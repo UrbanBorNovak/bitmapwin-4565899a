@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { BitmapCard } from "@/components/BitmapCard";
-import { bitmapsQuery } from "@/lib/bitmap-queries";
-import type { Bitmap } from "@/lib/bitmap";
+import { ChainBlockCard } from "@/components/ChainBlockCard";
+import { getChainBlocks } from "@/lib/chain.functions";
+import type { ChainBlock } from "@/lib/chain";
 
-type Filter = "ALL" | "FOR SALE" | "OWNED" | "UNCLAIMED";
-type Sort = "NEWEST" | "LOWEST PRICE" | "HIGHEST PRICE" | "BLOCK NUMBER";
+type Filter = "ALL" | "WITH INSCRIPTIONS" | "NO INSCRIPTIONS";
+type Sort = "NEWEST" | "OLDEST" | "MOST INSCRIPTIONS" | "MOST TXS";
 
 export const Route = createFileRoute("/explore")({
   validateSearch: (search: Record<string, unknown>): { q?: string } => {
@@ -16,70 +17,88 @@ export const Route = createFileRoute("/explore")({
 
   head: () => ({
     meta: [
-      { title: "Explore Bitmaps — Bitmap Marketplace" },
+      { title: "Explore Bitmaps — Live Bitcoin Blocks" },
       {
         name: "description",
-        content: "Search the Bitmap registry by block number, inscription or owner address.",
+        content:
+          "Explore live Bitcoin blocks and the inscriptions committed in each one, indexed from public chain and ordinals APIs.",
       },
-      { property: "og:title", content: "Explore Bitmaps — Bitmap Marketplace" },
+      { property: "og:title", content: "Explore Bitmaps — Live Bitcoin Blocks" },
       {
         property: "og:description",
-        content: "Search the Bitmap registry by block number, inscription or owner address.",
+        content:
+          "Explore live Bitcoin blocks and the inscriptions committed in each one, indexed from public chain and ordinals APIs.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(bitmapsQuery(200)),
   component: Explore,
 });
 
-const FILTERS: Filter[] = ["ALL", "FOR SALE", "OWNED", "UNCLAIMED"];
-const SORTS: Sort[] = ["NEWEST", "LOWEST PRICE", "HIGHEST PRICE", "BLOCK NUMBER"];
+const FILTERS: Filter[] = ["ALL", "WITH INSCRIPTIONS", "NO INSCRIPTIONS"];
+const SORTS: Sort[] = ["NEWEST", "OLDEST", "MOST INSCRIPTIONS", "MOST TXS"];
 
 function Explore() {
   const { q } = Route.useSearch();
-  const { data: bitmaps } = useSuspenseQuery(bitmapsQuery(200));
+  const fetchBlocks = useServerFn(getChainBlocks);
+  const [pages, setPages] = useState(2);
   const [term, setTerm] = useState(q ?? "");
   const [filter, setFilter] = useState<Filter>("ALL");
   const [sort, setSort] = useState<Sort>("NEWEST");
 
+  const { data, isPending, isFetching, isError, error, refetch } = useQuery({
+    queryKey: ["chain-blocks", pages],
+    queryFn: () => fetchBlocks({ data: { pages } }),
+    staleTime: 60_000,
+    refetchInterval: 120_000,
+  });
+
+  const blocks = data ?? [];
+
   const rows = useMemo(() => {
     const needle = term.trim().toLowerCase();
-    let out: Bitmap[] = bitmaps.filter((b) => {
-      if (filter === "FOR SALE" && b.status !== "for_sale") return false;
-      if (filter === "OWNED" && b.status !== "owned") return false;
-      if (filter === "UNCLAIMED" && b.status !== "unclaimed") return false;
+    const out: ChainBlock[] = blocks.filter((b) => {
+      if (filter === "WITH INSCRIPTIONS" && b.inscriptionCount === 0) return false;
+      if (filter === "NO INSCRIPTIONS" && b.inscriptionCount > 0) return false;
       if (!needle) return true;
       return (
-        String(b.block_height).includes(needle) ||
-        (b.inscription_id ?? "").toLowerCase().includes(needle) ||
-        (b.owner_address ?? "").toLowerCase().includes(needle)
+        String(b.height).includes(needle) ||
+        b.hash.toLowerCase().includes(needle) ||
+        (b.miner ?? "").toLowerCase().includes(needle) ||
+        b.sampleInscriptions.some((id) => id.toLowerCase().includes(needle))
       );
     });
-    out = [...out].sort((a, b) => {
+    return [...out].sort((a, b) => {
       switch (sort) {
-        case "LOWEST PRICE":
-          return (a.price_btc ?? Infinity) - (b.price_btc ?? Infinity);
-        case "HIGHEST PRICE":
-          return (b.price_btc ?? -1) - (a.price_btc ?? -1);
-        case "BLOCK NUMBER":
-          return a.block_height - b.block_height;
+        case "OLDEST":
+          return a.height - b.height;
+        case "MOST INSCRIPTIONS":
+          return b.inscriptionCount - a.inscriptionCount;
+        case "MOST TXS":
+          return b.txCount - a.txCount;
         default:
-          return +new Date(b.created_at) - +new Date(a.created_at);
+          return b.height - a.height;
       }
     });
-    return out;
-  }, [bitmaps, term, filter, sort]);
+  }, [blocks, term, filter, sort]);
+
+  const totalInscriptions = blocks.reduce((sum, b) => sum + b.inscriptionCount, 0);
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-12 md:px-8">
       <h1 className="display text-3xl md:text-5xl">EXPLORE BITMAPS</h1>
-      <p className="label mt-3">{rows.length} PARCELS INDEXED</p>
+      <p className="label mt-3">
+        {isPending
+          ? "SYNCING CHAIN..."
+          : `${rows.length} BLOCKS · ${totalInscriptions.toLocaleString("en-US")} INSCRIPTIONS · LIVE FROM MEMPOOL.SPACE + ORDINALS.COM`}
+      </p>
 
       <div className="mt-8 border border-border">
         <input
           value={term}
           onChange={(e) => setTerm(e.target.value)}
-          placeholder="Search block number, inscription or owner..."
+          placeholder="Search block height, block hash, miner or inscription id..."
           className="w-full bg-background px-4 py-4 font-mono text-sm outline-none placeholder:text-muted-foreground"
         />
         <div className="flex flex-col gap-4 border-t border-border p-3 md:flex-row md:items-center md:justify-between">
@@ -109,15 +128,47 @@ function Explore() {
         </div>
       </div>
 
+      {isError && (
+        <div className="mt-8 border border-border p-6 font-mono text-sm">
+          <p>&gt; CHAIN INDEXER UNREACHABLE</p>
+          <p className="mt-2 text-muted-foreground">
+            {error instanceof Error ? error.message : "Unknown error"}
+          </p>
+          <button className="btn-term mt-4 !px-3 !py-2" onClick={() => void refetch()}>
+            RETRY
+          </button>
+        </div>
+      )}
+
+      {isPending && (
+        <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} className="h-[340px] animate-pulse border border-border bg-card" />
+          ))}
+        </div>
+      )}
+
       <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
         {rows.map((b) => (
-          <BitmapCard key={b.id} bitmap={b} dense />
+          <ChainBlockCard key={b.hash} block={b} />
         ))}
       </div>
 
-      {rows.length === 0 && (
+      {!isPending && rows.length === 0 && (
         <div className="mt-12 border border-border p-8 font-mono text-sm text-muted-foreground">
-          &gt; NO MATCHING PARCELS<span className="blink">_</span>
+          &gt; NO MATCHING BLOCKS<span className="blink">_</span>
+        </div>
+      )}
+
+      {!isPending && pages < 6 && (
+        <div className="mt-8 flex justify-center">
+          <button
+            className="btn-term !px-5 !py-3"
+            disabled={isFetching}
+            onClick={() => setPages((p) => Math.min(6, p + 2))}
+          >
+            {isFetching ? "LOADING..." : "LOAD OLDER BLOCKS"}
+          </button>
         </div>
       )}
     </div>
