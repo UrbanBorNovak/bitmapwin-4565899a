@@ -10,33 +10,92 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ActivityRouteImport } from './routes/activity'
+import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as MapRouteImport } from './routes/map'
+import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ActivityRoute = ActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MapRoute = MapRouteImport.update({
+  id: '/map',
+  path: '/map',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceRoute = MarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BitmapBlockRoute = BitmapBlockRouteImport.update({
+  id: '/bitmap/$block',
+  path: '/bitmap/$block',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/activity': typeof ActivityRoute
+  '/explore': typeof ExploreRoute
+  '/map': typeof MapRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/bitmap/$block': typeof BitmapBlockRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/activity': typeof ActivityRoute
+  '/explore': typeof ExploreRoute
+  '/map': typeof MapRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/bitmap/$block': typeof BitmapBlockRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/activity': typeof ActivityRoute
+  '/explore': typeof ExploreRoute
+  '/map': typeof MapRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/bitmap/$block': typeof BitmapBlockRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    '/' | '/activity' | '/explore' | '/map' | '/marketplace' | '/bitmap/$block'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    '/' | '/activity' | '/explore' | '/map' | '/marketplace' | '/bitmap/$block'
+  id:
+    | '__root__'
+    | '/'
+    | '/activity'
+    | '/explore'
+    | '/map'
+    | '/marketplace'
+    | '/bitmap/$block'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ActivityRoute: typeof ActivityRoute
+  ExploreRoute: typeof ExploreRoute
+  MapRoute: typeof MapRoute
+  MarketplaceRoute: typeof MarketplaceRoute
+  BitmapBlockRoute: typeof BitmapBlockRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +107,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/activity': {
+      id: '/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof ActivityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/map': {
+      id: '/map'
+      path: '/map'
+      fullPath: '/map'
+      preLoaderRoute: typeof MapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace': {
+      id: '/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bitmap/$block': {
+      id: '/bitmap/$block'
+      path: '/bitmap/$block'
+      fullPath: '/bitmap/$block'
+      preLoaderRoute: typeof BitmapBlockRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ActivityRoute: ActivityRoute,
+  ExploreRoute: ExploreRoute,
+  MapRoute: MapRoute,
+  MarketplaceRoute: MarketplaceRoute,
+  BitmapBlockRoute: BitmapBlockRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
