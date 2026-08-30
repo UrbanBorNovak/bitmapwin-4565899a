@@ -14,7 +14,112 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      activity: {
+        Row: {
+          bitmap_id: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          type: string
+          wallet_address: string | null
+        }
+        Insert: {
+          bitmap_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          type: string
+          wallet_address?: string | null
+        }
+        Update: {
+          bitmap_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          type?: string
+          wallet_address?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_bitmap_id_fkey"
+            columns: ["bitmap_id"]
+            isOneToOne: false
+            referencedRelation: "bitmaps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bitmaps: {
+        Row: {
+          block_height: number
+          created_at: string
+          id: string
+          image_url: string | null
+          inscription_id: string | null
+          owner_address: string | null
+          price_btc: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          block_height: number
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          inscription_id?: string | null
+          owner_address?: string | null
+          price_btc?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          block_height?: number
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          inscription_id?: string | null
+          owner_address?: string | null
+          price_btc?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      listings: {
+        Row: {
+          bitmap_id: string
+          created_at: string
+          id: string
+          price_btc: number
+          seller_address: string
+          status: string
+        }
+        Insert: {
+          bitmap_id: string
+          created_at?: string
+          id?: string
+          price_btc: number
+          seller_address: string
+          status?: string
+        }
+        Update: {
+          bitmap_id?: string
+          created_at?: string
+          id?: string
+          price_btc?: number
+          seller_address?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listings_bitmap_id_fkey"
+            columns: ["bitmap_id"]
+            isOneToOne: false
+            referencedRelation: "bitmaps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
