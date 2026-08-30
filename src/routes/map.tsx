@@ -25,8 +25,8 @@ export const Route = createFileRoute("/map")({
 });
 
 const CELL = 96;
-const COLS = 40;
-const ROWS = 40;
+const COLS = 20;
+const ROWS = 20;
 const MIN_ZOOM = 0.35;
 const MAX_ZOOM = 4;
 
@@ -58,17 +58,7 @@ function MapPage() {
     setOffset({ x: px - (px - o.x) * k, y: py - (py - o.y) * k });
   }, []);
 
-  const wheelRef = useRef((e: WheelEvent) => {
-    const el = containerRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1);
-    zoomAt(
-      e.clientX - rect.left,
-      e.clientY - rect.top,
-      stateRef.current.zoom * Math.exp(-dy * 0.0015),
-    );
-  });
+  const wheelRef = useRef<(e: WheelEvent) => void>(() => {});
   wheelRef.current = (e: WheelEvent) => {
     const el = containerRef.current;
     if (!el) return;
