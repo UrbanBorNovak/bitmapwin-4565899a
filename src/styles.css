@@ -134,7 +134,8 @@
 @utility display {
   font-family: var(--font-display);
   font-weight: 900;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
+  word-spacing: 0.12em;
   line-height: 0.92;
   text-transform: uppercase;
 }
