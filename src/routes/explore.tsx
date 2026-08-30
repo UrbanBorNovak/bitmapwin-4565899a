@@ -9,9 +9,11 @@ type Filter = "ALL" | "FOR SALE" | "OWNED" | "UNCLAIMED";
 type Sort = "NEWEST" | "LOWEST PRICE" | "HIGHEST PRICE" | "BLOCK NUMBER";
 
 export const Route = createFileRoute("/explore")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    q: typeof search.q === "string" ? search.q : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { q?: string } => {
+    const raw = search["q"];
+    return typeof raw === "string" && raw.length > 0 ? { q: raw } : {};
+  },
+
   head: () => ({
     meta: [
       { title: "Explore Bitmaps — Bitmap Marketplace" },
