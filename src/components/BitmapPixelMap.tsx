@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 type Props = {
   blockHeight: number;
   className?: string;
-  /** adds a subtle hover animation on the parent .group */
+  /** subtle staggered pixel flicker when a parent .group is hovered */
   animate?: boolean;
 };
 
@@ -22,27 +22,24 @@ export function BitmapPixelMap({ blockHeight, className, animate = true }: Props
       style={{
         display: "grid",
         gridTemplateColumns: `repeat(${size}, 1fr)`,
-        imageRendering: "pixelated",
       }}
       aria-label={`Pixel pattern for bitmap ${blockHeight}`}
       role="img"
     >
-      {cells.map((on, i) => (
-        <span
-          key={i}
-          className={cn(
-            on ? "bg-foreground" : "bg-background",
-            animate && "transition-opacity duration-300",
-            animate && on && "group-hover:opacity-100",
-            animate && !on && "group-hover:opacity-100",
-          )}
-          style={
-            animate
-              ? { transitionDelay: `${((i * 37) % 23) * 12}ms`, opacity: on ? 1 : 0.06 }
-              : { opacity: on ? 1 : 0 }
-          }
-        />
-      ))}
+      {cells.map((on, i) =>
+        on ? (
+          <span
+            key={i}
+            className={cn(
+              "bg-foreground",
+              animate && "opacity-100 transition-opacity duration-200 group-hover:opacity-40",
+            )}
+            style={animate ? { transitionDelay: `${((i * 53) % 17) * 18}ms` } : undefined}
+          />
+        ) : (
+          <span key={i} className="bg-background" />
+        ),
+      )}
     </div>
   );
 }
