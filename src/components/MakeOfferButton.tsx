@@ -89,8 +89,8 @@ export function MakeOfferButton({
     },
     onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: ["bids"] });
-      setAmount("");
-      setNote("");
+      setAmount(defaultAmountSats && defaultAmountSats > 0 ? String(defaultAmountSats) : "");
+      setNote(initialNote);
       setOpen(false);
       toast(`OFFER SENT — ${height}.BITMAP`, {
         description: result.replaced
