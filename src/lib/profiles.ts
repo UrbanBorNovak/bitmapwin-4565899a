@@ -178,6 +178,38 @@ export async function saveParcelPage(input: {
   if (error) throw error;
 }
 
+/** Batch profile lookup so lists can show real builder names, not addresses. */
+export async function fetchProfiles(addresses: string[]): Promise<Map<string, WalletProfile>> {
+  const unique = Array.from(new Set(addresses.filter((a) => a !== "")));
+  if (unique.length === 0) return new Map();
+  const { data, error } = await supabase
+    .from("wallet_profiles")
+    .select("address, display_name, bio, avatar_inscription_id, updated_at")
+    .in("address", unique);
+  if (error) throw error;
+  return new Map(
+    (data ?? []).map((row) => [
+      row.address,
+      {
+        address: row.address,
+        displayName: row.display_name,
+        bio: row.bio,
+        avatarInscriptionId: row.avatar_inscription_id,
+        updatedAt: row.updated_at,
+      } satisfies WalletProfile,
+    ]),
+  );
+}
+
+export const profilesQuery = (addresses: string[]) =>
+  queryOptions({
+    queryKey: ["wallet-profiles", [...addresses].sort()],
+    queryFn: () => fetchProfiles(addresses),
+    enabled: addresses.length > 0,
+    staleTime: 60_000,
+  });
+
+
 export const profileQuery = (address: string) =>
   queryOptions({
     queryKey: ["wallet-profile", address],
