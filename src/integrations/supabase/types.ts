@@ -205,6 +205,8 @@ export type Database = {
         Row: {
           bitmap_height: number | null
           buyer_address: string | null
+          buyer_psbt_base64: string | null
+          buyer_txid: string | null
           created_at: string
           delivered_at: string | null
           delivery_note: string | null
@@ -221,6 +223,8 @@ export type Database = {
         Insert: {
           bitmap_height?: number | null
           buyer_address?: string | null
+          buyer_psbt_base64?: string | null
+          buyer_txid?: string | null
           created_at?: string
           delivered_at?: string | null
           delivery_note?: string | null
@@ -237,6 +241,8 @@ export type Database = {
         Update: {
           bitmap_height?: number | null
           buyer_address?: string | null
+          buyer_psbt_base64?: string | null
+          buyer_txid?: string | null
           created_at?: string
           delivered_at?: string | null
           delivery_note?: string | null
