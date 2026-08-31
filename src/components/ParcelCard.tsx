@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { toast } from "sonner";
 import { BitmapPixelMap } from "@/components/BitmapPixelMap";
-import { formatBtc } from "@/lib/bitmap";
+import { formatSats } from "@/lib/trades";
 import { shortenAddress, type RegistryParcel } from "@/lib/registry";
 
 /** Card for a real, on-chain bitmap claim held in the registry. */
@@ -17,12 +16,18 @@ export function ParcelCard({ parcel }: { parcel: RegistryParcel }) {
       </Link>
 
       <div className="p-4">
-        <div className="display text-sm">{parcel.bitmapHeight}.BITMAP</div>
+        <div className="flex items-baseline justify-between gap-2">
+          <div className="display text-sm">{parcel.bitmapHeight}.BITMAP</div>
+          <span className="label">{parcel.status === "sold" ? "SOLD" : "HELD"}</span>
+        </div>
 
         <dl className="mt-3 space-y-1 text-[11px]">
           <Row k="OWNER" v={shortenAddress(parcel.ownerAddress)} />
           <Row k="TRANSFERS" v={String(parcel.transfers)} />
-          <Row k="PRICE" v={parcel.listed ? formatBtc(parcel.priceBtc) : "NOT LISTED"} />
+          <Row
+            k="LAST SALE"
+            v={parcel.lastSaleSats ? formatSats(parcel.lastSaleSats) : "NO SALE ON CHAIN"}
+          />
           <Row
             k="CLAIM"
             v={parcel.inscribedInBlock === null ? "—" : `IN BLOCK ${parcel.inscribedInBlock}`}
@@ -43,17 +48,14 @@ export function ParcelCard({ parcel }: { parcel: RegistryParcel }) {
           >
             VIEW
           </Link>
-          <button
-            className="btn-term !px-2 !py-2 disabled:opacity-30"
-            disabled={!parcel.listed}
-            onClick={() =>
-              toast(`${parcel.bitmapHeight}.BITMAP`, {
-                description: "Settlement layer not connected in this prototype.",
-              })
-            }
+          <a
+            className="btn-term !px-2 !py-2"
+            href={`https://mempool.space/tx/${parcel.lastSaleTxid ?? parcel.txid}`}
+            target="_blank"
+            rel="noreferrer"
           >
-            BUY
-          </button>
+            {parcel.lastSaleTxid ? "TRADE TX" : "CLAIM TX"}
+          </a>
         </div>
       </div>
     </article>
