@@ -87,6 +87,12 @@ export function BuildEditor({
           config={parseBuildConfig("info", config)}
           onChange={onConfigChange}
         />
+      ) : kind === "shop" ? (
+        <ShopEditor
+          config={parseBuildConfig("shop", config)}
+          onChange={onConfigChange}
+          walletAddress={walletAddress ?? null}
+        />
       ) : kind === "gallery" ? (
         <GalleryEditor config={parseBuildConfig("gallery", config)} onChange={onConfigChange} />
       ) : kind === "game3d" ? (
@@ -94,6 +100,7 @@ export function BuildEditor({
       ) : (
         <Game2dEditor config={parseBuildConfig("game2d", config)} onChange={onConfigChange} />
       )}
+
     </div>
   );
 }
