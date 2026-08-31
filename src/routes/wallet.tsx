@@ -104,6 +104,12 @@ function WalletPage() {
       ),
     [inscribedUtxos],
   );
+  const ownedInscriptionIds = useMemo(
+    () => inscribedUtxos.flatMap((u) => u.inscriptions.map((i) => i.id)),
+    [inscribedUtxos],
+  );
+
+
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-12 md:px-8">
