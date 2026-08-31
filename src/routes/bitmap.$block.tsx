@@ -1,13 +1,16 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { getBlockInscriptions } from "@/lib/ordinals-scan.functions";
 import { getBitmapRegistryEntry } from "@/lib/oci.functions";
 import { MAX_BITMAP } from "@/lib/oci";
 import { toast } from "sonner";
 import { BitmapPixelMap } from "@/components/BitmapPixelMap";
-import { bitmapQuery } from "@/lib/bitmap-queries";
-import { registryParcelQuery, shortenAddress } from "@/lib/registry";
-import { STATUS_LABEL, formatBtc } from "@/lib/bitmap";
+import { registryParcelQuery, shortenAddress, PARCEL_STATUS_LABEL } from "@/lib/registry";
+import { saveTrades, tradesForHeightQuery } from "@/lib/trade-store";
+import { traceBitmapTradesFn } from "@/lib/trades.functions";
+import { formatSats } from "@/lib/trades";
+import { timeAgo } from "@/lib/bitmap";
+
 
 const blockScanQuery = (height: number) =>
   queryOptions({
