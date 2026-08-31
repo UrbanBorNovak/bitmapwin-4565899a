@@ -96,7 +96,7 @@ function Explore() {
           return b.height - a.height;
       }
     });
-  }, [blocks, term, filter, sort]);
+  }, [blocks, term, filter, sort, traits]);
 
   const totalInscriptions = blocks.reduce((sum, b) => sum + b.inscriptionCount, 0);
   const validBitmaps = blocks.filter((b) => b.bitmapStatus === "valid").length;
