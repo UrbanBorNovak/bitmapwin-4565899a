@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { inscriptionImageUrl, profileQuery, type ParcelPage } from "@/lib/profiles";
 import { shortenAddress } from "@/lib/registry";
 import { timeAgo } from "@/lib/bitmap";
+import { BUILD_KIND_LABELS, isBuildKind } from "@/lib/build-sdk";
 
 export const Route = createFileRoute("/profile/$address")({
   head: ({ params }) => {
@@ -29,7 +30,7 @@ const ownerPagesQuery = (address: string) =>
     queryFn: async (): Promise<ParcelPage[]> => {
       const { data, error } = await supabase
         .from("parcel_pages")
-        .select("bitmap_height, owner_address, title, description, link_url, banner_inscription_id, updated_at")
+        .select("bitmap_height, owner_address, title, description, link_url, banner_inscription_id, build_kind, build_config, updated_at")
         .eq("owner_address", address)
         .order("updated_at", { ascending: false })
         .limit(60);
@@ -41,6 +42,8 @@ const ownerPagesQuery = (address: string) =>
         description: row.description,
         linkUrl: row.link_url,
         bannerInscriptionId: row.banner_inscription_id,
+        buildKind: isBuildKind(row.build_kind) ? row.build_kind : "info",
+        buildConfig: row.build_config,
         updatedAt: row.updated_at,
       }));
     },
@@ -116,7 +119,10 @@ function ProfilePage() {
                   >
                     {p.bitmapHeight}.BITMAP{p.title ? ` — ${p.title}` : ""}
                   </Link>
-                  <span className="label">{p.updatedAt ? timeAgo(p.updatedAt) : ""}</span>
+                  <span className="label">
+                    {BUILD_KIND_LABELS[p.buildKind]}
+                    {p.updatedAt ? ` · ${timeAgo(p.updatedAt)}` : ""}
+                  </span>
                 </div>
                 {p.description && (
                   <p className="mt-2 line-clamp-2 font-mono text-xs text-muted-foreground">

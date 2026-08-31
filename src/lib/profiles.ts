@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { DEFAULT_CONFIGS, isBuildKind, parseBuildConfig, type BuildKind } from "@/lib/build-sdk";
 
 /**
  * Wallet profiles, owner-customised parcel pages and parcel visitor stats.
@@ -22,6 +23,8 @@ export type ParcelPage = {
   description: string | null;
   linkUrl: string | null;
   bannerInscriptionId: string | null;
+  buildKind: BuildKind;
+  buildConfig: unknown;
   updatedAt: string | null;
 };
 
@@ -127,7 +130,7 @@ export async function saveProfile(input: {
 export async function fetchParcelPage(height: number): Promise<ParcelPage | null> {
   const { data, error } = await supabase
     .from("parcel_pages")
-    .select("bitmap_height, owner_address, title, description, link_url, banner_inscription_id, updated_at")
+    .select("bitmap_height, owner_address, title, description, link_url, banner_inscription_id, build_kind, build_config, updated_at")
     .eq("bitmap_height", height)
     .maybeSingle();
   if (error) throw error;
@@ -139,6 +142,11 @@ export async function fetchParcelPage(height: number): Promise<ParcelPage | null
     description: data.description,
     linkUrl: data.link_url,
     bannerInscriptionId: data.banner_inscription_id,
+    buildKind: isBuildKind(data.build_kind) ? data.build_kind : "info",
+    buildConfig: parseBuildConfig(
+      isBuildKind(data.build_kind) ? data.build_kind : "info",
+      data.build_config,
+    ),
     updatedAt: data.updated_at,
   };
 }
@@ -150,9 +158,14 @@ export async function saveParcelPage(input: {
   description: string | null;
   linkUrl: string | null;
   bannerInscriptionId: string | null;
+  buildKind?: BuildKind;
+  buildConfig?: unknown;
 }) {
+  const kind = input.buildKind ?? "info";
   const { error } = await supabase.from("parcel_pages").upsert(
     {
+      build_kind: kind,
+      build_config: parseBuildConfig(kind, input.buildConfig ?? DEFAULT_CONFIGS[kind]) as never,
       bitmap_height: input.bitmapHeight,
       owner_address: input.ownerAddress,
       title: input.title,
