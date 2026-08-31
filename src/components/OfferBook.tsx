@@ -4,19 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { offersQuery, OFFER_STATUS_LABEL, type Offer } from "@/lib/offers";
 import { inspectOfferFn, refreshOffersFn, submitOfferFn } from "@/lib/offers.functions";
-import { buildPurchaseFn, submitPurchaseFn } from "@/lib/purchase.functions";
-import {
-  WALLET_LABEL,
-  WALLET_PROVIDER_STORAGE_KEY,
-  connectWallet,
-  isWalletInstalled,
-  signPurchasePsbt,
-  xOnlyPubKeyHex,
-  type ConnectedWallet,
-  type WalletProviderId,
-} from "@/lib/browser-wallet";
+import { BuyButton } from "@/components/BuyButton";
 import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
+
 
 
 /**
