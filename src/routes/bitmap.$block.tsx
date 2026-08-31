@@ -112,6 +112,15 @@ function BitmapDetail() {
 
       <TraitBadges height={block} showRarity className="mt-4" />
 
+      <div className="mt-6 flex flex-wrap gap-2">
+        <MakeOfferButton
+          height={block}
+          askSats={parcel?.listedSats ?? null}
+          className="btn-term"
+          label="[ MAKE OFFER ]"
+        />
+      </div>
+
       <ParcelPagePanel height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
