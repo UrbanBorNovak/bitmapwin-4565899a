@@ -191,6 +191,50 @@ export async function signListingPsbt(
   return signed;
 }
 
+/**
+ * Signs the buyer half of a purchase PSBT: only the buyer's funding inputs are
+ * signed, and the wallet is asked to finalize them so the transaction can be
+ * broadcast (the seller's input already carries its signature).
+ */
+export async function signPurchasePsbt(
+  provider: WalletProviderId,
+  psbtBase64: string,
+  buyerPaymentAddress: string,
+  signIndices: number[],
+): Promise<string> {
+  if (signIndices.length === 0) throw new Error("NOTHING TO SIGN IN THIS PURCHASE");
+  if (provider === "unisat") {
+    const unisat = getUnisat();
+    if (!unisat) throw new Error("UNISAT NOT DETECTED");
+    const signed = await unisat.signPsbt(base64ToHex(psbtBase64), {
+      autoFinalized: true,
+      toSignInputs: signIndices.map((index) => ({ index, address: buyerPaymentAddress })),
+    });
+    if (typeof signed !== "string" || signed.length < 20) {
+      throw new Error("UNISAT RETURNED NO SIGNED PSBT");
+    }
+    return /^[0-9a-fA-F]+$/.test(signed.trim()) ? hexToBase64(signed) : signed.trim();
+  }
+  const xverse = getXverse();
+  if (!xverse) throw new Error("XVERSE NOT DETECTED");
+  const res = await xverse.request<{ psbt?: string; psbtBase64?: string }>("signPsbt", {
+    psbt: psbtBase64,
+    signInputs: { [buyerPaymentAddress]: signIndices },
+    broadcast: false,
+  });
+  if (res.status !== "success") {
+    throw new Error((res.error?.message ?? "XVERSE SIGN REJECTED").toUpperCase());
+  }
+  const signed =
+    typeof res.result === "string" ? res.result : res.result?.psbt ?? res.result?.psbtBase64;
+  if (typeof signed !== "string" || signed.length < 20) {
+    throw new Error("XVERSE RETURNED NO SIGNED PSBT");
+  }
+  return signed;
+}
+
+
+
 
 /** x-only (32-byte) internal key hex from a compressed public key hex. */
 export function xOnlyPubKeyHex(publicKeyHex: string | undefined): string | undefined {
