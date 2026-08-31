@@ -78,6 +78,8 @@ function Marketplace() {
   const [page, setPage] = useState(0);
   const [syncHeight, setSyncHeight] = useState("");
   const queryClient = useQueryClient();
+  useLiveOffers();
+
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["registry"] });
