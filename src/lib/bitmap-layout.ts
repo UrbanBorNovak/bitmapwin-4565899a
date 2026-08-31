@@ -76,7 +76,17 @@ export function parcelSizesFromVsizes(vsizes: number[]): number[] {
 
 /** Mondrian packing driven by real per-transaction vbytes from the chain. */
 export function layoutFromVsizes(vsizes: number[]): BlockLayout {
-  const sizes = parcelSizesFromVsizes(vsizes);
+  return layoutFromSizeClasses(parcelSizesFromVsizes(vsizes));
+}
+
+/**
+ * Mondrian packing from precomputed size classes — the one-byte-per-transaction
+ * payload served by /api/public/blocks/:height.
+ */
+export function layoutFromSizeClasses(classes: number[]): BlockLayout {
+  const sizes = [...classes]
+    .map((c) => Math.max(1, Math.min(8, Math.round(c))))
+    .sort((a, b) => b - a);
   if (sizes.length === 0) return { width: 1, height: 1, parcels: [], filler: [] };
   const layout = new MondrianLayout(sizes);
   const filler = layout.fillEmptySpaces(true);
