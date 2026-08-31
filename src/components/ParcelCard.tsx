@@ -18,11 +18,19 @@ export function ParcelCard({ parcel }: { parcel: RegistryParcel }) {
       <div className="p-4">
         <div className="flex items-baseline justify-between gap-2">
           <div className="display text-sm">{parcel.bitmapHeight}.BITMAP</div>
-          <span className="label">{parcel.status === "sold" ? "SOLD" : "HELD"}</span>
+          <span className="label">{PARCEL_STATUS_LABEL[parcel.status]}</span>
         </div>
 
         <dl className="mt-3 space-y-1 text-[11px]">
           <Row k="OWNER" v={shortenAddress(parcel.ownerAddress)} />
+          <Row
+            k="ASK"
+            v={
+              parcel.listedSats
+                ? `${formatSats(parcel.listedSats)}${parcel.listedBuyerAddress ? " · RESERVED" : ""}`
+                : "NO OPEN OFFER"
+            }
+          />
           <Row k="TRANSFERS" v={String(parcel.transfers)} />
           <Row
             k="LAST SALE"
