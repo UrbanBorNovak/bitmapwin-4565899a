@@ -43,11 +43,11 @@ type BidRow = {
 const COLUMNS =
   "id, bitmap_height, bidder_address, price_sats, expires_at, note, status, created_at";
 
+const KNOWN_STATUSES: BidStatus[] = ["accepted", "settled", "cancelled", "expired"];
+
 function toBid(row: BidRow): Bid {
   const status: BidStatus =
-    row.status === "accepted" || row.status === "cancelled" || row.status === "expired"
-      ? row.status
-      : "open";
+    (KNOWN_STATUSES.find((s) => s === row.status) as BidStatus | undefined) ?? "open";
   return {
     id: row.id,
     bitmapHeight: Number(row.bitmap_height),
