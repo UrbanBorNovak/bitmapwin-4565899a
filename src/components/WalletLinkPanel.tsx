@@ -6,6 +6,7 @@ import { confirmWalletLinkFn, startWalletLinkFn, unlinkWalletFn } from "@/lib/wa
 import { isLinked, myWalletLinksQuery } from "@/lib/wallet-links";
 import { accountLabel, signOut, useAuthSession } from "@/lib/auth";
 import { shortenAddress } from "@/lib/registry";
+import { WalletSignIn } from "@/components/WalletSignIn";
 
 /**
  * Account panel: shows the signed-in account and the addresses it has proven
@@ -84,10 +85,13 @@ export function WalletLinkPanel({
       {loading ? (
         <p className="p-4 font-mono text-xs text-muted-foreground">&gt; CHECKING SESSION…</p>
       ) : !signedIn ? (
-        <p className="p-4 font-mono text-xs text-muted-foreground">
-          &gt; SIGN IN TO TIE THIS ADDRESS TO A PERSISTENT PROFILE — WITHOUT AN ACCOUNT YOUR
-          PROFILE AND PARCEL PAGES CANNOT BE SAVED<span className="blink">_</span>
-        </p>
+        <div className="space-y-3 p-4">
+          <p className="font-mono text-xs text-muted-foreground">
+            &gt; SIGN IN TO TIE THIS ADDRESS TO A PERSISTENT PROFILE — WITHOUT AN ACCOUNT YOUR
+            PROFILE AND PARCEL PAGES CANNOT BE SAVED<span className="blink">_</span>
+          </p>
+          <WalletSignIn />
+        </div>
       ) : (
         <div className="divide-y divide-border">
           <div className="flex flex-wrap items-baseline justify-between gap-3 px-4 py-3">
