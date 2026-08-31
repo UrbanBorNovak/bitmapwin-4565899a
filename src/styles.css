@@ -10,13 +10,13 @@
  */
 
 @theme inline {
-  --radius-sm: 0px;
-  --radius-md: 0px;
-  --radius-lg: 0px;
-  --radius-xl: 0px;
-  --radius-2xl: 0px;
-  --radius-3xl: 0px;
-  --radius-4xl: 0px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-2xl: 18px;
+  --radius-3xl: 24px;
+  --radius-4xl: 32px;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   --font-sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
   --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
@@ -41,36 +41,42 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-grid: var(--grid);
+  --color-bitcoin: var(--bitcoin);
+  --color-bitcoin-foreground: var(--bitcoin-foreground);
+  --color-surface: var(--surface);
 }
 
 :root {
-  --radius: 0px;
-  --background: oklch(0 0 0);
-  --foreground: oklch(1 0 0);
-  --card: oklch(0.04 0 0);
+  --radius: 10px;
+  --bitcoin: oklch(0.72 0.169 55);
+  --bitcoin-foreground: oklch(0.14 0 0);
+  --surface: oklch(0.16 0 0);
+  --background: oklch(0.115 0 0);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.155 0 0);
   --card-foreground: oklch(1 0 0);
-  --popover: oklch(0.04 0 0);
+  --popover: oklch(0.155 0 0);
   --popover-foreground: oklch(1 0 0);
-  --primary: oklch(1 0 0);
-  --primary-foreground: oklch(0 0 0);
-  --secondary: oklch(0.16 0 0);
+  --primary: oklch(0.72 0.169 55);
+  --primary-foreground: oklch(0.14 0 0);
+  --secondary: oklch(0.2 0 0);
   --secondary-foreground: oklch(1 0 0);
-  --muted: oklch(0.14 0 0);
-  --muted-foreground: oklch(0.62 0 0);
-  --accent: oklch(0.2 0 0);
+  --muted: oklch(0.185 0 0);
+  --muted-foreground: oklch(0.68 0 0);
+  --accent: oklch(0.24 0 0);
   --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.62 0 0);
   --destructive-foreground: oklch(0 0 0);
-  --border: oklch(0.28 0 0);
-  --border-strong: oklch(1 0 0);
-  --input: oklch(0.28 0 0);
-  --ring: oklch(1 0 0);
-  --grid: oklch(0.22 0 0);
+  --border: oklch(0.26 0 0);
+  --border-strong: oklch(0.42 0 0);
+  --input: oklch(0.26 0 0);
+  --ring: oklch(0.72 0.169 55);
+  --grid: oklch(0.24 0 0);
 }
 
 .dark {
-  --background: oklch(0 0 0);
-  --foreground: oklch(1 0 0);
+  --background: oklch(0.115 0 0);
+  --foreground: oklch(0.98 0 0);
 }
 
 @layer base {
@@ -99,13 +105,14 @@
     height: 8px;
   }
   ::-webkit-scrollbar-track {
-    background: #000;
+    background: var(--color-background);
   }
   ::-webkit-scrollbar-thumb {
-    background: #333;
+    background: var(--color-accent);
+    border-radius: 999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #fff;
+    background: var(--color-bitcoin);
   }
 }
 
@@ -145,17 +152,19 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border: 1px solid var(--color-border-strong);
-  background: var(--color-background);
-  color: var(--color-foreground);
+  border: 1px solid var(--color-bitcoin);
+  background: color-mix(in oklab, var(--color-bitcoin) 12%, transparent);
+  color: var(--color-bitcoin);
+  border-radius: var(--radius-md);
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   padding: 0.75rem 1.25rem;
   transition:
-    background 120ms linear,
-    color 120ms linear;
+    background 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease;
   cursor: pointer;
 }
 
@@ -165,8 +174,9 @@
   justify-content: center;
   gap: 0.5rem;
   border: 1px solid var(--color-border);
-  background: var(--color-background);
+  background: var(--color-surface);
   color: var(--color-muted-foreground);
+  border-radius: var(--radius-md);
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   letter-spacing: 0.16em;
@@ -180,13 +190,23 @@
 }
 
 .btn-term:hover {
-  background: var(--color-foreground);
-  color: var(--color-background);
+  background: var(--color-bitcoin);
+  color: var(--color-bitcoin-foreground);
 }
 
 .btn-term-ghost:hover {
-  border-color: var(--color-border-strong);
+  border-color: var(--color-bitcoin);
   color: var(--color-foreground);
+}
+
+@utility card-soft {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+@utility text-bitcoin {
+  color: var(--color-bitcoin);
 }
 
 @utility scanlines {
