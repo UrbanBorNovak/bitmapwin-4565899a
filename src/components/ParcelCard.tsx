@@ -69,6 +69,16 @@ export function ParcelCard({ parcel }: { parcel: RegistryParcel }) {
           </div>
         )}
 
+        <div className="mt-2">
+          <MakeOfferButton
+            height={parcel.bitmapHeight}
+            askSats={parcel.listedSats}
+            topBidSats={topBid?.priceSats ?? null}
+            className="btn-term-ghost w-full !px-2 !py-2"
+            label="[ MAKE OFFER ]"
+          />
+        </div>
+
         <div className="mt-4 grid grid-cols-2 gap-2">
           <Link
             to="/bitmap/$block"
