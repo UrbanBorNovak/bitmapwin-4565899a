@@ -5,7 +5,7 @@ import { ParcelCard } from "@/components/ParcelCard";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { registryParcelsQuery } from "@/lib/registry";
-import { getRecentInscriptions } from "@/lib/ordinals-scan.functions";
+import { getBlockInscriptions, getRecentInscriptions } from "@/lib/ordinals-scan.functions";
 import { saveChainInscriptions } from "@/lib/inscription-store";
 import { formatBtc } from "@/lib/bitmap";
 
@@ -49,9 +49,15 @@ function Marketplace() {
   const [search, setSearch] = useState("");
   const queryClient = useQueryClient();
 
+  const [syncHeight, setSyncHeight] = useState("");
+
   const sync = useMutation({
     mutationFn: async () => {
-      const blocks = await getRecentInscriptions({ data: { blocks: 8, txPages: 6 } });
+      const height = Number(syncHeight);
+      const blocks =
+        syncHeight.trim() !== "" && Number.isFinite(height)
+          ? [await getBlockInscriptions({ data: { height, txPages: 12 } })]
+          : await getRecentInscriptions({ data: { blocks: 8, txPages: 6 } });
       const found = blocks.flatMap((b) => b.inscriptions);
       const saved = await saveChainInscriptions(found);
       const claims = found.filter((i) => i.isBitmapClaim).length;
@@ -115,6 +121,12 @@ function Marketplace() {
           onChange={(e) => setSearch(e.target.value)}
           placeholder="SEARCH HEIGHT / OWNER / TXID"
           className="min-w-[240px] flex-1 border border-border bg-background px-3 py-2 font-mono text-xs uppercase text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+        />
+        <input
+          value={syncHeight}
+          onChange={(e) => setSyncHeight(e.target.value.replace(/[^0-9]/g, ""))}
+          placeholder="BLOCK TO INDEX"
+          className="w-[150px] border border-border bg-background px-3 py-2 font-mono text-xs uppercase text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
         />
         <button
           className="btn-term-ghost"
