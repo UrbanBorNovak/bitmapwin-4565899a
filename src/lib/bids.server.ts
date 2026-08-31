@@ -24,7 +24,6 @@ export type PlaceBidInput = {
   signature?: string | undefined;
 };
 
-
 export async function placeBid(input: PlaceBidInput) {
   const db = publicDb();
 

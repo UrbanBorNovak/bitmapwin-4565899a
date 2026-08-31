@@ -142,7 +142,9 @@ export function BidPanel({
               {EXPIRY_OPTIONS.map((o) => (
                 <button
                   key={o.label}
-                  className={expiry === o.hours ? "btn-term !px-2 !py-1" : "btn-term-ghost !px-2 !py-1"}
+                  className={
+                    expiry === o.hours ? "btn-term !px-2 !py-1" : "btn-term-ghost !px-2 !py-1"
+                  }
                   onClick={() => setExpiry(o.hours)}
                 >
                   {o.label}
@@ -156,7 +158,8 @@ export function BidPanel({
           </>
         ) : (
           <p className="font-mono text-[11px] text-muted-foreground">
-            &gt; CONNECT UNISAT OR XVERSE ON /WALLET TO BID ON THIS PARCEL<span className="blink">_</span>
+            &gt; CONNECT UNISAT OR XVERSE ON /WALLET TO BID ON THIS PARCEL
+            <span className="blink">_</span>
           </p>
         )}
       </div>
@@ -249,7 +252,6 @@ function BidRow({
 
   const { accept } = useAcceptBid({ holderAddress });
 
-
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
       <div className="min-w-0">
@@ -258,7 +260,9 @@ function BidRow({
         </div>
         <p className="mt-1 truncate font-mono text-[11px] text-muted-foreground">
           {shortenAddress(bid.bidderAddress)} · {timeAgo(bid.createdAt)}
-          {bid.expiresAt ? ` · EXPIRES ${new Date(bid.expiresAt).toISOString().slice(0, 10)}` : " · NO EXPIRY"}
+          {bid.expiresAt
+            ? ` · EXPIRES ${new Date(bid.expiresAt).toISOString().slice(0, 10)}`
+            : " · NO EXPIRY"}
         </p>
         {bid.note && <p className="mt-1 font-mono text-[11px] text-foreground">&gt; {bid.note}</p>}
       </div>

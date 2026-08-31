@@ -141,7 +141,8 @@ function BidList({
   if (bids.length === 0) {
     return (
       <p className="p-5 font-mono text-[11px] text-muted-foreground">
-        &gt; {empty}<span className="blink">_</span>
+        &gt; {empty}
+        <span className="blink">_</span>
       </p>
     );
   }
@@ -161,7 +162,9 @@ function BidList({
               {formatSats(bid.priceSats)} · {shortenAddress(bid.bidderAddress)} ·{" "}
               {timeAgo(bid.createdAt)} · {BID_STATUS_LABEL[bid.status]}
             </p>
-            {bid.note && <p className="mt-1 font-mono text-[11px] text-foreground">&gt; {bid.note}</p>}
+            {bid.note && (
+              <p className="mt-1 font-mono text-[11px] text-foreground">&gt; {bid.note}</p>
+            )}
           </div>
           {action(bid)}
         </li>

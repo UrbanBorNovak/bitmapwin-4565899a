@@ -15,7 +15,12 @@ const MEMPOOL = "https://mempool.space/api";
 const ESPLORA = "https://blockstream.info/api";
 const UA = "bitmap-marketplace/1.0";
 
-type Outspend = { spent: boolean; txid?: string | null; vin?: number | null; status?: { confirmed?: boolean; block_height?: number | null } };
+type Outspend = {
+  spent: boolean;
+  txid?: string | null;
+  vin?: number | null;
+  status?: { confirmed?: boolean; block_height?: number | null };
+};
 
 async function getJson<T>(path: string): Promise<T | null> {
   for (const base of [MEMPOOL, ESPLORA]) {
