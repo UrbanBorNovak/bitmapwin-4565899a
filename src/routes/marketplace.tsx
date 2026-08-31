@@ -309,6 +309,50 @@ function Marketplace() {
   );
 }
 
+/** Terminal-style pager: windowed page numbers plus prev/next. */
+function Pager({
+  page,
+  pageCount,
+  onPage,
+}: {
+  page: number;
+  pageCount: number;
+  onPage: (page: number) => void;
+}) {
+  if (pageCount <= 1) return null;
+  const start = Math.max(0, Math.min(page - 2, pageCount - 5));
+  const numbers = Array.from({ length: Math.min(5, pageCount) }, (_, i) => start + i).filter(
+    (n) => n < pageCount,
+  );
+  return (
+    <nav className="mt-6 flex flex-wrap items-center gap-2" aria-label="Parcel pages">
+      <button className="btn-term-ghost" disabled={page === 0} onClick={() => onPage(page - 1)}>
+        [ PREV ]
+      </button>
+      {start > 0 && <span className="label">…</span>}
+      {numbers.map((n) => (
+        <button
+          key={n}
+          className={n === page ? "btn-term" : "btn-term-ghost"}
+          aria-current={n === page ? "page" : undefined}
+          onClick={() => onPage(n)}
+        >
+          {String(n + 1).padStart(2, "0")}
+        </button>
+      ))}
+      {start + numbers.length < pageCount && <span className="label">…</span>}
+      <button
+        className="btn-term-ghost"
+        disabled={page >= pageCount - 1}
+        onClick={() => onPage(page + 1)}
+      >
+        [ NEXT ]
+      </button>
+    </nav>
+  );
+}
+
+
 function EmptyRegistry() {
   return (
     <div className="mt-10 border border-border p-10">
