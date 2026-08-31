@@ -60,3 +60,30 @@ export function blockLayout(blockHeight: number, txCount?: number | null): Block
     filler,
   };
 }
+
+/**
+ * Real transaction vbytes → square parcel sizes, bitfeed-style: each parcel's
+ * side grows with the log of the transaction's vsize.
+ */
+export function parcelSizesFromVsizes(vsizes: number[]): number[] {
+  return vsizes
+    .map((vsize) => {
+      const side = Math.floor(Math.log2(Math.max(1, vsize) / 180)) + 1;
+      return Math.max(1, Math.min(8, side));
+    })
+    .sort((a, b) => b - a);
+}
+
+/** Mondrian packing driven by real per-transaction vbytes from the chain. */
+export function layoutFromVsizes(vsizes: number[]): BlockLayout {
+  const sizes = parcelSizesFromVsizes(vsizes);
+  if (sizes.length === 0) return { width: 1, height: 1, parcels: [], filler: [] };
+  const layout = new MondrianLayout(sizes);
+  const filler = layout.fillEmptySpaces(true);
+  return {
+    width: Math.max(1, layout.width),
+    height: Math.max(1, layout.height),
+    parcels: layout.slots,
+    filler,
+  };
+}

@@ -1,11 +1,13 @@
 import { useMemo } from "react";
-import { blockLayout } from "@/lib/bitmap-layout";
+import { blockLayout, layoutFromVsizes } from "@/lib/bitmap-layout";
 import { cn } from "@/lib/utils";
 
 type Props = {
   blockHeight: number;
   /** real transaction count, when known — drives the parcel count */
   txCount?: number | null;
+  /** real per-transaction vbytes from the chain — when present, drives the render */
+  vsizes?: number[] | null;
   className?: string;
   /** subtle fade of the parcels when a parent .group is hovered */
   animate?: boolean;
@@ -15,10 +17,19 @@ type Props = {
  * BitmapPixelMap — Mondrian packing of a block's transactions into square
  * parcels of digital land. Deterministic: same block always renders the same.
  */
-export function BitmapPixelMap({ blockHeight, txCount, className, animate = true }: Props) {
+export function BitmapPixelMap({
+  blockHeight,
+  txCount,
+  vsizes,
+  className,
+  animate = true,
+}: Props) {
   const { width, height, parcels, filler } = useMemo(
-    () => blockLayout(blockHeight, txCount),
-    [blockHeight, txCount],
+    () =>
+      vsizes && vsizes.length > 0
+        ? layoutFromVsizes(vsizes)
+        : blockLayout(blockHeight, txCount),
+    [blockHeight, txCount, vsizes],
   );
 
   const side = Math.max(width, height);
