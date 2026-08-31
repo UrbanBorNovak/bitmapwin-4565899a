@@ -8,11 +8,12 @@ import { supabase } from "@/integrations/supabase/client";
  * once the holder accepts.
  */
 
-export type BidStatus = "open" | "accepted" | "cancelled" | "expired";
+export type BidStatus = "open" | "accepted" | "settled" | "cancelled" | "expired";
 
 export const BID_STATUS_LABEL: Record<BidStatus, string> = {
   open: "OPEN",
-  accepted: "ACCEPTED",
+  accepted: "ACCEPTED — AWAITING BROADCAST",
+  settled: "SETTLED ON CHAIN",
   cancelled: "CANCELLED",
   expired: "EXPIRED",
 };
@@ -42,11 +43,11 @@ type BidRow = {
 const COLUMNS =
   "id, bitmap_height, bidder_address, price_sats, expires_at, note, status, created_at";
 
+const KNOWN_STATUSES: BidStatus[] = ["accepted", "settled", "cancelled", "expired"];
+
 function toBid(row: BidRow): Bid {
   const status: BidStatus =
-    row.status === "accepted" || row.status === "cancelled" || row.status === "expired"
-      ? row.status
-      : "open";
+    (KNOWN_STATUSES.find((s) => s === row.status) as BidStatus | undefined) ?? "open";
   return {
     id: row.id,
     bitmapHeight: Number(row.bitmap_height),

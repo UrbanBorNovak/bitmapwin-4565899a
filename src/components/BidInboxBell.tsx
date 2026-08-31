@@ -1,13 +1,19 @@
 import { Link } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
 import { useBidInbox } from "@/lib/use-bid-inbox";
+import { useAutoSettle } from "@/lib/use-auto-settle";
+import { useWalletSession } from "@/lib/wallet-session";
 
 /**
  * Header notification for parcel holders: how many live offers stand on the
  * connected wallet's bitmaps, with a toast the first time each one is seen.
+ * While a wallet is connected it also runs the background settlement sweep so
+ * accepted bids close by themselves once the buyer broadcasts.
  */
 export function BidInboxBell() {
   const { received } = useBidInbox({ notify: true });
+  const wallet = useWalletSession();
+  useAutoSettle(Boolean(wallet));
   const count = received.length;
 
   return (

@@ -15,7 +15,12 @@ const MEMPOOL = "https://mempool.space/api";
 const ESPLORA = "https://blockstream.info/api";
 const UA = "bitmap-marketplace/1.0";
 
-type Outspend = { spent: boolean; txid?: string | null; vin?: number | null; status?: { confirmed?: boolean; block_height?: number | null } };
+type Outspend = {
+  spent: boolean;
+  txid?: string | null;
+  vin?: number | null;
+  status?: { confirmed?: boolean; block_height?: number | null };
+};
 
 async function getJson<T>(path: string): Promise<T | null> {
   for (const base of [MEMPOOL, ESPLORA]) {
@@ -101,6 +106,11 @@ async function persist(
       : { status: "spent" };
   const { error } = await supabaseAdmin.from("offers").update(patch).eq("id", offer.id);
   if (error) throw new Error(error.message);
+
+  // A sale that came from an accepted bid closes that bid too.
+  const { markBidSettled } = await import("@/lib/bids.server");
+  await markBidSettled(offer.id);
+
   return saved;
 }
 

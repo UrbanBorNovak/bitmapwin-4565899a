@@ -9,7 +9,8 @@ import {
   isLiveBid,
   type Bid,
 } from "@/lib/bids";
-import { acceptBidFn, cancelBidFn, placeBidFn } from "@/lib/bids.functions";
+import { cancelBidFn, placeBidFn } from "@/lib/bids.functions";
+import { useAcceptBid } from "@/lib/use-accept-bid";
 import { signMessageWithWallet } from "@/lib/browser-wallet";
 import { useWalletSession, walletControls } from "@/lib/wallet-session";
 import { formatSats } from "@/lib/trades";
@@ -141,7 +142,9 @@ export function BidPanel({
               {EXPIRY_OPTIONS.map((o) => (
                 <button
                   key={o.label}
-                  className={expiry === o.hours ? "btn-term !px-2 !py-1" : "btn-term-ghost !px-2 !py-1"}
+                  className={
+                    expiry === o.hours ? "btn-term !px-2 !py-1" : "btn-term-ghost !px-2 !py-1"
+                  }
                   onClick={() => setExpiry(o.hours)}
                 >
                   {o.label}
@@ -155,7 +158,8 @@ export function BidPanel({
           </>
         ) : (
           <p className="font-mono text-[11px] text-muted-foreground">
-            &gt; CONNECT UNISAT OR XVERSE ON /WALLET TO BID ON THIS PARCEL<span className="blink">_</span>
+            &gt; CONNECT UNISAT OR XVERSE ON /WALLET TO BID ON THIS PARCEL
+            <span className="blink">_</span>
           </p>
         )}
       </div>
@@ -246,30 +250,7 @@ function BidRow({
     onError: (e) => toast("WITHDRAW FAILED", { description: (e as Error).message.toUpperCase() }),
   });
 
-  const accept = useMutation({
-    mutationFn: async () => {
-      if (!wallet || !holderAddress) throw new Error("CONNECT THE WALLET HOLDING THIS PARCEL");
-      const address = [wallet.ordinalsAddress, wallet.paymentAddress].find(
-        (a) => a.toLowerCase() === holderAddress.toLowerCase(),
-      );
-      if (!address) throw new Error("CONNECT THE WALLET HOLDING THIS PARCEL");
-      await signMessageWithWallet(
-        wallet.provider,
-        address,
-        bidActionMessage("accept", bid.id, address),
-      ).catch(() => {
-        throw new Error("ACCEPT SIGNATURE REJECTED");
-      });
-      return acceptBidFn({ data: { bidId: bid.id, holderAddress: address } });
-    },
-    onSuccess: (result) => {
-      onDone();
-      toast(`BID ACCEPTED — ${result.bitmapHeight}.BITMAP`, {
-        description: `LIST THE PARCEL AT ${formatSats(result.priceSats)} ON /WALLET TO SETTLE ON CHAIN`,
-      });
-    },
-    onError: (e) => toast("ACCEPT FAILED", { description: (e as Error).message.toUpperCase() }),
-  });
+  const { accept } = useAcceptBid({ holderAddress });
 
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
@@ -279,7 +260,9 @@ function BidRow({
         </div>
         <p className="mt-1 truncate font-mono text-[11px] text-muted-foreground">
           {shortenAddress(bid.bidderAddress)} · {timeAgo(bid.createdAt)}
-          {bid.expiresAt ? ` · EXPIRES ${new Date(bid.expiresAt).toISOString().slice(0, 10)}` : " · NO EXPIRY"}
+          {bid.expiresAt
+            ? ` · EXPIRES ${new Date(bid.expiresAt).toISOString().slice(0, 10)}`
+            : " · NO EXPIRY"}
         </p>
         {bid.note && <p className="mt-1 font-mono text-[11px] text-foreground">&gt; {bid.note}</p>}
       </div>
@@ -288,9 +271,9 @@ function BidRow({
           <button
             className="btn-term !px-3 !py-1.5"
             disabled={accept.isPending}
-            onClick={() => accept.mutate()}
+            onClick={() => accept.mutate(bid)}
           >
-            {accept.isPending ? "[ ACCEPTING… ]" : "[ ACCEPT BID ]"}
+            {accept.isPending ? "[ SIGNING SALE… ]" : "[ ACCEPT BID ]"}
           </button>
         )}
         {canCancel && (

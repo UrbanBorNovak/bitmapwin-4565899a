@@ -1,0 +1,97 @@
+import { useCallback } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { acceptBidWithOfferFn } from "@/lib/bids.functions";
+import { settleOfferFn } from "@/lib/settle.functions";
+import { buildListingPsbt } from "@/lib/psbt-builder";
+import { signListingPsbt, xOnlyPubKeyHex } from "@/lib/browser-wallet";
+import { useWalletSession } from "@/lib/wallet-session";
+import { walletQuery } from "@/lib/wallet";
+import { formatSats } from "@/lib/trades";
+import type { Bid } from "@/lib/bids";
+
+/**
+ * Accepting a bid means signing the real sale: the connected wallet's parcel
+ * UTXO is packed into a SIGHASH_SINGLE|ANYONECANPAY PSBT priced at the bid,
+ * signed in the wallet, and published to the offer book addressed to the bidder.
+ * From then on the settlement watcher closes the sale automatically the moment
+ * the buyer broadcasts.
+ */
+export function useAcceptBid(options: { holderAddress?: string | null } = {}) {
+  const wallet = useWalletSession();
+  const queryClient = useQueryClient();
+  const ordinals = wallet?.ordinalsAddress ?? "";
+  const snapshot = useQuery({ ...walletQuery(ordinals), enabled: ordinals !== "" });
+
+  const findParcel = useCallback(
+    (height: number) => {
+      for (const utxo of snapshot.data?.utxos ?? []) {
+        for (const insc of utxo.inscriptions) {
+          if (insc.bitmapHeight === height) {
+            return { outpoint: utxo.outpoint, valueSats: utxo.valueSats };
+          }
+        }
+      }
+      return null;
+    },
+    [snapshot.data],
+  );
+
+  const accept = useMutation({
+    mutationFn: async (bid: Bid) => {
+      if (!wallet) throw new Error("CONNECT THE WALLET HOLDING THIS PARCEL");
+      const holder = options.holderAddress ?? wallet.ordinalsAddress;
+      if (holder.toLowerCase() !== wallet.ordinalsAddress.toLowerCase()) {
+        throw new Error("CONNECT THE WALLET HOLDING THIS PARCEL");
+      }
+      const parcel = findParcel(bid.bitmapHeight);
+      if (!parcel) {
+        throw new Error(`${bid.bitmapHeight}.BITMAP IS NOT IN THIS WALLET — REFRESH AND RETRY`);
+      }
+      const [txid, voutRaw] = parcel.outpoint.split(":");
+      const vout = Number(voutRaw);
+      if (!txid || !Number.isInteger(vout)) throw new Error("BAD PARCEL OUTPOINT");
+
+      const tapInternalKeyHex = xOnlyPubKeyHex(wallet.publicKey);
+      const psbt = buildListingPsbt({
+        txid,
+        vout,
+        utxoValueSats: parcel.valueSats,
+        sellerAddress: wallet.ordinalsAddress,
+        priceSats: bid.priceSats,
+        ...(tapInternalKeyHex ? { tapInternalKeyHex } : {}),
+      });
+
+      toast("SIGN THE SALE IN YOUR WALLET", {
+        description: `SELLING ${bid.bitmapHeight}.BITMAP FOR ${formatSats(bid.priceSats)}`,
+      });
+      const signed = await signListingPsbt(wallet.provider, psbt, wallet.ordinalsAddress).catch(
+        () => {
+          throw new Error("SALE SIGNATURE REJECTED IN THE WALLET");
+        },
+      );
+
+      const result = await acceptBidWithOfferFn({
+        data: { bidId: bid.id, holderAddress: wallet.ordinalsAddress, psbt: signed },
+      });
+
+      // Kick a settlement check straight away so an already-broadcast spend closes now.
+      void settleOfferFn({ data: { offerId: result.offerId } }).catch(() => undefined);
+      return result;
+    },
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: ["bids"] });
+      void queryClient.invalidateQueries({ queryKey: ["offers"] });
+      void queryClient.invalidateQueries({ queryKey: ["wallet-offers"] });
+      void queryClient.invalidateQueries({ queryKey: ["registry"] });
+      toast(`BID ACCEPTED — ${result.bitmapHeight}.BITMAP`, {
+        description: `SIGNED SALE AT ${formatSats(result.priceSats)} DELIVERED TO THE BIDDER — THE SALE CLOSES AUTOMATICALLY WHEN THEY BROADCAST`,
+        duration: 10_000,
+      });
+    },
+    onError: (error) =>
+      toast("ACCEPT FAILED", { description: (error as Error).message.toUpperCase() }),
+  });
+
+  return { accept, loadingParcels: snapshot.isLoading };
+}

@@ -24,7 +24,6 @@ export type PlaceBidInput = {
   signature?: string | undefined;
 };
 
-
 export async function placeBid(input: PlaceBidInput) {
   const db = publicDb();
 
@@ -133,6 +132,98 @@ export async function acceptBid(id: string, holderAddress: string) {
     priceSats: Number(bid.price_sats),
     bidderAddress: bid.bidder_address,
   };
+}
+
+/**
+ * Holder accepts a bid *with a signed sale transaction*. The seller-signed PSBT
+ * is validated against the chain (it must spend the parcel's inscription output
+ * and pay the seller), stored in the offer book addressed to the bidder, and the
+ * bid is marked accepted and linked to that sale. When the buyer broadcasts,
+ * the settlement watcher closes both the offer and the bid automatically.
+ */
+export async function acceptBidWithOffer(input: {
+  bidId: string;
+  holderAddress: string;
+  psbt: string;
+}) {
+  const bid = await loadBid(input.bidId);
+  if (bid.status !== "open") throw new Error(`BID IS ALREADY ${bid.status.toUpperCase()}`);
+
+  const { submitOffer } = await import("@/lib/offers.server");
+  const offer = await submitOffer(input.psbt);
+
+  const priceSats = Number(bid.price_sats);
+  const height = Number(bid.bitmap_height);
+
+  if (offer.bitmapHeight !== null && offer.bitmapHeight !== height) {
+    throw new Error("THE SIGNED SALE IS FOR A DIFFERENT PARCEL");
+  }
+  if (
+    offer.sellerAddress &&
+    offer.sellerAddress.toLowerCase() !== input.holderAddress.toLowerCase()
+  ) {
+    throw new Error("THE SIGNED SALE MUST PAY THE ACCEPTING WALLET");
+  }
+  if (offer.priceSats < priceSats) {
+    throw new Error("THE SIGNED SALE ASKS LESS THAN THE ACCEPTED BID");
+  }
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  const deliveredAt = new Date().toISOString();
+  const { error: offerError } = await supabaseAdmin
+    .from("offers")
+    .update({
+      bid_id: bid.id,
+      buyer_address: bid.bidder_address,
+      delivered_at: deliveredAt,
+      delivery_note: `ACCEPTED BID ${formatBidLabel(height, priceSats)}`,
+    })
+    .eq("id", offer.id);
+  if (offerError) throw new Error(offerError.message.toUpperCase());
+
+  const { error } = await supabaseAdmin
+    .from("bids")
+    .update({ status: "accepted", accepted_offer_id: offer.id })
+    .eq("id", bid.id);
+  if (error) throw new Error(error.message.toUpperCase());
+
+  await supabaseAdmin.from("activity").insert({
+    type: "bid_accepted",
+    wallet_address: input.holderAddress,
+    metadata: {
+      bid_id: bid.id,
+      offer_id: offer.id,
+      bitmap_height: height,
+      price_sats: priceSats,
+      bidder_address: bid.bidder_address,
+      outpoint: offer.outpoint,
+    },
+  });
+
+  return {
+    id: bid.id,
+    status: "accepted" as const,
+    offerId: offer.id,
+    outpoint: offer.outpoint,
+    bitmapHeight: height,
+    priceSats: offer.priceSats,
+    bidderAddress: bid.bidder_address,
+  };
+}
+
+function formatBidLabel(height: number, priceSats: number) {
+  return `${height}.BITMAP @ ${priceSats} SATS`;
+}
+
+/** Closes bids whose linked sale has settled on chain. */
+export async function markBidSettled(offerId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  await supabaseAdmin
+    .from("bids")
+    .update({ status: "settled" })
+    .eq("accepted_offer_id", offerId)
+    .eq("status", "accepted");
 }
 
 /** Marks expired bids so the book only shows live demand. */
