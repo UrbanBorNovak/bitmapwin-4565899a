@@ -26,6 +26,9 @@ export function BuildRenderer({
   height: number;
 }) {
   if (kind === "info") return <InfoBuild config={parseBuildConfig("info", config)} />;
+  if (kind === "shop")
+    return <ShopBuild config={parseBuildConfig("shop", config)} height={height} />;
+
   if (kind === "gallery")
     return <GalleryBuild config={parseBuildConfig("gallery", config)} height={height} />;
   if (kind === "game2d")
