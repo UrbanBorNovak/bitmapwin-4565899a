@@ -7,6 +7,7 @@ import { HeaderIdentity } from "@/components/HeaderIdentity";
 const NAV = [
   { to: "/explore", label: "EXPLORE" },
   { to: "/marketplace", label: "MARKETPLACE" },
+  { to: "/collections", label: "COLLECTIONS" },
   { to: "/map", label: "MAP" },
   { to: "/activity", label: "ACTIVITY" },
   { to: "/extractor", label: "EXTRACTOR" },
