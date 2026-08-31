@@ -8,7 +8,9 @@ const TX_PAGE = 25;
 
 type MempoolTx = {
   txid: string;
-  vsize: number;
+  vsize?: number;
+  weight?: number;
+  size?: number;
   vin: Array<{ witness?: string[] | null }>;
 };
 
@@ -18,6 +20,13 @@ type MempoolBlockHeader = {
   timestamp: number;
   tx_count: number;
 };
+
+/** mempool.space returns weight on block tx listings; vsize = ceil(weight / 4). */
+function txVsize(tx: MempoolTx): number {
+  if (typeof tx.vsize === "number" && tx.vsize > 0) return tx.vsize;
+  if (typeof tx.weight === "number" && tx.weight > 0) return Math.ceil(tx.weight / 4);
+  return typeof tx.size === "number" ? tx.size : 0;
+}
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -102,7 +111,7 @@ export async function scanBlock(height: number, txPages: number): Promise<Scanne
     timestamp: header.timestamp,
     txCount: header.tx_count,
     scannedTxCount: txs.length,
-    vsizes: txs.map((tx) => tx.vsize).filter((v) => Number.isFinite(v) && v > 0),
+    vsizes: txs.map(txVsize).filter((v) => Number.isFinite(v) && v > 0),
     inscriptions,
   };
 }
@@ -134,4 +143,81 @@ export async function scanRecentBlocks(
   );
 
   return results.filter((block): block is ScannedBlock => block !== null);
+}
+
+type MempoolTxDetail = {
+  txid: string;
+  vout: Array<{ scriptpubkey_address?: string | null; value: number }>;
+  status?: { block_height?: number | null; block_time?: number | null };
+};
+
+type Outspend = { spent: boolean; txid?: string | null; vin?: number | null };
+
+export type OwnerInfo = {
+  txid: string;
+  /** Current holder of the inscription satoshi, following up to 4 transfers. */
+  address: string | null;
+  /** How many times the inscription output has moved. */
+  transfers: number;
+  /** Block height of the latest transfer (or of the reveal). */
+  lastBlockHeight: number | null;
+};
+
+/**
+ * Resolves the present holder of an inscription by walking the first output of
+ * its reveal transaction forward through the chain (ordinals ride sat #0 of
+ * vout 0 in the common single-inscription reveal shape).
+ */
+export async function resolveOwner(revealTxid: string, maxHops = 4): Promise<OwnerInfo> {
+  let txid = revealTxid;
+  let vout = 0;
+  let transfers = 0;
+  let address: string | null = null;
+  let lastBlockHeight: number | null = null;
+
+  for (let hop = 0; hop <= maxHops; hop++) {
+    let detail: MempoolTxDetail;
+    try {
+      detail = await getJson<MempoolTxDetail>(`${MEMPOOL}/tx/${txid}`);
+    } catch {
+      break;
+    }
+    address = detail.vout[vout]?.scriptpubkey_address ?? address;
+    lastBlockHeight = detail.status?.block_height ?? lastBlockHeight;
+
+    if (hop === maxHops) break;
+    let spends: Outspend[];
+    try {
+      spends = await getJson<Outspend[]>(`${MEMPOOL}/tx/${txid}/outspends`);
+    } catch {
+      break;
+    }
+    const spend = spends[vout];
+    if (!spend?.spent || !spend.txid) break;
+    txid = spend.txid;
+    vout = 0;
+    transfers += 1;
+  }
+
+  return { txid: revealTxid, address, transfers, lastBlockHeight };
+}
+
+/** Resolves owners for many reveal transactions with bounded concurrency. */
+export async function resolveOwners(txids: string[]): Promise<OwnerInfo[]> {
+  const unique = [...new Set(txids)].slice(0, 60);
+  const out: OwnerInfo[] = [];
+  const queue = [...unique];
+  const workers = Array.from({ length: 4 }, async () => {
+    for (;;) {
+      const next = queue.shift();
+      if (!next) return;
+      try {
+        out.push(await resolveOwner(next));
+      } catch {
+        out.push({ txid: next, address: null, transfers: 0, lastBlockHeight: null });
+      }
+    }
+  });
+  await Promise.all(workers);
+  return out;
 }
