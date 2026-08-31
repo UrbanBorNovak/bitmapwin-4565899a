@@ -4,6 +4,6 @@ import { loadChainBlocks } from "@/lib/chain.server";
 
 export const getChainBlocks = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) =>
-    z.object({ pages: z.number().int().min(1).max(6).default(2) }).parse(data ?? {}),
+    z.object({ pages: z.number().int().min(1).max(6).default(2), scan: z.boolean().default(false) }).parse(data ?? {}),
   )
-  .handler(async ({ data }) => loadChainBlocks(data.pages));
+  .handler(async ({ data }) => loadChainBlocks(data.pages, data.scan));

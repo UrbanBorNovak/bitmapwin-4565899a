@@ -169,9 +169,15 @@ async function scanBlock(height: number): Promise<ScannedBlock> {
   return { ids, more, scannedAll: !more && scanIds.length === ids.length, claims };
 }
 
-export async function loadChainBlocks(pages: number): Promise<ChainBlock[]> {
+const EMPTY_SCAN: ScannedBlock = { ids: [], more: true, scannedAll: false, claims: [] };
+
+export async function loadChainBlocks(pages: number, scan = false): Promise<ChainBlock[]> {
   const blocks = await fetchRecentBlocks(pages);
-  const scans = await mapWithConcurrency(blocks, 4, (b) => scanBlock(b.height));
+  // Inscription scanning hits a public ord index and is slow/rate-limited, so it
+  // is opt-in: the block list itself renders from block headers alone.
+  const scans = scan
+    ? await mapWithConcurrency(blocks, 4, (b) => scanBlock(b.height))
+    : blocks.map(() => EMPTY_SCAN);
 
   const heights = blocks.map((b) => b.height);
   const minScanned = Math.min(...heights);
