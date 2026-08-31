@@ -1,3 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
+import { walletQuery } from "@/lib/wallet";
+import { inscriptionImageUrl } from "@/lib/profiles";
+import { formatSats } from "@/lib/trades";
 import {
   BUILD_KINDS,
   BUILD_KIND_HINTS,
@@ -10,7 +14,10 @@ import {
   type Game3dConfig,
   type GalleryConfig,
   type InfoConfig,
+  type ShopConfig,
+  type ShopItem,
 } from "@/lib/build-sdk";
+
 
 const input =
   "w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-primary";
