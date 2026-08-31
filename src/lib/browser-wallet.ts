@@ -307,7 +307,7 @@ export async function signPurchasePsbt(
     broadcast: false,
   });
   if (res.status !== "success") {
-    throw new Error((res.error?.message ?? "XVERSE SIGN REJECTED").toUpperCase());
+    throw new Error(describeXverseSignError(res.error));
   }
   const signed =
     typeof res.result === "string" ? res.result : res.result?.psbt ?? res.result?.psbtBase64;
