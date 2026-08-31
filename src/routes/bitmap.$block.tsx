@@ -17,6 +17,15 @@ const blockScanQuery = (height: number) =>
     retry: 1,
   });
 
+const ociQuery = (height: number) =>
+  queryOptions({
+    queryKey: ["oci-entry", height],
+    queryFn: () => getBitmapRegistryEntry({ data: { height } }),
+    enabled: height >= 0 && height <= MAX_BITMAP,
+    staleTime: 30 * 60_000,
+    retry: 1,
+  });
+
 export const Route = createFileRoute("/bitmap/$block")({
   loader: async ({ context, params }) => {
     const block = Number(params.block);
