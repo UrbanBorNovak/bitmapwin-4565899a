@@ -202,6 +202,8 @@ function Marketplace() {
           ))}
         </div>
       )}
+
+      <OfferBook />
     </div>
   );
 }
