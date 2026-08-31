@@ -1,27 +1,36 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Database, RefreshCw } from "lucide-react";
-import {
-  groupByBlock,
-  storedInscriptionsQuery,
-  type StoredInscription,
-} from "@/lib/inscription-store";
+import { getRecentInscriptions } from "@/lib/ordinals-scan.functions";
+import type { ChainInscription, ScannedBlock } from "@/lib/ordinals-scan";
+import { storedInscriptionsQuery, type StoredInscription } from "@/lib/inscription-store";
 import { BitmapPixelMap } from "@/components/BitmapPixelMap";
+import { shortId, timeAgoFromUnix } from "@/lib/chain";
+
+const BLOCKS = 6;
+const TX_PAGES = 4;
+
+const chainInscriptionsQuery = queryOptions({
+  queryKey: ["chain-inscriptions", BLOCKS, TX_PAGES],
+  queryFn: () => getRecentInscriptions({ data: { blocks: BLOCKS, txPages: TX_PAGES } }),
+  staleTime: 60_000,
+});
 
 export const Route = createFileRoute("/bitmaps")({
   head: () => ({
     meta: [
-      { title: "Indexed Bitmaps — Stored Inscription Registry" },
+      { title: "Live Inscription Registry — Bitmap Parcels by Block" },
       {
         name: "description",
         content:
-          "Browse every inscription indexed by block number. Bitmap claims decoded by the extractor are stored once and served from the registry.",
+          "Ordinal inscriptions decoded straight from live Bitcoin blocks and indexed by block height, with every <height>.bitmap claim flagged as it lands on chain.",
       },
-      { property: "og:title", content: "Indexed Bitmaps — Stored Inscription Registry" },
+      { property: "og:title", content: "Live Inscription Registry — Bitmap Parcels by Block" },
       {
         property: "og:description",
-        content: "Inscriptions indexed by Bitcoin block number, served from the registry.",
+        content:
+          "Real ordinal inscriptions decoded from recent Bitcoin blocks, indexed by block height.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -35,64 +44,166 @@ export const Route = createFileRoute("/bitmaps")({
   notFoundComponent: () => (
     <div className="mx-auto max-w-[900px] px-4 py-16 font-mono text-sm">&gt; NOT FOUND</div>
   ),
-  loader: ({ context }) =>
-    context.queryClient.ensureQueryData(storedInscriptionsQuery()),
+  loader: ({ context }) => context.queryClient.ensureQueryData(chainInscriptionsQuery),
   component: BitmapsPage,
 });
 
-function InscriptionRow({ row }: { row: StoredInscription }) {
+function InscriptionRow({ row }: { row: ChainInscription }) {
   return (
     <li className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
       <span className="break-all font-mono text-xs text-muted-foreground">{row.id}</span>
       <span className="font-mono text-xs text-muted-foreground">
-        {row.content_type ?? "UNKNOWN"} · {row.body_bytes} B
+        {row.contentType ?? "UNKNOWN"} · {row.bodyBytes} B
       </span>
-      {row.is_bitmap_claim && row.bitmap_height !== null ? (
+      {row.isBitmapClaim && row.bitmapHeight !== null ? (
         <span className="border border-foreground px-2 py-0.5 font-mono text-[11px] text-foreground">
-          {row.bitmap_height}.BITMAP
+          {row.bitmapHeight}.BITMAP
         </span>
       ) : null}
     </li>
   );
 }
 
+function BlockSection({ block }: { block: ScannedBlock }) {
+  const claims = block.inscriptions.filter((i) => i.isBitmapClaim);
+  return (
+    <section className="border border-border bg-background">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
+        <div className="flex items-center gap-3">
+          <div className="size-12 shrink-0 border border-border">
+            <BitmapPixelMap
+              blockHeight={block.height}
+              txCount={block.txCount}
+              vsizes={block.vsizes}
+              animate={false}
+            />
+          </div>
+          <div>
+            <div className="label">BLOCK</div>
+            <div className="display text-xl">{block.height}</div>
+            <div className="font-mono text-[11px] text-muted-foreground">
+              {timeAgoFromUnix(block.timestamp)} · {shortId(block.hash)}
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-3 font-mono text-xs text-muted-foreground">
+          <span>
+            {block.inscriptions.length} INSCRIPTION(S) IN {block.scannedTxCount}/{block.txCount} TX
+          </span>
+          <span>{claims.length} CLAIM(S)</span>
+          <Link
+            to="/bitmap/$block"
+            params={{ block: String(block.height) }}
+            className="btn-term"
+          >
+            VIEW PARCEL →
+          </Link>
+        </div>
+      </header>
+      {block.inscriptions.length === 0 ? (
+        <p className="px-4 py-3 font-mono text-xs text-muted-foreground">
+          &gt; NO ORD ENVELOPES IN THE SCANNED WINDOW OF THIS BLOCK
+        </p>
+      ) : (
+        <ul className="divide-y divide-border">
+          {block.inscriptions.map((row) => (
+            <InscriptionRow key={row.id} row={row} />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function storedToChain(row: StoredInscription): ChainInscription {
+  return {
+    id: row.id,
+    txid: row.txid,
+    inputIndex: row.input_index,
+    blockHeight: row.block_height ?? 0,
+    contentType: row.content_type,
+    bodyBytes: row.body_bytes,
+    bodyText: row.body_text,
+    isBitmapClaim: row.is_bitmap_claim,
+    bitmapHeight: row.bitmap_height,
+  };
+}
+
 function BitmapsPage() {
-  const { data, refetch, isFetching } = useSuspenseQuery(storedInscriptionsQuery());
+  const { data, refetch, isFetching } = useSuspenseQuery(chainInscriptionsQuery);
+  const stored = useQuery(storedInscriptionsQuery());
   const [onlyClaims, setOnlyClaims] = useState(false);
   const [term, setTerm] = useState("");
 
-  const groups = useMemo(() => {
-    const q = term.trim().toLowerCase();
-    const filtered = data.filter((row) => {
-      if (onlyClaims && !row.is_bitmap_claim) return false;
-      if (!q) return true;
-      return (
-        row.id.toLowerCase().includes(q) ||
-        row.txid.toLowerCase().includes(q) ||
-        String(row.block_height ?? "").includes(q) ||
-        (row.body_text ?? "").toLowerCase().includes(q)
-      );
-    });
-    return groupByBlock(filtered);
-  }, [data, onlyClaims, term]);
+  const blocks = useMemo(() => {
+    // Inscriptions saved from the extractor are folded into their block so the
+    // registry stays a single index over the chain.
+    const extra = new Map<number, ChainInscription[]>();
+    for (const row of stored.data ?? []) {
+      if (row.block_height === null) continue;
+      const list = extra.get(row.block_height) ?? [];
+      list.push(storedToChain(row));
+      extra.set(row.block_height, list);
+    }
 
-  const claimCount = data.filter((r) => r.is_bitmap_claim).length;
+    const merged: ScannedBlock[] = data.map((block) => {
+      const seen = new Set(block.inscriptions.map((i) => i.id));
+      const added = (extra.get(block.height) ?? []).filter((i) => !seen.has(i.id));
+      extra.delete(block.height);
+      return { ...block, inscriptions: [...block.inscriptions, ...added] };
+    });
+
+    for (const [height, inscriptions] of extra) {
+      merged.push({
+        height,
+        hash: "",
+        timestamp: 0,
+        txCount: 0,
+        scannedTxCount: 0,
+        vsizes: [],
+        inscriptions,
+      });
+    }
+
+    const q = term.trim().toLowerCase();
+    return merged
+      .map((block) => ({
+        ...block,
+        inscriptions: block.inscriptions.filter((row) => {
+          if (onlyClaims && !row.isBitmapClaim) return false;
+          if (!q) return true;
+          return (
+            row.id.toLowerCase().includes(q) ||
+            row.txid.toLowerCase().includes(q) ||
+            String(row.blockHeight).includes(q) ||
+            (row.bodyText ?? "").toLowerCase().includes(q)
+          );
+        }),
+      }))
+      .filter((block) => !(onlyClaims || q) || block.inscriptions.length > 0)
+      .sort((a, b) => b.height - a.height);
+  }, [data, stored.data, onlyClaims, term]);
+
+  const allInscriptions = blocks.flatMap((b) => b.inscriptions);
+  const claimCount = allInscriptions.filter((r) => r.isBitmapClaim).length;
 
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-10 md:px-8">
       <div className="mb-8 border border-border">
         <div className="flex items-center gap-3 border-b border-border px-4 py-3">
           <Database className="size-4" />
-          <h1 className="display text-2xl md:text-3xl">INDEXED BITMAPS</h1>
+          <h1 className="display text-2xl md:text-3xl">LIVE INSCRIPTION REGISTRY</h1>
         </div>
         <p className="px-4 py-3 font-mono text-sm text-muted-foreground">
-          Every inscription decoded by the extractor is stored in the registry and indexed by
-          block number. This page reads the stored index — no hex is parsed here.
+          Ordinal envelopes decoded from the witness data of the most recent Bitcoin blocks and
+          indexed by block height. Every parcel below is rendered from that block&apos;s real
+          transaction vbytes; any <span className="text-foreground">&lt;height&gt;.bitmap</span>{" "}
+          text inscription is flagged as a claim.
         </p>
         <div className="grid grid-cols-3 border-t border-border font-mono text-xs">
           <div className="border-r border-border px-4 py-3">
             <div className="label">INSCRIPTIONS</div>
-            <div className="mt-1 text-foreground">{data.length}</div>
+            <div className="mt-1 text-foreground">{allInscriptions.length}</div>
           </div>
           <div className="border-r border-border px-4 py-3">
             <div className="label">BITMAP CLAIMS</div>
@@ -100,7 +211,7 @@ function BitmapsPage() {
           </div>
           <div className="px-4 py-3">
             <div className="label">BLOCKS</div>
-            <div className="mt-1 text-foreground">{groups.length}</div>
+            <div className="mt-1 text-foreground">{blocks.length}</div>
           </div>
         </div>
       </div>
@@ -123,59 +234,22 @@ function BitmapsPage() {
           onClick={() => void refetch()}
           className="btn-term inline-flex items-center gap-2"
         >
-          <RefreshCw className={`size-3.5 ${isFetching ? "animate-spin" : ""}`} /> RELOAD
+          <RefreshCw className={`size-3.5 ${isFetching ? "animate-spin" : ""}`} /> RESCAN CHAIN
         </button>
       </div>
 
-      {groups.length === 0 ? (
+      {blocks.length === 0 ? (
         <div className="border border-border px-4 py-10 text-center font-mono text-sm text-muted-foreground">
-          &gt; REGISTRY EMPTY — DECODE A TRANSACTION IN THE{" "}
+          &gt; NO INSCRIPTIONS MATCHED — WIDEN THE SEARCH OR DECODE A TRANSACTION IN THE{" "}
           <Link to="/extractor" className="text-foreground underline">
             EXTRACTOR
-          </Link>{" "}
-          TO INDEX INSCRIPTIONS.
+          </Link>
+          .
         </div>
       ) : (
         <div className="space-y-6">
-          {groups.map((group) => (
-            <section
-              key={group.blockHeight ?? "unknown"}
-              className="border border-border bg-background"
-            >
-              <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
-                <div className="flex items-center gap-3">
-                  {group.blockHeight !== null && (
-                    <div className="size-10 shrink-0 border border-border">
-                      <BitmapPixelMap blockHeight={group.blockHeight} />
-                    </div>
-                  )}
-                  <div>
-                    <div className="label">BLOCK</div>
-                    <div className="display text-xl">
-                      {group.blockHeight ?? "UNKNOWN"}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 font-mono text-xs text-muted-foreground">
-                  <span>{group.inscriptions.length} INSCRIPTION(S)</span>
-                  <span>{group.bitmapClaims.length} CLAIM(S)</span>
-                  {group.blockHeight !== null && (
-                    <Link
-                      to="/bitmap/$block"
-                      params={{ block: String(group.blockHeight) }}
-                      className="btn-term"
-                    >
-                      VIEW PARCEL →
-                    </Link>
-                  )}
-                </div>
-              </header>
-              <ul className="divide-y divide-border">
-                {group.inscriptions.map((row) => (
-                  <InscriptionRow key={row.id} row={row} />
-                ))}
-              </ul>
-            </section>
+          {blocks.map((block) => (
+            <BlockSection key={block.height} block={block} />
           ))}
         </div>
       )}
