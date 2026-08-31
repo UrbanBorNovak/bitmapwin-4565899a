@@ -1,5 +1,16 @@
 /** Shared, browser-safe types for real Bitcoin chain data. */
 
+/** A plain-text `<height>.bitmap` inscription found on chain. */
+export type BitmapClaim = {
+  inscriptionId: string;
+  claimedHeight: number;
+  inscribedInBlock: number;
+  /** true = first ever claim (valid), false = later duplicate, null = unverifiable here. */
+  valid: boolean | null;
+};
+
+export type BitmapStatus = "valid" | "unclaimed" | "unknown";
+
 export type ChainBlock = {
   height: number;
   hash: string;
@@ -12,6 +23,13 @@ export type ChainBlock = {
   inscriptionCount: number;
   inscriptionCountIsMinimum: boolean;
   sampleInscriptions: string[];
+  /** Bitmap theory status of THIS block's own `<height>.bitmap`. */
+  bitmapStatus: BitmapStatus;
+  bitmapInscriptionId: string | null;
+  bitmapInscribedInBlock: number | null;
+  /** Bitmap claims inscribed inside this block (may target older heights). */
+  bitmapClaims: BitmapClaim[];
+  scanWindow: { from: number; to: number };
 };
 
 export function formatBytes(bytes: number): string {
