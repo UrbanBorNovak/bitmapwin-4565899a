@@ -66,6 +66,49 @@ async function fetchClaimRows(limit: number, block?: number): Promise<ClaimRow[]
   return (data ?? []) as ClaimRow[];
 }
 
+/**
+ * Claims resolved through the on-chain index (OCI). These are real inscriptions
+ * whose content is `<height>.bitmap`, resolved from the indexed satoshi.
+ */
+async function fetchIndexedClaimRows(limit: number, block?: number): Promise<ClaimRow[]> {
+  let query = supabase
+    .from("bitmap_index")
+    .select("block_height, inscription_id, genesis_height, is_valid, resolved_at")
+    .eq("is_valid", true)
+    .not("inscription_id", "is", null);
+  if (block !== undefined) query = query.eq("block_height", block);
+  const { data, error } = await query
+    .order("block_height", { ascending: false })
+    .limit(limit);
+  if (error) return [];
+  return (data ?? []).flatMap((row) => {
+    const id = row.inscription_id;
+    if (!id) return [];
+    const txid = id.split("i")[0] ?? "";
+    if (!/^[0-9a-fA-F]{64}$/.test(txid)) return [];
+    return [
+      {
+        id,
+        txid,
+        block_height: row.genesis_height ?? null,
+        bitmap_height: row.block_height,
+        created_at: row.resolved_at ?? new Date(0).toISOString(),
+      } satisfies ClaimRow,
+    ];
+  });
+}
+
+/** Union of extractor-indexed claims and OCI-resolved claims. */
+async function fetchAllClaimRows(limit: number, block?: number): Promise<ClaimRow[]> {
+  const [decoded, indexed] = await Promise.all([
+    fetchClaimRows(limit, block),
+    fetchIndexedClaimRows(limit, block).catch(() => [] as ClaimRow[]),
+  ]);
+  const seen = new Set(decoded.map((r) => r.id));
+  return [...decoded, ...indexed.filter((r) => !seen.has(r.id))];
+}
+
+
 /** Earliest inscription per height wins; later ones are counted as superseded. */
 function dedupeClaims(rows: ClaimRow[]): Array<{ row: ClaimRow; supersedes: number }> {
   const byHeight = new Map<number, ClaimRow[]>();
