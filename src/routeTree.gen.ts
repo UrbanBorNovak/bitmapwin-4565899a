@@ -18,6 +18,7 @@ import { Route as MapRouteImport } from './routes/map'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
+import { Route as ProfileAddressRouteImport } from './routes/profile.$address'
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
 import { Route as ApiPublicBlocksHeightRouteImport } from './routes/api/public/blocks.$height'
@@ -68,6 +69,11 @@ const BitmapBlockRoute = BitmapBlockRouteImport.update({
   path: '/bitmap/$block',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileAddressRoute = ProfileAddressRouteImport.update({
+  id: '/profile/$address',
+  path: '/profile/$address',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicOfferRoute = ApiPublicOfferRouteImport.update({
   id: '/api/public/offer',
   path: '/api/public/offer',
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/marketplace': typeof MarketplaceRoute
   '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
+  '/profile/$address': typeof ProfileAddressRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/marketplace': typeof MarketplaceRoute
   '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
+  '/profile/$address': typeof ProfileAddressRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
@@ -131,6 +139,7 @@ export interface FileRoutesById {
   '/marketplace': typeof MarketplaceRoute
   '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
+  '/profile/$address': typeof ProfileAddressRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
@@ -148,6 +157,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/wallet'
     | '/bitmap/$block'
+    | '/profile/$address'
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/blocks/$height'
@@ -163,6 +173,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/wallet'
     | '/bitmap/$block'
+    | '/profile/$address'
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/blocks/$height'
@@ -178,6 +189,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/wallet'
     | '/bitmap/$block'
+    | '/profile/$address'
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/blocks/$height'
@@ -194,6 +206,7 @@ export interface RootRouteChildren {
   MarketplaceRoute: typeof MarketplaceRoute
   WalletRoute: typeof WalletRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
+  ProfileAddressRoute: typeof ProfileAddressRoute
   ApiPublicOfferRoute: typeof ApiPublicOfferRoute
   ApiPublicOffersRoute: typeof ApiPublicOffersRoute
   ApiPublicBlocksHeightRoute: typeof ApiPublicBlocksHeightRouteWithChildren
@@ -264,6 +277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BitmapBlockRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/$address': {
+      id: '/profile/$address'
+      path: '/profile/$address'
+      fullPath: '/profile/$address'
+      preLoaderRoute: typeof ProfileAddressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/offer': {
       id: '/api/public/offer'
       path: '/api/public/offer'
@@ -318,6 +338,7 @@ const rootRouteChildren: RootRouteChildren = {
   MarketplaceRoute: MarketplaceRoute,
   WalletRoute: WalletRoute,
   BitmapBlockRoute: BitmapBlockRoute,
+  ProfileAddressRoute: ProfileAddressRoute,
   ApiPublicOfferRoute: ApiPublicOfferRoute,
   ApiPublicOffersRoute: ApiPublicOffersRoute,
   ApiPublicBlocksHeightRoute: ApiPublicBlocksHeightRouteWithChildren,
