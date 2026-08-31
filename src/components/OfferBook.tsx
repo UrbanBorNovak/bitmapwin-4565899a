@@ -4,8 +4,20 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { offersQuery, OFFER_STATUS_LABEL, type Offer } from "@/lib/offers";
 import { inspectOfferFn, refreshOffersFn, submitOfferFn } from "@/lib/offers.functions";
+import { buildPurchaseFn, submitPurchaseFn } from "@/lib/purchase.functions";
+import {
+  WALLET_LABEL,
+  WALLET_PROVIDER_STORAGE_KEY,
+  connectWallet,
+  isWalletInstalled,
+  signPurchasePsbt,
+  xOnlyPubKeyHex,
+  type ConnectedWallet,
+  type WalletProviderId,
+} from "@/lib/browser-wallet";
 import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
+
 
 /**
  * PSBT offer book: sellers paste or upload a signed sale PSBT, everyone else
@@ -160,9 +172,11 @@ function OfferRow({ offer, showLink }: { offer: Offer; showLink: boolean }) {
         <div className="break-all">UTXO {offer.outpoint}</div>
       </dl>
       <div className="mt-3 flex flex-wrap gap-2">
+        {offer.status === "open" && <BuyButton offer={offer} />}
         <button className="btn-term-ghost !px-3 !py-1.5" onClick={() => setExpanded((v) => !v)}>
           {expanded ? "HIDE PSBT" : "SHOW PSBT"}
         </button>
+
         <button
           className="btn-term-ghost !px-3 !py-1.5"
           onClick={() => {
@@ -188,5 +202,72 @@ function OfferRow({ offer, showLink }: { offer: Offer; showLink: boolean }) {
         </pre>
       )}
     </li>
+  );
+}
+
+const PROVIDERS: WalletProviderId[] = ["unisat", "xverse"];
+
+/** Uses the last connected provider, otherwise the first installed one. */
+async function resolveWallet(): Promise<ConnectedWallet> {
+  const stored = window.localStorage.getItem(WALLET_PROVIDER_STORAGE_KEY) as WalletProviderId | null;
+  const order = stored ? [stored, ...PROVIDERS.filter((p) => p !== stored)] : PROVIDERS;
+  const provider = order.find((p) => isWalletInstalled(p));
+  if (!provider) throw new Error("NO BITCOIN WALLET DETECTED — INSTALL UNISAT OR XVERSE");
+  const wallet = await connectWallet(provider);
+  window.localStorage.setItem(WALLET_PROVIDER_STORAGE_KEY, provider);
+  return wallet;
+}
+
+/**
+ * Buys a listed parcel: the server builds the buyer half of the sale PSBT from
+ * the buyer's live UTXO set, the wallet signs its own funding inputs, and the
+ * completed transaction is submitted and broadcast.
+ */
+function BuyButton({ offer }: { offer: Offer }) {
+  const queryClient = useQueryClient();
+
+  const buy = useMutation({
+    mutationFn: async () => {
+      const wallet = await resolveWallet();
+      const tapKey = xOnlyPubKeyHex(wallet.publicKey);
+      const quote = await buildPurchaseFn({
+        data: {
+          offerId: offer.id,
+          buyerPaymentAddress: wallet.paymentAddress,
+          buyerOrdinalsAddress: wallet.ordinalsAddress,
+          ...(tapKey ? { tapInternalKeyHex: tapKey } : {}),
+        },
+      });
+      toast(`SIGN PURCHASE IN ${WALLET_LABEL[wallet.provider]}`, {
+        description: `${formatSats(quote.priceSats)} + ${quote.feeSats} SATS FEE @ ${quote.feeRate} SAT/VB`,
+      });
+      const signed = await signPurchasePsbt(
+        wallet.provider,
+        quote.psbtBase64,
+        wallet.paymentAddress,
+        quote.signIndices,
+      );
+      return submitPurchaseFn({
+        data: { offerId: offer.id, psbt: signed, buyerAddress: wallet.ordinalsAddress },
+      });
+    },
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: ["offers"] });
+      void queryClient.invalidateQueries({ queryKey: ["registry"] });
+      toast(result.broadcast ? "PURCHASE BROADCAST" : "PURCHASE PENDING", {
+        description: result.txid ? `TXID ${result.txid}` : result.message.toUpperCase(),
+      });
+    },
+    onError: (e) => toast("BUY FAILED", { description: (e as Error).message.toUpperCase() }),
+  });
+
+  return (
+    <button
+      className="btn-term !px-3 !py-1.5"
+      disabled={buy.isPending}
+      onClick={() => buy.mutate()}
+    >
+      {buy.isPending ? "[ BUYING… ]" : `[ BUY ${formatSats(offer.priceSats)} ]`}
+    </button>
   );
 }
