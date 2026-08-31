@@ -47,7 +47,7 @@ export function toStoredRow(
     body_bytes: inscription.body ? inscription.body.length : 0,
     is_bitmap_claim: bitmapHeight !== null,
     bitmap_height: bitmapHeight,
-    fields: JSON.parse(JSON.stringify(inscription.fields)) as Record<string, unknown>,
+    fields: JSON.parse(JSON.stringify(inscription.fields)) as Record<string, never>,
   };
 }
 
