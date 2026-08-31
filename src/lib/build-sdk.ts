@@ -14,11 +14,12 @@ export const BUILD_SDK_VERSION = "2.0.0";
 export const BUILD_PROTOCOL = "bitmap-build";
 export const BUILD_PROTOCOL_VERSION = 2;
 
-export const BUILD_KINDS = ["info", "gallery", "game3d", "game2d"] as const;
+export const BUILD_KINDS = ["info", "shop", "gallery", "game3d", "game2d"] as const;
 export type BuildKind = (typeof BUILD_KINDS)[number];
 
 export const BUILD_KIND_LABELS: Record<BuildKind, string> = {
   info: "PERSONAL INFO PAGE",
+  shop: "ASSET SHOP",
   gallery: "ON-CHAIN GALLERY",
   game3d: "3D WORLD (THREE.JS)",
   game2d: "2D ARCADE",
@@ -26,6 +27,7 @@ export const BUILD_KIND_LABELS: Record<BuildKind, string> = {
 
 export const BUILD_KIND_HINTS: Record<BuildKind, string> = {
   info: "NAME, ROLE, LOCATION, LINKS — A HOME PAGE FOR THIS BLOCK",
+  shop: "LIST YOUR OWN INSCRIPTIONS AT YOUR OWN PRICES — YOUR STORE, YOUR STYLE",
   gallery: "SHOWCASE INSCRIPTION IDS YOU HOLD AS A GRID OF ON-CHAIN IMAGES",
   game3d: "A WALKABLE VOXEL WORLD GENERATED FROM THIS BLOCK'S DATA",
   game2d: "A PIXEL MAZE RUN SEEDED BY THIS BLOCK HEIGHT",
@@ -46,6 +48,28 @@ export type GalleryConfig = {
   items: GalleryItem[];
 };
 
+/** One asset the holder sells from their own wallet, at their own price. */
+export type ShopItem = {
+  inscriptionId: string;
+  name: string;
+  priceSats: number; // 0 = "MAKE OFFER"
+  note: string;
+  sold: boolean;
+};
+
+export type ShopConfig = {
+  shopName: string;
+  tagline: string;
+  /** Where a buyer reaches the seller (x.com, telegram, mail, any https link). */
+  contactUrl: string;
+  contactLabel: string;
+  accent: string; // hex accent for the storefront chrome
+  layout: "grid" | "list";
+  columns: 2 | 3 | 4;
+  frame: "sharp" | "soft";
+  items: ShopItem[];
+};
+
 export type Game3dConfig = {
   worldName: string;
   towers: number; // 4..64 voxel towers
@@ -62,6 +86,7 @@ export type Game2dConfig = {
 
 export type BuildConfigMap = {
   info: InfoConfig;
+  shop: ShopConfig;
   gallery: GalleryConfig;
   game3d: Game3dConfig;
   game2d: Game2dConfig;
@@ -71,6 +96,17 @@ export type BuildConfig = BuildConfigMap[BuildKind];
 
 export const DEFAULT_CONFIGS: BuildConfigMap = {
   info: { headline: "", fields: [], links: [] },
+  shop: {
+    shopName: "MY SHOP",
+    tagline: "",
+    contactUrl: "",
+    contactLabel: "CONTACT SELLER",
+    accent: "#f7931a",
+    layout: "grid",
+    columns: 3,
+    frame: "sharp",
+    items: [],
+  },
   gallery: { columns: 3, items: [] },
   game3d: { worldName: "BLOCK WORLD", towers: 24, spin: true, accent: "#f7931a" },
   game2d: { title: "BLOCK RUN", coins: 12, walls: 22, speed: 5 },
@@ -79,10 +115,22 @@ export const DEFAULT_CONFIGS: BuildConfigMap = {
 /** Documented limits — useful for builder-side validation and UIs. */
 export const BUILD_LIMITS = {
   info: { headline: 120, fields: 12, links: 12, label: 40, value: 200, url: 300 },
+  shop: {
+    items: 60,
+    shopName: 60,
+    tagline: 140,
+    name: 60,
+    note: 120,
+    inscriptionId: 120,
+    url: 300,
+    priceSats: [0, 2_100_000_000_000_000] as const,
+    columns: [2, 3, 4] as const,
+  },
   gallery: { items: 48, inscriptionId: 120, caption: 80, columns: [2, 3, 4] as const },
   game3d: { worldName: 60, towers: [4, 64] as const },
   game2d: { title: 60, coins: [3, 40] as const, walls: [0, 60] as const, speed: [1, 10] as const },
 } as const;
+
 
 export function isBuildKind(value: unknown): value is BuildKind {
   return typeof value === "string" && (BUILD_KINDS as readonly string[]).includes(value);
