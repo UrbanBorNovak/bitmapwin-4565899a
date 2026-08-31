@@ -2,6 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Search, X } from "lucide-react";
 import { useState } from "react";
 import { BidInboxBell } from "@/components/BidInboxBell";
+import { HeaderIdentity } from "@/components/HeaderIdentity";
 
 const NAV = [
   { to: "/explore", label: "EXPLORE" },
