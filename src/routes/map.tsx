@@ -2,8 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BitmapPixelMap } from "@/components/BitmapPixelMap";
-import { bitmapsQuery } from "@/lib/bitmap-queries";
-import { STATUS_LABEL, formatBtc, type Bitmap } from "@/lib/bitmap";
+import { registryParcelsQuery, shortenAddress, PARCEL_STATUS_LABEL, type RegistryParcel } from "@/lib/registry";
+import { formatSats } from "@/lib/trades";
 
 export const Route = createFileRoute("/map")({
   head: () => ({
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/map")({
       },
     ],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(bitmapsQuery(200)),
+  loader: ({ context }) => context.queryClient.ensureQueryData(registryParcelsQuery(200)),
   component: MapPage,
 });
 
@@ -31,15 +31,15 @@ const MIN_ZOOM = 0.35;
 const MAX_ZOOM = 4;
 
 function MapPage() {
-  const { data: bitmaps } = useSuspenseQuery(bitmapsQuery(200));
+  const { data: parcels } = useSuspenseQuery(registryParcelsQuery(200));
   const byBlock = useMemo(() => {
-    const m = new Map<number, Bitmap>();
-    bitmaps.forEach((b) => m.set(b.block_height, b));
+    const m = new Map<number, RegistryParcel>();
+    parcels.forEach((p) => m.set(p.bitmapHeight, p));
     return m;
-  }, [bitmaps]);
+  }, [parcels]);
   const topBlock = useMemo(
-    () => bitmaps.reduce((max, b) => Math.max(max, b.block_height), 840040),
-    [bitmaps],
+    () => parcels.reduce((max, p) => Math.max(max, p.bitmapHeight), 840000),
+    [parcels],
   );
 
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -213,16 +213,19 @@ function MapPage() {
             <div className="p-4">
               <div className="display text-lg">BITMAP #{selected}</div>
               <dl className="mt-4 space-y-2 text-[11px]">
-                <Row k="OWNER" v={selectedBitmap?.owner_address ?? "—"} />
+                <Row k="OWNER" v={selectedBitmap ? shortenAddress(selectedBitmap.ownerAddress) : "—"} />
                 <Row
                   k="STATUS"
                   v={
                     selectedBitmap
-                      ? (STATUS_LABEL[selectedBitmap.status] ?? selectedBitmap.status)
+                      ? PARCEL_STATUS_LABEL[selectedBitmap.status]
                       : "NOT INDEXED"
                   }
                 />
-                <Row k="PRICE" v={formatBtc(selectedBitmap?.price_btc ?? null)} />
+                <Row
+                  k="LAST SALE"
+                  v={selectedBitmap?.lastSaleSats ? formatSats(selectedBitmap.lastSaleSats) : "—"}
+                />
               </dl>
               <div className="mt-4 border border-border p-3">
                 <BitmapPixelMap blockHeight={selected} animate={false} />
@@ -236,7 +239,7 @@ function MapPage() {
                   [ VIEW BITMAP ]
                 </Link>
               ) : (
-                <div className="label mt-4">OUTSIDE DEMO REGISTRY RANGE</div>
+                <div className="label mt-4">NOT YET INDEXED</div>
               )}
             </div>
           )}
