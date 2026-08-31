@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { BitmapCard } from "@/components/BitmapCard";
-import { bitmapsQuery } from "@/lib/bitmap-queries";
+import { ParcelCard } from "@/components/ParcelCard";
+import { registryParcelsQuery } from "@/lib/registry";
+import { recentTradesQuery } from "@/lib/trade-store";
+import { formatSats } from "@/lib/trades";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -10,24 +12,40 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "A minimalist marketplace and explorer for Bitcoin Bitmap digital land. Discover, browse and trade on-chain land.",
+          "A minimalist marketplace and explorer for Bitcoin Bitmap digital land, priced by real on-chain trades.",
       },
       { property: "og:title", content: "Bitmap Marketplace — Own a Piece of Bitcoin" },
       {
         property: "og:description",
-        content: "Explore, discover and trade Bitcoin Bitmap digital land.",
+        content: "Explore, discover and trade Bitcoin Bitmap digital land with real on-chain data.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(bitmapsQuery(120)),
+  loader: ({ context }) => {
+    context.queryClient.ensureQueryData(registryParcelsQuery(120));
+    context.queryClient.ensureQueryData(recentTradesQuery(20));
+  },
   component: Index,
+  errorComponent: ({ error }) => (
+    <div className="mx-auto max-w-[900px] px-4 py-24 md:px-8" role="alert">
+      <h1 className="display text-3xl">REGISTRY UNAVAILABLE</h1>
+      <p className="mt-4 font-mono text-sm text-muted-foreground">&gt; {error.message}</p>
+    </div>
+  ),
+  notFoundComponent: () => null,
 });
 
 function Index() {
-  const { data: bitmaps } = useSuspenseQuery(bitmapsQuery(120));
-  const featured = bitmaps.filter((b) => b.status === "for_sale").slice(0, 8);
-  const forSale = bitmaps.filter((b) => b.status === "for_sale").length;
-  const unclaimed = bitmaps.filter((b) => b.status === "unclaimed").length;
+  const { data: parcels } = useSuspenseQuery(registryParcelsQuery(120));
+  const { data: trades } = useSuspenseQuery(recentTradesQuery(20));
+
+  const traded = parcels.filter((p) => p.transfers > 0);
+  const featured = [...parcels]
+    .sort((a, b) => (b.lastSaleSats ?? -1) - (a.lastSaleSats ?? -1))
+    .slice(0, 8);
+  const lastSale = trades.find((t) => t.price_sats > 0) ?? null;
 
   return (
     <div>
@@ -39,11 +57,12 @@ function Index() {
             OWN A PIECE OF BITCOIN
           </h1>
           <p className="mx-auto mt-6 max-w-xl font-mono text-sm text-muted-foreground">
-            Explore, discover and trade Bitcoin Bitmap digital land.
+            Explore, discover and trade Bitcoin Bitmap digital land. Every price on this site comes
+            from a confirmed Bitcoin transaction.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            <Link to="/explore" className="btn-term">
-              [ EXPLORE BITMAPS ]
+            <Link to="/marketplace" className="btn-term">
+              [ ENTER MARKETPLACE ]
             </Link>
             <Link to="/map" className="btn-term-ghost">
               [ VIEW MAP ]
@@ -53,9 +72,9 @@ function Index() {
       </section>
 
       <section className="grid grid-cols-2 divide-x divide-border border-b border-border md:grid-cols-4">
-        <Stat k="INDEXED BITMAPS" v={String(bitmaps.length)} />
-        <Stat k="FOR SALE" v={String(forSale)} />
-        <Stat k="UNCLAIMED" v={String(unclaimed)} />
+        <Stat k="INDEXED PARCELS" v={String(parcels.length)} />
+        <Stat k="TRADED ON CHAIN" v={String(traded.length)} />
+        <Stat k="LAST SALE" v={lastSale ? formatSats(lastSale.price_sats) : "—"} />
         <Stat k="NETWORK" v="MAINNET" />
       </section>
 
@@ -63,22 +82,29 @@ function Index() {
         <div className="flex items-end justify-between border-b border-border pb-4">
           <h2 className="display text-2xl md:text-3xl">FEATURED BITMAPS</h2>
           <Link to="/marketplace" className="label hover:text-foreground">
-            ALL LISTINGS →
+            ALL PARCELS →
           </Link>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {featured.map((b) => (
-            <BitmapCard key={b.id} bitmap={b} />
-          ))}
-        </div>
+        {featured.length === 0 ? (
+          <p className="mt-8 font-mono text-sm text-muted-foreground">
+            &gt; NO CLAIMS INDEXED YET — RUN A CHAIN SYNC FROM THE MARKETPLACE
+            <span className="blink">_</span>
+          </p>
+        ) : (
+          <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {featured.map((p) => (
+              <ParcelCard key={p.inscriptionId} parcel={p} />
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="border-t border-border">
         <div className="mx-auto grid max-w-[1600px] gap-px px-4 py-16 md:grid-cols-3 md:px-8">
-          <Cell title="DISCOVER" body="Every Bitcoin block is a parcel. Browse the registry block by block." />
-          <Cell title="OWNERSHIP" body="Each bitmap carries a deterministic pixel identity derived from its block." />
-          <Cell title="ON-CHAIN" body="Built for Ordinals indexers. Wallet and settlement layers plug in later." />
+          <Cell title="DISCOVER" body="Every Bitcoin block is a parcel. Browse the on-chain index block by block." />
+          <Cell title="OWNERSHIP" body="Holders are resolved by following each inscription satoshi through the chain." />
+          <Cell title="TRADES" body="Prices come from the sats paid to the previous holder in the transfer transaction." />
         </div>
       </section>
     </div>
