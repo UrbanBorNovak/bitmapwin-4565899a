@@ -57,7 +57,7 @@ function BuildCard({
   followers,
 }: {
   entry: BuildEntry;
-  followers: number | undefined;
+  followers?: number;
 }) {
   const { page, totalViews, uniqueVisitors } = entry;
   return (
