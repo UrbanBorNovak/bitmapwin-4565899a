@@ -341,13 +341,13 @@ function decodePayload(payload: Uint8Array[]): DecodedPayload {
 
   let i = 0;
   while (i < payload.length) {
-    if (payload[i].length === 0) {
+    if (payload[i]!.length === 0) {
       body = concatBytes(payload.slice(i + 1));
       break;
     }
 
     if (i + 1 >= payload.length) {
-      fields.incomplete_field = true;
+      fields["incomplete_field"] = true;
       break;
     }
 
@@ -356,12 +356,12 @@ function decodePayload(payload: Uint8Array[]): DecodedPayload {
     const keyHex = bytesToHex(key);
     counts[keyHex] = (counts[keyHex] || 0) + 1;
 
-    const tag = key.length === 1 ? key[0] : null;
+    const tag: number | null = key.length === 1 ? key[0]! : null;
     const name = (tag !== null ? TAGS[tag] : undefined) || "tag_" + keyHex;
 
     if (tag === 5 || tag === 17) {
       if (!chunks[name]) chunks[name] = [];
-      chunks[name].push(value);
+      chunks[name]!.push(value);
     } else if (tag === 3) {
       const id = inscriptionID(value);
       if (id) {
