@@ -18,6 +18,13 @@ import { isLinked, myWalletLinksQuery } from "@/lib/wallet-links";
 import { BuildDelegates } from "@/components/BuildDelegates";
 import { buildInscriptionPayload, delegatesQuery, downloadJson } from "@/lib/builds";
 import { districtForHeightQuery } from "@/lib/districts";
+import { BuildEditor } from "@/components/builds/BuildEditor";
+import { BuildRenderer } from "@/components/builds/BuildRenderer";
+import {
+  BUILD_KIND_LABELS,
+  DEFAULT_CONFIGS,
+  type BuildKind,
+} from "@/lib/build-sdk";
 
 /**
  * Visitor counter + owner-built page for a parcel: banner, title, description
@@ -56,6 +63,8 @@ export function ParcelPagePanel({
   const [description, setDescription] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const [banner, setBanner] = useState("");
+  const [buildKind, setBuildKind] = useState<BuildKind>("info");
+  const [buildConfig, setBuildConfig] = useState<unknown>(DEFAULT_CONFIGS.info);
 
   // Log the visit once per mount; the DB counts unique visitors by device key.
   useEffect(() => {
@@ -76,6 +85,9 @@ export function ParcelPagePanel({
     setDescription(page.data?.description ?? "");
     setLinkUrl(page.data?.linkUrl ?? "");
     setBanner(page.data?.bannerInscriptionId ?? "");
+    const kind = page.data?.buildKind ?? "info";
+    setBuildKind(kind);
+    setBuildConfig(page.data?.buildConfig ?? DEFAULT_CONFIGS[kind]);
     setEditing(true);
   }
 
@@ -89,6 +101,8 @@ export function ParcelPagePanel({
         description: description.trim() || null,
         linkUrl: linkUrl.trim() || null,
         bannerInscriptionId: banner.trim() || null,
+        buildKind,
+        buildConfig,
       });
     },
     onSuccess: () => {
@@ -158,6 +172,13 @@ export function ParcelPagePanel({
             {canEdit ? (isHolder ? " — IT'S YOURS, BUILD IT" : " — YOU ARE A DELEGATE, BUILD IT") : ""}
             <span className="blink">_</span>
           </p>
+        )}
+
+        {built && (
+          <div className="pt-2">
+            <p className="label mb-3">{BUILD_KIND_LABELS[built.buildKind]}</p>
+            <BuildRenderer kind={built.buildKind} config={built.buildConfig} height={height} />
+          </div>
         )}
 
         {district.data && (
@@ -243,6 +264,13 @@ export function ParcelPagePanel({
               className="mt-1 w-full border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-foreground"
             />
           </label>
+          <BuildEditor
+            kind={buildKind}
+            config={buildConfig}
+            onKindChange={setBuildKind}
+            onConfigChange={setBuildConfig}
+          />
+
           <div className="flex flex-wrap gap-3">
             <button
               className="btn-term disabled:opacity-30"
