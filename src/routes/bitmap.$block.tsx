@@ -1,6 +1,8 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { getBlockInscriptions } from "@/lib/ordinals-scan.functions";
+import { getBitmapRegistryEntry } from "@/lib/oci.functions";
+import { MAX_BITMAP } from "@/lib/oci";
 import { toast } from "sonner";
 import { BitmapPixelMap } from "@/components/BitmapPixelMap";
 import { bitmapQuery } from "@/lib/bitmap-queries";
