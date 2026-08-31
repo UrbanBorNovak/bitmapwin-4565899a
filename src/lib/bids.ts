@@ -8,11 +8,12 @@ import { supabase } from "@/integrations/supabase/client";
  * once the holder accepts.
  */
 
-export type BidStatus = "open" | "accepted" | "cancelled" | "expired";
+export type BidStatus = "open" | "accepted" | "settled" | "cancelled" | "expired";
 
 export const BID_STATUS_LABEL: Record<BidStatus, string> = {
   open: "OPEN",
-  accepted: "ACCEPTED",
+  accepted: "ACCEPTED — AWAITING BROADCAST",
+  settled: "SETTLED ON CHAIN",
   cancelled: "CANCELLED",
   expired: "EXPIRED",
 };
