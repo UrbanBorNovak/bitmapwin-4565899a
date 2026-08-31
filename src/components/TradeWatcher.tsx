@@ -62,9 +62,9 @@ export function TradeWatcher({ heights, limit = 40 }: { heights?: number[]; limi
             description: `${result.closedOffers} LISTING(S) CLOSED · ${result.spends} SPENT OUTPUT(S)`,
           });
         } else {
-          push(`WATCHED ${result.watched} PARCEL(S) — NO NEW SPEND`);
+          push(`WATCHED ${result.watched} BITMAP(S) — NO NEW SPEND`);
           if (announce) {
-            toast("NO NEW SPENDS", { description: `${result.watched} PARCEL(S) STILL UNMOVED` });
+            toast("NO NEW SPENDS", { description: `${result.watched} BITMAP(S) STILL UNMOVED` });
           }
         }
       } catch (error) {
@@ -91,7 +91,7 @@ export function TradeWatcher({ heights, limit = 40 }: { heights?: number[]; limi
         <div>
           <h2 className="display text-2xl">TRADE WATCHER</h2>
           <p className="label mt-2">
-            FIRES WHEN A PARCEL SPENDS THE OUTPUT HOLDING ITS INSCRIPTION SAT
+            FIRES WHEN A BITMAP SPENDS THE OUTPUT HOLDING ITS INSCRIPTION SAT
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -114,7 +114,7 @@ export function TradeWatcher({ heights, limit = 40 }: { heights?: number[]; limi
       </header>
 
       <div className="grid grid-cols-2 border-b border-border sm:grid-cols-4">
-        <Cell k="PARCELS WATCHED" v={last ? String(last.watched) : "—"} />
+        <Cell k="BITMAPS WATCHED" v={last ? String(last.watched) : "—"} />
         <Cell k="SPENT OUTPUTS" v={last ? String(last.spends) : "—"} />
         <Cell k="TRANSFERS FOUND" v={String(events.length)} />
         <Cell k="LAST PASS" v={last ? last.checkedAt.slice(11, 19) + " UTC" : "—"} />

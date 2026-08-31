@@ -163,7 +163,7 @@ function OfferRow({ offer, showLink }: { offer: Offer; showLink: boolean }) {
     <li className="p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <div className="display text-sm">
-          {offer.bitmapHeight === null ? "UNKNOWN PARCEL" : `${offer.bitmapHeight}.BITMAP`}
+          {offer.bitmapHeight === null ? "UNKNOWN BITMAP" : `${offer.bitmapHeight}.BITMAP`}
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <span className="display text-sm">{formatSats(offer.priceSats)}</span>
@@ -195,7 +195,7 @@ function OfferRow({ offer, showLink }: { offer: Offer; showLink: boolean }) {
             params={{ block: String(offer.bitmapHeight) }}
             className="btn-term-ghost !px-3 !py-1.5"
           >
-            VIEW PARCEL
+            VIEW BITMAP
           </Link>
         )}
       </div>

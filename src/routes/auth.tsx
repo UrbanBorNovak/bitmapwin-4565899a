@@ -91,7 +91,7 @@ function AuthPage() {
       </h1>
       <p className="mt-3 font-mono text-xs text-muted-foreground">
         &gt; ONE ACCOUNT, MANY ADDRESSES. LINK YOUR WALLET WITH A SIGNED MESSAGE AND YOUR
-        PROFILE, PARCEL PAGES AND BIDS STAY YOURS<span className="blink">_</span>
+        PROFILE, BITMAP PAGES AND BIDS STAY YOURS<span className="blink">_</span>
       </p>
 
       <div className="mt-8 border border-border p-5">

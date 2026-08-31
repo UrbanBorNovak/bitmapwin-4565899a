@@ -124,7 +124,7 @@ function Marketplace() {
     mutationFn: () => traceAndStore(parcels.slice(0, 120)),
     onSuccess: (r) => {
       invalidate();
-      toast(`TRACED ${r.traced} PARCEL(S)`, {
+      toast(`TRACED ${r.traced} BITMAP(S)`, {
         description: `${r.trades} CONFIRMED TRANSFER(S) STORED`,
       });
     },
@@ -198,7 +198,7 @@ function Marketplace() {
       <p className="label mt-3">PRICES AND STATUS TRACED FROM REAL BITCOIN TRANSACTIONS</p>
 
       <div className="mt-8 grid grid-cols-2 divide-border border border-border sm:grid-cols-5 sm:divide-x">
-        <Stat k="REGISTERED PARCELS" v={String(parcels.length)} />
+        <Stat k="REGISTERED BITMAPS" v={String(parcels.length)} />
         <Stat k="TRADED ON CHAIN" v={String(traded.length)} />
         <Stat
           k="LISTED"
@@ -224,7 +224,7 @@ function Marketplace() {
             setPage(0);
           }}
         >
-          [ ALL PARCELS ]
+          [ ALL BITMAPS ]
         </button>
         <button
           className={tab === "traded" ? "btn-term" : "btn-term-ghost"}
@@ -286,7 +286,7 @@ function Marketplace() {
           <div className="mt-8 flex flex-wrap items-baseline justify-between gap-3 border border-border p-4">
             <span className="label">
               SHOWING {current * PAGE_SIZE + 1}–{current * PAGE_SIZE + pageParcels.length} OF{" "}
-              {visible.length} PARCEL(S)
+              {visible.length} BITMAP(S)
             </span>
             <span className="label">
               {owners.isFetching ? (
@@ -365,7 +365,7 @@ function Pager({
 function EmptyRegistry() {
   return (
     <div className="mt-10 border border-border p-10">
-      <h2 className="display text-2xl">NO PARCELS IN THE REGISTRY YET</h2>
+      <h2 className="display text-2xl">NO BITMAPS IN THE REGISTRY YET</h2>
       <p className="mt-4 font-mono text-sm text-muted-foreground">
         &gt; RUN [ SYNC CHAIN ] TO INDEX REAL BITMAP CLAIMS AND THEIR TRADES
         <span className="blink">_</span>

@@ -46,11 +46,11 @@ export function QuickListForm({ height }: { height?: number }) {
   const list = useMutation({
     mutationFn: async () => {
       if (!wallet) throw new Error("CONNECT A WALLET FIRST");
-      if (!parcel) throw new Error("NO BITMAP PARCEL FOUND IN THIS WALLET");
+      if (!parcel) throw new Error("NO BITMAP FOUND IN THIS WALLET");
       if (priceSats === null) throw new Error("ASK AT LEAST 546 SATS (0.00000546 BTC)");
       const [txid, voutRaw] = parcel.outpoint.split(":");
       const vout = Number(voutRaw);
-      if (!txid || !Number.isInteger(vout)) throw new Error("BAD PARCEL OUTPOINT");
+      if (!txid || !Number.isInteger(vout)) throw new Error("BAD BITMAP OUTPOINT");
       const tapInternalKeyHex = xOnlyPubKeyHex(wallet.publicKey);
       const psbt = buildListingPsbt({
         txid,
@@ -78,7 +78,7 @@ export function QuickListForm({ height }: { height?: number }) {
   if (!wallet) {
     return (
       <p className="font-mono text-[11px] text-muted-foreground">
-        &gt; CONNECT UNISAT OR XVERSE TO LIST A PARCEL IN ONE CLICK<span className="blink">_</span>
+        &gt; CONNECT UNISAT OR XVERSE TO LIST A BITMAP IN ONE CLICK<span className="blink">_</span>
       </p>
     );
   }
@@ -86,7 +86,7 @@ export function QuickListForm({ height }: { height?: number }) {
   return (
     <div>
       <label className="label" htmlFor="quick-ask">
-        SELL {height === undefined ? "A PARCEL" : `${height}.BITMAP`} — TYPE AN AMOUNT, THE PSBT IS
+        SELL {height === undefined ? "A BITMAP" : `${height}.BITMAP`} — TYPE AN AMOUNT, THE PSBT IS
         BUILT FOR YOU
       </label>
       <div className="mt-2 flex flex-col gap-2 sm:flex-row">
@@ -126,7 +126,7 @@ export function QuickListForm({ height }: { height?: number }) {
 
       {parcels.length > 1 && (
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <span className="label">PARCEL</span>
+          <span className="label">BITMAP</span>
           {parcels.slice(0, 12).map((p) => (
             <button
               key={p.outpoint}
@@ -145,10 +145,10 @@ export function QuickListForm({ height }: { height?: number }) {
 
       <p className="mt-2 font-mono text-[11px] text-muted-foreground">
         {snapshot.isLoading
-          ? "> READING YOUR PARCELS…"
+          ? "> READING YOUR BITMAPS…"
           : parcel
             ? `> SELLING ${parcel.bitmapHeight}.BITMAP FROM ${shortenAddress(wallet.ordinalsAddress)} — YOU RECEIVE THE FULL PRICE, THE BUYER PAYS THE ${MARKETPLACE_FEE_PERCENT}% FEE`
-            : `> NO ${height === undefined ? "BITMAP PARCEL" : `${height}.BITMAP`} FOUND IN ${shortenAddress(wallet.ordinalsAddress)}`}
+            : `> NO ${height === undefined ? "BITMAP" : `${height}.BITMAP`} FOUND IN ${shortenAddress(wallet.ordinalsAddress)}`}
       </p>
     </div>
   );

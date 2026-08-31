@@ -66,7 +66,7 @@ function ParcelError({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
   return (
     <div className="mx-auto max-w-[900px] px-4 py-24 md:px-8" role="alert">
-      <h1 className="display text-3xl">PARCEL DATA UNAVAILABLE</h1>
+      <h1 className="display text-3xl">BITMAP DATA UNAVAILABLE</h1>
       <p className="mt-4 font-mono text-sm text-muted-foreground">&gt; {error.message}</p>
       <button
         type="button"
@@ -99,7 +99,7 @@ function BitmapDetail() {
   const trace = useMutation({
     mutationFn: async () => {
       const txid = parcel?.txid ?? oci.data?.inscriptionId?.slice(0, 64) ?? null;
-      if (!txid) throw new Error("NO CLAIM TRANSACTION KNOWN FOR THIS PARCEL");
+      if (!txid) throw new Error("NO CLAIM TRANSACTION KNOWN FOR THIS BITMAP");
       const traces = await traceBitmapTradesFn({
         data: {
           claims: [
@@ -374,7 +374,7 @@ function Field({ k, v }: { k: string; v: string }) {
 function BitmapMissing() {
   return (
     <div className="mx-auto max-w-[900px] px-4 py-24 md:px-8">
-      <h1 className="display text-3xl">PARCEL NOT INDEXED</h1>
+      <h1 className="display text-3xl">BITMAP NOT INDEXED</h1>
       <p className="mt-4 font-mono text-sm text-muted-foreground">
         &gt; THIS BLOCK IS NOT PRESENT IN THE DEMO REGISTRY<span className="blink">_</span>
       </p>

@@ -108,7 +108,7 @@ export function SettlementWatcher({ heights, limit = 40 }: { heights?: number[];
         <div>
           <h2 className="display text-2xl">SETTLEMENT WATCHER</h2>
           <p className="label mt-2">
-            FIRES WHEN A BUYER'S SIGNED OFFER SPENDS THE PARCEL'S REVEAL OUTPUT
+            FIRES WHEN A BUYER'S SIGNED OFFER SPENDS THE BITMAP'S REVEAL OUTPUT
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -149,7 +149,7 @@ export function SettlementWatcher({ heights, limit = 40 }: { heights?: number[];
             >
               <div className="flex flex-wrap items-baseline gap-3">
                 {event.bitmapHeight === null ? (
-                  <span className="display text-sm">UNKNOWN PARCEL</span>
+                  <span className="display text-sm">UNKNOWN BITMAP</span>
                 ) : (
                   <Link
                     to="/bitmap/$block"

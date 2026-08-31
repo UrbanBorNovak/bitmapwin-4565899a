@@ -76,12 +76,12 @@ export function WalletBids({ address, heldHeights }: { address: string; heldHeig
       <section className="mt-10 border border-border">
         <header className="border-b border-border p-5">
           <h2 className="display text-xl">BIDS RECEIVED</h2>
-          <p className="label mt-2">LIVE BIDS ON PARCELS THIS ADDRESS HOLDS</p>
+          <p className="label mt-2">LIVE BIDS ON BITMAPS THIS ADDRESS HOLDS</p>
         </header>
         <BidList
           bids={received}
           loading={open.isLoading}
-          empty="NO OPEN BIDS ON YOUR PARCELS YET"
+          empty="NO OPEN BIDS ON YOUR BITMAPS YET"
           action={(bid) => (
             <button
               className="btn-term !px-3 !py-1.5"

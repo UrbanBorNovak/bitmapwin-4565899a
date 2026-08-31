@@ -68,7 +68,7 @@ export function ParcelPagePanel({
 
   const save = useMutation({
     mutationFn: () => {
-      if (!ownerAddress) throw new Error("NO OWNER RESOLVED FOR THIS PARCEL");
+      if (!ownerAddress) throw new Error("NO OWNER RESOLVED FOR THIS BITMAP");
       return saveParcelPage({
         bitmapHeight: height,
         ownerAddress,
@@ -81,9 +81,9 @@ export function ParcelPagePanel({
     onSuccess: () => {
       setEditing(false);
       queryClient.invalidateQueries({ queryKey: ["parcel-page", height] });
-      toast(`${height}.BITMAP`, { description: "PARCEL PAGE UPDATED" });
+      toast(`${height}.BITMAP`, { description: "BITMAP PAGE UPDATED" });
     },
-    onError: (e) => toast("PARCEL PAGE SAVE FAILED", { description: (e as Error).message }),
+    onError: (e) => toast("BITMAP PAGE SAVE FAILED", { description: (e as Error).message }),
   });
 
   const built = page.data;
@@ -91,7 +91,7 @@ export function ParcelPagePanel({
   return (
     <section className="mt-8 border border-border">
       <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border px-6 py-3">
-        <span className="label">PARCEL PAGE — {height}.BITMAP</span>
+        <span className="label">BITMAP PAGE — {height}.BITMAP</span>
         <span className="label">
           {stats.data
             ? `${stats.data.totalViews.toLocaleString("en-US")} VIEWS · ${stats.data.uniqueVisitors.toLocaleString("en-US")} VISITORS`
@@ -141,7 +141,7 @@ export function ParcelPagePanel({
           </>
         ) : (
           <p className="font-mono text-xs text-muted-foreground">
-            &gt; NOTHING BUILT ON THIS PARCEL YET
+            &gt; NOTHING BUILT ON THIS BITMAP YET
             {canEdit ? " — IT'S YOURS, BUILD IT" : ""}
             <span className="blink">_</span>
           </p>
@@ -155,7 +155,7 @@ export function ParcelPagePanel({
       {canEdit && !editing && (
         <div className="border-t border-border px-6 py-4">
           <button className="btn-term" onClick={startEditing}>
-            {built ? "[ EDIT PARCEL PAGE ]" : "[ BUILD ON THIS PARCEL ]"}
+            {built ? "[ EDIT BITMAP PAGE ]" : "[ BUILD ON THIS BITMAP ]"}
           </button>
         </div>
       )}

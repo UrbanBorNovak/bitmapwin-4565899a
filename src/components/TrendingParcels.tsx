@@ -14,7 +14,7 @@ export function TrendingParcels({ limit = 8 }: { limit?: number }) {
     <section className="mt-8 border border-border">
       <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border px-5 py-3">
         <h2 className="display text-lg">TRENDING — MOST VISITED</h2>
-        <span className="label">TRACKED PARCEL VIEWS</span>
+        <span className="label">TRACKED BITMAP VIEWS</span>
       </header>
       {trending.isLoading ? (
         <p className="px-5 py-5 font-mono text-xs text-muted-foreground">

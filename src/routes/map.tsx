@@ -225,11 +225,11 @@ function MapPage() {
 
         <aside className="border border-border">
           <div className="border-b border-border px-4 py-3">
-            <span className="label">PARCEL INSPECTOR</span>
+            <span className="label">BITMAP INSPECTOR</span>
           </div>
           {selected === null ? (
             <div className="p-4 font-mono text-xs text-muted-foreground">
-              &gt; SELECT A PARCEL<span className="blink">_</span>
+              &gt; SELECT A BITMAP<span className="blink">_</span>
             </div>
           ) : (
             <div className="p-4">

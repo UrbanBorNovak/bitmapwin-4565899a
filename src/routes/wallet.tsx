@@ -240,7 +240,7 @@ function WalletPage() {
               v={wallet.data ? formatSats(wallet.data.balanceSats) : wallet.isLoading ? "…" : "—"}
             />
             <Stat k="UTXOS" v={wallet.data ? String(wallet.data.utxoCount) : "—"} />
-            <Stat k="BITMAP PARCELS" v={wallet.data ? String(parcels.length) : "—"} />
+            <Stat k="BITMAPS" v={wallet.data ? String(parcels.length) : "—"} />
           </section>
 
           <ProfileEditor
@@ -260,7 +260,7 @@ function WalletPage() {
           {parcels.length > 0 && (
             <section className="mt-10 border border-border">
               <header className="border-b border-border p-5">
-                <h2 className="display text-xl">MY BITMAP PARCELS</h2>
+                <h2 className="display text-xl">MY BITMAPS</h2>
               </header>
               <ul className="divide-y divide-border">
                 {parcels.map((p) => (
@@ -448,7 +448,7 @@ function OfferList({
         <li key={offer.id} className="p-5">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <span className="display text-sm">
-              {offer.bitmapHeight === null ? "UNKNOWN PARCEL" : `${offer.bitmapHeight}.BITMAP`}
+              {offer.bitmapHeight === null ? "UNKNOWN BITMAP" : `${offer.bitmapHeight}.BITMAP`}
             </span>
             <div className="flex flex-wrap items-center gap-3">
               <span className="display text-sm">{formatSats(offer.priceSats)}</span>
@@ -570,7 +570,7 @@ function ClaimAction({ offer, address }: { offer: DeliveredOffer; address: strin
         toast("NOT CONFIRMED YET", { description: result.reason.toUpperCase() });
         return;
       }
-      toast(`PARCEL CLAIMED — ${result.bitmapHeight ?? "?"}.BITMAP`, {
+      toast(`BITMAP CLAIMED — ${result.bitmapHeight ?? "?"}.BITMAP`, {
         description: `${result.ownerAddress ? `HOLDER ${shortenAddress(result.ownerAddress)}` : "HOLDER PENDING"} · ${
           result.salePriceSats ? formatSats(result.salePriceSats) : "NO PAYMENT OUTPUT FOUND"
         }`,
@@ -590,7 +590,7 @@ function ClaimAction({ offer, address }: { offer: DeliveredOffer; address: strin
   return (
     <div className="mt-3 flex flex-wrap items-center gap-3">
       <button className="btn-term" disabled={claim.isPending} onClick={() => claim.mutate()}>
-        {claim.isPending ? "[ VERIFYING CHAIN… ]" : "[ CLAIM PARCEL ]"}
+        {claim.isPending ? "[ VERIFYING CHAIN… ]" : "[ CLAIM BITMAP ]"}
       </button>
       <span className="label">BROADCAST THE PSBT FIRST, THEN CLAIM</span>
     </div>
@@ -631,10 +631,10 @@ function ListParcelForm({
       if (!Number.isInteger(priceSats) || priceSats < 546) {
         throw new Error("ENTER AN ASK OF AT LEAST 546 SATS");
       }
-      if (!connected || !signingAddress) throw new Error("CONNECT THE WALLET HOLDING THIS PARCEL");
+      if (!connected || !signingAddress) throw new Error("CONNECT THE WALLET HOLDING THIS BITMAP");
       const [txid, voutRaw] = parcel.outpoint.split(":");
       const vout = Number(voutRaw);
-      if (!txid || !Number.isInteger(vout)) throw new Error("BAD PARCEL OUTPOINT");
+      if (!txid || !Number.isInteger(vout)) throw new Error("BAD BITMAP OUTPOINT");
 
       const tapInternalKeyHex = xOnlyPubKeyHex(connected.publicKey);
       const psbt = buildListingPsbt({
@@ -705,7 +705,7 @@ function ListParcelForm({
       </p>
       {!canSign && (
         <p className="mt-2 font-mono text-[11px] text-muted-foreground">
-          &gt; CONNECT THE UNISAT/XVERSE WALLET THAT HOLDS THIS PARCEL TO SIGN THE LISTING
+          &gt; CONNECT THE UNISAT/XVERSE WALLET THAT HOLDS THIS BITMAP TO SIGN THE LISTING
         </p>
       )}
 

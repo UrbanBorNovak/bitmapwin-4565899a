@@ -88,7 +88,7 @@ export function MakeOfferButton({
       setOpen(false);
       toast(`OFFER SENT — ${height}.BITMAP`, {
         description: result.replaced
-          ? "REPLACED YOUR PREVIOUS OFFER ON THIS PARCEL"
+          ? "REPLACED YOUR PREVIOUS OFFER ON THIS BITMAP"
           : "THE HOLDER IS NOTIFIED AND CAN ACCEPT IT",
       });
     },
@@ -178,7 +178,7 @@ export function MakeOfferButton({
             </div>
           ) : (
             <p className="font-mono text-[11px] text-muted-foreground">
-              &gt; CONNECT UNISAT OR XVERSE ON /WALLET TO OFFER ON THIS PARCEL
+              &gt; CONNECT UNISAT OR XVERSE ON /WALLET TO OFFER ON THIS BITMAP
               <span className="blink">_</span>
             </p>
           )}
