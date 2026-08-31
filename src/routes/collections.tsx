@@ -1,0 +1,21 @@
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+
+export const Route = createFileRoute("/collections")({
+  component: CollectionsLayout,
+});
+
+function CollectionsLayout() {
+  return (
+    <div>
+      <div className="border-b border-border">
+        <div className="mx-auto flex max-w-[1600px] items-baseline justify-between gap-4 px-4 py-4 md:px-8">
+          <Link to="/collections" className="label hover:text-foreground">
+            COLLECTIONS /
+          </Link>
+          <span className="label">CLUBS ARE DEFINED BY BLOCK HEIGHT RANGE</span>
+        </div>
+      </div>
+      <Outlet />
+    </div>
+  );
+}
