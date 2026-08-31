@@ -1,0 +1,99 @@
+import { useEffect, useMemo, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { openBidsQuery, type Bid } from "@/lib/bids";
+import { walletQuery } from "@/lib/wallet";
+import { useWalletSession } from "@/lib/wallet-session";
+import { formatSats } from "@/lib/trades";
+
+const SEEN_KEY = "bitmap.bids.seen";
+
+function readSeen(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = window.localStorage.getItem(SEEN_KEY);
+    return new Set(raw ? (JSON.parse(raw) as string[]) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function writeSeen(ids: Set<string>) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(SEEN_KEY, JSON.stringify([...ids].slice(-400)));
+}
+
+/**
+ * Bid inbox for the connected wallet: the live bids standing on parcels this
+ * wallet holds on chain, kept fresh through realtime `bids` changes. New bids
+ * raise a toast the first time they are seen so the holder knows someone is
+ * bidding on their land.
+ */
+export function useBidInbox(options: { notify?: boolean } = {}) {
+  const { notify = false } = options;
+  const wallet = useWalletSession();
+  const queryClient = useQueryClient();
+  const holderAddress = wallet?.ordinalsAddress ?? "";
+
+  const held = useQuery(walletQuery(holderAddress));
+  const bids = useQuery(openBidsQuery(500));
+
+  const heldHeights = useMemo(() => {
+    const set = new Set<number>();
+    for (const utxo of held.data?.utxos ?? []) {
+      for (const insc of utxo.inscriptions) {
+        if (insc.bitmapHeight !== null) set.add(insc.bitmapHeight);
+      }
+    }
+    return set;
+  }, [held.data]);
+
+  const received = useMemo<Bid[]>(
+    () =>
+      (bids.data ?? [])
+        .filter((bid) => heldHeights.has(bid.bitmapHeight))
+        .sort((a, b) => b.priceSats - a.priceSats),
+    [bids.data, heldHeights],
+  );
+
+  // Realtime: any bid change refreshes the inbox.
+  useEffect(() => {
+    if (!holderAddress) return;
+    const channel = supabase
+      .channel("bid-inbox")
+      .on("postgres_changes", { event: "*", schema: "public", table: "bids" }, () => {
+        void queryClient.invalidateQueries({ queryKey: ["bids"] });
+      })
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [holderAddress, queryClient]);
+
+  const notified = useRef(false);
+  useEffect(() => {
+    if (!notify || received.length === 0) return;
+    const seen = readSeen();
+    const fresh = received.filter((bid) => !seen.has(bid.id));
+    if (fresh.length === 0) {
+      notified.current = true;
+      return;
+    }
+    fresh.forEach((bid) => seen.add(bid.id));
+    writeSeen(seen);
+    const top = fresh[0]!;
+    toast(
+      fresh.length === 1
+        ? `NEW BID — ${top.bitmapHeight}.BITMAP`
+        : `${fresh.length} NEW BIDS ON YOUR PARCELS`,
+      {
+        description: `${formatSats(top.priceSats)} OFFERED · OPEN /WALLET TO ACCEPT`,
+        duration: 10_000,
+      },
+    );
+    notified.current = true;
+  }, [notify, received]);
+
+  return { received, heldHeights, isLoading: held.isLoading || bids.isLoading };
+}
