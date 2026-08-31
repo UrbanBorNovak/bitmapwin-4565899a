@@ -40,14 +40,28 @@ export const Route = createFileRoute("/api/public/blocks/$height")({
             },
           });
         } catch (error) {
+          const message = error instanceof Error ? error.message : "Unavailable";
+          // A height beyond the chain tip (or otherwise unknown to every
+          // provider) is not a transient failure — answer 204 so callers can
+          // render an empty state instead of surfacing a runtime error.
+          const unknownBlock = /not found|404|unknown|invalid block height|out of range/i.test(
+            message,
+          );
+          if (unknownBlock) {
+            return new Response(null, {
+              status: 204,
+              headers: { ...CORS, "cache-control": "public, max-age=60", "x-tx-count": "0" },
+            });
+          }
           return Response.json(
-            { error: error instanceof Error ? error.message : "Unavailable" },
+            { error: message },
             {
               status: 503,
               headers: { ...CORS, "cache-control": "no-store", "retry-after": "3" },
             },
           );
         }
+
       },
     },
   },
