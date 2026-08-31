@@ -211,6 +211,10 @@ function Marketplace() {
         <Stat k="SALE VOLUME" v={volume ? formatSats(volume) : "—"} />
       </div>
 
+      <TrendingParcels limit={8} />
+
+
+
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <button
           className={tab === "all" ? "btn-term" : "btn-term-ghost"}
