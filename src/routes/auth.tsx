@@ -8,6 +8,7 @@ import {
   signUpWithEmail,
   useAuthSession,
 } from "@/lib/auth";
+import { WalletSignIn } from "@/components/WalletSignIn";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -93,7 +94,17 @@ function AuthPage() {
         PROFILE, PARCEL PAGES AND BIDS STAY YOURS<span className="blink">_</span>
       </p>
 
-      <form onSubmit={submit} className="mt-8 space-y-4 border border-border p-5">
+      <div className="mt-8 border border-border p-5">
+        <p className="label">SIGN IN WITH YOUR BITCOIN WALLET</p>
+        <p className="mt-2 mb-3 font-mono text-[11px] text-muted-foreground">
+          &gt; NO EMAIL NEEDED — YOUR ADDRESS SIGNS A MESSAGE AND BECOMES YOUR ACCOUNT
+        </p>
+        <WalletSignIn />
+      </div>
+
+      <p className="mt-6 label">OR USE AN EMAIL ACCOUNT</p>
+
+      <form onSubmit={submit} className="mt-2 space-y-4 border border-border p-5">
         <label className="block">
           <span className="label">EMAIL</span>
           <input

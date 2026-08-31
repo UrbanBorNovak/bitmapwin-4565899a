@@ -71,6 +71,15 @@ function WalletPage() {
     }
   }, []);
 
+  // Signed in with a wallet? Load that verified address automatically.
+  useEffect(() => {
+    const linked = links.data?.[0]?.address;
+    if (!linked || address !== "") return;
+    setInput(linked);
+    setAddress(linked);
+    window.localStorage.setItem(WALLET_ADDRESS_STORAGE_KEY, linked);
+  }, [links.data, address]);
+
   const wallet = useQuery(walletQuery(address));
   const offers = useQuery(walletOffersQuery(address));
 
@@ -185,7 +194,7 @@ function WalletPage() {
 
           <ProfileEditor
             address={address}
-            canEdit={walletControls(connected, address) && isLinked(links.data, address)}
+            canEdit={isLinked(links.data, address) || walletControls(connected, address)}
             inscriptionIds={ownedInscriptionIds}
           />
 
