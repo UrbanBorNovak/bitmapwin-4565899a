@@ -11,6 +11,9 @@
  * inside server functions alike.
  */
 
+import { MARKETPLACE_FEE_ADDRESS, marketplaceFeeSats } from "@/lib/marketplace-fee";
+import { addressToScriptPubKey } from "@/lib/psbt-builder";
+
 const MAGIC = [0x70, 0x73, 0x62, 0x74, 0xff];
 
 type Kv = { key: number[]; value: number[] };
