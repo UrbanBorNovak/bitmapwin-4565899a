@@ -1,5 +1,8 @@
+import { useQuery } from "@tanstack/react-query";
 import { inscriptionImageUrl } from "@/lib/profiles";
 import { formatSats } from "@/lib/trades";
+import { inscriptionOffersQuery } from "@/lib/offers";
+import { BuyButton } from "@/components/BuyButton";
 import type { ShopConfig } from "@/lib/build-sdk";
 
 /**
