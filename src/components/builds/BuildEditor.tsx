@@ -4,6 +4,7 @@ import {
   BUILD_KIND_LABELS,
   DEFAULT_CONFIGS,
   parseBuildConfig,
+  presetsForKind,
   type BuildKind,
   type Game2dConfig,
   type Game3dConfig,
