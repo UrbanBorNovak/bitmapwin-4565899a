@@ -11,6 +11,9 @@
  * inside server functions alike.
  */
 
+import { MARKETPLACE_FEE_ADDRESS, marketplaceFeeSats } from "@/lib/marketplace-fee";
+import { addressToScriptPubKey } from "@/lib/psbt-builder";
+
 const MAGIC = [0x70, 0x73, 0x62, 0x74, 0xff];
 
 type Kv = { key: number[]; value: number[] };
@@ -267,10 +270,13 @@ export type BuyerPsbtResult = {
   signIndices: number[];
   priceSats: number;
   feeSats: number;
+  /** marketplace commission paid to the platform address */
+  marketFeeSats: number;
   changeSats: number;
   spentSats: number;
   usedFunding: FundingUtxo[];
 };
+
 
 const DUST = 546;
 
@@ -306,6 +312,10 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
       ? hexToByteArray(input.tapInternalKeyHex)
       : null;
 
+  // marketplace commission: extra output paid by the buyer to the platform
+  const marketFeeSats = marketplaceFeeSats(priceSats);
+  const marketFeeScript = addressToScriptPubKey(MARKETPLACE_FEE_ADDRESS);
+
   // greedy largest-first coin selection over confirmed funding UTXOs
   const candidates = [...input.funding]
     .filter((u) => u.valueSats > DUST)
@@ -318,17 +328,17 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
   for (const candidate of candidates) {
     used.push(candidate);
     funded += candidate.valueSats;
-    feeSats = Math.ceil(estimateVsize(1 + used.length, 3) * Math.max(1, input.feeRate));
-    needed = priceSats + feeSats;
+    feeSats = Math.ceil(estimateVsize(1 + used.length, 4) * Math.max(1, input.feeRate));
+    needed = priceSats + marketFeeSats + feeSats;
     if (funded >= needed + DUST) break;
   }
   if (used.length === 0 || funded < needed) {
     throw new Error(
-      `Not enough confirmed funds: need ~${priceSats + feeSats} sats plus fees, have ${funded}`,
+      `Not enough confirmed funds: need ~${priceSats + marketFeeSats + feeSats} sats plus fees, have ${funded}`,
     );
   }
 
-  let changeSats = funded - priceSats - feeSats;
+  let changeSats = funded - priceSats - marketFeeSats - feeSats;
   if (changeSats < DUST) {
     // fold sub-dust change into the fee rather than creating an unspendable output
     feeSats += changeSats;
@@ -349,9 +359,11 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
     outputs: [
       priceOutput,
       { valueSats: input.inscriptionValueSats, script: receiveScript },
+      { valueSats: marketFeeSats, script: marketFeeScript },
       ...(changeSats > 0 ? [{ valueSats: changeSats, script: changeScript }] : []),
     ],
   };
+
 
   const inputMaps: Kv[][] = [seller.inputs[0] ?? []];
   for (const utxo of used) {
@@ -378,8 +390,10 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
     signIndices: used.map((_, i) => i + 1),
     priceSats,
     feeSats,
+    marketFeeSats,
     changeSats,
-    spentSats: priceSats + feeSats,
+    spentSats: priceSats + marketFeeSats + feeSats,
     usedFunding: used,
   };
+
 }

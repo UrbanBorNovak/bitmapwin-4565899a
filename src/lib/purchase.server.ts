@@ -115,6 +115,8 @@ export type PurchaseQuote = {
   signIndices: number[];
   priceSats: number;
   feeSats: number;
+  /** marketplace commission paid to the platform address */
+  marketFeeSats: number;
   feeRate: number;
   changeSats: number;
   inscriptionValueSats: number;
@@ -192,6 +194,7 @@ export async function buildPurchase(input: {
     signIndices: built.signIndices,
     priceSats: built.priceSats,
     feeSats: built.feeSats,
+    marketFeeSats: built.marketFeeSats,
     feeRate: rate,
     changeSats: built.changeSats,
     inscriptionValueSats,

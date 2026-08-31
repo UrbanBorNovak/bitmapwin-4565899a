@@ -12,6 +12,7 @@ import {
 import { deliverOfferFn } from "@/lib/wallet.functions";
 import { refreshOffersFn, submitOfferFn } from "@/lib/offers.functions";
 import { buildListingPsbt } from "@/lib/psbt-builder";
+import { MARKETPLACE_FEE_PERCENT } from "@/lib/marketplace-fee";
 import {
   signListingPsbt,
   xOnlyPubKeyHex,
@@ -573,11 +574,15 @@ function ListParcelForm({
           [ CANCEL ]
         </button>
       </div>
+      <p className="mt-2 font-mono text-[11px] text-muted-foreground">
+        &gt; YOU RECEIVE THE FULL ASK — THE BUYER PAYS A {MARKETPLACE_FEE_PERCENT}% MARKETPLACE FEE ON TOP
+      </p>
       {!canSign && (
         <p className="mt-2 font-mono text-[11px] text-muted-foreground">
           &gt; CONNECT THE UNISAT/XVERSE WALLET THAT HOLDS THIS PARCEL TO SIGN THE LISTING
         </p>
       )}
+
     </div>
   );
 }
