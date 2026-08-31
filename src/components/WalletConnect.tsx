@@ -10,6 +10,8 @@ import {
   type WalletProviderId,
 } from "@/lib/browser-wallet";
 import { shortenAddress } from "@/lib/registry";
+import { clearWalletSession, saveWalletSession } from "@/lib/wallet-session";
+
 
 const PROVIDERS: WalletProviderId[] = ["unisat", "xverse"];
 
