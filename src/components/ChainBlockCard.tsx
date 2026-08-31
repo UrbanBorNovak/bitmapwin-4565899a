@@ -24,7 +24,7 @@ export function ChainBlockCard({ block }: { block: ChainBlock }) {
         params={{ block: String(block.height) }}
         className="block border-b border-border p-4"
       >
-        <BitmapPixelMap blockHeight={block.height} txCount={block.txCount} />
+        <BlockMosaic height={block.height} txCount={block.txCount} />
       </Link>
 
       <div className="p-3">
