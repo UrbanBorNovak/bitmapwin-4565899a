@@ -175,7 +175,7 @@ function MapPage() {
                     className={`absolute border text-left transition-colors ${
                       isSelected
                         ? "border-foreground bg-secondary"
-                        : "border-border hover:border-foreground"
+                        : "border-border hover:border-primary"
                     }`}
                     style={{
                       left: col * CELL,

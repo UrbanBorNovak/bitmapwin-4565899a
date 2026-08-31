@@ -43,7 +43,7 @@ function Activity() {
       <h1 className="display text-3xl md:text-5xl">ACTIVITY</h1>
       <p className="label mt-3">CONFIRMED ON-CHAIN TRANSFERS AND SALES</p>
 
-      <div className="relative mt-8 border border-border bg-card">
+      <div className="relative mt-8 rounded-lg border border-border bg-card">
         <div className="pointer-events-none absolute inset-0 scanlines" />
         <div className="relative flex items-center justify-between border-b border-border px-4 py-2">
           <span className="label">BITMAP://ACTIVITY</span>

@@ -14,7 +14,7 @@ export function ParcelCard({ parcel }: { parcel: RegistryParcel }) {
   const topBid = topBidByHeight(bids.data ?? []).get(parcel.bitmapHeight) ?? null;
 
   return (
-    <article className="group border border-border bg-card transition-[border-color,transform] duration-150 hover:border-foreground hover:-translate-y-0.5">
+    <article className="group rounded-lg border border-border bg-card overflow-hidden transition-[border-color,transform] duration-150 hover:border-primary hover:-translate-y-0.5">
       <Link
         to="/bitmap/$block"
         params={{ block: String(parcel.bitmapHeight) }}

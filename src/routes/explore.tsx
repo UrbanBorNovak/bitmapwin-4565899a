@@ -185,7 +185,7 @@ function Explore() {
       {isPending && (
         <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
           {Array.from({ length: 10 }).map((_, i) => (
-            <div key={i} className="h-[340px] animate-pulse border border-border bg-card" />
+            <div key={i} className="h-[340px] animate-pulse rounded-lg border border-border bg-card" />
           ))}
         </div>
       )}
