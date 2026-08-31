@@ -205,7 +205,11 @@ async function requestXverseAddresses(providerId: string): Promise<XverseAccount
 async function xverseSignPsbt(params: Record<string, unknown>): Promise<string> {
   const providerId = getXverseProviderId();
   if (!providerId) throw new Error("XVERSE NOT DETECTED — INSTALL OR ENABLE THE EXTENSION");
-  const res = await requestSatsConnect<any, any>("signPsbt" as never, params as never, providerId);
+  const res = (await requestSatsConnect(
+    "signPsbt" as never,
+    params as never,
+    providerId,
+  )) as { status: "success"; result: unknown } | { status: "error"; error: { code?: unknown; message?: string } };
   if (res.status !== "success") {
     throw new Error(describeXverseSignError(res.error));
   }
