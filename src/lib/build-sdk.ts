@@ -179,7 +179,39 @@ export function parseBuildConfig<K extends BuildKind>(kind: K, raw: unknown): Bu
       };
       return config as BuildConfigMap[K];
     }
+    case "shop": {
+      const items = Array.isArray(o["items"]) ? o["items"] : [];
+      const cols = clamp(Number(o["columns"] ?? 3), 2, 4);
+      const config: ShopConfig = {
+        shopName: str(o["shopName"], 60) || DEFAULT_CONFIGS.shop.shopName,
+        tagline: str(o["tagline"], 140),
+        contactUrl: str(o["contactUrl"], 300).trim(),
+        contactLabel: str(o["contactLabel"], 40) || "CONTACT SELLER",
+        accent: /^#[0-9a-fA-F]{6}$/.test(String(o["accent"])) ? String(o["accent"]) : "#f7931a",
+        layout: o["layout"] === "list" ? "list" : "grid",
+        columns: (cols === 2 || cols === 4 ? cols : 3) as 2 | 3 | 4,
+        frame: o["frame"] === "soft" ? "soft" : "sharp",
+        items: items
+          .slice(0, 60)
+          .map((raw) => {
+            const r = (raw ?? {}) as Record<string, unknown>;
+            const price = Number(r["priceSats"] ?? 0);
+            return {
+              inscriptionId: str(r["inscriptionId"], 120).trim(),
+              name: str(r["name"], 60),
+              priceSats: Number.isFinite(price)
+                ? Math.max(0, Math.min(2_100_000_000_000_000, Math.round(price)))
+                : 0,
+              note: str(r["note"], 120),
+              sold: r["sold"] === true,
+            } satisfies ShopItem;
+          })
+          .filter((i) => i.inscriptionId !== ""),
+      };
+      return config as BuildConfigMap[K];
+    }
     case "game3d": {
+
       const config: Game3dConfig = {
         worldName: str(o["worldName"], 60) || DEFAULT_CONFIGS.game3d.worldName,
         towers: clamp(Number(o["towers"] ?? 24), 4, 64),
