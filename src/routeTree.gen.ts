@@ -16,6 +16,7 @@ import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as ExtractorRouteImport } from './routes/extractor'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
@@ -55,6 +56,11 @@ const MarketplaceRoute = MarketplaceRouteImport.update({
   path: '/marketplace',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WalletRoute = WalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BitmapBlockRoute = BitmapBlockRouteImport.update({
   id: '/bitmap/$block',
   path: '/bitmap/$block',
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/extractor': typeof ExtractorRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
+  '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
@@ -91,6 +98,7 @@ export interface FileRoutesByTo {
   '/extractor': typeof ExtractorRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
+  '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   '/extractor': typeof ExtractorRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
+  '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
@@ -118,6 +127,7 @@ export interface FileRouteTypes {
     | '/extractor'
     | '/map'
     | '/marketplace'
+    | '/wallet'
     | '/bitmap/$block'
     | '/api/public/offer'
     | '/api/public/offers'
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
     | '/extractor'
     | '/map'
     | '/marketplace'
+    | '/wallet'
     | '/bitmap/$block'
     | '/api/public/offer'
     | '/api/public/offers'
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/extractor'
     | '/map'
     | '/marketplace'
+    | '/wallet'
     | '/bitmap/$block'
     | '/api/public/offer'
     | '/api/public/offers'
@@ -155,6 +167,7 @@ export interface RootRouteChildren {
   ExtractorRoute: typeof ExtractorRoute
   MapRoute: typeof MapRoute
   MarketplaceRoute: typeof MarketplaceRoute
+  WalletRoute: typeof WalletRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
   ApiPublicOfferRoute: typeof ApiPublicOfferRoute
   ApiPublicOffersRoute: typeof ApiPublicOffersRoute
@@ -211,6 +224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketplaceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/wallet': {
+      id: '/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof WalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/bitmap/$block': {
       id: '/bitmap/$block'
       path: '/bitmap/$block'
@@ -243,6 +263,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExtractorRoute: ExtractorRoute,
   MapRoute: MapRoute,
   MarketplaceRoute: MarketplaceRoute,
+  WalletRoute: WalletRoute,
   BitmapBlockRoute: BitmapBlockRoute,
   ApiPublicOfferRoute: ApiPublicOfferRoute,
   ApiPublicOffersRoute: ApiPublicOffersRoute,
