@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { ChainBlockCard } from "@/components/ChainBlockCard";
 import { getChainBlocks } from "@/lib/chain.functions";
 import type { ChainBlock } from "@/lib/chain";
+import { TRAIT_FILTERS, hasTrait, type TraitId } from "@/lib/traits";
 
 type Filter = "ALL" | "VALID BITMAPS" | "UNCLAIMED" | "WITH INSCRIPTIONS" | "NO INSCRIPTIONS";
 type Sort = "NEWEST" | "OLDEST" | "MOST INSCRIPTIONS" | "MOST TXS";
@@ -52,10 +53,17 @@ function Explore() {
   const [term, setTerm] = useState(q ?? "");
   const [filter, setFilter] = useState<Filter>("ALL");
   const [sort, setSort] = useState<Sort>("NEWEST");
+  const [traits, setTraits] = useState<TraitId[]>([]);
+
+  const toggleTrait = (id: TraitId) =>
+    setTraits((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
+
+  // Inscription-aware filters need the (slow) ord index scan; plain browsing does not.
+  const scan = filter !== "ALL";
 
   const { data, isPending, isFetching, isError, error, refetch } = useQuery({
-    queryKey: ["chain-blocks", pages],
-    queryFn: () => fetchBlocks({ data: { pages } }),
+    queryKey: ["chain-blocks", pages, scan],
+    queryFn: () => fetchBlocks({ data: { pages, scan } }),
     staleTime: 60_000,
     refetchInterval: 120_000,
   });
@@ -69,6 +77,7 @@ function Explore() {
       if (filter === "NO INSCRIPTIONS" && b.inscriptionCount > 0) return false;
       if (filter === "VALID BITMAPS" && b.bitmapStatus !== "valid") return false;
       if (filter === "UNCLAIMED" && b.bitmapStatus === "valid") return false;
+      if (traits.length > 0 && !traits.every((t) => hasTrait(b.height, t))) return false;
       if (!needle) return true;
       return (
         String(b.height).includes(needle) ||
@@ -90,7 +99,7 @@ function Explore() {
           return b.height - a.height;
       }
     });
-  }, [blocks, term, filter, sort]);
+  }, [blocks, term, filter, sort, traits]);
 
   const totalInscriptions = blocks.reduce((sum, b) => sum + b.inscriptionCount, 0);
   const validBitmaps = blocks.filter((b) => b.bitmapStatus === "valid").length;
@@ -139,6 +148,25 @@ function Explore() {
               </button>
             ))}
           </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 border-t border-border p-3">
+          <span className="label self-center">TRAITS</span>
+          {TRAIT_FILTERS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => toggleTrait(t.id)}
+              className={
+                traits.includes(t.id) ? "btn-term !px-3 !py-2" : "btn-term-ghost !px-3 !py-2"
+              }
+            >
+              {t.label}
+            </button>
+          ))}
+          {traits.length > 0 && (
+            <button className="btn-term-ghost !px-3 !py-2" onClick={() => setTraits([])}>
+              CLEAR
+            </button>
+          )}
         </div>
       </div>
 

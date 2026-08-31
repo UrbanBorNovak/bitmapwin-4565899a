@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { blockLayout, layoutFromVsizes } from "@/lib/bitmap-layout";
+import { blockLayout, layoutFromSizeClasses, layoutFromVsizes } from "@/lib/bitmap-layout";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -8,6 +8,8 @@ type Props = {
   txCount?: number | null;
   /** real per-transaction vbytes from the chain — when present, drives the render */
   vsizes?: number[] | null;
+  /** one size class per transaction, from /api/public/blocks/:height */
+  sizeClasses?: number[] | null;
   className?: string;
   /** subtle fade of the parcels when a parent .group is hovered */
   animate?: boolean;
@@ -21,16 +23,15 @@ export function BitmapPixelMap({
   blockHeight,
   txCount,
   vsizes,
+  sizeClasses,
   className,
   animate = true,
 }: Props) {
-  const { width, height, parcels, filler } = useMemo(
-    () =>
-      vsizes && vsizes.length > 0
-        ? layoutFromVsizes(vsizes)
-        : blockLayout(blockHeight, txCount),
-    [blockHeight, txCount, vsizes],
-  );
+  const { width, height, parcels, filler } = useMemo(() => {
+    if (sizeClasses && sizeClasses.length > 0) return layoutFromSizeClasses(sizeClasses);
+    if (vsizes && vsizes.length > 0) return layoutFromVsizes(vsizes);
+    return blockLayout(blockHeight, txCount);
+  }, [blockHeight, txCount, vsizes, sizeClasses]);
 
   const side = Math.max(width, height);
   const gap = side > 40 ? 0.06 : 0.1;

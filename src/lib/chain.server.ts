@@ -2,6 +2,7 @@ import type { BitmapClaim, ChainBlock } from "@/lib/chain";
 
 const MEMPOOL = "https://mempool.space/api";
 const ORD = "https://ordinals.com";
+const ESPLORA = "https://blockstream.info/api";
 
 /** Max inscriptions per block we read the content (hex) of while hunting bitmaps. */
 const MAX_SCAN_PER_BLOCK = 120;
@@ -45,23 +46,51 @@ async function fetchWithRetry(
   throw lastError instanceof Error ? lastError : new Error(`${url} failed`);
 }
 
-async function getJson<T>(url: string): Promise<T> {
-  const res = await fetchWithRetry(url, "application/json");
+async function getJson<T>(url: string, attempts = 3, timeoutMs = 12000): Promise<T> {
+  const res = await fetchWithRetry(url, "application/json", attempts, timeoutMs);
   return (await res.json()) as T;
 }
 
+/** Block-header reads: fail fast so the Esplora fallback kicks in quickly. */
+const getJsonFast = <T,>(url: string) => getJson<T>(url, 1, 6000);
+
 /** Latest blocks from the mempool.space REST API (15 per page). */
 async function fetchBlockPages(pages: number): Promise<MempoolBlock[]> {
-  const first = await getJson<MempoolBlock[]>(`${MEMPOOL}/v1/blocks`);
+  const first = await getJsonFast<MempoolBlock[]>(`${MEMPOOL}/v1/blocks`);
   const out = [...first];
   for (let i = 1; i < pages; i++) {
     const next = out[out.length - 1];
     if (!next) break;
-    const page = await getJson<MempoolBlock[]>(`${MEMPOOL}/v1/blocks/${next.height - 1}`);
+    const page = await getJsonFast<MempoolBlock[]>(`${MEMPOOL}/v1/blocks/${next.height - 1}`);
     if (page.length === 0) break;
     out.push(...page);
   }
   return out;
+}
+
+/** Esplora fallback (10 blocks per page, no pool/fee extras). */
+async function fetchBlockPagesEsplora(pages: number): Promise<MempoolBlock[]> {
+  const tip = Number(
+    (await (await fetchWithRetry(`${ESPLORA}/blocks/tip/height`, "text/plain", 2, 8000)).text()).trim(),
+  );
+  if (!Number.isFinite(tip)) throw new Error("esplora tip height unavailable");
+  const out: MempoolBlock[] = [];
+  let cursor = tip;
+  for (let i = 0; i < pages && cursor >= 0; i++) {
+    const page = await getJson<MempoolBlock[]>(`${ESPLORA}/blocks/${cursor}`, 2, 8000);
+    if (page.length === 0) break;
+    out.push(...page);
+    cursor = (page[page.length - 1]?.height ?? 0) - 1;
+  }
+  return out;
+}
+
+async function fetchRecentBlocks(pages: number): Promise<MempoolBlock[]> {
+  try {
+    return await fetchBlockPages(pages);
+  } catch {
+    return await fetchBlockPagesEsplora(Math.max(2, Math.ceil((pages * 15) / 10)));
+  }
 }
 
 /** Inscription ids committed in a block, in inscription order. */
@@ -143,9 +172,15 @@ async function scanBlock(height: number): Promise<ScannedBlock> {
   return { ids, more, scannedAll: !more && scanIds.length === ids.length, claims };
 }
 
-export async function loadChainBlocks(pages: number): Promise<ChainBlock[]> {
-  const blocks = await fetchBlockPages(pages);
-  const scans = await mapWithConcurrency(blocks, 4, (b) => scanBlock(b.height));
+const EMPTY_SCAN: ScannedBlock = { ids: [], more: true, scannedAll: false, claims: [] };
+
+export async function loadChainBlocks(pages: number, scan = false): Promise<ChainBlock[]> {
+  const blocks = await fetchRecentBlocks(pages);
+  // Inscription scanning hits a public ord index and is slow/rate-limited, so it
+  // is opt-in: the block list itself renders from block headers alone.
+  const scans = scan
+    ? await mapWithConcurrency(blocks, 4, (b) => scanBlock(b.height))
+    : blocks.map(() => EMPTY_SCAN);
 
   const heights = blocks.map((b) => b.height);
   const minScanned = Math.min(...heights);

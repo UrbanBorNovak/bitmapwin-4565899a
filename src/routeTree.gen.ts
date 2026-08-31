@@ -20,6 +20,8 @@ import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
+import { Route as ApiPublicBlocksHeightRouteImport } from './routes/api/public/blocks.$height'
+import { Route as ApiPublicBlocksHeightMetaRouteImport } from './routes/api/public/blocks.$height.meta'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -76,6 +78,17 @@ const ApiPublicOffersRoute = ApiPublicOffersRouteImport.update({
   path: '/api/public/offers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBlocksHeightRoute = ApiPublicBlocksHeightRouteImport.update({
+  id: '/api/public/blocks/$height',
+  path: '/api/public/blocks/$height',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicBlocksHeightMetaRoute =
+  ApiPublicBlocksHeightMetaRouteImport.update({
+    id: '/meta',
+    path: '/meta',
+    getParentRoute: () => ApiPublicBlocksHeightRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,6 +102,8 @@ export interface FileRoutesByFullPath {
   '/bitmap/$block': typeof BitmapBlockRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
+  '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
+  '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -102,6 +117,8 @@ export interface FileRoutesByTo {
   '/bitmap/$block': typeof BitmapBlockRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
+  '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
+  '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -116,6 +133,8 @@ export interface FileRoutesById {
   '/bitmap/$block': typeof BitmapBlockRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
+  '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
+  '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,6 +150,8 @@ export interface FileRouteTypes {
     | '/bitmap/$block'
     | '/api/public/offer'
     | '/api/public/offers'
+    | '/api/public/blocks/$height'
+    | '/api/public/blocks/$height/meta'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -144,6 +165,8 @@ export interface FileRouteTypes {
     | '/bitmap/$block'
     | '/api/public/offer'
     | '/api/public/offers'
+    | '/api/public/blocks/$height'
+    | '/api/public/blocks/$height/meta'
   id:
     | '__root__'
     | '/'
@@ -157,6 +180,8 @@ export interface FileRouteTypes {
     | '/bitmap/$block'
     | '/api/public/offer'
     | '/api/public/offers'
+    | '/api/public/blocks/$height'
+    | '/api/public/blocks/$height/meta'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -171,6 +196,7 @@ export interface RootRouteChildren {
   BitmapBlockRoute: typeof BitmapBlockRoute
   ApiPublicOfferRoute: typeof ApiPublicOfferRoute
   ApiPublicOffersRoute: typeof ApiPublicOffersRoute
+  ApiPublicBlocksHeightRoute: typeof ApiPublicBlocksHeightRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -252,8 +278,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicOffersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/blocks/$height': {
+      id: '/api/public/blocks/$height'
+      path: '/api/public/blocks/$height'
+      fullPath: '/api/public/blocks/$height'
+      preLoaderRoute: typeof ApiPublicBlocksHeightRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/blocks/$height/meta': {
+      id: '/api/public/blocks/$height/meta'
+      path: '/meta'
+      fullPath: '/api/public/blocks/$height/meta'
+      preLoaderRoute: typeof ApiPublicBlocksHeightMetaRouteImport
+      parentRoute: typeof ApiPublicBlocksHeightRoute
+    }
   }
 }
+
+interface ApiPublicBlocksHeightRouteChildren {
+  ApiPublicBlocksHeightMetaRoute: typeof ApiPublicBlocksHeightMetaRoute
+}
+
+const ApiPublicBlocksHeightRouteChildren: ApiPublicBlocksHeightRouteChildren = {
+  ApiPublicBlocksHeightMetaRoute: ApiPublicBlocksHeightMetaRoute,
+}
+
+const ApiPublicBlocksHeightRouteWithChildren =
+  ApiPublicBlocksHeightRoute._addFileChildren(
+    ApiPublicBlocksHeightRouteChildren,
+  )
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -267,6 +320,7 @@ const rootRouteChildren: RootRouteChildren = {
   BitmapBlockRoute: BitmapBlockRoute,
   ApiPublicOfferRoute: ApiPublicOfferRoute,
   ApiPublicOffersRoute: ApiPublicOffersRoute,
+  ApiPublicBlocksHeightRoute: ApiPublicBlocksHeightRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
