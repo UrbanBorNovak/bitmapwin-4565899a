@@ -166,11 +166,13 @@ async function buildParcels(rows: ClaimRow[]): Promise<RegistryParcel[]> {
 
   const heights = claims.map((c) => c.row.bitmap_height!);
   const [trades, owners, listings] = await Promise.all([
-    fetchTradesForHeights(heights).catch(() => [] as TradeRow[]),
-    getBitmapOwners({ data: { txids: claims.slice(0, 60).map((c) => c.row.txid) } }).catch(
-      () => [] as Array<{ txid: string; address: string | null; transfers: number }>,
+    withDeadline(fetchTradesForHeights(heights), 8_000, [] as TradeRow[]),
+    withDeadline(
+      getBitmapOwners({ data: { txids: claims.slice(0, 24).map((c) => c.row.txid) } }),
+      12_000,
+      [] as Array<{ txid: string; address: string | null; transfers: number }>,
     ),
-    fetchOpenListings(heights).catch(() => new Map<number, OpenListing>()),
+    withDeadline(fetchOpenListings(heights), 8_000, new Map<number, OpenListing>()),
   ]);
   const ownerByTxid = new Map(owners.map((o) => [o.txid, o]));
   const tradeCount = new Map<number, number>();
