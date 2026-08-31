@@ -112,7 +112,40 @@ function BitmapDetail() {
               k="PRICE"
               v={parcel?.listed ? formatBtc(parcel.priceBtc) : "NOT LISTED"}
             />
-            <Field k="INSCRIPTION ID" v={parcel?.inscriptionId ?? "—"} />
+            <Field
+              k="INSCRIPTION ID"
+              v={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? (oci.isLoading ? "…" : "—")}
+            />
+            <Field
+              k="INDEX SAT"
+              v={oci.data?.sat ? oci.data.sat.toLocaleString() : oci.isLoading ? "…" : "—"}
+            />
+            <Field
+              k="ON-CHAIN CONTENT"
+              v={
+                oci.data?.content
+                  ? `"${oci.data.content}"`
+                  : oci.isLoading
+                    ? "…"
+                    : "NO CLAIM ON THE INDEX SAT"
+              }
+            />
+            <Field
+              k="BITMAP THEORY CHECK"
+              v={
+                oci.isLoading
+                  ? "…"
+                  : oci.data?.isValid
+                    ? "VALID — FIRST INSCRIPTION ON THE INDEXED SAT"
+                    : oci.data?.inscriptionId
+                      ? "CONTENT DOES NOT MATCH <HEIGHT>.BITMAP"
+                      : "UNCLAIMED"
+              }
+            />
+            <Field
+              k="CLAIM INSCRIBED IN BLOCK"
+              v={oci.data?.genesisHeight !== null && oci.data?.genesisHeight !== undefined ? String(oci.data.genesisHeight) : "—"}
+            />
             <Field k="REVEAL TXID" v={parcel?.txid ?? "—"} />
             <Field k="TRANSFERS" v={parcel ? String(parcel.transfers) : "—"} />
             <Field
