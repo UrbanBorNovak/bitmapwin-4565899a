@@ -4,6 +4,7 @@ import { BuyButton } from "@/components/BuyButton";
 import { MakeOfferButton } from "@/components/MakeOfferButton";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { TraitBadges } from "@/components/TraitBadges";
+import { ClubBadge } from "@/components/ClubBadge";
 import { formatSats } from "@/lib/trades";
 import { openBidsQuery, topBidByHeight } from "@/lib/bids";
 import { PARCEL_STATUS_LABEL, shortenAddress, type RegistryParcel } from "@/lib/registry";
@@ -25,7 +26,10 @@ export function ParcelCard({ parcel }: { parcel: RegistryParcel }) {
 
       <div className="p-4">
         <div className="flex items-baseline justify-between gap-2">
-          <div className="display text-sm">{parcel.bitmapHeight}.BITMAP</div>
+          <div className="flex items-baseline gap-2">
+            <div className="display text-sm">{parcel.bitmapHeight}.BITMAP</div>
+            <ClubBadge height={parcel.bitmapHeight} />
+          </div>
           <span className="label">{PARCEL_STATUS_LABEL[parcel.status]}</span>
         </div>
 

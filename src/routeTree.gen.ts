@@ -22,6 +22,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
+import { Route as CollectionsClubRouteImport } from './routes/collections.$club'
 import { Route as ProfileAddressRouteImport } from './routes/profile.$address'
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
@@ -93,6 +94,11 @@ const CollectionsIndexRoute = CollectionsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => CollectionsRoute,
 } as any)
+const CollectionsClubRoute = CollectionsClubRouteImport.update({
+  id: '/$club',
+  path: '/$club',
+  getParentRoute: () => CollectionsRoute,
+} as any)
 const ProfileAddressRoute = ProfileAddressRouteImport.update({
   id: '/profile/$address',
   path: '/profile/$address',
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
+  '/collections/$club': typeof CollectionsClubRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections/': typeof CollectionsIndexRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
+  '/collections/$club': typeof CollectionsClubRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections': typeof CollectionsIndexRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
+  '/collections/$club': typeof CollectionsClubRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections/': typeof CollectionsIndexRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/wallet'
     | '/bitmap/$block'
+    | '/collections/$club'
     | '/profile/$address'
     | '/collections/'
     | '/api/public/offer'
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/wallet'
     | '/bitmap/$block'
+    | '/collections/$club'
     | '/profile/$address'
     | '/collections'
     | '/api/public/offer'
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/wallet'
     | '/bitmap/$block'
+    | '/collections/$club'
     | '/profile/$address'
     | '/collections/'
     | '/api/public/offer'
@@ -354,6 +366,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CollectionsIndexRouteImport
       parentRoute: typeof CollectionsRoute
     }
+    '/collections/$club': {
+      id: '/collections/$club'
+      path: '/$club'
+      fullPath: '/collections/$club'
+      preLoaderRoute: typeof CollectionsClubRouteImport
+      parentRoute: typeof CollectionsRoute
+    }
     '/profile/$address': {
       id: '/profile/$address'
       path: '/profile/$address'
@@ -393,10 +412,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface CollectionsRouteChildren {
+  CollectionsClubRoute: typeof CollectionsClubRoute
   CollectionsIndexRoute: typeof CollectionsIndexRoute
 }
 
 const CollectionsRouteChildren: CollectionsRouteChildren = {
+  CollectionsClubRoute: CollectionsClubRoute,
   CollectionsIndexRoute: CollectionsIndexRoute,
 }
 
