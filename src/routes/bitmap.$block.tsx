@@ -80,12 +80,33 @@ function BitmapDetail() {
             <span className="label">BITMAP DATA</span>
           </div>
           <dl className="divide-y divide-border">
-            <Field k="BLOCK HEIGHT" v={String(data.block_height)} />
+            <Field k="BLOCK HEIGHT" v={String(block)} />
             <Field k="BITCOIN NETWORK" v="MAINNET" />
-            <Field k="OWNER" v={data.owner_address ?? "UNCLAIMED"} />
-            <Field k="STATUS" v={STATUS_LABEL[data.status] ?? data.status.toUpperCase()} />
-            <Field k="PRICE" v={formatBtc(data.price_btc)} />
-            <Field k="INSCRIPTION ID" v={data.inscription_id ?? "—"} />
+            <Field
+              k="OWNER"
+              v={parcel ? shortenAddress(parcel.ownerAddress) : (data?.owner_address ?? "UNCLAIMED")}
+            />
+            <Field
+              k="STATUS"
+              v={
+                parcel
+                  ? parcel.listed
+                    ? STATUS_LABEL.for_sale
+                    : STATUS_LABEL.owned
+                  : STATUS_LABEL.unclaimed
+              }
+            />
+            <Field
+              k="PRICE"
+              v={parcel?.listed ? formatBtc(parcel.priceBtc) : "NOT LISTED"}
+            />
+            <Field k="INSCRIPTION ID" v={parcel?.inscriptionId ?? "—"} />
+            <Field k="REVEAL TXID" v={parcel?.txid ?? "—"} />
+            <Field k="TRANSFERS" v={parcel ? String(parcel.transfers) : "—"} />
+            <Field
+              k="DUPLICATE CLAIMS"
+              v={parcel ? (parcel.supersedes === 0 ? "NONE" : `${parcel.supersedes} INVALID`) : "—"}
+            />
             <Field
               k="ON-CHAIN INSCRIPTIONS (SCANNED)"
               v={scan.data ? String(scan.data.inscriptions.length) : "…"}
@@ -129,9 +150,9 @@ function BitmapDetail() {
       <div className="mt-8 flex flex-wrap gap-3">
         <button
           className="btn-term disabled:opacity-30"
-          disabled={data.status !== "for_sale"}
+          disabled={!parcel?.listed}
           onClick={() =>
-            toast(`BITMAP #${data.block_height}`, {
+            toast(`${block}.BITMAP`, {
               description: "Settlement layer not connected in this prototype.",
             })
           }
@@ -140,18 +161,22 @@ function BitmapDetail() {
         </button>
         <a
           className="btn-term-ghost"
-          href={`https://mempool.space/block/${data.block_height}`}
+          href={`https://mempool.space/block/${block}`}
           target="_blank"
           rel="noreferrer"
         >
           [ VIEW ON EXPLORER ]
         </a>
-        <button
-          className="btn-term-ghost"
-          onClick={() => toast("TRANSACTION DATA PENDING INDEXER")}
-        >
-          [ VIEW TRANSACTION ]
-        </button>
+        {parcel && (
+          <a
+            className="btn-term-ghost"
+            href={`https://mempool.space/tx/${parcel.txid}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            [ VIEW CLAIM TRANSACTION ]
+          </a>
+        )}
       </div>
     </div>
   );
