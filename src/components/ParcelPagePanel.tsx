@@ -13,6 +13,8 @@ import {
 import { useWalletSession, walletControls } from "@/lib/wallet-session";
 import { shortenAddress } from "@/lib/registry";
 import { timeAgo } from "@/lib/bitmap";
+import { useAuthSession } from "@/lib/auth";
+import { isLinked, myWalletLinksQuery } from "@/lib/wallet-links";
 
 /**
  * Visitor counter + owner-built page for a parcel: banner, title, description
