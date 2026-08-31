@@ -15,6 +15,8 @@ export type Club = {
   /** Inclusive upper bound. */
   max: number;
   blurb: string;
+  /** True when the range is beyond the current chain tip (no blocks exist yet). */
+  future?: boolean;
 };
 
 export const CLUBS: Club[] = [
@@ -57,6 +59,7 @@ export const CLUBS: Club[] = [
     min: 1_000_000,
     max: 9_999_999,
     blurb: "Future land beyond block one million — not mined yet.",
+    future: true,
   },
 ];
 
