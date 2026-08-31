@@ -88,6 +88,9 @@ export async function validateOffer(psbtBase64: string): Promise<OfferValidation
   const outputs = await Promise.all(
     decoded.inputs.slice(0, 6).map((input) => fetchOutput(input.outpoint)),
   );
+  if (outputs.every((output) => output === null)) {
+    throw new Error("Could not read the input UTXOs from the ord index — try again shortly");
+  }
   const index = outputs.findIndex((output) => (output?.inscriptions.length ?? 0) > 0);
   if (index === -1) {
     throw new Error("No inscription found in any input UTXO — this PSBT does not sell an ordinal");
