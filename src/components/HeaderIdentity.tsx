@@ -3,25 +3,32 @@ import { useQuery } from "@tanstack/react-query";
 import { useWalletSession } from "@/lib/wallet-session";
 import { inscriptionImageUrl, profileQuery } from "@/lib/profiles";
 import { shortenAddress } from "@/lib/registry";
+import { accountLabel, useAuthSession } from "@/lib/auth";
+import { myWalletLinksQuery } from "@/lib/wallet-links";
 
 /**
- * Header identity chip: the connected wallet's inscription avatar and display
- * name (falling back to a shortened address), linking to /wallet.
+ * Header identity chip: the signed-in account with its linked wallet's
+ * inscription avatar and display name, linking to /wallet. Signed-out visitors
+ * get a sign-in call to action.
  */
 export function HeaderIdentity() {
   const wallet = useWalletSession();
-  const address = wallet?.ordinalsAddress ?? "";
+  const { session, user, loading } = useAuthSession();
+  const links = useQuery(myWalletLinksQuery(Boolean(session)));
+  const address = wallet?.ordinalsAddress ?? links.data?.[0]?.address ?? "";
   const profile = useQuery(profileQuery(address));
 
-  if (!wallet) {
+  if (!session) {
     return (
-      <Link to="/wallet" className="btn-term">
-        CONNECT
+      <Link to="/auth" className="btn-term">
+        {loading ? "…" : "SIGN IN"}
       </Link>
     );
   }
 
-  const name = profile.data?.displayName?.trim() || shortenAddress(address);
+  const name =
+    profile.data?.displayName?.trim() ||
+    (address ? shortenAddress(address) : accountLabel(user));
   const avatar = profile.data?.avatarInscriptionId;
 
   return (

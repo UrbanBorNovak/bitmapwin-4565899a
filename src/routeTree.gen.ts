@@ -11,11 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ActivityRouteImport } from './routes/activity'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BitmapsRouteImport } from './routes/bitmaps'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as ExtractorRouteImport } from './routes/extractor'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
 import { Route as ProfileAddressRouteImport } from './routes/profile.$address'
@@ -32,6 +34,11 @@ const IndexRoute = IndexRouteImport.update({
 const ActivityRoute = ActivityRouteImport.update({
   id: '/activity',
   path: '/activity',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BitmapsRoute = BitmapsRouteImport.update({
@@ -57,6 +64,11 @@ const MapRoute = MapRouteImport.update({
 const MarketplaceRoute = MarketplaceRouteImport.update({
   id: '/marketplace',
   path: '/marketplace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WalletRoute = WalletRouteImport.update({
@@ -99,11 +111,13 @@ const ApiPublicBlocksHeightMetaRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
+  '/auth': typeof AuthRoute
   '/bitmaps': typeof BitmapsRoute
   '/explore': typeof ExploreRoute
   '/extractor': typeof ExtractorRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/profile/$address': typeof ProfileAddressRoute
@@ -115,11 +129,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
+  '/auth': typeof AuthRoute
   '/bitmaps': typeof BitmapsRoute
   '/explore': typeof ExploreRoute
   '/extractor': typeof ExtractorRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/profile/$address': typeof ProfileAddressRoute
@@ -132,11 +148,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
+  '/auth': typeof AuthRoute
   '/bitmaps': typeof BitmapsRoute
   '/explore': typeof ExploreRoute
   '/extractor': typeof ExtractorRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/profile/$address': typeof ProfileAddressRoute
@@ -150,11 +168,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/activity'
+    | '/auth'
     | '/bitmaps'
     | '/explore'
     | '/extractor'
     | '/map'
     | '/marketplace'
+    | '/reset-password'
     | '/wallet'
     | '/bitmap/$block'
     | '/profile/$address'
@@ -166,11 +186,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/activity'
+    | '/auth'
     | '/bitmaps'
     | '/explore'
     | '/extractor'
     | '/map'
     | '/marketplace'
+    | '/reset-password'
     | '/wallet'
     | '/bitmap/$block'
     | '/profile/$address'
@@ -182,11 +204,13 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/activity'
+    | '/auth'
     | '/bitmaps'
     | '/explore'
     | '/extractor'
     | '/map'
     | '/marketplace'
+    | '/reset-password'
     | '/wallet'
     | '/bitmap/$block'
     | '/profile/$address'
@@ -199,11 +223,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActivityRoute: typeof ActivityRoute
+  AuthRoute: typeof AuthRoute
   BitmapsRoute: typeof BitmapsRoute
   ExploreRoute: typeof ExploreRoute
   ExtractorRoute: typeof ExtractorRoute
   MapRoute: typeof MapRoute
   MarketplaceRoute: typeof MarketplaceRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   WalletRoute: typeof WalletRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
@@ -226,6 +252,13 @@ declare module '@tanstack/react-router' {
       path: '/activity'
       fullPath: '/activity'
       preLoaderRoute: typeof ActivityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bitmaps': {
@@ -261,6 +294,13 @@ declare module '@tanstack/react-router' {
       path: '/marketplace'
       fullPath: '/marketplace'
       preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/wallet': {
@@ -331,11 +371,13 @@ const ApiPublicBlocksHeightRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivityRoute: ActivityRoute,
+  AuthRoute: AuthRoute,
   BitmapsRoute: BitmapsRoute,
   ExploreRoute: ExploreRoute,
   ExtractorRoute: ExtractorRoute,
   MapRoute: MapRoute,
   MarketplaceRoute: MarketplaceRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   WalletRoute: WalletRoute,
   BitmapBlockRoute: BitmapBlockRoute,
   ProfileAddressRoute: ProfileAddressRoute,

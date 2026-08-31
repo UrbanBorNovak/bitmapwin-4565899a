@@ -13,6 +13,8 @@ import {
 import { useWalletSession, walletControls } from "@/lib/wallet-session";
 import { shortenAddress } from "@/lib/registry";
 import { timeAgo } from "@/lib/bitmap";
+import { useAuthSession } from "@/lib/auth";
+import { isLinked, myWalletLinksQuery } from "@/lib/wallet-links";
 
 /**
  * Visitor counter + owner-built page for a parcel: banner, title, description
@@ -30,7 +32,11 @@ export function ParcelPagePanel({
   const stats = useQuery(viewStatsQuery(height));
   const ownerProfile = useQuery(profileQuery(ownerAddress ?? ""));
   const queryClient = useQueryClient();
-  const canEdit = walletControls(wallet, ownerAddress);
+  const { session } = useAuthSession();
+  const links = useQuery(myWalletLinksQuery(Boolean(session)));
+  // Editing needs both wallet control in the UI and a server-verified link, so
+  // the write actually passes the ownership policy.
+  const canEdit = walletControls(wallet, ownerAddress) && isLinked(links.data, ownerAddress);
 
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState("");
