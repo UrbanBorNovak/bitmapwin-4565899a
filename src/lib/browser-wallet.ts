@@ -129,12 +129,14 @@ async function requestXverseAddresses(xverse: XverseProvider): Promise<XverseAcc
   const message = "CONNECT TO BITMAP MARKETPLACE";
   const attempts: Array<{ method: string; params?: unknown }> = [
     { method: "wallet_connect", params: { addresses: ["ordinals", "payment"], message } },
+    { method: "wallet_connect", params: null },
     { method: "getAddresses", params: { purposes: ["ordinals", "payment"], message } },
     { method: "wallet_getAccount", params: undefined },
     { method: "getAccounts", params: { purposes: ["ordinals", "payment"], message } },
   ];
 
   let lastError = "";
+  let rejected = false;
   for (const attempt of attempts) {
     try {
       const res = await xverse.request(attempt.method, attempt.params);
@@ -145,15 +147,34 @@ async function requestXverseAddresses(xverse: XverseProvider): Promise<XverseAcc
         continue;
       }
       const msg = res?.error?.message ?? "";
-      if (/reject|denied|cancel/i.test(msg)) throw new Error(msg.toUpperCase());
+      // Older builds answer unsupported methods with a generic "rejected", so
+      // note it and keep trying instead of aborting the whole connect.
+      if (/reject|denied|cancel/i.test(msg)) rejected = true;
       lastError = msg || lastError;
     } catch (e) {
       const msg = (e as Error)?.message ?? "";
-      if (/reject|denied|cancel/i.test(msg)) throw new Error(msg.toUpperCase());
+      if (/reject|denied|cancel/i.test(msg)) rejected = true;
       lastError = msg || lastError;
     }
   }
-  throw new Error((lastError || "XVERSE CONNECT FAILED").toUpperCase());
+
+  // Last resort: explicitly ask for permissions, then read the active account.
+  try {
+    await xverse.request("wallet_requestPermissions", undefined);
+    const res = await xverse.request("wallet_getAccount", undefined);
+    if (res?.status === "success") {
+      const accounts = normalizeXverseAddresses(res.result);
+      if (accounts.length > 0) return accounts;
+    }
+    lastError = res?.status === "error" ? res.error?.message ?? lastError : lastError;
+  } catch (e) {
+    lastError = (e as Error)?.message || lastError;
+  }
+
+  if (rejected && !lastError) lastError = "XVERSE CONNECT REJECTED";
+  throw new Error(
+    (lastError || "XVERSE CONNECT FAILED — UNLOCK THE WALLET AND APPROVE THE POPUP").toUpperCase(),
+  );
 }
 
 /** Sign a base64 PSBT with the connected wallet. Returns a base64 PSBT. */
