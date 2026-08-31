@@ -105,6 +105,33 @@ async function fetchIndexedClaimRows(limit: number, block?: number): Promise<Cla
   });
 }
 
+type OpenListing = { offerId: string; priceSats: number; buyerAddress: string | null };
+
+/**
+ * Cheapest open PSBT offer per height. These are real signed seller
+ * transactions in the offer book, so they are the live asking prices.
+ */
+async function fetchOpenListings(heights: number[]): Promise<Map<number, OpenListing>> {
+  const map = new Map<number, OpenListing>();
+  if (heights.length === 0) return map;
+  const { data, error } = await supabase
+    .from("offers")
+    .select("id, bitmap_height, price_sats, buyer_address")
+    .eq("status", "open")
+    .in("bitmap_height", heights.slice(0, 400));
+  if (error) return map;
+  for (const row of data ?? []) {
+    const height = row.bitmap_height;
+    if (height === null) continue;
+    const priceSats = Number(row.price_sats ?? 0);
+    const current = map.get(height);
+    if (!current || priceSats < current.priceSats) {
+      map.set(height, { offerId: row.id, priceSats, buyerAddress: row.buyer_address ?? null });
+    }
+  }
+  return map;
+}
+
 /** Union of extractor-indexed claims and OCI-resolved claims. */
 async function fetchAllClaimRows(limit: number, block?: number): Promise<ClaimRow[]> {
   const [decoded, indexed] = await Promise.all([
