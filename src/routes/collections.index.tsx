@@ -61,9 +61,17 @@ function CollectionsIndex() {
               </div>
 
               <div className="mt-4 border border-border p-3">
-                <BlockMosaic height={club.min} />
+                {club.future ? (
+                  <div className="flex aspect-square items-center justify-center border border-dashed border-border">
+                    <span className="label text-muted-foreground">NOT MINED YET</span>
+                  </div>
+                ) : (
+                  <BlockMosaic height={club.min} />
+                )}
                 <div className="label mt-2">
-                  SAMPLE {club.min.toLocaleString("en-US")}.BITMAP
+                  {club.future
+                    ? "NO SAMPLE AVAILABLE"
+                    : `SAMPLE ${club.min.toLocaleString("en-US")}.BITMAP`}
                 </div>
               </div>
 
