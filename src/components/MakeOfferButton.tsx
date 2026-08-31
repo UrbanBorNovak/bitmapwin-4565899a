@@ -32,19 +32,25 @@ export function MakeOfferButton({
   topBidSats = null,
   className = "btn-term-ghost !px-2 !py-2",
   label = "MAKE OFFER",
+  defaultAmountSats = null,
+  initialNote = "",
 }: {
   height: number;
   askSats?: number | null;
   topBidSats?: number | null;
   className?: string;
   label?: string;
+  defaultAmountSats?: number | null;
+  initialNote?: string;
 }) {
   const wallet = useWalletSession();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(() =>
+    defaultAmountSats && defaultAmountSats > 0 ? String(defaultAmountSats) : "",
+  );
   const [unit, setUnit] = useState<"sats" | "btc">("sats");
-  const [note, setNote] = useState("");
+  const [note, setNote] = useState(initialNote);
   const [expiry, setExpiry] = useState(EXPIRY[1]!.hours);
 
   const priceSats = useMemo(() => {
