@@ -2,6 +2,7 @@ import {
   AddressPurpose,
   getProviders,
   request as requestSatsConnect,
+  type SignPsbtParams,
 } from "sats-connect";
 
 export type WalletProviderId = "unisat" | "xverse";
@@ -202,14 +203,10 @@ async function requestXverseAddresses(providerId: string): Promise<XverseAccount
  * resolve never at all in current Xverse builds, which looks like "nothing
  * happens" in the UI.
  */
-async function xverseSignPsbt(params: Record<string, unknown>): Promise<string> {
+async function xverseSignPsbt(params: SignPsbtParams): Promise<string> {
   const providerId = getXverseProviderId();
   if (!providerId) throw new Error("XVERSE NOT DETECTED — INSTALL OR ENABLE THE EXTENSION");
-  const res = (await requestSatsConnect(
-    "signPsbt" as never,
-    params as never,
-    providerId,
-  )) as { status: "success"; result: unknown } | { status: "error"; error: { code?: unknown; message?: string } };
+  const res = await requestSatsConnect("signPsbt", params, providerId);
   if (res.status !== "success") {
     throw new Error(describeXverseSignError(res.error));
   }
