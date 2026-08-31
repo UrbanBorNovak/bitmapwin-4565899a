@@ -1,5 +1,8 @@
+import { useQuery } from "@tanstack/react-query";
 import { inscriptionImageUrl } from "@/lib/profiles";
 import { formatSats } from "@/lib/trades";
+import { inscriptionOffersQuery } from "@/lib/offers";
+import { BuyButton } from "@/components/BuyButton";
 import type { ShopConfig } from "@/lib/build-sdk";
 
 /**
@@ -19,6 +22,13 @@ export function ShopBuild({ config, height }: { config: ShopConfig; height: numb
 
   const forSale = config.items.filter((i) => !i.sold);
   const floor = forSale.filter((i) => i.priceSats > 0).map((i) => i.priceSats);
+
+  // Live sale PSBTs the holder published for these inscriptions — one per asset.
+  const ids = config.items.filter((i) => !i.sold).map((i) => i.inscriptionId).filter(Boolean);
+  const offers = useQuery({ ...inscriptionOffersQuery(ids), enabled: ids.length > 0 });
+  const offerFor = (inscriptionId: string) =>
+    (offers.data ?? []).find((o) => o.inscriptionId === inscriptionId) ?? null;
+
 
   return (
     <div className="space-y-4">
@@ -78,6 +88,22 @@ export function ShopBuild({ config, height }: { config: ShopConfig; height: numb
                 ) : null}
               </div>
               <PriceTag item={item} accent={accent} />
+              {(() => {
+                const offer = item.sold ? null : offerFor(item.inscriptionId);
+                if (offer) {
+                  return <BuyButton offerId={offer.id} priceSats={offer.priceSats} />;
+                }
+                return !item.sold && config.contactUrl ? (
+                  <a
+                    href={config.contactUrl}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="label border border-border px-2 py-1 hover:border-primary hover:text-primary"
+                  >
+                    [ ASK ]
+                  </a>
+                ) : null;
+              })()}
             </div>
           ))}
         </div>
@@ -104,16 +130,22 @@ export function ShopBuild({ config, height }: { config: ShopConfig; height: numb
               ) : null}
               <div className="mt-2 flex items-center justify-between gap-2">
                 <PriceTag item={item} accent={accent} />
-                {!item.sold && config.contactUrl ? (
-                  <a
-                    href={config.contactUrl}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="label border border-border px-2 py-1 hover:border-primary hover:text-primary"
-                  >
-                    [ BUY ]
-                  </a>
-                ) : null}
+                {(() => {
+                  const offer = item.sold ? null : offerFor(item.inscriptionId);
+                  if (offer) {
+                    return <BuyButton offerId={offer.id} priceSats={offer.priceSats} />;
+                  }
+                  return !item.sold && config.contactUrl ? (
+                    <a
+                      href={config.contactUrl}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="label border border-border px-2 py-1 hover:border-primary hover:text-primary"
+                    >
+                      [ ASK ]
+                    </a>
+                  ) : null;
+                })()}
               </div>
             </div>
           ))}
@@ -121,7 +153,8 @@ export function ShopBuild({ config, height }: { config: ShopConfig; height: numb
       )}
 
       <p className="label text-muted-foreground">
-        &gt; PRICES SET BY THE HOLDER — SETTLE DIRECTLY WITH THE SELLER_
+        &gt; PRICES SET BY THE HOLDER — ASSETS WITH A SIGNED PSBT BUY ON-CHAIN INSTANTLY, THE REST
+        SETTLE DIRECTLY WITH THE SELLER_
       </p>
     </div>
   );
