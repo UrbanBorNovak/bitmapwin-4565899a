@@ -196,6 +196,31 @@ async function requestXverseAddresses(providerId: string): Promise<XverseAccount
   }
 }
 
+/**
+ * Signs a PSBT through Sats Connect (the API Xverse actually implements) and
+ * returns the base64 result. Raw `window.BitcoinProvider.request` calls can
+ * resolve never at all in current Xverse builds, which looks like "nothing
+ * happens" in the UI.
+ */
+async function xverseSignPsbt(params: Record<string, unknown>): Promise<string> {
+  const providerId = getXverseProviderId();
+  if (!providerId) throw new Error("XVERSE NOT DETECTED — INSTALL OR ENABLE THE EXTENSION");
+  const res = await requestSatsConnect<any, any>("signPsbt" as never, params as never, providerId);
+  if (res.status !== "success") {
+    throw new Error(describeXverseSignError(res.error));
+  }
+  const result = res.result as unknown;
+  const signed =
+    typeof result === "string"
+      ? result
+      : (result as { psbt?: string; psbtBase64?: string })?.psbt ??
+        (result as { psbtBase64?: string })?.psbtBase64;
+  if (typeof signed !== "string" || signed.length < 20) {
+    throw new Error("XVERSE RETURNED NO SIGNED PSBT");
+  }
+  return signed;
+}
+
 /** Sign a base64 PSBT with the connected wallet. Returns a base64 PSBT. */
 export async function signPsbtBase64(
   provider: WalletProviderId,
@@ -208,13 +233,7 @@ export async function signPsbtBase64(
     const signedHex = await unisat.signPsbt(hex);
     return hexToBase64(signedHex);
   }
-  const xverse = getXverse();
-  if (!xverse) throw new Error("XVERSE NOT DETECTED");
-  const res = await xverse.request<{ psbt: string }>("signPsbt", { psbt: psbtBase64 });
-  if (res.status !== "success") {
-    throw new Error(describeXverseSignError(res.error));
-  }
-  return res.result.psbt;
+  return xverseSignPsbt({ psbt: psbtBase64, broadcast: false });
 }
 
 const SIGHASH_SINGLE_ANYONECANPAY = 0x83;
@@ -243,25 +262,15 @@ export async function signListingPsbt(
     }
     return /^[0-9a-fA-F]+$/.test(signedHex.trim()) ? hexToBase64(signedHex) : signedHex.trim();
   }
-  const xverse = getXverse();
-  if (!xverse) throw new Error("XVERSE NOT DETECTED");
   // Xverse refuses non-default sighash flags unless they are declared up front.
-  const res = await xverse.request<{ psbt?: string; psbtBase64?: string }>("signPsbt", {
+  return xverseSignPsbt({
     psbt: psbtBase64,
     signInputs: { [sellerAddress]: [0] },
     allowedSignHash: SIGHASH_SINGLE_ANYONECANPAY,
     broadcast: false,
   });
-  if (res.status !== "success") {
-    throw new Error(describeXverseSignError(res.error));
-  }
-  const signed =
-    typeof res.result === "string" ? res.result : res.result?.psbt ?? res.result?.psbtBase64;
-  if (typeof signed !== "string" || signed.length < 20) {
-    throw new Error("XVERSE RETURNED NO SIGNED PSBT");
-  }
-  return signed;
 }
+
 
 /** Human-readable Xverse signing failure, keeping the provider's own code. */
 function describeXverseSignError(error?: { code?: unknown; message?: string }): string {
