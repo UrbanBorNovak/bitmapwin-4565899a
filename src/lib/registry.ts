@@ -178,21 +178,35 @@ async function withDeadline<T>(promise: Promise<T>, ms: number, fallback: T): Pr
   }
 }
 
-async function buildParcels(rows: ClaimRow[]): Promise<RegistryParcel[]> {
+type OwnerRow = { txid: string; address: string | null; transfers: number };
+
+/**
+ * Builds the read model. `resolveOwners: false` skips the chain hop-following
+ * lookup entirely, so the list renders from database reads only — the page then
+ * resolves holders for the visible page with `fetchParcelOwners`.
+ */
+async function buildParcels(
+  rows: ClaimRow[],
+  options: { resolveOwners?: boolean } = {},
+): Promise<RegistryParcel[]> {
   const claims = dedupeClaims(rows);
   if (claims.length === 0) return [];
+  const resolveOwners = options.resolveOwners !== false;
 
   const heights = claims.map((c) => c.row.bitmap_height!);
   const [trades, owners, listings] = await Promise.all([
     withDeadline(fetchTradesForHeights(heights), 8_000, [] as TradeRow[]),
-    withDeadline(
-      getBitmapOwners({ data: { txids: claims.slice(0, 24).map((c) => c.row.txid) } }),
-      12_000,
-      [] as Array<{ txid: string; address: string | null; transfers: number }>,
-    ),
+    resolveOwners
+      ? withDeadline(
+          getBitmapOwners({ data: { txids: claims.slice(0, 24).map((c) => c.row.txid) } }),
+          12_000,
+          [] as OwnerRow[],
+        )
+      : Promise.resolve([] as OwnerRow[]),
     withDeadline(fetchOpenListings(heights), 8_000, new Map<number, OpenListing>()),
   ]);
   const ownerByTxid = new Map(owners.map((o) => [o.txid, o]));
+
   const tradeCount = new Map<number, number>();
   for (const row of trades) {
     tradeCount.set(row.bitmap_height, (tradeCount.get(row.bitmap_height) ?? 0) + 1);
