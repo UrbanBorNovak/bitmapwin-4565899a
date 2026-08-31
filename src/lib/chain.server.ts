@@ -4,6 +4,19 @@ const MEMPOOL = "https://mempool.space/api";
 const ORD = "https://ordinals.com";
 const ESPLORA = "https://blockstream.info/api";
 
+/** Community mirrors used when the primary indexers throttle us (HTTP 429). */
+const MEMPOOL_MIRRORS = [
+  "https://mempool.space/api",
+  "https://mempool.emzy.de/api",
+  "https://mempool.bitaroo.net/api",
+];
+const ESPLORA_MIRRORS = ["https://blockstream.info/api", "https://mempool.emzy.de/api"];
+
+/** Block headers are immutable once mined, so a short process cache is safe. */
+const BLOCKS_TTL_MS = 30_000;
+let blocksCache: { key: string; at: number; value: MempoolBlock[] } | null = null;
+let blocksInflight: { key: string; promise: Promise<MempoolBlock[]> } | null = null;
+
 /** Max inscriptions per block we read the content (hex) of while hunting bitmaps. */
 const MAX_SCAN_PER_BLOCK = 120;
 
