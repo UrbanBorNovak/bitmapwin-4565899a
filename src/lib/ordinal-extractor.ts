@@ -191,7 +191,7 @@ function tokenize(script: Uint8Array): Token[] | null {
   const result: Token[] = [];
   let i = 0;
   while (i < script.length) {
-    const opcode = script[i++];
+    const opcode = script[i++]!;
     let length: number;
 
     if (opcode <= 75) {
