@@ -2,9 +2,17 @@ import { Link } from "@tanstack/react-router";
 import { BitmapPixelMap } from "@/components/BitmapPixelMap";
 import { formatBytes, shortId, timeAgoFromUnix, type ChainBlock } from "@/lib/chain";
 
+const STATUS_LABEL: Record<ChainBlock["bitmapStatus"], string> = {
+  valid: "VALID BITMAP",
+  unclaimed: "UNCLAIMED",
+  unknown: "UNVERIFIED",
+};
+
 export function ChainBlockCard({ block }: { block: ChainBlock }) {
   const count = block.inscriptionCount;
   const countLabel = `${count}${block.inscriptionCountIsMinimum ? "+" : ""}`;
+  const status = block.bitmapStatus;
+  const otherClaims = block.bitmapClaims.filter((c) => c.claimedHeight !== block.height);
 
   return (
     <article className="group border border-border bg-card transition-[border-color,transform] duration-150 hover:border-foreground hover:-translate-y-0.5">
@@ -17,7 +25,18 @@ export function ChainBlockCard({ block }: { block: ChainBlock }) {
       </Link>
 
       <div className="p-3">
-        <div className="display text-sm">{block.height}.bitmap</div>
+        <div className="flex items-start justify-between gap-2">
+          <div className="display text-sm">{block.height}.bitmap</div>
+          <span
+            className={
+              status === "valid"
+                ? "border border-foreground bg-foreground px-1.5 py-0.5 font-mono text-[9px] text-background"
+                : "border border-border px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground"
+            }
+          >
+            {STATUS_LABEL[status]}
+          </span>
+        </div>
         <div className="label mt-1">{timeAgoFromUnix(block.timestamp)}</div>
 
         <dl className="mt-3 space-y-1 text-[11px]">
@@ -28,18 +47,31 @@ export function ChainBlockCard({ block }: { block: ChainBlock }) {
           <Row k="HASH" v={shortId(block.hash)} />
         </dl>
 
-        {block.sampleInscriptions.length > 0 && (
+        {status === "valid" && block.bitmapInscriptionId && (
+          <div className="mt-3 border-t border-border pt-3 font-mono text-[10px] text-muted-foreground">
+            <div className="label">FIRST TXT INSCRIPTION</div>
+            <a
+              href={`https://ordinals.com/inscription/${block.bitmapInscriptionId}`}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1 block truncate text-foreground hover:underline"
+            >
+              &gt; {shortId(block.bitmapInscriptionId)}
+            </a>
+            <div className="mt-1">
+              INSCRIBED IN BLOCK {block.bitmapInscribedInBlock}
+              {block.bitmapInscribedInBlock === block.height ? " (SAME BLOCK)" : ""}
+            </div>
+          </div>
+        )}
+
+        {otherClaims.length > 0 && (
           <ul className="mt-3 space-y-1 border-t border-border pt-3 font-mono text-[10px] text-muted-foreground">
-            {block.sampleInscriptions.map((id) => (
-              <li key={id} className="truncate">
-                <a
-                  href={`https://ordinals.com/inscription/${id}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-foreground hover:underline"
-                >
-                  &gt; {shortId(id)}
-                </a>
+            <li className="label">CLAIMS IN THIS BLOCK</li>
+            {otherClaims.slice(0, 4).map((c) => (
+              <li key={c.inscriptionId} className="truncate">
+                &gt; {c.claimedHeight}.bitmap{" "}
+                {c.valid === true ? "· VALID" : c.valid === false ? "· INVALID (DUPLICATE)" : "· UNVERIFIED"}
               </li>
             ))}
           </ul>

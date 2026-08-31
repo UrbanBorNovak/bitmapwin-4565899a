@@ -6,7 +6,7 @@ import { ChainBlockCard } from "@/components/ChainBlockCard";
 import { getChainBlocks } from "@/lib/chain.functions";
 import type { ChainBlock } from "@/lib/chain";
 
-type Filter = "ALL" | "WITH INSCRIPTIONS" | "NO INSCRIPTIONS";
+type Filter = "ALL" | "VALID BITMAPS" | "UNCLAIMED" | "WITH INSCRIPTIONS" | "NO INSCRIPTIONS";
 type Sort = "NEWEST" | "OLDEST" | "MOST INSCRIPTIONS" | "MOST TXS";
 
 export const Route = createFileRoute("/explore")({
@@ -36,7 +36,13 @@ export const Route = createFileRoute("/explore")({
   component: Explore,
 });
 
-const FILTERS: Filter[] = ["ALL", "WITH INSCRIPTIONS", "NO INSCRIPTIONS"];
+const FILTERS: Filter[] = [
+  "ALL",
+  "VALID BITMAPS",
+  "UNCLAIMED",
+  "WITH INSCRIPTIONS",
+  "NO INSCRIPTIONS",
+];
 const SORTS: Sort[] = ["NEWEST", "OLDEST", "MOST INSCRIPTIONS", "MOST TXS"];
 
 function Explore() {
@@ -61,12 +67,15 @@ function Explore() {
     const out: ChainBlock[] = blocks.filter((b) => {
       if (filter === "WITH INSCRIPTIONS" && b.inscriptionCount === 0) return false;
       if (filter === "NO INSCRIPTIONS" && b.inscriptionCount > 0) return false;
+      if (filter === "VALID BITMAPS" && b.bitmapStatus !== "valid") return false;
+      if (filter === "UNCLAIMED" && b.bitmapStatus === "valid") return false;
       if (!needle) return true;
       return (
         String(b.height).includes(needle) ||
         b.hash.toLowerCase().includes(needle) ||
         (b.miner ?? "").toLowerCase().includes(needle) ||
-        b.sampleInscriptions.some((id) => id.toLowerCase().includes(needle))
+        b.sampleInscriptions.some((id) => id.toLowerCase().includes(needle)) ||
+        (b.bitmapInscriptionId ?? "").toLowerCase().includes(needle)
       );
     });
     return [...out].sort((a, b) => {
@@ -84,6 +93,7 @@ function Explore() {
   }, [blocks, term, filter, sort]);
 
   const totalInscriptions = blocks.reduce((sum, b) => sum + b.inscriptionCount, 0);
+  const validBitmaps = blocks.filter((b) => b.bitmapStatus === "valid").length;
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-12 md:px-8">
@@ -91,7 +101,11 @@ function Explore() {
       <p className="label mt-3">
         {isPending
           ? "SYNCING CHAIN..."
-          : `${rows.length} BLOCKS · ${totalInscriptions.toLocaleString("en-US")} INSCRIPTIONS · LIVE FROM MEMPOOL.SPACE + ORDINALS.COM`}
+          : `${rows.length} BLOCKS · ${validBitmaps} VALID BITMAPS · ${totalInscriptions.toLocaleString("en-US")} INSCRIPTIONS · LIVE FROM MEMPOOL.SPACE + ORDINALS.COM`}
+      </p>
+      <p className="mt-2 font-mono text-[11px] text-muted-foreground">
+        &gt; BITMAP THEORY: A BLOCK&apos;S BITMAP IS THE FIRST PLAIN-TEXT
+        &nbsp;&lt;HEIGHT&gt;.BITMAP&nbsp; INSCRIPTION EVER MADE. LATER DUPLICATES ARE INVALID.
       </p>
 
       <div className="mt-8 border border-border">
