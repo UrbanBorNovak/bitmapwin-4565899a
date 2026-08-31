@@ -1,8 +1,19 @@
 import type { BitmapClaim, ChainBlock } from "@/lib/chain";
 
-const MEMPOOL = "https://mempool.space/api";
 const ORD = "https://ordinals.com";
-const ESPLORA = "https://blockstream.info/api";
+
+/** Community mirrors used when the primary indexers throttle us (HTTP 429). */
+const MEMPOOL_MIRRORS = [
+  "https://mempool.space/api",
+  "https://mempool.emzy.de/api",
+  "https://mempool.bitaroo.net/api",
+];
+const ESPLORA_MIRRORS = ["https://blockstream.info/api", "https://mempool.emzy.de/api"];
+
+/** Block headers are immutable once mined, so a short process cache is safe. */
+const BLOCKS_TTL_MS = 30_000;
+let blocksCache: { key: string; at: number; value: MempoolBlock[] } | null = null;
+let blocksInflight: { key: string; promise: Promise<MempoolBlock[]> } | null = null;
 
 /** Max inscriptions per block we read the content (hex) of while hunting bitmaps. */
 const MAX_SCAN_PER_BLOCK = 120;
@@ -54,14 +65,14 @@ async function getJson<T>(url: string, attempts = 3, timeoutMs = 12000): Promise
 /** Block-header reads: fail fast so the Esplora fallback kicks in quickly. */
 const getJsonFast = <T,>(url: string) => getJson<T>(url, 1, 6000);
 
-/** Latest blocks from the mempool.space REST API (15 per page). */
-async function fetchBlockPages(pages: number): Promise<MempoolBlock[]> {
-  const first = await getJsonFast<MempoolBlock[]>(`${MEMPOOL}/v1/blocks`);
+/** Latest blocks from a mempool.space-compatible REST API (15 per page). */
+async function fetchBlockPages(base: string, pages: number): Promise<MempoolBlock[]> {
+  const first = await getJsonFast<MempoolBlock[]>(`${base}/v1/blocks`);
   const out = [...first];
   for (let i = 1; i < pages; i++) {
     const next = out[out.length - 1];
     if (!next) break;
-    const page = await getJsonFast<MempoolBlock[]>(`${MEMPOOL}/v1/blocks/${next.height - 1}`);
+    const page = await getJsonFast<MempoolBlock[]>(`${base}/v1/blocks/${next.height - 1}`);
     if (page.length === 0) break;
     out.push(...page);
   }
@@ -69,15 +80,15 @@ async function fetchBlockPages(pages: number): Promise<MempoolBlock[]> {
 }
 
 /** Esplora fallback (10 blocks per page, no pool/fee extras). */
-async function fetchBlockPagesEsplora(pages: number): Promise<MempoolBlock[]> {
+async function fetchBlockPagesEsplora(base: string, pages: number): Promise<MempoolBlock[]> {
   const tip = Number(
-    (await (await fetchWithRetry(`${ESPLORA}/blocks/tip/height`, "text/plain", 2, 8000)).text()).trim(),
+    (await (await fetchWithRetry(`${base}/blocks/tip/height`, "text/plain", 2, 8000)).text()).trim(),
   );
   if (!Number.isFinite(tip)) throw new Error("esplora tip height unavailable");
   const out: MempoolBlock[] = [];
   let cursor = tip;
   for (let i = 0; i < pages && cursor >= 0; i++) {
-    const page = await getJson<MempoolBlock[]>(`${ESPLORA}/blocks/${cursor}`, 2, 8000);
+    const page = await getJson<MempoolBlock[]>(`${base}/blocks/${cursor}`, 2, 8000);
     if (page.length === 0) break;
     out.push(...page);
     cursor = (page[page.length - 1]?.height ?? 0) - 1;
@@ -85,12 +96,54 @@ async function fetchBlockPagesEsplora(pages: number): Promise<MempoolBlock[]> {
   return out;
 }
 
-async function fetchRecentBlocks(pages: number): Promise<MempoolBlock[]> {
-  try {
-    return await fetchBlockPages(pages);
-  } catch {
-    return await fetchBlockPagesEsplora(Math.max(2, Math.ceil((pages * 15) / 10)));
+/**
+ * Walks every known provider before giving up: public indexers rate-limit
+ * (HTTP 429) aggressively, and a single throttled mirror must not blank the page.
+ */
+async function fetchRecentBlocksUncached(pages: number): Promise<MempoolBlock[]> {
+  const esploraPages = Math.max(2, Math.ceil((pages * 15) / 10));
+  let lastError: unknown;
+  for (const base of MEMPOOL_MIRRORS) {
+    try {
+      const blocks = await fetchBlockPages(base, pages);
+      if (blocks.length > 0) return blocks;
+    } catch (error) {
+      lastError = error;
+    }
   }
+  for (const base of ESPLORA_MIRRORS) {
+    try {
+      const blocks = await fetchBlockPagesEsplora(base, esploraPages);
+      if (blocks.length > 0) return blocks;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  // Prefer stale-but-real cached headers over failing the whole request.
+  if (blocksCache) return blocksCache.value;
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("no block header provider available (all rate-limited)");
+}
+
+async function fetchRecentBlocks(pages: number): Promise<MempoolBlock[]> {
+  const key = String(pages);
+  const now = Date.now();
+  if (blocksCache && blocksCache.key === key && now - blocksCache.at < BLOCKS_TTL_MS) {
+    return blocksCache.value;
+  }
+  if (blocksInflight && blocksInflight.key === key) return blocksInflight.promise;
+
+  const promise = fetchRecentBlocksUncached(pages)
+    .then((value) => {
+      blocksCache = { key, at: Date.now(), value };
+      return value;
+    })
+    .finally(() => {
+      if (blocksInflight?.promise === promise) blocksInflight = null;
+    });
+  blocksInflight = { key, promise };
+  return promise;
 }
 
 /** Inscription ids committed in a block, in inscription order. */
