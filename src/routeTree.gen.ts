@@ -24,6 +24,7 @@ import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
 import { Route as CollectionsClubRouteImport } from './routes/collections.$club'
+import { Route as DistrictSlugRouteImport } from './routes/district.$slug'
 import { Route as ProfileAddressRouteImport } from './routes/profile.$address'
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
@@ -105,6 +106,11 @@ const CollectionsClubRoute = CollectionsClubRouteImport.update({
   path: '/$club',
   getParentRoute: () => CollectionsRoute,
 } as any)
+const DistrictSlugRoute = DistrictSlugRouteImport.update({
+  id: '/district/$slug',
+  path: '/district/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileAddressRoute = ProfileAddressRouteImport.update({
   id: '/profile/$address',
   path: '/profile/$address',
@@ -147,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/collections/$club': typeof CollectionsClubRoute
+  '/district/$slug': typeof DistrictSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections/': typeof CollectionsIndexRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
@@ -168,6 +175,7 @@ export interface FileRoutesByTo {
   '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/collections/$club': typeof CollectionsClubRoute
+  '/district/$slug': typeof DistrictSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections': typeof CollectionsIndexRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
@@ -191,6 +199,7 @@ export interface FileRoutesById {
   '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/collections/$club': typeof CollectionsClubRoute
+  '/district/$slug': typeof DistrictSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections/': typeof CollectionsIndexRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
@@ -215,6 +224,7 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/bitmap/$block'
     | '/collections/$club'
+    | '/district/$slug'
     | '/profile/$address'
     | '/collections/'
     | '/api/public/offer'
@@ -236,6 +246,7 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/bitmap/$block'
     | '/collections/$club'
+    | '/district/$slug'
     | '/profile/$address'
     | '/collections'
     | '/api/public/offer'
@@ -258,6 +269,7 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/bitmap/$block'
     | '/collections/$club'
+    | '/district/$slug'
     | '/profile/$address'
     | '/collections/'
     | '/api/public/offer'
@@ -280,6 +292,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   WalletRoute: typeof WalletRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
+  DistrictSlugRoute: typeof DistrictSlugRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
   ApiPublicOfferRoute: typeof ApiPublicOfferRoute
   ApiPublicOffersRoute: typeof ApiPublicOffersRoute
@@ -393,6 +406,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CollectionsClubRouteImport
       parentRoute: typeof CollectionsRoute
     }
+    '/district/$slug': {
+      id: '/district/$slug'
+      path: '/district/$slug'
+      fullPath: '/district/$slug'
+      preLoaderRoute: typeof DistrictSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile/$address': {
       id: '/profile/$address'
       path: '/profile/$address'
@@ -472,6 +492,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   WalletRoute: WalletRoute,
   BitmapBlockRoute: BitmapBlockRoute,
+  DistrictSlugRoute: DistrictSlugRoute,
   ProfileAddressRoute: ProfileAddressRoute,
   ApiPublicOfferRoute: ApiPublicOfferRoute,
   ApiPublicOffersRoute: ApiPublicOffersRoute,
