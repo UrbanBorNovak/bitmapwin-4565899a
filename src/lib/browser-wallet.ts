@@ -37,14 +37,19 @@ type XverseRequest = <T = unknown>(
 
 type XverseProvider = { request: XverseRequest };
 
+type BtcProviderEntry = { id?: string; name?: string };
+
 type WindowWithWallets = Window & {
   unisat?: UnisatProvider;
   XverseProviders?: { BitcoinProvider?: XverseProvider };
   BitcoinProvider?: XverseProvider;
+  /** WBIP-004 provider registry — several wallets register here. */
+  btc_providers?: BtcProviderEntry[];
+  [key: string]: unknown;
 };
 
 function w(): WindowWithWallets {
-  return window as WindowWithWallets;
+  return window as unknown as WindowWithWallets;
 }
 
 export function getUnisat(): UnisatProvider | null {
@@ -52,9 +57,32 @@ export function getUnisat(): UnisatProvider | null {
   return w().unisat ?? null;
 }
 
+function isRequestProvider(value: unknown): value is XverseProvider {
+  return typeof (value as XverseProvider | undefined)?.request === "function";
+}
+
+/**
+ * Resolves the Xverse provider. Other Bitcoin wallets (Trust, OKX, Leather)
+ * also claim `window.BitcoinProvider`, so prefer Xverse's own namespace and the
+ * WBIP-004 registry, and only fall back to the shared global last.
+ */
 export function getXverse(): XverseProvider | null {
   if (typeof window === "undefined") return null;
-  return w().XverseProviders?.BitcoinProvider ?? w().BitcoinProvider ?? null;
+  const win = w();
+  if (isRequestProvider(win.XverseProviders?.BitcoinProvider)) {
+    return win.XverseProviders!.BitcoinProvider!;
+  }
+  const registry = Array.isArray(win.btc_providers) ? win.btc_providers : [];
+  const entry = registry.find((p) =>
+    `${p?.id ?? ""} ${p?.name ?? ""}`.toLowerCase().includes("xverse"),
+  );
+  if (entry?.id) {
+    const path = entry.id.split(".");
+    let node: unknown = win;
+    for (const key of path) node = (node as Record<string, unknown> | undefined)?.[key];
+    if (isRequestProvider(node)) return node;
+  }
+  return isRequestProvider(win.BitcoinProvider) ? win.BitcoinProvider : null;
 }
 
 export function isWalletInstalled(provider: WalletProviderId): boolean {
@@ -137,22 +165,26 @@ async function requestXverseAddresses(xverse: XverseProvider): Promise<XverseAcc
 
   let lastError = "";
   let rejected = false;
+  const trace: string[] = [];
   for (const attempt of attempts) {
     try {
       const res = await xverse.request(attempt.method, attempt.params);
       if (res?.status === "success") {
         const accounts = normalizeXverseAddresses(res.result);
         if (accounts.length > 0) return accounts;
+        trace.push(`${attempt.method}: ok but no addresses`);
         lastError = "XVERSE RETURNED NO ADDRESSES";
         continue;
       }
-      const msg = res?.error?.message ?? "";
+      const msg = res?.error?.message ?? "no response";
+      trace.push(`${attempt.method}: ${msg}`);
       // Older builds answer unsupported methods with a generic "rejected", so
       // note it and keep trying instead of aborting the whole connect.
       if (/reject|denied|cancel/i.test(msg)) rejected = true;
-      lastError = msg || lastError;
+      lastError = res?.error?.message || lastError;
     } catch (e) {
-      const msg = (e as Error)?.message ?? "";
+      const msg = (e as Error)?.message ?? "threw";
+      trace.push(`${attempt.method}: ${msg}`);
       if (/reject|denied|cancel/i.test(msg)) rejected = true;
       lastError = msg || lastError;
     }
@@ -166,11 +198,14 @@ async function requestXverseAddresses(xverse: XverseProvider): Promise<XverseAcc
       const accounts = normalizeXverseAddresses(res.result);
       if (accounts.length > 0) return accounts;
     }
+    trace.push(`wallet_requestPermissions: ${res?.status ?? "no response"}`);
     lastError = res?.status === "error" ? res.error?.message ?? lastError : lastError;
   } catch (e) {
+    trace.push(`wallet_requestPermissions: ${(e as Error)?.message ?? "threw"}`);
     lastError = (e as Error)?.message || lastError;
   }
 
+  console.error("[xverse] connect attempts", trace);
   if (rejected && !lastError) lastError = "XVERSE CONNECT REJECTED";
   throw new Error(
     (lastError || "XVERSE CONNECT FAILED — UNLOCK THE WALLET AND APPROVE THE POPUP").toUpperCase(),
