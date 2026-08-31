@@ -24,6 +24,7 @@ import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
 import { WalletConnect } from "@/components/WalletConnect";
 import { WalletBids } from "@/components/WalletBids";
+import { QuickListForm } from "@/components/QuickListForm";
 import { useBidInbox } from "@/lib/use-bid-inbox";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { useWalletSession, walletControls } from "@/lib/wallet-session";
@@ -94,6 +95,7 @@ function WalletPage() {
   const [input, setInput] = useState("");
   const [address, setAddress] = useState("");
   const [connected, setConnected] = useState<ConnectedWallet | null>(null);
+  const [listOpen, setListOpen] = useState(false);
   const sessionWallet = useWalletSession();
   const { session } = useAuthSession();
   const links = useQuery(myWalletLinksQuery(Boolean(session)));
