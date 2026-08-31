@@ -41,8 +41,8 @@ export async function confirmChallenge(input: {
   userId: string;
   nonce: string;
   signature: string;
-  publicKey?: string;
-  purpose?: string;
+  publicKey?: string | undefined;
+  purpose?: string | undefined;
 }): Promise<{ address: string; claimedProfile: boolean }> {
   const supabase = await admin();
 
