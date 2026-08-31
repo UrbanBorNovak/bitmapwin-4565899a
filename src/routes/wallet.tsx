@@ -27,6 +27,9 @@ import { WalletBids } from "@/components/WalletBids";
 import { useBidInbox } from "@/lib/use-bid-inbox";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { walletControls } from "@/lib/wallet-session";
+import { WalletLinkPanel } from "@/components/WalletLinkPanel";
+import { useAuthSession } from "@/lib/auth";
+import { isLinked, myWalletLinksQuery } from "@/lib/wallet-links";
 
 
 
@@ -56,6 +59,8 @@ function WalletPage() {
   const [input, setInput] = useState("");
   const [address, setAddress] = useState("");
   const [connected, setConnected] = useState<ConnectedWallet | null>(null);
+  const { session } = useAuthSession();
+  const links = useQuery(myWalletLinksQuery(Boolean(session)));
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -159,6 +164,8 @@ function WalletPage() {
         }}
       />
 
+      <WalletLinkPanel wallet={connected} address={address} />
+
 
       {address === "" ? (
         <p className="mt-10 font-mono text-xs text-muted-foreground">
@@ -178,7 +185,7 @@ function WalletPage() {
 
           <ProfileEditor
             address={address}
-            canEdit={walletControls(connected, address)}
+            canEdit={walletControls(connected, address) && isLinked(links.data, address)}
             inscriptionIds={ownedInscriptionIds}
           />
 
