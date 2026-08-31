@@ -308,23 +308,13 @@ export async function signPurchasePsbt(
     }
     return /^[0-9a-fA-F]+$/.test(signed.trim()) ? hexToBase64(signed) : signed.trim();
   }
-  const xverse = getXverse();
-  if (!xverse) throw new Error("XVERSE NOT DETECTED");
-  const res = await xverse.request<{ psbt?: string; psbtBase64?: string }>("signPsbt", {
+  return xverseSignPsbt({
     psbt: psbtBase64,
     signInputs: { [buyerPaymentAddress]: signIndices },
     broadcast: false,
   });
-  if (res.status !== "success") {
-    throw new Error(describeXverseSignError(res.error));
-  }
-  const signed =
-    typeof res.result === "string" ? res.result : res.result?.psbt ?? res.result?.psbtBase64;
-  if (typeof signed !== "string" || signed.length < 20) {
-    throw new Error("XVERSE RETURNED NO SIGNED PSBT");
-  }
-  return signed;
 }
+
 
 
 
