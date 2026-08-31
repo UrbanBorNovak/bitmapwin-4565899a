@@ -36,9 +36,11 @@ type UnisatProvider = {
   getAccounts: () => Promise<string[]>;
   getPublicKey: () => Promise<string>;
   signPsbt: (psbtHex: string, options?: unknown) => Promise<string>;
+  signMessage?: (message: string, type?: string) => Promise<string>;
   on?: (event: string, handler: (...args: unknown[]) => void) => void;
   removeListener?: (event: string, handler: (...args: unknown[]) => void) => void;
 };
+
 
 type XverseRequest = <T = unknown>(
   method: string,
@@ -242,6 +244,35 @@ export async function signPsbtBase64(
   }
   return xverseSignPsbt({ psbt: psbtBase64, broadcast: false });
 }
+
+/**
+ * Signs a plain message (BIP-322 where the wallet supports it) so a bid can be
+ * attributed to the wallet that placed it. The signature is stored with the bid
+ * as proof of authorship.
+ */
+export async function signMessageWithWallet(
+  provider: WalletProviderId,
+  address: string,
+  message: string,
+): Promise<string> {
+  if (provider === "unisat") {
+    const unisat = getUnisat();
+    if (!unisat?.signMessage) throw new Error("UNISAT CANNOT SIGN MESSAGES");
+    return unisat.signMessage(message, "bip322-simple");
+  }
+  const providerId = getXverseProviderId();
+  if (!providerId) throw new Error("XVERSE NOT DETECTED — INSTALL OR ENABLE THE EXTENSION");
+  const res = await requestSatsConnect("signMessage", { address, message }, providerId);
+  if (res.status !== "success") throw new Error(describeXverseSignError(res.error));
+  const result = res.result as unknown;
+  const signature =
+    typeof result === "string" ? result : (result as { signature?: string })?.signature;
+  if (typeof signature !== "string" || signature.length < 8) {
+    throw new Error("XVERSE RETURNED NO SIGNATURE");
+  }
+  return signature;
+}
+
 
 const SIGHASH_SINGLE_ANYONECANPAY = 0x83;
 

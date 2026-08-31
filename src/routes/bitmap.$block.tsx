@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { OfferBook } from "@/components/OfferBook";
+import { BidPanel } from "@/components/BidPanel";
+
 import { TradeWatcher } from "@/components/TradeWatcher";
 import { SettlementWatcher } from "@/components/SettlementWatcher";
 import { registryParcelQuery, shortenAddress, PARCEL_STATUS_LABEL } from "@/lib/registry";
@@ -315,6 +317,13 @@ function BitmapDetail() {
       <SettlementWatcher heights={[block]} limit={10} />
 
       <OfferBook height={block} />
+
+      <BidPanel
+        height={block}
+        ownerAddress={owner ?? oci.data?.ownerAddress ?? null}
+        askSats={parcel?.listedSats ?? null}
+      />
+
     </div>
   );
 }

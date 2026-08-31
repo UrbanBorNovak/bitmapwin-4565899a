@@ -23,6 +23,8 @@ import { OFFER_STATUS_LABEL } from "@/lib/offers";
 import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
 import { WalletConnect } from "@/components/WalletConnect";
+import { WalletBids } from "@/components/WalletBids";
+
 
 
 export const Route = createFileRoute("/wallet")({
@@ -256,6 +258,14 @@ function WalletPage() {
               renderExtra={(offer) => <ClaimAction offer={offer} address={address} />}
             />
           </section>
+
+          <WalletBids
+            address={address}
+            heldHeights={parcels
+              .map((p) => p.bitmapHeight)
+              .filter((h): h is number => typeof h === "number")}
+          />
+
         </>
       )}
     </div>

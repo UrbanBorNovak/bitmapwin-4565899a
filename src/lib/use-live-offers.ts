@@ -15,12 +15,15 @@ export function useLiveOffers() {
       void queryClient.invalidateQueries({ queryKey: ["registry"] });
       void queryClient.invalidateQueries({ queryKey: ["offers"] });
       void queryClient.invalidateQueries({ queryKey: ["wallet-offers"] });
+      void queryClient.invalidateQueries({ queryKey: ["bids"] });
     };
 
     const channel = supabase
       .channel("offers-live")
       .on("postgres_changes", { event: "*", schema: "public", table: "offers" }, invalidate)
+      .on("postgres_changes", { event: "*", schema: "public", table: "bids" }, invalidate)
       .subscribe();
+
 
     // Fallback for environments where realtime is unavailable.
     const poll = window.setInterval(invalidate, 60_000);
