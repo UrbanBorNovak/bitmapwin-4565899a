@@ -389,8 +389,10 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
     signIndices: used.map((_, i) => i + 1),
     priceSats,
     feeSats,
+    marketFeeSats,
     changeSats,
-    spentSats: priceSats + feeSats,
+    spentSats: priceSats + marketFeeSats + feeSats,
     usedFunding: used,
   };
+
 }
