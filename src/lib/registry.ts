@@ -132,15 +132,50 @@ async function fetchOpenListings(heights: number[]): Promise<Map<number, OpenLis
   return map;
 }
 
-/** Union of extractor-indexed claims and OCI-resolved claims. */
+/**
+ * Claim rows synthesised from open PSBT offers, so a parcel that was just
+ * listed shows up on the marketplace even before it lands in the inscription
+ * registry or the OCI index.
+ */
+async function fetchListedClaimRows(block?: number): Promise<ClaimRow[]> {
+  let query = supabase
+    .from("offers")
+    .select("inscription_id, outpoint, bitmap_height, created_at")
+    .eq("status", "open");
+  if (block !== undefined) query = query.eq("bitmap_height", block);
+  const { data, error } = await query.order("created_at", { ascending: true }).limit(400);
+  if (error) return [];
+  return (data ?? []).flatMap((row) => {
+    if (row.bitmap_height === null) return [];
+    const id = row.inscription_id ?? `${row.outpoint}`;
+    const txid = (row.inscription_id?.split("i")[0] ?? row.outpoint?.split(":")[0] ?? "").trim();
+    if (!/^[0-9a-fA-F]{64}$/.test(txid)) return [];
+    return [
+      {
+        id,
+        txid,
+        block_height: null,
+        bitmap_height: row.bitmap_height,
+        created_at: row.created_at ?? new Date(0).toISOString(),
+      } satisfies ClaimRow,
+    ];
+  });
+}
+
+/** Union of extractor-indexed claims, OCI-resolved claims and open listings. */
 async function fetchAllClaimRows(limit: number, block?: number): Promise<ClaimRow[]> {
-  const [decoded, indexed] = await Promise.all([
+  const [decoded, indexed, listed] = await Promise.all([
     fetchClaimRows(limit, block),
     fetchIndexedClaimRows(limit, block).catch(() => [] as ClaimRow[]),
+    fetchListedClaimRows(block).catch(() => [] as ClaimRow[]),
   ]);
   const seen = new Set(decoded.map((r) => r.id));
-  return [...decoded, ...indexed.filter((r) => !seen.has(r.id))];
+  const merged = [...decoded, ...indexed.filter((r) => !seen.has(r.id))];
+  const heights = new Set(merged.map((r) => r.bitmap_height));
+  // Listings only add a row when nothing else claims that height yet.
+  return [...merged, ...listed.filter((r) => !heights.has(r.bitmap_height))];
 }
+
 
 
 /** Earliest inscription per height wins; later ones are counted as superseded. */
