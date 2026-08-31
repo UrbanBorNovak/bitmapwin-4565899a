@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { ClubBadge } from "@/components/ClubBadge";
 import { districtBySlugQuery } from "@/lib/districts";
+import { DistrictRarity } from "@/components/DistrictRarity";
 import { shortenAddress } from "@/lib/registry";
 import { profileQuery } from "@/lib/profiles";
 
@@ -57,6 +58,7 @@ function DistrictPage() {
         DISTRICT OF {owner.data?.displayName?.toUpperCase() ?? shortenAddress(d.ownerAddress)} ·{" "}
         {d.heights.length} BITMAP{d.heights.length === 1 ? "" : "S"}
       </p>
+      <DistrictRarity heights={d.heights} className="mt-4" />
       {d.description ? (
         <p className="mt-4 max-w-[60ch] font-mono text-xs text-muted-foreground">{d.description}</p>
       ) : null}
