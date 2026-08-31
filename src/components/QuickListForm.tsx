@@ -18,7 +18,15 @@ export function QuickListForm({ height }: { height?: number }) {
   const wallet = useWalletSession();
   const queryClient = useQueryClient();
   const [price, setPrice] = useState("");
+  const [unit, setUnit] = useState<"btc" | "sats">("btc");
   const [selected, setSelected] = useState<string>("");
+
+  const priceSats = useMemo(() => {
+    const n = Number(price);
+    if (!price.trim() || !Number.isFinite(n) || n <= 0) return null;
+    const sats = unit === "btc" ? Math.round(n * 100_000_000) : Math.round(n);
+    return sats >= 546 ? sats : null;
+  }, [price, unit]);
 
   const ordinals = wallet?.ordinalsAddress ?? "";
   const snapshot = useQuery({ ...walletQuery(ordinals), enabled: ordinals !== "" });
