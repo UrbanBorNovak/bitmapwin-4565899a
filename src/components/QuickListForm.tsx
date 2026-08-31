@@ -18,7 +18,15 @@ export function QuickListForm({ height }: { height?: number }) {
   const wallet = useWalletSession();
   const queryClient = useQueryClient();
   const [price, setPrice] = useState("");
+  const [unit, setUnit] = useState<"btc" | "sats">("btc");
   const [selected, setSelected] = useState<string>("");
+
+  const priceSats = useMemo(() => {
+    const n = Number(price);
+    if (!price.trim() || !Number.isFinite(n) || n <= 0) return null;
+    const sats = unit === "btc" ? Math.round(n * 100_000_000) : Math.round(n);
+    return sats >= 546 ? sats : null;
+  }, [price, unit]);
 
   const ordinals = wallet?.ordinalsAddress ?? "";
   const snapshot = useQuery({ ...walletQuery(ordinals), enabled: ordinals !== "" });
@@ -39,10 +47,7 @@ export function QuickListForm({ height }: { height?: number }) {
     mutationFn: async () => {
       if (!wallet) throw new Error("CONNECT A WALLET FIRST");
       if (!parcel) throw new Error("NO BITMAP PARCEL FOUND IN THIS WALLET");
-      const priceSats = Number(price.replace(/[^0-9]/g, ""));
-      if (!Number.isInteger(priceSats) || priceSats < 546) {
-        throw new Error("ASK AT LEAST 546 SATS");
-      }
+      if (priceSats === null) throw new Error("ASK AT LEAST 546 SATS (0.00000546 BTC)");
       const [txid, voutRaw] = parcel.outpoint.split(":");
       const vout = Number(voutRaw);
       if (!txid || !Number.isInteger(vout)) throw new Error("BAD PARCEL OUTPOINT");
@@ -81,26 +86,43 @@ export function QuickListForm({ height }: { height?: number }) {
   return (
     <div>
       <label className="label" htmlFor="quick-ask">
-        SELL {height === undefined ? "A PARCEL" : `${height}.BITMAP`} — JUST NAME YOUR PRICE
+        SELL {height === undefined ? "A PARCEL" : `${height}.BITMAP`} — TYPE AN AMOUNT, THE PSBT IS
+        BUILT FOR YOU
       </label>
       <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-        <input
-          id="quick-ask"
-          value={price}
-          onChange={(e) => setPrice(e.target.value.replace(/[^0-9]/g, ""))}
-          inputMode="numeric"
-          spellCheck={false}
-          placeholder="PRICE IN SATS (e.g. 250000)"
-          className="flex-1 border border-border bg-background px-3 py-2 font-mono text-[11px] text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
-        />
+        <div className="flex flex-1 border border-border focus-within:border-foreground">
+          <input
+            id="quick-ask"
+            value={price}
+            onChange={(e) => setPrice(e.target.value.replace(unit === "btc" ? /[^0-9.]/g : /[^0-9]/g, ""))}
+            inputMode="decimal"
+            spellCheck={false}
+            placeholder={unit === "btc" ? "AMOUNT IN BTC (e.g. 0.0025)" : "AMOUNT IN SATS (e.g. 250000)"}
+            className="flex-1 bg-background px-3 py-2 font-mono text-[11px] text-foreground placeholder:text-muted-foreground focus:outline-none"
+          />
+          <button
+            className="border-l border-border px-3 font-mono text-[10px] text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              setUnit((u) => (u === "btc" ? "sats" : "btc"));
+              setPrice("");
+            }}
+          >
+            {unit === "btc" ? "BTC" : "SATS"}
+          </button>
+        </div>
         <button
           className="btn-term"
-          disabled={list.isPending || price.trim() === "" || parcel === null}
+          disabled={list.isPending || priceSats === null || parcel === null}
           onClick={() => list.mutate()}
         >
-          {list.isPending ? "[ SIGNING… ]" : "[ LIST FOR SALE ]"}
+          {list.isPending ? "[ BUILDING & SIGNING… ]" : "[ GENERATE & LIST PSBT ]"}
         </button>
       </div>
+      {priceSats !== null && (
+        <p className="mt-2 font-mono text-[11px] text-foreground">
+          &gt; ASK {formatSats(priceSats)} · {priceSats.toLocaleString("en-US")} SATS
+        </p>
+      )}
 
       {parcels.length > 1 && (
         <div className="mt-2 flex flex-wrap items-center gap-2">
