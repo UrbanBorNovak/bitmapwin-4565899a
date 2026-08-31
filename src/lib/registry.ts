@@ -248,6 +248,26 @@ export async function fetchRegistryParcels(limit = 300): Promise<RegistryParcel[
   return buildParcels(await fetchAllClaimRows(limit));
 }
 
+/**
+ * Database-only registry read: claims, stored trades and open listings. No
+ * chain hop-following, so it returns in one round trip and the grid can paint
+ * immediately. Holders are filled in per page by `fetchParcelOwners`.
+ */
+export async function fetchRegistryBase(limit = 300): Promise<RegistryParcel[]> {
+  return buildParcels(await fetchAllClaimRows(limit), { resolveOwners: false });
+}
+
+/** Resolves current holders on chain for one page of parcels. */
+export async function fetchParcelOwners(txids: string[]): Promise<Map<string, OwnerRow>> {
+  if (txids.length === 0) return new Map();
+  const owners = await withDeadline(
+    getBitmapOwners({ data: { txids: txids.slice(0, 40) } }),
+    12_000,
+    [] as OwnerRow[],
+  );
+  return new Map(owners.map((o) => [o.txid, o]));
+}
+
 export async function fetchRegistryParcel(block: number): Promise<RegistryParcel | null> {
   const parcels = await buildParcels(await fetchAllClaimRows(20, block));
   return parcels[0] ?? null;
@@ -259,6 +279,21 @@ export const registryParcelsQuery = (limit = 300) =>
     queryFn: () => fetchRegistryParcels(limit),
     staleTime: 60_000,
   });
+
+export const registryBaseQuery = (limit = 300) =>
+  queryOptions({
+    queryKey: ["registry", "base", limit],
+    queryFn: () => fetchRegistryBase(limit),
+    staleTime: 60_000,
+  });
+
+export const parcelOwnersQuery = (txids: string[]) =>
+  queryOptions({
+    queryKey: ["registry", "owners", [...txids].sort().join(",")],
+    queryFn: () => fetchParcelOwners(txids),
+    staleTime: 120_000,
+  });
+
 
 export const registryParcelQuery = (block: number) =>
   queryOptions({
