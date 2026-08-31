@@ -278,9 +278,14 @@ function WalletPage() {
 
           <WalletBids
             address={address}
-            heldHeights={parcels
-              .map((p) => p.bitmapHeight)
-              .filter((h): h is number => typeof h === "number")}
+            heldHeights={[
+              ...new Set([
+                ...parcels
+                  .map((p) => p.bitmapHeight)
+                  .filter((h): h is number => typeof h === "number"),
+                ...inbox.heldHeights,
+              ]),
+            ]}
           />
 
         </>
