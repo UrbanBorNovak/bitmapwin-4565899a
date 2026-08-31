@@ -130,16 +130,22 @@ export function ShopBuild({ config, height }: { config: ShopConfig; height: numb
               ) : null}
               <div className="mt-2 flex items-center justify-between gap-2">
                 <PriceTag item={item} accent={accent} />
-                {!item.sold && config.contactUrl ? (
-                  <a
-                    href={config.contactUrl}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="label border border-border px-2 py-1 hover:border-primary hover:text-primary"
-                  >
-                    [ BUY ]
-                  </a>
-                ) : null}
+                {(() => {
+                  const offer = item.sold ? null : offerFor(item.inscriptionId);
+                  if (offer) {
+                    return <BuyButton offerId={offer.id} priceSats={offer.priceSats} />;
+                  }
+                  return !item.sold && config.contactUrl ? (
+                    <a
+                      href={config.contactUrl}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="label border border-border px-2 py-1 hover:border-primary hover:text-primary"
+                    >
+                      [ ASK ]
+                    </a>
+                  ) : null;
+                })()}
               </div>
             </div>
           ))}
