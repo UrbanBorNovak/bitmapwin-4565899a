@@ -417,6 +417,66 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_link_challenges: {
+        Row: {
+          address: string
+          created_at: string
+          expires_at: string
+          message: string
+          nonce: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          expires_at?: string
+          message: string
+          nonce: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          expires_at?: string
+          message?: string
+          nonce?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallet_links: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          public_key: string | null
+          purpose: string
+          user_id: string
+          verified_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          public_key?: string | null
+          purpose?: string
+          user_id: string
+          verified_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          public_key?: string | null
+          purpose?: string
+          user_id?: string
+          verified_at?: string
+        }
+        Relationships: []
+      }
       wallet_profiles: {
         Row: {
           address: string
@@ -424,6 +484,7 @@ export type Database = {
           bio: string | null
           created_at: string
           display_name: string | null
+          owner_user_id: string | null
           updated_at: string
         }
         Insert: {
@@ -432,6 +493,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          owner_user_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -440,6 +502,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          owner_user_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -449,6 +512,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      owns_wallet: {
+        Args: { _address: string; _user_id: string }
+        Returns: boolean
+      }
       record_bitmap_view: {
         Args: { _address?: string; _height: number; _visitor: string }
         Returns: undefined
