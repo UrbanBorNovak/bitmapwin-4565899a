@@ -27,14 +27,20 @@ export function WalletConnect({
   const [wallet, setWallet] = useState<ConnectedWallet | null>(null);
 
   useEffect(() => {
+    // Extensions inject their provider asynchronously, so keep probing briefly.
+    let ticks = 0;
     const probe = () =>
       setInstalled({
         unisat: isWalletInstalled("unisat"),
         xverse: isWalletInstalled("xverse"),
       });
     probe();
-    const t = window.setTimeout(probe, 800);
-    return () => window.clearTimeout(t);
+    const id = window.setInterval(() => {
+      ticks += 1;
+      probe();
+      if (ticks >= 10) window.clearInterval(id);
+    }, 400);
+    return () => window.clearInterval(id);
   }, []);
 
   const run = async (provider: WalletProviderId) => {
