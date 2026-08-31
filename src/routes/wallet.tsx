@@ -221,6 +221,7 @@ function WalletPage() {
               offers={offers.data?.incoming ?? []}
               loading={offers.isLoading}
               empty="NO PSBT DELIVERED TO THIS ADDRESS YET"
+              renderExtra={(offer) => <ClaimAction offer={offer} address={address} />}
             />
           </section>
         </>
