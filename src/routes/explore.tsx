@@ -58,9 +58,12 @@ function Explore() {
   const toggleTrait = (id: TraitId) =>
     setTraits((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
 
+  // Inscription-aware filters need the (slow) ord index scan; plain browsing does not.
+  const scan = filter !== "ALL";
+
   const { data, isPending, isFetching, isError, error, refetch } = useQuery({
-    queryKey: ["chain-blocks", pages],
-    queryFn: () => fetchBlocks({ data: { pages } }),
+    queryKey: ["chain-blocks", pages, scan],
+    queryFn: () => fetchBlocks({ data: { pages, scan } }),
     staleTime: 60_000,
     refetchInterval: 120_000,
   });
