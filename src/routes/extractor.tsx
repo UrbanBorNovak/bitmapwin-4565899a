@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { Zap, Download, Upload, AlertTriangle } from "lucide-react";
+import { Zap, Download, Upload, AlertTriangle, Database } from "lucide-react";
+import { saveInscriptions } from "@/lib/inscription-store";
 import {
   extractInscriptions,
   type ExtractionResult,
@@ -116,6 +117,9 @@ function ExtractorPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ExtractionResult | null>(null);
   const [busy, setBusy] = useState(false);
+  const [blockHeight, setBlockHeight] = useState("");
+  const [saveMsg, setSaveMsg] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function run(hex: string) {
@@ -126,6 +130,25 @@ function ExtractorPage() {
     try {
       const res = await extractInscriptions(hex);
       setResult(res);
+      setSaveMsg(null);
+      if (res.inscriptions.length > 0) {
+        setSaving(true);
+        try {
+          const h = blockHeight.trim() ? Number(blockHeight.trim()) : null;
+          const n = await saveInscriptions(
+            res.txid,
+            res.inscriptions,
+            h !== null && Number.isFinite(h) ? h : null,
+          );
+          setSaveMsg(`INDEXED ${n} INSCRIPTION(S) INTO THE REGISTRY`);
+        } catch (e) {
+          setSaveMsg(
+            `REGISTRY WRITE FAILED: ${e instanceof Error ? e.message : String(e)}`,
+          );
+        } finally {
+          setSaving(false);
+        }
+      }
       setStatus(
         `DONE — ${res.inscriptions.length} INSCRIPTION(S) FOUND IN TRANSACTION ${res.txid}`
       );
@@ -178,6 +201,14 @@ function ExtractorPage() {
       />
 
       <div className="mt-3 flex flex-wrap items-center gap-3">
+        <input
+          value={blockHeight}
+          onChange={(e) => setBlockHeight(e.target.value)}
+          placeholder="BLOCK HEIGHT (OPTIONAL)"
+          inputMode="numeric"
+          spellCheck={false}
+          className="w-[220px] border border-border bg-background px-3 py-2 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground focus:border-foreground"
+        />
         <button
           onClick={() => run(raw)}
           disabled={busy || !raw.trim()}
@@ -196,6 +227,18 @@ function ExtractorPage() {
           onChange={onFile}
         />
       </div>
+
+      {(saveMsg || saving) && (
+        <div className="mt-3 flex items-center gap-2 border border-border px-4 py-3 font-mono text-xs text-foreground">
+          <Database className="size-3.5" />
+          {saving ? "WRITING TO REGISTRY…" : saveMsg}
+          {!saving && saveMsg?.startsWith("INDEXED") && (
+            <Link to="/bitmaps" className="btn-term ml-auto">
+              VIEW REGISTRY →
+            </Link>
+          )}
+        </div>
+      )}
 
       {status && (
         <div className="mt-6 border border-border px-4 py-3 font-mono text-xs text-foreground">
