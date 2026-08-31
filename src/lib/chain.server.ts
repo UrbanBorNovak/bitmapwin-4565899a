@@ -64,6 +64,31 @@ async function fetchBlockPages(pages: number): Promise<MempoolBlock[]> {
   return out;
 }
 
+/** Esplora fallback (10 blocks per page, no pool/fee extras). */
+async function fetchBlockPagesEsplora(pages: number): Promise<MempoolBlock[]> {
+  const tip = Number(
+    (await (await fetchWithRetry(`${ESPLORA}/blocks/tip/height`, "text/plain", 3, 12000)).text()).trim(),
+  );
+  if (!Number.isFinite(tip)) throw new Error("esplora tip height unavailable");
+  const out: MempoolBlock[] = [];
+  let cursor = tip;
+  for (let i = 0; i < pages && cursor >= 0; i++) {
+    const page = await getJson<MempoolBlock[]>(`${ESPLORA}/blocks/${cursor}`);
+    if (page.length === 0) break;
+    out.push(...page);
+    cursor = (page[page.length - 1]?.height ?? 0) - 1;
+  }
+  return out;
+}
+
+async function fetchRecentBlocks(pages: number): Promise<MempoolBlock[]> {
+  try {
+    return await fetchBlockPages(pages);
+  } catch {
+    return await fetchBlockPagesEsplora(Math.max(2, Math.ceil((pages * 15) / 10)));
+  }
+}
+
 /** Inscription ids committed in a block, in inscription order. */
 async function fetchBlockInscriptionIds(
   height: number,
