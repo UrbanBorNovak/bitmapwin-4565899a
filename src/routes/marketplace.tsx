@@ -13,6 +13,8 @@ import { traceBitmapTradesFn } from "@/lib/trades.functions";
 import { saveTrades } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
 import { settleOffersFn } from "@/lib/settle.functions";
+import { useLiveOffers } from "@/lib/use-live-offers";
+
 
 export const Route = createFileRoute("/marketplace")({
   head: () => ({
