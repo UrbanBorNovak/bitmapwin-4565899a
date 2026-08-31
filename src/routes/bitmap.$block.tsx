@@ -126,22 +126,25 @@ function BitmapDetail() {
             <Field k="BITCOIN NETWORK" v="MAINNET" />
             <Field
               k="OWNER"
-              v={parcel ? shortenAddress(parcel.ownerAddress) : (data?.owner_address ?? "UNCLAIMED")}
+              v={owner ? shortenAddress(owner) : oci.data?.ownerAddress ? shortenAddress(oci.data.ownerAddress) : "UNCLAIMED"}
             />
             <Field
               k="STATUS"
               v={
                 parcel
-                  ? parcel.listed
-                    ? STATUS_LABEL.for_sale
-                    : STATUS_LABEL.owned
-                  : STATUS_LABEL.unclaimed
+                  ? PARCEL_STATUS_LABEL[lastSale ? "sold" : parcel.status]
+                  : PARCEL_STATUS_LABEL.unclaimed
               }
             />
             <Field
-              k="PRICE"
-              v={parcel?.listed ? formatBtc(parcel.priceBtc) : "NOT LISTED"}
+              k="LAST PRICE PAID"
+              v={lastSale ? formatSats(lastSale.price_sats) : "NO SALE ON CHAIN"}
             />
+            <Field
+              k="LAST TRADE BLOCK"
+              v={history[0]?.block_height ? String(history[0].block_height) : "—"}
+            />
+
             <Field
               k="INSCRIPTION ID"
               v={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? (oci.isLoading ? "…" : "—")}
