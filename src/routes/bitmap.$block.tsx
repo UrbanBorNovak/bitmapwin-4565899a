@@ -58,6 +58,7 @@ function BitmapDetail() {
   const { block } = Route.useLoaderData();
   const { data: parcel } = useSuspenseQuery(registryParcelQuery(block));
   const scan = useQuery(blockScanQuery(block));
+  const sizeMap = useQuery(blockSizeMapQuery(block));
   const oci = useQuery(ociQuery(block));
   const trades = useQuery(tradesForHeightQuery(block));
   const queryClient = useQueryClient();
