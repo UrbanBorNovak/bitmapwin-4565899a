@@ -3,6 +3,8 @@ import type { WalletSnapshot, WalletUtxo } from "@/lib/wallet";
 const ORD = "https://ordinals.com";
 const UA = "bitmap-marketplace/1.0";
 
+let lastFailure = "";
+
 async function ordJson<T>(path: string, attempts = 3): Promise<T | null> {
   for (let i = 0; i < attempts; i++) {
     try {
@@ -10,12 +12,14 @@ async function ordJson<T>(path: string, attempts = 3): Promise<T | null> {
         headers: { "user-agent": UA, accept: "application/json" },
       });
       if (resp.ok) return (await resp.json()) as T;
+      lastFailure = `HTTP ${resp.status}`;
       if (resp.status === 429 || resp.status === 406 || resp.status >= 500) {
         await new Promise((r) => setTimeout(r, 350 * (i + 1)));
         continue;
       }
       return null;
-    } catch {
+    } catch (error) {
+      lastFailure = error instanceof Error ? error.message : "network error";
       await new Promise((r) => setTimeout(r, 300 * (i + 1)));
     }
   }
