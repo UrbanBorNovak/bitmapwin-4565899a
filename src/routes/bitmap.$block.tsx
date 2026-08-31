@@ -55,12 +55,39 @@ export const Route = createFileRoute("/bitmap/$block")({
 function BitmapDetail() {
   const { block } = Route.useLoaderData();
   const { data: parcel } = useSuspenseQuery(registryParcelQuery(block));
-  const market = useQuery(bitmapQuery(block));
   const scan = useQuery(blockScanQuery(block));
   const oci = useQuery(ociQuery(block));
+  const trades = useQuery(tradesForHeightQuery(block));
+  const queryClient = useQueryClient();
 
-  const data = market.data;
   const claims = (scan.data?.inscriptions ?? []).filter((i) => i.isBitmapClaim);
+  const history = [...(trades.data ?? [])].sort((a, b) => b.hop - a.hop);
+  const lastSale = history.find((t) => t.price_sats > 0) ?? null;
+  const owner = history[0]?.buyer_address ?? parcel?.ownerAddress ?? null;
+
+  const trace = useMutation({
+    mutationFn: async () => {
+      const txid = parcel?.txid ?? oci.data?.inscriptionId?.slice(0, 64) ?? null;
+      if (!txid) throw new Error("NO CLAIM TRANSACTION KNOWN FOR THIS PARCEL");
+      const traces = await traceBitmapTradesFn({
+        data: {
+          claims: [
+            { bitmapHeight: block, txid, inscriptionId: parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null },
+          ],
+          maxHops: 8,
+        },
+      });
+      return saveTrades(traces);
+    },
+    onSuccess: (stored) => {
+      queryClient.invalidateQueries({ queryKey: ["trades"] });
+      queryClient.invalidateQueries({ queryKey: ["registry"] });
+      toast(`${block}.BITMAP`, { description: `${stored} ON-CHAIN TRANSFER(S) INDEXED` });
+    },
+    onError: (e) => toast("TRADE TRACE FAILED", { description: (e as Error).message }),
+  });
+
+
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-12 md:px-8">
