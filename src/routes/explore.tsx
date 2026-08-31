@@ -74,6 +74,7 @@ function Explore() {
       if (filter === "NO INSCRIPTIONS" && b.inscriptionCount > 0) return false;
       if (filter === "VALID BITMAPS" && b.bitmapStatus !== "valid") return false;
       if (filter === "UNCLAIMED" && b.bitmapStatus === "valid") return false;
+      if (traits.length > 0 && !traits.every((t) => hasTrait(b.height, t))) return false;
       if (!needle) return true;
       return (
         String(b.height).includes(needle) ||
