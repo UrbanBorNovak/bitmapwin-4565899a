@@ -21,6 +21,8 @@ export function Game2DBuild({ config, height }: { config: Game2dConfig; height: 
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    const c = canvas;
+    const g = ctx;
 
     const rand = seededRandom(height + config.coins * 31 + config.walls * 7);
     const walls = new Set<string>();
@@ -47,31 +49,31 @@ export function Game2DBuild({ config, height }: { config: Game2dConfig; height: 
     const collected = new Set<string>();
     let raf = 0;
 
-    const cell = () => canvas.width / COLS;
+    const cell = () => c.width / COLS;
 
     function draw() {
       const size = cell();
-      const styles = getComputedStyle(canvas);
-      ctx.fillStyle = styles.getPropertyValue("--bg-fill") || "#0a0a0a";
-      ctx.fillStyle = "#0a0a0a";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      g.fillStyle = "#0a0a0a";
+      g.fillRect(0, 0, c.width, c.height);
 
-      ctx.fillStyle = "#232323";
+      g.fillStyle = "#232323";
       walls.forEach((k) => {
-        const [x, y] = k.split(",").map(Number);
-        ctx.fillRect(x * size, y * size, size - 1, size - 1);
+        const parts = k.split(",");
+        const x = Number(parts[0]);
+        const y = Number(parts[1]);
+        g.fillRect(x * size, y * size, size - 1, size - 1);
       });
 
-      ctx.fillStyle = "#f7931a";
-      coins.forEach((c) => {
-        if (collected.has(`${c.x},${c.y}`)) return;
-        ctx.beginPath();
-        ctx.arc(c.x * size + size / 2, c.y * size + size / 2, size * 0.22, 0, Math.PI * 2);
-        ctx.fill();
+      g.fillStyle = "#f7931a";
+      coins.forEach((cn) => {
+        if (collected.has(`${cn.x},${cn.y}`)) return;
+        g.beginPath();
+        g.arc(cn.x * size + size / 2, cn.y * size + size / 2, size * 0.22, 0, Math.PI * 2);
+        g.fill();
       });
 
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(player.x * size + 2, player.y * size + 2, size - 5, size - 5);
+      g.fillStyle = "#ffffff";
+      g.fillRect(player.x * size + 2, player.y * size + 2, size - 5, size - 5);
       raf = requestAnimationFrame(draw);
     }
 
