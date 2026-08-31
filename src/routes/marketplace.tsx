@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ParcelCard } from "@/components/ParcelCard";
 import { OfferBook } from "@/components/OfferBook";
@@ -32,9 +32,6 @@ export const Route = createFileRoute("/marketplace")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  loader: ({ context }) => {
-    context.queryClient.ensureQueryData(registryParcelsQuery(300));
-  },
   component: Marketplace,
   errorComponent: ({ error }) => (
     <div className="mx-auto max-w-[900px] px-4 py-24 md:px-8" role="alert">
@@ -69,7 +66,8 @@ async function traceAndStore(claims: RegistryParcel[]): Promise<{ traced: number
 }
 
 function Marketplace() {
-  const { data: parcels } = useSuspenseQuery(registryParcelsQuery(300));
+  const registry = useQuery(registryParcelsQuery(300));
+  const parcels = registry.data ?? [];
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [syncHeight, setSyncHeight] = useState("");
