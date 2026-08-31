@@ -15,6 +15,8 @@ import { settleOfferFn } from "@/lib/settle.functions";
 import { OFFER_STATUS_LABEL } from "@/lib/offers";
 import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
+import { WalletConnect } from "@/components/WalletConnect";
+
 
 export const Route = createFileRoute("/wallet")({
   head: () => ({
