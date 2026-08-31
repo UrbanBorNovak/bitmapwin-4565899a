@@ -4,6 +4,8 @@ import { parseBuildConfig, type BuildKind } from "@/lib/build-sdk";
 import { InfoBuild } from "@/components/builds/InfoBuild";
 import { GalleryBuild } from "@/components/builds/GalleryBuild";
 import { Game2DBuild } from "@/components/builds/Game2DBuild";
+import { ShopBuild } from "@/components/builds/ShopBuild";
+
 
 const Game3DBuild = lazy(() => import("@/components/builds/Game3DBuild"));
 
