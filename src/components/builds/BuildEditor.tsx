@@ -54,6 +54,34 @@ export function BuildEditor({
         </div>
       </div>
 
+      <div>
+        <span className="label">START FROM A PRESET</span>
+        <p className="label mt-1 text-muted-foreground">
+          PICK ONE, THEN ADAPT EVERY FIELD BELOW — NOTHING IS LOCKED.
+        </p>
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          {presetsForKind(kind).map((preset) => (
+            <button
+              key={preset.id}
+              type="button"
+              onClick={() => onConfigChange(preset.config)}
+              className="rounded-md border border-border px-3 py-2 text-left transition-colors hover:border-primary"
+            >
+              <span className="display block text-xs">[ {preset.name} ]</span>
+              <span className="label mt-1 block text-muted-foreground">{preset.blurb}</span>
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => onConfigChange(DEFAULT_CONFIGS[kind])}
+            className="rounded-md border border-dashed border-border px-3 py-2 text-left transition-colors hover:border-primary"
+          >
+            <span className="display block text-xs">[ BLANK ]</span>
+            <span className="label mt-1 block text-muted-foreground">START EMPTY AND BUILD IT YOURSELF</span>
+          </button>
+        </div>
+      </div>
+
       {kind === "info" ? (
         <InfoEditor
           config={parseBuildConfig("info", config)}
