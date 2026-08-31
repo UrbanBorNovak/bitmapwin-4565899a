@@ -158,6 +158,7 @@ async function buildParcels(rows: ClaimRow[]): Promise<RegistryParcel[]> {
     const chainOwner = ownerByTxid.get(row.txid);
     const move = lastMove.get(height);
     const sale = lastSale.get(height);
+    const listing = listings.get(height) ?? null;
     const transfers = tradeCount.get(height) ?? chainOwner?.transfers ?? 0;
     return {
       bitmapHeight: height,
@@ -173,7 +174,10 @@ async function buildParcels(rows: ClaimRow[]): Promise<RegistryParcel[]> {
       lastSaleBlock: sale?.block_height ?? null,
       lastSaleAt: sale?.block_time ?? sale?.created_at ?? null,
       traded: transfers > 0,
-      status: sale ? "sold" : "held",
+      status: listing ? "listed" : sale ? "sold" : "held",
+      listedSats: listing ? listing.priceSats : null,
+      listedOfferId: listing ? listing.offerId : null,
+      listedBuyerAddress: listing?.buyerAddress ?? null,
       supersedes,
     } satisfies RegistryParcel;
   });
