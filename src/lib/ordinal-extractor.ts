@@ -459,3 +459,44 @@ export async function extractInscriptions(rawHex: string): Promise<ExtractionRes
 
   return { txid: tx.txid, inscriptions };
 }
+
+/**
+ * Extract inscriptions straight from a transaction's witness stacks (hex),
+ * as served by block explorer APIs — no raw transaction serialization needed.
+ */
+export function extractInscriptionsFromWitnesses(
+  txid: string,
+  witnesses: string[][],
+): ExtractionResult {
+  const inscriptions: ExtractedInscription[] = [];
+  let inscriptionNumber = 0;
+
+  for (let inputIndex = 0; inputIndex < witnesses.length; inputIndex++) {
+    const stack = witnesses[inputIndex];
+    if (!stack || stack.length < 2) continue;
+
+    let script: Uint8Array | null = null;
+    try {
+      script = tapscript(stack.map((item) => hexToBytes(item)));
+    } catch {
+      script = null;
+    }
+    if (!script) continue;
+
+    for (const envelope of extractEnvelopes(script)) {
+      const { fields, body } = decodePayload(envelope.payload);
+      if (envelope.pushnum) fields["pushnum"] = true;
+      if (envelope.stutter) fields["stutter"] = true;
+
+      const id = `${txid}i${inscriptionNumber}`;
+      inscriptionNumber++;
+      fields["id"] = id;
+      fields["input"] = inputIndex;
+      fields["body_bytes"] = body ? body.length : 0;
+
+      inscriptions.push({ id, input: inputIndex, fields, body, bodyText: body ? utf8(body) : null });
+    }
+  }
+
+  return { txid, inscriptions };
+}
