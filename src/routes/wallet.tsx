@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -26,7 +26,7 @@ import { WalletConnect } from "@/components/WalletConnect";
 import { WalletBids } from "@/components/WalletBids";
 import { useBidInbox } from "@/lib/use-bid-inbox";
 import { ProfileEditor } from "@/components/ProfileEditor";
-import { walletControls } from "@/lib/wallet-session";
+import { useWalletSession, walletControls } from "@/lib/wallet-session";
 import { WalletLinkPanel } from "@/components/WalletLinkPanel";
 import { useAuthSession } from "@/lib/auth";
 import { isLinked, myWalletLinksQuery } from "@/lib/wallet-links";
@@ -52,24 +52,61 @@ export const Route = createFileRoute("/wallet")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
+  errorComponent: WalletError,
+  notFoundComponent: () => <WalletUnavailable message="WALLET ROUTE NOT FOUND" />,
   component: WalletPage,
 });
+
+function WalletError({ error, reset }: { error: Error; reset: () => void }) {
+  const router = useRouter();
+  return (
+    <div className="mx-auto max-w-[1400px] px-4 py-20 md:px-8">
+      <p className="label">WALLET</p>
+      <h1 className="display mt-4 text-4xl">WALLET UNAVAILABLE</h1>
+      <p className="mt-4 font-mono text-xs text-muted-foreground">
+        &gt; {error.message.toUpperCase()}
+      </p>
+      <button
+        type="button"
+        className="btn-term mt-6"
+        onClick={() => {
+          void router.invalidate();
+          reset();
+        }}
+      >
+        [ RETRY ]
+      </button>
+    </div>
+  );
+}
+
+function WalletUnavailable({ message }: { message: string }) {
+  return (
+    <div className="mx-auto max-w-[1400px] px-4 py-20 md:px-8">
+      <p className="label">WALLET</p>
+      <h1 className="display mt-4 text-4xl">{message}</h1>
+      <Link to="/" className="btn-term mt-6 inline-flex">[ GO HOME ]</Link>
+    </div>
+  );
+}
 
 function WalletPage() {
   const [input, setInput] = useState("");
   const [address, setAddress] = useState("");
   const [connected, setConnected] = useState<ConnectedWallet | null>(null);
+  const sessionWallet = useWalletSession();
   const { session } = useAuthSession();
   const links = useQuery(myWalletLinksQuery(Boolean(session)));
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const saved = window.localStorage.getItem(WALLET_ADDRESS_STORAGE_KEY);
+    const saved = sessionWallet?.ordinalsAddress ?? window.localStorage.getItem(WALLET_ADDRESS_STORAGE_KEY);
     if (saved) {
       setInput(saved);
       setAddress(saved);
     }
-  }, []);
+    if (sessionWallet) setConnected(sessionWallet);
+  }, [sessionWallet]);
 
   // Signed in with a wallet? Load that verified address automatically.
   useEffect(() => {
@@ -79,6 +116,16 @@ function WalletPage() {
     setAddress(linked);
     window.localStorage.setItem(WALLET_ADDRESS_STORAGE_KEY, linked);
   }, [links.data, address]);
+
+  // The profile is rendered after an address is restored. Scroll once that
+  // section exists instead of relying on the browser's initial hash pass.
+  useEffect(() => {
+    if (address === "" || window.location.hash !== "#profile") return;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById("profile")?.scrollIntoView({ block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [address]);
 
   const wallet = useQuery(walletQuery(address));
   const offers = useQuery(walletOffersQuery(address));
