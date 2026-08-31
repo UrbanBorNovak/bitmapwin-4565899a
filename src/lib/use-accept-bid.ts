@@ -39,10 +39,10 @@ export function useAcceptBid(options: { holderAddress?: string | null } = {}) {
 
   const accept = useMutation({
     mutationFn: async (bid: Bid) => {
-      if (!wallet) throw new Error("CONNECT THE WALLET HOLDING THIS PARCEL");
+      if (!wallet) throw new Error("CONNECT THE WALLET HOLDING THIS BITMAP");
       const holder = options.holderAddress ?? wallet.ordinalsAddress;
       if (holder.toLowerCase() !== wallet.ordinalsAddress.toLowerCase()) {
-        throw new Error("CONNECT THE WALLET HOLDING THIS PARCEL");
+        throw new Error("CONNECT THE WALLET HOLDING THIS BITMAP");
       }
       const parcel = findParcel(bid.bitmapHeight);
       if (!parcel) {
@@ -50,7 +50,7 @@ export function useAcceptBid(options: { holderAddress?: string | null } = {}) {
       }
       const [txid, voutRaw] = parcel.outpoint.split(":");
       const vout = Number(voutRaw);
-      if (!txid || !Number.isInteger(vout)) throw new Error("BAD PARCEL OUTPOINT");
+      if (!txid || !Number.isInteger(vout)) throw new Error("BAD BITMAP OUTPOINT");
 
       const tapInternalKeyHex = xOnlyPubKeyHex(wallet.publicKey);
       const psbt = buildListingPsbt({

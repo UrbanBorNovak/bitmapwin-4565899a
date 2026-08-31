@@ -261,7 +261,7 @@ function ExtractorPage() {
                 <span className="font-mono text-sm text-foreground">{b.height}.bitmap</span>
                 <span className="break-all font-mono text-xs text-muted-foreground">{b.id}</span>
                 <Link to="/bitmap/$block" params={{ block: b.height }} className="btn-term">
-                  VIEW PARCEL →
+                  VIEW BITMAP →
                 </Link>
               </li>
             ))}

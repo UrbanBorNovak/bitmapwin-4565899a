@@ -97,7 +97,7 @@ export function useBidInbox(options: { notify?: boolean } = {}) {
     toast(
       fresh.length === 1
         ? `NEW BID — ${top.bitmapHeight}.BITMAP`
-        : `${fresh.length} NEW BIDS ON YOUR PARCELS`,
+        : `${fresh.length} NEW BIDS ON YOUR BITMAPS`,
       {
         description: `${formatSats(top.priceSats)} OFFERED · OPEN /WALLET TO ACCEPT`,
         duration: 10_000,

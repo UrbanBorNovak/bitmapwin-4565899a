@@ -47,7 +47,7 @@ export const Route = createFileRoute("/bitmap/$block")({
   },
   head: ({ params }) => {
     const title = `Bitmap #${params.block} — Bitcoin Digital Land`;
-    const description = `Ownership, status and price data for Bitmap parcel #${params.block} on the Bitcoin land layer.`;
+    const description = `Ownership, status and price data for Bitmap #${params.block} on the Bitcoin land layer.`;
     return {
       meta: [
         { title },
@@ -66,7 +66,7 @@ function ParcelError({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
   return (
     <div className="mx-auto max-w-[900px] px-4 py-24 md:px-8" role="alert">
-      <h1 className="display text-3xl">PARCEL DATA UNAVAILABLE</h1>
+      <h1 className="display text-3xl">BITMAP DATA UNAVAILABLE</h1>
       <p className="mt-4 font-mono text-sm text-muted-foreground">&gt; {error.message}</p>
       <button
         type="button"
@@ -87,6 +87,8 @@ function BitmapDetail() {
   const { data: parcel } = useSuspenseQuery(registryParcelQuery(block));
   const scan = useQuery(blockScanQuery(block));
   const sizeMap = useQuery(blockSizeMapQuery(block));
+  const maxParcels = sizeMap.data?.txCount ?? scan.data?.txCount ?? null;
+
   const oci = useQuery(ociQuery(block));
   const trades = useQuery(tradesForHeightQuery(block));
   const queryClient = useQueryClient();
@@ -99,7 +101,7 @@ function BitmapDetail() {
   const trace = useMutation({
     mutationFn: async () => {
       const txid = parcel?.txid ?? oci.data?.inscriptionId?.slice(0, 64) ?? null;
-      if (!txid) throw new Error("NO CLAIM TRANSACTION KNOWN FOR THIS PARCEL");
+      if (!txid) throw new Error("NO CLAIM TRANSACTION KNOWN FOR THIS BITMAP");
       const traces = await traceBitmapTradesFn({
         data: {
           claims: [
@@ -255,6 +257,38 @@ function BitmapDetail() {
 
       <div className="mt-8 border border-border">
         <div className="flex items-center justify-between border-b border-border px-6 py-3">
+          <span className="label">PARCELS OF {block}.BITMAP</span>
+          <span className="label">
+            MAX {maxParcels === null ? "…" : maxParcels.toLocaleString("en-US")}
+          </span>
+        </div>
+        <dl className="divide-y divide-border">
+          <Field
+            k="MAX VALID PARCELS"
+            v={
+              maxParcels === null
+                ? "READING BLOCK TX COUNT…"
+                : `${maxParcels.toLocaleString("en-US")} — ONE PER TRANSACTION IN BLOCK ${block}`
+            }
+          />
+          <Field k="FIRST PARCEL" v={`0.${block}.bitmap`} />
+          <Field
+            k="LAST PARCEL"
+            v={maxParcels === null ? "…" : `${maxParcels - 1}.${block}.bitmap`}
+          />
+          <Field
+            k="PARCEL RULE"
+            v={`A PARCEL IS A CHILD INSCRIPTION OF ${block}.BITMAP NAMED <INDEX>.${block}.BITMAP, INDEX 0…${
+              maxParcels === null ? "TXCOUNT-1" : maxParcels - 1
+            }`}
+          />
+        </dl>
+      </div>
+
+
+
+      <div className="mt-8 border border-border">
+        <div className="flex items-center justify-between border-b border-border px-6 py-3">
           <span className="label">ON-CHAIN TRADE HISTORY</span>
           <span className="label">{history.length} TRANSFER(S)</span>
         </div>
@@ -374,7 +408,7 @@ function Field({ k, v }: { k: string; v: string }) {
 function BitmapMissing() {
   return (
     <div className="mx-auto max-w-[900px] px-4 py-24 md:px-8">
-      <h1 className="display text-3xl">PARCEL NOT INDEXED</h1>
+      <h1 className="display text-3xl">BITMAP NOT INDEXED</h1>
       <p className="mt-4 font-mono text-sm text-muted-foreground">
         &gt; THIS BLOCK IS NOT PRESENT IN THE DEMO REGISTRY<span className="blink">_</span>
       </p>

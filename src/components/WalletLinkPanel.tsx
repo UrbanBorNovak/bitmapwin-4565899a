@@ -88,7 +88,7 @@ export function WalletLinkPanel({
         <div className="space-y-3 p-4">
           <p className="font-mono text-xs text-muted-foreground">
             &gt; SIGN IN TO TIE THIS ADDRESS TO A PERSISTENT PROFILE — WITHOUT AN ACCOUNT YOUR
-            PROFILE AND PARCEL PAGES CANNOT BE SAVED<span className="blink">_</span>
+            PROFILE AND BITMAP PAGES CANNOT BE SAVED<span className="blink">_</span>
           </p>
           <WalletSignIn />
         </div>

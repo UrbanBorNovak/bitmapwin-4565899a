@@ -8,7 +8,7 @@ import { timeAgo } from "@/lib/bitmap";
 export const Route = createFileRoute("/profile/$address")({
   head: ({ params }) => {
     const title = `${shortenAddress(params.address)} — Bitmap Land Profile`;
-    const description = `Public profile, bio and built parcels for the Bitcoin address ${params.address} on the Bitmap land layer.`;
+    const description = `Public profile, bio and built bitmaps for the Bitcoin address ${params.address} on the Bitmap land layer.`;
     return {
       meta: [
         { title },
@@ -93,12 +93,12 @@ function ProfilePage() {
 
       <section className="mt-8 border border-border">
         <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border px-6 py-3">
-          <h2 className="display text-lg">BUILT PARCELS</h2>
+          <h2 className="display text-lg">BUILT BITMAPS</h2>
           <span className="label">{pages.data?.length ?? 0} PAGE(S)</span>
         </header>
         {pages.isLoading ? (
           <p className="px-6 py-6 font-mono text-xs text-muted-foreground">
-            &gt; READING PARCEL PAGES<span className="blink">_</span>
+            &gt; READING BITMAP PAGES<span className="blink">_</span>
           </p>
         ) : (pages.data?.length ?? 0) === 0 ? (
           <p className="px-6 py-6 font-mono text-xs text-muted-foreground">

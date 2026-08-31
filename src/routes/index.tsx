@@ -72,7 +72,7 @@ function Index() {
       </section>
 
       <section className="grid grid-cols-2 divide-x divide-border border-b border-border md:grid-cols-4">
-        <Stat k="INDEXED PARCELS" v={String(parcels.length)} />
+        <Stat k="INDEXED BITMAPS" v={String(parcels.length)} />
         <Stat k="TRADED ON CHAIN" v={String(traded.length)} />
         <Stat k="LAST SALE" v={lastSale ? formatSats(lastSale.price_sats) : "—"} />
         <Stat k="NETWORK" v="MAINNET" />
@@ -82,7 +82,7 @@ function Index() {
         <div className="flex items-end justify-between border-b border-border pb-4">
           <h2 className="display text-2xl md:text-3xl">FEATURED BITMAPS</h2>
           <Link to="/marketplace" className="label hover:text-foreground">
-            ALL PARCELS →
+            ALL BITMAPS →
           </Link>
         </div>
 
@@ -102,7 +102,7 @@ function Index() {
 
       <section className="border-t border-border">
         <div className="mx-auto grid max-w-[1600px] gap-px px-4 py-16 md:grid-cols-3 md:px-8">
-          <Cell title="DISCOVER" body="Every Bitcoin block is a parcel. Browse the on-chain index block by block." />
+          <Cell title="DISCOVER" body="Every Bitcoin block is a bitmap. Browse the on-chain index block by block." />
           <Cell title="OWNERSHIP" body="Holders are resolved by following each inscription satoshi through the chain." />
           <Cell title="TRADES" body="Prices come from the sats paid to the previous holder in the transfer transaction." />
         </div>

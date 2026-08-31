@@ -156,7 +156,7 @@ export async function acceptBidWithOffer(input: {
   const height = Number(bid.bitmap_height);
 
   if (offer.bitmapHeight !== null && offer.bitmapHeight !== height) {
-    throw new Error("THE SIGNED SALE IS FOR A DIFFERENT PARCEL");
+    throw new Error("THE SIGNED SALE IS FOR A DIFFERENT BITMAP");
   }
   if (
     offer.sellerAddress &&

@@ -94,7 +94,7 @@ export function BidPanel({
       setNote("");
       toast(`BID PLACED — ${height}.BITMAP`, {
         description: result.replaced
-          ? "REPLACED YOUR PREVIOUS BID ON THIS PARCEL"
+          ? "REPLACED YOUR PREVIOUS BID ON THIS BITMAP"
           : "VISIBLE TO THE HOLDER AND THE WHOLE MARKET",
       });
     },
@@ -158,7 +158,7 @@ export function BidPanel({
           </>
         ) : (
           <p className="font-mono text-[11px] text-muted-foreground">
-            &gt; CONNECT UNISAT OR XVERSE ON /WALLET TO BID ON THIS PARCEL
+            &gt; CONNECT UNISAT OR XVERSE ON /WALLET TO BID ON THIS BITMAP
             <span className="blink">_</span>
           </p>
         )}
@@ -170,7 +170,7 @@ export function BidPanel({
         </p>
       ) : live.length === 0 ? (
         <p className="p-4 font-mono text-[11px] text-muted-foreground">
-          &gt; NO OPEN BIDS ON THIS PARCEL YET<span className="blink">_</span>
+          &gt; NO OPEN BIDS ON THIS BITMAP YET<span className="blink">_</span>
         </p>
       ) : (
         <ul className="divide-y divide-border">
