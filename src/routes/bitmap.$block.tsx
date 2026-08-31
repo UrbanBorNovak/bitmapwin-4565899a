@@ -135,7 +135,11 @@ function BitmapDetail() {
           : "UNCLAIMED — NO VALID INSCRIPTION IN THE REGISTRY"}
       </p>
 
-      <TraitBadges height={block} showRarity className="mt-4" />
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <ClubBadge height={block} />
+        <TraitBadges height={block} showRarity />
+      </div>
+
 
       <div className="mt-6 flex flex-wrap gap-2">
         <MakeOfferButton
