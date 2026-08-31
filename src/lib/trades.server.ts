@@ -150,7 +150,7 @@ export async function traceBitmapTrades(
 
 /** Traces many claims with bounded concurrency so public APIs stay happy. */
 export async function traceMany(
-  claims: Array<{ bitmapHeight: number; txid: string; inscriptionId?: string | null }>,
+  claims: Array<{ bitmapHeight: number; txid: string; inscriptionId?: string | null | undefined }>,
   maxHops = 6,
 ): Promise<TradeTrace[]> {
   const queue = [...claims];

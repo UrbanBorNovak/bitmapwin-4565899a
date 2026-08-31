@@ -170,7 +170,7 @@ function MapPage() {
                         <BitmapPixelMap blockHeight={block} animate={false} />
                       </span>
                     )}
-                    {bm?.status === "for_sale" && (
+                    {bm?.status === "sold" && (
                       <span className="absolute bottom-1 right-1 size-1.5 bg-foreground" />
                     )}
                   </button>
