@@ -1,13 +1,27 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getBitmapOwners } from "@/lib/ordinals-scan.functions";
-import type { BitmapStatus } from "@/lib/bitmap";
+import {
+  fetchTradesForHeights,
+  latestByHeight,
+  latestSaleByHeight,
+  type TradeRow,
+} from "@/lib/trade-store";
+import { satsToBtc } from "@/lib/trades";
 
 /**
  * Marketplace read model: real on-chain bitmap claims from the inscription
- * registry, joined with the market layer (listings / prices) and with the
- * present holder resolved from the chain.
+ * registry, joined with the trades traced from Bitcoin transactions. Price,
+ * status and holder all come from the chain — there is no mock market layer.
  */
+
+export type ParcelStatus = "sold" | "held" | "unclaimed";
+
+export const PARCEL_STATUS_LABEL: Record<ParcelStatus, string> = {
+  sold: "SOLD ON CHAIN",
+  held: "HELD",
+  unclaimed: "UNCLAIMED",
+};
 
 export type RegistryParcel = {
   bitmapHeight: number;
@@ -18,9 +32,14 @@ export type RegistryParcel = {
   inscribedAt: string;
   ownerAddress: string | null;
   transfers: number;
+  /** Last price actually paid on chain, in BTC. */
   priceBtc: number | null;
-  listed: boolean;
-  status: BitmapStatus;
+  lastSaleSats: number | null;
+  lastSaleTxid: string | null;
+  lastSaleBlock: number | null;
+  lastSaleAt: string | null;
+  traded: boolean;
+  status: ParcelStatus;
   /** A later claim for the same height exists — invalid under bitmap theory. */
   supersedes: number;
 };
@@ -47,26 +66,6 @@ async function fetchClaimRows(limit: number, block?: number): Promise<ClaimRow[]
   return (data ?? []) as ClaimRow[];
 }
 
-type MarketRow = { block_height: number; price_btc: number | null; status: string };
-
-async function fetchMarket(heights: number[]): Promise<Map<number, MarketRow>> {
-  const map = new Map<number, MarketRow>();
-  if (heights.length === 0) return map;
-  const { data, error } = await supabase
-    .from("bitmaps")
-    .select("block_height, price_btc, status")
-    .in("block_height", heights);
-  if (error) throw error;
-  for (const row of data ?? []) {
-    map.set(row.block_height, {
-      block_height: row.block_height,
-      price_btc: row.price_btc === null ? null : Number(row.price_btc),
-      status: row.status,
-    });
-  }
-  return map;
-}
-
 /** Earliest inscription per height wins; later ones are counted as superseded. */
 function dedupeClaims(rows: ClaimRow[]): Array<{ row: ClaimRow; supersedes: number }> {
   const byHeight = new Map<number, ClaimRow[]>();
@@ -89,30 +88,41 @@ async function buildParcels(rows: ClaimRow[]): Promise<RegistryParcel[]> {
   if (claims.length === 0) return [];
 
   const heights = claims.map((c) => c.row.bitmap_height!);
-  const [market, owners] = await Promise.all([
-    fetchMarket(heights).catch(() => new Map<number, MarketRow>()),
+  const [trades, owners] = await Promise.all([
+    fetchTradesForHeights(heights).catch(() => [] as TradeRow[]),
     getBitmapOwners({ data: { txids: claims.slice(0, 60).map((c) => c.row.txid) } }).catch(
       () => [] as Array<{ txid: string; address: string | null; transfers: number }>,
     ),
   ]);
   const ownerByTxid = new Map(owners.map((o) => [o.txid, o]));
+  const tradeCount = new Map<number, number>();
+  for (const row of trades) {
+    tradeCount.set(row.bitmap_height, (tradeCount.get(row.bitmap_height) ?? 0) + 1);
+  }
+  const lastMove = latestByHeight(trades);
+  const lastSale = latestSaleByHeight(trades);
 
   return claims.map(({ row, supersedes }) => {
     const height = row.bitmap_height!;
-    const listing = market.get(height);
-    const owner = ownerByTxid.get(row.txid);
-    const listed = listing?.status === "for_sale" && listing.price_btc !== null;
+    const chainOwner = ownerByTxid.get(row.txid);
+    const move = lastMove.get(height);
+    const sale = lastSale.get(height);
+    const transfers = tradeCount.get(height) ?? chainOwner?.transfers ?? 0;
     return {
       bitmapHeight: height,
       inscriptionId: row.id,
       txid: row.txid,
       inscribedInBlock: row.block_height,
       inscribedAt: row.created_at,
-      ownerAddress: owner?.address ?? null,
-      transfers: owner?.transfers ?? 0,
-      priceBtc: listed ? listing!.price_btc : null,
-      listed: Boolean(listed),
-      status: listed ? "for_sale" : "owned",
+      ownerAddress: move?.buyer_address ?? chainOwner?.address ?? null,
+      transfers,
+      priceBtc: satsToBtc(sale?.price_sats ?? null),
+      lastSaleSats: sale ? sale.price_sats : null,
+      lastSaleTxid: sale?.txid ?? null,
+      lastSaleBlock: sale?.block_height ?? null,
+      lastSaleAt: sale?.block_time ?? sale?.created_at ?? null,
+      traded: transfers > 0,
+      status: sale ? "sold" : "held",
       supersedes,
     } satisfies RegistryParcel;
   });
