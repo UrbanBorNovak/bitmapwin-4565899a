@@ -427,6 +427,7 @@ export async function extractInscriptions(rawHex: string): Promise<ExtractionRes
 
   for (let inputIndex = 0; inputIndex < tx.inputs.length; inputIndex++) {
     const input = tx.inputs[inputIndex];
+    if (!input) continue;
     const script = tapscript(input.witness);
     if (!script) continue;
 

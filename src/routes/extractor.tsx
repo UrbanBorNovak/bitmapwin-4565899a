@@ -31,7 +31,7 @@ export const Route = createFileRoute("/extractor")({
 function isBitmapText(text: string | null): string | null {
   if (!text) return null;
   const m = text.trim().match(/^(\d+)\.bitmap$/);
-  return m ? m[1] : null;
+  return m?.[1] ?? null;
 }
 
 function InscriptionCard({ inscription }: { inscription: ExtractedInscription }) {
