@@ -101,7 +101,11 @@ function Explore() {
       <p className="label mt-3">
         {isPending
           ? "SYNCING CHAIN..."
-          : `${rows.length} BLOCKS · ${totalInscriptions.toLocaleString("en-US")} INSCRIPTIONS · LIVE FROM MEMPOOL.SPACE + ORDINALS.COM`}
+          : `${rows.length} BLOCKS · ${validBitmaps} VALID BITMAPS · ${totalInscriptions.toLocaleString("en-US")} INSCRIPTIONS · LIVE FROM MEMPOOL.SPACE + ORDINALS.COM`}
+      </p>
+      <p className="mt-2 font-mono text-[11px] text-muted-foreground">
+        &gt; BITMAP THEORY: A BLOCK&apos;S BITMAP IS THE FIRST PLAIN-TEXT
+        &nbsp;&lt;HEIGHT&gt;.BITMAP&nbsp; INSCRIPTION EVER MADE. LATER DUPLICATES ARE INVALID.
       </p>
 
       <div className="mt-8 border border-border">
