@@ -91,32 +91,16 @@ export async function connectWallet(provider: WalletProviderId): Promise<Connect
 
   const xverse = getXverse();
   if (!xverse) throw new Error("XVERSE NOT DETECTED — INSTALL THE EXTENSION");
-  const res = await xverse.request<XverseAccount[]>("wallet_connect", {
-    addresses: ["ordinals", "payment"],
-    message: "CONNECT TO BITMAP MARKETPLACE",
-  }).catch(() => null);
+  const accounts = await requestXverseAddresses(xverse);
 
-  let accounts: XverseAccount[] | null = null;
-  if (res && res.status === "success" && Array.isArray(res.result)) {
-    accounts = res.result;
-  } else {
-    // older API surface
-    const legacy = await xverse.request<{ addresses: XverseAccount[] } | XverseAccount[]>(
-      "getAccounts",
-      { purposes: ["ordinals", "payment"], message: "CONNECT TO BITMAP MARKETPLACE" },
-    );
-    if (legacy.status !== "success") {
-      throw new Error((legacy.error?.message ?? "XVERSE CONNECT REJECTED").toUpperCase());
-    }
-    accounts = Array.isArray(legacy.result) ? legacy.result : legacy.result.addresses;
-  }
-
-  if (!accounts || accounts.length === 0) throw new Error("XVERSE RETURNED NO ADDRESSES");
   const ordinals =
     accounts.find((a) => a.purpose === "ordinals") ??
-    accounts.find((a) => (a.addressType ?? "").includes("p2tr")) ??
+    accounts.find((a) => (a.addressType ?? "").toLowerCase().includes("p2tr")) ??
     accounts[0]!;
-  const payment = accounts.find((a) => a.purpose === "payment") ?? ordinals;
+  const payment =
+    accounts.find((a) => a.purpose === "payment") ??
+    accounts.find((a) => a !== ordinals) ??
+    ordinals;
 
   return {
     provider,
@@ -124,6 +108,52 @@ export async function connectWallet(provider: WalletProviderId): Promise<Connect
     paymentAddress: payment.address,
     ...(ordinals.publicKey ? { publicKey: ordinals.publicKey } : {}),
   };
+}
+
+/** Normalizes every shape Xverse has shipped for address responses. */
+function normalizeXverseAddresses(result: unknown): XverseAccount[] {
+  if (!result) return [];
+  if (Array.isArray(result)) return result.filter((a) => a && typeof a.address === "string");
+  const obj = result as { addresses?: unknown; address?: unknown };
+  if (Array.isArray(obj.addresses)) return normalizeXverseAddresses(obj.addresses);
+  if (typeof obj.address === "string") return [result as XverseAccount];
+  return [];
+}
+
+/**
+ * Xverse exposes several RPC generations at once (`wallet_connect`,
+ * `getAddresses`, `wallet_getAccount`, `getAccounts`) and rejects the ones its
+ * build does not implement, so try each in turn and only fail if none answers.
+ */
+async function requestXverseAddresses(xverse: XverseProvider): Promise<XverseAccount[]> {
+  const message = "CONNECT TO BITMAP MARKETPLACE";
+  const attempts: Array<{ method: string; params?: unknown }> = [
+    { method: "wallet_connect", params: { addresses: ["ordinals", "payment"], message } },
+    { method: "getAddresses", params: { purposes: ["ordinals", "payment"], message } },
+    { method: "wallet_getAccount", params: undefined },
+    { method: "getAccounts", params: { purposes: ["ordinals", "payment"], message } },
+  ];
+
+  let lastError = "";
+  for (const attempt of attempts) {
+    try {
+      const res = await xverse.request(attempt.method, attempt.params);
+      if (res?.status === "success") {
+        const accounts = normalizeXverseAddresses(res.result);
+        if (accounts.length > 0) return accounts;
+        lastError = "XVERSE RETURNED NO ADDRESSES";
+        continue;
+      }
+      const msg = res?.error?.message ?? "";
+      if (/reject|denied|cancel/i.test(msg)) throw new Error(msg.toUpperCase());
+      lastError = msg || lastError;
+    } catch (e) {
+      const msg = (e as Error)?.message ?? "";
+      if (/reject|denied|cancel/i.test(msg)) throw new Error(msg.toUpperCase());
+      lastError = msg || lastError;
+    }
+  }
+  throw new Error((lastError || "XVERSE CONNECT FAILED").toUpperCase());
 }
 
 /** Sign a base64 PSBT with the connected wallet. Returns a base64 PSBT. */
