@@ -124,6 +124,16 @@ function WalletPage() {
         )}
       </form>
 
+      <WalletConnect
+        connectedAddress={address}
+        onConnect={(w) => {
+          setInput(w.ordinalsAddress);
+          connect(w.ordinalsAddress);
+        }}
+        onDisconnect={disconnect}
+      />
+
+
       {address === "" ? (
         <p className="mt-10 font-mono text-xs text-muted-foreground">
           &gt; NO ADDRESS LOADED — PASTE THE ADDRESS THAT HOLDS YOUR BITMAPS<span className="blink">_</span>
