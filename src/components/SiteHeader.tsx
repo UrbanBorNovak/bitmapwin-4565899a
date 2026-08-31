@@ -9,6 +9,7 @@ const NAV = [
   { to: "/marketplace", label: "MARKETPLACE" },
   { to: "/collections", label: "COLLECTIONS" },
   { to: "/builds", label: "BUILDS" },
+  { to: "/sdk", label: "SDK" },
   { to: "/map", label: "MAP" },
   { to: "/activity", label: "ACTIVITY" },
   { to: "/extractor", label: "EXTRACTOR" },
