@@ -216,6 +216,95 @@ export type Database = {
         }
         Relationships: []
       }
+      build_delegates: {
+        Row: {
+          bitmap_height: number
+          created_at: string
+          delegate_address: string
+          id: string
+          note: string | null
+          owner_address: string
+        }
+        Insert: {
+          bitmap_height: number
+          created_at?: string
+          delegate_address: string
+          id?: string
+          note?: string | null
+          owner_address: string
+        }
+        Update: {
+          bitmap_height?: number
+          created_at?: string
+          delegate_address?: string
+          id?: string
+          note?: string | null
+          owner_address?: string
+        }
+        Relationships: []
+      }
+      district_bitmaps: {
+        Row: {
+          bitmap_height: number
+          created_at: string
+          district_id: string
+          id: string
+        }
+        Insert: {
+          bitmap_height: number
+          created_at?: string
+          district_id: string
+          id?: string
+        }
+        Update: {
+          bitmap_height?: number
+          created_at?: string
+          district_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "district_bitmaps_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      districts: {
+        Row: {
+          accent: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          owner_address: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          accent?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          owner_address: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          accent?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          owner_address?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inscriptions: {
         Row: {
           bitmap_height: number | null
@@ -534,6 +623,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_build_bitmap: {
+        Args: { _height: number; _owner_address: string; _user_id: string }
+        Returns: boolean
+      }
       owns_wallet: {
         Args: { _address: string; _user_id: string }
         Returns: boolean
