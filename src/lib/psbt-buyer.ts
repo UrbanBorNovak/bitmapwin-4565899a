@@ -267,10 +267,13 @@ export type BuyerPsbtResult = {
   signIndices: number[];
   priceSats: number;
   feeSats: number;
+  /** marketplace commission paid to the platform address */
+  marketFeeSats: number;
   changeSats: number;
   spentSats: number;
   usedFunding: FundingUtxo[];
 };
+
 
 const DUST = 546;
 
