@@ -101,6 +101,11 @@ async function persist(
       : { status: "spent" };
   const { error } = await supabaseAdmin.from("offers").update(patch).eq("id", offer.id);
   if (error) throw new Error(error.message);
+
+  // A sale that came from an accepted bid closes that bid too.
+  const { markBidSettled } = await import("@/lib/bids.server");
+  await markBidSettled(offer.id);
+
   return saved;
 }
 
