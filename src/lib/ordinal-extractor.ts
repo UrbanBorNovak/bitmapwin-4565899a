@@ -392,11 +392,12 @@ function decodePayload(payload: Uint8Array[]): DecodedPayload {
   }
 
   for (const name in chunks) {
-    fields[name] = bytesToHex(concatBytes(chunks[name]));
+    const chunkList = chunks[name];
+    if (chunkList) fields[name] = bytesToHex(concatBytes(chunkList));
   }
 
   if (Object.values(counts).some((c) => c > 1)) {
-    fields.duplicate_field = true;
+    fields["duplicate_field"] = true;
   }
 
   return { fields, body };
