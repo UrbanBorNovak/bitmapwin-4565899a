@@ -243,6 +243,27 @@ export type Database = {
         }
         Relationships: []
       }
+      builder_follows: {
+        Row: {
+          builder_address: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          builder_address: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          builder_address?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       district_bitmaps: {
         Row: {
           bitmap_height: number
