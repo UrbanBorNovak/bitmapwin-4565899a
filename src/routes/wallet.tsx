@@ -256,6 +256,14 @@ function WalletPage() {
               renderExtra={(offer) => <ClaimAction offer={offer} address={address} />}
             />
           </section>
+
+          <WalletBids
+            address={address}
+            heldHeights={parcels
+              .map((p) => p.bitmapHeight)
+              .filter((h): h is number => typeof h === "number")}
+          />
+
         </>
       )}
     </div>
