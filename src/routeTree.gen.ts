@@ -17,6 +17,7 @@ import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as ExtractorRouteImport } from './routes/extractor'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
 import { Route as ProfileAddressRouteImport } from './routes/profile.$address'
@@ -65,6 +66,11 @@ const MarketplaceRoute = MarketplaceRouteImport.update({
   path: '/marketplace',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WalletRoute = WalletRouteImport.update({
   id: '/wallet',
   path: '/wallet',
@@ -111,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/extractor': typeof ExtractorRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/profile/$address': typeof ProfileAddressRoute
@@ -128,6 +135,7 @@ export interface FileRoutesByTo {
   '/extractor': typeof ExtractorRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/profile/$address': typeof ProfileAddressRoute
@@ -146,6 +154,7 @@ export interface FileRoutesById {
   '/extractor': typeof ExtractorRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/profile/$address': typeof ProfileAddressRoute
@@ -165,6 +174,7 @@ export interface FileRouteTypes {
     | '/extractor'
     | '/map'
     | '/marketplace'
+    | '/reset-password'
     | '/wallet'
     | '/bitmap/$block'
     | '/profile/$address'
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/extractor'
     | '/map'
     | '/marketplace'
+    | '/reset-password'
     | '/wallet'
     | '/bitmap/$block'
     | '/profile/$address'
@@ -199,6 +210,7 @@ export interface FileRouteTypes {
     | '/extractor'
     | '/map'
     | '/marketplace'
+    | '/reset-password'
     | '/wallet'
     | '/bitmap/$block'
     | '/profile/$address'
@@ -217,6 +229,7 @@ export interface RootRouteChildren {
   ExtractorRoute: typeof ExtractorRoute
   MapRoute: typeof MapRoute
   MarketplaceRoute: typeof MarketplaceRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   WalletRoute: typeof WalletRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
@@ -281,6 +294,13 @@ declare module '@tanstack/react-router' {
       path: '/marketplace'
       fullPath: '/marketplace'
       preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/wallet': {
@@ -357,6 +377,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExtractorRoute: ExtractorRoute,
   MapRoute: MapRoute,
   MarketplaceRoute: MarketplaceRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   WalletRoute: WalletRoute,
   BitmapBlockRoute: BitmapBlockRoute,
   ProfileAddressRoute: ProfileAddressRoute,
