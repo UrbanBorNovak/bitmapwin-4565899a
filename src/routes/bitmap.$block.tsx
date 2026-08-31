@@ -138,6 +138,14 @@ function BitmapDetail() {
               }
             />
             <Field
+              k="ASKING PRICE"
+              v={
+                parcel?.listedSats
+                  ? `${formatSats(parcel.listedSats)}${parcel.listedBuyerAddress ? ` · RESERVED FOR ${shortenAddress(parcel.listedBuyerAddress)}` : ""}`
+                  : "NO OPEN OFFER"
+              }
+            />
+            <Field
               k="LAST PRICE PAID"
               v={lastSale ? formatSats(lastSale.price_sats) : "NO SALE ON CHAIN"}
             />

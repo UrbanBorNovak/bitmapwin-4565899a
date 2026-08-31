@@ -11,6 +11,7 @@ import {
 } from "@/lib/wallet";
 import { deliverOfferFn } from "@/lib/wallet.functions";
 import { refreshOffersFn } from "@/lib/offers.functions";
+import { settleOfferFn } from "@/lib/settle.functions";
 import { OFFER_STATUS_LABEL } from "@/lib/offers";
 import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
@@ -221,6 +222,7 @@ function WalletPage() {
               offers={offers.data?.incoming ?? []}
               loading={offers.isLoading}
               empty="NO PSBT DELIVERED TO THIS ADDRESS YET"
+              renderExtra={(offer) => <ClaimAction offer={offer} address={address} />}
             />
           </section>
         </>
@@ -390,6 +392,54 @@ function DeliverForm({ offer }: { offer: DeliveredOffer }) {
           {deliver.isPending ? "[ SENDING… ]" : "[ SEND PSBT ]"}
         </button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Buyer-side claim. Once the buyer has completed and broadcast the seller's
+ * PSBT, this verifies on chain that the inscription UTXO was really spent,
+ * records the confirmed transfer as a trade and closes the listing, so the
+ * parcel shows the new holder across the marketplace and detail pages.
+ */
+function ClaimAction({ offer, address }: { offer: DeliveredOffer; address: string }) {
+  const queryClient = useQueryClient();
+
+  const claim = useMutation({
+    mutationFn: () => settleOfferFn({ data: { offerId: offer.id, claimerAddress: address } }),
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: ["wallet"] });
+      void queryClient.invalidateQueries({ queryKey: ["wallet-offers"] });
+      void queryClient.invalidateQueries({ queryKey: ["offers"] });
+      void queryClient.invalidateQueries({ queryKey: ["registry"] });
+      void queryClient.invalidateQueries({ queryKey: ["trades"] });
+      if (!result.settled) {
+        toast("NOT CONFIRMED YET", { description: result.reason.toUpperCase() });
+        return;
+      }
+      toast(`PARCEL CLAIMED — ${result.bitmapHeight ?? "?"}.BITMAP`, {
+        description: `${result.ownerAddress ? `HOLDER ${shortenAddress(result.ownerAddress)}` : "HOLDER PENDING"} · ${
+          result.salePriceSats ? formatSats(result.salePriceSats) : "NO PAYMENT OUTPUT FOUND"
+        }`,
+      });
+    },
+    onError: (e) => toast("CLAIM FAILED", { description: (e as Error).message }),
+  });
+
+  if (offer.status !== "open") {
+    return (
+      <p className="mt-3 font-mono text-[11px] text-muted-foreground">
+        &gt; SETTLED — UTXO SPENT ON CHAIN<span className="blink">_</span>
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-3">
+      <button className="btn-term" disabled={claim.isPending} onClick={() => claim.mutate()}>
+        {claim.isPending ? "[ VERIFYING CHAIN… ]" : "[ CLAIM PARCEL ]"}
+      </button>
+      <span className="label">BROADCAST THE PSBT FIRST, THEN CLAIM</span>
     </div>
   );
 }

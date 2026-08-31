@@ -15,9 +15,10 @@ import { satsToBtc } from "@/lib/trades";
  * status and holder all come from the chain — there is no mock market layer.
  */
 
-export type ParcelStatus = "sold" | "held" | "unclaimed";
+export type ParcelStatus = "listed" | "sold" | "held" | "unclaimed";
 
 export const PARCEL_STATUS_LABEL: Record<ParcelStatus, string> = {
+  listed: "LISTED",
   sold: "SOLD ON CHAIN",
   held: "HELD",
   unclaimed: "UNCLAIMED",
@@ -40,6 +41,12 @@ export type RegistryParcel = {
   lastSaleAt: string | null;
   traded: boolean;
   status: ParcelStatus;
+  /** Asking price of the cheapest open PSBT offer for this parcel, in sats. */
+  listedSats: number | null;
+  /** Id of that open offer, so a buyer can claim it. */
+  listedOfferId: string | null;
+  /** Address the seller delivered that PSBT to, when it is a private sale. */
+  listedBuyerAddress: string | null;
   /** A later claim for the same height exists — invalid under bitmap theory. */
   supersedes: number;
 };
@@ -98,6 +105,33 @@ async function fetchIndexedClaimRows(limit: number, block?: number): Promise<Cla
   });
 }
 
+type OpenListing = { offerId: string; priceSats: number; buyerAddress: string | null };
+
+/**
+ * Cheapest open PSBT offer per height. These are real signed seller
+ * transactions in the offer book, so they are the live asking prices.
+ */
+async function fetchOpenListings(heights: number[]): Promise<Map<number, OpenListing>> {
+  const map = new Map<number, OpenListing>();
+  if (heights.length === 0) return map;
+  const { data, error } = await supabase
+    .from("offers")
+    .select("id, bitmap_height, price_sats, buyer_address")
+    .eq("status", "open")
+    .in("bitmap_height", heights.slice(0, 400));
+  if (error) return map;
+  for (const row of data ?? []) {
+    const height = row.bitmap_height;
+    if (height === null) continue;
+    const priceSats = Number(row.price_sats ?? 0);
+    const current = map.get(height);
+    if (!current || priceSats < current.priceSats) {
+      map.set(height, { offerId: row.id, priceSats, buyerAddress: row.buyer_address ?? null });
+    }
+  }
+  return map;
+}
+
 /** Union of extractor-indexed claims and OCI-resolved claims. */
 async function fetchAllClaimRows(limit: number, block?: number): Promise<ClaimRow[]> {
   const [decoded, indexed] = await Promise.all([
@@ -131,11 +165,12 @@ async function buildParcels(rows: ClaimRow[]): Promise<RegistryParcel[]> {
   if (claims.length === 0) return [];
 
   const heights = claims.map((c) => c.row.bitmap_height!);
-  const [trades, owners] = await Promise.all([
+  const [trades, owners, listings] = await Promise.all([
     fetchTradesForHeights(heights).catch(() => [] as TradeRow[]),
     getBitmapOwners({ data: { txids: claims.slice(0, 60).map((c) => c.row.txid) } }).catch(
       () => [] as Array<{ txid: string; address: string | null; transfers: number }>,
     ),
+    fetchOpenListings(heights).catch(() => new Map<number, OpenListing>()),
   ]);
   const ownerByTxid = new Map(owners.map((o) => [o.txid, o]));
   const tradeCount = new Map<number, number>();
@@ -150,6 +185,7 @@ async function buildParcels(rows: ClaimRow[]): Promise<RegistryParcel[]> {
     const chainOwner = ownerByTxid.get(row.txid);
     const move = lastMove.get(height);
     const sale = lastSale.get(height);
+    const listing = listings.get(height) ?? null;
     const transfers = tradeCount.get(height) ?? chainOwner?.transfers ?? 0;
     return {
       bitmapHeight: height,
@@ -165,7 +201,10 @@ async function buildParcels(rows: ClaimRow[]): Promise<RegistryParcel[]> {
       lastSaleBlock: sale?.block_height ?? null,
       lastSaleAt: sale?.block_time ?? sale?.created_at ?? null,
       traded: transfers > 0,
-      status: sale ? "sold" : "held",
+      status: listing ? "listed" : sale ? "sold" : "held",
+      listedSats: listing ? listing.priceSats : null,
+      listedOfferId: listing ? listing.offerId : null,
+      listedBuyerAddress: listing?.buyerAddress ?? null,
       supersedes,
     } satisfies RegistryParcel;
   });
