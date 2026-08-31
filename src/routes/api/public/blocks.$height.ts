@@ -42,7 +42,10 @@ export const Route = createFileRoute("/api/public/blocks/$height")({
         } catch (error) {
           return Response.json(
             { error: error instanceof Error ? error.message : "Unavailable" },
-            { status: 502, headers: { ...CORS, "cache-control": "no-store" } },
+            {
+              status: 503,
+              headers: { ...CORS, "cache-control": "no-store", "retry-after": "3" },
+            },
           );
         }
       },

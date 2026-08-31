@@ -13,11 +13,21 @@
  */
 
 const MEMPOOL = "https://mempool.space/api";
+const COMMUNITY_MEMPOOL = "https://mempool.emzy.de/api";
 const ESPLORA = "https://blockstream.info/api";
 
 /** Esplora returns 25 txs per page; cap the fan-out for very large blocks. */
 const ESPLORA_MAX_PAGES = 24;
-const ESPLORA_CONCURRENCY = 6;
+const ESPLORA_CONCURRENCY = 2;
+const UPSTREAM_CONCURRENCY = 3;
+const RETRY_DELAYS = [0, 500, 1_500] as const;
+
+const blockCache = new Map<number, BlockBytes>();
+const metaCache = new Map<number, BlockMeta>();
+const blockInflight = new Map<number, Promise<BlockBytes>>();
+const metaInflight = new Map<number, Promise<BlockMeta>>();
+let activeUpstreamJobs = 0;
+const upstreamQueue: Array<() => void> = [];
 
 export type BlockBytes = {
   height: number;
@@ -45,60 +55,115 @@ export function sizeClassFromVsize(vsize: number): number {
   return Math.max(1, Math.min(5, side));
 }
 
-async function json<T>(url: string, timeoutMs = 12_000): Promise<T> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+async function withUpstreamSlot<T>(task: () => Promise<T>): Promise<T> {
+  if (activeUpstreamJobs >= UPSTREAM_CONCURRENCY) {
+    await new Promise<void>((resolve) => upstreamQueue.push(resolve));
+  }
+  activeUpstreamJobs += 1;
   try {
-    const res = await fetch(url, {
-      headers: { accept: "application/json" },
-      signal: controller.signal,
-    });
-    if (!res.ok) throw new Error(`${url} -> HTTP ${res.status}`);
-    return (await res.json()) as T;
+    return await task();
   } finally {
-    clearTimeout(timer);
+    activeUpstreamJobs -= 1;
+    upstreamQueue.shift()?.();
   }
 }
 
-async function esploraBlockHash(height: number): Promise<string> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 12_000);
+async function fetchWithBackoff(url: string, accept: string, timeoutMs: number): Promise<Response> {
+  let lastError: unknown;
+  for (const delay of RETRY_DELAYS) {
+    if (delay > 0) await sleep(delay + Math.floor(Math.random() * 250));
+    try {
+      const response = await withUpstreamSlot(() =>
+        fetch(url, {
+          headers: { accept, "user-agent": "bitmap-marketplace/1.0" },
+          signal: AbortSignal.timeout(timeoutMs),
+        }),
+      );
+      if (response.ok) return response;
+      lastError = new Error(`${new URL(url).pathname} -> HTTP ${response.status}`);
+      if (response.status < 429 || (response.status < 500 && response.status !== 429)) break;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("Bitcoin indexer unavailable");
+}
+
+async function json<T>(url: string, timeoutMs = 12_000): Promise<T> {
+  const response = await fetchWithBackoff(url, "application/json", timeoutMs);
+  return (await response.json()) as T;
+}
+
+async function blockHashFromProvider(base: string, height: number): Promise<string> {
+  const response = await fetchWithBackoff(`${base}/block-height/${height}`, "text/plain", 8_000);
+  return (await response.text()).trim();
+}
+
+async function blockHash(height: number): Promise<string> {
   try {
-    const res = await fetch(`${ESPLORA}/block-height/${height}`, {
-      signal: controller.signal,
-    });
-    if (!res.ok) throw new Error(`block-height ${height} -> HTTP ${res.status}`);
-    return (await res.text()).trim();
-  } finally {
-    clearTimeout(timer);
+    return await blockHashFromProvider(COMMUNITY_MEMPOOL, height);
+  } catch {
+    try {
+      return await blockHashFromProvider(MEMPOOL, height);
+    } catch {
+      return blockHashFromProvider(ESPLORA, height);
+    }
   }
 }
 
 export async function fetchBlockMeta(height: number): Promise<BlockMeta> {
-  const hash = await esploraBlockHash(height);
-  const header = await json<{
-    id: string;
-    height: number;
-    timestamp: number;
-    size: number;
-    weight: number;
-    tx_count: number;
-  }>(`${ESPLORA}/block/${hash}`);
-  return {
-    height: header.height,
-    hash: header.id,
-    timestamp: header.timestamp,
-    size: header.size,
-    weight: header.weight,
-    txCount: header.tx_count,
-  };
+  const cached = metaCache.get(height);
+  if (cached) return cached;
+  const pending = metaInflight.get(height);
+  if (pending) return pending;
+
+  const request = (async () => {
+    const hash = await blockHash(height);
+    let header: {
+      id: string;
+      height: number;
+      timestamp: number;
+      size: number;
+      weight: number;
+      tx_count: number;
+    };
+    try {
+      header = await json(`${COMMUNITY_MEMPOOL}/block/${hash}`);
+    } catch {
+      try {
+        header = await json(`${MEMPOOL}/block/${hash}`);
+      } catch {
+        header = await json(`${ESPLORA}/block/${hash}`);
+      }
+    }
+    const meta = {
+      height: header.height,
+      hash: header.id,
+      timestamp: header.timestamp,
+      size: header.size,
+      weight: header.weight,
+      txCount: header.tx_count,
+    };
+    metaCache.set(height, meta);
+    return meta;
+  })();
+  metaInflight.set(height, request);
+  try {
+    return await request;
+  } finally {
+    metaInflight.delete(height);
+  }
 }
 
 async function vsizesFromMempoolSummary(hash: string): Promise<number[]> {
-  const rows = await json<Array<{ vsize?: number }>>(
-    `${MEMPOOL}/v1/block/${hash}/summary`,
-    15_000,
-  );
+  let rows: Array<{ vsize?: number }>;
+  try {
+    rows = await json(`${COMMUNITY_MEMPOOL}/v1/block/${hash}/summary`, 15_000);
+  } catch {
+    rows = await json(`${MEMPOOL}/v1/block/${hash}/summary`, 15_000);
+  }
   const out: number[] = [];
   for (const row of rows) {
     if (typeof row.vsize === "number" && row.vsize > 0) out.push(row.vsize);
@@ -121,7 +186,12 @@ async function vsizesFromEsploraPages(hash: string, txCount: number): Promise<nu
       if (index >= starts.length) return;
       const start = starts[index]!;
       try {
-        const txs = await json<EsploraTx[]>(`${ESPLORA}/block/${hash}/txs/${start}`);
+        let txs: EsploraTx[];
+        try {
+          txs = await json(`${COMMUNITY_MEMPOOL}/block/${hash}/txs/${start}`);
+        } catch {
+          txs = await json(`${ESPLORA}/block/${hash}/txs/${start}`);
+        }
         results[index] = txs.map((tx) =>
           typeof tx.weight === "number" && tx.weight > 0
             ? Math.ceil(tx.weight / 4)
@@ -144,6 +214,23 @@ async function vsizesFromEsploraPages(hash: string, txCount: number): Promise<nu
 
 /** Build the one-byte-per-transaction size map for a confirmed block. */
 export async function buildBlockBytes(height: number): Promise<BlockBytes> {
+  const cached = blockCache.get(height);
+  if (cached) return cached;
+  const pending = blockInflight.get(height);
+  if (pending) return pending;
+
+  const request = buildBlockBytesUncached(height);
+  blockInflight.set(height, request);
+  try {
+    const block = await request;
+    blockCache.set(height, block);
+    return block;
+  } finally {
+    blockInflight.delete(height);
+  }
+}
+
+async function buildBlockBytesUncached(height: number): Promise<BlockBytes> {
   const meta = await fetchBlockMeta(height);
 
   let vsizes: number[];
