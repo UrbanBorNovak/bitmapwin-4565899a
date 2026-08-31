@@ -10,6 +10,7 @@ import { followerCountsQuery, myFollowsQuery } from "@/lib/follows";
 import { useAuthSession } from "@/lib/auth";
 import { inscriptionImageUrl, profilesQuery, type WalletProfile } from "@/lib/profiles";
 import { BuilderName } from "@/components/BuilderName";
+import { DistrictRarity } from "@/components/DistrictRarity";
 import { shortenAddress } from "@/lib/registry";
 
 export const Route = createFileRoute("/builds")({
@@ -268,6 +269,7 @@ function BuildsPage() {
                   <span className="label">{d.heights.length} BITMAPS</span>
                 </div>
                 <div className="label mt-2">{shortenAddress(d.ownerAddress)}</div>
+                <DistrictRarity heights={d.heights} max={4} className="mt-2" />
                 {d.description ? (
                   <p className="mt-2 font-mono text-[11px] text-muted-foreground">{d.description}</p>
                 ) : null}
