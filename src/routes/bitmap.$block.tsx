@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { OfferBook } from "@/components/OfferBook";
+import { TradeWatcher } from "@/components/TradeWatcher";
 import { registryParcelQuery, shortenAddress, PARCEL_STATUS_LABEL } from "@/lib/registry";
 import { saveTrades, tradesForHeightQuery } from "@/lib/trade-store";
 import { traceBitmapTradesFn } from "@/lib/trades.functions";
@@ -304,6 +305,8 @@ function BitmapDetail() {
           </a>
         )}
       </div>
+
+      <TradeWatcher heights={[block]} limit={5} />
 
       <OfferBook height={block} />
     </div>
