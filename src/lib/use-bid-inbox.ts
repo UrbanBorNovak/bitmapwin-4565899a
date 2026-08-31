@@ -64,11 +64,14 @@ export function useBidInbox(options: { notify?: boolean } = {}) {
     [bids.data, heldHeights],
   );
 
-  // Realtime: any bid change refreshes the inbox.
+  // Realtime: any bid change refreshes the inbox. The channel name is unique
+  // per hook instance so multiple mounted consumers never collide on one
+  // channel (which would throw "cannot add callbacks after subscribe()").
+  const channelId = useId();
   useEffect(() => {
     if (!holderAddress) return;
     const channel = supabase
-      .channel("bid-inbox")
+      .channel(`bid-inbox:${channelId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "bids" }, () => {
         void queryClient.invalidateQueries({ queryKey: ["bids"] });
       })
@@ -76,7 +79,8 @@ export function useBidInbox(options: { notify?: boolean } = {}) {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [holderAddress, queryClient]);
+  }, [holderAddress, queryClient, channelId]);
+
 
   const notified = useRef(false);
   useEffect(() => {
