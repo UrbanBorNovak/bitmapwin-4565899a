@@ -24,6 +24,7 @@ import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
 import { WalletConnect } from "@/components/WalletConnect";
 import { WalletBids } from "@/components/WalletBids";
+import { QuickListForm } from "@/components/QuickListForm";
 import { useBidInbox } from "@/lib/use-bid-inbox";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { useWalletSession, walletControls } from "@/lib/wallet-session";
@@ -94,6 +95,7 @@ function WalletPage() {
   const [input, setInput] = useState("");
   const [address, setAddress] = useState("");
   const [connected, setConnected] = useState<ConnectedWallet | null>(null);
+  const [listOpen, setListOpen] = useState(false);
   const sessionWallet = useWalletSession();
   const { session } = useAuthSession();
   const links = useQuery(myWalletLinksQuery(Boolean(session)));
@@ -309,6 +311,28 @@ function WalletPage() {
               </ul>
             )}
           </section>
+
+          <section id="list" className="mt-10 scroll-mt-24 border border-border">
+            <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border p-5">
+              <div>
+                <h2 className="display text-xl">LIST MY OWN BITMAP</h2>
+                <p className="label mt-2">SET YOUR OWN PRICE — THE PSBT IS BUILT AND SIGNED FOR YOU</p>
+              </div>
+              <button
+                className={listOpen ? "btn-term !px-3 !py-1.5" : "btn-term-ghost !px-3 !py-1.5"}
+                onClick={() => setListOpen((o) => !o)}
+              >
+                {listOpen ? "[ CLOSE ]" : "[ LIST MY OWN BITMAP ]"}
+              </button>
+            </header>
+            {listOpen && (
+              <div className="p-5">
+                <QuickListForm />
+              </div>
+            )}
+          </section>
+
+
 
           <section className="mt-10 border border-border">
             <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border p-5">
