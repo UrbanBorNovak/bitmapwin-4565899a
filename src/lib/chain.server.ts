@@ -1,8 +1,6 @@
 import type { BitmapClaim, ChainBlock } from "@/lib/chain";
 
-const MEMPOOL = "https://mempool.space/api";
 const ORD = "https://ordinals.com";
-const ESPLORA = "https://blockstream.info/api";
 
 /** Community mirrors used when the primary indexers throttle us (HTTP 429). */
 const MEMPOOL_MIRRORS = [
