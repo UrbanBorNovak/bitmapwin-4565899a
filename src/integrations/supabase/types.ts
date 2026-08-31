@@ -49,6 +49,45 @@ export type Database = {
           },
         ]
       }
+      bids: {
+        Row: {
+          bidder_address: string
+          bitmap_height: number
+          created_at: string
+          expires_at: string | null
+          id: string
+          note: string | null
+          price_sats: number
+          signature: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bidder_address: string
+          bitmap_height: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          note?: string | null
+          price_sats: number
+          signature?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bidder_address?: string
+          bitmap_height?: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          note?: string | null
+          price_sats?: number
+          signature?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bitmap_index: {
         Row: {
           block_height: number
