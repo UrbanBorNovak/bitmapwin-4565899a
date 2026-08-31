@@ -2,7 +2,12 @@ import type { WalletSnapshot, WalletUtxo } from "@/lib/wallet";
 
 const ORD = "https://ordinals.com";
 const UA = "bitmap-marketplace/1.0";
-const ESPLORA = "https://blockstream.info/api";
+const ESPLORA_HOSTS = [
+  "https://mempool.space/api",
+  "https://blockstream.info/api",
+  "https://mempool.emzy.de/api",
+  "https://bitcoin.bitaroo.net/api",
+];
 
 let lastFailure = "";
 
