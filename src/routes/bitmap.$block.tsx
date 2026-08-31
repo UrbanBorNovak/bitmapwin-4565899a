@@ -54,6 +54,7 @@ function BitmapDetail() {
   const { data: parcel } = useSuspenseQuery(registryParcelQuery(block));
   const market = useQuery(bitmapQuery(block));
   const scan = useQuery(blockScanQuery(block));
+  const oci = useQuery(ociQuery(block));
 
   const data = market.data;
   const claims = (scan.data?.inscriptions ?? []).filter((i) => i.isBitmapClaim);
