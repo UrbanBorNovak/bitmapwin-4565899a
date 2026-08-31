@@ -49,6 +49,7 @@ export function WalletConnect({
       const next = await connectWallet(provider);
       setWallet(next);
       window.localStorage.setItem(WALLET_PROVIDER_STORAGE_KEY, provider);
+      saveWalletSession(next);
       onConnect(next);
       toast(`${WALLET_LABEL[provider]} CONNECTED`, { description: next.ordinalsAddress });
     } catch (e) {
@@ -63,8 +64,10 @@ export function WalletConnect({
   const disconnect = () => {
     setWallet(null);
     window.localStorage.removeItem(WALLET_PROVIDER_STORAGE_KEY);
+    clearWalletSession();
     onDisconnect?.();
   };
+
 
   const active = wallet !== null && connectedAddress === wallet.ordinalsAddress;
 
