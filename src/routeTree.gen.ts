@@ -18,6 +18,7 @@ import { Route as MapRouteImport } from './routes/map'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
+import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -64,6 +65,11 @@ const ApiPublicOfferRoute = ApiPublicOfferRouteImport.update({
   path: '/api/public/offer',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicOffersRoute = ApiPublicOffersRouteImport.update({
+  id: '/api/public/offers',
+  path: '/api/public/offers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/marketplace': typeof MarketplaceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
+  '/api/public/offers': typeof ApiPublicOffersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/marketplace': typeof MarketplaceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
+  '/api/public/offers': typeof ApiPublicOffersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/marketplace': typeof MarketplaceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
+  '/api/public/offers': typeof ApiPublicOffersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/bitmap/$block'
     | '/api/public/offer'
+    | '/api/public/offers'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/bitmap/$block'
     | '/api/public/offer'
+    | '/api/public/offers'
   id:
     | '__root__'
     | '/'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/bitmap/$block'
     | '/api/public/offer'
+    | '/api/public/offers'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -145,6 +157,7 @@ export interface RootRouteChildren {
   MarketplaceRoute: typeof MarketplaceRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
   ApiPublicOfferRoute: typeof ApiPublicOfferRoute
+  ApiPublicOffersRoute: typeof ApiPublicOffersRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -212,6 +225,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicOfferRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/offers': {
+      id: '/api/public/offers'
+      path: '/api/public/offers'
+      fullPath: '/api/public/offers'
+      preLoaderRoute: typeof ApiPublicOffersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -225,6 +245,7 @@ const rootRouteChildren: RootRouteChildren = {
   MarketplaceRoute: MarketplaceRoute,
   BitmapBlockRoute: BitmapBlockRoute,
   ApiPublicOfferRoute: ApiPublicOfferRoute,
+  ApiPublicOffersRoute: ApiPublicOffersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
