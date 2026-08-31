@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ParcelCard } from "@/components/ParcelCard";
+import { ClubPriceChart } from "@/components/ClubPriceChart";
 import { CLUBS, clubById, clubSupply, formatRange, inClub } from "@/lib/clubs";
 import { parcelOwnersQuery, registryBaseQuery, type RegistryParcel } from "@/lib/registry";
 import { formatSats } from "@/lib/trades";
@@ -99,6 +100,8 @@ function ClubPage() {
         <Stat k="FLOOR" v={floor ? formatSats(floor) : "—"} />
         <Stat k="SALE VOLUME" v={volume ? formatSats(volume) : "—"} />
       </div>
+
+      <ClubPriceChart club={club} />
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
         {(["all", "listed", "traded"] as Tab[]).map((t) => (
