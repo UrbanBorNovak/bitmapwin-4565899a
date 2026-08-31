@@ -13,6 +13,8 @@ import { traceBitmapTradesFn } from "@/lib/trades.functions";
 import { saveTrades } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
 import { settleOffersFn } from "@/lib/settle.functions";
+import { useLiveOffers } from "@/lib/use-live-offers";
+
 
 export const Route = createFileRoute("/marketplace")({
   head: () => ({
@@ -76,6 +78,8 @@ function Marketplace() {
   const [page, setPage] = useState(0);
   const [syncHeight, setSyncHeight] = useState("");
   const queryClient = useQueryClient();
+  useLiveOffers();
+
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["registry"] });
