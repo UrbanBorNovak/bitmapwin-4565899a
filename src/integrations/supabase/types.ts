@@ -51,6 +51,7 @@ export type Database = {
       }
       bids: {
         Row: {
+          accepted_offer_id: string | null
           bidder_address: string
           bitmap_height: number
           created_at: string
@@ -63,6 +64,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accepted_offer_id?: string | null
           bidder_address: string
           bitmap_height: number
           created_at?: string
@@ -75,6 +77,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accepted_offer_id?: string | null
           bidder_address?: string
           bitmap_height?: number
           created_at?: string
@@ -86,7 +89,15 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bids_accepted_offer_id_fkey"
+            columns: ["accepted_offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bitmap_index: {
         Row: {
@@ -287,6 +298,7 @@ export type Database = {
       }
       offers: {
         Row: {
+          bid_id: string | null
           bitmap_height: number | null
           buyer_address: string | null
           buyer_psbt_base64: string | null
@@ -305,6 +317,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bid_id?: string | null
           bitmap_height?: number | null
           buyer_address?: string | null
           buyer_psbt_base64?: string | null
@@ -323,6 +336,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bid_id?: string | null
           bitmap_height?: number | null
           buyer_address?: string | null
           buyer_psbt_base64?: string | null
@@ -340,7 +354,15 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "offers_bid_id_fkey"
+            columns: ["bid_id"]
+            isOneToOne: false
+            referencedRelation: "bids"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       parcel_pages: {
         Row: {
