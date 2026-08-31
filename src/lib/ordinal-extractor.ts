@@ -351,8 +351,8 @@ function decodePayload(payload: Uint8Array[]): DecodedPayload {
       break;
     }
 
-    const key = payload[i];
-    const value = payload[i + 1];
+    const key = payload[i]!;
+    const value = payload[i + 1]!;
     const keyHex = bytesToHex(key);
     counts[keyHex] = (counts[keyHex] || 0) + 1;
 
