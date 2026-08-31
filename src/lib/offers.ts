@@ -76,3 +76,26 @@ export const offersQuery = (height?: number) =>
     queryFn: () => fetchOffers(height === undefined ? {} : { height }),
     staleTime: 30_000,
   });
+
+/** Open offers for a set of inscription ids — powers the BUY button in shops. */
+export async function fetchOffersForInscriptions(ids: string[]) {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase
+    .from("offers")
+    .select(
+      "id, psbt_base64, bitmap_height, inscription_id, outpoint, seller_address, price_sats, status, created_at",
+    )
+    .in("inscription_id", ids.slice(0, 60))
+    .eq("status", "open")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  return (data ?? []).map((row) => toOffer(row as OfferRow));
+}
+
+export const inscriptionOffersQuery = (ids: string[]) =>
+  queryOptions({
+    queryKey: ["offers", "inscriptions", [...ids].sort().join(",")],
+    queryFn: () => fetchOffersForInscriptions(ids),
+    staleTime: 30_000,
+  });
