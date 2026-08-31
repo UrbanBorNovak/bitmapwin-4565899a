@@ -139,9 +139,9 @@ export async function fetchWallet(address: string, maxOutputs = 60): Promise<Wal
   const scanned = unspent.slice(0, maxOutputs);
 
   const utxos: WalletUtxo[] = await mapWithConcurrency(scanned, 4, async (output) => {
-    const inscriptionIds = (output.inscriptions ?? []).filter(
-      (id): id is string => typeof id === "string",
-    );
+    const inscriptionIds = needsInscriptionLookup
+      ? await inscriptionsOfOutpoint(output.outpoint)
+      : (output.inscriptions ?? []).filter((id): id is string => typeof id === "string");
     const inscriptions = await mapWithConcurrency(inscriptionIds.slice(0, 8), 3, async (id) => ({
       id,
       bitmapHeight: await bitmapHeightOf(id),
