@@ -67,12 +67,15 @@ function Explore() {
     const out: ChainBlock[] = blocks.filter((b) => {
       if (filter === "WITH INSCRIPTIONS" && b.inscriptionCount === 0) return false;
       if (filter === "NO INSCRIPTIONS" && b.inscriptionCount > 0) return false;
+      if (filter === "VALID BITMAPS" && b.bitmapStatus !== "valid") return false;
+      if (filter === "UNCLAIMED" && b.bitmapStatus === "valid") return false;
       if (!needle) return true;
       return (
         String(b.height).includes(needle) ||
         b.hash.toLowerCase().includes(needle) ||
         (b.miner ?? "").toLowerCase().includes(needle) ||
-        b.sampleInscriptions.some((id) => id.toLowerCase().includes(needle))
+        b.sampleInscriptions.some((id) => id.toLowerCase().includes(needle)) ||
+        (b.bitmapInscriptionId ?? "").toLowerCase().includes(needle)
       );
     });
     return [...out].sort((a, b) => {
