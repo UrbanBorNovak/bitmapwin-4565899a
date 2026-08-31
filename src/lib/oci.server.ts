@@ -211,7 +211,7 @@ async function persist(entries: BitmapIndexEntry[]) {
       is_valid: e.isValid,
       genesis_height: e.genesisHeight,
       owner_address: e.ownerAddress,
-      resolved_at: e.resolvedAt,
+      resolved_at: e.resolvedAt ?? new Date().toISOString(),
     })),
     { onConflict: "block_height" },
   );
