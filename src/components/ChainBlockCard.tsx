@@ -14,6 +14,8 @@ export function ChainBlockCard({ block }: { block: ChainBlock }) {
   const countLabel = `${count}${block.inscriptionCountIsMinimum ? "+" : ""}`;
   const status = block.bitmapStatus;
   const otherClaims = block.bitmapClaims.filter((c) => c.claimedHeight !== block.height);
+  const traits = traitsOf(block.height);
+  const rarity = rarityOf(block.height);
 
   return (
     <article className="group border border-border bg-card transition-[border-color,transform] duration-150 hover:border-foreground hover:-translate-y-0.5">
