@@ -60,6 +60,7 @@ export function SiteHeader() {
           >
             {searchOpen ? <X className="size-4" /> : <Search className="size-4" />}
           </button>
+          <BidInboxBell />
           <Link to="/wallet" className="btn-term">
             MY WALLET
           </Link>
