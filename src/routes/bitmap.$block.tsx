@@ -315,6 +315,13 @@ function BitmapDetail() {
       <SettlementWatcher heights={[block]} limit={10} />
 
       <OfferBook height={block} />
+
+      <BidPanel
+        height={block}
+        ownerAddress={owner ?? oci.data?.ownerAddress ?? null}
+        askSats={parcel?.listedSats ?? null}
+      />
+
     </div>
   );
 }
