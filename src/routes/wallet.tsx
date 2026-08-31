@@ -24,6 +24,7 @@ import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
 import { WalletConnect } from "@/components/WalletConnect";
 import { WalletBids } from "@/components/WalletBids";
+import { useBidInbox } from "@/lib/use-bid-inbox";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { walletControls } from "@/lib/wallet-session";
 
@@ -95,6 +96,7 @@ function WalletPage() {
     () => (wallet.data?.utxos ?? []).filter((u) => u.inscriptions.length > 0),
     [wallet.data],
   );
+  const inbox = useBidInbox();
   const parcels = useMemo(
     () =>
       inscribedUtxos.flatMap((u) =>
@@ -277,9 +279,14 @@ function WalletPage() {
 
           <WalletBids
             address={address}
-            heldHeights={parcels
-              .map((p) => p.bitmapHeight)
-              .filter((h): h is number => typeof h === "number")}
+            heldHeights={[
+              ...new Set([
+                ...parcels
+                  .map((p) => p.bitmapHeight)
+                  .filter((h): h is number => typeof h === "number"),
+                ...inbox.heldHeights,
+              ]),
+            ]}
           />
 
         </>
