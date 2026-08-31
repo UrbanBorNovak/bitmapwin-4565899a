@@ -87,6 +87,8 @@ function BitmapDetail() {
   const { data: parcel } = useSuspenseQuery(registryParcelQuery(block));
   const scan = useQuery(blockScanQuery(block));
   const sizeMap = useQuery(blockSizeMapQuery(block));
+  const maxParcels = sizeMap.data?.txCount ?? scan.data?.txCount ?? null;
+
   const oci = useQuery(ociQuery(block));
   const trades = useQuery(tradesForHeightQuery(block));
   const queryClient = useQueryClient();
