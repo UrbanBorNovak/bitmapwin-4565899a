@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { formatSats } from "@/lib/trades";
-import { shortenAddress, type RegistryParcel } from "@/lib/registry";
+import { PARCEL_STATUS_LABEL, shortenAddress, type RegistryParcel } from "@/lib/registry";
 
 /** Card for a real, on-chain bitmap claim held in the registry. */
 export function ParcelCard({ parcel }: { parcel: RegistryParcel }) {
