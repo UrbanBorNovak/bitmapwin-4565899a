@@ -93,6 +93,7 @@ function Explore() {
   }, [blocks, term, filter, sort]);
 
   const totalInscriptions = blocks.reduce((sum, b) => sum + b.inscriptionCount, 0);
+  const validBitmaps = blocks.filter((b) => b.bitmapStatus === "valid").length;
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-12 md:px-8">
