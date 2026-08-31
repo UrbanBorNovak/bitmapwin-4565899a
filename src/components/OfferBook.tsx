@@ -78,6 +78,16 @@ export function OfferBook({ height }: { height?: number }) {
       </header>
 
       <div className="border-b border-border p-6">
+        <QuickListForm {...(height === undefined ? {} : { height })} />
+        <button
+          className="btn-term-ghost mt-4 !px-3 !py-1.5"
+          onClick={() => setAdvanced((v) => !v)}
+        >
+          {advanced ? "[ HIDE PSBT PASTE ]" : "[ ADVANCED: PASTE A SIGNED PSBT ]"}
+        </button>
+      </div>
+
+      <div className={advanced ? "border-b border-border p-6" : "hidden"}>
         <label className="label" htmlFor="psbt-input">
           SUBMIT OFFER — BASE64 PSBT
         </label>
