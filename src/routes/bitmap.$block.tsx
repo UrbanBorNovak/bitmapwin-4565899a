@@ -5,6 +5,7 @@ import { getBitmapRegistryEntry } from "@/lib/oci.functions";
 import { MAX_BITMAP } from "@/lib/oci";
 import { toast } from "sonner";
 import { BitmapPixelMap } from "@/components/BitmapPixelMap";
+import { OfferBook } from "@/components/OfferBook";
 import { registryParcelQuery, shortenAddress, PARCEL_STATUS_LABEL } from "@/lib/registry";
 import { saveTrades, tradesForHeightQuery } from "@/lib/trade-store";
 import { traceBitmapTradesFn } from "@/lib/trades.functions";
