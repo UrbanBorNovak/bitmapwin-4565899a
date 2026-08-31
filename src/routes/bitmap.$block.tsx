@@ -9,6 +9,7 @@ import { BlockMosaic } from "@/components/BlockMosaic";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { OfferBook } from "@/components/OfferBook";
 import { BidPanel } from "@/components/BidPanel";
+import { ParcelPagePanel } from "@/components/ParcelPagePanel";
 
 import { TradeWatcher } from "@/components/TradeWatcher";
 import { SettlementWatcher } from "@/components/SettlementWatcher";
@@ -110,6 +111,8 @@ function BitmapDetail() {
       </p>
 
       <TraitBadges height={block} showRarity className="mt-4" />
+
+      <ParcelPagePanel height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="group border border-border bg-card p-6">

@@ -124,6 +124,51 @@ export type Database = {
         }
         Relationships: []
       }
+      bitmap_view_stats: {
+        Row: {
+          bitmap_height: number
+          last_viewed_at: string
+          total_views: number
+          unique_visitors: number
+        }
+        Insert: {
+          bitmap_height: number
+          last_viewed_at?: string
+          total_views?: number
+          unique_visitors?: number
+        }
+        Update: {
+          bitmap_height?: number
+          last_viewed_at?: string
+          total_views?: number
+          unique_visitors?: number
+        }
+        Relationships: []
+      }
+      bitmap_views: {
+        Row: {
+          bitmap_height: number
+          created_at: string
+          id: string
+          viewer_address: string | null
+          visitor_key: string
+        }
+        Insert: {
+          bitmap_height: number
+          created_at?: string
+          id?: string
+          viewer_address?: string | null
+          visitor_key: string
+        }
+        Update: {
+          bitmap_height?: number
+          created_at?: string
+          id?: string
+          viewer_address?: string | null
+          visitor_key?: string
+        }
+        Relationships: []
+      }
       bitmaps: {
         Row: {
           block_height: number
@@ -297,6 +342,39 @@ export type Database = {
         }
         Relationships: []
       }
+      parcel_pages: {
+        Row: {
+          banner_inscription_id: string | null
+          bitmap_height: number
+          created_at: string
+          description: string | null
+          link_url: string | null
+          owner_address: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          banner_inscription_id?: string | null
+          bitmap_height: number
+          created_at?: string
+          description?: string | null
+          link_url?: string | null
+          owner_address: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          banner_inscription_id?: string | null
+          bitmap_height?: number
+          created_at?: string
+          description?: string | null
+          link_url?: string | null
+          owner_address?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       trades: {
         Row: {
           bitmap_height: number
@@ -339,12 +417,42 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_profiles: {
+        Row: {
+          address: string
+          avatar_inscription_id: string | null
+          bio: string | null
+          created_at: string
+          display_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          avatar_inscription_id?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          avatar_inscription_id?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      record_bitmap_view: {
+        Args: { _address?: string; _height: number; _visitor: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

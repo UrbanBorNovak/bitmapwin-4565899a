@@ -14,6 +14,7 @@ import { saveTrades } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
 import { settleOffersFn } from "@/lib/settle.functions";
 import { useLiveOffers } from "@/lib/use-live-offers";
+import { TrendingParcels } from "@/components/TrendingParcels";
 
 
 export const Route = createFileRoute("/marketplace")({
@@ -210,6 +211,10 @@ function Marketplace() {
         <Stat k="LOWEST SALE" v={floor ? formatSats(floor) : "—"} />
         <Stat k="SALE VOLUME" v={volume ? formatSats(volume) : "—"} />
       </div>
+
+      <TrendingParcels limit={8} />
+
+
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <button

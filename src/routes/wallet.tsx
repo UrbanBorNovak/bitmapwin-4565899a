@@ -24,6 +24,8 @@ import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
 import { WalletConnect } from "@/components/WalletConnect";
 import { WalletBids } from "@/components/WalletBids";
+import { ProfileEditor } from "@/components/ProfileEditor";
+import { walletControls } from "@/lib/wallet-session";
 
 
 
@@ -102,6 +104,12 @@ function WalletPage() {
       ),
     [inscribedUtxos],
   );
+  const ownedInscriptionIds = useMemo(
+    () => inscribedUtxos.flatMap((u) => u.inscriptions.map((i) => i.id)),
+    [inscribedUtxos],
+  );
+
+
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-12 md:px-8">
@@ -165,6 +173,14 @@ function WalletPage() {
             <Stat k="UTXOS" v={wallet.data ? String(wallet.data.utxoCount) : "—"} />
             <Stat k="BITMAP PARCELS" v={wallet.data ? String(parcels.length) : "—"} />
           </section>
+
+          <ProfileEditor
+            address={address}
+            canEdit={walletControls(connected, address)}
+            inscriptionIds={ownedInscriptionIds}
+          />
+
+
 
           {wallet.isError && (
             <p className="mt-6 border border-border p-4 font-mono text-xs text-muted-foreground">
