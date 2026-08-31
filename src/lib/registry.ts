@@ -172,11 +172,11 @@ async function buildParcels(rows: ClaimRow[]): Promise<RegistryParcel[]> {
 }
 
 export async function fetchRegistryParcels(limit = 300): Promise<RegistryParcel[]> {
-  return buildParcels(await fetchClaimRows(limit));
+  return buildParcels(await fetchAllClaimRows(limit));
 }
 
 export async function fetchRegistryParcel(block: number): Promise<RegistryParcel | null> {
-  const parcels = await buildParcels(await fetchClaimRows(20, block));
+  const parcels = await buildParcels(await fetchAllClaimRows(20, block));
   return parcels[0] ?? null;
 }
 
