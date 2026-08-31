@@ -335,6 +335,58 @@ export type BuildPreset<K extends BuildKind = BuildKind> = {
 
 export const BUILD_PRESETS: BuildPreset[] = [
   {
+    id: "shop-orange",
+    name: "ORANGE STOREFRONT",
+    blurb: "BITCOIN-ORANGE SHOP FRONT, 3-UP GRID — IMPORT ASSETS AND PRICE THEM",
+    kind: "shop",
+    config: {
+      shopName: "ORANGE STOREFRONT",
+      tagline: "ON-CHAIN ASSETS, PRICED IN SATS, SOLD PEER TO PEER",
+      contactUrl: "https://x.com/",
+      contactLabel: "DM TO BUY",
+      accent: "#f7931a",
+      layout: "grid",
+      columns: 3,
+      frame: "sharp",
+      items: [],
+    } satisfies ShopConfig,
+  },
+  {
+    id: "shop-mono",
+    name: "MONO BOUTIQUE",
+    blurb: "STRICT BLACK/WHITE, SOFT FRAMES, 2-UP — FEWER, PRICIER PIECES",
+    kind: "shop",
+    config: {
+      shopName: "MONO BOUTIQUE",
+      tagline: "CURATED, ONE-OF-ONE, NO NOISE",
+      contactUrl: "",
+      contactLabel: "MAKE AN OFFER",
+      accent: "#e5e5e5",
+      layout: "grid",
+      columns: 2,
+      frame: "soft",
+      items: [],
+    } satisfies ShopConfig,
+  },
+  {
+    id: "shop-list",
+    name: "PRICE LIST",
+    blurb: "DENSE TERMINAL PRICE LIST — GOOD FOR MANY ASSETS AT ONCE",
+    kind: "shop",
+    config: {
+      shopName: "PRICE LIST",
+      tagline: "EVERYTHING I HOLD, EVERY PRICE, ONE SCREEN",
+      contactUrl: "",
+      contactLabel: "CONTACT SELLER",
+      accent: "#f7931a",
+      layout: "list",
+      columns: 3,
+      frame: "sharp",
+      items: [],
+    } satisfies ShopConfig,
+  },
+
+  {
     id: "info-card",
     name: "HOLDER CARD",
     blurb: "NAME, ROLE AND LINKS — A CLEAN HOME PAGE FOR THIS BLOCK",
