@@ -1,0 +1,385 @@
+/**
+ * Buyer half of an ordinal sale PSBT.
+ *
+ * The seller's offer is a PSBT whose single input (the inscription UTXO) is
+ * signed SIGHASH_SINGLE|ANYONECANPAY against output 0 (the asking price paid to
+ * the seller). The buyer must therefore keep that input at index 0 and that
+ * output at index 0, then append their own funding inputs plus a receive output
+ * for the inscription and a change output.
+ *
+ * Pure TypeScript byte work — no bitcoinjs-lib — so it runs in the browser and
+ * inside server functions alike.
+ */
+
+const MAGIC = [0x70, 0x73, 0x62, 0x74, 0xff];
+
+type Kv = { key: number[]; value: number[] };
+
+type ParsedPsbt = {
+  global: Kv[];
+  inputs: Kv[][];
+  outputs: Kv[][];
+  tx: RawTx;
+};
+
+type RawTx = {
+  version: number;
+  locktime: number;
+  inputs: Array<{ txidLe: number[]; vout: number; sequence: number }>;
+  outputs: Array<{ valueSats: number; script: number[] }>;
+};
+
+export function bytesFromBase64(input: string): number[] {
+  const clean = input.replace(/\s+/g, "");
+  const bin = typeof atob === "function" ? atob(clean) : Buffer.from(clean, "base64").toString("binary");
+  const out: number[] = [];
+  for (let i = 0; i < bin.length; i++) out.push(bin.charCodeAt(i));
+  return out;
+}
+
+export function base64FromBytes(bytes: number[]): string {
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return typeof btoa === "function" ? btoa(bin) : Buffer.from(bin, "binary").toString("base64");
+}
+
+function varint(value: number): number[] {
+  if (value < 0xfd) return [value];
+  if (value <= 0xffff) return [0xfd, value & 0xff, (value >> 8) & 0xff];
+  if (value <= 0xffffffff) {
+    return [0xfe, value & 0xff, (value >> 8) & 0xff, (value >> 16) & 0xff, (value >> 24) & 0xff];
+  }
+  const out = [0xff];
+  for (let i = 0; i < 8; i++) out.push(Number((BigInt(value) >> BigInt(8 * i)) & 0xffn));
+  return out;
+}
+
+function u32le(value: number): number[] {
+  return [value & 0xff, (value >> 8) & 0xff, (value >> 16) & 0xff, (value >> 24) & 0xff];
+}
+
+function u64le(value: number): number[] {
+  const out: number[] = [];
+  for (let i = 0; i < 8; i++) out.push(Number((BigInt(value) >> BigInt(8 * i)) & 0xffn));
+  return out;
+}
+
+export function hexToByteArray(hex: string): number[] {
+  const clean = hex.trim().replace(/^0x/, "");
+  const out: number[] = [];
+  for (let i = 0; i < clean.length; i += 2) out.push(parseInt(clean.slice(i, i + 2), 16));
+  return out;
+}
+
+export function byteArrayToHex(bytes: number[]): string {
+  return bytes.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+class Cursor {
+  offset = 0;
+  constructor(readonly bytes: number[]) {}
+  get done() {
+    return this.offset >= this.bytes.length;
+  }
+  u8(): number {
+    if (this.done) throw new Error("PSBT truncated");
+    return this.bytes[this.offset++]!;
+  }
+  take(n: number): number[] {
+    if (this.offset + n > this.bytes.length) throw new Error("PSBT truncated");
+    const slice = this.bytes.slice(this.offset, this.offset + n);
+    this.offset += n;
+    return slice;
+  }
+  uint(n: number): number {
+    const slice = this.take(n);
+    let value = 0;
+    for (let i = slice.length - 1; i >= 0; i--) value = value * 256 + slice[i]!;
+    return value;
+  }
+  varint(): number {
+    const first = this.u8();
+    if (first < 0xfd) return first;
+    if (first === 0xfd) return this.uint(2);
+    if (first === 0xfe) return this.uint(4);
+    return this.uint(8);
+  }
+}
+
+function readMap(cursor: Cursor): Kv[] {
+  const entries: Kv[] = [];
+  for (;;) {
+    if (cursor.done) throw new Error("PSBT map not terminated");
+    const keyLength = cursor.varint();
+    if (keyLength === 0) return entries;
+    const key = cursor.take(keyLength);
+    const value = cursor.take(cursor.varint());
+    entries.push({ key, value });
+  }
+}
+
+function parseTx(bytes: number[]): RawTx {
+  const c = new Cursor(bytes);
+  const version = c.uint(4);
+  const inputCount = c.varint();
+  const inputs: RawTx["inputs"] = [];
+  for (let i = 0; i < inputCount; i++) {
+    const txidLe = c.take(32);
+    const vout = c.uint(4);
+    c.take(c.varint());
+    inputs.push({ txidLe, vout, sequence: c.uint(4) });
+  }
+  const outputCount = c.varint();
+  const outputs: RawTx["outputs"] = [];
+  for (let i = 0; i < outputCount; i++) {
+    const valueSats = c.uint(8);
+    outputs.push({ valueSats, script: c.take(c.varint()) });
+  }
+  return { version, locktime: c.uint(4), inputs, outputs };
+}
+
+function serializeTx(tx: RawTx): number[] {
+  const out: number[] = [...u32le(tx.version), ...varint(tx.inputs.length)];
+  for (const input of tx.inputs) {
+    out.push(...input.txidLe, ...u32le(input.vout), 0x00, ...u32le(input.sequence));
+  }
+  out.push(...varint(tx.outputs.length));
+  for (const output of tx.outputs) {
+    out.push(...u64le(output.valueSats), ...varint(output.script.length), ...output.script);
+  }
+  out.push(...u32le(tx.locktime));
+  return out;
+}
+
+export function parsePsbt(psbtBase64: string): ParsedPsbt {
+  const bytes = bytesFromBase64(psbtBase64);
+  if (MAGIC.some((b, i) => bytes[i] !== b)) throw new Error("Not a PSBT (bad magic)");
+  const cursor = new Cursor(bytes);
+  cursor.offset = 5;
+  const global = readMap(cursor);
+  const txEntry = global.find((kv) => kv.key[0] === 0x00);
+  if (!txEntry) throw new Error("PSBT has no unsigned transaction");
+  const tx = parseTx(txEntry.value);
+  const inputs: Kv[][] = [];
+  for (let i = 0; i < tx.inputs.length; i++) inputs.push(readMap(cursor));
+  const outputs: Kv[][] = [];
+  for (let i = 0; i < tx.outputs.length; i++) outputs.push(readMap(cursor));
+  return { global, inputs, outputs, tx };
+}
+
+function serializeMap(entries: Kv[]): number[] {
+  const out: number[] = [];
+  for (const { key, value } of entries) {
+    out.push(...varint(key.length), ...key, ...varint(value.length), ...value);
+  }
+  out.push(0x00);
+  return out;
+}
+
+function serializePsbt(psbt: ParsedPsbt): string {
+  const global = psbt.global.map((kv) =>
+    kv.key[0] === 0x00 ? { key: kv.key, value: serializeTx(psbt.tx) } : kv,
+  );
+  const bytes = [
+    ...MAGIC,
+    ...serializeMap(global),
+    ...psbt.inputs.flatMap((map) => serializeMap(map)),
+    ...psbt.outputs.flatMap((map) => serializeMap(map)),
+  ];
+  return base64FromBytes(bytes);
+}
+
+/** True when every input carries a final scriptSig or final witness. */
+export function isFullySigned(psbtBase64: string): boolean {
+  const psbt = parsePsbt(psbtBase64);
+  return psbt.inputs.every((map) => map.some((kv) => kv.key[0] === 0x07 || kv.key[0] === 0x08));
+}
+
+/**
+ * Extracts the network-serialized transaction from a finalized PSBT so it can
+ * be broadcast. Returns null when any input is still unfinalized.
+ */
+export function extractRawTxHex(psbtBase64: string): string | null {
+  const psbt = parsePsbt(psbtBase64);
+  const finals = psbt.inputs.map((map) => ({
+    scriptSig: map.find((kv) => kv.key[0] === 0x07)?.value ?? null,
+    witness: map.find((kv) => kv.key[0] === 0x08)?.value ?? null,
+  }));
+  if (finals.some((f) => f.scriptSig === null && f.witness === null)) return null;
+  const hasWitness = finals.some((f) => f.witness !== null);
+  const out: number[] = [...u32le(psbt.tx.version)];
+  if (hasWitness) out.push(0x00, 0x01);
+  out.push(...varint(psbt.tx.inputs.length));
+  psbt.tx.inputs.forEach((input, i) => {
+    const scriptSig = finals[i]!.scriptSig ?? [];
+    out.push(
+      ...input.txidLe,
+      ...u32le(input.vout),
+      ...varint(scriptSig.length),
+      ...scriptSig,
+      ...u32le(input.sequence),
+    );
+  });
+  out.push(...varint(psbt.tx.outputs.length));
+  for (const output of psbt.tx.outputs) {
+    out.push(...u64le(output.valueSats), ...varint(output.script.length), ...output.script);
+  }
+  if (hasWitness) {
+    for (const final of finals) {
+      // the witness field is already stored as a serialized witness stack
+      if (final.witness) out.push(...final.witness);
+      else out.push(0x00);
+    }
+  }
+  out.push(...u32le(psbt.tx.locktime));
+  return byteArrayToHex(out);
+}
+
+export type FundingUtxo = {
+  txid: string;
+  vout: number;
+  valueSats: number;
+  scriptPubKeyHex: string;
+};
+
+export type BuyerPsbtInput = {
+  /** the seller's signed listing PSBT */
+  sellerPsbtBase64: string;
+  /** outpoint of the inscription being bought, `txid:vout` */
+  inscriptionOutpoint: string;
+  /** value in sats of the inscription UTXO (carried into the buyer's output) */
+  inscriptionValueSats: number;
+  /** scriptPubKey the inscription is delivered to (buyer's ordinals address) */
+  receiveScriptHex: string;
+  /** scriptPubKey for buyer change (payment address) */
+  changeScriptHex: string;
+  /** confirmed funding UTXOs of the buyer's payment address */
+  funding: FundingUtxo[];
+  /** sat/vB */
+  feeRate: number;
+  /** buyer x-only taproot key, when the funding inputs are p2tr */
+  tapInternalKeyHex?: string | undefined;
+};
+
+export type BuyerPsbtResult = {
+  psbtBase64: string;
+  /** indices the buyer's wallet must sign */
+  signIndices: number[];
+  priceSats: number;
+  feeSats: number;
+  changeSats: number;
+  spentSats: number;
+  usedFunding: FundingUtxo[];
+};
+
+const DUST = 546;
+
+function estimateVsize(inputs: number, outputs: number): number {
+  return Math.ceil(11 + inputs * 58 + outputs * 43);
+}
+
+/**
+ * Builds the complete purchase PSBT: seller input/output stay at index 0, the
+ * buyer's funding inputs follow, and the inscription is delivered to the
+ * buyer's ordinals address with change returned to their payment address.
+ */
+export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
+  const seller = parsePsbt(input.sellerPsbtBase64);
+  const [txidHex, voutRaw] = input.inscriptionOutpoint.split(":");
+  if (!txidHex || voutRaw === undefined) throw new Error("Bad inscription outpoint");
+  const vout = Number(voutRaw);
+  const txidLe = hexToByteArray(txidHex).reverse();
+
+  const sellerIndex = seller.tx.inputs.findIndex(
+    (i) => byteArrayToHex(i.txidLe) === byteArrayToHex(txidLe) && i.vout === vout,
+  );
+  if (sellerIndex === -1) throw new Error("The offer PSBT does not spend the listed inscription");
+  if (sellerIndex !== 0) throw new Error("Unsupported offer: the inscription must be input 0");
+  const priceOutput = seller.tx.outputs[0];
+  if (!priceOutput) throw new Error("The offer PSBT has no payment output");
+  const priceSats = priceOutput.valueSats;
+
+  const receiveScript = hexToByteArray(input.receiveScriptHex);
+  const changeScript = hexToByteArray(input.changeScriptHex);
+  const tapKey =
+    input.tapInternalKeyHex && /^[0-9a-f]{64}$/i.test(input.tapInternalKeyHex)
+      ? hexToByteArray(input.tapInternalKeyHex)
+      : null;
+
+  // greedy largest-first coin selection over confirmed funding UTXOs
+  const candidates = [...input.funding]
+    .filter((u) => u.valueSats > DUST)
+    .sort((a, b) => b.valueSats - a.valueSats);
+
+  const used: FundingUtxo[] = [];
+  let funded = 0;
+  let feeSats = 0;
+  let needed = 0;
+  for (const candidate of candidates) {
+    used.push(candidate);
+    funded += candidate.valueSats;
+    feeSats = Math.ceil(estimateVsize(1 + used.length, 3) * Math.max(1, input.feeRate));
+    needed = priceSats + feeSats;
+    if (funded >= needed + DUST) break;
+  }
+  if (used.length === 0 || funded < needed) {
+    throw new Error(
+      `Not enough confirmed funds: need ~${priceSats + feeSats} sats plus fees, have ${funded}`,
+    );
+  }
+
+  let changeSats = funded - priceSats - feeSats;
+  if (changeSats < DUST) {
+    // fold sub-dust change into the fee rather than creating an unspendable output
+    feeSats += changeSats;
+    changeSats = 0;
+  }
+
+  const tx: RawTx = {
+    version: seller.tx.version || 2,
+    locktime: 0,
+    inputs: [
+      seller.tx.inputs[0]!,
+      ...used.map((u) => ({
+        txidLe: hexToByteArray(u.txid).reverse(),
+        vout: u.vout,
+        sequence: 0xfffffffd,
+      })),
+    ],
+    outputs: [
+      priceOutput,
+      { valueSats: input.inscriptionValueSats, script: receiveScript },
+      ...(changeSats > 0 ? [{ valueSats: changeSats, script: changeScript }] : []),
+    ],
+  };
+
+  const inputMaps: Kv[][] = [seller.inputs[0] ?? []];
+  for (const utxo of used) {
+    const script = hexToByteArray(utxo.scriptPubKeyHex);
+    const map: Kv[] = [
+      { key: [0x01], value: [...u64le(utxo.valueSats), ...varint(script.length), ...script] },
+    ];
+    const isTaproot = script.length === 34 && script[0] === 0x51;
+    if (isTaproot && tapKey) map.push({ key: [0x17], value: tapKey });
+    inputMaps.push(map);
+  }
+
+  const outputMaps: Kv[][] = tx.outputs.map((_, i) => (i === 0 ? (seller.outputs[0] ?? []) : []));
+
+  const psbtBase64 = serializePsbt({
+    global: seller.global.filter((kv) => kv.key[0] === 0x00),
+    inputs: inputMaps,
+    outputs: outputMaps,
+    tx,
+  });
+
+  return {
+    psbtBase64,
+    signIndices: used.map((_, i) => i + 1),
+    priceSats,
+    feeSats,
+    changeSats,
+    spentSats: priceSats + feeSats,
+    usedFunding: used,
+  };
+}
