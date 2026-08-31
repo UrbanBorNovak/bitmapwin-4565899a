@@ -3,7 +3,8 @@ import { inscriptionImageUrl } from "@/lib/profiles";
 import { formatSats } from "@/lib/trades";
 import { inscriptionOffersQuery } from "@/lib/offers";
 import { BuyButton } from "@/components/BuyButton";
-import type { ShopConfig } from "@/lib/build-sdk";
+import { MakeOfferButton } from "@/components/MakeOfferButton";
+import type { ShopConfig, ShopItem } from "@/lib/build-sdk";
 
 /**
  * A holder-run storefront built on top of their bitmap: their own inscriptions,
