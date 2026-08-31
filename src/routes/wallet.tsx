@@ -12,6 +12,7 @@ import {
 import { deliverOfferFn } from "@/lib/wallet.functions";
 import { refreshOffersFn, submitOfferFn } from "@/lib/offers.functions";
 import { buildListingPsbt } from "@/lib/psbt-builder";
+import { MARKETPLACE_FEE_PERCENT } from "@/lib/marketplace-fee";
 import {
   signListingPsbt,
   xOnlyPubKeyHex,
