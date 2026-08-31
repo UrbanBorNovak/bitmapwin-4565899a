@@ -15,9 +15,10 @@ import { satsToBtc } from "@/lib/trades";
  * status and holder all come from the chain — there is no mock market layer.
  */
 
-export type ParcelStatus = "sold" | "held" | "unclaimed";
+export type ParcelStatus = "listed" | "sold" | "held" | "unclaimed";
 
 export const PARCEL_STATUS_LABEL: Record<ParcelStatus, string> = {
+  listed: "LISTED",
   sold: "SOLD ON CHAIN",
   held: "HELD",
   unclaimed: "UNCLAIMED",
