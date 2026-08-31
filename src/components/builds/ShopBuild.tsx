@@ -23,6 +23,13 @@ export function ShopBuild({ config, height }: { config: ShopConfig; height: numb
   const forSale = config.items.filter((i) => !i.sold);
   const floor = forSale.filter((i) => i.priceSats > 0).map((i) => i.priceSats);
 
+  // Live sale PSBTs the holder published for these inscriptions — one per asset.
+  const ids = config.items.filter((i) => !i.sold).map((i) => i.inscriptionId).filter(Boolean);
+  const offers = useQuery({ ...inscriptionOffersQuery(ids), enabled: ids.length > 0 });
+  const offerFor = (inscriptionId: string) =>
+    (offers.data ?? []).find((o) => o.inscriptionId === inscriptionId) ?? null;
+
+
   return (
     <div className="space-y-4">
       <header
