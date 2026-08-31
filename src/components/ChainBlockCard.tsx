@@ -40,7 +40,27 @@ export function ChainBlockCard({ block }: { block: ChainBlock }) {
             {STATUS_LABEL[status]}
           </span>
         </div>
-        <div className="label mt-1">{timeAgoFromUnix(block.timestamp)}</div>
+        <div className="label mt-1">
+          {timeAgoFromUnix(block.timestamp)} · {rarity}
+        </div>
+
+        {traits.length > 0 && (
+          <ul className="mt-2 flex flex-wrap gap-1">
+            {traits.slice(0, 4).map((t) => (
+              <li
+                key={t.id}
+                className={
+                  t.rare
+                    ? "border border-foreground px-1.5 py-0.5 font-mono text-[9px]"
+                    : "border border-border px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground"
+                }
+              >
+                {t.label}
+              </li>
+            ))}
+          </ul>
+        )}
+
 
         <dl className="mt-3 space-y-1 text-[11px]">
           <Row k="INSCRIPTIONS" v={countLabel} />
