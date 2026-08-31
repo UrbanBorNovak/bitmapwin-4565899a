@@ -185,7 +185,7 @@ function WalletPage() {
 
           <ProfileEditor
             address={address}
-            canEdit={walletControls(connected, address) && isLinked(links.data, address)}
+            canEdit={isLinked(links.data, address) || walletControls(connected, address)}
             inscriptionIds={ownedInscriptionIds}
           />
 
