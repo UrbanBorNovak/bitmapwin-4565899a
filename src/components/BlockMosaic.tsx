@@ -23,7 +23,7 @@ export function BlockMosaic({ height, txCount, className, animate, enabled = tru
       blockHeight={height}
       txCount={data?.txCount ?? txCount ?? null}
       sizeClasses={data?.classes ?? null}
-      className={className}
+      {...(className === undefined ? {} : { className })}
       {...(animate === undefined ? {} : { animate })}
     />
   );
