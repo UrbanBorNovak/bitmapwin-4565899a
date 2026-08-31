@@ -147,6 +147,53 @@ export async function signPsbtBase64(
   return res.result.psbt;
 }
 
+const SIGHASH_SINGLE_ANYONECANPAY = 0x83;
+
+/**
+ * Signs the seller half of a listing PSBT without finalizing it, so the buyer
+ * can still append funding inputs and receive outputs. UniSat needs the
+ * sighash pinned per input; Xverse needs the input indices per address.
+ */
+export async function signListingPsbt(
+  provider: WalletProviderId,
+  psbtBase64: string,
+  sellerAddress: string,
+): Promise<string> {
+  if (provider === "unisat") {
+    const unisat = getUnisat();
+    if (!unisat) throw new Error("UNISAT NOT DETECTED");
+    const signedHex = await unisat.signPsbt(base64ToHex(psbtBase64), {
+      autoFinalized: false,
+      toSignInputs: [
+        { index: 0, address: sellerAddress, sighashTypes: [SIGHASH_SINGLE_ANYONECANPAY] },
+      ],
+    });
+    return hexToBase64(signedHex);
+  }
+  const xverse = getXverse();
+  if (!xverse) throw new Error("XVERSE NOT DETECTED");
+  const res = await xverse.request<{ psbt: string }>("signPsbt", {
+    psbt: psbtBase64,
+    signInputs: { [sellerAddress]: [0] },
+    broadcast: false,
+  });
+  if (res.status !== "success") {
+    throw new Error((res.error?.message ?? "XVERSE SIGN REJECTED").toUpperCase());
+  }
+  return res.result.psbt;
+}
+
+/** x-only (32-byte) internal key hex from a compressed public key hex. */
+export function xOnlyPubKeyHex(publicKeyHex: string | undefined): string | undefined {
+  if (!publicKeyHex) return undefined;
+  const clean = publicKeyHex.trim().replace(/^0x/, "");
+  if (clean.length === 64) return clean;
+  if (clean.length === 66 && (clean.startsWith("02") || clean.startsWith("03"))) {
+    return clean.slice(2);
+  }
+  return undefined;
+}
+
 export function base64ToHex(b64: string): string {
   const bin = atob(b64.trim());
   let out = "";
