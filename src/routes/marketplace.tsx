@@ -15,6 +15,7 @@ import { formatSats } from "@/lib/trades";
 import { settleOffersFn } from "@/lib/settle.functions";
 import { useLiveOffers } from "@/lib/use-live-offers";
 import { TrendingParcels } from "@/components/TrendingParcels";
+import { CLUBS, inClub, type ClubId } from "@/lib/clubs";
 
 
 export const Route = createFileRoute("/marketplace")({
@@ -76,6 +77,7 @@ function Marketplace() {
   const parcels = registry.data ?? [];
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
+  const [club, setClub] = useState<ClubId | "any">("any");
   const [page, setPage] = useState(0);
   const [syncHeight, setSyncHeight] = useState("");
   const queryClient = useQueryClient();
@@ -148,7 +150,11 @@ function Marketplace() {
   const traded = useMemo(() => parcels.filter((p) => p.transfers > 0), [parcels]);
   const sold = useMemo(() => parcels.filter((p) => p.lastSaleSats), [parcels]);
   const visible = useMemo(() => {
-    const base = tab === "traded" ? traded : tab === "listed" ? listed : parcels;
+    let base = tab === "traded" ? traded : tab === "listed" ? listed : parcels;
+    if (club !== "any") {
+      const def = CLUBS.find((c) => c.id === club);
+      if (def) base = base.filter((p) => inClub(p.bitmapHeight, def));
+    }
     const q = search.trim().toLowerCase();
     if (!q) return base;
     return base.filter(
@@ -158,7 +164,7 @@ function Marketplace() {
         p.txid.toLowerCase().includes(q) ||
         (p.ownerAddress ?? "").toLowerCase().includes(q),
     );
-  }, [tab, traded, listed, parcels, search]);
+  }, [tab, traded, listed, parcels, search, club]);
 
   // Paginate first, then resolve holders on chain for the visible page only.
   const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
@@ -215,6 +221,34 @@ function Marketplace() {
       <TrendingParcels limit={8} />
 
 
+
+      <div className="mt-6 flex flex-wrap items-center gap-2 border border-border p-3">
+        <span className="label">COLLECTION</span>
+        <button
+          className={club === "any" ? "btn-term" : "btn-term-ghost"}
+          onClick={() => {
+            setClub("any");
+            setPage(0);
+          }}
+        >
+          [ ALL CLUBS ]
+        </button>
+        {CLUBS.map((c) => (
+          <button
+            key={c.id}
+            className={club === c.id ? "btn-term" : "btn-term-ghost"}
+            onClick={() => {
+              setClub(c.id);
+              setPage(0);
+            }}
+          >
+            [ {c.short} ]
+          </button>
+        ))}
+        <Link to="/collections" className="label ml-auto hover:text-foreground">
+          VIEW COLLECTIONS →
+        </Link>
+      </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <button
