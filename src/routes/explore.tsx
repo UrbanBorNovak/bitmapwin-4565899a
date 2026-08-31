@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { ChainBlockCard } from "@/components/ChainBlockCard";
 import { getChainBlocks } from "@/lib/chain.functions";
 import type { ChainBlock } from "@/lib/chain";
+import { TRAIT_FILTERS, hasTrait, type TraitId } from "@/lib/traits";
 
 type Filter = "ALL" | "VALID BITMAPS" | "UNCLAIMED" | "WITH INSCRIPTIONS" | "NO INSCRIPTIONS";
 type Sort = "NEWEST" | "OLDEST" | "MOST INSCRIPTIONS" | "MOST TXS";
