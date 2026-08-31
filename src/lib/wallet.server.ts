@@ -2,6 +2,7 @@ import type { WalletSnapshot, WalletUtxo } from "@/lib/wallet";
 
 const ORD = "https://ordinals.com";
 const UA = "bitmap-marketplace/1.0";
+const ESPLORA = "https://blockstream.info/api";
 
 let lastFailure = "";
 
@@ -74,19 +75,85 @@ async function mapWithConcurrency<T, R>(
  * knows for the address, which inscriptions sit in each one, and which of
  * those inscriptions are bitmap claims.
  */
-export async function fetchWallet(address: string, maxOutputs = 60): Promise<WalletSnapshot> {
-  const outputs = await ordJson<OrdAddressOutput[]>(`/outputs/${address}`);
-  if (outputs === null) {
-    throw new Error(`ord /outputs failed for ${address} (${lastFailure || "no response"})`);
+type MempoolUtxo = {
+  txid: string;
+  vout: number;
+  value: number;
+  status?: { confirmed?: boolean; block_height?: number };
+};
+
+/**
+ * Fallback source when ord's JSON API is unavailable (it intermittently answers
+ * 406 "JSON API disabled"): esplora gives the unspent outputs, and each
+ * one's inscriptions are then enriched best-effort from ord.
+ */
+async function fetchOutputsViaEsplora(address: string): Promise<OrdAddressOutput[] | null> {
+  try {
+    const [utxoResp, tipResp] = await Promise.all([
+      fetch(`${ESPLORA}/address/${address}/utxo`, {
+        headers: { "user-agent": UA, accept: "application/json" },
+      }),
+      fetch(`${ESPLORA}/blocks/tip/height`, { headers: { "user-agent": UA } }),
+    ]);
+    if (!utxoResp.ok) return null;
+    const utxos = (await utxoResp.json()) as MempoolUtxo[];
+    const tip = tipResp.ok ? Number(await tipResp.text()) : 0;
+    return utxos.map((utxo) => {
+      const height = utxo.status?.block_height ?? 0;
+      return {
+        address,
+        confirmations: tip && height ? tip - height + 1 : 0,
+        inscriptions: null,
+        outpoint: `${utxo.txid}:${utxo.vout}`,
+        spent: false,
+        value: Number(utxo.value ?? 0),
+      };
+    });
+  } catch {
+    return null;
   }
+}
+
+/**
+ * ord's per-output view, used to learn which inscriptions an outpoint holds.
+ * Stops asking after the first failure so a downed ord index does not turn into
+ * one slow request per output.
+ */
+async function inscriptionsOfOutpoint(
+  outpoint: string,
+  state: { ordDown: boolean },
+): Promise<string[]> {
+  if (state.ordDown) return [];
+  const output = await ordJson<{ inscriptions?: string[] | null }>(`/output/${outpoint}`, 1);
+  if (output === null) {
+    state.ordDown = true;
+    return [];
+  }
+  return (output.inscriptions ?? []).filter((id): id is string => typeof id === "string");
+}
+
+export async function fetchWallet(address: string, maxOutputs = 60): Promise<WalletSnapshot> {
+  const ordState = { ordDown: false };
+  let needsInscriptionLookup = false;
+  let outputs = await ordJson<OrdAddressOutput[]>(`/outputs/${address}`);
+  if (outputs === null) {
+    outputs = await fetchOutputsViaEsplora(address);
+    needsInscriptionLookup = true;
+  }
+  if (outputs === null) {
+    throw new Error(
+      `Could not read unspent outputs for ${address} (${lastFailure || "no response"}) — try again shortly`,
+    );
+  }
+
 
   const unspent = outputs.filter((output) => output.spent !== true);
   const scanned = unspent.slice(0, maxOutputs);
 
   const utxos: WalletUtxo[] = await mapWithConcurrency(scanned, 4, async (output) => {
-    const inscriptionIds = (output.inscriptions ?? []).filter(
-      (id): id is string => typeof id === "string",
-    );
+    const inscriptionIds = needsInscriptionLookup
+      ? await inscriptionsOfOutpoint(output.outpoint, ordState)
+      : (output.inscriptions ?? []).filter((id): id is string => typeof id === "string");
     const inscriptions = await mapWithConcurrency(inscriptionIds.slice(0, 8), 3, async (id) => ({
       id,
       bitmapHeight: await bitmapHeightOf(id),
