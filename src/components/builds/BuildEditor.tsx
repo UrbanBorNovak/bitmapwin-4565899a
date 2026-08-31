@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { walletQuery } from "@/lib/wallet";
+import { inscriptionOffersQuery } from "@/lib/offers";
+import { ShopListButton } from "@/components/builds/ShopListButton";
 import { inscriptionImageUrl } from "@/lib/profiles";
 import { formatSats } from "@/lib/trades";
 import {
@@ -421,6 +423,9 @@ function ShopEditor({
 
   const held = (wallet.data?.utxos ?? []).flatMap((u) => u.inscriptions);
   const listed = new Set(config.items.map((i) => i.inscriptionId));
+  const shopIds = config.items.map((i) => i.inscriptionId).filter(Boolean);
+  const offers = useQuery({ ...inscriptionOffersQuery(shopIds), enabled: shopIds.length > 0 });
+  const hasOffer = (id: string) => (offers.data ?? []).some((o) => o.inscriptionId === id);
   const importable = held.filter((i) => !listed.has(i.id));
 
   const setItem = (index: number, patch: Partial<ShopItem>) => {
@@ -644,8 +649,17 @@ function ShopEditor({
                 [ {item.sold ? "SOLD" : "FOR SALE"} ]
               </button>
             </div>
-            <div className="label mt-2 text-muted-foreground">
-              {item.priceSats > 0 ? formatSats(item.priceSats) : "MAKE OFFER"}
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+              <span className="label text-muted-foreground">
+                {item.priceSats > 0 ? formatSats(item.priceSats) : "MAKE OFFER"}
+              </span>
+              {item.sold ? null : (
+                <ShopListButton
+                  inscriptionId={item.inscriptionId}
+                  priceSats={item.priceSats}
+                  alreadyListed={hasOffer(item.inscriptionId)}
+                />
+              )}
             </div>
           </div>
         ))}

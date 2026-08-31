@@ -153,7 +153,8 @@ export function ShopBuild({ config, height }: { config: ShopConfig; height: numb
       )}
 
       <p className="label text-muted-foreground">
-        &gt; PRICES SET BY THE HOLDER — SETTLE DIRECTLY WITH THE SELLER_
+        &gt; PRICES SET BY THE HOLDER — ASSETS WITH A SIGNED PSBT BUY ON-CHAIN INSTANTLY, THE REST
+        SETTLE DIRECTLY WITH THE SELLER_
       </p>
     </div>
   );
