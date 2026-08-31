@@ -96,6 +96,7 @@ function WalletPage() {
     () => (wallet.data?.utxos ?? []).filter((u) => u.inscriptions.length > 0),
     [wallet.data],
   );
+  const inbox = useBidInbox();
   const parcels = useMemo(
     () =>
       inscribedUtxos.flatMap((u) =>
