@@ -198,7 +198,7 @@ function tokenize(script: Uint8Array): Token[] | null {
       length = opcode;
     } else if (opcode === 76) {
       if (i + 1 > script.length) return null;
-      length = script[i++];
+      length = script[i++]!;
     } else if (opcode === 77) {
       if (i + 2 > script.length) return null;
       length = Number(readLE(script, i, 2));
@@ -271,7 +271,7 @@ function extractEnvelopes(script: Uint8Array): Envelope[] {
     let valid = false;
 
     while (i < tokens.length) {
-      const token = tokens[i++];
+      const token = tokens[i++]!;
 
       if (token.type === "op" && token.value === 0x68) {
         valid = true;
@@ -281,7 +281,7 @@ function extractEnvelopes(script: Uint8Array): Envelope[] {
       if (token.type === "push") {
         payload.push(token.value as Uint8Array);
       } else if (token.type === "op" && NUM[token.value as number]) {
-        payload.push(NUM[token.value as number]);
+        payload.push(NUM[token.value as number]!);
         pushnum = true;
       } else {
         stuttered = false;
@@ -301,11 +301,11 @@ function inscriptionID(bytes: Uint8Array): string | null {
   const txidRaw = bytes.slice(0, 32);
   const index = bytes.slice(32);
 
-  if (index.length && index.length !== 4 && index[index.length - 1] === 0) return null;
+  if (index.length && index.length !== 4 && index[index.length - 1]! === 0) return null;
 
   let n = 0n;
   for (let i = 0; i < index.length; i++) {
-    n |= BigInt(index[i]) << BigInt(i * 8);
+    n |= BigInt(index[i]!) << BigInt(i * 8);
   }
 
   return bytesToHex(reverseBytes(txidRaw)) + "i" + n.toString();
