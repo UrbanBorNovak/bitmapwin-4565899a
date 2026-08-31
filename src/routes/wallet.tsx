@@ -494,7 +494,14 @@ function ListParcelForm({
   const [price, setPrice] = useState("");
   const [open, setOpen] = useState(false);
 
-  const canSign = connected !== null && connected.ordinalsAddress === sellerAddress;
+  // Xverse reports separate ordinals/payment addresses; the parcel may sit on either.
+  const signingAddress =
+    connected === null
+      ? null
+      : [connected.ordinalsAddress, connected.paymentAddress].find(
+          (a) => a.toLowerCase() === sellerAddress.toLowerCase(),
+        ) ?? null;
+  const canSign = signingAddress !== null;
 
   const list = useMutation({
     mutationFn: async () => {
@@ -502,7 +509,7 @@ function ListParcelForm({
       if (!Number.isInteger(priceSats) || priceSats < 546) {
         throw new Error("ENTER AN ASK OF AT LEAST 546 SATS");
       }
-      if (!connected) throw new Error("CONNECT UNISAT OR XVERSE FIRST");
+      if (!connected || !signingAddress) throw new Error("CONNECT THE WALLET HOLDING THIS PARCEL");
       const [txid, voutRaw] = parcel.outpoint.split(":");
       const vout = Number(voutRaw);
       if (!txid || !Number.isInteger(vout)) throw new Error("BAD PARCEL OUTPOINT");
@@ -511,19 +518,17 @@ function ListParcelForm({
         txid,
         vout,
         utxoValueSats: parcel.valueSats,
-        sellerAddress: connected.ordinalsAddress,
+        sellerAddress: signingAddress,
         priceSats,
         ...(xOnlyPubKeyHex(connected.publicKey)
           ? { tapInternalKeyHex: xOnlyPubKeyHex(connected.publicKey)! }
           : {}),
       });
-      const signed = await signListingPsbt(
-        connected.provider,
-        psbt,
-        connected.ordinalsAddress,
-      );
+      toast("APPROVE THE SIGNATURE IN YOUR WALLET", { description: "OPEN THE WALLET POPUP TO SIGN" });
+      const signed = await signListingPsbt(connected.provider, psbt, signingAddress);
       return submitOfferFn({ data: { psbt: signed } });
     },
+
     onSuccess: (offer) => {
       void queryClient.invalidateQueries({ queryKey: ["offers"] });
       void queryClient.invalidateQueries({ queryKey: ["wallet-offers"] });
