@@ -77,7 +77,7 @@ async function mapWithConcurrency<T, R>(
 export async function fetchWallet(address: string, maxOutputs = 60): Promise<WalletSnapshot> {
   const outputs = await ordJson<OrdAddressOutput[]>(`/outputs/${address}`);
   if (outputs === null) {
-    throw new Error(`Address not indexed or the ord index is unavailable: ${address}`);
+    throw new Error(`ord /outputs failed for ${address} (${lastFailure || "no response"})`);
   }
 
   const unspent = outputs.filter((output) => output.spent !== true);
