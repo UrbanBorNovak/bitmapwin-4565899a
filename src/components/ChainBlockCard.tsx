@@ -18,7 +18,7 @@ export function ChainBlockCard({ block }: { block: ChainBlock }) {
   const rarity = rarityOf(block.height);
 
   return (
-    <article className="group border border-border bg-card transition-[border-color,transform] duration-150 hover:border-primary hover:-translate-y-0.5">
+    <article className="group rounded-lg overflow-hidden border border-border bg-card transition-[border-color,transform] duration-150 hover:border-primary hover:-translate-y-0.5">
       <Link
         to="/bitmap/$block"
         params={{ block: String(block.height) }}
