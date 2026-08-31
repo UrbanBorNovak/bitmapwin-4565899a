@@ -119,3 +119,38 @@ export function groupByBlock(rows: StoredInscription[]): BlockGroup[] {
     }))
     .sort((a, b) => (b.blockHeight ?? -1) - (a.blockHeight ?? -1));
 }
+
+/**
+ * Persists inscriptions discovered by the live chain scanner into the
+ * registry so the marketplace and detail pages can read them back.
+ */
+export async function saveChainInscriptions(
+  inscriptions: Array<{
+    id: string;
+    txid: string;
+    inputIndex: number;
+    blockHeight: number;
+    contentType: string | null;
+    bodyBytes: number;
+    bodyText: string | null;
+    isBitmapClaim: boolean;
+    bitmapHeight: number | null;
+  }>,
+): Promise<number> {
+  if (inscriptions.length === 0) return 0;
+  const rows = inscriptions.map((i) => ({
+    id: i.id,
+    txid: i.txid,
+    input_index: i.inputIndex,
+    block_height: i.blockHeight,
+    content_type: i.contentType,
+    body_text: i.bodyText,
+    body_bytes: i.bodyBytes,
+    is_bitmap_claim: i.isBitmapClaim,
+    bitmap_height: i.bitmapHeight,
+    fields: {} as Record<string, never>,
+  }));
+  const { error } = await supabase.from("inscriptions").upsert(rows, { onConflict: "id" });
+  if (error) throw error;
+  return rows.length;
+}

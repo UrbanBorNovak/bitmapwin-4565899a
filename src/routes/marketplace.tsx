@@ -2,7 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { ParcelCard } from "@/components/ParcelCard";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { registryParcelsQuery } from "@/lib/registry";
+import { getRecentInscriptions } from "@/lib/ordinals-scan.functions";
+import { saveChainInscriptions } from "@/lib/inscription-store";
 import { formatBtc } from "@/lib/bitmap";
 
 export const Route = createFileRoute("/marketplace")({
@@ -43,6 +47,24 @@ function Marketplace() {
   const { data: parcels } = useSuspenseQuery(registryParcelsQuery(300));
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
+  const queryClient = useQueryClient();
+
+  const sync = useMutation({
+    mutationFn: async () => {
+      const blocks = await getRecentInscriptions({ data: { blocks: 8, txPages: 6 } });
+      const found = blocks.flatMap((b) => b.inscriptions);
+      const saved = await saveChainInscriptions(found);
+      const claims = found.filter((i) => i.isBitmapClaim).length;
+      return { saved, claims, blocks: blocks.length };
+    },
+    onSuccess: (r) => {
+      queryClient.invalidateQueries({ queryKey: ["registry"] });
+      toast(`INDEXED ${r.saved} INSCRIPTION(S)`, {
+        description: `${r.claims} BITMAP CLAIM(S) ACROSS ${r.blocks} BLOCKS`,
+      });
+    },
+    onError: (e) => toast("CHAIN SYNC FAILED", { description: (e as Error).message }),
+  });
 
   const listed = useMemo(() => parcels.filter((p) => p.listed), [parcels]);
   const visible = useMemo(() => {
@@ -94,6 +116,13 @@ function Marketplace() {
           placeholder="SEARCH HEIGHT / OWNER / TXID"
           className="min-w-[240px] flex-1 border border-border bg-background px-3 py-2 font-mono text-xs uppercase text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
         />
+        <button
+          className="btn-term-ghost"
+          disabled={sync.isPending}
+          onClick={() => sync.mutate()}
+        >
+          {sync.isPending ? "[ SYNCING… ]" : "[ SYNC CHAIN ]"}
+        </button>
         <span className="label">LISTED VALUE {formatBtc(volume)}</span>
       </div>
 
