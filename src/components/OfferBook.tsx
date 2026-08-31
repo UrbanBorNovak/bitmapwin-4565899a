@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { offersQuery, OFFER_STATUS_LABEL, type Offer } from "@/lib/offers";
 import { inspectOfferFn, refreshOffersFn, submitOfferFn } from "@/lib/offers.functions";
 import { BuyButton } from "@/components/BuyButton";
+import { QuickListForm } from "@/components/QuickListForm";
 import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
 
