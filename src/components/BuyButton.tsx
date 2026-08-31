@@ -12,6 +12,7 @@ import {
   type WalletProviderId,
 } from "@/lib/browser-wallet";
 import { formatSats } from "@/lib/trades";
+import { MARKETPLACE_FEE_PERCENT } from "@/lib/marketplace-fee";
 
 const PROVIDERS: WalletProviderId[] = ["unisat", "xverse"];
 
@@ -55,7 +56,7 @@ export function BuyButton({
         },
       });
       toast(`SIGN PURCHASE IN ${WALLET_LABEL[wallet.provider]}`, {
-        description: `${formatSats(quote.priceSats)} + ${quote.feeSats} SATS FEE @ ${quote.feeRate} SAT/VB`,
+        description: `${formatSats(quote.priceSats)} + ${quote.marketFeeSats} SATS MARKET FEE (${MARKETPLACE_FEE_PERCENT}%) + ${quote.feeSats} SATS MINER FEE @ ${quote.feeRate} SAT/VB`,
       });
       const signed = await signPurchasePsbt(
         wallet.provider,
