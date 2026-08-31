@@ -52,7 +52,7 @@ function readLE(bytes: Uint8Array, offset: number, length: number): bigint {
   if (offset + length > bytes.length) throw new Error("Unexpected end of data");
   let value = 0n;
   for (let i = 0; i < length; i++) {
-    value |= BigInt(bytes[offset + i]) << BigInt(8 * i);
+    value |= BigInt(bytes[offset + i]!) << BigInt(8 * i);
   }
   return value;
 }
@@ -64,7 +64,7 @@ interface VarintResult {
 
 function varint(bytes: Uint8Array, offset: number): VarintResult {
   if (offset >= bytes.length) throw new Error("Truncated CompactSize");
-  const first = bytes[offset];
+  const first = bytes[offset]!;
   if (first < 0xfd) return { value: BigInt(first), next: offset + 1 };
 
   const length = first === 0xfd ? 2 : first === 0xfe ? 4 : 8;
@@ -177,9 +177,10 @@ export async function parseTransaction(bytes: Uint8Array): Promise<ParsedTx> {
 
 function tapscript(witness: Uint8Array[]): Uint8Array | null {
   const w = [...witness];
-  if (w.length >= 2 && w[w.length - 1][0] === 0x50) w.pop();
+  const last = w[w.length - 1];
+  if (w.length >= 2 && last && last[0] === 0x50) w.pop();
   if (w.length < 2) return null;
-  return w[w.length - 2];
+  return w[w.length - 2] ?? null;
 }
 
 interface Token {
