@@ -160,17 +160,37 @@ function dedupeClaims(rows: ClaimRow[]): Array<{ row: ClaimRow; supersedes: numb
     .sort((a, b) => (b.row.bitmap_height ?? 0) - (a.row.bitmap_height ?? 0));
 }
 
+/**
+ * Chain reads must never hold a render hostage: whichever enrichment misses its
+ * deadline falls back to the neutral value and the parcel list still renders.
+ */
+async function withDeadline<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise.catch(() => fallback),
+      new Promise<T>((resolve) => {
+        timer = setTimeout(() => resolve(fallback), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 async function buildParcels(rows: ClaimRow[]): Promise<RegistryParcel[]> {
   const claims = dedupeClaims(rows);
   if (claims.length === 0) return [];
 
   const heights = claims.map((c) => c.row.bitmap_height!);
   const [trades, owners, listings] = await Promise.all([
-    fetchTradesForHeights(heights).catch(() => [] as TradeRow[]),
-    getBitmapOwners({ data: { txids: claims.slice(0, 60).map((c) => c.row.txid) } }).catch(
-      () => [] as Array<{ txid: string; address: string | null; transfers: number }>,
+    withDeadline(fetchTradesForHeights(heights), 8_000, [] as TradeRow[]),
+    withDeadline(
+      getBitmapOwners({ data: { txids: claims.slice(0, 24).map((c) => c.row.txid) } }),
+      12_000,
+      [] as Array<{ txid: string; address: string | null; transfers: number }>,
     ),
-    fetchOpenListings(heights).catch(() => new Map<number, OpenListing>()),
+    withDeadline(fetchOpenListings(heights), 8_000, new Map<number, OpenListing>()),
   ]);
   const ownerByTxid = new Map(owners.map((o) => [o.txid, o]));
   const tradeCount = new Map<number, number>();

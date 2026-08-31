@@ -2,7 +2,12 @@ import type { WalletSnapshot, WalletUtxo } from "@/lib/wallet";
 
 const ORD = "https://ordinals.com";
 const UA = "bitmap-marketplace/1.0";
-const ESPLORA = "https://blockstream.info/api";
+const ESPLORA_HOSTS = [
+  "https://mempool.space/api",
+  "https://blockstream.info/api",
+  "https://mempool.emzy.de/api",
+  "https://bitcoin.bitaroo.net/api",
+];
 
 let lastFailure = "";
 
@@ -88,30 +93,41 @@ type MempoolUtxo = {
  * one's inscriptions are then enriched best-effort from ord.
  */
 async function fetchOutputsViaEsplora(address: string): Promise<OrdAddressOutput[] | null> {
-  try {
-    const [utxoResp, tipResp] = await Promise.all([
-      fetch(`${ESPLORA}/address/${address}/utxo`, {
+  for (const host of ESPLORA_HOSTS) {
+    try {
+      const utxoResp = await fetch(`${host}/address/${address}/utxo`, {
         headers: { "user-agent": UA, accept: "application/json" },
-      }),
-      fetch(`${ESPLORA}/blocks/tip/height`, { headers: { "user-agent": UA } }),
-    ]);
-    if (!utxoResp.ok) return null;
-    const utxos = (await utxoResp.json()) as MempoolUtxo[];
-    const tip = tipResp.ok ? Number(await tipResp.text()) : 0;
-    return utxos.map((utxo) => {
-      const height = utxo.status?.block_height ?? 0;
-      return {
-        address,
-        confirmations: tip && height ? tip - height + 1 : 0,
-        inscriptions: null,
-        outpoint: `${utxo.txid}:${utxo.vout}`,
-        spent: false,
-        value: Number(utxo.value ?? 0),
-      };
-    });
-  } catch {
-    return null;
+      });
+      if (!utxoResp.ok) {
+        lastFailure = `esplora HTTP ${utxoResp.status}`;
+        continue;
+      }
+      const utxos = (await utxoResp.json()) as MempoolUtxo[];
+      let tip = 0;
+      try {
+        const tipResp = await fetch(`${host}/blocks/tip/height`, {
+          headers: { "user-agent": UA },
+        });
+        if (tipResp.ok) tip = Number(await tipResp.text());
+      } catch {
+        tip = 0;
+      }
+      return utxos.map((utxo) => {
+        const height = utxo.status?.block_height ?? 0;
+        return {
+          address,
+          confirmations: tip && height ? tip - height + 1 : 0,
+          inscriptions: null,
+          outpoint: `${utxo.txid}:${utxo.vout}`,
+          spent: false,
+          value: Number(utxo.value ?? 0),
+        };
+      });
+    } catch (error) {
+      lastFailure = error instanceof Error ? error.message : "network error";
+    }
   }
+  return null;
 }
 
 /**
