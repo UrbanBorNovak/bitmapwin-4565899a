@@ -13,6 +13,7 @@
  */
 
 const MEMPOOL = "https://mempool.space/api";
+const COMMUNITY_MEMPOOL = "https://mempool.emzy.de/api";
 const ESPLORA = "https://blockstream.info/api";
 
 /** Esplora returns 25 txs per page; cap the fan-out for very large blocks. */
@@ -102,9 +103,13 @@ async function blockHashFromProvider(base: string, height: number): Promise<stri
 
 async function blockHash(height: number): Promise<string> {
   try {
-    return await blockHashFromProvider(MEMPOOL, height);
+    return await blockHashFromProvider(COMMUNITY_MEMPOOL, height);
   } catch {
-    return blockHashFromProvider(ESPLORA, height);
+    try {
+      return await blockHashFromProvider(MEMPOOL, height);
+    } catch {
+      return blockHashFromProvider(ESPLORA, height);
+    }
   }
 }
 
@@ -125,9 +130,13 @@ export async function fetchBlockMeta(height: number): Promise<BlockMeta> {
       tx_count: number;
     };
     try {
-      header = await json(`${MEMPOOL}/block/${hash}`);
+      header = await json(`${COMMUNITY_MEMPOOL}/block/${hash}`);
     } catch {
-      header = await json(`${ESPLORA}/block/${hash}`);
+      try {
+        header = await json(`${MEMPOOL}/block/${hash}`);
+      } catch {
+        header = await json(`${ESPLORA}/block/${hash}`);
+      }
     }
     const meta = {
       height: header.height,
@@ -149,10 +158,12 @@ export async function fetchBlockMeta(height: number): Promise<BlockMeta> {
 }
 
 async function vsizesFromMempoolSummary(hash: string): Promise<number[]> {
-  const rows = await json<Array<{ vsize?: number }>>(
-    `${MEMPOOL}/v1/block/${hash}/summary`,
-    15_000,
-  );
+  let rows: Array<{ vsize?: number }>;
+  try {
+    rows = await json(`${COMMUNITY_MEMPOOL}/v1/block/${hash}/summary`, 15_000);
+  } catch {
+    rows = await json(`${MEMPOOL}/v1/block/${hash}/summary`, 15_000);
+  }
   const out: number[] = [];
   for (const row of rows) {
     if (typeof row.vsize === "number" && row.vsize > 0) out.push(row.vsize);
@@ -175,7 +186,12 @@ async function vsizesFromEsploraPages(hash: string, txCount: number): Promise<nu
       if (index >= starts.length) return;
       const start = starts[index]!;
       try {
-        const txs = await json<EsploraTx[]>(`${ESPLORA}/block/${hash}/txs/${start}`);
+        let txs: EsploraTx[];
+        try {
+          txs = await json(`${COMMUNITY_MEMPOOL}/block/${hash}/txs/${start}`);
+        } catch {
+          txs = await json(`${ESPLORA}/block/${hash}/txs/${start}`);
+        }
         results[index] = txs.map((tx) =>
           typeof tx.weight === "number" && tx.weight > 0
             ? Math.ceil(tx.weight / 4)
