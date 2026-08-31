@@ -19,10 +19,11 @@ export type PlaceBidInput = {
   bitmapHeight: number;
   bidderAddress: string;
   priceSats: number;
-  expiresInHours?: number;
-  note?: string;
-  signature?: string;
+  expiresInHours?: number | undefined;
+  note?: string | undefined;
+  signature?: string | undefined;
 };
+
 
 export async function placeBid(input: PlaceBidInput) {
   const db = publicDb();
