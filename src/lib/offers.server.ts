@@ -13,7 +13,7 @@ function db() {
   );
 }
 
-async function ordJson<T>(path: string, attempts = 3): Promise<T | null> {
+async function ordJson<T>(path: string, attempts = 5): Promise<T | null> {
   for (let i = 0; i < attempts; i++) {
     try {
       const resp = await fetch(`${ORD}${path}`, {
@@ -21,7 +21,7 @@ async function ordJson<T>(path: string, attempts = 3): Promise<T | null> {
       });
       if (resp.ok) return (await resp.json()) as T;
       if (resp.status === 429 || resp.status === 406 || resp.status >= 500) {
-        await new Promise((r) => setTimeout(r, 350 * (i + 1)));
+        await new Promise((r) => setTimeout(r, 400 * (i + 1)));
         continue;
       }
       return null;
@@ -88,6 +88,9 @@ export async function validateOffer(psbtBase64: string): Promise<OfferValidation
   const outputs = await Promise.all(
     decoded.inputs.slice(0, 6).map((input) => fetchOutput(input.outpoint)),
   );
+  if (outputs.every((output) => output === null)) {
+    throw new Error("Could not read the input UTXOs from the ord index — try again shortly");
+  }
   const index = outputs.findIndex((output) => (output?.inscriptions.length ?? 0) > 0);
   if (index === -1) {
     throw new Error("No inscription found in any input UTXO — this PSBT does not sell an ordinal");

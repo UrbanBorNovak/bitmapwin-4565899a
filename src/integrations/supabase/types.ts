@@ -204,7 +204,10 @@ export type Database = {
       offers: {
         Row: {
           bitmap_height: number | null
+          buyer_address: string | null
           created_at: string
+          delivered_at: string | null
+          delivery_note: string | null
           id: string
           inscription_id: string | null
           outpoint: string
@@ -217,7 +220,10 @@ export type Database = {
         }
         Insert: {
           bitmap_height?: number | null
+          buyer_address?: string | null
           created_at?: string
+          delivered_at?: string | null
+          delivery_note?: string | null
           id?: string
           inscription_id?: string | null
           outpoint: string
@@ -230,7 +236,10 @@ export type Database = {
         }
         Update: {
           bitmap_height?: number | null
+          buyer_address?: string | null
           created_at?: string
+          delivered_at?: string | null
+          delivery_note?: string | null
           id?: string
           inscription_id?: string | null
           outpoint?: string

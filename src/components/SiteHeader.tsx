@@ -1,7 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Search, X } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 
 const NAV = [
   { to: "/explore", label: "EXPLORE" },
@@ -10,6 +9,7 @@ const NAV = [
   { to: "/activity", label: "ACTIVITY" },
   { to: "/extractor", label: "EXTRACTOR" },
   { to: "/bitmaps", label: "REGISTRY" },
+  { to: "/wallet", label: "WALLET" },
 ] as const;
 
 export function SiteHeader() {
@@ -59,12 +59,9 @@ export function SiteHeader() {
           >
             {searchOpen ? <X className="size-4" /> : <Search className="size-4" />}
           </button>
-          <button
-            className="btn-term"
-            onClick={() => toast("WALLET LAYER NOT CONNECTED", { description: "Ordinals wallet integration ships later." })}
-          >
-            CONNECT WALLET
-          </button>
+          <Link to="/wallet" className="btn-term">
+            MY WALLET
+          </Link>
         </div>
       </div>
 
