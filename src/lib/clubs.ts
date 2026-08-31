@@ -55,7 +55,7 @@ export const CLUBS: Club[] = [
     label: "MILLION CLUB",
     short: "1M+",
     min: 1_000_000,
-    max: 10_000_000,
+    max: 9_999_999,
     blurb: "Future land beyond block one million — not mined yet.",
   },
 ];

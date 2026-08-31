@@ -60,13 +60,11 @@ function CollectionsIndex() {
                 <span className="label">{formatRange(club)}</span>
               </div>
 
-              <div className="mt-4 grid grid-cols-3 gap-2">
-                {[club.min, Math.floor((club.min + club.max) / 2), club.max].map((h) => (
-                  <div key={h} className="border border-border p-2">
-                    <BlockMosaic height={h} enabled={false} />
-                    <div className="label mt-1 truncate">{h.toLocaleString("en-US")}</div>
-                  </div>
-                ))}
+              <div className="mt-4 border border-border p-3">
+                <BlockMosaic height={club.min} />
+                <div className="label mt-2">
+                  SAMPLE {club.min.toLocaleString("en-US")}.BITMAP
+                </div>
               </div>
 
               <p className="mt-4 font-mono text-[11px] text-muted-foreground">{club.blurb}</p>
