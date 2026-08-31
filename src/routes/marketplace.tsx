@@ -164,7 +164,7 @@ function Marketplace() {
       <h1 className="display text-3xl md:text-5xl">MARKETPLACE</h1>
       <p className="label mt-3">PRICES AND STATUS TRACED FROM REAL BITCOIN TRANSACTIONS</p>
 
-      <div className="mt-8 grid grid-cols-2 divide-border border border-border sm:grid-cols-4 sm:divide-x">
+      <div className="mt-8 grid grid-cols-2 divide-border border border-border sm:grid-cols-5 sm:divide-x">
         <Stat k="REGISTERED PARCELS" v={String(parcels.length)} />
         <Stat k="TRADED ON CHAIN" v={String(traded.length)} />
         <Stat
