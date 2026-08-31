@@ -120,7 +120,7 @@ function WalletPage() {
   // The profile is rendered after an address is restored. Scroll once that
   // section exists instead of relying on the browser's initial hash pass.
   useEffect(() => {
-    if (address === "" || window.location.hash !== "#profile") return;
+    if (window.location.hash !== "#profile") return;
     const frame = window.requestAnimationFrame(() => {
       document.getElementById("profile")?.scrollIntoView({ block: "start" });
     });
@@ -207,20 +207,22 @@ function WalletPage() {
         )}
       </form>
 
-      <WalletConnect
-        connectedAddress={address}
-        onConnect={(w) => {
-          setConnected(w);
-          setInput(w.ordinalsAddress);
-          connect(w.ordinalsAddress);
-        }}
-        onDisconnect={() => {
-          setConnected(null);
-          disconnect();
-        }}
-      />
+      <div id={address === "" ? "profile" : undefined} className="scroll-mt-24">
+        <WalletConnect
+          connectedAddress={address}
+          onConnect={(w) => {
+            setConnected(w);
+            setInput(w.ordinalsAddress);
+            connect(w.ordinalsAddress);
+          }}
+          onDisconnect={() => {
+            setConnected(null);
+            disconnect();
+          }}
+        />
 
-      <WalletLinkPanel wallet={connected} address={address} />
+        <WalletLinkPanel wallet={connected} address={address} />
+      </div>
 
 
       {address === "" ? (
