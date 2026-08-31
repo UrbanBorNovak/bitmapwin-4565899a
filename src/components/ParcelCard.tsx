@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { BuyButton } from "@/components/BuyButton";
+import { MakeOfferButton } from "@/components/MakeOfferButton";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { TraitBadges } from "@/components/TraitBadges";
 import { formatSats } from "@/lib/trades";
@@ -68,6 +69,16 @@ export function ParcelCard({ parcel }: { parcel: RegistryParcel }) {
             />
           </div>
         )}
+
+        <div className="mt-2">
+          <MakeOfferButton
+            height={parcel.bitmapHeight}
+            askSats={parcel.listedSats}
+            topBidSats={topBid?.priceSats ?? null}
+            className="btn-term-ghost w-full !px-2 !py-2"
+            label="[ MAKE OFFER ]"
+          />
+        </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2">
           <Link

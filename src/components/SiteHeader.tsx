@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Search, X } from "lucide-react";
 import { useState } from "react";
+import { BidInboxBell } from "@/components/BidInboxBell";
 
 const NAV = [
   { to: "/explore", label: "EXPLORE" },
@@ -59,6 +60,7 @@ export function SiteHeader() {
           >
             {searchOpen ? <X className="size-4" /> : <Search className="size-4" />}
           </button>
+          <BidInboxBell />
           <Link to="/wallet" className="btn-term">
             MY WALLET
           </Link>

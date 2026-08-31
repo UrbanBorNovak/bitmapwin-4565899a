@@ -10,6 +10,7 @@ import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { OfferBook } from "@/components/OfferBook";
 import { BidPanel } from "@/components/BidPanel";
 import { ParcelPagePanel } from "@/components/ParcelPagePanel";
+import { MakeOfferButton } from "@/components/MakeOfferButton";
 
 import { TradeWatcher } from "@/components/TradeWatcher";
 import { SettlementWatcher } from "@/components/SettlementWatcher";
@@ -111,6 +112,15 @@ function BitmapDetail() {
       </p>
 
       <TraitBadges height={block} showRarity className="mt-4" />
+
+      <div className="mt-6 flex flex-wrap gap-2">
+        <MakeOfferButton
+          height={block}
+          askSats={parcel?.listedSats ?? null}
+          className="btn-term"
+          label="[ MAKE OFFER ]"
+        />
+      </div>
 
       <ParcelPagePanel height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
 
