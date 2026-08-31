@@ -63,8 +63,10 @@ export const CLUBS: Club[] = [
 const BY_ID = new Map(CLUBS.map((c) => [c.id, c]));
 
 export function clubOf(height: number): Club {
-  return CLUBS.find((c) => height >= c.min && height <= c.max) ?? CLUBS[CLUBS.length - 1];
+  const found = CLUBS.find((c) => height >= c.min && height <= c.max);
+  return found ?? (CLUBS[CLUBS.length - 1] as Club);
 }
+
 
 export function clubById(id: string): Club | null {
   return BY_ID.get(id as ClubId) ?? null;
