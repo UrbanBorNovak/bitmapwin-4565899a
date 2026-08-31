@@ -212,7 +212,7 @@ export async function signPsbtBase64(
   if (!xverse) throw new Error("XVERSE NOT DETECTED");
   const res = await xverse.request<{ psbt: string }>("signPsbt", { psbt: psbtBase64 });
   if (res.status !== "success") {
-    throw new Error((res.error?.message ?? "XVERSE SIGN REJECTED").toUpperCase());
+    throw new Error(describeXverseSignError(res.error));
   }
   return res.result.psbt;
 }
