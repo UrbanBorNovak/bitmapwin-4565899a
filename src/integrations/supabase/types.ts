@@ -201,6 +201,48 @@ export type Database = {
           },
         ]
       }
+      trades: {
+        Row: {
+          bitmap_height: number
+          block_height: number | null
+          block_time: string | null
+          buyer_address: string | null
+          created_at: string
+          hop: number
+          inscription_id: string | null
+          price_sats: number
+          seller_address: string | null
+          txid: string
+          updated_at: string
+        }
+        Insert: {
+          bitmap_height: number
+          block_height?: number | null
+          block_time?: string | null
+          buyer_address?: string | null
+          created_at?: string
+          hop?: number
+          inscription_id?: string | null
+          price_sats?: number
+          seller_address?: string | null
+          txid: string
+          updated_at?: string
+        }
+        Update: {
+          bitmap_height?: number
+          block_height?: number | null
+          block_time?: string | null
+          buyer_address?: string | null
+          created_at?: string
+          hop?: number
+          inscription_id?: string | null
+          price_sats?: number
+          seller_address?: string | null
+          txid?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
