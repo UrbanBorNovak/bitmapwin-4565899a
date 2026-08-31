@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { openBidsQuery, type Bid } from "@/lib/bids";
 import { walletQuery } from "@/lib/wallet";
+import { heldHeightsQuery } from "@/lib/held-parcels";
 import { useWalletSession } from "@/lib/wallet-session";
 import { formatSats } from "@/lib/trades";
 
