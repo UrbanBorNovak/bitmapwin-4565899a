@@ -368,15 +368,14 @@ function WalletPage() {
 
           <WalletBids
             address={address}
-            heldHeights={[
-              ...new Set([
-                ...parcels
-                  .map((p) => p.bitmapHeight)
-                  .filter((h): h is number => typeof h === "number"),
-                ...inbox.heldHeights,
-              ]),
-            ]}
+            heldHeights={heldHeights}
           />
+
+          <section className="mt-10">
+            <DistrictManager address={address} heldHeights={heldHeights} />
+          </section>
+
+
 
         </>
       )}
