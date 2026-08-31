@@ -41,6 +41,12 @@ export type RegistryParcel = {
   lastSaleAt: string | null;
   traded: boolean;
   status: ParcelStatus;
+  /** Asking price of the cheapest open PSBT offer for this parcel, in sats. */
+  listedSats: number | null;
+  /** Id of that open offer, so a buyer can claim it. */
+  listedOfferId: string | null;
+  /** Address the seller delivered that PSBT to, when it is a private sale. */
+  listedBuyerAddress: string | null;
   /** A later claim for the same height exists — invalid under bitmap theory. */
   supersedes: number;
 };
