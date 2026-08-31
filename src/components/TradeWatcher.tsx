@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { watchTradesFn } from "@/lib/watcher.functions";
-import type { WatchEvent, WatchResult } from "@/lib/watcher.server";
+import type { WatchEvent, WatchResult } from "@/lib/watcher";
 import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
 

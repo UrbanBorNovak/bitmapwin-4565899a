@@ -4,6 +4,7 @@ import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-q
 import { toast } from "sonner";
 import { ParcelCard } from "@/components/ParcelCard";
 import { OfferBook } from "@/components/OfferBook";
+import { TradeWatcher } from "@/components/TradeWatcher";
 import { registryParcelsQuery, type RegistryParcel } from "@/lib/registry";
 import { getBlockInscriptions, getRecentInscriptions } from "@/lib/ordinals-scan.functions";
 import { saveChainInscriptions } from "@/lib/inscription-store";
@@ -235,6 +236,8 @@ function Marketplace() {
           ))}
         </div>
       )}
+
+      <TradeWatcher limit={60} />
 
       <OfferBook />
     </div>

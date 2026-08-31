@@ -1,5 +1,6 @@
 import { traceBitmapTrades } from "@/lib/trades.server";
 import type { ChainTrade } from "@/lib/trades";
+import type { WatchEvent, WatchResult } from "@/lib/watcher";
 
 /**
  * Real-chain trade watcher.
@@ -40,32 +41,6 @@ async function anyOutputSpent(txid: string): Promise<{ spent: boolean; by: strin
   const hit = outspends.find((o) => o.spent);
   return { spent: Boolean(hit), by: hit?.txid ?? null };
 }
-
-export type WatchEvent = {
-  bitmapHeight: number;
-  inscriptionId: string | null;
-  /** Transaction that moved the inscription satoshi. */
-  txid: string;
-  sellerAddress: string | null;
-  buyerAddress: string | null;
-  priceSats: number;
-  blockHeight: number | null;
-  blockTime: string | null;
-  hop: number;
-  /** A payment back to the previous holder was found in the same transaction. */
-  isSale: boolean;
-};
-
-export type WatchResult = {
-  watched: number;
-  /** Parcels whose holding output turned out to be spent. */
-  spends: number;
-  /** Transfers that were not in the registry before this pass. */
-  events: WatchEvent[];
-  savedTrades: number;
-  closedOffers: number;
-  checkedAt: string;
-};
 
 type Candidate = {
   bitmapHeight: number;
