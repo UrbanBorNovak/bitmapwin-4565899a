@@ -1,13 +1,16 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { getBlockInscriptions } from "@/lib/ordinals-scan.functions";
 import { getBitmapRegistryEntry } from "@/lib/oci.functions";
 import { MAX_BITMAP } from "@/lib/oci";
 import { toast } from "sonner";
 import { BitmapPixelMap } from "@/components/BitmapPixelMap";
-import { bitmapQuery } from "@/lib/bitmap-queries";
-import { registryParcelQuery, shortenAddress } from "@/lib/registry";
-import { STATUS_LABEL, formatBtc } from "@/lib/bitmap";
+import { registryParcelQuery, shortenAddress, PARCEL_STATUS_LABEL } from "@/lib/registry";
+import { saveTrades, tradesForHeightQuery } from "@/lib/trade-store";
+import { traceBitmapTradesFn } from "@/lib/trades.functions";
+import { formatSats } from "@/lib/trades";
+import { timeAgo } from "@/lib/bitmap";
+
 
 const blockScanQuery = (height: number) =>
   queryOptions({
@@ -52,12 +55,39 @@ export const Route = createFileRoute("/bitmap/$block")({
 function BitmapDetail() {
   const { block } = Route.useLoaderData();
   const { data: parcel } = useSuspenseQuery(registryParcelQuery(block));
-  const market = useQuery(bitmapQuery(block));
   const scan = useQuery(blockScanQuery(block));
   const oci = useQuery(ociQuery(block));
+  const trades = useQuery(tradesForHeightQuery(block));
+  const queryClient = useQueryClient();
 
-  const data = market.data;
   const claims = (scan.data?.inscriptions ?? []).filter((i) => i.isBitmapClaim);
+  const history = [...(trades.data ?? [])].sort((a, b) => b.hop - a.hop);
+  const lastSale = history.find((t) => t.price_sats > 0) ?? null;
+  const owner = history[0]?.buyer_address ?? parcel?.ownerAddress ?? null;
+
+  const trace = useMutation({
+    mutationFn: async () => {
+      const txid = parcel?.txid ?? oci.data?.inscriptionId?.slice(0, 64) ?? null;
+      if (!txid) throw new Error("NO CLAIM TRANSACTION KNOWN FOR THIS PARCEL");
+      const traces = await traceBitmapTradesFn({
+        data: {
+          claims: [
+            { bitmapHeight: block, txid, inscriptionId: parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null },
+          ],
+          maxHops: 8,
+        },
+      });
+      return saveTrades(traces);
+    },
+    onSuccess: (stored) => {
+      queryClient.invalidateQueries({ queryKey: ["trades"] });
+      queryClient.invalidateQueries({ queryKey: ["registry"] });
+      toast(`${block}.BITMAP`, { description: `${stored} ON-CHAIN TRANSFER(S) INDEXED` });
+    },
+    onError: (e) => toast("TRADE TRACE FAILED", { description: (e as Error).message }),
+  });
+
+
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-12 md:px-8">
@@ -96,22 +126,25 @@ function BitmapDetail() {
             <Field k="BITCOIN NETWORK" v="MAINNET" />
             <Field
               k="OWNER"
-              v={parcel ? shortenAddress(parcel.ownerAddress) : (data?.owner_address ?? "UNCLAIMED")}
+              v={owner ? shortenAddress(owner) : oci.data?.ownerAddress ? shortenAddress(oci.data.ownerAddress) : "UNCLAIMED"}
             />
             <Field
               k="STATUS"
               v={
                 parcel
-                  ? parcel.listed
-                    ? STATUS_LABEL.for_sale
-                    : STATUS_LABEL.owned
-                  : STATUS_LABEL.unclaimed
+                  ? PARCEL_STATUS_LABEL[lastSale ? "sold" : parcel.status]
+                  : PARCEL_STATUS_LABEL.unclaimed
               }
             />
             <Field
-              k="PRICE"
-              v={parcel?.listed ? formatBtc(parcel.priceBtc) : "NOT LISTED"}
+              k="LAST PRICE PAID"
+              v={lastSale ? formatSats(lastSale.price_sats) : "NO SALE ON CHAIN"}
             />
+            <Field
+              k="LAST TRADE BLOCK"
+              v={history[0]?.block_height ? String(history[0].block_height) : "—"}
+            />
+
             <Field
               k="INSCRIPTION ID"
               v={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? (oci.isLoading ? "…" : "—")}
@@ -170,6 +203,48 @@ function BitmapDetail() {
         </div>
       </div>
 
+      <div className="mt-8 border border-border">
+        <div className="flex items-center justify-between border-b border-border px-6 py-3">
+          <span className="label">ON-CHAIN TRADE HISTORY</span>
+          <span className="label">{history.length} TRANSFER(S)</span>
+        </div>
+        {history.length === 0 ? (
+          <p className="px-6 py-6 font-mono text-xs text-muted-foreground">
+            &gt;{" "}
+            {trades.isLoading
+              ? "READING INDEXED TRANSFERS…"
+              : "NO CONFIRMED TRANSFER INDEXED — RUN [ TRACE ON-CHAIN TRADES ]"}
+            <span className="blink">_</span>
+          </p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {history.map((t) => (
+              <li key={t.txid} className="px-6 py-4 font-mono text-xs">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <span className="display text-sm">
+                    {t.price_sats > 0 ? `SOLD ${formatSats(t.price_sats)}` : "TRANSFER"}
+                  </span>
+                  <span className="text-muted-foreground">
+                    BLOCK {t.block_height ?? "—"} · {timeAgo(t.block_time ?? t.created_at)}
+                  </span>
+                </div>
+                <div className="mt-1 text-muted-foreground">
+                  {shortenAddress(t.seller_address)} → {shortenAddress(t.buyer_address)}
+                </div>
+                <a
+                  className="mt-1 block break-all text-muted-foreground underline decoration-border underline-offset-4 hover:text-foreground"
+                  href={`https://mempool.space/tx/${t.txid}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {t.txid}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       {scan.data && scan.data.inscriptions.length > 0 && (
         <div className="mt-8 border border-border">
           <div className="border-b border-border px-6 py-3">
@@ -195,15 +270,12 @@ function BitmapDetail() {
       <div className="mt-8 flex flex-wrap gap-3">
         <button
           className="btn-term disabled:opacity-30"
-          disabled={!parcel?.listed}
-          onClick={() =>
-            toast(`${block}.BITMAP`, {
-              description: "Settlement layer not connected in this prototype.",
-            })
-          }
+          disabled={trace.isPending || (!parcel && !oci.data?.inscriptionId)}
+          onClick={() => trace.mutate()}
         >
-          [ BUY BITMAP ]
+          {trace.isPending ? "[ TRACING… ]" : "[ TRACE ON-CHAIN TRADES ]"}
         </button>
+
         <a
           className="btn-term-ghost"
           href={`https://mempool.space/block/${block}`}

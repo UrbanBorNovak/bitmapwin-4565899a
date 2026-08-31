@@ -1,28 +1,29 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ParcelCard } from "@/components/ParcelCard";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { registryParcelsQuery } from "@/lib/registry";
+import { ParcelCard } from "@/components/ParcelCard";
+import { registryParcelsQuery, type RegistryParcel } from "@/lib/registry";
 import { getBlockInscriptions, getRecentInscriptions } from "@/lib/ordinals-scan.functions";
 import { saveChainInscriptions } from "@/lib/inscription-store";
-import { formatBtc } from "@/lib/bitmap";
+import { traceBitmapTradesFn } from "@/lib/trades.functions";
+import { saveTrades } from "@/lib/trade-store";
+import { formatSats } from "@/lib/trades";
 
 export const Route = createFileRoute("/marketplace")({
   head: () => ({
     meta: [
-      { title: "Marketplace — Bitmap Digital Land Listings" },
+      { title: "Marketplace — On-Chain Bitmap Trades" },
       {
         name: "description",
         content:
-          "Real on-chain Bitmap parcels from the inscription registry, with resolved owners and BTC prices.",
+          "Bitmap parcels priced by real Bitcoin transactions: every sale, buyer and holder traced from the chain.",
       },
-      { property: "og:title", content: "Marketplace — Bitmap Digital Land Listings" },
+      { property: "og:title", content: "Marketplace — On-Chain Bitmap Trades" },
       {
         property: "og:description",
         content:
-          "Real on-chain Bitmap parcels from the inscription registry, with resolved owners and BTC prices.",
+          "Bitmap parcels priced by real Bitcoin transactions: every sale, buyer and holder traced from the chain.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -41,15 +42,40 @@ export const Route = createFileRoute("/marketplace")({
   notFoundComponent: () => <EmptyRegistry />,
 });
 
-type Tab = "listed" | "all";
+type Tab = "traded" | "all";
+
+/** Traces claims on chain in batches of 40 and stores every transfer found. */
+async function traceAndStore(claims: RegistryParcel[]): Promise<{ traced: number; trades: number }> {
+  let trades = 0;
+  const batches: RegistryParcel[][] = [];
+  for (let i = 0; i < claims.length; i += 40) batches.push(claims.slice(i, i + 40));
+  for (const batch of batches) {
+    const traces = await traceBitmapTradesFn({
+      data: {
+        claims: batch.map((p) => ({
+          bitmapHeight: p.bitmapHeight,
+          txid: p.txid,
+          inscriptionId: p.inscriptionId,
+        })),
+        maxHops: 6,
+      },
+    });
+    trades += await saveTrades(traces);
+  }
+  return { traced: claims.length, trades };
+}
 
 function Marketplace() {
   const { data: parcels } = useSuspenseQuery(registryParcelsQuery(300));
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
+  const [syncHeight, setSyncHeight] = useState("");
   const queryClient = useQueryClient();
 
-  const [syncHeight, setSyncHeight] = useState("");
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["registry"] });
+    queryClient.invalidateQueries({ queryKey: ["trades"] });
+  };
 
   const sync = useMutation({
     mutationFn: async () => {
@@ -60,21 +86,45 @@ function Marketplace() {
           : await getRecentInscriptions({ data: { blocks: 8, txPages: 6 } });
       const found = blocks.flatMap((b) => b.inscriptions);
       const saved = await saveChainInscriptions(found);
-      const claims = found.filter((i) => i.isBitmapClaim).length;
-      return { saved, claims, blocks: blocks.length };
+      const claims = found.filter((i) => i.isBitmapClaim);
+      const traced = await traceAndStore(
+        claims
+          .filter((c) => c.bitmapHeight !== null)
+          .map(
+            (c) =>
+              ({
+                bitmapHeight: c.bitmapHeight as number,
+                txid: c.txid,
+                inscriptionId: c.id,
+              }) as RegistryParcel,
+          ),
+      );
+      return { saved, claims: claims.length, blocks: blocks.length, trades: traced.trades };
     },
     onSuccess: (r) => {
-      queryClient.invalidateQueries({ queryKey: ["registry"] });
+      invalidate();
       toast(`INDEXED ${r.saved} INSCRIPTION(S)`, {
-        description: `${r.claims} BITMAP CLAIM(S) ACROSS ${r.blocks} BLOCKS`,
+        description: `${r.claims} CLAIM(S) · ${r.trades} ON-CHAIN TRANSFER(S) ACROSS ${r.blocks} BLOCKS`,
       });
     },
     onError: (e) => toast("CHAIN SYNC FAILED", { description: (e as Error).message }),
   });
 
-  const listed = useMemo(() => parcels.filter((p) => p.listed), [parcels]);
+  const refreshTrades = useMutation({
+    mutationFn: () => traceAndStore(parcels.slice(0, 120)),
+    onSuccess: (r) => {
+      invalidate();
+      toast(`TRACED ${r.traced} PARCEL(S)`, {
+        description: `${r.trades} CONFIRMED TRANSFER(S) STORED`,
+      });
+    },
+    onError: (e) => toast("TRADE TRACE FAILED", { description: (e as Error).message }),
+  });
+
+  const traded = useMemo(() => parcels.filter((p) => p.transfers > 0), [parcels]);
+  const sold = useMemo(() => parcels.filter((p) => p.lastSaleSats), [parcels]);
   const visible = useMemo(() => {
-    const base = tab === "listed" ? listed : parcels;
+    const base = tab === "traded" ? traded : parcels;
     const q = search.trim().toLowerCase();
     if (!q) return base;
     return base.filter(
@@ -84,23 +134,25 @@ function Marketplace() {
         p.txid.toLowerCase().includes(q) ||
         (p.ownerAddress ?? "").toLowerCase().includes(q),
     );
-  }, [tab, listed, parcels, search]);
+  }, [tab, traded, parcels, search]);
 
-  const prices = listed.map((p) => p.priceBtc ?? 0).filter((p) => p > 0);
-  const floor = prices.length ? Math.min(...prices) : null;
-  const volume = prices.reduce((a, b) => a + b, 0);
+  const saleSats = sold.map((p) => p.lastSaleSats ?? 0).filter((v) => v > 0);
+  const floor = saleSats.length ? Math.min(...saleSats) : null;
+  const volume = saleSats.reduce((a, b) => a + b, 0);
   const holders = new Set(parcels.map((p) => p.ownerAddress).filter(Boolean)).size;
+
+  const busy = sync.isPending || refreshTrades.isPending;
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-12 md:px-8">
       <h1 className="display text-3xl md:text-5xl">MARKETPLACE</h1>
-      <p className="label mt-3">ON-CHAIN PARCELS FROM THE INSCRIPTION REGISTRY</p>
+      <p className="label mt-3">PRICES AND STATUS TRACED FROM REAL BITCOIN TRANSACTIONS</p>
 
       <div className="mt-8 grid grid-cols-2 divide-border border border-border sm:grid-cols-4 sm:divide-x">
         <Stat k="REGISTERED PARCELS" v={String(parcels.length)} />
-        <Stat k="LISTED" v={String(listed.length)} />
-        <Stat k="FLOOR" v={formatBtc(floor)} />
-        <Stat k="HOLDERS" v={String(holders)} />
+        <Stat k="TRADED ON CHAIN" v={String(traded.length)} />
+        <Stat k="LOWEST SALE" v={floor ? formatSats(floor) : "—"} />
+        <Stat k="SALE VOLUME" v={volume ? formatSats(volume) : "—"} />
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
@@ -111,10 +163,10 @@ function Marketplace() {
           [ ALL PARCELS ]
         </button>
         <button
-          className={tab === "listed" ? "btn-term" : "btn-term-ghost"}
-          onClick={() => setTab("listed")}
+          className={tab === "traded" ? "btn-term" : "btn-term-ghost"}
+          onClick={() => setTab("traded")}
         >
-          [ FOR SALE ]
+          [ TRADED ]
         </button>
         <input
           value={search}
@@ -128,14 +180,17 @@ function Marketplace() {
           placeholder="BLOCK TO INDEX"
           className="w-[150px] border border-border bg-background px-3 py-2 font-mono text-xs uppercase text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
         />
-        <button
-          className="btn-term-ghost"
-          disabled={sync.isPending}
-          onClick={() => sync.mutate()}
-        >
+        <button className="btn-term-ghost" disabled={busy} onClick={() => sync.mutate()}>
           {sync.isPending ? "[ SYNCING… ]" : "[ SYNC CHAIN ]"}
         </button>
-        <span className="label">LISTED VALUE {formatBtc(volume)}</span>
+        <button
+          className="btn-term-ghost"
+          disabled={busy || parcels.length === 0}
+          onClick={() => refreshTrades.mutate()}
+        >
+          {refreshTrades.isPending ? "[ TRACING TRADES… ]" : "[ TRACE TRADES ]"}
+        </button>
+        <span className="label">HOLDERS {holders}</span>
       </div>
 
       {visible.length === 0 ? (
@@ -156,7 +211,8 @@ function EmptyRegistry() {
     <div className="mt-10 border border-border p-10">
       <h2 className="display text-2xl">NO PARCELS IN THE REGISTRY YET</h2>
       <p className="mt-4 font-mono text-sm text-muted-foreground">
-        &gt; BITMAP CLAIMS APPEAR HERE ONCE INSCRIPTIONS ARE INDEXED<span className="blink">_</span>
+        &gt; RUN [ SYNC CHAIN ] TO INDEX REAL BITMAP CLAIMS AND THEIR TRADES
+        <span className="blink">_</span>
       </p>
       <div className="mt-8 flex flex-wrap gap-2">
         <Link to="/explore" className="btn-term">
