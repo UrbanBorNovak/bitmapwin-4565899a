@@ -104,17 +104,15 @@ function BitmapDetail() {
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="group border border-border bg-card p-6">
-          <BitmapPixelMap
-            blockHeight={block}
-            txCount={scan.data?.txCount ?? null}
-            vsizes={scan.data?.vsizes ?? null}
-          />
+          <BlockMosaic height={block} txCount={scan.data?.txCount ?? null} />
           <p className="mt-4 font-mono text-[11px] text-muted-foreground">
-            {scan.isLoading
-              ? "> SCANNING BLOCK WITNESS DATA…"
-              : scan.data
-                ? `> PACKED FROM ${scan.data.vsizes.length} REAL TRANSACTIONS (${scan.data.scannedTxCount}/${scan.data.txCount} SCANNED)`
-                : "> CHAIN SCAN UNAVAILABLE — DETERMINISTIC FALLBACK RENDER"}
+            {sizeMap.isLoading
+              ? "> LOADING BLOCK SIZE MAP…"
+              : sizeMap.data
+                ? `> PACKED FROM ${sizeMap.data.classes.length.toLocaleString("en-US")} REAL TRANSACTIONS${
+                    sizeMap.data.txCount ? ` OF ${sizeMap.data.txCount.toLocaleString("en-US")}` : ""
+                  }`
+                : "> SIZE MAP UNAVAILABLE — DETERMINISTIC FALLBACK RENDER"}
           </p>
         </div>
 
