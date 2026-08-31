@@ -4,6 +4,7 @@ import { getBlockInscriptions } from "@/lib/ordinals-scan.functions";
 import { toast } from "sonner";
 import { BitmapPixelMap } from "@/components/BitmapPixelMap";
 import { bitmapQuery } from "@/lib/bitmap-queries";
+import { registryParcelQuery, shortenAddress } from "@/lib/registry";
 import { STATUS_LABEL, formatBtc } from "@/lib/bitmap";
 
 const blockScanQuery = (height: number) =>
@@ -17,9 +18,8 @@ const blockScanQuery = (height: number) =>
 export const Route = createFileRoute("/bitmap/$block")({
   loader: async ({ context, params }) => {
     const block = Number(params.block);
-    if (!Number.isFinite(block)) throw notFound();
-    const bitmap = await context.queryClient.ensureQueryData(bitmapQuery(block));
-    if (!bitmap) throw notFound();
+    if (!Number.isFinite(block) || block < 0) throw notFound();
+    await context.queryClient.ensureQueryData(registryParcelQuery(block));
     return { block };
   },
   head: ({ params }) => {
@@ -40,10 +40,11 @@ export const Route = createFileRoute("/bitmap/$block")({
 
 function BitmapDetail() {
   const { block } = Route.useLoaderData();
-  const { data } = useSuspenseQuery(bitmapQuery(block));
+  const { data: parcel } = useSuspenseQuery(registryParcelQuery(block));
+  const market = useQuery(bitmapQuery(block));
   const scan = useQuery(blockScanQuery(block));
-  if (!data) return <BitmapMissing />;
 
+  const data = market.data;
   const claims = (scan.data?.inscriptions ?? []).filter((i) => i.isBitmapClaim);
 
   return (
@@ -51,13 +52,17 @@ function BitmapDetail() {
       <Link to="/explore" className="label hover:text-foreground">
         ← BACK TO EXPLORER
       </Link>
-      <h1 className="display mt-4 text-4xl md:text-6xl">BITMAP #{data.block_height}</h1>
-      <p className="label mt-3">DIGITAL LAND ON BITCOIN</p>
+      <h1 className="display mt-4 text-4xl md:text-6xl">{block}.BITMAP</h1>
+      <p className="label mt-3">
+        {parcel
+          ? `CLAIMED ON CHAIN${parcel.inscribedInBlock !== null ? ` IN BLOCK ${parcel.inscribedInBlock}` : ""}`
+          : "UNCLAIMED — NO VALID INSCRIPTION IN THE REGISTRY"}
+      </p>
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="group border border-border bg-card p-6">
           <BitmapPixelMap
-            blockHeight={data.block_height}
+            blockHeight={block}
             txCount={scan.data?.txCount ?? null}
             vsizes={scan.data?.vsizes ?? null}
           />
