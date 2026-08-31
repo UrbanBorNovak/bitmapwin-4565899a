@@ -47,10 +47,7 @@ export function QuickListForm({ height }: { height?: number }) {
     mutationFn: async () => {
       if (!wallet) throw new Error("CONNECT A WALLET FIRST");
       if (!parcel) throw new Error("NO BITMAP PARCEL FOUND IN THIS WALLET");
-      const priceSats = Number(price.replace(/[^0-9]/g, ""));
-      if (!Number.isInteger(priceSats) || priceSats < 546) {
-        throw new Error("ASK AT LEAST 546 SATS");
-      }
+      if (priceSats === null) throw new Error("ASK AT LEAST 546 SATS (0.00000546 BTC)");
       const [txid, voutRaw] = parcel.outpoint.split(":");
       const vout = Number(voutRaw);
       if (!txid || !Number.isInteger(vout)) throw new Error("BAD PARCEL OUTPOINT");
