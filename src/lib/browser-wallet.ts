@@ -165,22 +165,26 @@ async function requestXverseAddresses(xverse: XverseProvider): Promise<XverseAcc
 
   let lastError = "";
   let rejected = false;
+  const trace: string[] = [];
   for (const attempt of attempts) {
     try {
       const res = await xverse.request(attempt.method, attempt.params);
       if (res?.status === "success") {
         const accounts = normalizeXverseAddresses(res.result);
         if (accounts.length > 0) return accounts;
+        trace.push(`${attempt.method}: ok but no addresses`);
         lastError = "XVERSE RETURNED NO ADDRESSES";
         continue;
       }
-      const msg = res?.error?.message ?? "";
+      const msg = res?.error?.message ?? "no response";
+      trace.push(`${attempt.method}: ${msg}`);
       // Older builds answer unsupported methods with a generic "rejected", so
       // note it and keep trying instead of aborting the whole connect.
       if (/reject|denied|cancel/i.test(msg)) rejected = true;
-      lastError = msg || lastError;
+      lastError = res?.error?.message || lastError;
     } catch (e) {
-      const msg = (e as Error)?.message ?? "";
+      const msg = (e as Error)?.message ?? "threw";
+      trace.push(`${attempt.method}: ${msg}`);
       if (/reject|denied|cancel/i.test(msg)) rejected = true;
       lastError = msg || lastError;
     }
@@ -194,11 +198,14 @@ async function requestXverseAddresses(xverse: XverseProvider): Promise<XverseAcc
       const accounts = normalizeXverseAddresses(res.result);
       if (accounts.length > 0) return accounts;
     }
+    trace.push(`wallet_requestPermissions: ${res?.status ?? "no response"}`);
     lastError = res?.status === "error" ? res.error?.message ?? lastError : lastError;
   } catch (e) {
+    trace.push(`wallet_requestPermissions: ${(e as Error)?.message ?? "threw"}`);
     lastError = (e as Error)?.message || lastError;
   }
 
+  console.error("[xverse] connect attempts", trace);
   if (rejected && !lastError) lastError = "XVERSE CONNECT REJECTED";
   throw new Error(
     (lastError || "XVERSE CONNECT FAILED — UNLOCK THE WALLET AND APPROVE THE POPUP").toUpperCase(),
