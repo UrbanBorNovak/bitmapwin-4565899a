@@ -434,13 +434,13 @@ export async function extractInscriptions(rawHex: string): Promise<ExtractionRes
     for (const envelope of envelopes) {
       const { fields, body } = decodePayload(envelope.payload);
 
-      if (envelope.pushnum) fields.pushnum = true;
-      if (envelope.stutter) fields.stutter = true;
+      if (envelope.pushnum) fields["pushnum"] = true;
+      if (envelope.stutter) fields["stutter"] = true;
 
       const id = tx.txid + "i" + inscriptionNumber;
       inscriptionNumber++;
 
-      fields.id = id;
+      fields["id"] = id;
       fields["input"] = inputIndex;
       fields["body_bytes"] = body ? body.length : 0;
 
