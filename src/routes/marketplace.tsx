@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ParcelCard } from "@/components/ParcelCard";
 import { OfferBook } from "@/components/OfferBook";
 import { TradeWatcher } from "@/components/TradeWatcher";
+import { SettlementWatcher } from "@/components/SettlementWatcher";
 import { registryParcelsQuery, type RegistryParcel } from "@/lib/registry";
 import { getBlockInscriptions, getRecentInscriptions } from "@/lib/ordinals-scan.functions";
 import { saveChainInscriptions } from "@/lib/inscription-store";
@@ -240,6 +241,8 @@ function Marketplace() {
       )}
 
       <TradeWatcher limit={60} />
+
+      <SettlementWatcher limit={40} />
 
       <OfferBook />
     </div>

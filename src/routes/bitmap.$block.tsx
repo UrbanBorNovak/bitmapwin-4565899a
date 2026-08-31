@@ -8,6 +8,7 @@ import { BlockMosaic } from "@/components/BlockMosaic";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { OfferBook } from "@/components/OfferBook";
 import { TradeWatcher } from "@/components/TradeWatcher";
+import { SettlementWatcher } from "@/components/SettlementWatcher";
 import { registryParcelQuery, shortenAddress, PARCEL_STATUS_LABEL } from "@/lib/registry";
 import { saveTrades, tradesForHeightQuery } from "@/lib/trade-store";
 import { traceBitmapTradesFn } from "@/lib/trades.functions";
@@ -307,6 +308,8 @@ function BitmapDetail() {
       </div>
 
       <TradeWatcher heights={[block]} limit={5} />
+
+      <SettlementWatcher heights={[block]} limit={10} />
 
       <OfferBook height={block} />
     </div>
