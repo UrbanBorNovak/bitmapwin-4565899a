@@ -8,7 +8,9 @@ const TX_PAGE = 25;
 
 type MempoolTx = {
   txid: string;
-  vsize: number;
+  vsize?: number;
+  weight?: number;
+  size?: number;
   vin: Array<{ witness?: string[] | null }>;
 };
 
@@ -18,6 +20,13 @@ type MempoolBlockHeader = {
   timestamp: number;
   tx_count: number;
 };
+
+/** mempool.space returns weight on block tx listings; vsize = ceil(weight / 4). */
+function txVsize(tx: MempoolTx): number {
+  if (typeof tx.vsize === "number" && tx.vsize > 0) return tx.vsize;
+  if (typeof tx.weight === "number" && tx.weight > 0) return Math.ceil(tx.weight / 4);
+  return typeof tx.size === "number" ? tx.size : 0;
+}
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -102,7 +111,7 @@ export async function scanBlock(height: number, txPages: number): Promise<Scanne
     timestamp: header.timestamp,
     txCount: header.tx_count,
     scannedTxCount: txs.length,
-    vsizes: txs.map((tx) => tx.vsize).filter((v) => Number.isFinite(v) && v > 0),
+    vsizes: txs.map(txVsize).filter((v) => Number.isFinite(v) && v > 0),
     inscriptions,
   };
 }
