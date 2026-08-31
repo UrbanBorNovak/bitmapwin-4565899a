@@ -54,7 +54,7 @@ export async function recordBitmapView(height: number, address: string | null) {
   await supabase.rpc("record_bitmap_view", {
     _height: height,
     _visitor: visitor,
-    _address: address,
+    _address: address ?? undefined,
   });
 }
 
