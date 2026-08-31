@@ -309,6 +309,12 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
       ? hexToByteArray(input.tapInternalKeyHex)
       : null;
 
+  // marketplace commission: extra output paid by the buyer to the platform
+  const marketFeeSats = marketplaceFeeSats(priceSats);
+  const marketFeeScript = hexToByteArray(
+    byteArrayToHex(addressToScriptPubKey(MARKETPLACE_FEE_ADDRESS)),
+  );
+
   // greedy largest-first coin selection over confirmed funding UTXOs
   const candidates = [...input.funding]
     .filter((u) => u.valueSats > DUST)
@@ -321,17 +327,17 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
   for (const candidate of candidates) {
     used.push(candidate);
     funded += candidate.valueSats;
-    feeSats = Math.ceil(estimateVsize(1 + used.length, 3) * Math.max(1, input.feeRate));
-    needed = priceSats + feeSats;
+    feeSats = Math.ceil(estimateVsize(1 + used.length, 4) * Math.max(1, input.feeRate));
+    needed = priceSats + marketFeeSats + feeSats;
     if (funded >= needed + DUST) break;
   }
   if (used.length === 0 || funded < needed) {
     throw new Error(
-      `Not enough confirmed funds: need ~${priceSats + feeSats} sats plus fees, have ${funded}`,
+      `Not enough confirmed funds: need ~${priceSats + marketFeeSats + feeSats} sats plus fees, have ${funded}`,
     );
   }
 
-  let changeSats = funded - priceSats - feeSats;
+  let changeSats = funded - priceSats - marketFeeSats - feeSats;
   if (changeSats < DUST) {
     // fold sub-dust change into the fee rather than creating an unspendable output
     feeSats += changeSats;
@@ -352,9 +358,11 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
     outputs: [
       priceOutput,
       { valueSats: input.inscriptionValueSats, script: receiveScript },
+      { valueSats: marketFeeSats, script: marketFeeScript },
       ...(changeSats > 0 ? [{ valueSats: changeSats, script: changeScript }] : []),
     ],
   };
+
 
   const inputMaps: Kv[][] = [seller.inputs[0] ?? []];
   for (const utxo of used) {
