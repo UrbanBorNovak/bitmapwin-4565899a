@@ -521,7 +521,7 @@ function ListParcelForm({
         psbt,
         connected.ordinalsAddress,
       );
-      return submitOfferFn({ data: { psbtBase64: signed } });
+      return submitOfferFn({ data: { psbt: signed } });
     },
     onSuccess: (offer) => {
       void queryClient.invalidateQueries({ queryKey: ["offers"] });
