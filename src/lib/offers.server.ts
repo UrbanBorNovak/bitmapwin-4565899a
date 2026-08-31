@@ -13,11 +13,12 @@ function db() {
   );
 }
 
-async function ordJson<T>(path: string, attempts = 5): Promise<T | null> {
+async function ordJson<T>(path: string, attempts = 3): Promise<T | null> {
   for (let i = 0; i < attempts; i++) {
     try {
       const resp = await fetch(`${ORD}${path}`, {
         headers: { "user-agent": UA, accept: "application/json" },
+        signal: AbortSignal.timeout(12_000),
       });
       if (resp.ok) return (await resp.json()) as T;
       if (resp.status === 429 || resp.status === 406 || resp.status >= 500) {
@@ -40,8 +41,66 @@ type OrdOutput = {
   value: number;
 };
 
+function htmlText(html: string, label: string): string | null {
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = new RegExp(`<dt>${escaped}<\\/dt>\\s*<dd>([\\s\\S]*?)<\\/dd>`, "i").exec(html);
+  return match?.[1]?.replace(/<[^>]+>/g, "").trim() ?? null;
+}
+
+/**
+ * ordinals.com occasionally disables or throttles its JSON API while its HTML
+ * explorer remains available. Both representations come from the same ord
+ * index, so parsing the explorer page preserves the chain validation instead
+ * of trusting inscription details supplied by the browser.
+ */
+async function fetchOutputHtml(outpoint: string, attempts = 2): Promise<OrdOutput | null> {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const resp = await fetch(`${ORD}/output/${outpoint}`, {
+        headers: { "user-agent": UA, accept: "text/html" },
+        signal: AbortSignal.timeout(12_000),
+      });
+      if (!resp.ok) {
+        if (resp.status === 429 || resp.status === 406 || resp.status >= 500) {
+          await new Promise((resolve) => setTimeout(resolve, 350 * (i + 1)));
+          continue;
+        }
+        return null;
+      }
+
+      const html = await resp.text();
+      const inscriptions = [
+        ...html.matchAll(/href=["']?\/inscription\/([0-9a-f]{64}i\d+)/gi),
+      ].map((match) => match[1]!).filter((id, index, all) => all.indexOf(id) === index);
+      const addressMatch = /href=["']?\/address\/([^"'\s>]+)/i.exec(html);
+      const value = Number(htmlText(html, "value") ?? 0);
+      const spent = htmlText(html, "spent") === "true";
+
+      if (!html.includes("<dt>outpoint</dt>") && !html.includes("<dt>value</dt>")) return null;
+      return {
+        address: addressMatch?.[1] ?? null,
+        inscriptions,
+        outpoint,
+        spent,
+        value: Number.isFinite(value) ? value : 0,
+      };
+    } catch {
+      await new Promise((resolve) => setTimeout(resolve, 300 * (i + 1)));
+    }
+  }
+  return null;
+}
+
 async function fetchOutput(outpoint: string): Promise<OrdOutput | null> {
-  return ordJson<OrdOutput>(`/output/${outpoint}`);
+  const json = await ordJson<OrdOutput>(`/output/${outpoint}`, 2);
+  if (json) {
+    return {
+      ...json,
+      inscriptions: Array.isArray(json.inscriptions) ? json.inscriptions : [],
+      spent: json.spent === true,
+    };
+  }
+  return fetchOutputHtml(outpoint);
 }
 
 /** Reads the inscription body and returns the bitmap number it claims. */
@@ -89,7 +148,7 @@ export async function validateOffer(psbtBase64: string): Promise<OfferValidation
     decoded.inputs.slice(0, 6).map((input) => fetchOutput(input.outpoint)),
   );
   if (outputs.every((output) => output === null)) {
-    throw new Error("Could not read the input UTXOs from the ord index — try again shortly");
+    throw new Error("The live ord index is unavailable in both JSON and explorer modes — try again shortly");
   }
   const index = outputs.findIndex((output) => (output?.inscriptions.length ?? 0) > 0);
   if (index === -1) {
