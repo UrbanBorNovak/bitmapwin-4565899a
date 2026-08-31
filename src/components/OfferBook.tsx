@@ -18,6 +18,7 @@ export function OfferBook({ height }: { height?: number }) {
   const queryClient = useQueryClient();
   const { data: offers = [], isLoading } = useQuery(offersQuery(height));
   const [psbt, setPsbt] = useState("");
+  const [advanced, setAdvanced] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["offers"] });
