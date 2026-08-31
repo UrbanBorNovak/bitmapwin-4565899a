@@ -246,30 +246,8 @@ function BidRow({
     onError: (e) => toast("WITHDRAW FAILED", { description: (e as Error).message.toUpperCase() }),
   });
 
-  const accept = useMutation({
-    mutationFn: async () => {
-      if (!wallet || !holderAddress) throw new Error("CONNECT THE WALLET HOLDING THIS PARCEL");
-      const address = [wallet.ordinalsAddress, wallet.paymentAddress].find(
-        (a) => a.toLowerCase() === holderAddress.toLowerCase(),
-      );
-      if (!address) throw new Error("CONNECT THE WALLET HOLDING THIS PARCEL");
-      await signMessageWithWallet(
-        wallet.provider,
-        address,
-        bidActionMessage("accept", bid.id, address),
-      ).catch(() => {
-        throw new Error("ACCEPT SIGNATURE REJECTED");
-      });
-      return acceptBidFn({ data: { bidId: bid.id, holderAddress: address } });
-    },
-    onSuccess: (result) => {
-      onDone();
-      toast(`BID ACCEPTED — ${result.bitmapHeight}.BITMAP`, {
-        description: `LIST THE PARCEL AT ${formatSats(result.priceSats)} ON /WALLET TO SETTLE ON CHAIN`,
-      });
-    },
-    onError: (e) => toast("ACCEPT FAILED", { description: (e as Error).message.toUpperCase() }),
-  });
+  const { accept } = useAcceptBid({ holderAddress });
+
 
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
