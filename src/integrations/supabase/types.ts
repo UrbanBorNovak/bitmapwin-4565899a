@@ -201,6 +201,48 @@ export type Database = {
           },
         ]
       }
+      offers: {
+        Row: {
+          bitmap_height: number | null
+          created_at: string
+          id: string
+          inscription_id: string | null
+          outpoint: string
+          price_sats: number
+          psbt_base64: string
+          psbt_hash: string
+          seller_address: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bitmap_height?: number | null
+          created_at?: string
+          id?: string
+          inscription_id?: string | null
+          outpoint: string
+          price_sats?: number
+          psbt_base64: string
+          psbt_hash: string
+          seller_address?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bitmap_height?: number | null
+          created_at?: string
+          id?: string
+          inscription_id?: string | null
+          outpoint?: string
+          price_sats?: number
+          psbt_base64?: string
+          psbt_hash?: string
+          seller_address?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       trades: {
         Row: {
           bitmap_height: number

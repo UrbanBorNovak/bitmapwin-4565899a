@@ -4,7 +4,7 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-[1600px] flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div className="display text-sm">THE LAND LAYER OF BITCOIN</div>
         <div className="label">
-          LIVE CHAIN DATA · PRICES ARE DEMO · NO TRANSACTIONS BROADCAST
+          LIVE CHAIN DATA · PSBT OFFERS · NO TRANSACTIONS BROADCAST
           <span className="blink ml-2 text-foreground">_</span>
         </div>
       </div>
