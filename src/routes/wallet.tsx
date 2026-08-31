@@ -166,6 +166,14 @@ function WalletPage() {
             <Stat k="BITMAP PARCELS" v={wallet.data ? String(parcels.length) : "—"} />
           </section>
 
+          <ProfileEditor
+            address={address}
+            canEdit={walletControls(connected, address)}
+            inscriptionIds={ownedInscriptionIds}
+          />
+
+
+
           {wallet.isError && (
             <p className="mt-6 border border-border p-4 font-mono text-xs text-muted-foreground">
               &gt; {(wallet.error as Error).message.toUpperCase()}
