@@ -314,9 +314,7 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
 
   // marketplace commission: extra output paid by the buyer to the platform
   const marketFeeSats = marketplaceFeeSats(priceSats);
-  const marketFeeScript = hexToByteArray(
-    byteArrayToHex(addressToScriptPubKey(MARKETPLACE_FEE_ADDRESS)),
-  );
+  const marketFeeScript = addressToScriptPubKey(MARKETPLACE_FEE_ADDRESS);
 
   // greedy largest-first coin selection over confirmed funding UTXOs
   const candidates = [...input.funding]
