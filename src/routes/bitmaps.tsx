@@ -7,7 +7,7 @@ import {
   getBitmapRegistryStats,
 } from "@/lib/oci.functions";
 import { MAX_BITMAP, type BitmapIndexEntry } from "@/lib/oci";
-import { BitmapPixelMap } from "@/components/BitmapPixelMap";
+import { BlockMosaic } from "@/components/BlockMosaic";
 
 const PAGE = 60;
 
@@ -69,7 +69,7 @@ function EntryRow({ entry }: { entry: BitmapIndexEntry }) {
   return (
     <li className="grid grid-cols-[3rem_1fr] items-center gap-3 px-4 py-3 md:grid-cols-[3rem_7rem_1fr_auto]">
       <div className="size-10 shrink-0 border border-border">
-        <BitmapPixelMap blockHeight={entry.blockHeight} animate={false} />
+        <BlockMosaic height={entry.blockHeight} animate={false} />
       </div>
       <div>
         <Link

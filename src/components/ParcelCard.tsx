@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { BitmapPixelMap } from "@/components/BitmapPixelMap";
+import { BlockMosaic } from "@/components/BlockMosaic";
 import { formatSats } from "@/lib/trades";
 import { shortenAddress, type RegistryParcel } from "@/lib/registry";
 
@@ -12,7 +12,7 @@ export function ParcelCard({ parcel }: { parcel: RegistryParcel }) {
         params={{ block: String(parcel.bitmapHeight) }}
         className="block border-b border-border p-4"
       >
-        <BitmapPixelMap blockHeight={parcel.bitmapHeight} />
+        <BlockMosaic height={parcel.bitmapHeight} />
       </Link>
 
       <div className="p-4">
