@@ -1,0 +1,1 @@
+GRANT INSERT, UPDATE ON public.bitmap_index TO anon;

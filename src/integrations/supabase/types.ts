@@ -49,6 +49,42 @@ export type Database = {
           },
         ]
       }
+      bitmap_index: {
+        Row: {
+          block_height: number
+          content: string | null
+          genesis_height: number | null
+          inscription_id: string | null
+          is_valid: boolean
+          owner_address: string | null
+          resolved_at: string
+          sat: number
+          sat_index: number
+        }
+        Insert: {
+          block_height: number
+          content?: string | null
+          genesis_height?: number | null
+          inscription_id?: string | null
+          is_valid?: boolean
+          owner_address?: string | null
+          resolved_at?: string
+          sat: number
+          sat_index?: number
+        }
+        Update: {
+          block_height?: number
+          content?: string | null
+          genesis_height?: number | null
+          inscription_id?: string | null
+          is_valid?: boolean
+          owner_address?: string | null
+          resolved_at?: string
+          sat?: number
+          sat_index?: number
+        }
+        Relationships: []
+      }
       bitmaps: {
         Row: {
           block_height: number

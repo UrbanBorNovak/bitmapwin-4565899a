@@ -1,6 +1,8 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { getBlockInscriptions } from "@/lib/ordinals-scan.functions";
+import { getBitmapRegistryEntry } from "@/lib/oci.functions";
+import { MAX_BITMAP } from "@/lib/oci";
 import { toast } from "sonner";
 import { BitmapPixelMap } from "@/components/BitmapPixelMap";
 import { bitmapQuery } from "@/lib/bitmap-queries";
@@ -12,6 +14,15 @@ const blockScanQuery = (height: number) =>
     queryKey: ["block-scan", height],
     queryFn: () => getBlockInscriptions({ data: { height, txPages: 6 } }),
     staleTime: 5 * 60_000,
+    retry: 1,
+  });
+
+const ociQuery = (height: number) =>
+  queryOptions({
+    queryKey: ["oci-entry", height],
+    queryFn: () => getBitmapRegistryEntry({ data: { height } }),
+    enabled: height >= 0 && height <= MAX_BITMAP,
+    staleTime: 30 * 60_000,
     retry: 1,
   });
 
@@ -43,6 +54,7 @@ function BitmapDetail() {
   const { data: parcel } = useSuspenseQuery(registryParcelQuery(block));
   const market = useQuery(bitmapQuery(block));
   const scan = useQuery(blockScanQuery(block));
+  const oci = useQuery(ociQuery(block));
 
   const data = market.data;
   const claims = (scan.data?.inscriptions ?? []).filter((i) => i.isBitmapClaim);
@@ -100,7 +112,40 @@ function BitmapDetail() {
               k="PRICE"
               v={parcel?.listed ? formatBtc(parcel.priceBtc) : "NOT LISTED"}
             />
-            <Field k="INSCRIPTION ID" v={parcel?.inscriptionId ?? "—"} />
+            <Field
+              k="INSCRIPTION ID"
+              v={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? (oci.isLoading ? "…" : "—")}
+            />
+            <Field
+              k="INDEX SAT"
+              v={oci.data?.sat ? oci.data.sat.toLocaleString() : oci.isLoading ? "…" : "—"}
+            />
+            <Field
+              k="ON-CHAIN CONTENT"
+              v={
+                oci.data?.content
+                  ? `"${oci.data.content}"`
+                  : oci.isLoading
+                    ? "…"
+                    : "NO CLAIM ON THE INDEX SAT"
+              }
+            />
+            <Field
+              k="BITMAP THEORY CHECK"
+              v={
+                oci.isLoading
+                  ? "…"
+                  : oci.data?.isValid
+                    ? "VALID — FIRST INSCRIPTION ON THE INDEXED SAT"
+                    : oci.data?.inscriptionId
+                      ? "CONTENT DOES NOT MATCH <HEIGHT>.BITMAP"
+                      : "UNCLAIMED"
+              }
+            />
+            <Field
+              k="CLAIM INSCRIBED IN BLOCK"
+              v={oci.data?.genesisHeight !== null && oci.data?.genesisHeight !== undefined ? String(oci.data.genesisHeight) : "—"}
+            />
             <Field k="REVEAL TXID" v={parcel?.txid ?? "—"} />
             <Field k="TRANSFERS" v={parcel ? String(parcel.transfers) : "—"} />
             <Field
