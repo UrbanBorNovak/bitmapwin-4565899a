@@ -20,14 +20,12 @@ import { Route as ExtractorRouteImport } from './routes/extractor'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as SdkRouteImport } from './routes/sdk'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
 import { Route as CollectionsClubRouteImport } from './routes/collections.$club'
 import { Route as DistrictSlugRouteImport } from './routes/district.$slug'
 import { Route as ProfileAddressRouteImport } from './routes/profile.$address'
-import { Route as ApiPublicBuildSdkRouteImport } from './routes/api/public/build-sdk'
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
 import { Route as ApiPublicBlocksHeightRouteImport } from './routes/api/public/blocks.$height'
@@ -88,11 +86,6 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SdkRoute = SdkRouteImport.update({
-  id: '/sdk',
-  path: '/sdk',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const WalletRoute = WalletRouteImport.update({
   id: '/wallet',
   path: '/wallet',
@@ -121,11 +114,6 @@ const DistrictSlugRoute = DistrictSlugRouteImport.update({
 const ProfileAddressRoute = ProfileAddressRouteImport.update({
   id: '/profile/$address',
   path: '/profile/$address',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicBuildSdkRoute = ApiPublicBuildSdkRouteImport.update({
-  id: '/api/public/build-sdk',
-  path: '/api/public/build-sdk',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicOfferRoute = ApiPublicOfferRouteImport.update({
@@ -162,14 +150,12 @@ export interface FileRoutesByFullPath {
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/sdk': typeof SdkRoute
   '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/collections/$club': typeof CollectionsClubRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections/': typeof CollectionsIndexRoute
-  '/api/public/build-sdk': typeof ApiPublicBuildSdkRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
@@ -186,14 +172,12 @@ export interface FileRoutesByTo {
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/sdk': typeof SdkRoute
   '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/collections/$club': typeof CollectionsClubRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections': typeof CollectionsIndexRoute
-  '/api/public/build-sdk': typeof ApiPublicBuildSdkRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
@@ -212,14 +196,12 @@ export interface FileRoutesById {
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/sdk': typeof SdkRoute
   '/wallet': typeof WalletRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/collections/$club': typeof CollectionsClubRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections/': typeof CollectionsIndexRoute
-  '/api/public/build-sdk': typeof ApiPublicBuildSdkRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
@@ -239,14 +221,12 @@ export interface FileRouteTypes {
     | '/map'
     | '/marketplace'
     | '/reset-password'
-    | '/sdk'
     | '/wallet'
     | '/bitmap/$block'
     | '/collections/$club'
     | '/district/$slug'
     | '/profile/$address'
     | '/collections/'
-    | '/api/public/build-sdk'
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/blocks/$height'
@@ -263,14 +243,12 @@ export interface FileRouteTypes {
     | '/map'
     | '/marketplace'
     | '/reset-password'
-    | '/sdk'
     | '/wallet'
     | '/bitmap/$block'
     | '/collections/$club'
     | '/district/$slug'
     | '/profile/$address'
     | '/collections'
-    | '/api/public/build-sdk'
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/blocks/$height'
@@ -288,14 +266,12 @@ export interface FileRouteTypes {
     | '/map'
     | '/marketplace'
     | '/reset-password'
-    | '/sdk'
     | '/wallet'
     | '/bitmap/$block'
     | '/collections/$club'
     | '/district/$slug'
     | '/profile/$address'
     | '/collections/'
-    | '/api/public/build-sdk'
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/blocks/$height'
@@ -314,12 +290,10 @@ export interface RootRouteChildren {
   MapRoute: typeof MapRoute
   MarketplaceRoute: typeof MarketplaceRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
-  SdkRoute: typeof SdkRoute
   WalletRoute: typeof WalletRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
   DistrictSlugRoute: typeof DistrictSlugRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
-  ApiPublicBuildSdkRoute: typeof ApiPublicBuildSdkRoute
   ApiPublicOfferRoute: typeof ApiPublicOfferRoute
   ApiPublicOffersRoute: typeof ApiPublicOffersRoute
   ApiPublicBlocksHeightRoute: typeof ApiPublicBlocksHeightRouteWithChildren
@@ -404,13 +378,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sdk': {
-      id: '/sdk'
-      path: '/sdk'
-      fullPath: '/sdk'
-      preLoaderRoute: typeof SdkRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/wallet': {
       id: '/wallet'
       path: '/wallet'
@@ -451,13 +418,6 @@ declare module '@tanstack/react-router' {
       path: '/profile/$address'
       fullPath: '/profile/$address'
       preLoaderRoute: typeof ProfileAddressRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/build-sdk': {
-      id: '/api/public/build-sdk'
-      path: '/api/public/build-sdk'
-      fullPath: '/api/public/build-sdk'
-      preLoaderRoute: typeof ApiPublicBuildSdkRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/offer': {
@@ -530,12 +490,10 @@ const rootRouteChildren: RootRouteChildren = {
   MapRoute: MapRoute,
   MarketplaceRoute: MarketplaceRoute,
   ResetPasswordRoute: ResetPasswordRoute,
-  SdkRoute: SdkRoute,
   WalletRoute: WalletRoute,
   BitmapBlockRoute: BitmapBlockRoute,
   DistrictSlugRoute: DistrictSlugRoute,
   ProfileAddressRoute: ProfileAddressRoute,
-  ApiPublicBuildSdkRoute: ApiPublicBuildSdkRoute,
   ApiPublicOfferRoute: ApiPublicOfferRoute,
   ApiPublicOffersRoute: ApiPublicOffersRoute,
   ApiPublicBlocksHeightRoute: ApiPublicBlocksHeightRouteWithChildren,
