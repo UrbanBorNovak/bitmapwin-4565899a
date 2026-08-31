@@ -514,15 +514,14 @@ function ListParcelForm({
       const vout = Number(voutRaw);
       if (!txid || !Number.isInteger(vout)) throw new Error("BAD PARCEL OUTPOINT");
 
+      const tapInternalKeyHex = xOnlyPubKeyHex(connected.publicKey);
       const psbt = buildListingPsbt({
         txid,
         vout,
         utxoValueSats: parcel.valueSats,
         sellerAddress: signingAddress,
         priceSats,
-        ...(xOnlyPubKeyHex(connected.publicKey)
-          ? { tapInternalKeyHex: xOnlyPubKeyHex(connected.publicKey)! }
-          : {}),
+        ...(tapInternalKeyHex ? { tapInternalKeyHex } : {}),
       });
       toast("APPROVE THE SIGNATURE IN YOUR WALLET", { description: "OPEN THE WALLET POPUP TO SIGN" });
       const signed = await signListingPsbt(connected.provider, psbt, signingAddress);
