@@ -95,8 +95,10 @@ async function persist(
     saved = rows.length;
   }
 
-  const patch: Record<string, unknown> = { status: "spent" };
-  if (!offer.buyer_address && ownerAddress) patch["buyer_address"] = ownerAddress;
+  const patch =
+    !offer.buyer_address && ownerAddress
+      ? { status: "spent", buyer_address: ownerAddress }
+      : { status: "spent" };
   const { error } = await supabaseAdmin.from("offers").update(patch).eq("id", offer.id);
   if (error) throw new Error(error.message);
   return saved;
