@@ -59,7 +59,28 @@ export const Route = createFileRoute("/bitmap/$block")({
   },
   component: BitmapDetail,
   notFoundComponent: BitmapMissing,
+  errorComponent: ({ error, reset }) => <ParcelError error={error} reset={reset} />,
 });
+
+function ParcelError({ error, reset }: { error: Error; reset: () => void }) {
+  const router = useRouter();
+  return (
+    <div className="mx-auto max-w-[900px] px-4 py-24 md:px-8" role="alert">
+      <h1 className="display text-3xl">PARCEL DATA UNAVAILABLE</h1>
+      <p className="mt-4 font-mono text-sm text-muted-foreground">&gt; {error.message}</p>
+      <button
+        type="button"
+        className="btn-term mt-8"
+        onClick={() => {
+          router.invalidate();
+          reset();
+        }}
+      >
+        [ RETRY ]
+      </button>
+    </div>
+  );
+}
 
 function BitmapDetail() {
   const { block } = Route.useLoaderData();
