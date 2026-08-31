@@ -473,3 +473,111 @@ function ClaimAction({ offer, address }: { offer: DeliveredOffer; address: strin
     </div>
   );
 }
+
+/**
+ * Lists a wallet-held parcel for sale: builds the seller half of an ordinal
+ * sale PSBT (input signed SIGHASH_SINGLE|ANYONECANPAY, output 0 paying the ask
+ * to the seller), signs it with the connected UniSat/Xverse wallet without
+ * finalizing, and submits it to the offer book so it appears on /marketplace.
+ */
+function ListParcelForm({
+  parcel,
+  sellerAddress,
+  connected,
+}: {
+  parcel: { id: string; bitmapHeight: number | null; outpoint: string; valueSats: number };
+  sellerAddress: string;
+  connected: ConnectedWallet | null;
+}) {
+  const queryClient = useQueryClient();
+  const [price, setPrice] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const canSign = connected !== null && connected.ordinalsAddress === sellerAddress;
+
+  const list = useMutation({
+    mutationFn: async () => {
+      const priceSats = Number(price.trim());
+      if (!Number.isInteger(priceSats) || priceSats < 546) {
+        throw new Error("ENTER AN ASK OF AT LEAST 546 SATS");
+      }
+      if (!connected) throw new Error("CONNECT UNISAT OR XVERSE FIRST");
+      const [txid, voutRaw] = parcel.outpoint.split(":");
+      const vout = Number(voutRaw);
+      if (!txid || !Number.isInteger(vout)) throw new Error("BAD PARCEL OUTPOINT");
+
+      const psbt = buildListingPsbt({
+        txid,
+        vout,
+        utxoValueSats: parcel.valueSats,
+        sellerAddress: connected.ordinalsAddress,
+        priceSats,
+        ...(xOnlyPubKeyHex(connected.publicKey)
+          ? { tapInternalKeyHex: xOnlyPubKeyHex(connected.publicKey)! }
+          : {}),
+      });
+      const signed = await signListingPsbt(
+        connected.provider,
+        psbt,
+        connected.ordinalsAddress,
+      );
+      return submitOfferFn({ data: { psbtBase64: signed } });
+    },
+    onSuccess: (offer) => {
+      void queryClient.invalidateQueries({ queryKey: ["offers"] });
+      void queryClient.invalidateQueries({ queryKey: ["wallet-offers"] });
+      void queryClient.invalidateQueries({ queryKey: ["registry"] });
+      setOpen(false);
+      setPrice("");
+      toast(`LISTED ${offer.bitmapHeight ?? "?"}.BITMAP`, {
+        description: `ASK ${formatSats(offer.priceSats)} · NOW ON THE MARKETPLACE`,
+      });
+    },
+    onError: (e) => toast("LISTING FAILED", { description: (e as Error).message }),
+  });
+
+  if (!open) {
+    return (
+      <div className="mt-3">
+        <button className="btn-term-ghost !px-3 !py-1.5" onClick={() => setOpen(true)}>
+          [ LIST FOR SALE ]
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 border border-border p-4">
+      <p className="label">LIST {parcel.bitmapHeight}.BITMAP — SIGNS A SALE PSBT IN YOUR WALLET</p>
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+        <input
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          inputMode="numeric"
+          spellCheck={false}
+          placeholder="ASK IN SATS (e.g. 25000)"
+          className="flex-1 border border-border bg-background px-3 py-2 font-mono text-[11px] text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+        />
+        <button
+          className="btn-term"
+          disabled={list.isPending || !canSign || price.trim() === ""}
+          onClick={() => list.mutate()}
+        >
+          {list.isPending ? "[ SIGNING… ]" : "[ SIGN & LIST ]"}
+        </button>
+        <button
+          className="btn-term-ghost"
+          disabled={list.isPending}
+          onClick={() => setOpen(false)}
+        >
+          [ CANCEL ]
+        </button>
+      </div>
+      {!canSign && (
+        <p className="mt-2 font-mono text-[11px] text-muted-foreground">
+          &gt; CONNECT THE UNISAT/XVERSE WALLET THAT HOLDS THIS PARCEL TO SIGN THE LISTING
+        </p>
+      )}
+    </div>
+  );
+}
