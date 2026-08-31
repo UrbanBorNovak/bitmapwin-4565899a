@@ -203,6 +203,48 @@ function BitmapDetail() {
         </div>
       </div>
 
+      <div className="mt-8 border border-border">
+        <div className="flex items-center justify-between border-b border-border px-6 py-3">
+          <span className="label">ON-CHAIN TRADE HISTORY</span>
+          <span className="label">{history.length} TRANSFER(S)</span>
+        </div>
+        {history.length === 0 ? (
+          <p className="px-6 py-6 font-mono text-xs text-muted-foreground">
+            &gt;{" "}
+            {trades.isLoading
+              ? "READING INDEXED TRANSFERS…"
+              : "NO CONFIRMED TRANSFER INDEXED — RUN [ TRACE ON-CHAIN TRADES ]"}
+            <span className="blink">_</span>
+          </p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {history.map((t) => (
+              <li key={t.txid} className="px-6 py-4 font-mono text-xs">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <span className="display text-sm">
+                    {t.price_sats > 0 ? `SOLD ${formatSats(t.price_sats)}` : "TRANSFER"}
+                  </span>
+                  <span className="text-muted-foreground">
+                    BLOCK {t.block_height ?? "—"} · {timeAgo(t.block_time ?? t.created_at)}
+                  </span>
+                </div>
+                <div className="mt-1 text-muted-foreground">
+                  {shortenAddress(t.seller_address)} → {shortenAddress(t.buyer_address)}
+                </div>
+                <a
+                  className="mt-1 block break-all text-muted-foreground underline decoration-border underline-offset-4 hover:text-foreground"
+                  href={`https://mempool.space/tx/${t.txid}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {t.txid}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       {scan.data && scan.data.inscriptions.length > 0 && (
         <div className="mt-8 border border-border">
           <div className="border-b border-border px-6 py-3">
@@ -228,15 +270,12 @@ function BitmapDetail() {
       <div className="mt-8 flex flex-wrap gap-3">
         <button
           className="btn-term disabled:opacity-30"
-          disabled={!parcel?.listed}
-          onClick={() =>
-            toast(`${block}.BITMAP`, {
-              description: "Settlement layer not connected in this prototype.",
-            })
-          }
+          disabled={trace.isPending || (!parcel && !oci.data?.inscriptionId)}
+          onClick={() => trace.mutate()}
         >
-          [ BUY BITMAP ]
+          {trace.isPending ? "[ TRACING… ]" : "[ TRACE ON-CHAIN TRADES ]"}
         </button>
+
         <a
           className="btn-term-ghost"
           href={`https://mempool.space/block/${block}`}
