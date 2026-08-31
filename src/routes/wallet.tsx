@@ -49,6 +49,7 @@ export const Route = createFileRoute("/wallet")({
 function WalletPage() {
   const [input, setInput] = useState("");
   const [address, setAddress] = useState("");
+  const [connected, setConnected] = useState<ConnectedWallet | null>(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -135,10 +136,14 @@ function WalletPage() {
       <WalletConnect
         connectedAddress={address}
         onConnect={(w) => {
+          setConnected(w);
           setInput(w.ordinalsAddress);
           connect(w.ordinalsAddress);
         }}
-        onDisconnect={disconnect}
+        onDisconnect={() => {
+          setConnected(null);
+          disconnect();
+        }}
       />
 
 
@@ -171,17 +176,24 @@ function WalletPage() {
               </header>
               <ul className="divide-y divide-border">
                 {parcels.map((p) => (
-                  <li key={p.id} className="flex flex-wrap items-baseline justify-between gap-3 p-5">
-                    <Link
-                      to="/bitmap/$block"
-                      params={{ block: String(p.bitmapHeight) }}
-                      className="display text-sm underline decoration-border underline-offset-4 hover:text-foreground"
-                    >
-                      {p.bitmapHeight}.BITMAP
-                    </Link>
-                    <span className="font-mono text-[11px] break-all text-muted-foreground">
-                      {p.outpoint}
-                    </span>
+                  <li key={p.id} className="p-5">
+                    <div className="flex flex-wrap items-baseline justify-between gap-3">
+                      <Link
+                        to="/bitmap/$block"
+                        params={{ block: String(p.bitmapHeight) }}
+                        className="display text-sm underline decoration-border underline-offset-4 hover:text-foreground"
+                      >
+                        {p.bitmapHeight}.BITMAP
+                      </Link>
+                      <span className="font-mono text-[11px] break-all text-muted-foreground">
+                        {p.outpoint} · {formatSats(p.valueSats)}
+                      </span>
+                    </div>
+                    <ListParcelForm
+                      parcel={p}
+                      sellerAddress={address}
+                      connected={connected}
+                    />
                   </li>
                 ))}
               </ul>
