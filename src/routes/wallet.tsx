@@ -24,6 +24,8 @@ import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
 import { WalletConnect } from "@/components/WalletConnect";
 import { WalletBids } from "@/components/WalletBids";
+import { ProfileEditor } from "@/components/ProfileEditor";
+import { walletControls } from "@/lib/wallet-session";
 
 
 
