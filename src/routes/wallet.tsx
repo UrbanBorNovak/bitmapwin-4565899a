@@ -24,6 +24,7 @@ import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
 import { WalletConnect } from "@/components/WalletConnect";
 import { WalletBids } from "@/components/WalletBids";
+import { DistrictManager } from "@/components/DistrictManager";
 import { QuickListForm } from "@/components/QuickListForm";
 import { useBidInbox } from "@/lib/use-bid-inbox";
 import { ProfileEditor } from "@/components/ProfileEditor";
@@ -173,7 +174,18 @@ function WalletPage() {
     () => inscribedUtxos.flatMap((u) => u.inscriptions.map((i) => i.id)),
     [inscribedUtxos],
   );
-
+  const heldHeights = useMemo(
+    () =>
+      [
+        ...new Set([
+          ...parcels
+            .map((p) => p.bitmapHeight)
+            .filter((h): h is number => typeof h === "number"),
+          ...inbox.heldHeights,
+        ]),
+      ].sort((a, b) => a - b),
+    [parcels, inbox.heldHeights],
+  );
 
 
   return (
@@ -368,15 +380,14 @@ function WalletPage() {
 
           <WalletBids
             address={address}
-            heldHeights={[
-              ...new Set([
-                ...parcels
-                  .map((p) => p.bitmapHeight)
-                  .filter((h): h is number => typeof h === "number"),
-                ...inbox.heldHeights,
-              ]),
-            ]}
+            heldHeights={heldHeights}
           />
+
+          <section className="mt-10">
+            <DistrictManager address={address} heldHeights={heldHeights} />
+          </section>
+
+
 
         </>
       )}

@@ -15,6 +15,9 @@ import { shortenAddress } from "@/lib/registry";
 import { timeAgo } from "@/lib/bitmap";
 import { useAuthSession } from "@/lib/auth";
 import { isLinked, myWalletLinksQuery } from "@/lib/wallet-links";
+import { BuildDelegates } from "@/components/BuildDelegates";
+import { buildInscriptionPayload, delegatesQuery, downloadJson } from "@/lib/builds";
+import { districtForHeightQuery } from "@/lib/districts";
 
 /**
  * Visitor counter + owner-built page for a parcel: banner, title, description
@@ -36,7 +39,17 @@ export function ParcelPagePanel({
   const links = useQuery(myWalletLinksQuery(Boolean(session)));
   // Editing needs both wallet control in the UI and a server-verified link, so
   // the write actually passes the ownership policy.
-  const canEdit = walletControls(wallet, ownerAddress) && isLinked(links.data, ownerAddress);
+  const delegates = useQuery(delegatesQuery(height));
+  const district = useQuery(districtForHeightQuery(height));
+  const isHolder = walletControls(wallet, ownerAddress) && isLinked(links.data, ownerAddress);
+  // A delegate the holder granted can build too (RLS mirrors this check).
+  const isDelegate = (delegates.data ?? []).some(
+    (d) =>
+      (d.delegateAddress === wallet?.ordinalsAddress ||
+        d.delegateAddress === wallet?.paymentAddress) &&
+      isLinked(links.data, d.delegateAddress),
+  );
+  const canEdit = isHolder || isDelegate;
 
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState("");
@@ -142,14 +155,46 @@ export function ParcelPagePanel({
         ) : (
           <p className="font-mono text-xs text-muted-foreground">
             &gt; NOTHING BUILT ON THIS BITMAP YET
-            {canEdit ? " — IT'S YOURS, BUILD IT" : ""}
+            {canEdit ? (isHolder ? " — IT'S YOURS, BUILD IT" : " — YOU ARE A DELEGATE, BUILD IT") : ""}
             <span className="blink">_</span>
+          </p>
+        )}
+
+        {district.data && (
+          <p className="label">
+            DISTRICT{" "}
+            <Link
+              to="/district/$slug"
+              params={{ slug: district.data.slug }}
+              className="underline decoration-border underline-offset-4 hover:text-foreground"
+            >
+              {district.data.name.toUpperCase()}
+            </Link>
           </p>
         )}
 
         {stats.data?.lastViewedAt && (
           <p className="label">LAST VISIT {timeAgo(stats.data.lastViewedAt)}</p>
         )}
+
+        {built && (
+          <button
+            className="btn-term-ghost"
+            onClick={() =>
+              downloadJson(
+                `${height}.bitmap-build.json`,
+                buildInscriptionPayload(
+                  built,
+                  district.data ? { name: district.data.name, slug: district.data.slug } : null,
+                ),
+              )
+            }
+          >
+            [ EXPORT BUILD FOR INSCRIBING ]
+          </button>
+        )}
+
+        <BuildDelegates height={height} ownerAddress={ownerAddress} />
       </div>
 
       {canEdit && !editing && (
