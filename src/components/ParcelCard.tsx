@@ -41,6 +41,8 @@ export function ParcelCard({ parcel }: { parcel: RegistryParcel }) {
             }
           />
           <Row k="TRANSFERS" v={String(parcel.transfers)} />
+          <Row k="TOP BID" v={topBid ? formatSats(topBid.priceSats) : "NO BIDS"} />
+
           <Row
             k="LAST SALE"
             v={parcel.lastSaleSats ? formatSats(parcel.lastSaleSats) : "NO SALE ON CHAIN"}
