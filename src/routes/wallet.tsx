@@ -41,7 +41,7 @@ export const Route = createFileRoute("/wallet")({
       {
         name: "description",
         content:
-          "Inspect any Bitcoin address: unspent outputs, the inscriptions they hold, your bitmap parcels and the PSBT offers you have sent or received.",
+          "Inspect any Bitcoin address: unspent outputs, the inscriptions they hold, your bitmaps and the PSBT offers you have sent or received.",
       },
       { property: "og:title", content: "Wallet — Bitmap UTXOs, Inscriptions & PSBT Offers" },
       {

@@ -47,7 +47,7 @@ export const Route = createFileRoute("/bitmap/$block")({
   },
   head: ({ params }) => {
     const title = `Bitmap #${params.block} — Bitcoin Digital Land`;
-    const description = `Ownership, status and price data for Bitmap parcel #${params.block} on the Bitcoin land layer.`;
+    const description = `Ownership, status and price data for Bitmap #${params.block} on the Bitcoin land layer.`;
     return {
       meta: [
         { title },

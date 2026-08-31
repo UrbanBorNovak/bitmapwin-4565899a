@@ -17,7 +17,7 @@ export const Route = createFileRoute("/auth")({
       {
         name: "description",
         content:
-          "Create a Bitmap Marketplace account and link your Bitcoin wallet with a signed message so your profile, parcels and bids persist across devices.",
+          "Create a Bitmap Marketplace account and link your Bitcoin wallet with a signed message so your profile, bitmaps and bids persist across devices.",
       },
       { property: "og:title", content: "Sign In — Bitmap Marketplace Account" },
       {

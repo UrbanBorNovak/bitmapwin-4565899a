@@ -12,13 +12,13 @@ export const Route = createFileRoute("/activity")({
       {
         name: "description",
         content:
-          "Terminal feed of confirmed Bitcoin transactions moving bitmap parcels, with prices, buyers and sellers.",
+          "Terminal feed of confirmed Bitcoin transactions moving bitmaps, with prices, buyers and sellers.",
       },
       { property: "og:title", content: "Activity — On-Chain Bitmap Transfers" },
       {
         property: "og:description",
         content:
-          "Terminal feed of confirmed Bitcoin transactions moving bitmap parcels, with prices, buyers and sellers.",
+          "Terminal feed of confirmed Bitcoin transactions moving bitmaps, with prices, buyers and sellers.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

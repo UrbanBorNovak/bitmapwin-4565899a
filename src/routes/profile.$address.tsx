@@ -8,7 +8,7 @@ import { timeAgo } from "@/lib/bitmap";
 export const Route = createFileRoute("/profile/$address")({
   head: ({ params }) => {
     const title = `${shortenAddress(params.address)} — Bitmap Land Profile`;
-    const description = `Public profile, bio and built parcels for the Bitcoin address ${params.address} on the Bitmap land layer.`;
+    const description = `Public profile, bio and built bitmaps for the Bitcoin address ${params.address} on the Bitmap land layer.`;
     return {
       meta: [
         { title },
