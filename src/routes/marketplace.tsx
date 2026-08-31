@@ -6,7 +6,7 @@ import { ParcelCard } from "@/components/ParcelCard";
 import { OfferBook } from "@/components/OfferBook";
 import { TradeWatcher } from "@/components/TradeWatcher";
 import { SettlementWatcher } from "@/components/SettlementWatcher";
-import { registryParcelsQuery, type RegistryParcel } from "@/lib/registry";
+import { parcelOwnersQuery, registryBaseQuery, type RegistryParcel } from "@/lib/registry";
 import { getBlockInscriptions, getRecentInscriptions } from "@/lib/ordinals-scan.functions";
 import { saveChainInscriptions } from "@/lib/inscription-store";
 import { traceBitmapTradesFn } from "@/lib/trades.functions";
@@ -45,6 +45,8 @@ export const Route = createFileRoute("/marketplace")({
 
 type Tab = "traded" | "listed" | "all";
 
+const PAGE_SIZE = 24;
+
 /** Traces claims on chain in batches of 40 and stores every transfer found. */
 async function traceAndStore(claims: RegistryParcel[]): Promise<{ traced: number; trades: number }> {
   let trades = 0;
@@ -67,10 +69,11 @@ async function traceAndStore(claims: RegistryParcel[]): Promise<{ traced: number
 }
 
 function Marketplace() {
-  const registry = useQuery(registryParcelsQuery(300));
+  const registry = useQuery(registryBaseQuery(300));
   const parcels = registry.data ?? [];
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
   const [syncHeight, setSyncHeight] = useState("");
   const queryClient = useQueryClient();
 
@@ -152,6 +155,31 @@ function Marketplace() {
     );
   }, [tab, traded, listed, parcels, search]);
 
+  // Paginate first, then resolve holders on chain for the visible page only.
+  const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+  const current = Math.min(page, pageCount - 1);
+  const pageParcels = useMemo(
+    () => visible.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE),
+    [visible, current],
+  );
+  const owners = useQuery({
+    ...parcelOwnersQuery(pageParcels.map((p) => p.txid)),
+    enabled: pageParcels.length > 0,
+  });
+  const pageWithOwners = useMemo(
+    () =>
+      pageParcels.map((parcel) => {
+        const owner = owners.data?.get(parcel.txid);
+        if (!owner) return parcel;
+        return {
+          ...parcel,
+          ownerAddress: parcel.ownerAddress ?? owner.address,
+          transfers: parcel.transfers || owner.transfers,
+        } satisfies RegistryParcel;
+      }),
+    [pageParcels, owners.data],
+  );
+
   const saleSats = sold.map((p) => p.lastSaleSats ?? 0).filter((v) => v > 0);
   const floor = saleSats.length ? Math.min(...saleSats) : null;
   const volume = saleSats.reduce((a, b) => a + b, 0);
@@ -182,25 +210,37 @@ function Marketplace() {
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <button
           className={tab === "all" ? "btn-term" : "btn-term-ghost"}
-          onClick={() => setTab("all")}
+          onClick={() => {
+            setTab("all");
+            setPage(0);
+          }}
         >
           [ ALL PARCELS ]
         </button>
         <button
           className={tab === "traded" ? "btn-term" : "btn-term-ghost"}
-          onClick={() => setTab("traded")}
+          onClick={() => {
+            setTab("traded");
+            setPage(0);
+          }}
         >
           [ TRADED ]
         </button>
         <button
           className={tab === "listed" ? "btn-term" : "btn-term-ghost"}
-          onClick={() => setTab("listed")}
+          onClick={() => {
+            setTab("listed");
+            setPage(0);
+          }}
         >
           [ LISTED ]
         </button>
         <input
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(0);
+          }}
           placeholder="SEARCH HEIGHT / OWNER / TXID"
           className="min-w-[240px] flex-1 border border-border bg-background px-3 py-2 font-mono text-xs uppercase text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
         />
@@ -233,11 +273,31 @@ function Marketplace() {
       ) : visible.length === 0 ? (
         <EmptyRegistry />
       ) : (
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {visible.map((p) => (
-            <ParcelCard key={p.inscriptionId} parcel={p} />
-          ))}
-        </div>
+        <>
+          <div className="mt-8 flex flex-wrap items-baseline justify-between gap-3 border border-border p-4">
+            <span className="label">
+              SHOWING {current * PAGE_SIZE + 1}–{current * PAGE_SIZE + pageParcels.length} OF{" "}
+              {visible.length} PARCEL(S)
+            </span>
+            <span className="label">
+              {owners.isFetching ? (
+                <>
+                  RESOLVING HOLDERS ON CHAIN<span className="blink">_</span>
+                </>
+              ) : (
+                `PAGE ${current + 1} / ${pageCount}`
+              )}
+            </span>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {pageWithOwners.map((p) => (
+              <ParcelCard key={p.inscriptionId} parcel={p} />
+            ))}
+          </div>
+
+          <Pager page={current} pageCount={pageCount} onPage={setPage} />
+        </>
       )}
 
       <TradeWatcher limit={60} />
