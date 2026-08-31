@@ -146,6 +146,25 @@ function Explore() {
             ))}
           </div>
         </div>
+        <div className="flex flex-wrap items-center gap-2 border-t border-border p-3">
+          <span className="label self-center">TRAITS</span>
+          {TRAIT_FILTERS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => toggleTrait(t.id)}
+              className={
+                traits.includes(t.id) ? "btn-term !px-3 !py-2" : "btn-term-ghost !px-3 !py-2"
+              }
+            >
+              {t.label}
+            </button>
+          ))}
+          {traits.length > 0 && (
+            <button className="btn-term-ghost !px-3 !py-2" onClick={() => setTraits([])}>
+              CLEAR
+            </button>
+          )}
+        </div>
       </div>
 
       {isError && (
