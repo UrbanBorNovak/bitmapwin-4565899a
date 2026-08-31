@@ -9,7 +9,8 @@ import {
   isLiveBid,
   type Bid,
 } from "@/lib/bids";
-import { acceptBidFn, cancelBidFn, placeBidFn } from "@/lib/bids.functions";
+import { cancelBidFn, placeBidFn } from "@/lib/bids.functions";
+import { useAcceptBid } from "@/lib/use-accept-bid";
 import { signMessageWithWallet } from "@/lib/browser-wallet";
 import { useWalletSession, walletControls } from "@/lib/wallet-session";
 import { formatSats } from "@/lib/trades";
@@ -266,9 +267,9 @@ function BidRow({
           <button
             className="btn-term !px-3 !py-1.5"
             disabled={accept.isPending}
-            onClick={() => accept.mutate()}
+            onClick={() => accept.mutate(bid)}
           >
-            {accept.isPending ? "[ ACCEPTING… ]" : "[ ACCEPT BID ]"}
+            {accept.isPending ? "[ SIGNING SALE… ]" : "[ ACCEPT BID ]"}
           </button>
         )}
         {canCancel && (

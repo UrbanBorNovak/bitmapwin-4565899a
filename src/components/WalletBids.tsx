@@ -10,7 +10,8 @@ import {
   openBidsQuery,
   type Bid,
 } from "@/lib/bids";
-import { acceptBidFn, cancelBidFn } from "@/lib/bids.functions";
+import { cancelBidFn } from "@/lib/bids.functions";
+import { useAcceptBid } from "@/lib/use-accept-bid";
 import { signMessageWithWallet } from "@/lib/browser-wallet";
 import { useWalletSession } from "@/lib/wallet-session";
 import { formatSats } from "@/lib/trades";
@@ -68,29 +69,7 @@ export function WalletBids({ address, heldHeights }: { address: string; heldHeig
     onError: (e) => toast("WITHDRAW FAILED", { description: (e as Error).message.toUpperCase() }),
   });
 
-  const accept = useMutation({
-    mutationFn: async (bid: Bid) => {
-      if (!wallet) throw new Error("CONNECT THE WALLET HOLDING THIS PARCEL");
-      const signer = [wallet.ordinalsAddress, wallet.paymentAddress].find(
-        (a) => a.toLowerCase() === address.toLowerCase(),
-      ) ?? wallet.ordinalsAddress;
-      await signMessageWithWallet(
-        wallet.provider,
-        signer,
-        bidActionMessage("accept", bid.id, signer),
-      ).catch(() => {
-        throw new Error("ACCEPT SIGNATURE REJECTED");
-      });
-      return acceptBidFn({ data: { bidId: bid.id, holderAddress: signer } });
-    },
-    onSuccess: (result) => {
-      invalidate();
-      toast(`BID ACCEPTED — ${result.bitmapHeight}.BITMAP`, {
-        description: `SIGN A LISTING AT ${formatSats(result.priceSats)} TO SETTLE ON CHAIN`,
-      });
-    },
-    onError: (e) => toast("ACCEPT FAILED", { description: (e as Error).message.toUpperCase() }),
-  });
+  const { accept } = useAcceptBid({ holderAddress: address });
 
   return (
     <>
@@ -109,7 +88,7 @@ export function WalletBids({ address, heldHeights }: { address: string; heldHeig
               disabled={accept.isPending}
               onClick={() => accept.mutate(bid)}
             >
-              {accept.isPending ? "[ ACCEPTING… ]" : "[ ACCEPT ]"}
+              {accept.isPending ? "[ SIGNING SALE… ]" : "[ ACCEPT ]"}
             </button>
           )}
         />
