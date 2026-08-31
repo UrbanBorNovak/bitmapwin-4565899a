@@ -24,12 +24,16 @@ export function BuildEditor({
   config,
   onKindChange,
   onConfigChange,
+  walletAddress,
 }: {
   kind: BuildKind;
   config: unknown;
   onKindChange: (kind: BuildKind) => void;
   onConfigChange: (config: unknown) => void;
+  /** Address whose inscriptions can be imported into an asset shop. */
+  walletAddress?: string | null;
 }) {
+
   return (
     <div className="space-y-4">
       <div>
