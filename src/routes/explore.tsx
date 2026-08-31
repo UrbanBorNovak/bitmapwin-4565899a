@@ -53,6 +53,10 @@ function Explore() {
   const [term, setTerm] = useState(q ?? "");
   const [filter, setFilter] = useState<Filter>("ALL");
   const [sort, setSort] = useState<Sort>("NEWEST");
+  const [traits, setTraits] = useState<TraitId[]>([]);
+
+  const toggleTrait = (id: TraitId) =>
+    setTraits((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
 
   const { data, isPending, isFetching, isError, error, refetch } = useQuery({
     queryKey: ["chain-blocks", pages],
