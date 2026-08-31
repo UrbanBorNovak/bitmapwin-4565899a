@@ -573,11 +573,15 @@ function ListParcelForm({
           [ CANCEL ]
         </button>
       </div>
+      <p className="mt-2 font-mono text-[11px] text-muted-foreground">
+        &gt; YOU RECEIVE THE FULL ASK — THE BUYER PAYS A {MARKETPLACE_FEE_PERCENT}% MARKETPLACE FEE ON TOP
+      </p>
       {!canSign && (
         <p className="mt-2 font-mono text-[11px] text-muted-foreground">
           &gt; CONNECT THE UNISAT/XVERSE WALLET THAT HOLDS THIS PARCEL TO SIGN THE LISTING
         </p>
       )}
+
     </div>
   );
 }
