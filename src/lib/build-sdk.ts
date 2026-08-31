@@ -240,3 +240,96 @@ export function payloadHeight(payload: BuildPayload): number {
 export function buildSeed(height: number, salt = 0): number {
   return Math.abs(Math.floor(height) * 2654435761 + salt) % 2147483647;
 }
+
+/* ------------------------------------------------------------------------- *
+ * PRESETS — ready-made builds a holder can pick and then adapt.
+ * ------------------------------------------------------------------------- */
+
+export type BuildPreset<K extends BuildKind = BuildKind> = {
+  id: string;
+  name: string;
+  blurb: string;
+  kind: K;
+  config: BuildConfigMap[K];
+};
+
+export const BUILD_PRESETS: BuildPreset[] = [
+  {
+    id: "info-card",
+    name: "HOLDER CARD",
+    blurb: "NAME, ROLE AND LINKS — A CLEAN HOME PAGE FOR THIS BLOCK",
+    kind: "info",
+    config: {
+      headline: "BITCOIN NATIVE, BITMAP HOLDER",
+      fields: [
+        { label: "ROLE", value: "BUILDER" },
+        { label: "LOCATION", value: "ON-CHAIN" },
+        { label: "SINCE", value: "2023" },
+      ],
+      links: [{ label: "X", url: "https://x.com/" }],
+    } satisfies InfoConfig,
+  },
+  {
+    id: "info-shop",
+    name: "SIGNBOARD",
+    blurb: "A SHORT PITCH PLUS CONTACT LINKS — GOOD FOR PROJECTS",
+    kind: "info",
+    config: {
+      headline: "OPEN FOR BUSINESS ON BITCOIN",
+      fields: [
+        { label: "WHAT", value: "ORDINALS STUDIO" },
+        { label: "CONTACT", value: "DM ON X" },
+      ],
+      links: [
+        { label: "SITE", url: "https://" },
+        { label: "ORDINALS", url: "https://ordinals.com/" },
+      ],
+    } satisfies InfoConfig,
+  },
+  {
+    id: "gallery-3",
+    name: "GALLERY WALL",
+    blurb: "THREE-COLUMN GRID OF ON-CHAIN IMAGES YOU HOLD",
+    kind: "gallery",
+    config: { columns: 3, items: [] } satisfies GalleryConfig,
+  },
+  {
+    id: "gallery-2",
+    name: "SOLO SHOWCASE",
+    blurb: "TWO WIDE COLUMNS — BEST FOR A FEW HERO INSCRIPTIONS",
+    kind: "gallery",
+    config: { columns: 2, items: [] } satisfies GalleryConfig,
+  },
+  {
+    id: "game3d-skyline",
+    name: "ORANGE SKYLINE",
+    blurb: "WALKABLE VOXEL CITY SEEDED BY THIS BLOCK, BITCOIN ORANGE",
+    kind: "game3d",
+    config: { worldName: "BLOCK CITY", towers: 32, spin: true, accent: "#f7931a" } satisfies Game3dConfig,
+  },
+  {
+    id: "game3d-mono",
+    name: "MONO MONOLITHS",
+    blurb: "SPARSE WHITE TOWERS, STATIC CAMERA — MINIMAL AND CALM",
+    kind: "game3d",
+    config: { worldName: "MONOLITHS", towers: 12, spin: false, accent: "#ffffff" } satisfies Game3dConfig,
+  },
+  {
+    id: "game2d-run",
+    name: "BLOCK RUN",
+    blurb: "PIXEL MAZE WITH COINS — EASY, FRIENDLY FOR VISITORS",
+    kind: "game2d",
+    config: { title: "BLOCK RUN", coins: 12, walls: 18, speed: 4 } satisfies Game2dConfig,
+  },
+  {
+    id: "game2d-hard",
+    name: "DEEP MAZE",
+    blurb: "DENSE WALLS, MORE COINS, FASTER — FOR THE DEGENERATES",
+    kind: "game2d",
+    config: { title: "DEEP MAZE", coins: 28, walls: 45, speed: 8 } satisfies Game2dConfig,
+  },
+];
+
+export function presetsForKind(kind: BuildKind): BuildPreset[] {
+  return BUILD_PRESETS.filter((p) => p.kind === kind);
+}
