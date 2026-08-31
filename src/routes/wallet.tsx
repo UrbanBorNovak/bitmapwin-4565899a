@@ -23,6 +23,8 @@ import { OFFER_STATUS_LABEL } from "@/lib/offers";
 import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
 import { WalletConnect } from "@/components/WalletConnect";
+import { WalletBids } from "@/components/WalletBids";
+
 
 
 export const Route = createFileRoute("/wallet")({
