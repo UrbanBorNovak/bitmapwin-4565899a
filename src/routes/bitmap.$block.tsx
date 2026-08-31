@@ -10,6 +10,7 @@ import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { OfferBook } from "@/components/OfferBook";
 import { BidPanel } from "@/components/BidPanel";
 import { ParcelPagePanel } from "@/components/ParcelPagePanel";
+import { MakeOfferButton } from "@/components/MakeOfferButton";
 
 import { TradeWatcher } from "@/components/TradeWatcher";
 import { SettlementWatcher } from "@/components/SettlementWatcher";
