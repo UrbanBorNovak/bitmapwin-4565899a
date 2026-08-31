@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { BuyButton } from "@/components/BuyButton";
 import { BlockMosaic } from "@/components/BlockMosaic";
+import { TraitBadges } from "@/components/TraitBadges";
 import { formatSats } from "@/lib/trades";
 import { PARCEL_STATUS_LABEL, shortenAddress, type RegistryParcel } from "@/lib/registry";
 
@@ -21,6 +22,8 @@ export function ParcelCard({ parcel }: { parcel: RegistryParcel }) {
           <div className="display text-sm">{parcel.bitmapHeight}.BITMAP</div>
           <span className="label">{PARCEL_STATUS_LABEL[parcel.status]}</span>
         </div>
+
+        <TraitBadges height={parcel.bitmapHeight} max={4} showRarity className="mt-2" />
 
         <dl className="mt-3 space-y-1 text-[11px]">
           <Row k="OWNER" v={shortenAddress(parcel.ownerAddress)} />

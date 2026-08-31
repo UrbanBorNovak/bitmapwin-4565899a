@@ -3,6 +3,7 @@ import { queryOptions, useMutation, useQuery, useQueryClient, useSuspenseQuery }
 import { getBlockInscriptions } from "@/lib/ordinals-scan.functions";
 import { getBitmapRegistryEntry } from "@/lib/oci.functions";
 import { MAX_BITMAP } from "@/lib/oci";
+import { TraitBadges } from "@/components/TraitBadges";
 import { toast } from "sonner";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
@@ -105,6 +106,8 @@ function BitmapDetail() {
           ? `CLAIMED ON CHAIN${parcel.inscribedInBlock !== null ? ` IN BLOCK ${parcel.inscribedInBlock}` : ""}`
           : "UNCLAIMED — NO VALID INSCRIPTION IN THE REGISTRY"}
       </p>
+
+      <TraitBadges height={block} showRarity className="mt-4" />
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="group border border-border bg-card p-6">
