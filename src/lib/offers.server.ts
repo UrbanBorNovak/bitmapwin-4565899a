@@ -71,7 +71,9 @@ async function fetchOutputHtml(outpoint: string, attempts = 2): Promise<OrdOutpu
       const html = await resp.text();
       const inscriptions = [
         ...html.matchAll(/href=["']?\/inscription\/([0-9a-f]{64}i\d+)/gi),
-      ].map((match) => match[1]!).filter((id, index, all) => all.indexOf(id) === index);
+      ]
+        .flatMap((match) => (match[1] ? [match[1]] : []))
+        .filter((id, index, all) => all.indexOf(id) === index);
       const addressMatch = /href=["']?\/address\/([^"'\s>]+)/i.exec(html);
       const value = Number(htmlText(html, "value") ?? 0);
       const spent = htmlText(html, "spent") === "true";
