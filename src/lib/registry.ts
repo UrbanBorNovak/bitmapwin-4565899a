@@ -160,6 +160,24 @@ function dedupeClaims(rows: ClaimRow[]): Array<{ row: ClaimRow; supersedes: numb
     .sort((a, b) => (b.row.bitmap_height ?? 0) - (a.row.bitmap_height ?? 0));
 }
 
+/**
+ * Chain reads must never hold a render hostage: whichever enrichment misses its
+ * deadline falls back to the neutral value and the parcel list still renders.
+ */
+async function withDeadline<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise.catch(() => fallback),
+      new Promise<T>((resolve) => {
+        timer = setTimeout(() => resolve(fallback), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 async function buildParcels(rows: ClaimRow[]): Promise<RegistryParcel[]> {
   const claims = dedupeClaims(rows);
   if (claims.length === 0) return [];
