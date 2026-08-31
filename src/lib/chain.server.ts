@@ -2,6 +2,7 @@ import type { BitmapClaim, ChainBlock } from "@/lib/chain";
 
 const MEMPOOL = "https://mempool.space/api";
 const ORD = "https://ordinals.com";
+const ESPLORA = "https://blockstream.info/api";
 
 /** Max inscriptions per block we read the content (hex) of while hunting bitmaps. */
 const MAX_SCAN_PER_BLOCK = 120;
@@ -169,7 +170,7 @@ async function scanBlock(height: number): Promise<ScannedBlock> {
 }
 
 export async function loadChainBlocks(pages: number): Promise<ChainBlock[]> {
-  const blocks = await fetchBlockPages(pages);
+  const blocks = await fetchRecentBlocks(pages);
   const scans = await mapWithConcurrency(blocks, 4, (b) => scanBlock(b.height));
 
   const heights = blocks.map((b) => b.height);
