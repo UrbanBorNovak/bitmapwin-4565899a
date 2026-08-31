@@ -49,7 +49,7 @@ type WindowWithWallets = Window & {
 };
 
 function w(): WindowWithWallets {
-  return window as WindowWithWallets;
+  return window as unknown as WindowWithWallets;
 }
 
 export function getUnisat(): UnisatProvider | null {
