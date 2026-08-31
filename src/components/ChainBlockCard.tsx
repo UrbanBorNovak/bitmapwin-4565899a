@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { formatBytes, shortId, timeAgoFromUnix, type ChainBlock } from "@/lib/chain";
-import { rarityOf, traitsOf } from "@/lib/traits";
+import { TraitBadges } from "@/components/TraitBadges";
+import { rarityOf } from "@/lib/traits";
 
 const STATUS_LABEL: Record<ChainBlock["bitmapStatus"], string> = {
   valid: "VALID BITMAP",
@@ -14,7 +15,6 @@ export function ChainBlockCard({ block }: { block: ChainBlock }) {
   const countLabel = `${count}${block.inscriptionCountIsMinimum ? "+" : ""}`;
   const status = block.bitmapStatus;
   const otherClaims = block.bitmapClaims.filter((c) => c.claimedHeight !== block.height);
-  const traits = traitsOf(block.height);
   const rarity = rarityOf(block.height);
 
   return (
@@ -44,23 +44,7 @@ export function ChainBlockCard({ block }: { block: ChainBlock }) {
           {timeAgoFromUnix(block.timestamp)} · {rarity}
         </div>
 
-        {traits.length > 0 && (
-          <ul className="mt-2 flex flex-wrap gap-1">
-            {traits.slice(0, 4).map((t) => (
-              <li
-                key={t.id}
-                className={
-                  t.rare
-                    ? "border border-foreground px-1.5 py-0.5 font-mono text-[9px]"
-                    : "border border-border px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground"
-                }
-              >
-                {t.label}
-              </li>
-            ))}
-          </ul>
-        )}
-
+        <TraitBadges height={block.height} max={4} className="mt-2" />
 
         <dl className="mt-3 space-y-1 text-[11px]">
           <Row k="INSCRIPTIONS" v={countLabel} />
