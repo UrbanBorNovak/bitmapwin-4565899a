@@ -37,10 +37,15 @@ type XverseRequest = <T = unknown>(
 
 type XverseProvider = { request: XverseRequest };
 
+type BtcProviderEntry = { id?: string; name?: string };
+
 type WindowWithWallets = Window & {
   unisat?: UnisatProvider;
   XverseProviders?: { BitcoinProvider?: XverseProvider };
   BitcoinProvider?: XverseProvider;
+  /** WBIP-004 provider registry — several wallets register here. */
+  btc_providers?: BtcProviderEntry[];
+  [key: string]: unknown;
 };
 
 function w(): WindowWithWallets {
@@ -52,9 +57,32 @@ export function getUnisat(): UnisatProvider | null {
   return w().unisat ?? null;
 }
 
+function isRequestProvider(value: unknown): value is XverseProvider {
+  return typeof (value as XverseProvider | undefined)?.request === "function";
+}
+
+/**
+ * Resolves the Xverse provider. Other Bitcoin wallets (Trust, OKX, Leather)
+ * also claim `window.BitcoinProvider`, so prefer Xverse's own namespace and the
+ * WBIP-004 registry, and only fall back to the shared global last.
+ */
 export function getXverse(): XverseProvider | null {
   if (typeof window === "undefined") return null;
-  return w().XverseProviders?.BitcoinProvider ?? w().BitcoinProvider ?? null;
+  const win = w();
+  if (isRequestProvider(win.XverseProviders?.BitcoinProvider)) {
+    return win.XverseProviders!.BitcoinProvider!;
+  }
+  const registry = Array.isArray(win.btc_providers) ? win.btc_providers : [];
+  const entry = registry.find((p) =>
+    `${p?.id ?? ""} ${p?.name ?? ""}`.toLowerCase().includes("xverse"),
+  );
+  if (entry?.id) {
+    const path = entry.id.split(".");
+    let node: unknown = win;
+    for (const key of path) node = (node as Record<string, unknown> | undefined)?.[key];
+    if (isRequestProvider(node)) return node;
+  }
+  return isRequestProvider(win.BitcoinProvider) ? win.BitcoinProvider : null;
 }
 
 export function isWalletInstalled(provider: WalletProviderId): boolean {
