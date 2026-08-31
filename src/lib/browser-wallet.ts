@@ -1,7 +1,10 @@
 import {
   AddressPurpose,
+  BitcoinNetworkType,
   getProviders,
   request as requestSatsConnect,
+  signTransaction as signXverseTransaction,
+  type BitcoinProvider,
   type SignPsbtParams,
 } from "sats-connect";
 
@@ -42,7 +45,10 @@ type XverseRequest = <T = unknown>(
   params?: unknown,
 ) => Promise<{ status: "success"; result: T } | { status: "error"; error: { message?: string } }>;
 
-type XverseProvider = { request: XverseRequest };
+type XverseProvider = {
+  request: XverseRequest;
+  signTransaction?: BitcoinProvider["signTransaction"];
+};
 
 type BtcProviderEntry = { id?: string; name?: string };
 
@@ -263,14 +269,56 @@ export async function signListingPsbt(
     }
     return /^[0-9a-fA-F]+$/.test(signedHex.trim()) ? hexToBase64(signedHex) : signedHex.trim();
   }
-  // The sighash is declared in the PSBT input itself. Sats Connect v4 accepts
-  // only psbt/signInputs/broadcast here; sending the old `allowedSignHash`
-  // field makes current Xverse reject the request before opening its signer.
-  return xverseSignPsbt({
-    psbt: psbtBase64,
-    signInputs: { [sellerAddress]: [0] },
-    broadcast: false,
+  return xverseSignListingPsbt(psbtBase64, sellerAddress);
+}
+
+/**
+ * Xverse's JSON-RPC signPsbt method has no field for approving a non-default
+ * sighash, so it rejects marketplace offers even when 0x83 is correctly set
+ * in the PSBT input. Its marketplace signing API does support `sigHash` and
+ * is the correct path for SINGLE|ANYONECANPAY seller offers.
+ */
+async function xverseSignListingPsbt(psbtBase64: string, sellerAddress: string): Promise<string> {
+  const provider = getXverse();
+  if (!provider || typeof provider.signTransaction !== "function") {
+    throw new Error("XVERSE MARKETPLACE SIGNING IS UNAVAILABLE — UPDATE THE XVERSE EXTENSION");
+  }
+
+  return new Promise<string>((resolve, reject) => {
+    void signXverseTransaction({
+      payload: {
+        network: { type: BitcoinNetworkType.Mainnet },
+        message: "List bitmap on Bitmap Marketplace",
+        psbtBase64,
+        inputsToSign: [
+          {
+            address: sellerAddress,
+            signingIndexes: [0],
+            sigHash: SIGHASH_SINGLE_ANYONECANPAY,
+          },
+        ],
+        broadcast: false,
+      },
+      getProvider: async () => provider as BitcoinProvider,
+      onFinish: (response) => {
+        const signed = response.psbtBase64?.trim();
+        if (!signed || signed.length < 20) {
+          reject(new Error("XVERSE RETURNED NO SIGNED PSBT"));
+          return;
+        }
+        resolve(signed);
+      },
+      onCancel: () => reject(new Error("XVERSE SIGNING WAS DECLINED IN THE WALLET")),
+    }).catch((error: unknown) => {
+      reject(new Error(describeXverseSignError(normalizeXverseError(error))));
+    });
   });
+}
+
+function normalizeXverseError(error: unknown): { code?: unknown; message?: string } {
+  if (error instanceof Error) return { message: error.message };
+  if (error && typeof error === "object") return error as { code?: unknown; message?: string };
+  return { message: String(error) };
 }
 
 
