@@ -36,9 +36,11 @@ type UnisatProvider = {
   getAccounts: () => Promise<string[]>;
   getPublicKey: () => Promise<string>;
   signPsbt: (psbtHex: string, options?: unknown) => Promise<string>;
+  signMessage?: (message: string, type?: string) => Promise<string>;
   on?: (event: string, handler: (...args: unknown[]) => void) => void;
   removeListener?: (event: string, handler: (...args: unknown[]) => void) => void;
 };
+
 
 type XverseRequest = <T = unknown>(
   method: string,
