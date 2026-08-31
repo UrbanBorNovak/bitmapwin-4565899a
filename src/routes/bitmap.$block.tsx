@@ -295,6 +295,8 @@ function BitmapDetail() {
           </a>
         )}
       </div>
+
+      <OfferBook height={block} />
     </div>
   );
 }
