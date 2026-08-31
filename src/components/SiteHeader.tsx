@@ -8,6 +8,7 @@ const NAV = [
   { to: "/marketplace", label: "MARKETPLACE" },
   { to: "/map", label: "MAP" },
   { to: "/activity", label: "ACTIVITY" },
+  { to: "/extractor", label: "EXTRACTOR" },
 ] as const;
 
 export function SiteHeader() {

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as ExtractorRouteImport } from './routes/extractor'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
@@ -29,6 +30,11 @@ const ActivityRoute = ActivityRouteImport.update({
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExtractorRoute = ExtractorRouteImport.update({
+  id: '/extractor',
+  path: '/extractor',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MapRoute = MapRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
   '/explore': typeof ExploreRoute
+  '/extractor': typeof ExtractorRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
   '/explore': typeof ExploreRoute
+  '/extractor': typeof ExtractorRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
   '/explore': typeof ExploreRoute
+  '/extractor': typeof ExtractorRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
@@ -75,15 +84,28 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/activity' | '/explore' | '/map' | '/marketplace' | '/bitmap/$block'
+    | '/'
+    | '/activity'
+    | '/explore'
+    | '/extractor'
+    | '/map'
+    | '/marketplace'
+    | '/bitmap/$block'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/activity' | '/explore' | '/map' | '/marketplace' | '/bitmap/$block'
+    | '/'
+    | '/activity'
+    | '/explore'
+    | '/extractor'
+    | '/map'
+    | '/marketplace'
+    | '/bitmap/$block'
   id:
     | '__root__'
     | '/'
     | '/activity'
     | '/explore'
+    | '/extractor'
     | '/map'
     | '/marketplace'
     | '/bitmap/$block'
@@ -93,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActivityRoute: typeof ActivityRoute
   ExploreRoute: typeof ExploreRoute
+  ExtractorRoute: typeof ExtractorRoute
   MapRoute: typeof MapRoute
   MarketplaceRoute: typeof MarketplaceRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
@@ -119,6 +142,13 @@ declare module '@tanstack/react-router' {
       path: '/explore'
       fullPath: '/explore'
       preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/extractor': {
+      id: '/extractor'
+      path: '/extractor'
+      fullPath: '/extractor'
+      preLoaderRoute: typeof ExtractorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/map': {
@@ -149,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivityRoute: ActivityRoute,
   ExploreRoute: ExploreRoute,
+  ExtractorRoute: ExtractorRoute,
   MapRoute: MapRoute,
   MarketplaceRoute: MarketplaceRoute,
   BitmapBlockRoute: BitmapBlockRoute,
