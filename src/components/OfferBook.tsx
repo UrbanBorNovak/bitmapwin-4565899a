@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { offersQuery, OFFER_STATUS_LABEL, type Offer } from "@/lib/offers";
 import { inspectOfferFn, refreshOffersFn, submitOfferFn } from "@/lib/offers.functions";
 import { BuyButton } from "@/components/BuyButton";
+import { QuickListForm } from "@/components/QuickListForm";
 import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
 
@@ -18,6 +19,7 @@ export function OfferBook({ height }: { height?: number }) {
   const queryClient = useQueryClient();
   const { data: offers = [], isLoading } = useQuery(offersQuery(height));
   const [psbt, setPsbt] = useState("");
+  const [advanced, setAdvanced] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["offers"] });
@@ -78,6 +80,16 @@ export function OfferBook({ height }: { height?: number }) {
       </header>
 
       <div className="border-b border-border p-6">
+        <QuickListForm {...(height === undefined ? {} : { height })} />
+        <button
+          className="btn-term-ghost mt-4 !px-3 !py-1.5"
+          onClick={() => setAdvanced((v) => !v)}
+        >
+          {advanced ? "[ HIDE PSBT PASTE ]" : "[ ADVANCED: PASTE A SIGNED PSBT ]"}
+        </button>
+      </div>
+
+      <div className={advanced ? "border-b border-border p-6" : "hidden"}>
         <label className="label" htmlFor="psbt-input">
           SUBMIT OFFER — BASE64 PSBT
         </label>

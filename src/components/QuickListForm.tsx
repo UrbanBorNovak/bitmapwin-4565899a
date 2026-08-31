@@ -1,0 +1,133 @@
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { walletQuery } from "@/lib/wallet";
+import { submitOfferFn } from "@/lib/offers.functions";
+import { buildListingPsbt } from "@/lib/psbt-builder";
+import { signListingPsbt, xOnlyPubKeyHex } from "@/lib/browser-wallet";
+import { useWalletSession } from "@/lib/wallet-session";
+import { MARKETPLACE_FEE_PERCENT } from "@/lib/marketplace-fee";
+import { formatSats } from "@/lib/trades";
+import { shortenAddress } from "@/lib/registry";
+
+/**
+ * One-field listing: pick a price, press the button, the wallet signs the sale
+ * PSBT and it lands in the offer book. No base64 to copy around.
+ */
+export function QuickListForm({ height }: { height?: number }) {
+  const wallet = useWalletSession();
+  const queryClient = useQueryClient();
+  const [price, setPrice] = useState("");
+  const [selected, setSelected] = useState<string>("");
+
+  const ordinals = wallet?.ordinalsAddress ?? "";
+  const snapshot = useQuery({ ...walletQuery(ordinals), enabled: ordinals !== "" });
+
+  const parcels = useMemo(() => {
+    const utxos = snapshot.data?.utxos ?? [];
+    const owned = utxos.flatMap((u) =>
+      u.inscriptions
+        .filter((i) => i.bitmapHeight !== null)
+        .map((i) => ({ outpoint: u.outpoint, valueSats: u.valueSats, bitmapHeight: i.bitmapHeight! })),
+    );
+    return height === undefined ? owned : owned.filter((p) => p.bitmapHeight === height);
+  }, [snapshot.data, height]);
+
+  const parcel = parcels.find((p) => p.outpoint === selected) ?? parcels[0] ?? null;
+
+  const list = useMutation({
+    mutationFn: async () => {
+      if (!wallet) throw new Error("CONNECT A WALLET FIRST");
+      if (!parcel) throw new Error("NO BITMAP PARCEL FOUND IN THIS WALLET");
+      const priceSats = Number(price.replace(/[^0-9]/g, ""));
+      if (!Number.isInteger(priceSats) || priceSats < 546) {
+        throw new Error("ASK AT LEAST 546 SATS");
+      }
+      const [txid, voutRaw] = parcel.outpoint.split(":");
+      const vout = Number(voutRaw);
+      if (!txid || !Number.isInteger(vout)) throw new Error("BAD PARCEL OUTPOINT");
+      const tapInternalKeyHex = xOnlyPubKeyHex(wallet.publicKey);
+      const psbt = buildListingPsbt({
+        txid,
+        vout,
+        utxoValueSats: parcel.valueSats,
+        sellerAddress: wallet.ordinalsAddress,
+        priceSats,
+        ...(tapInternalKeyHex ? { tapInternalKeyHex } : {}),
+      });
+      toast("APPROVE THE SIGNATURE IN YOUR WALLET", { description: "OPEN THE WALLET POPUP TO SIGN" });
+      const signed = await signListingPsbt(wallet.provider, psbt, wallet.ordinalsAddress);
+      return submitOfferFn({ data: { psbt: signed } });
+    },
+    onSuccess: (offer) => {
+      void queryClient.invalidateQueries({ queryKey: ["offers"] });
+      void queryClient.invalidateQueries({ queryKey: ["registry"] });
+      setPrice("");
+      toast(`LISTED ${offer.bitmapHeight ?? "?"}.BITMAP`, {
+        description: `ASK ${formatSats(offer.priceSats)} · NOW IN THE OFFER BOOK`,
+      });
+    },
+    onError: (e) => toast("LISTING FAILED", { description: (e as Error).message.toUpperCase() }),
+  });
+
+  if (!wallet) {
+    return (
+      <p className="font-mono text-[11px] text-muted-foreground">
+        &gt; CONNECT UNISAT OR XVERSE TO LIST A PARCEL IN ONE CLICK<span className="blink">_</span>
+      </p>
+    );
+  }
+
+  return (
+    <div>
+      <label className="label" htmlFor="quick-ask">
+        SELL {height === undefined ? "A PARCEL" : `${height}.BITMAP`} — JUST NAME YOUR PRICE
+      </label>
+      <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+        <input
+          id="quick-ask"
+          value={price}
+          onChange={(e) => setPrice(e.target.value.replace(/[^0-9]/g, ""))}
+          inputMode="numeric"
+          spellCheck={false}
+          placeholder="PRICE IN SATS (e.g. 250000)"
+          className="flex-1 border border-border bg-background px-3 py-2 font-mono text-[11px] text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+        />
+        <button
+          className="btn-term"
+          disabled={list.isPending || price.trim() === "" || parcel === null}
+          onClick={() => list.mutate()}
+        >
+          {list.isPending ? "[ SIGNING… ]" : "[ LIST FOR SALE ]"}
+        </button>
+      </div>
+
+      {parcels.length > 1 && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <span className="label">PARCEL</span>
+          {parcels.slice(0, 12).map((p) => (
+            <button
+              key={p.outpoint}
+              className={
+                parcel?.outpoint === p.outpoint
+                  ? "btn-term !px-2 !py-1"
+                  : "btn-term-ghost !px-2 !py-1"
+              }
+              onClick={() => setSelected(p.outpoint)}
+            >
+              {p.bitmapHeight}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <p className="mt-2 font-mono text-[11px] text-muted-foreground">
+        {snapshot.isLoading
+          ? "> READING YOUR PARCELS…"
+          : parcel
+            ? `> SELLING ${parcel.bitmapHeight}.BITMAP FROM ${shortenAddress(wallet.ordinalsAddress)} — YOU RECEIVE THE FULL PRICE, THE BUYER PAYS THE ${MARKETPLACE_FEE_PERCENT}% FEE`
+            : `> NO ${height === undefined ? "BITMAP PARCEL" : `${height}.BITMAP`} FOUND IN ${shortenAddress(wallet.ordinalsAddress)}`}
+      </p>
+    </div>
+  );
+}
