@@ -22,7 +22,29 @@ export const Route = createFileRoute("/map")({
   }),
   loader: ({ context }) => context.queryClient.ensureQueryData(registryParcelsQuery(200)),
   component: MapPage,
+  errorComponent: ({ error, reset }) => <MapError error={error} reset={reset} />,
+  notFoundComponent: () => null,
 });
+
+function MapError({ error, reset }: { error: Error; reset: () => void }) {
+  const router = useRouter();
+  return (
+    <div className="mx-auto max-w-[900px] px-4 py-24 md:px-8" role="alert">
+      <h1 className="display text-3xl">GRID UNAVAILABLE</h1>
+      <p className="mt-4 font-mono text-sm text-muted-foreground">&gt; {error.message}</p>
+      <button
+        type="button"
+        className="btn-term mt-8"
+        onClick={() => {
+          router.invalidate();
+          reset();
+        }}
+      >
+        [ RETRY ]
+      </button>
+    </div>
+  );
+}
 
 const CELL = 96;
 const COLS = 20;
