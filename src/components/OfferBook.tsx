@@ -163,7 +163,7 @@ function OfferRow({ offer, showLink }: { offer: Offer; showLink: boolean }) {
         <div className="break-all">UTXO {offer.outpoint}</div>
       </dl>
       <div className="mt-3 flex flex-wrap gap-2">
-        {offer.status === "open" && <BuyButton offer={offer} />}
+        {offer.status === "open" && <BuyButton offerId={offer.id} priceSats={offer.priceSats} />}
         <button className="btn-term-ghost !px-3 !py-1.5" onClick={() => setExpanded((v) => !v)}>
           {expanded ? "HIDE PSBT" : "SHOW PSBT"}
         </button>
