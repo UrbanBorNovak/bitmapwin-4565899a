@@ -85,6 +85,51 @@ export type Database = {
         }
         Relationships: []
       }
+      inscriptions: {
+        Row: {
+          bitmap_height: number | null
+          block_height: number | null
+          body_bytes: number
+          body_text: string | null
+          content_type: string | null
+          created_at: string
+          fields: Json
+          id: string
+          input_index: number
+          is_bitmap_claim: boolean
+          txid: string
+          updated_at: string
+        }
+        Insert: {
+          bitmap_height?: number | null
+          block_height?: number | null
+          body_bytes?: number
+          body_text?: string | null
+          content_type?: string | null
+          created_at?: string
+          fields?: Json
+          id: string
+          input_index?: number
+          is_bitmap_claim?: boolean
+          txid: string
+          updated_at?: string
+        }
+        Update: {
+          bitmap_height?: number | null
+          block_height?: number | null
+          body_bytes?: number
+          body_text?: string | null
+          content_type?: string | null
+          created_at?: string
+          fields?: Json
+          id?: string
+          input_index?: number
+          is_bitmap_claim?: boolean
+          txid?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       listings: {
         Row: {
           bitmap_id: string
