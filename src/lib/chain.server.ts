@@ -46,19 +46,22 @@ async function fetchWithRetry(
   throw lastError instanceof Error ? lastError : new Error(`${url} failed`);
 }
 
-async function getJson<T>(url: string): Promise<T> {
-  const res = await fetchWithRetry(url, "application/json");
+async function getJson<T>(url: string, attempts = 3, timeoutMs = 12000): Promise<T> {
+  const res = await fetchWithRetry(url, "application/json", attempts, timeoutMs);
   return (await res.json()) as T;
 }
 
+/** Block-header reads: fail fast so the Esplora fallback kicks in quickly. */
+const getJsonFast = <T,>(url: string) => getJson<T>(url, 1, 6000);
+
 /** Latest blocks from the mempool.space REST API (15 per page). */
 async function fetchBlockPages(pages: number): Promise<MempoolBlock[]> {
-  const first = await getJson<MempoolBlock[]>(`${MEMPOOL}/v1/blocks`);
+  const first = await getJsonFast<MempoolBlock[]>(`${MEMPOOL}/v1/blocks`);
   const out = [...first];
   for (let i = 1; i < pages; i++) {
     const next = out[out.length - 1];
     if (!next) break;
-    const page = await getJson<MempoolBlock[]>(`${MEMPOOL}/v1/blocks/${next.height - 1}`);
+    const page = await getJsonFast<MempoolBlock[]>(`${MEMPOOL}/v1/blocks/${next.height - 1}`);
     if (page.length === 0) break;
     out.push(...page);
   }
@@ -68,13 +71,13 @@ async function fetchBlockPages(pages: number): Promise<MempoolBlock[]> {
 /** Esplora fallback (10 blocks per page, no pool/fee extras). */
 async function fetchBlockPagesEsplora(pages: number): Promise<MempoolBlock[]> {
   const tip = Number(
-    (await (await fetchWithRetry(`${ESPLORA}/blocks/tip/height`, "text/plain", 3, 12000)).text()).trim(),
+    (await (await fetchWithRetry(`${ESPLORA}/blocks/tip/height`, "text/plain", 2, 8000)).text()).trim(),
   );
   if (!Number.isFinite(tip)) throw new Error("esplora tip height unavailable");
   const out: MempoolBlock[] = [];
   let cursor = tip;
   for (let i = 0; i < pages && cursor >= 0; i++) {
-    const page = await getJson<MempoolBlock[]>(`${ESPLORA}/blocks/${cursor}`);
+    const page = await getJson<MempoolBlock[]>(`${ESPLORA}/blocks/${cursor}`, 2, 8000);
     if (page.length === 0) break;
     out.push(...page);
     cursor = (page[page.length - 1]?.height ?? 0) - 1;
