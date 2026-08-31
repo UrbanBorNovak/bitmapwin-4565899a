@@ -173,7 +173,18 @@ function WalletPage() {
     () => inscribedUtxos.flatMap((u) => u.inscriptions.map((i) => i.id)),
     [inscribedUtxos],
   );
-
+  const heldHeights = useMemo(
+    () =>
+      [
+        ...new Set([
+          ...parcels
+            .map((p) => p.bitmapHeight)
+            .filter((h): h is number => typeof h === "number"),
+          ...inbox.heldHeights,
+        ]),
+      ].sort((a, b) => a - b),
+    [parcels, inbox.heldHeights],
+  );
 
 
   return (
