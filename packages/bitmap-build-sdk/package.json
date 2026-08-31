@@ -1,0 +1,19 @@
+{
+  "name": "@bitmap/build-sdk",
+  "version": "2.0.0",
+  "description": "Zero-dependency SDK for building info pages, on-chain galleries and games on top of Bitcoin Bitmap digital land (<height>.bitmap).",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "keywords": ["bitcoin", "ordinals", "bitmap", "inscriptions", "sdk"],
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "files": ["src", "README.md", "LICENSE"]
+}
