@@ -35,8 +35,13 @@ export function useBidInbox(options: { notify?: boolean } = {}) {
   const wallet = useWalletSession();
   const queryClient = useQueryClient();
   const holderAddress = wallet?.ordinalsAddress ?? "";
+  const addresses = useMemo(
+    () => (wallet ? [wallet.ordinalsAddress, wallet.paymentAddress].filter(Boolean) : []),
+    [wallet],
+  );
 
   const held = useQuery(walletQuery(holderAddress));
+  const indexed = useQuery(heldHeightsQuery(addresses));
   const bids = useQuery(openBidsQuery(500));
 
   const heldHeights = useMemo(() => {
@@ -46,8 +51,9 @@ export function useBidInbox(options: { notify?: boolean } = {}) {
         if (insc.bitmapHeight !== null) set.add(insc.bitmapHeight);
       }
     }
+    for (const height of indexed.data ?? []) set.add(height);
     return set;
-  }, [held.data]);
+  }, [held.data, indexed.data]);
 
   const received = useMemo<Bid[]>(
     () =>
