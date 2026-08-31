@@ -160,10 +160,10 @@ export async function validateOffer(psbtBase64: string): Promise<OfferValidation
   const ordOutput = outputs[index]!;
   const input = decoded.inputs[index]!;
   const inscriptionId = ordOutput.inscriptions[0] ?? null;
+  // Any ordinal can be sold (shop assets, images, bitmaps). A `<height>.bitmap`
+  // body just tags the offer with its bitmap height for registry views.
   const bitmapHeight = inscriptionId ? await bitmapHeightOf(inscriptionId) : null;
-  if (bitmapHeight === null) {
-    throw new Error("Inscription is not a bitmap claim (<height>.bitmap)");
-  }
+
 
   const sellerAddress =
     ordOutput.address ?? scriptToAddress(input.witnessScriptPubKeyHex ?? "") ?? null;
