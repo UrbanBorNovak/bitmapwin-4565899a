@@ -1,9 +1,18 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { getBlockInscriptions } from "@/lib/ordinals-scan.functions";
 import { toast } from "sonner";
 import { BitmapPixelMap } from "@/components/BitmapPixelMap";
 import { bitmapQuery } from "@/lib/bitmap-queries";
 import { STATUS_LABEL, formatBtc } from "@/lib/bitmap";
+
+const blockScanQuery = (height: number) =>
+  queryOptions({
+    queryKey: ["block-scan", height],
+    queryFn: () => getBlockInscriptions({ data: { height, txPages: 6 } }),
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
 
 export const Route = createFileRoute("/bitmap/$block")({
   loader: async ({ context, params }) => {
@@ -32,7 +41,10 @@ export const Route = createFileRoute("/bitmap/$block")({
 function BitmapDetail() {
   const { block } = Route.useLoaderData();
   const { data } = useSuspenseQuery(bitmapQuery(block));
+  const scan = useQuery(blockScanQuery(block));
   if (!data) return <BitmapMissing />;
+
+  const claims = (scan.data?.inscriptions ?? []).filter((i) => i.isBitmapClaim);
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-12 md:px-8">
@@ -44,7 +56,18 @@ function BitmapDetail() {
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="group border border-border bg-card p-6">
-          <BitmapPixelMap blockHeight={data.block_height} />
+          <BitmapPixelMap
+            blockHeight={data.block_height}
+            txCount={scan.data?.txCount ?? null}
+            vsizes={scan.data?.vsizes ?? null}
+          />
+          <p className="mt-4 font-mono text-[11px] text-muted-foreground">
+            {scan.isLoading
+              ? "> SCANNING BLOCK WITNESS DATA…"
+              : scan.data
+                ? `> PACKED FROM ${scan.data.vsizes.length} REAL TRANSACTIONS (${scan.data.scannedTxCount}/${scan.data.txCount} SCANNED)`
+                : "> CHAIN SCAN UNAVAILABLE — DETERMINISTIC FALLBACK RENDER"}
+          </p>
         </div>
 
         <div className="border border-border">
@@ -58,9 +81,45 @@ function BitmapDetail() {
             <Field k="STATUS" v={STATUS_LABEL[data.status] ?? data.status.toUpperCase()} />
             <Field k="PRICE" v={formatBtc(data.price_btc)} />
             <Field k="INSCRIPTION ID" v={data.inscription_id ?? "—"} />
+            <Field
+              k="ON-CHAIN INSCRIPTIONS (SCANNED)"
+              v={scan.data ? String(scan.data.inscriptions.length) : "…"}
+            />
+            <Field
+              k="BITMAP CLAIMS IN BLOCK"
+              v={
+                claims.length === 0
+                  ? scan.data
+                    ? "NONE"
+                    : "…"
+                  : claims.map((c) => `${c.bitmapHeight}.bitmap`).join(", ")
+              }
+            />
           </dl>
         </div>
       </div>
+
+      {scan.data && scan.data.inscriptions.length > 0 && (
+        <div className="mt-8 border border-border">
+          <div className="border-b border-border px-6 py-3">
+            <span className="label">INSCRIPTIONS FOUND IN BLOCK {block}</span>
+          </div>
+          <ul className="divide-y divide-border">
+            {scan.data.inscriptions.slice(0, 40).map((i) => (
+              <li
+                key={i.id}
+                className="flex flex-wrap items-center justify-between gap-2 px-6 py-3 font-mono text-xs text-muted-foreground"
+              >
+                <span className="break-all">{i.id}</span>
+                <span>
+                  {i.contentType ?? "UNKNOWN"} · {i.bodyBytes} B
+                  {i.isBitmapClaim ? ` · ${i.bitmapHeight}.BITMAP` : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="mt-8 flex flex-wrap gap-3">
         <button
