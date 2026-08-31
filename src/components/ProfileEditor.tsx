@@ -168,7 +168,7 @@ export function ProfileEditor({
 
       {!canEdit && (
         <p className="border-t border-border p-5 font-mono text-xs text-muted-foreground">
-          &gt; CONNECT THIS ADDRESS TO EDIT ITS PROFILE<span className="blink">_</span>
+          &gt; SIGN IN AND LINK THIS ADDRESS (WALLET PAGE) TO EDIT ITS PROFILE<span className="blink">_</span>
         </p>
       )}
     </section>
