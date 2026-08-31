@@ -14,11 +14,12 @@ export const BUILD_SDK_VERSION = "2.0.0";
 export const BUILD_PROTOCOL = "bitmap-build";
 export const BUILD_PROTOCOL_VERSION = 2;
 
-export const BUILD_KINDS = ["info", "gallery", "game3d", "game2d"] as const;
+export const BUILD_KINDS = ["info", "shop", "gallery", "game3d", "game2d"] as const;
 export type BuildKind = (typeof BUILD_KINDS)[number];
 
 export const BUILD_KIND_LABELS: Record<BuildKind, string> = {
   info: "PERSONAL INFO PAGE",
+  shop: "ASSET SHOP",
   gallery: "ON-CHAIN GALLERY",
   game3d: "3D WORLD (THREE.JS)",
   game2d: "2D ARCADE",
@@ -26,6 +27,7 @@ export const BUILD_KIND_LABELS: Record<BuildKind, string> = {
 
 export const BUILD_KIND_HINTS: Record<BuildKind, string> = {
   info: "NAME, ROLE, LOCATION, LINKS — A HOME PAGE FOR THIS BLOCK",
+  shop: "LIST YOUR OWN INSCRIPTIONS AT YOUR OWN PRICES — YOUR STORE, YOUR STYLE",
   gallery: "SHOWCASE INSCRIPTION IDS YOU HOLD AS A GRID OF ON-CHAIN IMAGES",
   game3d: "A WALKABLE VOXEL WORLD GENERATED FROM THIS BLOCK'S DATA",
   game2d: "A PIXEL MAZE RUN SEEDED BY THIS BLOCK HEIGHT",
@@ -46,6 +48,28 @@ export type GalleryConfig = {
   items: GalleryItem[];
 };
 
+/** One asset the holder sells from their own wallet, at their own price. */
+export type ShopItem = {
+  inscriptionId: string;
+  name: string;
+  priceSats: number; // 0 = "MAKE OFFER"
+  note: string;
+  sold: boolean;
+};
+
+export type ShopConfig = {
+  shopName: string;
+  tagline: string;
+  /** Where a buyer reaches the seller (x.com, telegram, mail, any https link). */
+  contactUrl: string;
+  contactLabel: string;
+  accent: string; // hex accent for the storefront chrome
+  layout: "grid" | "list";
+  columns: 2 | 3 | 4;
+  frame: "sharp" | "soft";
+  items: ShopItem[];
+};
+
 export type Game3dConfig = {
   worldName: string;
   towers: number; // 4..64 voxel towers
@@ -62,6 +86,7 @@ export type Game2dConfig = {
 
 export type BuildConfigMap = {
   info: InfoConfig;
+  shop: ShopConfig;
   gallery: GalleryConfig;
   game3d: Game3dConfig;
   game2d: Game2dConfig;
@@ -71,6 +96,17 @@ export type BuildConfig = BuildConfigMap[BuildKind];
 
 export const DEFAULT_CONFIGS: BuildConfigMap = {
   info: { headline: "", fields: [], links: [] },
+  shop: {
+    shopName: "MY SHOP",
+    tagline: "",
+    contactUrl: "",
+    contactLabel: "CONTACT SELLER",
+    accent: "#f7931a",
+    layout: "grid",
+    columns: 3,
+    frame: "sharp",
+    items: [],
+  },
   gallery: { columns: 3, items: [] },
   game3d: { worldName: "BLOCK WORLD", towers: 24, spin: true, accent: "#f7931a" },
   game2d: { title: "BLOCK RUN", coins: 12, walls: 22, speed: 5 },
@@ -79,10 +115,22 @@ export const DEFAULT_CONFIGS: BuildConfigMap = {
 /** Documented limits — useful for builder-side validation and UIs. */
 export const BUILD_LIMITS = {
   info: { headline: 120, fields: 12, links: 12, label: 40, value: 200, url: 300 },
+  shop: {
+    items: 60,
+    shopName: 60,
+    tagline: 140,
+    name: 60,
+    note: 120,
+    inscriptionId: 120,
+    url: 300,
+    priceSats: [0, 2_100_000_000_000_000] as const,
+    columns: [2, 3, 4] as const,
+  },
   gallery: { items: 48, inscriptionId: 120, caption: 80, columns: [2, 3, 4] as const },
   game3d: { worldName: 60, towers: [4, 64] as const },
   game2d: { title: 60, coins: [3, 40] as const, walls: [0, 60] as const, speed: [1, 10] as const },
 } as const;
+
 
 export function isBuildKind(value: unknown): value is BuildKind {
   return typeof value === "string" && (BUILD_KINDS as readonly string[]).includes(value);
@@ -131,7 +179,39 @@ export function parseBuildConfig<K extends BuildKind>(kind: K, raw: unknown): Bu
       };
       return config as BuildConfigMap[K];
     }
+    case "shop": {
+      const items = Array.isArray(o["items"]) ? o["items"] : [];
+      const cols = clamp(Number(o["columns"] ?? 3), 2, 4);
+      const config: ShopConfig = {
+        shopName: str(o["shopName"], 60) || DEFAULT_CONFIGS.shop.shopName,
+        tagline: str(o["tagline"], 140),
+        contactUrl: str(o["contactUrl"], 300).trim(),
+        contactLabel: str(o["contactLabel"], 40) || "CONTACT SELLER",
+        accent: /^#[0-9a-fA-F]{6}$/.test(String(o["accent"])) ? String(o["accent"]) : "#f7931a",
+        layout: o["layout"] === "list" ? "list" : "grid",
+        columns: (cols === 2 || cols === 4 ? cols : 3) as 2 | 3 | 4,
+        frame: o["frame"] === "soft" ? "soft" : "sharp",
+        items: items
+          .slice(0, 60)
+          .map((raw) => {
+            const r = (raw ?? {}) as Record<string, unknown>;
+            const price = Number(r["priceSats"] ?? 0);
+            return {
+              inscriptionId: str(r["inscriptionId"], 120).trim(),
+              name: str(r["name"], 60),
+              priceSats: Number.isFinite(price)
+                ? Math.max(0, Math.min(2_100_000_000_000_000, Math.round(price)))
+                : 0,
+              note: str(r["note"], 120),
+              sold: r["sold"] === true,
+            } satisfies ShopItem;
+          })
+          .filter((i) => i.inscriptionId !== ""),
+      };
+      return config as BuildConfigMap[K];
+    }
     case "game3d": {
+
       const config: Game3dConfig = {
         worldName: str(o["worldName"], 60) || DEFAULT_CONFIGS.game3d.worldName,
         towers: clamp(Number(o["towers"] ?? 24), 4, 64),
@@ -254,6 +334,58 @@ export type BuildPreset<K extends BuildKind = BuildKind> = {
 };
 
 export const BUILD_PRESETS: BuildPreset[] = [
+  {
+    id: "shop-orange",
+    name: "ORANGE STOREFRONT",
+    blurb: "BITCOIN-ORANGE SHOP FRONT, 3-UP GRID — IMPORT ASSETS AND PRICE THEM",
+    kind: "shop",
+    config: {
+      shopName: "ORANGE STOREFRONT",
+      tagline: "ON-CHAIN ASSETS, PRICED IN SATS, SOLD PEER TO PEER",
+      contactUrl: "https://x.com/",
+      contactLabel: "DM TO BUY",
+      accent: "#f7931a",
+      layout: "grid",
+      columns: 3,
+      frame: "sharp",
+      items: [],
+    } satisfies ShopConfig,
+  },
+  {
+    id: "shop-mono",
+    name: "MONO BOUTIQUE",
+    blurb: "STRICT BLACK/WHITE, SOFT FRAMES, 2-UP — FEWER, PRICIER PIECES",
+    kind: "shop",
+    config: {
+      shopName: "MONO BOUTIQUE",
+      tagline: "CURATED, ONE-OF-ONE, NO NOISE",
+      contactUrl: "",
+      contactLabel: "MAKE AN OFFER",
+      accent: "#e5e5e5",
+      layout: "grid",
+      columns: 2,
+      frame: "soft",
+      items: [],
+    } satisfies ShopConfig,
+  },
+  {
+    id: "shop-list",
+    name: "PRICE LIST",
+    blurb: "DENSE TERMINAL PRICE LIST — GOOD FOR MANY ASSETS AT ONCE",
+    kind: "shop",
+    config: {
+      shopName: "PRICE LIST",
+      tagline: "EVERYTHING I HOLD, EVERY PRICE, ONE SCREEN",
+      contactUrl: "",
+      contactLabel: "CONTACT SELLER",
+      accent: "#f7931a",
+      layout: "list",
+      columns: 3,
+      frame: "sharp",
+      items: [],
+    } satisfies ShopConfig,
+  },
+
   {
     id: "info-card",
     name: "HOLDER CARD",

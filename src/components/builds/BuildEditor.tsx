@@ -1,3 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
+import { walletQuery } from "@/lib/wallet";
+import { inscriptionImageUrl } from "@/lib/profiles";
+import { formatSats } from "@/lib/trades";
 import {
   BUILD_KINDS,
   BUILD_KIND_HINTS,
@@ -10,7 +14,10 @@ import {
   type Game3dConfig,
   type GalleryConfig,
   type InfoConfig,
+  type ShopConfig,
+  type ShopItem,
 } from "@/lib/build-sdk";
+
 
 const input =
   "w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-primary";
@@ -24,12 +31,16 @@ export function BuildEditor({
   config,
   onKindChange,
   onConfigChange,
+  walletAddress,
 }: {
   kind: BuildKind;
   config: unknown;
   onKindChange: (kind: BuildKind) => void;
   onConfigChange: (config: unknown) => void;
+  /** Address whose inscriptions can be imported into an asset shop. */
+  walletAddress?: string | null;
 }) {
+
   return (
     <div className="space-y-4">
       <div>
@@ -87,6 +98,12 @@ export function BuildEditor({
           config={parseBuildConfig("info", config)}
           onChange={onConfigChange}
         />
+      ) : kind === "shop" ? (
+        <ShopEditor
+          config={parseBuildConfig("shop", config)}
+          onChange={onConfigChange}
+          walletAddress={walletAddress ?? null}
+        />
       ) : kind === "gallery" ? (
         <GalleryEditor config={parseBuildConfig("gallery", config)} onChange={onConfigChange} />
       ) : kind === "game3d" ? (
@@ -94,6 +111,7 @@ export function BuildEditor({
       ) : (
         <Game2dEditor config={parseBuildConfig("game2d", config)} onChange={onConfigChange} />
       )}
+
     </div>
   );
 }
@@ -378,6 +396,277 @@ function Game2dEditor({
           onChange={(e) => onChange({ ...config, speed: Number(e.target.value) })}
         />
       </label>
+    </div>
+  );
+}
+
+/**
+ * Asset-shop authoring: pull the real inscriptions held by the seller's address
+ * and price each one. Style (accent, layout, frame) is fully adaptable, so every
+ * shop built from the same preset can still look like its owner's.
+ */
+function ShopEditor({
+  config,
+  onChange,
+  walletAddress,
+}: {
+  config: ShopConfig;
+  onChange: (c: ShopConfig) => void;
+  walletAddress: string | null;
+}) {
+  const wallet = useQuery({
+    ...walletQuery(walletAddress ?? ""),
+    enabled: Boolean(walletAddress),
+  });
+
+  const held = (wallet.data?.utxos ?? []).flatMap((u) => u.inscriptions);
+  const listed = new Set(config.items.map((i) => i.inscriptionId));
+  const importable = held.filter((i) => !listed.has(i.id));
+
+  const setItem = (index: number, patch: Partial<ShopItem>) => {
+    const items = [...config.items];
+    const current = items[index];
+    if (!current) return;
+    items[index] = { ...current, ...patch };
+    onChange({ ...config, items });
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="grid gap-2 sm:grid-cols-2">
+        <label className="block">
+          <span className="label">SHOP NAME</span>
+          <input
+            className={`mt-1 ${input}`}
+            value={config.shopName}
+            placeholder="MY SHOP"
+            onChange={(e) => onChange({ ...config, shopName: e.target.value.slice(0, 60) })}
+          />
+        </label>
+        <label className="block">
+          <span className="label">TAGLINE</span>
+          <input
+            className={`mt-1 ${input}`}
+            value={config.tagline}
+            placeholder="ON-CHAIN ASSETS, PRICED IN SATS"
+            onChange={(e) => onChange({ ...config, tagline: e.target.value.slice(0, 140) })}
+          />
+        </label>
+        <label className="block">
+          <span className="label">CONTACT LINK (WHERE BUYERS REACH YOU)</span>
+          <input
+            className={`mt-1 ${input}`}
+            value={config.contactUrl}
+            placeholder="https://x.com/you"
+            onChange={(e) => onChange({ ...config, contactUrl: e.target.value.trim().slice(0, 300) })}
+          />
+        </label>
+        <label className="block">
+          <span className="label">CONTACT BUTTON LABEL</span>
+          <input
+            className={`mt-1 ${input}`}
+            value={config.contactLabel}
+            placeholder="DM TO BUY"
+            onChange={(e) => onChange({ ...config, contactLabel: e.target.value.slice(0, 40) })}
+          />
+        </label>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-4">
+        <label className="block">
+          <span className="label">LAYOUT</span>
+          <select
+            className={`mt-1 ${input}`}
+            value={config.layout}
+            onChange={(e) => onChange({ ...config, layout: e.target.value === "list" ? "list" : "grid" })}
+          >
+            <option value="grid">GRID</option>
+            <option value="list">PRICE LIST</option>
+          </select>
+        </label>
+        <label className="block">
+          <span className="label">COLUMNS</span>
+          <select
+            className={`mt-1 ${input}`}
+            value={config.columns}
+            onChange={(e) => onChange({ ...config, columns: Number(e.target.value) as 2 | 3 | 4 })}
+          >
+            <option value={2}>2</option>
+            <option value={3}>3</option>
+            <option value={4}>4</option>
+          </select>
+        </label>
+        <label className="block">
+          <span className="label">FRAMES</span>
+          <select
+            className={`mt-1 ${input}`}
+            value={config.frame}
+            onChange={(e) => onChange({ ...config, frame: e.target.value === "soft" ? "soft" : "sharp" })}
+          >
+            <option value="sharp">SHARP</option>
+            <option value="soft">SOFT</option>
+          </select>
+        </label>
+        <label className="block">
+          <span className="label">ACCENT</span>
+          <input
+            type="color"
+            className="mt-1 h-9 w-full rounded-md border border-border bg-background"
+            value={config.accent}
+            onChange={(e) => onChange({ ...config, accent: e.target.value })}
+          />
+        </label>
+      </div>
+
+      <div className="rounded-md border border-border p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="label">MY WALLET ASSETS</span>
+          <span className="label text-muted-foreground">
+            {!walletAddress
+              ? "NO ADDRESS — CONNECT YOUR WALLET"
+              : wallet.isLoading
+                ? "SCANNING…"
+                : `${importable.length} IMPORTABLE / ${held.length} HELD`}
+          </span>
+        </div>
+        {wallet.isError ? (
+          <p className="label mt-2 text-muted-foreground">
+            &gt; {(wallet.error as Error).message.toUpperCase()}
+          </p>
+        ) : null}
+        {importable.length > 0 ? (
+          <>
+            <button
+              type="button"
+              className="btn-term-ghost mt-2"
+              onClick={() =>
+                onChange({
+                  ...config,
+                  items: [
+                    ...config.items,
+                    ...importable.slice(0, Math.max(0, 60 - config.items.length)).map((i) => ({
+                      inscriptionId: i.id,
+                      name: i.bitmapHeight !== null ? `${i.bitmapHeight}.BITMAP` : "",
+                      priceSats: 0,
+                      note: "",
+                      sold: false,
+                    })),
+                  ],
+                })
+              }
+            >
+              [ IMPORT ALL ]
+            </button>
+            <div className="mt-2 grid gap-2 sm:grid-cols-4 lg:grid-cols-6">
+              {importable.slice(0, 24).map((i) => (
+                <button
+                  key={i.id}
+                  type="button"
+                  title={i.id}
+                  className="border border-border p-1 text-left transition-colors hover:border-primary"
+                  onClick={() =>
+                    onChange({
+                      ...config,
+                      items: [
+                        ...config.items,
+                        {
+                          inscriptionId: i.id,
+                          name: i.bitmapHeight !== null ? `${i.bitmapHeight}.BITMAP` : "",
+                          priceSats: 0,
+                          note: "",
+                          sold: false,
+                        },
+                      ].slice(0, 60),
+                    })
+                  }
+                >
+                  <img
+                    src={inscriptionImageUrl(i.id)}
+                    alt={i.id}
+                    loading="lazy"
+                    className="aspect-square w-full object-cover"
+                  />
+                  <span className="label mt-1 block truncate">
+                    {i.bitmapHeight !== null ? `${i.bitmapHeight}.BITMAP` : i.id.slice(0, 8)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : null}
+      </div>
+
+      <div>
+        <span className="label">ASSETS FOR SALE — YOUR PRICE, IN SATS</span>
+        {config.items.map((item, i) => (
+          <div key={`${item.inscriptionId}-${i}`} className="mt-2 rounded-md border border-border p-2">
+            <div className="grid gap-2 sm:grid-cols-[2fr_1fr_auto]">
+              <input
+                className={input}
+                placeholder="<txid>i0"
+                value={item.inscriptionId}
+                onChange={(e) => setItem(i, { inscriptionId: e.target.value.trim().slice(0, 120) })}
+              />
+              <input
+                className={input}
+                placeholder="NAME"
+                value={item.name}
+                onChange={(e) => setItem(i, { name: e.target.value.slice(0, 60) })}
+              />
+              <button
+                type="button"
+                className="btn-term-ghost"
+                onClick={() => onChange({ ...config, items: config.items.filter((_, x) => x !== i) })}
+              >
+                [ X ]
+              </button>
+            </div>
+            <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_2fr_auto]">
+              <input
+                className={input}
+                type="number"
+                min={0}
+                placeholder="PRICE IN SATS (0 = MAKE OFFER)"
+                value={item.priceSats || ""}
+                onChange={(e) => setItem(i, { priceSats: Math.max(0, Math.floor(Number(e.target.value) || 0)) })}
+              />
+              <input
+                className={input}
+                placeholder="NOTE (EDITION, RARITY, TERMS…)"
+                value={item.note}
+                onChange={(e) => setItem(i, { note: e.target.value.slice(0, 120) })}
+              />
+              <button
+                type="button"
+                className="btn-term-ghost"
+                onClick={() => setItem(i, { sold: !item.sold })}
+              >
+                [ {item.sold ? "SOLD" : "FOR SALE"} ]
+              </button>
+            </div>
+            <div className="label mt-2 text-muted-foreground">
+              {item.priceSats > 0 ? formatSats(item.priceSats) : "MAKE OFFER"}
+            </div>
+          </div>
+        ))}
+        {config.items.length < 60 ? (
+          <button
+            type="button"
+            className="btn-term-ghost mt-2"
+            onClick={() =>
+              onChange({
+                ...config,
+                items: [
+                  ...config.items,
+                  { inscriptionId: "", name: "", priceSats: 0, note: "", sold: false },
+                ],
+              })
+            }
+          >
+            [ + ASSET ]
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }

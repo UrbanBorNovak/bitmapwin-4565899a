@@ -269,7 +269,9 @@ export function ParcelPagePanel({
             config={buildConfig}
             onKindChange={setBuildKind}
             onConfigChange={setBuildConfig}
+            walletAddress={wallet?.ordinalsAddress ?? ownerAddress}
           />
+
 
           <div className="flex flex-wrap gap-3">
             <button

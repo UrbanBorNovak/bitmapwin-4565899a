@@ -8,7 +8,8 @@ import { buildsQuery, type BuildEntry } from "@/lib/builds";
 import { districtsQuery } from "@/lib/districts";
 import { followerCountsQuery, myFollowsQuery } from "@/lib/follows";
 import { useAuthSession } from "@/lib/auth";
-import { inscriptionImageUrl } from "@/lib/profiles";
+import { inscriptionImageUrl, profilesQuery, type WalletProfile } from "@/lib/profiles";
+import { BuilderName } from "@/components/BuilderName";
 import { shortenAddress } from "@/lib/registry";
 
 export const Route = createFileRoute("/builds")({
@@ -55,9 +56,11 @@ function timeAgo(iso: string | null): string {
 function BuildCard({
   entry,
   followers,
+  profile,
 }: {
   entry: BuildEntry;
   followers?: number;
+  profile?: WalletProfile | null;
 }) {
   const { page, totalViews, uniqueVisitors } = entry;
   return (
@@ -96,7 +99,7 @@ function BuildCard({
           params={{ address: page.ownerAddress }}
           className="label hover:text-primary"
         >
-          {shortenAddress(page.ownerAddress)}
+          <BuilderName address={page.ownerAddress} profile={profile ?? null} avatar />
         </Link>
         <FollowBuilderButton address={page.ownerAddress} followers={followers} />
       </div>
@@ -119,6 +122,7 @@ function BuildsPage() {
     enabled: addresses.length > 0,
   });
   const follows = useQuery({ ...myFollowsQuery(), enabled: Boolean(user) });
+  const profiles = useQuery({ ...profilesQuery(addresses), enabled: addresses.length > 0 });
 
   const entries = useMemo(() => {
     const all = builds.data ?? [];
@@ -181,7 +185,13 @@ function BuildsPage() {
                   params={{ address: builder.address }}
                   className="min-w-0"
                 >
-                  <div className="display text-sm">{shortenAddress(builder.address)}</div>
+                  <div className="display text-sm">
+                    <BuilderName
+                      address={builder.address}
+                      profile={profiles.data?.get(builder.address) ?? null}
+                      avatar
+                    />
+                  </div>
                   <div className="label mt-1 text-muted-foreground">
                     {builder.builds} BUILD(S) · {builder.views} VIEWS
                   </div>
@@ -228,6 +238,7 @@ function BuildsPage() {
                 key={entry.page.bitmapHeight}
                 entry={entry}
                 followers={counts.data?.get(entry.page.ownerAddress) ?? 0}
+                profile={profiles.data?.get(entry.page.ownerAddress) ?? null}
               />
             ))}
           </div>
