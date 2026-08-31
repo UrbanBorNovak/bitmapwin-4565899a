@@ -23,3 +23,12 @@ export const getBlockInscriptions = createServerFn({ method: "GET" })
       .parse(data),
   )
   .handler(async ({ data }) => scanBlock(data.height, data.txPages));
+
+export const getBitmapOwners = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) =>
+    z.object({ txids: z.array(z.string().regex(/^[0-9a-fA-F]{64}$/)).min(1).max(60) }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { resolveOwners } = await import("@/lib/ordinals-scan.server");
+    return resolveOwners(data.txids);
+  });
