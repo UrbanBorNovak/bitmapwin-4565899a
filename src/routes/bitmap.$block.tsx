@@ -255,6 +255,38 @@ function BitmapDetail() {
 
       <div className="mt-8 border border-border">
         <div className="flex items-center justify-between border-b border-border px-6 py-3">
+          <span className="label">PARCELS OF {block}.BITMAP</span>
+          <span className="label">
+            MAX {maxParcels === null ? "…" : maxParcels.toLocaleString("en-US")}
+          </span>
+        </div>
+        <dl className="divide-y divide-border">
+          <Field
+            k="MAX VALID PARCELS"
+            v={
+              maxParcels === null
+                ? "READING BLOCK TX COUNT…"
+                : `${maxParcels.toLocaleString("en-US")} — ONE PER TRANSACTION IN BLOCK ${block}`
+            }
+          />
+          <Field k="FIRST PARCEL" v={`0.${block}.bitmap`} />
+          <Field
+            k="LAST PARCEL"
+            v={maxParcels === null ? "…" : `${maxParcels - 1}.${block}.bitmap`}
+          />
+          <Field
+            k="PARCEL RULE"
+            v={`A PARCEL IS A CHILD INSCRIPTION OF ${block}.BITMAP NAMED <INDEX>.${block}.BITMAP, INDEX 0…${
+              maxParcels === null ? "TXCOUNT-1" : maxParcels - 1
+            }`}
+          />
+        </dl>
+      </div>
+
+
+
+      <div className="mt-8 border border-border">
+        <div className="flex items-center justify-between border-b border-border px-6 py-3">
           <span className="label">ON-CHAIN TRADE HISTORY</span>
           <span className="label">{history.length} TRANSFER(S)</span>
         </div>
