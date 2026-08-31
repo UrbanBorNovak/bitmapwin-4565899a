@@ -35,6 +35,8 @@ export const Route = createFileRoute("/bitmaps")({
   notFoundComponent: () => (
     <div className="mx-auto max-w-[900px] px-4 py-16 font-mono text-sm">&gt; NOT FOUND</div>
   ),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(storedInscriptionsQuery()),
   component: BitmapsPage,
 });
 
