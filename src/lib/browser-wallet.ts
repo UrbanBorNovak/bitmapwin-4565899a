@@ -266,11 +266,12 @@ export async function signListingPsbt(
     }
     return /^[0-9a-fA-F]+$/.test(signedHex.trim()) ? hexToBase64(signedHex) : signedHex.trim();
   }
-  // Xverse refuses non-default sighash flags unless they are declared up front.
+  // The sighash is declared in the PSBT input itself. Sats Connect v4 accepts
+  // only psbt/signInputs/broadcast here; sending the old `allowedSignHash`
+  // field makes current Xverse reject the request before opening its signer.
   return xverseSignPsbt({
     psbt: psbtBase64,
     signInputs: { [sellerAddress]: [0] },
-    allowedSignHash: SIGHASH_SINGLE_ANYONECANPAY,
     broadcast: false,
   });
 }
