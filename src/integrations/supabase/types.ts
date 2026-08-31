@@ -457,6 +457,8 @@ export type Database = {
         Row: {
           banner_inscription_id: string | null
           bitmap_height: number
+          build_config: Json
+          build_kind: string
           created_at: string
           description: string | null
           link_url: string | null
@@ -467,6 +469,8 @@ export type Database = {
         Insert: {
           banner_inscription_id?: string | null
           bitmap_height: number
+          build_config?: Json
+          build_kind?: string
           created_at?: string
           description?: string | null
           link_url?: string | null
@@ -477,6 +481,8 @@ export type Database = {
         Update: {
           banner_inscription_id?: string | null
           bitmap_height?: number
+          build_config?: Json
+          build_kind?: string
           created_at?: string
           description?: string | null
           link_url?: string | null
