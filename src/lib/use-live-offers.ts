@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export function useLiveOffers() {
   const queryClient = useQueryClient();
+  const channelId = useId();
 
   useEffect(() => {
     const invalidate = () => {
@@ -19,7 +20,7 @@ export function useLiveOffers() {
     };
 
     const channel = supabase
-      .channel("offers-live")
+      .channel(`offers-live:${channelId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "offers" }, invalidate)
       .on("postgres_changes", { event: "*", schema: "public", table: "bids" }, invalidate)
       .subscribe();
@@ -32,5 +33,5 @@ export function useLiveOffers() {
       window.clearInterval(poll);
       void supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [queryClient, channelId]);
 }
