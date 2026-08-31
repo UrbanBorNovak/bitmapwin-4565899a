@@ -3,7 +3,8 @@ import { inscriptionImageUrl } from "@/lib/profiles";
 import { formatSats } from "@/lib/trades";
 import { inscriptionOffersQuery } from "@/lib/offers";
 import { BuyButton } from "@/components/BuyButton";
-import type { ShopConfig } from "@/lib/build-sdk";
+import { MakeOfferButton } from "@/components/MakeOfferButton";
+import type { ShopConfig, ShopItem } from "@/lib/build-sdk";
 
 /**
  * A holder-run storefront built on top of their bitmap: their own inscriptions,
@@ -88,22 +89,13 @@ export function ShopBuild({ config, height }: { config: ShopConfig; height: numb
                 ) : null}
               </div>
               <PriceTag item={item} accent={accent} />
-              {(() => {
-                const offer = item.sold ? null : offerFor(item.inscriptionId);
-                if (offer) {
-                  return <BuyButton offerId={offer.id} priceSats={offer.priceSats} />;
-                }
-                return !item.sold && config.contactUrl ? (
-                  <a
-                    href={config.contactUrl}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="label border border-border px-2 py-1 hover:border-primary hover:text-primary"
-                  >
-                    [ ASK ]
-                  </a>
-                ) : null;
-              })()}
+              <ShopItemAction
+                item={item}
+                height={height}
+                offer={item.sold ? null : offerFor(item.inscriptionId)}
+                contactUrl={config.contactUrl}
+                accent={accent}
+              />
             </div>
           ))}
         </div>
@@ -130,22 +122,13 @@ export function ShopBuild({ config, height }: { config: ShopConfig; height: numb
               ) : null}
               <div className="mt-2 flex items-center justify-between gap-2">
                 <PriceTag item={item} accent={accent} />
-                {(() => {
-                  const offer = item.sold ? null : offerFor(item.inscriptionId);
-                  if (offer) {
-                    return <BuyButton offerId={offer.id} priceSats={offer.priceSats} />;
-                  }
-                  return !item.sold && config.contactUrl ? (
-                    <a
-                      href={config.contactUrl}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="label border border-border px-2 py-1 hover:border-primary hover:text-primary"
-                    >
-                      [ ASK ]
-                    </a>
-                  ) : null;
-                })()}
+                <ShopItemAction
+                  item={item}
+                  height={height}
+                  offer={item.sold ? null : offerFor(item.inscriptionId)}
+                  contactUrl={config.contactUrl}
+                  accent={accent}
+                />
               </div>
             </div>
           ))}
@@ -157,6 +140,51 @@ export function ShopBuild({ config, height }: { config: ShopConfig; height: numb
         SETTLE DIRECTLY WITH THE SELLER_
       </p>
     </div>
+  );
+}
+
+/**
+ * Buy action for one shop asset: a signed PSBT buys instantly on-chain;
+ * anything else falls back to a signed offer the holder can accept, plus the
+ * seller's direct contact link when published.
+ */
+function ShopItemAction({
+  item,
+  height,
+  offer,
+  contactUrl,
+  accent,
+}: {
+  item: ShopItem;
+  height: number;
+  offer: { id: string; priceSats: number } | null;
+  contactUrl?: string;
+  accent: string;
+}) {
+  if (item.sold) return null;
+  if (offer) return <BuyButton offerId={offer.id} priceSats={offer.priceSats} />;
+  return (
+    <span className="flex items-center gap-1">
+      <MakeOfferButton
+        height={height}
+        askSats={item.priceSats > 0 ? item.priceSats : null}
+        defaultAmountSats={item.priceSats > 0 ? item.priceSats : null}
+        initialNote={`OFFER FOR ${item.name || item.inscriptionId} (${item.inscriptionId})`}
+        label={item.priceSats > 0 ? "BUY" : "MAKE OFFER"}
+        className="btn-term !px-2 !py-1"
+      />
+      {contactUrl ? (
+        <a
+          href={contactUrl}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="label border border-border px-2 py-1 hover:border-primary hover:text-primary"
+          style={{ color: accent }}
+        >
+          [ ASK ]
+        </a>
+      ) : null}
+    </span>
   );
 }
 
