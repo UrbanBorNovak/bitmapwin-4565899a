@@ -37,7 +37,7 @@ export function HeaderIdentity() {
       hash="profile"
       aria-label={`Edit profile for ${name}`}
       title="EDIT PROFILE"
-      className="flex items-center gap-2 border border-border py-1 pl-1 pr-2 transition-colors hover:border-foreground"
+      className="flex items-center gap-2 border border-border py-1 pl-1 pr-2 transition-colors hover:border-primary"
     >
       {avatar ? (
         <img

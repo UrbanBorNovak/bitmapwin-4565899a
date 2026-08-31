@@ -57,7 +57,7 @@ export function SiteHeader() {
           <button
             aria-label="Search bitmaps"
             onClick={() => setSearchOpen((v) => !v)}
-            className="border border-border p-2 text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+            className="border border-border p-2 text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
           >
             {searchOpen ? <X className="size-4" /> : <Search className="size-4" />}
           </button>

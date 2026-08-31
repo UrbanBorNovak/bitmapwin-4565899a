@@ -129,7 +129,7 @@ export function ProfileEditor({
                     setAvatar(id === avatar ? null : id);
                   }}
                   className={`size-16 border ${
-                    id === avatar ? "border-foreground" : "border-border hover:border-foreground"
+                    id === avatar ? "border-foreground" : "border-border hover:border-primary"
                   }`}
                 >
                   <img
