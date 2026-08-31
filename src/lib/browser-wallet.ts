@@ -81,7 +81,12 @@ export async function connectWallet(provider: WalletProviderId): Promise<Connect
     } catch {
       publicKey = undefined;
     }
-    return { provider, ordinalsAddress: address, paymentAddress: address, publicKey };
+    return {
+      provider,
+      ordinalsAddress: address,
+      paymentAddress: address,
+      ...(publicKey ? { publicKey } : {}),
+    };
   }
 
   const xverse = getXverse();
