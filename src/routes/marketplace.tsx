@@ -14,6 +14,7 @@ import { saveTrades } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
 import { settleOffersFn } from "@/lib/settle.functions";
 import { useLiveOffers } from "@/lib/use-live-offers";
+import { TrendingParcels } from "@/components/TrendingParcels";
 
 
 export const Route = createFileRoute("/marketplace")({
