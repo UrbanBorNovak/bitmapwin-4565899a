@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { BuyButton } from "@/components/BuyButton";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { formatSats } from "@/lib/trades";
 import { PARCEL_STATUS_LABEL, shortenAddress, type RegistryParcel } from "@/lib/registry";
@@ -46,6 +47,16 @@ export function ParcelCard({ parcel }: { parcel: RegistryParcel }) {
           <p className="mt-3 font-mono text-[10px] text-muted-foreground">
             &gt; {parcel.supersedes} LATER DUPLICATE CLAIM(S) INVALID
           </p>
+        )}
+
+        {parcel.listedOfferId && parcel.listedSats !== null && (
+          <div className="mt-4">
+            <BuyButton
+              offerId={parcel.listedOfferId}
+              priceSats={parcel.listedSats}
+              className="btn-term w-full !px-2 !py-2"
+            />
+          </div>
         )}
 
         <div className="mt-4 grid grid-cols-2 gap-2">
