@@ -74,11 +74,66 @@ async function mapWithConcurrency<T, R>(
  * knows for the address, which inscriptions sit in each one, and which of
  * those inscriptions are bitmap claims.
  */
-export async function fetchWallet(address: string, maxOutputs = 60): Promise<WalletSnapshot> {
-  const outputs = await ordJson<OrdAddressOutput[]>(`/outputs/${address}`);
-  if (outputs === null) {
-    throw new Error(`ord /outputs failed for ${address} (${lastFailure || "no response"})`);
+type MempoolUtxo = {
+  txid: string;
+  vout: number;
+  value: number;
+  status?: { confirmed?: boolean; block_height?: number };
+};
+
+/**
+ * Fallback source when ord's JSON API is unavailable (it intermittently answers
+ * 406 "JSON API disabled"): mempool.space gives the unspent outputs, and each
+ * one's inscriptions are then enriched best-effort from ord.
+ */
+async function fetchOutputsViaMempool(address: string): Promise<OrdAddressOutput[] | null> {
+  try {
+    const [utxoResp, tipResp] = await Promise.all([
+      fetch(`https://mempool.space/api/address/${address}/utxo`, {
+        headers: { "user-agent": UA, accept: "application/json" },
+      }),
+      fetch("https://mempool.space/api/blocks/tip/height", {
+        headers: { "user-agent": UA },
+      }),
+    ]);
+    if (!utxoResp.ok) return null;
+    const utxos = (await utxoResp.json()) as MempoolUtxo[];
+    const tip = tipResp.ok ? Number(await tipResp.text()) : 0;
+    return utxos.map((utxo) => {
+      const height = utxo.status?.block_height ?? 0;
+      return {
+        address,
+        confirmations: tip && height ? tip - height + 1 : 0,
+        inscriptions: null,
+        outpoint: `${utxo.txid}:${utxo.vout}`,
+        spent: false,
+        value: Number(utxo.value ?? 0),
+      };
+    });
+  } catch {
+    return null;
   }
+}
+
+/** ord's per-output view, used to learn which inscriptions an outpoint holds. */
+async function inscriptionsOfOutpoint(outpoint: string): Promise<string[]> {
+  const output = await ordJson<{ inscriptions?: string[] | null }>(`/output/${outpoint}`, 2);
+  return (output?.inscriptions ?? []).filter((id): id is string => typeof id === "string");
+}
+
+export async function fetchWallet(address: string, maxOutputs = 60): Promise<WalletSnapshot> {
+  let needsInscriptionLookup = false;
+  let outputs = await ordJson<OrdAddressOutput[]>(`/outputs/${address}`);
+  if (outputs === null) {
+    outputs = await fetchOutputsViaMempool(address);
+    needsInscriptionLookup = true;
+  }
+  if (outputs === null) {
+    throw new Error(
+      `Could not read unspent outputs for ${address} (${lastFailure || "no response"}) — try again shortly`,
+    );
+  }
+
 
   const unspent = outputs.filter((output) => output.spent !== true);
   const scanned = unspent.slice(0, maxOutputs);
