@@ -35,7 +35,7 @@ function isBitmapText(text: string | null): string | null {
 }
 
 function InscriptionCard({ inscription }: { inscription: ExtractedInscription }) {
-  const contentType = (inscription.fields.content_type as string) || undefined;
+  const contentType = (inscription.fields["content_type"] as string) || null;
   const bitmapHeight = isBitmapText(inscription.bodyText);
 
   const bodyUrl =

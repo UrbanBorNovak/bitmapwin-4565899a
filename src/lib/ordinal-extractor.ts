@@ -441,8 +441,8 @@ export async function extractInscriptions(rawHex: string): Promise<ExtractionRes
       inscriptionNumber++;
 
       fields.id = id;
-      fields.input = inputIndex;
-      fields.body_bytes = body ? body.length : 0;
+      fields["input"] = inputIndex;
+      fields["body_bytes"] = body ? body.length : 0;
 
       inscriptions.push({
         id,
