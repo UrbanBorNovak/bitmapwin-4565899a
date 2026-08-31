@@ -36,7 +36,13 @@ export const Route = createFileRoute("/explore")({
   component: Explore,
 });
 
-const FILTERS: Filter[] = ["ALL", "WITH INSCRIPTIONS", "NO INSCRIPTIONS"];
+const FILTERS: Filter[] = [
+  "ALL",
+  "VALID BITMAPS",
+  "UNCLAIMED",
+  "WITH INSCRIPTIONS",
+  "NO INSCRIPTIONS",
+];
 const SORTS: Sort[] = ["NEWEST", "OLDEST", "MOST INSCRIPTIONS", "MOST TXS"];
 
 function Explore() {
