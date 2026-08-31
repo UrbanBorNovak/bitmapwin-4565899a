@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import {
   sendPasswordReset,
   signInWithEmail,
@@ -74,11 +74,9 @@ function AuthPage() {
   const google = async () => {
     setBusy(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: window.location.origin },
+      await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
       });
-      if (error) throw error;
     } catch (err) {
       toast("GOOGLE SIGN-IN FAILED", { description: (err as Error).message.toUpperCase() });
       setBusy(false);
