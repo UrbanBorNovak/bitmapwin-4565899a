@@ -15,6 +15,8 @@ import { settleOfferFn } from "@/lib/settle.functions";
 import { OFFER_STATUS_LABEL } from "@/lib/offers";
 import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
+import { WalletConnect } from "@/components/WalletConnect";
+
 
 export const Route = createFileRoute("/wallet")({
   head: () => ({
@@ -123,6 +125,16 @@ function WalletPage() {
           </button>
         )}
       </form>
+
+      <WalletConnect
+        connectedAddress={address}
+        onConnect={(w) => {
+          setInput(w.ordinalsAddress);
+          connect(w.ordinalsAddress);
+        }}
+        onDisconnect={disconnect}
+      />
+
 
       {address === "" ? (
         <p className="mt-10 font-mono text-xs text-muted-foreground">
