@@ -112,6 +112,8 @@ function BitmapDetail() {
 
       <TraitBadges height={block} showRarity className="mt-4" />
 
+      <ParcelPagePanel height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
+
       <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="group border border-border bg-card p-6">
           <BlockMosaic height={block} txCount={scan.data?.txCount ?? null} />
