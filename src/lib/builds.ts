@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { ParcelPage } from "@/lib/profiles";
+import { isBuildKind, parseBuildConfig } from "@/lib/build-sdk";
 
 /**
  * The public builds directory plus build delegation. A "build" is an owner-made
@@ -28,7 +29,7 @@ export async function fetchBuilds(limit = 60): Promise<BuildEntry[]> {
   const { data, error } = await supabase
     .from("parcel_pages")
     .select(
-      "bitmap_height, owner_address, title, description, link_url, banner_inscription_id, updated_at",
+      "bitmap_height, owner_address, title, description, link_url, banner_inscription_id, build_kind, build_config, updated_at",
     )
     .order("updated_at", { ascending: false })
     .limit(limit);
@@ -40,6 +41,8 @@ export async function fetchBuilds(limit = 60): Promise<BuildEntry[]> {
     description: row.description,
     linkUrl: row.link_url,
     bannerInscriptionId: row.banner_inscription_id,
+    buildKind: isBuildKind(row.build_kind) ? row.build_kind : "info",
+    buildConfig: parseBuildConfig(isBuildKind(row.build_kind) ? row.build_kind : "info", row.build_config),
     updatedAt: row.updated_at,
   })) satisfies ParcelPage[];
 
@@ -122,13 +125,15 @@ export const delegatesQuery = (height: number) =>
 export function buildInscriptionPayload(page: ParcelPage, district?: { name: string; slug: string } | null) {
   return {
     p: "bitmap-build",
-    v: 1,
+    v: 2,
     bitmap: `${page.bitmapHeight}.bitmap`,
     owner: page.ownerAddress,
     title: page.title ?? null,
     description: page.description ?? null,
     link: page.linkUrl ?? null,
     banner: page.bannerInscriptionId ?? null,
+    kind: page.buildKind,
+    config: page.buildConfig,
     ...(district ? { district: { name: district.name, slug: district.slug } } : {}),
   };
 }
