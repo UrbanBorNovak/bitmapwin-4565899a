@@ -5,7 +5,7 @@ const UA = "bitmap-marketplace/1.0";
 
 let lastFailure = "";
 
-async function ordJson<T>(path: string, attempts = 3): Promise<T | null> {
+async function ordJson<T>(path: string, attempts = 5): Promise<T | null> {
   for (let i = 0; i < attempts; i++) {
     try {
       const resp = await fetch(`${ORD}${path}`, {
@@ -14,7 +14,7 @@ async function ordJson<T>(path: string, attempts = 3): Promise<T | null> {
       if (resp.ok) return (await resp.json()) as T;
       lastFailure = `HTTP ${resp.status}`;
       if (resp.status === 429 || resp.status === 406 || resp.status >= 500) {
-        await new Promise((r) => setTimeout(r, 350 * (i + 1)));
+        await new Promise((r) => setTimeout(r, 400 * (i + 1)));
         continue;
       }
       return null;
