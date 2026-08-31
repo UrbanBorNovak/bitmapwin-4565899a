@@ -10,6 +10,7 @@ import { saveChainInscriptions } from "@/lib/inscription-store";
 import { traceBitmapTradesFn } from "@/lib/trades.functions";
 import { saveTrades } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
+import { settleOffersFn } from "@/lib/settle.functions";
 
 export const Route = createFileRoute("/marketplace")({
   head: () => ({
@@ -43,7 +44,7 @@ export const Route = createFileRoute("/marketplace")({
   notFoundComponent: () => <EmptyRegistry />,
 });
 
-type Tab = "traded" | "all";
+type Tab = "traded" | "listed" | "all";
 
 /** Traces claims on chain in batches of 40 and stores every transfer found. */
 async function traceAndStore(claims: RegistryParcel[]): Promise<{ traced: number; trades: number }> {
@@ -122,10 +123,24 @@ function Marketplace() {
     onError: (e) => toast("TRADE TRACE FAILED", { description: (e as Error).message }),
   });
 
+  const settle = useMutation({
+    mutationFn: () => settleOffersFn({ data: { limit: 40 } }),
+    onSuccess: (r) => {
+      invalidate();
+      queryClient.invalidateQueries({ queryKey: ["offers"] });
+      queryClient.invalidateQueries({ queryKey: ["wallet-offers"] });
+      toast(`CHECKED ${r.checked} LISTING(S)`, {
+        description: `${r.settled} SETTLED ON CHAIN · ${r.trades} TRANSFER(S) RECORDED`,
+      });
+    },
+    onError: (e) => toast("SETTLEMENT FAILED", { description: (e as Error).message }),
+  });
+
+  const listed = useMemo(() => parcels.filter((p) => p.listedSats !== null), [parcels]);
   const traded = useMemo(() => parcels.filter((p) => p.transfers > 0), [parcels]);
   const sold = useMemo(() => parcels.filter((p) => p.lastSaleSats), [parcels]);
   const visible = useMemo(() => {
-    const base = tab === "traded" ? traded : parcels;
+    const base = tab === "traded" ? traded : tab === "listed" ? listed : parcels;
     const q = search.trim().toLowerCase();
     if (!q) return base;
     return base.filter(
@@ -135,14 +150,14 @@ function Marketplace() {
         p.txid.toLowerCase().includes(q) ||
         (p.ownerAddress ?? "").toLowerCase().includes(q),
     );
-  }, [tab, traded, parcels, search]);
+  }, [tab, traded, listed, parcels, search]);
 
   const saleSats = sold.map((p) => p.lastSaleSats ?? 0).filter((v) => v > 0);
   const floor = saleSats.length ? Math.min(...saleSats) : null;
   const volume = saleSats.reduce((a, b) => a + b, 0);
   const holders = new Set(parcels.map((p) => p.ownerAddress).filter(Boolean)).size;
 
-  const busy = sync.isPending || refreshTrades.isPending;
+  const busy = sync.isPending || refreshTrades.isPending || settle.isPending;
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-12 md:px-8">
@@ -152,6 +167,14 @@ function Marketplace() {
       <div className="mt-8 grid grid-cols-2 divide-border border border-border sm:grid-cols-4 sm:divide-x">
         <Stat k="REGISTERED PARCELS" v={String(parcels.length)} />
         <Stat k="TRADED ON CHAIN" v={String(traded.length)} />
+        <Stat
+          k="LISTED"
+          v={
+            listed.length === 0
+              ? "0"
+              : `${listed.length} · ${formatSats(Math.min(...listed.map((p) => p.listedSats ?? 0)))}`
+          }
+        />
         <Stat k="LOWEST SALE" v={floor ? formatSats(floor) : "—"} />
         <Stat k="SALE VOLUME" v={volume ? formatSats(volume) : "—"} />
       </div>
@@ -168,6 +191,12 @@ function Marketplace() {
           onClick={() => setTab("traded")}
         >
           [ TRADED ]
+        </button>
+        <button
+          className={tab === "listed" ? "btn-term" : "btn-term-ghost"}
+          onClick={() => setTab("listed")}
+        >
+          [ LISTED ]
         </button>
         <input
           value={search}
@@ -190,6 +219,9 @@ function Marketplace() {
           onClick={() => refreshTrades.mutate()}
         >
           {refreshTrades.isPending ? "[ TRACING TRADES… ]" : "[ TRACE TRADES ]"}
+        </button>
+        <button className="btn-term-ghost" disabled={busy} onClick={() => settle.mutate()}>
+          {settle.isPending ? "[ SETTLING… ]" : "[ SETTLE SALES ]"}
         </button>
         <span className="label">HOLDERS {holders}</span>
       </div>
