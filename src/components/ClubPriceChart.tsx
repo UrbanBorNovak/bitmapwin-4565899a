@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { recentTradesQuery } from "@/lib/trade-store";
-import { formatSats, satsToBtc } from "@/lib/trades";
+import { formatSats } from "@/lib/trades";
 import type { Club } from "@/lib/clubs";
 import { inClub } from "@/lib/clubs";
 
@@ -144,7 +144,7 @@ export function ClubPriceChart({ club }: { club: Club }) {
             <span>
               {geom ? new Date(geom.minT).toISOString().slice(0, 10) : ""}
             </span>
-            <span>AVG {formatSats(stats.avg)}{satsToBtc(stats.avg) ? "" : ""}</span>
+            <span>AVG {formatSats(stats.avg)}</span>
             <span>{geom ? new Date(geom.maxT).toISOString().slice(0, 10) : ""}</span>
           </div>
         </>
