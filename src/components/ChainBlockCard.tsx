@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { BitmapPixelMap } from "@/components/BitmapPixelMap";
+import { BlockMosaic } from "@/components/BlockMosaic";
 import { formatBytes, shortId, timeAgoFromUnix, type ChainBlock } from "@/lib/chain";
+import { rarityOf, traitsOf } from "@/lib/traits";
 
 const STATUS_LABEL: Record<ChainBlock["bitmapStatus"], string> = {
   valid: "VALID BITMAP",
