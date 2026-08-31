@@ -168,11 +168,14 @@ export async function signListingPsbt(
         { index: 0, address: sellerAddress, sighashTypes: [SIGHASH_SINGLE_ANYONECANPAY] },
       ],
     });
-    return hexToBase64(signedHex);
+    if (typeof signedHex !== "string" || signedHex.length < 20) {
+      throw new Error("UNISAT RETURNED NO SIGNED PSBT");
+    }
+    return /^[0-9a-fA-F]+$/.test(signedHex.trim()) ? hexToBase64(signedHex) : signedHex.trim();
   }
   const xverse = getXverse();
   if (!xverse) throw new Error("XVERSE NOT DETECTED");
-  const res = await xverse.request<{ psbt: string }>("signPsbt", {
+  const res = await xverse.request<{ psbt?: string; psbtBase64?: string }>("signPsbt", {
     psbt: psbtBase64,
     signInputs: { [sellerAddress]: [0] },
     broadcast: false,
@@ -180,8 +183,14 @@ export async function signListingPsbt(
   if (res.status !== "success") {
     throw new Error((res.error?.message ?? "XVERSE SIGN REJECTED").toUpperCase());
   }
-  return res.result.psbt;
+  const signed =
+    typeof res.result === "string" ? res.result : res.result?.psbt ?? res.result?.psbtBase64;
+  if (typeof signed !== "string" || signed.length < 20) {
+    throw new Error("XVERSE RETURNED NO SIGNED PSBT");
+  }
+  return signed;
 }
+
 
 /** x-only (32-byte) internal key hex from a compressed public key hex. */
 export function xOnlyPubKeyHex(publicKeyHex: string | undefined): string | undefined {
