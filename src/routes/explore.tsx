@@ -6,7 +6,7 @@ import { ChainBlockCard } from "@/components/ChainBlockCard";
 import { getChainBlocks } from "@/lib/chain.functions";
 import type { ChainBlock } from "@/lib/chain";
 
-type Filter = "ALL" | "WITH INSCRIPTIONS" | "NO INSCRIPTIONS";
+type Filter = "ALL" | "VALID BITMAPS" | "UNCLAIMED" | "WITH INSCRIPTIONS" | "NO INSCRIPTIONS";
 type Sort = "NEWEST" | "OLDEST" | "MOST INSCRIPTIONS" | "MOST TXS";
 
 export const Route = createFileRoute("/explore")({
