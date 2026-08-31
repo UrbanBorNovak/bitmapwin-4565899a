@@ -9,6 +9,7 @@ import { BlockMosaic } from "@/components/BlockMosaic";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { OfferBook } from "@/components/OfferBook";
 import { BidPanel } from "@/components/BidPanel";
+import { ParcelPagePanel } from "@/components/ParcelPagePanel";
 
 import { TradeWatcher } from "@/components/TradeWatcher";
 import { SettlementWatcher } from "@/components/SettlementWatcher";
