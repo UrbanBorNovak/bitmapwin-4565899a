@@ -299,7 +299,7 @@ async function xverseSignListingPsbt(psbtBase64: string, sellerAddress: string):
         ],
         broadcast: false,
       },
-      getProvider: async () => provider as BitcoinProvider,
+      getProvider: async () => provider as unknown as BitcoinProvider,
       onFinish: (response) => {
         const signed = response.psbtBase64?.trim();
         if (!signed || signed.length < 20) {
