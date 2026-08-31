@@ -86,48 +86,48 @@ export function parseBuildConfig<K extends BuildKind>(kind: K, raw: unknown): Bu
   const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   switch (kind) {
     case "info": {
-      const fields = Array.isArray(o.fields) ? o.fields : [];
-      const links = Array.isArray(o.links) ? o.links : [];
+      const fields = Array.isArray(o["fields"]) ? o["fields"] : [];
+      const links = Array.isArray(o["links"]) ? o["links"] : [];
       const config: InfoConfig = {
-        headline: str(o.headline, 120),
+        headline: str(o["headline"], 120),
         fields: fields.slice(0, 12).map((f) => {
           const r = (f ?? {}) as Record<string, unknown>;
-          return { label: str(r.label, 40), value: str(r.value, 200) };
+          return { label: str(r["label"], 40), value: str(r["value"], 200) };
         }),
         links: links.slice(0, 12).map((l) => {
           const r = (l ?? {}) as Record<string, unknown>;
-          return { label: str(r.label, 40), url: str(r.url, 300) };
+          return { label: str(r["label"], 40), url: str(r["url"], 300) };
         }),
       };
       return config as BuildConfigMap[K];
     }
     case "gallery": {
-      const items = Array.isArray(o.items) ? o.items : [];
-      const cols = clamp(Number(o.columns ?? 3), 2, 4);
+      const items = Array.isArray(o["items"]) ? o["items"] : [];
+      const cols = clamp(Number(o["columns"] ?? 3), 2, 4);
       const config: GalleryConfig = {
         columns: (cols === 2 || cols === 4 ? cols : 3) as 2 | 3 | 4,
         items: items.slice(0, 48).map((i) => {
           const r = (i ?? {}) as Record<string, unknown>;
-          return { inscriptionId: str(r.inscriptionId, 120).trim(), caption: str(r.caption, 80) };
+          return { inscriptionId: str(r["inscriptionId"], 120).trim(), caption: str(r["caption"], 80) };
         }).filter((i) => i.inscriptionId !== ""),
       };
       return config as BuildConfigMap[K];
     }
     case "game3d": {
       const config: Game3dConfig = {
-        worldName: str(o.worldName, 60) || DEFAULT_CONFIGS.game3d.worldName,
-        towers: clamp(Number(o.towers ?? 24), 4, 64),
-        spin: o.spin !== false,
-        accent: /^#[0-9a-fA-F]{6}$/.test(String(o.accent)) ? String(o.accent) : "#f7931a",
+        worldName: str(o["worldName"], 60) || DEFAULT_CONFIGS.game3d.worldName,
+        towers: clamp(Number(o["towers"] ?? 24), 4, 64),
+        spin: o["spin"] !== false,
+        accent: /^#[0-9a-fA-F]{6}$/.test(String(o["accent"])) ? String(o["accent"]) : "#f7931a",
       };
       return config as BuildConfigMap[K];
     }
     default: {
       const config: Game2dConfig = {
-        title: str(o.title, 60) || DEFAULT_CONFIGS.game2d.title,
-        coins: clamp(Number(o.coins ?? 12), 3, 40),
-        walls: clamp(Number(o.walls ?? 22), 0, 60),
-        speed: clamp(Number(o.speed ?? 5), 1, 10),
+        title: str(o["title"], 60) || DEFAULT_CONFIGS.game2d.title,
+        coins: clamp(Number(o["coins"] ?? 12), 3, 40),
+        walls: clamp(Number(o["walls"] ?? 22), 0, 60),
+        speed: clamp(Number(o["speed"] ?? 5), 1, 10),
       };
       return config as BuildConfigMap[K];
     }
