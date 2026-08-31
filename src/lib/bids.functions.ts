@@ -44,6 +44,26 @@ export const acceptBidFn = createServerFn({ method: "POST" })
     return acceptBid(data.bidId, data.holderAddress);
   });
 
+/** Accept a bid by publishing the seller-signed sale PSBT for that bidder. */
+export const acceptBidWithOfferFn = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        bidId: z.string().uuid(),
+        holderAddress: addressSchema,
+        psbt: z
+          .string()
+          .min(40)
+          .max(400_000)
+          .regex(/^[A-Za-z0-9+/=\s]+$/, "Signed sale must be a base64 PSBT"),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { acceptBidWithOffer } = await import("@/lib/bids.server");
+    return acceptBidWithOffer(data);
+  });
+
 export const expireBidsFn = createServerFn({ method: "POST" }).handler(async () => {
   const { expireStaleBids } = await import("@/lib/bids.server");
   return expireStaleBids();
