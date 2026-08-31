@@ -245,13 +245,15 @@ export async function signListingPsbt(
   }
   const xverse = getXverse();
   if (!xverse) throw new Error("XVERSE NOT DETECTED");
+  // Xverse refuses non-default sighash flags unless they are declared up front.
   const res = await xverse.request<{ psbt?: string; psbtBase64?: string }>("signPsbt", {
     psbt: psbtBase64,
     signInputs: { [sellerAddress]: [0] },
+    allowedSignHash: SIGHASH_SINGLE_ANYONECANPAY,
     broadcast: false,
   });
   if (res.status !== "success") {
-    throw new Error((res.error?.message ?? "XVERSE SIGN REJECTED").toUpperCase());
+    throw new Error(describeXverseSignError(res.error));
   }
   const signed =
     typeof res.result === "string" ? res.result : res.result?.psbt ?? res.result?.psbtBase64;
@@ -260,6 +262,18 @@ export async function signListingPsbt(
   }
   return signed;
 }
+
+/** Human-readable Xverse signing failure, keeping the provider's own code. */
+function describeXverseSignError(error?: { code?: unknown; message?: string }): string {
+  const code = error?.code === undefined || error?.code === null ? "" : String(error.code);
+  const message = (error?.message ?? "").trim();
+  if (code === "4001" || /reject|denied|cancel/i.test(message)) {
+    return "XVERSE SIGNING WAS DECLINED IN THE WALLET";
+  }
+  if (!message) return `XVERSE COULD NOT SIGN THIS PSBT${code ? ` (${code})` : ""}`;
+  return `XVERSE: ${message.toUpperCase()}${code ? ` (${code})` : ""}`;
+}
+
 
 /**
  * Signs the buyer half of a purchase PSBT: only the buyer's funding inputs are
