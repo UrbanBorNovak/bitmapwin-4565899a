@@ -13,8 +13,8 @@ export function FollowBuilderButton({
   className,
 }: {
   address: string;
-  followers?: number;
-  className?: string;
+  followers?: number | undefined;
+  className?: string | undefined;
 }) {
   const { user } = useAuthSession();
   const queryClient = useQueryClient();
