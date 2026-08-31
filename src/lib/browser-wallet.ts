@@ -1,3 +1,9 @@
+import {
+  AddressPurpose,
+  getProviders,
+  request as requestSatsConnect,
+} from "sats-connect";
+
 export type WalletProviderId = "unisat" | "xverse";
 
 export type ConnectedWallet = {
@@ -85,6 +91,17 @@ export function getXverse(): XverseProvider | null {
   return isRequestProvider(win.BitcoinProvider) ? win.BitcoinProvider : null;
 }
 
+function getXverseProviderId(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  const registered = getProviders().find((provider) =>
+    `${provider.id} ${provider.name}`.toLowerCase().includes("xverse"),
+  );
+  if (registered?.id) return registered.id;
+  return isRequestProvider(w().XverseProviders?.BitcoinProvider)
+    ? "XverseProviders.BitcoinProvider"
+    : undefined;
+}
+
 export function isWalletInstalled(provider: WalletProviderId): boolean {
   return provider === "unisat" ? getUnisat() !== null : getXverse() !== null;
 }
@@ -117,9 +134,9 @@ export async function connectWallet(provider: WalletProviderId): Promise<Connect
     };
   }
 
-  const xverse = getXverse();
-  if (!xverse) throw new Error("XVERSE NOT DETECTED — INSTALL THE EXTENSION");
-  const accounts = await requestXverseAddresses(xverse);
+  const providerId = getXverseProviderId();
+  if (!providerId) throw new Error("XVERSE NOT DETECTED — INSTALL OR ENABLE THE EXTENSION");
+  const accounts = await requestXverseAddresses(providerId);
 
   const ordinals =
     accounts.find((a) => a.purpose === "ordinals") ??
@@ -138,7 +155,7 @@ export async function connectWallet(provider: WalletProviderId): Promise<Connect
   };
 }
 
-/** Normalizes every shape Xverse has shipped for address responses. */
+/** Normalizes address responses returned by current and older Xverse builds. */
 function normalizeXverseAddresses(result: unknown): XverseAccount[] {
   if (!result) return [];
   if (Array.isArray(result)) return result.filter((a) => a && typeof a.address === "string");
@@ -148,68 +165,35 @@ function normalizeXverseAddresses(result: unknown): XverseAccount[] {
   return [];
 }
 
-/**
- * Xverse exposes several RPC generations at once (`wallet_connect`,
- * `getAddresses`, `wallet_getAccount`, `getAccounts`) and rejects the ones its
- * build does not implement, so try each in turn and only fail if none answers.
- */
-async function requestXverseAddresses(xverse: XverseProvider): Promise<XverseAccount[]> {
-  const message = "CONNECT TO BITMAP MARKETPLACE";
-  const attempts: Array<{ method: string; params?: unknown }> = [
-    { method: "wallet_connect", params: { addresses: ["ordinals", "payment"], message } },
-    { method: "wallet_connect", params: null },
-    { method: "getAddresses", params: { purposes: ["ordinals", "payment"], message } },
-    { method: "wallet_getAccount", params: undefined },
-    { method: "getAccounts", params: { purposes: ["ordinals", "payment"], message } },
-  ];
-
-  let lastError = "";
-  let rejected = false;
-  const trace: string[] = [];
-  for (const attempt of attempts) {
-    try {
-      const res = await xverse.request(attempt.method, attempt.params);
-      if (res?.status === "success") {
-        const accounts = normalizeXverseAddresses(res.result);
-        if (accounts.length > 0) return accounts;
-        trace.push(`${attempt.method}: ok but no addresses`);
-        lastError = "XVERSE RETURNED NO ADDRESSES";
-        continue;
-      }
-      const msg = res?.error?.message ?? "no response";
-      trace.push(`${attempt.method}: ${msg}`);
-      // Older builds answer unsupported methods with a generic "rejected", so
-      // note it and keep trying instead of aborting the whole connect.
-      if (/reject|denied|cancel/i.test(msg)) rejected = true;
-      lastError = res?.error?.message || lastError;
-    } catch (e) {
-      const msg = (e as Error)?.message ?? "threw";
-      trace.push(`${attempt.method}: ${msg}`);
-      if (/reject|denied|cancel/i.test(msg)) rejected = true;
-      lastError = msg || lastError;
-    }
-  }
-
-  // Last resort: explicitly ask for permissions, then read the active account.
+/** Connects once through the current Sats Connect API so one click opens one prompt. */
+async function requestXverseAddresses(providerId: string): Promise<XverseAccount[]> {
   try {
-    await xverse.request("wallet_requestPermissions", undefined);
-    const res = await xverse.request("wallet_getAccount", undefined);
-    if (res?.status === "success") {
-      const accounts = normalizeXverseAddresses(res.result);
-      if (accounts.length > 0) return accounts;
-    }
-    trace.push(`wallet_requestPermissions: ${res?.status ?? "no response"}`);
-    lastError = res?.status === "error" ? res.error?.message ?? lastError : lastError;
-  } catch (e) {
-    trace.push(`wallet_requestPermissions: ${(e as Error)?.message ?? "threw"}`);
-    lastError = (e as Error)?.message || lastError;
-  }
+    const response = await requestSatsConnect(
+      "wallet_connect",
+      {
+        addresses: [AddressPurpose.Ordinals, AddressPurpose.Payment],
+        message: "Connect to Bitmap Marketplace",
+      },
+      providerId,
+    );
 
-  console.error("[xverse] connect attempts", trace);
-  if (rejected && !lastError) lastError = "XVERSE CONNECT REJECTED";
-  throw new Error(
-    (lastError || "XVERSE CONNECT FAILED — UNLOCK THE WALLET AND APPROVE THE POPUP").toUpperCase(),
-  );
+    if (response.status === "error") {
+      const code = String(response.error.code ?? "");
+      const message = response.error.message || "XVERSE CONNECTION FAILED";
+      if (code === "4001" || /reject|denied|cancel/i.test(message)) {
+        throw new Error("XVERSE REQUEST WAS DECLINED");
+      }
+      throw new Error(`XVERSE: ${message}${code ? ` (${code})` : ""}`);
+    }
+
+    const accounts = normalizeXverseAddresses(response.result);
+    if (accounts.length === 0) throw new Error("XVERSE RETURNED NO BITCOIN ADDRESSES");
+    return accounts;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/XVERSE/i.test(message)) throw error;
+    throw new Error(`XVERSE: ${message}`);
+  }
 }
 
 /** Sign a base64 PSBT with the connected wallet. Returns a base64 PSBT. */
