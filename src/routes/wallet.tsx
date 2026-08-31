@@ -10,7 +10,13 @@ import {
   type WalletUtxo,
 } from "@/lib/wallet";
 import { deliverOfferFn } from "@/lib/wallet.functions";
-import { refreshOffersFn } from "@/lib/offers.functions";
+import { refreshOffersFn, submitOfferFn } from "@/lib/offers.functions";
+import { buildListingPsbt } from "@/lib/psbt-builder";
+import {
+  signListingPsbt,
+  xOnlyPubKeyHex,
+  type ConnectedWallet,
+} from "@/lib/browser-wallet";
 import { settleOfferFn } from "@/lib/settle.functions";
 import { OFFER_STATUS_LABEL } from "@/lib/offers";
 import { formatSats } from "@/lib/trades";
@@ -88,7 +94,7 @@ function WalletPage() {
       inscribedUtxos.flatMap((u) =>
         u.inscriptions
           .filter((i) => i.bitmapHeight !== null)
-          .map((i) => ({ ...i, outpoint: u.outpoint })),
+          .map((i) => ({ ...i, outpoint: u.outpoint, valueSats: u.valueSats })),
       ),
     [inscribedUtxos],
   );
