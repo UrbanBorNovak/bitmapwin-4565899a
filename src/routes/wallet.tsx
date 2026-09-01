@@ -27,6 +27,7 @@ import { WalletBids } from "@/components/WalletBids";
 import { DistrictManager } from "@/components/DistrictManager";
 import { QuickListForm } from "@/components/QuickListForm";
 import { LeaseEarnings } from "@/components/leases/LeaseEarnings";
+import { CoinWallet } from "@/components/coins/CoinWallet";
 import { useBidInbox } from "@/lib/use-bid-inbox";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { useWalletSession, walletControls } from "@/lib/wallet-session";
@@ -384,7 +385,8 @@ function WalletPage() {
             heldHeights={heldHeights}
           />
 
-          <section id="earnings" className="mt-10 scroll-mt-24">
+          <section id="earnings" className="mt-10 grid gap-6 scroll-mt-24 lg:grid-cols-2">
+            <CoinWallet addresses={[address, sessionWallet?.paymentAddress ?? address]} />
             <LeaseEarnings addresses={[address, sessionWallet?.paymentAddress ?? address]} />
           </section>
 

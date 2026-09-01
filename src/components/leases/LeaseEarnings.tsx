@@ -1,12 +1,12 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { daysLeft, earningsFor, leasesQuery, satsToBtc } from "@/lib/leases";
+import { daysLeft, earningsFor, formatBit, leasesQuery } from "@/lib/leases";
 import { shortenAddress } from "@/lib/registry";
 
 /**
- * Holder earnings dashboard: rent collected, active leases and what expires
- * next. Every figure comes from a broadcast rent payment.
+ * Holder earnings dashboard: BIT rent collected, active leases and what
+ * expires next.
  */
 export function LeaseEarnings({ addresses }: { addresses: string[] }) {
   const leases = useQuery(leasesQuery(500));
@@ -21,10 +21,10 @@ export function LeaseEarnings({ addresses }: { addresses: string[] }) {
 
   const stats = earningsFor(owned, addresses[0] ?? null);
   const totals = {
-    totalSats: owned.reduce((sum, l) => sum + l.totalSats, 0),
-    perDaySats: owned
+    totalCoins: owned.reduce((sum, l) => sum + l.totalCoins, 0),
+    perDayCoins: owned
       .filter((l) => l.status === "active" && daysLeft(l.endsAt) > 0)
-      .reduce((sum, l) => sum + l.rateSatsPerDay, 0),
+      .reduce((sum, l) => sum + l.rateCoinsPerDay, 0),
     active: owned.filter((l) => l.status === "active" && daysLeft(l.endsAt) > 0).length,
   };
 
@@ -38,8 +38,8 @@ export function LeaseEarnings({ addresses }: { addresses: string[] }) {
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="COLLECTED" value={`${satsToBtc(totals.totalSats)} BTC`} />
-        <Stat label="PER DAY" value={`${totals.perDaySats} SATS`} />
+        <Stat label="COLLECTED" value={formatBit(totals.totalCoins)} />
+        <Stat label="PER DAY" value={formatBit(totals.perDayCoins)} />
         <Stat label="ACTIVE" value={String(totals.active)} />
         <Stat label="LEASES" value={String(owned.length)} />
       </div>
@@ -58,7 +58,7 @@ export function LeaseEarnings({ addresses }: { addresses: string[] }) {
                 {l.bitmapHeight}.BITMAP
               </Link>
               <span className="text-muted-foreground">
-                {shortenAddress(l.lesseeAddress)} · {satsToBtc(l.totalSats)} BTC ·{" "}
+                {shortenAddress(l.lesseeAddress)} · {formatBit(l.totalCoins)} ·{" "}
                 {l.status === "active" && daysLeft(l.endsAt) > 0
                   ? `${daysLeft(l.endsAt)}D LEFT`
                   : "ENDED"}

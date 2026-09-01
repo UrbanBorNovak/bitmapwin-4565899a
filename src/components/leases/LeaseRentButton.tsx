@@ -1,15 +1,13 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { quoteLeaseFn, submitLeaseFn } from "@/lib/leases.functions";
-import { signPurchasePsbt, xOnlyPubKeyHex } from "@/lib/browser-wallet";
+import { rentLeaseFn } from "@/lib/leases.functions";
 import { useWalletSession } from "@/lib/wallet-session";
-import { satsToBtc, type LeaseOffer } from "@/lib/leases";
-import { MARKETPLACE_FEE_PERCENT } from "@/lib/marketplace-fee";
+import { formatBit, type LeaseOffer } from "@/lib/leases";
 
 /**
- * Renter side: pick a term, sign the rent payment, the transaction is broadcast
- * and the lease turns active with build + shop rights on that bitmap.
+ * Renter side: pick a term and pay the rent in BIT. The transfer settles
+ * off-chain instantly and the lease grants build + shop rights on that bitmap.
  */
 export function LeaseRentButton({ offer }: { offer: LeaseOffer }) {
   const wallet = useWalletSession();
@@ -22,7 +20,7 @@ export function LeaseRentButton({ offer }: { offer: LeaseOffer }) {
     return n >= offer.minDays && n <= offer.maxDays ? n : null;
   }, [days, offer.minDays, offer.maxDays]);
 
-  const rentSats = termDays === null ? null : termDays * offer.rateSatsPerDay;
+  const rentCoins = termDays === null ? null : termDays * offer.rateCoinsPerDay;
 
   const rent = useMutation({
     mutationFn: async () => {
@@ -30,30 +28,11 @@ export function LeaseRentButton({ offer }: { offer: LeaseOffer }) {
       if (termDays === null) {
         throw new Error(`TERM MUST BE ${offer.minDays}–${offer.maxDays} DAYS`);
       }
-      const tapInternalKeyHex = xOnlyPubKeyHex(wallet.publicKey);
-      const quote = await quoteLeaseFn({
-        data: {
-          offerId: offer.id,
-          days: termDays,
-          payAddress: wallet.paymentAddress,
-          ...(tapInternalKeyHex ? { tapInternalKeyHex } : {}),
-        },
-      });
-      toast("APPROVE THE RENT PAYMENT IN YOUR WALLET", {
-        description: `${satsToBtc(quote.totalSats)} BTC TOTAL INCLUDING FEES`,
-      });
-      const signed = await signPurchasePsbt(
-        wallet.provider,
-        quote.psbtBase64,
-        wallet.paymentAddress,
-        quote.signIndices,
-      );
-      return submitLeaseFn({
+      return rentLeaseFn({
         data: {
           offerId: offer.id,
           days: termDays,
           lesseeAddress: wallet.ordinalsAddress,
-          psbt: signed,
         },
       });
     },
@@ -61,8 +40,10 @@ export function LeaseRentButton({ offer }: { offer: LeaseOffer }) {
       void queryClient.invalidateQueries({ queryKey: ["leases"] });
       void queryClient.invalidateQueries({ queryKey: ["lease-offers"] });
       void queryClient.invalidateQueries({ queryKey: ["bitmap-lease", offer.bitmapHeight] });
+      void queryClient.invalidateQueries({ queryKey: ["coin-balance"] });
+      void queryClient.invalidateQueries({ queryKey: ["coin-ledger"] });
       toast(`LEASED ${offer.bitmapHeight}.BITMAP`, {
-        description: `${satsToBtc(result.rentSats)} BTC RENT PAID · TX ${result.txid.slice(0, 12)}…`,
+        description: `${formatBit(result.rentCoins)} RENT PAID · ${result.days} DAY(S) OF BUILD RIGHTS`,
       });
     },
     onError: (e) => toast("LEASE FAILED", { description: (e as Error).message.toUpperCase() }),
@@ -88,15 +69,15 @@ export function LeaseRentButton({ offer }: { offer: LeaseOffer }) {
           onClick={() => rent.mutate()}
         >
           {rent.isPending
-            ? "[ SIGNING… ]"
-            : rentSats === null
+            ? "[ PAYING… ]"
+            : rentCoins === null
               ? "[ RENT ]"
-              : `[ RENT ${satsToBtc(rentSats)} BTC ]`}
+              : `[ RENT ${formatBit(rentCoins)} ]`}
         </button>
       </div>
       <p className="font-mono text-[11px] text-muted-foreground">
-        &gt; {offer.rateSatsPerDay} SATS / DAY PAID TO THE HOLDER + {MARKETPLACE_FEE_PERCENT}%
-        MARKETPLACE FEE{wallet ? "" : " — CONNECT A WALLET TO RENT"}
+        &gt; {formatBit(offer.rateCoinsPerDay)} / DAY PAID FROM YOUR BIT BALANCE TO THE HOLDER
+        {wallet ? "" : " — CONNECT A WALLET TO RENT"}
         <span className="blink">_</span>
       </p>
     </div>

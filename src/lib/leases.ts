@@ -1,17 +1,18 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { formatBit } from "@/lib/coins";
 
 /**
- * Client-side reads for bitmap leasing: open lease offers, active leases and
- * holder rent earnings. Every value comes from real rent payments recorded
- * after an on-chain broadcast.
+ * Client-side reads for bitmap leasing. Leases are settled off-chain in BIT:
+ * the renter's balance pays the holder's balance, and the renter gets build and
+ * shop rights on that bitmap while the term runs. Ownership never moves.
  */
 
 export type LeaseOffer = {
   id: string;
   bitmapHeight: number;
   ownerAddress: string;
-  rateSatsPerDay: number;
+  rateCoinsPerDay: number;
   minDays: number;
   maxDays: number;
   note: string | null;
@@ -24,21 +25,15 @@ export type Lease = {
   bitmapHeight: number;
   ownerAddress: string;
   lesseeAddress: string;
-  rateSatsPerDay: number;
+  rateCoinsPerDay: number;
+  totalCoins: number;
   days: number;
-  totalSats: number;
-  feeSats: number;
-  txid: string | null;
   status: string;
   startsAt: string;
   endsAt: string;
 };
 
-export const SATS = 100_000_000;
-
-export function satsToBtc(sats: number): string {
-  return (sats / SATS).toFixed(sats >= SATS ? 4 : 6);
-}
+export { formatBit };
 
 export function daysLeft(endsAt: string): number {
   const ms = new Date(endsAt).getTime() - Date.now();
@@ -49,7 +44,7 @@ type OfferRow = {
   id: string;
   bitmap_height: number;
   owner_address: string;
-  rate_sats_per_day: number;
+  rate_coins_per_day: number;
   min_days: number;
   max_days: number;
   note: string | null;
@@ -62,11 +57,9 @@ type LeaseRow = {
   bitmap_height: number;
   owner_address: string;
   lessee_address: string;
-  rate_sats_per_day: number;
+  rate_coins_per_day: number;
+  total_coins: number;
   days: number;
-  total_sats: number;
-  fee_sats: number;
-  txid: string | null;
   status: string;
   starts_at: string;
   ends_at: string;
@@ -77,7 +70,7 @@ function mapOffer(row: OfferRow): LeaseOffer {
     id: row.id,
     bitmapHeight: Number(row.bitmap_height),
     ownerAddress: row.owner_address,
-    rateSatsPerDay: Number(row.rate_sats_per_day),
+    rateCoinsPerDay: Number(row.rate_coins_per_day),
     minDays: row.min_days,
     maxDays: row.max_days,
     note: row.note,
@@ -92,11 +85,9 @@ function mapLease(row: LeaseRow): Lease {
     bitmapHeight: Number(row.bitmap_height),
     ownerAddress: row.owner_address,
     lesseeAddress: row.lessee_address,
-    rateSatsPerDay: Number(row.rate_sats_per_day),
+    rateCoinsPerDay: Number(row.rate_coins_per_day),
+    totalCoins: Number(row.total_coins),
     days: row.days,
-    totalSats: Number(row.total_sats),
-    feeSats: Number(row.fee_sats),
-    txid: row.txid,
     status: row.status,
     startsAt: row.starts_at,
     endsAt: row.ends_at,
@@ -104,9 +95,9 @@ function mapLease(row: LeaseRow): Lease {
 }
 
 const OFFER_COLS =
-  "id, bitmap_height, owner_address, rate_sats_per_day, min_days, max_days, note, status, created_at";
+  "id, bitmap_height, owner_address, rate_coins_per_day, min_days, max_days, note, status, created_at";
 const LEASE_COLS =
-  "id, bitmap_height, owner_address, lessee_address, rate_sats_per_day, days, total_sats, fee_sats, txid, status, starts_at, ends_at";
+  "id, bitmap_height, owner_address, lessee_address, rate_coins_per_day, total_coins, days, status, starts_at, ends_at";
 
 export async function fetchLeaseOffers(limit = 200): Promise<LeaseOffer[]> {
   const { data, error } = await supabase
@@ -170,24 +161,24 @@ export const bitmapLeaseQuery = (height: number) =>
   });
 
 export type LeaseEarnings = {
-  totalSats: number;
+  totalCoins: number;
   activeCount: number;
   leaseCount: number;
-  perDaySats: number;
+  perDayCoins: number;
   nextExpiry: string | null;
 };
 
-/** Rent earned by an address across all of its leases. */
+/** Rent earned in BIT by an address across all of its leases. */
 export function earningsFor(leases: Lease[], address: string | null): LeaseEarnings {
   const target = (address ?? "").toLowerCase();
   const mine = leases.filter((l) => l.ownerAddress.toLowerCase() === target);
   const active = mine.filter((l) => l.status === "active" && daysLeft(l.endsAt) > 0);
   const expiries = active.map((l) => l.endsAt).sort();
   return {
-    totalSats: mine.reduce((sum, l) => sum + l.totalSats, 0),
+    totalCoins: mine.reduce((sum, l) => sum + l.totalCoins, 0),
     activeCount: active.length,
     leaseCount: mine.length,
-    perDaySats: active.reduce((sum, l) => sum + l.rateSatsPerDay, 0),
+    perDayCoins: active.reduce((sum, l) => sum + l.rateCoinsPerDay, 0),
     nextExpiry: expiries[0] ?? null,
   };
 }
@@ -195,7 +186,7 @@ export function earningsFor(leases: Lease[], address: string | null): LeaseEarni
 export async function upsertLeaseOffer(input: {
   bitmapHeight: number;
   ownerAddress: string;
-  rateSatsPerDay: number;
+  rateCoinsPerDay: number;
   minDays: number;
   maxDays: number;
   note?: string | null;
@@ -204,7 +195,7 @@ export async function upsertLeaseOffer(input: {
     {
       bitmap_height: input.bitmapHeight,
       owner_address: input.ownerAddress,
-      rate_sats_per_day: input.rateSatsPerDay,
+      rate_coins_per_day: input.rateCoinsPerDay,
       min_days: input.minDays,
       max_days: input.maxDays,
       note: input.note ?? null,

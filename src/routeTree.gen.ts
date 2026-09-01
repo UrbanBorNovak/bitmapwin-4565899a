@@ -14,6 +14,7 @@ import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BitmapsRouteImport } from './routes/bitmaps'
 import { Route as BuildsRouteImport } from './routes/builds'
+import { Route as CoinsRouteImport } from './routes/coins'
 import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as ExtractorRouteImport } from './routes/extractor'
@@ -27,6 +28,7 @@ import { Route as CollectionsIndexRouteImport } from './routes/collections.index
 import { Route as CollectionsClubRouteImport } from './routes/collections.$club'
 import { Route as DistrictSlugRouteImport } from './routes/district.$slug'
 import { Route as ProfileAddressRouteImport } from './routes/profile.$address'
+import { Route as ApiPublicCoinRewardsRouteImport } from './routes/api/public/coin-rewards'
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
 import { Route as ApiPublicBlocksHeightRouteImport } from './routes/api/public/blocks.$height'
@@ -55,6 +57,11 @@ const BitmapsRoute = BitmapsRouteImport.update({
 const BuildsRoute = BuildsRouteImport.update({
   id: '/builds',
   path: '/builds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoinsRoute = CoinsRouteImport.update({
+  id: '/coins',
+  path: '/coins',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CollectionsRoute = CollectionsRouteImport.update({
@@ -122,6 +129,11 @@ const ProfileAddressRoute = ProfileAddressRouteImport.update({
   path: '/profile/$address',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCoinRewardsRoute = ApiPublicCoinRewardsRouteImport.update({
+  id: '/api/public/coin-rewards',
+  path: '/api/public/coin-rewards',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicOfferRoute = ApiPublicOfferRouteImport.update({
   id: '/api/public/offer',
   path: '/api/public/offer',
@@ -150,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/bitmaps': typeof BitmapsRoute
   '/builds': typeof BuildsRoute
+  '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/explore': typeof ExploreRoute
   '/extractor': typeof ExtractorRoute
@@ -163,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/district/$slug': typeof DistrictSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections/': typeof CollectionsIndexRoute
+  '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
@@ -174,6 +188,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/bitmaps': typeof BitmapsRoute
   '/builds': typeof BuildsRoute
+  '/coins': typeof CoinsRoute
   '/explore': typeof ExploreRoute
   '/extractor': typeof ExtractorRoute
   '/leases': typeof LeasesRoute
@@ -186,6 +201,7 @@ export interface FileRoutesByTo {
   '/district/$slug': typeof DistrictSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections': typeof CollectionsIndexRoute
+  '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
@@ -198,6 +214,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/bitmaps': typeof BitmapsRoute
   '/builds': typeof BuildsRoute
+  '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/explore': typeof ExploreRoute
   '/extractor': typeof ExtractorRoute
@@ -211,6 +228,7 @@ export interface FileRoutesById {
   '/district/$slug': typeof DistrictSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections/': typeof CollectionsIndexRoute
+  '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
@@ -224,6 +242,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bitmaps'
     | '/builds'
+    | '/coins'
     | '/collections'
     | '/explore'
     | '/extractor'
@@ -237,6 +256,7 @@ export interface FileRouteTypes {
     | '/district/$slug'
     | '/profile/$address'
     | '/collections/'
+    | '/api/public/coin-rewards'
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/blocks/$height'
@@ -248,6 +268,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bitmaps'
     | '/builds'
+    | '/coins'
     | '/explore'
     | '/extractor'
     | '/leases'
@@ -260,6 +281,7 @@ export interface FileRouteTypes {
     | '/district/$slug'
     | '/profile/$address'
     | '/collections'
+    | '/api/public/coin-rewards'
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/blocks/$height'
@@ -271,6 +293,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bitmaps'
     | '/builds'
+    | '/coins'
     | '/collections'
     | '/explore'
     | '/extractor'
@@ -284,6 +307,7 @@ export interface FileRouteTypes {
     | '/district/$slug'
     | '/profile/$address'
     | '/collections/'
+    | '/api/public/coin-rewards'
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/blocks/$height'
@@ -296,6 +320,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BitmapsRoute: typeof BitmapsRoute
   BuildsRoute: typeof BuildsRoute
+  CoinsRoute: typeof CoinsRoute
   CollectionsRoute: typeof CollectionsRouteWithChildren
   ExploreRoute: typeof ExploreRoute
   ExtractorRoute: typeof ExtractorRoute
@@ -307,6 +332,7 @@ export interface RootRouteChildren {
   BitmapBlockRoute: typeof BitmapBlockRoute
   DistrictSlugRoute: typeof DistrictSlugRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
+  ApiPublicCoinRewardsRoute: typeof ApiPublicCoinRewardsRoute
   ApiPublicOfferRoute: typeof ApiPublicOfferRoute
   ApiPublicOffersRoute: typeof ApiPublicOffersRoute
   ApiPublicBlocksHeightRoute: typeof ApiPublicBlocksHeightRouteWithChildren
@@ -347,6 +373,13 @@ declare module '@tanstack/react-router' {
       path: '/builds'
       fullPath: '/builds'
       preLoaderRoute: typeof BuildsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coins': {
+      id: '/coins'
+      path: '/coins'
+      fullPath: '/coins'
+      preLoaderRoute: typeof CoinsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/collections': {
@@ -440,6 +473,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileAddressRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/coin-rewards': {
+      id: '/api/public/coin-rewards'
+      path: '/api/public/coin-rewards'
+      fullPath: '/api/public/coin-rewards'
+      preLoaderRoute: typeof ApiPublicCoinRewardsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/offer': {
       id: '/api/public/offer'
       path: '/api/public/offer'
@@ -504,6 +544,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BitmapsRoute: BitmapsRoute,
   BuildsRoute: BuildsRoute,
+  CoinsRoute: CoinsRoute,
   CollectionsRoute: CollectionsRouteWithChildren,
   ExploreRoute: ExploreRoute,
   ExtractorRoute: ExtractorRoute,
@@ -515,6 +556,7 @@ const rootRouteChildren: RootRouteChildren = {
   BitmapBlockRoute: BitmapBlockRoute,
   DistrictSlugRoute: DistrictSlugRoute,
   ProfileAddressRoute: ProfileAddressRoute,
+  ApiPublicCoinRewardsRoute: ApiPublicCoinRewardsRoute,
   ApiPublicOfferRoute: ApiPublicOfferRoute,
   ApiPublicOffersRoute: ApiPublicOffersRoute,
   ApiPublicBlocksHeightRoute: ApiPublicBlocksHeightRouteWithChildren,
