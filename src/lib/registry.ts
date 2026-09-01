@@ -327,8 +327,7 @@ export async function fetchRegistryCount(): Promise<number> {
   const { count, error } = await supabase
     .from("bitmap_index")
     .select("block_height", { count: "exact", head: true })
-    .eq("is_valid", true)
-    .not("inscription_id", "is", null);
+    .eq("is_valid", true);
   if (error) throw error;
   return count ?? 0;
 }
