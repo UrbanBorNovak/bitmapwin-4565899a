@@ -115,16 +115,7 @@ export async function saveProfile(input: {
   bio: string | null;
   avatarInscriptionId: string | null;
 }) {
-  const { error } = await supabase.from("wallet_profiles").upsert(
-    {
-      address: input.address,
-      display_name: input.displayName,
-      bio: input.bio,
-      avatar_inscription_id: input.avatarInscriptionId,
-    },
-    { onConflict: "address" },
-  );
-  if (error) throw error;
+  await saveWalletProfileFn({ data: input });
 }
 
 export async function fetchParcelPage(height: number): Promise<ParcelPage | null> {
