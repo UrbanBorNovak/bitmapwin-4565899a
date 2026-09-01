@@ -5,7 +5,7 @@ import { useWalletSession } from "@/lib/wallet-session";
 import { useAuthSession, accountLabel } from "@/lib/auth";
 import { myWalletLinksQuery } from "@/lib/wallet-links";
 import { InscriptionAvatar } from "@/components/InscriptionAvatar";
-import { inscriptionImageUrl, profileQuery } from "@/lib/profiles";
+import { profileQuery } from "@/lib/profiles";
 import { shortenAddress } from "@/lib/registry";
 import { heldHeightsQuery } from "@/lib/held-parcels";
 import { buildsQuery } from "@/lib/builds";

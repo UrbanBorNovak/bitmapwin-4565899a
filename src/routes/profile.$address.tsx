@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { InscriptionAvatar } from "@/components/InscriptionAvatar";
-import { inscriptionImageUrl, profileQuery, type ParcelPage } from "@/lib/profiles";
+import { profileQuery, type ParcelPage } from "@/lib/profiles";
 import { shortenAddress } from "@/lib/registry";
 import { timeAgo } from "@/lib/bitmap";
 import { BUILD_KIND_LABELS, isBuildKind } from "@/lib/build-sdk";
