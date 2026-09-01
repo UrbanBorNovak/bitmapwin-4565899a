@@ -715,12 +715,14 @@ export const BUILD_PRESETS: BuildPreset[] = [
     kind: "info",
     config: {
       headline: "BITCOIN NATIVE, BITMAP HOLDER",
+      subline: "",
       fields: [
         { label: "ROLE", value: "BUILDER" },
         { label: "LOCATION", value: "ON-CHAIN" },
         { label: "SINCE", value: "2023" },
       ],
       links: [{ label: "X", url: "https://x.com/" }],
+      theme: DEFAULT_THEME,
     } satisfies InfoConfig,
   },
   {
@@ -730,6 +732,7 @@ export const BUILD_PRESETS: BuildPreset[] = [
     kind: "info",
     config: {
       headline: "OPEN FOR BUSINESS ON BITCOIN",
+      subline: "",
       fields: [
         { label: "WHAT", value: "ORDINALS STUDIO" },
         { label: "CONTACT", value: "DM ON X" },
@@ -738,6 +741,20 @@ export const BUILD_PRESETS: BuildPreset[] = [
         { label: "SITE", url: "https://" },
         { label: "ORDINALS", url: "https://ordinals.com/" },
       ],
+      theme: DEFAULT_THEME,
+    } satisfies InfoConfig,
+  },
+  {
+    id: "info-manifesto",
+    name: "MANIFESTO",
+    blurb: "BIG STATEMENT ON PAPER WHITE — TYPOGRAPHY FIRST, NEARLY NO CHROME",
+    kind: "info",
+    config: {
+      headline: "THIS BLOCK IS MINE",
+      subline: "A PLACE ON BITCOIN THAT CANNOT BE DELETED, RENTED BACK OR CENSORED.",
+      fields: [],
+      links: [],
+      theme: { accent: "#2d2d2d", surface: "paper", frame: "sharp", glow: false, rules: true },
     } satisfies InfoConfig,
   },
   {
@@ -745,14 +762,52 @@ export const BUILD_PRESETS: BuildPreset[] = [
     name: "GALLERY WALL",
     blurb: "THREE-COLUMN GRID OF ON-CHAIN IMAGES YOU HOLD",
     kind: "gallery",
-    config: { columns: 3, items: [] } satisfies GalleryConfig,
+    config: {
+      columns: 3,
+      fit: "contain",
+      monochrome: false,
+      items: [],
+      theme: DEFAULT_THEME,
+    } satisfies GalleryConfig,
   },
   {
     id: "gallery-2",
     name: "SOLO SHOWCASE",
     blurb: "TWO WIDE COLUMNS — BEST FOR A FEW HERO INSCRIPTIONS",
     kind: "gallery",
-    config: { columns: 2, items: [] } satisfies GalleryConfig,
+    config: {
+      columns: 2,
+      fit: "contain",
+      monochrome: false,
+      items: [],
+      theme: DEFAULT_THEME,
+    } satisfies GalleryConfig,
+  },
+  {
+    id: "gallery-museum",
+    name: "WHITE CUBE",
+    blurb: "MUSEUM WALL — PAPER WHITE, ROUND FRAMES, GRAYSCALE UNTIL HOVER",
+    kind: "gallery",
+    config: {
+      columns: 3,
+      fit: "contain",
+      monochrome: true,
+      items: [],
+      theme: { accent: "#2d2d2d", surface: "paper", frame: "round", glow: false, rules: false },
+    } satisfies GalleryConfig,
+  },
+  {
+    id: "gallery-neon",
+    name: "NEON VAULT",
+    blurb: "COVER-CROPPED 4-UP GRID WITH AN ACCENT GLOW — LOUD AND MODERN",
+    kind: "gallery",
+    config: {
+      columns: 4,
+      fit: "cover",
+      monochrome: false,
+      items: [],
+      theme: { accent: "#2dd4a8", surface: "slate", frame: "soft", glow: true, rules: true },
+    } satisfies GalleryConfig,
   },
   {
     id: "game3d-skyline",
