@@ -137,6 +137,7 @@ function mapEvent(row: EventRow): CoinEvent {
     title: row.title,
     description: row.description,
     prize: row.prize,
+    prizeCoins: Number(row.prize_coins ?? 0),
     entryCost: Number(row.entry_cost),
     maxEntries: row.max_entries === null ? null : Number(row.max_entries),
     status: row.status,
