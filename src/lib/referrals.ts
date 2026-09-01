@@ -65,6 +65,29 @@ export function referralLink(code: string): string {
   return `${origin}/?ref=${code}`;
 }
 
+/** Message used when sharing an invite on social platforms. */
+export function referralShareText(code: string): string {
+  return `Claim, build and trade Bitcoin BITMAP land on BITMAP UNHINGED. Join with my code ${code} and we both earn ${REFERRAL.joinerBonus} BIT.`;
+}
+
+/** Tweet intent URL pre-filled with the invite link. */
+export function shareOnX(code: string): string {
+  const params = new URLSearchParams({
+    text: referralShareText(code),
+    url: referralLink(code),
+  });
+  return `https://twitter.com/intent/tweet?${params.toString()}`;
+}
+
+/** Telegram share URL pre-filled with the invite link. */
+export function shareOnTelegram(code: string): string {
+  const params = new URLSearchParams({
+    url: referralLink(code),
+    text: referralShareText(code),
+  });
+  return `https://t.me/share/url?${params.toString()}`;
+}
+
 export const myReferralQuery = (address: string | null) =>
   queryOptions({
     queryKey: ["referrals", "mine", address],
