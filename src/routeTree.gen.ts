@@ -28,6 +28,7 @@ import { Route as CollectionsIndexRouteImport } from './routes/collections.index
 import { Route as CollectionsClubRouteImport } from './routes/collections.$club'
 import { Route as DistrictSlugRouteImport } from './routes/district.$slug'
 import { Route as ProfileAddressRouteImport } from './routes/profile.$address'
+import { Route as ApiPublicCoinRewardsRouteImport } from './routes/api/public/coin-rewards'
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
 import { Route as ApiPublicBlocksHeightRouteImport } from './routes/api/public/blocks.$height'
@@ -128,6 +129,11 @@ const ProfileAddressRoute = ProfileAddressRouteImport.update({
   path: '/profile/$address',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCoinRewardsRoute = ApiPublicCoinRewardsRouteImport.update({
+  id: '/api/public/coin-rewards',
+  path: '/api/public/coin-rewards',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicOfferRoute = ApiPublicOfferRouteImport.update({
   id: '/api/public/offer',
   path: '/api/public/offer',
@@ -170,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/district/$slug': typeof DistrictSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections/': typeof CollectionsIndexRoute
+  '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
@@ -194,6 +201,7 @@ export interface FileRoutesByTo {
   '/district/$slug': typeof DistrictSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections': typeof CollectionsIndexRoute
+  '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
@@ -220,6 +228,7 @@ export interface FileRoutesById {
   '/district/$slug': typeof DistrictSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections/': typeof CollectionsIndexRoute
+  '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
@@ -247,6 +256,7 @@ export interface FileRouteTypes {
     | '/district/$slug'
     | '/profile/$address'
     | '/collections/'
+    | '/api/public/coin-rewards'
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/blocks/$height'
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/district/$slug'
     | '/profile/$address'
     | '/collections'
+    | '/api/public/coin-rewards'
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/blocks/$height'
@@ -296,6 +307,7 @@ export interface FileRouteTypes {
     | '/district/$slug'
     | '/profile/$address'
     | '/collections/'
+    | '/api/public/coin-rewards'
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/blocks/$height'
@@ -320,6 +332,7 @@ export interface RootRouteChildren {
   BitmapBlockRoute: typeof BitmapBlockRoute
   DistrictSlugRoute: typeof DistrictSlugRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
+  ApiPublicCoinRewardsRoute: typeof ApiPublicCoinRewardsRoute
   ApiPublicOfferRoute: typeof ApiPublicOfferRoute
   ApiPublicOffersRoute: typeof ApiPublicOffersRoute
   ApiPublicBlocksHeightRoute: typeof ApiPublicBlocksHeightRouteWithChildren
@@ -460,6 +473,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileAddressRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/coin-rewards': {
+      id: '/api/public/coin-rewards'
+      path: '/api/public/coin-rewards'
+      fullPath: '/api/public/coin-rewards'
+      preLoaderRoute: typeof ApiPublicCoinRewardsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/offer': {
       id: '/api/public/offer'
       path: '/api/public/offer'
@@ -536,6 +556,7 @@ const rootRouteChildren: RootRouteChildren = {
   BitmapBlockRoute: BitmapBlockRoute,
   DistrictSlugRoute: DistrictSlugRoute,
   ProfileAddressRoute: ProfileAddressRoute,
+  ApiPublicCoinRewardsRoute: ApiPublicCoinRewardsRoute,
   ApiPublicOfferRoute: ApiPublicOfferRoute,
   ApiPublicOffersRoute: ApiPublicOffersRoute,
   ApiPublicBlocksHeightRoute: ApiPublicBlocksHeightRouteWithChildren,
