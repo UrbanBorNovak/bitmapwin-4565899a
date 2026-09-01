@@ -14,6 +14,7 @@ import {
   rewardRunsQuery,
 } from "@/lib/coins";
 import { runDailyRewardsFn } from "@/lib/coins.functions";
+import { ReferralPanel } from "@/components/coins/ReferralPanel";
 import { CoinEventCard } from "@/components/coins/CoinEventCard";
 import { CoinEventForm } from "@/components/coins/CoinEventForm";
 import { useWalletSession } from "@/lib/wallet-session";
@@ -97,6 +98,10 @@ function CoinsPage() {
           v={runs.data?.[0] ? `${formatBit(runs.data[0].awarded)}` : "NOT RUN YET"}
         />
       </section>
+
+      <div className="mt-10">
+        <ReferralPanel />
+      </div>
 
       <section className="mt-10 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <div className="border border-border">
