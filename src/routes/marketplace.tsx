@@ -3,7 +3,12 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ParcelCard } from "@/components/ParcelCard";
 
-import { parcelOwnersQuery, registryBaseQuery, type RegistryParcel } from "@/lib/registry";
+import {
+  parcelOwnersQuery,
+  registryBaseQuery,
+  registryCountQuery,
+  type RegistryParcel,
+} from "@/lib/registry";
 import { formatSats } from "@/lib/trades";
 import { useLiveOffers } from "@/lib/use-live-offers";
 import { TrendingParcels } from "@/components/TrendingParcels";
@@ -46,6 +51,7 @@ const PAGE_SIZE = 24;
 function Marketplace() {
   const registry = useQuery(registryBaseQuery(300));
   const parcels = registry.data ?? [];
+  const registryCount = useQuery(registryCountQuery());
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [club, setClub] = useState<ClubId | "any">("any");
@@ -110,7 +116,14 @@ function Marketplace() {
       <p className="label mt-3">PRICES AND STATUS TRACED FROM REAL BITCOIN TRANSACTIONS</p>
 
       <div className="mt-8 grid grid-cols-2 divide-border border border-border sm:grid-cols-5 sm:divide-x">
-        <Stat k="REGISTERED BITMAPS" v={String(parcels.length)} />
+        <Stat
+          k="REGISTERED BITMAPS"
+          v={
+            registryCount.data !== undefined
+              ? registryCount.data.toLocaleString("en-US")
+              : "…"
+          }
+        />
         <Stat k="TRADED ON CHAIN" v={String(traded.length)} />
         <Stat
           k="LISTED"
