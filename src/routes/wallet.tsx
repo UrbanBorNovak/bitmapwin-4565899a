@@ -29,7 +29,7 @@ import { LeaseEarnings } from "@/components/leases/LeaseEarnings";
 import { CoinWallet } from "@/components/coins/CoinWallet";
 import { useBidInbox } from "@/lib/use-bid-inbox";
 import { ProfileEditor } from "@/components/ProfileEditor";
-import { useWalletSession, walletControls } from "@/lib/wallet-session";
+import { useWalletSession } from "@/lib/wallet-session";
 import { WalletLinkPanel } from "@/components/WalletLinkPanel";
 import { useAuthSession } from "@/lib/auth";
 import { isLinked, myWalletLinksQuery } from "@/lib/wallet-links";
@@ -263,7 +263,7 @@ function WalletPage() {
 
           <ProfileEditor
             address={address}
-            canEdit={isLinked(links.data, address) || walletControls(connected, address)}
+            canEdit={isLinked(links.data, address)}
             inscriptionIds={ownedInscriptionIds}
           />
 

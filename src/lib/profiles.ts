@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_CONFIGS, isBuildKind, parseBuildConfig, type BuildKind } from "@/lib/build-sdk";
+import { saveWalletProfileFn } from "@/lib/profiles.functions";
 
 /**
  * Wallet profiles, owner-customised parcel pages and parcel visitor stats.
@@ -115,16 +116,7 @@ export async function saveProfile(input: {
   bio: string | null;
   avatarInscriptionId: string | null;
 }) {
-  const { error } = await supabase.from("wallet_profiles").upsert(
-    {
-      address: input.address,
-      display_name: input.displayName,
-      bio: input.bio,
-      avatar_inscription_id: input.avatarInscriptionId,
-    },
-    { onConflict: "address" },
-  );
-  if (error) throw error;
+  await saveWalletProfileFn({ data: input });
 }
 
 export async function fetchParcelPage(height: number): Promise<ParcelPage | null> {
