@@ -1,5 +1,4 @@
 import { auth, defineMcp } from "@lovable.dev/mcp-js";
-import type { ToolDefinition } from "@lovable.dev/mcp-js";
 import searchBitmaps from "./tools/search-bitmaps";
 import getBitmap from "./tools/get-bitmap";
 import myBitmaps from "./tools/my-bitmaps";
@@ -21,5 +20,5 @@ export default defineMcp({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",
   }),
-  tools: [searchBitmaps, getBitmap, myBitmaps, myBids, myBitBalance, recentBuilds] as unknown as ToolDefinition<never>[],
+  tools: [searchBitmaps, getBitmap, myBitmaps, myBids, myBitBalance, recentBuilds] as unknown as Parameters<typeof defineMcp>[0]["tools"],
 });
