@@ -153,7 +153,7 @@ function DashboardPage() {
         <p className="label">DASHBOARD</p>
         <h1 className="display mt-4 text-4xl">SIGN IN REQUIRED</h1>
         <Empty text="SIGN IN AND LINK A WALLET TO SEE YOUR PERSONAL DASHBOARD" />
-        <Link to="/auth" className="btn-term mt-6 inline-flex">[ SIGN IN ]</Link>
+        <Link to="/auth" search={{}} className="btn-term mt-6 inline-flex">[ SIGN IN ]</Link>
       </div>
     );
   }

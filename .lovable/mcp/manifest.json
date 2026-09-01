@@ -1,0 +1,186 @@
+{
+  "version": 1,
+  "sdk_version": "1.0.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://hkcmghtwpgqbjyeknqdl.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "bitmap-unhinged",
+      "version": "0.1.0",
+      "title": "Bitmap Unhinged"
+    },
+    "tools": [
+      {
+        "name": "search_bitmaps",
+        "title": "Search bitmaps",
+        "description": "Search the Bitmap Unhinged registry of valid bitmap claims by block-height range or holder address.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "minHeight": {
+              "description": "Lowest block height to include.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "maxHeight": {
+              "description": "Highest block height to include.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "ownerAddress": {
+              "description": "Only bitmaps held by this Bitcoin address.",
+              "type": "string"
+            },
+            "limit": {
+              "description": "Max rows to return (default 25).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_bitmap",
+        "title": "Get bitmap",
+        "description": "Get one bitmap by block height: registry claim, block stats, its build page and its live bids.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "height": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+              "description": "Bitcoin block height, e.g. 840000."
+            }
+          },
+          "required": [
+            "height"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "my_bitmaps",
+        "title": "My bitmaps",
+        "description": "List the bitmaps held by the Bitcoin addresses linked to the signed-in Bitmap Unhinged account.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "description": "Max rows to return (default 50).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "my_bids",
+        "title": "My bids",
+        "description": "List bids placed by the signed-in account's linked addresses, and incoming bids on the bitmaps it holds.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "status": {
+              "description": "Filter by bid status, e.g. open, accepted, declined.",
+              "type": "string"
+            },
+            "limit": {
+              "description": "Max rows per side (default 25).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "my_bit_balance",
+        "title": "My BIT balance",
+        "description": "Show the BIT coin balance, lifetime earnings and recent ledger entries for the signed-in account's linked addresses.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "ledgerLimit": {
+              "description": "Recent ledger rows to include (default 10).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "recent_builds",
+        "title": "Recent builds",
+        "description": "List recently updated bitmap build pages (info pages, galleries, shops, 3D worlds).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "kind": {
+              "description": "Filter by build kind, e.g. info, gallery, shop, game3d, game2d.",
+              "type": "string"
+            },
+            "limit": {
+              "description": "Max rows to return (default 20).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

@@ -17,13 +17,16 @@ import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LeasesRouteImport } from './routes/leases'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as WalletRouteImport } from './routes/wallet'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
 import { Route as CollectionsClubRouteImport } from './routes/collections.$club'
 import { Route as DistrictSlugRouteImport } from './routes/district.$slug'
 import { Route as ProfileAddressRouteImport } from './routes/profile.$address'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicCoinRewardsRouteImport } from './routes/api/public/coin-rewards'
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
@@ -70,6 +73,11 @@ const MarketplaceRoute = MarketplaceRouteImport.update({
   path: '/marketplace',
   getParentRoute: () => rootRouteImport,
 } as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -80,6 +88,12 @@ const WalletRoute = WalletRouteImport.update({
   path: '/wallet',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BitmapBlockRoute = BitmapBlockRouteImport.update({
   id: '/bitmap/$block',
   path: '/bitmap/$block',
@@ -103,6 +117,11 @@ const DistrictSlugRoute = DistrictSlugRouteImport.update({
 const ProfileAddressRoute = ProfileAddressRouteImport.update({
   id: '/profile/$address',
   path: '/profile/$address',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicCoinRewardsRoute = ApiPublicCoinRewardsRouteImport.update({
@@ -141,13 +160,16 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/leases': typeof LeasesRoute
   '/marketplace': typeof MarketplaceRoute
+  '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
   '/wallet': typeof WalletRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/collections/$club': typeof CollectionsClubRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections/': typeof CollectionsIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
@@ -162,13 +184,16 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/leases': typeof LeasesRoute
   '/marketplace': typeof MarketplaceRoute
+  '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
   '/wallet': typeof WalletRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/collections/$club': typeof CollectionsClubRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections': typeof CollectionsIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
@@ -185,13 +210,16 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/leases': typeof LeasesRoute
   '/marketplace': typeof MarketplaceRoute
+  '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
   '/wallet': typeof WalletRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/collections/$club': typeof CollectionsClubRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections/': typeof CollectionsIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
@@ -209,13 +237,16 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/leases'
     | '/marketplace'
+    | '/mcp'
     | '/reset-password'
     | '/wallet'
+    | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
     | '/collections/$club'
     | '/district/$slug'
     | '/profile/$address'
     | '/collections/'
+    | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
     | '/api/public/offer'
     | '/api/public/offers'
@@ -230,13 +261,16 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/leases'
     | '/marketplace'
+    | '/mcp'
     | '/reset-password'
     | '/wallet'
+    | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
     | '/collections/$club'
     | '/district/$slug'
     | '/profile/$address'
     | '/collections'
+    | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
     | '/api/public/offer'
     | '/api/public/offers'
@@ -252,13 +286,16 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/leases'
     | '/marketplace'
+    | '/mcp'
     | '/reset-password'
     | '/wallet'
+    | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
     | '/collections/$club'
     | '/district/$slug'
     | '/profile/$address'
     | '/collections/'
+    | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
     | '/api/public/offer'
     | '/api/public/offers'
@@ -275,11 +312,14 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   LeasesRoute: typeof LeasesRoute
   MarketplaceRoute: typeof MarketplaceRoute
+  McpRoute: typeof McpRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   WalletRoute: typeof WalletRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
   DistrictSlugRoute: typeof DistrictSlugRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiPublicCoinRewardsRoute: typeof ApiPublicCoinRewardsRoute
   ApiPublicOfferRoute: typeof ApiPublicOfferRoute
   ApiPublicOffersRoute: typeof ApiPublicOffersRoute
@@ -344,6 +384,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketplaceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -356,6 +403,13 @@ declare module '@tanstack/react-router' {
       path: '/wallet'
       fullPath: '/wallet'
       preLoaderRoute: typeof WalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bitmap/$block': {
@@ -391,6 +445,13 @@ declare module '@tanstack/react-router' {
       path: '/profile/$address'
       fullPath: '/profile/$address'
       preLoaderRoute: typeof ProfileAddressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/coin-rewards': {
@@ -467,11 +528,15 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   LeasesRoute: LeasesRoute,
   MarketplaceRoute: MarketplaceRoute,
+  McpRoute: McpRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   WalletRoute: WalletRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   BitmapBlockRoute: BitmapBlockRoute,
   DistrictSlugRoute: DistrictSlugRoute,
   ProfileAddressRoute: ProfileAddressRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiPublicCoinRewardsRoute: ApiPublicCoinRewardsRoute,
   ApiPublicOfferRoute: ApiPublicOfferRoute,
   ApiPublicOffersRoute: ApiPublicOffersRoute,
