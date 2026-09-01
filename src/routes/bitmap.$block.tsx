@@ -15,8 +15,6 @@ import { LeasePanel } from "@/components/leases/LeasePanel";
 import { BitmapEvents } from "@/components/coins/BitmapEvents";
 import { MakeOfferButton } from "@/components/MakeOfferButton";
 
-import { TradeWatcher } from "@/components/TradeWatcher";
-import { SettlementWatcher } from "@/components/SettlementWatcher";
 import { registryParcelQuery, shortenAddress, PARCEL_STATUS_LABEL } from "@/lib/registry";
 import { saveTrades, tradesForHeightQuery } from "@/lib/trade-store";
 import { traceBitmapTradesFn } from "@/lib/trades.functions";
@@ -387,9 +385,7 @@ function BitmapDetail() {
         )}
       </div>
 
-      <TradeWatcher heights={[block]} limit={5} />
 
-      <SettlementWatcher heights={[block]} limit={10} />
 
       <OfferBook height={block} />
 
