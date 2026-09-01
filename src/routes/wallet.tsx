@@ -385,7 +385,7 @@ function WalletPage() {
           />
 
           <section id="earnings" className="mt-10 scroll-mt-24">
-            <LeaseEarnings addresses={[address, session?.paymentAddress ?? address]} />
+            <LeaseEarnings addresses={[address, sessionWallet?.paymentAddress ?? address]} />
           </section>
 
           <section className="mt-10">
