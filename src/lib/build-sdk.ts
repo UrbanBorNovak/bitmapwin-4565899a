@@ -371,6 +371,7 @@ export function parseBuildConfig<K extends BuildKind>(kind: K, raw: unknown): Bu
               scale: Number.isFinite(scale) ? Math.min(20, Math.max(0.1, scale)) : 1,
               height: Number.isFinite(h) ? Math.min(20, Math.max(-5, h)) : 0,
               spin: r["spin"] === true,
+              textureId: str(r["textureId"], 120).trim(),
             } satisfies Game3dModel;
           })
           .filter((m) => m.inscriptionId !== ""),
