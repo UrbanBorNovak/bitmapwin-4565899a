@@ -433,18 +433,45 @@ function GalleryEditor({
 }) {
   return (
     <div className="space-y-3">
-      <label className="block">
-        <span className="label">COLUMNS</span>
-        <select
-          className={`mt-1 ${input}`}
-          value={config.columns}
-          onChange={(e) => onChange({ ...config, columns: Number(e.target.value) as 2 | 3 | 4 })}
-        >
-          <option value={2}>2</option>
-          <option value={3}>3</option>
-          <option value={4}>4</option>
-        </select>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="block">
+          <span className="label">COLUMNS</span>
+          <select
+            className={`mt-1 ${input}`}
+            value={config.columns}
+            onChange={(e) => onChange({ ...config, columns: Number(e.target.value) as 2 | 3 | 4 })}
+          >
+            <option value={2}>2</option>
+            <option value={3}>3</option>
+            <option value={4}>4</option>
+          </select>
+        </label>
+        <label className="block">
+          <span className="label">IMAGE FIT</span>
+          <select
+            className={`mt-1 ${input}`}
+            value={config.fit}
+            onChange={(e) =>
+              onChange({ ...config, fit: e.target.value === "cover" ? "cover" : "contain" })
+            }
+          >
+            <option value="contain">CONTAIN — SHOW THE WHOLE ARTWORK</option>
+            <option value="cover">COVER — CROP TO FILL THE FRAME</option>
+          </select>
+        </label>
+      </div>
+      <label className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          className="accent-primary"
+          checked={config.monochrome}
+          onChange={(e) => onChange({ ...config, monochrome: e.target.checked })}
+        />
+        <span className="label">GRAYSCALE UNTIL HOVER (MUSEUM MODE)</span>
       </label>
+
+      <ThemeEditor theme={config.theme} onChange={(theme) => onChange({ ...config, theme })} />
+
       <div>
         <span className="label">INSCRIPTIONS TO SHOWCASE</span>
         {config.items.map((item, i) => (
