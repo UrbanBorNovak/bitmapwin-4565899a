@@ -216,6 +216,33 @@ export type Database = {
         }
         Relationships: []
       }
+      block_stats: {
+        Row: {
+          block_height: number
+          created_at: string
+          pattern: number | null
+          preview_height: number
+          preview_width: number
+          tx_count: number
+        }
+        Insert: {
+          block_height: number
+          created_at?: string
+          pattern?: number | null
+          preview_height: number
+          preview_width: number
+          tx_count: number
+        }
+        Update: {
+          block_height?: number
+          created_at?: string
+          pattern?: number | null
+          preview_height?: number
+          preview_width?: number
+          tx_count?: number
+        }
+        Relationships: []
+      }
       build_delegates: {
         Row: {
           bitmap_height: number
