@@ -115,6 +115,7 @@ type EventRow = {
   title: string;
   description: string | null;
   prize: string | null;
+  prize_coins: number;
   entry_cost: number;
   max_entries: number | null;
   status: string;
