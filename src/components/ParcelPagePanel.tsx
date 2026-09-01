@@ -25,8 +25,18 @@ import { LiveBitmapPresence } from "@/components/LiveBitmapPresence";
 import {
   BUILD_KIND_LABELS,
   DEFAULT_CONFIGS,
+  presetsForKind,
   type BuildKind,
 } from "@/lib/build-sdk";
+
+/** Zero-decision entry points shown before anything is built on a bitmap. */
+const QUICK_STARTS: { kind: BuildKind; label: string }[] = [
+  { kind: "info", label: "HOLDER PAGE" },
+  { kind: "gallery", label: "GALLERY" },
+  { kind: "shop", label: "SHOP" },
+  { kind: "game3d", label: "3D WORLD" },
+  { kind: "game2d", label: "ARCADE" },
+];
 
 /**
  * Visitor counter + owner-built page for a parcel: banner, title, description
