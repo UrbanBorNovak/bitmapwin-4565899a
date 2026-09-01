@@ -4,6 +4,7 @@ import { useState } from "react";
 import { BidInboxBell } from "@/components/BidInboxBell";
 import { HeaderIdentity } from "@/components/HeaderIdentity";
 import { BtcTicker } from "@/components/BtcTicker";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const NAV = [
   { to: "/marketplace", label: "MARKETPLACE" },
@@ -34,7 +35,15 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
       <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 py-3 md:px-8">
         <Link to="/" className="shrink-0 leading-none">
-          <div className="display text-base md:text-lg">BITMAP UNHINGED</div>
+          <div className="display flex items-end gap-1.5 text-base md:text-lg">
+            <span>BITMAP</span>
+            <span className="relative">
+              <span className="label absolute bottom-full left-0 mb-0.5 text-[0.45rem] leading-none text-bitcoin">
+                ALPHA
+              </span>
+              UNHINGED
+            </span>
+          </div>
           <div className="label mt-1">BITCOIN DIGITAL LAND</div>
         </Link>
 
@@ -53,6 +62,7 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-2">
           <BtcTicker className="hidden sm:flex" />
+          <ThemeToggle />
           <button
             aria-label="Search bitmaps"
             onClick={() => setSearchOpen((v) => !v)}
