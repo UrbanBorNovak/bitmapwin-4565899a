@@ -12,6 +12,7 @@ import { OfferBook } from "@/components/OfferBook";
 import { BidPanel } from "@/components/BidPanel";
 import { ParcelPagePanel } from "@/components/ParcelPagePanel";
 import { LeasePanel } from "@/components/leases/LeasePanel";
+import { BitmapEvents } from "@/components/coins/BitmapEvents";
 import { MakeOfferButton } from "@/components/MakeOfferButton";
 
 import { TradeWatcher } from "@/components/TradeWatcher";
