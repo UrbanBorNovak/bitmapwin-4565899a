@@ -140,7 +140,7 @@ export function ParcelPagePanel({
       <LiveBitmapPresence height={height} placeName={built?.title || `${height}.BITMAP`} />
 
       <div className="space-y-3 px-6 py-5">
-        {built?.title || built?.description || built?.linkUrl ? (
+        {built ? (
           <>
             {built.title && <h2 className="display text-xl">{built.title}</h2>}
             {built.description && (
