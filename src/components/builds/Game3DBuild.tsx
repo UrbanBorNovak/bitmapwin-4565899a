@@ -233,6 +233,7 @@ export default function Game3DBuild({ config, height }: { config: Game3dConfig; 
       }
       for (const pivot of orbiters) pivot.rotation.y += (pivot.userData["speed"] as number) * delta;
       for (const object of spinners) object.rotation.y += delta * 0.5;
+      for (const mixer of mixers) mixer.update(delta);
       renderer.render(scene, camera);
       raf = requestAnimationFrame(tick);
     };
