@@ -3,7 +3,6 @@ import { inscriptionImageUrl } from "@/lib/profiles";
 import { formatSats } from "@/lib/trades";
 import { inscriptionOffersQuery } from "@/lib/offers";
 import { BuyButton } from "@/components/BuyButton";
-import { MakeOfferButton } from "@/components/MakeOfferButton";
 import type { ShopConfig, ShopItem } from "@/lib/build-sdk";
 
 /**
@@ -192,7 +191,7 @@ function PriceTag({
   if (item.sold) return <span className="label text-muted-foreground">SOLD</span>;
   return (
     <span className="label" style={{ color: accent }}>
-      {item.priceSats > 0 ? formatSats(item.priceSats) : "MAKE OFFER"}
+      {item.priceSats > 0 ? formatSats(item.priceSats) : "UNPRICED"}
     </span>
   );
 }
