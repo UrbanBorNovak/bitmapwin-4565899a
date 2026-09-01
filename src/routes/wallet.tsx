@@ -26,6 +26,7 @@ import { WalletConnect } from "@/components/WalletConnect";
 import { WalletBids } from "@/components/WalletBids";
 import { DistrictManager } from "@/components/DistrictManager";
 import { QuickListForm } from "@/components/QuickListForm";
+import { LeaseEarnings } from "@/components/leases/LeaseEarnings";
 import { useBidInbox } from "@/lib/use-bid-inbox";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { useWalletSession, walletControls } from "@/lib/wallet-session";
@@ -383,9 +384,14 @@ function WalletPage() {
             heldHeights={heldHeights}
           />
 
+          <section id="earnings" className="mt-10 scroll-mt-24">
+            <LeaseEarnings addresses={[address, sessionWallet?.paymentAddress ?? address]} />
+          </section>
+
           <section className="mt-10">
             <DistrictManager address={address} heldHeights={heldHeights} />
           </section>
+
 
 
 

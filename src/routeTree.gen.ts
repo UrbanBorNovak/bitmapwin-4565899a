@@ -17,6 +17,7 @@ import { Route as BuildsRouteImport } from './routes/builds'
 import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as ExtractorRouteImport } from './routes/extractor'
+import { Route as LeasesRouteImport } from './routes/leases'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -69,6 +70,11 @@ const ExploreRoute = ExploreRouteImport.update({
 const ExtractorRoute = ExtractorRouteImport.update({
   id: '/extractor',
   path: '/extractor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeasesRoute = LeasesRouteImport.update({
+  id: '/leases',
+  path: '/leases',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MapRoute = MapRouteImport.update({
@@ -147,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/collections': typeof CollectionsRouteWithChildren
   '/explore': typeof ExploreRoute
   '/extractor': typeof ExtractorRoute
+  '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -169,6 +176,7 @@ export interface FileRoutesByTo {
   '/builds': typeof BuildsRoute
   '/explore': typeof ExploreRoute
   '/extractor': typeof ExtractorRoute
+  '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -193,6 +201,7 @@ export interface FileRoutesById {
   '/collections': typeof CollectionsRouteWithChildren
   '/explore': typeof ExploreRoute
   '/extractor': typeof ExtractorRoute
+  '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -218,6 +227,7 @@ export interface FileRouteTypes {
     | '/collections'
     | '/explore'
     | '/extractor'
+    | '/leases'
     | '/map'
     | '/marketplace'
     | '/reset-password'
@@ -240,6 +250,7 @@ export interface FileRouteTypes {
     | '/builds'
     | '/explore'
     | '/extractor'
+    | '/leases'
     | '/map'
     | '/marketplace'
     | '/reset-password'
@@ -263,6 +274,7 @@ export interface FileRouteTypes {
     | '/collections'
     | '/explore'
     | '/extractor'
+    | '/leases'
     | '/map'
     | '/marketplace'
     | '/reset-password'
@@ -287,6 +299,7 @@ export interface RootRouteChildren {
   CollectionsRoute: typeof CollectionsRouteWithChildren
   ExploreRoute: typeof ExploreRoute
   ExtractorRoute: typeof ExtractorRoute
+  LeasesRoute: typeof LeasesRoute
   MapRoute: typeof MapRoute
   MarketplaceRoute: typeof MarketplaceRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -355,6 +368,13 @@ declare module '@tanstack/react-router' {
       path: '/extractor'
       fullPath: '/extractor'
       preLoaderRoute: typeof ExtractorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leases': {
+      id: '/leases'
+      path: '/leases'
+      fullPath: '/leases'
+      preLoaderRoute: typeof LeasesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/map': {
@@ -487,6 +507,7 @@ const rootRouteChildren: RootRouteChildren = {
   CollectionsRoute: CollectionsRouteWithChildren,
   ExploreRoute: ExploreRoute,
   ExtractorRoute: ExtractorRoute,
+  LeasesRoute: LeasesRoute,
   MapRoute: MapRoute,
   MarketplaceRoute: MarketplaceRoute,
   ResetPasswordRoute: ResetPasswordRoute,
