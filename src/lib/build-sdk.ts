@@ -78,6 +78,11 @@ export type Game3dModel = {
   scale: number; // 0.1..20
   height: number; // -5..20 vertical offset
   spin: boolean;
+  /**
+   * Optional on-chain image inscription painted onto the model — how the space
+   * avatar rig gets its pixel skin. Empty means the model keeps its own texture.
+   */
+  textureId?: string;
 };
 
 export const GAME3D_SCENES = ["city", "monoliths", "pyramids", "rings", "terrain"] as const;
