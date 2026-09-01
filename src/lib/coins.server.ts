@@ -225,3 +225,40 @@ export async function eventHost(eventId: string): Promise<string> {
   if (!data) throw new Error("Event not found");
   return data.host_address;
 }
+
+/** Creates a raffle/giveaway/event and locks any BIT prize from the host. */
+export async function createEvent(input: {
+  kind: string;
+  hostAddress: string;
+  title: string;
+  bitmapHeight: number | null;
+  description: string | null;
+  prize: string | null;
+  prizeCoins: number;
+  entryCost: number;
+  maxEntries: number | null;
+  endsAt: string | null;
+}): Promise<{ eventId: string }> {
+  const db = await admin();
+  const { data, error } = await db.rpc("coin_create_event", {
+    _kind: input.kind,
+    _host_address: input.hostAddress,
+    _title: input.title,
+    _bitmap_height: input.bitmapHeight,
+    _description: input.description,
+    _prize: input.prize,
+    _prize_coins: input.prizeCoins,
+    _entry_cost: input.entryCost,
+    _max_entries: input.maxEntries,
+    _ends_at: input.endsAt,
+  });
+  if (error) throw new Error(error.message);
+  return { eventId: String(data) };
+}
+
+/** Closes an event without a draw and refunds any locked BIT prize. */
+export async function closeEvent(eventId: string): Promise<void> {
+  const db = await admin();
+  const { error } = await db.rpc("coin_close_event", { _event_id: eventId });
+  if (error) throw new Error(error.message);
+}
