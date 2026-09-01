@@ -997,6 +997,11 @@ function ShopEditor({
         </label>
       </div>
 
+      <PaletteStrip
+        activeAccent={config.accent}
+        onPick={(p) => onChange({ ...config, accent: p.accent })}
+      />
+
       <div className="rounded-md border border-border p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="label">MY WALLET ASSETS</span>
