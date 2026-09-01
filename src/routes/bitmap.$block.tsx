@@ -8,6 +8,8 @@ import { ClubBadge } from "@/components/ClubBadge";
 import { toast } from "sonner";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
+import { blockStatsQuery, patternSiblingsQuery } from "@/lib/block-stats";
+
 
 import { BidPanel } from "@/components/BidPanel";
 import { ParcelPagePanel } from "@/components/ParcelPagePanel";
@@ -88,7 +90,10 @@ function BitmapDetail() {
   const { data: parcel } = useSuspenseQuery(registryParcelQuery(block));
   const scan = useQuery(blockScanQuery(block));
   const sizeMap = useQuery(blockSizeMapQuery(block));
-  const maxParcels = sizeMap.data?.txCount ?? scan.data?.txCount ?? null;
+  const stats = useQuery(blockStatsQuery(block));
+  const siblings = useQuery(patternSiblingsQuery(stats.data?.pattern));
+  const maxParcels = stats.data?.txCount ?? sizeMap.data?.txCount ?? scan.data?.txCount ?? null;
+
 
   const oci = useQuery(ociQuery(block));
   const trades = useQuery(tradesForHeightQuery(block));
@@ -154,7 +159,7 @@ function BitmapDetail() {
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="group rounded-lg border border-border bg-card p-6">
-          <BlockMosaic height={block} txCount={scan.data?.txCount ?? null} />
+          <BlockMosaic height={block} txCount={stats.data?.txCount ?? scan.data?.txCount ?? null} />
           <p className="mt-4 font-mono text-[11px] text-muted-foreground">
             {sizeMap.isLoading
               ? "> LOADING BLOCK SIZE MAP…"
@@ -256,6 +261,37 @@ function BitmapDetail() {
                   : claims.map((c) => `${c.bitmapHeight}.bitmap`).join(", ")
               }
             />
+            <Field
+              k="BLOCK TRANSACTIONS"
+              v={
+                stats.data
+                  ? stats.data.txCount.toLocaleString("en-US")
+                  : stats.isLoading
+                    ? "…"
+                    : "NOT IN DATASET"
+              }
+            />
+            <Field
+              k="PREVIEW SIZE"
+              v={stats.data ? `${stats.data.previewWidth} × ${stats.data.previewHeight}` : "—"}
+            />
+            <Field
+              k="SHAPE GROUP"
+              v={
+                stats.data?.pattern === null || stats.data?.pattern === undefined
+                  ? stats.isLoading
+                    ? "…"
+                    : "—"
+                  : `#${stats.data.pattern}${
+                      siblings.data === undefined
+                        ? ""
+                        : siblings.data === 0
+                          ? " — UNIQUE SHAPE"
+                          : ` — SHARED WITH ${siblings.data.toLocaleString("en-US")} BITMAP(S)`
+                    }`
+              }
+            />
+
           </dl>
         </div>
       </div>
