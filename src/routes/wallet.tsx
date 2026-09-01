@@ -384,9 +384,14 @@ function WalletPage() {
             heldHeights={heldHeights}
           />
 
+          <section id="earnings" className="mt-10 scroll-mt-24">
+            <LeaseEarnings addresses={[address, session?.paymentAddress ?? address]} />
+          </section>
+
           <section className="mt-10">
             <DistrictManager address={address} heldHeights={heldHeights} />
           </section>
+
 
 
 
