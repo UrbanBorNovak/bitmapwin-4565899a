@@ -224,10 +224,33 @@ export function ParcelPagePanel({
       </div>
 
       {canEdit && !editing && (
-        <div className="border-t border-border px-6 py-4">
+        <div className="space-y-3 border-t border-border px-6 py-4">
           <button className="btn-term" onClick={startEditing}>
             {built ? "[ EDIT BITMAP PAGE ]" : "[ BUILD ON THIS BITMAP ]"}
           </button>
+          {!built && (
+            <div>
+              <span className="label">OR START IN ONE CLICK</span>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {QUICK_STARTS.map((quick) => {
+                  const preset = presetsForKind(quick.kind)[0];
+                  return (
+                    <button
+                      key={quick.label}
+                      className="btn-term-ghost"
+                      onClick={() => {
+                        startEditing();
+                        setBuildKind(quick.kind);
+                        setBuildConfig(preset ? preset.config : DEFAULT_CONFIGS[quick.kind]);
+                      }}
+                    >
+                      [ {quick.label} ]
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
