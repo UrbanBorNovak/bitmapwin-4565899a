@@ -5,7 +5,6 @@ import { LeaseRentButton } from "@/components/leases/LeaseRentButton";
 import { ClubBadge } from "@/components/ClubBadge";
 import { TraitBadges } from "@/components/TraitBadges";
 import { shortenAddress } from "@/lib/registry";
-import { clubOf } from "@/lib/clubs";
 
 export const Route = createFileRoute("/leases")({
   component: LeaseMarket,
@@ -82,7 +81,7 @@ function LeaseMarket() {
                     {offer.bitmapHeight}.BITMAP
                   </Link>
                   <div className="flex flex-wrap items-center gap-2">
-                    <ClubBadge club={clubOf(offer.bitmapHeight)} />
+                    <ClubBadge height={offer.bitmapHeight} />
                     <TraitBadges height={offer.bitmapHeight} />
                   </div>
                   <p className="font-mono text-[11px] text-muted-foreground">

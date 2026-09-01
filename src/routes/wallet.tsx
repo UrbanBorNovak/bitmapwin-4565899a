@@ -26,6 +26,7 @@ import { WalletConnect } from "@/components/WalletConnect";
 import { WalletBids } from "@/components/WalletBids";
 import { DistrictManager } from "@/components/DistrictManager";
 import { QuickListForm } from "@/components/QuickListForm";
+import { LeaseEarnings } from "@/components/leases/LeaseEarnings";
 import { useBidInbox } from "@/lib/use-bid-inbox";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { useWalletSession, walletControls } from "@/lib/wallet-session";
