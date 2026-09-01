@@ -397,3 +397,111 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
   };
 
 }
+
+export type PaymentPsbtInput = {
+  /** confirmed funding UTXOs of the payer's payment address */
+  funding: FundingUtxo[];
+  /** scriptPubKey of the payer's address (change + inputs) */
+  payerScriptHex: string;
+  /** ordered payment outputs, address + amount */
+  outputs: { scriptHex: string; valueSats: number }[];
+  /** sat/vB */
+  feeRate: number;
+  /** payer x-only taproot key, when the funding inputs are p2tr */
+  tapInternalKeyHex?: string | undefined;
+};
+
+export type PaymentPsbtResult = {
+  psbtBase64: string;
+  signIndices: number[];
+  feeSats: number;
+  changeSats: number;
+  spentSats: number;
+  usedFunding: FundingUtxo[];
+};
+
+/**
+ * Builds a plain payment PSBT from the payer's own confirmed UTXOs. Used for
+ * rent payments: every output is an explicit recipient, change returns to the
+ * payer, and the payer signs every input.
+ */
+export function buildPaymentPsbt(input: PaymentPsbtInput): PaymentPsbtResult {
+  const payScript = hexToByteArray(input.payerScriptHex);
+  const outputs = input.outputs.map((o) => ({
+    valueSats: o.valueSats,
+    script: hexToByteArray(o.scriptHex),
+  }));
+  const target = outputs.reduce((sum, o) => sum + o.valueSats, 0);
+  if (target <= 0) throw new Error("Payment amount must be positive");
+
+  const tapKey =
+    input.tapInternalKeyHex && /^[0-9a-f]{64}$/i.test(input.tapInternalKeyHex)
+      ? hexToByteArray(input.tapInternalKeyHex)
+      : null;
+
+  const candidates = [...input.funding]
+    .filter((u) => u.valueSats > DUST)
+    .sort((a, b) => b.valueSats - a.valueSats);
+
+  const used: FundingUtxo[] = [];
+  let funded = 0;
+  let feeSats = 0;
+  let needed = 0;
+  for (const candidate of candidates) {
+    used.push(candidate);
+    funded += candidate.valueSats;
+    feeSats = Math.ceil(
+      estimateVsize(used.length, outputs.length + 1) * Math.max(1, input.feeRate),
+    );
+    needed = target + feeSats;
+    if (funded >= needed + DUST) break;
+  }
+  if (used.length === 0 || funded < needed) {
+    throw new Error(
+      `Not enough confirmed funds: need ~${target + feeSats} sats, have ${funded}`,
+    );
+  }
+
+  let changeSats = funded - target - feeSats;
+  if (changeSats < DUST) {
+    feeSats += changeSats;
+    changeSats = 0;
+  }
+
+  const tx: RawTx = {
+    version: 2,
+    locktime: 0,
+    inputs: used.map((u) => ({
+      txidLe: hexToByteArray(u.txid).reverse(),
+      vout: u.vout,
+      sequence: 0xfffffffd,
+    })),
+    outputs: [...outputs, ...(changeSats > 0 ? [{ valueSats: changeSats, script: payScript }] : [])],
+  };
+
+  const inputMaps: Kv[][] = used.map((utxo) => {
+    const script = hexToByteArray(utxo.scriptPubKeyHex);
+    const map: Kv[] = [
+      { key: [0x01], value: [...u64le(utxo.valueSats), ...varint(script.length), ...script] },
+    ];
+    const isTaproot = script.length === 34 && script[0] === 0x51;
+    if (isTaproot && tapKey) map.push({ key: [0x17], value: tapKey });
+    return map;
+  });
+
+  const psbtBase64 = serializePsbt({
+    global: [],
+    inputs: inputMaps,
+    outputs: tx.outputs.map(() => []),
+    tx,
+  });
+
+  return {
+    psbtBase64,
+    signIndices: used.map((_, i) => i),
+    feeSats,
+    changeSats,
+    spentSats: target + feeSats,
+    usedFunding: used,
+  };
+}
