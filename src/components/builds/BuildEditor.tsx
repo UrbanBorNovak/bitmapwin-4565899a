@@ -551,6 +551,44 @@ function Game3dEditor({
                 <span className="label">ROTATE MODEL</span>
               </label>
             </div>
+            <div className="grid gap-3 sm:grid-cols-[1fr_2fr]">
+              <label className="block">
+                <span className="label">
+                  {model.inscriptionId === AVATAR_RIG_ID ? "AVATAR SKIN" : "TEXTURE SKIN"}
+                </span>
+                <select
+                  className={`mt-1 ${input}`}
+                  value={
+                    AVATAR_SKINS.some((s) => s.inscriptionId === model.textureId)
+                      ? model.textureId
+                      : model.textureId
+                        ? "custom"
+                        : ""
+                  }
+                  onChange={(e) => {
+                    if (e.target.value === "custom") return;
+                    setModel(i, { textureId: e.target.value });
+                  }}
+                >
+                  <option value="">MODEL'S OWN TEXTURE</option>
+                  {AVATAR_SKINS.map((skin) => (
+                    <option key={skin.inscriptionId} value={skin.inscriptionId}>
+                      {skin.label}
+                    </option>
+                  ))}
+                  <option value="custom">CUSTOM INSCRIPTION →</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className="label">OR PASTE A TEXTURE INSCRIPTION ID</span>
+                <input
+                  className={`mt-1 ${input}`}
+                  placeholder="<txid>i0"
+                  value={model.textureId ?? ""}
+                  onChange={(e) => setModel(i, { textureId: e.target.value.trim().slice(0, 120) })}
+                />
+              </label>
+            </div>
           </div>
         ))}
         {config.models.length < 6 ? (
