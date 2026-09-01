@@ -201,7 +201,13 @@ export type OnChainAsset = {
   scale: number;
   height: number;
   note?: string;
+  /** True when the asset accepts an on-chain image skin (AVATAR_SKINS). */
+  skinnable?: boolean;
 };
+
+/** The animated space avatar rig — the one asset that takes a pixel skin. */
+export const AVATAR_RIG_ID =
+  "5e2d04efb32bc584af0f86ca9d0744186c680ced298a33235dc913a5f13e2f34i0";
 
 /**
  * Curated GLB/GLTF inscriptions (Draco compressed) that already render well in
