@@ -195,8 +195,8 @@ function WalletPage() {
       <p className="label">WALLET</p>
       <h1 className="display mt-4 text-4xl md:text-6xl">MY LAND</h1>
       <p className="mt-4 max-w-[70ch] font-mono text-sm text-muted-foreground">
-        &gt; UNSPENT OUTPUTS, INSCRIPTIONS AND PSBT OFFERS FOR ANY BITCOIN ADDRESS, READ LIVE FROM THE
-        ORD INDEX<span className="blink">_</span>
+        &gt; INSCRIPTIONS AND PSBT OFFERS FOR ANY BITCOIN ADDRESS, READ LIVE FROM THE ORD INDEX
+        <span className="blink">_</span>
       </p>
 
       <form
