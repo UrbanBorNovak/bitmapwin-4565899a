@@ -1,4 +1,5 @@
-import { inscriptionImageUrl, type WalletProfile } from "@/lib/profiles";
+import { type WalletProfile } from "@/lib/profiles";
+import { InscriptionAvatar } from "@/components/InscriptionAvatar";
 import { shortenAddress } from "@/lib/registry";
 
 /**
@@ -25,11 +26,12 @@ export function BuilderName({
   return (
     <span className={`inline-flex min-w-0 items-center gap-2 ${className}`}>
       {avatar && profile?.avatarInscriptionId ? (
-        <img
-          src={inscriptionImageUrl(profile.avatarInscriptionId)}
+        <InscriptionAvatar
+          inscriptionId={profile.avatarInscriptionId}
+          label={label}
           alt={`${label} avatar`}
-          loading="lazy"
-          className="h-5 w-5 shrink-0 border border-border object-cover"
+          className="h-5 w-5 shrink-0 border border-border"
+          fallbackClassName="text-[9px]"
         />
       ) : null}
       <span className="truncate">{label}</span>

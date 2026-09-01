@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useWalletSession } from "@/lib/wallet-session";
-import { inscriptionImageUrl, profileQuery } from "@/lib/profiles";
+import { profileQuery } from "@/lib/profiles";
+import { InscriptionAvatar } from "@/components/InscriptionAvatar";
 import { shortenAddress } from "@/lib/registry";
 import { accountLabel, useAuthSession } from "@/lib/auth";
 import { myWalletLinksQuery } from "@/lib/wallet-links";
@@ -38,17 +39,12 @@ export function HeaderIdentity() {
       title="DASHBOARD"
       className="flex items-center gap-2 border border-border py-1 pl-1 pr-2 transition-colors hover:border-primary"
     >
-      {avatar ? (
-        <img
-          src={inscriptionImageUrl(avatar)}
-          alt=""
-          className="size-7 shrink-0 border border-border object-cover [image-rendering:pixelated]"
-        />
-      ) : (
-        <span className="flex size-7 shrink-0 items-center justify-center border border-border font-mono text-[11px] text-muted-foreground">
-          {name.slice(0, 1).toUpperCase()}
-        </span>
-      )}
+      <InscriptionAvatar
+        inscriptionId={avatar}
+        label={name}
+        className="size-7 shrink-0 border border-border [image-rendering:pixelated]"
+        fallbackClassName="text-[11px]"
+      />
       <span className="max-w-[10rem] truncate font-mono text-[11px] uppercase text-foreground">
         {name}
       </span>
