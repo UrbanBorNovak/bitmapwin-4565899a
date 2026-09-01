@@ -33,7 +33,13 @@ export function BitmapOrderBook({ height }: { height?: number }) {
   const asks = useMemo(
     () =>
       offers
-        .filter((o) => o.status === "open" && o.priceSats > 0)
+        .filter(
+          (o) =>
+            o.status === "open" &&
+            o.priceSats > 0 &&
+            o.bitmapHeight !== null &&
+            (height === undefined || o.bitmapHeight === height),
+        )
         .sort((a, b) => a.priceSats - b.priceSats),
     [offers],
   );
@@ -119,12 +125,12 @@ export function BitmapOrderBook({ height }: { height?: number }) {
   });
 
   return (
-    <section className="mt-10 border border-border">
+    <section className="border border-border bg-card">
       <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border p-5">
         <div>
-          <h2 className="display text-xl">ORDER BOOK</h2>
+          <h2 className="font-mono text-sm font-bold uppercase text-foreground">BITMAP ORDER BOOK</h2>
           <p className="label mt-2">
-            {height === undefined ? "EVERY OPEN ASK AND LIVE BID" : `${height}.BITMAP DEPTH`}
+            {height === undefined ? "BITMAP BIDS & ASKS ONLY" : `${height}.BITMAP DEPTH`}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-4 font-mono text-[10px]">
@@ -152,7 +158,7 @@ export function BitmapOrderBook({ height }: { height?: number }) {
       <div className="grid gap-0 md:grid-cols-2 md:divide-x md:divide-border">
         <div>
           <div className="flex items-center justify-between border-b border-border px-4 py-2">
-            <span className="label">BIDS — {liveBids.length}</span>
+            <span className="label text-foreground">BIDS — {liveBids.length}</span>
             <span className="label">SIGNED INTENTS</span>
           </div>
           {bidsPending ? (
@@ -161,7 +167,7 @@ export function BitmapOrderBook({ height }: { height?: number }) {
             <Empty text="NO LIVE BIDS" />
           ) : (
             <ul>
-              {liveBids.slice(0, 25).map((bid) => (
+              {liveBids.slice(0, 12).map((bid) => (
                 <BidRow key={bid.id} bid={bid} max={maxSide} usdPerBtc={usdPerBtc} />
               ))}
             </ul>
@@ -170,7 +176,7 @@ export function BitmapOrderBook({ height }: { height?: number }) {
 
         <div>
           <div className="flex items-center justify-between border-b border-border px-4 py-2">
-            <span className="label">ASKS — {asks.length}</span>
+            <span className="label text-primary">ASKS — {asks.length}</span>
             <span className="label">SIGNED SALE PSBTS</span>
           </div>
           {offersPending ? (
@@ -179,7 +185,7 @@ export function BitmapOrderBook({ height }: { height?: number }) {
             <Empty text="NO OPEN ASKS" />
           ) : (
             <ul>
-              {asks.slice(0, 25).map((ask) => (
+              {asks.slice(0, 12).map((ask) => (
                 <AskRow
                   key={ask.id}
                   ask={ask}

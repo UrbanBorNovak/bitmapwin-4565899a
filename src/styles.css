@@ -17,9 +17,9 @@
   --radius-2xl: 18px;
   --radius-3xl: 24px;
   --radius-4xl: 32px;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-  --font-sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
-  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Rubik", "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Space Mono", ui-monospace, SFMono-Regular, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -120,7 +120,7 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
 
@@ -170,7 +170,7 @@
 @utility display {
   font-family: var(--font-display);
   font-weight: 900;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   word-spacing: 0.12em;
   line-height: 0.92;
   text-transform: uppercase;

@@ -14,6 +14,7 @@ import { useLiveOffers } from "@/lib/use-live-offers";
 import { TrendingParcels } from "@/components/TrendingParcels";
 import { CLUBS, inClub, type ClubId } from "@/lib/clubs";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
+import { BitmapMarketChart } from "@/components/BitmapMarketChart";
 
 
 export const Route = createFileRoute("/marketplace")({
@@ -23,13 +24,13 @@ export const Route = createFileRoute("/marketplace")({
       {
         name: "description",
         content:
-          "Bitmap parcels priced by real Bitcoin transactions: every sale, buyer and holder traced from the chain.",
+          "Trade Bitcoin Bitmaps with real on-chain prices, bids, asks, collections and confirmed sale history.",
       },
       { property: "og:title", content: "Marketplace — On-Chain Bitmap Trades" },
       {
         property: "og:description",
         content:
-          "Bitmap parcels priced by real Bitcoin transactions: every sale, buyer and holder traced from the chain.",
+          "Trade Bitcoin Bitmaps with real on-chain prices, bids, asks, collections and confirmed sale history.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -112,11 +113,20 @@ function Marketplace() {
   
 
   return (
-    <div className="mx-auto max-w-[1600px] px-4 py-12 md:px-8">
-      <h1 className="display text-3xl md:text-5xl">BITMAP MARKETPLACE</h1>
-      <p className="label mt-3">PRICES AND STATUS TRACED FROM REAL BITCOIN TRANSACTIONS</p>
+    <div className="marketplace-shell mx-auto max-w-[1600px] px-4 py-8 md:px-8 md:py-12">
+      <header className="flex flex-col gap-5 border-b border-border pb-7 lg:flex-row lg:items-end lg:justify-between">
+        <div className="border-l-2 border-primary pl-4">
+          <span className="label text-primary">LIVE BITCOIN LAND MARKET</span>
+          <h1 className="mt-2 font-mono text-3xl font-bold uppercase text-foreground md:text-5xl">BITMAP MARKETPLACE</h1>
+          <p className="mt-3 max-w-2xl text-sm text-muted-foreground">Buy, bid, list and track Bitmaps through verified Bitcoin transactions.</p>
+        </div>
+        <div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
+          <span className="size-2 bg-primary" aria-hidden />
+          ON-CHAIN MARKET DATA
+        </div>
+      </header>
 
-      <div className="mt-8 grid grid-cols-2 divide-border border border-border sm:grid-cols-5 sm:divide-x">
+      <div className="mt-6 grid grid-cols-2 divide-border border border-border bg-card sm:grid-cols-5 sm:divide-x">
         <Stat
           k="REGISTERED BITMAPS"
           v={
@@ -138,79 +148,74 @@ function Marketplace() {
         <Stat k="SALE VOLUME" v={volume ? formatSats(volume) : "—"} />
       </div>
 
-      <TrendingParcels limit={3} />
+      <div className="mt-6 grid gap-6 xl:grid-cols-12">
+        <div className="xl:col-span-8"><BitmapMarketChart /></div>
+        <div className="[&>section]:mt-0 xl:col-span-4"><TrendingParcels limit={3} /></div>
+      </div>
 
-      <BitmapOrderBook />
+      <div className="mt-6"><BitmapOrderBook /></div>
 
-
-
-      <div className="mt-6 flex flex-wrap items-center gap-2 border border-border p-3">
-        <span className="label">COLLECTION</span>
+      <div className="mt-8 grid gap-6 lg:grid-cols-12">
+        <aside className="lg:col-span-3">
+          <div className="border border-border bg-card lg:sticky lg:top-24">
+            <div className="border-b border-border p-4">
+              <h2 className="border-l-2 border-primary pl-3 font-mono text-sm font-bold text-foreground">FIND BITMAPS</h2>
+              <p className="label mt-2 pl-[14px]">FILTER THE REGISTRY</p>
+            </div>
+            <div className="space-y-5 p-4">
+              <div>
+                <label className="label mb-2 block" htmlFor="bitmap-market-search">SEARCH</label>
+                <input
+                  id="bitmap-market-search"
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+                  placeholder="HEIGHT / OWNER / TXID"
+                  className="w-full border border-border bg-background px-3 py-2.5 font-mono text-xs uppercase text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+              <div>
+                <span className="label mb-2 block">MARKET STATUS</span>
+                <div className="grid grid-cols-1 gap-2">
+                  {(["all", "listed", "traded"] as const).map((value) => (
+                    <button key={value} className={tab === value ? "btn-term justify-start" : "btn-term-ghost justify-start"} onClick={() => { setTab(value); setPage(0); }}>
+                      {value === "all" ? "ALL BITMAPS" : value.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <span className="label mb-2 block">COLLECTION</span>
+                <div className="grid grid-cols-2 gap-2 lg:grid-cols-1 xl:grid-cols-2">
         <button
-          className={club === "any" ? "btn-term" : "btn-term-ghost"}
+          className={club === "any" ? "btn-term !px-2" : "btn-term-ghost !px-2"}
           onClick={() => {
             setClub("any");
             setPage(0);
           }}
         >
-          [ ALL CLUBS ]
+          ALL CLUBS
         </button>
         {CLUBS.map((c) => (
           <button
             key={c.id}
-            className={club === c.id ? "btn-term" : "btn-term-ghost"}
+            className={club === c.id ? "btn-term !px-2" : "btn-term-ghost !px-2"}
             onClick={() => {
               setClub(c.id);
               setPage(0);
             }}
           >
-            [ {c.short} ]
+            {c.short}
           </button>
         ))}
-        <Link to="/collections" className="label ml-auto hover:text-foreground">
-          COLLECTION STATS →
-        </Link>
-      </div>
+                </div>
+              </div>
+              <Link to="/collections" className="btn-term-ghost w-full">COLLECTION STATS →</Link>
+              <div className="border-t border-border pt-4 label">{holders} HOLDERS IN LOADED INDEX</div>
+            </div>
+          </div>
+        </aside>
 
-      <div className="mt-6 flex flex-wrap items-center gap-2">
-        <button
-          className={tab === "all" ? "btn-term" : "btn-term-ghost"}
-          onClick={() => {
-            setTab("all");
-            setPage(0);
-          }}
-        >
-          [ ALL BITMAPS ]
-        </button>
-        <button
-          className={tab === "traded" ? "btn-term" : "btn-term-ghost"}
-          onClick={() => {
-            setTab("traded");
-            setPage(0);
-          }}
-        >
-          [ TRADED ]
-        </button>
-        <button
-          className={tab === "listed" ? "btn-term" : "btn-term-ghost"}
-          onClick={() => {
-            setTab("listed");
-            setPage(0);
-          }}
-        >
-          [ LISTED ]
-        </button>
-        <input
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(0);
-          }}
-          placeholder="SEARCH HEIGHT / OWNER / TXID"
-          className="min-w-[240px] flex-1 border border-border bg-background px-3 py-2 font-mono text-xs uppercase text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
-        />
-        <span className="label">HOLDERS {holders}</span>
-      </div>
+        <section className="lg:col-span-9">
 
       {registry.isPending ? (
         <p className="mt-10 border border-border p-10 font-mono text-sm text-muted-foreground">
@@ -220,7 +225,7 @@ function Marketplace() {
         <EmptyRegistry />
       ) : (
         <>
-          <div className="mt-8 flex flex-wrap items-baseline justify-between gap-3 border border-border p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-3 border border-border bg-card p-4">
             <span className="label">
               SHOWING {current * PAGE_SIZE + 1}–{current * PAGE_SIZE + pageParcels.length} OF{" "}
               {visible.length} BITMAP(S)
@@ -236,7 +241,7 @@ function Marketplace() {
             </span>
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {pageWithOwners.map((p) => (
               <ParcelCard key={p.inscriptionId} parcel={p} />
             ))}
@@ -245,7 +250,8 @@ function Marketplace() {
           <Pager page={current} pageCount={pageCount} onPage={setPage} />
         </>
       )}
-
+        </section>
+      </div>
     </div>
   );
 }
@@ -313,9 +319,9 @@ function EmptyRegistry() {
 
 function Stat({ k, v }: { k: string; v: string }) {
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-5">
       <div className="label">{k}</div>
-      <div className="display mt-2 text-2xl">{v}</div>
+      <div className="mt-2 font-mono text-lg font-bold text-foreground md:text-xl">{v}</div>
     </div>
   );
 }
