@@ -1,4 +1,5 @@
 import { EMISSION } from "@/lib/coins";
+import { REFERRAL } from "@/lib/referrals";
 
 /**
  * BIT economy engine. Everything here is off-chain platform state: the daily
