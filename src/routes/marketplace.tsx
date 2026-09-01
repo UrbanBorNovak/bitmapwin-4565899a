@@ -43,27 +43,6 @@ type Tab = "traded" | "listed" | "all";
 
 const PAGE_SIZE = 24;
 
-/** Traces claims on chain in batches of 40 and stores every transfer found. */
-async function traceAndStore(claims: RegistryParcel[]): Promise<{ traced: number; trades: number }> {
-  let trades = 0;
-  const batches: RegistryParcel[][] = [];
-  for (let i = 0; i < claims.length; i += 40) batches.push(claims.slice(i, i + 40));
-  for (const batch of batches) {
-    const traces = await traceBitmapTradesFn({
-      data: {
-        claims: batch.map((p) => ({
-          bitmapHeight: p.bitmapHeight,
-          txid: p.txid,
-          inscriptionId: p.inscriptionId,
-        })),
-        maxHops: 6,
-      },
-    });
-    trades += await saveTrades(traces);
-  }
-  return { traced: claims.length, trades };
-}
-
 function Marketplace() {
   const registry = useQuery(registryBaseQuery(300));
   const parcels = registry.data ?? [];
@@ -71,72 +50,7 @@ function Marketplace() {
   const [search, setSearch] = useState("");
   const [club, setClub] = useState<ClubId | "any">("any");
   const [page, setPage] = useState(0);
-  const [syncHeight, setSyncHeight] = useState("");
-  const queryClient = useQueryClient();
   useLiveOffers();
-
-
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["registry"] });
-    queryClient.invalidateQueries({ queryKey: ["trades"] });
-  };
-
-  const sync = useMutation({
-    mutationFn: async () => {
-      const height = Number(syncHeight);
-      const blocks =
-        syncHeight.trim() !== "" && Number.isFinite(height)
-          ? [await getBlockInscriptions({ data: { height, txPages: 12 } })]
-          : await getRecentInscriptions({ data: { blocks: 8, txPages: 6 } });
-      const found = blocks.flatMap((b) => b.inscriptions);
-      const saved = await saveChainInscriptions(found);
-      const claims = found.filter((i) => i.isBitmapClaim);
-      const traced = await traceAndStore(
-        claims
-          .filter((c) => c.bitmapHeight !== null)
-          .map(
-            (c) =>
-              ({
-                bitmapHeight: c.bitmapHeight as number,
-                txid: c.txid,
-                inscriptionId: c.id,
-              }) as RegistryParcel,
-          ),
-      );
-      return { saved, claims: claims.length, blocks: blocks.length, trades: traced.trades };
-    },
-    onSuccess: (r) => {
-      invalidate();
-      toast(`INDEXED ${r.saved} INSCRIPTION(S)`, {
-        description: `${r.claims} CLAIM(S) · ${r.trades} ON-CHAIN TRANSFER(S) ACROSS ${r.blocks} BLOCKS`,
-      });
-    },
-    onError: (e) => toast("CHAIN SYNC FAILED", { description: (e as Error).message }),
-  });
-
-  const refreshTrades = useMutation({
-    mutationFn: () => traceAndStore(parcels.slice(0, 120)),
-    onSuccess: (r) => {
-      invalidate();
-      toast(`TRACED ${r.traced} BITMAP(S)`, {
-        description: `${r.trades} CONFIRMED TRANSFER(S) STORED`,
-      });
-    },
-    onError: (e) => toast("TRADE TRACE FAILED", { description: (e as Error).message }),
-  });
-
-  const settle = useMutation({
-    mutationFn: () => settleOffersFn({ data: { limit: 40 } }),
-    onSuccess: (r) => {
-      invalidate();
-      queryClient.invalidateQueries({ queryKey: ["offers"] });
-      queryClient.invalidateQueries({ queryKey: ["wallet-offers"] });
-      toast(`CHECKED ${r.checked} LISTING(S)`, {
-        description: `${r.settled} SETTLED ON CHAIN · ${r.trades} TRANSFER(S) RECORDED`,
-      });
-    },
-    onError: (e) => toast("SETTLEMENT FAILED", { description: (e as Error).message }),
-  });
 
   const listed = useMemo(() => parcels.filter((p) => p.listedSats !== null), [parcels]);
   const traded = useMemo(() => parcels.filter((p) => p.transfers > 0), [parcels]);
