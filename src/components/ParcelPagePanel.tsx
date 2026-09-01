@@ -20,6 +20,7 @@ import { buildInscriptionPayload, delegatesQuery, downloadJson } from "@/lib/bui
 import { districtForHeightQuery } from "@/lib/districts";
 import { BuildEditor } from "@/components/builds/BuildEditor";
 import { BuildRenderer } from "@/components/builds/BuildRenderer";
+import { BuildRaffles } from "@/components/coins/BuildRaffles";
 import {
   BUILD_KIND_LABELS,
   DEFAULT_CONFIGS,
