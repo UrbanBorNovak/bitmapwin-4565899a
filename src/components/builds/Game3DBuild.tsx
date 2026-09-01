@@ -256,6 +256,8 @@ export default function Game3DBuild({ config, height }: { config: Game3dConfig; 
       el.removeEventListener("pointerup", onUp);
       el.removeEventListener("wheel", onWheel);
       renderer.dispose();
+      draco.dispose();
+      for (const mixer of mixers) mixer.stopAllAction();
       for (const geo of disposables) geo.dispose();
       const cleanup = (root: THREE.Object3D) =>
         root.traverse((o) => {
