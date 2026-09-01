@@ -75,8 +75,8 @@ function Index() {
       </section>
 
       <section className="grid grid-cols-2 divide-x divide-border border-b border-border md:grid-cols-4">
-        <Stat k="INDEXED BITMAPS" v={String(parcels.length)} />
-        <Stat k="TRADED ON CHAIN" v={String(traded.length)} />
+        <Stat k="INDEXED BITMAPS" v={indexedCount.toLocaleString("en-US")} />
+        <Stat k="TRADED ON CHAIN" v={tradedCount.toLocaleString("en-US")} />
         <Stat k="LAST SALE" v={lastSale ? formatSats(lastSale.price_sats) : "—"} />
         <Stat k="NETWORK" v="MAINNET" />
       </section>
