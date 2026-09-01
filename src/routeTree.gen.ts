@@ -12,14 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as BitmapsRouteImport } from './routes/bitmaps'
 import { Route as BuildsRouteImport } from './routes/builds'
 import { Route as CoinsRouteImport } from './routes/coins'
 import { Route as CollectionsRouteImport } from './routes/collections'
-import { Route as ExploreRouteImport } from './routes/explore'
-import { Route as ExtractorRouteImport } from './routes/extractor'
 import { Route as LeasesRouteImport } from './routes/leases'
-import { Route as MapRouteImport } from './routes/map'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as WalletRouteImport } from './routes/wallet'
@@ -49,11 +45,6 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BitmapsRoute = BitmapsRouteImport.update({
-  id: '/bitmaps',
-  path: '/bitmaps',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const BuildsRoute = BuildsRouteImport.update({
   id: '/builds',
   path: '/builds',
@@ -69,24 +60,9 @@ const CollectionsRoute = CollectionsRouteImport.update({
   path: '/collections',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ExploreRoute = ExploreRouteImport.update({
-  id: '/explore',
-  path: '/explore',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ExtractorRoute = ExtractorRouteImport.update({
-  id: '/extractor',
-  path: '/extractor',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LeasesRoute = LeasesRouteImport.update({
   id: '/leases',
   path: '/leases',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MapRoute = MapRouteImport.update({
-  id: '/map',
-  path: '/map',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketplaceRoute = MarketplaceRouteImport.update({
@@ -160,14 +136,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
   '/auth': typeof AuthRoute
-  '/bitmaps': typeof BitmapsRoute
   '/builds': typeof BuildsRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
-  '/explore': typeof ExploreRoute
-  '/extractor': typeof ExtractorRoute
   '/leases': typeof LeasesRoute
-  '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/reset-password': typeof ResetPasswordRoute
   '/wallet': typeof WalletRoute
@@ -186,13 +158,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
   '/auth': typeof AuthRoute
-  '/bitmaps': typeof BitmapsRoute
   '/builds': typeof BuildsRoute
   '/coins': typeof CoinsRoute
-  '/explore': typeof ExploreRoute
-  '/extractor': typeof ExtractorRoute
   '/leases': typeof LeasesRoute
-  '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/reset-password': typeof ResetPasswordRoute
   '/wallet': typeof WalletRoute
@@ -212,14 +180,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
   '/auth': typeof AuthRoute
-  '/bitmaps': typeof BitmapsRoute
   '/builds': typeof BuildsRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
-  '/explore': typeof ExploreRoute
-  '/extractor': typeof ExtractorRoute
   '/leases': typeof LeasesRoute
-  '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/reset-password': typeof ResetPasswordRoute
   '/wallet': typeof WalletRoute
@@ -240,14 +204,10 @@ export interface FileRouteTypes {
     | '/'
     | '/activity'
     | '/auth'
-    | '/bitmaps'
     | '/builds'
     | '/coins'
     | '/collections'
-    | '/explore'
-    | '/extractor'
     | '/leases'
-    | '/map'
     | '/marketplace'
     | '/reset-password'
     | '/wallet'
@@ -266,13 +226,9 @@ export interface FileRouteTypes {
     | '/'
     | '/activity'
     | '/auth'
-    | '/bitmaps'
     | '/builds'
     | '/coins'
-    | '/explore'
-    | '/extractor'
     | '/leases'
-    | '/map'
     | '/marketplace'
     | '/reset-password'
     | '/wallet'
@@ -291,14 +247,10 @@ export interface FileRouteTypes {
     | '/'
     | '/activity'
     | '/auth'
-    | '/bitmaps'
     | '/builds'
     | '/coins'
     | '/collections'
-    | '/explore'
-    | '/extractor'
     | '/leases'
-    | '/map'
     | '/marketplace'
     | '/reset-password'
     | '/wallet'
@@ -318,14 +270,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActivityRoute: typeof ActivityRoute
   AuthRoute: typeof AuthRoute
-  BitmapsRoute: typeof BitmapsRoute
   BuildsRoute: typeof BuildsRoute
   CoinsRoute: typeof CoinsRoute
   CollectionsRoute: typeof CollectionsRouteWithChildren
-  ExploreRoute: typeof ExploreRoute
-  ExtractorRoute: typeof ExtractorRoute
   LeasesRoute: typeof LeasesRoute
-  MapRoute: typeof MapRoute
   MarketplaceRoute: typeof MarketplaceRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   WalletRoute: typeof WalletRoute
@@ -361,13 +309,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/bitmaps': {
-      id: '/bitmaps'
-      path: '/bitmaps'
-      fullPath: '/bitmaps'
-      preLoaderRoute: typeof BitmapsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/builds': {
       id: '/builds'
       path: '/builds'
@@ -389,32 +330,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CollectionsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/explore': {
-      id: '/explore'
-      path: '/explore'
-      fullPath: '/explore'
-      preLoaderRoute: typeof ExploreRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/extractor': {
-      id: '/extractor'
-      path: '/extractor'
-      fullPath: '/extractor'
-      preLoaderRoute: typeof ExtractorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/leases': {
       id: '/leases'
       path: '/leases'
       fullPath: '/leases'
       preLoaderRoute: typeof LeasesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/map': {
-      id: '/map'
-      path: '/map'
-      fullPath: '/map'
-      preLoaderRoute: typeof MapRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marketplace': {
@@ -542,14 +462,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivityRoute: ActivityRoute,
   AuthRoute: AuthRoute,
-  BitmapsRoute: BitmapsRoute,
   BuildsRoute: BuildsRoute,
   CoinsRoute: CoinsRoute,
   CollectionsRoute: CollectionsRouteWithChildren,
-  ExploreRoute: ExploreRoute,
-  ExtractorRoute: ExtractorRoute,
   LeasesRoute: LeasesRoute,
-  MapRoute: MapRoute,
   MarketplaceRoute: MarketplaceRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   WalletRoute: WalletRoute,

@@ -5,20 +5,14 @@ import { BidInboxBell } from "@/components/BidInboxBell";
 import { HeaderIdentity } from "@/components/HeaderIdentity";
 
 const NAV = [
-  { to: "/explore", label: "EXPLORE" },
   { to: "/marketplace", label: "MARKETPLACE" },
   { to: "/collections", label: "COLLECTIONS" },
   { to: "/builds", label: "BUILDS" },
   { to: "/leases", label: "LEASES" },
   { to: "/coins", label: "BIT" },
-
-
-  { to: "/map", label: "MAP" },
   { to: "/activity", label: "ACTIVITY" },
-  { to: "/extractor", label: "EXTRACTOR" },
-  { to: "/bitmaps", label: "REGISTRY" },
-  { to: "/wallet", label: "WALLET" },
 ] as const;
+
 
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -32,7 +26,7 @@ export function SiteHeader() {
     if (/^\d{3,7}$/.test(q)) {
       navigate({ to: "/bitmap/$block", params: { block: q } });
     } else {
-      navigate({ to: "/explore", search: { q } });
+      navigate({ to: "/marketplace" });
     }
     setSearchOpen(false);
     setTerm("");
@@ -78,13 +72,13 @@ export function SiteHeader() {
             autoFocus
             value={term}
             onChange={(e) => setTerm(e.target.value)}
-            placeholder="Search block number, inscription or owner..."
+            placeholder="Search a block number, e.g. 840000"
             className="w-full bg-background font-mono text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
         </form>
       )}
 
-      <nav className="flex items-center justify-between gap-1 border-t border-border px-4 py-2 lg:hidden">
+      <nav className="flex flex-wrap items-center gap-x-1 gap-y-1 border-t border-border px-4 py-2 lg:hidden">
         {NAV.map((item) => (
           <Link
             key={item.to}

@@ -64,8 +64,8 @@ function Index() {
             <Link to="/marketplace" className="btn-term">
               [ ENTER MARKETPLACE ]
             </Link>
-            <Link to="/map" className="btn-term-ghost">
-              [ VIEW MAP ]
+            <Link to="/collections" className="btn-term-ghost">
+              [ BROWSE COLLECTIONS ]
             </Link>
           </div>
         </div>
