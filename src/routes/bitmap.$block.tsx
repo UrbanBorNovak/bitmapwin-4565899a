@@ -92,8 +92,6 @@ function BitmapDetail() {
   const sizeMap = useQuery(blockSizeMapQuery(block));
   const stats = useQuery(blockStatsQuery(block));
   const siblings = useQuery(patternSiblingsQuery(stats.data?.pattern));
-  const maxParcels = stats.data?.txCount ?? sizeMap.data?.txCount ?? scan.data?.txCount ?? null;
-
 
   const oci = useQuery(ociQuery(block));
   const trades = useQuery(tradesForHeightQuery(block));
