@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ParcelCard } from "@/components/ParcelCard";
-import { OfferBook } from "@/components/OfferBook";
+
 import { parcelOwnersQuery, registryBaseQuery, type RegistryParcel } from "@/lib/registry";
 import { formatSats } from "@/lib/trades";
 import { useLiveOffers } from "@/lib/use-live-offers";
@@ -230,9 +230,6 @@ function Marketplace() {
         </>
       )}
 
-
-
-      <OfferBook />
     </div>
   );
 }
