@@ -2,13 +2,8 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import {
-  closeCoinEvent,
-  eventEntriesQuery,
-  formatBit,
-  type CoinEvent,
-} from "@/lib/coins";
-import { drawEventFn, enterEventFn } from "@/lib/coins.functions";
+import { eventEntriesQuery, formatBit, type CoinEvent } from "@/lib/coins";
+import { closeEventFn, drawEventFn, enterEventFn } from "@/lib/coins.functions";
 import { useWalletSession, walletControls } from "@/lib/wallet-session";
 import { shortenAddress } from "@/lib/registry";
 
@@ -69,10 +64,15 @@ export function CoinEventCard({ event }: { event: CoinEvent }) {
   });
 
   const close = useMutation({
-    mutationFn: () => closeCoinEvent(event.id),
+    mutationFn: () => closeEventFn({ data: { eventId: event.id } }),
     onSuccess: () => {
       invalidate();
-      toast("EVENT CLOSED");
+      toast("EVENT CLOSED", {
+        description:
+          event.prizeCoins > 0 && !event.winnerAddress
+            ? `${formatBit(event.prizeCoins)} PRIZE REFUNDED`
+            : undefined,
+      });
     },
     onError: (e) => toast("COULD NOT CLOSE", { description: (e as Error).message.toUpperCase() }),
   });
@@ -107,13 +107,29 @@ export function CoinEventCard({ event }: { event: CoinEvent }) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="ENTRY" value={event.entryCost > 0 ? formatBit(event.entryCost) : "FREE"} />
         <Stat label="TICKETS" value={`${totalTickets}${event.maxEntries ? ` / ${event.maxEntries}` : ""}`} />
-        <Stat label="POT" value={formatBit(pot)} />
-        <Stat label="PRIZE" value={event.prize ? event.prize.toUpperCase() : "—"} />
+        <Stat
+          label="BIT PRIZE"
+          value={event.prizeCoins > 0 ? formatBit(event.prizeCoins) : "—"}
+        />
+        <Stat label="TICKET POT" value={formatBit(pot)} />
       </div>
+
+      {event.prize ? (
+        <p className="font-mono text-[11px] text-muted-foreground">
+          ALSO WINS {event.prize.toUpperCase()}
+        </p>
+      ) : null}
+
+      {event.prizeCoins > 0 && !event.winnerAddress ? (
+        <p className="font-mono text-[11px] text-muted-foreground">
+          {formatBit(event.prizeCoins)} LOCKED BY THE HOST FOR THE WINNER
+        </p>
+      ) : null}
 
       {event.winnerAddress ? (
         <p className="font-mono text-[11px] text-accent">
           WINNER {shortenAddress(event.winnerAddress)}
+          {event.prizeCoins > 0 ? ` · PAID ${formatBit(event.prizeCoins)}` : ""}
         </p>
       ) : null}
 
