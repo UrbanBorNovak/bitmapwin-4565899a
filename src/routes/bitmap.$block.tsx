@@ -12,6 +12,7 @@ import { blockStatsQuery, patternSiblingsQuery } from "@/lib/block-stats";
 
 
 import { BidPanel } from "@/components/BidPanel";
+import { BitmapChat } from "@/components/BitmapChat";
 import { ParcelPagePanel } from "@/components/ParcelPagePanel";
 import { LeasePanel } from "@/components/leases/LeasePanel";
 import { BitmapEvents } from "@/components/coins/BitmapEvents";
