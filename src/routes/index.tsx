@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ParcelCard } from "@/components/ParcelCard";
-import { registryParcelsQuery } from "@/lib/registry";
-import { recentTradesQuery } from "@/lib/trade-store";
+import { registryParcelsQuery, registryCountQuery } from "@/lib/registry";
+import { recentTradesQuery, tradedBitmapCountQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
 
 export const Route = createFileRoute("/")({
@@ -26,6 +26,8 @@ export const Route = createFileRoute("/")({
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(registryParcelsQuery(120));
     context.queryClient.ensureQueryData(recentTradesQuery(20));
+    context.queryClient.ensureQueryData(registryCountQuery());
+    context.queryClient.ensureQueryData(tradedBitmapCountQuery());
   },
   component: Index,
   errorComponent: ({ error }) => (
@@ -40,8 +42,9 @@ export const Route = createFileRoute("/")({
 function Index() {
   const { data: parcels } = useSuspenseQuery(registryParcelsQuery(120));
   const { data: trades } = useSuspenseQuery(recentTradesQuery(20));
+  const { data: indexedCount } = useSuspenseQuery(registryCountQuery());
+  const { data: tradedCount } = useSuspenseQuery(tradedBitmapCountQuery());
 
-  const traded = parcels.filter((p) => p.transfers > 0);
   const featured = [...parcels]
     .sort((a, b) => (b.lastSaleSats ?? -1) - (a.lastSaleSats ?? -1))
     .slice(0, 8);
@@ -72,8 +75,8 @@ function Index() {
       </section>
 
       <section className="grid grid-cols-2 divide-x divide-border border-b border-border md:grid-cols-4">
-        <Stat k="INDEXED BITMAPS" v={String(parcels.length)} />
-        <Stat k="TRADED ON CHAIN" v={String(traded.length)} />
+        <Stat k="INDEXED BITMAPS" v={indexedCount.toLocaleString("en-US")} />
+        <Stat k="TRADED ON CHAIN" v={tradedCount.toLocaleString("en-US")} />
         <Stat k="LAST SALE" v={lastSale ? formatSats(lastSale.price_sats) : "—"} />
         <Stat k="NETWORK" v="MAINNET" />
       </section>

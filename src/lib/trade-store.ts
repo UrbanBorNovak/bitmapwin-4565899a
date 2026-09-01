@@ -107,3 +107,17 @@ export const recentTradesQuery = (limit = 60) =>
     queryFn: () => fetchRecentTrades(limit),
     staleTime: 30_000,
   });
+
+/** Distinct bitmap heights that have a real traced on-chain transfer. */
+export async function fetchTradedBitmapCount(): Promise<number> {
+  const { data, error } = await supabase.from("trades").select("bitmap_height");
+  if (error) throw error;
+  return new Set((data ?? []).map((row) => row.bitmap_height)).size;
+}
+
+export const tradedBitmapCountQuery = () =>
+  queryOptions({
+    queryKey: ["trades", "traded-count"],
+    queryFn: fetchTradedBitmapCount,
+    staleTime: 120_000,
+  });
