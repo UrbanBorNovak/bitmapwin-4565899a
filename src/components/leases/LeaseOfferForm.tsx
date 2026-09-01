@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { closeLeaseOffer, satsToBtc, upsertLeaseOffer, type LeaseOffer } from "@/lib/leases";
+import { closeLeaseOffer, formatBit, upsertLeaseOffer, type LeaseOffer } from "@/lib/leases";
 import { useWalletSession } from "@/lib/wallet-session";
 
 /**
- * Holder-side lease listing: set a daily rent and a term window. The renter
- * pays that rent on-chain, so this is the holder's earning surface.
+ * Holder-side lease listing: set a daily rent in BIT and a term window. The
+ * renter pays that rent off-chain, so this is the holder's earning surface.
  */
 export function LeaseOfferForm({
   height,
@@ -19,12 +19,12 @@ export function LeaseOfferForm({
 }) {
   const wallet = useWalletSession();
   const queryClient = useQueryClient();
-  const [rate, setRate] = useState(offer ? String(offer.rateSatsPerDay) : "");
+  const [rate, setRate] = useState(offer ? String(offer.rateCoinsPerDay) : "");
   const [minDays, setMinDays] = useState(offer ? String(offer.minDays) : "1");
   const [maxDays, setMaxDays] = useState(offer ? String(offer.maxDays) : "30");
   const [note, setNote] = useState(offer?.note ?? "");
 
-  const rateSats = useMemo(() => {
+  const rateCoins = useMemo(() => {
     const n = Math.round(Number(rate));
     return Number.isFinite(n) && n > 0 ? n : null;
   }, [rate]);
@@ -43,14 +43,13 @@ export function LeaseOfferForm({
   const save = useMutation({
     mutationFn: async () => {
       if (!controls) throw new Error("CONNECT THE HOLDING WALLET FIRST");
-      if (rateSats === null) throw new Error("SET A DAILY RENT ABOVE ZERO");
+      if (rateCoins === null) throw new Error("SET A DAILY RENT ABOVE ZERO");
       const min = Math.max(1, Math.round(Number(minDays) || 1));
       const max = Math.max(min, Math.round(Number(maxDays) || min));
-      if (rateSats * min < 546) throw new Error("MINIMUM RENT MUST REACH 546 SATS");
       await upsertLeaseOffer({
         bitmapHeight: height,
         ownerAddress,
-        rateSatsPerDay: rateSats,
+        rateCoinsPerDay: rateCoins,
         minDays: min,
         maxDays: max,
         note: note.trim() || null,
@@ -59,7 +58,7 @@ export function LeaseOfferForm({
     onSuccess: () => {
       invalidate();
       toast(`${height}.BITMAP OPEN FOR LEASE`, {
-        description: `${rateSats} SATS / DAY · RENT PAID DIRECTLY TO YOU`,
+        description: `${formatBit(rateCoins ?? 0)} / DAY PAID STRAIGHT TO YOUR BALANCE`,
       });
     },
     onError: (e) => toast("LEASE OFFER FAILED", { description: (e as Error).message.toUpperCase() }),
@@ -88,14 +87,14 @@ export function LeaseOfferForm({
   return (
     <div className="space-y-3">
       <label className="label" htmlFor={`rent-${height}`}>
-        DAILY RENT IN SATS FOR {height}.BITMAP
+        DAILY RENT IN BIT FOR {height}.BITMAP
       </label>
       <div className="flex flex-wrap gap-2">
         <input
           id={`rent-${height}`}
           className="w-40 border border-border bg-transparent px-3 py-2 font-mono text-xs"
           inputMode="numeric"
-          placeholder="5000"
+          placeholder="250"
           value={rate}
           onChange={(e) => setRate(e.target.value)}
         />
@@ -142,9 +141,9 @@ export function LeaseOfferForm({
             [ CLOSE OFFER ]
           </button>
         ) : null}
-        {rateSats !== null ? (
+        {rateCoins !== null ? (
           <span className="font-mono text-[11px] text-muted-foreground">
-            {satsToBtc(rateSats * 30)} BTC / 30 DAYS
+            {formatBit(rateCoins * 30)} / 30 DAYS
           </span>
         ) : null}
       </div>
