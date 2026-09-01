@@ -234,7 +234,7 @@ export type BuildConfigMap = {
 export type BuildConfig = BuildConfigMap[BuildKind];
 
 export const DEFAULT_CONFIGS: BuildConfigMap = {
-  info: { headline: "", fields: [], links: [] },
+  info: { headline: "", subline: "", fields: [], links: [], theme: DEFAULT_THEME },
   shop: {
     shopName: "MY SHOP",
     tagline: "",
@@ -246,7 +246,13 @@ export const DEFAULT_CONFIGS: BuildConfigMap = {
     frame: "sharp",
     items: [],
   },
-  gallery: { columns: 3, items: [] },
+  gallery: {
+    columns: 3,
+    fit: "contain",
+    monochrome: false,
+    items: [],
+    theme: DEFAULT_THEME,
+  },
   game3d: {
     worldName: "BLOCK WORLD",
     scene: "city",
