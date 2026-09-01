@@ -13,6 +13,7 @@ import { formatSats } from "@/lib/trades";
 import { useLiveOffers } from "@/lib/use-live-offers";
 import { TrendingParcels } from "@/components/TrendingParcels";
 import { CLUBS, inClub, type ClubId } from "@/lib/clubs";
+import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 
 
 export const Route = createFileRoute("/marketplace")({
@@ -138,6 +139,8 @@ function Marketplace() {
       </div>
 
       <TrendingParcels limit={3} />
+
+      <BitmapOrderBook />
 
 
 

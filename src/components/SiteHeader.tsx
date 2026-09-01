@@ -3,6 +3,7 @@ import { Search, X } from "lucide-react";
 import { useState } from "react";
 import { BidInboxBell } from "@/components/BidInboxBell";
 import { HeaderIdentity } from "@/components/HeaderIdentity";
+import { BtcTicker } from "@/components/BtcTicker";
 
 const NAV = [
   { to: "/marketplace", label: "MARKETPLACE" },
@@ -51,6 +52,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <BtcTicker className="hidden sm:flex" />
           <button
             aria-label="Search bitmaps"
             onClick={() => setSearchOpen((v) => !v)}
