@@ -1,16 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import { ParcelCard } from "@/components/ParcelCard";
 import { OfferBook } from "@/components/OfferBook";
 import { parcelOwnersQuery, registryBaseQuery, type RegistryParcel } from "@/lib/registry";
-import { getBlockInscriptions, getRecentInscriptions } from "@/lib/ordinals-scan.functions";
-import { saveChainInscriptions } from "@/lib/inscription-store";
-import { traceBitmapTradesFn } from "@/lib/trades.functions";
-import { saveTrades } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
-import { settleOffersFn } from "@/lib/settle.functions";
 import { useLiveOffers } from "@/lib/use-live-offers";
 import { TrendingParcels } from "@/components/TrendingParcels";
 import { CLUBS, inClub, type ClubId } from "@/lib/clubs";
@@ -49,27 +43,6 @@ type Tab = "traded" | "listed" | "all";
 
 const PAGE_SIZE = 24;
 
-/** Traces claims on chain in batches of 40 and stores every transfer found. */
-async function traceAndStore(claims: RegistryParcel[]): Promise<{ traced: number; trades: number }> {
-  let trades = 0;
-  const batches: RegistryParcel[][] = [];
-  for (let i = 0; i < claims.length; i += 40) batches.push(claims.slice(i, i + 40));
-  for (const batch of batches) {
-    const traces = await traceBitmapTradesFn({
-      data: {
-        claims: batch.map((p) => ({
-          bitmapHeight: p.bitmapHeight,
-          txid: p.txid,
-          inscriptionId: p.inscriptionId,
-        })),
-        maxHops: 6,
-      },
-    });
-    trades += await saveTrades(traces);
-  }
-  return { traced: claims.length, trades };
-}
-
 function Marketplace() {
   const registry = useQuery(registryBaseQuery(300));
   const parcels = registry.data ?? [];
@@ -77,72 +50,7 @@ function Marketplace() {
   const [search, setSearch] = useState("");
   const [club, setClub] = useState<ClubId | "any">("any");
   const [page, setPage] = useState(0);
-  const [syncHeight, setSyncHeight] = useState("");
-  const queryClient = useQueryClient();
   useLiveOffers();
-
-
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["registry"] });
-    queryClient.invalidateQueries({ queryKey: ["trades"] });
-  };
-
-  const sync = useMutation({
-    mutationFn: async () => {
-      const height = Number(syncHeight);
-      const blocks =
-        syncHeight.trim() !== "" && Number.isFinite(height)
-          ? [await getBlockInscriptions({ data: { height, txPages: 12 } })]
-          : await getRecentInscriptions({ data: { blocks: 8, txPages: 6 } });
-      const found = blocks.flatMap((b) => b.inscriptions);
-      const saved = await saveChainInscriptions(found);
-      const claims = found.filter((i) => i.isBitmapClaim);
-      const traced = await traceAndStore(
-        claims
-          .filter((c) => c.bitmapHeight !== null)
-          .map(
-            (c) =>
-              ({
-                bitmapHeight: c.bitmapHeight as number,
-                txid: c.txid,
-                inscriptionId: c.id,
-              }) as RegistryParcel,
-          ),
-      );
-      return { saved, claims: claims.length, blocks: blocks.length, trades: traced.trades };
-    },
-    onSuccess: (r) => {
-      invalidate();
-      toast(`INDEXED ${r.saved} INSCRIPTION(S)`, {
-        description: `${r.claims} CLAIM(S) · ${r.trades} ON-CHAIN TRANSFER(S) ACROSS ${r.blocks} BLOCKS`,
-      });
-    },
-    onError: (e) => toast("CHAIN SYNC FAILED", { description: (e as Error).message }),
-  });
-
-  const refreshTrades = useMutation({
-    mutationFn: () => traceAndStore(parcels.slice(0, 120)),
-    onSuccess: (r) => {
-      invalidate();
-      toast(`TRACED ${r.traced} BITMAP(S)`, {
-        description: `${r.trades} CONFIRMED TRANSFER(S) STORED`,
-      });
-    },
-    onError: (e) => toast("TRADE TRACE FAILED", { description: (e as Error).message }),
-  });
-
-  const settle = useMutation({
-    mutationFn: () => settleOffersFn({ data: { limit: 40 } }),
-    onSuccess: (r) => {
-      invalidate();
-      queryClient.invalidateQueries({ queryKey: ["offers"] });
-      queryClient.invalidateQueries({ queryKey: ["wallet-offers"] });
-      toast(`CHECKED ${r.checked} LISTING(S)`, {
-        description: `${r.settled} SETTLED ON CHAIN · ${r.trades} TRANSFER(S) RECORDED`,
-      });
-    },
-    onError: (e) => toast("SETTLEMENT FAILED", { description: (e as Error).message }),
-  });
 
   const listed = useMemo(() => parcels.filter((p) => p.listedSats !== null), [parcels]);
   const traded = useMemo(() => parcels.filter((p) => p.transfers > 0), [parcels]);
@@ -194,7 +102,7 @@ function Marketplace() {
   const volume = saleSats.reduce((a, b) => a + b, 0);
   const holders = new Set(parcels.map((p) => p.ownerAddress).filter(Boolean)).size;
 
-  const busy = sync.isPending || refreshTrades.isPending || settle.isPending;
+  
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-12 md:px-8">
@@ -285,25 +193,6 @@ function Marketplace() {
           placeholder="SEARCH HEIGHT / OWNER / TXID"
           className="min-w-[240px] flex-1 border border-border bg-background px-3 py-2 font-mono text-xs uppercase text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
         />
-        <input
-          value={syncHeight}
-          onChange={(e) => setSyncHeight(e.target.value.replace(/[^0-9]/g, ""))}
-          placeholder="BLOCK TO INDEX"
-          className="w-[150px] border border-border bg-background px-3 py-2 font-mono text-xs uppercase text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
-        />
-        <button className="btn-term-ghost" disabled={busy} onClick={() => sync.mutate()}>
-          {sync.isPending ? "[ SYNCING… ]" : "[ SYNC CHAIN ]"}
-        </button>
-        <button
-          className="btn-term-ghost"
-          disabled={busy || parcels.length === 0}
-          onClick={() => refreshTrades.mutate()}
-        >
-          {refreshTrades.isPending ? "[ TRACING TRADES… ]" : "[ TRACE TRADES ]"}
-        </button>
-        <button className="btn-term-ghost" disabled={busy} onClick={() => settle.mutate()}>
-          {settle.isPending ? "[ SETTLING… ]" : "[ SETTLE SALES ]"}
-        </button>
         <span className="label">HOLDERS {holders}</span>
       </div>
 
@@ -397,7 +286,7 @@ function EmptyRegistry() {
     <div className="mt-10 border border-border p-10">
       <h2 className="display text-2xl">NO BITMAPS IN THE REGISTRY YET</h2>
       <p className="mt-4 font-mono text-sm text-muted-foreground">
-        &gt; RUN [ SYNC CHAIN ] TO INDEX REAL BITMAP CLAIMS AND THEIR TRADES
+        &gt; CHECK BACK SOON — BITMAPS ARE INDEXED FROM REAL BITCOIN BLOCKS
         <span className="blink">_</span>
       </p>
       <div className="mt-8 flex flex-wrap gap-2">
