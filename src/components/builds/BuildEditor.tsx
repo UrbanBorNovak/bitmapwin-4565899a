@@ -305,45 +305,194 @@ function Game3dEditor({
   config: Game3dConfig;
   onChange: (c: Game3dConfig) => void;
 }) {
+  const setModel = (index: number, patch: Partial<Game3dModel>) => {
+    const models = [...config.models];
+    const current = models[index];
+    if (!current) return;
+    models[index] = { ...current, ...patch };
+    onChange({ ...config, models });
+  };
+
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      <label className="block">
-        <span className="label">WORLD NAME</span>
-        <input
-          className={`mt-1 ${input}`}
-          value={config.worldName}
-          onChange={(e) => onChange({ ...config, worldName: e.target.value.slice(0, 60) })}
-        />
-      </label>
-      <label className="block">
-        <span className="label">TOWERS ({config.towers})</span>
-        <input
-          type="range"
-          min={4}
-          max={64}
-          value={config.towers}
-          className="mt-3 w-full accent-primary"
-          onChange={(e) => onChange({ ...config, towers: Number(e.target.value) })}
-        />
-      </label>
-      <label className="block">
-        <span className="label">ACCENT</span>
-        <input
-          type="color"
-          className="mt-1 h-9 w-full rounded-md border border-border bg-background"
-          value={config.accent}
-          onChange={(e) => onChange({ ...config, accent: e.target.value })}
-        />
-      </label>
-      <label className="flex items-center gap-2 pt-6">
-        <input
-          type="checkbox"
-          checked={config.spin}
-          className="accent-primary"
-          onChange={(e) => onChange({ ...config, spin: e.target.checked })}
-        />
-        <span className="label">AUTO ORBIT</span>
-      </label>
+    <div className="space-y-4">
+      <div>
+        <span className="label">WORLD STYLE</span>
+        <div className="mt-2 grid gap-2 sm:grid-cols-3">
+          {GAME3D_SCENES.map((scene) => (
+            <button
+              key={scene}
+              type="button"
+              onClick={() => onChange({ ...config, scene })}
+              className={`rounded-md border px-3 py-2 text-left transition-colors ${
+                config.scene === scene ? "border-primary bg-card" : "border-border hover:border-primary"
+              }`}
+            >
+              <span className="display block text-xs">{GAME3D_SCENE_LABELS[scene]}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="block">
+          <span className="label">WORLD NAME</span>
+          <input
+            className={`mt-1 ${input}`}
+            value={config.worldName}
+            onChange={(e) => onChange({ ...config, worldName: e.target.value.slice(0, 60) })}
+          />
+        </label>
+        <label className="block">
+          <span className="label">STRUCTURES ({config.towers})</span>
+          <input
+            type="range"
+            min={4}
+            max={64}
+            value={config.towers}
+            className="mt-3 w-full accent-primary"
+            onChange={(e) => onChange({ ...config, towers: Number(e.target.value) })}
+          />
+        </label>
+        <label className="block">
+          <span className="label">ACCENT</span>
+          <input
+            type="color"
+            className="mt-1 h-9 w-full rounded-md border border-border bg-background"
+            value={config.accent}
+            onChange={(e) => onChange({ ...config, accent: e.target.value })}
+          />
+        </label>
+        <label className="block">
+          <span className="label">GROUND / SKY</span>
+          <input
+            type="color"
+            className="mt-1 h-9 w-full rounded-md border border-border bg-background"
+            value={config.ground}
+            onChange={(e) => onChange({ ...config, ground: e.target.value })}
+          />
+        </label>
+        <div className="flex flex-wrap gap-4 pt-1">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={config.spin}
+              className="accent-primary"
+              onChange={(e) => onChange({ ...config, spin: e.target.checked })}
+            />
+            <span className="label">AUTO ORBIT</span>
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={config.grid}
+              className="accent-primary"
+              onChange={(e) => onChange({ ...config, grid: e.target.checked })}
+            />
+            <span className="label">GRID</span>
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={config.fog}
+              className="accent-primary"
+              onChange={(e) => onChange({ ...config, fog: e.target.checked })}
+            />
+            <span className="label">FOG</span>
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <span className="label">ON-CHAIN 3D MODELS (GLB / GLTF INSCRIPTIONS)</span>
+        <p className="label mt-1 text-muted-foreground">
+          PASTE AN INSCRIPTION ID THAT HOLDS A .GLB MODEL — IT LOADS STRAIGHT FROM{" "}
+          <a
+            href="https://ordinals.com/"
+            target="_blank"
+            rel="noreferrer"
+            className="underline decoration-border underline-offset-4 hover:text-foreground"
+          >
+            ORDINALS.COM
+          </a>
+          . UP TO 6 MODELS.
+        </p>
+        {config.models.map((model, i) => (
+          <div key={i} className="mt-2 space-y-2 rounded-md border border-border p-3">
+            <div className="grid gap-2 sm:grid-cols-[2fr_1fr_auto]">
+              <input
+                className={input}
+                placeholder="<txid>i0"
+                value={model.inscriptionId}
+                onChange={(e) => setModel(i, { inscriptionId: e.target.value.trim().slice(0, 120) })}
+              />
+              <input
+                className={input}
+                placeholder="LABEL"
+                value={model.label}
+                onChange={(e) => setModel(i, { label: e.target.value.slice(0, 60) })}
+              />
+              <button
+                className="btn-term-ghost"
+                type="button"
+                onClick={() => onChange({ ...config, models: config.models.filter((_, x) => x !== i) })}
+              >
+                [ X ]
+              </button>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <label className="block">
+                <span className="label">SCALE ({model.scale.toFixed(1)}×)</span>
+                <input
+                  type="range"
+                  min={0.1}
+                  max={20}
+                  step={0.1}
+                  value={model.scale}
+                  className="mt-2 w-full accent-primary"
+                  onChange={(e) => setModel(i, { scale: Number(e.target.value) })}
+                />
+              </label>
+              <label className="block">
+                <span className="label">HEIGHT ({model.height})</span>
+                <input
+                  type="range"
+                  min={-5}
+                  max={20}
+                  value={model.height}
+                  className="mt-2 w-full accent-primary"
+                  onChange={(e) => setModel(i, { height: Number(e.target.value) })}
+                />
+              </label>
+              <label className="flex items-center gap-2 pt-5">
+                <input
+                  type="checkbox"
+                  checked={model.spin}
+                  className="accent-primary"
+                  onChange={(e) => setModel(i, { spin: e.target.checked })}
+                />
+                <span className="label">ROTATE MODEL</span>
+              </label>
+            </div>
+          </div>
+        ))}
+        {config.models.length < 6 ? (
+          <button
+            type="button"
+            className="btn-term-ghost mt-2"
+            onClick={() =>
+              onChange({
+                ...config,
+                models: [
+                  ...config.models,
+                  { inscriptionId: "", label: "", scale: 1, height: 0, spin: false },
+                ],
+              })
+            }
+          >
+            [ + ON-CHAIN MODEL ]
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }
