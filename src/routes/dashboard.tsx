@@ -265,7 +265,7 @@ function DashboardPage() {
                     className="border border-border px-2 py-1 font-mono text-[11px] transition-colors hover:border-primary"
                   >
                     {height}.BITMAP
-                    <span className="ml-2 text-muted-foreground">{clubOf(height)?.label ?? ""}</span>
+                    <span className="ml-2 text-muted-foreground">{clubOf(height).label}</span>
                   </Link>
                 ))}
             </div>
