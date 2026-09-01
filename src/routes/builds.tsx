@@ -43,8 +43,8 @@ type KindFilter = "all" | BuildKind;
 const PAGE_SIZE = 12;
 
 const TABS: { id: FeedTab; label: string }[] = [
-  { id: "recent", label: "RECENTLY BUILT" },
-  { id: "visited", label: "MOST VISITED" },
+  { id: "recent", label: "NEWEST" },
+  { id: "visited", label: "POPULAR" },
   { id: "following", label: "FOLLOWING" },
 ];
 
