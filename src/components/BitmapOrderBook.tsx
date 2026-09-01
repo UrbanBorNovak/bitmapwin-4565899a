@@ -272,7 +272,7 @@ function AskRow({
 }: {
   ask: Offer;
   max: number;
-  usdPerBtc?: number;
+  usdPerBtc?: number | undefined;
   checked: boolean;
   onToggle: () => void;
 }) {
