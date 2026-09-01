@@ -21,7 +21,7 @@ export function LeasePanel({
   const offer = lease.data?.offer ?? null;
 
   return (
-    <section className="panel space-y-4 p-4">
+    <section className="border border-border p-5 space-y-4">
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="font-sans text-sm font-bold tracking-widest">LEASE</h2>
         <Link to="/leases" className="font-mono text-[11px] text-muted-foreground hover:text-foreground">

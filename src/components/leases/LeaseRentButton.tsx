@@ -72,7 +72,7 @@ export function LeaseRentButton({ offer }: { offer: LeaseOffer }) {
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
         <input
-          className="input w-24 font-mono"
+          className="w-24 border border-border bg-transparent px-3 py-2 font-mono text-xs"
           inputMode="numeric"
           aria-label="LEASE DAYS"
           value={days}
@@ -83,7 +83,7 @@ export function LeaseRentButton({ offer }: { offer: LeaseOffer }) {
         </span>
         <button
           type="button"
-          className="btn"
+          className="btn-term !px-3 !py-1.5"
           disabled={rent.isPending || !wallet}
           onClick={() => rent.mutate()}
         >

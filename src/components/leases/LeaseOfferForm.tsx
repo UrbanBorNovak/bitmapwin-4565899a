@@ -93,14 +93,14 @@ export function LeaseOfferForm({
       <div className="flex flex-wrap gap-2">
         <input
           id={`rent-${height}`}
-          className="input w-40 font-mono"
+          className="w-40 border border-border bg-transparent px-3 py-2 font-mono text-xs"
           inputMode="numeric"
           placeholder="5000"
           value={rate}
           onChange={(e) => setRate(e.target.value)}
         />
         <input
-          className="input w-24 font-mono"
+          className="w-24 border border-border bg-transparent px-3 py-2 font-mono text-xs"
           inputMode="numeric"
           aria-label="MINIMUM DAYS"
           placeholder="MIN"
@@ -108,7 +108,7 @@ export function LeaseOfferForm({
           onChange={(e) => setMinDays(e.target.value)}
         />
         <input
-          className="input w-24 font-mono"
+          className="w-24 border border-border bg-transparent px-3 py-2 font-mono text-xs"
           inputMode="numeric"
           aria-label="MAXIMUM DAYS"
           placeholder="MAX"
@@ -117,7 +117,7 @@ export function LeaseOfferForm({
         />
       </div>
       <input
-        className="input w-full font-mono"
+        className="w-full border border-border bg-transparent px-3 py-2 font-mono text-xs"
         aria-label="LEASE NOTE"
         placeholder="WHAT THE LEASE INCLUDES (OPTIONAL)"
         value={note}
@@ -126,7 +126,7 @@ export function LeaseOfferForm({
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          className="btn"
+          className="btn-term !px-3 !py-1.5"
           disabled={save.isPending}
           onClick={() => save.mutate()}
         >
@@ -135,7 +135,7 @@ export function LeaseOfferForm({
         {offer ? (
           <button
             type="button"
-            className="btn"
+            className="btn-term !px-3 !py-1.5"
             disabled={close.isPending}
             onClick={() => close.mutate()}
           >
