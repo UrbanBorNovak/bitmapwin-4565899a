@@ -148,13 +148,11 @@ export function ShopBuild({ config, height }: { config: ShopConfig; height: numb
  */
 function ShopItemAction({
   item,
-  height: _height,
   offer,
   contactUrl,
   accent,
 }: {
   item: ShopItem;
-  height: number;
   offer: { id: string; priceSats: number } | null;
   contactUrl?: string;
   accent: string;
