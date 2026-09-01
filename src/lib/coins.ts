@@ -45,6 +45,7 @@ export type CoinEvent = {
   title: string;
   description: string | null;
   prize: string | null;
+  prizeCoins: number;
   entryCost: number;
   maxEntries: number | null;
   status: string;
@@ -73,6 +74,9 @@ export const REASON_LABEL: Record<string, string> = {
   lease_rent_earned: "RENT EARNED",
   event_entry: "EVENT ENTRY",
   event_revenue: "EVENT REVENUE",
+  event_prize_locked: "PRIZE LOCKED",
+  event_prize_won: "PRIZE WON",
+  event_prize_refund: "PRIZE REFUNDED",
 };
 
 export function formatBit(amount: number): string {
@@ -111,6 +115,7 @@ type EventRow = {
   title: string;
   description: string | null;
   prize: string | null;
+  prize_coins: number;
   entry_cost: number;
   max_entries: number | null;
   status: string;
@@ -121,7 +126,7 @@ type EventRow = {
 };
 
 const EVENT_COLS =
-  "id, kind, bitmap_height, host_address, title, description, prize, entry_cost, max_entries, status, ends_at, winner_address, drawn_at, created_at";
+  "id, kind, bitmap_height, host_address, title, description, prize, prize_coins, entry_cost, max_entries, status, ends_at, winner_address, drawn_at, created_at";
 
 function mapEvent(row: EventRow): CoinEvent {
   return {
@@ -132,6 +137,7 @@ function mapEvent(row: EventRow): CoinEvent {
     title: row.title,
     description: row.description,
     prize: row.prize,
+    prizeCoins: Number(row.prize_coins ?? 0),
     entryCost: Number(row.entry_cost),
     maxEntries: row.max_entries === null ? null : Number(row.max_entries),
     status: row.status,
@@ -289,34 +295,15 @@ export const rewardRunsQuery = (limit = 7) =>
     staleTime: 60_000,
   });
 
-/** Holder-side event creation. RLS requires a verified wallet link. */
-export async function createCoinEvent(input: {
+export type CreateCoinEventInput = {
   kind: CoinEventKind;
   bitmapHeight: number | null;
   hostAddress: string;
   title: string;
   description?: string | null;
   prize?: string | null;
+  prizeCoins: number;
   entryCost: number;
   maxEntries?: number | null;
   endsAt?: string | null;
-}): Promise<void> {
-  const { error } = await supabase.from("coin_events").insert({
-    kind: input.kind,
-    bitmap_height: input.bitmapHeight,
-    host_address: input.hostAddress,
-    title: input.title,
-    description: input.description ?? null,
-    prize: input.prize ?? null,
-    entry_cost: input.entryCost,
-    max_entries: input.maxEntries ?? null,
-    ends_at: input.endsAt ?? null,
-    status: "open",
-  });
-  if (error) throw new Error(error.message);
-}
-
-export async function closeCoinEvent(id: string): Promise<void> {
-  const { error } = await supabase.from("coin_events").update({ status: "closed" }).eq("id", id);
-  if (error) throw new Error(error.message);
-}
+};

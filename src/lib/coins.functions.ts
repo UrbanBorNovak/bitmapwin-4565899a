@@ -38,3 +38,40 @@ export const runDailyRewardsFn = createServerFn({ method: "POST" }).handler(asyn
   const { runDailyRewards } = await import("@/lib/coins.server");
   return runDailyRewards();
 });
+
+/** Hosts a raffle, giveaway or event. Any BIT prize is locked on creation. */
+export const createEventFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        kind: z.enum(["raffle", "giveaway", "event"]),
+        hostAddress: addressSchema,
+        title: z.string().trim().min(3).max(120),
+        bitmapHeight: z.number().int().min(0).max(10_000_000).nullable(),
+        description: z.string().trim().max(1200).nullable(),
+        prize: z.string().trim().max(200).nullable(),
+        prizeCoins: z.number().int().min(0).max(10_000_000),
+        entryCost: z.number().int().min(0).max(10_000_000),
+        maxEntries: z.number().int().min(1).max(100_000).nullable(),
+        endsAt: z.string().datetime().nullable(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { assertControls, createEvent } = await import("@/lib/coins.server");
+    await assertControls(context.supabase, context.userId, data.hostAddress);
+    return createEvent(data);
+  });
+
+/** Host closes their event; a locked BIT prize goes back to them. */
+export const closeEventFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ eventId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { assertControls, closeEvent, eventHost } = await import("@/lib/coins.server");
+    const host = await eventHost(data.eventId);
+    await assertControls(context.supabase, context.userId, host);
+    await closeEvent(data.eventId);
+    return { ok: true };
+  });
