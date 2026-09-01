@@ -389,28 +389,6 @@ function Stat({ k, v }: { k: string; v: string }) {
   );
 }
 
-function UtxoRow({ utxo }: { utxo: WalletUtxo }) {
-  return (
-    <li className="p-5">
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <span className="font-mono text-[11px] break-all">{utxo.outpoint}</span>
-        <div className="flex items-center gap-4">
-          <span className="display text-sm">{formatSats(utxo.valueSats)}</span>
-          <span className="label">{utxo.confirmations.toLocaleString()} CONF</span>
-        </div>
-      </div>
-      {utxo.inscriptions.length > 0 && (
-        <ul className="mt-3 space-y-1">
-          {utxo.inscriptions.map((ins) => (
-            <li key={ins.id} className="font-mono text-[10px] break-all text-muted-foreground">
-              {ins.bitmapHeight === null ? "INSCRIPTION" : `${ins.bitmapHeight}.BITMAP`} · {ins.id}
-            </li>
-          ))}
-        </ul>
-      )}
-    </li>
-  );
-}
 
 function OfferList({
   offers,
