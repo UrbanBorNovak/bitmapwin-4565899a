@@ -556,6 +556,11 @@ function Game3dEditor({
         </div>
       </div>
 
+      <PaletteStrip
+        activeAccent={config.accent}
+        onPick={(p) => onChange({ ...config, accent: p.accent, ground: p.ground })}
+      />
+
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block">
           <span className="label">WORLD NAME</span>
