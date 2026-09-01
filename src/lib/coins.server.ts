@@ -244,13 +244,13 @@ export async function createEvent(input: {
     _kind: input.kind,
     _host_address: input.hostAddress,
     _title: input.title,
-    _bitmap_height: input.bitmapHeight ?? undefined,
-    _description: input.description ?? undefined,
-    _prize: input.prize ?? undefined,
     _prize_coins: input.prizeCoins,
     _entry_cost: input.entryCost,
-    _max_entries: input.maxEntries ?? undefined,
-    _ends_at: input.endsAt ?? undefined,
+    ...(input.bitmapHeight === null ? {} : { _bitmap_height: input.bitmapHeight }),
+    ...(input.description === null ? {} : { _description: input.description }),
+    ...(input.prize === null ? {} : { _prize: input.prize }),
+    ...(input.maxEntries === null ? {} : { _max_entries: input.maxEntries }),
+    ...(input.endsAt === null ? {} : { _ends_at: input.endsAt }),
   });
   if (error) throw new Error(error.message);
   return { eventId: String(data) };
