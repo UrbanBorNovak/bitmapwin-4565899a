@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import {
   inscriptionContentUrl,
   seededRandom,
@@ -118,8 +119,13 @@ export default function Game3DBuild({ config, height }: { config: Game3dConfig; 
     scene.add(world);
 
     // ---- on-chain models -------------------------------------------------
+    // Most ordinals GLBs are Draco compressed, so the decoder is always wired.
     const loader = new GLTFLoader();
+    const draco = new DRACOLoader();
+    draco.setDecoderPath("https://www.gstatic.com/draco/versioned/decoders/1.5.7/");
+    loader.setDRACOLoader(draco);
     const loaded: THREE.Object3D[] = [];
+    const mixers: THREE.AnimationMixer[] = [];
     const spinners: THREE.Object3D[] = [];
     let cancelled = false;
     const statuses = config.models.map((m) => `LOADING ${m.label || m.inscriptionId.slice(0, 10)}…`);
@@ -146,6 +152,11 @@ export default function Game3DBuild({ config, height }: { config: Game3dConfig; 
             Math.sin(angle) * radius - center.z,
           );
           scene.add(object);
+          if (gltf.animations.length > 0) {
+            const mixer = new THREE.AnimationMixer(object);
+            mixer.clipAction(gltf.animations[0]!).play();
+            mixers.push(mixer);
+          }
           loaded.push(object);
           if (model.spin) spinners.push(object);
           setModelStatus((prev) => {
@@ -222,6 +233,7 @@ export default function Game3DBuild({ config, height }: { config: Game3dConfig; 
       }
       for (const pivot of orbiters) pivot.rotation.y += (pivot.userData["speed"] as number) * delta;
       for (const object of spinners) object.rotation.y += delta * 0.5;
+      for (const mixer of mixers) mixer.update(delta);
       renderer.render(scene, camera);
       raf = requestAnimationFrame(tick);
     };
@@ -244,6 +256,8 @@ export default function Game3DBuild({ config, height }: { config: Game3dConfig; 
       el.removeEventListener("pointerup", onUp);
       el.removeEventListener("wheel", onWheel);
       renderer.dispose();
+      draco.dispose();
+      for (const mixer of mixers) mixer.stopAllAction();
       for (const geo of disposables) geo.dispose();
       const cleanup = (root: THREE.Object3D) =>
         root.traverse((o) => {

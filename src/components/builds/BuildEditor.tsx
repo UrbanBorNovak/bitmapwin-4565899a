@@ -14,6 +14,7 @@ import {
   presetsForKind,
   GAME3D_SCENES,
   GAME3D_SCENE_LABELS,
+  ONCHAIN_ASSETS,
   type BuildKind,
   type Game3dModel,
   type Game2dConfig,
@@ -417,6 +418,56 @@ function Game3dEditor({
             />
             <span className="label">FOG</span>
           </label>
+        </div>
+      </div>
+
+      <div>
+        <span className="label">ON-CHAIN ASSET LIBRARY</span>
+        <p className="label mt-1 text-muted-foreground">
+          READY-MADE GLB MODELS LIVING ON BITCOIN — CLICK TO DROP ONE INTO YOUR WORLD.
+        </p>
+        <div className="mt-2 grid gap-2 sm:grid-cols-3">
+          {ONCHAIN_ASSETS.map((asset) => {
+            const used = config.models.some((m) => m.inscriptionId === asset.inscriptionId);
+            const full = config.models.length >= 6;
+            return (
+              <button
+                key={asset.inscriptionId}
+                type="button"
+                disabled={used || full}
+                onClick={() =>
+                  onChange({
+                    ...config,
+                    models: [
+                      ...config.models,
+                      {
+                        inscriptionId: asset.inscriptionId,
+                        label: asset.label,
+                        scale: asset.scale,
+                        height: asset.height,
+                        spin: false,
+                      },
+                    ],
+                  })
+                }
+                className={`rounded-md border px-3 py-2 text-left transition-colors ${
+                  used
+                    ? "border-primary bg-card opacity-60"
+                    : full
+                      ? "border-border opacity-40"
+                      : "border-border hover:border-primary"
+                }`}
+              >
+                <span className="display block text-xs">{asset.label}</span>
+                <span className="label block text-muted-foreground">
+                  {used ? "IN WORLD" : asset.group}
+                </span>
+                {asset.note ? (
+                  <span className="label mt-1 block text-muted-foreground">{asset.note}</span>
+                ) : null}
+              </button>
+            );
+          })}
         </div>
       </div>
 
