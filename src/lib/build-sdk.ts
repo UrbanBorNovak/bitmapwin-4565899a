@@ -135,7 +135,17 @@ export const DEFAULT_CONFIGS: BuildConfigMap = {
     items: [],
   },
   gallery: { columns: 3, items: [] },
-  game3d: { worldName: "BLOCK WORLD", towers: 24, spin: true, accent: "#f7931a" },
+  game3d: {
+    worldName: "BLOCK WORLD",
+    scene: "city",
+    towers: 24,
+    spin: true,
+    accent: "#f7931a",
+    ground: "#0a0a0a",
+    grid: true,
+    fog: true,
+    models: [],
+  },
   game2d: { title: "BLOCK RUN", coins: 12, walls: 22, speed: 5 },
 };
 
