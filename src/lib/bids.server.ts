@@ -89,6 +89,45 @@ export async function cancelBid(id: string, address: string) {
   return { id, status: "cancelled" as const };
 }
 
+/** Holder declines a bid standing on a bitmap they hold. */
+export async function declineBid(id: string, holderAddress: string) {
+  const bid = await loadBid(id);
+  if (bid.status !== "open") throw new Error(`BID IS ALREADY ${bid.status.toUpperCase()}`);
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  const { data: parcels } = await supabaseAdmin
+    .from("bitmaps")
+    .select("owner_address")
+    .eq("block_height", bid.bitmap_height)
+    .limit(5);
+  const owner = (parcels ?? []).map((p) => p.owner_address).find(Boolean) ?? null;
+  if (owner && owner.toLowerCase() !== holderAddress.toLowerCase()) {
+    throw new Error("ONLY THE ON-CHAIN HOLDER CAN DECLINE THIS BID");
+  }
+
+  const { error } = await supabaseAdmin.from("bids").update({ status: "declined" }).eq("id", id);
+  if (error) throw new Error(error.message.toUpperCase());
+
+  await supabaseAdmin.from("activity").insert({
+    type: "bid_declined",
+    wallet_address: holderAddress,
+    metadata: {
+      bid_id: id,
+      bitmap_height: bid.bitmap_height,
+      price_sats: bid.price_sats,
+      bidder_address: bid.bidder_address,
+    },
+  });
+
+  return {
+    id,
+    status: "declined" as const,
+    bitmapHeight: Number(bid.bitmap_height),
+    priceSats: Number(bid.price_sats),
+  };
+}
+
 /**
  * Holder accepts a bid. Acceptance is recorded so both sides see the agreed
  * price; the transfer itself only happens when the holder signs and the buyer
