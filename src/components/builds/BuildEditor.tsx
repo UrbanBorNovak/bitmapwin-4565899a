@@ -428,7 +428,11 @@ function Game3dEditor({
         </p>
         <div className="mt-2 grid gap-2 sm:grid-cols-3">
           {ONCHAIN_ASSETS.map((asset) => {
-            const used = config.models.some((m) => m.inscriptionId === asset.inscriptionId);
+            const count = config.models.filter(
+              (m) => m.inscriptionId === asset.inscriptionId,
+            ).length;
+            // Skinnable avatars can be placed more than once, each with its own skin.
+            const used = count > 0 && !asset.skinnable;
             const full = config.models.length >= 6;
             return (
               <button
@@ -442,10 +446,15 @@ function Game3dEditor({
                       ...config.models,
                       {
                         inscriptionId: asset.inscriptionId,
-                        label: asset.label,
+                        label: asset.skinnable
+                          ? `${asset.label} ${count + 1}`.slice(0, 60)
+                          : asset.label,
                         scale: asset.scale,
                         height: asset.height,
                         spin: false,
+                        textureId: asset.skinnable
+                          ? (AVATAR_SKINS[count % AVATAR_SKINS.length]?.inscriptionId ?? "")
+                          : "",
                       },
                     ],
                   })
