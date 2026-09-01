@@ -238,12 +238,34 @@ export function parseBuildConfig<K extends BuildKind>(kind: K, raw: unknown): Bu
       return config as BuildConfigMap[K];
     }
     case "game3d": {
-
+      const models = Array.isArray(o["models"]) ? o["models"] : [];
+      const scene = GAME3D_SCENES.includes(o["scene"] as Game3dScene)
+        ? (o["scene"] as Game3dScene)
+        : "city";
       const config: Game3dConfig = {
         worldName: str(o["worldName"], 60) || DEFAULT_CONFIGS.game3d.worldName,
+        scene,
         towers: clamp(Number(o["towers"] ?? 24), 4, 64),
         spin: o["spin"] !== false,
-        accent: /^#[0-9a-fA-F]{6}$/.test(String(o["accent"])) ? String(o["accent"]) : "#f7931a",
+        accent: hex(o["accent"], "#f7931a"),
+        ground: hex(o["ground"], "#0a0a0a"),
+        grid: o["grid"] !== false,
+        fog: o["fog"] !== false,
+        models: models
+          .slice(0, 6)
+          .map((raw) => {
+            const r = (raw ?? {}) as Record<string, unknown>;
+            const scale = Number(r["scale"] ?? 1);
+            const h = Number(r["height"] ?? 0);
+            return {
+              inscriptionId: str(r["inscriptionId"], 120).trim(),
+              label: str(r["label"], 60),
+              scale: Number.isFinite(scale) ? Math.min(20, Math.max(0.1, scale)) : 1,
+              height: Number.isFinite(h) ? Math.min(20, Math.max(-5, h)) : 0,
+              spin: r["spin"] === true,
+            } satisfies Game3dModel;
+          })
+          .filter((m) => m.inscriptionId !== ""),
       };
       return config as BuildConfigMap[K];
     }
