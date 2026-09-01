@@ -174,9 +174,9 @@ function WalletPage() {
   const ownedInscriptionIds = useMemo(
     () =>
       inscribedUtxos.flatMap((u) =>
-        u.inscriptions
-          .filter((i) => i.contentType?.startsWith("image/"))
-          .map((i) => i.id),
+        // Show every inscription the wallet holds; the image tag's onError hides
+        // non-image/text inscriptions so the user only sees usable PFP choices.
+        u.inscriptions.map((i) => i.id),
       ),
     [inscribedUtxos],
   );

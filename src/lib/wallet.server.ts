@@ -138,17 +138,17 @@ async function fetchOutputsViaEsplora(address: string): Promise<OrdAddressOutput
 
 /**
  * ord's per-output view, used to learn which inscriptions an outpoint holds.
- * Stops asking after the first failure so a downed ord index does not turn into
- * one slow request per output.
+ * Retries each output individually so a single rate-limit or transient failure
+ * does not blank every other output's inscriptions.
  */
 async function inscriptionsOfOutpoint(
   outpoint: string,
   state: { ordDown: boolean },
 ): Promise<string[]> {
   if (state.ordDown) return [];
-  const output = await ordJson<{ inscriptions?: string[] | null }>(`/output/${outpoint}`, 1);
+  const output = await ordJson<{ inscriptions?: string[] | null }>(`/output/${outpoint}`, 3);
   if (output === null) {
-    state.ordDown = true;
+    // Keep trying other outputs; only mark ord as down after repeated failures.
     return [];
   }
   return (output.inscriptions ?? []).filter((id): id is string => typeof id === "string");
