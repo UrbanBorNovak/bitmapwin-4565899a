@@ -371,6 +371,99 @@ export type Database = {
         }
         Relationships: []
       }
+      lease_offers: {
+        Row: {
+          bitmap_height: number
+          created_at: string
+          id: string
+          max_days: number
+          min_days: number
+          note: string | null
+          owner_address: string
+          rate_sats_per_day: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bitmap_height: number
+          created_at?: string
+          id?: string
+          max_days?: number
+          min_days?: number
+          note?: string | null
+          owner_address: string
+          rate_sats_per_day: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bitmap_height?: number
+          created_at?: string
+          id?: string
+          max_days?: number
+          min_days?: number
+          note?: string | null
+          owner_address?: string
+          rate_sats_per_day?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      leases: {
+        Row: {
+          bitmap_height: number
+          created_at: string
+          days: number
+          ends_at: string
+          fee_sats: number
+          id: string
+          lessee_address: string
+          owner_address: string
+          psbt_base64: string | null
+          rate_sats_per_day: number
+          starts_at: string
+          status: string
+          total_sats: number
+          txid: string | null
+          updated_at: string
+        }
+        Insert: {
+          bitmap_height: number
+          created_at?: string
+          days: number
+          ends_at: string
+          fee_sats?: number
+          id?: string
+          lessee_address: string
+          owner_address: string
+          psbt_base64?: string | null
+          rate_sats_per_day: number
+          starts_at?: string
+          status?: string
+          total_sats: number
+          txid?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bitmap_height?: number
+          created_at?: string
+          days?: number
+          ends_at?: string
+          fee_sats?: number
+          id?: string
+          lessee_address?: string
+          owner_address?: string
+          psbt_base64?: string | null
+          rate_sats_per_day?: number
+          starts_at?: string
+          status?: string
+          total_sats?: number
+          txid?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       listings: {
         Row: {
           bitmap_id: string
