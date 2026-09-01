@@ -26,6 +26,8 @@ export const Route = createFileRoute("/")({
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(registryParcelsQuery(120));
     context.queryClient.ensureQueryData(recentTradesQuery(20));
+    context.queryClient.ensureQueryData(registryCountQuery());
+    context.queryClient.ensureQueryData(tradedBitmapCountQuery());
   },
   component: Index,
   errorComponent: ({ error }) => (
