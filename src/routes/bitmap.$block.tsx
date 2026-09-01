@@ -397,6 +397,11 @@ function BitmapDetail() {
         askSats={parcel?.listedSats ?? null}
       />
 
+      <div className="mt-6">
+        <LeasePanel height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
+      </div>
+
+
     </div>
   );
 }
