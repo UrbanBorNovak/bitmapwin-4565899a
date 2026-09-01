@@ -33,19 +33,126 @@ export const BUILD_KIND_HINTS: Record<BuildKind, string> = {
   game2d: "A PIXEL MAZE RUN SEEDED BY THIS BLOCK HEIGHT",
 };
 
+/* ------------------------------------------------------------------------- *
+ * THEME — the artistic layer every flat build kind shares.
+ * ------------------------------------------------------------------------- */
+
+export const BUILD_SURFACES = ["void", "slate", "paper", "sepia"] as const;
+export type BuildSurface = (typeof BUILD_SURFACES)[number];
+
+export const BUILD_SURFACE_LABELS: Record<BuildSurface, string> = {
+  void: "VOID BLACK",
+  slate: "SLATE",
+  paper: "PAPER WHITE",
+  sepia: "SEPIA",
+};
+
+export const BUILD_FRAMES = ["sharp", "soft", "round"] as const;
+export type BuildFrame = (typeof BUILD_FRAMES)[number];
+
+export const BUILD_FRAME_LABELS: Record<BuildFrame, string> = {
+  sharp: "SHARP",
+  soft: "SOFT",
+  round: "ROUND",
+};
+
+/** Look and feel a builder controls freely — colour, surface, frame, glow. */
+export type BuildTheme = {
+  accent: string;
+  surface: BuildSurface;
+  frame: BuildFrame;
+  /** Accent glow around the build shell — pure decoration. */
+  glow: boolean;
+  /** Show a thin accent rule under headings. */
+  rules: boolean;
+};
+
+export const DEFAULT_THEME: BuildTheme = {
+  accent: "#f7931a",
+  surface: "void",
+  frame: "sharp",
+  glow: false,
+  rules: true,
+};
+
+const SURFACE_BG: Record<BuildSurface, string> = {
+  void: "#0a0a0a",
+  slate: "#17181a",
+  paper: "#f2efe9",
+  sepia: "#efe3d0",
+};
+
+const SURFACE_FG: Record<BuildSurface, string> = {
+  void: "#f5f5f5",
+  slate: "#f2f2f2",
+  paper: "#121212",
+  sepia: "#241a10",
+};
+
+const FRAME_RADIUS: Record<BuildFrame, string> = {
+  sharp: "0px",
+  soft: "8px",
+  round: "22px",
+};
+
+/** Inline style for a themed build shell — renderers stay token-free. */
+export function themeShellStyle(theme: BuildTheme): Record<string, string> {
+  return {
+    background: SURFACE_BG[theme.surface],
+    color: SURFACE_FG[theme.surface],
+    borderColor: `${theme.accent}66`,
+    borderRadius: FRAME_RADIUS[theme.frame],
+    ...(theme.glow ? { boxShadow: `0 0 0 1px ${theme.accent}33, 0 18px 60px -24px ${theme.accent}` } : {}),
+  };
+}
+
+/** Inline style for a themed panel inside a build shell. */
+export function themePanelStyle(theme: BuildTheme): Record<string, string> {
+  return {
+    borderColor: `${theme.accent}44`,
+    borderRadius: FRAME_RADIUS[theme.frame],
+  };
+}
+
+/** One-click artistic palettes: accent + ground, ready for any build kind. */
+export const ART_PALETTES: {
+  id: string;
+  name: string;
+  accent: string;
+  ground: string;
+  surface: BuildSurface;
+}[] = [
+  { id: "orange", name: "BITCOIN ORANGE", accent: "#f7931a", ground: "#0a0a0a", surface: "void" },
+  { id: "mono", name: "PURE MONO", accent: "#ffffff", ground: "#111111", surface: "void" },
+  { id: "ember", name: "EMBER", accent: "#e85d3a", ground: "#1a1a1a", surface: "slate" },
+  { id: "gold", name: "NOIR GOLD", accent: "#c9a84c", ground: "#0d0d0d", surface: "void" },
+  { id: "mint", name: "TERMINAL MINT", accent: "#2dd4a8", ground: "#0d1b2a", surface: "slate" },
+  { id: "ice", name: "COLD STEEL", accent: "#6ba3c8", ground: "#101418", surface: "slate" },
+  { id: "paper", name: "PAPER & INK", accent: "#2d2d2d", ground: "#f2efe9", surface: "paper" },
+  { id: "sepia", name: "OLD MAP", accent: "#8b5a2b", ground: "#efe3d0", surface: "sepia" },
+];
+
 export type InfoField = { label: string; value: string };
 export type InfoLink = { label: string; url: string };
 
 export type InfoConfig = {
   headline: string;
+  /** Optional second line under the headline — room for a manifesto. */
+  subline: string;
   fields: InfoField[];
   links: InfoLink[];
+  theme: BuildTheme;
 };
 
 export type GalleryItem = { inscriptionId: string; caption: string };
 export type GalleryConfig = {
   columns: 2 | 3 | 4;
+  /** How each image sits in its frame. */
+  fit: "contain" | "cover";
+  /** Grayscale until hover — a gallerist's trick. */
+  monochrome: boolean;
   items: GalleryItem[];
+  theme: BuildTheme;
 };
 
 /** One asset the holder sells from their own wallet, at their own price. */
