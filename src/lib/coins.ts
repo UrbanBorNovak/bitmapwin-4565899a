@@ -73,6 +73,9 @@ export const REASON_LABEL: Record<string, string> = {
   lease_rent_earned: "RENT EARNED",
   event_entry: "EVENT ENTRY",
   event_revenue: "EVENT REVENUE",
+  event_prize_locked: "PRIZE LOCKED",
+  event_prize_won: "PRIZE WON",
+  event_prize_refund: "PRIZE REFUNDED",
 };
 
 export function formatBit(amount: number): string {
