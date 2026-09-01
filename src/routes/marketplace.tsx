@@ -113,7 +113,7 @@ function Marketplace() {
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-12 md:px-8">
-      <h1 className="display text-3xl md:text-5xl">MARKETPLACE</h1>
+      <h1 className="display text-3xl md:text-5xl">BITMAP MARKETPLACE</h1>
       <p className="label mt-3">PRICES AND STATUS TRACED FROM REAL BITCOIN TRANSACTIONS</p>
 
       <div className="mt-8 grid grid-cols-2 divide-border border border-border sm:grid-cols-5 sm:divide-x">

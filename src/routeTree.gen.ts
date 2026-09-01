@@ -19,6 +19,7 @@ import { Route as LeasesRouteImport } from './routes/leases'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
@@ -81,6 +82,11 @@ const McpRoute = McpRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WalletRoute = WalletRouteImport.update({
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/wallet': typeof WalletRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/wallet': typeof WalletRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
@@ -212,6 +220,7 @@ export interface FileRoutesById {
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/wallet': typeof WalletRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
@@ -239,6 +248,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/mcp'
     | '/reset-password'
+    | '/sitemap.xml'
     | '/wallet'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/mcp'
     | '/reset-password'
+    | '/sitemap.xml'
     | '/wallet'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
@@ -288,6 +299,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/mcp'
     | '/reset-password'
+    | '/sitemap.xml'
     | '/wallet'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
@@ -314,6 +326,7 @@ export interface RootRouteChildren {
   MarketplaceRoute: typeof MarketplaceRoute
   McpRoute: typeof McpRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   WalletRoute: typeof WalletRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
@@ -396,6 +409,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/wallet': {
@@ -530,6 +550,7 @@ const rootRouteChildren: RootRouteChildren = {
   MarketplaceRoute: MarketplaceRoute,
   McpRoute: McpRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   WalletRoute: WalletRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,

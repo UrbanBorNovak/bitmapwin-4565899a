@@ -33,7 +33,7 @@ function CollectionsIndex() {
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-12 md:px-8">
-      <h1 className="display text-3xl md:text-5xl">COLLECTIONS</h1>
+      <h1 className="display text-3xl md:text-5xl">BITMAP COLLECTIONS</h1>
       <p className="label mt-3">
         EVERY BITMAP BELONGS TO EXACTLY ONE CLUB, DECIDED BY ITS BLOCK HEIGHT
       </p>
