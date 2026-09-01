@@ -4,6 +4,7 @@ import { inscriptionOffersQuery } from "@/lib/offers";
 import { ShopListButton } from "@/components/builds/ShopListButton";
 import { inscriptionImageUrl } from "@/lib/profiles";
 import { formatSats } from "@/lib/trades";
+import { BuildRenderer } from "@/components/builds/BuildRenderer";
 import {
   BUILD_KINDS,
   BUILD_KIND_HINTS,
@@ -11,7 +12,10 @@ import {
   DEFAULT_CONFIGS,
   parseBuildConfig,
   presetsForKind,
+  GAME3D_SCENES,
+  GAME3D_SCENE_LABELS,
   type BuildKind,
+  type Game3dModel,
   type Game2dConfig,
   type Game3dConfig,
   type GalleryConfig,
@@ -34,6 +38,7 @@ export function BuildEditor({
   onKindChange,
   onConfigChange,
   walletAddress,
+  height,
 }: {
   kind: BuildKind;
   config: unknown;
@@ -41,6 +46,8 @@ export function BuildEditor({
   onConfigChange: (config: unknown) => void;
   /** Address whose inscriptions can be imported into an asset shop. */
   walletAddress?: string | null;
+  /** Block height this build sits on — used for the live preview seed. */
+  height?: number;
 }) {
 
   return (
@@ -114,6 +121,17 @@ export function BuildEditor({
         <Game2dEditor config={parseBuildConfig("game2d", config)} onChange={onConfigChange} />
       )}
 
+      {typeof height === "number" ? (
+        <div className="rounded-md border border-border">
+          <div className="flex items-baseline justify-between gap-2 border-b border-border px-3 py-2">
+            <span className="label">LIVE PREVIEW</span>
+            <span className="label text-muted-foreground">EXACTLY WHAT VISITORS WILL SEE</span>
+          </div>
+          <div className="p-3">
+            <BuildRenderer kind={kind} config={config} height={height} />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
