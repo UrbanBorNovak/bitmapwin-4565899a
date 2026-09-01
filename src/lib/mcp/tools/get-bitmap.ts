@@ -21,7 +21,7 @@ export default defineTool({
         .select("block_height, inscription_id, owner_address, is_valid, content")
         .eq("block_height", height)
         .maybeSingle(),
-      supabase.from("block_stats").select("*").eq("height", height).maybeSingle(),
+      supabase.from("block_stats").select("*").eq("block_height", height).maybeSingle(),
       supabase
         .from("parcel_pages")
         .select("title, description, build_kind, owner_address, updated_at")
