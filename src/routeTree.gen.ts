@@ -26,6 +26,7 @@ import { Route as CollectionsIndexRouteImport } from './routes/collections.index
 import { Route as CollectionsClubRouteImport } from './routes/collections.$club'
 import { Route as DistrictSlugRouteImport } from './routes/district.$slug'
 import { Route as ProfileAddressRouteImport } from './routes/profile.$address'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicCoinRewardsRouteImport } from './routes/api/public/coin-rewards'
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
@@ -118,6 +119,11 @@ const ProfileAddressRoute = ProfileAddressRouteImport.update({
   path: '/profile/$address',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCoinRewardsRoute = ApiPublicCoinRewardsRouteImport.update({
   id: '/api/public/coin-rewards',
   path: '/api/public/coin-rewards',
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/district/$slug': typeof DistrictSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections/': typeof CollectionsIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/district/$slug': typeof DistrictSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections': typeof CollectionsIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
@@ -211,6 +219,7 @@ export interface FileRoutesById {
   '/district/$slug': typeof DistrictSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections/': typeof CollectionsIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/district/$slug'
     | '/profile/$address'
     | '/collections/'
+    | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
     | '/api/public/offer'
     | '/api/public/offers'
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/district/$slug'
     | '/profile/$address'
     | '/collections'
+    | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
     | '/api/public/offer'
     | '/api/public/offers'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/district/$slug'
     | '/profile/$address'
     | '/collections/'
+    | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
     | '/api/public/offer'
     | '/api/public/offers'
@@ -307,6 +319,7 @@ export interface RootRouteChildren {
   BitmapBlockRoute: typeof BitmapBlockRoute
   DistrictSlugRoute: typeof DistrictSlugRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiPublicCoinRewardsRoute: typeof ApiPublicCoinRewardsRoute
   ApiPublicOfferRoute: typeof ApiPublicOfferRoute
   ApiPublicOffersRoute: typeof ApiPublicOffersRoute
@@ -434,6 +447,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileAddressRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/coin-rewards': {
       id: '/api/public/coin-rewards'
       path: '/api/public/coin-rewards'
@@ -516,6 +536,7 @@ const rootRouteChildren: RootRouteChildren = {
   BitmapBlockRoute: BitmapBlockRoute,
   DistrictSlugRoute: DistrictSlugRoute,
   ProfileAddressRoute: ProfileAddressRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiPublicCoinRewardsRoute: ApiPublicCoinRewardsRoute,
   ApiPublicOfferRoute: ApiPublicOfferRoute,
   ApiPublicOffersRoute: ApiPublicOffersRoute,
