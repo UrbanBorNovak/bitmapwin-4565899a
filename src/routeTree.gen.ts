@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BuildsRouteImport } from './routes/builds'
 import { Route as CoinsRouteImport } from './routes/coins'
@@ -33,11 +32,6 @@ import { Route as ApiPublicBlocksHeightMetaRouteImport } from './routes/api/publ
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ActivityRoute = ActivityRouteImport.update({
-  id: '/activity',
-  path: '/activity',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -134,7 +128,6 @@ const ApiPublicBlocksHeightMetaRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/activity': typeof ActivityRoute
   '/auth': typeof AuthRoute
   '/builds': typeof BuildsRoute
   '/coins': typeof CoinsRoute
@@ -156,7 +149,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/activity': typeof ActivityRoute
   '/auth': typeof AuthRoute
   '/builds': typeof BuildsRoute
   '/coins': typeof CoinsRoute
@@ -178,7 +170,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/activity': typeof ActivityRoute
   '/auth': typeof AuthRoute
   '/builds': typeof BuildsRoute
   '/coins': typeof CoinsRoute
@@ -202,7 +193,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/activity'
     | '/auth'
     | '/builds'
     | '/coins'
@@ -224,7 +214,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/activity'
     | '/auth'
     | '/builds'
     | '/coins'
@@ -245,7 +234,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/activity'
     | '/auth'
     | '/builds'
     | '/coins'
@@ -268,7 +256,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ActivityRoute: typeof ActivityRoute
   AuthRoute: typeof AuthRoute
   BuildsRoute: typeof BuildsRoute
   CoinsRoute: typeof CoinsRoute
@@ -293,13 +280,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/activity': {
-      id: '/activity'
-      path: '/activity'
-      fullPath: '/activity'
-      preLoaderRoute: typeof ActivityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -460,7 +440,6 @@ const ApiPublicBlocksHeightRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ActivityRoute: ActivityRoute,
   AuthRoute: AuthRoute,
   BuildsRoute: BuildsRoute,
   CoinsRoute: CoinsRoute,

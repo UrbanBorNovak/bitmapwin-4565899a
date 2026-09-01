@@ -6,11 +6,9 @@ import { HeaderIdentity } from "@/components/HeaderIdentity";
 
 const NAV = [
   { to: "/marketplace", label: "MARKETPLACE" },
-  { to: "/collections", label: "COLLECTIONS" },
   { to: "/builds", label: "BUILDS" },
   { to: "/leases", label: "LEASES" },
   { to: "/coins", label: "BIT" },
-  { to: "/activity", label: "ACTIVITY" },
 ] as const;
 
 
@@ -36,7 +34,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
       <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 py-3 md:px-8">
         <Link to="/" className="shrink-0 leading-none">
-          <div className="display text-base md:text-lg">BITMAP MARKETPLACE</div>
+          <div className="display text-base md:text-lg">BITMAP UNHINGED</div>
           <div className="label mt-1">BITCOIN DIGITAL LAND</div>
         </Link>
 
