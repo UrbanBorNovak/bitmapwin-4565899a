@@ -178,6 +178,7 @@ export function ParcelPagePanel({
           <div className="pt-2">
             <p className="label mb-3">{BUILD_KIND_LABELS[built.buildKind]}</p>
             <BuildRenderer kind={built.buildKind} config={built.buildConfig} height={height} />
+            <BuildRaffles height={height} />
           </div>
         )}
 
