@@ -827,6 +827,68 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string
+          owner_address: string
+          user_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          owner_address: string
+          user_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          owner_address?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          bonus_paid: number
+          code: string
+          created_at: string
+          id: string
+          override_earned: number
+          referee_address: string
+          referee_user_id: string | null
+          referrer_address: string
+        }
+        Insert: {
+          bonus_paid?: number
+          code: string
+          created_at?: string
+          id?: string
+          override_earned?: number
+          referee_address: string
+          referee_user_id?: string | null
+          referrer_address: string
+        }
+        Update: {
+          bonus_paid?: number
+          code?: string
+          created_at?: string
+          id?: string
+          override_earned?: number
+          referee_address?: string
+          referee_user_id?: string | null
+          referrer_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_code_fkey"
+            columns: ["code"]
+            isOneToOne: false
+            referencedRelation: "referral_codes"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       trades: {
         Row: {
           bitmap_height: number
@@ -1009,6 +1071,18 @@ export type Database = {
       record_bitmap_view: {
         Args: { _address?: string; _height: number; _visitor: string }
         Returns: undefined
+      }
+      referral_claim: {
+        Args: { _address: string; _code: string; _user_id: string }
+        Returns: string
+      }
+      referral_ensure_code: {
+        Args: { _address: string; _user_id: string }
+        Returns: string
+      }
+      referral_pay_override: {
+        Args: { _amount: number; _ref: string; _referee_address: string }
+        Returns: number
       }
     }
     Enums: {
