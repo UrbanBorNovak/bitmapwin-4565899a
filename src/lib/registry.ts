@@ -322,6 +322,24 @@ export const registryBaseQuery = (limit = 300) =>
     staleTime: 60_000,
   });
 
+/** Total valid bitmap claims in the index — a real count, not the loaded page. */
+export async function fetchRegistryCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from("bitmap_index")
+    .select("block_height", { count: "exact", head: true })
+    .eq("is_valid", true)
+    .not("inscription_id", "is", null);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+export const registryCountQuery = () =>
+  queryOptions({
+    queryKey: ["registry", "count"],
+    queryFn: fetchRegistryCount,
+    staleTime: 300_000,
+  });
+
 export const parcelOwnersQuery = (txids: string[]) =>
   queryOptions({
     queryKey: ["registry", "owners", [...txids].sort().join(",")],
