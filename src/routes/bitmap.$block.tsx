@@ -127,8 +127,8 @@ function BitmapDetail() {
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-12 md:px-8">
-      <Link to="/explore" className="label hover:text-foreground">
-        ← BACK TO EXPLORER
+      <Link to="/marketplace" className="label hover:text-foreground">
+        ← BACK TO MARKETPLACE
       </Link>
       <h1 className="display mt-4 text-4xl md:text-6xl">{block}.BITMAP</h1>
       <p className="label mt-3">
@@ -429,8 +429,8 @@ function BitmapMissing() {
       <p className="mt-4 font-mono text-sm text-muted-foreground">
         &gt; THIS BLOCK IS NOT PRESENT IN THE DEMO REGISTRY<span className="blink">_</span>
       </p>
-      <Link to="/explore" className="btn-term mt-8">
-        [ BACK TO EXPLORER ]
+      <Link to="/marketplace" className="btn-term mt-8">
+        [ BACK TO MARKETPLACE ]
       </Link>
     </div>
   );

@@ -405,11 +405,8 @@ function EmptyRegistry() {
         <span className="blink">_</span>
       </p>
       <div className="mt-8 flex flex-wrap gap-2">
-        <Link to="/explore" className="btn-term">
-          [ SCAN THE CHAIN ]
-        </Link>
-        <Link to="/extractor" className="btn-term-ghost">
-          [ INDEX A TRANSACTION ]
+        <Link to="/collections" className="btn-term">
+          [ BROWSE COLLECTIONS ]
         </Link>
       </div>
     </div>
