@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -13,6 +13,27 @@ const KIND_LABEL: Record<string, string> = {
   event: "EVENT",
 };
 
+/** Ticking time-left string for an event deadline. */
+function useCountdown(endsAt: string | null): string | null {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!endsAt) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [endsAt]);
+  if (!endsAt) return null;
+  const ms = new Date(endsAt).getTime() - now;
+  if (!Number.isFinite(ms)) return null;
+  if (ms <= 0) return "ENDED";
+  const s = Math.floor(ms / 1000);
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return d > 0 ? `${d}D ${pad(h)}:${pad(m)}:${pad(sec)}` : `${pad(h)}:${pad(m)}:${pad(sec)}`;
+}
+
 /**
  * A builder-hosted raffle, giveaway or ticketed event. Entries are paid in BIT
  * and the coins land in the host's balance.
@@ -22,6 +43,7 @@ export function CoinEventCard({ event }: { event: CoinEvent }) {
   const queryClient = useQueryClient();
   const [tickets, setTickets] = useState("1");
   const entries = useQuery(eventEntriesQuery([event.id]));
+  const countdown = useCountdown(event.endsAt);
 
   const totalTickets = (entries.data ?? []).reduce((sum, e) => sum + e.tickets, 0);
   const pot = (entries.data ?? []).reduce((sum, e) => sum + e.spent, 0);
@@ -113,6 +135,15 @@ export function CoinEventCard({ event }: { event: CoinEvent }) {
         />
         <Stat label="TICKET POT" value={formatBit(pot)} />
       </div>
+
+      {countdown ? (
+        <p className="font-mono text-[11px]">
+          <span className="text-muted-foreground">{open ? "ENDS IN " : "CLOSED · "}</span>
+          <span className={open ? "text-accent" : "text-muted-foreground"}>{countdown}</span>
+        </p>
+      ) : open ? (
+        <p className="font-mono text-[11px] text-muted-foreground">NO DEADLINE — OPEN UNTIL DRAWN</p>
+      ) : null}
 
       {event.prize ? (
         <p className="font-mono text-[11px] text-muted-foreground">
