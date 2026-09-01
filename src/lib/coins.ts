@@ -77,6 +77,9 @@ export const REASON_LABEL: Record<string, string> = {
   event_prize_locked: "PRIZE LOCKED",
   event_prize_won: "PRIZE WON",
   event_prize_refund: "PRIZE REFUNDED",
+  referral_bonus: "REFERRAL BONUS",
+  referral_joined: "JOINED VIA REFERRAL",
+  referral_override: "REFERRAL SHARE",
 };
 
 export function formatBit(amount: number): string {

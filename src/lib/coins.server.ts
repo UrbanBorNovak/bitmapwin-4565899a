@@ -1,4 +1,5 @@
 import { EMISSION } from "@/lib/coins";
+import { REFERRAL } from "@/lib/referrals";
 
 /**
  * BIT economy engine. Everything here is off-chain platform state: the daily
@@ -146,11 +147,13 @@ export async function runDailyRewards(): Promise<RewardRunResult> {
     add(awards, lease.lessee_address, "lease_reward_lessee", days * EMISSION.perLeaseDayRented);
   }
 
-  // 4. Credit everyone.
+  // 4. Credit everyone, then pay each inviter their share of the friend's day.
+  const { payOverride } = await import("@/lib/referrals.server");
   let awarded = 0;
   let recipients = 0;
   for (const [address, reasons] of awards) {
     let paidAddress = false;
+    let earnedToday = 0;
     for (const [reason, amount] of reasons) {
       if (amount <= 0) continue;
       const { error } = await db.rpc("coin_apply", {
@@ -161,10 +164,14 @@ export async function runDailyRewards(): Promise<RewardRunResult> {
       });
       if (error) continue;
       awarded += amount;
+      earnedToday += amount;
       paidAddress = true;
     }
     if (paidAddress) recipients += 1;
+    const share = Math.floor((earnedToday * REFERRAL.sharePercent) / 100);
+    if (share > 0) awarded += await payOverride(address, share, runDate);
   }
+
 
   if (snapshotUpserts.length > 0) {
     await db.from("coin_view_snapshots").upsert(snapshotUpserts, { onConflict: "bitmap_height" });

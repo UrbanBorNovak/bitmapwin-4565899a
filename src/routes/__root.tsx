@@ -15,6 +15,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { rememberReferralCode } from "@/lib/referrals";
 
 
 function NotFoundComponent() {
@@ -134,6 +135,12 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
 
+  // Remember an incoming ?ref= invite so it can be claimed once a wallet is verified.
+  useEffect(() => {
+    const ref = new URLSearchParams(window.location.search).get("ref");
+    if (ref) rememberReferralCode(ref);
+  }, []);
+
   // Single auth subscriber for the app: refresh account-scoped data on real
   // identity transitions only (not token refreshes or initial session).
   useEffect(() => {
@@ -145,6 +152,7 @@ function RootComponent() {
     });
     return () => data.subscription.unsubscribe();
   }, [router, queryClient]);
+
 
   return (
     <QueryClientProvider client={queryClient}>
