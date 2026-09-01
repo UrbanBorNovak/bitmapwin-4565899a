@@ -7,6 +7,7 @@ import {
   profileQuery,
   saveProfile,
 } from "@/lib/profiles";
+import { InscriptionAvatar } from "@/components/InscriptionAvatar";
 
 /**
  * Profile editor for the connected wallet: display name, bio and an avatar
