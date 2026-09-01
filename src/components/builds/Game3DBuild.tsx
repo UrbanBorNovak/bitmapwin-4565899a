@@ -119,8 +119,13 @@ export default function Game3DBuild({ config, height }: { config: Game3dConfig; 
     scene.add(world);
 
     // ---- on-chain models -------------------------------------------------
+    // Most ordinals GLBs are Draco compressed, so the decoder is always wired.
     const loader = new GLTFLoader();
+    const draco = new DRACOLoader();
+    draco.setDecoderPath("https://www.gstatic.com/draco/versioned/decoders/1.5.7/");
+    loader.setDRACOLoader(draco);
     const loaded: THREE.Object3D[] = [];
+    const mixers: THREE.AnimationMixer[] = [];
     const spinners: THREE.Object3D[] = [];
     let cancelled = false;
     const statuses = config.models.map((m) => `LOADING ${m.label || m.inscriptionId.slice(0, 10)}…`);
