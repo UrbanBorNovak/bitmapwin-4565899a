@@ -7,7 +7,6 @@ import {
   walletOffersQuery,
   walletQuery,
   type DeliveredOffer,
-  type WalletUtxo,
 } from "@/lib/wallet";
 import { deliverOfferFn } from "@/lib/wallet.functions";
 import { refreshOffersFn, submitOfferFn } from "@/lib/offers.functions";
