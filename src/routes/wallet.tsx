@@ -27,6 +27,7 @@ import { WalletBids } from "@/components/WalletBids";
 import { DistrictManager } from "@/components/DistrictManager";
 import { QuickListForm } from "@/components/QuickListForm";
 import { LeaseEarnings } from "@/components/leases/LeaseEarnings";
+import { CoinWallet } from "@/components/coins/CoinWallet";
 import { useBidInbox } from "@/lib/use-bid-inbox";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { useWalletSession, walletControls } from "@/lib/wallet-session";
