@@ -126,7 +126,7 @@ type EventRow = {
 };
 
 const EVENT_COLS =
-  "id, kind, bitmap_height, host_address, title, description, prize, entry_cost, max_entries, status, ends_at, winner_address, drawn_at, created_at";
+  "id, kind, bitmap_height, host_address, title, description, prize, prize_coins, entry_cost, max_entries, status, ends_at, winner_address, drawn_at, created_at";
 
 function mapEvent(row: EventRow): CoinEvent {
   return {
