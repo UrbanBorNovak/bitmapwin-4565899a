@@ -5,20 +5,14 @@ import { BidInboxBell } from "@/components/BidInboxBell";
 import { HeaderIdentity } from "@/components/HeaderIdentity";
 
 const NAV = [
-  { to: "/explore", label: "EXPLORE" },
   { to: "/marketplace", label: "MARKETPLACE" },
   { to: "/collections", label: "COLLECTIONS" },
   { to: "/builds", label: "BUILDS" },
   { to: "/leases", label: "LEASES" },
   { to: "/coins", label: "BIT" },
-
-
-  { to: "/map", label: "MAP" },
   { to: "/activity", label: "ACTIVITY" },
-  { to: "/extractor", label: "EXTRACTOR" },
-  { to: "/bitmaps", label: "REGISTRY" },
-  { to: "/wallet", label: "WALLET" },
 ] as const;
+
 
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
