@@ -193,25 +193,6 @@ function Marketplace() {
           placeholder="SEARCH HEIGHT / OWNER / TXID"
           className="min-w-[240px] flex-1 border border-border bg-background px-3 py-2 font-mono text-xs uppercase text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
         />
-        <input
-          value={syncHeight}
-          onChange={(e) => setSyncHeight(e.target.value.replace(/[^0-9]/g, ""))}
-          placeholder="BLOCK TO INDEX"
-          className="w-[150px] border border-border bg-background px-3 py-2 font-mono text-xs uppercase text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
-        />
-        <button className="btn-term-ghost" disabled={busy} onClick={() => sync.mutate()}>
-          {sync.isPending ? "[ SYNCING… ]" : "[ SYNC CHAIN ]"}
-        </button>
-        <button
-          className="btn-term-ghost"
-          disabled={busy || parcels.length === 0}
-          onClick={() => refreshTrades.mutate()}
-        >
-          {refreshTrades.isPending ? "[ TRACING TRADES… ]" : "[ TRACE TRADES ]"}
-        </button>
-        <button className="btn-term-ghost" disabled={busy} onClick={() => settle.mutate()}>
-          {settle.isPending ? "[ SETTLING… ]" : "[ SETTLE SALES ]"}
-        </button>
         <span className="label">HOLDERS {holders}</span>
       </div>
 
