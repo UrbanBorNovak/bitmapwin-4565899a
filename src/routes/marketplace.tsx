@@ -218,7 +218,7 @@ function Marketplace() {
         <Stat k="SALE VOLUME" v={volume ? formatSats(volume) : "—"} />
       </div>
 
-      <TrendingParcels limit={8} />
+      <TrendingParcels limit={3} />
 
 
 
@@ -246,7 +246,7 @@ function Marketplace() {
           </button>
         ))}
         <Link to="/collections" className="label ml-auto hover:text-foreground">
-          VIEW COLLECTIONS →
+          COLLECTION STATS →
         </Link>
       </div>
 

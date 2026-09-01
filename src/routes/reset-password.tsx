@@ -6,12 +6,12 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Set A New Password — Bitmap Marketplace" },
+      { title: "Set A New Password — Bitmap Unhinged" },
       {
         name: "description",
-        content: "Choose a new password for your Bitmap Marketplace account after a reset link.",
+        content: "Choose a new password for your Bitmap Unhinged account after a reset link.",
       },
-      { property: "og:title", content: "Set A New Password — Bitmap Marketplace" },
+      { property: "og:title", content: "Set A New Password — Bitmap Unhinged" },
       {
         property: "og:description",
         content: "Finish your password reset and get back to your bitmap parcels.",

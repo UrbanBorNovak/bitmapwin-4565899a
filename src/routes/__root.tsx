@@ -82,12 +82,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Bitmap Marketplace — Bitcoin Digital Land" },
+      { title: "Bitmap Unhinged — Bitcoin Digital Land" },
       {
         name: "description",
         content: "Explore, discover and trade Bitcoin Bitmap digital land. The land layer of Bitcoin.",
       },
-      { property: "og:title", content: "Bitmap Marketplace — Bitcoin Digital Land" },
+      { property: "og:title", content: "Bitmap Unhinged — Bitcoin Digital Land" },
       {
         property: "og:description",
         content: "Explore, discover and trade Bitcoin Bitmap digital land.",

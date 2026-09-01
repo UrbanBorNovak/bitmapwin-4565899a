@@ -13,17 +13,17 @@ import { WalletSignIn } from "@/components/WalletSignIn";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign In — Bitmap Marketplace Account" },
+      { title: "Sign In — Bitmap Unhinged Account" },
       {
         name: "description",
         content:
-          "Create a Bitmap Marketplace account and link your Bitcoin wallet with a signed message so your profile, bitmaps and bids persist across devices.",
+          "Create a Bitmap Unhinged account and link your Bitcoin wallet with a signed message so your profile, bitmaps and bids persist across devices.",
       },
-      { property: "og:title", content: "Sign In — Bitmap Marketplace Account" },
+      { property: "og:title", content: "Sign In — Bitmap Unhinged Account" },
       {
         property: "og:description",
         content:
-          "Account login for Bitmap Marketplace. Link your ordinals address by signing a challenge to own your profile permanently.",
+          "Account login for Bitmap Unhinged. Link your ordinals address by signing a challenge to own your profile permanently.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

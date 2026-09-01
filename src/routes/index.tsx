@@ -8,13 +8,13 @@ import { formatSats } from "@/lib/trades";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Bitmap Marketplace — Own a Piece of Bitcoin" },
+      { title: "Bitmap Unhinged — Own a Piece of Bitcoin" },
       {
         name: "description",
         content:
           "A minimalist marketplace and explorer for Bitcoin Bitmap digital land, priced by real on-chain trades.",
       },
-      { property: "og:title", content: "Bitmap Marketplace — Own a Piece of Bitcoin" },
+      { property: "og:title", content: "Bitmap Unhinged — Own a Piece of Bitcoin" },
       {
         property: "og:description",
         content: "Explore, discover and trade Bitcoin Bitmap digital land with real on-chain data.",

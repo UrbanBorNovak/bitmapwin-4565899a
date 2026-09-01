@@ -4,7 +4,7 @@ import { trendingQuery } from "@/lib/profiles";
 import { timeAgo } from "@/lib/bitmap";
 
 /** Most-visited parcels, ranked by tracked page views. */
-export function TrendingParcels({ limit = 8 }: { limit?: number }) {
+export function TrendingParcels({ limit = 3 }: { limit?: number }) {
   const trending = useQuery(trendingQuery(limit));
   const rows = trending.data ?? [];
 
