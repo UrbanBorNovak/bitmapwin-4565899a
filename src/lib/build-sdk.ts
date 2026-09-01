@@ -427,6 +427,8 @@ export function parseBuildConfig<K extends BuildKind>(kind: K, raw: unknown): Bu
       const fields = Array.isArray(o["fields"]) ? o["fields"] : [];
       const links = Array.isArray(o["links"]) ? o["links"] : [];
       const config: InfoConfig = {
+        theme: parseTheme(o["theme"]),
+        subline: str(o["subline"], 240),
         headline: str(o["headline"], 120),
         fields: fields.slice(0, 12).map((f) => {
           const r = (f ?? {}) as Record<string, unknown>;
