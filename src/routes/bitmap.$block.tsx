@@ -8,7 +8,7 @@ import { ClubBadge } from "@/components/ClubBadge";
 import { toast } from "sonner";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
-import { OfferBook } from "@/components/OfferBook";
+
 import { BidPanel } from "@/components/BidPanel";
 import { ParcelPagePanel } from "@/components/ParcelPagePanel";
 import { LeasePanel } from "@/components/leases/LeasePanel";
@@ -385,9 +385,6 @@ function BitmapDetail() {
         )}
       </div>
 
-
-
-      <OfferBook height={block} />
 
       <BidPanel
         height={block}
