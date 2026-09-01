@@ -9,6 +9,8 @@ import {
   normaliseCode,
   pendingReferralCode,
   referralLink,
+  shareOnTelegram,
+  shareOnX,
 } from "@/lib/referrals";
 import { claimReferralFn } from "@/lib/referrals.functions";
 import { shortenAddress } from "@/lib/registry";
