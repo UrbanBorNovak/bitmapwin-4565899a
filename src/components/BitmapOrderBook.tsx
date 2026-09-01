@@ -238,7 +238,7 @@ function DepthBar({ ratio, side }: { ratio: number; side: "bid" | "ask" }) {
   );
 }
 
-function BidRow({ bid, max, usdPerBtc }: { bid: Bid; max: number; usdPerBtc?: number }) {
+function BidRow({ bid, max, usdPerBtc }: { bid: Bid; max: number; usdPerBtc?: number | undefined }) {
   const usd = usdFromSats(bid.priceSats, usdPerBtc);
   return (
     <li className="relative border-b border-border/60">
