@@ -14,6 +14,7 @@ import {
   presetsForKind,
   GAME3D_SCENES,
   GAME3D_SCENE_LABELS,
+  ONCHAIN_ASSETS,
   type BuildKind,
   type Game3dModel,
   type Game2dConfig,
