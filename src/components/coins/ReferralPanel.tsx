@@ -9,6 +9,8 @@ import {
   normaliseCode,
   pendingReferralCode,
   referralLink,
+  shareOnTelegram,
+  shareOnX,
 } from "@/lib/referrals";
 import { claimReferralFn } from "@/lib/referrals.functions";
 import { shortenAddress } from "@/lib/registry";
@@ -97,6 +99,24 @@ export function ReferralPanel() {
               >
                 [ COPY ]
               </button>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <a
+                className="btn-term-ghost"
+                href={shareOnX(data.code)}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                [ SHARE ON X ]
+              </a>
+              <a
+                className="btn-term-ghost"
+                href={shareOnTelegram(data.code)}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                [ SHARE ON TELEGRAM ]
+              </a>
             </div>
           </div>
 
