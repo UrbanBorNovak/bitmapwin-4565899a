@@ -3,7 +3,6 @@ import { inscriptionImageUrl } from "@/lib/profiles";
 import { formatSats } from "@/lib/trades";
 import { inscriptionOffersQuery } from "@/lib/offers";
 import { BuyButton } from "@/components/BuyButton";
-import { MakeOfferButton } from "@/components/MakeOfferButton";
 import type { ShopConfig, ShopItem } from "@/lib/build-sdk";
 
 /**
@@ -91,7 +90,6 @@ export function ShopBuild({ config, height }: { config: ShopConfig; height: numb
               <PriceTag item={item} accent={accent} />
               <ShopItemAction
                 item={item}
-                height={height}
                 offer={item.sold ? null : offerFor(item.inscriptionId)}
                 contactUrl={config.contactUrl}
                 accent={accent}
@@ -124,7 +122,6 @@ export function ShopBuild({ config, height }: { config: ShopConfig; height: numb
                 <PriceTag item={item} accent={accent} />
                 <ShopItemAction
                   item={item}
-                  height={height}
                   offer={item.sold ? null : offerFor(item.inscriptionId)}
                   contactUrl={config.contactUrl}
                   accent={accent}
@@ -136,27 +133,24 @@ export function ShopBuild({ config, height }: { config: ShopConfig; height: numb
       )}
 
       <p className="label text-muted-foreground">
-        &gt; PRICES SET BY THE HOLDER — ASSETS WITH A SIGNED PSBT BUY ON-CHAIN INSTANTLY, THE REST
-        SETTLE DIRECTLY WITH THE SELLER_
+        &gt; PRICES SET BY THE HOLDER — LISTED ASSETS BUY ON-CHAIN INSTANTLY AT THE SHOWN PRICE_
       </p>
     </div>
   );
 }
 
 /**
- * Buy action for one shop asset: a signed PSBT buys instantly on-chain;
- * anything else falls back to a signed offer the holder can accept, plus the
- * seller's direct contact link when published.
+ * Buy action for one shop asset: fixed listed price only — a signed PSBT buys
+ * instantly on-chain at the ask; no offer flow. Unlisted assets point the
+ * buyer at the seller's contact link (or note the sale PSBT is pending).
  */
 function ShopItemAction({
   item,
-  height,
   offer,
   contactUrl,
   accent,
 }: {
   item: ShopItem;
-  height: number;
   offer: { id: string; priceSats: number } | null;
   contactUrl?: string;
   accent: string;
@@ -165,14 +159,9 @@ function ShopItemAction({
   if (offer) return <BuyButton offerId={offer.id} priceSats={offer.priceSats} />;
   return (
     <span className="flex items-center gap-1">
-      <MakeOfferButton
-        height={height}
-        askSats={item.priceSats > 0 ? item.priceSats : null}
-        defaultAmountSats={item.priceSats > 0 ? item.priceSats : null}
-        initialNote={`OFFER FOR ${item.name || item.inscriptionId} (${item.inscriptionId})`}
-        label={item.priceSats > 0 ? "BUY" : "MAKE OFFER"}
-        className="btn-term !px-2 !py-1"
-      />
+      {item.priceSats > 0 ? (
+        <span className="label text-muted-foreground">SALE PSBT PENDING</span>
+      ) : null}
       {contactUrl ? (
         <a
           href={contactUrl}
@@ -198,7 +187,7 @@ function PriceTag({
   if (item.sold) return <span className="label text-muted-foreground">SOLD</span>;
   return (
     <span className="label" style={{ color: accent }}>
-      {item.priceSats > 0 ? formatSats(item.priceSats) : "MAKE OFFER"}
+      {item.priceSats > 0 ? formatSats(item.priceSats) : "UNPRICED"}
     </span>
   );
 }
