@@ -36,6 +36,12 @@ export type ViewStats = {
   lastViewedAt: string | null;
 };
 
+export type BitmapVisit = {
+  id: string;
+  viewerAddress: string | null;
+  createdAt: string;
+};
+
 const VISITOR_KEY = "bitmap.visitor.key";
 
 export function inscriptionImageUrl(id: string) {
@@ -76,6 +82,21 @@ export async function fetchViewStats(height: number): Promise<ViewStats | null> 
     uniqueVisitors: Number(data.unique_visitors),
     lastViewedAt: data.last_viewed_at,
   };
+}
+
+export async function fetchRecentBitmapVisits(height: number, limit = 8): Promise<BitmapVisit[]> {
+  const { data, error } = await supabase
+    .from("bitmap_views")
+    .select("id, viewer_address, created_at")
+    .eq("bitmap_height", height)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    viewerAddress: row.viewer_address,
+    createdAt: row.created_at,
+  }));
 }
 
 export async function fetchTrending(limit = 12): Promise<ViewStats[]> {
@@ -199,6 +220,14 @@ export const profilesQuery = (addresses: string[]) =>
     queryFn: () => fetchProfiles(addresses),
     enabled: addresses.length > 0,
     staleTime: 60_000,
+  });
+
+export const recentBitmapVisitsQuery = (height: number) =>
+  queryOptions({
+    queryKey: ["bitmap-visits", height],
+    queryFn: () => fetchRecentBitmapVisits(height),
+    staleTime: 5_000,
+    refetchInterval: 15_000,
   });
 
 

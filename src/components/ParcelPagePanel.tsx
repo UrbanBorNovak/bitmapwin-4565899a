@@ -21,6 +21,7 @@ import { districtForHeightQuery } from "@/lib/districts";
 import { BuildEditor } from "@/components/builds/BuildEditor";
 import { BuildRenderer } from "@/components/builds/BuildRenderer";
 import { BuildRaffles } from "@/components/coins/BuildRaffles";
+import { LiveBitmapPresence } from "@/components/LiveBitmapPresence";
 import {
   BUILD_KIND_LABELS,
   DEFAULT_CONFIGS,
@@ -135,6 +136,8 @@ export function ParcelPagePanel({
           className="h-40 w-full border-b border-border object-cover grayscale"
         />
       )}
+
+      <LiveBitmapPresence height={height} placeName={built?.title || `${height}.BITMAP`} />
 
       <div className="space-y-3 px-6 py-5">
         {built?.title || built?.description || built?.linkUrl ? (
