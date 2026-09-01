@@ -42,8 +42,9 @@ export const Route = createFileRoute("/")({
 function Index() {
   const { data: parcels } = useSuspenseQuery(registryParcelsQuery(120));
   const { data: trades } = useSuspenseQuery(recentTradesQuery(20));
+  const { data: indexedCount } = useSuspenseQuery(registryCountQuery());
+  const { data: tradedCount } = useSuspenseQuery(tradedBitmapCountQuery());
 
-  const traded = parcels.filter((p) => p.transfers > 0);
   const featured = [...parcels]
     .sort((a, b) => (b.lastSaleSats ?? -1) - (a.lastSaleSats ?? -1))
     .slice(0, 8);
