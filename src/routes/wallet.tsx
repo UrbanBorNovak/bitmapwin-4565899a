@@ -302,29 +302,6 @@ function WalletPage() {
             </section>
           )}
 
-          <section className="mt-10 border border-border">
-            <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border p-5">
-              <h2 className="display text-xl">UNSPENT OUTPUTS</h2>
-              <span className="label">
-                {wallet.data ? `SCANNED ${wallet.data.scannedOutputs} / ${wallet.data.utxoCount}` : ""}
-              </span>
-            </header>
-            {wallet.isLoading ? (
-              <p className="p-5 font-mono text-xs text-muted-foreground">
-                &gt; READING UTXO SET<span className="blink">_</span>
-              </p>
-            ) : (wallet.data?.utxos.length ?? 0) === 0 ? (
-              <p className="p-5 font-mono text-xs text-muted-foreground">
-                &gt; NO UNSPENT OUTPUTS INDEXED FOR THIS ADDRESS<span className="blink">_</span>
-              </p>
-            ) : (
-              <ul className="divide-y divide-border">
-                {wallet.data!.utxos.map((utxo) => (
-                  <UtxoRow key={utxo.outpoint} utxo={utxo} />
-                ))}
-              </ul>
-            )}
-          </section>
 
           <section id="list" className="mt-10 scroll-mt-24 border border-border">
             <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border p-5">
