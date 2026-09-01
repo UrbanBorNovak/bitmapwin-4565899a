@@ -70,11 +70,38 @@ export type ShopConfig = {
   items: ShopItem[];
 };
 
+/** A 3D asset pulled straight from an ordinals inscription (GLB / GLTF). */
+export type Game3dModel = {
+  /** Inscription id holding the .glb/.gltf model, served from ordinals.com. */
+  inscriptionId: string;
+  label: string;
+  scale: number; // 0.1..20
+  height: number; // -5..20 vertical offset
+  spin: boolean;
+};
+
+export const GAME3D_SCENES = ["city", "monoliths", "pyramids", "rings", "terrain"] as const;
+export type Game3dScene = (typeof GAME3D_SCENES)[number];
+
+export const GAME3D_SCENE_LABELS: Record<Game3dScene, string> = {
+  city: "VOXEL CITY",
+  monoliths: "MONOLITHS",
+  pyramids: "PYRAMID FIELD",
+  rings: "ORBIT RINGS",
+  terrain: "BLOCK TERRAIN",
+};
+
 export type Game3dConfig = {
   worldName: string;
-  towers: number; // 4..64 voxel towers
+  scene: Game3dScene;
+  towers: number; // 4..64 structures
   spin: boolean;
   accent: string; // hex
+  ground: string; // hex
+  grid: boolean;
+  fog: boolean;
+  /** On-chain 3D models placed at the centre of the world. */
+  models: Game3dModel[];
 };
 
 export type Game2dConfig = {
