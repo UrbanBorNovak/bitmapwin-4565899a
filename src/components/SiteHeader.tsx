@@ -3,6 +3,7 @@ import { Search, X } from "lucide-react";
 import { useState } from "react";
 import { BidInboxBell } from "@/components/BidInboxBell";
 import { HeaderIdentity } from "@/components/HeaderIdentity";
+import { BtcTicker } from "@/components/BtcTicker";
 
 const NAV = [
   { to: "/marketplace", label: "MARKETPLACE" },
