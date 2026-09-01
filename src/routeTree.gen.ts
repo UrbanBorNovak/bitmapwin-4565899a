@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BuildsRouteImport } from './routes/builds'
 import { Route as CoinsRouteImport } from './routes/coins'
 import { Route as CollectionsRouteImport } from './routes/collections'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LeasesRouteImport } from './routes/leases'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -52,6 +53,11 @@ const CoinsRoute = CoinsRouteImport.update({
 const CollectionsRoute = CollectionsRouteImport.update({
   id: '/collections',
   path: '/collections',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LeasesRoute = LeasesRouteImport.update({
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/builds': typeof BuildsRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
+  '/dashboard': typeof DashboardRoute
   '/leases': typeof LeasesRoute
   '/marketplace': typeof MarketplaceRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/builds': typeof BuildsRoute
   '/coins': typeof CoinsRoute
+  '/dashboard': typeof DashboardRoute
   '/leases': typeof LeasesRoute
   '/marketplace': typeof MarketplaceRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -174,6 +182,7 @@ export interface FileRoutesById {
   '/builds': typeof BuildsRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
+  '/dashboard': typeof DashboardRoute
   '/leases': typeof LeasesRoute
   '/marketplace': typeof MarketplaceRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -197,6 +206,7 @@ export interface FileRouteTypes {
     | '/builds'
     | '/coins'
     | '/collections'
+    | '/dashboard'
     | '/leases'
     | '/marketplace'
     | '/reset-password'
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/builds'
     | '/coins'
+    | '/dashboard'
     | '/leases'
     | '/marketplace'
     | '/reset-password'
@@ -238,6 +249,7 @@ export interface FileRouteTypes {
     | '/builds'
     | '/coins'
     | '/collections'
+    | '/dashboard'
     | '/leases'
     | '/marketplace'
     | '/reset-password'
@@ -260,6 +272,7 @@ export interface RootRouteChildren {
   BuildsRoute: typeof BuildsRoute
   CoinsRoute: typeof CoinsRoute
   CollectionsRoute: typeof CollectionsRouteWithChildren
+  DashboardRoute: typeof DashboardRoute
   LeasesRoute: typeof LeasesRoute
   MarketplaceRoute: typeof MarketplaceRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -308,6 +321,13 @@ declare module '@tanstack/react-router' {
       path: '/collections'
       fullPath: '/collections'
       preLoaderRoute: typeof CollectionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/leases': {
@@ -444,6 +464,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuildsRoute: BuildsRoute,
   CoinsRoute: CoinsRoute,
   CollectionsRoute: CollectionsRouteWithChildren,
+  DashboardRoute: DashboardRoute,
   LeasesRoute: LeasesRoute,
   MarketplaceRoute: MarketplaceRoute,
   ResetPasswordRoute: ResetPasswordRoute,
