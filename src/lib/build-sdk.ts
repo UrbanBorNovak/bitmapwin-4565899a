@@ -186,6 +186,91 @@ export function inscriptionContentUrl(inscriptionId: string): string {
   return `https://ordinals.com/content/${inscriptionId}`;
 }
 
+/** A ready-to-place on-chain 3D asset builders can drop into a world. */
+export type OnChainAsset = {
+  inscriptionId: string;
+  label: string;
+  /** Group the asset shows up under in the picker. */
+  group: "STRUCTURE" | "AVATAR" | "LANDMARK";
+  /** Sensible starting scale for this model in the world. */
+  scale: number;
+  height: number;
+  note?: string;
+};
+
+/**
+ * Curated GLB/GLTF inscriptions (Draco compressed) that already render well in
+ * bitmap worlds — the same on-chain assets used by PATOSHI WORLD × BITMAP PIXELS.
+ * Every entry loads straight from the chain via ordinals.com/content.
+ */
+export const ONCHAIN_ASSETS: OnChainAsset[] = [
+  {
+    inscriptionId: "7d67e6f807a9898fb9f8cb28e19c58932b02c04ff4da313788f231fe7e00232di0",
+    label: "PREBUILD 01",
+    group: "STRUCTURE",
+    scale: 1,
+    height: 0,
+  },
+  {
+    inscriptionId: "e4a74eceffb5e91f543cc5ff8ad0b740794767c981cde9d5f44151c1d0e491a2i0",
+    label: "PREBUILD 02",
+    group: "STRUCTURE",
+    scale: 1,
+    height: 0,
+  },
+  {
+    inscriptionId: "d147e7e01b498c71638e19f8ca4b16dcecefe9c2efd3208e7d98ca31c7c983dci0",
+    label: "PREBUILD 03",
+    group: "STRUCTURE",
+    scale: 1.4,
+    height: 0,
+  },
+  {
+    inscriptionId: "7f36cae4bfb3ea52dfd1d454e2b16da89deba603988bd2b9415d3a11d24df212i0",
+    label: "PREBUILD 04",
+    group: "STRUCTURE",
+    scale: 1.4,
+    height: 0,
+  },
+  {
+    inscriptionId: "e34712cd813b2a0aa7330765c530f29e80cdfc6db6202f24ba87bd2d5819447di0",
+    label: "PREBUILD 05",
+    group: "STRUCTURE",
+    scale: 1.4,
+    height: 0,
+  },
+  {
+    inscriptionId: "4f57fb110ffa81b4905e789f337f9469f620a7106815e2f132409312a6770beci0",
+    label: "PREBUILD 06",
+    group: "STRUCTURE",
+    scale: 1.4,
+    height: 0,
+  },
+  {
+    inscriptionId: "171c26e24b94e11fc8dfae620173179ff43fa41674685721464ca28d658ed138i0",
+    label: "PREBUILD 07",
+    group: "STRUCTURE",
+    scale: 1.6,
+    height: 0,
+  },
+  {
+    inscriptionId: "8e1aae650bd4a716111e2df6f0a81e1089a90da1d2326286486141b042ecb0f0i0",
+    label: "MEGA LANDMARK",
+    group: "LANDMARK",
+    scale: 4,
+    height: 0,
+    note: "VERY LARGE — RAISE SCALE SLOWLY",
+  },
+  {
+    inscriptionId: "5e2d04efb32bc584af0f86ca9d0744186c680ced298a33235dc913a5f13e2f34i0",
+    label: "SPACE AVATAR RIG",
+    group: "AVATAR",
+    scale: 0.8,
+    height: 0,
+    note: "ANIMATED CHARACTER — IDLE LOOP PLAYS",
+  },
+];
+
 /** Normalises any untrusted JSON (DB row, pasted SDK payload) into a valid config. */
 export function parseBuildConfig<K extends BuildKind>(kind: K, raw: unknown): BuildConfigMap[K] {
   const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
