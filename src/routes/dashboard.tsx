@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useWalletSession } from "@/lib/wallet-session";
 import { useAuthSession, accountLabel } from "@/lib/auth";
 import { myWalletLinksQuery } from "@/lib/wallet-links";
+import { ReferralPanel } from "@/components/coins/ReferralPanel";
 import { InscriptionAvatar } from "@/components/InscriptionAvatar";
 import { profileQuery } from "@/lib/profiles";
 import { shortenAddress } from "@/lib/registry";
@@ -187,6 +188,10 @@ function DashboardPage() {
             </Link>
           ) : null}
         </div>
+      </div>
+
+      <div className="mt-8">
+        <ReferralPanel />
       </div>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
