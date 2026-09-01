@@ -15,6 +15,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { rememberReferralCode } from "@/lib/referrals";
 
 
 function NotFoundComponent() {
