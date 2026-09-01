@@ -14,6 +14,7 @@ import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BitmapsRouteImport } from './routes/bitmaps'
 import { Route as BuildsRouteImport } from './routes/builds'
+import { Route as CoinsRouteImport } from './routes/coins'
 import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as ExtractorRouteImport } from './routes/extractor'
@@ -55,6 +56,11 @@ const BitmapsRoute = BitmapsRouteImport.update({
 const BuildsRoute = BuildsRouteImport.update({
   id: '/builds',
   path: '/builds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoinsRoute = CoinsRouteImport.update({
+  id: '/coins',
+  path: '/coins',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CollectionsRoute = CollectionsRouteImport.update({
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/bitmaps': typeof BitmapsRoute
   '/builds': typeof BuildsRoute
+  '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/explore': typeof ExploreRoute
   '/extractor': typeof ExtractorRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/bitmaps': typeof BitmapsRoute
   '/builds': typeof BuildsRoute
+  '/coins': typeof CoinsRoute
   '/explore': typeof ExploreRoute
   '/extractor': typeof ExtractorRoute
   '/leases': typeof LeasesRoute
@@ -198,6 +206,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/bitmaps': typeof BitmapsRoute
   '/builds': typeof BuildsRoute
+  '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/explore': typeof ExploreRoute
   '/extractor': typeof ExtractorRoute
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bitmaps'
     | '/builds'
+    | '/coins'
     | '/collections'
     | '/explore'
     | '/extractor'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bitmaps'
     | '/builds'
+    | '/coins'
     | '/explore'
     | '/extractor'
     | '/leases'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bitmaps'
     | '/builds'
+    | '/coins'
     | '/collections'
     | '/explore'
     | '/extractor'
@@ -296,6 +308,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BitmapsRoute: typeof BitmapsRoute
   BuildsRoute: typeof BuildsRoute
+  CoinsRoute: typeof CoinsRoute
   CollectionsRoute: typeof CollectionsRouteWithChildren
   ExploreRoute: typeof ExploreRoute
   ExtractorRoute: typeof ExtractorRoute
@@ -347,6 +360,13 @@ declare module '@tanstack/react-router' {
       path: '/builds'
       fullPath: '/builds'
       preLoaderRoute: typeof BuildsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coins': {
+      id: '/coins'
+      path: '/coins'
+      fullPath: '/coins'
+      preLoaderRoute: typeof CoinsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/collections': {
@@ -504,6 +524,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BitmapsRoute: BitmapsRoute,
   BuildsRoute: BuildsRoute,
+  CoinsRoute: CoinsRoute,
   CollectionsRoute: CollectionsRouteWithChildren,
   ExploreRoute: ExploreRoute,
   ExtractorRoute: ExtractorRoute,
