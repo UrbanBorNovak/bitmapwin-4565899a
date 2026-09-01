@@ -172,7 +172,12 @@ function WalletPage() {
     [inscribedUtxos],
   );
   const ownedInscriptionIds = useMemo(
-    () => inscribedUtxos.flatMap((u) => u.inscriptions.map((i) => i.id)),
+    () =>
+      inscribedUtxos.flatMap((u) =>
+        u.inscriptions
+          .filter((i) => i.contentType?.startsWith("image/"))
+          .map((i) => i.id),
+      ),
     [inscribedUtxos],
   );
   const heldHeights = useMemo(

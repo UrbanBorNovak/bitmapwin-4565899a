@@ -179,6 +179,7 @@ export async function fetchWallet(address: string, maxOutputs = 60): Promise<Wal
     const inscriptions = await mapWithConcurrency(inscriptionIds.slice(0, 8), 3, async (id) => ({
       id,
       bitmapHeight: await bitmapHeightOf(id),
+      contentType: await contentTypeOf(id),
     }));
     return {
       outpoint: output.outpoint,
