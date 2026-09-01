@@ -11,6 +11,7 @@ import type { Offer, OfferStatus } from "@/lib/offers";
 export type WalletInscription = {
   id: string;
   bitmapHeight: number | null;
+  contentType: string | null;
 };
 
 export type WalletUtxo = {
