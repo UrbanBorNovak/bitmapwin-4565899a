@@ -56,7 +56,7 @@ export function BitmapPixelMap({
             y={s.position.y + gap}
             width={s.size - gap * 2}
             height={s.size - gap * 2}
-            className="fill-muted-foreground/25"
+            className="fill-bitcoin/20"
           />
         ))}
         {parcels.map((s, i) => (
@@ -66,7 +66,7 @@ export function BitmapPixelMap({
             y={s.position.y + gap}
             width={s.size - gap * 2}
             height={s.size - gap * 2}
-            className="fill-foreground"
+            className="fill-bitcoin"
           />
         ))}
       </g>
