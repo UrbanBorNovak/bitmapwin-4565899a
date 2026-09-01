@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { Search, X } from "lucide-react";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { ClubBadge } from "@/components/ClubBadge";
 import { FollowBuilderButton } from "@/components/FollowBuilderButton";
@@ -12,6 +13,8 @@ import { inscriptionImageUrl, profilesQuery, type WalletProfile } from "@/lib/pr
 import { BuilderName } from "@/components/BuilderName";
 import { DistrictRarity } from "@/components/DistrictRarity";
 import { shortenAddress } from "@/lib/registry";
+import { Button } from "@/components/ui/button";
+import { BUILD_KIND_LABELS, BUILD_KINDS, type BuildKind } from "@/lib/build-sdk";
 
 export const Route = createFileRoute("/builds")({
   head: () => ({
@@ -35,6 +38,9 @@ export const Route = createFileRoute("/builds")({
 });
 
 type FeedTab = "recent" | "visited" | "following";
+type KindFilter = "all" | BuildKind;
+
+const PAGE_SIZE = 12;
 
 const TABS: { id: FeedTab; label: string }[] = [
   { id: "recent", label: "RECENTLY BUILT" },
@@ -65,53 +71,65 @@ function BuildCard({
 }) {
   const { page, totalViews, uniqueVisitors } = entry;
   return (
-    <div className="group rounded-lg border border-border bg-card p-4 transition-[border-color,transform] duration-150 hover:border-primary hover:-translate-y-0.5">
+    <article className="group overflow-hidden rounded-lg border border-border bg-card transition-[border-color,transform] duration-150 hover:-translate-y-0.5 hover:border-primary">
       <Link to="/bitmap/$block" params={{ block: String(page.bitmapHeight) }}>
-        {page.bannerInscriptionId ? (
-          <img
-            src={inscriptionImageUrl(page.bannerInscriptionId)}
-            alt={`Banner built on bitmap ${page.bitmapHeight}`}
-            loading="lazy"
-            className="aspect-square w-full border border-border object-cover"
-          />
-        ) : (
-          <div className="border border-border">
-            <BlockMosaic height={page.bitmapHeight} />
-          </div>
-        )}
-        <div className="mt-3 flex items-baseline justify-between gap-2">
-          <span className="display text-sm">{page.bitmapHeight}.BITMAP</span>
-          <ClubBadge height={page.bitmapHeight} />
-        </div>
-        <div className="mt-2 font-mono text-[11px]">{page.title || "UNTITLED BUILD"}</div>
-        <div className="label mt-2 flex justify-between">
-          <span>{page.buildKind.toUpperCase()}</span>
-          <span className="text-primary">
-            {totalViews} VIEWS · {uniqueVisitors} UNIQUE
+        <div className="relative aspect-[4/3] overflow-hidden border-b border-border bg-background">
+          {page.bannerInscriptionId ? (
+            <img
+              src={inscriptionImageUrl(page.bannerInscriptionId)}
+              alt={`Banner built on bitmap ${page.bitmapHeight}`}
+              loading="lazy"
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            />
+          ) : (
+            <div className="h-full w-full [&>div]:h-full [&_svg]:h-full [&_svg]:w-full">
+              <BlockMosaic height={page.bitmapHeight} />
+            </div>
+          )}
+          <span className="label absolute left-2 top-2 rounded border border-border bg-background/90 px-2 py-1 text-primary backdrop-blur-sm">
+            {BUILD_KIND_LABELS[page.buildKind]}
+          </span>
+          <span className="label absolute bottom-2 right-2 rounded border border-border bg-background/90 px-2 py-1 text-foreground backdrop-blur-sm">
+            {totalViews.toLocaleString("en-US")} VIEWS
           </span>
         </div>
-        <div className="label mt-1 text-muted-foreground">
-          BUILT {timeAgo(page.updatedAt ?? null)}
+        <div className="p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="display truncate text-base leading-tight">
+                {page.title || `${page.bitmapHeight}.BITMAP`}
+              </h2>
+              <div className="label mt-1 text-muted-foreground">{page.bitmapHeight}.BITMAP</div>
+            </div>
+            <ClubBadge height={page.bitmapHeight} />
+          </div>
+          <div className="label mt-3 flex items-center justify-between gap-3 border-t border-border pt-3">
+            <span>{uniqueVisitors.toLocaleString("en-US")} VISITORS</span>
+            <span>UPDATED {timeAgo(page.updatedAt ?? null)}</span>
+          </div>
         </div>
       </Link>
-      <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-3">
+      <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-3">
         <Link
           to="/profile/$address"
           params={{ address: page.ownerAddress }}
-          className="label hover:text-primary"
+          className="label min-w-0 hover:text-primary"
         >
           <BuilderName address={page.ownerAddress} profile={profile ?? null} avatar />
         </Link>
         <FollowBuilderButton address={page.ownerAddress} followers={followers} />
       </div>
-    </div>
+    </article>
   );
 }
 
 function BuildsPage() {
   const [tab, setTab] = useState<FeedTab>("recent");
+  const [query, setQuery] = useState("");
+  const [kind, setKind] = useState<KindFilter>("all");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const { user } = useAuthSession();
-  const builds = useQuery(buildsQuery(60));
+  const builds = useQuery(buildsQuery(500));
   const districts = useQuery(districtsQuery(40));
 
   const addresses = useMemo(
@@ -127,20 +145,40 @@ function BuildsPage() {
 
   const entries = useMemo(() => {
     const all = builds.data ?? [];
+    const followed = new Set(follows.data ?? []);
+    const normalizedQuery = query.trim().toLowerCase();
+    const filtered = all.filter((entry) => {
+      if (tab === "following" && !followed.has(entry.page.ownerAddress)) return false;
+      if (kind !== "all" && entry.page.buildKind !== kind) return false;
+      if (!normalizedQuery) return true;
+      const profileName = profiles.data?.get(entry.page.ownerAddress)?.displayName ?? "";
+      return [
+        String(entry.page.bitmapHeight),
+        entry.page.title ?? "",
+        entry.page.description ?? "",
+        entry.page.ownerAddress,
+        profileName,
+      ].some((value) => value.toLowerCase().includes(normalizedQuery));
+    });
     if (tab === "visited") {
-      return [...all].sort(
+      return [...filtered].sort(
         (a, b) => b.totalViews - a.totalViews || b.uniqueVisitors - a.uniqueVisitors,
       );
     }
-    if (tab === "following") {
-      const set = new Set(follows.data ?? []);
-      return all.filter((entry) => set.has(entry.page.ownerAddress));
-    }
-    return [...all].sort(
+    return [...filtered].sort(
       (a, b) =>
         new Date(b.page.updatedAt ?? 0).getTime() - new Date(a.page.updatedAt ?? 0).getTime(),
     );
-  }, [builds.data, tab, follows.data]);
+  }, [builds.data, tab, follows.data, kind, query, profiles.data]);
+
+  useEffect(() => setVisibleCount(PAGE_SIZE), [tab, query, kind]);
+
+  const visibleEntries = entries.slice(0, visibleCount);
+  const hasMore = visibleCount < entries.length;
+  const totalViews = useMemo(
+    () => (builds.data ?? []).reduce((sum, entry) => sum + entry.totalViews, 0),
+    [builds.data],
+  );
 
   const topBuilders = useMemo(() => {
     const byAddress = new Map<string, { builds: number; views: number }>();
@@ -164,77 +202,109 @@ function BuildsPage() {
         : "SIGN IN TO FOLLOW BUILDERS AND SEE THEIR FEED"
       : "NOTHING BUILT YET — OPEN A BITMAP YOU HOLD AND BUILD ON IT";
 
+  const clearFilters = () => {
+    setQuery("");
+    setKind("all");
+  };
+
   return (
-    <div className="mx-auto max-w-[1600px] px-4 py-12 md:px-8">
-      <h1 className="display text-3xl md:text-5xl">BUILDS FEED</h1>
-      <p className="label mt-3">
-        NEWEST BUILDS, MOST VISITED BITMAPS AND THE BUILDERS YOU FOLLOW
-      </p>
+    <main className="mx-auto max-w-[1600px] px-4 py-8 md:px-8 md:py-12">
+      <header className="border-b border-border pb-8">
+        <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+          <div>
+            <div className="label text-primary">BITMAP WORLDS · LIVE DIRECTORY</div>
+            <h1 className="display mt-3 text-4xl md:text-6xl">DISCOVER BUILDS</h1>
+            <p className="mt-4 max-w-2xl font-mono text-xs leading-6 text-muted-foreground">
+              ENTER OWNER-BUILT WORLDS, GALLERIES, SHOPS, GAMES AND PERSONAL SPACES.
+            </p>
+          </div>
+          <dl className="grid grid-cols-3 border border-border bg-card lg:min-w-[420px]">
+            <div className="border-r border-border p-4">
+              <dt className="label">BUILDS</dt>
+              <dd className="display mt-2 text-2xl text-primary">{(builds.data ?? []).length}</dd>
+            </div>
+            <div className="border-r border-border p-4">
+              <dt className="label">BUILDERS</dt>
+              <dd className="display mt-2 text-2xl">{addresses.length}</dd>
+            </div>
+            <div className="p-4">
+              <dt className="label">VIEWS</dt>
+              <dd className="display mt-2 text-2xl">{totalViews.toLocaleString("en-US")}</dd>
+            </div>
+          </dl>
+        </div>
+      </header>
 
-      <section className="mt-10">
-        <h2 className="display text-lg">BUILDERS</h2>
-        <p className="label mt-2">RANKED BY REAL VISITORS ACROSS THEIR BUILDS</p>
-        {topBuilders.length > 0 ? (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {topBuilders.map((builder) => (
-              <div
-                key={builder.address}
-                className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card p-3"
-              >
-                <Link
-                  to="/profile/$address"
-                  params={{ address: builder.address }}
-                  className="min-w-0"
+      <section className="mt-8" aria-label="Build directory">
+        <div className="sticky top-16 z-20 border-y border-border bg-background/95 py-3 backdrop-blur-md">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+            <div className="relative min-w-0 flex-1">
+              <Search aria-hidden="true" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="SEARCH TITLE, BITMAP OR BUILDER"
+                aria-label="Search builds"
+                className="h-10 w-full rounded-md border border-input bg-card pl-10 pr-10 font-mono text-xs text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+              {query ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-1/2 h-10 w-10 -translate-y-1/2"
+                  onClick={() => setQuery("")}
+                  aria-label="Clear search"
                 >
-                  <div className="display text-sm">
-                    <BuilderName
-                      address={builder.address}
-                      profile={profiles.data?.get(builder.address) ?? null}
-                      avatar
-                    />
-                  </div>
-                  <div className="label mt-1 text-muted-foreground">
-                    {builder.builds} BUILD(S) · {builder.views} VIEWS
-                  </div>
-                </Link>
-                <FollowBuilderButton
-                  address={builder.address}
-                  followers={counts.data?.get(builder.address) ?? 0}
-                />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="mt-4 rounded-lg border border-dashed border-border p-6">
-            <span className="label text-muted-foreground">
-              {builds.isPending ? "SYNC" : "NO BUILDERS YET"}
-            </span>
-          </div>
-        )}
-      </section>
-
-      <section className="mt-12">
-        <div className="flex flex-wrap items-center gap-2">
-          {TABS.map((entry) => (
-            <button
-              key={entry.id}
-              type="button"
-              onClick={() => setTab(entry.id)}
-              className={`label rounded border px-3 py-1.5 transition-colors ${
-                tab === entry.id
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:border-primary hover:text-primary"
-              }`}
+                  <X />
+                </Button>
+              ) : null}
+            </div>
+            <select
+              value={kind}
+              onChange={(event) => setKind(event.target.value as KindFilter)}
+              aria-label="Filter by build type"
+              className="h-10 rounded-md border border-input bg-card px-3 font-mono text-[11px] text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
             >
-              {entry.label}
-            </button>
-          ))}
-          <span className="label ml-auto text-muted-foreground">{entries.length} BUILD(S)</span>
+              <option value="all">ALL BUILD TYPES</option>
+              {BUILD_KINDS.map((buildKind) => (
+                <option key={buildKind} value={buildKind}>{BUILD_KIND_LABELS[buildKind]}</option>
+              ))}
+            </select>
+            <div className="grid grid-cols-3 rounded-md border border-border bg-card p-1">
+              {TABS.map((entry) => (
+                <Button
+                  key={entry.id}
+                  type="button"
+                  size="sm"
+                  variant={tab === entry.id ? "default" : "ghost"}
+                  onClick={() => setTab(entry.id)}
+                  className="label h-8 px-3"
+                >
+                  {entry.label}
+                </Button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {entries.length > 0 ? (
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {entries.map((entry) => (
+        <div className="mt-5 flex items-center justify-between gap-4">
+          <p className="label">
+            <span className="text-foreground">{entries.length.toLocaleString("en-US")}</span> RESULT{entries.length === 1 ? "" : "S"}
+            {hasMore ? ` · SHOWING ${visibleEntries.length}` : ""}
+          </p>
+          {(query || kind !== "all") ? (
+            <Button type="button" variant="ghost" size="sm" onClick={clearFilters} className="label">
+              <X /> RESET
+            </Button>
+          ) : null}
+        </div>
+
+        {visibleEntries.length > 0 ? (
+          <>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+            {visibleEntries.map((entry) => (
               <BuildCard
                 key={entry.page.bitmapHeight}
                 entry={entry}
@@ -242,21 +312,56 @@ function BuildsPage() {
                 profile={profiles.data?.get(entry.page.ownerAddress) ?? null}
               />
             ))}
-          </div>
+            </div>
+            {hasMore ? (
+              <div className="mt-8 flex flex-col items-center gap-3 border-t border-border pt-8">
+                <span className="label">{entries.length - visibleCount} MORE BUILDS</span>
+                <Button type="button" variant="outline" onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}>
+                  LOAD {Math.min(PAGE_SIZE, entries.length - visibleCount)} MORE
+                </Button>
+              </div>
+            ) : null}
+          </>
         ) : (
-          <div className="mt-4 rounded-lg border border-dashed border-border p-6">
-            <span className="label text-muted-foreground">
-              {builds.isPending ? "SYNC" : emptyLabel}
-            </span>
+          <div className="mt-4 flex min-h-48 flex-col items-center justify-center border border-dashed border-border p-8 text-center">
+            <span className="display text-xl">{builds.isPending ? "SYNCING BUILDS" : "NO BUILDS FOUND"}</span>
+            <span className="label mt-3 max-w-lg text-muted-foreground">{builds.isPending ? "READING THE LIVE DIRECTORY" : (query || kind !== "all") ? "TRY A DIFFERENT SEARCH OR BUILD TYPE" : emptyLabel}</span>
+            {!builds.isPending && (query || kind !== "all") ? (
+              <Button type="button" variant="outline" size="sm" onClick={clearFilters} className="mt-5">RESET FILTERS</Button>
+            ) : null}
           </div>
         )}
       </section>
 
-      <section className="mt-12">
-        <h2 className="display text-lg">DISTRICTS</h2>
-        <p className="label mt-2">NEIGHBORHOODS ASSEMBLED FROM BITMAPS ONE HOLDER CONTROLS</p>
-        {districts.data && districts.data.length > 0 ? (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-16 grid gap-12 xl:grid-cols-[1fr_1.35fr]">
+        <section>
+          <div className="flex items-end justify-between border-b border-border pb-3">
+            <div>
+              <h2 className="display text-xl">TOP BUILDERS</h2>
+              <p className="label mt-2">RANKED BY REAL BUILD VIEWS</p>
+            </div>
+          </div>
+          <div className="divide-y divide-border border-b border-border">
+            {topBuilders.map((builder, index) => (
+              <div key={builder.address} className="flex items-center gap-3 py-3">
+                <span className="display w-7 text-lg text-muted-foreground">{String(index + 1).padStart(2, "0")}</span>
+                <Link to="/profile/$address" params={{ address: builder.address }} className="min-w-0 flex-1">
+                  <div className="display text-sm"><BuilderName address={builder.address} profile={profiles.data?.get(builder.address) ?? null} avatar /></div>
+                  <div className="label mt-1">{builder.builds} BUILDS · {builder.views.toLocaleString("en-US")} VIEWS</div>
+                </Link>
+                <FollowBuilderButton address={builder.address} followers={counts.data?.get(builder.address) ?? 0} />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <div className="border-b border-border pb-3">
+            <h2 className="display text-xl">EXPLORE DISTRICTS</h2>
+            <p className="label mt-2">BITMAP NEIGHBORHOODS BUILT BY HOLDERS</p>
+          </div>
+          {districts.data && districts.data.length > 0 ? (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {districts.data.map((d) => (
               <Link
                 key={d.id}
@@ -283,7 +388,8 @@ function BuildsPage() {
             </span>
           </div>
         )}
-      </section>
-    </div>
+        </section>
+      </div>
+    </main>
   );
 }
