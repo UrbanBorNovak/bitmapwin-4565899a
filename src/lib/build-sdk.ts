@@ -164,7 +164,7 @@ export const BUILD_LIMITS = {
     columns: [2, 3, 4] as const,
   },
   gallery: { items: 48, inscriptionId: 120, caption: 80, columns: [2, 3, 4] as const },
-  game3d: { worldName: 60, towers: [4, 64] as const },
+  game3d: { worldName: 60, towers: [4, 64] as const, models: 6, scale: [0.1, 20] as const },
   game2d: { title: 60, coins: [3, 40] as const, walls: [0, 60] as const, speed: [1, 10] as const },
 } as const;
 
@@ -177,6 +177,14 @@ const clamp = (n: number, min: number, max: number) =>
   Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n))) : min;
 
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : "");
+
+const hex = (v: unknown, fallback: string) =>
+  /^#[0-9a-fA-F]{6}$/.test(String(v)) ? String(v) : fallback;
+
+/** Content URL for an inscription — where on-chain 3D models and images live. */
+export function inscriptionContentUrl(inscriptionId: string): string {
+  return `https://ordinals.com/content/${inscriptionId}`;
+}
 
 /** Normalises any untrusted JSON (DB row, pasted SDK payload) into a valid config. */
 export function parseBuildConfig<K extends BuildKind>(kind: K, raw: unknown): BuildConfigMap[K] {
