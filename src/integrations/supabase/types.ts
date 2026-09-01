@@ -333,6 +333,8 @@ export type Database = {
           kind: string
           max_entries: number | null
           prize: string | null
+          prize_coins: number
+          prize_paid_at: string | null
           status: string
           title: string
           updated_at: string
@@ -350,6 +352,8 @@ export type Database = {
           kind?: string
           max_entries?: number | null
           prize?: string | null
+          prize_coins?: number
+          prize_paid_at?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -367,6 +371,8 @@ export type Database = {
           kind?: string
           max_entries?: number | null
           prize?: string | null
+          prize_coins?: number
+          prize_paid_at?: string | null
           status?: string
           title?: string
           updated_at?: string
@@ -943,6 +949,22 @@ export type Database = {
           _ref?: string
         }
         Returns: number
+      }
+      coin_close_event: { Args: { _event_id: string }; Returns: undefined }
+      coin_create_event: {
+        Args: {
+          _bitmap_height?: number
+          _description?: string
+          _ends_at?: string
+          _entry_cost?: number
+          _host_address: string
+          _kind: string
+          _max_entries?: number
+          _prize?: string
+          _prize_coins?: number
+          _title: string
+        }
+        Returns: string
       }
       coin_draw_event: { Args: { _event_id: string }; Returns: string }
       coin_enter_event: {
