@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useWalletSession } from "@/lib/wallet-session";
 import { useAuthSession, accountLabel } from "@/lib/auth";
 import { myWalletLinksQuery } from "@/lib/wallet-links";
+import { InscriptionAvatar } from "@/components/InscriptionAvatar";
 import { inscriptionImageUrl, profileQuery } from "@/lib/profiles";
 import { shortenAddress } from "@/lib/registry";
 import { heldHeightsQuery } from "@/lib/held-parcels";
@@ -161,17 +162,12 @@ function DashboardPage() {
     <div className="mx-auto max-w-[1600px] px-4 py-10 md:px-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          {profile.data?.avatarInscriptionId ? (
-            <img
-              src={inscriptionImageUrl(profile.data.avatarInscriptionId)}
-              alt=""
-              className="size-14 shrink-0 border border-border object-cover [image-rendering:pixelated]"
-            />
-          ) : (
-            <span className="flex size-14 shrink-0 items-center justify-center border border-border font-mono text-sm text-muted-foreground">
-              {name.slice(0, 1).toUpperCase()}
-            </span>
-          )}
+          <InscriptionAvatar
+            inscriptionId={profile.data?.avatarInscriptionId}
+            label={name}
+            className="size-14 shrink-0 border border-border [image-rendering:pixelated]"
+            fallbackClassName="text-sm"
+          />
           <div>
             <p className="label">DASHBOARD</p>
             <h1 className="display text-3xl md:text-4xl">{name.toUpperCase()}</h1>

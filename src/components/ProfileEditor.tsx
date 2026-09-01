@@ -67,18 +67,13 @@ export function ProfileEditor({
 
       <div className="grid gap-5 p-5 md:grid-cols-[120px_minmax(0,1fr)]">
         <div className="size-[120px] border border-border">
-          {avatar ? (
-            <img
-              src={inscriptionImageUrl(avatar)}
-              alt="Profile inscription avatar"
-              loading="lazy"
-              className="size-full object-cover grayscale"
-            />
-          ) : (
-            <div className="flex size-full items-center justify-center font-mono text-[10px] text-muted-foreground">
-              NO PFP
-            </div>
-          )}
+          <InscriptionAvatar
+            inscriptionId={avatar}
+            label={name || "?"}
+            alt="Profile inscription avatar"
+            className="size-full grayscale"
+            fallbackClassName="text-[10px]"
+          />
         </div>
 
         <div className="space-y-3">

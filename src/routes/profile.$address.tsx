@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { InscriptionAvatar } from "@/components/InscriptionAvatar";
 import { inscriptionImageUrl, profileQuery, type ParcelPage } from "@/lib/profiles";
 import { shortenAddress } from "@/lib/registry";
 import { timeAgo } from "@/lib/bitmap";
@@ -63,18 +64,13 @@ function ProfilePage() {
 
       <div className="mt-6 flex flex-wrap items-start gap-6 border border-border p-6">
         <div className="size-28 shrink-0 border border-border">
-          {profile.data?.avatarInscriptionId ? (
-            <img
-              src={inscriptionImageUrl(profile.data.avatarInscriptionId)}
-              alt={`Avatar inscription for ${address}`}
-              loading="lazy"
-              className="size-full object-cover grayscale"
-            />
-          ) : (
-            <div className="flex size-full items-center justify-center font-mono text-[10px] text-muted-foreground">
-              NO PFP
-            </div>
-          )}
+          <InscriptionAvatar
+            inscriptionId={profile.data?.avatarInscriptionId}
+            label={profile.data?.displayName ?? address}
+            alt={`Avatar inscription for ${address}`}
+            className="size-full grayscale"
+            fallbackClassName="text-[10px]"
+          />
         </div>
         <div className="min-w-0">
           <h1 className="display text-3xl md:text-4xl">
