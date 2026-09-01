@@ -261,6 +261,37 @@ function BitmapDetail() {
                   : claims.map((c) => `${c.bitmapHeight}.bitmap`).join(", ")
               }
             />
+            <Field
+              k="BLOCK TRANSACTIONS"
+              v={
+                stats.data
+                  ? stats.data.txCount.toLocaleString("en-US")
+                  : stats.isLoading
+                    ? "…"
+                    : "NOT IN DATASET"
+              }
+            />
+            <Field
+              k="PREVIEW SIZE"
+              v={stats.data ? `${stats.data.previewWidth} × ${stats.data.previewHeight}` : "—"}
+            />
+            <Field
+              k="SHAPE GROUP"
+              v={
+                stats.data?.pattern === null || stats.data?.pattern === undefined
+                  ? stats.isLoading
+                    ? "…"
+                    : "—"
+                  : `#${stats.data.pattern}${
+                      siblings.data === undefined
+                        ? ""
+                        : siblings.data === 0
+                          ? " — UNIQUE SHAPE"
+                          : ` — SHARED WITH ${siblings.data.toLocaleString("en-US")} BITMAP(S)`
+                    }`
+              }
+            />
+
           </dl>
         </div>
       </div>
