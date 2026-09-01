@@ -152,6 +152,11 @@ export default function Game3DBuild({ config, height }: { config: Game3dConfig; 
             Math.sin(angle) * radius - center.z,
           );
           scene.add(object);
+          if (gltf.animations.length > 0) {
+            const mixer = new THREE.AnimationMixer(object);
+            mixer.clipAction(gltf.animations[0]!).play();
+            mixers.push(mixer);
+          }
           loaded.push(object);
           if (model.spin) spinners.push(object);
           setModelStatus((prev) => {
