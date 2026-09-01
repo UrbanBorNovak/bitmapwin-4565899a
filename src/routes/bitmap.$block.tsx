@@ -402,6 +402,11 @@ function BitmapDetail() {
         <LeasePanel height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
       </div>
 
+      <div className="mt-6">
+        <BitmapEvents height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
+      </div>
+
+
 
     </div>
   );
