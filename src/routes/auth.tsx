@@ -29,6 +29,11 @@ export const Route = createFileRoute("/auth")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s['next'] === "string" && s['next'].startsWith("/") && !s['next'].startsWith("//")
+      ? s['next']
+      : undefined,
+  }),
   component: AuthPage,
 });
 
@@ -37,6 +42,7 @@ type Mode = "signin" | "signup" | "forgot";
 function AuthPage() {
   const { session, loading } = useAuthSession();
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,8 +50,10 @@ function AuthPage() {
   const [sent, setSent] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && session) void navigate({ to: "/wallet" });
-  }, [loading, session, navigate]);
+    if (loading || !session) return;
+    if (next) window.location.replace(next);
+    else void navigate({ to: "/wallet" });
+  }, [loading, session, navigate, next]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,7 +84,7 @@ function AuthPage() {
     setBusy(true);
     try {
       await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: next ? `${window.location.origin}${next}` : window.location.origin,
       });
     } catch (err) {
       toast("GOOGLE SIGN-IN FAILED", { description: (err as Error).message.toUpperCase() });
