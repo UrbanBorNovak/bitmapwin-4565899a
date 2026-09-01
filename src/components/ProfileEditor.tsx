@@ -136,6 +136,14 @@ export function ProfileEditor({
                     src={inscriptionImageUrl(id)}
                     alt="Owned inscription"
                     loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                      e.currentTarget.parentElement?.classList.add(
+                        "flex",
+                        "items-center",
+                        "justify-center",
+                      );
+                    }}
                     className="size-full object-cover grayscale"
                   />
                 </button>

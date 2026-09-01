@@ -57,6 +57,12 @@ async function bitmapHeightOf(inscriptionId: string): Promise<number | null> {
   }
 }
 
+/** ord's inscription metadata view — the content type, when the index knows it. */
+async function contentTypeOf(inscriptionId: string): Promise<string | null> {
+  const meta = await ordJson<{ content_type?: string | null }>(`/inscription/${inscriptionId}`, 1);
+  return typeof meta?.content_type === "string" ? meta.content_type : null;
+}
+
 async function mapWithConcurrency<T, R>(
   items: T[],
   limit: number,
@@ -173,6 +179,7 @@ export async function fetchWallet(address: string, maxOutputs = 60): Promise<Wal
     const inscriptions = await mapWithConcurrency(inscriptionIds.slice(0, 8), 3, async (id) => ({
       id,
       bitmapHeight: await bitmapHeightOf(id),
+      contentType: await contentTypeOf(id),
     }));
     return {
       outpoint: output.outpoint,
