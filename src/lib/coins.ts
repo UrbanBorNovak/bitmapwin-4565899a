@@ -45,6 +45,7 @@ export type CoinEvent = {
   title: string;
   description: string | null;
   prize: string | null;
+  prizeCoins: number;
   entryCost: number;
   maxEntries: number | null;
   status: string;
