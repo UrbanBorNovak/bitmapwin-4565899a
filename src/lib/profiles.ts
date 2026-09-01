@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_CONFIGS, isBuildKind, parseBuildConfig, type BuildKind } from "@/lib/build-sdk";
+import { saveWalletProfileFn } from "@/lib/profiles.functions";
 
 /**
  * Wallet profiles, owner-customised parcel pages and parcel visitor stats.
