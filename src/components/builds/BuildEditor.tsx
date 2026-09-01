@@ -469,7 +469,7 @@ function Game3dEditor({
               >
                 <span className="display block text-xs">{asset.label}</span>
                 <span className="label block text-muted-foreground">
-                  {used ? "IN WORLD" : asset.group}
+                  {used ? "IN WORLD" : asset.skinnable && count > 0 ? `×${count} — ADD MORE` : asset.group}
                 </span>
                 {asset.note ? (
                   <span className="label mt-1 block text-muted-foreground">{asset.note}</span>
