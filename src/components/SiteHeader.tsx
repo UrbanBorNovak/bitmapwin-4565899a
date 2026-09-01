@@ -51,6 +51,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <BtcTicker className="hidden sm:flex" />
           <button
             aria-label="Search bitmaps"
             onClick={() => setSearchOpen((v) => !v)}
