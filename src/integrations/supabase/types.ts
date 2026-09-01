@@ -99,6 +99,33 @@ export type Database = {
           },
         ]
       }
+      bitmap_chat_messages: {
+        Row: {
+          bitmap_height: number
+          body: string
+          created_at: string
+          id: string
+          sender_address: string | null
+          user_id: string
+        }
+        Insert: {
+          bitmap_height: number
+          body: string
+          created_at?: string
+          id?: string
+          sender_address?: string | null
+          user_id: string
+        }
+        Update: {
+          bitmap_height?: number
+          body?: string
+          created_at?: string
+          id?: string
+          sender_address?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       bitmap_index: {
         Row: {
           block_height: number

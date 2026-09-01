@@ -12,6 +12,7 @@ import { blockStatsQuery, patternSiblingsQuery } from "@/lib/block-stats";
 
 
 import { BidPanel } from "@/components/BidPanel";
+import { BitmapChat } from "@/components/BitmapChat";
 import { ParcelPagePanel } from "@/components/ParcelPagePanel";
 import { LeasePanel } from "@/components/leases/LeasePanel";
 import { BitmapEvents } from "@/components/coins/BitmapEvents";
@@ -154,6 +155,8 @@ function BitmapDetail() {
       </div>
 
       <ParcelPagePanel height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
+
+      <BitmapChat height={block} />
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="group rounded-lg border border-border bg-card p-6">
