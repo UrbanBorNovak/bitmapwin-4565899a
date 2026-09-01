@@ -1,16 +1,36 @@
-import type { InfoConfig } from "@/lib/build-sdk";
+import { themePanelStyle, themeShellStyle, type InfoConfig } from "@/lib/build-sdk";
 
 export function InfoBuild({ config }: { config: InfoConfig }) {
-  const empty = !config.headline && config.fields.length === 0 && config.links.length === 0;
+  const empty =
+    !config.headline && !config.subline && config.fields.length === 0 && config.links.length === 0;
   if (empty) return null;
+  const theme = config.theme;
   return (
-    <div className="space-y-4">
-      {config.headline ? <p className="display text-lg">{config.headline}</p> : null}
+    <div className="space-y-4 border p-5" style={themeShellStyle(theme)}>
+      {config.headline ? (
+        <p className="display text-lg" style={{ color: theme.accent }}>
+          {config.headline}
+        </p>
+      ) : null}
+      {theme.rules ? (
+        <hr className="border-0" style={{ height: "1px", background: `${theme.accent}55` }} />
+      ) : null}
+      {config.subline ? (
+        <p className="max-w-[62ch] font-mono text-sm whitespace-pre-wrap opacity-80">
+          {config.subline}
+        </p>
+      ) : null}
       {config.fields.length > 0 ? (
         <dl className="grid gap-2 sm:grid-cols-2">
           {config.fields.map((f, i) => (
-            <div key={`${f.label}-${i}`} className="rounded-md border border-border px-3 py-2">
-              <dt className="label">{f.label.toUpperCase()}</dt>
+            <div
+              key={`${f.label}-${i}`}
+              className="border px-3 py-2"
+              style={themePanelStyle(theme)}
+            >
+              <dt className="label" style={{ color: theme.accent }}>
+                {f.label.toUpperCase()}
+              </dt>
               <dd className="mt-1 font-mono text-xs break-words">{f.value}</dd>
             </div>
           ))}
@@ -24,7 +44,8 @@ export function InfoBuild({ config }: { config: InfoConfig }) {
                 href={l.url}
                 target="_blank"
                 rel="noreferrer nofollow"
-                className="btn-term-ghost inline-block"
+                className="inline-block border px-3 py-1.5 font-mono text-xs transition-opacity hover:opacity-70"
+                style={{ ...themePanelStyle(theme), color: theme.accent }}
               >
                 [ {(l.label || l.url).toUpperCase()} ]
               </a>
