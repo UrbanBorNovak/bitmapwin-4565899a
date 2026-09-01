@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ParcelCard } from "@/components/ParcelCard";
-import { registryParcelsQuery } from "@/lib/registry";
-import { recentTradesQuery } from "@/lib/trade-store";
+import { registryParcelsQuery, registryCountQuery } from "@/lib/registry";
+import { recentTradesQuery, tradedBitmapCountQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
 
 export const Route = createFileRoute("/")({
