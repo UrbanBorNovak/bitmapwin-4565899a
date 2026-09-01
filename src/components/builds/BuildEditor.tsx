@@ -15,6 +15,8 @@ import {
   GAME3D_SCENES,
   GAME3D_SCENE_LABELS,
   ONCHAIN_ASSETS,
+  AVATAR_SKINS,
+  AVATAR_RIG_ID,
   type BuildKind,
   type Game3dModel,
   type Game2dConfig,
@@ -428,7 +430,11 @@ function Game3dEditor({
         </p>
         <div className="mt-2 grid gap-2 sm:grid-cols-3">
           {ONCHAIN_ASSETS.map((asset) => {
-            const used = config.models.some((m) => m.inscriptionId === asset.inscriptionId);
+            const count = config.models.filter(
+              (m) => m.inscriptionId === asset.inscriptionId,
+            ).length;
+            // Skinnable avatars can be placed more than once, each with its own skin.
+            const used = count > 0 && !asset.skinnable;
             const full = config.models.length >= 6;
             return (
               <button
@@ -442,10 +448,15 @@ function Game3dEditor({
                       ...config.models,
                       {
                         inscriptionId: asset.inscriptionId,
-                        label: asset.label,
+                        label: asset.skinnable
+                          ? `${asset.label} ${count + 1}`.slice(0, 60)
+                          : asset.label,
                         scale: asset.scale,
                         height: asset.height,
                         spin: false,
+                        textureId: asset.skinnable
+                          ? (AVATAR_SKINS[count % AVATAR_SKINS.length]?.inscriptionId ?? "")
+                          : "",
                       },
                     ],
                   })
@@ -460,7 +471,7 @@ function Game3dEditor({
               >
                 <span className="display block text-xs">{asset.label}</span>
                 <span className="label block text-muted-foreground">
-                  {used ? "IN WORLD" : asset.group}
+                  {used ? "IN WORLD" : asset.skinnable && count > 0 ? `×${count} — ADD MORE` : asset.group}
                 </span>
                 {asset.note ? (
                   <span className="label mt-1 block text-muted-foreground">{asset.note}</span>
@@ -540,6 +551,44 @@ function Game3dEditor({
                   onChange={(e) => setModel(i, { spin: e.target.checked })}
                 />
                 <span className="label">ROTATE MODEL</span>
+              </label>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-[1fr_2fr]">
+              <label className="block">
+                <span className="label">
+                  {model.inscriptionId === AVATAR_RIG_ID ? "AVATAR SKIN" : "TEXTURE SKIN"}
+                </span>
+                <select
+                  className={`mt-1 ${input}`}
+                  value={
+                    AVATAR_SKINS.some((s) => s.inscriptionId === model.textureId)
+                      ? model.textureId
+                      : model.textureId
+                        ? "custom"
+                        : ""
+                  }
+                  onChange={(e) => {
+                    if (e.target.value === "custom") return;
+                    setModel(i, { textureId: e.target.value });
+                  }}
+                >
+                  <option value="">MODEL'S OWN TEXTURE</option>
+                  {AVATAR_SKINS.map((skin) => (
+                    <option key={skin.inscriptionId} value={skin.inscriptionId}>
+                      {skin.label}
+                    </option>
+                  ))}
+                  <option value="custom">CUSTOM INSCRIPTION →</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className="label">OR PASTE A TEXTURE INSCRIPTION ID</span>
+                <input
+                  className={`mt-1 ${input}`}
+                  placeholder="<txid>i0"
+                  value={model.textureId ?? ""}
+                  onChange={(e) => setModel(i, { textureId: e.target.value.trim().slice(0, 120) })}
+                />
               </label>
             </div>
           </div>

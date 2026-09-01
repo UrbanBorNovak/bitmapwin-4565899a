@@ -78,6 +78,11 @@ export type Game3dModel = {
   scale: number; // 0.1..20
   height: number; // -5..20 vertical offset
   spin: boolean;
+  /**
+   * Optional on-chain image inscription painted onto the model — how the space
+   * avatar rig gets its pixel skin. Empty means the model keeps its own texture.
+   */
+  textureId?: string;
 };
 
 export const GAME3D_SCENES = ["city", "monoliths", "pyramids", "rings", "terrain"] as const;
@@ -196,7 +201,13 @@ export type OnChainAsset = {
   scale: number;
   height: number;
   note?: string;
+  /** True when the asset accepts an on-chain image skin (AVATAR_SKINS). */
+  skinnable?: boolean;
 };
+
+/** The animated space avatar rig — the one asset that takes a pixel skin. */
+export const AVATAR_RIG_ID =
+  "5e2d04efb32bc584af0f86ca9d0744186c680ced298a33235dc913a5f13e2f34i0";
 
 /**
  * Curated GLB/GLTF inscriptions (Draco compressed) that already render well in
@@ -262,13 +273,37 @@ export const ONCHAIN_ASSETS: OnChainAsset[] = [
     note: "VERY LARGE — RAISE SCALE SLOWLY",
   },
   {
-    inscriptionId: "5e2d04efb32bc584af0f86ca9d0744186c680ced298a33235dc913a5f13e2f34i0",
+    inscriptionId: AVATAR_RIG_ID,
     label: "SPACE AVATAR RIG",
     group: "AVATAR",
     scale: 0.8,
     height: 0,
-    note: "ANIMATED CHARACTER — IDLE LOOP PLAYS",
+    note: "ANIMATED CHARACTER — PICK A SKIN BELOW",
+    skinnable: true,
   },
+];
+
+/**
+ * On-chain pixel skins for the space avatar rig. Each one is an image
+ * inscription mapped onto the rig's body material.
+ */
+export const AVATAR_SKINS: { inscriptionId: string; label: string }[] = [
+  { inscriptionId: "e4d14cac0179c85a6285bb31f7af2e9f741a324f98f5cba9f806493309714507i0", label: "SKIN 01" },
+  { inscriptionId: "bfd378b86fb230a26a9cffc23b427146de76eefb9fc1d6649fe7477dc4be53ddi0", label: "SKIN 02" },
+  { inscriptionId: "f9f64471e1fed505e31f90ec445c576219b9cba5b2646effd05d5e36c5e1b788i0", label: "SKIN 03" },
+  { inscriptionId: "0407fe2c0b080a9ed27b3b3a07d40f2106b3b6dbe973e49d3525a6001f63c8e9i0", label: "SKIN 04" },
+  { inscriptionId: "0701ed49ac70544e4d0909c94a5c910a0bf6bc948c20330732ac910206a08388i0", label: "SKIN 05" },
+  { inscriptionId: "80367c008deb077805e247ce722911cf706e9df70cdfba01988c57eaa50caab6i0", label: "SKIN 06" },
+  { inscriptionId: "cc06642fa13f760151e53804792c724fe3ffe38858b91f189f8d3439b282248bi0", label: "SKIN 07" },
+  { inscriptionId: "b95af2eeed5175622f49c992305cc02b790c20d834a965b20a040f59a3bab227i0", label: "SKIN 08" },
+  { inscriptionId: "6de302a4ca5d571cb48e64c408fe8243151f350bf0afefd369bab6f18d2041d1i0", label: "SKIN 09" },
+  { inscriptionId: "ef83cdeff41b74a8a5425862b9bcc1ca2085430137cab0e657142200346a922di0", label: "SKIN 10" },
+  { inscriptionId: "58b74905b0b40799e7791f2ed7b09595f9aee937d82084a85ef8173895c36a67i0", label: "SKIN 11" },
+  { inscriptionId: "cab9edf662a551d1de8993e04d5564197c0eb9575fd88dd28f4496b9d273d4f3i0", label: "SKIN 12" },
+  { inscriptionId: "bca9d8951361f077232115100939bc51c8ffa1ead67ab3e1a989912171f38996i0", label: "SKIN 13" },
+  { inscriptionId: "bff6ff4d9fc51fa9826b83267c0256236d9c2391a7e30323e5d38004d0e0047di0", label: "SKIN 14" },
+  { inscriptionId: "22e4ed36864569041cf57dd65512719b7655fae69ddfd07a5fab0148770c5dfei0", label: "SKIN 15" },
+  { inscriptionId: "7b32e098b565c79f217ce2dac18d8e621add81ce3c5fbae1e221c4a0f0679705i0", label: "SKIN 16" },
 ];
 
 /** Normalises any untrusted JSON (DB row, pasted SDK payload) into a valid config. */
@@ -366,6 +401,7 @@ export function parseBuildConfig<K extends BuildKind>(kind: K, raw: unknown): Bu
               scale: Number.isFinite(scale) ? Math.min(20, Math.max(0.1, scale)) : 1,
               height: Number.isFinite(h) ? Math.min(20, Math.max(-5, h)) : 0,
               spin: r["spin"] === true,
+              textureId: str(r["textureId"], 120).trim(),
             } satisfies Game3dModel;
           })
           .filter((m) => m.inscriptionId !== ""),

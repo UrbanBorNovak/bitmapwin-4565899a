@@ -126,6 +126,8 @@ export default function Game3DBuild({ config, height }: { config: Game3dConfig; 
     loader.setDRACOLoader(draco);
     const loaded: THREE.Object3D[] = [];
     const mixers: THREE.AnimationMixer[] = [];
+    const textureLoader = new THREE.TextureLoader();
+    const textures: THREE.Texture[] = [];
     const spinners: THREE.Object3D[] = [];
     let cancelled = false;
     const statuses = config.models.map((m) => `LOADING ${m.label || m.inscriptionId.slice(0, 10)}…`);
@@ -152,9 +154,40 @@ export default function Game3DBuild({ config, height }: { config: Game3dConfig; 
             Math.sin(angle) * radius - center.z,
           );
           scene.add(object);
+
+          // Paint the on-chain pixel skin onto the model's body materials.
+          const skinId = model.textureId?.trim();
+          if (skinId) {
+            textureLoader.load(inscriptionContentUrl(skinId), (tex) => {
+              if (cancelled) {
+                tex.dispose();
+                return;
+              }
+              tex.flipY = false;
+              tex.colorSpace = THREE.SRGBColorSpace;
+              tex.minFilter = THREE.NearestFilter;
+              tex.magFilter = THREE.NearestFilter;
+              tex.needsUpdate = true;
+              textures.push(tex);
+              object.traverse((child) => {
+                if (!(child instanceof THREE.Mesh)) return;
+                const materials = Array.isArray(child.material) ? child.material : [child.material];
+                for (const material of materials) {
+                  if (material instanceof THREE.MeshStandardMaterial) {
+                    material.map = tex;
+                    material.needsUpdate = true;
+                  }
+                }
+              });
+            });
+          }
+
           if (gltf.animations.length > 0) {
             const mixer = new THREE.AnimationMixer(object);
-            mixer.clipAction(gltf.animations[0]!).play();
+            const idle =
+              gltf.animations.find((clip) => /idle/i.test(clip.name)) ??
+              gltf.animations[gltf.animations.length > 2 ? 1 : 0]!;
+            mixer.clipAction(idle).play();
             mixers.push(mixer);
           }
           loaded.push(object);
@@ -257,6 +290,7 @@ export default function Game3DBuild({ config, height }: { config: Game3dConfig; 
       el.removeEventListener("wheel", onWheel);
       renderer.dispose();
       draco.dispose();
+      for (const tex of textures) tex.dispose();
       for (const mixer of mixers) mixer.stopAllAction();
       for (const geo of disposables) geo.dispose();
       const cleanup = (root: THREE.Object3D) =>
