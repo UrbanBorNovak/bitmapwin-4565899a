@@ -384,7 +384,8 @@ function WalletPage() {
             heldHeights={heldHeights}
           />
 
-          <section id="earnings" className="mt-10 scroll-mt-24">
+          <section id="earnings" className="mt-10 grid gap-6 scroll-mt-24 lg:grid-cols-2">
+            <CoinWallet addresses={[address, sessionWallet?.paymentAddress ?? address]} />
             <LeaseEarnings addresses={[address, sessionWallet?.paymentAddress ?? address]} />
           </section>
 
