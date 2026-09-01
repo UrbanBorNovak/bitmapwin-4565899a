@@ -275,6 +275,7 @@ export function ParcelPagePanel({
             onKindChange={setBuildKind}
             onConfigChange={setBuildConfig}
             walletAddress={wallet?.ordinalsAddress ?? ownerAddress}
+            height={height}
           />
 
 

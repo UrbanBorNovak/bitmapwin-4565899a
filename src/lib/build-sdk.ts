@@ -70,11 +70,38 @@ export type ShopConfig = {
   items: ShopItem[];
 };
 
+/** A 3D asset pulled straight from an ordinals inscription (GLB / GLTF). */
+export type Game3dModel = {
+  /** Inscription id holding the .glb/.gltf model, served from ordinals.com. */
+  inscriptionId: string;
+  label: string;
+  scale: number; // 0.1..20
+  height: number; // -5..20 vertical offset
+  spin: boolean;
+};
+
+export const GAME3D_SCENES = ["city", "monoliths", "pyramids", "rings", "terrain"] as const;
+export type Game3dScene = (typeof GAME3D_SCENES)[number];
+
+export const GAME3D_SCENE_LABELS: Record<Game3dScene, string> = {
+  city: "VOXEL CITY",
+  monoliths: "MONOLITHS",
+  pyramids: "PYRAMID FIELD",
+  rings: "ORBIT RINGS",
+  terrain: "BLOCK TERRAIN",
+};
+
 export type Game3dConfig = {
   worldName: string;
-  towers: number; // 4..64 voxel towers
+  scene: Game3dScene;
+  towers: number; // 4..64 structures
   spin: boolean;
   accent: string; // hex
+  ground: string; // hex
+  grid: boolean;
+  fog: boolean;
+  /** On-chain 3D models placed at the centre of the world. */
+  models: Game3dModel[];
 };
 
 export type Game2dConfig = {
@@ -108,7 +135,17 @@ export const DEFAULT_CONFIGS: BuildConfigMap = {
     items: [],
   },
   gallery: { columns: 3, items: [] },
-  game3d: { worldName: "BLOCK WORLD", towers: 24, spin: true, accent: "#f7931a" },
+  game3d: {
+    worldName: "BLOCK WORLD",
+    scene: "city",
+    towers: 24,
+    spin: true,
+    accent: "#f7931a",
+    ground: "#0a0a0a",
+    grid: true,
+    fog: true,
+    models: [],
+  },
   game2d: { title: "BLOCK RUN", coins: 12, walls: 22, speed: 5 },
 };
 
@@ -127,7 +164,7 @@ export const BUILD_LIMITS = {
     columns: [2, 3, 4] as const,
   },
   gallery: { items: 48, inscriptionId: 120, caption: 80, columns: [2, 3, 4] as const },
-  game3d: { worldName: 60, towers: [4, 64] as const },
+  game3d: { worldName: 60, towers: [4, 64] as const, models: 6, scale: [0.1, 20] as const },
   game2d: { title: 60, coins: [3, 40] as const, walls: [0, 60] as const, speed: [1, 10] as const },
 } as const;
 
@@ -140,6 +177,14 @@ const clamp = (n: number, min: number, max: number) =>
   Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n))) : min;
 
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : "");
+
+const hex = (v: unknown, fallback: string) =>
+  /^#[0-9a-fA-F]{6}$/.test(String(v)) ? String(v) : fallback;
+
+/** Content URL for an inscription — where on-chain 3D models and images live. */
+export function inscriptionContentUrl(inscriptionId: string): string {
+  return `https://ordinals.com/content/${inscriptionId}`;
+}
 
 /** Normalises any untrusted JSON (DB row, pasted SDK payload) into a valid config. */
 export function parseBuildConfig<K extends BuildKind>(kind: K, raw: unknown): BuildConfigMap[K] {
@@ -211,12 +256,34 @@ export function parseBuildConfig<K extends BuildKind>(kind: K, raw: unknown): Bu
       return config as BuildConfigMap[K];
     }
     case "game3d": {
-
+      const models = Array.isArray(o["models"]) ? o["models"] : [];
+      const scene = GAME3D_SCENES.includes(o["scene"] as Game3dScene)
+        ? (o["scene"] as Game3dScene)
+        : "city";
       const config: Game3dConfig = {
         worldName: str(o["worldName"], 60) || DEFAULT_CONFIGS.game3d.worldName,
+        scene,
         towers: clamp(Number(o["towers"] ?? 24), 4, 64),
         spin: o["spin"] !== false,
-        accent: /^#[0-9a-fA-F]{6}$/.test(String(o["accent"])) ? String(o["accent"]) : "#f7931a",
+        accent: hex(o["accent"], "#f7931a"),
+        ground: hex(o["ground"], "#0a0a0a"),
+        grid: o["grid"] !== false,
+        fog: o["fog"] !== false,
+        models: models
+          .slice(0, 6)
+          .map((raw) => {
+            const r = (raw ?? {}) as Record<string, unknown>;
+            const scale = Number(r["scale"] ?? 1);
+            const h = Number(r["height"] ?? 0);
+            return {
+              inscriptionId: str(r["inscriptionId"], 120).trim(),
+              label: str(r["label"], 60),
+              scale: Number.isFinite(scale) ? Math.min(20, Math.max(0.1, scale)) : 1,
+              height: Number.isFinite(h) ? Math.min(20, Math.max(-5, h)) : 0,
+              spin: r["spin"] === true,
+            } satisfies Game3dModel;
+          })
+          .filter((m) => m.inscriptionId !== ""),
       };
       return config as BuildConfigMap[K];
     }
@@ -437,14 +504,86 @@ export const BUILD_PRESETS: BuildPreset[] = [
     name: "ORANGE SKYLINE",
     blurb: "WALKABLE VOXEL CITY SEEDED BY THIS BLOCK, BITCOIN ORANGE",
     kind: "game3d",
-    config: { worldName: "BLOCK CITY", towers: 32, spin: true, accent: "#f7931a" } satisfies Game3dConfig,
+    config: {
+      ...DEFAULT_CONFIGS.game3d,
+      worldName: "BLOCK CITY",
+      scene: "city",
+      towers: 32,
+      accent: "#f7931a",
+    } satisfies Game3dConfig,
   },
   {
     id: "game3d-mono",
     name: "MONO MONOLITHS",
     blurb: "SPARSE WHITE TOWERS, STATIC CAMERA — MINIMAL AND CALM",
     kind: "game3d",
-    config: { worldName: "MONOLITHS", towers: 12, spin: false, accent: "#ffffff" } satisfies Game3dConfig,
+    config: {
+      ...DEFAULT_CONFIGS.game3d,
+      worldName: "MONOLITHS",
+      scene: "monoliths",
+      towers: 12,
+      spin: false,
+      accent: "#ffffff",
+      ground: "#111111",
+    } satisfies Game3dConfig,
+  },
+  {
+    id: "game3d-pyramids",
+    name: "PYRAMID FIELD",
+    blurb: "STEPPED PYRAMIDS ON AN OPEN PLAIN — MONUMENTAL, SLOW ORBIT",
+    kind: "game3d",
+    config: {
+      ...DEFAULT_CONFIGS.game3d,
+      worldName: "THE FIELD",
+      scene: "pyramids",
+      towers: 18,
+      accent: "#f7931a",
+      fog: true,
+    } satisfies Game3dConfig,
+  },
+  {
+    id: "game3d-rings",
+    name: "ORBIT RINGS",
+    blurb: "BLOCKS ORBITING A CENTRE — DROP AN ORDINALS GLB IN THE MIDDLE",
+    kind: "game3d",
+    config: {
+      ...DEFAULT_CONFIGS.game3d,
+      worldName: "ORBIT",
+      scene: "rings",
+      towers: 40,
+      accent: "#f7931a",
+      grid: false,
+    } satisfies Game3dConfig,
+  },
+  {
+    id: "game3d-terrain",
+    name: "BLOCK TERRAIN",
+    blurb: "HEIGHTFIELD LANDSCAPE SEEDED BY THE BLOCK — GOOD MODEL STAGE",
+    kind: "game3d",
+    config: {
+      ...DEFAULT_CONFIGS.game3d,
+      worldName: "TERRAIN",
+      scene: "terrain",
+      towers: 24,
+      accent: "#f7931a",
+      ground: "#0e0e0e",
+      fog: true,
+    } satisfies Game3dConfig,
+  },
+  {
+    id: "game3d-museum",
+    name: "MODEL PLINTH",
+    blurb: "EMPTY STAGE BUILT FOR ON-CHAIN 3D MODELS — PASTE A GLB INSCRIPTION",
+    kind: "game3d",
+    config: {
+      ...DEFAULT_CONFIGS.game3d,
+      worldName: "PLINTH",
+      scene: "rings",
+      towers: 6,
+      accent: "#e5e5e5",
+      grid: true,
+      models: [],
+    } satisfies Game3dConfig,
   },
   {
     id: "game2d-run",
