@@ -1,16 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import { ParcelCard } from "@/components/ParcelCard";
 import { OfferBook } from "@/components/OfferBook";
 import { parcelOwnersQuery, registryBaseQuery, type RegistryParcel } from "@/lib/registry";
-import { getBlockInscriptions, getRecentInscriptions } from "@/lib/ordinals-scan.functions";
-import { saveChainInscriptions } from "@/lib/inscription-store";
-import { traceBitmapTradesFn } from "@/lib/trades.functions";
-import { saveTrades } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
-import { settleOffersFn } from "@/lib/settle.functions";
 import { useLiveOffers } from "@/lib/use-live-offers";
 import { TrendingParcels } from "@/components/TrendingParcels";
 import { CLUBS, inClub, type ClubId } from "@/lib/clubs";
