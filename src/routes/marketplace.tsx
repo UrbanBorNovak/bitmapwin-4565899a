@@ -102,7 +102,7 @@ function Marketplace() {
   const volume = saleSats.reduce((a, b) => a + b, 0);
   const holders = new Set(parcels.map((p) => p.ownerAddress).filter(Boolean)).size;
 
-  const busy = sync.isPending || refreshTrades.isPending || settle.isPending;
+  
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-12 md:px-8">
