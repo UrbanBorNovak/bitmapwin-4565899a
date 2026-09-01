@@ -49,6 +49,15 @@ export const acceptBidFn = createServerFn({ method: "POST" })
     return acceptBid(data.bidId, data.holderAddress);
   });
 
+export const declineBidFn = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z.object({ bidId: z.string().uuid(), holderAddress: addressSchema }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { declineBid } = await import("@/lib/bids.server");
+    return declineBid(data.bidId, data.holderAddress);
+  });
+
 /** Accept a bid by publishing the seller-signed sale PSBT for that bidder. */
 export const acceptBidWithOfferFn = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>

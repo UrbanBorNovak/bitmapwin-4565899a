@@ -1,0 +1,2 @@
+ALTER TABLE public.bids DROP CONSTRAINT IF EXISTS bids_status_valid;
+ALTER TABLE public.bids ADD CONSTRAINT bids_status_valid CHECK (status IN ('open','accepted','settled','cancelled','expired','declined'));

@@ -8,13 +8,20 @@ import { supabase } from "@/integrations/supabase/client";
  * once the holder accepts.
  */
 
-export type BidStatus = "open" | "accepted" | "settled" | "cancelled" | "expired";
+export type BidStatus =
+  | "open"
+  | "accepted"
+  | "settled"
+  | "cancelled"
+  | "declined"
+  | "expired";
 
 export const BID_STATUS_LABEL: Record<BidStatus, string> = {
   open: "OPEN",
   accepted: "ACCEPTED — AWAITING BROADCAST",
   settled: "SETTLED ON CHAIN",
   cancelled: "CANCELLED",
+  declined: "DECLINED BY HOLDER",
   expired: "EXPIRED",
 };
 
@@ -43,7 +50,13 @@ type BidRow = {
 const COLUMNS =
   "id, bitmap_height, bidder_address, price_sats, expires_at, note, status, created_at";
 
-const KNOWN_STATUSES: BidStatus[] = ["accepted", "settled", "cancelled", "expired"];
+const KNOWN_STATUSES: BidStatus[] = [
+  "accepted",
+  "settled",
+  "cancelled",
+  "declined",
+  "expired",
+];
 
 function toBid(row: BidRow): Bid {
   const status: BidStatus =
@@ -138,6 +151,10 @@ export function bidMessage(height: number, priceSats: number, address: string): 
   return `BITMAP MARKETPLACE BID\nparcel: ${height}.bitmap\namount: ${priceSats} sats\nbidder: ${address}`;
 }
 
-export function bidActionMessage(action: "cancel" | "accept", bidId: string, address: string) {
+export function bidActionMessage(
+  action: "cancel" | "accept" | "decline",
+  bidId: string,
+  address: string,
+) {
   return `BITMAP MARKETPLACE ${action.toUpperCase()} BID\nbid: ${bidId}\naddress: ${address}`;
 }

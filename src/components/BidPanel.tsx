@@ -9,7 +9,7 @@ import {
   isLiveBid,
   type Bid,
 } from "@/lib/bids";
-import { cancelBidFn, placeBidFn } from "@/lib/bids.functions";
+import { cancelBidFn, declineBidFn, placeBidFn } from "@/lib/bids.functions";
 import { useAcceptBid } from "@/lib/use-accept-bid";
 import { signMessageWithWallet } from "@/lib/browser-wallet";
 import { useWalletSession, walletControls } from "@/lib/wallet-session";
@@ -250,6 +250,26 @@ function BidRow({
     onError: (e) => toast("WITHDRAW FAILED", { description: (e as Error).message.toUpperCase() }),
   });
 
+  const decline = useMutation({
+    mutationFn: async () => {
+      if (!wallet) throw new Error("CONNECT THE WALLET HOLDING THIS BITMAP");
+      const holder = holderAddress ?? wallet.ordinalsAddress;
+      await signMessageWithWallet(
+        wallet.provider,
+        wallet.ordinalsAddress,
+        bidActionMessage("decline", bid.id, wallet.ordinalsAddress),
+      ).catch(() => {
+        throw new Error("DECLINE SIGNATURE REJECTED");
+      });
+      return declineBidFn({ data: { bidId: bid.id, holderAddress: holder } });
+    },
+    onSuccess: () => {
+      onDone();
+      toast("BID DECLINED", { description: `${bid.bitmapHeight}.BITMAP` });
+    },
+    onError: (e) => toast("DECLINE FAILED", { description: (e as Error).message.toUpperCase() }),
+  });
+
   const { accept } = useAcceptBid({ holderAddress });
 
   return (
@@ -274,6 +294,15 @@ function BidRow({
             onClick={() => accept.mutate(bid)}
           >
             {accept.isPending ? "[ SIGNING SALE… ]" : "[ ACCEPT BID ]"}
+          </button>
+        )}
+        {canAccept && (
+          <button
+            className="btn-term-ghost !px-3 !py-1.5"
+            disabled={decline.isPending}
+            onClick={() => decline.mutate()}
+          >
+            {decline.isPending ? "[ DECLINING… ]" : "[ DECLINE ]"}
           </button>
         )}
         {canCancel && (
