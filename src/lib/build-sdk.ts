@@ -445,6 +445,9 @@ export function parseBuildConfig<K extends BuildKind>(kind: K, raw: unknown): Bu
       const items = Array.isArray(o["items"]) ? o["items"] : [];
       const cols = clamp(Number(o["columns"] ?? 3), 2, 4);
       const config: GalleryConfig = {
+        theme: parseTheme(o["theme"]),
+        fit: o["fit"] === "cover" ? "cover" : "contain",
+        monochrome: o["monochrome"] === true,
         columns: (cols === 2 || cols === 4 ? cols : 3) as 2 | 3 | 4,
         items: items
           .slice(0, 48)
