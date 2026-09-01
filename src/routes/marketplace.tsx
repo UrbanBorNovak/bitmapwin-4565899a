@@ -286,7 +286,7 @@ function EmptyRegistry() {
     <div className="mt-10 border border-border p-10">
       <h2 className="display text-2xl">NO BITMAPS IN THE REGISTRY YET</h2>
       <p className="mt-4 font-mono text-sm text-muted-foreground">
-        &gt; RUN [ SYNC CHAIN ] TO INDEX REAL BITMAP CLAIMS AND THEIR TRADES
+        &gt; CHECK BACK SOON — BITMAPS ARE INDEXED FROM REAL BITCOIN BLOCKS
         <span className="blink">_</span>
       </p>
       <div className="mt-8 flex flex-wrap gap-2">
