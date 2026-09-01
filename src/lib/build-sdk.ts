@@ -33,19 +33,126 @@ export const BUILD_KIND_HINTS: Record<BuildKind, string> = {
   game2d: "A PIXEL MAZE RUN SEEDED BY THIS BLOCK HEIGHT",
 };
 
+/* ------------------------------------------------------------------------- *
+ * THEME — the artistic layer every flat build kind shares.
+ * ------------------------------------------------------------------------- */
+
+export const BUILD_SURFACES = ["void", "slate", "paper", "sepia"] as const;
+export type BuildSurface = (typeof BUILD_SURFACES)[number];
+
+export const BUILD_SURFACE_LABELS: Record<BuildSurface, string> = {
+  void: "VOID BLACK",
+  slate: "SLATE",
+  paper: "PAPER WHITE",
+  sepia: "SEPIA",
+};
+
+export const BUILD_FRAMES = ["sharp", "soft", "round"] as const;
+export type BuildFrame = (typeof BUILD_FRAMES)[number];
+
+export const BUILD_FRAME_LABELS: Record<BuildFrame, string> = {
+  sharp: "SHARP",
+  soft: "SOFT",
+  round: "ROUND",
+};
+
+/** Look and feel a builder controls freely — colour, surface, frame, glow. */
+export type BuildTheme = {
+  accent: string;
+  surface: BuildSurface;
+  frame: BuildFrame;
+  /** Accent glow around the build shell — pure decoration. */
+  glow: boolean;
+  /** Show a thin accent rule under headings. */
+  rules: boolean;
+};
+
+export const DEFAULT_THEME: BuildTheme = {
+  accent: "#f7931a",
+  surface: "void",
+  frame: "sharp",
+  glow: false,
+  rules: true,
+};
+
+const SURFACE_BG: Record<BuildSurface, string> = {
+  void: "#0a0a0a",
+  slate: "#17181a",
+  paper: "#f2efe9",
+  sepia: "#efe3d0",
+};
+
+const SURFACE_FG: Record<BuildSurface, string> = {
+  void: "#f5f5f5",
+  slate: "#f2f2f2",
+  paper: "#121212",
+  sepia: "#241a10",
+};
+
+const FRAME_RADIUS: Record<BuildFrame, string> = {
+  sharp: "0px",
+  soft: "8px",
+  round: "22px",
+};
+
+/** Inline style for a themed build shell — renderers stay token-free. */
+export function themeShellStyle(theme: BuildTheme): Record<string, string> {
+  return {
+    background: SURFACE_BG[theme.surface],
+    color: SURFACE_FG[theme.surface],
+    borderColor: `${theme.accent}66`,
+    borderRadius: FRAME_RADIUS[theme.frame],
+    ...(theme.glow ? { boxShadow: `0 0 0 1px ${theme.accent}33, 0 18px 60px -24px ${theme.accent}` } : {}),
+  };
+}
+
+/** Inline style for a themed panel inside a build shell. */
+export function themePanelStyle(theme: BuildTheme): Record<string, string> {
+  return {
+    borderColor: `${theme.accent}44`,
+    borderRadius: FRAME_RADIUS[theme.frame],
+  };
+}
+
+/** One-click artistic palettes: accent + ground, ready for any build kind. */
+export const ART_PALETTES: {
+  id: string;
+  name: string;
+  accent: string;
+  ground: string;
+  surface: BuildSurface;
+}[] = [
+  { id: "orange", name: "BITCOIN ORANGE", accent: "#f7931a", ground: "#0a0a0a", surface: "void" },
+  { id: "mono", name: "PURE MONO", accent: "#ffffff", ground: "#111111", surface: "void" },
+  { id: "ember", name: "EMBER", accent: "#e85d3a", ground: "#1a1a1a", surface: "slate" },
+  { id: "gold", name: "NOIR GOLD", accent: "#c9a84c", ground: "#0d0d0d", surface: "void" },
+  { id: "mint", name: "TERMINAL MINT", accent: "#2dd4a8", ground: "#0d1b2a", surface: "slate" },
+  { id: "ice", name: "COLD STEEL", accent: "#6ba3c8", ground: "#101418", surface: "slate" },
+  { id: "paper", name: "PAPER & INK", accent: "#2d2d2d", ground: "#f2efe9", surface: "paper" },
+  { id: "sepia", name: "OLD MAP", accent: "#8b5a2b", ground: "#efe3d0", surface: "sepia" },
+];
+
 export type InfoField = { label: string; value: string };
 export type InfoLink = { label: string; url: string };
 
 export type InfoConfig = {
   headline: string;
+  /** Optional second line under the headline — room for a manifesto. */
+  subline: string;
   fields: InfoField[];
   links: InfoLink[];
+  theme: BuildTheme;
 };
 
 export type GalleryItem = { inscriptionId: string; caption: string };
 export type GalleryConfig = {
   columns: 2 | 3 | 4;
+  /** How each image sits in its frame. */
+  fit: "contain" | "cover";
+  /** Grayscale until hover — a gallerist's trick. */
+  monochrome: boolean;
   items: GalleryItem[];
+  theme: BuildTheme;
 };
 
 /** One asset the holder sells from their own wallet, at their own price. */
@@ -127,7 +234,7 @@ export type BuildConfigMap = {
 export type BuildConfig = BuildConfigMap[BuildKind];
 
 export const DEFAULT_CONFIGS: BuildConfigMap = {
-  info: { headline: "", fields: [], links: [] },
+  info: { headline: "", subline: "", fields: [], links: [], theme: DEFAULT_THEME },
   shop: {
     shopName: "MY SHOP",
     tagline: "",
@@ -139,7 +246,13 @@ export const DEFAULT_CONFIGS: BuildConfigMap = {
     frame: "sharp",
     items: [],
   },
-  gallery: { columns: 3, items: [] },
+  gallery: {
+    columns: 3,
+    fit: "contain",
+    monochrome: false,
+    items: [],
+    theme: DEFAULT_THEME,
+  },
   game3d: {
     worldName: "BLOCK WORLD",
     scene: "city",
@@ -306,6 +419,22 @@ export const AVATAR_SKINS: { inscriptionId: string; label: string }[] = [
   { inscriptionId: "7b32e098b565c79f217ce2dac18d8e621add81ce3c5fbae1e221c4a0f0679705i0", label: "SKIN 16" },
 ];
 
+/** Normalises an untrusted theme object, falling back to the house style. */
+export function parseTheme(raw: unknown): BuildTheme {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  return {
+    accent: hex(o["accent"], DEFAULT_THEME.accent),
+    surface: BUILD_SURFACES.includes(o["surface"] as BuildSurface)
+      ? (o["surface"] as BuildSurface)
+      : DEFAULT_THEME.surface,
+    frame: BUILD_FRAMES.includes(o["frame"] as BuildFrame)
+      ? (o["frame"] as BuildFrame)
+      : DEFAULT_THEME.frame,
+    glow: o["glow"] === true,
+    rules: o["rules"] !== false,
+  };
+}
+
 /** Normalises any untrusted JSON (DB row, pasted SDK payload) into a valid config. */
 export function parseBuildConfig<K extends BuildKind>(kind: K, raw: unknown): BuildConfigMap[K] {
   const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
@@ -314,6 +443,8 @@ export function parseBuildConfig<K extends BuildKind>(kind: K, raw: unknown): Bu
       const fields = Array.isArray(o["fields"]) ? o["fields"] : [];
       const links = Array.isArray(o["links"]) ? o["links"] : [];
       const config: InfoConfig = {
+        theme: parseTheme(o["theme"]),
+        subline: str(o["subline"], 240),
         headline: str(o["headline"], 120),
         fields: fields.slice(0, 12).map((f) => {
           const r = (f ?? {}) as Record<string, unknown>;
@@ -330,6 +461,9 @@ export function parseBuildConfig<K extends BuildKind>(kind: K, raw: unknown): Bu
       const items = Array.isArray(o["items"]) ? o["items"] : [];
       const cols = clamp(Number(o["columns"] ?? 3), 2, 4);
       const config: GalleryConfig = {
+        theme: parseTheme(o["theme"]),
+        fit: o["fit"] === "cover" ? "cover" : "contain",
+        monochrome: o["monochrome"] === true,
         columns: (cols === 2 || cols === 4 ? cols : 3) as 2 | 3 | 4,
         items: items
           .slice(0, 48)
@@ -581,12 +715,14 @@ export const BUILD_PRESETS: BuildPreset[] = [
     kind: "info",
     config: {
       headline: "BITCOIN NATIVE, BITMAP HOLDER",
+      subline: "",
       fields: [
         { label: "ROLE", value: "BUILDER" },
         { label: "LOCATION", value: "ON-CHAIN" },
         { label: "SINCE", value: "2023" },
       ],
       links: [{ label: "X", url: "https://x.com/" }],
+      theme: DEFAULT_THEME,
     } satisfies InfoConfig,
   },
   {
@@ -596,6 +732,7 @@ export const BUILD_PRESETS: BuildPreset[] = [
     kind: "info",
     config: {
       headline: "OPEN FOR BUSINESS ON BITCOIN",
+      subline: "",
       fields: [
         { label: "WHAT", value: "ORDINALS STUDIO" },
         { label: "CONTACT", value: "DM ON X" },
@@ -604,6 +741,20 @@ export const BUILD_PRESETS: BuildPreset[] = [
         { label: "SITE", url: "https://" },
         { label: "ORDINALS", url: "https://ordinals.com/" },
       ],
+      theme: DEFAULT_THEME,
+    } satisfies InfoConfig,
+  },
+  {
+    id: "info-manifesto",
+    name: "MANIFESTO",
+    blurb: "BIG STATEMENT ON PAPER WHITE — TYPOGRAPHY FIRST, NEARLY NO CHROME",
+    kind: "info",
+    config: {
+      headline: "THIS BLOCK IS MINE",
+      subline: "A PLACE ON BITCOIN THAT CANNOT BE DELETED, RENTED BACK OR CENSORED.",
+      fields: [],
+      links: [],
+      theme: { accent: "#2d2d2d", surface: "paper", frame: "sharp", glow: false, rules: true },
     } satisfies InfoConfig,
   },
   {
@@ -611,14 +762,52 @@ export const BUILD_PRESETS: BuildPreset[] = [
     name: "GALLERY WALL",
     blurb: "THREE-COLUMN GRID OF ON-CHAIN IMAGES YOU HOLD",
     kind: "gallery",
-    config: { columns: 3, items: [] } satisfies GalleryConfig,
+    config: {
+      columns: 3,
+      fit: "contain",
+      monochrome: false,
+      items: [],
+      theme: DEFAULT_THEME,
+    } satisfies GalleryConfig,
   },
   {
     id: "gallery-2",
     name: "SOLO SHOWCASE",
     blurb: "TWO WIDE COLUMNS — BEST FOR A FEW HERO INSCRIPTIONS",
     kind: "gallery",
-    config: { columns: 2, items: [] } satisfies GalleryConfig,
+    config: {
+      columns: 2,
+      fit: "contain",
+      monochrome: false,
+      items: [],
+      theme: DEFAULT_THEME,
+    } satisfies GalleryConfig,
+  },
+  {
+    id: "gallery-museum",
+    name: "WHITE CUBE",
+    blurb: "MUSEUM WALL — PAPER WHITE, ROUND FRAMES, GRAYSCALE UNTIL HOVER",
+    kind: "gallery",
+    config: {
+      columns: 3,
+      fit: "contain",
+      monochrome: true,
+      items: [],
+      theme: { accent: "#2d2d2d", surface: "paper", frame: "round", glow: false, rules: false },
+    } satisfies GalleryConfig,
+  },
+  {
+    id: "gallery-neon",
+    name: "NEON VAULT",
+    blurb: "COVER-CROPPED 4-UP GRID WITH AN ACCENT GLOW — LOUD AND MODERN",
+    kind: "gallery",
+    config: {
+      columns: 4,
+      fit: "cover",
+      monochrome: false,
+      items: [],
+      theme: { accent: "#2dd4a8", surface: "slate", frame: "soft", glow: true, rules: true },
+    } satisfies GalleryConfig,
   },
   {
     id: "game3d-skyline",

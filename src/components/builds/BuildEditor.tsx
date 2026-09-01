@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 import { walletQuery } from "@/lib/wallet";
 import { inscriptionOffersQuery } from "@/lib/offers";
 import { ShopListButton } from "@/components/builds/ShopListButton";
@@ -6,9 +7,14 @@ import { inscriptionImageUrl } from "@/lib/profiles";
 import { formatSats } from "@/lib/trades";
 import { BuildRenderer } from "@/components/builds/BuildRenderer";
 import {
+  ART_PALETTES,
+  BUILD_FRAMES,
+  BUILD_FRAME_LABELS,
   BUILD_KINDS,
   BUILD_KIND_HINTS,
   BUILD_KIND_LABELS,
+  BUILD_SURFACES,
+  BUILD_SURFACE_LABELS,
   DEFAULT_CONFIGS,
   parseBuildConfig,
   presetsForKind,
@@ -17,7 +23,10 @@ import {
   ONCHAIN_ASSETS,
   AVATAR_SKINS,
   AVATAR_RIG_ID,
+  type BuildFrame,
   type BuildKind,
+  type BuildSurface,
+  type BuildTheme,
   type Game3dModel,
   type Game2dConfig,
   type Game3dConfig,
@@ -31,9 +40,165 @@ import {
 const input =
   "w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-primary";
 
+/** Numbered step wrapper — makes the whole flow readable at a glance. */
+function Step({
+  n,
+  title,
+  hint,
+  children,
+}: {
+  n: number;
+  title: string;
+  hint: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-md border border-border">
+      <header className="flex flex-wrap items-baseline gap-2 border-b border-border px-3 py-2">
+        <span className="display text-xs text-primary">{String(n).padStart(2, "0")}</span>
+        <span className="display text-xs">{title}</span>
+        <span className="label text-muted-foreground">{hint}</span>
+      </header>
+      <div className="p-3">{children}</div>
+    </section>
+  );
+}
+
+/** Collapsed drawer for power-user fields, so step 3 never looks scary. */
+function Advanced({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <details className="group rounded-md border border-dashed border-border">
+      <summary className="label cursor-pointer list-none px-3 py-2 hover:text-foreground">
+        <span className="inline-block transition-transform group-open:rotate-90">▸</span> {title}
+      </summary>
+      <div className="space-y-3 border-t border-border p-3">{children}</div>
+    </details>
+  );
+}
+
 /**
- * The SDK's authoring surface: pick a build kind, then edit the typed config for
- * that kind. Any config produced here round-trips through `parseBuildConfig`.
+ * One-click artistic palettes. Works for every kind because it only writes the
+ * fields that kind understands (theme, or accent/ground for worlds and shops).
+ */
+function PaletteStrip({
+  activeAccent,
+  onPick,
+}: {
+  activeAccent: string;
+  onPick: (palette: (typeof ART_PALETTES)[number]) => void;
+}) {
+  return (
+    <div>
+      <span className="label">ARTIST PALETTES</span>
+      <p className="label mt-1 text-muted-foreground">
+        ONE CLICK RE-COLOURS THE WHOLE BUILD — TWEAK THE EXACT COLOURS BELOW.
+      </p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {ART_PALETTES.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            title={p.name}
+            onClick={() => onPick(p)}
+            className={`flex items-center gap-2 rounded-md border px-2 py-1.5 transition-colors ${
+              activeAccent.toLowerCase() === p.accent.toLowerCase()
+                ? "border-primary"
+                : "border-border hover:border-primary"
+            }`}
+          >
+            <span className="flex">
+              <span className="h-4 w-4 rounded-l-sm" style={{ background: p.ground }} />
+              <span className="h-4 w-4 rounded-r-sm" style={{ background: p.accent }} />
+            </span>
+            <span className="label">{p.name}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** The shared artistic controls for flat builds: colour, surface, frame, glow. */
+function ThemeEditor({
+  theme,
+  onChange,
+}: {
+  theme: BuildTheme;
+  onChange: (t: BuildTheme) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <PaletteStrip
+        activeAccent={theme.accent}
+        onPick={(p) => onChange({ ...theme, accent: p.accent, surface: p.surface })}
+      />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <label className="block">
+          <span className="label">ACCENT COLOUR</span>
+          <input
+            type="color"
+            className="mt-1 h-9 w-full rounded-md border border-border bg-background"
+            value={theme.accent}
+            onChange={(e) => onChange({ ...theme, accent: e.target.value })}
+          />
+        </label>
+        <label className="block">
+          <span className="label">SURFACE</span>
+          <select
+            className={`mt-1 ${input}`}
+            value={theme.surface}
+            onChange={(e) => onChange({ ...theme, surface: e.target.value as BuildSurface })}
+          >
+            {BUILD_SURFACES.map((s) => (
+              <option key={s} value={s}>
+                {BUILD_SURFACE_LABELS[s]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="label">FRAMES</span>
+          <select
+            className={`mt-1 ${input}`}
+            value={theme.frame}
+            onChange={(e) => onChange({ ...theme, frame: e.target.value as BuildFrame })}
+          >
+            {BUILD_FRAMES.map((f) => (
+              <option key={f} value={f}>
+                {BUILD_FRAME_LABELS[f]}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="flex flex-wrap gap-4">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            className="accent-primary"
+            checked={theme.glow}
+            onChange={(e) => onChange({ ...theme, glow: e.target.checked })}
+          />
+          <span className="label">ACCENT GLOW</span>
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            className="accent-primary"
+            checked={theme.rules}
+            onChange={(e) => onChange({ ...theme, rules: e.target.checked })}
+          />
+          <span className="label">ACCENT RULE LINES</span>
+        </label>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The SDK's authoring surface: a three-step flow (what → starting point → make
+ * it yours) with a live preview pinned on top. Any config produced here
+ * round-trips through `parseBuildConfig`.
  */
 export function BuildEditor({
   kind,
@@ -52,12 +217,24 @@ export function BuildEditor({
   /** Block height this build sits on — used for the live preview seed. */
   height?: number;
 }) {
-
   return (
     <div className="space-y-4">
-      <div>
-        <span className="label">BUILD TYPE</span>
-        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+      {typeof height === "number" ? (
+        <div className="sticky top-2 z-20 rounded-md border border-primary/60 bg-background/95 backdrop-blur">
+          <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-3 py-2">
+            <span className="label text-primary">LIVE PREVIEW — {height}.BITMAP</span>
+            <span className="label text-muted-foreground">
+              UPDATES AS YOU TYPE · EXACTLY WHAT VISITORS SEE
+            </span>
+          </div>
+          <div className="max-h-[46vh] overflow-auto p-3">
+            <BuildRenderer kind={kind} config={config} height={height} />
+          </div>
+        </div>
+      ) : null}
+
+      <Step n={1} title="WHAT ARE YOU BUILDING?" hint="SWITCH ANY TIME — NOTHING IS PERMANENT">
+        <div className="grid gap-2 sm:grid-cols-2">
           {BUILD_KINDS.map((k) => (
             <button
               key={k}
@@ -70,19 +247,18 @@ export function BuildEditor({
                 kind === k ? "border-primary bg-card" : "border-border hover:border-primary"
               }`}
             >
-              <span className="display block text-xs">{BUILD_KIND_LABELS[k]}</span>
+              <span className="display block text-xs">
+                {kind === k ? "▸ " : ""}
+                {BUILD_KIND_LABELS[k]}
+              </span>
               <span className="label mt-1 block text-muted-foreground">{BUILD_KIND_HINTS[k]}</span>
             </button>
           ))}
         </div>
-      </div>
+      </Step>
 
-      <div>
-        <span className="label">START FROM A PRESET</span>
-        <p className="label mt-1 text-muted-foreground">
-          PICK ONE, THEN ADAPT EVERY FIELD BELOW — NOTHING IS LOCKED.
-        </p>
-        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+      <Step n={2} title="PICK A STARTING POINT" hint="A FINISHED LOOK IN ONE CLICK">
+        <div className="grid gap-2 sm:grid-cols-2">
           {presetsForKind(kind).map((preset) => (
             <button
               key={preset.id}
@@ -99,42 +275,29 @@ export function BuildEditor({
             onClick={() => onConfigChange(DEFAULT_CONFIGS[kind])}
             className="rounded-md border border-dashed border-border px-3 py-2 text-left transition-colors hover:border-primary"
           >
-            <span className="display block text-xs">[ BLANK ]</span>
+            <span className="display block text-xs">[ BLANK CANVAS ]</span>
             <span className="label mt-1 block text-muted-foreground">START EMPTY AND BUILD IT YOURSELF</span>
           </button>
         </div>
-      </div>
+      </Step>
 
-      {kind === "info" ? (
-        <InfoEditor
-          config={parseBuildConfig("info", config)}
-          onChange={onConfigChange}
-        />
-      ) : kind === "shop" ? (
-        <ShopEditor
-          config={parseBuildConfig("shop", config)}
-          onChange={onConfigChange}
-          walletAddress={walletAddress ?? null}
-        />
-      ) : kind === "gallery" ? (
-        <GalleryEditor config={parseBuildConfig("gallery", config)} onChange={onConfigChange} />
-      ) : kind === "game3d" ? (
-        <Game3dEditor config={parseBuildConfig("game3d", config)} onChange={onConfigChange} />
-      ) : (
-        <Game2dEditor config={parseBuildConfig("game2d", config)} onChange={onConfigChange} />
-      )}
-
-      {typeof height === "number" ? (
-        <div className="rounded-md border border-border">
-          <div className="flex items-baseline justify-between gap-2 border-b border-border px-3 py-2">
-            <span className="label">LIVE PREVIEW</span>
-            <span className="label text-muted-foreground">EXACTLY WHAT VISITORS WILL SEE</span>
-          </div>
-          <div className="p-3">
-            <BuildRenderer kind={kind} config={config} height={height} />
-          </div>
-        </div>
-      ) : null}
+      <Step n={3} title="MAKE IT YOURS" hint="EVERY FIELD, COLOUR AND FRAME IS YOURS TO BEND">
+        {kind === "info" ? (
+          <InfoEditor config={parseBuildConfig("info", config)} onChange={onConfigChange} />
+        ) : kind === "shop" ? (
+          <ShopEditor
+            config={parseBuildConfig("shop", config)}
+            onChange={onConfigChange}
+            walletAddress={walletAddress ?? null}
+          />
+        ) : kind === "gallery" ? (
+          <GalleryEditor config={parseBuildConfig("gallery", config)} onChange={onConfigChange} />
+        ) : kind === "game3d" ? (
+          <Game3dEditor config={parseBuildConfig("game3d", config)} onChange={onConfigChange} />
+        ) : (
+          <Game2dEditor config={parseBuildConfig("game2d", config)} onChange={onConfigChange} />
+        )}
+      </Step>
     </div>
   );
 }
@@ -157,6 +320,18 @@ function InfoEditor({
           onChange={(e) => onChange({ ...config, headline: e.target.value.slice(0, 120) })}
         />
       </label>
+
+      <label className="block">
+        <span className="label">SUBLINE / MANIFESTO</span>
+        <textarea
+          className={`mt-1 h-20 resize-none ${input}`}
+          value={config.subline}
+          placeholder="ONE OR TWO LINES ABOUT THIS PLACE"
+          onChange={(e) => onChange({ ...config, subline: e.target.value.slice(0, 240) })}
+        />
+      </label>
+
+      <ThemeEditor theme={config.theme} onChange={(theme) => onChange({ ...config, theme })} />
 
       <div>
         <span className="label">INFO FIELDS</span>
@@ -258,18 +433,45 @@ function GalleryEditor({
 }) {
   return (
     <div className="space-y-3">
-      <label className="block">
-        <span className="label">COLUMNS</span>
-        <select
-          className={`mt-1 ${input}`}
-          value={config.columns}
-          onChange={(e) => onChange({ ...config, columns: Number(e.target.value) as 2 | 3 | 4 })}
-        >
-          <option value={2}>2</option>
-          <option value={3}>3</option>
-          <option value={4}>4</option>
-        </select>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="block">
+          <span className="label">COLUMNS</span>
+          <select
+            className={`mt-1 ${input}`}
+            value={config.columns}
+            onChange={(e) => onChange({ ...config, columns: Number(e.target.value) as 2 | 3 | 4 })}
+          >
+            <option value={2}>2</option>
+            <option value={3}>3</option>
+            <option value={4}>4</option>
+          </select>
+        </label>
+        <label className="block">
+          <span className="label">IMAGE FIT</span>
+          <select
+            className={`mt-1 ${input}`}
+            value={config.fit}
+            onChange={(e) =>
+              onChange({ ...config, fit: e.target.value === "cover" ? "cover" : "contain" })
+            }
+          >
+            <option value="contain">CONTAIN — SHOW THE WHOLE ARTWORK</option>
+            <option value="cover">COVER — CROP TO FILL THE FRAME</option>
+          </select>
+        </label>
+      </div>
+      <label className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          className="accent-primary"
+          checked={config.monochrome}
+          onChange={(e) => onChange({ ...config, monochrome: e.target.checked })}
+        />
+        <span className="label">GRAYSCALE UNTIL HOVER (MUSEUM MODE)</span>
       </label>
+
+      <ThemeEditor theme={config.theme} onChange={(theme) => onChange({ ...config, theme })} />
+
       <div>
         <span className="label">INSCRIPTIONS TO SHOWCASE</span>
         {config.items.map((item, i) => (
@@ -353,6 +555,11 @@ function Game3dEditor({
           ))}
         </div>
       </div>
+
+      <PaletteStrip
+        activeAccent={config.accent}
+        onPick={(p) => onChange({ ...config, accent: p.accent, ground: p.ground })}
+      />
 
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block">
@@ -789,6 +996,11 @@ function ShopEditor({
           />
         </label>
       </div>
+
+      <PaletteStrip
+        activeAccent={config.accent}
+        onPick={(p) => onChange({ ...config, accent: p.accent })}
+      />
 
       <div className="rounded-md border border-border p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
