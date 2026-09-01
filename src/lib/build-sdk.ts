@@ -419,6 +419,22 @@ export const AVATAR_SKINS: { inscriptionId: string; label: string }[] = [
   { inscriptionId: "7b32e098b565c79f217ce2dac18d8e621add81ce3c5fbae1e221c4a0f0679705i0", label: "SKIN 16" },
 ];
 
+/** Normalises an untrusted theme object, falling back to the house style. */
+export function parseTheme(raw: unknown): BuildTheme {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  return {
+    accent: hex(o["accent"], DEFAULT_THEME.accent),
+    surface: BUILD_SURFACES.includes(o["surface"] as BuildSurface)
+      ? (o["surface"] as BuildSurface)
+      : DEFAULT_THEME.surface,
+    frame: BUILD_FRAMES.includes(o["frame"] as BuildFrame)
+      ? (o["frame"] as BuildFrame)
+      : DEFAULT_THEME.frame,
+    glow: o["glow"] === true,
+    rules: o["rules"] !== false,
+  };
+}
+
 /** Normalises any untrusted JSON (DB row, pasted SDK payload) into a valid config. */
 export function parseBuildConfig<K extends BuildKind>(kind: K, raw: unknown): BuildConfigMap[K] {
   const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
