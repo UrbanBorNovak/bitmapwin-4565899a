@@ -264,6 +264,185 @@ export type Database = {
         }
         Relationships: []
       }
+      coin_balances: {
+        Row: {
+          address: string
+          balance: number
+          earned_total: number
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          balance?: number
+          earned_total?: number
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          balance?: number
+          earned_total?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      coin_event_entries: {
+        Row: {
+          address: string
+          created_at: string
+          event_id: string
+          id: string
+          spent: number
+          tickets: number
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          event_id: string
+          id?: string
+          spent?: number
+          tickets?: number
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          spent?: number
+          tickets?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coin_event_entries_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "coin_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coin_events: {
+        Row: {
+          bitmap_height: number | null
+          created_at: string
+          description: string | null
+          drawn_at: string | null
+          ends_at: string | null
+          entry_cost: number
+          host_address: string
+          id: string
+          kind: string
+          max_entries: number | null
+          prize: string | null
+          status: string
+          title: string
+          updated_at: string
+          winner_address: string | null
+        }
+        Insert: {
+          bitmap_height?: number | null
+          created_at?: string
+          description?: string | null
+          drawn_at?: string | null
+          ends_at?: string | null
+          entry_cost?: number
+          host_address: string
+          id?: string
+          kind?: string
+          max_entries?: number | null
+          prize?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          winner_address?: string | null
+        }
+        Update: {
+          bitmap_height?: number | null
+          created_at?: string
+          description?: string | null
+          drawn_at?: string | null
+          ends_at?: string | null
+          entry_cost?: number
+          host_address?: string
+          id?: string
+          kind?: string
+          max_entries?: number | null
+          prize?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          winner_address?: string | null
+        }
+        Relationships: []
+      }
+      coin_ledger: {
+        Row: {
+          address: string
+          created_at: string
+          delta: number
+          id: string
+          reason: string
+          ref: string | null
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          delta: number
+          id?: string
+          reason: string
+          ref?: string | null
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          delta?: number
+          id?: string
+          reason?: string
+          ref?: string | null
+        }
+        Relationships: []
+      }
+      coin_reward_runs: {
+        Row: {
+          awarded: number
+          created_at: string
+          recipients: number
+          run_date: string
+        }
+        Insert: {
+          awarded?: number
+          created_at?: string
+          recipients?: number
+          run_date: string
+        }
+        Update: {
+          awarded?: number
+          created_at?: string
+          recipients?: number
+          run_date?: string
+        }
+        Relationships: []
+      }
+      coin_view_snapshots: {
+        Row: {
+          bitmap_height: number
+          total_views: number
+          unique_visitors: number
+          updated_at: string
+        }
+        Insert: {
+          bitmap_height: number
+          total_views?: number
+          unique_visitors?: number
+          updated_at?: string
+        }
+        Update: {
+          bitmap_height?: number
+          total_views?: number
+          unique_visitors?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       district_bitmaps: {
         Row: {
           bitmap_height: number
@@ -380,6 +559,7 @@ export type Database = {
           min_days: number
           note: string | null
           owner_address: string
+          rate_coins_per_day: number
           rate_sats_per_day: number
           status: string
           updated_at: string
@@ -392,7 +572,8 @@ export type Database = {
           min_days?: number
           note?: string | null
           owner_address: string
-          rate_sats_per_day: number
+          rate_coins_per_day?: number
+          rate_sats_per_day?: number
           status?: string
           updated_at?: string
         }
@@ -404,6 +585,7 @@ export type Database = {
           min_days?: number
           note?: string | null
           owner_address?: string
+          rate_coins_per_day?: number
           rate_sats_per_day?: number
           status?: string
           updated_at?: string
@@ -421,9 +603,11 @@ export type Database = {
           lessee_address: string
           owner_address: string
           psbt_base64: string | null
+          rate_coins_per_day: number
           rate_sats_per_day: number
           starts_at: string
           status: string
+          total_coins: number
           total_sats: number
           txid: string | null
           updated_at: string
@@ -438,10 +622,12 @@ export type Database = {
           lessee_address: string
           owner_address: string
           psbt_base64?: string | null
-          rate_sats_per_day: number
+          rate_coins_per_day?: number
+          rate_sats_per_day?: number
           starts_at?: string
           status?: string
-          total_sats: number
+          total_coins?: number
+          total_sats?: number
           txid?: string | null
           updated_at?: string
         }
@@ -455,9 +641,11 @@ export type Database = {
           lessee_address?: string
           owner_address?: string
           psbt_base64?: string | null
+          rate_coins_per_day?: number
           rate_sats_per_day?: number
           starts_at?: string
           status?: string
+          total_coins?: number
           total_sats?: number
           txid?: string | null
           updated_at?: string
@@ -746,6 +934,24 @@ export type Database = {
       can_build_bitmap: {
         Args: { _height: number; _owner_address: string; _user_id: string }
         Returns: boolean
+      }
+      coin_apply: {
+        Args: {
+          _address: string
+          _delta: number
+          _reason: string
+          _ref?: string
+        }
+        Returns: number
+      }
+      coin_draw_event: { Args: { _event_id: string }; Returns: string }
+      coin_enter_event: {
+        Args: { _address: string; _event_id: string; _tickets: number }
+        Returns: string
+      }
+      coin_start_lease: {
+        Args: { _days: number; _lessee_address: string; _offer_id: string }
+        Returns: string
       }
       owns_wallet: {
         Args: { _address: string; _user_id: string }
