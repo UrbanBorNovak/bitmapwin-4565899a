@@ -136,6 +136,15 @@ export function CoinEventCard({ event }: { event: CoinEvent }) {
         <Stat label="TICKET POT" value={formatBit(pot)} />
       </div>
 
+      {countdown ? (
+        <p className="font-mono text-[11px]">
+          <span className="text-muted-foreground">{open ? "ENDS IN " : "CLOSED · "}</span>
+          <span className={open ? "text-accent" : "text-muted-foreground"}>{countdown}</span>
+        </p>
+      ) : open ? (
+        <p className="font-mono text-[11px] text-muted-foreground">NO DEADLINE — OPEN UNTIL DRAWN</p>
+      ) : null}
+
       {event.prize ? (
         <p className="font-mono text-[11px] text-muted-foreground">
           ALSO WINS {event.prize.toUpperCase()}
