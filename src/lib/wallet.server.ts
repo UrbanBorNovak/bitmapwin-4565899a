@@ -57,6 +57,12 @@ async function bitmapHeightOf(inscriptionId: string): Promise<number | null> {
   }
 }
 
+/** ord's inscription metadata view — the content type, when the index knows it. */
+async function contentTypeOf(inscriptionId: string): Promise<string | null> {
+  const meta = await ordJson<{ content_type?: string | null }>(`/inscription/${inscriptionId}`, 1);
+  return typeof meta?.content_type === "string" ? meta.content_type : null;
+}
+
 async function mapWithConcurrency<T, R>(
   items: T[],
   limit: number,
