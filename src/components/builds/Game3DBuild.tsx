@@ -126,6 +126,8 @@ export default function Game3DBuild({ config, height }: { config: Game3dConfig; 
     loader.setDRACOLoader(draco);
     const loaded: THREE.Object3D[] = [];
     const mixers: THREE.AnimationMixer[] = [];
+    const textureLoader = new THREE.TextureLoader();
+    const textures: THREE.Texture[] = [];
     const spinners: THREE.Object3D[] = [];
     let cancelled = false;
     const statuses = config.models.map((m) => `LOADING ${m.label || m.inscriptionId.slice(0, 10)}…`);
