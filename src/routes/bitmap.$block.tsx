@@ -8,6 +8,8 @@ import { ClubBadge } from "@/components/ClubBadge";
 import { toast } from "sonner";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
+import { blockStatsQuery, patternSiblingsQuery } from "@/lib/block-stats";
+
 
 import { BidPanel } from "@/components/BidPanel";
 import { ParcelPagePanel } from "@/components/ParcelPagePanel";
