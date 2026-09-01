@@ -289,34 +289,15 @@ export const rewardRunsQuery = (limit = 7) =>
     staleTime: 60_000,
   });
 
-/** Holder-side event creation. RLS requires a verified wallet link. */
-export async function createCoinEvent(input: {
+export type CreateCoinEventInput = {
   kind: CoinEventKind;
   bitmapHeight: number | null;
   hostAddress: string;
   title: string;
   description?: string | null;
   prize?: string | null;
+  prizeCoins: number;
   entryCost: number;
   maxEntries?: number | null;
   endsAt?: string | null;
-}): Promise<void> {
-  const { error } = await supabase.from("coin_events").insert({
-    kind: input.kind,
-    bitmap_height: input.bitmapHeight,
-    host_address: input.hostAddress,
-    title: input.title,
-    description: input.description ?? null,
-    prize: input.prize ?? null,
-    entry_cost: input.entryCost,
-    max_entries: input.maxEntries ?? null,
-    ends_at: input.endsAt ?? null,
-    status: "open",
-  });
-  if (error) throw new Error(error.message);
-}
-
-export async function closeCoinEvent(id: string): Promise<void> {
-  const { error } = await supabase.from("coin_events").update({ status: "closed" }).eq("id", id);
-  if (error) throw new Error(error.message);
-}
+};
