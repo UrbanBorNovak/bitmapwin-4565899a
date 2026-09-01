@@ -90,7 +90,6 @@ export function ShopBuild({ config, height }: { config: ShopConfig; height: numb
               <PriceTag item={item} accent={accent} />
               <ShopItemAction
                 item={item}
-                height={height}
                 offer={item.sold ? null : offerFor(item.inscriptionId)}
                 contactUrl={config.contactUrl}
                 accent={accent}
@@ -123,7 +122,6 @@ export function ShopBuild({ config, height }: { config: ShopConfig; height: numb
                 <PriceTag item={item} accent={accent} />
                 <ShopItemAction
                   item={item}
-                  height={height}
                   offer={item.sold ? null : offerFor(item.inscriptionId)}
                   contactUrl={config.contactUrl}
                   accent={accent}
