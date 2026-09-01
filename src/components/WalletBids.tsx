@@ -10,7 +10,7 @@ import {
   openBidsQuery,
   type Bid,
 } from "@/lib/bids";
-import { cancelBidFn } from "@/lib/bids.functions";
+import { cancelBidFn, declineBidFn } from "@/lib/bids.functions";
 import { useAcceptBid } from "@/lib/use-accept-bid";
 import { signMessageWithWallet } from "@/lib/browser-wallet";
 import { useWalletSession } from "@/lib/wallet-session";
@@ -69,6 +69,25 @@ export function WalletBids({ address, heldHeights }: { address: string; heldHeig
     onError: (e) => toast("WITHDRAW FAILED", { description: (e as Error).message.toUpperCase() }),
   });
 
+  const decline = useMutation({
+    mutationFn: async (bid: Bid) => {
+      if (!wallet) throw new Error("CONNECT THE WALLET HOLDING THIS BITMAP");
+      await signMessageWithWallet(
+        wallet.provider,
+        wallet.ordinalsAddress,
+        bidActionMessage("decline", bid.id, wallet.ordinalsAddress),
+      ).catch(() => {
+        throw new Error("DECLINE SIGNATURE REJECTED");
+      });
+      return declineBidFn({ data: { bidId: bid.id, holderAddress: address } });
+    },
+    onSuccess: () => {
+      invalidate();
+      toast("BID DECLINED");
+    },
+    onError: (e) => toast("DECLINE FAILED", { description: (e as Error).message.toUpperCase() }),
+  });
+
   const { accept } = useAcceptBid({ holderAddress: address });
 
   return (
@@ -83,13 +102,22 @@ export function WalletBids({ address, heldHeights }: { address: string; heldHeig
           loading={open.isLoading}
           empty="NO OPEN BIDS ON YOUR BITMAPS YET"
           action={(bid) => (
-            <button
-              className="btn-term !px-3 !py-1.5"
-              disabled={accept.isPending}
-              onClick={() => accept.mutate(bid)}
-            >
-              {accept.isPending ? "[ SIGNING SALE… ]" : "[ ACCEPT ]"}
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                className="btn-term !px-3 !py-1.5"
+                disabled={accept.isPending}
+                onClick={() => accept.mutate(bid)}
+              >
+                {accept.isPending ? "[ SIGNING SALE… ]" : "[ ACCEPT ]"}
+              </button>
+              <button
+                className="btn-term-ghost !px-3 !py-1.5"
+                disabled={decline.isPending}
+                onClick={() => decline.mutate(bid)}
+              >
+                {decline.isPending ? "[ DECLINING… ]" : "[ DECLINE ]"}
+              </button>
+            </div>
           )}
         />
       </section>
