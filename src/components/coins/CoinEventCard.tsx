@@ -43,6 +43,7 @@ export function CoinEventCard({ event }: { event: CoinEvent }) {
   const queryClient = useQueryClient();
   const [tickets, setTickets] = useState("1");
   const entries = useQuery(eventEntriesQuery([event.id]));
+  const countdown = useCountdown(event.endsAt);
 
   const totalTickets = (entries.data ?? []).reduce((sum, e) => sum + e.tickets, 0);
   const pot = (entries.data ?? []).reduce((sum, e) => sum + e.spent, 0);
