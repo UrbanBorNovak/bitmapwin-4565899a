@@ -6,10 +6,8 @@ import { HeaderIdentity } from "@/components/HeaderIdentity";
 
 const NAV = [
   { to: "/marketplace", label: "MARKETPLACE" },
-  { to: "/dashboard", label: "DASHBOARD" },
   { to: "/builds", label: "BUILDS" },
   { to: "/leases", label: "LEASES" },
-  { to: "/coins", label: "BIT" },
 ] as const;
 
 
