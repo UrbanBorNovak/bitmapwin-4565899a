@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { acceptBidWithOfferFn } from "@/lib/bids.functions";
 import { settleOfferFn } from "@/lib/settle.functions";
+import { locateBitmapFn } from "@/lib/locate-bitmap.functions";
+
 import { buildListingPsbt } from "@/lib/psbt-builder";
 import { signListingPsbt, xOnlyPubKeyHex } from "@/lib/browser-wallet";
 import { useWalletSession } from "@/lib/wallet-session";
@@ -44,13 +46,32 @@ export function useAcceptBid(options: { holderAddress?: string | null } = {}) {
       if (holder.toLowerCase() !== wallet.ordinalsAddress.toLowerCase()) {
         throw new Error("CONNECT THE WALLET HOLDING THIS BITMAP");
       }
-      const parcel = findParcel(bid.bitmapHeight);
+      // The wallet scan only walks a capped set of outputs, so fall back to the
+      // chain lookup for the inscription's current location before giving up.
+      let parcel = findParcel(bid.bitmapHeight);
       if (!parcel) {
-        throw new Error(`${bid.bitmapHeight}.BITMAP IS NOT IN THIS WALLET — REFRESH AND RETRY`);
+        const located = await locateBitmapFn({
+          data: { height: bid.bitmapHeight, address: wallet.ordinalsAddress },
+        }).catch((error: unknown) => {
+          throw new Error(
+            `COULD NOT LOCATE ${bid.bitmapHeight}.BITMAP ON CHAIN — ${
+              error instanceof Error ? error.message.toUpperCase() : "TRY AGAIN SHORTLY"
+            }`,
+          );
+        });
+        if (!located.heldByAddress) {
+          throw new Error(
+            `${bid.bitmapHeight}.BITMAP IS HELD BY ${
+              located.ownerAddress ? located.ownerAddress.slice(0, 10) + "…" : "ANOTHER ADDRESS"
+            } — CONNECT THAT WALLET`,
+          );
+        }
+        parcel = { outpoint: located.outpoint, valueSats: located.valueSats };
       }
       const [txid, voutRaw] = parcel.outpoint.split(":");
       const vout = Number(voutRaw);
       if (!txid || !Number.isInteger(vout)) throw new Error("BAD BITMAP OUTPOINT");
+
 
       const tapInternalKeyHex = xOnlyPubKeyHex(wallet.publicKey);
       const psbt = buildListingPsbt({
