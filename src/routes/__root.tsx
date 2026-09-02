@@ -173,7 +173,9 @@ function RootComponent() {
           <SiteFooter />
         </div>
       </div>
+      <MascotStickman />
       <Toaster />
+
     </QueryClientProvider>
   );
 }
