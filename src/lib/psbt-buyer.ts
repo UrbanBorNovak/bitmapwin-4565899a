@@ -193,6 +193,47 @@ function serializePsbt(psbt: ParsedPsbt): string {
   return base64FromBytes(bytes);
 }
 
+function witnessStack(items: number[][]): number[] {
+  return [...varint(items.length), ...items.flatMap((item) => [...varint(item.length), ...item])];
+}
+
+/**
+ * Converts wallet-produced signatures into PSBT final fields. Marketplace
+ * offers deliberately keep the seller signature partial so a buyer can append
+ * inputs and outputs; buyer wallets generally only finalize their own inputs.
+ * Finalizing the standard key-path forms here makes the completed transaction
+ * extractable without ever handling a private key.
+ */
+export function finalizeSignedPsbt(psbtBase64: string): string {
+  const psbt = parsePsbt(psbtBase64);
+  let changed = false;
+
+  psbt.inputs = psbt.inputs.map((map) => {
+    if (map.some((kv) => kv.key[0] === 0x07 || kv.key[0] === 0x08)) return map;
+
+    const tapKeySig = map.find((kv) => kv.key.length === 1 && kv.key[0] === 0x13);
+    if (tapKeySig) {
+      changed = true;
+      return [...map, { key: [0x08], value: witnessStack([tapKeySig.value]) }];
+    }
+
+    const partialSig = map.find((kv) => kv.key[0] === 0x02 && kv.key.length > 1);
+    if (!partialSig) return map;
+    const publicKey = partialSig.key.slice(1);
+    const redeemScript = map.find((kv) => kv.key.length === 1 && kv.key[0] === 0x04)?.value;
+    const additions: Kv[] = [
+      { key: [0x08], value: witnessStack([partialSig.value, publicKey]) },
+    ];
+    if (redeemScript) {
+      additions.push({ key: [0x07], value: [...varint(redeemScript.length), ...redeemScript] });
+    }
+    changed = true;
+    return [...map, ...additions];
+  });
+
+  return changed ? serializePsbt(psbt) : psbtBase64;
+}
+
 /** True when every input carries a final scriptSig or final witness. */
 export function isFullySigned(psbtBase64: string): boolean {
   const psbt = parsePsbt(psbtBase64);

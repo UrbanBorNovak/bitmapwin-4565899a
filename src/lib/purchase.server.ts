@@ -5,6 +5,7 @@ import {
   buildBuyerPsbt,
   byteArrayToHex,
   extractRawTxHex,
+  finalizeSignedPsbt,
   type FundingUtxo,
 } from "@/lib/psbt-buyer";
 
@@ -223,7 +224,8 @@ export async function submitPurchase(input: {
 }): Promise<PurchaseSubmission> {
   const offer = await loadOffer(input.offerId);
   const clean = input.psbtBase64.replace(/\s+/g, "");
-  const rawHex = extractRawTxHex(clean);
+  const finalized = finalizeSignedPsbt(clean);
+  const rawHex = extractRawTxHex(finalized);
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -232,7 +234,7 @@ export async function submitPurchase(input: {
       .from("offers")
       .update({
         buyer_address: input.buyerAddress,
-        buyer_psbt_base64: clean,
+        buyer_psbt_base64: finalized,
         delivered_at: new Date().toISOString(),
       })
       .eq("id", offer.id);
@@ -251,7 +253,7 @@ export async function submitPurchase(input: {
       .from("offers")
       .update({
         buyer_address: input.buyerAddress,
-        buyer_psbt_base64: clean,
+        buyer_psbt_base64: finalized,
         delivered_at: new Date().toISOString(),
       })
       .eq("id", offer.id);
