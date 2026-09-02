@@ -17,6 +17,8 @@ import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapMarketChart } from "@/components/BitmapMarketChart";
 import { FloorRanking } from "@/components/FloorRanking";
 import { SalesLog } from "@/components/SalesLog";
+import { BitmapPriceChart } from "@/components/BitmapPriceChart";
+
 
 
 
