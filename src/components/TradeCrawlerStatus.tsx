@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { tradeCrawlProgressFn } from "@/lib/trade-crawler.functions";
+import { registryResolveProgressFn } from "@/lib/registry-resolver.functions";
 
 function ago(iso: string | null) {
   if (!iso) return "—";
@@ -17,10 +18,18 @@ function ago(iso: string | null) {
  */
 export function TradeCrawlerStatus() {
   const progressFn = useServerFn(tradeCrawlProgressFn);
+  const resolveProgressFn = useServerFn(registryResolveProgressFn);
 
   const progress = useQuery({
     queryKey: ["trade-crawl", "progress"],
     queryFn: () => progressFn(),
+    staleTime: 10_000,
+    refetchInterval: 15_000,
+  });
+
+  const resolve = useQuery({
+    queryKey: ["registry-resolve", "progress"],
+    queryFn: () => resolveProgressFn(),
     staleTime: 10_000,
     refetchInterval: 15_000,
   });
@@ -38,6 +47,11 @@ export function TradeCrawlerStatus() {
   const pct =
     data && data.totalBitmaps > 0
       ? Math.min(100, (data.crawledBitmaps / data.totalBitmaps) * 100)
+      : 0;
+
+  const resolvePct =
+    resolve.data && resolve.data.total > 0
+      ? Math.min(100, (resolve.data.resolved / resolve.data.total) * 100)
       : 0;
 
   return (
@@ -64,6 +78,26 @@ export function TradeCrawlerStatus() {
         <div className="mt-1.5 h-1.5 w-full bg-muted" aria-hidden>
           <div className="h-full bg-primary" style={{ width: `${Math.max(pct, 0.5)}%` }} />
         </div>
+      </div>
+
+      <div className="mt-3">
+        <div className="flex items-baseline justify-between">
+          <span>INSCRIPTION IDS RESOLVED</span>
+          <span className="text-foreground">
+            {(resolve.data?.resolved ?? 0).toLocaleString("en-US")} /{" "}
+            {(resolve.data?.total ?? 0).toLocaleString("en-US")} · {resolvePct.toFixed(2)}%
+          </span>
+        </div>
+        <div className="mt-1.5 h-1.5 w-full bg-muted" aria-hidden>
+          <div
+            className="h-full bg-foreground"
+            style={{ width: `${Math.max(resolvePct, 0.5)}%` }}
+          />
+        </div>
+        <p className="mt-1.5 leading-relaxed">
+          RESOLVER PASS RUNNING · {(resolve.data?.unresolved ?? 0).toLocaleString("en-US")} CLAIMS
+          LEFT TO READ FROM THE ORDINALS INDEX
+        </p>
       </div>
 
       <dl className="mt-3 grid grid-cols-2 gap-2">

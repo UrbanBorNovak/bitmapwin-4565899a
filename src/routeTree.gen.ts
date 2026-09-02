@@ -32,6 +32,7 @@ import { Route as ApiPublicCoinRewardsRouteImport } from './routes/api/public/co
 import { Route as ApiPublicCrawlTradesRouteImport } from './routes/api/public/crawl-trades'
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
+import { Route as ApiPublicResolveRegistryRouteImport } from './routes/api/public/resolve-registry'
 import { Route as ApiPublicBlocksHeightRouteImport } from './routes/api/public/blocks.$height'
 import { Route as ApiPublicBlocksHeightMetaRouteImport } from './routes/api/public/blocks.$height.meta'
 
@@ -151,6 +152,12 @@ const ApiPublicOffersRoute = ApiPublicOffersRouteImport.update({
   path: '/api/public/offers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicResolveRegistryRoute =
+  ApiPublicResolveRegistryRouteImport.update({
+    id: '/api/public/resolve-registry',
+    path: '/api/public/resolve-registry',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicBlocksHeightRoute = ApiPublicBlocksHeightRouteImport.update({
   id: '/api/public/blocks/$height',
   path: '/api/public/blocks/$height',
@@ -187,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
+  '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
 }
@@ -213,6 +221,7 @@ export interface FileRoutesByTo {
   '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
+  '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
 }
@@ -241,6 +250,7 @@ export interface FileRoutesById {
   '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
+  '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
 }
@@ -270,6 +280,7 @@ export interface FileRouteTypes {
     | '/api/public/crawl-trades'
     | '/api/public/offer'
     | '/api/public/offers'
+    | '/api/public/resolve-registry'
     | '/api/public/blocks/$height'
     | '/api/public/blocks/$height/meta'
   fileRoutesByTo: FileRoutesByTo
@@ -296,6 +307,7 @@ export interface FileRouteTypes {
     | '/api/public/crawl-trades'
     | '/api/public/offer'
     | '/api/public/offers'
+    | '/api/public/resolve-registry'
     | '/api/public/blocks/$height'
     | '/api/public/blocks/$height/meta'
   id:
@@ -323,6 +335,7 @@ export interface FileRouteTypes {
     | '/api/public/crawl-trades'
     | '/api/public/offer'
     | '/api/public/offers'
+    | '/api/public/resolve-registry'
     | '/api/public/blocks/$height'
     | '/api/public/blocks/$height/meta'
   fileRoutesById: FileRoutesById
@@ -349,6 +362,7 @@ export interface RootRouteChildren {
   ApiPublicCrawlTradesRoute: typeof ApiPublicCrawlTradesRoute
   ApiPublicOfferRoute: typeof ApiPublicOfferRoute
   ApiPublicOffersRoute: typeof ApiPublicOffersRoute
+  ApiPublicResolveRegistryRoute: typeof ApiPublicResolveRegistryRoute
   ApiPublicBlocksHeightRoute: typeof ApiPublicBlocksHeightRouteWithChildren
 }
 
@@ -515,6 +529,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicOffersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/resolve-registry': {
+      id: '/api/public/resolve-registry'
+      path: '/api/public/resolve-registry'
+      fullPath: '/api/public/resolve-registry'
+      preLoaderRoute: typeof ApiPublicResolveRegistryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/blocks/$height': {
       id: '/api/public/blocks/$height'
       path: '/api/public/blocks/$height'
@@ -582,6 +603,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCrawlTradesRoute: ApiPublicCrawlTradesRoute,
   ApiPublicOfferRoute: ApiPublicOfferRoute,
   ApiPublicOffersRoute: ApiPublicOffersRoute,
+  ApiPublicResolveRegistryRoute: ApiPublicResolveRegistryRoute,
   ApiPublicBlocksHeightRoute: ApiPublicBlocksHeightRouteWithChildren,
 }
 export const routeTree = rootRouteImport
