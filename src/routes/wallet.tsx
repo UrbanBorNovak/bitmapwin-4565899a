@@ -30,6 +30,7 @@ import { CoinWallet } from "@/components/coins/CoinWallet";
 import { useBidInbox } from "@/lib/use-bid-inbox";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { useWalletSession } from "@/lib/wallet-session";
+import { UnlistButton } from "@/components/UnlistButton";
 import { WalletLinkPanel } from "@/components/WalletLinkPanel";
 import { useAuthSession } from "@/lib/auth";
 import { isLinked, myWalletLinksQuery } from "@/lib/wallet-links";
@@ -344,7 +345,16 @@ function WalletPage() {
               offers={offers.data?.outgoing ?? []}
               loading={offers.isLoading}
               empty="NO OFFERS SIGNED FROM THIS ADDRESS YET"
-              renderExtra={(offer) => <DeliverForm offer={offer} />}
+              renderExtra={(offer) => (
+                <>
+                  {offer.status === "open" && (
+                    <div className="mt-3">
+                      <UnlistButton offerId={offer.id} sellerAddress={offer.sellerAddress} />
+                    </div>
+                  )}
+                  <DeliverForm offer={offer} />
+                </>
+              )}
             />
           </section>
 
