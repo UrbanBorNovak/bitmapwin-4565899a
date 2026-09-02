@@ -27,7 +27,7 @@ export function TradeCrawlerStatus() {
       if (running.current || document.hidden) return;
       running.current = true;
       try {
-        const result = await crawlFn({ data: { batch: 8 } });
+        const result = await crawlFn({ data: { batch: 12 } });
         if (cancelled) return;
         if (!result.skipped && result.transfersFound > 0) {
           await queryClient.invalidateQueries({ queryKey: ["trades"] });
@@ -43,7 +43,7 @@ export function TradeCrawlerStatus() {
     };
 
     void tick();
-    const timer = window.setInterval(tick, 60_000);
+    const timer = window.setInterval(tick, 30_000);
     return () => {
       cancelled = true;
       window.clearInterval(timer);

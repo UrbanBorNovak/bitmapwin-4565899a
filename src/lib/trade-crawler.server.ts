@@ -129,9 +129,9 @@ export async function crawlTrades(batch = 20, maxHops = 6): Promise<CrawlResult>
 }
 
 /** Traffic-driven crawling: at most one run per window, app-wide. */
-const THROTTLE_MS = 45_000;
+const THROTTLE_MS = 20_000;
 
-export async function crawlTradesThrottled(batch = 8): Promise<CrawlResult & { skipped: boolean }> {
+export async function crawlTradesThrottled(batch = 12): Promise<CrawlResult & { skipped: boolean }> {
   const client = db();
   const { data } = await client
     .from("trade_crawl_state")
