@@ -20,8 +20,12 @@ export const buildPurchaseFn = createServerFn({ method: "POST" })
           .regex(/^[0-9a-fA-F]{64}$/)
           .optional(),
         paymentPublicKeyHex: z
-          .string()
-          .regex(/^[0-9a-fA-F]{66}$|^[0-9a-fA-F]{130}$/)
+          .union([
+            z.string().regex(/^[0-9a-fA-F]{66}$|^[0-9a-fA-F]{130}$/),
+            z
+              .array(z.string().regex(/^[0-9a-fA-F]{66}$|^[0-9a-fA-F]{130}$/))
+              .max(4),
+          ])
           .optional(),
       })
       .parse(data),

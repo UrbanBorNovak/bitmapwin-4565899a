@@ -263,8 +263,8 @@ export type BuyerPsbtInput = {
   feeRate: number;
   /** buyer x-only taproot key, when the funding inputs are p2tr */
   tapInternalKeyHex?: string | undefined;
-  /** buyer compressed payment public key, required for nested-segwit (3…) inputs */
-  paymentPublicKeyHex?: string | undefined;
+  /** buyer compressed payment public key(s), required for nested-segwit (3…) inputs */
+  paymentPublicKeyHex?: string | string[] | undefined;
 };
 
 export type BuyerPsbtResult = {
@@ -454,8 +454,8 @@ export type PaymentPsbtInput = {
   feeRate: number;
   /** payer x-only taproot key, when the funding inputs are p2tr */
   tapInternalKeyHex?: string | undefined;
-  /** payer compressed public key, required for nested-segwit (3…) inputs */
-  paymentPublicKeyHex?: string | undefined;
+  /** payer compressed public key(s), required for nested-segwit (3…) inputs */
+  paymentPublicKeyHex?: string | string[] | undefined;
 };
 
 export type PaymentPsbtResult = {
