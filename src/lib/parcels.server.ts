@@ -186,3 +186,52 @@ export async function scanChildInscriptions(inscriptionId: string, max = 48): Pr
     parcelIndex: null,
   }));
 }
+
+/**
+ * Reinscriptions of a district: every later inscription sharing the sat that
+ * carries the district's bitmap claim. The first inscription on the sat is the
+ * original; anything after it is a reinscription.
+ */
+export async function scanReinscriptions(inscriptionId: string): Promise<{
+  sat: number | null;
+  original: string | null;
+  reinscriptions: ChainChild[];
+}> {
+  const info = await ordFetch(`/r/inscription/${inscriptionId}`, 2);
+  if (!info) return { sat: null, original: null, reinscriptions: [] };
+  const json = (await info.json()) as { sat?: number | null };
+  const sat = typeof json.sat === "number" ? json.sat : null;
+  if (sat === null) return { sat: null, original: null, reinscriptions: [] };
+
+  const ids: string[] = [];
+  for (let page = 0; page < 3; page++) {
+    const resp = await ordFetch(`/r/sat/${sat}/${page}`, 2);
+    if (!resp) break;
+    const body = (await resp.json()) as { ids?: string[]; more?: boolean };
+    ids.push(...(body.ids ?? []));
+    if (!body.more) break;
+  }
+  if (ids.length <= 1) return { sat, original: ids[0] ?? null, reinscriptions: [] };
+
+  const later = ids.slice(1);
+  const details = await mapLimit(later, 6, async (id) => {
+    const resp = await ordFetch(`/r/inscription/${id}`, 2);
+    const meta = resp
+      ? ((await resp.json()) as { content_type?: string | null; number?: number; height?: number; timestamp?: number })
+      : null;
+    return meta;
+  });
+
+  return {
+    sat,
+    original: ids[0] ?? null,
+    reinscriptions: later.map((id, i) => ({
+      inscriptionId: id,
+      inscriptionNumber: details[i]?.number ?? 0,
+      inscribedInBlock: details[i]?.height ?? null,
+      timestamp: details[i]?.timestamp ?? null,
+      contentType: (details[i]?.content_type ?? null) as string | null,
+      parcelIndex: null,
+    })),
+  };
+}
