@@ -46,6 +46,8 @@ export async function crawlTrades(batch = 20, maxHops = 6): Promise<CrawlResult>
   const skip = new Set((recent ?? []).map((row) => row.block_height));
 
   const candidates: Array<{ bitmapHeight: number; txid: string; inscriptionId: string }> = [];
+  // bitmap_index can hold several sat rows per height — one candidate per height.
+  const seen = new Set<number>();
   let page = 0;
   // Prefer the highest bitmaps first: recent blocks trade most actively.
   while (candidates.length < size && page < 12) {
@@ -62,10 +64,12 @@ export async function crawlTrades(batch = 20, maxHops = 6): Promise<CrawlResult>
     for (const row of data) {
       if (candidates.length >= size) break;
       if (skip.has(row.block_height)) continue;
+      if (seen.has(row.block_height)) continue;
       const id = row.inscription_id;
       if (!id) continue;
       const txid = revealTxid(id);
       if (!txid) continue;
+      seen.add(row.block_height);
       candidates.push({ bitmapHeight: row.block_height, txid, inscriptionId: id });
     }
     page += 1;
@@ -77,7 +81,8 @@ export async function crawlTrades(batch = 20, maxHops = 6): Promise<CrawlResult>
 
   const traces = await traceMany(candidates, maxHops);
 
-  const tradeRows = traces.flatMap((trace) =>
+  const byTxid = new Map<string, Record<string, unknown>>();
+  const allTrades = traces.flatMap((trace) =>
     trace.trades.map((trade) => ({
       txid: trade.txid,
       bitmap_height: trade.bitmapHeight,
@@ -90,6 +95,9 @@ export async function crawlTrades(batch = 20, maxHops = 6): Promise<CrawlResult>
       hop: trade.hop,
     })),
   );
+
+  for (const row of allTrades) byTxid.set(row.txid as string, row);
+  const tradeRows = [...byTxid.values()] as typeof allTrades;
 
   if (tradeRows.length > 0) {
     const { error } = await client.from("trades").upsert(tradeRows, { onConflict: "txid" });
