@@ -21,11 +21,18 @@ export function ParcelPanel({
 }) {
   const scan = useQuery(parcelsQuery(height, districtInscriptionId));
   const [showAll, setShowAll] = useState(false);
+  const [showAllChildren, setShowAllChildren] = useState(false);
 
   const max = scan.data?.maxParcels ?? txCount;
   const valid = (scan.data?.parcels ?? []).filter((p) => p.valid);
   const superseded = (scan.data?.parcels ?? []).length - valid.length;
   const shown = showAll ? valid : valid.slice(0, 24);
+
+  const children = scan.data?.children ?? [];
+  const shownChildren = showAllChildren ? children : children.slice(0, 12);
+  const parcelIndexById = new Map(
+    children.filter((c) => c.parcelIndex !== null).map((c) => [c.inscriptionId, c.parcelIndex!]),
+  );
 
   return (
     <section className="mt-8 rounded-lg border border-border">
