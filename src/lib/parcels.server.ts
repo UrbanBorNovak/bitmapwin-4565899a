@@ -55,18 +55,27 @@ async function fetchChildren(inscriptionId: string, maxPages: number): Promise<{
   return { rows, more };
 }
 
-/** Reads the plain-text content of a child and returns its parcel index, if any. */
-async function parcelIndexOf(id: string, height: number): Promise<number | null> {
+/**
+ * Reads a child's content type and, when it is a plain-text parcel claim, its
+ * parcel index. Non-text children keep their content type so the UI can render
+ * html, images, svg, models and json children as they are on chain.
+ */
+async function inspectChild(
+  id: string,
+  height: number,
+): Promise<{ contentType: string | null; parcelIndex: number | null }> {
   const resp = await ordFetch(`/content/${id}`, 2);
-  if (!resp) return null;
-  const type = resp.headers.get("content-type") ?? "";
-  if (type && !type.includes("text/plain")) return null;
+  if (!resp) return { contentType: null, parcelIndex: null };
+  const type = (resp.headers.get("content-type") ?? "").toLowerCase();
+  if (type && !type.includes("text/plain")) return { contentType: type || null, parcelIndex: null };
   const text = (await resp.text()).trim().toLowerCase();
   const match = /^(\d+)\.(\d+)\.bitmap$/.exec(text);
-  if (!match) return null;
-  if (Number(match[2]) !== height) return null;
+  if (!match || Number(match[2]) !== height) return { contentType: type || null, parcelIndex: null };
   const index = Number(match[1]);
-  return Number.isSafeInteger(index) && index >= 0 ? index : null;
+  return {
+    contentType: type || null,
+    parcelIndex: Number.isSafeInteger(index) && index >= 0 ? index : null,
+  };
 }
 
 async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
