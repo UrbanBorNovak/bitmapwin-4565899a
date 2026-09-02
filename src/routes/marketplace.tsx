@@ -59,11 +59,20 @@ function Marketplace() {
   const registry = useQuery(registryBaseQuery(300));
   const parcels = registry.data ?? [];
   const registryCount = useQuery(registryCountQuery());
+  const progressFn = useServerFn(tradeCrawlProgressFn);
+  // Real registry-wide numbers from the crawler, not just the loaded page.
+  const crawl = useQuery({
+    queryKey: ["trade-crawl", "progress"],
+    queryFn: () => progressFn(),
+    staleTime: 10_000,
+    refetchInterval: 15_000,
+  });
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [club, setClub] = useState<ClubId | "any">("any");
   const [page, setPage] = useState(0);
   useLiveOffers();
+
 
   const listed = useMemo(() => parcels.filter((p) => p.listedSats !== null), [parcels]);
   const traded = useMemo(() => parcels.filter((p) => p.transfers > 0), [parcels]);
