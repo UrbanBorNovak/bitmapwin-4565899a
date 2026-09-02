@@ -148,23 +148,45 @@ export async function crawlTradesThrottled(batch = 12): Promise<CrawlResult & { 
 export type CrawlProgress = {
   crawledBitmaps: number;
   tradedBitmaps: number;
+  totalBitmaps: number;
+  transfers: number;
+  sales: number;
+  salesLast24h: number;
   lastRunAt: string | null;
 };
 
 export async function crawlProgress(): Promise<CrawlProgress> {
   const client = db();
-  const [{ count }, { data: last }, { data: traded }] = await Promise.all([
-    client.from("trade_crawl_state").select("*", { count: "exact", head: true }),
-    client
-      .from("trade_crawl_state")
-      .select("last_traced_at")
-      .order("last_traced_at", { ascending: false })
-      .limit(1),
-    client.from("trades").select("bitmap_height"),
-  ]);
+  const since = new Date(Date.now() - 24 * 3600_000).toISOString();
+  const [{ count }, { data: last }, { data: traded }, { count: indexed }, { count: recentSales }] =
+    await Promise.all([
+      client.from("trade_crawl_state").select("*", { count: "exact", head: true }),
+      client
+        .from("trade_crawl_state")
+        .select("last_traced_at")
+        .order("last_traced_at", { ascending: false })
+        .limit(1),
+      client.from("trades").select("bitmap_height, price_sats"),
+      client
+        .from("bitmap_index")
+        .select("*", { count: "exact", head: true })
+        .eq("is_valid", true)
+        .not("inscription_id", "is", null),
+      client
+        .from("trades")
+        .select("*", { count: "exact", head: true })
+        .gt("price_sats", 0)
+        .gte("block_time", since),
+    ]);
+  const rows = traded ?? [];
   return {
     crawledBitmaps: count ?? 0,
-    tradedBitmaps: new Set((traded ?? []).map((row) => row.bitmap_height)).size,
+    tradedBitmaps: new Set(rows.map((row) => row.bitmap_height)).size,
+    totalBitmaps: indexed ?? 0,
+    transfers: rows.length,
+    sales: rows.filter((row) => (row.price_sats ?? 0) > 0).length,
+    salesLast24h: recentSales ?? 0,
     lastRunAt: last?.[0]?.last_traced_at ?? null,
   };
 }
+
