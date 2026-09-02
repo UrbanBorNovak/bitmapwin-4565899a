@@ -7,6 +7,7 @@ import {
   connectWallet,
   isWalletInstalled,
   signPurchasePsbt,
+  keyCandidates,
   xOnlyPubKeyHex,
   type ConnectedWallet,
   type WalletProviderId,

@@ -478,3 +478,12 @@ export function hexToBase64(hex: string): string {
   for (let i = 0; i < clean.length; i += 2) bin += String.fromCharCode(parseInt(clean.slice(i, i + 2), 16));
   return btoa(bin);
 }
+
+/**
+ * Every compressed public key the wallet shared, payment key first. PSBT
+ * builders test each one against the funding scriptPubKey, so a wallet that
+ * mislabels its purposes still produces a signable nested-segwit input.
+ */
+export function keyCandidates(wallet: ConnectedWallet): string[] {
+  return [...new Set([wallet.paymentPublicKey, wallet.publicKey].filter(Boolean) as string[])];
+}
