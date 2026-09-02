@@ -13,6 +13,18 @@ export type ChainParcel = {
   valid: boolean;
 };
 
+/** Any child inscription of the district bitmap, parcel claim or not. */
+export type ChainChild = {
+  inscriptionId: string;
+  inscriptionNumber: number;
+  inscribedInBlock: number | null;
+  timestamp: number | null;
+  /** Content type as served by ord, e.g. `text/html;charset=utf-8`. */
+  contentType: string | null;
+  /** Parcel index when this child is a `{index}.{height}.bitmap` claim. */
+  parcelIndex: number | null;
+};
+
 export type ParcelScan = {
   height: number;
   districtInscriptionId: string;
@@ -21,6 +33,8 @@ export type ParcelScan = {
   childrenScanned: number;
   truncated: boolean;
   parcels: ChainParcel[];
+  /** Every scanned child inscription, so the UI can render their content. */
+  children: ChainChild[];
 };
 
 /** `{tx-index}.{block-height}.bitmap` — the parcel claim text to inscribe. */
