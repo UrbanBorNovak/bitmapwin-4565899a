@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ParcelCard } from "@/components/ParcelCard";
 import { ClubPriceChart } from "@/components/ClubPriceChart";
+import { FloorRanking } from "@/components/FloorRanking";
 import { CLUBS, clubById, clubSupply, formatRange, inClub } from "@/lib/clubs";
 import { parcelOwnersQuery, registryBaseQuery, type RegistryParcel } from "@/lib/registry";
 import { formatSats } from "@/lib/trades";
@@ -102,6 +103,15 @@ function ClubPage() {
       </div>
 
       <ClubPriceChart club={club} />
+
+      <div className="mt-6">
+        <FloorRanking
+          parcels={listed}
+          pending={registry.isPending}
+          showClub={false}
+          subtitle={`CHEAPEST ${club.short} BITMAPS OPEN FOR PURCHASE`}
+        />
+      </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
         {(["all", "listed", "traded"] as Tab[]).map((t) => (

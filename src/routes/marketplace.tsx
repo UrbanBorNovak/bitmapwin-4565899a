@@ -15,6 +15,7 @@ import { TrendingParcels } from "@/components/TrendingParcels";
 import { CLUBS, inClub, type ClubId } from "@/lib/clubs";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapMarketChart } from "@/components/BitmapMarketChart";
+import { FloorRanking } from "@/components/FloorRanking";
 
 
 export const Route = createFileRoute("/marketplace")({
@@ -151,6 +152,10 @@ function Marketplace() {
       <div className="mt-6 grid gap-6 xl:grid-cols-12">
         <div className="xl:col-span-8"><BitmapMarketChart /></div>
         <div className="[&>section]:mt-0 xl:col-span-4"><TrendingParcels limit={3} /></div>
+      </div>
+
+      <div className="mt-6">
+        <FloorRanking parcels={listed} pending={registry.isPending} />
       </div>
 
       <div className="mt-6"><BitmapOrderBook /></div>
