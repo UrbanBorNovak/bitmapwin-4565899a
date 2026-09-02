@@ -201,6 +201,15 @@ function DashboardPage() {
       </div>
 
       <div className="mt-8">
+        <ManagerAI
+          addresses={addresses}
+          heldHeights={held.data ?? []}
+          enabled={Boolean(session)}
+        />
+      </div>
+
+
+      <div className="mt-8">
         <ReferralPanel />
       </div>
 
