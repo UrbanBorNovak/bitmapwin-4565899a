@@ -11,11 +11,14 @@ export function InscriptionContent({
   contentType,
   className = "",
   title,
+  interactive = false,
 }: {
   inscriptionId: string;
   contentType?: string | null;
   className?: string;
   title?: string;
+  /** Allow pointer input, for html/3d children the visitor should explore. */
+  interactive?: boolean;
 }) {
   const type = (contentType ?? "").toLowerCase();
   const isImage = type.startsWith("image/") && !type.includes("svg");
@@ -36,7 +39,7 @@ export function InscriptionContent({
           loading="lazy"
           sandbox="allow-scripts"
           scrolling="no"
-          className="pointer-events-none h-full w-full border-0"
+          className={`h-full w-full border-0 ${interactive ? "" : "pointer-events-none"}`}
         />
       )}
     </div>

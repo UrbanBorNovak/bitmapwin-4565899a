@@ -21,11 +21,18 @@ export function ParcelPanel({
 }) {
   const scan = useQuery(parcelsQuery(height, districtInscriptionId));
   const [showAll, setShowAll] = useState(false);
+  const [showAllChildren, setShowAllChildren] = useState(false);
 
   const max = scan.data?.maxParcels ?? txCount;
   const valid = (scan.data?.parcels ?? []).filter((p) => p.valid);
   const superseded = (scan.data?.parcels ?? []).length - valid.length;
   const shown = showAll ? valid : valid.slice(0, 24);
+
+  const children = scan.data?.children ?? [];
+  const shownChildren = showAllChildren ? children : children.slice(0, 12);
+  const parcelIndexById = new Map(
+    children.filter((c) => c.parcelIndex !== null).map((c) => [c.inscriptionId, c.parcelIndex!]),
+  );
 
   return (
     <section className="mt-8 rounded-lg border border-border">
@@ -108,6 +115,52 @@ export function ParcelPanel({
             {superseded > 0 && scan.data?.truncated ? " · " : ""}
             {scan.data?.truncated ? `SCANNED FIRST ${scan.data.childrenScanned} CHILD INSCRIPTIONS` : ""}
           </p>
+        )}
+
+        {children.length > 0 && (
+          <div className="space-y-3 border-t border-border pt-5">
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <span className="label">CHILD INSCRIPTIONS — RENDERED ON CHAIN</span>
+              <span className="label text-muted-foreground">
+                {children.length.toLocaleString("en-US")} FOUND
+              </span>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {shownChildren.map((c) => (
+                <div key={c.inscriptionId} className="rounded border border-border">
+                  <InscriptionContent
+                    inscriptionId={c.inscriptionId}
+                    contentType={c.contentType}
+                    interactive
+                    className="aspect-square w-full border-b border-border"
+                    title={`Child inscription ${c.inscriptionId}`}
+                  />
+                  <div className="flex items-baseline justify-between gap-2 px-2 py-1.5">
+                    <span className="display truncate text-xs">
+                      {parcelIndexById.has(c.inscriptionId)
+                        ? parcelName(parcelIndexById.get(c.inscriptionId)!, height).toUpperCase()
+                        : shortId(c.inscriptionId)}
+                    </span>
+                    <a
+                      className="label shrink-0 text-muted-foreground hover:text-primary"
+                      href={`https://ordinals.com/inscription/${c.inscriptionId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {(c.contentType ?? "UNKNOWN").split(";")[0]!.toUpperCase()} ↗
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {children.length > 12 && (
+              <button className="btn-term-ghost" onClick={() => setShowAllChildren((v) => !v)}>
+                {showAllChildren
+                  ? "[ SHOW LESS ]"
+                  : `[ SHOW ALL ${children.length.toLocaleString("en-US")} CHILDREN ]`}
+              </button>
+            )}
+          </div>
         )}
       </div>
     </section>
