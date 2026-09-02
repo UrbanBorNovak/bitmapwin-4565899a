@@ -11,6 +11,7 @@ import {
   type ConnectedWallet,
   type WalletProviderId,
 } from "@/lib/browser-wallet";
+import { ensureWalletKeys, saveWalletSession } from "@/lib/wallet-session";
 import { formatSats } from "@/lib/trades";
 import { MARKETPLACE_FEE_PERCENT } from "@/lib/marketplace-fee";
 
