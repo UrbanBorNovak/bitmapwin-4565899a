@@ -104,6 +104,8 @@ function ClubPage() {
 
       <ClubPriceChart club={club} />
 
+      <ClubHolderChart club={club} />
+
       <div className="mt-6">
         <FloorRanking
           parcels={listed}
