@@ -235,17 +235,17 @@ export async function buildBlockBytes(height: number): Promise<BlockBytes> {
 async function buildBlockBytesUncached(height: number): Promise<BlockBytes> {
   const meta = await fetchBlockMeta(height);
 
-  let vsizes: number[];
+  let values: number[];
   let source: BlockBytes["source"] = "mempool-summary";
   try {
-    vsizes = await vsizesFromMempoolSummary(meta.hash);
+    values = await valuesFromMempoolSummary(meta.hash);
   } catch {
     source = "esplora-pages";
-    vsizes = await vsizesFromEsploraPages(meta.hash, meta.txCount);
+    values = await valuesFromEsploraPages(meta.hash, meta.txCount);
   }
 
-  const bytes = new Uint8Array(vsizes.length);
-  for (let i = 0; i < vsizes.length; i++) bytes[i] = sizeClassFromVsize(vsizes[i]!);
+  const bytes = new Uint8Array(values.length);
+  for (let i = 0; i < values.length; i++) bytes[i] = sizeClassFromValue(values[i]!);
 
   return {
     height: meta.height,
