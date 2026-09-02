@@ -160,6 +160,9 @@ function Marketplace() {
 
       <div className="mt-6"><BitmapOrderBook /></div>
 
+      <div className="mt-6"><SalesLog /></div>
+
+
       <div className="mt-8 grid gap-6 lg:grid-cols-12">
         <aside className="lg:col-span-3">
           <div className="border border-border bg-card lg:sticky lg:top-24">
