@@ -103,6 +103,15 @@ function ClubPage() {
 
       <ClubPriceChart club={club} />
 
+      <div className="mt-6">
+        <FloorRanking
+          parcels={listed}
+          pending={registry.isPending}
+          showClub={false}
+          subtitle={`CHEAPEST ${club.short} BITMAPS OPEN FOR PURCHASE`}
+        />
+      </div>
+
       <div className="mt-6 flex flex-wrap items-center gap-2">
         {(["all", "listed", "traded"] as Tab[]).map((t) => (
           <button
