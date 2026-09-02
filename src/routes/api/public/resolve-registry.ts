@@ -14,7 +14,7 @@ export const Route = createFileRoute("/api/public/resolve-registry")({
         if (url.searchParams.get("run") === "1") {
           const { resolveRegistryThrottled } = await import("@/lib/registry-resolver.server");
           try {
-            return Response.json(await resolveRegistryThrottled(25));
+            return Response.json(await resolveRegistryThrottled(40));
           } catch (error) {
             console.error("[resolve-registry]", error);
             return Response.json(

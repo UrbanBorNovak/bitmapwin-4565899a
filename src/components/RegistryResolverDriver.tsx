@@ -19,7 +19,7 @@ export function RegistryResolverDriver() {
       if (running.current || document.hidden) return;
       running.current = true;
       try {
-        const result = await resolveFn({ data: { batch: 25 } });
+        const result = await resolveFn({ data: { batch: 40 } });
         if (cancelled || result.skipped) return;
         await queryClient.invalidateQueries({ queryKey: ["registry-resolve"] });
         if (result.resolved > 0) {
