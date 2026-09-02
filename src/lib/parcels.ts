@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getInscriptionChildren, getParcels } from "@/lib/parcels.functions";
+import { getInscriptionChildren, getParcels, getReinscriptions } from "@/lib/parcels.functions";
 
 /** A parcel claim found on chain as a child inscription of a district bitmap. */
 export type ChainParcel = {
@@ -60,4 +60,21 @@ export const inscriptionChildrenQuery = (inscriptionId: string | null) =>
       }) as Promise<ChainChild[]>,
     enabled: Boolean(inscriptionId),
     staleTime: 60_000,
+  });
+
+export type ReinscriptionScan = {
+  sat: number | null;
+  original: string | null;
+  reinscriptions: ChainChild[];
+};
+
+export const reinscriptionsQuery = (inscriptionId: string | null) =>
+  queryOptions({
+    queryKey: ["reinscriptions", inscriptionId],
+    queryFn: () =>
+      getReinscriptions({
+        data: { inscriptionId: inscriptionId as string },
+      }) as Promise<ReinscriptionScan>,
+    enabled: Boolean(inscriptionId),
+    staleTime: 5 * 60_000,
   });
