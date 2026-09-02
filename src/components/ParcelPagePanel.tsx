@@ -18,6 +18,7 @@ import { isLinked, myWalletLinksQuery } from "@/lib/wallet-links";
 import { BuildDelegates } from "@/components/BuildDelegates";
 import { buildInscriptionPayload, delegatesQuery, downloadJson } from "@/lib/builds";
 import { districtForHeightQuery } from "@/lib/districts";
+import { safeExternalUrl } from "@/lib/safe-url";
 import { BuildEditor } from "@/components/builds/BuildEditor";
 import { BuildRenderer } from "@/components/builds/BuildRenderer";
 import { BuildRaffles } from "@/components/coins/BuildRaffles";
@@ -158,16 +159,17 @@ export function ParcelPagePanel({
                 {built.description}
               </p>
             )}
-            {built.linkUrl && (
+            {safeExternalUrl(built.linkUrl) && (
               <a
-                href={built.linkUrl}
+                href={safeExternalUrl(built.linkUrl)!}
                 target="_blank"
                 rel="noreferrer nofollow"
                 className="block break-all font-mono text-xs underline decoration-border underline-offset-4 hover:text-foreground"
               >
-                {built.linkUrl}
+                {safeExternalUrl(built.linkUrl)}
               </a>
             )}
+
             <p className="label">
               BUILT BY{" "}
               <Link

@@ -209,16 +209,31 @@ export async function drawEvent(eventId: string): Promise<{ winnerAddress: strin
   return { winnerAddress: String(data) };
 }
 
-/** Confirms the signed-in account controls the address it is acting as. */
+/**
+ * Confirms the signed-in account controls the address it is acting as. The
+ * lookup runs through the caller's own RLS-scoped client, so only wallet links
+ * that belong to this account are visible.
+ */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+type WalletLinkReader = { from: (table: "wallet_links") => any };
+
 export async function assertControls(
-  supabase: { rpc: (fn: "owns_wallet", args: { _user_id: string; _address: string }) => PromiseLike<{ data: unknown; error: { message: string } | null }> },
+  supabase: WalletLinkReader,
   userId: string,
   address: string,
 ): Promise<void> {
-  const { data, error } = await supabase.rpc("owns_wallet", { _user_id: userId, _address: address });
-  if (error) throw new Error(error.message);
-  if (data !== true) throw new Error("Verify this wallet address on your wallet page first");
+  const result = (await supabase.from("wallet_links").select("address").eq("user_id", userId)) as {
+    data: { address: string | null }[] | null;
+    error: { message: string } | null;
+  };
+  if (result.error) throw new Error(result.error.message);
+  const wanted = address.trim().toLowerCase();
+  const owns = (result.data ?? []).some((row) => (row.address ?? "").toLowerCase() === wanted);
+  if (!owns) throw new Error("Verify this wallet address on your wallet page first");
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+
 
 /** Reads the host address of an event. */
 export async function eventHost(eventId: string): Promise<string> {

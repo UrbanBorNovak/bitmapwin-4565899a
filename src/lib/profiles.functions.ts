@@ -16,15 +16,15 @@ export const saveWalletProfileFn = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { data: allowed } = await context.supabase.rpc("owns_wallet", {
-      _user_id: context.userId,
-      _address: data.address,
-    });
-    if (!allowed) {
+    const { assertControls } = await import("@/lib/coins.server");
+    try {
+      await assertControls(context.supabase, context.userId, data.address);
+    } catch {
       throw new Error(
         "THIS ADDRESS IS NOT LINKED TO YOUR ACCOUNT — SIGN IN WITH THE WALLET THAT HOLDS IT FIRST",
       );
     }
+
     const { error } = await context.supabase.from("wallet_profiles").upsert(
       {
         address: data.address,

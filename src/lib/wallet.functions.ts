@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
 
 const addressSchema = z
   .string()
@@ -16,6 +18,7 @@ export const getWalletFn = createServerFn({ method: "GET" })
   });
 
 export const deliverOfferFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
     z
       .object({
@@ -25,11 +28,15 @@ export const deliverOfferFn = createServerFn({ method: "POST" })
       })
       .parse(data),
   )
-  .handler(async ({ data }) => {
-    const { deliverOffer } = await import("@/lib/wallet.server");
+  .handler(async ({ data, context }) => {
+    const { deliverOffer, offerSeller } = await import("@/lib/wallet.server");
+    const { assertControls } = await import("@/lib/coins.server");
+    const seller = await offerSeller(data.offerId);
+    await assertControls(context.supabase, context.userId, seller);
     return deliverOffer({
       offerId: data.offerId,
       buyerAddress: data.buyerAddress,
       note: data.note,
     });
   });
+

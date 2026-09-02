@@ -2,6 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_CONFIGS, isBuildKind, parseBuildConfig, type BuildKind } from "@/lib/build-sdk";
 import { saveWalletProfileFn } from "@/lib/profiles.functions";
+import { assertSafeExternalUrl } from "@/lib/safe-url";
 
 /**
  * Wallet profiles, owner-customised parcel pages and parcel visitor stats.
@@ -61,12 +62,10 @@ export function visitorKey(): string {
 export async function recordBitmapView(height: number, address: string | null) {
   const visitor = visitorKey();
   if (!visitor) return;
-  await supabase.rpc("record_bitmap_view", {
-    _height: height,
-    _visitor: visitor,
-    ...(address ? { _address: address } : {}),
-  });
+  const { recordBitmapViewFn } = await import("@/lib/views.functions");
+  await recordBitmapViewFn({ data: { height, visitor, address } });
 }
+
 
 export async function fetchViewStats(height: number): Promise<ViewStats | null> {
   const { data, error } = await supabase
@@ -183,7 +182,7 @@ export async function saveParcelPage(input: {
       owner_address: input.ownerAddress,
       title: input.title,
       description: input.description,
-      link_url: input.linkUrl,
+      link_url: assertSafeExternalUrl(input.linkUrl),
       banner_inscription_id: input.bannerInscriptionId,
     },
     { onConflict: "bitmap_height" },
