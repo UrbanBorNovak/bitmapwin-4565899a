@@ -55,7 +55,9 @@ type Row = {
 
 function toDelivered(row: Row): DeliveredOffer {
   const status: OfferStatus =
-    row.status === "spent" || row.status === "invalid" ? row.status : "open";
+    row.status === "spent" || row.status === "invalid" || row.status === "cancelled"
+      ? row.status
+      : "open";
   return {
     id: row.id,
     psbtBase64: row.psbt_base64,
