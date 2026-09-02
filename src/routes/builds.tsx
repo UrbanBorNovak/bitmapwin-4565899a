@@ -23,7 +23,7 @@ export const Route = createFileRoute("/builds")({
       {
         name: "description",
         content:
-          "Live feed of Bitcoin bitmaps people build on: newest builds, most visited builds, districts, and the builders you follow.",
+          "Live feed of Bitcoin bitmaps people build on: newest builds, most visited builds, zones, and the builders you follow.",
       },
       { property: "og:title", content: "Builds Feed — Recently Built & Most Visited Bitmaps" },
       {
