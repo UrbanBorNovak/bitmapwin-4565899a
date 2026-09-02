@@ -10,7 +10,13 @@ import { shortenAddress } from "@/lib/registry";
 import { walletQuery } from "@/lib/wallet";
 import { useWalletSession } from "@/lib/wallet-session";
 import { buildListingPsbt } from "@/lib/psbt-builder";
-import { signListingPsbt, signPurchasePsbt, xOnlyPubKeyHex, WALLET_LABEL } from "@/lib/browser-wallet";
+import {
+  keyCandidates,
+  signListingPsbt,
+  signPurchasePsbt,
+  xOnlyPubKeyHex,
+  WALLET_LABEL,
+} from "@/lib/browser-wallet";
 import { submitOfferFn } from "@/lib/offers.functions";
 import { buildPurchaseFn, submitPurchaseFn } from "@/lib/purchase.functions";
 import { resolveWallet } from "@/components/BuyButton";
