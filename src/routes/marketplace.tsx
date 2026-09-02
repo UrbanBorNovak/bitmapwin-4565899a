@@ -118,17 +118,23 @@ function Marketplace() {
 
   return (
     <div className="marketplace-shell mx-auto max-w-[1600px] px-4 py-8 md:px-8 md:py-12">
-      <header className="flex flex-col gap-5 border-b border-border pb-7 lg:flex-row lg:items-end lg:justify-between">
-        <div className="border-l-2 border-primary pl-4">
-          <span className="label text-primary">LIVE BITCOIN LAND MARKET</span>
-          <h1 className="mt-2 font-mono text-3xl font-bold uppercase text-foreground md:text-5xl">BITMAP MARKETPLACE</h1>
-          <p className="mt-3 max-w-2xl text-sm text-muted-foreground">Buy, bid, list and track Bitmaps through verified Bitcoin transactions.</p>
+      <div className="grid gap-6 lg:grid-cols-12">
+        <header className="flex flex-col justify-between gap-5 border-b border-border pb-7 lg:col-span-7 lg:border-b-0 lg:pb-0">
+          <div className="border-l-2 border-primary pl-4">
+            <span className="label text-primary">LIVE BITCOIN LAND MARKET</span>
+            <h1 className="mt-2 font-mono text-3xl font-bold uppercase text-foreground md:text-5xl">BITMAP MARKETPLACE</h1>
+            <p className="mt-3 max-w-2xl text-sm text-muted-foreground">Buy, bid, list and track Bitmaps through verified Bitcoin transactions.</p>
+          </div>
+          <div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
+            <span className="size-2 bg-primary" aria-hidden />
+            ON-CHAIN MARKET DATA
+          </div>
+        </header>
+
+        <div className="lg:col-span-5">
+          <SalesLog limit={30} />
         </div>
-        <div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
-          <span className="size-2 bg-primary" aria-hidden />
-          ON-CHAIN MARKET DATA
-        </div>
-      </header>
+      </div>
 
       <div className="mt-6 grid grid-cols-2 divide-border border border-border bg-card sm:grid-cols-5 sm:divide-x">
         <Stat
@@ -162,8 +168,6 @@ function Marketplace() {
       </div>
 
       <div className="mt-6"><BitmapOrderBook /></div>
-
-      <div className="mt-6"><SalesLog /></div>
 
 
 
