@@ -48,6 +48,7 @@ export function ShopListButton({
         sellerAddress: wallet.ordinalsAddress,
         priceSats,
         ...(tapInternalKeyHex ? { tapInternalKeyHex } : {}),
+        ...(wallet.publicKey ? { publicKeyHex: wallet.publicKey } : {}),
       });
       toast("SIGN THE SALE IN YOUR WALLET", {
         description: `LISTING FOR ${formatSats(priceSats)}`,

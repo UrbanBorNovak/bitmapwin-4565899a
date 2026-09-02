@@ -59,6 +59,7 @@ export function QuickListForm({ height }: { height?: number }) {
         sellerAddress: wallet.ordinalsAddress,
         priceSats,
         ...(tapInternalKeyHex ? { tapInternalKeyHex } : {}),
+        ...(wallet.publicKey ? { publicKeyHex: wallet.publicKey } : {}),
       });
       toast("APPROVE THE SIGNATURE IN YOUR WALLET", { description: "OPEN THE WALLET POPUP TO SIGN" });
       const signed = await signListingPsbt(wallet.provider, psbt, wallet.ordinalsAddress);
