@@ -259,6 +259,31 @@
   }
 }
 
+@keyframes market-trail {
+  0%, 100% {
+    stroke-opacity: 0.1;
+  }
+  50% {
+    stroke-opacity: 0.28;
+  }
+}
+
+.bitmap-market-line__trail {
+  animation: market-trail 3.6s ease-in-out infinite;
+  transition: stroke-opacity 240ms ease;
+}
+
+.bitmap-market-line__stroke {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bitmap-market-line__trail {
+    animation: none;
+  }
+}
+
 .blink {
   animation: blink 1s steps(1) infinite;
 }
