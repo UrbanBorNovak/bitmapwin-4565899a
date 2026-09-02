@@ -55,7 +55,7 @@ export function TradeCrawlerStatus() {
 
       <div className="mt-3">
         <div className="flex items-baseline justify-between">
-          <span>REGISTRY CHECKED</span>
+          <span>TRACEABLE INSCRIPTIONS CHECKED</span>
           <span className="text-foreground">
             {(data?.crawledBitmaps ?? 0).toLocaleString("en-US")} /{" "}
             {(data?.totalBitmaps ?? 0).toLocaleString("en-US")} · {pct.toFixed(2)}%

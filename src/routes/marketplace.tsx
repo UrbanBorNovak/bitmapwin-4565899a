@@ -18,6 +18,8 @@ import { BitmapMarketChart } from "@/components/BitmapMarketChart";
 import { FloorRanking } from "@/components/FloorRanking";
 import { SalesLog } from "@/components/SalesLog";
 import { TradeCrawlerStatus } from "@/components/TradeCrawlerStatus";
+import { useServerFn } from "@tanstack/react-start";
+import { tradeCrawlProgressFn } from "@/lib/trade-crawler.functions";
 
 
 
@@ -59,11 +61,20 @@ function Marketplace() {
   const registry = useQuery(registryBaseQuery(300));
   const parcels = registry.data ?? [];
   const registryCount = useQuery(registryCountQuery());
+  const progressFn = useServerFn(tradeCrawlProgressFn);
+  // Real registry-wide numbers from the crawler, not just the loaded page.
+  const crawl = useQuery({
+    queryKey: ["trade-crawl", "progress"],
+    queryFn: () => progressFn(),
+    staleTime: 10_000,
+    refetchInterval: 15_000,
+  });
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [club, setClub] = useState<ClubId | "any">("any");
   const [page, setPage] = useState(0);
   useLiveOffers();
+
 
   const listed = useMemo(() => parcels.filter((p) => p.listedSats !== null), [parcels]);
   const traded = useMemo(() => parcels.filter((p) => p.transfers > 0), [parcels]);
@@ -143,7 +154,14 @@ function Marketplace() {
               : "…"
           }
         />
-        <Stat k="TRADED ON CHAIN" v={String(traded.length)} />
+        <Stat
+          k="TRADED ON CHAIN"
+          v={
+            crawl.data
+              ? crawl.data.tradedBitmaps.toLocaleString("en-US")
+              : traded.length.toLocaleString("en-US")
+          }
+        />
         <Stat
           k="LISTED"
           v={
