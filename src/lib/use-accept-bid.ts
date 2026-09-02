@@ -42,12 +42,8 @@ export function useAcceptBid(options: { holderAddress?: string | null } = {}) {
   const accept = useMutation({
     mutationFn: async (bid: Bid) => {
       if (!wallet) throw new Error("CONNECT THE WALLET HOLDING THIS BITMAP");
-      const holder = options.holderAddress ?? wallet.ordinalsAddress;
-      if (holder.toLowerCase() !== wallet.ordinalsAddress.toLowerCase()) {
-        throw new Error("CONNECT THE WALLET HOLDING THIS BITMAP");
-      }
-      // The wallet scan only walks a capped set of outputs, so fall back to the
-      // chain lookup for the inscription's current location before giving up.
+      // The registry owner can be stale (the bitmap may have moved since the
+      // last index pass), so never reject on it — the chain lookup decides.
       let parcel = findParcel(bid.bitmapHeight);
       if (!parcel) {
         const located = await locateBitmapFn({
@@ -59,7 +55,12 @@ export function useAcceptBid(options: { holderAddress?: string | null } = {}) {
             }`,
           );
         });
-        if (!located.heldByAddress) {
+        const owner = located.ownerAddress?.toLowerCase() ?? "";
+        const mine =
+          located.heldByAddress ||
+          owner === wallet.ordinalsAddress.toLowerCase() ||
+          owner === wallet.paymentAddress.toLowerCase();
+        if (!mine) {
           throw new Error(
             `${bid.bitmapHeight}.BITMAP IS HELD BY ${
               located.ownerAddress ? located.ownerAddress.slice(0, 10) + "…" : "ANOTHER ADDRESS"
@@ -68,6 +69,7 @@ export function useAcceptBid(options: { holderAddress?: string | null } = {}) {
         }
         parcel = { outpoint: located.outpoint, valueSats: located.valueSats };
       }
+
       const [txid, voutRaw] = parcel.outpoint.split(":");
       const vout = Number(voutRaw);
       if (!txid || !Number.isInteger(vout)) throw new Error("BAD BITMAP OUTPOINT");
