@@ -9,9 +9,9 @@
 const ORD = "https://ordinals.com";
 const UA = "bitmap-marketplace/1.0";
 
-import type { ChainParcel, ParcelScan } from "@/lib/parcels";
+import type { ChainChild, ChainParcel, ParcelScan } from "@/lib/parcels";
 
-export type { ChainParcel, ParcelScan };
+export type { ChainChild, ChainParcel, ParcelScan };
 
 type ChildRow = {
   id: string;
