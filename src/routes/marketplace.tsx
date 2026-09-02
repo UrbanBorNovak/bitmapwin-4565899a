@@ -16,6 +16,8 @@ import { CLUBS, inClub, type ClubId } from "@/lib/clubs";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapMarketChart } from "@/components/BitmapMarketChart";
 import { FloorRanking } from "@/components/FloorRanking";
+import { SalesLog } from "@/components/SalesLog";
+
 
 
 export const Route = createFileRoute("/marketplace")({
