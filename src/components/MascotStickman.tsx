@@ -183,7 +183,13 @@ export function MascotStickman() {
   }, [pathname, ready]);
 
   // React to app events.
-  useEffect(() => onMascot(({ text, mood }) => say(text, mood, mood === "alert" ? 6000 : 4600)), []);
+  useEffect(() => {
+    const off = onMascot(({ text, mood }) => say(text, mood, mood === "alert" ? 6000 : 4600));
+    return () => {
+      off();
+    };
+  }, []);
+
 
   useEffect(() => () => window.clearTimeout(bubbleTimer.current), []);
 
