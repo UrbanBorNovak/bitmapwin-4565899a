@@ -197,9 +197,7 @@ async function valuesFromEsploraPages(hash: string, txCount: number): Promise<nu
           txs = await json(`${ESPLORA}/block/${hash}/txs/${start}`);
         }
         results[index] = txs.map((tx) =>
-          typeof tx.weight === "number" && tx.weight > 0
-            ? Math.ceil(tx.weight / 4)
-            : (tx.size ?? 1),
+          (tx.vout ?? []).reduce((sum, out) => sum + (out.value ?? 0), 0),
         );
       } catch {
         results[index] = [];
