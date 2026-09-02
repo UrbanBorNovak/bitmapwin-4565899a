@@ -29,6 +29,7 @@ import { Route as DistrictSlugRouteImport } from './routes/district.$slug'
 import { Route as ProfileAddressRouteImport } from './routes/profile.$address'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicCoinRewardsRouteImport } from './routes/api/public/coin-rewards'
+import { Route as ApiPublicCrawlTradesRouteImport } from './routes/api/public/crawl-trades'
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
 import { Route as ApiPublicBlocksHeightRouteImport } from './routes/api/public/blocks.$height'
@@ -135,6 +136,11 @@ const ApiPublicCoinRewardsRoute = ApiPublicCoinRewardsRouteImport.update({
   path: '/api/public/coin-rewards',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCrawlTradesRoute = ApiPublicCrawlTradesRouteImport.update({
+  id: '/api/public/crawl-trades',
+  path: '/api/public/crawl-trades',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicOfferRoute = ApiPublicOfferRouteImport.update({
   id: '/api/public/offer',
   path: '/api/public/offer',
@@ -178,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/collections/': typeof CollectionsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
+  '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
   '/collections': typeof CollectionsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
+  '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
@@ -230,6 +238,7 @@ export interface FileRoutesById {
   '/collections/': typeof CollectionsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
+  '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
@@ -258,6 +267,7 @@ export interface FileRouteTypes {
     | '/collections/'
     | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
+    | '/api/public/crawl-trades'
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/blocks/$height'
@@ -283,6 +293,7 @@ export interface FileRouteTypes {
     | '/collections'
     | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
+    | '/api/public/crawl-trades'
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/blocks/$height'
@@ -309,6 +320,7 @@ export interface FileRouteTypes {
     | '/collections/'
     | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
+    | '/api/public/crawl-trades'
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/blocks/$height'
@@ -334,6 +346,7 @@ export interface RootRouteChildren {
   ProfileAddressRoute: typeof ProfileAddressRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiPublicCoinRewardsRoute: typeof ApiPublicCoinRewardsRoute
+  ApiPublicCrawlTradesRoute: typeof ApiPublicCrawlTradesRoute
   ApiPublicOfferRoute: typeof ApiPublicOfferRoute
   ApiPublicOffersRoute: typeof ApiPublicOffersRoute
   ApiPublicBlocksHeightRoute: typeof ApiPublicBlocksHeightRouteWithChildren
@@ -481,6 +494,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCoinRewardsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/crawl-trades': {
+      id: '/api/public/crawl-trades'
+      path: '/api/public/crawl-trades'
+      fullPath: '/api/public/crawl-trades'
+      preLoaderRoute: typeof ApiPublicCrawlTradesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/offer': {
       id: '/api/public/offer'
       path: '/api/public/offer'
@@ -559,6 +579,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileAddressRoute: ProfileAddressRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiPublicCoinRewardsRoute: ApiPublicCoinRewardsRoute,
+  ApiPublicCrawlTradesRoute: ApiPublicCrawlTradesRoute,
   ApiPublicOfferRoute: ApiPublicOfferRoute,
   ApiPublicOffersRoute: ApiPublicOffersRoute,
   ApiPublicBlocksHeightRoute: ApiPublicBlocksHeightRouteWithChildren,

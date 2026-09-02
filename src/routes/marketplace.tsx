@@ -17,6 +17,7 @@ import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapMarketChart } from "@/components/BitmapMarketChart";
 import { FloorRanking } from "@/components/FloorRanking";
 import { SalesLog } from "@/components/SalesLog";
+import { TradeCrawlerStatus } from "@/components/TradeCrawlerStatus";
 
 
 
@@ -158,6 +159,7 @@ function Marketplace() {
       <div className="mt-6 grid gap-6 xl:grid-cols-12">
         <div className="xl:col-span-8"><BitmapMarketChart /></div>
         <div className="space-y-6 xl:col-span-4 [&>section]:mt-0">
+          <TradeCrawlerStatus />
           <TrendingParcels limit={3} />
           <SalesLog limit={30} />
         </div>
