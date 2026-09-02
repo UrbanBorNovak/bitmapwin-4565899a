@@ -53,7 +53,10 @@ type OfferRow = {
 
 function toOffer(row: OfferRow): Offer {
   const status: OfferStatus =
-    row.status === "spent" || row.status === "invalid" ? row.status : "open";
+    row.status === "spent" || row.status === "invalid" || row.status === "cancelled"
+      ? row.status
+      : "open";
+
   return {
     id: row.id,
     psbtBase64: row.psbt_base64,
