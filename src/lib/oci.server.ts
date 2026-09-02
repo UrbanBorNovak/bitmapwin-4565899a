@@ -121,7 +121,7 @@ async function satFor(height: number): Promise<{ sat: number; satIndex: number }
   return { sat, satIndex };
 }
 
-async function resolveOne(height: number): Promise<BitmapIndexEntry> {
+export async function resolveOne(height: number): Promise<BitmapIndexEntry> {
   const { sat, satIndex } = await satFor(height);
   const base: BitmapIndexEntry = {
     blockHeight: height,
@@ -165,7 +165,7 @@ async function resolveOne(height: number): Promise<BitmapIndexEntry> {
   return base;
 }
 
-async function mapWithConcurrency<T, R>(
+export async function mapWithConcurrency<T, R>(
   items: T[],
   limit: number,
   fn: (item: T) => Promise<R>,
@@ -198,7 +198,7 @@ function rowToEntry(row: Row): BitmapIndexEntry {
   };
 }
 
-async function persist(entries: BitmapIndexEntry[]) {
+export async function persist(entries: BitmapIndexEntry[]) {
   if (entries.length === 0) return;
   const client = db();
   await client.from("bitmap_index").upsert(
