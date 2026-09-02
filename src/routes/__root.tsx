@@ -18,6 +18,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { rememberReferralCode } from "@/lib/referrals";
 import { SalesBackdrop } from "@/components/SalesBackdrop";
 import { MascotStickman } from "@/components/MascotStickman";
+import { TradeCrawlerDriver } from "@/components/TradeCrawlerDriver";
+
 
 
 
@@ -174,7 +176,9 @@ function RootComponent() {
         </div>
       </div>
       <MascotStickman />
+      <TradeCrawlerDriver />
       <Toaster />
+
 
     </QueryClientProvider>
   );
