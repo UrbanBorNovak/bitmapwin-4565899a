@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState, type PointerEvent } from "react";
+import { useMemo, useState, type PointerEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { recentTradesQuery, tradesForHeightQuery } from "@/lib/trade-store";
+import { tradesForHeightQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
 
 /**
@@ -27,28 +27,9 @@ function short(address: string | null) {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
-export function BitmapPriceChart({ initialHeight }: { initialHeight?: number }) {
-  const recent = useQuery(recentTradesQuery(500));
-  const [height, setHeight] = useState<number | null>(initialHeight ?? null);
+export function BitmapPriceChart({ height }: { height: number }) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
-
-  /** Bitmaps that actually have paid sales, most recent first. */
-  const heights = useMemo(() => {
-    const seen: number[] = [];
-    for (const row of recent.data ?? []) {
-      if (row.price_sats > 0 && !seen.includes(row.bitmap_height)) seen.push(row.bitmap_height);
-    }
-    return seen.slice(0, 60);
-  }, [recent.data]);
-
-  useEffect(() => {
-    if (height === null && heights.length > 0) setHeight(heights[0]!);
-  }, [height, heights]);
-
-  const history = useQuery({
-    ...tradesForHeightQuery(height ?? 0),
-    enabled: height !== null,
-  });
+  const history = useQuery(tradesForHeightQuery(height));
 
   const points = useMemo<Point[]>(() => {
     return (history.data ?? [])
@@ -124,34 +105,16 @@ export function BitmapPriceChart({ initialHeight }: { initialHeight?: number }) 
   };
 
   return (
-    <section className="border border-border bg-card">
+    <section className="mt-6 border border-border bg-card">
       <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border p-4">
         <div className="border-l-2 border-primary pl-3">
           <h2 className="font-mono text-sm font-bold uppercase text-foreground">BITMAP PRICE CHART</h2>
           <p className="label mt-1">SALE HISTORY PER BITMAP · REAL ON-CHAIN TRADES</p>
         </div>
-        <label className="flex items-center gap-2">
-          <span className="label">BITMAP</span>
-          <select
-            value={height ?? ""}
-            onChange={(event) => {
-              setHoverIndex(null);
-              setHeight(Number(event.target.value));
-            }}
-            className="border border-border bg-background px-2 py-1 font-mono text-[11px] uppercase text-foreground"
-            aria-label="Select bitmap for price history"
-          >
-            {heights.length === 0 && <option value="">—</option>}
-            {heights.map((h) => (
-              <option key={h} value={h}>
-                {h}.BITMAP
-              </option>
-            ))}
-          </select>
-        </label>
+        <span className="label font-mono">{height}.BITMAP</span>
       </header>
 
-      {recent.isPending || history.isPending ? (
+      {history.isPending ? (
         <p className="p-6 font-mono text-xs text-muted-foreground">
           &gt; READING SALE HISTORY<span className="blink">_</span>
         </p>

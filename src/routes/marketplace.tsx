@@ -17,7 +17,6 @@ import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapMarketChart } from "@/components/BitmapMarketChart";
 import { FloorRanking } from "@/components/FloorRanking";
 import { SalesLog } from "@/components/SalesLog";
-import { BitmapPriceChart } from "@/components/BitmapPriceChart";
 
 
 
@@ -163,8 +162,6 @@ function Marketplace() {
       </div>
 
       <div className="mt-6"><BitmapOrderBook /></div>
-
-      <div className="mt-6"><BitmapPriceChart /></div>
 
       <div className="mt-6"><SalesLog /></div>
 
