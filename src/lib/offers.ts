@@ -8,13 +8,24 @@ import { supabase } from "@/integrations/supabase/client";
  * before it is stored — nothing is simulated.
  */
 
-export type OfferStatus = "open" | "spent" | "invalid";
+export type OfferStatus = "open" | "spent" | "invalid" | "cancelled";
 
 export const OFFER_STATUS_LABEL: Record<OfferStatus, string> = {
   open: "OPEN",
   spent: "UTXO SPENT",
   invalid: "INVALID",
+  cancelled: "UNLISTED",
 };
+
+/** Message the seller signs to prove they own the listing they are unlisting. */
+export function unlistMessage(offerId: string) {
+  return [
+    "BITMAP MARKETPLACE — UNLIST",
+    `OFFER: ${offerId}`,
+    "SIGNING THIS CANCELS THE LISTING. IT MOVES NO FUNDS.",
+  ].join("\n");
+}
+
 
 export type Offer = {
   id: string;
