@@ -148,6 +148,13 @@ function BitmapDetail() {
         <TraitBadges height={block} showRarity />
       </div>
 
+      <DistrictReinscriptions
+        height={block}
+        districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
+      />
+
+
+
 
       <div className="mt-6 flex flex-wrap gap-2">
         <MakeOfferButton
