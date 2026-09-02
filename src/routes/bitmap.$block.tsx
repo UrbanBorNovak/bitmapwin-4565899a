@@ -19,7 +19,10 @@ import { LeasePanel } from "@/components/leases/LeasePanel";
 import { BitmapEvents } from "@/components/coins/BitmapEvents";
 import { MakeOfferButton } from "@/components/MakeOfferButton";
 
+import { InscriptionContent } from "@/components/InscriptionContent";
+import { shortId } from "@/lib/chain";
 import { registryParcelQuery, shortenAddress, PARCEL_STATUS_LABEL } from "@/lib/registry";
+
 import { saveTrades, tradesForHeightQuery } from "@/lib/trade-store";
 import { traceBitmapTradesFn } from "@/lib/trades.functions";
 import { formatSats } from "@/lib/trades";
