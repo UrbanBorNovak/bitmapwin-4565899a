@@ -162,7 +162,10 @@ function Marketplace() {
 
       <div className="mt-6"><BitmapOrderBook /></div>
 
+      <div className="mt-6"><BitmapPriceChart /></div>
+
       <div className="mt-6"><SalesLog /></div>
+
 
 
       <div className="mt-8 grid gap-6 lg:grid-cols-12">
