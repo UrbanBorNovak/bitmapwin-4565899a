@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { acceptBidWithOfferFn } from "@/lib/bids.functions";
 import { settleOfferFn } from "@/lib/settle.functions";
+import { locateBitmapFn } from "@/lib/locate-bitmap.functions";
+
 import { buildListingPsbt } from "@/lib/psbt-builder";
 import { signListingPsbt, xOnlyPubKeyHex } from "@/lib/browser-wallet";
 import { useWalletSession } from "@/lib/wallet-session";
