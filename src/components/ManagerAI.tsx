@@ -153,7 +153,18 @@ export function ManagerAI({
                     </div>
                     <p className="mt-1 font-mono text-xs">{s.title}</p>
                     <p className="mt-1 font-mono text-[11px] text-muted-foreground">{s.detail}</p>
-                  </li>
+                    <div className="mt-2">
+                      <ManagerSuggestionAction
+                        suggestion={s}
+                        held={s.height !== null && heldHeights.includes(s.height)}
+                        topBidSats={
+                          (s.height !== null
+                            ? (activity.data?.pulses.find((p) => p.height === s.height)?.topBidSats ?? null)
+                            : null)
+                        }
+                      />
+                    </div>
+
                 ))}
               </ul>
             )}
