@@ -153,6 +153,10 @@ function Marketplace() {
         <div className="[&>section]:mt-0 xl:col-span-4"><TrendingParcels limit={3} /></div>
       </div>
 
+      <div className="mt-6">
+        <FloorRanking parcels={listed} pending={registry.isPending} />
+      </div>
+
       <div className="mt-6"><BitmapOrderBook /></div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-12">
