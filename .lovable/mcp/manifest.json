@@ -219,6 +219,121 @@
           ]
         },
         "outputSchema": null
+      },
+      {
+        "name": "get_portfolio_activity",
+        "title": "Get my portfolio activity",
+        "description": "Aggregated activity stream across every bitmap the signed-in holder owns or watches: new visits, bids, on-chain trades, build updates, lease activity and BIT events, ranked so the most important bitmaps come first. Includes an 'attention' list of what needs the holder's action.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "windowHours": {
+              "description": "Look-back window in hours (default 24). Visit change % compares to the window before it.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 720
+            },
+            "limit": {
+              "description": "Max bitmaps to return (default 25).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "includeWatched": {
+              "description": "Include bitmaps on the watchlist even when not held (default true).",
+              "type": "boolean"
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "watch_bitmap",
+        "title": "Watch a bitmap",
+        "description": "Start (or stop) watching a bitmap for the signed-in account. Watched bitmaps show up in get_portfolio_activity even when the account does not hold them, with per-signal toggles for bids, visits, build updates, lease activity, on-chain trades and BIT activity.",
+        "annotations": {
+          "readOnlyHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "height": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+              "description": "Bitcoin block height of the bitmap, e.g. 420690."
+            },
+            "watch": {
+              "description": "false stops watching this bitmap (default true).",
+              "type": "boolean"
+            },
+            "bids": {
+              "description": "Watch new bids (default true).",
+              "type": "boolean"
+            },
+            "visits": {
+              "description": "Watch new visits (default true).",
+              "type": "boolean"
+            },
+            "builds": {
+              "description": "Watch build updates (default true).",
+              "type": "boolean"
+            },
+            "leases": {
+              "description": "Watch lease activity (default true).",
+              "type": "boolean"
+            },
+            "trades": {
+              "description": "Watch on-chain trades (default true).",
+              "type": "boolean"
+            },
+            "coins": {
+              "description": "Watch BIT activity (default true).",
+              "type": "boolean"
+            },
+            "note": {
+              "description": "Optional note about why this bitmap is watched.",
+              "type": "string",
+              "maxLength": 280
+            }
+          },
+          "required": [
+            "height"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "my_watchlist",
+        "title": "My watched bitmaps",
+        "description": "The bitmaps the signed-in account watches, with the signals enabled for each one.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "description": "Max rows to return (default 100).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          }
+        },
+        "outputSchema": null
       }
     ]
   }

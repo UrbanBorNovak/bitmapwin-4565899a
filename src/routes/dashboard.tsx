@@ -16,6 +16,7 @@ import { myBidsQuery, openBidsQuery, BID_STATUS_LABEL, isLiveBid } from "@/lib/b
 import { formatSats } from "@/lib/trades";
 import { clubOf } from "@/lib/clubs";
 import { followerCountsQuery } from "@/lib/follows";
+import { BitmapManager } from "@/components/BitmapManager";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -188,6 +189,15 @@ function DashboardPage() {
             </Link>
           ) : null}
         </div>
+      </div>
+
+      <div className="mt-8">
+        <BitmapManager
+          name={name}
+          addresses={addresses}
+          heldHeights={held.data ?? []}
+          enabled={Boolean(session)}
+        />
       </div>
 
       <div className="mt-8">

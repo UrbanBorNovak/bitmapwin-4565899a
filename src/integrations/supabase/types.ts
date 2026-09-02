@@ -207,6 +207,51 @@ export type Database = {
         }
         Relationships: []
       }
+      bitmap_watches: {
+        Row: {
+          bitmap_height: number
+          created_at: string
+          id: string
+          note: string | null
+          updated_at: string
+          user_id: string
+          watch_bids: boolean
+          watch_builds: boolean
+          watch_coins: boolean
+          watch_leases: boolean
+          watch_trades: boolean
+          watch_visits: boolean
+        }
+        Insert: {
+          bitmap_height: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          updated_at?: string
+          user_id: string
+          watch_bids?: boolean
+          watch_builds?: boolean
+          watch_coins?: boolean
+          watch_leases?: boolean
+          watch_trades?: boolean
+          watch_visits?: boolean
+        }
+        Update: {
+          bitmap_height?: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          updated_at?: string
+          user_id?: string
+          watch_bids?: boolean
+          watch_builds?: boolean
+          watch_coins?: boolean
+          watch_leases?: boolean
+          watch_trades?: boolean
+          watch_visits?: boolean
+        }
+        Relationships: []
+      }
       bitmaps: {
         Row: {
           block_height: number

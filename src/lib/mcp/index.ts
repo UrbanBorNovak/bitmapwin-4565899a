@@ -6,6 +6,9 @@ import myBids from "./tools/my-bids";
 import myBitBalance from "./tools/my-bit-balance";
 import recentBuilds from "./tools/recent-builds";
 import getBitmapActivity from "./tools/get-bitmap-activity";
+import getPortfolioActivity from "./tools/get-portfolio-activity";
+import watchBitmap from "./tools/watch-bitmap";
+import myWatchlist from "./tools/my-watchlist";
 
 // The OAuth issuer must be the direct Supabase host; the project ref is the only
 // value that survives publish unchanged.
@@ -16,10 +19,10 @@ export default defineMcp({
   title: "Bitmap Unhinged",
   version: "0.1.0",
   instructions:
-    "Tools for Bitmap Unhinged, a marketplace and explorer for Bitcoin Bitmap digital land. Use `search_bitmaps` and `get_bitmap` to explore the registry, `my_bitmaps`, `my_bids` and `my_bit_balance` for the signed-in holder's position, and `recent_builds` for what people are building on their bitmaps, and `get_bitmap_activity` for the full event timeline of a single bitmap (visits, bids, trades, build updates, leases, chat, BIT events).",
+    "Tools for Bitmap Unhinged, a marketplace and explorer for Bitcoin Bitmap digital land. Use `search_bitmaps` and `get_bitmap` to explore the registry, `my_bitmaps`, `my_bids` and `my_bit_balance` for the signed-in holder's position, and `recent_builds` for what people are building on their bitmaps, `get_bitmap_activity` for the full event timeline of a single bitmap (visits, bids, trades, build updates, leases, chat, BIT events), `get_portfolio_activity` for one aggregated stream across every bitmap the holder owns or watches (with an attention list), and `watch_bitmap` / `my_watchlist` to manage which bitmaps are being watched. Behave like a property manager: surface what needs attention first.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",
   }),
-  tools: [searchBitmaps, getBitmap, myBitmaps, myBids, myBitBalance, recentBuilds, getBitmapActivity] as unknown as Parameters<typeof defineMcp>[0]["tools"],
+  tools: [searchBitmaps, getBitmap, myBitmaps, myBids, myBitBalance, recentBuilds, getBitmapActivity, getPortfolioActivity, watchBitmap, myWatchlist] as unknown as Parameters<typeof defineMcp>[0]["tools"],
 });
