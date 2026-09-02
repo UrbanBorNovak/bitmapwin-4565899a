@@ -1,3 +1,4 @@
+import { isP2shScript, p2shP2wpkhRedeemScript } from "@/lib/psbt-scripts";
 /**
  * Minimal PSBT (BIP-174) writer — builds the seller half of an ordinal sale:
  * one input holding the inscription UTXO, signed SIGHASH_SINGLE|ANYONECANPAY,
@@ -126,6 +127,8 @@ export type ListingPsbtInput = {
   priceSats: number;
   /** x-only internal key (32-byte hex) for taproot inputs, when known */
   tapInternalKeyHex?: string;
+  /** compressed public key hex, required for nested-segwit (3…) seller inputs */
+  publicKeyHex?: string;
 };
 
 /**
@@ -167,6 +170,15 @@ export function buildListingPsbt(input: ListingPsbtInput): string {
   ];
   if (isTaproot && input.tapInternalKeyHex && /^[0-9a-f]{64}$/i.test(input.tapInternalKeyHex)) {
     inputMap.push(...kv([0x17], hexToBytes(input.tapInternalKeyHex)));
+  }
+  // nested segwit (3…) inputs need the redeemScript or wallets refuse to sign
+  const redeemScript = p2shP2wpkhRedeemScript(script, input.publicKeyHex);
+  if (redeemScript) {
+    inputMap.push(...kv([0x04], redeemScript));
+  } else if (isP2shScript(script)) {
+    throw new Error(
+      "NESTED SEGWIT (3…) ADDRESS WITHOUT A PUBLIC KEY — RECONNECT THE WALLET AND RETRY",
+    );
   }
   inputMap.push(0x00);
 

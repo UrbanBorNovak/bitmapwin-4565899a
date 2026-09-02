@@ -13,6 +13,7 @@
 
 import { MARKETPLACE_FEE_ADDRESS, marketplaceFeeSats } from "@/lib/marketplace-fee";
 import { addressToScriptPubKey } from "@/lib/psbt-builder";
+import { isP2pkhScript, isP2trScript, p2shP2wpkhRedeemScript } from "@/lib/psbt-scripts";
 
 const MAGIC = [0x70, 0x73, 0x62, 0x74, 0xff];
 
@@ -262,6 +263,8 @@ export type BuyerPsbtInput = {
   feeRate: number;
   /** buyer x-only taproot key, when the funding inputs are p2tr */
   tapInternalKeyHex?: string | undefined;
+  /** buyer compressed payment public key, required for nested-segwit (3…) inputs */
+  paymentPublicKeyHex?: string | undefined;
 };
 
 export type BuyerPsbtResult = {
@@ -277,6 +280,41 @@ export type BuyerPsbtResult = {
   usedFunding: FundingUtxo[];
 };
 
+
+/**
+ * PSBT input map for a funding UTXO. Nested-segwit (P2SH-P2WPKH) inputs get the
+ * redeemScript wallets require; taproot inputs get the internal key.
+ */
+function fundingInputMap(
+  utxo: FundingUtxo,
+  tapKey: number[] | null,
+  paymentPublicKeyHex: string | undefined,
+): Kv[] {
+  const script = hexToByteArray(utxo.scriptPubKeyHex);
+  const map: Kv[] = [
+    { key: [0x01], value: [...u64le(utxo.valueSats), ...varint(script.length), ...script] },
+  ];
+  if (isP2trScript(script)) {
+    if (tapKey) map.push({ key: [0x17], value: tapKey });
+    return map;
+  }
+  const redeem = p2shP2wpkhRedeemScript(script, paymentPublicKeyHex);
+  if (redeem) {
+    map.push({ key: [0x04], value: redeem });
+    return map;
+  }
+  if (script.length === 23 && script[0] === 0xa9) {
+    throw new Error(
+      "Your payment address is a nested-segwit (3…) address and the wallet did not share its public key — reconnect the wallet and retry",
+    );
+  }
+  if (isP2pkhScript(script)) {
+    throw new Error(
+      "Legacy (1…) payment addresses cannot fund this purchase — use a native segwit (bc1q…) or nested segwit (3…) payment address",
+    );
+  }
+  return map;
+}
 
 const DUST = 546;
 
@@ -367,13 +405,7 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
 
   const inputMaps: Kv[][] = [seller.inputs[0] ?? []];
   for (const utxo of used) {
-    const script = hexToByteArray(utxo.scriptPubKeyHex);
-    const map: Kv[] = [
-      { key: [0x01], value: [...u64le(utxo.valueSats), ...varint(script.length), ...script] },
-    ];
-    const isTaproot = script.length === 34 && script[0] === 0x51;
-    if (isTaproot && tapKey) map.push({ key: [0x17], value: tapKey });
-    inputMaps.push(map);
+    inputMaps.push(fundingInputMap(utxo, tapKey, input.paymentPublicKeyHex));
   }
 
   const outputMaps: Kv[][] = tx.outputs.map((_, i) => (i === 0 ? (seller.outputs[0] ?? []) : []));
@@ -409,6 +441,8 @@ export type PaymentPsbtInput = {
   feeRate: number;
   /** payer x-only taproot key, when the funding inputs are p2tr */
   tapInternalKeyHex?: string | undefined;
+  /** payer compressed public key, required for nested-segwit (3…) inputs */
+  paymentPublicKeyHex?: string | undefined;
 };
 
 export type PaymentPsbtResult = {
@@ -479,15 +513,9 @@ export function buildPaymentPsbt(input: PaymentPsbtInput): PaymentPsbtResult {
     outputs: [...outputs, ...(changeSats > 0 ? [{ valueSats: changeSats, script: payScript }] : [])],
   };
 
-  const inputMaps: Kv[][] = used.map((utxo) => {
-    const script = hexToByteArray(utxo.scriptPubKeyHex);
-    const map: Kv[] = [
-      { key: [0x01], value: [...u64le(utxo.valueSats), ...varint(script.length), ...script] },
-    ];
-    const isTaproot = script.length === 34 && script[0] === 0x51;
-    if (isTaproot && tapKey) map.push({ key: [0x17], value: tapKey });
-    return map;
-  });
+  const inputMaps: Kv[][] = used.map((utxo) =>
+    fundingInputMap(utxo, tapKey, input.paymentPublicKeyHex),
+  );
 
   const psbtBase64 = serializePsbt({
     global: [],
