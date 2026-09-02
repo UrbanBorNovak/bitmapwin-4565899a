@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { ConnectedWallet } from "@/lib/browser-wallet";
+import { refreshWalletKeys, type ConnectedWallet } from "@/lib/browser-wallet";
 
 /**
  * Shares the connected wallet across pages (bid panel, marketplace cards,
