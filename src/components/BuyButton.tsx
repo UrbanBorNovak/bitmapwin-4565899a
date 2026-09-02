@@ -24,7 +24,11 @@ export async function resolveWallet(): Promise<ConnectedWallet> {
   if (!provider) throw new Error("NO BITCOIN WALLET DETECTED — INSTALL UNISAT OR XVERSE");
   const wallet = await connectWallet(provider);
   window.localStorage.setItem(WALLET_PROVIDER_STORAGE_KEY, provider);
-  return wallet;
+  // Some wallet builds omit the payment public key on connect, which nested
+  // segwit (3…) funding inputs need. Fill it in before building any PSBT.
+  const complete = await ensureWalletKeys(wallet);
+  saveWalletSession(complete);
+  return complete;
 }
 
 /**
