@@ -49,10 +49,14 @@ export type BlockMeta = {
   txCount: number;
 };
 
-/** Real vbytes -> square parcel side, log-scaled like bitfeed's block render. */
-export function sizeClassFromVsize(vsize: number): number {
-  const side = Math.floor(Math.log2(Math.max(1, vsize) / 180)) + 1;
-  return Math.max(1, Math.min(5, side));
+/**
+ * Real transaction output value (sats) -> square parcel side, the canonical
+ * bitfeed / bitmap.trade scale: one side unit per decimal order of magnitude
+ * above 10,000 sats. Verified byte-for-byte against bitmap.trade's block feed.
+ */
+export function sizeClassFromValue(valueSats: number): number {
+  const side = Math.floor(Math.log10(Math.max(1, valueSats))) - 4;
+  return Math.max(1, Math.min(8, side));
 }
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -157,8 +161,8 @@ export async function fetchBlockMeta(height: number): Promise<BlockMeta> {
   }
 }
 
-async function vsizesFromMempoolSummary(hash: string): Promise<number[]> {
-  let rows: Array<{ vsize?: number }>;
+async function valuesFromMempoolSummary(hash: string): Promise<number[]> {
+  let rows: Array<{ value?: number }>;
   try {
     rows = await json(`${COMMUNITY_MEMPOOL}/v1/block/${hash}/summary`, 15_000);
   } catch {
@@ -166,15 +170,15 @@ async function vsizesFromMempoolSummary(hash: string): Promise<number[]> {
   }
   const out: number[] = [];
   for (const row of rows) {
-    if (typeof row.vsize === "number" && row.vsize > 0) out.push(row.vsize);
+    if (typeof row.value === "number" && row.value >= 0) out.push(row.value);
   }
   if (out.length === 0) throw new Error("empty mempool summary");
   return out;
 }
 
-type EsploraTx = { weight?: number; size?: number };
+type EsploraTx = { vout?: Array<{ value?: number }> };
 
-async function vsizesFromEsploraPages(hash: string, txCount: number): Promise<number[]> {
+async function valuesFromEsploraPages(hash: string, txCount: number): Promise<number[]> {
   const pages = Math.min(ESPLORA_MAX_PAGES, Math.ceil(txCount / 25));
   const starts = Array.from({ length: pages }, (_, i) => i * 25);
   const results: number[][] = new Array(pages).fill(null).map(() => []);
@@ -193,9 +197,7 @@ async function vsizesFromEsploraPages(hash: string, txCount: number): Promise<nu
           txs = await json(`${ESPLORA}/block/${hash}/txs/${start}`);
         }
         results[index] = txs.map((tx) =>
-          typeof tx.weight === "number" && tx.weight > 0
-            ? Math.ceil(tx.weight / 4)
-            : (tx.size ?? 1),
+          (tx.vout ?? []).reduce((sum, out) => sum + (out.value ?? 0), 0),
         );
       } catch {
         results[index] = [];
@@ -233,17 +235,17 @@ export async function buildBlockBytes(height: number): Promise<BlockBytes> {
 async function buildBlockBytesUncached(height: number): Promise<BlockBytes> {
   const meta = await fetchBlockMeta(height);
 
-  let vsizes: number[];
+  let values: number[];
   let source: BlockBytes["source"] = "mempool-summary";
   try {
-    vsizes = await vsizesFromMempoolSummary(meta.hash);
+    values = await valuesFromMempoolSummary(meta.hash);
   } catch {
     source = "esplora-pages";
-    vsizes = await vsizesFromEsploraPages(meta.hash, meta.txCount);
+    values = await valuesFromEsploraPages(meta.hash, meta.txCount);
   }
 
-  const bytes = new Uint8Array(vsizes.length);
-  for (let i = 0; i < vsizes.length; i++) bytes[i] = sizeClassFromVsize(vsizes[i]!);
+  const bytes = new Uint8Array(values.length);
+  for (let i = 0; i < values.length; i++) bytes[i] = sizeClassFromValue(values[i]!);
 
   return {
     height: meta.height,
