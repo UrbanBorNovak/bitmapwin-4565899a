@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchPortfolioActivity } from "@/lib/portfolio-activity";
 import { myWatchesQuery } from "@/lib/watches";
 import { managerAdviceFn, type ManagerAdvice } from "@/lib/manager-ai.functions";
+import { ManagerSuggestionAction } from "@/components/ManagerSuggestionAction";
+
 
 const KIND_LABEL: Record<string, string> = {
   bid: "BID",
@@ -153,8 +155,20 @@ export function ManagerAI({
                     </div>
                     <p className="mt-1 font-mono text-xs">{s.title}</p>
                     <p className="mt-1 font-mono text-[11px] text-muted-foreground">{s.detail}</p>
+                    <div className="mt-2">
+                      <ManagerSuggestionAction
+                        suggestion={s}
+                        held={s.height !== null && heldHeights.includes(s.height)}
+                        topBidSats={
+                          (s.height !== null
+                            ? (activity.data?.pulses.find((p) => p.height === s.height)?.topBidSats ?? null)
+                            : null)
+                        }
+                      />
+                    </div>
                   </li>
                 ))}
+
               </ul>
             )}
           </>
