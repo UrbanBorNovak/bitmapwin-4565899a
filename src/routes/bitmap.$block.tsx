@@ -13,6 +13,7 @@ import { blockStatsQuery, patternSiblingsQuery } from "@/lib/block-stats";
 
 import { BidPanel } from "@/components/BidPanel";
 import { BitmapChat } from "@/components/BitmapChat";
+import { WatchBitmapButton } from "@/components/WatchBitmapButton";
 import { ParcelPagePanel } from "@/components/ParcelPagePanel";
 import { ParcelPanel } from "@/components/ParcelPanel";
 import { DistrictReinscriptions } from "@/components/DistrictReinscriptions";
