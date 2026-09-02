@@ -34,6 +34,7 @@ export type Bid = {
   note: string | null;
   status: BidStatus;
   createdAt: string;
+  acceptedOfferId: string | null;
 };
 
 type BidRow = {
@@ -45,10 +46,11 @@ type BidRow = {
   note: string | null;
   status: string;
   created_at: string;
+  accepted_offer_id: string | null;
 };
 
 const COLUMNS =
-  "id, bitmap_height, bidder_address, price_sats, expires_at, note, status, created_at";
+  "id, bitmap_height, bidder_address, price_sats, expires_at, note, status, created_at, accepted_offer_id";
 
 const KNOWN_STATUSES: BidStatus[] = [
   "accepted",
@@ -70,6 +72,7 @@ function toBid(row: BidRow): Bid {
     note: row.note,
     status,
     createdAt: row.created_at,
+    acceptedOfferId: row.accepted_offer_id ?? null,
   };
 }
 
