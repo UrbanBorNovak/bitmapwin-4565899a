@@ -19,6 +19,7 @@ export const Route = createFileRoute("/api/public/crawl-trades")({
           try {
             return Response.json(await crawlTradesThrottled(8));
           } catch (error) {
+            console.error("[crawl-trades]", error);
             return Response.json(
               { error: error instanceof Error ? error.message : JSON.stringify(error) },
               { status: 500 },
