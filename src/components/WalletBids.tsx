@@ -12,6 +12,8 @@ import {
 } from "@/lib/bids";
 import { cancelBidFn, declineBidFn } from "@/lib/bids.functions";
 import { useAcceptBid } from "@/lib/use-accept-bid";
+import { BuyButton } from "@/components/BuyButton";
+
 import { signMessageWithWallet } from "@/lib/browser-wallet";
 import { useWalletSession } from "@/lib/wallet-session";
 import { formatSats } from "@/lib/trades";
