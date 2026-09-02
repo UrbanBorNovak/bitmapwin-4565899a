@@ -39,7 +39,7 @@ export function InscriptionContent({
           loading="lazy"
           sandbox="allow-scripts"
           scrolling="no"
-          className="pointer-events-none h-full w-full border-0"
+          className={`h-full w-full border-0 ${interactive ? "" : "pointer-events-none"}`}
         />
       )}
     </div>
