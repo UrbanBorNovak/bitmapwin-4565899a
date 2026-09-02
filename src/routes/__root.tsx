@@ -16,6 +16,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { rememberReferralCode } from "@/lib/referrals";
+import { SalesBackdrop } from "@/components/SalesBackdrop";
 
 
 function NotFoundComponent() {
@@ -157,13 +158,18 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex min-h-screen flex-col bg-background">
-        <SiteHeader />
-        <main className="flex-1">
+      <div className="relative flex min-h-screen flex-col bg-background">
+        <SalesBackdrop />
+        <div className="relative z-10">
+          <SiteHeader />
+        </div>
+        <main className="relative z-10 flex-1">
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
         </main>
-        <SiteFooter />
+        <div className="relative z-10">
+          <SiteFooter />
+        </div>
       </div>
       <Toaster />
     </QueryClientProvider>

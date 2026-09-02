@@ -306,3 +306,57 @@
 .blink {
   animation: blink 1s steps(1) infinite;
 }
+
+/* Ambient background feed of real on-chain sales (decorative, non-interactive) */
+.sales-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  overflow: hidden;
+  pointer-events: none;
+  padding: 0 1.5rem;
+  mask-image: linear-gradient(to bottom, transparent, black 18%, black 82%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 18%, black 82%, transparent);
+}
+
+.sales-backdrop__column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  animation-name: sales-drift;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.sales-backdrop__line {
+  font-family: var(--font-mono, ui-monospace), monospace;
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+  color: color-mix(in oklab, var(--color-primary) 45%, var(--color-muted-foreground));
+  opacity: 0.14;
+}
+
+@keyframes sales-drift {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+@media (max-width: 768px) {
+  .sales-backdrop__column:nth-child(n + 3) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sales-backdrop__column {
+    animation: none;
+  }
+}
