@@ -60,6 +60,7 @@ export function useAcceptBid(options: { holderAddress?: string | null } = {}) {
         sellerAddress: wallet.ordinalsAddress,
         priceSats: bid.priceSats,
         ...(tapInternalKeyHex ? { tapInternalKeyHex } : {}),
+        ...(wallet.publicKey ? { publicKeyHex: wallet.publicKey } : {}),
       });
 
       toast("SIGN THE SALE IN YOUR WALLET", {

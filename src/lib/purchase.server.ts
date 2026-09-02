@@ -129,6 +129,7 @@ export async function buildPurchase(input: {
   buyerPaymentAddress: string;
   buyerOrdinalsAddress: string;
   tapInternalKeyHex?: string | undefined;
+  paymentPublicKeyHex?: string | undefined;
 }): Promise<PurchaseQuote> {
   const offer = await loadOffer(input.offerId);
   if (offer.status !== "open") throw new Error("This offer is no longer open");
@@ -183,6 +184,7 @@ export async function buildPurchase(input: {
     funding,
     feeRate: rate,
     tapInternalKeyHex: input.tapInternalKeyHex,
+    paymentPublicKeyHex: input.paymentPublicKeyHex,
   });
 
   return {

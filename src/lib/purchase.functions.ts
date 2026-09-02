@@ -19,6 +19,10 @@ export const buildPurchaseFn = createServerFn({ method: "POST" })
           .string()
           .regex(/^[0-9a-fA-F]{64}$/)
           .optional(),
+        paymentPublicKeyHex: z
+          .string()
+          .regex(/^[0-9a-fA-F]{66}$|^[0-9a-fA-F]{130}$/)
+          .optional(),
       })
       .parse(data),
   )
@@ -29,6 +33,7 @@ export const buildPurchaseFn = createServerFn({ method: "POST" })
       buyerPaymentAddress: data.buyerPaymentAddress,
       buyerOrdinalsAddress: data.buyerOrdinalsAddress,
       tapInternalKeyHex: data.tapInternalKeyHex,
+      paymentPublicKeyHex: data.paymentPublicKeyHex,
     });
   });
 

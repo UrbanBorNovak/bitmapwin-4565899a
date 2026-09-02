@@ -53,6 +53,7 @@ export function BuyButton({
           buyerPaymentAddress: wallet.paymentAddress,
           buyerOrdinalsAddress: wallet.ordinalsAddress,
           ...(tapKey ? { tapInternalKeyHex: tapKey } : {}),
+          ...(wallet.paymentPublicKey ? { paymentPublicKeyHex: wallet.paymentPublicKey } : {}),
         },
       });
       toast(`SIGN PURCHASE IN ${WALLET_LABEL[wallet.provider]}`, {

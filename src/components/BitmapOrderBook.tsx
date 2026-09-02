@@ -90,6 +90,7 @@ export function BitmapOrderBook({ height }: { height?: number }) {
               buyerPaymentAddress: wallet.paymentAddress,
               buyerOrdinalsAddress: wallet.ordinalsAddress,
               ...(tapKey ? { tapInternalKeyHex: tapKey } : {}),
+              ...(wallet.paymentPublicKey ? { paymentPublicKeyHex: wallet.paymentPublicKey } : {}),
             },
           });
           toast(`SIGN ${label}.BITMAP IN ${WALLET_LABEL[wallet.provider]}`, {
@@ -369,6 +370,7 @@ function BulkListPanel({ height }: { height?: number }) {
             sellerAddress: wallet.ordinalsAddress,
             priceSats,
             ...(tapInternalKeyHex ? { tapInternalKeyHex } : {}),
+            ...(wallet.publicKey ? { publicKeyHex: wallet.publicKey } : {}),
           });
           const signed = await signListingPsbt(wallet.provider, psbt, wallet.ordinalsAddress);
           await submitOfferFn({ data: { psbt: signed } });

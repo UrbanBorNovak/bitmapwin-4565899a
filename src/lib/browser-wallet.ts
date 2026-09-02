@@ -17,6 +17,8 @@ export type ConnectedWallet = {
   /** payment address used to fund purchases (may equal ordinalsAddress on unisat) */
   paymentAddress: string;
   publicKey?: string;
+  /** compressed public key of the payment address (funding inputs) */
+  paymentPublicKey?: string;
 };
 
 export const WALLET_PROVIDER_STORAGE_KEY = "bitmap.wallet.provider";
@@ -139,7 +141,7 @@ export async function connectWallet(provider: WalletProviderId): Promise<Connect
       provider,
       ordinalsAddress: address,
       paymentAddress: address,
-      ...(publicKey ? { publicKey } : {}),
+      ...(publicKey ? { publicKey, paymentPublicKey: publicKey } : {}),
     };
   }
 
@@ -161,6 +163,7 @@ export async function connectWallet(provider: WalletProviderId): Promise<Connect
     ordinalsAddress: ordinals.address,
     paymentAddress: payment.address,
     ...(ordinals.publicKey ? { publicKey: ordinals.publicKey } : {}),
+    ...(payment.publicKey ? { paymentPublicKey: payment.publicKey } : {}),
   };
 }
 

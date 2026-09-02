@@ -632,6 +632,7 @@ function ListParcelForm({
         sellerAddress: signingAddress,
         priceSats,
         ...(tapInternalKeyHex ? { tapInternalKeyHex } : {}),
+        ...(connected.publicKey ? { publicKeyHex: connected.publicKey } : {}),
       });
       toast("APPROVE THE SIGNATURE IN YOUR WALLET", { description: "OPEN THE WALLET POPUP TO SIGN" });
       const signed = await signListingPsbt(connected.provider, psbt, signingAddress);
