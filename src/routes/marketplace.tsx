@@ -18,6 +18,8 @@ import { BitmapMarketChart } from "@/components/BitmapMarketChart";
 import { FloorRanking } from "@/components/FloorRanking";
 import { SalesLog } from "@/components/SalesLog";
 import { TradeCrawlerStatus } from "@/components/TradeCrawlerStatus";
+import { useServerFn } from "@tanstack/react-start";
+import { tradeCrawlProgressFn } from "@/lib/trade-crawler.functions";
 
 
 
@@ -152,7 +154,14 @@ function Marketplace() {
               : "…"
           }
         />
-        <Stat k="TRADED ON CHAIN" v={String(traded.length)} />
+        <Stat
+          k="TRADED ON CHAIN"
+          v={
+            crawl.data
+              ? crawl.data.tradedBitmaps.toLocaleString("en-US")
+              : traded.length.toLocaleString("en-US")
+          }
+        />
         <Stat
           k="LISTED"
           v={
