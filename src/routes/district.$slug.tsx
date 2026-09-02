@@ -9,8 +9,8 @@ import { profileQuery } from "@/lib/profiles";
 
 export const Route = createFileRoute("/district/$slug")({
   head: ({ params }) => {
-    const title = `District ${params.slug} — Bitmap Neighborhood`;
-    const description = `A bitmap district: the blocks one holder groups together as a single neighborhood on the map.`;
+    const title = `Zone ${params.slug} — Bitmap Neighborhood`;
+    const description = `A bitmap zone: the blocks one holder groups together as a single neighborhood on the map.`;
     return {
       meta: [
         { title },
@@ -33,7 +33,7 @@ function DistrictPage() {
   if (district.isPending) {
     return (
       <div className="mx-auto max-w-[900px] px-4 py-24 md:px-8">
-        <span className="label">SYNC DISTRICT…</span>
+        <span className="label">SYNC ZONE…</span>
       </div>
     );
   }
@@ -41,7 +41,7 @@ function DistrictPage() {
   if (!district.data) {
     return (
       <div className="mx-auto max-w-[900px] px-4 py-24 md:px-8">
-        <h1 className="display text-3xl">DISTRICT NOT FOUND</h1>
+        <h1 className="display text-3xl">ZONE NOT FOUND</h1>
         <Link to="/builds" className="btn-term mt-6 inline-block">
           [ ALL BUILDS ]
         </Link>
@@ -55,7 +55,7 @@ function DistrictPage() {
     <div className="mx-auto max-w-[1600px] px-4 py-12 md:px-8">
       <h1 className="display text-3xl md:text-5xl">{d.name.toUpperCase()}</h1>
       <p className="label mt-3">
-        DISTRICT OF {owner.data?.displayName?.toUpperCase() ?? shortenAddress(d.ownerAddress)} ·{" "}
+        ZONE OF {owner.data?.displayName?.toUpperCase() ?? shortenAddress(d.ownerAddress)} ·{" "}
         {d.heights.length} BITMAP{d.heights.length === 1 ? "" : "S"}
       </p>
       <DistrictRarity heights={d.heights} className="mt-4" />
@@ -97,7 +97,7 @@ function DistrictPage() {
         </div>
       ) : (
         <div className="mt-8 rounded-lg border border-dashed border-border p-6">
-          <span className="label text-muted-foreground">NO BITMAPS ADDED TO THIS DISTRICT YET</span>
+          <span className="label text-muted-foreground">NO BITMAPS ADDED TO THIS ZONE YET</span>
         </div>
       )}
     </div>

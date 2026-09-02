@@ -198,7 +198,7 @@ export function ParcelPagePanel({
 
         {district.data && (
           <p className="label">
-            DISTRICT{" "}
+            ZONE{" "}
             <Link
               to="/district/$slug"
               params={{ slug: district.data.slug }}

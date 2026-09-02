@@ -14,6 +14,7 @@ import { blockStatsQuery, patternSiblingsQuery } from "@/lib/block-stats";
 import { BidPanel } from "@/components/BidPanel";
 import { BitmapChat } from "@/components/BitmapChat";
 import { ParcelPagePanel } from "@/components/ParcelPagePanel";
+import { ParcelPanel } from "@/components/ParcelPanel";
 import { LeasePanel } from "@/components/leases/LeasePanel";
 import { BitmapEvents } from "@/components/coins/BitmapEvents";
 import { MakeOfferButton } from "@/components/MakeOfferButton";
@@ -155,6 +156,13 @@ function BitmapDetail() {
       </div>
 
       <ParcelPagePanel height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
+
+      <ParcelPanel
+        height={block}
+        districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
+        txCount={stats.data?.txCount ?? scan.data?.txCount ?? null}
+      />
+
 
       <BitmapChat height={block} />
 
