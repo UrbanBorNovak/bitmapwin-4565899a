@@ -164,8 +164,9 @@ export function ManagerAI({
                         }
                       />
                     </div>
-
+                  </li>
                 ))}
+
               </ul>
             )}
           </>
