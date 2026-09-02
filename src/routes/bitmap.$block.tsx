@@ -173,9 +173,12 @@ function BitmapDetail() {
         districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
         txCount={stats.data?.txCount ?? scan.data?.txCount ?? null}
       />
-
+      <div className="mt-6">
+        <WatchBitmapButton height={block} />
+      </div>
 
       <BitmapChat height={block} />
+
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="group rounded-lg border border-border bg-card p-6">
