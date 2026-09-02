@@ -1,5 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { traceMany } from "@/lib/trades.server";
 
 /**
@@ -16,13 +15,7 @@ const MAX_BATCH = 40;
 /** Re-check a bitmap at most this often (fresh transfers appear slowly). */
 const RECHECK_AFTER_HOURS = 72;
 
-function db() {
-  return createClient<Database>(
-    process.env["SUPABASE_URL"]!,
-    process.env["SUPABASE_SERVICE_ROLE_KEY"] ?? process.env["SUPABASE_PUBLISHABLE_KEY"]!,
-    { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
-  );
-}
+const db = () => supabaseAdmin;
 
 /** `<revealTxid>i<index>` → reveal txid. */
 function revealTxid(inscriptionId: string): string | null {
@@ -114,7 +107,10 @@ export async function crawlTrades(batch = 20, maxHops = 6): Promise<CrawlResult>
       last_traced_at: new Date().toISOString(),
     };
   });
-  await client.from("trade_crawl_state").upsert(stateRows, { onConflict: "block_height" });
+  const stateError = (
+    await client.from("trade_crawl_state").upsert(stateRows, { onConflict: "block_height" })
+  ).error;
+  if (stateError) console.error("[trade-crawler] state upsert failed", stateError);
 
   return {
     checked: candidates.length,
