@@ -73,16 +73,26 @@ export function ParcelPanel({
                 href={`https://ordinals.com/inscription/${p.inscriptionId}`}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded border border-border px-3 py-2 hover:border-primary"
+                className="flex items-center gap-3 rounded border border-border p-2 hover:border-primary"
               >
-                <span className="display block text-sm">{parcelName(p.index, height).toUpperCase()}</span>
-                <span className="label block text-muted-foreground">
-                  #{p.inscriptionNumber.toLocaleString("en-US")} · {shortId(p.inscriptionId)}
+                <InscriptionContent
+                  inscriptionId={p.inscriptionId}
+                  className="h-14 w-14 shrink-0 border border-border"
+                  title={parcelName(p.index, height)}
+                />
+                <span className="min-w-0">
+                  <span className="display block truncate text-sm">
+                    {parcelName(p.index, height).toUpperCase()}
+                  </span>
+                  <span className="label block text-muted-foreground">
+                    #{p.inscriptionNumber.toLocaleString("en-US")} · {shortId(p.inscriptionId)}
+                  </span>
                 </span>
               </a>
             ))}
           </div>
         )}
+
 
         {valid.length > 24 && (
           <button className="btn-term-ghost" onClick={() => setShowAll((v) => !v)}>
