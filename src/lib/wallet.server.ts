@@ -206,8 +206,6 @@ export function isBitcoinAddress(value: string): boolean {
   return ADDRESS_RE.test(value.trim());
 }
 
-/**
- * Hands a stored offer PSBT to a specific buyer address. The offer stays in the
 /** Reads the seller address of an offer so callers can prove they own it. */
 export async function offerSeller(offerId: string): Promise<string> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -221,7 +219,13 @@ export async function offerSeller(offerId: string): Promise<string> {
   return data.seller_address;
 }
 
+/**
+ * Hands a stored offer PSBT to a specific buyer address. The offer stays in the
+ * public book; the buyer additionally sees it in their wallet inbox and can
+ * take the raw PSBT into their own wallet to complete and broadcast the sale.
+ */
 export async function deliverOffer(input: {
+
 
   offerId: string;
   buyerAddress: string;
