@@ -10,7 +10,13 @@ import { shortenAddress } from "@/lib/registry";
 import { walletQuery } from "@/lib/wallet";
 import { useWalletSession } from "@/lib/wallet-session";
 import { buildListingPsbt } from "@/lib/psbt-builder";
-import { signListingPsbt, signPurchasePsbt, xOnlyPubKeyHex, WALLET_LABEL } from "@/lib/browser-wallet";
+import {
+  keyCandidates,
+  signListingPsbt,
+  signPurchasePsbt,
+  xOnlyPubKeyHex,
+  WALLET_LABEL,
+} from "@/lib/browser-wallet";
 import { submitOfferFn } from "@/lib/offers.functions";
 import { buildPurchaseFn, submitPurchaseFn } from "@/lib/purchase.functions";
 import { resolveWallet } from "@/components/BuyButton";
@@ -90,7 +96,9 @@ export function BitmapOrderBook({ height }: { height?: number }) {
               buyerPaymentAddress: wallet.paymentAddress,
               buyerOrdinalsAddress: wallet.ordinalsAddress,
               ...(tapKey ? { tapInternalKeyHex: tapKey } : {}),
-              ...(wallet.paymentPublicKey ? { paymentPublicKeyHex: wallet.paymentPublicKey } : {}),
+              ...(keyCandidates(wallet).length > 0
+              ? { paymentPublicKeyHex: keyCandidates(wallet) }
+              : {}),
             },
           });
           toast(`SIGN ${label}.BITMAP IN ${WALLET_LABEL[wallet.provider]}`, {

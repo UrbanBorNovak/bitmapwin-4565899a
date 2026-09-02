@@ -263,8 +263,8 @@ export type BuyerPsbtInput = {
   feeRate: number;
   /** buyer x-only taproot key, when the funding inputs are p2tr */
   tapInternalKeyHex?: string | undefined;
-  /** buyer compressed payment public key, required for nested-segwit (3…) inputs */
-  paymentPublicKeyHex?: string | undefined;
+  /** buyer compressed payment public key(s), required for nested-segwit (3…) inputs */
+  paymentPublicKeyHex?: string | string[] | undefined;
 };
 
 export type BuyerPsbtResult = {
@@ -288,7 +288,7 @@ export type BuyerPsbtResult = {
 function fundingInputMap(
   utxo: FundingUtxo,
   tapKey: number[] | null,
-  paymentPublicKeyHex: string | undefined,
+  paymentPublicKeyHex: string | string[] | undefined,
 ): Kv[] {
   const script = hexToByteArray(utxo.scriptPubKeyHex);
   const map: Kv[] = [
@@ -298,14 +298,27 @@ function fundingInputMap(
     if (tapKey) map.push({ key: [0x17], value: tapKey });
     return map;
   }
-  const redeem = p2shP2wpkhRedeemScript(script, paymentPublicKeyHex);
-  if (redeem) {
-    map.push({ key: [0x04], value: redeem });
-    return map;
+  // Wallets label their keys inconsistently, so try every key the wallet shared
+  // and keep the one that actually hashes to this P2SH address.
+  const keys = (
+    Array.isArray(paymentPublicKeyHex)
+      ? paymentPublicKeyHex
+      : paymentPublicKeyHex
+        ? [paymentPublicKeyHex]
+        : []
+  ).filter((k) => typeof k === "string" && k.length > 0);
+  for (const key of keys) {
+    const redeem = p2shP2wpkhRedeemScript(script, key);
+    if (redeem) {
+      map.push({ key: [0x04], value: redeem });
+      return map;
+    }
   }
   if (script.length === 23 && script[0] === 0xa9) {
     throw new Error(
-      "Your payment address is a nested-segwit (3…) address and the wallet did not share its public key — reconnect the wallet and retry",
+      keys.length === 0
+        ? "Your payment address is a nested-segwit (3…) address and the wallet did not share its public key — reconnect the wallet and retry"
+        : "Your wallet's public key does not match your nested-segwit (3…) payment address — switch to the account holding those funds, reconnect, and retry",
     );
   }
   if (isP2pkhScript(script)) {
@@ -441,8 +454,8 @@ export type PaymentPsbtInput = {
   feeRate: number;
   /** payer x-only taproot key, when the funding inputs are p2tr */
   tapInternalKeyHex?: string | undefined;
-  /** payer compressed public key, required for nested-segwit (3…) inputs */
-  paymentPublicKeyHex?: string | undefined;
+  /** payer compressed public key(s), required for nested-segwit (3…) inputs */
+  paymentPublicKeyHex?: string | string[] | undefined;
 };
 
 export type PaymentPsbtResult = {

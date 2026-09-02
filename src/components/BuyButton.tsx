@@ -7,10 +7,12 @@ import {
   connectWallet,
   isWalletInstalled,
   signPurchasePsbt,
+  keyCandidates,
   xOnlyPubKeyHex,
   type ConnectedWallet,
   type WalletProviderId,
 } from "@/lib/browser-wallet";
+import { ensureWalletKeys, saveWalletSession } from "@/lib/wallet-session";
 import { formatSats } from "@/lib/trades";
 import { MARKETPLACE_FEE_PERCENT } from "@/lib/marketplace-fee";
 
@@ -24,7 +26,11 @@ export async function resolveWallet(): Promise<ConnectedWallet> {
   if (!provider) throw new Error("NO BITCOIN WALLET DETECTED — INSTALL UNISAT OR XVERSE");
   const wallet = await connectWallet(provider);
   window.localStorage.setItem(WALLET_PROVIDER_STORAGE_KEY, provider);
-  return wallet;
+  // Some wallet builds omit the payment public key on connect, which nested
+  // segwit (3…) funding inputs need. Fill it in before building any PSBT.
+  const complete = await ensureWalletKeys(wallet);
+  saveWalletSession(complete);
+  return complete;
 }
 
 /**
@@ -53,7 +59,9 @@ export function BuyButton({
           buyerPaymentAddress: wallet.paymentAddress,
           buyerOrdinalsAddress: wallet.ordinalsAddress,
           ...(tapKey ? { tapInternalKeyHex: tapKey } : {}),
-          ...(wallet.paymentPublicKey ? { paymentPublicKeyHex: wallet.paymentPublicKey } : {}),
+          ...(keyCandidates(wallet).length > 0
+            ? { paymentPublicKeyHex: keyCandidates(wallet) }
+            : {}),
         },
       });
       toast(`SIGN PURCHASE IN ${WALLET_LABEL[wallet.provider]}`, {

@@ -167,6 +167,57 @@ export async function connectWallet(provider: WalletProviderId): Promise<Connect
   };
 }
 
+/**
+ * Re-reads the public keys for an already connected wallet. Sessions stored
+ * before the payment key was tracked (or wallets that withheld it on connect)
+ * would otherwise dead-end on nested-segwit signing; this refills the keys
+ * without asking the user to disconnect and reconnect.
+ */
+export async function refreshWalletKeys(wallet: ConnectedWallet): Promise<ConnectedWallet> {
+  if (wallet.provider === "unisat") {
+    const unisat = getUnisat();
+    if (!unisat) return wallet;
+    try {
+      const publicKey = await unisat.getPublicKey();
+      if (!publicKey) return wallet;
+      return { ...wallet, publicKey, paymentPublicKey: publicKey };
+    } catch {
+      return wallet;
+    }
+  }
+
+  const providerId = getXverseProviderId();
+  if (!providerId) return wallet;
+  let accounts: XverseAccount[] = [];
+  try {
+    const res = await requestSatsConnect("getAddresses", {
+      purposes: [AddressPurpose.Ordinals, AddressPurpose.Payment],
+      message: "Refresh Bitmap Marketplace keys",
+    } as never, providerId);
+    accounts = res.status === "success" ? normalizeXverseAddresses(res.result) : [];
+  } catch {
+    accounts = [];
+  }
+  if (accounts.length === 0) {
+    accounts = await requestXverseAddresses(providerId).catch(() => []);
+  }
+  if (accounts.length === 0) return wallet;
+
+  const lower = (v: string) => v.toLowerCase();
+  const ordinals =
+    accounts.find((a) => lower(a.address) === lower(wallet.ordinalsAddress)) ??
+    accounts.find((a) => a.purpose === "ordinals");
+  const payment =
+    accounts.find((a) => lower(a.address) === lower(wallet.paymentAddress)) ??
+    accounts.find((a) => a.purpose === "payment");
+
+  return {
+    ...wallet,
+    ...(ordinals?.publicKey ? { publicKey: ordinals.publicKey } : {}),
+    ...(payment?.publicKey ? { paymentPublicKey: payment.publicKey } : {}),
+  };
+}
+
 /** Normalizes address responses returned by current and older Xverse builds. */
 function normalizeXverseAddresses(result: unknown): XverseAccount[] {
   if (!result) return [];
@@ -426,4 +477,13 @@ export function hexToBase64(hex: string): string {
   let bin = "";
   for (let i = 0; i < clean.length; i += 2) bin += String.fromCharCode(parseInt(clean.slice(i, i + 2), 16));
   return btoa(bin);
+}
+
+/**
+ * Every compressed public key the wallet shared, payment key first. PSBT
+ * builders test each one against the funding scriptPubKey, so a wallet that
+ * mislabels its purposes still produces a signable nested-segwit input.
+ */
+export function keyCandidates(wallet: ConnectedWallet): string[] {
+  return [...new Set([wallet.paymentPublicKey, wallet.publicKey].filter(Boolean) as string[])];
 }
