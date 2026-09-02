@@ -11,11 +11,14 @@ export function InscriptionContent({
   contentType,
   className = "",
   title,
+  interactive = false,
 }: {
   inscriptionId: string;
   contentType?: string | null;
   className?: string;
   title?: string;
+  /** Allow pointer input, for html/3d children the visitor should explore. */
+  interactive?: boolean;
 }) {
   const type = (contentType ?? "").toLowerCase();
   const isImage = type.startsWith("image/") && !type.includes("svg");
