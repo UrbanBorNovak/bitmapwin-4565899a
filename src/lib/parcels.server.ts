@@ -9,9 +9,9 @@
 const ORD = "https://ordinals.com";
 const UA = "bitmap-marketplace/1.0";
 
-import type { ChainParcel, ParcelScan } from "@/lib/parcels";
+import type { ChainChild, ChainParcel, ParcelScan } from "@/lib/parcels";
 
-export type { ChainParcel, ParcelScan };
+export type { ChainChild, ChainParcel, ParcelScan };
 
 type ChildRow = {
   id: string;
@@ -167,4 +167,22 @@ export async function scanParcels(
     parcels: claims,
     children,
   };
+}
+
+/** Children of a parcel inscription (grandchildren of the district). */
+export async function scanChildInscriptions(inscriptionId: string, max = 48): Promise<ChainChild[]> {
+  const { rows } = await fetchChildren(inscriptionId, 3);
+  const inspected = rows.slice(0, max);
+  const types = await mapLimit(inspected, 8, async (child) => {
+    const resp = await ordFetch(`/content/${child.id}`, 2);
+    return (resp?.headers.get("content-type") ?? "").toLowerCase() || null;
+  });
+  return inspected.map((child, i) => ({
+    inscriptionId: child.id,
+    inscriptionNumber: child.number,
+    inscribedInBlock: child.height ?? null,
+    timestamp: child.timestamp ?? null,
+    contentType: types[i] ?? null,
+    parcelIndex: null,
+  }));
 }

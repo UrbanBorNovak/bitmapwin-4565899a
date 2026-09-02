@@ -1,8 +1,62 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { parcelName, parcelsQuery } from "@/lib/parcels";
+import { inscriptionChildrenQuery, parcelName, parcelsQuery } from "@/lib/parcels";
 import { shortId } from "@/lib/chain";
 import { InscriptionContent } from "@/components/InscriptionContent";
+
+/** Rendered children of a single parcel inscription (grandchildren of the district). */
+function ParcelChildren({ inscriptionId, label }: { inscriptionId: string; label: string }) {
+  const [open, setOpen] = useState(false);
+  const children = useQuery({ ...inscriptionChildrenQuery(open ? inscriptionId : null) });
+
+  return (
+    <div className="border-t border-border px-2 py-1.5">
+      <button
+        type="button"
+        className="label text-muted-foreground hover:text-primary"
+        onClick={() => setOpen((v) => !v)}
+      >
+        {open ? "[ HIDE CHILDREN ]" : "[ SHOW CHILDREN ]"}
+      </button>
+      {open && (
+        <div className="mt-2">
+          {children.isPending && <p className="label text-muted-foreground">SCANNING CHILDREN…</p>}
+          {children.isError && <p className="label text-muted-foreground">CHILD SCAN UNAVAILABLE</p>}
+          {children.data && children.data.length === 0 && (
+            <p className="label text-muted-foreground">NO CHILD INSCRIPTION UNDER {label}</p>
+          )}
+          {children.data && children.data.length > 0 && (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {children.data.map((c) => (
+                <div key={c.inscriptionId} className="rounded border border-border">
+                  <InscriptionContent
+                    inscriptionId={c.inscriptionId}
+                    contentType={c.contentType}
+                    interactive
+                    className="aspect-square w-full border-b border-border"
+                    title={`Child of ${label}`}
+                  />
+                  <div className="flex items-baseline justify-between gap-2 px-2 py-1">
+                    <span className="display truncate text-[11px]">{shortId(c.inscriptionId)}</span>
+                    <a
+                      className="label shrink-0 text-muted-foreground hover:text-primary"
+                      href={`https://ordinals.com/inscription/${c.inscriptionId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {(c.contentType ?? "UNKNOWN").split(";")[0]!.toUpperCase()} ↗
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 
 /**
@@ -77,28 +131,34 @@ export function ParcelPanel({
         {shown.length > 0 && (
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {shown.map((p) => (
-              <a
-                key={p.inscriptionId}
-                href={`https://ordinals.com/inscription/${p.inscriptionId}`}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-3 rounded border border-border p-2 hover:border-primary"
-              >
-                <InscriptionContent
+              <div key={p.inscriptionId} className="rounded border border-border">
+                <a
+                  href={`https://ordinals.com/inscription/${p.inscriptionId}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-3 p-2 hover:text-primary"
+                >
+                  <InscriptionContent
+                    inscriptionId={p.inscriptionId}
+                    className="h-14 w-14 shrink-0 border border-border"
+                    title={parcelName(p.index, height)}
+                  />
+                  <span className="min-w-0">
+                    <span className="display block truncate text-sm">
+                      {parcelName(p.index, height).toUpperCase()}
+                    </span>
+                    <span className="label block text-muted-foreground">
+                      #{p.inscriptionNumber.toLocaleString("en-US")} · {shortId(p.inscriptionId)}
+                    </span>
+                  </span>
+                </a>
+                <ParcelChildren
                   inscriptionId={p.inscriptionId}
-                  className="h-14 w-14 shrink-0 border border-border"
-                  title={parcelName(p.index, height)}
+                  label={parcelName(p.index, height).toUpperCase()}
                 />
-                <span className="min-w-0">
-                  <span className="display block truncate text-sm">
-                    {parcelName(p.index, height).toUpperCase()}
-                  </span>
-                  <span className="label block text-muted-foreground">
-                    #{p.inscriptionNumber.toLocaleString("en-US")} · {shortId(p.inscriptionId)}
-                  </span>
-                </span>
-              </a>
+              </div>
             ))}
+
           </div>
         )}
 
