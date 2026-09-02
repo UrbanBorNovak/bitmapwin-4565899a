@@ -62,12 +62,10 @@ export function visitorKey(): string {
 export async function recordBitmapView(height: number, address: string | null) {
   const visitor = visitorKey();
   if (!visitor) return;
-  await supabase.rpc("record_bitmap_view", {
-    _height: height,
-    _visitor: visitor,
-    ...(address ? { _address: address } : {}),
-  });
+  const { recordBitmapViewFn } = await import("@/lib/views.functions");
+  await recordBitmapViewFn({ data: { height, visitor, address } });
 }
+
 
 export async function fetchViewStats(height: number): Promise<ViewStats | null> {
   const { data, error } = await supabase
