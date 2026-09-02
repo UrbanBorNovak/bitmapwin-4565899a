@@ -52,6 +52,23 @@ export function useWalletSession(): ConnectedWallet | null {
   return wallet;
 }
 
+/**
+ * Guarantees the session carries the payment (and ordinals) public key, which
+ * nested-segwit signing needs. Re-reads the keys from the extension and
+ * persists them so the user never has to reconnect manually.
+ */
+export async function ensureWalletKeys(wallet: ConnectedWallet): Promise<ConnectedWallet> {
+  if (wallet.paymentPublicKey && wallet.publicKey) return wallet;
+  const refreshed = await refreshWalletKeys(wallet);
+  if (
+    refreshed.paymentPublicKey !== wallet.paymentPublicKey ||
+    refreshed.publicKey !== wallet.publicKey
+  ) {
+    saveWalletSession(refreshed);
+  }
+  return refreshed;
+}
+
 /** True when the session wallet controls the given address (any purpose). */
 export function walletControls(wallet: ConnectedWallet | null, address: string | null): boolean {
   if (!wallet || !address) return false;
