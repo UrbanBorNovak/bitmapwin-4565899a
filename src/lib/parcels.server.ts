@@ -165,5 +165,6 @@ export async function scanParcels(
     childrenScanned: inspected.length,
     truncated,
     parcels: claims,
+    children,
   };
 }
