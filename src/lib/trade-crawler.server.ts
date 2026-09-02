@@ -124,6 +124,23 @@ export async function crawlTrades(batch = 20, maxHops = 6): Promise<CrawlResult>
   };
 }
 
+/** Traffic-driven crawling: at most one run per window, app-wide. */
+const THROTTLE_MS = 45_000;
+
+export async function crawlTradesThrottled(batch = 8): Promise<CrawlResult & { skipped: boolean }> {
+  const client = db();
+  const { data } = await client
+    .from("trade_crawl_state")
+    .select("last_traced_at")
+    .order("last_traced_at", { ascending: false })
+    .limit(1);
+  const last = data?.[0]?.last_traced_at ? Date.parse(data[0]!.last_traced_at) : 0;
+  if (Date.now() - last < THROTTLE_MS) {
+    return { checked: 0, transfersFound: 0, salesFound: 0, heights: [], skipped: true };
+  }
+  return { ...(await crawlTrades(batch)), skipped: false };
+}
+
 export type CrawlProgress = {
   crawledBitmaps: number;
   tradedBitmaps: number;
