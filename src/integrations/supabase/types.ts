@@ -961,6 +961,33 @@ export type Database = {
           },
         ]
       }
+      trade_crawl_state: {
+        Row: {
+          block_height: number
+          inscription_id: string | null
+          last_error: string | null
+          last_traced_at: string
+          trades_found: number
+          transfers: number
+        }
+        Insert: {
+          block_height: number
+          inscription_id?: string | null
+          last_error?: string | null
+          last_traced_at?: string
+          trades_found?: number
+          transfers?: number
+        }
+        Update: {
+          block_height?: number
+          inscription_id?: string | null
+          last_error?: string | null
+          last_traced_at?: string
+          trades_found?: number
+          transfers?: number
+        }
+        Relationships: []
+      }
       trades: {
         Row: {
           bitmap_height: number
