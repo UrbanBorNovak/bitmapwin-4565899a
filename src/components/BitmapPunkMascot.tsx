@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 
+import bitmapPunk from "@/assets/bitmap-punk.png";
 import { MASCOT_THOUGHTS, mascotLineForPath, onMascot, type MascotMood } from "@/lib/mascot";
 
 /**
@@ -10,122 +11,28 @@ import { MASCOT_THOUGHTS, mascotLineForPath, onMascot, type MascotMood } from "@
  * still when the visitor prefers reduced motion.
  */
 
-const UNIT = 3; // pixel size
-const W = 18;
-const H = 22;
-const SPRITE_W = W * UNIT;
-
-type Rect = [x: number, y: number, w: number, h: number];
-
-const HAIR: Rect[] = [
-  [3, 3, 2, 2],
-  [4, 1, 2, 3],
-  [6, 2, 2, 2],
-  [8, 0, 2, 4],
-  [10, 1, 2, 3],
-  [12, 2, 2, 2],
-];
-
-const HEAD: Rect[] = [
-  [4, 4, 10, 1],
-  [3, 5, 12, 6],
-  [4, 11, 10, 1],
-];
-
-const FACE_CUTOUT: Rect[] = [[5, 5, 8, 5]];
-const VISOR: Rect[] = [[5, 6, 8, 2]];
-const VISOR_GLINT: Rect[] = [[11, 6, 1, 1]];
-const MOUTH: Rect[] = [[8, 9, 4, 1]];
-
-const JACKET: Rect[] = [
-  [5, 12, 8, 6],
-  [4, 13, 1, 4],
-  [13, 13, 1, 4],
-];
-
-const JACKET_CUTOUT: Rect[] = [
-  [7, 13, 1, 4],
-  [10, 13, 1, 4],
-];
-
-const JACKET_PINS: Rect[] = [
-  [6, 13, 1, 1],
-  [11, 14, 1, 1],
-];
-
-const ARMS_WALK: Rect[] = [
-  [2, 13, 2, 1],
-  [1, 14, 2, 3],
-  [14, 14, 2, 1],
-  [15, 15, 2, 3],
-];
-
-const ARMS_THINK: Rect[] = [
-  [2, 13, 3, 1],
-  [1, 14, 2, 3],
-  [13, 13, 2, 1],
-  [14, 10, 2, 4],
-  [13, 9, 2, 1],
-];
-
-const ARMS_CHEER: Rect[] = [
-  [2, 10, 2, 4],
-  [1, 9, 2, 1],
-  [14, 10, 2, 4],
-  [15, 9, 2, 1],
-];
-
-const LEGS_A: Rect[] = [
-  [5, 18, 3, 3],
-  [10, 18, 3, 3],
-  [4, 21, 4, 1],
-  [10, 21, 4, 1],
-];
-
-const LEGS_B: Rect[] = [
-  [4, 18, 3, 2],
-  [3, 20, 3, 1],
-  [2, 21, 4, 1],
-  [11, 18, 3, 2],
-  [13, 20, 3, 1],
-  [14, 21, 4, 1],
-];
-
-function Pixels({ rects, className }: { rects: Rect[]; className?: string }) {
-  return (
-    <g className={className}>
-      {rects.map(([x, y, w, h], i) => (
-        <rect key={i} x={x} y={y} width={w} height={h} fill="currentColor" />
-      ))}
-    </g>
-  );
-}
+const SPRITE_W = 58;
 
 type Pose = "walk" | "think" | "cheer";
 
 function Sprite({ pose, frame }: { pose: Pose; frame: number }) {
-  const arms = pose === "think" ? ARMS_THINK : pose === "cheer" ? ARMS_CHEER : ARMS_WALK;
-  const legs = pose === "walk" && frame === 1 ? LEGS_B : LEGS_A;
+  const movement =
+    pose === "cheer"
+      ? "-translate-y-3 rotate-3"
+      : pose === "walk" && frame === 1
+        ? "-translate-y-1"
+        : pose === "think"
+          ? "rotate-1"
+          : "translate-y-0";
+
   return (
-    <svg
+    <img
+      src={bitmapPunk}
+      alt=""
       width={SPRITE_W}
-      height={H * UNIT}
-      viewBox={`0 0 ${W} ${H}`}
-      shapeRendering="crispEdges"
-      className="overflow-visible"
-    >
-      <Pixels rects={HAIR} className="text-primary" />
-      <Pixels rects={HEAD} className="text-foreground" />
-      <Pixels rects={FACE_CUTOUT} className="text-background" />
-      <Pixels rects={VISOR} className="text-primary" />
-      <Pixels rects={VISOR_GLINT} className="text-foreground" />
-      <Pixels rects={MOUTH} className="text-muted-foreground" />
-      <Pixels rects={JACKET} className="text-foreground" />
-      <Pixels rects={JACKET_CUTOUT} className="text-background" />
-      <Pixels rects={JACKET_PINS} className="text-primary" />
-      <Pixels rects={arms} className="text-foreground" />
-      <Pixels rects={legs} className="text-foreground" />
-    </svg>
+      className={`h-auto w-[58px] origin-bottom object-contain transition-transform duration-150 ${movement}`}
+      draggable={false}
+    />
   );
 }
 
