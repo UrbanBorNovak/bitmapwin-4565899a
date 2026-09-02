@@ -158,16 +158,17 @@ export function ParcelPagePanel({
                 {built.description}
               </p>
             )}
-            {built.linkUrl && (
+            {safeExternalUrl(built.linkUrl) && (
               <a
-                href={built.linkUrl}
+                href={safeExternalUrl(built.linkUrl)!}
                 target="_blank"
                 rel="noreferrer nofollow"
                 className="block break-all font-mono text-xs underline decoration-border underline-offset-4 hover:text-foreground"
               >
-                {built.linkUrl}
+                {safeExternalUrl(built.linkUrl)}
               </a>
             )}
+
             <p className="label">
               BUILT BY{" "}
               <Link
