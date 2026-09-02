@@ -131,28 +131,34 @@ export function ParcelPanel({
         {shown.length > 0 && (
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {shown.map((p) => (
-              <a
-                key={p.inscriptionId}
-                href={`https://ordinals.com/inscription/${p.inscriptionId}`}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-3 rounded border border-border p-2 hover:border-primary"
-              >
-                <InscriptionContent
+              <div key={p.inscriptionId} className="rounded border border-border">
+                <a
+                  href={`https://ordinals.com/inscription/${p.inscriptionId}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-3 p-2 hover:text-primary"
+                >
+                  <InscriptionContent
+                    inscriptionId={p.inscriptionId}
+                    className="h-14 w-14 shrink-0 border border-border"
+                    title={parcelName(p.index, height)}
+                  />
+                  <span className="min-w-0">
+                    <span className="display block truncate text-sm">
+                      {parcelName(p.index, height).toUpperCase()}
+                    </span>
+                    <span className="label block text-muted-foreground">
+                      #{p.inscriptionNumber.toLocaleString("en-US")} · {shortId(p.inscriptionId)}
+                    </span>
+                  </span>
+                </a>
+                <ParcelChildren
                   inscriptionId={p.inscriptionId}
-                  className="h-14 w-14 shrink-0 border border-border"
-                  title={parcelName(p.index, height)}
+                  label={parcelName(p.index, height).toUpperCase()}
                 />
-                <span className="min-w-0">
-                  <span className="display block truncate text-sm">
-                    {parcelName(p.index, height).toUpperCase()}
-                  </span>
-                  <span className="label block text-muted-foreground">
-                    #{p.inscriptionNumber.toLocaleString("en-US")} · {shortId(p.inscriptionId)}
-                  </span>
-                </span>
-              </a>
+              </div>
             ))}
+
           </div>
         )}
 
