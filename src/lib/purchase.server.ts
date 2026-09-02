@@ -6,8 +6,11 @@ import {
   byteArrayToHex,
   extractRawTxHex,
   finalizeSignedPsbt,
+  inputSignatureReport,
+  psbtOutputs,
   type FundingUtxo,
 } from "@/lib/psbt-buyer";
+
 
 /**
  * Buy side of the offer book. Reads the seller's stored PSBT plus the buyer's
