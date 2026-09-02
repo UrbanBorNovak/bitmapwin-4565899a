@@ -161,8 +161,8 @@ export async function fetchBlockMeta(height: number): Promise<BlockMeta> {
   }
 }
 
-async function vsizesFromMempoolSummary(hash: string): Promise<number[]> {
-  let rows: Array<{ vsize?: number }>;
+async function valuesFromMempoolSummary(hash: string): Promise<number[]> {
+  let rows: Array<{ value?: number }>;
   try {
     rows = await json(`${COMMUNITY_MEMPOOL}/v1/block/${hash}/summary`, 15_000);
   } catch {
@@ -170,15 +170,15 @@ async function vsizesFromMempoolSummary(hash: string): Promise<number[]> {
   }
   const out: number[] = [];
   for (const row of rows) {
-    if (typeof row.vsize === "number" && row.vsize > 0) out.push(row.vsize);
+    if (typeof row.value === "number" && row.value >= 0) out.push(row.value);
   }
   if (out.length === 0) throw new Error("empty mempool summary");
   return out;
 }
 
-type EsploraTx = { weight?: number; size?: number };
+type EsploraTx = { vout?: Array<{ value?: number }> };
 
-async function vsizesFromEsploraPages(hash: string, txCount: number): Promise<number[]> {
+async function valuesFromEsploraPages(hash: string, txCount: number): Promise<number[]> {
   const pages = Math.min(ESPLORA_MAX_PAGES, Math.ceil(txCount / 25));
   const starts = Array.from({ length: pages }, (_, i) => i * 25);
   const results: number[][] = new Array(pages).fill(null).map(() => []);
