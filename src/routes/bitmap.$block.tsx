@@ -156,6 +156,13 @@ function BitmapDetail() {
 
       <ParcelPagePanel height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
 
+      <ParcelPanel
+        height={block}
+        districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
+        txCount={stats.data?.txCount ?? scan.data?.txCount ?? null}
+      />
+
+
       <BitmapChat height={block} />
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
