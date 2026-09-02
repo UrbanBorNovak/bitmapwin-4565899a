@@ -14,3 +14,12 @@ export const getParcels = createServerFn({ method: "GET" })
     const { scanParcels } = await import("@/lib/parcels.server");
     return scanParcels(data.height, data.inscriptionId);
   });
+
+export const getInscriptionChildren = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) =>
+    z.object({ inscriptionId: z.string().regex(/^[0-9a-fA-F]{64}i\d+$/) }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { scanChildInscriptions } = await import("@/lib/parcels.server");
+    return scanChildInscriptions(data.inscriptionId);
+  });
