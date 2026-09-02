@@ -23,3 +23,12 @@ export const getInscriptionChildren = createServerFn({ method: "GET" })
     const { scanChildInscriptions } = await import("@/lib/parcels.server");
     return scanChildInscriptions(data.inscriptionId);
   });
+
+export const getReinscriptions = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) =>
+    z.object({ inscriptionId: z.string().regex(/^[0-9a-fA-F]{64}i\d+$/) }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { scanReinscriptions } = await import("@/lib/parcels.server");
+    return scanReinscriptions(data.inscriptionId);
+  });

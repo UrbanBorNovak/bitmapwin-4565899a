@@ -15,6 +15,7 @@ import { BidPanel } from "@/components/BidPanel";
 import { BitmapChat } from "@/components/BitmapChat";
 import { ParcelPagePanel } from "@/components/ParcelPagePanel";
 import { ParcelPanel } from "@/components/ParcelPanel";
+import { DistrictReinscriptions } from "@/components/DistrictReinscriptions";
 import { LeasePanel } from "@/components/leases/LeasePanel";
 import { BitmapEvents } from "@/components/coins/BitmapEvents";
 import { MakeOfferButton } from "@/components/MakeOfferButton";
@@ -147,6 +148,13 @@ function BitmapDetail() {
         <ClubBadge height={block} />
         <TraitBadges height={block} showRarity />
       </div>
+
+      <DistrictReinscriptions
+        height={block}
+        districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
+      />
+
+
 
 
       <div className="mt-6 flex flex-wrap gap-2">
