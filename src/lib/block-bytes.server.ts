@@ -49,10 +49,14 @@ export type BlockMeta = {
   txCount: number;
 };
 
-/** Real vbytes -> square parcel side, log-scaled like bitfeed's block render. */
-export function sizeClassFromVsize(vsize: number): number {
-  const side = Math.floor(Math.log2(Math.max(1, vsize) / 180)) + 1;
-  return Math.max(1, Math.min(5, side));
+/**
+ * Real transaction output value (sats) -> square parcel side, the canonical
+ * bitfeed / bitmap.trade scale: one side unit per decimal order of magnitude
+ * above 10,000 sats. Verified byte-for-byte against bitmap.trade's block feed.
+ */
+export function sizeClassFromValue(valueSats: number): number {
+  const side = Math.floor(Math.log10(Math.max(1, valueSats))) - 4;
+  return Math.max(1, Math.min(8, side));
 }
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
