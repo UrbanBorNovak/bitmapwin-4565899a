@@ -191,21 +191,29 @@ export function BidPanel({
       {history.length > 0 && (
         <div className="border-t border-border p-4">
           <p className="label">CLOSED BIDS</p>
-          <ul className="mt-2 space-y-1">
+          <ul className="mt-2 space-y-2">
             {history.slice(0, 8).map((bid) => (
               <li
                 key={bid.id}
-                className="flex flex-wrap items-baseline justify-between gap-2 font-mono text-[11px] text-muted-foreground"
+                className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] text-muted-foreground"
               >
                 <span>
                   {formatSats(bid.priceSats)} · {shortenAddress(bid.bidderAddress)}
                 </span>
-                <span>{BID_STATUS_LABEL[bid.status]}</span>
+                <span className="flex items-center gap-2">
+                  {BID_STATUS_LABEL[bid.status]}
+                  {bid.status === "accepted" &&
+                    bid.acceptedOfferId &&
+                    walletControls(wallet, bid.bidderAddress) && (
+                      <BuyButton offerId={bid.acceptedOfferId} priceSats={bid.priceSats} />
+                    )}
+                </span>
               </li>
             ))}
           </ul>
         </div>
       )}
+
     </section>
   );
 }
