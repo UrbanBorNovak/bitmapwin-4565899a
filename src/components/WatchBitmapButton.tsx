@@ -26,8 +26,11 @@ export function WatchBitmapButton({ height }: { height: number }) {
   const flags: WatchFlags = watch?.flags ?? DEFAULT_WATCH_FLAGS;
 
   const save = useMutation({
-    mutationFn: (next: Partial<WatchFlags> | null) =>
-      next === null ? unwatchBitmap(height) : watchBitmap(height, next),
+    mutationFn: async (next: Partial<WatchFlags> | null) => {
+      if (next === null) await unwatchBitmap(height);
+      else await watchBitmap(height, next);
+    },
+
     onSuccess: () => {
       setError(null);
       void client.invalidateQueries({ queryKey: ["bitmap-watches"] });
