@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ParcelCard } from "@/components/ParcelCard";
+import { BlockMosaic } from "@/components/BlockMosaic";
 import { registryParcelsQuery, registryCountQuery } from "@/lib/registry";
 import { recentTradesQuery, tradedBitmapCountQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
@@ -46,46 +47,107 @@ function Index() {
   const { data: tradedCount } = useSuspenseQuery(tradedBitmapCountQuery());
 
   const featured = [...parcels]
-    .sort((a, b) => (b.lastSaleSats ?? -1) - (a.lastSaleSats ?? -1))
+    .sort((a, b) => {
+      if (a.listedSats !== null && b.listedSats === null) return -1;
+      if (a.listedSats === null && b.listedSats !== null) return 1;
+      return (b.lastSaleSats ?? -1) - (a.lastSaleSats ?? -1);
+    })
     .slice(0, 8);
-  const lastSale = trades.find((t) => t.price_sats > 0) ?? null;
+  const recentSales = trades.filter((trade) => trade.price_sats > 0);
+  const listed = parcels.filter((parcel) => parcel.listedSats !== null);
+  const lead = featured[0] ?? null;
+  const floor = listed.length
+    ? Math.min(...listed.map((parcel) => parcel.listedSats ?? Number.MAX_SAFE_INTEGER))
+    : null;
+  const volume = recentSales.reduce((total, trade) => total + trade.price_sats, 0);
 
   return (
-    <div>
-      <section className="relative overflow-hidden border-b border-border">
-        <div className="pointer-events-none absolute inset-0 grid-bg" />
-        <div className="relative mx-auto max-w-[1600px] px-4 py-24 text-center md:px-8 md:py-40">
-          <div className="label">THE LAND LAYER OF BITCOIN</div>
-          <h1 className="display mx-auto mt-6 max-w-4xl text-[13vw] md:text-[5.5rem]">
-            OWN A PIECE OF BITCOIN
-          </h1>
-          <p className="mx-auto mt-6 max-w-xl font-mono text-sm text-muted-foreground">
-            Explore, discover and trade Bitcoin Bitmap digital land. Every price on this site comes
-            from a confirmed Bitcoin transaction.
-          </p>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            <Link to="/marketplace" className="btn-term">
-              [ ENTER MARKETPLACE ]
-            </Link>
-            <Link to="/collections" className="btn-term-ghost">
-              [ BROWSE COLLECTIONS ]
-            </Link>
+    <div className="pb-16">
+      <section className="mx-auto max-w-[1600px] px-4 py-6 md:px-8 md:py-10">
+        <div className="grid overflow-hidden border-2 border-border-strong lg:min-h-[600px] lg:grid-cols-12">
+          <aside className="flex flex-col justify-between border-b-2 border-border bg-background p-6 lg:col-span-3 lg:border-b-0 lg:border-r-2 lg:p-8">
+            <div>
+              <div className="label flex items-center gap-2 text-bitcoin">
+                <span className="size-2 bg-bitcoin" aria-hidden="true" />
+                MARKET STATUS // LIVE
+              </div>
+              <dl className="mt-9 grid grid-cols-2 gap-x-5 gap-y-8 lg:grid-cols-1">
+                <MarketStat k="OPEN FLOOR" v={floor ? formatSats(floor) : "—"} />
+                <MarketStat k="BITMAPS INDEXED" v={indexedCount.toLocaleString("en-US")} />
+                <MarketStat k="CONFIRMED SALES" v={tradedCount.toLocaleString("en-US")} />
+                <MarketStat k="RECENT VOLUME" v={volume ? formatSats(volume) : "—"} />
+              </dl>
+            </div>
+            <div className="mt-10 border-t border-border pt-6">
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Every Bitcoin block is a unique BITMAP: digital land you can collect, build on, or lease.
+              </p>
+              <Link to="/marketplace" className="mt-5 inline-flex font-mono text-xs font-bold text-bitcoin hover:text-foreground">
+                SEE WHAT IS FOR SALE →
+              </Link>
+            </div>
+          </aside>
+
+          <div className="relative flex flex-col bg-surface lg:col-span-9">
+            <div className="pointer-events-none absolute inset-0 dot-bg" />
+            <div className="relative flex flex-1 flex-col justify-center p-7 md:p-12 lg:p-16">
+              <div className="label text-bitcoin">THE LAND LAYER OF BITCOIN</div>
+              <h1 className="display mt-5 text-5xl sm:text-7xl lg:text-8xl">
+                BITMAP<br /><span className="text-bitcoin">UNHINGED</span>
+              </h1>
+              <div className="mt-8 grid items-start gap-8 md:grid-cols-[minmax(0,1fr)_240px]">
+                <div className="max-w-xl">
+                  <p className="text-lg leading-relaxed text-foreground md:text-xl">
+                    Discover and own Bitcoin’s digital land. Trade verified BITMAPS, visit community builds, and make your block your own.
+                  </p>
+                  <div className="mt-8 flex flex-wrap gap-3">
+                    <Link to="/marketplace" className="btn-term">EXPLORE THE MARKET</Link>
+                    <Link to="/builds" className="btn-term-ghost">DISCOVER BUILDS</Link>
+                  </div>
+                </div>
+
+                {lead && (
+                  <Link
+                    to="/bitmap/$block"
+                    params={{ block: String(lead.bitmapHeight) }}
+                    className="group block w-full border border-bitcoin bg-background p-3 transition-transform duration-200 hover:-translate-y-1 md:rotate-2 md:hover:rotate-0"
+                  >
+                    <BlockMosaic height={lead.bitmapHeight} animate className="aspect-square" />
+                    <div className="label mt-3 text-bitcoin">FEATURED BITMAP</div>
+                    <div className="display mt-1 text-sm">{lead.bitmapHeight}.BITMAP</div>
+                    <div className="mt-2 font-mono text-[10px] text-muted-foreground">
+                      {lead.listedSats ? `ASK ${formatSats(lead.listedSats)}` : lead.lastSaleSats ? `LAST ${formatSats(lead.lastSaleSats)}` : "VIEW ON-CHAIN RECORD"}
+                    </div>
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            <div className="relative flex flex-col gap-3 border-t-2 border-background bg-background px-5 py-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex gap-7 overflow-x-auto py-1">
+                {recentSales.slice(0, 3).map((sale) => (
+                  <Link key={sale.txid} to="/bitmap/$block" params={{ block: String(sale.bitmap_height) }} className="shrink-0 font-mono text-[10px] hover:text-bitcoin">
+                    <span className="text-muted-foreground">{sale.bitmap_height}.BITMAP</span>{" "}
+                    <span className="text-bitcoin">SOLD {formatSats(sale.price_sats)}</span>
+                  </Link>
+                ))}
+              </div>
+              <span className="label flex shrink-0 items-center gap-2">
+                <span className="size-2 animate-pulse bg-bitcoin" aria-hidden="true" /> ON-CHAIN DATA
+              </span>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="grid grid-cols-2 divide-x divide-border border-b border-border md:grid-cols-4">
-        <Stat k="INDEXED BITMAPS" v={indexedCount.toLocaleString("en-US")} />
-        <Stat k="TRADED ON CHAIN" v={tradedCount.toLocaleString("en-US")} />
-        <Stat k="LAST SALE" v={lastSale ? formatSats(lastSale.price_sats) : "—"} />
-        <Stat k="NETWORK" v="MAINNET" />
-      </section>
-
-      <section className="mx-auto max-w-[1600px] px-4 py-16 md:px-8">
-        <div className="flex items-end justify-between border-b border-border pb-4">
-          <h2 className="display text-2xl md:text-3xl">FEATURED BITMAPS</h2>
+      <section className="mx-auto max-w-[1600px] px-4 pt-10 md:px-8 md:pt-16">
+        <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="label text-bitcoin">START EXPLORING</div>
+            <h2 className="display mt-2 text-2xl md:text-3xl">BITMAPS WORTH A CLOSER LOOK</h2>
+          </div>
           <Link to="/marketplace" className="label hover:text-foreground">
-            ALL BITMAPS →
+            VIEW THE FULL MARKET →
           </Link>
         </div>
 
@@ -103,31 +165,33 @@ function Index() {
         )}
       </section>
 
-      <section className="border-t border-border">
-        <div className="mx-auto grid max-w-[1600px] gap-px px-4 py-16 md:grid-cols-3 md:px-8">
-          <Cell title="DISCOVER" body="Every Bitcoin block is a bitmap. Browse the on-chain index block by block." />
-          <Cell title="OWNERSHIP" body="Holders are resolved by following each inscription satoshi through the chain." />
-          <Cell title="TRADES" body="Prices come from the sats paid to the previous holder in the transfer transaction." />
+      <section className="mx-auto max-w-[1600px] px-4 pt-16 md:px-8">
+        <div className="grid border-y border-border md:grid-cols-3 md:divide-x md:divide-border">
+          <Journey n="01" title="DISCOVER" body="Find a BITMAP by price, collection, rarity, or block number." to="/marketplace" action="BROWSE MARKET" />
+          <Journey n="02" title="OWN" body="Buy directly from signed listings or place a bid with your connected wallet." to="/marketplace" action="SEE LISTINGS" />
+          <Journey n="03" title="BUILD" body="Turn your BITMAP into a profile, gallery, shop, game, or on-chain world." to="/builds" action="EXPLORE BUILDS" />
         </div>
       </section>
     </div>
   );
 }
 
-function Stat({ k, v }: { k: string; v: string }) {
+function MarketStat({ k, v }: { k: string; v: string }) {
   return (
-    <div className="px-4 py-6 md:px-8">
-      <div className="label">{k}</div>
-      <div className="display mt-2 text-2xl">{v}</div>
+    <div>
+      <dt className="label">{k}</dt>
+      <dd className="display mt-2 text-xl text-foreground md:text-2xl">{v}</dd>
     </div>
   );
 }
 
-function Cell({ title, body }: { title: string; body: string }) {
+function Journey({ n, title, body, to, action }: { n: string; title: string; body: string; to: "/marketplace" | "/builds"; action: string }) {
   return (
-    <div className="border border-border p-6">
-      <div className="display text-lg">{title}</div>
-      <p className="mt-3 font-mono text-xs leading-relaxed text-muted-foreground">{body}</p>
+    <div className="border-b border-border py-7 md:border-b-0 md:px-7 first:md:pl-0 last:md:pr-0">
+      <div className="label text-bitcoin">{n}</div>
+      <div className="display mt-4 text-xl">{title}</div>
+      <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">{body}</p>
+      <Link to={to} className="mt-5 inline-flex font-mono text-[11px] font-bold text-foreground hover:text-bitcoin">{action} →</Link>
     </div>
   );
 }
