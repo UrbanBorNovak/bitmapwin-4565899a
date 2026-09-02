@@ -34,34 +34,44 @@ export const placeBidFn = createServerFn({ method: "POST" })
   });
 
 export const cancelBidFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
     z.object({ bidId: z.string().uuid(), address: addressSchema }).parse(data),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { assertControls } = await import("@/lib/coins.server");
+    await assertControls(context.supabase, context.userId, data.address);
     const { cancelBid } = await import("@/lib/bids.server");
     return cancelBid(data.bidId, data.address);
   });
 
 export const acceptBidFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
     z.object({ bidId: z.string().uuid(), holderAddress: addressSchema }).parse(data),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { assertControls } = await import("@/lib/coins.server");
+    await assertControls(context.supabase, context.userId, data.holderAddress);
     const { acceptBid } = await import("@/lib/bids.server");
     return acceptBid(data.bidId, data.holderAddress);
   });
 
 export const declineBidFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
     z.object({ bidId: z.string().uuid(), holderAddress: addressSchema }).parse(data),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { assertControls } = await import("@/lib/coins.server");
+    await assertControls(context.supabase, context.userId, data.holderAddress);
     const { declineBid } = await import("@/lib/bids.server");
     return declineBid(data.bidId, data.holderAddress);
   });
 
 /** Accept a bid by publishing the seller-signed sale PSBT for that bidder. */
 export const acceptBidWithOfferFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
     z
       .object({
@@ -75,10 +85,13 @@ export const acceptBidWithOfferFn = createServerFn({ method: "POST" })
       })
       .parse(data),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { assertControls } = await import("@/lib/coins.server");
+    await assertControls(context.supabase, context.userId, data.holderAddress);
     const { acceptBidWithOffer } = await import("@/lib/bids.server");
     return acceptBidWithOffer(data);
   });
+
 
 export const expireBidsFn = createServerFn({ method: "POST" }).handler(async () => {
   const { expireStaleBids } = await import("@/lib/bids.server");
