@@ -21,6 +21,7 @@ function mulberry32(seed: number) {
 /**
  * Deterministic list of parcel sizes for a block, mimicking the vbyte
  * distribution of real Bitcoin transactions (many small, few large).
+ * Order is preserved — the Mondrian packing places transactions in block order.
  */
 export function blockParcelSizes(blockHeight: number, txCount?: number | null): number[] {
   const h = hash32(blockHeight);
@@ -38,40 +39,31 @@ export function blockParcelSizes(blockHeight: number, txCount?: number | null): 
     sizes.push(size);
   }
 
-  // Largest first keeps the packing tight, like bitfeed's block render.
-  return sizes.sort((a, b) => b - a);
+  return sizes;
 }
 
 export type BlockLayout = {
+  /** side of the packing square */
   width: number;
+  /** rows actually used by placed squares */
   height: number;
   parcels: Slot[];
-  filler: Slot[];
 };
 
 /** Mondrian packing of a block's transactions into square parcels. */
 export function blockLayout(blockHeight: number, txCount?: number | null): BlockLayout {
-  const layout = new MondrianLayout(blockParcelSizes(blockHeight, txCount));
-  const filler = layout.fillEmptySpaces(true);
-  return {
-    width: Math.max(1, layout.width),
-    height: Math.max(1, layout.height),
-    parcels: layout.slots,
-    filler,
-  };
+  return layoutFromSizeClasses(blockParcelSizes(blockHeight, txCount));
 }
 
 /**
  * Real transaction vbytes → square parcel sizes, bitfeed-style: each parcel's
- * side grows with the log of the transaction's vsize.
+ * side grows with the log of the transaction's vsize. Block order preserved.
  */
 export function parcelSizesFromVsizes(vsizes: number[]): number[] {
-  return vsizes
-    .map((vsize) => {
-      const side = Math.floor(Math.log2(Math.max(1, vsize) / 180)) + 1;
-      return Math.max(1, Math.min(8, side));
-    })
-    .sort((a, b) => b - a);
+  return vsizes.map((vsize) => {
+    const side = Math.floor(Math.log2(Math.max(1, vsize) / 180)) + 1;
+    return Math.max(1, Math.min(8, side));
+  });
 }
 
 /** Mondrian packing driven by real per-transaction vbytes from the chain. */
@@ -81,19 +73,16 @@ export function layoutFromVsizes(vsizes: number[]): BlockLayout {
 
 /**
  * Mondrian packing from precomputed size classes — the one-byte-per-transaction
- * payload served by /api/public/blocks/:height.
+ * payload served by /api/public/blocks/:height. Transactions keep their block
+ * order; sorting them would change the canonical layout.
  */
 export function layoutFromSizeClasses(classes: number[]): BlockLayout {
-  const sizes = [...classes]
-    .map((c) => Math.max(1, Math.min(8, Math.round(c))))
-    .sort((a, b) => b - a);
-  if (sizes.length === 0) return { width: 1, height: 1, parcels: [], filler: [] };
+  const sizes = classes.map((c) => Math.max(1, Math.min(8, Math.round(c) || 1)));
+  if (sizes.length === 0) return { width: 1, height: 1, parcels: [] };
   const layout = new MondrianLayout(sizes);
-  const filler = layout.fillEmptySpaces(true);
   return {
     width: Math.max(1, layout.width),
     height: Math.max(1, layout.height),
     parcels: layout.slots,
-    filler,
   };
 }

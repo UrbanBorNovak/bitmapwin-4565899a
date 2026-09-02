@@ -16,8 +16,10 @@ type Props = {
 };
 
 /**
- * BitmapPixelMap — Mondrian packing of a block's transactions into square
- * parcels of digital land. Deterministic: same block always renders the same.
+ * BitmapPixelMap — canonical Mondrian packing of a block's transactions into
+ * square parcels of digital land, matching the bitfeed/bitmap.trade layout:
+ * transactions in block order, square side = ceil(sqrt(sum(size^2))), each
+ * square inset by a quarter unit, the used rows vertically centred.
  */
 export function BitmapPixelMap({
   blockHeight,
@@ -27,14 +29,16 @@ export function BitmapPixelMap({
   className,
   animate = true,
 }: Props) {
-  const { width, height, parcels, filler } = useMemo(() => {
+  const { width, height, parcels } = useMemo(() => {
     if (sizeClasses && sizeClasses.length > 0) return layoutFromSizeClasses(sizeClasses);
     if (vsizes && vsizes.length > 0) return layoutFromVsizes(vsizes);
     return blockLayout(blockHeight, txCount);
   }, [blockHeight, txCount, vsizes, sizeClasses]);
 
   const side = Math.max(width, height);
-  const gap = side > 40 ? 0.06 : 0.1;
+  // bitfeed renders each square with a quarter-unit padding on every side
+  const pad = 0.25;
+  const offsetY = (side - height) / 2;
 
   return (
     <svg
@@ -44,31 +48,21 @@ export function BitmapPixelMap({
       aria-label={`Mondrian transaction layout for block ${blockHeight}`}
       role="img"
     >
-      <g
-        className={cn(
-          animate && "transition-opacity duration-300 group-hover:opacity-50",
-        )}
-      >
-        {filler.map((s, i) => (
-          <rect
-            key={`f${i}`}
-            x={s.position.x + gap}
-            y={s.position.y + gap}
-            width={s.size - gap * 2}
-            height={s.size - gap * 2}
-            className="fill-bitcoin/20"
-          />
-        ))}
-        {parcels.map((s, i) => (
-          <rect
-            key={`p${i}`}
-            x={s.position.x + gap}
-            y={s.position.y + gap}
-            width={s.size - gap * 2}
-            height={s.size - gap * 2}
-            className="fill-bitcoin"
-          />
-        ))}
+      <g className={cn(animate && "transition-opacity duration-300 group-hover:opacity-50")}>
+        {parcels.map((s, i) => {
+          const size = s.size - pad * 2;
+          if (size <= 0) return null;
+          return (
+            <rect
+              key={`p${i}`}
+              x={s.position.x + pad}
+              y={s.position.y + offsetY + pad}
+              width={size}
+              height={size}
+              className="fill-bitcoin"
+            />
+          );
+        })}
       </g>
     </svg>
   );
