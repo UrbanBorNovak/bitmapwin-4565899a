@@ -363,22 +363,35 @@ function BitmapDetail() {
           <div className="border-b border-border px-6 py-3">
             <span className="label">INSCRIPTIONS FOUND IN BLOCK {block}</span>
           </div>
-          <ul className="divide-y divide-border">
+          <div className="grid gap-4 px-6 py-5 sm:grid-cols-2 lg:grid-cols-4">
             {scan.data.inscriptions.slice(0, 40).map((i) => (
-              <li
+              <a
                 key={i.id}
-                className="flex flex-wrap items-center justify-between gap-2 px-6 py-3 font-mono text-xs text-muted-foreground"
+                href={`https://ordinals.com/inscription/${i.id}`}
+                target="_blank"
+                rel="noreferrer"
+                className="border border-border transition-colors hover:border-primary"
               >
-                <span className="break-all">{i.id}</span>
-                <span>
-                  {i.contentType ?? "UNKNOWN"} · {i.bodyBytes} B
-                  {i.isBitmapClaim ? ` · ${i.bitmapHeight}.BITMAP` : ""}
-                </span>
-              </li>
+                <InscriptionContent
+                  inscriptionId={i.id}
+                  contentType={i.contentType}
+                  className="aspect-square w-full"
+                  title={i.isBitmapClaim ? `${i.bitmapHeight}.bitmap` : `Inscription ${shortId(i.id)}`}
+                />
+                <div className="border-t border-border px-3 py-2 font-mono text-[11px] text-muted-foreground">
+                  <span className="block truncate text-foreground">
+                    {i.isBitmapClaim ? `${i.bitmapHeight}.BITMAP` : shortId(i.id)}
+                  </span>
+                  <span className="block truncate">
+                    {i.contentType ?? "UNKNOWN"} · {i.bodyBytes} B
+                  </span>
+                </div>
+              </a>
             ))}
-          </ul>
+          </div>
         </div>
       )}
+
 
       <div className="mt-8 flex flex-wrap gap-3">
         <button
