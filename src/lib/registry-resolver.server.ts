@@ -15,7 +15,7 @@ import { mapWithConcurrency, persist, resolveOne } from "@/lib/oci.server";
 const MAX_BATCH = 60;
 const CONCURRENCY = 8;
 /** Traffic-driven pass: at most one run per window, app-wide. */
-const THROTTLE_MS = 10_000;
+const THROTTLE_MS = 5_000;
 
 const db = () => supabaseAdmin;
 
