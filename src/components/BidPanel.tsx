@@ -16,6 +16,8 @@ import { useWalletSession, walletControls } from "@/lib/wallet-session";
 import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
 import { timeAgo } from "@/lib/bitmap";
+import { BuyButton } from "@/components/BuyButton";
+
 
 const EXPIRY_OPTIONS = [
   { label: "24H", hours: 24 },
