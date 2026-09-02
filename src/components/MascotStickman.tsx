@@ -127,7 +127,7 @@ export function MascotStickman() {
     setReduced(mq.matches);
     const onChange = () => setReduced(mq.matches);
     mq.addEventListener("change", onChange);
-    setX(Math.min(48, Math.max(16, window.innerWidth * 0.08)));
+    setX(Math.min(96, Math.max(56, window.innerWidth * 0.08)));
     setReady(true);
     return () => mq.removeEventListener("change", onChange);
   }, []);
@@ -139,8 +139,8 @@ export function MascotStickman() {
 
     const step = () => {
       if (cancelled) return;
-      const max = Math.max(24, window.innerWidth - SPRITE_W - 16);
-      const target = 16 + Math.random() * (max - 16);
+      const max = Math.max(80, window.innerWidth - SPRITE_W - 24);
+      const target = 56 + Math.random() * Math.max(1, max - 56);
       setX((prev) => {
         const dx = target - prev;
         setFacing(dx >= 0 ? 1 : -1);
