@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchPortfolioActivity } from "@/lib/portfolio-activity";
 import { myWatchesQuery } from "@/lib/watches";
 import { managerAdviceFn, type ManagerAdvice } from "@/lib/manager-ai.functions";
+import { ManagerSuggestionAction } from "@/components/ManagerSuggestionAction";
+
 
 const KIND_LABEL: Record<string, string> = {
   bid: "BID",
