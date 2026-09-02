@@ -19,6 +19,7 @@ import { rememberReferralCode } from "@/lib/referrals";
 import { SalesBackdrop } from "@/components/SalesBackdrop";
 import { MascotStickman } from "@/components/MascotStickman";
 import { TradeCrawlerDriver } from "@/components/TradeCrawlerDriver";
+import { RegistryResolverDriver } from "@/components/RegistryResolverDriver";
 
 
 
@@ -177,6 +178,7 @@ function RootComponent() {
       </div>
       <MascotStickman />
       <TradeCrawlerDriver />
+      <RegistryResolverDriver />
       <Toaster />
 
 
