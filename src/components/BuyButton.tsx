@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { mascotReact } from "@/lib/mascot";
 import { buildPurchaseFn, submitPurchaseFn } from "@/lib/purchase.functions";
 import {
   WALLET_LABEL,
