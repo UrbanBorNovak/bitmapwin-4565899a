@@ -10,7 +10,21 @@ import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 export const Route = createFileRoute("/api/public/crawl-trades")({
   server: {
     handlers: {
-      GET: async () => {
+      GET: async ({ request }) => {
+        const url = new URL(request.url);
+        // ?run=1 advances the crawler by one throttled batch — the same work
+        // the marketplace does while visitors browse, so it needs no secret.
+        if (url.searchParams.get("run") === "1") {
+          const { crawlTradesThrottled } = await import("@/lib/trade-crawler.server");
+          try {
+            return Response.json(await crawlTradesThrottled(8));
+          } catch (error) {
+            return Response.json(
+              { error: error instanceof Error ? error.message : String(error) },
+              { status: 500 },
+            );
+          }
+        }
         const { crawlProgress } = await import("@/lib/trade-crawler.server");
         return Response.json(await crawlProgress());
       },
