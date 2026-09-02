@@ -16,6 +16,8 @@ import { CLUBS, inClub, type ClubId } from "@/lib/clubs";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapMarketChart } from "@/components/BitmapMarketChart";
 import { FloorRanking } from "@/components/FloorRanking";
+import { SalesLog } from "@/components/SalesLog";
+
 
 
 export const Route = createFileRoute("/marketplace")({
@@ -159,6 +161,9 @@ function Marketplace() {
       </div>
 
       <div className="mt-6"><BitmapOrderBook /></div>
+
+      <div className="mt-6"><SalesLog /></div>
+
 
       <div className="mt-8 grid gap-6 lg:grid-cols-12">
         <aside className="lg:col-span-3">
