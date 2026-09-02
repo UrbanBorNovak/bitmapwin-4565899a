@@ -33,18 +33,18 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
-      <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 py-3 md:px-8">
-        <Link to="/" className="shrink-0 leading-none">
-          <div className="display flex items-end gap-1.5 text-base md:text-lg">
+      <div className="mx-auto grid max-w-[1600px] grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-4 py-2.5 md:flex md:justify-between md:gap-4 md:px-8 md:py-3">
+        <Link to="/" className="min-w-0 leading-none">
+          <div className="display flex items-end gap-1 text-sm sm:text-base md:text-lg">
             <span>BITMAP</span>
             <span className="relative">
-              <span className="label absolute bottom-full left-0 mb-0.5 text-[0.45rem] leading-none text-bitcoin">
+              <span className="label absolute bottom-full left-0 mb-0.5 text-[0.4rem] leading-none text-bitcoin">
                 ALPHA
               </span>
               UNHINGED
             </span>
           </div>
-          <div className="label mt-1">BITCOIN DIGITAL LAND</div>
+          <div className="label mt-1 hidden sm:block">BITCOIN DIGITAL LAND</div>
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
@@ -60,13 +60,13 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
           <BtcTicker className="hidden sm:flex" />
           <ThemeToggle />
           <button
             aria-label="Search bitmaps"
             onClick={() => setSearchOpen((v) => !v)}
-            className="border border-border p-2 text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+            className="grid size-11 shrink-0 place-items-center border border-border text-muted-foreground transition-colors hover:border-primary hover:text-foreground md:size-9"
           >
             {searchOpen ? <X className="size-4" /> : <Search className="size-4" />}
           </button>
@@ -87,12 +87,12 @@ export function SiteHeader() {
         </form>
       )}
 
-      <nav className="flex flex-wrap items-center gap-x-1 gap-y-1 border-t border-border px-4 py-2 lg:hidden">
+      <nav className="flex items-center gap-1 overflow-x-auto border-t border-border px-4 py-2 lg:hidden">
         {NAV.map((item) => (
           <Link
             key={item.to}
             to={item.to}
-            className="label px-2 py-1"
+            className="label shrink-0 px-2 py-2"
             activeProps={{ className: "text-foreground" }}
           >
             {item.label}

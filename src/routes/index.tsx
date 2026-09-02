@@ -63,22 +63,22 @@ function Index() {
 
   return (
     <div className="pb-16">
-      <section className="mx-auto max-w-[1600px] px-4 py-6 md:px-8 md:py-10">
-        <div className="grid overflow-hidden border-2 border-border-strong lg:min-h-[600px] lg:grid-cols-12">
-          <aside className="flex flex-col justify-between border-b-2 border-border bg-background p-6 lg:col-span-3 lg:border-b-0 lg:border-r-2 lg:p-8">
+      <section className="mx-auto max-w-[1600px] px-3 py-4 sm:px-4 md:px-8 md:py-10">
+        <div className="grid overflow-hidden border border-border-strong lg:min-h-[600px] lg:grid-cols-12 lg:border-2">
+          <aside className="order-2 flex flex-col justify-between border-t border-border bg-background p-5 sm:p-6 lg:order-1 lg:col-span-3 lg:border-r-2 lg:border-t-0 lg:p-8">
             <div>
               <div className="label flex items-center gap-2 text-bitcoin">
                 <span className="size-2 bg-bitcoin" aria-hidden="true" />
                 MARKET STATUS // LIVE
               </div>
-              <dl className="mt-9 grid grid-cols-2 gap-x-5 gap-y-8 lg:grid-cols-1">
+              <dl className="mt-6 grid grid-cols-2 gap-x-5 gap-y-6 lg:mt-9 lg:grid-cols-1 lg:gap-y-8">
                 <MarketStat k="OPEN FLOOR" v={floor ? formatSats(floor) : "—"} />
                 <MarketStat k="BITMAPS INDEXED" v={indexedCount.toLocaleString("en-US")} />
                 <MarketStat k="CONFIRMED SALES" v={tradedCount.toLocaleString("en-US")} />
                 <MarketStat k="RECENT VOLUME" v={volume ? formatSats(volume) : "—"} />
               </dl>
             </div>
-            <div className="mt-10 border-t border-border pt-6">
+            <div className="mt-7 border-t border-border pt-5 lg:mt-10 lg:pt-6">
               <p className="text-sm leading-relaxed text-muted-foreground">
                 Every Bitcoin block is a unique BITMAP: digital land you can collect, build on, or lease.
               </p>
@@ -88,21 +88,21 @@ function Index() {
             </div>
           </aside>
 
-          <div className="relative flex flex-col bg-surface lg:col-span-9">
+          <div className="relative order-1 flex flex-col bg-surface lg:order-2 lg:col-span-9">
             <div className="pointer-events-none absolute inset-0 dot-bg" />
-            <div className="relative flex flex-1 flex-col justify-center p-7 md:p-12 lg:p-16">
+            <div className="relative flex flex-1 flex-col justify-center p-5 py-8 sm:p-7 md:p-12 lg:p-16">
               <div className="label text-bitcoin">THE LAND LAYER OF BITCOIN</div>
-              <h1 className="display mt-5 text-5xl sm:text-7xl lg:text-8xl">
+              <h1 className="display mt-4 text-[2.55rem] sm:mt-5 sm:text-7xl lg:text-8xl">
                 BITMAP<br /><span className="text-bitcoin">UNHINGED</span>
               </h1>
-              <div className="mt-8 grid items-start gap-8 md:grid-cols-[minmax(0,1fr)_240px]">
+              <div className="mt-6 grid items-start gap-7 sm:mt-8 md:grid-cols-[minmax(0,1fr)_240px] md:gap-8">
                 <div className="max-w-xl">
-                  <p className="text-lg leading-relaxed text-foreground md:text-xl">
+                  <p className="text-base leading-relaxed text-foreground sm:text-lg md:text-xl">
                     Discover and own Bitcoin’s digital land. Trade verified BITMAPS, visit community builds, and make your block your own.
                   </p>
-                  <div className="mt-8 flex flex-wrap gap-3">
-                    <Link to="/marketplace" className="btn-term">EXPLORE THE MARKET</Link>
-                    <Link to="/builds" className="btn-term-ghost">DISCOVER BUILDS</Link>
+                  <div className="mt-6 grid gap-2 sm:mt-8 sm:flex sm:flex-wrap sm:gap-3">
+                    <Link to="/marketplace" className="btn-term min-h-12 w-full sm:min-h-0 sm:w-auto">EXPLORE THE MARKET</Link>
+                    <Link to="/builds" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">DISCOVER BUILDS</Link>
                   </div>
                 </div>
 
@@ -110,20 +110,22 @@ function Index() {
                   <Link
                     to="/bitmap/$block"
                     params={{ block: String(lead.bitmapHeight) }}
-                    className="group block w-full border border-bitcoin bg-background p-3 transition-transform duration-200 hover:-translate-y-1 md:rotate-2 md:hover:rotate-0"
+                    className="group grid w-full grid-cols-[112px_minmax(0,1fr)] items-center gap-4 border border-bitcoin bg-background p-3 transition-transform duration-200 hover:-translate-y-1 md:block md:rotate-2 md:hover:rotate-0"
                   >
                     <BlockMosaic height={lead.bitmapHeight} animate className="aspect-square" />
-                    <div className="label mt-3 text-bitcoin">FEATURED BITMAP</div>
-                    <div className="display mt-1 text-sm">{lead.bitmapHeight}.BITMAP</div>
-                    <div className="mt-2 font-mono text-[10px] text-muted-foreground">
-                      {lead.listedSats ? `ASK ${formatSats(lead.listedSats)}` : lead.lastSaleSats ? `LAST ${formatSats(lead.lastSaleSats)}` : "VIEW ON-CHAIN RECORD"}
+                    <div className="min-w-0 md:contents">
+                      <div className="label text-bitcoin md:mt-3">FEATURED BITMAP</div>
+                      <div className="display mt-1 truncate text-sm">{lead.bitmapHeight}.BITMAP</div>
+                      <div className="mt-2 font-mono text-[10px] text-muted-foreground">
+                        {lead.listedSats ? `ASK ${formatSats(lead.listedSats)}` : lead.lastSaleSats ? `LAST ${formatSats(lead.lastSaleSats)}` : "VIEW ON-CHAIN RECORD"}
+                      </div>
                     </div>
                   </Link>
                 )}
               </div>
             </div>
 
-            <div className="relative flex flex-col gap-3 border-t-2 border-background bg-background px-5 py-4 md:flex-row md:items-center md:justify-between">
+            <div className="relative flex flex-col gap-3 border-t border-border bg-background px-4 py-3 md:flex-row md:items-center md:justify-between md:border-t-2 md:border-background md:px-5 md:py-4">
               <div className="flex gap-7 overflow-x-auto py-1">
                 {recentSales.slice(0, 3).map((sale) => (
                   <Link key={sale.txid} to="/bitmap/$block" params={{ block: String(sale.bitmap_height) }} className="shrink-0 font-mono text-[10px] hover:text-bitcoin">
@@ -157,9 +159,11 @@ function Index() {
             <span className="blink">_</span>
           </p>
         ) : (
-          <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-3 sm:mt-8 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:pb-0 lg:grid-cols-3 xl:grid-cols-4">
             {featured.map((p) => (
-              <ParcelCard key={p.inscriptionId} parcel={p} />
+              <div key={p.inscriptionId} className="w-[84vw] max-w-[330px] shrink-0 snap-center sm:w-auto sm:max-w-none">
+                <ParcelCard parcel={p} />
+              </div>
             ))}
           </div>
         )}
