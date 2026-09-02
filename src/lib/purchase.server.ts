@@ -5,6 +5,7 @@ import {
   buildBuyerPsbt,
   byteArrayToHex,
   extractRawTxHex,
+  finalizeSignedPsbt,
   type FundingUtxo,
 } from "@/lib/psbt-buyer";
 
@@ -47,7 +48,9 @@ async function esplora<T>(path: string, parse: "json" | "text" = "json"): Promis
   return null;
 }
 
-async function postTx(rawHex: string): Promise<{ txid: string } | { error: string }> {
+export async function broadcastRawTransaction(
+  rawHex: string,
+): Promise<{ txid: string } | { error: string }> {
   let lastError = "no response from any broadcast endpoint";
   for (const host of ESPLORA_HOSTS) {
     try {
@@ -223,7 +226,8 @@ export async function submitPurchase(input: {
 }): Promise<PurchaseSubmission> {
   const offer = await loadOffer(input.offerId);
   const clean = input.psbtBase64.replace(/\s+/g, "");
-  const rawHex = extractRawTxHex(clean);
+  const finalized = finalizeSignedPsbt(clean);
+  const rawHex = extractRawTxHex(finalized);
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -232,7 +236,7 @@ export async function submitPurchase(input: {
       .from("offers")
       .update({
         buyer_address: input.buyerAddress,
-        buyer_psbt_base64: clean,
+        buyer_psbt_base64: finalized,
         delivered_at: new Date().toISOString(),
       })
       .eq("id", offer.id);
@@ -245,13 +249,13 @@ export async function submitPurchase(input: {
     };
   }
 
-  const result = await postTx(rawHex);
+  const result = await broadcastRawTransaction(rawHex);
   if ("error" in result) {
     await supabaseAdmin
       .from("offers")
       .update({
         buyer_address: input.buyerAddress,
-        buyer_psbt_base64: clean,
+        buyer_psbt_base64: finalized,
         delivered_at: new Date().toISOString(),
       })
       .eq("id", offer.id);

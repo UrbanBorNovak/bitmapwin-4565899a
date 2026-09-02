@@ -193,6 +193,47 @@ function serializePsbt(psbt: ParsedPsbt): string {
   return base64FromBytes(bytes);
 }
 
+function witnessStack(items: number[][]): number[] {
+  return [...varint(items.length), ...items.flatMap((item) => [...varint(item.length), ...item])];
+}
+
+/**
+ * Converts wallet-produced signatures into PSBT final fields. Marketplace
+ * offers deliberately keep the seller signature partial so a buyer can append
+ * inputs and outputs; buyer wallets generally only finalize their own inputs.
+ * Finalizing the standard key-path forms here makes the completed transaction
+ * extractable without ever handling a private key.
+ */
+export function finalizeSignedPsbt(psbtBase64: string): string {
+  const psbt = parsePsbt(psbtBase64);
+  let changed = false;
+
+  psbt.inputs = psbt.inputs.map((map) => {
+    if (map.some((kv) => kv.key[0] === 0x07 || kv.key[0] === 0x08)) return map;
+
+    const tapKeySig = map.find((kv) => kv.key.length === 1 && kv.key[0] === 0x13);
+    if (tapKeySig) {
+      changed = true;
+      return [...map, { key: [0x08], value: witnessStack([tapKeySig.value]) }];
+    }
+
+    const partialSig = map.find((kv) => kv.key[0] === 0x02 && kv.key.length > 1);
+    if (!partialSig) return map;
+    const publicKey = partialSig.key.slice(1);
+    const redeemScript = map.find((kv) => kv.key.length === 1 && kv.key[0] === 0x04)?.value;
+    const additions: Kv[] = [
+      { key: [0x08], value: witnessStack([partialSig.value, publicKey]) },
+    ];
+    if (redeemScript) {
+      additions.push({ key: [0x07], value: [...varint(redeemScript.length), ...redeemScript] });
+    }
+    changed = true;
+    return [...map, ...additions];
+  });
+
+  return changed ? serializePsbt(psbt) : psbtBase64;
+}
+
 /** True when every input carries a final scriptSig or final witness. */
 export function isFullySigned(psbtBase64: string): boolean {
   const psbt = parsePsbt(psbtBase64);
@@ -366,6 +407,11 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
   // marketplace commission: extra output paid by the buyer to the platform
   const marketFeeSats = marketplaceFeeSats(priceSats);
   const marketFeeScript = addressToScriptPubKey(MARKETPLACE_FEE_ADDRESS);
+  // Relay nodes reject a fee-paying transaction with a sub-dust output. Older
+  // inscriptions commonly sit on postage below today's 546-sat threshold, so
+  // the buyer contributes enough sats to make the receive output relayable.
+  const inscriptionOutputSats = Math.max(input.inscriptionValueSats, DUST);
+  const inscriptionTopUpSats = inscriptionOutputSats - input.inscriptionValueSats;
 
   // greedy largest-first coin selection over confirmed funding UTXOs
   const candidates = [...input.funding]
@@ -380,16 +426,16 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
     used.push(candidate);
     funded += candidate.valueSats;
     feeSats = Math.ceil(estimateVsize(1 + used.length, 4) * Math.max(1, input.feeRate));
-    needed = priceSats + marketFeeSats + feeSats;
+    needed = priceSats + marketFeeSats + inscriptionTopUpSats + feeSats;
     if (funded >= needed + DUST) break;
   }
   if (used.length === 0 || funded < needed) {
     throw new Error(
-      `Not enough confirmed funds: need ~${priceSats + marketFeeSats + feeSats} sats plus fees, have ${funded}`,
+      `Not enough confirmed funds: need ~${priceSats + marketFeeSats + inscriptionTopUpSats + feeSats} sats plus fees, have ${funded}`,
     );
   }
 
-  let changeSats = funded - priceSats - marketFeeSats - feeSats;
+  let changeSats = funded - priceSats - marketFeeSats - inscriptionTopUpSats - feeSats;
   if (changeSats < DUST) {
     // fold sub-dust change into the fee rather than creating an unspendable output
     feeSats += changeSats;
@@ -409,7 +455,7 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
     ],
     outputs: [
       priceOutput,
-      { valueSats: input.inscriptionValueSats, script: receiveScript },
+      { valueSats: inscriptionOutputSats, script: receiveScript },
       { valueSats: marketFeeSats, script: marketFeeScript },
       ...(changeSats > 0 ? [{ valueSats: changeSats, script: changeScript }] : []),
     ],
@@ -437,7 +483,7 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
     feeSats,
     marketFeeSats,
     changeSats,
-    spentSats: priceSats + marketFeeSats + feeSats,
+    spentSats: priceSats + marketFeeSats + inscriptionTopUpSats + feeSats,
     usedFunding: used,
   };
 
