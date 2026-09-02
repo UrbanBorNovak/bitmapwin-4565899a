@@ -120,11 +120,20 @@ export async function scanParcels(
   const truncated = more || rows.length > maxChildren;
   const inspected = rows.slice(0, maxChildren);
 
-  const indices = await mapLimit(inspected, 8, (child) => parcelIndexOf(child.id, height));
+  const details = await mapLimit(inspected, 8, (child) => inspectChild(child.id, height));
+
+  const children = inspected.map((child, i) => ({
+    inscriptionId: child.id,
+    inscriptionNumber: child.number,
+    inscribedInBlock: child.height ?? null,
+    timestamp: child.timestamp ?? null,
+    contentType: details[i]?.contentType ?? null,
+    parcelIndex: details[i]?.parcelIndex ?? null,
+  }));
 
   const claims: ChainParcel[] = [];
   for (let i = 0; i < inspected.length; i++) {
-    const index = indices[i];
+    const index = details[i]?.parcelIndex;
     if (index === null || index === undefined) continue;
     const child = inspected[i]!;
     if (maxParcels !== null && index >= maxParcels) continue; // beyond the block's tx count
