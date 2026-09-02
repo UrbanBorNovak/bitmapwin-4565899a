@@ -357,7 +357,7 @@ function BuildsPage() {
 
         <section>
           <div className="border-b border-border pb-3">
-            <h2 className="display text-xl">EXPLORE DISTRICTS</h2>
+            <h2 className="display text-xl">EXPLORE ZONES</h2>
             <p className="label mt-2">BITMAP NEIGHBORHOODS BUILT BY HOLDERS</p>
           </div>
           {districts.data && districts.data.length > 0 ? (
@@ -384,7 +384,7 @@ function BuildsPage() {
         ) : (
           <div className="mt-4 rounded-lg border border-dashed border-border p-6">
             <span className="label text-muted-foreground">
-              {districts.isPending ? "SYNC" : "NO DISTRICTS YET — CREATE ONE FROM YOUR WALLET"}
+              {districts.isPending ? "SYNC" : "NO ZONES YET — CREATE ONE FROM YOUR WALLET"}
             </span>
           </div>
         )}

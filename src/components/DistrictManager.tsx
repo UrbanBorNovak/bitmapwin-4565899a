@@ -47,10 +47,10 @@ export function DistrictManager({
     onSuccess: () => {
       setName("");
       setDescription("");
-      toast.success("DISTRICT CREATED");
+      toast.success("ZONE CREATED");
       invalidate();
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "COULD NOT CREATE DISTRICT"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : "COULD NOT CREATE ZONE"),
   });
 
   const addBitmap = useMutation({
@@ -71,7 +71,7 @@ export function DistrictManager({
   const remove = useMutation({
     mutationFn: (id: string) => deleteDistrict(id),
     onSuccess: () => {
-      toast.success("DISTRICT DELETED");
+      toast.success("ZONE DELETED");
       invalidate();
     },
   });
@@ -79,7 +79,7 @@ export function DistrictManager({
   if (!address) {
     return (
       <div className="rounded-lg border border-dashed border-border p-5">
-        <span className="label text-muted-foreground">CONNECT A WALLET TO BUILD DISTRICTS</span>
+        <span className="label text-muted-foreground">CONNECT A WALLET TO BUILD ZONES</span>
       </div>
     );
   }
@@ -87,20 +87,20 @@ export function DistrictManager({
   return (
     <div className="rounded-lg border border-border bg-card p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="display text-base">MY DISTRICTS</h3>
+        <h3 className="display text-base">MY ZONES</h3>
         <span className="label">GROUP THE BITMAPS YOU HOLD INTO NEIGHBORHOODS</span>
       </div>
 
       {!canWrite ? (
         <p className="label mt-3 text-primary">
-          VERIFY THIS WALLET (SIGN IN + LINK) TO CREATE DISTRICTS
+          VERIFY THIS WALLET (SIGN IN + LINK) TO CREATE ZONES
         </p>
       ) : null}
 
       <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_2fr_auto]">
         <input
           className="border border-border bg-background px-3 py-2 font-mono text-xs"
-          placeholder="DISTRICT NAME"
+          placeholder="ZONE NAME"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
@@ -179,14 +179,14 @@ export function DistrictManager({
                   setPending((p) => ({ ...p, [d.id]: "" }));
                 }}
               >
-                [ ADD TO DISTRICT ]
+                [ ADD TO ZONE ]
               </button>
             </div>
           </div>
         ))}
 
         {districts.data && districts.data.length === 0 ? (
-          <span className="label text-muted-foreground">NO DISTRICTS YET</span>
+          <span className="label text-muted-foreground">NO ZONES YET</span>
         ) : null}
       </div>
     </div>
