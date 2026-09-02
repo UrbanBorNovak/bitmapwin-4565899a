@@ -86,6 +86,14 @@ function BuildCard({
               <BlockMosaic height={page.bitmapHeight} />
             </div>
           )}
+          <div
+            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"
+            aria-hidden="true"
+          />
+          <div
+            className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(247,147,26,0.12)_0%,transparent_50%,rgba(0,0,0,0.25)_100%)]"
+            aria-hidden="true"
+          />
           <span className="label absolute left-2 top-2 rounded border border-border bg-background/90 px-2 py-1 text-primary backdrop-blur-sm">
             {BUILD_KIND_LABELS[page.buildKind]}
           </span>
