@@ -15,6 +15,7 @@ import { TrendingParcels } from "@/components/TrendingParcels";
 import { CLUBS, inClub, type ClubId } from "@/lib/clubs";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapMarketChart } from "@/components/BitmapMarketChart";
+import { FloorRanking } from "@/components/FloorRanking";
 
 
 export const Route = createFileRoute("/marketplace")({
