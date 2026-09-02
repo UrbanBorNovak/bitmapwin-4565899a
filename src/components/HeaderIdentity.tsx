@@ -21,8 +21,8 @@ export function HeaderIdentity() {
 
   if (!session) {
     return (
-      <Link to="/auth" className="btn-term">
-        {loading ? "…" : "SIGN IN"}
+      <Link to="/auth" className="btn-term min-h-11 !px-3 !py-2 md:min-h-0 md:!px-5 md:!py-3">
+        {loading ? "…" : <><span className="sm:hidden">SIGN IN</span><span className="hidden sm:inline">SIGN IN</span></>}
       </Link>
     );
   }
@@ -37,7 +37,7 @@ export function HeaderIdentity() {
       to="/dashboard"
       aria-label={`Open dashboard for ${name}`}
       title="DASHBOARD"
-      className="flex items-center gap-2 border border-border py-1 pl-1 pr-2 transition-colors hover:border-primary"
+      className="flex min-h-11 items-center gap-2 border border-border py-1 pl-1 pr-2 transition-colors hover:border-primary md:min-h-0"
     >
       <InscriptionAvatar
         inscriptionId={avatar}
@@ -45,7 +45,7 @@ export function HeaderIdentity() {
         className="size-7 shrink-0 border border-border [image-rendering:pixelated]"
         fallbackClassName="text-[11px]"
       />
-      <span className="max-w-[10rem] truncate font-mono text-[11px] uppercase text-foreground">
+      <span className="hidden max-w-[10rem] truncate font-mono text-[11px] uppercase text-foreground sm:block">
         {name}
       </span>
     </Link>

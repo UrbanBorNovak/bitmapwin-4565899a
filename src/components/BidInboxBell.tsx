@@ -20,7 +20,7 @@ export function BidInboxBell() {
     <Link
       to="/wallet"
       aria-label={count > 0 ? `${count} offers on your bitmaps` : "Offers on your bitmaps"}
-      className="relative border border-border p-2 text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+      className="relative grid size-11 shrink-0 place-items-center border border-border text-muted-foreground transition-colors hover:border-primary hover:text-foreground md:size-9"
       activeProps={{ className: "text-foreground border-foreground" }}
     >
       <Bell className="size-4" />

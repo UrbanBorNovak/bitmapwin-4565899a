@@ -37,7 +37,7 @@ export function ThemeToggle() {
       onClick={toggleTheme}
       aria-label={label}
       title={label}
-      className="size-9 shrink-0 rounded-none shadow-none"
+      className="size-11 shrink-0 rounded-none shadow-none md:size-9"
     >
       {theme === "dark" ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
     </Button>
