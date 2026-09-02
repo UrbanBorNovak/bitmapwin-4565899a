@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, queryOptions } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +53,8 @@ const BUCKETS = [
 
 export function ClubHolderChart({ club }: { club: Club }) {
   const owners = useQuery(clubOwnersQuery(club));
+  const [hoveredAddress, setHoveredAddress] = useState<string | null>(null);
+  const [hoveredBucket, setHoveredBucket] = useState<string | null>(null);
 
   const model = useMemo(() => {
     const rows = owners.data ?? [];
@@ -87,9 +89,12 @@ export function ClubHolderChart({ club }: { club: Club }) {
   }, [owners.data]);
 
   return (
-    <section className="mt-6 rounded-lg border border-border bg-card p-5">
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 className="display text-lg">HOLDER CONCENTRATION</h2>
+    <section className="mt-6 overflow-hidden rounded-lg border border-border bg-card">
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border p-5">
+        <div className="border-l-2 border-primary pl-3">
+          <h2 className="font-mono text-sm font-bold uppercase text-foreground">HOLDER CONCENTRATION</h2>
+          <p className="label mt-1">ON-CHAIN OWNERSHIP DISTRIBUTION</p>
+        </div>
         <span className="label">
           {owners.isPending
             ? "READING OWNER INDEX…"
@@ -97,20 +102,26 @@ export function ClubHolderChart({ club }: { club: Club }) {
               ? `${model.holders.toLocaleString("en-US")} ADDRESSES · ${model.total.toLocaleString("en-US")} OWNED ${club.short} BITMAPS${model.truncated ? " (SAMPLE)" : ""}`
               : club.short}
         </span>
-      </div>
+      </header>
 
       {model ? (
         <>
-          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="grid grid-cols-2 divide-x divide-y divide-border border-b border-border sm:grid-cols-4 sm:divide-y-0">
             <Metric k="AVG PER ADDRESS" v={model.avg.toFixed(2)} />
             <Metric k="LARGEST HOLDER" v={`${model.maxHeld.toLocaleString("en-US")} BITMAPS`} accent />
             <Metric k="TOP 10 SHARE" v={`${model.top10Share.toFixed(1)}%`} />
             <Metric k="SINGLE-BITMAP HOLDERS" v={model.singles.toLocaleString("en-US")} />
           </div>
 
-          <div className="mt-6 space-y-2">
+          <div className="space-y-2 p-5">
             {model.top.map((row, i) => (
-              <div key={row.address} className="flex items-center gap-3">
+              <div
+                key={row.address}
+                className="flex items-center gap-3 transition-opacity duration-200"
+                style={{ opacity: hoveredAddress && hoveredAddress !== row.address ? 0.28 : 1 }}
+                onPointerEnter={() => setHoveredAddress(row.address)}
+                onPointerLeave={() => setHoveredAddress(null)}
+              >
                 <span className="label w-8 shrink-0">#{String(i + 1).padStart(2, "0")}</span>
                 <Link
                   to="/profile/$address"
@@ -120,9 +131,9 @@ export function ClubHolderChart({ club }: { club: Club }) {
                 >
                   {shortAddr(row.address)}
                 </Link>
-                <div className="h-4 flex-1 border border-border">
+                <div className="h-4 flex-1 overflow-hidden border border-border bg-surface">
                   <div
-                    className="h-full bg-primary/70"
+                    className="club-holder-bar h-full"
                     style={{ width: `${Math.max(2, (row.held / model.maxHeld) * 100)}%` }}
                   />
                 </div>
@@ -136,15 +147,21 @@ export function ClubHolderChart({ club }: { club: Club }) {
             ))}
           </div>
 
-          <div className="mt-6 grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-5 gap-2 border-t border-border px-5 pt-5">
             {model.buckets.map((b) => (
-              <div key={b.label} className="flex flex-col items-center justify-end gap-2">
+              <div
+                key={b.label}
+                className="flex flex-col items-center justify-end gap-2 transition-opacity duration-200"
+                style={{ opacity: hoveredBucket && hoveredBucket !== b.label ? 0.28 : 1 }}
+                onPointerEnter={() => setHoveredBucket(b.label)}
+                onPointerLeave={() => setHoveredBucket(null)}
+              >
                 <span className="font-mono text-[11px] text-muted-foreground">
                   {b.holders.toLocaleString("en-US")}
                 </span>
-                <div className="flex h-24 w-full items-end border border-border">
+                <div className="flex h-24 w-full items-end overflow-hidden border border-border bg-surface">
                   <div
-                    className="w-full bg-primary/40"
+                    className="club-holder-column w-full"
                     style={{ height: `${Math.max(2, (b.holders / model.maxBucket) * 100)}%` }}
                   />
                 </div>
@@ -152,12 +169,12 @@ export function ClubHolderChart({ club }: { club: Club }) {
               </div>
             ))}
           </div>
-          <p className="label mt-2 text-muted-foreground">
+          <p className="label px-5 pb-5 pt-2 text-muted-foreground">
             ADDRESSES GROUPED BY HOW MANY {club.short} BITMAPS THEY HOLD
           </p>
         </>
       ) : (
-        <div className="mt-4 flex h-[180px] items-center justify-center border border-dashed border-border">
+        <div className="flex h-[220px] items-center justify-center">
           <span className="label text-muted-foreground">
             {owners.isPending ? "SYNC" : "NO RESOLVED OWNERS IN THIS CLUB YET"}
           </span>
@@ -169,7 +186,7 @@ export function ClubHolderChart({ club }: { club: Club }) {
 
 function Metric({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
   return (
-    <div className="border border-border p-3">
+    <div className="p-3">
       <div className="label">{k}</div>
       <div className={`mt-1 font-mono text-sm ${accent ? "text-primary" : ""}`}>{v}</div>
     </div>

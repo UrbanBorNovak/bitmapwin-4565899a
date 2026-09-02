@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, type PointerEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { recentTradesQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
@@ -7,12 +7,30 @@ import { inClub } from "@/lib/clubs";
 
 type Point = { t: number; sats: number; height: number; txid: string };
 
+function smoothPath(coords: Array<{ cx: number; cy: number }>) {
+  if (coords.length === 0) return "";
+  const first = coords[0];
+  if (!first) return "";
+  if (coords.length === 1) return `M${first.cx},${first.cy}`;
+  return coords.slice(0, -1).reduce((path, point, index) => {
+    const previous = coords[Math.max(0, index - 1)] ?? point;
+    const next = coords[index + 1] ?? point;
+    const afterNext = coords[Math.min(coords.length - 1, index + 2)] ?? next;
+    const c1x = point.cx + (next.cx - previous.cx) / 6;
+    const c1y = point.cy + (next.cy - previous.cy) / 6;
+    const c2x = next.cx - (afterNext.cx - point.cx) / 6;
+    const c2y = next.cy - (afterNext.cy - point.cy) / 6;
+    return `${path} C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${next.cx.toFixed(1)},${next.cy.toFixed(1)}`;
+  }, `M${first.cx.toFixed(1)},${first.cy.toFixed(1)}`);
+}
+
 /**
  * Sale-price history for one club, drawn from confirmed on-chain trades only
  * (rows in `trades` where the spending transaction paid the previous holder).
  */
 export function ClubPriceChart({ club }: { club: Club }) {
   const trades = useQuery(recentTradesQuery(500));
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
   const points = useMemo<Point[]>(() => {
     const rows = trades.data ?? [];
@@ -56,25 +74,46 @@ export function ClubPriceChart({ club }: { club: Club }) {
       PAD.l + ((t - minT) / spanT) * (W - PAD.l - PAD.r) * (points.length === 1 ? 0 : 1);
     const y = (v: number) => PAD.t + (1 - (v - minV) / spanV) * (H - PAD.t - PAD.b);
     const coords = points.map((p) => ({ ...p, cx: points.length === 1 ? W / 2 : x(p.t), cy: y(p.sats) }));
-    const line = coords.map((c, i) => `${i === 0 ? "M" : "L"}${c.cx.toFixed(1)},${c.cy.toFixed(1)}`).join(" ");
+    const line = smoothPath(coords);
     const area = `${line} L${coords[coords.length - 1]!.cx.toFixed(1)},${H - PAD.b} L${coords[0]!.cx.toFixed(1)},${H - PAD.b} Z`;
     return { coords, line, area, avgY: y(stats.avg), minT, maxT };
   }, [points, stats]);
 
+  const hoverPoint = hoverIndex === null ? null : geom?.coords[hoverIndex] ?? null;
+
+  const handlePointerMove = (event: PointerEvent<SVGSVGElement>) => {
+    if (!geom || geom.coords.length === 0) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const pointerX = ((event.clientX - bounds.left) / bounds.width) * W;
+    let closestIndex = 0;
+    let closestDistance = Number.POSITIVE_INFINITY;
+    geom.coords.forEach((point, index) => {
+      const distance = Math.abs(point.cx - pointerX);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+    setHoverIndex(closestIndex);
+  };
+
   return (
-    <section className="mt-8 rounded-lg border border-border bg-card p-5">
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 className="display text-lg">PRICE HISTORY</h2>
+    <section className="mt-8 overflow-hidden rounded-lg border border-border bg-card">
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border p-5">
+        <div className="border-l-2 border-primary pl-3">
+          <h2 className="font-mono text-sm font-bold uppercase text-foreground">PRICE HISTORY</h2>
+          <p className="label mt-1">CONFIRMED ON-CHAIN SALES · BTC</p>
+        </div>
         <span className="label">
           {trades.isPending
             ? "LOADING CONFIRMED SALES…"
             : `${points.length} CONFIRMED SALE${points.length === 1 ? "" : "S"} · ${club.short}`}
         </span>
-      </div>
+      </header>
 
       {stats ? (
         <>
-          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="grid grid-cols-2 divide-x divide-y divide-border border-b border-border sm:grid-cols-4 sm:divide-y-0">
             <Metric k="LAST" v={formatSats(stats.last)} />
             <Metric k="LOW" v={formatSats(stats.low)} />
             <Metric k="HIGH" v={formatSats(stats.high)} />
@@ -85,13 +124,37 @@ export function ClubPriceChart({ club }: { club: Club }) {
             />
           </div>
 
-          <svg
-            viewBox={`0 0 ${W} ${H}`}
-            className="mt-4 h-[260px] w-full"
-            preserveAspectRatio="none"
-            role="img"
-            aria-label={`Confirmed sale prices for ${club.label}`}
-          >
+          <div className="p-4">
+            <div className="mb-2 flex min-h-8 items-center justify-between gap-3 font-mono text-[10px] uppercase">
+              <span className="text-muted-foreground">HOVER TO TRACE {club.short}</span>
+              <span className={`text-right transition-opacity ${hoverPoint ? "opacity-100" : "opacity-0"}`} aria-live="polite">
+                {hoverPoint ? `${hoverPoint.height}.BITMAP · ${formatSats(hoverPoint.sats)} · ${new Date(hoverPoint.t).toISOString().slice(0, 10)}` : "NO POINT SELECTED"}
+              </span>
+            </div>
+            <svg
+              viewBox={`0 0 ${W} ${H}`}
+              className="bitmap-market-line h-[260px] w-full touch-none"
+              preserveAspectRatio="none"
+              role="img"
+              aria-label={`Confirmed sale prices for ${club.label}`}
+              onPointerMove={handlePointerMove}
+              onPointerLeave={() => setHoverIndex(null)}
+            >
+              <defs>
+                <linearGradient id={`club-line-${club.id}`} x1="0" x2="1" y1="0" y2="0">
+                  <stop offset="0" stopColor="var(--color-primary)" stopOpacity="0.35" />
+                  <stop offset="0.52" stopColor="var(--color-primary)" stopOpacity="0.78" />
+                  <stop offset="1" stopColor="var(--color-primary)" />
+                </linearGradient>
+                <linearGradient id={`club-area-${club.id}`} x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0" stopColor="var(--color-primary)" stopOpacity="0.22" />
+                  <stop offset="1" stopColor="var(--color-primary)" stopOpacity="0" />
+                </linearGradient>
+                <filter id={`club-glow-${club.id}`} x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="5" result="blur" />
+                  <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                </filter>
+              </defs>
             {[0.25, 0.5, 0.75].map((f) => (
               <line
                 key={f}
@@ -106,7 +169,7 @@ export function ClubPriceChart({ club }: { club: Club }) {
             ))}
             {geom && (
               <>
-                <path d={geom.area} className="fill-primary/10" />
+                <path d={geom.area} fill={`url(#club-area-${club.id})`} opacity={hoverPoint ? 0.9 : 0.55} className="pointer-events-none transition-opacity duration-300" />
                 <line
                   x1={PAD.l}
                   x2={W - PAD.r}
@@ -120,36 +183,56 @@ export function ClubPriceChart({ club }: { club: Club }) {
                 <path
                   d={geom.line}
                   fill="none"
-                  stroke="currentColor"
-                  className="text-primary"
-                  strokeWidth={2}
+                  className="bitmap-market-line__trail pointer-events-none"
+                  stroke="var(--color-primary)"
+                  strokeOpacity={hoverPoint ? 0.22 : 0.12}
+                  strokeWidth={9}
+                  filter={`url(#club-glow-${club.id})`}
                   vectorEffect="non-scaling-stroke"
                 />
-                {geom.coords.map((c) => (
+                <path
+                  d={geom.line}
+                  fill="none"
+                  stroke={`url(#club-line-${club.id})`}
+                  className="bitmap-market-line__stroke pointer-events-none"
+                  strokeWidth={3}
+                  vectorEffect="non-scaling-stroke"
+                />
+                {geom.coords.map((c, index) => (
                   <circle
                     key={c.txid}
                     cx={c.cx}
                     cy={c.cy}
-                    r={3}
-                    className="fill-primary"
+                    r={hoverIndex === index ? 6 : 2.5}
+                    className="fill-primary transition-all duration-200"
+                    opacity={hoverPoint && hoverIndex !== index ? 0.22 : 1}
                   >
                     <title>{`${c.height}.bitmap — ${formatSats(c.sats)} (${new Date(c.t).toISOString().slice(0, 10)})`}</title>
                   </circle>
                 ))}
+                {hoverPoint && (
+                  <g className="pointer-events-none">
+                    <line x1={hoverPoint.cx} x2={hoverPoint.cx} y1={PAD.t} y2={H - PAD.b} stroke="var(--color-primary)" strokeDasharray="4 7" strokeOpacity="0.45" vectorEffect="non-scaling-stroke" />
+                    <circle cx={hoverPoint.cx} cy={hoverPoint.cy} r={12} fill="none" stroke="var(--color-primary)" strokeOpacity="0.3" vectorEffect="non-scaling-stroke" />
+                    <circle cx={hoverPoint.cx} cy={hoverPoint.cy} r={5} fill="var(--color-primary)" stroke="var(--color-background)" strokeWidth={2} vectorEffect="non-scaling-stroke" />
+                  </g>
+                )}
               </>
             )}
-          </svg>
+              <rect x="0" y="0" width={W} height={H} fill="transparent" />
+            </svg>
 
-          <div className="label flex justify-between">
+          <div className="label flex justify-between border-t border-border pt-3">
             <span>
               {geom ? new Date(geom.minT).toISOString().slice(0, 10) : ""}
             </span>
             <span>AVG {formatSats(stats.avg)}</span>
             <span>{geom ? new Date(geom.maxT).toISOString().slice(0, 10) : ""}</span>
           </div>
+          </div>
         </>
       ) : (
-        <div className="mt-4 flex h-[180px] items-center justify-center border border-dashed border-border">
+        <div className="flex h-[220px] items-center justify-center">
           <span className="label text-muted-foreground">
             {trades.isPending ? "SYNC" : "NO CONFIRMED SALES IN THIS CLUB YET"}
           </span>
@@ -161,7 +244,7 @@ export function ClubPriceChart({ club }: { club: Club }) {
 
 function Metric({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
   return (
-    <div className="border border-border p-3">
+    <div className="p-3">
       <div className="label">{k}</div>
       <div className={`mt-1 font-mono text-sm ${accent ? "text-primary" : ""}`}>{v}</div>
     </div>

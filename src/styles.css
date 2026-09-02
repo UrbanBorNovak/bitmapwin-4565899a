@@ -278,6 +278,25 @@
   stroke-linejoin: round;
 }
 
+.club-holder-bar,
+.club-holder-column {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--color-primary) 42%, transparent),
+    var(--color-primary)
+  );
+  box-shadow: 0 0 14px color-mix(in oklab, var(--color-primary) 20%, transparent);
+  transition: opacity 200ms ease, filter 200ms ease;
+}
+
+.club-holder-column {
+  background: linear-gradient(
+    0deg,
+    color-mix(in oklab, var(--color-primary) 34%, transparent),
+    var(--color-primary)
+  );
+}
+
 @media (prefers-reduced-motion: reduce) {
   .bitmap-market-line__trail {
     animation: none;
