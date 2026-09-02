@@ -160,12 +160,16 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <div className="relative flex min-h-screen flex-col bg-background">
         <SalesBackdrop />
-        <SiteHeader />
+        <div className="relative z-10">
+          <SiteHeader />
+        </div>
         <main className="relative z-10 flex-1">
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
         </main>
-        <SiteFooter />
+        <div className="relative z-10">
+          <SiteFooter />
+        </div>
       </div>
       <Toaster />
     </QueryClientProvider>
