@@ -9,29 +9,9 @@
 const ORD = "https://ordinals.com";
 const UA = "bitmap-marketplace/1.0";
 
-export type ChainParcel = {
-  /** Transaction index inside the district block. */
-  index: number;
-  inscriptionId: string;
-  inscriptionNumber: number;
-  /** Block the parcel claim itself was inscribed in. */
-  inscribedInBlock: number | null;
-  timestamp: number | null;
-  /** true = first child claiming this index (valid), false = later duplicate. */
-  valid: boolean;
-};
+import type { ChainParcel, ParcelScan } from "@/lib/parcels";
 
-export type ParcelScan = {
-  height: number;
-  districtInscriptionId: string;
-  /** Max valid parcels = transaction count of the district block. */
-  maxParcels: number | null;
-  /** Children inspected in this scan. */
-  childrenScanned: number;
-  /** true when the district has more children than we inspected. */
-  truncated: boolean;
-  parcels: ChainParcel[];
-};
+export type { ChainParcel, ParcelScan };
 
 type ChildRow = {
   id: string;
