@@ -1,5 +1,6 @@
 import { traceBitmapTrades } from "@/lib/trades.server";
 import type { ChainTrade } from "@/lib/trades";
+import { extractRawTxHex, finalizeSignedPsbt } from "@/lib/psbt-buyer";
 
 /**
  * Settlement: turns a delivered PSBT offer into real ownership.
@@ -53,6 +54,8 @@ type OfferRow = {
   inscription_id: string | null;
   seller_address: string | null;
   buyer_address: string | null;
+  buyer_psbt_base64: string | null;
+  buyer_txid: string | null;
   price_sats: number | string | null;
 };
 
@@ -129,7 +132,29 @@ async function settleRow(offer: OfferRow, maxHops: number): Promise<Settlement> 
 
   const spend = await outpointSpend(offer.outpoint);
   if (spend === null) return { ...base, reason: "Could not read the UTXO from any chain provider" };
-  if (!spend.spent) return base;
+  if (!spend.spent) {
+    if (!offer.buyer_psbt_base64) return base;
+    const finalized = finalizeSignedPsbt(offer.buyer_psbt_base64.replace(/\s+/g, ""));
+    const rawHex = extractRawTxHex(finalized);
+    if (!rawHex) {
+      return { ...base, reason: "Stored buyer PSBT is not fully signed — press BUY to sign again" };
+    }
+    const { broadcastRawTransaction } = await import("@/lib/purchase.server");
+    const broadcast = await broadcastRawTransaction(rawHex);
+    if ("error" in broadcast) {
+      return { ...base, reason: `Broadcast rejected: ${broadcast.error}` };
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin
+      .from("offers")
+      .update({ buyer_psbt_base64: finalized, buyer_txid: broadcast.txid })
+      .eq("id", offer.id);
+    return {
+      ...base,
+      reason: "Purchase broadcast to the mempool — waiting for chain settlement",
+      spendingTxid: broadcast.txid,
+    };
+  }
 
   const spendingTxid = spend.txid ?? null;
   const reveal = revealTxidOf(offer);
@@ -170,7 +195,7 @@ async function settleRow(offer: OfferRow, maxHops: number): Promise<Settlement> 
 }
 
 const OFFER_COLUMNS =
-  "id, outpoint, status, bitmap_height, inscription_id, seller_address, buyer_address, price_sats";
+  "id, outpoint, status, bitmap_height, inscription_id, seller_address, buyer_address, buyer_psbt_base64, buyer_txid, price_sats";
 
 /**
  * Settles one offer. When `claimerAddress` is given it must be the address the

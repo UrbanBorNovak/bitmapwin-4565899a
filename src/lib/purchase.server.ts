@@ -48,7 +48,9 @@ async function esplora<T>(path: string, parse: "json" | "text" = "json"): Promis
   return null;
 }
 
-async function postTx(rawHex: string): Promise<{ txid: string } | { error: string }> {
+export async function broadcastRawTransaction(
+  rawHex: string,
+): Promise<{ txid: string } | { error: string }> {
   let lastError = "no response from any broadcast endpoint";
   for (const host of ESPLORA_HOSTS) {
     try {
@@ -247,7 +249,7 @@ export async function submitPurchase(input: {
     };
   }
 
-  const result = await postTx(rawHex);
+  const result = await broadcastRawTransaction(rawHex);
   if ("error" in result) {
     await supabaseAdmin
       .from("offers")
