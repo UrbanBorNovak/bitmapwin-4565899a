@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { mascotReact } from "@/lib/mascot";
 import { buildPurchaseFn, submitPurchaseFn } from "@/lib/purchase.functions";
 import {
   WALLET_LABEL,
@@ -86,6 +87,8 @@ export function BuyButton({
       toast(result.broadcast ? "PURCHASE BROADCAST — SALE CLOSED" : "PURCHASE PENDING", {
         description: result.txid ? `TXID ${result.txid}` : result.message.toUpperCase(),
       });
+      mascotReact(result.broadcast ? "SALE CLOSED ON CHAIN" : "WAITING ON THE MEMPOOL", "cheer");
+
     },
 
     onError: (e) => toast("BUY FAILED", { description: (e as Error).message.toUpperCase() }),

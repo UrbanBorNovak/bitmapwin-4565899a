@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { mascotReact } from "@/lib/mascot";
 import {
   Dialog,
   DialogContent,
@@ -97,6 +98,7 @@ export function MakeOfferButton({
           ? "REPLACED YOUR PREVIOUS OFFER ON THIS BITMAP"
           : "THE HOLDER IS NOTIFIED AND CAN ACCEPT IT",
       });
+      mascotReact(`BID PLACED ON ${height}.BITMAP`, "cheer");
     },
     onError: (e) => toast("OFFER FAILED", { description: (e as Error).message.toUpperCase() }),
   });
