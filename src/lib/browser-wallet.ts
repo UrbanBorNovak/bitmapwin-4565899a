@@ -485,5 +485,15 @@ export function hexToBase64(hex: string): string {
  * mislabels its purposes still produces a signable nested-segwit input.
  */
 export function keyCandidates(wallet: ConnectedWallet): string[] {
-  return [...new Set([wallet.paymentPublicKey, wallet.publicKey].filter(Boolean) as string[])];
+  const clean = (raw: string | undefined | null): string | null => {
+    if (!raw) return null;
+    const hex = raw.trim().replace(/^0x/i, "").toLowerCase();
+    // Only full public keys are usable for legacy/nested-segwit inputs.
+    // 64-char x-only taproot keys go through tapInternalKeyHex instead.
+    return /^[0-9a-f]{66}$|^[0-9a-f]{130}$/.test(hex) ? hex : null;
+  };
+  const list = [clean(wallet.paymentPublicKey), clean(wallet.publicKey)].filter(
+    (k): k is string => Boolean(k),
+  );
+  return [...new Set(list)].slice(0, 4);
 }
