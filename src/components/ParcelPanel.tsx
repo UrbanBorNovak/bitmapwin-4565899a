@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { parcelName, parcelsQuery } from "@/lib/parcels";
 import { shortId } from "@/lib/chain";
+import { InscriptionContent } from "@/components/InscriptionContent";
+
 
 /**
  * Parcel Theory panel for a district bitmap: the transactions of the block are
