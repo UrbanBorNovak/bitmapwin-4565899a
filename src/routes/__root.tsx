@@ -174,7 +174,9 @@ function RootComponent() {
         </div>
       </div>
       <MascotStickman />
+      <TradeCrawlerDriver />
       <Toaster />
+
 
     </QueryClientProvider>
   );
