@@ -71,10 +71,14 @@ export function BuyButton({
     onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: ["offers"] });
       void queryClient.invalidateQueries({ queryKey: ["registry"] });
-      toast(result.broadcast ? "PURCHASE BROADCAST" : "PURCHASE PENDING", {
+      void queryClient.invalidateQueries({ queryKey: ["bids"] });
+      void queryClient.invalidateQueries({ queryKey: ["trades"] });
+      void queryClient.invalidateQueries({ queryKey: ["activity"] });
+      toast(result.broadcast ? "PURCHASE BROADCAST — SALE CLOSED" : "PURCHASE PENDING", {
         description: result.txid ? `TXID ${result.txid}` : result.message.toUpperCase(),
       });
     },
+
     onError: (e) => toast("BUY FAILED", { description: (e as Error).message.toUpperCase() }),
   });
 

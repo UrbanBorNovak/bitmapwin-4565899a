@@ -268,6 +268,38 @@ export async function submitPurchase(input: {
     .eq("id", offer.id);
   if (error) throw new Error(error.message);
 
+  // The transfer is live on the network: close the accepted bid that funded it,
+  // record the sale as a trade, and log the activity so every surface updates.
+  const { markBidSettled } = await import("@/lib/bids.server");
+  await markBidSettled(offer.id);
+
+  if (offer.bitmap_height !== null) {
+    await supabaseAdmin.from("trades").upsert(
+      {
+        txid: result.txid,
+        bitmap_height: offer.bitmap_height,
+        inscription_id: offer.inscription_id,
+        seller_address: offer.seller_address,
+        buyer_address: input.buyerAddress,
+        price_sats: Number(offer.price_sats ?? 0),
+        hop: 0,
+      },
+      { onConflict: "txid" },
+    );
+  }
+
+  await supabaseAdmin.from("activity").insert({
+    type: "sale_broadcast",
+    wallet_address: input.buyerAddress,
+    metadata: {
+      offer_id: offer.id,
+      txid: result.txid,
+      bitmap_height: offer.bitmap_height,
+      price_sats: Number(offer.price_sats ?? 0),
+      seller_address: offer.seller_address,
+    },
+  });
+
   return {
     offerId: offer.id,
     broadcast: true,
