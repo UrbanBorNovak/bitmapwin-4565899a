@@ -153,27 +153,31 @@ export async function locateBitmap(input: {
     throw new Error(`No indexed inscription for ${input.height}.bitmap yet`);
   }
 
-  const meta = await ordJson<{
-    address?: string | null;
-    value?: number | null;
-    satpoint?: string | null;
-  }>(`/inscription/${inscriptionId}`);
-  if (!meta?.satpoint) {
+  const located = (await ordLocation(inscriptionId)) ?? (await chainLocation(inscriptionId));
+  if (!located) {
     throw new Error("Could not read the inscription location from the ordinals index");
   }
 
-  const [txid, voutRaw] = meta.satpoint.split(":");
-  if (!txid || voutRaw === undefined) throw new Error("Malformed inscription satpoint");
-  const outpoint = `${txid}:${Number(voutRaw)}`;
+  const outpoint = located.outpoint;
+  let valueSats = located.valueSats;
+  let ownerAddress = located.ownerAddress;
 
-  let valueSats = Number(meta.value ?? 0);
+  if (!valueSats || !ownerAddress) {
+    const [txid, voutRaw] = outpoint.split(":");
+    const tx = await mempoolJson<{
+      vout?: Array<{ value?: number; scriptpubkey_address?: string }>;
+    }>(`/tx/${txid}`);
+    const out = tx?.vout?.[Number(voutRaw)];
+    if (!valueSats) valueSats = Number(out?.value ?? 0);
+    if (!ownerAddress) ownerAddress = out?.scriptpubkey_address ?? null;
+  }
   if (!valueSats) {
     const output = await ordJson<{ value?: number }>(`/output/${outpoint}`, 2);
     valueSats = Number(output?.value ?? 0);
   }
   if (!valueSats) throw new Error("Could not read the inscription UTXO value");
 
-  const ownerAddress = meta.address ?? null;
+
   return {
     bitmapHeight: input.height,
     inscriptionId,
