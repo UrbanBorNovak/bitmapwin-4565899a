@@ -17,6 +17,7 @@ import { formatSats } from "@/lib/trades";
 import { clubOf } from "@/lib/clubs";
 import { followerCountsQuery } from "@/lib/follows";
 import { BitmapManager } from "@/components/BitmapManager";
+import { ManagerAI } from "@/components/ManagerAI";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
