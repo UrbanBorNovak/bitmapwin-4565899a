@@ -50,118 +50,166 @@ export type ManagerAdvice = {
   suggestions: ManagerSuggestion[];
 };
 
-const suggestionShape = {
-  type: "object",
-  additionalProperties: false,
-  required: ["kind", "height", "title", "detail", "priority"],
-  properties: {
-    kind: { type: "string", enum: ["bid", "build", "lease", "watch", "note"] },
-    height: { type: ["integer", "null"] },
-    title: { type: "string" },
-    detail: { type: "string" },
-    priority: { type: "string", enum: ["high", "medium", "low"] },
-  },
-} as const;
+const fmtSats = (n: number) => `${n.toLocaleString("en-US")} sats`;
 
 /**
- * BITMAP MANAGER AI — turns the holder's real watchlist + portfolio activity
- * into concrete bid / build / lease actions. Advisory text only, no writes.
+ * BITMAP MANAGER — turns the holder's real watchlist + portfolio activity
+ * into concrete bid / build / lease actions.
+ *
+ * Runs entirely on-server with deterministic rules over the real activity
+ * data: no AI model calls, no credit usage. Advisory only, never writes.
  */
 export const managerAdviceFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => inputSchema.parse(data))
   .handler(async ({ data }): Promise<ManagerAdvice> => {
-    const apiKey = process.env["LOVABLE_API_KEY"];
-    if (!apiKey) throw new Error("AI is not configured for this project");
+    const { totals, pulses, watchlist, windowHours } = data;
+    const suggestions: ManagerSuggestion[] = [];
 
-    const lines = data.pulses.map((p) => {
-      const bits = [
-        `#${p.height}`,
-        p.held ? "held" : p.watched ? "watchlist" : "tracked",
-        `${p.visits} visits (prev ${p.previousVisits}${p.visitChangePct === null ? "" : `, ${p.visitChangePct}%`})`,
-        `${p.totalViews} lifetime views`,
-        `${p.newBids} new bids${p.topBidSats === null ? "" : ` top ${p.topBidSats} sats`}`,
-        `${p.trades} on-chain trades`,
-        p.buildKind ? `build ${p.buildKind}${p.buildUpdated ? " (updated)" : ""}` : "no build",
-        p.leaseExpiresInDays === null ? "no active lease" : `lease ends in ${p.leaseExpiresInDays}d`,
-        p.leaseOffered ? "lease offer open" : "not offered for lease",
-        `${p.coinEvents} BIT events`,
-        `${p.chatMessages} chat msgs`,
-      ];
-      return `- ${bits.join(" | ")}`;
-    });
-
-    const prompt = [
-      `Window: last ${data.windowHours}h.`,
-      `Totals: ${data.totals.visits} visits, ${data.totals.newBids} new bids, top bid ${data.totals.topBidSats ?? 0} sats, ${data.totals.trades} trades, ${data.totals.buildUpdates} build updates, ${data.totals.leasesExpiringSoon} leases ending soon, ${data.totals.coinEvents} BIT events.`,
-      `Watchlist heights: ${data.watchlist.length > 0 ? data.watchlist.join(", ") : "none"}.`,
-      "Per-bitmap activity:",
-      lines.length > 0 ? lines.join("\n") : "- no recorded activity in this window",
-      data.question ? `Holder question: ${data.question}` : "",
-    ]
-      .filter(Boolean)
-      .join("\n");
-
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${apiKey}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are the BITMAP MANAGER, a property manager for Bitcoin Bitmap digital land. You only reason from the supplied real activity data; never invent numbers or bitmaps not listed. Say BITMAP, never PARCEL. Prices are sats. Give a 2-3 sentence briefing, then 2-6 concrete actions: accept/counter/place bids, build or refresh a build, list or renew a lease, or start watching a bitmap. Each action must cite the real signal that justifies it. If activity is quiet, say so plainly instead of padding.",
-          },
-          { role: "user", content: prompt },
-        ],
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "manager_advice",
-            strict: true,
-            schema: {
-              type: "object",
-              additionalProperties: false,
-              required: ["briefing", "suggestions"],
-              properties: {
-                briefing: { type: "string" },
-                suggestions: { type: "array", items: suggestionShape },
-              },
-            },
-          },
-        },
-      }),
-    });
-
-    if (res.status === 429) throw new Error("AI rate limit reached — try again in a minute");
-    if (res.status === 402) throw new Error("AI credits exhausted for this workspace");
-    if (!res.ok) {
-      console.error("manager ai gateway error", res.status, await res.text());
-      throw new Error("Manager AI is unavailable right now");
+    // 1. Bids on held bitmaps — highest priority, real money on the table.
+    for (const p of pulses) {
+      if (p.held && p.newBids > 0) {
+        suggestions.push({
+          kind: "bid",
+          height: p.height,
+          title: `Review ${p.newBids} new bid${p.newBids === 1 ? "" : "s"} on ${p.height}.BITMAP`,
+          detail: `${p.newBids} bid${p.newBids === 1 ? "" : "s"} arrived in the last ${windowHours}h${
+            p.topBidSats === null ? "" : `, top bid ${fmtSats(p.topBidSats)}`
+          }. Accept, counter, or decline from the bid inbox on your dashboard.`,
+          priority: "high",
+        });
+      }
     }
 
-    const json = (await res.json()) as {
-      choices?: { message?: { content?: string } }[];
-    };
-    const content = json.choices?.[0]?.message?.content ?? "";
-    let parsed: ManagerAdvice;
-    try {
-      parsed = JSON.parse(content) as ManagerAdvice;
-    } catch {
-      return { briefing: content.trim() || "No advice returned.", suggestions: [] };
+    // 2. Leases ending soon on held bitmaps.
+    for (const p of pulses) {
+      if (p.leaseExpiresInDays !== null && p.leaseExpiresInDays <= 7) {
+        suggestions.push({
+          kind: "lease",
+          height: p.height,
+          title: `Renew the lease on ${p.height}.BITMAP`,
+          detail: `The active lease ends in ${p.leaseExpiresInDays} day${
+            p.leaseExpiresInDays === 1 ? "" : "s"
+          }. Renew or re-list it in BIT before it lapses to keep the revenue stream running.`,
+          priority: p.leaseExpiresInDays <= 3 ? "high" : "medium",
+        });
+      }
     }
-    return {
-      briefing: String(parsed.briefing ?? "").trim(),
-      suggestions: (parsed.suggestions ?? []).slice(0, 8).map((s) => ({
-        kind: s.kind,
-        height: typeof s.height === "number" ? s.height : null,
-        title: String(s.title ?? ""),
-        detail: String(s.detail ?? ""),
-        priority: s.priority ?? "medium",
-      })),
-    };
+
+    // 3. Attention spikes — monetise traffic.
+    const spiking = pulses
+      .filter((p) => p.visits >= 5 && (p.visitChangePct === null || p.visitChangePct >= 25))
+      .sort((a, b) => b.visits - a.visits);
+    for (const p of spiking.slice(0, 3)) {
+      if (!p.buildKind) {
+        suggestions.push({
+          kind: "build",
+          height: p.height,
+          title: `Build on ${p.height}.BITMAP while traffic is up`,
+          detail: `${p.visits} visits in the last ${windowHours}h (previous window ${p.previousVisits}) with no build attached. An info page, gallery or shop converts that attention.`,
+          priority: "high",
+        });
+      } else if (!p.buildUpdated) {
+        suggestions.push({
+          kind: "build",
+          height: p.height,
+          title: `Refresh the ${p.buildKind} build on ${p.height}.BITMAP`,
+          detail: `${p.visits} visits in the last ${windowHours}h but the build has not been updated in this window. New assets or copy keep returning visitors engaged.`,
+          priority: "medium",
+        });
+      }
+      if (p.held && !p.leaseOffered && p.leaseExpiresInDays === null) {
+        suggestions.push({
+          kind: "lease",
+          height: p.height,
+          title: `Offer ${p.height}.BITMAP for lease`,
+          detail: `Sustained attention (${p.visits} visits, ${p.totalViews} lifetime views) and no active lease — list it for BIT to earn from builders without selling.`,
+          priority: "medium",
+        });
+      }
+    }
+
+    // 4. Watched bitmaps with real trade activity — buying window.
+    for (const p of pulses) {
+      if (!p.held && p.watched && (p.trades > 0 || p.newBids > 0)) {
+        suggestions.push({
+          kind: "bid",
+          height: p.height,
+          title: `Place a bid on watched ${p.height}.BITMAP`,
+          detail: `${p.trades} on-chain trade${p.trades === 1 ? "" : "s"} and ${p.newBids} bid${
+            p.newBids === 1 ? "" : "s"
+          } in the last ${windowHours}h${
+            p.topBidSats === null ? "" : `, top bid ${fmtSats(p.topBidSats)}`
+          }. The market is live — bid now or set your ceiling.`,
+          priority: p.trades > 0 ? "high" : "medium",
+        });
+      }
+    }
+
+    // 5. Active bitmaps that are not on the watchlist yet.
+    const watchSet = new Set(watchlist);
+    for (const p of pulses) {
+      if (!p.held && !watchSet.has(p.height) && (p.visits >= 3 || p.chatMessages >= 3)) {
+        suggestions.push({
+          kind: "watch",
+          height: p.height,
+          title: `Start watching ${p.height}.BITMAP`,
+          detail: `${p.visits} visits and ${p.chatMessages} chat messages in the last ${windowHours}h and it is not on your watchlist yet.`,
+          priority: "low",
+        });
+      }
+    }
+
+    // 6. Chat / community signal on held bitmaps.
+    for (const p of pulses) {
+      if (p.held && p.chatMessages >= 5) {
+        suggestions.push({
+          kind: "note",
+          height: p.height,
+          title: `Reply in the ${p.height}.BITMAP chat`,
+          detail: `${p.chatMessages} messages in the last ${windowHours}h. Answering visitors keeps the community on your BITMAP.`,
+          priority: "low",
+        });
+      }
+    }
+
+    if (data.question) {
+      suggestions.unshift({
+        kind: "note",
+        height: null,
+        title: "Your note is scoped to this activity window",
+        detail: `"${data.question}" — the manager answers from your recorded activity only. The signals below cover the last ${windowHours}h across ${pulses.length} BITMAP${
+          pulses.length === 1 ? "" : "s"
+        }.`,
+        priority: "low",
+      });
+    }
+
+    const rank = { high: 0, medium: 1, low: 2 } as const;
+    suggestions.sort((a, b) => rank[a.priority] - rank[b.priority]);
+    const trimmed = suggestions.slice(0, 8);
+
+    const briefing =
+      pulses.length === 0
+        ? `Quiet window. No recorded activity across your held or watched BITMAPs in the last ${windowHours}h${
+            watchlist.length > 0 ? `, and your watchlist of ${watchlist.length} is idle` : ""
+          }. Nothing needs your attention right now.`
+        : [
+            `Last ${windowHours}h across ${pulses.length} BITMAP${pulses.length === 1 ? "" : "s"}: ${totals.visits} visits, ${totals.newBids} new bid${
+              totals.newBids === 1 ? "" : "s"
+            }${totals.topBidSats === null ? "" : ` (top ${fmtSats(totals.topBidSats)})`}, ${totals.trades} on-chain trade${
+              totals.trades === 1 ? "" : "s"
+            }.`,
+            `${totals.buildUpdates} build update${totals.buildUpdates === 1 ? "" : "s"}, ${totals.leasesExpiringSoon} lease${
+              totals.leasesExpiringSoon === 1 ? "" : "s"
+            } ending soon, ${totals.coinEvents} BIT event${totals.coinEvents === 1 ? "" : "s"}.`,
+            trimmed.length === 0
+              ? "Nothing is urgent — hold position and keep watching."
+              : `${trimmed.filter((s) => s.priority === "high").length} action${
+                  trimmed.filter((s) => s.priority === "high").length === 1 ? "" : "s"
+                } need attention first.`,
+          ].join(" ");
+
+    return { briefing, suggestions: trimmed };
   });
+
