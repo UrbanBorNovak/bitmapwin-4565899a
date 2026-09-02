@@ -6,8 +6,11 @@ import {
   byteArrayToHex,
   extractRawTxHex,
   finalizeSignedPsbt,
+  inputSignatureReport,
+  psbtOutputs,
   type FundingUtxo,
 } from "@/lib/psbt-buyer";
+
 
 /**
  * Buy side of the offer book. Reads the seller's stored PSBT plus the buyer's
@@ -215,9 +218,10 @@ export type PurchaseSubmission = {
 };
 
 /**
- * Stores the buyer-signed PSBT on the offer and broadcasts it when the wallet
- * finalized every input. A PSBT that is signed but not finalized is kept so the
- * buyer can finish it in their own wallet.
+ * Completes the sale from the buyer's single signature: the buyer's funding
+ * inputs arrive signed, the seller's stored SIGHASH_SINGLE|ANYONECANPAY
+ * signature is finalized server-side, the payout outputs are verified, and the
+ * transaction is broadcast. No second signature from either party is needed.
  */
 export async function submitPurchase(input: {
   offerId: string;
@@ -227,6 +231,40 @@ export async function submitPurchase(input: {
   const offer = await loadOffer(input.offerId);
   const clean = input.psbtBase64.replace(/\s+/g, "");
   const finalized = finalizeSignedPsbt(clean);
+
+  // The buyer must have signed their own inputs; the seller half is finalized
+  // above from the signature captured when the listing was created.
+  const report = inputSignatureReport(finalized);
+  const unsigned = report.filter((r) => !r.isFinal);
+  if (unsigned.length > 0) {
+    const missingBuyer = unsigned.filter((r) => r.index > 0 && !r.hasSignature);
+    if (missingBuyer.length > 0) {
+      throw new Error(
+        `Your wallet did not sign funding input(s) ${missingBuyer
+          .map((r) => r.index)
+          .join(", ")} — approve every requested input and retry`,
+      );
+    }
+    throw new Error(
+      "The seller's offer signature is missing or unsupported — ask the seller to relist this bitmap",
+    );
+  }
+
+  // Guarantee the money actually moves: output 0 pays the seller the asking
+  // price, output 1 delivers the inscription to the buyer.
+  const outs = psbtOutputs(finalized);
+  const expectedSeller = offer.seller_address
+    ? byteArrayToHex(addressToScriptPubKey(offer.seller_address))
+    : null;
+  const price = Number(offer.price_sats ?? 0);
+  if (expectedSeller && (outs[0]?.scriptHex !== expectedSeller || Number(outs[0]?.valueSats) < price)) {
+    throw new Error("Refusing to broadcast: the seller payout output was altered");
+  }
+  const expectedBuyer = byteArrayToHex(addressToScriptPubKey(input.buyerAddress));
+  if (outs[1]?.scriptHex !== expectedBuyer) {
+    throw new Error("Refusing to broadcast: the inscription is not delivered to your address");
+  }
+
   const rawHex = extractRawTxHex(finalized);
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -245,9 +283,10 @@ export async function submitPurchase(input: {
       offerId: offer.id,
       broadcast: false,
       txid: null,
-      message: "Signed PSBT stored — your wallet did not finalize every input, finish it in your wallet",
+      message: "Signed PSBT stored — it could not be assembled into a broadcastable transaction",
     };
   }
+
 
   const result = await broadcastRawTransaction(rawHex);
   if ("error" in result) {

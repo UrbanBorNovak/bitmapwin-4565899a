@@ -240,6 +240,31 @@ export function isFullySigned(psbtBase64: string): boolean {
   return psbt.inputs.every((map) => map.some((kv) => kv.key[0] === 0x07 || kv.key[0] === 0x08));
 }
 
+/** Per-input signing state, used to explain exactly what a wallet left unsigned. */
+export function inputSignatureReport(
+  psbtBase64: string,
+): Array<{ index: number; hasSignature: boolean; isFinal: boolean }> {
+  const psbt = parsePsbt(psbtBase64);
+  return psbt.inputs.map((map, index) => ({
+    index,
+    hasSignature: map.some(
+      (kv) =>
+        (kv.key[0] === 0x02 && kv.key.length > 1) ||
+        (kv.key.length === 1 && kv.key[0] === 0x13),
+    ),
+    isFinal: map.some((kv) => kv.key[0] === 0x07 || kv.key[0] === 0x08),
+  }));
+}
+
+/** Output values and scripts of a PSBT's unsigned transaction. */
+export function psbtOutputs(psbtBase64: string): Array<{ valueSats: number; scriptHex: string }> {
+  return parsePsbt(psbtBase64).tx.outputs.map((o) => ({
+    valueSats: o.valueSats,
+    scriptHex: byteArrayToHex(o.script),
+  }));
+}
+
+
 /**
  * Extracts the network-serialized transaction from a finalized PSBT so it can
  * be broadcast. Returns null when any input is still unfinalized.
