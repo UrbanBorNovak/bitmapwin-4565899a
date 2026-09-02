@@ -12,6 +12,8 @@ import {
 } from "@/lib/bids";
 import { cancelBidFn, declineBidFn } from "@/lib/bids.functions";
 import { useAcceptBid } from "@/lib/use-accept-bid";
+import { BuyButton } from "@/components/BuyButton";
+
 import { signMessageWithWallet } from "@/lib/browser-wallet";
 import { useWalletSession } from "@/lib/wallet-session";
 import { formatSats } from "@/lib/trades";
@@ -140,8 +142,14 @@ export function WalletBids({ address, heldHeights }: { address: string; heldHeig
               >
                 {cancel.isPending ? "[ WITHDRAWING… ]" : "[ WITHDRAW ]"}
               </button>
+            ) : bid.status === "accepted" && bid.acceptedOfferId ? (
+              <div className="flex flex-col items-end gap-1">
+                <BuyButton offerId={bid.acceptedOfferId} priceSats={bid.priceSats} />
+                <span className="label">HOLDER ACCEPTED — SIGN TO SETTLE</span>
+              </div>
             ) : null
           }
+
         />
       </section>
     </>
