@@ -59,7 +59,7 @@ export async function crawlTrades(batch = 20, maxHops = 6): Promise<CrawlResult>
       .not("inscription_id", "is", null)
       .order("block_height", { ascending: false })
       .range(from, from + 499);
-    if (error) throw error;
+    if (error) throw Object.assign(error, { stage: "index-read" });
     if (!data || data.length === 0) break;
     for (const row of data) {
       if (candidates.length >= size) break;
@@ -101,7 +101,7 @@ export async function crawlTrades(batch = 20, maxHops = 6): Promise<CrawlResult>
 
   if (tradeRows.length > 0) {
     const { error } = await client.from("trades").upsert(tradeRows, { onConflict: "txid" });
-    if (error) throw error;
+    if (error) throw Object.assign(error, { stage: "trades-upsert" });
   }
 
   const stateRows = candidates.map((candidate) => {
@@ -118,7 +118,7 @@ export async function crawlTrades(batch = 20, maxHops = 6): Promise<CrawlResult>
   const stateError = (
     await client.from("trade_crawl_state").upsert(stateRows, { onConflict: "block_height" })
   ).error;
-  if (stateError) console.error("[trade-crawler] state upsert failed", stateError);
+  if (stateError) throw Object.assign(stateError, { stage: "state-upsert" });
 
   return {
     checked: candidates.length,
