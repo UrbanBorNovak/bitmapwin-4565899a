@@ -86,6 +86,8 @@ export function BuyButton({
       toast(result.broadcast ? "PURCHASE BROADCAST — SALE CLOSED" : "PURCHASE PENDING", {
         description: result.txid ? `TXID ${result.txid}` : result.message.toUpperCase(),
       });
+      mascotReact(result.broadcast ? "SALE CLOSED ON CHAIN" : "WAITING ON THE MEMPOOL", "cheer");
+
     },
 
     onError: (e) => toast("BUY FAILED", { description: (e as Error).message.toUpperCase() }),
