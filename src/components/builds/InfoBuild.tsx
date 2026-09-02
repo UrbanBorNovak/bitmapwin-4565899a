@@ -1,4 +1,5 @@
 import { themePanelStyle, themeShellStyle, type InfoConfig } from "@/lib/build-sdk";
+import { safeExternalUrl } from "@/lib/safe-url";
 
 export function InfoBuild({ config }: { config: InfoConfig }) {
   const empty =
@@ -38,10 +39,10 @@ export function InfoBuild({ config }: { config: InfoConfig }) {
       ) : null}
       {config.links.length > 0 ? (
         <ul className="flex flex-wrap gap-2">
-          {config.links.map((l, i) => (
+          {config.links.filter((l) => safeExternalUrl(l.url)).map((l, i) => (
             <li key={`${l.url}-${i}`}>
               <a
-                href={l.url}
+                href={safeExternalUrl(l.url)!}
                 target="_blank"
                 rel="noreferrer nofollow"
                 className="inline-block border px-3 py-1.5 font-mono text-xs transition-opacity hover:opacity-70"

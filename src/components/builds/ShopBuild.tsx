@@ -4,6 +4,7 @@ import { formatSats } from "@/lib/trades";
 import { inscriptionOffersQuery } from "@/lib/offers";
 import { BuyButton } from "@/components/BuyButton";
 import type { ShopConfig, ShopItem } from "@/lib/build-sdk";
+import { safeExternalUrl } from "@/lib/safe-url";
 
 /**
  * A holder-run storefront built on top of their bitmap: their own inscriptions,
@@ -50,9 +51,9 @@ export function ShopBuild({ config, height }: { config: ShopConfig; height: numb
             FLOOR {floor.length > 0 ? formatSats(Math.min(...floor)) : "—"}
           </span>
         </div>
-        {config.contactUrl ? (
+        {safeExternalUrl(config.contactUrl) ? (
           <a
-            href={config.contactUrl}
+            href={safeExternalUrl(config.contactUrl)!}
             target="_blank"
             rel="noreferrer noopener"
             className={`label mt-3 inline-block border px-3 py-1.5 transition-colors hover:bg-primary/10 ${radius}`}
@@ -162,9 +163,9 @@ function ShopItemAction({
       {item.priceSats > 0 ? (
         <span className="label text-muted-foreground">SALE PSBT PENDING</span>
       ) : null}
-      {contactUrl ? (
+      {safeExternalUrl(contactUrl) ? (
         <a
-          href={contactUrl}
+          href={safeExternalUrl(contactUrl)!}
           target="_blank"
           rel="noreferrer noopener"
           className="label border border-border px-2 py-1 hover:border-primary hover:text-primary"

@@ -18,6 +18,7 @@ import { isLinked, myWalletLinksQuery } from "@/lib/wallet-links";
 import { BuildDelegates } from "@/components/BuildDelegates";
 import { buildInscriptionPayload, delegatesQuery, downloadJson } from "@/lib/builds";
 import { districtForHeightQuery } from "@/lib/districts";
+import { safeExternalUrl } from "@/lib/safe-url";
 import { BuildEditor } from "@/components/builds/BuildEditor";
 import { BuildRenderer } from "@/components/builds/BuildRenderer";
 import { BuildRaffles } from "@/components/coins/BuildRaffles";
