@@ -109,6 +109,77 @@ function HolderColumns({ owners, mine, bitcoin }: { owners: Map<number, string>;
   );
 }
 
+function OwnedBitmapGlow({ owners, mine, bitcoin }: { owners: Map<number, string>; mine: Set<string>; bitcoin: string }) {
+  const coreRef = useRef<THREE.InstancedMesh>(null);
+  const auraRef = useRef<THREE.InstancedMesh>(null);
+  const coreMaterial = useRef<THREE.MeshBasicMaterial>(null);
+  const auraMaterial = useRef<THREE.MeshBasicMaterial>(null);
+  const owned = useMemo(
+    () => [...owners.entries()].filter(([, owner]) => mine.has(owner)).map(([height]) => height),
+    [mine, owners],
+  );
+
+  useEffect(() => {
+    const core = coreRef.current;
+    const aura = auraRef.current;
+    if (!core || !aura) return;
+    const dummy = new THREE.Object3D();
+    owned.forEach((height, index) => {
+      const blockHeight = districtHeight(height);
+      const x = worldX(height % GRID);
+      const z = worldZ(Math.floor(height / GRID));
+      dummy.position.set(x, blockHeight + 0.018, z);
+      dummy.scale.set(CELL * 1.3, blockHeight + 0.045, CELL * 1.3);
+      dummy.updateMatrix();
+      core.setMatrixAt(index, dummy.matrix);
+      dummy.position.set(x, blockHeight + 0.022, z);
+      dummy.scale.set(CELL * 2.5, blockHeight + 0.065, CELL * 2.5);
+      dummy.updateMatrix();
+      aura.setMatrixAt(index, dummy.matrix);
+    });
+    core.instanceMatrix.needsUpdate = true;
+    aura.instanceMatrix.needsUpdate = true;
+    core.computeBoundingSphere();
+    aura.computeBoundingSphere();
+  }, [owned]);
+
+  useFrame(({ clock }) => {
+    const pulse = (Math.sin(clock.elapsedTime * 2.2) + 1) / 2;
+    if (coreMaterial.current) coreMaterial.current.opacity = 0.66 + pulse * 0.26;
+    if (auraMaterial.current) auraMaterial.current.opacity = 0.08 + pulse * 0.13;
+  });
+
+  if (owned.length === 0) return null;
+  return (
+    <group>
+      <instancedMesh ref={auraRef} args={[undefined, undefined, owned.length]} frustumCulled>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshBasicMaterial
+          ref={auraMaterial}
+          color={bitcoin}
+          transparent
+          opacity={0.14}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          side={THREE.DoubleSide}
+        />
+      </instancedMesh>
+      <instancedMesh ref={coreRef} args={[undefined, undefined, owned.length]} frustumCulled>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshBasicMaterial
+          ref={coreMaterial}
+          color={bitcoin}
+          transparent
+          opacity={0.8}
+          wireframe
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </instancedMesh>
+    </group>
+  );
+}
+
 function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: WorldColors }) {
   const geometry = useMemo(() => {
     const points = new THREE.BufferGeometry();
@@ -127,7 +198,7 @@ function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: Worl
       uCell: { value: CELL },
       uWorldSize: { value: WORLD_SIZE },
       uTip: { value: tipHeight },
-      uBitcoin: { value: new THREE.Color(colors.bitcoin) },
+      uMined: { value: new THREE.Color(colors.foreground) },
       uFuture: { value: new THREE.Color(colors.border) },
       uFog: { value: new THREE.Color(colors.background) },
     }),
@@ -170,7 +241,7 @@ function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: Worl
           }
         `}
         fragmentShader={/* glsl */ `
-          uniform vec3 uBitcoin;
+          uniform vec3 uMined;
           uniform vec3 uFuture;
           uniform vec3 uFog;
           varying float vMined;
@@ -182,8 +253,8 @@ function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: Worl
             if (max(edge.x, edge.y) > 0.46) discard;
             float bevel = 1.0 - smoothstep(0.32, 0.48, max(edge.x, edge.y));
             float light = 0.92 + bevel * 0.38;
-            float clubBand = 0.9 + vClub * 0.05;
-            vec3 minedColor = uBitcoin * clubBand * (1.02 + vShade * 0.2) * light;
+            float clubBand = 0.72 + vClub * 0.07;
+            vec3 minedColor = uMined * clubBand * (0.72 + vShade * 0.24) * light;
             vec3 futureColor = uFuture * (0.7 + light * 0.3);
             vec3 color = mix(futureColor, minedColor, vMined);
             float depth = gl_FragCoord.z / gl_FragCoord.w;
@@ -196,7 +267,7 @@ function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: Worl
   );
 }
 
-function DetailedDistrictBlocks({ window_, tipHeight, bitcoin, border }: { window_: OwnerWindow | null; tipHeight: number; bitcoin: string; border: string }) {
+function DetailedDistrictBlocks({ window_, tipHeight, mined, border }: { window_: OwnerWindow | null; tipHeight: number; mined: string; border: string }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const blocks = useMemo(() => {
     if (!window_) return [];
@@ -218,13 +289,13 @@ function DetailedDistrictBlocks({ window_, tipHeight, bitcoin, border }: { windo
       dummy.scale.set(CELL * 0.82, blockHeight, CELL * 0.82);
       dummy.updateMatrix();
       mesh.setMatrixAt(index, dummy.matrix);
-      color.set(height <= tipHeight ? bitcoin : border);
+      color.set(height <= tipHeight ? mined : border);
       mesh.setColorAt(index, color);
     });
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     mesh.computeBoundingSphere();
-  }, [bitcoin, blocks, border, tipHeight]);
+  }, [blocks, border, mined, tipHeight]);
 
   if (blocks.length === 0) return null;
   return (
@@ -421,8 +492,9 @@ function WorldScene({
       </Environment>
       <LandSurface colors={colors} tipHeight={tipHeight} />
       <DistrictBlocks tipHeight={tipHeight} colors={colors} />
-      <DetailedDistrictBlocks window_={districtWindow} tipHeight={tipHeight} bitcoin={colors.bitcoin} border={colors.border} />
+      <DetailedDistrictBlocks window_={districtWindow} tipHeight={tipHeight} mined={colors.foreground} border={colors.border} />
       <HolderColumns owners={owners} mine={mine} bitcoin={colors.bitcoin} />
+      <OwnedBitmapGlow owners={owners} mine={mine} bitcoin={colors.bitcoin} />
       {selectedHeight !== null ? <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} /> : null}
       <VisitorBeacons cursors={cursors} />
       <mesh
@@ -476,9 +548,9 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   return (
     <div className={className}>
       <div className="mb-2 flex flex-wrap items-center gap-2">
-        <button className="btn-term-ghost" onClick={() => moveCamera("mined")}>[ FRAME MINED WORLD ]</button>
-        <button className="btn-term-ghost" onClick={() => moveCamera("full")}>[ VIEW FULL WORLD ]</button>
-        <button className="btn-term-ghost" onClick={() => moveCamera("tip")}>[ FLY TO TIP ]</button>
+        <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("mined")}>[ FRAME MINED WORLD ]</Button>
+        <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("full")}>[ VIEW FULL WORLD ]</Button>
+        <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("tip")}>[ FLY TO TIP ]</Button>
       </div>
       <div className="relative h-[70vh] min-h-[420px] w-full overflow-hidden border border-border bg-background">
         {colors ? (
@@ -504,7 +576,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
           </Canvas>
         ) : null}
 
-        <div aria-hidden className="pointer-events-none absolute inset-0 z-20 animate-pulse ring-1 ring-inset ring-bitcoin/25 shadow-[0_0_60px_rgba(247,147,26,0.18)]" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 z-20 ring-1 ring-inset ring-bitcoin/30 shadow-[inset_0_0_48px_color-mix(in_oklab,var(--bitcoin)_12%,transparent)]" />
 
         {hover ? (
           <div
