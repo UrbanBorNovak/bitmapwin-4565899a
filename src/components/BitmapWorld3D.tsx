@@ -878,12 +878,15 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     window.setTimeout(() => setMySay((current) => (current === body ? null : current)), SAY_TTL_MS);
   }, [draft, say]);
 
-  const wearModel = useCallback(() => {
-    const id = modelDraft.trim() || null;
-    setAvatarModelInscription(id);
-    setAvatarModel(id);
-    setModelDraft("");
-  }, [modelDraft, setAvatarModel]);
+  /** Equip, swap or unequip the worn on-chain model — persists per browser. */
+  const equipModel = useCallback(
+    (inscriptionId: string | null) => {
+      setAvatarModelInscription(inscriptionId);
+      setAvatarModel(inscriptionId);
+    },
+    [setAvatarModel],
+  );
+
 
   const moveCamera = (type: CameraMove) => setCommand((current) => ({ type, nonce: current.nonce + 1 }));
   const handleWindow = useCallback((next: OwnerWindow | null) => setWindow(next), []);
