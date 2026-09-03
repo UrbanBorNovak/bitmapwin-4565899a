@@ -640,23 +640,28 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
       <div className="relative h-[70vh] min-h-[420px] w-full overflow-hidden border border-border bg-background">
         {colors ? (
           <Canvas
-            dpr={[1, 1.5]}
+            dpr={dpr}
             camera={{ position: [0, 108, minedDepth / 2 + 0.01], fov: 46, near: 0.01, far: 350 }}
-            gl={{ antialias: true }}
+            gl={{ antialias: false, powerPreference: "high-performance", stencil: false, depth: true }}
+            performance={{ min: 0.4 }}
           >
+            <PerformanceMonitor
+              onIncline={() => setDpr(Math.min(1.5, window.devicePixelRatio))}
+              onDecline={() => setDpr(1)}
+            />
             <WorldScene
               colors={colors}
               command={command}
               tipHeight={tipHeight}
-              owners={owners.data ?? new Map()}
+              owners={owners.data ?? EMPTY_OWNERS}
               mine={mine}
               cursors={cursors}
               onWindow={handleWindow}
               onHover={setHover}
-              onSelect={(height) => setSelected({ height, owner: owners.data?.get(height) ?? null })}
+              onSelect={handleSelect}
               selectedHeight={selected?.height ?? null}
               onPublish={publish}
-              models={models.data ?? []}
+              models={models.data ?? EMPTY_MODELS}
               ownedHeights={ownedHeights}
             />
           </Canvas>
