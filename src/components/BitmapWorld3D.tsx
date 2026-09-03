@@ -16,7 +16,6 @@ import { useWalletSession } from "@/lib/wallet-session";
 import { mapBitmapModelsQuery, type BitmapModel } from "@/lib/bitmap-models";
 
 const GRID = 1_000;
-const DISTRICT_COUNT = GRID * GRID;
 const WORLD_SIZE = 100;
 const CELL = WORLD_SIZE / GRID;
 const OWNER_CELL_BUDGET = 55_000;
