@@ -5,6 +5,7 @@ import { BidInboxBell } from "@/components/BidInboxBell";
 import { HeaderIdentity } from "@/components/HeaderIdentity";
 import { BtcTicker } from "@/components/BtcTicker";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 const NAV = [
   { to: "/marketplace", label: "MARKETPLACE" },
@@ -64,6 +65,7 @@ export function SiteHeader() {
         <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
           <BtcTicker className="hidden sm:flex" />
           <ThemeToggle />
+          <LanguageSwitcher />
           <button
             aria-label="Search bitmaps"
             onClick={() => setSearchOpen((v) => !v)}

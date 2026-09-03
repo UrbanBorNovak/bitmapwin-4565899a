@@ -1030,6 +1030,30 @@ export type Database = {
         }
         Relationships: []
       }
+      ui_translations: {
+        Row: {
+          created_at: string
+          lang: string
+          source: string
+          source_key: string
+          translated: string
+        }
+        Insert: {
+          created_at?: string
+          lang: string
+          source: string
+          source_key: string
+          translated: string
+        }
+        Update: {
+          created_at?: string
+          lang?: string
+          source?: string
+          source_key?: string
+          translated?: string
+        }
+        Relationships: []
+      }
       wallet_link_challenges: {
         Row: {
           address: string

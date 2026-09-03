@@ -26,7 +26,7 @@ export function SalesBackdrop() {
   });
 
   return (
-    <div aria-hidden className="sales-backdrop">
+    <div aria-hidden data-no-translate className="sales-backdrop">
       {columns.map((column, index) => (
         <div
           key={index}
