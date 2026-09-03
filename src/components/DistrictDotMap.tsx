@@ -178,7 +178,31 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
 
   return (
     <div className={className}>
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <button className="btn-term-ghost" onClick={fitMined}>
+          [ FIT MINED LAND ]
+        </button>
+        <button className="btn-term-ghost" onClick={fitAll}>
+          [ FIT FULL GRID ]
+        </button>
+        <button
+          className="btn-term-ghost"
+          onClick={() => {
+            const wrap = wrapRef.current;
+            if (!wrap) return;
+            const scale = 6;
+            setView({
+              scale,
+              x: wrap.clientWidth / 2 - (tipHeight % GRID) * scale,
+              y: wrap.clientHeight / 2 - Math.floor(tipHeight / GRID) * scale,
+            });
+          }}
+        >
+          [ GO TO TIP ]
+        </button>
+      </div>
       <div
+
         ref={wrapRef}
         className="relative h-[70vh] min-h-[380px] w-full cursor-crosshair overflow-hidden border border-border bg-background"
         onPointerDown={(e) => {
