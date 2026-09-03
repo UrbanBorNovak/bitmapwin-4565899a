@@ -144,6 +144,26 @@ export const paidSalesQuery = () =>
     staleTime: 60_000,
   });
 
+/** Every traced trade whose bitmap height falls inside a range (club). */
+export async function fetchTradesInRange(min: number, max: number): Promise<TradeRow[]> {
+  const { data, error } = await supabase
+    .from("trades")
+    .select("*")
+    .gte("bitmap_height", min)
+    .lte("bitmap_height", max)
+    .order("block_height", { ascending: true, nullsFirst: false })
+    .limit(5000);
+  if (error) throw error;
+  return normalise(data as TradeRow[] | null);
+}
+
+export const tradesInRangeQuery = (min: number, max: number) =>
+  queryOptions({
+    queryKey: ["trades", "range", min, max],
+    queryFn: () => fetchTradesInRange(min, max),
+    staleTime: 60_000,
+  });
+
 /** Best timestamp we hold for a traced trade. */
 export function tradeTime(row: TradeRow): string {
   return row.block_time ?? row.created_at;
