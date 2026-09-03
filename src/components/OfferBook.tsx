@@ -93,6 +93,10 @@ export function OfferBook({ height }: { height?: number }) {
         <label className="label" htmlFor="psbt-input">
           SUBMIT OFFER — BASE64 PSBT
         </label>
+        <p className="mt-2 font-mono text-[11px] text-muted-foreground">
+          &gt; MUST BE SIGNED, UNSPENT AND THE VALID CLAIM FOR ITS BLOCK — ONLY THE HOLDING WALLET
+          CAN LIST A BITMAP
+        </p>
         <textarea
           id="psbt-input"
           value={psbt}
