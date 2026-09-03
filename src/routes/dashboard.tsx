@@ -18,6 +18,9 @@ import { clubOf } from "@/lib/clubs";
 import { followerCountsQuery } from "@/lib/follows";
 import { BitmapManager } from "@/components/BitmapManager";
 import { ManagerAI } from "@/components/ManagerAI";
+import { FloorRanking } from "@/components/FloorRanking";
+import { OpportunityFunnel } from "@/components/OpportunityFunnel";
+import { registryBaseQuery } from "@/lib/registry";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -108,7 +111,15 @@ function DashboardPage() {
   const address = wallet?.ordinalsAddress ?? links.data?.[0]?.address ?? "";
   const addresses = useMemo(() => (address ? [address] : []), [address]);
 
+  const market = useQuery(registryBaseQuery(300));
+  const marketParcels = market.data ?? [];
+  const marketListed = useMemo(
+    () => marketParcels.filter((p) => p.listedSats !== null),
+    [marketParcels],
+  );
+
   const profile = useQuery(profileQuery(address));
+
   const held = useQuery(heldHeightsQuery(addresses));
   const builds = useQuery(buildsQuery(200));
   const balances = useQuery(coinBalanceQuery(addresses));
@@ -209,6 +220,14 @@ function DashboardPage() {
         />
       </div>
 
+
+      <div className="mt-8">
+        <OpportunityFunnel parcels={marketParcels} />
+      </div>
+
+      <div className="mt-8">
+        <FloorRanking parcels={marketListed} pending={market.isPending} />
+      </div>
 
       <div className="mt-8">
         <ReferralPanel />
