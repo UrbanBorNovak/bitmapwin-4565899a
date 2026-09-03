@@ -248,24 +248,74 @@ function SelectedBlock({ height, bitcoin }: { height: number; bitcoin: string })
   );
 }
 
-function VisitorBeacons({ cursors }: { cursors: MapCursor[] }) {
-  return cursors.map((cursor) => (
-    <group key={cursor.id} position={[worldX(cursor.col), 0.08, worldZ(cursor.row)]}>
-      <mesh rotation-x={Math.PI / 2}>
-        <torusGeometry args={[0.035, 0.006, 8, 20]} />
-        <meshBasicMaterial color={cursor.color} />
+/** One spawned visitor: a blocky cypherpunk figure standing on the land. */
+function VisitorAvatar({ cursor }: { cursor: MapCursor }) {
+  const body = useRef<THREE.Group>(null);
+  const ring = useRef<THREE.Mesh>(null);
+  const phase = useMemo(() => {
+    let hash = 0;
+    for (const ch of cursor.id) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+    return (hash % 628) / 100;
+  }, [cursor.id]);
+
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime + phase;
+    if (body.current) {
+      body.current.position.y = Math.abs(Math.sin(t * 2.4)) * CELL * 0.12;
+      body.current.rotation.y = Math.sin(t * 0.9) * 0.35;
+    }
+    if (ring.current) {
+      const pulse = (t * 0.8) % 1;
+      ring.current.scale.setScalar(1 + pulse * 0.9);
+      (ring.current.material as THREE.MeshBasicMaterial).opacity = 0.85 * (1 - pulse);
+    }
+  });
+
+  const u = CELL; // one avatar ≈ one district cell tall
+  return (
+    <group position={[worldX(cursor.col), 0.006, worldZ(cursor.row)]}>
+      {/* spawn ring pulsing under the avatar */}
+      <mesh ref={ring} rotation-x={-Math.PI / 2} position-y={0.001}>
+        <ringGeometry args={[u * 0.42, u * 0.5, 24]} />
+        <meshBasicMaterial color={cursor.color} transparent opacity={0.8} side={THREE.DoubleSide} />
       </mesh>
-      <mesh position-y={0.055}>
-        <sphereGeometry args={[0.012, 8, 6]} />
-        <meshBasicMaterial color={cursor.color} />
-      </mesh>
-      <Html center position={[0, 0.12, 0]} distanceFactor={4} style={{ pointerEvents: "none" }}>
+      <group ref={body}>
+        {/* legs */}
+        <mesh position={[-u * 0.11, u * 0.14, 0]}>
+          <boxGeometry args={[u * 0.14, u * 0.28, u * 0.14]} />
+          <meshBasicMaterial color={cursor.color} />
+        </mesh>
+        <mesh position={[u * 0.11, u * 0.14, 0]}>
+          <boxGeometry args={[u * 0.14, u * 0.28, u * 0.14]} />
+          <meshBasicMaterial color={cursor.color} />
+        </mesh>
+        {/* torso */}
+        <mesh position={[0, u * 0.45, 0]}>
+          <boxGeometry args={[u * 0.4, u * 0.34, u * 0.2]} />
+          <meshBasicMaterial color={cursor.color} />
+        </mesh>
+        {/* head */}
+        <mesh position={[0, u * 0.76, 0]}>
+          <boxGeometry args={[u * 0.26, u * 0.26, u * 0.26]} />
+          <meshBasicMaterial color={cursor.color} />
+        </mesh>
+        {/* visor */}
+        <mesh position={[0, u * 0.78, u * 0.135]}>
+          <boxGeometry args={[u * 0.2, u * 0.06, u * 0.01]} />
+          <meshBasicMaterial color="#000000" />
+        </mesh>
+      </group>
+      <Html center position={[0, u * 1.15, 0]} distanceFactor={4} style={{ pointerEvents: "none" }}>
         <span className="whitespace-nowrap border border-border bg-background/90 px-1 font-mono text-[8px] text-foreground">
           {cursor.handle}
         </span>
       </Html>
     </group>
-  ));
+  );
+}
+
+function VisitorBeacons({ cursors }: { cursors: MapCursor[] }) {
+  return cursors.map((cursor) => <VisitorAvatar key={cursor.id} cursor={cursor} />);
 }
 
 function OnChainModel({ model }: { model: BitmapModel }) {
