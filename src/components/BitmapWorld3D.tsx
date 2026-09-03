@@ -731,10 +731,10 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
       group.current.rotation.y = current.yaw;
     }
     if (body.current) {
-      const stride = cursor.movement === "run" ? 4.4 : cursor.movement === "walk" ? 3.1 : 2.2;
-      const lift = cursor.movement === "idle" || cursor.movement === "turn" ? 0.04 : 0.12;
-      body.current.position.y = Math.abs(Math.sin(t * stride)) * CELL * lift;
+      // The rigged skeleton carries stride and airtime now — no fake bobbing.
+      body.current.position.y = 0;
     }
+
     if (ring.current && ringMaterial.current) {
       const pulse = (t * 0.8) % 1;
       ring.current.scale.setScalar(1 + pulse * 0.9);
