@@ -116,23 +116,58 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
       return;
     }
 
+    const ownerMap = ownersRef.current;
     for (let row = rowFrom; row <= rowTo; row++) {
       const sy = y + row * scale;
       for (let col = colFrom; col <= colTo; col++) {
         const height = heightOf(col, row);
         const sx = x + col * scale;
-        const isHighlight = highlightSet.current.has(height);
+        const owner = ownerMap.get(height);
+        const isMine = !!owner && mineRef.current.has(owner);
+        const isHighlight = highlightSet.current.has(height) || isMine;
         if (height > tipHeight) {
           ctx.fillStyle = borderCol;
+          ctx.globalAlpha = 0.35;
+        } else if (isHighlight) {
+          ctx.fillStyle = accentCol;
+          ctx.globalAlpha = 1;
+        } else if (owner) {
+          ctx.fillStyle = colorForAddress(owner);
+          ctx.globalAlpha = 0.95;
         } else {
-          ctx.fillStyle = isHighlight ? accentCol : fgCol;
+          ctx.fillStyle = fgCol;
+          ctx.globalAlpha = 0.8;
         }
-        ctx.globalAlpha = height > tipHeight ? 0.35 : isHighlight ? 1 : 0.8;
-        ctx.fillRect(sx, sy, isHighlight ? Math.max(dot, 2) : dot, isHighlight ? Math.max(dot, 2) : dot);
+        const size = isHighlight || owner ? Math.max(dot, 2) : dot;
+        ctx.fillRect(sx, sy, size, size);
       }
     }
     ctx.globalAlpha = 1;
+  }, [tipHeight, owners.data]);
+
+  // Owners are fetched for the visible window only — the registry holds
+  // hundreds of thousands of owned districts.
+  const syncOwnerWindow = useCallback(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    const { x, y, scale } = viewRef.current;
+    const colFrom = Math.max(0, Math.floor(-x / scale));
+    const rowFrom = Math.max(0, Math.floor(-y / scale));
+    const colTo = Math.min(GRID - 1, Math.ceil((-x + wrap.clientWidth) / scale));
+    const rowTo = Math.min(GRID - 1, Math.ceil((-y + wrap.clientHeight) / scale));
+    const cells = (colTo - colFrom + 1) * (rowTo - rowFrom + 1);
+    if (scale < 1.2 || cells > OWNER_CELL_BUDGET || rowFrom * GRID > tipHeight) {
+      setWindow(null);
+      return;
+    }
+    setWindow({ rowFrom, rowTo, colFrom, colTo });
   }, [tipHeight]);
+
+  useEffect(() => {
+    const id = setTimeout(syncOwnerWindow, 250);
+    return () => clearTimeout(id);
+  }, [syncOwnerWindow, zoomLabel]);
+
 
 
   useEffect(() => {
