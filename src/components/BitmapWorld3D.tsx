@@ -145,7 +145,11 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({ heights, bitcoin }: { he
     aura.computeBoundingSphere();
   }, [owned]);
 
+  const nextPulse = useRef(0);
   useFrame(({ clock }) => {
+    // Pulse at ~20Hz instead of every frame — visually identical, far cheaper.
+    if (clock.elapsedTime < nextPulse.current) return;
+    nextPulse.current = clock.elapsedTime + 0.05;
     const pulse = (Math.sin(clock.elapsedTime * 2.2) + 1) / 2;
     if (coreMaterial.current) coreMaterial.current.opacity = 0.66 + pulse * 0.26;
     if (auraMaterial.current) auraMaterial.current.opacity = 0.08 + pulse * 0.13;
@@ -154,7 +158,7 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({ heights, bitcoin }: { he
   if (owned.length === 0) return null;
   return (
     <group>
-      <instancedMesh ref={auraRef} args={[undefined, undefined, owned.length]} frustumCulled>
+      <instancedMesh key={`aura-${owned.length}`} ref={auraRef} args={[undefined, undefined, owned.length]} frustumCulled raycast={noRaycast}>
         <boxGeometry args={[1, 1, 1]} />
         <meshBasicMaterial
           ref={auraMaterial}
