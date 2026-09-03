@@ -1240,7 +1240,7 @@ const LandSurface = memo(function LandSurface({
       <mesh
         rotation-x={-Math.PI / 2}
         position={[0, -AVATAR_U * 0.1, WORLD_SIZE / 2]}
-        renderOrder={-4}
+        renderOrder={-5}
         raycast={noRaycast}
       >
         <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
@@ -1249,7 +1249,7 @@ const LandSurface = memo(function LandSurface({
       <mesh
         rotation-x={-Math.PI / 2}
         position={[0, -AVATAR_U * 0.1, tipDepth / 2]}
-        renderOrder={-3}
+        renderOrder={-4}
         raycast={noRaycast}
       >
         <planeGeometry args={[WORLD_SIZE, tipDepth, 1, 1]} />
@@ -1275,6 +1275,7 @@ const LandSurface = memo(function LandSurface({
         position={[0, -AVATAR_U * 0.1, WORLD_SIZE / 2]}
         renderOrder={-2}
         material-depthWrite={false}
+        material-depthTest={false}
         raycast={noRaycast}
       />
     </>
