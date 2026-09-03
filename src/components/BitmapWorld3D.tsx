@@ -35,7 +35,16 @@ type WorldColors = {
 
 function readWorldColors(): WorldColors {
   const css = getComputedStyle(document.documentElement);
-  const read = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback;
+  const read = (name: string, fallback: string) => {
+    const value = css.getPropertyValue(name).trim() || fallback;
+    const probe = document.createElement("span");
+    probe.style.color = value;
+    probe.style.display = "none";
+    document.body.appendChild(probe);
+    const resolved = getComputedStyle(probe).color;
+    probe.remove();
+    return resolved || fallback;
+  };
   return {
     background: read("--background", "black"),
     foreground: read("--foreground", "white"),
@@ -43,10 +52,6 @@ function readWorldColors(): WorldColors {
     bitcoin: read("--bitcoin", "orange"),
     border: read("--border", "gray"),
   };
-}
-
-function toThreeColor(value: string) {
-  return value.startsWith("oklch") ? new THREE.Color().setStyle(value) : new THREE.Color(value);
 }
 
 const worldX = (col: number) => (col + 0.5) * CELL - WORLD_SIZE / 2;
@@ -189,7 +194,7 @@ function LandSurface({ colors, tipHeight }: { colors: WorldColors; tipHeight: nu
         <meshStandardMaterial color={colors.foreground} roughness={0.72} metalness={0.15} />
       </mesh>
       <gridHelper
-        args={[WORLD_SIZE, 100, toThreeColor(colors.muted), toThreeColor(colors.border)]}
+        args={[WORLD_SIZE, 100, new THREE.Color(colors.muted), new THREE.Color(colors.border)]}
         position={[0, 0.003, WORLD_SIZE / 2]}
       />
     </>
@@ -233,13 +238,13 @@ function WorldScene({
   return (
     <>
       <color attach="background" args={[colors.background]} />
-      <fog attach="fog" args={[colors.background, 32, 175]} />
-      <ambientLight intensity={0.42} />
-      <hemisphereLight args={[colors.foreground, colors.background, 0.44]} />
-      <directionalLight color={colors.bitcoin} position={[-18, 36, -12]} intensity={3.2} castShadow={false} />
-      <pointLight color={colors.bitcoin} position={[14, 12, 3]} intensity={85} distance={38} decay={2} />
+      <fog attach="fog" args={[colors.background, 48, 185]} />
+      <ambientLight intensity={0.24} />
+      <hemisphereLight args={[colors.foreground, colors.background, 0.3]} />
+      <directionalLight color={colors.bitcoin} position={[-18, 36, -12]} intensity={4.4} castShadow={false} />
+      <pointLight color={colors.bitcoin} position={[14, 12, 3]} intensity={120} distance={45} decay={2} />
       <Environment>
-        <Lightformer intensity={2.1} color={colors.bitcoin} position={[0, 12, -4]} scale={[34, 14, 1]} />
+        <Lightformer intensity={3.1} color={colors.bitcoin} position={[0, 12, -4]} scale={[34, 14, 1]} />
         <Lightformer intensity={0.8} color={colors.foreground} position={[-20, 5, 20]} rotation-y={Math.PI / 2} scale={[28, 4, 1]} />
       </Environment>
       <LandSurface colors={colors} tipHeight={tipHeight} />
