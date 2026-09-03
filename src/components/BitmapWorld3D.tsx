@@ -81,7 +81,7 @@ function heightAtPoint(point: THREE.Vector3) {
   return row * GRID + col;
 }
 
-function HolderColumns({ owners, mine, bitcoin }: { owners: Map<number, string>; mine: Set<string>; bitcoin: string }) {
+const HolderColumns = memo(function HolderColumns({ owners, mine, bitcoin }: { owners: Map<number, string>; mine: Set<string>; bitcoin: string }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const entries = useMemo(() => [...owners.entries()], [owners]);
 
