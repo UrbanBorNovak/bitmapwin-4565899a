@@ -832,7 +832,7 @@ const SelfAvatar = memo(function SelfAvatar({
     if (!current || !group.current) return;
     group.current.position.set(current.x, current.y + 0.006, current.z);
     group.current.rotation.y = current.yaw;
-    const next: AvatarMotion = current.animation === "turn" ? "idle" : current.animation;
+    const next: AvatarMotion = current.animation;
     setMotion((previous) => (previous === next ? previous : next));
   });
   return (
