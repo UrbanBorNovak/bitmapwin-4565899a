@@ -1082,6 +1082,25 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   );
   const chatLines = useMemo(() => said.slice(-6), [said]);
 
+  // Cheap 4Hz readout of the predicted local state — no per-frame re-renders.
+  const [readout, setReadout] = useState({ movement: "idle", chunk: "0:0", height: 0, target: false });
+  useEffect(() => {
+    if (!thirdPerson) return;
+    const id = window.setInterval(() => {
+      const player = pose.current;
+      if (!player) return;
+      setReadout((current) =>
+        current.movement === player.movement &&
+        current.chunk === player.chunk &&
+        current.height === player.height &&
+        current.target === Boolean(player.target)
+          ? current
+          : { movement: player.movement, chunk: player.chunk, height: player.height, target: Boolean(player.target) },
+      );
+    }, 250);
+    return () => window.clearInterval(id);
+  }, [thirdPerson]);
+
   return (
     <div className={className}>
       <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -1169,6 +1188,15 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
             </span>
           ) : null}
           {attackTarget ? <span className="text-bitcoin">{attackTarget}</span> : null}
+          {thirdPerson ? (
+            <>
+              <span className="text-muted-foreground">
+                {readout.movement.toUpperCase()} · REGION {readout.chunk} · {readout.height.toLocaleString("en-US")}.BITMAP
+                {readout.target ? " · WALKING TO MARK" : ""}
+              </span>
+              <span className="text-muted-foreground">WASD / ARROWS · SHIFT SPRINT · CLICK OR TAP TO WALK · SPACE ATTACK</span>
+            </>
+          ) : null}
 
         </div>
 
