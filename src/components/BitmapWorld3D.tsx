@@ -42,7 +42,11 @@ import {
   type MoveIntent,
   type PlayerState,
 } from "@/lib/player-state";
-import { setAvatarModelInscription } from "@/lib/map-identity";
+import {
+  DEFAULT_AVATAR_MODEL,
+  DEFAULT_AVATAR_TEXTURE,
+  setAvatarModelInscription,
+} from "@/lib/map-identity";
 
 import { useWalletSession } from "@/lib/wallet-session";
 import { mapBitmapModelsQuery, type BitmapModel } from "@/lib/bitmap-models";
