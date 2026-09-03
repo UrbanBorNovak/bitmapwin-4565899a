@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 const STEPS = [
   {
     n: "01",
