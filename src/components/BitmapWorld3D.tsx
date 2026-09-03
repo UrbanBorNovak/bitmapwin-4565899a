@@ -111,20 +111,12 @@ function HolderColumns({ owners, mine, bitcoin }: { owners: Map<number, string>;
 
 function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: WorldColors }) {
   const geometry = useMemo(() => {
-    const base = new THREE.BoxGeometry(1, 1, 1);
-    base.translate(0, 0.5, 0);
-    const instanced = new THREE.InstancedBufferGeometry();
-    if (base.index) instanced.setIndex(base.index.clone());
-    for (const [name, attribute] of Object.entries(base.attributes)) {
-      instanced.setAttribute(name, attribute.clone());
-    }
+    const points = new THREE.BufferGeometry();
     const ids = new Float32Array(DISTRICT_COUNT);
     for (let index = 0; index < DISTRICT_COUNT; index += 1) ids[index] = index;
-    instanced.setAttribute("districtId", new THREE.InstancedBufferAttribute(ids, 1));
-    instanced.instanceCount = DISTRICT_COUNT;
-    instanced.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, WORLD_SIZE / 2), WORLD_SIZE);
-    base.dispose();
-    return instanced;
+    points.setAttribute("position", new THREE.BufferAttribute(ids, 1));
+    points.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, WORLD_SIZE / 2), WORLD_SIZE);
+    return points;
   }, []);
 
   useEffect(() => () => geometry.dispose(), [geometry]);
@@ -143,11 +135,10 @@ function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: Worl
   );
 
   return (
-    <mesh geometry={geometry} frustumCulled={false}>
+    <points geometry={geometry} frustumCulled={false}>
       <shaderMaterial
         uniforms={uniforms}
         vertexShader={/* glsl */ `
-          attribute float districtId;
           uniform float uGrid;
           uniform float uCell;
           uniform float uWorldSize;
@@ -155,27 +146,27 @@ function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: Worl
           varying float vMined;
           varying float vClub;
           varying float vShade;
-          varying vec3 vNormal;
 
           float hash(float value) {
             return fract(sin(value * 12.9898) * 43758.5453);
           }
 
           void main() {
+            float districtId = position.x;
             float col = mod(districtId, uGrid);
             float row = floor(districtId / uGrid);
             vMined = step(districtId, uTip);
             vClub = districtId < 1000.0 ? 0.0 : districtId < 10000.0 ? 1.0 : districtId < 100000.0 ? 2.0 : 3.0;
             vShade = hash(districtId);
             float blockHeight = mix(0.006, 0.025 + vShade * 0.045, vMined);
-            vec3 transformed = position;
-            transformed.x *= uCell * 0.82;
-            transformed.y *= blockHeight;
-            transformed.z *= uCell * 0.82;
-            transformed.x += (col + 0.5) * uCell - uWorldSize * 0.5;
-            transformed.z += (row + 0.5) * uCell;
-            vNormal = normalize(normalMatrix * normal);
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(transformed, 1.0);
+            vec3 transformed = vec3(
+              (col + 0.5) * uCell - uWorldSize * 0.5,
+              blockHeight,
+              (row + 0.5) * uCell
+            );
+            vec4 viewPosition = modelViewMatrix * vec4(transformed, 1.0);
+            gl_Position = projectionMatrix * viewPosition;
+            gl_PointSize = clamp(72.0 * uCell / max(0.1, -viewPosition.z), 1.0, 7.0);
           }
         `}
         fragmentShader={/* glsl */ `
@@ -185,11 +176,12 @@ function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: Worl
           varying float vMined;
           varying float vClub;
           varying float vShade;
-          varying vec3 vNormal;
 
           void main() {
-            vec3 lightDirection = normalize(vec3(-0.35, 0.85, -0.28));
-            float light = 0.42 + max(dot(normalize(vNormal), lightDirection), 0.0) * 0.72;
+            vec2 edge = abs(gl_PointCoord - 0.5);
+            if (max(edge.x, edge.y) > 0.46) discard;
+            float bevel = 1.0 - smoothstep(0.32, 0.48, max(edge.x, edge.y));
+            float light = 0.72 + bevel * 0.35;
             float clubBand = 0.82 + vClub * 0.045;
             vec3 minedColor = uBitcoin * clubBand * (0.9 + vShade * 0.18) * light;
             vec3 futureColor = uFuture * (0.34 + light * 0.25);
@@ -200,7 +192,46 @@ function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: Worl
           }
         `}
       />
-    </mesh>
+    </points>
+  );
+}
+
+function DetailedDistrictBlocks({ window_, tipHeight, bitcoin, border }: { window_: OwnerWindow | null; tipHeight: number; bitcoin: string; border: string }) {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const blocks = useMemo(() => {
+    if (!window_) return [];
+    const result: number[] = [];
+    for (let row = window_.rowFrom; row <= window_.rowTo; row += 1) {
+      for (let col = window_.colFrom; col <= window_.colTo; col += 1) result.push(row * GRID + col);
+    }
+    return result;
+  }, [window_]);
+
+  useEffect(() => {
+    const mesh = meshRef.current;
+    if (!mesh) return;
+    const dummy = new THREE.Object3D();
+    const color = new THREE.Color();
+    blocks.forEach((height, index) => {
+      const blockHeight = height <= tipHeight ? districtHeight(height) : 0.006;
+      dummy.position.set(worldX(height % GRID), blockHeight / 2, worldZ(Math.floor(height / GRID)));
+      dummy.scale.set(CELL * 0.82, blockHeight, CELL * 0.82);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(index, dummy.matrix);
+      color.set(height <= tipHeight ? bitcoin : border);
+      mesh.setColorAt(index, color);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    mesh.computeBoundingSphere();
+  }, [bitcoin, blocks, border, tipHeight]);
+
+  if (blocks.length === 0) return null;
+  return (
+    <instancedMesh ref={meshRef} args={[undefined, undefined, blocks.length]}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial vertexColors roughness={0.68} metalness={0.18} />
+    </instancedMesh>
   );
 }
 
@@ -390,6 +421,7 @@ function WorldScene({
       </Environment>
       <LandSurface colors={colors} tipHeight={tipHeight} />
       <DistrictBlocks tipHeight={tipHeight} colors={colors} />
+      <DetailedDistrictBlocks window_={districtWindow} tipHeight={tipHeight} bitcoin={colors.bitcoin} border={colors.border} />
       <HolderColumns owners={owners} mine={mine} bitcoin={colors.bitcoin} />
       {selectedHeight !== null ? <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} /> : null}
       <VisitorBeacons cursors={cursors} />
