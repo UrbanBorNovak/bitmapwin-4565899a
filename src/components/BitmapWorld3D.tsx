@@ -35,15 +35,18 @@ type WorldColors = {
 
 function readWorldColors(): WorldColors {
   const css = getComputedStyle(document.documentElement);
+  const canvas = document.createElement("canvas");
+  canvas.width = 1;
+  canvas.height = 1;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
   const read = (name: string, fallback: string) => {
     const value = css.getPropertyValue(name).trim() || fallback;
-    const probe = document.createElement("span");
-    probe.style.color = value;
-    probe.style.display = "none";
-    document.body.appendChild(probe);
-    const resolved = getComputedStyle(probe).color;
-    probe.remove();
-    return resolved || fallback;
+    if (!context) return fallback;
+    context.clearRect(0, 0, 1, 1);
+    context.fillStyle = value;
+    context.fillRect(0, 0, 1, 1);
+    const [red, green, blue] = context.getImageData(0, 0, 1, 1).data;
+    return `rgb(${red}, ${green}, ${blue})`;
   };
   return {
     background: read("--background", "black"),
