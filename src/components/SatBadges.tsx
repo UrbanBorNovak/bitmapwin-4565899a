@@ -13,17 +13,20 @@ const FILLED: SatRarity[] = ["MYTHIC", "LEGENDARY", "EPIC", "RARE", "UNCOMMON"];
 export function SatBadges({
   height,
   max,
+  rarityOnly = false,
   className = "",
 }: {
   height: number;
   max?: number;
+  /** Show only the ordinal rarity badge, no named sat collections. */
+  rarityOnly?: boolean;
   className?: string;
 }) {
   const { data: sat } = useQuery(satQuery(height));
   if (sat === null || sat === undefined) return null;
 
   const rarity = satRarity(sat);
-  const specials = satSpecials(sat);
+  const specials = rarityOnly ? [] : satSpecials(sat);
   const rare = FILLED.includes(rarity);
   if (!rare && specials.length === 0) return null;
 
