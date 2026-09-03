@@ -2,16 +2,17 @@ import { useCallback, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { DistrictDotMap } from "@/components/DistrictDotMap";
+import { BitmapWorld3D } from "@/components/BitmapWorld3D";
 import { MapChat } from "@/components/MapChat";
 import type { MapCursor } from "@/lib/map-presence";
 import { getChainBlocks } from "@/lib/chain.functions";
 
 export const Route = createFileRoute("/map")({
+  ssr: false,
   head: () => {
     const title = "Land Map — 10,000 × 10,000 Bitmap Districts";
     const description =
-      "Every Bitcoin bitmap district as one dot on a 10,000 by 10,000 grid. Pan, zoom and click any dot to open that district.";
+      "Explore every Bitcoin bitmap district as a live 3D land world. Fly, orbit and click any district to open its on-chain view.";
     return {
       meta: [
         { title },
@@ -45,7 +46,7 @@ function MapPage() {
     <div className="mx-auto max-w-[1600px] px-4 py-12 md:px-8">
       <h1 className="display text-3xl md:text-5xl">LAND MAP</h1>
       <p className="label mt-3">
-        10,000 × 10,000 DOTS · ONE DOT = ONE DISTRICT · BLOCK ORDER LEFT TO RIGHT, TOP TO BOTTOM
+        10,000 × 10,000 LAND WORLD · ONE CELL = ONE BITMAP · BLOCK ORDER LEFT TO RIGHT, TOP TO BOTTOM
       </p>
 
       <div className="mt-6 flex flex-wrap items-center gap-4 font-mono text-[10px] text-muted-foreground">
@@ -69,7 +70,7 @@ function MapPage() {
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <DistrictDotMap tipHeight={tipHeight} onCursorsChange={handleCursors} />
+        <BitmapWorld3D tipHeight={tipHeight} onCursorsChange={handleCursors} />
         <MapChat cursors={cursors} />
       </div>
     </div>
