@@ -189,6 +189,11 @@ function Marketplace() {
       </div>
 
       <div className="mt-6">
+        <OpportunityFunnel parcels={parcels} />
+      </div>
+
+
+      <div className="mt-6">
         <FloorRanking parcels={listed} pending={registry.isPending} />
       </div>
 
