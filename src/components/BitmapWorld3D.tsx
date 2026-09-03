@@ -862,8 +862,25 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   useEffect(() => {
     if (spawnedRef.current || !tipHeight) return;
     spawnedRef.current = true;
+    pose.current = { x: worldX(tipHeight % GRID), z: worldZ(Math.floor(tipHeight / GRID)), yaw: 0 };
     publish({ col: tipHeight % GRID, row: Math.floor(tipHeight / GRID), height: tipHeight });
   }, [tipHeight, publish]);
+
+  const sendSay = useCallback(() => {
+    const body = draft.trim();
+    if (!body) return;
+    say(body);
+    setMySay(body);
+    setDraft("");
+    window.setTimeout(() => setMySay((current) => (current === body ? null : current)), SAY_TTL_MS);
+  }, [draft, say]);
+
+  const wearModel = useCallback(() => {
+    const id = modelDraft.trim() || null;
+    setAvatarModelInscription(id);
+    setAvatarModel(id);
+    setModelDraft("");
+  }, [modelDraft, setAvatarModel]);
 
   const moveCamera = (type: CameraMove) => setCommand((current) => ({ type, nonce: current.nonce + 1 }));
   const handleWindow = useCallback((next: OwnerWindow | null) => setWindow(next), []);
@@ -881,6 +898,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
       (held.data ?? []).includes(selected.height)
     ),
   );
+  const chatLines = useMemo(() => said.slice(-6), [said]);
 
   return (
     <div className={className}>
@@ -888,7 +906,44 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
         <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("mined")}>[ FRAME MINED WORLD ]</Button>
         <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("full")}>[ VIEW FULL WORLD ]</Button>
         <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("tip")}>[ FLY TO TIP ]</Button>
+        <Button
+          className={thirdPerson ? "btn-term" : "btn-term-ghost"}
+          variant="ghost"
+          onClick={() => setThirdPerson((current) => !current)}
+        >
+          {thirdPerson ? "[ EXIT 3RD PERSON ]" : "[ 3RD PERSON WALK ]"}
+        </Button>
+        <form
+          className="flex items-center gap-1"
+          onSubmit={(event) => {
+            event.preventDefault();
+            wearModel();
+          }}
+        >
+          <input
+            value={modelDraft}
+            onChange={(event) => setModelDraft(event.target.value)}
+            placeholder={avatarModel ? "REPLACE AVATAR INSCRIPTION ID" : "AVATAR GLB INSCRIPTION ID"}
+            aria-label="Avatar model inscription id"
+            className="w-[220px] border border-border bg-background px-2 py-1 font-mono text-[10px] text-foreground outline-none placeholder:text-muted-foreground focus:border-bitcoin"
+          />
+          <Button className="btn-term-ghost" variant="ghost" type="submit">[ WEAR ]</Button>
+          {avatarModel ? (
+            <Button
+              className="btn-term-ghost"
+              variant="ghost"
+              type="button"
+              onClick={() => {
+                setAvatarModelInscription(null);
+                setAvatarModel(null);
+              }}
+            >
+              [ REMOVE MODEL ]
+            </Button>
+          ) : null}
+        </form>
       </div>
+
       <div className="relative h-[70vh] min-h-[420px] w-full overflow-hidden border border-border bg-background">
         {colors ? (
           <Canvas
