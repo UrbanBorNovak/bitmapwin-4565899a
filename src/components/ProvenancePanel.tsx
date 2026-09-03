@@ -158,3 +158,63 @@ function Cell({ k, v, sub }: { k: string; v: string; sub: string }) {
     </div>
   );
 }
+
+/**
+ * Compact provenance score card, used next to market trends so a shortlisted
+ * bitmap can be judged on real records without leaving the page.
+ */
+export function ProvenanceScoreCard({
+  height,
+  ownerAddress,
+  priceSats,
+}: {
+  height: number;
+  ownerAddress: string | null;
+  priceSats?: number | null;
+}) {
+  const { data } = useQuery(provenanceQuery(height, ownerAddress));
+  const score = data ? provenanceScore(data) : null;
+  const meta = data ? STATUS[data.verification] : null;
+
+  return (
+    <a
+      href={`/bitmap/${height}`}
+      className="block border border-border bg-card p-4 transition-colors hover:border-bitcoin"
+    >
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="display text-sm">{height.toLocaleString("en-US")}.BITMAP</span>
+        <span className="label text-bitcoin">
+          {priceSats ? formatSats(priceSats) : NO_DATA}
+        </span>
+      </div>
+      {score && data && meta ? (
+        <>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="display text-2xl">{score.score}</span>
+            <span className="label">/ 100 · {score.grade}</span>
+          </div>
+          <div className="mt-2 h-1 w-full bg-surface" aria-hidden="true">
+            <div className="h-full bg-bitcoin" style={{ width: `${score.score}%` }} />
+          </div>
+          <div className="label mt-3 inline-flex items-center gap-1.5">
+            <span className={`size-1.5 ${meta.dot}`} aria-hidden="true" />
+            {meta.label}
+          </div>
+          <p className="mt-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
+            {data.paidSales > 0
+              ? `${data.paidSales} PAID SALE${data.paidSales === 1 ? "" : "S"}`
+              : "NO SETTLED SALE ON CHAIN"}
+            {" · "}
+            {data.transfers > 0 ? `${data.transfers} TRANSFERS` : "NO TRANSFER TRACED"}
+            {" · "}
+            {data.lastSaleAt ? `LAST ${timeAgo(data.lastSaleAt)}` : NO_DATA}
+          </p>
+        </>
+      ) : (
+        <p className="mt-3 font-mono text-[10px] text-muted-foreground">
+          &gt; READING RECORDS<span className="blink">_</span>
+        </p>
+      )}
+    </a>
+  );
+}

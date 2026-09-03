@@ -121,3 +121,30 @@ export const tradedBitmapCountQuery = () =>
     queryFn: fetchTradedBitmapCount,
     staleTime: 120_000,
   });
+
+/**
+ * Every real paid sale (a traced transfer that paid the seller). Used by the
+ * trend explorer to chart observed floor and average prices over time.
+ */
+export async function fetchPaidSales(): Promise<TradeRow[]> {
+  const { data, error } = await supabase
+    .from("trades")
+    .select("*")
+    .gt("price_sats", 0)
+    .order("created_at", { ascending: true })
+    .limit(5000);
+  if (error) throw error;
+  return normalise(data as TradeRow[] | null);
+}
+
+export const paidSalesQuery = () =>
+  queryOptions({
+    queryKey: ["trades", "paid-sales"],
+    queryFn: fetchPaidSales,
+    staleTime: 60_000,
+  });
+
+/** Best timestamp we hold for a traced trade. */
+export function tradeTime(row: TradeRow): string {
+  return row.block_time ?? row.created_at;
+}

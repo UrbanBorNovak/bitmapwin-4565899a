@@ -16,6 +16,7 @@ import { CLUBS, inClub, type ClubId } from "@/lib/clubs";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapMarketChart } from "@/components/BitmapMarketChart";
 import { FloorRanking } from "@/components/FloorRanking";
+import { TrendExplorer } from "@/components/TrendExplorer";
 import { SalesLog } from "@/components/SalesLog";
 import { TradeCrawlerStatus } from "@/components/TradeCrawlerStatus";
 import { useServerFn } from "@tanstack/react-start";
@@ -181,6 +182,10 @@ function Marketplace() {
           <TrendingParcels limit={3} />
           <SalesLog limit={30} />
         </div>
+      </div>
+
+      <div className="mt-6">
+        <TrendExplorer parcels={parcels} />
       </div>
 
       <div className="mt-6">
