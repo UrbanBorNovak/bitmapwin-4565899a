@@ -29,7 +29,7 @@ function triangleCount(json: GlbJson) {
   for (const mesh of json.meshes ?? []) {
     for (const primitive of mesh.primitives ?? []) {
       const count = primitive.indices === undefined
-        ? Number(json.accessors?.[primitive.attributes?.POSITION ?? -1]?.count ?? 0)
+        ? Number(json.accessors?.[primitive.attributes?.["POSITION"] ?? -1]?.count ?? 0)
         : Number(json.accessors?.[primitive.indices]?.count ?? 0);
       const mode = primitive.mode ?? 4;
       if (mode === 4) total += Math.floor(count / 3);

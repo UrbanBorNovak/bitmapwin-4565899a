@@ -357,7 +357,9 @@ function OnChainModel({ model }: { model: BitmapModel }) {
   useEffect(() => {
     const first = Object.values(actions)[0];
     first?.reset().play();
-    return () => first?.stop();
+    return () => {
+      first?.stop();
+    };
   }, [actions]);
   const blockY = districtHeight(model.bitmapHeight);
   return (
