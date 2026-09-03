@@ -108,24 +108,48 @@ function HolderColumns({ owners, mine, bitcoin }: { owners: Map<number, string>;
   );
 }
 
-function DistrictBlocks({ tipHeight, bitcoin }: { tipHeight: number; bitcoin: string }) {
+function DistrictBlocks({ tipHeight, bitcoin, window_ }: { tipHeight: number; bitcoin: string; window_: OwnerWindow | null }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
-  const count = Math.max(0, tipHeight + 1);
+  const blocks = useMemo(() => {
+    if (window_) {
+      const exact: Array<{ height: number; col: number; row: number; span: number }> = [];
+      for (let row = window_.rowFrom; row <= window_.rowTo; row += 1) {
+        for (let col = window_.colFrom; col <= window_.colTo; col += 1) {
+          const height = row * GRID + col;
+          if (height <= tipHeight) exact.push({ height, col, row, span: 1 });
+        }
+      }
+      return exact;
+    }
+
+    const span = 100;
+    const maxRow = Math.floor(tipHeight / GRID);
+    const overview: Array<{ height: number; col: number; row: number; span: number }> = [];
+    for (let row = 0; row <= maxRow; row += span) {
+      for (let col = 0; col < GRID; col += span) {
+        const height = row * GRID + col;
+        if (height <= tipHeight) overview.push({ height, col, row, span });
+      }
+    }
+    return overview;
+  }, [tipHeight, window_]);
+  const count = blocks.length;
 
   useEffect(() => {
     const mesh = meshRef.current;
     if (!mesh || count === 0) return;
     const dummy = new THREE.Object3D();
-    for (let height = 0; height < count; height += 1) {
+    blocks.forEach(({ height, col, row, span }, index) => {
       const blockHeight = districtHeight(height);
-      dummy.position.set(worldX(height % GRID), blockHeight / 2, worldZ(Math.floor(height / GRID)));
-      dummy.scale.set(CELL * 0.78, blockHeight, CELL * 0.78);
+      const width = CELL * span;
+      dummy.position.set(worldX(col) + width / 2 - CELL / 2, blockHeight / 2, worldZ(row) + width / 2 - CELL / 2);
+      dummy.scale.set(width * 0.92, blockHeight, width * 0.92);
       dummy.updateMatrix();
-      mesh.setMatrixAt(height, dummy.matrix);
-    }
+      mesh.setMatrixAt(index, dummy.matrix);
+    });
     mesh.instanceMatrix.needsUpdate = true;
     mesh.computeBoundingSphere();
-  }, [count]);
+  }, [blocks, count]);
 
   if (count === 0) return null;
   return (
@@ -278,6 +302,7 @@ function WorldScene({
   mine,
   cursors,
   onWindow,
+  districtWindow,
   onHover,
   onSelect,
   selectedHeight,
@@ -290,6 +315,7 @@ function WorldScene({
   mine: Set<string>;
   cursors: MapCursor[];
   onWindow: (window_: OwnerWindow | null) => void;
+  districtWindow: OwnerWindow | null;
   onHover: (hover: HoveredDistrict | null) => void;
   onSelect: (height: number) => void;
   selectedHeight: number | null;
@@ -319,7 +345,7 @@ function WorldScene({
         <Lightformer intensity={0.8} color={colors.foreground} position={[-20, 5, 20]} rotation-y={Math.PI / 2} scale={[28, 4, 1]} />
       </Environment>
       <LandSurface colors={colors} tipHeight={tipHeight} />
-      <DistrictBlocks tipHeight={tipHeight} bitcoin={colors.bitcoin} />
+      <DistrictBlocks tipHeight={tipHeight} bitcoin={colors.bitcoin} window_={districtWindow} />
       <HolderColumns owners={owners} mine={mine} bitcoin={colors.bitcoin} />
       {selectedHeight !== null ? <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} /> : null}
       <VisitorBeacons cursors={cursors} />
@@ -393,6 +419,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
               mine={mine}
               cursors={cursors}
               onWindow={handleWindow}
+              districtWindow={window_}
               onHover={setHover}
               onSelect={(height) => setSelected({ height, owner: owners.data?.get(height) ?? null })}
               selectedHeight={selected?.height ?? null}
