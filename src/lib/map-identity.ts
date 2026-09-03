@@ -9,6 +9,22 @@ import { colorForAddress } from "@/lib/map-owners";
  */
 const ID_KEY = "bitmap-map-visitor-id";
 const HANDLE_KEY = "bitmap-map-handle";
+const AVATAR_MODEL_KEY = "bitmap-map-avatar-model";
+
+/** Inscription id of the on-chain GLB this browser wears as its avatar. */
+export function avatarModelInscription(): string | null {
+  if (typeof window === "undefined") return null;
+  const stored = window.localStorage.getItem(AVATAR_MODEL_KEY);
+  return stored && stored.trim() ? stored.trim() : null;
+}
+
+export function setAvatarModelInscription(inscriptionId: string | null) {
+  if (typeof window === "undefined") return;
+  const clean = (inscriptionId ?? "").trim();
+  if (clean) window.localStorage.setItem(AVATAR_MODEL_KEY, clean);
+  else window.localStorage.removeItem(AVATAR_MODEL_KEY);
+}
+
 
 function randomId() {
   return crypto.randomUUID();
