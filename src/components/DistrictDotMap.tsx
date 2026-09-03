@@ -55,9 +55,10 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
     const accent = css.getPropertyValue("--bitcoin").trim() || "#f7931a";
     const border = css.getPropertyValue("--border").trim() || "#333";
 
-    ctx.fillStyle = bg ? `oklch(${bg})`.includes("oklch(oklch") ? bg : bg : "#000";
-    ctx.fillStyle = bg.startsWith("oklch") || bg.startsWith("#") ? bg : `oklch(${bg})`;
+    const color = (v: string) => (v.startsWith("oklch") || v.startsWith("#") || v.startsWith("rgb") ? v : `oklch(${v})`);
+    ctx.fillStyle = color(bg);
     ctx.fillRect(0, 0, w, h);
+
 
     const { x, y, scale } = viewRef.current;
     const colFrom = Math.max(0, Math.floor(-x / scale));
