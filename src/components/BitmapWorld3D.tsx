@@ -1239,7 +1239,7 @@ const LandSurface = memo(function LandSurface({
         raycast={noRaycast}
       >
         <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
-        <meshLambertMaterial color={colors.background} />
+        <meshLambertMaterial color={colors.background} depthWrite={false} depthTest={false} />
       </mesh>
       <mesh
         rotation-x={-Math.PI / 2}
@@ -1248,7 +1248,7 @@ const LandSurface = memo(function LandSurface({
         raycast={noRaycast}
       >
         <planeGeometry args={[WORLD_SIZE, tipDepth, 1, 1]} />
-        <meshLambertMaterial color={colors.muted} depthWrite={false} />
+        <meshLambertMaterial color={colors.muted} depthWrite={false} depthTest={false} />
       </mesh>
       <mesh
         rotation-x={-Math.PI / 2}
@@ -1754,9 +1754,6 @@ export function BitmapWorld3D({
               powerPreference: "high-performance",
               stencil: false,
               depth: true,
-              // the world spans centimetre-scale avatars to a 100-unit horizon —
-              // a logarithmic depth buffer keeps the land stable at every zoom
-              logarithmicDepthBuffer: true,
             }}
             performance={{ min: 0.4 }}
           >
