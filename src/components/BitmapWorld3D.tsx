@@ -13,6 +13,7 @@ import { useMapCursors, type MapCursor } from "@/lib/map-presence";
 import { useWalletSession } from "@/lib/wallet-session";
 
 const GRID = 1_000;
+const DISTRICT_COUNT = GRID * GRID;
 const WORLD_SIZE = 100;
 const CELL = WORLD_SIZE / GRID;
 const OWNER_CELL_BUDGET = 55_000;
@@ -108,55 +109,98 @@ function HolderColumns({ owners, mine, bitcoin }: { owners: Map<number, string>;
   );
 }
 
-function DistrictBlocks({ tipHeight, bitcoin, window_ }: { tipHeight: number; bitcoin: string; window_: OwnerWindow | null }) {
-  const meshRef = useRef<THREE.InstancedMesh>(null);
-  const blocks = useMemo(() => {
-    if (window_) {
-      const exact: Array<{ height: number; col: number; row: number; span: number }> = [];
-      for (let row = window_.rowFrom; row <= window_.rowTo; row += 1) {
-        for (let col = window_.colFrom; col <= window_.colTo; col += 1) {
-          const height = row * GRID + col;
-          if (height <= tipHeight) exact.push({ height, col, row, span: 1 });
-        }
-      }
-      return exact;
+function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: WorldColors }) {
+  const geometry = useMemo(() => {
+    const base = new THREE.BoxGeometry(1, 1, 1);
+    base.translate(0, 0.5, 0);
+    const instanced = new THREE.InstancedBufferGeometry();
+    if (base.index) instanced.setIndex(base.index.clone());
+    for (const [name, attribute] of Object.entries(base.attributes)) {
+      instanced.setAttribute(name, attribute.clone());
     }
+    const ids = new Float32Array(DISTRICT_COUNT);
+    for (let index = 0; index < DISTRICT_COUNT; index += 1) ids[index] = index;
+    instanced.setAttribute("districtId", new THREE.InstancedBufferAttribute(ids, 1));
+    instanced.instanceCount = DISTRICT_COUNT;
+    instanced.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, WORLD_SIZE / 2), WORLD_SIZE);
+    base.dispose();
+    return instanced;
+  }, []);
 
-    const span = 100;
-    const maxRow = Math.floor(tipHeight / GRID);
-    const overview: Array<{ height: number; col: number; row: number; span: number }> = [];
-    for (let row = 0; row <= maxRow; row += span) {
-      for (let col = 0; col < GRID; col += span) {
-        const height = row * GRID + col;
-        if (height <= tipHeight) overview.push({ height, col, row, span });
-      }
-    }
-    return overview;
-  }, [tipHeight, window_]);
-  const count = blocks.length;
+  useEffect(() => () => geometry.dispose(), [geometry]);
 
-  useEffect(() => {
-    const mesh = meshRef.current;
-    if (!mesh || count === 0) return;
-    const dummy = new THREE.Object3D();
-    blocks.forEach(({ height, col, row, span }, index) => {
-      const blockHeight = districtHeight(height);
-      const width = CELL * span;
-      dummy.position.set(worldX(col) + width / 2 - CELL / 2, blockHeight / 2, worldZ(row) + width / 2 - CELL / 2);
-      dummy.scale.set(width * 0.92, blockHeight, width * 0.92);
-      dummy.updateMatrix();
-      mesh.setMatrixAt(index, dummy.matrix);
-    });
-    mesh.instanceMatrix.needsUpdate = true;
-    mesh.computeBoundingSphere();
-  }, [blocks, count]);
+  const uniforms = useMemo(
+    () => ({
+      uGrid: { value: GRID },
+      uCell: { value: CELL },
+      uWorldSize: { value: WORLD_SIZE },
+      uTip: { value: tipHeight },
+      uBitcoin: { value: new THREE.Color(colors.bitcoin) },
+      uFuture: { value: new THREE.Color(colors.border) },
+      uFog: { value: new THREE.Color(colors.background) },
+    }),
+    [colors, tipHeight],
+  );
 
-  if (count === 0) return null;
   return (
-    <instancedMesh ref={meshRef} args={[undefined, undefined, count]} frustumCulled>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color={bitcoin} roughness={0.68} metalness={0.18} />
-    </instancedMesh>
+    <mesh geometry={geometry} frustumCulled={false}>
+      <shaderMaterial
+        uniforms={uniforms}
+        vertexShader={/* glsl */ `
+          attribute float districtId;
+          uniform float uGrid;
+          uniform float uCell;
+          uniform float uWorldSize;
+          uniform float uTip;
+          varying float vMined;
+          varying float vClub;
+          varying float vShade;
+          varying vec3 vNormal;
+
+          float hash(float value) {
+            return fract(sin(value * 12.9898) * 43758.5453);
+          }
+
+          void main() {
+            float col = mod(districtId, uGrid);
+            float row = floor(districtId / uGrid);
+            vMined = step(districtId, uTip);
+            vClub = districtId < 1000.0 ? 0.0 : districtId < 10000.0 ? 1.0 : districtId < 100000.0 ? 2.0 : 3.0;
+            vShade = hash(districtId);
+            float blockHeight = mix(0.006, 0.025 + vShade * 0.045, vMined);
+            vec3 transformed = position;
+            transformed.x *= uCell * 0.82;
+            transformed.y *= blockHeight;
+            transformed.z *= uCell * 0.82;
+            transformed.x += (col + 0.5) * uCell - uWorldSize * 0.5;
+            transformed.z += (row + 0.5) * uCell;
+            vNormal = normalize(normalMatrix * normal);
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(transformed, 1.0);
+          }
+        `}
+        fragmentShader={/* glsl */ `
+          uniform vec3 uBitcoin;
+          uniform vec3 uFuture;
+          uniform vec3 uFog;
+          varying float vMined;
+          varying float vClub;
+          varying float vShade;
+          varying vec3 vNormal;
+
+          void main() {
+            vec3 lightDirection = normalize(vec3(-0.35, 0.85, -0.28));
+            float light = 0.42 + max(dot(normalize(vNormal), lightDirection), 0.0) * 0.72;
+            float clubBand = 0.82 + vClub * 0.045;
+            vec3 minedColor = uBitcoin * clubBand * (0.9 + vShade * 0.18) * light;
+            vec3 futureColor = uFuture * (0.34 + light * 0.25);
+            vec3 color = mix(futureColor, minedColor, vMined);
+            float depth = gl_FragCoord.z / gl_FragCoord.w;
+            float fogFactor = smoothstep(48.0, 185.0, depth);
+            gl_FragColor = vec4(mix(color, uFog, fogFactor), 1.0);
+          }
+        `}
+      />
+    </mesh>
   );
 }
 
@@ -323,7 +367,7 @@ function WorldScene({
 }) {
   const handleMove = (event: ThreeEvent<PointerEvent>) => {
     const height = heightAtPoint(event.point);
-    if (height === null || height > tipHeight) {
+    if (height === null) {
       onHover(null);
       onPublish(null);
       return;
@@ -345,7 +389,7 @@ function WorldScene({
         <Lightformer intensity={0.8} color={colors.foreground} position={[-20, 5, 20]} rotation-y={Math.PI / 2} scale={[28, 4, 1]} />
       </Environment>
       <LandSurface colors={colors} tipHeight={tipHeight} />
-      <DistrictBlocks tipHeight={tipHeight} bitcoin={colors.bitcoin} window_={districtWindow} />
+      <DistrictBlocks tipHeight={tipHeight} colors={colors} />
       <HolderColumns owners={owners} mine={mine} bitcoin={colors.bitcoin} />
       {selectedHeight !== null ? <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} /> : null}
       <VisitorBeacons cursors={cursors} />
@@ -360,7 +404,7 @@ function WorldScene({
         onClick={(event) => {
           if (event.delta > 3) return;
           const height = heightAtPoint(event.point);
-          if (height !== null && height <= tipHeight) onSelect(height);
+          if (height !== null) onSelect(height);
         }}
       >
         <planeGeometry args={[WORLD_SIZE, WORLD_SIZE]} />
@@ -465,22 +509,28 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
               <dd>{clubOf(selected.height).label}</dd>
               <dt className="text-muted-foreground">BLOCK</dt>
               <dd>{selected.height.toLocaleString("en-US")}</dd>
-              <dt className="text-muted-foreground">HOLDER</dt>
+              <dt className="text-muted-foreground">STATUS</dt>
               <dd className="truncate">
-                {selected.owner ? (mine.has(selected.owner) ? "YOURS" : selected.owner) : "NO DATA YET"}
+                {selected.height > tipHeight
+                  ? "NOT MINED YET"
+                  : selected.owner
+                    ? (mine.has(selected.owner) ? "YOURS" : selected.owner)
+                    : "NO DATA YET"}
               </dd>
             </dl>
-            <Button
-              className="btn-term mt-4 w-full"
-              onClick={() => navigate({ to: "/bitmap/$block", params: { block: String(selected.height) } })}
-            >
-              OPEN BITMAP <ArrowUpRight />
-            </Button>
+            {selected.height <= tipHeight ? (
+              <Button
+                className="btn-term mt-4 w-full"
+                onClick={() => navigate({ to: "/bitmap/$block", params: { block: String(selected.height) } })}
+              >
+                OPEN BITMAP <ArrowUpRight />
+              </Button>
+            ) : null}
           </section>
         ) : null}
 
         <div className="pointer-events-none absolute bottom-2 left-2 z-30 flex max-w-[calc(100%-1rem)] flex-wrap gap-x-3 gap-y-1 bg-background/75 px-2 py-1 font-mono text-[10px] text-muted-foreground">
-          <span>DRAG TO PAN · RIGHT DRAG TO ORBIT · SCROLL TO FLY · CLICK A BLOCK</span>
+          <span>1,000,000 DISTRICTS LOADED · DRAG TO PAN · RIGHT DRAG TO ORBIT · SCROLL TO FLY · CLICK A BLOCK</span>
           <span data-no-translate>{window_ ? (owners.isPending ? "SCANNING HOLDERS…" : `${owners.data?.size ?? 0} HOLDERS IN RANGE`) : "FLY CLOSER FOR HOLDER COLOURS"}</span>
           <span data-no-translate>{cursors.length > 0 ? `${cursors.length} SEARCHING NOW` : "NOBODY ELSE SEARCHING"}</span>
           {highlight.length > 0 ? <span data-no-translate>{highlight.length} TARGETS</span> : null}
