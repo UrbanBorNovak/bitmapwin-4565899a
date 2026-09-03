@@ -36,10 +36,16 @@ export function HowItWorks() {
             <div className="label text-bitcoin">NEW HERE? START WITH THIS</div>
             <h2 className="display mt-2 text-2xl md:text-3xl">HOW A BITMAP TRADE WORKS</h2>
           </div>
-          <p className="max-w-md font-mono text-[11px] leading-relaxed text-muted-foreground">
-            &gt; FIVE STEPS, ALL ON BITCOIN. NOTHING IS HELD BY US AT ANY POINT.
-          </p>
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            <p className="max-w-md font-mono text-[11px] leading-relaxed text-muted-foreground">
+              &gt; FIVE STEPS, ALL ON BITCOIN. NOTHING IS HELD BY US AT ANY POINT.
+            </p>
+            <Link to="/land-101" className="label border border-border px-3 py-2">
+              [ BITCOIN LAND 101 ]
+            </Link>
+          </div>
         </header>
+
 
         <ol className="grid md:grid-cols-5">
           {STEPS.map((step, i) => (
