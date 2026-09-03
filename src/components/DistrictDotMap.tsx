@@ -358,6 +358,11 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
           }
           const cell = cellAt(e.clientX, e.clientY);
           setHover(cell && cell.height <= tipHeight ? cell : null);
+          publish(
+            cell
+              ? { col: cell.height % GRID, row: Math.floor(cell.height / GRID), height: cell.height }
+              : null,
+          );
         }}
         onPointerUp={(e) => {
           const d = dragRef.current;
