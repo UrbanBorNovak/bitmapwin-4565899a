@@ -111,7 +111,15 @@ function DashboardPage() {
   const address = wallet?.ordinalsAddress ?? links.data?.[0]?.address ?? "";
   const addresses = useMemo(() => (address ? [address] : []), [address]);
 
+  const market = useQuery(registryBaseQuery(300));
+  const marketParcels = market.data ?? [];
+  const marketListed = useMemo(
+    () => marketParcels.filter((p) => p.listedSats !== null),
+    [marketParcels],
+  );
+
   const profile = useQuery(profileQuery(address));
+
   const held = useQuery(heldHeightsQuery(addresses));
   const builds = useQuery(buildsQuery(200));
   const balances = useQuery(coinBalanceQuery(addresses));
