@@ -166,7 +166,7 @@ function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: Worl
             );
             vec4 viewPosition = modelViewMatrix * vec4(transformed, 1.0);
             gl_Position = projectionMatrix * viewPosition;
-            gl_PointSize = clamp(72.0 * uCell / max(0.1, -viewPosition.z), 1.0, 7.0);
+            gl_PointSize = clamp(96.0 * uCell / max(0.1, -viewPosition.z), 1.8, 8.0);
           }
         `}
         fragmentShader={/* glsl */ `
@@ -181,10 +181,10 @@ function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: Worl
             vec2 edge = abs(gl_PointCoord - 0.5);
             if (max(edge.x, edge.y) > 0.46) discard;
             float bevel = 1.0 - smoothstep(0.32, 0.48, max(edge.x, edge.y));
-            float light = 0.72 + bevel * 0.35;
-            float clubBand = 0.82 + vClub * 0.045;
-            vec3 minedColor = uBitcoin * clubBand * (0.9 + vShade * 0.18) * light;
-            vec3 futureColor = uFuture * (0.34 + light * 0.25);
+            float light = 0.92 + bevel * 0.38;
+            float clubBand = 0.9 + vClub * 0.05;
+            vec3 minedColor = uBitcoin * clubBand * (1.02 + vShade * 0.2) * light;
+            vec3 futureColor = uFuture * (0.7 + light * 0.3);
             vec3 color = mix(futureColor, minedColor, vMined);
             float depth = gl_FragCoord.z / gl_FragCoord.w;
             float fogFactor = smoothstep(48.0, 185.0, depth);
