@@ -5,6 +5,7 @@ import { getBitmapRegistryEntry } from "@/lib/oci.functions";
 import { MAX_BITMAP } from "@/lib/oci";
 import { TraitBadges } from "@/components/TraitBadges";
 import { ClubBadge } from "@/components/ClubBadge";
+import { SatBadges, SatProvenance } from "@/components/SatBadges";
 import { toast } from "sonner";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
