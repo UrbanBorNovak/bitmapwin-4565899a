@@ -95,7 +95,7 @@ export function MapChat({ cursors, className }: { cursors: MapCursor[]; classNam
   const onlineIds = useMemo(() => new Set(online.map((c) => c.id)), [online]);
 
   return (
-    <aside className={`flex flex-col border border-border ${className ?? ""}`}>
+    <aside className={`flex flex-col border border-border bg-background ${className ?? ""}`}>
       <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
         <span className="label">MAP CHAT</span>
         <span className="label" data-no-translate>
