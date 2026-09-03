@@ -477,7 +477,7 @@ const LandSurface = memo(function LandSurface({ colors, tipHeight }: { colors: W
   );
 });
 
-function WorldScene({
+const WorldScene = memo(function WorldScene({
   colors,
   command,
   tipHeight,
