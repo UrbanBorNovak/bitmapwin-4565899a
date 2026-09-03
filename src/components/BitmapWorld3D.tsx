@@ -1132,7 +1132,10 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     return () => window.removeEventListener("keydown", onKey);
   }, [attackNearest, exploring]);
 
-  const moveCamera = (type: CameraMove) => setCommand((current) => ({ type, nonce: current.nonce + 1 }));
+  const moveCamera = (type: CameraMove) => {
+    setCameraMode("map");
+    setCommand((current) => ({ type, nonce: current.nonce + 1 }));
+  };
   const handleWindow = useCallback((next: OwnerWindow | null) => setWindow(next), []);
   const ownersRef = useRef(owners.data);
   ownersRef.current = owners.data;
