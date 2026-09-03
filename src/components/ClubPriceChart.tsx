@@ -1,6 +1,6 @@
 import { useMemo, useState, type PointerEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { recentTradesQuery } from "@/lib/trade-store";
+import { tradesInRangeQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
 import type { Club } from "@/lib/clubs";
 import { inClub } from "@/lib/clubs";
@@ -29,7 +29,7 @@ function smoothPath(coords: Array<{ cx: number; cy: number }>) {
  * (rows in `trades` where the spending transaction paid the previous holder).
  */
 export function ClubPriceChart({ club }: { club: Club }) {
-  const trades = useQuery(recentTradesQuery(500));
+  const trades = useQuery(tradesInRangeQuery(club.min, club.max));
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
   const points = useMemo<Point[]>(() => {
