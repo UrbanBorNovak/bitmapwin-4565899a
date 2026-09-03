@@ -17,6 +17,7 @@ import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as Land101RouteImport } from './routes/land-101'
 import { Route as LeasesRouteImport } from './routes/leases'
+import { Route as MapRouteImport } from './routes/map'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -75,6 +76,11 @@ const Land101Route = Land101RouteImport.update({
 const LeasesRoute = LeasesRouteImport.update({
   id: '/leases',
   path: '/leases',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MapRoute = MapRouteImport.update({
+  id: '/map',
+  path: '/map',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketplaceRoute = MarketplaceRouteImport.update({
@@ -185,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
+  '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -213,6 +220,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
+  '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -243,6 +251,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
+  '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -274,6 +283,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/land-101'
     | '/leases'
+    | '/map'
     | '/marketplace'
     | '/mcp'
     | '/reset-password'
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/land-101'
     | '/leases'
+    | '/map'
     | '/marketplace'
     | '/mcp'
     | '/reset-password'
@@ -331,6 +342,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/land-101'
     | '/leases'
+    | '/map'
     | '/marketplace'
     | '/mcp'
     | '/reset-password'
@@ -361,6 +373,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   Land101Route: typeof Land101Route
   LeasesRoute: typeof LeasesRoute
+  MapRoute: typeof MapRoute
   MarketplaceRoute: typeof MarketplaceRoute
   McpRoute: typeof McpRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -435,6 +448,13 @@ declare module '@tanstack/react-router' {
       path: '/leases'
       fullPath: '/leases'
       preLoaderRoute: typeof LeasesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/map': {
+      id: '/map'
+      path: '/map'
+      fullPath: '/map'
+      preLoaderRoute: typeof MapRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marketplace': {
@@ -609,6 +629,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   Land101Route: Land101Route,
   LeasesRoute: LeasesRoute,
+  MapRoute: MapRoute,
   MarketplaceRoute: MarketplaceRoute,
   McpRoute: McpRoute,
   ResetPasswordRoute: ResetPasswordRoute,
