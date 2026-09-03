@@ -803,7 +803,7 @@ const WorldScene = memo(function WorldScene({
   onHover: (hover: HoveredDistrict | null) => void;
   onSelect: (height: number) => void;
   selectedHeight: number | null;
-  onPublish: (position: { col: number; row: number; height: number } | null) => void;
+  onPublish: (report: PoseReport | null) => void;
   models: BitmapModel[];
   ownedHeights: number[];
   thirdPerson: boolean;
@@ -879,14 +879,18 @@ const WorldScene = memo(function WorldScene({
         onClick={(event) => {
           if (event.delta > 3) return;
           const height = heightAtPoint(event.point);
-          if (height !== null) onSelect(height);
+          if (height === null) return;
+          // Mouse / touch movement: walking mode treats a tap as a destination,
+          // and still opens the district window you tapped.
+          if (thirdPerson && pose.current) pose.current.target = { x: event.point.x, z: event.point.z };
+          onSelect(height);
         }}
       >
         <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
       {thirdPerson ? (
-        <ThirdPersonRig pose={pose} onCell={onPublish} />
+        <ThirdPersonRig pose={pose} onPose={onPublish} />
       ) : (
         <CameraDirector command={command} tipHeight={tipHeight} />
       )}
@@ -933,7 +937,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     respawn,
   } = useMapCursors();
 
-  const pose = useRef<SelfPose>({ x: 0, z: CELL, yaw: 0 });
+  const pose = useRef<SelfPose>(createPlayerState(0, CELL, 0));
   const [mySay, setMySay] = useState<string | null>(null);
   const self = useMemo(
     () => ({ handle, color, model: avatarModel, say: mySay, hp, hitAt }),
@@ -965,8 +969,8 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   useEffect(() => {
     if (spawnedRef.current || !tipHeight) return;
     spawnedRef.current = true;
-    pose.current = { x: worldX(tipHeight % GRID), z: worldZ(Math.floor(tipHeight / GRID)), yaw: 0 };
-    publish({ col: tipHeight % GRID, row: Math.floor(tipHeight / GRID), height: tipHeight });
+    placePlayer(pose.current, worldX(tipHeight % GRID), worldZ(Math.floor(tipHeight / GRID)), 0);
+    publish({ col: tipHeight % GRID, row: Math.floor(tipHeight / GRID), height: tipHeight, x: pose.current.x, z: pose.current.z, yaw: 0, movement: "idle", teleport: true });
     // once you are standing in the world, walking controls are live right away
     setThirdPerson(true);
   }, [tipHeight, publish]);
@@ -976,11 +980,18 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     if (!respawnNonce || !tipHeight) return;
     const col = tipHeight % GRID;
     const row = Math.floor(tipHeight / GRID);
-    pose.current = { x: worldX(col), z: worldZ(row), yaw: 0 };
-    publish({ col, row, height: tipHeight });
+    placePlayer(pose.current, worldX(col), worldZ(row), 0);
+    pose.current.combat = "alive";
+    publish({ col, row, height: tipHeight, x: pose.current.x, z: pose.current.z, yaw: 0, movement: "idle", teleport: true });
     setThirdPerson(true);
   }, [respawnNonce, tipHeight, publish]);
 
+
+  // Combat state is mirrored onto the player so movement stops while down.
+  useEffect(() => {
+    if (!pose.current) return;
+    pose.current.combat = hp <= 0 ? "down" : "alive";
+  }, [hp]);
 
   // Countdown ticker, only while knocked out.
   const [nowTick, setNowTick] = useState(0);
@@ -1022,8 +1033,8 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     let best: { id: string; handle: string; distance: number } | null = null;
     for (const cursor of cursorsRef.current) {
       if (cursor.hp <= 0) continue;
-      const dx = worldX(cursor.col) - me.x;
-      const dz = worldZ(cursor.row) - me.z;
+      const dx = cursor.x - me.x;
+      const dz = cursor.z - me.z;
       const distance = Math.hypot(dx, dz);
       if (distance <= ATTACK_RANGE && (!best || distance < best.distance)) {
         best = { id: cursor.id, handle: cursor.handle, distance };
