@@ -5,6 +5,7 @@ import { getBitmapRegistryEntry } from "@/lib/oci.functions";
 import { MAX_BITMAP } from "@/lib/oci";
 import { TraitBadges } from "@/components/TraitBadges";
 import { ClubBadge } from "@/components/ClubBadge";
+import { SatBadges, SatProvenance } from "@/components/SatBadges";
 import { toast } from "sonner";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
@@ -150,6 +151,7 @@ function BitmapDetail() {
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <ClubBadge height={block} />
         <TraitBadges height={block} showRarity />
+        <SatBadges height={block} />
       </div>
 
       <DistrictReinscriptions
@@ -168,6 +170,13 @@ function BitmapDetail() {
           label="[ MAKE OFFER ]"
         />
       </div>
+
+      <section className="mt-6 rounded-lg border border-border bg-card p-4">
+        <h2 className="label">SATOSHI</h2>
+        <div className="mt-3">
+          <SatProvenance height={block} />
+        </div>
+      </section>
 
       <ProvenancePanel height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
 

@@ -4,6 +4,7 @@ import { BuyButton } from "@/components/BuyButton";
 import { MakeOfferButton } from "@/components/MakeOfferButton";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { TraitBadges } from "@/components/TraitBadges";
+import { SatBadges } from "@/components/SatBadges";
 import { ClubBadge } from "@/components/ClubBadge";
 import { VerificationChip } from "@/components/ProvenancePanel";
 import { formatSats } from "@/lib/trades";
@@ -42,6 +43,7 @@ export function ParcelCard({ parcel }: { parcel: RegistryParcel }) {
         </div>
 
         <TraitBadges height={parcel.bitmapHeight} max={4} showRarity className="mt-2" />
+        <SatBadges height={parcel.bitmapHeight} max={2} className="mt-2" />
 
         <dl className="mt-3 space-y-1 text-[11px]">
           <Row k="OWNER" v={shortenAddress(parcel.ownerAddress)} />
