@@ -12,7 +12,9 @@ import { Button } from "@/components/ui/button";
 import { BitmapModelPlacement } from "@/components/BitmapModelPlacement";
 import { clubOf } from "@/lib/clubs";
 import { colorForAddress, mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
-import { useMapCursors, type MapCursor } from "@/lib/map-presence";
+import { SAY_MAX_LENGTH, SAY_TTL_MS, useMapCursors, type MapCursor } from "@/lib/map-presence";
+import { setAvatarModelInscription } from "@/lib/map-identity";
+
 import { useWalletSession } from "@/lib/wallet-session";
 import { mapBitmapModelsQuery, type BitmapModel } from "@/lib/bitmap-models";
 import { heldHeightsQuery } from "@/lib/held-parcels";
