@@ -124,8 +124,10 @@ export function useMapCursors(enabled = true) {
     return () => {
       if (timer) clearTimeout(timer);
       clearInterval(sweep);
+      clearInterval(heartbeat);
       if (frame) cancelAnimationFrame(frame);
       sendRef.current = () => {};
+      push(null); // despawn: tell peers this avatar left the world
       void supabase.removeChannel(channel);
     };
   }, [enabled, selfId, handle]);
