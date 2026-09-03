@@ -14,6 +14,7 @@ import { blockStatsQuery, patternSiblingsQuery } from "@/lib/block-stats";
 import { BidPanel } from "@/components/BidPanel";
 import { BitmapChat } from "@/components/BitmapChat";
 import { BitmapPriceChart } from "@/components/BitmapPriceChart";
+import { ProvenancePanel } from "@/components/ProvenancePanel";
 import { WatchBitmapButton } from "@/components/WatchBitmapButton";
 import { ParcelPagePanel } from "@/components/ParcelPagePanel";
 import { ParcelPanel } from "@/components/ParcelPanel";
@@ -167,6 +168,8 @@ function BitmapDetail() {
           label="[ MAKE OFFER ]"
         />
       </div>
+
+      <ProvenancePanel height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
 
       <BitmapPriceChart height={block} />
 

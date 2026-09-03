@@ -5,6 +5,7 @@ import { MakeOfferButton } from "@/components/MakeOfferButton";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { TraitBadges } from "@/components/TraitBadges";
 import { ClubBadge } from "@/components/ClubBadge";
+import { VerificationChip } from "@/components/ProvenancePanel";
 import { formatSats } from "@/lib/trades";
 import { openBidsQuery, topBidByHeight } from "@/lib/bids";
 import { PARCEL_STATUS_LABEL, shortenAddress, type RegistryParcel } from "@/lib/registry";
@@ -31,6 +32,13 @@ export function ParcelCard({ parcel }: { parcel: RegistryParcel }) {
             <ClubBadge height={parcel.bitmapHeight} />
           </div>
           <span className="label">{PARCEL_STATUS_LABEL[parcel.status]}</span>
+        </div>
+
+        <div className="mt-2">
+          <VerificationChip
+            inscriptionId={parcel.inscriptionId}
+            duplicateClaims={parcel.supersedes}
+          />
         </div>
 
         <TraitBadges height={parcel.bitmapHeight} max={4} showRarity className="mt-2" />
