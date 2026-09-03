@@ -622,6 +622,12 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
 
   const moveCamera = (type: CameraMove) => setCommand((current) => ({ type, nonce: current.nonce + 1 }));
   const handleWindow = useCallback((next: OwnerWindow | null) => setWindow(next), []);
+  const ownersRef = useRef(owners.data);
+  ownersRef.current = owners.data;
+  const handleSelect = useCallback(
+    (height: number) => setSelected({ height, owner: ownersRef.current?.get(height) ?? null }),
+    [],
+  );
   const minedDepth = Math.max(CELL, (Math.floor(tipHeight / GRID) + 1) * CELL);
   const selectedModel = selected ? models.data?.find((model) => model.bitmapHeight === selected.height) : undefined;
   const selectedIsMine = Boolean(
