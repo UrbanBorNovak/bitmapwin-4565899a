@@ -1268,7 +1268,8 @@ const LandSurface = memo(function LandSurface({
       <gridHelper
         args={gridArgs as unknown as [number, number, THREE.Color, THREE.Color]}
         position={[0, -AVATAR_U * 0.1, WORLD_SIZE / 2]}
-        renderOrder={0}
+        renderOrder={-2}
+        material-depthWrite={false}
         raycast={noRaycast}
       />
     </>
@@ -1753,6 +1754,9 @@ export function BitmapWorld3D({
               powerPreference: "high-performance",
               stencil: false,
               depth: true,
+              // the world spans centimetre-scale avatars to a 100-unit horizon —
+              // a logarithmic depth buffer keeps the land stable at every zoom
+              logarithmicDepthBuffer: true,
             }}
             performance={{ min: 0.4 }}
           >
