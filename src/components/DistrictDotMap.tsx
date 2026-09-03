@@ -99,6 +99,30 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
     const accentCol = color(accent);
     const borderCol = color(border);
 
+    // Live visitor cursors, drawn last so they float above the land.
+    const drawCursors = () => {
+      const now = Date.now();
+      for (const cursor of cursorsRef.current) {
+        const cx = x + cursor.col * scale + Math.max(scale, 2) / 2;
+        const cy = y + cursor.row * scale + Math.max(scale, 2) / 2;
+        if (cx < -20 || cy < -20 || cx > w + 20 || cy > h + 20) continue;
+        const age = (now - cursor.at) / 1000;
+        const pulse = 0.5 + 0.5 * Math.sin(now / 320 + cursor.col);
+        ctx.globalAlpha = Math.max(0.25, 1 - age / 8);
+        ctx.strokeStyle = cursor.color;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 4 + pulse * 5, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = cursor.color;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    };
+
+
     // Zoomed far out a single pixel covers many cells, so the mined land is
     // painted as blocks of rows instead of 100M individual rects.
     if (scale < 1.2) {
