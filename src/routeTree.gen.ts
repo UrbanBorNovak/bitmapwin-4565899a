@@ -15,6 +15,7 @@ import { Route as BuildsRouteImport } from './routes/builds'
 import { Route as CoinsRouteImport } from './routes/coins'
 import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as Land101RouteImport } from './routes/land-101'
 import { Route as LeasesRouteImport } from './routes/leases'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as McpRouteImport } from './routes/mcp'
@@ -64,6 +65,11 @@ const CollectionsRoute = CollectionsRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Land101Route = Land101RouteImport.update({
+  id: '/land-101',
+  path: '/land-101',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LeasesRoute = LeasesRouteImport.update({
@@ -177,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
@@ -204,6 +211,7 @@ export interface FileRoutesByTo {
   '/builds': typeof BuildsRoute
   '/coins': typeof CoinsRoute
   '/dashboard': typeof DashboardRoute
+  '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
@@ -233,6 +241,7 @@ export interface FileRoutesById {
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
@@ -263,6 +272,7 @@ export interface FileRouteTypes {
     | '/coins'
     | '/collections'
     | '/dashboard'
+    | '/land-101'
     | '/leases'
     | '/marketplace'
     | '/mcp'
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
     | '/builds'
     | '/coins'
     | '/dashboard'
+    | '/land-101'
     | '/leases'
     | '/marketplace'
     | '/mcp'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/coins'
     | '/collections'
     | '/dashboard'
+    | '/land-101'
     | '/leases'
     | '/marketplace'
     | '/mcp'
@@ -347,6 +359,7 @@ export interface RootRouteChildren {
   CoinsRoute: typeof CoinsRoute
   CollectionsRoute: typeof CollectionsRouteWithChildren
   DashboardRoute: typeof DashboardRoute
+  Land101Route: typeof Land101Route
   LeasesRoute: typeof LeasesRoute
   MarketplaceRoute: typeof MarketplaceRoute
   McpRoute: typeof McpRoute
@@ -408,6 +421,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/land-101': {
+      id: '/land-101'
+      path: '/land-101'
+      fullPath: '/land-101'
+      preLoaderRoute: typeof Land101RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/leases': {
@@ -587,6 +607,7 @@ const rootRouteChildren: RootRouteChildren = {
   CoinsRoute: CoinsRoute,
   CollectionsRoute: CollectionsRouteWithChildren,
   DashboardRoute: DashboardRoute,
+  Land101Route: Land101Route,
   LeasesRoute: LeasesRoute,
   MarketplaceRoute: MarketplaceRoute,
   McpRoute: McpRoute,
