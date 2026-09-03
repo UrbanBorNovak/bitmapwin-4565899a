@@ -16,9 +16,10 @@ import { walletQuery } from "@/lib/wallet";
 type InventoryItem = {
   inscriptionId: string;
   source: string;
-  detail?: string;
-  pinned?: boolean;
+  detail?: string | undefined;
+  pinned?: boolean | undefined;
 };
+
 
 const short = (id: string) => `${id.slice(0, 8)}…${id.slice(-6)}`;
 
