@@ -413,7 +413,6 @@ function WorldScene({
   mine,
   cursors,
   onWindow,
-  districtWindow,
   onHover,
   onSelect,
   selectedHeight,
@@ -427,7 +426,6 @@ function WorldScene({
   mine: Set<string>;
   cursors: MapCursor[];
   onWindow: (window_: OwnerWindow | null) => void;
-  districtWindow: OwnerWindow | null;
   onHover: (hover: HoveredDistrict | null) => void;
   onSelect: (height: number) => void;
   selectedHeight: number | null;
@@ -536,7 +534,6 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
               mine={mine}
               cursors={cursors}
               onWindow={handleWindow}
-              districtWindow={window_}
               onHover={setHover}
               onSelect={(height) => setSelected({ height, owner: owners.data?.get(height) ?? null })}
               selectedHeight={selected?.height ?? null}
