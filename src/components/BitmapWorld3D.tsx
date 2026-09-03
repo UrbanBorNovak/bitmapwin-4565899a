@@ -251,10 +251,11 @@ const DistrictBlocks = memo(function DistrictBlocks({ tipHeight, colors }: { tip
             // per-cell inset instead of shimmering (cheaper and stable while zoomed out).
             float px = max(fwidth(vUv.x), fwidth(vUv.y)) * uGrid;
             float detail = 1.0 - smoothstep(0.35, 1.1, px);
-            float inset = mix(1.0, smoothstep(0.025, 0.14, edge), detail);
-            vec3 minedColor = mix(uMined * (0.45 + shade * 0.28), uBitcoin, 0.12 + club * 0.035);
+            float edgeAA = max(fwidth(cellUv.x), fwidth(cellUv.y));
+            float inset = mix(1.0, smoothstep(0.012, max(0.036, edgeAA * 1.4), edge), detail);
+            vec3 minedColor = mix(uMined * (0.36 + shade * 0.2), uBitcoin, 0.075 + club * 0.025);
             vec3 color = mix(uFuture * 0.32, minedColor, mined);
-            gl_FragColor = vec4(color * (0.34 + inset * 0.92), 1.0);
+            gl_FragColor = vec4(color * (0.48 + inset * 0.58), 1.0);
           }
         `}
       />

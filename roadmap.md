@@ -7,3 +7,4 @@
 - [x] Verify security, validation, performance, and responsive rendering
 - [x] Add inscription-ID model placement controls to owned BITMAPs in the selected map window
 - [x] Accept and render Draco-compressed on-chain GLB models
+- [x] Stabilize the 3D world renderer and refine the third-person MMORPG presentation
