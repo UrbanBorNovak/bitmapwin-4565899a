@@ -56,13 +56,19 @@ export function useMapCursors(enabled = true) {
   const [said, setSaid] = useState<WorldSaid[]>([]);
   const [hp, setHp] = useState(MAX_HP);
   const [hitAt, setHitAt] = useState(0);
+  /** timestamp we are scheduled to come back to life at, 0 when alive */
+  const [respawnAt, setRespawnAt] = useState(0);
+  /** bumps on every respawn so the world can teleport us back to the spawn point */
+  const [respawnNonce, setRespawnNonce] = useState(0);
   const hpRef = useRef(MAX_HP);
   hpRef.current = hp;
   const sendRef = useRef<(cell: { col: number; row: number; height: number } | null) => void>(() => {});
   const sayRef = useRef<(body: string) => void>(() => {});
   const attackRef = useRef<(targetId: string) => void>(() => {});
+  const respawnRef = useRef<() => void>(() => {});
   const modelRef = useRef(model);
   modelRef.current = model;
+
 
   useEffect(() => {
     if (!enabled) return;
