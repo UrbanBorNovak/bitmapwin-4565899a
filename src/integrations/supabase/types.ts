@@ -1277,6 +1277,24 @@ export type Database = {
         Args: { _days: number; _lessee_address: string; _offer_id: string }
         Returns: string
       }
+      map_bitmap_models: {
+        Args: {
+          _col_from: number
+          _col_to: number
+          _row_from: number
+          _row_to: number
+        }
+        Returns: {
+          animation_count: number
+          bitmap_height: number
+          height_offset: number
+          inscription_id: string
+          owner_address: string
+          rotation_y: number
+          scale: number
+          triangle_count: number
+        }[]
+      }
       map_owners: {
         Args: {
           _col_from: number
