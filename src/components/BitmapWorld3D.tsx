@@ -12,7 +12,7 @@ import { colorForAddress, mapOwnersQuery, type OwnerWindow } from "@/lib/map-own
 import { useMapCursors, type MapCursor } from "@/lib/map-presence";
 import { useWalletSession } from "@/lib/wallet-session";
 
-const GRID = 10_000;
+const GRID = 1_000;
 const WORLD_SIZE = 100;
 const CELL = WORLD_SIZE / GRID;
 const OWNER_CELL_BUDGET = 55_000;
