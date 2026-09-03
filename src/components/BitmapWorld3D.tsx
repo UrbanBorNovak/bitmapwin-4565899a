@@ -540,28 +540,32 @@ function ModelAvatar({
   );
 
   useEffect(() => {
+    if (skinTexture) {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.magFilter = THREE.NearestFilter;
+      texture.minFilter = THREE.NearestFilter;
+      texture.generateMipmaps = false;
+      texture.needsUpdate = true;
+    }
+    const paint = (source: THREE.Material) => {
+      const material = source.clone() as THREE.MeshStandardMaterial;
+      material.map = texture;
+      material.color = new THREE.Color("#ffffff");
+      material.needsUpdate = true;
+      return material;
+    };
     scene.traverse((child) => {
       const mesh = child as THREE.Mesh;
       if (!mesh.isMesh) return;
       mesh.frustumCulled = false;
       mesh.castShadow = false;
       if (!skinTexture) return;
-      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-      mesh.material = materials.map((source) => {
-        const material = (source as THREE.MeshStandardMaterial).clone();
-        texture.colorSpace = THREE.SRGBColorSpace;
-        texture.magFilter = THREE.NearestFilter;
-        texture.minFilter = THREE.NearestFilter;
-        texture.generateMipmaps = false;
-        material.map = texture;
-        material.color = new THREE.Color("#ffffff");
-        material.needsUpdate = true;
-        return material;
-      }) as THREE.Material[] as THREE.Material;
-      if (Array.isArray(materials) && materials.length === 1)
-        mesh.material = (mesh.material as unknown as THREE.Material[])[0]!;
+      mesh.material = Array.isArray(mesh.material)
+        ? mesh.material.map(paint)
+        : paint(mesh.material);
     });
   }, [scene, texture, skinTexture]);
+
 
   const fitted = useMemo(() => {
     scene.updateMatrixWorld(true);
