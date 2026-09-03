@@ -171,6 +171,13 @@ function BitmapDetail() {
         />
       </div>
 
+      <section className="mt-6 rounded-lg border border-border bg-card p-4">
+        <h2 className="label">SATOSHI</h2>
+        <div className="mt-3">
+          <SatProvenance height={block} />
+        </div>
+      </section>
+
       <ProvenancePanel height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
 
       <BitmapPriceChart height={block} />
