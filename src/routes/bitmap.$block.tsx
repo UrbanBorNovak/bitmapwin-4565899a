@@ -171,6 +171,10 @@ function BitmapDetail() {
         />
       </div>
 
+      <div className="mt-8">
+        <BitmapOrderBook height={block} />
+      </div>
+
       <ProvenancePanel height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
 
       <BitmapPriceChart height={block} />
