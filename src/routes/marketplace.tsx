@@ -17,6 +17,8 @@ import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapMarketChart } from "@/components/BitmapMarketChart";
 import { FloorRanking } from "@/components/FloorRanking";
 import { TrendExplorer } from "@/components/TrendExplorer";
+import { OpportunityFunnel } from "@/components/OpportunityFunnel";
+
 import { SalesLog } from "@/components/SalesLog";
 import { TradeCrawlerStatus } from "@/components/TradeCrawlerStatus";
 import { useServerFn } from "@tanstack/react-start";
@@ -187,6 +189,11 @@ function Marketplace() {
       <div className="mt-6">
         <TrendExplorer parcels={parcels} />
       </div>
+
+      <div className="mt-6">
+        <OpportunityFunnel parcels={parcels} />
+      </div>
+
 
       <div className="mt-6">
         <FloorRanking parcels={listed} pending={registry.isPending} />
