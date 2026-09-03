@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowUpRight, X } from "lucide-react";
+import { ArrowUpRight, Crosshair, Eye, Map as MapIcon, Orbit, X } from "lucide-react";
 import * as THREE from "three";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,7 @@ const EMPTY_OWNERS: Map<number, string> = new Map();
 const EMPTY_MODELS: BitmapModel[] = [];
 
 type CameraMove = "mined" | "full" | "tip";
+type CameraMode = "map" | "third" | "first";
 type HoveredDistrict = { height: number; x: number; y: number };
 type SelectedDistrict = { height: number; owner: string | null };
 
@@ -555,19 +556,24 @@ const SelfAvatar = memo(function SelfAvatar({
  * target, trail the camera behind, and report the resulting pose on a fixed
  * ~10Hz tick. Prediction is local feel only — the report is what peers see.
  */
-function ThirdPersonRig({
+function PlayerCameraRig({
   pose,
   onPose,
+  mode,
 }: {
   pose: React.RefObject<SelfPose>;
   onPose: (report: PoseReport) => void;
+  mode: Exclude<CameraMode, "map">;
 }) {
-  const { camera } = useThree();
+  const { camera, gl } = useThree();
   const keys = useRef(new Set<string>());
   const lastReport = useRef("");
   const nextReport = useRef(0);
   const cameraTarget = useRef(new THREE.Vector3());
   const cameraLook = useRef(new THREE.Vector3());
+  const lookMatrix = useRef(new THREE.Matrix4());
+  const targetRotation = useRef(new THREE.Quaternion());
+  const pitch = useRef(0);
 
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
@@ -589,6 +595,27 @@ function ThirdPersonRig({
     };
   }, []);
 
+  useEffect(() => {
+    const canvas = gl.domElement;
+    const lock = () => {
+      if (mode === "first" && document.pointerLockElement !== canvas) void canvas.requestPointerLock();
+    };
+    const look = (event: MouseEvent) => {
+      if (mode !== "first" || document.pointerLockElement !== canvas) return;
+      const player = pose.current;
+      if (!player) return;
+      player.yaw -= event.movementX * 0.0022;
+      pitch.current = THREE.MathUtils.clamp(pitch.current - event.movementY * 0.0018, -1.05, 1.05);
+    };
+    canvas.addEventListener("pointerdown", lock);
+    document.addEventListener("mousemove", look);
+    return () => {
+      canvas.removeEventListener("pointerdown", lock);
+      document.removeEventListener("mousemove", look);
+      if (document.pointerLockElement === canvas) document.exitPointerLock();
+    };
+  }, [gl, mode, pose]);
+
   useFrame(({ clock }, rawDelta) => {
     const player = pose.current;
     if (!player) return;
@@ -602,23 +629,37 @@ function ThirdPersonRig({
     };
     stepPlayer(player, intent, delta);
 
-    // Camera trails behind and above, pulling back a little at speed.
+    // Both modes track the same predicted player target. Only offsets change,
+    // so switching perspective is a smooth camera move rather than a cut.
     const speed = Math.hypot(player.vx, player.vz);
-    const back = CELL * (11.5 + (speed / (MOVE.walkSpeed * MOVE.sprint)) * 2.5);
-    cameraTarget.current.set(
-      player.x - Math.sin(player.yaw) * back,
-      CELL * 7.2,
-      player.z - Math.cos(player.yaw) * back,
-    );
-    camera.position.lerp(cameraTarget.current, 1 - Math.exp(-5.2 * delta));
-    cameraLook.current.set(
-      player.x + Math.sin(player.yaw) * CELL * 2.5,
-      CELL * 0.62,
-      player.z + Math.cos(player.yaw) * CELL * 2.5,
-    );
-    camera.lookAt(cameraLook.current);
+    if (mode === "first") {
+      cameraTarget.current.set(player.x, CELL * 0.88, player.z);
+      const horizontal = Math.cos(pitch.current);
+      cameraLook.current.set(
+        player.x + Math.sin(player.yaw) * horizontal,
+        CELL * 0.88 + Math.sin(pitch.current),
+        player.z + Math.cos(player.yaw) * horizontal,
+      );
+    } else {
+      const back = CELL * (11.5 + (speed / (MOVE.walkSpeed * MOVE.sprint)) * 2.5);
+      cameraTarget.current.set(
+        player.x - Math.sin(player.yaw) * back,
+        CELL * 7.2,
+        player.z - Math.cos(player.yaw) * back,
+      );
+      cameraLook.current.set(
+        player.x + Math.sin(player.yaw) * CELL * 2.5,
+        CELL * 0.62,
+        player.z + Math.cos(player.yaw) * CELL * 2.5,
+      );
+    }
+    const transitionSpeed = mode === "first" ? 8.5 : 5.2;
+    camera.position.lerp(cameraTarget.current, 1 - Math.exp(-transitionSpeed * delta));
+    lookMatrix.current.lookAt(camera.position, cameraLook.current, camera.up);
+    targetRotation.current.setFromRotationMatrix(lookMatrix.current);
+    camera.quaternion.slerp(targetRotation.current, 1 - Math.exp(-8 * delta));
     const perspective = camera as THREE.PerspectiveCamera;
-    const targetFov = 50 + Math.min(4, speed * 12);
+    const targetFov = (mode === "first" ? 66 : 50) + Math.min(4, speed * 12);
     if (Math.abs(perspective.fov - targetFov) > 0.02) {
       perspective.fov = damp(perspective.fov, targetFov, 5, delta);
       perspective.updateProjectionMatrix();
@@ -813,7 +854,7 @@ const WorldScene = memo(function WorldScene({
   onPublish,
   models,
   ownedHeights,
-  thirdPerson,
+  cameraMode,
   pose,
   self,
 }: {
@@ -830,7 +871,7 @@ const WorldScene = memo(function WorldScene({
   onPublish: (report: PoseReport | null) => void;
   models: BitmapModel[];
   ownedHeights: number[];
-  thirdPerson: boolean;
+  cameraMode: CameraMode;
   pose: React.RefObject<SelfPose>;
   self: { handle: string; color: string; model: string | null; say: string | null; hp: number; hitAt: number };
 }) {
@@ -881,7 +922,7 @@ const WorldScene = memo(function WorldScene({
       <OnChainModels models={models} bitcoin={colors.bitcoin} />
       {selectedHeight !== null ? <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} /> : null}
       <VisitorBeacons cursors={cursors} />
-      {thirdPerson ? (
+      {cameraMode === "third" ? (
         <SelfAvatar
           pose={pose}
           color={self.color}
@@ -906,19 +947,19 @@ const WorldScene = memo(function WorldScene({
           if (height === null) return;
           // Mouse / touch movement: walking mode treats a tap as a destination,
           // and still opens the district window you tapped.
-          if (thirdPerson && pose.current) pose.current.target = { x: event.point.x, z: event.point.z };
+          if (cameraMode !== "map" && pose.current) pose.current.target = { x: event.point.x, z: event.point.z };
           onSelect(height);
         }}
       >
         <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
-      {thirdPerson ? (
-        <ThirdPersonRig pose={pose} onPose={onPublish} />
+      {cameraMode !== "map" ? (
+        <PlayerCameraRig pose={pose} onPose={onPublish} mode={cameraMode} />
       ) : (
         <CameraDirector command={command} tipHeight={tipHeight} />
       )}
-      <ViewWindowReporter onWindow={onWindow} pose={thirdPerson ? pose : null} />
+      <ViewWindowReporter onWindow={onWindow} pose={cameraMode !== "map" ? pose : null} />
     </>
   );
 });
@@ -935,7 +976,8 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   const [selected, setSelected] = useState<SelectedDistrict | null>(null);
   const [command, setCommand] = useState<{ type: CameraMove; nonce: number }>({ type: "mined", nonce: 0 });
   const [dpr, setDpr] = useState(1);
-  const [thirdPerson, setThirdPerson] = useState(false);
+  const [cameraMode, setCameraMode] = useState<CameraMode>("map");
+  const exploring = cameraMode !== "map";
   const [draft, setDraft] = useState("");
   const [inventoryOpen, setInventoryOpen] = useState(false);
 
@@ -998,7 +1040,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     placePlayer(pose.current, worldX(tipHeight % GRID), worldZ(Math.floor(tipHeight / GRID)), 0);
     publish({ col: tipHeight % GRID, row: Math.floor(tipHeight / GRID), height: tipHeight, x: pose.current.x, z: pose.current.z, yaw: 0, movement: "idle", teleport: true });
     // once you are standing in the world, walking controls are live right away
-    setThirdPerson(true);
+    setCameraMode("third");
   }, [tipHeight, publish]);
 
   // Killed: teleport back to the spawn point at the chain tip on every respawn.
@@ -1009,7 +1051,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     placePlayer(pose.current, worldX(col), worldZ(row), 0);
     pose.current.combat = "alive";
     publish({ col, row, height: tipHeight, x: pose.current.x, z: pose.current.z, yaw: 0, movement: "idle", teleport: true });
-    setThirdPerson(true);
+    setCameraMode("third");
   }, [respawnNonce, tipHeight, publish]);
 
 
@@ -1078,7 +1120,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   }, [attack, hp]);
 
   useEffect(() => {
-    if (!thirdPerson) return;
+    if (!exploring) return;
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
@@ -1088,9 +1130,12 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [attackNearest, thirdPerson]);
+  }, [attackNearest, exploring]);
 
-  const moveCamera = (type: CameraMove) => setCommand((current) => ({ type, nonce: current.nonce + 1 }));
+  const moveCamera = (type: CameraMove) => {
+    setCameraMode("map");
+    setCommand((current) => ({ type, nonce: current.nonce + 1 }));
+  };
   const handleWindow = useCallback((next: OwnerWindow | null) => setWindow(next), []);
   const ownersRef = useRef(owners.data);
   ownersRef.current = owners.data;
@@ -1111,7 +1156,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   // Cheap 4Hz readout of the predicted local state — no per-frame re-renders.
   const [readout, setReadout] = useState({ movement: "idle", chunk: "0:0", height: 0, target: false });
   useEffect(() => {
-    if (!thirdPerson) return;
+    if (!exploring) return;
     const id = window.setInterval(() => {
       const player = pose.current;
       if (!player) return;
@@ -1125,7 +1170,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
       );
     }, 250);
     return () => window.clearInterval(id);
-  }, [thirdPerson]);
+  }, [exploring]);
 
   return (
     <div className={className}>
@@ -1133,13 +1178,6 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
         <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("mined")}>[ FRAME MINED WORLD ]</Button>
         <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("full")}>[ VIEW FULL WORLD ]</Button>
         <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("tip")}>[ FLY TO TIP ]</Button>
-        <Button
-          className={thirdPerson ? "btn-term" : "btn-term-ghost"}
-          variant="ghost"
-          onClick={() => setThirdPerson((current) => !current)}
-        >
-          {thirdPerson ? "[ EXIT 3RD PERSON ]" : "[ 3RD PERSON WALK ]"}
-        </Button>
         <Button className="btn-term-ghost" variant="ghost" onClick={attackNearest} disabled={hp <= 0}>
           [ ATTACK · SPACE ]
         </Button>
@@ -1175,11 +1213,61 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
               onPublish={publish}
               models={models.data ?? EMPTY_MODELS}
               ownedHeights={ownedHeights}
-              thirdPerson={thirdPerson}
+              cameraMode={cameraMode}
               pose={pose}
               self={self}
             />
           </Canvas>
+        ) : null}
+
+        <div
+          role="group"
+          aria-label="Camera mode"
+          data-no-translate
+          className="absolute right-3 top-3 z-30 flex border border-border bg-background/90 p-0.5 shadow-md backdrop-blur-sm"
+        >
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-label="Map camera"
+            aria-pressed={cameraMode === "map"}
+            title="Map camera"
+            className={cameraMode === "map" ? "rounded-sm bg-bitcoin text-bitcoin-foreground hover:bg-bitcoin/90" : "rounded-sm text-muted-foreground"}
+            onClick={() => setCameraMode("map")}
+          >
+            <MapIcon /> <span className="hidden sm:inline">MAP</span>
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-label="Third-person camera"
+            aria-pressed={cameraMode === "third"}
+            title="Third-person camera"
+            className={cameraMode === "third" ? "rounded-sm bg-bitcoin text-bitcoin-foreground hover:bg-bitcoin/90" : "rounded-sm text-muted-foreground"}
+            onClick={() => setCameraMode("third")}
+          >
+            <Orbit /> <span className="hidden sm:inline">3RD</span>
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-label="First-person camera"
+            aria-pressed={cameraMode === "first"}
+            title="First-person camera"
+            className={cameraMode === "first" ? "rounded-sm bg-bitcoin text-bitcoin-foreground hover:bg-bitcoin/90" : "rounded-sm text-muted-foreground"}
+            onClick={() => setCameraMode("first")}
+          >
+            <Eye /> <span className="hidden sm:inline">1ST</span>
+          </Button>
+        </div>
+
+        {cameraMode === "first" ? (
+          <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 text-bitcoin/80">
+            <Crosshair className="h-5 w-5" strokeWidth={1.5} />
+          </div>
         ) : null}
 
         {/* Your own health, always visible while exploring the world. */}
@@ -1210,13 +1298,15 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
             </span>
           ) : null}
           {attackTarget ? <span className="text-bitcoin">{attackTarget}</span> : null}
-          {thirdPerson ? (
+          {exploring ? (
             <>
               <span className="text-muted-foreground">
-                {readout.movement.toUpperCase()} · REGION {readout.chunk} · {readout.height.toLocaleString("en-US")}.BITMAP
+                {cameraMode === "first" ? "FIRST PERSON" : "THIRD PERSON"} · {readout.movement.toUpperCase()} · REGION {readout.chunk} · {readout.height.toLocaleString("en-US")}.BITMAP
                 {readout.target ? " · WALKING TO MARK" : ""}
               </span>
-              <span className="text-muted-foreground">WASD / ARROWS · SHIFT SPRINT · CLICK OR TAP TO WALK · SPACE ATTACK</span>
+              <span className="text-muted-foreground">
+                WASD / ARROWS · SHIFT SPRINT · {cameraMode === "first" ? "CLICK WORLD FOR MOUSE LOOK · ESC RELEASE" : "CLICK OR TAP TO WALK"} · SPACE ATTACK
+              </span>
             </>
           ) : null}
 
