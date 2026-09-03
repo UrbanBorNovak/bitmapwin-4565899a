@@ -915,35 +915,14 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
         >
           {thirdPerson ? "[ EXIT 3RD PERSON ]" : "[ 3RD PERSON WALK ]"}
         </Button>
-        <form
-          className="flex items-center gap-1"
-          onSubmit={(event) => {
-            event.preventDefault();
-            wearModel();
-          }}
+        <Button
+          className={inventoryOpen ? "btn-term" : "btn-term-ghost"}
+          variant="ghost"
+          onClick={() => setInventoryOpen((current) => !current)}
         >
-          <input
-            value={modelDraft}
-            onChange={(event) => setModelDraft(event.target.value)}
-            placeholder={avatarModel ? "REPLACE AVATAR INSCRIPTION ID" : "AVATAR GLB INSCRIPTION ID"}
-            aria-label="Avatar model inscription id"
-            className="w-[220px] border border-border bg-background px-2 py-1 font-mono text-[10px] text-foreground outline-none placeholder:text-muted-foreground focus:border-bitcoin"
-          />
-          <Button className="btn-term-ghost" variant="ghost" type="submit">[ WEAR ]</Button>
-          {avatarModel ? (
-            <Button
-              className="btn-term-ghost"
-              variant="ghost"
-              type="button"
-              onClick={() => {
-                setAvatarModelInscription(null);
-                setAvatarModel(null);
-              }}
-            >
-              [ REMOVE MODEL ]
-            </Button>
-          ) : null}
-        </form>
+          {avatarModel ? "[ INVENTORY · WEARING MODEL ]" : "[ INVENTORY ]"}
+        </Button>
+
       </div>
 
       <div className="relative h-[70vh] min-h-[420px] w-full overflow-hidden border border-border bg-background">
