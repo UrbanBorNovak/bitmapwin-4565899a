@@ -10,7 +10,7 @@ import { getChainBlocks } from "@/lib/chain.functions";
 export const Route = createFileRoute("/map")({
   ssr: false,
   head: () => {
-    const title = "Land Map — 10,000 × 10,000 Bitmap Districts";
+    const title = "Land Map — 1,000 × 1,000 Bitmap Districts";
     const description =
       "Explore every Bitcoin bitmap district as a live 3D land world. Fly, orbit and click any district to open its on-chain view.";
     return {
@@ -46,7 +46,7 @@ function MapPage() {
     <div className="mx-auto max-w-[1600px] px-4 py-12 md:px-8">
       <h1 className="display text-3xl md:text-5xl">LAND MAP</h1>
       <p className="label mt-3">
-        10,000 × 10,000 LAND WORLD · ONE CELL = ONE BITMAP · BLOCK ORDER LEFT TO RIGHT, TOP TO BOTTOM
+        1,000 × 1,000 LAND WORLD · ONE CELL = ONE BITMAP · BLOCK ORDER LEFT TO RIGHT, TOP TO BOTTOM
       </p>
 
       <div className="mt-6 flex flex-wrap items-center gap-4 font-mono text-[10px] text-muted-foreground">
