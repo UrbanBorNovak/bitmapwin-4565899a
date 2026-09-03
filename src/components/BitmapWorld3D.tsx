@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
-import { Environment, Html, Lightformer, MapControls, useAnimations, useGLTF } from "@react-three/drei";
+import { AdaptiveDpr, AdaptiveEvents, Environment, Html, Lightformer, MapControls, PerformanceMonitor, useAnimations, useGLTF } from "@react-three/drei";
 import { Suspense } from "react";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
@@ -22,7 +22,13 @@ import { myWalletLinksQuery } from "@/lib/wallet-links";
 const GRID = 1_000;
 const WORLD_SIZE = 100;
 const CELL = WORLD_SIZE / GRID;
-const OWNER_CELL_BUDGET = 55_000;
+const OWNER_CELL_BUDGET = 24_000;
+
+/** Everything except the flat picking plane opts out of raycasting — one plane hit test per pointer move. */
+const noRaycast = () => {};
+/** Stable empty fallbacks so memoized scene props don't change identity every render. */
+const EMPTY_OWNERS: Map<number, string> = new Map();
+const EMPTY_MODELS: BitmapModel[] = [];
 
 type CameraMove = "mined" | "full" | "tip";
 type HoveredDistrict = { height: number; x: number; y: number };
@@ -81,7 +87,7 @@ function heightAtPoint(point: THREE.Vector3) {
   return row * GRID + col;
 }
 
-function HolderColumns({ owners, mine, bitcoin }: { owners: Map<number, string>; mine: Set<string>; bitcoin: string }) {
+const HolderColumns = memo(function HolderColumns({ owners, mine, bitcoin }: { owners: Map<number, string>; mine: Set<string>; bitcoin: string }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const entries = useMemo(() => [...owners.entries()], [owners]);
 
@@ -108,14 +114,14 @@ function HolderColumns({ owners, mine, bitcoin }: { owners: Map<number, string>;
 
   if (entries.length === 0) return null;
   return (
-    <instancedMesh ref={meshRef} args={[undefined, undefined, entries.length]} frustumCulled>
+    <instancedMesh key={entries.length} ref={meshRef} args={[undefined, undefined, entries.length]} frustumCulled raycast={noRaycast}>
       <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial vertexColors roughness={0.58} metalness={0.12} />
+      <meshLambertMaterial vertexColors />
     </instancedMesh>
   );
-}
+});
 
-function OwnedBitmapGlow({ heights, bitcoin }: { heights: number[]; bitcoin: string }) {
+const OwnedBitmapGlow = memo(function OwnedBitmapGlow({ heights, bitcoin }: { heights: number[]; bitcoin: string }) {
   const coreRef = useRef<THREE.InstancedMesh>(null);
   const auraRef = useRef<THREE.InstancedMesh>(null);
   const coreMaterial = useRef<THREE.MeshBasicMaterial>(null);
@@ -145,7 +151,11 @@ function OwnedBitmapGlow({ heights, bitcoin }: { heights: number[]; bitcoin: str
     aura.computeBoundingSphere();
   }, [owned]);
 
+  const nextPulse = useRef(0);
   useFrame(({ clock }) => {
+    // Pulse at ~20Hz instead of every frame — visually identical, far cheaper.
+    if (clock.elapsedTime < nextPulse.current) return;
+    nextPulse.current = clock.elapsedTime + 0.05;
     const pulse = (Math.sin(clock.elapsedTime * 2.2) + 1) / 2;
     if (coreMaterial.current) coreMaterial.current.opacity = 0.66 + pulse * 0.26;
     if (auraMaterial.current) auraMaterial.current.opacity = 0.08 + pulse * 0.13;
@@ -154,7 +164,7 @@ function OwnedBitmapGlow({ heights, bitcoin }: { heights: number[]; bitcoin: str
   if (owned.length === 0) return null;
   return (
     <group>
-      <instancedMesh ref={auraRef} args={[undefined, undefined, owned.length]} frustumCulled>
+      <instancedMesh key={`aura-${owned.length}`} ref={auraRef} args={[undefined, undefined, owned.length]} frustumCulled raycast={noRaycast}>
         <boxGeometry args={[1, 1, 1]} />
         <meshBasicMaterial
           ref={auraMaterial}
@@ -166,7 +176,7 @@ function OwnedBitmapGlow({ heights, bitcoin }: { heights: number[]; bitcoin: str
           side={THREE.DoubleSide}
         />
       </instancedMesh>
-      <instancedMesh ref={coreRef} args={[undefined, undefined, owned.length]} frustumCulled>
+      <instancedMesh key={`core-${owned.length}`} ref={coreRef} args={[undefined, undefined, owned.length]} frustumCulled raycast={noRaycast}>
         <boxGeometry args={[1, 1, 1]} />
         <meshBasicMaterial
           ref={coreMaterial}
@@ -180,9 +190,9 @@ function OwnedBitmapGlow({ heights, bitcoin }: { heights: number[]; bitcoin: str
       </instancedMesh>
     </group>
   );
-}
+});
 
-function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: WorldColors }) {
+const DistrictBlocks = memo(function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: WorldColors }) {
   const uniforms = useMemo(
     () => ({
       uGrid: { value: GRID },
@@ -195,8 +205,8 @@ function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: Worl
   );
 
   return (
-    <mesh rotation-x={-Math.PI / 2} position={[0, 0.012, WORLD_SIZE / 2]}>
-      <planeGeometry args={[WORLD_SIZE, WORLD_SIZE]} />
+    <mesh rotation-x={-Math.PI / 2} position={[0, 0.012, WORLD_SIZE / 2]} raycast={noRaycast}>
+      <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
       <shaderMaterial
         uniforms={uniforms}
         vertexShader={/* glsl */ `
@@ -224,7 +234,11 @@ function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: Worl
             float shade = hash(districtId);
             float club = districtId < 1000.0 ? 0.0 : districtId < 10000.0 ? 1.0 : districtId < 100000.0 ? 2.0 : 3.0;
             float edge = min(min(cellUv.x, 1.0 - cellUv.x), min(cellUv.y, 1.0 - cellUv.y));
-            float inset = smoothstep(0.025, 0.14, edge);
+            // Cell footprint in pixels: when a district is sub-pixel, dissolve the
+            // per-cell inset instead of shimmering (cheaper and stable while zoomed out).
+            float px = max(fwidth(vUv.x), fwidth(vUv.y)) * uGrid;
+            float detail = 1.0 - smoothstep(0.35, 1.1, px);
+            float inset = mix(1.0, smoothstep(0.025, 0.14, edge), detail);
             vec3 minedColor = mix(uMined * (0.45 + shade * 0.28), uBitcoin, 0.12 + club * 0.035);
             vec3 color = mix(uFuture * 0.32, minedColor, mined);
             gl_FragColor = vec4(color * (0.34 + inset * 0.92), 1.0);
@@ -233,30 +247,56 @@ function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: Worl
       />
     </mesh>
   );
-}
+});
 
-function SelectedBlock({ height, bitcoin }: { height: number; bitcoin: string }) {
+const SelectedBlock = memo(function SelectedBlock({ height, bitcoin }: { height: number; bitcoin: string }) {
   const blockHeight = districtHeight(height);
   return (
     <mesh
       position={[worldX(height % GRID), blockHeight / 2 + 0.001, worldZ(Math.floor(height / GRID))]}
       scale={[CELL * 1.35, blockHeight + 0.008, CELL * 1.35]}
+      raycast={noRaycast}
     >
       <boxGeometry args={[1, 1, 1]} />
       <meshBasicMaterial color={bitcoin} wireframe />
     </mesh>
   );
+});
+
+// One avatar ≈ one district cell tall. Geometry is shared across every visitor so
+// spawning a crowd costs no extra GPU buffers.
+const AVATAR_U = CELL;
+const avatarGeometry = {
+  ring: new THREE.RingGeometry(AVATAR_U * 0.42, AVATAR_U * 0.5, 16),
+  leg: new THREE.BoxGeometry(AVATAR_U * 0.14, AVATAR_U * 0.28, AVATAR_U * 0.14),
+  torso: new THREE.BoxGeometry(AVATAR_U * 0.4, AVATAR_U * 0.34, AVATAR_U * 0.2),
+  head: new THREE.BoxGeometry(AVATAR_U * 0.26, AVATAR_U * 0.26, AVATAR_U * 0.26),
+  visor: new THREE.BoxGeometry(AVATAR_U * 0.2, AVATAR_U * 0.06, AVATAR_U * 0.01),
+};
+const visorMaterial = new THREE.MeshBasicMaterial({ color: "#000000" });
+const avatarBodyMaterials = new Map<string, THREE.MeshBasicMaterial>();
+function avatarBodyMaterial(color: string) {
+  let material = avatarBodyMaterials.get(color);
+  if (!material) {
+    material = new THREE.MeshBasicMaterial({ color });
+    avatarBodyMaterials.set(color, material);
+  }
+  return material;
 }
+/** Only this many visitor figures are drawn — keeps a busy map cheap on a laptop. */
+const MAX_AVATARS = 24;
 
 /** One spawned visitor: a blocky cypherpunk figure standing on the land. */
-function VisitorAvatar({ cursor }: { cursor: MapCursor }) {
+const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCursor }) {
   const body = useRef<THREE.Group>(null);
   const ring = useRef<THREE.Mesh>(null);
+  const ringMaterial = useRef<THREE.MeshBasicMaterial>(null);
   const phase = useMemo(() => {
     let hash = 0;
     for (const ch of cursor.id) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
     return (hash % 628) / 100;
   }, [cursor.id]);
+  const bodyMaterial = useMemo(() => avatarBodyMaterial(cursor.color), [cursor.color]);
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime + phase;
@@ -264,59 +304,39 @@ function VisitorAvatar({ cursor }: { cursor: MapCursor }) {
       body.current.position.y = Math.abs(Math.sin(t * 2.4)) * CELL * 0.12;
       body.current.rotation.y = Math.sin(t * 0.9) * 0.35;
     }
-    if (ring.current) {
+    if (ring.current && ringMaterial.current) {
       const pulse = (t * 0.8) % 1;
       ring.current.scale.setScalar(1 + pulse * 0.9);
-      (ring.current.material as THREE.MeshBasicMaterial).opacity = 0.85 * (1 - pulse);
+      ringMaterial.current.opacity = 0.85 * (1 - pulse);
     }
   });
 
-  const u = CELL; // one avatar ≈ one district cell tall
+  const u = AVATAR_U;
   return (
     <group position={[worldX(cursor.col), 0.006, worldZ(cursor.row)]}>
       {/* spawn ring pulsing under the avatar */}
-      <mesh ref={ring} rotation-x={-Math.PI / 2} position-y={0.001}>
-        <ringGeometry args={[u * 0.42, u * 0.5, 24]} />
-        <meshBasicMaterial color={cursor.color} transparent opacity={0.8} side={THREE.DoubleSide} />
+      <mesh ref={ring} rotation-x={-Math.PI / 2} position-y={0.001} geometry={avatarGeometry.ring} raycast={noRaycast}>
+        <meshBasicMaterial ref={ringMaterial} color={cursor.color} transparent opacity={0.8} side={THREE.DoubleSide} />
       </mesh>
       <group ref={body}>
-        {/* legs */}
-        <mesh position={[-u * 0.11, u * 0.14, 0]}>
-          <boxGeometry args={[u * 0.14, u * 0.28, u * 0.14]} />
-          <meshBasicMaterial color={cursor.color} />
-        </mesh>
-        <mesh position={[u * 0.11, u * 0.14, 0]}>
-          <boxGeometry args={[u * 0.14, u * 0.28, u * 0.14]} />
-          <meshBasicMaterial color={cursor.color} />
-        </mesh>
-        {/* torso */}
-        <mesh position={[0, u * 0.45, 0]}>
-          <boxGeometry args={[u * 0.4, u * 0.34, u * 0.2]} />
-          <meshBasicMaterial color={cursor.color} />
-        </mesh>
-        {/* head */}
-        <mesh position={[0, u * 0.76, 0]}>
-          <boxGeometry args={[u * 0.26, u * 0.26, u * 0.26]} />
-          <meshBasicMaterial color={cursor.color} />
-        </mesh>
-        {/* visor */}
-        <mesh position={[0, u * 0.78, u * 0.135]}>
-          <boxGeometry args={[u * 0.2, u * 0.06, u * 0.01]} />
-          <meshBasicMaterial color="#000000" />
-        </mesh>
+        <mesh position={[-u * 0.11, u * 0.14, 0]} geometry={avatarGeometry.leg} material={bodyMaterial} raycast={noRaycast} />
+        <mesh position={[u * 0.11, u * 0.14, 0]} geometry={avatarGeometry.leg} material={bodyMaterial} raycast={noRaycast} />
+        <mesh position={[0, u * 0.45, 0]} geometry={avatarGeometry.torso} material={bodyMaterial} raycast={noRaycast} />
+        <mesh position={[0, u * 0.76, 0]} geometry={avatarGeometry.head} material={bodyMaterial} raycast={noRaycast} />
+        <mesh position={[0, u * 0.78, u * 0.135]} geometry={avatarGeometry.visor} material={visorMaterial} raycast={noRaycast} />
       </group>
-      <Html center position={[0, u * 1.15, 0]} distanceFactor={4} style={{ pointerEvents: "none" }}>
+      <Html center position={[0, u * 1.15, 0]} distanceFactor={4} style={{ pointerEvents: "none" }} zIndexRange={[10, 0]}>
         <span className="whitespace-nowrap border border-border bg-background/90 px-1 font-mono text-[8px] text-foreground">
           {cursor.handle}
         </span>
       </Html>
     </group>
   );
-}
+});
 
-function VisitorBeacons({ cursors }: { cursors: MapCursor[] }) {
-  return cursors.map((cursor) => <VisitorAvatar key={cursor.id} cursor={cursor} />);
-}
+const VisitorBeacons = memo(function VisitorBeacons({ cursors }: { cursors: MapCursor[] }) {
+  return cursors.slice(0, MAX_AVATARS).map((cursor) => <VisitorAvatar key={cursor.id} cursor={cursor} />);
+});
 
 function OnChainModel({ model }: { model: BitmapModel }) {
   const gltf = useGLTF(`https://ordinals.com/content/${model.inscriptionId}`);
@@ -409,8 +429,12 @@ function ViewWindowReporter({ onWindow }: { onWindow: (window_: OwnerWindow | nu
     };
   }, []);
 
-  useFrame(() => {
+  const nextCheck = useRef(0);
+  useFrame(({ clock }) => {
     if (!mounted.current) return;
+    // Re-evaluate the holder/model window ~4x per second instead of every frame.
+    if (clock.elapsedTime < nextCheck.current) return;
+    nextCheck.current = clock.elapsedTime + 0.25;
     const mapControls = controls as MapControlsImpl | undefined;
     if (!mapControls) return;
     const distance = camera.position.distanceTo(mapControls.target);
@@ -431,31 +455,32 @@ function ViewWindowReporter({ onWindow }: { onWindow: (window_: OwnerWindow | nu
   return null;
 }
 
-function LandSurface({ colors, tipHeight }: { colors: WorldColors; tipHeight: number }) {
+const LandSurface = memo(function LandSurface({ colors, tipHeight }: { colors: WorldColors; tipHeight: number }) {
   const tipDepth = Math.max(CELL, (Math.floor(tipHeight / GRID) + 1) * CELL);
+  const gridArgs = useMemo(
+    () => [WORLD_SIZE, 100, new THREE.Color(colors.muted), new THREE.Color(colors.border)] as const,
+    [colors.border, colors.muted],
+  );
   return (
     <>
-      <mesh rotation-x={-Math.PI / 2} position={[0, -0.008, WORLD_SIZE / 2]} receiveShadow>
+      <mesh rotation-x={-Math.PI / 2} position={[0, -0.008, WORLD_SIZE / 2]} raycast={noRaycast}>
         <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
-        <meshStandardMaterial color={colors.border} roughness={0.92} metalness={0.08} />
+        <meshLambertMaterial color={colors.border} />
       </mesh>
-      <mesh rotation-x={-Math.PI / 2} position={[0, 0, tipDepth / 2]} receiveShadow>
+      <mesh rotation-x={-Math.PI / 2} position={[0, 0, tipDepth / 2]} raycast={noRaycast}>
         <planeGeometry args={[WORLD_SIZE, tipDepth, 1, 1]} />
-        <meshStandardMaterial color={colors.foreground} roughness={0.72} metalness={0.15} />
+        <meshLambertMaterial color={colors.foreground} />
       </mesh>
-      <mesh rotation-x={-Math.PI / 2} position={[0, 0.018, tipDepth / 2]}>
-        <planeGeometry args={[WORLD_SIZE, tipDepth]} />
+      <mesh rotation-x={-Math.PI / 2} position={[0, 0.018, tipDepth / 2]} raycast={noRaycast}>
+        <planeGeometry args={[WORLD_SIZE, tipDepth, 1, 1]} />
         <meshBasicMaterial color={colors.bitcoin} transparent opacity={0.2} depthWrite={false} blending={THREE.AdditiveBlending} />
       </mesh>
-      <gridHelper
-        args={[WORLD_SIZE, 100, new THREE.Color(colors.muted), new THREE.Color(colors.border)]}
-        position={[0, 0.003, WORLD_SIZE / 2]}
-      />
+      <gridHelper args={gridArgs as unknown as [number, number, THREE.Color, THREE.Color]} position={[0, 0.003, WORLD_SIZE / 2]} raycast={noRaycast} />
     </>
   );
-}
+});
 
-function WorldScene({
+const WorldScene = memo(function WorldScene({
   colors,
   command,
   tipHeight,
@@ -484,16 +509,31 @@ function WorldScene({
   models: BitmapModel[];
   ownedHeights: number[];
 }) {
-  const handleMove = (event: ThreeEvent<PointerEvent>) => {
-    const height = heightAtPoint(event.point);
-    if (height === null) {
-      onHover(null);
-      onPublish(null);
-      return;
-    }
-    onHover({ height, x: event.nativeEvent.offsetX, y: event.nativeEvent.offsetY });
-    onPublish({ col: height % GRID, row: Math.floor(height / GRID), height });
-  };
+  // Pointer moves fire dozens of times a second; each React state update re-renders
+  // the whole overlay. Coalesce them: at most ~20 hover updates a second, and skip
+  // updates that land on the same district within a couple of pixels.
+  const lastHover = useRef({ height: -1, x: -99, y: -99, at: 0 });
+  const handleMove = useCallback(
+    (event: ThreeEvent<PointerEvent>) => {
+      const height = heightAtPoint(event.point);
+      if (height === null) {
+        onHover(null);
+        onPublish(null);
+        return;
+      }
+      const x = event.nativeEvent.offsetX;
+      const y = event.nativeEvent.offsetY;
+      const now = event.nativeEvent.timeStamp || performance.now();
+      const previous = lastHover.current;
+      const moved = Math.abs(x - previous.x) + Math.abs(y - previous.y);
+      if (height === previous.height && moved < 3) return;
+      if (now - previous.at < 50 && height === previous.height) return;
+      lastHover.current = { height, x, y, at: now };
+      onHover({ height, x, y });
+      onPublish({ col: height % GRID, row: Math.floor(height / GRID), height });
+    },
+    [onHover, onPublish],
+  );
 
   return (
     <>
@@ -503,7 +543,8 @@ function WorldScene({
       <hemisphereLight args={[colors.foreground, colors.background, 0.3]} />
       <directionalLight color={colors.bitcoin} position={[-18, 36, -12]} intensity={4.4} castShadow={false} />
       <pointLight color={colors.bitcoin} position={[14, 12, 3]} intensity={120} distance={45} decay={2} />
-      <Environment>
+      {/* Baked once at low resolution — ambient tint only, no per-frame cubemap cost. */}
+      <Environment frames={1} resolution={64}>
         <Lightformer intensity={3.1} color={colors.bitcoin} position={[0, 12, -4]} scale={[34, 14, 1]} />
         <Lightformer intensity={0.8} color={colors.foreground} position={[-20, 5, 20]} rotation-y={Math.PI / 2} scale={[28, 4, 1]} />
       </Environment>
@@ -528,14 +569,17 @@ function WorldScene({
           if (height !== null) onSelect(height);
         }}
       >
-        <planeGeometry args={[WORLD_SIZE, WORLD_SIZE]} />
+        <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
       <CameraDirector command={command} tipHeight={tipHeight} />
       <ViewWindowReporter onWindow={onWindow} />
+      {/* Drops resolution while flying, restores it once the camera settles. */}
+      <AdaptiveDpr pixelated />
+      <AdaptiveEvents />
     </>
   );
-}
+});
 
 export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, className }: BitmapWorld3DProps) {
   const navigate = useNavigate();
@@ -547,6 +591,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   const [hover, setHover] = useState<HoveredDistrict | null>(null);
   const [selected, setSelected] = useState<SelectedDistrict | null>(null);
   const [command, setCommand] = useState<{ type: CameraMove; nonce: number }>({ type: "mined", nonce: 0 });
+  const [dpr, setDpr] = useState(1);
   const owners = useQuery(mapOwnersQuery(window_));
   const models = useQuery(mapBitmapModelsQuery(window_));
   const { cursors, publish } = useMapCursors();
@@ -580,6 +625,12 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
 
   const moveCamera = (type: CameraMove) => setCommand((current) => ({ type, nonce: current.nonce + 1 }));
   const handleWindow = useCallback((next: OwnerWindow | null) => setWindow(next), []);
+  const ownersRef = useRef(owners.data);
+  ownersRef.current = owners.data;
+  const handleSelect = useCallback(
+    (height: number) => setSelected({ height, owner: ownersRef.current?.get(height) ?? null }),
+    [],
+  );
   const minedDepth = Math.max(CELL, (Math.floor(tipHeight / GRID) + 1) * CELL);
   const selectedModel = selected ? models.data?.find((model) => model.bitmapHeight === selected.height) : undefined;
   const selectedIsMine = Boolean(
@@ -599,23 +650,28 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
       <div className="relative h-[70vh] min-h-[420px] w-full overflow-hidden border border-border bg-background">
         {colors ? (
           <Canvas
-            dpr={[1, 1.5]}
+            dpr={dpr}
             camera={{ position: [0, 108, minedDepth / 2 + 0.01], fov: 46, near: 0.01, far: 350 }}
-            gl={{ antialias: true }}
+            gl={{ antialias: false, powerPreference: "high-performance", stencil: false, depth: true }}
+            performance={{ min: 0.4 }}
           >
+            <PerformanceMonitor
+              onIncline={() => setDpr(Math.min(1.5, window.devicePixelRatio))}
+              onDecline={() => setDpr(1)}
+            />
             <WorldScene
               colors={colors}
               command={command}
               tipHeight={tipHeight}
-              owners={owners.data ?? new Map()}
+              owners={owners.data ?? EMPTY_OWNERS}
               mine={mine}
               cursors={cursors}
               onWindow={handleWindow}
               onHover={setHover}
-              onSelect={(height) => setSelected({ height, owner: owners.data?.get(height) ?? null })}
+              onSelect={handleSelect}
               selectedHeight={selected?.height ?? null}
               onPublish={publish}
-              models={models.data ?? []}
+              models={models.data ?? EMPTY_MODELS}
               ownedHeights={ownedHeights}
             />
           </Canvas>
