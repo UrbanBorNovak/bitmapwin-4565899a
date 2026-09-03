@@ -190,14 +190,7 @@ function Marketplace() {
         <TrendExplorer parcels={parcels} />
       </div>
 
-      <div className="mt-6">
-        <OpportunityFunnel parcels={parcels} />
-      </div>
 
-
-      <div className="mt-6">
-        <FloorRanking parcels={listed} pending={registry.isPending} />
-      </div>
 
       <div className="mt-6"><BitmapOrderBook /></div>
 
