@@ -31,10 +31,13 @@ export function useMapParty(selfId: string, handle: string, enabled = true) {
       .on("broadcast", { event: "party-invite" }, ({ payload }) => {
         const p = payload as { to?: string; partyId?: string; leaderId?: string; leaderHandle?: string };
         if (p.to !== selfId || !p.partyId || !p.leaderId || !p.leaderHandle || partyRef.current) return;
-        setInvites((current) => [...current.filter((invite) => invite.leaderId !== p.leaderId), {
-          partyId: p.partyId,
-          leaderId: p.leaderId,
-          leaderHandle: p.leaderHandle.slice(0, 32),
+        const partyId = p.partyId;
+        const leaderId = p.leaderId;
+        const leaderHandle = p.leaderHandle.slice(0, 32);
+        setInvites((current) => [...current.filter((invite) => invite.leaderId !== leaderId), {
+          partyId,
+          leaderId,
+          leaderHandle,
           at: Date.now(),
         }].slice(-3));
       })

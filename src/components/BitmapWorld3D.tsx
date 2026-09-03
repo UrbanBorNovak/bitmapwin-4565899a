@@ -1366,13 +1366,14 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
           {party.party ? (
             <ul className="p-1">
               {party.party.members.map((member) => {
+                const isLeader = party.party?.leaderId === selfId;
                 const cursor = member.id === selfId ? null : cursors.find((item) => item.id === member.id);
                 const memberHp = member.id === selfId ? hp : (cursor?.hp ?? 0);
                 return (
                   <li key={member.id} className="flex items-center gap-1 border-b border-border/60 px-1 py-1 last:border-0">
                     <span className="min-w-0 flex-1 truncate">{member.id === party.party?.leaderId ? "◆ " : ""}{member.handle}{member.id === selfId ? " (YOU)" : ""}</span>
                     <span className={memberHp > 0 ? "text-foreground" : "text-bitcoin"}>{memberHp} HP</span>
-                    {party.party.leaderId === selfId && member.id !== selfId ? <Button size="sm" variant="ghost" className="h-5 rounded-sm px-1 text-[8px] text-bitcoin" onClick={() => party.kick(member.id)}>EXPEL</Button> : null}
+                    {isLeader && member.id !== selfId ? <Button size="sm" variant="ghost" className="h-5 rounded-sm px-1 text-[8px] text-bitcoin" onClick={() => party.kick(member.id)}>EXPEL</Button> : null}
                   </li>
                 );
               })}
