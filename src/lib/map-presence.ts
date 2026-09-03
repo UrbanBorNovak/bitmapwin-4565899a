@@ -205,7 +205,12 @@ export function useMapCursors(enabled = true) {
         const damage = Math.max(0, Math.min(MAX_HP, Number(p.damage) || ATTACK_DAMAGE));
         const now = Date.now();
         const attacker = peers.get(p.from);
-        const target = p.to === selfId ? lastCell : peers.get(p.to);
+        const target = p.to === selfId && lastCell
+          ? {
+              x: typeof lastCell.x === "number" ? lastCell.x : cellX(lastCell.col),
+              z: typeof lastCell.z === "number" ? lastCell.z : cellZ(lastCell.row),
+            }
+          : peers.get(p.to);
         if (!attacker || !target) return;
         if (Math.hypot(attacker.x - target.x, attacker.z - target.z) > ATTACK_RANGE * 1.35) return;
         const previousAttack = lastAttackByPlayer.get(p.from) ?? 0;
@@ -303,7 +308,10 @@ export function useMapCursors(enabled = true) {
     attackRef.current = (targetId) => {
       if (!targetId || hpRef.current <= 0) return;
       const target = peers.get(targetId);
-      if (!target || !lastCell || Math.hypot(target.x - lastCell.x, target.z - lastCell.z) > ATTACK_RANGE) return;
+      if (!target || !lastCell) return;
+      const selfX = typeof lastCell.x === "number" ? lastCell.x : cellX(lastCell.col);
+      const selfZ = typeof lastCell.z === "number" ? lastCell.z : cellZ(lastCell.row);
+      if (Math.hypot(target.x - selfX, target.z - selfZ) > ATTACK_RANGE) return;
       const now = Date.now();
       const previousAttack = lastAttackByPlayer.get(selfId) ?? 0;
       if (now - previousAttack < ATTACK_COOLDOWN_MS) return;
