@@ -22,12 +22,9 @@ export function VerificationChip({
   duplicateClaims?: number;
   className?: string;
 }) {
-  const status: VerificationStatus = !inscriptionId
-    ? "pending"
-    : duplicateClaims > 0
-      ? "verified"
-      : "verified";
+  const status: VerificationStatus = inscriptionId ? "verified" : "pending";
   const meta = STATUS[status];
+  const note = duplicateClaims > 0 ? `${meta.label} · ${duplicateClaims} LATER DUPLICATE(S) INVALID` : meta.label;
   return (
     <span
       className={`label inline-flex items-center gap-1.5 border border-border px-1.5 py-0.5 ${className}`}
