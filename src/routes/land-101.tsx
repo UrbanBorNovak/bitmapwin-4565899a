@@ -26,15 +26,13 @@ export const Route = createFileRoute("/land-101")({
 /** Reveals children with a subtle rise once scrolled into view (respects reduced motion). */
 function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [shown, setShown] = useState(false);
+  const [shown, setShown] = useState(true);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setShown(true);
-      return;
-    }
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    setShown(false);
     const obs = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) if (entry.isIntersecting) setShown(true);
