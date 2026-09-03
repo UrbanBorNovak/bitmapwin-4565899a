@@ -243,28 +243,54 @@ const DistrictBlocks = memo(function DistrictBlocks({ tipHeight, colors }: { tip
   );
 });
 
-function SelectedBlock({ height, bitcoin }: { height: number; bitcoin: string }) {
+const SelectedBlock = memo(function SelectedBlock({ height, bitcoin }: { height: number; bitcoin: string }) {
   const blockHeight = districtHeight(height);
   return (
     <mesh
       position={[worldX(height % GRID), blockHeight / 2 + 0.001, worldZ(Math.floor(height / GRID))]}
       scale={[CELL * 1.35, blockHeight + 0.008, CELL * 1.35]}
+      raycast={noRaycast}
     >
       <boxGeometry args={[1, 1, 1]} />
       <meshBasicMaterial color={bitcoin} wireframe />
     </mesh>
   );
+});
+
+// One avatar ≈ one district cell tall. Geometry is shared across every visitor so
+// spawning a crowd costs no extra GPU buffers.
+const AVATAR_U = CELL;
+const avatarGeometry = {
+  ring: new THREE.RingGeometry(AVATAR_U * 0.42, AVATAR_U * 0.5, 16),
+  leg: new THREE.BoxGeometry(AVATAR_U * 0.14, AVATAR_U * 0.28, AVATAR_U * 0.14),
+  torso: new THREE.BoxGeometry(AVATAR_U * 0.4, AVATAR_U * 0.34, AVATAR_U * 0.2),
+  head: new THREE.BoxGeometry(AVATAR_U * 0.26, AVATAR_U * 0.26, AVATAR_U * 0.26),
+  visor: new THREE.BoxGeometry(AVATAR_U * 0.2, AVATAR_U * 0.06, AVATAR_U * 0.01),
+};
+const visorMaterial = new THREE.MeshBasicMaterial({ color: "#000000" });
+const avatarBodyMaterials = new Map<string, THREE.MeshBasicMaterial>();
+function avatarBodyMaterial(color: string) {
+  let material = avatarBodyMaterials.get(color);
+  if (!material) {
+    material = new THREE.MeshBasicMaterial({ color });
+    avatarBodyMaterials.set(color, material);
+  }
+  return material;
 }
+/** Only this many visitor figures are drawn — keeps a busy map cheap on a laptop. */
+const MAX_AVATARS = 24;
 
 /** One spawned visitor: a blocky cypherpunk figure standing on the land. */
-function VisitorAvatar({ cursor }: { cursor: MapCursor }) {
+const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCursor }) {
   const body = useRef<THREE.Group>(null);
   const ring = useRef<THREE.Mesh>(null);
+  const ringMaterial = useRef<THREE.MeshBasicMaterial>(null);
   const phase = useMemo(() => {
     let hash = 0;
     for (const ch of cursor.id) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
     return (hash % 628) / 100;
   }, [cursor.id]);
+  const bodyMaterial = useMemo(() => avatarBodyMaterial(cursor.color), [cursor.color]);
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime + phase;
@@ -272,59 +298,39 @@ function VisitorAvatar({ cursor }: { cursor: MapCursor }) {
       body.current.position.y = Math.abs(Math.sin(t * 2.4)) * CELL * 0.12;
       body.current.rotation.y = Math.sin(t * 0.9) * 0.35;
     }
-    if (ring.current) {
+    if (ring.current && ringMaterial.current) {
       const pulse = (t * 0.8) % 1;
       ring.current.scale.setScalar(1 + pulse * 0.9);
-      (ring.current.material as THREE.MeshBasicMaterial).opacity = 0.85 * (1 - pulse);
+      ringMaterial.current.opacity = 0.85 * (1 - pulse);
     }
   });
 
-  const u = CELL; // one avatar ≈ one district cell tall
+  const u = AVATAR_U;
   return (
     <group position={[worldX(cursor.col), 0.006, worldZ(cursor.row)]}>
       {/* spawn ring pulsing under the avatar */}
-      <mesh ref={ring} rotation-x={-Math.PI / 2} position-y={0.001}>
-        <ringGeometry args={[u * 0.42, u * 0.5, 24]} />
-        <meshBasicMaterial color={cursor.color} transparent opacity={0.8} side={THREE.DoubleSide} />
+      <mesh ref={ring} rotation-x={-Math.PI / 2} position-y={0.001} geometry={avatarGeometry.ring} raycast={noRaycast}>
+        <meshBasicMaterial ref={ringMaterial} color={cursor.color} transparent opacity={0.8} side={THREE.DoubleSide} />
       </mesh>
       <group ref={body}>
-        {/* legs */}
-        <mesh position={[-u * 0.11, u * 0.14, 0]}>
-          <boxGeometry args={[u * 0.14, u * 0.28, u * 0.14]} />
-          <meshBasicMaterial color={cursor.color} />
-        </mesh>
-        <mesh position={[u * 0.11, u * 0.14, 0]}>
-          <boxGeometry args={[u * 0.14, u * 0.28, u * 0.14]} />
-          <meshBasicMaterial color={cursor.color} />
-        </mesh>
-        {/* torso */}
-        <mesh position={[0, u * 0.45, 0]}>
-          <boxGeometry args={[u * 0.4, u * 0.34, u * 0.2]} />
-          <meshBasicMaterial color={cursor.color} />
-        </mesh>
-        {/* head */}
-        <mesh position={[0, u * 0.76, 0]}>
-          <boxGeometry args={[u * 0.26, u * 0.26, u * 0.26]} />
-          <meshBasicMaterial color={cursor.color} />
-        </mesh>
-        {/* visor */}
-        <mesh position={[0, u * 0.78, u * 0.135]}>
-          <boxGeometry args={[u * 0.2, u * 0.06, u * 0.01]} />
-          <meshBasicMaterial color="#000000" />
-        </mesh>
+        <mesh position={[-u * 0.11, u * 0.14, 0]} geometry={avatarGeometry.leg} material={bodyMaterial} raycast={noRaycast} />
+        <mesh position={[u * 0.11, u * 0.14, 0]} geometry={avatarGeometry.leg} material={bodyMaterial} raycast={noRaycast} />
+        <mesh position={[0, u * 0.45, 0]} geometry={avatarGeometry.torso} material={bodyMaterial} raycast={noRaycast} />
+        <mesh position={[0, u * 0.76, 0]} geometry={avatarGeometry.head} material={bodyMaterial} raycast={noRaycast} />
+        <mesh position={[0, u * 0.78, u * 0.135]} geometry={avatarGeometry.visor} material={visorMaterial} raycast={noRaycast} />
       </group>
-      <Html center position={[0, u * 1.15, 0]} distanceFactor={4} style={{ pointerEvents: "none" }}>
+      <Html center position={[0, u * 1.15, 0]} distanceFactor={4} style={{ pointerEvents: "none" }} zIndexRange={[10, 0]}>
         <span className="whitespace-nowrap border border-border bg-background/90 px-1 font-mono text-[8px] text-foreground">
           {cursor.handle}
         </span>
       </Html>
     </group>
   );
-}
+});
 
-function VisitorBeacons({ cursors }: { cursors: MapCursor[] }) {
-  return cursors.map((cursor) => <VisitorAvatar key={cursor.id} cursor={cursor} />);
-}
+const VisitorBeacons = memo(function VisitorBeacons({ cursors }: { cursors: MapCursor[] }) {
+  return cursors.slice(0, MAX_AVATARS).map((cursor) => <VisitorAvatar key={cursor.id} cursor={cursor} />);
+});
 
 function OnChainModel({ model }: { model: BitmapModel }) {
   const gltf = useGLTF(`https://ordinals.com/content/${model.inscriptionId}`);
