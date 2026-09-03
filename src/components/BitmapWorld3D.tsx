@@ -10,6 +10,8 @@ import * as THREE from "three";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
 import { Button } from "@/components/ui/button";
 import { BitmapModelPlacement } from "@/components/BitmapModelPlacement";
+import { AvatarInventory } from "@/components/AvatarInventory";
+
 import { clubOf } from "@/lib/clubs";
 import { colorForAddress, mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
 import { SAY_MAX_LENGTH, SAY_TTL_MS, useMapCursors, type MapCursor } from "@/lib/map-presence";
