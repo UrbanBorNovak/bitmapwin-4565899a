@@ -349,10 +349,11 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
               const isMine = mine.has(owner);
               return (
                 <div className="mt-0.5 flex items-center gap-1">
-                  <span
-                    className="inline-block h-2 w-2"
-                    style={{ background: isMine ? "hsl(var(--bitcoin))" : colorForAddress(owner) }}
-                  />
+                  {isMine ? (
+                    <span className="inline-block h-2 w-2 bg-bitcoin" />
+                  ) : (
+                    <span className="inline-block h-2 w-2" style={{ background: colorForAddress(owner) }} />
+                  )}
                   <span>{isMine ? "YOURS" : `${owner.slice(0, 6)}…${owner.slice(-4)}`}</span>
                 </div>
               );
