@@ -210,6 +210,10 @@ function LandSurface({ colors, tipHeight }: { colors: WorldColors; tipHeight: nu
         <planeGeometry args={[WORLD_SIZE, tipDepth, 1, 1]} />
         <meshStandardMaterial color={colors.foreground} roughness={0.72} metalness={0.15} />
       </mesh>
+      <mesh rotation-x={-Math.PI / 2} position={[0, 0.018, tipDepth / 2]}>
+        <planeGeometry args={[WORLD_SIZE, tipDepth]} />
+        <meshBasicMaterial color={colors.bitcoin} transparent opacity={0.2} depthWrite={false} blending={THREE.AdditiveBlending} />
+      </mesh>
       <gridHelper
         args={[WORLD_SIZE, 100, new THREE.Color(colors.muted), new THREE.Color(colors.border)]}
         position={[0, 0.003, WORLD_SIZE / 2]}
@@ -325,7 +329,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
         {colors ? (
           <Canvas
             dpr={[1, 1.5]}
-            camera={{ position: [3.5, Math.max(5.5, minedDepth * 0.62), minedDepth + 4.5], fov: 46, near: 0.01, far: 350 }}
+            camera={{ position: [0, 108, minedDepth / 2 + 0.01], fov: 46, near: 0.01, far: 350 }}
             gl={{ antialias: true }}
           >
             <WorldScene
