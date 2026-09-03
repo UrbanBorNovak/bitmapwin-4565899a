@@ -10,3 +10,5 @@
 - [x] Stabilize the 3D world renderer and refine the third-person MMORPG presentation
 - [x] Add smooth target-follow first-person, third-person, and map camera modes
 - [x] Polish combat HUD with damage, cooldown, range, and shared hit log
+- [ ] Add predicted jump movement and synchronized jump animation
+- [ ] Add three-player parties with invite, accept/decline, leader expulsion, member HUD, and party chat
