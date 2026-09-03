@@ -506,16 +506,31 @@ const WorldScene = memo(function WorldScene({
   models: BitmapModel[];
   ownedHeights: number[];
 }) {
-  const handleMove = (event: ThreeEvent<PointerEvent>) => {
-    const height = heightAtPoint(event.point);
-    if (height === null) {
-      onHover(null);
-      onPublish(null);
-      return;
-    }
-    onHover({ height, x: event.nativeEvent.offsetX, y: event.nativeEvent.offsetY });
-    onPublish({ col: height % GRID, row: Math.floor(height / GRID), height });
-  };
+  // Pointer moves fire dozens of times a second; each React state update re-renders
+  // the whole overlay. Coalesce them: at most ~20 hover updates a second, and skip
+  // updates that land on the same district within a couple of pixels.
+  const lastHover = useRef({ height: -1, x: -99, y: -99, at: 0 });
+  const handleMove = useCallback(
+    (event: ThreeEvent<PointerEvent>) => {
+      const height = heightAtPoint(event.point);
+      if (height === null) {
+        onHover(null);
+        onPublish(null);
+        return;
+      }
+      const x = event.nativeEvent.offsetX;
+      const y = event.nativeEvent.offsetY;
+      const now = event.nativeEvent.timeStamp || performance.now();
+      const previous = lastHover.current;
+      const moved = Math.abs(x - previous.x) + Math.abs(y - previous.y);
+      if (height === previous.height && moved < 3) return;
+      if (now - previous.at < 50 && height === previous.height) return;
+      lastHover.current = { height, x, y, at: now };
+      onHover({ height, x, y });
+      onPublish({ col: height % GRID, row: Math.floor(height / GRID), height });
+    },
+    [onHover, onPublish],
+  );
 
   return (
     <>
