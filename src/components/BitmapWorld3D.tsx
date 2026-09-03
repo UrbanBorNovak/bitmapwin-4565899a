@@ -193,11 +193,11 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
     owned.forEach((height, index) => {
       const x = worldX(height % GRID);
       const z = worldZ(Math.floor(height / GRID));
-      dummy.position.set(x, 0.16, z);
+      dummy.position.set(x, AVATAR_U * 1.6, z);
       dummy.scale.set(CELL * 1.5, 0.3, CELL * 1.5);
       dummy.updateMatrix();
       core.setMatrixAt(index, dummy.matrix);
-      dummy.position.set(x, 0.16, z);
+      dummy.position.set(x, AVATAR_U * 1.6, z);
       dummy.scale.set(CELL * 3.2, 0.34, CELL * 3.2);
       dummy.updateMatrix();
       aura.setMatrixAt(index, dummy.matrix);
@@ -280,7 +280,7 @@ const DistrictBlocks = memo(function DistrictBlocks({
   );
 
   return (
-    <mesh rotation-x={-Math.PI / 2} position={[0, 0.012, WORLD_SIZE / 2]} raycast={noRaycast}>
+    <mesh rotation-x={-Math.PI / 2} position={[0, -AVATAR_U * 0.02, WORLD_SIZE / 2]} raycast={noRaycast}>
       <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
       <shaderMaterial
         uniforms={uniforms}
@@ -752,7 +752,7 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
     current.yaw = damp(current.yaw, target.yaw, 9, delta, true);
     const t = clock.elapsedTime + phase;
     if (group.current) {
-      group.current.position.set(current.x, current.y + 0.006, current.z);
+      group.current.position.set(current.x, current.y, current.z);
       group.current.rotation.y = current.yaw;
     }
     if (body.current) {
@@ -768,7 +768,7 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
   });
 
   return (
-    <group ref={group} position={[cursor.x, cursor.y + 0.006, cursor.z]}>
+    <group ref={group} position={[cursor.x, cursor.y, cursor.z]}>
       {/* spawn ring pulsing under the avatar */}
       <mesh
         ref={ring}
@@ -862,7 +862,7 @@ const SelfAvatar = memo(function SelfAvatar({
   useFrame(() => {
     const current = pose.current;
     if (!current || !group.current) return;
-    group.current.position.set(current.x, current.y + 0.006, current.z);
+    group.current.position.set(current.x, current.y, current.z);
     group.current.rotation.y = current.yaw;
     if (!mounted.current) return;
     const next: AvatarMotion = current.animation;
@@ -1223,21 +1223,21 @@ const LandSurface = memo(function LandSurface({
   );
   return (
     <>
-      <mesh rotation-x={-Math.PI / 2} position={[0, -0.008, WORLD_SIZE / 2]} raycast={noRaycast}>
+      <mesh rotation-x={-Math.PI / 2} position={[0, -AVATAR_U * 0.1, WORLD_SIZE / 2]} raycast={noRaycast}>
         <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
         <meshLambertMaterial color={colors.background} />
       </mesh>
-      <mesh rotation-x={-Math.PI / 2} position={[0, 0, tipDepth / 2]} raycast={noRaycast}>
+      <mesh rotation-x={-Math.PI / 2} position={[0, -AVATAR_U * 0.08, tipDepth / 2]} raycast={noRaycast}>
         <planeGeometry args={[WORLD_SIZE, tipDepth, 1, 1]} />
         <meshLambertMaterial color={colors.muted} />
       </mesh>
-      <mesh rotation-x={-Math.PI / 2} position={[0, 0.018, tipDepth / 2]} raycast={noRaycast}>
+      <mesh rotation-x={-Math.PI / 2} position={[0, -AVATAR_U * 0.01, tipDepth / 2]} raycast={noRaycast}>
         <planeGeometry args={[WORLD_SIZE, tipDepth, 1, 1]} />
         <meshBasicMaterial color={colors.bitcoin} transparent opacity={0.045} depthWrite={false} />
       </mesh>
       <gridHelper
         args={gridArgs as unknown as [number, number, THREE.Color, THREE.Color]}
-        position={[0, 0.003, WORLD_SIZE / 2]}
+        position={[0, -AVATAR_U * 0.05, WORLD_SIZE / 2]}
         raycast={noRaycast}
       />
     </>
@@ -1371,7 +1371,7 @@ const WorldScene = memo(function WorldScene({
       ) : null}
       <mesh
         rotation-x={-Math.PI / 2}
-        position={[0, 0.13, WORLD_SIZE / 2]}
+        position={[0, -AVATAR_U * 0.12, WORLD_SIZE / 2]}
         onPointerMove={handleMove}
         onPointerOut={() => {
           onHover(null);
