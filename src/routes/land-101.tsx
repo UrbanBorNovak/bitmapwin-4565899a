@@ -71,7 +71,7 @@ function Chapter({
 }) {
   return (
     <Reveal>
-      <section className="border border-border-strong">
+      <section className="border border-border-strong bg-background">
         <header className="flex items-end justify-between gap-3 border-b border-border p-5 md:p-6">
           <div>
             <div className="label text-bitcoin">
@@ -124,7 +124,7 @@ function InscriptionDiagram() {
         />
       ))}
       <text x="10" y="150" className="fill-current font-mono text-[9px] text-muted-foreground">
-        &gt; DATA RIDES A SAT INTO A BITCOIN BLOCK — PERMANENT, UNEDITABLE
+        &gt; DATA RIDES A SAT INTO A BLOCK — PERMANENT
       </text>
     </svg>
   );
@@ -217,7 +217,7 @@ function Land101() {
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-10 md:px-8 md:py-16">
       <Reveal>
-        <header className="border border-border-strong p-6 md:p-10">
+        <header className="border border-border-strong bg-background p-6 md:p-10">
           <div className="label text-bitcoin">EDUCATION</div>
           <h1 className="display mt-3 text-3xl md:text-5xl">BITCOIN LAND 101</h1>
           <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
@@ -324,7 +324,7 @@ function Land101() {
         </Chapter>
 
         <Reveal>
-          <section className="border border-border-strong p-6 md:p-10">
+          <section className="border border-border-strong bg-background p-6 md:p-10">
             <h2 className="display text-2xl md:text-3xl">READY TO LOOK AROUND?</h2>
             <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
               Every price on this site comes from a confirmed Bitcoin transaction. Start with the
