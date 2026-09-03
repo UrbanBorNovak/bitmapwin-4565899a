@@ -71,6 +71,29 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
     const accentCol = color(accent);
     const borderCol = color(border);
 
+    // Zoomed far out a single pixel covers many cells, so the mined land is
+    // painted as blocks of rows instead of 100M individual rects.
+    if (scale < 1.2) {
+      const tipRow = Math.floor(tipHeight / GRID);
+      const tipCol = tipHeight % GRID;
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = borderCol;
+      ctx.fillRect(x, y, GRID * scale, GRID * scale);
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = fgCol;
+      if (tipRow > 0) ctx.fillRect(x, y, GRID * scale, tipRow * scale);
+      ctx.fillRect(x, y + tipRow * scale, (tipCol + 1) * scale, Math.max(1, scale));
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = accentCol;
+      for (const height of highlightSet.current) {
+        if (height > tipHeight) continue;
+        const hx = x + (height % GRID) * scale;
+        const hy = y + Math.floor(height / GRID) * scale;
+        ctx.fillRect(hx, hy, Math.max(2, scale), Math.max(2, scale));
+      }
+      ctx.globalAlpha = 1;
+      return;
+    }
 
     for (let row = rowFrom; row <= rowTo; row++) {
       const sy = y + row * scale;
@@ -79,17 +102,17 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
         const sx = x + col * scale;
         const isHighlight = highlightSet.current.has(height);
         if (height > tipHeight) {
-          if (scale < 0.5) continue;
           ctx.fillStyle = borderCol;
         } else {
           ctx.fillStyle = isHighlight ? accentCol : fgCol;
         }
-        ctx.globalAlpha = height > tipHeight ? 0.35 : isHighlight ? 1 : 0.75;
+        ctx.globalAlpha = height > tipHeight ? 0.35 : isHighlight ? 1 : 0.8;
         ctx.fillRect(sx, sy, isHighlight ? Math.max(dot, 2) : dot, isHighlight ? Math.max(dot, 2) : dot);
       }
     }
     ctx.globalAlpha = 1;
   }, [tipHeight]);
+
 
   useEffect(() => {
     draw();
