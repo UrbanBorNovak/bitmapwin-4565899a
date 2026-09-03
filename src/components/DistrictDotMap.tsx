@@ -175,7 +175,20 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
       }
     }
     ctx.globalAlpha = 1;
+    drawCursors();
   }, [tipHeight, owners.data]);
+
+  // Keep the cursor halos breathing while anyone else is on the map.
+  useEffect(() => {
+    if (cursors.length === 0) return;
+    let frame = 0;
+    const loop = () => {
+      draw();
+      frame = requestAnimationFrame(loop);
+    };
+    frame = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(frame);
+  }, [cursors.length, draw]);
 
   // Owners are fetched for the visible window only — the registry holds
   // hundreds of thousands of owned districts.
