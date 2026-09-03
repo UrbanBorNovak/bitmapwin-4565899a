@@ -199,8 +199,8 @@ const DistrictBlocks = memo(function DistrictBlocks({ tipHeight, colors }: { tip
   );
 
   return (
-    <mesh rotation-x={-Math.PI / 2} position={[0, 0.012, WORLD_SIZE / 2]}>
-      <planeGeometry args={[WORLD_SIZE, WORLD_SIZE]} />
+    <mesh rotation-x={-Math.PI / 2} position={[0, 0.012, WORLD_SIZE / 2]} raycast={noRaycast}>
+      <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
       <shaderMaterial
         uniforms={uniforms}
         vertexShader={/* glsl */ `
