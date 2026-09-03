@@ -779,6 +779,9 @@ const WorldScene = memo(function WorldScene({
       <OnChainModels models={models} bitcoin={colors.bitcoin} />
       {selectedHeight !== null ? <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} /> : null}
       <VisitorBeacons cursors={cursors} />
+      {thirdPerson ? (
+        <SelfAvatar pose={pose} color={self.color} handle={self.handle} model={self.model} say={self.say} />
+      ) : null}
       <mesh
         rotation-x={-Math.PI / 2}
         position={[0, 0.13, WORLD_SIZE / 2]}
@@ -796,14 +799,19 @@ const WorldScene = memo(function WorldScene({
         <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
-      <CameraDirector command={command} tipHeight={tipHeight} />
-      <ViewWindowReporter onWindow={onWindow} />
+      {thirdPerson ? (
+        <ThirdPersonRig pose={pose} onCell={onPublish} />
+      ) : (
+        <CameraDirector command={command} tipHeight={tipHeight} />
+      )}
+      <ViewWindowReporter onWindow={onWindow} pose={thirdPerson ? pose : null} />
       {/* Drops resolution while flying, restores it once the camera settles. */}
       <AdaptiveDpr pixelated />
       <AdaptiveEvents />
     </>
   );
 });
+
 
 export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, className }: BitmapWorld3DProps) {
   const navigate = useNavigate();
