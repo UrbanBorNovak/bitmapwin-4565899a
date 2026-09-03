@@ -23,6 +23,7 @@ import { DistrictReinscriptions } from "@/components/DistrictReinscriptions";
 import { LeasePanel } from "@/components/leases/LeasePanel";
 import { BitmapEvents } from "@/components/coins/BitmapEvents";
 import { MakeOfferButton } from "@/components/MakeOfferButton";
+import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 
 import { InscriptionContent } from "@/components/InscriptionContent";
 import { shortId } from "@/lib/chain";
