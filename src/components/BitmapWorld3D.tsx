@@ -1217,6 +1217,56 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
           </Canvas>
         ) : null}
 
+        <div
+          role="group"
+          aria-label="Camera mode"
+          data-no-translate
+          className="absolute right-3 top-3 z-30 flex border border-border bg-background/90 p-0.5 shadow-md backdrop-blur-sm"
+        >
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-label="Map camera"
+            aria-pressed={cameraMode === "map"}
+            title="Map camera"
+            className={cameraMode === "map" ? "rounded-sm bg-bitcoin text-bitcoin-foreground hover:bg-bitcoin/90" : "rounded-sm text-muted-foreground"}
+            onClick={() => setCameraMode("map")}
+          >
+            <MapIcon /> <span className="hidden sm:inline">MAP</span>
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-label="Third-person camera"
+            aria-pressed={cameraMode === "third"}
+            title="Third-person camera"
+            className={cameraMode === "third" ? "rounded-sm bg-bitcoin text-bitcoin-foreground hover:bg-bitcoin/90" : "rounded-sm text-muted-foreground"}
+            onClick={() => setCameraMode("third")}
+          >
+            <Orbit /> <span className="hidden sm:inline">3RD</span>
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-label="First-person camera"
+            aria-pressed={cameraMode === "first"}
+            title="First-person camera"
+            className={cameraMode === "first" ? "rounded-sm bg-bitcoin text-bitcoin-foreground hover:bg-bitcoin/90" : "rounded-sm text-muted-foreground"}
+            onClick={() => setCameraMode("first")}
+          >
+            <Eye /> <span className="hidden sm:inline">1ST</span>
+          </Button>
+        </div>
+
+        {cameraMode === "first" ? (
+          <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 text-bitcoin/80">
+            <Crosshair className="h-5 w-5" strokeWidth={1.5} />
+          </div>
+        ) : null}
+
         {/* Your own health, always visible while exploring the world. */}
         <div data-no-translate className="pointer-events-none absolute left-3 top-3 z-30 flex flex-col gap-1 bg-background/80 px-2 py-1 font-mono text-[10px]">
           <span className="flex items-center gap-2">
@@ -1245,13 +1295,15 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
             </span>
           ) : null}
           {attackTarget ? <span className="text-bitcoin">{attackTarget}</span> : null}
-          {thirdPerson ? (
+          {exploring ? (
             <>
               <span className="text-muted-foreground">
-                {readout.movement.toUpperCase()} · REGION {readout.chunk} · {readout.height.toLocaleString("en-US")}.BITMAP
+                {cameraMode === "first" ? "FIRST PERSON" : "THIRD PERSON"} · {readout.movement.toUpperCase()} · REGION {readout.chunk} · {readout.height.toLocaleString("en-US")}.BITMAP
                 {readout.target ? " · WALKING TO MARK" : ""}
               </span>
-              <span className="text-muted-foreground">WASD / ARROWS · SHIFT SPRINT · CLICK OR TAP TO WALK · SPACE ATTACK</span>
+              <span className="text-muted-foreground">
+                WASD / ARROWS · SHIFT SPRINT · {cameraMode === "first" ? "CLICK WORLD FOR MOUSE LOOK · ESC RELEASE" : "CLICK OR TAP TO WALK"} · SPACE ATTACK
+              </span>
             </>
           ) : null}
 
