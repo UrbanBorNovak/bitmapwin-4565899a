@@ -487,11 +487,82 @@ const AvatarBody = memo(function AvatarBody({ color }: { color: string }) {
   );
 });
 
-/** An avatar worn as an on-chain GLB inscription, textures included. */
-function ModelAvatar({ inscriptionId }: { inscriptionId: string }) {
+/** Pick the first clip whose name mentions one of these words. */
+function clipNamed(names: string[], words: string[]) {
+  for (const word of words) {
+    const hit = names.find((name) => name.toLowerCase().includes(word));
+    if (hit) return hit;
+  }
+  return null;
+}
+
+/** Which clip plays for a movement/animation state, and how fast it runs. */
+function clipFor(names: string[], state: AvatarMotion) {
+  switch (state) {
+    case "jump":
+      return { name: clipNamed(names, ["jump", "fall", "air", "idle"]), speed: 1 };
+    case "run":
+      return { name: clipNamed(names, ["run", "sprint", "walk"]), speed: 1.75 };
+    case "walk":
+      return { name: clipNamed(names, ["walk", "run"]), speed: 1.1 };
+    case "down":
+      return { name: clipNamed(names, ["death", "die", "down", "fall", "idle"]), speed: 1 };
+    case "hurt":
+      return { name: clipNamed(names, ["hurt", "hit", "damage", "idle"]), speed: 1 };
+    case "attack":
+      return { name: clipNamed(names, ["attack", "punch", "hit", "idle"]), speed: 1.3 };
+    default:
+      return { name: clipNamed(names, ["idle", "stand", "breath"]), speed: 1 };
+  }
+}
+
+export type AvatarMotion = "idle" | "walk" | "run" | "jump" | "hurt" | "attack" | "down";
+
+/**
+ * An avatar worn as an on-chain GLB inscription. Skeleton is driven by the
+ * model's own clips, cross-faded from the player's movement state so every bone
+ * walks, runs and leaves the ground with the body.
+ */
+function ModelAvatar({
+  inscriptionId,
+  motion,
+  skinTexture,
+}: {
+  inscriptionId: string;
+  motion: AvatarMotion;
+  skinTexture?: string | undefined;
+}) {
   const gltf = useGLTF(`https://ordinals.com/content/${inscriptionId}`);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
-  const { actions } = useAnimations(gltf.animations, scene);
+  const { actions, names } = useAnimations(gltf.animations, scene);
+  const texture = useTexture(
+    skinTexture ? `https://ordinals.com/content/${skinTexture}` : TRANSPARENT_PIXEL,
+  );
+
+  useEffect(() => {
+    scene.traverse((child) => {
+      const mesh = child as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      mesh.frustumCulled = false;
+      mesh.castShadow = false;
+      if (!skinTexture) return;
+      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      mesh.material = materials.map((source) => {
+        const material = (source as THREE.MeshStandardMaterial).clone();
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.magFilter = THREE.NearestFilter;
+        texture.minFilter = THREE.NearestFilter;
+        texture.generateMipmaps = false;
+        material.map = texture;
+        material.color = new THREE.Color("#ffffff");
+        material.needsUpdate = true;
+        return material;
+      }) as THREE.Material[] as THREE.Material;
+      if (Array.isArray(materials) && materials.length === 1)
+        mesh.material = (mesh.material as unknown as THREE.Material[])[0]!;
+    });
+  }, [scene, texture, skinTexture]);
+
   const fitted = useMemo(() => {
     scene.updateMatrixWorld(true);
     const bounds = new THREE.Box3().setFromObject(scene);
@@ -500,13 +571,28 @@ function ModelAvatar({ inscriptionId }: { inscriptionId: string }) {
     const fit = (AVATAR_U * 1.15) / Math.max(size.x, size.y, size.z, 0.0001);
     return { fit, center, minY: bounds.min.y };
   }, [scene]);
+
+  // Cross-fade to the clip the current motion asks for; bones do the rest.
   useEffect(() => {
-    const first = Object.values(actions)[0];
-    first?.reset().play();
+    const pick = clipFor(names, motion);
+    const name = pick.name ?? names[0];
+    if (!name) return;
+    const next = actions[name];
+    if (!next) return;
+    next.enabled = true;
+    next.setEffectiveTimeScale(pick.speed);
+    next.setEffectiveWeight(1);
+    if (motion === "jump" || motion === "attack" || motion === "hurt") {
+      next.setLoop(THREE.LoopRepeat, Infinity);
+    } else {
+      next.setLoop(THREE.LoopRepeat, Infinity);
+    }
+    next.reset().fadeIn(0.18).play();
     return () => {
-      first?.stop();
+      next.fadeOut(0.18);
     };
-  }, [actions]);
+  }, [actions, names, motion]);
+
   return (
     <group
       scale={fitted.fit}
@@ -521,14 +607,30 @@ function ModelAvatar({ inscriptionId }: { inscriptionId: string }) {
   );
 }
 
-function AvatarSkin({ color, model }: { color: string; model: string | null }) {
-  if (!model) return <AvatarBody color={color} />;
+const TRANSPARENT_PIXEL =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==";
+
+function AvatarSkin({
+  color,
+  model,
+  motion,
+}: {
+  color: string;
+  model: string | null;
+  motion: AvatarMotion;
+}) {
+  const worn = model ?? DEFAULT_AVATAR_MODEL;
   return (
     <Suspense fallback={<AvatarBody color={color} />}>
-      <ModelAvatar inscriptionId={model} />
+      <ModelAvatar
+        inscriptionId={worn}
+        motion={motion}
+        skinTexture={worn === DEFAULT_AVATAR_MODEL ? DEFAULT_AVATAR_TEXTURE : undefined}
+      />
     </Suspense>
   );
 }
+
 
 function HealthBar({ hp, color }: { hp: number; color: string }) {
   const pct = Math.max(0, Math.min(100, (hp / MAX_HP) * 100));
