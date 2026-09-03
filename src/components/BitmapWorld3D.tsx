@@ -268,13 +268,25 @@ const SelectedBlock = memo(function SelectedBlock({ height, bitcoin }: { height:
 const AVATAR_U = CELL;
 const avatarGeometry = {
   ring: new THREE.RingGeometry(AVATAR_U * 0.42, AVATAR_U * 0.5, 16),
-  leg: new THREE.BoxGeometry(AVATAR_U * 0.14, AVATAR_U * 0.28, AVATAR_U * 0.14),
-  torso: new THREE.BoxGeometry(AVATAR_U * 0.4, AVATAR_U * 0.34, AVATAR_U * 0.2),
-  head: new THREE.BoxGeometry(AVATAR_U * 0.26, AVATAR_U * 0.26, AVATAR_U * 0.26),
-  visor: new THREE.BoxGeometry(AVATAR_U * 0.2, AVATAR_U * 0.06, AVATAR_U * 0.01),
+  boot: new THREE.BoxGeometry(AVATAR_U * 0.16, AVATAR_U * 0.07, AVATAR_U * 0.2),
+  leg: new THREE.BoxGeometry(AVATAR_U * 0.13, AVATAR_U * 0.26, AVATAR_U * 0.13),
+  hip: new THREE.BoxGeometry(AVATAR_U * 0.34, AVATAR_U * 0.08, AVATAR_U * 0.18),
+  torso: new THREE.BoxGeometry(AVATAR_U * 0.38, AVATAR_U * 0.32, AVATAR_U * 0.19),
+  chest: new THREE.BoxGeometry(AVATAR_U * 0.3, AVATAR_U * 0.14, AVATAR_U * 0.21),
+  shoulder: new THREE.BoxGeometry(AVATAR_U * 0.1, AVATAR_U * 0.1, AVATAR_U * 0.18),
+  arm: new THREE.BoxGeometry(AVATAR_U * 0.08, AVATAR_U * 0.26, AVATAR_U * 0.08),
+  hand: new THREE.BoxGeometry(AVATAR_U * 0.09, AVATAR_U * 0.08, AVATAR_U * 0.09),
+  neck: new THREE.BoxGeometry(AVATAR_U * 0.12, AVATAR_U * 0.05, AVATAR_U * 0.12),
+  head: new THREE.BoxGeometry(AVATAR_U * 0.25, AVATAR_U * 0.24, AVATAR_U * 0.25),
+  visor: new THREE.BoxGeometry(AVATAR_U * 0.21, AVATAR_U * 0.07, AVATAR_U * 0.012),
+  antenna: new THREE.BoxGeometry(AVATAR_U * 0.015, AVATAR_U * 0.12, AVATAR_U * 0.015),
+  beacon: new THREE.BoxGeometry(AVATAR_U * 0.045, AVATAR_U * 0.045, AVATAR_U * 0.045),
+  pack: new THREE.BoxGeometry(AVATAR_U * 0.24, AVATAR_U * 0.2, AVATAR_U * 0.09),
 };
 const visorMaterial = new THREE.MeshBasicMaterial({ color: "#000000" });
+const darkMaterial = new THREE.MeshBasicMaterial({ color: "#111111" });
 const avatarBodyMaterials = new Map<string, THREE.MeshBasicMaterial>();
+const avatarTrimMaterials = new Map<string, THREE.MeshBasicMaterial>();
 function avatarBodyMaterial(color: string) {
   let material = avatarBodyMaterials.get(color);
   if (!material) {
@@ -283,10 +295,104 @@ function avatarBodyMaterial(color: string) {
   }
   return material;
 }
+function avatarTrimMaterial(color: string) {
+  let material = avatarTrimMaterials.get(color);
+  if (!material) {
+    const dim = new THREE.Color(color).multiplyScalar(0.55);
+    material = new THREE.MeshBasicMaterial({ color: dim });
+    avatarTrimMaterials.set(color, material);
+  }
+  return material;
+}
 /** Only this many visitor figures are drawn — keeps a busy map cheap on a laptop. */
 const MAX_AVATARS = 24;
 
-/** One spawned visitor: a blocky cypherpunk figure standing on the land. */
+/** Detailed blocky cypherpunk figure — shared geometry, colour per visitor. */
+const AvatarBody = memo(function AvatarBody({ color }: { color: string }) {
+  const skin = useMemo(() => avatarBodyMaterial(color), [color]);
+  const trim = useMemo(() => avatarTrimMaterial(color), [color]);
+  const u = AVATAR_U;
+  return (
+    <group>
+      {[-1, 1].map((side) => (
+        <group key={side}>
+          <mesh position={[side * u * 0.11, u * 0.035, u * 0.01]} geometry={avatarGeometry.boot} material={darkMaterial} raycast={noRaycast} />
+          <mesh position={[side * u * 0.11, u * 0.2, 0]} geometry={avatarGeometry.leg} material={trim} raycast={noRaycast} />
+          <mesh position={[side * u * 0.245, u * 0.5, 0]} geometry={avatarGeometry.shoulder} material={trim} raycast={noRaycast} />
+          <mesh position={[side * u * 0.245, u * 0.33, 0]} geometry={avatarGeometry.arm} material={skin} raycast={noRaycast} />
+          <mesh position={[side * u * 0.245, u * 0.18, 0]} geometry={avatarGeometry.hand} material={darkMaterial} raycast={noRaycast} />
+        </group>
+      ))}
+      <mesh position={[0, u * 0.35, 0]} geometry={avatarGeometry.hip} material={darkMaterial} raycast={noRaycast} />
+      <mesh position={[0, u * 0.53, 0]} geometry={avatarGeometry.torso} material={skin} raycast={noRaycast} />
+      <mesh position={[0, u * 0.56, 0]} geometry={avatarGeometry.chest} material={trim} raycast={noRaycast} />
+      <mesh position={[0, u * 0.55, -u * 0.13]} geometry={avatarGeometry.pack} material={darkMaterial} raycast={noRaycast} />
+      <mesh position={[0, u * 0.71, 0]} geometry={avatarGeometry.neck} material={darkMaterial} raycast={noRaycast} />
+      <mesh position={[0, u * 0.85, 0]} geometry={avatarGeometry.head} material={skin} raycast={noRaycast} />
+      <mesh position={[0, u * 0.86, u * 0.13]} geometry={avatarGeometry.visor} material={visorMaterial} raycast={noRaycast} />
+      <mesh position={[u * 0.1, u * 1.02, 0]} geometry={avatarGeometry.antenna} material={darkMaterial} raycast={noRaycast} />
+      <mesh position={[u * 0.1, u * 1.09, 0]} geometry={avatarGeometry.beacon} material={skin} raycast={noRaycast} />
+    </group>
+  );
+});
+
+/** An avatar worn as an on-chain GLB inscription, textures included. */
+function ModelAvatar({ inscriptionId }: { inscriptionId: string }) {
+  const gltf = useGLTF(`https://ordinals.com/content/${inscriptionId}`);
+  const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
+  const { actions } = useAnimations(gltf.animations, scene);
+  const fitted = useMemo(() => {
+    scene.updateMatrixWorld(true);
+    const bounds = new THREE.Box3().setFromObject(scene);
+    const size = bounds.getSize(new THREE.Vector3());
+    const center = bounds.getCenter(new THREE.Vector3());
+    const fit = (AVATAR_U * 1.15) / Math.max(size.x, size.y, size.z, 0.0001);
+    return { fit, center, minY: bounds.min.y };
+  }, [scene]);
+  useEffect(() => {
+    const first = Object.values(actions)[0];
+    first?.reset().play();
+    return () => {
+      first?.stop();
+    };
+  }, [actions]);
+  return (
+    <group scale={fitted.fit} position={[-fitted.center.x * fitted.fit, -fitted.minY * fitted.fit, -fitted.center.z * fitted.fit]}>
+      <primitive object={scene} />
+    </group>
+  );
+}
+
+function AvatarSkin({ color, model }: { color: string; model: string | null }) {
+  if (!model) return <AvatarBody color={color} />;
+  return (
+    <Suspense fallback={<AvatarBody color={color} />}>
+      <ModelAvatar inscriptionId={model} />
+    </Suspense>
+  );
+}
+
+function AvatarLabel({ handle, say, color }: { handle: string; say: string | null; color: string }) {
+  return (
+    <Html center position={[0, AVATAR_U * 1.35, 0]} distanceFactor={4} style={{ pointerEvents: "none" }} zIndexRange={[10, 0]}>
+      <div className="flex flex-col items-center gap-[2px]">
+        {say ? (
+          <span
+            className="max-w-[140px] whitespace-pre-wrap break-words border bg-background/95 px-1 py-[1px] font-mono text-[8px] text-foreground"
+            style={{ borderColor: color }}
+          >
+            {say}
+          </span>
+        ) : null}
+        <span className="whitespace-nowrap border border-border bg-background/90 px-1 font-mono text-[8px] text-foreground">
+          {handle}
+        </span>
+      </div>
+    </Html>
+  );
+}
+
+/** One spawned visitor standing on the land. */
 const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCursor }) {
   const body = useRef<THREE.Group>(null);
   const ring = useRef<THREE.Mesh>(null);
@@ -296,12 +402,11 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
     for (const ch of cursor.id) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
     return (hash % 628) / 100;
   }, [cursor.id]);
-  const bodyMaterial = useMemo(() => avatarBodyMaterial(cursor.color), [cursor.color]);
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime + phase;
     if (body.current) {
-      body.current.position.y = Math.abs(Math.sin(t * 2.4)) * CELL * 0.12;
+      body.current.position.y = Math.abs(Math.sin(t * 2.4)) * CELL * 0.1;
       body.current.rotation.y = Math.sin(t * 0.9) * 0.35;
     }
     if (ring.current && ringMaterial.current) {
@@ -311,7 +416,6 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
     }
   });
 
-  const u = AVATAR_U;
   return (
     <group position={[worldX(cursor.col), 0.006, worldZ(cursor.row)]}>
       {/* spawn ring pulsing under the avatar */}
@@ -319,17 +423,9 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
         <meshBasicMaterial ref={ringMaterial} color={cursor.color} transparent opacity={0.8} side={THREE.DoubleSide} />
       </mesh>
       <group ref={body}>
-        <mesh position={[-u * 0.11, u * 0.14, 0]} geometry={avatarGeometry.leg} material={bodyMaterial} raycast={noRaycast} />
-        <mesh position={[u * 0.11, u * 0.14, 0]} geometry={avatarGeometry.leg} material={bodyMaterial} raycast={noRaycast} />
-        <mesh position={[0, u * 0.45, 0]} geometry={avatarGeometry.torso} material={bodyMaterial} raycast={noRaycast} />
-        <mesh position={[0, u * 0.76, 0]} geometry={avatarGeometry.head} material={bodyMaterial} raycast={noRaycast} />
-        <mesh position={[0, u * 0.78, u * 0.135]} geometry={avatarGeometry.visor} material={visorMaterial} raycast={noRaycast} />
+        <AvatarSkin color={cursor.color} model={cursor.model} />
       </group>
-      <Html center position={[0, u * 1.15, 0]} distanceFactor={4} style={{ pointerEvents: "none" }} zIndexRange={[10, 0]}>
-        <span className="whitespace-nowrap border border-border bg-background/90 px-1 font-mono text-[8px] text-foreground">
-          {cursor.handle}
-        </span>
-      </Html>
+      <AvatarLabel handle={cursor.handle} say={cursor.say} color={cursor.color} />
     </group>
   );
 });
@@ -337,6 +433,115 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
 const VisitorBeacons = memo(function VisitorBeacons({ cursors }: { cursors: MapCursor[] }) {
   return cursors.slice(0, MAX_AVATARS).map((cursor) => <VisitorAvatar key={cursor.id} cursor={cursor} />);
 });
+
+export type SelfPose = { x: number; z: number; yaw: number };
+
+/** Your own figure in third person, driven by the shared pose ref. */
+const SelfAvatar = memo(function SelfAvatar({
+  pose,
+  color,
+  handle,
+  model,
+  say,
+}: {
+  pose: React.RefObject<SelfPose>;
+  color: string;
+  handle: string;
+  model: string | null;
+  say: string | null;
+}) {
+  const group = useRef<THREE.Group>(null);
+  const body = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    const current = pose.current;
+    if (!current || !group.current) return;
+    group.current.position.set(current.x, 0.006, current.z);
+    group.current.rotation.y = current.yaw;
+    if (body.current) body.current.position.y = Math.abs(Math.sin(clock.elapsedTime * 3.1)) * CELL * 0.08;
+  });
+  return (
+    <group ref={group}>
+      <group ref={body}>
+        <AvatarSkin color={color} model={model} />
+      </group>
+      <AvatarLabel handle={`${handle} (YOU)`} say={say} color={color} />
+    </group>
+  );
+});
+
+/** Walk your avatar with WASD / arrows while the camera trails behind it. */
+function ThirdPersonRig({
+  pose,
+  onCell,
+}: {
+  pose: React.RefObject<SelfPose>;
+  onCell: (cell: { col: number; row: number; height: number }) => void;
+}) {
+  const { camera } = useThree();
+  const keys = useRef(new Set<string>());
+  const lastCell = useRef("");
+  const nextPublish = useRef(0);
+
+  useEffect(() => {
+    const down = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+      keys.current.add(event.key.toLowerCase());
+      if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(event.key.toLowerCase()))
+        event.preventDefault();
+    };
+    const up = (event: KeyboardEvent) => keys.current.delete(event.key.toLowerCase());
+    const blur = () => keys.current.clear();
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    window.addEventListener("blur", blur);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+      window.removeEventListener("blur", blur);
+    };
+  }, []);
+
+  useFrame(({ clock }, rawDelta) => {
+    const current = pose.current;
+    if (!current) return;
+    const delta = Math.min(rawDelta, 0.05);
+    const pressed = keys.current;
+    const forward = (pressed.has("w") || pressed.has("arrowup") ? 1 : 0) - (pressed.has("s") || pressed.has("arrowdown") ? 1 : 0);
+    const turn = (pressed.has("a") || pressed.has("arrowleft") ? 1 : 0) - (pressed.has("d") || pressed.has("arrowright") ? 1 : 0);
+    const sprint = pressed.has("shift") ? 2.2 : 1;
+    current.yaw += turn * delta * 2.1;
+    if (forward !== 0) {
+      const speed = CELL * 9 * sprint * forward * delta;
+      current.x += Math.sin(current.yaw) * speed;
+      current.z += Math.cos(current.yaw) * speed;
+      current.x = THREE.MathUtils.clamp(current.x, -WORLD_SIZE / 2 + CELL, WORLD_SIZE / 2 - CELL);
+      current.z = THREE.MathUtils.clamp(current.z, CELL, WORLD_SIZE - CELL);
+    }
+
+    // Camera trails behind and above the avatar.
+    const back = CELL * 9;
+    const desired = new THREE.Vector3(
+      current.x - Math.sin(current.yaw) * back,
+      CELL * 5.2,
+      current.z - Math.cos(current.yaw) * back,
+    );
+    camera.position.lerp(desired, 1 - Math.exp(-6 * delta));
+    camera.lookAt(current.x, CELL * 0.7, current.z);
+
+    if (clock.elapsedTime < nextPublish.current) return;
+    nextPublish.current = clock.elapsedTime + 0.2;
+    const col = THREE.MathUtils.clamp(Math.floor((current.x + WORLD_SIZE / 2) / CELL), 0, GRID - 1);
+    const row = THREE.MathUtils.clamp(Math.floor(current.z / CELL), 0, GRID - 1);
+    const key = `${col}:${row}`;
+    if (key === lastCell.current) return;
+    lastCell.current = key;
+    onCell({ col, row, height: row * GRID + col });
+  });
+
+  return null;
+}
+
 
 function OnChainModel({ model }: { model: BitmapModel }) {
   const gltf = useGLTF(`https://ordinals.com/content/${model.inscriptionId}`);
