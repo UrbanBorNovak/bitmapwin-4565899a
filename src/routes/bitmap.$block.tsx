@@ -150,6 +150,7 @@ function BitmapDetail() {
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <ClubBadge height={block} />
         <TraitBadges height={block} showRarity />
+        <SatBadges height={block} />
       </div>
 
       <DistrictReinscriptions
