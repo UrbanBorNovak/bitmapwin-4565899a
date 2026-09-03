@@ -56,13 +56,19 @@ export function useMapCursors(enabled = true) {
   const [said, setSaid] = useState<WorldSaid[]>([]);
   const [hp, setHp] = useState(MAX_HP);
   const [hitAt, setHitAt] = useState(0);
+  /** timestamp we are scheduled to come back to life at, 0 when alive */
+  const [respawnAt, setRespawnAt] = useState(0);
+  /** bumps on every respawn so the world can teleport us back to the spawn point */
+  const [respawnNonce, setRespawnNonce] = useState(0);
   const hpRef = useRef(MAX_HP);
   hpRef.current = hp;
   const sendRef = useRef<(cell: { col: number; row: number; height: number } | null) => void>(() => {});
   const sayRef = useRef<(body: string) => void>(() => {});
   const attackRef = useRef<(targetId: string) => void>(() => {});
+  const respawnRef = useRef<() => void>(() => {});
   const modelRef = useRef(model);
   modelRef.current = model;
+
 
   useEffect(() => {
     if (!enabled) return;
@@ -146,11 +152,10 @@ export function useMapCursors(enabled = true) {
           setHitAt(Date.now());
           if (lastCell) push(lastCell);
           if (next === 0) {
-            setTimeout(() => {
-              hpRef.current = MAX_HP;
-              setHp(MAX_HP);
-              if (lastCell) push(lastCell);
-            }, RESPAWN_MS);
+            // Killed: start the respawn countdown, then bring us back at full health.
+            setRespawnAt(Date.now() + RESPAWN_MS);
+            if (respawnTimer) clearTimeout(respawnTimer);
+            respawnTimer = setTimeout(() => respawnRef.current(), RESPAWN_MS);
           }
         } else {
           const target = peers.get(p.to);
@@ -160,6 +165,7 @@ export function useMapCursors(enabled = true) {
           }
         }
       })
+
       .subscribe();
 
     let last = 0;
@@ -230,6 +236,19 @@ export function useMapCursors(enabled = true) {
       }
     };
 
+    // Respawn: come back at full health and tell the world we are standing again.
+    let respawnTimer: ReturnType<typeof setTimeout> | null = null;
+    respawnRef.current = () => {
+      if (respawnTimer) clearTimeout(respawnTimer);
+      respawnTimer = null;
+      hpRef.current = MAX_HP;
+      setHp(MAX_HP);
+      setHitAt(0);
+      setRespawnAt(0);
+      setRespawnNonce((current) => current + 1);
+      if (lastCell) push(lastCell);
+    };
+
     // Health trickles back so a fight does not permanently knock anyone out.
     const regen = setInterval(() => {
       if (hpRef.current <= 0 || hpRef.current >= MAX_HP) return;
@@ -241,6 +260,7 @@ export function useMapCursors(enabled = true) {
     const sweep = setInterval(flush, 2_000);
     return () => {
       if (timer) clearTimeout(timer);
+      if (respawnTimer) clearTimeout(respawnTimer);
       clearInterval(sweep);
       clearInterval(regen);
       clearInterval(heartbeat);
@@ -248,10 +268,12 @@ export function useMapCursors(enabled = true) {
       sendRef.current = () => {};
       sayRef.current = () => {};
       attackRef.current = () => {};
+      respawnRef.current = () => {};
       push(null); // despawn: tell peers this avatar left the world
       void supabase.removeChannel(channel);
     };
   }, [enabled, selfId, handle]);
+
 
   return {
     selfId,
@@ -264,8 +286,13 @@ export function useMapCursors(enabled = true) {
     hp,
     hitAt,
     maxHp: MAX_HP,
+    respawnAt,
+    respawnNonce,
+    respawnMs: RESPAWN_MS,
+    respawn: () => respawnRef.current(),
     attack: (targetId: string) => attackRef.current(targetId),
     say: (body: string) => sayRef.current(body),
     publish: (cell: { col: number; row: number; height: number } | null) => sendRef.current(cell),
+
   };
 }
