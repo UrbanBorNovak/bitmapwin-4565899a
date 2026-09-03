@@ -588,6 +588,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   const [hover, setHover] = useState<HoveredDistrict | null>(null);
   const [selected, setSelected] = useState<SelectedDistrict | null>(null);
   const [command, setCommand] = useState<{ type: CameraMove; nonce: number }>({ type: "mined", nonce: 0 });
+  const [dpr, setDpr] = useState(1);
   const owners = useQuery(mapOwnersQuery(window_));
   const models = useQuery(mapBitmapModelsQuery(window_));
   const { cursors, publish } = useMapCursors();
