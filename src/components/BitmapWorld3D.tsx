@@ -235,45 +235,6 @@ function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: Worl
   );
 }
 
-function DetailedDistrictBlocks({ window_, tipHeight, mined, border }: { window_: OwnerWindow | null; tipHeight: number; mined: string; border: string }) {
-  const meshRef = useRef<THREE.InstancedMesh>(null);
-  const blocks = useMemo(() => {
-    if (!window_) return [];
-    const result: number[] = [];
-    for (let row = window_.rowFrom; row <= window_.rowTo; row += 1) {
-      for (let col = window_.colFrom; col <= window_.colTo; col += 1) result.push(row * GRID + col);
-    }
-    return result;
-  }, [window_]);
-
-  useEffect(() => {
-    const mesh = meshRef.current;
-    if (!mesh) return;
-    const dummy = new THREE.Object3D();
-    const color = new THREE.Color();
-    blocks.forEach((height, index) => {
-      const blockHeight = height <= tipHeight ? districtHeight(height) : 0.006;
-      dummy.position.set(worldX(height % GRID), blockHeight / 2, worldZ(Math.floor(height / GRID)));
-      dummy.scale.set(CELL * 0.82, blockHeight, CELL * 0.82);
-      dummy.updateMatrix();
-      mesh.setMatrixAt(index, dummy.matrix);
-      color.set(height <= tipHeight ? mined : border);
-      mesh.setColorAt(index, color);
-    });
-    mesh.instanceMatrix.needsUpdate = true;
-    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-    mesh.computeBoundingSphere();
-  }, [blocks, border, mined, tipHeight]);
-
-  if (blocks.length === 0) return null;
-  return (
-    <instancedMesh ref={meshRef} args={[undefined, undefined, blocks.length]}>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial vertexColors roughness={0.68} metalness={0.18} />
-    </instancedMesh>
-  );
-}
-
 function SelectedBlock({ height, bitcoin }: { height: number; bitcoin: string }) {
   const blockHeight = districtHeight(height);
   return (
@@ -316,7 +277,7 @@ function OnChainModel({ model }: { model: BitmapModel }) {
     const bounds = new THREE.Box3().setFromObject(scene);
     const size = bounds.getSize(new THREE.Vector3());
     const center = bounds.getCenter(new THREE.Vector3());
-    const fit = 0.18 / Math.max(size.x, size.y, size.z, 0.001);
+    const fit = (CELL * 4.5) / Math.max(size.x, size.y, size.z, 0.001);
     return { fit, center, minY: bounds.min.y };
   }, [scene]);
   useEffect(() => {
@@ -326,9 +287,8 @@ function OnChainModel({ model }: { model: BitmapModel }) {
       first?.stop();
     };
   }, [actions]);
-  const blockY = districtHeight(model.bitmapHeight);
   return (
-    <group position={[worldX(model.bitmapHeight % GRID), blockY + model.heightOffset * CELL, worldZ(Math.floor(model.bitmapHeight / GRID))]} rotation-y={model.rotationY} scale={model.scale}>
+    <group position={[worldX(model.bitmapHeight % GRID), 0.014 + model.heightOffset * CELL, worldZ(Math.floor(model.bitmapHeight / GRID))]} rotation-y={model.rotationY} scale={model.scale}>
       <group scale={normalized.fit} position={[-normalized.center.x * normalized.fit, -normalized.minY * normalized.fit, -normalized.center.z * normalized.fit]}>
         <primitive object={scene} />
       </group>
@@ -412,7 +372,7 @@ function ViewWindowReporter({ onWindow }: { onWindow: (window_: OwnerWindow | nu
     const rowFrom = Math.max(0, centerRow - radius);
     const rowTo = Math.min(GRID - 1, centerRow + radius);
     const cells = (colTo - colFrom + 1) * (rowTo - rowFrom + 1);
-    const next = distance > 16 || cells > OWNER_CELL_BUDGET ? null : { rowFrom, rowTo, colFrom, colTo };
+    const next = distance > 24 || cells > OWNER_CELL_BUDGET ? null : { rowFrom, rowTo, colFrom, colTo };
     const key = next ? `${rowFrom}:${rowTo}:${colFrom}:${colTo}` : "none";
     if (key === last.current) return;
     last.current = key;
@@ -453,7 +413,6 @@ function WorldScene({
   mine,
   cursors,
   onWindow,
-  districtWindow,
   onHover,
   onSelect,
   selectedHeight,
@@ -467,7 +426,6 @@ function WorldScene({
   mine: Set<string>;
   cursors: MapCursor[];
   onWindow: (window_: OwnerWindow | null) => void;
-  districtWindow: OwnerWindow | null;
   onHover: (hover: HoveredDistrict | null) => void;
   onSelect: (height: number) => void;
   selectedHeight: number | null;
@@ -499,7 +457,6 @@ function WorldScene({
       </Environment>
       <LandSurface colors={colors} tipHeight={tipHeight} />
       <DistrictBlocks tipHeight={tipHeight} colors={colors} />
-      <DetailedDistrictBlocks window_={districtWindow} tipHeight={tipHeight} mined={colors.foreground} border={colors.border} />
       <HolderColumns owners={owners} mine={mine} bitcoin={colors.bitcoin} />
       <OwnedBitmapGlow owners={owners} mine={mine} bitcoin={colors.bitcoin} />
       <OnChainModels models={models} bitcoin={colors.bitcoin} />
@@ -553,6 +510,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   const moveCamera = (type: CameraMove) => setCommand((current) => ({ type, nonce: current.nonce + 1 }));
   const handleWindow = useCallback((next: OwnerWindow | null) => setWindow(next), []);
   const minedDepth = Math.max(CELL, (Math.floor(tipHeight / GRID) + 1) * CELL);
+  const selectedModel = selected ? models.data?.find((model) => model.bitmapHeight === selected.height) : undefined;
 
   return (
     <div className={className}>
@@ -576,7 +534,6 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
               mine={mine}
               cursors={cursors}
               onWindow={handleWindow}
-              districtWindow={window_}
               onHover={setHover}
               onSelect={(height) => setSelected({ height, owner: owners.data?.get(height) ?? null })}
               selectedHeight={selected?.height ?? null}
@@ -631,6 +588,8 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
                     ? (mine.has(selected.owner) ? "YOURS" : selected.owner)
                     : "NO DATA YET"}
               </dd>
+              <dt className="text-muted-foreground">MODEL</dt>
+              <dd>{selectedModel ? "ON-CHAIN GLB VISIBLE" : window_ && models.isPending ? "SCANNING…" : "NO MODEL"}</dd>
             </dl>
             {selected.height <= tipHeight ? (
               <Button
