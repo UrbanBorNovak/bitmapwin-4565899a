@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
-import { Environment, Html, Lightformer, MapControls, useAnimations, useGLTF } from "@react-three/drei";
+import { AdaptiveDpr, AdaptiveEvents, Environment, Html, Lightformer, MapControls, PerformanceMonitor, useAnimations, useGLTF } from "@react-three/drei";
 import { Suspense } from "react";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
