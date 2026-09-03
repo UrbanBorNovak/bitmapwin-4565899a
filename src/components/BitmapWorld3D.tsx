@@ -622,7 +622,14 @@ function CameraDirector({ command, tipHeight }: { command: { type: CameraMove; n
   );
 }
 
-function ViewWindowReporter({ onWindow }: { onWindow: (window_: OwnerWindow | null) => void }) {
+function ViewWindowReporter({
+  onWindow,
+  pose,
+}: {
+  onWindow: (window_: OwnerWindow | null) => void;
+  /** in third person there are no map controls — follow the walking avatar instead */
+  pose?: React.RefObject<SelfPose> | null;
+}) {
   const { camera, controls } = useThree();
   const last = useRef("");
   const mounted = useRef(false);
@@ -641,11 +648,16 @@ function ViewWindowReporter({ onWindow }: { onWindow: (window_: OwnerWindow | nu
     if (clock.elapsedTime < nextCheck.current) return;
     nextCheck.current = clock.elapsedTime + 0.25;
     const mapControls = controls as MapControlsImpl | undefined;
-    if (!mapControls) return;
-    const distance = camera.position.distanceTo(mapControls.target);
+    const focus = pose?.current;
+    if (!mapControls && !focus) return;
+    const target = focus
+      ? new THREE.Vector3(focus.x, 0, focus.z)
+      : (mapControls as MapControlsImpl).target;
+    const distance = focus ? CELL * 8 : camera.position.distanceTo(target);
     const radius = Math.max(12, Math.ceil(distance / CELL / 8));
-    const centerCol = Math.floor((mapControls.target.x + WORLD_SIZE / 2) / CELL);
-    const centerRow = Math.floor(mapControls.target.z / CELL);
+    const centerCol = Math.floor((target.x + WORLD_SIZE / 2) / CELL);
+    const centerRow = Math.floor(target.z / CELL);
+
     const colFrom = Math.max(0, centerCol - radius);
     const colTo = Math.min(GRID - 1, centerCol + radius);
     const rowFrom = Math.max(0, centerRow - radius);
