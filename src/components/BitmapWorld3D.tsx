@@ -826,17 +826,14 @@ const SelfAvatar = memo(function SelfAvatar({
   lastDamage: number;
 }) {
   const group = useRef<THREE.Group>(null);
-  const body = useRef<THREE.Group>(null);
-  useFrame(({ clock }) => {
+  const [motion, setMotion] = useState<AvatarMotion>("idle");
+  useFrame(() => {
     const current = pose.current;
     if (!current || !group.current) return;
     group.current.position.set(current.x, current.y + 0.006, current.z);
     group.current.rotation.y = current.yaw;
-    if (body.current) {
-      const stride = current.movement === "run" ? 4.6 : current.movement === "walk" ? 3.2 : 2.2;
-      const lift = current.movement === "idle" || current.movement === "turn" ? 0.035 : 0.1;
-      body.current.position.y = Math.abs(Math.sin(clock.elapsedTime * stride)) * CELL * lift;
-    }
+    const next: AvatarMotion = current.animation === "turn" ? "idle" : current.animation;
+    setMotion((previous) => (previous === next ? previous : next));
   });
   return (
     <group ref={group}>
@@ -844,9 +841,8 @@ const SelfAvatar = memo(function SelfAvatar({
         <circleGeometry args={[AVATAR_U * 0.3, 16]} />
         <meshBasicMaterial color={colorsForShadow} transparent opacity={0.38} depthWrite={false} />
       </mesh>
-      <group ref={body}>
-        <AvatarSkin color={color} model={model} />
-      </group>
+      <AvatarSkin color={color} model={model} motion={motion} />
+
       <AvatarLabel
         handle={`${handle} (YOU)`}
         say={say}
