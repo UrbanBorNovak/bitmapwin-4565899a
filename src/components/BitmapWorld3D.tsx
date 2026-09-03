@@ -547,16 +547,19 @@ function ThirdPersonRig({
     const delta = Math.min(rawDelta, 0.05);
     const pressed = keys.current;
     const forward = (pressed.has("w") || pressed.has("arrowup") ? 1 : 0) - (pressed.has("s") || pressed.has("arrowdown") ? 1 : 0);
-    const turn = (pressed.has("a") || pressed.has("arrowleft") ? 1 : 0) - (pressed.has("d") || pressed.has("arrowright") ? 1 : 0);
+    const strafe = (pressed.has("a") ? 1 : 0) - (pressed.has("d") ? 1 : 0);
+    const turn = (pressed.has("arrowleft") || pressed.has("q") ? 1 : 0) - (pressed.has("arrowright") || pressed.has("e") ? 1 : 0);
     const sprint = pressed.has("shift") ? 2.2 : 1;
     current.yaw += turn * delta * 2.1;
-    if (forward !== 0) {
-      const speed = CELL * 9 * sprint * forward * delta;
-      current.x += Math.sin(current.yaw) * speed;
-      current.z += Math.cos(current.yaw) * speed;
+    if (forward !== 0 || strafe !== 0) {
+      const speed = CELL * 9 * sprint * delta;
+      // camera-relative: W walks where you look, A/D step sideways
+      current.x += (Math.sin(current.yaw) * forward + Math.cos(current.yaw) * strafe) * speed;
+      current.z += (Math.cos(current.yaw) * forward - Math.sin(current.yaw) * strafe) * speed;
       current.x = THREE.MathUtils.clamp(current.x, -WORLD_SIZE / 2 + CELL, WORLD_SIZE / 2 - CELL);
       current.z = THREE.MathUtils.clamp(current.z, CELL, WORLD_SIZE - CELL);
     }
+
 
     // Camera trails behind and above the avatar.
     const back = CELL * 9;
