@@ -7,7 +7,15 @@ import { Button } from "@/components/ui/button";
 import { bitmapModelQuery } from "@/lib/bitmap-models";
 import { publishBitmapModelFn, removeBitmapModelFn } from "@/lib/bitmap-models.functions";
 
-export function BitmapModelPlacement({ height, canEdit }: { height: number; canEdit: boolean }) {
+export function BitmapModelPlacement({
+  height,
+  canEdit,
+  compact = false,
+}: {
+  height: number;
+  canEdit: boolean;
+  compact?: boolean;
+}) {
   const current = useQuery(bitmapModelQuery(height));
   const client = useQueryClient();
   const publish = useServerFn(publishBitmapModelFn);
@@ -46,11 +54,11 @@ export function BitmapModelPlacement({ height, canEdit }: { height: number; canE
   });
 
   return (
-    <section className="mt-6 border border-border">
-      <header className="flex items-center gap-2 border-b border-border px-4 py-3">
+    <section className={compact ? "mt-4 border-t border-border pt-4" : "mt-6 border border-border"}>
+      <header className={compact ? "flex items-center gap-2" : "flex items-center gap-2 border-b border-border px-4 py-3"}>
         <Box className="h-4 w-4 text-bitcoin" /><span className="label">3D WORLD MODEL</span>
       </header>
-      <div className="space-y-4 p-4">
+      <div className={compact ? "mt-3 space-y-3" : "space-y-4 p-4"}>
         {current.data ? (
           <p data-no-translate className="font-mono text-xs text-muted-foreground">
             {current.data.inscriptionId} · {current.data.triangleCount.toLocaleString("en-US")} TRIANGLES
@@ -59,7 +67,7 @@ export function BitmapModelPlacement({ height, canEdit }: { height: number; canE
         {canEdit ? (
           <>
             <label className="block"><span className="label">GLB INSCRIPTION ID</span><input value={inscriptionId} onChange={(event) => setInscriptionId(event.target.value.slice(0, 120))} placeholder="&lt;txid&gt;i0" className="mt-1 w-full border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-foreground" /></label>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className={compact ? "grid grid-cols-3 gap-2" : "grid gap-4 sm:grid-cols-3"}>
               <NumberField label="SCALE" min={0.1} max={4} step={0.1} value={scale} onChange={setScale} />
               <NumberField label="ROTATION" min={-6.28} max={6.28} step={0.1} value={rotationY} onChange={setRotationY} />
               <NumberField label="HEIGHT" min={0} max={2} step={0.05} value={heightOffset} onChange={setHeightOffset} />
