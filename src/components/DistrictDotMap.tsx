@@ -379,6 +379,7 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
         onPointerLeave={() => {
           dragRef.current = null;
           setHover(null);
+          publish(null);
         }}
       >
         <canvas ref={canvasRef} className="block h-full w-full touch-none" />
