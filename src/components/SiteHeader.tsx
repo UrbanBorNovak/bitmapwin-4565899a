@@ -5,6 +5,7 @@ import { BidInboxBell } from "@/components/BidInboxBell";
 import { HeaderIdentity } from "@/components/HeaderIdentity";
 import { BtcTicker } from "@/components/BtcTicker";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 const NAV = [
   { to: "/marketplace", label: "MARKETPLACE" },
