@@ -765,8 +765,23 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
         <meshBasicMaterial color={colorsForShadow} transparent opacity={0.34} depthWrite={false} />
       </mesh>
       <group ref={body}>
-        <AvatarSkin color={cursor.color} model={cursor.model} />
+        <AvatarSkin
+          color={cursor.color}
+          model={cursor.model}
+          motion={
+            cursor.hp <= 0
+              ? "down"
+              : cursor.y > CELL * 0.05
+                ? "jump"
+                : cursor.movement === "run"
+                  ? "run"
+                  : cursor.movement === "walk"
+                    ? "walk"
+                    : "idle"
+          }
+        />
       </group>
+
       <AvatarLabel
         handle={cursor.handle}
         say={cursor.say}
