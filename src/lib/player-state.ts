@@ -22,14 +22,20 @@ export const WORLD_CELL = WORLD_UNITS / WORLD_GRID;
 /** Chunk side in cells — the region label a player reports as their locale. */
 export const CHUNK_CELLS = 50;
 
+/**
+ * One stride unit — the avatar's own scale. A BITMAP is ten strides across, so
+ * districts read as walkable plots rather than single steps.
+ */
+export const STRIDE = WORLD_CELL / 10;
+
 /** Tuning constants for movement feel. Tune these, never the integrator. */
 export const MOVE = {
   /** top walking speed in world units per second */
-  walkSpeed: WORLD_CELL * 9,
+  walkSpeed: STRIDE * 9,
   /** multiplier while sprinting */
   sprint: 2.2,
-  jumpSpeed: WORLD_CELL * 28,
-  gravity: WORLD_CELL * 78,
+  jumpSpeed: STRIDE * 28,
+  gravity: STRIDE * 78,
   /** how hard the avatar accelerates toward the wanted velocity */
   accel: 14,
   /** exponential damping applied when no input is held */
@@ -39,9 +45,9 @@ export const MOVE = {
   /** how fast the body swings toward the direction it is travelling */
   faceRate: 10,
   /** click-to-move stops inside this radius */
-  arrive: WORLD_CELL * 1.4,
+  arrive: STRIDE * 1.4,
   /** speed below which the player counts as idle */
-  idleSpeed: WORLD_CELL * 0.6,
+  idleSpeed: STRIDE * 0.6,
 } as const;
 
 export type MovementState = "idle" | "walk" | "run" | "turn";
@@ -269,7 +275,7 @@ export function clampPeerStep(
   const dz = z - from.z;
   const distance = Math.hypot(dx, dz);
   // generous allowance: top sprint speed plus a beat of jitter and lost packets
-  const allowed = (MOVE.walkSpeed * MOVE.sprint * Math.max(elapsedMs, 120)) / 1000 + WORLD_CELL * 6;
+  const allowed = (MOVE.walkSpeed * MOVE.sprint * Math.max(elapsedMs, 120)) / 1000 + STRIDE * 6;
   if (distance <= allowed) return { x, z };
   const scale = allowed / distance;
   return { x: from.x + dx * scale, z: from.z + dz * scale };

@@ -6,7 +6,7 @@ import {
   mapHandle,
   mapVisitorId,
 } from "@/lib/map-identity";
-import { cellX, cellZ, clampPeerStep, WORLD_CELL, type MovementState } from "@/lib/player-state";
+import { cellX, cellZ, clampPeerStep, STRIDE, type MovementState } from "@/lib/player-state";
 
 /**
  * Live presence for the land map. Every visitor broadcasts the grid cell they are
@@ -83,7 +83,7 @@ export const ATTACK_DAMAGE = 12;
 /** minimum time between basic attacks */
 export const ATTACK_COOLDOWN_MS = 850;
 /** validated melee reach in world units */
-export const ATTACK_RANGE = WORLD_CELL * 6;
+export const ATTACK_RANGE = STRIDE * 6;
 /** health regenerated per second while not being hit */
 const REGEN_PER_SECOND = 3;
 /** how long a knocked-out visitor stays down before respawning at full health */
@@ -176,7 +176,7 @@ export function useMapCursors(enabled = true) {
             z: position.z,
             y:
               typeof p.y === "number" && Number.isFinite(p.y)
-                ? Math.max(0, Math.min(WORLD_CELL * 8, p.y))
+                ? Math.max(0, Math.min(STRIDE * 8, p.y))
                 : (previous?.y ?? 0),
             yaw: typeof p.yaw === "number" && Number.isFinite(p.yaw) ? p.yaw : (previous?.yaw ?? 0),
             movement: p.movement ?? previous?.movement ?? "idle",
