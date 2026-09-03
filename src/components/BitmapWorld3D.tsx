@@ -108,14 +108,14 @@ const HolderColumns = memo(function HolderColumns({ owners, mine, bitcoin }: { o
 
   if (entries.length === 0) return null;
   return (
-    <instancedMesh ref={meshRef} args={[undefined, undefined, entries.length]} frustumCulled>
+    <instancedMesh key={entries.length} ref={meshRef} args={[undefined, undefined, entries.length]} frustumCulled raycast={noRaycast}>
       <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial vertexColors roughness={0.58} metalness={0.12} />
+      <meshLambertMaterial vertexColors />
     </instancedMesh>
   );
-}
+});
 
-function OwnedBitmapGlow({ heights, bitcoin }: { heights: number[]; bitcoin: string }) {
+const OwnedBitmapGlow = memo(function OwnedBitmapGlow({ heights, bitcoin }: { heights: number[]; bitcoin: string }) {
   const coreRef = useRef<THREE.InstancedMesh>(null);
   const auraRef = useRef<THREE.InstancedMesh>(null);
   const coreMaterial = useRef<THREE.MeshBasicMaterial>(null);
