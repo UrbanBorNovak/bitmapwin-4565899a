@@ -4,6 +4,7 @@ import { BuyButton } from "@/components/BuyButton";
 import { MakeOfferButton } from "@/components/MakeOfferButton";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { TraitBadges } from "@/components/TraitBadges";
+import { SatBadges } from "@/components/SatBadges";
 import { ClubBadge } from "@/components/ClubBadge";
 import { VerificationChip } from "@/components/ProvenancePanel";
 import { formatSats } from "@/lib/trades";
