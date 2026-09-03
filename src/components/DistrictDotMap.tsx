@@ -1,8 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { clubOf } from "@/lib/clubs";
+import { colorForAddress, mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
+import { useWalletSession } from "@/lib/wallet-session";
 
 const GRID = 10_000; // 10,000 x 10,000 dots = 100,000,000 districts of land
+/** owners are only read when the window is small enough to stay responsive */
+const OWNER_CELL_BUDGET = 60_000;
 
 export type DistrictDotMapProps = {
   /** highest block that exists on chain — dots above it are unmined land */
@@ -24,15 +29,31 @@ const heightOf = (col: number, row: number) => row * GRID + col;
  */
 export function DistrictDotMap({ tipHeight, highlight = [], className }: DistrictDotMapProps) {
   const navigate = useNavigate();
+  const wallet = useWalletSession();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ x: number; y: number; moved: boolean } | null>(null);
   const viewRef = useRef<View>({ x: 0, y: 0, scale: 0.06 });
   const [hover, setHover] = useState<{ height: number; sx: number; sy: number } | null>(null);
   const [zoomLabel, setZoomLabel] = useState(0.06);
+  const [window_, setWindow] = useState<OwnerWindow | null>(null);
+
+  const mine = useMemo(() => {
+    const set = new Set<string>();
+    if (wallet?.ordinalsAddress) set.add(wallet.ordinalsAddress);
+    if (wallet?.paymentAddress) set.add(wallet.paymentAddress);
+    return set;
+  }, [wallet?.ordinalsAddress, wallet?.paymentAddress]);
+
+  const owners = useQuery(mapOwnersQuery(window_));
+  const ownersRef = useRef<Map<number, string>>(new Map());
+  ownersRef.current = owners.data ?? new Map();
+  const mineRef = useRef<Set<string>>(mine);
+  mineRef.current = mine;
 
   const highlightSet = useRef<Set<number>>(new Set());
   highlightSet.current = new Set(highlight);
+
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
