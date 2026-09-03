@@ -423,6 +423,14 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
           <span data-no-translate>
             {window_ ? (owners.isPending ? "LOADING HOLDERS…" : `${owners.data?.size ?? 0} HELD IN VIEW`) : "ZOOM IN FOR HOLDER COLOURS"}
           </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block size-1.5 animate-pulse bg-bitcoin" aria-hidden />
+            {cursors.length > 0 ? (
+              <span data-no-translate>{cursors.length} SEARCHING NOW</span>
+            ) : (
+              <span>NOBODY ELSE SEARCHING</span>
+            )}
+          </span>
         </div>
 
       </div>
