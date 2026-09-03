@@ -23,6 +23,7 @@ import { BuildEditor } from "@/components/builds/BuildEditor";
 import { BuildRenderer } from "@/components/builds/BuildRenderer";
 import { BuildRaffles } from "@/components/coins/BuildRaffles";
 import { LiveBitmapPresence } from "@/components/LiveBitmapPresence";
+import { BitmapModelPlacement } from "@/components/BitmapModelPlacement";
 import {
   BUILD_KIND_LABELS,
   DEFAULT_CONFIGS,
@@ -233,6 +234,7 @@ export function ParcelPagePanel({
         )}
 
         <BuildDelegates height={height} ownerAddress={ownerAddress} />
+        <BitmapModelPlacement height={height} canEdit={isHolder} />
       </div>
 
       {canEdit && !editing && (

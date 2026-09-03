@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
-import { Environment, Html, Lightformer, MapControls } from "@react-three/drei";
+import { Environment, Html, Lightformer, MapControls, useAnimations, useGLTF } from "@react-three/drei";
+import { Suspense } from "react";
+import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowUpRight, X } from "lucide-react";
@@ -11,6 +13,7 @@ import { clubOf } from "@/lib/clubs";
 import { colorForAddress, mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
 import { useMapCursors, type MapCursor } from "@/lib/map-presence";
 import { useWalletSession } from "@/lib/wallet-session";
+import { mapBitmapModelsQuery, type BitmapModel } from "@/lib/bitmap-models";
 
 const GRID = 1_000;
 const DISTRICT_COUNT = GRID * GRID;
@@ -339,6 +342,41 @@ function VisitorBeacons({ cursors }: { cursors: MapCursor[] }) {
   ));
 }
 
+function OnChainModel({ model }: { model: BitmapModel }) {
+  const gltf = useGLTF(`https://ordinals.com/content/${model.inscriptionId}`);
+  const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
+  const { actions } = useAnimations(gltf.animations, scene);
+  const normalized = useMemo(() => {
+    scene.updateMatrixWorld(true);
+    const bounds = new THREE.Box3().setFromObject(scene);
+    const size = bounds.getSize(new THREE.Vector3());
+    const center = bounds.getCenter(new THREE.Vector3());
+    const fit = 0.18 / Math.max(size.x, size.y, size.z, 0.001);
+    return { fit, center, minY: bounds.min.y };
+  }, [scene]);
+  useEffect(() => {
+    const first = Object.values(actions)[0];
+    first?.reset().play();
+    return () => first?.stop();
+  }, [actions]);
+  const blockY = districtHeight(model.bitmapHeight);
+  return (
+    <group position={[worldX(model.bitmapHeight % GRID), blockY + model.heightOffset * CELL, worldZ(Math.floor(model.bitmapHeight / GRID))]} rotation-y={model.rotationY} scale={model.scale}>
+      <group scale={normalized.fit} position={[-normalized.center.x * normalized.fit, -normalized.minY * normalized.fit, -normalized.center.z * normalized.fit]}>
+        <primitive object={scene} />
+      </group>
+    </group>
+  );
+}
+
+function ModelMarker({ model, bitcoin }: { model: BitmapModel; bitcoin: string }) {
+  return <mesh position={[worldX(model.bitmapHeight % GRID), districtHeight(model.bitmapHeight) + 0.03, worldZ(Math.floor(model.bitmapHeight / GRID))]}><octahedronGeometry args={[CELL * 1.8, 0]} /><meshBasicMaterial color={bitcoin} wireframe /></mesh>;
+}
+
+function OnChainModels({ models, bitcoin }: { models: BitmapModel[]; bitcoin: string }) {
+  return <>{models.map((model) => <Suspense key={model.bitmapHeight} fallback={<ModelMarker model={model} bitcoin={bitcoin} />}><OnChainModel model={model} /></Suspense>)}</>;
+}
+
 function CameraDirector({ command, tipHeight }: { command: { type: CameraMove; nonce: number }; tipHeight: number }) {
   const controls = useRef<MapControlsImpl>(null);
   const { camera } = useThree();
@@ -453,6 +491,7 @@ function WorldScene({
   onSelect,
   selectedHeight,
   onPublish,
+  models,
 }: {
   colors: WorldColors;
   command: { type: CameraMove; nonce: number };
@@ -466,6 +505,7 @@ function WorldScene({
   onSelect: (height: number) => void;
   selectedHeight: number | null;
   onPublish: (position: { col: number; row: number; height: number } | null) => void;
+  models: BitmapModel[];
 }) {
   const handleMove = (event: ThreeEvent<PointerEvent>) => {
     const height = heightAtPoint(event.point);
@@ -495,6 +535,7 @@ function WorldScene({
       <DetailedDistrictBlocks window_={districtWindow} tipHeight={tipHeight} mined={colors.foreground} border={colors.border} />
       <HolderColumns owners={owners} mine={mine} bitcoin={colors.bitcoin} />
       <OwnedBitmapGlow owners={owners} mine={mine} bitcoin={colors.bitcoin} />
+      <OnChainModels models={models} bitcoin={colors.bitcoin} />
       {selectedHeight !== null ? <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} /> : null}
       <VisitorBeacons cursors={cursors} />
       <mesh
@@ -529,6 +570,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   const [selected, setSelected] = useState<SelectedDistrict | null>(null);
   const [command, setCommand] = useState<{ type: CameraMove; nonce: number }>({ type: "mined", nonce: 0 });
   const owners = useQuery(mapOwnersQuery(window_));
+  const models = useQuery(mapBitmapModelsQuery(window_));
   const { cursors, publish } = useMapCursors();
 
   const mine = useMemo(() => {
@@ -572,6 +614,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
               onSelect={(height) => setSelected({ height, owner: owners.data?.get(height) ?? null })}
               selectedHeight={selected?.height ?? null}
               onPublish={publish}
+              models={models.data ?? []}
             />
           </Canvas>
         ) : null}
@@ -637,6 +680,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
           <span>1,000,000 DISTRICTS LOADED · DRAG TO PAN · RIGHT DRAG TO ORBIT · SCROLL TO FLY · CLICK A BLOCK</span>
           <span data-no-translate>{window_ ? (owners.isPending ? "SCANNING HOLDERS…" : `${owners.data?.size ?? 0} HOLDERS IN RANGE`) : "FLY CLOSER FOR HOLDER COLOURS"}</span>
           <span data-no-translate>{cursors.length > 0 ? `${cursors.length} SEARCHING NOW` : "NOBODY ELSE SEARCHING"}</span>
+          <span data-no-translate>{window_ ? `${models.data?.length ?? 0} ON-CHAIN MODELS IN RANGE` : "FLY CLOSER FOR MODELS"}</span>
           {highlight.length > 0 ? <span data-no-translate>{highlight.length} TARGETS</span> : null}
         </div>
       </div>
