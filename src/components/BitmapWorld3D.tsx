@@ -124,6 +124,10 @@ function VisitorBeacons({ cursors }: { cursors: MapCursor[] }) {
 function CameraDirector({ command, tipHeight }: { command: { type: CameraMove; nonce: number }; tipHeight: number }) {
   const controls = useRef<MapControlsImpl>(null);
   const { camera } = useThree();
+  const initialTarget = useMemo<[number, number, number]>(
+    () => [0, 0, Math.max(CELL, (Math.floor(tipHeight / GRID) + 1) * CELL) / 2],
+    [tipHeight],
+  );
 
   useEffect(() => {
     const active = controls.current;
@@ -148,6 +152,7 @@ function CameraDirector({ command, tipHeight }: { command: { type: CameraMove; n
     <MapControls
       ref={controls}
       makeDefault
+      target={initialTarget}
       enableDamping
       dampingFactor={0.08}
       minDistance={0.18}
@@ -162,8 +167,17 @@ function CameraDirector({ command, tipHeight }: { command: { type: CameraMove; n
 function ViewWindowReporter({ onWindow }: { onWindow: (window_: OwnerWindow | null) => void }) {
   const { camera, controls } = useThree();
   const last = useRef("");
+  const mounted = useRef(false);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   useFrame(() => {
+    if (!mounted.current) return;
     const mapControls = controls as MapControlsImpl | undefined;
     if (!mapControls) return;
     const distance = camera.position.distanceTo(mapControls.target);
@@ -298,6 +312,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
 
   const moveCamera = (type: CameraMove) => setCommand((current) => ({ type, nonce: current.nonce + 1 }));
   const handleWindow = useCallback((next: OwnerWindow | null) => setWindow(next), []);
+  const minedDepth = Math.max(CELL, (Math.floor(tipHeight / GRID) + 1) * CELL);
 
   return (
     <div className={className}>
@@ -308,7 +323,11 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
       </div>
       <div className="relative h-[70vh] min-h-[420px] w-full overflow-hidden border border-border bg-background">
         {colors ? (
-          <Canvas dpr={[1, 1.5]} camera={{ position: [4.8, 2.4, 6.5], fov: 46, near: 0.01, far: 350 }} gl={{ antialias: true }}>
+          <Canvas
+            dpr={[1, 1.5]}
+            camera={{ position: [3.5, Math.max(5.5, minedDepth * 0.62), minedDepth + 4.5], fov: 46, near: 0.01, far: 350 }}
+            gl={{ antialias: true }}
+          >
             <WorldScene
               colors={colors}
               command={command}
