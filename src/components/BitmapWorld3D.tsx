@@ -1102,8 +1102,20 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
             </span>
             <span>{hp}/{MAX_HP}</span>
           </span>
-          {hp <= 0 ? <span className="text-bitcoin">KNOCKED OUT · RESPAWNING…</span> : null}
+          {hp <= 0 ? (
+            <span className="flex items-center gap-2">
+              <span className="text-bitcoin">KILLED · RESPAWN IN {respawnIn}s</span>
+              <button
+                type="button"
+                className="pointer-events-auto border border-bitcoin px-1 text-bitcoin"
+                onClick={respawn}
+              >
+                [ RESPAWN NOW ]
+              </button>
+            </span>
+          ) : null}
           {attackTarget ? <span className="text-bitcoin">{attackTarget}</span> : null}
+
         </div>
 
         <div aria-hidden className="pointer-events-none absolute inset-0 z-20 ring-1 ring-inset ring-bitcoin/30 shadow-[inset_0_0_48px_color-mix(in_oklab,var(--bitcoin)_12%,transparent)]" />
