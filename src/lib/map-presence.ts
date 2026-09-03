@@ -286,8 +286,13 @@ export function useMapCursors(enabled = true) {
     hp,
     hitAt,
     maxHp: MAX_HP,
+    respawnAt,
+    respawnNonce,
+    respawnMs: RESPAWN_MS,
+    respawn: () => respawnRef.current(),
     attack: (targetId: string) => attackRef.current(targetId),
     say: (body: string) => sayRef.current(body),
     publish: (cell: { col: number; row: number; height: number } | null) => sendRef.current(cell),
+
   };
 }
