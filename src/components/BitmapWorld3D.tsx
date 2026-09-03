@@ -828,7 +828,8 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   const [dpr, setDpr] = useState(1);
   const [thirdPerson, setThirdPerson] = useState(false);
   const [draft, setDraft] = useState("");
-  const [modelDraft, setModelDraft] = useState("");
+  const [inventoryOpen, setInventoryOpen] = useState(false);
+
   const owners = useQuery(mapOwnersQuery(window_));
   const models = useQuery(mapBitmapModelsQuery(window_));
   const { cursors, publish, said, say, handle, color, model: avatarModel, setModel: setAvatarModel } = useMapCursors();
