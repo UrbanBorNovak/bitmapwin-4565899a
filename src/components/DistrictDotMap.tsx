@@ -167,7 +167,7 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
   useEffect(() => {
     const id = setTimeout(syncOwnerWindow, 250);
     return () => clearTimeout(id);
-  }, [syncOwnerWindow, zoomLabel]);
+  }, [syncOwnerWindow, zoomLabel, viewTick]);
 
 
 
