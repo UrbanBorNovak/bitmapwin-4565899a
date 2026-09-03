@@ -45,3 +45,20 @@ export const mapBitmapModelsQuery = (window_: OwnerWindow | null) => queryOption
   enabled: Boolean(window_),
   staleTime: 60_000,
 });
+/** Every model this wallet has published on its own BITMAPs — real on-chain inventory. */
+export const myBitmapModelsQuery = (addresses: string[]) =>
+  queryOptions({
+    queryKey: ["my-bitmap-models", [...addresses].sort()],
+    queryFn: async () => {
+      if (addresses.length === 0) return [];
+      const { data, error } = await supabase
+        .from("bitmap_models")
+        .select("*")
+        .in("owner_address", addresses)
+        .order("bitmap_height", { ascending: true });
+      if (error) throw error;
+      return (data ?? []).map(mapRow);
+    },
+    enabled: addresses.length > 0,
+    staleTime: 60_000,
+  });

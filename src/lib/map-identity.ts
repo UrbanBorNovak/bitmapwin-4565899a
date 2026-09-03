@@ -60,3 +60,40 @@ export function setMapHandle(handle: string) {
 export function colorForVisitor(id: string): string {
   return colorForAddress(id);
 }
+
+/**
+ * Wardrobe: extra on-chain GLB inscription ids this browser keeps around so they
+ * can be equipped, unequipped and swapped from the in-world inventory panel.
+ */
+const WARDROBE_KEY = "bitmap-map-wardrobe";
+
+export function avatarWardrobe(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(WARDROBE_KEY);
+    const parsed = raw ? (JSON.parse(raw) as unknown) : [];
+    if (!Array.isArray(parsed)) return [];
+    return [...new Set(parsed.filter((id): id is string => typeof id === "string" && id.trim().length > 0))];
+  } catch {
+    return [];
+  }
+}
+
+function writeWardrobe(ids: string[]) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(WARDROBE_KEY, JSON.stringify(ids.slice(0, 40)));
+}
+
+export function addToWardrobe(inscriptionId: string): string[] {
+  const clean = inscriptionId.trim();
+  if (!clean) return avatarWardrobe();
+  const next = [...new Set([clean, ...avatarWardrobe()])];
+  writeWardrobe(next);
+  return next;
+}
+
+export function removeFromWardrobe(inscriptionId: string): string[] {
+  const next = avatarWardrobe().filter((id) => id !== inscriptionId);
+  writeWardrobe(next);
+  return next;
+}
