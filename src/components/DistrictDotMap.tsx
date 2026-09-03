@@ -36,6 +36,7 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
   const viewRef = useRef<View>({ x: 0, y: 0, scale: 0.06 });
   const [hover, setHover] = useState<{ height: number; sx: number; sy: number } | null>(null);
   const [zoomLabel, setZoomLabel] = useState(0.06);
+  const [viewTick, setViewTick] = useState(0);
   const [window_, setWindow] = useState<OwnerWindow | null>(null);
 
   const mine = useMemo(() => {
