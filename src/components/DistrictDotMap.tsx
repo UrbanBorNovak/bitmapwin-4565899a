@@ -144,6 +144,7 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
         ctx.fillRect(hx, hy, Math.max(2, scale), Math.max(2, scale));
       }
       ctx.globalAlpha = 1;
+      drawCursors();
       return;
     }
 
