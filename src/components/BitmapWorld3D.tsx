@@ -184,89 +184,55 @@ function OwnedBitmapGlow({ owners, mine, bitcoin }: { owners: Map<number, string
 }
 
 function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: WorldColors }) {
-  const geometry = useMemo(() => {
-    const points = new THREE.BufferGeometry();
-    const ids = new Float32Array(DISTRICT_COUNT);
-    for (let index = 0; index < DISTRICT_COUNT; index += 1) ids[index] = index;
-    points.setAttribute("position", new THREE.BufferAttribute(ids, 1));
-    points.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, WORLD_SIZE / 2), WORLD_SIZE);
-    return points;
-  }, []);
-
-  useEffect(() => () => geometry.dispose(), [geometry]);
-
   const uniforms = useMemo(
     () => ({
       uGrid: { value: GRID },
-      uCell: { value: CELL },
-      uWorldSize: { value: WORLD_SIZE },
       uTip: { value: tipHeight },
       uMined: { value: new THREE.Color(colors.foreground) },
       uFuture: { value: new THREE.Color(colors.border) },
-      uFog: { value: new THREE.Color(colors.background) },
+      uBitcoin: { value: new THREE.Color(colors.bitcoin) },
     }),
     [colors, tipHeight],
   );
 
   return (
-    <points geometry={geometry} frustumCulled={false}>
+    <mesh rotation-x={-Math.PI / 2} position={[0, 0.012, WORLD_SIZE / 2]}>
+      <planeGeometry args={[WORLD_SIZE, WORLD_SIZE]} />
       <shaderMaterial
         uniforms={uniforms}
         vertexShader={/* glsl */ `
-          uniform float uGrid;
-          uniform float uCell;
-          uniform float uWorldSize;
-          uniform float uTip;
-          varying float vMined;
-          varying float vClub;
-          varying float vShade;
-
-          float hash(float value) {
-            return fract(sin(value * 12.9898) * 43758.5453);
-          }
-
+          varying vec2 vUv;
           void main() {
-            float districtId = position.x;
-            float col = mod(districtId, uGrid);
-            float row = floor(districtId / uGrid);
-            vMined = step(districtId, uTip);
-            vClub = districtId < 1000.0 ? 0.0 : districtId < 10000.0 ? 1.0 : districtId < 100000.0 ? 2.0 : 3.0;
-            vShade = hash(districtId);
-            float blockHeight = mix(0.006, 0.025 + vShade * 0.045, vMined);
-            vec3 transformed = vec3(
-              (col + 0.5) * uCell - uWorldSize * 0.5,
-              blockHeight,
-              (row + 0.5) * uCell
-            );
-            vec4 viewPosition = modelViewMatrix * vec4(transformed, 1.0);
-            gl_Position = projectionMatrix * viewPosition;
-            gl_PointSize = clamp(96.0 * uCell / max(0.1, -viewPosition.z), 1.8, 8.0);
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
           }
         `}
         fragmentShader={/* glsl */ `
+          uniform float uGrid;
+          uniform float uTip;
           uniform vec3 uMined;
           uniform vec3 uFuture;
-          uniform vec3 uFog;
-          varying float vMined;
-          varying float vClub;
-          varying float vShade;
+          uniform vec3 uBitcoin;
+          varying vec2 vUv;
+
+          float hash(float value) { return fract(sin(value * 12.9898) * 43758.5453); }
 
           void main() {
-            vec2 edge = abs(gl_PointCoord - 0.5);
-            if (max(edge.x, edge.y) > 0.46) discard;
-            float bevel = 1.0 - smoothstep(0.32, 0.48, max(edge.x, edge.y));
-            float light = 0.92 + bevel * 0.38;
-            float clubBand = 0.72 + vClub * 0.07;
-            vec3 minedColor = uMined * clubBand * (0.72 + vShade * 0.24) * light;
-            vec3 futureColor = uFuture * (0.7 + light * 0.3);
-            vec3 color = mix(futureColor, minedColor, vMined);
-            float depth = gl_FragCoord.z / gl_FragCoord.w;
-            float fogFactor = smoothstep(48.0, 185.0, depth);
-            gl_FragColor = vec4(mix(color, uFog, fogFactor), 1.0);
+            vec2 cellUv = fract(vUv * uGrid);
+            vec2 cell = floor(vUv * uGrid);
+            float districtId = cell.y * uGrid + cell.x;
+            float mined = step(districtId, uTip);
+            float shade = hash(districtId);
+            float club = districtId < 1000.0 ? 0.0 : districtId < 10000.0 ? 1.0 : districtId < 100000.0 ? 2.0 : 3.0;
+            float edge = min(min(cellUv.x, 1.0 - cellUv.x), min(cellUv.y, 1.0 - cellUv.y));
+            float inset = smoothstep(0.025, 0.14, edge);
+            vec3 minedColor = mix(uMined * (0.45 + shade * 0.28), uBitcoin, 0.12 + club * 0.035);
+            vec3 color = mix(uFuture * 0.32, minedColor, mined);
+            gl_FragColor = vec4(color * (0.34 + inset * 0.92), 1.0);
           }
         `}
       />
-    </points>
+    </mesh>
   );
 }
 
