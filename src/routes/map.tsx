@@ -45,10 +45,18 @@ function MapPage() {
 
       <div className="mt-6 flex flex-wrap items-center gap-4 font-mono text-[10px] text-muted-foreground">
         <span className="flex items-center gap-2">
-          <span className="inline-block h-2 w-2 bg-foreground" /> MINED DISTRICT
+          <span className="inline-block h-2 w-2 bg-foreground" /> MINED · UNCLAIMED
         </span>
         <span className="flex items-center gap-2">
           <span className="inline-block h-2 w-2 bg-border" /> NOT MINED YET
+        </span>
+        <span className="flex items-center gap-2">
+          <span className="inline-block h-2 w-2 bg-bitcoin" /> HELD BY YOU
+        </span>
+        <span className="flex items-center gap-2">
+          <span className="inline-block h-2 w-2" style={{ background: "hsl(190 70% 58%)" }} />
+          <span className="inline-block h-2 w-2" style={{ background: "hsl(320 70% 60%)" }} />
+          <span className="inline-block h-2 w-2" style={{ background: "hsl(90 70% 55%)" }} /> ONE COLOUR PER HOLDER ADDRESS
         </span>
         <span data-no-translate>
           {tip.isPending ? "SYNC TIP…" : tip.isError ? "NO DATA YET" : `TIP ${tipHeight}`}

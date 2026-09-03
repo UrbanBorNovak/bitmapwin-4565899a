@@ -1,8 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { clubOf } from "@/lib/clubs";
+import { colorForAddress, mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
+import { useWalletSession } from "@/lib/wallet-session";
 
 const GRID = 10_000; // 10,000 x 10,000 dots = 100,000,000 districts of land
+/** owners are only read when the window is small enough to stay responsive */
+const OWNER_CELL_BUDGET = 60_000;
 
 export type DistrictDotMapProps = {
   /** highest block that exists on chain — dots above it are unmined land */
@@ -24,15 +29,32 @@ const heightOf = (col: number, row: number) => row * GRID + col;
  */
 export function DistrictDotMap({ tipHeight, highlight = [], className }: DistrictDotMapProps) {
   const navigate = useNavigate();
+  const wallet = useWalletSession();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ x: number; y: number; moved: boolean } | null>(null);
   const viewRef = useRef<View>({ x: 0, y: 0, scale: 0.06 });
   const [hover, setHover] = useState<{ height: number; sx: number; sy: number } | null>(null);
   const [zoomLabel, setZoomLabel] = useState(0.06);
+  const [viewTick, setViewTick] = useState(0);
+  const [window_, setWindow] = useState<OwnerWindow | null>(null);
+
+  const mine = useMemo(() => {
+    const set = new Set<string>();
+    if (wallet?.ordinalsAddress) set.add(wallet.ordinalsAddress);
+    if (wallet?.paymentAddress) set.add(wallet.paymentAddress);
+    return set;
+  }, [wallet?.ordinalsAddress, wallet?.paymentAddress]);
+
+  const owners = useQuery(mapOwnersQuery(window_));
+  const ownersRef = useRef<Map<number, string>>(new Map());
+  ownersRef.current = owners.data ?? new Map();
+  const mineRef = useRef<Set<string>>(mine);
+  mineRef.current = mine;
 
   const highlightSet = useRef<Set<number>>(new Set());
   highlightSet.current = new Set(highlight);
+
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -95,23 +117,58 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
       return;
     }
 
+    const ownerMap = ownersRef.current;
     for (let row = rowFrom; row <= rowTo; row++) {
       const sy = y + row * scale;
       for (let col = colFrom; col <= colTo; col++) {
         const height = heightOf(col, row);
         const sx = x + col * scale;
-        const isHighlight = highlightSet.current.has(height);
+        const owner = ownerMap.get(height);
+        const isMine = !!owner && mineRef.current.has(owner);
+        const isHighlight = highlightSet.current.has(height) || isMine;
         if (height > tipHeight) {
           ctx.fillStyle = borderCol;
+          ctx.globalAlpha = 0.35;
+        } else if (isHighlight) {
+          ctx.fillStyle = accentCol;
+          ctx.globalAlpha = 1;
+        } else if (owner) {
+          ctx.fillStyle = colorForAddress(owner);
+          ctx.globalAlpha = 0.95;
         } else {
-          ctx.fillStyle = isHighlight ? accentCol : fgCol;
+          ctx.fillStyle = fgCol;
+          ctx.globalAlpha = 0.8;
         }
-        ctx.globalAlpha = height > tipHeight ? 0.35 : isHighlight ? 1 : 0.8;
-        ctx.fillRect(sx, sy, isHighlight ? Math.max(dot, 2) : dot, isHighlight ? Math.max(dot, 2) : dot);
+        const size = isHighlight || owner ? Math.max(dot, 2) : dot;
+        ctx.fillRect(sx, sy, size, size);
       }
     }
     ctx.globalAlpha = 1;
+  }, [tipHeight, owners.data]);
+
+  // Owners are fetched for the visible window only — the registry holds
+  // hundreds of thousands of owned districts.
+  const syncOwnerWindow = useCallback(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    const { x, y, scale } = viewRef.current;
+    const colFrom = Math.max(0, Math.floor(-x / scale));
+    const rowFrom = Math.max(0, Math.floor(-y / scale));
+    const colTo = Math.min(GRID - 1, Math.ceil((-x + wrap.clientWidth) / scale));
+    const rowTo = Math.min(GRID - 1, Math.ceil((-y + wrap.clientHeight) / scale));
+    const cells = (colTo - colFrom + 1) * (rowTo - rowFrom + 1);
+    if (scale < 1.2 || cells > OWNER_CELL_BUDGET || rowFrom * GRID > tipHeight) {
+      setWindow(null);
+      return;
+    }
+    setWindow({ rowFrom, rowTo, colFrom, colTo });
   }, [tipHeight]);
+
+  useEffect(() => {
+    const id = setTimeout(syncOwnerWindow, 250);
+    return () => clearTimeout(id);
+  }, [syncOwnerWindow, zoomLabel, viewTick]);
+
 
 
   useEffect(() => {
@@ -261,7 +318,10 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
         onPointerUp={(e) => {
           const d = dragRef.current;
           dragRef.current = null;
-          if (d?.moved) return;
+          if (d?.moved) {
+            setViewTick((n) => n + 1);
+            return;
+          }
           const cell = cellAt(e.clientX, e.clientY);
           if (cell && cell.height <= tipHeight) {
             navigate({ to: "/bitmap/$block", params: { block: String(cell.height) } });
@@ -278,16 +338,37 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
           <div
             data-no-translate
             className="pointer-events-none absolute z-10 -translate-y-full border border-bitcoin bg-background/95 px-2 py-1 font-mono text-[10px]"
-            style={{ left: Math.min(hover.sx + 8, (wrapRef.current?.clientWidth ?? 0) - 140), top: hover.sy - 6 }}
+            style={{ left: Math.min(hover.sx + 8, (wrapRef.current?.clientWidth ?? 0) - 200), top: hover.sy - 6 }}
           >
-            {hover.height}.bitmap · {clubOf(hover.height).short}
+            <div>
+              {hover.height}.bitmap · {clubOf(hover.height).short}
+            </div>
+            {(() => {
+              const owner = owners.data?.get(hover.height);
+              if (!owner) return null;
+              const isMine = mine.has(owner);
+              return (
+                <div className="mt-0.5 flex items-center gap-1">
+                  {isMine ? (
+                    <span className="inline-block h-2 w-2 bg-bitcoin" />
+                  ) : (
+                    <span className="inline-block h-2 w-2" style={{ background: colorForAddress(owner) }} />
+                  )}
+                  <span>{isMine ? "YOURS" : `${owner.slice(0, 6)}…${owner.slice(-4)}`}</span>
+                </div>
+              );
+            })()}
           </div>
         ) : null}
 
         <div className="pointer-events-none absolute bottom-2 left-2 flex flex-wrap items-center gap-3 font-mono text-[10px] text-muted-foreground">
           <span>DRAG TO PAN · SCROLL TO ZOOM · CLICK A DOT</span>
           <span data-no-translate>×{zoomLabel.toFixed(2)}</span>
+          <span data-no-translate>
+            {window_ ? (owners.isPending ? "LOADING HOLDERS…" : `${owners.data?.size ?? 0} HELD IN VIEW`) : "ZOOM IN FOR HOLDER COLOURS"}
+          </span>
         </div>
+
       </div>
     </div>
   );

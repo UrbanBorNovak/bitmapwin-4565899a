@@ -1187,6 +1187,18 @@ export type Database = {
         Args: { _days: number; _lessee_address: string; _offer_id: string }
         Returns: string
       }
+      map_owners: {
+        Args: {
+          _col_from: number
+          _col_to: number
+          _row_from: number
+          _row_to: number
+        }
+        Returns: {
+          block_height: number
+          owner_address: string
+        }[]
+      }
       owns_wallet: {
         Args: { _address: string; _user_id: string }
         Returns: boolean
