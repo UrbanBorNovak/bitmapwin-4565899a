@@ -28,7 +28,7 @@ export function VerificationChip({
   return (
     <span
       className={`label inline-flex items-center gap-1.5 border border-border px-1.5 py-0.5 ${className}`}
-      title={meta.label}
+      title={note}
     >
       <span className={`size-1.5 ${meta.dot}`} aria-hidden="true" />
       {status === "verified" ? "VERIFIED" : "PENDING"}
