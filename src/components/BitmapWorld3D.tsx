@@ -318,9 +318,20 @@ const DistrictBlocks = memo(function DistrictBlocks({
             float detail = 1.0 - smoothstep(0.35, 1.1, px);
             float edgeAA = max(fwidth(cellUv.x), fwidth(cellUv.y));
             float inset = mix(1.0, smoothstep(0.012, max(0.036, edgeAA * 1.4), edge), detail);
-            vec3 minedColor = mix(uMined * (0.36 + shade * 0.2), uBitcoin, 0.075 + club * 0.025);
-            vec3 color = mix(uFuture * 0.32, minedColor, mined);
-            gl_FragColor = vec4(color * (0.48 + inset * 0.58), 1.0);
+
+            // Bitcoin-orange gradients: a deep ember floor lifting toward bright
+            // orange with age (older blocks burn hotter) and across each plot.
+            vec3 ember = uBitcoin * 0.22;
+            vec3 blaze = mix(uBitcoin, vec3(1.0, 0.78, 0.42), 0.28);
+            float age = 1.0 - clamp(districtId / max(uTip, 1.0), 0.0, 1.0);
+            float sweep = clamp(vUv.y * 0.65 + vUv.x * 0.2, 0.0, 1.0);
+            float plot = clamp(cellUv.y * 0.55 + cellUv.x * 0.25 + 0.1, 0.0, 1.0);
+            float heat = clamp(age * 0.45 + sweep * 0.3 + plot * 0.22 * detail + shade * 0.12 + club * 0.03, 0.0, 1.0);
+            vec3 minedColor = mix(ember, blaze, heat);
+            minedColor = mix(minedColor, uMined * 0.34, 0.18);
+            vec3 futureColor = mix(uFuture * 0.24, uBitcoin * 0.1, sweep);
+            vec3 color = mix(futureColor, minedColor, mined);
+            gl_FragColor = vec4(color * (0.6 + inset * 0.5), 1.0);
           }
         `
         }
@@ -349,9 +360,10 @@ const SelectedBlock = memo(function SelectedBlock({
   );
 });
 
-// One avatar ≈ one district cell tall. Geometry is shared across every visitor so
-// spawning a crowd costs no extra GPU buffers.
-const AVATAR_U = CELL;
+// One avatar ≈ a tenth of a district cell tall, so every BITMAP reads as a wide
+// plot you walk across. Geometry is shared across visitors — a crowd costs no
+// extra GPU buffers.
+const AVATAR_U = CELL / 10;
 const avatarGeometry = {
   ring: new THREE.RingGeometry(AVATAR_U * 0.42, AVATAR_U * 0.5, 16),
   boot: new THREE.BoxGeometry(AVATAR_U * 0.16, AVATAR_U * 0.07, AVATAR_U * 0.2),
@@ -685,7 +697,7 @@ function AvatarLabel({
     <Html
       center
       position={[0, AVATAR_U * 1.35, 0]}
-      distanceFactor={0.46}
+      distanceFactor={0.012}
       style={{ pointerEvents: "none" }}
       zIndexRange={[10, 0]}
     >
@@ -784,7 +796,7 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
           motion={
             cursor.hp <= 0
               ? "down"
-              : cursor.y > CELL * 0.05
+              : cursor.y > AVATAR_U * 0.05
                 ? "jump"
                 : cursor.movement === "run"
                   ? "run"
@@ -971,24 +983,24 @@ function PlayerCameraRig({
     // so switching perspective is a smooth camera move rather than a cut.
     const speed = Math.hypot(player.vx, player.vz);
     if (mode === "first") {
-      cameraTarget.current.set(player.x, player.y + CELL * 0.88, player.z);
+      cameraTarget.current.set(player.x, player.y + AVATAR_U * 0.88, player.z);
       const horizontal = Math.cos(pitch.current);
       cameraLook.current.set(
         player.x + Math.sin(player.yaw) * horizontal,
-        player.y + CELL * 0.88 + Math.sin(pitch.current),
+        player.y + AVATAR_U * 0.88 + Math.sin(pitch.current),
         player.z + Math.cos(player.yaw) * horizontal,
       );
     } else {
-      const back = CELL * (11.5 + (speed / (MOVE.walkSpeed * MOVE.sprint)) * 2.5);
+      const back = AVATAR_U * (6.5 + (speed / (MOVE.walkSpeed * MOVE.sprint)) * 2.5);
       cameraTarget.current.set(
         player.x - Math.sin(player.yaw) * back,
-        player.y + CELL * 7.2,
+        player.y + AVATAR_U * 3.4,
         player.z - Math.cos(player.yaw) * back,
       );
       cameraLook.current.set(
-        player.x + Math.sin(player.yaw) * CELL * 2.5,
-        player.y + CELL * 0.62,
-        player.z + Math.cos(player.yaw) * CELL * 2.5,
+        player.x + Math.sin(player.yaw) * AVATAR_U * 2.5,
+        player.y + AVATAR_U * 0.62,
+        player.z + Math.cos(player.yaw) * AVATAR_U * 2.5,
       );
     }
     const transitionSpeed = mode === "first" ? 8.5 : 5.2;
