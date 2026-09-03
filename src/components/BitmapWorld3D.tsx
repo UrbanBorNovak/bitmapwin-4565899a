@@ -826,12 +826,20 @@ const SelfAvatar = memo(function SelfAvatar({
   lastDamage: number;
 }) {
   const group = useRef<THREE.Group>(null);
+  const mounted = useRef(false);
   const [motion, setMotion] = useState<AvatarMotion>("idle");
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   useFrame(() => {
     const current = pose.current;
     if (!current || !group.current) return;
     group.current.position.set(current.x, current.y + 0.006, current.z);
     group.current.rotation.y = current.yaw;
+    if (!mounted.current) return;
     const next: AvatarMotion = current.animation;
     setMotion((previous) => (previous === next ? previous : next));
   });
