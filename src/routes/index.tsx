@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ParcelCard } from "@/components/ParcelCard";
+import { HowItWorks } from "@/components/HowItWorks";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { registryParcelsQuery, registryCountQuery } from "@/lib/registry";
 import { recentTradesQuery, tradedBitmapCountQuery } from "@/lib/trade-store";
@@ -141,6 +142,8 @@ function Index() {
           </div>
         </div>
       </section>
+
+      <HowItWorks />
 
       <section className="mx-auto max-w-[1600px] px-4 pt-10 md:px-8 md:pt-16">
         <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
