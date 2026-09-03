@@ -22,7 +22,10 @@ import { myWalletLinksQuery } from "@/lib/wallet-links";
 const GRID = 1_000;
 const WORLD_SIZE = 100;
 const CELL = WORLD_SIZE / GRID;
-const OWNER_CELL_BUDGET = 55_000;
+const OWNER_CELL_BUDGET = 24_000;
+
+/** Everything except the flat picking plane opts out of raycasting — one plane hit test per pointer move. */
+const noRaycast = () => {};
 
 type CameraMove = "mined" | "full" | "tip";
 type HoveredDistrict = { height: number; x: number; y: number };
