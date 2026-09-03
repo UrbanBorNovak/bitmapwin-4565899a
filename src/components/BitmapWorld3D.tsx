@@ -545,16 +545,28 @@ function ModelAvatar({
 
   useEffect(() => {
     if (skinTexture) {
+      // glTF UVs assume an unflipped image; pixel-art skins want no smoothing.
+      texture.flipY = false;
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.magFilter = THREE.NearestFilter;
       texture.minFilter = THREE.NearestFilter;
+      texture.wrapS = THREE.ClampToEdgeWrapping;
+      texture.wrapT = THREE.ClampToEdgeWrapping;
       texture.generateMipmaps = false;
+      texture.anisotropy = 1;
       texture.needsUpdate = true;
     }
     const paint = (source: THREE.Material) => {
       const material = source.clone() as THREE.MeshStandardMaterial;
       material.map = texture;
       material.color = new THREE.Color("#ffffff");
+      // glTF defaults to a fully metallic surface, which renders the skin black.
+      material.metalness = 0;
+      material.roughness = 0.85;
+      material.envMapIntensity = 0.25;
+      material.transparent = false;
+      material.alphaTest = 0.5;
+      material.side = THREE.FrontSide;
       material.needsUpdate = true;
       return material;
     };
@@ -569,6 +581,7 @@ function ModelAvatar({
         : paint(mesh.material);
     });
   }, [scene, texture, skinTexture]);
+
 
 
   const fitted = useMemo(() => {
