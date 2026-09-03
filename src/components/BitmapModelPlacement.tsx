@@ -76,7 +76,7 @@ export function BitmapModelPlacement({
               <Button className="btn-term" disabled={save.isPending || inscriptionId.trim().length < 66} onClick={() => save.mutate()}>{save.isPending ? "VALIDATING…" : "VALIDATE + PUBLISH"}</Button>
               {current.data ? <Button className="btn-term-ghost" variant="ghost" disabled={clear.isPending} onClick={() => clear.mutate()}><Trash2 /> REMOVE</Button> : null}
             </div>
-            <p className="font-mono text-[10px] text-muted-foreground">GLB + DRACO · 2 MB · 100K TRIANGLES · 8 TEXTURES · 4 ANIMATIONS MAX</p>
+            <p className="font-mono text-[10px] text-muted-foreground">model/gltf-binary (GLB) + GLTF + DRACO · 2 MB · 100K TRIANGLES · 8 TEXTURES · 4 ANIMATIONS MAX</p>
           </>
         ) : null}
       </div>
