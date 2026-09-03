@@ -1227,23 +1227,48 @@ const LandSurface = memo(function LandSurface({
     () => [WORLD_SIZE, 100, new THREE.Color(colors.muted), new THREE.Color(colors.border)] as const,
     [colors.border, colors.muted],
   );
+  // The land is a stack of near-coplanar planes. Depth testing cannot separate
+  // them at this scale, so order is decided explicitly (renderOrder) and the
+  // upper layers never write depth — no flicker while zooming or panning.
   return (
     <>
-      <mesh rotation-x={-Math.PI / 2} position={[0, -AVATAR_U * 0.1, WORLD_SIZE / 2]} raycast={noRaycast}>
+      <mesh
+        rotation-x={-Math.PI / 2}
+        position={[0, -AVATAR_U * 0.1, WORLD_SIZE / 2]}
+        renderOrder={-4}
+        raycast={noRaycast}
+      >
         <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
         <meshLambertMaterial color={colors.background} />
       </mesh>
-      <mesh rotation-x={-Math.PI / 2} position={[0, -AVATAR_U * 0.08, tipDepth / 2]} raycast={noRaycast}>
+      <mesh
+        rotation-x={-Math.PI / 2}
+        position={[0, -AVATAR_U * 0.1, tipDepth / 2]}
+        renderOrder={-3}
+        raycast={noRaycast}
+      >
         <planeGeometry args={[WORLD_SIZE, tipDepth, 1, 1]} />
-        <meshLambertMaterial color={colors.muted} />
+        <meshLambertMaterial color={colors.muted} depthWrite={false} />
       </mesh>
-      <mesh rotation-x={-Math.PI / 2} position={[0, -AVATAR_U * 0.01, tipDepth / 2]} raycast={noRaycast}>
+      <mesh
+        rotation-x={-Math.PI / 2}
+        position={[0, -AVATAR_U * 0.1, tipDepth / 2]}
+        renderOrder={-1}
+        raycast={noRaycast}
+      >
         <planeGeometry args={[WORLD_SIZE, tipDepth, 1, 1]} />
-        <meshBasicMaterial color={colors.bitcoin} transparent opacity={0.045} depthWrite={false} />
+        <meshBasicMaterial
+          color={colors.bitcoin}
+          transparent
+          opacity={0.045}
+          depthWrite={false}
+          depthTest={false}
+        />
       </mesh>
       <gridHelper
         args={gridArgs as unknown as [number, number, THREE.Color, THREE.Color]}
-        position={[0, -AVATAR_U * 0.05, WORLD_SIZE / 2]}
+        position={[0, -AVATAR_U * 0.1, WORLD_SIZE / 2]}
+        renderOrder={0}
         raycast={noRaycast}
       />
     </>
