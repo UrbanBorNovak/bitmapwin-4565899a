@@ -1,6 +1,6 @@
 import { useMemo, useState, type PointerEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { recentTradesQuery } from "@/lib/trade-store";
+import { tradesInRangeQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
 import type { Club } from "@/lib/clubs";
 import { inClub } from "@/lib/clubs";
