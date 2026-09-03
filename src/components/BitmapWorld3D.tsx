@@ -569,6 +569,15 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   useEffect(() => setColors(readWorldColors()), []);
   useEffect(() => onCursorsChange?.(cursors), [cursors, onCursorsChange]);
 
+  // Spawn in at the chain tip as soon as the world knows where the frontier is,
+  // so every visitor is standing in the world before they even move the cursor.
+  const spawnedRef = useRef(false);
+  useEffect(() => {
+    if (spawnedRef.current || !tipHeight) return;
+    spawnedRef.current = true;
+    publish({ col: tipHeight % GRID, row: Math.floor(tipHeight / GRID), height: tipHeight });
+  }, [tipHeight, publish]);
+
   const moveCamera = (type: CameraMove) => setCommand((current) => ({ type, nonce: current.nonce + 1 }));
   const handleWindow = useCallback((next: OwnerWindow | null) => setWindow(next), []);
   const minedDepth = Math.max(CELL, (Math.floor(tipHeight / GRID) + 1) * CELL);
