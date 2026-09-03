@@ -80,6 +80,7 @@ export function useMapCursors(enabled = true) {
       .subscribe();
 
     let last = 0;
+    let lastCell: { col: number; row: number; height: number } | null = null;
     let pending: { col: number; row: number; height: number } | null = null;
     let timer: ReturnType<typeof setTimeout> | null = null;
     const push = (cell: { col: number; row: number; height: number } | null) => {
@@ -90,14 +91,20 @@ export function useMapCursors(enabled = true) {
       });
       last = Date.now();
     };
+    // Avatars stay spawned in the world: re-broadcast the last position on a
+    // heartbeat so peers never see us expire while the tab is open.
+    const heartbeat = setInterval(() => {
+      if (lastCell) push(lastCell);
+    }, STALE_MS / 2);
     sendRef.current = (cell) => {
       if (!cell) {
+        // Pointer left the map — keep the avatar standing where it was.
         if (timer) clearTimeout(timer);
         timer = null;
         pending = null;
-        push(null);
         return;
       }
+      lastCell = cell;
       const wait = SEND_INTERVAL_MS - (Date.now() - last);
       if (wait <= 0) {
         push(cell);
@@ -117,8 +124,10 @@ export function useMapCursors(enabled = true) {
     return () => {
       if (timer) clearTimeout(timer);
       clearInterval(sweep);
+      clearInterval(heartbeat);
       if (frame) cancelAnimationFrame(frame);
       sendRef.current = () => {};
+      push(null); // despawn: tell peers this avatar left the world
       void supabase.removeChannel(channel);
     };
   }, [enabled, selfId, handle]);
