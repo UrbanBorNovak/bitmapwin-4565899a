@@ -170,7 +170,7 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({ heights, bitcoin }: { he
           side={THREE.DoubleSide}
         />
       </instancedMesh>
-      <instancedMesh ref={coreRef} args={[undefined, undefined, owned.length]} frustumCulled>
+      <instancedMesh key={`core-${owned.length}`} ref={coreRef} args={[undefined, undefined, owned.length]} frustumCulled raycast={noRaycast}>
         <boxGeometry args={[1, 1, 1]} />
         <meshBasicMaterial
           ref={coreMaterial}
