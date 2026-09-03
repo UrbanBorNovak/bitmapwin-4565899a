@@ -426,8 +426,12 @@ function ViewWindowReporter({ onWindow }: { onWindow: (window_: OwnerWindow | nu
     };
   }, []);
 
-  useFrame(() => {
+  const nextCheck = useRef(0);
+  useFrame(({ clock }) => {
     if (!mounted.current) return;
+    // Re-evaluate the holder/model window ~4x per second instead of every frame.
+    if (clock.elapsedTime < nextCheck.current) return;
+    nextCheck.current = clock.elapsedTime + 0.25;
     const mapControls = controls as MapControlsImpl | undefined;
     if (!mapControls) return;
     const distance = camera.position.distanceTo(mapControls.target);
