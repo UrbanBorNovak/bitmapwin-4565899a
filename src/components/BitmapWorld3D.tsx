@@ -14,6 +14,9 @@ import { colorForAddress, mapOwnersQuery, type OwnerWindow } from "@/lib/map-own
 import { useMapCursors, type MapCursor } from "@/lib/map-presence";
 import { useWalletSession } from "@/lib/wallet-session";
 import { mapBitmapModelsQuery, type BitmapModel } from "@/lib/bitmap-models";
+import { heldHeightsQuery } from "@/lib/held-parcels";
+import { useAuthSession } from "@/lib/auth";
+import { myWalletLinksQuery } from "@/lib/wallet-links";
 
 const GRID = 1_000;
 const WORLD_SIZE = 100;
@@ -94,7 +97,7 @@ function HolderColumns({ owners, mine, bitcoin }: { owners: Map<number, string>;
       dummy.scale.set(CELL * 0.82, hashHeight, CELL * 0.82);
       dummy.updateMatrix();
       mesh.setMatrixAt(index, dummy.matrix);
-      color.set(mine.has(owner) ? bitcoin : colorForAddress(owner));
+      color.set(mine.has(owner.toLowerCase()) ? bitcoin : colorForAddress(owner));
       mesh.setColorAt(index, color);
     });
     mesh.instanceMatrix.needsUpdate = true;
@@ -111,15 +114,12 @@ function HolderColumns({ owners, mine, bitcoin }: { owners: Map<number, string>;
   );
 }
 
-function OwnedBitmapGlow({ owners, mine, bitcoin }: { owners: Map<number, string>; mine: Set<string>; bitcoin: string }) {
+function OwnedBitmapGlow({ heights, bitcoin }: { heights: number[]; bitcoin: string }) {
   const coreRef = useRef<THREE.InstancedMesh>(null);
   const auraRef = useRef<THREE.InstancedMesh>(null);
   const coreMaterial = useRef<THREE.MeshBasicMaterial>(null);
   const auraMaterial = useRef<THREE.MeshBasicMaterial>(null);
-  const owned = useMemo(
-    () => [...owners.entries()].filter(([, owner]) => mine.has(owner)).map(([height]) => height),
-    [mine, owners],
-  );
+  const owned = useMemo(() => [...new Set(heights)], [heights]);
 
   useEffect(() => {
     const core = coreRef.current;
@@ -130,12 +130,12 @@ function OwnedBitmapGlow({ owners, mine, bitcoin }: { owners: Map<number, string
       const blockHeight = districtHeight(height);
       const x = worldX(height % GRID);
       const z = worldZ(Math.floor(height / GRID));
-      dummy.position.set(x, blockHeight + 0.018, z);
-      dummy.scale.set(CELL * 1.3, blockHeight + 0.045, CELL * 1.3);
+      dummy.position.set(x, 0.16, z);
+      dummy.scale.set(CELL * 1.5, 0.3, CELL * 1.5);
       dummy.updateMatrix();
       core.setMatrixAt(index, dummy.matrix);
-      dummy.position.set(x, blockHeight + 0.022, z);
-      dummy.scale.set(CELL * 2.5, blockHeight + 0.065, CELL * 2.5);
+      dummy.position.set(x, 0.16, z);
+      dummy.scale.set(CELL * 3.2, 0.34, CELL * 3.2);
       dummy.updateMatrix();
       aura.setMatrixAt(index, dummy.matrix);
     });
@@ -418,6 +418,7 @@ function WorldScene({
   selectedHeight,
   onPublish,
   models,
+  ownedHeights,
 }: {
   colors: WorldColors;
   command: { type: CameraMove; nonce: number };
@@ -431,6 +432,7 @@ function WorldScene({
   selectedHeight: number | null;
   onPublish: (position: { col: number; row: number; height: number } | null) => void;
   models: BitmapModel[];
+  ownedHeights: number[];
 }) {
   const handleMove = (event: ThreeEvent<PointerEvent>) => {
     const height = heightAtPoint(event.point);
@@ -458,7 +460,7 @@ function WorldScene({
       <LandSurface colors={colors} tipHeight={tipHeight} />
       <DistrictBlocks tipHeight={tipHeight} colors={colors} />
       <HolderColumns owners={owners} mine={mine} bitcoin={colors.bitcoin} />
-      <OwnedBitmapGlow owners={owners} mine={mine} bitcoin={colors.bitcoin} />
+      <OwnedBitmapGlow heights={ownedHeights} bitcoin={colors.bitcoin} />
       <OnChainModels models={models} bitcoin={colors.bitcoin} />
       {selectedHeight !== null ? <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} /> : null}
       <VisitorBeacons cursors={cursors} />
@@ -488,6 +490,8 @@ function WorldScene({
 export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, className }: BitmapWorld3DProps) {
   const navigate = useNavigate();
   const wallet = useWalletSession();
+  const { session } = useAuthSession();
+  const links = useQuery(myWalletLinksQuery(Boolean(session)));
   const [colors, setColors] = useState<WorldColors | null>(null);
   const [window_, setWindow] = useState<OwnerWindow | null>(null);
   const [hover, setHover] = useState<HoveredDistrict | null>(null);
@@ -497,12 +501,20 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   const models = useQuery(mapBitmapModelsQuery(window_));
   const { cursors, publish } = useMapCursors();
 
-  const mine = useMemo(() => {
-    const addresses = new Set<string>();
-    if (wallet?.ordinalsAddress) addresses.add(wallet.ordinalsAddress);
-    if (wallet?.paymentAddress) addresses.add(wallet.paymentAddress);
-    return addresses;
-  }, [wallet?.ordinalsAddress, wallet?.paymentAddress]);
+  const myAddresses = useMemo(
+    () => [...new Set([
+      wallet?.ordinalsAddress,
+      wallet?.paymentAddress,
+      ...(links.data ?? []).map((link) => link.address),
+    ].filter((address): address is string => Boolean(address)))],
+    [links.data, wallet?.ordinalsAddress, wallet?.paymentAddress],
+  );
+  const mine = useMemo(() => new Set(myAddresses.map((address) => address.toLowerCase())), [myAddresses]);
+  const held = useQuery(heldHeightsQuery(myAddresses));
+  const ownedHeights = useMemo(
+    () => [...new Set([...highlight, ...(held.data ?? [])])].filter((height) => height <= tipHeight),
+    [held.data, highlight, tipHeight],
+  );
 
   useEffect(() => setColors(readWorldColors()), []);
   useEffect(() => onCursorsChange?.(cursors), [cursors, onCursorsChange]);
@@ -539,6 +551,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
               selectedHeight={selected?.height ?? null}
               onPublish={publish}
               models={models.data ?? []}
+              ownedHeights={ownedHeights}
             />
           </Canvas>
         ) : null}
@@ -553,7 +566,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
           >
             <div>{hover.height}.bitmap · {clubOf(hover.height).short}</div>
             {owners.data?.get(hover.height) ? (
-              <div className="mt-0.5">{mine.has(owners.data.get(hover.height) ?? "") ? "YOURS" : "HELD"}</div>
+              <div className="mt-0.5">{mine.has((owners.data.get(hover.height) ?? "").toLowerCase()) ? "YOURS" : "HELD"}</div>
             ) : null}
           </div>
         ) : null}
@@ -585,7 +598,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
                 {selected.height > tipHeight
                   ? "NOT MINED YET"
                   : selected.owner
-                    ? (mine.has(selected.owner) ? "YOURS" : selected.owner)
+                    ? (mine.has(selected.owner.toLowerCase()) ? "YOURS" : selected.owner)
                     : "NO DATA YET"}
               </dd>
               <dt className="text-muted-foreground">MODEL</dt>
@@ -607,7 +620,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
           <span data-no-translate>{window_ ? (owners.isPending ? "SCANNING HOLDERS…" : `${owners.data?.size ?? 0} HOLDERS IN RANGE`) : "FLY CLOSER FOR HOLDER COLOURS"}</span>
           <span data-no-translate>{cursors.length > 0 ? `${cursors.length} SEARCHING NOW` : "NOBODY ELSE SEARCHING"}</span>
           <span data-no-translate>{window_ ? `${models.data?.length ?? 0} ON-CHAIN MODELS IN RANGE` : "FLY CLOSER FOR MODELS"}</span>
-          {highlight.length > 0 ? <span data-no-translate>{highlight.length} TARGETS</span> : null}
+          {myAddresses.length > 0 ? <span data-no-translate className="text-bitcoin">{held.isPending ? "LOCATING YOUR BITMAPS…" : `${ownedHeights.length} YOUR BITMAPS · ORANGE BEACONS`}</span> : <span>CONNECT OR LINK WALLET TO HIGHLIGHT YOUR BITMAPS</span>}
         </div>
       </div>
     </div>
