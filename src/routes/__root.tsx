@@ -17,7 +17,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { rememberReferralCode } from "@/lib/referrals";
 import { SalesBackdrop } from "@/components/SalesBackdrop";
-import { BitmapPunkMascot } from "@/components/BitmapPunkMascot";
 import { TradeCrawlerDriver } from "@/components/TradeCrawlerDriver";
 import { RegistryResolverDriver } from "@/components/RegistryResolverDriver";
 import { LanguageProvider } from "@/lib/i18n";
@@ -178,7 +177,6 @@ function RootComponent() {
           <SiteFooter />
         </div>
       </div>
-      <BitmapPunkMascot />
       <TradeCrawlerDriver />
       <RegistryResolverDriver />
       <Toaster />
