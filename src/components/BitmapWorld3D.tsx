@@ -3,8 +3,10 @@ import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber"
 import { Environment, Html, Lightformer, MapControls } from "@react-three/drei";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
+import { ArrowUpRight, X } from "lucide-react";
 import * as THREE from "three";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
+import { Button } from "@/components/ui/button";
 import { clubOf } from "@/lib/clubs";
 import { colorForAddress, mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
 import { useMapCursors, type MapCursor } from "@/lib/map-presence";
@@ -17,6 +19,7 @@ const OWNER_CELL_BUDGET = 55_000;
 
 type CameraMove = "mined" | "full" | "tip";
 type HoveredDistrict = { height: number; x: number; y: number };
+type SelectedDistrict = { height: number; owner: string | null };
 
 export type BitmapWorld3DProps = {
   tipHeight: number;
@@ -60,6 +63,10 @@ function readWorldColors(): WorldColors {
 const worldX = (col: number) => (col + 0.5) * CELL - WORLD_SIZE / 2;
 const worldZ = (row: number) => (row + 0.5) * CELL;
 
+function districtHeight(height: number) {
+  return 0.009 + ((height * 2654435761) >>> 28) * 0.00055;
+}
+
 function heightAtPoint(point: THREE.Vector3) {
   const col = Math.floor((point.x + WORLD_SIZE / 2) / CELL);
   const row = Math.floor(point.z / CELL);
@@ -98,6 +105,47 @@ function HolderColumns({ owners, mine, bitcoin }: { owners: Map<number, string>;
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial vertexColors roughness={0.58} metalness={0.12} />
     </instancedMesh>
+  );
+}
+
+function DistrictBlocks({ tipHeight, bitcoin }: { tipHeight: number; bitcoin: string }) {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const count = Math.max(0, tipHeight + 1);
+
+  useEffect(() => {
+    const mesh = meshRef.current;
+    if (!mesh || count === 0) return;
+    const dummy = new THREE.Object3D();
+    for (let height = 0; height < count; height += 1) {
+      const blockHeight = districtHeight(height);
+      dummy.position.set(worldX(height % GRID), blockHeight / 2, worldZ(Math.floor(height / GRID)));
+      dummy.scale.set(CELL * 0.78, blockHeight, CELL * 0.78);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(height, dummy.matrix);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.computeBoundingSphere();
+  }, [count]);
+
+  if (count === 0) return null;
+  return (
+    <instancedMesh ref={meshRef} args={[undefined, undefined, count]} frustumCulled>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial color={bitcoin} roughness={0.68} metalness={0.18} />
+    </instancedMesh>
+  );
+}
+
+function SelectedBlock({ height, bitcoin }: { height: number; bitcoin: string }) {
+  const blockHeight = districtHeight(height);
+  return (
+    <mesh
+      position={[worldX(height % GRID), blockHeight / 2 + 0.001, worldZ(Math.floor(height / GRID))]}
+      scale={[CELL * 1.35, blockHeight + 0.008, CELL * 1.35]}
+    >
+      <boxGeometry args={[1, 1, 1]} />
+      <meshBasicMaterial color={bitcoin} wireframe />
+    </mesh>
   );
 }
 
@@ -232,6 +280,7 @@ function WorldScene({
   onWindow,
   onHover,
   onSelect,
+  selectedHeight,
   onPublish,
 }: {
   colors: WorldColors;
@@ -243,6 +292,7 @@ function WorldScene({
   onWindow: (window_: OwnerWindow | null) => void;
   onHover: (hover: HoveredDistrict | null) => void;
   onSelect: (height: number) => void;
+  selectedHeight: number | null;
   onPublish: (position: { col: number; row: number; height: number } | null) => void;
 }) {
   const handleMove = (event: ThreeEvent<PointerEvent>) => {
@@ -269,11 +319,13 @@ function WorldScene({
         <Lightformer intensity={0.8} color={colors.foreground} position={[-20, 5, 20]} rotation-y={Math.PI / 2} scale={[28, 4, 1]} />
       </Environment>
       <LandSurface colors={colors} tipHeight={tipHeight} />
+      <DistrictBlocks tipHeight={tipHeight} bitcoin={colors.bitcoin} />
       <HolderColumns owners={owners} mine={mine} bitcoin={colors.bitcoin} />
+      {selectedHeight !== null ? <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} /> : null}
       <VisitorBeacons cursors={cursors} />
       <mesh
         rotation-x={-Math.PI / 2}
-        position={[0, 0.012, WORLD_SIZE / 2]}
+        position={[0, 0.13, WORLD_SIZE / 2]}
         onPointerMove={handleMove}
         onPointerOut={() => {
           onHover(null);
@@ -300,6 +352,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   const [colors, setColors] = useState<WorldColors | null>(null);
   const [window_, setWindow] = useState<OwnerWindow | null>(null);
   const [hover, setHover] = useState<HoveredDistrict | null>(null);
+  const [selected, setSelected] = useState<SelectedDistrict | null>(null);
   const [command, setCommand] = useState<{ type: CameraMove; nonce: number }>({ type: "mined", nonce: 0 });
   const owners = useQuery(mapOwnersQuery(window_));
   const { cursors, publish } = useMapCursors();
@@ -341,7 +394,8 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
               cursors={cursors}
               onWindow={handleWindow}
               onHover={setHover}
-              onSelect={(height) => navigate({ to: "/bitmap/$block", params: { block: String(height) } })}
+              onSelect={(height) => setSelected({ height, owner: owners.data?.get(height) ?? null })}
+              selectedHeight={selected?.height ?? null}
               onPublish={publish}
             />
           </Canvas>
@@ -362,8 +416,44 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
           </div>
         ) : null}
 
+        {selected ? (
+          <section
+            aria-label={`${selected.height}.bitmap details`}
+            data-no-translate
+            className="absolute right-3 top-3 z-40 w-[min(300px,calc(100%-1.5rem))] border border-bitcoin bg-background/95 p-4 font-mono shadow-[8px_8px_0_var(--bitcoin)]"
+          >
+            <Button
+              aria-label="Close bitmap window"
+              className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+              variant="ghost"
+              size="icon"
+              onClick={() => setSelected(null)}
+            >
+              <X />
+            </Button>
+            <div className="label text-bitcoin">SELECTED BITMAP</div>
+            <h2 className="display mt-2 pr-10 text-2xl">{selected.height}.BITMAP</h2>
+            <dl className="mt-4 grid grid-cols-[72px_1fr] gap-x-3 gap-y-2 border-y border-border py-3 text-[11px]">
+              <dt className="text-muted-foreground">CLUB</dt>
+              <dd>{clubOf(selected.height).label}</dd>
+              <dt className="text-muted-foreground">BLOCK</dt>
+              <dd>{selected.height.toLocaleString("en-US")}</dd>
+              <dt className="text-muted-foreground">HOLDER</dt>
+              <dd className="truncate">
+                {selected.owner ? (mine.has(selected.owner) ? "YOURS" : selected.owner) : "NO DATA YET"}
+              </dd>
+            </dl>
+            <Button
+              className="btn-term mt-4 w-full"
+              onClick={() => navigate({ to: "/bitmap/$block", params: { block: String(selected.height) } })}
+            >
+              OPEN BITMAP <ArrowUpRight />
+            </Button>
+          </section>
+        ) : null}
+
         <div className="pointer-events-none absolute bottom-2 left-2 z-30 flex max-w-[calc(100%-1rem)] flex-wrap gap-x-3 gap-y-1 bg-background/75 px-2 py-1 font-mono text-[10px] text-muted-foreground">
-          <span>DRAG TO PAN · RIGHT DRAG TO ORBIT · SCROLL TO FLY · CLICK LAND</span>
+          <span>DRAG TO PAN · RIGHT DRAG TO ORBIT · SCROLL TO FLY · CLICK A BLOCK</span>
           <span data-no-translate>{window_ ? (owners.isPending ? "SCANNING HOLDERS…" : `${owners.data?.size ?? 0} HOLDERS IN RANGE`) : "FLY CLOSER FOR HOLDER COLOURS"}</span>
           <span data-no-translate>{cursors.length > 0 ? `${cursors.length} SEARCHING NOW` : "NOBODY ELSE SEARCHING"}</span>
           {highlight.length > 0 ? <span data-no-translate>{highlight.length} TARGETS</span> : null}
