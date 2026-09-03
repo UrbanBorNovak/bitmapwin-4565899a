@@ -824,9 +824,19 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   const [selected, setSelected] = useState<SelectedDistrict | null>(null);
   const [command, setCommand] = useState<{ type: CameraMove; nonce: number }>({ type: "mined", nonce: 0 });
   const [dpr, setDpr] = useState(1);
+  const [thirdPerson, setThirdPerson] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [modelDraft, setModelDraft] = useState("");
   const owners = useQuery(mapOwnersQuery(window_));
   const models = useQuery(mapBitmapModelsQuery(window_));
-  const { cursors, publish } = useMapCursors();
+  const { cursors, publish, said, say, handle, color, model: avatarModel, setModel: setAvatarModel } = useMapCursors();
+  const pose = useRef<SelfPose>({ x: 0, z: CELL, yaw: 0 });
+  const [mySay, setMySay] = useState<string | null>(null);
+  const self = useMemo(
+    () => ({ handle, color, model: avatarModel, say: mySay }),
+    [handle, color, avatarModel, mySay],
+  );
+
 
   const myAddresses = useMemo(
     () => [...new Set([
