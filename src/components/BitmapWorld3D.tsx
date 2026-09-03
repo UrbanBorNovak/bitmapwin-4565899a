@@ -14,7 +14,7 @@ import { AvatarInventory } from "@/components/AvatarInventory";
 
 import { clubOf } from "@/lib/clubs";
 import { colorForAddress, mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
-import { MAX_HP, SAY_MAX_LENGTH, SAY_TTL_MS, useMapCursors, type MapCursor, type PoseReport } from "@/lib/map-presence";
+import { ATTACK_COOLDOWN_MS, ATTACK_DAMAGE, ATTACK_RANGE, MAX_HP, SAY_MAX_LENGTH, SAY_TTL_MS, useMapCursors, type MapCursor, type PoseReport } from "@/lib/map-presence";
 import {
   createPlayerState,
   damp,
@@ -321,9 +321,6 @@ function avatarTrimMaterial(color: string) {
 }
 /** Only this many visitor figures are drawn — keeps a busy map cheap on a laptop. */
 const MAX_AVATARS = 24;
-/** how close you must stand to land a basic attack */
-const ATTACK_RANGE = CELL * 6;
-
 /** Detailed blocky cypherpunk figure — shared geometry, colour per visitor. */
 const AvatarBody = memo(function AvatarBody({ color }: { color: string }) {
   const skin = useMemo(() => avatarBodyMaterial(color), [color]);
@@ -407,12 +404,14 @@ function AvatarLabel({
   color,
   hp,
   hitAt,
+  lastDamage,
 }: {
   handle: string;
   say: string | null;
   color: string;
   hp: number;
   hitAt: number;
+  lastDamage: number;
 }) {
   const hurt = Date.now() - hitAt < 400;
   return (
@@ -427,6 +426,7 @@ function AvatarLabel({
           </span>
         ) : null}
         <HealthBar hp={hp} color={color} />
+        {hurt ? <span className="font-mono text-[10px] font-bold text-bitcoin">-{lastDamage}</span> : null}
         <span
           className="whitespace-nowrap border bg-background/90 px-1.5 py-0.5 font-mono text-[8px] text-foreground shadow-md"
           style={{ borderColor: hurt ? "var(--bitcoin)" : "var(--color-border)" }}
@@ -492,7 +492,7 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
       <group ref={body}>
         <AvatarSkin color={cursor.color} model={cursor.model} />
       </group>
-      <AvatarLabel handle={cursor.handle} say={cursor.say} color={cursor.color} hp={cursor.hp} hitAt={cursor.hitAt} />
+      <AvatarLabel handle={cursor.handle} say={cursor.say} color={cursor.color} hp={cursor.hp} hitAt={cursor.hitAt} lastDamage={cursor.lastDamage} />
     </group>
   );
 });
@@ -515,6 +515,7 @@ const SelfAvatar = memo(function SelfAvatar({
   say,
   hp,
   hitAt,
+  lastDamage,
 }: {
   pose: React.RefObject<SelfPose>;
   color: string;
@@ -523,6 +524,7 @@ const SelfAvatar = memo(function SelfAvatar({
   say: string | null;
   hp: number;
   hitAt: number;
+  lastDamage: number;
 }) {
   const group = useRef<THREE.Group>(null);
   const body = useRef<THREE.Group>(null);
@@ -546,7 +548,7 @@ const SelfAvatar = memo(function SelfAvatar({
       <group ref={body}>
         <AvatarSkin color={color} model={model} />
       </group>
-      <AvatarLabel handle={`${handle} (YOU)`} say={say} color={color} hp={hp} hitAt={hitAt} />
+      <AvatarLabel handle={`${handle} (YOU)`} say={say} color={color} hp={hp} hitAt={hitAt} lastDamage={lastDamage} />
     </group>
   );
 });
@@ -873,7 +875,7 @@ const WorldScene = memo(function WorldScene({
   ownedHeights: number[];
   cameraMode: CameraMode;
   pose: React.RefObject<SelfPose>;
-  self: { handle: string; color: string; model: string | null; say: string | null; hp: number; hitAt: number };
+  self: { handle: string; color: string; model: string | null; say: string | null; hp: number; hitAt: number; lastDamage: number };
 }) {
 
   // Pointer moves fire dozens of times a second; each React state update re-renders
@@ -931,6 +933,7 @@ const WorldScene = memo(function WorldScene({
           say={self.say}
           hp={self.hp}
           hitAt={self.hitAt}
+          lastDamage={self.lastDamage}
         />
       ) : null}
       <mesh
@@ -994,6 +997,8 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     setModel: setAvatarModel,
     hp,
     hitAt,
+    lastDamage,
+    combatLog,
     attack,
     respawnAt,
     respawnNonce,
@@ -1003,8 +1008,8 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   const pose = useRef<SelfPose>(createPlayerState(0, CELL, 0));
   const [mySay, setMySay] = useState<string | null>(null);
   const self = useMemo(
-    () => ({ handle, color, model: avatarModel, say: mySay, hp, hitAt }),
-    [handle, color, avatarModel, mySay, hp, hitAt],
+    () => ({ handle, color, model: avatarModel, say: mySay, hp, hitAt, lastDamage }),
+    [handle, color, avatarModel, mySay, hp, hitAt, lastDamage],
   );
 
 
@@ -1095,8 +1100,13 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   const cursorsRef = useRef(cursors);
   cursorsRef.current = cursors;
   const [attackTarget, setAttackTarget] = useState<string | null>(null);
+  const [attackCooldownUntil, setAttackCooldownUntil] = useState(0);
+  const [combatNow, setCombatNow] = useState(() => Date.now());
+  const cooldownRemaining = Math.max(0, attackCooldownUntil - combatNow);
+  const attackReady = cooldownRemaining === 0 && hp > 0;
   const attackNearest = useCallback(() => {
-    if (hp <= 0) return;
+    const now = Date.now();
+    if (hp <= 0 || now < attackCooldownUntil) return;
     const me = pose.current;
     let best: { id: string; handle: string; distance: number } | null = null;
     for (const cursor of cursorsRef.current) {
@@ -1114,10 +1124,17 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
       return;
     }
     attack(best.id);
+    setAttackCooldownUntil(now + ATTACK_COOLDOWN_MS);
     const label = `HIT ${best.handle}`;
     setAttackTarget(label);
     window.setTimeout(() => setAttackTarget((current) => (current === label ? null : current)), 1200);
-  }, [attack, hp]);
+  }, [attack, attackCooldownUntil, hp]);
+
+  useEffect(() => {
+    if (!attackCooldownUntil) return;
+    const tick = window.setInterval(() => setCombatNow(Date.now()), 50);
+    return () => window.clearInterval(tick);
+  }, [attackCooldownUntil]);
 
   useEffect(() => {
     if (!exploring) return;
@@ -1178,8 +1195,8 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
         <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("mined")}>[ FRAME MINED WORLD ]</Button>
         <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("full")}>[ VIEW FULL WORLD ]</Button>
         <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("tip")}>[ FLY TO TIP ]</Button>
-        <Button className="btn-term-ghost" variant="ghost" onClick={attackNearest} disabled={hp <= 0}>
-          [ ATTACK · SPACE ]
+        <Button className="btn-term-ghost" variant="ghost" onClick={attackNearest} disabled={!attackReady}>
+          [ {attackReady ? "ATTACK · SPACE" : `COOLDOWN ${(cooldownRemaining / 1000).toFixed(1)}s`} ]
         </Button>
         <Button
           className={inventoryOpen ? "btn-term" : "btn-term-ghost"}
@@ -1298,6 +1315,10 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
             </span>
           ) : null}
           {attackTarget ? <span className="text-bitcoin">{attackTarget}</span> : null}
+          <span className="flex items-center gap-2 text-muted-foreground">
+            <span>DMG {ATTACK_DAMAGE}</span><span>·</span><span>RANGE {(ATTACK_RANGE / CELL).toFixed(0)} DISTRICTS</span><span>·</span>
+            <span className={attackReady ? "text-bitcoin" : "text-muted-foreground"}>{attackReady ? "READY" : `${(cooldownRemaining / 1000).toFixed(1)}s`}</span>
+          </span>
           {exploring ? (
             <>
               <span className="text-muted-foreground">
@@ -1311,6 +1332,20 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
           ) : null}
 
         </div>
+
+        <section data-no-translate aria-label="Combat log" className="absolute bottom-3 left-3 z-30 w-[min(360px,calc(100%-1.5rem))] border border-border bg-background/90 font-mono">
+          <header className="flex items-center justify-between border-b border-border px-2 py-1 text-[9px] text-muted-foreground">
+            <span>COMBAT LOG · WORLD</span><span>{combatLog.length} EVENTS</span>
+          </header>
+          <ol aria-live="polite" className="max-h-28 overflow-y-auto px-2 py-1 text-[10px]">
+            {combatLog.length ? combatLog.slice(-6).reverse().map((entry) => (
+              <li key={entry.id} className="flex gap-1 border-b border-border/60 py-1 last:border-0">
+                <span className="text-muted-foreground">{new Date(entry.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
+                <span className="truncate"><b className="text-foreground">{entry.attacker}</b> hit <b className="text-foreground">{entry.target}</b> for <b className="text-bitcoin">{entry.damage}</b>{entry.knockout ? " · KNOCKOUT" : ""}</span>
+              </li>
+            )) : <li className="py-2 text-muted-foreground">NO HITS YET</li>}
+          </ol>
+        </section>
 
         <div aria-hidden className="pointer-events-none absolute inset-0 z-20 ring-1 ring-inset ring-bitcoin/30 shadow-[inset_0_0_48px_color-mix(in_oklab,var(--bitcoin)_12%,transparent)]" />
 

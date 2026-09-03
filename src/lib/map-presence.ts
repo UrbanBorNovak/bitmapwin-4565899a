@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { avatarModelInscription, colorForVisitor, mapHandle, mapVisitorId } from "@/lib/map-identity";
-import { cellX, cellZ, clampPeerStep, type MovementState } from "@/lib/player-state";
+import { cellX, cellZ, clampPeerStep, WORLD_CELL, type MovementState } from "@/lib/player-state";
 
 /**
  * Live presence for the land map. Every visitor broadcasts the grid cell they are
@@ -46,10 +46,20 @@ export type MapCursor = {
   hp: number;
   /** when this visitor was last hit — drives the hit flash */
   hitAt: number;
+  /** damage shown above the avatar for the latest validated strike */
+  lastDamage: number;
   at: number;
 };
 
 export type WorldSaid = { id: string; handle: string; color: string; body: string; at: number };
+export type CombatLogEntry = {
+  id: string;
+  attacker: string;
+  target: string;
+  damage: number;
+  knockout: boolean;
+  at: number;
+};
 
 const CHANNEL = "map-cursors";
 /** cursors older than this are considered gone */
@@ -63,6 +73,10 @@ export const SAY_MAX_LENGTH = 140;
 export const MAX_HP = 100;
 /** damage one basic attack lands */
 export const ATTACK_DAMAGE = 12;
+/** minimum time between basic attacks */
+export const ATTACK_COOLDOWN_MS = 850;
+/** validated melee reach in world units */
+export const ATTACK_RANGE = WORLD_CELL * 6;
 /** health regenerated per second while not being hit */
 const REGEN_PER_SECOND = 3;
 /** how long a knocked-out visitor stays down before respawning at full health */
@@ -76,6 +90,8 @@ export function useMapCursors(enabled = true) {
   const [said, setSaid] = useState<WorldSaid[]>([]);
   const [hp, setHp] = useState(MAX_HP);
   const [hitAt, setHitAt] = useState(0);
+  const [lastDamage, setLastDamage] = useState(0);
+  const [combatLog, setCombatLog] = useState<CombatLogEntry[]>([]);
   /** timestamp we are scheduled to come back to life at, 0 when alive */
   const [respawnAt, setRespawnAt] = useState(0);
   /** bumps on every respawn so the world can teleport us back to the spawn point */
@@ -93,6 +109,7 @@ export function useMapCursors(enabled = true) {
   useEffect(() => {
     if (!enabled) return;
     const peers = new Map<string, MapCursor>();
+    const lastAttackByPlayer = new Map<string, number>();
     let frame = 0;
     const flush = () => {
       const now = Date.now();
@@ -158,6 +175,7 @@ export function useMapCursors(enabled = true) {
             sayAt: previous?.sayAt ?? 0,
             hp: typeof p.hp === "number" ? Math.max(0, Math.min(MAX_HP, p.hp)) : (previous?.hp ?? MAX_HP),
             hitAt: previous?.hitAt ?? 0,
+            lastDamage: previous?.lastDamage ?? 0,
             at: now,
           });
         }
@@ -182,15 +200,34 @@ export function useMapCursors(enabled = true) {
         flush();
       })
       .on("broadcast", { event: "hit" }, ({ payload }) => {
-        const p = payload as { from?: string; to?: string; damage?: number };
+        const p = payload as { id?: string; from?: string; to?: string; damage?: number; at?: number };
         if (!p?.from || !p?.to) return;
         const damage = Math.max(0, Math.min(MAX_HP, Number(p.damage) || ATTACK_DAMAGE));
+        const now = Date.now();
+        const attacker = peers.get(p.from);
+        const target = p.to === selfId ? lastCell : peers.get(p.to);
+        if (!attacker || !target) return;
+        if (Math.hypot(attacker.x - target.x, attacker.z - target.z) > ATTACK_RANGE * 1.35) return;
+        const previousAttack = lastAttackByPlayer.get(p.from) ?? 0;
+        if (now - previousAttack < ATTACK_COOLDOWN_MS * 0.8) return;
+        lastAttackByPlayer.set(p.from, now);
+        const targetHandle = p.to === selfId ? handle : (peers.get(p.to)?.handle ?? "ANON");
+        const targetHp = p.to === selfId ? hpRef.current : (peers.get(p.to)?.hp ?? MAX_HP);
+        setCombatLog((current) => [...current, {
+          id: typeof p.id === "string" ? p.id : `${p.from}-${now}`,
+          attacker: attacker.handle,
+          target: targetHandle,
+          damage,
+          knockout: targetHp - damage <= 0,
+          at: now,
+        }].slice(-40));
         if (p.to === selfId) {
           // We took the hit: drop our own health and tell everyone the new value.
           const next = Math.max(0, hpRef.current - damage);
           hpRef.current = next;
           setHp(next);
           setHitAt(Date.now());
+          setLastDamage(damage);
           if (lastCell) push(lastCell);
           if (next === 0) {
             // Killed: start the respawn countdown, then bring us back at full health.
@@ -201,7 +238,7 @@ export function useMapCursors(enabled = true) {
         } else {
           const target = peers.get(p.to);
           if (target) {
-            peers.set(p.to, { ...target, hp: Math.max(0, target.hp - damage), hitAt: Date.now(), at: Date.now() });
+            peers.set(p.to, { ...target, hp: Math.max(0, target.hp - damage), hitAt: now, lastDamage: damage, at: now });
             flush();
           }
         }
@@ -265,16 +302,29 @@ export function useMapCursors(enabled = true) {
 
     attackRef.current = (targetId) => {
       if (!targetId || hpRef.current <= 0) return;
+      const target = peers.get(targetId);
+      if (!target || !lastCell || Math.hypot(target.x - lastCell.x, target.z - lastCell.z) > ATTACK_RANGE) return;
+      const now = Date.now();
+      const previousAttack = lastAttackByPlayer.get(selfId) ?? 0;
+      if (now - previousAttack < ATTACK_COOLDOWN_MS) return;
+      lastAttackByPlayer.set(selfId, now);
+      const eventId = `${selfId}-${now}`;
       void channel.send({
         type: "broadcast",
         event: "hit",
-        payload: { from: selfId, to: targetId, damage: ATTACK_DAMAGE },
+        payload: { id: eventId, from: selfId, to: targetId, damage: ATTACK_DAMAGE, at: now },
       });
-      const target = peers.get(targetId);
-      if (target) {
-        peers.set(targetId, { ...target, hp: Math.max(0, target.hp - ATTACK_DAMAGE), hitAt: Date.now(), at: Date.now() });
-        flush();
-      }
+      const nextHp = Math.max(0, target.hp - ATTACK_DAMAGE);
+      peers.set(targetId, { ...target, hp: nextHp, hitAt: now, lastDamage: ATTACK_DAMAGE, at: now });
+      setCombatLog((current) => [...current, {
+        id: eventId,
+        attacker: handle,
+        target: target.handle,
+        damage: ATTACK_DAMAGE,
+        knockout: nextHp === 0,
+        at: now,
+      }].slice(-40));
+      flush();
     };
 
     // Respawn: come back at full health and tell the world we are standing again.
@@ -285,6 +335,7 @@ export function useMapCursors(enabled = true) {
       hpRef.current = MAX_HP;
       setHp(MAX_HP);
       setHitAt(0);
+      setLastDamage(0);
       setRespawnAt(0);
       setRespawnNonce((current) => current + 1);
       if (lastCell) push(lastCell);
@@ -326,6 +377,8 @@ export function useMapCursors(enabled = true) {
     said,
     hp,
     hitAt,
+    lastDamage,
+    combatLog,
     maxHp: MAX_HP,
     respawnAt,
     respawnNonce,
