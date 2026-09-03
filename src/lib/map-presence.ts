@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { avatarModelInscription, colorForVisitor, mapHandle, mapVisitorId } from "@/lib/map-identity";
+import { cellX, cellZ, clampPeerStep, type MovementState } from "@/lib/player-state";
 
 /**
  * Live presence for the land map. Every visitor broadcasts the grid cell they are
@@ -10,11 +11,30 @@ import { avatarModelInscription, colorForVisitor, mapHandle, mapVisitorId } from
  *
  * Nothing is persisted — this is ephemeral broadcast traffic only.
  */
+/** A movement report a client sends about itself. Never about anyone else. */
+export type PoseReport = {
+  col: number;
+  row: number;
+  height: number;
+  /** exact world position, so peers interpolate instead of hopping cell to cell */
+  x?: number;
+  z?: number;
+  yaw?: number;
+  movement?: MovementState;
+  /** spawn / respawn — the only legitimate teleport */
+  teleport?: boolean;
+};
+
 export type MapCursor = {
   id: string;
   col: number;
   row: number;
   height: number;
+  /** validated world position used for interpolation */
+  x: number;
+  z: number;
+  yaw: number;
+  movement: MovementState;
   color: string;
   handle: string;
   /** on-chain GLB inscription id worn as the avatar, if any */
@@ -62,7 +82,7 @@ export function useMapCursors(enabled = true) {
   const [respawnNonce, setRespawnNonce] = useState(0);
   const hpRef = useRef(MAX_HP);
   hpRef.current = hp;
-  const sendRef = useRef<(cell: { col: number; row: number; height: number } | null) => void>(() => {});
+  const sendRef = useRef<(pose: PoseReport | null) => void>(() => {});
   const sayRef = useRef<(body: string) => void>(() => {});
   const attackRef = useRef<(targetId: string) => void>(() => {});
   const respawnRef = useRef<() => void>(() => {});
@@ -91,6 +111,11 @@ export function useMapCursors(enabled = true) {
           col?: number;
           row?: number;
           height?: number;
+          x?: number;
+          z?: number;
+          yaw?: number;
+          movement?: MovementState;
+          teleport?: boolean;
           handle?: string;
           model?: string | null;
           hp?: number;
@@ -105,11 +130,27 @@ export function useMapCursors(enabled = true) {
           typeof p.height === "number"
         ) {
           const previous = peers.get(p.id);
+          const now = Date.now();
+          // Remote clients are not trusted: bound the claim and cap the step to
+          // the distance top speed allows since their last report.
+          const position = clampPeerStep(
+            previous ? { x: previous.x, z: previous.z } : null,
+            {
+              x: typeof p.x === "number" ? p.x : cellX(p.col),
+              z: typeof p.z === "number" ? p.z : cellZ(p.row),
+            },
+            previous ? now - previous.at : 0,
+            Boolean(p.teleport),
+          );
           peers.set(p.id, {
             id: p.id,
             col: p.col,
             row: p.row,
             height: p.height,
+            x: position.x,
+            z: position.z,
+            yaw: typeof p.yaw === "number" && Number.isFinite(p.yaw) ? p.yaw : (previous?.yaw ?? 0),
+            movement: p.movement ?? previous?.movement ?? "idle",
             color: colorForVisitor(p.id),
             handle: typeof p.handle === "string" && p.handle ? p.handle : "ANON",
             model: typeof p.model === "string" && p.model ? p.model : null,
@@ -117,7 +158,7 @@ export function useMapCursors(enabled = true) {
             sayAt: previous?.sayAt ?? 0,
             hp: typeof p.hp === "number" ? Math.max(0, Math.min(MAX_HP, p.hp)) : (previous?.hp ?? MAX_HP),
             hitAt: previous?.hitAt ?? 0,
-            at: Date.now(),
+            at: now,
           });
         }
         if (!frame) {
@@ -169,10 +210,10 @@ export function useMapCursors(enabled = true) {
       .subscribe();
 
     let last = 0;
-    let lastCell: { col: number; row: number; height: number } | null = null;
-    let pending: { col: number; row: number; height: number } | null = null;
+    let lastCell: PoseReport | null = null;
+    let pending: PoseReport | null = null;
     let timer: ReturnType<typeof setTimeout> | null = null;
-    const push = (cell: { col: number; row: number; height: number } | null) => {
+    const push = (cell: PoseReport | null) => {
       void channel.send({
         type: "broadcast",
         event: "cursor",
@@ -292,7 +333,7 @@ export function useMapCursors(enabled = true) {
     respawn: () => respawnRef.current(),
     attack: (targetId: string) => attackRef.current(targetId),
     say: (body: string) => sayRef.current(body),
-    publish: (cell: { col: number; row: number; height: number } | null) => sendRef.current(cell),
+    publish: (pose: PoseReport | null) => sendRef.current(pose),
 
   };
 }
