@@ -31,6 +31,7 @@ import { mapBitmapModelsQuery, type BitmapModel } from "@/lib/bitmap-models";
 import { heldHeightsQuery } from "@/lib/held-parcels";
 import { useAuthSession } from "@/lib/auth";
 import { myWalletLinksQuery } from "@/lib/wallet-links";
+import { PARTY_CHAT_MAX_LENGTH, PARTY_MAX_MEMBERS, useMapParty } from "@/lib/map-party";
 
 const GRID = 1_000;
 const WORLD_SIZE = 100;
@@ -445,9 +446,9 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
   const ring = useRef<THREE.Mesh>(null);
   const ringMaterial = useRef<THREE.MeshBasicMaterial>(null);
   /** Latest validated report — the interpolation goal, never applied directly. */
-  const goal = useRef({ x: cursor.x, z: cursor.z, yaw: cursor.yaw });
-  goal.current = { x: cursor.x, z: cursor.z, yaw: cursor.yaw };
-  const shown = useRef({ x: cursor.x, z: cursor.z, yaw: cursor.yaw });
+  const goal = useRef({ x: cursor.x, y: cursor.y, z: cursor.z, yaw: cursor.yaw });
+  goal.current = { x: cursor.x, y: cursor.y, z: cursor.z, yaw: cursor.yaw };
+  const shown = useRef({ x: cursor.x, y: cursor.y, z: cursor.z, yaw: cursor.yaw });
   const phase = useMemo(() => {
     let hash = 0;
     for (const ch of cursor.id) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
@@ -460,11 +461,12 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
     const current = shown.current;
     // Broadcasts arrive ~10x a second; glide between them so peers never hop.
     current.x = damp(current.x, target.x, 11, delta);
+    current.y = damp(current.y, target.y, 14, delta);
     current.z = damp(current.z, target.z, 11, delta);
     current.yaw = damp(current.yaw, target.yaw, 9, delta, true);
     const t = clock.elapsedTime + phase;
     if (group.current) {
-      group.current.position.set(current.x, 0.006, current.z);
+      group.current.position.set(current.x, current.y + 0.006, current.z);
       group.current.rotation.y = current.yaw;
     }
     if (body.current) {
@@ -480,7 +482,7 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
   });
 
   return (
-    <group ref={group} position={[cursor.x, 0.006, cursor.z]}>
+    <group ref={group} position={[cursor.x, cursor.y + 0.006, cursor.z]}>
       {/* spawn ring pulsing under the avatar */}
       <mesh ref={ring} rotation-x={-Math.PI / 2} position-y={0.001} geometry={avatarGeometry.ring} raycast={noRaycast}>
         <meshBasicMaterial ref={ringMaterial} color={cursor.color} transparent opacity={0.8} side={THREE.DoubleSide} />
@@ -531,7 +533,7 @@ const SelfAvatar = memo(function SelfAvatar({
   useFrame(({ clock }) => {
     const current = pose.current;
     if (!current || !group.current) return;
-    group.current.position.set(current.x, 0.006, current.z);
+    group.current.position.set(current.x, current.y + 0.006, current.z);
     group.current.rotation.y = current.yaw;
     if (body.current) {
       const stride = current.movement === "run" ? 4.6 : current.movement === "walk" ? 3.2 : 2.2;
@@ -576,12 +578,17 @@ function PlayerCameraRig({
   const lookMatrix = useRef(new THREE.Matrix4());
   const targetRotation = useRef(new THREE.Quaternion());
   const pitch = useRef(0);
+  const jumpRequested = useRef(false);
 
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
       const key = event.key.toLowerCase();
+      if (event.code === "Space" && !event.repeat) {
+        jumpRequested.current = true;
+        event.preventDefault();
+      }
       keys.current.add(key);
       if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) event.preventDefault();
     };
@@ -628,30 +635,32 @@ function PlayerCameraRig({
       strafe: (pressed.has("a") ? 1 : 0) - (pressed.has("d") ? 1 : 0),
       turn: (pressed.has("arrowleft") || pressed.has("q") ? 1 : 0) - (pressed.has("arrowright") || pressed.has("e") ? 1 : 0),
       sprint: pressed.has("shift"),
+      jump: jumpRequested.current,
     };
+    jumpRequested.current = false;
     stepPlayer(player, intent, delta);
 
     // Both modes track the same predicted player target. Only offsets change,
     // so switching perspective is a smooth camera move rather than a cut.
     const speed = Math.hypot(player.vx, player.vz);
     if (mode === "first") {
-      cameraTarget.current.set(player.x, CELL * 0.88, player.z);
+      cameraTarget.current.set(player.x, player.y + CELL * 0.88, player.z);
       const horizontal = Math.cos(pitch.current);
       cameraLook.current.set(
         player.x + Math.sin(player.yaw) * horizontal,
-        CELL * 0.88 + Math.sin(pitch.current),
+        player.y + CELL * 0.88 + Math.sin(pitch.current),
         player.z + Math.cos(player.yaw) * horizontal,
       );
     } else {
       const back = CELL * (11.5 + (speed / (MOVE.walkSpeed * MOVE.sprint)) * 2.5);
       cameraTarget.current.set(
         player.x - Math.sin(player.yaw) * back,
-        CELL * 7.2,
+        player.y + CELL * 7.2,
         player.z - Math.cos(player.yaw) * back,
       );
       cameraLook.current.set(
         player.x + Math.sin(player.yaw) * CELL * 2.5,
-        CELL * 0.62,
+        player.y + CELL * 0.62,
         player.z + Math.cos(player.yaw) * CELL * 2.5,
       );
     }
@@ -670,8 +679,8 @@ function PlayerCameraRig({
     // Fixed-rate reporting keeps network traffic flat regardless of frame rate.
     if (clock.elapsedTime < nextReport.current) return;
     nextReport.current = clock.elapsedTime + 0.1;
-    const key = `${player.col}:${player.row}:${player.movement}:${Math.round(player.yaw * 8)}`;
-    if (key === lastReport.current && player.movement === "idle") return;
+    const key = `${player.col}:${player.row}:${player.movement}:${Math.round(player.yaw * 8)}:${Math.round(player.y * 20)}`;
+    if (key === lastReport.current && player.movement === "idle" && player.grounded) return;
     lastReport.current = key;
     onPose({
       col: player.col,
@@ -679,6 +688,7 @@ function PlayerCameraRig({
       height: player.height,
       x: player.x,
       z: player.z,
+      y: player.y,
       yaw: player.yaw,
       movement: player.movement,
     });
@@ -999,11 +1009,14 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     hitAt,
     lastDamage,
     combatLog,
+    selfId,
     attack,
     respawnAt,
     respawnNonce,
     respawn,
   } = useMapCursors();
+  const party = useMapParty(selfId, handle);
+  const [chatMode, setChatMode] = useState<"world" | "party">("world");
 
   const pose = useRef<SelfPose>(createPlayerState(0, CELL, 0));
   const [mySay, setMySay] = useState<string | null>(null);
@@ -1080,11 +1093,14 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   const sendSay = useCallback(() => {
     const body = draft.trim();
     if (!body) return;
-    say(body);
-    setMySay(body);
+    if (chatMode === "party" && party.party) party.say(body);
+    else {
+      say(body);
+      setMySay(body);
+      window.setTimeout(() => setMySay((current) => (current === body ? null : current)), SAY_TTL_MS);
+    }
     setDraft("");
-    window.setTimeout(() => setMySay((current) => (current === body ? null : current)), SAY_TTL_MS);
-  }, [draft, say]);
+  }, [chatMode, draft, party, say]);
 
   /** Equip, swap or unequip the worn on-chain model — persists per browser. */
   const equipModel = useCallback(
@@ -1141,7 +1157,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
-      if (event.code !== "Space") return;
+      if (event.code !== "KeyF") return;
       event.preventDefault();
       attackNearest();
     };
@@ -1196,7 +1212,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
         <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("full")}>[ VIEW FULL WORLD ]</Button>
         <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("tip")}>[ FLY TO TIP ]</Button>
         <Button className="btn-term-ghost" variant="ghost" onClick={attackNearest} disabled={!attackReady}>
-          [ {attackReady ? "ATTACK · SPACE" : `COOLDOWN ${(cooldownRemaining / 1000).toFixed(1)}s`} ]
+          [ {attackReady ? "ATTACK · F" : `COOLDOWN ${(cooldownRemaining / 1000).toFixed(1)}s`} ]
         </Button>
         <Button
           className={inventoryOpen ? "btn-term" : "btn-term-ghost"}
@@ -1326,12 +1342,53 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
                 {readout.target ? " · WALKING TO MARK" : ""}
               </span>
               <span className="text-muted-foreground">
-                WASD / ARROWS · SHIFT SPRINT · {cameraMode === "first" ? "CLICK WORLD FOR MOUSE LOOK · ESC RELEASE" : "CLICK OR TAP TO WALK"} · SPACE ATTACK
+                WASD / ARROWS · SHIFT SPRINT · SPACE JUMP · {cameraMode === "first" ? "CLICK WORLD FOR MOUSE LOOK · ESC RELEASE" : "CLICK OR TAP TO WALK"} · F ATTACK
               </span>
             </>
           ) : null}
 
         </div>
+
+        <section data-no-translate aria-label="Party" className="absolute right-3 top-14 z-30 w-[min(250px,calc(100%-1.5rem))] border border-border bg-background/90 font-mono text-[10px]">
+          <header className="flex items-center justify-between border-b border-border px-2 py-1">
+            <span>PARTY · {party.party ? `${party.party.members.length}/${PARTY_MAX_MEMBERS}` : "SOLO"}</span>
+            {party.party ? <Button size="sm" variant="ghost" className="h-6 rounded-sm px-1 text-[9px] text-muted-foreground" onClick={party.leave}>LEAVE</Button> : null}
+          </header>
+          {party.invites.map((invite) => (
+            <div key={`${invite.partyId}-${invite.leaderId}`} className="border-b border-bitcoin px-2 py-1.5">
+              <p className="mb-1 text-bitcoin">{invite.leaderHandle} INVITED YOU</p>
+              <div className="flex gap-1">
+                <Button size="sm" className="h-6 rounded-sm px-2 text-[9px]" onClick={() => party.respond(invite, true)}>ACCEPT</Button>
+                <Button size="sm" variant="ghost" className="h-6 rounded-sm px-2 text-[9px]" onClick={() => party.respond(invite, false)}>DECLINE</Button>
+              </div>
+            </div>
+          ))}
+          {party.party ? (
+            <ul className="p-1">
+              {party.party.members.map((member) => {
+                const cursor = member.id === selfId ? null : cursors.find((item) => item.id === member.id);
+                const memberHp = member.id === selfId ? hp : (cursor?.hp ?? 0);
+                return (
+                  <li key={member.id} className="flex items-center gap-1 border-b border-border/60 px-1 py-1 last:border-0">
+                    <span className="min-w-0 flex-1 truncate">{member.id === party.party?.leaderId ? "◆ " : ""}{member.handle}{member.id === selfId ? " (YOU)" : ""}</span>
+                    <span className={memberHp > 0 ? "text-foreground" : "text-bitcoin"}>{memberHp} HP</span>
+                    {party.party.leaderId === selfId && member.id !== selfId ? <Button size="sm" variant="ghost" className="h-5 rounded-sm px-1 text-[8px] text-bitcoin" onClick={() => party.kick(member.id)}>EXPEL</Button> : null}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <div className="max-h-32 overflow-y-auto p-1">
+              <p className="px-1 py-1 text-muted-foreground">ONLINE · INVITE UP TO 2</p>
+              {cursors.length ? cursors.slice(0, 8).map((cursor) => (
+                <div key={cursor.id} className="flex items-center justify-between gap-1 px-1 py-1">
+                  <span className="truncate">{cursor.handle}</span>
+                  <Button size="sm" variant="ghost" className="h-5 rounded-sm px-1 text-[8px] text-bitcoin" onClick={() => party.invite(cursor.id)}>INVITE</Button>
+                </div>
+              )) : <p className="px-1 py-1 text-muted-foreground">NO OTHER PLAYERS ONLINE</p>}
+            </div>
+          )}
+        </section>
 
         <section data-no-translate aria-label="Combat log" className="absolute bottom-3 left-3 z-30 w-[min(360px,calc(100%-1.5rem))] border border-border bg-background/90 font-mono">
           <header className="flex items-center justify-between border-b border-border px-2 py-1 text-[9px] text-muted-foreground">
@@ -1361,11 +1418,15 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
 
         {/* Talk while you explore — ephemeral world chat with speech bubbles over avatars. */}
         <div className="absolute bottom-16 left-1/2 z-30 flex w-[min(420px,calc(100%-1.5rem))] -translate-x-1/2 flex-col gap-1">
-          {chatLines.length > 0 ? (
+          <div className="flex gap-1">
+            <Button type="button" size="sm" variant="ghost" className={chatMode === "world" ? "h-6 rounded-sm bg-bitcoin px-2 text-[9px] text-bitcoin-foreground" : "h-6 rounded-sm px-2 text-[9px]"} onClick={() => setChatMode("world")}>WORLD</Button>
+            <Button type="button" size="sm" variant="ghost" disabled={!party.party} className={chatMode === "party" ? "h-6 rounded-sm bg-bitcoin px-2 text-[9px] text-bitcoin-foreground" : "h-6 rounded-sm px-2 text-[9px]"} onClick={() => setChatMode("party")}>PARTY</Button>
+          </div>
+          {(chatMode === "party" ? party.messages : chatLines).length > 0 ? (
             <div data-no-translate className="flex flex-col gap-[2px] bg-background/70 p-1 font-mono text-[10px]">
-              {chatLines.map((line) => (
+              {(chatMode === "party" ? party.messages.slice(-6) : chatLines).map((line) => (
                 <p key={line.id} className="truncate">
-                  <span style={{ color: line.color }}>{line.handle}</span>{" "}
+                  <span className={chatMode === "party" ? "text-bitcoin" : ""} style={chatMode === "world" && "color" in line ? { color: line.color } : undefined}>{line.handle}</span>{" "}
                   <span className="text-foreground">{line.body}</span>
                 </p>
               ))}
@@ -1380,13 +1441,13 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
           >
             <input
               value={draft}
-              maxLength={SAY_MAX_LENGTH}
+              maxLength={chatMode === "party" ? PARTY_CHAT_MAX_LENGTH : SAY_MAX_LENGTH}
               onChange={(event) => setDraft(event.target.value)}
-              placeholder="SAY SOMETHING TO EVERYONE IN THE WORLD…"
-              aria-label="World chat message"
+              placeholder={chatMode === "party" ? "MESSAGE YOUR PARTY…" : "SAY SOMETHING TO EVERYONE IN THE WORLD…"}
+              aria-label={chatMode === "party" ? "Party chat message" : "World chat message"}
               className="min-w-0 flex-1 border border-border bg-background/90 px-2 py-1 font-mono text-[11px] text-foreground outline-none placeholder:text-muted-foreground focus:border-bitcoin"
             />
-            <Button className="btn-term" type="submit" disabled={!draft.trim()}>[ SAY ]</Button>
+            <Button className="btn-term" type="submit" disabled={!draft.trim()}>[ {chatMode === "party" ? "PARTY" : "SAY"} ]</Button>
           </form>
         </div>
 
