@@ -1187,7 +1187,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   const chatLines = useMemo(() => said.slice(-6), [said]);
 
   // Cheap 4Hz readout of the predicted local state — no per-frame re-renders.
-  const [readout, setReadout] = useState({ movement: "idle", chunk: "0:0", height: 0, target: false });
+  const [readout, setReadout] = useState({ movement: "idle", chunk: "0:0", height: 0, target: false, airborne: false });
   useEffect(() => {
     if (!exploring) return;
     const id = window.setInterval(() => {
@@ -1197,9 +1197,10 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
         current.movement === player.movement &&
         current.chunk === player.chunk &&
         current.height === player.height &&
-        current.target === Boolean(player.target)
+        current.target === Boolean(player.target) &&
+        current.airborne === !player.grounded
           ? current
-          : { movement: player.movement, chunk: player.chunk, height: player.height, target: Boolean(player.target) },
+          : { movement: player.movement, chunk: player.chunk, height: player.height, target: Boolean(player.target), airborne: !player.grounded },
       );
     }, 250);
     return () => window.clearInterval(id);
@@ -1340,6 +1341,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
               <span className="text-muted-foreground">
                 {cameraMode === "first" ? "FIRST PERSON" : "THIRD PERSON"} · {readout.movement.toUpperCase()} · REGION {readout.chunk} · {readout.height.toLocaleString("en-US")}.BITMAP
                 {readout.target ? " · WALKING TO MARK" : ""}
+                {readout.airborne ? " · JUMPING" : ""}
               </span>
               <span className="text-muted-foreground">
                 WASD / ARROWS · SHIFT SPRINT · SPACE JUMP · {cameraMode === "first" ? "CLICK WORLD FOR MOUSE LOOK · ESC RELEASE" : "CLICK OR TAP TO WALK"} · F ATTACK
