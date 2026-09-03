@@ -19,6 +19,7 @@ export type PoseReport = {
   /** exact world position, so peers interpolate instead of hopping cell to cell */
   x?: number;
   z?: number;
+  y?: number;
   yaw?: number;
   movement?: MovementState;
   /** spawn / respawn — the only legitimate teleport */
@@ -33,6 +34,7 @@ export type MapCursor = {
   /** validated world position used for interpolation */
   x: number;
   z: number;
+  y: number;
   yaw: number;
   movement: MovementState;
   color: string;
@@ -130,6 +132,7 @@ export function useMapCursors(enabled = true) {
           height?: number;
           x?: number;
           z?: number;
+          y?: number;
           yaw?: number;
           movement?: MovementState;
           teleport?: boolean;
@@ -166,6 +169,7 @@ export function useMapCursors(enabled = true) {
             height: p.height,
             x: position.x,
             z: position.z,
+            y: typeof p.y === "number" && Number.isFinite(p.y) ? Math.max(0, Math.min(WORLD_CELL * 8, p.y)) : (previous?.y ?? 0),
             yaw: typeof p.yaw === "number" && Number.isFinite(p.yaw) ? p.yaw : (previous?.yaw ?? 0),
             movement: p.movement ?? previous?.movement ?? "idle",
             color: colorForVisitor(p.id),

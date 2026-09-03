@@ -28,6 +28,8 @@ export const MOVE = {
   walkSpeed: WORLD_CELL * 9,
   /** multiplier while sprinting */
   sprint: 2.2,
+  jumpSpeed: WORLD_CELL * 28,
+  gravity: WORLD_CELL * 78,
   /** how hard the avatar accelerates toward the wanted velocity */
   accel: 14,
   /** exponential damping applied when no input is held */
@@ -43,7 +45,7 @@ export const MOVE = {
 } as const;
 
 export type MovementState = "idle" | "walk" | "run" | "turn";
-export type AnimationState = "idle" | "walk" | "run" | "hurt" | "attack" | "down";
+export type AnimationState = "idle" | "walk" | "run" | "jump" | "hurt" | "attack" | "down";
 export type CombatState = "alive" | "attacking" | "hurt" | "down";
 
 /** Everything the world needs to know about one player, self or peer. */
@@ -54,6 +56,10 @@ export type PlayerState = {
   /** current velocity in world units per second */
   vx: number;
   vz: number;
+  /** vertical offset and velocity above the terrain */
+  y: number;
+  vy: number;
+  grounded: boolean;
   /** facing, radians — also the camera yaw in third person */
   yaw: number;
   movement: MovementState;
@@ -92,6 +98,9 @@ export function createPlayerState(x = 0, z = WORLD_CELL, yaw = 0): PlayerState {
     z,
     vx: 0,
     vz: 0,
+    y: 0,
+    vy: 0,
+    grounded: true,
     yaw,
     movement: "idle",
     animation: "idle",
@@ -110,6 +119,9 @@ export function placePlayer(player: PlayerState, x: number, z: number, yaw = pla
   player.z = z;
   player.vx = 0;
   player.vz = 0;
+  player.y = 0;
+  player.vy = 0;
+  player.grounded = true;
   player.yaw = yaw;
   player.target = null;
   player.movement = "idle";
@@ -132,6 +144,7 @@ export type MoveIntent = {
   /** -1 right … 1 left, keyboard turning */
   turn: number;
   sprint: boolean;
+  jump: boolean;
 };
 
 /**
@@ -146,10 +159,26 @@ export function stepPlayer(player: PlayerState, intent: MoveIntent, rawDelta: nu
     player.vz = 0;
     player.movement = "idle";
     player.animation = "down";
+    player.y = 0;
+    player.vy = 0;
+    player.grounded = true;
     return player;
   }
 
   player.yaw += intent.turn * MOVE.turnRate * delta;
+  if (intent.jump && player.grounded) {
+    player.vy = MOVE.jumpSpeed;
+    player.grounded = false;
+  }
+  if (!player.grounded) {
+    player.vy -= MOVE.gravity * delta;
+    player.y += player.vy * delta;
+    if (player.y <= 0) {
+      player.y = 0;
+      player.vy = 0;
+      player.grounded = true;
+    }
+  }
 
   const top = MOVE.walkSpeed * (intent.sprint ? MOVE.sprint : 1);
   let wantX = 0;
@@ -195,7 +224,8 @@ export function stepPlayer(player: PlayerState, intent: MoveIntent, rawDelta: nu
   } else {
     player.movement = speed > MOVE.walkSpeed * 1.25 ? "run" : "walk";
   }
-  if (player.combat === "hurt" || player.combat === "attacking") player.animation = player.combat === "hurt" ? "hurt" : "attack";
+  if (!player.grounded) player.animation = "jump";
+  else if (player.combat === "hurt" || player.combat === "attacking") player.animation = player.combat === "hurt" ? "hurt" : "attack";
   else player.animation = player.movement === "run" ? "run" : player.movement === "walk" ? "walk" : "idle";
 
   syncCell(player);
