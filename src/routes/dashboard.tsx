@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useWalletSession } from "@/lib/wallet-session";
@@ -68,14 +68,22 @@ function DashboardError({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+function Stat({
+  label,
+  value,
+  hint,
+  accent,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  accent?: boolean;
+}) {
   return (
-    <div className="border border-border p-4">
+    <div className="border border-border bg-card/40 p-4">
       <p className="label">{label}</p>
-      <p className="display mt-2 text-2xl">{value}</p>
-      {hint ? (
-        <p className="mt-1 font-mono text-[11px] text-muted-foreground">{hint}</p>
-      ) : null}
+      <p className={`display mt-2 text-2xl ${accent ? "text-primary" : ""}`}>{value}</p>
+      {hint ? <p className="mt-1 font-mono text-[11px] text-muted-foreground">{hint}</p> : null}
     </div>
   );
 }
@@ -84,18 +92,20 @@ function Panel({
   title,
   action,
   children,
+  className,
 }: {
   title: string;
   action?: React.ReactNode;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <section className="border border-border">
-      <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-        <h2 className="label">{title}</h2>
+    <section className={`flex flex-col border border-border ${className ?? ""}`}>
+      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border px-4 py-3">
+        <h2 className="label truncate">{title}</h2>
         {action}
       </header>
-      <div className="p-4">{children}</div>
+      <div className="flex-1 p-4">{children}</div>
     </section>
   );
 }
@@ -104,9 +114,20 @@ function Empty({ text }: { text: string }) {
   return <p className="font-mono text-[11px] text-muted-foreground">&gt; {text}_</p>;
 }
 
+const TABS = [
+  { id: "overview", label: "OVERVIEW" },
+  { id: "portfolio", label: "PORTFOLIO" },
+  { id: "trading", label: "TRADING" },
+  { id: "earnings", label: "EARNINGS" },
+  { id: "market", label: "MARKET" },
+] as const;
+
+type TabId = (typeof TABS)[number]["id"];
+
 function DashboardPage() {
   const wallet = useWalletSession();
   const { session, user, loading } = useAuthSession();
+  const [tab, setTab] = useState<TabId>("overview");
   const links = useQuery(myWalletLinksQuery(Boolean(session)));
   const address = wallet?.ordinalsAddress ?? links.data?.[0]?.address ?? "";
   const addresses = useMemo(() => (address ? [address] : []), [address]);
@@ -172,20 +193,190 @@ function DashboardPage() {
     );
   }
 
+  const heldPanel = (
+    <Panel
+      title="MY BITMAPS"
+      action={<Link to="/marketplace" className="label shrink-0 hover:text-foreground">MARKETPLACE →</Link>}
+    >
+      {held.isLoading ? (
+        <Empty text="SCANNING" />
+      ) : (held.data ?? []).length === 0 ? (
+        <Empty text="NO BITMAPS FOUND FOR THIS ADDRESS YET" />
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {[...(held.data ?? [])]
+            .sort((a, b) => a - b)
+            .slice(0, 40)
+            .map((height) => (
+              <Link
+                key={height}
+                to="/bitmap/$block"
+                params={{ block: String(height) }}
+                className="border border-border px-2 py-1 font-mono text-[11px] transition-colors hover:border-primary"
+              >
+                {height}.BITMAP
+                <span className="ml-2 text-muted-foreground">{clubOf(height).label}</span>
+              </Link>
+            ))}
+        </div>
+      )}
+    </Panel>
+  );
+
+  const buildsPanel = (
+    <Panel
+      title="MY BUILDS"
+      action={<Link to="/builds" className="label shrink-0 hover:text-foreground">BUILDS FEED →</Link>}
+    >
+      {builds.isLoading ? (
+        <Empty text="LOADING" />
+      ) : myBuilds.length === 0 ? (
+        <Empty text="NOTHING BUILT YET — OPEN A BITMAP YOU HOLD AND BUILD ON IT" />
+      ) : (
+        <ul className="divide-y divide-border">
+          {myBuilds.slice(0, 8).map((b) => (
+            <li key={b.page.bitmapHeight} className="flex items-center justify-between gap-3 py-2">
+              <Link
+                to="/bitmap/$block"
+                params={{ block: String(b.page.bitmapHeight) }}
+                className="min-w-0 font-mono text-xs hover:text-primary"
+              >
+                <span className="block truncate">{b.page.title || `${b.page.bitmapHeight}.BITMAP`}</span>
+                <span className="block truncate text-[11px] text-muted-foreground">
+                  {b.page.bitmapHeight}.BITMAP · {b.page.buildKind.toUpperCase()}
+                </span>
+              </Link>
+              <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
+                {b.totalViews.toLocaleString()} VIEWS
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
+  );
+
+  const incomingPanel = (
+    <Panel
+      title="INCOMING BIDS"
+      action={<Link to="/wallet" className="label shrink-0 hover:text-foreground">ACCEPT IN WALLET →</Link>}
+    >
+      {incoming.length === 0 ? (
+        <Empty text="NO OPEN BIDS ON YOUR BITMAPS" />
+      ) : (
+        <ul className="divide-y divide-border">
+          {incoming.slice(0, 8).map((bid) => (
+            <li key={bid.id} className="flex items-center justify-between gap-3 py-2">
+              <Link
+                to="/bitmap/$block"
+                params={{ block: String(bid.bitmapHeight) }}
+                className="font-mono text-xs hover:text-primary"
+              >
+                {bid.bitmapHeight}.BITMAP
+              </Link>
+              <span className="font-mono text-xs text-primary">{formatSats(bid.priceSats)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
+  );
+
+  const myBidsPanel = (
+    <Panel
+      title="MY BIDS"
+      action={<Link to="/marketplace" className="label shrink-0 hover:text-foreground">BID MORE →</Link>}
+    >
+      {(outgoing.data ?? []).length === 0 ? (
+        <Empty text="YOU HAVE NOT PLACED ANY BIDS" />
+      ) : (
+        <ul className="divide-y divide-border">
+          {(outgoing.data ?? []).slice(0, 8).map((bid) => (
+            <li key={bid.id} className="flex items-center justify-between gap-3 py-2">
+              <Link
+                to="/bitmap/$block"
+                params={{ block: String(bid.bitmapHeight) }}
+                className="font-mono text-xs hover:text-primary"
+              >
+                {bid.bitmapHeight}.BITMAP
+              </Link>
+              <span className="font-mono text-[11px] text-muted-foreground">
+                {formatSats(bid.priceSats)} · {BID_STATUS_LABEL[bid.status]}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
+  );
+
+  const leasesPanel = (
+    <Panel
+      title="LEASES"
+      action={<Link to="/leases" className="label shrink-0 hover:text-foreground">LEASE MARKET →</Link>}
+    >
+      {earnings.leaseCount === 0 && rented.length === 0 ? (
+        <Empty text="NO LEASES GRANTED OR RENTED YET" />
+      ) : (
+        <div className="space-y-2 font-mono text-xs">
+          <p>
+            GRANTED: {earnings.leaseCount} · ACTIVE {earnings.activeCount} · EARNED{" "}
+            <span className="text-primary">{formatBit(earnings.totalCoins)}</span>
+          </p>
+          <p>
+            RENTED: {rented.length}
+            {rented.length > 0
+              ? ` · ${rented.map((l) => `${l.bitmapHeight}.BITMAP (${daysLeft(l.endsAt)}D LEFT)`).join(", ")}`
+              : ""}
+          </p>
+          {earnings.nextExpiry ? (
+            <p className="text-muted-foreground">
+              NEXT EXPIRY {new Date(earnings.nextExpiry).toLocaleDateString()}
+            </p>
+          ) : null}
+        </div>
+      )}
+    </Panel>
+  );
+
+  const bitPanel = (
+    <Panel
+      title="BIT ACTIVITY"
+      action={<Link to="/coins" className="label shrink-0 hover:text-foreground">BIT ECONOMY →</Link>}
+    >
+      {(ledger.data ?? []).length === 0 ? (
+        <Empty text="NO BIT MOVEMENTS YET — VISITS, BUILDS AND TRADES EARN BIT" />
+      ) : (
+        <ul className="divide-y divide-border">
+          {(ledger.data ?? []).map((entry) => (
+            <li key={entry.id} className="flex items-center justify-between gap-3 py-2 font-mono text-xs">
+              <span className="min-w-0 truncate text-muted-foreground">{reasonLabel(entry.reason)}</span>
+              <span className={entry.delta >= 0 ? "text-primary" : "text-muted-foreground"}>
+                {entry.delta >= 0 ? "+" : ""}
+                {formatBit(entry.delta)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
+  );
+
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-10 md:px-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      {/* IDENTITY */}
+      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 border border-border p-4 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
           <InscriptionAvatar
             inscriptionId={profile.data?.avatarInscriptionId}
             label={name}
             className="size-14 shrink-0 border border-border [image-rendering:pixelated]"
             fallbackClassName="text-sm"
           />
-          <div>
+          <div className="min-w-0">
             <p className="label">DASHBOARD</p>
-            <h1 className="display text-3xl md:text-4xl">{name.toUpperCase()}</h1>
-            <p className="mt-1 font-mono text-[11px] text-muted-foreground">
+            <h1 className="display truncate text-2xl md:text-4xl">{name.toUpperCase()}</h1>
+            <p className="mt-1 truncate font-mono text-[11px] text-muted-foreground">
               {address ? address : "NO WALLET LINKED"}
             </p>
           </div>
@@ -201,65 +392,19 @@ function DashboardPage() {
             </Link>
           ) : null}
         </div>
-      </div>
+      </header>
 
-      <div className="mt-8">
-        <BitmapManager
-          name={name}
-          addresses={addresses}
-          heldHeights={held.data ?? []}
-          enabled={Boolean(session)}
-        />
-      </div>
-
-      <div className="mt-8">
-        <ManagerAI
-          addresses={addresses}
-          heldHeights={held.data ?? []}
-          enabled={Boolean(session)}
-        />
-      </div>
-
-
-      <div className="mt-8">
-        <OpportunityFunnel parcels={marketParcels} />
-      </div>
-
-      <div className="mt-8">
-        <FloorRanking parcels={marketListed} pending={market.isPending} />
-      </div>
-
-      <div className="mt-8">
-        <ReferralPanel />
-      </div>
-
-      <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {/* KPI STRIP — always visible */}
+      <div className="mt-3 grid gap-3 grid-cols-2 lg:grid-cols-4">
         <Stat
           label="BITMAPS HELD"
           value={held.isLoading ? "…" : String((held.data ?? []).length)}
           hint={held.isLoading ? "SCANNING REGISTRY" : "INDEXED + TRADED + BUILT"}
         />
         <Stat
-          label="BUILDS"
-          value={builds.isLoading ? "…" : String(myBuilds.length)}
-          hint={`${totalViews.toLocaleString()} VIEWS · ${uniqueVisitors.toLocaleString()} UNIQUE`}
-        />
-        <Stat
-          label="BIT BALANCE"
-          value={balances.isLoading ? "…" : formatBit(balance)}
-          hint={`${formatBit(earned)} EARNED ALL TIME`}
-        />
-        <Stat
-          label="FOLLOWERS"
-          value={String(followers.data?.get(address) ?? 0)}
-          hint="BUILDERS FOLLOWING YOU"
-        />
-      </div>
-
-      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat
           label="INCOMING BIDS"
           value={openBids.isLoading ? "…" : String(incoming.length)}
+          accent={incoming.length > 0}
           hint={
             incoming.length > 0
               ? `TOP ${formatSats(Math.max(...incoming.map((b) => b.priceSats)))}`
@@ -267,181 +412,111 @@ function DashboardPage() {
           }
         />
         <Stat
-          label="MY BIDS"
-          value={outgoing.isLoading ? "…" : String((outgoing.data ?? []).length)}
-          hint="BIDS YOU PLACED"
+          label="BIT BALANCE"
+          value={balances.isLoading ? "…" : formatBit(balance)}
+          hint={`${formatBit(earned)} EARNED ALL TIME`}
         />
         <Stat
           label="RENT EARNED"
           value={formatBit(earnings.totalCoins)}
           hint={`${earnings.activeCount} ACTIVE · ${formatBit(earnings.perDayCoins)}/DAY`}
         />
-        <Stat
-          label="BITMAPS RENTED"
-          value={String(rented.length)}
-          hint="LEASES YOU HOLD"
-        />
       </div>
 
-      <div className="mt-8 grid gap-3 lg:grid-cols-2">
-        <Panel
-          title="MY BITMAPS"
-          action={<Link to="/marketplace" className="label hover:text-foreground">MARKETPLACE →</Link>}
-        >
-          {held.isLoading ? (
-            <Empty text="SCANNING" />
-          ) : (held.data ?? []).length === 0 ? (
-            <Empty text="NO BITMAPS FOUND FOR THIS ADDRESS YET" />
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {[...(held.data ?? [])]
-                .sort((a, b) => a - b)
-                .slice(0, 40)
-                .map((height) => (
-                  <Link
-                    key={height}
-                    to="/bitmap/$block"
-                    params={{ block: String(height) }}
-                    className="border border-border px-2 py-1 font-mono text-[11px] transition-colors hover:border-primary"
-                  >
-                    {height}.BITMAP
-                    <span className="ml-2 text-muted-foreground">{clubOf(height).label}</span>
-                  </Link>
-                ))}
+      {/* MODULE NAV */}
+      <nav className="mt-6 flex flex-wrap gap-2 border-b border-border pb-3">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setTab(t.id)}
+            aria-current={tab === t.id ? "page" : undefined}
+            className={`border px-3 py-1.5 font-mono text-[11px] tracking-wider transition-colors ${
+              tab === t.id
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </nav>
+
+      <div className="mt-6 space-y-3">
+        {tab === "overview" ? (
+          <>
+            <BitmapManager
+              name={name}
+              addresses={addresses}
+              heldHeights={held.data ?? []}
+              enabled={Boolean(session)}
+            />
+            <ManagerAI
+              addresses={addresses}
+              heldHeights={held.data ?? []}
+              enabled={Boolean(session)}
+            />
+            <div className="grid gap-3 lg:grid-cols-2">
+              {incomingPanel}
+              {heldPanel}
             </div>
-          )}
-        </Panel>
+          </>
+        ) : null}
 
-        <Panel
-          title="MY BUILDS"
-          action={<Link to="/builds" className="label hover:text-foreground">BUILDS FEED →</Link>}
-        >
-          {builds.isLoading ? (
-            <Empty text="LOADING" />
-          ) : myBuilds.length === 0 ? (
-            <Empty text="NOTHING BUILT YET — OPEN A BITMAP YOU HOLD AND BUILD ON IT" />
-          ) : (
-            <ul className="divide-y divide-border">
-              {myBuilds.slice(0, 8).map((b) => (
-                <li key={b.page.bitmapHeight} className="flex items-center justify-between gap-3 py-2">
-                  <Link
-                    to="/bitmap/$block"
-                    params={{ block: String(b.page.bitmapHeight) }}
-                    className="min-w-0 font-mono text-xs hover:text-primary"
-                  >
-                    <span className="block truncate">{b.page.title || `${b.page.bitmapHeight}.BITMAP`}</span>
-                    <span className="block truncate text-[11px] text-muted-foreground">
-                      {b.page.bitmapHeight}.BITMAP · {b.page.buildKind.toUpperCase()}
-                    </span>
-                  </Link>
-                  <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
-                    {b.totalViews.toLocaleString()} VIEWS
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
-
-        <Panel
-          title="INCOMING BIDS"
-          action={<Link to="/wallet" className="label hover:text-foreground">ACCEPT IN WALLET →</Link>}
-        >
-          {incoming.length === 0 ? (
-            <Empty text="NO OPEN BIDS ON YOUR BITMAPS" />
-          ) : (
-            <ul className="divide-y divide-border">
-              {incoming.slice(0, 8).map((bid) => (
-                <li key={bid.id} className="flex items-center justify-between gap-3 py-2">
-                  <Link
-                    to="/bitmap/$block"
-                    params={{ block: String(bid.bitmapHeight) }}
-                    className="font-mono text-xs hover:text-primary"
-                  >
-                    {bid.bitmapHeight}.BITMAP
-                  </Link>
-                  <span className="font-mono text-xs text-primary">{formatSats(bid.priceSats)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
-
-        <Panel
-          title="MY BIDS"
-          action={<Link to="/marketplace" className="label hover:text-foreground">BID MORE →</Link>}
-        >
-          {(outgoing.data ?? []).length === 0 ? (
-            <Empty text="YOU HAVE NOT PLACED ANY BIDS" />
-          ) : (
-            <ul className="divide-y divide-border">
-              {(outgoing.data ?? []).slice(0, 8).map((bid) => (
-                <li key={bid.id} className="flex items-center justify-between gap-3 py-2">
-                  <Link
-                    to="/bitmap/$block"
-                    params={{ block: String(bid.bitmapHeight) }}
-                    className="font-mono text-xs hover:text-primary"
-                  >
-                    {bid.bitmapHeight}.BITMAP
-                  </Link>
-                  <span className="font-mono text-[11px] text-muted-foreground">
-                    {formatSats(bid.priceSats)} · {BID_STATUS_LABEL[bid.status]}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
-
-        <Panel
-          title="LEASES"
-          action={<Link to="/leases" className="label hover:text-foreground">LEASE MARKET →</Link>}
-        >
-          {earnings.leaseCount === 0 && rented.length === 0 ? (
-            <Empty text="NO LEASES GRANTED OR RENTED YET" />
-          ) : (
-            <div className="space-y-2 font-mono text-xs">
-              <p>
-                GRANTED: {earnings.leaseCount} · ACTIVE {earnings.activeCount} · EARNED{" "}
-                <span className="text-primary">{formatBit(earnings.totalCoins)}</span>
-              </p>
-              <p>
-                RENTED: {rented.length}
-                {rented.length > 0
-                  ? ` · ${rented.map((l) => `${l.bitmapHeight}.BITMAP (${daysLeft(l.endsAt)}D LEFT)`).join(", ")}`
-                  : ""}
-              </p>
-              {earnings.nextExpiry ? (
-                <p className="text-muted-foreground">
-                  NEXT EXPIRY {new Date(earnings.nextExpiry).toLocaleDateString()}
-                </p>
-              ) : null}
+        {tab === "portfolio" ? (
+          <>
+            <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+              <Stat
+                label="BUILDS"
+                value={builds.isLoading ? "…" : String(myBuilds.length)}
+                hint={`${totalViews.toLocaleString()} VIEWS · ${uniqueVisitors.toLocaleString()} UNIQUE`}
+              />
+              <Stat label="TOTAL VIEWS" value={totalViews.toLocaleString()} hint="ACROSS ALL BUILDS" />
+              <Stat
+                label="FOLLOWERS"
+                value={String(followers.data?.get(address) ?? 0)}
+                hint="BUILDERS FOLLOWING YOU"
+              />
+              <Stat label="BITMAPS RENTED" value={String(rented.length)} hint="LEASES YOU HOLD" />
             </div>
-          )}
-        </Panel>
+            <div className="grid gap-3 lg:grid-cols-2">
+              {heldPanel}
+              {buildsPanel}
+            </div>
+          </>
+        ) : null}
 
-        <Panel
-          title="BIT ACTIVITY"
-          action={<Link to="/coins" className="label hover:text-foreground">BIT ECONOMY →</Link>}
-        >
-          {(ledger.data ?? []).length === 0 ? (
-            <Empty text="NO BIT MOVEMENTS YET — VISITS, BUILDS AND TRADES EARN BIT" />
-          ) : (
-            <ul className="divide-y divide-border">
-              {(ledger.data ?? []).map((entry) => (
-                <li key={entry.id} className="flex items-center justify-between gap-3 py-2 font-mono text-xs">
-                  <span className="min-w-0 truncate text-muted-foreground">
-                    {reasonLabel(entry.reason)}
-                  </span>
-                  <span className={entry.delta >= 0 ? "text-primary" : "text-muted-foreground"}>
-                    {entry.delta >= 0 ? "+" : ""}
-                    {formatBit(entry.delta)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
+        {tab === "trading" ? (
+          <>
+            <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+              <Stat label="INCOMING BIDS" value={String(incoming.length)} accent={incoming.length > 0} hint="ON YOUR BITMAPS" />
+              <Stat label="MY BIDS" value={String((outgoing.data ?? []).length)} hint="BIDS YOU PLACED" />
+              <Stat label="LISTED IN MARKET" value={String(marketListed.length)} hint="LIVE ASKS TRACKED" />
+              <Stat label="REGISTRY SCANNED" value={String(marketParcels.length)} hint="BITMAPS IN VIEW" />
+            </div>
+            <div className="grid gap-3 lg:grid-cols-2">
+              {incomingPanel}
+              {myBidsPanel}
+            </div>
+          </>
+        ) : null}
+
+        {tab === "earnings" ? (
+          <>
+            <div className="grid gap-3 lg:grid-cols-2">
+              {leasesPanel}
+              {bitPanel}
+            </div>
+            <ReferralPanel />
+          </>
+        ) : null}
+
+        {tab === "market" ? (
+          <>
+            <OpportunityFunnel parcels={marketParcels} />
+            <FloorRanking parcels={marketListed} pending={market.isPending} />
+          </>
+        ) : null}
       </div>
     </div>
   );
