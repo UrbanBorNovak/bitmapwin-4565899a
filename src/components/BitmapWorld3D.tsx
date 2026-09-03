@@ -14,7 +14,16 @@ import { AvatarInventory } from "@/components/AvatarInventory";
 
 import { clubOf } from "@/lib/clubs";
 import { colorForAddress, mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
-import { MAX_HP, SAY_MAX_LENGTH, SAY_TTL_MS, useMapCursors, type MapCursor } from "@/lib/map-presence";
+import { MAX_HP, SAY_MAX_LENGTH, SAY_TTL_MS, useMapCursors, type MapCursor, type PoseReport } from "@/lib/map-presence";
+import {
+  createPlayerState,
+  damp,
+  MOVE,
+  placePlayer,
+  stepPlayer,
+  type MoveIntent,
+  type PlayerState,
+} from "@/lib/player-state";
 import { setAvatarModelInscription } from "@/lib/map-identity";
 
 import { useWalletSession } from "@/lib/wallet-session";
@@ -427,22 +436,39 @@ function AvatarLabel({
   );
 }
 
-/** One spawned visitor standing on the land. */
+/** One spawned visitor standing on the land, smoothed between broadcasts. */
 const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCursor }) {
+  const group = useRef<THREE.Group>(null);
   const body = useRef<THREE.Group>(null);
   const ring = useRef<THREE.Mesh>(null);
   const ringMaterial = useRef<THREE.MeshBasicMaterial>(null);
+  /** Latest validated report — the interpolation goal, never applied directly. */
+  const goal = useRef({ x: cursor.x, z: cursor.z, yaw: cursor.yaw });
+  goal.current = { x: cursor.x, z: cursor.z, yaw: cursor.yaw };
+  const shown = useRef({ x: cursor.x, z: cursor.z, yaw: cursor.yaw });
   const phase = useMemo(() => {
     let hash = 0;
     for (const ch of cursor.id) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
     return (hash % 628) / 100;
   }, [cursor.id]);
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock }, rawDelta) => {
+    const delta = Math.min(rawDelta, 0.05);
+    const target = goal.current;
+    const current = shown.current;
+    // Broadcasts arrive ~10x a second; glide between them so peers never hop.
+    current.x = damp(current.x, target.x, 11, delta);
+    current.z = damp(current.z, target.z, 11, delta);
+    current.yaw = damp(current.yaw, target.yaw, 9, delta, true);
     const t = clock.elapsedTime + phase;
+    if (group.current) {
+      group.current.position.set(current.x, 0.006, current.z);
+      group.current.rotation.y = current.yaw;
+    }
     if (body.current) {
-      body.current.position.y = Math.abs(Math.sin(t * 2.4)) * CELL * 0.1;
-      body.current.rotation.y = Math.sin(t * 0.9) * 0.35;
+      const stride = cursor.movement === "run" ? 4.4 : cursor.movement === "walk" ? 3.1 : 2.2;
+      const lift = cursor.movement === "idle" || cursor.movement === "turn" ? 0.04 : 0.12;
+      body.current.position.y = Math.abs(Math.sin(t * stride)) * CELL * lift;
     }
     if (ring.current && ringMaterial.current) {
       const pulse = (t * 0.8) % 1;
@@ -452,7 +478,7 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
   });
 
   return (
-    <group position={[worldX(cursor.col), 0.006, worldZ(cursor.row)]}>
+    <group ref={group} position={[cursor.x, 0.006, cursor.z]}>
       {/* spawn ring pulsing under the avatar */}
       <mesh ref={ring} rotation-x={-Math.PI / 2} position-y={0.001} geometry={avatarGeometry.ring} raycast={noRaycast}>
         <meshBasicMaterial ref={ringMaterial} color={cursor.color} transparent opacity={0.8} side={THREE.DoubleSide} />
@@ -469,7 +495,8 @@ const VisitorBeacons = memo(function VisitorBeacons({ cursors }: { cursors: MapC
   return cursors.slice(0, MAX_AVATARS).map((cursor) => <VisitorAvatar key={cursor.id} cursor={cursor} />);
 });
 
-export type SelfPose = { x: number; z: number; yaw: number };
+/** Full local player: position, velocity, facing, movement/animation/combat state, region and target. */
+export type SelfPose = PlayerState;
 
 /** Your own figure in third person, driven by the shared pose ref. */
 const SelfAvatar = memo(function SelfAvatar({
@@ -496,7 +523,11 @@ const SelfAvatar = memo(function SelfAvatar({
     if (!current || !group.current) return;
     group.current.position.set(current.x, 0.006, current.z);
     group.current.rotation.y = current.yaw;
-    if (body.current) body.current.position.y = Math.abs(Math.sin(clock.elapsedTime * 3.1)) * CELL * 0.08;
+    if (body.current) {
+      const stride = current.movement === "run" ? 4.6 : current.movement === "walk" ? 3.2 : 2.2;
+      const lift = current.movement === "idle" || current.movement === "turn" ? 0.035 : 0.1;
+      body.current.position.y = Math.abs(Math.sin(clock.elapsedTime * stride)) * CELL * lift;
+    }
   });
   return (
     <group ref={group}>
@@ -508,26 +539,30 @@ const SelfAvatar = memo(function SelfAvatar({
   );
 });
 
-/** Walk your avatar with WASD / arrows while the camera trails behind it. */
+/**
+ * Local movement: predict the player every frame from held input and the walk
+ * target, trail the camera behind, and report the resulting pose on a fixed
+ * ~10Hz tick. Prediction is local feel only — the report is what peers see.
+ */
 function ThirdPersonRig({
   pose,
-  onCell,
+  onPose,
 }: {
   pose: React.RefObject<SelfPose>;
-  onCell: (cell: { col: number; row: number; height: number }) => void;
+  onPose: (report: PoseReport) => void;
 }) {
   const { camera } = useThree();
   const keys = useRef(new Set<string>());
-  const lastCell = useRef("");
-  const nextPublish = useRef(0);
+  const lastReport = useRef("");
+  const nextReport = useRef(0);
 
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
-      keys.current.add(event.key.toLowerCase());
-      if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(event.key.toLowerCase()))
-        event.preventDefault();
+      const key = event.key.toLowerCase();
+      keys.current.add(key);
+      if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) event.preventDefault();
     };
     const up = (event: KeyboardEvent) => keys.current.delete(event.key.toLowerCase());
     const blur = () => keys.current.clear();
@@ -542,43 +577,44 @@ function ThirdPersonRig({
   }, []);
 
   useFrame(({ clock }, rawDelta) => {
-    const current = pose.current;
-    if (!current) return;
+    const player = pose.current;
+    if (!player) return;
     const delta = Math.min(rawDelta, 0.05);
     const pressed = keys.current;
-    const forward = (pressed.has("w") || pressed.has("arrowup") ? 1 : 0) - (pressed.has("s") || pressed.has("arrowdown") ? 1 : 0);
-    const strafe = (pressed.has("a") ? 1 : 0) - (pressed.has("d") ? 1 : 0);
-    const turn = (pressed.has("arrowleft") || pressed.has("q") ? 1 : 0) - (pressed.has("arrowright") || pressed.has("e") ? 1 : 0);
-    const sprint = pressed.has("shift") ? 2.2 : 1;
-    current.yaw += turn * delta * 2.1;
-    if (forward !== 0 || strafe !== 0) {
-      const speed = CELL * 9 * sprint * delta;
-      // camera-relative: W walks where you look, A/D step sideways
-      current.x += (Math.sin(current.yaw) * forward + Math.cos(current.yaw) * strafe) * speed;
-      current.z += (Math.cos(current.yaw) * forward - Math.sin(current.yaw) * strafe) * speed;
-      current.x = THREE.MathUtils.clamp(current.x, -WORLD_SIZE / 2 + CELL, WORLD_SIZE / 2 - CELL);
-      current.z = THREE.MathUtils.clamp(current.z, CELL, WORLD_SIZE - CELL);
-    }
+    const intent: MoveIntent = {
+      forward: (pressed.has("w") || pressed.has("arrowup") ? 1 : 0) - (pressed.has("s") || pressed.has("arrowdown") ? 1 : 0),
+      strafe: (pressed.has("a") ? 1 : 0) - (pressed.has("d") ? 1 : 0),
+      turn: (pressed.has("arrowleft") || pressed.has("q") ? 1 : 0) - (pressed.has("arrowright") || pressed.has("e") ? 1 : 0),
+      sprint: pressed.has("shift"),
+    };
+    stepPlayer(player, intent, delta);
 
-
-    // Camera trails behind and above the avatar.
-    const back = CELL * 9;
+    // Camera trails behind and above, pulling back a little at speed.
+    const speed = Math.hypot(player.vx, player.vz);
+    const back = CELL * (9 + (speed / (MOVE.walkSpeed * MOVE.sprint)) * 3);
     const desired = new THREE.Vector3(
-      current.x - Math.sin(current.yaw) * back,
+      player.x - Math.sin(player.yaw) * back,
       CELL * 5.2,
-      current.z - Math.cos(current.yaw) * back,
+      player.z - Math.cos(player.yaw) * back,
     );
     camera.position.lerp(desired, 1 - Math.exp(-6 * delta));
-    camera.lookAt(current.x, CELL * 0.7, current.z);
+    camera.lookAt(player.x, CELL * 0.7, player.z);
 
-    if (clock.elapsedTime < nextPublish.current) return;
-    nextPublish.current = clock.elapsedTime + 0.2;
-    const col = THREE.MathUtils.clamp(Math.floor((current.x + WORLD_SIZE / 2) / CELL), 0, GRID - 1);
-    const row = THREE.MathUtils.clamp(Math.floor(current.z / CELL), 0, GRID - 1);
-    const key = `${col}:${row}`;
-    if (key === lastCell.current) return;
-    lastCell.current = key;
-    onCell({ col, row, height: row * GRID + col });
+    // Fixed-rate reporting keeps network traffic flat regardless of frame rate.
+    if (clock.elapsedTime < nextReport.current) return;
+    nextReport.current = clock.elapsedTime + 0.1;
+    const key = `${player.col}:${player.row}:${player.movement}:${Math.round(player.yaw * 8)}`;
+    if (key === lastReport.current && player.movement === "idle") return;
+    lastReport.current = key;
+    onPose({
+      col: player.col,
+      row: player.row,
+      height: player.height,
+      x: player.x,
+      z: player.z,
+      yaw: player.yaw,
+      movement: player.movement,
+    });
   });
 
   return null;
