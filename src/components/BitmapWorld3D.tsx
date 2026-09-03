@@ -964,6 +964,16 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
 
         <div aria-hidden className="pointer-events-none absolute inset-0 z-20 ring-1 ring-inset ring-bitcoin/30 shadow-[inset_0_0_48px_color-mix(in_oklab,var(--bitcoin)_12%,transparent)]" />
 
+        {inventoryOpen ? (
+          <AvatarInventory
+            addresses={myAddresses}
+            equipped={avatarModel}
+            onEquip={equipModel}
+            onClose={() => setInventoryOpen(false)}
+          />
+        ) : null}
+
+
         {/* Talk while you explore — ephemeral world chat with speech bubbles over avatars. */}
         <div className="absolute bottom-16 left-1/2 z-30 flex w-[min(420px,calc(100%-1.5rem))] -translate-x-1/2 flex-col gap-1">
           {chatLines.length > 0 ? (
