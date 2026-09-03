@@ -7,6 +7,7 @@ import {
   MapControls,
   useAnimations,
   useGLTF,
+  useTexture,
 } from "@react-three/drei";
 import { Suspense } from "react";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
