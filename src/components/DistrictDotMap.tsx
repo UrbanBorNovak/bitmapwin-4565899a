@@ -15,6 +15,8 @@ export type DistrictDotMapProps = {
   tipHeight: number;
   /** heights to mark on the map (e.g. bitmaps you hold) */
   highlight?: number[];
+  /** live cursors of other visitors, so the page can list who is online */
+  onCursorsChange?: (cursors: MapCursor[]) => void;
   className?: string;
 };
 
@@ -28,7 +30,7 @@ const heightOf = (col: number, row: number) => row * GRID + col;
  * dots inside the viewport are drawn, so panning and zooming stay smooth even
  * though the grid holds 100 million cells.
  */
-export function DistrictDotMap({ tipHeight, highlight = [], className }: DistrictDotMapProps) {
+export function DistrictDotMap({ tipHeight, highlight = [], onCursorsChange, className }: DistrictDotMapProps) {
   const navigate = useNavigate();
   const wallet = useWalletSession();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -60,6 +62,10 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
   const { cursors, publish } = useMapCursors();
   const cursorsRef = useRef<MapCursor[]>([]);
   cursorsRef.current = cursors;
+
+  useEffect(() => {
+    onCursorsChange?.(cursors);
+  }, [cursors, onCursorsChange]);
 
 
   const draw = useCallback(() => {
@@ -118,6 +124,8 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
         ctx.beginPath();
         ctx.arc(cx, cy, 2.2, 0, Math.PI * 2);
         ctx.fill();
+        ctx.font = "9px ui-monospace, monospace";
+        ctx.fillText(cursor.handle, cx + 9, cy - 7);
       }
       ctx.globalAlpha = 1;
     };

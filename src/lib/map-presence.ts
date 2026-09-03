@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { colorForAddress } from "@/lib/map-owners";
+import { colorForVisitor, mapHandle, mapVisitorId } from "@/lib/map-identity";
 
 /**
  * Live cursor presence for the land map. Every visitor broadcasts the grid cell
@@ -15,6 +15,7 @@ export type MapCursor = {
   row: number;
   height: number;
   color: string;
+  handle: string;
   at: number;
 };
 
@@ -25,7 +26,8 @@ const STALE_MS = 8_000;
 const SEND_INTERVAL_MS = 90;
 
 export function useMapCursors(enabled = true) {
-  const selfId = useMemo(() => crypto.randomUUID(), []);
+  const selfId = useMemo(() => mapVisitorId(), []);
+  const handle = useMemo(() => mapHandle(), []);
   const [cursors, setCursors] = useState<MapCursor[]>([]);
   const sendRef = useRef<(cell: { col: number; row: number; height: number } | null) => void>(() => {});
 
@@ -42,7 +44,14 @@ export function useMapCursors(enabled = true) {
     const channel = supabase
       .channel(CHANNEL, { config: { broadcast: { self: false } } })
       .on("broadcast", { event: "cursor" }, ({ payload }) => {
-        const p = payload as { id?: string; col?: number; row?: number; height?: number; gone?: boolean };
+        const p = payload as {
+          id?: string;
+          col?: number;
+          row?: number;
+          height?: number;
+          handle?: string;
+          gone?: boolean;
+        };
         if (!p?.id || p.id === selfId) return;
         if (p.gone) {
           peers.delete(p.id);
@@ -56,7 +65,8 @@ export function useMapCursors(enabled = true) {
             col: p.col,
             row: p.row,
             height: p.height,
-            color: colorForAddress(p.id),
+            color: colorForVisitor(p.id),
+            handle: typeof p.handle === "string" && p.handle ? p.handle : "ANON",
             at: Date.now(),
           });
         }
@@ -76,7 +86,7 @@ export function useMapCursors(enabled = true) {
       void channel.send({
         type: "broadcast",
         event: "cursor",
-        payload: cell ? { id: selfId, ...cell } : { id: selfId, gone: true },
+        payload: cell ? { id: selfId, handle, ...cell } : { id: selfId, gone: true },
       });
       last = Date.now();
     };
@@ -111,7 +121,7 @@ export function useMapCursors(enabled = true) {
       sendRef.current = () => {};
       void supabase.removeChannel(channel);
     };
-  }, [enabled, selfId]);
+  }, [enabled, selfId, handle]);
 
-  return { cursors, publish: (cell: { col: number; row: number; height: number } | null) => sendRef.current(cell) };
+  return { selfId, handle, cursors, publish: (cell: { col: number; row: number; height: number } | null) => sendRef.current(cell) };
 }

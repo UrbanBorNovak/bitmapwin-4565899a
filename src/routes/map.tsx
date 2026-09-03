@@ -1,7 +1,10 @@
+import { useCallback, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { DistrictDotMap } from "@/components/DistrictDotMap";
+import { MapChat } from "@/components/MapChat";
+import type { MapCursor } from "@/lib/map-presence";
 import { getChainBlocks } from "@/lib/chain.functions";
 
 export const Route = createFileRoute("/map")({
@@ -35,6 +38,8 @@ function MapPage() {
   });
 
   const tipHeight = tip.data ?? 0;
+  const [cursors, setCursors] = useState<MapCursor[]>([]);
+  const handleCursors = useCallback((next: MapCursor[]) => setCursors(next), []);
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-12 md:px-8">
@@ -63,7 +68,10 @@ function MapPage() {
         </span>
       </div>
 
-      <DistrictDotMap tipHeight={tipHeight} className="mt-4" />
+      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <DistrictDotMap tipHeight={tipHeight} onCursorsChange={handleCursors} />
+        <MapChat cursors={cursors} />
+      </div>
     </div>
   );
 }

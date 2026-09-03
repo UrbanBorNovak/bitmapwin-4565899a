@@ -792,6 +792,39 @@ export type Database = {
           },
         ]
       }
+      map_chat_messages: {
+        Row: {
+          body: string
+          created_at: string
+          district_height: number | null
+          handle: string | null
+          id: string
+          sender_address: string | null
+          user_id: string
+          visitor_id: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          district_height?: number | null
+          handle?: string | null
+          id?: string
+          sender_address?: string | null
+          user_id: string
+          visitor_id?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          district_height?: number | null
+          handle?: string | null
+          id?: string
+          sender_address?: string | null
+          user_id?: string
+          visitor_id?: string | null
+        }
+        Relationships: []
+      }
       offers: {
         Row: {
           bid_id: string | null
