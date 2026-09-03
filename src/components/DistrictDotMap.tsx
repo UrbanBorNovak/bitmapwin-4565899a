@@ -334,6 +334,12 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
       >
         <canvas ref={canvasRef} className="block h-full w-full touch-none" />
 
+        {/* gentle pulsing glow around the map viewport */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-20 animate-pulse rounded-none ring-1 ring-inset ring-bitcoin/25 shadow-[0_0_60px_rgba(247,147,26,0.18)]"
+        />
+
         {hover ? (
           <div
             data-no-translate
