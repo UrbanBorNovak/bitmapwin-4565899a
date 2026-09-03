@@ -23,6 +23,7 @@ async function liveOwner(userId: string, height: number) {
 export async function publishBitmapModel(userId: string, input: Placement) {
   const ownerAddress = await liveOwner(userId, input.height);
   const validated = await validateOnChainGlb(input.inscriptionId);
+  const validationNote = "STRICT GLB VALIDATION PASSED · DRACO SUPPORTED";
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin.from("bitmap_models").upsert({
     bitmap_height: input.height,
@@ -37,7 +38,7 @@ export async function publishBitmapModel(userId: string, input: Placement) {
     triangle_count: validated.triangleCount,
     texture_count: validated.textureCount,
     animation_count: validated.animationCount,
-    validation_note: "STRICT GLB VALIDATION PASSED",
+    validation_note: validationNote,
     validated_at: new Date().toISOString(),
   }, { onConflict: "bitmap_height" }).select().single();
   if (error) throw error;

@@ -67,8 +67,6 @@ export async function validateOnChainGlb(inscriptionId: string): Promise<Validat
   if (json.asset?.version !== "2.0") throw new Error("ONLY GLTF 2.0 MODELS ARE SUPPORTED");
   if ((json.buffers ?? []).some((buffer) => Boolean(buffer.uri))) throw new Error("GLB MUST EMBED ALL BUFFERS");
   if ((json.images ?? []).some((image) => Boolean(image.uri))) throw new Error("GLB MUST EMBED ALL TEXTURES");
-  if ((json.extensionsUsed ?? []).some((extension) => extension.includes("draco"))) throw new Error("DRACO-COMPRESSED GLB IS NOT SUPPORTED");
-
   const triangles = triangleCount(json);
   const textures = json.textures?.length ?? 0;
   const animations = json.animations?.length ?? 0;
