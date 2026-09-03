@@ -566,14 +566,17 @@ const WorldScene = memo(function WorldScene({
           if (height !== null) onSelect(height);
         }}
       >
-        <planeGeometry args={[WORLD_SIZE, WORLD_SIZE]} />
+        <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
       <CameraDirector command={command} tipHeight={tipHeight} />
       <ViewWindowReporter onWindow={onWindow} />
+      {/* Drops resolution while flying, restores it once the camera settles. */}
+      <AdaptiveDpr pixelated />
+      <AdaptiveEvents />
     </>
   );
-}
+});
 
 export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, className }: BitmapWorld3DProps) {
   const navigate = useNavigate();
