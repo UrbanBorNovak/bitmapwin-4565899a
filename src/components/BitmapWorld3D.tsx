@@ -970,11 +970,46 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
               onPublish={publish}
               models={models.data ?? EMPTY_MODELS}
               ownedHeights={ownedHeights}
+              thirdPerson={thirdPerson}
+              pose={pose}
+              self={self}
             />
           </Canvas>
         ) : null}
 
         <div aria-hidden className="pointer-events-none absolute inset-0 z-20 ring-1 ring-inset ring-bitcoin/30 shadow-[inset_0_0_48px_color-mix(in_oklab,var(--bitcoin)_12%,transparent)]" />
+
+        {/* Talk while you explore — ephemeral world chat with speech bubbles over avatars. */}
+        <div className="absolute bottom-8 left-1/2 z-30 flex w-[min(420px,calc(100%-1.5rem))] -translate-x-1/2 flex-col gap-1">
+          {chatLines.length > 0 ? (
+            <div data-no-translate className="flex flex-col gap-[2px] bg-background/70 p-1 font-mono text-[10px]">
+              {chatLines.map((line) => (
+                <p key={line.id} className="truncate">
+                  <span style={{ color: line.color }}>{line.handle}</span>{" "}
+                  <span className="text-foreground">{line.body}</span>
+                </p>
+              ))}
+            </div>
+          ) : null}
+          <form
+            className="flex gap-1"
+            onSubmit={(event) => {
+              event.preventDefault();
+              sendSay();
+            }}
+          >
+            <input
+              value={draft}
+              maxLength={SAY_MAX_LENGTH}
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder="SAY SOMETHING TO EVERYONE IN THE WORLD…"
+              aria-label="World chat message"
+              className="min-w-0 flex-1 border border-border bg-background/90 px-2 py-1 font-mono text-[11px] text-foreground outline-none placeholder:text-muted-foreground focus:border-bitcoin"
+            />
+            <Button className="btn-term" type="submit" disabled={!draft.trim()}>[ SAY ]</Button>
+          </form>
+        </div>
+
 
         {hover ? (
           <div
