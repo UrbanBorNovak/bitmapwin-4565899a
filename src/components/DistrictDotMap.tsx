@@ -338,16 +338,36 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
           <div
             data-no-translate
             className="pointer-events-none absolute z-10 -translate-y-full border border-bitcoin bg-background/95 px-2 py-1 font-mono text-[10px]"
-            style={{ left: Math.min(hover.sx + 8, (wrapRef.current?.clientWidth ?? 0) - 140), top: hover.sy - 6 }}
+            style={{ left: Math.min(hover.sx + 8, (wrapRef.current?.clientWidth ?? 0) - 200), top: hover.sy - 6 }}
           >
-            {hover.height}.bitmap · {clubOf(hover.height).short}
+            <div>
+              {hover.height}.bitmap · {clubOf(hover.height).short}
+            </div>
+            {(() => {
+              const owner = owners.data?.get(hover.height);
+              if (!owner) return null;
+              const isMine = mine.has(owner);
+              return (
+                <div className="mt-0.5 flex items-center gap-1">
+                  <span
+                    className="inline-block h-2 w-2"
+                    style={{ background: isMine ? "hsl(var(--bitcoin))" : colorForAddress(owner) }}
+                  />
+                  <span>{isMine ? "YOURS" : `${owner.slice(0, 6)}…${owner.slice(-4)}`}</span>
+                </div>
+              );
+            })()}
           </div>
         ) : null}
 
         <div className="pointer-events-none absolute bottom-2 left-2 flex flex-wrap items-center gap-3 font-mono text-[10px] text-muted-foreground">
           <span>DRAG TO PAN · SCROLL TO ZOOM · CLICK A DOT</span>
           <span data-no-translate>×{zoomLabel.toFixed(2)}</span>
+          <span data-no-translate>
+            {window_ ? (owners.isPending ? "LOADING HOLDERS…" : `${owners.data?.size ?? 0} HELD IN VIEW`) : "ZOOM IN FOR HOLDER COLOURS"}
+          </span>
         </div>
+
       </div>
     </div>
   );
