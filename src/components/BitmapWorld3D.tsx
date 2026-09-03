@@ -452,29 +452,30 @@ function ViewWindowReporter({ onWindow }: { onWindow: (window_: OwnerWindow | nu
   return null;
 }
 
-function LandSurface({ colors, tipHeight }: { colors: WorldColors; tipHeight: number }) {
+const LandSurface = memo(function LandSurface({ colors, tipHeight }: { colors: WorldColors; tipHeight: number }) {
   const tipDepth = Math.max(CELL, (Math.floor(tipHeight / GRID) + 1) * CELL);
+  const gridArgs = useMemo(
+    () => [WORLD_SIZE, 100, new THREE.Color(colors.muted), new THREE.Color(colors.border)] as const,
+    [colors.border, colors.muted],
+  );
   return (
     <>
-      <mesh rotation-x={-Math.PI / 2} position={[0, -0.008, WORLD_SIZE / 2]} receiveShadow>
+      <mesh rotation-x={-Math.PI / 2} position={[0, -0.008, WORLD_SIZE / 2]} raycast={noRaycast}>
         <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
-        <meshStandardMaterial color={colors.border} roughness={0.92} metalness={0.08} />
+        <meshLambertMaterial color={colors.border} />
       </mesh>
-      <mesh rotation-x={-Math.PI / 2} position={[0, 0, tipDepth / 2]} receiveShadow>
+      <mesh rotation-x={-Math.PI / 2} position={[0, 0, tipDepth / 2]} raycast={noRaycast}>
         <planeGeometry args={[WORLD_SIZE, tipDepth, 1, 1]} />
-        <meshStandardMaterial color={colors.foreground} roughness={0.72} metalness={0.15} />
+        <meshLambertMaterial color={colors.foreground} />
       </mesh>
-      <mesh rotation-x={-Math.PI / 2} position={[0, 0.018, tipDepth / 2]}>
-        <planeGeometry args={[WORLD_SIZE, tipDepth]} />
+      <mesh rotation-x={-Math.PI / 2} position={[0, 0.018, tipDepth / 2]} raycast={noRaycast}>
+        <planeGeometry args={[WORLD_SIZE, tipDepth, 1, 1]} />
         <meshBasicMaterial color={colors.bitcoin} transparent opacity={0.2} depthWrite={false} blending={THREE.AdditiveBlending} />
       </mesh>
-      <gridHelper
-        args={[WORLD_SIZE, 100, new THREE.Color(colors.muted), new THREE.Color(colors.border)]}
-        position={[0, 0.003, WORLD_SIZE / 2]}
-      />
+      <gridHelper args={gridArgs as unknown as [number, number, THREE.Color, THREE.Color]} position={[0, 0.003, WORLD_SIZE / 2]} raycast={noRaycast} />
     </>
   );
-}
+});
 
 function WorldScene({
   colors,
