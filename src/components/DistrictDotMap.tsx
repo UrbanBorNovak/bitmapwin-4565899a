@@ -317,7 +317,10 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
         onPointerUp={(e) => {
           const d = dragRef.current;
           dragRef.current = null;
-          if (d?.moved) return;
+          if (d?.moved) {
+            setViewTick((n) => n + 1);
+            return;
+          }
           const cell = cellAt(e.clientX, e.clientY);
           if (cell && cell.height <= tipHeight) {
             navigate({ to: "/bitmap/$block", params: { block: String(cell.height) } });
