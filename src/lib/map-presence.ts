@@ -236,6 +236,19 @@ export function useMapCursors(enabled = true) {
       }
     };
 
+    // Respawn: come back at full health and tell the world we are standing again.
+    let respawnTimer: ReturnType<typeof setTimeout> | null = null;
+    respawnRef.current = () => {
+      if (respawnTimer) clearTimeout(respawnTimer);
+      respawnTimer = null;
+      hpRef.current = MAX_HP;
+      setHp(MAX_HP);
+      setHitAt(0);
+      setRespawnAt(0);
+      setRespawnNonce((current) => current + 1);
+      if (lastCell) push(lastCell);
+    };
+
     // Health trickles back so a fight does not permanently knock anyone out.
     const regen = setInterval(() => {
       if (hpRef.current <= 0 || hpRef.current >= MAX_HP) return;
@@ -247,6 +260,7 @@ export function useMapCursors(enabled = true) {
     const sweep = setInterval(flush, 2_000);
     return () => {
       if (timer) clearTimeout(timer);
+      if (respawnTimer) clearTimeout(respawnTimer);
       clearInterval(sweep);
       clearInterval(regen);
       clearInterval(heartbeat);
@@ -254,10 +268,12 @@ export function useMapCursors(enabled = true) {
       sendRef.current = () => {};
       sayRef.current = () => {};
       attackRef.current = () => {};
+      respawnRef.current = () => {};
       push(null); // despawn: tell peers this avatar left the world
       void supabase.removeChannel(channel);
     };
   }, [enabled, selfId, handle]);
+
 
   return {
     selfId,
