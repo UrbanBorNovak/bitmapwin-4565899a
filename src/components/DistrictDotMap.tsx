@@ -56,6 +56,11 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
   const highlightSet = useRef<Set<number>>(new Set());
   highlightSet.current = new Set(highlight);
 
+  // Other visitors' cursors — ephemeral realtime broadcast, nothing stored.
+  const { cursors, publish } = useMapCursors();
+  const cursorsRef = useRef<MapCursor[]>([]);
+  cursorsRef.current = cursors;
+
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
