@@ -1,6 +1,13 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
-import { Environment, Html, Lightformer, MapControls, useAnimations, useGLTF } from "@react-three/drei";
+import {
+  Environment,
+  Html,
+  Lightformer,
+  MapControls,
+  useAnimations,
+  useGLTF,
+} from "@react-three/drei";
 import { Suspense } from "react";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
@@ -14,7 +21,17 @@ import { AvatarInventory } from "@/components/AvatarInventory";
 
 import { clubOf } from "@/lib/clubs";
 import { colorForAddress, mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
-import { ATTACK_COOLDOWN_MS, ATTACK_DAMAGE, ATTACK_RANGE, MAX_HP, SAY_MAX_LENGTH, SAY_TTL_MS, useMapCursors, type MapCursor, type PoseReport } from "@/lib/map-presence";
+import {
+  ATTACK_COOLDOWN_MS,
+  ATTACK_DAMAGE,
+  ATTACK_RANGE,
+  MAX_HP,
+  SAY_MAX_LENGTH,
+  SAY_TTL_MS,
+  useMapCursors,
+  type MapCursor,
+  type PoseReport,
+} from "@/lib/map-presence";
 import {
   createPlayerState,
   damp,
@@ -31,6 +48,7 @@ import { mapBitmapModelsQuery, type BitmapModel } from "@/lib/bitmap-models";
 import { heldHeightsQuery } from "@/lib/held-parcels";
 import { useAuthSession } from "@/lib/auth";
 import { myWalletLinksQuery } from "@/lib/wallet-links";
+import { PARTY_CHAT_MAX_LENGTH, PARTY_MAX_MEMBERS, useMapParty } from "@/lib/map-party";
 
 const GRID = 1_000;
 const WORLD_SIZE = 100;
@@ -101,7 +119,15 @@ function heightAtPoint(point: THREE.Vector3) {
   return row * GRID + col;
 }
 
-const HolderColumns = memo(function HolderColumns({ owners, mine, bitcoin }: { owners: Map<number, string>; mine: Set<string>; bitcoin: string }) {
+const HolderColumns = memo(function HolderColumns({
+  owners,
+  mine,
+  bitcoin,
+}: {
+  owners: Map<number, string>;
+  mine: Set<string>;
+  bitcoin: string;
+}) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const entries = useMemo(() => [...owners.entries()], [owners]);
 
@@ -128,14 +154,26 @@ const HolderColumns = memo(function HolderColumns({ owners, mine, bitcoin }: { o
 
   if (entries.length === 0) return null;
   return (
-    <instancedMesh key={entries.length} ref={meshRef} args={[undefined, undefined, entries.length]} frustumCulled raycast={noRaycast}>
+    <instancedMesh
+      key={entries.length}
+      ref={meshRef}
+      args={[undefined, undefined, entries.length]}
+      frustumCulled
+      raycast={noRaycast}
+    >
       <boxGeometry args={[1, 1, 1]} />
       <meshLambertMaterial vertexColors />
     </instancedMesh>
   );
 });
 
-const OwnedBitmapGlow = memo(function OwnedBitmapGlow({ heights, bitcoin }: { heights: number[]; bitcoin: string }) {
+const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
+  heights,
+  bitcoin,
+}: {
+  heights: number[];
+  bitcoin: string;
+}) {
   const coreRef = useRef<THREE.InstancedMesh>(null);
   const auraRef = useRef<THREE.InstancedMesh>(null);
   const coreMaterial = useRef<THREE.MeshBasicMaterial>(null);
@@ -178,7 +216,13 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({ heights, bitcoin }: { he
   if (owned.length === 0) return null;
   return (
     <group>
-      <instancedMesh key={`aura-${owned.length}`} ref={auraRef} args={[undefined, undefined, owned.length]} frustumCulled raycast={noRaycast}>
+      <instancedMesh
+        key={`aura-${owned.length}`}
+        ref={auraRef}
+        args={[undefined, undefined, owned.length]}
+        frustumCulled
+        raycast={noRaycast}
+      >
         <boxGeometry args={[1, 1, 1]} />
         <meshBasicMaterial
           ref={auraMaterial}
@@ -190,7 +234,13 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({ heights, bitcoin }: { he
           side={THREE.DoubleSide}
         />
       </instancedMesh>
-      <instancedMesh key={`core-${owned.length}`} ref={coreRef} args={[undefined, undefined, owned.length]} frustumCulled raycast={noRaycast}>
+      <instancedMesh
+        key={`core-${owned.length}`}
+        ref={coreRef}
+        args={[undefined, undefined, owned.length]}
+        frustumCulled
+        raycast={noRaycast}
+      >
         <boxGeometry args={[1, 1, 1]} />
         <meshBasicMaterial
           ref={coreMaterial}
@@ -206,7 +256,13 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({ heights, bitcoin }: { he
   );
 });
 
-const DistrictBlocks = memo(function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: WorldColors }) {
+const DistrictBlocks = memo(function DistrictBlocks({
+  tipHeight,
+  colors,
+}: {
+  tipHeight: number;
+  colors: WorldColors;
+}) {
   const uniforms = useMemo(
     () => ({
       uGrid: { value: GRID },
@@ -223,14 +279,17 @@ const DistrictBlocks = memo(function DistrictBlocks({ tipHeight, colors }: { tip
       <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
       <shaderMaterial
         uniforms={uniforms}
-        vertexShader={/* glsl */ `
+        vertexShader={
+          /* glsl */ `
           varying vec2 vUv;
           void main() {
             vUv = uv;
             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
           }
-        `}
-        fragmentShader={/* glsl */ `
+        `
+        }
+        fragmentShader={
+          /* glsl */ `
           uniform float uGrid;
           uniform float uTip;
           uniform vec3 uMined;
@@ -258,13 +317,20 @@ const DistrictBlocks = memo(function DistrictBlocks({ tipHeight, colors }: { tip
             vec3 color = mix(uFuture * 0.32, minedColor, mined);
             gl_FragColor = vec4(color * (0.48 + inset * 0.58), 1.0);
           }
-        `}
+        `
+        }
       />
     </mesh>
   );
 });
 
-const SelectedBlock = memo(function SelectedBlock({ height, bitcoin }: { height: number; bitcoin: string }) {
+const SelectedBlock = memo(function SelectedBlock({
+  height,
+  bitcoin,
+}: {
+  height: number;
+  bitcoin: string;
+}) {
   const blockHeight = districtHeight(height);
   return (
     <mesh
@@ -330,22 +396,92 @@ const AvatarBody = memo(function AvatarBody({ color }: { color: string }) {
     <group>
       {[-1, 1].map((side) => (
         <group key={side}>
-          <mesh position={[side * u * 0.11, u * 0.035, u * 0.01]} geometry={avatarGeometry.boot} material={darkMaterial} raycast={noRaycast} />
-          <mesh position={[side * u * 0.11, u * 0.2, 0]} geometry={avatarGeometry.leg} material={trim} raycast={noRaycast} />
-          <mesh position={[side * u * 0.245, u * 0.5, 0]} geometry={avatarGeometry.shoulder} material={trim} raycast={noRaycast} />
-          <mesh position={[side * u * 0.245, u * 0.33, 0]} geometry={avatarGeometry.arm} material={skin} raycast={noRaycast} />
-          <mesh position={[side * u * 0.245, u * 0.18, 0]} geometry={avatarGeometry.hand} material={darkMaterial} raycast={noRaycast} />
+          <mesh
+            position={[side * u * 0.11, u * 0.035, u * 0.01]}
+            geometry={avatarGeometry.boot}
+            material={darkMaterial}
+            raycast={noRaycast}
+          />
+          <mesh
+            position={[side * u * 0.11, u * 0.2, 0]}
+            geometry={avatarGeometry.leg}
+            material={trim}
+            raycast={noRaycast}
+          />
+          <mesh
+            position={[side * u * 0.245, u * 0.5, 0]}
+            geometry={avatarGeometry.shoulder}
+            material={trim}
+            raycast={noRaycast}
+          />
+          <mesh
+            position={[side * u * 0.245, u * 0.33, 0]}
+            geometry={avatarGeometry.arm}
+            material={skin}
+            raycast={noRaycast}
+          />
+          <mesh
+            position={[side * u * 0.245, u * 0.18, 0]}
+            geometry={avatarGeometry.hand}
+            material={darkMaterial}
+            raycast={noRaycast}
+          />
         </group>
       ))}
-      <mesh position={[0, u * 0.35, 0]} geometry={avatarGeometry.hip} material={darkMaterial} raycast={noRaycast} />
-      <mesh position={[0, u * 0.53, 0]} geometry={avatarGeometry.torso} material={skin} raycast={noRaycast} />
-      <mesh position={[0, u * 0.56, 0]} geometry={avatarGeometry.chest} material={trim} raycast={noRaycast} />
-      <mesh position={[0, u * 0.55, -u * 0.13]} geometry={avatarGeometry.pack} material={darkMaterial} raycast={noRaycast} />
-      <mesh position={[0, u * 0.71, 0]} geometry={avatarGeometry.neck} material={darkMaterial} raycast={noRaycast} />
-      <mesh position={[0, u * 0.85, 0]} geometry={avatarGeometry.head} material={skin} raycast={noRaycast} />
-      <mesh position={[0, u * 0.86, u * 0.13]} geometry={avatarGeometry.visor} material={visorMaterial} raycast={noRaycast} />
-      <mesh position={[u * 0.1, u * 1.02, 0]} geometry={avatarGeometry.antenna} material={darkMaterial} raycast={noRaycast} />
-      <mesh position={[u * 0.1, u * 1.09, 0]} geometry={avatarGeometry.beacon} material={skin} raycast={noRaycast} />
+      <mesh
+        position={[0, u * 0.35, 0]}
+        geometry={avatarGeometry.hip}
+        material={darkMaterial}
+        raycast={noRaycast}
+      />
+      <mesh
+        position={[0, u * 0.53, 0]}
+        geometry={avatarGeometry.torso}
+        material={skin}
+        raycast={noRaycast}
+      />
+      <mesh
+        position={[0, u * 0.56, 0]}
+        geometry={avatarGeometry.chest}
+        material={trim}
+        raycast={noRaycast}
+      />
+      <mesh
+        position={[0, u * 0.55, -u * 0.13]}
+        geometry={avatarGeometry.pack}
+        material={darkMaterial}
+        raycast={noRaycast}
+      />
+      <mesh
+        position={[0, u * 0.71, 0]}
+        geometry={avatarGeometry.neck}
+        material={darkMaterial}
+        raycast={noRaycast}
+      />
+      <mesh
+        position={[0, u * 0.85, 0]}
+        geometry={avatarGeometry.head}
+        material={skin}
+        raycast={noRaycast}
+      />
+      <mesh
+        position={[0, u * 0.86, u * 0.13]}
+        geometry={avatarGeometry.visor}
+        material={visorMaterial}
+        raycast={noRaycast}
+      />
+      <mesh
+        position={[u * 0.1, u * 1.02, 0]}
+        geometry={avatarGeometry.antenna}
+        material={darkMaterial}
+        raycast={noRaycast}
+      />
+      <mesh
+        position={[u * 0.1, u * 1.09, 0]}
+        geometry={avatarGeometry.beacon}
+        material={skin}
+        raycast={noRaycast}
+      />
     </group>
   );
 });
@@ -371,7 +507,14 @@ function ModelAvatar({ inscriptionId }: { inscriptionId: string }) {
     };
   }, [actions]);
   return (
-    <group scale={fitted.fit} position={[-fitted.center.x * fitted.fit, -fitted.minY * fitted.fit, -fitted.center.z * fitted.fit]}>
+    <group
+      scale={fitted.fit}
+      position={[
+        -fitted.center.x * fitted.fit,
+        -fitted.minY * fitted.fit,
+        -fitted.center.z * fitted.fit,
+      ]}
+    >
       <primitive object={scene} />
     </group>
   );
@@ -415,7 +558,13 @@ function AvatarLabel({
 }) {
   const hurt = Date.now() - hitAt < 400;
   return (
-    <Html center position={[0, AVATAR_U * 1.35, 0]} distanceFactor={0.46} style={{ pointerEvents: "none" }} zIndexRange={[10, 0]}>
+    <Html
+      center
+      position={[0, AVATAR_U * 1.35, 0]}
+      distanceFactor={0.46}
+      style={{ pointerEvents: "none" }}
+      zIndexRange={[10, 0]}
+    >
       <div className="flex flex-col items-center gap-[2px]">
         {say ? (
           <span
@@ -426,7 +575,9 @@ function AvatarLabel({
           </span>
         ) : null}
         <HealthBar hp={hp} color={color} />
-        {hurt ? <span className="font-mono text-[10px] font-bold text-bitcoin">-{lastDamage}</span> : null}
+        {hurt ? (
+          <span className="font-mono text-[10px] font-bold text-bitcoin">-{lastDamage}</span>
+        ) : null}
         <span
           className="whitespace-nowrap border bg-background/90 px-1.5 py-0.5 font-mono text-[8px] text-foreground shadow-md"
           style={{ borderColor: hurt ? "var(--bitcoin)" : "var(--color-border)" }}
@@ -445,9 +596,9 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
   const ring = useRef<THREE.Mesh>(null);
   const ringMaterial = useRef<THREE.MeshBasicMaterial>(null);
   /** Latest validated report — the interpolation goal, never applied directly. */
-  const goal = useRef({ x: cursor.x, z: cursor.z, yaw: cursor.yaw });
-  goal.current = { x: cursor.x, z: cursor.z, yaw: cursor.yaw };
-  const shown = useRef({ x: cursor.x, z: cursor.z, yaw: cursor.yaw });
+  const goal = useRef({ x: cursor.x, y: cursor.y, z: cursor.z, yaw: cursor.yaw });
+  goal.current = { x: cursor.x, y: cursor.y, z: cursor.z, yaw: cursor.yaw };
+  const shown = useRef({ x: cursor.x, y: cursor.y, z: cursor.z, yaw: cursor.yaw });
   const phase = useMemo(() => {
     let hash = 0;
     for (const ch of cursor.id) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
@@ -460,11 +611,12 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
     const current = shown.current;
     // Broadcasts arrive ~10x a second; glide between them so peers never hop.
     current.x = damp(current.x, target.x, 11, delta);
+    current.y = damp(current.y, target.y, 14, delta);
     current.z = damp(current.z, target.z, 11, delta);
     current.yaw = damp(current.yaw, target.yaw, 9, delta, true);
     const t = clock.elapsedTime + phase;
     if (group.current) {
-      group.current.position.set(current.x, 0.006, current.z);
+      group.current.position.set(current.x, current.y + 0.006, current.z);
       group.current.rotation.y = current.yaw;
     }
     if (body.current) {
@@ -480,10 +632,22 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
   });
 
   return (
-    <group ref={group} position={[cursor.x, 0.006, cursor.z]}>
+    <group ref={group} position={[cursor.x, cursor.y + 0.006, cursor.z]}>
       {/* spawn ring pulsing under the avatar */}
-      <mesh ref={ring} rotation-x={-Math.PI / 2} position-y={0.001} geometry={avatarGeometry.ring} raycast={noRaycast}>
-        <meshBasicMaterial ref={ringMaterial} color={cursor.color} transparent opacity={0.8} side={THREE.DoubleSide} />
+      <mesh
+        ref={ring}
+        rotation-x={-Math.PI / 2}
+        position-y={0.001}
+        geometry={avatarGeometry.ring}
+        raycast={noRaycast}
+      >
+        <meshBasicMaterial
+          ref={ringMaterial}
+          color={cursor.color}
+          transparent
+          opacity={0.8}
+          side={THREE.DoubleSide}
+        />
       </mesh>
       <mesh rotation-x={-Math.PI / 2} position-y={0.002} raycast={noRaycast}>
         <circleGeometry args={[AVATAR_U * 0.28, 16]} />
@@ -492,13 +656,22 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
       <group ref={body}>
         <AvatarSkin color={cursor.color} model={cursor.model} />
       </group>
-      <AvatarLabel handle={cursor.handle} say={cursor.say} color={cursor.color} hp={cursor.hp} hitAt={cursor.hitAt} lastDamage={cursor.lastDamage} />
+      <AvatarLabel
+        handle={cursor.handle}
+        say={cursor.say}
+        color={cursor.color}
+        hp={cursor.hp}
+        hitAt={cursor.hitAt}
+        lastDamage={cursor.lastDamage}
+      />
     </group>
   );
 });
 
 const VisitorBeacons = memo(function VisitorBeacons({ cursors }: { cursors: MapCursor[] }) {
-  return cursors.slice(0, MAX_AVATARS).map((cursor) => <VisitorAvatar key={cursor.id} cursor={cursor} />);
+  return cursors
+    .slice(0, MAX_AVATARS)
+    .map((cursor) => <VisitorAvatar key={cursor.id} cursor={cursor} />);
 });
 
 /** Full local player: position, velocity, facing, movement/animation/combat state, region and target. */
@@ -531,7 +704,7 @@ const SelfAvatar = memo(function SelfAvatar({
   useFrame(({ clock }) => {
     const current = pose.current;
     if (!current || !group.current) return;
-    group.current.position.set(current.x, 0.006, current.z);
+    group.current.position.set(current.x, current.y + 0.006, current.z);
     group.current.rotation.y = current.yaw;
     if (body.current) {
       const stride = current.movement === "run" ? 4.6 : current.movement === "walk" ? 3.2 : 2.2;
@@ -548,7 +721,14 @@ const SelfAvatar = memo(function SelfAvatar({
       <group ref={body}>
         <AvatarSkin color={color} model={model} />
       </group>
-      <AvatarLabel handle={`${handle} (YOU)`} say={say} color={color} hp={hp} hitAt={hitAt} lastDamage={lastDamage} />
+      <AvatarLabel
+        handle={`${handle} (YOU)`}
+        say={say}
+        color={color}
+        hp={hp}
+        hitAt={hitAt}
+        lastDamage={lastDamage}
+      />
     </group>
   );
 });
@@ -576,14 +756,20 @@ function PlayerCameraRig({
   const lookMatrix = useRef(new THREE.Matrix4());
   const targetRotation = useRef(new THREE.Quaternion());
   const pitch = useRef(0);
+  const jumpRequested = useRef(false);
 
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
       const key = event.key.toLowerCase();
+      if (event.code === "Space" && !event.repeat) {
+        jumpRequested.current = true;
+        event.preventDefault();
+      }
       keys.current.add(key);
-      if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) event.preventDefault();
+      if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key))
+        event.preventDefault();
     };
     const up = (event: KeyboardEvent) => keys.current.delete(event.key.toLowerCase());
     const blur = () => keys.current.clear();
@@ -600,7 +786,8 @@ function PlayerCameraRig({
   useEffect(() => {
     const canvas = gl.domElement;
     const lock = () => {
-      if (mode === "first" && document.pointerLockElement !== canvas) void canvas.requestPointerLock();
+      if (mode === "first" && document.pointerLockElement !== canvas)
+        void canvas.requestPointerLock();
     };
     const look = (event: MouseEvent) => {
       if (mode !== "first" || document.pointerLockElement !== canvas) return;
@@ -624,34 +811,40 @@ function PlayerCameraRig({
     const delta = Math.min(rawDelta, 0.05);
     const pressed = keys.current;
     const intent: MoveIntent = {
-      forward: (pressed.has("w") || pressed.has("arrowup") ? 1 : 0) - (pressed.has("s") || pressed.has("arrowdown") ? 1 : 0),
+      forward:
+        (pressed.has("w") || pressed.has("arrowup") ? 1 : 0) -
+        (pressed.has("s") || pressed.has("arrowdown") ? 1 : 0),
       strafe: (pressed.has("a") ? 1 : 0) - (pressed.has("d") ? 1 : 0),
-      turn: (pressed.has("arrowleft") || pressed.has("q") ? 1 : 0) - (pressed.has("arrowright") || pressed.has("e") ? 1 : 0),
+      turn:
+        (pressed.has("arrowleft") || pressed.has("q") ? 1 : 0) -
+        (pressed.has("arrowright") || pressed.has("e") ? 1 : 0),
       sprint: pressed.has("shift"),
+      jump: jumpRequested.current,
     };
+    jumpRequested.current = false;
     stepPlayer(player, intent, delta);
 
     // Both modes track the same predicted player target. Only offsets change,
     // so switching perspective is a smooth camera move rather than a cut.
     const speed = Math.hypot(player.vx, player.vz);
     if (mode === "first") {
-      cameraTarget.current.set(player.x, CELL * 0.88, player.z);
+      cameraTarget.current.set(player.x, player.y + CELL * 0.88, player.z);
       const horizontal = Math.cos(pitch.current);
       cameraLook.current.set(
         player.x + Math.sin(player.yaw) * horizontal,
-        CELL * 0.88 + Math.sin(pitch.current),
+        player.y + CELL * 0.88 + Math.sin(pitch.current),
         player.z + Math.cos(player.yaw) * horizontal,
       );
     } else {
       const back = CELL * (11.5 + (speed / (MOVE.walkSpeed * MOVE.sprint)) * 2.5);
       cameraTarget.current.set(
         player.x - Math.sin(player.yaw) * back,
-        CELL * 7.2,
+        player.y + CELL * 7.2,
         player.z - Math.cos(player.yaw) * back,
       );
       cameraLook.current.set(
         player.x + Math.sin(player.yaw) * CELL * 2.5,
-        CELL * 0.62,
+        player.y + CELL * 0.62,
         player.z + Math.cos(player.yaw) * CELL * 2.5,
       );
     }
@@ -670,8 +863,8 @@ function PlayerCameraRig({
     // Fixed-rate reporting keeps network traffic flat regardless of frame rate.
     if (clock.elapsedTime < nextReport.current) return;
     nextReport.current = clock.elapsedTime + 0.1;
-    const key = `${player.col}:${player.row}:${player.movement}:${Math.round(player.yaw * 8)}`;
-    if (key === lastReport.current && player.movement === "idle") return;
+    const key = `${player.col}:${player.row}:${player.movement}:${Math.round(player.yaw * 8)}:${Math.round(player.y * 20)}`;
+    if (key === lastReport.current && player.movement === "idle" && player.grounded) return;
     lastReport.current = key;
     onPose({
       col: player.col,
@@ -679,6 +872,7 @@ function PlayerCameraRig({
       height: player.height,
       x: player.x,
       z: player.z,
+      y: player.y,
       yaw: player.yaw,
       movement: player.movement,
     });
@@ -686,7 +880,6 @@ function PlayerCameraRig({
 
   return null;
 }
-
 
 function OnChainModel({ model }: { model: BitmapModel }) {
   const gltf = useGLTF(`https://ordinals.com/content/${model.inscriptionId}`);
@@ -708,8 +901,23 @@ function OnChainModel({ model }: { model: BitmapModel }) {
     };
   }, [actions]);
   return (
-    <group position={[worldX(model.bitmapHeight % GRID), 0.014 + model.heightOffset * CELL, worldZ(Math.floor(model.bitmapHeight / GRID))]} rotation-y={model.rotationY} scale={model.scale}>
-      <group scale={normalized.fit} position={[-normalized.center.x * normalized.fit, -normalized.minY * normalized.fit, -normalized.center.z * normalized.fit]}>
+    <group
+      position={[
+        worldX(model.bitmapHeight % GRID),
+        0.014 + model.heightOffset * CELL,
+        worldZ(Math.floor(model.bitmapHeight / GRID)),
+      ]}
+      rotation-y={model.rotationY}
+      scale={model.scale}
+    >
+      <group
+        scale={normalized.fit}
+        position={[
+          -normalized.center.x * normalized.fit,
+          -normalized.minY * normalized.fit,
+          -normalized.center.z * normalized.fit,
+        ]}
+      >
         <primitive object={scene} />
       </group>
     </group>
@@ -717,14 +925,42 @@ function OnChainModel({ model }: { model: BitmapModel }) {
 }
 
 function ModelMarker({ model, bitcoin }: { model: BitmapModel; bitcoin: string }) {
-  return <mesh position={[worldX(model.bitmapHeight % GRID), districtHeight(model.bitmapHeight) + 0.03, worldZ(Math.floor(model.bitmapHeight / GRID))]}><octahedronGeometry args={[CELL * 1.8, 0]} /><meshBasicMaterial color={bitcoin} wireframe /></mesh>;
+  return (
+    <mesh
+      position={[
+        worldX(model.bitmapHeight % GRID),
+        districtHeight(model.bitmapHeight) + 0.03,
+        worldZ(Math.floor(model.bitmapHeight / GRID)),
+      ]}
+    >
+      <octahedronGeometry args={[CELL * 1.8, 0]} />
+      <meshBasicMaterial color={bitcoin} wireframe />
+    </mesh>
+  );
 }
 
 function OnChainModels({ models, bitcoin }: { models: BitmapModel[]; bitcoin: string }) {
-  return <>{models.map((model) => <Suspense key={model.bitmapHeight} fallback={<ModelMarker model={model} bitcoin={bitcoin} />}><OnChainModel model={model} /></Suspense>)}</>;
+  return (
+    <>
+      {models.map((model) => (
+        <Suspense
+          key={model.bitmapHeight}
+          fallback={<ModelMarker model={model} bitcoin={bitcoin} />}
+        >
+          <OnChainModel model={model} />
+        </Suspense>
+      ))}
+    </>
+  );
 }
 
-function CameraDirector({ command, tipHeight }: { command: { type: CameraMove; nonce: number }; tipHeight: number }) {
+function CameraDirector({
+  command,
+  tipHeight,
+}: {
+  command: { type: CameraMove; nonce: number };
+  tipHeight: number;
+}) {
   const controls = useRef<MapControlsImpl>(null);
   const { camera } = useThree();
   const initialTarget = useMemo<[number, number, number]>(
@@ -808,7 +1044,8 @@ function ViewWindowReporter({
     const rowFrom = Math.max(0, centerRow - radius);
     const rowTo = Math.min(GRID - 1, centerRow + radius);
     const cells = (colTo - colFrom + 1) * (rowTo - rowFrom + 1);
-    const next = distance > 24 || cells > OWNER_CELL_BUDGET ? null : { rowFrom, rowTo, colFrom, colTo };
+    const next =
+      distance > 24 || cells > OWNER_CELL_BUDGET ? null : { rowFrom, rowTo, colFrom, colTo };
     const key = next ? `${rowFrom}:${rowTo}:${colFrom}:${colTo}` : "none";
     if (key === last.current) return;
     last.current = key;
@@ -817,7 +1054,13 @@ function ViewWindowReporter({
   return null;
 }
 
-const LandSurface = memo(function LandSurface({ colors, tipHeight }: { colors: WorldColors; tipHeight: number }) {
+const LandSurface = memo(function LandSurface({
+  colors,
+  tipHeight,
+}: {
+  colors: WorldColors;
+  tipHeight: number;
+}) {
   const tipDepth = Math.max(CELL, (Math.floor(tipHeight / GRID) + 1) * CELL);
   const gridArgs = useMemo(
     () => [WORLD_SIZE, 100, new THREE.Color(colors.muted), new THREE.Color(colors.border)] as const,
@@ -837,7 +1080,11 @@ const LandSurface = memo(function LandSurface({ colors, tipHeight }: { colors: W
         <planeGeometry args={[WORLD_SIZE, tipDepth, 1, 1]} />
         <meshBasicMaterial color={colors.bitcoin} transparent opacity={0.045} depthWrite={false} />
       </mesh>
-      <gridHelper args={gridArgs as unknown as [number, number, THREE.Color, THREE.Color]} position={[0, 0.003, WORLD_SIZE / 2]} raycast={noRaycast} />
+      <gridHelper
+        args={gridArgs as unknown as [number, number, THREE.Color, THREE.Color]}
+        position={[0, 0.003, WORLD_SIZE / 2]}
+        raycast={noRaycast}
+      />
     </>
   );
 });
@@ -875,9 +1122,16 @@ const WorldScene = memo(function WorldScene({
   ownedHeights: number[];
   cameraMode: CameraMode;
   pose: React.RefObject<SelfPose>;
-  self: { handle: string; color: string; model: string | null; say: string | null; hp: number; hitAt: number; lastDamage: number };
+  self: {
+    handle: string;
+    color: string;
+    model: string | null;
+    say: string | null;
+    hp: number;
+    hitAt: number;
+    lastDamage: number;
+  };
 }) {
-
   // Pointer moves fire dozens of times a second; each React state update re-renders
   // the whole overlay. Coalesce them: at most ~20 hover updates a second, and skip
   // updates that land on the same district within a couple of pixels.
@@ -910,19 +1164,43 @@ const WorldScene = memo(function WorldScene({
       <fog attach="fog" args={[colors.background, 34, 150]} />
       <ambientLight intensity={0.42} />
       <hemisphereLight args={[colors.foreground, colors.background, 0.52]} />
-      <directionalLight color={colors.foreground} position={[-18, 36, -12]} intensity={1.35} castShadow={false} />
-      <pointLight color={colors.bitcoin} position={[14, 10, 3]} intensity={18} distance={28} decay={2} />
+      <directionalLight
+        color={colors.foreground}
+        position={[-18, 36, -12]}
+        intensity={1.35}
+        castShadow={false}
+      />
+      <pointLight
+        color={colors.bitcoin}
+        position={[14, 10, 3]}
+        intensity={18}
+        distance={28}
+        decay={2}
+      />
       {/* Baked once at low resolution — ambient tint only, no per-frame cubemap cost. */}
       <Environment frames={1} resolution={64}>
-        <Lightformer intensity={0.85} color={colors.bitcoin} position={[0, 12, -4]} scale={[34, 14, 1]} />
-        <Lightformer intensity={1.15} color={colors.foreground} position={[-20, 5, 20]} rotation-y={Math.PI / 2} scale={[28, 4, 1]} />
+        <Lightformer
+          intensity={0.85}
+          color={colors.bitcoin}
+          position={[0, 12, -4]}
+          scale={[34, 14, 1]}
+        />
+        <Lightformer
+          intensity={1.15}
+          color={colors.foreground}
+          position={[-20, 5, 20]}
+          rotation-y={Math.PI / 2}
+          scale={[28, 4, 1]}
+        />
       </Environment>
       <LandSurface colors={colors} tipHeight={tipHeight} />
       <DistrictBlocks tipHeight={tipHeight} colors={colors} />
       <HolderColumns owners={owners} mine={mine} bitcoin={colors.bitcoin} />
       <OwnedBitmapGlow heights={ownedHeights} bitcoin={colors.bitcoin} />
       <OnChainModels models={models} bitcoin={colors.bitcoin} />
-      {selectedHeight !== null ? <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} /> : null}
+      {selectedHeight !== null ? (
+        <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} />
+      ) : null}
       <VisitorBeacons cursors={cursors} />
       {cameraMode === "third" ? (
         <SelfAvatar
@@ -950,7 +1228,8 @@ const WorldScene = memo(function WorldScene({
           if (height === null) return;
           // Mouse / touch movement: walking mode treats a tap as a destination,
           // and still opens the district window you tapped.
-          if (cameraMode !== "map" && pose.current) pose.current.target = { x: event.point.x, z: event.point.z };
+          if (cameraMode !== "map" && pose.current)
+            pose.current.target = { x: event.point.x, z: event.point.z };
           onSelect(height);
         }}
       >
@@ -967,8 +1246,12 @@ const WorldScene = memo(function WorldScene({
   );
 });
 
-
-export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, className }: BitmapWorld3DProps) {
+export function BitmapWorld3D({
+  tipHeight,
+  highlight = [],
+  onCursorsChange,
+  className,
+}: BitmapWorld3DProps) {
   const navigate = useNavigate();
   const wallet = useWalletSession();
   const { session } = useAuthSession();
@@ -977,7 +1260,10 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   const [window_, setWindow] = useState<OwnerWindow | null>(null);
   const [hover, setHover] = useState<HoveredDistrict | null>(null);
   const [selected, setSelected] = useState<SelectedDistrict | null>(null);
-  const [command, setCommand] = useState<{ type: CameraMove; nonce: number }>({ type: "mined", nonce: 0 });
+  const [command, setCommand] = useState<{ type: CameraMove; nonce: number }>({
+    type: "mined",
+    nonce: 0,
+  });
   const [dpr, setDpr] = useState(1);
   const [cameraMode, setCameraMode] = useState<CameraMode>("map");
   const exploring = cameraMode !== "map";
@@ -999,11 +1285,14 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     hitAt,
     lastDamage,
     combatLog,
+    selfId,
     attack,
     respawnAt,
     respawnNonce,
     respawn,
   } = useMapCursors();
+  const party = useMapParty(selfId, handle);
+  const [chatMode, setChatMode] = useState<"world" | "party">("world");
 
   const pose = useRef<SelfPose>(createPlayerState(0, CELL, 0));
   const [mySay, setMySay] = useState<string | null>(null);
@@ -1012,19 +1301,26 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     [handle, color, avatarModel, mySay, hp, hitAt, lastDamage],
   );
 
-
   const myAddresses = useMemo(
-    () => [...new Set([
-      wallet?.ordinalsAddress,
-      wallet?.paymentAddress,
-      ...(links.data ?? []).map((link) => link.address),
-    ].filter((address): address is string => Boolean(address)))],
+    () => [
+      ...new Set(
+        [
+          wallet?.ordinalsAddress,
+          wallet?.paymentAddress,
+          ...(links.data ?? []).map((link) => link.address),
+        ].filter((address): address is string => Boolean(address)),
+      ),
+    ],
     [links.data, wallet?.ordinalsAddress, wallet?.paymentAddress],
   );
-  const mine = useMemo(() => new Set(myAddresses.map((address) => address.toLowerCase())), [myAddresses]);
+  const mine = useMemo(
+    () => new Set(myAddresses.map((address) => address.toLowerCase())),
+    [myAddresses],
+  );
   const held = useQuery(heldHeightsQuery(myAddresses));
   const ownedHeights = useMemo(
-    () => [...new Set([...highlight, ...(held.data ?? [])])].filter((height) => height <= tipHeight),
+    () =>
+      [...new Set([...highlight, ...(held.data ?? [])])].filter((height) => height <= tipHeight),
     [held.data, highlight, tipHeight],
   );
 
@@ -1043,7 +1339,16 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     if (spawnedRef.current || !tipHeight) return;
     spawnedRef.current = true;
     placePlayer(pose.current, worldX(tipHeight % GRID), worldZ(Math.floor(tipHeight / GRID)), 0);
-    publish({ col: tipHeight % GRID, row: Math.floor(tipHeight / GRID), height: tipHeight, x: pose.current.x, z: pose.current.z, yaw: 0, movement: "idle", teleport: true });
+    publish({
+      col: tipHeight % GRID,
+      row: Math.floor(tipHeight / GRID),
+      height: tipHeight,
+      x: pose.current.x,
+      z: pose.current.z,
+      yaw: 0,
+      movement: "idle",
+      teleport: true,
+    });
     // once you are standing in the world, walking controls are live right away
     setCameraMode("third");
   }, [tipHeight, publish]);
@@ -1055,10 +1360,18 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     const row = Math.floor(tipHeight / GRID);
     placePlayer(pose.current, worldX(col), worldZ(row), 0);
     pose.current.combat = "alive";
-    publish({ col, row, height: tipHeight, x: pose.current.x, z: pose.current.z, yaw: 0, movement: "idle", teleport: true });
+    publish({
+      col,
+      row,
+      height: tipHeight,
+      x: pose.current.x,
+      z: pose.current.z,
+      yaw: 0,
+      movement: "idle",
+      teleport: true,
+    });
     setCameraMode("third");
   }, [respawnNonce, tipHeight, publish]);
-
 
   // Combat state is mirrored onto the player so movement stops while down.
   useEffect(() => {
@@ -1073,18 +1386,25 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     const id = window.setInterval(() => setNowTick(Date.now()), 250);
     return () => window.clearInterval(id);
   }, [hp]);
-  const respawnIn = hp <= 0 && respawnAt ? Math.max(0, Math.ceil((respawnAt - Math.max(nowTick, Date.now())) / 1000)) : 0;
-
-
+  const respawnIn =
+    hp <= 0 && respawnAt
+      ? Math.max(0, Math.ceil((respawnAt - Math.max(nowTick, Date.now())) / 1000))
+      : 0;
 
   const sendSay = useCallback(() => {
     const body = draft.trim();
     if (!body) return;
-    say(body);
-    setMySay(body);
+    if (chatMode === "party" && party.party) party.say(body);
+    else {
+      say(body);
+      setMySay(body);
+      window.setTimeout(
+        () => setMySay((current) => (current === body ? null : current)),
+        SAY_TTL_MS,
+      );
+    }
     setDraft("");
-    window.setTimeout(() => setMySay((current) => (current === body ? null : current)), SAY_TTL_MS);
-  }, [draft, say]);
+  }, [chatMode, draft, party, say]);
 
   /** Equip, swap or unequip the worn on-chain model — persists per browser. */
   const equipModel = useCallback(
@@ -1094,7 +1414,6 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     },
     [setAvatarModel],
   );
-
 
   /** Basic attack: strike the closest visitor standing within melee range. */
   const cursorsRef = useRef(cursors);
@@ -1120,14 +1439,20 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     }
     if (!best) {
       setAttackTarget("NO TARGET IN RANGE");
-      window.setTimeout(() => setAttackTarget((current) => (current === "NO TARGET IN RANGE" ? null : current)), 1200);
+      window.setTimeout(
+        () => setAttackTarget((current) => (current === "NO TARGET IN RANGE" ? null : current)),
+        1200,
+      );
       return;
     }
     attack(best.id);
     setAttackCooldownUntil(now + ATTACK_COOLDOWN_MS);
     const label = `HIT ${best.handle}`;
     setAttackTarget(label);
-    window.setTimeout(() => setAttackTarget((current) => (current === label ? null : current)), 1200);
+    window.setTimeout(
+      () => setAttackTarget((current) => (current === label ? null : current)),
+      1200,
+    );
   }, [attack, attackCooldownUntil, hp]);
 
   useEffect(() => {
@@ -1141,7 +1466,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
-      if (event.code !== "Space") return;
+      if (event.code !== "KeyF") return;
       event.preventDefault();
       attackNearest();
     };
@@ -1161,17 +1486,24 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     [],
   );
   const minedDepth = Math.max(CELL, (Math.floor(tipHeight / GRID) + 1) * CELL);
-  const selectedModel = selected ? models.data?.find((model) => model.bitmapHeight === selected.height) : undefined;
+  const selectedModel = selected
+    ? models.data?.find((model) => model.bitmapHeight === selected.height)
+    : undefined;
   const selectedIsMine = Boolean(
-    selected && (
-      (selected.owner && mine.has(selected.owner.toLowerCase())) ||
-      (held.data ?? []).includes(selected.height)
-    ),
+    selected &&
+    ((selected.owner && mine.has(selected.owner.toLowerCase())) ||
+      (held.data ?? []).includes(selected.height)),
   );
   const chatLines = useMemo(() => said.slice(-6), [said]);
 
   // Cheap 4Hz readout of the predicted local state — no per-frame re-renders.
-  const [readout, setReadout] = useState({ movement: "idle", chunk: "0:0", height: 0, target: false });
+  const [readout, setReadout] = useState({
+    movement: "idle",
+    chunk: "0:0",
+    height: 0,
+    target: false,
+    airborne: false,
+  });
   useEffect(() => {
     if (!exploring) return;
     const id = window.setInterval(() => {
@@ -1181,9 +1513,16 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
         current.movement === player.movement &&
         current.chunk === player.chunk &&
         current.height === player.height &&
-        current.target === Boolean(player.target)
+        current.target === Boolean(player.target) &&
+        current.airborne === !player.grounded
           ? current
-          : { movement: player.movement, chunk: player.chunk, height: player.height, target: Boolean(player.target) },
+          : {
+              movement: player.movement,
+              chunk: player.chunk,
+              height: player.height,
+              target: Boolean(player.target),
+              airborne: !player.grounded,
+            },
       );
     }, 250);
     return () => window.clearInterval(id);
@@ -1192,11 +1531,22 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   return (
     <div className={className}>
       <div className="mb-2 flex flex-wrap items-center gap-2">
-        <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("mined")}>[ FRAME MINED WORLD ]</Button>
-        <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("full")}>[ VIEW FULL WORLD ]</Button>
-        <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("tip")}>[ FLY TO TIP ]</Button>
-        <Button className="btn-term-ghost" variant="ghost" onClick={attackNearest} disabled={!attackReady}>
-          [ {attackReady ? "ATTACK · SPACE" : `COOLDOWN ${(cooldownRemaining / 1000).toFixed(1)}s`} ]
+        <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("mined")}>
+          [ FRAME MINED WORLD ]
+        </Button>
+        <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("full")}>
+          [ VIEW FULL WORLD ]
+        </Button>
+        <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("tip")}>
+          [ FLY TO TIP ]
+        </Button>
+        <Button
+          className="btn-term-ghost"
+          variant="ghost"
+          onClick={attackNearest}
+          disabled={!attackReady}
+        >
+          [ {attackReady ? "ATTACK · F" : `COOLDOWN ${(cooldownRemaining / 1000).toFixed(1)}s`} ]
         </Button>
         <Button
           className={inventoryOpen ? "btn-term" : "btn-term-ghost"}
@@ -1205,7 +1555,6 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
         >
           {avatarModel ? "[ INVENTORY · WEARING MODEL ]" : "[ INVENTORY ]"}
         </Button>
-
       </div>
 
       <div className="relative h-[70vh] min-h-[420px] w-full overflow-hidden border border-border bg-background">
@@ -1213,7 +1562,12 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
           <Canvas
             dpr={dpr}
             camera={{ position: [0, 108, minedDepth / 2 + 0.01], fov: 50, near: 0.01, far: 350 }}
-            gl={{ antialias: true, powerPreference: "high-performance", stencil: false, depth: true }}
+            gl={{
+              antialias: true,
+              powerPreference: "high-performance",
+              stencil: false,
+              depth: true,
+            }}
             performance={{ min: 0.4 }}
           >
             <WorldScene
@@ -1250,7 +1604,11 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
             aria-label="Map camera"
             aria-pressed={cameraMode === "map"}
             title="Map camera"
-            className={cameraMode === "map" ? "rounded-sm bg-bitcoin text-bitcoin-foreground hover:bg-bitcoin/90" : "rounded-sm text-muted-foreground"}
+            className={
+              cameraMode === "map"
+                ? "rounded-sm bg-bitcoin text-bitcoin-foreground hover:bg-bitcoin/90"
+                : "rounded-sm text-muted-foreground"
+            }
             onClick={() => setCameraMode("map")}
           >
             <MapIcon /> <span className="hidden sm:inline">MAP</span>
@@ -1262,7 +1620,11 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
             aria-label="Third-person camera"
             aria-pressed={cameraMode === "third"}
             title="Third-person camera"
-            className={cameraMode === "third" ? "rounded-sm bg-bitcoin text-bitcoin-foreground hover:bg-bitcoin/90" : "rounded-sm text-muted-foreground"}
+            className={
+              cameraMode === "third"
+                ? "rounded-sm bg-bitcoin text-bitcoin-foreground hover:bg-bitcoin/90"
+                : "rounded-sm text-muted-foreground"
+            }
             onClick={() => setCameraMode("third")}
           >
             <Orbit /> <span className="hidden sm:inline">3RD</span>
@@ -1274,7 +1636,11 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
             aria-label="First-person camera"
             aria-pressed={cameraMode === "first"}
             title="First-person camera"
-            className={cameraMode === "first" ? "rounded-sm bg-bitcoin text-bitcoin-foreground hover:bg-bitcoin/90" : "rounded-sm text-muted-foreground"}
+            className={
+              cameraMode === "first"
+                ? "rounded-sm bg-bitcoin text-bitcoin-foreground hover:bg-bitcoin/90"
+                : "rounded-sm text-muted-foreground"
+            }
             onClick={() => setCameraMode("first")}
           >
             <Eye /> <span className="hidden sm:inline">1ST</span>
@@ -1282,13 +1648,19 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
         </div>
 
         {cameraMode === "first" ? (
-          <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 text-bitcoin/80">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 text-bitcoin/80"
+          >
             <Crosshair className="h-5 w-5" strokeWidth={1.5} />
           </div>
         ) : null}
 
         {/* Your own health, always visible while exploring the world. */}
-        <div data-no-translate className="pointer-events-none absolute left-3 top-3 z-30 flex flex-col gap-1 bg-background/80 px-2 py-1 font-mono text-[10px]">
+        <div
+          data-no-translate
+          className="pointer-events-none absolute left-3 top-3 z-30 flex flex-col gap-1 bg-background/80 px-2 py-1 font-mono text-[10px]"
+        >
           <span className="flex items-center gap-2">
             <span>HP</span>
             <span className="relative block h-[6px] w-[110px] border border-border">
@@ -1300,7 +1672,9 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
                 }}
               />
             </span>
-            <span>{hp}/{MAX_HP}</span>
+            <span>
+              {hp}/{MAX_HP}
+            </span>
           </span>
           {hp <= 0 ? (
             <span className="flex items-center gap-2">
@@ -1316,38 +1690,212 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
           ) : null}
           {attackTarget ? <span className="text-bitcoin">{attackTarget}</span> : null}
           <span className="flex items-center gap-2 text-muted-foreground">
-            <span>DMG {ATTACK_DAMAGE}</span><span>·</span><span>RANGE {(ATTACK_RANGE / CELL).toFixed(0)} DISTRICTS</span><span>·</span>
-            <span className={attackReady ? "text-bitcoin" : "text-muted-foreground"}>{attackReady ? "READY" : `${(cooldownRemaining / 1000).toFixed(1)}s`}</span>
+            <span>DMG {ATTACK_DAMAGE}</span>
+            <span>·</span>
+            <span>RANGE {(ATTACK_RANGE / CELL).toFixed(0)} DISTRICTS</span>
+            <span>·</span>
+            <span className={attackReady ? "text-bitcoin" : "text-muted-foreground"}>
+              {attackReady ? "READY" : `${(cooldownRemaining / 1000).toFixed(1)}s`}
+            </span>
           </span>
           {exploring ? (
             <>
               <span className="text-muted-foreground">
-                {cameraMode === "first" ? "FIRST PERSON" : "THIRD PERSON"} · {readout.movement.toUpperCase()} · REGION {readout.chunk} · {readout.height.toLocaleString("en-US")}.BITMAP
+                {cameraMode === "first" ? "FIRST PERSON" : "THIRD PERSON"} ·{" "}
+                {readout.movement.toUpperCase()} · REGION {readout.chunk} ·{" "}
+                {readout.height.toLocaleString("en-US")}.BITMAP
                 {readout.target ? " · WALKING TO MARK" : ""}
+                {readout.airborne ? " · JUMPING" : ""}
               </span>
               <span className="text-muted-foreground">
-                WASD / ARROWS · SHIFT SPRINT · {cameraMode === "first" ? "CLICK WORLD FOR MOUSE LOOK · ESC RELEASE" : "CLICK OR TAP TO WALK"} · SPACE ATTACK
+                WASD / ARROWS · SHIFT SPRINT · SPACE JUMP ·{" "}
+                {cameraMode === "first"
+                  ? "CLICK WORLD FOR MOUSE LOOK · ESC RELEASE"
+                  : "CLICK OR TAP TO WALK"}{" "}
+                · F ATTACK
               </span>
             </>
           ) : null}
-
         </div>
 
-        <section data-no-translate aria-label="Combat log" className="absolute bottom-3 left-3 z-30 w-[min(360px,calc(100%-1.5rem))] border border-border bg-background/90 font-mono">
+        <section
+          data-no-translate
+          aria-label="Party"
+          className="absolute right-3 top-14 z-30 w-[min(250px,calc(100%-1.5rem))] border border-border bg-background/90 font-mono text-[10px]"
+        >
+          <header className="flex items-center justify-between border-b border-border px-2 py-1">
+            <span>
+              PARTY · {party.party ? `${party.party.members.length}/${PARTY_MAX_MEMBERS}` : "SOLO"}
+            </span>
+            {party.party ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 rounded-sm px-1 text-[9px] text-muted-foreground"
+                onClick={party.leave}
+              >
+                LEAVE
+              </Button>
+            ) : null}
+          </header>
+          {party.invites.map((invite) => (
+            <div
+              key={`${invite.partyId}-${invite.leaderId}`}
+              className="border-b border-bitcoin px-2 py-1.5"
+            >
+              <p className="mb-1 text-bitcoin">{invite.leaderHandle} INVITED YOU</p>
+              <div className="flex gap-1">
+                <Button
+                  size="sm"
+                  className="h-6 rounded-sm px-2 text-[9px]"
+                  onClick={() => party.respond(invite, true)}
+                >
+                  ACCEPT
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 rounded-sm px-2 text-[9px]"
+                  onClick={() => party.respond(invite, false)}
+                >
+                  DECLINE
+                </Button>
+              </div>
+            </div>
+          ))}
+          {party.party ? (
+            <div>
+              <ul className="p-1">
+                {party.party.members.map((member) => {
+                  const isLeader = party.party?.leaderId === selfId;
+                  const cursor =
+                    member.id === selfId ? null : cursors.find((item) => item.id === member.id);
+                  const memberHp = member.id === selfId ? hp : (cursor?.hp ?? 0);
+                  return (
+                    <li
+                      key={member.id}
+                      className="flex items-center gap-1 border-b border-border/60 px-1 py-1 last:border-0"
+                    >
+                      <span className="min-w-0 flex-1 truncate">
+                        {member.id === party.party?.leaderId ? "◆ " : ""}
+                        {member.handle}
+                        {member.id === selfId ? " (YOU)" : ""}
+                      </span>
+                      <span className={memberHp > 0 ? "text-foreground" : "text-bitcoin"}>
+                        {memberHp} HP
+                      </span>
+                      {isLeader && member.id !== selfId ? (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-5 rounded-sm px-1 text-[8px] text-bitcoin"
+                          onClick={() => party.kick(member.id)}
+                        >
+                          EXPEL
+                        </Button>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+              {party.party.leaderId === selfId && party.party.members.length < PARTY_MAX_MEMBERS ? (
+                <div className="border-t border-border p-1">
+                  <p className="px-1 py-1 text-muted-foreground">ADD MEMBER</p>
+                  {cursors
+                    .filter(
+                      (cursor) => !party.party?.members.some((member) => member.id === cursor.id),
+                    )
+                    .slice(0, 6)
+                    .map((cursor) => (
+                      <div
+                        key={cursor.id}
+                        className="flex items-center justify-between gap-1 px-1 py-1"
+                      >
+                        <span className="truncate">{cursor.handle}</span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-5 rounded-sm px-1 text-[8px] text-bitcoin"
+                          onClick={() => party.invite(cursor.id)}
+                        >
+                          INVITE
+                        </Button>
+                      </div>
+                    ))}
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <div className="max-h-32 overflow-y-auto p-1">
+              <p className="px-1 py-1 text-muted-foreground">ONLINE · INVITE UP TO 2</p>
+              {cursors.length ? (
+                cursors.slice(0, 8).map((cursor) => (
+                  <div
+                    key={cursor.id}
+                    className="flex items-center justify-between gap-1 px-1 py-1"
+                  >
+                    <span className="truncate">{cursor.handle}</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-5 rounded-sm px-1 text-[8px] text-bitcoin"
+                      onClick={() => party.invite(cursor.id)}
+                    >
+                      INVITE
+                    </Button>
+                  </div>
+                ))
+              ) : (
+                <p className="px-1 py-1 text-muted-foreground">NO OTHER PLAYERS ONLINE</p>
+              )}
+            </div>
+          )}
+        </section>
+
+        <section
+          data-no-translate
+          aria-label="Combat log"
+          className="absolute bottom-3 left-3 z-30 w-[min(360px,calc(100%-1.5rem))] border border-border bg-background/90 font-mono"
+        >
           <header className="flex items-center justify-between border-b border-border px-2 py-1 text-[9px] text-muted-foreground">
-            <span>COMBAT LOG · WORLD</span><span>{combatLog.length} EVENTS</span>
+            <span>COMBAT LOG · WORLD</span>
+            <span>{combatLog.length} EVENTS</span>
           </header>
           <ol aria-live="polite" className="max-h-28 overflow-y-auto px-2 py-1 text-[10px]">
-            {combatLog.length ? combatLog.slice(-6).reverse().map((entry) => (
-              <li key={entry.id} className="flex gap-1 border-b border-border/60 py-1 last:border-0">
-                <span className="text-muted-foreground">{new Date(entry.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>
-                <span className="truncate"><b className="text-foreground">{entry.attacker}</b> hit <b className="text-foreground">{entry.target}</b> for <b className="text-bitcoin">{entry.damage}</b>{entry.knockout ? " · KNOCKOUT" : ""}</span>
-              </li>
-            )) : <li className="py-2 text-muted-foreground">NO HITS YET</li>}
+            {combatLog.length ? (
+              combatLog
+                .slice(-6)
+                .reverse()
+                .map((entry) => (
+                  <li
+                    key={entry.id}
+                    className="flex gap-1 border-b border-border/60 py-1 last:border-0"
+                  >
+                    <span className="text-muted-foreground">
+                      {new Date(entry.at).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                      })}
+                    </span>
+                    <span className="truncate">
+                      <b className="text-foreground">{entry.attacker}</b> hit{" "}
+                      <b className="text-foreground">{entry.target}</b> for{" "}
+                      <b className="text-bitcoin">{entry.damage}</b>
+                      {entry.knockout ? " · KNOCKOUT" : ""}
+                    </span>
+                  </li>
+                ))
+            ) : (
+              <li className="py-2 text-muted-foreground">NO HITS YET</li>
+            )}
           </ol>
         </section>
 
-        <div aria-hidden className="pointer-events-none absolute inset-0 z-20 ring-1 ring-inset ring-bitcoin/30 shadow-[inset_0_0_48px_color-mix(in_oklab,var(--bitcoin)_12%,transparent)]" />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-20 ring-1 ring-inset ring-bitcoin/30 shadow-[inset_0_0_48px_color-mix(in_oklab,var(--bitcoin)_12%,transparent)]"
+        />
 
         {inventoryOpen ? (
           <AvatarInventory
@@ -1358,14 +1906,52 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
           />
         ) : null}
 
-
         {/* Talk while you explore — ephemeral world chat with speech bubbles over avatars. */}
         <div className="absolute bottom-16 left-1/2 z-30 flex w-[min(420px,calc(100%-1.5rem))] -translate-x-1/2 flex-col gap-1">
-          {chatLines.length > 0 ? (
-            <div data-no-translate className="flex flex-col gap-[2px] bg-background/70 p-1 font-mono text-[10px]">
-              {chatLines.map((line) => (
+          <div className="flex gap-1">
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className={
+                chatMode === "world"
+                  ? "h-6 rounded-sm bg-bitcoin px-2 text-[9px] text-bitcoin-foreground"
+                  : "h-6 rounded-sm px-2 text-[9px]"
+              }
+              onClick={() => setChatMode("world")}
+            >
+              WORLD
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={!party.party}
+              className={
+                chatMode === "party"
+                  ? "h-6 rounded-sm bg-bitcoin px-2 text-[9px] text-bitcoin-foreground"
+                  : "h-6 rounded-sm px-2 text-[9px]"
+              }
+              onClick={() => setChatMode("party")}
+            >
+              PARTY
+            </Button>
+          </div>
+          {(chatMode === "party" ? party.messages : chatLines).length > 0 ? (
+            <div
+              data-no-translate
+              className="flex flex-col gap-[2px] bg-background/70 p-1 font-mono text-[10px]"
+            >
+              {(chatMode === "party" ? party.messages.slice(-6) : chatLines).map((line) => (
                 <p key={line.id} className="truncate">
-                  <span style={{ color: line.color }}>{line.handle}</span>{" "}
+                  <span
+                    className={chatMode === "party" ? "text-bitcoin" : ""}
+                    style={
+                      chatMode === "world" && "color" in line ? { color: line.color } : undefined
+                    }
+                  >
+                    {line.handle}
+                  </span>{" "}
                   <span className="text-foreground">{line.body}</span>
                 </p>
               ))}
@@ -1380,16 +1966,21 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
           >
             <input
               value={draft}
-              maxLength={SAY_MAX_LENGTH}
+              maxLength={chatMode === "party" ? PARTY_CHAT_MAX_LENGTH : SAY_MAX_LENGTH}
               onChange={(event) => setDraft(event.target.value)}
-              placeholder="SAY SOMETHING TO EVERYONE IN THE WORLD…"
-              aria-label="World chat message"
+              placeholder={
+                chatMode === "party"
+                  ? "MESSAGE YOUR PARTY…"
+                  : "SAY SOMETHING TO EVERYONE IN THE WORLD…"
+              }
+              aria-label={chatMode === "party" ? "Party chat message" : "World chat message"}
               className="min-w-0 flex-1 border border-border bg-background/90 px-2 py-1 font-mono text-[11px] text-foreground outline-none placeholder:text-muted-foreground focus:border-bitcoin"
             />
-            <Button className="btn-term" type="submit" disabled={!draft.trim()}>[ SAY ]</Button>
+            <Button className="btn-term" type="submit" disabled={!draft.trim()}>
+              [ {chatMode === "party" ? "PARTY" : "SAY"} ]
+            </Button>
           </form>
         </div>
-
 
         {hover ? (
           <div
@@ -1397,9 +1988,13 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
             className="pointer-events-none absolute z-30 -translate-y-full border border-bitcoin bg-background/95 px-2 py-1 font-mono text-[10px]"
             style={{ left: hover.x + 10, top: hover.y - 8 }}
           >
-            <div>{hover.height}.bitmap · {clubOf(hover.height).short}</div>
+            <div>
+              {hover.height}.bitmap · {clubOf(hover.height).short}
+            </div>
             {owners.data?.get(hover.height) ? (
-              <div className="mt-0.5">{mine.has((owners.data.get(hover.height) ?? "").toLowerCase()) ? "YOURS" : "HELD"}</div>
+              <div className="mt-0.5">
+                {mine.has((owners.data.get(hover.height) ?? "").toLowerCase()) ? "YOURS" : "HELD"}
+              </div>
             ) : null}
           </div>
         ) : null}
@@ -1431,11 +2026,19 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
                 {selected.height > tipHeight
                   ? "NOT MINED YET"
                   : selected.owner
-                    ? (mine.has(selected.owner.toLowerCase()) ? "YOURS" : selected.owner)
+                    ? mine.has(selected.owner.toLowerCase())
+                      ? "YOURS"
+                      : selected.owner
                     : "NO DATA YET"}
               </dd>
               <dt className="text-muted-foreground">MODEL</dt>
-              <dd>{selectedModel ? "ON-CHAIN GLB VISIBLE" : window_ && models.isPending ? "SCANNING…" : "NO MODEL"}</dd>
+              <dd>
+                {selectedModel
+                  ? "ON-CHAIN GLB VISIBLE"
+                  : window_ && models.isPending
+                    ? "SCANNING…"
+                    : "NO MODEL"}
+              </dd>
             </dl>
             {selectedIsMine && session ? (
               <BitmapModelPlacement height={selected.height} canEdit compact />
@@ -1443,7 +2046,9 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
             {selected.height <= tipHeight ? (
               <Button
                 className="btn-term mt-4 w-full"
-                onClick={() => navigate({ to: "/bitmap/$block", params: { block: String(selected.height) } })}
+                onClick={() =>
+                  navigate({ to: "/bitmap/$block", params: { block: String(selected.height) } })
+                }
               >
                 OPEN BITMAP <ArrowUpRight />
               </Button>
@@ -1452,11 +2057,34 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
         ) : null}
 
         <div className="pointer-events-none absolute bottom-2 left-2 z-30 flex max-w-[calc(100%-1rem)] flex-wrap gap-x-3 gap-y-1 bg-background/75 px-2 py-1 font-mono text-[10px] text-muted-foreground">
-          <span>1,000,000 DISTRICTS LOADED · DRAG TO PAN · RIGHT DRAG TO ORBIT · SCROLL TO FLY · CLICK A BLOCK</span>
-          <span data-no-translate>{window_ ? (owners.isPending ? "SCANNING HOLDERS…" : `${owners.data?.size ?? 0} HOLDERS IN RANGE`) : "FLY CLOSER FOR HOLDER COLOURS"}</span>
-          <span data-no-translate>{cursors.length > 0 ? `${cursors.length} SEARCHING NOW` : "NOBODY ELSE SEARCHING"}</span>
-          <span data-no-translate>{window_ ? `${models.data?.length ?? 0} ON-CHAIN MODELS IN RANGE` : "FLY CLOSER FOR MODELS"}</span>
-          {myAddresses.length > 0 ? <span data-no-translate className="text-bitcoin">{held.isPending ? "LOCATING YOUR BITMAPS…" : `${ownedHeights.length} YOUR BITMAPS · ORANGE BEACONS`}</span> : <span>CONNECT OR LINK WALLET TO HIGHLIGHT YOUR BITMAPS</span>}
+          <span>
+            1,000,000 DISTRICTS LOADED · DRAG TO PAN · RIGHT DRAG TO ORBIT · SCROLL TO FLY · CLICK A
+            BLOCK
+          </span>
+          <span data-no-translate>
+            {window_
+              ? owners.isPending
+                ? "SCANNING HOLDERS…"
+                : `${owners.data?.size ?? 0} HOLDERS IN RANGE`
+              : "FLY CLOSER FOR HOLDER COLOURS"}
+          </span>
+          <span data-no-translate>
+            {cursors.length > 0 ? `${cursors.length} SEARCHING NOW` : "NOBODY ELSE SEARCHING"}
+          </span>
+          <span data-no-translate>
+            {window_
+              ? `${models.data?.length ?? 0} ON-CHAIN MODELS IN RANGE`
+              : "FLY CLOSER FOR MODELS"}
+          </span>
+          {myAddresses.length > 0 ? (
+            <span data-no-translate className="text-bitcoin">
+              {held.isPending
+                ? "LOCATING YOUR BITMAPS…"
+                : `${ownedHeights.length} YOUR BITMAPS · ORANGE BEACONS`}
+            </span>
+          ) : (
+            <span>CONNECT OR LINK WALLET TO HIGHLIGHT YOUR BITMAPS</span>
+          )}
         </div>
       </div>
     </div>

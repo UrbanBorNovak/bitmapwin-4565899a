@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { avatarModelInscription, colorForVisitor, mapHandle, mapVisitorId } from "@/lib/map-identity";
+import {
+  avatarModelInscription,
+  colorForVisitor,
+  mapHandle,
+  mapVisitorId,
+} from "@/lib/map-identity";
 import { cellX, cellZ, clampPeerStep, WORLD_CELL, type MovementState } from "@/lib/player-state";
 
 /**
@@ -19,6 +24,7 @@ export type PoseReport = {
   /** exact world position, so peers interpolate instead of hopping cell to cell */
   x?: number;
   z?: number;
+  y?: number;
   yaw?: number;
   movement?: MovementState;
   /** spawn / respawn — the only legitimate teleport */
@@ -33,6 +39,7 @@ export type MapCursor = {
   /** validated world position used for interpolation */
   x: number;
   z: number;
+  y: number;
   yaw: number;
   movement: MovementState;
   color: string;
@@ -105,7 +112,6 @@ export function useMapCursors(enabled = true) {
   const modelRef = useRef(model);
   modelRef.current = model;
 
-
   useEffect(() => {
     if (!enabled) return;
     const peers = new Map<string, MapCursor>();
@@ -115,7 +121,8 @@ export function useMapCursors(enabled = true) {
       const now = Date.now();
       for (const [id, cursor] of peers) {
         if (now - cursor.at > STALE_MS) peers.delete(id);
-        else if (cursor.say && now - cursor.sayAt > SAY_TTL_MS) peers.set(id, { ...cursor, say: null });
+        else if (cursor.say && now - cursor.sayAt > SAY_TTL_MS)
+          peers.set(id, { ...cursor, say: null });
       }
       setCursors(Array.from(peers.values()));
     };
@@ -130,6 +137,7 @@ export function useMapCursors(enabled = true) {
           height?: number;
           x?: number;
           z?: number;
+          y?: number;
           yaw?: number;
           movement?: MovementState;
           teleport?: boolean;
@@ -166,6 +174,10 @@ export function useMapCursors(enabled = true) {
             height: p.height,
             x: position.x,
             z: position.z,
+            y:
+              typeof p.y === "number" && Number.isFinite(p.y)
+                ? Math.max(0, Math.min(WORLD_CELL * 8, p.y))
+                : (previous?.y ?? 0),
             yaw: typeof p.yaw === "number" && Number.isFinite(p.yaw) ? p.yaw : (previous?.yaw ?? 0),
             movement: p.movement ?? previous?.movement ?? "idle",
             color: colorForVisitor(p.id),
@@ -173,7 +185,10 @@ export function useMapCursors(enabled = true) {
             model: typeof p.model === "string" && p.model ? p.model : null,
             say: previous?.say ?? null,
             sayAt: previous?.sayAt ?? 0,
-            hp: typeof p.hp === "number" ? Math.max(0, Math.min(MAX_HP, p.hp)) : (previous?.hp ?? MAX_HP),
+            hp:
+              typeof p.hp === "number"
+                ? Math.max(0, Math.min(MAX_HP, p.hp))
+                : (previous?.hp ?? MAX_HP),
             hitAt: previous?.hitAt ?? 0,
             lastDamage: previous?.lastDamage ?? 0,
             at: now,
@@ -193,24 +208,35 @@ export function useMapCursors(enabled = true) {
         const color = colorForVisitor(p.id);
         const name = typeof p.handle === "string" && p.handle ? p.handle : "ANON";
         const existing = peers.get(p.id);
-        if (existing) peers.set(p.id, { ...existing, say: body, sayAt: Date.now(), at: Date.now() });
+        if (existing)
+          peers.set(p.id, { ...existing, say: body, sayAt: Date.now(), at: Date.now() });
         setSaid((current) =>
-          [...current, { id: `${p.id}-${Date.now()}`, handle: name, color, body, at: Date.now() }].slice(-30),
+          [
+            ...current,
+            { id: `${p.id}-${Date.now()}`, handle: name, color, body, at: Date.now() },
+          ].slice(-30),
         );
         flush();
       })
       .on("broadcast", { event: "hit" }, ({ payload }) => {
-        const p = payload as { id?: string; from?: string; to?: string; damage?: number; at?: number };
+        const p = payload as {
+          id?: string;
+          from?: string;
+          to?: string;
+          damage?: number;
+          at?: number;
+        };
         if (!p?.from || !p?.to) return;
         const damage = Math.max(0, Math.min(MAX_HP, Number(p.damage) || ATTACK_DAMAGE));
         const now = Date.now();
         const attacker = peers.get(p.from);
-        const target = p.to === selfId && lastCell
-          ? {
-              x: typeof lastCell.x === "number" ? lastCell.x : cellX(lastCell.col),
-              z: typeof lastCell.z === "number" ? lastCell.z : cellZ(lastCell.row),
-            }
-          : peers.get(p.to);
+        const target =
+          p.to === selfId && lastCell
+            ? {
+                x: typeof lastCell.x === "number" ? lastCell.x : cellX(lastCell.col),
+                z: typeof lastCell.z === "number" ? lastCell.z : cellZ(lastCell.row),
+              }
+            : peers.get(p.to);
         if (!attacker || !target) return;
         if (Math.hypot(attacker.x - target.x, attacker.z - target.z) > ATTACK_RANGE * 1.35) return;
         const previousAttack = lastAttackByPlayer.get(p.from) ?? 0;
@@ -218,14 +244,19 @@ export function useMapCursors(enabled = true) {
         lastAttackByPlayer.set(p.from, now);
         const targetHandle = p.to === selfId ? handle : (peers.get(p.to)?.handle ?? "ANON");
         const targetHp = p.to === selfId ? hpRef.current : (peers.get(p.to)?.hp ?? MAX_HP);
-        setCombatLog((current) => [...current, {
-          id: typeof p.id === "string" ? p.id : `${p.from}-${now}`,
-          attacker: attacker.handle,
-          target: targetHandle,
-          damage,
-          knockout: targetHp - damage <= 0,
-          at: now,
-        }].slice(-40));
+        setCombatLog((current) =>
+          [
+            ...current,
+            {
+              id: typeof p.id === "string" ? p.id : `${p.from}-${now}`,
+              attacker: attacker.handle,
+              target: targetHandle,
+              damage,
+              knockout: targetHp - damage <= 0,
+              at: now,
+            },
+          ].slice(-40),
+        );
         if (p.to === selfId) {
           // We took the hit: drop our own health and tell everyone the new value.
           const next = Math.max(0, hpRef.current - damage);
@@ -243,7 +274,13 @@ export function useMapCursors(enabled = true) {
         } else {
           const target = peers.get(p.to);
           if (target) {
-            peers.set(p.to, { ...target, hp: Math.max(0, target.hp - damage), hitAt: now, lastDamage: damage, at: now });
+            peers.set(p.to, {
+              ...target,
+              hp: Math.max(0, target.hp - damage),
+              hitAt: now,
+              lastDamage: damage,
+              at: now,
+            });
             flush();
           }
         }
@@ -296,11 +333,21 @@ export function useMapCursors(enabled = true) {
     sayRef.current = (body) => {
       const clean = body.trim().slice(0, SAY_MAX_LENGTH);
       if (!clean) return;
-      void channel.send({ type: "broadcast", event: "say", payload: { id: selfId, handle, body: clean } });
+      void channel.send({
+        type: "broadcast",
+        event: "say",
+        payload: { id: selfId, handle, body: clean },
+      });
       setSaid((current) =>
         [
           ...current,
-          { id: `${selfId}-${Date.now()}`, handle, color: colorForVisitor(selfId), body: clean, at: Date.now() },
+          {
+            id: `${selfId}-${Date.now()}`,
+            handle,
+            color: colorForVisitor(selfId),
+            body: clean,
+            at: Date.now(),
+          },
         ].slice(-30),
       );
     };
@@ -323,15 +370,26 @@ export function useMapCursors(enabled = true) {
         payload: { id: eventId, from: selfId, to: targetId, damage: ATTACK_DAMAGE, at: now },
       });
       const nextHp = Math.max(0, target.hp - ATTACK_DAMAGE);
-      peers.set(targetId, { ...target, hp: nextHp, hitAt: now, lastDamage: ATTACK_DAMAGE, at: now });
-      setCombatLog((current) => [...current, {
-        id: eventId,
-        attacker: handle,
-        target: target.handle,
-        damage: ATTACK_DAMAGE,
-        knockout: nextHp === 0,
+      peers.set(targetId, {
+        ...target,
+        hp: nextHp,
+        hitAt: now,
+        lastDamage: ATTACK_DAMAGE,
         at: now,
-      }].slice(-40));
+      });
+      setCombatLog((current) =>
+        [
+          ...current,
+          {
+            id: eventId,
+            attacker: handle,
+            target: target.handle,
+            damage: ATTACK_DAMAGE,
+            knockout: nextHp === 0,
+            at: now,
+          },
+        ].slice(-40),
+      );
       flush();
     };
 
@@ -374,7 +432,6 @@ export function useMapCursors(enabled = true) {
     };
   }, [enabled, selfId, handle]);
 
-
   return {
     selfId,
     handle,
@@ -395,6 +452,5 @@ export function useMapCursors(enabled = true) {
     attack: (targetId: string) => attackRef.current(targetId),
     say: (body: string) => sayRef.current(body),
     publish: (pose: PoseReport | null) => sendRef.current(pose),
-
   };
 }
