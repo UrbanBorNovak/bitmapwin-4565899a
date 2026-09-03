@@ -194,11 +194,11 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
       const x = worldX(height % GRID);
       const z = worldZ(Math.floor(height / GRID));
       dummy.position.set(x, AVATAR_U * 1.6, z);
-      dummy.scale.set(CELL * 1.5, 0.3, CELL * 1.5);
+      dummy.scale.set(CELL * 1.5, AVATAR_U * 3, CELL * 1.5);
       dummy.updateMatrix();
       core.setMatrixAt(index, dummy.matrix);
       dummy.position.set(x, AVATAR_U * 1.6, z);
-      dummy.scale.set(CELL * 3.2, 0.34, CELL * 3.2);
+      dummy.scale.set(CELL * 3.2, AVATAR_U * 3.4, CELL * 3.2);
       dummy.updateMatrix();
       aura.setMatrixAt(index, dummy.matrix);
     });
