@@ -163,6 +163,34 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
     if (tipHeight > 0) fitMined();
   }, [tipHeight, fitMined]);
 
+  // Wheel zoom needs a non-passive listener, otherwise preventDefault is ignored
+  // and the page scrolls away while zooming.
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const r = wrap.getBoundingClientRect();
+      const px = e.clientX - r.left;
+      const py = e.clientY - r.top;
+      const prev = viewRef.current;
+      const factor = Math.exp(-e.deltaY * 0.0015);
+      const scale = Math.min(24, Math.max(0.02, prev.scale * factor));
+      const k = scale / prev.scale;
+      viewRef.current = clamp(
+        { scale, x: px - (px - prev.x) * k, y: py - (py - prev.y) * k },
+        wrap.clientWidth,
+        wrap.clientHeight,
+      );
+      setZoomLabel(scale);
+      draw();
+    };
+    wrap.addEventListener("wheel", onWheel, { passive: false });
+    return () => wrap.removeEventListener("wheel", onWheel);
+  }, [draw]);
+
+
+
 
 
   const cellAt = (clientX: number, clientY: number) => {
