@@ -146,11 +146,10 @@ export function useMapCursors(enabled = true) {
           setHitAt(Date.now());
           if (lastCell) push(lastCell);
           if (next === 0) {
-            setTimeout(() => {
-              hpRef.current = MAX_HP;
-              setHp(MAX_HP);
-              if (lastCell) push(lastCell);
-            }, RESPAWN_MS);
+            // Killed: start the respawn countdown, then bring us back at full health.
+            setRespawnAt(Date.now() + RESPAWN_MS);
+            if (respawnTimer) clearTimeout(respawnTimer);
+            respawnTimer = setTimeout(() => respawnRef.current(), RESPAWN_MS);
           }
         } else {
           const target = peers.get(p.to);
@@ -160,6 +159,7 @@ export function useMapCursors(enabled = true) {
           }
         }
       })
+
       .subscribe();
 
     let last = 0;
