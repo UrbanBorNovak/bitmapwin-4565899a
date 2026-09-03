@@ -75,7 +75,8 @@ export type PlayerState = {
   target: { x: number; z: number } | null;
 };
 
-const clamp = (value: number, min: number, max: number) => (value < min ? min : value > max ? max : value);
+const clamp = (value: number, min: number, max: number) =>
+  value < min ? min : value > max ? max : value;
 
 export const cellX = (col: number) => (col + 0.5) * WORLD_CELL - WORLD_UNITS / 2;
 export const cellZ = (row: number) => (row + 0.5) * WORLD_CELL;
@@ -213,7 +214,11 @@ export function stepPlayer(player: PlayerState, intent: MoveIntent, rawDelta: nu
   player.vx += (wantX - player.vx) * blend;
   player.vz += (wantZ - player.vz) * blend;
 
-  player.x = clamp(player.x + player.vx * delta, -WORLD_UNITS / 2 + WORLD_CELL, WORLD_UNITS / 2 - WORLD_CELL);
+  player.x = clamp(
+    player.x + player.vx * delta,
+    -WORLD_UNITS / 2 + WORLD_CELL,
+    WORLD_UNITS / 2 - WORLD_CELL,
+  );
   player.z = clamp(player.z + player.vz * delta, WORLD_CELL, WORLD_UNITS - WORLD_CELL);
 
   const speed = Math.hypot(player.vx, player.vz);
@@ -225,8 +230,11 @@ export function stepPlayer(player: PlayerState, intent: MoveIntent, rawDelta: nu
     player.movement = speed > MOVE.walkSpeed * 1.25 ? "run" : "walk";
   }
   if (!player.grounded) player.animation = "jump";
-  else if (player.combat === "hurt" || player.combat === "attacking") player.animation = player.combat === "hurt" ? "hurt" : "attack";
-  else player.animation = player.movement === "run" ? "run" : player.movement === "walk" ? "walk" : "idle";
+  else if (player.combat === "hurt" || player.combat === "attacking")
+    player.animation = player.combat === "hurt" ? "hurt" : "attack";
+  else
+    player.animation =
+      player.movement === "run" ? "run" : player.movement === "walk" ? "walk" : "idle";
 
   syncCell(player);
   return player;
@@ -236,7 +244,8 @@ export function stepPlayer(player: PlayerState, intent: MoveIntent, rawDelta: nu
 export function damp(current: number, goal: number, rate: number, delta: number, wrap = false) {
   let difference = goal - current;
   if (wrap) {
-    difference = ((difference + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+    difference =
+      ((((difference + Math.PI) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) - Math.PI;
   }
   return current + difference * (1 - Math.exp(-rate * delta));
 }
