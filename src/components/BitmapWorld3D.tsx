@@ -991,10 +991,10 @@ function PlayerCameraRig({
         player.z + Math.cos(player.yaw) * horizontal,
       );
     } else {
-      const back = AVATAR_U * (11.5 + (speed / (MOVE.walkSpeed * MOVE.sprint)) * 2.5);
+      const back = AVATAR_U * (6.5 + (speed / (MOVE.walkSpeed * MOVE.sprint)) * 2.5);
       cameraTarget.current.set(
         player.x - Math.sin(player.yaw) * back,
-        player.y + AVATAR_U * 7.2,
+        player.y + AVATAR_U * 3.4,
         player.z - Math.cos(player.yaw) * back,
       );
       cameraLook.current.set(
