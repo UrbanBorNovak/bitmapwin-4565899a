@@ -228,7 +228,11 @@ const DistrictBlocks = memo(function DistrictBlocks({ tipHeight, colors }: { tip
             float shade = hash(districtId);
             float club = districtId < 1000.0 ? 0.0 : districtId < 10000.0 ? 1.0 : districtId < 100000.0 ? 2.0 : 3.0;
             float edge = min(min(cellUv.x, 1.0 - cellUv.x), min(cellUv.y, 1.0 - cellUv.y));
-            float inset = smoothstep(0.025, 0.14, edge);
+            // Cell footprint in pixels: when a district is sub-pixel, dissolve the
+            // per-cell inset instead of shimmering (cheaper and stable while zoomed out).
+            float px = max(fwidth(vUv.x), fwidth(vUv.y)) * uGrid;
+            float detail = 1.0 - smoothstep(0.35, 1.1, px);
+            float inset = mix(1.0, smoothstep(0.025, 0.14, edge), detail);
             vec3 minedColor = mix(uMined * (0.45 + shade * 0.28), uBitcoin, 0.12 + club * 0.035);
             vec3 color = mix(uFuture * 0.32, minedColor, mined);
             gl_FragColor = vec4(color * (0.34 + inset * 0.92), 1.0);
@@ -237,7 +241,7 @@ const DistrictBlocks = memo(function DistrictBlocks({ tipHeight, colors }: { tip
       />
     </mesh>
   );
-}
+});
 
 function SelectedBlock({ height, bitcoin }: { height: number; bitcoin: string }) {
   const blockHeight = districtHeight(height);
