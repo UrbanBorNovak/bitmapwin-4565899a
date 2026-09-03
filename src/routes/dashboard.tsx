@@ -18,6 +18,9 @@ import { clubOf } from "@/lib/clubs";
 import { followerCountsQuery } from "@/lib/follows";
 import { BitmapManager } from "@/components/BitmapManager";
 import { ManagerAI } from "@/components/ManagerAI";
+import { FloorRanking } from "@/components/FloorRanking";
+import { OpportunityFunnel } from "@/components/OpportunityFunnel";
+import { registryBaseQuery } from "@/lib/registry";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -209,6 +212,14 @@ function DashboardPage() {
         />
       </div>
 
+
+      <div className="mt-8">
+        <OpportunityFunnel parcels={marketParcels} />
+      </div>
+
+      <div className="mt-8">
+        <FloorRanking parcels={marketListed} pending={market.isPending} />
+      </div>
 
       <div className="mt-8">
         <ReferralPanel />

@@ -15,9 +15,7 @@ import { TrendingParcels } from "@/components/TrendingParcels";
 import { CLUBS, inClub, type ClubId } from "@/lib/clubs";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapMarketChart } from "@/components/BitmapMarketChart";
-import { FloorRanking } from "@/components/FloorRanking";
 import { TrendExplorer } from "@/components/TrendExplorer";
-import { OpportunityFunnel } from "@/components/OpportunityFunnel";
 
 import { SalesLog } from "@/components/SalesLog";
 import { TradeCrawlerStatus } from "@/components/TradeCrawlerStatus";
