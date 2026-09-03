@@ -26,6 +26,9 @@ const OWNER_CELL_BUDGET = 24_000;
 
 /** Everything except the flat picking plane opts out of raycasting — one plane hit test per pointer move. */
 const noRaycast = () => {};
+/** Stable empty fallbacks so memoized scene props don't change identity every render. */
+const EMPTY_OWNERS: Map<number, string> = new Map();
+const EMPTY_MODELS: BitmapModel[] = [];
 
 type CameraMove = "mined" | "full" | "tip";
 type HoveredDistrict = { height: number; x: number; y: number };
