@@ -930,6 +930,26 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     publish({ col: tipHeight % GRID, row: Math.floor(tipHeight / GRID), height: tipHeight });
   }, [tipHeight, publish]);
 
+  // Killed: teleport back to the spawn point at the chain tip on every respawn.
+  useEffect(() => {
+    if (!respawnNonce || !tipHeight) return;
+    const col = tipHeight % GRID;
+    const row = Math.floor(tipHeight / GRID);
+    pose.current = { x: worldX(col), z: worldZ(row), yaw: 0 };
+    publish({ col, row, height: tipHeight });
+  }, [respawnNonce, tipHeight, publish]);
+
+  // Countdown ticker, only while knocked out.
+  const [nowTick, setNowTick] = useState(0);
+  useEffect(() => {
+    if (hp > 0) return;
+    const id = window.setInterval(() => setNowTick(Date.now()), 250);
+    return () => window.clearInterval(id);
+  }, [hp]);
+  const respawnIn = hp <= 0 && respawnAt ? Math.max(0, Math.ceil((respawnAt - Math.max(nowTick, Date.now())) / 1000)) : 0;
+
+
+
   const sendSay = useCallback(() => {
     const body = draft.trim();
     if (!body) return;
