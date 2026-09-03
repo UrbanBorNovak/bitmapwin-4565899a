@@ -1364,20 +1364,33 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
             </div>
           ))}
           {party.party ? (
-            <ul className="p-1">
-              {party.party.members.map((member) => {
-                const isLeader = party.party?.leaderId === selfId;
-                const cursor = member.id === selfId ? null : cursors.find((item) => item.id === member.id);
-                const memberHp = member.id === selfId ? hp : (cursor?.hp ?? 0);
-                return (
-                  <li key={member.id} className="flex items-center gap-1 border-b border-border/60 px-1 py-1 last:border-0">
-                    <span className="min-w-0 flex-1 truncate">{member.id === party.party?.leaderId ? "◆ " : ""}{member.handle}{member.id === selfId ? " (YOU)" : ""}</span>
-                    <span className={memberHp > 0 ? "text-foreground" : "text-bitcoin"}>{memberHp} HP</span>
-                    {isLeader && member.id !== selfId ? <Button size="sm" variant="ghost" className="h-5 rounded-sm px-1 text-[8px] text-bitcoin" onClick={() => party.kick(member.id)}>EXPEL</Button> : null}
-                  </li>
-                );
-              })}
-            </ul>
+            <div>
+              <ul className="p-1">
+                {party.party.members.map((member) => {
+                  const isLeader = party.party?.leaderId === selfId;
+                  const cursor = member.id === selfId ? null : cursors.find((item) => item.id === member.id);
+                  const memberHp = member.id === selfId ? hp : (cursor?.hp ?? 0);
+                  return (
+                    <li key={member.id} className="flex items-center gap-1 border-b border-border/60 px-1 py-1 last:border-0">
+                      <span className="min-w-0 flex-1 truncate">{member.id === party.party?.leaderId ? "◆ " : ""}{member.handle}{member.id === selfId ? " (YOU)" : ""}</span>
+                      <span className={memberHp > 0 ? "text-foreground" : "text-bitcoin"}>{memberHp} HP</span>
+                      {isLeader && member.id !== selfId ? <Button size="sm" variant="ghost" className="h-5 rounded-sm px-1 text-[8px] text-bitcoin" onClick={() => party.kick(member.id)}>EXPEL</Button> : null}
+                    </li>
+                  );
+                })}
+              </ul>
+              {party.party.leaderId === selfId && party.party.members.length < PARTY_MAX_MEMBERS ? (
+                <div className="border-t border-border p-1">
+                  <p className="px-1 py-1 text-muted-foreground">ADD MEMBER</p>
+                  {cursors.filter((cursor) => !party.party?.members.some((member) => member.id === cursor.id)).slice(0, 6).map((cursor) => (
+                    <div key={cursor.id} className="flex items-center justify-between gap-1 px-1 py-1">
+                      <span className="truncate">{cursor.handle}</span>
+                      <Button size="sm" variant="ghost" className="h-5 rounded-sm px-1 text-[8px] text-bitcoin" onClick={() => party.invite(cursor.id)}>INVITE</Button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           ) : (
             <div className="max-h-32 overflow-y-auto p-1">
               <p className="px-1 py-1 text-muted-foreground">ONLINE · INVITE UP TO 2</p>
