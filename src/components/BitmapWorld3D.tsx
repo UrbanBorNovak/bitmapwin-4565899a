@@ -14,7 +14,7 @@ import { AvatarInventory } from "@/components/AvatarInventory";
 
 import { clubOf } from "@/lib/clubs";
 import { colorForAddress, mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
-import { SAY_MAX_LENGTH, SAY_TTL_MS, useMapCursors, type MapCursor } from "@/lib/map-presence";
+import { MAX_HP, SAY_MAX_LENGTH, SAY_TTL_MS, useMapCursors, type MapCursor } from "@/lib/map-presence";
 import { setAvatarModelInscription } from "@/lib/map-identity";
 
 import { useWalletSession } from "@/lib/wallet-session";
@@ -310,6 +310,8 @@ function avatarTrimMaterial(color: string) {
 }
 /** Only this many visitor figures are drawn — keeps a busy map cheap on a laptop. */
 const MAX_AVATARS = 24;
+/** how close you must stand to land a basic attack */
+const ATTACK_RANGE = CELL * 6;
 
 /** Detailed blocky cypherpunk figure — shared geometry, colour per visitor. */
 const AvatarBody = memo(function AvatarBody({ color }: { color: string }) {
@@ -376,7 +378,32 @@ function AvatarSkin({ color, model }: { color: string; model: string | null }) {
   );
 }
 
-function AvatarLabel({ handle, say, color }: { handle: string; say: string | null; color: string }) {
+function HealthBar({ hp, color }: { hp: number; color: string }) {
+  const pct = Math.max(0, Math.min(100, (hp / MAX_HP) * 100));
+  return (
+    <span className="relative block h-[4px] w-[52px] border border-border bg-background/90">
+      <span
+        className="absolute inset-y-0 left-0"
+        style={{ width: `${pct}%`, background: pct <= 25 ? "var(--bitcoin)" : color }}
+      />
+    </span>
+  );
+}
+
+function AvatarLabel({
+  handle,
+  say,
+  color,
+  hp,
+  hitAt,
+}: {
+  handle: string;
+  say: string | null;
+  color: string;
+  hp: number;
+  hitAt: number;
+}) {
+  const hurt = Date.now() - hitAt < 400;
   return (
     <Html center position={[0, AVATAR_U * 1.35, 0]} distanceFactor={4} style={{ pointerEvents: "none" }} zIndexRange={[10, 0]}>
       <div className="flex flex-col items-center gap-[2px]">
@@ -388,8 +415,12 @@ function AvatarLabel({ handle, say, color }: { handle: string; say: string | nul
             {say}
           </span>
         ) : null}
-        <span className="whitespace-nowrap border border-border bg-background/90 px-1 font-mono text-[8px] text-foreground">
-          {handle}
+        <HealthBar hp={hp} color={color} />
+        <span
+          className="whitespace-nowrap border bg-background/90 px-1 font-mono text-[8px] text-foreground"
+          style={{ borderColor: hurt ? "var(--bitcoin)" : "var(--color-border)" }}
+        >
+          {hp <= 0 ? `${handle} · DOWN` : handle}
         </span>
       </div>
     </Html>
@@ -429,7 +460,7 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
       <group ref={body}>
         <AvatarSkin color={cursor.color} model={cursor.model} />
       </group>
-      <AvatarLabel handle={cursor.handle} say={cursor.say} color={cursor.color} />
+      <AvatarLabel handle={cursor.handle} say={cursor.say} color={cursor.color} hp={cursor.hp} hitAt={cursor.hitAt} />
     </group>
   );
 });
@@ -447,12 +478,16 @@ const SelfAvatar = memo(function SelfAvatar({
   handle,
   model,
   say,
+  hp,
+  hitAt,
 }: {
   pose: React.RefObject<SelfPose>;
   color: string;
   handle: string;
   model: string | null;
   say: string | null;
+  hp: number;
+  hitAt: number;
 }) {
   const group = useRef<THREE.Group>(null);
   const body = useRef<THREE.Group>(null);
@@ -468,7 +503,7 @@ const SelfAvatar = memo(function SelfAvatar({
       <group ref={body}>
         <AvatarSkin color={color} model={model} />
       </group>
-      <AvatarLabel handle={`${handle} (YOU)`} say={say} color={color} />
+      <AvatarLabel handle={`${handle} (YOU)`} say={say} color={color} hp={hp} hitAt={hitAt} />
     </group>
   );
 });
@@ -734,7 +769,7 @@ const WorldScene = memo(function WorldScene({
   ownedHeights: number[];
   thirdPerson: boolean;
   pose: React.RefObject<SelfPose>;
-  self: { handle: string; color: string; model: string | null; say: string | null };
+  self: { handle: string; color: string; model: string | null; say: string | null; hp: number; hitAt: number };
 }) {
 
   // Pointer moves fire dozens of times a second; each React state update re-renders
@@ -784,7 +819,15 @@ const WorldScene = memo(function WorldScene({
       {selectedHeight !== null ? <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} /> : null}
       <VisitorBeacons cursors={cursors} />
       {thirdPerson ? (
-        <SelfAvatar pose={pose} color={self.color} handle={self.handle} model={self.model} say={self.say} />
+        <SelfAvatar
+          pose={pose}
+          color={self.color}
+          handle={self.handle}
+          model={self.model}
+          say={self.say}
+          hp={self.hp}
+          hitAt={self.hitAt}
+        />
       ) : null}
       <mesh
         rotation-x={-Math.PI / 2}
@@ -834,12 +877,24 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
 
   const owners = useQuery(mapOwnersQuery(window_));
   const models = useQuery(mapBitmapModelsQuery(window_));
-  const { cursors, publish, said, say, handle, color, model: avatarModel, setModel: setAvatarModel } = useMapCursors();
+  const {
+    cursors,
+    publish,
+    said,
+    say,
+    handle,
+    color,
+    model: avatarModel,
+    setModel: setAvatarModel,
+    hp,
+    hitAt,
+    attack,
+  } = useMapCursors();
   const pose = useRef<SelfPose>({ x: 0, z: CELL, yaw: 0 });
   const [mySay, setMySay] = useState<string | null>(null);
   const self = useMemo(
-    () => ({ handle, color, model: avatarModel, say: mySay }),
-    [handle, color, avatarModel, mySay],
+    () => ({ handle, color, model: avatarModel, say: mySay, hp, hitAt }),
+    [handle, color, avatarModel, mySay, hp, hitAt],
   );
 
 
@@ -890,6 +945,47 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   );
 
 
+  /** Basic attack: strike the closest visitor standing within melee range. */
+  const cursorsRef = useRef(cursors);
+  cursorsRef.current = cursors;
+  const [attackTarget, setAttackTarget] = useState<string | null>(null);
+  const attackNearest = useCallback(() => {
+    if (hp <= 0) return;
+    const me = pose.current;
+    let best: { id: string; handle: string; distance: number } | null = null;
+    for (const cursor of cursorsRef.current) {
+      if (cursor.hp <= 0) continue;
+      const dx = worldX(cursor.col) - me.x;
+      const dz = worldZ(cursor.row) - me.z;
+      const distance = Math.hypot(dx, dz);
+      if (distance <= ATTACK_RANGE && (!best || distance < best.distance)) {
+        best = { id: cursor.id, handle: cursor.handle, distance };
+      }
+    }
+    if (!best) {
+      setAttackTarget("NO TARGET IN RANGE");
+      window.setTimeout(() => setAttackTarget((current) => (current === "NO TARGET IN RANGE" ? null : current)), 1200);
+      return;
+    }
+    attack(best.id);
+    const label = `HIT ${best.handle}`;
+    setAttackTarget(label);
+    window.setTimeout(() => setAttackTarget((current) => (current === label ? null : current)), 1200);
+  }, [attack, hp]);
+
+  useEffect(() => {
+    if (!thirdPerson) return;
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+      if (event.code !== "Space") return;
+      event.preventDefault();
+      attackNearest();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [attackNearest, thirdPerson]);
+
   const moveCamera = (type: CameraMove) => setCommand((current) => ({ type, nonce: current.nonce + 1 }));
   const handleWindow = useCallback((next: OwnerWindow | null) => setWindow(next), []);
   const ownersRef = useRef(owners.data);
@@ -920,6 +1016,9 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
           onClick={() => setThirdPerson((current) => !current)}
         >
           {thirdPerson ? "[ EXIT 3RD PERSON ]" : "[ 3RD PERSON WALK ]"}
+        </Button>
+        <Button className="btn-term-ghost" variant="ghost" onClick={attackNearest} disabled={hp <= 0}>
+          [ ATTACK · SPACE ]
         </Button>
         <Button
           className={inventoryOpen ? "btn-term" : "btn-term-ghost"}
@@ -963,6 +1062,25 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
             />
           </Canvas>
         ) : null}
+
+        {/* Your own health, always visible while exploring the world. */}
+        <div data-no-translate className="pointer-events-none absolute left-3 top-3 z-30 flex flex-col gap-1 bg-background/80 px-2 py-1 font-mono text-[10px]">
+          <span className="flex items-center gap-2">
+            <span>HP</span>
+            <span className="relative block h-[6px] w-[110px] border border-border">
+              <span
+                className="absolute inset-y-0 left-0"
+                style={{
+                  width: `${Math.max(0, (hp / MAX_HP) * 100)}%`,
+                  background: hp <= MAX_HP * 0.25 ? "var(--bitcoin)" : color,
+                }}
+              />
+            </span>
+            <span>{hp}/{MAX_HP}</span>
+          </span>
+          {hp <= 0 ? <span className="text-bitcoin">KNOCKED OUT · RESPAWNING…</span> : null}
+          {attackTarget ? <span className="text-bitcoin">{attackTarget}</span> : null}
+        </div>
 
         <div aria-hidden className="pointer-events-none absolute inset-0 z-20 ring-1 ring-inset ring-bitcoin/30 shadow-[inset_0_0_48px_color-mix(in_oklab,var(--bitcoin)_12%,transparent)]" />
 
