@@ -162,6 +162,63 @@ export type Database = {
         }
         Relationships: []
       }
+      bitmap_models: {
+        Row: {
+          animation_count: number
+          bitmap_height: number
+          body_bytes: number
+          content_type: string
+          created_at: string
+          height_offset: number
+          inscription_id: string
+          owner_address: string
+          rotation_y: number
+          scale: number
+          texture_count: number
+          triangle_count: number
+          updated_at: string
+          validated_at: string
+          validation_note: string | null
+          validation_status: string
+        }
+        Insert: {
+          animation_count: number
+          bitmap_height: number
+          body_bytes: number
+          content_type: string
+          created_at?: string
+          height_offset?: number
+          inscription_id: string
+          owner_address: string
+          rotation_y?: number
+          scale?: number
+          texture_count: number
+          triangle_count: number
+          updated_at?: string
+          validated_at?: string
+          validation_note?: string | null
+          validation_status?: string
+        }
+        Update: {
+          animation_count?: number
+          bitmap_height?: number
+          body_bytes?: number
+          content_type?: string
+          created_at?: string
+          height_offset?: number
+          inscription_id?: string
+          owner_address?: string
+          rotation_y?: number
+          scale?: number
+          texture_count?: number
+          triangle_count?: number
+          updated_at?: string
+          validated_at?: string
+          validation_note?: string | null
+          validation_status?: string
+        }
+        Relationships: []
+      }
       bitmap_view_stats: {
         Row: {
           bitmap_height: number
@@ -1219,6 +1276,24 @@ export type Database = {
       coin_start_lease: {
         Args: { _days: number; _lessee_address: string; _offer_id: string }
         Returns: string
+      }
+      map_bitmap_models: {
+        Args: {
+          _col_from: number
+          _col_to: number
+          _row_from: number
+          _row_to: number
+        }
+        Returns: {
+          animation_count: number
+          bitmap_height: number
+          height_offset: number
+          inscription_id: string
+          owner_address: string
+          rotation_y: number
+          scale: number
+          triangle_count: number
+        }[]
       }
       map_owners: {
         Args: {
