@@ -167,7 +167,7 @@ function RootComponent() {
       <LanguageProvider>
       <div className="relative flex min-h-screen flex-col bg-background">
         <SalesBackdrop />
-        <div className="relative z-10">
+        <div className="relative z-40">
           <SiteHeader />
         </div>
         <main className="relative z-10 flex-1">
