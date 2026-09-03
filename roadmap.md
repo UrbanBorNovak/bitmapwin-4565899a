@@ -5,3 +5,4 @@
 - [x] Add owner placement controls to BITMAP map/detail views
 - [x] Render nearby approved models in the shared 3D world with LOD limits
 - [x] Verify security, validation, performance, and responsive rendering
+- [x] Add inscription-ID model placement controls to owned BITMAPs in the selected map window

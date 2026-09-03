@@ -9,6 +9,7 @@ import { ArrowUpRight, X } from "lucide-react";
 import * as THREE from "three";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
 import { Button } from "@/components/ui/button";
+import { BitmapModelPlacement } from "@/components/BitmapModelPlacement";
 import { clubOf } from "@/lib/clubs";
 import { colorForAddress, mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
 import { useMapCursors, type MapCursor } from "@/lib/map-presence";
@@ -522,6 +523,12 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   const handleWindow = useCallback((next: OwnerWindow | null) => setWindow(next), []);
   const minedDepth = Math.max(CELL, (Math.floor(tipHeight / GRID) + 1) * CELL);
   const selectedModel = selected ? models.data?.find((model) => model.bitmapHeight === selected.height) : undefined;
+  const selectedIsMine = Boolean(
+    selected && (
+      (selected.owner && mine.has(selected.owner.toLowerCase())) ||
+      (held.data ?? []).includes(selected.height)
+    ),
+  );
 
   return (
     <div className={className}>
@@ -574,7 +581,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
           <section
             aria-label={`${selected.height}.bitmap details`}
             data-no-translate
-            className="absolute right-3 top-3 z-40 w-[min(300px,calc(100%-1.5rem))] border border-bitcoin bg-background/95 p-4 font-mono shadow-[8px_8px_0_var(--bitcoin)]"
+            className="absolute right-3 top-3 z-40 max-h-[calc(100%-1.5rem)] w-[min(340px,calc(100%-1.5rem))] overflow-y-auto border border-bitcoin bg-background/95 p-4 font-mono shadow-[8px_8px_0_var(--bitcoin)]"
           >
             <Button
               aria-label="Close bitmap window"
@@ -603,6 +610,9 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
               <dt className="text-muted-foreground">MODEL</dt>
               <dd>{selectedModel ? "ON-CHAIN GLB VISIBLE" : window_ && models.isPending ? "SCANNING…" : "NO MODEL"}</dd>
             </dl>
+            {selectedIsMine && session ? (
+              <BitmapModelPlacement height={selected.height} canEdit compact />
+            ) : null}
             {selected.height <= tipHeight ? (
               <Button
                 className="btn-term mt-4 w-full"
