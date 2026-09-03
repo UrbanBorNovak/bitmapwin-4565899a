@@ -540,7 +540,8 @@ const WorldScene = memo(function WorldScene({
       <hemisphereLight args={[colors.foreground, colors.background, 0.3]} />
       <directionalLight color={colors.bitcoin} position={[-18, 36, -12]} intensity={4.4} castShadow={false} />
       <pointLight color={colors.bitcoin} position={[14, 12, 3]} intensity={120} distance={45} decay={2} />
-      <Environment>
+      {/* Baked once at low resolution — ambient tint only, no per-frame cubemap cost. */}
+      <Environment frames={1} resolution={64}>
         <Lightformer intensity={3.1} color={colors.bitcoin} position={[0, 12, -4]} scale={[34, 14, 1]} />
         <Lightformer intensity={0.8} color={colors.foreground} position={[-20, 5, 20]} rotation-y={Math.PI / 2} scale={[28, 4, 1]} />
       </Environment>
