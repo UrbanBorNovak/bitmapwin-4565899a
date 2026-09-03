@@ -20,6 +20,7 @@ import { SalesBackdrop } from "@/components/SalesBackdrop";
 import { BitmapPunkMascot } from "@/components/BitmapPunkMascot";
 import { TradeCrawlerDriver } from "@/components/TradeCrawlerDriver";
 import { RegistryResolverDriver } from "@/components/RegistryResolverDriver";
+import { LanguageProvider } from "@/lib/i18n";
 
 
 
@@ -163,6 +164,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <LanguageProvider>
       <div className="relative flex min-h-screen flex-col bg-background">
         <SalesBackdrop />
         <div className="relative z-10">
@@ -180,8 +182,7 @@ function RootComponent() {
       <TradeCrawlerDriver />
       <RegistryResolverDriver />
       <Toaster />
-
-
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }
