@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { clubOf } from "@/lib/clubs";
 import { colorForAddress, mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
+import { useMapCursors, type MapCursor } from "@/lib/map-presence";
 import { useWalletSession } from "@/lib/wallet-session";
 
 const GRID = 10_000; // 10,000 x 10,000 dots = 100,000,000 districts of land
