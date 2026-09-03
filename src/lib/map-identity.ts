@@ -11,6 +11,13 @@ const ID_KEY = "bitmap-map-visitor-id";
 const HANDLE_KEY = "bitmap-map-handle";
 const AVATAR_MODEL_KEY = "bitmap-map-avatar-model";
 
+/** The rigged on-chain GLB every visitor wears unless they equip their own. */
+export const DEFAULT_AVATAR_MODEL =
+  "5e2d04efb32bc584af0f86ca9d0744186c680ced298a33235dc913a5f13e2f34i0";
+/** The on-chain PNG skin painted on the default figure. */
+export const DEFAULT_AVATAR_TEXTURE =
+  "02a42a16913bfcdb1d48323850c1a2fab1633e4c1e151bc64c2bd8a5a5cdfacfi0";
+
 /** Inscription id of the on-chain GLB this browser wears as its avatar. */
 export function avatarModelInscription(): string | null {
   if (typeof window === "undefined") return null;

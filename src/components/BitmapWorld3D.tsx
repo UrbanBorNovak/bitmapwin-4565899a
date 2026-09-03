@@ -7,6 +7,7 @@ import {
   MapControls,
   useAnimations,
   useGLTF,
+  useTexture,
 } from "@react-three/drei";
 import { Suspense } from "react";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
@@ -41,7 +42,11 @@ import {
   type MoveIntent,
   type PlayerState,
 } from "@/lib/player-state";
-import { setAvatarModelInscription } from "@/lib/map-identity";
+import {
+  DEFAULT_AVATAR_MODEL,
+  DEFAULT_AVATAR_TEXTURE,
+  setAvatarModelInscription,
+} from "@/lib/map-identity";
 
 import { useWalletSession } from "@/lib/wallet-session";
 import { mapBitmapModelsQuery, type BitmapModel } from "@/lib/bitmap-models";
@@ -486,11 +491,86 @@ const AvatarBody = memo(function AvatarBody({ color }: { color: string }) {
   );
 });
 
-/** An avatar worn as an on-chain GLB inscription, textures included. */
-function ModelAvatar({ inscriptionId }: { inscriptionId: string }) {
+/** Pick the first clip whose name mentions one of these words. */
+function clipNamed(names: string[], words: string[]) {
+  for (const word of words) {
+    const hit = names.find((name) => name.toLowerCase().includes(word));
+    if (hit) return hit;
+  }
+  return null;
+}
+
+/** Which clip plays for a movement/animation state, and how fast it runs. */
+function clipFor(names: string[], state: AvatarMotion) {
+  switch (state) {
+    case "jump":
+      return { name: clipNamed(names, ["jump", "fall", "air", "idle"]), speed: 1 };
+    case "run":
+      return { name: clipNamed(names, ["run", "sprint", "walk"]), speed: 1.75 };
+    case "walk":
+      return { name: clipNamed(names, ["walk", "run"]), speed: 1.1 };
+    case "down":
+      return { name: clipNamed(names, ["death", "die", "down", "fall", "idle"]), speed: 1 };
+    case "hurt":
+      return { name: clipNamed(names, ["hurt", "hit", "damage", "idle"]), speed: 1 };
+    case "attack":
+      return { name: clipNamed(names, ["attack", "punch", "hit", "idle"]), speed: 1.3 };
+    default:
+      return { name: clipNamed(names, ["idle", "stand", "breath"]), speed: 1 };
+  }
+}
+
+export type AvatarMotion = "idle" | "walk" | "run" | "jump" | "hurt" | "attack" | "down";
+
+/**
+ * An avatar worn as an on-chain GLB inscription. Skeleton is driven by the
+ * model's own clips, cross-faded from the player's movement state so every bone
+ * walks, runs and leaves the ground with the body.
+ */
+function ModelAvatar({
+  inscriptionId,
+  motion,
+  skinTexture,
+}: {
+  inscriptionId: string;
+  motion: AvatarMotion;
+  skinTexture?: string | undefined;
+}) {
   const gltf = useGLTF(`https://ordinals.com/content/${inscriptionId}`);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
-  const { actions } = useAnimations(gltf.animations, scene);
+  const { actions, names } = useAnimations(gltf.animations, scene);
+  const texture = useTexture(
+    skinTexture ? `https://ordinals.com/content/${skinTexture}` : TRANSPARENT_PIXEL,
+  );
+
+  useEffect(() => {
+    if (skinTexture) {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.magFilter = THREE.NearestFilter;
+      texture.minFilter = THREE.NearestFilter;
+      texture.generateMipmaps = false;
+      texture.needsUpdate = true;
+    }
+    const paint = (source: THREE.Material) => {
+      const material = source.clone() as THREE.MeshStandardMaterial;
+      material.map = texture;
+      material.color = new THREE.Color("#ffffff");
+      material.needsUpdate = true;
+      return material;
+    };
+    scene.traverse((child) => {
+      const mesh = child as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      mesh.frustumCulled = false;
+      mesh.castShadow = false;
+      if (!skinTexture) return;
+      mesh.material = Array.isArray(mesh.material)
+        ? mesh.material.map(paint)
+        : paint(mesh.material);
+    });
+  }, [scene, texture, skinTexture]);
+
+
   const fitted = useMemo(() => {
     scene.updateMatrixWorld(true);
     const bounds = new THREE.Box3().setFromObject(scene);
@@ -499,13 +579,28 @@ function ModelAvatar({ inscriptionId }: { inscriptionId: string }) {
     const fit = (AVATAR_U * 1.15) / Math.max(size.x, size.y, size.z, 0.0001);
     return { fit, center, minY: bounds.min.y };
   }, [scene]);
+
+  // Cross-fade to the clip the current motion asks for; bones do the rest.
   useEffect(() => {
-    const first = Object.values(actions)[0];
-    first?.reset().play();
+    const pick = clipFor(names, motion);
+    const name = pick.name ?? names[0];
+    if (!name) return;
+    const next = actions[name];
+    if (!next) return;
+    next.enabled = true;
+    next.setEffectiveTimeScale(pick.speed);
+    next.setEffectiveWeight(1);
+    if (motion === "jump" || motion === "attack" || motion === "hurt") {
+      next.setLoop(THREE.LoopRepeat, Infinity);
+    } else {
+      next.setLoop(THREE.LoopRepeat, Infinity);
+    }
+    next.reset().fadeIn(0.18).play();
     return () => {
-      first?.stop();
+      next.fadeOut(0.18);
     };
-  }, [actions]);
+  }, [actions, names, motion]);
+
   return (
     <group
       scale={fitted.fit}
@@ -520,14 +615,30 @@ function ModelAvatar({ inscriptionId }: { inscriptionId: string }) {
   );
 }
 
-function AvatarSkin({ color, model }: { color: string; model: string | null }) {
-  if (!model) return <AvatarBody color={color} />;
+const TRANSPARENT_PIXEL =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==";
+
+function AvatarSkin({
+  color,
+  model,
+  motion,
+}: {
+  color: string;
+  model: string | null;
+  motion: AvatarMotion;
+}) {
+  const worn = model ?? DEFAULT_AVATAR_MODEL;
   return (
     <Suspense fallback={<AvatarBody color={color} />}>
-      <ModelAvatar inscriptionId={model} />
+      <ModelAvatar
+        inscriptionId={worn}
+        motion={motion}
+        skinTexture={worn === DEFAULT_AVATAR_MODEL ? DEFAULT_AVATAR_TEXTURE : undefined}
+      />
     </Suspense>
   );
 }
+
 
 function HealthBar({ hp, color }: { hp: number; color: string }) {
   const pct = Math.max(0, Math.min(100, (hp / MAX_HP) * 100));
@@ -620,10 +731,10 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
       group.current.rotation.y = current.yaw;
     }
     if (body.current) {
-      const stride = cursor.movement === "run" ? 4.4 : cursor.movement === "walk" ? 3.1 : 2.2;
-      const lift = cursor.movement === "idle" || cursor.movement === "turn" ? 0.04 : 0.12;
-      body.current.position.y = Math.abs(Math.sin(t * stride)) * CELL * lift;
+      // The rigged skeleton carries stride and airtime now — no fake bobbing.
+      body.current.position.y = 0;
     }
+
     if (ring.current && ringMaterial.current) {
       const pulse = (t * 0.8) % 1;
       ring.current.scale.setScalar(1 + pulse * 0.9);
@@ -654,8 +765,23 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
         <meshBasicMaterial color={colorsForShadow} transparent opacity={0.34} depthWrite={false} />
       </mesh>
       <group ref={body}>
-        <AvatarSkin color={cursor.color} model={cursor.model} />
+        <AvatarSkin
+          color={cursor.color}
+          model={cursor.model}
+          motion={
+            cursor.hp <= 0
+              ? "down"
+              : cursor.y > CELL * 0.05
+                ? "jump"
+                : cursor.movement === "run"
+                  ? "run"
+                  : cursor.movement === "walk"
+                    ? "walk"
+                    : "idle"
+          }
+        />
       </group>
+
       <AvatarLabel
         handle={cursor.handle}
         say={cursor.say}
@@ -700,17 +826,22 @@ const SelfAvatar = memo(function SelfAvatar({
   lastDamage: number;
 }) {
   const group = useRef<THREE.Group>(null);
-  const body = useRef<THREE.Group>(null);
-  useFrame(({ clock }) => {
+  const mounted = useRef(false);
+  const [motion, setMotion] = useState<AvatarMotion>("idle");
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  useFrame(() => {
     const current = pose.current;
     if (!current || !group.current) return;
     group.current.position.set(current.x, current.y + 0.006, current.z);
     group.current.rotation.y = current.yaw;
-    if (body.current) {
-      const stride = current.movement === "run" ? 4.6 : current.movement === "walk" ? 3.2 : 2.2;
-      const lift = current.movement === "idle" || current.movement === "turn" ? 0.035 : 0.1;
-      body.current.position.y = Math.abs(Math.sin(clock.elapsedTime * stride)) * CELL * lift;
-    }
+    if (!mounted.current) return;
+    const next: AvatarMotion = current.animation;
+    setMotion((previous) => (previous === next ? previous : next));
   });
   return (
     <group ref={group}>
@@ -718,9 +849,8 @@ const SelfAvatar = memo(function SelfAvatar({
         <circleGeometry args={[AVATAR_U * 0.3, 16]} />
         <meshBasicMaterial color={colorsForShadow} transparent opacity={0.38} depthWrite={false} />
       </mesh>
-      <group ref={body}>
-        <AvatarSkin color={color} model={model} />
-      </group>
+      <AvatarSkin color={color} model={model} motion={motion} />
+
       <AvatarLabel
         handle={`${handle} (YOU)`}
         say={say}
