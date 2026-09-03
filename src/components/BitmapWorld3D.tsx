@@ -12,7 +12,9 @@ import { Button } from "@/components/ui/button";
 import { BitmapModelPlacement } from "@/components/BitmapModelPlacement";
 import { clubOf } from "@/lib/clubs";
 import { colorForAddress, mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
-import { useMapCursors, type MapCursor } from "@/lib/map-presence";
+import { SAY_MAX_LENGTH, SAY_TTL_MS, useMapCursors, type MapCursor } from "@/lib/map-presence";
+import { setAvatarModelInscription } from "@/lib/map-identity";
+
 import { useWalletSession } from "@/lib/wallet-session";
 import { mapBitmapModelsQuery, type BitmapModel } from "@/lib/bitmap-models";
 import { heldHeightsQuery } from "@/lib/held-parcels";
@@ -268,13 +270,25 @@ const SelectedBlock = memo(function SelectedBlock({ height, bitcoin }: { height:
 const AVATAR_U = CELL;
 const avatarGeometry = {
   ring: new THREE.RingGeometry(AVATAR_U * 0.42, AVATAR_U * 0.5, 16),
-  leg: new THREE.BoxGeometry(AVATAR_U * 0.14, AVATAR_U * 0.28, AVATAR_U * 0.14),
-  torso: new THREE.BoxGeometry(AVATAR_U * 0.4, AVATAR_U * 0.34, AVATAR_U * 0.2),
-  head: new THREE.BoxGeometry(AVATAR_U * 0.26, AVATAR_U * 0.26, AVATAR_U * 0.26),
-  visor: new THREE.BoxGeometry(AVATAR_U * 0.2, AVATAR_U * 0.06, AVATAR_U * 0.01),
+  boot: new THREE.BoxGeometry(AVATAR_U * 0.16, AVATAR_U * 0.07, AVATAR_U * 0.2),
+  leg: new THREE.BoxGeometry(AVATAR_U * 0.13, AVATAR_U * 0.26, AVATAR_U * 0.13),
+  hip: new THREE.BoxGeometry(AVATAR_U * 0.34, AVATAR_U * 0.08, AVATAR_U * 0.18),
+  torso: new THREE.BoxGeometry(AVATAR_U * 0.38, AVATAR_U * 0.32, AVATAR_U * 0.19),
+  chest: new THREE.BoxGeometry(AVATAR_U * 0.3, AVATAR_U * 0.14, AVATAR_U * 0.21),
+  shoulder: new THREE.BoxGeometry(AVATAR_U * 0.1, AVATAR_U * 0.1, AVATAR_U * 0.18),
+  arm: new THREE.BoxGeometry(AVATAR_U * 0.08, AVATAR_U * 0.26, AVATAR_U * 0.08),
+  hand: new THREE.BoxGeometry(AVATAR_U * 0.09, AVATAR_U * 0.08, AVATAR_U * 0.09),
+  neck: new THREE.BoxGeometry(AVATAR_U * 0.12, AVATAR_U * 0.05, AVATAR_U * 0.12),
+  head: new THREE.BoxGeometry(AVATAR_U * 0.25, AVATAR_U * 0.24, AVATAR_U * 0.25),
+  visor: new THREE.BoxGeometry(AVATAR_U * 0.21, AVATAR_U * 0.07, AVATAR_U * 0.012),
+  antenna: new THREE.BoxGeometry(AVATAR_U * 0.015, AVATAR_U * 0.12, AVATAR_U * 0.015),
+  beacon: new THREE.BoxGeometry(AVATAR_U * 0.045, AVATAR_U * 0.045, AVATAR_U * 0.045),
+  pack: new THREE.BoxGeometry(AVATAR_U * 0.24, AVATAR_U * 0.2, AVATAR_U * 0.09),
 };
 const visorMaterial = new THREE.MeshBasicMaterial({ color: "#000000" });
+const darkMaterial = new THREE.MeshBasicMaterial({ color: "#111111" });
 const avatarBodyMaterials = new Map<string, THREE.MeshBasicMaterial>();
+const avatarTrimMaterials = new Map<string, THREE.MeshBasicMaterial>();
 function avatarBodyMaterial(color: string) {
   let material = avatarBodyMaterials.get(color);
   if (!material) {
@@ -283,10 +297,104 @@ function avatarBodyMaterial(color: string) {
   }
   return material;
 }
+function avatarTrimMaterial(color: string) {
+  let material = avatarTrimMaterials.get(color);
+  if (!material) {
+    const dim = new THREE.Color(color).multiplyScalar(0.55);
+    material = new THREE.MeshBasicMaterial({ color: dim });
+    avatarTrimMaterials.set(color, material);
+  }
+  return material;
+}
 /** Only this many visitor figures are drawn — keeps a busy map cheap on a laptop. */
 const MAX_AVATARS = 24;
 
-/** One spawned visitor: a blocky cypherpunk figure standing on the land. */
+/** Detailed blocky cypherpunk figure — shared geometry, colour per visitor. */
+const AvatarBody = memo(function AvatarBody({ color }: { color: string }) {
+  const skin = useMemo(() => avatarBodyMaterial(color), [color]);
+  const trim = useMemo(() => avatarTrimMaterial(color), [color]);
+  const u = AVATAR_U;
+  return (
+    <group>
+      {[-1, 1].map((side) => (
+        <group key={side}>
+          <mesh position={[side * u * 0.11, u * 0.035, u * 0.01]} geometry={avatarGeometry.boot} material={darkMaterial} raycast={noRaycast} />
+          <mesh position={[side * u * 0.11, u * 0.2, 0]} geometry={avatarGeometry.leg} material={trim} raycast={noRaycast} />
+          <mesh position={[side * u * 0.245, u * 0.5, 0]} geometry={avatarGeometry.shoulder} material={trim} raycast={noRaycast} />
+          <mesh position={[side * u * 0.245, u * 0.33, 0]} geometry={avatarGeometry.arm} material={skin} raycast={noRaycast} />
+          <mesh position={[side * u * 0.245, u * 0.18, 0]} geometry={avatarGeometry.hand} material={darkMaterial} raycast={noRaycast} />
+        </group>
+      ))}
+      <mesh position={[0, u * 0.35, 0]} geometry={avatarGeometry.hip} material={darkMaterial} raycast={noRaycast} />
+      <mesh position={[0, u * 0.53, 0]} geometry={avatarGeometry.torso} material={skin} raycast={noRaycast} />
+      <mesh position={[0, u * 0.56, 0]} geometry={avatarGeometry.chest} material={trim} raycast={noRaycast} />
+      <mesh position={[0, u * 0.55, -u * 0.13]} geometry={avatarGeometry.pack} material={darkMaterial} raycast={noRaycast} />
+      <mesh position={[0, u * 0.71, 0]} geometry={avatarGeometry.neck} material={darkMaterial} raycast={noRaycast} />
+      <mesh position={[0, u * 0.85, 0]} geometry={avatarGeometry.head} material={skin} raycast={noRaycast} />
+      <mesh position={[0, u * 0.86, u * 0.13]} geometry={avatarGeometry.visor} material={visorMaterial} raycast={noRaycast} />
+      <mesh position={[u * 0.1, u * 1.02, 0]} geometry={avatarGeometry.antenna} material={darkMaterial} raycast={noRaycast} />
+      <mesh position={[u * 0.1, u * 1.09, 0]} geometry={avatarGeometry.beacon} material={skin} raycast={noRaycast} />
+    </group>
+  );
+});
+
+/** An avatar worn as an on-chain GLB inscription, textures included. */
+function ModelAvatar({ inscriptionId }: { inscriptionId: string }) {
+  const gltf = useGLTF(`https://ordinals.com/content/${inscriptionId}`);
+  const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
+  const { actions } = useAnimations(gltf.animations, scene);
+  const fitted = useMemo(() => {
+    scene.updateMatrixWorld(true);
+    const bounds = new THREE.Box3().setFromObject(scene);
+    const size = bounds.getSize(new THREE.Vector3());
+    const center = bounds.getCenter(new THREE.Vector3());
+    const fit = (AVATAR_U * 1.15) / Math.max(size.x, size.y, size.z, 0.0001);
+    return { fit, center, minY: bounds.min.y };
+  }, [scene]);
+  useEffect(() => {
+    const first = Object.values(actions)[0];
+    first?.reset().play();
+    return () => {
+      first?.stop();
+    };
+  }, [actions]);
+  return (
+    <group scale={fitted.fit} position={[-fitted.center.x * fitted.fit, -fitted.minY * fitted.fit, -fitted.center.z * fitted.fit]}>
+      <primitive object={scene} />
+    </group>
+  );
+}
+
+function AvatarSkin({ color, model }: { color: string; model: string | null }) {
+  if (!model) return <AvatarBody color={color} />;
+  return (
+    <Suspense fallback={<AvatarBody color={color} />}>
+      <ModelAvatar inscriptionId={model} />
+    </Suspense>
+  );
+}
+
+function AvatarLabel({ handle, say, color }: { handle: string; say: string | null; color: string }) {
+  return (
+    <Html center position={[0, AVATAR_U * 1.35, 0]} distanceFactor={4} style={{ pointerEvents: "none" }} zIndexRange={[10, 0]}>
+      <div className="flex flex-col items-center gap-[2px]">
+        {say ? (
+          <span
+            className="max-w-[140px] whitespace-pre-wrap break-words border bg-background/95 px-1 py-[1px] font-mono text-[8px] text-foreground"
+            style={{ borderColor: color }}
+          >
+            {say}
+          </span>
+        ) : null}
+        <span className="whitespace-nowrap border border-border bg-background/90 px-1 font-mono text-[8px] text-foreground">
+          {handle}
+        </span>
+      </div>
+    </Html>
+  );
+}
+
+/** One spawned visitor standing on the land. */
 const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCursor }) {
   const body = useRef<THREE.Group>(null);
   const ring = useRef<THREE.Mesh>(null);
@@ -296,12 +404,11 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
     for (const ch of cursor.id) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
     return (hash % 628) / 100;
   }, [cursor.id]);
-  const bodyMaterial = useMemo(() => avatarBodyMaterial(cursor.color), [cursor.color]);
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime + phase;
     if (body.current) {
-      body.current.position.y = Math.abs(Math.sin(t * 2.4)) * CELL * 0.12;
+      body.current.position.y = Math.abs(Math.sin(t * 2.4)) * CELL * 0.1;
       body.current.rotation.y = Math.sin(t * 0.9) * 0.35;
     }
     if (ring.current && ringMaterial.current) {
@@ -311,7 +418,6 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
     }
   });
 
-  const u = AVATAR_U;
   return (
     <group position={[worldX(cursor.col), 0.006, worldZ(cursor.row)]}>
       {/* spawn ring pulsing under the avatar */}
@@ -319,17 +425,9 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
         <meshBasicMaterial ref={ringMaterial} color={cursor.color} transparent opacity={0.8} side={THREE.DoubleSide} />
       </mesh>
       <group ref={body}>
-        <mesh position={[-u * 0.11, u * 0.14, 0]} geometry={avatarGeometry.leg} material={bodyMaterial} raycast={noRaycast} />
-        <mesh position={[u * 0.11, u * 0.14, 0]} geometry={avatarGeometry.leg} material={bodyMaterial} raycast={noRaycast} />
-        <mesh position={[0, u * 0.45, 0]} geometry={avatarGeometry.torso} material={bodyMaterial} raycast={noRaycast} />
-        <mesh position={[0, u * 0.76, 0]} geometry={avatarGeometry.head} material={bodyMaterial} raycast={noRaycast} />
-        <mesh position={[0, u * 0.78, u * 0.135]} geometry={avatarGeometry.visor} material={visorMaterial} raycast={noRaycast} />
+        <AvatarSkin color={cursor.color} model={cursor.model} />
       </group>
-      <Html center position={[0, u * 1.15, 0]} distanceFactor={4} style={{ pointerEvents: "none" }} zIndexRange={[10, 0]}>
-        <span className="whitespace-nowrap border border-border bg-background/90 px-1 font-mono text-[8px] text-foreground">
-          {cursor.handle}
-        </span>
-      </Html>
+      <AvatarLabel handle={cursor.handle} say={cursor.say} color={cursor.color} />
     </group>
   );
 });
@@ -337,6 +435,115 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
 const VisitorBeacons = memo(function VisitorBeacons({ cursors }: { cursors: MapCursor[] }) {
   return cursors.slice(0, MAX_AVATARS).map((cursor) => <VisitorAvatar key={cursor.id} cursor={cursor} />);
 });
+
+export type SelfPose = { x: number; z: number; yaw: number };
+
+/** Your own figure in third person, driven by the shared pose ref. */
+const SelfAvatar = memo(function SelfAvatar({
+  pose,
+  color,
+  handle,
+  model,
+  say,
+}: {
+  pose: React.RefObject<SelfPose>;
+  color: string;
+  handle: string;
+  model: string | null;
+  say: string | null;
+}) {
+  const group = useRef<THREE.Group>(null);
+  const body = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    const current = pose.current;
+    if (!current || !group.current) return;
+    group.current.position.set(current.x, 0.006, current.z);
+    group.current.rotation.y = current.yaw;
+    if (body.current) body.current.position.y = Math.abs(Math.sin(clock.elapsedTime * 3.1)) * CELL * 0.08;
+  });
+  return (
+    <group ref={group}>
+      <group ref={body}>
+        <AvatarSkin color={color} model={model} />
+      </group>
+      <AvatarLabel handle={`${handle} (YOU)`} say={say} color={color} />
+    </group>
+  );
+});
+
+/** Walk your avatar with WASD / arrows while the camera trails behind it. */
+function ThirdPersonRig({
+  pose,
+  onCell,
+}: {
+  pose: React.RefObject<SelfPose>;
+  onCell: (cell: { col: number; row: number; height: number }) => void;
+}) {
+  const { camera } = useThree();
+  const keys = useRef(new Set<string>());
+  const lastCell = useRef("");
+  const nextPublish = useRef(0);
+
+  useEffect(() => {
+    const down = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+      keys.current.add(event.key.toLowerCase());
+      if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(event.key.toLowerCase()))
+        event.preventDefault();
+    };
+    const up = (event: KeyboardEvent) => keys.current.delete(event.key.toLowerCase());
+    const blur = () => keys.current.clear();
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    window.addEventListener("blur", blur);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+      window.removeEventListener("blur", blur);
+    };
+  }, []);
+
+  useFrame(({ clock }, rawDelta) => {
+    const current = pose.current;
+    if (!current) return;
+    const delta = Math.min(rawDelta, 0.05);
+    const pressed = keys.current;
+    const forward = (pressed.has("w") || pressed.has("arrowup") ? 1 : 0) - (pressed.has("s") || pressed.has("arrowdown") ? 1 : 0);
+    const turn = (pressed.has("a") || pressed.has("arrowleft") ? 1 : 0) - (pressed.has("d") || pressed.has("arrowright") ? 1 : 0);
+    const sprint = pressed.has("shift") ? 2.2 : 1;
+    current.yaw += turn * delta * 2.1;
+    if (forward !== 0) {
+      const speed = CELL * 9 * sprint * forward * delta;
+      current.x += Math.sin(current.yaw) * speed;
+      current.z += Math.cos(current.yaw) * speed;
+      current.x = THREE.MathUtils.clamp(current.x, -WORLD_SIZE / 2 + CELL, WORLD_SIZE / 2 - CELL);
+      current.z = THREE.MathUtils.clamp(current.z, CELL, WORLD_SIZE - CELL);
+    }
+
+    // Camera trails behind and above the avatar.
+    const back = CELL * 9;
+    const desired = new THREE.Vector3(
+      current.x - Math.sin(current.yaw) * back,
+      CELL * 5.2,
+      current.z - Math.cos(current.yaw) * back,
+    );
+    camera.position.lerp(desired, 1 - Math.exp(-6 * delta));
+    camera.lookAt(current.x, CELL * 0.7, current.z);
+
+    if (clock.elapsedTime < nextPublish.current) return;
+    nextPublish.current = clock.elapsedTime + 0.2;
+    const col = THREE.MathUtils.clamp(Math.floor((current.x + WORLD_SIZE / 2) / CELL), 0, GRID - 1);
+    const row = THREE.MathUtils.clamp(Math.floor(current.z / CELL), 0, GRID - 1);
+    const key = `${col}:${row}`;
+    if (key === lastCell.current) return;
+    lastCell.current = key;
+    onCell({ col, row, height: row * GRID + col });
+  });
+
+  return null;
+}
+
 
 function OnChainModel({ model }: { model: BitmapModel }) {
   const gltf = useGLTF(`https://ordinals.com/content/${model.inscriptionId}`);
@@ -417,7 +624,14 @@ function CameraDirector({ command, tipHeight }: { command: { type: CameraMove; n
   );
 }
 
-function ViewWindowReporter({ onWindow }: { onWindow: (window_: OwnerWindow | null) => void }) {
+function ViewWindowReporter({
+  onWindow,
+  pose,
+}: {
+  onWindow: (window_: OwnerWindow | null) => void;
+  /** in third person there are no map controls — follow the walking avatar instead */
+  pose?: React.RefObject<SelfPose> | null;
+}) {
   const { camera, controls } = useThree();
   const last = useRef("");
   const mounted = useRef(false);
@@ -436,11 +650,16 @@ function ViewWindowReporter({ onWindow }: { onWindow: (window_: OwnerWindow | nu
     if (clock.elapsedTime < nextCheck.current) return;
     nextCheck.current = clock.elapsedTime + 0.25;
     const mapControls = controls as MapControlsImpl | undefined;
-    if (!mapControls) return;
-    const distance = camera.position.distanceTo(mapControls.target);
+    const focus = pose?.current;
+    if (!mapControls && !focus) return;
+    const target = focus
+      ? new THREE.Vector3(focus.x, 0, focus.z)
+      : (mapControls as MapControlsImpl).target;
+    const distance = focus ? CELL * 8 : camera.position.distanceTo(target);
     const radius = Math.max(12, Math.ceil(distance / CELL / 8));
-    const centerCol = Math.floor((mapControls.target.x + WORLD_SIZE / 2) / CELL);
-    const centerRow = Math.floor(mapControls.target.z / CELL);
+    const centerCol = Math.floor((target.x + WORLD_SIZE / 2) / CELL);
+    const centerRow = Math.floor(target.z / CELL);
+
     const colFrom = Math.max(0, centerCol - radius);
     const colTo = Math.min(GRID - 1, centerCol + radius);
     const rowFrom = Math.max(0, centerRow - radius);
@@ -494,6 +713,9 @@ const WorldScene = memo(function WorldScene({
   onPublish,
   models,
   ownedHeights,
+  thirdPerson,
+  pose,
+  self,
 }: {
   colors: WorldColors;
   command: { type: CameraMove; nonce: number };
@@ -508,7 +730,11 @@ const WorldScene = memo(function WorldScene({
   onPublish: (position: { col: number; row: number; height: number } | null) => void;
   models: BitmapModel[];
   ownedHeights: number[];
+  thirdPerson: boolean;
+  pose: React.RefObject<SelfPose>;
+  self: { handle: string; color: string; model: string | null; say: string | null };
 }) {
+
   // Pointer moves fire dozens of times a second; each React state update re-renders
   // the whole overlay. Coalesce them: at most ~20 hover updates a second, and skip
   // updates that land on the same district within a couple of pixels.
@@ -555,6 +781,9 @@ const WorldScene = memo(function WorldScene({
       <OnChainModels models={models} bitcoin={colors.bitcoin} />
       {selectedHeight !== null ? <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} /> : null}
       <VisitorBeacons cursors={cursors} />
+      {thirdPerson ? (
+        <SelfAvatar pose={pose} color={self.color} handle={self.handle} model={self.model} say={self.say} />
+      ) : null}
       <mesh
         rotation-x={-Math.PI / 2}
         position={[0, 0.13, WORLD_SIZE / 2]}
@@ -572,14 +801,19 @@ const WorldScene = memo(function WorldScene({
         <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
-      <CameraDirector command={command} tipHeight={tipHeight} />
-      <ViewWindowReporter onWindow={onWindow} />
+      {thirdPerson ? (
+        <ThirdPersonRig pose={pose} onCell={onPublish} />
+      ) : (
+        <CameraDirector command={command} tipHeight={tipHeight} />
+      )}
+      <ViewWindowReporter onWindow={onWindow} pose={thirdPerson ? pose : null} />
       {/* Drops resolution while flying, restores it once the camera settles. */}
       <AdaptiveDpr pixelated />
       <AdaptiveEvents />
     </>
   );
 });
+
 
 export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, className }: BitmapWorld3DProps) {
   const navigate = useNavigate();
@@ -592,9 +826,19 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   const [selected, setSelected] = useState<SelectedDistrict | null>(null);
   const [command, setCommand] = useState<{ type: CameraMove; nonce: number }>({ type: "mined", nonce: 0 });
   const [dpr, setDpr] = useState(1);
+  const [thirdPerson, setThirdPerson] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [modelDraft, setModelDraft] = useState("");
   const owners = useQuery(mapOwnersQuery(window_));
   const models = useQuery(mapBitmapModelsQuery(window_));
-  const { cursors, publish } = useMapCursors();
+  const { cursors, publish, said, say, handle, color, model: avatarModel, setModel: setAvatarModel } = useMapCursors();
+  const pose = useRef<SelfPose>({ x: 0, z: CELL, yaw: 0 });
+  const [mySay, setMySay] = useState<string | null>(null);
+  const self = useMemo(
+    () => ({ handle, color, model: avatarModel, say: mySay }),
+    [handle, color, avatarModel, mySay],
+  );
+
 
   const myAddresses = useMemo(
     () => [...new Set([
@@ -620,8 +864,25 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   useEffect(() => {
     if (spawnedRef.current || !tipHeight) return;
     spawnedRef.current = true;
+    pose.current = { x: worldX(tipHeight % GRID), z: worldZ(Math.floor(tipHeight / GRID)), yaw: 0 };
     publish({ col: tipHeight % GRID, row: Math.floor(tipHeight / GRID), height: tipHeight });
   }, [tipHeight, publish]);
+
+  const sendSay = useCallback(() => {
+    const body = draft.trim();
+    if (!body) return;
+    say(body);
+    setMySay(body);
+    setDraft("");
+    window.setTimeout(() => setMySay((current) => (current === body ? null : current)), SAY_TTL_MS);
+  }, [draft, say]);
+
+  const wearModel = useCallback(() => {
+    const id = modelDraft.trim() || null;
+    setAvatarModelInscription(id);
+    setAvatarModel(id);
+    setModelDraft("");
+  }, [modelDraft, setAvatarModel]);
 
   const moveCamera = (type: CameraMove) => setCommand((current) => ({ type, nonce: current.nonce + 1 }));
   const handleWindow = useCallback((next: OwnerWindow | null) => setWindow(next), []);
@@ -639,6 +900,7 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
       (held.data ?? []).includes(selected.height)
     ),
   );
+  const chatLines = useMemo(() => said.slice(-6), [said]);
 
   return (
     <div className={className}>
@@ -646,7 +908,44 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
         <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("mined")}>[ FRAME MINED WORLD ]</Button>
         <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("full")}>[ VIEW FULL WORLD ]</Button>
         <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("tip")}>[ FLY TO TIP ]</Button>
+        <Button
+          className={thirdPerson ? "btn-term" : "btn-term-ghost"}
+          variant="ghost"
+          onClick={() => setThirdPerson((current) => !current)}
+        >
+          {thirdPerson ? "[ EXIT 3RD PERSON ]" : "[ 3RD PERSON WALK ]"}
+        </Button>
+        <form
+          className="flex items-center gap-1"
+          onSubmit={(event) => {
+            event.preventDefault();
+            wearModel();
+          }}
+        >
+          <input
+            value={modelDraft}
+            onChange={(event) => setModelDraft(event.target.value)}
+            placeholder={avatarModel ? "REPLACE AVATAR INSCRIPTION ID" : "AVATAR GLB INSCRIPTION ID"}
+            aria-label="Avatar model inscription id"
+            className="w-[220px] border border-border bg-background px-2 py-1 font-mono text-[10px] text-foreground outline-none placeholder:text-muted-foreground focus:border-bitcoin"
+          />
+          <Button className="btn-term-ghost" variant="ghost" type="submit">[ WEAR ]</Button>
+          {avatarModel ? (
+            <Button
+              className="btn-term-ghost"
+              variant="ghost"
+              type="button"
+              onClick={() => {
+                setAvatarModelInscription(null);
+                setAvatarModel(null);
+              }}
+            >
+              [ REMOVE MODEL ]
+            </Button>
+          ) : null}
+        </form>
       </div>
+
       <div className="relative h-[70vh] min-h-[420px] w-full overflow-hidden border border-border bg-background">
         {colors ? (
           <Canvas
@@ -673,11 +972,46 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
               onPublish={publish}
               models={models.data ?? EMPTY_MODELS}
               ownedHeights={ownedHeights}
+              thirdPerson={thirdPerson}
+              pose={pose}
+              self={self}
             />
           </Canvas>
         ) : null}
 
         <div aria-hidden className="pointer-events-none absolute inset-0 z-20 ring-1 ring-inset ring-bitcoin/30 shadow-[inset_0_0_48px_color-mix(in_oklab,var(--bitcoin)_12%,transparent)]" />
+
+        {/* Talk while you explore — ephemeral world chat with speech bubbles over avatars. */}
+        <div className="absolute bottom-16 left-1/2 z-30 flex w-[min(420px,calc(100%-1.5rem))] -translate-x-1/2 flex-col gap-1">
+          {chatLines.length > 0 ? (
+            <div data-no-translate className="flex flex-col gap-[2px] bg-background/70 p-1 font-mono text-[10px]">
+              {chatLines.map((line) => (
+                <p key={line.id} className="truncate">
+                  <span style={{ color: line.color }}>{line.handle}</span>{" "}
+                  <span className="text-foreground">{line.body}</span>
+                </p>
+              ))}
+            </div>
+          ) : null}
+          <form
+            className="flex gap-1"
+            onSubmit={(event) => {
+              event.preventDefault();
+              sendSay();
+            }}
+          >
+            <input
+              value={draft}
+              maxLength={SAY_MAX_LENGTH}
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder="SAY SOMETHING TO EVERYONE IN THE WORLD…"
+              aria-label="World chat message"
+              className="min-w-0 flex-1 border border-border bg-background/90 px-2 py-1 font-mono text-[11px] text-foreground outline-none placeholder:text-muted-foreground focus:border-bitcoin"
+            />
+            <Button className="btn-term" type="submit" disabled={!draft.trim()}>[ SAY ]</Button>
+          </form>
+        </div>
+
 
         {hover ? (
           <div
