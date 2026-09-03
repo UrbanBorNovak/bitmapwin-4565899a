@@ -184,9 +184,9 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({ heights, bitcoin }: { he
       </instancedMesh>
     </group>
   );
-}
+});
 
-function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: WorldColors }) {
+const DistrictBlocks = memo(function DistrictBlocks({ tipHeight, colors }: { tipHeight: number; colors: WorldColors }) {
   const uniforms = useMemo(
     () => ({
       uGrid: { value: GRID },
