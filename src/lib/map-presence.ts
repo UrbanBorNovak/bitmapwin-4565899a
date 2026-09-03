@@ -22,6 +22,10 @@ export type MapCursor = {
   /** last thing this visitor said (shown as a speech bubble) */
   say: string | null;
   sayAt: number;
+  /** current health, 0–100 */
+  hp: number;
+  /** when this visitor was last hit — drives the hit flash */
+  hitAt: number;
   at: number;
 };
 
@@ -35,6 +39,14 @@ const SEND_INTERVAL_MS = 90;
 /** speech bubbles fade after this long */
 export const SAY_TTL_MS = 9_000;
 export const SAY_MAX_LENGTH = 140;
+/** full health for every visitor */
+export const MAX_HP = 100;
+/** damage one basic attack lands */
+export const ATTACK_DAMAGE = 12;
+/** health regenerated per second while not being hit */
+const REGEN_PER_SECOND = 3;
+/** how long a knocked-out visitor stays down before respawning at full health */
+const RESPAWN_MS = 4_000;
 
 export function useMapCursors(enabled = true) {
   const selfId = useMemo(() => mapVisitorId(), []);
@@ -42,8 +54,13 @@ export function useMapCursors(enabled = true) {
   const [model, setModel] = useState<string | null>(() => avatarModelInscription());
   const [cursors, setCursors] = useState<MapCursor[]>([]);
   const [said, setSaid] = useState<WorldSaid[]>([]);
+  const [hp, setHp] = useState(MAX_HP);
+  const [hitAt, setHitAt] = useState(0);
+  const hpRef = useRef(MAX_HP);
+  hpRef.current = hp;
   const sendRef = useRef<(cell: { col: number; row: number; height: number } | null) => void>(() => {});
   const sayRef = useRef<(body: string) => void>(() => {});
+  const attackRef = useRef<(targetId: string) => void>(() => {});
   const modelRef = useRef(model);
   modelRef.current = model;
 
@@ -70,6 +87,7 @@ export function useMapCursors(enabled = true) {
           height?: number;
           handle?: string;
           model?: string | null;
+          hp?: number;
           gone?: boolean;
         };
         if (!p?.id || p.id === selfId) return;
@@ -91,6 +109,8 @@ export function useMapCursors(enabled = true) {
             model: typeof p.model === "string" && p.model ? p.model : null,
             say: previous?.say ?? null,
             sayAt: previous?.sayAt ?? 0,
+            hp: typeof p.hp === "number" ? Math.max(0, Math.min(MAX_HP, p.hp)) : (previous?.hp ?? MAX_HP),
+            hitAt: previous?.hitAt ?? 0,
             at: Date.now(),
           });
         }
@@ -114,6 +134,32 @@ export function useMapCursors(enabled = true) {
         );
         flush();
       })
+      .on("broadcast", { event: "hit" }, ({ payload }) => {
+        const p = payload as { from?: string; to?: string; damage?: number };
+        if (!p?.from || !p?.to) return;
+        const damage = Math.max(0, Math.min(MAX_HP, Number(p.damage) || ATTACK_DAMAGE));
+        if (p.to === selfId) {
+          // We took the hit: drop our own health and tell everyone the new value.
+          const next = Math.max(0, hpRef.current - damage);
+          hpRef.current = next;
+          setHp(next);
+          setHitAt(Date.now());
+          if (lastCell) push(lastCell);
+          if (next === 0) {
+            setTimeout(() => {
+              hpRef.current = MAX_HP;
+              setHp(MAX_HP);
+              if (lastCell) push(lastCell);
+            }, RESPAWN_MS);
+          }
+        } else {
+          const target = peers.get(p.to);
+          if (target) {
+            peers.set(p.to, { ...target, hp: Math.max(0, target.hp - damage), hitAt: Date.now(), at: Date.now() });
+            flush();
+          }
+        }
+      })
       .subscribe();
 
     let last = 0;
@@ -125,7 +171,7 @@ export function useMapCursors(enabled = true) {
         type: "broadcast",
         event: "cursor",
         payload: cell
-          ? { id: selfId, handle, model: modelRef.current, ...cell }
+          ? { id: selfId, handle, model: modelRef.current, hp: hpRef.current, ...cell }
           : { id: selfId, gone: true },
       });
       last = Date.now();
@@ -170,14 +216,38 @@ export function useMapCursors(enabled = true) {
       );
     };
 
+    attackRef.current = (targetId) => {
+      if (!targetId || hpRef.current <= 0) return;
+      void channel.send({
+        type: "broadcast",
+        event: "hit",
+        payload: { from: selfId, to: targetId, damage: ATTACK_DAMAGE },
+      });
+      const target = peers.get(targetId);
+      if (target) {
+        peers.set(targetId, { ...target, hp: Math.max(0, target.hp - ATTACK_DAMAGE), hitAt: Date.now(), at: Date.now() });
+        flush();
+      }
+    };
+
+    // Health trickles back so a fight does not permanently knock anyone out.
+    const regen = setInterval(() => {
+      if (hpRef.current <= 0 || hpRef.current >= MAX_HP) return;
+      const next = Math.min(MAX_HP, hpRef.current + REGEN_PER_SECOND);
+      hpRef.current = next;
+      setHp(next);
+    }, 1_000);
+
     const sweep = setInterval(flush, 2_000);
     return () => {
       if (timer) clearTimeout(timer);
       clearInterval(sweep);
+      clearInterval(regen);
       clearInterval(heartbeat);
       if (frame) cancelAnimationFrame(frame);
       sendRef.current = () => {};
       sayRef.current = () => {};
+      attackRef.current = () => {};
       push(null); // despawn: tell peers this avatar left the world
       void supabase.removeChannel(channel);
     };
@@ -191,6 +261,10 @@ export function useMapCursors(enabled = true) {
     setModel,
     cursors,
     said,
+    hp,
+    hitAt,
+    maxHp: MAX_HP,
+    attack: (targetId: string) => attackRef.current(targetId),
     say: (body: string) => sayRef.current(body),
     publish: (cell: { col: number; row: number; height: number } | null) => sendRef.current(cell),
   };
