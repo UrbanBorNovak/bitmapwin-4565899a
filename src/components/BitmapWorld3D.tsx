@@ -889,7 +889,11 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     hp,
     hitAt,
     attack,
+    respawnAt,
+    respawnNonce,
+    respawn,
   } = useMapCursors();
+
   const pose = useRef<SelfPose>({ x: 0, z: CELL, yaw: 0 });
   const [mySay, setMySay] = useState<string | null>(null);
   const self = useMemo(
