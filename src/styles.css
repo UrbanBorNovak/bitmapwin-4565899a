@@ -360,3 +360,34 @@
     animation: none;
   }
 }
+
+@keyframes land101-carry {
+  0% { transform: translateX(0); opacity: 0; }
+  10% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateX(84px); opacity: 0; }
+}
+
+@keyframes land101-sweep {
+  0% { width: 0%; }
+  70%, 100% { width: 100%; }
+}
+
+@keyframes land101-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+@keyframes land101-float {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(6px); }
+}
+
+@keyframes land101-fill {
+  0%, 100% { background-color: transparent; }
+  50% { background-color: color-mix(in oklab, var(--bitcoin) 55%, transparent); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [style*="land101-"] { animation: none !important; }
+}
