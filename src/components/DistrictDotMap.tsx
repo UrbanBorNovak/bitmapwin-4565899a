@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { clubOf } from "@/lib/clubs";
 import { colorForAddress, mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
+import { useMapCursors, type MapCursor } from "@/lib/map-presence";
 import { useWalletSession } from "@/lib/wallet-session";
 
 const GRID = 10_000; // 10,000 x 10,000 dots = 100,000,000 districts of land
@@ -55,6 +56,11 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
   const highlightSet = useRef<Set<number>>(new Set());
   highlightSet.current = new Set(highlight);
 
+  // Other visitors' cursors — ephemeral realtime broadcast, nothing stored.
+  const { cursors, publish } = useMapCursors();
+  const cursorsRef = useRef<MapCursor[]>([]);
+  cursorsRef.current = cursors;
+
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -93,6 +99,30 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
     const accentCol = color(accent);
     const borderCol = color(border);
 
+    // Live visitor cursors, drawn last so they float above the land.
+    const drawCursors = () => {
+      const now = Date.now();
+      for (const cursor of cursorsRef.current) {
+        const cx = x + cursor.col * scale + Math.max(scale, 2) / 2;
+        const cy = y + cursor.row * scale + Math.max(scale, 2) / 2;
+        if (cx < -20 || cy < -20 || cx > w + 20 || cy > h + 20) continue;
+        const age = (now - cursor.at) / 1000;
+        const pulse = 0.5 + 0.5 * Math.sin(now / 320 + cursor.col);
+        ctx.globalAlpha = Math.max(0.25, 1 - age / 8);
+        ctx.strokeStyle = cursor.color;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 4 + pulse * 5, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = cursor.color;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    };
+
+
     // Zoomed far out a single pixel covers many cells, so the mined land is
     // painted as blocks of rows instead of 100M individual rects.
     if (scale < 1.2) {
@@ -114,6 +144,7 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
         ctx.fillRect(hx, hy, Math.max(2, scale), Math.max(2, scale));
       }
       ctx.globalAlpha = 1;
+      drawCursors();
       return;
     }
 
@@ -144,7 +175,20 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
       }
     }
     ctx.globalAlpha = 1;
+    drawCursors();
   }, [tipHeight, owners.data]);
+
+  // Keep the cursor halos breathing while anyone else is on the map.
+  useEffect(() => {
+    if (cursors.length === 0) return;
+    let frame = 0;
+    const loop = () => {
+      draw();
+      frame = requestAnimationFrame(loop);
+    };
+    frame = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(frame);
+  }, [cursors.length, draw]);
 
   // Owners are fetched for the visible window only — the registry holds
   // hundreds of thousands of owned districts.
@@ -314,6 +358,11 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
           }
           const cell = cellAt(e.clientX, e.clientY);
           setHover(cell && cell.height <= tipHeight ? cell : null);
+          publish(
+            cell
+              ? { col: cell.height % GRID, row: Math.floor(cell.height / GRID), height: cell.height }
+              : null,
+          );
         }}
         onPointerUp={(e) => {
           const d = dragRef.current;
@@ -330,6 +379,7 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
         onPointerLeave={() => {
           dragRef.current = null;
           setHover(null);
+          publish(null);
         }}
       >
         <canvas ref={canvasRef} className="block h-full w-full touch-none" />
@@ -372,6 +422,14 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
           <span data-no-translate>×{zoomLabel.toFixed(2)}</span>
           <span data-no-translate>
             {window_ ? (owners.isPending ? "LOADING HOLDERS…" : `${owners.data?.size ?? 0} HELD IN VIEW`) : "ZOOM IN FOR HOLDER COLOURS"}
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block size-1.5 animate-pulse bg-bitcoin" aria-hidden />
+            {cursors.length > 0 ? (
+              <span data-no-translate>{cursors.length} SEARCHING NOW</span>
+            ) : (
+              <span>NOBODY ELSE SEARCHING</span>
+            )}
           </span>
         </div>
 
