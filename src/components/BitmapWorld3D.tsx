@@ -711,6 +711,9 @@ const WorldScene = memo(function WorldScene({
   onPublish,
   models,
   ownedHeights,
+  thirdPerson,
+  pose,
+  self,
 }: {
   colors: WorldColors;
   command: { type: CameraMove; nonce: number };
@@ -725,7 +728,11 @@ const WorldScene = memo(function WorldScene({
   onPublish: (position: { col: number; row: number; height: number } | null) => void;
   models: BitmapModel[];
   ownedHeights: number[];
+  thirdPerson: boolean;
+  pose: React.RefObject<SelfPose>;
+  self: { handle: string; color: string; model: string | null; say: string | null };
 }) {
+
   // Pointer moves fire dozens of times a second; each React state update re-renders
   // the whole overlay. Coalesce them: at most ~20 hover updates a second, and skip
   // updates that land on the same district within a couple of pixels.
