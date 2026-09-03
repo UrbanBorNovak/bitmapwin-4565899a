@@ -160,9 +160,44 @@ export async function validateOffer(psbtBase64: string): Promise<OfferValidation
   const ordOutput = outputs[index]!;
   const input = decoded.inputs[index]!;
   const inscriptionId = ordOutput.inscriptions[0] ?? null;
+
+  // Listing gate 1 — only the key holder can list: the selling input must
+  // already carry a signature, which nobody but the wallet holding the
+  // inscription can produce.
+  if (!input.signed) {
+    throw new Error(
+      "PSBT IS NOT SIGNED — ONLY THE WALLET HOLDING THIS BITMAP CAN LIST IT",
+    );
+  }
+
+  // Listing gate 2 — the inscription must still be sitting in an unspent
+  // output, i.e. the seller really holds it right now.
+  if (ordOutput.spent) {
+    throw new Error("THIS UTXO IS ALREADY SPENT — THE INSCRIPTION HAS MOVED");
+  }
+
   // Any ordinal can be sold (shop assets, images, bitmaps). A `<height>.bitmap`
   // body just tags the offer with its bitmap height for registry views.
   const bitmapHeight = inscriptionId ? await bitmapHeightOf(inscriptionId) : null;
+
+  // Listing gate 3 — a bitmap listing must be the VALID claim for that height.
+  // Losing duplicate claims for the same block cannot be listed as land.
+  if (bitmapHeight !== null && inscriptionId) {
+    const { data: indexRow } = await db()
+      .from("bitmap_index")
+      .select("inscription_id, is_valid")
+      .eq("block_height", bitmapHeight)
+      .maybeSingle();
+    if (indexRow?.inscription_id && indexRow.inscription_id !== inscriptionId) {
+      throw new Error(
+        `NOT THE VALID ${bitmapHeight}.BITMAP — THAT BLOCK IS HELD BY AN EARLIER INSCRIPTION`,
+      );
+    }
+    if (indexRow && indexRow.is_valid === false) {
+      throw new Error(`${bitmapHeight}.BITMAP IS NOT A VALID CLAIM`);
+    }
+  }
+
 
 
   const sellerAddress =
