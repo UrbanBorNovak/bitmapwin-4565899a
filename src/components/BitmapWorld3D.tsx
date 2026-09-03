@@ -127,7 +127,6 @@ function OwnedBitmapGlow({ heights, bitcoin }: { heights: number[]; bitcoin: str
     if (!core || !aura) return;
     const dummy = new THREE.Object3D();
     owned.forEach((height, index) => {
-      const blockHeight = districtHeight(height);
       const x = worldX(height % GRID);
       const z = worldZ(Math.floor(height / GRID));
       dummy.position.set(x, 0.16, z);
