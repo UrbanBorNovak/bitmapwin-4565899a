@@ -17,6 +17,8 @@ import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapMarketChart } from "@/components/BitmapMarketChart";
 import { FloorRanking } from "@/components/FloorRanking";
 import { TrendExplorer } from "@/components/TrendExplorer";
+import { OpportunityFunnel } from "@/components/OpportunityFunnel";
+
 import { SalesLog } from "@/components/SalesLog";
 import { TradeCrawlerStatus } from "@/components/TradeCrawlerStatus";
 import { useServerFn } from "@tanstack/react-start";
