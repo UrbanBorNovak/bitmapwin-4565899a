@@ -10,6 +10,8 @@ import * as THREE from "three";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
 import { Button } from "@/components/ui/button";
 import { BitmapModelPlacement } from "@/components/BitmapModelPlacement";
+import { AvatarInventory } from "@/components/AvatarInventory";
+
 import { clubOf } from "@/lib/clubs";
 import { colorForAddress, mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
 import { SAY_MAX_LENGTH, SAY_TTL_MS, useMapCursors, type MapCursor } from "@/lib/map-presence";
@@ -828,7 +830,8 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
   const [dpr, setDpr] = useState(1);
   const [thirdPerson, setThirdPerson] = useState(false);
   const [draft, setDraft] = useState("");
-  const [modelDraft, setModelDraft] = useState("");
+  const [inventoryOpen, setInventoryOpen] = useState(false);
+
   const owners = useQuery(mapOwnersQuery(window_));
   const models = useQuery(mapBitmapModelsQuery(window_));
   const { cursors, publish, said, say, handle, color, model: avatarModel, setModel: setAvatarModel } = useMapCursors();
@@ -877,12 +880,15 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     window.setTimeout(() => setMySay((current) => (current === body ? null : current)), SAY_TTL_MS);
   }, [draft, say]);
 
-  const wearModel = useCallback(() => {
-    const id = modelDraft.trim() || null;
-    setAvatarModelInscription(id);
-    setAvatarModel(id);
-    setModelDraft("");
-  }, [modelDraft, setAvatarModel]);
+  /** Equip, swap or unequip the worn on-chain model — persists per browser. */
+  const equipModel = useCallback(
+    (inscriptionId: string | null) => {
+      setAvatarModelInscription(inscriptionId);
+      setAvatarModel(inscriptionId);
+    },
+    [setAvatarModel],
+  );
+
 
   const moveCamera = (type: CameraMove) => setCommand((current) => ({ type, nonce: current.nonce + 1 }));
   const handleWindow = useCallback((next: OwnerWindow | null) => setWindow(next), []);
@@ -915,35 +921,14 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
         >
           {thirdPerson ? "[ EXIT 3RD PERSON ]" : "[ 3RD PERSON WALK ]"}
         </Button>
-        <form
-          className="flex items-center gap-1"
-          onSubmit={(event) => {
-            event.preventDefault();
-            wearModel();
-          }}
+        <Button
+          className={inventoryOpen ? "btn-term" : "btn-term-ghost"}
+          variant="ghost"
+          onClick={() => setInventoryOpen((current) => !current)}
         >
-          <input
-            value={modelDraft}
-            onChange={(event) => setModelDraft(event.target.value)}
-            placeholder={avatarModel ? "REPLACE AVATAR INSCRIPTION ID" : "AVATAR GLB INSCRIPTION ID"}
-            aria-label="Avatar model inscription id"
-            className="w-[220px] border border-border bg-background px-2 py-1 font-mono text-[10px] text-foreground outline-none placeholder:text-muted-foreground focus:border-bitcoin"
-          />
-          <Button className="btn-term-ghost" variant="ghost" type="submit">[ WEAR ]</Button>
-          {avatarModel ? (
-            <Button
-              className="btn-term-ghost"
-              variant="ghost"
-              type="button"
-              onClick={() => {
-                setAvatarModelInscription(null);
-                setAvatarModel(null);
-              }}
-            >
-              [ REMOVE MODEL ]
-            </Button>
-          ) : null}
-        </form>
+          {avatarModel ? "[ INVENTORY · WEARING MODEL ]" : "[ INVENTORY ]"}
+        </Button>
+
       </div>
 
       <div className="relative h-[70vh] min-h-[420px] w-full overflow-hidden border border-border bg-background">
@@ -980,6 +965,16 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
         ) : null}
 
         <div aria-hidden className="pointer-events-none absolute inset-0 z-20 ring-1 ring-inset ring-bitcoin/30 shadow-[inset_0_0_48px_color-mix(in_oklab,var(--bitcoin)_12%,transparent)]" />
+
+        {inventoryOpen ? (
+          <AvatarInventory
+            addresses={myAddresses}
+            equipped={avatarModel}
+            onEquip={equipModel}
+            onClose={() => setInventoryOpen(false)}
+          />
+        ) : null}
+
 
         {/* Talk while you explore — ephemeral world chat with speech bubbles over avatars. */}
         <div className="absolute bottom-16 left-1/2 z-30 flex w-[min(420px,calc(100%-1.5rem))] -translate-x-1/2 flex-col gap-1">
