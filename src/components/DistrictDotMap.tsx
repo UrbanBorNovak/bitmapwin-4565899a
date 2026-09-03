@@ -67,10 +67,10 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
     const rowTo = Math.min(GRID - 1, Math.ceil((-y + h) / scale));
 
     const dot = Math.max(0.6, scale * 0.7);
-    const mined = (v: string) => (v.startsWith("oklch") || v.startsWith("#") ? v : `oklch(${v})`);
-    const fgCol = mined(fg);
-    const accentCol = mined(accent);
-    const borderCol = mined(border);
+    const fgCol = color(fg);
+    const accentCol = color(accent);
+    const borderCol = color(border);
+
 
     for (let row = rowFrom; row <= rowTo; row++) {
       const sy = y + row * scale;
