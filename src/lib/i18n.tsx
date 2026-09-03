@@ -68,6 +68,8 @@ function isTranslatable(raw: string): boolean {
   if (/^(bc1|tb1)[a-z0-9]{20,}$/i.test(t)) return false;
   if (/^[A-Za-z0-9]{26,}$/.test(t)) return false;
   if (/\.bitmap$/i.test(t)) return false;
+  // Live on-chain data rows (addresses, block references) stay as-is.
+  if (/bc1|tb1|BLK\s|\btxid\b/i.test(t) && /[\d]/.test(t)) return false;
   return true;
 }
 

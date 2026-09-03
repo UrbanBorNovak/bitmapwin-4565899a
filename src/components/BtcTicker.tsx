@@ -24,6 +24,7 @@ export function BtcTicker({ className = "" }: { className?: string }) {
     <div
       className={`flex items-center gap-2 border border-border px-2 py-1 font-mono text-[10px] ${className}`}
       aria-live="polite"
+      data-no-translate
     >
       <span className="text-muted-foreground">BTC</span>
       {isPending || !data ? (
