@@ -132,6 +132,39 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
     };
   };
 
+  const setView = (next: View) => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    viewRef.current = clamp(next, wrap.clientWidth, wrap.clientHeight);
+    setZoomLabel(viewRef.current.scale);
+    draw();
+  };
+
+  /** whole 10,000 x 10,000 grid in frame */
+  const fitAll = () => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    const scale = Math.min(wrap.clientWidth, wrap.clientHeight) / GRID;
+    setView({ scale, x: 0, y: 0 });
+  };
+
+  /** frame the mined rows — the districts that actually exist today */
+  const fitMined = useCallback(() => {
+    const wrap = wrapRef.current;
+    if (!wrap || tipHeight <= 0) return;
+    const rows = Math.floor(tipHeight / GRID) + 1;
+    const scale = Math.min(8, Math.max(0.02, wrap.clientHeight / (rows + 1)));
+    viewRef.current = clamp({ scale, x: 0, y: 0 }, wrap.clientWidth, wrap.clientHeight);
+    setZoomLabel(scale);
+    draw();
+  }, [tipHeight, draw]);
+
+  useEffect(() => {
+    if (tipHeight > 0) fitMined();
+  }, [tipHeight, fitMined]);
+
+
+
   const cellAt = (clientX: number, clientY: number) => {
     const wrap = wrapRef.current;
     if (!wrap) return null;
