@@ -931,6 +931,8 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     spawnedRef.current = true;
     pose.current = { x: worldX(tipHeight % GRID), z: worldZ(Math.floor(tipHeight / GRID)), yaw: 0 };
     publish({ col: tipHeight % GRID, row: Math.floor(tipHeight / GRID), height: tipHeight });
+    // once you are standing in the world, walking controls are live right away
+    setThirdPerson(true);
   }, [tipHeight, publish]);
 
   // Killed: teleport back to the spawn point at the chain tip on every respawn.
@@ -940,7 +942,9 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     const row = Math.floor(tipHeight / GRID);
     pose.current = { x: worldX(col), z: worldZ(row), yaw: 0 };
     publish({ col, row, height: tipHeight });
+    setThirdPerson(true);
   }, [respawnNonce, tipHeight, publish]);
+
 
   // Countdown ticker, only while knocked out.
   const [nowTick, setNowTick] = useState(0);
