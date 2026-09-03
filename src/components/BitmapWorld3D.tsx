@@ -1148,13 +1148,19 @@ function CameraDirector({
       makeDefault
       target={initialTarget}
       enableDamping
-      dampingFactor={0.08}
-      minDistance={0.18}
-      maxDistance={190}
+      dampingFactor={0.12}
+      // scroll keeps whatever plot is under the cursor pinned, and dollies by a
+      // gentle multiplier so one trackpad flick cannot slam into the limits
+      zoomToCursor
+      zoomSpeed={0.55}
+      panSpeed={0.9}
+      minDistance={0.05}
+      maxDistance={220}
       maxPolarAngle={Math.PI / 2.08}
       screenSpacePanning={false}
       mouseButtons={{ LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE }}
     />
+
   );
 }
 
