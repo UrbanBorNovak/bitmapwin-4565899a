@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
-import { AdaptiveDpr, AdaptiveEvents, Environment, Html, Lightformer, MapControls, PerformanceMonitor, useAnimations, useGLTF } from "@react-three/drei";
+import { Environment, Html, Lightformer, MapControls, useAnimations, useGLTF } from "@react-three/drei";
 import { Suspense } from "react";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
@@ -251,10 +251,11 @@ const DistrictBlocks = memo(function DistrictBlocks({ tipHeight, colors }: { tip
             // per-cell inset instead of shimmering (cheaper and stable while zoomed out).
             float px = max(fwidth(vUv.x), fwidth(vUv.y)) * uGrid;
             float detail = 1.0 - smoothstep(0.35, 1.1, px);
-            float inset = mix(1.0, smoothstep(0.025, 0.14, edge), detail);
-            vec3 minedColor = mix(uMined * (0.45 + shade * 0.28), uBitcoin, 0.12 + club * 0.035);
+            float edgeAA = max(fwidth(cellUv.x), fwidth(cellUv.y));
+            float inset = mix(1.0, smoothstep(0.012, max(0.036, edgeAA * 1.4), edge), detail);
+            vec3 minedColor = mix(uMined * (0.36 + shade * 0.2), uBitcoin, 0.075 + club * 0.025);
             vec3 color = mix(uFuture * 0.32, minedColor, mined);
-            gl_FragColor = vec4(color * (0.34 + inset * 0.92), 1.0);
+            gl_FragColor = vec4(color * (0.48 + inset * 0.58), 1.0);
           }
         `}
       />
@@ -414,11 +415,11 @@ function AvatarLabel({
 }) {
   const hurt = Date.now() - hitAt < 400;
   return (
-    <Html center position={[0, AVATAR_U * 1.35, 0]} distanceFactor={4} style={{ pointerEvents: "none" }} zIndexRange={[10, 0]}>
+    <Html center position={[0, AVATAR_U * 1.35, 0]} distanceFactor={0.46} style={{ pointerEvents: "none" }} zIndexRange={[10, 0]}>
       <div className="flex flex-col items-center gap-[2px]">
         {say ? (
           <span
-            className="max-w-[140px] whitespace-pre-wrap break-words border bg-background/95 px-1 py-[1px] font-mono text-[8px] text-foreground"
+            className="max-w-[160px] whitespace-pre-wrap break-words border bg-background/95 px-2 py-1 font-mono text-[9px] text-foreground shadow-md"
             style={{ borderColor: color }}
           >
             {say}
@@ -426,7 +427,7 @@ function AvatarLabel({
         ) : null}
         <HealthBar hp={hp} color={color} />
         <span
-          className="whitespace-nowrap border bg-background/90 px-1 font-mono text-[8px] text-foreground"
+          className="whitespace-nowrap border bg-background/90 px-1.5 py-0.5 font-mono text-[8px] text-foreground shadow-md"
           style={{ borderColor: hurt ? "var(--bitcoin)" : "var(--color-border)" }}
         >
           {hp <= 0 ? `${handle} · DOWN` : handle}
@@ -483,6 +484,10 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
       <mesh ref={ring} rotation-x={-Math.PI / 2} position-y={0.001} geometry={avatarGeometry.ring} raycast={noRaycast}>
         <meshBasicMaterial ref={ringMaterial} color={cursor.color} transparent opacity={0.8} side={THREE.DoubleSide} />
       </mesh>
+      <mesh rotation-x={-Math.PI / 2} position-y={0.002} raycast={noRaycast}>
+        <circleGeometry args={[AVATAR_U * 0.28, 16]} />
+        <meshBasicMaterial color={colorsForShadow} transparent opacity={0.34} depthWrite={false} />
+      </mesh>
       <group ref={body}>
         <AvatarSkin color={cursor.color} model={cursor.model} />
       </group>
@@ -497,6 +502,8 @@ const VisitorBeacons = memo(function VisitorBeacons({ cursors }: { cursors: MapC
 
 /** Full local player: position, velocity, facing, movement/animation/combat state, region and target. */
 export type SelfPose = PlayerState;
+
+const colorsForShadow = "#000000";
 
 /** Your own figure in third person, driven by the shared pose ref. */
 const SelfAvatar = memo(function SelfAvatar({
@@ -531,6 +538,10 @@ const SelfAvatar = memo(function SelfAvatar({
   });
   return (
     <group ref={group}>
+      <mesh rotation-x={-Math.PI / 2} position-y={0.002} raycast={noRaycast}>
+        <circleGeometry args={[AVATAR_U * 0.3, 16]} />
+        <meshBasicMaterial color={colorsForShadow} transparent opacity={0.38} depthWrite={false} />
+      </mesh>
       <group ref={body}>
         <AvatarSkin color={color} model={model} />
       </group>
@@ -555,6 +566,8 @@ function ThirdPersonRig({
   const keys = useRef(new Set<string>());
   const lastReport = useRef("");
   const nextReport = useRef(0);
+  const cameraTarget = useRef(new THREE.Vector3());
+  const cameraLook = useRef(new THREE.Vector3());
 
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
@@ -591,14 +604,25 @@ function ThirdPersonRig({
 
     // Camera trails behind and above, pulling back a little at speed.
     const speed = Math.hypot(player.vx, player.vz);
-    const back = CELL * (9 + (speed / (MOVE.walkSpeed * MOVE.sprint)) * 3);
-    const desired = new THREE.Vector3(
+    const back = CELL * (11.5 + (speed / (MOVE.walkSpeed * MOVE.sprint)) * 2.5);
+    cameraTarget.current.set(
       player.x - Math.sin(player.yaw) * back,
-      CELL * 5.2,
+      CELL * 7.2,
       player.z - Math.cos(player.yaw) * back,
     );
-    camera.position.lerp(desired, 1 - Math.exp(-6 * delta));
-    camera.lookAt(player.x, CELL * 0.7, player.z);
+    camera.position.lerp(cameraTarget.current, 1 - Math.exp(-5.2 * delta));
+    cameraLook.current.set(
+      player.x + Math.sin(player.yaw) * CELL * 2.5,
+      CELL * 0.62,
+      player.z + Math.cos(player.yaw) * CELL * 2.5,
+    );
+    camera.lookAt(cameraLook.current);
+    const perspective = camera as THREE.PerspectiveCamera;
+    const targetFov = 50 + Math.min(4, speed * 12);
+    if (Math.abs(perspective.fov - targetFov) > 0.02) {
+      perspective.fov = damp(perspective.fov, targetFov, 5, delta);
+      perspective.updateProjectionMatrix();
+    }
 
     // Fixed-rate reporting keeps network traffic flat regardless of frame rate.
     if (clock.elapsedTime < nextReport.current) return;
@@ -760,15 +784,15 @@ const LandSurface = memo(function LandSurface({ colors, tipHeight }: { colors: W
     <>
       <mesh rotation-x={-Math.PI / 2} position={[0, -0.008, WORLD_SIZE / 2]} raycast={noRaycast}>
         <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
-        <meshLambertMaterial color={colors.border} />
+        <meshLambertMaterial color={colors.background} />
       </mesh>
       <mesh rotation-x={-Math.PI / 2} position={[0, 0, tipDepth / 2]} raycast={noRaycast}>
         <planeGeometry args={[WORLD_SIZE, tipDepth, 1, 1]} />
-        <meshLambertMaterial color={colors.foreground} />
+        <meshLambertMaterial color={colors.muted} />
       </mesh>
       <mesh rotation-x={-Math.PI / 2} position={[0, 0.018, tipDepth / 2]} raycast={noRaycast}>
         <planeGeometry args={[WORLD_SIZE, tipDepth, 1, 1]} />
-        <meshBasicMaterial color={colors.bitcoin} transparent opacity={0.2} depthWrite={false} blending={THREE.AdditiveBlending} />
+        <meshBasicMaterial color={colors.bitcoin} transparent opacity={0.045} depthWrite={false} />
       </mesh>
       <gridHelper args={gridArgs as unknown as [number, number, THREE.Color, THREE.Color]} position={[0, 0.003, WORLD_SIZE / 2]} raycast={noRaycast} />
     </>
@@ -840,15 +864,15 @@ const WorldScene = memo(function WorldScene({
   return (
     <>
       <color attach="background" args={[colors.background]} />
-      <fog attach="fog" args={[colors.background, 48, 185]} />
-      <ambientLight intensity={0.24} />
-      <hemisphereLight args={[colors.foreground, colors.background, 0.3]} />
-      <directionalLight color={colors.bitcoin} position={[-18, 36, -12]} intensity={4.4} castShadow={false} />
-      <pointLight color={colors.bitcoin} position={[14, 12, 3]} intensity={120} distance={45} decay={2} />
+      <fog attach="fog" args={[colors.background, 34, 150]} />
+      <ambientLight intensity={0.42} />
+      <hemisphereLight args={[colors.foreground, colors.background, 0.52]} />
+      <directionalLight color={colors.foreground} position={[-18, 36, -12]} intensity={1.35} castShadow={false} />
+      <pointLight color={colors.bitcoin} position={[14, 10, 3]} intensity={18} distance={28} decay={2} />
       {/* Baked once at low resolution — ambient tint only, no per-frame cubemap cost. */}
       <Environment frames={1} resolution={64}>
-        <Lightformer intensity={3.1} color={colors.bitcoin} position={[0, 12, -4]} scale={[34, 14, 1]} />
-        <Lightformer intensity={0.8} color={colors.foreground} position={[-20, 5, 20]} rotation-y={Math.PI / 2} scale={[28, 4, 1]} />
+        <Lightformer intensity={0.85} color={colors.bitcoin} position={[0, 12, -4]} scale={[34, 14, 1]} />
+        <Lightformer intensity={1.15} color={colors.foreground} position={[-20, 5, 20]} rotation-y={Math.PI / 2} scale={[28, 4, 1]} />
       </Environment>
       <LandSurface colors={colors} tipHeight={tipHeight} />
       <DistrictBlocks tipHeight={tipHeight} colors={colors} />
@@ -895,9 +919,6 @@ const WorldScene = memo(function WorldScene({
         <CameraDirector command={command} tipHeight={tipHeight} />
       )}
       <ViewWindowReporter onWindow={onWindow} pose={thirdPerson ? pose : null} />
-      {/* Drops resolution while flying, restores it once the camera settles. */}
-      <AdaptiveDpr pixelated />
-      <AdaptiveEvents />
     </>
   );
 });
@@ -960,7 +981,12 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
     [held.data, highlight, tipHeight],
   );
 
-  useEffect(() => setColors(readWorldColors()), []);
+  useEffect(() => {
+    setColors(readWorldColors());
+    // Keep a fixed renderer resolution. Dynamic DPR changes looked like visual
+    // glitches while moving and cost more than they saved on typical laptops.
+    setDpr(Math.min(window.devicePixelRatio, 1.25));
+  }, []);
   useEffect(() => onCursorsChange?.(cursors), [cursors, onCursorsChange]);
 
   // Spawn in at the chain tip as soon as the world knows where the frontier is,
@@ -1131,14 +1157,10 @@ export function BitmapWorld3D({ tipHeight, highlight = [], onCursorsChange, clas
         {colors ? (
           <Canvas
             dpr={dpr}
-            camera={{ position: [0, 108, minedDepth / 2 + 0.01], fov: 46, near: 0.01, far: 350 }}
-            gl={{ antialias: false, powerPreference: "high-performance", stencil: false, depth: true }}
+            camera={{ position: [0, 108, minedDepth / 2 + 0.01], fov: 50, near: 0.01, far: 350 }}
+            gl={{ antialias: true, powerPreference: "high-performance", stencil: false, depth: true }}
             performance={{ min: 0.4 }}
           >
-            <PerformanceMonitor
-              onIncline={() => setDpr(Math.min(1.5, window.devicePixelRatio))}
-              onDecline={() => setDpr(1)}
-            />
             <WorldScene
               colors={colors}
               command={command}
