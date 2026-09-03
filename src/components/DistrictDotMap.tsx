@@ -271,24 +271,6 @@ export function DistrictDotMap({ tipHeight, highlight = [], className }: Distric
           dragRef.current = null;
           setHover(null);
         }}
-        onWheel={(e) => {
-          e.preventDefault();
-          const wrap = wrapRef.current!;
-          const r = wrap.getBoundingClientRect();
-          const px = e.clientX - r.left;
-          const py = e.clientY - r.top;
-          const prev = viewRef.current;
-          const factor = Math.exp(-e.deltaY * 0.0015);
-          const scale = Math.min(24, Math.max(0.02, prev.scale * factor));
-          const k = scale / prev.scale;
-          viewRef.current = clamp(
-            { scale, x: px - (px - prev.x) * k, y: py - (py - prev.y) * k },
-            wrap.clientWidth,
-            wrap.clientHeight,
-          );
-          setZoomLabel(scale);
-          draw();
-        }}
       >
         <canvas ref={canvasRef} className="block h-full w-full touch-none" />
 
