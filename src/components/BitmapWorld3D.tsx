@@ -124,9 +124,8 @@ function heightAtPoint(point: THREE.Vector3) {
   return row * GRID + col;
 }
 
-/** shared tints so every held plot stays inside the Bitcoin-orange family */
+/** shared tint so every held plot stays inside the Bitcoin-orange family */
 const WHITE_HOT = new THREE.Color("#ffd9a0");
-const DEEP_EMBER = new THREE.Color("#5a2600");
 
 const HolderColumns = memo(function HolderColumns({
 
@@ -157,17 +156,14 @@ const HolderColumns = memo(function HolderColumns({
 
       dummy.updateMatrix();
       mesh.setMatrixAt(index, dummy.matrix);
-      // Held plots stay in the Bitcoin-orange family. Rarer clubs (lower
-      // blocks) burn brighter, common ones sit as a deeper ember, and your own
-      // holdings are the hottest of all.
-      const club = height < 1000 ? 4 : height < 10_000 ? 3 : height < 100_000 ? 2 : height < 1_000_000 ? 1 : 0;
+      // Held plots all use the same Bitcoin orange. Your own holdings burn
+      // hottest; everyone else's stays a consistent bright orange so the start
+      // of the map and blocks through 30k+ are never darker than the rest.
       color.set(bitcoin);
       if (mine.has(owner.toLowerCase())) {
         color.lerp(WHITE_HOT, 0.35);
-      } else if (club >= 3) {
-        color.lerp(WHITE_HOT, 0.18 + club * 0.06);
       } else {
-        color.lerp(DEEP_EMBER, 0.42 - club * 0.14);
+        color.lerp(WHITE_HOT, 0.12);
       }
       mesh.setColorAt(index, color);
 
