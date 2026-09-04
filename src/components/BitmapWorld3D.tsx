@@ -124,7 +124,12 @@ function heightAtPoint(point: THREE.Vector3) {
   return row * GRID + col;
 }
 
+/** shared tints so every held plot stays inside the Bitcoin-orange family */
+const WHITE_HOT = new THREE.Color("#ffd9a0");
+const DEEP_EMBER = new THREE.Color("#5a2600");
+
 const HolderColumns = memo(function HolderColumns({
+
   owners,
   mine,
   bitcoin,
