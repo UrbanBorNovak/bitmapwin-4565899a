@@ -339,18 +339,21 @@ const DistrictBlocks = memo(function DistrictBlocks({
             float edgeAA = max(fwidth(cellUv.x), fwidth(cellUv.y));
             float inset = mix(1.0, smoothstep(0.012, max(0.036, edgeAA * 1.4), edge), detail);
 
-            // Bitcoin-orange gradient: every mined tile uses the same orange family,
-            // including blocks 0–34,999. Only spatial sweep/plot/shade add texture.
-            vec3 ember = uBitcoin * 0.22;
-            vec3 blaze = mix(uBitcoin, vec3(1.0, 0.78, 0.42), 0.28);
-            float sweep = clamp(vUv.y * 0.65 + vUv.x * 0.2, 0.0, 1.0);
+            // Bitcoin-orange gradient: every tile — mined or not — stays in the same
+            // bright orange family. Unmined tiles are only slightly dimmer and marked
+            // by the grid, never dark.
+            vec3 ember = uBitcoin * 0.32;
+            vec3 blaze = mix(uBitcoin, vec3(1.0, 0.82, 0.48), 0.38);
+            float sweep = clamp(vUv.y * 0.55 + vUv.x * 0.18, 0.0, 1.0);
             float plot = clamp(cellUv.y * 0.55 + cellUv.x * 0.25 + 0.1, 0.0, 1.0);
-            float heat = clamp(sweep * 0.3 + plot * 0.22 * detail + shade * 0.12, 0.0, 1.0);
+            float heat = clamp(sweep * 0.28 + plot * 0.22 * detail + shade * 0.12, 0.0, 1.0);
             vec3 minedColor = mix(ember, blaze, heat);
-            minedColor = mix(minedColor, uMined * 0.34, 0.18);
-            vec3 futureColor = mix(uFuture * 0.24, uBitcoin * 0.1, sweep);
+            minedColor = mix(minedColor, uMined * 0.42, 0.14);
+            // Unmined world: same orange family, just a touch more muted so the grid
+            // lines remain the main difference, not a jarring dark band.
+            vec3 futureColor = mix(uBitcoin * 0.28, blaze * 0.72, sweep);
             vec3 color = mix(futureColor, minedColor, mined);
-            gl_FragColor = vec4(color * (0.6 + inset * 0.5), 1.0);
+            gl_FragColor = vec4(color * (0.62 + inset * 0.5), 1.0);
           }
         `
         }
