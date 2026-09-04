@@ -331,7 +331,6 @@ const DistrictBlocks = memo(function DistrictBlocks({
             float districtId = cell.y * uGrid + cell.x;
             float mined = step(districtId, uTip);
             float shade = hash(districtId);
-            float club = districtId < 1000.0 ? 0.0 : districtId < 10000.0 ? 1.0 : districtId < 100000.0 ? 2.0 : 3.0;
             float edge = min(min(cellUv.x, 1.0 - cellUv.x), min(cellUv.y, 1.0 - cellUv.y));
             // Cell footprint in pixels: when a district is sub-pixel, dissolve the
             // per-cell inset instead of shimmering (cheaper and stable while zoomed out).
@@ -340,14 +339,13 @@ const DistrictBlocks = memo(function DistrictBlocks({
             float edgeAA = max(fwidth(cellUv.x), fwidth(cellUv.y));
             float inset = mix(1.0, smoothstep(0.012, max(0.036, edgeAA * 1.4), edge), detail);
 
-            // Bitcoin-orange gradients: a deep ember floor lifting toward bright
-            // orange with age (older blocks burn hotter) and across each plot.
+            // Bitcoin-orange gradient: every mined tile uses the same orange family,
+            // including blocks 0–34,999. Only spatial sweep/plot/shade add texture.
             vec3 ember = uBitcoin * 0.22;
             vec3 blaze = mix(uBitcoin, vec3(1.0, 0.78, 0.42), 0.28);
-            float age = 1.0 - clamp(districtId / max(uTip, 1.0), 0.0, 1.0);
             float sweep = clamp(vUv.y * 0.65 + vUv.x * 0.2, 0.0, 1.0);
             float plot = clamp(cellUv.y * 0.55 + cellUv.x * 0.25 + 0.1, 0.0, 1.0);
-            float heat = clamp(age * 0.45 + sweep * 0.3 + plot * 0.22 * detail + shade * 0.12 + club * 0.03, 0.0, 1.0);
+            float heat = clamp(sweep * 0.3 + plot * 0.22 * detail + shade * 0.12, 0.0, 1.0);
             vec3 minedColor = mix(ember, blaze, heat);
             minedColor = mix(minedColor, uMined * 0.34, 0.18);
             vec3 futureColor = mix(uFuture * 0.24, uBitcoin * 0.1, sweep);
