@@ -21,7 +21,7 @@ import { BitmapModelPlacement } from "@/components/BitmapModelPlacement";
 import { AvatarInventory } from "@/components/AvatarInventory";
 
 import { clubOf } from "@/lib/clubs";
-import { colorForAddress, mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
+import { mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
 import {
   ATTACK_COOLDOWN_MS,
   ATTACK_DAMAGE,
