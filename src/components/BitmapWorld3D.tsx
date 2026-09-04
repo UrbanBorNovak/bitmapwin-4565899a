@@ -144,9 +144,12 @@ const HolderColumns = memo(function HolderColumns({
     entries.forEach(([height, owner], index) => {
       const col = height % GRID;
       const row = Math.floor(height / GRID);
-      const hashHeight = 0.035 + ((height * 2654435761) >>> 27) * 0.0025;
-      dummy.position.set(worldX(col), hashHeight / 2, worldZ(row));
-      dummy.scale.set(CELL * 0.82, hashHeight, CELL * 0.82);
+      // Held districts read as flat coloured plots painted on the land — no
+      // raised blocks standing up out of the terrain.
+      const tile = AVATAR_U * 0.06;
+      dummy.position.set(worldX(col), tile / 2, worldZ(row));
+      dummy.scale.set(CELL * 0.9, tile, CELL * 0.9);
+
       dummy.updateMatrix();
       mesh.setMatrixAt(index, dummy.matrix);
       color.set(mine.has(owner.toLowerCase()) ? bitcoin : colorForAddress(owner));
