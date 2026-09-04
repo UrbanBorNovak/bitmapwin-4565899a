@@ -1431,8 +1431,8 @@ const WorldScene = memo(function WorldScene({
         onPointerMove={handleMove}
         onPointerOut={() => {
           onHover(null);
-          onPublish(null);
         }}
+
         onClick={(event) => {
           if (event.delta > 3) return;
           const height = heightAtPoint(event.point);
