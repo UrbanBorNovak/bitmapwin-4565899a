@@ -1351,7 +1351,6 @@ const WorldScene = memo(function WorldScene({
       const height = heightAtPoint(event.point);
       if (height === null) {
         onHover(null);
-        onPublish(null);
         return;
       }
       const x = event.nativeEvent.offsetX;
@@ -1363,10 +1362,12 @@ const WorldScene = memo(function WorldScene({
       if (now - previous.at < 50 && height === previous.height) return;
       lastHover.current = { height, x, y, at: now };
       onHover({ height, x, y });
-      onPublish({ col: height % GRID, row: Math.floor(height / GRID), height });
+      // Hover is a look, not a move: never report the pointer as our position —
+      // peers must only ever see the real simulated avatar coordinates.
     },
-    [onHover, onPublish],
+    [onHover],
   );
+
 
   return (
     <>
