@@ -152,8 +152,20 @@ const HolderColumns = memo(function HolderColumns({
 
       dummy.updateMatrix();
       mesh.setMatrixAt(index, dummy.matrix);
-      color.set(mine.has(owner.toLowerCase()) ? bitcoin : colorForAddress(owner));
+      // Held plots stay in the Bitcoin-orange family. Rarer clubs (lower
+      // blocks) burn brighter, common ones sit as a deeper ember, and your own
+      // holdings are the hottest of all.
+      const club = height < 1000 ? 4 : height < 10_000 ? 3 : height < 100_000 ? 2 : height < 1_000_000 ? 1 : 0;
+      color.set(bitcoin);
+      if (mine.has(owner.toLowerCase())) {
+        color.lerp(WHITE_HOT, 0.35);
+      } else if (club >= 3) {
+        color.lerp(WHITE_HOT, 0.18 + club * 0.06);
+      } else {
+        color.lerp(DEEP_EMBER, 0.42 - club * 0.14);
+      }
       mesh.setColorAt(index, color);
+
     });
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
