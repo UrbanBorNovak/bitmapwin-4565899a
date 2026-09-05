@@ -14,6 +14,8 @@ import { ExtenderPropGroup } from "@/components/extenders/ExtenderProps";
  */
 
 const RANGE = WORLD_CELL * 6;
+/** From the map camera we look at land from above, so give it a wider catchment. */
+const MAP_RANGE = WORLD_CELL * 14;
 const MAX_ACTIVE = 6;
 
 export function ExtenderStage({
