@@ -31,6 +31,7 @@ export function ExtenderStage({
   const [nearby, setNearby] = useState<RuntimeDeployment[]>([]);
   const lastPick = useRef({ at: 0, key: "" });
   const focus = useRef(new THREE.Vector3());
+  const direction = useRef(new THREE.Vector3());
 
   useFrame(({ clock }) => {
     const now = clock.getElapsedTime();
