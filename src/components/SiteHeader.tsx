@@ -82,9 +82,9 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
+    <header className="site-header sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
       <div className="mx-auto grid max-w-[1600px] grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-4 py-2.5 md:flex md:justify-between md:gap-4 md:px-8 md:py-3">
-        <Link to="/" className="min-w-0 leading-none">
+        <Link to="/" className="site-brand min-w-0 leading-none">
           <div className="display flex items-end gap-1 text-sm sm:text-base md:text-lg">
             <span>BITMAP</span>
             <span className="relative">
@@ -109,21 +109,21 @@ export function SiteHeader() {
                 type="button"
                 aria-expanded={openGroup === group.id}
                 onClick={() => setOpenGroup((v) => (v === group.id ? null : group.id))}
-                className={`label flex items-center gap-1 px-3 py-2 transition-colors hover:text-foreground ${
-                  openGroup === group.id ? "border border-border text-foreground" : ""
+              className={`nav-trigger label flex items-center gap-1 px-3 py-2 ${
+                  openGroup === group.id ? "is-active border border-border text-foreground" : ""
                 }`}
               >
                 {group.label}
                 <ChevronDown className="size-3" />
               </button>
               {openGroup === group.id && (
-                <div className="absolute left-0 top-full min-w-64 border border-border bg-background shadow-[4px_4px_0_0_hsl(var(--border))]">
+                <div className="nav-menu absolute left-0 top-full min-w-64 border border-border bg-background shadow-[4px_4px_0_0_var(--color-border)]">
                   {group.items.map((item) => (
                     <Link
                       key={item.to}
                       to={item.to}
                       onClick={() => setOpenGroup(null)}
-                      className="block border-b border-border px-4 py-3 last:border-b-0 hover:bg-secondary"
+                      className="nav-menu-item block border-b border-border px-4 py-3 last:border-b-0"
                       activeProps={{ className: "text-bitcoin" }}
                     >
                       <div className="label text-foreground">{item.label}</div>
@@ -143,7 +143,7 @@ export function SiteHeader() {
           <button
             aria-label="Search bitmaps"
             onClick={() => setSearchOpen((v) => !v)}
-            className="grid size-11 shrink-0 place-items-center border border-border text-muted-foreground transition-colors hover:border-primary hover:text-foreground md:size-9"
+            className="icon-control grid size-11 shrink-0 place-items-center border border-border text-muted-foreground md:size-9"
           >
             {searchOpen ? <X className="size-4" /> : <Search className="size-4" />}
           </button>
@@ -169,8 +169,8 @@ export function SiteHeader() {
           <Link
             key={item.to}
             to={item.to}
-            className="label shrink-0 px-2 py-2"
-            activeProps={{ className: "text-foreground" }}
+           className="nav-link label shrink-0 px-2 py-2"
+            activeProps={{ className: "is-active text-bitcoin" }}
           >
             {item.label}
           </Link>

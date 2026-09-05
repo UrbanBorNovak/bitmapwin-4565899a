@@ -49,7 +49,7 @@ const GROUPS: { label: string; items: { to: string; label: string }[] }[] = [
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-border px-4 py-8 md:px-8">
+    <footer className="site-footer border-t border-border px-4 py-8 md:px-8">
       <div className="mx-auto max-w-[1600px]">
         <nav className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
           {GROUPS.map((g) => (
@@ -58,7 +58,7 @@ export function SiteFooter() {
               <ul className="mt-3 space-y-2">
                 {g.items.map((item) => (
                   <li key={item.to}>
-                    <Link to={item.to} className="label text-[0.6rem] hover:text-foreground">
+                    <Link to={item.to} className="footer-link label text-[0.6rem]">
                       {item.label}
                     </Link>
                   </li>

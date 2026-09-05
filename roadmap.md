@@ -17,3 +17,4 @@
 - [ ] Phase 2: extender import, sandboxed execution, versioned deploy config, AI build pipeline
 
 - [x] Real AI builder: plan + code generation, live sandbox preview, publish and deploy from /create
+- [x] Unify site-wide terminal styling, interaction states, spacing rhythm, and route motion

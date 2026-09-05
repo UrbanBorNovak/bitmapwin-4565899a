@@ -48,6 +48,10 @@
 
 :root {
   --radius: 10px;
+  --motion-fast: 140ms;
+  --motion-base: 220ms;
+  --motion-route: 320ms;
+  --ease-terminal: cubic-bezier(0.22, 1, 0.36, 1);
   --bitcoin: oklch(0.72 0.169 55);
   --bitcoin-foreground: oklch(0.14 0 0);
   --surface: oklch(0.16 0 0);
@@ -122,6 +126,29 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    min-width: 320px;
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--color-bitcoin);
+    outline-offset: 3px;
+  }
+
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    transition-duration: var(--motion-fast);
+    transition-timing-function: linear;
+  }
+
+  button:disabled,
+  input:disabled,
+  textarea:disabled,
+  select:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
   }
 
   ::selection {
@@ -234,6 +261,67 @@
   border-radius: var(--radius-lg);
 }
 
+@utility page-shell {
+  width: 100%;
+  max-width: 1600px;
+  margin-inline: auto;
+  padding: 2.5rem 1rem 3.5rem;
+
+  @media (min-width: 768px) {
+    padding-inline: 2rem;
+    padding-top: 3.5rem;
+  }
+}
+
+@utility page-intro {
+  max-width: 48rem;
+  padding-bottom: 2rem;
+}
+
+@utility section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.625rem;
+}
+
+@utility terminal-panel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--color-card) 82%, transparent);
+}
+
+@utility terminal-row {
+  border-bottom: 1px solid var(--color-border);
+  transition-property: background-color, border-color, color;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: linear;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  &:hover {
+    background: var(--color-secondary);
+  }
+}
+
+@utility terminal-interactive {
+  transition-property: background-color, border-color, color, transform;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-terminal);
+
+  &:hover {
+    border-color: var(--color-bitcoin);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+}
+
 @utility text-bitcoin {
   color: var(--color-bitcoin);
 }
@@ -257,6 +345,97 @@
   100% {
     opacity: 0;
   }
+}
+
+@keyframes route-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes menu-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.route-stage {
+  min-height: 100%;
+  animation: route-enter var(--motion-route) var(--ease-terminal) both;
+}
+
+.site-header,
+.site-footer {
+  isolation: isolate;
+}
+
+.site-brand,
+.nav-trigger,
+.nav-link,
+.footer-link,
+.icon-control,
+.nav-menu-item {
+  transition-property: color, background-color, border-color, opacity;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: linear;
+}
+
+.site-brand:hover .display,
+.footer-link:hover,
+.nav-link:hover,
+.nav-trigger:hover,
+.nav-trigger.is-active {
+  color: var(--color-foreground);
+}
+
+.nav-trigger.is-active,
+.nav-link.is-active {
+  box-shadow: inset 0 -1px 0 var(--color-bitcoin);
+}
+
+.icon-control:hover,
+.icon-control[aria-expanded="true"] {
+  border-color: var(--color-bitcoin);
+  color: var(--color-foreground);
+  background: color-mix(in oklab, var(--color-bitcoin) 8%, transparent);
+}
+
+.nav-menu {
+  animation: menu-enter var(--motion-base) var(--ease-terminal) both;
+}
+
+.nav-menu-item:hover {
+  background: var(--color-secondary);
+  box-shadow: inset 2px 0 0 var(--color-bitcoin);
+}
+
+.footer-link:hover {
+  padding-left: 0.25rem;
+}
+
+.route-stage :where(.border.border-border, .border.border-border-strong) {
+  transition-property: border-color, background-color, color, transform;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: linear;
+}
+
+.route-stage :where(input, textarea, select) {
+  border-radius: var(--radius-md);
+}
+
+.route-stage :where(input, textarea, select):focus {
+  border-color: var(--color-bitcoin);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-bitcoin) 28%, transparent);
 }
 
 @keyframes market-trail {
