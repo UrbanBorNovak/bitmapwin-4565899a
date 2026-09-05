@@ -1570,6 +1570,14 @@ export function BitmapWorld3D({
     note: null,
   });
   const handleShooterStats = useCallback((stats: ShooterStats) => setShooterStats(stats), []);
+  const equipWeapon = useCallback((kind: WeaponKind | null) => {
+    unlockAudio();
+    setWeapon((current) => {
+      if (current === kind) return current;
+      playSfx(kind ? "cock" : "ui");
+      return kind;
+    });
+  }, []);
   const [muted, setMuted] = useState(false);
   useEffect(() => setMuted(isSoundMuted()), []);
   const toggleSound = useCallback(() => {
@@ -1790,6 +1798,18 @@ export function BitmapWorld3D({
         playSfx("jump");
         return;
       }
+      // 1 / 2 / 3 pull a weapon out, 0 puts it away — the belt, in game.
+      const slot = ["Digit1", "Digit2", "Digit3"].indexOf(event.code);
+      if (slot >= 0) {
+        event.preventDefault();
+        equipWeapon(WEAPON_ORDER[slot] ?? null);
+        return;
+      }
+      if (event.code === "Digit0" || event.code === "Backquote") {
+        event.preventDefault();
+        equipWeapon(null);
+        return;
+      }
       if (event.code !== "KeyF") return;
       event.preventDefault();
       unlockAudio();
@@ -1798,7 +1818,26 @@ export function BitmapWorld3D({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [attackNearest, exploring]);
+  }, [attackNearest, equipWeapon, exploring]);
+
+  // Mouse wheel cycles through the belt while you are in the world.
+  useEffect(() => {
+    if (!exploring || !weapon) return;
+    let last = 0;
+    const onWheel = (event: WheelEvent) => {
+      if (Math.abs(event.deltaY) < 4) return;
+      const now = performance.now();
+      if (now - last < 180) return;
+      last = now;
+      event.preventDefault();
+      const at = WEAPON_ORDER.indexOf(weapon);
+      const step = event.deltaY > 0 ? 1 : -1;
+      const next = (at + step + WEAPON_ORDER.length) % WEAPON_ORDER.length;
+      equipWeapon(WEAPON_ORDER[next]!);
+    };
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => window.removeEventListener("wheel", onWheel);
+  }, [equipWeapon, exploring, weapon]);
 
   const moveCamera = (type: CameraMove) => {
     setCameraMode("map");
@@ -1915,30 +1954,6 @@ export function BitmapWorld3D({
           >
             {avatarModel ? "[ INVENTORY · WEARING MODEL ]" : "[ INVENTORY ]"}
           </Button>
-          <div
-            className="flex flex-wrap items-center gap-1 border border-border px-1.5 py-1"
-            data-no-translate
-          >
-            <span className="label px-1 text-[9px] text-muted-foreground">EQUIP A WEAPON</span>
-            {WEAPON_ORDER.map((kind) => (
-              <Button
-                key={kind}
-                className={weapon === kind ? "btn-term" : "btn-term-ghost"}
-                variant="ghost"
-                aria-pressed={weapon === kind}
-                title={WEAPONS[kind].hint}
-                onClick={() => {
-                  unlockAudio();
-                  playSfx("ui");
-                  setWeapon((current) => (current === kind ? null : kind));
-                  if (!exploring) setCameraMode("first");
-                }}
-              >
-                [ {WEAPONS[kind].short}
-                {weapon === kind ? " ·" : ""} ]
-              </Button>
-            ))}
-          </div>
           <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
             {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
           </Button>
@@ -2023,6 +2038,44 @@ export function BitmapWorld3D({
             {shooterStats.note ? <div className="text-bitcoin">{shooterStats.note}</div> : null}
           </div>
         ) : null}
+
+        {/* THE BELT — in-world weapon slots: press 1 / 2 / 3, scroll to cycle, 0 to holster. */}
+        {exploring ? (
+          <div
+            data-no-translate
+            className="absolute bottom-3 left-1/2 z-40 -translate-x-1/2"
+            aria-label="Weapon belt"
+          >
+            <div className="hud-panel flex items-center gap-1 px-1.5 py-1.5 font-mono">
+              {WEAPON_ORDER.map((kind, index) => {
+                const active = weapon === kind;
+                return (
+                  <button
+                    key={kind}
+                    type="button"
+                    aria-pressed={active}
+                    title={WEAPONS[kind].hint}
+                    onClick={() => equipWeapon(active ? null : kind)}
+                    className={`flex min-w-[5.5rem] items-center gap-1.5 border px-2 py-1 text-[10px] transition-colors ${
+                      active
+                        ? "border-bitcoin bg-bitcoin/10 text-bitcoin"
+                        : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span className="border border-current px-1 text-[9px] tabular-nums">
+                      {index + 1}
+                    </span>
+                    <span className="label text-[9px]">{WEAPONS[kind].short}</span>
+                  </button>
+                );
+              })}
+              <span className="px-1.5 text-[9px] text-muted-foreground">
+                {weapon ? "SCROLL · SWAP · 0 · HOLSTER" : "1 · 2 · 3 · DRAW"}
+              </span>
+            </div>
+          </div>
+        ) : null}
+
 
 
         <div

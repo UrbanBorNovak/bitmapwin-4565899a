@@ -26,6 +26,7 @@ const MUTE_KEY = "bitmapwin:sound-muted";
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
+let verb: GainNode | null = null;
 let muted = false;
 let hydrated = false;
 
@@ -55,7 +56,24 @@ export function setSoundMuted(next: boolean) {
   if (master && ctx) master.gain.setTargetAtTime(next ? 0 : 0.5, ctx.currentTime, 0.02);
 }
 
-function audio(): { ctx: AudioContext; master: GainNode } | null {
+/**
+ * A short synthetic impulse response so shots roll away into the open land
+ * instead of stopping dead — the difference between a beep and a gunshot.
+ */
+function buildImpulse(context: AudioContext, seconds: number, decay: number) {
+  const frames = Math.floor(context.sampleRate * seconds);
+  const buffer = context.createBuffer(2, frames, context.sampleRate);
+  for (let channel = 0; channel < 2; channel++) {
+    const data = buffer.getChannelData(channel);
+    for (let i = 0; i < frames; i++) {
+      const t = i / frames;
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, decay);
+    }
+  }
+  return buffer;
+}
+
+function audio(): { ctx: AudioContext; master: GainNode; verb: GainNode } | null {
   if (typeof window === "undefined") return null;
   const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!Ctor) return null;
@@ -63,10 +81,27 @@ function audio(): { ctx: AudioContext; master: GainNode } | null {
     ctx = new Ctor();
     master = ctx.createGain();
     master.gain.value = readMuted() ? 0 : 0.5;
-    master.connect(ctx.destination);
+    // A gentle limiter keeps the loud shots from clipping the mix.
+    const guard = ctx.createDynamicsCompressor();
+    guard.threshold.value = -12;
+    guard.knee.value = 12;
+    guard.ratio.value = 6;
+    guard.attack.value = 0.003;
+    guard.release.value = 0.18;
+    master.connect(guard).connect(ctx.destination);
+
+    const convolver = ctx.createConvolver();
+    convolver.buffer = buildImpulse(ctx, 2.2, 3.2);
+    const tail = ctx.createGain();
+    tail.gain.value = 0.55;
+    const dampen = ctx.createBiquadFilter();
+    dampen.type = "lowpass";
+    dampen.frequency.value = 2200;
+    tail.connect(dampen).connect(convolver).connect(master);
+    verb = tail;
   }
   if (ctx.state === "suspended") void ctx.resume();
-  return master ? { ctx, master } : null;
+  return master && verb ? { ctx, master, verb } : null;
 }
 
 /** Call once from a click/keypress so the browser lets us make sound at all. */
@@ -85,12 +120,17 @@ function noiseBuffer(context: AudioContext, seconds: number) {
 function burst(
   context: AudioContext,
   out: GainNode,
-  { seconds, gain, type, frequency, q }: {
+  { seconds, gain, type, frequency, q, delay = 0, send, curve = 1 }: {
     seconds: number;
     gain: number;
     type: BiquadFilterType;
     frequency: number;
     q: number;
+    delay?: number;
+    /** how much of this layer rolls off into the world's tail (0-1) */
+    send?: { node: AudioNode; gain: number };
+    /** >1 snaps the envelope shut faster, for a tighter transient */
+    curve?: number;
   },
 ) {
   const source = context.createBufferSource();
@@ -100,12 +140,17 @@ function burst(
   filter.frequency.value = frequency;
   filter.Q.value = q;
   const env = context.createGain();
-  const now = context.currentTime;
+  const now = context.currentTime + delay;
   env.gain.setValueAtTime(gain, now);
-  env.gain.exponentialRampToValueAtTime(0.0001, now + seconds);
+  env.gain.exponentialRampToValueAtTime(0.0001, now + seconds / curve);
   source.connect(filter).connect(env).connect(out);
+  if (send) {
+    const tap = context.createGain();
+    tap.gain.value = send.gain;
+    env.connect(tap).connect(send.node);
+  }
   source.start(now);
-  source.stop(now + seconds);
+  source.stop(now + seconds + 0.02);
 }
 
 function tone(
@@ -118,6 +163,8 @@ function tone(
     gain,
     type = "square",
     delay = 0,
+    send,
+    attack = 0.008,
   }: {
     from: number;
     to: number;
@@ -125,6 +172,8 @@ function tone(
     gain: number;
     type?: OscillatorType;
     delay?: number;
+    send?: { node: AudioNode; gain: number };
+    attack?: number;
   },
 ) {
   const osc = context.createOscillator();
@@ -134,9 +183,14 @@ function tone(
   osc.frequency.setValueAtTime(from, now);
   osc.frequency.exponentialRampToValueAtTime(Math.max(20, to), now + seconds);
   env.gain.setValueAtTime(0.0001, now);
-  env.gain.exponentialRampToValueAtTime(gain, now + 0.008);
+  env.gain.exponentialRampToValueAtTime(gain, now + attack);
   env.gain.exponentialRampToValueAtTime(0.0001, now + seconds);
   osc.connect(env).connect(out);
+  if (send) {
+    const tap = context.createGain();
+    tap.gain.value = send.gain;
+    env.connect(tap).connect(send.node);
+  }
   osc.start(now);
   osc.stop(now + seconds + 0.02);
 }
@@ -146,44 +200,73 @@ export function playSfx(name: Sfx) {
   if (readMuted()) return;
   const rig = audio();
   if (!rig) return;
-  const { ctx: context, master: out } = rig;
+  const { ctx: context, master: out, verb } = rig;
+  // A touch of variation so repeat shots never sound like a copy of each other.
+  const vary = 0.94 + Math.random() * 0.12;
   switch (name) {
     case "shot":
       burst(context, out, { seconds: 0.16, gain: 0.5, type: "highpass", frequency: 900, q: 0.6 });
       tone(context, out, { from: 320, to: 60, seconds: 0.12, gain: 0.28, type: "sawtooth" });
       break;
     case "mosin": {
-      // 7.62x54R crack: sharp muzzle blast, deep body, long rolling tail
-      burst(context, out, { seconds: 0.05, gain: 0.85, type: "highpass", frequency: 2600, q: 0.5 });
-      burst(context, out, { seconds: 0.3, gain: 0.7, type: "lowpass", frequency: 420, q: 0.6 });
-      burst(context, out, { seconds: 1.05, gain: 0.24, type: "bandpass", frequency: 320, q: 0.5 });
-      tone(context, out, { from: 190, to: 42, seconds: 0.32, gain: 0.4, type: "sawtooth" });
-      tone(context, out, { from: 90, to: 34, seconds: 0.7, gain: 0.16, type: "triangle", delay: 0.06 });
+      // 7.62x54R: a hard supersonic crack, a deep gut punch, then the land answers.
+      burst(context, out, {
+        seconds: 0.03, gain: 1, type: "highpass", frequency: 3400 * vary, q: 0.4, curve: 2.4,
+        send: { node: verb, gain: 0.5 },
+      });
+      burst(context, out, {
+        seconds: 0.12, gain: 0.8, type: "bandpass", frequency: 1100 * vary, q: 0.7,
+        send: { node: verb, gain: 0.7 },
+      });
+      burst(context, out, {
+        seconds: 0.26, gain: 0.62, type: "lowpass", frequency: 300, q: 0.6,
+        send: { node: verb, gain: 0.8 },
+      });
+      tone(context, out, {
+        from: 150 * vary, to: 38, seconds: 0.26, gain: 0.34, type: "sawtooth", attack: 0.002,
+        send: { node: verb, gain: 0.4 },
+      });
+      tone(context, out, { from: 74, to: 30, seconds: 0.55, gain: 0.12, type: "sine", delay: 0.03 });
       break;
     }
     case "bolt":
-      // bolt lift, draw back, chamber, lock down
-      burst(context, out, { seconds: 0.05, gain: 0.2, type: "bandpass", frequency: 1800, q: 2.2 });
-      burst(context, out, { seconds: 0.09, gain: 0.16, type: "bandpass", frequency: 900, q: 1.4 });
-      tone(context, out, { from: 300, to: 210, seconds: 0.05, gain: 0.12, type: "square", delay: 0.14 });
-      burst(context, out, { seconds: 0.06, gain: 0.22, type: "bandpass", frequency: 1400, q: 2.6 });
+      // handle up, brass out, fresh round in, handle down
+      burst(context, out, { seconds: 0.035, gain: 0.24, type: "bandpass", frequency: 2400, q: 3.5, curve: 2 });
+      burst(context, out, { seconds: 0.07, gain: 0.14, type: "bandpass", frequency: 1100, q: 1.2, delay: 0.05 });
+      burst(context, out, { seconds: 0.05, gain: 0.2, type: "bandpass", frequency: 3100, q: 4, delay: 0.16 });
+      tone(context, out, { from: 340, to: 190, seconds: 0.04, gain: 0.1, type: "square", delay: 0.2 });
+      burst(context, out, { seconds: 0.04, gain: 0.26, type: "bandpass", frequency: 1700, q: 3, delay: 0.3, curve: 2 });
       break;
     case "revolver":
-      // .45 bark: tight blast, short body, small room tail
-      burst(context, out, { seconds: 0.04, gain: 0.6, type: "highpass", frequency: 2200, q: 0.5 });
-      burst(context, out, { seconds: 0.16, gain: 0.46, type: "lowpass", frequency: 620, q: 0.7 });
-      tone(context, out, { from: 260, to: 70, seconds: 0.14, gain: 0.28, type: "sawtooth" });
+      // .45 bark: tight, dry, gone fast
+      burst(context, out, {
+        seconds: 0.022, gain: 0.9, type: "highpass", frequency: 3000 * vary, q: 0.4, curve: 2.6,
+        send: { node: verb, gain: 0.35 },
+      });
+      burst(context, out, {
+        seconds: 0.1, gain: 0.6, type: "bandpass", frequency: 900 * vary, q: 0.8,
+        send: { node: verb, gain: 0.45 },
+      });
+      tone(context, out, {
+        from: 220 * vary, to: 58, seconds: 0.11, gain: 0.26, type: "sawtooth", attack: 0.002,
+      });
       break;
     case "cock":
-      // hammer drawn back, cylinder indexing
-      burst(context, out, { seconds: 0.035, gain: 0.18, type: "bandpass", frequency: 2600, q: 3 });
-      tone(context, out, { from: 420, to: 320, seconds: 0.04, gain: 0.1, type: "square" });
+      // hammer drawn back, cylinder clicking into place
+      burst(context, out, { seconds: 0.02, gain: 0.2, type: "bandpass", frequency: 3200, q: 5, curve: 2 });
+      burst(context, out, { seconds: 0.02, gain: 0.16, type: "bandpass", frequency: 2200, q: 5, delay: 0.07 });
+      tone(context, out, { from: 480, to: 360, seconds: 0.03, gain: 0.08, type: "square", delay: 0.07 });
       break;
     case "whip":
-      // leather sweep then a sharp crack
-      burst(context, out, { seconds: 0.14, gain: 0.22, type: "bandpass", frequency: 700, q: 0.8 });
-      burst(context, out, { seconds: 0.05, gain: 0.5, type: "highpass", frequency: 3200, q: 0.6 });
-      tone(context, out, { from: 1400, to: 260, seconds: 0.09, gain: 0.16, type: "sawtooth" });
+      // leather hisses through the air, then the tip breaks the sound barrier
+      burst(context, out, { seconds: 0.16, gain: 0.2, type: "bandpass", frequency: 900, q: 0.9 });
+      burst(context, out, {
+        seconds: 0.02, gain: 0.75, type: "highpass", frequency: 4200 * vary, q: 0.5, delay: 0.12, curve: 2.6,
+        send: { node: verb, gain: 0.4 },
+      });
+      tone(context, out, {
+        from: 2400 * vary, to: 300, seconds: 0.07, gain: 0.14, type: "sawtooth", delay: 0.12, attack: 0.002,
+      });
       break;
     case "hit":
       burst(context, out, { seconds: 0.08, gain: 0.32, type: "bandpass", frequency: 2400, q: 1.4 });
