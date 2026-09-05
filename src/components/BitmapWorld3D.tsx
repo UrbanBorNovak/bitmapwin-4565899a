@@ -1955,9 +1955,9 @@ export function BitmapWorld3D({
             </div>
             <div className="flex items-center gap-3 text-muted-foreground">
               <span>DOWNED {shooterStats.kills}</span>
-              <span>TARGETS {shooterStats.targets}</span>
+              <span>VISITORS {shooterStats.targets}</span>
             </div>
-            <div className="text-muted-foreground">CLICK / E · FIRE · R · RELOAD</div>
+            <div className="text-muted-foreground">CLICK / E · FIRE · R · CYCLE BOLT</div>
             {shooterStats.note ? <div className="text-bitcoin">{shooterStats.note}</div> : null}
           </div>
         ) : null}
