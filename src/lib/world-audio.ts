@@ -237,37 +237,67 @@ export function playSfx(name: Sfx) {
       tone(context, out, { from: 340, to: 190, seconds: 0.04, gain: 0.1, type: "square", delay: 0.2 });
       burst(context, out, { seconds: 0.04, gain: 0.26, type: "bandpass", frequency: 1700, q: 3, delay: 0.3, curve: 2 });
       break;
-    case "revolver":
-      // .45 bark: tight, dry, gone fast
+    case "revolver": {
+      // Single-action .45 fired in the open: hammer fall, muzzle blast with a
+      // brassy ring, a hard low thump, then a dry desert slap-back.
+      burst(context, out, { seconds: 0.012, gain: 0.16, type: "bandpass", frequency: 2600, q: 6, curve: 3 });
       burst(context, out, {
-        seconds: 0.022, gain: 0.9, type: "highpass", frequency: 3000 * vary, q: 0.4, curve: 2.6,
-        send: { node: verb, gain: 0.35 },
+        seconds: 0.018, gain: 1, type: "highpass", frequency: 3600 * vary, q: 0.4, curve: 3.4,
+        delay: 0.012, send: { node: verb, gain: 0.4 },
       });
       burst(context, out, {
-        seconds: 0.1, gain: 0.6, type: "bandpass", frequency: 900 * vary, q: 0.8,
-        send: { node: verb, gain: 0.45 },
+        seconds: 0.085, gain: 0.72, type: "bandpass", frequency: 1250 * vary, q: 1.1,
+        delay: 0.012, send: { node: verb, gain: 0.55 },
+      });
+      burst(context, out, {
+        seconds: 0.2, gain: 0.5, type: "lowpass", frequency: 260, q: 0.7,
+        delay: 0.012, send: { node: verb, gain: 0.5 },
       });
       tone(context, out, {
-        from: 220 * vary, to: 58, seconds: 0.11, gain: 0.26, type: "sawtooth", attack: 0.002,
+        from: 260 * vary, to: 52, seconds: 0.13, gain: 0.3, type: "sawtooth", attack: 0.0015,
+        delay: 0.012, send: { node: verb, gain: 0.3 },
       });
+      // the flat crack coming back off the rocks
+      burst(context, out, {
+        seconds: 0.07, gain: 0.2, type: "bandpass", frequency: 1800, q: 1.4, delay: 0.11,
+        send: { node: verb, gain: 0.5 },
+      });
+      tone(context, out, { from: 70, to: 30, seconds: 0.4, gain: 0.09, type: "sine", delay: 0.03 });
       break;
+    }
     case "cock":
       // hammer drawn back, cylinder clicking into place
       burst(context, out, { seconds: 0.02, gain: 0.2, type: "bandpass", frequency: 3200, q: 5, curve: 2 });
       burst(context, out, { seconds: 0.02, gain: 0.16, type: "bandpass", frequency: 2200, q: 5, delay: 0.07 });
       tone(context, out, { from: 480, to: 360, seconds: 0.03, gain: 0.08, type: "square", delay: 0.07 });
       break;
-    case "whip":
-      // leather hisses through the air, then the tip breaks the sound barrier
-      burst(context, out, { seconds: 0.16, gain: 0.2, type: "bandpass", frequency: 900, q: 0.9 });
+    case "whip": {
+      // Bullwhip: the leather loads and hisses as it unrolls, the tip goes
+      // supersonic with a glassy crack, then the fall settles in the dust.
+      burst(context, out, { seconds: 0.09, gain: 0.12, type: "bandpass", frequency: 480, q: 1.1 });
       burst(context, out, {
-        seconds: 0.02, gain: 0.75, type: "highpass", frequency: 4200 * vary, q: 0.5, delay: 0.12, curve: 2.6,
-        send: { node: verb, gain: 0.4 },
+        seconds: 0.13, gain: 0.3, type: "bandpass", frequency: 1500 * vary, q: 0.8, delay: 0.02,
+      });
+      // rising air as the loop travels down the whip
+      tone(context, out, {
+        from: 420, to: 3200 * vary, seconds: 0.12, gain: 0.1, type: "triangle", delay: 0.02, attack: 0.03,
+      });
+      // the crack itself
+      burst(context, out, {
+        seconds: 0.012, gain: 1, type: "highpass", frequency: 5200 * vary, q: 0.5, delay: 0.145, curve: 3.6,
+        send: { node: verb, gain: 0.45 },
+      });
+      burst(context, out, {
+        seconds: 0.06, gain: 0.5, type: "bandpass", frequency: 2600 * vary, q: 1.3, delay: 0.145,
+        send: { node: verb, gain: 0.5 },
       });
       tone(context, out, {
-        from: 2400 * vary, to: 300, seconds: 0.07, gain: 0.14, type: "sawtooth", delay: 0.12, attack: 0.002,
+        from: 3400 * vary, to: 220, seconds: 0.06, gain: 0.16, type: "sawtooth", delay: 0.145, attack: 0.0015,
       });
+      // leather falling back
+      burst(context, out, { seconds: 0.11, gain: 0.14, type: "lowpass", frequency: 700, q: 0.8, delay: 0.21 });
       break;
+    }
     case "hit":
       burst(context, out, { seconds: 0.08, gain: 0.32, type: "bandpass", frequency: 2400, q: 1.4 });
       tone(context, out, { from: 900, to: 500, seconds: 0.07, gain: 0.16, type: "square" });
