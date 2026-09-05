@@ -155,31 +155,44 @@ function CreatePage() {
       const chosen = Number(target);
       if (!Number.isFinite(chosen) || chosen < 0) throw new Error("PICK THE BITMAP TO DEPLOY ON");
       const askBit = Math.max(0, Math.round(Number(priceBit) || 0));
-      const slugBase = slugify(design.name) || "ai-extender";
-      const slug = `${slugBase}-${Date.now().toString(36).slice(-4)}`.slice(0, 60);
 
-      const created = await createExtender({
-        data: {
-          slug,
-          name: design.name.slice(0, 80),
-          summary: design.summary.slice(0, 200),
-          description: design.stages.map((s) => `${s.label}: ${s.detail}`).join("\n").slice(0, 4000),
-          category: design.category,
-          tags: design.tags.slice(0, 8),
-          isAiBuilt: true,
-          license: "all-rights-reserved",
-          monetization: askBit > 0 ? "paid" : "free",
-          priceSats: 0,
-          priceBit: askBit,
-          iconInscriptionId: null,
-          previewInscriptionId: null,
-        },
-      });
+      let extenderId: string;
+      let slug: string;
+      let semver: string;
+
+      if (selectedExtender) {
+        extenderId = selectedExtender.id;
+        slug = selectedExtender.slug;
+        semver = nextSemver(latestExisting?.semver ?? null);
+      } else {
+        const slugBase = slugify(design.name) || "ai-extender";
+        slug = `${slugBase}-${Date.now().toString(36).slice(-4)}`.slice(0, 60);
+        semver = "1.0.0";
+
+        const created = await createExtender({
+          data: {
+            slug,
+            name: design.name.slice(0, 80),
+            summary: design.summary.slice(0, 200),
+            description: design.stages.map((s) => `${s.label}: ${s.detail}`).join("\n").slice(0, 4000),
+            category: design.category,
+            tags: design.tags.slice(0, 8),
+            isAiBuilt: true,
+            license: "all-rights-reserved",
+            monetization: askBit > 0 ? "paid" : "free",
+            priceSats: 0,
+            priceBit: askBit,
+            iconInscriptionId: iconInscriptionId.trim() || null,
+            previewInscriptionId: previewInscriptionId.trim() || null,
+          },
+        });
+        extenderId = created.id;
+      }
 
       const version = await publishVersion({
         data: {
-          extenderId: created.id,
-          semver: "1.0.0",
+          extenderId,
+          semver,
           sdkVersion: SDK_VERSION,
           changelog: `Built with AI from: ${prompt.trim().slice(0, 300)}`,
           manifest: {
@@ -189,8 +202,8 @@ function CreatePage() {
             assets: design.assets,
             models,
             brief: prompt.trim().slice(0, 1200),
+            configSchema: Object.keys(config).length > 0 ? config : undefined,
           },
-
           publish: true,
           dependencies: [],
           permissions: [],
@@ -198,14 +211,15 @@ function CreatePage() {
       });
 
       await deploy({
-        data: { extenderId: created.id, versionId: version.versionId, height: chosen, config: {} },
+        data: { extenderId, versionId: version.versionId, height: chosen, config },
       });
 
-      return { slug, height: chosen, semver: "1.0.0" } satisfies Deployed;
+      return { slug, height: chosen, semver } satisfies Deployed;
     },
     onSuccess: (result) => {
       setDeployed(result);
       queryClient.invalidateQueries({ queryKey: ["my-extenders"] });
+      queryClient.invalidateQueries({ queryKey: ["extender-versions"] });
       queryClient.invalidateQueries({ queryKey: ["extenders"] });
       queryClient.invalidateQueries({ queryKey: ["tile-deployments"] });
       queryClient.invalidateQueries({ queryKey: ["world-deployments"] });
