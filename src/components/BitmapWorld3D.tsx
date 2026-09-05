@@ -1933,7 +1933,7 @@ export function BitmapWorld3D({
         {/* Your own health, always visible while exploring the world. */}
         <div
           data-no-translate
-          className="pointer-events-none absolute left-3 top-3 z-30 flex flex-col gap-1 bg-background/80 px-2 py-1 font-mono text-[10px]"
+          className="hud-panel pointer-events-none absolute left-3 top-3 z-30 flex max-w-[min(340px,calc(100%-1.5rem))] flex-col gap-1 px-2 py-1.5 font-mono text-[10px]"
         >
           <span className="flex items-center gap-2">
             <span>HP</span>
