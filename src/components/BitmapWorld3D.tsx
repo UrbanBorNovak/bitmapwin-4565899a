@@ -1544,9 +1544,12 @@ const WorldScene = memo(function WorldScene({
       <SkyBodies bitcoin={colors.bitcoin} />
       <LandSurface colors={colors} tipHeight={tipHeight} />
       {cameraMode !== "map" ? (
-        <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
-        <DesertBuilds unit={AVATAR_U} />
+        <>
+          <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
+          <DesertBuilds unit={AVATAR_U} />
+        </>
       ) : null}
+
       <DistrictBlocks tipHeight={tipHeight} colors={colors} />
       <HolderColumns owners={owners} mine={mine} bitcoin={colors.bitcoin} />
       <OwnedBitmapGlow heights={ownedHeights} bitcoin={colors.bitcoin} />
