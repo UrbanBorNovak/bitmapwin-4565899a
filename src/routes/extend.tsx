@@ -68,6 +68,7 @@ function ExtendPage() {
           title="CREATE WITH AI"
           body="Describe what you want to build in plain English. The builder plans it, writes the code, runs it, then deploys it."
           to="/create"
+          {...(hasLand ? { search: { height: height as number } } : {})}
           action="[ DESCRIBE IT ]"
           badge={<DataBadge kind="live" note="GEMINI BUILDER" />}
         />
@@ -117,6 +118,7 @@ function Choice({
   title,
   body,
   to,
+  search,
   action,
   badge,
 }: {
@@ -124,12 +126,14 @@ function Choice({
   title: string;
   body: string;
   to: "/studio" | "/extenders" | "/create";
+  search?: { height: number };
   action: string;
   badge: React.ReactNode;
 }) {
   return (
     <Link
       to={to}
+      {...(search ? { search } : {})}
       className="group flex min-h-[220px] flex-col justify-between border border-border bg-surface p-5 transition-colors hover:border-bitcoin"
     >
       <div>

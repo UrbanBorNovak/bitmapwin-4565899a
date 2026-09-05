@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { DataBadge } from "@/components/extenders/DataBadge";
+import { MvpFlowRail } from "@/components/MvpFlowRail";
 import { ExtenderPreview } from "@/components/extenders/ExtenderPreview";
 import { useAuthSession } from "@/lib/auth";
 import { heldHeightsQuery } from "@/lib/held-parcels";
@@ -216,7 +217,8 @@ function CreatePage() {
 
   return (
     <div className="mx-auto max-w-[1500px] px-4 py-10 md:px-8 md:py-14">
-      <div className="label text-bitcoin">BEDROCK · CREATE WITH AI</div>
+      <MvpFlowRail active="deploy" {...(searchHeight === undefined ? {} : { height: searchHeight })} />
+      <div className="label mt-6 text-bitcoin">STEP 03 OF 03 · BUILD AND DEPLOY</div>
       <h1 className="display mt-3 text-3xl md:text-5xl">WHAT DO YOU WANT TO BUILD?</h1>
       <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
         Describe the place in plain words. The builder plans it, writes the code, runs it in the sandbox in front of
