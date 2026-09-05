@@ -31,7 +31,7 @@ function Box({
   rotation?: [number, number, number];
 }) {
   return (
-    <mesh position={position} rotation={rotation} raycast={noRaycast} castShadow={false}>
+    <mesh position={position} rotation={rotation ?? [0, 0, 0]} raycast={noRaycast}>
       <boxGeometry args={size} />
       <meshLambertMaterial color={color} />
     </mesh>
@@ -118,7 +118,7 @@ const Structure = memo(function Structure({ id, unit }: { id: StructureId; unit:
         [-1, 1],
         [1, -1],
         [1, 1],
-      ].map(([sx, sz]) => (
+      ].map(([sx = 0, sz = 0]) => (
         <Box
           key={`${sx}${sz}`}
           size={[u * 0.12, u * 2.4, u * 0.12]}
