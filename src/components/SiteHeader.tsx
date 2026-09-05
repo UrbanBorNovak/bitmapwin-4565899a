@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Search, X } from "lucide-react";
+import { ChevronDown, Search, X } from "lucide-react";
 import { useState } from "react";
 import { BidInboxBell } from "@/components/BidInboxBell";
 import { HeaderIdentity } from "@/components/HeaderIdentity";
@@ -7,23 +7,64 @@ import { BtcTicker } from "@/components/BtcTicker";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
-const NAV = [
-  { to: "/marketplace", label: "MARKETPLACE" },
-  { to: "/map", label: "MAP" },
-  { to: "/extend", label: "EXTEND" },
-  { to: "/extenders", label: "EXTENDERS" },
+type NavItem = { to: string; label: string; note?: string };
+type NavGroup = { id: string; label: string; items: NavItem[] };
 
-  { to: "/studio", label: "STUDIO" },
-  { to: "/my-world", label: "MY WORLD" },
-  { to: "/cities", label: "CITIES" },
-  { to: "/builds", label: "BUILDS" },
-  { to: "/leases", label: "LEASES" },
-  { to: "/sdk", label: "SDK" },
-] as const;
-
+const NAV_GROUPS: NavGroup[] = [
+  {
+    id: "world",
+    label: "WORLD",
+    items: [
+      { to: "/map", label: "MAP", note: "1,000 × 1,000 live world" },
+      { to: "/cities", label: "CITIES", note: "Districts and city hubs" },
+      { to: "/explore", label: "EXPLORE", note: "Trending land and activity" },
+    ],
+  },
+  {
+    id: "build",
+    label: "BUILD",
+    items: [
+      { to: "/my-world", label: "MY WORLD", note: "Your land and deployments" },
+      { to: "/builds", label: "BUILDS", note: "On-chain 3D model registry" },
+      { to: "/extend", label: "EXTEND", note: "Deploy software on land" },
+      { to: "/studio", label: "STUDIO", note: "Extender code workbench" },
+    ],
+  },
+  {
+    id: "market",
+    label: "MARKET",
+    items: [
+      { to: "/marketplace", label: "MARKETPLACE", note: "Buy and sell BITMAPs" },
+      { to: "/extenders", label: "EXTENDERS", note: "Packages that run on land" },
+      { to: "/experiences", label: "EXPERIENCES", note: "Live deployed worlds" },
+      { to: "/builders", label: "BUILDERS", note: "Who ships on bedrock" },
+    ],
+  },
+  {
+    id: "land",
+    label: "LAND",
+    items: [
+      { to: "/my-land", label: "MY LAND", note: "BITMAPs your wallet holds" },
+      { to: "/leases", label: "LEASES", note: "Rent land by the day" },
+      { to: "/ownership", label: "OWNERSHIP", note: "First-is-first, on chain" },
+      { to: "/history", label: "HISTORY", note: "Confirmed chain sales" },
+    ],
+  },
+  {
+    id: "develop",
+    label: "DEVELOP",
+    items: [
+      { to: "/sdk", label: "SDK", note: "Build for Bitcoin land" },
+      { to: "/docs", label: "DOCS", note: "Guides and references" },
+      { to: "/api", label: "API", note: "Public HTTP endpoints" },
+      { to: "/dev-tools", label: "DEVELOPER TOOLS", note: "Playground, MCP, AI" },
+    ],
+  },
+];
 
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [term, setTerm] = useState("");
   const navigate = useNavigate();
 
@@ -57,15 +98,41 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
-          {NAV.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className="label px-3 py-2 transition-colors hover:text-foreground"
-              activeProps={{ className: "text-foreground border border-border" }}
+          {NAV_GROUPS.map((group) => (
+            <div
+              key={group.id}
+              className="relative"
+              onMouseEnter={() => setOpenGroup(group.id)}
+              onMouseLeave={() => setOpenGroup((v) => (v === group.id ? null : v))}
             >
-              {item.label}
-            </Link>
+              <button
+                type="button"
+                aria-expanded={openGroup === group.id}
+                onClick={() => setOpenGroup((v) => (v === group.id ? null : group.id))}
+                className={`label flex items-center gap-1 px-3 py-2 transition-colors hover:text-foreground ${
+                  openGroup === group.id ? "border border-border text-foreground" : ""
+                }`}
+              >
+                {group.label}
+                <ChevronDown className="size-3" />
+              </button>
+              {openGroup === group.id && (
+                <div className="absolute left-0 top-full min-w-64 border border-border bg-background shadow-[4px_4px_0_0_hsl(var(--border))]">
+                  {group.items.map((item) => (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      onClick={() => setOpenGroup(null)}
+                      className="block border-b border-border px-4 py-3 last:border-b-0 hover:bg-secondary"
+                      activeProps={{ className: "text-bitcoin" }}
+                    >
+                      <div className="label text-foreground">{item.label}</div>
+                      {item.note && <div className="label mt-1 text-[0.55rem]">{item.note}</div>}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
         </nav>
 
@@ -98,7 +165,7 @@ export function SiteHeader() {
       )}
 
       <nav className="flex items-center gap-1 overflow-x-auto border-t border-border px-4 py-2 lg:hidden">
-        {NAV.map((item) => (
+        {NAV_GROUPS.flatMap((g) => g.items).map((item) => (
           <Link
             key={item.to}
             to={item.to}
