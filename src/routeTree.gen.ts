@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiRouteImport } from './routes/api'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BuildersRouteImport } from './routes/builders'
 import { Route as BuildsRouteImport } from './routes/builds'
@@ -18,6 +19,8 @@ import { Route as CoinsRouteImport } from './routes/coins'
 import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as DevToolsRouteImport } from './routes/dev-tools'
+import { Route as DocsRouteImport } from './routes/docs'
 import { Route as ExperiencesRouteImport } from './routes/experiences'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as ExtendRouteImport } from './routes/extend'
@@ -59,6 +62,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRoute = ApiRouteImport.update({
+  id: '/api',
+  path: '/api',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -97,6 +105,16 @@ const CreateRoute = CreateRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DevToolsRoute = DevToolsRouteImport.update({
+  id: '/dev-tools',
+  path: '/dev-tools',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsRoute = DocsRouteImport.update({
+  id: '/docs',
+  path: '/docs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExperiencesRoute = ExperiencesRouteImport.update({
@@ -241,35 +259,35 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicCoinRewardsRoute = ApiPublicCoinRewardsRouteImport.update({
-  id: '/api/public/coin-rewards',
-  path: '/api/public/coin-rewards',
-  getParentRoute: () => rootRouteImport,
+  id: '/public/coin-rewards',
+  path: '/public/coin-rewards',
+  getParentRoute: () => ApiRoute,
 } as any)
 const ApiPublicCrawlTradesRoute = ApiPublicCrawlTradesRouteImport.update({
-  id: '/api/public/crawl-trades',
-  path: '/api/public/crawl-trades',
-  getParentRoute: () => rootRouteImport,
+  id: '/public/crawl-trades',
+  path: '/public/crawl-trades',
+  getParentRoute: () => ApiRoute,
 } as any)
 const ApiPublicOfferRoute = ApiPublicOfferRouteImport.update({
-  id: '/api/public/offer',
-  path: '/api/public/offer',
-  getParentRoute: () => rootRouteImport,
+  id: '/public/offer',
+  path: '/public/offer',
+  getParentRoute: () => ApiRoute,
 } as any)
 const ApiPublicOffersRoute = ApiPublicOffersRouteImport.update({
-  id: '/api/public/offers',
-  path: '/api/public/offers',
-  getParentRoute: () => rootRouteImport,
+  id: '/public/offers',
+  path: '/public/offers',
+  getParentRoute: () => ApiRoute,
 } as any)
 const ApiPublicResolveRegistryRoute =
   ApiPublicResolveRegistryRouteImport.update({
-    id: '/api/public/resolve-registry',
-    path: '/api/public/resolve-registry',
-    getParentRoute: () => rootRouteImport,
+    id: '/public/resolve-registry',
+    path: '/public/resolve-registry',
+    getParentRoute: () => ApiRoute,
   } as any)
 const ApiPublicBlocksHeightRoute = ApiPublicBlocksHeightRouteImport.update({
-  id: '/api/public/blocks/$height',
-  path: '/api/public/blocks/$height',
-  getParentRoute: () => rootRouteImport,
+  id: '/public/blocks/$height',
+  path: '/public/blocks/$height',
+  getParentRoute: () => ApiRoute,
 } as any)
 const ApiPublicBlocksHeightMetaRoute =
   ApiPublicBlocksHeightMetaRouteImport.update({
@@ -280,6 +298,7 @@ const ApiPublicBlocksHeightMetaRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api': typeof ApiRouteWithChildren
   '/auth': typeof AuthRoute
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
@@ -288,6 +307,8 @@ export interface FileRoutesByFullPath {
   '/collections': typeof CollectionsRouteWithChildren
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
+  '/dev-tools': typeof DevToolsRoute
+  '/docs': typeof DocsRoute
   '/experiences': typeof ExperiencesRoute
   '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
@@ -326,6 +347,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api': typeof ApiRouteWithChildren
   '/auth': typeof AuthRoute
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
@@ -333,6 +355,8 @@ export interface FileRoutesByTo {
   '/coins': typeof CoinsRoute
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
+  '/dev-tools': typeof DevToolsRoute
+  '/docs': typeof DocsRoute
   '/experiences': typeof ExperiencesRoute
   '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
@@ -371,6 +395,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api': typeof ApiRouteWithChildren
   '/auth': typeof AuthRoute
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
@@ -379,6 +404,8 @@ export interface FileRoutesById {
   '/collections': typeof CollectionsRouteWithChildren
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
+  '/dev-tools': typeof DevToolsRoute
+  '/docs': typeof DocsRoute
   '/experiences': typeof ExperiencesRoute
   '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
@@ -419,6 +446,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/api'
     | '/auth'
     | '/builders'
     | '/builds'
@@ -427,6 +455,8 @@ export interface FileRouteTypes {
     | '/collections'
     | '/create'
     | '/dashboard'
+    | '/dev-tools'
+    | '/docs'
     | '/experiences'
     | '/explore'
     | '/extend'
@@ -465,6 +495,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/api'
     | '/auth'
     | '/builders'
     | '/builds'
@@ -472,6 +503,8 @@ export interface FileRouteTypes {
     | '/coins'
     | '/create'
     | '/dashboard'
+    | '/dev-tools'
+    | '/docs'
     | '/experiences'
     | '/explore'
     | '/extend'
@@ -509,6 +542,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/api'
     | '/auth'
     | '/builders'
     | '/builds'
@@ -517,6 +551,8 @@ export interface FileRouteTypes {
     | '/collections'
     | '/create'
     | '/dashboard'
+    | '/dev-tools'
+    | '/docs'
     | '/experiences'
     | '/explore'
     | '/extend'
@@ -556,6 +592,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiRoute: typeof ApiRouteWithChildren
   AuthRoute: typeof AuthRoute
   BuildersRoute: typeof BuildersRoute
   BuildsRoute: typeof BuildsRoute
@@ -564,6 +601,8 @@ export interface RootRouteChildren {
   CollectionsRoute: typeof CollectionsRouteWithChildren
   CreateRoute: typeof CreateRoute
   DashboardRoute: typeof DashboardRoute
+  DevToolsRoute: typeof DevToolsRoute
+  DocsRoute: typeof DocsRoute
   ExperiencesRoute: typeof ExperiencesRoute
   ExploreRoute: typeof ExploreRoute
   ExtendRoute: typeof ExtendRoute
@@ -588,12 +627,6 @@ export interface RootRouteChildren {
   DistrictSlugRoute: typeof DistrictSlugRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
-  ApiPublicCoinRewardsRoute: typeof ApiPublicCoinRewardsRoute
-  ApiPublicCrawlTradesRoute: typeof ApiPublicCrawlTradesRoute
-  ApiPublicOfferRoute: typeof ApiPublicOfferRoute
-  ApiPublicOffersRoute: typeof ApiPublicOffersRoute
-  ApiPublicResolveRegistryRoute: typeof ApiPublicResolveRegistryRoute
-  ApiPublicBlocksHeightRoute: typeof ApiPublicBlocksHeightRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -603,6 +636,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api': {
+      id: '/api'
+      path: '/api'
+      fullPath: '/api'
+      preLoaderRoute: typeof ApiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -659,6 +699,20 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dev-tools': {
+      id: '/dev-tools'
+      path: '/dev-tools'
+      fullPath: '/dev-tools'
+      preLoaderRoute: typeof DevToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/experiences': {
@@ -859,45 +913,45 @@ declare module '@tanstack/react-router' {
     }
     '/api/public/coin-rewards': {
       id: '/api/public/coin-rewards'
-      path: '/api/public/coin-rewards'
+      path: '/public/coin-rewards'
       fullPath: '/api/public/coin-rewards'
       preLoaderRoute: typeof ApiPublicCoinRewardsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiRoute
     }
     '/api/public/crawl-trades': {
       id: '/api/public/crawl-trades'
-      path: '/api/public/crawl-trades'
+      path: '/public/crawl-trades'
       fullPath: '/api/public/crawl-trades'
       preLoaderRoute: typeof ApiPublicCrawlTradesRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiRoute
     }
     '/api/public/offer': {
       id: '/api/public/offer'
-      path: '/api/public/offer'
+      path: '/public/offer'
       fullPath: '/api/public/offer'
       preLoaderRoute: typeof ApiPublicOfferRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiRoute
     }
     '/api/public/offers': {
       id: '/api/public/offers'
-      path: '/api/public/offers'
+      path: '/public/offers'
       fullPath: '/api/public/offers'
       preLoaderRoute: typeof ApiPublicOffersRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiRoute
     }
     '/api/public/resolve-registry': {
       id: '/api/public/resolve-registry'
-      path: '/api/public/resolve-registry'
+      path: '/public/resolve-registry'
       fullPath: '/api/public/resolve-registry'
       preLoaderRoute: typeof ApiPublicResolveRegistryRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiRoute
     }
     '/api/public/blocks/$height': {
       id: '/api/public/blocks/$height'
-      path: '/api/public/blocks/$height'
+      path: '/public/blocks/$height'
       fullPath: '/api/public/blocks/$height'
       preLoaderRoute: typeof ApiPublicBlocksHeightRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiRoute
     }
     '/api/public/blocks/$height/meta': {
       id: '/api/public/blocks/$height/meta'
@@ -908,6 +962,39 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface ApiPublicBlocksHeightRouteChildren {
+  ApiPublicBlocksHeightMetaRoute: typeof ApiPublicBlocksHeightMetaRoute
+}
+
+const ApiPublicBlocksHeightRouteChildren: ApiPublicBlocksHeightRouteChildren = {
+  ApiPublicBlocksHeightMetaRoute: ApiPublicBlocksHeightMetaRoute,
+}
+
+const ApiPublicBlocksHeightRouteWithChildren =
+  ApiPublicBlocksHeightRoute._addFileChildren(
+    ApiPublicBlocksHeightRouteChildren,
+  )
+
+interface ApiRouteChildren {
+  ApiPublicCoinRewardsRoute: typeof ApiPublicCoinRewardsRoute
+  ApiPublicCrawlTradesRoute: typeof ApiPublicCrawlTradesRoute
+  ApiPublicOfferRoute: typeof ApiPublicOfferRoute
+  ApiPublicOffersRoute: typeof ApiPublicOffersRoute
+  ApiPublicResolveRegistryRoute: typeof ApiPublicResolveRegistryRoute
+  ApiPublicBlocksHeightRoute: typeof ApiPublicBlocksHeightRouteWithChildren
+}
+
+const ApiRouteChildren: ApiRouteChildren = {
+  ApiPublicCoinRewardsRoute: ApiPublicCoinRewardsRoute,
+  ApiPublicCrawlTradesRoute: ApiPublicCrawlTradesRoute,
+  ApiPublicOfferRoute: ApiPublicOfferRoute,
+  ApiPublicOffersRoute: ApiPublicOffersRoute,
+  ApiPublicResolveRegistryRoute: ApiPublicResolveRegistryRoute,
+  ApiPublicBlocksHeightRoute: ApiPublicBlocksHeightRouteWithChildren,
+}
+
+const ApiRouteWithChildren = ApiRoute._addFileChildren(ApiRouteChildren)
 
 interface CollectionsRouteChildren {
   CollectionsClubRoute: typeof CollectionsClubRoute
@@ -937,21 +1024,9 @@ const ExtendersRouteWithChildren = ExtendersRoute._addFileChildren(
   ExtendersRouteChildren,
 )
 
-interface ApiPublicBlocksHeightRouteChildren {
-  ApiPublicBlocksHeightMetaRoute: typeof ApiPublicBlocksHeightMetaRoute
-}
-
-const ApiPublicBlocksHeightRouteChildren: ApiPublicBlocksHeightRouteChildren = {
-  ApiPublicBlocksHeightMetaRoute: ApiPublicBlocksHeightMetaRoute,
-}
-
-const ApiPublicBlocksHeightRouteWithChildren =
-  ApiPublicBlocksHeightRoute._addFileChildren(
-    ApiPublicBlocksHeightRouteChildren,
-  )
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiRoute: ApiRouteWithChildren,
   AuthRoute: AuthRoute,
   BuildersRoute: BuildersRoute,
   BuildsRoute: BuildsRoute,
@@ -960,6 +1035,8 @@ const rootRouteChildren: RootRouteChildren = {
   CollectionsRoute: CollectionsRouteWithChildren,
   CreateRoute: CreateRoute,
   DashboardRoute: DashboardRoute,
+  DevToolsRoute: DevToolsRoute,
+  DocsRoute: DocsRoute,
   ExperiencesRoute: ExperiencesRoute,
   ExploreRoute: ExploreRoute,
   ExtendRoute: ExtendRoute,
@@ -985,12 +1062,6 @@ const rootRouteChildren: RootRouteChildren = {
   DistrictSlugRoute: DistrictSlugRoute,
   ProfileAddressRoute: ProfileAddressRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
-  ApiPublicCoinRewardsRoute: ApiPublicCoinRewardsRoute,
-  ApiPublicCrawlTradesRoute: ApiPublicCrawlTradesRoute,
-  ApiPublicOfferRoute: ApiPublicOfferRoute,
-  ApiPublicOffersRoute: ApiPublicOffersRoute,
-  ApiPublicResolveRegistryRoute: ApiPublicResolveRegistryRoute,
-  ApiPublicBlocksHeightRoute: ApiPublicBlocksHeightRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
