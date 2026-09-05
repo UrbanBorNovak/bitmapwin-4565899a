@@ -149,6 +149,22 @@ export function playSfx(name: Sfx) {
       burst(context, out, { seconds: 0.16, gain: 0.5, type: "highpass", frequency: 900, q: 0.6 });
       tone(context, out, { from: 320, to: 60, seconds: 0.12, gain: 0.28, type: "sawtooth" });
       break;
+    case "mosin": {
+      // 7.62x54R crack: sharp muzzle blast, deep body, long rolling tail
+      burst(context, out, { seconds: 0.05, gain: 0.85, type: "highpass", frequency: 2600, q: 0.5 });
+      burst(context, out, { seconds: 0.3, gain: 0.7, type: "lowpass", frequency: 420, q: 0.6 });
+      burst(context, out, { seconds: 1.05, gain: 0.24, type: "bandpass", frequency: 320, q: 0.5 });
+      tone(context, out, { from: 190, to: 42, seconds: 0.32, gain: 0.4, type: "sawtooth" });
+      tone(context, out, { from: 90, to: 34, seconds: 0.7, gain: 0.16, type: "triangle", delay: 0.06 });
+      break;
+    }
+    case "bolt":
+      // bolt lift, draw back, chamber, lock down
+      burst(context, out, { seconds: 0.05, gain: 0.2, type: "bandpass", frequency: 1800, q: 2.2 });
+      burst(context, out, { seconds: 0.09, gain: 0.16, type: "bandpass", frequency: 900, q: 1.4 });
+      tone(context, out, { from: 300, to: 210, seconds: 0.05, gain: 0.12, type: "square", delay: 0.14 });
+      burst(context, out, { seconds: 0.06, gain: 0.22, type: "bandpass", frequency: 1400, q: 2.6 });
+      break;
     case "hit":
       burst(context, out, { seconds: 0.08, gain: 0.32, type: "bandpass", frequency: 2400, q: 1.4 });
       tone(context, out, { from: 900, to: 500, seconds: 0.07, gain: 0.16, type: "square" });
