@@ -55,7 +55,24 @@ export function setSoundMuted(next: boolean) {
   if (master && ctx) master.gain.setTargetAtTime(next ? 0 : 0.5, ctx.currentTime, 0.02);
 }
 
-function audio(): { ctx: AudioContext; master: GainNode } | null {
+/**
+ * A short synthetic impulse response so shots roll away into the open land
+ * instead of stopping dead — the difference between a beep and a gunshot.
+ */
+function buildImpulse(context: AudioContext, seconds: number, decay: number) {
+  const frames = Math.floor(context.sampleRate * seconds);
+  const buffer = context.createBuffer(2, frames, context.sampleRate);
+  for (let channel = 0; channel < 2; channel++) {
+    const data = buffer.getChannelData(channel);
+    for (let i = 0; i < frames; i++) {
+      const t = i / frames;
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, decay);
+    }
+  }
+  return buffer;
+}
+
+function audio(): { ctx: AudioContext; master: GainNode; verb: GainNode } | null {
   if (typeof window === "undefined") return null;
   const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!Ctor) return null;
@@ -63,10 +80,27 @@ function audio(): { ctx: AudioContext; master: GainNode } | null {
     ctx = new Ctor();
     master = ctx.createGain();
     master.gain.value = readMuted() ? 0 : 0.5;
-    master.connect(ctx.destination);
+    // A gentle limiter keeps the loud shots from clipping the mix.
+    const guard = ctx.createDynamicsCompressor();
+    guard.threshold.value = -12;
+    guard.knee.value = 12;
+    guard.ratio.value = 6;
+    guard.attack.value = 0.003;
+    guard.release.value = 0.18;
+    master.connect(guard).connect(ctx.destination);
+
+    const convolver = ctx.createConvolver();
+    convolver.buffer = buildImpulse(ctx, 2.2, 3.2);
+    const tail = ctx.createGain();
+    tail.gain.value = 0.55;
+    const dampen = ctx.createBiquadFilter();
+    dampen.type = "lowpass";
+    dampen.frequency.value = 2200;
+    tail.connect(dampen).connect(convolver).connect(master);
+    verb = tail;
   }
   if (ctx.state === "suspended") void ctx.resume();
-  return master ? { ctx, master } : null;
+  return master && verb ? { ctx, master, verb } : null;
 }
 
 /** Call once from a click/keypress so the browser lets us make sound at all. */
