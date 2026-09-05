@@ -1413,6 +1413,7 @@ const WorldScene = memo(function WorldScene({
       <HolderColumns owners={owners} mine={mine} bitcoin={colors.bitcoin} />
       <OwnedBitmapGlow heights={ownedHeights} bitcoin={colors.bitcoin} />
       <OnChainModels models={models} bitcoin={colors.bitcoin} />
+      <ExtenderStage deployments={deployments} pose={pose} onRunning={onRunning} />
       {selectedHeight !== null ? (
         <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} />
       ) : null}
