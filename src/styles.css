@@ -308,6 +308,11 @@
   }
 }
 
+@utility terminal-data-row {
+  min-height: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
 @utility terminal-interactive {
   transition-property: background-color, border-color, color, transform;
   transition-duration: var(--motion-fast);
@@ -429,6 +434,18 @@
   transition-timing-function: linear;
 }
 
+.route-stage :where(article, section) > :where(header, .section-head):first-child {
+  border-color: var(--color-border);
+}
+
+.route-stage :where(a, button)[class*="border"]:hover {
+  border-color: var(--color-bitcoin);
+}
+
+.route-stage :where(a, button):active {
+  transform: translateY(1px);
+}
+
 .route-stage :where(input, textarea, select) {
   border-radius: var(--radius-md);
 }
@@ -436,6 +453,21 @@
 .route-stage :where(input, textarea, select):focus {
   border-color: var(--color-bitcoin);
   box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-bitcoin) 28%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .route-stage {
+    transform: none;
+  }
 }
 
 @keyframes market-trail {

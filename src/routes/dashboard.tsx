@@ -80,7 +80,7 @@ function Stat({
   accent?: boolean;
 }) {
   return (
-    <div className="border border-border bg-card/40 p-4">
+    <div className="terminal-panel terminal-interactive p-4">
       <p className="label">{label}</p>
       <p className={`display mt-2 text-2xl ${accent ? "text-primary" : ""}`}>{value}</p>
       {hint ? <p className="mt-1 font-mono text-[11px] text-muted-foreground">{hint}</p> : null}
@@ -100,7 +100,7 @@ function Panel({
   className?: string;
 }) {
   return (
-    <section className={`flex flex-col border border-border ${className ?? ""}`}>
+    <section className={`terminal-panel flex flex-col overflow-hidden ${className ?? ""}`}>
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border px-4 py-3">
         <h2 className="label truncate">{title}</h2>
         {action}
@@ -363,9 +363,9 @@ function DashboardPage() {
   );
 
   return (
-    <div className="mx-auto max-w-[1600px] px-4 py-10 md:px-8">
+    <div className="page-shell">
       {/* IDENTITY */}
-      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 border border-border p-4 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
+      <header className="terminal-panel grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 p-4 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <InscriptionAvatar
             inscriptionId={profile.data?.avatarInscriptionId}
@@ -424,14 +424,14 @@ function DashboardPage() {
       </div>
 
       {/* MODULE NAV */}
-      <nav className="mt-6 flex flex-wrap gap-2 border-b border-border pb-3">
+      <nav className="mt-6 flex flex-wrap gap-2 border-b border-border pb-3" aria-label="Dashboard sections">
         {TABS.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => setTab(t.id)}
             aria-current={tab === t.id ? "page" : undefined}
-            className={`border px-3 py-1.5 font-mono text-[11px] tracking-wider transition-colors ${
+            className={`terminal-interactive border px-3 py-1.5 font-mono text-[11px] tracking-wider ${
               tab === t.id
                 ? "border-primary bg-primary/10 text-primary"
                 : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
