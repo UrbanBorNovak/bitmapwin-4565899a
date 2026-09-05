@@ -25,6 +25,7 @@ import { runtimeDeploymentsQuery, type RuntimeDeployment } from "@/lib/extender-
 import type { RunningExtender } from "@/lib/use-extender-runtimes";
 import { ShooterLayer, type ShooterStats } from "@/components/game/ShooterLayer";
 import { DesertLife } from "@/components/game/DesertLife";
+import { SkyBodies } from "@/components/game/SkyBodies";
 import {
   WEAPONS,
   WEAPON_ORDER,
@@ -1460,6 +1461,7 @@ const WorldScene = memo(function WorldScene({
           scale={[28, 4, 1]}
         />
       </Environment>
+      <SkyBodies unit={AVATAR_U} bitcoin={colors.bitcoin} />
       <LandSurface colors={colors} tipHeight={tipHeight} />
       {cameraMode !== "map" ? (
         <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active />
