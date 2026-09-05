@@ -146,10 +146,11 @@ export const CAMP_RECIPE: StructureRecipe = {
   cost: { hide: 11, fang: 2, "gold-nugget": 2 },
 };
 
-export function buildCamp(x: number, z: number, yaw = 0) {
+export function buildCamp(x: number, z: number, yaw = 0, unit = 1) {
   hydrate();
   if (!spendItems(CAMP_RECIPE.cost)) return null;
-  const spread = 2.4;
+  const spread = unit * 2.4;
+
   const layout: { id: StructureId; dx: number; dz: number }[] = [
     { id: "hide-tent", dx: -spread, dz: 0 },
     { id: "camp-fire", dx: 0, dz: 0 },
