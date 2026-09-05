@@ -2213,9 +2213,11 @@ export function BitmapWorld3D({
         {buildOpen ? (
           <BuildHud
             onBuild={placeBuild}
+            onBuildCamp={placeCamp}
             note={buildNote}
             onClose={() => setBuildOpen(false)}
           />
+
         ) : null}
 
         {/* THE BELT — in-world weapon slots: press 1 / 2 / 3, scroll to cycle, 0 to holster. */}
