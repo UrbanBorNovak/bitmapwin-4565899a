@@ -107,9 +107,12 @@ function CreatePage() {
     onSuccess: (result) => {
       setDesign(result.design as Design);
       setCode(result.code);
+      setModels((result.models ?? []) as ModelAsset[]);
+      setModelsDowngraded(result.modelsDowngraded ?? 0);
       setDeployed(null);
       toast("PACKAGE BUILT", { description: "IT IS RUNNING IN THE SANDBOX BELOW" });
     },
+
     onError: (error) => toast("BUILD FAILED", { description: (error as Error).message }),
   });
 
