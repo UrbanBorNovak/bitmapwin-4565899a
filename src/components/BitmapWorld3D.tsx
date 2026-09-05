@@ -23,7 +23,14 @@ import { ExtenderStage } from "@/components/extenders/ExtenderStage";
 import { ExtenderHud } from "@/components/extenders/ExtenderHud";
 import { runtimeDeploymentsQuery, type RuntimeDeployment } from "@/lib/extender-code";
 import type { RunningExtender } from "@/lib/use-extender-runtimes";
-import { ShooterLayer, MAGAZINE, type ShooterStats } from "@/components/game/ShooterLayer";
+import { ShooterLayer, type ShooterStats } from "@/components/game/ShooterLayer";
+import {
+  WEAPONS,
+  WEAPON_ORDER,
+  WeaponModel,
+  useWeaponMaterials,
+  type WeaponKind,
+} from "@/components/game/weapons";
 import { isSoundMuted, playSfx, setSoundMuted, unlockAudio } from "@/lib/world-audio";
 
 const EMPTY_DEPLOYMENTS: RuntimeDeployment[] = [];
@@ -861,6 +868,24 @@ export type SelfPose = PlayerState;
 
 const colorsForShadow = "#000000";
 
+/**
+ * The weapon in the avatar's right hand — the same model the first-person view
+ * carries, so other visitors see what you are holding.
+ */
+function HeldWeapon({ kind, bitcoin }: { kind: WeaponKind; bitcoin: string }) {
+  const materials = useWeaponMaterials();
+  const u = AVATAR_U;
+  return (
+    <group
+      position={[u * 0.3, u * 0.26, u * 0.14]}
+      rotation={[kind === "whip" ? 0.35 : -0.06, Math.PI, 0]}
+      scale={0.62}
+    >
+      <WeaponModel kind={kind} u={u} materials={materials} flashColor={bitcoin} lash={0} />
+    </group>
+  );
+}
+
 /** Your own figure in third person, driven by the shared pose ref. */
 const SelfAvatar = memo(function SelfAvatar({
   pose,
@@ -871,6 +896,8 @@ const SelfAvatar = memo(function SelfAvatar({
   hp,
   hitAt,
   lastDamage,
+  weapon,
+  bitcoin,
 }: {
   pose: React.RefObject<SelfPose>;
   color: string;
@@ -880,6 +907,8 @@ const SelfAvatar = memo(function SelfAvatar({
   hp: number;
   hitAt: number;
   lastDamage: number;
+  weapon: WeaponKind | null;
+  bitcoin: string;
 }) {
   const group = useRef<THREE.Group>(null);
   const mounted = useRef(false);
@@ -906,6 +935,7 @@ const SelfAvatar = memo(function SelfAvatar({
         <meshBasicMaterial color={colorsForShadow} transparent opacity={0.38} depthWrite={false} />
       </mesh>
       <AvatarSkin color={color} model={model} motion={motion} />
+      {weapon ? <HeldWeapon kind={weapon} bitcoin={bitcoin} /> : null}
 
       <AvatarLabel
         handle={`${handle} (YOU)`}
@@ -1333,7 +1363,7 @@ const WorldScene = memo(function WorldScene({
   self,
   deployments,
   onRunning,
-  shooter,
+  weapon,
   onShootPeer,
   onShooterStats,
 }: {
@@ -1363,7 +1393,7 @@ const WorldScene = memo(function WorldScene({
   };
   deployments: RuntimeDeployment[];
   onRunning: (running: RunningExtender[]) => void;
-  shooter: boolean;
+  weapon: WeaponKind | null;
   onShootPeer: (id: string) => void;
   onShooterStats: (stats: ShooterStats) => void;
 }) {
@@ -1441,7 +1471,9 @@ const WorldScene = memo(function WorldScene({
         onRunning={onRunning}
       />
       <ShooterLayer
-        active={shooter && cameraMode !== "map"}
+        active={weapon !== null && cameraMode !== "map"}
+        firstPerson={cameraMode === "first"}
+        weapon={weapon ?? "mosin"}
         pose={pose}
         cursors={cursors}
         bitcoin={colors.bitcoin}
@@ -1463,6 +1495,8 @@ const WorldScene = memo(function WorldScene({
           hp={self.hp}
           hitAt={self.hitAt}
           lastDamage={self.lastDamage}
+          weapon={weapon}
+          bitcoin={colors.bitcoin}
         />
       ) : null}
       <mesh
@@ -1522,10 +1556,13 @@ export function BitmapWorld3D({
   const exploring = cameraMode !== "map";
   const [draft, setDraft] = useState("");
   const [inventoryOpen, setInventoryOpen] = useState(false);
-  // SHOOTER — the first game mode that runs inside the land world.
-  const [shooter, setShooter] = useState(false);
+  // WEAPONS — what you are carrying while you explore the land world.
+  const [weapon, setWeapon] = useState<WeaponKind | null>(null);
+  const shooter = weapon !== null;
   const [shooterStats, setShooterStats] = useState<ShooterStats>({
-    ammo: MAGAZINE,
+    weapon: "mosin",
+    ammo: WEAPONS.mosin.magazine,
+    magazine: WEAPONS.mosin.magazine,
     reloading: false,
     score: 0,
     kills: 0,
@@ -1878,18 +1915,30 @@ export function BitmapWorld3D({
           >
             {avatarModel ? "[ INVENTORY · WEARING MODEL ]" : "[ INVENTORY ]"}
           </Button>
-          <Button
-            className={shooter ? "btn-term" : "btn-term-ghost"}
-            variant="ghost"
-            onClick={() => {
-              unlockAudio();
-              playSfx("ui");
-              setShooter((current) => !current);
-              if (!exploring) setCameraMode("first");
-            }}
+          <div
+            className="flex flex-wrap items-center gap-1 border border-border px-1.5 py-1"
+            data-no-translate
           >
-            {shooter ? "[ MOSIN NAGANT · EQUIPPED ]" : "[ EQUIP A WEAPON ]"}
-          </Button>
+            <span className="label px-1 text-[9px] text-muted-foreground">EQUIP A WEAPON</span>
+            {WEAPON_ORDER.map((kind) => (
+              <Button
+                key={kind}
+                className={weapon === kind ? "btn-term" : "btn-term-ghost"}
+                variant="ghost"
+                aria-pressed={weapon === kind}
+                title={WEAPONS[kind].hint}
+                onClick={() => {
+                  unlockAudio();
+                  playSfx("ui");
+                  setWeapon((current) => (current === kind ? null : kind));
+                  if (!exploring) setCameraMode("first");
+                }}
+              >
+                [ {WEAPONS[kind].short}
+                {weapon === kind ? " ·" : ""} ]
+              </Button>
+            ))}
+          </div>
           <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
             {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
           </Button>
@@ -1928,25 +1977,31 @@ export function BitmapWorld3D({
               self={self}
               deployments={deployments.data ?? EMPTY_DEPLOYMENTS}
               onRunning={setRunning}
-              shooter={shooter}
+              weapon={weapon}
               onShootPeer={attack}
               onShooterStats={handleShooterStats}
             />
           </Canvas>
         ) : null}
 
-        {shooter && exploring ? (
+        {weapon && exploring ? (
           <div
             data-no-translate
             className="hud-panel absolute left-3 top-[8.5rem] z-40 space-y-1 px-2.5 py-2 font-mono text-[10px] tabular-nums"
-            aria-label="Shooter status"
+            aria-label="Weapon status"
           >
-            <div className="label text-[9px] text-bitcoin">MOSIN NAGANT · EQUIPPED</div>
+            <div className="label text-[9px] text-bitcoin">
+              {WEAPONS[weapon].label} · EQUIPPED
+            </div>
             <div className="flex items-center gap-3">
               <span>
                 AMMO{" "}
                 <span className="text-foreground">
-                  {shooterStats.reloading ? "RELOADING" : `${shooterStats.ammo}/${MAGAZINE}`}
+                  {shooterStats.magazine === 0
+                    ? "—"
+                    : shooterStats.reloading
+                      ? "RELOADING"
+                      : `${shooterStats.ammo}/${shooterStats.magazine}`}
                 </span>
               </span>
               <span>
@@ -1957,7 +2012,14 @@ export function BitmapWorld3D({
               <span>DOWNED {shooterStats.kills}</span>
               <span>VISITORS {shooterStats.targets}</span>
             </div>
-            <div className="text-muted-foreground">CLICK / E · FIRE · R · CYCLE BOLT</div>
+            <div className="text-muted-foreground">
+              {weapon === "whip"
+                ? "CLICK / E · CRACK · CLOSE RANGE"
+                : "CLICK / E · FIRE · R · RELOAD"}
+            </div>
+            {cameraMode === "third" ? (
+              <div className="text-muted-foreground">FIRST PERSON SHOWS THE WEAPON IN HAND</div>
+            ) : null}
             {shooterStats.note ? <div className="text-bitcoin">{shooterStats.note}</div> : null}
           </div>
         ) : null}
