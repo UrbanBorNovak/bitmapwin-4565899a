@@ -37,9 +37,23 @@ export function ExtenderStage({
     if (now - lastPick.current.at < 0.75) return;
     lastPick.current.at = now;
 
+    // On foot we follow the player; from the map camera we follow whatever patch of
+    // land the camera is actually looking down at.
     const player = pose.current;
-    if (player) focus.current.set(player.x, 0, player.z);
-    else focus.current.set(camera.position.x, 0, camera.position.z);
+    const overhead = camera.position.y > 1.5;
+    let range = RANGE;
+    if (overhead) {
+      camera.getWorldDirection(direction.current);
+      const travel =
+        Math.abs(direction.current.y) > 0.0001 ? -camera.position.y / direction.current.y : 0;
+      focus.current
+        .copy(camera.position)
+        .addScaledVector(direction.current, Math.max(0, travel));
+      focus.current.y = 0;
+      range = MAP_RANGE;
+    } else if (player) {
+      focus.current.set(player.x, 0, player.z);
+    }
 
     const scored = deployments
       .map((deployment) => {
@@ -48,7 +62,7 @@ export function ExtenderStage({
         const distance = Math.hypot(cellX(col) - focus.current.x, cellZ(row) - focus.current.z);
         return { deployment, distance };
       })
-      .filter((item) => item.distance <= RANGE)
+      .filter((item) => item.distance <= range)
       .sort((a, b) => a.distance - b.distance)
       .slice(0, MAX_ACTIVE)
       .map((item) => item.deployment);
