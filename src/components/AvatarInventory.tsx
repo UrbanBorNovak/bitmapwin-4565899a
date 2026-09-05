@@ -74,7 +74,7 @@ export function AvatarInventory({
   const loading = published.isLoading || (primary !== "" && wallet.isLoading);
 
   return (
-    <div className="absolute right-3 top-3 z-40 flex max-h-[calc(100%-1.5rem)] w-[min(320px,calc(100%-1.5rem))] flex-col border border-bitcoin bg-background/95">
+    <div className="absolute right-3 top-16 z-50 flex max-h-[calc(100%-5rem)] w-[min(320px,calc(100%-1.5rem))] flex-col border border-bitcoin bg-background/95">
       <div className="flex items-center justify-between border-b border-border px-3 py-2">
         <span className="label">AVATAR INVENTORY</span>
         <button type="button" aria-label="Close inventory" onClick={onClose} className="text-muted-foreground hover:text-bitcoin">

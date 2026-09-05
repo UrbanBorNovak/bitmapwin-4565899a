@@ -2200,7 +2200,8 @@ export function BitmapWorld3D({
                 className="absolute inset-y-0 left-0"
                 style={{
                   width: `${Math.max(0, (hp / MAX_HP) * 100)}%`,
-                  background: hp <= MAX_HP * 0.25 ? "var(--bitcoin)" : color,
+                  background: "var(--bitcoin)",
+                  opacity: hp <= MAX_HP * 0.25 ? 1 : 0.85,
                 }}
               />
             </span>
@@ -2253,7 +2254,7 @@ export function BitmapWorld3D({
         <section
           data-no-translate
           aria-label="Party"
-          className="hud-panel absolute right-3 top-14 z-30 w-[min(250px,calc(100%-1.5rem))] font-mono text-[10px]"
+          className="hud-panel absolute right-3 top-16 z-20 w-[min(250px,calc(100%-1.5rem))] font-mono text-[10px]"
         >
           <header className="flex items-center justify-between border-b border-border px-2 py-1">
             <span>
@@ -2539,11 +2540,11 @@ export function BitmapWorld3D({
           </div>
         ) : null}
 
-        {selected ? (
+        {selected && !inventoryOpen ? (
           <section
             aria-label={`${selected.height}.bitmap details`}
             data-no-translate
-            className="absolute right-3 top-3 z-40 max-h-[calc(100%-1.5rem)] w-[min(340px,calc(100%-1.5rem))] overflow-y-auto border border-bitcoin bg-background/95 p-4 font-mono shadow-[8px_8px_0_var(--bitcoin)]"
+            className="absolute right-3 top-16 z-40 max-h-[calc(100%-5rem)] w-[min(340px,calc(100%-1.5rem))] overflow-y-auto border border-bitcoin bg-background/95 p-4 font-mono shadow-[8px_8px_0_var(--bitcoin)]"
           >
             <Button
               aria-label="Close bitmap window"
