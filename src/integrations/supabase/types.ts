@@ -886,6 +886,44 @@ export type Database = {
           },
         ]
       }
+      extender_state: {
+        Row: {
+          actor: string | null
+          created_at: string
+          data: Json
+          deployment_id: string
+          id: string
+          scope: string
+          updated_at: string
+        }
+        Insert: {
+          actor?: string | null
+          created_at?: string
+          data?: Json
+          deployment_id: string
+          id?: string
+          scope: string
+          updated_at?: string
+        }
+        Update: {
+          actor?: string | null
+          created_at?: string
+          data?: Json
+          deployment_id?: string
+          id?: string
+          scope?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extender_state_deployment_id_fkey"
+            columns: ["deployment_id"]
+            isOneToOne: false
+            referencedRelation: "extender_deployments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       extender_versions: {
         Row: {
           changelog: string
