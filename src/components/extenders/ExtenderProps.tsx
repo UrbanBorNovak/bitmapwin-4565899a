@@ -55,8 +55,8 @@ export function ExtenderPropMesh({
 }: {
   prop: ExtenderProp;
   unit: number;
-  onInteract?: (propId: string) => void;
-  labels?: boolean;
+  onInteract?: ((propId: string) => void) | undefined;
+  labels?: boolean | undefined;
 }) {
   const interactive = Boolean(prop.interactive && onInteract);
   return (
@@ -69,14 +69,14 @@ export function ExtenderPropMesh({
         <mesh
           scale={unit}
           rotation-x={prop.shape === "plane" ? -Math.PI / 2 : 0}
-          onClick={
-            interactive
-              ? (event) => {
+          {...(interactive
+            ? {
+                onClick: (event: import("@react-three/fiber").ThreeEvent<MouseEvent>) => {
                   event.stopPropagation();
                   onInteract?.(prop.id);
-                }
-              : undefined
-          }
+                },
+              }
+            : {})}
         >
           <Geometry prop={prop} />
           {prop.glow ? (
@@ -116,8 +116,8 @@ export function ExtenderPropGroup({
 }: {
   props: ExtenderProp[];
   unit: number;
-  onInteract?: (propId: string) => void;
-  labels?: boolean;
+  onInteract?: ((propId: string) => void) | undefined;
+  labels?: boolean | undefined;
 }) {
   return (
     <>
