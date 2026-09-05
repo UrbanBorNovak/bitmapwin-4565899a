@@ -2332,14 +2332,23 @@ export function BitmapWorld3D({
               <BitmapModelPlacement height={selected.height} canEdit compact />
             ) : null}
             {selected.height <= tipHeight ? (
-              <Button
-                className="btn-term mt-4 w-full"
-                onClick={() =>
-                  navigate({ to: "/bitmap/$block", params: { block: String(selected.height) } })
-                }
-              >
-                OPEN BITMAP <ArrowUpRight />
-              </Button>
+              <div className="mt-4 grid gap-2">
+                <Button
+                  className="btn-term w-full"
+                  onClick={() => navigate({ to: "/extend", search: { height: selected.height } })}
+                >
+                  EXTEND THIS LAND <ArrowUpRight />
+                </Button>
+                <Button
+                  className="btn-term-ghost w-full"
+                  variant="ghost"
+                  onClick={() =>
+                    navigate({ to: "/bitmap/$block", params: { block: String(selected.height) } })
+                  }
+                >
+                  OPEN BITMAP
+                </Button>
+              </div>
             ) : null}
           </section>
         ) : null}
