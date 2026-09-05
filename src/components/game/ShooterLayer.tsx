@@ -6,15 +6,27 @@ import { ATTACK_RANGE } from "@/lib/map-presence";
 import type { MapCursor } from "@/lib/map-presence";
 import { playSfx, unlockAudio } from "@/lib/world-audio";
 import { WEAPONS, WeaponModel, useWeaponMaterials, type WeaponKind } from "./weapons";
+import {
+  damageBeast,
+  liveBeasts,
+  liveVeins,
+  mineVoxel,
+  type BeastEntity,
+  type OreVein,
+  type OreVoxel,
+} from "@/lib/world-entities";
+import { addItem, grantXp, skillLevel } from "@/lib/world-skills";
 
 /**
- * WEAPONS IN THE WORLD — carry a Mosin Nagant, a revolver or a whip.
+ * WEAPONS IN THE WORLD — carry a Mosin Nagant, a revolver, a whip or a pickaxe.
  *
- * Hitscan fire from the live camera. Nothing is spawned to shoot: the only
- * things a strike can touch are other visitors, and only inside the shared
- * melee-range rule the world already enforces, so no client can invent
- * long-range damage. The carried model is drawn in front of the camera in
- * first person; in third person the avatar holds it instead.
+ * Hitscan strikes from the live camera. A strike can land on another visitor
+ * (only inside the shared melee-range rule the world already enforces, so no
+ * client can invent long-range damage against a person), on wildlife, which
+ * carries its own health, or — with the pickaxe — on a gold vein, which gives up
+ * one voxel per swing until the seam is empty. Downing an animal or breaking ore
+ * pays experience into the visitor's own skills. The carried model is drawn in
+ * front of the camera in first person; in third person the avatar holds it.
  */
 
 export const SHOT_DAMAGE = 12;
@@ -32,6 +44,7 @@ export type ShooterStats = {
 
 type Tracer = { id: number; from: THREE.Vector3; to: THREE.Vector3; born: number };
 type Burst = { id: number; at: THREE.Vector3; born: number };
+
 
 export function ShooterLayer({
   active,
@@ -102,9 +115,10 @@ export function ShooterLayer({
       const kick = recoil.current;
       held.position.copy(camera.position);
       held.quaternion.copy(camera.quaternion);
-      held.translateX(STRIDE * (weapon === "mosin" ? 0.34 : 0.26));
-      held.translateY(-STRIDE * (weapon === "mosin" ? 0.3 : 0.26) - kick * STRIDE * 0.08);
-      held.translateZ(-STRIDE * (weapon === "mosin" ? 0.55 : 0.4) + kick * STRIDE * 0.22);
+      const long = weapon === "mosin" || weapon === "pickaxe";
+      held.translateX(STRIDE * (long ? 0.34 : 0.26));
+      held.translateY(-STRIDE * (long ? 0.3 : 0.26) - kick * STRIDE * 0.08);
+      held.translateZ(-STRIDE * (long ? 0.55 : 0.4) + kick * STRIDE * 0.22);
       held.rotateX(kick * (weapon === "whip" ? -0.3 : 0.22));
     }
   });
@@ -118,12 +132,14 @@ export function ShooterLayer({
     if (spec.magazine === 0) return;
     if (reloading || ammo === spec.magazine) return;
     setReloading(true);
-    playSfx("reload");
+    playSfx(spec.reloadSfx);
     window.setTimeout(() => {
       setAmmo(spec.magazine);
       setReloading(false);
-      if (spec.cycleSfx) playSfx(spec.cycleSfx);
+      // The cylinder reload already ends on a closed gate — no extra click.
+      if (spec.cycleSfx && spec.reloadSfx !== "cylinder") playSfx(spec.cycleSfx);
     }, spec.reloadMs);
+
   }, [ammo, reloading, spec]);
 
   const fire = useCallback(() => {
@@ -144,7 +160,7 @@ export function ShooterLayer({
       const cycle = spec.cycleSfx;
       window.setTimeout(() => playSfx(cycle), spec.cycleDelayMs);
     }
-    if (weapon !== "whip") setFlash(now);
+    if (!spec.mining && weapon !== "whip") setFlash(now);
     recoil.current = 1;
     setLash(1);
 
@@ -167,18 +183,120 @@ export function ShooterLayer({
       if (!best || distance < best.distance) best = { distance, point: hit.clone(), peer };
     }
 
-    if (weapon !== "whip") {
-      const end = best
-        ? best.point.clone()
+    // WILDLIFE — every animal carries its own health, so a strike can bring it down.
+    let beastHit: { distance: number; point: THREE.Vector3; beast: BeastEntity } | null = null;
+    for (const beast of liveBeasts()) {
+      if (beast.deadUntil || beast.hp <= 0) continue;
+      const center = new THREE.Vector3(beast.x, beast.bodyY, beast.z);
+      const sphere = new THREE.Sphere(center, Math.max(beast.bodyRadius, STRIDE * 0.12));
+      if (!ray.intersectSphere(sphere, hit)) continue;
+      const distance = origin.distanceTo(hit);
+      if (distance > range) continue;
+      if (!beastHit || distance < beastHit.distance) {
+        beastHit = { distance, point: hit.clone(), beast };
+      }
+    }
+
+    // GOLD — only a mining tool bites into a seam, one voxel per swing.
+    let oreHit:
+      | { distance: number; point: THREE.Vector3; vein: OreVein; voxel: OreVoxel }
+      | null = null;
+    if (spec.mining) {
+      for (const vein of liveVeins()) {
+        if (vein.depletedUntil) continue;
+        if (Math.hypot(vein.x - me.x, vein.z - me.z) > range + STRIDE * 2) continue;
+        for (const voxel of vein.voxels) {
+          if (!voxel.alive) continue;
+          const center = new THREE.Vector3(vein.x + voxel.x, voxel.y, vein.z + voxel.z);
+          const sphere = new THREE.Sphere(center, voxel.size * 0.9);
+          if (!ray.intersectSphere(sphere, hit)) continue;
+          const distance = origin.distanceTo(hit);
+          if (distance > range) continue;
+          if (!oreHit || distance < oreHit.distance) {
+            oreHit = { distance, point: hit.clone(), vein, voxel };
+          }
+        }
+      }
+    }
+
+    // Whatever the swing reached first is what it struck.
+    const nearest = [
+      best ? { kind: "peer" as const, distance: best.distance, point: best.point } : null,
+      beastHit ? { kind: "beast" as const, distance: beastHit.distance, point: beastHit.point } : null,
+      oreHit ? { kind: "ore" as const, distance: oreHit.distance, point: oreHit.point } : null,
+    ]
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+      .sort((a, b) => a.distance - b.distance)[0];
+
+    if (weapon !== "whip" && !spec.mining) {
+      const end = nearest
+        ? nearest.point.clone()
         : origin.clone().addScaledVector(ray.direction, range * 0.5);
       const id = ++nextTracer.current;
       setTracers((current) => [...current.slice(-5), { id, from: origin.clone(), to: end, born: now }]);
     }
 
-    const impact = best
-      ? best.point.clone()
+    const impact = nearest
+      ? nearest.point.clone()
       : origin.clone().addScaledVector(ray.direction, range * 0.35);
     setBursts((current) => [...current.slice(-3), { id: ++nextBurst.current, at: impact, born: now }]);
+
+    if (!nearest) {
+      if (spec.mining) flashNote("NOTHING TO MINE HERE");
+      return;
+    }
+
+    // MINING — break the voxel, bank the experience, keep the nugget.
+    if (nearest.kind === "ore" && oreHit) {
+      const level = skillLevel("mining");
+      if (level < oreHit.vein.level) {
+        flashNote(`NEEDS MINING LEVEL ${oreHit.vein.level}`);
+        return;
+      }
+      const result = mineVoxel(oreHit.vein, oreHit.voxel);
+      if (!result.mined) return;
+      playSfx("ore");
+      const stored = addItem("gold-nugget", 1);
+      const gained = grantXp("mining", oreHit.vein.xpPerVoxel);
+      setScore((current) => current + 15);
+      if (!stored) {
+        flashNote("BACKPACK FULL");
+      } else if (gained.levelled) {
+        playSfx("levelup");
+        flashNote(`MINING LEVEL ${gained.level}`);
+      } else {
+        playSfx("nugget");
+        flashNote(
+          result.emptied
+            ? "VEIN MINED OUT · REGROWING"
+            : `+${oreHit.vein.xpPerVoxel} MINING XP`,
+        );
+      }
+      return;
+    }
+
+    // WILDLIFE — damage, a downed animal, and the experience for the kill.
+    if (nearest.kind === "beast" && beastHit) {
+      const struck = damageBeast(beastHit.beast, spec.damage);
+      if (!struck.damage) return;
+      playSfx(struck.killed ? "kill" : "hit");
+      setScore((current) => current + (struck.killed ? 40 : 10));
+      if (struck.killed) {
+        setKills((current) => current + 1);
+        const gained = grantXp("hunter", beastHit.beast.xp);
+        addItem(beastHit.beast.hostile ? "fang" : "hide", 1);
+        if (gained.levelled) {
+          playSfx("levelup");
+          flashNote(`HUNTER LEVEL ${gained.level}`);
+        } else {
+          flashNote(`${beastHit.beast.label} DOWN · +${beastHit.beast.xp} HUNTER XP`);
+        }
+      } else {
+        grantXp("attack", Math.round(struck.damage * 1.4));
+        flashNote(`${beastHit.beast.label} · ${beastHit.beast.hp}/${beastHit.beast.maxHp}`);
+      }
+      return;
+    }
 
     if (!best) return;
     const reach = Math.hypot(best.peer.x - me.x, best.peer.z - me.z);
@@ -200,12 +318,14 @@ export function ShooterLayer({
     playSfx("hit");
     setScore((current) => current + 25 * caught.length);
     setKills((current) => current + caught.filter((peer) => peer.hp - SHOT_DAMAGE <= 0).length);
+    grantXp("attack", 20 * caught.length);
     flashNote(
       caught.length > 1
         ? `SPLASH HIT ${caught.length} VISITORS`
         : `HIT ${best.peer.handle}`,
     );
   }, [active, ammo, camera, flashNote, onShootPeer, pose, reloading, spec, weapon]);
+
 
 
   // Mouse / touch strike on the canvas, R to reload.

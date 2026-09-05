@@ -1,0 +1,123 @@
+/**
+ * LIVE WORLD ENTITIES — the shared register of things in the sand that can be
+ * hit: wildlife with real health, and gold veins that can be mined voxel by
+ * voxel until there is nothing left.
+ *
+ * The desert dressing owns and moves these objects; the weapon layer reads the
+ * same objects to work out what a swing actually struck. Both sides talk through
+ * this one module so a beast's position and its health never disagree.
+ */
+
+export type BeastEntity = {
+  id: number;
+  label: string;
+  hostile: boolean;
+  hp: number;
+  maxHp: number;
+  /** where the body currently is, in world units */
+  x: number;
+  z: number;
+  /** centre of mass above ground, and the hit sphere around it */
+  bodyY: number;
+  bodyRadius: number;
+  /** experience for the killing blow */
+  xp: number;
+  hitAt: number;
+  /** while set, the beast is dead and waiting to wander back in */
+  deadUntil: number;
+};
+
+export type OreVoxel = { x: number; y: number; z: number; size: number; alive: boolean };
+
+export type OreVein = {
+  id: string;
+  x: number;
+  z: number;
+  /** mining level needed to break it */
+  level: number;
+  xpPerVoxel: number;
+  voxels: OreVoxel[];
+  /** while set, the vein is spent and regrowing */
+  depletedUntil: number;
+};
+
+const beasts: BeastEntity[] = [];
+const veins: OreVein[] = [];
+const listeners = new Set<() => void>();
+let version = 0;
+
+function emit() {
+  version++;
+  for (const listener of listeners) listener();
+}
+
+export function subscribeWorldEntities(listener: () => void) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+export function worldEntitiesVersion() {
+  return version;
+}
+
+/** The desert hands over its live arrays; the objects themselves stay mutable. */
+export function registerBeasts(list: BeastEntity[]) {
+  beasts.length = 0;
+  beasts.push(...list);
+}
+
+export function registerVeins(list: OreVein[]) {
+  veins.length = 0;
+  veins.push(...list);
+  emit();
+}
+
+export function liveBeasts() {
+  return beasts;
+}
+
+export function liveVeins() {
+  return veins;
+}
+
+/** Land a hit on a beast. Returns the outcome so the HUD can report it. */
+export function damageBeast(beast: BeastEntity, damage: number) {
+  if (beast.deadUntil) return { killed: false, damage: 0 };
+  const dealt = Math.max(1, Math.round(damage));
+  beast.hp = Math.max(0, beast.hp - dealt);
+  beast.hitAt = performance.now();
+  const killed = beast.hp === 0;
+  if (killed) beast.deadUntil = performance.now() + 14_000;
+  emit();
+  return { killed, damage: dealt };
+}
+
+/** Knock one voxel out of a vein. Returns whether that emptied it. */
+export function mineVoxel(vein: OreVein, voxel: OreVoxel) {
+  if (!voxel.alive || vein.depletedUntil) return { mined: false, emptied: false };
+  voxel.alive = false;
+  const emptied = vein.voxels.every((v) => !v.alive);
+  if (emptied) vein.depletedUntil = performance.now() + 60_000;
+  emit();
+  return { mined: true, emptied };
+}
+
+/** Called once a second by the desert: bring back dead beasts and spent veins. */
+export function tickRespawns(now: number) {
+  let changed = false;
+  for (const beast of beasts) {
+    if (beast.deadUntil && now >= beast.deadUntil) {
+      beast.deadUntil = 0;
+      beast.hp = beast.maxHp;
+      changed = true;
+    }
+  }
+  for (const vein of veins) {
+    if (vein.depletedUntil && now >= vein.depletedUntil) {
+      vein.depletedUntil = 0;
+      for (const voxel of vein.voxels) voxel.alive = true;
+      changed = true;
+    }
+  }
+  if (changed) emit();
+}

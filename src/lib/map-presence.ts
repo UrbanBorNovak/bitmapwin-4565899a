@@ -109,6 +109,7 @@ export function useMapCursors(enabled = true) {
   const sayRef = useRef<(body: string) => void>(() => {});
   const attackRef = useRef<(targetId: string) => void>(() => {});
   const respawnRef = useRef<() => void>(() => {});
+  const hurtRef = useRef<(damage: number) => void>(() => {});
   const modelRef = useRef(model);
   modelRef.current = model;
 
@@ -393,6 +394,23 @@ export function useMapCursors(enabled = true) {
       flush();
     };
 
+    // Something in the world bit us — wildlife, a fall, a trap. Same health path
+    // as a peer's hit, so the rest of the world sees the new value straight away.
+    hurtRef.current = (damage) => {
+      if (hpRef.current <= 0 || damage <= 0) return;
+      const next = Math.max(0, hpRef.current - Math.round(damage));
+      hpRef.current = next;
+      setHp(next);
+      setHitAt(Date.now());
+      setLastDamage(Math.round(damage));
+      if (lastCell) push(lastCell);
+      if (next === 0) {
+        setRespawnAt(Date.now() + RESPAWN_MS);
+        if (respawnTimer) clearTimeout(respawnTimer);
+        respawnTimer = setTimeout(() => respawnRef.current(), RESPAWN_MS);
+      }
+    };
+
     // Respawn: come back at full health and tell the world we are standing again.
     let respawnTimer: ReturnType<typeof setTimeout> | null = null;
     respawnRef.current = () => {
@@ -427,6 +445,7 @@ export function useMapCursors(enabled = true) {
       sayRef.current = () => {};
       attackRef.current = () => {};
       respawnRef.current = () => {};
+      hurtRef.current = () => {};
       push(null); // despawn: tell peers this avatar left the world
       void supabase.removeChannel(channel);
     };
@@ -450,6 +469,7 @@ export function useMapCursors(enabled = true) {
     respawnMs: RESPAWN_MS,
     respawn: () => respawnRef.current(),
     attack: (targetId: string) => attackRef.current(targetId),
+    hurt: (damage: number) => hurtRef.current(damage),
     say: (body: string) => sayRef.current(body),
     publish: (pose: PoseReport | null) => sendRef.current(pose),
   };

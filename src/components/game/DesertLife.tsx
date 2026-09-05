@@ -7,9 +7,22 @@
  * hash keeps every plant in the same place each time you come back, while only
  * the patch you can actually see is ever pushed to the GPU.
  */
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import {
+  registerBeasts,
+  registerVeins,
+  subscribeWorldEntities,
+  tickRespawns,
+  worldEntitiesVersion,
+  type BeastEntity,
+  type OreVein,
+  type OreVoxel,
+} from "@/lib/world-entities";
+import { playSfx } from "@/lib/world-audio";
+
+
 
 export type DesertColors = {
   foreground: string;
@@ -45,13 +58,17 @@ export const DesertLife = memo(function DesertLife({
   colors,
   pose,
   active,
+  onBite,
 }: {
   /** One avatar height in world units. */
   unit: number;
   colors: DesertColors;
   pose: { current: { x: number; z: number } | null };
   active: boolean;
+  /** a hostile animal got its teeth in — damage the visitor */
+  onBite?: ((damage: number, label: string) => void) | undefined;
 }) {
+
   const step = unit * 2.4; // scatter lattice pitch
   const radius = unit * 70; // how far the dressing reaches around the avatar
   const [center, setCenter] = useState<[number, number]>([0, 0]);
@@ -335,7 +352,10 @@ export const DesertLife = memo(function DesertLife({
         <meshLambertMaterial color={REED} />
       </instancedMesh>
       <Mirage unit={unit} pose={pose} />
-      <Critters unit={unit} colors={colors} pose={pose} />
+      <GoldVeins unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
+      <Critters unit={unit} colors={colors} pose={pose} onBite={onBite} />
+
+
 
     </group>
   );
@@ -361,21 +381,28 @@ type Species = {
   hostile: boolean;
   speed: number;
   scale: number;
+  /** health, the experience for downing it, and how hard it bites back */
+  hp: number;
+  xp: number;
+  bite: number;
+  /** hit sphere radius and its height off the sand, in avatar units */
+  radius: number;
+  bodyY: number;
 };
 
 const SPECIES: Species[] = [
-  { kind: "scorpion", weight: 22, hostile: true, speed: 0.9, scale: 1 },
-  { kind: "snake", weight: 18, hostile: true, speed: 0.6, scale: 1 },
-  { kind: "lizard", weight: 16, hostile: false, speed: 1.3, scale: 1 },
-  { kind: "jackrabbit", weight: 14, hostile: false, speed: 1.8, scale: 1 },
-  { kind: "coyote", weight: 8, hostile: true, speed: 1.6, scale: 1 },
-  { kind: "vulture", weight: 6, hostile: false, speed: 1.1, scale: 1 },
+  { kind: "scorpion", weight: 22, hostile: true, speed: 0.9, scale: 1, hp: 18, xp: 20, bite: 5, radius: 0.11, bodyY: 0.05 },
+  { kind: "snake", weight: 18, hostile: true, speed: 0.6, scale: 1, hp: 22, xp: 26, bite: 8, radius: 0.13, bodyY: 0.05 },
+  { kind: "lizard", weight: 16, hostile: false, speed: 1.3, scale: 1, hp: 14, xp: 12, bite: 0, radius: 0.1, bodyY: 0.05 },
+  { kind: "jackrabbit", weight: 14, hostile: false, speed: 1.8, scale: 1, hp: 12, xp: 14, bite: 0, radius: 0.12, bodyY: 0.08 },
+  { kind: "coyote", weight: 8, hostile: true, speed: 1.6, scale: 1, hp: 46, xp: 55, bite: 9, radius: 0.26, bodyY: 0.3 },
+  { kind: "vulture", weight: 6, hostile: false, speed: 1.1, scale: 1, hp: 26, xp: 34, bite: 0, radius: 0.24, bodyY: 0 },
   // Rare safari sightings.
-  { kind: "zebra", weight: 2, hostile: false, speed: 1.5, scale: 1 },
-  { kind: "giraffe", weight: 1.2, hostile: false, speed: 1.0, scale: 1 },
-  { kind: "elephant", weight: 1, hostile: false, speed: 0.9, scale: 1 },
-  { kind: "rhino", weight: 0.8, hostile: true, speed: 1.4, scale: 1 },
-  { kind: "lion", weight: 0.8, hostile: true, speed: 1.7, scale: 1 },
+  { kind: "zebra", weight: 2, hostile: false, speed: 1.5, scale: 1, hp: 80, xp: 110, bite: 0, radius: 0.36, bodyY: 0.52 },
+  { kind: "giraffe", weight: 1.2, hostile: false, speed: 1.0, scale: 1, hp: 130, xp: 190, bite: 0, radius: 0.44, bodyY: 0.85 },
+  { kind: "elephant", weight: 1, hostile: false, speed: 0.9, scale: 1, hp: 280, xp: 430, bite: 0, radius: 0.6, bodyY: 0.62 },
+  { kind: "rhino", weight: 0.8, hostile: true, speed: 1.4, scale: 1, hp: 220, xp: 350, bite: 18, radius: 0.52, bodyY: 0.48 },
+  { kind: "lion", weight: 0.8, hostile: true, speed: 1.7, scale: 1, hp: 160, xp: 280, bite: 15, radius: 0.4, bodyY: 0.38 },
 ];
 
 function pickSpecies(roll: number): Species {
@@ -389,51 +416,94 @@ function pickSpecies(roll: number): Species {
   return SPECIES[0]!;
 }
 
-type Critter = {
+/** One animal: a beast the weapon layer can hit, plus how it wanders. */
+type Critter = BeastEntity & {
   species: Species;
   seed: number;
-  x: number;
-  z: number;
   heading: number;
   bob: number;
+  lastBite: number;
 };
 
 const CRITTER_COUNT = 18;
 
-/** Wildlife wandering the sand near the avatar; hostiles stalk, the rest keep away. */
+
+/**
+ * Wildlife wandering the sand near the avatar. Every animal carries real health,
+ * so a weapon can bring it down and it stays down until it wanders back in.
+ * Hostile species stalk the visitor and bite when they close the gap; the rest
+ * bolt away.
+ */
 const Critters = memo(function Critters({
   unit,
   colors,
   pose,
+  onBite,
 }: {
   unit: number;
   colors: DesertColors;
   pose: { current: { x: number; z: number } | null };
+  onBite?: ((damage: number, label: string) => void) | undefined;
 }) {
   const groups = useRef<(THREE.Group | null)[]>([]);
   const state = useRef<Critter[]>(
     Array.from({ length: CRITTER_COUNT }, (_, i) => {
       const roll = hash(i + 1, i * 3 + 7, 41);
+      const species = pickSpecies(roll);
       return {
-        species: pickSpecies(roll),
-        seed: i * 17.3,
+        id: i + 1,
+        label: species.kind.toUpperCase(),
+        hostile: species.hostile,
+        hp: species.hp,
+        maxHp: species.hp,
         x: 0,
         z: 0,
+        bodyY: unit * species.bodyY,
+        bodyRadius: unit * species.radius,
+        xp: species.xp,
+        hitAt: 0,
+        deadUntil: 0,
+        species,
+        seed: i * 17.3,
         heading: i,
         bob: 0,
+        lastBite: 0,
       };
     }),
   );
+  const bars = useRef<(THREE.Group | null)[]>([]);
+  const lastSweep = useRef(0);
+
+  // The weapon layer strikes these exact objects.
+  useEffect(() => {
+    registerBeasts(state.current);
+    return () => registerBeasts([]);
+  }, []);
 
   useFrame((_, rawDelta) => {
     const delta = Math.min(rawDelta, 0.05);
     const player = pose.current;
     const reach = unit * 34;
     const now = performance.now();
+    if (now - lastSweep.current > 1_000) {
+      lastSweep.current = now;
+      tickRespawns(now);
+    }
     state.current.forEach((critter, index) => {
       const group = groups.current?.[index];
       if (!group) return;
       const { species } = critter;
+
+      // Down: lie where it fell, out of the fight, until it comes back.
+      if (critter.deadUntil) {
+        group.visible = true;
+        group.rotation.z = Math.PI / 2.1;
+        group.position.set(critter.x, unit * 0.02, critter.z);
+        const bar = bars.current?.[index];
+        if (bar) bar.visible = false;
+        return;
+      }
+      group.rotation.z = 0;
       const speed = species.speed * unit;
 
       let steer = Math.sin(now / 1400 + critter.seed) * delta * 1.4;
@@ -448,6 +518,12 @@ const Critters = memo(function Critters({
           const diff = ((toPlayer - critter.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
           steer = diff * Math.min(1, delta * 3);
           travel = speed * 1.25;
+          // Close enough to strike: bite, on its own cooldown.
+          if (away < unit * 1.5 && now - critter.lastBite > 1_800 && species.bite > 0) {
+            critter.lastBite = now;
+            playSfx("beast");
+            onBite?.(species.bite, critter.label);
+          }
         } else if (!species.hostile && away < unit * 5) {
           // Skittish: bolt the other way.
           const flee = toPlayer + Math.PI;
@@ -464,7 +540,7 @@ const Critters = memo(function Critters({
         const dx = critter.x - player.x;
         const dz = critter.z - player.z;
         const away = Math.hypot(dx, dz);
-        const tooClose = species.hostile ? unit * 1.2 : unit * 1.6;
+        const tooClose = species.hostile ? unit * 1.0 : unit * 1.6;
         if (away > reach || away < tooClose) {
           const angle = critter.seed + now / 6000;
           const ring = unit * (9 + (index % 5) * 5);
@@ -475,11 +551,28 @@ const Critters = memo(function Critters({
 
       const flyer = species.kind === "vulture";
       const lift = flyer ? unit * (2.6 + Math.sin(now / 900 + critter.seed) * 0.4) : unit * 0.03;
+      critter.bodyY = lift + unit * species.bodyY;
       group.position.set(critter.x, lift, critter.z);
       group.rotation.y = critter.heading;
       const wiggle = Math.sin(now / 110 + critter.seed) * 0.2;
       group.rotation.z = species.kind === "snake" ? wiggle : wiggle * 0.25;
       critter.bob = Math.sin(now / 180 + critter.seed);
+
+      // A health bar appears the moment something has been wounded.
+      const bar = bars.current?.[index];
+      if (bar) {
+        const wounded = critter.hp < critter.maxHp;
+        bar.visible = wounded;
+        if (wounded) {
+          const pct = critter.hp / critter.maxHp;
+          bar.position.set(0, unit * (species.bodyY + species.radius) + unit * 0.22, 0);
+          const fill = bar.children[1];
+          if (fill) {
+            fill.scale.x = Math.max(0.02, pct);
+            fill.position.x = -unit * 0.18 * (1 - pct);
+          }
+        }
+      }
     });
   });
 
@@ -500,9 +593,26 @@ const Critters = memo(function Critters({
               <meshBasicMaterial color={HOSTILE} />
             </mesh>
           ) : null}
+          <group
+            visible={false}
+            ref={(node) => {
+              if (!bars.current) bars.current = [];
+              bars.current[index] = node;
+            }}
+          >
+            <mesh raycast={noRaycast}>
+              <boxGeometry args={[unit * 0.36, unit * 0.05, unit * 0.01]} />
+              <meshBasicMaterial color={colors.background} />
+            </mesh>
+            <mesh position={[0, 0, unit * 0.006]} raycast={noRaycast}>
+              <boxGeometry args={[unit * 0.36, unit * 0.035, unit * 0.01]} />
+              <meshBasicMaterial color={HOSTILE} />
+            </mesh>
+          </group>
         </group>
       ))}
     </>
+
   );
 });
 
@@ -787,6 +897,146 @@ const Mirage = memo(function Mirage({
             side={THREE.DoubleSide}
           />
         </mesh>
+      ))}
+    </>
+  );
+});
+
+/* ------------------------------------------------------------------ GOLD */
+
+const GOLD = "#f7931a";
+const GOLD_DARK = "#a86811";
+const ROCK = "#6b6459";
+
+/** Mining level a gold vein demands before the pick will break it. */
+export const GOLD_MINING_LEVEL = 15;
+export const GOLD_XP_PER_VOXEL = 65;
+
+/**
+ * Mined-out progress survives walking away and coming back — the world keeps one
+ * record per vein, so a half-worked seam is still half-worked when you return.
+ */
+const veinMemory = new Map<string, OreVein>();
+
+function veinAt(unit: number, gx: number, gz: number, x: number, z: number): OreVein {
+  const id = `${gx}:${gz}`;
+  const existing = veinMemory.get(id);
+  if (existing) {
+    existing.x = x;
+    existing.z = z;
+    return existing;
+  }
+  // A blocky nugget-studded outcrop: chunky voxels a pick can knock out one by one.
+  const size = unit * 0.17;
+  const voxels: OreVoxel[] = [];
+  const width = 2 + Math.floor(hash(gx, gz, 61) * 2);
+  const tall = 2 + Math.floor(hash(gx, gz, 62) * 2);
+  for (let ix = 0; ix < width; ix++) {
+    for (let iy = 0; iy < tall; iy++) {
+      for (let iz = 0; iz < width; iz++) {
+        if (hash(gx * 7 + ix * 3 + iz, gz * 11 + iy * 5, 63) < 0.25) continue;
+        voxels.push({
+          x: (ix - (width - 1) / 2) * size,
+          y: size * 0.6 + iy * size,
+          z: (iz - (width - 1) / 2) * size,
+          size,
+          alive: true,
+        });
+      }
+    }
+  }
+  const vein: OreVein = {
+    id,
+    x,
+    z,
+    level: GOLD_MINING_LEVEL,
+    xpPerVoxel: GOLD_XP_PER_VOXEL,
+    voxels,
+    depletedUntil: 0,
+  };
+  veinMemory.set(id, vein);
+  return vein;
+}
+
+/** Rare gold outcrops in the sand, mineable voxel by voxel until they run dry. */
+const GoldVeins = memo(function GoldVeins({
+  unit,
+  bitcoin,
+  center,
+  radius,
+}: {
+  unit: number;
+  bitcoin: string;
+  center: [number, number];
+  radius: number;
+}) {
+  const version = useSyncExternalStore(
+    subscribeWorldEntities,
+    worldEntitiesVersion,
+    () => 0,
+  );
+
+  const veins = useMemo(() => {
+    const pitch = unit * 16;
+    const span = Math.ceil(radius / pitch);
+    const cx = Math.round(center[0] / pitch);
+    const cz = Math.round(center[1] / pitch);
+    const found: OreVein[] = [];
+    for (let ix = -span; ix <= span; ix++) {
+      for (let iz = -span; iz <= span; iz++) {
+        const gx = cx + ix;
+        const gz = cz + iz;
+        if (hash(gx, gz, 60) > 0.16) continue; // gold is rare
+        const x = gx * pitch + (hash(gx, gz, 64) - 0.5) * pitch * 0.7;
+        const z = gz * pitch + (hash(gx, gz, 65) - 0.5) * pitch * 0.7;
+        const dx = x - center[0];
+        const dz = z - center[1];
+        if (dx * dx + dz * dz > radius * radius) continue;
+        found.push(veinAt(unit, gx, gz, x, z));
+      }
+    }
+    return found;
+  }, [center, radius, unit]);
+
+  useEffect(() => {
+    registerVeins(veins);
+    return () => registerVeins([]);
+  }, [veins]);
+
+  return (
+    <>
+      {veins.map((vein) => (
+        <group key={vein.id} position={[vein.x, 0, vein.z]}>
+          {/* the host rock the gold sits in */}
+          <mesh position={[0, unit * 0.06, 0]} raycast={noRaycast}>
+            <boxGeometry args={[unit * 0.62, unit * 0.12, unit * 0.62]} />
+            <meshLambertMaterial color={ROCK} flatShading />
+          </mesh>
+          {vein.depletedUntil ? (
+            <mesh position={[0, unit * 0.14, 0]} raycast={noRaycast}>
+              <boxGeometry args={[unit * 0.4, unit * 0.06, unit * 0.4]} />
+              <meshLambertMaterial color={GOLD_DARK} flatShading />
+            </mesh>
+          ) : (
+            vein.voxels.map((voxel, i) =>
+              voxel.alive ? (
+                <mesh
+                  key={`${i}-${version}`}
+                  position={[voxel.x, voxel.y, voxel.z]}
+                  raycast={noRaycast}
+                >
+                  <boxGeometry args={[voxel.size, voxel.size, voxel.size]} />
+                  <meshLambertMaterial color={i % 3 === 0 ? bitcoin : GOLD} flatShading />
+                </mesh>
+              ) : null,
+            )
+          )}
+          {/* a faint glint so a seam reads from a distance */}
+          <mesh position={[0, unit * 0.75, 0]} raycast={noRaycast}>
+            <octahedronGeometry args={[unit * 0.07, 0]} />
+            <meshBasicMaterial color={GOLD} transparent opacity={0.7} />
+          </mesh>
+        </group>
       ))}
     </>
   );
