@@ -48,13 +48,28 @@ function MapPage() {
   const handleCursors = useCallback((next: MapCursor[]) => setCursors(next), []);
 
   return (
-    <div className="mx-auto max-w-[1600px] px-4 py-12 md:px-8">
-      <h1 className="display text-3xl md:text-5xl">LAND MAP</h1>
-      <p className="label mt-3">
-        1,000 × 1,000 LAND WORLD · ONE CELL = ONE BITMAP · BLOCK ORDER LEFT TO RIGHT, TOP TO BOTTOM
-      </p>
+    <div className="page-shell">
+      <header className="section-head">
+        <div className="min-w-0">
+          <h1 className="display text-3xl md:text-5xl">LAND MAP</h1>
+          <p className="label mt-2">
+            1,000 × 1,000 LAND WORLD · ONE CELL = ONE BITMAP · BLOCK ORDER LEFT TO RIGHT, TOP TO
+            BOTTOM
+          </p>
+        </div>
+        <span
+          data-no-translate
+          className="shrink-0 border border-border px-2 py-1 font-mono text-[10px] text-muted-foreground"
+        >
+          {tip.isPending
+            ? "SYNC TIP…"
+            : tip.isError
+              ? "NO DATA YET"
+              : `TIP ${tipHeight.toLocaleString("en-US")}`}
+        </span>
+      </header>
 
-      <div className="mt-6 flex flex-wrap items-center gap-4 font-mono text-[10px] text-muted-foreground">
+      <div className="terminal-panel mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 px-3 py-2 font-mono text-[10px] text-muted-foreground">
         <span className="flex items-center gap-2">
           <span className="inline-block h-2 w-2 bg-foreground" /> MINED · UNCLAIMED
         </span>
@@ -67,10 +82,8 @@ function MapPage() {
         <span className="flex items-center gap-2">
           <span className="inline-block h-2 w-2" style={{ background: "hsl(190 70% 58%)" }} />
           <span className="inline-block h-2 w-2" style={{ background: "hsl(320 70% 60%)" }} />
-          <span className="inline-block h-2 w-2" style={{ background: "hsl(90 70% 55%)" }} /> ONE COLOUR PER HOLDER ADDRESS
-        </span>
-        <span data-no-translate>
-          {tip.isPending ? "SYNC TIP…" : tip.isError ? "NO DATA YET" : `TIP ${tipHeight}`}
+          <span className="inline-block h-2 w-2" style={{ background: "hsl(90 70% 55%)" }} /> ONE
+          COLOUR PER HOLDER ADDRESS
         </span>
       </div>
 
