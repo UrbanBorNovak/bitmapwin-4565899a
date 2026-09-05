@@ -19,18 +19,14 @@ function isNight() {
   return hour < 7 || hour >= 19;
 }
 
-export const SkyBodies = memo(function SkyBodies({
-  unit,
-  bitcoin,
-}: {
-  unit: number;
-  bitcoin: string;
-}) {
+export const SkyBodies = memo(function SkyBodies({ bitcoin }: { bitcoin: string }) {
   const night = useMemo(isNight, []);
   const dome = useRef<THREE.Group>(null);
   const stars = useRef<THREE.Points>(null);
   const camera = useThree((s) => s.camera);
-  const far = unit * 320;
+  // Sky sits just inside the fog/camera range of the land world, in world units.
+  const far = 26;
+  const bodyScale = 1;
 
   const starGeometry = useMemo(() => {
     const count = 900;
@@ -69,7 +65,7 @@ export const SkyBodies = memo(function SkyBodies({
       <points ref={stars} geometry={starGeometry} raycast={() => {}}>
         <pointsMaterial
           color={STAR}
-          size={unit * 0.16}
+          size={0.09}
           sizeAttenuation
           transparent
           opacity={night ? 0.6 : 0.08}
@@ -80,11 +76,11 @@ export const SkyBodies = memo(function SkyBodies({
       {/* Sun — glow halo plus a bright core. */}
       <group position={[-far * 0.62, sunHeight, -far * 0.62]}>
         <mesh raycast={() => {}}>
-          <sphereGeometry args={[unit * (night ? 3.2 : 5.4), 20, 16]} />
+          <sphereGeometry args={[bodyScale * (night ? 0.7 : 1.15), 20, 16]} />
           <meshBasicMaterial color={SUN_CORE} />
         </mesh>
         <mesh raycast={() => {}}>
-          <sphereGeometry args={[unit * (night ? 5 : 9), 20, 16]} />
+          <sphereGeometry args={[bodyScale * (night ? 1.2 : 2.1), 20, 16]} />
           <meshBasicMaterial
             color={night ? bitcoin : SUN}
             transparent
@@ -97,11 +93,11 @@ export const SkyBodies = memo(function SkyBodies({
       {/* Moon — a pale disc with a hint of crater shading. */}
       <group position={[far * 0.58, moonHeight, far * 0.5]}>
         <mesh raycast={() => {}}>
-          <sphereGeometry args={[unit * (night ? 4.2 : 2.4), 20, 16]} />
+          <sphereGeometry args={[bodyScale * (night ? 0.95 : 0.55), 20, 16]} />
           <meshBasicMaterial color={MOON} transparent opacity={night ? 1 : 0.45} />
         </mesh>
         <mesh raycast={() => {}}>
-          <sphereGeometry args={[unit * (night ? 6 : 3.4), 16, 12]} />
+          <sphereGeometry args={[bodyScale * (night ? 1.5 : 0.8), 16, 12]} />
           <meshBasicMaterial
             color={MOON}
             transparent
