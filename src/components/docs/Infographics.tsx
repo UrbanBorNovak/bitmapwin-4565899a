@@ -91,7 +91,7 @@ export function ParcelsInfographic() {
             <span
               key={c}
               className="infogfx-cell aspect-square bg-background"
-              style={{ animationDelay: `${(c % 8) * 0.06 + Math.floor(c / 8) * 0.06}s` }}
+              style={{ animationDelay: `${((c % 8) + Math.floor(c / 8)) * 0.22}s` }}
             />
           ))}
         </div>
