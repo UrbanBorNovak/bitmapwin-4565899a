@@ -81,15 +81,15 @@ export const DesertLife = memo(function DesertLife({
 
         if (roll < 0.05) {
           // Saguaro: a tall trunk, sometimes with one or two raised arms.
-          const height = unit * (1.4 + hash(gx, gz, 5) * 1.5);
-          const girth = unit * (0.12 + hash(gx, gz, 6) * 0.05);
+          const height = unit * (1.1 + hash(gx, gz, 5) * 1.3);
+          const girth = unit * (0.2 + hash(gx, gz, 6) * 0.1);
           dummy.position.set(x, height / 2, z);
           dummy.rotation.set(0, spin, 0);
           dummy.scale.set(girth, height, girth);
           dummy.updateMatrix();
           cactus.matrices.push(dummy.matrix.clone());
 
-          const armCount = hash(gx, gz, 7) < 0.6 ? (hash(gx, gz, 8) < 0.45 ? 2 : 1) : 0;
+          const armCount = hash(gx, gz, 7) < 0.75 ? (hash(gx, gz, 8) < 0.45 ? 2 : 1) : 0;
           for (let a = 0; a < armCount; a++) {
             const side = a === 0 ? 1 : -1;
             const at = height * (0.5 + hash(gx, gz, 9 + a) * 0.25);
