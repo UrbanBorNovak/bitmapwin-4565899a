@@ -25,6 +25,14 @@ import { runtimeDeploymentsQuery, type RuntimeDeployment } from "@/lib/extender-
 import type { RunningExtender } from "@/lib/use-extender-runtimes";
 import { ShooterLayer, type ShooterStats } from "@/components/game/ShooterLayer";
 import { DesertLife } from "@/components/game/DesertLife";
+import { DesertBuilds } from "@/components/game/DesertBuilds";
+import {
+  build as buildStructure,
+  costLabel,
+  recipeFor,
+  STRUCTURES,
+  type StructureId,
+} from "@/lib/world-build";
 import { SkyBodies } from "@/components/game/SkyBodies";
 import {
   WEAPONS,
@@ -374,18 +382,21 @@ const DistrictBlocks = memo(function DistrictBlocks({
             float seam = step(cellUv.x, 0.02) + step(0.98, cellUv.x)
                        + step(cellUv.y, 0.02) + step(0.98, cellUv.y);
 
-            vec3 ember = uBitcoin * 0.34;
-            vec3 blaze = mix(uBitcoin, vec3(1.0, 0.82, 0.48), 0.4);
+            // DESERT VOXEL LAND — stone and sand tones, so Bitcoin orange is
+            // saved for what matters: your own land, beacons and the interface.
+            vec3 sandDeep = vec3(0.36, 0.31, 0.24);
+            vec3 sandLight = vec3(0.72, 0.64, 0.50);
             // stepped height field so the land reads as stacked voxel tiers
             float tier = floor(shade * 4.0) / 3.0;
-            float heat = clamp(0.24 + tier * 0.5, 0.0, 1.0);
-            vec3 baseColor = mix(ember, blaze, heat);
-            baseColor = mix(baseColor, uMined * 0.4, 0.12);
-            vec3 color = mix(baseColor * 0.74 + uBitcoin * 0.06, baseColor, mined);
+            vec3 baseColor = mix(sandDeep, sandLight, clamp(0.28 + tier * 0.55, 0.0, 1.0));
+            // A faint ember wash marks the mined world; unmined land stays cold stone.
+            baseColor = mix(baseColor, baseColor * 0.62 + uFuture * 0.18, 1.0 - mined);
+            vec3 color = mix(baseColor, mix(baseColor, uBitcoin, 0.07), mined);
 
-            float face = mix(1.0, 1.0 + light * 0.22 - min(dark, 1.0) * 0.3, detail);
+            float face = mix(1.0, 1.0 + light * 0.24 - min(dark, 1.0) * 0.34, detail);
             color *= face;
-            color = mix(color, color * 0.42, min(seam, 1.0) * detail);
+            color = mix(color, color * 0.4, min(seam, 1.0) * detail);
+
             gl_FragColor = vec4(color, 1.0);
           }
 
@@ -879,6 +890,60 @@ const VisitorBeacons = memo(function VisitorBeacons({ cursors }: { cursors: MapC
   return cursors
     .slice(0, MAX_AVATARS)
     .map((cursor) => <VisitorAvatar key={cursor.id} cursor={cursor} />);
+});
+
+/**
+ * YOU ARE HERE — a Bitcoin-orange beacon on your own district, sized so it is
+ * unmistakable from the map camera far above and still readable on the ground.
+ */
+const SelfBeacon = memo(function SelfBeacon({
+  pose,
+  bitcoin,
+  wide,
+}: {
+  pose: React.RefObject<SelfPose>;
+  bitcoin: string;
+  wide: boolean;
+}) {
+  const group = useRef<THREE.Group>(null);
+  const pulse = useRef<THREE.Mesh>(null);
+  const scale = wide ? CELL * 0.62 : AVATAR_U * 0.7;
+  const height = wide ? CELL * 9 : AVATAR_U * 3.4;
+  useFrame((state) => {
+    const current = pose.current;
+    if (!current || !group.current) return;
+    group.current.position.set(current.x, 0, current.z);
+    if (pulse.current) {
+      const beat = 1 + Math.sin(state.clock.elapsedTime * 2.4) * 0.28;
+      pulse.current.scale.setScalar(beat);
+      const material = pulse.current.material as THREE.MeshBasicMaterial;
+      material.opacity = 0.5 - (beat - 1) * 0.5;
+    }
+  });
+  return (
+    <group ref={group}>
+      {/* the district under your feet, lit up */}
+      <mesh rotation-x={-Math.PI / 2} position-y={wide ? CELL * 0.06 : AVATAR_U * 0.03} raycast={noRaycast}>
+        <planeGeometry args={[scale * 2, scale * 2]} />
+        <meshBasicMaterial color={bitcoin} transparent opacity={0.34} depthWrite={false} />
+      </mesh>
+      {/* pulsing ring so the eye finds you while the camera moves */}
+      <mesh
+        ref={pulse}
+        rotation-x={-Math.PI / 2}
+        position-y={wide ? CELL * 0.09 : AVATAR_U * 0.05}
+        raycast={noRaycast}
+      >
+        <ringGeometry args={[scale * 0.9, scale * 1.25, 4]} />
+        <meshBasicMaterial color={bitcoin} transparent opacity={0.5} depthWrite={false} />
+      </mesh>
+      {/* a column of light straight up */}
+      <mesh position-y={height / 2} raycast={noRaycast}>
+        <cylinderGeometry args={[scale * 0.18, scale * 0.3, height, 4, 1, true]} />
+        <meshBasicMaterial color={bitcoin} transparent opacity={0.3} depthWrite={false} side={THREE.DoubleSide} />
+      </mesh>
+    </group>
+  );
 });
 
 /** Full local player: position, velocity, facing, movement/animation/combat state, region and target. */
@@ -1482,8 +1547,12 @@ const WorldScene = memo(function WorldScene({
       <SkyBodies bitcoin={colors.bitcoin} />
       <LandSurface colors={colors} tipHeight={tipHeight} />
       {cameraMode !== "map" ? (
-        <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
+        <>
+          <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
+          <DesertBuilds unit={AVATAR_U} />
+        </>
       ) : null}
+
       <DistrictBlocks tipHeight={tipHeight} colors={colors} />
       <HolderColumns owners={owners} mine={mine} bitcoin={colors.bitcoin} />
       <OwnedBitmapGlow heights={ownedHeights} bitcoin={colors.bitcoin} />
@@ -1509,6 +1578,7 @@ const WorldScene = memo(function WorldScene({
         <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} />
       ) : null}
       <VisitorBeacons cursors={cursors} />
+      <SelfBeacon pose={pose} bitcoin={colors.bitcoin} wide={cameraMode === "map"} />
       {cameraMode === "third" ? (
         <SelfAvatar
           pose={pose}
@@ -1582,6 +1652,8 @@ export function BitmapWorld3D({
   const exploring = cameraMode !== "map";
   const [draft, setDraft] = useState("");
   const [inventoryOpen, setInventoryOpen] = useState(false);
+  const [buildOpen, setBuildOpen] = useState(false);
+  const [buildNote, setBuildNote] = useState<string | null>(null);
   // WEAPONS — what you are carrying while you explore the land world.
   const [weapon, setWeapon] = useState<WeaponKind | null>(null);
   const shooter = weapon !== null;
@@ -1606,6 +1678,30 @@ export function BitmapWorld3D({
   }, []);
   const [muted, setMuted] = useState(false);
   useEffect(() => setMuted(isSoundMuted()), []);
+  /** Craft a structure out of gathered materials and drop it where you stand. */
+  const placeBuild = useCallback((id: StructureId) => {
+    const current = pose.current;
+    const placed = buildStructure(id, current?.x ?? 0, current?.z ?? 0, current?.yaw ?? 0);
+    if (!placed) {
+      setBuildNote("NOT ENOUGH MATERIALS · MINE OR HUNT FIRST");
+      return;
+    }
+    playSfx("ui");
+    setBuildNote(`${recipeFor(id)?.name ?? "STRUCTURE"} BUILT WHERE YOU STAND`);
+  }, []);
+
+  // B opens and closes the build panel while you are out in the world.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+      if (event.key.toLowerCase() !== "b") return;
+      setBuildOpen((current) => !current);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const toggleSound = useCallback(() => {
     const next = !isSoundMuted();
     setSoundMuted(next);
@@ -1993,6 +2089,13 @@ export function BitmapWorld3D({
           >
             {avatarModel ? "[ INVENTORY · WEARING MODEL ]" : "[ INVENTORY ]"}
           </Button>
+          <Button
+            className={buildOpen ? "btn-term" : "btn-term-ghost"}
+            variant="ghost"
+            onClick={() => setBuildOpen((current) => !current)}
+          >
+            [ BUILD · B ]
+          </Button>
           <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
             {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
           </Button>
@@ -2083,6 +2186,14 @@ export function BitmapWorld3D({
         ) : null}
 
         {exploring ? <SkillsHud /> : null}
+
+        {buildOpen ? (
+          <BuildHud
+            onBuild={placeBuild}
+            note={buildNote}
+            onClose={() => setBuildOpen(false)}
+          />
+        ) : null}
 
         {/* THE BELT — in-world weapon slots: press 1 / 2 / 3, scroll to cycle, 0 to holster. */}
         {exploring ? (
@@ -2200,7 +2311,8 @@ export function BitmapWorld3D({
                 className="absolute inset-y-0 left-0"
                 style={{
                   width: `${Math.max(0, (hp / MAX_HP) * 100)}%`,
-                  background: hp <= MAX_HP * 0.25 ? "var(--bitcoin)" : color,
+                  background: "var(--bitcoin)",
+                  opacity: hp <= MAX_HP * 0.25 ? 1 : 0.85,
                 }}
               />
             </span>
@@ -2253,7 +2365,7 @@ export function BitmapWorld3D({
         <section
           data-no-translate
           aria-label="Party"
-          className="hud-panel absolute right-3 top-14 z-30 w-[min(250px,calc(100%-1.5rem))] font-mono text-[10px]"
+          className="hud-panel absolute right-3 top-16 z-20 w-[min(250px,calc(100%-1.5rem))] font-mono text-[10px]"
         >
           <header className="flex items-center justify-between border-b border-border px-2 py-1">
             <span>
@@ -2539,11 +2651,11 @@ export function BitmapWorld3D({
           </div>
         ) : null}
 
-        {selected ? (
+        {selected && !inventoryOpen ? (
           <section
             aria-label={`${selected.height}.bitmap details`}
             data-no-translate
-            className="absolute right-3 top-3 z-40 max-h-[calc(100%-1.5rem)] w-[min(340px,calc(100%-1.5rem))] overflow-y-auto border border-bitcoin bg-background/95 p-4 font-mono shadow-[8px_8px_0_var(--bitcoin)]"
+            className="absolute right-3 top-16 z-40 max-h-[calc(100%-5rem)] w-[min(340px,calc(100%-1.5rem))] overflow-y-auto border border-bitcoin bg-background/95 p-4 font-mono shadow-[8px_8px_0_var(--bitcoin)]"
           >
             <Button
               aria-label="Close bitmap window"
@@ -2682,6 +2794,60 @@ function SkillsHud() {
           ))
       )}
       {full ? <div className="text-destructive">FULL</div> : null}
+    </div>
+  );
+}
+
+/** BUILD — spend gathered hides, fangs and gold on a structure at your feet. */
+function BuildHud({
+  onBuild,
+  note,
+  onClose,
+}: {
+  onBuild: (id: StructureId) => void;
+  note: string | null;
+  onClose: () => void;
+}) {
+  const { items } = useWorldSkills();
+  return (
+    <div
+      data-no-translate
+      className="hud-panel absolute left-3 top-[13.5rem] z-40 w-[min(15rem,calc(100%-1.5rem))] space-y-1.5 px-2.5 py-2 font-mono text-[10px]"
+      aria-label="Build structures"
+    >
+      <div className="flex items-center justify-between">
+        <span className="label text-[9px] text-bitcoin">BUILD</span>
+        <button
+          type="button"
+          aria-label="Close build panel"
+          onClick={onClose}
+          className="text-muted-foreground hover:text-bitcoin"
+        >
+          <X className="size-3" />
+        </button>
+      </div>
+      {STRUCTURES.map((recipe) => {
+        const affordable = (Object.entries(recipe.cost) as [ItemId, number][]).every(
+          ([item, amount]) => items[item] >= amount,
+        );
+        return (
+          <button
+            key={recipe.id}
+            type="button"
+            disabled={!affordable}
+            onClick={() => onBuild(recipe.id)}
+            className={
+              affordable
+                ? "w-full border border-border px-2 py-1 text-left hover:border-bitcoin hover:text-bitcoin"
+                : "w-full border border-border/60 px-2 py-1 text-left text-muted-foreground/60"
+            }
+          >
+            <span className="block text-foreground">{recipe.name}</span>
+            <span className="block text-[9px] text-muted-foreground">{costLabel(recipe)}</span>
+          </button>
+        );
+      })}
+      {note ? <div className="border-t border-border pt-1.5 text-bitcoin">{note}</div> : null}
     </div>
   );
 }

@@ -92,12 +92,15 @@ export function damageBeast(beast: BeastEntity, damage: number) {
   return { killed, damage: dealt };
 }
 
-/** Knock one voxel out of a vein. Returns whether that emptied it. */
+/**
+ * Knock one voxel out of a vein. Returns whether that emptied it.
+ * A worked-out seam stays worked out — gold does not grow back.
+ */
 export function mineVoxel(vein: OreVein, voxel: OreVoxel) {
   if (!voxel.alive || vein.depletedUntil) return { mined: false, emptied: false };
   voxel.alive = false;
   const emptied = vein.voxels.every((v) => !v.alive);
-  if (emptied) vein.depletedUntil = performance.now() + 60_000;
+  if (emptied) vein.depletedUntil = Number.POSITIVE_INFINITY;
   emit();
   return { mined: true, emptied };
 }
@@ -112,12 +115,6 @@ export function tickRespawns(now: number) {
       changed = true;
     }
   }
-  for (const vein of veins) {
-    if (vein.depletedUntil && now >= vein.depletedUntil) {
-      vein.depletedUntil = 0;
-      for (const voxel of vein.voxels) voxel.alive = true;
-      changed = true;
-    }
-  }
+  // Veins are never restored: once a strike is mined out, it is gone for good.
   if (changed) emit();
 }
