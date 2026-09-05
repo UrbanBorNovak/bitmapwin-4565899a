@@ -24,17 +24,19 @@ export const Route = createFileRoute("/extenders/")({
   component: ExtenderCatalogue,
 });
 
-const LANES = [
-  { id: "all", label: "ALL", categories: null as string[] | null },
+type Lane = { id: "all" | "assets" | "extenders" | "experiences" | "ai" | "builders"; label: string; categories: string[] | null };
+
+const LANES: Lane[] = [
+  { id: "all", label: "ALL", categories: null },
   { id: "assets", label: "ASSETS", categories: ["art", "construction"] },
   { id: "extenders", label: "EXTENDERS", categories: ["world-systems", "combat", "economy", "vehicles", "dev-tools"] },
   { id: "experiences", label: "EXPERIENCES", categories: ["games", "rpg", "cities"] },
   { id: "ai", label: "AI BUILT", categories: null },
   { id: "builders", label: "BUILDERS", categories: null },
-] as const;
+];
 
 function ExtenderCatalogue() {
-  const [lane, setLane] = useState<(typeof LANES)[number]["id"]>("all");
+  const [lane, setLane] = useState<Lane["id"]>("all");
   const [category, setCategory] = useState<string>("any");
   const [search, setSearch] = useState("");
   const aiOnly = lane === "ai";

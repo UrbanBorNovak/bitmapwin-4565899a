@@ -7,9 +7,11 @@ import { DataBadge } from "@/components/extenders/DataBadge";
  * software from: someone else's package, an AI brief, or the open market.
  */
 export const Route = createFileRoute("/extend")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    height: typeof search.height === "string" || typeof search.height === "number" ? Number(search.height) : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { height?: number } => {
+    const raw = search["height"];
+    const height = Number(raw);
+    return Number.isFinite(height) && height >= 0 ? { height } : {};
+  },
   head: () => {
     const title = "Extend Your Land — Put Software on a BITMAP";
     const description =
