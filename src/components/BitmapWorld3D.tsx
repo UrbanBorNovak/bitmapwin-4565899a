@@ -1861,15 +1861,11 @@ export function BitmapWorld3D({
           </Canvas>
         ) : null}
 
-        <div className="pointer-events-none absolute bottom-3 left-3 z-30">
-          <ExtenderHud running={running} />
-        </div>
-
         <div
           role="group"
           aria-label="Camera mode"
           data-no-translate
-          className="absolute right-3 top-3 z-30 flex border border-border bg-background/90 p-0.5 shadow-md backdrop-blur-sm"
+          className="hud-panel absolute right-3 top-3 z-30 flex p-0.5"
         >
           <Button
             type="button"
