@@ -25,6 +25,8 @@ import { runtimeDeploymentsQuery, type RuntimeDeployment } from "@/lib/extender-
 import type { RunningExtender } from "@/lib/use-extender-runtimes";
 import { ShooterLayer, type ShooterStats } from "@/components/game/ShooterLayer";
 import { DesertLife } from "@/components/game/DesertLife";
+import { DesertBuilds } from "@/components/game/DesertBuilds";
+import { build as buildStructure, costLabel, STRUCTURES } from "@/lib/world-build";
 import { SkyBodies } from "@/components/game/SkyBodies";
 import {
   WEAPONS,
@@ -1537,6 +1539,7 @@ const WorldScene = memo(function WorldScene({
       <LandSurface colors={colors} tipHeight={tipHeight} />
       {cameraMode !== "map" ? (
         <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
+        <DesertBuilds unit={AVATAR_U} />
       ) : null}
       <DistrictBlocks tipHeight={tipHeight} colors={colors} />
       <HolderColumns owners={owners} mine={mine} bitcoin={colors.bitcoin} />
@@ -1637,6 +1640,8 @@ export function BitmapWorld3D({
   const exploring = cameraMode !== "map";
   const [draft, setDraft] = useState("");
   const [inventoryOpen, setInventoryOpen] = useState(false);
+  const [buildOpen, setBuildOpen] = useState(false);
+  const [buildNote, setBuildNote] = useState<string | null>(null);
   // WEAPONS — what you are carrying while you explore the land world.
   const [weapon, setWeapon] = useState<WeaponKind | null>(null);
   const shooter = weapon !== null;
@@ -2048,6 +2053,13 @@ export function BitmapWorld3D({
           >
             {avatarModel ? "[ INVENTORY · WEARING MODEL ]" : "[ INVENTORY ]"}
           </Button>
+          <Button
+            className={buildOpen ? "btn-term" : "btn-term-ghost"}
+            variant="ghost"
+            onClick={() => setBuildOpen((current) => !current)}
+          >
+            [ BUILD · B ]
+          </Button>
           <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
             {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
           </Button>
@@ -2138,6 +2150,14 @@ export function BitmapWorld3D({
         ) : null}
 
         {exploring ? <SkillsHud /> : null}
+
+        {buildOpen ? (
+          <BuildHud
+            onBuild={placeBuild}
+            note={buildNote}
+            onClose={() => setBuildOpen(false)}
+          />
+        ) : null}
 
         {/* THE BELT — in-world weapon slots: press 1 / 2 / 3, scroll to cycle, 0 to holster. */}
         {exploring ? (
