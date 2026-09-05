@@ -70,6 +70,9 @@ export const DesertLife = memo(function DesertLife({
     const rocks: Scatter = { matrices: [] };
     const pebbles: Scatter = { matrices: [] };
     const brush: Scatter = { matrices: [] };
+    const ponds: Scatter = { matrices: [] };
+    const reeds: Scatter = { matrices: [] };
+
     const dummy = new THREE.Object3D();
     const span = Math.ceil(radius / step);
     const cx = Math.round(center[0] / step);
