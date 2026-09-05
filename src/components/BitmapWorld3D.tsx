@@ -23,6 +23,8 @@ import { ExtenderStage } from "@/components/extenders/ExtenderStage";
 import { ExtenderHud } from "@/components/extenders/ExtenderHud";
 import { runtimeDeploymentsQuery, type RuntimeDeployment } from "@/lib/extender-code";
 import type { RunningExtender } from "@/lib/use-extender-runtimes";
+import { ShooterLayer, MAGAZINE, type ShooterStats } from "@/components/game/ShooterLayer";
+import { isSoundMuted, playSfx, setSoundMuted, unlockAudio } from "@/lib/world-audio";
 
 const EMPTY_DEPLOYMENTS: RuntimeDeployment[] = [];
 
