@@ -13,6 +13,8 @@ import { SDK_VERSION, categoryLabel, slugify } from "@/lib/extenders";
 import { createExtenderFn, deployExtenderFn, publishVersionFn } from "@/lib/extenders.functions";
 import { buildExtenderPackageFn } from "@/lib/extender-ai.functions";
 import { RUNTIME_LIMITS } from "@/lib/extender-sdk";
+import { BUILD_TIERS, DEFAULT_BUILD_TIER, buildTier, type BuildTierId } from "@/lib/build-tiers";
+import { coinBalanceQuery, formatBit } from "@/lib/coins";
 
 /**
  * CREATE WITH AI — the whole build in one page.
@@ -75,7 +77,13 @@ function CreatePage() {
   const addresses = useMemo(() => (address ? [address] : []), [address]);
   const held = useQuery(heldHeightsQuery(addresses));
 
+  const balances = useQuery({ ...coinBalanceQuery(addresses), enabled: addresses.length > 0 });
+  const bitBalance = (balances.data ?? []).reduce((sum, row) => sum + row.balance, 0);
+
   const [prompt, setPrompt] = useState("");
+  const [tierId, setTierId] = useState<BuildTierId>(DEFAULT_BUILD_TIER);
+  const [priceBit, setPriceBit] = useState("0");
+  const tier = buildTier(tierId);
   const [design, setDesign] = useState<Design | null>(null);
   const [models, setModels] = useState<ModelAsset[]>([]);
   const [modelsDowngraded, setModelsDowngraded] = useState(0);
@@ -102,7 +110,11 @@ function CreatePage() {
     mutationFn: async () => {
       const brief = prompt.trim();
       if (brief.length < 8) throw new Error("DESCRIBE WHAT SHOULD STAND ON THE TILE");
-      return build({ data: { prompt: brief, height: testHeight } });
+      if (!address) throw new Error("CONNECT A VERIFIED WALLET TO PAY IN BIT");
+      if (bitBalance < tier.costBit) {
+        throw new Error(`${tier.label} COSTS ${tier.costBit} BIT — YOU HOLD ${Math.round(bitBalance)} BIT`);
+      }
+      return build({ data: { prompt: brief, height: testHeight, tier: tierId, address } });
     },
     onSuccess: (result) => {
       setDesign(result.design as Design);
@@ -110,7 +122,10 @@ function CreatePage() {
       setModels((result.models ?? []) as ModelAsset[]);
       setModelsDowngraded(result.modelsDowngraded ?? 0);
       setDeployed(null);
-      toast("PACKAGE BUILT", { description: "IT IS RUNNING IN THE SANDBOX BELOW" });
+      queryClient.invalidateQueries({ queryKey: ["coin-balance"] });
+      toast("PACKAGE BUILT", {
+        description: `${result.costBit} BIT SPENT · ${Math.round(result.balance)} BIT LEFT`,
+      });
     },
 
     onError: (error) => toast("BUILD FAILED", { description: (error as Error).message }),
@@ -121,6 +136,7 @@ function CreatePage() {
       if (!design || !code.trim()) throw new Error("BUILD SOMETHING FIRST");
       const chosen = Number(target);
       if (!Number.isFinite(chosen) || chosen < 0) throw new Error("PICK THE BITMAP TO DEPLOY ON");
+      const askBit = Math.max(0, Math.round(Number(priceBit) || 0));
       const slugBase = slugify(design.name) || "ai-extender";
       const slug = `${slugBase}-${Date.now().toString(36).slice(-4)}`.slice(0, 60);
 
@@ -134,8 +150,9 @@ function CreatePage() {
           tags: design.tags.slice(0, 8),
           isAiBuilt: true,
           license: "all-rights-reserved",
-          monetization: "free",
+          monetization: askBit > 0 ? "paid" : "free",
           priceSats: 0,
+          priceBit: askBit,
           iconInscriptionId: null,
           previewInscriptionId: null,
         },
@@ -232,8 +249,52 @@ function CreatePage() {
                 </button>
               ))}
             </div>
+            <div className="mt-4 border-t border-border pt-3">
+              <div className="flex items-center justify-between">
+                <div className="label text-muted-foreground">BUILD TIER · PAID IN BIT</div>
+                <div className="font-mono text-[10px] text-muted-foreground" data-no-translate>
+                  BALANCE {formatBit(bitBalance)}
+                </div>
+              </div>
+              <div className="mt-2 grid gap-1">
+                {BUILD_TIERS.map((option) => {
+                  const affordable = bitBalance >= option.costBit;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => setTierId(option.id)}
+                      className={`terminal-interactive flex items-center justify-between border px-2 py-2 text-left ${
+                        option.id === tierId ? "border-bitcoin" : "border-border"
+                      }`}
+                    >
+                      <span>
+                        <span className={`label ${option.id === tierId ? "text-bitcoin" : "text-foreground"}`} data-no-translate>
+                          {option.label}
+                        </span>
+                        <span className="ml-2 font-mono text-[10px] text-muted-foreground">{option.note}</span>
+                      </span>
+                      <span
+                        className={`font-mono text-[10px] ${affordable ? "text-foreground" : "text-muted-foreground line-through"}`}
+                        data-no-translate
+                      >
+                        {option.costBit.toLocaleString("en-US")} BIT
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+                {tier.label} BUILDS {tier.detail.toUpperCase()} · UP TO {tier.maxProps} OBJECTS AND {tier.maxQuests} QUESTS ·
+                BIT IS ONLY CHARGED WHEN A BUILD SUCCEEDS
+              </p>
+            </div>
             <button type="button" className="btn-term mt-3 w-full" disabled={generate.isPending} onClick={() => generate.mutate()}>
-              {generate.isPending ? "[ BUILDING… ]" : design ? "[ BUILD AGAIN ]" : "[ BUILD IT ]"}
+              {generate.isPending
+                ? "[ BUILDING… ]"
+                : design
+                  ? `[ BUILD AGAIN · ${tier.costBit} BIT ]`
+                  : `[ BUILD IT · ${tier.costBit} BIT ]`}
             </button>
           </div>
 
@@ -376,6 +437,21 @@ function CreatePage() {
                 className="w-32 border border-border bg-background px-2 py-1.5 font-mono text-xs outline-none focus:border-bitcoin"
                 data-no-translate
               />
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="label text-muted-foreground">PRICE IN BIT</span>
+              <input
+                value={priceBit}
+                onChange={(e) => setPriceBit(e.target.value)}
+                placeholder="0"
+                className="w-32 border border-border bg-background px-2 py-1.5 font-mono text-xs outline-none focus:border-bitcoin"
+                data-no-translate
+              />
+              <span className="font-mono text-[10px] text-muted-foreground">
+                {Math.round(Number(priceBit) || 0) > 0
+                  ? `OTHERS PAY ${formatBit(Math.round(Number(priceBit)))} TO USE IT`
+                  : "0 = FREE FOR EVERYONE"}
+              </span>
             </div>
             <button
               type="button"
