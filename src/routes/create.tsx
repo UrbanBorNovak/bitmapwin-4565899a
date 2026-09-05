@@ -571,6 +571,50 @@ function CreatePage() {
   );
 }
 
+function ConfigEditor({
+  value,
+  onChange,
+}: {
+  value: Record<string, unknown>;
+  onChange: (value: Record<string, unknown>) => void;
+}) {
+  const [text, setText] = useState(() => JSON.stringify(value, null, 2));
+  const [invalid, setInvalid] = useState(false);
+
+  return (
+    <div>
+      <textarea
+        value={text}
+        onChange={(e) => {
+          setText(e.target.value);
+          try {
+            const parsed = JSON.parse(e.target.value);
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+              onChange(parsed as Record<string, unknown>);
+              setInvalid(false);
+            } else {
+              setInvalid(true);
+            }
+          } catch {
+            setInvalid(true);
+          }
+        }}
+        rows={4}
+        placeholder='{"greeting":"Welcome traveller","difficulty":"normal"}'
+        className="w-full border border-border bg-background px-3 py-2 font-mono text-[11px] leading-relaxed outline-none focus:border-bitcoin"
+        data-no-translate
+      />
+      {invalid ? (
+        <p className="mt-1 font-mono text-[10px] text-destructive">INVALID JSON — MUST BE AN OBJECT</p>
+      ) : (
+        <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+          PASSED TO land.config AT RUNTIME. LEAVE EMPTY IF THE BUILD DOES NOT NEED IT.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function nextSemver(current: string | null): string {
   if (!current) return "1.0.0";
   const parts = current.split(".").map((n) => Number(n));
