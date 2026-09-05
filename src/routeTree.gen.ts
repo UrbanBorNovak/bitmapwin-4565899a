@@ -22,6 +22,7 @@ import { Route as LeasesRouteImport } from './routes/leases'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as MyWorldRouteImport } from './routes/my-world'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SdkRouteImport } from './routes/sdk'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -107,6 +108,11 @@ const MarketplaceRoute = MarketplaceRouteImport.update({
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyWorldRoute = MyWorldRouteImport.update({
+  id: '/my-world',
+  path: '/my-world',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -232,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
+  '/my-world': typeof MyWorldRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -266,6 +273,7 @@ export interface FileRoutesByTo {
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
+  '/my-world': typeof MyWorldRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -303,6 +311,7 @@ export interface FileRoutesById {
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
+  '/my-world': typeof MyWorldRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -341,6 +350,7 @@ export interface FileRouteTypes {
     | '/map'
     | '/marketplace'
     | '/mcp'
+    | '/my-world'
     | '/reset-password'
     | '/sdk'
     | '/sitemap.xml'
@@ -375,6 +385,7 @@ export interface FileRouteTypes {
     | '/map'
     | '/marketplace'
     | '/mcp'
+    | '/my-world'
     | '/reset-password'
     | '/sdk'
     | '/sitemap.xml'
@@ -411,6 +422,7 @@ export interface FileRouteTypes {
     | '/map'
     | '/marketplace'
     | '/mcp'
+    | '/my-world'
     | '/reset-password'
     | '/sdk'
     | '/sitemap.xml'
@@ -448,6 +460,7 @@ export interface RootRouteChildren {
   MapRoute: typeof MapRoute
   MarketplaceRoute: typeof MarketplaceRoute
   McpRoute: typeof McpRoute
+  MyWorldRoute: typeof MyWorldRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SdkRoute: typeof SdkRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -557,6 +570,13 @@ declare module '@tanstack/react-router' {
       path: '/mcp'
       fullPath: '/mcp'
       preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-world': {
+      id: '/my-world'
+      path: '/my-world'
+      fullPath: '/my-world'
+      preLoaderRoute: typeof MyWorldRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -764,6 +784,7 @@ const rootRouteChildren: RootRouteChildren = {
   MapRoute: MapRoute,
   MarketplaceRoute: MarketplaceRoute,
   McpRoute: McpRoute,
+  MyWorldRoute: MyWorldRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SdkRoute: SdkRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
