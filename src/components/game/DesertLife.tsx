@@ -26,6 +26,9 @@ const BLOSSOM = "#e4738f";
 const HIDE = "#8d7a5e";
 const HIDE_DARK = "#5f5240";
 const HOSTILE = "#c0392b";
+const WATER = "#3f6f86";
+const REED = "#5d7a46";
+const MIRAGE = "#9fc4d6";
 
 /** Stable pseudo-random in [0,1) from two integers — same cell, same plant. */
 function hash(x: number, z: number, salt: number) {
@@ -70,6 +73,9 @@ export const DesertLife = memo(function DesertLife({
     const rocks: Scatter = { matrices: [] };
     const pebbles: Scatter = { matrices: [] };
     const brush: Scatter = { matrices: [] };
+    const ponds: Scatter = { matrices: [] };
+    const reeds: Scatter = { matrices: [] };
+
     const dummy = new THREE.Object3D();
     const span = Math.ceil(radius / step);
     const cx = Math.round(center[0] / step);
@@ -183,11 +189,35 @@ export const DesertLife = memo(function DesertLife({
           dummy.scale.set(size, size * 0.8, size);
           dummy.updateMatrix();
           brush.matrices.push(dummy.matrix.clone());
+        } else if (roll > 0.988) {
+          // A rare watering hole, with a shore of reeds around it.
+          const span2 = unit * (1.6 + hash(gx, gz, 30) * 2.4);
+          dummy.position.set(x, unit * 0.012, z);
+          dummy.rotation.set(-Math.PI / 2, 0, spin);
+          dummy.scale.set(span2, span2 * (0.7 + hash(gx, gz, 31) * 0.5), 1);
+          dummy.updateMatrix();
+          ponds.matrices.push(dummy.matrix.clone());
+          const shore = 10;
+          for (let r = 0; r < shore; r++) {
+            const angle = (r / shore) * Math.PI * 2 + spin;
+            const ring = span2 * (0.9 + hash(gx, gz + r, 32) * 0.25);
+            const tall = unit * (0.2 + hash(gx + r, gz, 33) * 0.35);
+            dummy.position.set(
+              x + Math.cos(angle) * ring,
+              tall / 2,
+              z + Math.sin(angle) * ring * 0.85,
+            );
+            dummy.rotation.set(0, angle, hash(gx + r, gz, 34) * 0.2 - 0.1);
+            dummy.scale.set(unit * 0.05, tall, unit * 0.05);
+            dummy.updateMatrix();
+            reeds.matrices.push(dummy.matrix.clone());
+          }
         }
       }
     }
-    return { cactus, arms, spikes, blossoms, rocks, pebbles, brush };
+    return { cactus, arms, spikes, blossoms, rocks, pebbles, brush, ponds, reeds };
   }, [center, radius, step, unit]);
+
 
   const cactusRef = useRef<THREE.InstancedMesh>(null);
   const armsRef = useRef<THREE.InstancedMesh>(null);
@@ -196,6 +226,8 @@ export const DesertLife = memo(function DesertLife({
   const rockRef = useRef<THREE.InstancedMesh>(null);
   const pebbleRef = useRef<THREE.InstancedMesh>(null);
   const brushRef = useRef<THREE.InstancedMesh>(null);
+  const pondRef = useRef<THREE.InstancedMesh>(null);
+  const reedRef = useRef<THREE.InstancedMesh>(null);
 
   useEffect(() => {
     const apply = (mesh: THREE.InstancedMesh | null, scatter: Scatter) => {
@@ -212,7 +244,10 @@ export const DesertLife = memo(function DesertLife({
     apply(rockRef.current, patch.rocks);
     apply(pebbleRef.current, patch.pebbles);
     apply(brushRef.current, patch.brush);
+    apply(pondRef.current, patch.ponds);
+    apply(reedRef.current, patch.reeds);
   }, [patch]);
+
 
   if (!active) return null;
 
@@ -281,7 +316,27 @@ export const DesertLife = memo(function DesertLife({
         <coneGeometry args={[0.5, 1, 5, 1]} />
         <meshLambertMaterial color={colors.muted} />
       </instancedMesh>
+      <instancedMesh
+        ref={pondRef}
+        args={[undefined, undefined, 60]}
+        frustumCulled={false}
+        raycast={noRaycast}
+      >
+        <circleGeometry args={[1, 24]} />
+        <meshBasicMaterial color={WATER} transparent opacity={0.72} depthWrite={false} />
+      </instancedMesh>
+      <instancedMesh
+        ref={reedRef}
+        args={[undefined, undefined, 700]}
+        frustumCulled={false}
+        raycast={noRaycast}
+      >
+        <boxGeometry args={[1, 1, 1]} />
+        <meshLambertMaterial color={REED} />
+      </instancedMesh>
+      <Mirage unit={unit} pose={pose} />
       <Critters unit={unit} colors={colors} pose={pose} />
+
     </group>
   );
 });
@@ -674,3 +729,65 @@ function quadruped(kind: CritterKind, u: number) {
     accent: p.accent,
   };
 }
+
+/**
+ * Fata morgana: shimmering false lakes hovering on the horizon that thin out
+ * as you walk toward them and never quite arrive.
+ */
+const Mirage = memo(function Mirage({
+  unit,
+  pose,
+}: {
+  unit: number;
+  pose: { current: { x: number; z: number } | null };
+}) {
+  const bands = useRef<(THREE.Mesh | null)[]>([]);
+  const count = 4;
+
+  useFrame(() => {
+    const player = pose.current;
+    if (!player) return;
+    const now = performance.now();
+    for (let i = 0; i < count; i++) {
+      const mesh = bands.current?.[i];
+      if (!mesh) continue;
+      // Hover far out, always drifting away, on a slow orbit around the visitor.
+      const angle = i * ((Math.PI * 2) / count) + now / 42000;
+      const distance = unit * (44 + i * 7);
+      mesh.position.set(
+        player.x + Math.cos(angle) * distance,
+        unit * (0.22 + Math.sin(now / 2600 + i) * 0.06),
+        player.z + Math.sin(angle) * distance,
+      );
+      mesh.rotation.y = -angle + Math.PI / 2;
+      const material = mesh.material as THREE.MeshBasicMaterial;
+      const shimmer = 0.5 + Math.sin(now / 1900 + i * 1.7) * 0.5;
+      material.opacity = 0.06 + shimmer * 0.16;
+      mesh.scale.set(1, 0.7 + shimmer * 0.6, 1);
+    }
+  });
+
+  return (
+    <>
+      {Array.from({ length: count }, (_, i) => (
+        <mesh
+          key={i}
+          ref={(node) => {
+            if (!bands.current) bands.current = [];
+            bands.current[i] = node;
+          }}
+          raycast={noRaycast}
+        >
+          <planeGeometry args={[unit * (16 + i * 5), unit * 0.9]} />
+          <meshBasicMaterial
+            color={MIRAGE}
+            transparent
+            opacity={0.12}
+            depthWrite={false}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      ))}
+    </>
+  );
+});
