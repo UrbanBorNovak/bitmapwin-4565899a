@@ -244,6 +244,93 @@ function CreateExtenderForm({ onCreated }: { onCreated: (id: string) => void }) 
   );
 }
 
+function MetadataEditor({ extender, onSave }: { extender: Extender; onSave: () => void }) {
+  const update = useServerFn(updateExtenderMetadataFn);
+  const [name, setName] = useState(extender.name);
+  const [summary, setSummary] = useState(extender.summary ?? "");
+  const [category, setCategory] = useState(extender.category);
+  const [iconInscriptionId, setIconInscriptionId] = useState(extender.iconInscriptionId ?? "");
+  const [previewInscriptionId, setPreviewInscriptionId] = useState(extender.previewInscriptionId ?? "");
+  const [tags, setTags] = useState((extender.tags ?? []).join(", "));
+
+  const run = useMutation({
+    mutationFn: async () =>
+      update({
+        data: {
+          extenderId: extender.id,
+          name: name.trim() || extender.name,
+          summary: summary.trim(),
+          category,
+          tags: tags
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean)
+            .slice(0, 8),
+          iconInscriptionId: iconInscriptionId.trim() || null,
+          previewInscriptionId: previewInscriptionId.trim() || null,
+        },
+      }),
+    onSuccess: () => {
+      toast("PACKAGE UPDATED");
+      onSave();
+    },
+    onError: (error) => toast("COULD NOT UPDATE", { description: (error as Error).message }),
+  });
+
+  return (
+    <div className="border border-border bg-surface p-4">
+      <div className="label text-bitcoin">EDIT PACKAGE</div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Name"
+          className="w-full border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-bitcoin"
+        />
+        <input
+          value={summary}
+          onChange={(e) => setSummary(e.target.value)}
+          placeholder="Summary"
+          className="w-full border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-bitcoin"
+        />
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="w-full border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-bitcoin"
+        >
+          {EXTENDER_CATEGORIES.map((c) => (
+            <option key={c.id} value={c.id}>{c.label}</option>
+          ))}
+        </select>
+        <input
+          value={tags}
+          onChange={(e) => setTags(e.target.value)}
+          placeholder="Tags, comma separated"
+          className="w-full border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-bitcoin"
+          data-no-translate
+        />
+        <input
+          value={iconInscriptionId}
+          onChange={(e) => setIconInscriptionId(e.target.value)}
+          placeholder="Icon inscription id"
+          className="w-full border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-bitcoin"
+          data-no-translate
+        />
+        <input
+          value={previewInscriptionId}
+          onChange={(e) => setPreviewInscriptionId(e.target.value)}
+          placeholder="Preview inscription id"
+          className="w-full border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-bitcoin"
+          data-no-translate
+        />
+      </div>
+      <button type="button" className="btn-term mt-3" disabled={run.isPending} onClick={() => run.mutate()}>
+        {run.isPending ? "[ SAVING… ]" : "[ SAVE PACKAGE ]"}
+      </button>
+    </div>
+  );
+}
+
 function ExtenderWorkbench({ extender }: { extender: Extender }) {
   const versions = useQuery(extenderVersionsQuery(extender.id));
   const setStatus = useServerFn(setExtenderStatusFn);
