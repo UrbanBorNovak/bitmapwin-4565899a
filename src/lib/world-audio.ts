@@ -168,6 +168,23 @@ export function playSfx(name: Sfx) {
       tone(context, out, { from: 300, to: 210, seconds: 0.05, gain: 0.12, type: "square", delay: 0.14 });
       burst(context, out, { seconds: 0.06, gain: 0.22, type: "bandpass", frequency: 1400, q: 2.6 });
       break;
+    case "revolver":
+      // .45 bark: tight blast, short body, small room tail
+      burst(context, out, { seconds: 0.04, gain: 0.6, type: "highpass", frequency: 2200, q: 0.5 });
+      burst(context, out, { seconds: 0.16, gain: 0.46, type: "lowpass", frequency: 620, q: 0.7 });
+      tone(context, out, { from: 260, to: 70, seconds: 0.14, gain: 0.28, type: "sawtooth" });
+      break;
+    case "cock":
+      // hammer drawn back, cylinder indexing
+      burst(context, out, { seconds: 0.035, gain: 0.18, type: "bandpass", frequency: 2600, q: 3 });
+      tone(context, out, { from: 420, to: 320, seconds: 0.04, gain: 0.1, type: "square" });
+      break;
+    case "whip":
+      // leather sweep then a sharp crack
+      burst(context, out, { seconds: 0.14, gain: 0.22, type: "bandpass", frequency: 700, q: 0.8 });
+      burst(context, out, { seconds: 0.05, gain: 0.5, type: "highpass", frequency: 3200, q: 0.6 });
+      tone(context, out, { from: 1400, to: 260, seconds: 0.09, gain: 0.16, type: "sawtooth" });
+      break;
     case "hit":
       burst(context, out, { seconds: 0.08, gain: 0.32, type: "bandpass", frequency: 2400, q: 1.4 });
       tone(context, out, { from: 900, to: 500, seconds: 0.07, gain: 0.16, type: "square" });
