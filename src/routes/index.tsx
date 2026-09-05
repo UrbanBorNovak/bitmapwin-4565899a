@@ -3,6 +3,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { ParcelCard } from "@/components/ParcelCard";
 import { HowItWorks } from "@/components/HowItWorks";
 import { BlockMosaic } from "@/components/BlockMosaic";
+import { BitmapConstellations } from "@/components/BitmapConstellations";
 import { registryParcelsQuery, registryCountQuery } from "@/lib/registry";
 import { recentTradesQuery, tradedBitmapCountQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
