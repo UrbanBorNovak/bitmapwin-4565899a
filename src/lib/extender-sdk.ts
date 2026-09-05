@@ -118,6 +118,21 @@ export const SDK_MODULES: SdkModule[] = [
     ],
   },
   {
+    id: "state",
+    status: "live",
+    body:
+      "Real world state, saved to the land. Anything you put in state comes back next session for every visitor, so buildings, NPCs and progress persist instead of resetting. Quest states and props created with `persist: true` are saved for you automatically. Signed-out visitors still play — their session simply is not written back.",
+    calls: [
+      { signature: "state.get(key, fallback)", note: "Read the shared record for this deployment." },
+      { signature: "state.set(key, value)", note: "Save JSON — objects, arrays, numbers, strings." },
+      { signature: "state.add(key, amount)", note: "Increment a saved counter and return it." },
+      { signature: "state.remove(key)", note: "Forget one key." },
+      { signature: "state.all()", note: "The whole shared record." },
+      { signature: "state.player.get / set / add / remove / all", note: "Private per-visitor record (progress, inventory)." },
+      { signature: "world.prop({ id, persist: true, ... })", note: "Save this object's position, rotation, colour and label." },
+    ],
+  },
+  {
     id: "land",
     status: "live",
     body: "Read-only facts about the tile the code is deployed on. Ownership comes from the chain — the SDK never invents it.",
@@ -138,6 +153,7 @@ export const SDK_MODULES: SdkModule[] = [
       { signature: "log(...values)", note: "Writes to the extender console (last 40 lines)." },
     ],
   },
+
   {
     id: "economy / social",
     status: "soon",
