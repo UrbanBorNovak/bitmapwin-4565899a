@@ -1494,6 +1494,8 @@ export function BitmapWorld3D({
 
   const owners = useQuery(mapOwnersQuery(window_));
   const models = useQuery(mapBitmapModelsQuery(window_));
+  const deployments = useQuery(runtimeDeploymentsQuery());
+  const [running, setRunning] = useState<RunningExtender[]>([]);
   const {
     cursors,
     publish,
