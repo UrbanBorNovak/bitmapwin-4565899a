@@ -500,10 +500,15 @@ function PublishVersionForm({
 }) {
   const publish = useServerFn(publishVersionFn);
   const queryClient = useQueryClient();
+  const catalogue = useQuery(extendersQuery({}));
   const [semver, setSemver] = useState(suggestedSemver);
   const [changelog, setChangelog] = useState("");
   const [permissions, setPermissions] = useState<LandPermission[]>(["view", "enter"]);
   const [published, setPublished] = useState(false);
+  const [config, setConfig] = useState<Record<string, unknown>>({});
+  const [configText, setConfigText] = useState("{}");
+  const [configInvalid, setConfigInvalid] = useState(false);
+  const [dependencies, setDependencies] = useState<{ extenderId: string; versionRange: string }[]>([]);
 
   const bytes = new TextEncoder().encode(code).length;
   const tooLarge = bytes > RUNTIME_LIMITS.maxCodeBytes;
@@ -516,9 +521,9 @@ function PublishVersionForm({
           semver: semver.trim(),
           sdkVersion: SDK_VERSION,
           changelog: changelog.trim(),
-          manifest: code.trim() ? { code: code.trim() } : {},
+          manifest: code.trim() ? { code: code.trim(), config } : { config },
           publish: true,
-          dependencies: [],
+          dependencies: dependencies.map((d) => ({ dependsOnExtenderId: d.extenderId, versionRange: d.versionRange })),
           permissions: permissions.map((permission) => ({ permission, reason: "" })),
         },
       }),
@@ -531,6 +536,8 @@ function PublishVersionForm({
     },
     onError: (error) => toast("PUBLISH REFUSED", { description: (error as Error).message }),
   });
+
+  const availableDeps = (catalogue.data ?? []).filter((e) => e.id !== extenderId && e.status === "published");
 
   return (
     <div className="border border-border bg-surface p-4">
@@ -551,7 +558,82 @@ function PublishVersionForm({
         />
       </div>
 
-      <div className="mt-3">
+      <div className="mt-4">
+        <div className="label">DEPENDENCIES</div>
+        {catalogue.isPending ? (
+          <p className="mt-2 font-mono text-[10px] text-muted-foreground">&gt; LOADING CATALOGUE…</p>
+        ) : availableDeps.length === 0 ? (
+          <p className="mt-2 font-mono text-[10px] text-muted-foreground">&gt; NO PUBLISHED EXTENDERS TO DEPEND ON YET</p>
+        ) : (
+          <div className="mt-2 grid gap-2">
+            {availableDeps.map((e) => {
+              const selected = dependencies.find((d) => d.extenderId === e.id);
+              return (
+                <button
+                  key={e.id}
+                  type="button"
+                  onClick={() =>
+                    setDependencies((prev) => {
+                      if (selected) return prev.filter((d) => d.extenderId !== e.id);
+                      return [...prev, { extenderId: e.id, versionRange: "^" + (e.latestVersion ?? "1.0.0") }];
+                    })
+                  }
+                  className={`flex items-center justify-between border px-2 py-1.5 text-left font-mono text-[11px] ${
+                    selected ? "border-bitcoin text-bitcoin" : "border-border text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span data-no-translate>{e.name}</span>
+                  {selected ? (
+                    <input
+                      value={selected.versionRange}
+                      onChange={(ev) =>
+                        setDependencies((prev) =>
+                          prev.map((d) => (d.extenderId === e.id ? { ...d, versionRange: ev.target.value } : d))
+                        )
+                      }
+                      onClick={(ev) => ev.stopPropagation()}
+                      className="w-24 border border-border bg-background px-1 py-0.5 font-mono text-[10px] outline-none focus:border-bitcoin"
+                      data-no-translate
+                    />
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4">
+        <div className="label">DEPLOY CONFIG (JSON)</div>
+        <textarea
+          value={configText}
+          onChange={(e) => {
+            setConfigText(e.target.value);
+            try {
+              const parsed = JSON.parse(e.target.value);
+              if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+                setConfig(parsed as Record<string, unknown>);
+                setConfigInvalid(false);
+              } else {
+                setConfigInvalid(true);
+              }
+            } catch {
+              setConfigInvalid(true);
+            }
+          }}
+          rows={4}
+          placeholder='{"greeting":"Welcome traveller"}'
+          className="mt-2 w-full border border-border bg-background px-3 py-2 font-mono text-[11px] leading-relaxed outline-none focus:border-bitcoin"
+          data-no-translate
+        />
+        {configInvalid ? (
+          <p className="mt-1 font-mono text-[10px] text-destructive">INVALID JSON — MUST BE AN OBJECT</p>
+        ) : (
+          <p className="mt-1 font-mono text-[10px] text-muted-foreground">PASSED TO land.config AT RUNTIME</p>
+        )}
+      </div>
+
+      <div className="mt-4">
         <div className="label">LAND PERMISSIONS THIS VERSION REQUESTS</div>
         <div className="mt-2 flex flex-wrap gap-1">
           {LAND_PERMISSIONS.map((perm) => {
@@ -572,7 +654,7 @@ function PublishVersionForm({
         </div>
       </div>
 
-      <p className="mt-3 font-mono text-[10px] text-muted-foreground" data-no-translate>
+      <p className="mt-4 font-mono text-[10px] text-muted-foreground" data-no-translate>
         {bytes} / {RUNTIME_LIMITS.maxCodeBytes} BYTES ·{" "}
         {code.trim()
           ? tooLarge
@@ -581,7 +663,7 @@ function PublishVersionForm({
           : "EMPTY — THIS VERSION WILL PUBLISH AS A DESCRIPTION ONLY"}
       </p>
 
-      <button type="button" className="btn-term mt-3 w-full" disabled={run.isPending || tooLarge} onClick={() => run.mutate()}>
+      <button type="button" className="btn-term mt-3 w-full" disabled={run.isPending || tooLarge || configInvalid} onClick={() => run.mutate()}>
         {run.isPending ? "[ PUBLISHING… ]" : "[ PUBLISH VERSION ]"}
       </button>
 
