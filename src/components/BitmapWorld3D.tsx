@@ -2181,7 +2181,7 @@ export function BitmapWorld3D({
         ) : null}
 
         {/* Talk while you explore — ephemeral world chat with speech bubbles over avatars. */}
-        <div className="absolute bottom-16 left-1/2 z-30 flex w-[min(420px,calc(100%-1.5rem))] -translate-x-1/2 flex-col gap-1">
+        <div className="absolute bottom-3 left-1/2 z-30 flex w-[min(420px,calc(100%-1.5rem))] -translate-x-1/2 flex-col gap-1">
           <div className="flex gap-1">
             <Button
               type="button"
