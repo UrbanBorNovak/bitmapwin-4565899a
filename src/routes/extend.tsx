@@ -54,7 +54,7 @@ function ExtendPage() {
 
       <div className="mt-8 grid gap-3 md:grid-cols-3">
         <Choice
-          glyph="📦"
+          glyph="01"
           title="IMPORT EXTENDER"
           body="Add something built by another creator. Point at a package, check its manifest, then test it."
           to="/studio"
@@ -62,7 +62,7 @@ function ExtendPage() {
           badge={<DataBadge kind="live" note="STUDIO" />}
         />
         <Choice
-          glyph="🧠"
+          glyph="02"
           title="CREATE WITH AI"
           body="Describe what you want to build in plain English and let the builder write the package for you."
           to="/studio"
@@ -70,7 +70,7 @@ function ExtendPage() {
           badge={<DataBadge kind="live" note="GEMINI BUILDER" />}
         />
         <Choice
-          glyph="🛒"
+          glyph="03"
           title="EXPLORE MARKET"
           body="Find something that already exists. Preview it running, then deploy it onto your land."
           to="/extenders"
@@ -131,7 +131,7 @@ function Choice({
       className="group flex min-h-[220px] flex-col justify-between border border-border bg-surface p-5 transition-colors hover:border-bitcoin"
     >
       <div>
-        <div className="text-2xl" aria-hidden="true">{glyph}</div>
+        <div className="display text-xl text-bitcoin" data-no-translate>{glyph}</div>
         <div className="display mt-3 text-xl group-hover:text-bitcoin">{title}</div>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
       </div>
