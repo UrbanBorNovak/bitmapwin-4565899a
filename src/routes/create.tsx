@@ -274,7 +274,28 @@ function CreatePage() {
                     </ul>
                   </div>
                 ) : null}
+                <div>
+                  <div className="label text-muted-foreground">ON-CHAIN 3D MODELS PLACED</div>
+                  {models.length > 0 ? (
+                    <ul className="mt-2 space-y-1 font-mono text-[10px] text-muted-foreground">
+                      {models.map((model) => (
+                        <li key={model.inscriptionId} data-no-translate>
+                          <span className="text-bitcoin">▣ </span>
+                          {model.inscriptionId.slice(0, 10)}…{model.inscriptionId.slice(-6)} · {model.height}.BITMAP ·{" "}
+                          {model.triangleCount.toLocaleString()} TRIS
+                          {model.animationCount > 0 ? " · ANIMATED" : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+                      &gt; NO VALIDATED GLB INSCRIPTION IN THE REGISTRY YET — THIS BUILD USES PRIMITIVE GEOMETRY ONLY
+                      {modelsDowngraded > 0 ? ` (${modelsDowngraded} MODEL CALLS DOWNGRADED)` : ""}
+                    </p>
+                  )}
+                </div>
               </div>
+
             )}
           </div>
 
