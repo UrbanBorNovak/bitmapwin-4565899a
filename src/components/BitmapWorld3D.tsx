@@ -1316,6 +1316,8 @@ const WorldScene = memo(function WorldScene({
   cameraMode,
   pose,
   self,
+  deployments,
+  onRunning,
 }: {
   colors: WorldColors;
   command: { type: CameraMove; nonce: number };
