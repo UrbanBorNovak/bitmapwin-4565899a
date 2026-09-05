@@ -9,6 +9,10 @@ import { getChainBlocks } from "@/lib/chain.functions";
 
 export const Route = createFileRoute("/map")({
   ssr: false,
+  validateSearch: (search: Record<string, unknown>): { height?: number } => {
+    const height = Number(search["height"]);
+    return Number.isInteger(height) && height >= 0 && height < 1_000_000 ? { height } : {};
+  },
   head: () => {
     const title = "Land Map — 1,000 × 1,000 Bitmap Districts";
     const description =
@@ -28,6 +32,7 @@ export const Route = createFileRoute("/map")({
 });
 
 function MapPage() {
+  const { height } = Route.useSearch();
   const fetchBlocks = useServerFn(getChainBlocks);
   const tip = useQuery({
     queryKey: ["chain", "tip", "map"],
@@ -70,7 +75,7 @@ function MapPage() {
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <BitmapWorld3D tipHeight={tipHeight} onCursorsChange={handleCursors} />
+        <BitmapWorld3D tipHeight={tipHeight} initialHeight={height} onCursorsChange={handleCursors} />
         <MapChat cursors={cursors} />
       </div>
     </div>
