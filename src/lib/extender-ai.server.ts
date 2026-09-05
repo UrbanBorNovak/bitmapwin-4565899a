@@ -283,12 +283,16 @@ export async function designExtender(input: { prompt: string; height: number }):
   };
 }
 
-/** Full build: plan the package, then write the code that implements the plan. */
+/**
+ * Full build: plan the package, resolve the real 3D assets available on chain,
+ * write the code that implements the plan, then reconcile every model reference
+ * against the catalogue so what runs in the sandbox is what actually renders.
+ */
 export async function buildExtenderPackage(input: {
   prompt: string;
   height: number;
-}): Promise<{ design: ExtenderDesign; code: string }> {
-  const design = await designExtender(input);
+}): Promise<{ design: ExtenderDesign; code: string; models: ModelAsset[]; modelsDowngraded: number }> {
+  const [design, catalogue] = await Promise.all([designExtender(input), listModelCatalogue()]);
   const brief = [
     `Package: ${design.name} — ${design.summary}`,
     `Build stages: ${design.stages.map((s) => `${s.label}: ${s.detail}`).join(" | ")}`,
@@ -299,11 +303,19 @@ export async function buildExtenderPackage(input: {
   ]
     .filter(Boolean)
     .join("\n");
-  const code = await writeExtenderCode({
+  const raw = await writeExtenderCode({
     prompt: brief,
     height: input.height,
     category: design.category,
     existingCode: "",
+    models: catalogue,
   });
-  return { design, code };
+  const reconciled = reconcileModels(raw, catalogue);
+  return {
+    design,
+    code: reconciled.code,
+    models: reconciled.used,
+    modelsDowngraded: reconciled.downgraded,
+  };
 }
+
