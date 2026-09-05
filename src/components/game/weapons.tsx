@@ -11,13 +11,13 @@ import * as THREE from "three";
  * Every model is built facing -Z with its grip at the origin.
  */
 
-export type WeaponKind = "mosin" | "revolver" | "whip";
+export type WeaponKind = "mosin" | "revolver" | "whip" | "pickaxe";
 
 export type WeaponSpec = {
   kind: WeaponKind;
   label: string;
   short: string;
-  /** rounds before a reload; 0 means the weapon never needs one (whip) */
+  /** rounds before a reload; 0 means the weapon never needs one (whip, pickaxe) */
   magazine: number;
   reloadMs: number;
   cooldownMs: number;
@@ -25,10 +25,16 @@ export type WeaponSpec = {
   reachStrides: number;
   /** splash radius around an impact, in strides — anyone inside also takes a hit */
   splashStrides: number;
-  fireSfx: "mosin" | "revolver" | "whip";
+  /** damage one clean strike does to wildlife */
+  damage: number;
+  /** a mining tool breaks gold veins; a gun does not */
+  mining: boolean;
+  fireSfx: "mosin" | "revolver" | "whip" | "pick";
   /** follow-up mechanical sound after a shot (bolt lift / cylinder) */
   cycleSfx: "bolt" | "cock" | null;
   cycleDelayMs: number;
+  /** the sound of loading this weapon back up */
+  reloadSfx: "reload" | "cylinder";
   hint: string;
 };
 
@@ -43,9 +49,12 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     cooldownMs: 1_250,
     reachStrides: 90,
     splashStrides: 1.6,
+    damage: 42,
+    mining: false,
     fireSfx: "mosin",
     cycleSfx: "bolt",
     cycleDelayMs: 620,
+    reloadSfx: "reload",
     hint: "BOLT ACTION · LONG RANGE · SPLASH",
   },
   revolver: {
@@ -57,9 +66,12 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     cooldownMs: 420,
     reachStrides: 34,
     splashStrides: 1.1,
+    damage: 22,
+    mining: false,
     fireSfx: "revolver",
     cycleSfx: "cock",
     cycleDelayMs: 220,
+    reloadSfx: "cylinder",
     hint: "SIX SHOTS · FAST · SPLASH",
   },
   whip: {
@@ -71,14 +83,35 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     cooldownMs: 640,
     reachStrides: 4,
     splashStrides: 2.2,
+    damage: 14,
+    mining: false,
     fireSfx: "whip",
     cycleSfx: null,
     cycleDelayMs: 0,
+    reloadSfx: "reload",
     hint: "NO AMMO · CLOSE RANGE · WIDE SPLASH",
+  },
+  pickaxe: {
+    kind: "pickaxe",
+    label: "PICKAXE",
+    short: "PICKAXE",
+    magazine: 0,
+    reloadMs: 0,
+    cooldownMs: 700,
+    reachStrides: 3,
+    splashStrides: 0.6,
+    damage: 10,
+    mining: true,
+    fireSfx: "pick",
+    cycleSfx: null,
+    cycleDelayMs: 0,
+    reloadSfx: "reload",
+    hint: "MINE GOLD VEINS · SWING TO STRIKE",
   },
 };
 
-export const WEAPON_ORDER: WeaponKind[] = ["mosin", "revolver", "whip"];
+export const WEAPON_ORDER: WeaponKind[] = ["mosin", "revolver", "whip", "pickaxe"];
+
 
 export function useWeaponMaterials() {
   return useMemo(
@@ -175,8 +208,37 @@ export function WeaponModel({
     );
   }
 
+  if (kind === "pickaxe") {
+    // A miner's pick: shaft in the fist, iron head swinging with the strike.
+    const swing = lash;
+    return (
+      <group rotation={[swing * 0.9, 0, 0]}>
+        <mesh material={wood} position={[0, 0.06 * u, -0.28 * u]} rotation={[Math.PI / 2.2, 0, 0]}>
+          <cylinderGeometry args={[0.026 * u, 0.03 * u, 0.72 * u, 8]} />
+        </mesh>
+        <mesh material={leather} position={[0, -0.04 * u, 0.02 * u]} rotation={[Math.PI / 2.2, 0, 0]}>
+          <cylinderGeometry args={[0.033 * u, 0.033 * u, 0.16 * u, 8]} />
+        </mesh>
+        {/* head collar */}
+        <mesh material={steel} position={[0, 0.24 * u, -0.52 * u]}>
+          <boxGeometry args={[0.05 * u, 0.07 * u, 0.07 * u]} />
+        </mesh>
+        {/* pick point */}
+        <mesh material={steel} position={[0, 0.22 * u, -0.72 * u]} rotation={[-Math.PI / 2.6, 0, 0]}>
+          <coneGeometry args={[0.032 * u, 0.4 * u, 6]} />
+        </mesh>
+        {/* chisel back */}
+        <mesh material={steel} position={[0, 0.3 * u, -0.36 * u]} rotation={[0.5, 0, 0]}>
+          <boxGeometry args={[0.06 * u, 0.05 * u, 0.2 * u]} />
+        </mesh>
+        {flash ? <Muzzle u={u} z={-0.8 * u} size={0.05} color={flashColor} /> : null}
+      </group>
+    );
+  }
+
   // whip — braided leather that straightens as it cracks
   const segments = 9;
+
   return (
     <group>
       <mesh material={leather} position={[0, -0.02 * u, 0.1 * u]} rotation={[Math.PI / 2, 0, 0]}>

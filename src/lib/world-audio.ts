@@ -13,14 +13,21 @@ export type Sfx =
   | "revolver"
   | "cock"
   | "whip"
+  | "pick"
+  | "ore"
+  | "nugget"
+  | "levelup"
+  | "beast"
   | "hit"
   | "kill"
   | "reload"
+  | "cylinder"
   | "empty"
   | "jump"
   | "step"
   | "hurt"
   | "ui";
+
 
 const MUTE_KEY = "bitmapwin:sound-muted";
 
@@ -311,6 +318,69 @@ export function playSfx(name: Sfx) {
       tone(context, out, { from: 180, to: 120, seconds: 0.06, gain: 0.18, type: "square" });
       tone(context, out, { from: 240, to: 300, seconds: 0.07, gain: 0.16, type: "square", delay: 0.22 });
       break;
+    case "cylinder": {
+      // Single-action reload: hammer to half-cock, loading gate flicks open,
+      // spent brass tumbles out, six fresh rounds seat, gate snaps shut.
+      burst(context, out, { seconds: 0.02, gain: 0.2, type: "bandpass", frequency: 3000, q: 5, curve: 2.4 });
+      burst(context, out, { seconds: 0.03, gain: 0.17, type: "bandpass", frequency: 2100, q: 4, delay: 0.09 });
+      for (let i = 0; i < 6; i++) {
+        const at = 0.2 + i * 0.16;
+        // brass falling out
+        tone(context, out, {
+          from: 1500 + Math.random() * 700, to: 900, seconds: 0.05, gain: 0.07,
+          type: "triangle", delay: at, attack: 0.002,
+        });
+        // fresh round pushed home, cylinder indexes a notch
+        burst(context, out, {
+          seconds: 0.03, gain: 0.16, type: "bandpass", frequency: 1500 + i * 90, q: 4.5,
+          delay: at + 0.06, curve: 2,
+        });
+        burst(context, out, {
+          seconds: 0.018, gain: 0.12, type: "bandpass", frequency: 3400, q: 6,
+          delay: at + 0.1, curve: 3,
+        });
+      }
+      // gate closed, hammer down
+      burst(context, out, { seconds: 0.035, gain: 0.26, type: "bandpass", frequency: 1800, q: 3, delay: 1.24, curve: 2 });
+      tone(context, out, { from: 420, to: 240, seconds: 0.05, gain: 0.1, type: "square", delay: 1.3 });
+      break;
+    }
+    case "pick": {
+      // Iron point biting stone: a bright chink, grit shearing off, dull thud.
+      burst(context, out, {
+        seconds: 0.02, gain: 0.6, type: "highpass", frequency: 4200 * vary, q: 0.6, curve: 3,
+        send: { node: verb, gain: 0.35 },
+      });
+      tone(context, out, { from: 2600 * vary, to: 900, seconds: 0.07, gain: 0.16, type: "triangle", attack: 0.002 });
+      burst(context, out, { seconds: 0.09, gain: 0.3, type: "bandpass", frequency: 900, q: 1.1, delay: 0.01 });
+      burst(context, out, { seconds: 0.16, gain: 0.2, type: "lowpass", frequency: 260, q: 0.7, delay: 0.015 });
+      break;
+    }
+    case "ore": {
+      // A chunk breaks free and clatters down the rock face.
+      burst(context, out, { seconds: 0.05, gain: 0.34, type: "bandpass", frequency: 1600, q: 1.3, curve: 2 });
+      burst(context, out, { seconds: 0.2, gain: 0.22, type: "lowpass", frequency: 520, q: 0.8, delay: 0.03 });
+      tone(context, out, { from: 700, to: 240, seconds: 0.16, gain: 0.12, type: "triangle", delay: 0.02 });
+      break;
+    }
+    case "nugget":
+      // Gold in the hand.
+      tone(context, out, { from: 1180, to: 1180, seconds: 0.06, gain: 0.14, type: "triangle" });
+      tone(context, out, { from: 1760, to: 1760, seconds: 0.09, gain: 0.12, type: "triangle", delay: 0.05 });
+      break;
+    case "levelup":
+      tone(context, out, { from: 523, to: 523, seconds: 0.14, gain: 0.16, type: "square" });
+      tone(context, out, { from: 659, to: 659, seconds: 0.14, gain: 0.15, type: "square", delay: 0.13 });
+      tone(context, out, { from: 784, to: 784, seconds: 0.16, gain: 0.15, type: "square", delay: 0.26 });
+      tone(context, out, { from: 1046, to: 1046, seconds: 0.3, gain: 0.14, type: "triangle", delay: 0.4 });
+      break;
+    case "beast":
+      // A snarl and a snap of jaws.
+      tone(context, out, { from: 210, to: 90, seconds: 0.26, gain: 0.22, type: "sawtooth", attack: 0.02 });
+      burst(context, out, { seconds: 0.2, gain: 0.2, type: "bandpass", frequency: 420, q: 0.9 });
+      burst(context, out, { seconds: 0.03, gain: 0.24, type: "bandpass", frequency: 1900, q: 3, delay: 0.2, curve: 2 });
+      break;
+
     case "empty":
       tone(context, out, { from: 220, to: 160, seconds: 0.05, gain: 0.14, type: "square" });
       break;

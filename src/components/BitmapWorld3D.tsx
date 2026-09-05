@@ -34,6 +34,14 @@ import {
   type WeaponKind,
 } from "@/components/game/weapons";
 import { isSoundMuted, playSfx, setSoundMuted, unlockAudio } from "@/lib/world-audio";
+import {
+  BACKPACK_SLOTS,
+  ITEM_LABELS,
+  SKILL_LABELS,
+  useWorldSkills,
+  type ItemId,
+  type SkillId,
+} from "@/lib/world-skills";
 
 const EMPTY_DEPLOYMENTS: RuntimeDeployment[] = [];
 
@@ -1375,6 +1383,7 @@ const WorldScene = memo(function WorldScene({
   onRunning,
   weapon,
   onShootPeer,
+  onBite,
   onShooterStats,
 }: {
   colors: WorldColors;
@@ -1405,6 +1414,7 @@ const WorldScene = memo(function WorldScene({
   onRunning: (running: RunningExtender[]) => void;
   weapon: WeaponKind | null;
   onShootPeer: (id: string) => void;
+  onBite: (damage: number, label: string) => void;
   onShooterStats: (stats: ShooterStats) => void;
 }) {
   // Pointer moves fire dozens of times a second; each React state update re-renders
@@ -1472,7 +1482,7 @@ const WorldScene = memo(function WorldScene({
       <SkyBodies bitcoin={colors.bitcoin} />
       <LandSurface colors={colors} tipHeight={tipHeight} />
       {cameraMode !== "map" ? (
-        <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active />
+        <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
       ) : null}
       <DistrictBlocks tipHeight={tipHeight} colors={colors} />
       <HolderColumns owners={owners} mine={mine} bitcoin={colors.bitcoin} />
@@ -1628,6 +1638,7 @@ export function BitmapWorld3D({
     respawnAt,
     respawnNonce,
     respawn,
+    hurt,
   } = useMapCursors();
   const party = useMapParty(selfId, handle);
   const [chatMode, setChatMode] = useState<"world" | "party">("world");
@@ -1815,7 +1826,7 @@ export function BitmapWorld3D({
         return;
       }
       // 1 / 2 / 3 pull a weapon out, 0 puts it away — the belt, in game.
-      const slot = ["Digit1", "Digit2", "Digit3"].indexOf(event.code);
+      const slot = ["Digit1", "Digit2", "Digit3", "Digit4"].indexOf(event.code);
       if (slot >= 0) {
         event.preventDefault();
         equipWeapon(WEAPON_ORDER[slot] ?? null);
@@ -1854,6 +1865,18 @@ export function BitmapWorld3D({
     window.addEventListener("wheel", onWheel, { passive: false });
     return () => window.removeEventListener("wheel", onWheel);
   }, [equipWeapon, exploring, weapon]);
+
+  // A hostile animal got its teeth in: real damage, the same as a visitor's hit.
+  const [biteNote, setBiteNote] = useState<string | null>(null);
+  const takeBite = useCallback(
+    (damage: number, label: string) => {
+      hurt(damage);
+      playSfx("hurt");
+      setBiteNote(`${label} BIT YOU · -${damage}`);
+      window.setTimeout(() => setBiteNote(null), 1600);
+    },
+    [hurt],
+  );
 
   const moveCamera = (type: CameraMove) => {
     setCameraMode("map");
@@ -2010,6 +2033,7 @@ export function BitmapWorld3D({
               onRunning={setRunning}
               weapon={weapon}
               onShootPeer={attack}
+              onBite={takeBite}
               onShooterStats={handleShooterStats}
             />
           </Canvas>
@@ -2044,16 +2068,21 @@ export function BitmapWorld3D({
               <span>VISITORS {shooterStats.targets}</span>
             </div>
             <div className="text-muted-foreground">
-              {weapon === "whip"
-                ? "CLICK / E · CRACK · CLOSE RANGE"
-                : "CLICK / E · FIRE · R · RELOAD"}
+              {weapon === "pickaxe"
+                ? "CLICK / E · SWING · MINE GOLD SEAMS"
+                : weapon === "whip"
+                  ? "CLICK / E · CRACK · CLOSE RANGE"
+                  : "CLICK / E · FIRE · R · RELOAD"}
             </div>
             {cameraMode === "third" ? (
               <div className="text-muted-foreground">FIRST PERSON SHOWS THE WEAPON IN HAND</div>
             ) : null}
             {shooterStats.note ? <div className="text-bitcoin">{shooterStats.note}</div> : null}
+            {biteNote ? <div className="text-destructive">{biteNote}</div> : null}
           </div>
         ) : null}
+
+        {exploring ? <SkillsHud /> : null}
 
         {/* THE BELT — in-world weapon slots: press 1 / 2 / 3, scroll to cycle, 0 to holster. */}
         {exploring ? (
@@ -2086,7 +2115,7 @@ export function BitmapWorld3D({
                 );
               })}
               <span className="px-1.5 text-[9px] text-muted-foreground">
-                {weapon ? "SCROLL · SWAP · 0 · HOLSTER" : "1 · 2 · 3 · DRAW"}
+                {weapon ? "SCROLL · SWAP · 0 · HOLSTER" : "1 · 2 · 3 · 4 · DRAW"}
               </span>
             </div>
           </div>
@@ -2608,6 +2637,51 @@ export function BitmapWorld3D({
           <span>CONNECT OR LINK WALLET TO HIGHLIGHT YOUR BITMAPS</span>
         )}
       </div>
+    </div>
+  );
+}
+
+/** SKILLS AND BACKPACK — what this visitor has earned out in the sand. */
+function SkillsHud() {
+  const { skills, items, carried, full } = useWorldSkills();
+  return (
+    <div
+      data-no-translate
+      className="hud-panel absolute right-3 bottom-3 z-40 w-[10.5rem] space-y-1.5 px-2.5 py-2 font-mono text-[10px] tabular-nums"
+      aria-label="Skills and backpack"
+    >
+      <div className="label text-[9px] text-bitcoin">SKILLS</div>
+      {(Object.keys(skills) as SkillId[]).map((id) => {
+        const skill = skills[id];
+        const pct = Math.min(100, Math.round((skill.intoLevel / skill.nextLevel) * 100));
+        return (
+          <div key={id} className="space-y-0.5">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span>{SKILL_LABELS[id]}</span>
+              <span className="text-foreground">{skill.level}</span>
+            </div>
+            <div className="h-1 w-full bg-border">
+              <div className="h-full bg-bitcoin" style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+        );
+      })}
+      <div className="label border-t border-border pt-1.5 text-[9px] text-bitcoin">
+        BACKPACK {carried}/{BACKPACK_SLOTS}
+      </div>
+      {carried === 0 ? (
+        <div className="text-muted-foreground">EMPTY · MINE OR HUNT</div>
+      ) : (
+        (Object.keys(items) as ItemId[])
+          .filter((id) => items[id] > 0)
+          .map((id) => (
+            <div key={id} className="flex items-center justify-between text-muted-foreground">
+              <span>{ITEM_LABELS[id]}</span>
+              <span className="text-foreground">{items[id]}</span>
+            </div>
+          ))
+      )}
+      {full ? <div className="text-destructive">FULL</div> : null}
     </div>
   );
 }
