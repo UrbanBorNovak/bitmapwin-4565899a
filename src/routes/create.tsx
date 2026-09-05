@@ -214,7 +214,7 @@ function CreatePage() {
         data: { extenderId, versionId: version.versionId, height: chosen, config },
       });
 
-      return { slug, height: chosen, semver } satisfies Deployed;
+      return { slug, height: chosen, semver, extenderId } satisfies Deployed;
     },
     onSuccess: (result) => {
       setDeployed(result);
