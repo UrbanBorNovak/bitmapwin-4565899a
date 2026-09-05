@@ -1995,7 +1995,7 @@ export function BitmapWorld3D({
         <section
           data-no-translate
           aria-label="Party"
-          className="absolute right-3 top-14 z-30 w-[min(250px,calc(100%-1.5rem))] border border-border bg-background/90 font-mono text-[10px]"
+          className="hud-panel absolute right-3 top-14 z-30 w-[min(250px,calc(100%-1.5rem))] font-mono text-[10px]"
         >
           <header className="flex items-center justify-between border-b border-border px-2 py-1">
             <span>
