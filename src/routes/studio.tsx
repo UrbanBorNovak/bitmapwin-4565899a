@@ -22,6 +22,10 @@ import { generateExtenderCodeFn } from "@/lib/extender-ai.functions";
 import { RUNTIME_LIMITS, STARTER_TEMPLATES, codeFromManifest } from "@/lib/extender-sdk";
 
 export const Route = createFileRoute("/studio")({
+  validateSearch: (search: Record<string, unknown>): { selected?: string } => {
+    const selected = search["selected"];
+    return typeof selected === "string" && selected.length > 0 ? { selected } : {};
+  },
   head: () => {
     const title = "Extender Studio — Describe It, Test It, Ship It";
     const description =
