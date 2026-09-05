@@ -2126,45 +2126,53 @@ export function BitmapWorld3D({
           )}
         </section>
 
-        <section
-          data-no-translate
-          aria-label="Combat log"
-          className="absolute bottom-3 left-3 z-30 w-[min(360px,calc(100%-1.5rem))] border border-border bg-background/90 font-mono"
-        >
-          <header className="flex items-center justify-between border-b border-border px-2 py-1 text-[9px] text-muted-foreground">
-            <span>COMBAT LOG · WORLD</span>
-            <span>{combatLog.length} EVENTS</span>
-          </header>
-          <ol aria-live="polite" className="max-h-28 overflow-y-auto px-2 py-1 text-[10px]">
-            {combatLog.length ? (
-              combatLog
-                .slice(-6)
-                .reverse()
-                .map((entry) => (
-                  <li
-                    key={entry.id}
-                    className="flex gap-1 border-b border-border/60 py-1 last:border-0"
-                  >
-                    <span className="text-muted-foreground">
-                      {new Date(entry.at).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        second: "2-digit",
-                      })}
-                    </span>
-                    <span className="truncate">
-                      <b className="text-foreground">{entry.attacker}</b> hit{" "}
-                      <b className="text-foreground">{entry.target}</b> for{" "}
-                      <b className="text-bitcoin">{entry.damage}</b>
-                      {entry.knockout ? " · KNOCKOUT" : ""}
-                    </span>
-                  </li>
-                ))
-            ) : (
-              <li className="py-2 text-muted-foreground">NO HITS YET</li>
-            )}
-          </ol>
-        </section>
+        {/* Bottom-left column: live extender readout stacked over the combat log. */}
+        <div className="hud-stack absolute bottom-16 left-3 z-30 w-[min(320px,calc(100%-1.5rem))]">
+          <div className="pointer-events-none">
+            <ExtenderHud running={running} />
+          </div>
+
+          <section
+            data-no-translate
+            aria-label="Combat log"
+            className="hud-panel font-mono"
+          >
+            <header className="flex items-center justify-between border-b border-border/70 px-2 py-1 text-[9px] tracking-[0.14em] text-muted-foreground">
+              <span>COMBAT LOG</span>
+              <span>{combatLog.length} EVENTS</span>
+            </header>
+            <ol aria-live="polite" className="max-h-24 overflow-y-auto px-2 py-1 text-[10px]">
+              {combatLog.length ? (
+                combatLog
+                  .slice(-5)
+                  .reverse()
+                  .map((entry) => (
+                    <li
+                      key={entry.id}
+                      className="flex gap-1 border-b border-border/40 py-1 last:border-0"
+                    >
+                      <span className="tabular-nums text-muted-foreground">
+                        {new Date(entry.at).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                        })}
+                      </span>
+                      <span className="truncate">
+                        <b className="text-foreground">{entry.attacker}</b> hit{" "}
+                        <b className="text-foreground">{entry.target}</b> for{" "}
+                        <b className="text-bitcoin">{entry.damage}</b>
+                        {entry.knockout ? " · KNOCKOUT" : ""}
+                      </span>
+                    </li>
+                  ))
+              ) : (
+                <li className="py-1.5 text-muted-foreground">NO HITS YET</li>
+              )}
+            </ol>
+          </section>
+        </div>
+
 
         <div
           aria-hidden
