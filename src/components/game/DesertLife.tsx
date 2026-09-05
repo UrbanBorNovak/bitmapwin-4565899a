@@ -38,7 +38,7 @@ export const DesertLife = memo(function DesertLife({
   /** One avatar height in world units. */
   unit: number;
   colors: DesertColors;
-  pose: React.RefObject<{ x: number; z: number } | null>;
+  pose: { current: { x: number; z: number } | null };
   active: boolean;
 }) {
   const step = unit * 2.4; // scatter lattice pitch
@@ -224,7 +224,7 @@ const Critters = memo(function Critters({
 }: {
   unit: number;
   colors: DesertColors;
-  pose: React.RefObject<{ x: number; z: number } | null>;
+  pose: { current: { x: number; z: number } | null };
 }) {
   const groups = useRef<(THREE.Group | null)[]>([]);
   const state = useRef<Critter[]>(
