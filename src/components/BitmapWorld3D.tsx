@@ -878,6 +878,8 @@ const SelfAvatar = memo(function SelfAvatar({
   hp,
   hitAt,
   lastDamage,
+  weapon,
+  bitcoin,
 }: {
   pose: React.RefObject<SelfPose>;
   color: string;
@@ -887,6 +889,8 @@ const SelfAvatar = memo(function SelfAvatar({
   hp: number;
   hitAt: number;
   lastDamage: number;
+  weapon: WeaponKind | null;
+  bitcoin: string;
 }) {
   const group = useRef<THREE.Group>(null);
   const mounted = useRef(false);
