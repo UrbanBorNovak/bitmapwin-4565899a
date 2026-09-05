@@ -58,7 +58,7 @@ export const publishVersionFn = createServerFn({ method: "POST" })
       .object({
         extenderId: uuid,
         semver,
-        sdkVersion: z.string().trim().max(12).default("0.1"),
+        sdkVersion: z.string().trim().max(12).default("0.2"),
         changelog: z.string().trim().max(2000).default(""),
         manifest: z.record(z.string(), z.unknown()).default({}),
         publish: z.boolean().default(true),
