@@ -152,6 +152,41 @@ export async function setExtenderStatus(userId: string, extenderId: string, stat
   return { ok: true };
 }
 
+export async function updateExtenderMetadata(
+  userId: string,
+  input: {
+    extenderId: string;
+    name?: string;
+    summary?: string;
+    description?: string;
+    category?: string;
+    tags?: string[];
+    license?: string;
+    monetization?: "free" | "paid" | "lease";
+    priceBit?: number;
+    iconInscriptionId?: string | null;
+    previewInscriptionId?: string | null;
+  },
+) {
+  await ownExtender(userId, input.extenderId);
+  const db = await admin();
+  const update: Record<string, unknown> = {};
+  if (input.name !== undefined) update.name = input.name;
+  if (input.summary !== undefined) update.summary = input.summary;
+  if (input.description !== undefined) update.description = input.description;
+  if (input.category !== undefined) update.category = input.category;
+  if (input.tags !== undefined) update.tags = input.tags;
+  if (input.license !== undefined) update.license = input.license;
+  if (input.monetization !== undefined) update.monetization = input.monetization;
+  if (input.priceBit !== undefined) update.price_bit = input.priceBit;
+  if (input.iconInscriptionId !== undefined) update.icon_inscription_id = input.iconInscriptionId;
+  if (input.previewInscriptionId !== undefined) update.preview_inscription_id = input.previewInscriptionId;
+
+  const { error } = await db.from("extenders").update(update).eq("id", input.extenderId);
+  if (error) throw error;
+  return { ok: true };
+}
+
 export type VersionDraft = {
   extenderId: string;
   semver: string;
