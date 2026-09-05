@@ -420,6 +420,77 @@ export type Database = {
         }
         Relationships: []
       }
+      cities: {
+        Row: {
+          banner_inscription_id: string | null
+          created_at: string
+          description: string
+          founder_address: string
+          founder_user_id: string
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          banner_inscription_id?: string | null
+          created_at?: string
+          description?: string
+          founder_address: string
+          founder_user_id: string
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          banner_inscription_id?: string | null
+          created_at?: string
+          description?: string
+          founder_address?: string
+          founder_user_id?: string
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      city_bitmaps: {
+        Row: {
+          bitmap_height: number
+          city_id: string
+          created_at: string
+          id: string
+          member_address: string
+          member_user_id: string
+        }
+        Insert: {
+          bitmap_height: number
+          city_id: string
+          created_at?: string
+          id?: string
+          member_address: string
+          member_user_id: string
+        }
+        Update: {
+          bitmap_height?: number
+          city_id?: string
+          created_at?: string
+          id?: string
+          member_address?: string
+          member_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "city_bitmaps_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coin_balances: {
         Row: {
           address: string
@@ -667,6 +738,268 @@ export type Database = {
         }
         Relationships: []
       }
+      extender_dependencies: {
+        Row: {
+          created_at: string
+          depends_on_extender_id: string
+          id: string
+          version_id: string
+          version_range: string
+        }
+        Insert: {
+          created_at?: string
+          depends_on_extender_id: string
+          id?: string
+          version_id: string
+          version_range?: string
+        }
+        Update: {
+          created_at?: string
+          depends_on_extender_id?: string
+          id?: string
+          version_id?: string
+          version_range?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extender_dependencies_depends_on_extender_id_fkey"
+            columns: ["depends_on_extender_id"]
+            isOneToOne: false
+            referencedRelation: "extender_public_stats"
+            referencedColumns: ["extender_id"]
+          },
+          {
+            foreignKeyName: "extender_dependencies_depends_on_extender_id_fkey"
+            columns: ["depends_on_extender_id"]
+            isOneToOne: false
+            referencedRelation: "extenders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extender_dependencies_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "extender_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      extender_deployments: {
+        Row: {
+          active_from: string
+          active_until: string | null
+          bitmap_height: number
+          config: Json
+          created_at: string
+          deployed_by_address: string
+          deployed_by_user_id: string
+          extender_id: string
+          granted_via: string
+          id: string
+          status: string
+          updated_at: string
+          version_id: string
+        }
+        Insert: {
+          active_from?: string
+          active_until?: string | null
+          bitmap_height: number
+          config?: Json
+          created_at?: string
+          deployed_by_address: string
+          deployed_by_user_id: string
+          extender_id: string
+          granted_via?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          version_id: string
+        }
+        Update: {
+          active_from?: string
+          active_until?: string | null
+          bitmap_height?: number
+          config?: Json
+          created_at?: string
+          deployed_by_address?: string
+          deployed_by_user_id?: string
+          extender_id?: string
+          granted_via?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extender_deployments_extender_id_fkey"
+            columns: ["extender_id"]
+            isOneToOne: false
+            referencedRelation: "extender_public_stats"
+            referencedColumns: ["extender_id"]
+          },
+          {
+            foreignKeyName: "extender_deployments_extender_id_fkey"
+            columns: ["extender_id"]
+            isOneToOne: false
+            referencedRelation: "extenders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extender_deployments_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "extender_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      extender_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          permission: Database["public"]["Enums"]["land_permission"]
+          reason: string
+          version_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          permission: Database["public"]["Enums"]["land_permission"]
+          reason?: string
+          version_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          permission?: Database["public"]["Enums"]["land_permission"]
+          reason?: string
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extender_permissions_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "extender_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      extender_versions: {
+        Row: {
+          changelog: string
+          created_at: string
+          extender_id: string
+          id: string
+          manifest: Json
+          published_at: string | null
+          sdk_version: string
+          semver: string
+          status: Database["public"]["Enums"]["extender_status"]
+        }
+        Insert: {
+          changelog?: string
+          created_at?: string
+          extender_id: string
+          id?: string
+          manifest?: Json
+          published_at?: string | null
+          sdk_version?: string
+          semver: string
+          status?: Database["public"]["Enums"]["extender_status"]
+        }
+        Update: {
+          changelog?: string
+          created_at?: string
+          extender_id?: string
+          id?: string
+          manifest?: Json
+          published_at?: string | null
+          sdk_version?: string
+          semver?: string
+          status?: Database["public"]["Enums"]["extender_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extender_versions_extender_id_fkey"
+            columns: ["extender_id"]
+            isOneToOne: false
+            referencedRelation: "extender_public_stats"
+            referencedColumns: ["extender_id"]
+          },
+          {
+            foreignKeyName: "extender_versions_extender_id_fkey"
+            columns: ["extender_id"]
+            isOneToOne: false
+            referencedRelation: "extenders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      extenders: {
+        Row: {
+          category: string
+          created_at: string
+          creator_address: string | null
+          creator_user_id: string
+          description: string
+          icon_inscription_id: string | null
+          id: string
+          is_ai_built: boolean
+          license: string
+          monetization: Database["public"]["Enums"]["extender_monetization"]
+          name: string
+          preview_inscription_id: string | null
+          price_sats: number
+          slug: string
+          status: Database["public"]["Enums"]["extender_status"]
+          summary: string
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          creator_address?: string | null
+          creator_user_id: string
+          description?: string
+          icon_inscription_id?: string | null
+          id?: string
+          is_ai_built?: boolean
+          license?: string
+          monetization?: Database["public"]["Enums"]["extender_monetization"]
+          name: string
+          preview_inscription_id?: string | null
+          price_sats?: number
+          slug: string
+          status?: Database["public"]["Enums"]["extender_status"]
+          summary?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          creator_address?: string | null
+          creator_user_id?: string
+          description?: string
+          icon_inscription_id?: string | null
+          id?: string
+          is_ai_built?: boolean
+          license?: string
+          monetization?: Database["public"]["Enums"]["extender_monetization"]
+          name?: string
+          preview_inscription_id?: string | null
+          price_sats?: number
+          slug?: string
+          status?: Database["public"]["Enums"]["extender_status"]
+          summary?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inscriptions: {
         Row: {
           bitmap_height: number | null
@@ -709,6 +1042,45 @@ export type Database = {
           is_bitmap_claim?: boolean
           txid?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      land_grants: {
+        Row: {
+          bitmap_height: number
+          created_at: string
+          expires_at: string | null
+          grantee_address: string
+          grantee_user_id: string | null
+          id: string
+          note: string | null
+          owner_address: string
+          owner_user_id: string
+          permissions: Database["public"]["Enums"]["land_permission"][]
+        }
+        Insert: {
+          bitmap_height: number
+          created_at?: string
+          expires_at?: string | null
+          grantee_address: string
+          grantee_user_id?: string | null
+          id?: string
+          note?: string | null
+          owner_address: string
+          owner_user_id: string
+          permissions?: Database["public"]["Enums"]["land_permission"][]
+        }
+        Update: {
+          bitmap_height?: number
+          created_at?: string
+          expires_at?: string | null
+          grantee_address?: string
+          grantee_user_id?: string | null
+          id?: string
+          note?: string | null
+          owner_address?: string
+          owner_user_id?: string
+          permissions?: Database["public"]["Enums"]["land_permission"][]
         }
         Relationships: []
       }
@@ -1236,7 +1608,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      extender_public_stats: {
+        Row: {
+          active_deployments: number | null
+          extender_id: string | null
+          last_published_at: string | null
+          published_versions: number | null
+        }
+        Insert: {
+          active_deployments?: never
+          extender_id?: string | null
+          last_published_at?: never
+          published_versions?: never
+        }
+        Update: {
+          active_deployments?: never
+          extender_id?: string | null
+          last_published_at?: never
+          published_versions?: never
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can_build_bitmap: {
@@ -1329,7 +1721,17 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      extender_monetization: "free" | "paid" | "lease"
+      extender_status: "draft" | "published" | "archived"
+      land_permission:
+        | "view"
+        | "enter"
+        | "build"
+        | "edit"
+        | "deploy"
+        | "manage"
+        | "lease"
+        | "monetize"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1456,6 +1858,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      extender_monetization: ["free", "paid", "lease"],
+      extender_status: ["draft", "published", "archived"],
+      land_permission: [
+        "view",
+        "enter",
+        "build",
+        "edit",
+        "deploy",
+        "manage",
+        "lease",
+        "monetize",
+      ],
+    },
   },
 } as const

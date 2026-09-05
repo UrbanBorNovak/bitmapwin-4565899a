@@ -12,22 +12,29 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BuildsRouteImport } from './routes/builds'
+import { Route as CitiesRouteImport } from './routes/cities'
 import { Route as CoinsRouteImport } from './routes/coins'
 import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ExtendersRouteImport } from './routes/extenders'
 import { Route as Land101RouteImport } from './routes/land-101'
 import { Route as LeasesRouteImport } from './routes/leases'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as MyWorldRouteImport } from './routes/my-world'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SdkRouteImport } from './routes/sdk'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as StudioRouteImport } from './routes/studio'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
 import { Route as CollectionsClubRouteImport } from './routes/collections.$club'
 import { Route as DistrictSlugRouteImport } from './routes/district.$slug'
+import { Route as ExtendersIndexRouteImport } from './routes/extenders.index'
+import { Route as ExtendersSlugRouteImport } from './routes/extenders.$slug'
 import { Route as ProfileAddressRouteImport } from './routes/profile.$address'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicCoinRewardsRouteImport } from './routes/api/public/coin-rewards'
@@ -53,6 +60,11 @@ const BuildsRoute = BuildsRouteImport.update({
   path: '/builds',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CitiesRoute = CitiesRouteImport.update({
+  id: '/cities',
+  path: '/cities',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CoinsRoute = CoinsRouteImport.update({
   id: '/coins',
   path: '/coins',
@@ -66,6 +78,11 @@ const CollectionsRoute = CollectionsRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExtendersRoute = ExtendersRouteImport.update({
+  id: '/extenders',
+  path: '/extenders',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Land101Route = Land101RouteImport.update({
@@ -93,14 +110,29 @@ const McpRoute = McpRouteImport.update({
   path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MyWorldRoute = MyWorldRouteImport.update({
+  id: '/my-world',
+  path: '/my-world',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SdkRoute = SdkRouteImport.update({
+  id: '/sdk',
+  path: '/sdk',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StudioRoute = StudioRouteImport.update({
+  id: '/studio',
+  path: '/studio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WalletRoute = WalletRouteImport.update({
@@ -133,6 +165,16 @@ const DistrictSlugRoute = DistrictSlugRouteImport.update({
   id: '/district/$slug',
   path: '/district/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ExtendersIndexRoute = ExtendersIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ExtendersRoute,
+} as any)
+const ExtendersSlugRoute = ExtendersSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => ExtendersRoute,
 } as any)
 const ProfileAddressRoute = ProfileAddressRouteImport.update({
   id: '/profile/$address',
@@ -186,23 +228,30 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/builds': typeof BuildsRoute
+  '/cities': typeof CitiesRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/extenders': typeof ExtendersRouteWithChildren
   '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
+  '/my-world': typeof MyWorldRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sdk': typeof SdkRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/studio': typeof StudioRoute
   '/wallet': typeof WalletRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/collections/$club': typeof CollectionsClubRoute
   '/district/$slug': typeof DistrictSlugRoute
+  '/extenders/$slug': typeof ExtendersSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections/': typeof CollectionsIndexRoute
+  '/extenders/': typeof ExtendersIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
@@ -216,6 +265,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/builds': typeof BuildsRoute
+  '/cities': typeof CitiesRoute
   '/coins': typeof CoinsRoute
   '/dashboard': typeof DashboardRoute
   '/land-101': typeof Land101Route
@@ -223,15 +273,20 @@ export interface FileRoutesByTo {
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
+  '/my-world': typeof MyWorldRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sdk': typeof SdkRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/studio': typeof StudioRoute
   '/wallet': typeof WalletRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/collections/$club': typeof CollectionsClubRoute
   '/district/$slug': typeof DistrictSlugRoute
+  '/extenders/$slug': typeof ExtendersSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections': typeof CollectionsIndexRoute
+  '/extenders': typeof ExtendersIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
@@ -246,23 +301,30 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/builds': typeof BuildsRoute
+  '/cities': typeof CitiesRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/extenders': typeof ExtendersRouteWithChildren
   '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
+  '/my-world': typeof MyWorldRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sdk': typeof SdkRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/studio': typeof StudioRoute
   '/wallet': typeof WalletRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/collections/$club': typeof CollectionsClubRoute
   '/district/$slug': typeof DistrictSlugRoute
+  '/extenders/$slug': typeof ExtendersSlugRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/collections/': typeof CollectionsIndexRoute
+  '/extenders/': typeof ExtendersIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
@@ -278,23 +340,30 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/builds'
+    | '/cities'
     | '/coins'
     | '/collections'
     | '/dashboard'
+    | '/extenders'
     | '/land-101'
     | '/leases'
     | '/map'
     | '/marketplace'
     | '/mcp'
+    | '/my-world'
     | '/reset-password'
+    | '/sdk'
     | '/sitemap.xml'
+    | '/studio'
     | '/wallet'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
     | '/collections/$club'
     | '/district/$slug'
+    | '/extenders/$slug'
     | '/profile/$address'
     | '/collections/'
+    | '/extenders/'
     | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
     | '/api/public/crawl-trades'
@@ -308,6 +377,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/builds'
+    | '/cities'
     | '/coins'
     | '/dashboard'
     | '/land-101'
@@ -315,15 +385,20 @@ export interface FileRouteTypes {
     | '/map'
     | '/marketplace'
     | '/mcp'
+    | '/my-world'
     | '/reset-password'
+    | '/sdk'
     | '/sitemap.xml'
+    | '/studio'
     | '/wallet'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
     | '/collections/$club'
     | '/district/$slug'
+    | '/extenders/$slug'
     | '/profile/$address'
     | '/collections'
+    | '/extenders'
     | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
     | '/api/public/crawl-trades'
@@ -337,23 +412,30 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/builds'
+    | '/cities'
     | '/coins'
     | '/collections'
     | '/dashboard'
+    | '/extenders'
     | '/land-101'
     | '/leases'
     | '/map'
     | '/marketplace'
     | '/mcp'
+    | '/my-world'
     | '/reset-password'
+    | '/sdk'
     | '/sitemap.xml'
+    | '/studio'
     | '/wallet'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
     | '/collections/$club'
     | '/district/$slug'
+    | '/extenders/$slug'
     | '/profile/$address'
     | '/collections/'
+    | '/extenders/'
     | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
     | '/api/public/crawl-trades'
@@ -368,16 +450,21 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   BuildsRoute: typeof BuildsRoute
+  CitiesRoute: typeof CitiesRoute
   CoinsRoute: typeof CoinsRoute
   CollectionsRoute: typeof CollectionsRouteWithChildren
   DashboardRoute: typeof DashboardRoute
+  ExtendersRoute: typeof ExtendersRouteWithChildren
   Land101Route: typeof Land101Route
   LeasesRoute: typeof LeasesRoute
   MapRoute: typeof MapRoute
   MarketplaceRoute: typeof MarketplaceRoute
   McpRoute: typeof McpRoute
+  MyWorldRoute: typeof MyWorldRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SdkRoute: typeof SdkRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  StudioRoute: typeof StudioRoute
   WalletRoute: typeof WalletRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
@@ -415,6 +502,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BuildsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cities': {
+      id: '/cities'
+      path: '/cities'
+      fullPath: '/cities'
+      preLoaderRoute: typeof CitiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/coins': {
       id: '/coins'
       path: '/coins'
@@ -434,6 +528,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/extenders': {
+      id: '/extenders'
+      path: '/extenders'
+      fullPath: '/extenders'
+      preLoaderRoute: typeof ExtendersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/land-101': {
@@ -471,6 +572,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/my-world': {
+      id: '/my-world'
+      path: '/my-world'
+      fullPath: '/my-world'
+      preLoaderRoute: typeof MyWorldRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -478,11 +586,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sdk': {
+      id: '/sdk'
+      path: '/sdk'
+      fullPath: '/sdk'
+      preLoaderRoute: typeof SdkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/studio': {
+      id: '/studio'
+      path: '/studio'
+      fullPath: '/studio'
+      preLoaderRoute: typeof StudioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/wallet': {
@@ -526,6 +648,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/district/$slug'
       preLoaderRoute: typeof DistrictSlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/extenders/': {
+      id: '/extenders/'
+      path: '/'
+      fullPath: '/extenders/'
+      preLoaderRoute: typeof ExtendersIndexRouteImport
+      parentRoute: typeof ExtendersRoute
+    }
+    '/extenders/$slug': {
+      id: '/extenders/$slug'
+      path: '/$slug'
+      fullPath: '/extenders/$slug'
+      preLoaderRoute: typeof ExtendersSlugRouteImport
+      parentRoute: typeof ExtendersRoute
     }
     '/profile/$address': {
       id: '/profile/$address'
@@ -607,6 +743,20 @@ const CollectionsRouteWithChildren = CollectionsRoute._addFileChildren(
   CollectionsRouteChildren,
 )
 
+interface ExtendersRouteChildren {
+  ExtendersSlugRoute: typeof ExtendersSlugRoute
+  ExtendersIndexRoute: typeof ExtendersIndexRoute
+}
+
+const ExtendersRouteChildren: ExtendersRouteChildren = {
+  ExtendersSlugRoute: ExtendersSlugRoute,
+  ExtendersIndexRoute: ExtendersIndexRoute,
+}
+
+const ExtendersRouteWithChildren = ExtendersRoute._addFileChildren(
+  ExtendersRouteChildren,
+)
+
 interface ApiPublicBlocksHeightRouteChildren {
   ApiPublicBlocksHeightMetaRoute: typeof ApiPublicBlocksHeightMetaRoute
 }
@@ -624,16 +774,21 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   BuildsRoute: BuildsRoute,
+  CitiesRoute: CitiesRoute,
   CoinsRoute: CoinsRoute,
   CollectionsRoute: CollectionsRouteWithChildren,
   DashboardRoute: DashboardRoute,
+  ExtendersRoute: ExtendersRouteWithChildren,
   Land101Route: Land101Route,
   LeasesRoute: LeasesRoute,
   MapRoute: MapRoute,
   MarketplaceRoute: MarketplaceRoute,
   McpRoute: McpRoute,
+  MyWorldRoute: MyWorldRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SdkRoute: SdkRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  StudioRoute: StudioRoute,
   WalletRoute: WalletRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
