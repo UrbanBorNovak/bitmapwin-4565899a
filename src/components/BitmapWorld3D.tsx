@@ -24,6 +24,7 @@ import { ExtenderHud } from "@/components/extenders/ExtenderHud";
 import { runtimeDeploymentsQuery, type RuntimeDeployment } from "@/lib/extender-code";
 import type { RunningExtender } from "@/lib/use-extender-runtimes";
 import { ShooterLayer, type ShooterStats } from "@/components/game/ShooterLayer";
+import { DesertLife } from "@/components/game/DesertLife";
 import {
   WEAPONS,
   WEAPON_ORDER,
@@ -1460,6 +1461,9 @@ const WorldScene = memo(function WorldScene({
         />
       </Environment>
       <LandSurface colors={colors} tipHeight={tipHeight} />
+      {cameraMode !== "map" ? (
+        <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active />
+      ) : null}
       <DistrictBlocks tipHeight={tipHeight} colors={colors} />
       <HolderColumns owners={owners} mine={mine} bitcoin={colors.bitcoin} />
       <OwnedBitmapGlow heights={ownedHeights} bitcoin={colors.bitcoin} />
