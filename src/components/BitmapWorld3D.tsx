@@ -1363,6 +1363,9 @@ const WorldScene = memo(function WorldScene({
   };
   deployments: RuntimeDeployment[];
   onRunning: (running: RunningExtender[]) => void;
+  shooter: boolean;
+  onShootPeer: (id: string) => void;
+  onShooterStats: (stats: ShooterStats) => void;
 }) {
   // Pointer moves fire dozens of times a second; each React state update re-renders
   // the whole overlay. Coalesce them: at most ~20 hover updates a second, and skip
