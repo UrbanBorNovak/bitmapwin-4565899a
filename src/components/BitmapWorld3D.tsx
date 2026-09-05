@@ -1888,7 +1888,7 @@ export function BitmapWorld3D({
               if (!exploring) setCameraMode("first");
             }}
           >
-            {shooter ? "[ SHOOTER · ON ]" : "[ SHOOTER ]"}
+            {shooter ? "[ MOSIN NAGANT · EQUIPPED ]" : "[ EQUIP A WEAPON ]"}
           </Button>
           <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
             {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
