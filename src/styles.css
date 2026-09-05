@@ -666,3 +666,48 @@
 @media (prefers-reduced-motion: reduce) {
   [style*="land101-"] { animation: none !important; }
 }
+
+/* Docs infographics */
+@keyframes infogfx-sweep {
+  0% { transform: translateX(-100%); }
+  60%, 100% { transform: translateX(0); }
+}
+
+@keyframes infogfx-runner {
+  0% { left: 0%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+
+@keyframes infogfx-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes infogfx-cell {
+  0%, 100% { background-color: var(--color-background); }
+  50% { background-color: color-mix(in oklab, var(--bitcoin) 45%, transparent); }
+}
+
+.infogfx-sweep {
+  animation: infogfx-sweep 2.4s ease-in-out infinite;
+}
+
+.infogfx-runner {
+  animation: infogfx-runner 3.2s linear infinite;
+}
+
+.infogfx-rise {
+  animation: infogfx-rise 0.5s ease-out both;
+}
+
+.infogfx-cell {
+  animation: infogfx-cell 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .infogfx-sweep, .infogfx-runner, .infogfx-rise, .infogfx-cell {
+    animation: none !important;
+  }
+}
