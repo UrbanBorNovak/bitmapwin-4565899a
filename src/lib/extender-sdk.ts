@@ -233,10 +233,14 @@ for (let i = 0; i < 6; i++) {
 // harbour master's hut + quest board
 world.prop({ shape: "box", x: -2.6, z: -1.6, w: 1.6, h: 1.1, d: 1.4, color: DECK, y: 0.55 });
 world.prop({ shape: "cone", x: -2.6, z: -1.6, w: 1.3, h: 0.6, color: PLANK, y: 1.4 });
+const signed = state.get("signed", false);
 const board = world.prop({
+  id: "quest-board", persist: true,
   shape: "box", x: -1.4, z: -0.6, w: 0.9, h: 0.9, d: 0.12,
-  color: GOLD, y: 0.6, label: "QUEST BOARD", glow: true, interactive: true,
+  color: signed ? SAIL : GOLD, y: 0.6,
+  label: signed ? "SIGNED ON" : "QUEST BOARD", glow: true, interactive: true,
 });
+
 
 // braziers marking the harbour mouth
 world.prop({ shape: "sphere", x: -3.4, z: 4.4, w: 0.34, color: GOLD, y: 0.5, glow: true });
