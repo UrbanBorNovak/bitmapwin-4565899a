@@ -135,6 +135,45 @@ export function build(id: StructureId, x: number, z: number, yaw = 0) {
   return placed;
 }
 
+/**
+ * A FULL CAMP — shelter, fire and watchtower laid out around where you stand,
+ * paid for in one go. Either the whole camp goes up or nothing is spent.
+ */
+export const CAMP_RECIPE: StructureRecipe = {
+  id: "hide-tent",
+  name: "FULL CAMP",
+  blurb: "Shelter, fire and watchtower raised together.",
+  cost: { hide: 11, fang: 2, "gold-nugget": 2 },
+};
+
+export function buildCamp(x: number, z: number, yaw = 0) {
+  hydrate();
+  if (!spendItems(CAMP_RECIPE.cost)) return null;
+  const spread = 2.4;
+  const layout: { id: StructureId; dx: number; dz: number }[] = [
+    { id: "hide-tent", dx: -spread, dz: 0 },
+    { id: "camp-fire", dx: 0, dz: 0 },
+    { id: "watchtower", dx: spread * 1.1, dz: spread * 0.6 },
+  ];
+  const stamp = Date.now();
+  const placed = layout.map((part, index) => {
+    const cos = Math.cos(yaw);
+    const sin = Math.sin(yaw);
+    return {
+      key: `camp-${stamp}-${index}`,
+      id: part.id,
+      x: x + part.dx * cos - part.dz * sin,
+      z: z + part.dx * sin + part.dz * cos,
+      yaw,
+      at: stamp,
+    } satisfies PlacedStructure;
+  });
+  builds = [...builds, ...placed];
+  commit();
+  return placed;
+}
+
+
 export function removeBuild(key: string) {
   hydrate();
   builds = builds.filter((item) => item.key !== key);
