@@ -10,7 +10,14 @@ import { useAuthSession } from "@/lib/auth";
 import { heldHeightsQuery } from "@/lib/held-parcels";
 import { myWalletLinksQuery } from "@/lib/wallet-links";
 import { useWalletSession } from "@/lib/wallet-session";
-import { SDK_VERSION, categoryLabel, slugify } from "@/lib/extenders";
+import {
+  SDK_VERSION,
+  categoryLabel,
+  extenderVersionsQuery,
+  myExtendersQuery,
+  slugify,
+  type Extender,
+} from "@/lib/extenders";
 import { createExtenderFn, deployExtenderFn, publishVersionFn } from "@/lib/extenders.functions";
 import { buildExtenderPackageFn } from "@/lib/extender-ai.functions";
 import { RUNTIME_LIMITS } from "@/lib/extender-sdk";
