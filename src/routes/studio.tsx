@@ -391,7 +391,7 @@ function PublishVersionForm({ extenderId }: { extenderId: string }) {
           })}
         </div>
       </div>
-      <button type="button" className="btn-term mt-4 w-full sm:w-auto" disabled={run.isPending} onClick={() => run.mutate()}>
+      <button type="button" className="btn-term mt-4 w-full sm:w-auto" disabled={run.isPending || tooLarge} onClick={() => run.mutate()}>
         {run.isPending ? "[ PUBLISHING… ]" : "[ PUBLISH VERSION ]"}
       </button>
     </div>
