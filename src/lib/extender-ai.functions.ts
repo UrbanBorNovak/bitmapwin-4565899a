@@ -31,9 +31,12 @@ export const buildExtenderPackageFn = createServerFn({ method: "POST" })
       .object({
         prompt: z.string().trim().min(8).max(1200),
         height: z.number().int().nonnegative().max(3_000_000).default(36095),
+        tier: z.enum(BUILD_TIER_IDS).default(DEFAULT_BUILD_TIER),
+        address: z.string().trim().min(16).max(120),
       })
       .parse(data),
   )
+
   .handler(async ({ data, context }) => {
     const { buildExtenderPackage } = await import("@/lib/extender-ai.server");
     const { assertControls, bitBalance, spendBit } = await import("@/lib/coins.server");
