@@ -171,18 +171,38 @@ export function ShooterLayer({
       setTracers((current) => [...current.slice(-5), { id, from: origin.clone(), to: end, born: now }]);
     }
 
+    const impact = best
+      ? best.point.clone()
+      : origin.clone().addScaledVector(ray.direction, range * 0.35);
+    setBursts((current) => [...current.slice(-3), { id: ++nextBurst.current, at: impact, born: now }]);
+
     if (!best) return;
     const reach = Math.hypot(best.peer.x - me.x, best.peer.z - me.z);
     if (reach > ATTACK_RANGE) {
       flashNote(`${best.peer.handle} OUT OF COMBAT RANGE`);
       return;
     }
-    onShootPeer(best.peer.id);
+    // SPLASH — the strike lands on the target and everyone caught in the blast
+    // around the impact, still inside the world's shared combat range.
+    const splash = STRIDE * spec.splashStrides;
+    const caught = cursorsRef.current.filter((peer) => {
+      if (peer.hp <= 0) return false;
+      if (peer.id === best!.peer.id) return true;
+      const near = Math.hypot(peer.x - impact.x, peer.z - impact.z) <= splash;
+      const inRange = Math.hypot(peer.x - me.x, peer.z - me.z) <= ATTACK_RANGE;
+      return near && inRange;
+    });
+    for (const peer of caught) onShootPeer(peer.id);
     playSfx("hit");
-    setScore((current) => current + 25);
-    setKills((current) => (best!.peer.hp - SHOT_DAMAGE <= 0 ? current + 1 : current));
-    flashNote(`HIT ${best.peer.handle}`);
+    setScore((current) => current + 25 * caught.length);
+    setKills((current) => current + caught.filter((peer) => peer.hp - SHOT_DAMAGE <= 0).length);
+    flashNote(
+      caught.length > 1
+        ? `SPLASH HIT ${caught.length} VISITORS`
+        : `HIT ${best.peer.handle}`,
+    );
   }, [active, ammo, camera, flashNote, onShootPeer, pose, reloading, spec, weapon]);
+
 
   // Mouse / touch strike on the canvas, R to reload.
   useEffect(() => {
