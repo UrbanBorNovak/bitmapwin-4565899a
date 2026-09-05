@@ -332,14 +332,25 @@ function start(message) {
   });
   seed = (Math.abs(message.context.height) % 2147483647) + 7;
 
+  // restore anything the previous session saved before code runs
+  var saved = message.state || {};
+  var savedShared = saved.shared && typeof saved.shared === "object" ? saved.shared : {};
+  playerState = saved.player && typeof saved.player === "object" ? saved.player : {};
+  savedQuests = savedShared.__quests && typeof savedShared.__quests === "object" ? savedShared.__quests : {};
+  savedProps = savedShared.__props && typeof savedShared.__props === "object" ? savedShared.__props : {};
+  sharedState = {};
+  Object.keys(savedShared).forEach(function (key) {
+    if (key !== "__quests" && key !== "__props") sharedState[key] = savedShared[key];
+  });
+
   var api = buildApi();
   var blocked = [
     "fetch", "XMLHttpRequest", "WebSocket", "importScripts", "EventSource", "indexedDB",
     "caches", "Request", "Response", "postMessage", "onmessage", "close", "self",
     "globalThis", "Worker", "SharedWorker", "Notification", "navigator", "location",
   ];
-  var args = ["land", "world", "quest", "on", "log", "random", "randomInt"].concat(blocked);
-  var values = [land, api.world, api.quest, api.on, api.log, api.random, api.randomInt].concat(
+  var args = ["land", "world", "quest", "state", "on", "log", "random", "randomInt"].concat(blocked);
+  var values = [land, api.world, api.quest, api.state, api.on, api.log, api.random, api.randomInt].concat(
     blocked.map(function () {
       return undefined;
     }),
@@ -358,7 +369,10 @@ function start(message) {
     if (stopped) return;
     time += LIMITS.tickMs / 1000;
     fire("tick", { time: time, dt: LIMITS.tickMs / 1000, player: lastPlayer });
-    if (!stopped) snapshot();
+    if (!stopped) {
+      snapshot();
+      flush(false);
+    }
   }, LIMITS.tickMs);
 }
 
@@ -374,19 +388,23 @@ onmessage = function (event) {
     lastPlayer = message.player;
     if (!had && lastPlayer) fire("enter", { player: lastPlayer });
     if (had && !lastPlayer) fire("leave", {});
+    if (had && !lastPlayer) flush(true);
     return;
   }
   if (message.type === "interact") {
     fire("interact", { propId: message.propId, player: lastPlayer });
     snapshot();
+    flush(true);
     return;
   }
   if (message.type === "stop") {
+    flush(true);
     stopped = true;
     if (timer) clearInterval(timer);
     close();
   }
 };
+
 `;
 
 let cachedUrl: string | null = null;
