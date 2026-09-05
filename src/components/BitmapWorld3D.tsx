@@ -1695,6 +1695,24 @@ export function BitmapWorld3D({
     setBuildNote(`${recipeFor(id)?.name ?? "STRUCTURE"} BUILT WHERE YOU STAND`);
   }, []);
 
+  /** Raise a whole camp — shelter, fire and watchtower — around your feet. */
+  const placeCamp = useCallback(() => {
+    const current = pose.current;
+    const placed = buildCamp(
+      current?.x ?? 0,
+      current?.z ?? 0,
+      current?.yaw ?? 0,
+      AVATAR_U,
+    );
+    if (!placed) {
+      setBuildNote("NOT ENOUGH MATERIALS FOR A FULL CAMP");
+      return;
+    }
+    playSfx("ui");
+    setBuildNote("CAMP RAISED · SHELTER, FIRE AND WATCHTOWER STAY PUT");
+  }, []);
+
+
   // B opens and closes the build panel while you are out in the world.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
