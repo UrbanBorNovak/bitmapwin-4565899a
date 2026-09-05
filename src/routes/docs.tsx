@@ -1,4 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  BedrockStackInfographic,
+  DeployFlowInfographic,
+  FirstIsFirstInfographic,
+  LoopInfographic,
+  ParcelsInfographic,
+  RightsInfographic,
+} from "@/components/docs/Infographics";
+
 
 export const Route = createFileRoute("/docs")({
   head: () => {
