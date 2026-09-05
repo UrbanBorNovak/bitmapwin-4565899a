@@ -15,6 +15,7 @@ import { Route as BuildsRouteImport } from './routes/builds'
 import { Route as CitiesRouteImport } from './routes/cities'
 import { Route as CoinsRouteImport } from './routes/coins'
 import { Route as CollectionsRouteImport } from './routes/collections'
+import { Route as CreateRouteImport } from './routes/create'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ExtendRouteImport } from './routes/extend'
 import { Route as ExtendersRouteImport } from './routes/extenders'
@@ -75,6 +76,11 @@ const CoinsRoute = CoinsRouteImport.update({
 const CollectionsRoute = CollectionsRouteImport.update({
   id: '/collections',
   path: '/collections',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CreateRoute = CreateRouteImport.update({
+  id: '/create',
+  path: '/create',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -243,6 +249,7 @@ export interface FileRoutesByFullPath {
   '/cities': typeof CitiesRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
+  '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
   '/extend': typeof ExtendRoute
   '/extenders': typeof ExtendersRouteWithChildren
@@ -281,6 +288,7 @@ export interface FileRoutesByTo {
   '/builds': typeof BuildsRoute
   '/cities': typeof CitiesRoute
   '/coins': typeof CoinsRoute
+  '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
   '/extend': typeof ExtendRoute
   '/land-101': typeof Land101Route
@@ -320,6 +328,7 @@ export interface FileRoutesById {
   '/cities': typeof CitiesRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
+  '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
   '/extend': typeof ExtendRoute
   '/extenders': typeof ExtendersRouteWithChildren
@@ -361,6 +370,7 @@ export interface FileRouteTypes {
     | '/cities'
     | '/coins'
     | '/collections'
+    | '/create'
     | '/dashboard'
     | '/extend'
     | '/extenders'
@@ -399,6 +409,7 @@ export interface FileRouteTypes {
     | '/builds'
     | '/cities'
     | '/coins'
+    | '/create'
     | '/dashboard'
     | '/extend'
     | '/land-101'
@@ -437,6 +448,7 @@ export interface FileRouteTypes {
     | '/cities'
     | '/coins'
     | '/collections'
+    | '/create'
     | '/dashboard'
     | '/extend'
     | '/extenders'
@@ -477,6 +489,7 @@ export interface RootRouteChildren {
   CitiesRoute: typeof CitiesRoute
   CoinsRoute: typeof CoinsRoute
   CollectionsRoute: typeof CollectionsRouteWithChildren
+  CreateRoute: typeof CreateRoute
   DashboardRoute: typeof DashboardRoute
   ExtendRoute: typeof ExtendRoute
   ExtendersRoute: typeof ExtendersRouteWithChildren
@@ -547,6 +560,13 @@ declare module '@tanstack/react-router' {
       path: '/collections'
       fullPath: '/collections'
       preLoaderRoute: typeof CollectionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/create': {
+      id: '/create'
+      path: '/create'
+      fullPath: '/create'
+      preLoaderRoute: typeof CreateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -817,6 +837,7 @@ const rootRouteChildren: RootRouteChildren = {
   CitiesRoute: CitiesRoute,
   CoinsRoute: CoinsRoute,
   CollectionsRoute: CollectionsRouteWithChildren,
+  CreateRoute: CreateRoute,
   DashboardRoute: DashboardRoute,
   ExtendRoute: ExtendRoute,
   ExtendersRoute: ExtendersRouteWithChildren,

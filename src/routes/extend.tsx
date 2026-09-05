@@ -64,8 +64,8 @@ function ExtendPage() {
         <Choice
           glyph="02"
           title="CREATE WITH AI"
-          body="Describe what you want to build in plain English and let the builder write the package for you."
-          to="/studio"
+          body="Describe what you want to build in plain English. The builder plans it, writes the code, runs it, then deploys it."
+          to="/create"
           action="[ DESCRIBE IT ]"
           badge={<DataBadge kind="live" note="GEMINI BUILDER" />}
         />
@@ -121,7 +121,7 @@ function Choice({
   glyph: string;
   title: string;
   body: string;
-  to: "/studio" | "/extenders";
+  to: "/studio" | "/extenders" | "/create";
   action: string;
   badge: React.ReactNode;
 }) {
