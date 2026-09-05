@@ -166,11 +166,12 @@ const HolderColumns = memo(function HolderColumns({
     entries.forEach(([height, owner], index) => {
       const col = height % GRID;
       const row = Math.floor(height / GRID);
-      // Held districts read as flat coloured plots painted on the land — no
-      // raised blocks standing up out of the terrain.
-      const tile = AVATAR_U * 0.06;
+      // Held districts read as chunky voxel plots: a low cube sitting on the
+      // land with a small gap to its neighbours so the grid stays legible.
+      const tile = AVATAR_U * 0.5;
       dummy.position.set(worldX(col), tile / 2, worldZ(row));
-      dummy.scale.set(CELL * 0.9, tile, CELL * 0.9);
+      dummy.scale.set(CELL * 0.86, tile, CELL * 0.86);
+
 
       dummy.updateMatrix();
       mesh.setMatrixAt(index, dummy.matrix);
