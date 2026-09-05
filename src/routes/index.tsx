@@ -180,10 +180,14 @@ function Index() {
       </section>
 
       <section className="mx-auto max-w-[1600px] px-4 pt-16 md:px-8">
-        <div className="grid border-y border-border md:grid-cols-3 md:divide-x md:divide-border">
-          <Journey n="01" title="DISCOVER" body="Find a BITMAP by price, collection, rarity, or block number." to="/marketplace" action="BROWSE MARKET" />
-          <Journey n="02" title="OWN" body="Buy directly from signed listings or place a bid with your connected wallet." to="/marketplace" action="SEE LISTINGS" />
-          <Journey n="03" title="BUILD" body="Turn your BITMAP into a profile, gallery, shop, game, or on-chain world." to="/builds" action="EXPLORE BUILDS" />
+        <div className="label text-bitcoin">THE LOOP</div>
+        <h2 className="display mt-2 text-2xl md:text-3xl">OWN · EXTEND · DEPLOY · EXPERIENCE · PUBLISH</h2>
+        <div className="mt-6 grid border-y border-border md:grid-cols-5 md:divide-x md:divide-border">
+          <Journey n="01" title="OWN" body="Hold a piece of permanent Bitcoin-derived territory." to="/marketplace" action="FIND LAND" />
+          <Journey n="02" title="EXTEND" body="Add experiences created by you, other builders or AI." to="/extend" action="EXTEND LAND" />
+          <Journey n="03" title="DEPLOY" body="Put a tested package onto your own land." to="/studio" action="OPEN STUDIO" />
+          <Journey n="04" title="EXPERIENCE" body="Players enter your land and interact with what runs there." to="/map" action="ENTER THE WORLD" />
+          <Journey n="05" title="PUBLISH" body="List your creation so anyone can deploy it too." to="/extenders" action="SEE THE MARKET" />
         </div>
       </section>
     </div>
@@ -199,9 +203,21 @@ function MarketStat({ k, v }: { k: string; v: string }) {
   );
 }
 
-function Journey({ n, title, body, to, action }: { n: string; title: string; body: string; to: "/marketplace" | "/builds"; action: string }) {
+function Journey({
+  n,
+  title,
+  body,
+  to,
+  action,
+}: {
+  n: string;
+  title: string;
+  body: string;
+  to: "/marketplace" | "/builds" | "/extend" | "/studio" | "/map" | "/extenders";
+  action: string;
+}) {
   return (
-    <div className="border-b border-border py-7 md:border-b-0 md:px-7 first:md:pl-0 last:md:pr-0">
+    <div className="border-b border-border py-7 md:border-b-0 md:px-6 first:md:pl-0 last:md:pr-0">
       <div className="label text-bitcoin">{n}</div>
       <div className="display mt-4 text-xl">{title}</div>
       <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">{body}</p>
@@ -209,3 +225,4 @@ function Journey({ n, title, body, to, action }: { n: string; title: string; bod
     </div>
   );
 }
+
