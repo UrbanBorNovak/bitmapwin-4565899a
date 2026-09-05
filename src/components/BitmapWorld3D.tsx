@@ -1798,6 +1798,18 @@ export function BitmapWorld3D({
         playSfx("jump");
         return;
       }
+      // 1 / 2 / 3 pull a weapon out, 0 puts it away — the belt, in game.
+      const slot = ["Digit1", "Digit2", "Digit3"].indexOf(event.code);
+      if (slot >= 0) {
+        event.preventDefault();
+        equipWeapon(WEAPON_ORDER[slot] ?? null);
+        return;
+      }
+      if (event.code === "Digit0" || event.code === "Backquote") {
+        event.preventDefault();
+        equipWeapon(null);
+        return;
+      }
       if (event.code !== "KeyF") return;
       event.preventDefault();
       unlockAudio();
@@ -1806,7 +1818,26 @@ export function BitmapWorld3D({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [attackNearest, exploring]);
+  }, [attackNearest, equipWeapon, exploring]);
+
+  // Mouse wheel cycles through the belt while you are in the world.
+  useEffect(() => {
+    if (!exploring || !weapon) return;
+    let last = 0;
+    const onWheel = (event: WheelEvent) => {
+      if (Math.abs(event.deltaY) < 4) return;
+      const now = performance.now();
+      if (now - last < 180) return;
+      last = now;
+      event.preventDefault();
+      const at = WEAPON_ORDER.indexOf(weapon);
+      const step = event.deltaY > 0 ? 1 : -1;
+      const next = (at + step + WEAPON_ORDER.length) % WEAPON_ORDER.length;
+      equipWeapon(WEAPON_ORDER[next]!);
+    };
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => window.removeEventListener("wheel", onWheel);
+  }, [equipWeapon, exploring, weapon]);
 
   const moveCamera = (type: CameraMove) => {
     setCameraMode("map");
