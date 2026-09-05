@@ -73,7 +73,7 @@ type Design = {
 
 type ModelAsset = { inscriptionId: string; height: number; triangleCount: number; animationCount: number };
 
-type Deployed = { slug: string; height: number; semver: string };
+type Deployed = { slug: string; height: number; semver: string; extenderId: string };
 
 
 function CreatePage() {
