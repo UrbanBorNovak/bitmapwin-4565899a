@@ -1778,7 +1778,7 @@ export function BitmapWorld3D({
 
   return (
     <div className={className}>
-      <div className="mb-2 flex flex-wrap items-center gap-2">
+      <div className="hud-toolbar border-b-0">
         <form
           className="flex items-center gap-1"
           onSubmit={(event) => {
