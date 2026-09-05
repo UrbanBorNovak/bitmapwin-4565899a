@@ -1333,6 +1333,9 @@ const WorldScene = memo(function WorldScene({
   self,
   deployments,
   onRunning,
+  shooter,
+  onShootPeer,
+  onShooterStats,
 }: {
   colors: WorldColors;
   command: { type: CameraMove; nonce: number; height?: number };
