@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { DataBadge } from "@/components/extenders/DataBadge";
 import { LAND_PERMISSIONS, SDK_VERSION } from "@/lib/extenders";
+import { RUNTIME_LIMITS, SDK_MODULES, SDK_TYPES, STARTER_TEMPLATES } from "@/lib/extender-sdk";
 
 export const Route = createFileRoute("/sdk")({
   head: () => {
