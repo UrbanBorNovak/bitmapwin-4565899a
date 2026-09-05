@@ -185,6 +185,8 @@ function ExtenderDetail() {
 function DeployPanel({ extenderId, versionId }: { extenderId: string; versionId: string | null }) {
   const { session } = useAuthSession();
   const [height, setHeight] = useState("");
+  const [configText, setConfigText] = useState("{}");
+  const [configInvalid, setConfigInvalid] = useState(false);
   const deploy = useServerFn(deployExtenderFn);
   const queryClient = useQueryClient();
 
@@ -193,7 +195,21 @@ function DeployPanel({ extenderId, versionId }: { extenderId: string; versionId:
       if (!versionId) throw new Error("THIS EXTENDER HAS NO PUBLISHED VERSION TO DEPLOY");
       const block = Number(height);
       if (!Number.isInteger(block) || block < 0) throw new Error("ENTER A VALID BITMAP NUMBER");
-      return deploy({ data: { extenderId, versionId, height: block, config: {} } });
+      let config: Record<string, unknown> = {};
+      try {
+        const parsed = JSON.parse(configText);
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          config = parsed as Record<string, unknown>;
+          setConfigInvalid(false);
+        } else {
+          setConfigInvalid(true);
+          throw new Error("CONFIG MUST BE A JSON OBJECT");
+        }
+      } catch {
+        setConfigInvalid(true);
+        throw new Error("CONFIG JSON IS INVALID");
+      }
+      return deploy({ data: { extenderId, versionId, height: block, config } });
     },
     onSuccess: (result) => {
       toast("EXTENDER DEPLOYED", { description: `AUTHORISED VIA ${String(result.grantedVia).toUpperCase()}` });
@@ -201,6 +217,7 @@ function DeployPanel({ extenderId, versionId }: { extenderId: string; versionId:
       queryClient.invalidateQueries({ queryKey: ["extender-stats"] });
       queryClient.invalidateQueries({ queryKey: ["world-deployments"] });
       setHeight("");
+      setConfigText("{}");
     },
     onError: (error) => toast("DEPLOY REFUSED", { description: (error as Error).message }),
   });
@@ -220,6 +237,27 @@ function DeployPanel({ extenderId, versionId }: { extenderId: string; versionId:
             placeholder="BITMAP number, e.g. 840000"
             className="w-full border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-bitcoin"
           />
+          <textarea
+            value={configText}
+            onChange={(e) => {
+              setConfigText(e.target.value);
+              try {
+                const parsed = JSON.parse(e.target.value);
+                setConfigInvalid(!(parsed && typeof parsed === "object" && !Array.isArray(parsed)));
+              } catch {
+                setConfigInvalid(true);
+              }
+            }}
+            placeholder='{"greeting":"Welcome traveller","difficulty":"normal"}'
+            rows={3}
+            className="w-full border border-border bg-background px-3 py-2 font-mono text-[11px] leading-relaxed outline-none focus:border-bitcoin"
+            data-no-translate
+          />
+          {configInvalid ? (
+            <p className="font-mono text-[10px] text-destructive">INVALID JSON — MUST BE AN OBJECT</p>
+          ) : (
+            <p className="font-mono text-[10px] text-muted-foreground">PASSED TO land.config AT RUNTIME</p>
+          )}
           <button type="button" className="btn-term w-full" disabled={run.isPending} onClick={() => run.mutate()}>
             {run.isPending ? "[ VERIFYING OWNERSHIP… ]" : "[ DEPLOY ]"}
           </button>
