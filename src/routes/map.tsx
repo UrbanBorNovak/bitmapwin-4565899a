@@ -101,6 +101,10 @@ function MapPage() {
         </span>
       </div>
 
+      <div className="mt-4">
+        <MvpFlowRail active="map" {...(height === undefined ? {} : { height })} />
+      </div>
+
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
         <BitmapWorld3D
           tipHeight={tipHeight}
