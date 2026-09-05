@@ -33,6 +33,14 @@ var lastPlayer = null;
 var tickErrors = 0;
 var stopped = false;
 var timer = null;
+var sharedState = {};
+var playerState = {};
+var savedQuests = {};
+var savedProps = {};
+var persistIds = {};
+var dirty = false;
+var lastFlush = 0;
+
 
 function fail(message) {
   if (stopped) return;
