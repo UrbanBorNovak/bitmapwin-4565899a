@@ -362,7 +362,256 @@ if (IDS.length === 0) {
 }
 `;
 
+const WELCOME_GATE_CODE = `// WELCOME GATE — an arrival point that tells visitors what this land is and how to move.
+const ORANGE = "#f7931a";
+const DARK = "#1c1c1c";
+
+world.prop({ shape: "plane", x: 0, z: 0, w: 9, d: 9, color: "#141414", y: 0.01 });
+
+// gate frame at the northern edge
+world.prop({ shape: "box", x: -1.6, z: -3.4, w: 0.4, h: 3.2, d: 0.4, color: DARK, y: 1.6 });
+world.prop({ shape: "box", x: 1.6, z: -3.4, w: 0.4, h: 3.2, d: 0.4, color: DARK, y: 1.6 });
+world.prop({ shape: "box", x: 0, z: -3.4, w: 3.6, h: 0.4, d: 0.4, color: ORANGE, y: 3.4, glow: true, label: land.height + ".BITMAP" });
+
+// path of markers leading inward
+for (let i = 0; i < 6; i++) {
+  world.prop({ shape: "box", x: -0.9, z: -2.6 + i * 0.9, w: 0.18, h: 0.06, d: 0.7, color: "#333", y: 0.05 });
+  world.prop({ shape: "box", x: 0.9, z: -2.6 + i * 0.9, w: 0.18, h: 0.06, d: 0.7, color: "#333", y: 0.05 });
+}
+
+// info boards
+const BOARDS = [
+  { z: 0.4, x: -2.6, text: "WASD TO WALK · SPACE TO JUMP" },
+  { z: 1.6, x: -2.6, text: "CLICK GLOWING OBJECTS" },
+  { z: 0.4, x: 2.6, text: "QUESTS SHOW IN THE HUD" },
+  { z: 1.6, x: 2.6, text: "OWNER: " + (land.owner ? "ON RECORD" : "UNCLAIMED") },
+];
+BOARDS.forEach(function (b, i) {
+  world.prop({ shape: "cylinder", x: b.x, z: b.z, w: 0.12, h: 1.0, color: DARK, y: 0.5 });
+  world.prop({ shape: "box", x: b.x, z: b.z, w: 1.5, h: 0.7, d: 0.08, color: "#101010", y: 1.2, label: b.text });
+  if (i === 0) log("welcome gate ready");
+});
+
+// guest counter — saved to the land, so it keeps counting between sessions
+const stone = world.prop({
+  id: "guest-stone", persist: true,
+  shape: "box", x: 0, z: 2.4, w: 1.1, h: 1.1, d: 1.1, color: DARK, y: 0.55,
+  label: "GUESTS: " + state.get("guests", 0), interactive: true, glow: false,
+});
+
+quest.add({ id: "sign-guestbook", title: "SIGN THE GUESTBOOK", detail: "Touch the stone in the courtyard.", reward: "WELCOMED" });
+
+on("enter", function () {
+  if (state.player.get("counted", false)) return;
+  state.player.set("counted", true);
+  const total = state.add("guests", 1);
+  stone.set({ label: "GUESTS: " + total });
+  log("guest " + total + " arrived");
+});
+on("interact", function (e) {
+  if (e.propId !== stone.id) return;
+  quest.state("sign-guestbook", "done");
+  stone.set({ color: ORANGE });
+});
+`;
+
+const PARKOUR_CODE = `// SKY PARKOUR — a jumping course with checkpoints and a personal best.
+const PAD = "#2b2b2b";
+const HIT = "#f7931a";
+
+world.prop({ shape: "plane", x: 0, z: 0, w: 9, d: 9, color: "#101010", y: 0.01 });
+
+const COURSE = [
+  { x: -3.2, z: -3.0, y: 0.6 },
+  { x: -1.6, z: -1.8, y: 1.4 },
+  { x: 0.2, z: -0.6, y: 2.2 },
+  { x: 1.8, z: 0.8, y: 3.0 },
+  { x: 3.2, z: 2.4, y: 3.8 },
+  { x: 0.0, z: 3.4, y: 4.6 },
+];
+
+const pads = COURSE.map(function (p, i) {
+  return world.prop({
+    shape: "box", x: p.x, z: p.z, y: p.y, w: 1.2, h: 0.16, d: 1.2,
+    color: PAD, label: "CP " + (i + 1),
+  });
+});
+
+const flag = world.prop({ shape: "cone", x: 0, z: 3.4, y: 5.2, w: 0.5, h: 0.9, color: HIT, glow: true, label: "SUMMIT" });
+
+quest.add({
+  id: "clear-course",
+  title: "CLEAR THE SKY COURSE",
+  detail: "Touch all six checkpoints, then reach the summit flag.",
+  reward: "PARKOUR RUNNER",
+});
+
+let reached = state.player.get("reached", 0);
+let best = state.get("best", 0);
+
+on("enter", function () { quest.state("clear-course", "active"); });
+
+on("tick", function (e) {
+  flag.set({ y: 5.2 + Math.sin(e.time * 2) * 0.12, rotationY: e.time * 0.8 });
+  if (!e.player) return;
+  const next = COURSE[reached];
+  if (!next) return;
+  const near = Math.abs(e.player.x - next.x) < 0.9 && Math.abs(e.player.z - next.z) < 0.9;
+  if (!near) return;
+  const pad = pads[reached];
+  if (pad) pad.set({ color: HIT });
+  reached += 1;
+  state.player.set("reached", reached);
+  log("checkpoint " + reached + " of " + COURSE.length);
+  if (reached >= COURSE.length) {
+    quest.state("clear-course", "done");
+    if (best === 0) { best = state.add("clears", 1); }
+    flag.set({ label: "CLEARED" });
+  }
+});
+`;
+
+const TREASURE_CODE = `// BURIED CACHE — a treasure hunt that remembers each visitor's finds.
+const DIRT = "#2a231b";
+const GOLD = "#f7931a";
+
+world.prop({ shape: "plane", x: 0, z: 0, w: 9, d: 9, color: "#151515", y: 0.01 });
+
+// deterministic dig sites — the same land always hides them in the same places
+const SITES = [];
+for (let i = 0; i < 5; i++) {
+  SITES.push({ x: (random() * 7) - 3.5, z: (random() * 7) - 3.5 });
+}
+
+const found = state.player.get("found", []);
+
+const mounds = SITES.map(function (s, i) {
+  const done = found.indexOf(i) !== -1;
+  return world.prop({
+    id: "mound-" + i,
+    shape: "sphere", x: s.x, z: s.z, y: 0.18, w: 0.9,
+    color: done ? GOLD : DIRT, glow: done, interactive: true,
+    label: done ? "FOUND" : "DIG",
+  });
+});
+
+world.prop({ shape: "box", x: 0, z: -4.2, w: 1.6, h: 0.9, d: 0.12, color: "#101010", y: 0.7, label: "FIVE CACHES BURIED HERE" });
+
+quest.add({
+  id: "find-caches",
+  title: "FIND FIVE CACHES",
+  detail: "Dig the mounds scattered across " + land.height + ".BITMAP.",
+  reward: "CACHE HUNTER",
+});
+quest.state("find-caches", found.length > 0 ? (found.length >= 5 ? "done" : "active") : "open");
+
+on("interact", function (e) {
+  for (let i = 0; i < mounds.length; i++) {
+    if (mounds[i].id !== e.propId) continue;
+    const list = state.player.get("found", []);
+    if (list.indexOf(i) !== -1) return;
+    list.push(i);
+    state.player.set("found", list);
+    state.add("digs", 1);
+    mounds[i].set({ color: GOLD, label: "FOUND" });
+    log("cache " + list.length + " of 5 found");
+    if (list.length >= 5) quest.state("find-caches", "done");
+    else quest.state("find-caches", "active");
+    return;
+  }
+});
+`;
+
+const CAMPFIRE_CODE = `// CAMPFIRE MEETUP — a social spot with seating, a live fire and a shared tally.
+const WOOD = "#3a2a1c";
+const FIRE = "#f7931a";
+
+world.prop({ shape: "plane", x: 0, z: 0, w: 9, d: 9, color: "#121212", y: 0.01 });
+
+// fire ring
+for (let i = 0; i < 10; i++) {
+  const a = (i / 10) * Math.PI * 2;
+  world.prop({ shape: "box", x: Math.cos(a) * 0.85, z: Math.sin(a) * 0.85, w: 0.28, h: 0.2, d: 0.28, color: "#242424", y: 0.1 });
+}
+world.prop({ shape: "box", x: 0, z: 0, w: 0.9, h: 0.18, d: 0.22, color: WOOD, y: 0.12, rotationY: 0.5 });
+world.prop({ shape: "box", x: 0, z: 0, w: 0.9, h: 0.18, d: 0.22, color: WOOD, y: 0.24, rotationY: -0.7 });
+const flame = world.prop({ shape: "cone", x: 0, z: 0, w: 0.7, h: 1.0, color: FIRE, y: 0.7, glow: true });
+const ember = world.prop({ shape: "sphere", x: 0, z: 0, w: 0.22, color: FIRE, y: 1.5, glow: true });
+
+// logs to sit on
+const SEATS = [{ x: -2.1, z: 0 }, { x: 2.1, z: 0 }, { x: 0, z: -2.1 }, { x: 0, z: 2.1 }];
+SEATS.forEach(function (s) {
+  world.prop({
+    shape: "cylinder", x: s.x, z: s.z, w: 0.45, h: 1.6, color: WOOD, y: 0.22,
+    rotationY: s.x === 0 ? 0 : Math.PI / 2,
+  });
+});
+
+const tally = world.prop({
+  id: "fire-tally", persist: true,
+  shape: "box", x: -3.2, z: -3.2, w: 1.4, h: 0.8, d: 0.1, color: "#101010", y: 0.9,
+  label: "NIGHTS SHARED: " + state.get("nights", 0), interactive: true,
+});
+
+quest.add({ id: "sit-a-while", title: "SIT A WHILE", detail: "Stay by the fire for thirty seconds.", reward: "FIRESIDE" });
+
+let sat = 0;
+on("enter", function () { quest.state("sit-a-while", "active"); log("someone joined the fire"); });
+on("leave", function () { sat = 0; });
+
+on("tick", function (e) {
+  const t = e.time;
+  flame.set({ y: 0.7 + Math.sin(t * 6) * 0.08 });
+  ember.set({ x: Math.sin(t * 1.4) * 0.3, y: 1.5 + ((t * 0.6) % 1) * 0.8, z: Math.cos(t * 1.1) * 0.3 });
+  if (!e.player) return;
+  const close = Math.abs(e.player.x) < 2.4 && Math.abs(e.player.z) < 2.4;
+  if (!close) return;
+  sat += e.dt;
+  if (sat > 30 && !state.player.get("sat", false)) {
+    state.player.set("sat", true);
+    const nights = state.add("nights", 1);
+    tally.set({ label: "NIGHTS SHARED: " + nights });
+    quest.state("sit-a-while", "done");
+  }
+});
+`;
+
+const MARKET_STALL_CODE = `// LAND NOTICE BOARD — a stall that shows what this land is and who to talk to.
+// Config: { "headline": "...", "note": "...", "contact": "..." }
+const ORANGE = "#f7931a";
+const cfg = land.config || {};
+const headline = String(cfg.headline || land.height + ".BITMAP");
+const note = String(cfg.note || "OPEN LAND · BUILD HERE");
+const contact = String(cfg.contact || "NO CONTACT SET");
+
+world.prop({ shape: "plane", x: 0, z: 0, w: 8, d: 8, color: "#141414", y: 0.01 });
+
+// stall
+world.prop({ shape: "box", x: 0, z: 1.2, w: 3.4, h: 0.2, d: 1.2, color: "#2b2b2b", y: 1.0 });
+world.prop({ shape: "cylinder", x: -1.6, z: 1.2, w: 0.16, h: 1.0, color: "#222", y: 0.5 });
+world.prop({ shape: "cylinder", x: 1.6, z: 1.2, w: 0.16, h: 1.0, color: "#222", y: 0.5 });
+world.prop({ shape: "box", x: 0, z: 1.2, w: 3.8, h: 0.12, d: 1.8, color: ORANGE, y: 2.2, rotationY: 0, glow: true });
+
+// signs
+world.prop({ shape: "box", x: 0, z: -1.0, w: 3.0, h: 1.0, d: 0.1, color: "#101010", y: 1.4, label: headline, glow: true });
+world.prop({ shape: "box", x: -1.9, z: -1.0, w: 1.6, h: 0.7, d: 0.1, color: "#101010", y: 0.9, label: note });
+const card = world.prop({
+  shape: "box", x: 1.9, z: -1.0, w: 1.6, h: 0.7, d: 0.1, color: "#101010", y: 0.9,
+  label: "CONTACT", interactive: true,
+});
+
+quest.add({ id: "read-notice", title: "READ THE NOTICE", detail: "Touch the contact card at the stall.", reward: "INFORMED" });
+
+on("interact", function (e) {
+  if (e.propId !== card.id) return;
+  card.set({ label: contact, color: ORANGE });
+  quest.state("read-notice", "done");
+  log("contact shown: " + contact);
+});
+`;
+
 export type StarterTemplate = { id: string; name: string; summary: string; category: string; code: string };
+
 
 export const STARTER_TEMPLATES: StarterTemplate[] = [
   {
@@ -386,7 +635,43 @@ export const STARTER_TEMPLATES: StarterTemplate[] = [
     category: "art",
     code: GALLERY_CODE,
   },
+  {
+    id: "welcome-gate",
+    name: "WELCOME GATE",
+    summary: "Arrival gate, control hints and a saved guest counter. Good first build for any land.",
+    category: "world-systems",
+    code: WELCOME_GATE_CODE,
+  },
+  {
+    id: "sky-parkour",
+    name: "SKY PARKOUR",
+    summary: "Six floating checkpoints and a summit flag, with progress saved per visitor.",
+    category: "games",
+    code: PARKOUR_CODE,
+  },
+  {
+    id: "buried-cache",
+    name: "BURIED CACHE",
+    summary: "Five hidden caches per land, remembered for each visitor who digs them.",
+    category: "games",
+    code: TREASURE_CODE,
+  },
+  {
+    id: "campfire-meetup",
+    name: "CAMPFIRE MEETUP",
+    summary: "Seating circle, live fire and a shared tally of nights spent together.",
+    category: "world-systems",
+    code: CAMPFIRE_CODE,
+  },
+  {
+    id: "land-notice-board",
+    name: "LAND NOTICE BOARD",
+    summary: "Market stall showing a headline, note and contact set in deploy config.",
+    category: "world-systems",
+    code: MARKET_STALL_CODE,
+  },
 ];
+
 
 /** Pull runnable code out of a version manifest, whatever shape it was saved in. */
 export function codeFromManifest(manifest: unknown): string | null {
