@@ -103,6 +103,7 @@ export function TerritoryPanel({ height, ownerAddress }: { height: number; owner
         </div>
 
         <div className="flex flex-wrap gap-2 border-t border-border pt-4">
+          <Link to="/extend" search={{ height }} className="btn-term">[ EXTEND THIS LAND ]</Link>
           <Link to="/extenders" className="btn-term-ghost">[ BROWSE EXTENDERS ]</Link>
           {isOwner ? <Link to="/my-world" className="btn-term-ghost">[ MANAGE IN MY WORLD ]</Link> : null}
         </div>
@@ -110,3 +111,39 @@ export function TerritoryPanel({ height, ownerAddress }: { height: number; owner
     </section>
   );
 }
+
+function Cell({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="px-3 py-2">
+      <dt className="label text-muted-foreground">{k}</dt>
+      <dd className="mt-1 truncate font-mono text-xs text-foreground" data-no-translate>{v}</dd>
+    </div>
+  );
+}
+
+function Action({
+  to,
+  label,
+  params,
+  search,
+  primary,
+}: {
+  to: "/map" | "/builds" | "/extend" | "/leases" | "/bitmap/$block";
+  label: string;
+  params?: { block: string };
+  search?: { height: number };
+  primary?: boolean;
+}) {
+  return (
+    <Link
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      to={to as any}
+      params={params as never}
+      search={search as never}
+      className={`label px-2 py-3 text-center transition-colors hover:bg-background ${primary ? "text-bitcoin" : "text-muted-foreground hover:text-foreground"}`}
+    >
+      {label}
+    </Link>
+  );
+}
+
