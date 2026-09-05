@@ -14,9 +14,11 @@ export const generateExtenderCodeFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => inputSchema.parse(data))
   .handler(async ({ data }): Promise<{ code: string }> => {
-    const { writeExtenderCode } = await import("@/lib/extender-ai.server");
-    const code = await writeExtenderCode(data);
+    const { writeExtenderCode, listModelCatalogue } = await import("@/lib/extender-ai.server");
+    const models = await listModelCatalogue();
+    const code = await writeExtenderCode({ ...data, models });
     return { code };
+
   });
 
 /** Plans a package and writes its code in one pass. Signed-in builders only. */

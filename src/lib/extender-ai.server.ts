@@ -30,22 +30,100 @@ function stripFences(text: string): string {
   return (fenced?.[1] ?? trimmed).trim();
 }
 
+/**
+ * Real 3D asset catalogue.
+ *
+ * The only 3D models that exist are GLB/GLTF inscriptions already validated on
+ * chain and registered in `bitmap_models`. The builder hands that list to the
+ * model so generated code places genuine on-chain geometry instead of inventing
+ * inscription ids that would render as nothing.
+ */
+export type ModelAsset = {
+  inscriptionId: string;
+  height: number;
+  triangleCount: number;
+  animationCount: number;
+};
+
+export async function listModelCatalogue(limit = 20): Promise<ModelAsset[]> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("bitmap_models")
+    .select("inscription_id, bitmap_height, triangle_count, animation_count, validation_status")
+    .eq("validation_status", "approved")
+    .order("validated_at", { ascending: false })
+    .limit(limit * 3);
+  if (error) return [];
+  const seen = new Set<string>();
+  const out: ModelAsset[] = [];
+  for (const row of data ?? []) {
+    const id = String(row.inscription_id ?? "");
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push({
+      inscriptionId: id,
+      height: Number(row.bitmap_height ?? 0),
+      triangleCount: Number(row.triangle_count ?? 0),
+      animationCount: Number(row.animation_count ?? 0),
+    });
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+const INSCRIPTION_RE = /inscriptionId\s*:\s*(["'`])([^"'`]*)\1/g;
+
+/**
+ * Keeps generated code honest about 3D assets: any inscription id the model
+ * invented is swapped for a real catalogue entry, and when no validated model
+ * exists at all the model calls degrade to primitives so the scene still runs.
+ */
+function reconcileModels(code: string, catalogue: ModelAsset[]): { code: string; used: ModelAsset[]; downgraded: number } {
+  const ids = catalogue.map((m) => m.inscriptionId);
+  if (ids.length === 0) {
+    const downgraded = (code.match(/world\.model\s*\(/g) ?? []).length;
+    return { code: code.replace(/world\.model\s*\(/g, "world.prop("), used: [], downgraded };
+  }
+  let cursor = 0;
+  const used = new Set<string>();
+  const next = code.replace(INSCRIPTION_RE, (_match, quote: string, value: string) => {
+    const id = ids.includes(value) ? value : (ids[cursor++ % ids.length] as string);
+    used.add(id);
+    return `inscriptionId: ${quote}${id}${quote}`;
+  });
+  return {
+    code: next,
+    used: catalogue.filter((m) => used.has(m.inscriptionId)),
+    downgraded: 0,
+  };
+}
+
 export async function writeExtenderCode(input: {
   prompt: string;
   height: number;
   category: string;
   existingCode: string;
+  models?: ModelAsset[];
 }): Promise<string> {
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) throw new Error("AI code generation is not configured");
 
+  const models = input.models ?? [];
+  const modelBrief = models.length > 0
+    ? `Real on-chain 3D models you MAY place with world.model({ inscriptionId, x, z, y, w, rotationY }). Use ONLY these ids verbatim — no other inscription id exists:\n${models
+        .map((m) => `- ${m.inscriptionId} (from ${m.height}.BITMAP, ${m.triangleCount} tris${m.animationCount > 0 ? ", animated" : ""})`)
+        .join("\n")}`
+    : "No validated on-chain 3D models are available, so do NOT call world.model — build everything from primitives.";
+
   const user = [
     `Tile: ${input.height}.BITMAP. Category: ${input.category}.`,
+    modelBrief,
     input.existingCode.trim()
       ? `Revise the existing code below to satisfy the request. Keep what still works.\n\n--- EXISTING CODE ---\n${input.existingCode.slice(0, 12_000)}\n--- END ---`
       : "There is no existing code — write it from scratch.",
     `Request: ${input.prompt}`,
   ].join("\n\n");
+
 
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
@@ -205,12 +283,16 @@ export async function designExtender(input: { prompt: string; height: number }):
   };
 }
 
-/** Full build: plan the package, then write the code that implements the plan. */
+/**
+ * Full build: plan the package, resolve the real 3D assets available on chain,
+ * write the code that implements the plan, then reconcile every model reference
+ * against the catalogue so what runs in the sandbox is what actually renders.
+ */
 export async function buildExtenderPackage(input: {
   prompt: string;
   height: number;
-}): Promise<{ design: ExtenderDesign; code: string }> {
-  const design = await designExtender(input);
+}): Promise<{ design: ExtenderDesign; code: string; models: ModelAsset[]; modelsDowngraded: number }> {
+  const [design, catalogue] = await Promise.all([designExtender(input), listModelCatalogue()]);
   const brief = [
     `Package: ${design.name} — ${design.summary}`,
     `Build stages: ${design.stages.map((s) => `${s.label}: ${s.detail}`).join(" | ")}`,
@@ -221,11 +303,19 @@ export async function buildExtenderPackage(input: {
   ]
     .filter(Boolean)
     .join("\n");
-  const code = await writeExtenderCode({
+  const raw = await writeExtenderCode({
     prompt: brief,
     height: input.height,
     category: design.category,
     existingCode: "",
+    models: catalogue,
   });
-  return { design, code };
+  const reconciled = reconcileModels(raw, catalogue);
+  return {
+    design,
+    code: reconciled.code,
+    models: reconciled.used,
+    modelsDowngraded: reconciled.downgraded,
+  };
 }
+

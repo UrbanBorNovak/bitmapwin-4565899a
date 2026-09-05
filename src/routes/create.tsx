@@ -61,7 +61,10 @@ type Design = {
   assets: Array<{ name: string; kind: string; note: string }>;
 };
 
+type ModelAsset = { inscriptionId: string; height: number; triangleCount: number; animationCount: number };
+
 type Deployed = { slug: string; height: number; semver: string };
+
 
 function CreatePage() {
   const { height: searchHeight } = Route.useSearch();
@@ -74,7 +77,10 @@ function CreatePage() {
 
   const [prompt, setPrompt] = useState("");
   const [design, setDesign] = useState<Design | null>(null);
+  const [models, setModels] = useState<ModelAsset[]>([]);
+  const [modelsDowngraded, setModelsDowngraded] = useState(0);
   const [code, setCode] = useState("");
+
   const [status, setStatus] = useState<{ running: boolean; error: string | null; props: number }>({
     running: false,
     error: null,
@@ -101,9 +107,12 @@ function CreatePage() {
     onSuccess: (result) => {
       setDesign(result.design as Design);
       setCode(result.code);
+      setModels((result.models ?? []) as ModelAsset[]);
+      setModelsDowngraded(result.modelsDowngraded ?? 0);
       setDeployed(null);
       toast("PACKAGE BUILT", { description: "IT IS RUNNING IN THE SANDBOX BELOW" });
     },
+
     onError: (error) => toast("BUILD FAILED", { description: (error as Error).message }),
   });
 
@@ -143,8 +152,10 @@ function CreatePage() {
             builtWith: "ai",
             plan: design.stages,
             assets: design.assets,
+            models,
             brief: prompt.trim().slice(0, 1200),
           },
+
           publish: true,
           dependencies: [],
           permissions: [],
@@ -263,7 +274,28 @@ function CreatePage() {
                     </ul>
                   </div>
                 ) : null}
+                <div>
+                  <div className="label text-muted-foreground">ON-CHAIN 3D MODELS PLACED</div>
+                  {models.length > 0 ? (
+                    <ul className="mt-2 space-y-1 font-mono text-[10px] text-muted-foreground">
+                      {models.map((model) => (
+                        <li key={model.inscriptionId} data-no-translate>
+                          <span className="text-bitcoin">▣ </span>
+                          {model.inscriptionId.slice(0, 10)}…{model.inscriptionId.slice(-6)} · {model.height}.BITMAP ·{" "}
+                          {model.triangleCount.toLocaleString()} TRIS
+                          {model.animationCount > 0 ? " · ANIMATED" : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+                      &gt; NO VALIDATED GLB INSCRIPTION IN THE REGISTRY YET — THIS BUILD USES PRIMITIVE GEOMETRY ONLY
+                      {modelsDowngraded > 0 ? ` (${modelsDowngraded} MODEL CALLS DOWNGRADED)` : ""}
+                    </p>
+                  )}
+                </div>
               </div>
+
             )}
           </div>
 
