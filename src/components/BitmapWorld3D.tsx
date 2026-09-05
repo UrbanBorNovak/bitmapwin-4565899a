@@ -2330,36 +2330,37 @@ export function BitmapWorld3D({
           </section>
         ) : null}
 
-        <div className="pointer-events-none absolute bottom-2 left-2 z-30 flex max-w-[calc(100%-1rem)] flex-wrap gap-x-3 gap-y-1 bg-background/75 px-2 py-1 font-mono text-[10px] text-muted-foreground">
-          <span>
-            1,000,000 DISTRICTS LOADED · DRAG TO PAN · RIGHT DRAG TO ORBIT · SCROLL TO FLY · CLICK A
-            BLOCK
+      </div>
+
+      {/* Status strip lives under the viewport so it never covers the world. */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border border-t-0 border-border bg-card/60 px-2 py-1.5 font-mono text-[10px] text-muted-foreground">
+        <span>DRAG PAN · RIGHT DRAG ORBIT · SCROLL FLY · CLICK A BLOCK</span>
+        <span className="text-border">|</span>
+        <span data-no-translate>
+          {window_
+            ? owners.isPending
+              ? "SCANNING HOLDERS…"
+              : `${owners.data?.size ?? 0} HOLDERS IN RANGE`
+            : "FLY CLOSER FOR HOLDER COLOURS"}
+        </span>
+        <span className="text-border">|</span>
+        <span data-no-translate>
+          {cursors.length > 0 ? `${cursors.length} SEARCHING NOW` : "NOBODY ELSE SEARCHING"}
+        </span>
+        <span className="text-border">|</span>
+        <span data-no-translate>
+          {window_ ? `${models.data?.length ?? 0} ON-CHAIN MODELS IN RANGE` : "FLY CLOSER FOR MODELS"}
+        </span>
+        <span className="text-border">|</span>
+        {myAddresses.length > 0 ? (
+          <span data-no-translate className="text-bitcoin">
+            {held.isPending
+              ? "LOCATING YOUR BITMAPS…"
+              : `${ownedHeights.length} YOUR BITMAPS · ORANGE BEACONS`}
           </span>
-          <span data-no-translate>
-            {window_
-              ? owners.isPending
-                ? "SCANNING HOLDERS…"
-                : `${owners.data?.size ?? 0} HOLDERS IN RANGE`
-              : "FLY CLOSER FOR HOLDER COLOURS"}
-          </span>
-          <span data-no-translate>
-            {cursors.length > 0 ? `${cursors.length} SEARCHING NOW` : "NOBODY ELSE SEARCHING"}
-          </span>
-          <span data-no-translate>
-            {window_
-              ? `${models.data?.length ?? 0} ON-CHAIN MODELS IN RANGE`
-              : "FLY CLOSER FOR MODELS"}
-          </span>
-          {myAddresses.length > 0 ? (
-            <span data-no-translate className="text-bitcoin">
-              {held.isPending
-                ? "LOCATING YOUR BITMAPS…"
-                : `${ownedHeights.length} YOUR BITMAPS · ORANGE BEACONS`}
-            </span>
-          ) : (
-            <span>CONNECT OR LINK WALLET TO HIGHLIGHT YOUR BITMAPS</span>
-          )}
-        </div>
+        ) : (
+          <span>CONNECT OR LINK WALLET TO HIGHLIGHT YOUR BITMAPS</span>
+        )}
       </div>
     </div>
   );
