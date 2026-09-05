@@ -410,7 +410,6 @@ on("enter", function () {
 });
 on("interact", function (e) {
   if (e.propId !== stone.id) return;
-  quest.state("sign-signguestbook", "done");
   quest.state("sign-guestbook", "done");
   stone.set({ color: ORANGE });
 });
@@ -472,7 +471,7 @@ on("tick", function (e) {
 });
 `;
 
-const TREASURE_CODE = \`// BURIED CACHE — a treasure hunt that remembers each visitor's finds.
+const TREASURE_CODE = `// BURIED CACHE — a treasure hunt that remembers each visitor's finds.
 const DIRT = "#2a231b";
 const GOLD = "#f7931a";
 
@@ -521,7 +520,7 @@ on("interact", function (e) {
     return;
   }
 });
-\`;
+`;
 
 const CAMPFIRE_CODE = `// CAMPFIRE MEETUP — a social spot with seating, a live fire and a shared tally.
 const WOOD = "#3a2a1c";
