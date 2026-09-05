@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { DataBadge } from "@/components/extenders/DataBadge";
+import { ExtenderPreview } from "@/components/extenders/ExtenderPreview";
 import { useAuthSession } from "@/lib/auth";
 import {
   EXTENDER_CATEGORIES,
@@ -17,13 +18,14 @@ import {
   type LandPermission,
 } from "@/lib/extenders";
 import { createExtenderFn, publishVersionFn, setExtenderStatusFn } from "@/lib/extenders.functions";
-import { RUNTIME_LIMITS, STARTER_TEMPLATES } from "@/lib/extender-sdk";
+import { generateExtenderCodeFn } from "@/lib/extender-ai.functions";
+import { RUNTIME_LIMITS, STARTER_TEMPLATES, codeFromManifest } from "@/lib/extender-sdk";
 
 export const Route = createFileRoute("/studio")({
   head: () => {
-    const title = "Extender Studio — Ship Software to Bitcoin Land";
+    const title = "Extender Studio — Describe It, Test It, Ship It";
     const description =
-      "Create, version and publish extenders for BitmapWin: declare dependencies, request land permissions and release to the marketplace.";
+      "Build extenders for Bitcoin land in plain English: an AI writes the world code, you test it on a tile in the same sandbox the world uses, then publish and deploy.";
     return {
       meta: [
         { title },
@@ -54,8 +56,8 @@ function StudioPage() {
         <div className="label text-bitcoin">BEDROCK · STUDIO</div>
         <h1 className="display mt-3 text-3xl md:text-5xl">EXTENDER STUDIO</h1>
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-          Sign in to create extenders. Publishing writes to the public registry under your account, and deploying is
-          checked against the BITMAPs you actually hold.
+          Sign in to build extenders. Describing a place in plain words is enough to get working code — publishing
+          writes to the public registry under your account, and deploying is checked against the BITMAPs you hold.
         </p>
         <Link to="/auth" className="btn-term mt-6 inline-flex">[ SIGN IN ]</Link>
       </div>
@@ -66,19 +68,26 @@ function StudioPage() {
   const active = extenders.find((e) => e.id === selected) ?? null;
 
   return (
-    <div className="mx-auto max-w-[1500px] px-4 py-10 md:px-8 md:py-14">
+    <div className="mx-auto max-w-[1600px] px-4 py-10 md:px-8 md:py-14">
       <div className="label text-bitcoin">BEDROCK · STUDIO</div>
       <h1 className="display mt-3 text-3xl md:text-5xl">EXTENDER STUDIO</h1>
       <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-        Define a package, publish immutable versions, declare what it depends on and what rights it needs on land. Every
-        release here is real and public — there is no demo mode.
+        Describe the place you want on your land. The studio writes the code, runs it on a test tile in front of you,
+        and publishes it when it looks right. Everything here is real and public — there is no demo mode.
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
-        <DataBadge kind="live" note="WRITES TO THE REGISTRY" />
-        <DataBadge kind="soon" note="AI GENERATION · IMPORT · SANDBOX" />
+        <DataBadge kind="live" note="AI CODE WRITER · LIVE SANDBOX · REGISTRY" />
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
+      <ol className="mt-6 flex flex-wrap gap-2 font-mono text-[10px]">
+        {["1 · NAME IT", "2 · DESCRIBE IT", "3 · TEST IT", "4 · PUBLISH", "5 · DEPLOY ON YOUR LAND"].map((step) => (
+          <li key={step} className="border border-border px-2 py-1.5 text-muted-foreground" data-no-translate>
+            {step}
+          </li>
+        ))}
+      </ol>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
         <div className="space-y-4">
           <CreateExtenderForm onCreated={(id) => setSelected(id)} />
           <div className="border border-border bg-surface">
@@ -110,6 +119,7 @@ function StudioPage() {
               )}
             </div>
           </div>
+          <Link to="/sdk" className="btn-term-ghost w-full justify-center">[ READ THE SDK ]</Link>
         </div>
 
         <div>
@@ -117,12 +127,11 @@ function StudioPage() {
             <ExtenderWorkbench extender={active} />
           ) : (
             <div className="border border-border bg-surface p-6">
-              <div className="display text-xl">SELECT OR CREATE AN EXTENDER</div>
+              <div className="display text-xl">START WITH A NAME</div>
               <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
-                A package starts as a draft. Publishing a version makes it installable on land; publishing the extender
-                itself makes it visible in the marketplace.
+                Name your package on the left and it appears here as a draft. From there you describe what should stand
+                on the tile in ordinary words, watch it run, and publish when you like it.
               </p>
-              <Link to="/sdk" className="btn-term-ghost mt-5 inline-flex">[ READ THE SDK FIRST ]</Link>
             </div>
           )}
         </div>
@@ -137,7 +146,7 @@ function CreateExtenderForm({ onCreated }: { onCreated: (id: string) => void }) 
   const [name, setName] = useState("");
   const [summary, setSummary] = useState("");
   const [category, setCategory] = useState<string>(EXTENDER_CATEGORIES[0].id);
-  const [isAiBuilt, setIsAiBuilt] = useState(false);
+  const [isAiBuilt, setIsAiBuilt] = useState(true);
 
   const run = useMutation({
     mutationFn: async () => {
@@ -172,12 +181,12 @@ function CreateExtenderForm({ onCreated }: { onCreated: (id: string) => void }) 
 
   return (
     <div className="border border-border bg-surface p-4">
-      <div className="label text-bitcoin">NEW EXTENDER</div>
+      <div className="label text-bitcoin">1 · NEW EXTENDER</div>
       <div className="mt-3 space-y-2">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Name, e.g. Voxel City Kit"
+          placeholder="Name, e.g. Pirate Harbor"
           className="w-full border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-bitcoin"
         />
         <input
@@ -214,6 +223,12 @@ function ExtenderWorkbench({ extender }: { extender: Extender }) {
   const versions = useQuery(extenderVersionsQuery(extender.id));
   const setStatus = useServerFn(setExtenderStatusFn);
   const queryClient = useQueryClient();
+  const [code, setCode] = useState("");
+  const [testHeight, setTestHeight] = useState("36095");
+  const [loadedFrom, setLoadedFrom] = useState<string | null>(null);
+
+  const latestWithCode = (versions.data ?? []).find((v) => codeFromManifest(v.manifest));
+  const height = Number.isFinite(Number(testHeight)) ? Number(testHeight) : 0;
 
   const status = useMutation({
     mutationFn: (next: "draft" | "published" | "archived") =>
@@ -240,7 +255,7 @@ function ExtenderWorkbench({ extender }: { extender: Extender }) {
           <div className="flex flex-wrap gap-2">
             {extender.status === "published" ? (
               <>
-                <Link to="/extenders/$slug" params={{ slug: extender.slug }} className="btn-term-ghost">[ VIEW PUBLIC PAGE ]</Link>
+                <Link to="/extenders/$slug" params={{ slug: extender.slug }} className="btn-term">[ DEPLOY ON YOUR LAND ]</Link>
                 <button type="button" className="btn-term-ghost" onClick={() => status.mutate("draft")}>[ UNPUBLISH ]</button>
               </>
             ) : (
@@ -253,7 +268,90 @@ function ExtenderWorkbench({ extender }: { extender: Extender }) {
         </p>
       </div>
 
-      <PublishVersionForm extenderId={extender.id} />
+      <div className="grid gap-4 xl:grid-cols-2">
+        <div className="space-y-4">
+          <AiComposer
+            code={code}
+            onCode={setCode}
+            category={extender.category}
+            height={height}
+            name={extender.name}
+            summary={extender.summary}
+          />
+
+          <div className="border border-border bg-surface p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="label text-bitcoin">THE CODE</div>
+              <div className="flex flex-wrap items-center gap-1">
+                {STARTER_TEMPLATES.map((template) => (
+                  <button
+                    key={template.id}
+                    type="button"
+                    onClick={() => {
+                      setCode(template.code);
+                      setLoadedFrom(template.name);
+                    }}
+                    className="label border border-border px-2 py-1.5 text-muted-foreground hover:border-bitcoin hover:text-bitcoin"
+                  >
+                    {template.name}
+                  </button>
+                ))}
+                {latestWithCode ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCode(codeFromManifest(latestWithCode.manifest) ?? "");
+                      setLoadedFrom(`v${latestWithCode.semver}`);
+                    }}
+                    className="label border border-bitcoin px-2 py-1.5 text-bitcoin"
+                    data-no-translate
+                  >
+                    LOAD v{latestWithCode.semver}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            <textarea
+              value={code}
+              onChange={(e) => {
+                setCode(e.target.value);
+                setLoadedFrom(null);
+              }}
+              spellCheck={false}
+              rows={18}
+              data-no-translate
+              placeholder={'world.prop({ shape: "box", w: 2, h: 3, color: "#f7931a", label: "TOWER" });'}
+              className="mt-3 w-full border border-border bg-background px-3 py-2 font-mono text-[11px] leading-relaxed outline-none focus:border-bitcoin"
+            />
+            <p className="mt-1 font-mono text-[10px] text-muted-foreground" data-no-translate>
+              {new TextEncoder().encode(code).length} / {RUNTIME_LIMITS.maxCodeBytes} BYTES
+              {loadedFrom ? ` · LOADED FROM ${loadedFrom.toUpperCase()}` : ""}
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2 border border-border bg-surface px-3 py-2">
+            <span className="label text-muted-foreground">TEST TILE</span>
+            <input
+              value={testHeight}
+              onChange={(e) => setTestHeight(e.target.value)}
+              className="w-28 border border-border bg-background px-2 py-1.5 font-mono text-xs outline-none focus:border-bitcoin"
+              data-no-translate
+            />
+            <span className="font-mono text-[10px] text-muted-foreground">
+              THE SANDBOX HERE IS THE ONE THE WORLD RUNS
+            </span>
+          </div>
+          <ExtenderPreview code={code} height={height} club={extender.name} canvasHeight={340} />
+          <PublishVersionForm
+            extenderId={extender.id}
+            slug={extender.slug}
+            code={code}
+            suggestedSemver={nextSemver(latestWithCode?.semver ?? (versions.data ?? [])[0]?.semver ?? null)}
+          />
+        </div>
+      </div>
 
       <div className="border border-border bg-surface">
         <header className="border-b border-border px-4 py-3">
@@ -269,7 +367,8 @@ function ExtenderWorkbench({ extender }: { extender: Extender }) {
               {(versions.data ?? []).map((v) => (
                 <li key={v.id} className="border-l border-border pl-4">
                   <div className="font-mono text-xs" data-no-translate>
-                    v{v.semver} · SDK {v.sdkVersion} · {v.status.toUpperCase()}
+                    v{v.semver} · SDK {v.sdkVersion} · {v.status.toUpperCase()} ·{" "}
+                    {codeFromManifest(v.manifest) ? "CODE" : "DESCRIPTION ONLY"}
                   </div>
                   <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{v.changelog || "NO CHANGELOG"}</p>
                 </li>
@@ -282,13 +381,122 @@ function ExtenderWorkbench({ extender }: { extender: Extender }) {
   );
 }
 
-function PublishVersionForm({ extenderId }: { extenderId: string }) {
+const IDEAS = [
+  "A pirate harbour with a pier, three sailing ships and a quest board",
+  "A neon night market with stalls, lanterns and a trader to talk to",
+  "A watchtower with a rotating beacon and a climb-to-the-top quest",
+  "A small arena with a fighting ring, torches and seating",
+  "A quiet garden with trees, a pond and stepping stones",
+];
+
+function AiComposer({
+  code,
+  onCode,
+  category,
+  height,
+  name,
+  summary,
+}: {
+  code: string;
+  onCode: (code: string) => void;
+  category: string;
+  height: number;
+  name: string;
+  summary: string;
+}) {
+  const generate = useServerFn(generateExtenderCodeFn);
+  const [prompt, setPrompt] = useState("");
+
+  const run = useMutation({
+    mutationFn: async () => {
+      const brief = prompt.trim();
+      if (brief.length < 4) throw new Error("DESCRIBE WHAT SHOULD STAND ON THE TILE");
+      return generate({
+        data: {
+          prompt: [name ? `Extender name: ${name}.` : "", summary ? `Purpose: ${summary}.` : "", brief]
+            .filter(Boolean)
+            .join(" "),
+          height,
+          category,
+          existingCode: code.trim(),
+        },
+      });
+    },
+    onSuccess: (result) => {
+      onCode(result.code);
+      toast(code.trim() ? "CODE REVISED" : "CODE WRITTEN", { description: "PRESS RUN TO SEE IT" });
+    },
+    onError: (error) => toast("COULD NOT WRITE THE CODE", { description: (error as Error).message }),
+  });
+
+  return (
+    <div className="border border-bitcoin/50 bg-surface p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="label text-bitcoin">2 · DESCRIBE IT IN PLAIN WORDS</div>
+        <DataBadge kind="live" note="WRITES REAL SDK CODE" />
+      </div>
+      <textarea
+        value={prompt}
+        onChange={(e) => setPrompt(e.target.value)}
+        rows={4}
+        placeholder={code.trim() ? "What should change? e.g. add two more ships and a lighthouse" : IDEAS[0]}
+        className="mt-3 w-full border border-border bg-background px-3 py-2 font-mono text-xs leading-relaxed outline-none focus:border-bitcoin"
+      />
+      <div className="mt-2 flex flex-wrap gap-1">
+        {IDEAS.map((idea) => (
+          <button
+            key={idea}
+            type="button"
+            onClick={() => setPrompt(idea)}
+            className="border border-border px-2 py-1 font-mono text-[10px] text-muted-foreground hover:border-bitcoin hover:text-bitcoin"
+          >
+            {idea}
+          </button>
+        ))}
+      </div>
+      <button
+        type="button"
+        className="btn-term mt-3 w-full"
+        disabled={run.isPending}
+        onClick={() => run.mutate()}
+      >
+        {run.isPending
+          ? "[ WRITING THE CODE… ]"
+          : code.trim()
+            ? "[ REVISE THE CODE ]"
+            : "[ BUILD IT FOR ME ]"}
+      </button>
+      <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+        THE RESULT IS EDITABLE CODE — NOTHING IS HIDDEN, AND NOTHING PUBLISHES UNTIL YOU SAY SO
+      </p>
+    </div>
+  );
+}
+
+function nextSemver(current: string | null): string {
+  if (!current) return "1.0.0";
+  const parts = current.split(".").map((n) => Number(n));
+  if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n))) return "1.0.0";
+  return `${parts[0]}.${(parts[1] ?? 0) + 1}.0`;
+}
+
+function PublishVersionForm({
+  extenderId,
+  slug,
+  code,
+  suggestedSemver,
+}: {
+  extenderId: string;
+  slug: string;
+  code: string;
+  suggestedSemver: string;
+}) {
   const publish = useServerFn(publishVersionFn);
   const queryClient = useQueryClient();
-  const [semver, setSemver] = useState("1.0.0");
+  const [semver, setSemver] = useState(suggestedSemver);
   const [changelog, setChangelog] = useState("");
   const [permissions, setPermissions] = useState<LandPermission[]>(["view", "enter"]);
-  const [code, setCode] = useState("");
+  const [published, setPublished] = useState(false);
 
   const bytes = new TextEncoder().encode(code).length;
   const tooLarge = bytes > RUNTIME_LIMITS.maxCodeBytes;
@@ -308,8 +516,9 @@ function PublishVersionForm({ extenderId }: { extenderId: string }) {
         },
       }),
     onSuccess: () => {
-      toast("VERSION PUBLISHED");
+      toast("VERSION PUBLISHED", { description: "NOW DEPLOY IT ON A BITMAP YOU HOLD" });
       setChangelog("");
+      setPublished(true);
       queryClient.invalidateQueries({ queryKey: ["extender-versions"] });
       queryClient.invalidateQueries({ queryKey: ["extender-stats"] });
     },
@@ -317,13 +526,14 @@ function PublishVersionForm({ extenderId }: { extenderId: string }) {
   });
 
   return (
-    <div className="border border-border bg-surface p-5">
-      <div className="label text-bitcoin">PUBLISH A VERSION</div>
-      <div className="mt-3 grid gap-2 sm:grid-cols-[140px_minmax(0,1fr)]">
+    <div className="border border-border bg-surface p-4">
+      <div className="label text-bitcoin">4 · PUBLISH THIS VERSION</div>
+      <div className="mt-3 grid gap-2 sm:grid-cols-[120px_minmax(0,1fr)]">
         <input
           value={semver}
           onChange={(e) => setSemver(e.target.value)}
           placeholder="1.0.0"
+          data-no-translate
           className="border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-bitcoin"
         />
         <input
@@ -334,45 +544,7 @@ function PublishVersionForm({ extenderId }: { extenderId: string }) {
         />
       </div>
 
-      <div className="mt-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="label text-bitcoin">EXTENDER CODE — RUNS IN THE WORLD</div>
-          <Link to="/sdk-playground" className="label text-muted-foreground hover:text-bitcoin">
-            OPEN PLAYGROUND →
-          </Link>
-        </div>
-        <div className="mt-2 flex flex-wrap gap-1">
-          {STARTER_TEMPLATES.map((template) => (
-            <button
-              key={template.id}
-              type="button"
-              onClick={() => setCode(template.code)}
-              className="label border border-border px-2 py-1.5 text-muted-foreground hover:border-bitcoin hover:text-bitcoin"
-            >
-              LOAD {template.name.toUpperCase()}
-            </button>
-          ))}
-        </div>
-        <textarea
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          spellCheck={false}
-          rows={14}
-          data-no-translate
-          placeholder={'world.prop({ shape: "box", w: 2, h: 3, color: "#f7931a", label: "TOWER" });'}
-          className="mt-2 w-full border border-border bg-background px-3 py-2 font-mono text-[11px] leading-relaxed outline-none focus:border-bitcoin"
-        />
-        <p className="mt-1 font-mono text-[10px] text-muted-foreground" data-no-translate>
-          {bytes} / {RUNTIME_LIMITS.maxCodeBytes} BYTES ·{" "}
-          {code.trim()
-            ? tooLarge
-              ? "TOO LARGE — TRIM THE CODE"
-              : "LIVE CODE — RUNS SANDBOXED ON EVERY TILE THIS VERSION IS DEPLOYED TO"
-            : "EMPTY — THIS VERSION WILL PUBLISH AS A DESCRIPTION ONLY"}
-        </p>
-      </div>
-
-      <div className="mt-4">
+      <div className="mt-3">
         <div className="label">LAND PERMISSIONS THIS VERSION REQUESTS</div>
         <div className="mt-2 flex flex-wrap gap-1">
           {LAND_PERMISSIONS.map((perm) => {
@@ -392,9 +564,25 @@ function PublishVersionForm({ extenderId }: { extenderId: string }) {
           })}
         </div>
       </div>
-      <button type="button" className="btn-term mt-4 w-full sm:w-auto" disabled={run.isPending || tooLarge} onClick={() => run.mutate()}>
+
+      <p className="mt-3 font-mono text-[10px] text-muted-foreground" data-no-translate>
+        {bytes} / {RUNTIME_LIMITS.maxCodeBytes} BYTES ·{" "}
+        {code.trim()
+          ? tooLarge
+            ? "TOO LARGE — TRIM THE CODE"
+            : "LIVE CODE — RUNS SANDBOXED ON EVERY TILE THIS VERSION IS DEPLOYED TO"
+          : "EMPTY — THIS VERSION WILL PUBLISH AS A DESCRIPTION ONLY"}
+      </p>
+
+      <button type="button" className="btn-term mt-3 w-full" disabled={run.isPending || tooLarge} onClick={() => run.mutate()}>
         {run.isPending ? "[ PUBLISHING… ]" : "[ PUBLISH VERSION ]"}
       </button>
+
+      {published ? (
+        <Link to="/extenders/$slug" params={{ slug }} className="btn-term-ghost mt-2 w-full justify-center">
+          [ 5 · DEPLOY ON YOUR LAND ]
+        </Link>
+      ) : null}
     </div>
   );
 }
