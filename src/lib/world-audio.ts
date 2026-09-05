@@ -120,12 +120,17 @@ function noiseBuffer(context: AudioContext, seconds: number) {
 function burst(
   context: AudioContext,
   out: GainNode,
-  { seconds, gain, type, frequency, q }: {
+  { seconds, gain, type, frequency, q, delay = 0, send, curve = 1 }: {
     seconds: number;
     gain: number;
     type: BiquadFilterType;
     frequency: number;
     q: number;
+    delay?: number;
+    /** how much of this layer rolls off into the world's tail (0-1) */
+    send?: { node: AudioNode; gain: number };
+    /** >1 snaps the envelope shut faster, for a tighter transient */
+    curve?: number;
   },
 ) {
   const source = context.createBufferSource();
@@ -135,12 +140,17 @@ function burst(
   filter.frequency.value = frequency;
   filter.Q.value = q;
   const env = context.createGain();
-  const now = context.currentTime;
+  const now = context.currentTime + delay;
   env.gain.setValueAtTime(gain, now);
-  env.gain.exponentialRampToValueAtTime(0.0001, now + seconds);
+  env.gain.exponentialRampToValueAtTime(0.0001, now + seconds / curve);
   source.connect(filter).connect(env).connect(out);
+  if (send) {
+    const tap = context.createGain();
+    tap.gain.value = send.gain;
+    env.connect(tap).connect(send.node);
+  }
   source.start(now);
-  source.stop(now + seconds);
+  source.stop(now + seconds + 0.02);
 }
 
 function tone(
