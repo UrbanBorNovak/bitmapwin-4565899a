@@ -23,6 +23,8 @@ import { ExtenderStage } from "@/components/extenders/ExtenderStage";
 import { ExtenderHud } from "@/components/extenders/ExtenderHud";
 import { runtimeDeploymentsQuery, type RuntimeDeployment } from "@/lib/extender-code";
 import type { RunningExtender } from "@/lib/use-extender-runtimes";
+import { ShooterLayer, MAGAZINE, type ShooterStats } from "@/components/game/ShooterLayer";
+import { isSoundMuted, playSfx, setSoundMuted, unlockAudio } from "@/lib/world-audio";
 
 const EMPTY_DEPLOYMENTS: RuntimeDeployment[] = [];
 
@@ -1331,6 +1333,9 @@ const WorldScene = memo(function WorldScene({
   self,
   deployments,
   onRunning,
+  shooter,
+  onShootPeer,
+  onShooterStats,
 }: {
   colors: WorldColors;
   command: { type: CameraMove; nonce: number; height?: number };
@@ -1358,6 +1363,9 @@ const WorldScene = memo(function WorldScene({
   };
   deployments: RuntimeDeployment[];
   onRunning: (running: RunningExtender[]) => void;
+  shooter: boolean;
+  onShootPeer: (id: string) => void;
+  onShooterStats: (stats: ShooterStats) => void;
 }) {
   // Pointer moves fire dozens of times a second; each React state update re-renders
   // the whole overlay. Coalesce them: at most ~20 hover updates a second, and skip
@@ -1432,6 +1440,15 @@ const WorldScene = memo(function WorldScene({
         followPlayer={cameraMode !== "map"}
         onRunning={onRunning}
       />
+      <ShooterLayer
+        active={shooter && cameraMode !== "map"}
+        pose={pose}
+        cursors={cursors}
+        bitcoin={colors.bitcoin}
+        onShootPeer={onShootPeer}
+        onStats={onShooterStats}
+      />
+
       {selectedHeight !== null ? (
         <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} />
       ) : null}
@@ -1505,6 +1522,28 @@ export function BitmapWorld3D({
   const exploring = cameraMode !== "map";
   const [draft, setDraft] = useState("");
   const [inventoryOpen, setInventoryOpen] = useState(false);
+  // SHOOTER — the first game mode that runs inside the land world.
+  const [shooter, setShooter] = useState(false);
+  const [shooterStats, setShooterStats] = useState<ShooterStats>({
+    ammo: MAGAZINE,
+    reloading: false,
+    score: 0,
+    kills: 0,
+    targets: 0,
+    note: null,
+  });
+  const handleShooterStats = useCallback((stats: ShooterStats) => setShooterStats(stats), []);
+  const [muted, setMuted] = useState(false);
+  useEffect(() => setMuted(isSoundMuted()), []);
+  const toggleSound = useCallback(() => {
+    const next = !isSoundMuted();
+    setSoundMuted(next);
+    setMuted(next);
+    if (!next) {
+      unlockAudio();
+      playSfx("ui");
+    }
+  }, []);
 
   const owners = useQuery(mapOwnersQuery(window_));
   const models = useQuery(mapBitmapModelsQuery(window_));
@@ -1709,8 +1748,15 @@ export function BitmapWorld3D({
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+      if (event.code === "Space") {
+        unlockAudio();
+        playSfx("jump");
+        return;
+      }
       if (event.code !== "KeyF") return;
       event.preventDefault();
+      unlockAudio();
+      playSfx("hit");
       attackNearest();
     };
     window.addEventListener("keydown", onKey);
@@ -1832,6 +1878,21 @@ export function BitmapWorld3D({
           >
             {avatarModel ? "[ INVENTORY · WEARING MODEL ]" : "[ INVENTORY ]"}
           </Button>
+          <Button
+            className={shooter ? "btn-term" : "btn-term-ghost"}
+            variant="ghost"
+            onClick={() => {
+              unlockAudio();
+              playSfx("ui");
+              setShooter((current) => !current);
+              if (!exploring) setCameraMode("first");
+            }}
+          >
+            {shooter ? "[ SHOOTER · ON ]" : "[ SHOOTER ]"}
+          </Button>
+          <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
+            {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
+          </Button>
         </div>
       </div>
 
@@ -1867,9 +1928,40 @@ export function BitmapWorld3D({
               self={self}
               deployments={deployments.data ?? EMPTY_DEPLOYMENTS}
               onRunning={setRunning}
+              shooter={shooter}
+              onShootPeer={attack}
+              onShooterStats={handleShooterStats}
             />
           </Canvas>
         ) : null}
+
+        {shooter && exploring ? (
+          <div
+            data-no-translate
+            className="hud-panel absolute left-3 top-[8.5rem] z-40 space-y-1 px-2.5 py-2 font-mono text-[10px] tabular-nums"
+            aria-label="Shooter status"
+          >
+            <div className="label text-[9px] text-bitcoin">SHOOTER · LIVE</div>
+            <div className="flex items-center gap-3">
+              <span>
+                AMMO{" "}
+                <span className="text-foreground">
+                  {shooterStats.reloading ? "RELOADING" : `${shooterStats.ammo}/${MAGAZINE}`}
+                </span>
+              </span>
+              <span>
+                SCORE <span className="text-foreground">{shooterStats.score}</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-3 text-muted-foreground">
+              <span>DOWNED {shooterStats.kills}</span>
+              <span>TARGETS {shooterStats.targets}</span>
+            </div>
+            <div className="text-muted-foreground">CLICK / E · FIRE · R · RELOAD</div>
+            {shooterStats.note ? <div className="text-bitcoin">{shooterStats.note}</div> : null}
+          </div>
+        ) : null}
+
 
         <div
           role="group"
