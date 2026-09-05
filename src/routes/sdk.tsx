@@ -98,6 +98,61 @@ function SdkPage() {
         ))}
       </div>
 
+      <section className="mt-12">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="display text-2xl">RUNTIME API — CODE THAT ACTUALLY RUNS</h2>
+          <DataBadge kind="live" note="EXECUTES IN A SANDBOX ON DEPLOYED LAND" />
+        </div>
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          A published version can carry JavaScript. It runs in a sealed sandbox — no page, no network, no wallet — and can
+          only describe objects, movement and quests, which every visitor standing on that BITMAP then sees.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link to="/sdk-playground" className="btn-term">[ WRITE AND RUN CODE NOW ]</Link>
+        </div>
+        <div className="mt-5 space-y-4">
+          {SDK_MODULES.map((module) => (
+            <section key={module.id} className="border border-border bg-surface p-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="display text-lg" data-no-translate>{module.id}</h3>
+                <DataBadge kind={module.status} />
+              </div>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">{module.body}</p>
+              <ul className="mt-4 space-y-2">
+                {module.calls.map((call) => (
+                  <li key={call.signature} className="font-mono text-[11px]">
+                    <span className="text-foreground" data-no-translate>&gt; {call.signature}</span>
+                    <span className="ml-2 text-muted-foreground">{call.note}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+        <div className="mt-4 border border-border bg-surface p-4">
+          <div className="label text-bitcoin">TYPES INJECTED INTO EVERY SANDBOX</div>
+          <pre
+            data-no-translate
+            className="mt-3 overflow-x-auto font-mono text-[10px] leading-relaxed text-muted-foreground"
+          >
+            {SDK_TYPES}
+          </pre>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          {STARTER_TEMPLATES.map((template) => (
+            <div key={template.id} className="border border-border bg-surface p-4">
+              <div className="label text-bitcoin" data-no-translate>{template.name}</div>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{template.summary}</p>
+            </div>
+          ))}
+        </div>
+        <ul className="mt-4 grid gap-2 font-mono text-[10px] text-muted-foreground sm:grid-cols-3">
+          <li className="border border-border px-3 py-2" data-no-translate>MAX {RUNTIME_LIMITS.maxProps} OBJECTS</li>
+          <li className="border border-border px-3 py-2" data-no-translate>MAX {RUNTIME_LIMITS.maxQuests} QUESTS</li>
+          <li className="border border-border px-3 py-2" data-no-translate>MAX {RUNTIME_LIMITS.maxCodeBytes} CODE BYTES</li>
+        </ul>
+      </section>
+
       <section className="mt-10 border border-border bg-surface p-5">
         <h2 className="display text-xl">LAND PERMISSIONS</h2>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
