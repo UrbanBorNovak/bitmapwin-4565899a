@@ -28,11 +28,14 @@ import { DesertLife } from "@/components/game/DesertLife";
 import { DesertBuilds } from "@/components/game/DesertBuilds";
 import {
   build as buildStructure,
+  buildCamp,
+  CAMP_RECIPE,
   costLabel,
   recipeFor,
   STRUCTURES,
   type StructureId,
 } from "@/lib/world-build";
+
 import { SkyBodies } from "@/components/game/SkyBodies";
 import {
   WEAPONS,
