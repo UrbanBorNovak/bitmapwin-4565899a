@@ -17,14 +17,18 @@ import { Route as CoinsRouteImport } from './routes/coins'
 import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as ExtendRouteImport } from './routes/extend'
 import { Route as ExtendersRouteImport } from './routes/extenders'
+import { Route as HistoryRouteImport } from './routes/history'
 import { Route as Land101RouteImport } from './routes/land-101'
 import { Route as LeasesRouteImport } from './routes/leases'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as MyLandRouteImport } from './routes/my-land'
 import { Route as MyWorldRouteImport } from './routes/my-world'
+import { Route as OwnershipRouteImport } from './routes/ownership'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SdkRouteImport } from './routes/sdk'
 import { Route as SdkPlaygroundRouteImport } from './routes/sdk-playground'
@@ -88,6 +92,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExtendRoute = ExtendRouteImport.update({
   id: '/extend',
   path: '/extend',
@@ -96,6 +105,11 @@ const ExtendRoute = ExtendRouteImport.update({
 const ExtendersRoute = ExtendersRouteImport.update({
   id: '/extenders',
   path: '/extenders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Land101Route = Land101RouteImport.update({
@@ -123,9 +137,19 @@ const McpRoute = McpRouteImport.update({
   path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MyLandRoute = MyLandRouteImport.update({
+  id: '/my-land',
+  path: '/my-land',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MyWorldRoute = MyWorldRouteImport.update({
   id: '/my-world',
   path: '/my-world',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OwnershipRoute = OwnershipRouteImport.update({
+  id: '/ownership',
+  path: '/ownership',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -251,14 +275,18 @@ export interface FileRoutesByFullPath {
   '/collections': typeof CollectionsRouteWithChildren
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
+  '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
   '/extenders': typeof ExtendersRouteWithChildren
+  '/history': typeof HistoryRoute
   '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
+  '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
+  '/ownership': typeof OwnershipRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
@@ -290,13 +318,17 @@ export interface FileRoutesByTo {
   '/coins': typeof CoinsRoute
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
+  '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
+  '/history': typeof HistoryRoute
   '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
+  '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
+  '/ownership': typeof OwnershipRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
@@ -330,14 +362,18 @@ export interface FileRoutesById {
   '/collections': typeof CollectionsRouteWithChildren
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
+  '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
   '/extenders': typeof ExtendersRouteWithChildren
+  '/history': typeof HistoryRoute
   '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
+  '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
+  '/ownership': typeof OwnershipRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
@@ -372,14 +408,18 @@ export interface FileRouteTypes {
     | '/collections'
     | '/create'
     | '/dashboard'
+    | '/explore'
     | '/extend'
     | '/extenders'
+    | '/history'
     | '/land-101'
     | '/leases'
     | '/map'
     | '/marketplace'
     | '/mcp'
+    | '/my-land'
     | '/my-world'
+    | '/ownership'
     | '/reset-password'
     | '/sdk'
     | '/sdk-playground'
@@ -411,13 +451,17 @@ export interface FileRouteTypes {
     | '/coins'
     | '/create'
     | '/dashboard'
+    | '/explore'
     | '/extend'
+    | '/history'
     | '/land-101'
     | '/leases'
     | '/map'
     | '/marketplace'
     | '/mcp'
+    | '/my-land'
     | '/my-world'
+    | '/ownership'
     | '/reset-password'
     | '/sdk'
     | '/sdk-playground'
@@ -450,14 +494,18 @@ export interface FileRouteTypes {
     | '/collections'
     | '/create'
     | '/dashboard'
+    | '/explore'
     | '/extend'
     | '/extenders'
+    | '/history'
     | '/land-101'
     | '/leases'
     | '/map'
     | '/marketplace'
     | '/mcp'
+    | '/my-land'
     | '/my-world'
+    | '/ownership'
     | '/reset-password'
     | '/sdk'
     | '/sdk-playground'
@@ -491,14 +539,18 @@ export interface RootRouteChildren {
   CollectionsRoute: typeof CollectionsRouteWithChildren
   CreateRoute: typeof CreateRoute
   DashboardRoute: typeof DashboardRoute
+  ExploreRoute: typeof ExploreRoute
   ExtendRoute: typeof ExtendRoute
   ExtendersRoute: typeof ExtendersRouteWithChildren
+  HistoryRoute: typeof HistoryRoute
   Land101Route: typeof Land101Route
   LeasesRoute: typeof LeasesRoute
   MapRoute: typeof MapRoute
   MarketplaceRoute: typeof MarketplaceRoute
   McpRoute: typeof McpRoute
+  MyLandRoute: typeof MyLandRoute
   MyWorldRoute: typeof MyWorldRoute
+  OwnershipRoute: typeof OwnershipRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SdkRoute: typeof SdkRoute
   SdkPlaygroundRoute: typeof SdkPlaygroundRoute
@@ -576,6 +628,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/extend': {
       id: '/extend'
       path: '/extend'
@@ -588,6 +647,13 @@ declare module '@tanstack/react-router' {
       path: '/extenders'
       fullPath: '/extenders'
       preLoaderRoute: typeof ExtendersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/land-101': {
@@ -625,11 +691,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/my-land': {
+      id: '/my-land'
+      path: '/my-land'
+      fullPath: '/my-land'
+      preLoaderRoute: typeof MyLandRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/my-world': {
       id: '/my-world'
       path: '/my-world'
       fullPath: '/my-world'
       preLoaderRoute: typeof MyWorldRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ownership': {
+      id: '/ownership'
+      path: '/ownership'
+      fullPath: '/ownership'
+      preLoaderRoute: typeof OwnershipRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -839,14 +919,18 @@ const rootRouteChildren: RootRouteChildren = {
   CollectionsRoute: CollectionsRouteWithChildren,
   CreateRoute: CreateRoute,
   DashboardRoute: DashboardRoute,
+  ExploreRoute: ExploreRoute,
   ExtendRoute: ExtendRoute,
   ExtendersRoute: ExtendersRouteWithChildren,
+  HistoryRoute: HistoryRoute,
   Land101Route: Land101Route,
   LeasesRoute: LeasesRoute,
   MapRoute: MapRoute,
   MarketplaceRoute: MarketplaceRoute,
   McpRoute: McpRoute,
+  MyLandRoute: MyLandRoute,
   MyWorldRoute: MyWorldRoute,
+  OwnershipRoute: OwnershipRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SdkRoute: SdkRoute,
   SdkPlaygroundRoute: SdkPlaygroundRoute,
