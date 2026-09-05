@@ -2123,7 +2123,7 @@ export function BitmapWorld3D({
         </section>
 
         {/* Bottom-left column: live extender readout stacked over the combat log. */}
-        <div className="hud-stack absolute bottom-16 left-3 z-30 w-[min(320px,calc(100%-1.5rem))]">
+        <div className="hud-stack absolute bottom-24 left-3 z-30 w-[min(320px,calc(100%-1.5rem))]">
           <div className="pointer-events-none">
             <ExtenderHud running={running} />
           </div>
