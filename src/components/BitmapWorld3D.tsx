@@ -881,6 +881,60 @@ const VisitorBeacons = memo(function VisitorBeacons({ cursors }: { cursors: MapC
     .map((cursor) => <VisitorAvatar key={cursor.id} cursor={cursor} />);
 });
 
+/**
+ * YOU ARE HERE — a Bitcoin-orange beacon on your own district, sized so it is
+ * unmistakable from the map camera far above and still readable on the ground.
+ */
+const SelfBeacon = memo(function SelfBeacon({
+  pose,
+  bitcoin,
+  wide,
+}: {
+  pose: React.RefObject<SelfPose>;
+  bitcoin: string;
+  wide: boolean;
+}) {
+  const group = useRef<THREE.Group>(null);
+  const pulse = useRef<THREE.Mesh>(null);
+  const scale = wide ? CELL * 0.62 : AVATAR_U * 0.7;
+  const height = wide ? CELL * 9 : AVATAR_U * 3.4;
+  useFrame((state) => {
+    const current = pose.current;
+    if (!current || !group.current) return;
+    group.current.position.set(current.x, 0, current.z);
+    if (pulse.current) {
+      const beat = 1 + Math.sin(state.clock.elapsedTime * 2.4) * 0.28;
+      pulse.current.scale.setScalar(beat);
+      const material = pulse.current.material as THREE.MeshBasicMaterial;
+      material.opacity = 0.5 - (beat - 1) * 0.5;
+    }
+  });
+  return (
+    <group ref={group}>
+      {/* the district under your feet, lit up */}
+      <mesh rotation-x={-Math.PI / 2} position-y={wide ? CELL * 0.06 : AVATAR_U * 0.03} raycast={noRaycast}>
+        <planeGeometry args={[scale * 2, scale * 2]} />
+        <meshBasicMaterial color={bitcoin} transparent opacity={0.34} depthWrite={false} />
+      </mesh>
+      {/* pulsing ring so the eye finds you while the camera moves */}
+      <mesh
+        ref={pulse}
+        rotation-x={-Math.PI / 2}
+        position-y={wide ? CELL * 0.09 : AVATAR_U * 0.05}
+        raycast={noRaycast}
+      >
+        <ringGeometry args={[scale * 0.9, scale * 1.25, 4]} />
+        <meshBasicMaterial color={bitcoin} transparent opacity={0.5} depthWrite={false} />
+      </mesh>
+      {/* a column of light straight up */}
+      <mesh position-y={height / 2} raycast={noRaycast}>
+        <cylinderGeometry args={[scale * 0.18, scale * 0.3, height, 4, 1, true]} />
+        <meshBasicMaterial color={bitcoin} transparent opacity={0.3} depthWrite={false} side={THREE.DoubleSide} />
+      </mesh>
+    </group>
+  );
+});
+
 /** Full local player: position, velocity, facing, movement/animation/combat state, region and target. */
 export type SelfPose = PlayerState;
 
@@ -1509,6 +1563,7 @@ const WorldScene = memo(function WorldScene({
         <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} />
       ) : null}
       <VisitorBeacons cursors={cursors} />
+      <SelfBeacon pose={pose} bitcoin={colors.bitcoin} wide={cameraMode === "map"} />
       {cameraMode === "third" ? (
         <SelfAvatar
           pose={pose}
