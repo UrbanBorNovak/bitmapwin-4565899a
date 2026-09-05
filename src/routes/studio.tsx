@@ -332,6 +332,45 @@ function PublishVersionForm({ extenderId }: { extenderId: string }) {
           className="border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-bitcoin"
         />
       </div>
+
+      <div className="mt-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="label text-bitcoin">EXTENDER CODE — RUNS IN THE WORLD</div>
+          <Link to="/sdk-playground" className="label text-muted-foreground hover:text-bitcoin">
+            OPEN PLAYGROUND →
+          </Link>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1">
+          {STARTER_TEMPLATES.map((template) => (
+            <button
+              key={template.id}
+              type="button"
+              onClick={() => setCode(template.code)}
+              className="label border border-border px-2 py-1.5 text-muted-foreground hover:border-bitcoin hover:text-bitcoin"
+            >
+              LOAD {template.name.toUpperCase()}
+            </button>
+          ))}
+        </div>
+        <textarea
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          spellCheck={false}
+          rows={14}
+          data-no-translate
+          placeholder={'world.prop({ shape: "box", w: 2, h: 3, color: "#f7931a", label: "TOWER" });'}
+          className="mt-2 w-full border border-border bg-background px-3 py-2 font-mono text-[11px] leading-relaxed outline-none focus:border-bitcoin"
+        />
+        <p className="mt-1 font-mono text-[10px] text-muted-foreground" data-no-translate>
+          {bytes} / {RUNTIME_LIMITS.maxCodeBytes} BYTES ·{" "}
+          {code.trim()
+            ? tooLarge
+              ? "TOO LARGE — TRIM THE CODE"
+              : "LIVE CODE — RUNS SANDBOXED ON EVERY TILE THIS VERSION IS DEPLOYED TO"
+            : "EMPTY — THIS VERSION WILL PUBLISH AS A DESCRIPTION ONLY"}
+        </p>
+      </div>
+
       <div className="mt-4">
         <div className="label">LAND PERMISSIONS THIS VERSION REQUESTS</div>
         <div className="mt-2 flex flex-wrap gap-1">
