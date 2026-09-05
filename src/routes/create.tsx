@@ -435,17 +435,70 @@ function CreatePage() {
           </p>
 
           <div className="border border-border bg-surface p-4">
-            <div className="label text-bitcoin">4 · DEPLOY ON YOUR LAND</div>
+            <div className="label text-bitcoin">4 · PACKAGE AND DEPLOY</div>
+
+            <div className="mt-3">
+              <div className="label text-muted-foreground">EXTENDER</div>
+              <select
+                value={existingExtenderId}
+                onChange={(e) => setExistingExtenderId(e.target.value)}
+                className="mt-2 w-full border border-border bg-background px-2 py-1.5 font-mono text-xs outline-none focus:border-bitcoin"
+                data-no-translate
+              >
+                <option value="new">+ CREATE NEW EXTENDER</option>
+                {(mine.data ?? []).map((e: Extender) => (
+                  <option key={e.id} value={e.id}>
+                    {e.name} · {e.slug}
+                  </option>
+                ))}
+              </select>
+              {selectedExtender ? (
+                <p className="mt-2 font-mono text-[10px] text-muted-foreground" data-no-translate>
+                  &gt; VERSION WILL BE v{nextSemver(latestExisting?.semver ?? null)} · LATEST v{latestExisting?.semver ?? "—"}
+                </p>
+              ) : null}
+            </div>
+
+            {selectedExtender ? null : (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div>
+                  <div className="label text-muted-foreground">ICON INSCRIPTION</div>
+                  <input
+                    value={iconInscriptionId}
+                    onChange={(e) => setIconInscriptionId(e.target.value)}
+                    placeholder="abc123...i0"
+                    className="mt-2 w-full border border-border bg-background px-2 py-1.5 font-mono text-xs outline-none focus:border-bitcoin"
+                    data-no-translate
+                  />
+                </div>
+                <div>
+                  <div className="label text-muted-foreground">PREVIEW INSCRIPTION</div>
+                  <input
+                    value={previewInscriptionId}
+                    onChange={(e) => setPreviewInscriptionId(e.target.value)}
+                    placeholder="abc123...i0"
+                    className="mt-2 w-full border border-border bg-background px-2 py-1.5 font-mono text-xs outline-none focus:border-bitcoin"
+                    data-no-translate
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4">
+              <div className="label text-muted-foreground">DEPLOY CONFIG (JSON)</div>
+              <ConfigEditor value={config} onChange={setConfig} />
+            </div>
+
             {held.isPending ? (
-              <p className="mt-3 font-mono text-xs text-muted-foreground">&gt; CHECKING WHICH BITMAPS YOU HOLD…</p>
+              <p className="mt-4 font-mono text-xs text-muted-foreground">&gt; CHECKING WHICH BITMAPS YOU HOLD…</p>
             ) : heights.length === 0 ? (
-              <p className="mt-3 font-mono text-xs text-muted-foreground">
+              <p className="mt-4 font-mono text-xs text-muted-foreground">
                 &gt; NO LAND FOUND FOR THIS WALLET — CONNECT IT ON{" "}
                 <Link to="/wallet" className="text-bitcoin underline">/WALLET</Link>{" "}
                 OR TYPE A BITMAP YOU HOLD BELOW
               </p>
             ) : (
-              <div className="mt-3 flex flex-wrap gap-1">
+              <div className="mt-4 flex flex-wrap gap-1">
                 {heights.slice(0, 40).map((h) => (
                   <button
                     key={h}
