@@ -1928,6 +1928,9 @@ export function BitmapWorld3D({
               self={self}
               deployments={deployments.data ?? EMPTY_DEPLOYMENTS}
               onRunning={setRunning}
+              shooter={shooter}
+              onShootPeer={attack}
+              onShooterStats={handleShooterStats}
             />
           </Canvas>
         ) : null}
