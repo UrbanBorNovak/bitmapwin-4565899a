@@ -15,3 +15,5 @@
 - [x] Phase 1 bedrock: extender registry, studio, SDK contract, territory panels, my-world, cities
 - [x] MVP loop framing: bedrock homepage, EXTEND screen, territory panel, extender market lanes
 - [ ] Phase 2: extender import, sandboxed execution, versioned deploy config, AI build pipeline
+
+- [x] Real AI builder: plan + code generation, live sandbox preview, publish and deploy from /create
