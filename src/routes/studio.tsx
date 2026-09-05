@@ -17,6 +17,7 @@ import {
   type LandPermission,
 } from "@/lib/extenders";
 import { createExtenderFn, publishVersionFn, setExtenderStatusFn } from "@/lib/extenders.functions";
+import { RUNTIME_LIMITS, STARTER_TEMPLATES } from "@/lib/extender-sdk";
 
 export const Route = createFileRoute("/studio")({
   head: () => {
