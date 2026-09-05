@@ -154,35 +154,38 @@ export async function setExtenderStatus(userId: string, extenderId: string, stat
 
 export async function updateExtenderMetadata(
   userId: string,
-  input: Partial<{
+  input: {
     extenderId: string;
-    name: string;
-    summary: string;
-    description: string;
-    category: string;
-    tags: string[];
-    license: string;
-    monetization: "free" | "paid" | "lease";
-    priceBit: number;
-    iconInscriptionId: string | null;
-    previewInscriptionId: string | null;
-  }>,
+    name?: string | undefined;
+    summary?: string | undefined;
+    description?: string | undefined;
+    category?: string | undefined;
+    tags?: string[] | undefined;
+    license?: string | undefined;
+    monetization?: "free" | "paid" | "lease" | undefined;
+    priceBit?: number | undefined;
+    iconInscriptionId?: string | null | undefined;
+    previewInscriptionId?: string | null | undefined;
+  },
 ) {
-  await ownExtender(userId, input.extenderId!);
+  await ownExtender(userId, input.extenderId);
   const db = await admin();
-  const update: Record<string, string | string[] | number | null | undefined> = {};
-  if (input.name !== undefined) update["name"] = input.name;
-  if (input.summary !== undefined) update["summary"] = input.summary;
-  if (input.description !== undefined) update["description"] = input.description;
-  if (input.category !== undefined) update["category"] = input.category;
-  if (input.tags !== undefined) update["tags"] = input.tags;
-  if (input.license !== undefined) update["license"] = input.license;
-  if (input.monetization !== undefined) update["monetization"] = input.monetization;
-  if (input.priceBit !== undefined) update["price_bit"] = input.priceBit;
-  if (input.iconInscriptionId !== undefined) update["icon_inscription_id"] = input.iconInscriptionId;
-  if (input.previewInscriptionId !== undefined) update["preview_inscription_id"] = input.previewInscriptionId;
 
-  const { error } = await db.from("extenders").update(update).eq("id", input.extenderId!);
+  const { error } = await db
+    .from("extenders")
+    .update({
+      ...(input.name !== undefined && { name: input.name }),
+      ...(input.summary !== undefined && { summary: input.summary }),
+      ...(input.description !== undefined && { description: input.description }),
+      ...(input.category !== undefined && { category: input.category }),
+      ...(input.tags !== undefined && { tags: input.tags }),
+      ...(input.license !== undefined && { license: input.license }),
+      ...(input.monetization !== undefined && { monetization: input.monetization }),
+      ...(input.priceBit !== undefined && { price_bit: input.priceBit }),
+      ...(input.iconInscriptionId !== undefined && { icon_inscription_id: input.iconInscriptionId }),
+      ...(input.previewInscriptionId !== undefined && { preview_inscription_id: input.previewInscriptionId }),
+    })
+    .eq("id", input.extenderId);
   if (error) throw error;
   return { ok: true };
 }
