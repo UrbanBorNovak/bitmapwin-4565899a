@@ -51,6 +51,30 @@ export const setExtenderStatusFn = createServerFn({ method: "POST" })
     return setExtenderStatus(context.userId, data.extenderId, data.status);
   });
 
+export const updateExtenderMetadataFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        extenderId: uuid,
+        name: z.string().trim().min(2).max(80).optional(),
+        summary: z.string().trim().max(200).optional(),
+        description: z.string().trim().max(4000).optional(),
+        category: z.string().trim().min(2).max(40).optional(),
+        tags: z.array(z.string().trim().min(1).max(24)).max(8).optional(),
+        license: z.string().trim().max(60).optional(),
+        monetization: z.enum(["free", "paid", "lease"]).optional(),
+        priceBit: z.number().int().min(0).max(100_000_000).optional(),
+        iconInscriptionId: z.string().trim().regex(/^[0-9a-fA-F]{64}i\d+$/).nullable().optional(),
+        previewInscriptionId: z.string().trim().regex(/^[0-9a-fA-F]{64}i\d+$/).nullable().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { updateExtenderMetadata } = await import("@/lib/extenders.server");
+    return updateExtenderMetadata(context.userId, data);
+  });
+
 export const publishVersionFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
