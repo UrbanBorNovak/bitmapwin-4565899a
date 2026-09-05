@@ -79,6 +79,7 @@ type SelectedDistrict = { height: number; owner: string | null };
 
 export type BitmapWorld3DProps = {
   tipHeight: number;
+  initialHeight?: number;
   highlight?: number[];
   onCursorsChange?: (cursors: MapCursor[]) => void;
   className?: string;
@@ -1481,6 +1482,7 @@ const WorldScene = memo(function WorldScene({
 
 export function BitmapWorld3D({
   tipHeight,
+  initialHeight,
   highlight = [],
   onCursorsChange,
   className,
@@ -1568,26 +1570,31 @@ export function BitmapWorld3D({
   }, []);
   useEffect(() => onCursorsChange?.(cursors), [cursors, onCursorsChange]);
 
-  // Spawn in at the chain tip as soon as the world knows where the frontier is,
-  // so every visitor is standing in the world before they even move the cursor.
+  // Deep links spawn directly on the requested experience; ordinary map visits
+  // still begin at the live chain tip.
   const spawnedRef = useRef(false);
   useEffect(() => {
     if (spawnedRef.current || !tipHeight) return;
     spawnedRef.current = true;
-    placePlayer(pose.current, worldX(tipHeight % GRID), worldZ(Math.floor(tipHeight / GRID)), 0);
+    const spawnHeight = initialHeight !== undefined && initialHeight <= tipHeight ? initialHeight : tipHeight;
+    placePlayer(pose.current, worldX(spawnHeight % GRID), worldZ(Math.floor(spawnHeight / GRID)), 0);
     publish({
-      col: tipHeight % GRID,
-      row: Math.floor(tipHeight / GRID),
-      height: tipHeight,
+      col: spawnHeight % GRID,
+      row: Math.floor(spawnHeight / GRID),
+      height: spawnHeight,
       x: pose.current.x,
       z: pose.current.z,
       yaw: 0,
       movement: "idle",
       teleport: true,
     });
+    if (initialHeight !== undefined && initialHeight <= tipHeight) {
+      setVisitDraft(String(initialHeight));
+      setSelected({ height: initialHeight, owner: ownersRef.current?.get(initialHeight) ?? null });
+    }
     // once you are standing in the world, walking controls are live right away
     setCameraMode("third");
-  }, [tipHeight, publish]);
+  }, [initialHeight, tipHeight, publish]);
 
   // Killed: teleport back to the spawn point at the chain tip on every respawn.
   useEffect(() => {
