@@ -1570,6 +1570,14 @@ export function BitmapWorld3D({
     note: null,
   });
   const handleShooterStats = useCallback((stats: ShooterStats) => setShooterStats(stats), []);
+  const equipWeapon = useCallback((kind: WeaponKind | null) => {
+    unlockAudio();
+    setWeapon((current) => {
+      if (current === kind) return current;
+      playSfx(kind ? "cock" : "ui");
+      return kind;
+    });
+  }, []);
   const [muted, setMuted] = useState(false);
   useEffect(() => setMuted(isSoundMuted()), []);
   const toggleSound = useCallback(() => {
