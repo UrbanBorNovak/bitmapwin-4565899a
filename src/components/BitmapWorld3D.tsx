@@ -1440,6 +1440,15 @@ const WorldScene = memo(function WorldScene({
         followPlayer={cameraMode !== "map"}
         onRunning={onRunning}
       />
+      <ShooterLayer
+        active={shooter && cameraMode !== "map"}
+        pose={pose}
+        cursors={cursors}
+        bitcoin={colors.bitcoin}
+        onShootPeer={onShootPeer}
+        onStats={onShooterStats}
+      />
+
       {selectedHeight !== null ? (
         <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} />
       ) : null}
