@@ -927,14 +927,18 @@ function veinAt(unit: number, gx: number, gz: number, x: number, z: number): Ore
     return existing;
   }
   // A blocky nugget-studded outcrop: chunky voxels a pick can knock out one by one.
-  const size = unit * 0.17;
+  // STRIKE SIZE — most seams are a handful of nuggets, a few are a real strike
+  // and one in a while a mother lode worth working for a long while.
+  const roll = hash(gx, gz, 61);
+  const tier = roll > 0.94 ? 2 : roll > 0.72 ? 1 : 0;
+  const size = unit * (tier === 2 ? 0.26 : tier === 1 ? 0.2 : 0.15);
+  const width = tier === 2 ? 4 + Math.floor(hash(gx, gz, 66) * 2) : tier === 1 ? 3 : 2;
+  const tall = tier === 2 ? 4 : tier === 1 ? 3 : 2;
   const voxels: OreVoxel[] = [];
-  const width = 2 + Math.floor(hash(gx, gz, 61) * 2);
-  const tall = 2 + Math.floor(hash(gx, gz, 62) * 2);
   for (let ix = 0; ix < width; ix++) {
     for (let iy = 0; iy < tall; iy++) {
       for (let iz = 0; iz < width; iz++) {
-        if (hash(gx * 7 + ix * 3 + iz, gz * 11 + iy * 5, 63) < 0.25) continue;
+        if (hash(gx * 7 + ix * 3 + iz, gz * 11 + iy * 5, 63) < 0.22) continue;
         voxels.push({
           x: (ix - (width - 1) / 2) * size,
           y: size * 0.6 + iy * size,
@@ -950,13 +954,15 @@ function veinAt(unit: number, gx: number, gz: number, x: number, z: number): Ore
     x,
     z,
     level: GOLD_MINING_LEVEL,
-    xpPerVoxel: GOLD_XP_PER_VOXEL,
+    // A bigger strike pays better per swing as well as lasting longer.
+    xpPerVoxel: GOLD_XP_PER_VOXEL * (tier === 2 ? 2 : tier === 1 ? 1.4 : 1),
     voxels,
     depletedUntil: 0,
   };
   veinMemory.set(id, vein);
   return vein;
 }
+
 
 /** Rare gold outcrops in the sand, mineable voxel by voxel until they run dry. */
 const GoldVeins = memo(function GoldVeins({
