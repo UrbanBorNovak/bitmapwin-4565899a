@@ -10,21 +10,22 @@ import { formatSats } from "@/lib/trades";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Bitmap Unhinged — Own a Piece of Bitcoin" },
+      { title: "BitmapWin — The Bedrock for AI-Built Worlds" },
       {
         name: "description",
         content:
-          "A minimalist marketplace and explorer for Bitcoin Bitmap digital land, priced by real on-chain trades.",
+          "Own permanent Bitcoin land, extend it with experiences built by you, other creators or AI, deploy them, and let players enter.",
       },
-      { property: "og:title", content: "Bitmap Unhinged — Own a Piece of Bitcoin" },
+      { property: "og:title", content: "BitmapWin — The Bedrock for AI-Built Worlds" },
       {
         property: "og:description",
-        content: "Explore, discover and trade Bitcoin Bitmap digital land with real on-chain data.",
+        content: "Build on permanent Bitcoin land. Own, extend, deploy, experience, publish.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
+
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(registryParcelsQuery(120));
     context.queryClient.ensureQueryData(recentTradesQuery(20));
@@ -92,20 +93,26 @@ function Index() {
           <div className="relative order-1 flex flex-col bg-surface lg:order-2 lg:col-span-9">
             <div className="pointer-events-none absolute inset-0 dot-bg" />
             <div className="relative flex flex-1 flex-col justify-center p-5 py-8 sm:p-7 md:p-12 lg:p-16">
-              <div className="label text-bitcoin">THE LAND LAYER OF BITCOIN</div>
-              <h1 className="display mt-4 text-[2.55rem] sm:mt-5 sm:text-7xl lg:text-8xl">
-                BITMAP<br /><span className="text-bitcoin">UNHINGED</span>
+              <div className="label text-bitcoin">THE BEDROCK FOR AI-BUILT WORLDS</div>
+              <h1 className="display mt-4 text-[2.1rem] leading-[1.05] sm:mt-5 sm:text-6xl lg:text-7xl">
+                BUILD ON PERMANENT<br /><span className="text-bitcoin">BITCOIN LAND.</span>
               </h1>
               <div className="mt-6 grid items-start gap-7 sm:mt-8 md:grid-cols-[minmax(0,1fr)_240px] md:gap-8">
                 <div className="max-w-xl">
                   <p className="text-base leading-relaxed text-foreground sm:text-lg md:text-xl">
-                    Discover and own Bitcoin’s digital land. Trade verified BITMAPS, visit community builds, and make your block your own.
+                    BitmapWin is the bedrock for player-owned, AI-built worlds. Own a block, extend it with experiences,
+                    deploy them, and let players walk in.
                   </p>
                   <div className="mt-6 grid gap-2 sm:mt-8 sm:flex sm:flex-wrap sm:gap-3">
-                    <Link to="/marketplace" className="btn-term min-h-12 w-full sm:min-h-0 sm:w-auto">EXPLORE THE MARKET</Link>
-                    <Link to="/builds" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">DISCOVER BUILDS</Link>
+                    <Link to="/map" className="btn-term min-h-12 w-full sm:min-h-0 sm:w-auto">EXPLORE THE WORLD</Link>
+                    <Link to="/extend" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">BUILD</Link>
+                    <Link to="/extenders" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">MARKETPLACE</Link>
                   </div>
+                  <Link to="/studio" className="mt-4 inline-flex font-mono text-xs font-bold text-bitcoin hover:text-foreground">
+                    BUILD WITH AI →
+                  </Link>
                 </div>
+
 
                 {lead && (
                   <Link
@@ -173,10 +180,14 @@ function Index() {
       </section>
 
       <section className="mx-auto max-w-[1600px] px-4 pt-16 md:px-8">
-        <div className="grid border-y border-border md:grid-cols-3 md:divide-x md:divide-border">
-          <Journey n="01" title="DISCOVER" body="Find a BITMAP by price, collection, rarity, or block number." to="/marketplace" action="BROWSE MARKET" />
-          <Journey n="02" title="OWN" body="Buy directly from signed listings or place a bid with your connected wallet." to="/marketplace" action="SEE LISTINGS" />
-          <Journey n="03" title="BUILD" body="Turn your BITMAP into a profile, gallery, shop, game, or on-chain world." to="/builds" action="EXPLORE BUILDS" />
+        <div className="label text-bitcoin">THE LOOP</div>
+        <h2 className="display mt-2 text-2xl md:text-3xl">OWN · EXTEND · DEPLOY · EXPERIENCE · PUBLISH</h2>
+        <div className="mt-6 grid border-y border-border md:grid-cols-5 md:divide-x md:divide-border">
+          <Journey n="01" title="OWN" body="Hold a piece of permanent Bitcoin-derived territory." to="/marketplace" action="FIND LAND" />
+          <Journey n="02" title="EXTEND" body="Add experiences created by you, other builders or AI." to="/extend" action="EXTEND LAND" />
+          <Journey n="03" title="DEPLOY" body="Put a tested package onto your own land." to="/studio" action="OPEN STUDIO" />
+          <Journey n="04" title="EXPERIENCE" body="Players enter your land and interact with what runs there." to="/map" action="ENTER THE WORLD" />
+          <Journey n="05" title="PUBLISH" body="List your creation so anyone can deploy it too." to="/extenders" action="SEE THE MARKET" />
         </div>
       </section>
     </div>
@@ -192,9 +203,21 @@ function MarketStat({ k, v }: { k: string; v: string }) {
   );
 }
 
-function Journey({ n, title, body, to, action }: { n: string; title: string; body: string; to: "/marketplace" | "/builds"; action: string }) {
+function Journey({
+  n,
+  title,
+  body,
+  to,
+  action,
+}: {
+  n: string;
+  title: string;
+  body: string;
+  to: "/marketplace" | "/builds" | "/extend" | "/studio" | "/map" | "/extenders";
+  action: string;
+}) {
   return (
-    <div className="border-b border-border py-7 md:border-b-0 md:px-7 first:md:pl-0 last:md:pr-0">
+    <div className="border-b border-border py-7 md:border-b-0 md:px-6 first:md:pl-0 last:md:pr-0">
       <div className="label text-bitcoin">{n}</div>
       <div className="display mt-4 text-xl">{title}</div>
       <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">{body}</p>
@@ -202,3 +225,4 @@ function Journey({ n, title, body, to, action }: { n: string; title: string; bod
     </div>
   );
 }
+

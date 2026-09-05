@@ -10,7 +10,9 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 const NAV = [
   { to: "/marketplace", label: "MARKETPLACE" },
   { to: "/map", label: "MAP" },
+  { to: "/extend", label: "EXTEND" },
   { to: "/extenders", label: "EXTENDERS" },
+
   { to: "/studio", label: "STUDIO" },
   { to: "/my-world", label: "MY WORLD" },
   { to: "/cities", label: "CITIES" },
@@ -51,7 +53,7 @@ export function SiteHeader() {
               UNHINGED
             </span>
           </div>
-          <div className="label mt-1 hidden sm:block">BITCOIN DIGITAL LAND</div>
+          <div className="label mt-1 hidden sm:block">BITCOIN LAND BEDROCK</div>
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
