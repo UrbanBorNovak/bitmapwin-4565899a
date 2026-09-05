@@ -11,6 +11,7 @@ import {
   LAND_PERMISSIONS,
   SDK_VERSION,
   categoryLabel,
+  extendersQuery,
   extenderVersionsQuery,
   myExtendersQuery,
   slugify,
