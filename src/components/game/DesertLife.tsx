@@ -313,7 +313,27 @@ export const DesertLife = memo(function DesertLife({
         <coneGeometry args={[0.5, 1, 5, 1]} />
         <meshLambertMaterial color={colors.muted} />
       </instancedMesh>
+      <instancedMesh
+        ref={pondRef}
+        args={[undefined, undefined, 60]}
+        frustumCulled={false}
+        raycast={noRaycast}
+      >
+        <circleGeometry args={[1, 24]} />
+        <meshBasicMaterial color={WATER} transparent opacity={0.72} depthWrite={false} />
+      </instancedMesh>
+      <instancedMesh
+        ref={reedRef}
+        args={[undefined, undefined, 700]}
+        frustumCulled={false}
+        raycast={noRaycast}
+      >
+        <boxGeometry args={[1, 1, 1]} />
+        <meshLambertMaterial color={REED} />
+      </instancedMesh>
+      <Mirage unit={unit} pose={pose} />
       <Critters unit={unit} colors={colors} pose={pose} />
+
     </group>
   );
 });
