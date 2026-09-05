@@ -955,7 +955,7 @@ function veinAt(unit: number, gx: number, gz: number, x: number, z: number): Ore
     z,
     level: GOLD_MINING_LEVEL,
     // A bigger strike pays better per swing as well as lasting longer.
-    xpPerVoxel: GOLD_XP_PER_VOXEL * (tier === 2 ? 2 : tier === 1 ? 1.4 : 1),
+    xpPerVoxel: Math.round(GOLD_XP_PER_VOXEL * (tier === 2 ? 2 : tier === 1 ? 1.4 : 1)),
     voxels,
     depletedUntil: 0,
   };

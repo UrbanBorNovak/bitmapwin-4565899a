@@ -268,7 +268,7 @@ export function ShooterLayer({
         playSfx("nugget");
         flashNote(
           result.emptied
-            ? "VEIN MINED OUT · REGROWING"
+            ? "SEAM MINED OUT · GONE FOR GOOD"
             : `+${oreHit.vein.xpPerVoxel} MINING XP`,
         );
       }
