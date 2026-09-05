@@ -8,7 +8,7 @@ import { RUNTIME_LIMITS, SDK_TYPES } from "@/lib/extender-sdk";
  * it cannot reach the page, the chain or the database.
  */
 
-const MODEL = "google/gemini-2.5-flash";
+const MODEL = "google/gemini-3.7-flash";
 
 const RULES = [
   "You write JavaScript for the BITMAPWIN extender sandbox.",
