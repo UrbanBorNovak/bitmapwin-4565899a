@@ -157,6 +157,22 @@ export function addItem(item: ItemId, count = 1) {
   return true;
 }
 
+/**
+ * Pay a recipe's cost out of the backpack. All-or-nothing: nothing is consumed
+ * unless every material is there.
+ */
+export function spendItems(cost: Partial<Record<ItemId, number>>) {
+  hydrate();
+  for (const [item, amount] of Object.entries(cost) as [ItemId, number][]) {
+    if (state.items[item] < amount) return false;
+  }
+  for (const [item, amount] of Object.entries(cost) as [ItemId, number][]) {
+    state.items[item] -= amount;
+  }
+  commit();
+  return true;
+}
+
 export function dropAll() {
   hydrate();
   state.items = blankState().items;
