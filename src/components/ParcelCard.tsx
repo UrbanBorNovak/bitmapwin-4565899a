@@ -17,7 +17,7 @@ export function ParcelCard({ parcel }: { parcel: RegistryParcel }) {
   const topBid = topBidByHeight(bids.data ?? []).get(parcel.bitmapHeight) ?? null;
 
   return (
-    <article className="group rounded-lg border border-border bg-card overflow-hidden transition-[border-color,transform] duration-150 hover:border-primary hover:-translate-y-0.5">
+    <article className="terminal-panel terminal-interactive group overflow-hidden">
       <Link
         to="/bitmap/$block"
         params={{ block: String(parcel.bitmapHeight) }}
@@ -117,7 +117,7 @@ export function ParcelCard({ parcel }: { parcel: RegistryParcel }) {
 
 function Row({ k, v }: { k: string; v: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-2">
+    <div className="terminal-data-row flex items-baseline justify-between gap-2">
       <dt className="label">{k}</dt>
       <dd className="truncate font-mono text-foreground">{v}</dd>
     </div>
