@@ -23,12 +23,15 @@ export type WeaponSpec = {
   cooldownMs: number;
   /** how far a hit can land, in strides */
   reachStrides: number;
+  /** splash radius around an impact, in strides — anyone inside also takes a hit */
+  splashStrides: number;
   fireSfx: "mosin" | "revolver" | "whip";
   /** follow-up mechanical sound after a shot (bolt lift / cylinder) */
   cycleSfx: "bolt" | "cock" | null;
   cycleDelayMs: number;
   hint: string;
 };
+
 
 export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
   mosin: {
