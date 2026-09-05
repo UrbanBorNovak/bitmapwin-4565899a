@@ -277,18 +277,19 @@ quest.add({
 });
 
 let passes = 0;
-let signed = false;
 
 on("interact", (event) => {
   if (event.propId !== board.id) return;
-  signed = true;
+  state.set("signed", true);
+  state.add("crew", 1);
   quest.state("sign-on", "done");
   quest.state("night-watch", "active");
   board.set({ label: "SIGNED ON", color: SAIL });
-  log("a visitor signed the harbour register");
+  log("crew signed: " + state.get("crew", 0));
 });
 
 on("enter", () => log("someone walked onto the pier"));
+
 
 on("tick", (event) => {
   const t = event.time;
