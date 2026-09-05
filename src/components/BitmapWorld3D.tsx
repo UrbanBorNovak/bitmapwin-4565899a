@@ -1448,7 +1448,9 @@ const WorldScene = memo(function WorldScene({
         onRunning={onRunning}
       />
       <ShooterLayer
-        active={shooter && cameraMode !== "map"}
+        active={weapon !== null && cameraMode !== "map"}
+        firstPerson={cameraMode === "first"}
+        weapon={weapon ?? "mosin"}
         pose={pose}
         cursors={cursors}
         bitcoin={colors.bitcoin}
@@ -1470,6 +1472,8 @@ const WorldScene = memo(function WorldScene({
           hp={self.hp}
           hitAt={self.hitAt}
           lastDamage={self.lastDamage}
+          weapon={weapon}
+          bitcoin={colors.bitcoin}
         />
       ) : null}
       <mesh
