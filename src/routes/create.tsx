@@ -78,7 +78,7 @@ type Deployed = { slug: string; height: number; semver: string };
 
 function CreatePage() {
   const { height: searchHeight } = Route.useSearch();
-  const { session, loading } = useAuthSession();
+  const { session, user, loading } = useAuthSession();
   const wallet = useWalletSession();
   const links = useQuery(myWalletLinksQuery(Boolean(session)));
   const address = wallet?.ordinalsAddress ?? links.data?.[0]?.address ?? "";
@@ -105,11 +105,21 @@ function CreatePage() {
   const [target, setTarget] = useState(searchHeight ? String(searchHeight) : "");
   const [deployed, setDeployed] = useState<Deployed | null>(null);
 
+  const [existingExtenderId, setExistingExtenderId] = useState<string | "new">("new");
+  const [config, setConfig] = useState<Record<string, unknown>>({});
+  const [iconInscriptionId, setIconInscriptionId] = useState("");
+  const [previewInscriptionId, setPreviewInscriptionId] = useState("");
+
   const build = useServerFn(buildExtenderPackageFn);
   const createExtender = useServerFn(createExtenderFn);
   const publishVersion = useServerFn(publishVersionFn);
   const deploy = useServerFn(deployExtenderFn);
   const queryClient = useQueryClient();
+
+  const mine = useQuery(myExtendersQuery(user?.id ?? null));
+  const selectedExtender = (mine.data ?? []).find((e: Extender) => e.id === existingExtenderId);
+  const existingVersions = useQuery(extenderVersionsQuery(selectedExtender?.id ?? null));
+  const latestExisting = existingVersions.data?.[0] ?? null;
 
   const heights = held.data ?? [];
   const testHeight = Number.isFinite(Number(target)) && Number(target) > 0 ? Number(target) : (searchHeight ?? 36095);
