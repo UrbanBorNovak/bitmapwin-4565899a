@@ -80,6 +80,8 @@ export const REASON_LABEL: Record<string, string> = {
   referral_bonus: "REFERRAL BONUS",
   referral_joined: "JOINED VIA REFERRAL",
   referral_override: "REFERRAL SHARE",
+  ai_build: "AI BUILD",
+  extender_purchase: "EXTENDER BOUGHT",
 };
 
 export function formatBit(amount: number): string {

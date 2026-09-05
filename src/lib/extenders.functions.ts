@@ -30,6 +30,7 @@ export const createExtenderFn = createServerFn({ method: "POST" })
         license: z.string().trim().max(60).default("all-rights-reserved"),
         monetization: z.enum(["free", "paid", "lease"]).default("free"),
         priceSats: z.number().int().min(0).max(2_100_000_000_000).default(0),
+        priceBit: z.number().int().min(0).max(100_000_000).default(0),
         iconInscriptionId: z.string().trim().regex(/^[0-9a-fA-F]{64}i\d+$/).nullable().default(null),
         previewInscriptionId: z.string().trim().regex(/^[0-9a-fA-F]{64}i\d+$/).nullable().default(null),
       })

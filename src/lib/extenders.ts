@@ -69,6 +69,8 @@ export type Extender = {
   license: string;
   monetization: "free" | "paid" | "lease";
   priceSats: number;
+  /** Price in BIT — the platform coin extenders are sold in. */
+  priceBit: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -116,7 +118,7 @@ export type LandGrant = {
 };
 
 const EXTENDER_COLUMNS =
-  "id, slug, name, summary, description, category, tags, creator_user_id, creator_address, icon_inscription_id, preview_inscription_id, status, is_ai_built, license, monetization, price_sats, created_at, updated_at";
+  "id, slug, name, summary, description, category, tags, creator_user_id, creator_address, icon_inscription_id, preview_inscription_id, status, is_ai_built, license, monetization, price_sats, price_bit, created_at, updated_at";
 
 type ExtenderRow = {
   id: string;
@@ -135,6 +137,7 @@ type ExtenderRow = {
   license: string;
   monetization: string;
   price_sats: number;
+  price_bit: number;
   created_at: string;
   updated_at: string;
 };
@@ -157,6 +160,7 @@ function toExtender(row: ExtenderRow): Extender {
     license: row.license,
     monetization: row.monetization as Extender["monetization"],
     priceSats: Number(row.price_sats),
+    priceBit: Number(row.price_bit ?? 0),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

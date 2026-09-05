@@ -164,6 +164,7 @@ function CreateExtenderForm({ onCreated }: { onCreated: (id: string) => void }) 
           license: "all-rights-reserved",
           monetization: "free",
           priceSats: 0,
+          priceBit: 0,
           iconInscriptionId: null,
           previewInscriptionId: null,
         },
