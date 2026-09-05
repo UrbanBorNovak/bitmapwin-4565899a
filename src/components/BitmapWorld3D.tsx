@@ -1935,6 +1935,34 @@ export function BitmapWorld3D({
           </Canvas>
         ) : null}
 
+        {shooter && exploring ? (
+          <div
+            data-no-translate
+            className="hud-panel absolute left-3 top-3 z-30 space-y-1 px-2.5 py-2 font-mono text-[10px] tabular-nums"
+            aria-label="Shooter status"
+          >
+            <div className="label text-[9px] text-bitcoin">SHOOTER · LIVE</div>
+            <div className="flex items-center gap-3">
+              <span>
+                AMMO{" "}
+                <span className="text-foreground">
+                  {shooterStats.reloading ? "RELOADING" : `${shooterStats.ammo}/${MAGAZINE}`}
+                </span>
+              </span>
+              <span>
+                SCORE <span className="text-foreground">{shooterStats.score}</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-3 text-muted-foreground">
+              <span>DOWNED {shooterStats.kills}</span>
+              <span>TARGETS {shooterStats.targets}</span>
+            </div>
+            <div className="text-muted-foreground">CLICK / E · FIRE · R · RELOAD</div>
+            {shooterStats.note ? <div className="text-bitcoin">{shooterStats.note}</div> : null}
+          </div>
+        ) : null}
+
+
         <div
           role="group"
           aria-label="Camera mode"
