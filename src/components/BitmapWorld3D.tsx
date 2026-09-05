@@ -868,6 +868,24 @@ export type SelfPose = PlayerState;
 
 const colorsForShadow = "#000000";
 
+/**
+ * The weapon in the avatar's right hand — the same model the first-person view
+ * carries, so other visitors see what you are holding.
+ */
+function HeldWeapon({ kind, bitcoin }: { kind: WeaponKind; bitcoin: string }) {
+  const materials = useWeaponMaterials();
+  const u = AVATAR_U;
+  return (
+    <group
+      position={[u * 0.3, u * 0.26, u * 0.14]}
+      rotation={[kind === "whip" ? 0.35 : -0.06, Math.PI, 0]}
+      scale={0.62}
+    >
+      <WeaponModel kind={kind} u={u} materials={materials} flashColor={bitcoin} lash={0} />
+    </group>
+  );
+}
+
 /** Your own figure in third person, driven by the shared pose ref. */
 const SelfAvatar = memo(function SelfAvatar({
   pose,
