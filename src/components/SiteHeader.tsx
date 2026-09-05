@@ -134,7 +134,16 @@ export function SiteHeader() {
               )}
             </div>
           ))}
+          <Link
+            to="/map"
+            className="label ml-2 flex items-center gap-1 border border-bitcoin px-3 py-2 text-bitcoin hover:bg-bitcoin/10"
+            title="Map, extend, deploy"
+          >
+            MAP <span aria-hidden="true">→</span> EXTEND <span aria-hidden="true">→</span> DEPLOY
+          </Link>
         </nav>
+
+
 
         <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
           <BtcTicker className="hidden sm:flex" />
