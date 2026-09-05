@@ -106,7 +106,21 @@ function burst(
 function tone(
   context: AudioContext,
   out: GainNode,
-  { from, to, seconds, gain, type = "square" as OscillatorType, delay = 0 },
+  {
+    from,
+    to,
+    seconds,
+    gain,
+    type = "square",
+    delay = 0,
+  }: {
+    from: number;
+    to: number;
+    seconds: number;
+    gain: number;
+    type?: OscillatorType;
+    delay?: number;
+  },
 ) {
   const osc = context.createOscillator();
   const env = context.createGain();
