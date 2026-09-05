@@ -350,30 +350,37 @@ const DistrictBlocks = memo(function DistrictBlocks({
             float districtId = cell.y * uGrid + cell.x;
             float mined = step(districtId, uTip);
             float shade = hash(districtId);
-            float edge = min(min(cellUv.x, 1.0 - cellUv.x), min(cellUv.y, 1.0 - cellUv.y));
+
             // Cell footprint in pixels: when a district is sub-pixel, dissolve the
-            // per-cell inset instead of shimmering (cheaper and stable while zoomed out).
+            // per-cell voxel detail instead of shimmering while zoomed out.
             float px = max(fwidth(vUv.x), fwidth(vUv.y)) * uGrid;
             float detail = 1.0 - smoothstep(0.35, 1.1, px);
-            float edgeAA = max(fwidth(cellUv.x), fwidth(cellUv.y));
-            float inset = mix(1.0, smoothstep(0.012, max(0.036, edgeAA * 1.4), edge), detail);
 
-            // Bitcoin-orange gradient: every tile — mined or not — uses the same
-            // shade rules so the whole world reads as one continuous orange land.
-            // Unmined tiles are only slightly dimmer, keeping the grid as the main
-            // difference instead of a dark band.
-            vec3 ember = uBitcoin * 0.32;
-            vec3 blaze = mix(uBitcoin, vec3(1.0, 0.82, 0.48), 0.38);
-            float sweep = clamp(vUv.y * 0.55 + vUv.x * 0.18, 0.0, 1.0);
-            float plot = clamp(cellUv.y * 0.55 + cellUv.x * 0.25 + 0.1, 0.0, 1.0);
-            float heat = clamp(sweep * 0.28 + plot * 0.22 * detail + shade * 0.12, 0.0, 1.0);
+            // VOXEL LAND — every district is a block: flat quantised top face,
+            // hard bevel highlight on two sides and shadow on the other two, and
+            // a dark seam between blocks. No smooth gradients.
+            float bevel = 0.09;
+            float top = step(cellUv.y, 1.0 - bevel);
+            float light = (1.0 - step(cellUv.x, bevel)) * (1.0 - step(1.0 - bevel, cellUv.y));
+            float dark = step(1.0 - bevel, cellUv.x) + step(cellUv.y, bevel);
+            float seam = step(cellUv.x, 0.02) + step(0.98, cellUv.x)
+                       + step(cellUv.y, 0.02) + step(0.98, cellUv.y);
+
+            vec3 ember = uBitcoin * 0.34;
+            vec3 blaze = mix(uBitcoin, vec3(1.0, 0.82, 0.48), 0.4);
+            // stepped height field so the land reads as stacked voxel tiers
+            float tier = floor(shade * 4.0) / 3.0;
+            float heat = clamp(0.24 + tier * 0.5, 0.0, 1.0);
             vec3 baseColor = mix(ember, blaze, heat);
-            baseColor = mix(baseColor, uMined * 0.42, 0.14);
-            vec3 minedColor = baseColor;
-            vec3 futureColor = baseColor * 0.78 + uBitcoin * 0.08;
-            vec3 color = mix(futureColor, minedColor, mined);
-            gl_FragColor = vec4(color * (0.62 + inset * 0.5), 1.0);
+            baseColor = mix(baseColor, uMined * 0.4, 0.12);
+            vec3 color = mix(baseColor * 0.74 + uBitcoin * 0.06, baseColor, mined);
+
+            float face = mix(1.0, 1.0 + light * 0.22 - min(dark, 1.0) * 0.3, detail);
+            color *= face;
+            color = mix(color, color * 0.42, min(seam, 1.0) * detail);
+            gl_FragColor = vec4(color, 1.0);
           }
+
         `
         }
       />
