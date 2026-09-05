@@ -26,7 +26,7 @@ export const SkyBodies = memo(function SkyBodies({ bitcoin }: { bitcoin: string 
   const camera = useThree((s) => s.camera);
   // Sky sits just inside the fog/camera range of the land world, in world units.
   const far = 26;
-  const bodyScale = 1;
+  const bodyScale = 2.2;
 
   const starGeometry = useMemo(() => {
     const count = 900;
@@ -74,7 +74,7 @@ export const SkyBodies = memo(function SkyBodies({ bitcoin }: { bitcoin: string 
       </points>
 
       {/* Sun — glow halo plus a bright core. */}
-      <group position={[-far * 0.62, sunHeight, -far * 0.62]}>
+      <group position={[-far * 0.5, sunHeight, -far * 0.5]}>
         <mesh raycast={() => {}}>
           <sphereGeometry args={[bodyScale * (night ? 0.7 : 1.15), 20, 16]} />
           <meshBasicMaterial color={SUN_CORE} />
@@ -91,7 +91,7 @@ export const SkyBodies = memo(function SkyBodies({ bitcoin }: { bitcoin: string 
       </group>
 
       {/* Moon — a pale disc with a hint of crater shading. */}
-      <group position={[far * 0.58, moonHeight, far * 0.5]}>
+      <group position={[far * 0.5, moonHeight, far * 0.5]}>
         <mesh raycast={() => {}}>
           <sphereGeometry args={[bodyScale * (night ? 0.95 : 0.55), 20, 16]} />
           <meshBasicMaterial color={MOON} transparent opacity={night ? 1 : 0.45} />
