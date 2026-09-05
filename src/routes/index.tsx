@@ -104,12 +104,12 @@ function Index() {
                     deploy them, and let players walk in.
                   </p>
                   <div className="mt-6 grid gap-2 sm:mt-8 sm:flex sm:flex-wrap sm:gap-3">
-                    <Link to="/map" className="btn-term min-h-12 w-full sm:min-h-0 sm:w-auto">EXPLORE THE WORLD</Link>
-                    <Link to="/extend" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">BUILD</Link>
-                    <Link to="/extenders" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">MARKETPLACE</Link>
+                    <Link to="/map" className="btn-term min-h-12 w-full sm:min-h-0 sm:w-auto">01 · OPEN THE MAP</Link>
+                    <Link to="/extend" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">02 · EXTEND</Link>
+                    <Link to="/create" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">03 · DEPLOY</Link>
                   </div>
-                  <Link to="/studio" className="mt-4 inline-flex font-mono text-xs font-bold text-bitcoin hover:text-foreground">
-                    BUILD WITH AI →
+                  <Link to="/extenders" className="mt-4 inline-flex font-mono text-xs font-bold text-bitcoin hover:text-foreground">
+                    BROWSE THE MARKET →
                   </Link>
                 </div>
 
@@ -180,14 +180,17 @@ function Index() {
       </section>
 
       <section className="mx-auto max-w-[1600px] px-4 pt-16 md:px-8">
-        <div className="label text-bitcoin">THE LOOP</div>
-        <h2 className="display mt-2 text-2xl md:text-3xl">OWN · EXTEND · DEPLOY · EXPERIENCE · PUBLISH</h2>
-        <div className="mt-6 grid border-y border-border md:grid-cols-5 md:divide-x md:divide-border">
-          <Journey n="01" title="OWN" body="Hold a piece of permanent Bitcoin-derived territory." to="/marketplace" action="FIND LAND" />
-          <Journey n="02" title="EXTEND" body="Add experiences created by you, other builders or AI." to="/extend" action="EXTEND LAND" />
-          <Journey n="03" title="DEPLOY" body="Put a tested package onto your own land." to="/studio" action="OPEN STUDIO" />
-          <Journey n="04" title="EXPERIENCE" body="Players enter your land and interact with what runs there." to="/map" action="ENTER THE WORLD" />
-          <Journey n="05" title="PUBLISH" body="List your creation so anyone can deploy it too." to="/extenders" action="SEE THE MARKET" />
+        <div className="label text-bitcoin">THE PRIMARY FLOW</div>
+        <h2 className="display mt-2 text-2xl md:text-3xl">MAP · EXTEND · DEPLOY</h2>
+        <div className="mt-6 grid border-y border-border md:grid-cols-3 md:divide-x md:divide-border">
+          <Journey n="01" title="MAP" body="Open the live world and pick the BITMAP you want to work on." to="/map" action="OPEN THE MAP" />
+          <Journey n="02" title="EXTEND" body="Give that land software: import a package, describe it to AI, or take one from the market." to="/extend" action="EXTEND LAND" />
+          <Journey n="03" title="DEPLOY" body="Run it on the land, then walk in as a visitor." to="/create" action="BUILD AND DEPLOY" />
+        </div>
+        <div className="mt-6 flex flex-wrap gap-2 pb-2">
+          <Link to="/marketplace" className="btn-term-ghost">[ GET LAND FIRST ]</Link>
+          <Link to="/extenders" className="btn-term-ghost">[ PUBLISHED EXTENDERS ]</Link>
+          <Link to="/experiences" className="btn-term-ghost">[ LIVE EXPERIENCES ]</Link>
         </div>
       </section>
     </div>
@@ -213,7 +216,7 @@ function Journey({
   n: string;
   title: string;
   body: string;
-  to: "/marketplace" | "/builds" | "/extend" | "/studio" | "/map" | "/extenders";
+  to: "/marketplace" | "/builds" | "/extend" | "/studio" | "/map" | "/extenders" | "/create";
   action: string;
 }) {
   return (
