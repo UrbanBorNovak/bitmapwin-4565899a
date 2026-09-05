@@ -160,9 +160,9 @@ function MyWorldPage() {
           <GrantRightsForm />
           <Panel title="WHAT IS NEXT">
             <ul className="space-y-3 text-sm leading-relaxed text-muted-foreground">
-              <li className="flex gap-2"><DataBadge kind="soon" /> Sandboxed execution of deployed extenders</li>
-              <li className="flex gap-2"><DataBadge kind="soon" /> AI agents building experiences to order</li>
-              <li className="flex gap-2"><DataBadge kind="soon" /> Revenue splits between land and package</li>
+              <li className="flex gap-2"><DataBadge kind="soon" /> <span className="text-foreground font-medium">01 — WORLDS GO LIVE</span> Extenders execute as persistent experiences directly on player-owned Bitmap land.</li>
+              <li className="flex gap-2"><DataBadge kind="soon" /> <span className="text-foreground font-medium">02 — AI STARTS BUILDING</span> AI agents create, test, compose, and deploy worlds from a simple idea.</li>
+              <li className="flex gap-2"><DataBadge kind="soon" /> <span className="text-foreground font-medium">03 — THE WORLD BECOMES AN ECONOMY</span> Landowners, builders, Extenders, and players earn from the worlds they create.</li>
             </ul>
           </Panel>
         </aside>
