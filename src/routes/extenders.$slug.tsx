@@ -80,7 +80,7 @@ function ExtenderDetail() {
 
           {e.previewInscriptionId ? (
             <div className="mt-6 border border-border bg-surface p-2">
-              <InscriptionContent id={e.previewInscriptionId} />
+              <InscriptionContent inscriptionId={e.previewInscriptionId} />
             </div>
           ) : null}
 
