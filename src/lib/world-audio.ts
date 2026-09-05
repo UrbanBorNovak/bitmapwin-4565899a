@@ -163,6 +163,8 @@ function tone(
     gain,
     type = "square",
     delay = 0,
+    send,
+    attack = 0.008,
   }: {
     from: number;
     to: number;
@@ -170,6 +172,8 @@ function tone(
     gain: number;
     type?: OscillatorType;
     delay?: number;
+    send?: { node: AudioNode; gain: number };
+    attack?: number;
   },
 ) {
   const osc = context.createOscillator();
@@ -179,9 +183,14 @@ function tone(
   osc.frequency.setValueAtTime(from, now);
   osc.frequency.exponentialRampToValueAtTime(Math.max(20, to), now + seconds);
   env.gain.setValueAtTime(0.0001, now);
-  env.gain.exponentialRampToValueAtTime(gain, now + 0.008);
+  env.gain.exponentialRampToValueAtTime(gain, now + attack);
   env.gain.exponentialRampToValueAtTime(0.0001, now + seconds);
   osc.connect(env).connect(out);
+  if (send) {
+    const tap = context.createGain();
+    tap.gain.value = send.gain;
+    env.connect(tap).connect(send.node);
+  }
   osc.start(now);
   osc.stop(now + seconds + 0.02);
 }
