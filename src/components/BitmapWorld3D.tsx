@@ -1915,30 +1915,6 @@ export function BitmapWorld3D({
           >
             {avatarModel ? "[ INVENTORY · WEARING MODEL ]" : "[ INVENTORY ]"}
           </Button>
-          <div
-            className="flex flex-wrap items-center gap-1 border border-border px-1.5 py-1"
-            data-no-translate
-          >
-            <span className="label px-1 text-[9px] text-muted-foreground">EQUIP A WEAPON</span>
-            {WEAPON_ORDER.map((kind) => (
-              <Button
-                key={kind}
-                className={weapon === kind ? "btn-term" : "btn-term-ghost"}
-                variant="ghost"
-                aria-pressed={weapon === kind}
-                title={WEAPONS[kind].hint}
-                onClick={() => {
-                  unlockAudio();
-                  playSfx("ui");
-                  setWeapon((current) => (current === kind ? null : kind));
-                  if (!exploring) setCameraMode("first");
-                }}
-              >
-                [ {WEAPONS[kind].short}
-                {weapon === kind ? " ·" : ""} ]
-              </Button>
-            ))}
-          </div>
           <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
             {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
           </Button>
