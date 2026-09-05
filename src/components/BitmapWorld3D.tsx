@@ -1511,8 +1511,10 @@ const WorldScene = memo(function WorldScene({
           if (event.delta > 3) return;
           const height = heightAtPoint(event.point);
           if (height === null) return;
-          // Mouse / touch movement: walking mode treats a tap as a destination,
-          // and still opens the district window you tapped.
+          // In first person the pointer is the crosshair — clicking fires the
+          // equipped weapon, never opens a district card. In third person a tap
+          // still walks to the spot and opens the tile.
+          if (cameraMode === "first") return;
           if (cameraMode !== "map" && pose.current)
             pose.current.target = { x: event.point.x, z: event.point.z };
           onSelect(height);
