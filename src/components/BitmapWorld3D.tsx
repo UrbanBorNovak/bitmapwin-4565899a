@@ -1343,6 +1343,8 @@ const WorldScene = memo(function WorldScene({
     hitAt: number;
     lastDamage: number;
   };
+  deployments: RuntimeDeployment[];
+  onRunning: (running: RunningExtender[]) => void;
 }) {
   // Pointer moves fire dozens of times a second; each React state update re-renders
   // the whole overlay. Coalesce them: at most ~20 hover updates a second, and skip
