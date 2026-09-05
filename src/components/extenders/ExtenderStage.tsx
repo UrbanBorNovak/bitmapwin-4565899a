@@ -21,10 +21,13 @@ const MAX_ACTIVE = 6;
 export function ExtenderStage({
   deployments,
   pose,
+  followPlayer,
   onRunning,
 }: {
   deployments: RuntimeDeployment[];
   pose: React.RefObject<{ x: number; z: number; y: number }>;
+  /** true while walking the world; false while using the overhead map camera */
+  followPlayer: boolean;
   onRunning?: (running: RunningExtender[]) => void;
 }) {
   const camera = useThree((state) => state.camera);
@@ -41,7 +44,7 @@ export function ExtenderStage({
     // On foot we follow the player; from the map camera we follow whatever patch of
     // land the camera is actually looking down at.
     const player = pose.current;
-    const overhead = camera.position.y > 1.5;
+    const overhead = !followPlayer || !player;
     let range = RANGE;
     if (overhead) {
       camera.getWorldDirection(direction.current);
@@ -73,10 +76,14 @@ export function ExtenderStage({
     lastPick.current.key = key;
     setNearby(scored);
   });
+  // keep the picker honest when the camera mode flips
+  useEffect(() => {
+    lastPick.current.at = 0;
+  }, [followPlayer]);
 
   const playerFor = useCallback(
     (deployment: RuntimeDeployment) => {
-      const player = pose.current;
+      const player = followPlayer ? pose.current : null;
       if (!player) return null;
       const col = deployment.height % WORLD_GRID;
       const row = Math.floor(deployment.height / WORLD_GRID);
@@ -86,7 +93,7 @@ export function ExtenderStage({
       if (Math.abs(dx) > 7 || Math.abs(dz) > 7) return null;
       return { x: dx, z: dz, y: player.y / STRIDE };
     },
-    [pose],
+    [followPlayer, pose],
   );
 
   const { running, interact } = useExtenderRuntimes(nearby, playerFor);
