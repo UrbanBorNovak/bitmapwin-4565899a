@@ -26,7 +26,13 @@ import type { RunningExtender } from "@/lib/use-extender-runtimes";
 import { ShooterLayer, type ShooterStats } from "@/components/game/ShooterLayer";
 import { DesertLife } from "@/components/game/DesertLife";
 import { DesertBuilds } from "@/components/game/DesertBuilds";
-import { build as buildStructure, costLabel, STRUCTURES } from "@/lib/world-build";
+import {
+  build as buildStructure,
+  costLabel,
+  recipeFor,
+  STRUCTURES,
+  type StructureId,
+} from "@/lib/world-build";
 import { SkyBodies } from "@/components/game/SkyBodies";
 import {
   WEAPONS,
@@ -1666,6 +1672,30 @@ export function BitmapWorld3D({
   }, []);
   const [muted, setMuted] = useState(false);
   useEffect(() => setMuted(isSoundMuted()), []);
+  /** Craft a structure out of gathered materials and drop it where you stand. */
+  const placeBuild = useCallback((id: StructureId) => {
+    const current = pose.current;
+    const placed = buildStructure(id, current?.x ?? 0, current?.z ?? 0, current?.yaw ?? 0);
+    if (!placed) {
+      setBuildNote("NOT ENOUGH MATERIALS · MINE OR HUNT FIRST");
+      return;
+    }
+    playSfx("ui");
+    setBuildNote(`${recipeFor(id)?.name ?? "STRUCTURE"} BUILT WHERE YOU STAND`);
+  }, []);
+
+  // B opens and closes the build panel while you are out in the world.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+      if (event.key.toLowerCase() !== "b") return;
+      setBuildOpen((current) => !current);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const toggleSound = useCallback(() => {
     const next = !isSoundMuted();
     setSoundMuted(next);
@@ -2758,6 +2788,60 @@ function SkillsHud() {
           ))
       )}
       {full ? <div className="text-destructive">FULL</div> : null}
+    </div>
+  );
+}
+
+/** BUILD — spend gathered hides, fangs and gold on a structure at your feet. */
+function BuildHud({
+  onBuild,
+  note,
+  onClose,
+}: {
+  onBuild: (id: StructureId) => void;
+  note: string | null;
+  onClose: () => void;
+}) {
+  const { items } = useWorldSkills();
+  return (
+    <div
+      data-no-translate
+      className="hud-panel absolute left-3 top-[13.5rem] z-40 w-[min(15rem,calc(100%-1.5rem))] space-y-1.5 px-2.5 py-2 font-mono text-[10px]"
+      aria-label="Build structures"
+    >
+      <div className="flex items-center justify-between">
+        <span className="label text-[9px] text-bitcoin">BUILD</span>
+        <button
+          type="button"
+          aria-label="Close build panel"
+          onClick={onClose}
+          className="text-muted-foreground hover:text-bitcoin"
+        >
+          <X className="size-3" />
+        </button>
+      </div>
+      {STRUCTURES.map((recipe) => {
+        const affordable = (Object.entries(recipe.cost) as [ItemId, number][]).every(
+          ([item, amount]) => items[item] >= amount,
+        );
+        return (
+          <button
+            key={recipe.id}
+            type="button"
+            disabled={!affordable}
+            onClick={() => onBuild(recipe.id)}
+            className={
+              affordable
+                ? "w-full border border-border px-2 py-1 text-left hover:border-bitcoin hover:text-bitcoin"
+                : "w-full border border-border/60 px-2 py-1 text-left text-muted-foreground/60"
+            }
+          >
+            <span className="block text-foreground">{recipe.name}</span>
+            <span className="block text-[9px] text-muted-foreground">{costLabel(recipe)}</span>
+          </button>
+        );
+      })}
+      {note ? <div className="border-t border-border pt-1.5 text-bitcoin">{note}</div> : null}
     </div>
   );
 }
