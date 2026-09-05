@@ -77,7 +77,10 @@ function CreatePage() {
 
   const [prompt, setPrompt] = useState("");
   const [design, setDesign] = useState<Design | null>(null);
+  const [models, setModels] = useState<ModelAsset[]>([]);
+  const [modelsDowngraded, setModelsDowngraded] = useState(0);
   const [code, setCode] = useState("");
+
   const [status, setStatus] = useState<{ running: boolean; error: string | null; props: number }>({
     running: false,
     error: null,
