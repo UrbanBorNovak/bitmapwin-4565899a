@@ -25,6 +25,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as MyWorldRouteImport } from './routes/my-world'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SdkRouteImport } from './routes/sdk'
+import { Route as SdkPlaygroundRouteImport } from './routes/sdk-playground'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StudioRouteImport } from './routes/studio'
 import { Route as WalletRouteImport } from './routes/wallet'
@@ -123,6 +124,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const SdkRoute = SdkRouteImport.update({
   id: '/sdk',
   path: '/sdk',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SdkPlaygroundRoute = SdkPlaygroundRouteImport.update({
+  id: '/sdk-playground',
+  path: '/sdk-playground',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -241,6 +247,7 @@ export interface FileRoutesByFullPath {
   '/my-world': typeof MyWorldRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
+  '/sdk-playground': typeof SdkPlaygroundRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/studio': typeof StudioRoute
   '/wallet': typeof WalletRoute
@@ -276,6 +283,7 @@ export interface FileRoutesByTo {
   '/my-world': typeof MyWorldRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
+  '/sdk-playground': typeof SdkPlaygroundRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/studio': typeof StudioRoute
   '/wallet': typeof WalletRoute
@@ -314,6 +322,7 @@ export interface FileRoutesById {
   '/my-world': typeof MyWorldRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
+  '/sdk-playground': typeof SdkPlaygroundRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/studio': typeof StudioRoute
   '/wallet': typeof WalletRoute
@@ -353,6 +362,7 @@ export interface FileRouteTypes {
     | '/my-world'
     | '/reset-password'
     | '/sdk'
+    | '/sdk-playground'
     | '/sitemap.xml'
     | '/studio'
     | '/wallet'
@@ -388,6 +398,7 @@ export interface FileRouteTypes {
     | '/my-world'
     | '/reset-password'
     | '/sdk'
+    | '/sdk-playground'
     | '/sitemap.xml'
     | '/studio'
     | '/wallet'
@@ -425,6 +436,7 @@ export interface FileRouteTypes {
     | '/my-world'
     | '/reset-password'
     | '/sdk'
+    | '/sdk-playground'
     | '/sitemap.xml'
     | '/studio'
     | '/wallet'
@@ -463,6 +475,7 @@ export interface RootRouteChildren {
   MyWorldRoute: typeof MyWorldRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SdkRoute: typeof SdkRoute
+  SdkPlaygroundRoute: typeof SdkPlaygroundRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StudioRoute: typeof StudioRoute
   WalletRoute: typeof WalletRoute
@@ -591,6 +604,13 @@ declare module '@tanstack/react-router' {
       path: '/sdk'
       fullPath: '/sdk'
       preLoaderRoute: typeof SdkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sdk-playground': {
+      id: '/sdk-playground'
+      path: '/sdk-playground'
+      fullPath: '/sdk-playground'
+      preLoaderRoute: typeof SdkPlaygroundRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -787,6 +807,7 @@ const rootRouteChildren: RootRouteChildren = {
   MyWorldRoute: MyWorldRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SdkRoute: SdkRoute,
+  SdkPlaygroundRoute: SdkPlaygroundRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StudioRoute: StudioRoute,
   WalletRoute: WalletRoute,
