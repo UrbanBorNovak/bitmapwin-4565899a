@@ -152,7 +152,7 @@ function CreatePage() {
       });
 
       await deploy({
-        data: { extenderId: created.id, versionId: version.id, height: chosen, config: {} },
+        data: { extenderId: created.id, versionId: version.versionId, height: chosen, config: {} },
       });
 
       return { slug, height: chosen, semver: "1.0.0" } satisfies Deployed;
