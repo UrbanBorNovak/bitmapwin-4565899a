@@ -10,7 +10,9 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 const NAV = [
   { to: "/marketplace", label: "MARKETPLACE" },
   { to: "/map", label: "MAP" },
+  { to: "/extend", label: "EXTEND" },
   { to: "/extenders", label: "EXTENDERS" },
+
   { to: "/studio", label: "STUDIO" },
   { to: "/my-world", label: "MY WORLD" },
   { to: "/cities", label: "CITIES" },
