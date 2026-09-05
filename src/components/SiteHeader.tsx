@@ -53,7 +53,7 @@ export function SiteHeader() {
               UNHINGED
             </span>
           </div>
-          <div className="label mt-1 hidden sm:block">BITCOIN DIGITAL LAND</div>
+          <div className="label mt-1 hidden sm:block">BEDROCK FOR AI-BUILT WORLDS</div>
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
