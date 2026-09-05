@@ -1,4 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  BedrockStackInfographic,
+  DeployFlowInfographic,
+  FirstIsFirstInfographic,
+  LoopInfographic,
+  ParcelsInfographic,
+  RightsInfographic,
+} from "@/components/docs/Infographics";
+
 
 export const Route = createFileRoute("/docs")({
   head: () => {
@@ -71,9 +80,16 @@ function DocsPage() {
         You bring the world. Start with the loop.
       </p>
 
+      <div className="mt-8">
+        <BedrockStackInfographic />
+      </div>
+
       <section className="mt-10">
         <h2 className="display border-b border-border pb-2 text-xl">THE LOOP</h2>
-        <div className="border-x border-b border-border">
+        <div className="mt-4">
+          <LoopInfographic />
+        </div>
+        <div className="mt-4 border-x border-b border-t border-border">
           {LOOP.map((s, i) => (
             <div key={s.step} className="flex flex-col gap-3 border-b border-border p-5 last:border-b-0 md:flex-row md:items-center">
               <div className="w-32 shrink-0">
@@ -86,6 +102,18 @@ function DocsPage() {
           ))}
         </div>
       </section>
+
+      <section className="mt-10">
+        <h2 className="display border-b border-border pb-2 text-xl">HOW OWNERSHIP WORKS</h2>
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <FirstIsFirstInfographic />
+          <ParcelsInfographic />
+          <RightsInfographic />
+          <DeployFlowInfographic />
+        </div>
+      </section>
+
+
 
       <section className="mt-10">
         <h2 className="display border-b border-border pb-2 text-xl">REFERENCES</h2>
