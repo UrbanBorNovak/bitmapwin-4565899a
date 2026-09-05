@@ -67,7 +67,7 @@ function CreatePage() {
   const { height: searchHeight } = Route.useSearch();
   const { session, loading } = useAuthSession();
   const wallet = useWalletSession();
-  const links = useQuery(myWalletLinksQuery(session?.user?.id ?? null));
+  const links = useQuery(myWalletLinksQuery(Boolean(session)));
   const address = wallet?.ordinalsAddress ?? links.data?.[0]?.address ?? "";
   const addresses = useMemo(() => (address ? [address] : []), [address]);
   const held = useQuery(heldHeightsQuery(addresses));
@@ -365,7 +365,7 @@ function CreatePage() {
                 {deployed.height}.BITMAP · v{deployed.semver} · ACTIVE
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <Link to="/map" search={{ height: deployed.height }} className="btn-term">[ ENTER EXPERIENCE ]</Link>
+                <Link to="/bitmap/$block" params={{ block: String(deployed.height) }} className="btn-term">[ ENTER EXPERIENCE ]</Link>
                 <Link to="/extenders/$slug" params={{ slug: deployed.slug }} className="btn-term-ghost">[ MANAGE ]</Link>
                 <Link to="/studio" className="btn-term-ghost">[ OPEN IN STUDIO ]</Link>
               </div>
