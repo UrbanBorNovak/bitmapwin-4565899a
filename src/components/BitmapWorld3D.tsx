@@ -917,6 +917,7 @@ const SelfAvatar = memo(function SelfAvatar({
         <meshBasicMaterial color={colorsForShadow} transparent opacity={0.38} depthWrite={false} />
       </mesh>
       <AvatarSkin color={color} model={model} motion={motion} />
+      {weapon ? <HeldWeapon kind={weapon} bitcoin={bitcoin} /> : null}
 
       <AvatarLabel
         handle={`${handle} (YOU)`}
