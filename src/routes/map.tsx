@@ -57,33 +57,47 @@ function MapPage() {
             BOTTOM
           </p>
         </div>
-        <span
-          data-no-translate
-          className="shrink-0 border border-border px-2 py-1 font-mono text-[10px] text-muted-foreground"
-        >
-          {tip.isPending
-            ? "SYNC TIP…"
-            : tip.isError
-              ? "NO DATA YET"
-              : `TIP ${tipHeight.toLocaleString("en-US")}`}
-        </span>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <span className="label text-[9px]">CHAIN TIP</span>
+          <span
+            data-no-translate
+            className="hud-panel-accent px-2.5 py-1 font-mono text-[11px] tabular-nums text-foreground"
+          >
+            {tip.isPending ? (
+              <>
+                SYNC<span className="blink">…</span>
+              </>
+            ) : tip.isError ? (
+              "NO DATA YET"
+            ) : (
+              tipHeight.toLocaleString("en-US")
+            )}
+          </span>
+        </div>
       </header>
 
-      <div className="terminal-panel mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 px-3 py-2 font-mono text-[10px] text-muted-foreground">
-        <span className="flex items-center gap-2">
-          <span className="inline-block h-2 w-2 bg-foreground" /> MINED · UNCLAIMED
+      <div
+        className="terminal-panel mt-4 flex flex-wrap items-center gap-2 px-3 py-2.5 font-mono text-[10px] text-muted-foreground"
+        role="list"
+        aria-label="Map legend"
+      >
+        <span className="label mr-1 text-[9px]">LEGEND</span>
+        <span className="legend-chip" role="listitem">
+          <span className="legend-swatch bg-foreground" /> MINED · UNCLAIMED
         </span>
-        <span className="flex items-center gap-2">
-          <span className="inline-block h-2 w-2 bg-border" /> NOT MINED YET
+        <span className="legend-chip" role="listitem">
+          <span className="legend-swatch bg-border" /> NOT MINED YET
         </span>
-        <span className="flex items-center gap-2">
-          <span className="inline-block h-2 w-2 bg-bitcoin" /> HELD BY YOU
+        <span className="legend-chip" role="listitem">
+          <span className="legend-swatch bg-bitcoin" /> HELD BY YOU
         </span>
-        <span className="flex items-center gap-2">
-          <span className="inline-block h-2 w-2" style={{ background: "hsl(190 70% 58%)" }} />
-          <span className="inline-block h-2 w-2" style={{ background: "hsl(320 70% 60%)" }} />
-          <span className="inline-block h-2 w-2" style={{ background: "hsl(90 70% 55%)" }} /> ONE
-          COLOUR PER HOLDER ADDRESS
+        <span className="legend-chip" role="listitem">
+          <span className="flex items-center gap-0.5">
+            <span className="legend-swatch" style={{ background: "hsl(190 70% 58%)" }} />
+            <span className="legend-swatch" style={{ background: "hsl(320 70% 60%)" }} />
+            <span className="legend-swatch" style={{ background: "hsl(90 70% 55%)" }} />
+          </span>
+          ONE COLOUR PER HOLDER
         </span>
       </div>
 
