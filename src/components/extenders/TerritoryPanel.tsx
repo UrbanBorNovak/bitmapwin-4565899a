@@ -23,8 +23,6 @@ export function TerritoryPanel({ height, ownerAddress }: { height: number; owner
   const stack = deployments.data ?? [];
   const grantList = grants.data ?? [];
 
-  const stack = deployments.data ?? [];
-  const grantList = grants.data ?? [];
   const experiences = stack.filter((d) => d.category !== "art" && d.category !== "construction").length;
   const buildings = stack.length - experiences;
 
