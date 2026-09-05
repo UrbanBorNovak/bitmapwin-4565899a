@@ -10,7 +10,14 @@ import { useAuthSession } from "@/lib/auth";
 import { heldHeightsQuery } from "@/lib/held-parcels";
 import { myWalletLinksQuery } from "@/lib/wallet-links";
 import { useWalletSession } from "@/lib/wallet-session";
-import { SDK_VERSION, categoryLabel, slugify } from "@/lib/extenders";
+import {
+  SDK_VERSION,
+  categoryLabel,
+  extenderVersionsQuery,
+  myExtendersQuery,
+  slugify,
+  type Extender,
+} from "@/lib/extenders";
 import { createExtenderFn, deployExtenderFn, publishVersionFn } from "@/lib/extenders.functions";
 import { buildExtenderPackageFn } from "@/lib/extender-ai.functions";
 import { RUNTIME_LIMITS } from "@/lib/extender-sdk";
@@ -66,12 +73,12 @@ type Design = {
 
 type ModelAsset = { inscriptionId: string; height: number; triangleCount: number; animationCount: number };
 
-type Deployed = { slug: string; height: number; semver: string };
+type Deployed = { slug: string; height: number; semver: string; extenderId: string };
 
 
 function CreatePage() {
   const { height: searchHeight } = Route.useSearch();
-  const { session, loading } = useAuthSession();
+  const { session, user, loading } = useAuthSession();
   const wallet = useWalletSession();
   const links = useQuery(myWalletLinksQuery(Boolean(session)));
   const address = wallet?.ordinalsAddress ?? links.data?.[0]?.address ?? "";
@@ -98,11 +105,21 @@ function CreatePage() {
   const [target, setTarget] = useState(searchHeight ? String(searchHeight) : "");
   const [deployed, setDeployed] = useState<Deployed | null>(null);
 
+  const [existingExtenderId, setExistingExtenderId] = useState<string | "new">("new");
+  const [config, setConfig] = useState<Record<string, unknown>>({});
+  const [iconInscriptionId, setIconInscriptionId] = useState("");
+  const [previewInscriptionId, setPreviewInscriptionId] = useState("");
+
   const build = useServerFn(buildExtenderPackageFn);
   const createExtender = useServerFn(createExtenderFn);
   const publishVersion = useServerFn(publishVersionFn);
   const deploy = useServerFn(deployExtenderFn);
   const queryClient = useQueryClient();
+
+  const mine = useQuery(myExtendersQuery(user?.id ?? null));
+  const selectedExtender = (mine.data ?? []).find((e: Extender) => e.id === existingExtenderId);
+  const existingVersions = useQuery(extenderVersionsQuery(selectedExtender?.id ?? null));
+  const latestExisting = existingVersions.data?.[0] ?? null;
 
   const heights = held.data ?? [];
   const testHeight = Number.isFinite(Number(target)) && Number(target) > 0 ? Number(target) : (searchHeight ?? 36095);
@@ -138,31 +155,44 @@ function CreatePage() {
       const chosen = Number(target);
       if (!Number.isFinite(chosen) || chosen < 0) throw new Error("PICK THE BITMAP TO DEPLOY ON");
       const askBit = Math.max(0, Math.round(Number(priceBit) || 0));
-      const slugBase = slugify(design.name) || "ai-extender";
-      const slug = `${slugBase}-${Date.now().toString(36).slice(-4)}`.slice(0, 60);
 
-      const created = await createExtender({
-        data: {
-          slug,
-          name: design.name.slice(0, 80),
-          summary: design.summary.slice(0, 200),
-          description: design.stages.map((s) => `${s.label}: ${s.detail}`).join("\n").slice(0, 4000),
-          category: design.category,
-          tags: design.tags.slice(0, 8),
-          isAiBuilt: true,
-          license: "all-rights-reserved",
-          monetization: askBit > 0 ? "paid" : "free",
-          priceSats: 0,
-          priceBit: askBit,
-          iconInscriptionId: null,
-          previewInscriptionId: null,
-        },
-      });
+      let extenderId: string;
+      let slug: string;
+      let semver: string;
+
+      if (selectedExtender) {
+        extenderId = selectedExtender.id;
+        slug = selectedExtender.slug;
+        semver = nextSemver(latestExisting?.semver ?? null);
+      } else {
+        const slugBase = slugify(design.name) || "ai-extender";
+        slug = `${slugBase}-${Date.now().toString(36).slice(-4)}`.slice(0, 60);
+        semver = "1.0.0";
+
+        const created = await createExtender({
+          data: {
+            slug,
+            name: design.name.slice(0, 80),
+            summary: design.summary.slice(0, 200),
+            description: design.stages.map((s) => `${s.label}: ${s.detail}`).join("\n").slice(0, 4000),
+            category: design.category,
+            tags: design.tags.slice(0, 8),
+            isAiBuilt: true,
+            license: "all-rights-reserved",
+            monetization: askBit > 0 ? "paid" : "free",
+            priceSats: 0,
+            priceBit: askBit,
+            iconInscriptionId: iconInscriptionId.trim() || null,
+            previewInscriptionId: previewInscriptionId.trim() || null,
+          },
+        });
+        extenderId = created.id;
+      }
 
       const version = await publishVersion({
         data: {
-          extenderId: created.id,
-          semver: "1.0.0",
+          extenderId,
+          semver,
           sdkVersion: SDK_VERSION,
           changelog: `Built with AI from: ${prompt.trim().slice(0, 300)}`,
           manifest: {
@@ -172,8 +202,8 @@ function CreatePage() {
             assets: design.assets,
             models,
             brief: prompt.trim().slice(0, 1200),
+            configSchema: Object.keys(config).length > 0 ? config : undefined,
           },
-
           publish: true,
           dependencies: [],
           permissions: [],
@@ -181,14 +211,15 @@ function CreatePage() {
       });
 
       await deploy({
-        data: { extenderId: created.id, versionId: version.versionId, height: chosen, config: {} },
+        data: { extenderId, versionId: version.versionId, height: chosen, config },
       });
 
-      return { slug, height: chosen, semver: "1.0.0" } satisfies Deployed;
+      return { slug, height: chosen, semver, extenderId } satisfies Deployed;
     },
     onSuccess: (result) => {
       setDeployed(result);
       queryClient.invalidateQueries({ queryKey: ["my-extenders"] });
+      queryClient.invalidateQueries({ queryKey: ["extender-versions"] });
       queryClient.invalidateQueries({ queryKey: ["extenders"] });
       queryClient.invalidateQueries({ queryKey: ["tile-deployments"] });
       queryClient.invalidateQueries({ queryKey: ["world-deployments"] });
@@ -404,17 +435,70 @@ function CreatePage() {
           </p>
 
           <div className="border border-border bg-surface p-4">
-            <div className="label text-bitcoin">4 · DEPLOY ON YOUR LAND</div>
+            <div className="label text-bitcoin">4 · PACKAGE AND DEPLOY</div>
+
+            <div className="mt-3">
+              <div className="label text-muted-foreground">EXTENDER</div>
+              <select
+                value={existingExtenderId}
+                onChange={(e) => setExistingExtenderId(e.target.value)}
+                className="mt-2 w-full border border-border bg-background px-2 py-1.5 font-mono text-xs outline-none focus:border-bitcoin"
+                data-no-translate
+              >
+                <option value="new">+ CREATE NEW EXTENDER</option>
+                {(mine.data ?? []).map((e: Extender) => (
+                  <option key={e.id} value={e.id}>
+                    {e.name} · {e.slug}
+                  </option>
+                ))}
+              </select>
+              {selectedExtender ? (
+                <p className="mt-2 font-mono text-[10px] text-muted-foreground" data-no-translate>
+                  &gt; VERSION WILL BE v{nextSemver(latestExisting?.semver ?? null)} · LATEST v{latestExisting?.semver ?? "—"}
+                </p>
+              ) : null}
+            </div>
+
+            {selectedExtender ? null : (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div>
+                  <div className="label text-muted-foreground">ICON INSCRIPTION</div>
+                  <input
+                    value={iconInscriptionId}
+                    onChange={(e) => setIconInscriptionId(e.target.value)}
+                    placeholder="abc123...i0"
+                    className="mt-2 w-full border border-border bg-background px-2 py-1.5 font-mono text-xs outline-none focus:border-bitcoin"
+                    data-no-translate
+                  />
+                </div>
+                <div>
+                  <div className="label text-muted-foreground">PREVIEW INSCRIPTION</div>
+                  <input
+                    value={previewInscriptionId}
+                    onChange={(e) => setPreviewInscriptionId(e.target.value)}
+                    placeholder="abc123...i0"
+                    className="mt-2 w-full border border-border bg-background px-2 py-1.5 font-mono text-xs outline-none focus:border-bitcoin"
+                    data-no-translate
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4">
+              <div className="label text-muted-foreground">DEPLOY CONFIG (JSON)</div>
+              <ConfigEditor value={config} onChange={setConfig} />
+            </div>
+
             {held.isPending ? (
-              <p className="mt-3 font-mono text-xs text-muted-foreground">&gt; CHECKING WHICH BITMAPS YOU HOLD…</p>
+              <p className="mt-4 font-mono text-xs text-muted-foreground">&gt; CHECKING WHICH BITMAPS YOU HOLD…</p>
             ) : heights.length === 0 ? (
-              <p className="mt-3 font-mono text-xs text-muted-foreground">
+              <p className="mt-4 font-mono text-xs text-muted-foreground">
                 &gt; NO LAND FOUND FOR THIS WALLET — CONNECT IT ON{" "}
                 <Link to="/wallet" className="text-bitcoin underline">/WALLET</Link>{" "}
                 OR TYPE A BITMAP YOU HOLD BELOW
               </p>
             ) : (
-              <div className="mt-3 flex flex-wrap gap-1">
+              <div className="mt-4 flex flex-wrap gap-1">
                 {heights.slice(0, 40).map((h) => (
                   <button
                     key={h}
@@ -477,7 +561,7 @@ function CreatePage() {
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link to="/map" search={{ height: deployed.height }} className="btn-term">[ ENTER EXPERIENCE ]</Link>
                 <Link to="/extenders/$slug" params={{ slug: deployed.slug }} className="btn-term-ghost">[ MANAGE ]</Link>
-                <Link to="/studio" className="btn-term-ghost">[ OPEN IN STUDIO ]</Link>
+                <Link to="/studio" search={{ selected: deployed.extenderId }} className="btn-term-ghost">[ OPEN IN STUDIO ]</Link>
               </div>
             </div>
           ) : null}
@@ -485,4 +569,55 @@ function CreatePage() {
       </div>
     </div>
   );
+}
+
+function ConfigEditor({
+  value,
+  onChange,
+}: {
+  value: Record<string, unknown>;
+  onChange: (value: Record<string, unknown>) => void;
+}) {
+  const [text, setText] = useState(() => JSON.stringify(value, null, 2));
+  const [invalid, setInvalid] = useState(false);
+
+  return (
+    <div>
+      <textarea
+        value={text}
+        onChange={(e) => {
+          setText(e.target.value);
+          try {
+            const parsed = JSON.parse(e.target.value);
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+              onChange(parsed as Record<string, unknown>);
+              setInvalid(false);
+            } else {
+              setInvalid(true);
+            }
+          } catch {
+            setInvalid(true);
+          }
+        }}
+        rows={4}
+        placeholder='{"greeting":"Welcome traveller","difficulty":"normal"}'
+        className="w-full border border-border bg-background px-3 py-2 font-mono text-[11px] leading-relaxed outline-none focus:border-bitcoin"
+        data-no-translate
+      />
+      {invalid ? (
+        <p className="mt-1 font-mono text-[10px] text-destructive">INVALID JSON — MUST BE AN OBJECT</p>
+      ) : (
+        <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+          PASSED TO land.config AT RUNTIME. LEAVE EMPTY IF THE BUILD DOES NOT NEED IT.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function nextSemver(current: string | null): string {
+  if (!current) return "1.0.0";
+  const parts = current.split(".").map((n) => Number(n));
+  if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n))) return "1.0.0";
+  return `${parts[0]}.${(parts[1] ?? 0) + 1}.0`;
 }

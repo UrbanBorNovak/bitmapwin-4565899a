@@ -152,6 +152,44 @@ export async function setExtenderStatus(userId: string, extenderId: string, stat
   return { ok: true };
 }
 
+export async function updateExtenderMetadata(
+  userId: string,
+  input: {
+    extenderId: string;
+    name?: string | undefined;
+    summary?: string | undefined;
+    description?: string | undefined;
+    category?: string | undefined;
+    tags?: string[] | undefined;
+    license?: string | undefined;
+    monetization?: "free" | "paid" | "lease" | undefined;
+    priceBit?: number | undefined;
+    iconInscriptionId?: string | null | undefined;
+    previewInscriptionId?: string | null | undefined;
+  },
+) {
+  await ownExtender(userId, input.extenderId);
+  const db = await admin();
+
+  const { error } = await db
+    .from("extenders")
+    .update({
+      ...(input.name !== undefined && { name: input.name }),
+      ...(input.summary !== undefined && { summary: input.summary }),
+      ...(input.description !== undefined && { description: input.description }),
+      ...(input.category !== undefined && { category: input.category }),
+      ...(input.tags !== undefined && { tags: input.tags }),
+      ...(input.license !== undefined && { license: input.license }),
+      ...(input.monetization !== undefined && { monetization: input.monetization }),
+      ...(input.priceBit !== undefined && { price_bit: input.priceBit }),
+      ...(input.iconInscriptionId !== undefined && { icon_inscription_id: input.iconInscriptionId }),
+      ...(input.previewInscriptionId !== undefined && { preview_inscription_id: input.previewInscriptionId }),
+    })
+    .eq("id", input.extenderId);
+  if (error) throw error;
+  return { ok: true };
+}
+
 export type VersionDraft = {
   extenderId: string;
   semver: string;

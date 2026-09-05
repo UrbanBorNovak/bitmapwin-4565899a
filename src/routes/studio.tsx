@@ -11,17 +11,22 @@ import {
   LAND_PERMISSIONS,
   SDK_VERSION,
   categoryLabel,
+  extendersQuery,
   extenderVersionsQuery,
   myExtendersQuery,
   slugify,
   type Extender,
   type LandPermission,
 } from "@/lib/extenders";
-import { createExtenderFn, publishVersionFn, setExtenderStatusFn } from "@/lib/extenders.functions";
+import { createExtenderFn, publishVersionFn, setExtenderStatusFn, updateExtenderMetadataFn } from "@/lib/extenders.functions";
 import { generateExtenderCodeFn } from "@/lib/extender-ai.functions";
 import { RUNTIME_LIMITS, STARTER_TEMPLATES, codeFromManifest } from "@/lib/extender-sdk";
 
 export const Route = createFileRoute("/studio")({
+  validateSearch: (search: Record<string, unknown>): { selected?: string } => {
+    const selected = search["selected"];
+    return typeof selected === "string" && selected.length > 0 ? { selected } : {};
+  },
   head: () => {
     const title = "Extender Studio — Describe It, Test It, Ship It";
     const description =
@@ -41,10 +46,11 @@ export const Route = createFileRoute("/studio")({
 });
 
 function StudioPage() {
+  const { selected: searchSelected } = Route.useSearch();
   const { session, loading } = useAuthSession();
   const userId = session?.user?.id ?? null;
   const mine = useQuery(myExtendersQuery(userId));
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(searchSelected ?? null);
 
   if (loading) {
     return <p className="mx-auto max-w-[1300px] px-4 py-20 font-mono text-sm text-muted-foreground md:px-8">&gt; CHECKING SESSION…</p>;
@@ -147,6 +153,8 @@ function CreateExtenderForm({ onCreated }: { onCreated: (id: string) => void }) 
   const [summary, setSummary] = useState("");
   const [category, setCategory] = useState<string>(EXTENDER_CATEGORIES[0].id);
   const [isAiBuilt, setIsAiBuilt] = useState(true);
+  const [iconInscriptionId, setIconInscriptionId] = useState("");
+  const [previewInscriptionId, setPreviewInscriptionId] = useState("");
 
   const run = useMutation({
     mutationFn: async () => {
@@ -165,8 +173,8 @@ function CreateExtenderForm({ onCreated }: { onCreated: (id: string) => void }) 
           monetization: "free",
           priceSats: 0,
           priceBit: 0,
-          iconInscriptionId: null,
-          previewInscriptionId: null,
+          iconInscriptionId: iconInscriptionId.trim() || null,
+          previewInscriptionId: previewInscriptionId.trim() || null,
         },
       });
     },
@@ -176,6 +184,8 @@ function CreateExtenderForm({ onCreated }: { onCreated: (id: string) => void }) 
       onCreated(created.id);
       setName("");
       setSummary("");
+      setIconInscriptionId("");
+      setPreviewInscriptionId("");
     },
     onError: (error) => toast("COULD NOT CREATE", { description: (error as Error).message }),
   });
@@ -205,6 +215,20 @@ function CreateExtenderForm({ onCreated }: { onCreated: (id: string) => void }) 
             <option key={c.id} value={c.id}>{c.label}</option>
           ))}
         </select>
+        <input
+          value={iconInscriptionId}
+          onChange={(e) => setIconInscriptionId(e.target.value)}
+          placeholder="Icon inscription id (optional)"
+          className="w-full border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-bitcoin"
+          data-no-translate
+        />
+        <input
+          value={previewInscriptionId}
+          onChange={(e) => setPreviewInscriptionId(e.target.value)}
+          placeholder="Preview inscription id (optional)"
+          className="w-full border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-bitcoin"
+          data-no-translate
+        />
         <label className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
           <input type="checkbox" checked={isAiBuilt} onChange={(e) => setIsAiBuilt(e.target.checked)} />
           BUILT WITH AN AI AGENT
@@ -220,9 +244,97 @@ function CreateExtenderForm({ onCreated }: { onCreated: (id: string) => void }) 
   );
 }
 
+function MetadataEditor({ extender, onSave }: { extender: Extender; onSave: () => void }) {
+  const update = useServerFn(updateExtenderMetadataFn);
+  const [name, setName] = useState(extender.name);
+  const [summary, setSummary] = useState(extender.summary ?? "");
+  const [category, setCategory] = useState(extender.category);
+  const [iconInscriptionId, setIconInscriptionId] = useState(extender.iconInscriptionId ?? "");
+  const [previewInscriptionId, setPreviewInscriptionId] = useState(extender.previewInscriptionId ?? "");
+  const [tags, setTags] = useState((extender.tags ?? []).join(", "));
+
+  const run = useMutation({
+    mutationFn: async () =>
+      update({
+        data: {
+          extenderId: extender.id,
+          name: name.trim() || extender.name,
+          summary: summary.trim(),
+          category,
+          tags: tags
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean)
+            .slice(0, 8),
+          iconInscriptionId: iconInscriptionId.trim() || null,
+          previewInscriptionId: previewInscriptionId.trim() || null,
+        },
+      }),
+    onSuccess: () => {
+      toast("PACKAGE UPDATED");
+      onSave();
+    },
+    onError: (error) => toast("COULD NOT UPDATE", { description: (error as Error).message }),
+  });
+
+  return (
+    <div className="border border-border bg-surface p-4">
+      <div className="label text-bitcoin">EDIT PACKAGE</div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Name"
+          className="w-full border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-bitcoin"
+        />
+        <input
+          value={summary}
+          onChange={(e) => setSummary(e.target.value)}
+          placeholder="Summary"
+          className="w-full border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-bitcoin"
+        />
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="w-full border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-bitcoin"
+        >
+          {EXTENDER_CATEGORIES.map((c) => (
+            <option key={c.id} value={c.id}>{c.label}</option>
+          ))}
+        </select>
+        <input
+          value={tags}
+          onChange={(e) => setTags(e.target.value)}
+          placeholder="Tags, comma separated"
+          className="w-full border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-bitcoin"
+          data-no-translate
+        />
+        <input
+          value={iconInscriptionId}
+          onChange={(e) => setIconInscriptionId(e.target.value)}
+          placeholder="Icon inscription id"
+          className="w-full border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-bitcoin"
+          data-no-translate
+        />
+        <input
+          value={previewInscriptionId}
+          onChange={(e) => setPreviewInscriptionId(e.target.value)}
+          placeholder="Preview inscription id"
+          className="w-full border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-bitcoin"
+          data-no-translate
+        />
+      </div>
+      <button type="button" className="btn-term mt-3" disabled={run.isPending} onClick={() => run.mutate()}>
+        {run.isPending ? "[ SAVING… ]" : "[ SAVE PACKAGE ]"}
+      </button>
+    </div>
+  );
+}
+
 function ExtenderWorkbench({ extender }: { extender: Extender }) {
   const versions = useQuery(extenderVersionsQuery(extender.id));
   const setStatus = useServerFn(setExtenderStatusFn);
+  const updateMetadata = useServerFn(updateExtenderMetadataFn);
   const queryClient = useQueryClient();
   const [code, setCode] = useState("");
   const [testHeight, setTestHeight] = useState("36095");
@@ -268,6 +380,8 @@ function ExtenderWorkbench({ extender }: { extender: Extender }) {
           {extender.summary || "NO SUMMARY YET"}
         </p>
       </div>
+
+      <MetadataEditor extender={extender} onSave={() => queryClient.invalidateQueries({ queryKey: ["my-extenders"] })} />
 
       <div className="grid gap-4 xl:grid-cols-2">
         <div className="space-y-4">
@@ -494,10 +608,15 @@ function PublishVersionForm({
 }) {
   const publish = useServerFn(publishVersionFn);
   const queryClient = useQueryClient();
+  const catalogue = useQuery(extendersQuery({}));
   const [semver, setSemver] = useState(suggestedSemver);
   const [changelog, setChangelog] = useState("");
   const [permissions, setPermissions] = useState<LandPermission[]>(["view", "enter"]);
   const [published, setPublished] = useState(false);
+  const [config, setConfig] = useState<Record<string, unknown>>({});
+  const [configText, setConfigText] = useState("{}");
+  const [configInvalid, setConfigInvalid] = useState(false);
+  const [dependencies, setDependencies] = useState<{ extenderId: string; versionRange: string }[]>([]);
 
   const bytes = new TextEncoder().encode(code).length;
   const tooLarge = bytes > RUNTIME_LIMITS.maxCodeBytes;
@@ -510,9 +629,9 @@ function PublishVersionForm({
           semver: semver.trim(),
           sdkVersion: SDK_VERSION,
           changelog: changelog.trim(),
-          manifest: code.trim() ? { code: code.trim() } : {},
+          manifest: code.trim() ? { code: code.trim(), config } : { config },
           publish: true,
-          dependencies: [],
+          dependencies: dependencies.map((d) => ({ dependsOnExtenderId: d.extenderId, versionRange: d.versionRange })),
           permissions: permissions.map((permission) => ({ permission, reason: "" })),
         },
       }),
@@ -525,6 +644,8 @@ function PublishVersionForm({
     },
     onError: (error) => toast("PUBLISH REFUSED", { description: (error as Error).message }),
   });
+
+  const availableDeps = (catalogue.data ?? []).filter((e) => e.id !== extenderId && e.status === "published");
 
   return (
     <div className="border border-border bg-surface p-4">
@@ -545,7 +666,82 @@ function PublishVersionForm({
         />
       </div>
 
-      <div className="mt-3">
+      <div className="mt-4">
+        <div className="label">DEPENDENCIES</div>
+        {catalogue.isPending ? (
+          <p className="mt-2 font-mono text-[10px] text-muted-foreground">&gt; LOADING CATALOGUE…</p>
+        ) : availableDeps.length === 0 ? (
+          <p className="mt-2 font-mono text-[10px] text-muted-foreground">&gt; NO PUBLISHED EXTENDERS TO DEPEND ON YET</p>
+        ) : (
+          <div className="mt-2 grid gap-2">
+            {availableDeps.map((e) => {
+              const selected = dependencies.find((d) => d.extenderId === e.id);
+              return (
+                <button
+                  key={e.id}
+                  type="button"
+                  onClick={() =>
+                    setDependencies((prev) => {
+                      if (selected) return prev.filter((d) => d.extenderId !== e.id);
+                      return [...prev, { extenderId: e.id, versionRange: "^1.0.0" }];
+                    })
+                  }
+                  className={`flex items-center justify-between border px-2 py-1.5 text-left font-mono text-[11px] ${
+                    selected ? "border-bitcoin text-bitcoin" : "border-border text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span data-no-translate>{e.name}</span>
+                  {selected ? (
+                    <input
+                      value={selected.versionRange}
+                      onChange={(ev) =>
+                        setDependencies((prev) =>
+                          prev.map((d) => (d.extenderId === e.id ? { ...d, versionRange: ev.target.value } : d))
+                        )
+                      }
+                      onClick={(ev) => ev.stopPropagation()}
+                      className="w-24 border border-border bg-background px-1 py-0.5 font-mono text-[10px] outline-none focus:border-bitcoin"
+                      data-no-translate
+                    />
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4">
+        <div className="label">DEPLOY CONFIG (JSON)</div>
+        <textarea
+          value={configText}
+          onChange={(e) => {
+            setConfigText(e.target.value);
+            try {
+              const parsed = JSON.parse(e.target.value);
+              if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+                setConfig(parsed as Record<string, unknown>);
+                setConfigInvalid(false);
+              } else {
+                setConfigInvalid(true);
+              }
+            } catch {
+              setConfigInvalid(true);
+            }
+          }}
+          rows={4}
+          placeholder='{"greeting":"Welcome traveller"}'
+          className="mt-2 w-full border border-border bg-background px-3 py-2 font-mono text-[11px] leading-relaxed outline-none focus:border-bitcoin"
+          data-no-translate
+        />
+        {configInvalid ? (
+          <p className="mt-1 font-mono text-[10px] text-destructive">INVALID JSON — MUST BE AN OBJECT</p>
+        ) : (
+          <p className="mt-1 font-mono text-[10px] text-muted-foreground">PASSED TO land.config AT RUNTIME</p>
+        )}
+      </div>
+
+      <div className="mt-4">
         <div className="label">LAND PERMISSIONS THIS VERSION REQUESTS</div>
         <div className="mt-2 flex flex-wrap gap-1">
           {LAND_PERMISSIONS.map((perm) => {
@@ -566,7 +762,7 @@ function PublishVersionForm({
         </div>
       </div>
 
-      <p className="mt-3 font-mono text-[10px] text-muted-foreground" data-no-translate>
+      <p className="mt-4 font-mono text-[10px] text-muted-foreground" data-no-translate>
         {bytes} / {RUNTIME_LIMITS.maxCodeBytes} BYTES ·{" "}
         {code.trim()
           ? tooLarge
@@ -575,7 +771,7 @@ function PublishVersionForm({
           : "EMPTY — THIS VERSION WILL PUBLISH AS A DESCRIPTION ONLY"}
       </p>
 
-      <button type="button" className="btn-term mt-3 w-full" disabled={run.isPending || tooLarge} onClick={() => run.mutate()}>
+      <button type="button" className="btn-term mt-3 w-full" disabled={run.isPending || tooLarge || configInvalid} onClick={() => run.mutate()}>
         {run.isPending ? "[ PUBLISHING… ]" : "[ PUBLISH VERSION ]"}
       </button>
 

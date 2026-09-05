@@ -48,7 +48,7 @@ export const LAND_PERMISSIONS = [
 ] as const;
 export type LandPermission = (typeof LAND_PERMISSIONS)[number];
 
-export const SDK_VERSION = "0.1";
+export const SDK_VERSION = "0.2";
 
 export type ExtenderStatus = "draft" | "published" | "archived";
 

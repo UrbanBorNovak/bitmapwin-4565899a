@@ -6,6 +6,8 @@ import { ExtenderPropGroup } from "@/components/extenders/ExtenderProps";
 import { startExtender, type ExtenderRuntime } from "@/lib/extender-runtime";
 import { EMPTY_SNAPSHOT, type ExtenderSnapshot } from "@/lib/extender-sdk";
 
+type LogLine = { kind: "log" | "error"; text: string; time: number };
+
 /**
  * The tile-sized test bench: runs code in the same sandbox the world uses and
  * shows exactly what a visitor standing on the BITMAP would see.
@@ -28,7 +30,16 @@ export function ExtenderPreview({
   const [snapshot, setSnapshot] = useState<ExtenderSnapshot>(EMPTY_SNAPSHOT);
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
+  const [logsOpen, setLogsOpen] = useState(false);
+  const [logLines, setLogLines] = useState<LogLine[]>([]);
   const runtime = useRef<ExtenderRuntime | null>(null);
+
+  const appendLog = useCallback((kind: LogLine["kind"], text: string) => {
+    setLogLines((prev) => {
+      const next = [...prev, { kind, text, time: Date.now() }];
+      return next.slice(-40);
+    });
+  }, []);
 
   const stop = useCallback(() => {
     runtime.current?.stop();
@@ -45,6 +56,7 @@ export function ExtenderPreview({
 
   const run = useCallback(() => {
     stop();
+    setLogLines([]);
     if (!code.trim()) {
       setError("NOTHING TO RUN YET");
       return;
@@ -55,16 +67,20 @@ export function ExtenderPreview({
       code,
       { height, club, owner: null, config: {} },
       {
-        onSnapshot: setSnapshot,
+        onSnapshot: (next) => {
+          setSnapshot(next);
+          next.logs.forEach((line) => appendLog("log", line));
+        },
         onError: (message) => {
           setError(message);
+          appendLog("error", message);
           setRunning(false);
         },
       },
     );
     setRunning(true);
     runtime.current.setPlayer({ x: 0, z: 0, y: 0 });
-  }, [code, height, club, stop]);
+  }, [code, height, club, stop, appendLog]);
 
   useEffect(() => {
     if (!autoRun) return;
@@ -73,13 +89,15 @@ export function ExtenderPreview({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRun, code]);
 
+  const statusLabel = error ? "STOPPED" : running ? "RUNNING" : "IDLE";
+
   return (
     <div className="border border-border bg-surface">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
         <span className="label text-bitcoin">TEST ON A TILE</span>
         <span className="font-mono text-[10px] text-muted-foreground" data-no-translate>
-          {error ? "STOPPED" : running ? "RUNNING" : "IDLE"} · {snapshot.props.length} OBJECTS ·{" "}
-          {snapshot.quests.length} QUESTS · {snapshot.time.toFixed(1)}s
+          {statusLabel} · {snapshot.props.length} OBJECTS · {snapshot.quests.length} QUESTS ·{" "}
+          {snapshot.time.toFixed(1)}s
         </span>
       </header>
 
@@ -111,6 +129,14 @@ export function ExtenderPreview({
         <button type="button" className="btn-term-ghost" onClick={stop} disabled={!running}>
           [ STOP ]
         </button>
+        <button
+          type="button"
+          className="btn-term-ghost"
+          onClick={() => setLogsOpen((v) => !v)}
+          disabled={logLines.length === 0 && !error}
+        >
+          [ {logsOpen ? "HIDE LOG" : "SHOW LOG"} ]
+        </button>
         <span className="font-mono text-[10px] text-muted-foreground">CLICK GLOWING OBJECTS TO TEST INTERACTION</span>
       </div>
 
@@ -131,17 +157,19 @@ export function ExtenderPreview({
         </ul>
       ) : null}
 
-      <div className="max-h-28 space-y-0.5 overflow-y-auto border-t border-border px-3 py-2 font-mono text-[10px] text-muted-foreground">
-        {snapshot.logs.length === 0 ? (
-          <p>&gt; NO OUTPUT YET — PRESS RUN</p>
-        ) : (
-          snapshot.logs.map((line, index) => (
-            <p key={`${index}-${line}`} data-no-translate>
-              &gt; {line}
-            </p>
-          ))
-        )}
-      </div>
+      {logsOpen ? (
+        <div className="max-h-40 space-y-0.5 overflow-y-auto border-t border-border bg-background px-3 py-2 font-mono text-[10px]">
+          {logLines.length === 0 ? (
+            <p className="text-muted-foreground">&gt; NO OUTPUT YET</p>
+          ) : (
+            logLines.map((line, index) => (
+              <p key={`${index}-${line.time}`} className={line.kind === "error" ? "text-destructive" : "text-muted-foreground"} data-no-translate>
+                &gt; {line.text}
+              </p>
+            ))
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }
