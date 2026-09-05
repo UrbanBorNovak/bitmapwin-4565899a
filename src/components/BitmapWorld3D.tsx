@@ -19,6 +19,12 @@ import type { MapControls as MapControlsImpl } from "three-stdlib";
 import { Button } from "@/components/ui/button";
 import { BitmapModelPlacement } from "@/components/BitmapModelPlacement";
 import { AvatarInventory } from "@/components/AvatarInventory";
+import { ExtenderStage } from "@/components/extenders/ExtenderStage";
+import { ExtenderHud } from "@/components/extenders/ExtenderHud";
+import { runtimeDeploymentsQuery, type RuntimeDeployment } from "@/lib/extender-code";
+import type { RunningExtender } from "@/lib/use-extender-runtimes";
+
+const EMPTY_DEPLOYMENTS: RuntimeDeployment[] = [];
 
 import { clubOf } from "@/lib/clubs";
 import { mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
