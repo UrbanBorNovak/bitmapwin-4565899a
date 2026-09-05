@@ -18,3 +18,19 @@ export const generateExtenderCodeFn = createServerFn({ method: "POST" })
     const code = await writeExtenderCode(data);
     return { code };
   });
+
+/** Plans a package and writes its code in one pass. Signed-in builders only. */
+export const buildExtenderPackageFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        prompt: z.string().trim().min(8).max(1200),
+        height: z.number().int().nonnegative().max(3_000_000).default(36095),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { buildExtenderPackage } = await import("@/lib/extender-ai.server");
+    return buildExtenderPackage(data);
+  });
