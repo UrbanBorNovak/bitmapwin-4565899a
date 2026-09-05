@@ -1340,7 +1340,7 @@ const WorldScene = memo(function WorldScene({
   self,
   deployments,
   onRunning,
-  shooter,
+  weapon,
   onShootPeer,
   onShooterStats,
 }: {
