@@ -18,7 +18,7 @@ import {
   type Extender,
   type LandPermission,
 } from "@/lib/extenders";
-import { createExtenderFn, publishVersionFn, setExtenderStatusFn } from "@/lib/extenders.functions";
+import { createExtenderFn, publishVersionFn, setExtenderStatusFn, updateExtenderMetadataFn } from "@/lib/extenders.functions";
 import { generateExtenderCodeFn } from "@/lib/extender-ai.functions";
 import { RUNTIME_LIMITS, STARTER_TEMPLATES, codeFromManifest } from "@/lib/extender-sdk";
 
