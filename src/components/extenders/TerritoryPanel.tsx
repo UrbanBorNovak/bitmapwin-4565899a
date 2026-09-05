@@ -23,6 +23,11 @@ export function TerritoryPanel({ height, ownerAddress }: { height: number; owner
   const stack = deployments.data ?? [];
   const grantList = grants.data ?? [];
 
+  const stack = deployments.data ?? [];
+  const grantList = grants.data ?? [];
+  const experiences = stack.filter((d) => d.category !== "art" && d.category !== "construction").length;
+  const buildings = stack.length - experiences;
+
   return (
     <section className="border border-border bg-surface">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
@@ -30,7 +35,27 @@ export function TerritoryPanel({ height, ownerAddress }: { height: number; owner
         <DataBadge kind="live" />
       </header>
 
+      <dl className="grid grid-cols-2 divide-x divide-y divide-border border-b border-border sm:grid-cols-4">
+        <Cell k="OWNER" v={ownerAddress ? shortenAddress(ownerAddress) : "UNCLAIMED"} />
+        <Cell k="LAND" v={ownerAddress ? "OWNED" : "OPEN"} />
+        <Cell k="DEPLOYED" v={deployments.isPending ? "…" : String(stack.length)} />
+        <Cell k="BUILDINGS" v={deployments.isPending ? "…" : String(buildings)} />
+        <Cell k="EXPERIENCES" v={deployments.isPending ? "…" : String(experiences)} />
+        <Cell k="BUILD RIGHTS" v={grants.isPending ? "…" : String(grantList.length)} />
+        <Cell k="LEASE" v={lease.data?.active ? "LEASED" : "NONE"} />
+        <Cell k="SURFACE" v="DEPLOYABLE" />
+      </dl>
+
+      <div className="grid grid-cols-2 divide-x divide-border border-b border-border sm:grid-cols-5">
+        <Action to="/map" label="[ ENTER ]" primary />
+        <Action to="/builds" label="[ BUILD ]" />
+        <Action to="/extend" search={{ height }} label="[ EXTEND ]" primary />
+        <Action to="/leases" label="[ LEASE ]" />
+        <Action to="/bitmap/$block" params={{ block: String(height) }} label="[ HISTORY ]" />
+      </div>
+
       <div className="space-y-6 p-4">
+
         <div>
           <div className="label text-bitcoin">RUNNING EXTENDERS</div>
           {deployments.isPending ? (
