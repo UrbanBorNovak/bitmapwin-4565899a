@@ -1748,8 +1748,15 @@ export function BitmapWorld3D({
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+      if (event.code === "Space") {
+        unlockAudio();
+        playSfx("jump");
+        return;
+      }
       if (event.code !== "KeyF") return;
       event.preventDefault();
+      unlockAudio();
+      playSfx("hit");
       attackNearest();
     };
     window.addEventListener("keydown", onKey);
