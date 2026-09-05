@@ -45,10 +45,11 @@ export const Route = createFileRoute("/studio")({
 });
 
 function StudioPage() {
+  const { selected: searchSelected } = Route.useSearch();
   const { session, loading } = useAuthSession();
   const userId = session?.user?.id ?? null;
   const mine = useQuery(myExtendersQuery(userId));
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(searchSelected ?? null);
 
   if (loading) {
     return <p className="mx-auto max-w-[1300px] px-4 py-20 font-mono text-sm text-muted-foreground md:px-8">&gt; CHECKING SESSION…</p>;
