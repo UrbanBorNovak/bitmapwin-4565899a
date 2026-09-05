@@ -1977,25 +1977,31 @@ export function BitmapWorld3D({
               self={self}
               deployments={deployments.data ?? EMPTY_DEPLOYMENTS}
               onRunning={setRunning}
-              shooter={shooter}
+              weapon={weapon}
               onShootPeer={attack}
               onShooterStats={handleShooterStats}
             />
           </Canvas>
         ) : null}
 
-        {shooter && exploring ? (
+        {weapon && exploring ? (
           <div
             data-no-translate
             className="hud-panel absolute left-3 top-[8.5rem] z-40 space-y-1 px-2.5 py-2 font-mono text-[10px] tabular-nums"
-            aria-label="Shooter status"
+            aria-label="Weapon status"
           >
-            <div className="label text-[9px] text-bitcoin">MOSIN NAGANT · EQUIPPED</div>
+            <div className="label text-[9px] text-bitcoin">
+              {WEAPONS[weapon].label} · EQUIPPED
+            </div>
             <div className="flex items-center gap-3">
               <span>
                 AMMO{" "}
                 <span className="text-foreground">
-                  {shooterStats.reloading ? "RELOADING" : `${shooterStats.ammo}/${MAGAZINE}`}
+                  {shooterStats.magazine === 0
+                    ? "—"
+                    : shooterStats.reloading
+                      ? "RELOADING"
+                      : `${shooterStats.ammo}/${shooterStats.magazine}`}
                 </span>
               </span>
               <span>
@@ -2006,7 +2012,14 @@ export function BitmapWorld3D({
               <span>DOWNED {shooterStats.kills}</span>
               <span>VISITORS {shooterStats.targets}</span>
             </div>
-            <div className="text-muted-foreground">CLICK / E · FIRE · R · CYCLE BOLT</div>
+            <div className="text-muted-foreground">
+              {weapon === "whip"
+                ? "CLICK / E · CRACK · CLOSE RANGE"
+                : "CLICK / E · FIRE · R · RELOAD"}
+            </div>
+            {cameraMode === "third" ? (
+              <div className="text-muted-foreground">FIRST PERSON SHOWS THE WEAPON IN HAND</div>
+            ) : null}
             {shooterStats.note ? <div className="text-bitcoin">{shooterStats.note}</div> : null}
           </div>
         ) : null}
