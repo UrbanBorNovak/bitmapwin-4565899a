@@ -61,7 +61,10 @@ type Design = {
   assets: Array<{ name: string; kind: string; note: string }>;
 };
 
+type ModelAsset = { inscriptionId: string; height: number; triangleCount: number; animationCount: number };
+
 type Deployed = { slug: string; height: number; semver: string };
+
 
 function CreatePage() {
   const { height: searchHeight } = Route.useSearch();
