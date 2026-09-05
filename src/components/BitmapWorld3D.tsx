@@ -1778,7 +1778,7 @@ export function BitmapWorld3D({
 
   return (
     <div className={className}>
-      <div className="mb-2 flex flex-wrap items-center gap-2">
+      <div className="hud-toolbar border-b-0">
         <form
           className="flex items-center gap-1"
           onSubmit={(event) => {
@@ -1861,15 +1861,11 @@ export function BitmapWorld3D({
           </Canvas>
         ) : null}
 
-        <div className="pointer-events-none absolute bottom-3 left-3 z-30">
-          <ExtenderHud running={running} />
-        </div>
-
         <div
           role="group"
           aria-label="Camera mode"
           data-no-translate
-          className="absolute right-3 top-3 z-30 flex border border-border bg-background/90 p-0.5 shadow-md backdrop-blur-sm"
+          className="hud-panel absolute right-3 top-3 z-30 flex p-0.5"
         >
           <Button
             type="button"
@@ -1933,7 +1929,7 @@ export function BitmapWorld3D({
         {/* Your own health, always visible while exploring the world. */}
         <div
           data-no-translate
-          className="pointer-events-none absolute left-3 top-3 z-30 flex flex-col gap-1 bg-background/80 px-2 py-1 font-mono text-[10px]"
+          className="hud-panel pointer-events-none absolute left-3 top-3 z-30 flex max-w-[min(340px,calc(100%-1.5rem))] flex-col gap-1 px-2 py-1.5 font-mono text-[10px]"
         >
           <span className="flex items-center gap-2">
             <span>HP</span>
@@ -1995,7 +1991,7 @@ export function BitmapWorld3D({
         <section
           data-no-translate
           aria-label="Party"
-          className="absolute right-3 top-14 z-30 w-[min(250px,calc(100%-1.5rem))] border border-border bg-background/90 font-mono text-[10px]"
+          className="hud-panel absolute right-3 top-14 z-30 w-[min(250px,calc(100%-1.5rem))] font-mono text-[10px]"
         >
           <header className="flex items-center justify-between border-b border-border px-2 py-1">
             <span>
@@ -2126,45 +2122,53 @@ export function BitmapWorld3D({
           )}
         </section>
 
-        <section
-          data-no-translate
-          aria-label="Combat log"
-          className="absolute bottom-3 left-3 z-30 w-[min(360px,calc(100%-1.5rem))] border border-border bg-background/90 font-mono"
-        >
-          <header className="flex items-center justify-between border-b border-border px-2 py-1 text-[9px] text-muted-foreground">
-            <span>COMBAT LOG · WORLD</span>
-            <span>{combatLog.length} EVENTS</span>
-          </header>
-          <ol aria-live="polite" className="max-h-28 overflow-y-auto px-2 py-1 text-[10px]">
-            {combatLog.length ? (
-              combatLog
-                .slice(-6)
-                .reverse()
-                .map((entry) => (
-                  <li
-                    key={entry.id}
-                    className="flex gap-1 border-b border-border/60 py-1 last:border-0"
-                  >
-                    <span className="text-muted-foreground">
-                      {new Date(entry.at).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        second: "2-digit",
-                      })}
-                    </span>
-                    <span className="truncate">
-                      <b className="text-foreground">{entry.attacker}</b> hit{" "}
-                      <b className="text-foreground">{entry.target}</b> for{" "}
-                      <b className="text-bitcoin">{entry.damage}</b>
-                      {entry.knockout ? " · KNOCKOUT" : ""}
-                    </span>
-                  </li>
-                ))
-            ) : (
-              <li className="py-2 text-muted-foreground">NO HITS YET</li>
-            )}
-          </ol>
-        </section>
+        {/* Bottom-left column: live extender readout stacked over the combat log. */}
+        <div className="hud-stack absolute bottom-24 left-3 z-30 w-[min(320px,calc(100%-1.5rem))]">
+          <div className="pointer-events-none">
+            <ExtenderHud running={running} />
+          </div>
+
+          <section
+            data-no-translate
+            aria-label="Combat log"
+            className="hud-panel font-mono"
+          >
+            <header className="flex items-center justify-between border-b border-border/70 px-2 py-1 text-[9px] tracking-[0.14em] text-muted-foreground">
+              <span>COMBAT LOG</span>
+              <span>{combatLog.length} EVENTS</span>
+            </header>
+            <ol aria-live="polite" className="max-h-24 overflow-y-auto px-2 py-1 text-[10px]">
+              {combatLog.length ? (
+                combatLog
+                  .slice(-5)
+                  .reverse()
+                  .map((entry) => (
+                    <li
+                      key={entry.id}
+                      className="flex gap-1 border-b border-border/40 py-1 last:border-0"
+                    >
+                      <span className="tabular-nums text-muted-foreground">
+                        {new Date(entry.at).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                        })}
+                      </span>
+                      <span className="truncate">
+                        <b className="text-foreground">{entry.attacker}</b> hit{" "}
+                        <b className="text-foreground">{entry.target}</b> for{" "}
+                        <b className="text-bitcoin">{entry.damage}</b>
+                        {entry.knockout ? " · KNOCKOUT" : ""}
+                      </span>
+                    </li>
+                  ))
+              ) : (
+                <li className="py-1.5 text-muted-foreground">NO HITS YET</li>
+              )}
+            </ol>
+          </section>
+        </div>
+
 
         <div
           aria-hidden
@@ -2181,7 +2185,7 @@ export function BitmapWorld3D({
         ) : null}
 
         {/* Talk while you explore — ephemeral world chat with speech bubbles over avatars. */}
-        <div className="absolute bottom-16 left-1/2 z-30 flex w-[min(420px,calc(100%-1.5rem))] -translate-x-1/2 flex-col gap-1">
+        <div className="absolute bottom-3 left-1/2 z-30 flex w-[min(420px,calc(100%-1.5rem))] -translate-x-1/2 flex-col gap-1">
           <div className="flex gap-1">
             <Button
               type="button"
@@ -2330,36 +2334,37 @@ export function BitmapWorld3D({
           </section>
         ) : null}
 
-        <div className="pointer-events-none absolute bottom-2 left-2 z-30 flex max-w-[calc(100%-1rem)] flex-wrap gap-x-3 gap-y-1 bg-background/75 px-2 py-1 font-mono text-[10px] text-muted-foreground">
-          <span>
-            1,000,000 DISTRICTS LOADED · DRAG TO PAN · RIGHT DRAG TO ORBIT · SCROLL TO FLY · CLICK A
-            BLOCK
+      </div>
+
+      {/* Status strip lives under the viewport so it never covers the world. */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border border-t-0 border-border bg-card/60 px-2 py-1.5 font-mono text-[10px] text-muted-foreground">
+        <span>DRAG PAN · RIGHT DRAG ORBIT · SCROLL FLY · CLICK A BLOCK</span>
+        <span className="text-border">|</span>
+        <span data-no-translate>
+          {window_
+            ? owners.isPending
+              ? "SCANNING HOLDERS…"
+              : `${owners.data?.size ?? 0} HOLDERS IN RANGE`
+            : "FLY CLOSER FOR HOLDER COLOURS"}
+        </span>
+        <span className="text-border">|</span>
+        <span data-no-translate>
+          {cursors.length > 0 ? `${cursors.length} SEARCHING NOW` : "NOBODY ELSE SEARCHING"}
+        </span>
+        <span className="text-border">|</span>
+        <span data-no-translate>
+          {window_ ? `${models.data?.length ?? 0} ON-CHAIN MODELS IN RANGE` : "FLY CLOSER FOR MODELS"}
+        </span>
+        <span className="text-border">|</span>
+        {myAddresses.length > 0 ? (
+          <span data-no-translate className="text-bitcoin">
+            {held.isPending
+              ? "LOCATING YOUR BITMAPS…"
+              : `${ownedHeights.length} YOUR BITMAPS · ORANGE BEACONS`}
           </span>
-          <span data-no-translate>
-            {window_
-              ? owners.isPending
-                ? "SCANNING HOLDERS…"
-                : `${owners.data?.size ?? 0} HOLDERS IN RANGE`
-              : "FLY CLOSER FOR HOLDER COLOURS"}
-          </span>
-          <span data-no-translate>
-            {cursors.length > 0 ? `${cursors.length} SEARCHING NOW` : "NOBODY ELSE SEARCHING"}
-          </span>
-          <span data-no-translate>
-            {window_
-              ? `${models.data?.length ?? 0} ON-CHAIN MODELS IN RANGE`
-              : "FLY CLOSER FOR MODELS"}
-          </span>
-          {myAddresses.length > 0 ? (
-            <span data-no-translate className="text-bitcoin">
-              {held.isPending
-                ? "LOCATING YOUR BITMAPS…"
-                : `${ownedHeights.length} YOUR BITMAPS · ORANGE BEACONS`}
-            </span>
-          ) : (
-            <span>CONNECT OR LINK WALLET TO HIGHLIGHT YOUR BITMAPS</span>
-          )}
-        </div>
+        ) : (
+          <span>CONNECT OR LINK WALLET TO HIGHLIGHT YOUR BITMAPS</span>
+        )}
       </div>
     </div>
   );
