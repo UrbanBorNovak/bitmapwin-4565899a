@@ -1878,6 +1878,21 @@ export function BitmapWorld3D({
           >
             {avatarModel ? "[ INVENTORY · WEARING MODEL ]" : "[ INVENTORY ]"}
           </Button>
+          <Button
+            className={shooter ? "btn-term" : "btn-term-ghost"}
+            variant="ghost"
+            onClick={() => {
+              unlockAudio();
+              playSfx("ui");
+              setShooter((current) => !current);
+              if (!exploring) setCameraMode("first");
+            }}
+          >
+            {shooter ? "[ SHOOTER · ON ]" : "[ SHOOTER ]"}
+          </Button>
+          <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
+            {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
+          </Button>
         </div>
       </div>
 
