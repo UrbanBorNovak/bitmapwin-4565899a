@@ -183,11 +183,35 @@ export const DesertLife = memo(function DesertLife({
           dummy.scale.set(size, size * 0.8, size);
           dummy.updateMatrix();
           brush.matrices.push(dummy.matrix.clone());
+        } else if (roll > 0.988) {
+          // A rare watering hole, with a shore of reeds around it.
+          const span2 = unit * (1.6 + hash(gx, gz, 30) * 2.4);
+          dummy.position.set(x, unit * 0.012, z);
+          dummy.rotation.set(-Math.PI / 2, 0, spin);
+          dummy.scale.set(span2, span2 * (0.7 + hash(gx, gz, 31) * 0.5), 1);
+          dummy.updateMatrix();
+          ponds.matrices.push(dummy.matrix.clone());
+          const shore = 10;
+          for (let r = 0; r < shore; r++) {
+            const angle = (r / shore) * Math.PI * 2 + spin;
+            const ring = span2 * (0.9 + hash(gx, gz + r, 32) * 0.25);
+            const tall = unit * (0.2 + hash(gx + r, gz, 33) * 0.35);
+            dummy.position.set(
+              x + Math.cos(angle) * ring,
+              tall / 2,
+              z + Math.sin(angle) * ring * 0.85,
+            );
+            dummy.rotation.set(0, angle, hash(gx + r, gz, 34) * 0.2 - 0.1);
+            dummy.scale.set(unit * 0.05, tall, unit * 0.05);
+            dummy.updateMatrix();
+            reeds.matrices.push(dummy.matrix.clone());
+          }
         }
       }
     }
-    return { cactus, arms, spikes, blossoms, rocks, pebbles, brush };
+    return { cactus, arms, spikes, blossoms, rocks, pebbles, brush, ponds, reeds };
   }, [center, radius, step, unit]);
+
 
   const cactusRef = useRef<THREE.InstancedMesh>(null);
   const armsRef = useRef<THREE.InstancedMesh>(null);
