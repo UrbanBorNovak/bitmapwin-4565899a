@@ -284,3 +284,36 @@ export async function closeEvent(eventId: string): Promise<void> {
   const { error } = await db.rpc("coin_close_event", { _event_id: eventId });
   if (error) throw new Error(error.message);
 }
+
+/** Reads the spendable BIT balance of one address. */
+export async function bitBalance(address: string): Promise<number> {
+  const db = await admin();
+  const { data, error } = await db
+    .from("coin_balances")
+    .select("balance")
+    .eq("address", address)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return Number(data?.balance ?? 0);
+}
+
+/**
+ * Charges BIT from an address. Atomic in the database: the debit and the ledger
+ * entry land together, and the call fails when the balance is too low.
+ */
+export async function spendBit(input: {
+  address: string;
+  amount: number;
+  reason: string;
+  ref?: string | null;
+}): Promise<{ balance: number }> {
+  const db = await admin();
+  const { data, error } = await db.rpc("coin_spend", {
+    _address: input.address,
+    _amount: input.amount,
+    _reason: input.reason,
+    ...(input.ref ? { _ref: input.ref } : {}),
+  });
+  if (error) throw new Error(error.message);
+  return { balance: Number(data ?? 0) };
+}

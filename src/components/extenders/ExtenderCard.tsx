@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { categoryGlyph, categoryLabel, type Extender, type ExtenderStats } from "@/lib/extenders";
 import { shortenAddress } from "@/lib/registry";
-import { formatSats } from "@/lib/trades";
+import { formatBit } from "@/lib/coins";
 
 export function ExtenderCard({ extender, stats }: { extender: Extender; stats?: ExtenderStats | undefined }) {
   return (
@@ -35,7 +35,7 @@ export function ExtenderCard({ extender, stats }: { extender: Extender; stats?: 
         <div>
           <dt className="text-muted-foreground">PRICE</dt>
           <dd className="text-foreground" data-no-translate>
-            {extender.monetization === "free" ? "FREE" : formatSats(extender.priceSats)}
+            {extender.monetization === "free" || extender.priceBit <= 0 ? "FREE" : formatBit(extender.priceBit)}
           </dd>
         </div>
       </dl>

@@ -93,6 +93,7 @@ export type ExtenderDraft = {
   license: string;
   monetization: "free" | "paid" | "lease";
   priceSats: number;
+  priceBit: number;
   iconInscriptionId: string | null;
   previewInscriptionId: string | null;
 };
@@ -117,6 +118,7 @@ export async function createExtender(userId: string, draft: ExtenderDraft) {
       license: draft.license,
       monetization: draft.monetization,
       price_sats: draft.priceSats,
+      price_bit: draft.priceBit,
       status: "draft",
     })
     .select("id, slug")

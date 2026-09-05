@@ -1,12 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { BUILD_TIER_IDS, DEFAULT_BUILD_TIER, buildTier } from "@/lib/build-tiers";
 
 const inputSchema = z.object({
   prompt: z.string().trim().min(4).max(1200),
   height: z.number().int().nonnegative().max(3_000_000).default(36095),
   category: z.string().trim().max(40).default("world-systems"),
   existingCode: z.string().max(24_000).default(""),
+  tier: z.enum(BUILD_TIER_IDS).default(DEFAULT_BUILD_TIER),
 });
 
 /** Writes extender SDK code from a plain-English brief. Signed-in builders only. */
@@ -29,10 +31,33 @@ export const buildExtenderPackageFn = createServerFn({ method: "POST" })
       .object({
         prompt: z.string().trim().min(8).max(1200),
         height: z.number().int().nonnegative().max(3_000_000).default(36095),
+        tier: z.enum(BUILD_TIER_IDS).default(DEFAULT_BUILD_TIER),
+        address: z.string().trim().min(16).max(120),
       })
       .parse(data),
   )
-  .handler(async ({ data }) => {
+
+  .handler(async ({ data, context }) => {
     const { buildExtenderPackage } = await import("@/lib/extender-ai.server");
-    return buildExtenderPackage(data);
+    const { assertControls, bitBalance, spendBit } = await import("@/lib/coins.server");
+    const tier = buildTier(data.tier);
+
+    // The wallet must belong to this account, and it must be able to pay first.
+    await assertControls(context.supabase, context.userId, data.address);
+    const balance = await bitBalance(data.address);
+    if (balance < tier.costBit) {
+      throw new Error(
+        `The ${tier.label} build costs ${tier.costBit} BIT and this wallet holds ${balance} BIT`,
+      );
+    }
+
+    // Charge only once the build actually produced something runnable.
+    const built = await buildExtenderPackage({ prompt: data.prompt, height: data.height, tier: data.tier });
+    const charged = await spendBit({
+      address: data.address,
+      amount: tier.costBit,
+      reason: "ai_build",
+      ref: `${tier.id}:${data.height}`,
+    });
+    return { ...built, tier: tier.id, costBit: tier.costBit, balance: charged.balance };
   });

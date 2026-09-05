@@ -989,6 +989,7 @@ export type Database = {
           monetization: Database["public"]["Enums"]["extender_monetization"]
           name: string
           preview_inscription_id: string | null
+          price_bit: number
           price_sats: number
           slug: string
           status: Database["public"]["Enums"]["extender_status"]
@@ -1009,6 +1010,7 @@ export type Database = {
           monetization?: Database["public"]["Enums"]["extender_monetization"]
           name: string
           preview_inscription_id?: string | null
+          price_bit?: number
           price_sats?: number
           slug: string
           status?: Database["public"]["Enums"]["extender_status"]
@@ -1029,6 +1031,7 @@ export type Database = {
           monetization?: Database["public"]["Enums"]["extender_monetization"]
           name?: string
           preview_inscription_id?: string | null
+          price_bit?: number
           price_sats?: number
           slug?: string
           status?: Database["public"]["Enums"]["extender_status"]
@@ -1702,6 +1705,15 @@ export type Database = {
       coin_enter_event: {
         Args: { _address: string; _event_id: string; _tickets: number }
         Returns: string
+      }
+      coin_spend: {
+        Args: {
+          _address: string
+          _amount: number
+          _reason: string
+          _ref?: string
+        }
+        Returns: number
       }
       coin_start_lease: {
         Args: { _days: number; _lessee_address: string; _offer_id: string }

@@ -95,7 +95,7 @@ function ExtenderDetail() {
               <Fact k="SDK VERSION" v={latest?.sdkVersion ?? "NO DATA YET"} />
               <Fact k="LATEST VERSION" v={latest?.semver ?? "NOT PUBLISHED"} />
               <Fact k="LICENSE" v={e.license.toUpperCase()} />
-              <Fact k="PRICE" v={e.monetization === "free" ? "FREE" : formatSats(e.priceSats)} />
+              <Fact k="PRICE" v={e.monetization === "free" || e.priceBit <= 0 ? "FREE" : formatBit(e.priceBit)} />
             </dl>
             <div className="mt-5">
               <div className="label">DEPENDENCIES</div>
