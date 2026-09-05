@@ -160,7 +160,7 @@ function CreateExtenderForm({ onCreated }: { onCreated: (id: string) => void }) 
       });
     },
     onSuccess: (created) => {
-      toast("DRAFT CREATED", { description: created.name });
+      toast("DRAFT CREATED", { description: created.slug });
       queryClient.invalidateQueries({ queryKey: ["my-extenders"] });
       onCreated(created.id);
       setName("");

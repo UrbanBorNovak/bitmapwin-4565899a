@@ -171,7 +171,7 @@ export async function publishVersion(userId: string, draft: VersionDraft) {
       semver: draft.semver,
       sdk_version: draft.sdkVersion,
       changelog: draft.changelog,
-      manifest: draft.manifest,
+      manifest: draft.manifest as Record<string, never>,
       status: draft.publish ? "published" : "draft",
       published_at: draft.publish ? new Date().toISOString() : null,
     })
@@ -238,7 +238,7 @@ export async function deployExtender(
         deployed_by_user_id: userId,
         deployed_by_address: auth.address,
         granted_via: auth.grantedVia,
-        config: input.config,
+        config: input.config as Record<string, never>,
         status: "active",
         updated_at: new Date().toISOString(),
       },
