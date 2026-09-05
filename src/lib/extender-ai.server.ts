@@ -1,4 +1,5 @@
 import { RUNTIME_LIMITS, SDK_TYPES } from "@/lib/extender-sdk";
+import { buildTier, DEFAULT_BUILD_TIER, type BuildTierId } from "@/lib/build-tiers";
 
 /**
  * AI code writer for extenders.
@@ -10,19 +11,26 @@ import { RUNTIME_LIMITS, SDK_TYPES } from "@/lib/extender-sdk";
 
 const MODEL = "google/gemini-3.7-flash";
 
-const RULES = [
-  "You write JavaScript for the BITMAPWIN extender sandbox.",
-  "Output ONLY runnable JavaScript — no markdown fences, no explanation, no imports, no exports.",
-  "There is no DOM, no window, no fetch, no setTimeout. Only the declared globals exist.",
-  "Coordinates are strides, tile-local: the tile is 10 strides across, 0,0 is the centre.",
-  `Keep every prop within x/z in [-${RUNTIME_LIMITS.maxReach}, ${RUNTIME_LIMITS.maxReach}] and y below ${RUNTIME_LIMITS.maxHeight}.`,
-  `Create at most ${RUNTIME_LIMITS.maxProps} props and at most ${RUNTIME_LIMITS.maxQuests} quests.`,
-  "Build the scene at top level, then use on('tick') for motion and on('interact') / on('enter') for interaction.",
-  "Prefer loops over long repetitive lists. Use hex colour strings.",
-  "Add 1-3 quests when the description implies something to do, and one short log() line at the end.",
-  `Total code must stay under ${RUNTIME_LIMITS.maxCodeBytes} bytes.`,
-  "Write compact, commented, readable code that runs forever without errors.",
-].join("\n");
+function rulesFor(tierId: BuildTierId): string {
+  const tier = buildTier(tierId);
+  const maxProps = Math.min(tier.maxProps, RUNTIME_LIMITS.maxProps);
+  const maxQuests = Math.min(tier.maxQuests, RUNTIME_LIMITS.maxQuests);
+  const maxBytes = Math.min(tier.maxCodeBytes, RUNTIME_LIMITS.maxCodeBytes);
+  return [
+    "You write JavaScript for the BITMAPWIN extender sandbox.",
+    "Output ONLY runnable JavaScript — no markdown fences, no explanation, no imports, no exports.",
+    "There is no DOM, no window, no fetch, no setTimeout. Only the declared globals exist.",
+    "Coordinates are strides, tile-local: the tile is 10 strides across, 0,0 is the centre.",
+    `Keep every prop within x/z in [-${RUNTIME_LIMITS.maxReach}, ${RUNTIME_LIMITS.maxReach}] and y below ${RUNTIME_LIMITS.maxHeight}.`,
+    `Build tier ${tier.label}: ${tier.detail}.`,
+    `Create at most ${maxProps} props and at most ${maxQuests} quests.`,
+    "Build the scene at top level, then use on('tick') for motion and on('interact') / on('enter') for interaction.",
+    "Prefer loops over long repetitive lists. Use hex colour strings.",
+    `Add up to ${maxQuests} quests when the description implies something to do, and one short log() line at the end.`,
+    `Total code must stay under ${maxBytes} bytes.`,
+    "Write compact, commented, readable code that runs forever without errors.",
+  ].join("\n");
+}
 
 function stripFences(text: string): string {
   const trimmed = text.trim();
@@ -104,10 +112,14 @@ export async function writeExtenderCode(input: {
   category: string;
   existingCode: string;
   models?: ModelAsset[];
+  tier?: BuildTierId;
 }): Promise<string> {
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) throw new Error("AI code generation is not configured");
 
+  const tierId = input.tier ?? DEFAULT_BUILD_TIER;
+  const tier = buildTier(tierId);
+  const byteBudget = Math.min(tier.maxCodeBytes, RUNTIME_LIMITS.maxCodeBytes);
   const models = input.models ?? [];
   const modelBrief = models.length > 0
     ? `Real on-chain 3D models you MAY place with world.model({ inscriptionId, x, z, y, w, rotationY }). Use ONLY these ids verbatim — no other inscription id exists:\n${models
@@ -135,7 +147,7 @@ export async function writeExtenderCode(input: {
     body: JSON.stringify({
       model: MODEL,
       messages: [
-        { role: "system", content: `${RULES}\n\nAvailable API:\n${SDK_TYPES}` },
+        { role: "system", content: `${rulesFor(tierId)}\n\nAvailable API:\n${SDK_TYPES}` },
         { role: "user", content: user },
       ],
     }),
@@ -152,8 +164,8 @@ export async function writeExtenderCode(input: {
   const code = stripFences(payload.choices?.[0]?.message?.content ?? "");
   if (!code) throw new Error("AI returned nothing runnable");
   const bytes = new TextEncoder().encode(code).length;
-  if (bytes > RUNTIME_LIMITS.maxCodeBytes) {
-    throw new Error(`AI wrote ${bytes} bytes, over the ${RUNTIME_LIMITS.maxCodeBytes} byte limit — ask for something simpler`);
+  if (bytes > byteBudget) {
+    throw new Error(`AI wrote ${bytes} bytes, over the ${byteBudget} byte limit for the ${tier.label} tier — ask for something simpler or pick a bigger tier`);
   }
   return code;
 }
@@ -235,10 +247,18 @@ function str(value: unknown, fallback: string, max: number): string {
   return (text.length > 0 ? text : fallback).slice(0, max);
 }
 
-export async function designExtender(input: { prompt: string; height: number }): Promise<ExtenderDesign> {
+export async function designExtender(input: {
+  prompt: string;
+  height: number;
+  tier?: BuildTierId;
+}): Promise<ExtenderDesign> {
+  const tier = buildTier(input.tier ?? DEFAULT_BUILD_TIER);
   const raw = await callGateway([
     { role: "system", content: DESIGN_RULES },
-    { role: "user", content: `Tile: ${input.height}.BITMAP.\nBrief: ${input.prompt}` },
+    {
+      role: "user",
+      content: `Tile: ${input.height}.BITMAP.\nBuild tier: ${tier.label} — ${tier.detail}.\nBrief: ${input.prompt}`,
+    },
   ]);
   const parsed = parseJsonObject(raw);
 
@@ -291,8 +311,13 @@ export async function designExtender(input: { prompt: string; height: number }):
 export async function buildExtenderPackage(input: {
   prompt: string;
   height: number;
+  tier?: BuildTierId;
 }): Promise<{ design: ExtenderDesign; code: string; models: ModelAsset[]; modelsDowngraded: number }> {
-  const [design, catalogue] = await Promise.all([designExtender(input), listModelCatalogue()]);
+  const tierId = input.tier ?? DEFAULT_BUILD_TIER;
+  const [design, catalogue] = await Promise.all([
+    designExtender({ ...input, tier: tierId }),
+    listModelCatalogue(),
+  ]);
   const brief = [
     `Package: ${design.name} — ${design.summary}`,
     `Build stages: ${design.stages.map((s) => `${s.label}: ${s.detail}`).join(" | ")}`,
@@ -309,6 +334,7 @@ export async function buildExtenderPackage(input: {
     category: design.category,
     existingCode: "",
     models: catalogue,
+    tier: tierId,
   });
   const reconciled = reconcileModels(raw, catalogue);
   return {
