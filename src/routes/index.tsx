@@ -93,20 +93,26 @@ function Index() {
           <div className="relative order-1 flex flex-col bg-surface lg:order-2 lg:col-span-9">
             <div className="pointer-events-none absolute inset-0 dot-bg" />
             <div className="relative flex flex-1 flex-col justify-center p-5 py-8 sm:p-7 md:p-12 lg:p-16">
-              <div className="label text-bitcoin">THE LAND LAYER OF BITCOIN</div>
-              <h1 className="display mt-4 text-[2.55rem] sm:mt-5 sm:text-7xl lg:text-8xl">
-                BITMAP<br /><span className="text-bitcoin">UNHINGED</span>
+              <div className="label text-bitcoin">THE BEDROCK FOR AI-BUILT WORLDS</div>
+              <h1 className="display mt-4 text-[2.1rem] leading-[1.05] sm:mt-5 sm:text-6xl lg:text-7xl">
+                BUILD ON PERMANENT<br /><span className="text-bitcoin">BITCOIN LAND.</span>
               </h1>
               <div className="mt-6 grid items-start gap-7 sm:mt-8 md:grid-cols-[minmax(0,1fr)_240px] md:gap-8">
                 <div className="max-w-xl">
                   <p className="text-base leading-relaxed text-foreground sm:text-lg md:text-xl">
-                    Discover and own Bitcoin’s digital land. Trade verified BITMAPS, visit community builds, and make your block your own.
+                    BitmapWin is the bedrock for player-owned, AI-built worlds. Own a block, extend it with experiences,
+                    deploy them, and let players walk in.
                   </p>
                   <div className="mt-6 grid gap-2 sm:mt-8 sm:flex sm:flex-wrap sm:gap-3">
-                    <Link to="/marketplace" className="btn-term min-h-12 w-full sm:min-h-0 sm:w-auto">EXPLORE THE MARKET</Link>
-                    <Link to="/builds" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">DISCOVER BUILDS</Link>
+                    <Link to="/map" className="btn-term min-h-12 w-full sm:min-h-0 sm:w-auto">EXPLORE THE WORLD</Link>
+                    <Link to="/extend" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">BUILD</Link>
+                    <Link to="/extenders" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">MARKETPLACE</Link>
                   </div>
+                  <Link to="/studio" className="mt-4 inline-flex font-mono text-xs font-bold text-bitcoin hover:text-foreground">
+                    BUILD WITH AI →
+                  </Link>
                 </div>
+
 
                 {lead && (
                   <Link
