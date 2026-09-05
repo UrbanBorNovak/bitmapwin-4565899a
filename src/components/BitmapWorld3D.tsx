@@ -1780,7 +1780,7 @@ export function BitmapWorld3D({
     <div className={className}>
       <div className="hud-toolbar border-b-0">
         <form
-          className="flex items-center gap-1"
+          className="flex items-center gap-1.5"
           onSubmit={(event) => {
             event.preventDefault();
             const height = Number(visitDraft.trim());
@@ -1793,36 +1793,46 @@ export function BitmapWorld3D({
             placeholder="VISIT BITMAP"
             aria-label="Visit a BITMAP"
             data-no-translate
-            className="w-32 border border-border bg-background px-2 py-1.5 font-mono text-[11px] outline-none focus:border-bitcoin"
+            className="h-7 w-32 border border-border bg-background px-2 font-mono text-[11px] tabular-nums outline-none transition-colors focus:border-bitcoin"
           />
-          <Button type="submit" className="btn-term-ghost" variant="ghost">
+          <Button type="submit" className="btn-term" variant="ghost">
             [ VISIT ]
           </Button>
         </form>
-        <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("mined")}>
-          [ FRAME MINED WORLD ]
-        </Button>
-        <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("full")}>
-          [ VIEW FULL WORLD ]
-        </Button>
-        <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("tip")}>
-          [ FLY TO TIP ]
-        </Button>
-        <Button
-          className="btn-term-ghost"
-          variant="ghost"
-          onClick={attackNearest}
-          disabled={!attackReady}
-        >
-          [ {attackReady ? "ATTACK · F" : `COOLDOWN ${(cooldownRemaining / 1000).toFixed(1)}s`} ]
-        </Button>
-        <Button
-          className={inventoryOpen ? "btn-term" : "btn-term-ghost"}
-          variant="ghost"
-          onClick={() => setInventoryOpen((current) => !current)}
-        >
-          {avatarModel ? "[ INVENTORY · WEARING MODEL ]" : "[ INVENTORY ]"}
-        </Button>
+
+        <span className="hud-divider" aria-hidden />
+
+        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Camera">
+          <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("mined")}>
+            [ FRAME MINED ]
+          </Button>
+          <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("full")}>
+            [ FULL WORLD ]
+          </Button>
+          <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("tip")}>
+            [ FLY TO TIP ]
+          </Button>
+        </div>
+
+        <span className="hud-divider" aria-hidden />
+
+        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Avatar">
+          <Button
+            className="btn-term-ghost"
+            variant="ghost"
+            onClick={attackNearest}
+            disabled={!attackReady}
+          >
+            [ {attackReady ? "ATTACK · F" : `COOLDOWN ${(cooldownRemaining / 1000).toFixed(1)}s`} ]
+          </Button>
+          <Button
+            className={inventoryOpen ? "btn-term" : "btn-term-ghost"}
+            variant="ghost"
+            onClick={() => setInventoryOpen((current) => !current)}
+          >
+            {avatarModel ? "[ INVENTORY · WEARING MODEL ]" : "[ INVENTORY ]"}
+          </Button>
+        </div>
       </div>
 
       <div className="relative h-[70vh] min-h-[420px] w-full overflow-hidden border border-border bg-background">
