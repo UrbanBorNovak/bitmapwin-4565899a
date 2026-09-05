@@ -122,7 +122,7 @@ function CreatePage() {
       setModels((result.models ?? []) as ModelAsset[]);
       setModelsDowngraded(result.modelsDowngraded ?? 0);
       setDeployed(null);
-      queryClient.invalidateQueries({ queryKey: ["coin-balances"] });
+      queryClient.invalidateQueries({ queryKey: ["coin-balance"] });
       toast("PACKAGE BUILT", {
         description: `${result.costBit} BIT SPENT · ${Math.round(result.balance)} BIT LEFT`,
       });
