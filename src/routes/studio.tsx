@@ -287,6 +287,10 @@ function PublishVersionForm({ extenderId }: { extenderId: string }) {
   const [semver, setSemver] = useState("1.0.0");
   const [changelog, setChangelog] = useState("");
   const [permissions, setPermissions] = useState<LandPermission[]>(["view", "enter"]);
+  const [code, setCode] = useState("");
+
+  const bytes = new TextEncoder().encode(code).length;
+  const tooLarge = bytes > RUNTIME_LIMITS.maxCodeBytes;
 
   const run = useMutation({
     mutationFn: () =>
@@ -296,7 +300,7 @@ function PublishVersionForm({ extenderId }: { extenderId: string }) {
           semver: semver.trim(),
           sdkVersion: SDK_VERSION,
           changelog: changelog.trim(),
-          manifest: {},
+          manifest: code.trim() ? { code: code.trim() } : {},
           publish: true,
           dependencies: [],
           permissions: permissions.map((permission) => ({ permission, reason: "" })),
