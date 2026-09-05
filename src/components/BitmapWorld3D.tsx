@@ -1888,7 +1888,7 @@ export function BitmapWorld3D({
               if (!exploring) setCameraMode("first");
             }}
           >
-            {shooter ? "[ SHOOTER · ON ]" : "[ SHOOTER ]"}
+            {shooter ? "[ MOSIN NAGANT · EQUIPPED ]" : "[ EQUIP A WEAPON ]"}
           </Button>
           <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
             {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
@@ -1941,7 +1941,7 @@ export function BitmapWorld3D({
             className="hud-panel absolute left-3 top-[8.5rem] z-40 space-y-1 px-2.5 py-2 font-mono text-[10px] tabular-nums"
             aria-label="Shooter status"
           >
-            <div className="label text-[9px] text-bitcoin">SHOOTER · LIVE</div>
+            <div className="label text-[9px] text-bitcoin">MOSIN NAGANT · EQUIPPED</div>
             <div className="flex items-center gap-3">
               <span>
                 AMMO{" "}
@@ -1955,9 +1955,9 @@ export function BitmapWorld3D({
             </div>
             <div className="flex items-center gap-3 text-muted-foreground">
               <span>DOWNED {shooterStats.kills}</span>
-              <span>TARGETS {shooterStats.targets}</span>
+              <span>VISITORS {shooterStats.targets}</span>
             </div>
-            <div className="text-muted-foreground">CLICK / E · FIRE · R · RELOAD</div>
+            <div className="text-muted-foreground">CLICK / E · FIRE · R · CYCLE BOLT</div>
             {shooterStats.note ? <div className="text-bitcoin">{shooterStats.note}</div> : null}
           </div>
         ) : null}
