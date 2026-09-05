@@ -10,21 +10,22 @@ import { formatSats } from "@/lib/trades";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Bitmap Unhinged — Own a Piece of Bitcoin" },
+      { title: "BitmapWin — The Bedrock for AI-Built Worlds" },
       {
         name: "description",
         content:
-          "A minimalist marketplace and explorer for Bitcoin Bitmap digital land, priced by real on-chain trades.",
+          "Own permanent Bitcoin land, extend it with experiences built by you, other creators or AI, deploy them, and let players enter.",
       },
-      { property: "og:title", content: "Bitmap Unhinged — Own a Piece of Bitcoin" },
+      { property: "og:title", content: "BitmapWin — The Bedrock for AI-Built Worlds" },
       {
         property: "og:description",
-        content: "Explore, discover and trade Bitcoin Bitmap digital land with real on-chain data.",
+        content: "Build on permanent Bitcoin land. Own, extend, deploy, experience, publish.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
+
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(registryParcelsQuery(120));
     context.queryClient.ensureQueryData(recentTradesQuery(20));
