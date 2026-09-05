@@ -226,7 +226,7 @@ const Critters = memo(function Critters({
   colors: DesertColors;
   pose: React.RefObject<{ x: number; z: number } | null>;
 }) {
-  const groups = useRef<(THREE.Group | null)[]);
+  const groups = useRef<(THREE.Group | null)[]>([]);
   const state = useRef<Critter[]>(
     Array.from({ length: 8 }, (_, i) => ({
       kind: i % 3 === 0 ? "snake" : "scorpion",
