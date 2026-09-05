@@ -74,7 +74,7 @@ export function TerritoryPanel({ height, ownerAddress }: { height: number; owner
           <div>
             <div className="label">LEASE STATUS</div>
             <p className="mt-2 font-mono text-[11px] text-muted-foreground" data-no-translate>
-              {lease.data ? `LEASED · ENDS ${lease.data.endsAt?.slice(0, 10) ?? "—"}` : "NOT LEASED"}
+              {lease.data?.active ? `LEASED · ENDS ${lease.data.active.endsAt.slice(0, 10)}` : "NOT LEASED"}
             </p>
           </div>
         </div>

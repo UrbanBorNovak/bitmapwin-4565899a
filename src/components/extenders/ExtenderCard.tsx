@@ -3,7 +3,7 @@ import { categoryGlyph, categoryLabel, type Extender, type ExtenderStats } from 
 import { shortenAddress } from "@/lib/registry";
 import { formatSats } from "@/lib/trades";
 
-export function ExtenderCard({ extender, stats }: { extender: Extender; stats?: ExtenderStats }) {
+export function ExtenderCard({ extender, stats }: { extender: Extender; stats?: ExtenderStats | undefined }) {
   return (
     <Link
       to="/extenders/$slug"
