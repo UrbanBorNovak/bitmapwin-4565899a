@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { DataBadge } from "@/components/extenders/DataBadge";
+import { MvpFlowRail } from "@/components/MvpFlowRail";
 
 /**
  * EXTEND YOUR LAND — the fork in the road of the bedrock loop.
@@ -36,7 +37,8 @@ function ExtendPage() {
 
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-10 md:px-8 md:py-16">
-      <div className="label text-bitcoin">BEDROCK · STEP 2 OF 5 · EXTEND</div>
+      <MvpFlowRail active="extend" {...(hasLand ? { height: height as number } : {})} />
+      <div className="label mt-6 text-bitcoin">STEP 02 OF 03 · EXTEND</div>
       <h1 className="display mt-3 text-3xl md:text-5xl">EXTEND YOUR LAND</h1>
       <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
         {hasLand ? (
