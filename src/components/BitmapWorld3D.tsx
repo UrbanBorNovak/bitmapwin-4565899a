@@ -1811,9 +1811,15 @@ export function BitmapWorld3D({
               cameraMode={cameraMode}
               pose={pose}
               self={self}
+              deployments={deployments.data ?? EMPTY_DEPLOYMENTS}
+              onRunning={setRunning}
             />
           </Canvas>
         ) : null}
+
+        <div className="pointer-events-none absolute bottom-3 left-3 z-30">
+          <ExtenderHud running={running} />
+        </div>
 
         <div
           role="group"
