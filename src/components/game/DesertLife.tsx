@@ -223,6 +223,8 @@ export const DesertLife = memo(function DesertLife({
   const rockRef = useRef<THREE.InstancedMesh>(null);
   const pebbleRef = useRef<THREE.InstancedMesh>(null);
   const brushRef = useRef<THREE.InstancedMesh>(null);
+  const pondRef = useRef<THREE.InstancedMesh>(null);
+  const reedRef = useRef<THREE.InstancedMesh>(null);
 
   useEffect(() => {
     const apply = (mesh: THREE.InstancedMesh | null, scatter: Scatter) => {
@@ -239,7 +241,10 @@ export const DesertLife = memo(function DesertLife({
     apply(rockRef.current, patch.rocks);
     apply(pebbleRef.current, patch.pebbles);
     apply(brushRef.current, patch.brush);
+    apply(pondRef.current, patch.ponds);
+    apply(reedRef.current, patch.reeds);
   }, [patch]);
+
 
   if (!active) return null;
 
