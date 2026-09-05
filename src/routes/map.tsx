@@ -75,7 +75,11 @@ function MapPage() {
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <BitmapWorld3D tipHeight={tipHeight} initialHeight={height} onCursorsChange={handleCursors} />
+        <BitmapWorld3D
+          tipHeight={tipHeight}
+          {...(height === undefined ? {} : { initialHeight: height })}
+          onCursorsChange={handleCursors}
+        />
         <MapChat cursors={cursors} />
       </div>
     </div>
