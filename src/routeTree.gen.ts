@@ -10,21 +10,30 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiRouteImport } from './routes/api'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BuildersRouteImport } from './routes/builders'
 import { Route as BuildsRouteImport } from './routes/builds'
 import { Route as CitiesRouteImport } from './routes/cities'
 import { Route as CoinsRouteImport } from './routes/coins'
 import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as DevToolsRouteImport } from './routes/dev-tools'
+import { Route as DocsRouteImport } from './routes/docs'
+import { Route as ExperiencesRouteImport } from './routes/experiences'
+import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as ExtendRouteImport } from './routes/extend'
 import { Route as ExtendersRouteImport } from './routes/extenders'
+import { Route as HistoryRouteImport } from './routes/history'
 import { Route as Land101RouteImport } from './routes/land-101'
 import { Route as LeasesRouteImport } from './routes/leases'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as MyLandRouteImport } from './routes/my-land'
 import { Route as MyWorldRouteImport } from './routes/my-world'
+import { Route as OwnershipRouteImport } from './routes/ownership'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SdkRouteImport } from './routes/sdk'
 import { Route as SdkPlaygroundRouteImport } from './routes/sdk-playground'
@@ -53,9 +62,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRoute = ApiRouteImport.update({
+  id: '/api',
+  path: '/api',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuildersRoute = BuildersRouteImport.update({
+  id: '/builders',
+  path: '/builders',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BuildsRoute = BuildsRouteImport.update({
@@ -88,6 +107,26 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevToolsRoute = DevToolsRouteImport.update({
+  id: '/dev-tools',
+  path: '/dev-tools',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsRoute = DocsRouteImport.update({
+  id: '/docs',
+  path: '/docs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExperiencesRoute = ExperiencesRouteImport.update({
+  id: '/experiences',
+  path: '/experiences',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExtendRoute = ExtendRouteImport.update({
   id: '/extend',
   path: '/extend',
@@ -96,6 +135,11 @@ const ExtendRoute = ExtendRouteImport.update({
 const ExtendersRoute = ExtendersRouteImport.update({
   id: '/extenders',
   path: '/extenders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Land101Route = Land101RouteImport.update({
@@ -123,9 +167,19 @@ const McpRoute = McpRouteImport.update({
   path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MyLandRoute = MyLandRouteImport.update({
+  id: '/my-land',
+  path: '/my-land',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MyWorldRoute = MyWorldRouteImport.update({
   id: '/my-world',
   path: '/my-world',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OwnershipRoute = OwnershipRouteImport.update({
+  id: '/ownership',
+  path: '/ownership',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -205,35 +259,35 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicCoinRewardsRoute = ApiPublicCoinRewardsRouteImport.update({
-  id: '/api/public/coin-rewards',
-  path: '/api/public/coin-rewards',
-  getParentRoute: () => rootRouteImport,
+  id: '/public/coin-rewards',
+  path: '/public/coin-rewards',
+  getParentRoute: () => ApiRoute,
 } as any)
 const ApiPublicCrawlTradesRoute = ApiPublicCrawlTradesRouteImport.update({
-  id: '/api/public/crawl-trades',
-  path: '/api/public/crawl-trades',
-  getParentRoute: () => rootRouteImport,
+  id: '/public/crawl-trades',
+  path: '/public/crawl-trades',
+  getParentRoute: () => ApiRoute,
 } as any)
 const ApiPublicOfferRoute = ApiPublicOfferRouteImport.update({
-  id: '/api/public/offer',
-  path: '/api/public/offer',
-  getParentRoute: () => rootRouteImport,
+  id: '/public/offer',
+  path: '/public/offer',
+  getParentRoute: () => ApiRoute,
 } as any)
 const ApiPublicOffersRoute = ApiPublicOffersRouteImport.update({
-  id: '/api/public/offers',
-  path: '/api/public/offers',
-  getParentRoute: () => rootRouteImport,
+  id: '/public/offers',
+  path: '/public/offers',
+  getParentRoute: () => ApiRoute,
 } as any)
 const ApiPublicResolveRegistryRoute =
   ApiPublicResolveRegistryRouteImport.update({
-    id: '/api/public/resolve-registry',
-    path: '/api/public/resolve-registry',
-    getParentRoute: () => rootRouteImport,
+    id: '/public/resolve-registry',
+    path: '/public/resolve-registry',
+    getParentRoute: () => ApiRoute,
   } as any)
 const ApiPublicBlocksHeightRoute = ApiPublicBlocksHeightRouteImport.update({
-  id: '/api/public/blocks/$height',
-  path: '/api/public/blocks/$height',
-  getParentRoute: () => rootRouteImport,
+  id: '/public/blocks/$height',
+  path: '/public/blocks/$height',
+  getParentRoute: () => ApiRoute,
 } as any)
 const ApiPublicBlocksHeightMetaRoute =
   ApiPublicBlocksHeightMetaRouteImport.update({
@@ -244,21 +298,30 @@ const ApiPublicBlocksHeightMetaRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api': typeof ApiRouteWithChildren
   '/auth': typeof AuthRoute
+  '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
   '/cities': typeof CitiesRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
+  '/dev-tools': typeof DevToolsRoute
+  '/docs': typeof DocsRoute
+  '/experiences': typeof ExperiencesRoute
+  '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
   '/extenders': typeof ExtendersRouteWithChildren
+  '/history': typeof HistoryRoute
   '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
+  '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
+  '/ownership': typeof OwnershipRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
@@ -284,19 +347,28 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api': typeof ApiRouteWithChildren
   '/auth': typeof AuthRoute
+  '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
   '/cities': typeof CitiesRoute
   '/coins': typeof CoinsRoute
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
+  '/dev-tools': typeof DevToolsRoute
+  '/docs': typeof DocsRoute
+  '/experiences': typeof ExperiencesRoute
+  '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
+  '/history': typeof HistoryRoute
   '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
+  '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
+  '/ownership': typeof OwnershipRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
@@ -323,21 +395,30 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api': typeof ApiRouteWithChildren
   '/auth': typeof AuthRoute
+  '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
   '/cities': typeof CitiesRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
+  '/dev-tools': typeof DevToolsRoute
+  '/docs': typeof DocsRoute
+  '/experiences': typeof ExperiencesRoute
+  '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
   '/extenders': typeof ExtendersRouteWithChildren
+  '/history': typeof HistoryRoute
   '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
+  '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
+  '/ownership': typeof OwnershipRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
@@ -365,21 +446,30 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/api'
     | '/auth'
+    | '/builders'
     | '/builds'
     | '/cities'
     | '/coins'
     | '/collections'
     | '/create'
     | '/dashboard'
+    | '/dev-tools'
+    | '/docs'
+    | '/experiences'
+    | '/explore'
     | '/extend'
     | '/extenders'
+    | '/history'
     | '/land-101'
     | '/leases'
     | '/map'
     | '/marketplace'
     | '/mcp'
+    | '/my-land'
     | '/my-world'
+    | '/ownership'
     | '/reset-password'
     | '/sdk'
     | '/sdk-playground'
@@ -405,19 +495,28 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/api'
     | '/auth'
+    | '/builders'
     | '/builds'
     | '/cities'
     | '/coins'
     | '/create'
     | '/dashboard'
+    | '/dev-tools'
+    | '/docs'
+    | '/experiences'
+    | '/explore'
     | '/extend'
+    | '/history'
     | '/land-101'
     | '/leases'
     | '/map'
     | '/marketplace'
     | '/mcp'
+    | '/my-land'
     | '/my-world'
+    | '/ownership'
     | '/reset-password'
     | '/sdk'
     | '/sdk-playground'
@@ -443,21 +542,30 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/api'
     | '/auth'
+    | '/builders'
     | '/builds'
     | '/cities'
     | '/coins'
     | '/collections'
     | '/create'
     | '/dashboard'
+    | '/dev-tools'
+    | '/docs'
+    | '/experiences'
+    | '/explore'
     | '/extend'
     | '/extenders'
+    | '/history'
     | '/land-101'
     | '/leases'
     | '/map'
     | '/marketplace'
     | '/mcp'
+    | '/my-land'
     | '/my-world'
+    | '/ownership'
     | '/reset-password'
     | '/sdk'
     | '/sdk-playground'
@@ -484,21 +592,30 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiRoute: typeof ApiRouteWithChildren
   AuthRoute: typeof AuthRoute
+  BuildersRoute: typeof BuildersRoute
   BuildsRoute: typeof BuildsRoute
   CitiesRoute: typeof CitiesRoute
   CoinsRoute: typeof CoinsRoute
   CollectionsRoute: typeof CollectionsRouteWithChildren
   CreateRoute: typeof CreateRoute
   DashboardRoute: typeof DashboardRoute
+  DevToolsRoute: typeof DevToolsRoute
+  DocsRoute: typeof DocsRoute
+  ExperiencesRoute: typeof ExperiencesRoute
+  ExploreRoute: typeof ExploreRoute
   ExtendRoute: typeof ExtendRoute
   ExtendersRoute: typeof ExtendersRouteWithChildren
+  HistoryRoute: typeof HistoryRoute
   Land101Route: typeof Land101Route
   LeasesRoute: typeof LeasesRoute
   MapRoute: typeof MapRoute
   MarketplaceRoute: typeof MarketplaceRoute
   McpRoute: typeof McpRoute
+  MyLandRoute: typeof MyLandRoute
   MyWorldRoute: typeof MyWorldRoute
+  OwnershipRoute: typeof OwnershipRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SdkRoute: typeof SdkRoute
   SdkPlaygroundRoute: typeof SdkPlaygroundRoute
@@ -510,12 +627,6 @@ export interface RootRouteChildren {
   DistrictSlugRoute: typeof DistrictSlugRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
-  ApiPublicCoinRewardsRoute: typeof ApiPublicCoinRewardsRoute
-  ApiPublicCrawlTradesRoute: typeof ApiPublicCrawlTradesRoute
-  ApiPublicOfferRoute: typeof ApiPublicOfferRoute
-  ApiPublicOffersRoute: typeof ApiPublicOffersRoute
-  ApiPublicResolveRegistryRoute: typeof ApiPublicResolveRegistryRoute
-  ApiPublicBlocksHeightRoute: typeof ApiPublicBlocksHeightRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -527,11 +638,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api': {
+      id: '/api'
+      path: '/api'
+      fullPath: '/api'
+      preLoaderRoute: typeof ApiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/builders': {
+      id: '/builders'
+      path: '/builders'
+      fullPath: '/builders'
+      preLoaderRoute: typeof BuildersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/builds': {
@@ -576,6 +701,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dev-tools': {
+      id: '/dev-tools'
+      path: '/dev-tools'
+      fullPath: '/dev-tools'
+      preLoaderRoute: typeof DevToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/experiences': {
+      id: '/experiences'
+      path: '/experiences'
+      fullPath: '/experiences'
+      preLoaderRoute: typeof ExperiencesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/extend': {
       id: '/extend'
       path: '/extend'
@@ -588,6 +741,13 @@ declare module '@tanstack/react-router' {
       path: '/extenders'
       fullPath: '/extenders'
       preLoaderRoute: typeof ExtendersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/land-101': {
@@ -625,11 +785,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/my-land': {
+      id: '/my-land'
+      path: '/my-land'
+      fullPath: '/my-land'
+      preLoaderRoute: typeof MyLandRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/my-world': {
       id: '/my-world'
       path: '/my-world'
       fullPath: '/my-world'
       preLoaderRoute: typeof MyWorldRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ownership': {
+      id: '/ownership'
+      path: '/ownership'
+      fullPath: '/ownership'
+      preLoaderRoute: typeof OwnershipRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -739,45 +913,45 @@ declare module '@tanstack/react-router' {
     }
     '/api/public/coin-rewards': {
       id: '/api/public/coin-rewards'
-      path: '/api/public/coin-rewards'
+      path: '/public/coin-rewards'
       fullPath: '/api/public/coin-rewards'
       preLoaderRoute: typeof ApiPublicCoinRewardsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiRoute
     }
     '/api/public/crawl-trades': {
       id: '/api/public/crawl-trades'
-      path: '/api/public/crawl-trades'
+      path: '/public/crawl-trades'
       fullPath: '/api/public/crawl-trades'
       preLoaderRoute: typeof ApiPublicCrawlTradesRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiRoute
     }
     '/api/public/offer': {
       id: '/api/public/offer'
-      path: '/api/public/offer'
+      path: '/public/offer'
       fullPath: '/api/public/offer'
       preLoaderRoute: typeof ApiPublicOfferRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiRoute
     }
     '/api/public/offers': {
       id: '/api/public/offers'
-      path: '/api/public/offers'
+      path: '/public/offers'
       fullPath: '/api/public/offers'
       preLoaderRoute: typeof ApiPublicOffersRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiRoute
     }
     '/api/public/resolve-registry': {
       id: '/api/public/resolve-registry'
-      path: '/api/public/resolve-registry'
+      path: '/public/resolve-registry'
       fullPath: '/api/public/resolve-registry'
       preLoaderRoute: typeof ApiPublicResolveRegistryRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiRoute
     }
     '/api/public/blocks/$height': {
       id: '/api/public/blocks/$height'
-      path: '/api/public/blocks/$height'
+      path: '/public/blocks/$height'
       fullPath: '/api/public/blocks/$height'
       preLoaderRoute: typeof ApiPublicBlocksHeightRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiRoute
     }
     '/api/public/blocks/$height/meta': {
       id: '/api/public/blocks/$height/meta'
@@ -788,6 +962,39 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface ApiPublicBlocksHeightRouteChildren {
+  ApiPublicBlocksHeightMetaRoute: typeof ApiPublicBlocksHeightMetaRoute
+}
+
+const ApiPublicBlocksHeightRouteChildren: ApiPublicBlocksHeightRouteChildren = {
+  ApiPublicBlocksHeightMetaRoute: ApiPublicBlocksHeightMetaRoute,
+}
+
+const ApiPublicBlocksHeightRouteWithChildren =
+  ApiPublicBlocksHeightRoute._addFileChildren(
+    ApiPublicBlocksHeightRouteChildren,
+  )
+
+interface ApiRouteChildren {
+  ApiPublicCoinRewardsRoute: typeof ApiPublicCoinRewardsRoute
+  ApiPublicCrawlTradesRoute: typeof ApiPublicCrawlTradesRoute
+  ApiPublicOfferRoute: typeof ApiPublicOfferRoute
+  ApiPublicOffersRoute: typeof ApiPublicOffersRoute
+  ApiPublicResolveRegistryRoute: typeof ApiPublicResolveRegistryRoute
+  ApiPublicBlocksHeightRoute: typeof ApiPublicBlocksHeightRouteWithChildren
+}
+
+const ApiRouteChildren: ApiRouteChildren = {
+  ApiPublicCoinRewardsRoute: ApiPublicCoinRewardsRoute,
+  ApiPublicCrawlTradesRoute: ApiPublicCrawlTradesRoute,
+  ApiPublicOfferRoute: ApiPublicOfferRoute,
+  ApiPublicOffersRoute: ApiPublicOffersRoute,
+  ApiPublicResolveRegistryRoute: ApiPublicResolveRegistryRoute,
+  ApiPublicBlocksHeightRoute: ApiPublicBlocksHeightRouteWithChildren,
+}
+
+const ApiRouteWithChildren = ApiRoute._addFileChildren(ApiRouteChildren)
 
 interface CollectionsRouteChildren {
   CollectionsClubRoute: typeof CollectionsClubRoute
@@ -817,36 +1024,32 @@ const ExtendersRouteWithChildren = ExtendersRoute._addFileChildren(
   ExtendersRouteChildren,
 )
 
-interface ApiPublicBlocksHeightRouteChildren {
-  ApiPublicBlocksHeightMetaRoute: typeof ApiPublicBlocksHeightMetaRoute
-}
-
-const ApiPublicBlocksHeightRouteChildren: ApiPublicBlocksHeightRouteChildren = {
-  ApiPublicBlocksHeightMetaRoute: ApiPublicBlocksHeightMetaRoute,
-}
-
-const ApiPublicBlocksHeightRouteWithChildren =
-  ApiPublicBlocksHeightRoute._addFileChildren(
-    ApiPublicBlocksHeightRouteChildren,
-  )
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiRoute: ApiRouteWithChildren,
   AuthRoute: AuthRoute,
+  BuildersRoute: BuildersRoute,
   BuildsRoute: BuildsRoute,
   CitiesRoute: CitiesRoute,
   CoinsRoute: CoinsRoute,
   CollectionsRoute: CollectionsRouteWithChildren,
   CreateRoute: CreateRoute,
   DashboardRoute: DashboardRoute,
+  DevToolsRoute: DevToolsRoute,
+  DocsRoute: DocsRoute,
+  ExperiencesRoute: ExperiencesRoute,
+  ExploreRoute: ExploreRoute,
   ExtendRoute: ExtendRoute,
   ExtendersRoute: ExtendersRouteWithChildren,
+  HistoryRoute: HistoryRoute,
   Land101Route: Land101Route,
   LeasesRoute: LeasesRoute,
   MapRoute: MapRoute,
   MarketplaceRoute: MarketplaceRoute,
   McpRoute: McpRoute,
+  MyLandRoute: MyLandRoute,
   MyWorldRoute: MyWorldRoute,
+  OwnershipRoute: OwnershipRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SdkRoute: SdkRoute,
   SdkPlaygroundRoute: SdkPlaygroundRoute,
@@ -859,12 +1062,6 @@ const rootRouteChildren: RootRouteChildren = {
   DistrictSlugRoute: DistrictSlugRoute,
   ProfileAddressRoute: ProfileAddressRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
-  ApiPublicCoinRewardsRoute: ApiPublicCoinRewardsRoute,
-  ApiPublicCrawlTradesRoute: ApiPublicCrawlTradesRoute,
-  ApiPublicOfferRoute: ApiPublicOfferRoute,
-  ApiPublicOffersRoute: ApiPublicOffersRoute,
-  ApiPublicResolveRegistryRoute: ApiPublicResolveRegistryRoute,
-  ApiPublicBlocksHeightRoute: ApiPublicBlocksHeightRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
