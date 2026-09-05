@@ -153,6 +153,8 @@ function CreateExtenderForm({ onCreated }: { onCreated: (id: string) => void }) 
   const [summary, setSummary] = useState("");
   const [category, setCategory] = useState<string>(EXTENDER_CATEGORIES[0].id);
   const [isAiBuilt, setIsAiBuilt] = useState(true);
+  const [iconInscriptionId, setIconInscriptionId] = useState("");
+  const [previewInscriptionId, setPreviewInscriptionId] = useState("");
 
   const run = useMutation({
     mutationFn: async () => {
@@ -171,8 +173,8 @@ function CreateExtenderForm({ onCreated }: { onCreated: (id: string) => void }) 
           monetization: "free",
           priceSats: 0,
           priceBit: 0,
-          iconInscriptionId: null,
-          previewInscriptionId: null,
+          iconInscriptionId: iconInscriptionId.trim() || null,
+          previewInscriptionId: previewInscriptionId.trim() || null,
         },
       });
     },
@@ -182,6 +184,8 @@ function CreateExtenderForm({ onCreated }: { onCreated: (id: string) => void }) 
       onCreated(created.id);
       setName("");
       setSummary("");
+      setIconInscriptionId("");
+      setPreviewInscriptionId("");
     },
     onError: (error) => toast("COULD NOT CREATE", { description: (error as Error).message }),
   });
@@ -211,6 +215,20 @@ function CreateExtenderForm({ onCreated }: { onCreated: (id: string) => void }) 
             <option key={c.id} value={c.id}>{c.label}</option>
           ))}
         </select>
+        <input
+          value={iconInscriptionId}
+          onChange={(e) => setIconInscriptionId(e.target.value)}
+          placeholder="Icon inscription id (optional)"
+          className="w-full border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-bitcoin"
+          data-no-translate
+        />
+        <input
+          value={previewInscriptionId}
+          onChange={(e) => setPreviewInscriptionId(e.target.value)}
+          placeholder="Preview inscription id (optional)"
+          className="w-full border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-bitcoin"
+          data-no-translate
+        />
         <label className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
           <input type="checkbox" checked={isAiBuilt} onChange={(e) => setIsAiBuilt(e.target.checked)} />
           BUILT WITH AN AI AGENT
