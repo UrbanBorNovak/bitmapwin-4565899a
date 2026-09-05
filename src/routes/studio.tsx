@@ -575,7 +575,7 @@ function PublishVersionForm({
                   onClick={() =>
                     setDependencies((prev) => {
                       if (selected) return prev.filter((d) => d.extenderId !== e.id);
-                      return [...prev, { extenderId: e.id, versionRange: "^" + (e.latestVersion ?? "1.0.0") }];
+                      return [...prev, { extenderId: e.id, versionRange: "^1.0.0" }];
                     })
                   }
                   className={`flex items-center justify-between border px-2 py-1.5 text-left font-mono text-[11px] ${
