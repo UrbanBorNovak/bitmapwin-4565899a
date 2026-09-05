@@ -4,13 +4,18 @@ import { DataBadge } from "@/components/extenders/DataBadge";
 import { categoryGlyph, landGrantsQuery, tileDeploymentsQuery } from "@/lib/extenders";
 import { bitmapLeaseQuery } from "@/lib/leases";
 import { shortenAddress } from "@/lib/registry";
+import { useWalletSession } from "@/lib/wallet-session";
 
 /**
  * The territory view of one BITMAP: what software runs on it, who else may
  * build there, and whether it is currently leased. Ownership itself stays on
  * chain — this panel only reads the rights layered on top of it.
  */
-export function TerritoryPanel({ height, isOwner }: { height: number; isOwner: boolean }) {
+export function TerritoryPanel({ height, ownerAddress }: { height: number; ownerAddress: string | null }) {
+  const wallet = useWalletSession();
+  const isOwner = Boolean(
+    ownerAddress && wallet?.ordinalsAddress && ownerAddress.toLowerCase() === wallet.ordinalsAddress.toLowerCase(),
+  );
   const deployments = useQuery(tileDeploymentsQuery(height));
   const grants = useQuery(landGrantsQuery(height));
   const lease = useQuery(bitmapLeaseQuery(height));

@@ -24,6 +24,7 @@ import { LeasePanel } from "@/components/leases/LeasePanel";
 import { BitmapEvents } from "@/components/coins/BitmapEvents";
 import { MakeOfferButton } from "@/components/MakeOfferButton";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
+import { TerritoryPanel } from "@/components/extenders/TerritoryPanel";
 
 import { InscriptionContent } from "@/components/InscriptionContent";
 import { shortId } from "@/lib/chain";
@@ -456,6 +457,10 @@ function BitmapDetail() {
         ownerAddress={owner ?? oci.data?.ownerAddress ?? null}
         askSats={parcel?.listedSats ?? null}
       />
+
+      <div className="mt-6">
+        <TerritoryPanel height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
+      </div>
 
       <div className="mt-6">
         <LeasePanel height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
