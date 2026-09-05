@@ -10,14 +10,32 @@ function applyTheme(theme: Theme) {
   document.documentElement.style.colorScheme = theme;
 }
 
+/** Day between 07:00 and 19:00 in the visitor's own time zone. */
+function themeForLocalTime(): Theme {
+  const hour = new Date().getHours();
+  return hour >= 7 && hour < 19 ? "light" : "dark";
+}
+
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("dark");
 
   useEffect(() => {
     const saved = window.localStorage.getItem("bitmap-theme");
-    const initialTheme: Theme = saved === "light" ? "light" : "dark";
+    const initialTheme: Theme =
+      saved === "light" || saved === "dark" ? saved : themeForLocalTime();
     setTheme(initialTheme);
     applyTheme(initialTheme);
+
+    // keep following the clock until the visitor picks a side themselves
+    const timer = window.setInterval(() => {
+      if (window.localStorage.getItem("bitmap-theme")) return;
+      const next = themeForLocalTime();
+      setTheme((current) => {
+        if (current !== next) applyTheme(next);
+        return next;
+      });
+    }, 60_000);
+    return () => window.clearInterval(timer);
   }, []);
 
   function toggleTheme() {

@@ -3,6 +3,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { ParcelCard } from "@/components/ParcelCard";
 import { HowItWorks } from "@/components/HowItWorks";
 import { BlockMosaic } from "@/components/BlockMosaic";
+import { BitmapConstellations } from "@/components/BitmapConstellations";
 import { registryParcelsQuery, registryCountQuery } from "@/lib/registry";
 import { recentTradesQuery, tradedBitmapCountQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
@@ -92,6 +93,7 @@ function Index() {
 
           <div className="relative order-1 flex flex-col bg-surface lg:order-2 lg:col-span-9">
             <div className="pointer-events-none absolute inset-0 dot-bg" />
+            <BitmapConstellations className="opacity-90" />
             <div className="relative flex flex-1 flex-col justify-center p-5 py-8 sm:p-7 md:p-12 lg:p-16">
               <div className="label text-bitcoin">THE BEDROCK FOR AI-BUILT WORLDS</div>
               <h1 className="display mt-4 text-[2.1rem] leading-[1.05] sm:mt-5 sm:text-6xl lg:text-7xl">
