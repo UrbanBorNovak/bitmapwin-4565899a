@@ -247,6 +247,7 @@ function CreateExtenderForm({ onCreated }: { onCreated: (id: string) => void }) 
 function ExtenderWorkbench({ extender }: { extender: Extender }) {
   const versions = useQuery(extenderVersionsQuery(extender.id));
   const setStatus = useServerFn(setExtenderStatusFn);
+  const updateMetadata = useServerFn(updateExtenderMetadataFn);
   const queryClient = useQueryClient();
   const [code, setCode] = useState("");
   const [testHeight, setTestHeight] = useState("36095");
@@ -292,6 +293,8 @@ function ExtenderWorkbench({ extender }: { extender: Extender }) {
           {extender.summary || "NO SUMMARY YET"}
         </p>
       </div>
+
+      <MetadataEditor extender={extender} onSave={() => queryClient.invalidateQueries({ queryKey: ["my-extenders"] })} />
 
       <div className="grid gap-4 xl:grid-cols-2">
         <div className="space-y-4">
