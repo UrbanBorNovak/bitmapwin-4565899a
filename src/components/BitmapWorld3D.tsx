@@ -1522,6 +1522,28 @@ export function BitmapWorld3D({
   const exploring = cameraMode !== "map";
   const [draft, setDraft] = useState("");
   const [inventoryOpen, setInventoryOpen] = useState(false);
+  // SHOOTER — the first game mode that runs inside the land world.
+  const [shooter, setShooter] = useState(false);
+  const [shooterStats, setShooterStats] = useState<ShooterStats>({
+    ammo: MAGAZINE,
+    reloading: false,
+    score: 0,
+    kills: 0,
+    targets: 0,
+    note: null,
+  });
+  const handleShooterStats = useCallback((stats: ShooterStats) => setShooterStats(stats), []);
+  const [muted, setMuted] = useState(false);
+  useEffect(() => setMuted(isSoundMuted()), []);
+  const toggleSound = useCallback(() => {
+    const next = !isSoundMuted();
+    setSoundMuted(next);
+    setMuted(next);
+    if (!next) {
+      unlockAudio();
+      playSfx("ui");
+    }
+  }, []);
 
   const owners = useQuery(mapOwnersQuery(window_));
   const models = useQuery(mapBitmapModelsQuery(window_));
