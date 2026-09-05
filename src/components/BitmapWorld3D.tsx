@@ -19,6 +19,12 @@ import type { MapControls as MapControlsImpl } from "three-stdlib";
 import { Button } from "@/components/ui/button";
 import { BitmapModelPlacement } from "@/components/BitmapModelPlacement";
 import { AvatarInventory } from "@/components/AvatarInventory";
+import { ExtenderStage } from "@/components/extenders/ExtenderStage";
+import { ExtenderHud } from "@/components/extenders/ExtenderHud";
+import { runtimeDeploymentsQuery, type RuntimeDeployment } from "@/lib/extender-code";
+import type { RunningExtender } from "@/lib/use-extender-runtimes";
+
+const EMPTY_DEPLOYMENTS: RuntimeDeployment[] = [];
 
 import { clubOf } from "@/lib/clubs";
 import { mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
@@ -66,7 +72,7 @@ const noRaycast = () => {};
 const EMPTY_OWNERS: Map<number, string> = new Map();
 const EMPTY_MODELS: BitmapModel[] = [];
 
-type CameraMove = "mined" | "full" | "tip";
+type CameraMove = "mined" | "full" | "tip" | "visit";
 type CameraMode = "map" | "third" | "first";
 type HoveredDistrict = { height: number; x: number; y: number };
 type SelectedDistrict = { height: number; owner: string | null };
@@ -1135,7 +1141,7 @@ function CameraDirector({
   command,
   tipHeight,
 }: {
-  command: { type: CameraMove; nonce: number };
+  command: { type: CameraMove; nonce: number; height?: number };
   tipHeight: number;
 }) {
   const controls = useRef<MapControlsImpl>(null);
@@ -1150,7 +1156,13 @@ function CameraDirector({
     if (!active) return;
     const tipRow = Math.floor(tipHeight / GRID);
     const tipCol = tipHeight % GRID;
-    if (command.type === "full") {
+    if (command.type === "visit" && typeof command.height === "number") {
+      // Drop the map camera right onto a BITMAP so anything deployed there runs.
+      const col = command.height % GRID;
+      const row = Math.floor(command.height / GRID);
+      active.target.set(worldX(col), 0, worldZ(row));
+      camera.position.set(worldX(col) + 0.3, 0.45, worldZ(row) + 0.5);
+    } else if (command.type === "full") {
       active.target.set(0, 0, WORLD_SIZE / 2);
       camera.position.set(76, 92, 132);
     } else if (command.type === "tip") {
@@ -1316,9 +1328,11 @@ const WorldScene = memo(function WorldScene({
   cameraMode,
   pose,
   self,
+  deployments,
+  onRunning,
 }: {
   colors: WorldColors;
-  command: { type: CameraMove; nonce: number };
+  command: { type: CameraMove; nonce: number; height?: number };
   tipHeight: number;
   owners: Map<number, string>;
   mine: Set<string>;
@@ -1341,6 +1355,8 @@ const WorldScene = memo(function WorldScene({
     hitAt: number;
     lastDamage: number;
   };
+  deployments: RuntimeDeployment[];
+  onRunning: (running: RunningExtender[]) => void;
 }) {
   // Pointer moves fire dozens of times a second; each React state update re-renders
   // the whole overlay. Coalesce them: at most ~20 hover updates a second, and skip
@@ -1409,6 +1425,12 @@ const WorldScene = memo(function WorldScene({
       <HolderColumns owners={owners} mine={mine} bitcoin={colors.bitcoin} />
       <OwnedBitmapGlow heights={ownedHeights} bitcoin={colors.bitcoin} />
       <OnChainModels models={models} bitcoin={colors.bitcoin} />
+      <ExtenderStage
+        deployments={deployments}
+        pose={pose}
+        followPlayer={cameraMode !== "map"}
+        onRunning={onRunning}
+      />
       {selectedHeight !== null ? (
         <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} />
       ) : null}
@@ -1471,10 +1493,11 @@ export function BitmapWorld3D({
   const [window_, setWindow] = useState<OwnerWindow | null>(null);
   const [hover, setHover] = useState<HoveredDistrict | null>(null);
   const [selected, setSelected] = useState<SelectedDistrict | null>(null);
-  const [command, setCommand] = useState<{ type: CameraMove; nonce: number }>({
+  const [command, setCommand] = useState<{ type: CameraMove; nonce: number; height?: number }>({
     type: "mined",
     nonce: 0,
   });
+  const [visitDraft, setVisitDraft] = useState("");
   const [dpr, setDpr] = useState(1);
   const [cameraMode, setCameraMode] = useState<CameraMode>("map");
   const exploring = cameraMode !== "map";
@@ -1483,6 +1506,8 @@ export function BitmapWorld3D({
 
   const owners = useQuery(mapOwnersQuery(window_));
   const models = useQuery(mapBitmapModelsQuery(window_));
+  const deployments = useQuery(runtimeDeploymentsQuery());
+  const [running, setRunning] = useState<RunningExtender[]>([]);
   const {
     cursors,
     publish,
@@ -1689,6 +1714,11 @@ export function BitmapWorld3D({
     setCameraMode("map");
     setCommand((current) => ({ type, nonce: current.nonce + 1 }));
   };
+  const visitHeight = (height: number) => {
+    setCameraMode("map");
+    setCommand((current) => ({ type: "visit", nonce: current.nonce + 1, height }));
+    setSelected({ height, owner: ownersRef.current?.get(height) ?? null });
+  };
   const handleWindow = useCallback((next: OwnerWindow | null) => setWindow(next), []);
   const ownersRef = useRef(owners.data);
   ownersRef.current = owners.data;
@@ -1742,6 +1772,26 @@ export function BitmapWorld3D({
   return (
     <div className={className}>
       <div className="mb-2 flex flex-wrap items-center gap-2">
+        <form
+          className="flex items-center gap-1"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const height = Number(visitDraft.trim());
+            if (Number.isFinite(height) && height >= 0 && height < GRID * GRID) visitHeight(height);
+          }}
+        >
+          <input
+            value={visitDraft}
+            onChange={(event) => setVisitDraft(event.target.value)}
+            placeholder="VISIT BITMAP"
+            aria-label="Visit a BITMAP"
+            data-no-translate
+            className="w-32 border border-border bg-background px-2 py-1.5 font-mono text-[11px] outline-none focus:border-bitcoin"
+          />
+          <Button type="submit" className="btn-term-ghost" variant="ghost">
+            [ VISIT ]
+          </Button>
+        </form>
         <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("mined")}>
           [ FRAME MINED WORLD ]
         </Button>
@@ -1798,9 +1848,15 @@ export function BitmapWorld3D({
               cameraMode={cameraMode}
               pose={pose}
               self={self}
+              deployments={deployments.data ?? EMPTY_DEPLOYMENTS}
+              onRunning={setRunning}
             />
           </Canvas>
         ) : null}
+
+        <div className="pointer-events-none absolute bottom-3 left-3 z-30">
+          <ExtenderHud running={running} />
+        </div>
 
         <div
           role="group"
