@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BuildsRouteImport } from './routes/builds'
+import { Route as CitiesRouteImport } from './routes/cities'
 import { Route as CoinsRouteImport } from './routes/coins'
 import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -24,6 +25,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SdkRouteImport } from './routes/sdk'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as StudioRouteImport } from './routes/studio'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
@@ -55,6 +57,11 @@ const AuthRoute = AuthRouteImport.update({
 const BuildsRoute = BuildsRouteImport.update({
   id: '/builds',
   path: '/builds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CitiesRoute = CitiesRouteImport.update({
+  id: '/cities',
+  path: '/cities',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoinsRoute = CoinsRouteImport.update({
@@ -115,6 +122,11 @@ const SdkRoute = SdkRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StudioRoute = StudioRouteImport.update({
+  id: '/studio',
+  path: '/studio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WalletRoute = WalletRouteImport.update({
@@ -210,6 +222,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/builds': typeof BuildsRoute
+  '/cities': typeof CitiesRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/dashboard': typeof DashboardRoute
@@ -222,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/studio': typeof StudioRoute
   '/wallet': typeof WalletRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
@@ -244,6 +258,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/builds': typeof BuildsRoute
+  '/cities': typeof CitiesRoute
   '/coins': typeof CoinsRoute
   '/dashboard': typeof DashboardRoute
   '/land-101': typeof Land101Route
@@ -254,6 +269,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/studio': typeof StudioRoute
   '/wallet': typeof WalletRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
@@ -277,6 +293,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/builds': typeof BuildsRoute
+  '/cities': typeof CitiesRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/dashboard': typeof DashboardRoute
@@ -289,6 +306,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/studio': typeof StudioRoute
   '/wallet': typeof WalletRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
@@ -313,6 +331,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/builds'
+    | '/cities'
     | '/coins'
     | '/collections'
     | '/dashboard'
@@ -325,6 +344,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sdk'
     | '/sitemap.xml'
+    | '/studio'
     | '/wallet'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
@@ -347,6 +367,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/builds'
+    | '/cities'
     | '/coins'
     | '/dashboard'
     | '/land-101'
@@ -357,6 +378,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sdk'
     | '/sitemap.xml'
+    | '/studio'
     | '/wallet'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
@@ -379,6 +401,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/builds'
+    | '/cities'
     | '/coins'
     | '/collections'
     | '/dashboard'
@@ -391,6 +414,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sdk'
     | '/sitemap.xml'
+    | '/studio'
     | '/wallet'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
@@ -414,6 +438,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   BuildsRoute: typeof BuildsRoute
+  CitiesRoute: typeof CitiesRoute
   CoinsRoute: typeof CoinsRoute
   CollectionsRoute: typeof CollectionsRouteWithChildren
   DashboardRoute: typeof DashboardRoute
@@ -426,6 +451,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SdkRoute: typeof SdkRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  StudioRoute: typeof StudioRoute
   WalletRoute: typeof WalletRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
@@ -461,6 +487,13 @@ declare module '@tanstack/react-router' {
       path: '/builds'
       fullPath: '/builds'
       preLoaderRoute: typeof BuildsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cities': {
+      id: '/cities'
+      path: '/cities'
+      fullPath: '/cities'
+      preLoaderRoute: typeof CitiesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/coins': {
@@ -545,6 +578,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/studio': {
+      id: '/studio'
+      path: '/studio'
+      fullPath: '/studio'
+      preLoaderRoute: typeof StudioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/wallet': {
@@ -714,6 +754,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   BuildsRoute: BuildsRoute,
+  CitiesRoute: CitiesRoute,
   CoinsRoute: CoinsRoute,
   CollectionsRoute: CollectionsRouteWithChildren,
   DashboardRoute: DashboardRoute,
@@ -726,6 +767,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SdkRoute: SdkRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  StudioRoute: StudioRoute,
   WalletRoute: WalletRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
