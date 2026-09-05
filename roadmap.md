@@ -12,3 +12,5 @@
 - [x] Polish combat HUD with damage, cooldown, range, and shared hit log
 - [x] Add predicted jump movement and synchronized jump animation
 - [x] Add three-player parties with invite, accept/decline, leader expulsion, member HUD, and party chat
+- [x] Phase 1 bedrock: extender registry, studio, SDK contract, territory panels, my-world, cities
+- [ ] Phase 2: extender import, sandboxed execution, versioned deploy config, AI build pipeline
