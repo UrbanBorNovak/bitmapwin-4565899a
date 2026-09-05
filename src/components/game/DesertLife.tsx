@@ -66,7 +66,7 @@ export const DesertLife = memo(function DesertLife({
   pose: { current: { x: number; z: number } | null };
   active: boolean;
   /** a hostile animal got its teeth in — damage the visitor */
-  onBite?: (damage: number, label: string) => void;
+  onBite?: ((damage: number, label: string) => void) | undefined;
 }) {
 
   const step = unit * 2.4; // scatter lattice pitch
@@ -443,7 +443,7 @@ const Critters = memo(function Critters({
   unit: number;
   colors: DesertColors;
   pose: { current: { x: number; z: number } | null };
-  onBite?: (damage: number, label: string) => void;
+  onBite?: ((damage: number, label: string) => void) | undefined;
 }) {
   const groups = useRef<(THREE.Group | null)[]>([]);
   const state = useRef<Critter[]>(
