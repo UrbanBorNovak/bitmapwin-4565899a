@@ -517,3 +517,10 @@ function CreatePage() {
     </div>
   );
 }
+
+function nextSemver(current: string | null): string {
+  if (!current) return "1.0.0";
+  const parts = current.split(".").map((n) => Number(n));
+  if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n))) return "1.0.0";
+  return `${parts[0]}.${(parts[1] ?? 0) + 1}.0`;
+}
