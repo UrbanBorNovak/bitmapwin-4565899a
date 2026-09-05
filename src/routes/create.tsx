@@ -152,8 +152,10 @@ function CreatePage() {
             builtWith: "ai",
             plan: design.stages,
             assets: design.assets,
+            models,
             brief: prompt.trim().slice(0, 1200),
           },
+
           publish: true,
           dependencies: [],
           permissions: [],
