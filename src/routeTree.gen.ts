@@ -11,12 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BuildersRouteImport } from './routes/builders'
 import { Route as BuildsRouteImport } from './routes/builds'
 import { Route as CitiesRouteImport } from './routes/cities'
 import { Route as CoinsRouteImport } from './routes/coins'
 import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ExperiencesRouteImport } from './routes/experiences'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as ExtendRouteImport } from './routes/extend'
 import { Route as ExtendersRouteImport } from './routes/extenders'
@@ -62,6 +64,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BuildersRoute = BuildersRouteImport.update({
+  id: '/builders',
+  path: '/builders',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BuildsRoute = BuildsRouteImport.update({
   id: '/builds',
   path: '/builds',
@@ -90,6 +97,11 @@ const CreateRoute = CreateRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExperiencesRoute = ExperiencesRouteImport.update({
+  id: '/experiences',
+  path: '/experiences',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExploreRoute = ExploreRouteImport.update({
@@ -269,12 +281,14 @@ const ApiPublicBlocksHeightMetaRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
   '/cities': typeof CitiesRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
+  '/experiences': typeof ExperiencesRoute
   '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
   '/extenders': typeof ExtendersRouteWithChildren
@@ -313,11 +327,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
   '/cities': typeof CitiesRoute
   '/coins': typeof CoinsRoute
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
+  '/experiences': typeof ExperiencesRoute
   '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
   '/history': typeof HistoryRoute
@@ -356,12 +372,14 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
   '/cities': typeof CitiesRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/create': typeof CreateRoute
   '/dashboard': typeof DashboardRoute
+  '/experiences': typeof ExperiencesRoute
   '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
   '/extenders': typeof ExtendersRouteWithChildren
@@ -402,12 +420,14 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/builders'
     | '/builds'
     | '/cities'
     | '/coins'
     | '/collections'
     | '/create'
     | '/dashboard'
+    | '/experiences'
     | '/explore'
     | '/extend'
     | '/extenders'
@@ -446,11 +466,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/builders'
     | '/builds'
     | '/cities'
     | '/coins'
     | '/create'
     | '/dashboard'
+    | '/experiences'
     | '/explore'
     | '/extend'
     | '/history'
@@ -488,12 +510,14 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/builders'
     | '/builds'
     | '/cities'
     | '/coins'
     | '/collections'
     | '/create'
     | '/dashboard'
+    | '/experiences'
     | '/explore'
     | '/extend'
     | '/extenders'
@@ -533,12 +557,14 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  BuildersRoute: typeof BuildersRoute
   BuildsRoute: typeof BuildsRoute
   CitiesRoute: typeof CitiesRoute
   CoinsRoute: typeof CoinsRoute
   CollectionsRoute: typeof CollectionsRouteWithChildren
   CreateRoute: typeof CreateRoute
   DashboardRoute: typeof DashboardRoute
+  ExperiencesRoute: typeof ExperiencesRoute
   ExploreRoute: typeof ExploreRoute
   ExtendRoute: typeof ExtendRoute
   ExtendersRoute: typeof ExtendersRouteWithChildren
@@ -586,6 +612,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/builders': {
+      id: '/builders'
+      path: '/builders'
+      fullPath: '/builders'
+      preLoaderRoute: typeof BuildersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/builds': {
       id: '/builds'
       path: '/builds'
@@ -626,6 +659,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/experiences': {
+      id: '/experiences'
+      path: '/experiences'
+      fullPath: '/experiences'
+      preLoaderRoute: typeof ExperiencesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/explore': {
@@ -913,12 +953,14 @@ const ApiPublicBlocksHeightRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  BuildersRoute: BuildersRoute,
   BuildsRoute: BuildsRoute,
   CitiesRoute: CitiesRoute,
   CoinsRoute: CoinsRoute,
   CollectionsRoute: CollectionsRouteWithChildren,
   CreateRoute: CreateRoute,
   DashboardRoute: DashboardRoute,
+  ExperiencesRoute: ExperiencesRoute,
   ExploreRoute: ExploreRoute,
   ExtendRoute: ExtendRoute,
   ExtendersRoute: ExtendersRouteWithChildren,
