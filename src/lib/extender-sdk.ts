@@ -635,7 +635,43 @@ export const STARTER_TEMPLATES: StarterTemplate[] = [
     category: "art",
     code: GALLERY_CODE,
   },
+  {
+    id: "welcome-gate",
+    name: "WELCOME GATE",
+    summary: "Arrival gate, control hints and a saved guest counter. Good first build for any land.",
+    category: "world-systems",
+    code: WELCOME_GATE_CODE,
+  },
+  {
+    id: "sky-parkour",
+    name: "SKY PARKOUR",
+    summary: "Six floating checkpoints and a summit flag, with progress saved per visitor.",
+    category: "games",
+    code: PARKOUR_CODE,
+  },
+  {
+    id: "buried-cache",
+    name: "BURIED CACHE",
+    summary: "Five hidden caches per land, remembered for each visitor who digs them.",
+    category: "games",
+    code: TREASURE_CODE,
+  },
+  {
+    id: "campfire-meetup",
+    name: "CAMPFIRE MEETUP",
+    summary: "Seating circle, live fire and a shared tally of nights spent together.",
+    category: "world-systems",
+    code: CAMPFIRE_CODE,
+  },
+  {
+    id: "land-notice-board",
+    name: "LAND NOTICE BOARD",
+    summary: "Market stall showing a headline, note and contact set in deploy config.",
+    category: "world-systems",
+    code: MARKET_STALL_CODE,
+  },
 ];
+
 
 /** Pull runnable code out of a version manifest, whatever shape it was saved in. */
 export function codeFromManifest(manifest: unknown): string | null {
