@@ -200,7 +200,9 @@ export function playSfx(name: Sfx) {
   if (readMuted()) return;
   const rig = audio();
   if (!rig) return;
-  const { ctx: context, master: out } = rig;
+  const { ctx: context, master: out, verb } = rig;
+  // A touch of variation so repeat shots never sound like a copy of each other.
+  const vary = 0.94 + Math.random() * 0.12;
   switch (name) {
     case "shot":
       burst(context, out, { seconds: 0.16, gain: 0.5, type: "highpass", frequency: 900, q: 0.6 });
