@@ -8,6 +8,8 @@
 
 export type Sfx =
   | "shot"
+  | "mosin"
+  | "bolt"
   | "hit"
   | "kill"
   | "reload"
