@@ -1370,7 +1370,7 @@ const WorldScene = memo(function WorldScene({
   };
   deployments: RuntimeDeployment[];
   onRunning: (running: RunningExtender[]) => void;
-  shooter: boolean;
+  weapon: WeaponKind | null;
   onShootPeer: (id: string) => void;
   onShooterStats: (stats: ShooterStats) => void;
 }) {
