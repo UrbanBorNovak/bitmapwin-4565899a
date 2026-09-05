@@ -382,18 +382,21 @@ const DistrictBlocks = memo(function DistrictBlocks({
             float seam = step(cellUv.x, 0.02) + step(0.98, cellUv.x)
                        + step(cellUv.y, 0.02) + step(0.98, cellUv.y);
 
-            vec3 ember = uBitcoin * 0.34;
-            vec3 blaze = mix(uBitcoin, vec3(1.0, 0.82, 0.48), 0.4);
+            // DESERT VOXEL LAND — stone and sand tones, so Bitcoin orange is
+            // saved for what matters: your own land, beacons and the interface.
+            vec3 sandDeep = vec3(0.36, 0.31, 0.24);
+            vec3 sandLight = vec3(0.72, 0.64, 0.50);
             // stepped height field so the land reads as stacked voxel tiers
             float tier = floor(shade * 4.0) / 3.0;
-            float heat = clamp(0.24 + tier * 0.5, 0.0, 1.0);
-            vec3 baseColor = mix(ember, blaze, heat);
-            baseColor = mix(baseColor, uMined * 0.4, 0.12);
-            vec3 color = mix(baseColor * 0.74 + uBitcoin * 0.06, baseColor, mined);
+            vec3 baseColor = mix(sandDeep, sandLight, clamp(0.28 + tier * 0.55, 0.0, 1.0));
+            // A faint ember wash marks the mined world; unmined land stays cold stone.
+            baseColor = mix(baseColor, baseColor * 0.62 + uFuture * 0.18, 1.0 - mined);
+            vec3 color = mix(baseColor, mix(baseColor, uBitcoin, 0.07), mined);
 
-            float face = mix(1.0, 1.0 + light * 0.22 - min(dark, 1.0) * 0.3, detail);
+            float face = mix(1.0, 1.0 + light * 0.24 - min(dark, 1.0) * 0.34, detail);
             color *= face;
-            color = mix(color, color * 0.42, min(seam, 1.0) * detail);
+            color = mix(color, color * 0.4, min(seam, 1.0) * detail);
+
             gl_FragColor = vec4(color, 1.0);
           }
 
