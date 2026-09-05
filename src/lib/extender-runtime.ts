@@ -90,6 +90,20 @@ function makeProp(spec, shape) {
     label: text(spec.label, 40),
     inscriptionId: shape === "model" ? text(spec.inscriptionId, 80) : null,
   };
+  if (spec && spec.persist) {
+    persistIds[id] = true;
+    var saved = savedProps[id];
+    if (saved) {
+      if (saved.removed) return { get id() { return id; }, set: function () {}, remove: function () {} };
+      if (saved.x !== undefined) record.x = num(saved.x, record.x, reach);
+      if (saved.y !== undefined) record.y = num(saved.y, record.y, LIMITS.maxHeight);
+      if (saved.z !== undefined) record.z = num(saved.z, record.z, reach);
+      if (saved.rotationY !== undefined) record.rotationY = num(saved.rotationY, record.rotationY, 64);
+      if (saved.color !== undefined) record.color = colour(saved.color, record.color);
+      if (saved.label !== undefined) record.label = text(saved.label, 40);
+      if (saved.glow !== undefined) record.glow = Boolean(saved.glow);
+    }
+  }
   props.set(id, record);
   return {
     get id() {
@@ -108,12 +122,18 @@ function makeProp(spec, shape) {
       if (patch.color !== undefined) current.color = colour(patch.color, current.color);
       if (patch.label !== undefined) current.label = text(patch.label, 40);
       if (patch.glow !== undefined) current.glow = Boolean(patch.glow);
+      if (persistIds[id]) dirty = true;
     },
     remove: function () {
       props.delete(id);
+      if (persistIds[id]) {
+        savedProps[id] = { removed: true };
+        dirty = true;
+      }
     },
   };
 }
+
 
 function buildApi() {
   var world = {
