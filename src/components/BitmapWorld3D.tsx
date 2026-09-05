@@ -1522,10 +1522,13 @@ export function BitmapWorld3D({
   const exploring = cameraMode !== "map";
   const [draft, setDraft] = useState("");
   const [inventoryOpen, setInventoryOpen] = useState(false);
-  // SHOOTER — the first game mode that runs inside the land world.
-  const [shooter, setShooter] = useState(false);
+  // WEAPONS — what you are carrying while you explore the land world.
+  const [weapon, setWeapon] = useState<WeaponKind | null>(null);
+  const shooter = weapon !== null;
   const [shooterStats, setShooterStats] = useState<ShooterStats>({
-    ammo: MAGAZINE,
+    weapon: "mosin",
+    ammo: WEAPONS.mosin.magazine,
+    magazine: WEAPONS.mosin.magazine,
     reloading: false,
     score: 0,
     kills: 0,
