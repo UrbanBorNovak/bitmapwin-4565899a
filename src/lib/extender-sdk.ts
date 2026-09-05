@@ -186,8 +186,10 @@ declare const world: {
     w?: number; h?: number; d?: number;
     color?: string; rotationY?: number;
     label?: string; glow?: boolean; interactive?: boolean;
+    /** save this object's place, rotation, colour and label to the land */
+    persist?: boolean;
   }): Handle;
-  model(spec: { inscriptionId: string; x?: number; y?: number; z?: number; w?: number; rotationY?: number; label?: string }): Handle;
+  model(spec: { inscriptionId: string; x?: number; y?: number; z?: number; w?: number; rotationY?: number; label?: string; persist?: boolean }): Handle;
   count(): number;
 };
 
@@ -195,7 +197,19 @@ declare const quest: {
   add(spec: { id: string; title: string; detail?: string; reward?: string }): void;
   state(id: string, state: "open" | "active" | "done"): void;
   remove(id: string): void;
-};`;
+};
+
+type StateBucket = {
+  get<T = unknown>(key: string, fallback?: T): T;
+  set(key: string, value: unknown): void;
+  add(key: string, amount: number): number;
+  remove(key: string): void;
+  all(): Record<string, unknown>;
+};
+
+/** Saved world state. Shared record for everyone, plus a private per-visitor record. */
+declare const state: StateBucket & { player: StateBucket };`;
+
 
 export const PIRATE_HARBOR_CODE = `// PIRATE HARBOR — docks, sailing ships and a quest board.
 // Coordinates are strides: a BITMAP is 10 strides across, 0,0 is the centre.
