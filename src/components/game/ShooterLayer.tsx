@@ -31,6 +31,7 @@ export type ShooterStats = {
 };
 
 type Tracer = { id: number; from: THREE.Vector3; to: THREE.Vector3; born: number };
+type Burst = { id: number; at: THREE.Vector3; born: number };
 
 export function ShooterLayer({
   active,
@@ -66,6 +67,8 @@ export function ShooterLayer({
   const [note, setNote] = useState<string | null>(null);
   const [tracers, setTracers] = useState<Tracer[]>([]);
   const [flash, setFlash] = useState(0);
+  const [bursts, setBursts] = useState<Burst[]>([]);
+  const nextBurst = useRef(0);
   const [lash, setLash] = useState(0);
 
   const lastFire = useRef(0);
@@ -85,6 +88,7 @@ export function ShooterLayer({
     const now = performance.now();
     if (flash && now - flash > 70) setFlash(0);
     setTracers((current) => (current.length && now - current[0]!.born > 120 ? current.slice(1) : current));
+    setBursts((current) => (current.length && now - current[0]!.born > 620 ? current.slice(1) : current));
 
     const next = Math.max(0, recoil.current - delta * 3.4);
     if (next !== recoil.current) {
@@ -171,18 +175,38 @@ export function ShooterLayer({
       setTracers((current) => [...current.slice(-5), { id, from: origin.clone(), to: end, born: now }]);
     }
 
+    const impact = best
+      ? best.point.clone()
+      : origin.clone().addScaledVector(ray.direction, range * 0.35);
+    setBursts((current) => [...current.slice(-3), { id: ++nextBurst.current, at: impact, born: now }]);
+
     if (!best) return;
     const reach = Math.hypot(best.peer.x - me.x, best.peer.z - me.z);
     if (reach > ATTACK_RANGE) {
       flashNote(`${best.peer.handle} OUT OF COMBAT RANGE`);
       return;
     }
-    onShootPeer(best.peer.id);
+    // SPLASH — the strike lands on the target and everyone caught in the blast
+    // around the impact, still inside the world's shared combat range.
+    const splash = STRIDE * spec.splashStrides;
+    const caught = cursorsRef.current.filter((peer) => {
+      if (peer.hp <= 0) return false;
+      if (peer.id === best!.peer.id) return true;
+      const near = Math.hypot(peer.x - impact.x, peer.z - impact.z) <= splash;
+      const inRange = Math.hypot(peer.x - me.x, peer.z - me.z) <= ATTACK_RANGE;
+      return near && inRange;
+    });
+    for (const peer of caught) onShootPeer(peer.id);
     playSfx("hit");
-    setScore((current) => current + 25);
-    setKills((current) => (best!.peer.hp - SHOT_DAMAGE <= 0 ? current + 1 : current));
-    flashNote(`HIT ${best.peer.handle}`);
+    setScore((current) => current + 25 * caught.length);
+    setKills((current) => current + caught.filter((peer) => peer.hp - SHOT_DAMAGE <= 0).length);
+    flashNote(
+      caught.length > 1
+        ? `SPLASH HIT ${caught.length} VISITORS`
+        : `HIT ${best.peer.handle}`,
+    );
   }, [active, ammo, camera, flashNote, onShootPeer, pose, reloading, spec, weapon]);
+
 
   // Mouse / touch strike on the canvas, R to reload.
   useEffect(() => {
@@ -250,6 +274,9 @@ export function ShooterLayer({
         </group>
       ) : null}
 
+      {bursts.map((burst) => (
+        <VoxelBurst key={burst.id} at={burst.at} born={burst.born} color={bitcoin} radius={STRIDE * spec.splashStrides} />
+      ))}
       {tracers.map((tracer) => (
         <Tracer key={tracer.id} from={tracer.from} to={tracer.to} color={bitcoin} />
       ))}
@@ -272,5 +299,61 @@ function Tracer({ from, to, color }: { from: THREE.Vector3; to: THREE.Vector3; c
       <primitive object={geometry} attach="geometry" />
       <lineBasicMaterial color={color} transparent opacity={0.75} />
     </line>
+  );
+}
+
+/** Chunky voxel debris kicked up at the point of impact, sized to the splash. */
+function VoxelBurst({
+  at,
+  born,
+  color,
+  radius,
+}: {
+  at: THREE.Vector3;
+  born: number;
+  color: string;
+  radius: number;
+}) {
+  const group = useRef<THREE.Group>(null);
+  const shards = useState(() =>
+    Array.from({ length: 10 }, (_, i) => {
+      const angle = (i / 10) * Math.PI * 2 + Math.random();
+      const speed = 0.6 + Math.random() * 0.9;
+      return {
+        dir: new THREE.Vector3(Math.cos(angle) * speed, 0.8 + Math.random(), Math.sin(angle) * speed),
+        size: radius * (0.08 + Math.random() * 0.12),
+        spin: (Math.random() - 0.5) * 6,
+      };
+    }),
+  )[0];
+
+  useFrame(() => {
+    const g = group.current;
+    if (!g) return;
+    const t = Math.min(1, (performance.now() - born) / 620);
+    g.children.forEach((child, i) => {
+      const shard = shards[i];
+      if (!shard) return;
+      child.position.set(
+        shard.dir.x * radius * t,
+        Math.max(0.02 * radius, shard.dir.y * radius * t - radius * 2.4 * t * t),
+        shard.dir.z * radius * t,
+      );
+      child.rotation.set(shard.spin * t, shard.spin * t * 0.7, 0);
+      const material = (child as THREE.Mesh).material as THREE.MeshBasicMaterial;
+      material.opacity = 1 - t;
+    });
+    g.scale.setScalar(1);
+  });
+
+  return (
+    <group ref={group} position={at}>
+      {shards.map((shard, i) => (
+        <mesh key={i}>
+          <boxGeometry args={[shard.size, shard.size, shard.size]} />
+          <meshBasicMaterial color={color} transparent opacity={0.9} />
+        </mesh>
+      ))}
+    </group>
   );
 }

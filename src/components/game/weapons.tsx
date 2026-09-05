@@ -23,12 +23,15 @@ export type WeaponSpec = {
   cooldownMs: number;
   /** how far a hit can land, in strides */
   reachStrides: number;
+  /** splash radius around an impact, in strides — anyone inside also takes a hit */
+  splashStrides: number;
   fireSfx: "mosin" | "revolver" | "whip";
   /** follow-up mechanical sound after a shot (bolt lift / cylinder) */
   cycleSfx: "bolt" | "cock" | null;
   cycleDelayMs: number;
   hint: string;
 };
+
 
 export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
   mosin: {
@@ -39,10 +42,11 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     reloadMs: 2_400,
     cooldownMs: 1_250,
     reachStrides: 90,
+    splashStrides: 1.6,
     fireSfx: "mosin",
     cycleSfx: "bolt",
     cycleDelayMs: 620,
-    hint: "BOLT ACTION · LONG RANGE",
+    hint: "BOLT ACTION · LONG RANGE · SPLASH",
   },
   revolver: {
     kind: "revolver",
@@ -52,10 +56,11 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     reloadMs: 1_700,
     cooldownMs: 420,
     reachStrides: 34,
+    splashStrides: 1.1,
     fireSfx: "revolver",
     cycleSfx: "cock",
     cycleDelayMs: 220,
-    hint: "SIX SHOTS · FAST",
+    hint: "SIX SHOTS · FAST · SPLASH",
   },
   whip: {
     kind: "whip",
@@ -65,10 +70,11 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     reloadMs: 0,
     cooldownMs: 640,
     reachStrides: 4,
+    splashStrides: 2.2,
     fireSfx: "whip",
     cycleSfx: null,
     cycleDelayMs: 0,
-    hint: "NO AMMO · CLOSE RANGE",
+    hint: "NO AMMO · CLOSE RANGE · WIDE SPLASH",
   },
 };
 
