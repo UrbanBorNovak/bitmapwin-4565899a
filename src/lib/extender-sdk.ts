@@ -306,7 +306,7 @@ on("tick", (event) => {
     ship.lamp.set({ x: x - (ship.speed > 0 ? 1 : -1) * 0.9 * ship.size, z: ship.lane, y: 0.75 + bob });
   }
 
-  if (signed && event.player) {
+  if (state.get("signed", false) && event.player) {
     const onPier = Math.abs(event.player.x) < 1.4 && event.player.z > -2 && event.player.z < 3;
     if (onPier && Math.floor(t) % 6 === 0 && Math.floor(t) !== passes) {
       passes = Math.floor(t);
