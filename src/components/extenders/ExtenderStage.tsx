@@ -22,7 +22,7 @@ export function ExtenderStage({
   onRunning,
 }: {
   deployments: RuntimeDeployment[];
-  pose: React.RefObject<{ x: number; z: number; y: number } | null>;
+  pose: React.RefObject<{ x: number; z: number; y: number }>;
   onRunning?: (running: RunningExtender[]) => void;
 }) {
   const camera = useThree((state) => state.camera);
