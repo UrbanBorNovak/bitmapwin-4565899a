@@ -15,7 +15,7 @@ import {
 } from "@/lib/extenders";
 import { useAuthSession } from "@/lib/auth";
 import { shortenAddress } from "@/lib/registry";
-import { formatSats } from "@/lib/trades";
+import { formatBit } from "@/lib/coins";
 import { timeAgo } from "@/lib/bitmap";
 import { deployExtenderFn } from "@/lib/extenders.functions";
 
