@@ -26,6 +26,7 @@ const MUTE_KEY = "bitmapwin:sound-muted";
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
+let verb: GainNode | null = null;
 let muted = false;
 let hydrated = false;
 
