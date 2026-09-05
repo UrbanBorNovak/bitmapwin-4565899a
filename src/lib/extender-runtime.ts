@@ -157,23 +157,87 @@ function buildApi() {
       var s = spec || {};
       if (quests.size >= LIMITS.maxQuests) return;
       var id = text(s.id, 40) || "q" + (quests.size + 1);
+      var restored = savedQuests[id];
       quests.set(id, {
         id: id,
         title: text(s.title, 80) || "UNTITLED QUEST",
         detail: text(s.detail, 240) || "",
         reward: text(s.reward, 60) || "",
-        state: "open",
+        state: ["open", "active", "done"].indexOf(restored) >= 0 ? restored : "open",
       });
     },
     state: function (id, state) {
-      var q = quests.get(text(id, 40));
+      var key = text(id, 40);
+      var q = quests.get(key);
       if (!q) return;
-      q.state = ["open", "active", "done"].indexOf(state) >= 0 ? state : q.state;
+      if (["open", "active", "done"].indexOf(state) >= 0 && q.state !== state) {
+        q.state = state;
+        savedQuests[key] = state;
+        dirty = true;
+      }
     },
     remove: function (id) {
       quests.delete(text(id, 40));
     },
   };
+
+  function clean(value, depth) {
+    if (value === null || value === undefined) return null;
+    var kind = typeof value;
+    if (kind === "number") return isFinite(value) ? value : 0;
+    if (kind === "boolean") return value;
+    if (kind === "string") return value.slice(0, 2000);
+    if (depth > 4) return null;
+    if (Array.isArray(value)) {
+      var list = [];
+      for (var i = 0; i < Math.min(value.length, 500); i++) list.push(clean(value[i], depth + 1));
+      return list;
+    }
+    if (kind === "object") {
+      var out = {};
+      var keys = Object.keys(value).slice(0, 200);
+      for (var k = 0; k < keys.length; k++) out[keys[k]] = clean(value[keys[k]], depth + 1);
+      return out;
+    }
+    return null;
+  }
+
+  function bucket(store) {
+    return {
+      get: function (key, fallback) {
+        var k = text(key, 60);
+        return k !== null && store[k] !== undefined ? store[k] : fallback === undefined ? null : fallback;
+      },
+      set: function (key, value) {
+        var k = text(key, 60);
+        if (k === null) return;
+        if (Object.keys(store).length >= 200 && store[k] === undefined) return;
+        store[k] = clean(value, 0);
+        dirty = true;
+      },
+      add: function (key, amount) {
+        var k = text(key, 60);
+        if (k === null) return 0;
+        var next = (typeof store[k] === "number" ? store[k] : 0) + (Number(amount) || 0);
+        store[k] = isFinite(next) ? next : 0;
+        dirty = true;
+        return store[k];
+      },
+      remove: function (key) {
+        var k = text(key, 60);
+        if (k !== null) {
+          delete store[k];
+          dirty = true;
+        }
+      },
+      all: function () {
+        return JSON.parse(JSON.stringify(store));
+      },
+    };
+  }
+
+  var state = bucket(sharedState);
+  state.player = bucket(playerState);
 
   function on(event, handler) {
     if (typeof handler !== "function") return;
@@ -204,8 +268,32 @@ function buildApi() {
     return lo + Math.floor(random() * (hi - lo + 1));
   }
 
-  return { world: world, quest: quest, on: on, log: log, random: random, randomInt: randomInt };
+  return { world: world, quest: quest, state: state, on: on, log: log, random: random, randomInt: randomInt };
 }
+
+/** Reports saved world state back to the page, which writes it to the database. */
+function flush(force) {
+  if (!dirty) return;
+  var now = Date.now();
+  if (!force && now - lastFlush < 1500) return;
+  lastFlush = now;
+  dirty = false;
+  props.forEach(function (record) {
+    if (!persistIds[record.id]) return;
+    savedProps[record.id] = {
+      x: record.x, y: record.y, z: record.z,
+      rotationY: record.rotationY, color: record.color, label: record.label, glow: record.glow,
+    };
+  });
+  postMessage({
+    type: "state",
+    state: {
+      shared: Object.assign({}, sharedState, { __quests: savedQuests, __props: savedProps }),
+      player: playerState,
+    },
+  });
+}
+
 
 function fire(event, payload) {
   var list = handlers[event] || [];
