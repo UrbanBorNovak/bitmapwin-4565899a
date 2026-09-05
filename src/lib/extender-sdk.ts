@@ -118,6 +118,21 @@ export const SDK_MODULES: SdkModule[] = [
     ],
   },
   {
+    id: "state",
+    status: "live",
+    body:
+      "Real world state, saved to the land. Anything you put in state comes back next session for every visitor, so buildings, NPCs and progress persist instead of resetting. Quest states and props created with `persist: true` are saved for you automatically. Signed-out visitors still play — their session simply is not written back.",
+    calls: [
+      { signature: "state.get(key, fallback)", note: "Read the shared record for this deployment." },
+      { signature: "state.set(key, value)", note: "Save JSON — objects, arrays, numbers, strings." },
+      { signature: "state.add(key, amount)", note: "Increment a saved counter and return it." },
+      { signature: "state.remove(key)", note: "Forget one key." },
+      { signature: "state.all()", note: "The whole shared record." },
+      { signature: "state.player.get / set / add / remove / all", note: "Private per-visitor record (progress, inventory)." },
+      { signature: "world.prop({ id, persist: true, ... })", note: "Save this object's position, rotation, colour and label." },
+    ],
+  },
+  {
     id: "land",
     status: "live",
     body: "Read-only facts about the tile the code is deployed on. Ownership comes from the chain — the SDK never invents it.",
@@ -138,6 +153,7 @@ export const SDK_MODULES: SdkModule[] = [
       { signature: "log(...values)", note: "Writes to the extender console (last 40 lines)." },
     ],
   },
+
   {
     id: "economy / social",
     status: "soon",
@@ -170,8 +186,10 @@ declare const world: {
     w?: number; h?: number; d?: number;
     color?: string; rotationY?: number;
     label?: string; glow?: boolean; interactive?: boolean;
+    /** save this object's place, rotation, colour and label to the land */
+    persist?: boolean;
   }): Handle;
-  model(spec: { inscriptionId: string; x?: number; y?: number; z?: number; w?: number; rotationY?: number; label?: string }): Handle;
+  model(spec: { inscriptionId: string; x?: number; y?: number; z?: number; w?: number; rotationY?: number; label?: string; persist?: boolean }): Handle;
   count(): number;
 };
 
@@ -179,7 +197,19 @@ declare const quest: {
   add(spec: { id: string; title: string; detail?: string; reward?: string }): void;
   state(id: string, state: "open" | "active" | "done"): void;
   remove(id: string): void;
-};`;
+};
+
+type StateBucket = {
+  get<T = unknown>(key: string, fallback?: T): T;
+  set(key: string, value: unknown): void;
+  add(key: string, amount: number): number;
+  remove(key: string): void;
+  all(): Record<string, unknown>;
+};
+
+/** Saved world state. Shared record for everyone, plus a private per-visitor record. */
+declare const state: StateBucket & { player: StateBucket };`;
+
 
 export const PIRATE_HARBOR_CODE = `// PIRATE HARBOR — docks, sailing ships and a quest board.
 // Coordinates are strides: a BITMAP is 10 strides across, 0,0 is the centre.
@@ -203,10 +233,14 @@ for (let i = 0; i < 6; i++) {
 // harbour master's hut + quest board
 world.prop({ shape: "box", x: -2.6, z: -1.6, w: 1.6, h: 1.1, d: 1.4, color: DECK, y: 0.55 });
 world.prop({ shape: "cone", x: -2.6, z: -1.6, w: 1.3, h: 0.6, color: PLANK, y: 1.4 });
+const signed = state.get("signed", false);
 const board = world.prop({
+  id: "quest-board", persist: true,
   shape: "box", x: -1.4, z: -0.6, w: 0.9, h: 0.9, d: 0.12,
-  color: GOLD, y: 0.6, label: "QUEST BOARD", glow: true, interactive: true,
+  color: signed ? SAIL : GOLD, y: 0.6,
+  label: signed ? "SIGNED ON" : "QUEST BOARD", glow: true, interactive: true,
 });
+
 
 // braziers marking the harbour mouth
 world.prop({ shape: "sphere", x: -3.4, z: 4.4, w: 0.34, color: GOLD, y: 0.5, glow: true });
@@ -243,18 +277,19 @@ quest.add({
 });
 
 let passes = 0;
-let signed = false;
 
 on("interact", (event) => {
   if (event.propId !== board.id) return;
-  signed = true;
+  state.set("signed", true);
+  state.add("crew", 1);
   quest.state("sign-on", "done");
   quest.state("night-watch", "active");
   board.set({ label: "SIGNED ON", color: SAIL });
-  log("a visitor signed the harbour register");
+  log("crew signed: " + state.get("crew", 0));
 });
 
 on("enter", () => log("someone walked onto the pier"));
+
 
 on("tick", (event) => {
   const t = event.time;
@@ -271,7 +306,7 @@ on("tick", (event) => {
     ship.lamp.set({ x: x - (ship.speed > 0 ? 1 : -1) * 0.9 * ship.size, z: ship.lane, y: 0.75 + bob });
   }
 
-  if (signed && event.player) {
+  if (state.get("signed", false) && event.player) {
     const onPier = Math.abs(event.player.x) < 1.4 && event.player.z > -2 && event.player.z < 3;
     if (onPier && Math.floor(t) % 6 === 0 && Math.floor(t) !== passes) {
       passes = Math.floor(t);

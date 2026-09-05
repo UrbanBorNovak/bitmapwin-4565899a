@@ -81,12 +81,12 @@ async function upsertRecord(
 
   const { data: existing } = await lookup.maybeSingle();
   if (existing?.id) {
-    await supabase.from("extender_state").update({ data: safe }).eq("id", existing.id);
+    await supabase.from("extender_state").update({ data: safe as never }).eq("id", existing.id);
     return;
   }
   await supabase
     .from("extender_state")
-    .insert({ deployment_id: deploymentId, scope, actor, data: safe });
+    .insert({ deployment_id: deploymentId, scope, actor, data: safe as never });
 }
 
 /**

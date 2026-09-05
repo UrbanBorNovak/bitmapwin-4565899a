@@ -4,6 +4,8 @@ import {
   type ExtenderContext,
   type ExtenderSnapshot,
 } from "@/lib/extender-sdk";
+import { EMPTY_STATE, type ExtenderPersistedState } from "@/lib/extender-state";
+
 
 /**
  * The extender sandbox.

@@ -42,7 +42,9 @@ export function ExtenderHud({ running }: { running: RunningExtender[] }) {
               ) : (
                 <p className="text-muted-foreground">
                   {item.snapshot.props.length} OBJECTS LIVE
+                  {item.saved ? " · STATE SAVED" : ""}
                 </p>
+
               )}
             </div>
           ))}
