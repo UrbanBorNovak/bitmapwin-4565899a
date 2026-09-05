@@ -1941,7 +1941,7 @@ export function BitmapWorld3D({
             className="hud-panel absolute left-3 top-[8.5rem] z-40 space-y-1 px-2.5 py-2 font-mono text-[10px] tabular-nums"
             aria-label="Shooter status"
           >
-            <div className="label text-[9px] text-bitcoin">SHOOTER · LIVE</div>
+            <div className="label text-[9px] text-bitcoin">MOSIN NAGANT · EQUIPPED</div>
             <div className="flex items-center gap-3">
               <span>
                 AMMO{" "}
