@@ -419,6 +419,8 @@ export type TilePlayer = { x: number; z: number; y: number } | null;
 export type ExtenderRuntime = {
   /** Latest data-only snapshot from the sandbox. */
   snapshot: () => ExtenderSnapshot;
+  /** Latest saved state reported by the sandbox, or null if nothing changed. */
+  state: () => ExtenderPersistedState | null;
   setPlayer: (player: TilePlayer) => void;
   interact: (propId: string) => void
   stop: () => void;
@@ -427,20 +429,34 @@ export type ExtenderRuntime = {
 export type RuntimeCallbacks = {
   onSnapshot: (snapshot: ExtenderSnapshot) => void;
   onError: (message: string) => void;
+  /** Fired whenever the sandbox changes persistent state (quests, counters, saved props). */
+  onState?: (state: ExtenderPersistedState) => void;
 };
 
-/** Boot one extender. Returns a handle; always call `stop()` when unmounting. */
+/**
+ * Boot one extender. Returns a handle; always call `stop()` when unmounting.
+ * `restored` is the state saved by earlier sessions — pass `EMPTY_STATE` for a
+ * throwaway preview so nothing from the studio touches live world state.
+ */
 export function startExtender(
   code: string,
   context: ExtenderContext,
   callbacks: RuntimeCallbacks,
+  restored: ExtenderPersistedState = EMPTY_STATE,
 ): ExtenderRuntime {
   let latest: ExtenderSnapshot = EMPTY_SNAPSHOT;
+  let latestState: ExtenderPersistedState | null = null;
   let dead = false;
 
   if (code.length > RUNTIME_LIMITS.maxCodeBytes) {
     callbacks.onError(`CODE TOO LARGE (${code.length} BYTES, LIMIT ${RUNTIME_LIMITS.maxCodeBytes})`);
-    return { snapshot: () => latest, setPlayer: () => {}, interact: () => {}, stop: () => {} };
+    return {
+      snapshot: () => latest,
+      state: () => null,
+      setPlayer: () => {},
+      interact: () => {},
+      stop: () => {},
+    };
   }
 
   const worker = new Worker(workerUrl());
@@ -453,11 +469,21 @@ export function startExtender(
   }, RUNTIME_LIMITS.initTimeoutMs);
 
   worker.onmessage = (event: MessageEvent) => {
-    const message = event.data as { type: string; snapshot?: ExtenderSnapshot; message?: string };
+    const message = event.data as {
+      type: string;
+      snapshot?: ExtenderSnapshot;
+      state?: ExtenderPersistedState;
+      message?: string;
+    };
     if (message.type === "snapshot" && message.snapshot) {
       window.clearTimeout(setup);
       latest = message.snapshot;
       callbacks.onSnapshot(message.snapshot);
+      return;
+    }
+    if (message.type === "state" && message.state) {
+      latestState = message.state;
+      callbacks.onState?.(message.state);
       return;
     }
     if (message.type === "error") {
@@ -474,10 +500,11 @@ export function startExtender(
     worker.terminate();
   };
 
-  worker.postMessage({ type: "init", code, context, limits: RUNTIME_LIMITS });
+  worker.postMessage({ type: "init", code, context, limits: RUNTIME_LIMITS, state: restored });
 
   return {
     snapshot: () => latest,
+    state: () => latestState,
     setPlayer: (player) => {
       if (!dead) worker.postMessage({ type: "player", player });
     },
@@ -496,3 +523,4 @@ export function startExtender(
     },
   };
 }
+
