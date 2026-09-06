@@ -323,11 +323,11 @@ export function WeaponModel({
     const swing = lash;
     return (
       <group
-        position={[0, -0.05 * u, 0.1 * u]}
+        position={[0.05 * u, -0.07 * u, 0.02 * u]}
         rotation={[-0.2 + swing * 0.8, 0.24, -0.34 - swing * 0.5]}
       >
         <Suspense fallback={<PickStandIn u={u} materials={materials} />}>
-          <OnChainWeapon url={PICK_URL} u={u} lengthStrides={0.75} forwardAxis="z" />
+          <OnChainWeapon url={PICK_URL} u={u} lengthStrides={0.4} forwardAxis="z" />
         </Suspense>
         {flash ? <Muzzle u={u} z={-0.86 * u} size={0.05} color={flashColor} /> : null}
       </group>
