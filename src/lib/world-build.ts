@@ -130,15 +130,31 @@ function hydrate() {
   recompute(false);
 }
 
-/** Tell the grid which tiles are taken, so paths route around what is built. */
+/**
+ * Tell the grid which tiles are taken, so paths route around what is built.
+ * Tiles freed by a demolished structure are cleared in the same pass, otherwise
+ * the world would stay blocked where nothing is standing any more.
+ */
+let stamped = new Set<string>();
+
 function stampTiles(items: PlacedStructure[]) {
-  setTiles(
-    items.map((item) => ({
-      col: colAt(item.x),
-      row: rowAt(item.z),
-      bits: TILE.OCCUPIED,
-    })),
-  );
+  const next = new Set<string>();
+  const entries: { col: number; row: number; bits: number; on?: boolean }[] = [];
+  for (const item of items) {
+    const col = colAt(item.x);
+    const row = rowAt(item.z);
+    const key = `${col}:${row}`;
+    if (next.has(key)) continue;
+    next.add(key);
+    if (!stamped.has(key)) entries.push({ col, row, bits: TILE.OCCUPIED, on: true });
+  }
+  for (const key of stamped) {
+    if (next.has(key)) continue;
+    const [colRaw, rowRaw] = key.split(":");
+    entries.push({ col: Number(colRaw), row: Number(rowRaw), bits: TILE.OCCUPIED, on: false });
+  }
+  stamped = next;
+  if (entries.length) setTiles(entries);
 }
 
 function recompute(notify = true) {
@@ -147,6 +163,108 @@ function recompute(notify = true) {
   // Hydration happens during render, so it must never call listeners.
   if (notify) for (const listener of listeners) listener();
 }
+
+/* ------------------------------------------------- solidity and demolition */
+
+/** Footprint radius of a structure, in world units. */
+export function footprintOf(id: StructureId) {
+  return (recipeFor(id)?.footprint ?? 0.4) * STRIDE;
+}
+
+/**
+ * How much punishment a structure can take. Land that has been terraformed
+ * gives a build real roots: the greener the plot, the sturdier what stands on
+ * it, up to half again its bare-sand strength.
+ */
+export function maxHpOf(item: PlacedStructure) {
+  const base = recipeFor(item.id)?.hp ?? 60;
+  const land = terraformAt(item.x, item.z);
+  const bonus = land ? growthOf(land) * 0.5 : 0;
+  return Math.round(base * (1 + bonus));
+}
+
+const damage = new Map<string, number>();
+const DAMAGE_KEY = "bitmapwin:build-damage";
+
+function hydrateDamage() {
+  if (damage.size || typeof window === "undefined") return;
+  try {
+    const raw = window.localStorage.getItem(DAMAGE_KEY);
+    const parsed = raw ? (JSON.parse(raw) as Record<string, number>) : {};
+    for (const [key, value] of Object.entries(parsed)) {
+      if (typeof value === "number" && value > 0) damage.set(key, value);
+    }
+  } catch {
+    damage.clear();
+  }
+}
+
+function persistDamage() {
+  try {
+    window.localStorage.setItem(DAMAGE_KEY, JSON.stringify(Object.fromEntries(damage)));
+  } catch {
+    // nothing to do — damage simply resets next session
+  }
+}
+
+/** Remaining strength of a structure, out of `maxHpOf`. */
+export function hpOf(item: PlacedStructure) {
+  hydrateDamage();
+  return Math.max(0, maxHpOf(item) - (damage.get(item.key) ?? 0));
+}
+
+/** The structure standing on a spot, if anything solid is in the way there. */
+export function structureAt(x: number, z: number, pad = 0) {
+  hydrate();
+  for (const item of view) {
+    const reach = footprintOf(item.id) + pad;
+    if (Math.abs(item.x - x) > reach || Math.abs(item.z - z) > reach) continue;
+    if (Math.hypot(item.x - x, item.z - z) <= reach) return item;
+  }
+  return null;
+}
+
+/** True when a body of `pad` radius cannot stand at this spot. */
+export function blockedAt(x: number, z: number, pad = 0) {
+  return structureAt(x, z, pad) !== null;
+}
+
+/** The nearest structure within striking distance, for demolition. */
+export function structureInReach(x: number, z: number, reach: number) {
+  hydrate();
+  let best: { item: PlacedStructure; distance: number } | null = null;
+  for (const item of view) {
+    const distance = Math.hypot(item.x - x, item.z - z) - footprintOf(item.id);
+    if (distance <= reach && (!best || distance < best.distance)) best = { item, distance };
+  }
+  return best?.item ?? null;
+}
+
+/**
+ * Hit a structure. When its strength runs out it collapses and the tile it sat
+ * on becomes walkable again. Returns what happened, so the world can say so.
+ */
+export function damageStructure(key: string, amount: number) {
+  hydrate();
+  hydrateDamage();
+  const item = view.find((entry) => entry.key === key);
+  if (!item) return null;
+  const max = maxHpOf(item);
+  const dealt = Math.max(1, Math.round(amount));
+  const total = (damage.get(key) ?? 0) + dealt;
+  const name = recipeFor(item.id)?.name ?? "STRUCTURE";
+  if (total >= max) {
+    damage.delete(key);
+    persistDamage();
+    removeBuild(key);
+    return { name, hp: 0, max, destroyed: true };
+  }
+  damage.set(key, total);
+  persistDamage();
+  for (const listener of listeners) listener();
+  return { name, hp: max - total, max, destroyed: false };
+}
+
 
 function persistLocal() {
   try {
