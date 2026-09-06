@@ -208,11 +208,11 @@ const HolderColumns = memo(function HolderColumns({
       dummy.scale.set(CELL * 0.86, tile, CELL * 0.86);
       dummy.updateMatrix();
       mesh.setMatrixAt(index, dummy.matrix);
-      // Your own holdings burn hot Bitcoin orange. Every other holder gets a
+      // Your own holdings are pure Bitcoin orange. Every other holder gets a
       // deterministic colour of their own, so neighbouring owners are visible
       // as distinct estates instead of one anonymous orange mass.
       if (isMine) {
-        color.set(bitcoin).lerp(WHITE_HOT, 0.45);
+        color.set(bitcoin);
       } else {
         holderColor.set(colorForAddress(owner));
         color.copy(holderColor).lerp(WHITE_HOT, 0.1);
