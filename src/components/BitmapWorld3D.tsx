@@ -1472,6 +1472,18 @@ function OnChainModel({ model }: { model: BitmapModel }) {
     const fit = (CELL * 4.5) / Math.max(size.x, size.y, size.z, 0.001);
     return { fit, center, minY: bounds.min.y };
   }, [scene]);
+  // Animated and skinned parts keep the bounding box they were exported with,
+  // so the renderer culls them while you are still looking at them — that is
+  // the flicker you see driving past a build. Draw them unconditionally.
+  useEffect(() => {
+    scene.traverse((child) => {
+      const mesh = child as THREE.Mesh;
+      if (!mesh.isMesh && !(child as THREE.SkinnedMesh).isSkinnedMesh) return;
+      mesh.frustumCulled = false;
+      mesh.castShadow = false;
+      mesh.receiveShadow = false;
+    });
+  }, [scene]);
   useEffect(() => {
     const first = Object.values(actions)[0];
     first?.reset().play();
