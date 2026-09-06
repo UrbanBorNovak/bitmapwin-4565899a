@@ -2596,8 +2596,25 @@ export function BitmapWorld3D({
                 variant="ghost"
                 onClick={toggleTruck}
               >
-                {driving ? "[ PARK TRUCK · V ]" : "[ DRIVE CYBERTRUCK · V ]"}
+                <span data-no-translate>
+                  {driving ? `[ LEAVE ${ride.label} · V ]` : `[ TRAVEL BY ${ride.label} · V ]`}
+                </span>
               </Button>
+              <select
+                aria-label="Travel source"
+                data-no-translate
+                value={ride.id}
+                onChange={(event) => pickRide(event.target.value)}
+                className="border border-border bg-background px-1.5 py-1 font-mono text-[10px] uppercase text-foreground outline-none focus:border-bitcoin"
+              >
+                {RIDES.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label} ·{" "}
+                    {option.kind === "air" ? "FLY" : option.kind === "water" ? "SAIL" : "DRIVE"}
+                  </option>
+                ))}
+              </select>
+
               <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
                 {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
               </Button>
