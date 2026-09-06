@@ -1753,6 +1753,8 @@ const WorldScene = memo(function WorldScene({
   onBite,
   onShooterStats,
   driving,
+  ride,
+
 }: {
   colors: WorldColors;
   command: { type: CameraMove; nonce: number; height?: number };
