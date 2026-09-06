@@ -153,8 +153,14 @@ export function FootTrail({
         const fade = 1 - Math.max(0, slot.age - (PRINT_LIFE - PRINT_FADE)) / PRINT_FADE;
         scratch.euler.set(0, slot.yaw, 0);
         scratch.quat.setFromEuler(scratch.euler);
-        scratch.pos.set(slot.x, unit * 0.015, slot.z);
-        scratch.scale.set(unit * 0.16, 1, unit * 0.26).multiplyScalar(0.6 + fade * 0.4);
+        // Pressed into the sand: half the print's own thickness above zero, so
+        // it sits flush with the ground instead of hovering over it.
+        const thickness = unit * 0.012;
+        scratch.pos.set(slot.x, thickness * 0.5, slot.z);
+        scratch.scale
+          .set(unit * 0.16, thickness, unit * 0.26)
+          .multiply(new THREE.Vector3(0.6 + fade * 0.4, 1, 0.6 + fade * 0.4));
+
         scratch.matrix.compose(scratch.pos, scratch.quat, scratch.scale);
         printMesh.setMatrixAt(i, scratch.matrix);
         printMesh.setColorAt(i, printColor.clone().multiplyScalar(0.6 + fade * 0.4));
