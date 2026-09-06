@@ -56,7 +56,7 @@ import {
 const EMPTY_DEPLOYMENTS: RuntimeDeployment[] = [];
 
 import { clubOf } from "@/lib/clubs";
-import { mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
+import { colorForAddress, mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
 import {
   ATTACK_COOLDOWN_MS,
   ATTACK_DAMAGE,
@@ -1606,7 +1606,12 @@ const WorldScene = memo(function WorldScene({
       ) : null}
 
       <DistrictBlocks tipHeight={tipHeight} colors={colors} />
-      <HolderColumns owners={owners} mine={mine} bitcoin={colors.bitcoin} />
+      <HolderColumns
+        owners={owners}
+        mine={mine}
+        ownedHeights={ownedHeights}
+        bitcoin={colors.bitcoin}
+      />
       <OwnedBitmapGlow heights={ownedHeights} bitcoin={colors.bitcoin} />
       <OnChainModels models={models} bitcoin={colors.bitcoin} />
       <ExtenderStage
