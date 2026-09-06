@@ -2177,6 +2177,10 @@ export function BitmapWorld3D({
               powerPreference: "high-performance",
               stencil: false,
               depth: true,
+              // Filmic response: highlights on sand, water and orange tiles roll
+              // off instead of clipping to flat white.
+              toneMapping: THREE.ACESFilmicToneMapping,
+              toneMappingExposure: 1.08,
             }}
             performance={{ min: 0.4 }}
           >
