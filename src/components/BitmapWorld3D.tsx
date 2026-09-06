@@ -2070,10 +2070,13 @@ export function BitmapWorld3D({
   const selectedModel = selected
     ? models.data?.find((model) => model.bitmapHeight === selected.height)
     : undefined;
+  // Every height this visitor owns, whether that came from the registry or
+  // straight from the wallet's on-chain inscriptions.
+  const myHeights = useMemo(() => new Set(ownedHeights), [ownedHeights]);
   const selectedIsMine = Boolean(
     selected &&
     ((selected.owner && mine.has(selected.owner.toLowerCase())) ||
-      (held.data ?? []).includes(selected.height)),
+      myHeights.has(selected.height)),
   );
   const chatLines = useMemo(() => said.slice(-6), [said]);
 
@@ -2732,10 +2735,11 @@ export function BitmapWorld3D({
             <div>
               {hover.height}.bitmap · {clubOf(hover.height).short}
             </div>
-            {owners.data?.get(hover.height) ? (
-              <div className="mt-0.5">
-                {mine.has((owners.data.get(hover.height) ?? "").toLowerCase()) ? "YOURS" : "HELD"}
-              </div>
+            {myHeights.has(hover.height) ||
+            mine.has((owners.data?.get(hover.height) ?? "").toLowerCase()) ? (
+              <div className="mt-0.5 text-bitcoin">YOURS</div>
+            ) : owners.data?.get(hover.height) ? (
+              <div className="mt-0.5">HELD</div>
             ) : null}
           </div>
         ) : null}
@@ -2766,11 +2770,9 @@ export function BitmapWorld3D({
               <dd className="truncate">
                 {selected.height > tipHeight
                   ? "NOT MINED YET"
-                  : selected.owner
-                    ? mine.has(selected.owner.toLowerCase())
-                      ? "YOURS"
-                      : selected.owner
-                    : "NO DATA YET"}
+                  : selectedIsMine
+                    ? "YOURS"
+                    : (selected.owner ?? "NO DATA YET")}
               </dd>
               <dt className="text-muted-foreground">MODEL</dt>
               <dd>
