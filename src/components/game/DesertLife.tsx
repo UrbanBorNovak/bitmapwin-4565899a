@@ -415,9 +415,12 @@ export const DesertLife = memo(function DesertLife({
         args={[undefined, undefined, 60]}
         frustumCulled={false}
         raycast={noRaycast}
+        // Drawn before anything standing in it, so an avatar wading at the edge
+        // is never painted over by the water sheet.
+        renderOrder={-2}
       >
-        <circleGeometry args={[1, 24]} />
-        <meshBasicMaterial color={WATER} transparent opacity={0.72} depthWrite={false} />
+        <circleGeometry args={[1, 48]} />
+        <WaterMaterial />
       </instancedMesh>
       <instancedMesh
         ref={reedRef}
