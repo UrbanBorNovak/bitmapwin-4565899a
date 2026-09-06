@@ -472,7 +472,8 @@ function OnChainSword({ u }: { u: number }) {
     // The model's own long axis becomes the forward (-Z) direction, with the
     // low end of that axis (the grip) sitting at the origin like every other
     // weapon here.
-    const axis = size.y >= size.x && size.y >= size.z ? "y" : size.x >= size.z ? "x" : "z";
+    const axis: "x" | "y" | "z" =
+      size.y >= size.x && size.y >= size.z ? "y" : size.x >= size.z ? "x" : "z";
     const low = bounds.min[axis];
     return { scale, center, axis, low };
   }, [scene, u]);
@@ -482,6 +483,7 @@ function OnChainSword({ u }: { u: number }) {
   // centre the two short axes, and start the long axis at the grip
   const offset = new THREE.Vector3(-fit.center.x, -fit.center.y, -fit.center.z);
   offset[fit.axis] = -fit.low;
+
 
   return (
     <group rotation={spin}>
