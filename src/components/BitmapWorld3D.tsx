@@ -2557,6 +2557,7 @@ export function BitmapWorld3D({
             pose={pose}
             cursors={cursors}
             ownedHeights={ownedHeights}
+            partyIds={party.party?.members.map((member) => member.id) ?? []}
             onVisit={visitHeight}
           />
         ) : null}
