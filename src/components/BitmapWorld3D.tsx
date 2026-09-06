@@ -913,44 +913,51 @@ const SelfBeacon = memo(function SelfBeacon({
 }) {
   const group = useRef<THREE.Group>(null);
   const pulse = useRef<THREE.Mesh>(null);
-  const scale = wide ? CELL * 0.62 : AVATAR_U * 0.7;
-  const height = wide ? CELL * 9 : AVATAR_U * 3.4;
+  const scale = wide ? CELL * 0.62 : AVATAR_U * 0.22;
+  const height = wide ? CELL * 9 : AVATAR_U * 0.5;
   useFrame((state) => {
     const current = pose.current;
     if (!current || !group.current) return;
     group.current.position.set(current.x, 0, current.z);
     if (pulse.current) {
-      const beat = 1 + Math.sin(state.clock.elapsedTime * 2.4) * 0.28;
+      const beat = 1 + Math.sin(state.clock.elapsedTime * 2.4) * (wide ? 0.28 : 0.14);
       pulse.current.scale.setScalar(beat);
       const material = pulse.current.material as THREE.MeshBasicMaterial;
-      material.opacity = 0.5 - (beat - 1) * 0.5;
+      material.opacity = (wide ? 0.5 : 0.42) - (beat - 1) * 0.5;
     }
   });
   return (
     <group ref={group}>
-      {/* the district under your feet, lit up */}
-      <mesh rotation-x={-Math.PI / 2} position-y={wide ? CELL * 0.06 : AVATAR_U * 0.03} raycast={noRaycast}>
-        <planeGeometry args={[scale * 2, scale * 2]} />
-        <meshBasicMaterial color={bitcoin} transparent opacity={0.34} depthWrite={false} />
+      {/* a soft pool of light around the feet */}
+      <mesh rotation-x={-Math.PI / 2} position-y={wide ? CELL * 0.06 : AVATAR_U * 0.02} raycast={noRaycast}>
+        <circleGeometry args={[scale * 1.4, wide ? 4 : 24]} />
+        <meshBasicMaterial color={bitcoin} transparent opacity={wide ? 0.34 : 0.2} depthWrite={false} />
       </mesh>
       {/* pulsing ring so the eye finds you while the camera moves */}
       <mesh
         ref={pulse}
         rotation-x={-Math.PI / 2}
-        position-y={wide ? CELL * 0.09 : AVATAR_U * 0.05}
+        position-y={wide ? CELL * 0.09 : AVATAR_U * 0.035}
         raycast={noRaycast}
       >
-        <ringGeometry args={[scale * 0.9, scale * 1.25, 4]} />
+        <ringGeometry args={[scale * 0.95, scale * 1.2, wide ? 4 : 32]} />
         <meshBasicMaterial color={bitcoin} transparent opacity={0.5} depthWrite={false} />
       </mesh>
-      {/* a column of light straight up */}
+      {/* a faint glow rising just off the ground */}
       <mesh position-y={height / 2} raycast={noRaycast}>
-        <cylinderGeometry args={[scale * 0.18, scale * 0.3, height, 4, 1, true]} />
-        <meshBasicMaterial color={bitcoin} transparent opacity={0.3} depthWrite={false} side={THREE.DoubleSide} />
+        <cylinderGeometry args={[scale * 0.5, scale * 0.95, height, wide ? 4 : 16, 1, true]} />
+        <meshBasicMaterial
+          color={bitcoin}
+          transparent
+          opacity={wide ? 0.3 : 0.12}
+          depthWrite={false}
+          side={THREE.DoubleSide}
+        />
       </mesh>
     </group>
   );
 });
+
 
 /** Full local player: position, velocity, facing, movement/animation/combat state, region and target. */
 export type SelfPose = PlayerState;
