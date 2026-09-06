@@ -2938,7 +2938,9 @@ export function BitmapWorld3D({
               {helpOpen ? (
                 <span className="text-muted-foreground">
                   W · S WALK · A · D TURN · Q · E SIDESTEP · SHIFT SPRINT · SPACE JUMP · C SWAP
-                  VIEW · M MAP · V DRIVE · B BUILD · T TERRAFORM · F ATTACK ·{" "}
+                  VIEW · M MAP · V TRAVEL · SPACE · X CLIMB · SINK WHEN FLYING · B BUILD · T
+                  TERRAFORM · F ATTACK ·{" "}
+
                   {cameraMode === "first"
                     ? "CLICK WORLD FOR MOUSE LOOK · ESC RELEASE"
                     : "CLICK OR TAP TO WALK"}
