@@ -7,6 +7,12 @@ import {
   mapVisitorId,
 } from "@/lib/map-identity";
 import { cellX, cellZ, clampPeerStep, STRIDE, type MovementState } from "@/lib/player-state";
+import {
+  COMBAT_TICK_MS,
+  MELEE_REACH_TILES,
+  createCombatResolver,
+  tileOfPosition,
+} from "@/lib/world-combat";
 
 /**
  * Live presence for the land map. Every visitor broadcasts the grid cell they are
@@ -447,6 +453,8 @@ export function useMapCursors(enabled = true) {
       if (respawnTimer) clearTimeout(respawnTimer);
       clearInterval(sweep);
       clearInterval(regen);
+      clearInterval(ticker);
+      combat.reset();
       clearInterval(heartbeat);
       if (frame) cancelAnimationFrame(frame);
       sendRef.current = () => {};
