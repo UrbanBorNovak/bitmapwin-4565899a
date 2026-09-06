@@ -2392,8 +2392,15 @@ export function BitmapWorld3D({
         playSfx("jump");
         return;
       }
-      // 1 / 2 / 3 pull a weapon out, 0 puts it away — the belt, in game.
-      const slot = ["Digit1", "Digit2", "Digit3", "Digit4"].indexOf(event.code);
+      // 1..6 pull a weapon out, 0 puts it away — the belt, in game.
+      const slot = [
+        "Digit1",
+        "Digit2",
+        "Digit3",
+        "Digit4",
+        "Digit5",
+        "Digit6",
+      ].indexOf(event.code);
       if (slot >= 0) {
         event.preventDefault();
         equipWeapon(WEAPON_ORDER[slot] ?? null);
