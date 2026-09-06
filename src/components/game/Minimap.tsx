@@ -268,7 +268,7 @@ export function Minimap({ pose, cursors, ownedHeights, onVisit }: Props) {
         >
           <div
             data-no-translate
-            className="hud-panel w-[min(70vh,90%)] max-w-[620px] font-mono"
+            className="hud-panel w-[min(56vh,90%)] max-w-[560px] font-mono"
           >
             <header className="flex items-center justify-between border-b border-border px-2 py-1 text-[10px]">
               <span className="label text-bitcoin">WORLD MAP · 1,000 × 1,000 DISTRICTS</span>
