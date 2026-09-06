@@ -2535,6 +2535,7 @@ export function BitmapWorld3D({
         </div>
 
         {colors ? (
+          <div ref={viewShake} className="absolute inset-0 will-change-transform">
           <Canvas
             dpr={dpr}
             camera={{ position: [0, 108, minedDepth / 2 + 0.01], fov: 50, near: 0.01, far: 350 }}
