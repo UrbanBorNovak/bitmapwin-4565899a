@@ -16,6 +16,7 @@ import {
   type OreVoxel,
 } from "@/lib/world-entities";
 import { addItem, grantXp, skillLevel } from "@/lib/world-skills";
+import { Primitive } from "./Primitive";
 
 /**
  * WEAPONS IN THE WORLD — carry a Mosin Nagant, a revolver, a whip or a pickaxe.
@@ -475,7 +476,7 @@ function Tracer({ from, to, color }: { from: THREE.Vector3; to: THREE.Vector3; c
   useEffect(() => () => geometry.dispose(), [geometry]);
   return (
     <line>
-      <primitive object={geometry} attach="geometry" />
+      <Primitive object={geometry} attach="geometry" />
       <lineBasicMaterial color={color} transparent opacity={0.75} />
     </line>
   );
