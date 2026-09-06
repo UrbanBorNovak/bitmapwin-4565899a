@@ -665,6 +665,7 @@ const Critters = memo(function Critters({
       // Down: lie where it fell, out of the fight, until it comes back.
       if (critter.deadUntil) {
         group.visible = true;
+        group.rotation.x = 0;
         group.rotation.z = Math.PI / 2.1;
         group.position.set(critter.x, unit * 0.02, critter.z);
         const bar = bars.current?.[index];
