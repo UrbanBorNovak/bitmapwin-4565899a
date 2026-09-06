@@ -49,6 +49,7 @@ import {
   costLabel,
   damageStructure,
   recipeFor,
+  respawnAnchor,
   structureInReach,
   STRUCTURES,
   type StructureId,
