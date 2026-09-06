@@ -2214,14 +2214,20 @@ export function BitmapWorld3D({
   }, [hp]);
 
   // A hit staggers the body for a beat, so the avatar visibly reacts to damage.
+  // Behind the wheel, and while actually on the move, the stagger is skipped:
+  // the hit is felt on screen instead of interrupting the run or the drive.
   useEffect(() => {
     if (!hitAt || hp <= 0 || !pose.current) return;
-    pose.current.combat = "hurt";
+    if (isDriving()) return;
+    const player = pose.current;
+    if (player.movement === "run" || player.movement === "walk") return;
+    player.combat = "hurt";
     const id = window.setTimeout(() => {
       if (pose.current && pose.current.combat === "hurt") pose.current.combat = "alive";
-    }, 420);
+    }, 320);
     return () => window.clearTimeout(id);
   }, [hitAt, hp]);
+
 
   // Countdown ticker, only while knocked out.
   const [nowTick, setNowTick] = useState(0);
