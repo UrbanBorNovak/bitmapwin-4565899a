@@ -34,6 +34,19 @@ import { runtimeDeploymentsQuery, type RuntimeDeployment } from "@/lib/extender-
 import type { RunningExtender } from "@/lib/use-extender-runtimes";
 import { ShooterLayer, type ShooterStats } from "@/components/game/ShooterLayer";
 import { DesertLife } from "@/components/game/DesertLife";
+import { Punks } from "@/components/game/Punks";
+import { Companions } from "@/components/game/Companions";
+import { WornGear } from "@/components/game/WornGear";
+import { NightVision } from "@/components/game/NightVision";
+import {
+  FOODS,
+  cycleCompanion,
+  startEating,
+  tickGear,
+  toggleGoggles,
+  useGear,
+  type FoodId,
+} from "@/lib/world-gear";
 import { DesertBuilds } from "@/components/game/DesertBuilds";
 import { ChunkStreamer } from "@/components/game/ChunkStreamer";
 import { FootTrail } from "@/components/game/FootTrail";
