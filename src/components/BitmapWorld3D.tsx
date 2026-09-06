@@ -1349,15 +1349,23 @@ function PlayerCameraRig({
       jump: jumpRequested.current,
     };
 
-    // Behind the wheel the same keys drive the truck: much faster, wider turns,
-    // and no jumping.
+    // Aboard a ride the same keys travel it: much faster, wider turns, and no
+    // jumping. The flying ride swaps jumping for climb and sink on Space / X.
     const driving = isDriving();
+    const ride = currentRide();
     if (driving) {
-      intent.speedScale = DRIVE_SPEED * (intent.sprint ? DRIVE_SPRINT : 1);
-      intent.turnScale = DRIVE_TURN;
+      intent.speedScale = ride.speed * (intent.sprint ? ride.sprint : 1);
+      intent.turnScale = ride.turn;
       intent.strafe = 0;
       intent.jump = false;
+      if (ride.kind === "air") {
+        intent.fly =
+          (pressed.has(" ") || pressed.has("r") ? 1 : 0) - (pressed.has("x") || pressed.has("f") ? 1 : 0);
+        intent.climbRate = AVATAR_U * (ride.climb ?? 9);
+        intent.cruise = AVATAR_U * (ride.altitude ?? 6);
+      }
     }
+
 
     jumpRequested.current = false;
     // Ease the steer input in and out so turns start and stop like a body, not a switch.
