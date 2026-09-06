@@ -113,6 +113,7 @@ import { Primitive } from "./game/Primitive";
 import { Cybertruck } from "@/components/game/Cybertruck";
 import { Minimap } from "@/components/game/Minimap";
 import { DriveBlur } from "@/components/game/DriveBlur";
+import { DamageVeil } from "@/components/game/DamageVeil";
 
 import {
   DRIVE_SPEED,
@@ -742,19 +743,31 @@ function clipNamed(names: string[], words: string[]) {
 function clipFor(names: string[], state: AvatarMotion) {
   switch (state) {
     case "jump":
-      return { name: clipNamed(names, ["jump", "fall", "air", "idle"]), speed: 1 };
+      return { name: clipNamed(names, ["jump", "fall", "air", "idle"]), speed: 1, once: false };
     case "run":
-      return { name: clipNamed(names, ["run", "sprint", "walk"]), speed: 1.75 };
+      return { name: clipNamed(names, ["run", "sprint", "walk"]), speed: 1.55, once: false };
     case "walk":
-      return { name: clipNamed(names, ["walk", "run"]), speed: 1.1 };
+      return { name: clipNamed(names, ["walk", "run"]), speed: 1, once: false };
     case "down":
-      return { name: clipNamed(names, ["death", "die", "down", "fall", "idle"]), speed: 1 };
+      return {
+        name: clipNamed(names, ["death", "die", "down", "fall", "idle"]),
+        speed: 0.6,
+        once: true,
+      };
     case "hurt":
-      return { name: clipNamed(names, ["hurt", "hit", "damage", "idle"]), speed: 1 };
+      return {
+        name: clipNamed(names, ["hurt", "hit", "damage", "fall", "idle"]),
+        speed: 1.2,
+        once: true,
+      };
     case "attack":
-      return { name: clipNamed(names, ["attack", "punch", "hit", "idle"]), speed: 1.3 };
+      return {
+        name: clipNamed(names, ["attack", "punch", "swing", "hit", "walk", "idle"]),
+        speed: 1.6,
+        once: true,
+      };
     default:
-      return { name: clipNamed(names, ["idle", "stand", "breath"]), speed: 1 };
+      return { name: clipNamed(names, ["idle", "stand", "breath"]), speed: 1, once: false };
   }
 }
 
@@ -831,25 +844,42 @@ function ModelAvatar({
     return { fit, center, minY: bounds.min.y };
   }, [scene]);
 
-  // Cross-fade to the clip the current motion asks for; bones do the rest.
+  /**
+   * Cross-fade to the clip the current motion asks for; bones do the rest.
+   *
+   * Every other action is faded out and stopped here, so a model whose clips
+   * share bones (this avatar's Idle, Walking and Falling all drive the whole
+   * armature) never ends up with two clips fighting over the same limbs — which
+   * is what made walking look like a stiff slide.
+   */
+  const active = useRef<THREE.AnimationAction | null>(null);
   useEffect(() => {
     const pick = clipFor(names, motion);
     const name = pick.name ?? names[0];
     if (!name) return;
     const next = actions[name];
     if (!next) return;
+    const previous = active.current;
     next.enabled = true;
     next.setEffectiveTimeScale(pick.speed);
-    next.setEffectiveWeight(1);
-    if (motion === "jump" || motion === "attack" || motion === "hurt") {
-      next.setLoop(THREE.LoopRepeat, Infinity);
+    if (pick.once) {
+      next.setLoop(THREE.LoopOnce, 1);
+      next.clampWhenFinished = true;
     } else {
       next.setLoop(THREE.LoopRepeat, Infinity);
+      next.clampWhenFinished = false;
     }
-    next.reset().fadeIn(0.18).play();
-    return () => {
-      next.fadeOut(0.18);
-    };
+    if (previous && previous !== next) {
+      next.reset().play();
+      previous.crossFadeTo(next, 0.22, false);
+    } else {
+      next.reset().setEffectiveWeight(1).fadeIn(0.18).play();
+    }
+    for (const [key, action] of Object.entries(actions)) {
+      if (!action || key === name || action === previous) continue;
+      action.stop();
+    }
+    active.current = next;
   }, [actions, names, motion]);
 
   return (
@@ -2070,6 +2100,8 @@ export function BitmapWorld3D({
   const [chatMode, setChatMode] = useState<"world" | "party">("world");
 
   const pose = useRef<SelfPose>(createPlayerState(0, CELL, 0));
+  /** the 3D view itself — shaken when you take a hit */
+  const viewShake = useRef<HTMLDivElement>(null);
   const [mySay, setMySay] = useState<string | null>(null);
   const self = useMemo(
     () => ({ handle, color, model: avatarModel, say: mySay, hp, hitAt, lastDamage }),
@@ -2159,6 +2191,16 @@ export function BitmapWorld3D({
     pose.current.combat = hp <= 0 ? "down" : "alive";
   }, [hp]);
 
+  // A hit staggers the body for a beat, so the avatar visibly reacts to damage.
+  useEffect(() => {
+    if (!hitAt || hp <= 0 || !pose.current) return;
+    pose.current.combat = "hurt";
+    const id = window.setTimeout(() => {
+      if (pose.current && pose.current.combat === "hurt") pose.current.combat = "alive";
+    }, 420);
+    return () => window.clearTimeout(id);
+  }, [hitAt, hp]);
+
   // Countdown ticker, only while knocked out.
   const [nowTick, setNowTick] = useState(0);
   useEffect(() => {
@@ -2207,6 +2249,13 @@ export function BitmapWorld3D({
     const now = Date.now();
     if (hp <= 0 || now < attackCooldownUntil) return;
     const me = pose.current;
+    // The swing itself plays on the skeleton, not only in the HUD.
+    if (me.combat === "alive") {
+      me.combat = "attacking";
+      window.setTimeout(() => {
+        if (pose.current && pose.current.combat === "attacking") pose.current.combat = "alive";
+      }, 420);
+    }
     let best: { id: string; handle: string; distance: number } | null = null;
     for (const cursor of cursorsRef.current) {
       if (cursor.hp <= 0) continue;
@@ -2506,6 +2555,7 @@ export function BitmapWorld3D({
         </div>
 
         {colors ? (
+          <div ref={viewShake} className="absolute inset-0 will-change-transform">
           <Canvas
             dpr={dpr}
             camera={{ position: [0, 108, minedDepth / 2 + 0.01], fov: 50, near: 0.01, far: 350 }}
@@ -2547,9 +2597,21 @@ export function BitmapWorld3D({
               driving={driving}
             />
           </Canvas>
+          </div>
         ) : null}
 
         <DriveBlur active={driving && cameraMode !== "map"} />
+
+        {/* DAMAGE — a bite or a bullet is felt: red edges, a kick, a heartbeat. */}
+        {exploring ? (
+          <DamageVeil
+            hp={hp}
+            maxHp={MAX_HP}
+            hitAt={hitAt}
+            lastDamage={lastDamage}
+            shakeTarget={viewShake}
+          />
+        ) : null}
 
         {/* MINIMAP — where you are, who is near, what you own. */}
         {exploring ? (

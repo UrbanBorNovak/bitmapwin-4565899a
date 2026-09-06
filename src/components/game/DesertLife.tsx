@@ -665,6 +665,7 @@ const Critters = memo(function Critters({
       // Down: lie where it fell, out of the fight, until it comes back.
       if (critter.deadUntil) {
         group.visible = true;
+        group.rotation.x = 0;
         group.rotation.z = Math.PI / 2.1;
         group.position.set(critter.x, unit * 0.02, critter.z);
         const bar = bars.current?.[index];
@@ -691,8 +692,15 @@ const Critters = memo(function Critters({
           const diff = ((toPlayer - critter.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
           steer = diff * Math.min(1, delta * 3);
           travel = speed * 1.25;
+          // Hold a standoff at biting range instead of walking into the body:
+          // they circle, lunge and back off rather than piling into the camera.
+          const standoff = unit * (0.9 + species.radius);
+          if (away < standoff * 1.35) {
+            travel = away < standoff ? -speed * 0.35 : speed * 0.15;
+            steer += Math.sin(now / 700 + critter.seed) * delta * 1.2;
+          }
           // Close enough to strike: bite, on its own cooldown.
-          if (away < unit * 1.5 && now - critter.lastBite > 1_800 && species.bite > 0) {
+          if (away < standoff * 1.8 && now - critter.lastBite > 1_400 && species.bite > 0) {
             critter.lastBite = now;
             playSfx("beast");
             onBite?.(species.bite, critter.label);
@@ -713,9 +721,16 @@ const Critters = memo(function Critters({
       if (player) {
         const dx = critter.x - player.x;
         const dz = critter.z - player.z;
-        const away = Math.hypot(dx, dz);
-        const tooClose = species.hostile ? unit * 1.0 : unit * 1.6;
-        if (away > reach || away < tooClose) {
+        const away = Math.hypot(dx, dz) || 0.0001;
+        // Never let a body overlap the visitor — push it back out to its own
+        // standoff ring instead of teleporting it away, which read as vanishing.
+        const standoff = unit * (0.7 + species.radius);
+        if (away < standoff) {
+          critter.x = player.x + (dx / away) * standoff;
+          critter.z = player.z + (dz / away) * standoff;
+        }
+        // Only something that wandered right out of sight is brought back in.
+        if (away > reach) {
           const angle = critter.seed + now / 6000;
           const ring = unit * (9 + (index % 5) * 5);
           critter.x = player.x + Math.cos(angle) * ring;
@@ -723,14 +738,25 @@ const Critters = memo(function Critters({
         }
       }
 
+
       const flyer = species.kind === "vulture";
       const lift = flyer ? unit * (2.6 + Math.sin(now / 900 + critter.seed) * 0.4) : unit * 0.03;
       critter.bodyY = lift + unit * species.bodyY;
-      group.position.set(critter.x, lift, critter.z);
+      // A bite throws the body forward and rears it up for a beat, so you can
+      // see the strike land rather than only feel the damage.
+      const sinceBite = now - critter.lastBite;
+      const lunge = sinceBite < 320 ? Math.sin((sinceBite / 320) * Math.PI) : 0;
+      group.position.set(
+        critter.x + Math.sin(critter.heading) * unit * 0.35 * lunge,
+        lift + unit * 0.12 * lunge,
+        critter.z + Math.cos(critter.heading) * unit * 0.35 * lunge,
+      );
       group.rotation.y = critter.heading;
+      group.rotation.x = -0.5 * lunge;
       const wiggle = Math.sin(now / 110 + critter.seed) * 0.2;
       group.rotation.z = species.kind === "snake" ? wiggle : wiggle * 0.25;
       critter.bob = Math.sin(now / 180 + critter.seed);
+
 
       // A health bar appears the moment something has been wounded.
       const bar = bars.current?.[index];
