@@ -327,7 +327,7 @@ export function WeaponModel({
         rotation={[-0.2 + swing * 0.8, 0.24, -0.34 - swing * 0.5]}
       >
         <Suspense fallback={<PickStandIn u={u} materials={materials} />}>
-          <OnChainWeapon url={PICK_URL} u={u} lengthStrides={0.9} forwardAxis="z" />
+          <OnChainWeapon url={PICK_URL} u={u} lengthStrides={0.5} forwardAxis="z" />
         </Suspense>
         {flash ? <Muzzle u={u} z={-0.86 * u} size={0.05} color={flashColor} /> : null}
       </group>
