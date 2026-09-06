@@ -1330,7 +1330,23 @@ function PlayerCameraRig({
     // so switching perspective is a smooth camera move rather than a cut.
     const speed = Math.hypot(player.vx, player.vz);
     const gait = Math.min(1, speed / (MOVE.walkSpeed * 1.1));
-    if (mode === "first") {
+    if (mode === "first" && driving) {
+      // Hood cam: sits just ahead of the nose so the road is wide open instead
+      // of being read through the windshield. No footstep bob behind the wheel.
+      const eye = player.y + AVATAR_U * 1.05;
+      const ahead = AVATAR_U * 2.2;
+      cameraTarget.current.set(
+        player.x + Math.sin(player.yaw) * ahead,
+        eye,
+        player.z + Math.cos(player.yaw) * ahead,
+      );
+      const horizontal = Math.cos(pitch.current);
+      cameraLook.current.set(
+        player.x + Math.sin(player.yaw) * (ahead + horizontal),
+        eye + Math.sin(pitch.current),
+        player.z + Math.cos(player.yaw) * (ahead + horizontal),
+      );
+    } else if (mode === "first") {
       // Footstep bob: vertical bounce plus a light side sway, scaled by pace.
       bob.current += speed * delta * 7.5;
       const bounce = Math.sin(bob.current * 2) * AVATAR_U * 0.035 * gait;
@@ -1348,6 +1364,7 @@ function PlayerCameraRig({
         player.z + Math.cos(player.yaw) * horizontal,
       );
     } else {
+
       // Shoulder rig: trails further and drops lower the faster you travel, and
       // swings a touch wide of the turn so the body stays readable.
       const back = AVATAR_U * (isDriving() ? 12 + gait * 5 : 6.2 + gait * 3.2);
