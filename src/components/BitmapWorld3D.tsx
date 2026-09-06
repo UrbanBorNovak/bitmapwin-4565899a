@@ -2106,8 +2106,23 @@ export function BitmapWorld3D({
     );
   }, []);
 
-  // B opens the build panel, T works the land under your feet.
+  // B opens the build panel, T works the land under your feet, and the kit keys
+  // whistle for a pet, flip the goggles, and open a ration.
   useEffect(() => {
+    const eat = (food: FoodId) => {
+      const spec = startEating(food);
+      if (!spec) {
+        setBiteNote("ALREADY EATING");
+        window.setTimeout(() => setBiteNote(null), 1200);
+        return;
+      }
+      heal(spec.bite);
+      playSfx("ui");
+      setBiteNote(
+        `${spec.label} · +${spec.bite} HP · ${spec.buff.label} FOR ${Math.round(spec.buff.ms / 1000)}s`,
+      );
+      window.setTimeout(() => setBiteNote(null), 2400);
+    };
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
@@ -2121,12 +2136,46 @@ export function BitmapWorld3D({
         setCameraMode((current) => (current === "first" ? "third" : "first"));
         return;
       }
+      if (key === "p") {
+        const next = cycleCompanion();
+        playSfx("ui");
+        setBiteNote(next.inscription ? `COMPANION · ${next.label}` : "COMPANION DISMISSED");
+        window.setTimeout(() => setBiteNote(null), 1600);
+        return;
+      }
+      if (key === "n") {
+        const on = toggleGoggles();
+        playSfx("ui");
+        setBiteNote(on ? "NIGHT VISION · ON" : "NIGHT VISION · OFF");
+        window.setTimeout(() => setBiteNote(null), 1400);
+        return;
+      }
+      if (key === "g") {
+        eat("ice-cream");
+        return;
+      }
+      if (key === "j") {
+        eat("ramen");
+        return;
+      }
       if (key !== "b") return;
       setBuildOpen((current) => !current);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [workLand]);
+
+  // A meal keeps mending you while its buff runs.
+  const gear = useGear();
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      tickGear();
+      const buff = gearSnapshotRegen();
+      if (buff > 0) heal(buff);
+    }, 1_000);
+    return () => window.clearInterval(timer);
+  }, [heal]);
+
 
   const toggleSound = useCallback(() => {
     const next = !isSoundMuted();
