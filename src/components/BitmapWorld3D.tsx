@@ -119,7 +119,9 @@ import { Minimap } from "@/components/game/Minimap";
 import { DriveBlur } from "@/components/game/DriveBlur";
 import { DamageVeil } from "@/components/game/DamageVeil";
 
+import type { RideSpec } from "@/lib/world-vehicle";
 import {
+
   RIDES,
   currentRide,
   isDriving,
