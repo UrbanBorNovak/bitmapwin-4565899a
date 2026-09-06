@@ -111,6 +111,7 @@ export type BitmapWorld3DProps = {
   initialHeight?: number;
   highlight?: number[];
   onCursorsChange?: (cursors: MapCursor[]) => void;
+  legend?: ReactNode;
   className?: string;
 };
 
