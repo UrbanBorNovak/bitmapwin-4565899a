@@ -2209,7 +2209,7 @@ export function BitmapWorld3D({
         {weapon && exploring ? (
           <div
             data-no-translate
-            className="hud-panel absolute left-3 top-[8.5rem] z-40 space-y-1 px-2.5 py-2 font-mono text-[10px] tabular-nums"
+            className="hud-panel absolute left-3 top-[13rem] z-40 space-y-1 px-2.5 py-2 font-mono text-[10px] tabular-nums"
             aria-label="Weapon status"
           >
             <div className="label text-[9px] text-bitcoin">
@@ -2304,7 +2304,7 @@ export function BitmapWorld3D({
           role="group"
           aria-label="Camera mode"
           data-no-translate
-          className="hud-panel absolute right-3 top-3 z-30 flex p-0.5"
+          className="hud-panel absolute right-3 top-[9.5rem] z-30 flex p-0.5"
         >
           <Button
             type="button"
@@ -2368,7 +2368,7 @@ export function BitmapWorld3D({
         {/* Your own health, always visible while exploring the world. */}
         <div
           data-no-translate
-          className="hud-panel pointer-events-none absolute left-3 top-3 z-30 flex max-w-[min(340px,calc(100%-1.5rem))] flex-col gap-1 px-2 py-1.5 font-mono text-[10px]"
+          className="hud-panel pointer-events-none absolute left-3 top-[9.5rem] z-30 flex max-w-[min(340px,calc(100%-1.5rem))] flex-col gap-1 px-2 py-1.5 font-mono text-[10px]"
         >
           <span className="flex items-center gap-2">
             <span>HP</span>
@@ -2431,7 +2431,7 @@ export function BitmapWorld3D({
         <section
           data-no-translate
           aria-label="Party"
-          className="hud-panel absolute right-3 top-16 z-20 w-[min(250px,calc(100%-1.5rem))] font-mono text-[10px]"
+          className="hud-panel absolute right-3 top-[13rem] z-20 w-[min(250px,calc(100%-1.5rem))] font-mono text-[10px]"
         >
           <header className="flex items-center justify-between border-b border-border px-2 py-1">
             <span>
@@ -2721,7 +2721,7 @@ export function BitmapWorld3D({
           <section
             aria-label={`${selected.height}.bitmap details`}
             data-no-translate
-            className="absolute right-3 top-16 z-40 max-h-[calc(100%-5rem)] w-[min(340px,calc(100%-1.5rem))] overflow-y-auto border border-bitcoin bg-background/95 p-4 font-mono shadow-[8px_8px_0_var(--bitcoin)]"
+            className="absolute right-3 top-[13rem] z-40 max-h-[calc(100%-5rem)] w-[min(340px,calc(100%-1.5rem))] overflow-y-auto border border-bitcoin bg-background/95 p-4 font-mono shadow-[8px_8px_0_var(--bitcoin)]"
           >
             <Button
               aria-label="Close bitmap window"
@@ -2904,7 +2904,7 @@ function BuildHud({
   return (
     <div
       data-no-translate
-      className="hud-panel absolute left-3 top-[13.5rem] z-40 w-[min(15rem,calc(100%-1.5rem))] space-y-1.5 px-2.5 py-2 font-mono text-[10px]"
+      className="hud-panel absolute left-3 top-[18rem] z-40 w-[min(15rem,calc(100%-1.5rem))] space-y-1.5 px-2.5 py-2 font-mono text-[10px]"
       aria-label="Build structures"
     >
       <div className="flex items-center justify-between">
