@@ -13,6 +13,7 @@ export type Sfx =
   | "revolver"
   | "cock"
   | "whip"
+  | "slash"
   | "pick"
   | "ore"
   | "nugget"
