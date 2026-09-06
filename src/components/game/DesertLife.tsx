@@ -21,6 +21,7 @@ import {
   type OreVoxel,
 } from "@/lib/world-entities";
 import { playSfx } from "@/lib/world-audio";
+import { Primitive } from "./Primitive";
 
 
 
