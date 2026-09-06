@@ -3,14 +3,16 @@
  *
  * A single 2D canvas painted on an animation frame from the predicted pose, so
  * it never re-renders React and never allocates per frame. It shows the land
- * grid around you, the BITMAPs you own, everybody else out there, and your own
- * heading as an arrow at the centre. Press M to open it full size.
+ * grid around you, the terrain the world has streamed in (water, rock, built
+ * plots), the BITMAPs you own, everybody else out there, your party mates by
+ * name, and your own heading as an arrow at the centre. Press M for the full map.
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { PlayerState } from "@/lib/player-state";
 import { WORLD_CELL, WORLD_GRID, WORLD_UNITS } from "@/lib/player-state";
 import type { MapCursor } from "@/lib/map-presence";
+import { CHUNK_TILES, TILE, loadedChunks } from "@/lib/world-grid";
 
 /** how many districts fit across the minimap, near to far */
 const ZOOMS = [16, 48, 160] as const;
@@ -19,6 +21,8 @@ type Props = {
   pose: React.RefObject<PlayerState>;
   cursors: MapCursor[];
   ownedHeights: number[];
+  /** visitor ids currently grouped with you */
+  partyIds?: string[];
   /** jump the big camera to a district when the expanded map is clicked */
   onVisit?: (height: number) => void;
 };
@@ -32,7 +36,7 @@ function readColor(name: string, fallback: string) {
   return value || fallback;
 }
 
-export function Minimap({ pose, cursors, ownedHeights, onVisit }: Props) {
+export function Minimap({ pose, cursors, ownedHeights, partyIds, onVisit }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [zoom, setZoom] = useState(1);
   const [expanded, setExpanded] = useState(false);
@@ -40,6 +44,10 @@ export function Minimap({ pose, cursors, ownedHeights, onVisit }: Props) {
 
   const cursorsRef = useRef(cursors);
   cursorsRef.current = cursors;
+
+  const partySet = useMemo(() => new Set(partyIds ?? []), [partyIds]);
+  const partyRef = useRef(partySet);
+  partyRef.current = partySet;
 
   const owned = useMemo(
     () =>
@@ -51,6 +59,11 @@ export function Minimap({ pose, cursors, ownedHeights, onVisit }: Props) {
   );
   const ownedRef = useRef(owned);
   ownedRef.current = owned;
+
+  const partyPeers = useMemo(
+    () => cursors.filter((peer) => partySet.has(peer.id)),
+    [cursors, partySet],
+  );
 
   // M toggles the full-size map.
   useEffect(() => {
@@ -105,6 +118,37 @@ export function Minimap({ pose, cursors, ownedHeights, onVisit }: Props) {
       ctx.fillRect(0, 0, size, size);
       ctx.globalAlpha = 1;
 
+      // terrain the world has streamed in: water, rock, built plots
+      const tilePx = Math.max(1, WORLD_CELL * scale);
+      if (tilePx > 1.2) {
+        for (const chunk of loadedChunks().values()) {
+          const cx0 = toPx(chunk.col0 * WORLD_CELL - WORLD_UNITS / 2);
+          const cz0 = toPy(chunk.row0 * WORLD_CELL);
+          const chunkPx = CHUNK_TILES * tilePx;
+          if (cx0 + chunkPx < 0 || cz0 + chunkPx < 0 || cx0 > size || cz0 > size) continue;
+          for (let i = 0; i < chunk.flags.length; i++) {
+            const flags = chunk.flags[i] ?? 0;
+            if ((flags & (TILE.WATER | TILE.BLOCKED | TILE.DEPLOYED | TILE.OCCUPIED)) === 0)
+              continue;
+            const x = cx0 + (i % CHUNK_TILES) * tilePx;
+            const z = cz0 + Math.floor(i / CHUNK_TILES) * tilePx;
+            if (x < -tilePx || z < -tilePx || x > size || z > size) continue;
+            if ((flags & TILE.WATER) !== 0) {
+              ctx.fillStyle = "hsl(190 70% 45%)";
+              ctx.globalAlpha = 0.7;
+            } else if ((flags & TILE.DEPLOYED) !== 0) {
+              ctx.fillStyle = theme.bitcoin;
+              ctx.globalAlpha = 0.8;
+            } else {
+              ctx.fillStyle = theme.muted;
+              ctx.globalAlpha = 0.5;
+            }
+            ctx.fillRect(x, z, Math.max(1, tilePx), Math.max(1, tilePx));
+          }
+        }
+        ctx.globalAlpha = 1;
+      }
+
       // district grid — only when the lines would be readable
       const step = WORLD_CELL * scale;
       if (step > 6) {
@@ -149,15 +193,28 @@ export function Minimap({ pose, cursors, ownedHeights, onVisit }: Props) {
       }
       ctx.globalAlpha = 1;
 
-      // everybody else out there
+      // everybody else out there — party mates read louder, with a name tag
       for (const peer of cursorsRef.current) {
         const x = toPx(peer.x);
         const z = toPy(peer.z);
         if (x < 0 || z < 0 || x > size || z > size) continue;
+        const inParty = partyRef.current.has(peer.id);
         ctx.fillStyle = peer.color || theme.ink;
         ctx.beginPath();
-        ctx.arc(x, z, expanded ? 2.5 : 3, 0, Math.PI * 2);
+        ctx.arc(x, z, inParty ? 4.5 : expanded ? 2.5 : 3, 0, Math.PI * 2);
         ctx.fill();
+        if (inParty) {
+          ctx.strokeStyle = theme.bitcoin;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(x, z, 6.5, 0, Math.PI * 2);
+          ctx.stroke();
+          if (!expanded) {
+            ctx.fillStyle = theme.ink;
+            ctx.font = "8px ui-monospace, monospace";
+            ctx.fillText(peer.handle.slice(0, 8).toUpperCase(), x + 8, z + 3);
+          }
+        }
       }
 
       // you: an arrow pointing where you face
@@ -168,18 +225,24 @@ export function Minimap({ pose, cursors, ownedHeights, onVisit }: Props) {
       ctx.rotate(-player.yaw);
       ctx.fillStyle = theme.bitcoin;
       ctx.beginPath();
-      ctx.moveTo(0, -7);
-      ctx.lineTo(5, 6);
-      ctx.lineTo(0, 3);
-      ctx.lineTo(-5, 6);
+      ctx.moveTo(0, -8);
+      ctx.lineTo(6, 7);
+      ctx.lineTo(0, 3.5);
+      ctx.lineTo(-6, 7);
       ctx.closePath();
       ctx.fill();
+      ctx.strokeStyle = theme.bg;
+      ctx.lineWidth = 1;
+      ctx.stroke();
       ctx.restore();
 
-      // north tick
+      // compass ticks
       ctx.fillStyle = theme.muted;
       ctx.font = "9px ui-monospace, monospace";
       ctx.fillText("N", size / 2 - 3, 11);
+      ctx.fillText("S", size / 2 - 3, size - 3);
+      ctx.fillText("W", 3, size / 2 + 3);
+      ctx.fillText("E", size - 10, size / 2 + 3);
 
       // 4Hz text readout, cheap
       const now = performance.now();
@@ -226,12 +289,30 @@ export function Minimap({ pose, cursors, ownedHeights, onVisit }: Props) {
     </>
   );
 
+  const partyRoster = partyPeers.length ? (
+    <ul className="border-t border-border px-1.5 py-1 text-[9px] leading-tight">
+      <li className="label text-[8px] text-bitcoin">PARTY</li>
+      {partyPeers.slice(0, 3).map((peer) => (
+        <li key={peer.id} className="flex items-center justify-between gap-1 text-muted-foreground">
+          <span className="flex min-w-0 items-center gap-1">
+            <span
+              className="inline-block size-1.5 shrink-0 rounded-full"
+              style={{ background: peer.color }}
+            />
+            <span className="truncate text-foreground">{peer.handle.toUpperCase()}</span>
+          </span>
+          <span className="tabular-nums">{peer.height.toLocaleString("en-US")}</span>
+        </li>
+      ))}
+    </ul>
+  ) : null;
+
   return (
     <>
       <div
         data-no-translate
         aria-label="Minimap"
-        className="hud-panel pointer-events-auto absolute bottom-3 right-3 z-40 w-[168px] font-mono"
+        className="hud-panel pointer-events-auto absolute bottom-3 right-3 z-40 w-[188px] font-mono"
       >
         <header className="flex items-center justify-between gap-1 border-b border-border px-1.5 py-1 text-[9px]">
           <span className="label text-bitcoin">MINIMAP</span>
@@ -254,10 +335,14 @@ export function Minimap({ pose, cursors, ownedHeights, onVisit }: Props) {
             </button>
           </span>
         </header>
-        {expanded ? null : body}
         {expanded ? (
           <div className="px-1.5 py-2 text-[9px] text-muted-foreground">FULL MAP OPEN · M</div>
-        ) : null}
+        ) : (
+          <>
+            {body}
+            {partyRoster}
+          </>
+        )}
       </div>
 
       {expanded ? (
@@ -281,8 +366,10 @@ export function Minimap({ pose, cursors, ownedHeights, onVisit }: Props) {
               </button>
             </header>
             {body}
+            {partyRoster}
             <p className="border-t border-border px-2 py-1 text-[9px] text-muted-foreground">
-              CLICK ANYWHERE TO SEND THE CAMERA THERE · ORANGE SQUARES ARE YOURS
+              CLICK ANYWHERE TO SEND THE CAMERA THERE · ORANGE SQUARES ARE YOURS · RINGED DOTS ARE
+              YOUR PARTY
             </p>
           </div>
         </div>
