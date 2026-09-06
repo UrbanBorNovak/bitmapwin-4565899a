@@ -17,6 +17,7 @@ import * as THREE from "three";
 import type { PlayerState } from "@/lib/player-state";
 import { WORLD_CELL, cellX, cellZ } from "@/lib/player-state";
 import { growthOf, useTerraformedLand, type TerraformedLand } from "@/lib/world-terraform";
+import { blockedAt, useWorldBuilds } from "@/lib/world-build";
 
 const MAX_GRASS = 900;
 const MAX_BUSH = 260;
@@ -33,6 +34,9 @@ const hash = (a: number, b: number) => {
   return n - Math.floor(n);
 };
 
+/** Nothing grows through a floor: plants skip ground a structure stands on. */
+const clear = (x: number, z: number) => !blockedAt(x, z);
+
 function planPlot(land: TerraformedLand, growth: number, out: { grass: Item[]; bush: Item[]; tree: Item[] }) {
   const cx = cellX(land.col);
   const cz = cellZ(land.row);
@@ -47,6 +51,7 @@ function planPlot(land: TerraformedLand, growth: number, out: { grass: Item[]; b
     const rx = hash(land.height + i * 1.7, 11.3) * 2 - 1;
     const rz = hash(land.height + i * 2.3, 27.9) * 2 - 1;
     const r = hash(land.height * 0.5 + i, 3.1);
+    if (!clear(cx + rx * half, cz + rz * half)) continue;
     out.grass.push({
       x: cx + rx * half,
       z: cz + rz * half,
@@ -61,6 +66,7 @@ function planPlot(land: TerraformedLand, growth: number, out: { grass: Item[]; b
     const rx = hash(land.height + i * 5.1, 71.7) * 2 - 1;
     const rz = hash(land.height + i * 6.3, 91.1) * 2 - 1;
     const r = hash(land.height * 1.3 + i, 13.7);
+    if (!clear(cx + rx * half, cz + rz * half)) continue;
     out.bush.push({
       x: cx + rx * half,
       z: cz + rz * half,
@@ -75,6 +81,7 @@ function planPlot(land: TerraformedLand, growth: number, out: { grass: Item[]; b
     const rx = hash(land.height + i * 9.7, 133.3) * 2 - 1;
     const rz = hash(land.height + i * 12.1, 171.9) * 2 - 1;
     const r = hash(land.height * 2.1 + i, 41.3);
+    if (!clear(cx + rx * half * 0.8, cz + rz * half * 0.8)) continue;
     out.tree.push({
       x: cx + rx * half * 0.8,
       z: cz + rz * half * 0.8,
@@ -94,6 +101,8 @@ export function LandGrowth({
   pose: React.RefObject<PlayerState>;
 }) {
   const land = useTerraformedLand();
+  // Re-plan when something is built or demolished: plants clear the new floor.
+  const builds = useWorldBuilds();
   const [tick, setTick] = useState(0);
   const [near, setNear] = useState<TerraformedLand[]>([]);
 
@@ -133,11 +142,12 @@ export function LandGrowth({
 
   const plan = useMemo(() => {
     void tick;
+    void builds;
     const out = { grass: [] as Item[], bush: [] as Item[], tree: [] as Item[] };
     const now = Date.now();
     for (const plot of near) planPlot(plot, growthOf(plot, now), out);
     return out;
-  }, [near, tick]);
+  }, [builds, near, tick]);
 
   const scratch = useMemo(
     () => ({

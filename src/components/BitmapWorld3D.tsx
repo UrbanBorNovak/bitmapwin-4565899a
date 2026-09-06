@@ -33,11 +33,14 @@ import { growthLabel, terraform, terraformAt } from "@/lib/world-terraform";
 
 
 import {
+  blockedAt,
   build as buildStructure,
   buildCamp,
   CAMP_RECIPE,
   costLabel,
+  damageStructure,
   recipeFor,
+  structureInReach,
   STRUCTURES,
   type StructureId,
 } from "@/lib/world-build";
@@ -79,6 +82,7 @@ import {
   damp,
   MOVE,
   placePlayer,
+  setMoveBlocker,
   stepPlayer,
   type MoveIntent,
   type PlayerState,
@@ -1231,6 +1235,12 @@ function PlayerCameraRig({
     };
   }, []);
 
+  // Built structures are solid while you are walking the world.
+  useEffect(() => {
+    setMoveBlocker((x, z) => blockedAt(x, z, AVATAR_U * 0.3));
+    return () => setMoveBlocker(null);
+  }, []);
+
   useEffect(() => {
     const canvas = gl.domElement;
     const lock = () => {
@@ -1863,13 +1873,17 @@ export function BitmapWorld3D({
   /** Craft a structure out of gathered materials and drop it where you stand. */
   const placeBuild = useCallback((id: StructureId) => {
     const current = pose.current;
+    if (blockedAt(current?.x ?? 0, current?.z ?? 0, AVATAR_U * 0.2)) {
+      setBuildNote("SOMETHING IS ALREADY STANDING HERE · MOVE OR KNOCK IT DOWN");
+      return;
+    }
     const placed = buildStructure(id, current?.x ?? 0, current?.z ?? 0, current?.yaw ?? 0);
     if (!placed) {
       setBuildNote("NOT ENOUGH MATERIALS · MINE OR HUNT FIRST");
       return;
     }
     playSfx("ui");
-    setBuildNote(`${recipeFor(id)?.name ?? "STRUCTURE"} BUILT WHERE YOU STAND`);
+    setBuildNote(`${recipeFor(id)?.name ?? "STRUCTURE"} BUILT · IT BLOCKS THE WAY UNTIL KNOCKED DOWN`);
   }, []);
 
   /** Raise a whole camp — shelter, fire and watchtower — around your feet. */
@@ -2117,6 +2131,23 @@ export function BitmapWorld3D({
       }
     }
     if (!best) {
+      // Nobody in range: swing at whatever is built in front of you instead.
+      const target = structureInReach(me.x, me.z, ATTACK_RANGE * 0.5);
+      if (target) {
+        const result = damageStructure(target.key, ATTACK_DAMAGE);
+        setAttackCooldownUntil(now + ATTACK_COOLDOWN_MS);
+        const note = result
+          ? result.destroyed
+            ? `${result.name} DESTROYED`
+            : `${result.name} ${result.hp}/${result.max}`
+          : "NOTHING TO HIT";
+        setAttackTarget(note);
+        window.setTimeout(
+          () => setAttackTarget((current) => (current === note ? null : current)),
+          1200,
+        );
+        return;
+      }
       setAttackTarget("NO TARGET IN RANGE");
       window.setTimeout(
         () => setAttackTarget((current) => (current === "NO TARGET IN RANGE" ? null : current)),

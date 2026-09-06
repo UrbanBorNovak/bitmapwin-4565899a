@@ -144,6 +144,16 @@ function syncCell(player: PlayerState) {
   player.chunk = chunkKey(player.col, player.row);
 }
 
+/**
+ * Solid-world test the movement step consults. The world registers one (built
+ * structures block their tile); movement stays pure physics otherwise.
+ */
+let blocker: ((x: number, z: number) => boolean) | null = null;
+
+export function setMoveBlocker(test: ((x: number, z: number) => boolean) | null) {
+  blocker = test;
+}
+
 export type MoveIntent = {
   /** -1 back … 1 forward, camera-relative */
   forward: number;
@@ -221,12 +231,23 @@ export function stepPlayer(player: PlayerState, intent: MoveIntent, rawDelta: nu
   player.vx += (wantX - player.vx) * blend;
   player.vz += (wantZ - player.vz) * blend;
 
-  player.x = clamp(
+  const nextX = clamp(
     player.x + player.vx * delta,
     -WORLD_UNITS / 2 + WORLD_CELL,
     WORLD_UNITS / 2 - WORLD_CELL,
   );
-  player.z = clamp(player.z + player.vz * delta, WORLD_CELL, WORLD_UNITS - WORLD_CELL);
+  const nextZ = clamp(player.z + player.vz * delta, WORLD_CELL, WORLD_UNITS - WORLD_CELL);
+  // Solid things (built structures) stop the body. Each axis is tested on its
+  // own, so walking into a wall slides along it instead of sticking.
+  if (blocker) {
+    if (blocker(nextX, player.z)) player.vx = 0;
+    else player.x = nextX;
+    if (blocker(player.x, nextZ)) player.vz = 0;
+    else player.z = nextZ;
+  } else {
+    player.x = nextX;
+    player.z = nextZ;
+  }
 
   const speed = Math.hypot(player.vx, player.vz);
   if (speed < MOVE.idleSpeed) {
