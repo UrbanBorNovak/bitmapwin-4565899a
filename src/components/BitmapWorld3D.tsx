@@ -49,6 +49,7 @@ import {
   costLabel,
   damageStructure,
   recipeFor,
+  respawnAnchor,
   structureInReach,
   STRUCTURES,
   type StructureId,
@@ -88,12 +89,15 @@ import {
   type PoseReport,
 } from "@/lib/map-presence";
 import {
+  colAt,
   createPlayerState,
   damp,
   MOVE,
   placePlayer,
+  rowAt,
   setMoveBlocker,
   stepPlayer,
+  STRIDE,
   type MoveIntent,
   type PlayerState,
 } from "@/lib/player-state";
@@ -2102,6 +2106,8 @@ export function BitmapWorld3D({
   const pose = useRef<SelfPose>(createPlayerState(0, CELL, 0));
   /** the 3D view itself — shaken when you take a hit */
   const viewShake = useRef<HTMLDivElement>(null);
+  /** where the last respawn put you — shown briefly in the HUD */
+  const [respawnNote, setRespawnNote] = useState<string | null>(null);
   const [mySay, setMySay] = useState<string | null>(null);
   const self = useMemo(
     () => ({ handle, color, model: avatarModel, say: mySay, hp, hitAt, lastDamage }),
@@ -2165,17 +2171,31 @@ export function BitmapWorld3D({
     setCameraMode("third");
   }, [initialHeight, tipHeight, publish]);
 
-  // Killed: teleport back to the spawn point at the chain tip on every respawn.
+  // Killed: wake up at the nearest graveyard, else the nearest town, else on
+  // 0.BITMAP — the genesis square everyone starts from.
   useEffect(() => {
-    if (!respawnNonce || !tipHeight) return;
-    const col = tipHeight % GRID;
-    const row = Math.floor(tipHeight / GRID);
-    placePlayer(pose.current, worldX(col), worldZ(row), 0);
+    if (!respawnNonce) return;
+    const anchor = respawnAnchor(pose.current.x, pose.current.z);
+    let x = anchor?.x ?? worldX(0);
+    let z = anchor?.z ?? worldZ(0);
+    if (anchor) {
+      // Step off the stones themselves so you do not wake up inside a headstone.
+      x += STRIDE * 1.4;
+      z += STRIDE * 1.4;
+    }
+    placePlayer(pose.current, x, z, 0);
     pose.current.combat = "alive";
+    const col = colAt(pose.current.x);
+    const row = rowAt(pose.current.z);
+    setRespawnNote(
+      anchor
+        ? `RESPAWNED AT NEAREST ${anchor.kind === "graveyard" ? "GRAVEYARD" : "TOWN"}`
+        : "NO GRAVEYARD OR TOWN YET · RESPAWNED ON 0.BITMAP",
+    );
     publish({
       col,
       row,
-      height: tipHeight,
+      height: row * GRID + col,
       x: pose.current.x,
       z: pose.current.z,
       yaw: 0,
@@ -2183,7 +2203,9 @@ export function BitmapWorld3D({
       teleport: true,
     });
     setCameraMode("third");
-  }, [respawnNonce, tipHeight, publish]);
+    const clear = window.setTimeout(() => setRespawnNote(null), 6_000);
+    return () => window.clearTimeout(clear);
+  }, [respawnNonce, publish]);
 
   // Combat state is mirrored onto the player so movement stops while down.
   useEffect(() => {
@@ -2826,6 +2848,7 @@ export function BitmapWorld3D({
               </button>
             </span>
           ) : null}
+          {respawnNote ? <span className="text-bitcoin">{respawnNote}</span> : null}
           {attackTarget ? <span className="text-bitcoin">{attackTarget}</span> : null}
           <span className="flex items-center gap-2 text-muted-foreground">
             <span>DMG {ATTACK_DAMAGE}</span>

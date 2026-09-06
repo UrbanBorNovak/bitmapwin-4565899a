@@ -110,6 +110,27 @@ const Structure = memo(function Structure({ id, unit }: { id: StructureId; unit:
     );
   }
 
+  if (id === "graveyard") {
+    return (
+      <group>
+        <Box size={[u * 1.5, u * 0.06, u * 1.5]} position={[0, u * 0.03, 0]} color={HIDE_DARK} />
+        {[
+          [-0.45, -0.4],
+          [0.35, -0.35],
+          [-0.3, 0.42],
+          [0.48, 0.4],
+        ].map(([sx = 0, sz = 0]) => (
+          <group key={`${sx}${sz}`} position={[sx * u, 0, sz * u]}>
+            <Box size={[u * 0.1, u * 0.62, u * 0.1]} position={[0, u * 0.31, 0]} color={BONE} />
+            <Box size={[u * 0.34, u * 0.1, u * 0.1]} position={[0, u * 0.44, 0]} color={BONE} />
+          </group>
+        ))}
+        <Box size={[u * 0.16, u * 0.9, u * 0.16]} position={[0, u * 0.45, 0]} color={TIMBER} />
+        <Box size={[u * 0.52, u * 0.14, u * 0.14]} position={[0, u * 0.72, 0]} color={BONE} />
+      </group>
+    );
+  }
+
   // watchtower
   return (
     <group>

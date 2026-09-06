@@ -93,7 +93,7 @@ export const ATTACK_RANGE = STRIDE * 6;
 /** health regenerated per second while not being hit */
 const REGEN_PER_SECOND = 3;
 /** how long a knocked-out visitor stays down before respawning at full health */
-const RESPAWN_MS = 4_000;
+const RESPAWN_MS = 15_000;
 
 export function useMapCursors(enabled = true) {
   const selfId = useMemo(() => mapVisitorId(), []);
