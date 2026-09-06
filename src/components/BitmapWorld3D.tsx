@@ -40,6 +40,7 @@ import { WornGear } from "@/components/game/WornGear";
 import { NightVision } from "@/components/game/NightVision";
 import {
   FOODS,
+  activeRegen,
   cycleCompanion,
   startEating,
   tickGear,

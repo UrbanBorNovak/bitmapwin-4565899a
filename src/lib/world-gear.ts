@@ -225,3 +225,9 @@ export function powerMultiplier(now = Date.now()) {
   const buff = state.buff;
   return buff && buff.until > now ? buff.power : 1;
 }
+
+/** How much health a running food buff mends each second — 0 with no buff. */
+export function activeRegen(now = Date.now()) {
+  const buff = state.buff;
+  return buff && buff.until > now ? buff.regenPerSecond : 0;
+}
