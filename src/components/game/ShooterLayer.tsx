@@ -407,24 +407,27 @@ export function ShooterLayer({
     if (!active) return;
     const element = gl.domElement;
     const onDown = (event: PointerEvent) => {
-      if (event.button !== 0) return;
-      unlockAudio();
-      if (firstPerson) {
-        // Hold to bring the sights up; the shot leaves on release.
-        aimState.active = true;
+      // Right button steadies the sights; left button always fires.
+      if (event.button === 2) {
+        if (firstPerson) {
+          event.preventDefault();
+          aimState.active = true;
+        }
         return;
       }
+      if (event.button !== 0) return;
+      unlockAudio();
       fire();
     };
     const onUp = (event: PointerEvent) => {
-      if (event.button !== 0) return;
-      if (!aimState.active) return;
+      if (event.button !== 2) return;
       aimState.active = false;
-      if (firstPerson) fire();
     };
     const onLeave = () => {
       aimState.active = false;
     };
+    const onContext = (event: Event) => event.preventDefault();
+
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
@@ -439,16 +442,19 @@ export function ShooterLayer({
       }
     };
     element.addEventListener("pointerdown", onDown);
+    element.addEventListener("contextmenu", onContext);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("blur", onLeave);
     window.addEventListener("keydown", onKey);
     return () => {
       element.removeEventListener("pointerdown", onDown);
+      element.removeEventListener("contextmenu", onContext);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("blur", onLeave);
       window.removeEventListener("keydown", onKey);
       aimState.active = false;
     };
+
   }, [active, fire, firstPerson, gl, reload]);
 
   useEffect(() => {
