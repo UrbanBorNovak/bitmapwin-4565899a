@@ -28,6 +28,8 @@ import { DesertLife } from "@/components/game/DesertLife";
 import { DesertBuilds } from "@/components/game/DesertBuilds";
 import { ChunkStreamer } from "@/components/game/ChunkStreamer";
 import { FootTrail } from "@/components/game/FootTrail";
+import { LandGrowth } from "@/components/game/LandGrowth";
+import { growthLabel, terraform, terraformAt } from "@/lib/world-terraform";
 
 
 import {
@@ -1721,6 +1723,7 @@ const WorldScene = memo(function WorldScene({
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <DesertBuilds unit={AVATAR_U} />
           <FootTrail unit={AVATAR_U} pose={pose} sand={colors.bitcoin} />
+          <LandGrowth unit={AVATAR_U} pose={pose} />
 
         </>
       ) : null}
@@ -1887,17 +1890,46 @@ export function BitmapWorld3D({
   }, []);
 
 
-  // B opens and closes the build panel while you are out in the world.
+  /**
+   * TERRAFORM — start greening the BITMAP under your feet. Nothing appears at
+   * once: vegetation creeps in over real days, whether you are here or not.
+   */
+  const [terraformNote, setTerraformNote] = useState<string | null>(null);
+  const workLand = useCallback(async () => {
+    const current = pose.current;
+    const x = current?.x ?? 0;
+    const z = current?.z ?? 0;
+    const already = terraformAt(x, z);
+    if (already) {
+      setTerraformNote(`ALREADY TERRAFORMED · ${growthLabel(already)}`);
+      return;
+    }
+    playSfx("ui");
+    setTerraformNote("TERRAFORMING · GROWTH STARTS NOW, IN REAL TIME");
+    const result = await terraform(x, z);
+    setTerraformNote(
+      result.already
+        ? `ALREADY TERRAFORMED · ${growthLabel(result.land)}`
+        : `SEEDED · ${growthLabel(result.land)}`,
+    );
+  }, []);
+
+  // B opens the build panel, T works the land under your feet.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
-      if (event.key.toLowerCase() !== "b") return;
+      const key = event.key.toLowerCase();
+      if (key === "t") {
+        void workLand();
+        return;
+      }
+      if (key !== "b") return;
       setBuildOpen((current) => !current);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [workLand]);
 
   const toggleSound = useCallback(() => {
     const next = !isSoundMuted();
@@ -2300,11 +2332,22 @@ export function BitmapWorld3D({
               >
                 [ BUILD · B ]
               </Button>
+              <Button className="btn-term-ghost" variant="ghost" onClick={() => void workLand()}>
+                [ TERRAFORM · T ]
+              </Button>
               <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
                 {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
               </Button>
             </div>
           </div>
+          {terraformNote ? (
+            <div
+              className="hud-toolbar pointer-events-none mt-2 text-[10px] text-bitcoin"
+              data-no-translate
+            >
+              {terraformNote}
+            </div>
+          ) : null}
           {legend ? (
             <div className="hud-toolbar pointer-events-auto mt-2 text-[10px]">{legend}</div>
           ) : null}

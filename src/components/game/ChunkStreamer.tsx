@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { pruneChunks, visibleChunks } from "@/lib/world-grid";
 import { syncWorldChunks } from "@/lib/world-build";
+import { syncTerraformChunks } from "@/lib/world-terraform";
 import type { PlayerState } from "@/lib/player-state";
 
 /**
@@ -34,6 +35,7 @@ export function ChunkStreamer({
     last.current.key = signature;
 
     void syncWorldChunks(keys);
+    void syncTerraformChunks(keys);
     pruneChunks(keys);
   });
 
