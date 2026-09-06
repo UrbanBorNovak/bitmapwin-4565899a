@@ -35,6 +35,7 @@ export function ChunkStreamer({
     last.current.key = signature;
 
     void syncWorldChunks(keys);
+    void syncTerraformChunks(keys);
     pruneChunks(keys);
   });
 
