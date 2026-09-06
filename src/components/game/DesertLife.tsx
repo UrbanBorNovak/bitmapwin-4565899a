@@ -643,10 +643,20 @@ const Critters = memo(function Critters({
     const player = pose.current;
     const reach = unit * 34;
     const now = performance.now();
+    // How fast the visitor is actually travelling, measured from their own
+    // movement — used to decide whether they have outrun a predator.
+    let pace = 0;
+    if (player) {
+      const previous = paceRef.current;
+      if (previous.at && now > previous.at)
+        pace = Math.hypot(player.x - previous.x, player.z - previous.z) / ((now - previous.at) / 1000);
+      paceRef.current = { x: player.x, z: player.z, at: now };
+    }
     if (now - lastSweep.current > 1_000) {
       lastSweep.current = now;
       tickRespawns(now);
     }
+
 
     // ONE shared route for the whole pack. Instead of every hostile solving its
     // own path to the visitor, a single field is swept from the visitor's tile
