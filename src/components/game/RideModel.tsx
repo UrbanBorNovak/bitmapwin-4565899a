@@ -71,7 +71,11 @@ export function RideModel({
     const size = bounds.getSize(new THREE.Vector3());
     const center = bounds.getCenter(new THREE.Vector3());
     const fit = (unit * ride.fit) / Math.max(size.x, size.y, size.z, 0.0001);
-    return { fit, center, minY: bounds.min.y };
+    // Each model is exported facing a different way. The longest horizontal axis
+    // is the ride's length, so turn that axis to point where you are heading
+    // instead of assuming every ride was modelled the same way.
+    const turn = size.x > size.z ? -Math.PI / 2 : 0;
+    return { fit, center, minY: bounds.min.y, turn };
   }, [scene, unit, ride.fit, ride.repaint]);
 
   useEffect(() => {
