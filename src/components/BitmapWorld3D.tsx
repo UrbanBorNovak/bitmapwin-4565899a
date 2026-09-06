@@ -1061,7 +1061,10 @@ function PlayerCameraRig({
   const lookMatrix = useRef(new THREE.Matrix4());
   const targetRotation = useRef(new THREE.Quaternion());
   const pitch = useRef(0);
+  const steer = useRef(0);
+  const bob = useRef(0);
   const jumpRequested = useRef(false);
+
 
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
@@ -1119,51 +1122,73 @@ function PlayerCameraRig({
       forward:
         (pressed.has("w") || pressed.has("arrowup") ? 1 : 0) -
         (pressed.has("s") || pressed.has("arrowdown") ? 1 : 0),
-      strafe: (pressed.has("a") ? 1 : 0) - (pressed.has("d") ? 1 : 0),
+      // A/D and the left/right arrows steer the body — sidestepping is Q/E only.
+      strafe: (pressed.has("q") ? 1 : 0) - (pressed.has("e") ? 1 : 0),
       turn:
-        (pressed.has("arrowleft") || pressed.has("q") ? 1 : 0) -
-        (pressed.has("arrowright") || pressed.has("e") ? 1 : 0),
+        (pressed.has("a") || pressed.has("arrowleft") ? 1 : 0) -
+        (pressed.has("d") || pressed.has("arrowright") ? 1 : 0),
       sprint: pressed.has("shift"),
       jump: jumpRequested.current,
     };
+
     jumpRequested.current = false;
+    // Ease the steer input in and out so turns start and stop like a body, not a switch.
+    steer.current = damp(steer.current, intent.turn, 9, delta);
+    intent.turn = Math.abs(steer.current) < 0.02 ? 0 : steer.current;
     stepPlayer(player, intent, delta);
 
     // Both modes track the same predicted player target. Only offsets change,
     // so switching perspective is a smooth camera move rather than a cut.
     const speed = Math.hypot(player.vx, player.vz);
+    const gait = Math.min(1, speed / (MOVE.walkSpeed * 1.1));
     if (mode === "first") {
-      cameraTarget.current.set(player.x, player.y + AVATAR_U * 0.88, player.z);
+      // Footstep bob: vertical bounce plus a light side sway, scaled by pace.
+      bob.current += speed * delta * 7.5;
+      const bounce = Math.sin(bob.current * 2) * AVATAR_U * 0.035 * gait;
+      const sway = Math.cos(bob.current) * AVATAR_U * 0.05 * gait;
+      const eye = player.y + AVATAR_U * 0.88 + bounce;
+      cameraTarget.current.set(
+        player.x + Math.cos(player.yaw) * sway,
+        eye,
+        player.z - Math.sin(player.yaw) * sway,
+      );
       const horizontal = Math.cos(pitch.current);
       cameraLook.current.set(
         player.x + Math.sin(player.yaw) * horizontal,
-        player.y + AVATAR_U * 0.88 + Math.sin(pitch.current),
+        eye + Math.sin(pitch.current),
         player.z + Math.cos(player.yaw) * horizontal,
       );
     } else {
-      const back = AVATAR_U * (6.5 + (speed / (MOVE.walkSpeed * MOVE.sprint)) * 2.5);
+      // Shoulder rig: trails further and drops lower the faster you travel, and
+      // swings a touch wide of the turn so the body stays readable.
+      const back = AVATAR_U * (6.2 + gait * 3.2);
+      const side = -steer.current * AVATAR_U * 1.6;
       cameraTarget.current.set(
-        player.x - Math.sin(player.yaw) * back,
-        player.y + AVATAR_U * 3.4,
-        player.z - Math.cos(player.yaw) * back,
+        player.x - Math.sin(player.yaw) * back + Math.cos(player.yaw) * side,
+        player.y + AVATAR_U * (3.3 - gait * 0.45),
+        player.z - Math.cos(player.yaw) * back - Math.sin(player.yaw) * side,
       );
       cameraLook.current.set(
-        player.x + Math.sin(player.yaw) * AVATAR_U * 2.5,
-        player.y + AVATAR_U * 0.62,
-        player.z + Math.cos(player.yaw) * AVATAR_U * 2.5,
+        player.x + player.vx * 0.16 + Math.sin(player.yaw) * AVATAR_U * 2.8,
+        player.y + AVATAR_U * 0.72,
+        player.z + player.vz * 0.16 + Math.cos(player.yaw) * AVATAR_U * 2.8,
       );
     }
-    const transitionSpeed = mode === "first" ? 8.5 : 5.2;
+    const transitionSpeed = mode === "first" ? 11 : 6;
     camera.position.lerp(cameraTarget.current, 1 - Math.exp(-transitionSpeed * delta));
     lookMatrix.current.lookAt(camera.position, cameraLook.current, camera.up);
     targetRotation.current.setFromRotationMatrix(lookMatrix.current);
-    camera.quaternion.slerp(targetRotation.current, 1 - Math.exp(-8 * delta));
+    camera.quaternion.slerp(
+      targetRotation.current,
+      1 - Math.exp(-(mode === "first" ? 14 : 7) * delta),
+    );
     const perspective = camera as THREE.PerspectiveCamera;
-    const targetFov = (mode === "first" ? 66 : 50) + Math.min(4, speed * 12);
+    const targetFov = (mode === "first" ? 68 : 52) + gait * (mode === "first" ? 5 : 3);
     if (Math.abs(perspective.fov - targetFov) > 0.02) {
-      perspective.fov = damp(perspective.fov, targetFov, 5, delta);
+      perspective.fov = damp(perspective.fov, targetFov, 4, delta);
       perspective.updateProjectionMatrix();
     }
+
 
     // Fixed-rate reporting keeps network traffic flat regardless of frame rate.
     if (clock.elapsedTime < nextReport.current) return;
@@ -2378,7 +2403,7 @@ export function BitmapWorld3D({
                 {readout.airborne ? " · JUMPING" : ""}
               </span>
               <span className="text-muted-foreground">
-                WASD / ARROWS · SHIFT SPRINT · SPACE JUMP ·{" "}
+                W · S WALK · A · D TURN · Q · E SIDESTEP · SHIFT SPRINT · SPACE JUMP ·{" "}
                 {cameraMode === "first"
                   ? "CLICK WORLD FOR MOUSE LOOK · ESC RELEASE"
                   : "CLICK OR TAP TO WALK"}{" "}
