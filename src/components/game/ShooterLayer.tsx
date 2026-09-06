@@ -447,15 +447,30 @@ export function ShooterLayer({
         fire();
       }
     };
+    // right button is caught on the window so HUD panels over the canvas
+    // never swallow the hold
+    const onWindowDown = (event: PointerEvent) => {
+      if (event.button !== 2 || !firstPerson) return;
+      event.preventDefault();
+      aimState.active = true;
+    };
     element.addEventListener("pointerdown", onDown);
     element.addEventListener("contextmenu", onContext);
+    window.addEventListener("pointerdown", onWindowDown, true);
+    window.addEventListener("contextmenu", onContext);
     window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointercancel", onLeave);
     window.addEventListener("blur", onLeave);
     window.addEventListener("keydown", onKey);
     return () => {
       element.removeEventListener("pointerdown", onDown);
       element.removeEventListener("contextmenu", onContext);
+      window.removeEventListener("pointerdown", onWindowDown, true);
+      window.removeEventListener("contextmenu", onContext);
       window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointercancel", onLeave);
       window.removeEventListener("blur", onLeave);
       window.removeEventListener("keydown", onKey);
       aimState.active = false;
