@@ -16,7 +16,6 @@ type HeldBitmap = {
   outpoint: string;
   valueSats: number;
   bitmapHeight: number;
-  inscriptionId: string | null;
 };
 
 /**
@@ -41,7 +40,6 @@ export function MyBitmapsPanel() {
             outpoint: u.outpoint,
             valueSats: u.valueSats,
             bitmapHeight: i.bitmapHeight as number,
-            inscriptionId: i.inscriptionId ?? null,
           })),
       )
       .sort((a, b) => a.bitmapHeight - b.bitmapHeight);
