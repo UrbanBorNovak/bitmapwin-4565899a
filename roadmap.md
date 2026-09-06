@@ -18,3 +18,5 @@
 
 - [x] Real AI builder: plan + code generation, live sandbox preview, publish and deploy from /create
 - [x] Unify site-wide terminal styling, interaction states, spacing rhythm, and route motion
+- [x] Tile-graph world: 32x32 chunk streaming, packed tile flags, event-driven A* and shared flow fields
+- [x] Server-authoritative built structures shared across all visitors (world_structures)
