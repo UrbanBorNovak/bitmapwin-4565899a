@@ -2555,10 +2555,10 @@ export function BitmapWorld3D({
             <div className="text-muted-foreground">
               {cameraMode === "first"
                 ? weapon === "pickaxe"
-                  ? "HOLD LEFT · LINE UP · RELEASE · SWING"
+                  ? "RIGHT · LINE UP · LEFT · SWING"
                   : weapon === "whip"
-                    ? "HOLD LEFT · STEADY · RELEASE · CRACK"
-                    : "HOLD LEFT · AIM · RELEASE · FIRE · R · RELOAD"
+                    ? "RIGHT · STEADY · LEFT · CRACK"
+                    : "RIGHT · AIM · LEFT · FIRE · R · RELOAD"
                 : weapon === "pickaxe"
                   ? "CLICK / E · SWING · MINE GOLD SEAMS"
                   : weapon === "whip"

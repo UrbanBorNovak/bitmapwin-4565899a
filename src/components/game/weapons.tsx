@@ -55,7 +55,7 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     cycleSfx: "bolt",
     cycleDelayMs: 620,
     reloadSfx: "reload",
-    hint: "BOLT ACTION · HOLD LEFT TO AIM · RELEASE TO FIRE",
+    hint: "BOLT ACTION · RIGHT TO AIM · LEFT TO FIRE",
   },
   revolver: {
     kind: "revolver",
@@ -72,7 +72,7 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     cycleSfx: "cock",
     cycleDelayMs: 220,
     reloadSfx: "cylinder",
-    hint: "SIX SHOTS · HOLD LEFT TO AIM · RELEASE TO FIRE",
+    hint: "SIX SHOTS · RIGHT TO AIM · LEFT TO FIRE",
   },
   whip: {
     kind: "whip",
@@ -89,7 +89,7 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     cycleSfx: null,
     cycleDelayMs: 0,
     reloadSfx: "reload",
-    hint: "NO AMMO · HOLD LEFT TO STEADY · RELEASE TO CRACK",
+    hint: "NO AMMO · RIGHT TO STEADY · LEFT TO CRACK",
   },
   pickaxe: {
     kind: "pickaxe",
@@ -106,7 +106,7 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     cycleSfx: null,
     cycleDelayMs: 0,
     reloadSfx: "reload",
-    hint: "MINE GOLD VEINS · HOLD LEFT TO LINE UP · RELEASE TO SWING",
+    hint: "MINE GOLD VEINS · RIGHT TO LINE UP · LEFT TO SWING",
   },
 };
 
