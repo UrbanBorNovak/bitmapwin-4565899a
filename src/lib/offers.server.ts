@@ -262,7 +262,11 @@ export async function submitOffer(psbtBase64: string): Promise<StoredOffer> {
     };
   }
 
-  const { data, error } = await client
+  // Listings are written with the privileged client only AFTER validateOffer
+  // proved the seller signed the input and still holds the inscription. The
+  // table itself denies direct inserts, so this is the only way in.
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
     .from("offers")
     .insert({
       psbt_base64: clean,
