@@ -1983,8 +1983,8 @@ export function BitmapWorld3D({
   // WEAPONS — what you are carrying while you explore the land world.
   const [weapon, setWeapon] = useState<WeaponKind | null>(null);
   const shooter = weapon !== null;
-  // The shared ride: seated or parked, both views read the same state.
   // The shared ride: which vehicle, seated or parked — both views read the same state.
+
   const rideSnapshot = useSyncExternalStore(subscribeVehicle, vehicleSnapshot, () => "0::0");
   const driving = rideSnapshot.startsWith("1");
   const ride = useMemo(() => currentRide(), [rideSnapshot]);
