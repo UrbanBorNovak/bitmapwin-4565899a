@@ -1,4 +1,13 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import {
   Environment,
@@ -1892,6 +1901,15 @@ export function BitmapWorld3D({
   // WEAPONS — what you are carrying while you explore the land world.
   const [weapon, setWeapon] = useState<WeaponKind | null>(null);
   const shooter = weapon !== null;
+  // The shared ride: seated or parked, both views read the same state.
+  const driving = useSyncExternalStore(subscribeVehicle, isDriving, () => false);
+  const toggleTruck = useCallback(() => {
+    const player = pose.current;
+    if (!player) return;
+    unlockAudio();
+    const seated = toggleDriving(player.x, player.z, player.yaw);
+    playSfx(seated ? "jump" : "hit");
+  }, []);
   const [shooterStats, setShooterStats] = useState<ShooterStats>({
     weapon: "mosin",
     ammo: WEAPONS.mosin.magazine,
@@ -2236,6 +2254,11 @@ export function BitmapWorld3D({
         equipWeapon(null);
         return;
       }
+      if (event.code === "KeyV") {
+        event.preventDefault();
+        toggleTruck();
+        return;
+      }
       if (event.code !== "KeyF") return;
       event.preventDefault();
       unlockAudio();
@@ -2244,7 +2267,7 @@ export function BitmapWorld3D({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [attackNearest, equipWeapon, exploring]);
+  }, [attackNearest, equipWeapon, exploring, toggleTruck]);
 
   // Mouse wheel cycles through the belt while you are in the world.
   useEffect(() => {
@@ -2408,6 +2431,13 @@ export function BitmapWorld3D({
               </Button>
               <Button className="btn-term-ghost" variant="ghost" onClick={() => void workLand()}>
                 [ TERRAFORM · T ]
+              </Button>
+              <Button
+                className={driving ? "btn-term" : "btn-term-ghost"}
+                variant="ghost"
+                onClick={toggleTruck}
+              >
+                {driving ? "[ PARK TRUCK · V ]" : "[ DRIVE CYBERTRUCK · V ]"}
               </Button>
               <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
                 {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
