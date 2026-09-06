@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { STRIDE, type PlayerState } from "@/lib/player-state";
@@ -45,6 +45,14 @@ export type ShooterStats = {
 type Tracer = { id: number; from: THREE.Vector3; to: THREE.Vector3; born: number };
 type Burst = { id: number; at: THREE.Vector3; born: number };
 
+/**
+ * How far the carried view model sits from the eye, and how much it is scaled
+ * up to compensate. A stride is 0.01 world units here, well inside the near
+ * plane, so the model must be pushed out and enlarged together.
+ */
+const VIEW_PUSH = 12;
+
+
 
 export function ShooterLayer({
   active,
@@ -89,6 +97,28 @@ export function ShooterLayer({
   const heldRef = useRef<THREE.Group>(null);
   const recoil = useRef(0);
   const materials = useWeaponMaterials();
+  // The carried model is a view model: it lives a few centimetres from the eye,
+  // so it must draw over the world instead of clipping into terrain or props.
+  const viewMaterials = useMemo(() => {
+    const clone = <T extends THREE.MeshStandardMaterial>(material: T, lift: number) => {
+      const copy = material.clone() as T;
+      copy.depthTest = false;
+      copy.depthWrite = false;
+      // The world light rarely falls on a piece held right at the lens, so the
+      // view model carries a little light of its own and reads at a glance.
+      copy.emissive = new THREE.Color(copy.color).multiplyScalar(lift);
+      copy.emissiveIntensity = 1;
+      copy.roughness = Math.max(0.2, copy.roughness - 0.1);
+      return copy;
+    };
+    return {
+      wood: clone(materials.wood, 0.85),
+      steel: clone(materials.steel, 1.5),
+      leather: clone(materials.leather, 0.9),
+    };
+  }, [materials]);
+
+
 
   // swapping weapons hands you a full load
   useEffect(() => {
@@ -109,18 +139,46 @@ export function ShooterLayer({
       setLash((current) => (Math.abs(current - next) > 0.06 || next === 0 ? next : current));
     }
 
-    // keep the carried model glued to the view, with a kick after each strike
+    // Keep the carried model glued to the eye like a proper view model: held at
+    // the lower right of the frame, angled slightly inward, breathing gently,
+    // and kicking back with every strike.
     const held = heldRef.current;
     if (held && firstPerson) {
+      // draw the whole view model over the world, never through it
+      held.traverse((node) => {
+        node.renderOrder = 900;
+        const mesh = node as THREE.Mesh;
+        const material = mesh.material as THREE.Material | undefined;
+        if (material && "depthTest" in material && material.depthTest) {
+          material.depthTest = false;
+          material.depthWrite = false;
+        }
+      });
       const kick = recoil.current;
+
+      const t = now / 1000;
+      const breath = Math.sin(t * 1.6) * 0.012;
+      const drift = Math.cos(t * 1.1) * 0.01;
+      const long = weapon === "mosin" || weapon === "pickaxe";
+      // A stride is tiny in world units, so a hand-distance offset would fall
+      // inside the camera's near plane and vanish. Push the model out by a
+      // fixed factor and scale it up by the same amount: identical on screen,
+      // safely in front of the lens.
+      const k = VIEW_PUSH;
       held.position.copy(camera.position);
       held.quaternion.copy(camera.quaternion);
-      const long = weapon === "mosin" || weapon === "pickaxe";
-      held.translateX(STRIDE * (long ? 0.34 : 0.26));
-      held.translateY(-STRIDE * (long ? 0.3 : 0.26) - kick * STRIDE * 0.08);
-      held.translateZ(-STRIDE * (long ? 0.55 : 0.4) + kick * STRIDE * 0.22);
-      held.rotateX(kick * (weapon === "whip" ? -0.3 : 0.22));
+      held.translateX(k * STRIDE * ((long ? 0.3 : 0.26) + drift));
+      held.translateY(k * STRIDE * (-(long ? 0.22 : 0.2) + breath - kick * 0.05));
+      held.translateZ(k * STRIDE * (-(long ? 0.4 : 0.32) + kick * 0.16));
+      // aim the piece slightly across the view so the barrel reads as held,
+      // not floating dead-centre
+      held.rotateY(long ? 0.1 : 0.14);
+      held.rotateZ(long ? -0.04 : -0.07);
+      held.rotateX(kick * (weapon === "whip" ? -0.3 : 0.22) - 0.03);
+      held.scale.setScalar(k * (long ? 0.5 : 0.58));
+
     }
+
   });
 
   const flashNote = useCallback((message: string) => {
@@ -382,16 +440,17 @@ export function ShooterLayer({
   return (
     <group>
       {firstPerson ? (
-        <group ref={heldRef}>
+        <group ref={heldRef} renderOrder={900}>
           <WeaponModel
             kind={weapon}
             u={STRIDE}
-            materials={materials}
+            materials={viewMaterials}
             flash={Boolean(flash)}
             flashColor={bitcoin}
             lash={lash}
           />
         </group>
+
       ) : null}
 
       {bursts.map((burst) => (
