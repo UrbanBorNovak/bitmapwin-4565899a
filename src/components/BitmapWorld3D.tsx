@@ -2450,6 +2450,22 @@ export function BitmapWorld3D({
     [hurt],
   );
 
+  // The wand's healing spell: it mends you, and every party member with you.
+  const castHeal = useCallback(
+    (amount: number) => {
+      heal(amount);
+      party.bless(amount);
+      setBiteNote(
+        party.party
+          ? `HEALING SPELL · +${amount} HP TO THE PARTY`
+          : `HEALING SPELL · +${amount} HP`,
+      );
+      window.setTimeout(() => setBiteNote(null), 1800);
+    },
+    [heal, party],
+  );
+
+
   const moveCamera = (type: CameraMove) => {
     setCameraMode("map");
     setCommand((current) => ({ type, nonce: current.nonce + 1 }));
