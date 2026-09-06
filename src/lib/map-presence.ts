@@ -236,56 +236,24 @@ export function useMapCursors(enabled = true) {
             ? {
                 x: typeof lastCell.x === "number" ? lastCell.x : cellX(lastCell.col),
                 z: typeof lastCell.z === "number" ? lastCell.z : cellZ(lastCell.row),
+                handle,
               }
             : peers.get(p.to);
         if (!attacker || !target) return;
-        if (Math.hypot(attacker.x - target.x, attacker.z - target.z) > ATTACK_RANGE * 1.35) return;
-        const previousAttack = lastAttackByPlayer.get(p.from) ?? 0;
-        if (now - previousAttack < ATTACK_COOLDOWN_MS * 0.8) return;
-        lastAttackByPlayer.set(p.from, now);
-        const targetHandle = p.to === selfId ? handle : (peers.get(p.to)?.handle ?? "ANON");
-        const targetHp = p.to === selfId ? hpRef.current : (peers.get(p.to)?.hp ?? MAX_HP);
-        setCombatLog((current) =>
-          [
-            ...current,
-            {
-              id: typeof p.id === "string" ? p.id : `${p.from}-${now}`,
-              attacker: attacker.handle,
-              target: targetHandle,
-              damage,
-              knockout: targetHp - damage <= 0,
-              at: now,
-            },
-          ].slice(-40),
-        );
-        if (p.to === selfId) {
-          // We took the hit: drop our own health and tell everyone the new value.
-          const next = Math.max(0, hpRef.current - damage);
-          hpRef.current = next;
-          setHp(next);
-          setHitAt(Date.now());
-          setLastDamage(damage);
-          if (lastCell) push(lastCell);
-          if (next === 0) {
-            // Killed: start the respawn countdown, then bring us back at full health.
-            setRespawnAt(Date.now() + RESPAWN_MS);
-            if (respawnTimer) clearTimeout(respawnTimer);
-            respawnTimer = setTimeout(() => respawnRef.current(), RESPAWN_MS);
-          }
-        } else {
-          const target = peers.get(p.to);
-          if (target) {
-            peers.set(p.to, {
-              ...target,
-              hp: Math.max(0, target.hp - damage),
-              hitAt: now,
-              lastDamage: damage,
-              at: now,
-            });
-            flush();
-          }
-        }
+        // Queue the swing on the tile graph. Reach, blockers and swing rate are
+        // all judged there; the tick below decides what it actually did.
+        combat.queue({
+          id: typeof p.id === "string" ? p.id : `${p.from}-${now}`,
+          attacker: p.from,
+          target: p.to,
+          from: tileOfPosition(attacker.x, attacker.z),
+          to: tileOfPosition(target.x, target.z),
+          damage,
+          reach: MELEE_REACH_TILES,
+          at: now,
+        });
       })
+
 
       .subscribe();
 
