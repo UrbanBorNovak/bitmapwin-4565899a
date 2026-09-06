@@ -843,25 +843,42 @@ function ModelAvatar({
     return { fit, center, minY: bounds.min.y };
   }, [scene]);
 
-  // Cross-fade to the clip the current motion asks for; bones do the rest.
+  /**
+   * Cross-fade to the clip the current motion asks for; bones do the rest.
+   *
+   * Every other action is faded out and stopped here, so a model whose clips
+   * share bones (this avatar's Idle, Walking and Falling all drive the whole
+   * armature) never ends up with two clips fighting over the same limbs — which
+   * is what made walking look like a stiff slide.
+   */
+  const active = useRef<THREE.AnimationAction | null>(null);
   useEffect(() => {
     const pick = clipFor(names, motion);
     const name = pick.name ?? names[0];
     if (!name) return;
     const next = actions[name];
     if (!next) return;
+    const previous = active.current;
     next.enabled = true;
     next.setEffectiveTimeScale(pick.speed);
-    next.setEffectiveWeight(1);
-    if (motion === "jump" || motion === "attack" || motion === "hurt") {
-      next.setLoop(THREE.LoopRepeat, Infinity);
+    if (pick.once) {
+      next.setLoop(THREE.LoopOnce, 1);
+      next.clampWhenFinished = true;
     } else {
       next.setLoop(THREE.LoopRepeat, Infinity);
+      next.clampWhenFinished = false;
     }
-    next.reset().fadeIn(0.18).play();
-    return () => {
-      next.fadeOut(0.18);
-    };
+    if (previous && previous !== next) {
+      next.reset().play();
+      previous.crossFadeTo(next, 0.22, false);
+    } else {
+      next.reset().setEffectiveWeight(1).fadeIn(0.18).play();
+    }
+    for (const [key, action] of Object.entries(actions)) {
+      if (!action || key === name || action === previous) continue;
+      action.stop();
+    }
+    active.current = next;
   }, [actions, names, motion]);
 
   return (
