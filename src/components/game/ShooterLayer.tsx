@@ -33,6 +33,10 @@ import { AIM_FORGIVENESS, AIM_REACH_BONUS, aimState } from "@/lib/world-aim";
 
 export const SHOT_DAMAGE = 12;
 
+/** How much health one wand heal returns to every party member, and how often. */
+export const HEAL_AMOUNT = 34;
+export const HEAL_COOLDOWN_MS = 12_000;
+
 export type ShooterStats = {
   weapon: WeaponKind;
   ammo: number;
@@ -64,6 +68,7 @@ export function ShooterLayer({
   cursors,
   bitcoin,
   onShootPeer,
+  onCastHeal,
   onStats,
 }: {
   active: boolean;
@@ -75,6 +80,8 @@ export function ShooterLayer({
   bitcoin: string;
   /** land a strike on another visitor through the world's shared combat rules */
   onShootPeer: (id: string) => void;
+  /** the wand's healing spell — mends the caster and the whole party */
+  onCastHeal?: (amount: number) => void;
   onStats: (stats: ShooterStats) => void;
 }) {
   const camera = useThree((state) => state.camera);
@@ -95,6 +102,8 @@ export function ShooterLayer({
   const [lash, setLash] = useState(0);
 
   const lastFire = useRef(0);
+  const holding = useRef(false);
+  const lastHeal = useRef(0);
   const nextTracer = useRef(0);
   const heldRef = useRef<THREE.Group>(null);
   const recoil = useRef(0);
@@ -163,7 +172,7 @@ export function ShooterLayer({
       const t = now / 1000;
       const breath = Math.sin(t * 1.6) * 0.012;
       const drift = Math.cos(t * 1.1) * 0.01;
-      const long = weapon === "mosin" || weapon === "pickaxe";
+      const long = weapon === "minigun" || weapon === "pickaxe";
       // A stride is tiny in world units, so a hand-distance offset would fall
       // inside the camera's near plane and vanish. Push the model out by a
       // fixed factor and scale it up by the same amount: identical on screen,
@@ -195,10 +204,18 @@ export function ShooterLayer({
 
   });
 
+  // A minigun keeps ripping for as long as the button is down.
+  useFrame(() => {
+    if (!active || !spec.auto || !holding.current) return;
+    fireRef.current();
+  });
+
   const flashNote = useCallback((message: string) => {
     setNote(message);
     window.setTimeout(() => setNote((current) => (current === message ? null : current)), 1300);
   }, []);
+
+  const fireRef = useRef<() => void>(() => {});
 
   const reload = useCallback(() => {
     if (spec.magazine === 0) return;
@@ -402,6 +419,25 @@ export function ShooterLayer({
 
 
 
+  fireRef.current = fire;
+
+  // THE HEALING SPELL — the wand mends the caster and every party member at once.
+  const castHeal = useCallback(() => {
+    if (!spec.spell) return;
+    const now = performance.now();
+    const wait = HEAL_COOLDOWN_MS - (now - lastHeal.current);
+    if (wait > 0) {
+      flashNote(`HEAL READY IN ${Math.ceil(wait / 1000)}S`);
+      return;
+    }
+    lastHeal.current = now;
+    playSfx("heal");
+    recoil.current = 1;
+    setLash(1);
+    onCastHeal?.(HEAL_AMOUNT);
+    flashNote(`HEALING SPELL · +${HEAL_AMOUNT} TO THE PARTY`);
+  }, [flashNote, onCastHeal, spec.spell]);
+
   // Mouse / touch strike on the canvas, R to reload.
   useEffect(() => {
     if (!active) return;
@@ -420,9 +456,11 @@ export function ShooterLayer({
       unlockAudio();
       // a left click while the right button is still held keeps aiming
       if (firstPerson && (event.buttons & 2) !== 0) aimState.active = true;
+      holding.current = true;
       fire();
     };
     const onUp = (event: PointerEvent) => {
+      if (event.button === 0) holding.current = false;
       if (event.button === 2 || (event.buttons & 2) === 0) aimState.active = false;
     };
     // keep the sights honest if the button is released outside the canvas
@@ -431,6 +469,7 @@ export function ShooterLayer({
     };
     const onLeave = () => {
       aimState.active = false;
+      holding.current = false;
     };
     const onContext = (event: Event) => event.preventDefault();
 
@@ -440,6 +479,11 @@ export function ShooterLayer({
       if (event.code === "KeyR") {
         event.preventDefault();
         reload();
+      }
+      if (event.code === "KeyH") {
+        event.preventDefault();
+        unlockAudio();
+        castHeal();
       }
       if (event.code === "KeyE") {
         event.preventDefault();
@@ -474,9 +518,10 @@ export function ShooterLayer({
       window.removeEventListener("blur", onLeave);
       window.removeEventListener("keydown", onKey);
       aimState.active = false;
+      holding.current = false;
     };
 
-  }, [active, fire, firstPerson, gl, reload]);
+  }, [active, castHeal, fire, firstPerson, gl, reload]);
 
   useEffect(() => {
     if (!active || spec.magazine === 0) return;
@@ -497,6 +542,8 @@ export function ShooterLayer({
     });
   }, [ammo, kills, liveTargets, note, onStats, reloading, score, spec.magazine, weapon]);
 
+  const strikeColor = spec.spell ? "#6cc6ff" : bitcoin;
+
   if (!active) return null;
 
   return (
@@ -508,7 +555,7 @@ export function ShooterLayer({
             u={STRIDE}
             materials={viewMaterials}
             flash={Boolean(flash)}
-            flashColor={bitcoin}
+            flashColor={strikeColor}
             lash={lash}
           />
         </group>
@@ -516,13 +563,13 @@ export function ShooterLayer({
       ) : null}
 
       {bursts.map((burst) => (
-        <VoxelBurst key={burst.id} at={burst.at} born={burst.born} color={bitcoin} radius={STRIDE * spec.splashStrides} />
+        <VoxelBurst key={burst.id} at={burst.at} born={burst.born} color={strikeColor} radius={STRIDE * spec.splashStrides} />
       ))}
       {tracers.map((tracer) => (
-        <Tracer key={tracer.id} from={tracer.from} to={tracer.to} color={bitcoin} />
+        <Tracer key={tracer.id} from={tracer.from} to={tracer.to} color={strikeColor} />
       ))}
       {flash ? (
-        <pointLight color={bitcoin} intensity={12} distance={STRIDE * 16} position={camera.position} />
+        <pointLight color={strikeColor} intensity={12} distance={STRIDE * 16} position={camera.position} />
       ) : null}
     </group>
   );
