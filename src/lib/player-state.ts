@@ -163,6 +163,10 @@ export type MoveIntent = {
   turn: number;
   sprint: boolean;
   jump: boolean;
+  /** multiplier on top speed — a vehicle travels several times a walk */
+  speedScale?: number;
+  /** multiplier on the keyboard turn rate */
+  turnScale?: number;
 };
 
 /**
