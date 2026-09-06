@@ -2844,6 +2844,7 @@ export function BitmapWorld3D({
               </button>
             </span>
           ) : null}
+          {respawnNote ? <span className="text-bitcoin">{respawnNote}</span> : null}
           {attackTarget ? <span className="text-bitcoin">{attackTarget}</span> : null}
           <span className="flex items-center gap-2 text-muted-foreground">
             <span>DMG {ATTACK_DAMAGE}</span>
