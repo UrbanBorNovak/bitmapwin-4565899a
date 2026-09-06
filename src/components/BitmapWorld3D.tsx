@@ -2972,7 +2972,3 @@ function BuildHud({
     </div>
   );
 }
-
-    </div>
-  );
-}
