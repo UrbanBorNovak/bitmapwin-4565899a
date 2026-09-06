@@ -13,6 +13,7 @@ export type Sfx =
   | "revolver"
   | "cock"
   | "whip"
+  | "slash"
   | "pick"
   | "ore"
   | "nugget"
@@ -305,7 +306,25 @@ export function playSfx(name: Sfx) {
       burst(context, out, { seconds: 0.11, gain: 0.14, type: "lowpass", frequency: 700, q: 0.8, delay: 0.21 });
       break;
     }
+    case "slash": {
+      // Steel cutting air: a fast airy swish, then a bright ringing edge.
+      burst(context, out, {
+        seconds: 0.12, gain: 0.26, type: "bandpass", frequency: 2200 * vary, q: 0.9,
+      });
+      tone(context, out, {
+        from: 900, to: 2600 * vary, seconds: 0.1, gain: 0.1, type: "triangle", attack: 0.02,
+      });
+      tone(context, out, {
+        from: 3200 * vary, to: 1400, seconds: 0.22, gain: 0.12, type: "sine", delay: 0.06, attack: 0.004,
+      });
+      burst(context, out, {
+        seconds: 0.05, gain: 0.3, type: "highpass", frequency: 5200 * vary, q: 0.5, delay: 0.06,
+        send: { node: verb, gain: 0.4 },
+      });
+      break;
+    }
     case "hit":
+
       burst(context, out, { seconds: 0.08, gain: 0.32, type: "bandpass", frequency: 2400, q: 1.4 });
       tone(context, out, { from: 900, to: 500, seconds: 0.07, gain: 0.16, type: "square" });
       break;

@@ -1,17 +1,26 @@
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
+import { useGLTF } from "@react-three/drei";
+import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
+import { Primitive } from "@/components/game/Primitive";
 
 /**
- * WEAPONS — the three things a visitor can carry in the land world.
+ * WEAPONS — the things a visitor can carry in the land world.
  *
  * One shared set of low-poly view models, used both as the first-person model
  * glued to the camera and as the piece held in the avatar's hand in third
- * person, so what other visitors see matches what you are holding.
+ * person, so what other visitors see matches what you are holding. The sword is
+ * a real on-chain inscription loaded straight from the chain.
  *
  * Every model is built facing -Z with its grip at the origin.
  */
 
-export type WeaponKind = "mosin" | "revolver" | "whip" | "pickaxe";
+/** on-chain GLB inscription of the sword */
+export const SWORD_INSCRIPTION =
+  "7b674e8378b14b590960d452900507e2e26089bc9f622fa7e6c938d95d697b81i0";
+
+export type WeaponKind = "mosin" | "revolver" | "whip" | "pickaxe" | "sword";
+
 
 export type WeaponSpec = {
   kind: WeaponKind;
@@ -29,7 +38,7 @@ export type WeaponSpec = {
   damage: number;
   /** a mining tool breaks gold veins; a gun does not */
   mining: boolean;
-  fireSfx: "mosin" | "revolver" | "whip" | "pick";
+  fireSfx: "mosin" | "revolver" | "whip" | "pick" | "slash";
   /** follow-up mechanical sound after a shot (bolt lift / cylinder) */
   cycleSfx: "bolt" | "cock" | null;
   cycleDelayMs: number;
@@ -108,9 +117,27 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     reloadSfx: "reload",
     hint: "MINE GOLD VEINS · RIGHT TO LINE UP · LEFT TO SWING",
   },
+  sword: {
+    kind: "sword",
+    label: "SWORD",
+    short: "SWORD",
+    magazine: 0,
+    reloadMs: 0,
+    cooldownMs: 520,
+    reachStrides: 4.5,
+    splashStrides: 1.4,
+    damage: 34,
+    mining: false,
+    fireSfx: "slash",
+    cycleSfx: null,
+    cycleDelayMs: 0,
+    reloadSfx: "reload",
+    hint: "ON-CHAIN BLADE · RIGHT TO GUARD · LEFT TO SLASH",
+  },
 };
 
-export const WEAPON_ORDER: WeaponKind[] = ["mosin", "revolver", "whip", "pickaxe"];
+export const WEAPON_ORDER: WeaponKind[] = ["mosin", "revolver", "whip", "pickaxe", "sword"];
+
 
 
 export function useWeaponMaterials() {
@@ -343,7 +370,24 @@ export function WeaponModel({
     );
   }
 
+  if (kind === "sword") {
+    // The real on-chain blade, swung from the grip. A plain steel stand-in
+    // holds the pose while the inscription streams in.
+    return (
+      <group
+        position={[0, -0.03 * u, 0.12 * u]}
+        rotation={[-0.16 + lash * 0.5, 0.2, -0.3 - lash * 1.05]}
+      >
+        <Suspense fallback={<SwordStandIn u={u} materials={materials} />}>
+          <OnChainSword u={u} />
+        </Suspense>
+        {flash ? <Muzzle u={u} z={-1.05 * u} size={0.04} color={flashColor} /> : null}
+      </group>
+    );
+  }
+
   // whip — braided leather on a bound handle, straightening as it cracks
+
   const segments = 12;
 
   return (
@@ -402,3 +446,71 @@ function Muzzle({ u, z, size, color }: { u: number; z: number; size: number; col
     </mesh>
   );
 }
+
+const SWORD_URL = `https://ordinals.com/content/${SWORD_INSCRIPTION}`;
+
+/** The inscribed sword, fitted to the hand and pointed down -Z like the rest. */
+function OnChainSword({ u }: { u: number }) {
+  const gltf = useGLTF(SWORD_URL);
+  const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
+  const fit = useMemo(() => {
+    scene.traverse((child) => {
+      const mesh = child as THREE.Mesh;
+      if (mesh.isMesh) {
+        mesh.castShadow = false;
+        mesh.receiveShadow = false;
+        mesh.frustumCulled = false;
+      }
+    });
+    scene.updateMatrixWorld(true);
+    const bounds = new THREE.Box3().setFromObject(scene);
+    const size = bounds.getSize(new THREE.Vector3());
+    const center = bounds.getCenter(new THREE.Vector3());
+    const longest = Math.max(size.x, size.y, size.z, 0.0001);
+    // Blade runs a little over one stride from grip to tip.
+    const scale = (0.95 * u) / longest;
+    // The model's own long axis becomes the forward (-Z) direction, with the
+    // low end of that axis (the grip) sitting at the origin like every other
+    // weapon here.
+    const axis: "x" | "y" | "z" =
+      size.y >= size.x && size.y >= size.z ? "y" : size.x >= size.z ? "x" : "z";
+    const low = bounds.min[axis];
+    return { scale, center, axis, low };
+  }, [scene, u]);
+
+  const spin: [number, number, number] =
+    fit.axis === "y" ? [-Math.PI / 2, 0, 0] : fit.axis === "x" ? [0, -Math.PI / 2, 0] : [0, Math.PI, 0];
+  // centre the two short axes, and start the long axis at the grip
+  const offset = new THREE.Vector3(-fit.center.x, -fit.center.y, -fit.center.z);
+  offset[fit.axis] = -fit.low;
+
+
+  return (
+    <group rotation={spin}>
+      <group scale={fit.scale} position={[offset.x * fit.scale, offset.y * fit.scale, offset.z * fit.scale]}>
+        <Primitive object={scene} />
+      </group>
+    </group>
+  );
+}
+
+
+/** Plain blade shown for the moment before the inscription finishes loading. */
+function SwordStandIn({ u, materials }: { u: number; materials: WeaponMaterials }) {
+  const { steel, leather, brass } = materials;
+  return (
+    <group>
+      <mesh material={leather} position={[0, 0, 0.1 * u]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.028 * u, 0.032 * u, 0.2 * u, 8]} />
+      </mesh>
+      <mesh material={brass} position={[0, 0, -0.02 * u]}>
+        <boxGeometry args={[0.22 * u, 0.03 * u, 0.04 * u]} />
+      </mesh>
+      <mesh material={steel} position={[0, 0, -0.6 * u]}>
+        <boxGeometry args={[0.07 * u, 0.02 * u, 1.1 * u]} />
+      </mesh>
+    </group>
+  );
+}
+
+useGLTF.preload(SWORD_URL);
