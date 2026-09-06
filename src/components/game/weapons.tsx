@@ -374,7 +374,10 @@ export function WeaponModel({
     // The real on-chain blade, swung from the grip. A plain steel stand-in
     // holds the pose while the inscription streams in.
     return (
-      <group rotation={[lash * 0.5, 0, -lash * 1.15]}>
+      <group
+        position={[0.06 * u, -0.05 * u, 0]}
+        rotation={[-0.22 + lash * 0.55, 0.28, -0.35 - lash * 1.1]}
+      >
         <Suspense fallback={<SwordStandIn u={u} materials={materials} />}>
           <OnChainSword u={u} />
         </Suspense>
