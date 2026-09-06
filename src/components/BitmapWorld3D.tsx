@@ -1873,13 +1873,17 @@ export function BitmapWorld3D({
   /** Craft a structure out of gathered materials and drop it where you stand. */
   const placeBuild = useCallback((id: StructureId) => {
     const current = pose.current;
+    if (blockedAt(current?.x ?? 0, current?.z ?? 0, AVATAR_U * 0.2)) {
+      setBuildNote("SOMETHING IS ALREADY STANDING HERE · MOVE OR KNOCK IT DOWN");
+      return;
+    }
     const placed = buildStructure(id, current?.x ?? 0, current?.z ?? 0, current?.yaw ?? 0);
     if (!placed) {
       setBuildNote("NOT ENOUGH MATERIALS · MINE OR HUNT FIRST");
       return;
     }
     playSfx("ui");
-    setBuildNote(`${recipeFor(id)?.name ?? "STRUCTURE"} BUILT WHERE YOU STAND`);
+    setBuildNote(`${recipeFor(id)?.name ?? "STRUCTURE"} BUILT · IT BLOCKS THE WAY UNTIL KNOCKED DOWN`);
   }, []);
 
   /** Raise a whole camp — shelter, fire and watchtower — around your feet. */
