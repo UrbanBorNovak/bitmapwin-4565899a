@@ -2492,14 +2492,16 @@ export function BitmapWorld3D({
           </div>
           {terraformNote ? (
             <div
-              className="hud-toolbar pointer-events-none mt-2 text-[10px] text-bitcoin"
+              className="hud-toolbar pointer-events-none mt-2 w-fit max-w-[calc(100%-15rem)] text-[10px] text-bitcoin"
               data-no-translate
             >
               {terraformNote}
             </div>
           ) : null}
           {legend ? (
-            <div className="hud-toolbar pointer-events-auto mt-2 text-[10px]">{legend}</div>
+            <div className="hud-toolbar pointer-events-auto mt-2 w-fit max-w-[calc(100%-15rem)] text-[10px]">
+              {legend}
+            </div>
           ) : null}
         </div>
 
