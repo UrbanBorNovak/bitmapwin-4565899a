@@ -41,6 +41,22 @@ export function Cybertruck({
       if (mesh.isMesh) {
         mesh.castShadow = false;
         mesh.frustumCulled = false;
+        // The shipped material is near-black metal, which reads as a hole in the
+        // sand. Lift it to brushed stainless so the shape stays legible.
+        const paint = (source: THREE.Material) => {
+          const material = source.clone() as THREE.MeshStandardMaterial;
+          if (material.color && material.color.getHSL({ h: 0, s: 0, l: 0 }).l < 0.25) {
+            material.color = new THREE.Color("#8d9096");
+          }
+          material.metalness = 0.55;
+          material.roughness = 0.42;
+          material.envMapIntensity = 0.9;
+          material.needsUpdate = true;
+          return material;
+        };
+        mesh.material = Array.isArray(mesh.material)
+          ? mesh.material.map(paint)
+          : paint(mesh.material);
       }
     });
     scene.updateMatrixWorld(true);
