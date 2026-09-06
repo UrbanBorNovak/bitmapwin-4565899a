@@ -2090,74 +2090,81 @@ export function BitmapWorld3D({
 
   return (
     <div className={className}>
-      <div className="hud-toolbar border-b-0">
-        <form
-          className="flex items-center gap-1.5"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const height = Number(visitDraft.trim());
-            if (Number.isFinite(height) && height >= 0 && height < GRID * GRID) visitHeight(height);
-          }}
-        >
-          <input
-            value={visitDraft}
-            onChange={(event) => setVisitDraft(event.target.value)}
-            placeholder="VISIT BITMAP"
-            aria-label="Visit a BITMAP"
-            data-no-translate
-            className="h-7 w-32 border border-border bg-background px-2 font-mono text-[11px] tabular-nums outline-none transition-colors focus:border-bitcoin"
-          />
-          <Button type="submit" className="btn-term" variant="ghost">
-            [ VISIT ]
-          </Button>
-        </form>
+      <div className="relative h-[78vh] min-h-[520px] w-full overflow-hidden border border-border bg-background">
+        {/* Controls sit on the world itself, not stacked above it. */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-40 p-2">
+          <div className="hud-toolbar pointer-events-auto">
+            <form
+              className="flex items-center gap-1.5"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const height = Number(visitDraft.trim());
+                if (Number.isFinite(height) && height >= 0 && height < GRID * GRID)
+                  visitHeight(height);
+              }}
+            >
+              <input
+                value={visitDraft}
+                onChange={(event) => setVisitDraft(event.target.value)}
+                placeholder="VISIT BITMAP"
+                aria-label="Visit a BITMAP"
+                data-no-translate
+                className="h-7 w-32 border border-border bg-background/80 px-2 font-mono text-[11px] tabular-nums outline-none transition-colors focus:border-bitcoin"
+              />
+              <Button type="submit" className="btn-term" variant="ghost">
+                [ VISIT ]
+              </Button>
+            </form>
 
-        <span className="hud-divider" aria-hidden />
+            <span className="hud-divider" aria-hidden />
 
-        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Camera">
-          <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("mined")}>
-            [ FRAME MINED ]
-          </Button>
-          <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("full")}>
-            [ FULL WORLD ]
-          </Button>
-          <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("tip")}>
-            [ FLY TO TIP ]
-          </Button>
+            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Camera">
+              <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("mined")}>
+                [ FRAME MINED ]
+              </Button>
+              <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("full")}>
+                [ FULL WORLD ]
+              </Button>
+              <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("tip")}>
+                [ FLY TO TIP ]
+              </Button>
+            </div>
+
+            <span className="hud-divider" aria-hidden />
+
+            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Avatar">
+              <Button
+                className="btn-term-ghost"
+                variant="ghost"
+                onClick={attackNearest}
+                disabled={!attackReady}
+              >
+                [ {attackReady ? "ATTACK · F" : `COOLDOWN ${(cooldownRemaining / 1000).toFixed(1)}s`} ]
+              </Button>
+              <Button
+                className={inventoryOpen ? "btn-term" : "btn-term-ghost"}
+                variant="ghost"
+                onClick={() => setInventoryOpen((current) => !current)}
+              >
+                {avatarModel ? "[ INVENTORY · WEARING MODEL ]" : "[ INVENTORY ]"}
+              </Button>
+              <Button
+                className={buildOpen ? "btn-term" : "btn-term-ghost"}
+                variant="ghost"
+                onClick={() => setBuildOpen((current) => !current)}
+              >
+                [ BUILD · B ]
+              </Button>
+              <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
+                {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
+              </Button>
+            </div>
+          </div>
+          {legend ? (
+            <div className="hud-toolbar pointer-events-auto mt-2 text-[10px]">{legend}</div>
+          ) : null}
         </div>
 
-        <span className="hud-divider" aria-hidden />
-
-        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Avatar">
-          <Button
-            className="btn-term-ghost"
-            variant="ghost"
-            onClick={attackNearest}
-            disabled={!attackReady}
-          >
-            [ {attackReady ? "ATTACK · F" : `COOLDOWN ${(cooldownRemaining / 1000).toFixed(1)}s`} ]
-          </Button>
-          <Button
-            className={inventoryOpen ? "btn-term" : "btn-term-ghost"}
-            variant="ghost"
-            onClick={() => setInventoryOpen((current) => !current)}
-          >
-            {avatarModel ? "[ INVENTORY · WEARING MODEL ]" : "[ INVENTORY ]"}
-          </Button>
-          <Button
-            className={buildOpen ? "btn-term" : "btn-term-ghost"}
-            variant="ghost"
-            onClick={() => setBuildOpen((current) => !current)}
-          >
-            [ BUILD · B ]
-          </Button>
-          <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
-            {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
-          </Button>
-        </div>
-      </div>
-
-      <div className="relative h-[70vh] min-h-[420px] w-full overflow-hidden border border-border bg-background">
         {colors ? (
           <Canvas
             dpr={dpr}
