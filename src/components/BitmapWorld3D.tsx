@@ -1119,13 +1119,15 @@ function PlayerCameraRig({
       forward:
         (pressed.has("w") || pressed.has("arrowup") ? 1 : 0) -
         (pressed.has("s") || pressed.has("arrowdown") ? 1 : 0),
-      strafe: (pressed.has("a") ? 1 : 0) - (pressed.has("d") ? 1 : 0),
+      // A/D and the left/right arrows steer the body — sidestepping is Q/E only.
+      strafe: (pressed.has("q") ? 1 : 0) - (pressed.has("e") ? 1 : 0),
       turn:
-        (pressed.has("arrowleft") || pressed.has("q") ? 1 : 0) -
-        (pressed.has("arrowright") || pressed.has("e") ? 1 : 0),
+        (pressed.has("a") || pressed.has("arrowleft") ? 1 : 0) -
+        (pressed.has("d") || pressed.has("arrowright") ? 1 : 0),
       sprint: pressed.has("shift"),
       jump: jumpRequested.current,
     };
+
     jumpRequested.current = false;
     stepPlayer(player, intent, delta);
 
