@@ -230,8 +230,8 @@ export function WeaponModel({
     // The inscribed blue wand: a spark gathers at the tip as a spell goes off.
     return (
       <group
-        position={[0.02 * u, -0.04 * u, 0.08 * u]}
-        rotation={[-0.18 - lash * 0.35, 0.16, -0.16]}
+        position={[0.14 * u, -0.12 * u, 0.02 * u]}
+        rotation={[-0.42 - lash * 0.3, 0.24, -0.12]}
       >
         <Suspense fallback={<WandStandIn u={u} materials={materials} />}>
           <OnChainWeapon url={WAND_URL} u={u} lengthStrides={0.8} />
