@@ -2418,19 +2418,39 @@ export function BitmapWorld3D({
 
             <span className="hud-divider" aria-hidden />
 
-            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Camera">
-              <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("mined")}>
-                [ FRAME MINED ]
-              </Button>
-              <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("full")}>
-                [ FULL WORLD ]
-              </Button>
-              <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("tip")}>
-                [ FLY TO TIP ]
-              </Button>
-            </div>
+            {exploring ? null : (
+              <>
+                <div
+                  className="flex flex-wrap items-center gap-1.5"
+                  role="group"
+                  aria-label="Camera"
+                >
+                  <Button
+                    className="btn-term-ghost"
+                    variant="ghost"
+                    onClick={() => moveCamera("mined")}
+                  >
+                    [ FRAME MINED ]
+                  </Button>
+                  <Button
+                    className="btn-term-ghost"
+                    variant="ghost"
+                    onClick={() => moveCamera("full")}
+                  >
+                    [ FULL WORLD ]
+                  </Button>
+                  <Button
+                    className="btn-term-ghost"
+                    variant="ghost"
+                    onClick={() => moveCamera("tip")}
+                  >
+                    [ FLY TO TIP ]
+                  </Button>
+                </div>
 
-            <span className="hud-divider" aria-hidden />
+                <span className="hud-divider" aria-hidden />
+              </>
+            )}
 
             <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Avatar">
               <Button
