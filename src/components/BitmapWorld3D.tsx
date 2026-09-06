@@ -1061,7 +1061,10 @@ function PlayerCameraRig({
   const lookMatrix = useRef(new THREE.Matrix4());
   const targetRotation = useRef(new THREE.Quaternion());
   const pitch = useRef(0);
+  const steer = useRef(0);
+  const bob = useRef(0);
   const jumpRequested = useRef(false);
+
 
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
