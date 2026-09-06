@@ -384,6 +384,54 @@ export function useMapCursors(enabled = true) {
       if (lastCell) push(lastCell);
     };
 
+
+    // COMBAT TICK — every swing queued since the last tick is settled here, in
+    // one pass, per target tile. Nothing about a fight is worked out per frame.
+    const ticker = setInterval(() => {
+      const now = Date.now();
+      for (const hit of combat.resolve(now)) {
+        const attackerName = peers.get(hit.strikes[0]!.attacker)?.handle ?? handle;
+        const mine = hit.target === selfId;
+        const targetPeer = peers.get(hit.target);
+        const before = mine ? hpRef.current : (targetPeer?.hp ?? MAX_HP);
+        const after = Math.max(0, before - hit.damage);
+        setCombatLog((current) =>
+          [
+            ...current,
+            {
+              id: hit.strikes[0]!.id,
+              attacker: attackerName,
+              target: mine ? handle : (targetPeer?.handle ?? "ANON"),
+              damage: hit.damage,
+              knockout: after === 0,
+              at: now,
+            },
+          ].slice(-40),
+        );
+        if (mine) {
+          hpRef.current = after;
+          setHp(after);
+          setHitAt(now);
+          setLastDamage(hit.damage);
+          if (lastCell) push(lastCell);
+          if (after === 0) {
+            setRespawnAt(now + RESPAWN_MS);
+            if (respawnTimer) clearTimeout(respawnTimer);
+            respawnTimer = setTimeout(() => respawnRef.current(), RESPAWN_MS);
+          }
+        } else if (targetPeer) {
+          peers.set(hit.target, {
+            ...targetPeer,
+            hp: after,
+            hitAt: now,
+            lastDamage: hit.damage,
+            at: now,
+          });
+          flush();
+        }
+      }
+    }, COMBAT_TICK_MS);
+
     // Health trickles back so a fight does not permanently knock anyone out.
     const regen = setInterval(() => {
       if (hpRef.current <= 0 || hpRef.current >= MAX_HP) return;
@@ -393,6 +441,7 @@ export function useMapCursors(enabled = true) {
     }, 1_000);
 
     const sweep = setInterval(flush, 2_000);
+
     return () => {
       if (timer) clearTimeout(timer);
       if (respawnTimer) clearTimeout(respawnTimer);
