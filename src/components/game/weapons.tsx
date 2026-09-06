@@ -18,8 +18,14 @@ import { Primitive } from "@/components/game/Primitive";
 /** on-chain GLB inscription of the sword */
 export const SWORD_INSCRIPTION =
   "7b674e8378b14b590960d452900507e2e26089bc9f622fa7e6c938d95d697b81i0";
+/** on-chain GLB inscription of the minigun */
+export const MINIGUN_INSCRIPTION =
+  "46dd4a7cfb48132b2a4d06cbebdcf4a340192ba386c6f76832221c51e8d67b77i0";
+/** on-chain GLB inscription of the blue wand */
+export const WAND_INSCRIPTION =
+  "fdc01c2ffb7e74585b121ad79000b0910b9e38087becb0102aff3f1eef2c18fai0";
 
-export type WeaponKind = "mosin" | "revolver" | "whip" | "pickaxe" | "sword";
+export type WeaponKind = "minigun" | "revolver" | "whip" | "pickaxe" | "sword" | "wand";
 
 
 export type WeaponSpec = {
@@ -38,7 +44,11 @@ export type WeaponSpec = {
   damage: number;
   /** a mining tool breaks gold veins; a gun does not */
   mining: boolean;
-  fireSfx: "mosin" | "revolver" | "whip" | "pick" | "slash";
+  fireSfx: "minigun" | "revolver" | "whip" | "pick" | "slash" | "spell";
+  /** holds down for continuous fire instead of one strike per click */
+  auto?: boolean;
+  /** the wand casts spells: an arcane bolt on click, a party heal on H */
+  spell?: boolean;
   /** follow-up mechanical sound after a shot (bolt lift / cylinder) */
   cycleSfx: "bolt" | "cock" | null;
   cycleDelayMs: number;
@@ -49,22 +59,23 @@ export type WeaponSpec = {
 
 
 export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
-  mosin: {
-    kind: "mosin",
-    label: "MOSIN NAGANT",
-    short: "MOSIN",
-    magazine: 5,
-    reloadMs: 2_400,
-    cooldownMs: 1_250,
-    reachStrides: 90,
-    splashStrides: 1.6,
-    damage: 42,
+  minigun: {
+    kind: "minigun",
+    label: "MINIGUN",
+    short: "MINIGUN",
+    magazine: 150,
+    reloadMs: 4_200,
+    cooldownMs: 85,
+    reachStrides: 80,
+    splashStrides: 1.1,
+    damage: 9,
     mining: false,
-    fireSfx: "mosin",
-    cycleSfx: "bolt",
-    cycleDelayMs: 620,
+    fireSfx: "minigun",
+    cycleSfx: null,
+    cycleDelayMs: 0,
     reloadSfx: "reload",
-    hint: "BOLT ACTION · RIGHT TO AIM · LEFT TO FIRE",
+    auto: true,
+    hint: "SPINS UP · RIGHT TO AIM · HOLD LEFT TO RIP",
   },
   revolver: {
     kind: "revolver",
@@ -134,9 +145,34 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     reloadSfx: "reload",
     hint: "ON-CHAIN BLADE · RIGHT TO GUARD · LEFT TO SLASH",
   },
+  wand: {
+    kind: "wand",
+    label: "BLUE WAND",
+    short: "WAND",
+    magazine: 0,
+    reloadMs: 0,
+    cooldownMs: 420,
+    reachStrides: 44,
+    splashStrides: 2.4,
+    damage: 26,
+    mining: false,
+    fireSfx: "spell",
+    cycleSfx: null,
+    cycleDelayMs: 0,
+    reloadSfx: "reload",
+    spell: true,
+    hint: "LEFT TO CAST A BOLT · H TO HEAL THE WHOLE PARTY",
+  },
 };
 
-export const WEAPON_ORDER: WeaponKind[] = ["mosin", "revolver", "whip", "pickaxe", "sword"];
+export const WEAPON_ORDER: WeaponKind[] = [
+  "minigun",
+  "revolver",
+  "whip",
+  "pickaxe",
+  "sword",
+  "wand",
+];
 
 
 
