@@ -1723,6 +1723,7 @@ const WorldScene = memo(function WorldScene({
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <DesertBuilds unit={AVATAR_U} />
           <FootTrail unit={AVATAR_U} pose={pose} sand={colors.bitcoin} />
+          <LandGrowth unit={AVATAR_U} pose={pose} />
 
         </>
       ) : null}
