@@ -1,7 +1,21 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-const LANGS = ["el", "es", "de", "ru", "hi"] as const;
+const LANGS = [
+  "el",
+  "es",
+  "de",
+  "ru",
+  "hi",
+  "fr",
+  "zh",
+  "sl",
+  "hr",
+  "sr",
+  "bs",
+  "mk",
+  "uk",
+] as const;
 
 /** Public: translate a batch of interface strings into a supported language. */
 export const translateStringsFn = createServerFn({ method: "POST" })

@@ -8,7 +8,20 @@
 
 const MODEL = "google/gemini-3.7-flash";
 
-export type Lang = "el" | "es" | "de" | "ru" | "hi";
+export type Lang =
+  | "el"
+  | "es"
+  | "de"
+  | "ru"
+  | "hi"
+  | "fr"
+  | "zh"
+  | "sl"
+  | "hr"
+  | "sr"
+  | "bs"
+  | "mk"
+  | "uk";
 
 export const LANG_NAMES: Record<Lang, string> = {
   el: "Greek",
@@ -16,6 +29,14 @@ export const LANG_NAMES: Record<Lang, string> = {
   de: "German",
   ru: "Russian",
   hi: "Hindi",
+  fr: "French",
+  zh: "Simplified Chinese",
+  sl: "Slovenian",
+  hr: "Croatian",
+  sr: "Serbian (Cyrillic script)",
+  bs: "Bosnian",
+  mk: "Macedonian",
+  uk: "Ukrainian",
 };
 
 /** Stable cache key for a source string (hex sha-256). */
