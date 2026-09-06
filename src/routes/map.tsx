@@ -108,7 +108,7 @@ function MapPage() {
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div data-tour="map-world" className="contents">
+        <div data-tour="map-world" className="min-w-0">
         <BitmapWorld3D
           tipHeight={tipHeight}
           {...(height === undefined ? {} : { initialHeight: height })}
