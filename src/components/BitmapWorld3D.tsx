@@ -2680,6 +2680,8 @@ export function BitmapWorld3D({
               onBite={takeBite}
               onShooterStats={handleShooterStats}
               driving={driving}
+              ride={ride}
+
             />
           </Canvas>
           </div>
