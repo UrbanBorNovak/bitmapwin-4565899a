@@ -22,7 +22,13 @@ import {
 } from "./world-structures.functions";
 import { growthOf, terraformAt } from "./world-terraform";
 
-export type StructureId = "camp-fire" | "hide-tent" | "bone-totem" | "gold-obelisk" | "watchtower";
+export type StructureId =
+  | "camp-fire"
+  | "hide-tent"
+  | "bone-totem"
+  | "gold-obelisk"
+  | "watchtower"
+  | "graveyard";
 
 export type StructureRecipe = {
   id: StructureId;
