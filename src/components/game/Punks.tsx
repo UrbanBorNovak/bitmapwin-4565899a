@@ -182,7 +182,7 @@ export function Punks({
 
       if (punk.deadUntil) {
         node.visible = true;
-        node.rotation.set(0, punk.heading, Math.PI / 2.1);
+        node.rotation.set(0, punk.heading + Math.PI, Math.PI / 2.1);
         node.position.set(punk.x, unit * 0.02, punk.z);
         return;
       }
@@ -263,7 +263,8 @@ export function Punks({
       const stride = Math.abs(Math.sin(now / 190 + punk.seed)) * unit * punk.size * 0.03;
       punk.bodyY = unit * punk.size * 0.5;
       node.position.set(punk.x, stride, punk.z);
-      node.rotation.y = punk.heading;
+      // The model's face points down its own -Z, so turn it to walk face-first.
+      node.rotation.y = punk.heading + Math.PI;
       // A struck Punk rocks back so the hit reads.
       const sinceHit = now - punk.hitAt;
       node.rotation.x = sinceHit < 260 ? -Math.sin((sinceHit / 260) * Math.PI) * 0.3 : 0;

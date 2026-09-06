@@ -18,6 +18,7 @@ import type { PlayerState } from "@/lib/player-state";
 import {
   FOODS,
   GOGGLES_INSCRIPTION,
+  MAGIC_BOOK_INSCRIPTION,
   WIZARD_HAT_INSCRIPTION,
   useGear,
 } from "@/lib/world-gear";
@@ -106,6 +107,18 @@ export function WornGear({
   const eatingFood = gear.eating ? FOODS[gear.eating.food] : null;
   return (
     <>
+      {weapon === "wand" ? (
+        <Suspense fallback={null}>
+          <WornPiece
+            url={`https://ordinals.com/content/${MAGIC_BOOK_INSCRIPTION}`}
+            unit={unit}
+            fit={0.3}
+            pose={pose}
+            offset={[-0.24, 0.62, 0.16]}
+            bob={0.02}
+          />
+        </Suspense>
+      ) : null}
       {showHead && weapon === "wand" ? (
         <Suspense fallback={null}>
           <WornPiece
