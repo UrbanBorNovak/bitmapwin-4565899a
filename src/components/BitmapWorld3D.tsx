@@ -2100,6 +2100,8 @@ export function BitmapWorld3D({
   const [chatMode, setChatMode] = useState<"world" | "party">("world");
 
   const pose = useRef<SelfPose>(createPlayerState(0, CELL, 0));
+  /** the 3D view itself — shaken when you take a hit */
+  const viewShake = useRef<HTMLDivElement>(null);
   const [mySay, setMySay] = useState<string | null>(null);
   const self = useMemo(
     () => ({ handle, color, model: avatarModel, say: mySay, hp, hitAt, lastDamage }),
