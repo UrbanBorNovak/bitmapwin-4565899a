@@ -204,12 +204,6 @@ export function ShooterLayer({
 
   });
 
-  // A minigun keeps ripping for as long as the button is down.
-  useFrame(() => {
-    if (!active || !spec.auto || !holding.current) return;
-    fireRef.current();
-  });
-
   const flashNote = useCallback((message: string) => {
     setNote(message);
     window.setTimeout(() => setNote((current) => (current === message ? null : current)), 1300);
@@ -420,6 +414,13 @@ export function ShooterLayer({
 
 
   fireRef.current = fire;
+
+  // A minigun keeps ripping for as long as the button is down.
+  useFrame(() => {
+    if (!active || !spec.auto || !holding.current) return;
+    fireRef.current();
+  });
+
 
   // THE HEALING SPELL — the wand mends the caster and every party member at once.
   const castHeal = useCallback(() => {
