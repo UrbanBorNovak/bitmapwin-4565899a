@@ -2836,9 +2836,8 @@ function SkillsHud() {
           </div>
         );
       })}
-      <div className="label border-t border-border pt-1.5 text-[9px] text-bitcoin">
-        BACKPACK {carried}/{BACKPACK_SLOTS}
-      </div>
+      <div className="label border-t border-border pt-1.5 text-[9px] text-bitcoin">MATERIALS</div>
+
       {carried === 0 ? (
         <div className="text-muted-foreground">EMPTY · MINE OR HUNT</div>
       ) : (
