@@ -122,14 +122,10 @@ export function GuidedTour() {
   const [box, setBox] = useState<DOMRect | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const close = useCallback(
-    (complete: boolean) => {
-      if (tour && complete) markSeen(tour.id);
-      if (tour) markSeen(tour.id);
-      setIndex(null);
-    },
-    [tour],
-  );
+  const close = useCallback(() => {
+    if (tour) markSeen(tour.id);
+    setIndex(null);
+  }, [tour]);
 
   // Auto-open once per page, and only when the page has a tour to give.
   useEffect(() => {
@@ -157,13 +153,13 @@ export function GuidedTour() {
     if (!tour || index === null) return;
     const current = tour.steps[index];
     if (!current) {
-      close(true);
+      close();
       return;
     }
     const el = document.querySelector<HTMLElement>(`[data-tour="${current.target}"]`);
     if (!el) {
       if (index + 1 < tour.steps.length) setIndex(index + 1);
-      else close(true);
+      else close();
       return;
     }
     el.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -182,7 +178,7 @@ export function GuidedTour() {
   useEffect(() => {
     if (index === null) return;
     const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close(true);
+      if (e.key === "Escape") close();
     };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
@@ -223,7 +219,7 @@ export function GuidedTour() {
           </span>
           <button
             type="button"
-            onClick={() => close(true)}
+            onClick={() => close()}
             aria-label="Close tour"
             className="grid size-6 place-items-center border border-border text-muted-foreground hover:text-foreground"
           >
@@ -233,7 +229,7 @@ export function GuidedTour() {
         <h2 className="display mt-2 text-sm leading-snug">{step.title}</h2>
         <p className="mt-2 font-mono text-[11px] leading-relaxed text-muted-foreground">{step.body}</p>
         <div className="mt-4 flex items-center justify-between gap-2">
-          <button type="button" onClick={() => close(true)} className="label hover:text-foreground">
+          <button type="button" onClick={() => close()} className="label hover:text-foreground">
             SKIP
           </button>
           <div className="flex gap-2">
@@ -244,7 +240,7 @@ export function GuidedTour() {
             )}
             <button
               type="button"
-              onClick={() => (index + 1 < total ? setIndex(index + 1) : close(true))}
+              onClick={() => (index + 1 < total ? setIndex(index + 1) : close())}
               className="btn-term px-3 py-2 text-[10px]"
             >
               {index + 1 < total ? "NEXT" : "GOT IT"}
