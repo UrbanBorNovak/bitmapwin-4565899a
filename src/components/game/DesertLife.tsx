@@ -699,12 +699,22 @@ const Critters = memo(function Critters({
             travel = away < standoff ? -speed * 0.35 : speed * 0.15;
             steer += Math.sin(now / 700 + critter.seed) * delta * 1.2;
           }
-          // Close enough to strike: bite, on its own cooldown.
-          if (away < standoff * 1.8 && now - critter.lastBite > 1_400 && species.bite > 0) {
+          // Close enough to strike: bite, on its own cooldown. Outrunning it
+          // (sprinting, or behind the wheel) breaks the bite — you can always
+          // escape rather than being chewed on while trying to leave.
+          const pace = Math.hypot(player.vx, player.vz);
+          const outrunning = pace > speed * 1.15;
+          if (
+            !outrunning &&
+            away < standoff * 1.8 &&
+            now - critter.lastBite > 1_400 &&
+            species.bite > 0
+          ) {
             critter.lastBite = now;
             playSfx("beast");
             onBite?.(species.bite, critter.label);
           }
+
         } else if (!species.hostile && away < unit * 5) {
           // Skittish: bolt the other way.
           const flee = toPlayer + Math.PI;
