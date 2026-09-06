@@ -323,7 +323,7 @@ export function WeaponModel({
     const swing = lash;
     return (
       <group
-        position={[0, -0.04 * u, 0.12 * u]}
+        position={[-0.09 * u, -0.12 * u, 0.12 * u]}
         rotation={[-0.2 + swing * 0.8, 0.24, -0.34 - swing * 0.5]}
       >
         <Suspense fallback={<PickStandIn u={u} materials={materials} />}>
