@@ -2855,7 +2855,7 @@ function SkillsHud() {
   );
 }
 
-/** BUILD — spend gathered hides, fangs and gold on a structure at your feet. */
+/** BUILD — a two-step screen: pick one structure, then place it where you stand. */
 function BuildHud({
   onBuild,
   onBuildCamp,
@@ -2868,9 +2868,31 @@ function BuildHud({
   onClose: () => void;
 }) {
   const { items } = useWorldSkills();
-  const campAffordable = (Object.entries(CAMP_RECIPE.cost) as [ItemId, number][]).every(
-    ([item, amount]) => items[item] >= amount,
-  );
+  const [picked, setPicked] = useState<StructureId | "full-camp" | null>(null);
+
+  const options: { key: StructureId | "full-camp"; name: string; blurb: string; cost: Partial<Record<ItemId, number>>; costText: string }[] =
+    [
+      {
+        key: "full-camp",
+        name: CAMP_RECIPE.name,
+        blurb: CAMP_RECIPE.blurb,
+        cost: CAMP_RECIPE.cost,
+        costText: costLabel(CAMP_RECIPE),
+      },
+      ...STRUCTURES.map((recipe) => ({
+        key: recipe.id,
+        name: recipe.name,
+        blurb: recipe.blurb,
+        cost: recipe.cost,
+        costText: costLabel(recipe),
+      })),
+    ];
+
+  const affordable = (cost: Partial<Record<ItemId, number>>) =>
+    (Object.entries(cost) as [ItemId, number][]).every(([item, amount]) => items[item] >= amount);
+
+  const chosen = options.find((option) => option.key === picked) ?? null;
+
   return (
     <div
       data-no-translate
@@ -2878,7 +2900,7 @@ function BuildHud({
       aria-label="Build structures"
     >
       <div className="flex items-center justify-between">
-        <span className="label text-[9px] text-bitcoin">BUILD</span>
+        <span className="label text-[9px] text-bitcoin">BUILD · STEP {chosen ? "2 / 2" : "1 / 2"}</span>
         <button
           type="button"
           aria-label="Close build panel"
@@ -2888,42 +2910,70 @@ function BuildHud({
           <X className="size-3" />
         </button>
       </div>
-      <button
-        type="button"
-        disabled={!campAffordable}
-        onClick={onBuildCamp}
-        className={
-          campAffordable
-            ? "w-full border border-bitcoin/70 px-2 py-1 text-left text-bitcoin hover:border-bitcoin"
-            : "w-full border border-border/60 px-2 py-1 text-left text-muted-foreground/60"
-        }
-      >
-        <span className="block">{CAMP_RECIPE.name}</span>
-        <span className="block text-[9px] text-muted-foreground">{costLabel(CAMP_RECIPE)}</span>
-      </button>
-      {STRUCTURES.map((recipe) => {
-        const affordable = (Object.entries(recipe.cost) as [ItemId, number][]).every(
-          ([item, amount]) => items[item] >= amount,
-        );
-        return (
-          <button
-            key={recipe.id}
 
+      {!chosen ? (
+        <>
+          <div className="text-muted-foreground">PICK ONE STRUCTURE</div>
+          {options.map((option) => {
+            const ok = affordable(option.cost);
+            return (
+              <button
+                key={option.key}
+                type="button"
+                disabled={!ok}
+                onClick={() => setPicked(option.key)}
+                className={
+                  ok
+                    ? "w-full border border-border px-2 py-1 text-left hover:border-bitcoin hover:text-bitcoin"
+                    : "w-full border border-border/60 px-2 py-1 text-left text-muted-foreground/60"
+                }
+              >
+                <span className="block text-foreground">{option.name}</span>
+                <span className="block text-[9px] text-muted-foreground">
+                  {ok ? option.costText : `NEED ${option.costText}`}
+                </span>
+              </button>
+            );
+          })}
+        </>
+      ) : (
+        <>
+          <div className="border border-border px-2 py-1">
+            <span className="block text-foreground">{chosen.name}</span>
+            <span className="block text-[9px] text-muted-foreground">{chosen.blurb}</span>
+            <span className="block text-[9px] text-muted-foreground">COSTS {chosen.costText}</span>
+          </div>
+          <div className="text-muted-foreground">PLACE IT WHERE YOU STAND</div>
+          <button
             type="button"
-            disabled={!affordable}
-            onClick={() => onBuild(recipe.id)}
+            disabled={!affordable(chosen.cost)}
+            onClick={() => {
+              if (chosen.key === "full-camp") onBuildCamp();
+              else onBuild(chosen.key);
+              setPicked(null);
+            }}
             className={
-              affordable
-                ? "w-full border border-border px-2 py-1 text-left hover:border-bitcoin hover:text-bitcoin"
-                : "w-full border border-border/60 px-2 py-1 text-left text-muted-foreground/60"
+              affordable(chosen.cost)
+                ? "w-full border border-bitcoin/70 px-2 py-1 text-bitcoin hover:border-bitcoin"
+                : "w-full border border-border/60 px-2 py-1 text-muted-foreground/60"
             }
           >
-            <span className="block text-foreground">{recipe.name}</span>
-            <span className="block text-[9px] text-muted-foreground">{costLabel(recipe)}</span>
+            [ BUILD HERE ]
           </button>
-        );
-      })}
+          <button
+            type="button"
+            onClick={() => setPicked(null)}
+            className="w-full border border-border px-2 py-1 text-muted-foreground hover:border-bitcoin hover:text-bitcoin"
+          >
+            [ BACK ]
+          </button>
+        </>
+      )}
       {note ? <div className="border-t border-border pt-1.5 text-bitcoin">{note}</div> : null}
+    </div>
+  );
+}
+
     </div>
   );
 }
