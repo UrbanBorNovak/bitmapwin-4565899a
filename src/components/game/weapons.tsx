@@ -211,86 +211,36 @@ export function WeaponModel({
 }) {
   const { wood, steel, leather, iron, brass } = materials;
 
-  if (kind === "mosin") {
-    // A long rifle: shaped stock, banded barrel, a bolt that lifts on the cycle,
-    // sling slots, a hooded front post and a laddered rear sight.
-    const bolt = lash;
+  if (kind === "minigun") {
+    // The real on-chain minigun, held level, barrels spinning as it rips.
     return (
-      <group>
-        {/* butt stock, with a shaped comb and a steel plate */}
-        <mesh material={wood} position={[0, -0.02 * u, 0.4 * u]} rotation={[0.05, 0, 0]}>
-          <boxGeometry args={[0.085 * u, 0.15 * u, 0.56 * u]} />
+      <group
+        position={[0, -0.06 * u, 0.1 * u]}
+        rotation={[0.02 - lash * 0.12, 0, -0.04]}
+      >
+        <Suspense fallback={<MinigunStandIn u={u} materials={materials} spin={lash} />}>
+          <OnChainWeapon url={MINIGUN_URL} u={u} lengthStrides={1.5} />
+        </Suspense>
+        {flash ? <Muzzle u={u} z={-1.5 * u} size={0.09} color={flashColor} /> : null}
+      </group>
+    );
+  }
+
+  if (kind === "wand") {
+    // The inscribed blue wand: a spark gathers at the tip as a spell goes off.
+    return (
+      <group
+        position={[0.02 * u, -0.04 * u, 0.08 * u]}
+        rotation={[-0.18 - lash * 0.35, 0.16, -0.16]}
+      >
+        <Suspense fallback={<WandStandIn u={u} materials={materials} />}>
+          <OnChainWeapon url={WAND_URL} u={u} lengthStrides={0.8} />
+        </Suspense>
+        <mesh position={[0, 0.02 * u, -0.86 * u]}>
+          <sphereGeometry args={[(0.04 + lash * 0.05) * u, 10, 10]} />
+          <meshBasicMaterial color="#4fa8ff" transparent opacity={0.35 + lash * 0.55} />
         </mesh>
-        <mesh material={wood} position={[0, 0.06 * u, 0.28 * u]} rotation={[0.11, 0, 0]}>
-          <boxGeometry args={[0.07 * u, 0.06 * u, 0.3 * u]} />
-        </mesh>
-        <mesh material={iron} position={[0, -0.02 * u, 0.68 * u]}>
-          <boxGeometry args={[0.088 * u, 0.16 * u, 0.02 * u]} />
-        </mesh>
-        {/* pistol wrist and trigger guard */}
-        <mesh material={wood} position={[0, -0.07 * u, 0.19 * u]} rotation={[0.5, 0, 0]}>
-          <boxGeometry args={[0.06 * u, 0.11 * u, 0.08 * u]} />
-        </mesh>
-        <mesh material={iron} position={[0, -0.062 * u, 0.09 * u]} rotation={[Math.PI / 2, 0, 0]}>
-          <torusGeometry args={[0.028 * u, 0.007 * u, 6, 12]} />
-        </mesh>
-        <mesh material={iron} position={[0, -0.05 * u, 0.1 * u]} rotation={[0.3, 0, 0]}>
-          <boxGeometry args={[0.01 * u, 0.045 * u, 0.012 * u]} />
-        </mesh>
-        {/* forend */}
-        <mesh material={wood} position={[0, -0.015 * u, -0.3 * u]}>
-          <boxGeometry args={[0.075 * u, 0.095 * u, 0.66 * u]} />
-        </mesh>
-        {/* barrel + banded barrel shroud */}
-        <mesh material={steel} position={[0, 0.025 * u, -0.55 * u]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.017 * u, 0.02 * u, 1.12 * u, 12]} />
-        </mesh>
-        {[-0.12, -0.44, -0.72].map((z) => (
-          <mesh key={z} material={iron} position={[0, 0.01 * u, z * u]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.03 * u, 0.03 * u, 0.045 * u, 10]} />
-          </mesh>
-        ))}
-        {/* receiver + magazine box */}
-        <mesh material={iron} position={[0, 0.015 * u, 0.03 * u]}>
-          <boxGeometry args={[0.068 * u, 0.095 * u, 0.34 * u]} />
-        </mesh>
-        <mesh material={iron} position={[0, -0.06 * u, -0.02 * u]}>
-          <boxGeometry args={[0.055 * u, 0.075 * u, 0.14 * u]} />
-        </mesh>
-        {/* bolt body + handle, lifting as the action cycles */}
-        <mesh material={steel} position={[0, 0.05 * u, 0.12 * u]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.018 * u, 0.018 * u, 0.24 * u, 10]} />
-        </mesh>
-        <group position={[0.03 * u, 0.05 * u, 0.14 * u]} rotation={[0, 0, -bolt * 1.1]}>
-          <mesh material={steel} position={[0.05 * u, 0.02 * u, 0]} rotation={[0, 0, Math.PI / 2.4]}>
-            <cylinderGeometry args={[0.012 * u, 0.012 * u, 0.13 * u, 8]} />
-          </mesh>
-          <mesh material={steel} position={[0.09 * u, 0.055 * u, 0]}>
-            <sphereGeometry args={[0.022 * u, 10, 8]} />
-          </mesh>
-        </group>
-        {/* rear sight ladder */}
-        <mesh material={iron} position={[0, 0.075 * u, -0.16 * u]} rotation={[0.15, 0, 0]}>
-          <boxGeometry args={[0.045 * u, 0.012 * u, 0.1 * u]} />
-        </mesh>
-        <mesh material={iron} position={[0, 0.09 * u, -0.12 * u]}>
-          <boxGeometry args={[0.05 * u, 0.03 * u, 0.012 * u]} />
-        </mesh>
-        {/* hooded front post */}
-        <mesh material={iron} position={[0, 0.055 * u, -1.02 * u]}>
-          <boxGeometry args={[0.036 * u, 0.05 * u, 0.03 * u]} />
-        </mesh>
-        <mesh material={brass} position={[0, 0.07 * u, -1.02 * u]}>
-          <boxGeometry args={[0.008 * u, 0.03 * u, 0.008 * u]} />
-        </mesh>
-        {/* sling slots and a leather sling stub */}
-        <mesh material={leather} position={[0, -0.075 * u, -0.44 * u]} rotation={[Math.PI / 2, 0, 0]}>
-          <torusGeometry args={[0.022 * u, 0.005 * u, 5, 10]} />
-        </mesh>
-        <mesh material={leather} position={[0, -0.09 * u, 0.42 * u]} rotation={[Math.PI / 2, 0, 0]}>
-          <torusGeometry args={[0.022 * u, 0.005 * u, 5, 10]} />
-        </mesh>
-        {flash ? <Muzzle u={u} z={-1.14 * u} size={0.075} color={flashColor} /> : null}
+        {flash ? <Muzzle u={u} z={-0.9 * u} size={0.07} color="#6cc6ff" /> : null}
       </group>
     );
   }
@@ -415,7 +365,7 @@ export function WeaponModel({
         rotation={[-0.16 + lash * 0.5, 0.2, -0.3 - lash * 1.05]}
       >
         <Suspense fallback={<SwordStandIn u={u} materials={materials} />}>
-          <OnChainSword u={u} />
+          <OnChainWeapon url={SWORD_URL} u={u} lengthStrides={0.95} />
         </Suspense>
         {flash ? <Muzzle u={u} z={-1.05 * u} size={0.04} color={flashColor} /> : null}
       </group>
@@ -484,10 +434,21 @@ function Muzzle({ u, z, size, color }: { u: number; z: number; size: number; col
 }
 
 const SWORD_URL = `https://ordinals.com/content/${SWORD_INSCRIPTION}`;
+const MINIGUN_URL = `https://ordinals.com/content/${MINIGUN_INSCRIPTION}`;
+const WAND_URL = `https://ordinals.com/content/${WAND_INSCRIPTION}`;
 
-/** The inscribed sword, fitted to the hand and pointed down -Z like the rest. */
-function OnChainSword({ u }: { u: number }) {
-  const gltf = useGLTF(SWORD_URL);
+/** An inscribed piece, fitted to the hand and pointed down -Z like the rest. */
+function OnChainWeapon({
+  url,
+  u,
+  lengthStrides,
+}: {
+  url: string;
+  u: number;
+  /** how long the piece reads from grip to tip, in strides */
+  lengthStrides: number;
+}) {
+  const gltf = useGLTF(url);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
   const fit = useMemo(() => {
     scene.traverse((child) => {
@@ -504,7 +465,7 @@ function OnChainSword({ u }: { u: number }) {
     const center = bounds.getCenter(new THREE.Vector3());
     const longest = Math.max(size.x, size.y, size.z, 0.0001);
     // Blade runs a little over one stride from grip to tip.
-    const scale = (0.95 * u) / longest;
+    const scale = (lengthStrides * u) / longest;
     // The model's own long axis becomes the forward (-Z) direction, with the
     // low end of that axis (the grip) sitting at the origin like every other
     // weapon here.
@@ -512,7 +473,7 @@ function OnChainSword({ u }: { u: number }) {
       size.y >= size.x && size.y >= size.z ? "y" : size.x >= size.z ? "x" : "z";
     const low = bounds.min[axis];
     return { scale, center, axis, low };
-  }, [scene, u]);
+  }, [scene, u, lengthStrides]);
 
   const spin: [number, number, number] =
     fit.axis === "y" ? [-Math.PI / 2, 0, 0] : fit.axis === "x" ? [0, -Math.PI / 2, 0] : [0, Math.PI, 0];
@@ -550,3 +511,56 @@ function SwordStandIn({ u, materials }: { u: number; materials: WeaponMaterials 
 }
 
 useGLTF.preload(SWORD_URL);
+useGLTF.preload(MINIGUN_URL);
+useGLTF.preload(WAND_URL);
+
+/** Barrel cluster shown while the minigun inscription streams in. */
+function MinigunStandIn({
+  u,
+  materials,
+  spin,
+}: {
+  u: number;
+  materials: WeaponMaterials;
+  spin: number;
+}) {
+  const { steel, iron } = materials;
+  return (
+    <group>
+      <mesh material={iron} position={[0, 0, 0.16 * u]}>
+        <boxGeometry args={[0.16 * u, 0.16 * u, 0.4 * u]} />
+      </mesh>
+      <group rotation={[0, 0, spin * 6]}>
+        {Array.from({ length: 6 }, (_, i) => {
+          const a = (i / 6) * Math.PI * 2;
+          return (
+            <mesh
+              key={i}
+              material={steel}
+              position={[Math.cos(a) * 0.05 * u, Math.sin(a) * 0.05 * u, -0.65 * u]}
+              rotation={[Math.PI / 2, 0, 0]}
+            >
+              <cylinderGeometry args={[0.016 * u, 0.016 * u, 1.1 * u, 8]} />
+            </mesh>
+          );
+        })}
+      </group>
+    </group>
+  );
+}
+
+/** Plain blue rod shown while the wand inscription streams in. */
+function WandStandIn({ u, materials }: { u: number; materials: WeaponMaterials }) {
+  const { leather } = materials;
+  return (
+    <group>
+      <mesh material={leather} position={[0, 0, 0.08 * u]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.024 * u, 0.028 * u, 0.2 * u, 8]} />
+      </mesh>
+      <mesh position={[0, 0, -0.42 * u]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.014 * u, 0.02 * u, 0.8 * u, 8]} />
+        <meshStandardMaterial color="#2f6fd0" emissive="#1a4a9c" emissiveIntensity={0.8} roughness={0.4} />
+      </mesh>
+    </group>
+  );
+}
