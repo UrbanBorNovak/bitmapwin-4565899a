@@ -54,6 +54,7 @@ import {
   type WeaponKind,
 } from "@/components/game/weapons";
 import { isSoundMuted, playSfx, setSoundMuted, unlockAudio } from "@/lib/world-audio";
+import { aimState, aimZoom } from "@/lib/world-aim";
 import {
   ITEM_LABELS,
   SKILL_LABELS,
@@ -1191,10 +1192,12 @@ function PlayerCameraRig({
   pose,
   onPose,
   mode,
+  weapon,
 }: {
   pose: React.RefObject<SelfPose>;
   onPose: (report: PoseReport) => void;
   mode: Exclude<CameraMode, "map">;
+  weapon: WeaponKind;
 }) {
   const { camera, gl } = useThree();
   const keys = useRef(new Set<string>());
@@ -1251,8 +1254,15 @@ function PlayerCameraRig({
       if (mode !== "first" || document.pointerLockElement !== canvas) return;
       const player = pose.current;
       if (!player) return;
-      player.yaw -= event.movementX * 0.0022;
-      pitch.current = THREE.MathUtils.clamp(pitch.current - event.movementY * 0.0018, -1.05, 1.05);
+      // Aiming slows the look down in step with the zoom, so a steadied shot
+      // tracks a distant target instead of skating past it.
+      const steady = 1 - aimState.amount * 0.62;
+      player.yaw -= event.movementX * 0.0022 * steady;
+      pitch.current = THREE.MathUtils.clamp(
+        pitch.current - event.movementY * 0.0018 * steady,
+        -1.05,
+        1.05,
+      );
     };
     canvas.addEventListener("pointerdown", lock);
     document.addEventListener("mousemove", look);
@@ -1333,9 +1343,15 @@ function PlayerCameraRig({
       1 - Math.exp(-(mode === "first" ? 14 : 7) * delta),
     );
     const perspective = camera as THREE.PerspectiveCamera;
-    const targetFov = (mode === "first" ? 68 : 52) + gait * (mode === "first" ? 5 : 3);
+    // Holding the left button in first person steadies the aim and pulls the
+    // view in, by an amount that suits the weapon in hand.
+    const aiming = mode === "first" && aimState.active;
+    aimState.amount = damp(aimState.amount, aiming ? 1 : 0, 9, delta);
+    const zoom = 1 - (1 - aimZoom(weapon)) * aimState.amount;
+    const targetFov =
+      ((mode === "first" ? 68 : 52) + gait * (mode === "first" ? 5 : 3)) * zoom;
     if (Math.abs(perspective.fov - targetFov) > 0.02) {
-      perspective.fov = damp(perspective.fov, targetFov, 4, delta);
+      perspective.fov = damp(perspective.fov, targetFov, 8, delta);
       perspective.updateProjectionMatrix();
     }
 
@@ -1809,7 +1825,7 @@ const WorldScene = memo(function WorldScene({
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
       {cameraMode !== "map" ? (
-        <PlayerCameraRig pose={pose} onPose={onPublish} mode={cameraMode} />
+        <PlayerCameraRig pose={pose} onPose={onPublish} mode={cameraMode} weapon={weapon ?? "mosin"} />
       ) : (
         <CameraDirector command={command} tipHeight={tipHeight} />
       )}
@@ -2456,11 +2472,17 @@ export function BitmapWorld3D({
               <span>VISITORS {shooterStats.targets}</span>
             </div>
             <div className="text-muted-foreground">
-              {weapon === "pickaxe"
-                ? "CLICK / E · SWING · MINE GOLD SEAMS"
-                : weapon === "whip"
-                  ? "CLICK / E · CRACK · CLOSE RANGE"
-                  : "CLICK / E · FIRE · R · RELOAD"}
+              {cameraMode === "first"
+                ? weapon === "pickaxe"
+                  ? "HOLD LEFT · LINE UP · RELEASE · SWING"
+                  : weapon === "whip"
+                    ? "HOLD LEFT · STEADY · RELEASE · CRACK"
+                    : "HOLD LEFT · AIM · RELEASE · FIRE · R · RELOAD"
+                : weapon === "pickaxe"
+                  ? "CLICK / E · SWING · MINE GOLD SEAMS"
+                  : weapon === "whip"
+                    ? "CLICK / E · CRACK · CLOSE RANGE"
+                    : "CLICK / E · FIRE · R · RELOAD"}
             </div>
             {cameraMode === "third" ? (
               <div className="text-muted-foreground">FIRST PERSON SHOWS THE WEAPON IN HAND</div>

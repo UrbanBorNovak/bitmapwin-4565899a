@@ -17,6 +17,7 @@ import {
 } from "@/lib/world-entities";
 import { addItem, grantXp, skillLevel } from "@/lib/world-skills";
 import { Primitive } from "./Primitive";
+import { AIM_FORGIVENESS, AIM_REACH_BONUS, aimState } from "@/lib/world-aim";
 
 /**
  * WEAPONS IN THE WORLD — carry a Mosin Nagant, a revolver, a whip or a pickaxe.
@@ -116,6 +117,8 @@ export function ShooterLayer({
       wood: clone(materials.wood, 0.85),
       steel: clone(materials.steel, 1.5),
       leather: clone(materials.leather, 0.9),
+      iron: clone(materials.iron, 1.15),
+      brass: clone(materials.brass, 1.4),
     };
   }, [materials]);
 
@@ -166,17 +169,27 @@ export function ShooterLayer({
       // fixed factor and scale it up by the same amount: identical on screen,
       // safely in front of the lens.
       const k = VIEW_PUSH;
+      // Aiming brings the piece up to the centre of the frame and stills the
+      // sway, so the sights line up with what the crosshair is on.
+      const aim = aimState.amount;
+      const still = 1 - aim * 0.85;
       held.position.copy(camera.position);
       held.quaternion.copy(camera.quaternion);
-      held.translateX(k * STRIDE * ((long ? 0.28 : 0.19) + drift));
-      held.translateY(k * STRIDE * (-(long ? 0.17 : 0.1) + breath - kick * 0.05));
-      held.translateZ(k * STRIDE * (-(long ? 0.4 : 0.32) + kick * 0.16));
+      const restX = (long ? 0.28 : 0.19) + drift * still;
+      const restY = -(long ? 0.17 : 0.1) + breath * still - kick * 0.05;
+      const restZ = -(long ? 0.4 : 0.32) + kick * 0.16;
+      const sightX = long ? 0.012 : 0.028;
+      const sightY = long ? -0.055 : -0.05;
+      const sightZ = -(long ? 0.58 : 0.46) + kick * 0.2;
+      held.translateX(k * STRIDE * THREE.MathUtils.lerp(restX, sightX, aim));
+      held.translateY(k * STRIDE * THREE.MathUtils.lerp(restY, sightY, aim));
+      held.translateZ(k * STRIDE * THREE.MathUtils.lerp(restZ, sightZ, aim));
       // aim the piece slightly across the view so the barrel reads as held,
-      // not floating dead-centre
-      held.rotateY(long ? 0.1 : 0.14);
-      held.rotateZ(long ? -0.04 : -0.07);
+      // not floating dead-centre — squared up when aimed
+      held.rotateY(THREE.MathUtils.lerp(long ? 0.1 : 0.14, 0, aim));
+      held.rotateZ(THREE.MathUtils.lerp(long ? -0.04 : -0.07, 0, aim));
       held.rotateX(kick * (weapon === "whip" ? -0.3 : 0.22) - 0.03);
-      held.scale.setScalar(k * (long ? 0.5 : 0.5));
+      held.scale.setScalar(k * 0.5 * (1 + aim * 0.08));
 
     }
 
@@ -223,7 +236,9 @@ export function ShooterLayer({
     recoil.current = 1;
     setLash(1);
 
-    const range = STRIDE * spec.reachStrides;
+    const aimed = firstPerson && aimState.amount > 0.6;
+    const range = STRIDE * spec.reachStrides * (aimed ? AIM_REACH_BONUS : 1);
+    const forgive = aimed ? AIM_FORGIVENESS : 1;
     const origin = new THREE.Vector3();
     const direction = new THREE.Vector3();
     camera.getWorldPosition(origin);
@@ -235,7 +250,7 @@ export function ShooterLayer({
     for (const peer of cursorsRef.current) {
       if (peer.hp <= 0) continue;
       const center = new THREE.Vector3(peer.x, STRIDE * 1.1, peer.z);
-      const sphere = new THREE.Sphere(center, STRIDE * (weapon === "whip" ? 1.3 : 0.85));
+      const sphere = new THREE.Sphere(center, STRIDE * (weapon === "whip" ? 1.3 : 0.85) * forgive);
       if (!ray.intersectSphere(sphere, hit)) continue;
       const distance = origin.distanceTo(hit);
       if (distance > range) continue;
@@ -247,7 +262,7 @@ export function ShooterLayer({
     for (const beast of liveBeasts()) {
       if (beast.deadUntil || beast.hp <= 0) continue;
       const center = new THREE.Vector3(beast.x, beast.bodyY, beast.z);
-      const sphere = new THREE.Sphere(center, Math.max(beast.bodyRadius, STRIDE * 0.12));
+      const sphere = new THREE.Sphere(center, Math.max(beast.bodyRadius, STRIDE * 0.12) * forgive);
       if (!ray.intersectSphere(sphere, hit)) continue;
       const distance = origin.distanceTo(hit);
       if (distance > range) continue;
@@ -383,7 +398,7 @@ export function ShooterLayer({
         ? `SPLASH HIT ${caught.length} VISITORS`
         : `HIT ${best.peer.handle}`,
     );
-  }, [active, ammo, camera, flashNote, onShootPeer, pose, reloading, spec, weapon]);
+  }, [active, ammo, camera, firstPerson, flashNote, onShootPeer, pose, reloading, spec, weapon]);
 
 
 
@@ -394,7 +409,21 @@ export function ShooterLayer({
     const onDown = (event: PointerEvent) => {
       if (event.button !== 0) return;
       unlockAudio();
+      if (firstPerson) {
+        // Hold to bring the sights up; the shot leaves on release.
+        aimState.active = true;
+        return;
+      }
       fire();
+    };
+    const onUp = (event: PointerEvent) => {
+      if (event.button !== 0) return;
+      if (!aimState.active) return;
+      aimState.active = false;
+      if (firstPerson) fire();
+    };
+    const onLeave = () => {
+      aimState.active = false;
     };
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
@@ -410,12 +439,17 @@ export function ShooterLayer({
       }
     };
     element.addEventListener("pointerdown", onDown);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("blur", onLeave);
     window.addEventListener("keydown", onKey);
     return () => {
       element.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("blur", onLeave);
       window.removeEventListener("keydown", onKey);
+      aimState.active = false;
     };
-  }, [active, fire, gl, reload]);
+  }, [active, fire, firstPerson, gl, reload]);
 
   useEffect(() => {
     if (!active || spec.magazine === 0) return;
