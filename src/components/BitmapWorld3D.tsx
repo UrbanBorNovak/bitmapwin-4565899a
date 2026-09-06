@@ -435,15 +435,56 @@ const SelectedBlock = memo(function SelectedBlock({
   bitcoin: string;
 }) {
   const blockHeight = districtHeight(height);
+  const groupRef = useRef<THREE.Group>(null);
+  const auraRef = useRef<THREE.MeshBasicMaterial>(null);
+  const coreRef = useRef<THREE.MeshBasicMaterial>(null);
+
+  useFrame(({ clock }) => {
+    const pulse = (Math.sin(clock.elapsedTime * 3.5) + 1) / 2;
+    if (auraRef.current) auraRef.current.opacity = 0.18 + pulse * 0.22;
+    if (coreRef.current) coreRef.current.opacity = 0.55 + pulse * 0.35;
+  });
+
+  const position: [number, number, number] = [
+    worldX(height % GRID),
+    blockHeight / 2 + 0.001,
+    worldZ(Math.floor(height / GRID)),
+  ];
+
   return (
-    <mesh
-      position={[worldX(height % GRID), blockHeight / 2 + 0.001, worldZ(Math.floor(height / GRID))]}
-      scale={[CELL * 1.35, blockHeight + 0.008, CELL * 1.35]}
-      raycast={noRaycast}
-    >
-      <boxGeometry args={[1, 1, 1]} />
-      <meshBasicMaterial color={bitcoin} wireframe />
-    </mesh>
+    <group ref={groupRef} position={position} raycast={noRaycast}>
+      {/* outer glow aura */}
+      <mesh scale={[CELL * 2.2, blockHeight + 0.04, CELL * 2.2]} raycast={noRaycast}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshBasicMaterial
+          ref={auraRef}
+          color={bitcoin}
+          transparent
+          opacity={0.28}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      {/* inner solid glow */}
+      <mesh scale={[CELL * 1.25, blockHeight + 0.012, CELL * 1.25]} raycast={noRaycast}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshBasicMaterial
+          ref={coreRef}
+          color={bitcoin}
+          transparent
+          opacity={0.72}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      {/* bright wireframe outline */}
+      <mesh scale={[CELL * 1.45, blockHeight + 0.018, CELL * 1.45]} raycast={noRaycast}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshBasicMaterial color={bitcoin} wireframe transparent opacity={0.95} />
+      </mesh>
+    </group>
   );
 });
 
