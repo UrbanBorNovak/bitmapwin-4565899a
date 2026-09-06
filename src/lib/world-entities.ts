@@ -75,11 +75,28 @@ export function worldEntitiesVersion() {
   return version;
 }
 
+/**
+ * Each population — desert wildlife, roaming Punks — hands over its own live
+ * array under a name, and the combined list is what weapons hit.
+ */
+const beastGroups = new Map<string, BeastEntity[]>();
+
+function rebuildBeasts() {
+  beasts.length = 0;
+  for (const list of beastGroups.values()) beasts.push(...list);
+}
+
+export function registerBeastGroup(source: string, list: BeastEntity[]) {
+  if (list.length) beastGroups.set(source, list);
+  else beastGroups.delete(source);
+  rebuildBeasts();
+}
+
 /** The desert hands over its live arrays; the objects themselves stay mutable. */
 export function registerBeasts(list: BeastEntity[]) {
-  beasts.length = 0;
-  beasts.push(...list);
+  registerBeastGroup("desert", list);
 }
+
 
 export function registerVeins(list: OreVein[]) {
   veins.length = 0;
