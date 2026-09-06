@@ -2403,7 +2403,7 @@ export function BitmapWorld3D({
                 {readout.airborne ? " · JUMPING" : ""}
               </span>
               <span className="text-muted-foreground">
-                WASD / ARROWS · SHIFT SPRINT · SPACE JUMP ·{" "}
+                W · S WALK · A · D TURN · Q · E SIDESTEP · SHIFT SPRINT · SPACE JUMP ·{" "}
                 {cameraMode === "first"
                   ? "CLICK WORLD FOR MOUSE LOOK · ESC RELEASE"
                   : "CLICK OR TAP TO WALK"}{" "}
