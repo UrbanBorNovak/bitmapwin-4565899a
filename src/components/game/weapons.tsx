@@ -323,11 +323,11 @@ export function WeaponModel({
     const swing = lash;
     return (
       <group
-        position={[-0.09 * u, -0.12 * u, 0.12 * u]}
+        position={[0, -0.05 * u, 0.1 * u]}
         rotation={[-0.2 + swing * 0.8, 0.24, -0.34 - swing * 0.5]}
       >
         <Suspense fallback={<PickStandIn u={u} materials={materials} />}>
-          <OnChainWeapon url={PICK_URL} u={u} lengthStrides={0.5} forwardAxis="z" />
+          <OnChainWeapon url={PICK_URL} u={u} lengthStrides={0.75} forwardAxis="z" />
         </Suspense>
         {flash ? <Muzzle u={u} z={-0.86 * u} size={0.05} color={flashColor} /> : null}
       </group>
@@ -468,7 +468,7 @@ function OnChainWeapon({
     const center = bounds.getCenter(new THREE.Vector3());
     const longest = Math.max(size.x, size.y, size.z, 0.0001);
     // Blade runs a little over one stride from grip to tip.
-    const scale = (lengthStrides * u) / (forwardAxis ? size[forwardAxis] || longest : longest);
+    const scale = (lengthStrides * u) / longest;
     // The model's own long axis becomes the forward (-Z) direction, with the
     // low end of that axis (the grip) sitting at the origin like every other
     // weapon here.
