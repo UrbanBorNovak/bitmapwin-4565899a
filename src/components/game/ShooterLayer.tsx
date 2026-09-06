@@ -167,15 +167,15 @@ export function ShooterLayer({
       const k = VIEW_PUSH;
       held.position.copy(camera.position);
       held.quaternion.copy(camera.quaternion);
-      held.translateX(k * STRIDE * ((long ? 0.28 : 0.15) + drift));
-      held.translateY(k * STRIDE * (-(long ? 0.17 : 0.04) + breath - kick * 0.05));
+      held.translateX(k * STRIDE * ((long ? 0.28 : 0.19) + drift));
+      held.translateY(k * STRIDE * (-(long ? 0.17 : 0.1) + breath - kick * 0.05));
       held.translateZ(k * STRIDE * (-(long ? 0.4 : 0.32) + kick * 0.16));
       // aim the piece slightly across the view so the barrel reads as held,
       // not floating dead-centre
       held.rotateY(long ? 0.1 : 0.14);
       held.rotateZ(long ? -0.04 : -0.07);
       held.rotateX(kick * (weapon === "whip" ? -0.3 : 0.22) - 0.03);
-      held.scale.setScalar(k * (long ? 0.5 : 0.8));
+      held.scale.setScalar(k * (long ? 0.5 : 0.5));
 
     }
 
