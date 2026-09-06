@@ -406,8 +406,9 @@ export function ShooterLayer({
   useEffect(() => {
     if (!active) return;
     const element = gl.domElement;
+    // Hold the right button to keep the sights up for as long as it is down;
+    // the left button fires at any time, aimed or not, without dropping aim.
     const onDown = (event: PointerEvent) => {
-      // Right button steadies the sights; left button always fires.
       if (event.button === 2) {
         if (firstPerson) {
           event.preventDefault();
@@ -417,11 +418,16 @@ export function ShooterLayer({
       }
       if (event.button !== 0) return;
       unlockAudio();
+      // a left click while the right button is still held keeps aiming
+      if (firstPerson && (event.buttons & 2) !== 0) aimState.active = true;
       fire();
     };
     const onUp = (event: PointerEvent) => {
-      if (event.button !== 2) return;
-      aimState.active = false;
+      if (event.button === 2 || (event.buttons & 2) === 0) aimState.active = false;
+    };
+    // keep the sights honest if the button is released outside the canvas
+    const onMove = (event: PointerEvent) => {
+      if (aimState.active && (event.buttons & 2) === 0) aimState.active = false;
     };
     const onLeave = () => {
       aimState.active = false;
@@ -441,15 +447,30 @@ export function ShooterLayer({
         fire();
       }
     };
+    // right button is caught on the window so HUD panels over the canvas
+    // never swallow the hold
+    const onWindowDown = (event: PointerEvent) => {
+      if (event.button !== 2 || !firstPerson) return;
+      event.preventDefault();
+      aimState.active = true;
+    };
     element.addEventListener("pointerdown", onDown);
     element.addEventListener("contextmenu", onContext);
+    window.addEventListener("pointerdown", onWindowDown, true);
+    window.addEventListener("contextmenu", onContext);
     window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointercancel", onLeave);
     window.addEventListener("blur", onLeave);
     window.addEventListener("keydown", onKey);
     return () => {
       element.removeEventListener("pointerdown", onDown);
       element.removeEventListener("contextmenu", onContext);
+      window.removeEventListener("pointerdown", onWindowDown, true);
+      window.removeEventListener("contextmenu", onContext);
       window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointercancel", onLeave);
       window.removeEventListener("blur", onLeave);
       window.removeEventListener("keydown", onKey);
       aimState.active = false;
