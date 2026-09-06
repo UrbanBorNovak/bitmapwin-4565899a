@@ -2592,6 +2592,10 @@ export function BitmapWorld3D({
               powerPreference: "high-performance",
               stencil: false,
               depth: true,
+              // The world is tiny in world units (one BITMAP is 0.1 across) and
+              // the camera sees from 0.01 out to 350, so plain depth precision
+              // runs out and surfaces on models tear as you move past them.
+              logarithmicDepthBuffer: true,
               // Filmic response: highlights on sand, water and orange tiles roll
               // off instead of clipping to flat white.
               toneMapping: THREE.ACESFilmicToneMapping,
