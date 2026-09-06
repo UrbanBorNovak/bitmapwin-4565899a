@@ -13,6 +13,7 @@ import { formatSats } from "@/lib/trades";
 import { useLiveOffers } from "@/lib/use-live-offers";
 import { TrendingParcels } from "@/components/TrendingParcels";
 import { CLUBS, inClub, type ClubId } from "@/lib/clubs";
+import { MyBitmapsPanel } from "@/components/MyBitmapsPanel";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapMarketChart } from "@/components/BitmapMarketChart";
 import { TrendExplorer } from "@/components/TrendExplorer";
@@ -255,6 +256,11 @@ function Marketplace() {
         </aside>
 
         <section className="lg:col-span-9">
+
+      <div className="mb-6">
+        <MyBitmapsPanel />
+      </div>
+
 
       {registry.isPending ? (
         <p className="mt-10 border border-border p-10 font-mono text-sm text-muted-foreground">

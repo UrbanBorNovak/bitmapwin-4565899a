@@ -113,3 +113,25 @@ export const inscriptionOffersQuery = (ids: string[]) =>
     queryFn: () => fetchOffersForInscriptions(ids),
     staleTime: 30_000,
   });
+
+/** Every offer signed by one seller address — powers the seller console. */
+export async function fetchSellerOffers(address: string) {
+  if (!address) return [];
+  const { data, error } = await supabase
+    .from("offers")
+    .select(
+      "id, psbt_base64, bitmap_height, inscription_id, outpoint, seller_address, price_sats, status, created_at",
+    )
+    .ilike("seller_address", address)
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  return (data ?? []).map((row) => toOffer(row as OfferRow));
+}
+
+export const sellerOffersQuery = (address: string) =>
+  queryOptions({
+    queryKey: ["offers", "seller", address.toLowerCase()],
+    queryFn: () => fetchSellerOffers(address),
+    staleTime: 20_000,
+  });

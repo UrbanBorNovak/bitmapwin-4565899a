@@ -25,6 +25,7 @@ import { WalletConnect } from "@/components/WalletConnect";
 import { WalletBids } from "@/components/WalletBids";
 import { DistrictManager } from "@/components/DistrictManager";
 import { QuickListForm } from "@/components/QuickListForm";
+import { MyBitmapsPanel } from "@/components/MyBitmapsPanel";
 import { LeaseEarnings } from "@/components/leases/LeaseEarnings";
 import { CoinWallet } from "@/components/coins/CoinWallet";
 import { useBidInbox } from "@/lib/use-bid-inbox";
@@ -307,6 +308,10 @@ function WalletPage() {
             </section>
           )}
 
+
+          <div className="mt-10">
+            <MyBitmapsPanel />
+          </div>
 
           <section id="list" className="mt-10 scroll-mt-24 border border-border">
             <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border p-5">
