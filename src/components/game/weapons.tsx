@@ -370,7 +370,21 @@ export function WeaponModel({
     );
   }
 
+  if (kind === "sword") {
+    // The real on-chain blade, swung from the grip. A plain steel stand-in
+    // holds the pose while the inscription streams in.
+    return (
+      <group rotation={[lash * 0.5, 0, -lash * 1.15]}>
+        <Suspense fallback={<SwordStandIn u={u} materials={materials} />}>
+          <OnChainSword u={u} />
+        </Suspense>
+        {flash ? <Muzzle u={u} z={-1.05 * u} size={0.04} color={flashColor} /> : null}
+      </group>
+    );
+  }
+
   // whip — braided leather on a bound handle, straightening as it cracks
+
   const segments = 12;
 
   return (
