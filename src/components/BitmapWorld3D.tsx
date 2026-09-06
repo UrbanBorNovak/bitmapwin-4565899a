@@ -1752,6 +1752,7 @@ const WorldScene = memo(function WorldScene({
   onRunning,
   weapon,
   onShootPeer,
+  onCastHeal,
   onBite,
   onShooterStats,
   driving,
@@ -1786,6 +1787,7 @@ const WorldScene = memo(function WorldScene({
   onRunning: (running: RunningExtender[]) => void;
   weapon: WeaponKind | null;
   onShootPeer: (id: string) => void;
+  onCastHeal: (amount: number) => void;
   onBite: (damage: number, label: string) => void;
   onShooterStats: (stats: ShooterStats) => void;
   driving: boolean;
@@ -1886,11 +1888,12 @@ const WorldScene = memo(function WorldScene({
       <ShooterLayer
         active={weapon !== null && cameraMode !== "map"}
         firstPerson={cameraMode === "first"}
-        weapon={weapon ?? "mosin"}
+        weapon={weapon ?? "minigun"}
         pose={pose}
         cursors={cursors}
         bitcoin={colors.bitcoin}
         onShootPeer={onShootPeer}
+        onCastHeal={onCastHeal}
         onStats={onShooterStats}
       />
 
@@ -1944,7 +1947,7 @@ const WorldScene = memo(function WorldScene({
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
       {cameraMode !== "map" ? (
-        <PlayerCameraRig pose={pose} onPose={onPublish} mode={cameraMode} weapon={weapon ?? "mosin"} />
+        <PlayerCameraRig pose={pose} onPose={onPublish} mode={cameraMode} weapon={weapon ?? "minigun"} />
       ) : (
         <CameraDirector command={command} tipHeight={tipHeight} />
       )}
@@ -2004,9 +2007,9 @@ export function BitmapWorld3D({
   }, []);
 
   const [shooterStats, setShooterStats] = useState<ShooterStats>({
-    weapon: "mosin",
-    ammo: WEAPONS.mosin.magazine,
-    magazine: WEAPONS.mosin.magazine,
+    weapon: "minigun",
+    ammo: WEAPONS.minigun.magazine,
+    magazine: WEAPONS.minigun.magazine,
     reloading: false,
     score: 0,
     kills: 0,
@@ -2137,8 +2140,14 @@ export function BitmapWorld3D({
     respawnNonce,
     respawn,
     hurt,
+    heal,
   } = useMapCursors();
-  const party = useMapParty(selfId, handle);
+  const healRef = useRef<(amount: number) => void>(() => {});
+  healRef.current = heal;
+  const party = useMapParty(selfId, handle, true, (amount, from) => {
+    healRef.current(amount);
+    setRespawnNote(`${from} HEALED THE PARTY · +${amount} HP`);
+  });
   const [chatMode, setChatMode] = useState<"world" | "party">("world");
 
   const pose = useRef<SelfPose>(createPlayerState(0, CELL, 0));
@@ -2679,6 +2688,7 @@ export function BitmapWorld3D({
               onRunning={setRunning}
               weapon={weapon}
               onShootPeer={attack}
+              onCastHeal={castHeal}
               onBite={takeBite}
               onShooterStats={handleShooterStats}
               driving={driving}
