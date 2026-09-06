@@ -33,11 +33,14 @@ import { growthLabel, terraform, terraformAt } from "@/lib/world-terraform";
 
 
 import {
+  blockedAt,
   build as buildStructure,
   buildCamp,
   CAMP_RECIPE,
   costLabel,
+  damageStructure,
   recipeFor,
+  structureInReach,
   STRUCTURES,
   type StructureId,
 } from "@/lib/world-build";
@@ -79,6 +82,7 @@ import {
   damp,
   MOVE,
   placePlayer,
+  setMoveBlocker,
   stepPlayer,
   type MoveIntent,
   type PlayerState,
@@ -2117,6 +2121,23 @@ export function BitmapWorld3D({
       }
     }
     if (!best) {
+      // Nobody in range: swing at whatever is built in front of you instead.
+      const target = structureInReach(me.x, me.z, ATTACK_RANGE * 0.5);
+      if (target) {
+        const result = damageStructure(target.key, ATTACK_DAMAGE);
+        setAttackCooldownUntil(now + ATTACK_COOLDOWN_MS);
+        const note = result
+          ? result.destroyed
+            ? `${result.name} DESTROYED`
+            : `${result.name} ${result.hp}/${result.max}`
+          : "NOTHING TO HIT";
+        setAttackTarget(note);
+        window.setTimeout(
+          () => setAttackTarget((current) => (current === note ? null : current)),
+          1200,
+        );
+        return;
+      }
       setAttackTarget("NO TARGET IN RANGE");
       window.setTimeout(
         () => setAttackTarget((current) => (current === "NO TARGET IN RANGE" ? null : current)),
