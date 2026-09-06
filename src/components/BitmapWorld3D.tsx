@@ -1895,9 +1895,10 @@ const WorldScene = memo(function WorldScene({
       <SelfBeacon pose={pose} bitcoin={colors.bitcoin} wide={cameraMode === "map"} />
       {cameraMode !== "map" && (driving || vehicle.placed) ? (
         <Suspense fallback={null}>
-          <Cybertruck unit={AVATAR_U} pose={pose} driving={driving} />
+          <RideModel key={ride.id} unit={AVATAR_U} pose={pose} driving={driving} ride={ride} />
         </Suspense>
       ) : null}
+
       {cameraMode === "third" && !driving ? (
         <SelfAvatar
           pose={pose}
