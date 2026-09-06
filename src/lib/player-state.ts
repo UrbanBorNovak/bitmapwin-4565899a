@@ -167,7 +167,17 @@ export type MoveIntent = {
   speedScale?: number;
   /** multiplier on the keyboard turn rate */
   turnScale?: number;
+  /**
+   * Flight: -1 sink … 1 climb. When present, gravity is off and altitude is
+   * held instead — this is how the flying ride stays in the air.
+   */
+  fly?: number;
+  /** climb rate in world units per second while flying */
+  climbRate?: number;
+  /** altitude held while flying with no climb input */
+  cruise?: number;
 };
+
 
 /**
  * Advance one player one frame from an intent plus an optional walk target.
