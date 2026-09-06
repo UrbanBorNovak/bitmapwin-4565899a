@@ -740,12 +740,16 @@ const Critters = memo(function Critters({
           critter.z = player.z + (dz / away) * standoff;
         }
         // Only something that wandered right out of sight is brought back in.
+        // A predator is put back much further out and given a fresh cooldown, so
+        // running away really does shake it off instead of respawning it on you.
         if (away > reach) {
           const angle = critter.seed + now / 6000;
-          const ring = unit * (9 + (index % 5) * 5);
+          const ring = unit * ((species.hostile ? 22 : 9) + (index % 5) * 5);
           critter.x = player.x + Math.cos(angle) * ring;
           critter.z = player.z + Math.sin(angle) * ring;
+          if (species.hostile) critter.lastBite = now;
         }
+
       }
 
 
