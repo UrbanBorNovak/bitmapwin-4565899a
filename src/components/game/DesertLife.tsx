@@ -633,6 +633,8 @@ const Critters = memo(function Critters({
 
 
   // The weapon layer strikes these exact objects.
+  const paceRef = useRef({ x: 0, z: 0, at: 0 });
+
   useEffect(() => {
     registerBeasts(state.current);
     return () => registerBeasts([]);
@@ -712,7 +714,6 @@ const Critters = memo(function Critters({
           // Close enough to strike: bite, on its own cooldown. Outrunning it
           // (sprinting, or behind the wheel) breaks the bite — you can always
           // escape rather than being chewed on while trying to leave.
-          const pace = Math.hypot(player.vx, player.vz);
           const outrunning = pace > speed * 1.15;
           if (
             !outrunning &&
