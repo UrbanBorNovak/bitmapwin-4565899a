@@ -1,14 +1,25 @@
 /**
- * DESERT BUILDING — turn what you gather into structures you can stand next to.
+ * DESERT BUILDING — turn what you gather into structures everyone can see.
  *
- * Hides, fangs and gold nuggets pulled out of the desert are the materials for
- * a small set of voxel structures. Placements live in the visitor's own browser
- * alongside their skills: a personal play record, never chain state and never
- * presented as on-chain ownership of land.
+ * Hides, fangs and gold nuggets pulled out of the desert are the materials for a
+ * small set of voxel structures. Placements are part of the mutable game world:
+ * the backend holds them per world chunk, so a camp raised on open sand is still
+ * standing there for the next visitor. Signed-out visitors still build, but
+ * their structures stay in their own browser and are marked LOCAL.
+ *
+ * Structures also stamp their tile as occupied on the world grid, which is what
+ * makes navigation route around them instead of through them.
  */
 
 import { useSyncExternalStore } from "react";
 import { ITEM_LABELS, spendItems, type ItemId } from "./world-skills";
+import { colAt, rowAt } from "./player-state";
+import { TILE, chunkOfTile, heightOfTile, setTiles } from "./world-grid";
+import {
+  listWorldStructures,
+  placeWorldStructures,
+  removeWorldStructure,
+} from "./world-structures.functions";
 
 export type StructureId = "camp-fire" | "hide-tent" | "bone-totem" | "gold-obelisk" | "watchtower";
 
@@ -59,14 +70,27 @@ export type PlacedStructure = {
   z: number;
   yaw: number;
   at: number;
+  /** backend row id — absent while the structure is only local */
+  rowId?: string;
+  /** wallet of the builder, when they have one linked */
+  builder?: string | null;
+  /** true while this structure exists only in this browser */
+  local?: boolean;
 };
 
 const STORE_KEY = "bitmapwin:builds";
-const MAX_BUILDS = 120;
+const MAX_BUILDS = 400;
 
-let builds: PlacedStructure[] = [];
+/** Local (unsynced) builds and shared builds pulled from the backend. */
+let localBuilds: PlacedStructure[] = [];
+let shared = new Map<string, PlacedStructure>();
+let view: PlacedStructure[] = [];
 let hydrated = false;
 const listeners = new Set<() => void>();
+const syncedChunks = new Set<string>();
+
+const isStructureId = (value: unknown): value is StructureId =>
+  STRUCTURES.some((recipe) => recipe.id === value);
 
 function hydrate() {
   if (hydrated || typeof window === "undefined") return;
@@ -76,30 +100,48 @@ function hydrate() {
     if (raw) {
       const parsed = JSON.parse(raw) as PlacedStructure[];
       if (Array.isArray(parsed)) {
-        builds = parsed
+        localBuilds = parsed
           .filter(
             (item) =>
-              item &&
-              typeof item.x === "number" &&
-              typeof item.z === "number" &&
-              STRUCTURES.some((recipe) => recipe.id === item.id),
+              item && typeof item.x === "number" && typeof item.z === "number" && isStructureId(item.id),
           )
+          .map((item) => ({ ...item, local: true }))
           .slice(-MAX_BUILDS);
       }
     }
   } catch {
-    builds = [];
+    localBuilds = [];
   }
+  recompute(false);
 }
 
-function commit() {
-  builds = builds.slice(-MAX_BUILDS);
+/** Tell the grid which tiles are taken, so paths route around what is built. */
+function stampTiles(items: PlacedStructure[]) {
+  setTiles(
+    items.map((item) => ({
+      col: colAt(item.x),
+      row: rowAt(item.z),
+      bits: TILE.OCCUPIED,
+    })),
+  );
+}
+
+function recompute(notify = true) {
+  view = [...shared.values(), ...localBuilds].slice(-MAX_BUILDS);
+  stampTiles(view);
+  // Hydration happens during render, so it must never call listeners.
+  if (notify) for (const listener of listeners) listener();
+}
+
+function persistLocal() {
   try {
-    window.localStorage.setItem(STORE_KEY, JSON.stringify(builds));
+    window.localStorage.setItem(
+      STORE_KEY,
+      JSON.stringify(localBuilds.map(({ local: _local, ...rest }) => rest)),
+    );
   } catch {
     // storage full or blocked — the session still plays, it just will not persist
   }
-  for (const listener of listeners) listener();
 }
 
 export function recipeFor(id: StructureId) {
@@ -112,6 +154,85 @@ export function costLabel(recipe: StructureRecipe) {
     .map(([item, amount]) => `${amount} ${ITEM_LABELS[item]}`)
     .join(" · ");
 }
+
+/* --------------------------------------------------------- backend syncing */
+
+function toRequest(item: PlacedStructure) {
+  const col = colAt(item.x);
+  const row = rowAt(item.z);
+  return {
+    kind: item.id,
+    chunkKey: chunkOfTile(col, row),
+    height: heightOfTile(col, row),
+    col,
+    row,
+    x: item.x,
+    z: item.z,
+    yaw: item.yaw,
+  };
+}
+
+/**
+ * Push freshly placed structures to the shared world. On success they stop
+ * being local; if the visitor is not signed in the placement simply stays local.
+ */
+async function publish(items: PlacedStructure[]) {
+  try {
+    const result = await placeWorldStructures({ data: { items: items.map(toRequest) } });
+    const rows = result?.structures ?? [];
+    if (!rows.length) return;
+    const keys = new Set(items.map((item) => item.key));
+    localBuilds = localBuilds.filter((item) => !keys.has(item.key));
+    persistLocal();
+    for (const row of rows) {
+      shared.set(row.id, {
+        key: row.id,
+        rowId: row.id,
+        id: (isStructureId(row.kind) ? row.kind : "camp-fire") as StructureId,
+        x: row.x,
+        z: row.z,
+        yaw: row.yaw,
+        at: new Date(row.created_at).getTime(),
+        builder: row.builder_address,
+      });
+      syncedChunks.add(row.chunk_key);
+    }
+    recompute();
+  } catch {
+    // not signed in, or the world write failed: the build stays in this browser
+  }
+}
+
+/**
+ * Load the shared structures for a set of world chunks. Called by the client as
+ * the player walks; each chunk is fetched once per session.
+ */
+export async function syncWorldChunks(keys: string[]) {
+  hydrate();
+  const missing = keys.filter((key) => !syncedChunks.has(key));
+  if (!missing.length) return;
+  for (const key of missing) syncedChunks.add(key);
+  try {
+    const result = await listWorldStructures({ data: { keys: missing } });
+    for (const row of result?.structures ?? []) {
+      shared.set(row.id, {
+        key: row.id,
+        rowId: row.id,
+        id: (isStructureId(row.kind) ? row.kind : "camp-fire") as StructureId,
+        x: row.x,
+        z: row.z,
+        yaw: row.yaw,
+        at: new Date(row.created_at).getTime(),
+        builder: row.builder_address,
+      });
+    }
+    recompute();
+  } catch {
+    for (const key of missing) syncedChunks.delete(key);
+  }
+}
+
+/* ------------------------------------------------------------- placement */
 
 /**
  * Spend the recipe and drop the structure at a spot. Returns null when the
@@ -129,9 +250,12 @@ export function build(id: StructureId, x: number, z: number, yaw = 0) {
     z,
     yaw,
     at: Date.now(),
+    local: true,
   };
-  builds = [...builds, placed];
-  commit();
+  localBuilds = [...localBuilds, placed];
+  persistLocal();
+  recompute();
+  void publish([placed]);
   return placed;
 }
 
@@ -157,33 +281,47 @@ export function buildCamp(x: number, z: number, yaw = 0, unit = 1) {
     { id: "watchtower", dx: spread * 1.1, dz: spread * 0.6 },
   ];
   const stamp = Date.now();
-  const placed = layout.map((part, index) => {
-    const cos = Math.cos(yaw);
-    const sin = Math.sin(yaw);
-    return {
-      key: `camp-${stamp}-${index}`,
-      id: part.id,
-      x: x + part.dx * cos - part.dz * sin,
-      z: z + part.dx * sin + part.dz * cos,
-      yaw,
-      at: stamp,
-    } satisfies PlacedStructure;
-  });
-  builds = [...builds, ...placed];
-  commit();
+  const cos = Math.cos(yaw);
+  const sin = Math.sin(yaw);
+  const placed = layout.map(
+    (part, index) =>
+      ({
+        key: `camp-${stamp}-${index}`,
+        id: part.id,
+        x: x + part.dx * cos - part.dz * sin,
+        z: z + part.dx * sin + part.dz * cos,
+        yaw,
+        at: stamp,
+        local: true,
+      }) satisfies PlacedStructure,
+  );
+  localBuilds = [...localBuilds, ...placed];
+  persistLocal();
+  recompute();
+  void publish(placed);
   return placed;
 }
 
-
 export function removeBuild(key: string) {
   hydrate();
-  builds = builds.filter((item) => item.key !== key);
-  commit();
+  const row = shared.get(key);
+  if (row) {
+    shared.delete(key);
+    recompute();
+    void removeWorldStructure({ data: { id: key } }).catch(() => {
+      shared.set(key, row);
+      recompute();
+    });
+    return;
+  }
+  localBuilds = localBuilds.filter((item) => item.key !== key);
+  persistLocal();
+  recompute();
 }
 
 export function listBuilds() {
   hydrate();
-  return builds;
+  return view;
 }
 
 function subscribe(listener: () => void) {
@@ -198,8 +336,7 @@ export function useWorldBuilds() {
   return useSyncExternalStore(
     subscribe,
     () => {
-      hydrate();
-      return builds;
+      return view;
     },
     () => empty,
   );

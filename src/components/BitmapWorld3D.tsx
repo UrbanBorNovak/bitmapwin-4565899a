@@ -26,6 +26,8 @@ import type { RunningExtender } from "@/lib/use-extender-runtimes";
 import { ShooterLayer, type ShooterStats } from "@/components/game/ShooterLayer";
 import { DesertLife } from "@/components/game/DesertLife";
 import { DesertBuilds } from "@/components/game/DesertBuilds";
+import { ChunkStreamer } from "@/components/game/ChunkStreamer";
+
 import {
   build as buildStructure,
   buildCamp,
@@ -1706,10 +1708,12 @@ const WorldScene = memo(function WorldScene({
       <LandSurface colors={colors} tipHeight={tipHeight} />
       {cameraMode !== "map" ? (
         <>
+          <ChunkStreamer pose={pose} />
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <DesertBuilds unit={AVATAR_U} />
         </>
       ) : null}
+
 
       <DistrictBlocks tipHeight={tipHeight} colors={colors} />
       <HolderColumns

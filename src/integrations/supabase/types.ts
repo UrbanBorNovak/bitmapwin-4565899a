@@ -1647,6 +1647,51 @@ export type Database = {
         }
         Relationships: []
       }
+      world_structures: {
+        Row: {
+          bitmap_height: number
+          builder_address: string | null
+          builder_user_id: string
+          chunk_key: string
+          created_at: string
+          id: string
+          kind: string
+          tile_col: number
+          tile_row: number
+          x: number
+          yaw: number
+          z: number
+        }
+        Insert: {
+          bitmap_height: number
+          builder_address?: string | null
+          builder_user_id: string
+          chunk_key: string
+          created_at?: string
+          id?: string
+          kind: string
+          tile_col: number
+          tile_row: number
+          x: number
+          yaw?: number
+          z: number
+        }
+        Update: {
+          bitmap_height?: number
+          builder_address?: string | null
+          builder_user_id?: string
+          chunk_key?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          tile_col?: number
+          tile_row?: number
+          x?: number
+          yaw?: number
+          z?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       extender_public_stats: {
@@ -1768,6 +1813,22 @@ export type Database = {
       referral_pay_override: {
         Args: { _amount: number; _ref: string; _referee_address: string }
         Returns: number
+      }
+      world_structures_in_chunks: {
+        Args: { _keys: string[] }
+        Returns: {
+          bitmap_height: number
+          builder_address: string
+          chunk_key: string
+          created_at: string
+          id: string
+          kind: string
+          tile_col: number
+          tile_row: number
+          x: number
+          yaw: number
+          z: number
+        }[]
       }
     }
     Enums: {

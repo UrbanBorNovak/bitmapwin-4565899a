@@ -21,7 +21,11 @@ import {
   type OreVoxel,
 } from "@/lib/world-entities";
 import { playSfx } from "@/lib/world-audio";
+import { colAt, rowAt } from "@/lib/player-state";
+import { createFieldCache, fieldDirection } from "@/lib/world-nav";
 import { Primitive } from "./Primitive";
+
+
 
 
 
@@ -624,6 +628,9 @@ const Critters = memo(function Critters({
   );
   const bars = useRef<(THREE.Group | null)[]>([]);
   const lastSweep = useRef(0);
+  /** shared pursuit routes — one sweep serves every hostile in the pack */
+  const pursuit = useRef(createFieldCache(20));
+
 
   // The weapon layer strikes these exact objects.
   useEffect(() => {
@@ -640,6 +647,16 @@ const Critters = memo(function Critters({
       lastSweep.current = now;
       tickRespawns(now);
     }
+
+    // ONE shared route for the whole pack. Instead of every hostile solving its
+    // own path to the visitor, a single field is swept from the visitor's tile
+    // and rebuilt only when they step onto a new tile or the land changes; each
+    // creature then just reads which way to go.
+    const field =
+      player && pursuit.current
+        ? pursuit.current.get("player", { col: colAt(player.x), row: rowAt(player.z) })
+        : null;
+
     state.current.forEach((critter, index) => {
       const group = groups.current?.[index];
       if (!group) return;
@@ -663,8 +680,13 @@ const Critters = memo(function Critters({
         const dx = player.x - critter.x;
         const dz = player.z - critter.z;
         const away = Math.hypot(dx, dz);
-        const toPlayer = Math.atan2(dx, dz);
+        let toPlayer = Math.atan2(dx, dz);
         if (species.hostile && away < unit * 12) {
+          // Follow the shared field where it has an answer, otherwise head straight in.
+          if (field) {
+            const step = fieldDirection(field, colAt(critter.x), rowAt(critter.z));
+            if (step.dx !== 0 || step.dz !== 0) toPlayer = Math.atan2(step.dx, step.dz);
+          }
           // Stalk the visitor.
           const diff = ((toPlayer - critter.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
           steer = diff * Math.min(1, delta * 3);
@@ -683,6 +705,7 @@ const Critters = memo(function Critters({
           travel = speed * 1.6;
         }
       }
+
       critter.heading += steer;
       critter.x += Math.sin(critter.heading) * travel * delta;
       critter.z += Math.cos(critter.heading) * travel * delta;
