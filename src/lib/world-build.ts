@@ -82,7 +82,40 @@ export const STRUCTURES: StructureRecipe[] = [
     footprint: 0.6,
     hp: 200,
   },
+  {
+    id: "graveyard",
+    name: "GRAVEYARD",
+    blurb: "Ground consecrated for the fallen — you respawn at the nearest one.",
+    cost: { fang: 3, hide: 2 },
+    footprint: 0.55,
+    hp: 220,
+  },
 ];
+
+/** Structures that count as a settlement you can wake up in. */
+const TOWN_KINDS: StructureId[] = ["camp-fire", "hide-tent", "watchtower"];
+
+/**
+ * WHERE THE DEAD WAKE UP — nearest graveyard first, then the nearest town
+ * structure. Returns null when the desert is still empty, and the caller falls
+ * back to the 0.BITMAP genesis spawn.
+ */
+export function respawnAnchor(x: number, z: number) {
+  hydrate();
+  let grave: { item: PlacedStructure; distance: number } | null = null;
+  let town: { item: PlacedStructure; distance: number } | null = null;
+  for (const item of view) {
+    const distance = Math.hypot(item.x - x, item.z - z);
+    if (item.id === "graveyard") {
+      if (!grave || distance < grave.distance) grave = { item, distance };
+    } else if (TOWN_KINDS.includes(item.id)) {
+      if (!town || distance < town.distance) town = { item, distance };
+    }
+  }
+  const pick = grave ?? town;
+  if (!pick) return null;
+  return { kind: grave ? ("graveyard" as const) : ("town" as const), x: pick.item.x, z: pick.item.z };
+}
 
 
 export type PlacedStructure = {
