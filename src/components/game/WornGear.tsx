@@ -33,6 +33,10 @@ function WornPiece({
   offset,
   spin = 0,
   bob = 0,
+  /** extra yaw so a piece modelled sideways still faces where you look */
+  turn = 0,
+  /** rest on the piece's own base instead of its middle (hats, helmets) */
+  seatOnBase = false,
 }: {
   url: string;
   unit: number;
@@ -42,6 +46,8 @@ function WornPiece({
   offset: [number, number, number];
   spin?: number;
   bob?: number;
+  turn?: number;
+  seatOnBase?: boolean;
 }) {
   const gltf = useGLTF(url);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
