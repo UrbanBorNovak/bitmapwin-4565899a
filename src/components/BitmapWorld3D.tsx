@@ -2165,16 +2165,8 @@ export function BitmapWorld3D({
     return () => window.removeEventListener("keydown", onKey);
   }, [workLand]);
 
-  // A meal keeps mending you while its buff runs.
-  const gear = useGear();
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      tickGear();
-      const buff = gearSnapshotRegen();
-      if (buff > 0) heal(buff);
-    }, 1_000);
-    return () => window.clearInterval(timer);
-  }, [heal]);
+
+
 
 
   const toggleSound = useCallback(() => {
