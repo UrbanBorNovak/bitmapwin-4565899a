@@ -1708,7 +1708,7 @@ const WorldScene = memo(function WorldScene({
       <LandSurface colors={colors} tipHeight={tipHeight} />
       {cameraMode !== "map" ? (
         <>
-          {/*TMP*/}
+          <ChunkStreamer pose={pose} />
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <DesertBuilds unit={AVATAR_U} />
         </>
