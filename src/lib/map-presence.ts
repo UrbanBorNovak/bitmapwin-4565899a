@@ -7,6 +7,12 @@ import {
   mapVisitorId,
 } from "@/lib/map-identity";
 import { cellX, cellZ, clampPeerStep, STRIDE, type MovementState } from "@/lib/player-state";
+import {
+  COMBAT_TICK_MS,
+  MELEE_REACH_TILES,
+  createCombatResolver,
+  tileOfPosition,
+} from "@/lib/world-combat";
 
 /**
  * Live presence for the land map. Every visitor broadcasts the grid cell they are
@@ -117,6 +123,8 @@ export function useMapCursors(enabled = true) {
     if (!enabled) return;
     const peers = new Map<string, MapCursor>();
     const lastAttackByPlayer = new Map<string, number>();
+    const combat = createCombatResolver(ATTACK_COOLDOWN_MS * 0.8);
+
     let frame = 0;
     const flush = () => {
       const now = Date.now();
@@ -236,56 +244,24 @@ export function useMapCursors(enabled = true) {
             ? {
                 x: typeof lastCell.x === "number" ? lastCell.x : cellX(lastCell.col),
                 z: typeof lastCell.z === "number" ? lastCell.z : cellZ(lastCell.row),
+                handle,
               }
             : peers.get(p.to);
         if (!attacker || !target) return;
-        if (Math.hypot(attacker.x - target.x, attacker.z - target.z) > ATTACK_RANGE * 1.35) return;
-        const previousAttack = lastAttackByPlayer.get(p.from) ?? 0;
-        if (now - previousAttack < ATTACK_COOLDOWN_MS * 0.8) return;
-        lastAttackByPlayer.set(p.from, now);
-        const targetHandle = p.to === selfId ? handle : (peers.get(p.to)?.handle ?? "ANON");
-        const targetHp = p.to === selfId ? hpRef.current : (peers.get(p.to)?.hp ?? MAX_HP);
-        setCombatLog((current) =>
-          [
-            ...current,
-            {
-              id: typeof p.id === "string" ? p.id : `${p.from}-${now}`,
-              attacker: attacker.handle,
-              target: targetHandle,
-              damage,
-              knockout: targetHp - damage <= 0,
-              at: now,
-            },
-          ].slice(-40),
-        );
-        if (p.to === selfId) {
-          // We took the hit: drop our own health and tell everyone the new value.
-          const next = Math.max(0, hpRef.current - damage);
-          hpRef.current = next;
-          setHp(next);
-          setHitAt(Date.now());
-          setLastDamage(damage);
-          if (lastCell) push(lastCell);
-          if (next === 0) {
-            // Killed: start the respawn countdown, then bring us back at full health.
-            setRespawnAt(Date.now() + RESPAWN_MS);
-            if (respawnTimer) clearTimeout(respawnTimer);
-            respawnTimer = setTimeout(() => respawnRef.current(), RESPAWN_MS);
-          }
-        } else {
-          const target = peers.get(p.to);
-          if (target) {
-            peers.set(p.to, {
-              ...target,
-              hp: Math.max(0, target.hp - damage),
-              hitAt: now,
-              lastDamage: damage,
-              at: now,
-            });
-            flush();
-          }
-        }
+        // Queue the swing on the tile graph. Reach, blockers and swing rate are
+        // all judged there; the tick below decides what it actually did.
+        combat.queue({
+          id: typeof p.id === "string" ? p.id : `${p.from}-${now}`,
+          attacker: p.from,
+          target: p.to,
+          from: tileOfPosition(attacker.x, attacker.z),
+          to: tileOfPosition(target.x, target.z),
+          damage,
+          reach: MELEE_REACH_TILES,
+          at: now,
+        });
       })
+
 
       .subscribe();
 
@@ -359,40 +335,29 @@ export function useMapCursors(enabled = true) {
       if (!target || !lastCell) return;
       const selfX = typeof lastCell.x === "number" ? lastCell.x : cellX(lastCell.col);
       const selfZ = typeof lastCell.z === "number" ? lastCell.z : cellZ(lastCell.row);
-      if (Math.hypot(target.x - selfX, target.z - selfZ) > ATTACK_RANGE) return;
       const now = Date.now();
-      const previousAttack = lastAttackByPlayer.get(selfId) ?? 0;
-      if (now - previousAttack < ATTACK_COOLDOWN_MS) return;
-      lastAttackByPlayer.set(selfId, now);
       const eventId = `${selfId}-${now}`;
+      // Our own swing goes through the same tile resolver as everyone else's, so
+      // reach, walls and swing rate are judged identically on every screen.
+      const accepted = combat.queue({
+        id: eventId,
+        attacker: selfId,
+        target: targetId,
+        from: tileOfPosition(selfX, selfZ),
+        to: tileOfPosition(target.x, target.z),
+        damage: ATTACK_DAMAGE,
+        reach: MELEE_REACH_TILES,
+        at: now,
+      });
+      if (!accepted) return;
+      lastAttackByPlayer.set(selfId, now);
       void channel.send({
         type: "broadcast",
         event: "hit",
         payload: { id: eventId, from: selfId, to: targetId, damage: ATTACK_DAMAGE, at: now },
       });
-      const nextHp = Math.max(0, target.hp - ATTACK_DAMAGE);
-      peers.set(targetId, {
-        ...target,
-        hp: nextHp,
-        hitAt: now,
-        lastDamage: ATTACK_DAMAGE,
-        at: now,
-      });
-      setCombatLog((current) =>
-        [
-          ...current,
-          {
-            id: eventId,
-            attacker: handle,
-            target: target.handle,
-            damage: ATTACK_DAMAGE,
-            knockout: nextHp === 0,
-            at: now,
-          },
-        ].slice(-40),
-      );
-      flush();
     };
+
 
     // Something in the world bit us — wildlife, a fall, a trap. Same health path
     // as a peer's hit, so the rest of the world sees the new value straight away.
@@ -425,6 +390,54 @@ export function useMapCursors(enabled = true) {
       if (lastCell) push(lastCell);
     };
 
+
+    // COMBAT TICK — every swing queued since the last tick is settled here, in
+    // one pass, per target tile. Nothing about a fight is worked out per frame.
+    const ticker = setInterval(() => {
+      const now = Date.now();
+      for (const hit of combat.resolve(now)) {
+        const attackerName = peers.get(hit.strikes[0]!.attacker)?.handle ?? handle;
+        const mine = hit.target === selfId;
+        const targetPeer = peers.get(hit.target);
+        const before = mine ? hpRef.current : (targetPeer?.hp ?? MAX_HP);
+        const after = Math.max(0, before - hit.damage);
+        setCombatLog((current) =>
+          [
+            ...current,
+            {
+              id: hit.strikes[0]!.id,
+              attacker: attackerName,
+              target: mine ? handle : (targetPeer?.handle ?? "ANON"),
+              damage: hit.damage,
+              knockout: after === 0,
+              at: now,
+            },
+          ].slice(-40),
+        );
+        if (mine) {
+          hpRef.current = after;
+          setHp(after);
+          setHitAt(now);
+          setLastDamage(hit.damage);
+          if (lastCell) push(lastCell);
+          if (after === 0) {
+            setRespawnAt(now + RESPAWN_MS);
+            if (respawnTimer) clearTimeout(respawnTimer);
+            respawnTimer = setTimeout(() => respawnRef.current(), RESPAWN_MS);
+          }
+        } else if (targetPeer) {
+          peers.set(hit.target, {
+            ...targetPeer,
+            hp: after,
+            hitAt: now,
+            lastDamage: hit.damage,
+            at: now,
+          });
+          flush();
+        }
+      }
+    }, COMBAT_TICK_MS);
+
     // Health trickles back so a fight does not permanently knock anyone out.
     const regen = setInterval(() => {
       if (hpRef.current <= 0 || hpRef.current >= MAX_HP) return;
@@ -434,11 +447,14 @@ export function useMapCursors(enabled = true) {
     }, 1_000);
 
     const sweep = setInterval(flush, 2_000);
+
     return () => {
       if (timer) clearTimeout(timer);
       if (respawnTimer) clearTimeout(respawnTimer);
       clearInterval(sweep);
       clearInterval(regen);
+      clearInterval(ticker);
+      combat.reset();
       clearInterval(heartbeat);
       if (frame) cancelAnimationFrame(frame);
       sendRef.current = () => {};
