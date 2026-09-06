@@ -262,7 +262,7 @@ function CreatePage() {
       <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
         <div className="space-y-4">
           <div className="border border-bitcoin/50 bg-surface p-4">
-            <div className="label text-bitcoin">1 · THE BRIEF</div>
+            <div data-tour="create-brief" className="label text-bitcoin">1 · THE BRIEF</div>
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}

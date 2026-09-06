@@ -54,7 +54,7 @@ function ExtendPage() {
         )}
       </p>
 
-      <div className="mt-8 grid gap-3 md:grid-cols-3">
+      <div data-tour="extend-paths" className="mt-8 grid gap-3 md:grid-cols-3">
         <Choice
           glyph="01"
           title="IMPORT EXTENDER"
