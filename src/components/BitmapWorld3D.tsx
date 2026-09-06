@@ -27,6 +27,8 @@ import { ShooterLayer, type ShooterStats } from "@/components/game/ShooterLayer"
 import { DesertLife } from "@/components/game/DesertLife";
 import { DesertBuilds } from "@/components/game/DesertBuilds";
 import { ChunkStreamer } from "@/components/game/ChunkStreamer";
+import { FootTrail } from "@/components/game/FootTrail";
+
 
 import {
   build as buildStructure,
@@ -1718,6 +1720,8 @@ const WorldScene = memo(function WorldScene({
           <ChunkStreamer pose={pose} />
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <DesertBuilds unit={AVATAR_U} />
+          <FootTrail unit={AVATAR_U} pose={pose} sand={colors.bitcoin} />
+
         </>
       ) : null}
 
