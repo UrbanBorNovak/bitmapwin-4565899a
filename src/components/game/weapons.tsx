@@ -327,7 +327,7 @@ export function WeaponModel({
         rotation={[-0.2 + swing * 0.8, 0.24, -0.34 - swing * 0.5]}
       >
         <Suspense fallback={<PickStandIn u={u} materials={materials} />}>
-          <OnChainWeapon url={PICK_URL} u={u} lengthStrides={0.4} forwardAxis="z" />
+          <OnChainWeapon url={PICK_URL} u={u} lengthStrides={0.55} forwardAxis="z" />
         </Suspense>
         {flash ? <Muzzle u={u} z={-0.86 * u} size={0.05} color={flashColor} /> : null}
       </group>
@@ -475,12 +475,15 @@ function OnChainWeapon({
     const axis: "x" | "y" | "z" =
       forwardAxis ??
       (size.y >= size.x && size.y >= size.z ? "y" : size.x >= size.z ? "x" : "z");
-    const low = flip ? bounds.max[axis] : bounds.min[axis];
+    // For a model whose long axis already runs along Z, the far (tip) end is
+    // the one that should point away from the hand, so the grip is the high end.
+    const grip = axis === "z" ? !flip : flip;
+    const low = grip ? bounds.max[axis] : bounds.min[axis];
     return { scale, center, axis, low };
   }, [scene, u, lengthStrides, flip, forwardAxis]);
 
   const spin: [number, number, number] =
-    fit.axis === "y" ? [-Math.PI / 2, 0, 0] : fit.axis === "x" ? [0, -Math.PI / 2, 0] : [0, Math.PI, 0];
+    fit.axis === "y" ? [-Math.PI / 2, 0, 0] : fit.axis === "x" ? [0, -Math.PI / 2, 0] : [0, 0, 0];
   // centre the two short axes, and start the long axis at the grip
   const offset = new THREE.Vector3(-fit.center.x, -fit.center.y, -fit.center.z);
   offset[fit.axis] = -fit.low;
