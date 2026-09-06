@@ -863,11 +863,17 @@ function AvatarSkin({
 function HealthBar({ hp, color }: { hp: number; color: string }) {
   const pct = Math.max(0, Math.min(100, (hp / MAX_HP) * 100));
   return (
-    <span className="relative block h-[4px] w-[52px] border border-border bg-background/90">
+    <span className="relative block h-[9px] w-[104px] border border-border bg-background/90 shadow-md">
       <span
-        className="absolute inset-y-0 left-0"
+        className="absolute inset-y-0 left-0 transition-[width] duration-200"
         style={{ width: `${pct}%`, background: pct <= 25 ? "var(--bitcoin)" : color }}
       />
+      <span
+        data-no-translate
+        className="absolute inset-0 flex items-center justify-center font-mono text-[7px] leading-none tabular-nums text-foreground mix-blend-difference"
+      >
+        {Math.max(0, Math.round(hp))}
+      </span>
     </span>
   );
 }
@@ -891,15 +897,15 @@ function AvatarLabel({
   return (
     <Html
       center
-      position={[0, AVATAR_U * 1.35, 0]}
-      distanceFactor={0.012}
+      position={[0, AVATAR_U * 1.5, 0]}
+      distanceFactor={0.02}
       style={{ pointerEvents: "none" }}
       zIndexRange={[10, 0]}
     >
-      <div className="flex flex-col items-center gap-[2px]">
+      <div className="flex flex-col items-center gap-[3px]">
         {say ? (
           <span
-            className="max-w-[160px] whitespace-pre-wrap break-words border bg-background/95 px-2 py-1 font-mono text-[9px] text-foreground shadow-md"
+            className="max-w-[200px] whitespace-pre-wrap break-words border bg-background/95 px-2 py-1 font-mono text-[11px] text-foreground shadow-md"
             style={{ borderColor: color }}
           >
             {say}
@@ -907,10 +913,10 @@ function AvatarLabel({
         ) : null}
         <HealthBar hp={hp} color={color} />
         {hurt ? (
-          <span className="font-mono text-[10px] font-bold text-bitcoin">-{lastDamage}</span>
+          <span className="font-mono text-[13px] font-bold text-bitcoin">-{lastDamage}</span>
         ) : null}
         <span
-          className="whitespace-nowrap border bg-background/90 px-1.5 py-0.5 font-mono text-[8px] text-foreground shadow-md"
+          className="whitespace-nowrap border bg-background/90 px-2 py-[3px] font-mono text-[12px] font-bold tracking-wide text-foreground shadow-md"
           style={{ borderColor: hurt ? "var(--bitcoin)" : "var(--color-border)" }}
         >
           {hp <= 0 ? `${handle} · DOWN` : handle}
@@ -919,6 +925,7 @@ function AvatarLabel({
     </Html>
   );
 }
+
 
 /** One spawned visitor standing on the land, smoothed between broadcasts. */
 const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCursor }) {
