@@ -66,9 +66,15 @@ function WornPiece({
     const bounds = new THREE.Box3().setFromObject(scene);
     const size = bounds.getSize(new THREE.Vector3());
     const center = bounds.getCenter(new THREE.Vector3());
-    const scale = (unit * fit) / Math.max(size.x, size.y, size.z, 0.0001);
-    return { scale, center };
-  }, [scene, unit, fit]);
+    // A hat is sized by how wide it is, not by its tallest point, so a pointed
+    // brim doesn't shrink the whole thing down to a bead.
+    const span = seatOnBase
+      ? Math.max(size.x, size.z, 0.0001)
+      : Math.max(size.x, size.y, size.z, 0.0001);
+    const scale = (unit * fit) / span;
+    const drop = seatOnBase ? bounds.min.y : center.y;
+    return { scale, center, drop };
+  }, [scene, unit, fit, seatOnBase]);
 
   useFrame(({ clock }) => {
     const player = pose.current;
@@ -83,13 +89,13 @@ function WornPiece({
       player.y + up * unit + lift,
       player.z - sin * side * unit + cos * forward * unit,
     );
-    node.rotation.y = player.yaw + (spin ? clock.elapsedTime * spin : 0);
+    node.rotation.y = player.yaw + turn + (spin ? clock.elapsedTime * spin : 0);
   });
 
   return (
     <group ref={group}>
       <group scale={fitted.scale}>
-        <group position={[-fitted.center.x, -fitted.center.y, -fitted.center.z]}>
+        <group position={[-fitted.center.x, -fitted.drop, -fitted.center.z]}>
           <Primitive object={scene} />
         </group>
       </group>
