@@ -1718,6 +1718,8 @@ const WorldScene = memo(function WorldScene({
           <ChunkStreamer pose={pose} />
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <DesertBuilds unit={AVATAR_U} />
+          <FootTrail unit={AVATAR_U} pose={pose} sand={colors.bitcoin} />
+
         </>
       ) : null}
 
