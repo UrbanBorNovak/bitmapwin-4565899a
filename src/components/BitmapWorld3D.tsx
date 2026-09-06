@@ -2106,6 +2106,8 @@ export function BitmapWorld3D({
   const pose = useRef<SelfPose>(createPlayerState(0, CELL, 0));
   /** the 3D view itself — shaken when you take a hit */
   const viewShake = useRef<HTMLDivElement>(null);
+  /** where the last respawn put you — shown briefly in the HUD */
+  const [respawnNote, setRespawnNote] = useState<string | null>(null);
   const [mySay, setMySay] = useState<string | null>(null);
   const self = useMemo(
     () => ({ handle, color, model: avatarModel, say: mySay, hp, hitAt, lastDamage }),
