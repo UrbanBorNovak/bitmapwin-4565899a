@@ -117,9 +117,27 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     reloadSfx: "reload",
     hint: "MINE GOLD VEINS · RIGHT TO LINE UP · LEFT TO SWING",
   },
+  sword: {
+    kind: "sword",
+    label: "SWORD",
+    short: "SWORD",
+    magazine: 0,
+    reloadMs: 0,
+    cooldownMs: 520,
+    reachStrides: 4.5,
+    splashStrides: 1.4,
+    damage: 34,
+    mining: false,
+    fireSfx: "slash",
+    cycleSfx: null,
+    cycleDelayMs: 0,
+    reloadSfx: "reload",
+    hint: "ON-CHAIN BLADE · RIGHT TO GUARD · LEFT TO SLASH",
+  },
 };
 
-export const WEAPON_ORDER: WeaponKind[] = ["mosin", "revolver", "whip", "pickaxe"];
+export const WEAPON_ORDER: WeaponKind[] = ["mosin", "revolver", "whip", "pickaxe", "sword"];
+
 
 
 export function useWeaponMaterials() {
