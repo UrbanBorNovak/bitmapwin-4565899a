@@ -474,7 +474,7 @@ function OnChainWeapon({
         // Some inscriptions ship a flat presentation plane behind the object.
         // It would swallow the fitting box, so it is dropped from the carry.
         const geometry = mesh.geometry as THREE.BufferGeometry | undefined;
-        const count = geometry?.attributes?.position?.count ?? 0;
+        const count = geometry?.attributes?.["position"]?.count ?? 0;
         if (geometry && count > 0 && count <= 8) {
           geometry.computeBoundingBox();
           const box = geometry.boundingBox;
