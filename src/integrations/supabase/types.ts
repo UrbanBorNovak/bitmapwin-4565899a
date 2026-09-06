@@ -1843,6 +1843,7 @@ export type Database = {
         Args: { _address: string; _user_id: string }
         Returns: boolean
       }
+      owns_wallet_address: { Args: { _address: string }; Returns: boolean }
       record_bitmap_view: {
         Args: { _address?: string; _height: number; _visitor: string }
         Returns: undefined
