@@ -2191,6 +2191,16 @@ export function BitmapWorld3D({
     pose.current.combat = hp <= 0 ? "down" : "alive";
   }, [hp]);
 
+  // A hit staggers the body for a beat, so the avatar visibly reacts to damage.
+  useEffect(() => {
+    if (!hitAt || hp <= 0 || !pose.current) return;
+    pose.current.combat = "hurt";
+    const id = window.setTimeout(() => {
+      if (pose.current && pose.current.combat === "hurt") pose.current.combat = "alive";
+    }, 420);
+    return () => window.clearTimeout(id);
+  }, [hitAt, hp]);
+
   // Countdown ticker, only while knocked out.
   const [nowTick, setNowTick] = useState(0);
   useEffect(() => {
