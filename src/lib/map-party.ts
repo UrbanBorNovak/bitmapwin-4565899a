@@ -16,13 +16,21 @@ export type PartyMessage = {
 
 type PartySnapshot = { partyId: string; leaderId: string; members: PartyMember[] };
 
-export function useMapParty(selfId: string, handle: string, enabled = true) {
+export function useMapParty(
+  selfId: string,
+  handle: string,
+  enabled = true,
+  /** called when a party member's spell heals us */
+  onHeal?: (amount: number, fromHandle: string) => void,
+) {
   const [party, setParty] = useState<PartySnapshot | null>(null);
   const [invites, setInvites] = useState<PartyInvite[]>([]);
   const [messages, setMessages] = useState<PartyMessage[]>([]);
   const partyRef = useRef<PartySnapshot | null>(null);
   partyRef.current = party;
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const healRef = useRef(onHeal);
+  healRef.current = onHeal;
 
   const send = (event: string, payload: Record<string, unknown>) => {
     const channel = channelRef.current;
@@ -139,6 +147,20 @@ export function useMapParty(selfId: string, handle: string, enabled = true) {
         partyRef.current = null;
         setParty(null);
         setMessages([]);
+      })
+      .on("broadcast", { event: "party-heal" }, ({ payload }) => {
+        const p = payload as { partyId?: string; senderId?: string; handle?: string; amount?: number };
+        const current = partyRef.current;
+        if (
+          !current ||
+          p.partyId !== current.partyId ||
+          !p.senderId ||
+          !current.members.some((member) => member.id === p.senderId) ||
+          typeof p.amount !== "number"
+        )
+          return;
+        // a spell can only ever mend, and never by more than a full bar
+        healRef.current?.(Math.max(0, Math.min(100, Math.round(p.amount))), (p.handle ?? "ANON").slice(0, 32));
       })
       .on("broadcast", { event: "party-say" }, ({ payload }) => {
         const p = payload as PartyMessage & { partyId?: string };
@@ -260,8 +282,15 @@ export function useMapParty(selfId: string, handle: string, enabled = true) {
     send("party-say", { ...message, partyId: current.partyId });
   };
 
+  /** Cast a healing spell over everyone in the party. */
+  const bless = (amount: number) => {
+    const current = partyRef.current;
+    if (!current) return;
+    send("party-heal", { partyId: current.partyId, senderId: selfId, handle, amount });
+  };
+
   return useMemo(
-    () => ({ party, invites, messages, invite, respond, kick, leave, say }),
+    () => ({ party, invites, messages, invite, respond, kick, leave, say, bless }),
     [party, invites, messages],
   );
 }
