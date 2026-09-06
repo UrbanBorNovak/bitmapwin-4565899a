@@ -9,6 +9,9 @@
 export type Sfx =
   | "shot"
   | "mosin"
+  | "minigun"
+  | "spell"
+  | "heal"
   | "bolt"
   | "revolver"
   | "cock"
@@ -235,6 +238,40 @@ export function playSfx(name: Sfx) {
         send: { node: verb, gain: 0.4 },
       });
       tone(context, out, { from: 74, to: 30, seconds: 0.55, gain: 0.12, type: "sine", delay: 0.03 });
+      break;
+    }
+    case "minigun": {
+      // One round out of a spinning cluster: a flat hard bark plus mechanism whirr.
+      burst(context, out, {
+        seconds: 0.02, gain: 0.72, type: "highpass", frequency: 2600 * vary, q: 0.5, curve: 2.6,
+        send: { node: verb, gain: 0.3 },
+      });
+      burst(context, out, {
+        seconds: 0.07, gain: 0.5, type: "bandpass", frequency: 900 * vary, q: 1,
+        send: { node: verb, gain: 0.35 },
+      });
+      tone(context, out, { from: 180 * vary, to: 60, seconds: 0.08, gain: 0.22, type: "square", attack: 0.001 });
+      tone(context, out, { from: 900, to: 1200, seconds: 0.05, gain: 0.05, type: "sawtooth" });
+      break;
+    }
+    case "spell": {
+      // An arcane bolt: a bright rising shimmer that leaves the tip and flies out.
+      tone(context, out, {
+        from: 520 * vary, to: 1500, seconds: 0.22, gain: 0.2, type: "triangle", attack: 0.004,
+        send: { node: verb, gain: 0.6 },
+      });
+      tone(context, out, { from: 1800, to: 420, seconds: 0.3, gain: 0.1, type: "sine", delay: 0.02 });
+      burst(context, out, {
+        seconds: 0.12, gain: 0.18, type: "bandpass", frequency: 3200, q: 2.4,
+        send: { node: verb, gain: 0.5 },
+      });
+      break;
+    }
+    case "heal": {
+      // A warm chord blooming outward — the sound of a party being mended.
+      tone(context, out, { from: 392, to: 523, seconds: 0.5, gain: 0.16, type: "sine", send: { node: verb, gain: 0.8 } });
+      tone(context, out, { from: 523, to: 659, seconds: 0.6, gain: 0.13, type: "sine", delay: 0.08, send: { node: verb, gain: 0.8 } });
+      tone(context, out, { from: 659, to: 784, seconds: 0.7, gain: 0.1, type: "triangle", delay: 0.16, send: { node: verb, gain: 0.9 } });
       break;
     }
     case "bolt":

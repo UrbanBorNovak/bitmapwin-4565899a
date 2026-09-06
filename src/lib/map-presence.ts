@@ -116,6 +116,7 @@ export function useMapCursors(enabled = true) {
   const attackRef = useRef<(targetId: string) => void>(() => {});
   const respawnRef = useRef<() => void>(() => {});
   const hurtRef = useRef<(damage: number) => void>(() => {});
+  const healRef = useRef<(amount: number) => void>(() => {});
   const modelRef = useRef(model);
   modelRef.current = model;
 
@@ -376,6 +377,16 @@ export function useMapCursors(enabled = true) {
       }
     };
 
+    // A healing spell mends us. Knocked-out visitors have to wait for respawn.
+    healRef.current = (amount) => {
+      if (hpRef.current <= 0 || amount <= 0) return;
+      const next = Math.min(MAX_HP, hpRef.current + Math.round(amount));
+      if (next === hpRef.current) return;
+      hpRef.current = next;
+      setHp(next);
+      if (lastCell) push(lastCell);
+    };
+
     // Respawn: come back at full health and tell the world we are standing again.
     let respawnTimer: ReturnType<typeof setTimeout> | null = null;
     respawnRef.current = () => {
@@ -462,6 +473,7 @@ export function useMapCursors(enabled = true) {
       attackRef.current = () => {};
       respawnRef.current = () => {};
       hurtRef.current = () => {};
+      healRef.current = () => {};
       push(null); // despawn: tell peers this avatar left the world
       void supabase.removeChannel(channel);
     };
@@ -486,6 +498,7 @@ export function useMapCursors(enabled = true) {
     respawn: () => respawnRef.current(),
     attack: (targetId: string) => attackRef.current(targetId),
     hurt: (damage: number) => hurtRef.current(damage),
+    heal: (amount: number) => healRef.current(amount),
     say: (body: string) => sayRef.current(body),
     publish: (pose: PoseReport | null) => sendRef.current(pose),
   };

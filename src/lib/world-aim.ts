@@ -19,10 +19,12 @@ export const aimState = {
 /** How far each weapon pulls the view in when aimed. */
 export function aimZoom(weapon: WeaponKind): number {
   switch (weapon) {
-    case "mosin":
-      return 0.46; // long iron sights — the tightest look
+    case "minigun":
+      return 0.6; // heavy piece, braced rather than sighted
     case "revolver":
       return 0.68;
+    case "wand":
+      return 0.78;
     case "whip":
       return 0.84; // just a steadier stance
     default:

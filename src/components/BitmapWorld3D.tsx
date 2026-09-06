@@ -1752,6 +1752,7 @@ const WorldScene = memo(function WorldScene({
   onRunning,
   weapon,
   onShootPeer,
+  onCastHeal,
   onBite,
   onShooterStats,
   driving,
@@ -1786,6 +1787,7 @@ const WorldScene = memo(function WorldScene({
   onRunning: (running: RunningExtender[]) => void;
   weapon: WeaponKind | null;
   onShootPeer: (id: string) => void;
+  onCastHeal: (amount: number) => void;
   onBite: (damage: number, label: string) => void;
   onShooterStats: (stats: ShooterStats) => void;
   driving: boolean;
@@ -1886,11 +1888,12 @@ const WorldScene = memo(function WorldScene({
       <ShooterLayer
         active={weapon !== null && cameraMode !== "map"}
         firstPerson={cameraMode === "first"}
-        weapon={weapon ?? "mosin"}
+        weapon={weapon ?? "minigun"}
         pose={pose}
         cursors={cursors}
         bitcoin={colors.bitcoin}
         onShootPeer={onShootPeer}
+        onCastHeal={onCastHeal}
         onStats={onShooterStats}
       />
 
@@ -1944,7 +1947,7 @@ const WorldScene = memo(function WorldScene({
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
       {cameraMode !== "map" ? (
-        <PlayerCameraRig pose={pose} onPose={onPublish} mode={cameraMode} weapon={weapon ?? "mosin"} />
+        <PlayerCameraRig pose={pose} onPose={onPublish} mode={cameraMode} weapon={weapon ?? "minigun"} />
       ) : (
         <CameraDirector command={command} tipHeight={tipHeight} />
       )}
@@ -2004,9 +2007,9 @@ export function BitmapWorld3D({
   }, []);
 
   const [shooterStats, setShooterStats] = useState<ShooterStats>({
-    weapon: "mosin",
-    ammo: WEAPONS.mosin.magazine,
-    magazine: WEAPONS.mosin.magazine,
+    weapon: "minigun",
+    ammo: WEAPONS.minigun.magazine,
+    magazine: WEAPONS.minigun.magazine,
     reloading: false,
     score: 0,
     kills: 0,
@@ -2137,8 +2140,14 @@ export function BitmapWorld3D({
     respawnNonce,
     respawn,
     hurt,
+    heal,
   } = useMapCursors();
-  const party = useMapParty(selfId, handle);
+  const healRef = useRef<(amount: number) => void>(() => {});
+  healRef.current = heal;
+  const party = useMapParty(selfId, handle, true, (amount, from) => {
+    healRef.current(amount);
+    setRespawnNote(`${from} HEALED THE PARTY · +${amount} HP`);
+  });
   const [chatMode, setChatMode] = useState<"world" | "party">("world");
 
   const pose = useRef<SelfPose>(createPlayerState(0, CELL, 0));
@@ -2383,8 +2392,15 @@ export function BitmapWorld3D({
         playSfx("jump");
         return;
       }
-      // 1 / 2 / 3 pull a weapon out, 0 puts it away — the belt, in game.
-      const slot = ["Digit1", "Digit2", "Digit3", "Digit4"].indexOf(event.code);
+      // 1..6 pull a weapon out, 0 puts it away — the belt, in game.
+      const slot = [
+        "Digit1",
+        "Digit2",
+        "Digit3",
+        "Digit4",
+        "Digit5",
+        "Digit6",
+      ].indexOf(event.code);
       if (slot >= 0) {
         event.preventDefault();
         equipWeapon(WEAPON_ORDER[slot] ?? null);
@@ -2440,6 +2456,22 @@ export function BitmapWorld3D({
     },
     [hurt],
   );
+
+  // The wand's healing spell: it mends you, and every party member with you.
+  const castHeal = useCallback(
+    (amount: number) => {
+      heal(amount);
+      party.bless(amount);
+      setBiteNote(
+        party.party
+          ? `HEALING SPELL · +${amount} HP TO THE PARTY`
+          : `HEALING SPELL · +${amount} HP`,
+      );
+      window.setTimeout(() => setBiteNote(null), 1800);
+    },
+    [heal, party],
+  );
+
 
   const moveCamera = (type: CameraMove) => {
     setCameraMode("map");
@@ -2679,6 +2711,7 @@ export function BitmapWorld3D({
               onRunning={setRunning}
               weapon={weapon}
               onShootPeer={attack}
+              onCastHeal={castHeal}
               onBite={takeBite}
               onShooterStats={handleShooterStats}
               driving={driving}
@@ -2939,7 +2972,7 @@ export function BitmapWorld3D({
                 <span className="text-muted-foreground">
                   W · S WALK · A · D TURN · Q · E SIDESTEP · SHIFT SPRINT · SPACE JUMP · C SWAP
                   VIEW · M MAP · V TRAVEL · SPACE · X CLIMB · SINK WHEN FLYING · B BUILD · T
-                  TERRAFORM · F ATTACK ·{" "}
+                  TERRAFORM · F ATTACK · H HEAL SPELL ·{" "}
 
                   {cameraMode === "first"
                     ? "CLICK WORLD FOR MOUSE LOOK · ESC RELEASE"
