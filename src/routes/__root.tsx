@@ -21,6 +21,7 @@ import { SalesBackdrop } from "@/components/SalesBackdrop";
 import { TradeCrawlerDriver } from "@/components/TradeCrawlerDriver";
 import { RegistryResolverDriver } from "@/components/RegistryResolverDriver";
 import { LanguageProvider } from "@/lib/i18n";
+import { GuidedTour } from "@/components/GuidedTour";
 
 
 
@@ -171,6 +172,7 @@ function RootComponent() {
           <SiteFooter />
         </div>
       </div>
+      <GuidedTour />
       <TradeCrawlerDriver />
       <RegistryResolverDriver />
       <Toaster />
