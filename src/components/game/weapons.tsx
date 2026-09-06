@@ -1,17 +1,26 @@
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
+import { useGLTF } from "@react-three/drei";
+import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
+import { Primitive } from "@/components/game/Primitive";
 
 /**
- * WEAPONS — the three things a visitor can carry in the land world.
+ * WEAPONS — the things a visitor can carry in the land world.
  *
  * One shared set of low-poly view models, used both as the first-person model
  * glued to the camera and as the piece held in the avatar's hand in third
- * person, so what other visitors see matches what you are holding.
+ * person, so what other visitors see matches what you are holding. The sword is
+ * a real on-chain inscription loaded straight from the chain.
  *
  * Every model is built facing -Z with its grip at the origin.
  */
 
-export type WeaponKind = "mosin" | "revolver" | "whip" | "pickaxe";
+/** on-chain GLB inscription of the sword */
+export const SWORD_INSCRIPTION =
+  "7b674e8378b14b590960d452900507e2e26089bc9f622fa7e6c938d95d697b81i0";
+
+export type WeaponKind = "mosin" | "revolver" | "whip" | "pickaxe" | "sword";
+
 
 export type WeaponSpec = {
   kind: WeaponKind;
