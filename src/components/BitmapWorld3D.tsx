@@ -113,6 +113,7 @@ import { Primitive } from "./game/Primitive";
 import { Cybertruck } from "@/components/game/Cybertruck";
 import { Minimap } from "@/components/game/Minimap";
 import { DriveBlur } from "@/components/game/DriveBlur";
+import { DamageVeil } from "@/components/game/DamageVeil";
 
 import {
   DRIVE_SPEED,
