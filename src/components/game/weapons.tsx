@@ -464,24 +464,31 @@ function OnChainSword({ u }: { u: number }) {
     const size = bounds.getSize(new THREE.Vector3());
     const center = bounds.getCenter(new THREE.Vector3());
     const longest = Math.max(size.x, size.y, size.z, 0.0001);
-    // Blade runs roughly one and a half strides from grip to tip.
-    const scale = (1.5 * u) / longest;
-    // The model's own long axis becomes the forward (-Z) direction.
+    // Blade runs a little over one stride from grip to tip.
+    const scale = (1.3 * u) / longest;
+    // The model's own long axis becomes the forward (-Z) direction, with the
+    // low end of that axis (the grip) sitting at the origin like every other
+    // weapon here.
     const axis = size.y >= size.x && size.y >= size.z ? "y" : size.x >= size.z ? "x" : "z";
-    return { scale, center, axis, half: (longest * scale) / 2 };
+    const low = bounds.min[axis];
+    return { scale, center, axis, low };
   }, [scene, u]);
 
   const spin: [number, number, number] =
-    fit.axis === "y" ? [-Math.PI / 2, 0, 0] : fit.axis === "x" ? [0, Math.PI / 2, 0] : [0, 0, 0];
+    fit.axis === "y" ? [-Math.PI / 2, 0, 0] : fit.axis === "x" ? [0, -Math.PI / 2, 0] : [0, Math.PI, 0];
+  // centre the two short axes, and start the long axis at the grip
+  const offset = new THREE.Vector3(-fit.center.x, -fit.center.y, -fit.center.z);
+  offset[fit.axis] = -fit.low;
 
   return (
-    <group rotation={spin} position={[0, 0, -fit.half]}>
-      <group scale={fit.scale} position={[-fit.center.x * fit.scale, -fit.center.y * fit.scale, -fit.center.z * fit.scale]}>
+    <group rotation={spin}>
+      <group scale={fit.scale} position={[offset.x * fit.scale, offset.y * fit.scale, offset.z * fit.scale]}>
         <Primitive object={scene} />
       </group>
     </group>
   );
 }
+
 
 /** Plain blade shown for the moment before the inscription finishes loading. */
 function SwordStandIn({ u, materials }: { u: number; materials: WeaponMaterials }) {
