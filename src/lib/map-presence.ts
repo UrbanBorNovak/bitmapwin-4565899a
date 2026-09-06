@@ -117,6 +117,8 @@ export function useMapCursors(enabled = true) {
     if (!enabled) return;
     const peers = new Map<string, MapCursor>();
     const lastAttackByPlayer = new Map<string, number>();
+    const combat = createCombatResolver(ATTACK_COOLDOWN_MS * 0.8);
+
     let frame = 0;
     const flush = () => {
       const now = Date.now();
