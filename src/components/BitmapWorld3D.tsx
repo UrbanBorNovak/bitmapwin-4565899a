@@ -2472,11 +2472,17 @@ export function BitmapWorld3D({
               <span>VISITORS {shooterStats.targets}</span>
             </div>
             <div className="text-muted-foreground">
-              {weapon === "pickaxe"
-                ? "CLICK / E · SWING · MINE GOLD SEAMS"
-                : weapon === "whip"
-                  ? "CLICK / E · CRACK · CLOSE RANGE"
-                  : "CLICK / E · FIRE · R · RELOAD"}
+              {cameraMode === "first"
+                ? weapon === "pickaxe"
+                  ? "HOLD LEFT · LINE UP · RELEASE · SWING"
+                  : weapon === "whip"
+                    ? "HOLD LEFT · STEADY · RELEASE · CRACK"
+                    : "HOLD LEFT · AIM · RELEASE · FIRE · R · RELOAD"
+                : weapon === "pickaxe"
+                  ? "CLICK / E · SWING · MINE GOLD SEAMS"
+                  : weapon === "whip"
+                    ? "CLICK / E · CRACK · CLOSE RANGE"
+                    : "CLICK / E · FIRE · R · RELOAD"}
             </div>
             {cameraMode === "third" ? (
               <div className="text-muted-foreground">FIRST PERSON SHOWS THE WEAPON IN HAND</div>
