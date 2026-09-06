@@ -42,7 +42,7 @@ export function growthOf(land: TerraformedLand, now = Date.now()) {
 }
 
 export function stageOf(growth: number) {
-  let stage = GROWTH_STAGES[0];
+  let stage: (typeof GROWTH_STAGES)[number] = GROWTH_STAGES[0];
   for (const candidate of GROWTH_STAGES) if (growth >= candidate.at) stage = candidate;
   return stage;
 }
