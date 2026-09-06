@@ -11,8 +11,8 @@ export const CYBERTRUCK_INSCRIPTION =
   "9bb043b1fa45fc98b15408e023054ba19c658ac23a403c03e73f0829f493055fi0";
 
 /** how much faster the truck travels than a walk, and how much snappier it turns */
-export const DRIVE_SPEED = 6.5;
-export const DRIVE_SPRINT = 1.6;
+export const DRIVE_SPEED = 4.2;
+export const DRIVE_SPRINT = 1.35;
 export const DRIVE_TURN = 0.75;
 
 export type VehicleState = {
@@ -22,9 +22,19 @@ export type VehicleState = {
   z: number;
   yaw: number;
   placed: boolean;
+  /** 0..1 how hard the ride is pushing, read every frame by the blur overlay */
+  rush: number;
 };
 
-export const vehicle: VehicleState = { driving: false, x: 0, z: 0, yaw: 0, placed: false };
+export const vehicle: VehicleState = {
+  driving: false,
+  x: 0,
+  z: 0,
+  yaw: 0,
+  placed: false,
+  rush: 0,
+};
+
 
 const listeners = new Set<() => void>();
 
