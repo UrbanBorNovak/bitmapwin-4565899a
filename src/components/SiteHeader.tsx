@@ -1,19 +1,21 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ChevronDown, Search, X } from "lucide-react";
+import { ChevronDown, HelpCircle, Search, X } from "lucide-react";
 import { useState } from "react";
 import { BidInboxBell } from "@/components/BidInboxBell";
 import { HeaderIdentity } from "@/components/HeaderIdentity";
 import { BtcTicker } from "@/components/BtcTicker";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { startGuidedTour } from "@/components/GuidedTour";
 
 type NavItem = { to: string; label: string; note?: string };
-type NavGroup = { id: string; label: string; items: NavItem[] };
+type NavGroup = { id: string; label: string; note: string; items: NavItem[] };
 
 const NAV_GROUPS: NavGroup[] = [
   {
     id: "world",
     label: "WORLD",
+    note: "Where the land lives — look around it",
     items: [
       { to: "/map", label: "MAP", note: "1,000 × 1,000 live world" },
       { to: "/cities", label: "CITIES", note: "Districts and city hubs" },
@@ -23,6 +25,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     id: "build",
     label: "BUILD",
+    note: "Put something on land you hold",
     items: [
       { to: "/my-world", label: "MY WORLD", note: "Your land and deployments" },
       { to: "/builds", label: "BUILDS", note: "On-chain 3D model registry" },
@@ -33,6 +36,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     id: "market",
     label: "MARKET",
+    note: "Buy land, or buy something to run on it",
     items: [
       { to: "/marketplace", label: "MARKETPLACE", note: "Buy and sell BITMAPs" },
       { to: "/extenders", label: "EXTENDERS", note: "Packages that run on land" },
@@ -43,6 +47,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     id: "land",
     label: "LAND",
+    note: "Your holdings, rentals and proof of ownership",
     items: [
       { to: "/my-land", label: "MY LAND", note: "BITMAPs your wallet holds" },
       { to: "/leases", label: "LEASES", note: "Rent land by the day" },
@@ -53,6 +58,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     id: "develop",
     label: "DEVELOP",
+    note: "Tools and docs for building on top",
     items: [
       { to: "/sdk", label: "SDK", note: "Build for Bitcoin land" },
       { to: "/docs", label: "DOCS", note: "Guides and references" },
@@ -118,6 +124,12 @@ export function SiteHeader() {
               </button>
               {openGroup === group.id && (
                 <div className="nav-menu absolute left-0 top-full min-w-64 border border-border bg-background shadow-[4px_4px_0_0_var(--color-border)]">
+                  <div className="border-b border-border bg-surface px-4 py-2">
+                    <div className="label text-bitcoin">{group.label}</div>
+                    <div className="mt-1 font-mono text-[10px] leading-snug text-muted-foreground">
+                      {group.note}
+                    </div>
+                  </div>
                   {group.items.map((item) => (
                     <Link
                       key={item.to}
@@ -149,6 +161,15 @@ export function SiteHeader() {
           <BtcTicker className="hidden sm:flex" />
           <ThemeToggle />
           <LanguageSwitcher />
+          <button
+            type="button"
+            aria-label="Show me around this page"
+            title="Show me around this page"
+            onClick={() => startGuidedTour()}
+            className="icon-control grid size-11 shrink-0 place-items-center border border-border text-muted-foreground md:size-9"
+          >
+            <HelpCircle className="size-4" />
+          </button>
           <button
             aria-label="Search bitmaps"
             onClick={() => setSearchOpen((v) => !v)}
