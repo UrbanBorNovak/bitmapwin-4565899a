@@ -96,9 +96,15 @@ export function Cybertruck({
       node.position.set(vehicle.x, 0, vehicle.z);
       node.rotation.set(0, vehicle.yaw, 0);
     }
+    // How hard the ride is pushing, eased so the streaks build and fade smoothly.
+    const target = driving
+      ? THREE.MathUtils.clamp(speed / (MOVE.walkSpeed * DRIVE_SPEED * 0.9), 0, 1)
+      : 0;
+    vehicle.rush += (target - vehicle.rush) * (1 - Math.exp(-5 * delta));
     // Wheels roll at ground speed; standing still they stop.
     const rate = Math.min(6, speed / (MOVE.walkSpeed * 0.9));
     for (const action of Object.values(actions)) action?.setEffectiveTimeScale(rate);
+
   });
 
   return (
