@@ -324,7 +324,7 @@ export function WeaponModel({
     return (
       <group rotation={[swing * 0.9, 0, 0]} position={[-0.02 * u, -0.06 * u, 0.04 * u]}>
         <Suspense fallback={<PickStandIn u={u} materials={materials} />}>
-          <OnChainWeapon url={PICK_URL} u={u} lengthStrides={0.8} />
+          <OnChainWeapon url={PICK_URL} u={u} lengthStrides={0.85} forwardAxis="z" flip />
         </Suspense>
         {flash ? <Muzzle u={u} z={-0.86 * u} size={0.05} color={flashColor} /> : null}
       </group>
@@ -420,6 +420,7 @@ function OnChainWeapon({
   u,
   lengthStrides,
   flip = false,
+  forwardAxis,
 }: {
   url: string;
   u: number;
@@ -427,6 +428,8 @@ function OnChainWeapon({
   lengthStrides: number;
   /** the model's grip sits at the far end of its long axis, not the near end */
   flip?: boolean;
+  /** override which model axis points away from the hand */
+  forwardAxis?: "x" | "y" | "z";
 }) {
   const gltf = useGLTF(url);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
@@ -462,15 +465,16 @@ function OnChainWeapon({
     const center = bounds.getCenter(new THREE.Vector3());
     const longest = Math.max(size.x, size.y, size.z, 0.0001);
     // Blade runs a little over one stride from grip to tip.
-    const scale = (lengthStrides * u) / longest;
+    const scale = (lengthStrides * u) / (forwardAxis ? size[forwardAxis] || longest : longest);
     // The model's own long axis becomes the forward (-Z) direction, with the
     // low end of that axis (the grip) sitting at the origin like every other
     // weapon here.
     const axis: "x" | "y" | "z" =
-      size.y >= size.x && size.y >= size.z ? "y" : size.x >= size.z ? "x" : "z";
+      forwardAxis ??
+      (size.y >= size.x && size.y >= size.z ? "y" : size.x >= size.z ? "x" : "z");
     const low = flip ? bounds.max[axis] : bounds.min[axis];
     return { scale, center, axis, low };
-  }, [scene, u, lengthStrides, flip]);
+  }, [scene, u, lengthStrides, flip, forwardAxis]);
 
   const spin: [number, number, number] =
     fit.axis === "y" ? [-Math.PI / 2, 0, 0] : fit.axis === "x" ? [0, -Math.PI / 2, 0] : [0, Math.PI, 0];
