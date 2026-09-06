@@ -109,7 +109,7 @@ function MapPage() {
             tipHeight={tipHeight}
             {...(height === undefined ? {} : { initialHeight: height })}
             onCursorsChange={handleCursors}
-            legend={<span data-tour="map-legend" className="contents">{legend}</span>}
+            legend={<span data-tour="map-legend" className="flex flex-wrap items-center gap-2">{legend}</span>}
           />
         </div>
         <MapChat cursors={cursors} />
