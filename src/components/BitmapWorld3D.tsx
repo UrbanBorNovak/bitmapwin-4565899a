@@ -1787,6 +1787,8 @@ const WorldScene = memo(function WorldScene({
   onBite: (damage: number, label: string) => void;
   onShooterStats: (stats: ShooterStats) => void;
   driving: boolean;
+  ride: RideSpec;
+
 }) {
   // Pointer moves fire dozens of times a second; each React state update re-renders
   // the whole overlay. Coalesce them: at most ~20 hover updates a second, and skip
