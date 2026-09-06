@@ -633,6 +633,8 @@ const Critters = memo(function Critters({
 
 
   // The weapon layer strikes these exact objects.
+  const paceRef = useRef({ x: 0, z: 0, at: 0 });
+
   useEffect(() => {
     registerBeasts(state.current);
     return () => registerBeasts([]);
@@ -643,10 +645,20 @@ const Critters = memo(function Critters({
     const player = pose.current;
     const reach = unit * 34;
     const now = performance.now();
+    // How fast the visitor is actually travelling, measured from their own
+    // movement — used to decide whether they have outrun a predator.
+    let pace = 0;
+    if (player) {
+      const previous = paceRef.current;
+      if (previous.at && now > previous.at)
+        pace = Math.hypot(player.x - previous.x, player.z - previous.z) / ((now - previous.at) / 1000);
+      paceRef.current = { x: player.x, z: player.z, at: now };
+    }
     if (now - lastSweep.current > 1_000) {
       lastSweep.current = now;
       tickRespawns(now);
     }
+
 
     // ONE shared route for the whole pack. Instead of every hostile solving its
     // own path to the visitor, a single field is swept from the visitor's tile
@@ -699,12 +711,21 @@ const Critters = memo(function Critters({
             travel = away < standoff ? -speed * 0.35 : speed * 0.15;
             steer += Math.sin(now / 700 + critter.seed) * delta * 1.2;
           }
-          // Close enough to strike: bite, on its own cooldown.
-          if (away < standoff * 1.8 && now - critter.lastBite > 1_400 && species.bite > 0) {
+          // Close enough to strike: bite, on its own cooldown. Outrunning it
+          // (sprinting, or behind the wheel) breaks the bite — you can always
+          // escape rather than being chewed on while trying to leave.
+          const outrunning = pace > speed * 1.15;
+          if (
+            !outrunning &&
+            away < standoff * 1.8 &&
+            now - critter.lastBite > 1_400 &&
+            species.bite > 0
+          ) {
             critter.lastBite = now;
             playSfx("beast");
             onBite?.(species.bite, critter.label);
           }
+
         } else if (!species.hostile && away < unit * 5) {
           // Skittish: bolt the other way.
           const flee = toPlayer + Math.PI;
@@ -730,12 +751,16 @@ const Critters = memo(function Critters({
           critter.z = player.z + (dz / away) * standoff;
         }
         // Only something that wandered right out of sight is brought back in.
+        // A predator is put back much further out and given a fresh cooldown, so
+        // running away really does shake it off instead of respawning it on you.
         if (away > reach) {
           const angle = critter.seed + now / 6000;
-          const ring = unit * (9 + (index % 5) * 5);
+          const ring = unit * ((species.hostile ? 22 : 9) + (index % 5) * 5);
           critter.x = player.x + Math.cos(angle) * ring;
           critter.z = player.z + Math.sin(angle) * ring;
+          if (species.hostile) critter.lastBite = now;
         }
+
       }
 
 
