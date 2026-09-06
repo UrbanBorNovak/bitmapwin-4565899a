@@ -114,20 +114,22 @@ import { useAuthSession } from "@/lib/auth";
 import { myWalletLinksQuery } from "@/lib/wallet-links";
 import { PARTY_CHAT_MAX_LENGTH, PARTY_MAX_MEMBERS, useMapParty } from "@/lib/map-party";
 import { Primitive } from "./game/Primitive";
-import { Cybertruck } from "@/components/game/Cybertruck";
+import { RideModel } from "@/components/game/RideModel";
 import { Minimap } from "@/components/game/Minimap";
 import { DriveBlur } from "@/components/game/DriveBlur";
 import { DamageVeil } from "@/components/game/DamageVeil";
 
 import {
-  DRIVE_SPEED,
-  DRIVE_SPRINT,
-  DRIVE_TURN,
+  RIDES,
+  currentRide,
   isDriving,
+  selectRide,
   subscribeVehicle,
   toggleDriving,
   vehicle,
+  vehicleSnapshot,
 } from "@/lib/world-vehicle";
+
 
 const GRID = 1_000;
 const WORLD_SIZE = 100;
