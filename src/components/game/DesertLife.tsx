@@ -56,6 +56,49 @@ type Scatter = { matrices: THREE.Matrix4[] };
 
 const noRaycast = () => {};
 
+/**
+ * The pond surface.
+ *
+ * A basic instanced material with a small shader patch: concentric ripples and
+ * cross chop shimmer, a depth-tinted middle and a soft shoreline fade, so water
+ * reads as water instead of a flat blue disc. The sheet never writes depth and
+ * draws early, so wading past it can't tint the whole view.
+ */
+function WaterMaterial() {
+  const uniforms = useMemo(() => ({ uTime: { value: 0 } }), []);
+  const material = useMemo(() => {
+    const mat = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(WATER),
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms["uTime"] = uniforms.uTime;
+      shader.vertexShader = `#define USE_UV\n${shader.vertexShader}`;
+      shader.fragmentShader = `#define USE_UV\nuniform float uTime;\n${shader.fragmentShader}`.replace(
+        "#include <color_fragment>",
+        `#include <color_fragment>
+        vec2 wuv = vUv - 0.5;
+        float wdist = length(wuv);
+        float ripple = sin(wdist * 72.0 - uTime * 1.8) * 0.5 + 0.5;
+        float chop = sin(vUv.x * 34.0 + vUv.y * 26.0 + uTime * 1.15) * 0.5 + 0.5;
+        float shimmer = pow(mix(ripple, chop, 0.5), 3.0);
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.84, 0.94, 0.99), shimmer * 0.45);
+        diffuseColor.rgb *= mix(0.72, 1.08, clamp(wdist * 2.0, 0.0, 1.0));
+        diffuseColor.a *= smoothstep(0.5, 0.33, wdist) * (0.66 + 0.2 * shimmer);
+        `,
+      );
+    };
+    return mat;
+  }, [uniforms]);
+  useEffect(() => () => material.dispose(), [material]);
+  useFrame((_, delta) => {
+    uniforms.uTime.value += delta;
+  });
+  return <Primitive object={material} attach="material" />;
+}
+
 export const DesertLife = memo(function DesertLife({
   unit,
   colors,
