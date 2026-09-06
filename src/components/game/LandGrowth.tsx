@@ -101,6 +101,8 @@ export function LandGrowth({
   pose: React.RefObject<PlayerState>;
 }) {
   const land = useTerraformedLand();
+  // Re-plan when something is built or demolished: plants clear the new floor.
+  const builds = useWorldBuilds();
   const [tick, setTick] = useState(0);
   const [near, setNear] = useState<TerraformedLand[]>([]);
 
@@ -140,11 +142,12 @@ export function LandGrowth({
 
   const plan = useMemo(() => {
     void tick;
+    void builds;
     const out = { grass: [] as Item[], bush: [] as Item[], tree: [] as Item[] };
     const now = Date.now();
     for (const plot of near) planPlot(plot, growthOf(plot, now), out);
     return out;
-  }, [near, tick]);
+  }, [builds, near, tick]);
 
   const scratch = useMemo(
     () => ({
