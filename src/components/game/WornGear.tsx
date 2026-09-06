@@ -136,10 +136,12 @@ export function WornGear({
           <WornPiece
             url={`https://ordinals.com/content/${WIZARD_HAT_INSCRIPTION}`}
             unit={unit}
-            fit={0.34}
+            fit={0.62}
             pose={pose}
-            offset={[0, 1.02, 0]}
+            offset={[0, 0.94, 0]}
+            seatOnBase
           />
+
         </Suspense>
       ) : null}
       {showHead && gear.goggles ? (
