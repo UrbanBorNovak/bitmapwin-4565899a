@@ -274,11 +274,14 @@ export function stepPlayer(player: PlayerState, intent: MoveIntent, rawDelta: nu
   }
 
   if (!player.grounded) player.animation = "jump";
+  else if (player.movement === "run" || player.movement === "walk")
+    // Taking a bite never freezes the stride: if you are moving, you keep
+    // moving — the hit is felt on screen, not by locking the legs.
+    player.animation = player.movement === "run" ? "run" : "walk";
   else if (player.combat === "hurt" || player.combat === "attacking")
     player.animation = player.combat === "hurt" ? "hurt" : "attack";
-  else
-    player.animation =
-      player.movement === "run" ? "run" : player.movement === "walk" ? "walk" : "idle";
+  else player.animation = "idle";
+
 
   syncCell(player);
   return player;
