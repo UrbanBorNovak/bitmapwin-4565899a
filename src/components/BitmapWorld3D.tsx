@@ -164,53 +164,66 @@ function heightAtPoint(point: THREE.Vector3) {
 
 /** shared tint so every held plot stays inside the Bitcoin-orange family */
 const WHITE_HOT = new THREE.Color("#ffd9a0");
+const SELF_OWNER = "\u0000self";
 
 const HolderColumns = memo(function HolderColumns({
-
   owners,
   mine,
+  ownedHeights,
   bitcoin,
 }: {
   owners: Map<number, string>;
   mine: Set<string>;
+  ownedHeights: number[];
   bitcoin: string;
 }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
-  const entries = useMemo(() => [...owners.entries()], [owners]);
+  // Every claimed cell in view: the registry owners plus the heights the
+  // connected wallet actually holds on chain (those can be ahead of the
+  // registry, so without them your own land would read as unclaimed).
+  const entries = useMemo(() => {
+    const merged = new Map(owners);
+    for (const height of ownedHeights) {
+      const existing = merged.get(height);
+      if (!existing || !mine.has(existing.toLowerCase())) merged.set(height, SELF_OWNER);
+    }
+    return [...merged.entries()];
+  }, [mine, owners, ownedHeights]);
 
   useEffect(() => {
     const mesh = meshRef.current;
     if (!mesh) return;
     const dummy = new THREE.Object3D();
     const color = new THREE.Color();
+    const holderColor = new THREE.Color();
     entries.forEach(([height, owner], index) => {
       const col = height % GRID;
       const row = Math.floor(height / GRID);
+      const isMine = owner === SELF_OWNER || mine.has(owner.toLowerCase());
       // Held districts read as chunky voxel plots: a low cube sitting on the
       // land with a small gap to its neighbours so the grid stays legible.
-      const tile = AVATAR_U * 0.5;
+      // Your own plots sit a little taller so they stand out from a distance.
+      const tile = AVATAR_U * (isMine ? 0.8 : 0.5);
       dummy.position.set(worldX(col), tile / 2, worldZ(row));
       dummy.scale.set(CELL * 0.86, tile, CELL * 0.86);
-
-
       dummy.updateMatrix();
       mesh.setMatrixAt(index, dummy.matrix);
-      // Held plots all use the same Bitcoin orange. Your own holdings burn
-      // hottest; everyone else's stays a consistent bright orange so the start
-      // of the map and blocks through 30k+ are never darker than the rest.
-      color.set(bitcoin);
-      if (mine.has(owner.toLowerCase())) {
-        color.lerp(WHITE_HOT, 0.35);
+      // Your own holdings burn hot Bitcoin orange. Every other holder gets a
+      // deterministic colour of their own, so neighbouring owners are visible
+      // as distinct estates instead of one anonymous orange mass.
+      if (isMine) {
+        color.set(bitcoin).lerp(WHITE_HOT, 0.45);
       } else {
-        color.lerp(WHITE_HOT, 0.12);
+        holderColor.set(colorForAddress(owner));
+        color.copy(holderColor).lerp(WHITE_HOT, 0.1);
       }
       mesh.setColorAt(index, color);
-
     });
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     mesh.computeBoundingSphere();
   }, [bitcoin, entries, mine]);
+
 
   if (entries.length === 0) return null;
   return (
