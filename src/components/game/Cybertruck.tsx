@@ -15,7 +15,7 @@ import * as THREE from "three";
 import { Primitive } from "@/components/game/Primitive";
 import type { PlayerState } from "@/lib/player-state";
 import { MOVE } from "@/lib/player-state";
-import { CYBERTRUCK_INSCRIPTION, vehicle } from "@/lib/world-vehicle";
+import { CYBERTRUCK_INSCRIPTION, DRIVE_SPEED, vehicle } from "@/lib/world-vehicle";
 
 export function Cybertruck({
   unit,
