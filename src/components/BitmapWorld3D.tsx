@@ -39,7 +39,6 @@ import { Companions } from "@/components/game/Companions";
 import { WornGear } from "@/components/game/WornGear";
 import { NightVision } from "@/components/game/NightVision";
 import {
-  FOODS,
   activeRegen,
   companionSpec,
   cycleCompanion,
