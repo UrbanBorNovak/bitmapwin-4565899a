@@ -89,12 +89,15 @@ import {
   type PoseReport,
 } from "@/lib/map-presence";
 import {
+  colAt,
   createPlayerState,
   damp,
   MOVE,
   placePlayer,
+  rowAt,
   setMoveBlocker,
   stepPlayer,
+  STRIDE,
   type MoveIntent,
   type PlayerState,
 } from "@/lib/player-state";
