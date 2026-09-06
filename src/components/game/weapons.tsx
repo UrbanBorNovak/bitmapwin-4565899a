@@ -443,3 +443,62 @@ function Muzzle({ u, z, size, color }: { u: number; z: number; size: number; col
     </mesh>
   );
 }
+
+const SWORD_URL = `https://ordinals.com/content/${SWORD_INSCRIPTION}`;
+
+/** The inscribed sword, fitted to the hand and pointed down -Z like the rest. */
+function OnChainSword({ u }: { u: number }) {
+  const gltf = useGLTF(SWORD_URL);
+  const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
+  const fit = useMemo(() => {
+    scene.traverse((child) => {
+      const mesh = child as THREE.Mesh;
+      if (mesh.isMesh) {
+        mesh.castShadow = false;
+        mesh.receiveShadow = false;
+        mesh.frustumCulled = false;
+      }
+    });
+    scene.updateMatrixWorld(true);
+    const bounds = new THREE.Box3().setFromObject(scene);
+    const size = bounds.getSize(new THREE.Vector3());
+    const center = bounds.getCenter(new THREE.Vector3());
+    const longest = Math.max(size.x, size.y, size.z, 0.0001);
+    // Blade runs roughly one and a half strides from grip to tip.
+    const scale = (1.5 * u) / longest;
+    // The model's own long axis becomes the forward (-Z) direction.
+    const axis = size.y >= size.x && size.y >= size.z ? "y" : size.x >= size.z ? "x" : "z";
+    return { scale, center, axis, half: (longest * scale) / 2 };
+  }, [scene, u]);
+
+  const spin: [number, number, number] =
+    fit.axis === "y" ? [-Math.PI / 2, 0, 0] : fit.axis === "x" ? [0, Math.PI / 2, 0] : [0, 0, 0];
+
+  return (
+    <group rotation={spin} position={[0, 0, -fit.half]}>
+      <group scale={fit.scale} position={[-fit.center.x * fit.scale, -fit.center.y * fit.scale, -fit.center.z * fit.scale]}>
+        <Primitive object={scene} />
+      </group>
+    </group>
+  );
+}
+
+/** Plain blade shown for the moment before the inscription finishes loading. */
+function SwordStandIn({ u, materials }: { u: number; materials: WeaponMaterials }) {
+  const { steel, leather, brass } = materials;
+  return (
+    <group>
+      <mesh material={leather} position={[0, 0, 0.1 * u]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.028 * u, 0.032 * u, 0.2 * u, 8]} />
+      </mesh>
+      <mesh material={brass} position={[0, 0, -0.02 * u]}>
+        <boxGeometry args={[0.22 * u, 0.03 * u, 0.04 * u]} />
+      </mesh>
+      <mesh material={steel} position={[0, 0, -0.6 * u]}>
+        <boxGeometry args={[0.07 * u, 0.02 * u, 1.1 * u]} />
+      </mesh>
+    </group>
+  );
+}
+
+useGLTF.preload(SWORD_URL);
