@@ -327,40 +327,29 @@ export function useMapCursors(enabled = true) {
       if (!target || !lastCell) return;
       const selfX = typeof lastCell.x === "number" ? lastCell.x : cellX(lastCell.col);
       const selfZ = typeof lastCell.z === "number" ? lastCell.z : cellZ(lastCell.row);
-      if (Math.hypot(target.x - selfX, target.z - selfZ) > ATTACK_RANGE) return;
       const now = Date.now();
-      const previousAttack = lastAttackByPlayer.get(selfId) ?? 0;
-      if (now - previousAttack < ATTACK_COOLDOWN_MS) return;
-      lastAttackByPlayer.set(selfId, now);
       const eventId = `${selfId}-${now}`;
+      // Our own swing goes through the same tile resolver as everyone else's, so
+      // reach, walls and swing rate are judged identically on every screen.
+      const accepted = combat.queue({
+        id: eventId,
+        attacker: selfId,
+        target: targetId,
+        from: tileOfPosition(selfX, selfZ),
+        to: tileOfPosition(target.x, target.z),
+        damage: ATTACK_DAMAGE,
+        reach: MELEE_REACH_TILES,
+        at: now,
+      });
+      if (!accepted) return;
+      lastAttackByPlayer.set(selfId, now);
       void channel.send({
         type: "broadcast",
         event: "hit",
         payload: { id: eventId, from: selfId, to: targetId, damage: ATTACK_DAMAGE, at: now },
       });
-      const nextHp = Math.max(0, target.hp - ATTACK_DAMAGE);
-      peers.set(targetId, {
-        ...target,
-        hp: nextHp,
-        hitAt: now,
-        lastDamage: ATTACK_DAMAGE,
-        at: now,
-      });
-      setCombatLog((current) =>
-        [
-          ...current,
-          {
-            id: eventId,
-            attacker: handle,
-            target: target.handle,
-            damage: ATTACK_DAMAGE,
-            knockout: nextHp === 0,
-            at: now,
-          },
-        ].slice(-40),
-      );
-      flush();
     };
+
 
     // Something in the world bit us — wildlife, a fall, a trap. Same health path
     // as a peer's hit, so the rest of the world sees the new value straight away.
