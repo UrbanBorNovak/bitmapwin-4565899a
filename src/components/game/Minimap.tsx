@@ -222,7 +222,8 @@ export function Minimap({ pose, cursors, ownedHeights, partyIds, onVisit }: Prop
       const sz = toPy(player.z);
       ctx.save();
       ctx.translate(sx, sz);
-      ctx.rotate(-player.yaw);
+      // world forward is (sin yaw, cos yaw) in x/z; the arrow art points up (0,-1)
+      ctx.rotate(Math.PI - player.yaw);
       ctx.fillStyle = theme.bitcoin;
       ctx.beginPath();
       ctx.moveTo(0, -8);
