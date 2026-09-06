@@ -2203,6 +2203,8 @@ export function BitmapWorld3D({
       teleport: true,
     });
     setCameraMode("third");
+    const clear = window.setTimeout(() => setRespawnNote(null), 6_000);
+    return () => window.clearTimeout(clear);
   }, [respawnNonce, publish]);
 
   // Combat state is mirrored onto the player so movement stops while down.
