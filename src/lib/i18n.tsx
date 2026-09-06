@@ -26,6 +26,14 @@ export const LANGUAGES = [
   { code: "de", label: "DEUTSCH", short: "DE" },
   { code: "ru", label: "РУССКИЙ", short: "RU" },
   { code: "hi", label: "हिन्दी", short: "HI" },
+  { code: "fr", label: "FRANÇAIS", short: "FR" },
+  { code: "zh", label: "中文", short: "ZH" },
+  { code: "sl", label: "SLOVENŠČINA", short: "SL" },
+  { code: "hr", label: "HRVATSKI", short: "HR" },
+  { code: "sr", label: "СРПСКИ", short: "SR" },
+  { code: "bs", label: "BOSANSKI", short: "BS" },
+  { code: "mk", label: "МАКЕДОНСКИ", short: "MK" },
+  { code: "uk", label: "УКРАЇНСЬКА", short: "UK" },
 ] as const;
 
 export type LangCode = (typeof LANGUAGES)[number]["code"];
