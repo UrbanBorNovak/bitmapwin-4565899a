@@ -41,7 +41,22 @@ export type OreVein = {
   depletedUntil: number;
 };
 
+/**
+ * A buried treasure chest. Locked until a visitor spends an on-chain key on it,
+ * and once opened it stays opened for the rest of the session.
+ */
+export type ChestEntity = {
+  id: string;
+  x: number;
+  z: number;
+  /** ground height the chest sits on */
+  y: number;
+  opened: boolean;
+  openedAt: number;
+};
+
 const beasts: BeastEntity[] = [];
+const chests: ChestEntity[] = [];
 const veins: OreVein[] = [];
 const listeners = new Set<() => void>();
 let version = 0;
@@ -70,6 +85,44 @@ export function registerVeins(list: OreVein[]) {
   veins.length = 0;
   veins.push(...list);
   emit();
+}
+
+/** The desert hands over the chest patch around the visitor. */
+export function registerChests(list: ChestEntity[]) {
+  const opened = new Map(chests.filter((c) => c.opened).map((c) => [c.id, c]));
+  chests.length = 0;
+  for (const chest of list) {
+    const before = opened.get(chest.id);
+    chests.push(before ? { ...chest, opened: true, openedAt: before.openedAt } : chest);
+  }
+  emit();
+}
+
+export function liveChests() {
+  return chests;
+}
+
+/** The closest chest within reach of a visitor, opened or not. */
+export function nearestChest(x: number, z: number, range: number) {
+  let best: ChestEntity | null = null;
+  let bestDistance = range;
+  for (const chest of chests) {
+    const distance = Math.hypot(chest.x - x, chest.z - z);
+    if (distance <= bestDistance) {
+      best = chest;
+      bestDistance = distance;
+    }
+  }
+  return best;
+}
+
+/** Turn the key. Returns false when the lid was already up. */
+export function openChest(chest: ChestEntity) {
+  if (chest.opened) return false;
+  chest.opened = true;
+  chest.openedAt = performance.now();
+  emit();
+  return true;
 }
 
 export function liveBeasts() {
