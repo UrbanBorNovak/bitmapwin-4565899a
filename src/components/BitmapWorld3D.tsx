@@ -101,6 +101,16 @@ import { useAuthSession } from "@/lib/auth";
 import { myWalletLinksQuery } from "@/lib/wallet-links";
 import { PARTY_CHAT_MAX_LENGTH, PARTY_MAX_MEMBERS, useMapParty } from "@/lib/map-party";
 import { Primitive } from "./game/Primitive";
+import { Cybertruck } from "@/components/game/Cybertruck";
+import {
+  DRIVE_SPEED,
+  DRIVE_SPRINT,
+  DRIVE_TURN,
+  isDriving,
+  subscribeVehicle,
+  toggleDriving,
+  vehicle,
+} from "@/lib/world-vehicle";
 
 const GRID = 1_000;
 const WORLD_SIZE = 100;
@@ -1291,6 +1301,16 @@ function PlayerCameraRig({
       jump: jumpRequested.current,
     };
 
+    // Behind the wheel the same keys drive the truck: much faster, wider turns,
+    // and no jumping.
+    const driving = isDriving();
+    if (driving) {
+      intent.speedScale = DRIVE_SPEED * (intent.sprint ? DRIVE_SPRINT : 1);
+      intent.turnScale = DRIVE_TURN;
+      intent.strafe = 0;
+      intent.jump = false;
+    }
+
     jumpRequested.current = false;
     // Ease the steer input in and out so turns start and stop like a body, not a switch.
     steer.current = damp(steer.current, intent.turn, 9, delta);
@@ -1321,7 +1341,7 @@ function PlayerCameraRig({
     } else {
       // Shoulder rig: trails further and drops lower the faster you travel, and
       // swings a touch wide of the turn so the body stays readable.
-      const back = AVATAR_U * (6.2 + gait * 3.2);
+      const back = AVATAR_U * (isDriving() ? 12 + gait * 5 : 6.2 + gait * 3.2);
       const side = -steer.current * AVATAR_U * 1.6;
       cameraTarget.current.set(
         player.x - Math.sin(player.yaw) * back + Math.cos(player.yaw) * side,
@@ -1647,6 +1667,7 @@ const WorldScene = memo(function WorldScene({
   onShootPeer,
   onBite,
   onShooterStats,
+  driving,
 }: {
   colors: WorldColors;
   command: { type: CameraMove; nonce: number; height?: number };
@@ -1678,6 +1699,7 @@ const WorldScene = memo(function WorldScene({
   onShootPeer: (id: string) => void;
   onBite: (damage: number, label: string) => void;
   onShooterStats: (stats: ShooterStats) => void;
+  driving: boolean;
 }) {
   // Pointer moves fire dozens of times a second; each React state update re-renders
   // the whole overlay. Coalesce them: at most ~20 hover updates a second, and skip
@@ -1786,7 +1808,12 @@ const WorldScene = memo(function WorldScene({
       ) : null}
       <VisitorBeacons cursors={cursors} />
       <SelfBeacon pose={pose} bitcoin={colors.bitcoin} wide={cameraMode === "map"} />
-      {cameraMode === "third" ? (
+      {cameraMode !== "map" && (driving || vehicle.placed) ? (
+        <Suspense fallback={null}>
+          <Cybertruck unit={AVATAR_U} pose={pose} driving={driving} />
+        </Suspense>
+      ) : null}
+      {cameraMode === "third" && !driving ? (
         <SelfAvatar
           pose={pose}
           color={self.color}
@@ -2439,6 +2466,7 @@ export function BitmapWorld3D({
               onShootPeer={attack}
               onBite={takeBite}
               onShooterStats={handleShooterStats}
+              driving={driving}
             />
           </Canvas>
         ) : null}
