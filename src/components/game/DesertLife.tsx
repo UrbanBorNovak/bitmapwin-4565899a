@@ -216,7 +216,7 @@ export const DesertLife = memo(function DesertLife({
         } else if (roll > 0.9975) {
           // A rare oasis: one water hole ringed by reeds, palms and green bushes.
           const span2 = unit * (1.8 + hash(gx, gz, 30) * 2.6);
-          dummy.position.set(x, unit * 0.012, z);
+          dummy.position.set(x, unit * 0.003, z);
           dummy.rotation.set(-Math.PI / 2, 0, spin);
           dummy.scale.set(span2, span2 * (0.7 + hash(gx, gz, 31) * 0.5), 1);
           dummy.updateMatrix();
