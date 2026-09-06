@@ -1984,7 +1984,10 @@ export function BitmapWorld3D({
   const [weapon, setWeapon] = useState<WeaponKind | null>(null);
   const shooter = weapon !== null;
   // The shared ride: seated or parked, both views read the same state.
-  const driving = useSyncExternalStore(subscribeVehicle, isDriving, () => false);
+  // The shared ride: which vehicle, seated or parked — both views read the same state.
+  const rideSnapshot = useSyncExternalStore(subscribeVehicle, vehicleSnapshot, () => "0::0");
+  const driving = rideSnapshot.startsWith("1");
+  const ride = useMemo(() => currentRide(), [rideSnapshot]);
   const toggleTruck = useCallback(() => {
     const player = pose.current;
     if (!player) return;
@@ -1992,6 +1995,12 @@ export function BitmapWorld3D({
     const seated = toggleDriving(player.x, player.z, player.yaw);
     playSfx(seated ? "jump" : "hit");
   }, []);
+  const pickRide = useCallback((id: string) => {
+    selectRide(id);
+    unlockAudio();
+    playSfx("jump");
+  }, []);
+
   const [shooterStats, setShooterStats] = useState<ShooterStats>({
     weapon: "mosin",
     ammo: WEAPONS.mosin.magazine,
