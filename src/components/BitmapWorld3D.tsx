@@ -111,6 +111,7 @@ import { myWalletLinksQuery } from "@/lib/wallet-links";
 import { PARTY_CHAT_MAX_LENGTH, PARTY_MAX_MEMBERS, useMapParty } from "@/lib/map-party";
 import { Primitive } from "./game/Primitive";
 import { Cybertruck } from "@/components/game/Cybertruck";
+import { Minimap } from "@/components/game/Minimap";
 import { DriveBlur } from "@/components/game/DriveBlur";
 
 import {
@@ -2522,6 +2523,16 @@ export function BitmapWorld3D({
 
         <DriveBlur active={driving && cameraMode !== "map"} />
 
+        {/* MINIMAP — where you are, who is near, what you own. */}
+        {exploring ? (
+          <Minimap
+            pose={pose}
+            cursors={cursors}
+            ownedHeights={ownedHeights}
+            onVisit={visitHeight}
+          />
+        ) : null}
+
 
 
         {weapon && exploring ? (
@@ -2628,8 +2639,9 @@ export function BitmapWorld3D({
           role="group"
           aria-label="Camera mode"
           data-no-translate
-          className="hud-panel absolute right-3 top-[9.5rem] z-30 flex p-0.5"
+          className="hud-panel absolute right-3 top-[9.5rem] z-30 flex items-center gap-1 p-0.5 pl-2"
         >
+          <span className="label text-[9px] text-muted-foreground">VIEW</span>
           <Button
             type="button"
             variant="ghost"
@@ -2678,6 +2690,7 @@ export function BitmapWorld3D({
           >
             <Eye /> <span className="hidden sm:inline">1ST</span>
           </Button>
+          <span className="hidden pr-1 text-[9px] text-muted-foreground sm:inline">C</span>
         </div>
 
         {cameraMode === "first" ? (
