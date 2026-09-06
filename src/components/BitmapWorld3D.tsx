@@ -1862,12 +1862,20 @@ const WorldScene = memo(function WorldScene({
         <>
           <ChunkStreamer pose={pose} />
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
+          <Punks unit={AVATAR_U} pose={pose} onBite={onBite} />
           <DesertBuilds unit={AVATAR_U} />
           <FootTrail unit={AVATAR_U} pose={pose} sand={colors.bitcoin} />
           <LandGrowth unit={AVATAR_U} pose={pose} />
-
+          <Companions unit={AVATAR_U} pose={pose} />
+          <WornGear
+            unit={AVATAR_U}
+            pose={pose}
+            weapon={weapon}
+            showHead={cameraMode === "third" && !driving}
+          />
         </>
       ) : null}
+
 
 
       <DistrictBlocks tipHeight={tipHeight} colors={colors} />
