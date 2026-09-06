@@ -2577,9 +2577,21 @@ export function BitmapWorld3D({
               driving={driving}
             />
           </Canvas>
+          </div>
         ) : null}
 
         <DriveBlur active={driving && cameraMode !== "map"} />
+
+        {/* DAMAGE — a bite or a bullet is felt: red edges, a kick, a heartbeat. */}
+        {exploring ? (
+          <DamageVeil
+            hp={hp}
+            maxHp={MAX_HP}
+            hitAt={hitAt}
+            lastDamage={lastDamage}
+            shakeTarget={viewShake}
+          />
+        ) : null}
 
         {/* MINIMAP — where you are, who is near, what you own. */}
         {exploring ? (
