@@ -404,6 +404,8 @@ export const CAMP_RECIPE: StructureRecipe = {
   name: "FULL CAMP",
   blurb: "Shelter, fire and watchtower raised together.",
   cost: { hide: 11, fang: 2, "gold-nugget": 2 },
+  footprint: 0.5,
+  hp: 90,
 };
 
 export function buildCamp(x: number, z: number, yaw = 0, unit = 1) {

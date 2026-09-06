@@ -17,6 +17,7 @@ import * as THREE from "three";
 import type { PlayerState } from "@/lib/player-state";
 import { WORLD_CELL, cellX, cellZ } from "@/lib/player-state";
 import { growthOf, useTerraformedLand, type TerraformedLand } from "@/lib/world-terraform";
+import { blockedAt, useWorldBuilds } from "@/lib/world-build";
 
 const MAX_GRASS = 900;
 const MAX_BUSH = 260;
@@ -32,6 +33,9 @@ const hash = (a: number, b: number) => {
   const n = Math.sin(a * 127.1 + b * 311.7) * 43758.5453;
   return n - Math.floor(n);
 };
+
+/** Nothing grows through a floor: plants skip ground a structure stands on. */
+const clear = (x: number, z: number) => !blockedAt(x, z);
 
 function planPlot(land: TerraformedLand, growth: number, out: { grass: Item[]; bush: Item[]; tree: Item[] }) {
   const cx = cellX(land.col);
