@@ -230,12 +230,24 @@ export function stepPlayer(player: PlayerState, intent: MoveIntent, rawDelta: nu
 
   const speed = Math.hypot(player.vx, player.vz);
   if (speed < MOVE.idleSpeed) {
-    player.vx *= 0.2;
-    player.vz *= 0.2;
+    // Settle to a stop with the same exponential curve as everything else — a
+    // flat per-frame multiply here made stopping snap differently at 30 and 144 fps.
+    const settle = Math.exp(-MOVE.drag * 2 * delta);
+    player.vx *= settle;
+    player.vz *= settle;
+    if (Math.hypot(player.vx, player.vz) < MOVE.idleSpeed * 0.15) {
+      player.vx = 0;
+      player.vz = 0;
+    }
     player.movement = intent.turn !== 0 ? "turn" : "idle";
   } else {
-    player.movement = speed > MOVE.walkSpeed * 1.25 ? "run" : "walk";
+    // Hysteresis: once running it takes a real slowdown to drop back to a walk,
+    // so the stride does not flicker while holding a steady speed.
+    const wasRunning = player.movement === "run";
+    const threshold = MOVE.walkSpeed * (wasRunning ? 1.05 : 1.3);
+    player.movement = speed > threshold ? "run" : "walk";
   }
+
   if (!player.grounded) player.animation = "jump";
   else if (player.combat === "hurt" || player.combat === "attacking")
     player.animation = player.combat === "hurt" ? "hurt" : "attack";
