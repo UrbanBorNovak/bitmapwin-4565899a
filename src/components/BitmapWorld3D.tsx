@@ -89,6 +89,7 @@ import { heldHeightsQuery } from "@/lib/held-parcels";
 import { useAuthSession } from "@/lib/auth";
 import { myWalletLinksQuery } from "@/lib/wallet-links";
 import { PARTY_CHAT_MAX_LENGTH, PARTY_MAX_MEMBERS, useMapParty } from "@/lib/map-party";
+import { Primitive } from "./game/Primitive";
 
 const GRID = 1_000;
 const WORLD_SIZE = 100;
@@ -708,7 +709,7 @@ function ModelAvatar({
         -fitted.center.z * fitted.fit,
       ]}
     >
-      <primitive object={scene} />
+      <Primitive object={scene} />
     </group>
   );
 }
@@ -1255,7 +1256,7 @@ function OnChainModel({ model }: { model: BitmapModel }) {
           -normalized.center.z * normalized.fit,
         ]}
       >
-        <primitive object={scene} />
+        <Primitive object={scene} />
       </group>
     </group>
   );

@@ -3,6 +3,7 @@ import { Html, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import type { ExtenderProp } from "@/lib/extender-sdk";
+import { Primitive } from "../game/Primitive";
 
 /**
  * Renders what a running extender described. The sandbox only ever sends data,
@@ -42,7 +43,7 @@ function ModelProp({ prop, unit }: { prop: ExtenderProp; unit: number }) {
       scale={fitted.fit}
       position={[-fitted.center.x * fitted.fit, -fitted.minY * fitted.fit, -fitted.center.z * fitted.fit]}
     >
-      <primitive object={scene} />
+      <Primitive object={scene} />
     </group>
   );
 }
