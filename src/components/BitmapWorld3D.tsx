@@ -1890,12 +1890,41 @@ export function BitmapWorld3D({
   }, []);
 
 
-  // B opens and closes the build panel while you are out in the world.
+  /**
+   * TERRAFORM — start greening the BITMAP under your feet. Nothing appears at
+   * once: vegetation creeps in over real days, whether you are here or not.
+   */
+  const [terraformNote, setTerraformNote] = useState<string | null>(null);
+  const workLand = useCallback(async () => {
+    const current = pose.current;
+    const x = current?.x ?? 0;
+    const z = current?.z ?? 0;
+    const already = terraformAt(x, z);
+    if (already) {
+      setTerraformNote(`ALREADY TERRAFORMED · ${growthLabel(already)}`);
+      return;
+    }
+    playSfx("ui");
+    setTerraformNote("TERRAFORMING · GROWTH STARTS NOW, IN REAL TIME");
+    const result = await terraform(x, z);
+    setTerraformNote(
+      result.already
+        ? `ALREADY TERRAFORMED · ${growthLabel(result.land)}`
+        : `SEEDED · ${growthLabel(result.land)}`,
+    );
+  }, []);
+
+  // B opens the build panel, T works the land under your feet.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
-      if (event.key.toLowerCase() !== "b") return;
+      const key = event.key.toLowerCase();
+      if (key === "t") {
+        void workLand();
+        return;
+      }
+      if (key !== "b") return;
       setBuildOpen((current) => !current);
     };
     window.addEventListener("keydown", onKey);
