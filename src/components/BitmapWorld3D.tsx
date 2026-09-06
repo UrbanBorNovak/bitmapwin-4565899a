@@ -114,20 +114,24 @@ import { useAuthSession } from "@/lib/auth";
 import { myWalletLinksQuery } from "@/lib/wallet-links";
 import { PARTY_CHAT_MAX_LENGTH, PARTY_MAX_MEMBERS, useMapParty } from "@/lib/map-party";
 import { Primitive } from "./game/Primitive";
-import { Cybertruck } from "@/components/game/Cybertruck";
+import { RideModel } from "@/components/game/RideModel";
 import { Minimap } from "@/components/game/Minimap";
 import { DriveBlur } from "@/components/game/DriveBlur";
 import { DamageVeil } from "@/components/game/DamageVeil";
 
+import type { RideSpec } from "@/lib/world-vehicle";
 import {
-  DRIVE_SPEED,
-  DRIVE_SPRINT,
-  DRIVE_TURN,
+
+  RIDES,
+  currentRide,
   isDriving,
+  selectRide,
   subscribeVehicle,
   toggleDriving,
   vehicle,
+  vehicleSnapshot,
 } from "@/lib/world-vehicle";
+
 
 const GRID = 1_000;
 const WORLD_SIZE = 100;
@@ -1347,15 +1351,23 @@ function PlayerCameraRig({
       jump: jumpRequested.current,
     };
 
-    // Behind the wheel the same keys drive the truck: much faster, wider turns,
-    // and no jumping.
+    // Aboard a ride the same keys travel it: much faster, wider turns, and no
+    // jumping. The flying ride swaps jumping for climb and sink on Space / X.
     const driving = isDriving();
+    const ride = currentRide();
     if (driving) {
-      intent.speedScale = DRIVE_SPEED * (intent.sprint ? DRIVE_SPRINT : 1);
-      intent.turnScale = DRIVE_TURN;
+      intent.speedScale = ride.speed * (intent.sprint ? ride.sprint : 1);
+      intent.turnScale = ride.turn;
       intent.strafe = 0;
       intent.jump = false;
+      if (ride.kind === "air") {
+        intent.fly =
+          (pressed.has(" ") || pressed.has("r") ? 1 : 0) - (pressed.has("x") || pressed.has("f") ? 1 : 0);
+        intent.climbRate = AVATAR_U * (ride.climb ?? 9);
+        intent.cruise = AVATAR_U * (ride.altitude ?? 6);
+      }
     }
+
 
     jumpRequested.current = false;
     // Ease the steer input in and out so turns start and stop like a body, not a switch.
@@ -1743,6 +1755,8 @@ const WorldScene = memo(function WorldScene({
   onBite,
   onShooterStats,
   driving,
+  ride,
+
 }: {
   colors: WorldColors;
   command: { type: CameraMove; nonce: number; height?: number };
@@ -1775,6 +1789,8 @@ const WorldScene = memo(function WorldScene({
   onBite: (damage: number, label: string) => void;
   onShooterStats: (stats: ShooterStats) => void;
   driving: boolean;
+  ride: RideSpec;
+
 }) {
   // Pointer moves fire dozens of times a second; each React state update re-renders
   // the whole overlay. Coalesce them: at most ~20 hover updates a second, and skip
@@ -1885,9 +1901,10 @@ const WorldScene = memo(function WorldScene({
       <SelfBeacon pose={pose} bitcoin={colors.bitcoin} wide={cameraMode === "map"} />
       {cameraMode !== "map" && (driving || vehicle.placed) ? (
         <Suspense fallback={null}>
-          <Cybertruck unit={AVATAR_U} pose={pose} driving={driving} />
+          <RideModel key={ride.id} unit={AVATAR_U} pose={pose} driving={driving} ride={ride} />
         </Suspense>
       ) : null}
+
       {cameraMode === "third" && !driving ? (
         <SelfAvatar
           pose={pose}
@@ -1968,8 +1985,11 @@ export function BitmapWorld3D({
   // WEAPONS — what you are carrying while you explore the land world.
   const [weapon, setWeapon] = useState<WeaponKind | null>(null);
   const shooter = weapon !== null;
-  // The shared ride: seated or parked, both views read the same state.
-  const driving = useSyncExternalStore(subscribeVehicle, isDriving, () => false);
+  // The shared ride: which vehicle, seated or parked — both views read the same state.
+
+  const rideSnapshot = useSyncExternalStore(subscribeVehicle, vehicleSnapshot, () => "0::0");
+  const driving = rideSnapshot.startsWith("1");
+  const ride = useMemo(() => currentRide(), [rideSnapshot]);
   const toggleTruck = useCallback(() => {
     const player = pose.current;
     if (!player) return;
@@ -1977,6 +1997,12 @@ export function BitmapWorld3D({
     const seated = toggleDriving(player.x, player.z, player.yaw);
     playSfx(seated ? "jump" : "hit");
   }, []);
+  const pickRide = useCallback((id: string) => {
+    selectRide(id);
+    unlockAudio();
+    playSfx("jump");
+  }, []);
+
   const [shooterStats, setShooterStats] = useState<ShooterStats>({
     weapon: "mosin",
     ammo: WEAPONS.mosin.magazine,
@@ -2572,8 +2598,25 @@ export function BitmapWorld3D({
                 variant="ghost"
                 onClick={toggleTruck}
               >
-                {driving ? "[ PARK TRUCK · V ]" : "[ DRIVE CYBERTRUCK · V ]"}
+                <span data-no-translate>
+                  {driving ? `[ LEAVE ${ride.label} · V ]` : `[ TRAVEL BY ${ride.label} · V ]`}
+                </span>
               </Button>
+              <select
+                aria-label="Travel source"
+                data-no-translate
+                value={ride.id}
+                onChange={(event) => pickRide(event.target.value)}
+                className="border border-border bg-background px-1.5 py-1 font-mono text-[10px] uppercase text-foreground outline-none focus:border-bitcoin"
+              >
+                {RIDES.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label} ·{" "}
+                    {option.kind === "air" ? "FLY" : option.kind === "water" ? "SAIL" : "DRIVE"}
+                  </option>
+                ))}
+              </select>
+
               <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
                 {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
               </Button>
@@ -2639,6 +2682,8 @@ export function BitmapWorld3D({
               onBite={takeBite}
               onShooterStats={handleShooterStats}
               driving={driving}
+              ride={ride}
+
             />
           </Canvas>
           </div>
@@ -2893,7 +2938,9 @@ export function BitmapWorld3D({
               {helpOpen ? (
                 <span className="text-muted-foreground">
                   W · S WALK · A · D TURN · Q · E SIDESTEP · SHIFT SPRINT · SPACE JUMP · C SWAP
-                  VIEW · M MAP · V DRIVE · B BUILD · T TERRAFORM · F ATTACK ·{" "}
+                  VIEW · M MAP · V TRAVEL · SPACE · X CLIMB · SINK WHEN FLYING · B BUILD · T
+                  TERRAFORM · F ATTACK ·{" "}
+
                   {cameraMode === "first"
                     ? "CLICK WORLD FOR MOUSE LOOK · ESC RELEASE"
                     : "CLICK OR TAP TO WALK"}

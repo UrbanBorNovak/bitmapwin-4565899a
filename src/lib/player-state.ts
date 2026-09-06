@@ -167,7 +167,17 @@ export type MoveIntent = {
   speedScale?: number;
   /** multiplier on the keyboard turn rate */
   turnScale?: number;
+  /**
+   * Flight: -1 sink … 1 climb. When present, gravity is off and altitude is
+   * held instead — this is how the flying ride stays in the air.
+   */
+  fly?: number;
+  /** climb rate in world units per second while flying */
+  climbRate?: number;
+  /** altitude held while flying with no climb input */
+  cruise?: number;
 };
+
 
 /**
  * Advance one player one frame from an intent plus an optional walk target.
@@ -188,19 +198,30 @@ export function stepPlayer(player: PlayerState, intent: MoveIntent, rawDelta: nu
   }
 
   player.yaw += intent.turn * MOVE.turnRate * (intent.turnScale ?? 1) * delta;
-  if (intent.jump && player.grounded) {
-    player.vy = MOVE.jumpSpeed;
+  if (intent.fly !== undefined) {
+    // Flying: hold altitude, climb or sink on input, never fall.
+    const climb = intent.climbRate ?? STRIDE * 9;
+    const cruise = intent.cruise ?? STRIDE * 6;
+    const goal = intent.fly === 0 ? Math.max(player.y, cruise) : player.y + intent.fly * climb;
+    player.y = Math.max(0, damp(player.y, goal, intent.fly === 0 ? 2.2 : 8, delta));
+    player.vy = 0;
     player.grounded = false;
-  }
-  if (!player.grounded) {
-    player.vy -= MOVE.gravity * delta;
-    player.y += player.vy * delta;
-    if (player.y <= 0) {
-      player.y = 0;
-      player.vy = 0;
-      player.grounded = true;
+  } else {
+    if (intent.jump && player.grounded) {
+      player.vy = MOVE.jumpSpeed;
+      player.grounded = false;
+    }
+    if (!player.grounded) {
+      player.vy -= MOVE.gravity * delta;
+      player.y += player.vy * delta;
+      if (player.y <= 0) {
+        player.y = 0;
+        player.vy = 0;
+        player.grounded = true;
+      }
     }
   }
+
 
   const top = MOVE.walkSpeed * (intent.sprint ? MOVE.sprint : 1) * (intent.speedScale ?? 1);
   let wantX = 0;
