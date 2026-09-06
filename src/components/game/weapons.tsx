@@ -323,11 +323,11 @@ export function WeaponModel({
     const swing = lash;
     return (
       <group
-        position={[0.05 * u, -0.07 * u, 0.02 * u]}
-        rotation={[-0.2 + swing * 0.8, 0.24, -0.34 - swing * 0.5]}
+        position={[0.05 * u, -0.06 * u, 0.02 * u]}
+        rotation={[-0.25 + swing * 0.9, 0.1, -0.2]}
       >
         <Suspense fallback={<PickStandIn u={u} materials={materials} />}>
-          <OnChainWeapon url={PICK_URL} u={u} lengthStrides={0.55} forwardAxis="z" />
+          <PickModel u={u} />
         </Suspense>
         {flash ? <Muzzle u={u} z={-0.86 * u} size={0.05} color={flashColor} /> : null}
       </group>
@@ -418,6 +418,34 @@ const WAND_URL = `https://ordinals.com/content/${WAND_INSCRIPTION}`;
 const PICK_URL = `https://ordinals.com/content/${PICK_INSCRIPTION}`;
 
 /** An inscribed piece, fitted to the hand and pointed down -Z like the rest. */
+/**
+ * The mining pick, mounted by hand. Its head is as long as its haft, so the
+ * shared fitter reads it sideways; these numbers come from the inscription's
+ * own measurements: haft along Z, head across X.
+ */
+function PickModel({ u }: { u: number }) {
+  const gltf = useGLTF(PICK_URL);
+  const scene = useMemo(() => {
+    const copy = clone(gltf.scene);
+    copy.traverse((child) => {
+      const mesh = child as THREE.Mesh;
+      if (mesh.isMesh) {
+        mesh.castShadow = false;
+        mesh.receiveShadow = false;
+        mesh.frustumCulled = false;
+      }
+    });
+    return copy;
+  }, [gltf.scene]);
+  // native longest span is 1.3; carry it about a quarter of a stride wide
+  const scale = (0.3 * u) / 1.3;
+  return (
+    <group scale={scale} position={[0, 0, -0.55 * 0.3 * u]}>
+      <Primitive object={scene} />
+    </group>
+  );
+}
+
 function OnChainWeapon({
   url,
   u,
@@ -475,15 +503,12 @@ function OnChainWeapon({
     const axis: "x" | "y" | "z" =
       forwardAxis ??
       (size.y >= size.x && size.y >= size.z ? "y" : size.x >= size.z ? "x" : "z");
-    // For a model whose long axis already runs along Z, the far (tip) end is
-    // the one that should point away from the hand, so the grip is the high end.
-    const grip = axis === "z" ? !flip : flip;
-    const low = grip ? bounds.max[axis] : bounds.min[axis];
+    const low = flip ? bounds.max[axis] : bounds.min[axis];
     return { scale, center, axis, low };
   }, [scene, u, lengthStrides, flip, forwardAxis]);
 
   const spin: [number, number, number] =
-    fit.axis === "y" ? [-Math.PI / 2, 0, 0] : fit.axis === "x" ? [0, -Math.PI / 2, 0] : [0, 0, 0];
+    fit.axis === "y" ? [-Math.PI / 2, 0, 0] : fit.axis === "x" ? [0, -Math.PI / 2, 0] : [0, Math.PI, 0];
   // centre the two short axes, and start the long axis at the grip
   const offset = new THREE.Vector3(-fit.center.x, -fit.center.y, -fit.center.z);
   offset[fit.axis] = -fit.low;
