@@ -18,6 +18,7 @@ import type { PlayerState } from "@/lib/player-state";
 import {
   FOODS,
   GOGGLES_INSCRIPTION,
+  MAGIC_BOOK_INSCRIPTION,
   WIZARD_HAT_INSCRIPTION,
   useGear,
 } from "@/lib/world-gear";
