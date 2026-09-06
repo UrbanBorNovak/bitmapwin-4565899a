@@ -13,13 +13,14 @@
 
 import { useSyncExternalStore } from "react";
 import { ITEM_LABELS, spendItems, type ItemId } from "./world-skills";
-import { colAt, rowAt } from "./player-state";
+import { STRIDE, colAt, rowAt } from "./player-state";
 import { TILE, chunkOfTile, heightOfTile, setTiles } from "./world-grid";
 import {
   listWorldStructures,
   placeWorldStructures,
   removeWorldStructure,
 } from "./world-structures.functions";
+import { growthOf, terraformAt } from "./world-terraform";
 
 export type StructureId = "camp-fire" | "hide-tent" | "bone-totem" | "gold-obelisk" | "watchtower";
 
@@ -375,6 +376,8 @@ export function build(id: StructureId, x: number, z: number, yaw = 0) {
   hydrate();
   const recipe = recipeFor(id);
   if (!recipe) return null;
+  // Nothing is built inside something else — the ground has to be clear first.
+  if (blockedAt(x, z, footprintOf(id) * 0.6)) return null;
   if (!spendItems(recipe.cost)) return null;
   const placed: PlacedStructure = {
     key: `${id}-${Math.round(x)}-${Math.round(z)}-${Date.now()}`,
