@@ -741,11 +741,21 @@ const Critters = memo(function Critters({
       const flyer = species.kind === "vulture";
       const lift = flyer ? unit * (2.6 + Math.sin(now / 900 + critter.seed) * 0.4) : unit * 0.03;
       critter.bodyY = lift + unit * species.bodyY;
-      group.position.set(critter.x, lift, critter.z);
+      // A bite throws the body forward and rears it up for a beat, so you can
+      // see the strike land rather than only feel the damage.
+      const sinceBite = now - critter.lastBite;
+      const lunge = sinceBite < 320 ? Math.sin((sinceBite / 320) * Math.PI) : 0;
+      group.position.set(
+        critter.x + Math.sin(critter.heading) * unit * 0.35 * lunge,
+        lift + unit * 0.12 * lunge,
+        critter.z + Math.cos(critter.heading) * unit * 0.35 * lunge,
+      );
       group.rotation.y = critter.heading;
+      group.rotation.x = -0.5 * lunge;
       const wiggle = Math.sin(now / 110 + critter.seed) * 0.2;
       group.rotation.z = species.kind === "snake" ? wiggle : wiggle * 0.25;
       critter.bob = Math.sin(now / 180 + critter.seed);
+
 
       // A health bar appears the moment something has been wounded.
       const bar = bars.current?.[index];
