@@ -38,7 +38,7 @@ export type WeaponSpec = {
   damage: number;
   /** a mining tool breaks gold veins; a gun does not */
   mining: boolean;
-  fireSfx: "mosin" | "revolver" | "whip" | "pick";
+  fireSfx: "mosin" | "revolver" | "whip" | "pick" | "slash";
   /** follow-up mechanical sound after a shot (bolt lift / cylinder) */
   cycleSfx: "bolt" | "cock" | null;
   cycleDelayMs: number;
