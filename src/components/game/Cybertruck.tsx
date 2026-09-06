@@ -45,12 +45,13 @@ export function Cybertruck({
         // sand. Lift it to brushed stainless so the shape stays legible.
         const paint = (source: THREE.Material) => {
           const material = source.clone() as THREE.MeshStandardMaterial;
-          if (material.color && material.color.getHSL({ h: 0, s: 0, l: 0 }).l < 0.25) {
-            material.color = new THREE.Color("#8d9096");
-          }
-          material.metalness = 0.55;
-          material.roughness = 0.42;
-          material.envMapIntensity = 0.9;
+          const lit = /light|lamp|glow|red/i.test(source.name);
+          material.color = new THREE.Color(lit ? "#ff6a3d" : "#9aa0a8");
+          if (lit) material.emissive = new THREE.Color("#ff5722");
+          material.map = null;
+          material.metalness = 0.35;
+          material.roughness = 0.5;
+          material.envMapIntensity = 1.1;
           material.needsUpdate = true;
           return material;
         };
