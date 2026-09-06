@@ -256,6 +256,11 @@ function Marketplace() {
 
         <section className="lg:col-span-9">
 
+      <div className="mb-6">
+        <MyBitmapsPanel />
+      </div>
+
+
       {registry.isPending ? (
         <p className="mt-10 border border-border p-10 font-mono text-sm text-muted-foreground">
           &gt; READING THE REGISTRY FROM CHAIN<span className="blink">_</span>
