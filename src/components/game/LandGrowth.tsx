@@ -51,6 +51,7 @@ function planPlot(land: TerraformedLand, growth: number, out: { grass: Item[]; b
     const rx = hash(land.height + i * 1.7, 11.3) * 2 - 1;
     const rz = hash(land.height + i * 2.3, 27.9) * 2 - 1;
     const r = hash(land.height * 0.5 + i, 3.1);
+    if (!clear(cx + rx * half, cz + rz * half)) continue;
     out.grass.push({
       x: cx + rx * half,
       z: cz + rz * half,
@@ -65,6 +66,7 @@ function planPlot(land: TerraformedLand, growth: number, out: { grass: Item[]; b
     const rx = hash(land.height + i * 5.1, 71.7) * 2 - 1;
     const rz = hash(land.height + i * 6.3, 91.1) * 2 - 1;
     const r = hash(land.height * 1.3 + i, 13.7);
+    if (!clear(cx + rx * half, cz + rz * half)) continue;
     out.bush.push({
       x: cx + rx * half,
       z: cz + rz * half,
@@ -79,6 +81,7 @@ function planPlot(land: TerraformedLand, growth: number, out: { grass: Item[]; b
     const rx = hash(land.height + i * 9.7, 133.3) * 2 - 1;
     const rz = hash(land.height + i * 12.1, 171.9) * 2 - 1;
     const r = hash(land.height * 2.1 + i, 41.3);
+    if (!clear(cx + rx * half * 0.8, cz + rz * half * 0.8)) continue;
     out.tree.push({
       x: cx + rx * half * 0.8,
       z: cz + rz * half * 0.8,
