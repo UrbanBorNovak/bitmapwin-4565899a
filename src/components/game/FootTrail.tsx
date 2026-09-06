@@ -153,8 +153,13 @@ export function FootTrail({
         const fade = 1 - Math.max(0, slot.age - (PRINT_LIFE - PRINT_FADE)) / PRINT_FADE;
         scratch.euler.set(0, slot.yaw, 0);
         scratch.quat.setFromEuler(scratch.euler);
-        scratch.pos.set(slot.x, unit * 0.015, slot.z);
-        scratch.scale.set(unit * 0.16, 1, unit * 0.26).multiplyScalar(0.6 + fade * 0.4);
+        // Pressed into the sand: half the print's own thickness above zero, so
+        // it sits flush with the ground instead of hovering over it.
+        const thickness = unit * 0.012;
+        scratch.pos.set(slot.x, thickness * 0.5, slot.z);
+        const shrink = 0.6 + fade * 0.4;
+        scratch.scale.set(unit * 0.16 * shrink, thickness, unit * 0.26 * shrink);
+
         scratch.matrix.compose(scratch.pos, scratch.quat, scratch.scale);
         printMesh.setMatrixAt(i, scratch.matrix);
         printMesh.setColorAt(i, printColor.clone().multiplyScalar(0.6 + fade * 0.4));
@@ -204,7 +209,7 @@ export function FootTrail({
         frustumCulled={false}
         renderOrder={-1}
       >
-        <boxGeometry args={[1, 0.02, 1]} />
+        <boxGeometry args={[1, 1, 1]} />
         <meshBasicMaterial transparent opacity={0.35} depthWrite={false} toneMapped={false} />
       </instancedMesh>
       <instancedMesh ref={dust} args={[undefined, undefined, MAX_DUST]} frustumCulled={false}>
