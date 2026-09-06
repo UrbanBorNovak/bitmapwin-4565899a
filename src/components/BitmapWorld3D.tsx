@@ -34,6 +34,20 @@ import { runtimeDeploymentsQuery, type RuntimeDeployment } from "@/lib/extender-
 import type { RunningExtender } from "@/lib/use-extender-runtimes";
 import { ShooterLayer, type ShooterStats } from "@/components/game/ShooterLayer";
 import { DesertLife } from "@/components/game/DesertLife";
+import { Punks } from "@/components/game/Punks";
+import { Companions } from "@/components/game/Companions";
+import { WornGear } from "@/components/game/WornGear";
+import { NightVision } from "@/components/game/NightVision";
+import {
+  activeRegen,
+  companionSpec,
+  cycleCompanion,
+  startEating,
+  tickGear,
+  toggleGoggles,
+  useGear,
+  type FoodId,
+} from "@/lib/world-gear";
 import { DesertBuilds } from "@/components/game/DesertBuilds";
 import { ChunkStreamer } from "@/components/game/ChunkStreamer";
 import { FootTrail } from "@/components/game/FootTrail";
@@ -1862,12 +1876,20 @@ const WorldScene = memo(function WorldScene({
         <>
           <ChunkStreamer pose={pose} />
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
+          <Punks unit={AVATAR_U} pose={pose} onBite={onBite} />
           <DesertBuilds unit={AVATAR_U} />
           <FootTrail unit={AVATAR_U} pose={pose} sand={colors.bitcoin} />
           <LandGrowth unit={AVATAR_U} pose={pose} />
-
+          <Companions unit={AVATAR_U} pose={pose} />
+          <WornGear
+            unit={AVATAR_U}
+            pose={pose}
+            weapon={weapon}
+            showHead={cameraMode === "third" && !driving}
+          />
         </>
       ) : null}
+
 
 
       <DistrictBlocks tipHeight={tipHeight} colors={colors} />
@@ -2085,8 +2107,23 @@ export function BitmapWorld3D({
     );
   }, []);
 
-  // B opens the build panel, T works the land under your feet.
+  // B opens the build panel, T works the land under your feet, and the kit keys
+  // whistle for a pet, flip the goggles, and open a ration.
   useEffect(() => {
+    const eat = (food: FoodId) => {
+      const spec = startEating(food);
+      if (!spec) {
+        setBiteNote("ALREADY EATING");
+        window.setTimeout(() => setBiteNote(null), 1200);
+        return;
+      }
+      heal(spec.bite);
+      playSfx("ui");
+      setBiteNote(
+        `${spec.label} · +${spec.bite} HP · ${spec.buff.label} FOR ${Math.round(spec.buff.ms / 1000)}s`,
+      );
+      window.setTimeout(() => setBiteNote(null), 2400);
+    };
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
@@ -2100,12 +2137,38 @@ export function BitmapWorld3D({
         setCameraMode((current) => (current === "first" ? "third" : "first"));
         return;
       }
+      if (key === "p") {
+        const next = cycleCompanion();
+        playSfx("ui");
+        setBiteNote(next.inscription ? `COMPANION · ${next.label}` : "COMPANION DISMISSED");
+        window.setTimeout(() => setBiteNote(null), 1600);
+        return;
+      }
+      if (key === "n") {
+        const on = toggleGoggles();
+        playSfx("ui");
+        setBiteNote(on ? "NIGHT VISION · ON" : "NIGHT VISION · OFF");
+        window.setTimeout(() => setBiteNote(null), 1400);
+        return;
+      }
+      if (key === "g") {
+        eat("ice-cream");
+        return;
+      }
+      if (key === "j") {
+        eat("ramen");
+        return;
+      }
       if (key !== "b") return;
       setBuildOpen((current) => !current);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [workLand]);
+
+
+
+
 
   const toggleSound = useCallback(() => {
     const next = !isSoundMuted();
@@ -2472,6 +2535,19 @@ export function BitmapWorld3D({
     [heal, party],
   );
 
+  // A meal keeps mending you while its buff runs.
+  const gear = useGear();
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      tickGear();
+      const regen = activeRegen();
+      if (regen > 0) heal(regen);
+    }, 1_000);
+    return () => window.clearInterval(timer);
+  }, [heal]);
+
+
+
 
   const moveCamera = (type: CameraMove) => {
     setCameraMode("map");
@@ -2626,6 +2702,60 @@ export function BitmapWorld3D({
                 [ TERRAFORM · T ]
               </Button>
               <Button
+                className={gear.companion !== "none" ? "btn-term" : "btn-term-ghost"}
+                variant="ghost"
+                onClick={() => {
+                  const next = cycleCompanion();
+                  playSfx("ui");
+                  setBiteNote(next.inscription ? `COMPANION · ${next.label}` : "COMPANION DISMISSED");
+                  window.setTimeout(() => setBiteNote(null), 1600);
+                }}
+              >
+                <span data-no-translate>
+                  [ {gear.companion === "none" ? "COMPANION" : companionSpec(gear.companion).label} · P ]
+                </span>
+              </Button>
+              <Button
+                className={gear.goggles ? "btn-term" : "btn-term-ghost"}
+                variant="ghost"
+                onClick={() => {
+                  const on = toggleGoggles();
+                  playSfx("ui");
+                  setBiteNote(on ? "NIGHT VISION · ON" : "NIGHT VISION · OFF");
+                  window.setTimeout(() => setBiteNote(null), 1400);
+                }}
+              >
+                [ NIGHT VISION · N ]
+              </Button>
+              <Button
+                className="btn-term-ghost"
+                variant="ghost"
+                onClick={() => {
+                  const spec = startEating("ice-cream");
+                  if (!spec) return;
+                  heal(spec.bite);
+                  playSfx("ui");
+                  setBiteNote(`${spec.label} · +${spec.bite} HP · ${spec.buff.label}`);
+                  window.setTimeout(() => setBiteNote(null), 2400);
+                }}
+              >
+                [ ICE CREAM · G ]
+              </Button>
+              <Button
+                className="btn-term-ghost"
+                variant="ghost"
+                onClick={() => {
+                  const spec = startEating("ramen");
+                  if (!spec) return;
+                  heal(spec.bite);
+                  playSfx("ui");
+                  setBiteNote(`${spec.label} · +${spec.bite} HP · ${spec.buff.label}`);
+                  window.setTimeout(() => setBiteNote(null), 2400);
+                }}
+              >
+                [ RAMEN · J ]
+              </Button>
+              <Button
                 className={driving ? "btn-term" : "btn-term-ghost"}
                 variant="ghost"
                 onClick={toggleTruck}
@@ -2724,6 +2854,9 @@ export function BitmapWorld3D({
 
         <DriveBlur active={driving && cameraMode !== "map"} />
 
+        {/* NIGHT VISION — the goggles paint the world green while you wear them. */}
+        <NightVision active={gear.goggles && cameraMode === "first"} />
+
         {/* DAMAGE — a bite or a bullet is felt: red edges, a kick, a heartbeat. */}
         {exploring ? (
           <DamageVeil
@@ -2794,6 +2927,12 @@ export function BitmapWorld3D({
             ) : null}
             {shooterStats.note ? <div className="text-bitcoin">{shooterStats.note}</div> : null}
             {biteNote ? <div className="text-destructive">{biteNote}</div> : null}
+            {gear.buff ? (
+              <div className="text-bitcoin" data-no-translate>
+                {gear.buff.label} · +{gear.buff.regenPerSecond} HP/s ·{" "}
+                {Math.max(0, Math.round((gear.buff.until - Date.now()) / 1000))}s
+              </div>
+            ) : null}
           </div>
         ) : null}
 
@@ -2972,7 +3111,8 @@ export function BitmapWorld3D({
                 <span className="text-muted-foreground">
                   W · S WALK · A · D TURN · Q · E SIDESTEP · SHIFT SPRINT · SPACE JUMP · C SWAP
                   VIEW · M MAP · V TRAVEL · SPACE · X CLIMB · SINK WHEN FLYING · B BUILD · T
-                  TERRAFORM · F ATTACK · H HEAL SPELL · K OPEN CHEST ·{" "}
+                  TERRAFORM · F ATTACK · H HEAL SPELL · K OPEN CHEST · P COMPANION · N NIGHT VISION · G
+                  ICE CREAM · J RAMEN ·{" "}
 
                   {cameraMode === "first"
                     ? "CLICK WORLD FOR MOUSE LOOK · ESC RELEASE"
