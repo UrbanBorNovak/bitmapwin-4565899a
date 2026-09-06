@@ -322,9 +322,12 @@ export function WeaponModel({
     // below holds the pose while the inscription streams in.
     const swing = lash;
     return (
-      <group rotation={[swing * 0.9 + 0.25, -0.35, 0.12]} position={[0.16 * u, -0.3 * u, -0.15 * u]}>
+      <group
+        position={[0, -0.04 * u, 0.12 * u]}
+        rotation={[-0.2 + swing * 0.8, 0.24, -0.34 - swing * 0.5]}
+      >
         <Suspense fallback={<PickStandIn u={u} materials={materials} />}>
-          <OnChainWeapon url={PICK_URL} u={u} lengthStrides={0.6} forwardAxis="z" />
+          <OnChainWeapon url={PICK_URL} u={u} lengthStrides={0.9} forwardAxis="z" />
         </Suspense>
         {flash ? <Muzzle u={u} z={-0.86 * u} size={0.05} color={flashColor} /> : null}
       </group>
