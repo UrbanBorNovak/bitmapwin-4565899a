@@ -1917,6 +1917,7 @@ export function BitmapWorld3D({
   const [draft, setDraft] = useState("");
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [buildOpen, setBuildOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [buildNote, setBuildNote] = useState<string | null>(null);
   // WEAPONS — what you are carrying while you explore the land world.
   const [weapon, setWeapon] = useState<WeaponKind | null>(null);
@@ -2017,6 +2018,11 @@ export function BitmapWorld3D({
       const key = event.key.toLowerCase();
       if (key === "t") {
         void workLand();
+        return;
+      }
+      // C flips between looking through your own eyes and over your shoulder.
+      if (key === "c") {
+        setCameraMode((current) => (current === "first" ? "third" : "first"));
         return;
       }
       if (key !== "b") return;
@@ -2754,13 +2760,22 @@ export function BitmapWorld3D({
                 {readout.target ? " · WALKING TO MARK" : ""}
                 {readout.airborne ? " · JUMPING" : ""}
               </span>
-              <span className="text-muted-foreground">
-                W · S WALK · A · D TURN · Q · E SIDESTEP · SHIFT SPRINT · SPACE JUMP ·{" "}
-                {cameraMode === "first"
-                  ? "CLICK WORLD FOR MOUSE LOOK · ESC RELEASE"
-                  : "CLICK OR TAP TO WALK"}{" "}
-                · F ATTACK
-              </span>
+              {helpOpen ? (
+                <span className="text-muted-foreground">
+                  W · S WALK · A · D TURN · Q · E SIDESTEP · SHIFT SPRINT · SPACE JUMP · C SWAP
+                  VIEW · M MAP · V DRIVE · B BUILD · T TERRAFORM · F ATTACK ·{" "}
+                  {cameraMode === "first"
+                    ? "CLICK WORLD FOR MOUSE LOOK · ESC RELEASE"
+                    : "CLICK OR TAP TO WALK"}
+                </span>
+              ) : null}
+              <button
+                type="button"
+                className="pointer-events-auto self-start border border-border px-1 text-[9px] text-muted-foreground hover:border-bitcoin hover:text-bitcoin"
+                onClick={() => setHelpOpen((current) => !current)}
+              >
+                {helpOpen ? "[ HIDE CONTROLS ]" : "[ CONTROLS ]"}
+              </button>
             </>
           ) : null}
         </div>
