@@ -25,6 +25,10 @@ export const MINIGUN_INSCRIPTION =
 export const WAND_INSCRIPTION =
   "fdc01c2ffb7e74585b121ad79000b0910b9e38087becb0102aff3f1eef2c18fai0";
 
+/** on-chain GLB inscription of the mining pick */
+export const PICK_INSCRIPTION =
+  "fd69f76fc8964ab62237d8fd6a5de7f76765bbf9861a48855d6502d25b4db7e8i0";
+
 export type WeaponKind = "minigun" | "revolver" | "whip" | "pickaxe" | "sword" | "wand";
 
 
@@ -126,7 +130,7 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     cycleSfx: null,
     cycleDelayMs: 0,
     reloadSfx: "reload",
-    hint: "MINE GOLD VEINS · RIGHT TO LINE UP · LEFT TO SWING",
+    hint: "MINE GOLD VEINS · LEFT TO SWING · K TO UNLOCK A CHEST",
   },
   sword: {
     kind: "sword",
@@ -314,47 +318,19 @@ export function WeaponModel({
   }
 
   if (kind === "pickaxe") {
-    // A miner's pick: bound haft, iron head with a wedge, worn point and chisel.
+    // The real on-chain mining pick, swung from the haft. The forged stand-in
+    // below holds the pose while the inscription streams in.
     const swing = lash;
     return (
-      <group rotation={[swing * 0.9, 0, 0]}>
-        <mesh material={wood} position={[0, 0.07 * u, -0.3 * u]} rotation={[Math.PI / 2.2, 0, 0]}>
-          <cylinderGeometry args={[0.024 * u, 0.032 * u, 0.78 * u, 10]} />
-        </mesh>
-        {/* grip wraps */}
-        {[0.03, -0.02, -0.07].map((z) => (
-          <mesh key={z} material={leather} position={[0, -0.02 * u - z * 0.4 * u, z * u]} rotation={[Math.PI / 2.2, 0, 0]}>
-            <cylinderGeometry args={[0.035 * u, 0.035 * u, 0.05 * u, 8]} />
-          </mesh>
-        ))}
-        <mesh material={leather} position={[0, -0.05 * u, 0.04 * u]} rotation={[Math.PI / 2.2, 0, 0]}>
-          <cylinderGeometry args={[0.036 * u, 0.03 * u, 0.1 * u, 8]} />
-        </mesh>
-        {/* head collar, wedged onto the haft */}
-        <mesh material={iron} position={[0, 0.25 * u, -0.53 * u]} rotation={[0.28, 0, 0]}>
-          <boxGeometry args={[0.055 * u, 0.09 * u, 0.09 * u]} />
-        </mesh>
-        <mesh material={brass} position={[0, 0.3 * u, -0.53 * u]}>
-          <boxGeometry args={[0.03 * u, 0.02 * u, 0.05 * u]} />
-        </mesh>
-        {/* pick point */}
-        <mesh material={iron} position={[0, 0.22 * u, -0.72 * u]} rotation={[-Math.PI / 2.6, 0, 0]}>
-          <coneGeometry args={[0.034 * u, 0.44 * u, 8]} />
-        </mesh>
-        <mesh material={steel} position={[0, 0.16 * u, -0.88 * u]} rotation={[-Math.PI / 2.6, 0, 0]}>
-          <coneGeometry args={[0.014 * u, 0.1 * u, 8]} />
-        </mesh>
-        {/* chisel back */}
-        <mesh material={iron} position={[0, 0.31 * u, -0.36 * u]} rotation={[0.52, 0, 0]}>
-          <boxGeometry args={[0.062 * u, 0.055 * u, 0.22 * u]} />
-        </mesh>
-        <mesh material={steel} position={[0, 0.37 * u, -0.26 * u]} rotation={[0.52, 0, 0]}>
-          <boxGeometry args={[0.064 * u, 0.018 * u, 0.05 * u]} />
-        </mesh>
+      <group rotation={[swing * 0.9, 0, 0]} position={[0.02 * u, -0.04 * u, 0.06 * u]}>
+        <Suspense fallback={<PickStandIn u={u} materials={materials} />}>
+          <OnChainWeapon url={PICK_URL} u={u} lengthStrides={1.1} />
+        </Suspense>
         {flash ? <Muzzle u={u} z={-0.86 * u} size={0.05} color={flashColor} /> : null}
       </group>
     );
   }
+
 
   if (kind === "sword") {
     // The real on-chain blade, swung from the grip. A plain steel stand-in
@@ -436,17 +412,21 @@ function Muzzle({ u, z, size, color }: { u: number; z: number; size: number; col
 const SWORD_URL = `https://ordinals.com/content/${SWORD_INSCRIPTION}`;
 const MINIGUN_URL = `https://ordinals.com/content/${MINIGUN_INSCRIPTION}`;
 const WAND_URL = `https://ordinals.com/content/${WAND_INSCRIPTION}`;
+const PICK_URL = `https://ordinals.com/content/${PICK_INSCRIPTION}`;
 
 /** An inscribed piece, fitted to the hand and pointed down -Z like the rest. */
 function OnChainWeapon({
   url,
   u,
   lengthStrides,
+  flip = false,
 }: {
   url: string;
   u: number;
   /** how long the piece reads from grip to tip, in strides */
   lengthStrides: number;
+  /** the model's grip sits at the far end of its long axis, not the near end */
+  flip?: boolean;
 }) {
   const gltf = useGLTF(url);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
@@ -457,10 +437,27 @@ function OnChainWeapon({
         mesh.castShadow = false;
         mesh.receiveShadow = false;
         mesh.frustumCulled = false;
+        // Some inscriptions ship a flat presentation plane behind the object.
+        // It would swallow the fitting box, so it is dropped from the carry.
+        const geometry = mesh.geometry as THREE.BufferGeometry | undefined;
+        const count = geometry?.attributes?.position?.count ?? 0;
+        if (geometry && count > 0 && count <= 8) {
+          geometry.computeBoundingBox();
+          const box = geometry.boundingBox;
+          if (box) {
+            const span = box.getSize(new THREE.Vector3());
+            const flat = [span.x, span.y, span.z].filter((v) => v < 1e-4).length >= 1;
+            if (flat) mesh.visible = false;
+          }
+        }
       }
     });
     scene.updateMatrixWorld(true);
-    const bounds = new THREE.Box3().setFromObject(scene);
+    const bounds = new THREE.Box3();
+    scene.traverse((child) => {
+      const mesh = child as THREE.Mesh;
+      if (mesh.isMesh && mesh.visible) bounds.expandByObject(mesh);
+    });
     const size = bounds.getSize(new THREE.Vector3());
     const center = bounds.getCenter(new THREE.Vector3());
     const longest = Math.max(size.x, size.y, size.z, 0.0001);
@@ -471,9 +468,9 @@ function OnChainWeapon({
     // weapon here.
     const axis: "x" | "y" | "z" =
       size.y >= size.x && size.y >= size.z ? "y" : size.x >= size.z ? "x" : "z";
-    const low = bounds.min[axis];
+    const low = flip ? bounds.max[axis] : bounds.min[axis];
     return { scale, center, axis, low };
-  }, [scene, u, lengthStrides]);
+  }, [scene, u, lengthStrides, flip]);
 
   const spin: [number, number, number] =
     fit.axis === "y" ? [-Math.PI / 2, 0, 0] : fit.axis === "x" ? [0, -Math.PI / 2, 0] : [0, Math.PI, 0];
@@ -513,6 +510,7 @@ function SwordStandIn({ u, materials }: { u: number; materials: WeaponMaterials 
 useGLTF.preload(SWORD_URL);
 useGLTF.preload(MINIGUN_URL);
 useGLTF.preload(WAND_URL);
+useGLTF.preload(PICK_URL);
 
 /** Barrel cluster shown while the minigun inscription streams in. */
 function MinigunStandIn({
@@ -560,6 +558,36 @@ function WandStandIn({ u, materials }: { u: number; materials: WeaponMaterials }
       <mesh position={[0, 0, -0.42 * u]} rotation={[Math.PI / 2, 0, 0]}>
         <cylinderGeometry args={[0.014 * u, 0.02 * u, 0.8 * u, 8]} />
         <meshStandardMaterial color="#2f6fd0" emissive="#1a4a9c" emissiveIntensity={0.8} roughness={0.4} />
+      </mesh>
+    </group>
+  );
+}
+
+/** Forged pick shown for the moment before the inscription finishes loading. */
+function PickStandIn({ u, materials }: { u: number; materials: WeaponMaterials }) {
+  const { wood, leather, iron, steel, brass } = materials;
+  return (
+    <group>
+      <mesh material={wood} position={[0, 0.07 * u, -0.3 * u]} rotation={[Math.PI / 2.2, 0, 0]}>
+        <cylinderGeometry args={[0.024 * u, 0.032 * u, 0.78 * u, 10]} />
+      </mesh>
+      <mesh material={leather} position={[0, -0.05 * u, 0.04 * u]} rotation={[Math.PI / 2.2, 0, 0]}>
+        <cylinderGeometry args={[0.036 * u, 0.03 * u, 0.1 * u, 8]} />
+      </mesh>
+      <mesh material={iron} position={[0, 0.25 * u, -0.53 * u]} rotation={[0.28, 0, 0]}>
+        <boxGeometry args={[0.055 * u, 0.09 * u, 0.09 * u]} />
+      </mesh>
+      <mesh material={brass} position={[0, 0.3 * u, -0.53 * u]}>
+        <boxGeometry args={[0.03 * u, 0.02 * u, 0.05 * u]} />
+      </mesh>
+      <mesh material={iron} position={[0, 0.22 * u, -0.72 * u]} rotation={[-Math.PI / 2.6, 0, 0]}>
+        <coneGeometry args={[0.034 * u, 0.44 * u, 8]} />
+      </mesh>
+      <mesh material={steel} position={[0, 0.16 * u, -0.88 * u]} rotation={[-Math.PI / 2.6, 0, 0]}>
+        <coneGeometry args={[0.014 * u, 0.1 * u, 8]} />
+      </mesh>
+      <mesh material={iron} position={[0, 0.31 * u, -0.36 * u]} rotation={[0.52, 0, 0]}>
+        <boxGeometry args={[0.062 * u, 0.055 * u, 0.22 * u]} />
       </mesh>
     </group>
   );

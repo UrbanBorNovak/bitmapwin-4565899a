@@ -11,11 +11,13 @@ import {
   liveBeasts,
   liveVeins,
   mineVoxel,
+  nearestChest,
+  openChest,
   type BeastEntity,
   type OreVein,
   type OreVoxel,
 } from "@/lib/world-entities";
-import { addItem, grantXp, skillLevel } from "@/lib/world-skills";
+import { addItem, grantXp, skillLevel, spendItems } from "@/lib/world-skills";
 import { Primitive } from "./Primitive";
 import { AIM_FORGIVENESS, AIM_REACH_BONUS, aimState } from "@/lib/world-aim";
 
@@ -342,6 +344,8 @@ export function ShooterLayer({
       if (!result.mined) return;
       playSfx("ore");
       const stored = addItem("gold-nugget", 1);
+      // A key turns up now and then in the rubble — treasure needs one.
+      if (Math.random() < 0.07 && addItem("key", 1)) flashNote("A KEY IN THE RUBBLE");
       const gained = grantXp("mining", oreHit.vein.xpPerVoxel);
       setScore((current) => current + 15);
       if (!stored) {
@@ -370,6 +374,7 @@ export function ShooterLayer({
         setKills((current) => current + 1);
         const gained = grantXp("hunter", beastHit.beast.xp);
         addItem(beastHit.beast.hostile ? "fang" : "hide", 1);
+        if (Math.random() < 0.05) addItem("key", 1);
         if (gained.levelled) {
           playSfx("levelup");
           flashNote(`HUNTER LEVEL ${gained.level}`);
@@ -439,6 +444,43 @@ export function ShooterLayer({
     flashNote(`HEALING SPELL · +${HEAL_AMOUNT} TO THE PARTY`);
   }, [flashNote, onCastHeal, spec.spell]);
 
+  // TREASURE — turn a key on the nearest chest and take what is inside.
+  const unlockChest = useCallback(() => {
+    const me = pose.current;
+    if (!me) return;
+    const chest = nearestChest(me.x, me.z, STRIDE * 3.5);
+    if (!chest) {
+      flashNote("NO TREASURE CHEST IN REACH");
+      return;
+    }
+    if (chest.opened) {
+      flashNote("THIS CHEST IS ALREADY EMPTY");
+      return;
+    }
+    if (!spendItems({ key: 1 })) {
+      playSfx("empty");
+      flashNote("LOCKED · FIND A KEY FIRST");
+      return;
+    }
+    openChest(chest);
+    const nuggets = 2 + Math.floor(Math.random() * 4);
+    addItem("gold-nugget", nuggets);
+    const relic = Math.random() < 0.35;
+    if (relic) addItem("relic", 1);
+    const gained = grantXp("mining", 240);
+    setScore((current) => current + 120);
+    playSfx(relic ? "levelup" : "nugget");
+    if (gained.levelled) {
+      flashNote(`TREASURE · MINING LEVEL ${gained.level}`);
+    } else {
+      flashNote(
+        relic
+          ? `TREASURE · ${nuggets} GOLD AND A RELIC`
+          : `TREASURE · ${nuggets} GOLD NUGGETS`,
+      );
+    }
+  }, [flashNote, pose]);
+
   // Mouse / touch strike on the canvas, R to reload.
   useEffect(() => {
     if (!active) return;
@@ -486,6 +528,11 @@ export function ShooterLayer({
         unlockAudio();
         castHeal();
       }
+      if (event.code === "KeyK") {
+        event.preventDefault();
+        unlockAudio();
+        unlockChest();
+      }
       if (event.code === "KeyE") {
         event.preventDefault();
         unlockAudio();
@@ -522,7 +569,7 @@ export function ShooterLayer({
       holding.current = false;
     };
 
-  }, [active, castHeal, fire, firstPerson, gl, reload]);
+  }, [active, castHeal, fire, firstPerson, gl, reload, unlockChest]);
 
   useEffect(() => {
     if (!active || spec.magazine === 0) return;

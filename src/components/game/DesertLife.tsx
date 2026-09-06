@@ -10,6 +10,7 @@
 import { memo, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { TreasureChests } from "@/components/game/TreasureChests";
 import {
   registerBeasts,
   registerVeins,
@@ -508,6 +509,7 @@ export const DesertLife = memo(function DesertLife({
       </instancedMesh>
       <Mirage unit={unit} pose={pose} />
       <GoldVeins unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
+      <TreasureChests unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <Critters unit={unit} colors={colors} pose={pose} onBite={onBite} />
 
 
