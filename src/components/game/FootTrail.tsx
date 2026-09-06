@@ -13,6 +13,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { PlayerState } from "@/lib/player-state";
 import { MOVE } from "@/lib/player-state";
+import { vehicle } from "@/lib/world-vehicle";
 
 const MAX_PRINTS = 96;
 const MAX_DUST = 120;
@@ -21,7 +22,7 @@ const PRINT_LIFE = 26;
 const PRINT_FADE = 8;
 const DUST_LIFE = 0.85;
 
-type Print = { x: number; z: number; yaw: number; age: number; live: boolean };
+type Print = { x: number; z: number; yaw: number; age: number; live: boolean; tire: boolean };
 type Mote = {
   x: number;
   y: number;
@@ -47,7 +48,7 @@ export function FootTrail({
   const dust = useRef<THREE.InstancedMesh>(null);
 
   const state = useRef({
-    prints: Array.from({ length: MAX_PRINTS }, (): Print => ({ x: 0, z: 0, yaw: 0, age: 0, live: false })),
+    prints: Array.from({ length: MAX_PRINTS }, (): Print => ({ x: 0, z: 0, yaw: 0, age: 0, live: false, tire: false })),
     motes: Array.from({ length: MAX_DUST }, (): Mote => ({
       x: 0,
       y: 0,
@@ -98,12 +99,29 @@ export function FootTrail({
     const landed = grounded && store.wasAirborne;
     store.wasAirborne = !grounded;
 
-    /* ---- prints: one every stride, alternating feet ---- */
+    /* ---- marks: boot prints on foot, twin tire tracks while driving ---- */
+    const driving = vehicle.driving;
     if (grounded && travelled > 0) {
       store.strideCarry += travelled;
-      const gap = unit * (running ? 1.5 : 1.05);
+      const gap = driving ? unit * 0.34 : unit * (running ? 1.5 : 1.05);
       while (store.strideCarry >= gap) {
         store.strideCarry -= gap;
+        if (driving) {
+          // both wheels lay a segment at once, spaced to the truck's track width
+          for (const side of [1, -1]) {
+            const offX = Math.cos(player.yaw) * side * unit * 0.42;
+            const offZ = -Math.sin(player.yaw) * side * unit * 0.42;
+            const slot = store.prints[store.printCursor % MAX_PRINTS]!;
+            store.printCursor++;
+            slot.x = player.x + offX;
+            slot.z = player.z + offZ;
+            slot.yaw = player.yaw;
+            slot.age = 0;
+            slot.live = true;
+            slot.tire = true;
+          }
+          continue;
+        }
         store.left = !store.left;
         const side = store.left ? 1 : -1;
         const offX = Math.cos(player.yaw) * side * unit * 0.22;
@@ -115,11 +133,22 @@ export function FootTrail({
         slot.yaw = player.yaw;
         slot.age = 0;
         slot.live = true;
+        slot.tire = false;
       }
     }
 
     /* ---- dust: kicked up while running, and a burst on landing ---- */
-    const puffs = landed ? 10 : running ? (speed > MOVE.walkSpeed * 1.6 ? 2 : 1) : 0;
+    const puffs = driving
+      ? speed > 0.4 * unit
+        ? 2
+        : 0
+      : landed
+        ? 10
+        : running
+          ? speed > MOVE.walkSpeed * 1.6
+            ? 2
+            : 1
+          : 0;
     for (let i = 0; i < puffs; i++) {
       const mote = store.motes[store.moteCursor % MAX_DUST]!;
       store.moteCursor++;
@@ -158,7 +187,11 @@ export function FootTrail({
         const thickness = unit * 0.012;
         scratch.pos.set(slot.x, thickness * 0.5, slot.z);
         const shrink = 0.6 + fade * 0.4;
-        scratch.scale.set(unit * 0.16 * shrink, thickness, unit * 0.26 * shrink);
+        if (slot.tire) {
+          scratch.scale.set(unit * 0.1 * shrink, thickness, unit * 0.4 * shrink);
+        } else {
+          scratch.scale.set(unit * 0.16 * shrink, thickness, unit * 0.26 * shrink);
+        }
 
         scratch.matrix.compose(scratch.pos, scratch.quat, scratch.scale);
         printMesh.setMatrixAt(i, scratch.matrix);
