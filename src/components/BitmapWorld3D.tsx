@@ -247,33 +247,60 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
   heights: number[];
   bitcoin: string;
 }) {
-  const coreRef = useRef<THREE.InstancedMesh>(null);
+  const innerRef = useRef<THREE.InstancedMesh>(null);
   const auraRef = useRef<THREE.InstancedMesh>(null);
-  const coreMaterial = useRef<THREE.MeshBasicMaterial>(null);
-  const auraMaterial = useRef<THREE.MeshBasicMaterial>(null);
+  const outerRef = useRef<THREE.InstancedMesh>(null);
+  const wireRef = useRef<THREE.InstancedMesh>(null);
+  const innerMat = useRef<THREE.MeshBasicMaterial>(null);
+  const auraMat = useRef<THREE.MeshBasicMaterial>(null);
+  const outerMat = useRef<THREE.MeshBasicMaterial>(null);
+  const wireMat = useRef<THREE.MeshBasicMaterial>(null);
   const owned = useMemo(() => [...new Set(heights)], [heights]);
 
   useEffect(() => {
-    const core = coreRef.current;
+    const inner = innerRef.current;
     const aura = auraRef.current;
-    if (!core || !aura) return;
+    const outer = outerRef.current;
+    const wire = wireRef.current;
+    if (!inner || !aura || !outer || !wire) return;
     const dummy = new THREE.Object3D();
     owned.forEach((height, index) => {
       const x = worldX(height % GRID);
       const z = worldZ(Math.floor(height / GRID));
-      dummy.position.set(x, AVATAR_U * 1.6, z);
-      dummy.scale.set(CELL * 1.5, AVATAR_U * 3, CELL * 1.5);
+      const y = AVATAR_U * 0.55;
+
+      // bright inner column
+      dummy.position.set(x, y, z);
+      dummy.scale.set(CELL * 1.35, AVATAR_U * 2.2, CELL * 1.35);
       dummy.updateMatrix();
-      core.setMatrixAt(index, dummy.matrix);
-      dummy.position.set(x, AVATAR_U * 1.6, z);
-      dummy.scale.set(CELL * 3.2, AVATAR_U * 3.4, CELL * 3.2);
+      inner.setMatrixAt(index, dummy.matrix);
+
+      // soft mid aura
+      dummy.position.set(x, y, z);
+      dummy.scale.set(CELL * 2.6, AVATAR_U * 2.8, CELL * 2.6);
       dummy.updateMatrix();
       aura.setMatrixAt(index, dummy.matrix);
+
+      // wide outer halo
+      dummy.position.set(x, y, z);
+      dummy.scale.set(CELL * 4.2, AVATAR_U * 1.4, CELL * 4.2);
+      dummy.updateMatrix();
+      outer.setMatrixAt(index, dummy.matrix);
+
+      // crisp wireframe cage
+      dummy.position.set(x, y + AVATAR_U * 0.25, z);
+      dummy.scale.set(CELL * 1.75, AVATAR_U * 2.8, CELL * 1.75);
+      dummy.updateMatrix();
+      wire.setMatrixAt(index, dummy.matrix);
     });
-    core.instanceMatrix.needsUpdate = true;
+    inner.instanceMatrix.needsUpdate = true;
     aura.instanceMatrix.needsUpdate = true;
-    core.computeBoundingSphere();
+    outer.instanceMatrix.needsUpdate = true;
+    wire.instanceMatrix.needsUpdate = true;
+    inner.computeBoundingSphere();
     aura.computeBoundingSphere();
+    outer.computeBoundingSphere();
+    wire.computeBoundingSphere();
   }, [owned]);
 
   const nextPulse = useRef(0);
@@ -282,13 +309,33 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
     if (clock.elapsedTime < nextPulse.current) return;
     nextPulse.current = clock.elapsedTime + 0.05;
     const pulse = (Math.sin(clock.elapsedTime * 2.2) + 1) / 2;
-    if (coreMaterial.current) coreMaterial.current.opacity = 0.66 + pulse * 0.26;
-    if (auraMaterial.current) auraMaterial.current.opacity = 0.08 + pulse * 0.13;
+    if (innerMat.current) innerMat.current.opacity = 0.55 + pulse * 0.35;
+    if (auraMat.current) auraMat.current.opacity = 0.18 + pulse * 0.22;
+    if (outerMat.current) outerMat.current.opacity = 0.06 + pulse * 0.12;
+    if (wireMat.current) wireMat.current.opacity = 0.7 + pulse * 0.25;
   });
 
   if (owned.length === 0) return null;
   return (
-    <group>
+    <group renderOrder={10}>
+      <instancedMesh
+        key={`outer-${owned.length}`}
+        ref={outerRef}
+        args={[undefined, undefined, owned.length]}
+        frustumCulled
+        raycast={noRaycast}
+      >
+        <boxGeometry args={[1, 1, 1]} />
+        <meshBasicMaterial
+          ref={outerMat}
+          color={bitcoin}
+          transparent
+          opacity={0.12}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          side={THREE.DoubleSide}
+        />
+      </instancedMesh>
       <instancedMesh
         key={`aura-${owned.length}`}
         ref={auraRef}
@@ -298,28 +345,46 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
       >
         <boxGeometry args={[1, 1, 1]} />
         <meshBasicMaterial
-          ref={auraMaterial}
+          ref={auraMat}
           color={bitcoin}
           transparent
-          opacity={0.14}
+          opacity={0.22}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
           side={THREE.DoubleSide}
         />
       </instancedMesh>
       <instancedMesh
-        key={`core-${owned.length}`}
-        ref={coreRef}
+        key={`inner-${owned.length}`}
+        ref={innerRef}
         args={[undefined, undefined, owned.length]}
         frustumCulled
         raycast={noRaycast}
       >
         <boxGeometry args={[1, 1, 1]} />
         <meshBasicMaterial
-          ref={coreMaterial}
+          ref={innerMat}
           color={bitcoin}
           transparent
-          opacity={0.8}
+          opacity={0.7}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          side={THREE.DoubleSide}
+        />
+      </instancedMesh>
+      <instancedMesh
+        key={`wire-${owned.length}`}
+        ref={wireRef}
+        args={[undefined, undefined, owned.length]}
+        frustumCulled
+        raycast={noRaycast}
+      >
+        <boxGeometry args={[1, 1, 1]} />
+        <meshBasicMaterial
+          ref={wireMat}
+          color={bitcoin}
+          transparent
+          opacity={0.85}
           wireframe
           depthWrite={false}
           blending={THREE.AdditiveBlending}
