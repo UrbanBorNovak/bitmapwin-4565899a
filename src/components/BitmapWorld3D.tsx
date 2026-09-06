@@ -2518,6 +2518,10 @@ export function BitmapWorld3D({
           </Canvas>
         ) : null}
 
+        <DriveBlur active={driving && cameraMode !== "map"} />
+
+
+
         {weapon && exploring ? (
           <div
             data-no-translate
