@@ -41,6 +41,9 @@ const HIDE_DARK = "#5f5240";
 const HOSTILE = "#c0392b";
 const WATER = "#3f6f86";
 const REED = "#5d7a46";
+const PALM_TRUNK = "#7a6242";
+const PALM_LEAF = "#4f8a44";
+const OASIS_BUSH = "#3f7a3c";
 const MIRAGE = "#9fc4d6";
 
 /** Stable pseudo-random in [0,1) from two integers — same cell, same plant. */
@@ -92,6 +95,10 @@ export const DesertLife = memo(function DesertLife({
     const brush: Scatter = { matrices: [] };
     const ponds: Scatter = { matrices: [] };
     const reeds: Scatter = { matrices: [] };
+    const palms: Scatter = { matrices: [] };
+    const fronds3: Scatter = { matrices: [] };
+    const oasisBush: Scatter = { matrices: [] };
+
 
     const dummy = new THREE.Object3D();
     const span = Math.ceil(radius / step);
@@ -206,9 +213,9 @@ export const DesertLife = memo(function DesertLife({
           dummy.scale.set(size, size * 0.8, size);
           dummy.updateMatrix();
           brush.matrices.push(dummy.matrix.clone());
-        } else if (roll > 0.988) {
-          // A rare watering hole, with a shore of reeds around it.
-          const span2 = unit * (1.6 + hash(gx, gz, 30) * 2.4);
+        } else if (roll > 0.9975) {
+          // A rare oasis: one water hole ringed by reeds, palms and green bushes.
+          const span2 = unit * (1.8 + hash(gx, gz, 30) * 2.6);
           dummy.position.set(x, unit * 0.012, z);
           dummy.rotation.set(-Math.PI / 2, 0, spin);
           dummy.scale.set(span2, span2 * (0.7 + hash(gx, gz, 31) * 0.5), 1);
@@ -229,10 +236,74 @@ export const DesertLife = memo(function DesertLife({
             dummy.updateMatrix();
             reeds.matrices.push(dummy.matrix.clone());
           }
+
+          // Palms leaning over the water.
+          const palmCount = 3 + Math.floor(hash(gx, gz, 40) * 3);
+          for (let p = 0; p < palmCount; p++) {
+            const angle = (p / palmCount) * Math.PI * 2 + spin * 1.3;
+            const ring = span2 * (1.25 + hash(gx + p, gz, 41) * 0.5);
+            const px = x + Math.cos(angle) * ring;
+            const pz = z + Math.sin(angle) * ring;
+            const height = unit * (1.6 + hash(gx, gz + p, 42) * 1.3);
+            const lean = 0.1 + hash(gx + p, gz + p, 43) * 0.16;
+            dummy.position.set(px, height / 2, pz);
+            dummy.rotation.set(0, angle, -lean);
+            dummy.scale.set(unit * 0.11, height, unit * 0.11);
+            dummy.updateMatrix();
+            palms.matrices.push(dummy.matrix.clone());
+            const topY = height * 0.98;
+            const topX = px + Math.sin(lean) * height * 0.5 * Math.cos(angle + Math.PI / 2);
+            const fronds = 6;
+            for (let f = 0; f < fronds; f++) {
+              const fa = (f / fronds) * Math.PI * 2 + angle;
+              const reach = unit * (0.5 + hash(gx + f, gz + p, 44) * 0.28);
+              dummy.position.set(
+                topX + Math.cos(fa) * reach * 0.55,
+                topY - unit * 0.06,
+                pz + Math.sin(fa) * reach * 0.55,
+              );
+              dummy.rotation.set(0.34, -fa, 0);
+              dummy.rotation.order = "YXZ";
+              dummy.scale.set(reach, unit * 0.035, unit * 0.16);
+              dummy.updateMatrix();
+              fronds3.matrices.push(dummy.matrix.clone());
+            }
+          }
+
+          // Green bushes crowding the damp ground.
+          const bushCount = 6 + Math.floor(hash(gx, gz, 45) * 5);
+          for (let b = 0; b < bushCount; b++) {
+            const angle = hash(gx + b, gz - b, 46) * Math.PI * 2;
+            const ring = span2 * (1.0 + hash(gx - b, gz + b, 47) * 0.9);
+            const size = unit * (0.24 + hash(gx + b, gz + b, 48) * 0.3);
+            dummy.position.set(
+              x + Math.cos(angle) * ring,
+              size * 0.45,
+              z + Math.sin(angle) * ring,
+            );
+            dummy.rotation.set(0, angle, 0);
+            dummy.scale.set(size, size * 0.85, size);
+            dummy.updateMatrix();
+            oasisBush.matrices.push(dummy.matrix.clone());
+          }
         }
       }
     }
-    return { cactus, arms, spikes, blossoms, rocks, pebbles, brush, ponds, reeds };
+    return {
+      cactus,
+      arms,
+      spikes,
+      blossoms,
+      rocks,
+      pebbles,
+      brush,
+      ponds,
+      reeds,
+      palms,
+      fronds3,
+      oasisBush,
+    };
+
   }, [center, radius, step, unit]);
 
 
@@ -245,6 +316,9 @@ export const DesertLife = memo(function DesertLife({
   const brushRef = useRef<THREE.InstancedMesh>(null);
   const pondRef = useRef<THREE.InstancedMesh>(null);
   const reedRef = useRef<THREE.InstancedMesh>(null);
+  const palmRef = useRef<THREE.InstancedMesh>(null);
+  const frondRef = useRef<THREE.InstancedMesh>(null);
+  const oasisBushRef = useRef<THREE.InstancedMesh>(null);
 
   useEffect(() => {
     const apply = (mesh: THREE.InstancedMesh | null, scatter: Scatter) => {
@@ -263,6 +337,9 @@ export const DesertLife = memo(function DesertLife({
     apply(brushRef.current, patch.brush);
     apply(pondRef.current, patch.ponds);
     apply(reedRef.current, patch.reeds);
+    apply(palmRef.current, patch.palms);
+    apply(frondRef.current, patch.fronds3);
+    apply(oasisBushRef.current, patch.oasisBush);
   }, [patch]);
 
 
@@ -350,6 +427,33 @@ export const DesertLife = memo(function DesertLife({
       >
         <boxGeometry args={[1, 1, 1]} />
         <meshLambertMaterial color={REED} />
+      </instancedMesh>
+      <instancedMesh
+        ref={palmRef}
+        args={[undefined, undefined, 240]}
+        frustumCulled={false}
+        raycast={noRaycast}
+      >
+        <cylinderGeometry args={[0.36, 0.5, 1, 7, 1]} />
+        <meshLambertMaterial color={PALM_TRUNK} />
+      </instancedMesh>
+      <instancedMesh
+        ref={frondRef}
+        args={[undefined, undefined, 1600]}
+        frustumCulled={false}
+        raycast={noRaycast}
+      >
+        <boxGeometry args={[1, 1, 1]} />
+        <meshLambertMaterial color={PALM_LEAF} />
+      </instancedMesh>
+      <instancedMesh
+        ref={oasisBushRef}
+        args={[undefined, undefined, 900]}
+        frustumCulled={false}
+        raycast={noRaycast}
+      >
+        <icosahedronGeometry args={[0.5, 0]} />
+        <meshLambertMaterial color={OASIS_BUSH} flatShading />
       </instancedMesh>
       <Mirage unit={unit} pose={pose} />
       <GoldVeins unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />

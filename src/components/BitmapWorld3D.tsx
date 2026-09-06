@@ -385,17 +385,18 @@ const DistrictBlocks = memo(function DistrictBlocks({
             float seam = step(cellUv.x, 0.02) + step(0.98, cellUv.x)
                        + step(cellUv.y, 0.02) + step(0.98, cellUv.y);
 
-            // VOXEL LAND — warm Bitcoin-orange tiles over the desert: the land
-            // keeps its ember identity, unmined ground stays cold and dim.
-            vec3 emberDeep = vec3(0.24, 0.11, 0.04);
-            vec3 emberLight = vec3(0.98, 0.55, 0.16);
+            // VOXEL LAND — warm desert tiles that keep the Bitcoin-orange
+            // identity, with enough tonal range that each block still reads.
+            vec3 emberDeep = vec3(0.30, 0.17, 0.09);
+            vec3 emberLight = vec3(0.93, 0.62, 0.33);
             // stepped height field so the land reads as stacked voxel tiers
             float tier = floor(shade * 4.0) / 3.0;
-            vec3 baseColor = mix(emberDeep, emberLight, clamp(0.22 + tier * 0.62, 0.0, 1.0));
-            baseColor = mix(baseColor, uBitcoin, 0.22);
-            // Unmined land drains to cold stone; mined land glows orange.
-            baseColor = mix(baseColor, baseColor * 0.34 + uFuture * 0.2, 1.0 - mined);
-            vec3 color = mix(baseColor, mix(baseColor, uBitcoin, 0.3), mined);
+            vec3 baseColor = mix(emberDeep, emberLight, clamp(0.2 + tier * 0.72, 0.0, 1.0));
+            baseColor = mix(baseColor, uBitcoin, 0.14);
+            // Unmined land drains to cold stone; mined land keeps the ember wash.
+            baseColor = mix(baseColor, baseColor * 0.36 + uFuture * 0.2, 1.0 - mined);
+            vec3 color = mix(baseColor, mix(baseColor, uBitcoin, 0.18), mined);
+
 
 
             float face = mix(1.0, 1.0 + light * 0.24 - min(dark, 1.0) * 0.34, detail);
@@ -2826,14 +2827,19 @@ function SkillsHud() {
 /** BUILD — spend gathered hides, fangs and gold on a structure at your feet. */
 function BuildHud({
   onBuild,
+  onBuildCamp,
   note,
   onClose,
 }: {
   onBuild: (id: StructureId) => void;
+  onBuildCamp: () => void;
   note: string | null;
   onClose: () => void;
 }) {
   const { items } = useWorldSkills();
+  const campAffordable = (Object.entries(CAMP_RECIPE.cost) as [ItemId, number][]).every(
+    ([item, amount]) => items[item] >= amount,
+  );
   return (
     <div
       data-no-translate
@@ -2851,6 +2857,19 @@ function BuildHud({
           <X className="size-3" />
         </button>
       </div>
+      <button
+        type="button"
+        disabled={!campAffordable}
+        onClick={onBuildCamp}
+        className={
+          campAffordable
+            ? "w-full border border-bitcoin/70 px-2 py-1 text-left text-bitcoin hover:border-bitcoin"
+            : "w-full border border-border/60 px-2 py-1 text-left text-muted-foreground/60"
+        }
+      >
+        <span className="block">{CAMP_RECIPE.name}</span>
+        <span className="block text-[9px] text-muted-foreground">{costLabel(CAMP_RECIPE)}</span>
+      </button>
       {STRUCTURES.map((recipe) => {
         const affordable = (Object.entries(recipe.cost) as [ItemId, number][]).every(
           ([item, amount]) => items[item] >= amount,
@@ -2858,6 +2877,7 @@ function BuildHud({
         return (
           <button
             key={recipe.id}
+
             type="button"
             disabled={!affordable}
             onClick={() => onBuild(recipe.id)}
