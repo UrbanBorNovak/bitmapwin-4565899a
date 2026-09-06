@@ -52,6 +52,9 @@ export function companionSpec(id: CompanionId) {
 /** The wizard hat that comes out whenever the wand is in hand. */
 export const WIZARD_HAT_INSCRIPTION =
   "b91084dd15d7df4e15fe83f866c2421686c53105ceb81ce9acf034526c63b0c4i0";
+/** The magic book, held in the off hand alongside the wand. */
+export const MAGIC_BOOK_INSCRIPTION =
+  "9b0b033ddd5ebe5f6a78cedb2432e33d2e739ff04d59278017298564391272fbi0";
 /** Night-vision goggles — worn on the head, and they tint the first-person view. */
 export const GOGGLES_INSCRIPTION =
   "d8b0d7024d4fead7d5ff4adb40bd81e28fb3d6035c5eda1deef5ef24ff61b2b1i0";
