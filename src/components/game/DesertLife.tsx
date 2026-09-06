@@ -691,8 +691,15 @@ const Critters = memo(function Critters({
           const diff = ((toPlayer - critter.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
           steer = diff * Math.min(1, delta * 3);
           travel = speed * 1.25;
+          // Hold a standoff at biting range instead of walking into the body:
+          // they circle, lunge and back off rather than piling into the camera.
+          const standoff = unit * (0.9 + species.radius);
+          if (away < standoff * 1.35) {
+            travel = away < standoff ? -speed * 0.35 : speed * 0.15;
+            steer += Math.sin(now / 700 + critter.seed) * delta * 1.2;
+          }
           // Close enough to strike: bite, on its own cooldown.
-          if (away < unit * 1.5 && now - critter.lastBite > 1_800 && species.bite > 0) {
+          if (away < standoff * 1.8 && now - critter.lastBite > 1_400 && species.bite > 0) {
             critter.lastBite = now;
             playSfx("beast");
             onBite?.(species.bite, critter.label);
@@ -713,15 +720,23 @@ const Critters = memo(function Critters({
       if (player) {
         const dx = critter.x - player.x;
         const dz = critter.z - player.z;
-        const away = Math.hypot(dx, dz);
-        const tooClose = species.hostile ? unit * 1.0 : unit * 1.6;
-        if (away > reach || away < tooClose) {
+        const away = Math.hypot(dx, dz) || 0.0001;
+        // Never let a body overlap the visitor — push it back out to its own
+        // standoff ring instead of teleporting it away, which read as vanishing.
+        const standoff = unit * (0.7 + species.radius);
+        if (away < standoff) {
+          critter.x = player.x + (dx / away) * standoff;
+          critter.z = player.z + (dz / away) * standoff;
+        }
+        // Only something that wandered right out of sight is brought back in.
+        if (away > reach) {
           const angle = critter.seed + now / 6000;
           const ring = unit * (9 + (index % 5) * 5);
           critter.x = player.x + Math.cos(angle) * ring;
           critter.z = player.z + Math.sin(angle) * ring;
         }
       }
+
 
       const flyer = species.kind === "vulture";
       const lift = flyer ? unit * (2.6 + Math.sin(now / 900 + critter.seed) * 0.4) : unit * 0.03;
