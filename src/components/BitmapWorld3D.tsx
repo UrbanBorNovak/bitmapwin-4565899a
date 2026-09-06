@@ -2534,6 +2534,19 @@ export function BitmapWorld3D({
     [heal, party],
   );
 
+  // A meal keeps mending you while its buff runs.
+  const gear = useGear();
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      tickGear();
+      const regen = activeRegen();
+      if (regen > 0) heal(regen);
+    }, 1_000);
+    return () => window.clearInterval(timer);
+  }, [heal]);
+
+
+
 
   const moveCamera = (type: CameraMove) => {
     setCameraMode("map");
