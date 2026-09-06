@@ -1929,7 +1929,7 @@ export function BitmapWorld3D({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [workLand]);
 
   const toggleSound = useCallback(() => {
     const next = !isSoundMuted();
