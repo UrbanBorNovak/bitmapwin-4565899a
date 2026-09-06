@@ -101,7 +101,7 @@ export function Minimap({ pose, cursors, ownedHeights, onVisit }: Props) {
 
       // ground
       ctx.fillStyle = theme.bg;
-      ctx.globalAlpha = 0.82;
+      ctx.globalAlpha = 0.92;
       ctx.fillRect(0, 0, size, size);
       ctx.globalAlpha = 1;
 
@@ -109,7 +109,7 @@ export function Minimap({ pose, cursors, ownedHeights, onVisit }: Props) {
       const step = WORLD_CELL * scale;
       if (step > 6) {
         ctx.strokeStyle = theme.muted;
-        ctx.globalAlpha = 0.18;
+        ctx.globalAlpha = 0.3;
         ctx.lineWidth = 1;
         ctx.beginPath();
         const firstCol = Math.floor((centerX - span / 2 + WORLD_UNITS / 2) / WORLD_CELL);
@@ -231,7 +231,7 @@ export function Minimap({ pose, cursors, ownedHeights, onVisit }: Props) {
       <div
         data-no-translate
         aria-label="Minimap"
-        className="hud-panel pointer-events-auto absolute bottom-16 right-3 z-40 w-[168px] font-mono"
+        className="hud-panel pointer-events-auto absolute bottom-3 right-3 z-40 w-[168px] font-mono"
       >
         <header className="flex items-center justify-between gap-1 border-b border-border px-1.5 py-1 text-[9px]">
           <span className="label text-bitcoin">MINIMAP</span>

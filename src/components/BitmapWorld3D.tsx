@@ -2498,7 +2498,7 @@ export function BitmapWorld3D({
               {terraformNote}
             </div>
           ) : null}
-          {legend ? (
+          {legend && !exploring ? (
             <div className="hud-toolbar pointer-events-auto mt-2 w-fit max-w-[calc(100%-15rem)] text-[10px]">
               {legend}
             </div>
@@ -3198,7 +3198,7 @@ function SkillsHud() {
   return (
     <div
       data-no-translate
-      className="hud-panel absolute right-3 bottom-3 z-40 w-[10.5rem] space-y-1.5 px-2.5 py-2 font-mono text-[10px] tabular-nums"
+      className="hud-panel absolute right-[11.75rem] bottom-3 z-40 w-[10.5rem] space-y-1.5 px-2.5 py-2 font-mono text-[10px] tabular-nums"
       aria-label="Skills and backpack"
     >
       <div className="label text-[9px] text-bitcoin">SKILLS</div>
