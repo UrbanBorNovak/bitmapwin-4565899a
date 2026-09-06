@@ -39,8 +39,8 @@ export const COMPANIONS: CompanionSpec[] = [
     id: "goose",
     label: "PET GOOSE",
     inscription: "b8f812d363032f4e8acd486a8316544fa28eb156344550ee606cfd33d73a23a9i0",
-    fit: 0.38,
-    follow: 0.7,
+    fit: 0.6,
+    follow: 0.9,
     hovers: true,
   },
 ];
