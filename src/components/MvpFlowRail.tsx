@@ -18,6 +18,7 @@ export function MvpFlowRail({ active, height }: { active: Step; height?: number 
   return (
     <nav
       aria-label="Build flow"
+      data-tour="flow-rail"
       className="terminal-panel flex flex-wrap items-stretch gap-px overflow-hidden font-mono text-[10px]"
     >
       {STEPS.map((step, index) => {

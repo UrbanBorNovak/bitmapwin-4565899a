@@ -74,7 +74,7 @@ function Index() {
                 <span className="size-2 bg-bitcoin" aria-hidden="true" />
                 MARKET STATUS // LIVE
               </div>
-              <dl className="mt-6 grid grid-cols-2 gap-x-5 gap-y-6 lg:mt-9 lg:grid-cols-1 lg:gap-y-8">
+              <dl data-tour="home-market" className="mt-6 grid grid-cols-2 gap-x-5 gap-y-6 lg:mt-9 lg:grid-cols-1 lg:gap-y-8">
                 <MarketStat k="OPEN FLOOR" v={floor ? formatSats(floor) : "—"} />
                 <MarketStat k="BITMAPS INDEXED" v={indexedCount.toLocaleString("en-US")} />
                 <MarketStat k="CONFIRMED SALES" v={tradedCount.toLocaleString("en-US")} />
@@ -105,7 +105,7 @@ function Index() {
                     BitmapWin is the bedrock for player-owned, AI-built worlds. Own a block, extend it with experiences,
                     deploy them, and let players walk in.
                   </p>
-                  <div className="mt-6 grid gap-2 sm:mt-8 sm:flex sm:flex-wrap sm:gap-3">
+                  <div data-tour="home-flow" className="mt-6 grid gap-2 sm:mt-8 sm:flex sm:flex-wrap sm:gap-3">
                     <Link to="/map" className="btn-term min-h-12 w-full sm:min-h-0 sm:w-auto">01 · OPEN THE MAP</Link>
                     <Link to="/extend" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">02 · EXTEND</Link>
                     <Link to="/create" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">03 · DEPLOY</Link>
@@ -171,7 +171,7 @@ function Index() {
             <span className="blink">_</span>
           </p>
         ) : (
-          <div className="mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-3 sm:mt-8 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:pb-0 lg:grid-cols-3 xl:grid-cols-4">
+          <div data-tour="home-featured" className="mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-3 sm:mt-8 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:pb-0 lg:grid-cols-3 xl:grid-cols-4">
             {featured.map((p) => (
               <div key={p.inscriptionId} className="w-[84vw] max-w-[330px] shrink-0 snap-center sm:w-auto sm:max-w-none">
                 <ParcelCard parcel={p} />

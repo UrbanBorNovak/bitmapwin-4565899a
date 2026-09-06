@@ -81,6 +81,7 @@ function MapPage() {
         className="terminal-panel mt-4 flex flex-wrap items-center gap-2 px-3 py-2.5 font-mono text-[10px] text-muted-foreground"
         role="list"
         aria-label="Map legend"
+        data-tour="map-legend"
       >
         <span className="label mr-1 text-[9px]">LEGEND</span>
         <span className="legend-chip" role="listitem">
@@ -107,11 +108,13 @@ function MapPage() {
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div data-tour="map-world" className="contents">
         <BitmapWorld3D
           tipHeight={tipHeight}
           {...(height === undefined ? {} : { initialHeight: height })}
           onCursorsChange={handleCursors}
         />
+        </div>
         <MapChat cursors={cursors} />
       </div>
     </div>
