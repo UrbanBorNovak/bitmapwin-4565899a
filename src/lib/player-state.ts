@@ -41,7 +41,8 @@ export const MOVE = {
   /** exponential damping applied when no input is held */
   drag: 9,
   /** keyboard turn rate in radians per second */
-  turnRate: 2.4,
+  turnRate: 2.9,
+
   /** how fast the body swings toward the direction it is travelling */
   faceRate: 10,
   /** click-to-move stops inside this radius */
