@@ -56,7 +56,7 @@ import {
 const EMPTY_DEPLOYMENTS: RuntimeDeployment[] = [];
 
 import { clubOf } from "@/lib/clubs";
-import { mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
+import { colorForAddress, mapOwnersQuery, type OwnerWindow } from "@/lib/map-owners";
 import {
   ATTACK_COOLDOWN_MS,
   ATTACK_DAMAGE,
@@ -164,53 +164,66 @@ function heightAtPoint(point: THREE.Vector3) {
 
 /** shared tint so every held plot stays inside the Bitcoin-orange family */
 const WHITE_HOT = new THREE.Color("#ffd9a0");
+const SELF_OWNER = "\u0000self";
 
 const HolderColumns = memo(function HolderColumns({
-
   owners,
   mine,
+  ownedHeights,
   bitcoin,
 }: {
   owners: Map<number, string>;
   mine: Set<string>;
+  ownedHeights: number[];
   bitcoin: string;
 }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
-  const entries = useMemo(() => [...owners.entries()], [owners]);
+  // Every claimed cell in view: the registry owners plus the heights the
+  // connected wallet actually holds on chain (those can be ahead of the
+  // registry, so without them your own land would read as unclaimed).
+  const entries = useMemo(() => {
+    const merged = new Map(owners);
+    for (const height of ownedHeights) {
+      const existing = merged.get(height);
+      if (!existing || !mine.has(existing.toLowerCase())) merged.set(height, SELF_OWNER);
+    }
+    return [...merged.entries()];
+  }, [mine, owners, ownedHeights]);
 
   useEffect(() => {
     const mesh = meshRef.current;
     if (!mesh) return;
     const dummy = new THREE.Object3D();
     const color = new THREE.Color();
+    const holderColor = new THREE.Color();
     entries.forEach(([height, owner], index) => {
       const col = height % GRID;
       const row = Math.floor(height / GRID);
+      const isMine = owner === SELF_OWNER || mine.has(owner.toLowerCase());
       // Held districts read as chunky voxel plots: a low cube sitting on the
       // land with a small gap to its neighbours so the grid stays legible.
-      const tile = AVATAR_U * 0.5;
+      // Your own plots sit a little taller so they stand out from a distance.
+      const tile = AVATAR_U * (isMine ? 0.8 : 0.5);
       dummy.position.set(worldX(col), tile / 2, worldZ(row));
       dummy.scale.set(CELL * 0.86, tile, CELL * 0.86);
-
-
       dummy.updateMatrix();
       mesh.setMatrixAt(index, dummy.matrix);
-      // Held plots all use the same Bitcoin orange. Your own holdings burn
-      // hottest; everyone else's stays a consistent bright orange so the start
-      // of the map and blocks through 30k+ are never darker than the rest.
-      color.set(bitcoin);
-      if (mine.has(owner.toLowerCase())) {
-        color.lerp(WHITE_HOT, 0.35);
+      // Your own holdings burn hot Bitcoin orange. Every other holder gets a
+      // deterministic colour of their own, so neighbouring owners are visible
+      // as distinct estates instead of one anonymous orange mass.
+      if (isMine) {
+        color.set(bitcoin).lerp(WHITE_HOT, 0.45);
       } else {
-        color.lerp(WHITE_HOT, 0.12);
+        holderColor.set(colorForAddress(owner));
+        color.copy(holderColor).lerp(WHITE_HOT, 0.1);
       }
       mesh.setColorAt(index, color);
-
     });
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     mesh.computeBoundingSphere();
   }, [bitcoin, entries, mine]);
+
 
   if (entries.length === 0) return null;
   return (
@@ -1593,7 +1606,12 @@ const WorldScene = memo(function WorldScene({
       ) : null}
 
       <DistrictBlocks tipHeight={tipHeight} colors={colors} />
-      <HolderColumns owners={owners} mine={mine} bitcoin={colors.bitcoin} />
+      <HolderColumns
+        owners={owners}
+        mine={mine}
+        ownedHeights={ownedHeights}
+        bitcoin={colors.bitcoin}
+      />
       <OwnedBitmapGlow heights={ownedHeights} bitcoin={colors.bitcoin} />
       <OnChainModels models={models} bitcoin={colors.bitcoin} />
       <ExtenderStage
@@ -2052,10 +2070,13 @@ export function BitmapWorld3D({
   const selectedModel = selected
     ? models.data?.find((model) => model.bitmapHeight === selected.height)
     : undefined;
+  // Every height this visitor owns, whether that came from the registry or
+  // straight from the wallet's on-chain inscriptions.
+  const myHeights = useMemo(() => new Set(ownedHeights), [ownedHeights]);
   const selectedIsMine = Boolean(
     selected &&
     ((selected.owner && mine.has(selected.owner.toLowerCase())) ||
-      (held.data ?? []).includes(selected.height)),
+      myHeights.has(selected.height)),
   );
   const chatLines = useMemo(() => said.slice(-6), [said]);
 
@@ -2714,10 +2735,11 @@ export function BitmapWorld3D({
             <div>
               {hover.height}.bitmap · {clubOf(hover.height).short}
             </div>
-            {owners.data?.get(hover.height) ? (
-              <div className="mt-0.5">
-                {mine.has((owners.data.get(hover.height) ?? "").toLowerCase()) ? "YOURS" : "HELD"}
-              </div>
+            {myHeights.has(hover.height) ||
+            mine.has((owners.data?.get(hover.height) ?? "").toLowerCase()) ? (
+              <div className="mt-0.5 text-bitcoin">YOURS</div>
+            ) : owners.data?.get(hover.height) ? (
+              <div className="mt-0.5">HELD</div>
             ) : null}
           </div>
         ) : null}
@@ -2748,11 +2770,9 @@ export function BitmapWorld3D({
               <dd className="truncate">
                 {selected.height > tipHeight
                   ? "NOT MINED YET"
-                  : selected.owner
-                    ? mine.has(selected.owner.toLowerCase())
-                      ? "YOURS"
-                      : selected.owner
-                    : "NO DATA YET"}
+                  : selectedIsMine
+                    ? "YOURS"
+                    : (selected.owner ?? "NO DATA YET")}
               </dd>
               <dt className="text-muted-foreground">MODEL</dt>
               <dd>
