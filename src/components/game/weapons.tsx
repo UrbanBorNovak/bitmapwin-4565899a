@@ -375,8 +375,8 @@ export function WeaponModel({
     // holds the pose while the inscription streams in.
     return (
       <group
-        position={[0.06 * u, -0.05 * u, 0]}
-        rotation={[-0.22 + lash * 0.55, 0.28, -0.35 - lash * 1.1]}
+        position={[0, -0.03 * u, 0.12 * u]}
+        rotation={[-0.16 + lash * 0.5, 0.2, -0.3 - lash * 1.05]}
       >
         <Suspense fallback={<SwordStandIn u={u} materials={materials} />}>
           <OnChainSword u={u} />
@@ -468,7 +468,7 @@ function OnChainSword({ u }: { u: number }) {
     const center = bounds.getCenter(new THREE.Vector3());
     const longest = Math.max(size.x, size.y, size.z, 0.0001);
     // Blade runs a little over one stride from grip to tip.
-    const scale = (1.3 * u) / longest;
+    const scale = (0.95 * u) / longest;
     // The model's own long axis becomes the forward (-Z) direction, with the
     // low end of that axis (the grip) sitting at the origin like every other
     // weapon here.
