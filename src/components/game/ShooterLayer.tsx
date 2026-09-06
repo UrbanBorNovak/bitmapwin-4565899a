@@ -442,16 +442,19 @@ export function ShooterLayer({
       }
     };
     element.addEventListener("pointerdown", onDown);
+    element.addEventListener("contextmenu", onContext);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("blur", onLeave);
     window.addEventListener("keydown", onKey);
     return () => {
       element.removeEventListener("pointerdown", onDown);
+      element.removeEventListener("contextmenu", onContext);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("blur", onLeave);
       window.removeEventListener("keydown", onKey);
       aimState.active = false;
     };
+
   }, [active, fire, firstPerson, gl, reload]);
 
   useEffect(() => {
