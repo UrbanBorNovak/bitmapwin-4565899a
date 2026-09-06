@@ -48,17 +48,39 @@ function MapPage() {
   const [cursors, setCursors] = useState<MapCursor[]>([]);
   const handleCursors = useCallback((next: MapCursor[]) => setCursors(next), []);
 
+  const legend = (
+    <>
+      <span className="label mr-1 text-[9px]">LEGEND</span>
+      <span className="legend-chip" role="listitem">
+        <span className="legend-swatch bg-foreground" /> MINED · UNCLAIMED
+      </span>
+      <span className="legend-chip" role="listitem">
+        <span className="legend-swatch bg-border" /> NOT MINED YET
+      </span>
+      <span className="legend-chip" role="listitem">
+        <span className="legend-swatch bg-bitcoin" /> HELD BY YOU
+      </span>
+      <span className="legend-chip" role="listitem">
+        <span className="flex items-center gap-0.5">
+          <span className="legend-swatch" style={{ background: "hsl(190 70% 58%)" }} />
+          <span className="legend-swatch" style={{ background: "hsl(320 70% 60%)" }} />
+          <span className="legend-swatch" style={{ background: "hsl(90 70% 55%)" }} />
+        </span>
+        ONE COLOUR PER HOLDER
+      </span>
+    </>
+  );
+
   return (
     <div className="page-shell">
-      <header className="section-head">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="display text-3xl md:text-5xl">LAND MAP</h1>
-          <p className="label mt-2">
-            1,000 × 1,000 LAND WORLD · ONE CELL = ONE BITMAP · BLOCK ORDER LEFT TO RIGHT, TOP TO
-            BOTTOM
+          <h1 className="display text-2xl md:text-3xl">LAND MAP</h1>
+          <p className="label mt-1 text-[9px]">
+            1,000 × 1,000 · ONE CELL = ONE BITMAP · BLOCK ORDER LEFT TO RIGHT
           </p>
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-1">
+        <div className="flex shrink-0 items-center gap-2">
           <span className="label text-[9px]">CHAIN TIP</span>
           <span
             data-no-translate
@@ -77,46 +99,22 @@ function MapPage() {
         </div>
       </header>
 
-      <div
-        className="terminal-panel mt-4 flex flex-wrap items-center gap-2 px-3 py-2.5 font-mono text-[10px] text-muted-foreground"
-        role="list"
-        aria-label="Map legend"
-        data-tour="map-legend"
-      >
-        <span className="label mr-1 text-[9px]">LEGEND</span>
-        <span className="legend-chip" role="listitem">
-          <span className="legend-swatch bg-foreground" /> MINED · UNCLAIMED
-        </span>
-        <span className="legend-chip" role="listitem">
-          <span className="legend-swatch bg-border" /> NOT MINED YET
-        </span>
-        <span className="legend-chip" role="listitem">
-          <span className="legend-swatch bg-bitcoin" /> HELD BY YOU
-        </span>
-        <span className="legend-chip" role="listitem">
-          <span className="flex items-center gap-0.5">
-            <span className="legend-swatch" style={{ background: "hsl(190 70% 58%)" }} />
-            <span className="legend-swatch" style={{ background: "hsl(320 70% 60%)" }} />
-            <span className="legend-swatch" style={{ background: "hsl(90 70% 55%)" }} />
-          </span>
-          ONE COLOUR PER HOLDER
-        </span>
-      </div>
-
-      <div className="mt-4">
+      <div className="mt-3">
         <MvpFlowRail active="map" {...(height === undefined ? {} : { height })} />
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="mt-3 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div data-tour="map-world" className="min-w-0">
-        <BitmapWorld3D
-          tipHeight={tipHeight}
-          {...(height === undefined ? {} : { initialHeight: height })}
-          onCursorsChange={handleCursors}
-        />
+          <BitmapWorld3D
+            tipHeight={tipHeight}
+            {...(height === undefined ? {} : { initialHeight: height })}
+            onCursorsChange={handleCursors}
+            legend={<span data-tour="map-legend" className="flex flex-wrap items-center gap-2">{legend}</span>}
+          />
         </div>
         <MapChat cursors={cursors} />
       </div>
     </div>
   );
 }
+

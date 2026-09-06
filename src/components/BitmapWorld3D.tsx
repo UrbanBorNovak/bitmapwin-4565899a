@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import {
   Environment,
@@ -111,6 +111,7 @@ export type BitmapWorld3DProps = {
   initialHeight?: number;
   highlight?: number[];
   onCursorsChange?: (cursors: MapCursor[]) => void;
+  legend?: ReactNode;
   className?: string;
 };
 
@@ -1669,6 +1670,7 @@ export function BitmapWorld3D({
   initialHeight,
   highlight = [],
   onCursorsChange,
+  legend,
   className,
 }: BitmapWorld3DProps) {
   const navigate = useNavigate();
@@ -2090,74 +2092,81 @@ export function BitmapWorld3D({
 
   return (
     <div className={className}>
-      <div className="hud-toolbar border-b-0">
-        <form
-          className="flex items-center gap-1.5"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const height = Number(visitDraft.trim());
-            if (Number.isFinite(height) && height >= 0 && height < GRID * GRID) visitHeight(height);
-          }}
-        >
-          <input
-            value={visitDraft}
-            onChange={(event) => setVisitDraft(event.target.value)}
-            placeholder="VISIT BITMAP"
-            aria-label="Visit a BITMAP"
-            data-no-translate
-            className="h-7 w-32 border border-border bg-background px-2 font-mono text-[11px] tabular-nums outline-none transition-colors focus:border-bitcoin"
-          />
-          <Button type="submit" className="btn-term" variant="ghost">
-            [ VISIT ]
-          </Button>
-        </form>
+      <div className="relative h-[78vh] min-h-[520px] w-full overflow-hidden border border-border bg-background">
+        {/* Controls sit on the world itself, not stacked above it. */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-40 p-2">
+          <div className="hud-toolbar pointer-events-auto">
+            <form
+              className="flex items-center gap-1.5"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const height = Number(visitDraft.trim());
+                if (Number.isFinite(height) && height >= 0 && height < GRID * GRID)
+                  visitHeight(height);
+              }}
+            >
+              <input
+                value={visitDraft}
+                onChange={(event) => setVisitDraft(event.target.value)}
+                placeholder="VISIT BITMAP"
+                aria-label="Visit a BITMAP"
+                data-no-translate
+                className="h-7 w-32 border border-border bg-background/80 px-2 font-mono text-[11px] tabular-nums outline-none transition-colors focus:border-bitcoin"
+              />
+              <Button type="submit" className="btn-term" variant="ghost">
+                [ VISIT ]
+              </Button>
+            </form>
 
-        <span className="hud-divider" aria-hidden />
+            <span className="hud-divider" aria-hidden />
 
-        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Camera">
-          <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("mined")}>
-            [ FRAME MINED ]
-          </Button>
-          <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("full")}>
-            [ FULL WORLD ]
-          </Button>
-          <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("tip")}>
-            [ FLY TO TIP ]
-          </Button>
+            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Camera">
+              <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("mined")}>
+                [ FRAME MINED ]
+              </Button>
+              <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("full")}>
+                [ FULL WORLD ]
+              </Button>
+              <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("tip")}>
+                [ FLY TO TIP ]
+              </Button>
+            </div>
+
+            <span className="hud-divider" aria-hidden />
+
+            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Avatar">
+              <Button
+                className="btn-term-ghost"
+                variant="ghost"
+                onClick={attackNearest}
+                disabled={!attackReady}
+              >
+                [ {attackReady ? "ATTACK · F" : `COOLDOWN ${(cooldownRemaining / 1000).toFixed(1)}s`} ]
+              </Button>
+              <Button
+                className={inventoryOpen ? "btn-term" : "btn-term-ghost"}
+                variant="ghost"
+                onClick={() => setInventoryOpen((current) => !current)}
+              >
+                {avatarModel ? "[ INVENTORY · WEARING MODEL ]" : "[ INVENTORY ]"}
+              </Button>
+              <Button
+                className={buildOpen ? "btn-term" : "btn-term-ghost"}
+                variant="ghost"
+                onClick={() => setBuildOpen((current) => !current)}
+              >
+                [ BUILD · B ]
+              </Button>
+              <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
+                {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
+              </Button>
+            </div>
+          </div>
+          {legend ? (
+            <div className="hud-toolbar pointer-events-auto mt-2 text-[10px]">{legend}</div>
+          ) : null}
         </div>
 
-        <span className="hud-divider" aria-hidden />
-
-        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Avatar">
-          <Button
-            className="btn-term-ghost"
-            variant="ghost"
-            onClick={attackNearest}
-            disabled={!attackReady}
-          >
-            [ {attackReady ? "ATTACK · F" : `COOLDOWN ${(cooldownRemaining / 1000).toFixed(1)}s`} ]
-          </Button>
-          <Button
-            className={inventoryOpen ? "btn-term" : "btn-term-ghost"}
-            variant="ghost"
-            onClick={() => setInventoryOpen((current) => !current)}
-          >
-            {avatarModel ? "[ INVENTORY · WEARING MODEL ]" : "[ INVENTORY ]"}
-          </Button>
-          <Button
-            className={buildOpen ? "btn-term" : "btn-term-ghost"}
-            variant="ghost"
-            onClick={() => setBuildOpen((current) => !current)}
-          >
-            [ BUILD · B ]
-          </Button>
-          <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
-            {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
-          </Button>
-        </div>
-      </div>
-
-      <div className="relative h-[70vh] min-h-[420px] w-full overflow-hidden border border-border bg-background">
         {colors ? (
           <Canvas
             dpr={dpr}
@@ -2200,7 +2209,7 @@ export function BitmapWorld3D({
         {weapon && exploring ? (
           <div
             data-no-translate
-            className="hud-panel absolute left-3 top-[8.5rem] z-40 space-y-1 px-2.5 py-2 font-mono text-[10px] tabular-nums"
+            className="hud-panel absolute left-3 top-[13rem] z-40 space-y-1 px-2.5 py-2 font-mono text-[10px] tabular-nums"
             aria-label="Weapon status"
           >
             <div className="label text-[9px] text-bitcoin">
@@ -2295,7 +2304,7 @@ export function BitmapWorld3D({
           role="group"
           aria-label="Camera mode"
           data-no-translate
-          className="hud-panel absolute right-3 top-3 z-30 flex p-0.5"
+          className="hud-panel absolute right-3 top-[9.5rem] z-30 flex p-0.5"
         >
           <Button
             type="button"
@@ -2359,7 +2368,7 @@ export function BitmapWorld3D({
         {/* Your own health, always visible while exploring the world. */}
         <div
           data-no-translate
-          className="hud-panel pointer-events-none absolute left-3 top-3 z-30 flex max-w-[min(340px,calc(100%-1.5rem))] flex-col gap-1 px-2 py-1.5 font-mono text-[10px]"
+          className="hud-panel pointer-events-none absolute left-3 top-[9.5rem] z-30 flex max-w-[min(340px,calc(100%-1.5rem))] flex-col gap-1 px-2 py-1.5 font-mono text-[10px]"
         >
           <span className="flex items-center gap-2">
             <span>HP</span>
@@ -2422,7 +2431,7 @@ export function BitmapWorld3D({
         <section
           data-no-translate
           aria-label="Party"
-          className="hud-panel absolute right-3 top-16 z-20 w-[min(250px,calc(100%-1.5rem))] font-mono text-[10px]"
+          className="hud-panel absolute right-3 top-[13rem] z-20 w-[min(250px,calc(100%-1.5rem))] font-mono text-[10px]"
         >
           <header className="flex items-center justify-between border-b border-border px-2 py-1">
             <span>
@@ -2712,7 +2721,7 @@ export function BitmapWorld3D({
           <section
             aria-label={`${selected.height}.bitmap details`}
             data-no-translate
-            className="absolute right-3 top-16 z-40 max-h-[calc(100%-5rem)] w-[min(340px,calc(100%-1.5rem))] overflow-y-auto border border-bitcoin bg-background/95 p-4 font-mono shadow-[8px_8px_0_var(--bitcoin)]"
+            className="absolute right-3 top-[13rem] z-40 max-h-[calc(100%-5rem)] w-[min(340px,calc(100%-1.5rem))] overflow-y-auto border border-bitcoin bg-background/95 p-4 font-mono shadow-[8px_8px_0_var(--bitcoin)]"
           >
             <Button
               aria-label="Close bitmap window"
@@ -2895,7 +2904,7 @@ function BuildHud({
   return (
     <div
       data-no-translate
-      className="hud-panel absolute left-3 top-[13.5rem] z-40 w-[min(15rem,calc(100%-1.5rem))] space-y-1.5 px-2.5 py-2 font-mono text-[10px]"
+      className="hud-panel absolute left-3 top-[18rem] z-40 w-[min(15rem,calc(100%-1.5rem))] space-y-1.5 px-2.5 py-2 font-mono text-[10px]"
       aria-label="Build structures"
     >
       <div className="flex items-center justify-between">
