@@ -28,6 +28,8 @@ import { DesertLife } from "@/components/game/DesertLife";
 import { DesertBuilds } from "@/components/game/DesertBuilds";
 import { ChunkStreamer } from "@/components/game/ChunkStreamer";
 import { FootTrail } from "@/components/game/FootTrail";
+import { LandGrowth } from "@/components/game/LandGrowth";
+import { growthLabel, terraform, terraformAt } from "@/lib/world-terraform";
 
 
 import {
