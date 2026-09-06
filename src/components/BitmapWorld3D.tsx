@@ -1,4 +1,13 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import {
   Environment,
@@ -101,6 +110,16 @@ import { useAuthSession } from "@/lib/auth";
 import { myWalletLinksQuery } from "@/lib/wallet-links";
 import { PARTY_CHAT_MAX_LENGTH, PARTY_MAX_MEMBERS, useMapParty } from "@/lib/map-party";
 import { Primitive } from "./game/Primitive";
+import { Cybertruck } from "@/components/game/Cybertruck";
+import {
+  DRIVE_SPEED,
+  DRIVE_SPRINT,
+  DRIVE_TURN,
+  isDriving,
+  subscribeVehicle,
+  toggleDriving,
+  vehicle,
+} from "@/lib/world-vehicle";
 
 const GRID = 1_000;
 const WORLD_SIZE = 100;
@@ -1291,6 +1310,16 @@ function PlayerCameraRig({
       jump: jumpRequested.current,
     };
 
+    // Behind the wheel the same keys drive the truck: much faster, wider turns,
+    // and no jumping.
+    const driving = isDriving();
+    if (driving) {
+      intent.speedScale = DRIVE_SPEED * (intent.sprint ? DRIVE_SPRINT : 1);
+      intent.turnScale = DRIVE_TURN;
+      intent.strafe = 0;
+      intent.jump = false;
+    }
+
     jumpRequested.current = false;
     // Ease the steer input in and out so turns start and stop like a body, not a switch.
     steer.current = damp(steer.current, intent.turn, 9, delta);
@@ -1321,7 +1350,7 @@ function PlayerCameraRig({
     } else {
       // Shoulder rig: trails further and drops lower the faster you travel, and
       // swings a touch wide of the turn so the body stays readable.
-      const back = AVATAR_U * (6.2 + gait * 3.2);
+      const back = AVATAR_U * (isDriving() ? 12 + gait * 5 : 6.2 + gait * 3.2);
       const side = -steer.current * AVATAR_U * 1.6;
       cameraTarget.current.set(
         player.x - Math.sin(player.yaw) * back + Math.cos(player.yaw) * side,
@@ -1647,6 +1676,7 @@ const WorldScene = memo(function WorldScene({
   onShootPeer,
   onBite,
   onShooterStats,
+  driving,
 }: {
   colors: WorldColors;
   command: { type: CameraMove; nonce: number; height?: number };
@@ -1678,6 +1708,7 @@ const WorldScene = memo(function WorldScene({
   onShootPeer: (id: string) => void;
   onBite: (damage: number, label: string) => void;
   onShooterStats: (stats: ShooterStats) => void;
+  driving: boolean;
 }) {
   // Pointer moves fire dozens of times a second; each React state update re-renders
   // the whole overlay. Coalesce them: at most ~20 hover updates a second, and skip
@@ -1786,7 +1817,12 @@ const WorldScene = memo(function WorldScene({
       ) : null}
       <VisitorBeacons cursors={cursors} />
       <SelfBeacon pose={pose} bitcoin={colors.bitcoin} wide={cameraMode === "map"} />
-      {cameraMode === "third" ? (
+      {cameraMode !== "map" && (driving || vehicle.placed) ? (
+        <Suspense fallback={null}>
+          <Cybertruck unit={AVATAR_U} pose={pose} driving={driving} />
+        </Suspense>
+      ) : null}
+      {cameraMode === "third" && !driving ? (
         <SelfAvatar
           pose={pose}
           color={self.color}
@@ -1865,6 +1901,15 @@ export function BitmapWorld3D({
   // WEAPONS — what you are carrying while you explore the land world.
   const [weapon, setWeapon] = useState<WeaponKind | null>(null);
   const shooter = weapon !== null;
+  // The shared ride: seated or parked, both views read the same state.
+  const driving = useSyncExternalStore(subscribeVehicle, isDriving, () => false);
+  const toggleTruck = useCallback(() => {
+    const player = pose.current;
+    if (!player) return;
+    unlockAudio();
+    const seated = toggleDriving(player.x, player.z, player.yaw);
+    playSfx(seated ? "jump" : "hit");
+  }, []);
   const [shooterStats, setShooterStats] = useState<ShooterStats>({
     weapon: "mosin",
     ammo: WEAPONS.mosin.magazine,
@@ -2209,6 +2254,11 @@ export function BitmapWorld3D({
         equipWeapon(null);
         return;
       }
+      if (event.code === "KeyV") {
+        event.preventDefault();
+        toggleTruck();
+        return;
+      }
       if (event.code !== "KeyF") return;
       event.preventDefault();
       unlockAudio();
@@ -2217,7 +2267,7 @@ export function BitmapWorld3D({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [attackNearest, equipWeapon, exploring]);
+  }, [attackNearest, equipWeapon, exploring, toggleTruck]);
 
   // Mouse wheel cycles through the belt while you are in the world.
   useEffect(() => {
@@ -2382,6 +2432,13 @@ export function BitmapWorld3D({
               <Button className="btn-term-ghost" variant="ghost" onClick={() => void workLand()}>
                 [ TERRAFORM · T ]
               </Button>
+              <Button
+                className={driving ? "btn-term" : "btn-term-ghost"}
+                variant="ghost"
+                onClick={toggleTruck}
+              >
+                {driving ? "[ PARK TRUCK · V ]" : "[ DRIVE CYBERTRUCK · V ]"}
+              </Button>
               <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
                 {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
               </Button>
@@ -2439,6 +2496,7 @@ export function BitmapWorld3D({
               onShootPeer={attack}
               onBite={takeBite}
               onShooterStats={handleShooterStats}
+              driving={driving}
             />
           </Canvas>
         ) : null}

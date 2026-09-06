@@ -163,6 +163,10 @@ export type MoveIntent = {
   turn: number;
   sprint: boolean;
   jump: boolean;
+  /** multiplier on top speed — a vehicle travels several times a walk */
+  speedScale?: number;
+  /** multiplier on the keyboard turn rate */
+  turnScale?: number;
 };
 
 /**
@@ -183,7 +187,7 @@ export function stepPlayer(player: PlayerState, intent: MoveIntent, rawDelta: nu
     return player;
   }
 
-  player.yaw += intent.turn * MOVE.turnRate * delta;
+  player.yaw += intent.turn * MOVE.turnRate * (intent.turnScale ?? 1) * delta;
   if (intent.jump && player.grounded) {
     player.vy = MOVE.jumpSpeed;
     player.grounded = false;
@@ -198,7 +202,7 @@ export function stepPlayer(player: PlayerState, intent: MoveIntent, rawDelta: nu
     }
   }
 
-  const top = MOVE.walkSpeed * (intent.sprint ? MOVE.sprint : 1);
+  const top = MOVE.walkSpeed * (intent.sprint ? MOVE.sprint : 1) * (intent.speedScale ?? 1);
   let wantX = 0;
   let wantZ = 0;
 
