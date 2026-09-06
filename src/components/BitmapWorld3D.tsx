@@ -46,7 +46,6 @@ import {
 } from "@/components/game/weapons";
 import { isSoundMuted, playSfx, setSoundMuted, unlockAudio } from "@/lib/world-audio";
 import {
-  BACKPACK_SLOTS,
   ITEM_LABELS,
   SKILL_LABELS,
   useWorldSkills,
