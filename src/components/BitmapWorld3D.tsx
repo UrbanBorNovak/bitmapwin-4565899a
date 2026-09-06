@@ -27,6 +27,8 @@ import { ShooterLayer, type ShooterStats } from "@/components/game/ShooterLayer"
 import { DesertLife } from "@/components/game/DesertLife";
 import { DesertBuilds } from "@/components/game/DesertBuilds";
 import { ChunkStreamer } from "@/components/game/ChunkStreamer";
+import { FootTrail } from "@/components/game/FootTrail";
+
 
 import {
   build as buildStructure,
