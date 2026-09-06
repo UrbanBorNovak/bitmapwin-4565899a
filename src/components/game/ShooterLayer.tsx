@@ -406,8 +406,9 @@ export function ShooterLayer({
   useEffect(() => {
     if (!active) return;
     const element = gl.domElement;
+    // Hold the right button to keep the sights up for as long as it is down;
+    // the left button fires at any time, aimed or not, without dropping aim.
     const onDown = (event: PointerEvent) => {
-      // Right button steadies the sights; left button always fires.
       if (event.button === 2) {
         if (firstPerson) {
           event.preventDefault();
@@ -417,11 +418,16 @@ export function ShooterLayer({
       }
       if (event.button !== 0) return;
       unlockAudio();
+      // a left click while the right button is still held keeps aiming
+      if (firstPerson && (event.buttons & 2) !== 0) aimState.active = true;
       fire();
     };
     const onUp = (event: PointerEvent) => {
-      if (event.button !== 2) return;
-      aimState.active = false;
+      if (event.button === 2 || (event.buttons & 2) === 0) aimState.active = false;
+    };
+    // keep the sights honest if the button is released outside the canvas
+    const onMove = (event: PointerEvent) => {
+      if (aimState.active && (event.buttons & 2) === 0) aimState.active = false;
     };
     const onLeave = () => {
       aimState.active = false;
