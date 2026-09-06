@@ -742,19 +742,31 @@ function clipNamed(names: string[], words: string[]) {
 function clipFor(names: string[], state: AvatarMotion) {
   switch (state) {
     case "jump":
-      return { name: clipNamed(names, ["jump", "fall", "air", "idle"]), speed: 1 };
+      return { name: clipNamed(names, ["jump", "fall", "air", "idle"]), speed: 1, once: false };
     case "run":
-      return { name: clipNamed(names, ["run", "sprint", "walk"]), speed: 1.75 };
+      return { name: clipNamed(names, ["run", "sprint", "walk"]), speed: 1.55, once: false };
     case "walk":
-      return { name: clipNamed(names, ["walk", "run"]), speed: 1.1 };
+      return { name: clipNamed(names, ["walk", "run"]), speed: 1, once: false };
     case "down":
-      return { name: clipNamed(names, ["death", "die", "down", "fall", "idle"]), speed: 1 };
+      return {
+        name: clipNamed(names, ["death", "die", "down", "fall", "idle"]),
+        speed: 0.6,
+        once: true,
+      };
     case "hurt":
-      return { name: clipNamed(names, ["hurt", "hit", "damage", "idle"]), speed: 1 };
+      return {
+        name: clipNamed(names, ["hurt", "hit", "damage", "fall", "idle"]),
+        speed: 1.2,
+        once: true,
+      };
     case "attack":
-      return { name: clipNamed(names, ["attack", "punch", "hit", "idle"]), speed: 1.3 };
+      return {
+        name: clipNamed(names, ["attack", "punch", "swing", "hit", "walk", "idle"]),
+        speed: 1.6,
+        once: true,
+      };
     default:
-      return { name: clipNamed(names, ["idle", "stand", "breath"]), speed: 1 };
+      return { name: clipNamed(names, ["idle", "stand", "breath"]), speed: 1, once: false };
   }
 }
 
