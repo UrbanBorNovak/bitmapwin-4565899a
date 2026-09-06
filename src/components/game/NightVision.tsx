@@ -10,27 +10,37 @@ export function NightVision({ active }: { active: boolean }) {
   if (!active) return null;
   return (
     <div className="pointer-events-none fixed inset-0 z-20" aria-hidden>
+      {/* Step one: strip all colour out of the world and push the gain up, the
+          way an image tube sees — everything becomes bright grey. */}
       <div
         className="absolute inset-0"
         style={{
-          backdropFilter: "brightness(2.1) saturate(0.15) contrast(1.15)",
-          WebkitBackdropFilter: "brightness(2.1) saturate(0.15) contrast(1.15)",
-          backgroundColor: "rgba(40, 255, 110, 0.16)",
-          mixBlendMode: "screen",
+          backdropFilter: "grayscale(1) brightness(2.3) contrast(1.35)",
+          WebkitBackdropFilter: "grayscale(1) brightness(2.3) contrast(1.35)",
+        }}
+      />
+      {/* Step two: that grey image can now only come through as green. */}
+      <div
+        className="absolute inset-0"
+        style={{ backgroundColor: "#19ff6a", mixBlendMode: "multiply" }}
+      />
+      {/* A faint phosphor glow so the darkest corners still read green. */}
+      <div
+        className="absolute inset-0"
+        style={{ backgroundColor: "rgba(20, 190, 80, 0.14)", mixBlendMode: "screen" }}
+      />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "repeating-linear-gradient(to bottom, rgba(0,0,0,0.26) 0px, rgba(0,0,0,0.26) 1px, transparent 1px, transparent 4px)",
         }}
       />
       <div
         className="absolute inset-0"
         style={{
           background:
-            "repeating-linear-gradient(to bottom, rgba(0,0,0,0.22) 0px, rgba(0,0,0,0.22) 1px, transparent 1px, transparent 4px)",
-        }}
-      />
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(circle at 50% 50%, transparent 42%, rgba(0,0,0,0.55) 78%, rgba(0,0,0,0.9) 100%)",
+            "radial-gradient(circle at 50% 50%, transparent 38%, rgba(0,0,0,0.6) 76%, rgba(0,0,0,0.95) 100%)",
         }}
       />
       <div className="absolute left-4 top-4 font-mono text-[10px] tracking-[0.2em] text-[#7dffa8]">
