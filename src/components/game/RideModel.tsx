@@ -128,7 +128,7 @@ export function RideModel({
     <group ref={group}>
       <group
         scale={fitted.fit}
-        rotation-y={-Math.PI / 2}
+        rotation-y={fitted.turn}
         position={[0, -fitted.minY * fitted.fit, 0]}
       >
         <group position={[-fitted.center.x, 0, -fitted.center.z]}>
