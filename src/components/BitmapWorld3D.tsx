@@ -2332,11 +2332,22 @@ export function BitmapWorld3D({
               >
                 [ BUILD · B ]
               </Button>
+              <Button className="btn-term-ghost" variant="ghost" onClick={() => void workLand()}>
+                [ TERRAFORM · T ]
+              </Button>
               <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
                 {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
               </Button>
             </div>
           </div>
+          {terraformNote ? (
+            <div
+              className="hud-toolbar pointer-events-none mt-2 text-[10px] text-bitcoin"
+              data-no-translate
+            >
+              {terraformNote}
+            </div>
+          ) : null}
           {legend ? (
             <div className="hud-toolbar pointer-events-auto mt-2 text-[10px]">{legend}</div>
           ) : null}
