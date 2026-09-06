@@ -167,8 +167,8 @@ export function ShooterLayer({
       const k = VIEW_PUSH;
       held.position.copy(camera.position);
       held.quaternion.copy(camera.quaternion);
-      held.translateX(k * STRIDE * ((long ? 0.3 : 0.2) + drift));
-      held.translateY(k * STRIDE * (-(long ? 0.22 : 0.14) + breath - kick * 0.05));
+      held.translateX(k * STRIDE * ((long ? 0.28 : 0.15) + drift));
+      held.translateY(k * STRIDE * (-(long ? 0.17 : 0.04) + breath - kick * 0.05));
       held.translateZ(k * STRIDE * (-(long ? 0.4 : 0.32) + kick * 0.16));
       // aim the piece slightly across the view so the barrel reads as held,
       // not floating dead-centre
