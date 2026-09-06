@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import {
   Environment,
@@ -1670,6 +1670,7 @@ export function BitmapWorld3D({
   initialHeight,
   highlight = [],
   onCursorsChange,
+  legend,
   className,
 }: BitmapWorld3DProps) {
   const navigate = useNavigate();
