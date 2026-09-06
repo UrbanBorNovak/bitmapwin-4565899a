@@ -28,6 +28,10 @@ export type StructureRecipe = {
   name: string;
   blurb: string;
   cost: Partial<Record<ItemId, number>>;
+  /** how much ground it takes up, in strides — this is what blocks a path */
+  footprint: number;
+  /** how much punishment it takes before it collapses */
+  hp: number;
 };
 
 export const STRUCTURES: StructureRecipe[] = [
@@ -36,32 +40,43 @@ export const STRUCTURES: StructureRecipe[] = [
     name: "CAMP FIRE",
     blurb: "A place to meet on open sand.",
     cost: { hide: 1 },
+    footprint: 0.34,
+    hp: 40,
   },
   {
     id: "hide-tent",
     name: "HIDE TENT",
     blurb: "Shelter stitched from desert hides.",
     cost: { hide: 4 },
+    footprint: 0.5,
+    hp: 90,
   },
   {
     id: "bone-totem",
     name: "BONE TOTEM",
     blurb: "A warning to anything hostile nearby.",
     cost: { fang: 5, hide: 1 },
+    footprint: 0.3,
+    hp: 70,
   },
   {
     id: "gold-obelisk",
     name: "GOLD OBELISK",
     blurb: "A landmark cast from a real strike.",
     cost: { "gold-nugget": 8 },
+    footprint: 0.42,
+    hp: 160,
   },
   {
     id: "watchtower",
     name: "WATCHTOWER",
     blurb: "Timber and hide, high enough to see the horizon.",
     cost: { hide: 6, fang: 2, "gold-nugget": 2 },
+    footprint: 0.6,
+    hp: 200,
   },
 ];
+
 
 export type PlacedStructure = {
   key: string;
