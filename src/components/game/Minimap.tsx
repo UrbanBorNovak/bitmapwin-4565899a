@@ -1,0 +1,292 @@
+/**
+ * MINIMAP — the pocket map you carry while you explore.
+ *
+ * A single 2D canvas painted on an animation frame from the predicted pose, so
+ * it never re-renders React and never allocates per frame. It shows the land
+ * grid around you, the BITMAPs you own, everybody else out there, and your own
+ * heading as an arrow at the centre. Press M to open it full size.
+ */
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { PlayerState } from "@/lib/player-state";
+import { WORLD_CELL, WORLD_GRID, WORLD_UNITS } from "@/lib/player-state";
+import type { MapCursor } from "@/lib/map-presence";
+
+/** how many districts fit across the minimap, near to far */
+const ZOOMS = [16, 48, 160] as const;
+
+type Props = {
+  pose: React.RefObject<PlayerState>;
+  cursors: MapCursor[];
+  ownedHeights: number[];
+  /** jump the big camera to a district when the expanded map is clicked */
+  onVisit?: (height: number) => void;
+};
+
+const colOf = (x: number) => Math.floor((x + WORLD_UNITS / 2) / WORLD_CELL);
+const rowOf = (z: number) => Math.floor(z / WORLD_CELL);
+
+function readColor(name: string, fallback: string) {
+  if (typeof window === "undefined") return fallback;
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+}
+
+export function Minimap({ pose, cursors, ownedHeights, onVisit }: Props) {
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const [zoom, setZoom] = useState(1);
+  const [expanded, setExpanded] = useState(false);
+  const [readout, setReadout] = useState({ col: 0, row: 0, height: 0 });
+
+  const cursorsRef = useRef(cursors);
+  cursorsRef.current = cursors;
+
+  const owned = useMemo(
+    () =>
+      ownedHeights.map((height) => ({
+        col: height % WORLD_GRID,
+        row: Math.floor(height / WORLD_GRID),
+      })),
+    [ownedHeights],
+  );
+  const ownedRef = useRef(owned);
+  ownedRef.current = owned;
+
+  // M toggles the full-size map.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() !== "m") return;
+      const target = event.target as HTMLElement | null;
+      if (target && /^(input|textarea|select)$/i.test(target.tagName)) return;
+      setExpanded((current) => !current);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    let frame = 0;
+    const theme = {
+      ink: readColor("--foreground", "#e6e6e6"),
+      bitcoin: readColor("--bitcoin", "#f7931a"),
+      muted: readColor("--muted-foreground", "#8a8a8a"),
+      bg: readColor("--background", "#0a0a0a"),
+    };
+    let lastLabel = -1;
+
+    const paint = () => {
+      frame = requestAnimationFrame(paint);
+      const el = canvas.current;
+      const player = pose.current;
+      if (!el || !player) return;
+      const ctx = el.getContext("2d");
+      if (!ctx) return;
+
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const size = el.clientWidth;
+      if (el.width !== Math.round(size * dpr)) {
+        el.width = Math.round(size * dpr);
+        el.height = Math.round(size * dpr);
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, size, size);
+
+      const districts = expanded ? WORLD_GRID : ZOOMS[zoom]!;
+      const span = districts * WORLD_CELL;
+      const centerX = expanded ? 0 : player.x;
+      const centerZ = expanded ? WORLD_UNITS / 2 : player.z;
+      const scale = size / span;
+      const toPx = (x: number) => (x - centerX) * scale + size / 2;
+      const toPy = (z: number) => (z - centerZ) * scale + size / 2;
+
+      // ground
+      ctx.fillStyle = theme.bg;
+      ctx.globalAlpha = 0.92;
+      ctx.fillRect(0, 0, size, size);
+      ctx.globalAlpha = 1;
+
+      // district grid — only when the lines would be readable
+      const step = WORLD_CELL * scale;
+      if (step > 6) {
+        ctx.strokeStyle = theme.muted;
+        ctx.globalAlpha = 0.3;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        const firstCol = Math.floor((centerX - span / 2 + WORLD_UNITS / 2) / WORLD_CELL);
+        const firstRow = Math.floor((centerZ - span / 2) / WORLD_CELL);
+        for (let i = 0; i <= districts + 1; i++) {
+          const gx = toPx((firstCol + i) * WORLD_CELL - WORLD_UNITS / 2);
+          const gz = toPy((firstRow + i) * WORLD_CELL);
+          ctx.moveTo(gx, 0);
+          ctx.lineTo(gx, size);
+          ctx.moveTo(0, gz);
+          ctx.lineTo(size, gz);
+        }
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+
+      // world edge
+      ctx.strokeStyle = theme.muted;
+      ctx.globalAlpha = 0.5;
+      ctx.strokeRect(
+        toPx(-WORLD_UNITS / 2),
+        toPy(0),
+        WORLD_UNITS * scale,
+        WORLD_UNITS * scale,
+      );
+      ctx.globalAlpha = 1;
+
+      // your own BITMAPs
+      ctx.fillStyle = theme.bitcoin;
+      const dot = Math.max(2, Math.min(10, step));
+      for (const cell of ownedRef.current) {
+        const x = toPx(cell.col * WORLD_CELL - WORLD_UNITS / 2);
+        const z = toPy(cell.row * WORLD_CELL);
+        if (x < -dot || z < -dot || x > size + dot || z > size + dot) continue;
+        ctx.globalAlpha = 0.55;
+        ctx.fillRect(x, z, dot, dot);
+      }
+      ctx.globalAlpha = 1;
+
+      // everybody else out there
+      for (const peer of cursorsRef.current) {
+        const x = toPx(peer.x);
+        const z = toPy(peer.z);
+        if (x < 0 || z < 0 || x > size || z > size) continue;
+        ctx.fillStyle = peer.color || theme.ink;
+        ctx.beginPath();
+        ctx.arc(x, z, expanded ? 2.5 : 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // you: an arrow pointing where you face
+      const sx = toPx(player.x);
+      const sz = toPy(player.z);
+      ctx.save();
+      ctx.translate(sx, sz);
+      ctx.rotate(-player.yaw);
+      ctx.fillStyle = theme.bitcoin;
+      ctx.beginPath();
+      ctx.moveTo(0, -7);
+      ctx.lineTo(5, 6);
+      ctx.lineTo(0, 3);
+      ctx.lineTo(-5, 6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // north tick
+      ctx.fillStyle = theme.muted;
+      ctx.font = "9px ui-monospace, monospace";
+      ctx.fillText("N", size / 2 - 3, 11);
+
+      // 4Hz text readout, cheap
+      const now = performance.now();
+      if (now - lastLabel > 250) {
+        lastLabel = now;
+        const col = colOf(player.x);
+        const row = rowOf(player.z);
+        setReadout((current) =>
+          current.col === col && current.row === row && current.height === player.height
+            ? current
+            : { col, row, height: player.height },
+        );
+      }
+    };
+
+    frame = requestAnimationFrame(paint);
+    return () => cancelAnimationFrame(frame);
+  }, [expanded, pose, zoom]);
+
+  const body = (
+    <>
+      <canvas
+        ref={canvas}
+        className="block aspect-square w-full cursor-crosshair"
+        onClick={(event) => {
+          if (!expanded || !onVisit) return;
+          const rect = event.currentTarget.getBoundingClientRect();
+          const fx = (event.clientX - rect.left) / rect.width;
+          const fz = (event.clientY - rect.top) / rect.height;
+          const col = Math.floor(fx * WORLD_GRID);
+          const row = Math.floor(fz * WORLD_GRID);
+          if (col < 0 || row < 0 || col >= WORLD_GRID || row >= WORLD_GRID) return;
+          onVisit(row * WORLD_GRID + col);
+        }}
+      />
+      <div className="flex items-center justify-between border-t border-border px-1.5 py-1 text-[9px] text-muted-foreground">
+        <span className="tabular-nums text-foreground">
+          {readout.height.toLocaleString("en-US")}.BITMAP
+        </span>
+        <span className="tabular-nums">
+          {readout.col} · {readout.row}
+        </span>
+      </div>
+    </>
+  );
+
+  return (
+    <>
+      <div
+        data-no-translate
+        aria-label="Minimap"
+        className="hud-panel pointer-events-auto absolute bottom-3 right-3 z-40 w-[168px] font-mono"
+      >
+        <header className="flex items-center justify-between gap-1 border-b border-border px-1.5 py-1 text-[9px]">
+          <span className="label text-bitcoin">MINIMAP</span>
+          <span className="flex items-center gap-1">
+            <button
+              type="button"
+              className="border border-border px-1 text-muted-foreground hover:border-foreground hover:text-foreground"
+              title="Zoom the minimap"
+              onClick={() => setZoom((current) => (current + 1) % ZOOMS.length)}
+            >
+              {ZOOMS[zoom]}
+            </button>
+            <button
+              type="button"
+              className="border border-border px-1 text-muted-foreground hover:border-bitcoin hover:text-bitcoin"
+              title="Open the full map (M)"
+              onClick={() => setExpanded(true)}
+            >
+              M
+            </button>
+          </span>
+        </header>
+        {expanded ? null : body}
+        {expanded ? (
+          <div className="px-1.5 py-2 text-[9px] text-muted-foreground">FULL MAP OPEN · M</div>
+        ) : null}
+      </div>
+
+      {expanded ? (
+        <div
+          className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 p-4"
+          role="dialog"
+          aria-label="World map"
+        >
+          <div
+            data-no-translate
+            className="hud-panel w-[min(56vh,90%)] max-w-[560px] font-mono"
+          >
+            <header className="flex items-center justify-between border-b border-border px-2 py-1 text-[10px]">
+              <span className="label text-bitcoin">WORLD MAP · 1,000 × 1,000 DISTRICTS</span>
+              <button
+                type="button"
+                className="border border-border px-1.5 text-muted-foreground hover:border-foreground hover:text-foreground"
+                onClick={() => setExpanded(false)}
+              >
+                CLOSE · M
+              </button>
+            </header>
+            {body}
+            <p className="border-t border-border px-2 py-1 text-[9px] text-muted-foreground">
+              CLICK ANYWHERE TO SEND THE CAMERA THERE · ORANGE SQUARES ARE YOURS
+            </p>
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}

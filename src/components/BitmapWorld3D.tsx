@@ -111,6 +111,7 @@ import { myWalletLinksQuery } from "@/lib/wallet-links";
 import { PARTY_CHAT_MAX_LENGTH, PARTY_MAX_MEMBERS, useMapParty } from "@/lib/map-party";
 import { Primitive } from "./game/Primitive";
 import { Cybertruck } from "@/components/game/Cybertruck";
+import { Minimap } from "@/components/game/Minimap";
 import { DriveBlur } from "@/components/game/DriveBlur";
 
 import {
@@ -1916,6 +1917,7 @@ export function BitmapWorld3D({
   const [draft, setDraft] = useState("");
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [buildOpen, setBuildOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [buildNote, setBuildNote] = useState<string | null>(null);
   // WEAPONS — what you are carrying while you explore the land world.
   const [weapon, setWeapon] = useState<WeaponKind | null>(null);
@@ -2016,6 +2018,11 @@ export function BitmapWorld3D({
       const key = event.key.toLowerCase();
       if (key === "t") {
         void workLand();
+        return;
+      }
+      // C flips between looking through your own eyes and over your shoulder.
+      if (key === "c") {
+        setCameraMode((current) => (current === "first" ? "third" : "first"));
         return;
       }
       if (key !== "b") return;
@@ -2411,19 +2418,39 @@ export function BitmapWorld3D({
 
             <span className="hud-divider" aria-hidden />
 
-            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Camera">
-              <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("mined")}>
-                [ FRAME MINED ]
-              </Button>
-              <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("full")}>
-                [ FULL WORLD ]
-              </Button>
-              <Button className="btn-term-ghost" variant="ghost" onClick={() => moveCamera("tip")}>
-                [ FLY TO TIP ]
-              </Button>
-            </div>
+            {exploring ? null : (
+              <>
+                <div
+                  className="flex flex-wrap items-center gap-1.5"
+                  role="group"
+                  aria-label="Camera"
+                >
+                  <Button
+                    className="btn-term-ghost"
+                    variant="ghost"
+                    onClick={() => moveCamera("mined")}
+                  >
+                    [ FRAME MINED ]
+                  </Button>
+                  <Button
+                    className="btn-term-ghost"
+                    variant="ghost"
+                    onClick={() => moveCamera("full")}
+                  >
+                    [ FULL WORLD ]
+                  </Button>
+                  <Button
+                    className="btn-term-ghost"
+                    variant="ghost"
+                    onClick={() => moveCamera("tip")}
+                  >
+                    [ FLY TO TIP ]
+                  </Button>
+                </div>
 
-            <span className="hud-divider" aria-hidden />
+                <span className="hud-divider" aria-hidden />
+              </>
+            )}
 
             <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Avatar">
               <Button
@@ -2465,14 +2492,16 @@ export function BitmapWorld3D({
           </div>
           {terraformNote ? (
             <div
-              className="hud-toolbar pointer-events-none mt-2 text-[10px] text-bitcoin"
+              className="hud-toolbar pointer-events-none mt-2 w-fit max-w-[calc(100%-15rem)] text-[10px] text-bitcoin"
               data-no-translate
             >
               {terraformNote}
             </div>
           ) : null}
-          {legend ? (
-            <div className="hud-toolbar pointer-events-auto mt-2 text-[10px]">{legend}</div>
+          {legend && !exploring ? (
+            <div className="hud-toolbar pointer-events-auto mt-2 w-fit max-w-[calc(100%-15rem)] text-[10px]">
+              {legend}
+            </div>
           ) : null}
         </div>
 
@@ -2521,6 +2550,16 @@ export function BitmapWorld3D({
         ) : null}
 
         <DriveBlur active={driving && cameraMode !== "map"} />
+
+        {/* MINIMAP — where you are, who is near, what you own. */}
+        {exploring ? (
+          <Minimap
+            pose={pose}
+            cursors={cursors}
+            ownedHeights={ownedHeights}
+            onVisit={visitHeight}
+          />
+        ) : null}
 
 
 
@@ -2628,8 +2667,9 @@ export function BitmapWorld3D({
           role="group"
           aria-label="Camera mode"
           data-no-translate
-          className="hud-panel absolute right-3 top-[9.5rem] z-30 flex p-0.5"
+          className="hud-panel absolute right-3 top-[9.5rem] z-30 flex items-center gap-1 p-0.5 pl-2"
         >
+          <span className="label text-[9px] text-muted-foreground">VIEW</span>
           <Button
             type="button"
             variant="ghost"
@@ -2678,6 +2718,7 @@ export function BitmapWorld3D({
           >
             <Eye /> <span className="hidden sm:inline">1ST</span>
           </Button>
+          <span className="hidden pr-1 text-[9px] text-muted-foreground sm:inline">C</span>
         </div>
 
         {cameraMode === "first" ? (
@@ -2741,13 +2782,22 @@ export function BitmapWorld3D({
                 {readout.target ? " · WALKING TO MARK" : ""}
                 {readout.airborne ? " · JUMPING" : ""}
               </span>
-              <span className="text-muted-foreground">
-                W · S WALK · A · D TURN · Q · E SIDESTEP · SHIFT SPRINT · SPACE JUMP ·{" "}
-                {cameraMode === "first"
-                  ? "CLICK WORLD FOR MOUSE LOOK · ESC RELEASE"
-                  : "CLICK OR TAP TO WALK"}{" "}
-                · F ATTACK
-              </span>
+              {helpOpen ? (
+                <span className="text-muted-foreground">
+                  W · S WALK · A · D TURN · Q · E SIDESTEP · SHIFT SPRINT · SPACE JUMP · C SWAP
+                  VIEW · M MAP · V DRIVE · B BUILD · T TERRAFORM · F ATTACK ·{" "}
+                  {cameraMode === "first"
+                    ? "CLICK WORLD FOR MOUSE LOOK · ESC RELEASE"
+                    : "CLICK OR TAP TO WALK"}
+                </span>
+              ) : null}
+              <button
+                type="button"
+                className="pointer-events-auto self-start border border-border px-1 text-[9px] text-muted-foreground hover:border-bitcoin hover:text-bitcoin"
+                onClick={() => setHelpOpen((current) => !current)}
+              >
+                {helpOpen ? "[ HIDE CONTROLS ]" : "[ CONTROLS ]"}
+              </button>
             </>
           ) : null}
         </div>
@@ -3148,7 +3198,7 @@ function SkillsHud() {
   return (
     <div
       data-no-translate
-      className="hud-panel absolute right-3 bottom-3 z-40 w-[10.5rem] space-y-1.5 px-2.5 py-2 font-mono text-[10px] tabular-nums"
+      className="hud-panel absolute right-3 bottom-[13.75rem] z-40 w-[10.5rem] space-y-1.5 px-2.5 py-2 font-mono text-[10px] tabular-nums"
       aria-label="Skills and backpack"
     >
       <div className="label text-[9px] text-bitcoin">SKILLS</div>
