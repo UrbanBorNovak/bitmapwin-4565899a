@@ -1125,6 +1125,39 @@ export type Database = {
         }
         Relationships: []
       }
+      land_terraform: {
+        Row: {
+          bitmap_height: number
+          chunk_key: string
+          id: string
+          seeded_at: string
+          seeded_by_address: string | null
+          seeded_by_user_id: string
+          tile_col: number
+          tile_row: number
+        }
+        Insert: {
+          bitmap_height: number
+          chunk_key: string
+          id?: string
+          seeded_at?: string
+          seeded_by_address?: string | null
+          seeded_by_user_id: string
+          tile_col: number
+          tile_row: number
+        }
+        Update: {
+          bitmap_height?: number
+          chunk_key?: string
+          id?: string
+          seeded_at?: string
+          seeded_by_address?: string | null
+          seeded_by_user_id?: string
+          tile_col?: number
+          tile_row?: number
+        }
+        Relationships: []
+      }
       lease_offers: {
         Row: {
           bitmap_height: number
@@ -1763,6 +1796,18 @@ export type Database = {
       coin_start_lease: {
         Args: { _days: number; _lessee_address: string; _offer_id: string }
         Returns: string
+      }
+      land_terraform_in_chunks: {
+        Args: { _keys: string[] }
+        Returns: {
+          bitmap_height: number
+          chunk_key: string
+          id: string
+          seeded_at: string
+          seeded_by_address: string
+          tile_col: number
+          tile_row: number
+        }[]
       }
       map_bitmap_models: {
         Args: {
