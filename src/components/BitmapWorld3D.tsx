@@ -1235,6 +1235,12 @@ function PlayerCameraRig({
     };
   }, []);
 
+  // Built structures are solid while you are walking the world.
+  useEffect(() => {
+    setMoveBlocker((x, z) => blockedAt(x, z, AVATAR_U * 0.3));
+    return () => setMoveBlocker(null);
+  }, []);
+
   useEffect(() => {
     const canvas = gl.domElement;
     const lock = () => {
