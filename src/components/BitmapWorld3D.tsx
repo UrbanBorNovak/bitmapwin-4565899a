@@ -2249,6 +2249,13 @@ export function BitmapWorld3D({
     const now = Date.now();
     if (hp <= 0 || now < attackCooldownUntil) return;
     const me = pose.current;
+    // The swing itself plays on the skeleton, not only in the HUD.
+    if (me.combat === "alive") {
+      me.combat = "attacking";
+      window.setTimeout(() => {
+        if (pose.current && pose.current.combat === "attacking") pose.current.combat = "alive";
+      }, 420);
+    }
     let best: { id: string; handle: string; distance: number } | null = null;
     for (const cursor of cursorsRef.current) {
       if (cursor.hp <= 0) continue;
