@@ -46,8 +46,9 @@ function hash(a: number, b: number) {
 }
 
 /**
- * The face: square white eyes with black pupils, plus brows and a mouth that
- * shift with the Punk's mood so you can read it before it reads you.
+ * The face: two flat white rectangles on the orange block head, each holding a
+ * solid black square pupil that shifts with the Punk's mood. No brows or mouth
+ * — the reference face is eyes only.
  */
 function Face({
   unit,
@@ -61,13 +62,13 @@ function Face({
   mood: { current: "calm" | "curious" | "angry" | "hurt" };
 }) {
   const blinkRef = useRef<THREE.Group>(null);
-  const browL = useRef<THREE.Mesh>(null);
-  const browR = useRef<THREE.Mesh>(null);
-  const mouthRef = useRef<THREE.Mesh>(null);
   const pupils = useRef<(THREE.Mesh | null)[]>([]);
   const eye = unit * size * 0.16;
+  const eyeW = eye * 1.5;
+  const eyeH = eye * 0.75;
+  const pupilW = eyeW * 0.5;
   const y = unit * size * 0.8;
-  const x = unit * size * 0.105;
+  const x = unit * size * 0.115;
   // The fitted orange head reaches roughly 0.34 units along its front (-Z).
   // Seat the eye blocks across that face so they protrude instead of hiding inside it.
   const z = -unit * size * 0.36;
@@ -84,38 +85,12 @@ function Face({
     const squint = state === "angry" ? 0.55 : state === "hurt" ? 0.35 : 1;
     node.scale.y = blink * squint;
 
-    // Brows: flat and calm, angled down when angry, raised when curious.
-    const tilt = state === "angry" ? 0.5 : state === "hurt" ? 0.32 : state === "curious" ? -0.22 : 0;
-    const lift =
-      state === "curious" ? eye * 0.35 : state === "angry" ? -eye * 0.12 : eye * 0.12;
-    if (browL.current) {
-      browL.current.rotation.z = -tilt;
-      browL.current.position.y = eye * 0.78 + lift;
-    }
-    if (browR.current) {
-      browR.current.rotation.z = tilt;
-      browR.current.position.y = eye * 0.78 + lift;
-    }
-
-    // Mouth: small line when calm, wide open snarl when angry, wobble when hurt.
-    if (mouthRef.current) {
-      const open =
-        state === "angry"
-          ? 0.85 + Math.abs(Math.sin(t * 8 + seed)) * 0.5
-          : state === "hurt"
-            ? 0.7
-            : state === "curious"
-              ? 0.4 + Math.sin(t * 2 + seed) * 0.15
-              : 0.22;
-      mouthRef.current.scale.set(state === "angry" ? 1.25 : 1, open, 1);
-    }
-
-    // Pupils drift about when idle, lock forward when angry.
+    // Pupils slide side to side within the white block, lock forward when angry.
     for (const pupil of pupils.current) {
       if (!pupil) continue;
-      const look = state === "angry" ? 0 : Math.sin(t * 0.8 + seed) * eye * 0.16;
-      pupil.position.x = look;
-      pupil.position.y = state === "calm" ? Math.sin(t * 0.55 + seed) * eye * 0.08 : 0;
+      const range = (eyeW - pupilW) * 0.5;
+      pupil.position.x =
+        state === "angry" ? -range : Math.sin(t * 0.7 + seed) * range;
     }
   });
 
@@ -124,34 +99,24 @@ function Face({
       {[-1, 1].map((side, i) => (
         <group key={side} position={[x * side, 0, 0]}>
           <mesh>
-            <boxGeometry args={[eye, eye, eye * 0.34]} />
+            <boxGeometry args={[eyeW, eyeH, eye * 0.3]} />
             <meshBasicMaterial color="#ffffff" />
           </mesh>
           <mesh
             ref={(node) => {
               pupils.current[i] = node;
             }}
-            position={[0, 0, -eye * 0.2]}
+            position={[0, 0, -eye * 0.18]}
           >
-            <boxGeometry args={[eye * 0.44, eye * 0.44, eye * 0.08]} />
-            <meshBasicMaterial color="#0a0a0a" />
-          </mesh>
-          <mesh
-            ref={side < 0 ? browL : browR}
-            position={[0, eye * 0.78, -eye * 0.2]}
-          >
-            <boxGeometry args={[eye * 1.05, eye * 0.2, eye * 0.1]} />
+            <boxGeometry args={[pupilW, eyeH, eye * 0.08]} />
             <meshBasicMaterial color="#0a0a0a" />
           </mesh>
         </group>
       ))}
-      <mesh ref={mouthRef} position={[0, -eye * 0.95, -eye * 0.2]}>
-        <boxGeometry args={[eye * 0.9, eye * 0.4, eye * 0.1]} />
-        <meshBasicMaterial color="#0a0a0a" />
-      </mesh>
     </group>
   );
 }
+
 
 function PunkBody({ unit, size }: { unit: number; size: number }) {
   const gltf = useGLTF(PUNK_URL);
