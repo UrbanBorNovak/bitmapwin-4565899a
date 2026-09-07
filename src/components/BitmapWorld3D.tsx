@@ -2862,6 +2862,14 @@ export function BitmapWorld3D({
               </Button>
             </div>
           </div>
+          {rideNote ? (
+            <div
+              className="hud-toolbar pointer-events-none mt-2 w-fit max-w-[calc(100%-15rem)] text-[10px] text-bitcoin"
+              data-no-translate
+            >
+              {rideNote}
+            </div>
+          ) : null}
           {terraformNote ? (
             <div
               className="hud-toolbar pointer-events-none mt-2 w-fit max-w-[calc(100%-15rem)] text-[10px] text-bitcoin"
