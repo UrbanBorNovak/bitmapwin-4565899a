@@ -126,9 +126,10 @@ export function WornGear({
             unit={unit}
             fit={0.3}
             pose={pose}
-            offset={[-0.24, 0.62, 0.16]}
-            bob={0.02}
+            offset={[-0.26, 0.46, 0.2]}
+            bob={0.015}
           />
+
         </Suspense>
       ) : null}
       {showHead && weapon === "wand" ? (
