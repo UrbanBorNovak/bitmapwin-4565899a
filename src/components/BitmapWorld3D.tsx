@@ -2234,6 +2234,10 @@ export function BitmapWorld3D({
         eat("ramen");
         return;
       }
+      if (key === "u") {
+        eat("cheese-slice");
+        return;
+      }
       if (key !== "b") return;
       setBuildOpen((current) => !current);
     };
@@ -2836,6 +2840,20 @@ export function BitmapWorld3D({
                 [ RAMEN · J ]
               </Button>
               <Button
+                className="btn-term-ghost"
+                variant="ghost"
+                onClick={() => {
+                  const spec = startEating("cheese-slice");
+                  if (!spec) return;
+                  heal(spec.bite);
+                  playSfx("ui");
+                  setBiteNote(`${spec.label} · +${spec.bite} HP · ${spec.buff.label}`);
+                  window.setTimeout(() => setBiteNote(null), 2400);
+                }}
+              >
+                [ CHEESE SLICE · U ]
+              </Button>
+              <Button
                 className={driving ? "btn-term" : "btn-term-ghost"}
                 variant="ghost"
                 onClick={toggleTruck}
@@ -3228,7 +3246,7 @@ export function BitmapWorld3D({
                   W · S WALK · A · D TURN · Q · E SIDESTEP · SHIFT SPRINT · SPACE JUMP · C SWAP
                   VIEW · M MAP · V TRAVEL · SPACE · X CLIMB · SINK WHEN FLYING · B BUILD · T
                   TERRAFORM · F ATTACK · H HEAL SPELL · K OPEN CHEST · P COMPANION · N NIGHT VISION · G
-                  ICE CREAM · J RAMEN ·{" "}
+                  ICE CREAM · J RAMEN · U CHEESE SLICE ·{" "}
 
                   {cameraMode === "first"
                     ? "CLICK WORLD FOR MOUSE LOOK · ESC RELEASE"
