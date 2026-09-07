@@ -147,6 +147,7 @@ import {
   RIDES,
   currentRide,
   isDriving,
+  stopDriving,
   selectRide,
   subscribeVehicle,
   toggleDriving,
@@ -1387,14 +1388,12 @@ function PlayerCameraRig({
 
     // Aboard a ride the same keys travel it: much faster, wider turns, and no
     // jumping. The flying ride swaps jumping for climb and sink on Space / X.
-    const driving = isDriving();
     const ride = currentRide();
     // A boat only runs on the sea. Step off the water and the hull settles.
     const afloatOk = ride.kind !== "water" || isSea(player.x, player.z);
-    if (driving && !afloatOk) {
-      stopDriving();
-    }
-    if (driving && afloatOk) {
+    if (isDriving() && !afloatOk) stopDriving();
+    const driving = isDriving();
+    if (driving) {
       intent.speedScale = ride.speed * (intent.sprint ? ride.sprint : 1);
       // Steering tightens up at a crawl and washes out flat out, by how much
       // grip this ride has.
@@ -1924,6 +1923,7 @@ const WorldScene = memo(function WorldScene({
         <>
           <ChunkStreamer pose={pose} />
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
+          <SeaMasses unit={AVATAR_U} pose={pose} />
           <Punks unit={AVATAR_U} pose={pose} onBite={onBite} />
           <TrapField
             unit={AVATAR_U}
