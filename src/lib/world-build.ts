@@ -29,7 +29,8 @@ export type StructureId =
   | "gold-obelisk"
   | "watchtower"
   | "graveyard"
-  | "btc-miner";
+  | "btc-miner"
+  | "road";
 
 export type StructureRecipe = {
   id: StructureId;
@@ -40,6 +41,8 @@ export type StructureRecipe = {
   footprint: number;
   /** how much punishment it takes before it collapses */
   hp: number;
+  /** ground pieces like road slabs — you walk over them, they never block */
+  walkable?: boolean;
 };
 
 export const STRUCTURES: StructureRecipe[] = [
@@ -92,6 +95,15 @@ export const STRUCTURES: StructureRecipe[] = [
     hp: 180,
   },
   {
+    id: "road",
+    name: "ROAD PIECE",
+    blurb: "A modular slab that snaps to the grid — lay them end to end for a road.",
+    cost: { mineral: 1, "ore-chunk": 1 },
+    footprint: 0,
+    hp: 60,
+    walkable: true,
+  },
+  {
     id: "graveyard",
     name: "GRAVEYARD",
     blurb: "Ground consecrated for the fallen — you respawn at the nearest one.",
@@ -100,6 +112,11 @@ export const STRUCTURES: StructureRecipe[] = [
     hp: 220,
   },
 ];
+
+/** True for ground pieces you walk straight over. */
+export function isWalkable(id: StructureId) {
+  return recipeFor(id)?.walkable === true;
+}
 
 /** Structures that count as a settlement you can wake up in. */
 const TOWN_KINDS: StructureId[] = ["camp-fire", "hide-tent", "watchtower"];
@@ -190,6 +207,7 @@ function stampTiles(items: PlacedStructure[]) {
   const next = new Set<string>();
   const entries: { col: number; row: number; bits: number; on?: boolean }[] = [];
   for (const item of items) {
+    if (isWalkable(item.id)) continue; // a road is ground, not an obstacle
     const col = colAt(item.x);
     const row = rowAt(item.z);
     const key = `${col}:${row}`;
@@ -266,6 +284,7 @@ export function hpOf(item: PlacedStructure) {
 export function structureAt(x: number, z: number, pad = 0) {
   hydrate();
   for (const item of view) {
+    if (isWalkable(item.id)) continue;
     const reach = footprintOf(item.id) + pad;
     if (Math.abs(item.x - x) > reach || Math.abs(item.z - z) > reach) continue;
     if (Math.hypot(item.x - x, item.z - z) <= reach) return item;
@@ -424,8 +443,19 @@ export function build(id: StructureId, x: number, z: number, yaw = 0) {
   hydrate();
   const recipe = recipeFor(id);
   if (!recipe) return null;
+  if (recipe.walkable) {
+    // MODULAR PIECES snap to the stride grid and to quarter turns, so slabs laid
+    // one after another line up into a continuous road instead of a jumble.
+    x = Math.round(x / STRIDE) * STRIDE;
+    z = Math.round(z / STRIDE) * STRIDE;
+    yaw = Math.round(yaw / (Math.PI / 2)) * (Math.PI / 2);
+    const taken = view.some(
+      (item) => item.id === id && Math.hypot(item.x - x, item.z - z) < STRIDE * 0.5,
+    );
+    if (taken) return null;
+  }
   // Nothing is built inside something else — the ground has to be clear first.
-  if (blockedAt(x, z, footprintOf(id) * 0.6)) return null;
+  if (!recipe.walkable && blockedAt(x, z, footprintOf(id) * 0.6)) return null;
   if (!spendItems(recipe.cost)) return null;
   const placed: PlacedStructure = {
     key: `${id}-${Math.round(x)}-${Math.round(z)}-${Date.now()}`,

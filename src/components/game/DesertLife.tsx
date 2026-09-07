@@ -12,6 +12,9 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { TreasureChests } from "@/components/game/TreasureChests";
 import { MineralNodes } from "@/components/game/MineralNodes";
+import { PineTrees } from "@/components/game/PineTrees";
+import { GoldenEgg } from "@/components/game/GoldenEgg";
+import { AntelopeBody } from "@/components/game/Antelope";
 import {
   registerBeasts,
   registerVeins,
@@ -511,6 +514,8 @@ export const DesertLife = memo(function DesertLife({
       <Mirage unit={unit} pose={pose} />
       <GoldVeins unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <MineralNodes unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
+      <PineTrees unit={unit} center={center} radius={radius} />
+      <GoldenEgg unit={unit} pose={pose} />
       <TreasureChests unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <Critters unit={unit} colors={colors} pose={pose} onBite={onBite} />
 
@@ -527,7 +532,7 @@ type CritterKind =
   | "jackrabbit"
   | "coyote"
   | "vulture"
-  | "zebra"
+  | "antelope"
   | "giraffe"
   | "elephant"
   | "rhino"
@@ -557,7 +562,7 @@ const SPECIES: Species[] = [
   { kind: "coyote", weight: 8, hostile: true, speed: 1.6, scale: 1, hp: 46, xp: 55, bite: 9, radius: 0.26, bodyY: 0.3 },
   { kind: "vulture", weight: 6, hostile: false, speed: 1.1, scale: 1, hp: 26, xp: 34, bite: 0, radius: 0.24, bodyY: 0 },
   // Rare safari sightings.
-  { kind: "zebra", weight: 2, hostile: false, speed: 1.5, scale: 1, hp: 80, xp: 110, bite: 0, radius: 0.36, bodyY: 0.52 },
+  { kind: "antelope", weight: 2, hostile: false, speed: 1.5, scale: 1, hp: 80, xp: 110, bite: 0, radius: 0.36, bodyY: 0.52 },
   { kind: "giraffe", weight: 1.2, hostile: false, speed: 1.0, scale: 1, hp: 130, xp: 190, bite: 0, radius: 0.44, bodyY: 0.85 },
   { kind: "elephant", weight: 1, hostile: false, speed: 0.9, scale: 1, hp: 280, xp: 430, bite: 0, radius: 0.6, bodyY: 0.62 },
   { kind: "rhino", weight: 0.8, hostile: true, speed: 1.4, scale: 1, hp: 220, xp: 350, bite: 18, radius: 0.52, bodyY: 0.48 },
@@ -983,6 +988,9 @@ const CritterBody = memo(function CritterBody({
     );
   }
 
+  // The antelope is an inscribed model, not a voxel build.
+  if (kind === "antelope") return <AntelopeBody unit={u} />;
+
   // Quadrupeds — one shared build with per-species proportions.
   const build = quadruped(kind, u);
   return (
@@ -1050,7 +1058,7 @@ function quadruped(kind: CritterKind, u: number) {
   > = {
     coyote: { w: 0.13, h: 0.16, l: 0.4, leg: 0.22, neck: 0.1, tilt: 0.5, hide: HIDE, accent: HIDE_DARK },
     lion: { w: 0.2, h: 0.22, l: 0.55, leg: 0.28, neck: 0.12, tilt: 0.4, hide: "#b08a52", accent: "#8d6c3c" },
-    zebra: { w: 0.2, h: 0.26, l: 0.6, leg: 0.4, neck: 0.26, tilt: 0.9, hide: "#d8d3c8", accent: "#3c3a37" },
+    antelope: { w: 0.2, h: 0.26, l: 0.6, leg: 0.4, neck: 0.26, tilt: 0.9, hide: "#d8d3c8", accent: "#3c3a37" },
     giraffe: { w: 0.22, h: 0.3, l: 0.66, leg: 0.7, neck: 0.95, tilt: 1.15, hide: "#c9a154", accent: "#8a6a2e" },
     elephant: { w: 0.36, h: 0.42, l: 0.9, leg: 0.42, neck: 0.16, tilt: 0.3, hide: "#8a8b8a", accent: "#6c6d6c" },
     rhino: { w: 0.32, h: 0.34, l: 0.82, leg: 0.32, neck: 0.14, tilt: 0.35, hide: "#8f9295", accent: "#707375" },
