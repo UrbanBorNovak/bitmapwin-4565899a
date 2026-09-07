@@ -18,6 +18,9 @@ import { Primitive } from "@/components/game/Primitive";
 /** on-chain GLB inscription of the sword */
 export const SWORD_INSCRIPTION =
   "7b674e8378b14b590960d452900507e2e26089bc9f622fa7e6c938d95d697b81i0";
+/** on-chain GLB inscription of the second blade */
+export const SWORD_TWO_INSCRIPTION =
+  "593fb11363d49f4cf404d7dbbcaad623dbbc2e37539dedd328448f7feeaa8ff0i0";
 /** on-chain GLB inscription of the minigun */
 export const MINIGUN_INSCRIPTION =
   "46dd4a7cfb48132b2a4d06cbebdcf4a340192ba386c6f76832221c51e8d67b77i0";
@@ -29,7 +32,14 @@ export const WAND_INSCRIPTION =
 export const PICK_INSCRIPTION =
   "fd69f76fc8964ab62237d8fd6a5de7f76765bbf9861a48855d6502d25b4db7e8i0";
 
-export type WeaponKind = "minigun" | "revolver" | "whip" | "pickaxe" | "sword" | "wand";
+export type WeaponKind =
+  | "minigun"
+  | "revolver"
+  | "whip"
+  | "pickaxe"
+  | "sword"
+  | "swordTwo"
+  | "wand";
 
 
 export type WeaponSpec = {
@@ -149,6 +159,23 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     reloadSfx: "reload",
     hint: "ON-CHAIN BLADE · RIGHT TO GUARD · LEFT TO SLASH",
   },
+  swordTwo: {
+    kind: "swordTwo",
+    label: "SWORD II",
+    short: "SWORD II",
+    magazine: 0,
+    reloadMs: 0,
+    cooldownMs: 470,
+    reachStrides: 4.8,
+    splashStrides: 1.5,
+    damage: 38,
+    mining: false,
+    fireSfx: "slash",
+    cycleSfx: null,
+    cycleDelayMs: 0,
+    reloadSfx: "reload",
+    hint: "SECOND ON-CHAIN BLADE · RIGHT TO GUARD · LEFT TO SLASH",
+  },
   wand: {
     kind: "wand",
     label: "BLUE WAND",
@@ -175,6 +202,7 @@ export const WEAPON_ORDER: WeaponKind[] = [
   "whip",
   "pickaxe",
   "sword",
+  "swordTwo",
   "wand",
 ];
 
@@ -335,7 +363,7 @@ export function WeaponModel({
   }
 
 
-  if (kind === "sword") {
+  if (kind === "sword" || kind === "swordTwo") {
     // The real on-chain blade, swung from the grip. A plain steel stand-in
     // holds the pose while the inscription streams in.
     return (
@@ -344,7 +372,11 @@ export function WeaponModel({
         rotation={[-0.16 + lash * 0.5, 0.2, -0.3 - lash * 1.05]}
       >
         <Suspense fallback={<SwordStandIn u={u} materials={materials} />}>
-          <OnChainWeapon url={SWORD_URL} u={u} lengthStrides={0.95} />
+          <OnChainWeapon
+            url={kind === "sword" ? SWORD_URL : SWORD_TWO_URL}
+            u={u}
+            lengthStrides={kind === "sword" ? 0.95 : 1.05}
+          />
         </Suspense>
         {flash ? <Muzzle u={u} z={-1.05 * u} size={0.04} color={flashColor} /> : null}
       </group>
@@ -413,6 +445,7 @@ function Muzzle({ u, z, size, color }: { u: number; z: number; size: number; col
 }
 
 const SWORD_URL = `https://ordinals.com/content/${SWORD_INSCRIPTION}`;
+const SWORD_TWO_URL = `https://ordinals.com/content/${SWORD_TWO_INSCRIPTION}`;
 const MINIGUN_URL = `https://ordinals.com/content/${MINIGUN_INSCRIPTION}`;
 const WAND_URL = `https://ordinals.com/content/${WAND_INSCRIPTION}`;
 const PICK_URL = `https://ordinals.com/content/${PICK_INSCRIPTION}`;
@@ -543,6 +576,7 @@ function SwordStandIn({ u, materials }: { u: number; materials: WeaponMaterials 
 }
 
 useGLTF.preload(SWORD_URL);
+useGLTF.preload(SWORD_TWO_URL);
 useGLTF.preload(MINIGUN_URL);
 useGLTF.preload(WAND_URL);
 useGLTF.preload(PICK_URL);
