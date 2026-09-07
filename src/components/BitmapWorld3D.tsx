@@ -35,6 +35,7 @@ import type { RunningExtender } from "@/lib/use-extender-runtimes";
 import { ShooterLayer, type ShooterStats } from "@/components/game/ShooterLayer";
 import { DesertLife } from "@/components/game/DesertLife";
 import { Punks } from "@/components/game/Punks";
+import { DjEvent, useDjEvent } from "@/components/game/DjEvent";
 import { Companions } from "@/components/game/Companions";
 import { WornGear } from "@/components/game/WornGear";
 import { NightVision } from "@/components/game/NightVision";
@@ -1880,6 +1881,7 @@ const WorldScene = memo(function WorldScene({
           <ChunkStreamer pose={pose} />
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <Punks unit={AVATAR_U} pose={pose} onBite={onBite} />
+          <DjEvent unit={AVATAR_U} pose={pose} bitcoin={colors.bitcoin} />
           <DesertBuilds unit={AVATAR_U} />
           <FootTrail unit={AVATAR_U} pose={pose} sand={colors.bitcoin} />
           <LandGrowth unit={AVATAR_U} pose={pose} />
@@ -2471,6 +2473,7 @@ export function BitmapWorld3D({
         "Digit4",
         "Digit5",
         "Digit6",
+        "Digit7",
       ].indexOf(event.code);
       if (slot >= 0) {
         event.preventDefault();
