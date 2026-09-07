@@ -278,7 +278,7 @@ export function ShooterLayer({
       const cycle = spec.cycleSfx;
       window.setTimeout(() => playSfx(cycle), spec.cycleDelayMs);
     }
-    if (!spec.mining && weapon !== "trap") setFlash(now);
+    if (!spec.mining) setFlash(now);
     recoil.current = 1;
     setLash(1);
 
@@ -348,7 +348,7 @@ export function ShooterLayer({
       .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
       .sort((a, b) => a.distance - b.distance)[0];
 
-    if (weapon !== "trap" && !spec.mining) {
+    if (!spec.mining) {
       const end = nearest
         ? nearest.point.clone()
         : origin.clone().addScaledVector(ray.direction, range * 0.5);
