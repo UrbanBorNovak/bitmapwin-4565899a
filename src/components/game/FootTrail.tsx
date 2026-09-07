@@ -33,6 +33,8 @@ type Mote = {
   size: number;
   age: number;
   live: boolean;
+  /** foam from a boat's wake rather than sand dust */
+  foam: boolean;
 };
 
 export function FootTrail({
