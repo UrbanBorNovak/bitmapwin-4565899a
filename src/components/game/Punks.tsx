@@ -273,7 +273,7 @@ export function Punks({
       }
       node.rotation.z = 0;
 
-      const speed = unit * (angry ? 1.5 : 0.55) * (0.7 + punk.size * 0.4);
+      const speed = unit * (angry ? 1.05 : 0.5) * (0.7 + punk.size * 0.4);
       let steer = Math.sin(now / 1_500 + punk.seed) * delta * 1.6;
       let travel = speed;
 
