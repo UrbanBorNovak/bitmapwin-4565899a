@@ -988,6 +988,9 @@ const CritterBody = memo(function CritterBody({
     );
   }
 
+  // The antelope is an inscribed model, not a voxel build.
+  if (kind === "antelope") return <AntelopeBody unit={u} />;
+
   // Quadrupeds — one shared build with per-species proportions.
   const build = quadruped(kind, u);
   return (
@@ -1055,7 +1058,7 @@ function quadruped(kind: CritterKind, u: number) {
   > = {
     coyote: { w: 0.13, h: 0.16, l: 0.4, leg: 0.22, neck: 0.1, tilt: 0.5, hide: HIDE, accent: HIDE_DARK },
     lion: { w: 0.2, h: 0.22, l: 0.55, leg: 0.28, neck: 0.12, tilt: 0.4, hide: "#b08a52", accent: "#8d6c3c" },
-    zebra: { w: 0.2, h: 0.26, l: 0.6, leg: 0.4, neck: 0.26, tilt: 0.9, hide: "#d8d3c8", accent: "#3c3a37" },
+    antelope: { w: 0.2, h: 0.26, l: 0.6, leg: 0.4, neck: 0.26, tilt: 0.9, hide: "#d8d3c8", accent: "#3c3a37" },
     giraffe: { w: 0.22, h: 0.3, l: 0.66, leg: 0.7, neck: 0.95, tilt: 1.15, hide: "#c9a154", accent: "#8a6a2e" },
     elephant: { w: 0.36, h: 0.42, l: 0.9, leg: 0.42, neck: 0.16, tilt: 0.3, hide: "#8a8b8a", accent: "#6c6d6c" },
     rhino: { w: 0.32, h: 0.34, l: 0.82, leg: 0.32, neck: 0.14, tilt: 0.35, hide: "#8f9295", accent: "#707375" },
