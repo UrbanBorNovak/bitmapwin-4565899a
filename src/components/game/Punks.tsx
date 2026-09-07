@@ -26,8 +26,8 @@ const PUNK_URL = `https://ordinals.com/content/${PUNK_INSCRIPTION}`;
 const MOBS = 2;
 const MOB_MIN = 3;
 const MOB_MAX = 5;
-/** how long a provoked mob keeps coming for you */
-const RAGE_MS = 30_000;
+/** how long a provoked mob keeps coming for you — they cool down quickly now */
+const RAGE_MS = 10_000;
 
 type Punk = BeastEntity & {
   mob: number;
@@ -43,9 +43,26 @@ function hash(a: number, b: number) {
   return n - Math.floor(n);
 }
 
-/** Blocky white eyes with square black pupils, mounted on the model's -Z face. */
-function Eyes({ unit, size, seed }: { unit: number; size: number; seed: number }) {
+/**
+ * The face: square white eyes with black pupils, plus brows and a mouth that
+ * shift with the Punk's mood so you can read it before it reads you.
+ */
+function Face({
+  unit,
+  size,
+  seed,
+  mood,
+}: {
+  unit: number;
+  size: number;
+  seed: number;
+  mood: { current: "calm" | "curious" | "angry" | "hurt" };
+}) {
   const blinkRef = useRef<THREE.Group>(null);
+  const browL = useRef<THREE.Mesh>(null);
+  const browR = useRef<THREE.Mesh>(null);
+  const mouthRef = useRef<THREE.Mesh>(null);
+  const pupils = useRef<(THREE.Mesh | null)[]>([]);
   const eye = unit * size * 0.16;
   const y = unit * size * 0.8;
   const x = unit * size * 0.105;
@@ -56,26 +73,80 @@ function Eyes({ unit, size, seed }: { unit: number; size: number; seed: number }
   useFrame(({ clock }) => {
     const node = blinkRef.current;
     if (!node) return;
-    const interval = 3.6 + hash(seed, 41) * 3.2;
-    const phase = (clock.elapsedTime + hash(seed, 73) * interval) % interval;
+    const t = clock.elapsedTime;
+    const state = mood.current;
+    const interval = state === "calm" ? 3.6 + hash(seed, 41) * 3.2 : 1.8 + hash(seed, 41) * 1.4;
+    const phase = (t + hash(seed, 73) * interval) % interval;
     const blink = phase < 0.16 ? Math.max(0.08, Math.abs(phase - 0.08) / 0.08) : 1;
-    node.scale.y = blink;
+    // Angry Punks squint; hurt ones screw their eyes half shut.
+    const squint = state === "angry" ? 0.55 : state === "hurt" ? 0.35 : 1;
+    node.scale.y = blink * squint;
+
+    // Brows: flat and calm, angled down when angry, raised when curious.
+    const tilt = state === "angry" ? 0.5 : state === "hurt" ? 0.32 : state === "curious" ? -0.22 : 0;
+    const lift =
+      state === "curious" ? eye * 0.35 : state === "angry" ? -eye * 0.12 : eye * 0.12;
+    if (browL.current) {
+      browL.current.rotation.z = -tilt;
+      browL.current.position.y = eye * 0.78 + lift;
+    }
+    if (browR.current) {
+      browR.current.rotation.z = tilt;
+      browR.current.position.y = eye * 0.78 + lift;
+    }
+
+    // Mouth: small line when calm, wide open snarl when angry, wobble when hurt.
+    if (mouthRef.current) {
+      const open =
+        state === "angry"
+          ? 0.85 + Math.abs(Math.sin(t * 8 + seed)) * 0.5
+          : state === "hurt"
+            ? 0.7
+            : state === "curious"
+              ? 0.4 + Math.sin(t * 2 + seed) * 0.15
+              : 0.22;
+      mouthRef.current.scale.set(state === "angry" ? 1.25 : 1, open, 1);
+    }
+
+    // Pupils drift about when idle, lock forward when angry.
+    for (const pupil of pupils.current) {
+      if (!pupil) continue;
+      const look = state === "angry" ? 0 : Math.sin(t * 0.8 + seed) * eye * 0.16;
+      pupil.position.x = look;
+      pupil.position.y = state === "calm" ? Math.sin(t * 0.55 + seed) * eye * 0.08 : 0;
+    }
   });
 
   return (
     <group ref={blinkRef} position={[0, y, z]}>
-      {[-1, 1].map((side) => (
+      {[-1, 1].map((side, i) => (
         <group key={side} position={[x * side, 0, 0]}>
           <mesh>
             <boxGeometry args={[eye, eye, eye * 0.34]} />
             <meshBasicMaterial color="#ffffff" />
           </mesh>
-          <mesh position={[0, 0, -eye * 0.2]}>
+          <mesh
+            ref={(node) => {
+              pupils.current[i] = node;
+            }}
+            position={[0, 0, -eye * 0.2]}
+          >
             <boxGeometry args={[eye * 0.44, eye * 0.44, eye * 0.08]} />
+            <meshBasicMaterial color="#0a0a0a" />
+          </mesh>
+          <mesh
+            ref={side < 0 ? browL : browR}
+            position={[0, eye * 0.78, -eye * 0.2]}
+          >
+            <boxGeometry args={[eye * 1.05, eye * 0.2, eye * 0.1]} />
             <meshBasicMaterial color="#0a0a0a" />
           </mesh>
         </group>
       ))}
+      <mesh ref={mouthRef} position={[0, -eye * 0.95, -eye * 0.2]}>
+        <boxGeometry args={[eye * 0.9, eye * 0.4, eye * 0.1]} />
+        <meshBasicMaterial color="#0a0a0a" />
+      </mesh>
     </group>
   );
 }
