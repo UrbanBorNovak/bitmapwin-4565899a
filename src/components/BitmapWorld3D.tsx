@@ -37,6 +37,7 @@ import { MinerHud } from "@/components/game/MinerHud";
 import { SmeltHud } from "@/components/game/SmeltHud";
 import { EggHunt } from "@/components/game/EggHunt";
 import { DesertLife } from "@/components/game/DesertLife";
+import { SeaMasses } from "@/components/game/SeaMasses";
 import { Punks } from "@/components/game/Punks";
 import { DjEvent, useDjEvent } from "@/components/game/DjEvent";
 import { TrapField } from "@/components/game/TrapField";
@@ -140,11 +141,13 @@ import { DriveBlur } from "@/components/game/DriveBlur";
 import { DamageVeil } from "@/components/game/DamageVeil";
 
 import type { RideSpec } from "@/lib/world-vehicle";
+import { isDeepSea, isSea, nearestSea } from "@/lib/world-sea";
 import {
 
   RIDES,
   currentRide,
   isDriving,
+  stopDriving,
   selectRide,
   subscribeVehicle,
   toggleDriving,
@@ -1320,7 +1323,19 @@ function PlayerCameraRig({
 
   // Built structures are solid while you are walking the world.
   useEffect(() => {
-    setMoveBlocker((x, z) => blockedAt(x, z, AVATAR_U * 0.3));
+    setMoveBlocker((x, z) => {
+      if (blockedAt(x, z, AVATAR_U * 0.3)) return true;
+      const afloat = isDriving() && currentRide().kind === "water";
+      if (afloat) {
+        // A hull only holds where there is water: the shoreline is a wall.
+        return !isSea(x, z) && isSea(pose.current?.x ?? x, pose.current?.z ?? z);
+      }
+      // Boots and wheels wade the shelf but never the deep — unless they are
+      // already out there, so nobody is ever stuck mid-sea.
+      const player = pose.current;
+      if (player && isDeepSea(player.x, player.z)) return false;
+      return isDeepSea(x, z);
+    });
     return () => setMoveBlocker(null);
   }, []);
 
@@ -1373,11 +1388,22 @@ function PlayerCameraRig({
 
     // Aboard a ride the same keys travel it: much faster, wider turns, and no
     // jumping. The flying ride swaps jumping for climb and sink on Space / X.
-    const driving = isDriving();
     const ride = currentRide();
+    // A boat only runs on the sea. Step off the water and the hull settles.
+    const afloatOk = ride.kind !== "water" || isSea(player.x, player.z);
+    if (isDriving() && !afloatOk) stopDriving();
+    const driving = isDriving();
     if (driving) {
       intent.speedScale = ride.speed * (intent.sprint ? ride.sprint : 1);
-      intent.turnScale = ride.turn;
+      // Steering tightens up at a crawl and washes out flat out, by how much
+      // grip this ride has.
+      const pace = Math.min(
+        1,
+        Math.hypot(player.vx, player.vz) / (MOVE.walkSpeed * ride.speed * ride.sprint),
+      );
+      intent.turnScale = ride.turn * (1 + ride.grip * 0.5 - ride.grip * pace);
+      intent.accelScale = ride.accel;
+      intent.dragScale = ride.brake;
       intent.strafe = 0;
       intent.jump = false;
       if (ride.kind === "air") {
@@ -1897,6 +1923,7 @@ const WorldScene = memo(function WorldScene({
         <>
           <ChunkStreamer pose={pose} />
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
+          <SeaMasses unit={AVATAR_U} pose={pose} />
           <Punks unit={AVATAR_U} pose={pose} onBite={onBite} />
           <TrapField
             unit={AVATAR_U}
@@ -2049,10 +2076,22 @@ export function BitmapWorld3D({
   const rideSnapshot = useSyncExternalStore(subscribeVehicle, vehicleSnapshot, () => "0::0");
   const driving = rideSnapshot.startsWith("1");
   const ride = useMemo(() => currentRide(), [rideSnapshot]);
+  /** Told to the player when a hull is asked to sail dry sand. */
+  const [rideNote, setRideNote] = useState<string | null>(null);
   const toggleTruck = useCallback(() => {
     const player = pose.current;
     if (!player) return;
     unlockAudio();
+    const wanted = currentRide();
+    if (!isDriving() && wanted.kind === "water" && !isSea(player.x, player.z)) {
+      const { distance } = nearestSea(player.x, player.z);
+      playSfx("hit");
+      setRideNote(
+        `${wanted.label} NEEDS WATER · NEAREST SEA ${Math.round(distance / AVATAR_U)} STRIDES AWAY`,
+      );
+      window.setTimeout(() => setRideNote(null), 2800);
+      return;
+    }
     const seated = toggleDriving(player.x, player.z, player.yaw);
     playSfx(seated ? "jump" : "hit");
   }, []);
@@ -2823,6 +2862,14 @@ export function BitmapWorld3D({
               </Button>
             </div>
           </div>
+          {rideNote ? (
+            <div
+              className="hud-toolbar pointer-events-none mt-2 w-fit max-w-[calc(100%-15rem)] text-[10px] text-bitcoin"
+              data-no-translate
+            >
+              {rideNote}
+            </div>
+          ) : null}
           {terraformNote ? (
             <div
               className="hud-toolbar pointer-events-none mt-2 w-fit max-w-[calc(100%-15rem)] text-[10px] text-bitcoin"
