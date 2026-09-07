@@ -214,6 +214,7 @@ export function WeaponModel({
   flash = false,
   flashColor = "#f7931a",
   lash = 0,
+  guard = 0,
 }: {
   kind: WeaponKind;
   /** one avatar stride in world units — everything scales off this */
@@ -223,6 +224,8 @@ export function WeaponModel({
   flashColor?: string;
   /** 0..1 crack of the whip / recoil of a gun */
   lash?: number;
+  /** 0..1 how far the piece is brought up into a guard / aim */
+  guard?: number;
 }) {
   const { wood, steel, leather, iron, brass } = materials;
 
@@ -347,13 +350,20 @@ export function WeaponModel({
 
 
   if (kind === "sword") {
-    // Dual wield: the first on-chain blade rides the right hand, the second
-    // mirrors it in the left, and both swing together on a slash.
+    // Dual wield: one on-chain blade per hand, held low and angled inward so
+    // the tips read in front of the chest rather than crossing the face. A
+    // guard lifts both blades up and crosses them; a slash sweeps them out.
+    const swing = lash;
+    const up = guard;
     return (
-      <group>
+      <group position={[0, -0.02 * u * (1 - up), -0.04 * u * up]}>
         <group
-          position={[0.34 * u, -0.05 * u, 0.1 * u]}
-          rotation={[-0.16 + lash * 0.5, 0.26, -0.34 - lash * 1.05]}
+          position={[0.3 * u - up * 0.06 * u, (-0.16 + up * 0.16) * u, (0.12 - up * 0.05) * u]}
+          rotation={[
+            -0.42 + up * 0.5 + swing * 0.85,
+            0.42 - up * 0.16 - swing * 0.5,
+            -0.5 - up * 0.35 - swing * 0.45,
+          ]}
         >
           <Suspense fallback={<SwordStandIn u={u} materials={materials} />}>
             <OnChainWeapon url={SWORD_URL} u={u} lengthStrides={0.95} />
@@ -361,8 +371,12 @@ export function WeaponModel({
           {flash ? <Muzzle u={u} z={-1.05 * u} size={0.04} color={flashColor} /> : null}
         </group>
         <group
-          position={[-0.34 * u, -0.05 * u, 0.1 * u]}
-          rotation={[-0.16 + lash * 0.35, -0.26, 0.34 + lash * 1.05]}
+          position={[-0.3 * u + up * 0.06 * u, (-0.16 + up * 0.1) * u, (0.12 - up * 0.05) * u]}
+          rotation={[
+            -0.42 + up * 0.42 + swing * 0.45,
+            -0.42 + up * 0.16 + swing * 0.2,
+            0.5 + up * 0.35 + swing * 0.9,
+          ]}
         >
           <Suspense fallback={<SwordStandIn u={u} materials={materials} />}>
             <OnChainWeapon url={SWORD_TWO_URL} u={u} lengthStrides={1.02} />
