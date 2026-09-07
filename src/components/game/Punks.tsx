@@ -26,8 +26,8 @@ const PUNK_URL = `https://ordinals.com/content/${PUNK_INSCRIPTION}`;
 const MOBS = 2;
 const MOB_MIN = 3;
 const MOB_MAX = 5;
-/** how long a provoked mob keeps coming for you */
-const RAGE_MS = 30_000;
+/** how long a provoked mob keeps coming for you — they cool down quickly now */
+const RAGE_MS = 10_000;
 
 type Punk = BeastEntity & {
   mob: number;
@@ -36,6 +36,8 @@ type Punk = BeastEntity & {
   seed: number;
   heading: number;
   lastBite: number;
+  /** what the face is doing right now */
+  mood: { current: "calm" | "curious" | "angry" | "hurt" };
 };
 
 function hash(a: number, b: number) {
@@ -43,9 +45,26 @@ function hash(a: number, b: number) {
   return n - Math.floor(n);
 }
 
-/** Blocky white eyes with square black pupils, mounted on the model's -Z face. */
-function Eyes({ unit, size, seed }: { unit: number; size: number; seed: number }) {
+/**
+ * The face: square white eyes with black pupils, plus brows and a mouth that
+ * shift with the Punk's mood so you can read it before it reads you.
+ */
+function Face({
+  unit,
+  size,
+  seed,
+  mood,
+}: {
+  unit: number;
+  size: number;
+  seed: number;
+  mood: { current: "calm" | "curious" | "angry" | "hurt" };
+}) {
   const blinkRef = useRef<THREE.Group>(null);
+  const browL = useRef<THREE.Mesh>(null);
+  const browR = useRef<THREE.Mesh>(null);
+  const mouthRef = useRef<THREE.Mesh>(null);
+  const pupils = useRef<(THREE.Mesh | null)[]>([]);
   const eye = unit * size * 0.16;
   const y = unit * size * 0.8;
   const x = unit * size * 0.105;
@@ -56,26 +75,80 @@ function Eyes({ unit, size, seed }: { unit: number; size: number; seed: number }
   useFrame(({ clock }) => {
     const node = blinkRef.current;
     if (!node) return;
-    const interval = 3.6 + hash(seed, 41) * 3.2;
-    const phase = (clock.elapsedTime + hash(seed, 73) * interval) % interval;
+    const t = clock.elapsedTime;
+    const state = mood.current;
+    const interval = state === "calm" ? 3.6 + hash(seed, 41) * 3.2 : 1.8 + hash(seed, 41) * 1.4;
+    const phase = (t + hash(seed, 73) * interval) % interval;
     const blink = phase < 0.16 ? Math.max(0.08, Math.abs(phase - 0.08) / 0.08) : 1;
-    node.scale.y = blink;
+    // Angry Punks squint; hurt ones screw their eyes half shut.
+    const squint = state === "angry" ? 0.55 : state === "hurt" ? 0.35 : 1;
+    node.scale.y = blink * squint;
+
+    // Brows: flat and calm, angled down when angry, raised when curious.
+    const tilt = state === "angry" ? 0.5 : state === "hurt" ? 0.32 : state === "curious" ? -0.22 : 0;
+    const lift =
+      state === "curious" ? eye * 0.35 : state === "angry" ? -eye * 0.12 : eye * 0.12;
+    if (browL.current) {
+      browL.current.rotation.z = -tilt;
+      browL.current.position.y = eye * 0.78 + lift;
+    }
+    if (browR.current) {
+      browR.current.rotation.z = tilt;
+      browR.current.position.y = eye * 0.78 + lift;
+    }
+
+    // Mouth: small line when calm, wide open snarl when angry, wobble when hurt.
+    if (mouthRef.current) {
+      const open =
+        state === "angry"
+          ? 0.85 + Math.abs(Math.sin(t * 8 + seed)) * 0.5
+          : state === "hurt"
+            ? 0.7
+            : state === "curious"
+              ? 0.4 + Math.sin(t * 2 + seed) * 0.15
+              : 0.22;
+      mouthRef.current.scale.set(state === "angry" ? 1.25 : 1, open, 1);
+    }
+
+    // Pupils drift about when idle, lock forward when angry.
+    for (const pupil of pupils.current) {
+      if (!pupil) continue;
+      const look = state === "angry" ? 0 : Math.sin(t * 0.8 + seed) * eye * 0.16;
+      pupil.position.x = look;
+      pupil.position.y = state === "calm" ? Math.sin(t * 0.55 + seed) * eye * 0.08 : 0;
+    }
   });
 
   return (
     <group ref={blinkRef} position={[0, y, z]}>
-      {[-1, 1].map((side) => (
+      {[-1, 1].map((side, i) => (
         <group key={side} position={[x * side, 0, 0]}>
           <mesh>
             <boxGeometry args={[eye, eye, eye * 0.34]} />
             <meshBasicMaterial color="#ffffff" />
           </mesh>
-          <mesh position={[0, 0, -eye * 0.2]}>
+          <mesh
+            ref={(node) => {
+              pupils.current[i] = node;
+            }}
+            position={[0, 0, -eye * 0.2]}
+          >
             <boxGeometry args={[eye * 0.44, eye * 0.44, eye * 0.08]} />
+            <meshBasicMaterial color="#0a0a0a" />
+          </mesh>
+          <mesh
+            ref={side < 0 ? browL : browR}
+            position={[0, eye * 0.78, -eye * 0.2]}
+          >
+            <boxGeometry args={[eye * 1.05, eye * 0.2, eye * 0.1]} />
             <meshBasicMaterial color="#0a0a0a" />
           </mesh>
         </group>
       ))}
+      <mesh ref={mouthRef} position={[0, -eye * 0.95, -eye * 0.2]}>
+        <boxGeometry args={[eye * 0.9, eye * 0.4, eye * 0.1]} />
+        <meshBasicMaterial color="#0a0a0a" />
+      </mesh>
     </group>
   );
 }
@@ -161,6 +234,7 @@ export function Punks({
             seed: mob * 7.7 + index * 2.3,
             heading: hash(index, mob) * Math.PI * 2,
             lastBite: 0,
+            mood: { current: "calm" },
           });
         }
       }
@@ -201,7 +275,7 @@ export function Punks({
       }
       node.rotation.z = 0;
 
-      const speed = unit * (angry ? 1.5 : 0.55) * (0.7 + punk.size * 0.4);
+      const speed = unit * (angry ? 1.05 : 0.5) * (0.7 + punk.size * 0.4);
       let steer = Math.sin(now / 1_500 + punk.seed) * delta * 1.6;
       let travel = speed;
 
@@ -231,17 +305,25 @@ export function Punks({
         const dz = player.z - punk.z;
         const away = Math.hypot(dx, dz);
         const toPlayer = Math.atan2(dx, dz);
-        if (angry && away < unit * 20) {
+        // Pups never join the fight, and adults only chase you nearby.
+        const fighter = angry && punk.size >= 0.75;
+        if (fighter && away < unit * 9) {
           const diff = ((toPlayer - punk.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-          steer = diff * Math.min(1, delta * 3.2);
-          travel = speed * 1.2;
+          steer = diff * Math.min(1, delta * 2.4);
+          travel = speed;
           const standoff = unit * (0.8 + punk.size * 0.3);
           if (away < standoff * 1.3) travel = speed * 0.1;
-          if (away < standoff * 1.9 && now - punk.lastBite > 1_500) {
+          if (away < standoff * 1.7 && now - punk.lastBite > 3_000) {
             punk.lastBite = now;
             playSfx("hit");
-            onBite?.(Math.round(5 + punk.size * 7), punk.label);
+            onBite?.(Math.round(2 + punk.size * 4), punk.label);
           }
+        } else if (angry && !fighter && away < unit * 8) {
+          // Pups scatter away from trouble instead of biting.
+          const back = toPlayer + Math.PI;
+          const diff = ((back - punk.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+          steer = diff * Math.min(1, delta * 3.4);
+          travel = speed * 1.3;
         } else if (!angry && away < unit * 2.2) {
           // Friendly, but they keep their personal space.
           const back = toPlayer + Math.PI;
@@ -249,6 +331,16 @@ export function Punks({
           steer = diff * Math.min(1, delta * 3);
           travel = speed * 1.2;
         }
+
+        // Mood drives the face: hurt beats angry, curious when you come close.
+        punk.mood.current =
+          now - punk.hitAt < 1_400
+            ? "hurt"
+            : fighter && away < unit * 12
+              ? "angry"
+              : away < unit * 5
+                ? "curious"
+                : "calm";
       }
 
       punk.heading += steer;
@@ -296,7 +388,7 @@ export function Punks({
           <Suspense fallback={null}>
             <PunkBody unit={unit} size={punk.size} />
           </Suspense>
-          <Eyes unit={unit} size={punk.size} seed={punk.seed} />
+          <Face unit={unit} size={punk.size} seed={punk.seed} mood={punk.mood} />
         </group>
       ))}
     </group>
