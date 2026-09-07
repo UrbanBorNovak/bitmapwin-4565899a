@@ -37,6 +37,7 @@ import { MinerHud } from "@/components/game/MinerHud";
 import { SmeltHud } from "@/components/game/SmeltHud";
 import { EggHunt } from "@/components/game/EggHunt";
 import { DesertLife } from "@/components/game/DesertLife";
+import { SeaMasses } from "@/components/game/SeaMasses";
 import { Punks } from "@/components/game/Punks";
 import { DjEvent, useDjEvent } from "@/components/game/DjEvent";
 import { TrapField } from "@/components/game/TrapField";
@@ -140,6 +141,7 @@ import { DriveBlur } from "@/components/game/DriveBlur";
 import { DamageVeil } from "@/components/game/DamageVeil";
 
 import type { RideSpec } from "@/lib/world-vehicle";
+import { isDeepSea, isSea, nearestSea } from "@/lib/world-sea";
 import {
 
   RIDES,
@@ -1320,7 +1322,19 @@ function PlayerCameraRig({
 
   // Built structures are solid while you are walking the world.
   useEffect(() => {
-    setMoveBlocker((x, z) => blockedAt(x, z, AVATAR_U * 0.3));
+    setMoveBlocker((x, z) => {
+      if (blockedAt(x, z, AVATAR_U * 0.3)) return true;
+      const afloat = isDriving() && currentRide().kind === "water";
+      if (afloat) {
+        // A hull only holds where there is water: the shoreline is a wall.
+        return !isSea(x, z) && isSea(pose.current?.x ?? x, pose.current?.z ?? z);
+      }
+      // Boots and wheels wade the shelf but never the deep — unless they are
+      // already out there, so nobody is ever stuck mid-sea.
+      const player = pose.current;
+      if (player && isDeepSea(player.x, player.z)) return false;
+      return isDeepSea(x, z);
+    });
     return () => setMoveBlocker(null);
   }, []);
 
@@ -1375,9 +1389,22 @@ function PlayerCameraRig({
     // jumping. The flying ride swaps jumping for climb and sink on Space / X.
     const driving = isDriving();
     const ride = currentRide();
-    if (driving) {
+    // A boat only runs on the sea. Step off the water and the hull settles.
+    const afloatOk = ride.kind !== "water" || isSea(player.x, player.z);
+    if (driving && !afloatOk) {
+      stopDriving();
+    }
+    if (driving && afloatOk) {
       intent.speedScale = ride.speed * (intent.sprint ? ride.sprint : 1);
-      intent.turnScale = ride.turn;
+      // Steering tightens up at a crawl and washes out flat out, by how much
+      // grip this ride has.
+      const pace = Math.min(
+        1,
+        Math.hypot(player.vx, player.vz) / (MOVE.walkSpeed * ride.speed * ride.sprint),
+      );
+      intent.turnScale = ride.turn * (1 + ride.grip * 0.5 - ride.grip * pace);
+      intent.accelScale = ride.accel;
+      intent.dragScale = ride.brake;
       intent.strafe = 0;
       intent.jump = false;
       if (ride.kind === "air") {
