@@ -21,8 +21,10 @@ const noRaycast = () => {};
 function sheet(points: Array<[number, number]>, grow: number) {
   const shape = new THREE.Shape();
   points.forEach(([x, z], index) => {
-    const cx = x * 1;
-    const cz = z * 1;
+    // ShapeGeometry lives in XY; laying it flat flips the second axis, so the
+    // shape is built with -z and comes out facing the right way round.
+    const cx = x;
+    const cz = -z;
     if (index === 0) shape.moveTo(cx, cz);
     else shape.lineTo(cx, cz);
   });
