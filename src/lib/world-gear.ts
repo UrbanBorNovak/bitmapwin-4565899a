@@ -62,7 +62,7 @@ export const GOGGLES_INSCRIPTION =
 export const PUNK_INSCRIPTION =
   "748e439d2558d567c69d97eba12329e1bd6b6dd2ee1900c738ffbf42c9a9db9fi0";
 
-export type FoodId = "ice-cream" | "ramen";
+export type FoodId = "ice-cream" | "ramen" | "cheese-slice";
 
 export type FoodSpec = {
   id: FoodId;
@@ -95,6 +95,15 @@ export const FOODS: Record<FoodId, FoodSpec> = {
     bite: 26,
     eatMs: 8_000,
     buff: { label: "WELL FED", ms: 90_000, regenPerSecond: 3, power: 1.3 },
+  },
+  "cheese-slice": {
+    id: "cheese-slice",
+    label: "CHEESE SLICE",
+    inscription: "cb2e324c8588aead7dac9d5c919beaff763db6883b01cc6ca30ce2d6112e8e4fi0",
+    fit: 0.32,
+    bite: 32,
+    eatMs: 5_000,
+    buff: { label: "CHEESY", ms: 60_000, regenPerSecond: 5, power: 1.2 },
   },
 };
 

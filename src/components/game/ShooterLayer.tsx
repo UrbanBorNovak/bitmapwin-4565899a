@@ -106,6 +106,7 @@ export function ShooterLayer({
   const [bursts, setBursts] = useState<Burst[]>([]);
   const nextBurst = useRef(0);
   const [lash, setLash] = useState(0);
+  const [guard, setGuard] = useState(0);
 
   const lastFire = useRef(0);
   const holding = useRef(false);
@@ -195,15 +196,22 @@ export function ShooterLayer({
       // Aiming brings the piece up to the centre of the frame and stills the
       // sway, so the sights line up with what the crosshair is on.
       const aim = aimState.amount;
+      // The blade rig itself needs to know about the guard, so mirror the aim
+      // into React state, but only in coarse steps to keep renders cheap.
+      if (dual) {
+        const step = Math.round(aim * 5) / 5;
+        setGuard((current) => (current === step ? current : step));
+      }
       const still = 1 - aim * 0.85;
       held.position.copy(camera.position);
       held.quaternion.copy(camera.quaternion);
-      const restX = (dual ? 0.03 : long ? 0.28 : 0.19) + drift * still;
-      const restY = -(long ? 0.17 : 0.1) + breath * still - kick * 0.05;
-      const restZ = -(long ? 0.4 : 0.32) + kick * 0.16;
+      const restX = (dual ? 0 : long ? 0.28 : 0.19) + drift * still;
+      const restY = -(dual ? 0.2 : long ? 0.17 : 0.1) + breath * still - kick * 0.05;
+      const restZ = -(dual ? 0.34 : long ? 0.4 : 0.32) + kick * (dual ? 0.1 : 0.16);
       const sightX = dual ? 0 : long ? 0.012 : 0.028;
-      const sightY = long ? -0.055 : -0.05;
-      const sightZ = -(long ? 0.58 : 0.46) + kick * 0.2;
+      // A guard brings the blades up in front of the eyes, not down to a sight.
+      const sightY = dual ? -0.1 : long ? -0.055 : -0.05;
+      const sightZ = -(dual ? 0.42 : long ? 0.58 : 0.46) + kick * 0.2;
       held.translateX(k * STRIDE * THREE.MathUtils.lerp(restX, sightX, aim));
       held.translateY(k * STRIDE * THREE.MathUtils.lerp(restY, sightY, aim));
       held.translateZ(k * STRIDE * THREE.MathUtils.lerp(restZ, sightZ, aim));
@@ -660,6 +668,7 @@ export function ShooterLayer({
             flash={Boolean(flash)}
             flashColor={strikeColor}
             lash={lash}
+            guard={guard}
           />
         </group>
 
