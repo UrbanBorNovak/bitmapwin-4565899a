@@ -1,0 +1,92 @@
+/**
+ * PINES — inscribed conifers scattered through the desert in clumps, from
+ * knee-high saplings to tall old trees.
+ *
+ * Placement is deterministic: the same patch of sand grows the same trees every
+ * visit. Only the pines near the avatar are drawn, and every tree shares one set
+ * of geometry buffers.
+ */
+
+import { Suspense, memo, useMemo } from "react";
+import { useGLTF } from "@react-three/drei";
+import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
+
+export const PINE_INSCRIPTION =
+  "a67b9e40973e6cf9df84bfc0d28ac10bcbef8f7d0e3f46ad0f99541876c8e330i0";
+
+const PINE_URL = contentUrl(PINE_INSCRIPTION);
+
+const noRaycast = () => {};
+
+function hash(x: number, z: number, salt: number) {
+  const n = Math.sin(x * 127.1 + z * 311.7 + salt * 74.7) * 43758.5453;
+  return n - Math.floor(n);
+}
+
+type Pine = { key: string; x: number; z: number; size: number; yaw: number };
+
+export const PineTrees = memo(function PineTrees({
+  unit,
+  center,
+  radius,
+}: {
+  unit: number;
+  center: [number, number];
+  radius: number;
+}) {
+  const trees = useMemo(() => {
+    const pitch = unit * 9;
+    const span = Math.ceil(radius / pitch);
+    const cx = Math.round(center[0] / pitch);
+    const cz = Math.round(center[1] / pitch);
+    const found: Pine[] = [];
+    for (let ix = -span; ix <= span; ix++) {
+      for (let iz = -span; iz <= span; iz++) {
+        const gx = cx + ix;
+        const gz = cz + iz;
+        // Pines grow in stands rather than one by one.
+        if (hash(gx, gz, 71) > 0.22) continue;
+        const count = 2 + Math.floor(hash(gx, gz, 72) * 4);
+        for (let n = 0; n < count; n++) {
+          const x = gx * pitch + (hash(gx * 5 + n, gz, 73) - 0.5) * pitch * 0.8;
+          const z = gz * pitch + (hash(gx, gz * 7 + n, 74) - 0.5) * pitch * 0.8;
+          const dx = x - center[0];
+          const dz = z - center[1];
+          if (dx * dx + dz * dz > radius * radius) continue;
+          // SIZES — mostly young trees, a few full-grown giants.
+          const roll = hash(gx * 3 + n, gz * 11 + n, 75);
+          const size = unit * (roll > 0.9 ? 3.4 + roll : roll > 0.6 ? 2 + roll : 0.7 + roll);
+          found.push({
+            key: `${gx}:${gz}:${n}`,
+            x,
+            z,
+            size,
+            yaw: hash(gx + n, gz - n, 76) * Math.PI * 2,
+          });
+        }
+      }
+    }
+    return found;
+  }, [center, radius, unit]);
+
+  return (
+    <>
+      {trees.map((tree) => (
+        <group key={tree.key} position={[tree.x, 0, tree.z]}>
+          <Suspense
+            fallback={
+              <mesh position={[0, tree.size * 0.5, 0]} raycast={noRaycast}>
+                <coneGeometry args={[tree.size * 0.22, tree.size, 6, 1]} />
+                <meshLambertMaterial color="#3d6b3f" flatShading />
+              </mesh>
+            }
+          >
+            <InscribedModel url={PINE_URL} size={tree.size} yaw={tree.yaw} />
+          </Suspense>
+        </group>
+      ))}
+    </>
+  );
+});
+
+useGLTF.preload(PINE_URL);
