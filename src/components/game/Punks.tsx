@@ -232,6 +232,7 @@ export function Punks({
             seed: mob * 7.7 + index * 2.3,
             heading: hash(index, mob) * Math.PI * 2,
             lastBite: 0,
+            mood: { current: "calm" },
           });
         }
       }
