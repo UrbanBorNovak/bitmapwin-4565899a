@@ -2475,7 +2475,6 @@ export function BitmapWorld3D({
         "Digit4",
         "Digit5",
         "Digit6",
-        "Digit7",
       ].indexOf(event.code);
       if (slot >= 0) {
         event.preventDefault();

@@ -38,7 +38,6 @@ export type WeaponKind =
   | "whip"
   | "pickaxe"
   | "sword"
-  | "swordTwo"
   | "wand";
 
 
@@ -144,37 +143,20 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
   },
   sword: {
     kind: "sword",
-    label: "SWORD",
-    short: "SWORD",
+    label: "DUAL BLADES",
+    short: "BLADES",
     magazine: 0,
     reloadMs: 0,
-    cooldownMs: 520,
-    reachStrides: 4.5,
-    splashStrides: 1.4,
-    damage: 34,
-    mining: false,
-    fireSfx: "slash",
-    cycleSfx: null,
-    cycleDelayMs: 0,
-    reloadSfx: "reload",
-    hint: "ON-CHAIN BLADE · RIGHT TO GUARD · LEFT TO SLASH",
-  },
-  swordTwo: {
-    kind: "swordTwo",
-    label: "SWORD II",
-    short: "SWORD II",
-    magazine: 0,
-    reloadMs: 0,
-    cooldownMs: 470,
+    cooldownMs: 430,
     reachStrides: 4.8,
-    splashStrides: 1.5,
-    damage: 38,
+    splashStrides: 1.6,
+    damage: 42,
     mining: false,
     fireSfx: "slash",
     cycleSfx: null,
     cycleDelayMs: 0,
     reloadSfx: "reload",
-    hint: "SECOND ON-CHAIN BLADE · RIGHT TO GUARD · LEFT TO SLASH",
+    hint: "TWO ON-CHAIN BLADES · RIGHT TO GUARD · LEFT TO SLASH",
   },
   wand: {
     kind: "wand",
@@ -202,7 +184,6 @@ export const WEAPON_ORDER: WeaponKind[] = [
   "whip",
   "pickaxe",
   "sword",
-  "swordTwo",
   "wand",
 ];
 
@@ -363,22 +344,28 @@ export function WeaponModel({
   }
 
 
-  if (kind === "sword" || kind === "swordTwo") {
-    // The real on-chain blade, swung from the grip. A plain steel stand-in
-    // holds the pose while the inscription streams in.
+  if (kind === "sword") {
+    // Dual wield: the first on-chain blade rides the right hand, the second
+    // mirrors it in the left, and both swing together on a slash.
     return (
-      <group
-        position={[0, -0.03 * u, 0.12 * u]}
-        rotation={[-0.16 + lash * 0.5, 0.2, -0.3 - lash * 1.05]}
-      >
-        <Suspense fallback={<SwordStandIn u={u} materials={materials} />}>
-          <OnChainWeapon
-            url={kind === "sword" ? SWORD_URL : SWORD_TWO_URL}
-            u={u}
-            lengthStrides={kind === "sword" ? 0.95 : 1.05}
-          />
-        </Suspense>
-        {flash ? <Muzzle u={u} z={-1.05 * u} size={0.04} color={flashColor} /> : null}
+      <group>
+        <group
+          position={[0.11 * u, -0.03 * u, 0.12 * u]}
+          rotation={[-0.16 + lash * 0.5, 0.2, -0.3 - lash * 1.05]}
+        >
+          <Suspense fallback={<SwordStandIn u={u} materials={materials} />}>
+            <OnChainWeapon url={SWORD_URL} u={u} lengthStrides={0.95} />
+          </Suspense>
+          {flash ? <Muzzle u={u} z={-1.05 * u} size={0.04} color={flashColor} /> : null}
+        </group>
+        <group
+          position={[-0.13 * u, -0.04 * u, 0.12 * u]}
+          rotation={[-0.16 + lash * 0.35, -0.2, 0.34 + lash * 0.9]}
+        >
+          <Suspense fallback={<SwordStandIn u={u} materials={materials} />}>
+            <OnChainWeapon url={SWORD_TWO_URL} u={u} lengthStrides={1.02} />
+          </Suspense>
+        </group>
       </group>
     );
   }
