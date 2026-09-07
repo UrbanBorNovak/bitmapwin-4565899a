@@ -5,14 +5,14 @@
 
 import { useEffect, useState } from "react";
 import { playSfx } from "@/lib/world-audio";
-import { useSkills } from "@/lib/world-skills";
+import { useWorldSkills } from "@/lib/world-skills";
 import { BAR_COST, smeltGoldBar, furnaceInReach } from "@/lib/world-smelt";
-import type { SelfPose } from "@/lib/player-state";
+import type { SelfPose } from "@/components/BitmapWorld3D";
 
 const NUGGETS = BAR_COST["gold-nugget"] ?? 4;
 
 export function SmeltHud({ pose }: { pose: React.RefObject<SelfPose> }) {
-  const skills = useSkills();
+  const skills = useWorldSkills();
   const [near, setNear] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
