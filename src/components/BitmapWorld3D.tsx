@@ -1194,9 +1194,11 @@ function HeldWeapon({ kind, bitcoin }: { kind: WeaponKind; bitcoin: string }) {
   const u = AVATAR_U;
   return (
     <group
-      position={[u * 0.3, u * 0.26, u * 0.14]}
+      // Dual blades live in both hands, so their rig sits centred on the chest
+      // instead of tucked into the right hand like a single piece.
+      position={[kind === "sword" ? 0 : u * 0.3, u * 0.26, u * 0.14]}
       rotation={[kind === "trap" ? 0.5 : -0.06, Math.PI, 0]}
-      scale={0.62}
+      scale={kind === "sword" ? 0.7 : 0.62}
     >
       <WeaponModel kind={kind} u={u} materials={materials} flashColor={bitcoin} lash={0} />
     </group>

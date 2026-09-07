@@ -198,12 +198,13 @@ export function ShooterLayer({
       const still = 1 - aim * 0.85;
       held.position.copy(camera.position);
       held.quaternion.copy(camera.quaternion);
-      const restX = (dual ? 0.03 : long ? 0.28 : 0.19) + drift * still;
-      const restY = -(long ? 0.17 : 0.1) + breath * still - kick * 0.05;
-      const restZ = -(long ? 0.4 : 0.32) + kick * 0.16;
+      const restX = (dual ? 0 : long ? 0.28 : 0.19) + drift * still;
+      const restY = -(dual ? 0.2 : long ? 0.17 : 0.1) + breath * still - kick * 0.05;
+      const restZ = -(dual ? 0.34 : long ? 0.4 : 0.32) + kick * (dual ? 0.1 : 0.16);
       const sightX = dual ? 0 : long ? 0.012 : 0.028;
-      const sightY = long ? -0.055 : -0.05;
-      const sightZ = -(long ? 0.58 : 0.46) + kick * 0.2;
+      // A guard brings the blades up in front of the eyes, not down to a sight.
+      const sightY = dual ? -0.1 : long ? -0.055 : -0.05;
+      const sightZ = -(dual ? 0.42 : long ? 0.58 : 0.46) + kick * 0.2;
       held.translateX(k * STRIDE * THREE.MathUtils.lerp(restX, sightX, aim));
       held.translateY(k * STRIDE * THREE.MathUtils.lerp(restY, sightY, aim));
       held.translateZ(k * STRIDE * THREE.MathUtils.lerp(restZ, sightZ, aim));
@@ -660,6 +661,7 @@ export function ShooterLayer({
             flash={Boolean(flash)}
             flashColor={strikeColor}
             lash={lash}
+            guard={aimState.amount}
           />
         </group>
 
