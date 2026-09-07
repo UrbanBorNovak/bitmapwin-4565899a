@@ -37,6 +37,7 @@ import { DesertLife } from "@/components/game/DesertLife";
 import { Punks } from "@/components/game/Punks";
 import { DjEvent, useDjEvent } from "@/components/game/DjEvent";
 import { TrapField } from "@/components/game/TrapField";
+import { isSelfSnared, selfSnaredMs } from "@/lib/world-traps";
 import { Companions } from "@/components/game/Companions";
 import { WornGear } from "@/components/game/WornGear";
 import { NightVision } from "@/components/game/NightVision";
@@ -1385,6 +1386,15 @@ function PlayerCameraRig({
     }
 
 
+    // Caught in a trap: the legs are held, and only the head can still turn.
+    if (isSelfSnared()) {
+      intent.forward = 0;
+      intent.strafe = 0;
+      intent.jump = false;
+      intent.speedScale = 0;
+      intent.fly = 0;
+    }
+
     jumpRequested.current = false;
     // Ease the steer input in and out so turns start and stop like a body, not a switch.
     steer.current = damp(steer.current, intent.turn, 9, delta);
@@ -1927,6 +1937,7 @@ const WorldScene = memo(function WorldScene({
         active={weapon !== null && cameraMode !== "map"}
         firstPerson={cameraMode === "first"}
         weapon={weapon ?? "minigun"}
+        selfId={selfId}
         pose={pose}
         cursors={cursors}
         bitcoin={colors.bitcoin}
@@ -2866,6 +2877,7 @@ export function BitmapWorld3D({
               onShootPeer={attack}
               onCastHeal={castHeal}
               onBite={takeBite}
+              selfId={selfId}
               onShooterStats={handleShooterStats}
               driving={driving}
               ride={ride}
