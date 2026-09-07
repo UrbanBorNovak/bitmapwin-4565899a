@@ -61,6 +61,7 @@ export function FootTrail({
       size: 1,
       age: 0,
       live: false,
+      foam: false,
     })),
     printCursor: 0,
     moteCursor: 0,
