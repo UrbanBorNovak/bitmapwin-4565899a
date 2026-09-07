@@ -105,7 +105,12 @@ export function ShooterLayer({
 
   const lastFire = useRef(0);
   const holding = useRef(false);
+  /** how far the minigun barrels have spun up, 0 cold to 1 at full speed */
+  const spinUp = useRef(0);
+  /** multiplies the weapon's cooldown — a cold minigun fires slowly at first */
+  const rateScale = useRef(1);
   const lastHeal = useRef(0);
+
   const nextTracer = useRef(0);
   const heldRef = useRef<THREE.Group>(null);
   const recoil = useRef(0);
