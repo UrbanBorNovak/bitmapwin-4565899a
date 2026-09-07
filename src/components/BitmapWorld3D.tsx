@@ -36,6 +36,7 @@ import { ShooterLayer, type ShooterStats } from "@/components/game/ShooterLayer"
 import { DesertLife } from "@/components/game/DesertLife";
 import { Punks } from "@/components/game/Punks";
 import { DjEvent, useDjEvent } from "@/components/game/DjEvent";
+import { TrapField } from "@/components/game/TrapField";
 import { Companions } from "@/components/game/Companions";
 import { WornGear } from "@/components/game/WornGear";
 import { NightVision } from "@/components/game/NightVision";
@@ -1187,7 +1188,7 @@ function HeldWeapon({ kind, bitcoin }: { kind: WeaponKind; bitcoin: string }) {
   return (
     <group
       position={[u * 0.3, u * 0.26, u * 0.14]}
-      rotation={[kind === "whip" ? 0.35 : -0.06, Math.PI, 0]}
+      rotation={[kind === "trap" ? 0.5 : -0.06, Math.PI, 0]}
       scale={0.62}
     >
       <WeaponModel kind={kind} u={u} materials={materials} flashColor={bitcoin} lash={0} />
@@ -1881,6 +1882,13 @@ const WorldScene = memo(function WorldScene({
           <ChunkStreamer pose={pose} />
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <Punks unit={AVATAR_U} pose={pose} onBite={onBite} />
+          <TrapField
+            unit={AVATAR_U}
+            pose={pose}
+            selfId={selfId}
+            bitcoin={colors.bitcoin}
+            onSnared={onBite}
+          />
           <DjEvent unit={AVATAR_U} pose={pose} bitcoin={colors.bitcoin} />
           <DesertBuilds unit={AVATAR_U} />
           <FootTrail unit={AVATAR_U} pose={pose} sand={colors.bitcoin} />
@@ -2925,13 +2933,13 @@ export function BitmapWorld3D({
               {cameraMode === "first"
                 ? weapon === "pickaxe"
                   ? "RIGHT · LINE UP · LEFT · SWING"
-                  : weapon === "whip"
-                    ? "RIGHT · STEADY · LEFT · CRACK"
+                  : weapon === "trap"
+                    ? "LEFT · LAY A TRAP · HOLDS FOR 15S"
                     : "RIGHT · AIM · LEFT · FIRE · R · RELOAD"
                 : weapon === "pickaxe"
                   ? "CLICK / E · SWING · MINE GOLD SEAMS"
-                  : weapon === "whip"
-                    ? "CLICK / E · CRACK · CLOSE RANGE"
+                  : weapon === "trap"
+                    ? "CLICK / E · LAY A TRAP ON THE GROUND"
                     : "CLICK / E · FIRE · R · RELOAD"}
             </div>
             {cameraMode === "third" ? (

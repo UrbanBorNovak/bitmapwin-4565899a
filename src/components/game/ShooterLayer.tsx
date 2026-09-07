@@ -447,7 +447,7 @@ export function ShooterLayer({
         ? `SPLASH HIT ${caught.length} VISITORS`
         : `HIT ${best.peer.handle}`,
     );
-  }, [active, ammo, camera, firstPerson, flashNote, onShootPeer, pose, reloading, spec, weapon]);
+  }, [active, ammo, camera, firstPerson, flashNote, onShootPeer, pose, reloading, selfId, spec, weapon]);
 
 
 
