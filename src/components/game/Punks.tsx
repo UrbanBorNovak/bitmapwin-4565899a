@@ -386,7 +386,7 @@ export function Punks({
           <Suspense fallback={null}>
             <PunkBody unit={unit} size={punk.size} />
           </Suspense>
-          <Eyes unit={unit} size={punk.size} seed={punk.seed} />
+          <Face unit={unit} size={punk.size} seed={punk.seed} mood={punk.mood} />
         </group>
       ))}
     </group>
