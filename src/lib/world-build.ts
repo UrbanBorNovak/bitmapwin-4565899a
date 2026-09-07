@@ -28,7 +28,8 @@ export type StructureId =
   | "bone-totem"
   | "gold-obelisk"
   | "watchtower"
-  | "graveyard";
+  | "graveyard"
+  | "btc-miner";
 
 export type StructureRecipe = {
   id: StructureId;
@@ -81,6 +82,14 @@ export const STRUCTURES: StructureRecipe[] = [
     cost: { hide: 6, fang: 2, "gold-nugget": 2 },
     footprint: 0.6,
     hp: 200,
+  },
+  {
+    id: "btc-miner",
+    name: "BTC MINER",
+    blurb: "Built from minerals — mines BIT around the clock once it is standing.",
+    cost: { mineral: 8, "gold-nugget": 2, hide: 2 },
+    footprint: 0.46,
+    hp: 180,
   },
   {
     id: "graveyard",

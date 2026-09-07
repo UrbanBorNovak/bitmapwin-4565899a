@@ -5,9 +5,13 @@
  * the land world. Nothing raycasts: builds never intercept a shot or a click.
  */
 
-import { memo, useMemo, useRef } from "react";
+import { Suspense, memo, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
+import { useGLTF } from "@react-three/drei";
+import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
+import { Primitive } from "@/components/game/Primitive";
+import { MINER_INSCRIPTION } from "@/lib/world-miner";
 import { useWorldBuilds, type PlacedStructure, type StructureId } from "@/lib/world-build";
 
 const noRaycast = () => {};
@@ -38,6 +42,69 @@ function Box({
   );
 }
 
+const MINER_URL = `https://ordinals.com/content/${MINER_INSCRIPTION}`;
+
+/**
+ * THE BTC MINER RIG — an inscribed model rather than cubes, with a status lamp
+ * that pulses while it is hashing away for BIT.
+ */
+function MinerRig({ unit }: { unit: number }) {
+  const gltf = useGLTF(MINER_URL);
+  const scene = useMemo(() => {
+    const copy = clone(gltf.scene);
+    copy.traverse((child) => {
+      const mesh = child as THREE.Mesh;
+      if (mesh.isMesh) {
+        mesh.castShadow = false;
+        mesh.receiveShadow = false;
+        mesh.frustumCulled = false;
+        mesh.raycast = noRaycast;
+      }
+    });
+    return copy;
+  }, [gltf.scene]);
+
+  const fit = useMemo(() => {
+    scene.updateMatrixWorld(true);
+    const bounds = new THREE.Box3().setFromObject(scene);
+    const span = bounds.getSize(new THREE.Vector3());
+    const center = bounds.getCenter(new THREE.Vector3());
+    const scale = (unit * 1.5) / Math.max(span.x, span.y, span.z, 0.0001);
+    return { scale, center, minY: bounds.min.y };
+  }, [scene, unit]);
+
+  const lamp = useRef<THREE.MeshBasicMaterial>(null);
+  useFrame(({ clock }) => {
+    if (lamp.current) {
+      lamp.current.opacity = 0.45 + Math.abs(Math.sin(clock.elapsedTime * 3)) * 0.5;
+    }
+  });
+
+  return (
+    <group>
+      <group scale={fit.scale} position={[0, -fit.minY * fit.scale, 0]}>
+        <group position={[-fit.center.x, 0, -fit.center.z]}>
+          <Primitive object={scene} />
+        </group>
+      </group>
+      <mesh position={[0, unit * 1.7, 0]} raycast={noRaycast}>
+        <octahedronGeometry args={[unit * 0.09, 0]} />
+        <meshBasicMaterial ref={lamp} color={GOLD} transparent opacity={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
+function MinerStandIn({ unit }: { unit: number }) {
+  return (
+    <group>
+      <Box size={[u1(unit), u1(unit) * 1.4, u1(unit)]} position={[0, u1(unit) * 0.7, 0]} color={TIMBER} />
+    </group>
+  );
+}
+
+const u1 = (unit: number) => unit * 0.7;
+
 /** One structure, built out of cubes at avatar scale. */
 const Structure = memo(function Structure({ id, unit }: { id: StructureId; unit: number }) {
   const u = unit;
@@ -47,6 +114,14 @@ const Structure = memo(function Structure({ id, unit }: { id: StructureId; unit:
     const beat = 1 + Math.sin(state.clock.elapsedTime * 7) * 0.16;
     flame.current.scale.set(1, beat, 1);
   });
+
+  if (id === "btc-miner") {
+    return (
+      <Suspense fallback={<MinerStandIn unit={u} />}>
+        <MinerRig unit={u} />
+      </Suspense>
+    );
+  }
 
   if (id === "camp-fire") {
     return (
@@ -177,3 +252,5 @@ export const DesertBuilds = memo(function DesertBuilds({ unit }: { unit: number 
     </>
   );
 });
+
+useGLTF.preload(MINER_URL);

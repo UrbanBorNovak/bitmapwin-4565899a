@@ -33,6 +33,7 @@ import { ExtenderHud } from "@/components/extenders/ExtenderHud";
 import { runtimeDeploymentsQuery, type RuntimeDeployment } from "@/lib/extender-code";
 import type { RunningExtender } from "@/lib/use-extender-runtimes";
 import { ShooterLayer, type ShooterStats } from "@/components/game/ShooterLayer";
+import { MinerHud } from "@/components/game/MinerHud";
 import { DesertLife } from "@/components/game/DesertLife";
 import { Punks } from "@/components/game/Punks";
 import { DjEvent, useDjEvent } from "@/components/game/DjEvent";
@@ -2993,6 +2994,10 @@ export function BitmapWorld3D({
         ) : null}
 
         {exploring ? <SkillsHud /> : null}
+
+        {buildOpen ? (
+          <MinerHud address={wallet?.ordinalsAddress ?? null} />
+        ) : null}
 
         {buildOpen ? (
           <BuildHud
