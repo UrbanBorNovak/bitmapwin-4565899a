@@ -2038,6 +2038,8 @@ export function BitmapWorld3D({
   const [weapon, setWeapon] = useState<WeaponKind | null>(null);
   // The rare party: when a set is live, PEPE AND THE BITMAPPERS play the plaza.
   const djSet = useDjEvent();
+  // Countdown while the jaws hold you, refreshed with the world clock tick.
+  const snaredLeft = selfSnaredMs();
   const shooter = weapon !== null;
   // The shared ride: which vehicle, seated or parked — both views read the same state.
 
@@ -2968,6 +2970,15 @@ export function BitmapWorld3D({
                 {Math.max(0, Math.round((gear.buff.until - Date.now()) / 1000))}s
               </div>
             ) : null}
+          </div>
+        ) : null}
+
+        {exploring && snaredLeft > 0 ? (
+          <div
+            data-no-translate
+            className="hud-panel absolute left-1/2 top-28 z-40 -translate-x-1/2 px-3 py-1.5 font-mono text-[10px] text-destructive"
+          >
+            CAUGHT IN A TRAP · {Math.ceil(snaredLeft / 1000)}S
           </div>
         ) : null}
 

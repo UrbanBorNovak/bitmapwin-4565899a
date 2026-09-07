@@ -737,6 +737,12 @@ const Critters = memo(function Critters({
         }
       }
 
+      // Pinned in a trap: the body stays exactly where the jaws closed.
+      if (critter.snaredUntil && critter.snaredUntil > now) {
+        steer = 0;
+        travel = 0;
+      }
+
       critter.heading += steer;
       critter.x += Math.sin(critter.heading) * travel * delta;
       critter.z += Math.cos(critter.heading) * travel * delta;
