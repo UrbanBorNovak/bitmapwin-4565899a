@@ -16,6 +16,8 @@ import { Primitive } from "@/components/game/Primitive";
  */
 
 /** on-chain GLB inscription of the sword */
+import { TRAP_INSCRIPTION } from "@/lib/world-traps-model";
+
 export const SWORD_INSCRIPTION =
   "7b674e8378b14b590960d452900507e2e26089bc9f622fa7e6c938d95d697b81i0";
 /** on-chain GLB inscription of the second blade */
@@ -370,54 +372,30 @@ export function WeaponModel({
     );
   }
 
-  // whip — braided leather on a bound handle, straightening as it cracks
+  // trap — the on-chain iron jaws, carried low and set down with a swing
+  return (
+    <group
+      position={[0.02 * u, -0.08 * u - lash * 0.05 * u, 0.1 * u]}
+      rotation={[-0.5 + lash * 0.9, 0.25, -0.12]}
+    >
+      <Suspense fallback={<TrapStandIn u={u} materials={materials} />}>
+        <OnChainWeapon url={TRAP_URL} u={u} lengthStrides={0.6} />
+      </Suspense>
+      {flash ? <Muzzle u={u} z={-0.3 * u} size={0.03} color={flashColor} /> : null}
+    </group>
+  );
+}
 
-  const segments = 12;
-
+/** Plain iron jaws, holding the pose while the inscription streams in. */
+function TrapStandIn({ u, materials }: { u: number; materials: WeaponMaterials }) {
   return (
     <group>
-      {/* handle: knob, wrap and a steel collar */}
-      <mesh material={wood} position={[0, -0.02 * u, 0.12 * u]} rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.028 * u, 0.032 * u, 0.24 * u, 10]} />
+      <mesh material={materials.iron} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.12 * u, 0.018 * u, 6, 14]} />
       </mesh>
-      {[0.19, 0.13, 0.07].map((z) => (
-        <mesh key={z} material={leather} position={[0, -0.02 * u, z * u]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.034 * u, 0.034 * u, 0.04 * u, 8]} />
-        </mesh>
-      ))}
-      <mesh material={brass} position={[0, -0.02 * u, 0.24 * u]} rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.03 * u, 0.026 * u, 0.03 * u, 10]} />
+      <mesh material={materials.steel} position={[0, 0.01 * u, 0]}>
+        <boxGeometry args={[0.06 * u, 0.02 * u, 0.06 * u]} />
       </mesh>
-      <mesh material={leather} position={[0, -0.06 * u, 0.24 * u]} rotation={[0.4, 0, 0]}>
-        <torusGeometry args={[0.03 * u, 0.006 * u, 5, 12]} />
-      </mesh>
-      <mesh material={steel} position={[0, -0.02 * u, -0.02 * u]} rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.03 * u, 0.028 * u, 0.035 * u, 10]} />
-      </mesh>
-      {Array.from({ length: segments }, (_, i) => {
-        const t = (i + 1) / segments;
-        const straight = lash;
-        // coiled when idle, whipped forward when it cracks
-        const coil = (1 - straight) * 0.55;
-        const z = -t * u * (0.22 + straight * 1.6) - 0.04 * u;
-        const x = Math.sin(t * Math.PI * 2.4) * u * coil * 0.17;
-        const y = -0.02 * u + Math.cos(t * Math.PI * 1.9) * u * coil * 0.15 - straight * t * u * 0.05;
-        const r = Math.max((0.022 - 0.0015 * i) * u, 0.004 * u);
-        return (
-          <mesh key={i} material={leather} position={[x, y, z]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[r, r * 0.88, 0.15 * u, 6]} />
-          </mesh>
-        );
-      })}
-      {/* the popper at the tip — what actually cracks */}
-      <mesh
-        material={brass}
-        position={[0, -0.02 * u - lash * u * 0.05, -u * (0.26 + lash * 1.7)]}
-        rotation={[Math.PI / 2, 0, 0]}
-      >
-        <cylinderGeometry args={[0.006 * u, 0.002 * u, 0.09 * u, 6]} />
-      </mesh>
-      {flash ? <Muzzle u={u} z={-u * (0.3 + lash * 1.7)} size={0.03} color={flashColor} /> : null}
     </group>
   );
 }
@@ -436,6 +414,7 @@ const SWORD_TWO_URL = `https://ordinals.com/content/${SWORD_TWO_INSCRIPTION}`;
 const MINIGUN_URL = `https://ordinals.com/content/${MINIGUN_INSCRIPTION}`;
 const WAND_URL = `https://ordinals.com/content/${WAND_INSCRIPTION}`;
 const PICK_URL = `https://ordinals.com/content/${PICK_INSCRIPTION}`;
+const TRAP_URL = `https://ordinals.com/content/${TRAP_INSCRIPTION}`;
 
 /** An inscribed piece, fitted to the hand and pointed down -Z like the rest. */
 /**
@@ -562,6 +541,7 @@ function SwordStandIn({ u, materials }: { u: number; materials: WeaponMaterials 
   );
 }
 
+useGLTF.preload(TRAP_URL);
 useGLTF.preload(SWORD_URL);
 useGLTF.preload(SWORD_TWO_URL);
 useGLTF.preload(MINIGUN_URL);
