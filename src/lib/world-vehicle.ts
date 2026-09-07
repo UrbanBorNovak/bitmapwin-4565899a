@@ -26,6 +26,15 @@ export type RideSpec = {
   turn: number;
   /** how much body roll the ride leans into a turn */
   lean: number;
+  /**
+   * FEEL — every ride pulls away and settles differently. `accel` scales how
+   * hard it builds speed, `brake` how quickly it sheds it when you let off, and
+   * `grip` how much the steering tightens up at low speed and washes out flat
+   * out. Tune these, never the integrator.
+   */
+  accel: number;
+  brake: number;
+  grip: number;
   /** cruise height above the ground in avatar units (air rides) */
   altitude?: number;
   /** climb rate in avatar units per second (air rides) */
@@ -50,6 +59,9 @@ export const RIDES: RideSpec[] = [
     turn: 0.75,
     lean: 0.6,
     repaint: true,
+    accel: 0.5,
+    brake: 0.75,
+    grip: 0.45,
   },
   {
     id: "ship",
@@ -61,6 +73,9 @@ export const RIDES: RideSpec[] = [
     sprint: 1.2,
     turn: 0.5,
     lean: 0.35,
+    accel: 0.2,
+    brake: 0.16,
+    grip: 0.15,
   },
   {
     id: "lambo",
@@ -72,6 +87,9 @@ export const RIDES: RideSpec[] = [
     sprint: 1.4,
     turn: 0.68,
     lean: 0.8,
+    accel: 1.55,
+    brake: 1.7,
+    grip: 0.75,
   },
   {
     id: "model-s",
@@ -83,6 +101,25 @@ export const RIDES: RideSpec[] = [
     sprint: 1.35,
     turn: 0.78,
     lean: 0.6,
+    accel: 1.95,
+    brake: 1.2,
+    grip: 0.6,
+  },
+  {
+    id: "testarossa",
+    label: "FERRARI TESTAROSSA",
+    inscription: "4d3848266f8e4e6bc100b45d7c94245e70c5d593781cd6e1d20c2a2b829e56e3i0",
+    kind: "ground",
+    fit: 3.3,
+    speed: 5.2,
+    sprint: 1.45,
+    turn: 0.72,
+    lean: 0.9,
+    // Mid-engine flat twelve: eager off the line, hard on the brakes, and the
+    // steering goes light the faster it runs.
+    accel: 1.3,
+    brake: 1.45,
+    grip: 0.8,
   },
   {
     id: "adamantine-yacht",
@@ -94,6 +131,9 @@ export const RIDES: RideSpec[] = [
     sprint: 1.25,
     turn: 0.45,
     lean: 0.3,
+    accel: 0.28,
+    brake: 0.2,
+    grip: 0.12,
   },
   {
     id: "bitsaucer",
@@ -107,6 +147,9 @@ export const RIDES: RideSpec[] = [
     lean: 0.5,
     altitude: 6,
     climb: 9,
+    accel: 0.85,
+    brake: 0.5,
+    grip: 0.25,
   },
 ];
 
