@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { STRIDE, type PlayerState } from "@/lib/player-state";
 import { ATTACK_RANGE } from "@/lib/map-presence";
 import type { MapCursor } from "@/lib/map-presence";
-import { playSfx, unlockAudio } from "@/lib/world-audio";
+import { playSfx, startMinigunSpin, stopMinigunSpin, unlockAudio } from "@/lib/world-audio";
 import { WEAPONS, WeaponModel, useWeaponMaterials, type WeaponKind } from "./weapons";
 import {
   damageBeast,
