@@ -310,19 +310,28 @@ export function playSfx(name: Sfx) {
       break;
     }
     case "minigun": {
-      // One round out of a spinning cluster: a short tight crack with a low
-      // thump. At ~12 rounds a second these must stay tiny and dry or the mix
-      // turns to mush — the barrel whirr lives in the continuous spin loop.
+      // One round out of a spinning cluster: a hard dry crack, a bolt-face clack
+      // from the rotating breech, and a low thump underneath. At ~15 rounds a
+      // second these stay short or the mix turns to mush — the barrel whirr
+      // lives in the continuous spin loop.
       burst(context, out, {
-        seconds: 0.018, gain: 0.42, type: "highpass", frequency: 2200 * vary, q: 0.5, curve: 3,
-        send: { node: verb, gain: 0.18 },
+        seconds: 0.012, gain: 0.6, type: "highpass", frequency: 3200 * vary, q: 0.4, curve: 3.2,
+        send: { node: verb, gain: 0.22 },
       });
       burst(context, out, {
-        seconds: 0.045, gain: 0.3, type: "bandpass", frequency: 700 * vary, q: 1.2, curve: 1.6,
+        seconds: 0.038, gain: 0.34, type: "bandpass", frequency: 900 * vary, q: 1.4, curve: 1.8,
+        send: { node: verb, gain: 0.16 },
       });
-      tone(context, out, { from: 130 * vary, to: 55, seconds: 0.05, gain: 0.14, type: "square", attack: 0.001 });
+      // rotating breech: a tiny metal clack a hair after the crack
+      burst(context, out, {
+        seconds: 0.014, gain: 0.16, type: "bandpass", frequency: 4200 * vary, q: 5, curve: 2.6,
+        delay: 0.012,
+      });
+      tone(context, out, { from: 165 * vary, to: 48, seconds: 0.055, gain: 0.2, type: "square", attack: 0.001 });
+      tone(context, out, { from: 82, to: 34, seconds: 0.1, gain: 0.09, type: "sine", delay: 0.008 });
       break;
     }
+
     case "spell": {
       // An arcane bolt: a bright rising shimmer that leaves the tip and flies out.
       tone(context, out, {
