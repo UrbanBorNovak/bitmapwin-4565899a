@@ -19,6 +19,7 @@ import { playSfx } from "@/lib/world-audio";
 import {
   SNARE_DAMAGE_PER_SECOND,
   SNARE_MS,
+  TRAP_INSCRIPTION,
   TRAP_RADIUS_STRIDES,
   liveTraps,
   prune,
@@ -29,9 +30,6 @@ import {
   type TrapEntity,
 } from "@/lib/world-traps";
 
-/** on-chain GLB of the trap */
-export const TRAP_INSCRIPTION =
-  "cd4b95f67cd2de6f4b523fe05260fdfaca73fa6268fa9efb0985748d4caf84a3i0";
 const TRAP_URL = `https://ordinals.com/content/${TRAP_INSCRIPTION}`;
 
 function TrapModel({ unit, sprung }: { unit: number; sprung: boolean }) {

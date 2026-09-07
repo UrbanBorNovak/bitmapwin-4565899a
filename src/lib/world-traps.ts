@@ -10,6 +10,10 @@
  * all read the same objects.
  */
 
+/** on-chain GLB inscription of the iron trap */
+export const TRAP_INSCRIPTION =
+  "cd4b95f67cd2de6f4b523fe05260fdfaca73fa6268fa9efb0985748d4caf84a3i0";
+
 export type TrapEntity = {
   id: number;
   /** who laid it — their own boots walk over it safely */

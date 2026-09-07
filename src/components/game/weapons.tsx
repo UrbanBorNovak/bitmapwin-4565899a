@@ -16,7 +16,7 @@ import { Primitive } from "@/components/game/Primitive";
  */
 
 /** on-chain GLB inscription of the sword */
-import { TRAP_INSCRIPTION } from "@/lib/world-traps-model";
+import { TRAP_INSCRIPTION } from "@/lib/world-traps";
 
 export const SWORD_INSCRIPTION =
   "7b674e8378b14b590960d452900507e2e26089bc9f622fa7e6c938d95d697b81i0";
