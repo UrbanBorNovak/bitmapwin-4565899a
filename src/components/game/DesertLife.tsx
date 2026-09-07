@@ -12,6 +12,9 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { TreasureChests } from "@/components/game/TreasureChests";
 import { MineralNodes } from "@/components/game/MineralNodes";
+import { PineTrees } from "@/components/game/PineTrees";
+import { GoldenEgg } from "@/components/game/GoldenEgg";
+import { AntelopeBody } from "@/components/game/Antelope";
 import {
   registerBeasts,
   registerVeins,
@@ -511,6 +514,8 @@ export const DesertLife = memo(function DesertLife({
       <Mirage unit={unit} pose={pose} />
       <GoldVeins unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <MineralNodes unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
+      <PineTrees unit={unit} center={center} radius={radius} />
+      <GoldenEgg unit={unit} pose={pose} />
       <TreasureChests unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <Critters unit={unit} colors={colors} pose={pose} onBite={onBite} />
 
@@ -527,7 +532,7 @@ type CritterKind =
   | "jackrabbit"
   | "coyote"
   | "vulture"
-  | "zebra"
+  | "antelope"
   | "giraffe"
   | "elephant"
   | "rhino"
@@ -557,7 +562,7 @@ const SPECIES: Species[] = [
   { kind: "coyote", weight: 8, hostile: true, speed: 1.6, scale: 1, hp: 46, xp: 55, bite: 9, radius: 0.26, bodyY: 0.3 },
   { kind: "vulture", weight: 6, hostile: false, speed: 1.1, scale: 1, hp: 26, xp: 34, bite: 0, radius: 0.24, bodyY: 0 },
   // Rare safari sightings.
-  { kind: "zebra", weight: 2, hostile: false, speed: 1.5, scale: 1, hp: 80, xp: 110, bite: 0, radius: 0.36, bodyY: 0.52 },
+  { kind: "antelope", weight: 2, hostile: false, speed: 1.5, scale: 1, hp: 80, xp: 110, bite: 0, radius: 0.36, bodyY: 0.52 },
   { kind: "giraffe", weight: 1.2, hostile: false, speed: 1.0, scale: 1, hp: 130, xp: 190, bite: 0, radius: 0.44, bodyY: 0.85 },
   { kind: "elephant", weight: 1, hostile: false, speed: 0.9, scale: 1, hp: 280, xp: 430, bite: 0, radius: 0.6, bodyY: 0.62 },
   { kind: "rhino", weight: 0.8, hostile: true, speed: 1.4, scale: 1, hp: 220, xp: 350, bite: 18, radius: 0.52, bodyY: 0.48 },

@@ -12,6 +12,8 @@ import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
 import { Primitive } from "@/components/game/Primitive";
 import { MINER_INSCRIPTION } from "@/lib/world-miner";
+import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
+import { ROAD_INSCRIPTION } from "@/lib/world-road";
 import { useWorldBuilds, type PlacedStructure, type StructureId } from "@/lib/world-build";
 
 const noRaycast = () => {};
@@ -114,6 +116,18 @@ const Structure = memo(function Structure({ id, unit }: { id: StructureId; unit:
     const beat = 1 + Math.sin(state.clock.elapsedTime * 7) * 0.16;
     flame.current.scale.set(1, beat, 1);
   });
+
+  if (id === "road") {
+    return (
+      <Suspense
+        fallback={
+          <Box size={[u * 1.05, u * 0.03, u * 1.05]} position={[0, u * 0.015, 0]} color={TIMBER} />
+        }
+      >
+        <InscribedModel url={contentUrl(ROAD_INSCRIPTION)} size={u * 1.05} flat />
+      </Suspense>
+    );
+  }
 
   if (id === "btc-miner") {
     return (
