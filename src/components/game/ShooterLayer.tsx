@@ -235,9 +235,13 @@ export function ShooterLayer({
   const fire = useCallback(() => {
     const me = pose.current;
     if (!active || !me) return;
+    // A knocked-out visitor swings at nothing: no shots, no strikes, no mining
+    // until the respawn puts them back on their feet.
+    if (me.combat === "down") return;
     const now = performance.now();
-    if (now - lastFire.current < spec.cooldownMs) return;
+    if (now - lastFire.current < spec.cooldownMs * rateScale.current) return;
     if (reloading) return;
+
     if (spec.magazine > 0 && ammo <= 0) {
       playSfx("empty");
       flashNote("EMPTY · R TO RELOAD");
