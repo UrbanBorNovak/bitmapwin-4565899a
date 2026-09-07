@@ -241,23 +241,33 @@ export function FootTrail({
           continue;
         }
         mote.age += delta;
-        if (mote.age > DUST_LIFE) {
+        const span = mote.foam ? FOAM_LIFE : DUST_LIFE;
+        if (mote.age > span) {
           mote.live = false;
           continue;
         }
-        const drag = Math.exp(-2.6 * delta);
+        const drag = Math.exp(-(mote.foam ? 1.4 : 2.6) * delta);
         mote.vx *= drag;
         mote.vz *= drag;
-        mote.vy = mote.vy * drag - unit * 0.9 * delta;
+        mote.vy = mote.foam ? mote.vy * drag : mote.vy * drag - unit * 0.9 * delta;
         mote.x += mote.vx * delta;
         mote.y = Math.max(unit * 0.02, mote.y + mote.vy * delta);
         mote.z += mote.vz * delta;
-        const life = 1 - mote.age / DUST_LIFE;
+        const life = 1 - mote.age / span;
         scratch.pos.set(mote.x, mote.y, mote.z);
-        scratch.scale.setScalar(mote.size * (0.5 + life * 0.9));
+        if (mote.foam) {
+          // foam flattens and spreads out on the surface as it dies
+          const spread = mote.size * (1 + (1 - life) * 1.6);
+          scratch.scale.set(spread, mote.size * 0.25 * life, spread);
+        } else {
+          scratch.scale.setScalar(mote.size * (0.5 + life * 0.9));
+        }
         scratch.matrix.compose(scratch.pos, scratch.quat.identity(), scratch.scale);
         dustMesh.setMatrixAt(i, scratch.matrix);
-        dustMesh.setColorAt(i, dustColor.clone().multiplyScalar(0.4 + life * 0.6));
+        dustMesh.setColorAt(
+          i,
+          (mote.foam ? foamColor : dustColor).clone().multiplyScalar(0.4 + life * 0.6),
+        );
       }
       dustMesh.instanceMatrix.needsUpdate = true;
       if (dustMesh.instanceColor) dustMesh.instanceColor.needsUpdate = true;
