@@ -36,6 +36,8 @@ type Punk = BeastEntity & {
   seed: number;
   heading: number;
   lastBite: number;
+  /** what the face is doing right now */
+  mood: { current: "calm" | "curious" | "angry" | "hurt" };
 };
 
 function hash(a: number, b: number) {
