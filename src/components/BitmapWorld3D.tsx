@@ -1196,7 +1196,7 @@ function HeldWeapon({ kind, bitcoin }: { kind: WeaponKind; bitcoin: string }) {
     <group
       // Dual blades live in both hands, so their rig sits centred on the chest
       // instead of tucked into the right hand like a single piece.
-      position={[kind === "sword" ? 0 : u * 0.3, u * 0.26, u * 0.14]}
+      position={[kind === "sword" ? 0 : u * 0.3, kind === "sword" ? u * 0.62 : u * 0.26, u * 0.14]}
       rotation={[kind === "trap" ? 0.5 : -0.06, Math.PI, 0]}
       scale={kind === "sword" ? 0.7 : 0.62}
     >
