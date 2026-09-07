@@ -206,6 +206,58 @@ function tone(
   osc.stop(now + seconds + 0.02);
 }
 
+/** Continuous minigun barrel spin — started while the trigger is held. */
+let spin: { stop: () => void } | null = null;
+
+export function startMinigunSpin() {
+  if (spin || readMuted()) return;
+  const rig = audio();
+  if (!rig) return;
+  const { ctx: context, master: out } = rig;
+  const now = context.currentTime;
+
+  // Electric whirr of the barrels winding up, then holding a steady hum.
+  const osc = context.createOscillator();
+  osc.type = "sawtooth";
+  osc.frequency.setValueAtTime(70, now);
+  osc.frequency.exponentialRampToValueAtTime(210, now + 0.5);
+  const grind = context.createOscillator();
+  grind.type = "square";
+  grind.frequency.setValueAtTime(35, now);
+  grind.frequency.exponentialRampToValueAtTime(105, now + 0.5);
+  const oscGain = context.createGain();
+  oscGain.gain.setValueAtTime(0.0001, now);
+  oscGain.gain.exponentialRampToValueAtTime(0.045, now + 0.5);
+  const grindGain = context.createGain();
+  grindGain.gain.setValueAtTime(0.0001, now);
+  grindGain.gain.exponentialRampToValueAtTime(0.03, now + 0.5);
+  const lowpass = context.createBiquadFilter();
+  lowpass.type = "lowpass";
+  lowpass.frequency.value = 900;
+  osc.connect(oscGain).connect(lowpass);
+  grind.connect(grindGain).connect(lowpass);
+  lowpass.connect(out);
+  osc.start(now);
+  grind.start(now);
+
+  spin = {
+    stop: () => {
+      const at = context.currentTime;
+      oscGain.gain.setTargetAtTime(0.0001, at, 0.08);
+      grindGain.gain.setTargetAtTime(0.0001, at, 0.08);
+      osc.frequency.setTargetAtTime(50, at, 0.15);
+      grind.frequency.setTargetAtTime(25, at, 0.15);
+      osc.stop(at + 0.6);
+      grind.stop(at + 0.6);
+      spin = null;
+    },
+  };
+}
+
+export function stopMinigunSpin() {
+  spin?.stop();
+}
+
 /** Fire one of the world's sounds. Safe to call anywhere, ignored when muted. */
 export function playSfx(name: Sfx) {
   if (readMuted()) return;
