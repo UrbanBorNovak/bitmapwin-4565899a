@@ -310,25 +310,28 @@ export function playSfx(name: Sfx) {
       break;
     }
     case "minigun": {
-      // One round out of a spinning cluster: a hard dry crack, a bolt-face clack
-      // from the rotating breech, and a low thump underneath. At ~15 rounds a
-      // second these stay short or the mix turns to mush — the barrel whirr
-      // lives in the continuous spin loop.
+      // One round out of a spinning cluster: a hard supersonic crack with real
+      // body behind it, the bolt-face clack of the rotating breech, and a low
+      // thump. Kept tight so ~15 rounds a second stack into a rip, not mush.
       burst(context, out, {
-        seconds: 0.012, gain: 0.6, type: "highpass", frequency: 3200 * vary, q: 0.4, curve: 3.2,
-        send: { node: verb, gain: 0.22 },
+        seconds: 0.016, gain: 0.95, type: "highpass", frequency: 3000 * vary, q: 0.4, curve: 3,
+        send: { node: verb, gain: 0.3 },
       });
       burst(context, out, {
-        seconds: 0.038, gain: 0.34, type: "bandpass", frequency: 900 * vary, q: 1.4, curve: 1.8,
-        send: { node: verb, gain: 0.16 },
+        seconds: 0.05, gain: 0.5, type: "bandpass", frequency: 820 * vary, q: 1.1, curve: 1.6,
+        send: { node: verb, gain: 0.24 },
+      });
+      burst(context, out, {
+        seconds: 0.09, gain: 0.34, type: "lowpass", frequency: 240, q: 0.7, curve: 1.4,
+        send: { node: verb, gain: 0.3 },
       });
       // rotating breech: a tiny metal clack a hair after the crack
       burst(context, out, {
-        seconds: 0.014, gain: 0.16, type: "bandpass", frequency: 4200 * vary, q: 5, curve: 2.6,
-        delay: 0.012,
+        seconds: 0.014, gain: 0.18, type: "bandpass", frequency: 4300 * vary, q: 5, curve: 2.6,
+        delay: 0.014,
       });
-      tone(context, out, { from: 165 * vary, to: 48, seconds: 0.055, gain: 0.2, type: "square", attack: 0.001 });
-      tone(context, out, { from: 82, to: 34, seconds: 0.1, gain: 0.09, type: "sine", delay: 0.008 });
+      tone(context, out, { from: 190 * vary, to: 44, seconds: 0.06, gain: 0.26, type: "sawtooth", attack: 0.001 });
+      tone(context, out, { from: 78, to: 32, seconds: 0.13, gain: 0.12, type: "sine", delay: 0.008 });
       break;
     }
 
