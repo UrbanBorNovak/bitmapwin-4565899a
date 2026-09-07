@@ -48,7 +48,9 @@ function Eyes({ unit, size }: { unit: number; size: number }) {
   const eye = unit * size * 0.16;
   const y = unit * size * 0.8;
   const x = unit * size * 0.105;
-  const z = -unit * size * 0.205;
+  // The fitted orange head reaches roughly 0.34 units along its front (-Z).
+  // Seat the eye blocks across that face so they protrude instead of hiding inside it.
+  const z = -unit * size * 0.36;
   return (
     <group>
       {[-1, 1].map((side) => (
