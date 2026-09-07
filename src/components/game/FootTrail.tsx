@@ -105,12 +105,12 @@ export function FootTrail({
     // Boats leave a foam wake, not tire tracks; flying rides mark nothing.
     const wheels = driving && kind === "ground";
     const boat = driving && kind === "water";
-    if ((grounded || boat) && travelled > 0 && (wheels || boat || !driving)) {
+    if (grounded && travelled > 0 && (wheels || !driving)) {
       store.strideCarry += travelled;
-      const gap = driving ? unit * 0.34 : unit * (running ? 1.5 : 1.05);
+      const gap = wheels ? unit * 0.34 : unit * (running ? 1.5 : 1.05);
       while (store.strideCarry >= gap) {
         store.strideCarry -= gap;
-        if (driving) {
+        if (wheels) {
           // both wheels lay a segment at once, spaced to the truck's track width
           for (const side of [1, -1]) {
             const offX = Math.cos(player.yaw) * side * unit * 0.42;
