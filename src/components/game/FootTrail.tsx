@@ -21,6 +21,8 @@ const MAX_DUST = 120;
 const PRINT_LIFE = 26;
 const PRINT_FADE = 8;
 const DUST_LIFE = 0.85;
+/** a boat's foam wake lingers on the water longer than dust hangs in air */
+const FOAM_LIFE = 2.2;
 
 type Print = { x: number; z: number; yaw: number; age: number; live: boolean; tire: boolean };
 type Mote = {
