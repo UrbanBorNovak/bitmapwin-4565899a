@@ -303,17 +303,25 @@ export function Punks({
         const dz = player.z - punk.z;
         const away = Math.hypot(dx, dz);
         const toPlayer = Math.atan2(dx, dz);
-        if (angry && away < unit * 20) {
+        // Pups never join the fight, and adults only chase you nearby.
+        const fighter = angry && punk.size >= 0.75;
+        if (fighter && away < unit * 9) {
           const diff = ((toPlayer - punk.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-          steer = diff * Math.min(1, delta * 3.2);
-          travel = speed * 1.2;
+          steer = diff * Math.min(1, delta * 2.4);
+          travel = speed;
           const standoff = unit * (0.8 + punk.size * 0.3);
           if (away < standoff * 1.3) travel = speed * 0.1;
-          if (away < standoff * 1.9 && now - punk.lastBite > 1_500) {
+          if (away < standoff * 1.7 && now - punk.lastBite > 3_000) {
             punk.lastBite = now;
             playSfx("hit");
-            onBite?.(Math.round(5 + punk.size * 7), punk.label);
+            onBite?.(Math.round(2 + punk.size * 4), punk.label);
           }
+        } else if (angry && !fighter && away < unit * 8) {
+          // Pups scatter away from trouble instead of biting.
+          const back = toPlayer + Math.PI;
+          const diff = ((back - punk.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+          steer = diff * Math.min(1, delta * 3.4);
+          travel = speed * 1.3;
         } else if (!angry && away < unit * 2.2) {
           // Friendly, but they keep their personal space.
           const back = toPlayer + Math.PI;
@@ -321,6 +329,16 @@ export function Punks({
           steer = diff * Math.min(1, delta * 3);
           travel = speed * 1.2;
         }
+
+        // Mood drives the face: hurt beats angry, curious when you come close.
+        punk.mood.current =
+          now - punk.hitAt < 1_400
+            ? "hurt"
+            : fighter && away < unit * 12
+              ? "angry"
+              : away < unit * 5
+                ? "curious"
+                : "calm";
       }
 
       punk.heading += steer;
