@@ -105,7 +105,12 @@ export function ShooterLayer({
 
   const lastFire = useRef(0);
   const holding = useRef(false);
+  /** how far the minigun barrels have spun up, 0 cold to 1 at full speed */
+  const spinUp = useRef(0);
+  /** multiplies the weapon's cooldown — a cold minigun fires slowly at first */
+  const rateScale = useRef(1);
   const lastHeal = useRef(0);
+
   const nextTracer = useRef(0);
   const heldRef = useRef<THREE.Group>(null);
   const recoil = useRef(0);
@@ -230,9 +235,13 @@ export function ShooterLayer({
   const fire = useCallback(() => {
     const me = pose.current;
     if (!active || !me) return;
+    // A knocked-out visitor swings at nothing: no shots, no strikes, no mining
+    // until the respawn puts them back on their feet.
+    if (me.combat === "down") return;
     const now = performance.now();
-    if (now - lastFire.current < spec.cooldownMs) return;
+    if (now - lastFire.current < spec.cooldownMs * rateScale.current) return;
     if (reloading) return;
+
     if (spec.magazine > 0 && ammo <= 0) {
       playSfx("empty");
       flashNote("EMPTY · R TO RELOAD");
@@ -420,17 +429,28 @@ export function ShooterLayer({
 
   fireRef.current = fire;
 
-  // A minigun keeps ripping for as long as the button is down, and the
-  // barrels keep their whirr for exactly that long too.
-  useFrame(() => {
-    const spinning = active && spec.auto && holding.current;
+  // A minigun keeps ripping for as long as the button is down. The barrels have
+  // to come up to speed first: nothing leaves the muzzle for the first fraction
+  // of a second, then the rate climbs until it is a solid ripping stream. Let go
+  // and the cluster coasts back down instead of stopping dead.
+  useFrame((_, delta) => {
+    const down = pose.current?.combat === "down";
+    const spinning = active && spec.auto && holding.current && !down;
     if (spinning) {
       startMinigunSpin();
-      fireRef.current();
+      spinUp.current = Math.min(1, spinUp.current + delta / 0.5);
+      if (spinUp.current > 0.24) {
+        const ramp = (spinUp.current - 0.24) / 0.76;
+        rateScale.current = 2.2 - ramp * 1.45; // slow first rounds, then full rate
+        fireRef.current();
+      }
     } else {
+      spinUp.current = Math.max(0, spinUp.current - delta / 0.45);
+      rateScale.current = 1;
       stopMinigunSpin();
     }
   });
+
 
   // Never leave the barrels humming when the layer unmounts or the weapon changes.
   useEffect(() => () => stopMinigunSpin(), [spec.auto]);

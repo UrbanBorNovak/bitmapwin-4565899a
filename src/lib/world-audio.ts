@@ -216,43 +216,60 @@ export function startMinigunSpin() {
   const { ctx: context, master: out } = rig;
   const now = context.currentTime;
 
-  // Electric whirr of the barrels winding up, then holding a steady hum.
+  // Electric whirr of the barrel cluster winding up, a mechanical grind under
+  // it, and a rotor chop that beats faster as the cluster reaches speed.
   const osc = context.createOscillator();
   osc.type = "sawtooth";
-  osc.frequency.setValueAtTime(70, now);
-  osc.frequency.exponentialRampToValueAtTime(210, now + 0.5);
+  osc.frequency.setValueAtTime(60, now);
+  osc.frequency.exponentialRampToValueAtTime(235, now + 0.55);
   const grind = context.createOscillator();
   grind.type = "square";
-  grind.frequency.setValueAtTime(35, now);
-  grind.frequency.exponentialRampToValueAtTime(105, now + 0.5);
+  grind.frequency.setValueAtTime(28, now);
+  grind.frequency.exponentialRampToValueAtTime(118, now + 0.55);
   const oscGain = context.createGain();
   oscGain.gain.setValueAtTime(0.0001, now);
-  oscGain.gain.exponentialRampToValueAtTime(0.045, now + 0.5);
+  oscGain.gain.exponentialRampToValueAtTime(0.05, now + 0.55);
   const grindGain = context.createGain();
   grindGain.gain.setValueAtTime(0.0001, now);
-  grindGain.gain.exponentialRampToValueAtTime(0.03, now + 0.5);
+  grindGain.gain.exponentialRampToValueAtTime(0.034, now + 0.55);
+  // The chop: an amplitude beat on the whirr, ramping with barrel speed.
+  const chop = context.createOscillator();
+  chop.type = "triangle";
+  chop.frequency.setValueAtTime(9, now);
+  chop.frequency.exponentialRampToValueAtTime(46, now + 0.55);
+  const chopDepth = context.createGain();
+  chopDepth.gain.setValueAtTime(0.0001, now);
+  chopDepth.gain.exponentialRampToValueAtTime(0.022, now + 0.55);
   const lowpass = context.createBiquadFilter();
   lowpass.type = "lowpass";
-  lowpass.frequency.value = 900;
+  lowpass.frequency.setValueAtTime(600, now);
+  lowpass.frequency.exponentialRampToValueAtTime(1400, now + 0.55);
   osc.connect(oscGain).connect(lowpass);
   grind.connect(grindGain).connect(lowpass);
+  chop.connect(chopDepth).connect(oscGain.gain);
   lowpass.connect(out);
   osc.start(now);
   grind.start(now);
+  chop.start(now);
 
   spin = {
     stop: () => {
       const at = context.currentTime;
-      oscGain.gain.setTargetAtTime(0.0001, at, 0.08);
-      grindGain.gain.setTargetAtTime(0.0001, at, 0.08);
-      osc.frequency.setTargetAtTime(50, at, 0.15);
-      grind.frequency.setTargetAtTime(25, at, 0.15);
-      osc.stop(at + 0.6);
-      grind.stop(at + 0.6);
+      // Coast down: the pitch falls away as the barrels lose speed.
+      oscGain.gain.setTargetAtTime(0.0001, at, 0.16);
+      grindGain.gain.setTargetAtTime(0.0001, at, 0.16);
+      chopDepth.gain.setTargetAtTime(0.0001, at, 0.12);
+      osc.frequency.setTargetAtTime(45, at, 0.22);
+      grind.frequency.setTargetAtTime(22, at, 0.22);
+      chop.frequency.setTargetAtTime(6, at, 0.2);
+      osc.stop(at + 0.9);
+      grind.stop(at + 0.9);
+      chop.stop(at + 0.9);
       spin = null;
     },
   };
 }
+
 
 export function stopMinigunSpin() {
   spin?.stop();
@@ -293,19 +310,28 @@ export function playSfx(name: Sfx) {
       break;
     }
     case "minigun": {
-      // One round out of a spinning cluster: a short tight crack with a low
-      // thump. At ~12 rounds a second these must stay tiny and dry or the mix
-      // turns to mush — the barrel whirr lives in the continuous spin loop.
+      // One round out of a spinning cluster: a hard dry crack, a bolt-face clack
+      // from the rotating breech, and a low thump underneath. At ~15 rounds a
+      // second these stay short or the mix turns to mush — the barrel whirr
+      // lives in the continuous spin loop.
       burst(context, out, {
-        seconds: 0.018, gain: 0.42, type: "highpass", frequency: 2200 * vary, q: 0.5, curve: 3,
-        send: { node: verb, gain: 0.18 },
+        seconds: 0.012, gain: 0.6, type: "highpass", frequency: 3200 * vary, q: 0.4, curve: 3.2,
+        send: { node: verb, gain: 0.22 },
       });
       burst(context, out, {
-        seconds: 0.045, gain: 0.3, type: "bandpass", frequency: 700 * vary, q: 1.2, curve: 1.6,
+        seconds: 0.038, gain: 0.34, type: "bandpass", frequency: 900 * vary, q: 1.4, curve: 1.8,
+        send: { node: verb, gain: 0.16 },
       });
-      tone(context, out, { from: 130 * vary, to: 55, seconds: 0.05, gain: 0.14, type: "square", attack: 0.001 });
+      // rotating breech: a tiny metal clack a hair after the crack
+      burst(context, out, {
+        seconds: 0.014, gain: 0.16, type: "bandpass", frequency: 4200 * vary, q: 5, curve: 2.6,
+        delay: 0.012,
+      });
+      tone(context, out, { from: 165 * vary, to: 48, seconds: 0.055, gain: 0.2, type: "square", attack: 0.001 });
+      tone(context, out, { from: 82, to: 34, seconds: 0.1, gain: 0.09, type: "sine", delay: 0.008 });
       break;
     }
+
     case "spell": {
       // An arcane bolt: a bright rising shimmer that leaves the tip and flies out.
       tone(context, out, {
