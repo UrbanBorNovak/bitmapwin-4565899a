@@ -420,11 +420,20 @@ export function ShooterLayer({
 
   fireRef.current = fire;
 
-  // A minigun keeps ripping for as long as the button is down.
+  // A minigun keeps ripping for as long as the button is down, and the
+  // barrels keep their whirr for exactly that long too.
   useFrame(() => {
-    if (!active || !spec.auto || !holding.current) return;
-    fireRef.current();
+    const spinning = active && spec.auto && holding.current;
+    if (spinning) {
+      startMinigunSpin();
+      fireRef.current();
+    } else {
+      stopMinigunSpin();
+    }
   });
+
+  // Never leave the barrels humming when the layer unmounts or the weapon changes.
+  useEffect(() => () => stopMinigunSpin(), [spec.auto]);
 
 
   // THE HEALING SPELL — the wand mends the caster and every party member at once.
