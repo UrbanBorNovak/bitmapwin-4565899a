@@ -438,12 +438,10 @@ export function ShooterLayer({
     const spinning = active && spec.auto && holding.current && !down;
     if (spinning) {
       startMinigunSpin();
-      spinUp.current = Math.min(1, spinUp.current + delta / 0.5);
-      if (spinUp.current > 0.24) {
-        const ramp = (spinUp.current - 0.24) / 0.76;
-        rateScale.current = 2.2 - ramp * 1.45; // slow first rounds, then full rate
-        fireRef.current();
-      }
+      spinUp.current = Math.min(1, spinUp.current + delta / 0.3);
+      // first round leaves almost at once, then the rate climbs to full speed
+      rateScale.current = 1.5 - spinUp.current * 0.5;
+      fireRef.current();
     } else {
       spinUp.current = Math.max(0, spinUp.current - delta / 0.45);
       rateScale.current = 1;
@@ -535,9 +533,10 @@ export function ShooterLayer({
       if (event.button === 0) holding.current = false;
       if (event.button === 2 || (event.buttons & 2) === 0) aimState.active = false;
     };
-    // keep the sights honest if the button is released outside the canvas
+    // keep the sights and the trigger honest if a button is released elsewhere
     const onMove = (event: PointerEvent) => {
       if (aimState.active && (event.buttons & 2) === 0) aimState.active = false;
+      if (holding.current && (event.buttons & 1) === 0) holding.current = false;
     };
     const onLeave = () => {
       aimState.active = false;
