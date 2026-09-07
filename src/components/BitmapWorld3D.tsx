@@ -2076,10 +2076,22 @@ export function BitmapWorld3D({
   const rideSnapshot = useSyncExternalStore(subscribeVehicle, vehicleSnapshot, () => "0::0");
   const driving = rideSnapshot.startsWith("1");
   const ride = useMemo(() => currentRide(), [rideSnapshot]);
+  /** Told to the player when a hull is asked to sail dry sand. */
+  const [rideNote, setRideNote] = useState<string | null>(null);
   const toggleTruck = useCallback(() => {
     const player = pose.current;
     if (!player) return;
     unlockAudio();
+    const wanted = currentRide();
+    if (!isDriving() && wanted.kind === "water" && !isSea(player.x, player.z)) {
+      const { distance } = nearestSea(player.x, player.z);
+      playSfx("hit");
+      setRideNote(
+        `${wanted.label} NEEDS WATER · NEAREST SEA ${Math.round(distance / AVATAR_U)} STRIDES AWAY`,
+      );
+      window.setTimeout(() => setRideNote(null), 2800);
+      return;
+    }
     const seated = toggleDriving(player.x, player.z, player.yaw);
     playSfx(seated ? "jump" : "hit");
   }, []);
