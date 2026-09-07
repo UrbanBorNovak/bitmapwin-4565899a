@@ -241,17 +241,17 @@ export function playSfx(name: Sfx) {
       break;
     }
     case "minigun": {
-      // One round out of a spinning cluster: a flat hard bark plus mechanism whirr.
+      // One round out of a spinning cluster: a short tight crack with a low
+      // thump. At ~12 rounds a second these must stay tiny and dry or the mix
+      // turns to mush — the barrel whirr lives in the continuous spin loop.
       burst(context, out, {
-        seconds: 0.02, gain: 0.72, type: "highpass", frequency: 2600 * vary, q: 0.5, curve: 2.6,
-        send: { node: verb, gain: 0.3 },
+        seconds: 0.018, gain: 0.42, type: "highpass", frequency: 2200 * vary, q: 0.5, curve: 3,
+        send: { node: verb, gain: 0.18 },
       });
       burst(context, out, {
-        seconds: 0.07, gain: 0.5, type: "bandpass", frequency: 900 * vary, q: 1,
-        send: { node: verb, gain: 0.35 },
+        seconds: 0.045, gain: 0.3, type: "bandpass", frequency: 700 * vary, q: 1.2, curve: 1.6,
       });
-      tone(context, out, { from: 180 * vary, to: 60, seconds: 0.08, gain: 0.22, type: "square", attack: 0.001 });
-      tone(context, out, { from: 900, to: 1200, seconds: 0.05, gain: 0.05, type: "sawtooth" });
+      tone(context, out, { from: 130 * vary, to: 55, seconds: 0.05, gain: 0.14, type: "square", attack: 0.001 });
       break;
     }
     case "spell": {
