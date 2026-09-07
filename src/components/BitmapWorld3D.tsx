@@ -2285,10 +2285,15 @@ export function BitmapWorld3D({
   }, [initialHeight, tipHeight, publish]);
 
   // Killed: wake up at the nearest graveyard, else the nearest town, else on
-  // 0.BITMAP — the genesis square everyone starts from.
+  // 0.BITMAP — the genesis square everyone starts from. This runs exactly once
+  // per death: without the guard any later re-render re-ran the teleport and
+  // yanked you back to the spawn point the moment you tried to walk away.
+  const respawnedRef = useRef(0);
   useEffect(() => {
-    if (!respawnNonce) return;
+    if (!respawnNonce || respawnedRef.current === respawnNonce) return;
+    respawnedRef.current = respawnNonce;
     const anchor = respawnAnchor(pose.current.x, pose.current.z);
+
     let x = anchor?.x ?? worldX(0);
     let z = anchor?.z ?? worldZ(0);
     if (anchor) {
