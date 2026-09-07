@@ -43,22 +43,22 @@ function hash(a: number, b: number) {
   return n - Math.floor(n);
 }
 
-/** The eyes: a white ball with a black dot inside, one per socket. */
+/** Blocky white eyes with square black pupils, mounted on the model's -Z face. */
 function Eyes({ unit, size }: { unit: number; size: number }) {
-  const r = unit * size * 0.075;
-  const y = unit * size * 0.78;
-  const x = unit * size * 0.09;
-  const z = unit * size * 0.115;
+  const eye = unit * size * 0.16;
+  const y = unit * size * 0.8;
+  const x = unit * size * 0.105;
+  const z = -unit * size * 0.205;
   return (
     <group>
       {[-1, 1].map((side) => (
         <group key={side} position={[x * side, y, z]}>
           <mesh>
-            <sphereGeometry args={[r, 10, 10]} />
+            <boxGeometry args={[eye, eye, eye * 0.34]} />
             <meshBasicMaterial color="#ffffff" />
           </mesh>
-          <mesh position={[0, 0, r * 0.72]}>
-            <sphereGeometry args={[r * 0.44, 8, 8]} />
+          <mesh position={[0, 0, -eye * 0.2]}>
+            <boxGeometry args={[eye * 0.44, eye * 0.44, eye * 0.08]} />
             <meshBasicMaterial color="#0a0a0a" />
           </mesh>
         </group>
