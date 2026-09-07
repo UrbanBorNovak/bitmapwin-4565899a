@@ -44,17 +44,28 @@ function hash(a: number, b: number) {
 }
 
 /** Blocky white eyes with square black pupils, mounted on the model's -Z face. */
-function Eyes({ unit, size }: { unit: number; size: number }) {
+function Eyes({ unit, size, seed }: { unit: number; size: number; seed: number }) {
+  const blinkRef = useRef<THREE.Group>(null);
   const eye = unit * size * 0.16;
   const y = unit * size * 0.8;
   const x = unit * size * 0.105;
   // The fitted orange head reaches roughly 0.34 units along its front (-Z).
   // Seat the eye blocks across that face so they protrude instead of hiding inside it.
   const z = -unit * size * 0.36;
+
+  useFrame(({ clock }) => {
+    const node = blinkRef.current;
+    if (!node) return;
+    const interval = 3.6 + hash(seed, 41) * 3.2;
+    const phase = (clock.elapsedTime + hash(seed, 73) * interval) % interval;
+    const blink = phase < 0.16 ? Math.max(0.08, Math.abs(phase - 0.08) / 0.08) : 1;
+    node.scale.y = blink;
+  });
+
   return (
-    <group>
+    <group ref={blinkRef} position={[0, y, z]}>
       {[-1, 1].map((side) => (
-        <group key={side} position={[x * side, y, z]}>
+        <group key={side} position={[x * side, 0, 0]}>
           <mesh>
             <boxGeometry args={[eye, eye, eye * 0.34]} />
             <meshBasicMaterial color="#ffffff" />
@@ -285,7 +296,7 @@ export function Punks({
           <Suspense fallback={null}>
             <PunkBody unit={unit} size={punk.size} />
           </Suspense>
-          <Eyes unit={unit} size={punk.size} />
+          <Eyes unit={unit} size={punk.size} seed={punk.seed} />
         </group>
       ))}
     </group>
