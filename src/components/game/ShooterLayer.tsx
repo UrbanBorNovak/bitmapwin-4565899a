@@ -180,6 +180,9 @@ export function ShooterLayer({
       const breath = Math.sin(t * 1.6) * 0.012;
       const drift = Math.cos(t * 1.1) * 0.01;
       const long = weapon === "minigun" || weapon === "pickaxe";
+      // Dual blades are carried in both hands, so the rig sits centred on the
+      // frame instead of tucked into the right corner.
+      const dual = weapon === "sword";
       // A stride is tiny in world units, so a hand-distance offset would fall
       // inside the camera's near plane and vanish. Push the model out by a
       // fixed factor and scale it up by the same amount: identical on screen,
@@ -191,10 +194,10 @@ export function ShooterLayer({
       const still = 1 - aim * 0.85;
       held.position.copy(camera.position);
       held.quaternion.copy(camera.quaternion);
-      const restX = (long ? 0.28 : 0.19) + drift * still;
+      const restX = (dual ? 0.03 : long ? 0.28 : 0.19) + drift * still;
       const restY = -(long ? 0.17 : 0.1) + breath * still - kick * 0.05;
       const restZ = -(long ? 0.4 : 0.32) + kick * 0.16;
-      const sightX = long ? 0.012 : 0.028;
+      const sightX = dual ? 0 : long ? 0.012 : 0.028;
       const sightY = long ? -0.055 : -0.05;
       const sightZ = -(long ? 0.58 : 0.46) + kick * 0.2;
       held.translateX(k * STRIDE * THREE.MathUtils.lerp(restX, sightX, aim));
@@ -202,7 +205,7 @@ export function ShooterLayer({
       held.translateZ(k * STRIDE * THREE.MathUtils.lerp(restZ, sightZ, aim));
       // aim the piece slightly across the view so the barrel reads as held,
       // not floating dead-centre — squared up when aimed
-      held.rotateY(THREE.MathUtils.lerp(long ? 0.1 : 0.14, 0, aim));
+      held.rotateY(THREE.MathUtils.lerp(dual ? 0 : long ? 0.1 : 0.14, 0, aim));
       held.rotateZ(THREE.MathUtils.lerp(long ? -0.04 : -0.07, 0, aim));
       held.rotateX(kick * (weapon === "whip" ? -0.3 : 0.22) - 0.03);
       held.scale.setScalar(k * 0.5 * (1 + aim * 0.08));
