@@ -13,7 +13,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { PlayerState } from "@/lib/player-state";
 import { MOVE } from "@/lib/player-state";
-import { vehicle } from "@/lib/world-vehicle";
+import { currentRide, vehicle } from "@/lib/world-vehicle";
 
 const MAX_PRINTS = 96;
 const MAX_DUST = 120;
@@ -101,7 +101,11 @@ export function FootTrail({
 
     /* ---- marks: boot prints on foot, twin tire tracks while driving ---- */
     const driving = vehicle.driving;
-    if (grounded && travelled > 0) {
+    const kind = driving ? currentRide().kind : "ground";
+    // Boats leave a foam wake, not tire tracks; flying rides mark nothing.
+    const wheels = driving && kind === "ground";
+    const boat = driving && kind === "water";
+    if ((grounded || boat) && travelled > 0 && (wheels || boat || !driving)) {
       store.strideCarry += travelled;
       const gap = driving ? unit * 0.34 : unit * (running ? 1.5 : 1.05);
       while (store.strideCarry >= gap) {
