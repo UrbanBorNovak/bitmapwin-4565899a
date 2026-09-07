@@ -1428,9 +1428,12 @@ function PlayerCameraRig({
       );
     } else {
 
-      // Shoulder rig: trails further and drops lower the faster you travel, and
-      // swings a touch wide of the turn so the body stays readable.
-      const back = AVATAR_U * (isDriving() ? 12 + gait * 5 : 6.2 + gait * 3.2);
+      // Shoulder rig: trails a little further and drops slightly the faster you
+      // travel, and swings a touch wide of the turn so the body stays readable.
+      // The sprint pull-back stays small on purpose — a big one made the avatar
+      // shrink away the moment you ran.
+      const back = AVATAR_U * (isDriving() ? 11 + gait * 2.2 : 6.2 + gait * 1.1);
+
       const side = -steer.current * AVATAR_U * 1.6;
       cameraTarget.current.set(
         player.x - Math.sin(player.yaw) * back + Math.cos(player.yaw) * side,
