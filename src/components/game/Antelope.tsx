@@ -24,7 +24,7 @@ export const AntelopeBody = memo(function AntelopeBody({ unit }: { unit: number 
       }
     >
       {/* Facing along +Z like the voxel animals, so the wander code still steers it. */}
-      <InscribedModel url={ANTELOPE_URL} size={unit * 0.9} yaw={Math.PI} />
+      <InscribedModel url={ANTELOPE_URL} size={unit * 0.9} yaw={0} />
     </Suspense>
   );
 });
