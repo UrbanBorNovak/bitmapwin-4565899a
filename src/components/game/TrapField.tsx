@@ -114,7 +114,12 @@ export function TrapField({
   onSnared: (damage: number, label: string) => void;
 }) {
   const [, setTick] = useState(() => trapsVersion());
-  useEffect(() => subscribeTraps(() => setTick(trapsVersion())), []);
+  useEffect(() => {
+    const off = subscribeTraps(() => setTick(trapsVersion()));
+    return () => {
+      off();
+    };
+  }, []);
 
   /** while set, the local visitor is bleeding in a trap */
   const heldUntil = useRef(0);

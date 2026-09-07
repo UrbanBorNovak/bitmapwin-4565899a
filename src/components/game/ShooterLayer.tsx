@@ -20,9 +20,10 @@ import {
 import { addItem, grantXp, skillLevel, spendItems } from "@/lib/world-skills";
 import { Primitive } from "./Primitive";
 import { AIM_FORGIVENESS, AIM_REACH_BONUS, aimState } from "@/lib/world-aim";
+import { TRAP_LIMIT, placeTrap } from "@/lib/world-traps";
 
 /**
- * WEAPONS IN THE WORLD — carry a Mosin Nagant, a revolver, a whip or a pickaxe.
+ * WEAPONS IN THE WORLD — carry a minigun, a revolver, traps or a pickaxe.
  *
  * Hitscan strikes from the live camera. A strike can land on another visitor
  * (only inside the shared melee-range rule the world already enforces, so no
@@ -66,6 +67,7 @@ export function ShooterLayer({
   active,
   firstPerson,
   weapon,
+  selfId,
   pose,
   cursors,
   bitcoin,
@@ -77,6 +79,8 @@ export function ShooterLayer({
   /** only the first-person view draws the carried model in front of the camera */
   firstPerson: boolean;
   weapon: WeaponKind;
+  /** the local visitor's id — stamped on any trap they lay */
+  selfId: string;
   pose: React.RefObject<PlayerState>;
   cursors: MapCursor[];
   bitcoin: string;
@@ -207,7 +211,7 @@ export function ShooterLayer({
       // not floating dead-centre — squared up when aimed
       held.rotateY(THREE.MathUtils.lerp(dual ? 0 : long ? 0.1 : 0.14, 0, aim));
       held.rotateZ(THREE.MathUtils.lerp(long ? -0.04 : -0.07, 0, aim));
-      held.rotateX(kick * (weapon === "whip" ? -0.3 : 0.22) - 0.03);
+      held.rotateX(kick * (weapon === "trap" ? -0.3 : 0.22) - 0.03);
       held.scale.setScalar(k * 0.5 * (1 + aim * 0.08));
 
     }
@@ -250,6 +254,23 @@ export function ShooterLayer({
       flashNote("EMPTY · R TO RELOAD");
       return;
     }
+    // THE TRAP — laid on the ground a pace ahead instead of swung at anything.
+    if (weapon === "trap") {
+      lastFire.current = now;
+      playSfx("trap");
+      setLash(1);
+      recoil.current = 1;
+      const ahead = STRIDE * 2.2;
+      const laid = placeTrap(
+        selfId,
+        me.x + Math.sin(me.yaw) * ahead,
+        me.z + Math.cos(me.yaw) * ahead,
+        0,
+      );
+      flashNote(laid ? "TRAP SET · ARMING" : `TRAP LIMIT · ${TRAP_LIMIT} IN THE SAND`);
+      return;
+    }
+
     lastFire.current = now;
     if (spec.magazine > 0) setAmmo((current) => Math.max(0, current - 1));
     playSfx(spec.fireSfx);
@@ -257,7 +278,7 @@ export function ShooterLayer({
       const cycle = spec.cycleSfx;
       window.setTimeout(() => playSfx(cycle), spec.cycleDelayMs);
     }
-    if (!spec.mining && weapon !== "whip") setFlash(now);
+    if (!spec.mining && weapon !== "trap") setFlash(now);
     recoil.current = 1;
     setLash(1);
 
@@ -275,7 +296,7 @@ export function ShooterLayer({
     for (const peer of cursorsRef.current) {
       if (peer.hp <= 0) continue;
       const center = new THREE.Vector3(peer.x, STRIDE * 1.1, peer.z);
-      const sphere = new THREE.Sphere(center, STRIDE * (weapon === "whip" ? 1.3 : 0.85) * forgive);
+      const sphere = new THREE.Sphere(center, STRIDE * (0.85) * forgive);
       if (!ray.intersectSphere(sphere, hit)) continue;
       const distance = origin.distanceTo(hit);
       if (distance > range) continue;
@@ -327,7 +348,7 @@ export function ShooterLayer({
       .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
       .sort((a, b) => a.distance - b.distance)[0];
 
-    if (weapon !== "whip" && !spec.mining) {
+    if (weapon !== "trap" && !spec.mining) {
       const end = nearest
         ? nearest.point.clone()
         : origin.clone().addScaledVector(ray.direction, range * 0.5);
