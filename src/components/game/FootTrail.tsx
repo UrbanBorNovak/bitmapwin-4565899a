@@ -141,21 +141,42 @@ export function FootTrail({
       }
     }
 
-    /* ---- dust: kicked up while running, and a burst on landing ---- */
-    const puffs = driving
-      ? speed > 0.4 * unit
-        ? 2
+    /* ---- spray: sand dust on land, a foam wake behind a boat ---- */
+    const puffs = boat
+      ? speed > 0.15 * unit
+        ? 3
         : 0
-      : landed
-        ? 10
-        : running
-          ? speed > MOVE.walkSpeed * 1.6
-            ? 2
-            : 1
-          : 0;
+      : wheels
+        ? speed > 0.4 * unit
+          ? 2
+          : 0
+        : landed
+          ? 10
+          : running
+            ? speed > MOVE.walkSpeed * 1.6
+              ? 2
+              : 1
+            : 0;
     for (let i = 0; i < puffs; i++) {
       const mote = store.motes[store.moteCursor % MAX_DUST]!;
       store.moteCursor++;
+      if (boat) {
+        // Two foam shoulders spreading out and back from the stern, staying
+        // flat on the water instead of rising like dust.
+        const side = i % 2 === 0 ? 1 : -1;
+        const lateral = unit * (0.18 + Math.random() * 0.16) * side;
+        mote.x = player.x - Math.sin(player.yaw) * unit * 0.9 + Math.cos(player.yaw) * lateral;
+        mote.z = player.z - Math.cos(player.yaw) * unit * 0.9 - Math.sin(player.yaw) * lateral;
+        mote.y = unit * 0.03;
+        mote.vx = Math.cos(player.yaw) * side * unit * 0.5 - player.vx * 0.06;
+        mote.vz = -Math.sin(player.yaw) * side * unit * 0.5 - player.vz * 0.06;
+        mote.vy = unit * 0.05;
+        mote.size = unit * (0.12 + Math.random() * 0.14);
+        mote.foam = true;
+        mote.age = 0;
+        mote.live = true;
+        continue;
+      }
       const spread = unit * (landed ? 0.4 : 0.22);
       mote.x = player.x + (Math.random() - 0.5) * spread - Math.sin(player.yaw) * unit * 0.2;
       mote.z = player.z + (Math.random() - 0.5) * spread - Math.cos(player.yaw) * unit * 0.2;
@@ -164,6 +185,7 @@ export function FootTrail({
       mote.vz = (Math.random() - 0.5) * unit * (landed ? 1.6 : 0.7) - player.vz * 0.12;
       mote.vy = unit * (0.7 + Math.random() * 0.8);
       mote.size = unit * (0.09 + Math.random() * 0.09) * (landed ? 1.3 : 1);
+      mote.foam = false;
       mote.age = 0;
       mote.live = true;
     }
