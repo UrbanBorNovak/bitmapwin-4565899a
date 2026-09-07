@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { STRIDE, type PlayerState } from "@/lib/player-state";
 import { ATTACK_RANGE } from "@/lib/map-presence";
 import type { MapCursor } from "@/lib/map-presence";
-import { playSfx, unlockAudio } from "@/lib/world-audio";
+import { playSfx, startMinigunSpin, stopMinigunSpin, unlockAudio } from "@/lib/world-audio";
 import { WEAPONS, WeaponModel, useWeaponMaterials, type WeaponKind } from "./weapons";
 import {
   damageBeast,
@@ -420,11 +420,20 @@ export function ShooterLayer({
 
   fireRef.current = fire;
 
-  // A minigun keeps ripping for as long as the button is down.
+  // A minigun keeps ripping for as long as the button is down, and the
+  // barrels keep their whirr for exactly that long too.
   useFrame(() => {
-    if (!active || !spec.auto || !holding.current) return;
-    fireRef.current();
+    const spinning = active && spec.auto && holding.current;
+    if (spinning) {
+      startMinigunSpin();
+      fireRef.current();
+    } else {
+      stopMinigunSpin();
+    }
   });
+
+  // Never leave the barrels humming when the layer unmounts or the weapon changes.
+  useEffect(() => () => stopMinigunSpin(), [spec.auto]);
 
 
   // THE HEALING SPELL — the wand mends the caster and every party member at once.

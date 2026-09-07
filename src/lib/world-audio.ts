@@ -206,6 +206,58 @@ function tone(
   osc.stop(now + seconds + 0.02);
 }
 
+/** Continuous minigun barrel spin — started while the trigger is held. */
+let spin: { stop: () => void } | null = null;
+
+export function startMinigunSpin() {
+  if (spin || readMuted()) return;
+  const rig = audio();
+  if (!rig) return;
+  const { ctx: context, master: out } = rig;
+  const now = context.currentTime;
+
+  // Electric whirr of the barrels winding up, then holding a steady hum.
+  const osc = context.createOscillator();
+  osc.type = "sawtooth";
+  osc.frequency.setValueAtTime(70, now);
+  osc.frequency.exponentialRampToValueAtTime(210, now + 0.5);
+  const grind = context.createOscillator();
+  grind.type = "square";
+  grind.frequency.setValueAtTime(35, now);
+  grind.frequency.exponentialRampToValueAtTime(105, now + 0.5);
+  const oscGain = context.createGain();
+  oscGain.gain.setValueAtTime(0.0001, now);
+  oscGain.gain.exponentialRampToValueAtTime(0.045, now + 0.5);
+  const grindGain = context.createGain();
+  grindGain.gain.setValueAtTime(0.0001, now);
+  grindGain.gain.exponentialRampToValueAtTime(0.03, now + 0.5);
+  const lowpass = context.createBiquadFilter();
+  lowpass.type = "lowpass";
+  lowpass.frequency.value = 900;
+  osc.connect(oscGain).connect(lowpass);
+  grind.connect(grindGain).connect(lowpass);
+  lowpass.connect(out);
+  osc.start(now);
+  grind.start(now);
+
+  spin = {
+    stop: () => {
+      const at = context.currentTime;
+      oscGain.gain.setTargetAtTime(0.0001, at, 0.08);
+      grindGain.gain.setTargetAtTime(0.0001, at, 0.08);
+      osc.frequency.setTargetAtTime(50, at, 0.15);
+      grind.frequency.setTargetAtTime(25, at, 0.15);
+      osc.stop(at + 0.6);
+      grind.stop(at + 0.6);
+      spin = null;
+    },
+  };
+}
+
+export function stopMinigunSpin() {
+  spin?.stop();
+}
+
 /** Fire one of the world's sounds. Safe to call anywhere, ignored when muted. */
 export function playSfx(name: Sfx) {
   if (readMuted()) return;
@@ -241,17 +293,17 @@ export function playSfx(name: Sfx) {
       break;
     }
     case "minigun": {
-      // One round out of a spinning cluster: a flat hard bark plus mechanism whirr.
+      // One round out of a spinning cluster: a short tight crack with a low
+      // thump. At ~12 rounds a second these must stay tiny and dry or the mix
+      // turns to mush — the barrel whirr lives in the continuous spin loop.
       burst(context, out, {
-        seconds: 0.02, gain: 0.72, type: "highpass", frequency: 2600 * vary, q: 0.5, curve: 2.6,
-        send: { node: verb, gain: 0.3 },
+        seconds: 0.018, gain: 0.42, type: "highpass", frequency: 2200 * vary, q: 0.5, curve: 3,
+        send: { node: verb, gain: 0.18 },
       });
       burst(context, out, {
-        seconds: 0.07, gain: 0.5, type: "bandpass", frequency: 900 * vary, q: 1,
-        send: { node: verb, gain: 0.35 },
+        seconds: 0.045, gain: 0.3, type: "bandpass", frequency: 700 * vary, q: 1.2, curve: 1.6,
       });
-      tone(context, out, { from: 180 * vary, to: 60, seconds: 0.08, gain: 0.22, type: "square", attack: 0.001 });
-      tone(context, out, { from: 900, to: 1200, seconds: 0.05, gain: 0.05, type: "sawtooth" });
+      tone(context, out, { from: 130 * vary, to: 55, seconds: 0.05, gain: 0.14, type: "square", attack: 0.001 });
       break;
     }
     case "spell": {
