@@ -106,6 +106,7 @@ export function ShooterLayer({
   const [bursts, setBursts] = useState<Burst[]>([]);
   const nextBurst = useRef(0);
   const [lash, setLash] = useState(0);
+  const [guard, setGuard] = useState(0);
 
   const lastFire = useRef(0);
   const holding = useRef(false);
@@ -195,6 +196,12 @@ export function ShooterLayer({
       // Aiming brings the piece up to the centre of the frame and stills the
       // sway, so the sights line up with what the crosshair is on.
       const aim = aimState.amount;
+      // The blade rig itself needs to know about the guard, so mirror the aim
+      // into React state, but only in coarse steps to keep renders cheap.
+      if (dual) {
+        const step = Math.round(aim * 5) / 5;
+        setGuard((current) => (current === step ? current : step));
+      }
       const still = 1 - aim * 0.85;
       held.position.copy(camera.position);
       held.quaternion.copy(camera.quaternion);
@@ -661,7 +668,7 @@ export function ShooterLayer({
             flash={Boolean(flash)}
             flashColor={strikeColor}
             lash={lash}
-            guard={aimState.amount}
+            guard={guard}
           />
         </group>
 
