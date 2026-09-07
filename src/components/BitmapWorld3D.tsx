@@ -1773,6 +1773,7 @@ const WorldScene = memo(function WorldScene({
   onShootPeer,
   onCastHeal,
   onBite,
+  selfId,
   onShooterStats,
   driving,
   ride,
@@ -1808,6 +1809,8 @@ const WorldScene = memo(function WorldScene({
   onShootPeer: (id: string) => void;
   onCastHeal: (amount: number) => void;
   onBite: (damage: number, label: string) => void;
+  /** the local visitor's id — stamps traps and keeps their own jaws harmless */
+  selfId: string;
   onShooterStats: (stats: ShooterStats) => void;
   driving: boolean;
   ride: RideSpec;
