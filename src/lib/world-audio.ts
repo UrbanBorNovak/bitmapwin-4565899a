@@ -15,7 +15,7 @@ export type Sfx =
   | "bolt"
   | "revolver"
   | "cock"
-  | "whip"
+  | "trap"
   | "slash"
   | "pick"
   | "ore"
@@ -397,31 +397,11 @@ export function playSfx(name: Sfx) {
       burst(context, out, { seconds: 0.02, gain: 0.16, type: "bandpass", frequency: 2200, q: 5, delay: 0.07 });
       tone(context, out, { from: 480, to: 360, seconds: 0.03, gain: 0.08, type: "square", delay: 0.07 });
       break;
-    case "whip": {
-      // Bullwhip: the leather loads and hisses as it unrolls, the tip goes
-      // supersonic with a glassy crack, then the fall settles in the dust.
-      burst(context, out, { seconds: 0.09, gain: 0.12, type: "bandpass", frequency: 480, q: 1.1 });
-      burst(context, out, {
-        seconds: 0.13, gain: 0.3, type: "bandpass", frequency: 1500 * vary, q: 0.8, delay: 0.02,
-      });
-      // rising air as the loop travels down the whip
-      tone(context, out, {
-        from: 420, to: 3200 * vary, seconds: 0.12, gain: 0.1, type: "triangle", delay: 0.02, attack: 0.03,
-      });
-      // the crack itself
-      burst(context, out, {
-        seconds: 0.012, gain: 1, type: "highpass", frequency: 5200 * vary, q: 0.5, delay: 0.145, curve: 3.6,
-        send: { node: verb, gain: 0.45 },
-      });
-      burst(context, out, {
-        seconds: 0.06, gain: 0.5, type: "bandpass", frequency: 2600 * vary, q: 1.3, delay: 0.145,
-        send: { node: verb, gain: 0.5 },
-      });
-      tone(context, out, {
-        from: 3400 * vary, to: 220, seconds: 0.06, gain: 0.16, type: "sawtooth", delay: 0.145, attack: 0.0015,
-      });
-      // leather falling back
-      burst(context, out, { seconds: 0.11, gain: 0.14, type: "lowpass", frequency: 700, q: 0.8, delay: 0.21 });
+    case "trap": {
+      // Iron jaws set into the sand: a dull metal clack and a spring under load.
+      burst(context, out, { seconds: 0.05, gain: 0.4, type: "bandpass", frequency: 900 * vary, q: 2.2, curve: 3 });
+      burst(context, out, { seconds: 0.09, gain: 0.22, type: "lowpass", frequency: 320, q: 0.9, delay: 0.02 });
+      tone(context, out, { from: 1400 * vary, to: 420, seconds: 0.14, gain: 0.12, type: "triangle", delay: 0.03 });
       break;
     }
     case "slash": {

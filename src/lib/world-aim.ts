@@ -25,8 +25,8 @@ export function aimZoom(weapon: WeaponKind): number {
       return 0.68;
     case "wand":
       return 0.78;
-    case "whip":
-      return 0.84; // just a steadier stance
+    case "trap":
+      return 0.9; // just a steadier crouch over the ground
     default:
       return 0.86;
   }

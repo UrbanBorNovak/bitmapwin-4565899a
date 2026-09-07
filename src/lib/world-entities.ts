@@ -25,6 +25,10 @@ export type BeastEntity = {
   hitAt: number;
   /** while set, the beast is dead and waiting to wander back in */
   deadUntil: number;
+  /** while set, the body is pinned in a trap and cannot move */
+  snaredUntil?: number;
+  /** last time the jaws bled it */
+  snaredTickAt?: number;
 };
 
 export type OreVoxel = { x: number; y: number; z: number; size: number; alive: boolean };

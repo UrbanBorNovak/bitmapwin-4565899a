@@ -36,6 +36,8 @@ import { ShooterLayer, type ShooterStats } from "@/components/game/ShooterLayer"
 import { DesertLife } from "@/components/game/DesertLife";
 import { Punks } from "@/components/game/Punks";
 import { DjEvent, useDjEvent } from "@/components/game/DjEvent";
+import { TrapField } from "@/components/game/TrapField";
+import { isSelfSnared, selfSnaredMs } from "@/lib/world-traps";
 import { Companions } from "@/components/game/Companions";
 import { WornGear } from "@/components/game/WornGear";
 import { NightVision } from "@/components/game/NightVision";
@@ -1187,7 +1189,7 @@ function HeldWeapon({ kind, bitcoin }: { kind: WeaponKind; bitcoin: string }) {
   return (
     <group
       position={[u * 0.3, u * 0.26, u * 0.14]}
-      rotation={[kind === "whip" ? 0.35 : -0.06, Math.PI, 0]}
+      rotation={[kind === "trap" ? 0.5 : -0.06, Math.PI, 0]}
       scale={0.62}
     >
       <WeaponModel kind={kind} u={u} materials={materials} flashColor={bitcoin} lash={0} />
@@ -1383,6 +1385,15 @@ function PlayerCameraRig({
       }
     }
 
+
+    // Caught in a trap: the legs are held, and only the head can still turn.
+    if (isSelfSnared()) {
+      intent.forward = 0;
+      intent.strafe = 0;
+      intent.jump = false;
+      intent.speedScale = 0;
+      intent.fly = 0;
+    }
 
     jumpRequested.current = false;
     // Ease the steer input in and out so turns start and stop like a body, not a switch.
@@ -1772,6 +1783,7 @@ const WorldScene = memo(function WorldScene({
   onShootPeer,
   onCastHeal,
   onBite,
+  selfId,
   onShooterStats,
   driving,
   ride,
@@ -1807,6 +1819,8 @@ const WorldScene = memo(function WorldScene({
   onShootPeer: (id: string) => void;
   onCastHeal: (amount: number) => void;
   onBite: (damage: number, label: string) => void;
+  /** the local visitor's id — stamps traps and keeps their own jaws harmless */
+  selfId: string;
   onShooterStats: (stats: ShooterStats) => void;
   driving: boolean;
   ride: RideSpec;
@@ -1881,6 +1895,13 @@ const WorldScene = memo(function WorldScene({
           <ChunkStreamer pose={pose} />
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <Punks unit={AVATAR_U} pose={pose} onBite={onBite} />
+          <TrapField
+            unit={AVATAR_U}
+            pose={pose}
+            selfId={selfId}
+            bitcoin={colors.bitcoin}
+            onSnared={onBite}
+          />
           <DjEvent unit={AVATAR_U} pose={pose} bitcoin={colors.bitcoin} />
           <DesertBuilds unit={AVATAR_U} />
           <FootTrail unit={AVATAR_U} pose={pose} sand={colors.bitcoin} />
@@ -1916,6 +1937,7 @@ const WorldScene = memo(function WorldScene({
         active={weapon !== null && cameraMode !== "map"}
         firstPerson={cameraMode === "first"}
         weapon={weapon ?? "minigun"}
+        selfId={selfId}
         pose={pose}
         cursors={cursors}
         bitcoin={colors.bitcoin}
@@ -2016,6 +2038,8 @@ export function BitmapWorld3D({
   const [weapon, setWeapon] = useState<WeaponKind | null>(null);
   // The rare party: when a set is live, PEPE AND THE BITMAPPERS play the plaza.
   const djSet = useDjEvent();
+  // Countdown while the jaws hold you, refreshed with the world clock tick.
+  const snaredLeft = selfSnaredMs();
   const shooter = weapon !== null;
   // The shared ride: which vehicle, seated or parked — both views read the same state.
 
@@ -2855,6 +2879,7 @@ export function BitmapWorld3D({
               onShootPeer={attack}
               onCastHeal={castHeal}
               onBite={takeBite}
+              selfId={selfId}
               onShooterStats={handleShooterStats}
               driving={driving}
               ride={ride}
@@ -2925,13 +2950,13 @@ export function BitmapWorld3D({
               {cameraMode === "first"
                 ? weapon === "pickaxe"
                   ? "RIGHT · LINE UP · LEFT · SWING"
-                  : weapon === "whip"
-                    ? "RIGHT · STEADY · LEFT · CRACK"
+                  : weapon === "trap"
+                    ? "LEFT · LAY A TRAP · HOLDS FOR 15S"
                     : "RIGHT · AIM · LEFT · FIRE · R · RELOAD"
                 : weapon === "pickaxe"
                   ? "CLICK / E · SWING · MINE GOLD SEAMS"
-                  : weapon === "whip"
-                    ? "CLICK / E · CRACK · CLOSE RANGE"
+                  : weapon === "trap"
+                    ? "CLICK / E · LAY A TRAP ON THE GROUND"
                     : "CLICK / E · FIRE · R · RELOAD"}
             </div>
             {cameraMode === "third" ? (
@@ -2945,6 +2970,15 @@ export function BitmapWorld3D({
                 {Math.max(0, Math.round((gear.buff.until - Date.now()) / 1000))}s
               </div>
             ) : null}
+          </div>
+        ) : null}
+
+        {exploring && snaredLeft > 0 ? (
+          <div
+            data-no-translate
+            className="hud-panel absolute left-1/2 top-28 z-40 -translate-x-1/2 px-3 py-1.5 font-mono text-[10px] text-destructive"
+          >
+            CAUGHT IN A TRAP · {Math.ceil(snaredLeft / 1000)}S
           </div>
         ) : null}
 

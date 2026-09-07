@@ -308,6 +308,12 @@ export function Punks({
                 : "calm";
       }
 
+      // Pinned in a trap: the body stays exactly where the jaws closed.
+      if (punk.snaredUntil && punk.snaredUntil > now) {
+        steer = 0;
+        travel = 0;
+      }
+
       punk.heading += steer;
       punk.x += Math.sin(punk.heading) * travel * delta;
       punk.z += Math.cos(punk.heading) * travel * delta;
