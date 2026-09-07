@@ -167,6 +167,10 @@ export type MoveIntent = {
   speedScale?: number;
   /** multiplier on the keyboard turn rate */
   turnScale?: number;
+  /** multiplier on how hard the body/ride builds speed */
+  accelScale?: number;
+  /** multiplier on how fast it sheds speed when you let off */
+  dragScale?: number;
   /**
    * Flight: -1 sink … 1 climb. When present, gravity is off and altitude is
    * held instead — this is how the flying ride stays in the air.
@@ -251,7 +255,9 @@ export function stepPlayer(player: PlayerState, intent: MoveIntent, rawDelta: nu
   }
 
   const moving = wantX !== 0 || wantZ !== 0;
-  const k = moving ? MOVE.accel : MOVE.drag;
+  const k = moving
+    ? MOVE.accel * (intent.accelScale ?? 1)
+    : MOVE.drag * (intent.dragScale ?? 1);
   const blend = 1 - Math.exp(-k * delta);
   player.vx += (wantX - player.vx) * blend;
   player.vz += (wantZ - player.vz) * blend;
