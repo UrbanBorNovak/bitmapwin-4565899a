@@ -11,7 +11,14 @@
 import { useSyncExternalStore } from "react";
 
 export type SkillId = "mining" | "attack" | "hunter";
-export type ItemId = "gold-nugget" | "ore-chunk" | "hide" | "fang" | "key" | "relic";
+export type ItemId =
+  | "gold-nugget"
+  | "ore-chunk"
+  | "mineral"
+  | "hide"
+  | "fang"
+  | "key"
+  | "relic";
 
 export const SKILL_LABELS: Record<SkillId, string> = {
   mining: "MINING",
@@ -22,6 +29,7 @@ export const SKILL_LABELS: Record<SkillId, string> = {
 export const ITEM_LABELS: Record<ItemId, string> = {
   "gold-nugget": "GOLD NUGGET",
   "ore-chunk": "ORE CHUNK",
+  mineral: "MINERAL",
   hide: "HIDE",
   fang: "FANG",
   key: "CHEST KEY",
@@ -65,7 +73,7 @@ const STORE_KEY = "bitmapwin:skills";
 
 const blankState = (): StoredState => ({
   xp: { mining: 0, attack: 0, hunter: 0 },
-  items: { "gold-nugget": 0, "ore-chunk": 0, hide: 0, fang: 0, key: 0, relic: 0 },
+  items: { "gold-nugget": 0, "ore-chunk": 0, mineral: 0, hide: 0, fang: 0, key: 0, relic: 0 },
 });
 
 let state: StoredState = blankState();

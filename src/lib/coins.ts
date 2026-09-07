@@ -67,6 +67,7 @@ export type CoinEventEntry = {
 export const REASON_LABEL: Record<string, string> = {
   build_attention: "BUILD ATTENTION",
   build_maintained: "BUILD MAINTAINED",
+  miner_yield: "BTC MINER YIELD",
   trade_reward: "TRADE",
   lease_reward_owner: "LEASE GRANTED",
   lease_reward_lessee: "LEASE TAKEN",

@@ -11,6 +11,7 @@ import { memo, useEffect, useMemo, useRef, useState, useSyncExternalStore } from
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { TreasureChests } from "@/components/game/TreasureChests";
+import { MineralNodes } from "@/components/game/MineralNodes";
 import {
   registerBeasts,
   registerVeins,
@@ -509,6 +510,7 @@ export const DesertLife = memo(function DesertLife({
       </instancedMesh>
       <Mirage unit={unit} pose={pose} />
       <GoldVeins unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
+      <MineralNodes unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <TreasureChests unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <Critters unit={unit} colors={colors} pose={pose} onBite={onBite} />
 
@@ -1184,6 +1186,7 @@ function veinAt(unit: number, gx: number, gz: number, x: number, z: number): Ore
   }
   const vein: OreVein = {
     id,
+    kind: "gold",
     x,
     z,
     level: GOLD_MINING_LEVEL,
