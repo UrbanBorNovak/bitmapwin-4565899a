@@ -30,6 +30,7 @@ export type StructureId =
   | "watchtower"
   | "graveyard"
   | "btc-miner"
+  | "furnace"
   | "road";
 
 export type StructureRecipe = {
@@ -93,6 +94,14 @@ export const STRUCTURES: StructureRecipe[] = [
     cost: { mineral: 8, "gold-nugget": 2, hide: 2 },
     footprint: 0.46,
     hp: 180,
+  },
+  {
+    id: "furnace",
+    name: "SMELTING FURNACE",
+    blurb: "Melts mined gold nuggets down into solid gold bars.",
+    cost: { mineral: 4, "ore-chunk": 4, hide: 1 },
+    footprint: 0.44,
+    hp: 200,
   },
   {
     id: "road",
