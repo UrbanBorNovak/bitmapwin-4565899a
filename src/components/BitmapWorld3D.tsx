@@ -34,6 +34,7 @@ import { runtimeDeploymentsQuery, type RuntimeDeployment } from "@/lib/extender-
 import type { RunningExtender } from "@/lib/use-extender-runtimes";
 import { ShooterLayer, type ShooterStats } from "@/components/game/ShooterLayer";
 import { MinerHud } from "@/components/game/MinerHud";
+import { SmeltHud } from "@/components/game/SmeltHud";
 import { EggHunt } from "@/components/game/EggHunt";
 import { DesertLife } from "@/components/game/DesertLife";
 import { Punks } from "@/components/game/Punks";
@@ -2997,6 +2998,8 @@ export function BitmapWorld3D({
         {exploring ? <SkillsHud /> : null}
 
         <EggHunt unit={AVATAR_U} />
+
+        {exploring ? <SmeltHud pose={pose} /> : null}
 
         {buildOpen ? (
           <MinerHud address={wallet?.ordinalsAddress ?? null} />

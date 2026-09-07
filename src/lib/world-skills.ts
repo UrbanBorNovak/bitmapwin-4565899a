@@ -18,7 +18,8 @@ export type ItemId =
   | "hide"
   | "fang"
   | "key"
-  | "relic";
+  | "relic"
+  | "gold-bar";
 
 export const SKILL_LABELS: Record<SkillId, string> = {
   mining: "MINING",
@@ -34,6 +35,7 @@ export const ITEM_LABELS: Record<ItemId, string> = {
   fang: "FANG",
   key: "CHEST KEY",
   relic: "RELIC",
+  "gold-bar": "GOLD BAR",
 };
 
 export const BACKPACK_SLOTS = 28;
@@ -73,7 +75,7 @@ const STORE_KEY = "bitmapwin:skills";
 
 const blankState = (): StoredState => ({
   xp: { mining: 0, attack: 0, hunter: 0 },
-  items: { "gold-nugget": 0, "ore-chunk": 0, mineral: 0, hide: 0, fang: 0, key: 0, relic: 0 },
+  items: { "gold-nugget": 0, "ore-chunk": 0, mineral: 0, hide: 0, fang: 0, key: 0, relic: 0, "gold-bar": 0 },
 });
 
 let state: StoredState = blankState();

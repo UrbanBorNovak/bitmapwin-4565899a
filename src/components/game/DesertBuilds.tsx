@@ -14,6 +14,7 @@ import { Primitive } from "@/components/game/Primitive";
 import { MINER_INSCRIPTION } from "@/lib/world-miner";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { ROAD_INSCRIPTION } from "@/lib/world-road";
+import { GOLD_BAR_INSCRIPTION } from "@/lib/world-smelt";
 import { useWorldBuilds, type PlacedStructure, type StructureId } from "@/lib/world-build";
 
 const noRaycast = () => {};
@@ -24,6 +25,8 @@ const TIMBER = "#6b563c";
 const BONE = "#d9d2b8";
 const GOLD = "#d8a020";
 const EMBER = "#e2712a";
+const STONE = "#6f6f6f";
+const STONE_DARK = "#4a4a4a";
 
 function Box({
   size,
@@ -134,6 +137,33 @@ const Structure = memo(function Structure({ id, unit }: { id: StructureId; unit:
       <Suspense fallback={<MinerStandIn unit={u} />}>
         <MinerRig unit={u} />
       </Suspense>
+    );
+  }
+
+  if (id === "furnace") {
+    // A squat stone furnace: glowing mouth, chimney, and a cast bar cooling on
+    // the ledge so you can see at a glance what it makes.
+    return (
+      <group>
+        <Box size={[u * 0.8, u * 0.12, u * 0.8]} position={[0, u * 0.06, 0]} color={STONE_DARK} />
+        <Box size={[u * 0.66, u * 0.5, u * 0.66]} position={[0, u * 0.37, 0]} color={STONE} />
+        <Box size={[u * 0.24, u * 0.2, u * 0.06]} position={[0, u * 0.3, u * 0.33]} color={STONE_DARK} />
+        <mesh ref={flame} position={[0, u * 0.3, u * 0.35]} raycast={noRaycast}>
+          <boxGeometry args={[u * 0.2, u * 0.16, u * 0.04]} />
+          <meshBasicMaterial color={EMBER} transparent opacity={0.9} />
+        </mesh>
+        <Box size={[u * 0.22, u * 0.34, u * 0.22]} position={[u * 0.18, u * 0.78, -u * 0.12]} color={STONE_DARK} />
+        <Box size={[u * 0.5, u * 0.06, u * 0.34]} position={[0, u * 0.65, u * 0.22]} color={STONE_DARK} />
+        <Suspense
+          fallback={
+            <Box size={[u * 0.22, u * 0.08, u * 0.12]} position={[0, u * 0.72, u * 0.22]} color={GOLD} />
+          }
+        >
+          <group position={[0, u * 0.68, u * 0.22]}>
+            <InscribedModel url={contentUrl(GOLD_BAR_INSCRIPTION)} size={u * 0.22} />
+          </group>
+        </Suspense>
+      </group>
     );
   }
 
