@@ -535,3 +535,99 @@ export function playSfx(name: Sfx) {
       break;
   }
 }
+
+/**
+ * THE DJ SET — a four-on-the-floor loop that only plays while a rare DJ event
+ * is running and the visitor is close enough to the stage. Volume follows the
+ * distance so the beat swells as you walk up to the decks.
+ */
+let dj: { stop: () => void; gain: GainNode } | null = null;
+
+export function startDjSet() {
+  if (dj || readMuted()) return;
+  const rig = audio();
+  if (!rig) return;
+  const { ctx: context, master: out } = rig;
+  const bus = context.createGain();
+  bus.gain.value = 0.0001;
+  bus.connect(out);
+
+  let step = 0;
+  let at = context.currentTime + 0.06;
+  const beat = 60 / 124 / 2; // eighth notes at 124 BPM
+
+  const kick = (when: number) => {
+    const osc = context.createOscillator();
+    const env = context.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(150, when);
+    osc.frequency.exponentialRampToValueAtTime(44, when + 0.13);
+    env.gain.setValueAtTime(0.9, when);
+    env.gain.exponentialRampToValueAtTime(0.0001, when + 0.22);
+    osc.connect(env).connect(bus);
+    osc.start(when);
+    osc.stop(when + 0.24);
+  };
+  const hat = (when: number, loud: number) => {
+    const src = context.createBufferSource();
+    src.buffer = noiseBuffer(context, 0.05);
+    const hp = context.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.value = 7200;
+    const env = context.createGain();
+    env.gain.setValueAtTime(loud, when);
+    env.gain.exponentialRampToValueAtTime(0.0001, when + 0.045);
+    src.connect(hp).connect(env).connect(bus);
+    src.start(when);
+  };
+  const bass = (when: number, hz: number) => {
+    const osc = context.createOscillator();
+    const env = context.createGain();
+    const lp = context.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = 900;
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(hz, when);
+    env.gain.setValueAtTime(0.0001, when);
+    env.gain.linearRampToValueAtTime(0.22, when + 0.02);
+    env.gain.exponentialRampToValueAtTime(0.0001, when + beat * 0.9);
+    osc.connect(lp).connect(env).connect(bus);
+    osc.start(when);
+    osc.stop(when + beat);
+  };
+
+  const notes = [55, 55, 82.5, 73.4, 55, 65.4, 82.5, 61.7];
+  const timer = window.setInterval(() => {
+    const ahead = context.currentTime + 0.4;
+    while (at < ahead) {
+      if (step % 4 === 0) kick(at);
+      hat(at, step % 2 === 1 ? 0.16 : 0.07);
+      if (step % 2 === 0) bass(at, notes[(step / 2) % notes.length] ?? 55);
+      at += beat;
+      step += 1;
+    }
+  }, 120);
+
+  dj = {
+    gain: bus,
+    stop: () => {
+      window.clearInterval(timer);
+      const now = context.currentTime;
+      bus.gain.setTargetAtTime(0.0001, now, 0.2);
+      window.setTimeout(() => bus.disconnect(), 1200);
+      dj = null;
+    },
+  };
+}
+
+/** Set how loud the DJ set is right now, 0 to 1, following distance. */
+export function setDjLevel(level: number) {
+  if (!dj) return;
+  const rig = audio();
+  if (!rig) return;
+  dj.gain.gain.setTargetAtTime(Math.max(0.0001, level * 0.45), rig.ctx.currentTime, 0.18);
+}
+
+export function stopDjSet() {
+  dj?.stop();
+}

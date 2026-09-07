@@ -35,6 +35,7 @@ import type { RunningExtender } from "@/lib/use-extender-runtimes";
 import { ShooterLayer, type ShooterStats } from "@/components/game/ShooterLayer";
 import { DesertLife } from "@/components/game/DesertLife";
 import { Punks } from "@/components/game/Punks";
+import { DjEvent, useDjEvent } from "@/components/game/DjEvent";
 import { Companions } from "@/components/game/Companions";
 import { WornGear } from "@/components/game/WornGear";
 import { NightVision } from "@/components/game/NightVision";
@@ -1880,6 +1881,7 @@ const WorldScene = memo(function WorldScene({
           <ChunkStreamer pose={pose} />
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <Punks unit={AVATAR_U} pose={pose} onBite={onBite} />
+          <DjEvent unit={AVATAR_U} pose={pose} bitcoin={colors.bitcoin} />
           <DesertBuilds unit={AVATAR_U} />
           <FootTrail unit={AVATAR_U} pose={pose} sand={colors.bitcoin} />
           <LandGrowth unit={AVATAR_U} pose={pose} />
@@ -2012,6 +2014,8 @@ export function BitmapWorld3D({
   const [buildNote, setBuildNote] = useState<string | null>(null);
   // WEAPONS — what you are carrying while you explore the land world.
   const [weapon, setWeapon] = useState<WeaponKind | null>(null);
+  // The rare party: when a set is live, PEPE AND THE BITMAPPERS play the plaza.
+  const djSet = useDjEvent();
   const shooter = weapon !== null;
   // The shared ride: which vehicle, seated or parked — both views read the same state.
 
@@ -2471,6 +2475,7 @@ export function BitmapWorld3D({
         "Digit4",
         "Digit5",
         "Digit6",
+        "Digit7",
       ].indexOf(event.code);
       if (slot >= 0) {
         event.preventDefault();
@@ -2941,6 +2946,16 @@ export function BitmapWorld3D({
                 {Math.max(0, Math.round((gear.buff.until - Date.now()) / 1000))}s
               </div>
             ) : null}
+          </div>
+        ) : null}
+
+        {exploring && djSet.live ? (
+          <div
+            data-no-translate
+            className="hud-panel absolute left-1/2 top-16 z-40 -translate-x-1/2 px-3 py-1.5 font-mono text-[10px] text-bitcoin"
+          >
+            PEPE AND THE BITMAPPERS · LIVE AT 0.BITMAP ·{" "}
+            {Math.max(0, Math.round((djSet.endsAt - Date.now()) / 60_000))}M LEFT
           </div>
         ) : null}
 
