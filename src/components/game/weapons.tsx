@@ -350,8 +350,8 @@ export function WeaponModel({
     return (
       <group>
         <group
-          position={[0.11 * u, -0.03 * u, 0.12 * u]}
-          rotation={[-0.16 + lash * 0.5, 0.2, -0.3 - lash * 1.05]}
+          position={[0.34 * u, -0.05 * u, 0.1 * u]}
+          rotation={[-0.16 + lash * 0.5, 0.26, -0.34 - lash * 1.05]}
         >
           <Suspense fallback={<SwordStandIn u={u} materials={materials} />}>
             <OnChainWeapon url={SWORD_URL} u={u} lengthStrides={0.95} />
@@ -359,8 +359,8 @@ export function WeaponModel({
           {flash ? <Muzzle u={u} z={-1.05 * u} size={0.04} color={flashColor} /> : null}
         </group>
         <group
-          position={[-0.13 * u, -0.04 * u, 0.12 * u]}
-          rotation={[-0.16 + lash * 0.35, -0.2, 0.34 + lash * 0.9]}
+          position={[-0.34 * u, -0.05 * u, 0.1 * u]}
+          rotation={[-0.16 + lash * 0.35, -0.26, 0.34 + lash * 1.05]}
         >
           <Suspense fallback={<SwordStandIn u={u} materials={materials} />}>
             <OnChainWeapon url={SWORD_TWO_URL} u={u} lengthStrides={1.02} />
