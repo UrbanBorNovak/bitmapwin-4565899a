@@ -76,6 +76,7 @@ export function FootTrail({
   const scratch = useMemo(() => ({ matrix: new THREE.Matrix4(), quat: new THREE.Quaternion(), euler: new THREE.Euler(), pos: new THREE.Vector3(), scale: new THREE.Vector3() }), []);
   const printColor = useMemo(() => new THREE.Color(sand).multiplyScalar(0.45), [sand]);
   const dustColor = useMemo(() => new THREE.Color(sand).lerp(new THREE.Color("#ffffff"), 0.35), [sand]);
+  const foamColor = useMemo(() => new THREE.Color("#dff1ff"), []);
   const hidden = useMemo(() => new THREE.Vector3(0, -9999, 0), []);
 
   useFrame((_, rawDelta) => {
