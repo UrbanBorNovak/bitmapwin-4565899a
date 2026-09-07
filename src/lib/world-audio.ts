@@ -216,43 +216,60 @@ export function startMinigunSpin() {
   const { ctx: context, master: out } = rig;
   const now = context.currentTime;
 
-  // Electric whirr of the barrels winding up, then holding a steady hum.
+  // Electric whirr of the barrel cluster winding up, a mechanical grind under
+  // it, and a rotor chop that beats faster as the cluster reaches speed.
   const osc = context.createOscillator();
   osc.type = "sawtooth";
-  osc.frequency.setValueAtTime(70, now);
-  osc.frequency.exponentialRampToValueAtTime(210, now + 0.5);
+  osc.frequency.setValueAtTime(60, now);
+  osc.frequency.exponentialRampToValueAtTime(235, now + 0.55);
   const grind = context.createOscillator();
   grind.type = "square";
-  grind.frequency.setValueAtTime(35, now);
-  grind.frequency.exponentialRampToValueAtTime(105, now + 0.5);
+  grind.frequency.setValueAtTime(28, now);
+  grind.frequency.exponentialRampToValueAtTime(118, now + 0.55);
   const oscGain = context.createGain();
   oscGain.gain.setValueAtTime(0.0001, now);
-  oscGain.gain.exponentialRampToValueAtTime(0.045, now + 0.5);
+  oscGain.gain.exponentialRampToValueAtTime(0.05, now + 0.55);
   const grindGain = context.createGain();
   grindGain.gain.setValueAtTime(0.0001, now);
-  grindGain.gain.exponentialRampToValueAtTime(0.03, now + 0.5);
+  grindGain.gain.exponentialRampToValueAtTime(0.034, now + 0.55);
+  // The chop: an amplitude beat on the whirr, ramping with barrel speed.
+  const chop = context.createOscillator();
+  chop.type = "triangle";
+  chop.frequency.setValueAtTime(9, now);
+  chop.frequency.exponentialRampToValueAtTime(46, now + 0.55);
+  const chopDepth = context.createGain();
+  chopDepth.gain.setValueAtTime(0.0001, now);
+  chopDepth.gain.exponentialRampToValueAtTime(0.022, now + 0.55);
   const lowpass = context.createBiquadFilter();
   lowpass.type = "lowpass";
-  lowpass.frequency.value = 900;
+  lowpass.frequency.setValueAtTime(600, now);
+  lowpass.frequency.exponentialRampToValueAtTime(1400, now + 0.55);
   osc.connect(oscGain).connect(lowpass);
   grind.connect(grindGain).connect(lowpass);
+  chop.connect(chopDepth).connect(oscGain.gain);
   lowpass.connect(out);
   osc.start(now);
   grind.start(now);
+  chop.start(now);
 
   spin = {
     stop: () => {
       const at = context.currentTime;
-      oscGain.gain.setTargetAtTime(0.0001, at, 0.08);
-      grindGain.gain.setTargetAtTime(0.0001, at, 0.08);
-      osc.frequency.setTargetAtTime(50, at, 0.15);
-      grind.frequency.setTargetAtTime(25, at, 0.15);
-      osc.stop(at + 0.6);
-      grind.stop(at + 0.6);
+      // Coast down: the pitch falls away as the barrels lose speed.
+      oscGain.gain.setTargetAtTime(0.0001, at, 0.16);
+      grindGain.gain.setTargetAtTime(0.0001, at, 0.16);
+      chopDepth.gain.setTargetAtTime(0.0001, at, 0.12);
+      osc.frequency.setTargetAtTime(45, at, 0.22);
+      grind.frequency.setTargetAtTime(22, at, 0.22);
+      chop.frequency.setTargetAtTime(6, at, 0.2);
+      osc.stop(at + 0.9);
+      grind.stop(at + 0.9);
+      chop.stop(at + 0.9);
       spin = null;
     },
   };
 }
+
 
 export function stopMinigunSpin() {
   spin?.stop();
