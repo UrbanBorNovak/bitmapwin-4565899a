@@ -35,7 +35,7 @@ export const PICK_INSCRIPTION =
 export type WeaponKind =
   | "minigun"
   | "revolver"
-  | "whip"
+  | "trap"
   | "pickaxe"
   | "sword"
   | "wand";
@@ -57,7 +57,7 @@ export type WeaponSpec = {
   damage: number;
   /** a mining tool breaks gold veins; a gun does not */
   mining: boolean;
-  fireSfx: "minigun" | "revolver" | "whip" | "pick" | "slash" | "spell";
+  fireSfx: "minigun" | "revolver" | "trap" | "pick" | "slash" | "spell";
   /** holds down for continuous fire instead of one strike per click */
   auto?: boolean;
   /** the wand casts spells: an arcane bolt on click, a party heal on H */
@@ -107,22 +107,22 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     reloadSfx: "cylinder",
     hint: "SIX SHOTS · RIGHT TO AIM · LEFT TO FIRE",
   },
-  whip: {
-    kind: "whip",
-    label: "WHIP",
-    short: "WHIP",
+  trap: {
+    kind: "trap",
+    label: "TRAP",
+    short: "TRAP",
     magazine: 0,
     reloadMs: 0,
-    cooldownMs: 640,
-    reachStrides: 4,
-    splashStrides: 2.2,
-    damage: 14,
+    cooldownMs: 900,
+    reachStrides: 3,
+    splashStrides: 0.4,
+    damage: 4,
     mining: false,
-    fireSfx: "whip",
+    fireSfx: "trap",
     cycleSfx: null,
     cycleDelayMs: 0,
     reloadSfx: "reload",
-    hint: "NO AMMO · RIGHT TO STEADY · LEFT TO CRACK",
+    hint: "LEFT TO LAY A TRAP · HOLDS WHOEVER STEPS ON IT FOR 15S",
   },
   pickaxe: {
     kind: "pickaxe",
@@ -181,7 +181,7 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
 export const WEAPON_ORDER: WeaponKind[] = [
   "minigun",
   "revolver",
-  "whip",
+  "trap",
   "pickaxe",
   "sword",
   "wand",
