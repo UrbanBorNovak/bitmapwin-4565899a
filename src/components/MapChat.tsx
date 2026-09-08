@@ -17,7 +17,7 @@ import { shortenAddress } from "@/lib/registry";
 import { useWalletSession } from "@/lib/wallet-session";
 
 /**
- * Public chat next to the land map. Visitors talk about districts here, and the
+ * Public chat next to the Oasis world map. Visitors talk about districts here, and the
  * colour beside each name is the same colour as that person's live cursor dot
  * on the map — so you can see who is online and where they are looking.
  */

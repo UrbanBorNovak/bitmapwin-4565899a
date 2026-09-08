@@ -15,7 +15,7 @@ export const Route = createFileRoute("/map")({
     return Number.isInteger(height) && height >= 0 && height < 1_000_000 ? { height } : {};
   },
   head: () => {
-    const title = "Land Map — 1,000 × 1,000 Bitmap Districts";
+    const title = "The Oasis — 1,000 × 1,000 Bitmap Districts";
     const description =
       "Explore every Bitcoin bitmap district as a live 3D land world. Fly, orbit and click any district to open its on-chain view.";
     return {
@@ -75,7 +75,7 @@ function MapPage() {
     <div className="page-shell">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="display text-2xl md:text-3xl">LAND MAP</h1>
+          <h1 className="display text-2xl md:text-3xl">THE OASIS</h1>
           <p className="label mt-1 text-[9px]">
             1,000 × 1,000 · ONE CELL = ONE BITMAP · BLOCK ORDER LEFT TO RIGHT
           </p>
