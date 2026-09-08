@@ -81,14 +81,14 @@ function AuthPage() {
     }
   };
 
-  const google = async () => {
+  const oauth = async (provider: "google" | "apple") => {
     setBusy(true);
     try {
-      await lovable.auth.signInWithOAuth("google", {
+      await lovable.auth.signInWithOAuth(provider, {
         redirect_uri: next ? `${window.location.origin}${next}` : window.location.origin,
       });
     } catch (err) {
-      toast("GOOGLE SIGN-IN FAILED", { description: (err as Error).message.toUpperCase() });
+      toast(`${provider.toUpperCase()} SIGN-IN FAILED`, { description: (err as Error).message.toUpperCase() });
       setBusy(false);
     }
   };
