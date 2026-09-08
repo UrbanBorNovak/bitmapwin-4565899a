@@ -3,13 +3,13 @@ import { Link } from "@tanstack/react-router";
 type Step = "map" | "extend" | "deploy";
 
 const STEPS: { id: Step; n: string; label: string; note: string }[] = [
-  { id: "map", n: "01", label: "MAP", note: "Pick a BITMAP" },
+  { id: "map", n: "01", label: "OASIS", note: "Pick a BITMAP" },
   { id: "extend", n: "02", label: "EXTEND", note: "Give it software" },
   { id: "deploy", n: "03", label: "DEPLOY", note: "Run it on the land" },
 ];
 
 /**
- * The primary MVP loop: MAP → EXTEND → DEPLOY.
+ * The primary MVP loop: OASIS → EXTEND → DEPLOY.
  * Shown on every screen that belongs to the loop so the path is never lost.
  */
 export function MvpFlowRail({ active, height }: { active: Step; height?: number }) {

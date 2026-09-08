@@ -23,7 +23,7 @@ const TOURS: Record<string, Tour> = {
       {
         target: "home-flow",
         title: "THREE STEPS · THAT IS THE WHOLE THING",
-        body: "Open the map to find land, extend it with an experience, then deploy so other people can walk in. Start at step one.",
+        body: "Enter the Oasis to find land, extend it with an experience, then deploy so other people can walk in. Start at step one.",
       },
       {
         target: "home-market",

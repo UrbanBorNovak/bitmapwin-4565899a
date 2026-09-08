@@ -17,7 +17,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "WORLD",
     note: "Where the land lives — look around it",
     items: [
-      { to: "/map", label: "MAP", note: "1,000 × 1,000 live world" },
+      { to: "/map", label: "OASIS", note: "1,000 × 1,000 live world" },
       { to: "/cities", label: "CITIES", note: "Districts and city hubs" },
       { to: "/explore", label: "EXPLORE", note: "Trending land and activity" },
     ],

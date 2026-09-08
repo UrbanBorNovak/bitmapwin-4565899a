@@ -97,9 +97,9 @@ export function MapChat({ cursors, className }: { cursors: MapCursor[]; classNam
   return (
     <aside className={`flex flex-col border border-border bg-background ${className ?? ""}`}>
       <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
-        <span className="label">MAP CHAT</span>
+        <span className="label">OASIS CHAT</span>
         <span className="label" data-no-translate>
-          {online.length + 1} ON THE MAP
+          {online.length + 1} IN THE OASIS
         </span>
       </div>
 
@@ -149,7 +149,7 @@ export function MapChat({ cursors, className }: { cursors: MapCursor[]; classNam
       <div ref={listRef} className="min-h-[220px] flex-1 divide-y divide-border overflow-y-auto md:max-h-[52vh]">
         {list.length === 0 ? (
           <p className="px-4 py-6 font-mono text-xs text-muted-foreground">
-            &gt; {messages.isLoading ? "OPENING THE ROOM…" : "NOBODY HAS SPOKEN ON THE MAP YET — SAY SOMETHING"}
+            &gt; {messages.isLoading ? "OPENING THE ROOM…" : "NOBODY HAS SPOKEN IN THE OASIS YET — SAY SOMETHING"}
             <span className="blink">_</span>
           </p>
         ) : (
@@ -247,7 +247,7 @@ export function MapChat({ cursors, className }: { cursors: MapCursor[]; classNam
           </form>
         ) : (
           <p className="font-mono text-xs text-muted-foreground">
-            &gt; SIGN IN TO JOIN THE MAP CHAT —{" "}
+            &gt; SIGN IN TO JOIN THE OASIS CHAT —{" "}
             <Link to="/auth" className="underline decoration-border underline-offset-4 hover:text-foreground">
               [ SIGN IN ]
             </Link>
