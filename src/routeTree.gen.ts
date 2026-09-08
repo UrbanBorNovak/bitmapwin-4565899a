@@ -26,6 +26,7 @@ import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as ExtendRouteImport } from './routes/extend'
 import { Route as ExtendersRouteImport } from './routes/extenders'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as Land101RouteImport } from './routes/land-101'
 import { Route as LeasesRouteImport } from './routes/leases'
 import { Route as MapRouteImport } from './routes/map'
@@ -140,6 +141,11 @@ const ExtendersRoute = ExtendersRouteImport.update({
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InventoryRoute = InventoryRouteImport.update({
+  id: '/inventory',
+  path: '/inventory',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Land101Route = Land101RouteImport.update({
@@ -314,6 +320,7 @@ export interface FileRoutesByFullPath {
   '/extend': typeof ExtendRoute
   '/extenders': typeof ExtendersRouteWithChildren
   '/history': typeof HistoryRoute
+  '/inventory': typeof InventoryRoute
   '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
@@ -361,6 +368,7 @@ export interface FileRoutesByTo {
   '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
   '/history': typeof HistoryRoute
+  '/inventory': typeof InventoryRoute
   '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
@@ -411,6 +419,7 @@ export interface FileRoutesById {
   '/extend': typeof ExtendRoute
   '/extenders': typeof ExtendersRouteWithChildren
   '/history': typeof HistoryRoute
+  '/inventory': typeof InventoryRoute
   '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
@@ -462,6 +471,7 @@ export interface FileRouteTypes {
     | '/extend'
     | '/extenders'
     | '/history'
+    | '/inventory'
     | '/land-101'
     | '/leases'
     | '/map'
@@ -509,6 +519,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/extend'
     | '/history'
+    | '/inventory'
     | '/land-101'
     | '/leases'
     | '/map'
@@ -558,6 +569,7 @@ export interface FileRouteTypes {
     | '/extend'
     | '/extenders'
     | '/history'
+    | '/inventory'
     | '/land-101'
     | '/leases'
     | '/map'
@@ -608,6 +620,7 @@ export interface RootRouteChildren {
   ExtendRoute: typeof ExtendRoute
   ExtendersRoute: typeof ExtendersRouteWithChildren
   HistoryRoute: typeof HistoryRoute
+  InventoryRoute: typeof InventoryRoute
   Land101Route: typeof Land101Route
   LeasesRoute: typeof LeasesRoute
   MapRoute: typeof MapRoute
@@ -748,6 +761,13 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventory': {
+      id: '/inventory'
+      path: '/inventory'
+      fullPath: '/inventory'
+      preLoaderRoute: typeof InventoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/land-101': {
@@ -1042,6 +1062,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExtendRoute: ExtendRoute,
   ExtendersRoute: ExtendersRouteWithChildren,
   HistoryRoute: HistoryRoute,
+  InventoryRoute: InventoryRoute,
   Land101Route: Land101Route,
   LeasesRoute: LeasesRoute,
   MapRoute: MapRoute,
