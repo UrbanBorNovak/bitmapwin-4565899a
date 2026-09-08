@@ -81,14 +81,14 @@ function AuthPage() {
     }
   };
 
-  const google = async () => {
+  const oauth = async (provider: "google" | "apple") => {
     setBusy(true);
     try {
-      await lovable.auth.signInWithOAuth("google", {
+      await lovable.auth.signInWithOAuth(provider, {
         redirect_uri: next ? `${window.location.origin}${next}` : window.location.origin,
       });
     } catch (err) {
-      toast("GOOGLE SIGN-IN FAILED", { description: (err as Error).message.toUpperCase() });
+      toast(`${provider.toUpperCase()} SIGN-IN FAILED`, { description: (err as Error).message.toUpperCase() });
       setBusy(false);
     }
   };
@@ -152,14 +152,24 @@ function AuthPage() {
         {sent && <p className="font-mono text-xs text-foreground">&gt; {sent}</p>}
       </form>
 
-      <button
-        type="button"
-        onClick={() => void google()}
-        disabled={busy}
-        className="btn-term-ghost mt-3 w-full"
-      >
-        [ CONTINUE WITH GOOGLE ]
-      </button>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => void oauth("google")}
+          disabled={busy}
+          className="btn-term-ghost w-full"
+        >
+          [ GOOGLE ]
+        </button>
+        <button
+          type="button"
+          onClick={() => void oauth("apple")}
+          disabled={busy}
+          className="btn-term-ghost w-full"
+        >
+          [ APPLE ]
+        </button>
+      </div>
 
       <div className="mt-6 flex flex-wrap gap-4 font-mono text-[11px] uppercase text-muted-foreground">
         {mode !== "signin" && (
