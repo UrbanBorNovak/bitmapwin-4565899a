@@ -152,14 +152,24 @@ function AuthPage() {
         {sent && <p className="font-mono text-xs text-foreground">&gt; {sent}</p>}
       </form>
 
-      <button
-        type="button"
-        onClick={() => void google()}
-        disabled={busy}
-        className="btn-term-ghost mt-3 w-full"
-      >
-        [ CONTINUE WITH GOOGLE ]
-      </button>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => void oauth("google")}
+          disabled={busy}
+          className="btn-term-ghost w-full"
+        >
+          [ GOOGLE ]
+        </button>
+        <button
+          type="button"
+          onClick={() => void oauth("apple")}
+          disabled={busy}
+          className="btn-term-ghost w-full"
+        >
+          [ APPLE ]
+        </button>
+      </div>
 
       <div className="mt-6 flex flex-wrap gap-4 font-mono text-[11px] uppercase text-muted-foreground">
         {mode !== "signin" && (
