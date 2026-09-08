@@ -42,7 +42,7 @@ function ExplorePage() {
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         <DataBadge kind="live" note="CHAIN SALES" />
-        <Link to="/map" className="btn-term">[ OPEN THE WORLD MAP ]</Link>
+        <Link to="/map" className="btn-term">[ ENTER THE OASIS ]</Link>
       </div>
 
       <section className="mt-10">

@@ -4,7 +4,7 @@ const GROUPS: { label: string; items: { to: string; label: string }[] }[] = [
   {
     label: "WORLD",
     items: [
-      { to: "/map", label: "MAP" },
+      { to: "/map", label: "OASIS" },
       { to: "/cities", label: "CITIES" },
       { to: "/explore", label: "EXPLORE" },
     ],
