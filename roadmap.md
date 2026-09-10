@@ -20,4 +20,4 @@
 - [x] Unify site-wide terminal styling, interaction states, spacing rhythm, and route motion
 - [x] Tile-graph world: 32x32 chunk streaming, packed tile flags, event-driven A* and shared flow fields
 - [x] Server-authoritative built structures shared across all visitors (world_structures)
-- [ ] Make Oasis exploration world-first with a minimal persistent HUD and contextual panels
+- [x] Make Oasis exploration world-first with a minimal persistent HUD and contextual panels
