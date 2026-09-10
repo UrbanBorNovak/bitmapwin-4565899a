@@ -50,6 +50,11 @@ export function pageForBitmap(height: number): number {
   return height >= PAGE9_START ? 9 : Math.floor(height / PAGE_SIZE);
 }
 
+/** Public URL that serves an inscription's raw content. */
+export function ordContentUrl(inscriptionId: string): string {
+  return `https://ordinals.com/content/${inscriptionId}`;
+}
+
 export function isValidClaimContent(height: number, content: string | null): boolean {
   if (!content) return false;
   return content.trim() === `${height}.bitmap`;
