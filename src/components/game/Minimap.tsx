@@ -25,6 +25,11 @@ type Props = {
   partyIds?: string[];
   /** jump the big camera to a district when the expanded map is clicked */
   onVisit?: (height: number) => void;
+  /** Hide the pocket map while keeping the full map available on demand. */
+  showCompact?: boolean;
+  /** Optional controlled state used by the world-first HUD. */
+  expanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
 };
 
 const colOf = (x: number) => Math.floor((x + WORLD_UNITS / 2) / WORLD_CELL);
@@ -36,10 +41,28 @@ function readColor(name: string, fallback: string) {
   return value || fallback;
 }
 
-export function Minimap({ pose, cursors, ownedHeights, partyIds, onVisit }: Props) {
+export function Minimap({
+  pose,
+  cursors,
+  ownedHeights,
+  partyIds,
+  onVisit,
+  showCompact = true,
+  expanded: controlledExpanded,
+  onExpandedChange,
+}: Props) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [zoom, setZoom] = useState(1);
-  const [expanded, setExpanded] = useState(false);
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  const expanded = controlledExpanded ?? internalExpanded;
+  const setExpanded = useCallback(
+    (next: boolean | ((current: boolean) => boolean)) => {
+      const value = typeof next === "function" ? next(expanded) : next;
+      if (controlledExpanded === undefined) setInternalExpanded(value);
+      onExpandedChange?.(value);
+    },
+    [controlledExpanded, expanded, onExpandedChange],
+  );
   const [readout, setReadout] = useState({ col: 0, row: 0, height: 0 });
 
   const cursorsRef = useRef(cursors);
@@ -67,6 +90,7 @@ export function Minimap({ pose, cursors, ownedHeights, partyIds, onVisit }: Prop
 
   // M toggles the full-size map.
   useEffect(() => {
+    if (controlledExpanded !== undefined) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() !== "m") return;
       const target = event.target as HTMLElement | null;
@@ -75,7 +99,7 @@ export function Minimap({ pose, cursors, ownedHeights, partyIds, onVisit }: Prop
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [controlledExpanded, setExpanded]);
 
   useEffect(() => {
     let frame = 0;
@@ -310,7 +334,7 @@ export function Minimap({ pose, cursors, ownedHeights, partyIds, onVisit }: Prop
 
   return (
     <>
-      <div
+      {showCompact ? <div
         data-no-translate
         aria-label="Minimap"
         className="hud-panel pointer-events-auto absolute bottom-3 right-3 z-40 w-[188px] font-mono"
@@ -344,7 +368,7 @@ export function Minimap({ pose, cursors, ownedHeights, partyIds, onVisit }: Prop
             {partyRoster}
           </>
         )}
-      </div>
+      </div> : null}
 
       {expanded ? (
         <div

@@ -22,7 +22,7 @@ import { Suspense } from "react";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowUpRight, Crosshair, Eye, Map as MapIcon, Orbit, X } from "lucide-react";
+import { ArrowUpRight, Crosshair, Eye, Map as MapIcon, Menu, MessageSquare, Orbit, X } from "lucide-react";
 import * as THREE from "three";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
 import { Button } from "@/components/ui/button";
@@ -2064,6 +2064,9 @@ export function BitmapWorld3D({
   const [draft, setDraft] = useState("");
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [buildOpen, setBuildOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [utilityOpen, setUtilityOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [buildNote, setBuildNote] = useState<string | null>(null);
   // WEAPONS — what you are carrying while you explore the land world.
@@ -2207,8 +2210,41 @@ export function BitmapWorld3D({
         void workLand();
         return;
       }
-      // C flips between looking through your own eyes and over your shoulder.
+      if (key === "escape") {
+        setInventoryOpen(false);
+        setBuildOpen(false);
+        setMapOpen(false);
+        setChatOpen(false);
+        setUtilityOpen(false);
+        setSelected(null);
+        return;
+      }
+      if (key === "i") {
+        setInventoryOpen((current) => !current);
+        setBuildOpen(false);
+        setMapOpen(false);
+        setChatOpen(false);
+        setUtilityOpen(false);
+        return;
+      }
+      if (key === "m") {
+        setMapOpen((current) => !current);
+        setInventoryOpen(false);
+        setBuildOpen(false);
+        setChatOpen(false);
+        setUtilityOpen(false);
+        return;
+      }
       if (key === "c") {
+        setChatOpen((current) => !current);
+        setInventoryOpen(false);
+        setBuildOpen(false);
+        setMapOpen(false);
+        setUtilityOpen(false);
+        return;
+      }
+      // O changes perspective; C belongs to chat in the minimal HUD.
+      if (key === "o") {
         setCameraMode((current) => (current === "first" ? "third" : "first"));
         return;
       }
@@ -2240,6 +2276,10 @@ export function BitmapWorld3D({
       }
       if (key !== "b") return;
       setBuildOpen((current) => !current);
+      setInventoryOpen(false);
+      setMapOpen(false);
+      setChatOpen(false);
+      setUtilityOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -2700,6 +2740,29 @@ export function BitmapWorld3D({
       <div className="relative h-[78vh] min-h-[520px] w-full overflow-hidden border border-border bg-background">
         {/* Controls sit on the world itself, not stacked above it. */}
         <div className="pointer-events-none absolute inset-x-0 top-0 z-40 p-2">
+          {exploring ? (
+            <div className="flex items-start justify-between gap-3 px-1 py-1 font-mono">
+              <div className="pointer-events-none">
+                <div className="display text-base text-foreground md:text-lg">THE OASIS</div>
+                <div className="text-[9px] text-muted-foreground" data-no-translate>
+                  {readout.height.toLocaleString("en-US")}.BITMAP
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Open world tools"
+                aria-expanded={utilityOpen}
+                title="World tools"
+                className="pointer-events-auto border border-border bg-background/55 text-muted-foreground backdrop-blur-sm hover:border-bitcoin hover:text-bitcoin"
+                onClick={() => setUtilityOpen((current) => !current)}
+              >
+                {utilityOpen ? <X /> : <Menu />}
+              </Button>
+            </div>
+          ) : null}
+          {!exploring || utilityOpen ? (
           <div className="hud-toolbar pointer-events-auto">
             <form
               className="flex items-center gap-1.5"
@@ -2882,6 +2945,7 @@ export function BitmapWorld3D({
               </Button>
             </div>
           </div>
+          ) : null}
           {rideNote ? (
             <div
               className="hud-toolbar pointer-events-none mt-2 w-fit max-w-[calc(100%-15rem)] text-[10px] text-bitcoin"
@@ -2975,7 +3039,7 @@ export function BitmapWorld3D({
           />
         ) : null}
 
-        {/* MINIMAP — where you are, who is near, what you own. */}
+        {/* Full map stays available without occupying the exploration view. */}
         {exploring ? (
           <Minimap
             pose={pose}
@@ -2983,12 +3047,15 @@ export function BitmapWorld3D({
             ownedHeights={ownedHeights}
             partyIds={party.party?.members.map((member) => member.id) ?? []}
             onVisit={visitHeight}
+            showCompact={false}
+            expanded={mapOpen}
+            onExpandedChange={setMapOpen}
           />
         ) : null}
 
 
 
-        {weapon && exploring ? (
+        {weapon && exploring && (shooterStats.reloading || Boolean(shooterStats.note)) ? (
           <div
             data-no-translate
             className="hud-panel absolute left-3 top-[13rem] z-40 space-y-1 px-2.5 py-2 font-mono text-[10px] tabular-nums"
@@ -3062,11 +3129,11 @@ export function BitmapWorld3D({
           </div>
         ) : null}
 
-        {exploring ? <SkillsHud /> : null}
-
         <EggHunt unit={AVATAR_U} />
 
-        {exploring ? <SmeltHud pose={pose} /> : null}
+        {inventoryOpen ? <SkillsHud /> : null}
+
+        {inventoryOpen ? <SmeltHud pose={pose} /> : null}
 
         {buildOpen ? (
           <MinerHud address={wallet?.ordinalsAddress ?? null} />
@@ -3083,7 +3150,7 @@ export function BitmapWorld3D({
         ) : null}
 
         {/* THE BELT — in-world weapon slots: press 1 / 2 / 3, scroll to cycle, 0 to holster. */}
-        {exploring ? (
+        {exploring && utilityOpen ? (
           <div
             data-no-translate
             className="absolute bottom-3 left-1/2 z-40 -translate-x-1/2"
@@ -3121,7 +3188,7 @@ export function BitmapWorld3D({
 
 
 
-        <div
+        {utilityOpen ? <div
           role="group"
           aria-label="Camera mode"
           data-no-translate
@@ -3176,8 +3243,8 @@ export function BitmapWorld3D({
           >
             <Eye /> <span className="hidden sm:inline">1ST</span>
           </Button>
-          <span className="hidden pr-1 text-[9px] text-muted-foreground sm:inline">C</span>
-        </div>
+          <span className="hidden pr-1 text-[9px] text-muted-foreground sm:inline">O</span>
+        </div> : null}
 
         {cameraMode === "first" ? (
           <div
@@ -3188,8 +3255,8 @@ export function BitmapWorld3D({
           </div>
         ) : null}
 
-        {/* Your own health, always visible while exploring the world. */}
-        <div
+        {/* Health stays out of sight until damage or death makes it important. */}
+        {(!exploring || hp < MAX_HP || respawnNote || attackTarget) ? <div
           data-no-translate
           className="hud-panel pointer-events-none absolute left-3 top-[9.5rem] z-30 flex max-w-[min(340px,calc(100%-1.5rem))] flex-col gap-1 px-2 py-1.5 font-mono text-[10px]"
         >
@@ -3243,7 +3310,7 @@ export function BitmapWorld3D({
               </span>
               {helpOpen ? (
                 <span className="text-muted-foreground">
-                  W · S WALK · A · D TURN · Q · E SIDESTEP · SHIFT SPRINT · SPACE JUMP · C SWAP
+                   W · S WALK · A · D TURN · Q · E SIDESTEP · SHIFT SPRINT · SPACE JUMP · O SWAP
                   VIEW · M MAP · V TRAVEL · SPACE · X CLIMB · SINK WHEN FLYING · B BUILD · T
                   TERRAFORM · F ATTACK · H HEAL SPELL · K OPEN CHEST · P COMPANION · N NIGHT VISION · G
                   ICE CREAM · J RAMEN · U CHEESE SLICE ·{" "}
@@ -3262,9 +3329,9 @@ export function BitmapWorld3D({
               </button>
             </>
           ) : null}
-        </div>
+        </div> : null}
 
-        <section
+        {(party.invites.length > 0 || utilityOpen) ? <section
           data-no-translate
           aria-label="Party"
           className="hud-panel absolute right-3 top-[13rem] z-20 w-[min(250px,calc(100%-1.5rem))] font-mono text-[10px]"
@@ -3396,10 +3463,10 @@ export function BitmapWorld3D({
               )}
             </div>
           )}
-        </section>
+        </section> : null}
 
         {/* Bottom-left column: live extender readout stacked over the combat log. */}
-        <div className="hud-stack absolute bottom-24 left-3 z-30 w-[min(320px,calc(100%-1.5rem))]">
+        {utilityOpen ? <div className="hud-stack absolute bottom-24 left-3 z-30 w-[min(320px,calc(100%-1.5rem))]">
           <div className="pointer-events-none">
             <ExtenderHud running={running} />
           </div>
@@ -3443,7 +3510,7 @@ export function BitmapWorld3D({
               )}
             </ol>
           </section>
-        </div>
+        </div> : null}
 
 
         <div
@@ -3461,7 +3528,13 @@ export function BitmapWorld3D({
         ) : null}
 
         {/* Talk while you explore — ephemeral world chat with speech bubbles over avatars. */}
-        <div className="absolute bottom-3 left-1/2 z-30 flex w-[min(420px,calc(100%-1.5rem))] -translate-x-1/2 flex-col gap-1">
+        {chatOpen ? <div className="absolute inset-x-3 bottom-16 z-40 mx-auto flex w-[min(520px,calc(100%-1.5rem))] flex-col gap-1 border border-bitcoin bg-background/95 p-2 shadow-[6px_6px_0_var(--bitcoin)]">
+          <div className="flex items-center justify-between gap-2">
+            <span className="label text-bitcoin">OASIS CHAT</span>
+            <Button type="button" variant="ghost" size="icon" aria-label="Close chat" onClick={() => setChatOpen(false)}>
+              <X />
+            </Button>
+          </div>
           <div className="flex gap-1">
             <Button
               type="button"
@@ -3534,7 +3607,28 @@ export function BitmapWorld3D({
               [ {chatMode === "party" ? "PARTY" : "SAY"} ]
             </Button>
           </form>
-        </div>
+        </div> : null}
+
+        {exploring && !inventoryOpen && !buildOpen && !mapOpen && !chatOpen ? (
+          <div className="pointer-events-none absolute inset-x-0 bottom-4 z-30 flex items-center justify-between px-4 md:px-8">
+            <Button
+              type="button"
+              variant="ghost"
+              className="pointer-events-auto border border-border bg-background/55 font-mono text-[10px] text-muted-foreground backdrop-blur-sm hover:border-bitcoin hover:text-bitcoin"
+              onClick={() => setMapOpen(true)}
+            >
+              <MapIcon className="size-3.5" /> [M] MAP
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="pointer-events-auto border border-border bg-background/55 font-mono text-[10px] text-muted-foreground backdrop-blur-sm hover:border-bitcoin hover:text-bitcoin"
+              onClick={() => setChatOpen(true)}
+            >
+              <MessageSquare className="size-3.5" /> [C] CHAT
+            </Button>
+          </div>
+        ) : null}
 
         {hover ? (
           <div
@@ -3620,8 +3714,8 @@ export function BitmapWorld3D({
 
       </div>
 
-      {/* Status strip lives under the viewport so it never covers the world. */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border border-t-0 border-border bg-card/60 px-2 py-1.5 font-mono text-[10px] text-muted-foreground">
+      {/* Detailed map status stays available in overhead mode only. */}
+      {!exploring ? <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border border-t-0 border-border bg-card/60 px-2 py-1.5 font-mono text-[10px] text-muted-foreground">
         <span>DRAG PAN · RIGHT DRAG ORBIT · SCROLL FLY · CLICK A BLOCK</span>
         <span className="text-border">|</span>
         <span data-no-translate>
@@ -3649,7 +3743,7 @@ export function BitmapWorld3D({
         ) : (
           <span>CONNECT OR LINK WALLET TO HIGHLIGHT YOUR BITMAPS</span>
         )}
-      </div>
+      </div> : null}
     </div>
   );
 }
