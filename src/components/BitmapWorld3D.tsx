@@ -22,7 +22,7 @@ import { Suspense } from "react";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowUpRight, Crosshair, Eye, Map as MapIcon, Orbit, X } from "lucide-react";
+import { ArrowUpRight, Crosshair, Eye, Map as MapIcon, Menu, MessageSquare, Orbit, X } from "lucide-react";
 import * as THREE from "three";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
 import { Button } from "@/components/ui/button";
@@ -2064,6 +2064,9 @@ export function BitmapWorld3D({
   const [draft, setDraft] = useState("");
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [buildOpen, setBuildOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [utilityOpen, setUtilityOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [buildNote, setBuildNote] = useState<string | null>(null);
   // WEAPONS — what you are carrying while you explore the land world.
@@ -2207,8 +2210,41 @@ export function BitmapWorld3D({
         void workLand();
         return;
       }
-      // C flips between looking through your own eyes and over your shoulder.
+      if (key === "escape") {
+        setInventoryOpen(false);
+        setBuildOpen(false);
+        setMapOpen(false);
+        setChatOpen(false);
+        setUtilityOpen(false);
+        setSelected(null);
+        return;
+      }
+      if (key === "i") {
+        setInventoryOpen((current) => !current);
+        setBuildOpen(false);
+        setMapOpen(false);
+        setChatOpen(false);
+        setUtilityOpen(false);
+        return;
+      }
+      if (key === "m") {
+        setMapOpen((current) => !current);
+        setInventoryOpen(false);
+        setBuildOpen(false);
+        setChatOpen(false);
+        setUtilityOpen(false);
+        return;
+      }
       if (key === "c") {
+        setChatOpen((current) => !current);
+        setInventoryOpen(false);
+        setBuildOpen(false);
+        setMapOpen(false);
+        setUtilityOpen(false);
+        return;
+      }
+      // O changes perspective; C belongs to chat in the minimal HUD.
+      if (key === "o") {
         setCameraMode((current) => (current === "first" ? "third" : "first"));
         return;
       }
@@ -2240,6 +2276,10 @@ export function BitmapWorld3D({
       }
       if (key !== "b") return;
       setBuildOpen((current) => !current);
+      setInventoryOpen(false);
+      setMapOpen(false);
+      setChatOpen(false);
+      setUtilityOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

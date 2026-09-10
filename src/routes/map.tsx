@@ -1,11 +1,7 @@
-import { useCallback, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { BitmapWorld3D } from "@/components/BitmapWorld3D";
-import { MvpFlowRail } from "@/components/MvpFlowRail";
-import { MapChat } from "@/components/MapChat";
-import type { MapCursor } from "@/lib/map-presence";
 import { getChainBlocks } from "@/lib/chain.functions";
 
 export const Route = createFileRoute("/map")({
@@ -45,9 +41,6 @@ function MapPage() {
   });
 
   const tipHeight = tip.data ?? 0;
-  const [cursors, setCursors] = useState<MapCursor[]>([]);
-  const handleCursors = useCallback((next: MapCursor[]) => setCursors(next), []);
-
   const legend = (
     <>
       <span className="label mr-1 text-[9px]">LEGEND</span>
@@ -72,47 +65,13 @@ function MapPage() {
   );
 
   return (
-    <div className="page-shell">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="display text-2xl md:text-3xl">THE OASIS</h1>
-          <p className="label mt-1 text-[9px]">
-            1,000 × 1,000 · ONE CELL = ONE BITMAP · BLOCK ORDER LEFT TO RIGHT
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <span className="label text-[9px]">CHAIN TIP</span>
-          <span
-            data-no-translate
-            className="hud-panel-accent px-2.5 py-1 font-mono text-[11px] tabular-nums text-foreground"
-          >
-            {tip.isPending ? (
-              <>
-                SYNC<span className="blink">…</span>
-              </>
-            ) : tip.isError ? (
-              "NO DATA YET"
-            ) : (
-              tipHeight.toLocaleString("en-US")
-            )}
-          </span>
-        </div>
-      </header>
-
-      <div className="mt-3">
-        <MvpFlowRail active="map" {...(height === undefined ? {} : { height })} />
-      </div>
-
-      <div className="mt-3 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div data-tour="map-world" className="min-w-0">
-          <BitmapWorld3D
-            tipHeight={tipHeight}
-            {...(height === undefined ? {} : { initialHeight: height })}
-            onCursorsChange={handleCursors}
-            legend={<span data-tour="map-legend" className="flex flex-wrap items-center gap-2">{legend}</span>}
-          />
-        </div>
-        <MapChat cursors={cursors} />
+    <div className="px-2 pb-2 md:px-3">
+      <div data-tour="map-world" className="min-w-0">
+        <BitmapWorld3D
+          tipHeight={tipHeight}
+          {...(height === undefined ? {} : { initialHeight: height })}
+          legend={<span data-tour="map-legend" className="flex flex-wrap items-center gap-2">{legend}</span>}
+        />
       </div>
     </div>
   );
