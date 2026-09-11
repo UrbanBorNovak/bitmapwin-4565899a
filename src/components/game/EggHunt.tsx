@@ -30,6 +30,10 @@ export function EggHunt({ unit }: { unit: number }) {
   const note = eggNote();
   const within = probe ? probe.distance <= unit * EGG_REACH : false;
 
+  // The hunt becomes visible only when it is relevant instead of permanently
+  // occupying the exploration view from across the world.
+  if (!note && (!probe || probe.claimed || probe.distance > unit * 16)) return null;
+
   return (
     <div
       data-no-translate
