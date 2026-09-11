@@ -8,7 +8,7 @@
  * name, and your own heading as an arrow at the centre. Press M for the full map.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PlayerState } from "@/lib/player-state";
 import { WORLD_CELL, WORLD_GRID, WORLD_UNITS } from "@/lib/player-state";
 import type { MapCursor } from "@/lib/map-presence";
