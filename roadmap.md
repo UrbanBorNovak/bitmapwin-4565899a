@@ -21,3 +21,5 @@
 - [x] Tile-graph world: 32x32 chunk streaming, packed tile flags, event-driven A* and shared flow fields
 - [x] Server-authoritative built structures shared across all visitors (world_structures)
 - [x] Make Oasis exploration world-first with a minimal persistent HUD and contextual panels
+- [x] Desert haze fog by view mode plus first-person feel: step bob, landing dip, turn lean, speed FOV
+
