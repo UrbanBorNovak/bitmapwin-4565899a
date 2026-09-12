@@ -125,6 +125,8 @@ import {
 import {
   DEFAULT_AVATAR_MODEL,
   DEFAULT_AVATAR_TEXTURE,
+  readLastPose,
+  saveLastPose,
   setAvatarModelInscription,
 } from "@/lib/map-identity";
 
@@ -2434,31 +2436,51 @@ export function BitmapWorld3D({
   }, []);
   useEffect(() => onCursorsChange?.(cursors), [cursors, onCursorsChange]);
 
-  // Deep links spawn directly on the requested experience; ordinary map visits
-  // still begin at the live chain tip.
+  // Deep links spawn directly on the requested experience; otherwise you come
+  // back exactly where you left off, falling back to the live chain tip.
   const spawnedRef = useRef(false);
   useEffect(() => {
     if (spawnedRef.current || !tipHeight) return;
     spawnedRef.current = true;
-    const spawnHeight = initialHeight !== undefined && initialHeight <= tipHeight ? initialHeight : tipHeight;
-    placePlayer(pose.current, worldX(spawnHeight % GRID), worldZ(Math.floor(spawnHeight / GRID)), 0);
+    const deepLink = initialHeight !== undefined && initialHeight <= tipHeight;
+    const saved = deepLink ? null : readLastPose();
+    const spawnHeight = deepLink ? (initialHeight as number) : tipHeight;
+    if (saved) placePlayer(pose.current, saved.x, saved.z, saved.yaw);
+    else
+      placePlayer(pose.current, worldX(spawnHeight % GRID), worldZ(Math.floor(spawnHeight / GRID)), 0);
     publish({
-      col: spawnHeight % GRID,
-      row: Math.floor(spawnHeight / GRID),
-      height: spawnHeight,
+      col: pose.current.col,
+      row: pose.current.row,
+      height: pose.current.height,
       x: pose.current.x,
       z: pose.current.z,
-      yaw: 0,
+      yaw: pose.current.yaw,
       movement: "idle",
       teleport: true,
     });
-    if (initialHeight !== undefined && initialHeight <= tipHeight) {
+    if (deepLink) {
       setVisitDraft(String(initialHeight));
-      setSelected({ height: initialHeight, owner: ownersRef.current?.get(initialHeight) ?? null });
+      setSelected({ height: initialHeight as number, owner: ownersRef.current?.get(initialHeight as number) ?? null });
     }
     // once you are standing in the world, walking controls are live right away
     setCameraMode("third");
   }, [initialHeight, tipHeight, publish]);
+
+  // Remember where you stand, so signing back in puts you back on the spot.
+  useEffect(() => {
+    const remember = () => {
+      if (!spawnedRef.current) return;
+      saveLastPose({ x: pose.current.x, z: pose.current.z, yaw: pose.current.yaw });
+    };
+    const timer = window.setInterval(remember, 4_000);
+    window.addEventListener("pagehide", remember);
+    return () => {
+      remember();
+      window.clearInterval(timer);
+      window.removeEventListener("pagehide", remember);
+    };
+  }, []);
+
 
   // Killed: wake up at the nearest graveyard, else the nearest town, else on
   // 0.BITMAP — the genesis square everyone starts from. This runs exactly once

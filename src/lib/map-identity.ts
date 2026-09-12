@@ -104,3 +104,35 @@ export function removeFromWardrobe(inscriptionId: string): string[] {
   writeWardrobe(next);
   return next;
 }
+
+/**
+ * Last standing spot in the world, so closing the tab and coming back drops you
+ * where you left off instead of at the chain tip.
+ */
+const POSE_KEY = "bitmap-map-last-pose";
+
+export type SavedPose = { x: number; z: number; yaw: number };
+
+export function readLastPose(): SavedPose | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(POSE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<SavedPose>;
+    const { x, z, yaw } = parsed ?? {};
+    if (!Number.isFinite(x) || !Number.isFinite(z) || !Number.isFinite(yaw)) return null;
+    return { x: x as number, z: z as number, yaw: yaw as number };
+  } catch {
+    return null;
+  }
+}
+
+export function saveLastPose(pose: SavedPose) {
+  if (typeof window === "undefined") return;
+  if (!Number.isFinite(pose.x) || !Number.isFinite(pose.z) || !Number.isFinite(pose.yaw)) return;
+  try {
+    window.localStorage.setItem(POSE_KEY, JSON.stringify(pose));
+  } catch {
+    /* storage full or blocked — position simply is not remembered */
+  }
+}
