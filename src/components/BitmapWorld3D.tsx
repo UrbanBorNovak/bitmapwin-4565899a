@@ -1296,6 +1296,23 @@ function PlayerCameraRig({
   const steer = useRef(0);
   const bob = useRef(0);
   const jumpRequested = useRef(false);
+  // Landing impact and body lean — feel only, and both switched off for anyone
+  // who asked the system for reduced motion.
+  const land = useRef(0);
+  const roll = useRef(0);
+  const wasGrounded = useRef(true);
+  const calm = useRef(false);
+
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    calm.current = query.matches;
+    const listen = () => {
+      calm.current = query.matches;
+    };
+    query.addEventListener("change", listen);
+    return () => query.removeEventListener("change", listen);
+  }, []);
+
 
 
   useEffect(() => {
@@ -1430,12 +1447,29 @@ function PlayerCameraRig({
     // Ease the steer input in and out so turns start and stop like a body, not a switch.
     steer.current = damp(steer.current, intent.turn, 9, delta);
     intent.turn = Math.abs(steer.current) < 0.02 ? 0 : steer.current;
+    const fallSpeed = player.grounded ? 0 : Math.max(0, -player.vy);
     stepPlayer(player, intent, delta);
+
+    // Touching down after a jump or a fall dips the view once, hard enough to
+    // feel and short enough not to fight the next step.
+    if (!calm.current && player.grounded && !wasGrounded.current) {
+      land.current = Math.min(1, fallSpeed / (MOVE.jumpSpeed * 0.9));
+    }
+    wasGrounded.current = player.grounded;
+    land.current = damp(land.current, 0, 7, delta);
 
     // Both modes track the same predicted player target. Only offsets change,
     // so switching perspective is a smooth camera move rather than a cut.
     const speed = Math.hypot(player.vx, player.vz);
     const gait = Math.min(1, speed / (MOVE.walkSpeed * 1.1));
+    // Leaning into a turn: strongest at pace, gone when standing still, and
+    // steadied right down while aiming so a shot never drifts.
+    const leanGoal = calm.current
+      ? 0
+      : steer.current * gait * (driving ? 0.08 : 0.045) * (1 - aimState.amount * 0.85);
+    roll.current = damp(roll.current, leanGoal, 6, delta);
+    const dip = land.current * AVATAR_U * (mode === "first" ? 0.28 : 0.34);
+
     if (mode === "first" && driving) {
       // Hood cam: sits just ahead of the nose so the road is wide open instead
       // of being read through the windshield. No footstep bob behind the wheel.
@@ -1453,11 +1487,13 @@ function PlayerCameraRig({
         player.z + Math.cos(player.yaw) * (ahead + horizontal),
       );
     } else if (mode === "first") {
-      // Footstep bob: vertical bounce plus a light side sway, scaled by pace.
+      // Footstep bob: vertical bounce plus a light side sway, scaled by pace and
+      // held right down while aiming so the sights stay steady.
+      const settle = calm.current ? 0 : 1 - aimState.amount * 0.8;
       bob.current += speed * delta * 7.5;
-      const bounce = Math.sin(bob.current * 2) * AVATAR_U * 0.035 * gait;
-      const sway = Math.cos(bob.current) * AVATAR_U * 0.05 * gait;
-      const eye = player.y + AVATAR_U * 0.88 + bounce;
+      const bounce = Math.sin(bob.current * 2) * AVATAR_U * 0.03 * gait * settle;
+      const sway = Math.cos(bob.current) * AVATAR_U * 0.042 * gait * settle;
+      const eye = player.y + AVATAR_U * 0.88 + bounce - dip;
       cameraTarget.current.set(
         player.x + Math.cos(player.yaw) * sway,
         eye,
@@ -1480,13 +1516,16 @@ function PlayerCameraRig({
       const side = -steer.current * AVATAR_U * 1.6;
       cameraTarget.current.set(
         player.x - Math.sin(player.yaw) * back + Math.cos(player.yaw) * side,
-        player.y + AVATAR_U * (3.3 - gait * 0.45),
+        player.y + AVATAR_U * (3.3 - gait * 0.45) - dip,
         player.z - Math.cos(player.yaw) * back - Math.sin(player.yaw) * side,
       );
+      // Look a little where the body is heading, scaled by pace so standing
+      // still never drags the aim off the avatar.
+      const lead = 0.12 + gait * 0.1;
       cameraLook.current.set(
-        player.x + player.vx * 0.16 + Math.sin(player.yaw) * AVATAR_U * 2.8,
+        player.x + player.vx * lead + Math.sin(player.yaw) * AVATAR_U * 2.8,
         player.y + AVATAR_U * 0.72,
-        player.z + player.vz * 0.16 + Math.cos(player.yaw) * AVATAR_U * 2.8,
+        player.z + player.vz * lead + Math.cos(player.yaw) * AVATAR_U * 2.8,
       );
     }
     const transitionSpeed = mode === "first" ? 11 : 6;
@@ -1497,14 +1536,23 @@ function PlayerCameraRig({
       targetRotation.current,
       1 - Math.exp(-(mode === "first" ? 14 : 7) * delta),
     );
+    // Lean last, on top of the settled look, so turning banks the frame without
+    // ever pulling the camera off its target.
+    if (Math.abs(roll.current) > 0.0005) camera.rotateZ(roll.current);
+
     const perspective = camera as THREE.PerspectiveCamera;
     // Holding the left button in first person steadies the aim and pulls the
     // view in, by an amount that suits the weapon in hand.
     const aiming = mode === "first" && aimState.active;
     aimState.amount = damp(aimState.amount, aiming ? 1 : 0, 9, delta);
     const zoom = 1 - (1 - aimZoom(weapon)) * aimState.amount;
+    // Speed widens the view a little and a landing squeezes it for a beat.
     const targetFov =
-      ((mode === "first" ? 68 : 52) + gait * (mode === "first" ? 5 : 3)) * zoom;
+      ((mode === "first" ? 68 : 52) +
+        gait * (mode === "first" ? 7 : 4) -
+        land.current * (mode === "first" ? 5 : 3)) *
+      zoom;
+
     if (Math.abs(perspective.fov - targetFov) > 0.02) {
       perspective.fov = damp(perspective.fov, targetFov, 8, delta);
       perspective.updateProjectionMatrix();
@@ -1887,7 +1935,19 @@ const WorldScene = memo(function WorldScene({
   return (
     <>
       <color attach="background" args={[colors.background]} />
-      <fog attach="fog" args={[colors.background, 34, 150]} />
+      {/* Desert haze closes in while you walk the world and opens up on the
+          overhead map, where distant districts must stay readable. */}
+      <fog
+        attach="fog"
+        args={
+          cameraMode === "map"
+            ? [colors.background, 40, 190]
+            : cameraMode === "first"
+              ? [colors.background, 10, 88]
+              : [colors.background, 16, 108]
+        }
+      />
+
       <ambientLight intensity={0.42} />
       <hemisphereLight args={[colors.foreground, colors.background, 0.52]} />
       <directionalLight
