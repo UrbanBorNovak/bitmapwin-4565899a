@@ -65,7 +65,10 @@ export function SmeltHud({ pose }: { pose: React.RefObject<SelfPose> }) {
         <span className="tabular-nums text-foreground">{nuggets}</span>
       </div>
       <div className="flex items-center justify-between">
-        <span className="text-muted-foreground">GOLD BARS</span>
+        <span className="flex items-center gap-1.5 text-muted-foreground">
+          <GoldBarIcon size={12} />
+          GOLD BARS
+        </span>
         <span className="tabular-nums text-bitcoin">{bars}</span>
       </div>
       <button
