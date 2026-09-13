@@ -5,6 +5,7 @@ import { FOODS, useGear, gearSnapshot } from "@/lib/world-gear";
 import { RIDES } from "@/lib/world-vehicle";
 import { SWORD_INSCRIPTION, SWORD_TWO_INSCRIPTION } from "@/components/game/weapons";
 import { ordContentUrl } from "@/lib/oci";
+import { GoldBarIcon } from "@/components/GoldBarIcon";
 
 export const Route = createFileRoute("/inventory")({
   head: () => ({
@@ -78,7 +79,7 @@ function InventoryPage() {
       </p>
 
       <section className="mt-10 grid grid-cols-2 border border-border md:grid-cols-4">
-        <Stat k="GOLD BARS" v={String(bars)} />
+        <Stat k="GOLD BARS" v={String(bars)} icon />
         <Stat k="GOLD NUGGETS" v={`${nuggets} / 4 TO A BAR`} />
         <Stat k="PACK LOAD" v={`${skills.carried} / 28`} />
         <Stat k="ACTIVE BUFF" v={buff ? buff.label : "NONE"} />
@@ -92,7 +93,10 @@ function InventoryPage() {
         <ul className="grid grid-cols-2 divide-border sm:grid-cols-4">
           {SPOIL_ORDER.map((item) => (
             <li key={item} className="border-b border-r border-border p-5">
-              <p className="label">{ITEM_LABELS[item]}</p>
+              <p className="label flex items-center gap-1.5">
+                {item === "gold-bar" ? <GoldBarIcon size={12} /> : null}
+                {ITEM_LABELS[item]}
+              </p>
               <p className="display mt-2 text-2xl">{skills.items[item]}</p>
             </li>
           ))}
@@ -188,10 +192,13 @@ function InventoryPage() {
   );
 }
 
-function Stat({ k, v }: { k: string; v: string }) {
+function Stat({ k, v, icon }: { k: string; v: string; icon?: boolean }) {
   return (
     <div className="border-r border-b border-border p-5 last:border-r-0">
-      <div className="label">{k}</div>
+      <div className="label flex items-center gap-1.5">
+        {icon ? <GoldBarIcon size={12} /> : null}
+        {k}
+      </div>
       <div className="display mt-2 text-lg break-all">{v}</div>
     </div>
   );
