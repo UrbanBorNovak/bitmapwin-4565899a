@@ -1798,15 +1798,7 @@ const LandSurface = memo(function LandSurface({
   // upper layers never write depth — no flicker while zooming or panning.
   return (
     <>
-      <mesh
-        rotation-x={-Math.PI / 2}
-        position={[0, -AVATAR_U * 0.1, WORLD_SIZE / 2]}
-        renderOrder={-5}
-        raycast={noRaycast}
-      >
-        <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
-        <meshLambertMaterial color={colors.background} depthWrite={false} depthTest={false} />
-      </mesh>
+      <GroundPlane colors={colors} />
       <mesh
         rotation-x={-Math.PI / 2}
         position={[0, -AVATAR_U * 0.1, tipDepth / 2]}
