@@ -49,6 +49,7 @@ import {
   activeRegen,
   companionSpec,
   cycleCompanion,
+  FOODS,
   startEating,
   tickGear,
   toggleGoggles,
@@ -60,6 +61,7 @@ import { ChunkStreamer } from "@/components/game/ChunkStreamer";
 import { FootTrail } from "@/components/game/FootTrail";
 import { LandGrowth } from "@/components/game/LandGrowth";
 import { growthLabel, terraform, terraformAt } from "@/lib/world-terraform";
+import { ordContentUrl } from "@/lib/oci";
 
 
 import {
@@ -2129,6 +2131,7 @@ export function BitmapWorld3D({
   const [mapOpen, setMapOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [utilityOpen, setUtilityOpen] = useState(false);
+  const [rationsOpen, setRationsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [buildNote, setBuildNote] = useState<string | null>(null);
   // WEAPONS — what you are carrying while you explore the land world.
