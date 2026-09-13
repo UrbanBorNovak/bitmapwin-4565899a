@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { GoldBarIcon } from "@/components/GoldBarIcon";
 import { playSfx } from "@/lib/world-audio";
 import { useWorldSkills } from "@/lib/world-skills";
 import { BAR_COST, smeltGoldBar, furnaceInReach } from "@/lib/world-smelt";
