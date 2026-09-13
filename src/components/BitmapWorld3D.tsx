@@ -1781,6 +1781,103 @@ function ViewWindowReporter({
   return null;
 }
 
+// The desert floor: a single shader plane. Value-noise dunes give the sand
+// broad shading, a finer animated ripple drifts with the wind, and the scene
+// fog is blended in by hand because ShaderMaterial does not apply it.
+function GroundPlane({ colors }: { colors: WorldColors }) {
+  const matRef = useRef<THREE.ShaderMaterial>(null);
+  const uniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      uBase: { value: new THREE.Color(colors.background) },
+      uSand: { value: new THREE.Color(colors.muted) },
+      uGlow: { value: new THREE.Color(colors.bitcoin) },
+      uFogColor: { value: new THREE.Color(colors.background) },
+      uFogNear: { value: 40 },
+      uFogFar: { value: 190 },
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+  useEffect(() => {
+    uniforms.uBase.value.set(colors.background);
+    uniforms.uSand.value.set(colors.muted);
+    uniforms.uGlow.value.set(colors.bitcoin);
+  }, [colors, uniforms]);
+  useFrame(({ scene, clock }) => {
+    uniforms.uTime.value = clock.elapsedTime;
+    const fog = scene.fog as THREE.Fog | null;
+    if (fog) {
+      uniforms.uFogColor.value.copy(fog.color);
+      uniforms.uFogNear.value = fog.near;
+      uniforms.uFogFar.value = fog.far;
+    }
+  });
+  return (
+    <mesh
+      rotation-x={-Math.PI / 2}
+      position={[0, -AVATAR_U * 0.1, WORLD_SIZE / 2]}
+      renderOrder={-5}
+      raycast={noRaycast}
+    >
+      <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
+      <shaderMaterial
+        ref={matRef}
+        depthWrite={false}
+        depthTest={false}
+        uniforms={uniforms}
+        vertexShader={/* glsl */ `
+          varying vec3 vWorldPos;
+          void main() {
+            vec4 world = modelMatrix * vec4(position, 1.0);
+            vWorldPos = world.xyz;
+            gl_Position = projectionMatrix * viewMatrix * world;
+          }
+        `}
+        fragmentShader={/* glsl */ `
+          uniform float uTime;
+          uniform vec3 uBase;
+          uniform vec3 uSand;
+          uniform vec3 uGlow;
+          uniform vec3 uFogColor;
+          uniform float uFogNear;
+          uniform float uFogFar;
+          varying vec3 vWorldPos;
+
+          float hash(vec2 p) {
+            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+          }
+          float noise(vec2 p) {
+            vec2 i = floor(p);
+            vec2 f = fract(p);
+            vec2 u = f * f * (3.0 - 2.0 * f);
+            return mix(
+              mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),
+              mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x),
+              u.y
+            );
+          }
+
+          void main() {
+            vec2 p = vWorldPos.xz;
+            // Broad static dunes — two octaves of large-scale shading.
+            float dune = noise(p * 0.045) * 0.65 + noise(p * 0.14) * 0.35;
+            // Fine ripples creeping sideways, like wind over sand.
+            float ripple = noise(p * 0.9 + vec2(uTime * 0.25, uTime * 0.06));
+            vec3 col = mix(uBase, uSand, 0.25 + dune * 0.4);
+            col += uSand * (ripple - 0.5) * 0.12;
+            // A faint warm shimmer where the ripples catch the light.
+            col += uGlow * smoothstep(0.72, 1.0, ripple) * 0.05;
+            float depth = gl_FragCoord.z / gl_FragCoord.w;
+            float fogFactor = smoothstep(uFogNear, uFogFar, depth);
+            gl_FragColor = vec4(mix(col, uFogColor, fogFactor), 1.0);
+          }
+        `}
+      />
+    </mesh>
+  );
+}
+
 const LandSurface = memo(function LandSurface({
   colors,
   tipHeight,
@@ -1798,15 +1895,7 @@ const LandSurface = memo(function LandSurface({
   // upper layers never write depth — no flicker while zooming or panning.
   return (
     <>
-      <mesh
-        rotation-x={-Math.PI / 2}
-        position={[0, -AVATAR_U * 0.1, WORLD_SIZE / 2]}
-        renderOrder={-5}
-        raycast={noRaycast}
-      >
-        <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
-        <meshLambertMaterial color={colors.background} depthWrite={false} depthTest={false} />
-      </mesh>
+      <GroundPlane colors={colors} />
       <mesh
         rotation-x={-Math.PI / 2}
         position={[0, -AVATAR_U * 0.1, tipDepth / 2]}
