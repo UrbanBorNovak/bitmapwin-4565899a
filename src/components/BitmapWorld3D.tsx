@@ -2353,7 +2353,7 @@ export function BitmapWorld3D({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [workLand]);
+  }, [workLand, eat]);
 
 
 
@@ -2964,48 +2964,53 @@ export function BitmapWorld3D({
               >
                 [ NIGHT VISION · N ]
               </Button>
-              <Button
-                className="btn-term-ghost"
-                variant="ghost"
-                onClick={() => {
-                  const spec = startEating("ice-cream");
-                  if (!spec) return;
-                  heal(spec.bite);
-                  playSfx("ui");
-                  setBiteNote(`${spec.label} · +${spec.bite} HP · ${spec.buff.label}`);
-                  window.setTimeout(() => setBiteNote(null), 2400);
-                }}
-              >
-                [ ICE CREAM · G ]
-              </Button>
-              <Button
-                className="btn-term-ghost"
-                variant="ghost"
-                onClick={() => {
-                  const spec = startEating("ramen");
-                  if (!spec) return;
-                  heal(spec.bite);
-                  playSfx("ui");
-                  setBiteNote(`${spec.label} · +${spec.bite} HP · ${spec.buff.label}`);
-                  window.setTimeout(() => setBiteNote(null), 2400);
-                }}
-              >
-                [ RAMEN · J ]
-              </Button>
-              <Button
-                className="btn-term-ghost"
-                variant="ghost"
-                onClick={() => {
-                  const spec = startEating("cheese-slice");
-                  if (!spec) return;
-                  heal(spec.bite);
-                  playSfx("ui");
-                  setBiteNote(`${spec.label} · +${spec.bite} HP · ${spec.buff.label}`);
-                  window.setTimeout(() => setBiteNote(null), 2400);
-                }}
-              >
-                [ CHEESE SLICE · U ]
-              </Button>
+              <div className="relative">
+                <Button
+                  className={rationsOpen ? "btn-term" : "btn-term-ghost"}
+                  variant="ghost"
+                  onClick={() => setRationsOpen((current) => !current)}
+                >
+                  [ RATIONS · E ]
+                </Button>
+                {rationsOpen ? (
+                  <div className="hud-panel absolute bottom-full left-0 z-20 mb-2 w-64 p-2">
+                    <div className="mb-1.5 text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
+                      Field rations · one meal at a time
+                    </div>
+                    {(Object.keys(FOODS) as FoodId[]).map((id, index) => {
+                      const spec = FOODS[id];
+                      const keyHint = ["G", "J", "U"][index];
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => {
+                            eat(id);
+                            setRationsOpen(false);
+                          }}
+                          className="flex w-full items-center gap-2 border border-transparent px-1 py-1 text-left font-mono text-[10px] uppercase text-foreground transition-colors hover:border-bitcoin hover:text-bitcoin"
+                        >
+                          <img
+                            src={ordContentUrl(spec.inscription)}
+                            alt={spec.label}
+                            className="size-7 shrink-0 [image-rendering:pixelated]"
+                            loading="lazy"
+                          />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate">{spec.label}</span>
+                            <span className="block text-[9px] text-muted-foreground">
+                              +{spec.bite} HP · {spec.buff.label} {Math.round(spec.buff.ms / 1000)}s
+                            </span>
+                          </span>
+                          <span className="shrink-0 text-[9px] text-muted-foreground">
+                            [{keyHint}]
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
               <Button
                 className={driving ? "btn-term" : "btn-term-ghost"}
                 variant="ghost"
