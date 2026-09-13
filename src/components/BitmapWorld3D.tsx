@@ -2252,21 +2252,21 @@ export function BitmapWorld3D({
 
   // B opens the build panel, T works the land under your feet, and the kit keys
   // whistle for a pet, flip the goggles, and open a ration.
+  const eat = useCallback((food: FoodId) => {
+    const spec = startEating(food);
+    if (!spec) {
+      setBiteNote("ALREADY EATING");
+      window.setTimeout(() => setBiteNote(null), 1200);
+      return;
+    }
+    heal(spec.bite);
+    playSfx("ui");
+    setBiteNote(
+      `${spec.label} · +${spec.bite} HP · ${spec.buff.label} FOR ${Math.round(spec.buff.ms / 1000)}s`,
+    );
+    window.setTimeout(() => setBiteNote(null), 2400);
+  }, []);
   useEffect(() => {
-    const eat = (food: FoodId) => {
-      const spec = startEating(food);
-      if (!spec) {
-        setBiteNote("ALREADY EATING");
-        window.setTimeout(() => setBiteNote(null), 1200);
-        return;
-      }
-      heal(spec.bite);
-      playSfx("ui");
-      setBiteNote(
-        `${spec.label} · +${spec.bite} HP · ${spec.buff.label} FOR ${Math.round(spec.buff.ms / 1000)}s`,
-      );
-      window.setTimeout(() => setBiteNote(null), 2400);
-    };
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
@@ -2281,7 +2281,12 @@ export function BitmapWorld3D({
         setMapOpen(false);
         setChatOpen(false);
         setUtilityOpen(false);
+        setRationsOpen(false);
         setSelected(null);
+        return;
+      }
+      if (key === "e") {
+        setRationsOpen((current) => !current);
         return;
       }
       if (key === "i") {
