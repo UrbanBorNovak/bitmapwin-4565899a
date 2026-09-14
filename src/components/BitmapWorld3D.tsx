@@ -3001,133 +3001,156 @@ export function BitmapWorld3D({
               </>
             )}
 
-            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Avatar">
-              <Button
-                className="btn-term-ghost"
-                variant="ghost"
-                onClick={attackNearest}
-                disabled={!attackReady}
-              >
-                [ {attackReady ? "ATTACK · F" : `COOLDOWN ${(cooldownRemaining / 1000).toFixed(1)}s`} ]
-              </Button>
-              <Button
-                className={inventoryOpen ? "btn-term" : "btn-term-ghost"}
-                variant="ghost"
-                onClick={() => setInventoryOpen((current) => !current)}
-              >
-                {avatarModel ? "[ INVENTORY · WEARING MODEL ]" : "[ INVENTORY ]"}
-              </Button>
-              <Button
-                className={buildOpen ? "btn-term" : "btn-term-ghost"}
-                variant="ghost"
-                onClick={() => setBuildOpen((current) => !current)}
-              >
-                [ BUILD · B ]
-              </Button>
-              <Button className="btn-term-ghost" variant="ghost" onClick={() => void workLand()}>
-                [ TERRAFORM · T ]
-              </Button>
-              <Button
-                className={gear.companion !== "none" ? "btn-term" : "btn-term-ghost"}
-                variant="ghost"
-                onClick={() => {
-                  const next = cycleCompanion();
-                  playSfx("ui");
-                  setBiteNote(next.inscription ? `COMPANION · ${next.label}` : "COMPANION DISMISSED");
-                  window.setTimeout(() => setBiteNote(null), 1600);
-                }}
-              >
-                <span data-no-translate>
-                  [ {gear.companion === "none" ? "COMPANION" : companionSpec(gear.companion).label} · P ]
-                </span>
-              </Button>
-              <Button
-                className={gear.goggles ? "btn-term" : "btn-term-ghost"}
-                variant="ghost"
-                onClick={() => {
-                  const on = toggleGoggles();
-                  playSfx("ui");
-                  setBiteNote(on ? "NIGHT VISION · ON" : "NIGHT VISION · OFF");
-                  window.setTimeout(() => setBiteNote(null), 1400);
-                }}
-              >
-                [ NIGHT VISION · N ]
-              </Button>
-              <div className="relative">
-                <Button
-                  className={rationsOpen ? "btn-term" : "btn-term-ghost"}
-                  variant="ghost"
-                  onClick={() => setRationsOpen((current) => !current)}
-                >
-                  [ RATIONS · E ]
-                </Button>
-                {rationsOpen ? (
-                  <div className="hud-panel absolute bottom-full left-0 z-20 mb-2 w-64 p-2">
-                    <div className="mb-1.5 text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
-                      Field rations · one meal at a time
-                    </div>
-                    {(Object.keys(FOODS) as FoodId[]).map((id, index) => {
-                      const spec = FOODS[id];
-                      const keyHint = ["G", "J", "U"][index];
-                      return (
-                        <button
-                          key={id}
-                          type="button"
-                          onClick={() => {
-                            eat(id);
-                            setRationsOpen(false);
-                          }}
-                          className="flex w-full items-center gap-2 border border-transparent px-1 py-1 text-left font-mono text-[10px] uppercase text-foreground transition-colors hover:border-bitcoin hover:text-bitcoin"
-                        >
-                          <img
-                            src={ordContentUrl(spec.inscription)}
-                            alt={spec.label}
-                            className="size-7 shrink-0 [image-rendering:pixelated]"
-                            loading="lazy"
-                          />
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate">{spec.label}</span>
-                            <span className="block text-[9px] text-muted-foreground">
-                              +{spec.bite} HP · {spec.buff.label} {Math.round(spec.buff.ms / 1000)}s
-                            </span>
-                          </span>
-                          <span className="shrink-0 text-[9px] text-muted-foreground">
-                            [{keyHint}]
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : null}
+            <div className="flex w-full flex-col gap-2" role="group" aria-label="Avatar">
+              <div className="flex flex-col gap-1">
+                <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Action</span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Button
+                    className="btn-term-ghost"
+                    variant="ghost"
+                    onClick={attackNearest}
+                    disabled={!attackReady}
+                  >
+                    [ {attackReady ? "ATTACK · F" : `COOLDOWN ${(cooldownRemaining / 1000).toFixed(1)}s`} ]
+                  </Button>
+                  <Button className="btn-term-ghost" variant="ghost" onClick={() => void workLand()}>
+                    [ TERRAFORM · T ]
+                  </Button>
+                  <Button
+                    className={buildOpen ? "btn-term" : "btn-term-ghost"}
+                    variant="ghost"
+                    onClick={() => setBuildOpen((current) => !current)}
+                  >
+                    [ BUILD · B ]
+                  </Button>
+                </div>
               </div>
-              <Button
-                className={driving ? "btn-term" : "btn-term-ghost"}
-                variant="ghost"
-                onClick={toggleTruck}
-              >
-                <span data-no-translate>
-                  {driving ? `[ LEAVE ${ride.label} · V ]` : `[ TRAVEL BY ${ride.label} · V ]`}
-                </span>
-              </Button>
-              <select
-                aria-label="Travel source"
-                data-no-translate
-                value={ride.id}
-                onChange={(event) => pickRide(event.target.value)}
-                className="border border-border bg-background px-1.5 py-1 font-mono text-[10px] uppercase text-foreground outline-none focus:border-bitcoin"
-              >
-                {RIDES.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label} ·{" "}
-                    {option.kind === "air" ? "FLY" : option.kind === "water" ? "SAIL" : "DRIVE"}
-                  </option>
-                ))}
-              </select>
 
-              <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
-                {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
-              </Button>
+              <div className="flex flex-col gap-1">
+                <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Kit</span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Button
+                    className={inventoryOpen ? "btn-term" : "btn-term-ghost"}
+                    variant="ghost"
+                    onClick={() => setInventoryOpen((current) => !current)}
+                  >
+                    {avatarModel ? "[ INVENTORY · WEARING MODEL ]" : "[ INVENTORY · I ]"}
+                  </Button>
+                  <div className="relative">
+                    <Button
+                      className={rationsOpen ? "btn-term" : "btn-term-ghost"}
+                      variant="ghost"
+                      onClick={() => setRationsOpen((current) => !current)}
+                    >
+                      [ RATIONS · E ]
+                    </Button>
+                    {rationsOpen ? (
+                      <div className="hud-panel absolute bottom-full left-0 z-20 mb-2 w-64 p-2">
+                        <div className="mb-1.5 text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
+                          Field rations · one meal at a time
+                        </div>
+                        {(Object.keys(FOODS) as FoodId[]).map((id, index) => {
+                          const spec = FOODS[id];
+                          const keyHint = ["G", "J", "U"][index];
+                          return (
+                            <button
+                              key={id}
+                              type="button"
+                              onClick={() => {
+                                eat(id);
+                                setRationsOpen(false);
+                              }}
+                              className="flex w-full items-center gap-2 border border-transparent px-1 py-1 text-left font-mono text-[10px] uppercase text-foreground transition-colors hover:border-bitcoin hover:text-bitcoin"
+                            >
+                              <img
+                                src={ordContentUrl(spec.inscription)}
+                                alt={spec.label}
+                                className="size-7 shrink-0 [image-rendering:pixelated]"
+                                loading="lazy"
+                              />
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate">{spec.label}</span>
+                                <span className="block text-[9px] text-muted-foreground">
+                                  +{spec.bite} HP · {spec.buff.label} {Math.round(spec.buff.ms / 1000)}s
+                                </span>
+                              </span>
+                              <span className="shrink-0 text-[9px] text-muted-foreground">
+                                [{keyHint}]
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                  </div>
+                  <Button
+                    className={gear.companion !== "none" ? "btn-term" : "btn-term-ghost"}
+                    variant="ghost"
+                    onClick={() => {
+                      const next = cycleCompanion();
+                      playSfx("ui");
+                      setBiteNote(next.inscription ? `COMPANION · ${next.label}` : "COMPANION DISMISSED");
+                      window.setTimeout(() => setBiteNote(null), 1600);
+                    }}
+                  >
+                    <span data-no-translate>
+                      [ {gear.companion === "none" ? "COMPANION" : companionSpec(gear.companion).label} · P ]
+                    </span>
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Travel</span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Button
+                    className={driving ? "btn-term" : "btn-term-ghost"}
+                    variant="ghost"
+                    onClick={toggleTruck}
+                  >
+                    <span data-no-translate>
+                      {driving ? `[ LEAVE ${ride.label} · V ]` : `[ TRAVEL BY ${ride.label} · V ]`}
+                    </span>
+                  </Button>
+                  <select
+                    aria-label="Travel source"
+                    data-no-translate
+                    value={ride.id}
+                    onChange={(event) => pickRide(event.target.value)}
+                    className="border border-border bg-background px-1.5 py-1 font-mono text-[10px] uppercase text-foreground outline-none focus:border-bitcoin"
+                  >
+                    {RIDES.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.label} ·{" "}
+                        {option.kind === "air" ? "FLY" : option.kind === "water" ? "SAIL" : "DRIVE"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">View &amp; sound</span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Button
+                    className={gear.goggles ? "btn-term" : "btn-term-ghost"}
+                    variant="ghost"
+                    onClick={() => {
+                      const on = toggleGoggles();
+                      playSfx("ui");
+                      setBiteNote(on ? "NIGHT VISION · ON" : "NIGHT VISION · OFF");
+                      window.setTimeout(() => setBiteNote(null), 1400);
+                    }}
+                  >
+                    [ NIGHT VISION · N ]
+                  </Button>
+                  <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
+                    {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
+                  </Button>
+                </div>
+              </div>
             </div>
+
           </div>
           ) : null}
           {rideNote ? (
