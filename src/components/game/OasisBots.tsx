@@ -30,6 +30,7 @@ import {
   type BotPlan,
   type BotRole,
 } from "@/lib/world-bots";
+import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 
 type Bot = BeastEntity &
   BotPlan & {
@@ -41,6 +42,8 @@ type Bot = BeastEntity &
     sayUntil: number;
     nextSay: number;
     vein: OreVein | null;
+    /** the insect-style brain that decides what this settler does next */
+    brain: FlyBrain;
   };
 
 /** how far from the player settlers stay loaded before walking back in */
