@@ -126,7 +126,12 @@ export function OasisBots({
   onBite?: ((damage: number, label: string) => void) | undefined;
 }) {
   const [count, setCount] = useState(() => botCount());
-  useEffect(() => subscribeBotCount(() => setCount(botCount())), []);
+  useEffect(() => {
+    const unsubscribe = subscribeBotCount(() => setCount(botCount()));
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const bots = useMemo(() => botRoster(count).map((plan) => makeBot(plan, unit)), [count, unit]);
   const groups = useRef<(THREE.Group | null)[]>([]);
