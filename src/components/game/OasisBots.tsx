@@ -166,12 +166,10 @@ export function OasisBots({
       node.rotation.z = 0;
 
       const spec = BOT_ROLES[bot.role];
-      const speed = unit * (bot.role === "raider" ? 0.95 : bot.role === "trader" ? 0.18 : 0.5);
-      let steer = Math.sin(now / 1_700 + bot.seed) * delta * 1.4;
-      let travel = speed;
+      const speed = unit * (bot.role === "raider" ? 0.95 : bot.role === "trader" ? 0.4 : 0.5);
 
       if (bot.role === "miner") {
-        // Prospectors head for the nearest live seam and chip at it.
+        // Prospectors keep a seam in mind and pick a new one when it runs dry.
         if (!bot.vein || bot.vein.depletedUntil || bot.vein.voxels.every((v) => !v.alive)) {
           let best: OreVein | null = null;
           let bestDistance = unit * 40;
@@ -185,67 +183,47 @@ export function OasisBots({
           }
           bot.vein = best;
         }
-        const vein = bot.vein;
-        if (vein) {
-          const dx = vein.x - bot.x;
-          const dz = vein.z - bot.z;
-          const away = Math.hypot(dx, dz);
-          const toVein = Math.atan2(dx, dz);
-          const diff = ((toVein - bot.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-          steer = diff * Math.min(1, delta * 2.6);
-          travel = away > unit * 1.1 ? speed : 0;
-          if (away <= unit * 1.4 && now - bot.lastWork > 1_400) {
-            bot.lastWork = now;
-            const voxel = vein.voxels.find((v) => v.alive);
-            if (voxel) mineVoxel(vein, voxel);
-          }
-        }
       }
 
-      if (player) {
-        const dx = player.x - bot.x;
-        const dz = player.z - bot.z;
-        const away = Math.hypot(dx, dz);
-        const toPlayer = Math.atan2(dx, dz);
+      const vein = bot.role === "miner" ? bot.vein : null;
+      const playerDistance = player ? Math.hypot(player.x - bot.x, player.z - bot.z) / unit : null;
+      const act = bot.brain.think(
+        {
+          now,
+          hp: bot.hp,
+          maxHp: bot.maxHp,
+          snared: Boolean(bot.snaredUntil && bot.snaredUntil > now),
+          heading: bot.heading,
+          playerDistance,
+          playerAngle: player ? Math.atan2(player.x - bot.x, player.z - bot.z) : 0,
+          workDistance: vein ? Math.hypot(vein.x - bot.x, vein.z - bot.z) / unit : null,
+          workAngle: vein ? Math.atan2(vein.x - bot.x, vein.z - bot.z) : 0,
+          worker: bot.role === "miner",
+          hostile: bot.role === "raider",
+          vendor: bot.role === "trader",
+        },
+        delta,
+      );
 
-        if (bot.role === "raider" && away < unit * 14) {
-          const diff = ((toPlayer - bot.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-          steer = diff * Math.min(1, delta * 2.4);
-          travel = speed;
-          const standoff = unit * 1.1;
-          if (away < standoff * 1.3) travel = speed * 0.1;
-          if (away < standoff * 1.8 && now - bot.lastBite > 2_600) {
-            bot.lastBite = now;
-            playSfx("hit");
-            onBite?.(Math.round(3 + bot.size * 4), bot.label);
-          }
-        } else if (bot.role !== "miner" && away < unit * 2) {
-          const back = toPlayer + Math.PI;
-          const diff = ((back - bot.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-          steer = diff * Math.min(1, delta * 3);
-          travel = speed * 1.1;
-        } else if (bot.role === "trader" && away < unit * 9) {
-          // Traders turn to face a customer and hold their pitch.
-          const diff = ((toPlayer - bot.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-          steer = diff * Math.min(1, delta * 3);
-          travel = 0;
-        }
-
-        // Walked out of sight: bring them back in around the player.
-        if (away > unit * REACH) {
-          const angle = bot.seed * 1.7 + now / 20_000;
-          const ring = unit * (14 + (bot.id % 5) * 5);
-          bot.x = player.x + Math.cos(angle) * ring;
-          bot.z = player.z + Math.sin(angle) * ring;
-        }
+      if (act.strike) {
+        playSfx("hit");
+        onBite?.(Math.round(3 + bot.size * 4), bot.label);
+      }
+      if (act.work && vein) {
+        const voxel = vein.voxels.find((v) => v.alive);
+        if (voxel) mineVoxel(vein, voxel);
       }
 
-      if (bot.snaredUntil && bot.snaredUntil > now) {
-        steer = 0;
-        travel = 0;
+      // Walked out of sight: bring them back in around the player.
+      if (player && playerDistance !== null && playerDistance > REACH) {
+        const angle = bot.seed * 1.7 + now / 20_000;
+        const ring = unit * (14 + (bot.id % 5) * 5);
+        bot.x = player.x + Math.cos(angle) * ring;
+        bot.z = player.z + Math.sin(angle) * ring;
       }
 
-      bot.heading += steer;
+      const travel = speed * act.throttle;
+      bot.heading += act.steer;
       bot.x += Math.sin(bot.heading) * travel * delta;
       bot.z += Math.cos(bot.heading) * travel * delta;
       bot.bodyY = unit * bot.size * 0.6;
