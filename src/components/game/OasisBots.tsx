@@ -71,6 +71,7 @@ function makeBot(plan: BotPlan, unit: number): Bot {
     sayUntil: 0,
     nextSay: 2_000 + botHash(plan.id, 7) * 16_000,
     vein: null,
+    brain: createFlyBrain(plan.seed),
   };
 }
 

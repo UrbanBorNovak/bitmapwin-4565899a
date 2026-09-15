@@ -39,6 +39,7 @@ import { EggHunt } from "@/components/game/EggHunt";
 import { DesertLife } from "@/components/game/DesertLife";
 import { SeaMasses } from "@/components/game/SeaMasses";
 import { Punks } from "@/components/game/Punks";
+import { OasisBots } from "@/components/game/OasisBots";
 import { DjEvent, useDjEvent } from "@/components/game/DjEvent";
 import { TrapField } from "@/components/game/TrapField";
 import { isSelfSnared, selfSnaredMs } from "@/lib/world-traps";
@@ -2080,6 +2081,7 @@ const WorldScene = memo(function WorldScene({
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <SeaMasses unit={AVATAR_U} pose={pose} />
           <Punks unit={AVATAR_U} pose={pose} onBite={onBite} />
+          <OasisBots unit={AVATAR_U} pose={pose} onBite={onBite} />
           <TrapField
             unit={AVATAR_U}
             pose={pose}
