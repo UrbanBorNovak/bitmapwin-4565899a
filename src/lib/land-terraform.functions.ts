@@ -109,6 +109,9 @@ export const seedTerraform = createServerFn({ method: "POST" })
       })
       .select("id, chunk_key, bitmap_height, tile_col, tile_row, seeded_at, seeded_by_address")
       .maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (error.code === "42501") throw new Error("YOU CANNOT TERRAFORM A BITMAP YOU DO NOT HOLD");
+      throw new Error(error.message);
+    }
     return { land: row ? normalise(row as TerraformRow) : null, already: false };
   });
