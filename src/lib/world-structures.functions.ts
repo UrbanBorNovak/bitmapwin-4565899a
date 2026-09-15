@@ -133,7 +133,10 @@ export const placeWorldStructures = createServerFn({ method: "POST" })
       .select(
         "id, chunk_key, bitmap_height, tile_col, tile_row, kind, x, z, yaw, builder_address, created_at",
       );
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (error.code === "42501") throw new Error("YOU CANNOT BUILD ON A BITMAP YOU DO NOT HOLD");
+      throw new Error(error.message);
+    }
     return { structures: (rows ?? []).map((row) => normalise(row as WorldStructureRow)) };
   });
 
