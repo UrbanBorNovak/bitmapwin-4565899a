@@ -3141,6 +3141,25 @@ export function BitmapWorld3D({
               </div>
 
               <div className="flex flex-col gap-1">
+                <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Settlers</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min={0}
+                    max={BOT_COUNT_MAX}
+                    step={1}
+                    value={settlers}
+                    aria-label="Number of settlers in the Oasis"
+                    onChange={(event) => setBotCount(Number(event.target.value))}
+                    className="h-1 w-32 accent-bitcoin"
+                  />
+                  <span className="font-mono text-[10px] tabular-nums text-muted-foreground" data-no-translate>
+                    {settlers} / {BOT_COUNT_MAX} · FREE · LOCAL BRAINS
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1">
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">View &amp; sound</span>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <Button
