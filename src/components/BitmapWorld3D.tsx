@@ -40,6 +40,7 @@ import { DesertLife } from "@/components/game/DesertLife";
 import { SeaMasses } from "@/components/game/SeaMasses";
 import { Punks } from "@/components/game/Punks";
 import { OasisBots } from "@/components/game/OasisBots";
+import { BOT_COUNT_MAX, botCount, setBotCount, subscribeBotCount } from "@/lib/world-bots";
 import { DjEvent, useDjEvent } from "@/components/game/DjEvent";
 import { TrapField } from "@/components/game/TrapField";
 import { isSelfSnared, selfSnaredMs } from "@/lib/world-traps";
@@ -2224,6 +2225,14 @@ export function BitmapWorld3D({
   const [utilityOpen, setUtilityOpen] = useState(false);
   const [rationsOpen, setRationsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  // SETTLERS — how many rule-driven characters walk the Oasis with you.
+  const [settlers, setSettlers] = useState(() => botCount());
+  useEffect(() => {
+    const unsubscribe = subscribeBotCount(() => setSettlers(botCount()));
+    return () => {
+      unsubscribe();
+    };
+  }, []);
   const [buildNote, setBuildNote] = useState<string | null>(null);
   // WEAPONS — what you are carrying while you explore the land world.
   const [weapon, setWeapon] = useState<WeaponKind | null>(null);
