@@ -39,6 +39,8 @@ import { EggHunt } from "@/components/game/EggHunt";
 import { DesertLife } from "@/components/game/DesertLife";
 import { SeaMasses } from "@/components/game/SeaMasses";
 import { Punks } from "@/components/game/Punks";
+import { OasisBots } from "@/components/game/OasisBots";
+import { BOT_COUNT_MAX, botCount, setBotCount, subscribeBotCount } from "@/lib/world-bots";
 import { DjEvent, useDjEvent } from "@/components/game/DjEvent";
 import { TrapField } from "@/components/game/TrapField";
 import { isSelfSnared, selfSnaredMs } from "@/lib/world-traps";
@@ -2080,6 +2082,7 @@ const WorldScene = memo(function WorldScene({
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <SeaMasses unit={AVATAR_U} pose={pose} />
           <Punks unit={AVATAR_U} pose={pose} onBite={onBite} />
+          <OasisBots unit={AVATAR_U} pose={pose} onBite={onBite} />
           <TrapField
             unit={AVATAR_U}
             pose={pose}
@@ -2222,6 +2225,14 @@ export function BitmapWorld3D({
   const [utilityOpen, setUtilityOpen] = useState(false);
   const [rationsOpen, setRationsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  // SETTLERS — how many rule-driven characters walk the Oasis with you.
+  const [settlers, setSettlers] = useState(() => botCount());
+  useEffect(() => {
+    const unsubscribe = subscribeBotCount(() => setSettlers(botCount()));
+    return () => {
+      unsubscribe();
+    };
+  }, []);
   const [buildNote, setBuildNote] = useState<string | null>(null);
   // WEAPONS — what you are carrying while you explore the land world.
   const [weapon, setWeapon] = useState<WeaponKind | null>(null);
@@ -3126,6 +3137,25 @@ export function BitmapWorld3D({
                       </option>
                     ))}
                   </select>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Settlers</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min={0}
+                    max={BOT_COUNT_MAX}
+                    step={1}
+                    value={settlers}
+                    aria-label="Number of settlers in the Oasis"
+                    onChange={(event) => setBotCount(Number(event.target.value))}
+                    className="h-1 w-32 accent-bitcoin"
+                  />
+                  <span className="font-mono text-[10px] tabular-nums text-muted-foreground" data-no-translate>
+                    {settlers} / {BOT_COUNT_MAX} · FREE · LOCAL BRAINS
+                  </span>
                 </div>
               </div>
 
