@@ -147,12 +147,18 @@ export function OasisBots({
     return () => registerBeastGroup("bots", []);
   }, [bots]);
 
+  /** when the brain readout panel was last refreshed */
+  const nextProbe = useRef(0);
+
   useFrame((_, rawDelta) => {
     const delta = Math.min(rawDelta, 0.05);
     const player = pose.current;
     const now = performance.now();
     let talkChanged = false;
     const talk: Record<number, string> = {};
+    let closest: Bot | null = null;
+    let closestDistance = Infinity;
+
 
     bots.forEach((bot, index) => {
       const node = groups.current[index];
