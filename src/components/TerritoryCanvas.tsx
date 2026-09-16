@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 
-type Parcel = { index: number; size: number; x: number; y: number };
+export type Parcel = { index: number; size: number; x: number; y: number };
 
 const PALETTE = ["#ffb45a", "#f7931a", "#e6810e", "#c96d08", "#a95a06"];
 
@@ -30,7 +30,7 @@ function shelfPack(classes: number[], maxWidth: number) {
   return { parcels, extentX, extentY };
 }
 
-function packParcels(classes: number[]) {
+export function packParcels(classes: number[]) {
   const area = classes.reduce((sum, c) => sum + Math.max(1, Math.min(5, c)) ** 2, 0);
   const base = Math.max(8, Math.ceil(Math.sqrt(area)));
   // widen the shelf until the packed block is no taller than it is wide (square territory)
@@ -42,7 +42,15 @@ function packParcels(classes: number[]) {
 }
 
 
-export function TerritoryCanvas({ height, className }: { height: number; className?: string }) {
+export function TerritoryCanvas({
+  height,
+  className,
+  hideTitle = false,
+}: {
+  height: number;
+  className?: string;
+  hideTitle?: boolean;
+}) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [hover, setHover] = useState<Parcel | null>(null);
   const { data, isError } = useQuery(blockSizeMapQuery(height));
@@ -131,10 +139,12 @@ export function TerritoryCanvas({ height, className }: { height: number; classNa
 
   return (
     <div className={`space-y-2 ${className ?? ""}`}>
-      <div className="flex items-baseline justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-        <span>TERRITORY // TX PARCELS</span>
-        <span>{packed.parcels.length.toLocaleString()} PARCELS</span>
-      </div>
+      {hideTitle ? null : (
+        <div className="flex items-baseline justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          <span>TERRITORY // TX PARCELS</span>
+          <span>{packed.parcels.length.toLocaleString()} PARCELS</span>
+        </div>
+      )}
       <canvas
         ref={canvasRef}
         onMouseMove={onMove}
