@@ -73,15 +73,11 @@ export const GALLERY_COLLECTIONS: GalleryCollection[] = [
     id: "7tx-perfect-punks",
     label: "7TX PERFECT PUNKS",
     short: "7TX PUNK",
-    coverInscription: "999bbd123e327789d9b0991a73bb76385b7d9f3d99828576d6b2b0cb8c3cdfdei0",
+    coverInscription: "77775e67fa7b257e126add77e12fedb48e32f885c9f3e03ab64aea2c5ebf6041i0",
     blurb: "Exactly seven transactions — a perfectly packed punk.",
     txCount: 7,
   },
 ];
-
-// The 7tx cover is its own inscription; keep it explicit rather than reusing.
-GALLERY_COLLECTIONS[5]!.coverInscription =
-  "77775e67fa7b257e126add77e12fedb48e32f885c9f3e03ab64aea2c5ebf6041i0";
 
 /**
  * Every gallery collection a bitmap belongs to. `txCount` comes from the block
