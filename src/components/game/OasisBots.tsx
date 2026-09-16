@@ -162,8 +162,7 @@ export function OasisBots({
     const now = performance.now();
     let talkChanged = false;
     const talk: Record<number, string> = {};
-    let closest: Bot | null = null;
-    let closestDistance = Infinity;
+    const nearest: { bot: Bot | null; distance: number } = { bot: null, distance: Infinity };
 
 
     bots.forEach((bot, index) => {
@@ -203,9 +202,9 @@ export function OasisBots({
 
       const vein = bot.role === "miner" ? bot.vein : null;
       const playerDistance = player ? Math.hypot(player.x - bot.x, player.z - bot.z) / unit : null;
-      if (playerDistance !== null && playerDistance < closestDistance) {
-        closestDistance = playerDistance;
-        closest = bot;
+      if (playerDistance !== null && playerDistance < nearest.distance) {
+        nearest.distance = playerDistance;
+        nearest.bot = bot;
       }
 
       const act = bot.brain.think(
@@ -276,7 +275,8 @@ export function OasisBots({
     // so the panel can show it without re-rendering every frame.
     if (now > nextProbe.current) {
       nextProbe.current = now + 220;
-      if (closest && closestDistance < 24) {
+      const closest = nearest.bot;
+      if (closest && nearest.distance < 24) {
         const firing = closest.brain.net.activity;
         let hot = 0;
         for (let i = 0; i < firing.length; i++) if (Math.abs(firing[i]!) > 0.05) hot++;
