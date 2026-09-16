@@ -56,6 +56,7 @@ import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
 import { Route as ApiPublicResolveRegistryRouteImport } from './routes/api/public/resolve-registry'
 import { Route as ApiPublicBlocksHeightRouteImport } from './routes/api/public/blocks.$height'
+import { Route as ApiPublicGalleryIdRouteImport } from './routes/api/public/gallery.$id'
 import { Route as ApiPublicBlocksHeightMetaRouteImport } from './routes/api/public/blocks.$height.meta'
 
 const IndexRoute = IndexRouteImport.update({
@@ -295,6 +296,11 @@ const ApiPublicBlocksHeightRoute = ApiPublicBlocksHeightRouteImport.update({
   path: '/public/blocks/$height',
   getParentRoute: () => ApiRoute,
 } as any)
+const ApiPublicGalleryIdRoute = ApiPublicGalleryIdRouteImport.update({
+  id: '/public/gallery/$id',
+  path: '/public/gallery/$id',
+  getParentRoute: () => ApiRoute,
+} as any)
 const ApiPublicBlocksHeightMetaRoute =
   ApiPublicBlocksHeightMetaRouteImport.update({
     id: '/meta',
@@ -350,6 +356,7 @@ export interface FileRoutesByFullPath {
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
+  '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
 }
 export interface FileRoutesByTo {
@@ -398,6 +405,7 @@ export interface FileRoutesByTo {
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
+  '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
 }
 export interface FileRoutesById {
@@ -449,6 +457,7 @@ export interface FileRoutesById {
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
+  '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
 }
 export interface FileRouteTypes {
@@ -501,6 +510,7 @@ export interface FileRouteTypes {
     | '/api/public/offers'
     | '/api/public/resolve-registry'
     | '/api/public/blocks/$height'
+    | '/api/public/gallery/$id'
     | '/api/public/blocks/$height/meta'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -549,6 +559,7 @@ export interface FileRouteTypes {
     | '/api/public/offers'
     | '/api/public/resolve-registry'
     | '/api/public/blocks/$height'
+    | '/api/public/gallery/$id'
     | '/api/public/blocks/$height/meta'
   id:
     | '__root__'
@@ -599,6 +610,7 @@ export interface FileRouteTypes {
     | '/api/public/offers'
     | '/api/public/resolve-registry'
     | '/api/public/blocks/$height'
+    | '/api/public/gallery/$id'
     | '/api/public/blocks/$height/meta'
   fileRoutesById: FileRoutesById
 }
@@ -973,6 +985,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBlocksHeightRouteImport
       parentRoute: typeof ApiRoute
     }
+    '/api/public/gallery/$id': {
+      id: '/api/public/gallery/$id'
+      path: '/public/gallery/$id'
+      fullPath: '/api/public/gallery/$id'
+      preLoaderRoute: typeof ApiPublicGalleryIdRouteImport
+      parentRoute: typeof ApiRoute
+    }
     '/api/public/blocks/$height/meta': {
       id: '/api/public/blocks/$height/meta'
       path: '/meta'
@@ -1003,6 +1022,7 @@ interface ApiRouteChildren {
   ApiPublicOffersRoute: typeof ApiPublicOffersRoute
   ApiPublicResolveRegistryRoute: typeof ApiPublicResolveRegistryRoute
   ApiPublicBlocksHeightRoute: typeof ApiPublicBlocksHeightRouteWithChildren
+  ApiPublicGalleryIdRoute: typeof ApiPublicGalleryIdRoute
 }
 
 const ApiRouteChildren: ApiRouteChildren = {
@@ -1012,6 +1032,7 @@ const ApiRouteChildren: ApiRouteChildren = {
   ApiPublicOffersRoute: ApiPublicOffersRoute,
   ApiPublicResolveRegistryRoute: ApiPublicResolveRegistryRoute,
   ApiPublicBlocksHeightRoute: ApiPublicBlocksHeightRouteWithChildren,
+  ApiPublicGalleryIdRoute: ApiPublicGalleryIdRoute,
 }
 
 const ApiRouteWithChildren = ApiRoute._addFileChildren(ApiRouteChildren)
