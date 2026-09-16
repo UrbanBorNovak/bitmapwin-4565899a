@@ -8,6 +8,8 @@
  * speed instead of walking speed; flying rides also gain altitude control.
  */
 
+import type { EngineVoice } from "@/lib/world-audio";
+
 export type RideKind = "ground" | "water" | "air";
 
 export type RideSpec = {
@@ -43,6 +45,8 @@ export type RideSpec = {
   repaint?: boolean;
   /** worn on the body instead of boarded, like the jetpack */
   worn?: boolean;
+  /** which live engine voice runs while you travel it */
+  voice?: EngineVoice;
 };
 
 /** on-chain GLB inscription of the Tesla Cybertruck model */
@@ -58,6 +62,7 @@ export const JETPACK_HELMET_INSCRIPTION =
 export const RIDES: RideSpec[] = [
   {
     id: "cybertruck",
+    voice: "ev",
     label: "CYBERTRUCK",
     inscription: CYBERTRUCK_INSCRIPTION,
     kind: "ground",
@@ -73,6 +78,7 @@ export const RIDES: RideSpec[] = [
   },
   {
     id: "ship",
+    voice: "boat",
     label: "SHIP",
     inscription: "f052b807840ed3a051a253e43128b0c1a5f75f87221e2e69253a569f8f0d7726i0",
     kind: "water",
@@ -87,6 +93,7 @@ export const RIDES: RideSpec[] = [
   },
   {
     id: "lambo",
+    voice: "v12",
     label: "LAMBO",
     inscription: "f92bab3766aba8b6f9962d4fb7a0a81ce0cc8dc1111bd23ebc3aefe5f01d0ebfi0",
     kind: "ground",
@@ -101,6 +108,7 @@ export const RIDES: RideSpec[] = [
   },
   {
     id: "model-s",
+    voice: "ev",
     label: "MODEL S",
     inscription: "53222472c2376e929b42fc85cbe80e22759dcf42d25ac55abde0940294bdd9a3i0",
     kind: "ground",
@@ -115,6 +123,7 @@ export const RIDES: RideSpec[] = [
   },
   {
     id: "testarossa",
+    voice: "v12",
     label: "FERRARI TESTAROSSA",
     inscription: "4d3848266f8e4e6bc100b45d7c94245e70c5d593781cd6e1d20c2a2b829e56e3i0",
     kind: "ground",
@@ -131,6 +140,7 @@ export const RIDES: RideSpec[] = [
   },
   {
     id: "adamantine-yacht",
+    voice: "boat",
     label: "ADAMANTINE YACHT",
     inscription: "354c773f197afdb7c78dbef6a77fe6321c73a0ab4ff0e90cb2cdd28f79668c13i0",
     kind: "water",
@@ -145,6 +155,7 @@ export const RIDES: RideSpec[] = [
   },
   {
     id: "bitsaucer",
+    voice: "saucer",
     label: "BITSAUCER",
     inscription: "f6d0118e790bb0d53e8f48eb54ff4d9991cd2065ae4497abf1f5cdec3c3d6870i0",
     kind: "air",
@@ -161,6 +172,7 @@ export const RIDES: RideSpec[] = [
   },
   {
     id: "tank",
+    voice: "diesel",
     label: "TANK",
     inscription: "d8d6ff362f643a4597a9eb6dbd67c282acba3e682370007e3d6cfdf13ffc1b72i0",
     kind: "ground",
@@ -176,6 +188,7 @@ export const RIDES: RideSpec[] = [
   },
   {
     id: "spacecraft",
+    voice: "rocket",
     label: "SPACECRAFT",
     inscription: "454b385ae059767b885127a3c3dc6008da77b926c016924fcee3bfd187c974bdi0",
     kind: "air",
@@ -192,6 +205,7 @@ export const RIDES: RideSpec[] = [
   },
   {
     id: "silver-saucer",
+    voice: "saucer",
     label: "SILVER FLYING SAUCER",
     inscription: "b76ac607342727beed91a87d17de5715f5f66500b50868b4732ba3f008d58b31i0",
     kind: "air",
@@ -208,6 +222,7 @@ export const RIDES: RideSpec[] = [
   },
   {
     id: "jetpack",
+    voice: "thruster",
     label: "JETPACK",
     // Worn, not boarded: the pack rides on your back and the helmet goes on
     // with it, so the body you fly with is your own avatar.

@@ -30,7 +30,13 @@ export type Sfx =
   | "jump"
   | "step"
   | "hurt"
-  | "ui";
+  | "ui"
+  | "board"
+  | "engineoff"
+  | "eat"
+  | "smelt"
+  | "splash"
+  | "horn";
 
 
 const MUTE_KEY = "bitmapwin:sound-muted";
@@ -275,6 +281,211 @@ export function stopMinigunSpin() {
   spin?.stop();
 }
 
+/**
+ * ENGINES — every ride runs its own live voice while you travel.
+ *
+ * One continuous rig per ride: a pitched core (the motor), a harmonic above it,
+ * a filtered noise bed (tyres, water, thrust) and, on the lumpier machines, an
+ * amplitude chop that beats faster with speed. Nothing is sampled — each voice
+ * is a handful of numbers below, so a car growls, a boat chugs, a saucer hums
+ * and a thruster roars from the same few nodes.
+ */
+export type EngineVoice = "ev" | "v12" | "diesel" | "boat" | "saucer" | "rocket" | "thruster";
+
+type VoiceSpec = {
+  /** motor pitch at idle and flat out */
+  base: number;
+  top: number;
+  wave: OscillatorType;
+  /** harmonic multiple and its level */
+  harmonic: number;
+  harmonicGain: number;
+  /** core level at idle and flat out */
+  idle: number;
+  loud: number;
+  /** noise bed: level, filter and its sweep */
+  noise: number;
+  noiseFilter: BiquadFilterType;
+  noiseFrom: number;
+  noiseTo: number;
+  /** amplitude chop (cylinders, treads, rotor) — 0 disables it */
+  chop: number;
+  chopTop: number;
+  chopDepth: number;
+  /** core lowpass sweep */
+  cutoff: number;
+  cutoffTop: number;
+};
+
+const VOICES: Record<EngineVoice, VoiceSpec> = {
+  // Electric: near-silent at rest, a rising inverter whine under load.
+  ev: {
+    base: 90, top: 780, wave: "triangle", harmonic: 2.01, harmonicGain: 0.5,
+    idle: 0.012, loud: 0.06, noise: 0.014, noiseFilter: "bandpass", noiseFrom: 700, noiseTo: 2600,
+    chop: 0, chopTop: 0, chopDepth: 0, cutoff: 900, cutoffTop: 4200,
+  },
+  // Twelve cylinders: a hard sawtooth growl with a fast cylinder beat.
+  v12: {
+    base: 58, top: 300, wave: "sawtooth", harmonic: 1.5, harmonicGain: 0.42,
+    idle: 0.03, loud: 0.09, noise: 0.02, noiseFilter: "lowpass", noiseFrom: 700, noiseTo: 3200,
+    chop: 18, chopTop: 96, chopDepth: 0.5, cutoff: 620, cutoffTop: 3400,
+  },
+  // Tracked diesel: deep, slow and heavy, treads clattering over it.
+  diesel: {
+    base: 34, top: 120, wave: "square", harmonic: 2, harmonicGain: 0.3,
+    idle: 0.045, loud: 0.1, noise: 0.038, noiseFilter: "lowpass", noiseFrom: 380, noiseTo: 1500,
+    chop: 7, chopTop: 26, chopDepth: 0.7, cutoff: 320, cutoffTop: 1200,
+  },
+  // Hull motor: a chugging outboard with water breaking off the bow.
+  boat: {
+    base: 42, top: 150, wave: "triangle", harmonic: 2.5, harmonicGain: 0.26,
+    idle: 0.032, loud: 0.078, noise: 0.05, noiseFilter: "highpass", noiseFrom: 420, noiseTo: 2400,
+    chop: 6, chopTop: 22, chopDepth: 0.6, cutoff: 420, cutoffTop: 1700,
+  },
+  // Saucer: a smooth antigravity hum that warbles as it accelerates.
+  saucer: {
+    base: 120, top: 460, wave: "sine", harmonic: 3.01, harmonicGain: 0.34,
+    idle: 0.03, loud: 0.075, noise: 0.012, noiseFilter: "bandpass", noiseFrom: 1600, noiseTo: 3600,
+    chop: 4, chopTop: 15, chopDepth: 0.35, cutoff: 1400, cutoffTop: 5200,
+  },
+  // Rocket stack: mostly roar, the pitched core buried underneath.
+  rocket: {
+    base: 46, top: 130, wave: "sawtooth", harmonic: 1.98, harmonicGain: 0.2,
+    idle: 0.03, loud: 0.07, noise: 0.085, noiseFilter: "lowpass", noiseFrom: 900, noiseTo: 5200,
+    chop: 0, chopTop: 0, chopDepth: 0, cutoff: 700, cutoffTop: 2600,
+  },
+  // Backpack thruster: a tight hiss of gas with a small turbine behind it.
+  thruster: {
+    base: 160, top: 520, wave: "triangle", harmonic: 2.4, harmonicGain: 0.22,
+    idle: 0.02, loud: 0.05, noise: 0.06, noiseFilter: "highpass", noiseFrom: 1400, noiseTo: 5600,
+    chop: 0, chopTop: 0, chopDepth: 0, cutoff: 1800, cutoffTop: 6000,
+  },
+};
+
+let engine:
+  | {
+      voice: EngineVoice;
+      drive: (throttle: number, pace: number) => void;
+      stop: () => void;
+    }
+  | null = null;
+
+/** Start a ride's engine loop. Calling it again with the same voice is a no-op. */
+export function startEngine(voice: EngineVoice) {
+  if (engine?.voice === voice) return;
+  if (engine) stopEngine();
+  if (readMuted()) return;
+  const rig = audio();
+  if (!rig) return;
+  const spec = VOICES[voice];
+  const { ctx: context, master: out } = rig;
+  const now = context.currentTime;
+
+  const core = context.createOscillator();
+  core.type = spec.wave;
+  core.frequency.setValueAtTime(spec.base, now);
+  const harmonic = context.createOscillator();
+  harmonic.type = "sine";
+  harmonic.frequency.setValueAtTime(spec.base * spec.harmonic, now);
+  const harmonicGain = context.createGain();
+  harmonicGain.gain.value = spec.harmonicGain;
+
+  const lowpass = context.createBiquadFilter();
+  lowpass.type = "lowpass";
+  lowpass.frequency.setValueAtTime(spec.cutoff, now);
+
+  const level = context.createGain();
+  level.gain.setValueAtTime(0.0001, now);
+  level.gain.exponentialRampToValueAtTime(spec.idle, now + 0.35);
+
+  core.connect(lowpass);
+  harmonic.connect(harmonicGain).connect(lowpass);
+  lowpass.connect(level).connect(out);
+
+  // The bed: looping noise, shaped per voice — tyre roar, water, thrust.
+  const bed = context.createBufferSource();
+  bed.buffer = noiseBuffer(context, 2);
+  bed.loop = true;
+  const bedFilter = context.createBiquadFilter();
+  bedFilter.type = spec.noiseFilter;
+  bedFilter.frequency.setValueAtTime(spec.noiseFrom, now);
+  bedFilter.Q.value = 0.7;
+  const bedGain = context.createGain();
+  bedGain.gain.setValueAtTime(0.0001, now);
+  bedGain.gain.exponentialRampToValueAtTime(spec.noise * 0.4, now + 0.35);
+  bed.connect(bedFilter).connect(bedGain).connect(out);
+
+  // The beat: cylinders, treads or rotor, felt as a pulse on the whole voice.
+  let chop: OscillatorNode | null = null;
+  let chopDepth: GainNode | null = null;
+  if (spec.chop > 0) {
+    chop = context.createOscillator();
+    chop.type = "sawtooth";
+    chop.frequency.setValueAtTime(spec.chop, now);
+    chopDepth = context.createGain();
+    chopDepth.gain.value = spec.idle * spec.chopDepth;
+    chop.connect(chopDepth).connect(level.gain);
+    chop.start(now);
+  }
+
+  core.start(now);
+  harmonic.start(now);
+  bed.start(now);
+
+  engine = {
+    voice,
+    drive: (throttle, pace) => {
+      const at = context.currentTime;
+      const load = Math.min(1, Math.max(0, pace * 0.75 + throttle * 0.35));
+      const pitch = spec.base + (spec.top - spec.base) * load;
+      const ease = 0.12;
+      core.frequency.setTargetAtTime(pitch, at, ease);
+      harmonic.frequency.setTargetAtTime(pitch * spec.harmonic, at, ease);
+      lowpass.frequency.setTargetAtTime(
+        spec.cutoff + (spec.cutoffTop - spec.cutoff) * load,
+        at,
+        ease,
+      );
+      const loudness = spec.idle + (spec.loud - spec.idle) * load;
+      level.gain.setTargetAtTime(loudness, at, ease);
+      bedGain.gain.setTargetAtTime(spec.noise * (0.35 + load * 0.65), at, ease);
+      bedFilter.frequency.setTargetAtTime(
+        spec.noiseFrom + (spec.noiseTo - spec.noiseFrom) * load,
+        at,
+        ease,
+      );
+      if (chop && chopDepth) {
+        chop.frequency.setTargetAtTime(spec.chop + (spec.chopTop - spec.chop) * load, at, ease);
+        chopDepth.gain.setTargetAtTime(loudness * spec.chopDepth, at, ease);
+      }
+    },
+    stop: () => {
+      const at = context.currentTime;
+      // Spin down: the motor falls away instead of cutting mid-note.
+      level.gain.setTargetAtTime(0.0001, at, 0.14);
+      bedGain.gain.setTargetAtTime(0.0001, at, 0.14);
+      core.frequency.setTargetAtTime(spec.base * 0.7, at, 0.2);
+      harmonic.frequency.setTargetAtTime(spec.base * 0.7 * spec.harmonic, at, 0.2);
+      core.stop(at + 0.8);
+      harmonic.stop(at + 0.8);
+      bed.stop(at + 0.8);
+      if (chop) chop.stop(at + 0.8);
+    },
+  };
+}
+
+/** Feed the running engine: throttle held (0-1) and how fast the ride is going (0-1). */
+export function driveEngine(throttle: number, pace: number) {
+  engine?.drive(throttle, pace);
+}
+
+export function stopEngine() {
+  engine?.stop();
+  engine = null;
+}
+
+
+
 /** Fire one of the world's sounds. Safe to call anywhere, ignored when muted. */
 export function playSfx(name: Sfx) {
   if (readMuted()) return;
@@ -512,6 +723,39 @@ export function playSfx(name: Sfx) {
       break;
     case "ui":
       tone(context, out, { from: 520, to: 520, seconds: 0.035, gain: 0.1, type: "square" });
+      break;
+    case "board":
+      // Door thunk, then the dash waking up.
+      burst(context, out, { seconds: 0.09, gain: 0.4, type: "lowpass", frequency: 260, q: 0.9, curve: 1.6 });
+      tone(context, out, { from: 180, to: 520, seconds: 0.22, gain: 0.12, type: "triangle", delay: 0.1 });
+      break;
+    case "engineoff":
+      tone(context, out, { from: 420, to: 90, seconds: 0.34, gain: 0.12, type: "triangle" });
+      burst(context, out, { seconds: 0.12, gain: 0.22, type: "lowpass", frequency: 220, q: 0.8, delay: 0.02 });
+      break;
+    case "eat":
+      // Two soft bites, wet and close.
+      burst(context, out, { seconds: 0.09, gain: 0.22, type: "bandpass", frequency: 620 * vary, q: 1.4 });
+      burst(context, out, { seconds: 0.08, gain: 0.18, type: "bandpass", frequency: 480 * vary, q: 1.6, delay: 0.16 });
+      break;
+    case "smelt":
+      // Furnace roar with the bar setting: hiss, then a bright ring.
+      burst(context, out, {
+        seconds: 0.6, gain: 0.3, type: "lowpass", frequency: 900, q: 0.6,
+        send: { node: verb, gain: 0.5 },
+      });
+      tone(context, out, { from: 1180 * vary, to: 780, seconds: 0.5, gain: 0.13, type: "sine", delay: 0.34, send: { node: verb, gain: 0.6 } });
+      break;
+    case "splash":
+      burst(context, out, {
+        seconds: 0.34, gain: 0.42, type: "highpass", frequency: 900 * vary, q: 0.5,
+        send: { node: verb, gain: 0.4 },
+      });
+      tone(context, out, { from: 260, to: 90, seconds: 0.2, gain: 0.14, type: "sine" });
+      break;
+    case "horn":
+      tone(context, out, { from: 300 * vary, to: 296 * vary, seconds: 0.5, gain: 0.18, type: "square", send: { node: verb, gain: 0.5 } });
+      tone(context, out, { from: 402 * vary, to: 398 * vary, seconds: 0.5, gain: 0.14, type: "sawtooth" });
       break;
   }
 }

@@ -128,7 +128,15 @@ const KIT_TABS: { id: KitTab; label: string }[] = [
   { id: "travel", label: "TRAVEL" },
   { id: "view", label: "INVENTORY" },
 ];
-import { isSoundMuted, playSfx, setSoundMuted, unlockAudio } from "@/lib/world-audio";
+import {
+  driveEngine,
+  isSoundMuted,
+  playSfx,
+  setSoundMuted,
+  startEngine,
+  stopEngine,
+  unlockAudio,
+} from "@/lib/world-audio";
 import { aimState, aimZoom } from "@/lib/world-aim";
 import {
   ITEM_LABELS,
@@ -1504,6 +1512,9 @@ function PlayerCameraRig({
       intent.dragScale = ride.brake;
       intent.strafe = 0;
       intent.jump = false;
+      // The ride's own live engine voice, fed the throttle and the real pace.
+      startEngine(ride.voice ?? "ev");
+      driveEngine(Math.abs(intent.forward), pace);
       if (ride.kind === "air") {
         // Where you look is where you travel: aiming the view up climbs, down
         // sinks, and the keys / pad still override it outright.
@@ -1518,8 +1529,11 @@ function PlayerCameraRig({
         intent.cruise = AVATAR_U * (ride.altitude ?? 6);
       }
     }
-    // On foot the shoes quicken every stride.
-    else intent.speedScale = walkMultiplier();
+    // On foot the shoes quicken every stride and the engine falls silent.
+    else {
+      intent.speedScale = walkMultiplier();
+      stopEngine();
+    }
 
 
 
@@ -1544,6 +1558,9 @@ function PlayerCameraRig({
     // feel and short enough not to fight the next step.
     if (!calm.current && player.grounded && !wasGrounded.current) {
       land.current = Math.min(1, fallSpeed / (MOVE.jumpSpeed * 0.9));
+      // Coming down in the shallows breaks the water instead of thumping sand.
+      if (fallSpeed > MOVE.jumpSpeed * 0.4)
+        playSfx(isSea(player.x, player.z) ? "splash" : "step");
     }
     wasGrounded.current = player.grounded;
     land.current = damp(land.current, 0, 7, delta);
@@ -2370,7 +2387,8 @@ export function BitmapWorld3D({
       return;
     }
     const seated = toggleDriving(player.x, player.z, player.yaw);
-    playSfx(seated ? "jump" : "hit");
+    playSfx(seated ? "board" : "engineoff");
+    if (!seated) stopEngine();
   }, []);
   const pickRide = useCallback((id: string) => {
     selectRide(id);
@@ -2467,7 +2485,7 @@ export function BitmapWorld3D({
       return;
     }
     heal(spec.bite);
-    playSfx("ui");
+    playSfx("eat");
     setBiteNote(
       `${spec.label} · +${spec.bite} HP · ${spec.buff.label} FOR ${Math.round(spec.buff.ms / 1000)}s`,
     );
@@ -2480,6 +2498,14 @@ export function BitmapWorld3D({
       const key = event.key.toLowerCase();
       if (key === "t") {
         void workLand();
+        return;
+      }
+      // 0 sounds the horn — only aboard a ride, where there is one to sound.
+      if (key === "0") {
+        if (isDriving()) {
+          unlockAudio();
+          playSfx("horn");
+        }
         return;
       }
       if (key === "escape") {

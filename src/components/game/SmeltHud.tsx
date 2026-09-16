@@ -41,7 +41,7 @@ export function SmeltHud({ pose }: { pose: React.RefObject<SelfPose> }) {
     if (!spot) return;
     const result = smeltGoldBar(spot.x, spot.z);
     if (result.ok) {
-      playSfx("nugget");
+      playSfx("smelt");
       setNote(`+1 GOLD BAR · +${result.xp} MINING XP`);
       return;
     }
