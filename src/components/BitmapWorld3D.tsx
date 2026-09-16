@@ -1400,17 +1400,30 @@ function PlayerCameraRig({
     if (!player) return;
     const delta = Math.min(rawDelta, 0.05);
     const pressed = keys.current;
+    // A phone has no keys and no locked mouse: the thumb pads feed the same
+    // intent, and a look swipe turns the head exactly like mouse movement.
+    const swipe = takeTouchLook();
+    if (swipe.x !== 0 || swipe.y !== 0) {
+      const steady = 1 - aimState.amount * 0.62;
+      player.yaw -= swipe.x * 0.005 * steady;
+      pitch.current = THREE.MathUtils.clamp(pitch.current - swipe.y * 0.004 * steady, -1.05, 1.05);
+    }
+    const padJump = consumeTouchJump();
     const intent: MoveIntent = {
-      forward:
+      forward: clampAxis(
         (pressed.has("w") || pressed.has("arrowup") ? 1 : 0) -
-        (pressed.has("s") || pressed.has("arrowdown") ? 1 : 0),
+          (pressed.has("s") || pressed.has("arrowdown") ? 1 : 0) +
+          touchPad.forward,
+      ),
       // A/D and the left/right arrows steer the body — sidestepping is Q/E only.
       strafe: (pressed.has("q") ? 1 : 0) - (pressed.has("e") ? 1 : 0),
-      turn:
+      turn: clampAxis(
         (pressed.has("a") || pressed.has("arrowleft") ? 1 : 0) -
-        (pressed.has("d") || pressed.has("arrowright") ? 1 : 0),
-      sprint: pressed.has("shift"),
-      jump: jumpRequested.current,
+          (pressed.has("d") || pressed.has("arrowright") ? 1 : 0) +
+          touchPad.turn,
+      ),
+      sprint: pressed.has("shift") || touchPad.sprint,
+      jump: jumpRequested.current || padJump,
     };
 
     // Aboard a ride the same keys travel it: much faster, wider turns, and no
