@@ -16,15 +16,19 @@ import * as THREE from "three";
 import { Primitive } from "@/components/game/Primitive";
 import type { PlayerState } from "@/lib/player-state";
 import {
+  COMIC_INSCRIPTION,
   FOODS,
   GOGGLES_INSCRIPTION,
   MAGIC_BOOK_INSCRIPTION,
   NECKLACE_INSCRIPTION,
+  RING_INSCRIPTION,
   SHOES_INSCRIPTION,
   toySpec,
+  WATCH_INSCRIPTION,
   WIZARD_HAT_INSCRIPTION,
   useGear,
 } from "@/lib/world-gear";
+import { JETPACK_HELMET_INSCRIPTION, JETPACK_INSCRIPTION } from "@/lib/world-vehicle";
 
 
 import type { WeaponKind } from "./weapons";
