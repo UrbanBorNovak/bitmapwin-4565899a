@@ -31,6 +31,8 @@ import {
   type BotRole,
 } from "@/lib/world-bots";
 import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
+import { brainProbe, publishBrainProbe } from "@/lib/fly-connectome";
+
 
 type Bot = BeastEntity &
   BotPlan & {
