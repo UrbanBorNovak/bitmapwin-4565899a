@@ -157,6 +157,37 @@ export const FLY_CLEARANCE = STRIDE * 5;
 export const aloft = (player: { y: number } | null | undefined) =>
   Boolean(player && player.y > FLY_CLEARANCE);
 
+/** Ground speed above which the visitor counts as racing past the scenery. */
+export const FAST_PACE = MOVE.walkSpeed * 2.2;
+
+/**
+ * SIMULATION BUDGET — while the visitor is flying or racing past, the crowd on
+ * the ground is out of reach and out of the fight, so their brains only need a
+ * handful of ticks a second instead of one per frame. Returns the delta to
+ * simulate with, or null when this frame should be skipped entirely.
+ */
+export function simDelta(
+  budget: { current: number },
+  rawDelta: number,
+  pose: { current: unknown } | null | undefined,
+) {
+  const step = Math.min(rawDelta, 0.05);
+  const player = pose?.current as { vx?: number; vz?: number; y?: number } | null;
+  const racing =
+    !!player &&
+    (aloft(player as { y: number }) ||
+      Math.hypot(player.vx ?? 0, player.vz ?? 0) > FAST_PACE);
+  if (!racing) {
+    budget.current = 0;
+    return step;
+  }
+  budget.current += rawDelta;
+  if (budget.current < 0.14) return null;
+  const spent = Math.min(budget.current, 0.05);
+  budget.current = 0;
+  return spent;
+}
+
 /**
  * True while the visitor is down. Everything hostile reads this from the shared
  * pose so a killed player is left alone: no stalking, no strikes, no damage

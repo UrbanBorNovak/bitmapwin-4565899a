@@ -19,7 +19,7 @@ import { Primitive } from "@/components/game/Primitive";
 import { playSfx } from "@/lib/world-audio";
 import { PUNK_INSCRIPTION } from "@/lib/world-gear";
 import { registerBeastGroup, type BeastEntity } from "@/lib/world-entities";
-import { poseDown } from "@/lib/player-state";
+import { poseDown, simDelta} from "@/lib/player-state";
 
 const PUNK_URL = `https://ordinals.com/content/${PUNK_INSCRIPTION}`;
 
@@ -213,8 +213,12 @@ export function Punks({
     return () => registerBeastGroup("punks", []);
   }, []);
 
+  const simBudget = useRef(0);
   useFrame((_, rawDelta) => {
-    const delta = Math.min(rawDelta, 0.05);
+    // Flying or racing past: the crowd here is out of reach, so their brains
+    // tick a few times a second instead of once a frame and travel stays smooth.
+    const delta = simDelta(simBudget, rawDelta, pose);
+    if (delta === null) return;
     const player = pose.current;
     const down = poseDown(pose);
     const now = performance.now();
