@@ -42,6 +42,9 @@ import { DesertLife } from "@/components/game/DesertLife";
 import { SeaMasses } from "@/components/game/SeaMasses";
 import { SeaIslands } from "@/components/game/SeaIslands";
 import { BitField } from "@/components/game/BitField";
+import { useBits } from "@/lib/world-bits";
+import { STONES, cycleStone, useFittedStone } from "@/lib/world-runestones";
+
 
 
 import { Punks } from "@/components/game/Punks";
@@ -61,6 +64,8 @@ import {
   startEating,
   tickGear,
   toggleGoggles,
+  toggleNecklace,
+
   toggleShoes,
   walkMultiplier,
 
@@ -2915,6 +2920,9 @@ export function BitmapWorld3D({
 
   // A meal keeps mending you while its buff runs.
   const gear = useGear();
+  const stone = useFittedStone();
+  const bits = useBits();
+
   useEffect(() => {
     const timer = window.setInterval(() => {
       tickGear();
