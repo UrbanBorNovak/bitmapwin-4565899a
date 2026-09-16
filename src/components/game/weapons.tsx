@@ -308,6 +308,13 @@ export function WeaponModel({
     );
   }
 
+  if (kind === "staff") {
+    // The runestone staff, carried upright. Whatever stone is seated on the head
+    // rides at the tip and lends the cast its colour.
+    return <RunestoneStaff u={u} materials={materials} lash={lash} flash={flash} />;
+  }
+
+
   if (kind === "revolver") {
     // Single-action iron: fluted cylinder, ejector rod, checkered grip panels.
     return (
