@@ -24,6 +24,10 @@ export const PROSPECTOR_INSCRIPTION =
 export const TRADER_INSCRIPTION =
   "855d5edd289bf34d7be22f095958e5a6ea0cff7df9d4ea094db33d3aa545a0b9i0";
 
+/** The raiders come at you as this inscribed figure. */
+export const RAIDER_INSCRIPTION =
+  "9bcfa4ecc355441bc1fcb196cff3a78bb74bf7821fc33e3e8ef0d9c21b30ae3fi0";
+
 export type BotRole = "wanderer" | "miner" | "raider" | "trader";
 
 
