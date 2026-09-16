@@ -123,6 +123,7 @@ import {
 } from "@/components/game/weapons";
 import { WeaponBelt } from "@/components/game/WeaponBelt";
 import { CharacterSheet } from "@/components/game/CharacterSheet";
+import { RationIcon } from "@/components/game/RationIcon";
 
 /** the side menu shelves — one open at a time keeps the HUD short */
 type KitTab = "action" | "kit" | "travel" | "view";
@@ -3324,12 +3325,9 @@ export function BitmapWorld3D({
                               }}
                               className="flex w-full items-center gap-2 border border-transparent px-1 py-1 text-left font-mono text-[10px] uppercase text-foreground transition-colors hover:border-bitcoin hover:text-bitcoin"
                             >
-                              <img
-                                src={ordContentUrl(spec.inscription)}
-                                alt={spec.label}
-                                className="size-7 shrink-0 [image-rendering:pixelated]"
-                                loading="lazy"
-                              />
+                              <span className="flex size-8 shrink-0 items-center justify-center border border-border bg-background text-muted-foreground transition-colors group-hover:border-bitcoin group-hover:text-bitcoin">
+                                <RationIcon id={id} className="size-5" />
+                              </span>
                               <span className="min-w-0 flex-1">
                                 <span className="block truncate">{spec.label}</span>
                                 <span className="block text-[9px] text-muted-foreground">
