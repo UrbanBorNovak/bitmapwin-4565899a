@@ -190,7 +190,13 @@ export function GuidedTour() {
   const pad = 6;
   const cardWidth = Math.min(320, window.innerWidth - 24);
   const below = box.bottom + 200 < window.innerHeight;
-  const top = below ? box.bottom + 12 : Math.max(12, box.top - 12 - 190);
+  // Keep the card fully on screen — on a phone the highlighted area often fills
+  // the whole viewport, which used to push the card past the bottom edge.
+  const cardHeight = cardRef.current?.offsetHeight ?? 220;
+  const top = Math.min(
+    Math.max(12, below ? box.bottom + 12 : box.top - 12 - cardHeight),
+    Math.max(12, window.innerHeight - cardHeight - 12),
+  );
   const left = Math.min(
     Math.max(12, box.left + box.width / 2 - cardWidth / 2),
     window.innerWidth - cardWidth - 12,
