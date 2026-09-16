@@ -13,8 +13,13 @@ import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 
 export const PINE_INSCRIPTION =
   "a67b9e40973e6cf9df84bfc0d28ac10bcbef8f7d0e3f46ad0f99541876c8e330i0";
+/** Shrooms sprout in the shade at the foot of the pines. */
+export const SHROOM_INSCRIPTION =
+  "171c26e24b94e11fc8dfae620173179ff43fa41674685721464ca28d658ed138i0";
 
 const PINE_URL = contentUrl(PINE_INSCRIPTION);
+const SHROOM_URL = contentUrl(SHROOM_INSCRIPTION);
+
 
 const noRaycast = () => {};
 
