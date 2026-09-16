@@ -20,6 +20,9 @@ import { Playgrounds } from "@/components/game/Playgrounds";
 import { GoldenEgg } from "@/components/game/GoldenEgg";
 import { AntelopeBody } from "@/components/game/Antelope";
 import { UnicornBody } from "@/components/game/Unicorn";
+import { JadeNodes } from "@/components/game/JadeNodes";
+import { DesertProps } from "@/components/game/DesertProps";
+import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 
 import {
   registerBeasts,
