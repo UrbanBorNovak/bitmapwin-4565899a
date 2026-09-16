@@ -59,6 +59,9 @@ import {
   startEating,
   tickGear,
   toggleGoggles,
+  toggleShoes,
+  walkMultiplier,
+
   useGear,
   type FoodId,
 } from "@/lib/world-gear";
@@ -1465,6 +1468,10 @@ function PlayerCameraRig({
         intent.cruise = AVATAR_U * (ride.altitude ?? 6);
       }
     }
+    // On foot the shoes quicken every stride.
+    else intent.speedScale = walkMultiplier();
+
+
 
 
     // Caught in a trap: the legs are held, and only the head can still turn.
