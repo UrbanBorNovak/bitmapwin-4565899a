@@ -48,7 +48,7 @@ const TOURS: Record<string, Tour> = {
       {
         target: "map-world",
         title: "MOVE AND LOOK AROUND",
-        body: "Drag to look, W to walk forward, A and D to turn, SPACE to jump. Click a square to open it.",
+        body: "Drag to look around and use the on-screen stick — or W to walk, A and D to turn, SPACE to jump. Tap a square to open it.",
       },
       {
         target: "flow-rail",

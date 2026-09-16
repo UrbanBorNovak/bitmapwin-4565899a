@@ -3024,7 +3024,7 @@ export function BitmapWorld3D({
 
   return (
     <div className={className}>
-      <div className="relative h-[78vh] min-h-[520px] w-full overflow-hidden border border-border bg-background">
+      <div className="relative h-[calc(100dvh-3.5rem)] min-h-[360px] w-full overflow-hidden border-0 border-border bg-background sm:h-[78vh] sm:min-h-[520px] sm:border">
         {/* Controls sit on the world itself, not stacked above it. */}
         <div className="pointer-events-none absolute inset-x-0 top-0 z-40 p-2">
           {exploring ? (

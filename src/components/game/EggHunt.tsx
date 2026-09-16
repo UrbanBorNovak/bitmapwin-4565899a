@@ -37,7 +37,7 @@ export function EggHunt({ unit }: { unit: number }) {
   return (
     <div
       data-no-translate
-      className="hud-panel absolute right-3 top-[13rem] z-40 w-[min(14rem,calc(100%-1.5rem))] space-y-1 px-2.5 py-2 font-mono text-[10px]"
+      className="hud-panel absolute right-3 top-[7rem] md:top-[13rem] z-40 w-[min(14rem,calc(100%-1.5rem))] space-y-1 px-2.5 py-2 font-mono text-[10px]"
       aria-label="Golden egg hunt"
     >
       <span className="label text-[9px] text-bitcoin">GOLDEN EGG HUNT</span>

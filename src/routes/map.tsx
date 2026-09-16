@@ -65,7 +65,7 @@ function MapPage() {
   );
 
   return (
-    <div className="px-2 pb-2 md:px-3">
+    <div className="px-0 pb-0 sm:px-2 sm:pb-2 md:px-3">
       <div data-tour="map-world" className="min-w-0">
         <BitmapWorld3D
           tipHeight={tipHeight}
