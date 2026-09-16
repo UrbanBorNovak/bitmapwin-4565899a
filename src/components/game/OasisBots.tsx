@@ -9,10 +9,12 @@
  * log treat them exactly like wildlife and Punks.
  */
 
-import { memo, useEffect, useMemo, useRef, useState } from "react";
-import { Html } from "@react-three/drei";
+import { Suspense, memo, useEffect, useMemo, useRef, useState } from "react";
+import { Html, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
+
 import { playSfx } from "@/lib/world-audio";
 import {
   liveVeins,
@@ -84,6 +86,9 @@ const ROLE_TINT: Record<BotRole, string> = {
   trader: "#5aa9c9",
 };
 
+/** The plain settlers walk the sand as a real on-chain figure. */
+const SETTLER_URL = contentUrl(SETTLER_INSCRIPTION);
+
 /** A blocky settler figure — cheap enough to draw dozens of. */
 const BotBody = memo(function BotBody({
   unit,
@@ -94,6 +99,14 @@ const BotBody = memo(function BotBody({
   size: number;
   role: BotRole;
 }) {
+  if (role === "wanderer") {
+    return (
+      <Suspense fallback={null}>
+        <InscribedModel url={SETTLER_URL} size={unit * size * 1.05} yaw={0} />
+      </Suspense>
+    );
+  }
+
   const u = unit * size;
   const tint = ROLE_TINT[role];
   return (
