@@ -7,7 +7,7 @@
  * hash keeps every plant in the same place each time you come back, while only
  * the patch you can actually see is ever pushed to the GPU.
  */
-import { memo, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { Suspense, memo, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { TreasureChests } from "@/components/game/TreasureChests";
