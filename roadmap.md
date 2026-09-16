@@ -23,3 +23,4 @@
 - [x] Make Oasis exploration world-first with a minimal persistent HUD and contextual panels
 - [x] Desert haze fog by view mode plus first-person feel: step bob, landing dip, turn lean, speed FOV
 
+- [x] Mobile play: on-screen thumb stick (move/turn/sprint), look swipe, jump/fire buttons, fly up/down pads — touch devices only
