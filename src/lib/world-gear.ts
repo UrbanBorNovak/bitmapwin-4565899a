@@ -198,7 +198,7 @@ export const FOODS: Record<FoodId, FoodSpec> = {
 };
 
 /** The toys a visitor can carry in the right hand. */
-export type ToyId = "none" | "puppet" | "bitfrog";
+export type ToyId = "none" | "puppet" | "bitfrog" | "platinum-puppet";
 
 export type ToySpec = { id: ToyId; label: string; inscription: string; fit: number };
 
@@ -215,6 +215,12 @@ export const TOYS: ToySpec[] = [
     label: "BITFROG TOY",
     inscription: "89d00d08bac6cb7e197813ab0c36aac9dad273300d163d20283770ddef5463f2i0",
     fit: 0.3,
+  },
+  {
+    id: "platinum-puppet",
+    label: "PLATINUM PUPPET",
+    inscription: "e2e9193fd0bc90802f8b1a4ebca7871029a0b9528568ba99275856edac257931i0",
+    fit: 0.34,
   },
 ];
 
