@@ -25,6 +25,7 @@ import {
 } from "@/lib/world-entities";
 import {
   SETTLER_INSCRIPTION,
+  PROSPECTOR_INSCRIPTION,
   BOT_ROLES,
 
   botCount,
@@ -90,6 +91,8 @@ const ROLE_TINT: Record<BotRole, string> = {
 
 /** The plain settlers walk the sand as a real on-chain figure. */
 const SETTLER_URL = contentUrl(SETTLER_INSCRIPTION);
+/** Prospectors wear a second inscribed figure of their own. */
+const PROSPECTOR_URL = contentUrl(PROSPECTOR_INSCRIPTION);
 
 /** A blocky settler figure — cheap enough to draw dozens of. */
 const BotBody = memo(function BotBody({
@@ -101,10 +104,14 @@ const BotBody = memo(function BotBody({
   size: number;
   role: BotRole;
 }) {
-  if (role === "wanderer") {
+  if (role === "wanderer" || role === "miner") {
     return (
       <Suspense fallback={null}>
-        <InscribedModel url={SETTLER_URL} size={unit * size * 1.05} yaw={0} />
+        <InscribedModel
+          url={role === "miner" ? PROSPECTOR_URL : SETTLER_URL}
+          size={unit * size * 1.05}
+          yaw={0}
+        />
       </Suspense>
     );
   }
@@ -346,3 +353,4 @@ export function OasisBots({
 }
 
 useGLTF.preload(SETTLER_URL);
+useGLTF.preload(PROSPECTOR_URL);

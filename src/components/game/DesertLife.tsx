@@ -13,6 +13,7 @@ import * as THREE from "three";
 import { TreasureChests } from "@/components/game/TreasureChests";
 import { MineralNodes } from "@/components/game/MineralNodes";
 import { PineTrees } from "@/components/game/PineTrees";
+import { Houses } from "@/components/game/Houses";
 import { GoldenEgg } from "@/components/game/GoldenEgg";
 import { AntelopeBody } from "@/components/game/Antelope";
 import { UnicornBody } from "@/components/game/Unicorn";
@@ -30,6 +31,7 @@ import {
 import { playSfx } from "@/lib/world-audio";
 import { colAt, rowAt } from "@/lib/player-state";
 import { createFieldCache, fieldDirection } from "@/lib/world-nav";
+import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { Primitive } from "./Primitive";
 
 
@@ -517,6 +519,7 @@ export const DesertLife = memo(function DesertLife({
       <GoldVeins unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <MineralNodes unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <PineTrees unit={unit} center={center} radius={radius} />
+      <Houses unit={unit} center={center} radius={radius} />
       <GoldenEgg unit={unit} pose={pose} />
       <TreasureChests unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <Critters unit={unit} colors={colors} pose={pose} onBite={onBite} />
@@ -594,6 +597,8 @@ type Critter = BeastEntity & {
   heading: number;
   bob: number;
   lastBite: number;
+  /** the same insect-style brain the settlers run on */
+  brain: FlyBrain;
 };
 
 const CRITTER_COUNT = 18;
@@ -639,6 +644,7 @@ const Critters = memo(function Critters({
         heading: i,
         bob: 0,
         lastBite: 0,
+        brain: createFlyBrain(i * 2.7 + 1.9),
       };
     }),
   );
@@ -703,12 +709,36 @@ const Critters = memo(function Critters({
       group.rotation.z = 0;
       const speed = species.speed * unit;
 
-      let steer = Math.sin(now / 1400 + critter.seed) * delta * 1.4;
-      let travel = speed;
+      // Every animal thinks for itself: the same insect-style brain the settlers
+      // run drives the idle wander, the breathers and the flinches, while the
+      // tuned hunt and bolt below still own the chase.
+      const dxBrain = player ? player.x - critter.x : 0;
+      const dzBrain = player ? player.z - critter.z : 0;
+      const brainAway = player ? Math.hypot(dxBrain, dzBrain) : null;
+      const act = critter.brain.think(
+        {
+          now,
+          hp: critter.hp,
+          maxHp: critter.maxHp,
+          snared: Boolean(critter.snaredUntil && critter.snaredUntil > now),
+          heading: critter.heading,
+          playerDistance: brainAway === null ? null : brainAway / unit,
+          playerAngle: Math.atan2(dxBrain, dzBrain),
+          workDistance: null,
+          workAngle: 0,
+          worker: false,
+          hostile: species.hostile,
+          vendor: false,
+        },
+        delta,
+      );
+
+      let steer = act.steer;
+      let travel = speed * Math.max(0.35, act.throttle);
       if (player) {
-        const dx = player.x - critter.x;
-        const dz = player.z - critter.z;
-        const away = Math.hypot(dx, dz);
+        const dx = dxBrain;
+        const dz = dzBrain;
+        const away = brainAway ?? 0;
         let toPlayer = Math.atan2(dx, dz);
         if (species.hostile && away < unit * 12) {
           // Follow the shared field where it has an answer, otherwise head straight in.
