@@ -42,7 +42,7 @@ export function CreatureEyes({
   const x = unit * size * 0.115;
   // The fitted head reaches roughly a third of a unit along its front (-Z).
   // Seat the eye blocks across that face so they protrude instead of hiding inside it.
-  const z = -unit * size * 0.36;
+  const z = -unit * size * 0.235;
 
   useFrame(({ clock }) => {
     const node = blinkRef.current;
@@ -67,16 +67,16 @@ export function CreatureEyes({
       {[-1, 1].map((side, i) => (
         <group key={side} position={[x * side, 0, 0]}>
           <mesh>
-            <boxGeometry args={[eyeW, eyeH, eye * 0.3]} />
+            <boxGeometry args={[eyeW, eyeH, eye * 0.12]} />
             <meshBasicMaterial color="#ffffff" />
           </mesh>
           <mesh
             ref={(node) => {
               pupils.current[i] = node;
             }}
-            position={[0, 0, -eye * 0.18]}
+            position={[0, 0, -eye * 0.08]}
           >
-            <boxGeometry args={[pupilW, eyeH, eye * 0.08]} />
+            <boxGeometry args={[pupilW, eyeH, eye * 0.05]} />
             <meshBasicMaterial color="#0a0a0a" />
           </mesh>
         </group>
