@@ -23,6 +23,7 @@ import {
   toggleNecklace,
   toggleRing,
   toggleShoes,
+  toggleWatch,
   useGear,
 } from "@/lib/world-gear";
 import { JETPACK_HELMET_INSCRIPTION } from "@/lib/world-vehicle";
