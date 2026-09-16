@@ -14,10 +14,13 @@ import { cn } from "@/lib/utils";
 export default function TouchControls({
   flying = false,
   shooter = false,
+  paused = false,
   onJumpLabel,
 }: {
   flying?: boolean;
   shooter?: boolean;
+  /** hide the pads while a panel is open, so nothing sits under the menu */
+  paused?: boolean;
   onJumpLabel?: string;
 }) {
   const stick = useRef<HTMLDivElement | null>(null);
@@ -77,6 +80,8 @@ export default function TouchControls({
     );
     if (!down) window.dispatchEvent(new PointerEvent("pointerup", { button: 0, buttons: 0 }));
   }, []);
+
+  if (paused) return null;
 
   return (
     <div className="pointer-events-none fixed inset-0 z-40 select-none">

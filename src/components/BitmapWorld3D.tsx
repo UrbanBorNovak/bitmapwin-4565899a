@@ -3451,7 +3451,11 @@ export function BitmapWorld3D({
 
         {/* Phones and tablets walk the Oasis with thumb pads instead of keys. */}
         {exploring && touchDevice ? (
-          <TouchControls flying={driving && ride.kind === "air"} shooter={Boolean(weapon)} />
+          <TouchControls
+            flying={driving && ride.kind === "air"}
+            shooter={Boolean(weapon)}
+            paused={utilityOpen || inventoryOpen || buildOpen || mapOpen || chatOpen || rationsOpen}
+          />
         ) : null}
 
 
