@@ -5,6 +5,7 @@ import { getBitmapRegistryEntry } from "@/lib/oci.functions";
 import { MAX_BITMAP } from "@/lib/oci";
 import { TraitBadges } from "@/components/TraitBadges";
 import { ClubBadge } from "@/components/ClubBadge";
+import { GalleryBadges } from "@/components/GalleryBadges";
 import { SatBadges } from "@/components/SatBadges";
 import { toast } from "sonner";
 import { BlockMosaic } from "@/components/BlockMosaic";
@@ -154,6 +155,7 @@ function BitmapDetail() {
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <ClubBadge height={block} />
+        <GalleryBadges height={block} txCount={stats.data?.txCount ?? null} />
         <TraitBadges height={block} showRarity />
         <SatBadges height={block} />
       </div>
