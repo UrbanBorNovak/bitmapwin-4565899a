@@ -13,6 +13,7 @@ import * as THREE from "three";
 import { TreasureChests } from "@/components/game/TreasureChests";
 import { MineralNodes } from "@/components/game/MineralNodes";
 import { PineTrees } from "@/components/game/PineTrees";
+import { Houses } from "@/components/game/Houses";
 import { GoldenEgg } from "@/components/game/GoldenEgg";
 import { AntelopeBody } from "@/components/game/Antelope";
 import { UnicornBody } from "@/components/game/Unicorn";
@@ -30,6 +31,7 @@ import {
 import { playSfx } from "@/lib/world-audio";
 import { colAt, rowAt } from "@/lib/player-state";
 import { createFieldCache, fieldDirection } from "@/lib/world-nav";
+import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { Primitive } from "./Primitive";
 
 
@@ -517,6 +519,7 @@ export const DesertLife = memo(function DesertLife({
       <GoldVeins unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <MineralNodes unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <PineTrees unit={unit} center={center} radius={radius} />
+      <Houses unit={unit} center={center} radius={radius} />
       <GoldenEgg unit={unit} pose={pose} />
       <TreasureChests unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <Critters unit={unit} colors={colors} pose={pose} onBite={onBite} />
