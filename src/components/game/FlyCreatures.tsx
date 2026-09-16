@@ -102,6 +102,22 @@ export const CREATURE_GROUPS: CreatureGroupSpec[] = [
     lines: [],
   },
   {
+    id: "pikachus",
+    label: "PIKACHU",
+    inscription: "728e2197e51efdf7e5be5b80ab28ea0b33e9a9f38a8568e278fc05e6ee622cc1i0",
+    count: 3,
+    size: 0.7,
+    hp: 70,
+    xp: 140,
+    speed: 1.05,
+    hostile: false,
+    bite: 0,
+    hops: true,
+    water: true,
+    eyes: false,
+    lines: ["PIKA", "PIKA PIKA", "PIKACHUUU"],
+  },
+  {
     id: "frogs",
     label: "FROG",
     inscription: "b9a34c9cdc34f59f488d2566bafb58ffebf3d44508c540ac06df11903e9069f8i0",
@@ -192,11 +208,13 @@ export const CreatureGroup = memo(function CreatureGroup({
   unit,
   pose,
   onBite,
+  onSighted,
 }: {
   spec: CreatureGroupSpec;
   unit: number;
   pose: { current: { x: number; z: number } | null };
   onBite?: ((damage: number, label: string) => void) | undefined;
+  onSighted?: ((label: string, strides: number) => void) | undefined;
 }) {
   const url = useMemo(() => contentUrl(spec.inscription), [spec.inscription]);
   const creatures = useMemo(
@@ -205,6 +223,7 @@ export const CreatureGroup = memo(function CreatureGroup({
   );
   const groups = useRef<(THREE.Group | null)[]>([]);
   const [chatter, setChatter] = useState<Record<number, string>>({});
+  const sighted = useRef(0);
 
   useEffect(() => {
     registerBeastGroup(`creatures:${spec.id}`, creatures);
@@ -217,6 +236,8 @@ export const CreatureGroup = memo(function CreatureGroup({
     const now = performance.now();
     let talkChanged = false;
     const talk: Record<number, string> = {};
+    // Nearest one of this group, reported to the readout a few times a second.
+    let closest: { label: string; strides: number } | null = null;
 
     creatures.forEach((creature, index) => {
       const node = groups.current[index];
@@ -328,6 +349,11 @@ export const CreatureGroup = memo(function CreatureGroup({
       const sinceHit = now - creature.hitAt;
       if (sinceHit < 250) node.rotation.x -= Math.sin((sinceHit / 250) * Math.PI) * 0.3;
 
+      if (away !== null && away < unit * 12) {
+        const strides = away / unit;
+        if (!closest || strides < closest.strides) closest = { label: creature.label, strides };
+      }
+
       creature.mood.current =
         sinceHit < 1_400
           ? "hurt"
@@ -354,6 +380,10 @@ export const CreatureGroup = memo(function CreatureGroup({
     });
 
     if (talkChanged) setChatter(talk);
+    if (closest && now - sighted.current > 320) {
+      sighted.current = now;
+      onSighted?.(closest.label, closest.strides);
+    }
   });
 
   return (
@@ -400,15 +430,24 @@ export const FlyCreatures = memo(function FlyCreatures({
   unit,
   pose,
   onBite,
+  onSighted,
 }: {
   unit: number;
   pose: { current: { x: number; z: number } | null };
   onBite?: ((damage: number, label: string) => void) | undefined;
+  onSighted?: ((label: string, strides: number) => void) | undefined;
 }) {
   return (
     <>
       {CREATURE_GROUPS.map((spec) => (
-        <CreatureGroup key={spec.id} spec={spec} unit={unit} pose={pose} onBite={onBite} />
+        <CreatureGroup
+          key={spec.id}
+          spec={spec}
+          unit={unit}
+          pose={pose}
+          onBite={onBite}
+          onSighted={onSighted}
+        />
       ))}
     </>
   );
