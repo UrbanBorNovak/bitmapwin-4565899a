@@ -24,7 +24,9 @@ import {
   type OreVein,
 } from "@/lib/world-entities";
 import {
+  SETTLER_INSCRIPTION,
   BOT_ROLES,
+
   botCount,
   botHash,
   botRoster,

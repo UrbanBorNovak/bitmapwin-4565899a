@@ -45,7 +45,9 @@ export type WeaponKind =
   | "pickaxe"
   | "hammer"
   | "sword"
-  | "wand";
+  | "wand"
+  | "staff";
+
 
 
 export type WeaponSpec = {
