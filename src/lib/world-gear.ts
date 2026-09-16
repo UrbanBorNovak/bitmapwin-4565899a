@@ -64,6 +64,9 @@ export const PUNK_INSCRIPTION =
 /** Desert shoes — laced on the feet, and they quicken every stride. */
 export const SHOES_INSCRIPTION =
   "d2a674751c24003e196b7a70ce4d5427a544bb84faca6e3536f4ee665b5da616i0";
+/** The moon that hangs in the night sky — inscribed, not edible. */
+export const MOON_INSCRIPTION =
+  "37b64538bf925f3780fc22cdab1d0a8bd7a70df3ba74989fd9c891d70b2dcd34i0";
 /** How much faster a visitor travels with the shoes on. */
 export const SHOES_SPEED = 1.16;
 /** The necklace — worn at the throat, and it steadies a visitor's recovery. */
@@ -78,7 +81,6 @@ export type FoodId =
   | "ramen"
   | "cheese-slice"
   | "candy"
-  | "moon"
   | "potion"
   | "peperoni-slice"
   | "medkit";
@@ -133,15 +135,6 @@ export const FOODS: Record<FoodId, FoodSpec> = {
     bite: 14,
     eatMs: 4_000,
     buff: { label: "SUGAR BURST", ms: 30_000, regenPerSecond: 3, power: 1.15 },
-  },
-  moon: {
-    id: "moon",
-    label: "MOON",
-    inscription: "37b64538bf925f3780fc22cdab1d0a8bd7a70df3ba74989fd9c891d70b2dcd34i0",
-    fit: 0.32,
-    bite: 24,
-    eatMs: 6_000,
-    buff: { label: "LUNAR FOCUS", ms: 75_000, regenPerSecond: 4, power: 1.25 },
   },
   potion: {
     id: "potion",
