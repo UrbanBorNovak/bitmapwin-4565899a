@@ -297,12 +297,28 @@
 /* In-world readouts sit back out of the way until they are looked at, so the
    land stays visible while playing. */
 @utility hud-panel {
+  position: relative;
   border: 1px solid color-mix(in oklab, var(--color-border) 45%, transparent);
   border-radius: var(--radius-sm);
-  background: color-mix(in oklab, var(--color-background) 34%, transparent);
-  backdrop-filter: blur(6px) saturate(115%);
-  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 5%, transparent);
-  opacity: 0.62;
+  /* Layered glass: a dark pane, a soft top sheen and a faint scanline weave,
+     so a readout reads as instrument glass rather than a flat box. */
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-foreground) 6%, transparent),
+      transparent 42%
+    ),
+    repeating-linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-foreground) 3%, transparent) 0 1px,
+      transparent 1px 3px
+    ),
+    color-mix(in oklab, var(--color-background) 40%, transparent);
+  backdrop-filter: blur(8px) saturate(120%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 7%, transparent),
+    0 10px 26px -20px color-mix(in oklab, var(--color-background) 90%, transparent);
+  opacity: 0.68;
   transition:
     opacity var(--motion-fast, 150ms) ease,
     background var(--motion-fast, 150ms) ease,
@@ -310,11 +326,57 @@
     box-shadow var(--motion-fast, 150ms) ease;
 }
 
+/* Machined corner brackets, drawn from the border colour and lit on focus. */
+.hud-panel::before,
+.hud-panel::after {
+  content: "";
+  position: absolute;
+  width: 0.5rem;
+  height: 0.5rem;
+  pointer-events: none;
+  border-color: color-mix(in oklab, var(--color-bitcoin) 55%, transparent);
+  opacity: 0.55;
+  transition:
+    opacity var(--motion-fast, 150ms) ease,
+    border-color var(--motion-fast, 150ms) ease;
+}
+
+.hud-panel::before {
+  top: -1px;
+  left: -1px;
+  border-top: 1px solid;
+  border-left: 1px solid;
+}
+
+.hud-panel::after {
+  right: -1px;
+  bottom: -1px;
+  border-right: 1px solid;
+  border-bottom: 1px solid;
+}
+
 .hud-panel:hover,
 .hud-panel:focus-within {
   opacity: 1;
-  background: color-mix(in oklab, var(--color-background) 82%, transparent);
-  border-color: color-mix(in oklab, var(--color-border) 80%, transparent);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-foreground) 8%, transparent),
+      transparent 42%
+    ),
+    color-mix(in oklab, var(--color-background) 86%, transparent);
+  border-color: color-mix(in oklab, var(--color-border) 85%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 9%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--color-bitcoin) 12%, transparent),
+    0 14px 30px -18px color-mix(in oklab, var(--color-bitcoin) 35%, transparent);
+}
+
+.hud-panel:hover::before,
+.hud-panel:hover::after,
+.hud-panel:focus-within::before,
+.hud-panel:focus-within::after {
+  opacity: 1;
 }
 
 @utility hud-panel-accent {
