@@ -90,12 +90,18 @@ export const SkyBodies = memo(function SkyBodies({ bitcoin }: { bitcoin: string 
         </mesh>
       </group>
 
-      {/* Moon — a pale disc with a hint of crater shading. */}
+      {/* Moon — the inscribed moon, with a soft halo behind it. */}
       <group position={[far * 0.5, moonHeight, far * 0.5]}>
-        <mesh raycast={() => {}}>
-          <sphereGeometry args={[bodyScale * (night ? 0.95 : 0.55), 20, 16]} />
-          <meshBasicMaterial color={MOON} transparent opacity={night ? 1 : 0.45} />
-        </mesh>
+        <Suspense
+          fallback={
+            <mesh raycast={() => {}}>
+              <sphereGeometry args={[bodyScale * (night ? 0.95 : 0.55), 20, 16]} />
+              <meshBasicMaterial color={MOON} transparent opacity={night ? 1 : 0.45} />
+            </mesh>
+          }
+        >
+          <InscribedMoon size={bodyScale * (night ? 2.1 : 1.2)} dim={night ? 1 : 0.5} />
+        </Suspense>
         <mesh raycast={() => {}}>
           <sphereGeometry args={[bodyScale * (night ? 1.5 : 0.8), 16, 12]} />
           <meshBasicMaterial
