@@ -384,6 +384,33 @@ export function toggleNecklace() {
   return state.necklace;
 }
 
+/** Strap the watch on, or take it off. */
+export function toggleWatch() {
+  hydrate();
+  state = { ...state, watch: !state.watch };
+  persist();
+  emit();
+  return state.watch;
+}
+
+/** Tuck the comic book under your arm, or put it away. */
+export function toggleComic() {
+  hydrate();
+  state = { ...state, comic: !state.comic };
+  persist();
+  emit();
+  return state.comic;
+}
+
+/** Slip the ring on, or take it off. */
+export function toggleRing() {
+  hydrate();
+  state = { ...state, ring: !state.ring };
+  persist();
+  emit();
+  return state.ring;
+}
+
 /** Pull the next toy out of the pack, or put the last one away. */
 export function cycleToy() {
   hydrate();
