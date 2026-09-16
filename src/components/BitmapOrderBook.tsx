@@ -30,6 +30,11 @@ import { MARKETPLACE_FEE_PERCENT } from "@/lib/marketplace-fee";
 export function BitmapOrderBook({ height }: { height?: number }) {
   const { data: offers = [], isPending: offersPending } = useQuery(offersQuery(height));
   const { data: bids = [], isPending: bidsPending } = useQuery(openBidsQuery(500));
+  // Hold the loading state until after hydration: when the query cache is
+  // prefetched, the first client render already has data while the server
+  // rendered Loading — without this gate the tree hydration-mismatches.
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
   const { data: price } = useQuery(btcPriceQuery());
   const usdPerBtc = price?.usd;
 
