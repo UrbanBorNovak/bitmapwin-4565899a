@@ -60,6 +60,8 @@ import { isSelfSnared, selfSnaredMs } from "@/lib/world-traps";
 import { Companions } from "@/components/game/Companions";
 import { WornGear } from "@/components/game/WornGear";
 import { GhostShade } from "@/components/game/GhostShade";
+import type { MysteryPrize } from "@/lib/world-mystery";
+import { creditBits } from "@/lib/world-bits";
 import { FlyCreatures } from "@/components/game/FlyCreatures";
 import { MysteryBoxes } from "@/components/game/MysteryBoxes";
 import { NightVision } from "@/components/game/NightVision";
@@ -2934,6 +2936,15 @@ export function BitmapWorld3D({
     },
     [hp, hurt],
   );
+
+  // A mystery box cracked open: pay out whatever it held.
+  const takePrize = useCallback((prize: MysteryPrize) => {
+    if (prize.kind === "bit") creditBits(prize.amount);
+    if (prize.kind === "xp") grantXp("mining", prize.amount);
+    if (prize.kind === "food") startEating(prize.food as FoodId);
+    setBiteNote(`MYSTERY BOX · ${prize.label}`);
+    window.setTimeout(() => setBiteNote(null), 2200);
+  }, []);
 
   // The wand's healing spell: it mends you, and every party member with you.
   const castHeal = useCallback(
