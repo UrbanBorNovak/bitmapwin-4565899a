@@ -238,6 +238,12 @@ export type GearSnapshot = {
   shoes: boolean;
   /** the necklace, worn at the throat */
   necklace: boolean;
+  /** the watch, worn on the wrist */
+  watch: boolean;
+  /** the comic book, carried in the off hand */
+  comic: boolean;
+  /** the ring, worn on the hand */
+  ring: boolean;
   /** the toy held in the right hand */
   toy: ToyId;
   /** the meal in hand, while it lasts */
@@ -252,6 +258,9 @@ let state: GearSnapshot = {
   goggles: false,
   shoes: false,
   necklace: false,
+  watch: false,
+  comic: false,
+  ring: false,
   toy: "none",
   eating: null,
   buff: null,
@@ -276,6 +285,9 @@ function hydrate() {
       goggles?: boolean;
       shoes?: boolean;
       necklace?: boolean;
+      watch?: boolean;
+      comic?: boolean;
+      ring?: boolean;
       toy?: ToyId;
     };
     if (parsed.companion && COMPANIONS.some((c) => c.id === parsed.companion))
@@ -283,6 +295,9 @@ function hydrate() {
     if (typeof parsed.goggles === "boolean") state = { ...state, goggles: parsed.goggles };
     if (typeof parsed.shoes === "boolean") state = { ...state, shoes: parsed.shoes };
     if (typeof parsed.necklace === "boolean") state = { ...state, necklace: parsed.necklace };
+    if (typeof parsed.watch === "boolean") state = { ...state, watch: parsed.watch };
+    if (typeof parsed.comic === "boolean") state = { ...state, comic: parsed.comic };
+    if (typeof parsed.ring === "boolean") state = { ...state, ring: parsed.ring };
     if (parsed.toy && TOYS.some((t) => t.id === parsed.toy)) state = { ...state, toy: parsed.toy };
   } catch {
     // a lost preference is never worth an error
@@ -298,6 +313,9 @@ function persist() {
         goggles: state.goggles,
         shoes: state.shoes,
         necklace: state.necklace,
+        watch: state.watch,
+        comic: state.comic,
+        ring: state.ring,
         toy: state.toy,
       }),
     );
