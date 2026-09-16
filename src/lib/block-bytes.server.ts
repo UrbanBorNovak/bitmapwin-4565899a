@@ -232,27 +232,88 @@ export async function buildBlockBytes(height: number): Promise<BlockBytes> {
   }
 }
 
-async function buildBlockBytesUncached(height: number): Promise<BlockBytes> {
-  const meta = await fetchBlockMeta(height);
+/**
+ * Real per-transaction output values (sats) for a block, shared by the parcel
+ * size map and the bitmap render side map. Values are cached: they are the raw
+ * input for every per-transaction scale we derive.
+ */
+export type TxValues = {
+  height: number;
+  hash: string;
+  txCount: number;
+  source: BlockBytes["source"];
+  values: number[];
+};
 
-  let values: number[];
-  let source: BlockBytes["source"] = "mempool-summary";
+const valuesCache = new Map<number, TxValues>();
+const valuesInflight = new Map<number, Promise<TxValues>>();
+
+export async function buildTxValues(height: number): Promise<TxValues> {
+  const cached = valuesCache.get(height);
+  if (cached) return cached;
+  const pending = valuesInflight.get(height);
+  if (pending) return pending;
+
+  const request = (async (): Promise<TxValues> => {
+    const meta = await fetchBlockMeta(height);
+
+    let values: number[];
+    let source: BlockBytes["source"] = "mempool-summary";
+    try {
+      values = await valuesFromMempoolSummary(meta.hash);
+    } catch {
+      source = "esplora-pages";
+      values = await valuesFromEsploraPages(meta.hash, meta.txCount);
+    }
+    return { height: meta.height, hash: meta.hash, txCount: meta.txCount, source, values };
+  })();
+
+  valuesInflight.set(height, request);
   try {
-    values = await valuesFromMempoolSummary(meta.hash);
-  } catch {
-    source = "esplora-pages";
-    values = await valuesFromEsploraPages(meta.hash, meta.txCount);
+    const tx = await request;
+    if (valuesCache.size >= 150) {
+      const oldest = valuesCache.keys().next().value;
+      if (oldest !== undefined) valuesCache.delete(oldest);
+    }
+    valuesCache.set(height, tx);
+    return tx;
+  } finally {
+    valuesInflight.delete(height);
   }
+}
 
-  const bytes = new Uint8Array(values.length);
-  for (let i = 0; i < values.length; i++) bytes[i] = sizeClassFromValue(values[i]!);
+async function buildBlockBytesUncached(height: number): Promise<BlockBytes> {
+  const tx = await buildTxValues(height);
+
+  const bytes = new Uint8Array(tx.values.length);
+  for (let i = 0; i < tx.values.length; i++) bytes[i] = sizeClassFromValue(tx.values[i]!);
 
   return {
-    height: meta.height,
-    hash: meta.hash,
-    txCount: meta.txCount,
+    height: tx.height,
+    hash: tx.hash,
+    txCount: tx.txCount,
     covered: bytes.length,
-    source,
+    source: tx.source,
     bytes,
   };
+}
+
+/**
+ * Per-transaction square side on the canonical bitmap renderer scale:
+ * `ceil(log10(total_sats)) - 5`, minimum 1 — the size bitlodo's MondrianLayout
+ * packs, and the scale the punk silhouettes are cut on.
+ */
+export type RenderSides = {
+  height: number;
+  hash: string;
+  txCount: number;
+  sides: number[];
+};
+
+export async function buildRenderSides(height: number): Promise<RenderSides> {
+  const tx = await buildTxValues(height);
+  const sides = tx.values.map((v) =>
+    Math.max(1, Math.min(255, Math.ceil(Math.log10(Math.max(1, v))) - 5)),
+  );
+  return { height: tx.height, hash: tx.hash, txCount: tx.txCount, sides };
 }
