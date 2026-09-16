@@ -22,6 +22,9 @@ import { STAFF_INSCRIPTION, useFittedStone } from "@/lib/world-runestones";
 
 export const SWORD_INSCRIPTION =
   "7b674e8378b14b590960d452900507e2e26089bc9f622fa7e6c938d95d697b81i0";
+/** on-chain GLB inscription of the powersword */
+export const POWERSWORD_INSCRIPTION =
+  "b4de4f0db1e6bab3e3b5714566e90dc91091fe8630f607d79c7062a28776ef6di0";
 /** on-chain GLB inscription of the second blade */
 export const SWORD_TWO_INSCRIPTION =
   "593fb11363d49f4cf404d7dbbcaad623dbbc2e37539dedd328448f7feeaa8ff0i0";
@@ -47,6 +50,7 @@ export type WeaponKind =
   | "pickaxe"
   | "hammer"
   | "sword"
+  | "powersword"
   | "wand"
   | "staff";
 
@@ -186,6 +190,23 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     reloadSfx: "reload",
     hint: "TWO ON-CHAIN BLADES · RIGHT TO GUARD · LEFT TO SLASH",
   },
+  powersword: {
+    kind: "powersword",
+    label: "POWERSWORD",
+    short: "POWERSWORD",
+    magazine: 0,
+    reloadMs: 0,
+    cooldownMs: 620,
+    reachStrides: 5.4,
+    splashStrides: 2.2,
+    damage: 78,
+    mining: false,
+    fireSfx: "slash",
+    cycleSfx: null,
+    cycleDelayMs: 0,
+    reloadSfx: "reload",
+    hint: "ON-CHAIN POWERSWORD · SLOW, HEAVY, DEVASTATING · LEFT TO SWING",
+  },
   wand: {
     kind: "wand",
     label: "BLUE WAND",
@@ -231,6 +252,7 @@ export const WEAPON_ORDER: WeaponKind[] = [
   "pickaxe",
   "hammer",
   "sword",
+  "powersword",
   "wand",
   "staff",
 ];
@@ -419,6 +441,23 @@ export function WeaponModel({
     );
   }
 
+  if (kind === "powersword") {
+    // The on-chain powersword: two-handed, hauled high and brought down slow.
+    const swing = lash;
+    const up = guard;
+    return (
+      <group
+        position={[0.1 * u, (-0.04 - up * 0.04) * u, 0.02 * u]}
+        rotation={[-0.62 + up * 0.4 + swing * 1.35, 0.22 - swing * 0.4, -0.34 - swing * 0.5]}
+      >
+        <Suspense fallback={<SwordStandIn u={u} materials={materials} />}>
+          <OnChainWeapon url={POWERSWORD_URL} u={u} lengthStrides={1.35} />
+        </Suspense>
+        {flash ? <Muzzle u={u} z={-1.4 * u} size={0.06} color="#6cc6ff" /> : null}
+      </group>
+    );
+  }
+
 
   if (kind === "sword") {
     // Dual wield: one on-chain blade per hand, held low and angled inward so
@@ -496,6 +535,7 @@ function Muzzle({ u, z, size, color }: { u: number; z: number; size: number; col
 
 const SWORD_URL = `https://ordinals.com/content/${SWORD_INSCRIPTION}`;
 const SWORD_TWO_URL = `https://ordinals.com/content/${SWORD_TWO_INSCRIPTION}`;
+const POWERSWORD_URL = `https://ordinals.com/content/${POWERSWORD_INSCRIPTION}`;
 const MINIGUN_URL = `https://ordinals.com/content/${MINIGUN_INSCRIPTION}`;
 const WAND_URL = `https://ordinals.com/content/${WAND_INSCRIPTION}`;
 const PICK_URL = `https://ordinals.com/content/${PICK_INSCRIPTION}`;

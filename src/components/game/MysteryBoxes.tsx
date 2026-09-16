@@ -95,7 +95,7 @@ export const MysteryBoxes = memo(function MysteryBoxes({
       if (Math.hypot(player.x - box.x, player.z - box.z) > reach) continue;
       const prize = openMystery(box.id, box.roll);
       if (!prize) continue;
-      playSfx(prize.kind === "nothing" ? "thud" : "chest");
+      playSfx(prize.kind === "nothing" ? "ui" : "levelup");
       setOpened((n) => n + 1);
       onPrize?.(prize);
       break;
