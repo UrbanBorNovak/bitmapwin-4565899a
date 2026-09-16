@@ -19,6 +19,7 @@ import {
   type OreVein,
   type OreVoxel,
 } from "@/lib/world-entities";
+import { MEMBER_MINE_RATE, MEMBER_MINE_XP, isMember } from "@/lib/world-perks";
 import { addItem, grantXp, skillLevel, spendItems } from "@/lib/world-skills";
 import { Primitive } from "./Primitive";
 import { AIM_FORGIVENESS, AIM_REACH_BONUS, aimState } from "@/lib/world-aim";
