@@ -441,6 +441,23 @@ export function WeaponModel({
     );
   }
 
+  if (kind === "powersword") {
+    // The on-chain powersword: two-handed, hauled high and brought down slow.
+    const swing = lash;
+    const up = guard;
+    return (
+      <group
+        position={[0.1 * u, (-0.04 - up * 0.04) * u, 0.02 * u]}
+        rotation={[-0.62 + up * 0.4 + swing * 1.35, 0.22 - swing * 0.4, -0.34 - swing * 0.5]}
+      >
+        <Suspense fallback={<SwordStandIn u={u} materials={materials} />}>
+          <OnChainWeapon url={POWERSWORD_URL} u={u} lengthStrides={1.35} />
+        </Suspense>
+        {flash ? <Muzzle u={u} z={-1.4 * u} size={0.06} color="#6cc6ff" /> : null}
+      </group>
+    );
+  }
+
 
   if (kind === "sword") {
     // Dual wield: one on-chain blade per hand, held low and angled inward so
