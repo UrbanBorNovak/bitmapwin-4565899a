@@ -619,7 +619,8 @@ type Critter = BeastEntity & {
   brain: FlyBrain;
 };
 
-const CRITTER_COUNT = 18;
+// Wildlife is thin on the ground — the desert should feel empty between sightings.
+const CRITTER_COUNT = 11;
 
 
 /**
