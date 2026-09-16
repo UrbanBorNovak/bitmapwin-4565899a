@@ -342,3 +342,5 @@ export function OasisBots({
     </group>
   );
 }
+
+useGLTF.preload(SETTLER_URL);
