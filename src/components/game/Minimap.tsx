@@ -13,6 +13,7 @@ import type { PlayerState } from "@/lib/player-state";
 import { WORLD_CELL, WORLD_GRID, WORLD_UNITS } from "@/lib/player-state";
 import type { MapCursor } from "@/lib/map-presence";
 import { CHUNK_TILES, TILE, loadedChunks } from "@/lib/world-grid";
+import oasisMinimapAsset from "@/assets/oasis-minimap.jpg.asset.json";
 
 /** how many districts fit across the minimap, near to far */
 const ZOOMS = [16, 48, 160] as const;
@@ -52,6 +53,7 @@ export function Minimap({
   onExpandedChange,
 }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null);
+  const backgroundImage = useRef<HTMLImageElement | null>(null);
   const [zoom, setZoom] = useState(1);
   const [internalExpanded, setInternalExpanded] = useState(false);
   const expanded = controlledExpanded ?? internalExpanded;
@@ -87,6 +89,19 @@ export function Minimap({
     () => cursors.filter((peer) => partySet.has(peer.id)),
     [cursors, partySet],
   );
+
+  useEffect(() => {
+    const image = new Image();
+    image.decoding = "async";
+    image.src = oasisMinimapAsset.url;
+    image.onload = () => {
+      backgroundImage.current = image;
+    };
+    return () => {
+      image.onload = null;
+      if (backgroundImage.current === image) backgroundImage.current = null;
+    };
+  }, []);
 
   // M toggles the full-size map.
   useEffect(() => {
@@ -136,9 +151,29 @@ export function Minimap({
       const toPx = (x: number) => (x - centerX) * scale + size / 2;
       const toPy = (z: number) => (z - centerZ) * scale + size / 2;
 
-      // ground
+      // Illustrated Oasis atlas. The image spans the complete million-BITMAP
+      // world, so the compact map crops the same geographic window as its
+      // live markers while the expanded map shows the full artwork.
       ctx.fillStyle = theme.bg;
-      ctx.globalAlpha = 0.92;
+      ctx.fillRect(0, 0, size, size);
+      const atlas = backgroundImage.current;
+      if (atlas?.complete && atlas.naturalWidth > 0 && atlas.naturalHeight > 0) {
+        const left = Math.max(-WORLD_UNITS / 2, centerX - span / 2);
+        const right = Math.min(WORLD_UNITS / 2, centerX + span / 2);
+        const top = Math.max(0, centerZ - span / 2);
+        const bottom = Math.min(WORLD_UNITS, centerZ + span / 2);
+        if (right > left && bottom > top) {
+          const sx = ((left + WORLD_UNITS / 2) / WORLD_UNITS) * atlas.naturalWidth;
+          const sy = (top / WORLD_UNITS) * atlas.naturalHeight;
+          const sw = ((right - left) / WORLD_UNITS) * atlas.naturalWidth;
+          const sh = ((bottom - top) / WORLD_UNITS) * atlas.naturalHeight;
+          ctx.globalAlpha = 0.72;
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(atlas, sx, sy, sw, sh, toPx(left), toPy(top), (right - left) * scale, (bottom - top) * scale);
+        }
+      }
+      ctx.fillStyle = theme.bg;
+      ctx.globalAlpha = 0.24;
       ctx.fillRect(0, 0, size, size);
       ctx.globalAlpha = 1;
 
