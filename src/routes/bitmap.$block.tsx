@@ -8,6 +8,8 @@ import { ClubBadge } from "@/components/ClubBadge";
 import { SatBadges } from "@/components/SatBadges";
 import { toast } from "sonner";
 import { BlockMosaic } from "@/components/BlockMosaic";
+import { TerritoryCanvas } from "@/components/TerritoryCanvas";
+
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { blockStatsQuery, patternSiblingsQuery } from "@/lib/block-stats";
 
