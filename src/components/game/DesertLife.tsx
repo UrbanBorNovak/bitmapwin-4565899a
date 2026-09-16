@@ -141,13 +141,26 @@ export const DesertLife = memo(function DesertLife({
   const radius = unit * 70; // how far the dressing reaches around the avatar
   const [center, setCenter] = useState<[number, number]>([0, 0]);
 
-  // Re-seed the patch only after the avatar has really moved on.
+  // Re-seed the patch only after the avatar has really moved on. Rebuilding the
+  // whole dressing is the single most expensive thing that happens while you
+  // travel, so it is aimed ahead of the direction of travel — a flight or a fast
+  // drive then reseeds once for a long stretch instead of every few frames — and
+  // two rebuilds never land back to back.
+  const lastSeed = useRef(0);
   useFrame(() => {
-    const player = pose.current;
+    const player = pose.current as { x: number; z: number; vx?: number; vz?: number } | null;
     if (!player) return;
-    const dx = player.x - center[0];
-    const dz = player.z - center[1];
-    if (dx * dx + dz * dz > (radius * 0.35) ** 2) setCenter([player.x, player.z]);
+    const pace = Math.hypot(player.vx ?? 0, player.vz ?? 0);
+    const lead = Math.min(radius * 0.5, pace * 1.4);
+    const aimX = pace > 0.01 ? player.x + ((player.vx ?? 0) / pace) * lead : player.x;
+    const aimZ = pace > 0.01 ? player.z + ((player.vz ?? 0) / pace) * lead : player.z;
+    const dx = aimX - center[0];
+    const dz = aimZ - center[1];
+    if (dx * dx + dz * dz <= (radius * 0.4) ** 2) return;
+    const now = performance.now();
+    if (now - lastSeed.current < 650) return;
+    lastSeed.current = now;
+    setCenter([aimX, aimZ]);
   });
 
   const patch = useMemo(() => {
