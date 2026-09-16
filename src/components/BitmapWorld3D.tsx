@@ -3008,7 +3008,9 @@ export function BitmapWorld3D({
                 <div className="display text-base text-foreground md:text-lg">THE OASIS</div>
                 <div className="text-[9px] text-muted-foreground" data-no-translate>
                   {readout.height.toLocaleString("en-US")}.BITMAP
+                  {bits.today > 0 ? ` · ${bits.today} BIT TODAY` : ""}
                 </div>
+
               </div>
               <Button
                 type="button"
