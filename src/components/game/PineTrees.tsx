@@ -123,3 +123,4 @@ export const PineTrees = memo(function PineTrees({
 
 
 useGLTF.preload(PINE_URL);
+useGLTF.preload(SHROOM_URL);
