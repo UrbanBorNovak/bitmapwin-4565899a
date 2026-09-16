@@ -61,6 +61,11 @@ export const GOGGLES_INSCRIPTION =
 /** The Punks that roam the universe. */
 export const PUNK_INSCRIPTION =
   "748e439d2558d567c69d97eba12329e1bd6b6dd2ee1900c738ffbf42c9a9db9fi0";
+/** Desert shoes — laced on the feet, and they quicken every stride. */
+export const SHOES_INSCRIPTION =
+  "d2a674751c24003e196b7a70ce4d5427a544bb84faca6e3536f4ee665b5da616i0";
+/** How much faster a visitor travels with the shoes on. */
+export const SHOES_SPEED = 1.16;
 
 export type FoodId =
   | "ice-cream"
@@ -68,7 +73,10 @@ export type FoodId =
   | "cheese-slice"
   | "candy"
   | "moon"
-  | "potion";
+  | "potion"
+  | "peperoni-slice"
+  | "medkit";
+
 
 export type FoodSpec = {
   id: FoodId;
@@ -138,13 +146,34 @@ export const FOODS: Record<FoodId, FoodSpec> = {
     eatMs: 3_500,
     buff: { label: "FORTIFIED", ms: 120_000, regenPerSecond: 6, power: 1.35 },
   },
+  "peperoni-slice": {
+    id: "peperoni-slice",
+    label: "PEPERONI SLICE",
+    inscription: "53f9ec0c166fbdcf32ea39d5c8bd6a5f36cc8bf730fa1b57ff88be418f46b0dai0",
+    fit: 0.34,
+    bite: 30,
+    eatMs: 5_500,
+    buff: { label: "STONE OVEN", ms: 70_000, regenPerSecond: 4, power: 1.28 },
+  },
+  medkit: {
+    id: "medkit",
+    label: "MEDKIT",
+    inscription: "235e6e92fc64a3f3a57e3a3d741390c3248b9589a744345d2bf7109ddd76fab0i0",
+    fit: 0.3,
+    bite: 70,
+    eatMs: 3_000,
+    buff: { label: "PATCHED UP", ms: 45_000, regenPerSecond: 8, power: 1.1 },
+  },
 };
+
 
 export type GearBuff = { label: string; until: number; regenPerSecond: number; power: number };
 
 export type GearSnapshot = {
   companion: CompanionId;
   goggles: boolean;
+  /** the desert shoes, laced on or left in the pack */
+  shoes: boolean;
   /** the meal in hand, while it lasts */
   eating: { food: FoodId; until: number } | null;
   buff: GearBuff | null;
@@ -152,7 +181,13 @@ export type GearSnapshot = {
 
 const STORE_KEY = "bitmapwin:gear";
 
-let state: GearSnapshot = { companion: "none", goggles: false, eating: null, buff: null };
+let state: GearSnapshot = {
+  companion: "none",
+  goggles: false,
+  shoes: false,
+  eating: null,
+  buff: null,
+};
 let hydrated = false;
 const listeners = new Set<() => void>();
 
@@ -167,10 +202,15 @@ function hydrate() {
   try {
     const raw = window.localStorage.getItem(STORE_KEY);
     if (!raw) return;
-    const parsed = JSON.parse(raw) as { companion?: CompanionId; goggles?: boolean };
+    const parsed = JSON.parse(raw) as {
+      companion?: CompanionId;
+      goggles?: boolean;
+      shoes?: boolean;
+    };
     if (parsed.companion && COMPANIONS.some((c) => c.id === parsed.companion))
       state = { ...state, companion: parsed.companion };
     if (typeof parsed.goggles === "boolean") state = { ...state, goggles: parsed.goggles };
+    if (typeof parsed.shoes === "boolean") state = { ...state, shoes: parsed.shoes };
   } catch {
     // a lost preference is never worth an error
   }
@@ -180,12 +220,13 @@ function persist() {
   try {
     window.localStorage.setItem(
       STORE_KEY,
-      JSON.stringify({ companion: state.companion, goggles: state.goggles }),
+      JSON.stringify({ companion: state.companion, goggles: state.goggles, shoes: state.shoes }),
     );
   } catch {
     // saving kit is a nicety
   }
 }
+
 
 export function gearSnapshot(): GearSnapshot {
   hydrate();
@@ -226,6 +267,21 @@ export function toggleGoggles() {
   emit();
   return state.goggles;
 }
+
+/** Lace the desert shoes on, or kick them off. */
+export function toggleShoes() {
+  hydrate();
+  state = { ...state, shoes: !state.shoes };
+  persist();
+  emit();
+  return state.shoes;
+}
+
+/** How fast a visitor walks — quicker with the shoes on. */
+export function walkMultiplier() {
+  return state.shoes ? SHOES_SPEED : 1;
+}
+
 
 /**
  * Sit down and eat. Returns the meal when it starts, or null when one is already

@@ -13,8 +13,13 @@ import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 
 export const PINE_INSCRIPTION =
   "a67b9e40973e6cf9df84bfc0d28ac10bcbef8f7d0e3f46ad0f99541876c8e330i0";
+/** Shrooms sprout in the shade at the foot of the pines. */
+export const SHROOM_INSCRIPTION =
+  "171c26e24b94e11fc8dfae620173179ff43fa41674685721464ca28d658ed138i0";
 
 const PINE_URL = contentUrl(PINE_INSCRIPTION);
+const SHROOM_URL = contentUrl(SHROOM_INSCRIPTION);
+
 
 const noRaycast = () => {};
 
@@ -83,10 +88,39 @@ export const PineTrees = memo(function PineTrees({
           >
             <InscribedModel url={PINE_URL} size={tree.size} yaw={tree.yaw} />
           </Suspense>
+          {/* SHROOMS — a small ring of them in the shade under the branches. */}
+          {Array.from({ length: 1 + Math.floor(hash(tree.x, tree.z, 81) * 4) }, (_, n) => {
+            const angle = hash(tree.x + n, tree.z - n, 82) * Math.PI * 2;
+            const reach = tree.size * (0.28 + hash(tree.x - n, tree.z + n, 83) * 0.45);
+            const size = unit * (0.07 + hash(tree.x * 2 + n, tree.z, 84) * 0.09);
+            return (
+              <group
+                key={`s${n}`}
+                position={[Math.cos(angle) * reach, 0, Math.sin(angle) * reach]}
+              >
+                <Suspense
+                  fallback={
+                    <mesh position={[0, size * 0.5, 0]} raycast={noRaycast}>
+                      <sphereGeometry args={[size * 0.4, 6, 5]} />
+                      <meshLambertMaterial color="#b8503f" flatShading />
+                    </mesh>
+                  }
+                >
+                  <InscribedModel
+                    url={SHROOM_URL}
+                    size={size}
+                    yaw={hash(tree.x + n * 3, tree.z + n, 85) * Math.PI * 2}
+                  />
+                </Suspense>
+              </group>
+            );
+          })}
         </group>
       ))}
     </>
   );
 });
 
+
 useGLTF.preload(PINE_URL);
+useGLTF.preload(SHROOM_URL);

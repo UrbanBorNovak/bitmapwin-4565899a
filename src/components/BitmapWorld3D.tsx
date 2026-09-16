@@ -40,6 +40,8 @@ import { FlyBrainPanel } from "@/components/game/FlyBrainPanel";
 
 import { DesertLife } from "@/components/game/DesertLife";
 import { SeaMasses } from "@/components/game/SeaMasses";
+import { SeaIslands } from "@/components/game/SeaIslands";
+
 import { Punks } from "@/components/game/Punks";
 import { OasisBots } from "@/components/game/OasisBots";
 import { BOT_COUNT_MAX, botCount, setBotCount, subscribeBotCount } from "@/lib/world-bots";
@@ -57,6 +59,9 @@ import {
   startEating,
   tickGear,
   toggleGoggles,
+  toggleShoes,
+  walkMultiplier,
+
   useGear,
   type FoodId,
 } from "@/lib/world-gear";
@@ -1463,6 +1468,10 @@ function PlayerCameraRig({
         intent.cruise = AVATAR_U * (ride.altitude ?? 6);
       }
     }
+    // On foot the shoes quicken every stride.
+    else intent.speedScale = walkMultiplier();
+
+
 
 
     // Caught in a trap: the legs are held, and only the head can still turn.
@@ -2106,6 +2115,8 @@ const WorldScene = memo(function WorldScene({
           <ChunkStreamer pose={pose} />
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <SeaMasses unit={AVATAR_U} pose={pose} />
+          <SeaIslands unit={AVATAR_U} pose={pose} />
+
           <Punks unit={AVATAR_U} pose={pose} onBite={onBite} />
           <OasisBots unit={AVATAR_U} pose={pose} onBite={onBite} />
           <TrapField
@@ -2484,6 +2495,15 @@ export function BitmapWorld3D({
         eat("potion");
         return;
       }
+      if (key === "y") {
+        eat("peperoni-slice");
+        return;
+      }
+      if (key === "v") {
+        eat("medkit");
+        return;
+      }
+
       if (key !== "b") return;
       setBuildOpen((current) => !current);
       setInventoryOpen(false);
@@ -3102,7 +3122,7 @@ export function BitmapWorld3D({
                         </div>
                         {(Object.keys(FOODS) as FoodId[]).map((id, index) => {
                           const spec = FOODS[id];
-                          const keyHint = ["G", "J", "U", "H", "K", "L"][index];
+                          const keyHint = ["G", "J", "U", "H", "K", "L", "Y", "V"][index];
                           return (
                             <button
                               key={id}
@@ -3214,6 +3234,19 @@ export function BitmapWorld3D({
                   >
                     [ NIGHT VISION · N ]
                   </Button>
+                  <Button
+                    className={gear.shoes ? "btn-term" : "btn-term-ghost"}
+                    variant="ghost"
+                    onClick={() => {
+                      const on = toggleShoes();
+                      playSfx("ui");
+                      setBiteNote(on ? "SHOES ON · FASTER STRIDE" : "SHOES OFF");
+                      window.setTimeout(() => setBiteNote(null), 1400);
+                    }}
+                  >
+                    [ SHOES ]
+                  </Button>
+
                   <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
                     {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
                   </Button>
