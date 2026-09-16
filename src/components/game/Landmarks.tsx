@@ -43,23 +43,12 @@ function Landmark({ spec }: { spec: LandmarkSpec }) {
   );
 }
 
-export const Landmarks = memo(function Landmarks({
-  pose,
-  radius = WORLD_CELL * 40,
-}: {
-  pose: { current: { x: number; z: number } | null };
-  radius?: number;
-}) {
+export const Landmarks = memo(function Landmarks() {
   useLandmarkSolids();
-  const me = pose.current;
-  const near = LANDMARKS.filter((spec) => {
-    if (!me) return true;
-    const spot = landmarkSpot(spec);
-    return Math.hypot(spot.x - me.x, spot.z - me.z) <= radius;
-  });
+  // Only five of them stand in the whole world, so all five stay loaded.
   return (
     <>
-      {near.map((spec) => (
+      {LANDMARKS.map((spec) => (
         <Landmark key={spec.id} spec={spec} />
       ))}
     </>
