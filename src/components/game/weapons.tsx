@@ -501,6 +501,54 @@ const WAND_URL = `https://ordinals.com/content/${WAND_INSCRIPTION}`;
 const PICK_URL = `https://ordinals.com/content/${PICK_INSCRIPTION}`;
 const TRAP_URL = `https://ordinals.com/content/${TRAP_INSCRIPTION}`;
 const HAMMER_URL = `https://ordinals.com/content/${HAMMER_INSCRIPTION}`;
+const STAFF_URL = `https://ordinals.com/content/${STAFF_INSCRIPTION}`;
+
+/**
+ * The runestone staff with whatever stone is seated on its head. With a bare
+ * socket the head carries a plain rune glow instead.
+ */
+function RunestoneStaff({
+  u,
+  materials,
+  lash,
+  flash,
+}: {
+  u: number;
+  materials: WeaponMaterials;
+  lash: number;
+  flash: boolean;
+}) {
+  const stone = useFittedStone();
+  const glow = stone?.glow ?? "#7ad1ff";
+  return (
+    <group
+      position={[0.16 * u, -0.14 * u, 0.02 * u]}
+      rotation={[-0.36 - lash * 0.34, 0.2, -0.1]}
+    >
+      <Suspense fallback={<WandStandIn u={u} materials={materials} />}>
+        <OnChainWeapon url={STAFF_URL} u={u} lengthStrides={1.35} />
+      </Suspense>
+      {/* the socket at the head, where a stone is seated */}
+      <group position={[0, 0.02 * u, -1.34 * u]}>
+        {stone ? (
+          <Suspense fallback={null}>
+            <OnChainWeapon
+              url={`https://ordinals.com/content/${stone.inscription}`}
+              u={u}
+              lengthStrides={stone.fit}
+            />
+          </Suspense>
+        ) : null}
+        <mesh>
+          <sphereGeometry args={[(0.05 + lash * 0.06) * u, 12, 12]} />
+          <meshBasicMaterial color={glow} transparent opacity={0.3 + lash * 0.6} />
+        </mesh>
+      </group>
+      {flash ? <Muzzle u={u} z={-1.42 * u} size={0.08} color={glow} /> : null}
+    </group>
+  );
+}
+
 
 /** Forged sledge shown for the moment before the inscription streams in. */
 function HammerStandIn({ u, materials }: { u: number; materials: WeaponMaterials }) {
