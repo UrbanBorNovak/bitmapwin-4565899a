@@ -117,6 +117,16 @@ import {
   useWeaponMaterials,
   type WeaponKind,
 } from "@/components/game/weapons";
+import { WeaponBelt } from "@/components/game/WeaponBelt";
+
+/** the side menu shelves — one open at a time keeps the HUD short */
+type KitTab = "action" | "kit" | "travel" | "view";
+const KIT_TABS: { id: KitTab; label: string }[] = [
+  { id: "action", label: "ACTION" },
+  { id: "kit", label: "KIT" },
+  { id: "travel", label: "TRAVEL" },
+  { id: "view", label: "VIEW" },
+];
 import { isSoundMuted, playSfx, setSoundMuted, unlockAudio } from "@/lib/world-audio";
 import { aimState, aimZoom } from "@/lib/world-aim";
 import {
@@ -2297,6 +2307,8 @@ export function BitmapWorld3D({
   const [touchDevice, setTouchDevice] = useState(false);
   useEffect(() => setTouchDevice(isTouchDevice()), []);
   const [cameraMode, setCameraMode] = useState<CameraMode>("map");
+  // The side menu is one shelf at a time: ACTION / KIT / TRAVEL / VIEW.
+  const [kitTab, setKitTab] = useState<KitTab>("action");
   const exploring = cameraMode !== "map";
   const [draft, setDraft] = useState("");
   const [inventoryOpen, setInventoryOpen] = useState(false);
@@ -3153,6 +3165,31 @@ export function BitmapWorld3D({
             )}
 
             <div className="flex w-full flex-col gap-2" role="group" aria-label="Avatar">
+              <div
+                className="flex items-center gap-1 border-b border-border pb-1.5"
+                role="tablist"
+                aria-label="Kit sections"
+                data-no-translate
+              >
+                {KIT_TABS.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={kitTab === tab.id}
+                    onClick={() => setKitTab(tab.id)}
+                    className={`flex-1 border px-1.5 py-1 font-mono text-[9px] uppercase tracking-[0.18em] transition-colors ${
+                      kitTab === tab.id
+                        ? "border-bitcoin bg-bitcoin/10 text-bitcoin"
+                        : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {kitTab === "action" ? (
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Action</span>
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -3176,7 +3213,9 @@ export function BitmapWorld3D({
                   </Button>
                 </div>
               </div>
+              ) : null}
 
+              {kitTab === "kit" ? (
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Kit</span>
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -3250,6 +3289,10 @@ export function BitmapWorld3D({
                   </Button>
                 </div>
               </div>
+              ) : null}
+
+              {kitTab === "travel" ? (
+              <>
 
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Travel</span>
@@ -3286,7 +3329,10 @@ export function BitmapWorld3D({
                   {BOT_POPULATION} LIVE HERE ALREADY · FREE · LOCAL BRAINS
                 </span>
               </div>
+              </>
+              ) : null}
 
+              {kitTab === "view" ? (
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">View &amp; sound</span>
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -3403,6 +3449,7 @@ export function BitmapWorld3D({
                   </Button>
                 </div>
               </div>
+              ) : null}
             </div>
 
           </div>
@@ -3626,39 +3673,7 @@ export function BitmapWorld3D({
 
         {/* THE BELT — in-world weapon slots: press 1 / 2 / 3, scroll to cycle, 0 to holster. */}
         {exploring && utilityOpen ? (
-          <div
-            data-no-translate
-            className="absolute bottom-[10.5rem] left-1/2 z-20 w-[calc(100%-1rem)] -translate-x-1/2 overflow-x-auto md:bottom-3 md:z-40 md:w-auto md:overflow-visible"
-            aria-label="Weapon belt"
-          >
-            <div className="hud-panel flex w-max items-center gap-1 px-1.5 py-1.5 font-mono md:w-auto">
-              {WEAPON_ORDER.map((kind, index) => {
-                const active = weapon === kind;
-                return (
-                  <button
-                    key={kind}
-                    type="button"
-                    aria-pressed={active}
-                    title={WEAPONS[kind].hint}
-                    onClick={() => equipWeapon(active ? null : kind)}
-                    className={`flex min-w-[5.5rem] items-center gap-1.5 border px-2 py-1 text-[10px] transition-colors ${
-                      active
-                        ? "border-bitcoin bg-bitcoin/10 text-bitcoin"
-                        : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <span className="border border-current px-1 text-[9px] tabular-nums">
-                      {index + 1}
-                    </span>
-                    <span className="label text-[9px]">{WEAPONS[kind].short}</span>
-                  </button>
-                );
-              })}
-              <span className="px-1.5 text-[9px] text-muted-foreground">
-                {weapon ? "SCROLL · SWAP · 0 · HOLSTER" : "1 · 2 · 3 · 4 · DRAW"}
-              </span>
-            </div>
-          </div>
+          <WeaponBelt weapon={weapon} stats={shooterStats} onEquip={equipWeapon} />
         ) : null}
 
 
