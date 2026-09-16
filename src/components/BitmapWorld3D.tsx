@@ -91,6 +91,8 @@ import {
 } from "@/lib/world-gear";
 import { DesertBuilds } from "@/components/game/DesertBuilds";
 import { ChunkStreamer } from "@/components/game/ChunkStreamer";
+import { PerfGovernor } from "@/components/game/PerfGovernor";
+import { OasisLoading } from "@/components/game/OasisLoading";
 import { FootTrail } from "@/components/game/FootTrail";
 import { LandGrowth } from "@/components/game/LandGrowth";
 import { growthLabel, terraform, terraformAt } from "@/lib/world-terraform";
@@ -2190,6 +2192,7 @@ const WorldScene = memo(function WorldScene({
           scale={[28, 4, 1]}
         />
       </Environment>
+      <PerfGovernor pose={pose} base={baseDpr} active={cameraMode !== "map"} />
       <SkyBodies bitcoin={colors.bitcoin} />
       <LandSurface colors={colors} tipHeight={tipHeight} />
       {cameraMode !== "map" ? (
@@ -3611,6 +3614,8 @@ export function BitmapWorld3D({
           </Canvas>
           </div>
         ) : null}
+
+        <OasisLoading />
 
         <DriveBlur active={driving && cameraMode !== "map"} />
 
