@@ -14,12 +14,19 @@ import * as THREE from "three";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { playSfx } from "@/lib/world-audio";
 import {
+  MEMBER_BIT_CHANCE,
+  MEMBER_BIT_PAYOUT,
+  isMember,
+  useMember,
+} from "@/lib/world-perks";
+import {
   BIT_INSCRIPTION,
   BIT_REACH,
   BIT_TILE,
   bitHash,
   bitPicked,
   bitsDay,
+  creditBits,
   pickBit,
 } from "@/lib/world-bits";
 
@@ -43,6 +50,7 @@ export const BitField = memo(function BitField({
 }) {
   const tile = unit * BIT_TILE;
   const day = bitsDay();
+  const member = useMember();
   const [centre, setCentre] = useState({ tx: 0, tz: 0 });
   const [taken, setTaken] = useState(0);
 
@@ -52,8 +60,8 @@ export const BitField = memo(function BitField({
       for (let dz = -SPREAD; dz <= SPREAD; dz++) {
         const tx = centre.tx + dx;
         const tz = centre.tz + dz;
-        // Roughly two tiles in five hold a BIT.
-        if (bitHash(tx, tz, 3) > 0.42) continue;
+        // Roughly two tiles in five hold a BIT — more of them for MEMBERS.
+        if (bitHash(tx, tz, 3) > (member ? MEMBER_BIT_CHANCE : 0.42)) continue;
         const id = `${day}:${tx}:${tz}`;
         if (bitPicked(id)) continue;
         list.push({
@@ -66,7 +74,7 @@ export const BitField = memo(function BitField({
     }
     return list;
     // `taken` re-reads the field the moment one is pocketed.
-  }, [centre, day, tile, taken]);
+  }, [centre, day, member, tile, taken]);
 
   const groups = useRef<(THREE.Group | null)[]>([]);
   const check = useRef(0);
@@ -95,7 +103,13 @@ export const BitField = memo(function BitField({
       if (!pickBit(bit.id)) continue;
       playSfx("nugget");
       setTaken((n) => n + 1);
-      onPick?.("BIT PICKED UP");
+      // MEMBERS pocket more from the same BIT lying in the sand.
+      if (isMember()) {
+        creditBits(MEMBER_BIT_PAYOUT - 1);
+        onPick?.(`BIT PICKED UP ×${MEMBER_BIT_PAYOUT} · MEMBER`);
+      } else {
+        onPick?.("BIT PICKED UP");
+      }
       break;
     }
   });

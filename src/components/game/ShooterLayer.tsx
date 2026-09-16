@@ -256,7 +256,9 @@ export function ShooterLayer({
     // until the respawn puts them back on their feet.
     if (me.combat === "down") return;
     const now = performance.now();
-    if (now - lastFire.current < spec.cooldownMs * rateScale.current) return;
+    // MEMBERS work a seam noticeably faster than everyone else.
+    const memberRate = spec.mining && isMember() ? MEMBER_MINE_RATE : 1;
+    if (now - lastFire.current < spec.cooldownMs * rateScale.current * memberRate) return;
     if (reloading) return;
 
     if (spec.magazine > 0 && ammo <= 0) {
@@ -393,7 +395,10 @@ export function ShooterLayer({
       );
       // A key turns up now and then in the rubble — treasure needs one.
       if (Math.random() < 0.07 && addItem("key", 1)) flashNote("A KEY IN THE RUBBLE");
-      const gained = grantXp("mining", oreHit.vein.xpPerVoxel);
+      const gained = grantXp(
+        "mining",
+        oreHit.vein.xpPerVoxel * (isMember() ? MEMBER_MINE_XP : 1),
+      );
       setScore((current) => current + 15);
       if (!stored) {
         flashNote("BACKPACK FULL");
