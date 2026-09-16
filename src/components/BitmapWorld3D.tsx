@@ -3281,6 +3281,8 @@ export function BitmapWorld3D({
               ) : null}
 
               {kitTab === "travel" ? (
+              <>
+
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Travel</span>
                 <div className="flex flex-wrap items-center gap-1.5">
