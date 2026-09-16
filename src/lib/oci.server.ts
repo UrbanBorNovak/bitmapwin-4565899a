@@ -5,6 +5,7 @@ import {
   MAX_BITMAP,
   OCI_PAGES,
   PAGE9_START,
+  PAGE10_START,
   PAGE_SIZE,
   isValidClaimContent,
   pageForBitmap,
@@ -63,7 +64,7 @@ async function decodePage(page: number): Promise<DecodedPage> {
   const resp = await ordFetch(`/content/${OCI_PAGES[page]}`);
   const raw = await resp.text();
 
-  if (page === 9) {
+  if (page === 9 || page === 10) {
     const data = JSON.parse(raw) as {
       deltaEncodedSats?: number[];
       satIndexMap?: Record<string, number>;
@@ -114,7 +115,8 @@ async function getPage(page: number): Promise<DecodedPage> {
 async function satFor(height: number): Promise<{ sat: number; satIndex: number }> {
   const page = pageForBitmap(height);
   const { sats, satIndices } = await getPage(page);
-  const offset = page === 9 ? height - PAGE9_START : height % PAGE_SIZE;
+  const offset =
+    page === 10 ? height - PAGE10_START : page === 9 ? height - PAGE9_START : height % PAGE_SIZE;
   const sat = sats[offset] ?? 0;
   const satIndex =
     (height >= PAGE9_START ? satIndices[height] : LEGACY_SAT_INDICES[height]) ?? 0;
