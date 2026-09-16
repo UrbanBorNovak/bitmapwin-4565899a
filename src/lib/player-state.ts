@@ -162,14 +162,8 @@ export const aloft = (player: { y: number } | null | undefined) =>
  * pose so a killed player is left alone: no stalking, no strikes, no damage
  * until they respawn.
  */
-export const poseDown = (
-  pose: { current: { combat?: string; y?: number } | null } | null | undefined,
-) => pose?.current?.combat === "down";
-
-/** Out of reach: either flying high or already down. */
-export const untouchable = (
-  pose: { current: { combat?: string; y?: number } | null } | null | undefined,
-) => poseDown(pose) || aloft(pose?.current as { y: number } | null | undefined);
+export const poseDown = (pose: { current: unknown } | null | undefined) =>
+  (pose?.current as { combat?: string } | null)?.combat === "down";
 
 /**
  * Solid-world test the movement step consults. The world registers one (built
