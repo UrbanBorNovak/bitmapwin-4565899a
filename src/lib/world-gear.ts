@@ -83,7 +83,9 @@ export type FoodId =
   | "candy"
   | "potion"
   | "peperoni-slice"
-  | "medkit";
+  | "medkit"
+  | "crypto-soup"
+  | "cigarette";
 
 
 export type FoodSpec = {
@@ -163,7 +165,50 @@ export const FOODS: Record<FoodId, FoodSpec> = {
     eatMs: 3_000,
     buff: { label: "PATCHED UP", ms: 45_000, regenPerSecond: 8, power: 1.1 },
   },
+  "crypto-soup": {
+    id: "crypto-soup",
+    label: "CRYPTO SOUP",
+    inscription: "ed5ded069b953b97ce6deaf4fabd93c003acb9bb42cd24094218192d8ebb48adi0",
+    fit: 0.32,
+    bite: 38,
+    eatMs: 7_000,
+    buff: { label: "WARMED THROUGH", ms: 100_000, regenPerSecond: 5, power: 1.26 },
+  },
+  cigarette: {
+    id: "cigarette",
+    label: "CIGARETTE",
+    inscription: "f8a3eb638b65512d18561db49b00d23c8b21c0d75e50a9709ed17f298e0585d1i0",
+    fit: 0.18,
+    bite: 4,
+    eatMs: 9_000,
+    buff: { label: "STEADY HANDS", ms: 80_000, regenPerSecond: 1, power: 1.4 },
+  },
 };
+
+/** The toys a visitor can carry in the right hand. */
+export type ToyId = "none" | "puppet" | "bitfrog";
+
+export type ToySpec = { id: ToyId; label: string; inscription: string; fit: number };
+
+export const TOYS: ToySpec[] = [
+  { id: "none", label: "NO TOY", inscription: "", fit: 0 },
+  {
+    id: "puppet",
+    label: "PUPPET TOY",
+    inscription: "6bdb11c3bc8463a14e0b646aabc3a56ce3b2e0fc913648b87f816b1c2111d573i0",
+    fit: 0.34,
+  },
+  {
+    id: "bitfrog",
+    label: "BITFROG TOY",
+    inscription: "89d00d08bac6cb7e197813ab0c36aac9dad273300d163d20283770ddef5463f2i0",
+    fit: 0.3,
+  },
+];
+
+export function toySpec(id: ToyId) {
+  return TOYS.find((entry) => entry.id === id) ?? TOYS[0]!;
+}
 
 
 export type GearBuff = { label: string; until: number; regenPerSecond: number; power: number };
@@ -175,6 +220,8 @@ export type GearSnapshot = {
   shoes: boolean;
   /** the necklace, worn at the throat */
   necklace: boolean;
+  /** the toy held in the right hand */
+  toy: ToyId;
   /** the meal in hand, while it lasts */
   eating: { food: FoodId; until: number } | null;
   buff: GearBuff | null;
@@ -187,6 +234,7 @@ let state: GearSnapshot = {
   goggles: false,
   shoes: false,
   necklace: false,
+  toy: "none",
   eating: null,
   buff: null,
 };
@@ -210,12 +258,14 @@ function hydrate() {
       goggles?: boolean;
       shoes?: boolean;
       necklace?: boolean;
+      toy?: ToyId;
     };
     if (parsed.companion && COMPANIONS.some((c) => c.id === parsed.companion))
       state = { ...state, companion: parsed.companion };
     if (typeof parsed.goggles === "boolean") state = { ...state, goggles: parsed.goggles };
     if (typeof parsed.shoes === "boolean") state = { ...state, shoes: parsed.shoes };
     if (typeof parsed.necklace === "boolean") state = { ...state, necklace: parsed.necklace };
+    if (parsed.toy && TOYS.some((t) => t.id === parsed.toy)) state = { ...state, toy: parsed.toy };
   } catch {
     // a lost preference is never worth an error
   }
@@ -230,6 +280,7 @@ function persist() {
         goggles: state.goggles,
         shoes: state.shoes,
         necklace: state.necklace,
+        toy: state.toy,
       }),
     );
   } catch {
@@ -295,6 +346,17 @@ export function toggleNecklace() {
   persist();
   emit();
   return state.necklace;
+}
+
+/** Pull the next toy out of the pack, or put the last one away. */
+export function cycleToy() {
+  hydrate();
+  const at = TOYS.findIndex((entry) => entry.id === state.toy);
+  const next = TOYS[(at + 1) % TOYS.length]!;
+  state = { ...state, toy: next.id };
+  persist();
+  emit();
+  return next;
 }
 
 /** How fast a visitor walks — quicker with the shoes on. */

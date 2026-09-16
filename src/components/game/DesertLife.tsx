@@ -15,6 +15,8 @@ import { MineralNodes } from "@/components/game/MineralNodes";
 import { OreMines } from "@/components/game/OreMines";
 import { PineTrees } from "@/components/game/PineTrees";
 import { Houses } from "@/components/game/Houses";
+import { Igloos } from "@/components/game/Igloos";
+import { Playgrounds } from "@/components/game/Playgrounds";
 import { GoldenEgg } from "@/components/game/GoldenEgg";
 import { AntelopeBody } from "@/components/game/Antelope";
 import { UnicornBody } from "@/components/game/Unicorn";
@@ -522,6 +524,8 @@ export const DesertLife = memo(function DesertLife({
       <OreMines unit={unit} center={center} radius={radius} />
       <PineTrees unit={unit} center={center} radius={radius} />
       <Houses unit={unit} center={center} radius={radius} />
+      <Igloos unit={unit} center={center} radius={radius} />
+      <Playgrounds unit={unit} center={center} radius={radius} />
       <GoldenEgg unit={unit} pose={pose} />
       <TreasureChests unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <Critters unit={unit} colors={colors} pose={pose} onBite={onBite} />

@@ -21,6 +21,7 @@ import {
   MAGIC_BOOK_INSCRIPTION,
   NECKLACE_INSCRIPTION,
   SHOES_INSCRIPTION,
+  toySpec,
   WIZARD_HAT_INSCRIPTION,
   useGear,
 } from "@/lib/world-gear";
@@ -121,6 +122,7 @@ export function WornGear({
 }) {
   const gear = useGear();
   const eatingFood = gear.eating ? FOODS[gear.eating.food] : null;
+  const toy = toySpec(gear.toy);
   return (
     <>
       {weapon === "wand" ? (
@@ -186,6 +188,18 @@ export function WornGear({
             </Suspense>
           ))
         : null}
+      {toy.inscription && !eatingFood ? (
+        <Suspense fallback={null}>
+          <WornPiece
+            url={`https://ordinals.com/content/${toy.inscription}`}
+            unit={unit}
+            fit={toy.fit}
+            pose={pose}
+            offset={[0.26, 0.58, 0.2]}
+            bob={0.02}
+          />
+        </Suspense>
+      ) : null}
       {eatingFood ? (
         <Suspense fallback={null}>
           <WornPiece
