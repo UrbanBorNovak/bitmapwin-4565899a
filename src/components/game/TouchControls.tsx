@@ -14,10 +14,13 @@ import { cn } from "@/lib/utils";
 export default function TouchControls({
   flying = false,
   shooter = false,
+  paused = false,
   onJumpLabel,
 }: {
   flying?: boolean;
   shooter?: boolean;
+  /** hide the pads while a panel is open, so nothing sits under the menu */
+  paused?: boolean;
   onJumpLabel?: string;
 }) {
   const stick = useRef<HTMLDivElement | null>(null);
@@ -28,6 +31,15 @@ export default function TouchControls({
   const [sprinting, setSprinting] = useState(false);
 
   useEffect(() => () => resetTouchPad(), []);
+
+  // A panel opening hides the pads, so drop whatever was held down.
+  useEffect(() => {
+    if (paused) {
+      resetTouchPad();
+      setKnob({ x: 0, y: 0 });
+      setSprinting(false);
+    }
+  }, [paused]);
 
   const readStick = useCallback((clientX: number, clientY: number) => {
     const box = stick.current?.getBoundingClientRect();
@@ -78,11 +90,14 @@ export default function TouchControls({
     if (!down) window.dispatchEvent(new PointerEvent("pointerup", { button: 0, buttons: 0 }));
   }, []);
 
+  if (paused) return null;
+
   return (
-    <div className="pointer-events-none fixed inset-0 z-30 select-none">
-      {/* look pad: the whole right side of the screen above the buttons */}
+    <div className="pointer-events-none fixed inset-0 z-40 select-none">
+      {/* look pad: the right side of the screen, clear of the on-screen buttons
+          so the menu, map, chat and belt stay tappable */}
       <div
-        className="pointer-events-auto absolute inset-y-0 right-0 w-1/2"
+        className="pointer-events-auto absolute right-0 top-[4.5rem] bottom-[17rem] w-1/2"
         style={{ touchAction: "none" }}
         onPointerDown={(event) => {
           if (lookId.current !== null) return;

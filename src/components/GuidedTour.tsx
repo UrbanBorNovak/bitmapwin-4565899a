@@ -48,7 +48,7 @@ const TOURS: Record<string, Tour> = {
       {
         target: "map-world",
         title: "MOVE AND LOOK AROUND",
-        body: "Drag to look, W to walk forward, A and D to turn, SPACE to jump. Click a square to open it.",
+        body: "Drag to look around and use the on-screen stick — or W to walk, A and D to turn, SPACE to jump. Tap a square to open it.",
       },
       {
         target: "flow-rail",
@@ -162,7 +162,11 @@ export function GuidedTour() {
       else close();
       return;
     }
-    el.scrollIntoView({ block: "center", behavior: "smooth" });
+    // Only scroll when the target is off screen — on a phone the world already
+    // fills the viewport and scrolling it away was disorienting.
+    const rect = el.getBoundingClientRect();
+    if (rect.bottom < 8 || rect.top > window.innerHeight - 8)
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
     const measure = () => setBox(el.getBoundingClientRect());
     measure();
     const timer = window.setTimeout(measure, 350);
@@ -190,7 +194,13 @@ export function GuidedTour() {
   const pad = 6;
   const cardWidth = Math.min(320, window.innerWidth - 24);
   const below = box.bottom + 200 < window.innerHeight;
-  const top = below ? box.bottom + 12 : Math.max(12, box.top - 12 - 190);
+  // Keep the card fully on screen — on a phone the highlighted area often fills
+  // the whole viewport, which used to push the card past the bottom edge.
+  const cardHeight = cardRef.current?.offsetHeight ?? 220;
+  const top = Math.min(
+    Math.max(12, below ? box.bottom + 12 : box.top - 12 - cardHeight),
+    Math.max(12, window.innerHeight - cardHeight - 12),
+  );
   const left = Math.min(
     Math.max(12, box.left + box.width / 2 - cardWidth / 2),
     window.innerWidth - cardWidth - 12,

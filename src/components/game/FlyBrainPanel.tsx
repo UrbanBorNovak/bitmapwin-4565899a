@@ -35,7 +35,7 @@ export function FlyBrainPanel() {
   return (
     <div
       data-no-translate
-      className="hud-panel absolute left-3 bottom-3 z-40 w-[min(15rem,calc(100%-1.5rem))] space-y-1 px-2.5 py-2 font-mono text-[10px]"
+      className="hud-panel absolute left-3 bottom-3 hidden md:block z-40 w-[min(15rem,calc(100%-1.5rem))] space-y-1 px-2.5 py-2 font-mono text-[10px]"
       aria-label="Settler brain readout"
     >
       <div className="flex items-center justify-between">
