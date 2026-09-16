@@ -4143,6 +4143,24 @@ export function BitmapWorld3D({
             <Button
               type="button"
               variant="ghost"
+              aria-label="Switch between first and third person"
+              title="Switch view (O)"
+              className="pointer-events-auto border border-border bg-background/55 font-mono text-[10px] text-muted-foreground backdrop-blur-sm hover:border-bitcoin hover:text-bitcoin"
+              onClick={() => setCameraMode((current) => (current === "first" ? "third" : "first"))}
+            >
+              {cameraMode === "first" ? (
+                <>
+                  <Eye className="size-3.5" /> [O] 1ST
+                </>
+              ) : (
+                <>
+                  <Orbit className="size-3.5" /> [O] 3RD
+                </>
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
               className="pointer-events-auto border border-border bg-background/55 font-mono text-[10px] text-muted-foreground backdrop-blur-sm hover:border-bitcoin hover:text-bitcoin"
               onClick={() => setChatOpen(true)}
             >
