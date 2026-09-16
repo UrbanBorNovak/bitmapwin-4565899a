@@ -80,9 +80,10 @@ export default function TouchControls({
 
   return (
     <div className="pointer-events-none fixed inset-0 z-40 select-none">
-      {/* look pad: the whole right side of the screen above the buttons */}
+      {/* look pad: the right side of the screen, clear of the on-screen buttons
+          so the menu, map, chat and belt stay tappable */}
       <div
-        className="pointer-events-auto absolute inset-y-0 right-0 w-1/2"
+        className="pointer-events-auto absolute right-0 top-[4.5rem] bottom-[17rem] w-1/2"
         style={{ touchAction: "none" }}
         onPointerDown={(event) => {
           if (lookId.current !== null) return;
