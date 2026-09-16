@@ -1505,10 +1505,14 @@ function PlayerCameraRig({
       intent.strafe = 0;
       intent.jump = false;
       if (ride.kind === "air") {
+        // Where you look is where you travel: aiming the view up climbs, down
+        // sinks, and the keys / pad still override it outright.
+        const lookClimb = Math.abs(pitch.current) > 0.12 ? pitch.current * 1.6 : 0;
         intent.fly = clampAxis(
           (pressed.has(" ") || pressed.has("r") ? 1 : 0) -
             (pressed.has("x") || pressed.has("f") ? 1 : 0) +
-            touchPad.fly,
+            touchPad.fly +
+            lookClimb,
         );
         intent.climbRate = AVATAR_U * (ride.climb ?? 9);
         intent.cruise = AVATAR_U * (ride.altitude ?? 6);
