@@ -3626,39 +3626,7 @@ export function BitmapWorld3D({
 
         {/* THE BELT — in-world weapon slots: press 1 / 2 / 3, scroll to cycle, 0 to holster. */}
         {exploring && utilityOpen ? (
-          <div
-            data-no-translate
-            className="absolute bottom-[10.5rem] left-1/2 z-20 w-[calc(100%-1rem)] -translate-x-1/2 overflow-x-auto md:bottom-3 md:z-40 md:w-auto md:overflow-visible"
-            aria-label="Weapon belt"
-          >
-            <div className="hud-panel flex w-max items-center gap-1 px-1.5 py-1.5 font-mono md:w-auto">
-              {WEAPON_ORDER.map((kind, index) => {
-                const active = weapon === kind;
-                return (
-                  <button
-                    key={kind}
-                    type="button"
-                    aria-pressed={active}
-                    title={WEAPONS[kind].hint}
-                    onClick={() => equipWeapon(active ? null : kind)}
-                    className={`flex min-w-[5.5rem] items-center gap-1.5 border px-2 py-1 text-[10px] transition-colors ${
-                      active
-                        ? "border-bitcoin bg-bitcoin/10 text-bitcoin"
-                        : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <span className="border border-current px-1 text-[9px] tabular-nums">
-                      {index + 1}
-                    </span>
-                    <span className="label text-[9px]">{WEAPONS[kind].short}</span>
-                  </button>
-                );
-              })}
-              <span className="px-1.5 text-[9px] text-muted-foreground">
-                {weapon ? "SCROLL · SWAP · 0 · HOLSTER" : "1 · 2 · 3 · 4 · DRAW"}
-              </span>
-            </div>
-          </div>
+          <WeaponBelt weapon={weapon} stats={shooterStats} onEquip={equipWeapon} />
         ) : null}
 
 
