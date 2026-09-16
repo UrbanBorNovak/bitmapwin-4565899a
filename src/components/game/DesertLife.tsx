@@ -536,7 +536,9 @@ type CritterKind =
   | "giraffe"
   | "elephant"
   | "rhino"
-  | "lion";
+  | "lion"
+  | "unicorn";
+
 
 type Species = {
   kind: CritterKind;
@@ -567,7 +569,10 @@ const SPECIES: Species[] = [
   { kind: "elephant", weight: 1, hostile: false, speed: 0.9, scale: 1, hp: 280, xp: 430, bite: 0, radius: 0.6, bodyY: 0.62 },
   { kind: "rhino", weight: 0.8, hostile: true, speed: 1.4, scale: 1, hp: 220, xp: 350, bite: 18, radius: 0.52, bodyY: 0.48 },
   { kind: "lion", weight: 0.8, hostile: true, speed: 1.7, scale: 1, hp: 160, xp: 280, bite: 15, radius: 0.4, bodyY: 0.38 },
+  // The rarest sighting of all.
+  { kind: "unicorn", weight: 0.3, hostile: false, speed: 2.1, scale: 1, hp: 120, xp: 520, bite: 0, radius: 0.38, bodyY: 0.55 },
 ];
+
 
 function pickSpecies(roll: number): Species {
   const total = SPECIES.reduce((sum, s) => sum + s.weight, 0);
