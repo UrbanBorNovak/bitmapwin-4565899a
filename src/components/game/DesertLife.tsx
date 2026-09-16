@@ -524,6 +524,8 @@ export const DesertLife = memo(function DesertLife({
       <Mirage unit={unit} pose={pose} />
       <GoldVeins unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <MineralNodes unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
+      <JadeNodes unit={unit} center={center} radius={radius} />
+      <DesertProps unit={unit} center={center} radius={radius} />
       <OreMines unit={unit} center={center} radius={radius} />
       <PineTrees unit={unit} center={center} radius={radius} />
       <Houses unit={unit} center={center} radius={radius} />
