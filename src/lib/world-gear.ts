@@ -61,6 +61,11 @@ export const GOGGLES_INSCRIPTION =
 /** The Punks that roam the universe. */
 export const PUNK_INSCRIPTION =
   "748e439d2558d567c69d97eba12329e1bd6b6dd2ee1900c738ffbf42c9a9db9fi0";
+/** Desert shoes — laced on the feet, and they quicken every stride. */
+export const SHOES_INSCRIPTION =
+  "d2a674751c24003e196b7a70ce4d5427a544bb84faca6e3536f4ee665b5da616i0";
+/** How much faster a visitor travels with the shoes on. */
+export const SHOES_SPEED = 1.16;
 
 export type FoodId =
   | "ice-cream"
@@ -68,7 +73,10 @@ export type FoodId =
   | "cheese-slice"
   | "candy"
   | "moon"
-  | "potion";
+  | "potion"
+  | "peperoni-slice"
+  | "medkit";
+
 
 export type FoodSpec = {
   id: FoodId;
