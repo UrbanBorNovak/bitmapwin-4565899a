@@ -125,7 +125,7 @@ const KIT_TABS: { id: KitTab; label: string }[] = [
   { id: "action", label: "ACTION" },
   { id: "kit", label: "KIT" },
   { id: "travel", label: "TRAVEL" },
-  { id: "view", label: "VIEW" },
+  { id: "view", label: "INVENTORY" },
 ];
 import { isSoundMuted, playSfx, setSoundMuted, unlockAudio } from "@/lib/world-audio";
 import { aimState, aimZoom } from "@/lib/world-aim";
@@ -153,6 +153,7 @@ import {
   type PoseReport,
 } from "@/lib/map-presence";
 import {
+  aloft,
   colAt,
   createPlayerState,
   damp,
