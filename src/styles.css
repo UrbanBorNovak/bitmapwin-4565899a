@@ -397,25 +397,46 @@
 }
 
 @utility hud-toolbar {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.375rem;
   border: 1px solid color-mix(in oklab, var(--color-border) 55%, transparent);
-  background: color-mix(in oklab, var(--color-card) 42%, transparent);
-  backdrop-filter: blur(6px) saturate(115%);
-  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 5%, transparent);
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-foreground) 6%, transparent),
+      transparent 45%
+    ),
+    color-mix(in oklab, var(--color-card) 48%, transparent);
+  backdrop-filter: blur(8px) saturate(120%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 7%, transparent),
+    0 10px 24px -20px color-mix(in oklab, var(--color-background) 90%, transparent);
   padding: 0.375rem;
-  opacity: 0.7;
+  opacity: 0.74;
   transition:
     opacity var(--motion-fast, 150ms) ease,
-    background var(--motion-fast, 150ms) ease;
+    background var(--motion-fast, 150ms) ease,
+    box-shadow var(--motion-fast, 150ms) ease;
 }
 
 .hud-toolbar:hover,
 .hud-toolbar:focus-within {
   opacity: 1;
-  background: color-mix(in oklab, var(--color-card) 88%, transparent);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-foreground) 8%, transparent),
+      transparent 45%
+    ),
+    color-mix(in oklab, var(--color-card) 92%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 9%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--color-bitcoin) 14%, transparent),
+    0 14px 28px -18px color-mix(in oklab, var(--color-bitcoin) 30%, transparent);
 }
 
 /* Compact controls + legend chrome inside HUD toolbars and map panels. */
