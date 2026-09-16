@@ -107,6 +107,12 @@ function BitmapDetail() {
   const sizeMap = useQuery(blockSizeMapQuery(block));
   const stats = useQuery(blockStatsQuery(block));
   const siblings = useQuery(patternSiblingsQuery(stats.data?.pattern));
+  // Two-transaction blocks: fetch the real render sides so the punk badges
+  // can tell pristine / standard / wide neck apart by shape.
+  const punkSides = useQuery({
+    ...blockRenderSidesQuery(block),
+    enabled: (stats.data?.txCount ?? scan.data?.txCount ?? null) === 2,
+  });
 
   const oci = useQuery(ociQuery(block));
   const trades = useQuery(tradesForHeightQuery(block));
