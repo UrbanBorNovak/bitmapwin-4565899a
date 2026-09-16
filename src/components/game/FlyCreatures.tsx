@@ -18,7 +18,7 @@ import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { CreatureEyes } from "@/components/game/CreatureEyes";
 import { registerBeastGroup, type BeastEntity } from "@/lib/world-entities";
 import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
-import { nearestSea } from "@/lib/world-sea";
+import { isDeepSea, nearestSea } from "@/lib/world-sea";
 
 export type CreatureGroupSpec = {
   id: string;
