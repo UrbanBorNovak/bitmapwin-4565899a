@@ -66,6 +66,12 @@ export const SHOES_INSCRIPTION =
   "d2a674751c24003e196b7a70ce4d5427a544bb84faca6e3536f4ee665b5da616i0";
 /** How much faster a visitor travels with the shoes on. */
 export const SHOES_SPEED = 1.16;
+/** The necklace — worn at the throat, and it steadies a visitor's recovery. */
+export const NECKLACE_INSCRIPTION =
+  "aa4b5be5b8aa8460ee7cc6fa19279fb6768f0e376a3901e46f8f942a16d75ac6i0";
+/** Health the necklace mends every second, on top of any meal buff. */
+export const NECKLACE_REGEN = 1;
+
 
 export type FoodId =
   | "ice-cream"
@@ -174,6 +180,8 @@ export type GearSnapshot = {
   goggles: boolean;
   /** the desert shoes, laced on or left in the pack */
   shoes: boolean;
+  /** the necklace, worn at the throat */
+  necklace: boolean;
   /** the meal in hand, while it lasts */
   eating: { food: FoodId; until: number } | null;
   buff: GearBuff | null;
@@ -185,9 +193,11 @@ let state: GearSnapshot = {
   companion: "none",
   goggles: false,
   shoes: false,
+  necklace: false,
   eating: null,
   buff: null,
 };
+
 let hydrated = false;
 const listeners = new Set<() => void>();
 
@@ -206,11 +216,13 @@ function hydrate() {
       companion?: CompanionId;
       goggles?: boolean;
       shoes?: boolean;
+      necklace?: boolean;
     };
     if (parsed.companion && COMPANIONS.some((c) => c.id === parsed.companion))
       state = { ...state, companion: parsed.companion };
     if (typeof parsed.goggles === "boolean") state = { ...state, goggles: parsed.goggles };
     if (typeof parsed.shoes === "boolean") state = { ...state, shoes: parsed.shoes };
+    if (typeof parsed.necklace === "boolean") state = { ...state, necklace: parsed.necklace };
   } catch {
     // a lost preference is never worth an error
   }
@@ -220,12 +232,18 @@ function persist() {
   try {
     window.localStorage.setItem(
       STORE_KEY,
-      JSON.stringify({ companion: state.companion, goggles: state.goggles, shoes: state.shoes }),
+      JSON.stringify({
+        companion: state.companion,
+        goggles: state.goggles,
+        shoes: state.shoes,
+        necklace: state.necklace,
+      }),
     );
   } catch {
     // saving kit is a nicety
   }
 }
+
 
 
 export function gearSnapshot(): GearSnapshot {
