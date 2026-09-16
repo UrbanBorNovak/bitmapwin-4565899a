@@ -195,6 +195,7 @@ import {
   RIDES,
   currentRide,
   isDriving,
+  rideIsWorn,
   stopDriving,
   selectRide,
   subscribeVehicle,
@@ -2234,13 +2235,13 @@ const WorldScene = memo(function WorldScene({
       ) : null}
       <VisitorBeacons cursors={cursors} />
       <SelfBeacon pose={pose} bitcoin={colors.bitcoin} wide={cameraMode === "map"} />
-      {cameraMode !== "map" && (driving || vehicle.placed) ? (
+      {cameraMode !== "map" && (driving || vehicle.placed) && !rideIsWorn(ride.id) ? (
         <Suspense fallback={null}>
           <RideModel key={ride.id} unit={AVATAR_U} pose={pose} driving={driving} ride={ride} />
         </Suspense>
       ) : null}
 
-      {cameraMode === "third" && !driving ? (
+      {cameraMode === "third" && (!driving || rideIsWorn(ride.id)) ? (
         <SelfAvatar
           pose={pose}
           color={self.color}
