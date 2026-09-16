@@ -8,8 +8,8 @@
 
 import { Suspense, memo, useEffect, useMemo, useState } from "react";
 import { useGLTF } from "@react-three/drei";
-import * as THREE from "three";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
+import { dropSolids, registerSolids } from "@/lib/world-solids";
 import {
   registerVeinGroup,
   subscribeWorldEntities,
@@ -133,8 +133,19 @@ export const OreMines = memo(function OreMines({
 
   useEffect(() => {
     registerVeinGroup("ore-mine", mines);
-    return () => registerVeinGroup("ore-mine", []);
-  }, [mines]);
+    // The mine head itself is a building: you walk and drive around it.
+    const solids = mines.map((vein) => ({
+      key: `ore-mine:${vein.id}`,
+      x: vein.x,
+      z: vein.z,
+      radius: unit * 1.1,
+    }));
+    registerSolids(solids);
+    return () => {
+      registerVeinGroup("ore-mine", []);
+      dropSolids(solids.map((solid) => solid.key));
+    };
+  }, [mines, unit]);
 
   return (
     <>
@@ -180,6 +191,3 @@ function useSyncVeins() {
 }
 
 useGLTF.preload(ORE_MINE_URL);
-
-// Keep the three import used by future geometry work honest.
-export type { THREE };
