@@ -146,8 +146,12 @@ export function OasisBots({
 
   useEffect(() => {
     registerBeastGroup("bots", bots);
-    return () => registerBeastGroup("bots", []);
+    return () => {
+      registerBeastGroup("bots", []);
+      publishBrainProbe(null);
+    };
   }, [bots]);
+
 
   /** when the brain readout panel was last refreshed */
   const nextProbe = useRef(0);
