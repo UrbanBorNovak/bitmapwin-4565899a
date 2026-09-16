@@ -1293,6 +1293,8 @@ const SelfAvatar = memo(function SelfAvatar({
     if (!current || !group.current) return;
     group.current.position.set(current.x, current.y, current.z);
     group.current.rotation.y = current.yaw;
+    // Flight pitches the whole body forward, like leaning into the wind.
+    group.current.rotation.x = current.lean ?? 0;
     if (!mounted.current) return;
     const next: AvatarMotion = current.animation;
     setMotion((previous) => (previous === next ? previous : next));
@@ -1503,10 +1505,14 @@ function PlayerCameraRig({
       intent.strafe = 0;
       intent.jump = false;
       if (ride.kind === "air") {
+        // Where you look is where you travel: aiming the view up climbs, down
+        // sinks, and the keys / pad still override it outright.
+        const lookClimb = Math.abs(pitch.current) > 0.12 ? pitch.current * 1.6 : 0;
         intent.fly = clampAxis(
           (pressed.has(" ") || pressed.has("r") ? 1 : 0) -
             (pressed.has("x") || pressed.has("f") ? 1 : 0) +
-            touchPad.fly,
+            touchPad.fly +
+            lookClimb,
         );
         intent.climbRate = AVATAR_U * (ride.climb ?? 9);
         intent.cruise = AVATAR_U * (ride.altitude ?? 6);
@@ -1552,6 +1558,13 @@ function PlayerCameraRig({
       ? 0
       : steer.current * gait * (driving ? 0.08 : 0.045) * (1 - aimState.amount * 0.85);
     roll.current = damp(roll.current, leanGoal, 6, delta);
+    // In the air the body pitches forward, more so the faster you travel, and a
+    // climb or a dive tips it further. Back to flat the moment you land.
+    const flyLean =
+      driving && ride.kind === "air"
+        ? 0.16 + gait * 0.3 - (intent.fly ?? 0) * 0.14
+        : 0;
+    player.lean = damp(player.lean ?? 0, flyLean, 4, delta);
     const dip = land.current * AVATAR_U * (mode === "first" ? 0.28 : 0.34);
 
     if (mode === "first" && driving) {
@@ -3089,6 +3102,9 @@ export function BitmapWorld3D({
   return (
     <div className={className}>
       <div className="relative h-[calc(100dvh-3.5rem)] min-h-[360px] w-full overflow-hidden border-0 border-border bg-background sm:h-[78vh] sm:min-h-[520px] sm:border">
+        {/* A soft frame around the screen: darkened corners and a thin lit edge,
+            so the readouts sit inside a cockpit instead of floating loose. */}
+        {exploring ? <div className="hud-vignette" aria-hidden="true" /> : null}
         {/* Controls sit on the world itself, not stacked above it. */}
         <div className="pointer-events-none absolute inset-x-0 top-0 z-40 p-2">
           {exploring ? (

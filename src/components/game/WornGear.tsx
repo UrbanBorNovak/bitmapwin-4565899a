@@ -99,6 +99,8 @@ function WornPiece({
       player.z - sin * side * unit + cos * forward * unit,
     );
     node.rotation.y = player.yaw + turn + (spin ? clock.elapsedTime * spin : 0);
+    // Worn pieces lean with the body, so the helmet stays on the head in flight.
+    node.rotation.x = player.lean ?? 0;
   });
 
   return (
@@ -246,9 +248,9 @@ export function WornGear({
           <WornPiece
             url={`https://ordinals.com/content/${JETPACK_HELMET_INSCRIPTION}`}
             unit={unit}
-            fit={0.34}
+            fit={0.46}
             pose={pose}
-            offset={[0, 0.86, 0]}
+            offset={[0, 0.84, 0]}
             seatOnBase
           />
         </Suspense>
