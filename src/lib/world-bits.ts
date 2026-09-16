@@ -96,6 +96,18 @@ export function pickBit(id: string) {
   return true;
 }
 
+/** Pay BIT straight into the purse — a mystery box prize, not a field pickup. */
+export function creditBits(amount: number) {
+  hydrate();
+  rollDay();
+  if (amount <= 0) return;
+  state = { ...state, total: state.total + amount };
+  persist();
+  emit();
+}
+
+
+
 export type BitsSnapshot = { total: number; today: number; day: string };
 
 let snapshot: BitsSnapshot = { total: 0, today: 0, day: "" };
