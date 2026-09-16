@@ -33,7 +33,6 @@ import {
   botCount,
   botHash,
   botRoster,
-  subscribeBotCount,
   type BotPlan,
   type BotRole,
 } from "@/lib/world-bots";
@@ -163,14 +162,8 @@ export function OasisBots({
   pose: { current: { x: number; z: number } | null };
   onBite?: ((damage: number, label: string) => void) | undefined;
 }) {
-  const [count, setCount] = useState(() => botCount());
-  useEffect(() => {
-    const unsubscribe = subscribeBotCount(() => setCount(botCount()));
-    return () => {
-      unsubscribe();
-    };
-  }, []);
-
+  // The settlers simply live here — a fixed population, nothing to dial.
+  const count = botCount();
   const bots = useMemo(() => botRoster(count).map((plan) => makeBot(plan, unit)), [count, unit]);
   const groups = useRef<(THREE.Group | null)[]>([]);
   /** what the labels show — refreshed on a slow timer, never every frame */
