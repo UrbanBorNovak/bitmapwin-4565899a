@@ -3438,6 +3438,7 @@ export function BitmapWorld3D({
                   </Button>
                 </div>
               </div>
+              ) : null}
             </div>
 
           </div>
