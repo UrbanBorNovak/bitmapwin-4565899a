@@ -2190,7 +2190,9 @@ const WorldScene = memo(function WorldScene({
             unit={AVATAR_U}
             pose={pose}
             weapon={weapon}
-            showHead={cameraMode === "third" && !driving}
+            // The jetpack is worn, not boarded: your own body and the helmet
+            // stay on screen in third person while you fly.
+            showHead={cameraMode === "third" && (!driving || rideIsWorn(ride.id))}
             jetpack={driving && ride.id === "jetpack"}
           />
           {self.hp <= 0 ? <GhostShade unit={AVATAR_U} pose={pose} /> : null}
@@ -2950,6 +2952,8 @@ export function BitmapWorld3D({
     (damage: number, label: string) => {
       // While you are down you are a ghost: nothing can touch you.
       if (hp <= 0) return;
+      // Up on the jetpack you are out of reach — nothing on the ground bites.
+      if (aloft(pose.current)) return;
       hurt(damage);
       playSfx("hurt");
       setBiteNote(`${label} BIT YOU · -${damage}`);
