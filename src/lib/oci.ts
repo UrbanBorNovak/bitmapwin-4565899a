@@ -1,12 +1,20 @@
 // Shared types/constants for the OCI (on-chain index) bitmap registry.
-// The index itself lives on Bitcoin as ten inscriptions: each page maps a
-// bitmap number to the sat that carries its claim, delta encoded.
+// The index itself lives on Bitcoin as eleven inscriptions: each page maps a
+// bitmap number to the sat that carries its claim, delta encoded. The module
+// that stitches them together is
+// 942b5886158d57fc70cb8fb7d9bd4d37aa95b8b145be1a351326336b087262dbi0
+// (0 … 941999.bitmap, second post-840k addition).
 
 export const PAGE_SIZE = 100_000;
-export const MAX_BITMAP = 906_999;
+export const MAX_BITMAP = 941_999;
 export const PAGE9_START = 840_000;
+export const PAGE10_START = 907_000;
 
-/** Inscription ids of the OCI pages, page 0..9 (page 9 covers 840000+). */
+/**
+ * Inscription ids of the OCI pages, page 0..10. Page 9 covers 840000–906999
+ * and page 10 covers 907000–941999; both ship as JSON with their own
+ * satIndexMap.
+ */
 export const OCI_PAGES = [
   "01bba6c58af39d7f199aa2bceeaaba1ba91b23d2663bc4ef079a4b5e442dbf74i0",
   "bb01dfa977a5cd0ee6e900f1d1f896b5ec4b1e3c7b18f09c952f25af6591809fi0",
@@ -18,6 +26,7 @@ export const OCI_PAGES = [
   "bb076934c1c22007b315dd1dc0f8c4a2f9d52f348320cfbadc7c0bd99eaa5e18i0",
   "bb986a1208380ec7db8df55a01c88c73a581069a51b5a2eb2734b41ba10b65c2i0",
   "b907b51a239e3a37f29f8222fb274f828c6ebf7b93ce501a55b7171daaa75758i0",
+  "b942b6477c7da9090edb9751429ba9c3ba01b39ab972fc888d481f528e3e03c3i0",
 ] as const;
 
 /**
@@ -47,7 +56,9 @@ export type BitmapIndexEntry = {
 };
 
 export function pageForBitmap(height: number): number {
-  return height >= PAGE9_START ? 9 : Math.floor(height / PAGE_SIZE);
+  if (height >= PAGE10_START) return 10;
+  if (height >= PAGE9_START) return 9;
+  return Math.floor(height / PAGE_SIZE);
 }
 
 /** Public URL that serves an inscription's raw content. */
