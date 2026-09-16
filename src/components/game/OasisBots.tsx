@@ -38,7 +38,7 @@ import {
 } from "@/lib/world-bots";
 import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { brainProbe, publishBrainProbe } from "@/lib/fly-connectome";
-import { poseDown } from "@/lib/player-state";
+import { poseDown, simDelta} from "@/lib/player-state";
 
 
 type Bot = BeastEntity &
@@ -182,8 +182,12 @@ export function OasisBots({
   /** when the brain readout panel was last refreshed */
   const nextProbe = useRef(0);
 
+  const simBudget = useRef(0);
   useFrame((_, rawDelta) => {
-    const delta = Math.min(rawDelta, 0.05);
+    // Flying or racing past: the crowd here is out of reach, so their brains
+    // tick a few times a second instead of once a frame and travel stays smooth.
+    const delta = simDelta(simBudget, rawDelta, pose);
+    if (delta === null) return;
     const player = pose.current;
     const down = poseDown(pose);
     const now = performance.now();

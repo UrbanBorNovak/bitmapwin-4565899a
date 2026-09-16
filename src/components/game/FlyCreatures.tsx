@@ -19,7 +19,7 @@ import { CreatureEyes } from "@/components/game/CreatureEyes";
 import { registerBeastGroup, type BeastEntity } from "@/lib/world-entities";
 import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { isDeepSea, nearestSea } from "@/lib/world-sea";
-import { poseDown } from "@/lib/player-state";
+import { poseDown, simDelta} from "@/lib/player-state";
 
 export type CreatureGroupSpec = {
   id: string;
@@ -231,8 +231,12 @@ export const CreatureGroup = memo(function CreatureGroup({
     return () => registerBeastGroup(`creatures:${spec.id}`, []);
   }, [creatures, spec.id]);
 
+  const simBudget = useRef(0);
   useFrame((_, rawDelta) => {
-    const delta = Math.min(rawDelta, 0.05);
+    // Flying or racing past: the crowd here is out of reach, so their brains
+    // tick a few times a second instead of once a frame and travel stays smooth.
+    const delta = simDelta(simBudget, rawDelta, pose);
+    if (delta === null) return;
     const player = pose.current;
     const down = poseDown(pose);
     const now = performance.now();

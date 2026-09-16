@@ -22,7 +22,7 @@ import { AntelopeBody } from "@/components/game/Antelope";
 import { UnicornBody } from "@/components/game/Unicorn";
 import { JadeNodes } from "@/components/game/JadeNodes";
 import { DiamondNodes } from "@/components/game/DiamondNodes";
-import { poseDown } from "@/lib/player-state";
+import { poseDown, simDelta} from "@/lib/player-state";
 import { DesertProps } from "@/components/game/DesertProps";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 
@@ -699,8 +699,12 @@ const Critters = memo(function Critters({
     return () => registerBeasts([]);
   }, []);
 
+  const simBudget = useRef(0);
   useFrame((_, rawDelta) => {
-    const delta = Math.min(rawDelta, 0.05);
+    // Flying or racing past: the crowd here is out of reach, so their brains
+    // tick a few times a second instead of once a frame and travel stays smooth.
+    const delta = simDelta(simBudget, rawDelta, pose);
+    if (delta === null) return;
     const player = pose.current;
     // Killed visitors are ghosts: hostiles stop stalking and stop striking.
     const down = poseDown(pose);
