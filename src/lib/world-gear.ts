@@ -172,6 +172,8 @@ export type GearBuff = { label: string; until: number; regenPerSecond: number; p
 export type GearSnapshot = {
   companion: CompanionId;
   goggles: boolean;
+  /** the desert shoes, laced on or left in the pack */
+  shoes: boolean;
   /** the meal in hand, while it lasts */
   eating: { food: FoodId; until: number } | null;
   buff: GearBuff | null;
@@ -179,7 +181,13 @@ export type GearSnapshot = {
 
 const STORE_KEY = "bitmapwin:gear";
 
-let state: GearSnapshot = { companion: "none", goggles: false, eating: null, buff: null };
+let state: GearSnapshot = {
+  companion: "none",
+  goggles: false,
+  shoes: false,
+  eating: null,
+  buff: null,
+};
 let hydrated = false;
 const listeners = new Set<() => void>();
 
@@ -194,10 +202,15 @@ function hydrate() {
   try {
     const raw = window.localStorage.getItem(STORE_KEY);
     if (!raw) return;
-    const parsed = JSON.parse(raw) as { companion?: CompanionId; goggles?: boolean };
+    const parsed = JSON.parse(raw) as {
+      companion?: CompanionId;
+      goggles?: boolean;
+      shoes?: boolean;
+    };
     if (parsed.companion && COMPANIONS.some((c) => c.id === parsed.companion))
       state = { ...state, companion: parsed.companion };
     if (typeof parsed.goggles === "boolean") state = { ...state, goggles: parsed.goggles };
+    if (typeof parsed.shoes === "boolean") state = { ...state, shoes: parsed.shoes };
   } catch {
     // a lost preference is never worth an error
   }
@@ -207,12 +220,13 @@ function persist() {
   try {
     window.localStorage.setItem(
       STORE_KEY,
-      JSON.stringify({ companion: state.companion, goggles: state.goggles }),
+      JSON.stringify({ companion: state.companion, goggles: state.goggles, shoes: state.shoes }),
     );
   } catch {
     // saving kit is a nicety
   }
 }
+
 
 export function gearSnapshot(): GearSnapshot {
   hydrate();
