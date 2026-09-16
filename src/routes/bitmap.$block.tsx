@@ -207,7 +207,11 @@ function BitmapDetail() {
                   }`
                 : "> SIZE MAP UNAVAILABLE — DETERMINISTIC FALLBACK RENDER"}
           </p>
+          <div className="mt-6 border-t border-border pt-6">
+            <TerritoryCanvas height={block} />
+          </div>
         </div>
+
 
         <details className="group border border-border">
           <summary className="flex cursor-pointer list-none items-center justify-between border-b border-border px-6 py-3">
