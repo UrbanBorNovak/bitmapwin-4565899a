@@ -7,8 +7,7 @@ type Parcel = { index: number; size: number; x: number; y: number };
 const PALETTE = ["#ffb45a", "#f7931a", "#e6810e", "#c96d08", "#a95a06"];
 
 /** shelf-pack every transaction as a square sized by its real vbyte class */
-function packParcels(classes: number[]) {
-  const maxWidth = Math.max(24, Math.ceil(Math.sqrt(classes.reduce((sum, c) => sum + c * c, 0)) * 1.05));
+function shelfPack(classes: number[], maxWidth: number) {
   const parcels: Parcel[] = [];
   let cursorX = 0;
   let cursorY = 0;
@@ -28,8 +27,20 @@ function packParcels(classes: number[]) {
 
   const extentX = parcels.reduce((m, p) => Math.max(m, p.x + p.size), 1);
   const extentY = parcels.reduce((m, p) => Math.max(m, p.y + p.size), 1);
-  return { parcels, grid: Math.max(extentX, extentY) };
+  return { parcels, extentX, extentY };
 }
+
+function packParcels(classes: number[]) {
+  const area = classes.reduce((sum, c) => sum + Math.max(1, Math.min(5, c)) ** 2, 0);
+  const base = Math.max(8, Math.ceil(Math.sqrt(area)));
+  // widen the shelf until the packed block is no taller than it is wide (square territory)
+  let best = shelfPack(classes, base);
+  for (let i = 0; i < 24 && best.extentY > best.extentX; i += 1) {
+    best = shelfPack(classes, Math.ceil(base * (1 + (i + 1) * 0.12)));
+  }
+  return { parcels: best.parcels, grid: Math.max(best.extentX, best.extentY) };
+}
+
 
 export function TerritoryCanvas({ height, className }: { height: number; className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
