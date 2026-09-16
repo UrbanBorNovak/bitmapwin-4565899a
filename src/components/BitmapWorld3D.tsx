@@ -62,6 +62,7 @@ import { WornGear } from "@/components/game/WornGear";
 import { GhostShade } from "@/components/game/GhostShade";
 import type { MysteryPrize } from "@/lib/world-mystery";
 import { creditBits } from "@/lib/world-bits";
+import { grantXp } from "@/lib/world-skills";
 import { FlyCreatures } from "@/components/game/FlyCreatures";
 import { MysteryBoxes } from "@/components/game/MysteryBoxes";
 import { NightVision } from "@/components/game/NightVision";
