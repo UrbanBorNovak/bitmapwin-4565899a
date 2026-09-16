@@ -175,7 +175,7 @@ export function BitmapOrderBook({ height }: { height?: number }) {
             <span className="label text-foreground">BIDS — {liveBids.length}</span>
             <span className="label">SIGNED INTENTS</span>
           </div>
-          {bidsPending ? (
+          {!hydrated || bidsPending ? (
             <Loading />
           ) : liveBids.length === 0 ? (
             <Empty text="NO LIVE BIDS" />
@@ -193,7 +193,7 @@ export function BitmapOrderBook({ height }: { height?: number }) {
             <span className="label text-primary">ASKS — {asks.length}</span>
             <span className="label">SIGNED SALE PSBTS</span>
           </div>
-          {offersPending ? (
+          {!hydrated || offersPending ? (
             <Loading />
           ) : asks.length === 0 ? (
             <Empty text="NO OPEN ASKS" />
