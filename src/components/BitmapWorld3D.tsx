@@ -1374,6 +1374,11 @@ function PlayerCameraRig({
   useEffect(() => {
     setMoveBlocker((x, z) => {
       if (blockedAt(x, z, AVATAR_U * 0.3)) return true;
+      // Landmarks, trees and other inscribed props are solid too — you go
+      // around the cafe, the tower, the arena and the gate posts, never through.
+      const wide = isDriving() ? AVATAR_U * 1.1 : AVATAR_U * 0.3;
+      if (solidBlocked(x, z, wide)) return true;
+
       const afloat = isDriving() && currentRide().kind === "water";
       if (afloat) {
         // A hull only holds where there is water: the shoreline is a wall.
