@@ -2118,6 +2118,8 @@ const WorldScene = memo(function WorldScene({
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <SeaMasses unit={AVATAR_U} pose={pose} />
           <SeaIslands unit={AVATAR_U} pose={pose} />
+          <BitField unit={AVATAR_U} pose={pose} />
+
 
           <Punks unit={AVATAR_U} pose={pose} onBite={onBite} />
           <OasisBots unit={AVATAR_U} pose={pose} onBite={onBite} />
