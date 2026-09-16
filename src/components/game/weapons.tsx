@@ -34,11 +34,16 @@ export const WAND_INSCRIPTION =
 export const PICK_INSCRIPTION =
   "fd69f76fc8964ab62237d8fd6a5de7f76765bbf9861a48855d6502d25b4db7e8i0";
 
+/** on-chain GLB inscription of the sledge hammer */
+export const HAMMER_INSCRIPTION =
+  "fb1dcba0405adf5b6ded0312a32738a25aafa5de68db341434952d6772692fd5i0";
+
 export type WeaponKind =
   | "minigun"
   | "revolver"
   | "trap"
   | "pickaxe"
+  | "hammer"
   | "sword"
   | "wand";
 
@@ -143,6 +148,23 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     reloadSfx: "reload",
     hint: "MINE GOLD VEINS · LEFT TO SWING · K TO UNLOCK A CHEST",
   },
+  hammer: {
+    kind: "hammer",
+    label: "HAMMER",
+    short: "HAMMER",
+    magazine: 0,
+    reloadMs: 0,
+    cooldownMs: 980,
+    reachStrides: 3.4,
+    splashStrides: 1.4,
+    damage: 34,
+    mining: true,
+    fireSfx: "pick",
+    cycleSfx: null,
+    cycleDelayMs: 0,
+    reloadSfx: "reload",
+    hint: "HEAVY ON-CHAIN SLEDGE · CRUSHES ROCK AND BONE · LEFT TO SWING",
+  },
   sword: {
     kind: "sword",
     label: "DUAL BLADES",
@@ -185,6 +207,7 @@ export const WEAPON_ORDER: WeaponKind[] = [
   "revolver",
   "trap",
   "pickaxe",
+  "hammer",
   "sword",
   "wand",
 ];
@@ -349,6 +372,23 @@ export function WeaponModel({
   }
 
 
+  if (kind === "hammer") {
+    // The on-chain sledge, hauled over the shoulder and driven down hard.
+    const swing = lash;
+    return (
+      <group
+        position={[0.06 * u, -0.05 * u, 0.04 * u]}
+        rotation={[-0.42 + swing * 1.15, 0.14, -0.24]}
+      >
+        <Suspense fallback={<HammerStandIn u={u} materials={materials} />}>
+          <OnChainWeapon url={HAMMER_URL} u={u} lengthStrides={0.72} />
+        </Suspense>
+        {flash ? <Muzzle u={u} z={-0.7 * u} size={0.05} color={flashColor} /> : null}
+      </group>
+    );
+  }
+
+
   if (kind === "sword") {
     // Dual wield: one on-chain blade per hand, held low and angled inward so
     // the tips read in front of the chest rather than crossing the face. A
@@ -429,6 +469,21 @@ const MINIGUN_URL = `https://ordinals.com/content/${MINIGUN_INSCRIPTION}`;
 const WAND_URL = `https://ordinals.com/content/${WAND_INSCRIPTION}`;
 const PICK_URL = `https://ordinals.com/content/${PICK_INSCRIPTION}`;
 const TRAP_URL = `https://ordinals.com/content/${TRAP_INSCRIPTION}`;
+const HAMMER_URL = `https://ordinals.com/content/${HAMMER_INSCRIPTION}`;
+
+/** Forged sledge shown for the moment before the inscription streams in. */
+function HammerStandIn({ u, materials }: { u: number; materials: WeaponMaterials }) {
+  return (
+    <group>
+      <mesh material={materials.wood} rotation={[Math.PI / 2, 0, 0]} position={[0, 0, -0.3 * u]}>
+        <cylinderGeometry args={[0.022 * u, 0.026 * u, 0.62 * u, 8]} />
+      </mesh>
+      <mesh material={materials.iron} position={[0, 0, -0.62 * u]}>
+        <boxGeometry args={[0.24 * u, 0.12 * u, 0.12 * u]} />
+      </mesh>
+    </group>
+  );
+}
 
 /** An inscribed piece, fitted to the hand and pointed down -Z like the rest. */
 /**
