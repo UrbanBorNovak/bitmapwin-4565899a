@@ -197,6 +197,11 @@ export function OasisBots({
 
       const vein = bot.role === "miner" ? bot.vein : null;
       const playerDistance = player ? Math.hypot(player.x - bot.x, player.z - bot.z) / unit : null;
+      if (playerDistance !== null && playerDistance < closestDistance) {
+        closestDistance = playerDistance;
+        closest = bot;
+      }
+
       const act = bot.brain.think(
         {
           now,
