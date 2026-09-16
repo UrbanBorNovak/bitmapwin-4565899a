@@ -21,6 +21,8 @@ import { GoldenEgg } from "@/components/game/GoldenEgg";
 import { AntelopeBody } from "@/components/game/Antelope";
 import { UnicornBody } from "@/components/game/Unicorn";
 import { JadeNodes } from "@/components/game/JadeNodes";
+import { DiamondNodes } from "@/components/game/DiamondNodes";
+import { poseDown } from "@/lib/player-state";
 import { DesertProps } from "@/components/game/DesertProps";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 
@@ -525,6 +527,7 @@ export const DesertLife = memo(function DesertLife({
       <GoldVeins unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <MineralNodes unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <JadeNodes unit={unit} center={center} radius={radius} />
+      <DiamondNodes unit={unit} center={center} radius={radius} />
       <DesertProps unit={unit} center={center} radius={radius} />
       <OreMines unit={unit} center={center} radius={radius} />
       <PineTrees unit={unit} center={center} radius={radius} />
@@ -686,6 +689,8 @@ const Critters = memo(function Critters({
   useFrame((_, rawDelta) => {
     const delta = Math.min(rawDelta, 0.05);
     const player = pose.current;
+    // Killed visitors are ghosts: hostiles stop stalking and stop striking.
+    const down = poseDown(pose);
     const reach = unit * 34;
     const now = performance.now();
     // How fast the visitor is actually travelling, measured from their own
@@ -761,7 +766,7 @@ const Critters = memo(function Critters({
         const dz = dzBrain;
         const away = brainAway ?? 0;
         let toPlayer = Math.atan2(dx, dz);
-        if (species.hostile && away < unit * 12) {
+        if (species.hostile && !down && away < unit * 12) {
           // Follow the shared field where it has an answer, otherwise head straight in.
           if (field) {
             const step = fieldDirection(field, colAt(critter.x), rowAt(critter.z));
@@ -784,6 +789,7 @@ const Critters = memo(function Critters({
           const outrunning = pace > speed * 1.15;
           if (
             !outrunning &&
+            !down &&
             away < standoff * 1.8 &&
             now - critter.lastBite > 1_400 &&
             species.bite > 0

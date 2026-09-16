@@ -19,6 +19,7 @@ import { CreatureEyes } from "@/components/game/CreatureEyes";
 import { registerBeastGroup, type BeastEntity } from "@/lib/world-entities";
 import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { isDeepSea, nearestSea } from "@/lib/world-sea";
+import { poseDown } from "@/lib/player-state";
 
 export type CreatureGroupSpec = {
   id: string;
@@ -233,6 +234,7 @@ export const CreatureGroup = memo(function CreatureGroup({
   useFrame((_, rawDelta) => {
     const delta = Math.min(rawDelta, 0.05);
     const player = pose.current;
+    const down = poseDown(pose);
     const now = performance.now();
     let talkChanged = false;
     const talk: Record<number, string> = {};
@@ -303,7 +305,7 @@ export const CreatureGroup = memo(function CreatureGroup({
         }
       }
 
-      if (spec.hostile && player && away !== null && away < unit * 9) {
+      if (spec.hostile && !down && player && away !== null && away < unit * 9) {
         const standoff = unit * (0.8 + spec.size * 0.3);
         if (away < standoff * 1.7 && now - creature.lastBite > 2_400 && spec.bite > 0) {
           creature.lastBite = now;

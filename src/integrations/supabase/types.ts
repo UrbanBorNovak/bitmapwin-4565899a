@@ -1328,6 +1328,45 @@ export type Database = {
         }
         Relationships: []
       }
+      memberships: {
+        Row: {
+          address: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          invoice_sats: number
+          paid_at: string | null
+          status: string
+          txid: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          invoice_sats: number
+          paid_at?: string | null
+          status?: string
+          txid?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          invoice_sats?: number
+          paid_at?: string | null
+          status?: string
+          txid?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       offers: {
         Row: {
           bid_id: string | null

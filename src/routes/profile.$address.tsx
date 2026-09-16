@@ -6,6 +6,7 @@ import { profileQuery, type ParcelPage } from "@/lib/profiles";
 import { shortenAddress } from "@/lib/registry";
 import { timeAgo } from "@/lib/bitmap";
 import { BUILD_KIND_LABELS, isBuildKind } from "@/lib/build-sdk";
+import { isActive, membershipQuery } from "@/lib/membership";
 
 export const Route = createFileRoute("/profile/$address")({
   head: ({ params }) => {
@@ -55,6 +56,8 @@ function ProfilePage() {
   const { address } = Route.useParams();
   const profile = useQuery(profileQuery(address));
   const pages = useQuery(ownerPagesQuery(address));
+  const membership = useQuery(membershipQuery(address));
+  const isMember = isActive(membership.data);
 
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-12 md:px-8">
@@ -73,9 +76,14 @@ function ProfilePage() {
           />
         </div>
         <div className="min-w-0">
-          <h1 className="display text-3xl md:text-4xl">
-            {profile.data?.displayName ?? shortenAddress(address)}
-          </h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="display text-3xl md:text-4xl">
+              {profile.data?.displayName ?? shortenAddress(address)}
+            </h1>
+            {isMember && (
+              <span className="label border border-bitcoin px-2 py-1 text-bitcoin">MEMBERS</span>
+            )}
+          </div>
           <p className="label mt-2 break-all">{address}</p>
           {profile.data?.bio && (
             <p className="mt-4 max-w-[70ch] font-mono text-sm whitespace-pre-wrap text-muted-foreground">
