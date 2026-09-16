@@ -158,6 +158,20 @@ export const aloft = (player: { y: number } | null | undefined) =>
   Boolean(player && player.y > FLY_CLEARANCE);
 
 /**
+ * True while the visitor is down. Everything hostile reads this from the shared
+ * pose so a killed player is left alone: no stalking, no strikes, no damage
+ * until they respawn.
+ */
+export const poseDown = (
+  pose: { current: { combat?: string; y?: number } | null } | null | undefined,
+) => pose?.current?.combat === "down";
+
+/** Out of reach: either flying high or already down. */
+export const untouchable = (
+  pose: { current: { combat?: string; y?: number } | null } | null | undefined,
+) => poseDown(pose) || aloft(pose?.current as { y: number } | null | undefined);
+
+/**
  * Solid-world test the movement step consults. The world registers one (built
  * structures block their tile); movement stays pure physics otherwise.
  */
