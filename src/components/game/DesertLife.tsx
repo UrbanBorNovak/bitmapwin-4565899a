@@ -995,8 +995,10 @@ const CritterBody = memo(function CritterBody({
     );
   }
 
-  // The antelope is an inscribed model, not a voxel build.
+  // The antelope and the unicorn are inscribed models, not voxel builds.
   if (kind === "antelope") return <AntelopeBody unit={u} />;
+  if (kind === "unicorn") return <UnicornBody unit={u} />;
+
 
   // Quadrupeds — one shared build with per-species proportions.
   const build = quadruped(kind, u);
