@@ -74,6 +74,18 @@ export const NECKLACE_INSCRIPTION =
   "aa4b5be5b8aa8460ee7cc6fa19279fb6768f0e376a3901e46f8f942a16d75ac6i0";
 /** Health the necklace mends every second, on top of any meal buff. */
 export const NECKLACE_REGEN = 1;
+/** The watch — worn on the wrist. */
+export const WATCH_INSCRIPTION =
+  "ea4c75598df0220f7ea39248737687d4546accb339fe4684cd1501cda7159d33i0";
+/** The comic book — carried in the off hand. */
+export const COMIC_INSCRIPTION =
+  "606f4d8a2aa37154cae69bbeae8518f627b16a1b218212e9b1ab34c525fc8240i0";
+/** The ring — worn on the hand. */
+export const RING_INSCRIPTION =
+  "d2d827b0f7e6ff046bfc40b60fa5d7fa86647186a02235fe5db8bcb06eb1fb29i0";
+/** The ghost you drift as while you are down. */
+export const GHOST_INSCRIPTION =
+  "1d0854ff6af9ae25f800b6c4523d3c8a3e1fafee94d9f649848ddb890218718ei0";
 
 
 export type FoodId =
