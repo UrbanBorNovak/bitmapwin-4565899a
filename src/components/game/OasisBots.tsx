@@ -27,6 +27,7 @@ import {
   SETTLER_INSCRIPTION,
   PROSPECTOR_INSCRIPTION,
   TRADER_INSCRIPTION,
+  RAIDER_INSCRIPTION,
   BOT_ROLES,
 
   botCount,
@@ -96,11 +97,14 @@ const SETTLER_URL = contentUrl(SETTLER_INSCRIPTION);
 const PROSPECTOR_URL = contentUrl(PROSPECTOR_INSCRIPTION);
 /** Traders walk the sand as the inscribed plant. */
 const TRADER_URL = contentUrl(TRADER_INSCRIPTION);
+/** Raiders wear their own inscribed figure. */
+const RAIDER_URL = contentUrl(RAIDER_INSCRIPTION);
 
 const ROLE_MODEL: Partial<Record<BotRole, string>> = {
   wanderer: SETTLER_URL,
   miner: PROSPECTOR_URL,
   trader: TRADER_URL,
+  raider: RAIDER_URL,
 };
 
 /** A blocky settler figure — cheap enough to draw dozens of. */
@@ -360,3 +364,5 @@ export function OasisBots({
 
 useGLTF.preload(SETTLER_URL);
 useGLTF.preload(PROSPECTOR_URL);
+useGLTF.preload(TRADER_URL);
+useGLTF.preload(RAIDER_URL);

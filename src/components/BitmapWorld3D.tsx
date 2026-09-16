@@ -71,6 +71,8 @@ import {
   toggleNecklace,
 
   toggleShoes,
+  cycleToy,
+  toySpec,
   walkMultiplier,
 
   useGear,
@@ -2520,6 +2522,21 @@ export function BitmapWorld3D({
         eat("medkit");
         return;
       }
+      if (key === "k") {
+        eat("crypto-soup");
+        return;
+      }
+      if (key === "x") {
+        eat("cigarette");
+        return;
+      }
+      if (key === "z") {
+        const next = cycleToy();
+        playSfx("ui");
+        setBiteNote(next.inscription ? `TOY IN HAND · ${next.label}` : "TOY PUT AWAY");
+        window.setTimeout(() => setBiteNote(null), 1500);
+        return;
+      }
 
       if (key !== "b") return;
       setBuildOpen((current) => !current);
@@ -3144,7 +3161,7 @@ export function BitmapWorld3D({
                         </div>
                         {(Object.keys(FOODS) as FoodId[]).map((id, index) => {
                           const spec = FOODS[id];
-                          const keyHint = ["G", "J", "U", "H", "L", "Y", "V"][index];
+                          const keyHint = ["G", "J", "U", "H", "L", "Y", "V", "K", "X"][index];
                           return (
                             <button
                               key={id}
@@ -3267,6 +3284,20 @@ export function BitmapWorld3D({
                     }}
                   >
                     [ SHOES ]
+                  </Button>
+                  <Button
+                    className={gear.toy !== "none" ? "btn-term" : "btn-term-ghost"}
+                    variant="ghost"
+                    onClick={() => {
+                      const next = cycleToy();
+                      playSfx("ui");
+                      setBiteNote(next.inscription ? `TOY IN HAND · ${next.label}` : "TOY PUT AWAY");
+                      window.setTimeout(() => setBiteNote(null), 1500);
+                    }}
+                  >
+                    <span data-no-translate>
+                      [ {gear.toy === "none" ? "TOY" : toySpec(gear.toy).label} · Z ]
+                    </span>
                   </Button>
                   <Button
                     className={gear.necklace ? "btn-term" : "btn-term-ghost"}
