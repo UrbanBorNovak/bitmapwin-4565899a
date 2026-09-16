@@ -150,6 +150,8 @@ import { DamageVeil } from "@/components/game/DamageVeil";
 
 import type { RideSpec } from "@/lib/world-vehicle";
 import { isDeepSea, isSea, nearestSea } from "@/lib/world-sea";
+import TouchControls from "@/components/game/TouchControls";
+import { consumeTouchJump, isTouchDevice, takeTouchLook, touchPad } from "@/lib/touch-input";
 import {
 
   RIDES,
@@ -1447,8 +1449,11 @@ function PlayerCameraRig({
       intent.strafe = 0;
       intent.jump = false;
       if (ride.kind === "air") {
-        intent.fly =
-          (pressed.has(" ") || pressed.has("r") ? 1 : 0) - (pressed.has("x") || pressed.has("f") ? 1 : 0);
+        intent.fly = clampAxis(
+          (pressed.has(" ") || pressed.has("r") ? 1 : 0) -
+            (pressed.has("x") || pressed.has("f") ? 1 : 0) +
+            touchPad.fly,
+        );
         intent.climbRate = AVATAR_U * (ride.climb ?? 9);
         intent.cruise = AVATAR_U * (ride.altitude ?? 6);
       }
