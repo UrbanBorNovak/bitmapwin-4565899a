@@ -111,7 +111,11 @@ export default function TouchControls({
         onPointerDown={(event) => {
           if (stickId.current !== null) return;
           stickId.current = event.pointerId;
-          event.currentTarget.setPointerCapture(event.pointerId);
+          try {
+            event.currentTarget.setPointerCapture(event.pointerId);
+          } catch {
+            /* synthetic or already-released pointers have nothing to capture */
+          }
           readStick(event.clientX, event.clientY);
         }}
         onPointerMove={(event) => {
@@ -208,7 +212,11 @@ function PadButton({
       style={{ touchAction: "none" }}
       onPointerDown={(event) => {
         event.preventDefault();
-        event.currentTarget.setPointerCapture(event.pointerId);
+        try {
+          event.currentTarget.setPointerCapture(event.pointerId);
+        } catch {
+          /* synthetic or already-released pointers have nothing to capture */
+        }
         onDown();
       }}
       onPointerUp={() => onUp?.()}
