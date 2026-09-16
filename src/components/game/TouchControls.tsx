@@ -32,6 +32,15 @@ export default function TouchControls({
 
   useEffect(() => () => resetTouchPad(), []);
 
+  // A panel opening hides the pads, so drop whatever was held down.
+  useEffect(() => {
+    if (paused) {
+      resetTouchPad();
+      setKnob({ x: 0, y: 0 });
+      setSprinting(false);
+    }
+  }, [paused]);
+
   const readStick = useCallback((clientX: number, clientY: number) => {
     const box = stick.current?.getBoundingClientRect();
     if (!box) return;
