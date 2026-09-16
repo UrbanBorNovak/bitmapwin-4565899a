@@ -404,9 +404,11 @@ export function ShooterLayer({
         playSfx("nugget");
         flashNote(
           result.emptied
-            ? mineral
+            ? kind === "mineral"
               ? "CLUSTER MINED OUT · CLEARED FROM THE SAND"
-              : "SEAM MINED OUT · GONE FOR GOOD"
+              : kind === "ore"
+                ? "MINE WORKED OUT · CLEARED FROM THE SAND"
+                : "SEAM MINED OUT · GONE FOR GOOD"
             : `+${oreHit.vein.xpPerVoxel} MINING XP`,
         );
       }
