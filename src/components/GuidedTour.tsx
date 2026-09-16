@@ -162,7 +162,11 @@ export function GuidedTour() {
       else close();
       return;
     }
-    el.scrollIntoView({ block: "center", behavior: "smooth" });
+    // Only scroll when the target is off screen — on a phone the world already
+    // fills the viewport and scrolling it away was disorienting.
+    const rect = el.getBoundingClientRect();
+    if (rect.bottom < 8 || rect.top > window.innerHeight - 8)
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
     const measure = () => setBox(el.getBoundingClientRect());
     measure();
     const timer = window.setTimeout(measure, 350);
