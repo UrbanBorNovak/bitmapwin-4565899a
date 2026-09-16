@@ -128,7 +128,15 @@ const KIT_TABS: { id: KitTab; label: string }[] = [
   { id: "travel", label: "TRAVEL" },
   { id: "view", label: "INVENTORY" },
 ];
-import { isSoundMuted, playSfx, setSoundMuted, unlockAudio } from "@/lib/world-audio";
+import {
+  driveEngine,
+  isSoundMuted,
+  playSfx,
+  setSoundMuted,
+  startEngine,
+  stopEngine,
+  unlockAudio,
+} from "@/lib/world-audio";
 import { aimState, aimZoom } from "@/lib/world-aim";
 import {
   ITEM_LABELS,
