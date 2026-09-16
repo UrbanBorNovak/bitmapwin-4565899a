@@ -2018,6 +2018,7 @@ const WorldScene = memo(function WorldScene({
   onShootPeer,
   onCastHeal,
   onBite,
+  onSighted,
   onPrize,
   selfId,
   onShooterStats,
@@ -2055,6 +2056,8 @@ const WorldScene = memo(function WorldScene({
   onShootPeer: (id: string) => void;
   onCastHeal: (amount: number) => void;
   onBite: (damage: number, label: string) => void;
+  /** nearest fly-brain creature, for the sighting readout in the HUD */
+  onSighted: (label: string, strides: number) => void;
   /** a mystery box cracked open — pay the prize out in the HUD layer */
   onPrize: (prize: MysteryPrize) => void;
   /** the local visitor's id — stamps traps and keeps their own jaws harmless */
@@ -2149,7 +2152,7 @@ const WorldScene = memo(function WorldScene({
           <BitField unit={AVATAR_U} pose={pose} />
           <Landmarks />
           <MarioBros unit={AVATAR_U} pose={pose} />
-          <FlyCreatures unit={AVATAR_U} pose={pose} onBite={onBite} />
+          <FlyCreatures unit={AVATAR_U} pose={pose} onBite={onBite} onSighted={onSighted} />
           <MysteryBoxes unit={AVATAR_U} pose={pose} onPrize={onPrize} />
 
 
@@ -3452,6 +3455,7 @@ export function BitmapWorld3D({
               onShootPeer={attack}
               onCastHeal={castHeal}
               onBite={takeBite}
+              onSighted={noteSighting}
               onPrize={takePrize}
               selfId={selfId}
               onShooterStats={handleShooterStats}
