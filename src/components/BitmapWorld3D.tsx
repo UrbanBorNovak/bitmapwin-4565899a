@@ -2298,6 +2298,8 @@ export function BitmapWorld3D({
   const [touchDevice, setTouchDevice] = useState(false);
   useEffect(() => setTouchDevice(isTouchDevice()), []);
   const [cameraMode, setCameraMode] = useState<CameraMode>("map");
+  // The side menu is one shelf at a time: ACTION / KIT / TRAVEL / VIEW.
+  const [kitTab, setKitTab] = useState<KitTab>("action");
   const exploring = cameraMode !== "map";
   const [draft, setDraft] = useState("");
   const [inventoryOpen, setInventoryOpen] = useState(false);
