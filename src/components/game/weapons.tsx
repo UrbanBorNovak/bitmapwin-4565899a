@@ -695,6 +695,7 @@ useGLTF.preload(SWORD_TWO_URL);
 useGLTF.preload(MINIGUN_URL);
 useGLTF.preload(WAND_URL);
 useGLTF.preload(PICK_URL);
+useGLTF.preload(STAFF_URL);
 
 /** Barrel cluster shown while the minigun inscription streams in. */
 function MinigunStandIn({
