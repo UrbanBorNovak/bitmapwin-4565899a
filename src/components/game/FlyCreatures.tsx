@@ -267,20 +267,18 @@ export const CreatureGroup = memo(function CreatureGroup({
       // Water-bound: steer back toward the nearest sea whenever they stray from
       // it, so frogs and toads stay by the shoreline instead of crossing dunes.
       if (spec.water) {
-        const sea = nearestSea(creature.x, creature.z);
-        if (sea) {
-          const gap = Math.hypot(sea.x - creature.x, sea.z - creature.z) - sea.radius;
-          if (gap > unit * 2) {
-            const home = Math.atan2(sea.x - creature.x, sea.z - creature.z);
-            const diff = ((home - creature.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-            steer = diff * Math.min(1, delta * 2.2);
-            travel = unit * spec.speed;
-          } else if (gap < -sea.radius * 0.55) {
-            // Too far in: turn back for the bank.
-            const back = Math.atan2(creature.x - sea.x, creature.z - sea.z);
-            const diff = ((back - creature.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-            steer = diff * Math.min(1, delta * 2.6);
-          }
+        const { sea, distance } = nearestSea(creature.x, creature.z);
+        if (distance > unit * 2) {
+          // Strayed inland: turn back for the shoreline.
+          const home = Math.atan2(sea.x - creature.x, sea.z - creature.z);
+          const diff = ((home - creature.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+          steer = diff * Math.min(1, delta * 2.2);
+          travel = unit * spec.speed;
+        } else if (isDeepSea(creature.x, creature.z)) {
+          // Waded out too far: turn back for the bank.
+          const back = Math.atan2(creature.x - sea.x, creature.z - sea.z);
+          const diff = ((back - creature.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+          steer = diff * Math.min(1, delta * 2.6);
         }
       }
 
