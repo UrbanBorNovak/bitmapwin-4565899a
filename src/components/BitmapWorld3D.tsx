@@ -3202,7 +3202,9 @@ export function BitmapWorld3D({
                   </Button>
                 </div>
               </div>
+              ) : null}
 
+              {kitTab === "kit" ? (
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Kit</span>
                 <div className="flex flex-wrap items-center gap-1.5">
