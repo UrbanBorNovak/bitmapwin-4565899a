@@ -3154,6 +3154,31 @@ export function BitmapWorld3D({
             )}
 
             <div className="flex w-full flex-col gap-2" role="group" aria-label="Avatar">
+              <div
+                className="flex items-center gap-1 border-b border-border pb-1.5"
+                role="tablist"
+                aria-label="Kit sections"
+                data-no-translate
+              >
+                {KIT_TABS.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={kitTab === tab.id}
+                    onClick={() => setKitTab(tab.id)}
+                    className={`flex-1 border px-1.5 py-1 font-mono text-[9px] uppercase tracking-[0.18em] transition-colors ${
+                      kitTab === tab.id
+                        ? "border-bitcoin bg-bitcoin/10 text-bitcoin"
+                        : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {kitTab === "action" ? (
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Action</span>
                 <div className="flex flex-wrap items-center gap-1.5">
