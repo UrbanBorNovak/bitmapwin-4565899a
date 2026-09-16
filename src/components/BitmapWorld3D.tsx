@@ -42,6 +42,9 @@ import { DesertLife } from "@/components/game/DesertLife";
 import { SeaMasses } from "@/components/game/SeaMasses";
 import { SeaIslands } from "@/components/game/SeaIslands";
 import { BitField } from "@/components/game/BitField";
+import { Landmarks } from "@/components/game/Landmarks";
+import { solidBlocked } from "@/lib/world-solids";
+
 import { useBits } from "@/lib/world-bits";
 import { STONES, cycleStone, useFittedStone } from "@/lib/world-runestones";
 
@@ -2124,6 +2127,8 @@ const WorldScene = memo(function WorldScene({
           <SeaMasses unit={AVATAR_U} pose={pose} />
           <SeaIslands unit={AVATAR_U} pose={pose} />
           <BitField unit={AVATAR_U} pose={pose} />
+          <Landmarks />
+
 
 
           <Punks unit={AVATAR_U} pose={pose} onBite={onBite} />
