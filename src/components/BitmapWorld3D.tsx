@@ -3316,7 +3316,10 @@ export function BitmapWorld3D({
                   {BOT_POPULATION} LIVE HERE ALREADY · FREE · LOCAL BRAINS
                 </span>
               </div>
+              </>
+              ) : null}
 
+              {kitTab === "view" ? (
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">View &amp; sound</span>
                 <div className="flex flex-wrap items-center gap-1.5">
