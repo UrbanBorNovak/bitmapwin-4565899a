@@ -126,7 +126,7 @@ export const DesertProps = memo(function DesertProps({
 }) {
   // Rocks are common and come in pebbles through boulders.
   const rocks = useMemo(
-    () => scatter(unit, center, radius, unit * 7, 71, 0.42, (roll) => 0.5 + roll * roll * 3.4, 1.1),
+    () => scatter(unit, center, radius, unit * 7, 71, 0.42, (roll) => 0.09 + roll * roll * 0.24, 9),
     [center, radius, unit],
   );
   // Dumpsters are rare and always solid.
