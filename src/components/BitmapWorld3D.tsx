@@ -118,6 +118,7 @@ import {
   type WeaponKind,
 } from "@/components/game/weapons";
 import { WeaponBelt } from "@/components/game/WeaponBelt";
+import { CharacterSheet } from "@/components/game/CharacterSheet";
 
 /** the side menu shelves — one open at a time keeps the HUD short */
 type KitTab = "action" | "kit" | "travel" | "view";
@@ -3343,7 +3344,17 @@ export function BitmapWorld3D({
               ) : null}
 
               {kitTab === "view" ? (
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-2">
+                <CharacterSheet
+                  weapon={weapon}
+                  model={avatarModel ?? null}
+                  flying={driving && ride.id === "jetpack"}
+                  onNote={(text) => {
+                    setBiteNote(text);
+                    window.setTimeout(() => setBiteNote(null), 1500);
+                  }}
+                />
+                <span className="hud-divider" aria-hidden />
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">View &amp; sound</span>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <Button
