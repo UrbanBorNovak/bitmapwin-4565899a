@@ -47,6 +47,8 @@ import { MarioBros } from "@/components/game/MarioBros";
 import { solidBlocked } from "@/lib/world-solids";
 
 import { useBits } from "@/lib/world-bits";
+import { MEMBER_TITLE, setMember, useMember } from "@/lib/world-perks";
+import { isActive, membershipQuery } from "@/lib/membership";
 import { STONES, cycleStone, useFittedStone } from "@/lib/world-runestones";
 
 
@@ -3050,6 +3052,12 @@ export function BitmapWorld3D({
   const gear = useGear();
   const stone = useFittedStone();
   const bits = useBits();
+  const member = useMember();
+  // The badge is confirmed on chain by the backend; the world only echoes it.
+  const membership = useQuery(membershipQuery(wallet?.ordinalsAddress ?? ""));
+  useEffect(() => {
+    setMember(isActive(membership.data));
+  }, [membership.data]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -3141,6 +3149,14 @@ export function BitmapWorld3D({
                   {readout.height.toLocaleString("en-US")}.BITMAP
                   {bits.today > 0 ? ` · ${bits.today} BIT TODAY` : ""}
                 </div>
+                {member ? (
+                  <div
+                    className="mt-0.5 w-fit border border-bitcoin px-1 text-[9px] tracking-[0.18em] text-bitcoin"
+                    data-no-translate
+                  >
+                    {MEMBER_TITLE}
+                  </div>
+                ) : null}
 
               </div>
               <Button
