@@ -1,15 +1,29 @@
 /**
- * FLY BRAIN — a tiny insect-style brain for the Oasis settlers.
+ * FLY BRAIN — the settlers' brain, now built on a bundled connectome slice.
  *
- * Modelled on how a fruit fly gets by with a few thousand neurons: a handful of
- * senses feed a handful of drives, the strongest drive wins, and the winner is
- * held for a moment so the body does not twitch between plans. Movement uses
- * saccades — straight runs broken by sudden turn bursts — which is what makes a
- * fly look alive without any planning at all.
+ * Following the pattern the fly-connectome community builds all use:
+ *   1. game state in  →  2. injected into sensory populations  →
+ *   3. propagated through a fixed slice of fly-style wiring  →
+ *   4. read back out of descending neurons (DNs)  →
+ *   5. plain thresholds turn that readout into an action.
+ *
+ * Step 5 is ordinary code, not the connectome: the wiring supplies a
+ * biologically-shaped scaffold, while thresholds here do the deciding, and the
+ * excitatory/inhibitory signs are our assignment (see fly-connectome.ts). On top
+ * of the network, movement still uses saccades — straight runs broken by sudden
+ * turn bursts — which is what makes a fly look alive.
  *
  * Everything is arithmetic in the browser: no model calls, no server tick, so a
  * crowded Oasis stays free to run.
  */
+
+import {
+  createFlyNet,
+  type DnChannel,
+  type FlyNet,
+  type SenseChannel,
+} from "./fly-connectome";
+
 
 export type BrainState = "cruise" | "seek" | "work" | "pursue" | "strike" | "flee" | "pitch" | "rest";
 
