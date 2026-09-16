@@ -118,6 +118,15 @@ import {
   type WeaponKind,
 } from "@/components/game/weapons";
 import { WeaponBelt } from "@/components/game/WeaponBelt";
+
+/** the side menu shelves — one open at a time keeps the HUD short */
+type KitTab = "action" | "kit" | "travel" | "view";
+const KIT_TABS: { id: KitTab; label: string }[] = [
+  { id: "action", label: "ACTION" },
+  { id: "kit", label: "KIT" },
+  { id: "travel", label: "TRAVEL" },
+  { id: "view", label: "VIEW" },
+];
 import { isSoundMuted, playSfx, setSoundMuted, unlockAudio } from "@/lib/world-audio";
 import { aimState, aimZoom } from "@/lib/world-aim";
 import {
