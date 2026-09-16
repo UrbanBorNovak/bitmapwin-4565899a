@@ -1787,6 +1787,21 @@ export type Database = {
         }
         Relationships: []
       }
+      membership_badges: {
+        Row: {
+          active: boolean | null
+          address: string | null
+        }
+        Insert: {
+          active?: never
+          address?: string | null
+        }
+        Update: {
+          active?: never
+          address?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can_build_bitmap: {
