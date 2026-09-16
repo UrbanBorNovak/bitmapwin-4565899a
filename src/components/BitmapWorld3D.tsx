@@ -1558,6 +1558,13 @@ function PlayerCameraRig({
       ? 0
       : steer.current * gait * (driving ? 0.08 : 0.045) * (1 - aimState.amount * 0.85);
     roll.current = damp(roll.current, leanGoal, 6, delta);
+    // In the air the body pitches forward, more so the faster you travel, and a
+    // climb or a dive tips it further. Back to flat the moment you land.
+    const flyLean =
+      driving && ride.kind === "air"
+        ? 0.16 + gait * 0.3 - (intent.fly ?? 0) * 0.14
+        : 0;
+    player.lean = damp(player.lean ?? 0, flyLean, 4, delta);
     const dip = land.current * AVATAR_U * (mode === "first" ? 0.28 : 0.34);
 
     if (mode === "first" && driving) {
