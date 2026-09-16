@@ -19,6 +19,7 @@ import { Primitive } from "@/components/game/Primitive";
 import { playSfx } from "@/lib/world-audio";
 import { PUNK_INSCRIPTION } from "@/lib/world-gear";
 import { registerBeastGroup, type BeastEntity } from "@/lib/world-entities";
+import { poseDown } from "@/lib/player-state";
 
 const PUNK_URL = `https://ordinals.com/content/${PUNK_INSCRIPTION}`;
 
@@ -215,6 +216,7 @@ export function Punks({
   useFrame((_, rawDelta) => {
     const delta = Math.min(rawDelta, 0.05);
     const player = pose.current;
+    const down = poseDown(pose);
     const now = performance.now();
     const reach = unit * 40;
 
@@ -271,7 +273,7 @@ export function Punks({
         const away = Math.hypot(dx, dz);
         const toPlayer = Math.atan2(dx, dz);
         // Pups never join the fight, and adults only chase you nearby.
-        const fighter = angry && punk.size >= 0.75;
+        const fighter = angry && !down && punk.size >= 0.75;
         if (fighter && away < unit * 9) {
           const diff = ((toPlayer - punk.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
           steer = diff * Math.min(1, delta * 2.4);

@@ -38,6 +38,7 @@ import {
 } from "@/lib/world-bots";
 import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { brainProbe, publishBrainProbe } from "@/lib/fly-connectome";
+import { poseDown } from "@/lib/player-state";
 
 
 type Bot = BeastEntity &
@@ -184,6 +185,7 @@ export function OasisBots({
   useFrame((_, rawDelta) => {
     const delta = Math.min(rawDelta, 0.05);
     const player = pose.current;
+    const down = poseDown(pose);
     const now = performance.now();
     let talkChanged = false;
     const talk: Record<number, string> = {};
@@ -250,7 +252,7 @@ export function OasisBots({
         delta,
       );
 
-      if (act.strike) {
+      if (act.strike && !down) {
         playSfx("hit");
         onBite?.(Math.round(3 + bot.size * 4), bot.label);
       }

@@ -22,6 +22,7 @@ import { AntelopeBody } from "@/components/game/Antelope";
 import { UnicornBody } from "@/components/game/Unicorn";
 import { JadeNodes } from "@/components/game/JadeNodes";
 import { DiamondNodes } from "@/components/game/DiamondNodes";
+import { poseDown } from "@/lib/player-state";
 import { DesertProps } from "@/components/game/DesertProps";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 
@@ -688,6 +689,8 @@ const Critters = memo(function Critters({
   useFrame((_, rawDelta) => {
     const delta = Math.min(rawDelta, 0.05);
     const player = pose.current;
+    // Killed visitors are ghosts: hostiles stop stalking and stop striking.
+    const down = poseDown(pose);
     const reach = unit * 34;
     const now = performance.now();
     // How fast the visitor is actually travelling, measured from their own
