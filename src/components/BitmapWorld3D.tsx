@@ -2018,6 +2018,7 @@ const WorldScene = memo(function WorldScene({
   onShootPeer,
   onCastHeal,
   onBite,
+  onSighted,
   onPrize,
   selfId,
   onShooterStats,
@@ -2055,6 +2056,8 @@ const WorldScene = memo(function WorldScene({
   onShootPeer: (id: string) => void;
   onCastHeal: (amount: number) => void;
   onBite: (damage: number, label: string) => void;
+  /** nearest fly-brain creature, for the sighting readout in the HUD */
+  onSighted: (label: string, strides: number) => void;
   /** a mystery box cracked open — pay the prize out in the HUD layer */
   onPrize: (prize: MysteryPrize) => void;
   /** the local visitor's id — stamps traps and keeps their own jaws harmless */
@@ -2149,7 +2152,7 @@ const WorldScene = memo(function WorldScene({
           <BitField unit={AVATAR_U} pose={pose} />
           <Landmarks />
           <MarioBros unit={AVATAR_U} pose={pose} />
-          <FlyCreatures unit={AVATAR_U} pose={pose} onBite={onBite} />
+          <FlyCreatures unit={AVATAR_U} pose={pose} onBite={onBite} onSighted={onSighted} />
           <MysteryBoxes unit={AVATAR_U} pose={pose} onPrize={onPrize} />
 
 
@@ -2938,6 +2941,25 @@ export function BitmapWorld3D({
     [hp, hurt],
   );
 
+  // Nearest creature living its own life close by — a quiet sighting readout.
+  const [sighting, setSighting] = useState<{ label: string; strides: number } | null>(null);
+  const sightingClear = useRef<number | null>(null);
+  const noteSighting = useCallback((label: string, strides: number) => {
+    setSighting((current) =>
+      current && current.label === label && Math.abs(current.strides - strides) < 0.4
+        ? current
+        : { label, strides },
+    );
+    if (sightingClear.current) window.clearTimeout(sightingClear.current);
+    sightingClear.current = window.setTimeout(() => setSighting(null), 1400);
+  }, []);
+  useEffect(
+    () => () => {
+      if (sightingClear.current) window.clearTimeout(sightingClear.current);
+    },
+    [],
+  );
+
   // A mystery box cracked open: pay out whatever it held.
   const takePrize = useCallback((prize: MysteryPrize) => {
     if (prize.kind === "bit") creditBits(prize.amount);
@@ -3452,6 +3474,7 @@ export function BitmapWorld3D({
               onShootPeer={attack}
               onCastHeal={castHeal}
               onBite={takeBite}
+              onSighted={noteSighting}
               onPrize={takePrize}
               selfId={selfId}
               onShooterStats={handleShooterStats}
@@ -3698,6 +3721,16 @@ export function BitmapWorld3D({
           <span className="hidden pr-1 text-[9px] text-muted-foreground sm:inline">O</span>
         </div> : null}
 
+        {exploring && sighting ? (
+          <div
+            data-no-translate
+            className="hud-panel pointer-events-none absolute left-1/2 top-16 z-20 -translate-x-1/2 px-2 py-1 font-mono text-[10px] text-muted-foreground"
+          >
+            <span className="text-bitcoin">{sighting.label}</span> ·{" "}
+            {sighting.strides.toFixed(0)} STRIDES
+          </div>
+        ) : null}
+
         {cameraMode === "first" ? (
           <div
             aria-hidden
@@ -3765,7 +3798,7 @@ export function BitmapWorld3D({
                    W · S WALK · A · D TURN · Q · E SIDESTEP · SHIFT SPRINT · SPACE JUMP · O SWAP
                   VIEW · M MAP · V TRAVEL · SPACE · X CLIMB · SINK WHEN FLYING · B BUILD · T
                   TERRAFORM · F ATTACK · H HEAL SPELL · K OPEN CHEST · P COMPANION · N NIGHT VISION · G
-                  ICE CREAM · J RAMEN · U CHEESE SLICE ·{" "}
+                  ICE CREAM · J RAMEN · U CHEESE SLICE · NEARBY CREATURES NAME THEMSELVES AT THE TOP ·{" "}
 
                   {cameraMode === "first"
                     ? "CLICK WORLD FOR MOUSE LOOK · ESC RELEASE"
