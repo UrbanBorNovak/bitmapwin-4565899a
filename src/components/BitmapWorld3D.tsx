@@ -2240,6 +2240,9 @@ export function BitmapWorld3D({
   });
   const [visitDraft, setVisitDraft] = useState("");
   const [dpr, setDpr] = useState(1);
+  // Thumb pads only mount on a real touch screen, never on a desktop browser.
+  const [touchDevice, setTouchDevice] = useState(false);
+  useEffect(() => setTouchDevice(isTouchDevice()), []);
   const [cameraMode, setCameraMode] = useState<CameraMode>("map");
   const exploring = cameraMode !== "map";
   const [draft, setDraft] = useState("");
@@ -3325,6 +3328,11 @@ export function BitmapWorld3D({
             expanded={mapOpen}
             onExpandedChange={setMapOpen}
           />
+        ) : null}
+
+        {/* Phones and tablets walk the Oasis with thumb pads instead of keys. */}
+        {exploring && touchDevice ? (
+          <TouchControls flying={driving && ride.kind === "air"} shooter={Boolean(weapon)} />
         ) : null}
 
 
