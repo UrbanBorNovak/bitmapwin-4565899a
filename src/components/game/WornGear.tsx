@@ -173,21 +173,79 @@ export function WornGear({
           />
         </Suspense>
       ) : null}
+      {/* Shoes go on the feet: dropped right down to the sand and sized to fit. */}
       {gear.shoes
-
         ? [-1, 1].map((side) => (
             <Suspense key={side} fallback={null}>
               <WornPiece
                 url={`https://ordinals.com/content/${SHOES_INSCRIPTION}`}
                 unit={unit}
-                fit={0.28}
+                fit={0.42}
                 pose={pose}
-                offset={[side * 0.12, 0.02, 0.03]}
+                offset={[side * 0.13, -0.22, 0.04]}
                 seatOnBase
               />
             </Suspense>
           ))
         : null}
+      {gear.watch ? (
+        <Suspense fallback={null}>
+          <WornPiece
+            url={`https://ordinals.com/content/${WATCH_INSCRIPTION}`}
+            unit={unit}
+            fit={0.14}
+            pose={pose}
+            offset={[-0.2, 0.46, 0.08]}
+          />
+        </Suspense>
+      ) : null}
+      {gear.ring ? (
+        <Suspense fallback={null}>
+          <WornPiece
+            url={`https://ordinals.com/content/${RING_INSCRIPTION}`}
+            unit={unit}
+            fit={0.08}
+            pose={pose}
+            offset={[-0.23, 0.4, 0.12]}
+          />
+        </Suspense>
+      ) : null}
+      {gear.comic ? (
+        <Suspense fallback={null}>
+          <WornPiece
+            url={`https://ordinals.com/content/${COMIC_INSCRIPTION}`}
+            unit={unit}
+            fit={0.28}
+            pose={pose}
+            offset={[-0.28, 0.55, 0.16]}
+            bob={0.012}
+          />
+        </Suspense>
+      ) : null}
+      {/* The jetpack rides on your back, and the helmet comes with it. */}
+      {jetpack ? (
+        <Suspense fallback={null}>
+          <WornPiece
+            url={`https://ordinals.com/content/${JETPACK_INSCRIPTION}`}
+            unit={unit}
+            fit={0.5}
+            pose={pose}
+            offset={[0, 0.6, -0.18]}
+          />
+        </Suspense>
+      ) : null}
+      {jetpack && showHead ? (
+        <Suspense fallback={null}>
+          <WornPiece
+            url={`https://ordinals.com/content/${JETPACK_HELMET_INSCRIPTION}`}
+            unit={unit}
+            fit={0.34}
+            pose={pose}
+            offset={[0, 0.86, 0]}
+            seatOnBase
+          />
+        </Suspense>
+      ) : null}
       {toy.inscription && !eatingFood ? (
         <Suspense fallback={null}>
           <WornPiece
