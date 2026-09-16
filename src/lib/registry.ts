@@ -1,4 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
+import { MAX_BITMAP } from "@/lib/oci";
 import { supabase } from "@/integrations/supabase/client";
 import { getBitmapOwners } from "@/lib/ordinals-scan.functions";
 import {
@@ -329,7 +330,9 @@ export async function fetchRegistryCount(): Promise<number> {
     .select("block_height", { count: "exact", head: true })
     .eq("is_valid", true);
   if (error) throw error;
-  return count ?? 0;
+  // The inscribed OCI is the authoritative complete registry. The local table
+  // may trail its latest page while ownership metadata is still being resolved.
+  return Math.max(count ?? 0, MAX_BITMAP + 1);
 }
 
 export const registryCountQuery = () =>
