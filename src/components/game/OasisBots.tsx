@@ -266,8 +266,29 @@ export function OasisBots({
       }
     });
 
+    // Publish the nearest settler's descending-neuron readout on a slow clock,
+    // so the panel can show it without re-rendering every frame.
+    if (now > nextProbe.current) {
+      nextProbe.current = now + 220;
+      if (closest && closestDistance < 24) {
+        const firing = closest.brain.net.activity;
+        let hot = 0;
+        for (let i = 0; i < firing.length; i++) if (Math.abs(firing[i]!) > 0.05) hot++;
+        publishBrainProbe({
+          name: closest.name,
+          role: BOT_ROLES[closest.role].label,
+          state: closest.brain.state,
+          readout: { ...closest.brain.readout },
+          load: firing.length ? hot / firing.length : 0,
+        });
+      } else if (brainProbe()) {
+        publishBrainProbe(null);
+      }
+    }
+
     if (talkChanged) setChatter(talk);
   });
+
 
   return (
     <group>
