@@ -237,7 +237,7 @@ export const CreatureGroup = memo(function CreatureGroup({
     let talkChanged = false;
     const talk: Record<number, string> = {};
     // Nearest one of this group, reported to the readout a few times a second.
-    let closest: { label: string; strides: number } | null = null;
+    let closest: { label: string; strides: number } | undefined;
 
     creatures.forEach((creature, index) => {
       const node = groups.current[index];
