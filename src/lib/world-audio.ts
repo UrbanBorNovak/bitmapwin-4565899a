@@ -30,7 +30,13 @@ export type Sfx =
   | "jump"
   | "step"
   | "hurt"
-  | "ui";
+  | "ui"
+  | "board"
+  | "engineoff"
+  | "eat"
+  | "smelt"
+  | "splash"
+  | "horn";
 
 
 const MUTE_KEY = "bitmapwin:sound-muted";
@@ -717,6 +723,39 @@ export function playSfx(name: Sfx) {
       break;
     case "ui":
       tone(context, out, { from: 520, to: 520, seconds: 0.035, gain: 0.1, type: "square" });
+      break;
+    case "board":
+      // Door thunk, then the dash waking up.
+      burst(context, out, { seconds: 0.09, gain: 0.4, type: "lowpass", frequency: 260, q: 0.9, curve: 1.6 });
+      tone(context, out, { from: 180, to: 520, seconds: 0.22, gain: 0.12, type: "triangle", delay: 0.1 });
+      break;
+    case "engineoff":
+      tone(context, out, { from: 420, to: 90, seconds: 0.34, gain: 0.12, type: "triangle" });
+      burst(context, out, { seconds: 0.12, gain: 0.22, type: "lowpass", frequency: 220, q: 0.8, delay: 0.02 });
+      break;
+    case "eat":
+      // Two soft bites, wet and close.
+      burst(context, out, { seconds: 0.09, gain: 0.22, type: "bandpass", frequency: 620 * vary, q: 1.4 });
+      burst(context, out, { seconds: 0.08, gain: 0.18, type: "bandpass", frequency: 480 * vary, q: 1.6, delay: 0.16 });
+      break;
+    case "smelt":
+      // Furnace roar with the bar setting: hiss, then a bright ring.
+      burst(context, out, {
+        seconds: 0.6, gain: 0.3, type: "lowpass", frequency: 900, q: 0.6,
+        send: { node: verb, gain: 0.5 },
+      });
+      tone(context, out, { from: 1180 * vary, to: 780, seconds: 0.5, gain: 0.13, type: "sine", delay: 0.34, send: { node: verb, gain: 0.6 } });
+      break;
+    case "splash":
+      burst(context, out, {
+        seconds: 0.34, gain: 0.42, type: "highpass", frequency: 900 * vary, q: 0.5,
+        send: { node: verb, gain: 0.4 },
+      });
+      tone(context, out, { from: 260, to: 90, seconds: 0.2, gain: 0.14, type: "sine" });
+      break;
+    case "horn":
+      tone(context, out, { from: 300 * vary, to: 296 * vary, seconds: 0.5, gain: 0.18, type: "square", send: { node: verb, gain: 0.5 } });
+      tone(context, out, { from: 402 * vary, to: 398 * vary, seconds: 0.5, gain: 0.14, type: "sawtooth" });
       break;
   }
 }
