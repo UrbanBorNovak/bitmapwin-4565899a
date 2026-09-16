@@ -17,7 +17,7 @@ export const Route = createFileRoute("/api/public/blocks/$height")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
-      GET: async ({ params }) => {
+      GET: async ({ request, params }) => {
         const height = Number(params.height);
         if (!Number.isInteger(height) || height < 0 || height > 5_000_000) {
           return Response.json(
@@ -26,6 +26,18 @@ export const Route = createFileRoute("/api/public/blocks/$height")({
           );
         }
         try {
+          // ?sides=1 → per-transaction square side on the bitmap renderer
+          // scale (what punk silhouettes are cut on), as JSON.
+          if (new URL(request.url).searchParams.get("sides") === "1") {
+            const { buildRenderSides } = await import("@/lib/block-bytes.server");
+            const data = await buildRenderSides(height);
+            return Response.json(data, {
+              headers: {
+                ...CORS,
+                "cache-control": "public, max-age=2592000, immutable",
+              },
+            });
+          }
           const { buildBlockBytes } = await import("@/lib/block-bytes.server");
           const block = await buildBlockBytes(height);
           return new Response(block.bytes as unknown as BodyInit, {

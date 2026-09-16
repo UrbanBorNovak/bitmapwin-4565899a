@@ -9,13 +9,16 @@ import { ordContentUrl } from "@/lib/oci";
 export function GalleryBadges({
   height,
   txCount,
+  sides = null,
   className = "",
 }: {
   height: number;
   txCount: number | null;
+  /** per-transaction renderer square sides, for the shape-based punk rules */
+  sides?: number[] | null;
   className?: string;
 }) {
-  const galleries = galleriesFor(height, txCount);
+  const galleries = galleriesFor(height, txCount, sides);
   if (galleries.length === 0) return null;
   return (
     <>

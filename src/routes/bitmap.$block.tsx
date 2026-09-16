@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { TerritoryCanvas } from "@/components/TerritoryCanvas";
 
-import { blockSizeMapQuery } from "@/lib/block-bytes";
+import { blockSizeMapQuery, blockRenderSidesQuery } from "@/lib/block-bytes";
 import { blockStatsQuery, patternSiblingsQuery } from "@/lib/block-stats";
 
 
@@ -107,6 +107,12 @@ function BitmapDetail() {
   const sizeMap = useQuery(blockSizeMapQuery(block));
   const stats = useQuery(blockStatsQuery(block));
   const siblings = useQuery(patternSiblingsQuery(stats.data?.pattern));
+  // Two-transaction blocks: fetch the real render sides so the punk badges
+  // can tell pristine / standard / wide neck apart by shape.
+  const punkSides = useQuery({
+    ...blockRenderSidesQuery(block),
+    enabled: (stats.data?.txCount ?? scan.data?.txCount ?? null) === 2,
+  });
 
   const oci = useQuery(ociQuery(block));
   const trades = useQuery(tradesForHeightQuery(block));
@@ -155,7 +161,15 @@ function BitmapDetail() {
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <ClubBadge height={block} />
-        <GalleryBadges height={block} txCount={stats.data?.txCount ?? null} />
+        <GalleryBadges
+          height={block}
+          txCount={stats.data?.txCount ?? scan.data?.txCount ?? null}
+          sides={
+            (stats.data?.txCount ?? scan.data?.txCount ?? null) === 2
+              ? punkSides.data?.sides ?? null
+              : null
+          }
+        />
         <TraitBadges height={block} showRarity />
         <SatBadges height={block} />
       </div>

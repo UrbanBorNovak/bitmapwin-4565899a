@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -30,6 +30,11 @@ import { MARKETPLACE_FEE_PERCENT } from "@/lib/marketplace-fee";
 export function BitmapOrderBook({ height }: { height?: number }) {
   const { data: offers = [], isPending: offersPending } = useQuery(offersQuery(height));
   const { data: bids = [], isPending: bidsPending } = useQuery(openBidsQuery(500));
+  // Hold the loading state until after hydration: when the query cache is
+  // prefetched, the first client render already has data while the server
+  // rendered Loading — without this gate the tree hydration-mismatches.
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
   const { data: price } = useQuery(btcPriceQuery());
   const usdPerBtc = price?.usd;
 
@@ -170,7 +175,7 @@ export function BitmapOrderBook({ height }: { height?: number }) {
             <span className="label text-foreground">BIDS — {liveBids.length}</span>
             <span className="label">SIGNED INTENTS</span>
           </div>
-          {bidsPending ? (
+          {!hydrated || bidsPending ? (
             <Loading />
           ) : liveBids.length === 0 ? (
             <Empty text="NO LIVE BIDS" />
@@ -188,7 +193,7 @@ export function BitmapOrderBook({ height }: { height?: number }) {
             <span className="label text-primary">ASKS — {asks.length}</span>
             <span className="label">SIGNED SALE PSBTS</span>
           </div>
-          {offersPending ? (
+          {!hydrated || offersPending ? (
             <Loading />
           ) : asks.length === 0 ? (
             <Empty text="NO OPEN ASKS" />
