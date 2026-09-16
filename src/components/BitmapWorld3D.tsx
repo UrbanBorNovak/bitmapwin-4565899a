@@ -1558,6 +1558,9 @@ function PlayerCameraRig({
     // feel and short enough not to fight the next step.
     if (!calm.current && player.grounded && !wasGrounded.current) {
       land.current = Math.min(1, fallSpeed / (MOVE.jumpSpeed * 0.9));
+      // Coming down in the shallows breaks the water instead of thumping sand.
+      if (fallSpeed > MOVE.jumpSpeed * 0.4)
+        playSfx(isSea(player.x, player.z) ? "splash" : "step");
     }
     wasGrounded.current = player.grounded;
     land.current = damp(land.current, 0, 7, delta);
@@ -2495,6 +2498,14 @@ export function BitmapWorld3D({
       const key = event.key.toLowerCase();
       if (key === "t") {
         void workLand();
+        return;
+      }
+      // 0 sounds the horn — only aboard a ride, where there is one to sound.
+      if (key === "0") {
+        if (isDriving()) {
+          unlockAudio();
+          playSfx("horn");
+        }
         return;
       }
       if (key === "escape") {
