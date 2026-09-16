@@ -198,8 +198,8 @@ export function mineVoxel(vein: OreVein, voxel: OreVoxel) {
   const emptied = vein.voxels.every((v) => !v.alive);
   if (emptied) {
     vein.depletedUntil = Number.POSITIVE_INFINITY;
-    // Mineral clusters are cleared out of the world once the last voxel is gone.
-    if (vein.kind === "mineral") rebuildVeins();
+    // Clusters and mines are cleared out of the world once the last voxel is gone.
+    if (vein.kind !== "gold") rebuildVeins();
   }
   emit();
   return { mined: true, emptied };
