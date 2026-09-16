@@ -150,6 +150,8 @@ import { DamageVeil } from "@/components/game/DamageVeil";
 
 import type { RideSpec } from "@/lib/world-vehicle";
 import { isDeepSea, isSea, nearestSea } from "@/lib/world-sea";
+import TouchControls from "@/components/game/TouchControls";
+import { consumeTouchJump, isTouchDevice, takeTouchLook, touchPad } from "@/lib/touch-input";
 import {
 
   RIDES,
@@ -1281,6 +1283,11 @@ const SelfAvatar = memo(function SelfAvatar({
  * target, trail the camera behind, and report the resulting pose on a fixed
  * ~10Hz tick. Prediction is local feel only — the report is what peers see.
  */
+/** Keys and a thumb stick can push the same axis: keep the sum in range. */
+function clampAxis(value: number) {
+  return Math.max(-1, Math.min(1, value));
+}
+
 function PlayerCameraRig({
   pose,
   onPose,
@@ -1400,17 +1407,30 @@ function PlayerCameraRig({
     if (!player) return;
     const delta = Math.min(rawDelta, 0.05);
     const pressed = keys.current;
+    // A phone has no keys and no locked mouse: the thumb pads feed the same
+    // intent, and a look swipe turns the head exactly like mouse movement.
+    const swipe = takeTouchLook();
+    if (swipe.x !== 0 || swipe.y !== 0) {
+      const steady = 1 - aimState.amount * 0.62;
+      player.yaw -= swipe.x * 0.005 * steady;
+      pitch.current = THREE.MathUtils.clamp(pitch.current - swipe.y * 0.004 * steady, -1.05, 1.05);
+    }
+    const padJump = consumeTouchJump();
     const intent: MoveIntent = {
-      forward:
+      forward: clampAxis(
         (pressed.has("w") || pressed.has("arrowup") ? 1 : 0) -
-        (pressed.has("s") || pressed.has("arrowdown") ? 1 : 0),
+          (pressed.has("s") || pressed.has("arrowdown") ? 1 : 0) +
+          touchPad.forward,
+      ),
       // A/D and the left/right arrows steer the body — sidestepping is Q/E only.
       strafe: (pressed.has("q") ? 1 : 0) - (pressed.has("e") ? 1 : 0),
-      turn:
+      turn: clampAxis(
         (pressed.has("a") || pressed.has("arrowleft") ? 1 : 0) -
-        (pressed.has("d") || pressed.has("arrowright") ? 1 : 0),
-      sprint: pressed.has("shift"),
-      jump: jumpRequested.current,
+          (pressed.has("d") || pressed.has("arrowright") ? 1 : 0) +
+          touchPad.turn,
+      ),
+      sprint: pressed.has("shift") || touchPad.sprint,
+      jump: jumpRequested.current || padJump,
     };
 
     // Aboard a ride the same keys travel it: much faster, wider turns, and no
@@ -1434,8 +1454,11 @@ function PlayerCameraRig({
       intent.strafe = 0;
       intent.jump = false;
       if (ride.kind === "air") {
-        intent.fly =
-          (pressed.has(" ") || pressed.has("r") ? 1 : 0) - (pressed.has("x") || pressed.has("f") ? 1 : 0);
+        intent.fly = clampAxis(
+          (pressed.has(" ") || pressed.has("r") ? 1 : 0) -
+            (pressed.has("x") || pressed.has("f") ? 1 : 0) +
+            touchPad.fly,
+        );
         intent.climbRate = AVATAR_U * (ride.climb ?? 9);
         intent.cruise = AVATAR_U * (ride.altitude ?? 6);
       }
@@ -2217,6 +2240,9 @@ export function BitmapWorld3D({
   });
   const [visitDraft, setVisitDraft] = useState("");
   const [dpr, setDpr] = useState(1);
+  // Thumb pads only mount on a real touch screen, never on a desktop browser.
+  const [touchDevice, setTouchDevice] = useState(false);
+  useEffect(() => setTouchDevice(isTouchDevice()), []);
   const [cameraMode, setCameraMode] = useState<CameraMode>("map");
   const exploring = cameraMode !== "map";
   const [draft, setDraft] = useState("");
@@ -3302,6 +3328,11 @@ export function BitmapWorld3D({
             expanded={mapOpen}
             onExpandedChange={setMapOpen}
           />
+        ) : null}
+
+        {/* Phones and tablets walk the Oasis with thumb pads instead of keys. */}
+        {exploring && touchDevice ? (
+          <TouchControls flying={driving && ride.kind === "air"} shooter={Boolean(weapon)} />
         ) : null}
 
 
