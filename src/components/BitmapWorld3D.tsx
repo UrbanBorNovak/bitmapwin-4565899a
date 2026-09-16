@@ -3250,6 +3250,39 @@ export function BitmapWorld3D({
                   >
                     [ SHOES ]
                   </Button>
+                  <Button
+                    className={gear.necklace ? "btn-term" : "btn-term-ghost"}
+                    variant="ghost"
+                    onClick={() => {
+                      const on = toggleNecklace();
+                      playSfx("ui");
+                      setBiteNote(on ? "NECKLACE ON · STEADY RECOVERY" : "NECKLACE OFF");
+                      window.setTimeout(() => setBiteNote(null), 1400);
+                    }}
+                  >
+                    [ NECKLACE ]
+                  </Button>
+                  {weapon === "staff" ? (
+                    <Button
+                      className={stone ? "btn-term" : "btn-term-ghost"}
+                      variant="ghost"
+                      onClick={() => {
+                        const next = cycleStone();
+                        playSfx("ui");
+                        setBiteNote(
+                          STONES.length === 0
+                            ? "NO STONES IN THE POUCH YET"
+                            : next
+                              ? `STONE SEATED · ${next.label}`
+                              : "STAFF HEAD BARE",
+                        );
+                        window.setTimeout(() => setBiteNote(null), 1600);
+                      }}
+                    >
+                      [ STAFF STONE · {stone ? stone.label : "BARE"} ]
+                    </Button>
+                  ) : null}
+
 
                   <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
                     {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
