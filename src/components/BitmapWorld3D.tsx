@@ -1283,6 +1283,11 @@ const SelfAvatar = memo(function SelfAvatar({
  * target, trail the camera behind, and report the resulting pose on a fixed
  * ~10Hz tick. Prediction is local feel only — the report is what peers see.
  */
+/** Keys and a thumb stick can push the same axis: keep the sum in range. */
+function clampAxis(value: number) {
+  return Math.max(-1, Math.min(1, value));
+}
+
 function PlayerCameraRig({
   pose,
   onPose,
