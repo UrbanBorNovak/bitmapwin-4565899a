@@ -118,11 +118,14 @@ export function WornGear({
   weapon,
   /** the head pieces are hidden from your own eyes in first person */
   showHead,
+  /** the jetpack is strapped on right now */
+  jetpack = false,
 }: {
   unit: number;
   pose: { current: PlayerState | null };
   weapon: WeaponKind | null;
   showHead: boolean;
+  jetpack?: boolean;
 }) {
   const gear = useGear();
   const eatingFood = gear.eating ? FOODS[gear.eating.food] : null;
