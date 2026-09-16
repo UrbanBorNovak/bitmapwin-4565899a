@@ -21,15 +21,14 @@ const HEAVY_MS = 24;
 
 export function PerfGovernor({
   pose,
-  base,
   active,
 }: {
   pose: React.RefObject<PlayerState>;
-  /** the device resolution the world runs at when frames are cheap */
-  base: number;
   active: boolean;
 }) {
   const setDpr = useThree((state) => state.setDpr);
+  /** the resolution the world runs at when frames are cheap */
+  const base = Math.min(typeof window === "undefined" ? 1 : window.devicePixelRatio, 1.25);
   const state = useRef({ avg: 16, current: base, at: 0 });
 
   useFrame(({ clock }, delta) => {

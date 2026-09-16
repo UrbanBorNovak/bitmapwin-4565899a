@@ -2192,7 +2192,7 @@ const WorldScene = memo(function WorldScene({
           scale={[28, 4, 1]}
         />
       </Environment>
-      <PerfGovernor pose={pose} base={baseDpr} active={cameraMode !== "map"} />
+      <PerfGovernor pose={pose} active={cameraMode !== "map"} />
       <SkyBodies bitcoin={colors.bitcoin} />
       <LandSurface colors={colors} tipHeight={tipHeight} />
       {cameraMode !== "map" ? (
