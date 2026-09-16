@@ -21,6 +21,7 @@ import {
   removeWorldStructure,
 } from "./world-structures.functions";
 import { growthOf, terraformAt } from "./world-terraform";
+import { markChunkLoad } from "./world-perf";
 
 export type StructureId =
   | "camp-fire"
@@ -422,8 +423,10 @@ export async function syncWorldChunks(keys: string[]) {
   const missing = keys.filter((key) => !syncedChunks.has(key));
   if (!missing.length) return;
   for (const key of missing) syncedChunks.add(key);
+  const started = performance.now();
   try {
     const result = await listWorldStructures({ data: { keys: missing } });
+    markChunkLoad("structures", missing.length, performance.now() - started);
     for (const row of result?.structures ?? []) {
       shared.set(row.id, {
         key: row.id,
