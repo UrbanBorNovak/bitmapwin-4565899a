@@ -41,6 +41,8 @@ import { FlyBrainPanel } from "@/components/game/FlyBrainPanel";
 import { DesertLife } from "@/components/game/DesertLife";
 import { SeaMasses } from "@/components/game/SeaMasses";
 import { SeaIslands } from "@/components/game/SeaIslands";
+import { BitField } from "@/components/game/BitField";
+
 
 import { Punks } from "@/components/game/Punks";
 import { OasisBots } from "@/components/game/OasisBots";
