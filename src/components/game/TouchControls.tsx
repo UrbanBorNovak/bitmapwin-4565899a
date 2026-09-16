@@ -79,7 +79,7 @@ export default function TouchControls({
   }, []);
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-30 select-none">
+    <div className="pointer-events-none fixed inset-0 z-40 select-none">
       {/* look pad: the whole right side of the screen above the buttons */}
       <div
         className="pointer-events-auto absolute inset-y-0 right-0 w-1/2"

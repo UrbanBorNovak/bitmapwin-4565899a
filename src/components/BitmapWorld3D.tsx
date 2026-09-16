@@ -3052,7 +3052,7 @@ export function BitmapWorld3D({
             </div>
           ) : null}
           {!exploring || utilityOpen ? (
-          <div className="hud-toolbar pointer-events-auto">
+          <div className="hud-toolbar pointer-events-auto max-h-[52vh] overflow-y-auto md:max-h-none md:overflow-visible">
             <form
               className="flex items-center gap-1.5"
               onSubmit={(event) => {
@@ -3557,10 +3557,10 @@ export function BitmapWorld3D({
         {exploring && utilityOpen ? (
           <div
             data-no-translate
-            className="absolute bottom-3 left-1/2 z-40 -translate-x-1/2"
+            className="absolute bottom-[10.5rem] left-1/2 z-20 w-[calc(100%-1rem)] -translate-x-1/2 overflow-x-auto md:bottom-3 md:z-40 md:w-auto md:overflow-visible"
             aria-label="Weapon belt"
           >
-            <div className="hud-panel flex items-center gap-1 px-1.5 py-1.5 font-mono">
+            <div className="hud-panel flex w-max items-center gap-1 px-1.5 py-1.5 font-mono md:w-auto">
               {WEAPON_ORDER.map((kind, index) => {
                 const active = weapon === kind;
                 return (
@@ -3870,7 +3870,7 @@ export function BitmapWorld3D({
         </section> : null}
 
         {/* Bottom-left column: live extender readout stacked over the combat log. */}
-        {utilityOpen ? <div className="hud-stack absolute bottom-24 left-3 z-30 w-[min(320px,calc(100%-1.5rem))]">
+        {utilityOpen ? <div className="hud-stack absolute bottom-24 left-3 z-30 hidden w-[min(320px,calc(100%-1.5rem))] md:block">
           <div className="pointer-events-none">
             <ExtenderHud running={running} />
           </div>
@@ -4014,7 +4014,7 @@ export function BitmapWorld3D({
         </div> : null}
 
         {exploring && !inventoryOpen && !buildOpen && !mapOpen && !chatOpen ? (
-          <div className="pointer-events-none absolute inset-x-0 bottom-4 z-30 flex items-center justify-between px-4 md:px-8">
+          <div className="pointer-events-none absolute inset-x-0 bottom-[14rem] z-30 flex items-center justify-between px-4 md:bottom-4 md:px-8">
             <Button
               type="button"
               variant="ghost"
