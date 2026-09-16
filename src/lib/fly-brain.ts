@@ -1,15 +1,29 @@
 /**
- * FLY BRAIN — a tiny insect-style brain for the Oasis settlers.
+ * FLY BRAIN — the settlers' brain, now built on a bundled connectome slice.
  *
- * Modelled on how a fruit fly gets by with a few thousand neurons: a handful of
- * senses feed a handful of drives, the strongest drive wins, and the winner is
- * held for a moment so the body does not twitch between plans. Movement uses
- * saccades — straight runs broken by sudden turn bursts — which is what makes a
- * fly look alive without any planning at all.
+ * Following the pattern the fly-connectome community builds all use:
+ *   1. game state in  →  2. injected into sensory populations  →
+ *   3. propagated through a fixed slice of fly-style wiring  →
+ *   4. read back out of descending neurons (DNs)  →
+ *   5. plain thresholds turn that readout into an action.
+ *
+ * Step 5 is ordinary code, not the connectome: the wiring supplies a
+ * biologically-shaped scaffold, while thresholds here do the deciding, and the
+ * excitatory/inhibitory signs are our assignment (see fly-connectome.ts). On top
+ * of the network, movement still uses saccades — straight runs broken by sudden
+ * turn bursts — which is what makes a fly look alive.
  *
  * Everything is arithmetic in the browser: no model calls, no server tick, so a
  * crowded Oasis stays free to run.
  */
+
+import {
+  createFlyNet,
+  type DnChannel,
+  type FlyNet,
+  type SenseChannel,
+} from "./fly-connectome";
+
 
 export type BrainState = "cruise" | "seek" | "work" | "pursue" | "strike" | "flee" | "pitch" | "rest";
 
@@ -56,12 +70,21 @@ function wrap(angle: number) {
 
 export type FlyBrain = {
   state: BrainState;
+  /** the connectome slice this body runs on */
+  net: FlyNet;
+  /** mean activity of each descending-neuron group after the last step */
+  readout: Record<DnChannel, number>;
   think: (sense: BrainSense, delta: number) => BrainAct;
 };
 
+/** Squash a DN group's mean activity into a 0..1 urge. */
+function urge(value: number) {
+  return Math.max(0, Math.tanh(value));
+}
+
 /**
- * One brain per settler. The seed keeps each body's rhythm its own, so a crowd
- * never turns or speaks in lockstep.
+ * One brain per settler. The seed keeps each body's rhythm — and its slice of
+ * the shared wiring — its own, so a crowd never turns or speaks in lockstep.
  */
 export function createFlyBrain(seed: number): FlyBrain {
   // saccade clock: how long until the next turn burst, and how hard it turns
@@ -77,10 +100,15 @@ export function createFlyBrain(seed: number): FlyBrain {
   let novelty = 1;
   let lastStrike = 0;
   let lastWork = 0;
+  const net = createFlyNet(seed);
 
   const brain: FlyBrain = {
     get state() {
       return state;
+    },
+    net,
+    get readout() {
+      return net.readout;
     },
     think(sense, delta) {
       const { now } = sense;
@@ -94,10 +122,40 @@ export function createFlyBrain(seed: number): FlyBrain {
           : Math.min(1, novelty + delta * 0.05);
       fatigue = Math.max(0, Math.min(1, fatigue + (state === "rest" ? -delta * 0.5 : delta * 0.02)));
 
-      const fear = sense.hostile ? (wounded < 0.35 ? 1 - wounded : 0) : near !== null && near < 2.2 ? 1 : 0;
-      const aggression = sense.hostile && near !== null && near < 14 ? 1 - near / 14 : 0;
-      const greed = sense.worker && sense.workDistance !== null ? 0.8 : 0;
-      const trade = sense.vendor && near !== null && near < 9 ? (1 - near / 9) * novelty : 0;
+      // --- senses into the sensory populations ------------------------------
+      const playerBearing = near === null ? 0 : wrap(sense.playerAngle - sense.heading);
+      const workBearing = sense.workDistance === null ? 0 : wrap(sense.workAngle - sense.heading);
+      const input: Partial<Record<SenseChannel, number>> = {
+        PLAYER_NEAR: near === null ? 0 : Math.max(0, 1 - near / 14),
+        PLAYER_LEFT: near === null ? 0 : Math.max(0, -playerBearing / Math.PI),
+        PLAYER_RIGHT: near === null ? 0 : Math.max(0, playerBearing / Math.PI),
+        WORK_NEAR: sense.workDistance === null ? 0 : Math.max(0, 1 - sense.workDistance / 30),
+        WORK_BEARING: Math.abs(workBearing) / Math.PI,
+        PAIN: 1 - wounded,
+        FATIGUE: fatigue,
+        SNARE: sense.snared ? 1 : 0,
+        ROLE_WORKER: sense.worker ? 0.6 : 0,
+        ROLE_HOSTILE: sense.hostile ? 0.6 : 0,
+        ROLE_VENDOR: sense.vendor ? 0.6 : 0,
+      };
+
+      // --- propagate one step through the slice, read the DNs back ----------
+      const dn = net.step(input, delta);
+
+      // Sense-level gates keep the body sane; the DN readout sets how strongly
+      // each urge presses, so the wiring genuinely drives the timing.
+      const fear =
+        (sense.hostile ? (wounded < 0.35 ? 1 - wounded : 0) : near !== null && near < 2.2 ? 1 : 0) *
+        (0.5 + urge(dn.DN_FLEE));
+      const aggression =
+        (sense.hostile && near !== null && near < 14 ? 1 - near / 14 : 0) *
+        (0.5 + urge(dn.DN_STRIKE));
+      const greed =
+        (sense.worker && sense.workDistance !== null ? 0.8 : 0) * (0.5 + urge(dn.DN_WORK));
+      const trade =
+        (sense.vendor && near !== null && near < 9 ? (1 - near / 9) * novelty : 0) *
+        (0.5 + urge(dn.DN_PITCH));
+      const halt = urge(dn.DN_STOP);
 
       // --- pick a plan, then hold it ---------------------------------------
       if (now >= commitUntil) {
@@ -115,13 +173,14 @@ export function createFlyBrain(seed: number): FlyBrain {
         } else if (greed > 0) {
           next = sense.workDistance !== null && sense.workDistance < 1.4 ? "work" : "seek";
           hold = 700;
-        } else if (fatigue > 0.85) {
+        } else if (fatigue > 0.85 || halt > 0.9) {
           next = "rest";
           hold = 2_600;
         }
         state = next;
         commitUntil = now + hold;
       }
+
 
       // --- act --------------------------------------------------------------
       if (sense.snared) return { state, steer: 0, throttle: 0, strike: false, work: false };

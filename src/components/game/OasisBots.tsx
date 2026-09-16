@@ -31,6 +31,8 @@ import {
   type BotRole,
 } from "@/lib/world-bots";
 import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
+import { brainProbe, publishBrainProbe } from "@/lib/fly-connectome";
+
 
 type Bot = BeastEntity &
   BotPlan & {
@@ -144,8 +146,15 @@ export function OasisBots({
 
   useEffect(() => {
     registerBeastGroup("bots", bots);
-    return () => registerBeastGroup("bots", []);
+    return () => {
+      registerBeastGroup("bots", []);
+      publishBrainProbe(null);
+    };
   }, [bots]);
+
+
+  /** when the brain readout panel was last refreshed */
+  const nextProbe = useRef(0);
 
   useFrame((_, rawDelta) => {
     const delta = Math.min(rawDelta, 0.05);
@@ -153,6 +162,8 @@ export function OasisBots({
     const now = performance.now();
     let talkChanged = false;
     const talk: Record<number, string> = {};
+    const nearest: { bot: Bot | null; distance: number } = { bot: null, distance: Infinity };
+
 
     bots.forEach((bot, index) => {
       const node = groups.current[index];
@@ -191,6 +202,11 @@ export function OasisBots({
 
       const vein = bot.role === "miner" ? bot.vein : null;
       const playerDistance = player ? Math.hypot(player.x - bot.x, player.z - bot.z) / unit : null;
+      if (playerDistance !== null && playerDistance < nearest.distance) {
+        nearest.distance = playerDistance;
+        nearest.bot = bot;
+      }
+
       const act = bot.brain.think(
         {
           now,
@@ -255,8 +271,30 @@ export function OasisBots({
       }
     });
 
+    // Publish the nearest settler's descending-neuron readout on a slow clock,
+    // so the panel can show it without re-rendering every frame.
+    if (now > nextProbe.current) {
+      nextProbe.current = now + 220;
+      const closest = nearest.bot;
+      if (closest && nearest.distance < 24) {
+        const firing = closest.brain.net.activity;
+        let hot = 0;
+        for (let i = 0; i < firing.length; i++) if (Math.abs(firing[i]!) > 0.05) hot++;
+        publishBrainProbe({
+          name: closest.name,
+          role: BOT_ROLES[closest.role].label,
+          state: closest.brain.state,
+          readout: { ...closest.brain.readout },
+          load: firing.length ? hot / firing.length : 0,
+        });
+      } else if (brainProbe()) {
+        publishBrainProbe(null);
+      }
+    }
+
     if (talkChanged) setChatter(talk);
   });
+
 
   return (
     <group>
