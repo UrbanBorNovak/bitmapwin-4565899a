@@ -594,6 +594,8 @@ type Critter = BeastEntity & {
   heading: number;
   bob: number;
   lastBite: number;
+  /** the same insect-style brain the settlers run on */
+  brain: FlyBrain;
 };
 
 const CRITTER_COUNT = 18;
@@ -639,6 +641,7 @@ const Critters = memo(function Critters({
         heading: i,
         bob: 0,
         lastBite: 0,
+        brain: createFlyBrain(i * 2.7 + 1.9),
       };
     }),
   );
