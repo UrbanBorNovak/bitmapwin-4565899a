@@ -19,10 +19,12 @@ import {
   FOODS,
   GOGGLES_INSCRIPTION,
   MAGIC_BOOK_INSCRIPTION,
+  NECKLACE_INSCRIPTION,
   SHOES_INSCRIPTION,
   WIZARD_HAT_INSCRIPTION,
   useGear,
 } from "@/lib/world-gear";
+
 
 import type { WeaponKind } from "./weapons";
 
@@ -158,7 +160,19 @@ export function WornGear({
           />
         </Suspense>
       ) : null}
+      {gear.necklace ? (
+        <Suspense fallback={null}>
+          <WornPiece
+            url={`https://ordinals.com/content/${NECKLACE_INSCRIPTION}`}
+            unit={unit}
+            fit={0.2}
+            pose={pose}
+            offset={[0, 0.7, 0.11]}
+          />
+        </Suspense>
+      ) : null}
       {gear.shoes
+
         ? [-1, 1].map((side) => (
             <Suspense key={side} fallback={null}>
               <WornPiece

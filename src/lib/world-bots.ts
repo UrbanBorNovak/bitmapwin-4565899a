@@ -9,7 +9,15 @@
  * settlers are around at once.
  */
 
+/**
+ * The on-chain figure the plain settlers wear — prospectors, raiders and traders
+ * keep their blocky work bodies so a crowd still reads at a glance.
+ */
+export const SETTLER_INSCRIPTION =
+  "7aaed056704bfb957ced2786397e0ed726e66fb181681f1e07de12d9913570f2i0";
+
 export type BotRole = "wanderer" | "miner" | "raider" | "trader";
+
 
 export type BotRoleSpec = {
   label: string;

@@ -41,6 +41,11 @@ import { FlyBrainPanel } from "@/components/game/FlyBrainPanel";
 import { DesertLife } from "@/components/game/DesertLife";
 import { SeaMasses } from "@/components/game/SeaMasses";
 import { SeaIslands } from "@/components/game/SeaIslands";
+import { BitField } from "@/components/game/BitField";
+import { useBits } from "@/lib/world-bits";
+import { STONES, cycleStone, useFittedStone } from "@/lib/world-runestones";
+
+
 
 import { Punks } from "@/components/game/Punks";
 import { OasisBots } from "@/components/game/OasisBots";
@@ -59,6 +64,8 @@ import {
   startEating,
   tickGear,
   toggleGoggles,
+  toggleNecklace,
+
   toggleShoes,
   walkMultiplier,
 
@@ -2116,6 +2123,8 @@ const WorldScene = memo(function WorldScene({
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <SeaMasses unit={AVATAR_U} pose={pose} />
           <SeaIslands unit={AVATAR_U} pose={pose} />
+          <BitField unit={AVATAR_U} pose={pose} />
+
 
           <Punks unit={AVATAR_U} pose={pose} onBite={onBite} />
           <OasisBots unit={AVATAR_U} pose={pose} onBite={onBite} />
@@ -2911,6 +2920,9 @@ export function BitmapWorld3D({
 
   // A meal keeps mending you while its buff runs.
   const gear = useGear();
+  const stone = useFittedStone();
+  const bits = useBits();
+
   useEffect(() => {
     const timer = window.setInterval(() => {
       tickGear();
@@ -2996,7 +3008,9 @@ export function BitmapWorld3D({
                 <div className="display text-base text-foreground md:text-lg">THE OASIS</div>
                 <div className="text-[9px] text-muted-foreground" data-no-translate>
                   {readout.height.toLocaleString("en-US")}.BITMAP
+                  {bits.today > 0 ? ` · ${bits.today} BIT TODAY` : ""}
                 </div>
+
               </div>
               <Button
                 type="button"
@@ -3246,6 +3260,39 @@ export function BitmapWorld3D({
                   >
                     [ SHOES ]
                   </Button>
+                  <Button
+                    className={gear.necklace ? "btn-term" : "btn-term-ghost"}
+                    variant="ghost"
+                    onClick={() => {
+                      const on = toggleNecklace();
+                      playSfx("ui");
+                      setBiteNote(on ? "NECKLACE ON · STEADY RECOVERY" : "NECKLACE OFF");
+                      window.setTimeout(() => setBiteNote(null), 1400);
+                    }}
+                  >
+                    [ NECKLACE ]
+                  </Button>
+                  {weapon === "staff" ? (
+                    <Button
+                      className={stone ? "btn-term" : "btn-term-ghost"}
+                      variant="ghost"
+                      onClick={() => {
+                        const next = cycleStone();
+                        playSfx("ui");
+                        setBiteNote(
+                          STONES.length === 0
+                            ? "NO STONES IN THE POUCH YET"
+                            : next
+                              ? `STONE SEATED · ${next.label}`
+                              : "STAFF HEAD BARE",
+                        );
+                        window.setTimeout(() => setBiteNote(null), 1600);
+                      }}
+                    >
+                      [ STAFF STONE · {stone ? stone.label : "BARE"} ]
+                    </Button>
+                  ) : null}
+
 
                   <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
                     {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}

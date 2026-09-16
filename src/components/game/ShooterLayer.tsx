@@ -6,6 +6,8 @@ import { ATTACK_RANGE } from "@/lib/map-presence";
 import type { MapCursor } from "@/lib/map-presence";
 import { playSfx, startMinigunSpin, stopMinigunSpin, unlockAudio } from "@/lib/world-audio";
 import { WEAPONS, WeaponModel, useWeaponMaterials, type WeaponKind } from "./weapons";
+import { stonePower } from "@/lib/world-runestones";
+
 import {
   damageBeast,
   liveBeasts,
@@ -410,7 +412,10 @@ export function ShooterLayer({
 
     // WILDLIFE — damage, a downed animal, and the experience for the kill.
     if (nearest.kind === "beast" && beastHit) {
-      const struck = damageBeast(beastHit.beast, spec.damage);
+      // The staff hits as hard as the stone seated on its head.
+      const bite = weapon === "staff" ? Math.round(spec.damage * stonePower()) : spec.damage;
+      const struck = damageBeast(beastHit.beast, bite);
+
       if (!struck.damage) return;
       playSfx(struck.killed ? "kill" : "hit");
       setScore((current) => current + (struck.killed ? 40 : 10));

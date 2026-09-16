@@ -17,6 +17,8 @@ import { Primitive } from "@/components/game/Primitive";
 
 /** on-chain GLB inscription of the sword */
 import { TRAP_INSCRIPTION } from "@/lib/world-traps";
+import { STAFF_INSCRIPTION, useFittedStone } from "@/lib/world-runestones";
+
 
 export const SWORD_INSCRIPTION =
   "7b674e8378b14b590960d452900507e2e26089bc9f622fa7e6c938d95d697b81i0";
@@ -45,7 +47,9 @@ export type WeaponKind =
   | "pickaxe"
   | "hammer"
   | "sword"
-  | "wand";
+  | "wand"
+  | "staff";
+
 
 
 export type WeaponSpec = {
@@ -200,6 +204,24 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     spell: true,
     hint: "LEFT TO CAST A BOLT · H TO HEAL THE WHOLE PARTY",
   },
+  staff: {
+    kind: "staff",
+    label: "RUNESTONE STAFF",
+    short: "STAFF",
+    magazine: 0,
+    reloadMs: 0,
+    cooldownMs: 620,
+    reachStrides: 52,
+    splashStrides: 3.2,
+    damage: 34,
+    mining: false,
+    fireSfx: "spell",
+    cycleSfx: null,
+    cycleDelayMs: 0,
+    reloadSfx: "reload",
+    spell: true,
+    hint: "SEAT A STONE ON THE HEAD · LEFT TO CAST · H TO HEAL THE PARTY",
+  },
 };
 
 export const WEAPON_ORDER: WeaponKind[] = [
@@ -210,7 +232,9 @@ export const WEAPON_ORDER: WeaponKind[] = [
   "hammer",
   "sword",
   "wand",
+  "staff",
 ];
+
 
 
 
@@ -285,6 +309,13 @@ export function WeaponModel({
       </group>
     );
   }
+
+  if (kind === "staff") {
+    // The runestone staff, carried upright. Whatever stone is seated on the head
+    // rides at the tip and lends the cast its colour.
+    return <RunestoneStaff u={u} materials={materials} lash={lash} flash={flash} />;
+  }
+
 
   if (kind === "revolver") {
     // Single-action iron: fluted cylinder, ejector rod, checkered grip panels.
@@ -470,6 +501,54 @@ const WAND_URL = `https://ordinals.com/content/${WAND_INSCRIPTION}`;
 const PICK_URL = `https://ordinals.com/content/${PICK_INSCRIPTION}`;
 const TRAP_URL = `https://ordinals.com/content/${TRAP_INSCRIPTION}`;
 const HAMMER_URL = `https://ordinals.com/content/${HAMMER_INSCRIPTION}`;
+const STAFF_URL = `https://ordinals.com/content/${STAFF_INSCRIPTION}`;
+
+/**
+ * The runestone staff with whatever stone is seated on its head. With a bare
+ * socket the head carries a plain rune glow instead.
+ */
+function RunestoneStaff({
+  u,
+  materials,
+  lash,
+  flash,
+}: {
+  u: number;
+  materials: WeaponMaterials;
+  lash: number;
+  flash: boolean;
+}) {
+  const stone = useFittedStone();
+  const glow = stone?.glow ?? "#7ad1ff";
+  return (
+    <group
+      position={[0.16 * u, -0.14 * u, 0.02 * u]}
+      rotation={[-0.36 - lash * 0.34, 0.2, -0.1]}
+    >
+      <Suspense fallback={<WandStandIn u={u} materials={materials} />}>
+        <OnChainWeapon url={STAFF_URL} u={u} lengthStrides={1.35} />
+      </Suspense>
+      {/* the socket at the head, where a stone is seated */}
+      <group position={[0, 0.02 * u, -1.34 * u]}>
+        {stone ? (
+          <Suspense fallback={null}>
+            <OnChainWeapon
+              url={`https://ordinals.com/content/${stone.inscription}`}
+              u={u}
+              lengthStrides={stone.fit}
+            />
+          </Suspense>
+        ) : null}
+        <mesh>
+          <sphereGeometry args={[(0.05 + lash * 0.06) * u, 12, 12]} />
+          <meshBasicMaterial color={glow} transparent opacity={0.3 + lash * 0.6} />
+        </mesh>
+      </group>
+      {flash ? <Muzzle u={u} z={-1.42 * u} size={0.08} color={glow} /> : null}
+    </group>
+  );
+}
+
 
 /** Forged sledge shown for the moment before the inscription streams in. */
 function HammerStandIn({ u, materials }: { u: number; materials: WeaponMaterials }) {
@@ -616,6 +695,7 @@ useGLTF.preload(SWORD_TWO_URL);
 useGLTF.preload(MINIGUN_URL);
 useGLTF.preload(WAND_URL);
 useGLTF.preload(PICK_URL);
+useGLTF.preload(STAFF_URL);
 
 /** Barrel cluster shown while the minigun inscription streams in. */
 function MinigunStandIn({
