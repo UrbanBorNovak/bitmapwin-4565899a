@@ -1,3 +1,4 @@
+import type React from "react";
 /**
  * THE BELT — the weapon strip you see in the world.
  *
@@ -24,7 +25,7 @@ function WeaponGlyph({ kind }: { kind: WeaponKind }) {
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
   };
-  const paths: Record<WeaponKind, JSX.Element> = {
+  const paths: Record<WeaponKind, React.ReactElement> = {
     minigun: (
       <g {...stroke}>
         <path d="M3 9h13M3 12h13M3 15h13" />
