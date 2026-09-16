@@ -268,6 +268,21 @@ export function toggleGoggles() {
   return state.goggles;
 }
 
+/** Lace the desert shoes on, or kick them off. */
+export function toggleShoes() {
+  hydrate();
+  state = { ...state, shoes: !state.shoes };
+  persist();
+  emit();
+  return state.shoes;
+}
+
+/** How fast a visitor walks — quicker with the shoes on. */
+export function walkMultiplier() {
+  return state.shoes ? SHOES_SPEED : 1;
+}
+
+
 /**
  * Sit down and eat. Returns the meal when it starts, or null when one is already
  * on the go — you cannot double up on rations.

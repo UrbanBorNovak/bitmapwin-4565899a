@@ -19,9 +19,11 @@ import {
   FOODS,
   GOGGLES_INSCRIPTION,
   MAGIC_BOOK_INSCRIPTION,
+  SHOES_INSCRIPTION,
   WIZARD_HAT_INSCRIPTION,
   useGear,
 } from "@/lib/world-gear";
+
 import type { WeaponKind } from "./weapons";
 
 /** One on-chain prop, fitted and pinned to a spot on the body. */
@@ -156,6 +158,20 @@ export function WornGear({
           />
         </Suspense>
       ) : null}
+      {gear.shoes
+        ? [-1, 1].map((side) => (
+            <Suspense key={side} fallback={null}>
+              <WornPiece
+                url={`https://ordinals.com/content/${SHOES_INSCRIPTION}`}
+                unit={unit}
+                fit={0.17}
+                pose={pose}
+                offset={[side * 0.09, 0.03, 0.02]}
+                seatOnBase
+              />
+            </Suspense>
+          ))
+        : null}
       {eatingFood ? (
         <Suspense fallback={null}>
           <WornPiece
@@ -171,3 +187,4 @@ export function WornGear({
     </>
   );
 }
+
