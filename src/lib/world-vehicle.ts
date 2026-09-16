@@ -41,11 +41,19 @@ export type RideSpec = {
   climb?: number;
   /** repaint the shipped materials into the world's brushed-metal palette */
   repaint?: boolean;
+  /** worn on the body instead of boarded, like the jetpack */
+  worn?: boolean;
 };
 
 /** on-chain GLB inscription of the Tesla Cybertruck model */
 export const CYBERTRUCK_INSCRIPTION =
   "9bb043b1fa45fc98b15408e023054ba19c658ac23a403c03e73f0829f493055fi0";
+
+/** The jetpack strapped to your back, and the helmet that comes on with it. */
+export const JETPACK_INSCRIPTION =
+  "911e903f1dfccdda7873f71b684473d5c553038c7ca18f76d69dd120fbd50452i0";
+export const JETPACK_HELMET_INSCRIPTION =
+  "f8b44754124e832a73964cd7b05a2c2f6a596e295ec35a22ec30e63fa0fa5692i0";
 
 export const RIDES: RideSpec[] = [
   {
