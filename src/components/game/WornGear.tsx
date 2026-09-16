@@ -19,10 +19,12 @@ import {
   FOODS,
   GOGGLES_INSCRIPTION,
   MAGIC_BOOK_INSCRIPTION,
+  NECKLACE_INSCRIPTION,
   SHOES_INSCRIPTION,
   WIZARD_HAT_INSCRIPTION,
   useGear,
 } from "@/lib/world-gear";
+
 
 import type { WeaponKind } from "./weapons";
 

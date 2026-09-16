@@ -295,10 +295,20 @@ export function toggleShoes() {
   return state.shoes;
 }
 
+/** Clasp the necklace on, or take it off. */
+export function toggleNecklace() {
+  hydrate();
+  state = { ...state, necklace: !state.necklace };
+  persist();
+  emit();
+  return state.necklace;
+}
+
 /** How fast a visitor walks — quicker with the shoes on. */
 export function walkMultiplier() {
   return state.shoes ? SHOES_SPEED : 1;
 }
+
 
 
 /**
@@ -345,8 +355,10 @@ export function powerMultiplier(now = Date.now()) {
   return buff && buff.until > now ? buff.power : 1;
 }
 
-/** How much health a running food buff mends each second — 0 with no buff. */
+/** How much health mends each second — meal buff plus the necklace. */
 export function activeRegen(now = Date.now()) {
   const buff = state.buff;
-  return buff && buff.until > now ? buff.regenPerSecond : 0;
+  const meal = buff && buff.until > now ? buff.regenPerSecond : 0;
+  return meal + (state.necklace ? NECKLACE_REGEN : 0);
 }
+
