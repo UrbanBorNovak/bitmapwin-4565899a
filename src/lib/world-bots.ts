@@ -16,6 +16,10 @@
 export const SETTLER_INSCRIPTION =
   "7aaed056704bfb957ced2786397e0ed726e66fb181681f1e07de12d9913570f2i0";
 
+/** The prospectors wear their own inscribed figure, so the two crowds read apart. */
+export const PROSPECTOR_INSCRIPTION =
+  "4319218fc12b00ca48298b0252201ba2a714900f530cf6ecab02d0acbaa691eei0";
+
 export type BotRole = "wanderer" | "miner" | "raider" | "trader";
 
 
