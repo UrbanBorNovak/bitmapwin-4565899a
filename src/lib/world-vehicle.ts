@@ -41,11 +41,19 @@ export type RideSpec = {
   climb?: number;
   /** repaint the shipped materials into the world's brushed-metal palette */
   repaint?: boolean;
+  /** worn on the body instead of boarded, like the jetpack */
+  worn?: boolean;
 };
 
 /** on-chain GLB inscription of the Tesla Cybertruck model */
 export const CYBERTRUCK_INSCRIPTION =
   "9bb043b1fa45fc98b15408e023054ba19c658ac23a403c03e73f0829f493055fi0";
+
+/** The jetpack strapped to your back, and the helmet that comes on with it. */
+export const JETPACK_INSCRIPTION =
+  "911e903f1dfccdda7873f71b684473d5c553038c7ca18f76d69dd120fbd50452i0";
+export const JETPACK_HELMET_INSCRIPTION =
+  "f8b44754124e832a73964cd7b05a2c2f6a596e295ec35a22ec30e63fa0fa5692i0";
 
 export const RIDES: RideSpec[] = [
   {
@@ -151,7 +159,76 @@ export const RIDES: RideSpec[] = [
     brake: 0.5,
     grip: 0.25,
   },
+  {
+    id: "tank",
+    label: "TANK",
+    inscription: "d8d6ff362f643a4597a9eb6dbd67c282acba3e682370007e3d6cfdf13ffc1b72i0",
+    kind: "ground",
+    // Tracked and heavy: slow to wind up, slow to stop, and it turns like a barn.
+    fit: 4.2,
+    speed: 3.2,
+    sprint: 1.15,
+    turn: 0.42,
+    lean: 0.15,
+    accel: 0.32,
+    brake: 0.3,
+    grip: 0.95,
+  },
+  {
+    id: "spacecraft",
+    label: "SPACECRAFT",
+    inscription: "454b385ae059767b885127a3c3dc6008da77b926c016924fcee3bfd187c974bdi0",
+    kind: "air",
+    fit: 6.5,
+    speed: 11,
+    sprint: 1.7,
+    turn: 0.6,
+    lean: 0.7,
+    altitude: 12,
+    climb: 14,
+    accel: 0.6,
+    brake: 0.35,
+    grip: 0.2,
+  },
+  {
+    id: "silver-saucer",
+    label: "SILVER FLYING SAUCER",
+    inscription: "b76ac607342727beed91a87d17de5715f5f66500b50868b4732ba3f008d58b31i0",
+    kind: "air",
+    fit: 5.4,
+    speed: 8.6,
+    sprint: 1.55,
+    turn: 1.05,
+    lean: 0.4,
+    altitude: 8,
+    climb: 11,
+    accel: 1.1,
+    brake: 0.7,
+    grip: 0.22,
+  },
+  {
+    id: "jetpack",
+    label: "JETPACK",
+    // Worn, not boarded: the pack rides on your back and the helmet goes on
+    // with it, so the body you fly with is your own avatar.
+    inscription: JETPACK_INSCRIPTION,
+    kind: "air",
+    fit: 0.6,
+    speed: 3.4,
+    sprint: 1.5,
+    turn: 1.3,
+    lean: 0.25,
+    altitude: 3.5,
+    climb: 7,
+    accel: 1.4,
+    brake: 1.2,
+    grip: 0.4,
+    worn: true,
+  },
 ];
+
+/** True while the active ride is worn on the body rather than boarded. */
+export const rideIsWorn = (id: string) => Boolean(rideById(id).worn);
 
 export const rideById = (id: string) => RIDES.find((ride) => ride.id === id) ?? RIDES[0]!;
 

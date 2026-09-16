@@ -88,37 +88,15 @@ const FIRST = [
 ];
 const LAST = ["OFTHESAND", "-9", "GRIT", "HOLLOW", "STONE", "MK2", "OASIS", "DRIFT"];
 
-export const BOT_COUNT_MAX = 40;
-export const BOT_COUNT_DEFAULT = 15;
-const STORE_KEY = "oasis-bot-count";
-
-let count = BOT_COUNT_DEFAULT;
-let loaded = false;
-const listeners = new Set<() => void>();
-
-function load() {
-  if (loaded || typeof window === "undefined") return;
-  loaded = true;
-  const raw = window.localStorage.getItem(STORE_KEY);
-  const parsed = raw === null ? Number.NaN : Number(raw);
-  if (Number.isFinite(parsed)) count = Math.max(0, Math.min(BOT_COUNT_MAX, Math.round(parsed)));
-}
+/**
+ * The Oasis populates itself: settlers simply live here, and the size of the
+ * crowd is not something anybody dials up or down. It is a fixed roster so the
+ * same faces are around for everyone.
+ */
+export const BOT_POPULATION = 18;
 
 export function botCount() {
-  load();
-  return count;
-}
-
-export function setBotCount(next: number) {
-  load();
-  count = Math.max(0, Math.min(BOT_COUNT_MAX, Math.round(next)));
-  if (typeof window !== "undefined") window.localStorage.setItem(STORE_KEY, String(count));
-  for (const listener of listeners) listener();
-}
-
-export function subscribeBotCount(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
+  return BOT_POPULATION;
 }
 
 /** Stable 0..1 from two numbers, so the same roster comes back every session. */

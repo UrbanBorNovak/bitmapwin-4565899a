@@ -74,6 +74,18 @@ export const NECKLACE_INSCRIPTION =
   "aa4b5be5b8aa8460ee7cc6fa19279fb6768f0e376a3901e46f8f942a16d75ac6i0";
 /** Health the necklace mends every second, on top of any meal buff. */
 export const NECKLACE_REGEN = 1;
+/** The watch — worn on the wrist. */
+export const WATCH_INSCRIPTION =
+  "ea4c75598df0220f7ea39248737687d4546accb339fe4684cd1501cda7159d33i0";
+/** The comic book — carried in the off hand. */
+export const COMIC_INSCRIPTION =
+  "606f4d8a2aa37154cae69bbeae8518f627b16a1b218212e9b1ab34c525fc8240i0";
+/** The ring — worn on the hand. */
+export const RING_INSCRIPTION =
+  "d2d827b0f7e6ff046bfc40b60fa5d7fa86647186a02235fe5db8bcb06eb1fb29i0";
+/** The ghost you drift as while you are down. */
+export const GHOST_INSCRIPTION =
+  "1d0854ff6af9ae25f800b6c4523d3c8a3e1fafee94d9f649848ddb890218718ei0";
 
 
 export type FoodId =
@@ -186,7 +198,7 @@ export const FOODS: Record<FoodId, FoodSpec> = {
 };
 
 /** The toys a visitor can carry in the right hand. */
-export type ToyId = "none" | "puppet" | "bitfrog";
+export type ToyId = "none" | "puppet" | "bitfrog" | "platinum-puppet";
 
 export type ToySpec = { id: ToyId; label: string; inscription: string; fit: number };
 
@@ -204,6 +216,12 @@ export const TOYS: ToySpec[] = [
     inscription: "89d00d08bac6cb7e197813ab0c36aac9dad273300d163d20283770ddef5463f2i0",
     fit: 0.3,
   },
+  {
+    id: "platinum-puppet",
+    label: "PLATINUM PUPPET",
+    inscription: "e2e9193fd0bc90802f8b1a4ebca7871029a0b9528568ba99275856edac257931i0",
+    fit: 0.34,
+  },
 ];
 
 export function toySpec(id: ToyId) {
@@ -220,6 +238,12 @@ export type GearSnapshot = {
   shoes: boolean;
   /** the necklace, worn at the throat */
   necklace: boolean;
+  /** the watch, worn on the wrist */
+  watch: boolean;
+  /** the comic book, carried in the off hand */
+  comic: boolean;
+  /** the ring, worn on the hand */
+  ring: boolean;
   /** the toy held in the right hand */
   toy: ToyId;
   /** the meal in hand, while it lasts */
@@ -234,6 +258,9 @@ let state: GearSnapshot = {
   goggles: false,
   shoes: false,
   necklace: false,
+  watch: false,
+  comic: false,
+  ring: false,
   toy: "none",
   eating: null,
   buff: null,
@@ -258,6 +285,9 @@ function hydrate() {
       goggles?: boolean;
       shoes?: boolean;
       necklace?: boolean;
+      watch?: boolean;
+      comic?: boolean;
+      ring?: boolean;
       toy?: ToyId;
     };
     if (parsed.companion && COMPANIONS.some((c) => c.id === parsed.companion))
@@ -265,6 +295,9 @@ function hydrate() {
     if (typeof parsed.goggles === "boolean") state = { ...state, goggles: parsed.goggles };
     if (typeof parsed.shoes === "boolean") state = { ...state, shoes: parsed.shoes };
     if (typeof parsed.necklace === "boolean") state = { ...state, necklace: parsed.necklace };
+    if (typeof parsed.watch === "boolean") state = { ...state, watch: parsed.watch };
+    if (typeof parsed.comic === "boolean") state = { ...state, comic: parsed.comic };
+    if (typeof parsed.ring === "boolean") state = { ...state, ring: parsed.ring };
     if (parsed.toy && TOYS.some((t) => t.id === parsed.toy)) state = { ...state, toy: parsed.toy };
   } catch {
     // a lost preference is never worth an error
@@ -280,6 +313,9 @@ function persist() {
         goggles: state.goggles,
         shoes: state.shoes,
         necklace: state.necklace,
+        watch: state.watch,
+        comic: state.comic,
+        ring: state.ring,
         toy: state.toy,
       }),
     );
@@ -346,6 +382,33 @@ export function toggleNecklace() {
   persist();
   emit();
   return state.necklace;
+}
+
+/** Strap the watch on, or take it off. */
+export function toggleWatch() {
+  hydrate();
+  state = { ...state, watch: !state.watch };
+  persist();
+  emit();
+  return state.watch;
+}
+
+/** Tuck the comic book under your arm, or put it away. */
+export function toggleComic() {
+  hydrate();
+  state = { ...state, comic: !state.comic };
+  persist();
+  emit();
+  return state.comic;
+}
+
+/** Slip the ring on, or take it off. */
+export function toggleRing() {
+  hydrate();
+  state = { ...state, ring: !state.ring };
+  persist();
+  emit();
+  return state.ring;
 }
 
 /** Pull the next toy out of the pack, or put the last one away. */
