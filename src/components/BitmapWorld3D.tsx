@@ -3687,7 +3687,7 @@ export function BitmapWorld3D({
 
         <EggHunt unit={AVATAR_U} />
 
-        <FlyBrainPanel />
+
 
 
         {inventoryOpen ? <SkillsHud /> : null}

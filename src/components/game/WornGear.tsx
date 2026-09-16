@@ -248,9 +248,9 @@ export function WornGear({
           <WornPiece
             url={`https://ordinals.com/content/${JETPACK_HELMET_INSCRIPTION}`}
             unit={unit}
-            fit={0.46}
+            fit={0.42}
             pose={pose}
-            offset={[0, 0.84, 0]}
+            offset={[0, 0.8, 0.01]}
             seatOnBase
           />
         </Suspense>
