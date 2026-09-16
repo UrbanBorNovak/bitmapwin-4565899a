@@ -88,10 +88,38 @@ export const PineTrees = memo(function PineTrees({
           >
             <InscribedModel url={PINE_URL} size={tree.size} yaw={tree.yaw} />
           </Suspense>
+          {/* SHROOMS — a small ring of them in the shade under the branches. */}
+          {Array.from({ length: 1 + Math.floor(hash(tree.x, tree.z, 81) * 4) }, (_, n) => {
+            const angle = hash(tree.x + n, tree.z - n, 82) * Math.PI * 2;
+            const reach = tree.size * (0.28 + hash(tree.x - n, tree.z + n, 83) * 0.45);
+            const size = unit * (0.07 + hash(tree.x * 2 + n, tree.z, 84) * 0.09);
+            return (
+              <group
+                key={`s${n}`}
+                position={[Math.cos(angle) * reach, 0, Math.sin(angle) * reach]}
+              >
+                <Suspense
+                  fallback={
+                    <mesh position={[0, size * 0.5, 0]} raycast={noRaycast}>
+                      <sphereGeometry args={[size * 0.4, 6, 5]} />
+                      <meshLambertMaterial color="#b8503f" flatShading />
+                    </mesh>
+                  }
+                >
+                  <InscribedModel
+                    url={SHROOM_URL}
+                    size={size}
+                    yaw={hash(tree.x + n * 3, tree.z + n, 85) * Math.PI * 2}
+                  />
+                </Suspense>
+              </group>
+            );
+          })}
         </group>
       ))}
     </>
   );
 });
+
 
 useGLTF.preload(PINE_URL);
