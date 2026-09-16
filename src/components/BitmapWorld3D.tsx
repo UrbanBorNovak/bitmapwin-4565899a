@@ -53,12 +53,15 @@ import { STONES, cycleStone, useFittedStone } from "@/lib/world-runestones";
 
 import { Punks } from "@/components/game/Punks";
 import { OasisBots } from "@/components/game/OasisBots";
-import { BOT_COUNT_MAX, botCount, setBotCount, subscribeBotCount } from "@/lib/world-bots";
+import { BOT_POPULATION } from "@/lib/world-bots";
 import { DjEvent, useDjEvent } from "@/components/game/DjEvent";
 import { TrapField } from "@/components/game/TrapField";
 import { isSelfSnared, selfSnaredMs } from "@/lib/world-traps";
 import { Companions } from "@/components/game/Companions";
 import { WornGear } from "@/components/game/WornGear";
+import { GhostShade } from "@/components/game/GhostShade";
+import { FlyCreatures } from "@/components/game/FlyCreatures";
+import { MysteryBoxes } from "@/components/game/MysteryBoxes";
 import { NightVision } from "@/components/game/NightVision";
 import {
   activeRegen,
@@ -67,8 +70,11 @@ import {
   FOODS,
   startEating,
   tickGear,
+  toggleComic,
   toggleGoggles,
   toggleNecklace,
+  toggleRing,
+  toggleWatch,
 
   toggleShoes,
   cycleToy,
@@ -2009,6 +2015,7 @@ const WorldScene = memo(function WorldScene({
   onShootPeer,
   onCastHeal,
   onBite,
+  onPrize,
   selfId,
   onShooterStats,
   driving,
@@ -2045,6 +2052,8 @@ const WorldScene = memo(function WorldScene({
   onShootPeer: (id: string) => void;
   onCastHeal: (amount: number) => void;
   onBite: (damage: number, label: string) => void;
+  /** a mystery box cracked open — pay the prize out in the HUD layer */
+  onPrize: (prize: MysteryPrize) => void;
   /** the local visitor's id — stamps traps and keeps their own jaws harmless */
   selfId: string;
   onShooterStats: (stats: ShooterStats) => void;
@@ -2137,6 +2146,8 @@ const WorldScene = memo(function WorldScene({
           <BitField unit={AVATAR_U} pose={pose} />
           <Landmarks />
           <MarioBros unit={AVATAR_U} pose={pose} />
+          <FlyCreatures unit={AVATAR_U} pose={pose} onBite={onBite} />
+          <MysteryBoxes unit={AVATAR_U} pose={pose} onPrize={onPrize} />
 
 
 
@@ -2159,7 +2170,9 @@ const WorldScene = memo(function WorldScene({
             pose={pose}
             weapon={weapon}
             showHead={cameraMode === "third" && !driving}
+            jetpack={driving && ride.id === "jetpack"}
           />
+          {self.hp <= 0 ? <GhostShade unit={AVATAR_U} pose={pose} /> : null}
         </>
       ) : null}
 
@@ -2287,14 +2300,6 @@ export function BitmapWorld3D({
   const [utilityOpen, setUtilityOpen] = useState(false);
   const [rationsOpen, setRationsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
-  // SETTLERS — how many rule-driven characters walk the Oasis with you.
-  const [settlers, setSettlers] = useState(() => botCount());
-  useEffect(() => {
-    const unsubscribe = subscribeBotCount(() => setSettlers(botCount()));
-    return () => {
-      unsubscribe();
-    };
-  }, []);
   const [buildNote, setBuildNote] = useState<string | null>(null);
   // WEAPONS — what you are carrying while you explore the land world.
   const [weapon, setWeapon] = useState<WeaponKind | null>(null);
@@ -2920,12 +2925,14 @@ export function BitmapWorld3D({
   const [biteNote, setBiteNote] = useState<string | null>(null);
   const takeBite = useCallback(
     (damage: number, label: string) => {
+      // While you are down you are a ghost: nothing can touch you.
+      if (hp <= 0) return;
       hurt(damage);
       playSfx("hurt");
       setBiteNote(`${label} BIT YOU · -${damage}`);
       window.setTimeout(() => setBiteNote(null), 1600);
     },
-    [hurt],
+    [hp, hurt],
   );
 
   // The wand's healing spell: it mends you, and every party member with you.
@@ -3241,21 +3248,9 @@ export function BitmapWorld3D({
 
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Settlers</span>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="range"
-                    min={0}
-                    max={BOT_COUNT_MAX}
-                    step={1}
-                    value={settlers}
-                    aria-label="Number of settlers in the Oasis"
-                    onChange={(event) => setBotCount(Number(event.target.value))}
-                    className="h-1 w-32 accent-bitcoin"
-                  />
-                  <span className="font-mono text-[10px] tabular-nums text-muted-foreground" data-no-translate>
-                    {settlers} / {BOT_COUNT_MAX} · FREE · LOCAL BRAINS
-                  </span>
-                </div>
+                <span className="font-mono text-[10px] tabular-nums text-muted-foreground" data-no-translate>
+                  {BOT_POPULATION} LIVE HERE ALREADY · FREE · LOCAL BRAINS
+                </span>
               </div>
 
               <div className="flex flex-col gap-1">
@@ -3310,6 +3305,42 @@ export function BitmapWorld3D({
                     }}
                   >
                     [ NECKLACE ]
+                  </Button>
+                  <Button
+                    className={gear.watch ? "btn-term" : "btn-term-ghost"}
+                    variant="ghost"
+                    onClick={() => {
+                      const on = toggleWatch();
+                      playSfx("ui");
+                      setBiteNote(on ? "WATCH ON" : "WATCH OFF");
+                      window.setTimeout(() => setBiteNote(null), 1400);
+                    }}
+                  >
+                    [ WATCH ]
+                  </Button>
+                  <Button
+                    className={gear.ring ? "btn-term" : "btn-term-ghost"}
+                    variant="ghost"
+                    onClick={() => {
+                      const on = toggleRing();
+                      playSfx("ui");
+                      setBiteNote(on ? "RING ON" : "RING OFF");
+                      window.setTimeout(() => setBiteNote(null), 1400);
+                    }}
+                  >
+                    [ RING ]
+                  </Button>
+                  <Button
+                    className={gear.comic ? "btn-term" : "btn-term-ghost"}
+                    variant="ghost"
+                    onClick={() => {
+                      const on = toggleComic();
+                      playSfx("ui");
+                      setBiteNote(on ? "COMIC BOOK IN HAND" : "COMIC BOOK AWAY");
+                      window.setTimeout(() => setBiteNote(null), 1400);
+                    }}
+                  >
+                    [ COMIC BOOK ]
                   </Button>
                   {weapon === "staff" ? (
                     <Button
@@ -3409,6 +3440,7 @@ export function BitmapWorld3D({
               onShootPeer={attack}
               onCastHeal={castHeal}
               onBite={takeBite}
+              onPrize={takePrize}
               selfId={selfId}
               onShooterStats={handleShooterStats}
               driving={driving}
