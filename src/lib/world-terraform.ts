@@ -14,6 +14,7 @@ import { useSyncExternalStore } from "react";
 import { colAt, rowAt } from "./player-state";
 import { chunkOfTile, heightOfTile, tileOfHeight } from "./world-grid";
 import { listTerraformedLand, seedTerraform } from "./land-terraform.functions";
+import { markChunkLoad } from "./world-perf";
 
 /** Real time from bare sand to a fully grown BITMAP: 30 days. */
 export const FULL_GROWTH_MS = 30 * 24 * 60 * 60 * 1000;
@@ -121,8 +122,10 @@ export async function syncTerraformChunks(keys: string[]) {
   const missing = keys.filter((key) => !syncedChunks.has(key));
   if (!missing.length) return;
   for (const key of missing) syncedChunks.add(key);
+  const started = performance.now();
   try {
     const result = await listTerraformedLand({ data: { keys: missing } });
+    markChunkLoad("terraform", missing.length, performance.now() - started);
     for (const row of result?.land ?? []) shared.set(row.bitmap_height, fromRow(row));
     recompute();
   } catch {
