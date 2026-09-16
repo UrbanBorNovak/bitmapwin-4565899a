@@ -30,7 +30,7 @@ function Plots({ classes }: { classes: number[] }) {
             <mesh key={`p${size}-${i}`} position={[plot.x, (size * size) / 6, plot.z]}>
               <boxGeometry args={[size * 0.86, (size * size) / 3, size * 0.86]} />
               <meshStandardMaterial
-                color={PALETTE[Math.min(PALETTE.length - 1, size - 1)]}
+                color={PALETTE[Math.min(PALETTE.length - 1, size - 1)] ?? "#f7931a"}
                 roughness={0.55}
                 metalness={0.15}
               />
