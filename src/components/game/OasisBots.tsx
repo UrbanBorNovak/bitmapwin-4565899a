@@ -26,6 +26,7 @@ import {
 import {
   SETTLER_INSCRIPTION,
   PROSPECTOR_INSCRIPTION,
+  TRADER_INSCRIPTION,
   BOT_ROLES,
 
   botCount,
@@ -93,6 +94,14 @@ const ROLE_TINT: Record<BotRole, string> = {
 const SETTLER_URL = contentUrl(SETTLER_INSCRIPTION);
 /** Prospectors wear a second inscribed figure of their own. */
 const PROSPECTOR_URL = contentUrl(PROSPECTOR_INSCRIPTION);
+/** Traders walk the sand as the inscribed plant. */
+const TRADER_URL = contentUrl(TRADER_INSCRIPTION);
+
+const ROLE_MODEL: Partial<Record<BotRole, string>> = {
+  wanderer: SETTLER_URL,
+  miner: PROSPECTOR_URL,
+  trader: TRADER_URL,
+};
 
 /** A blocky settler figure — cheap enough to draw dozens of. */
 const BotBody = memo(function BotBody({
@@ -104,14 +113,11 @@ const BotBody = memo(function BotBody({
   size: number;
   role: BotRole;
 }) {
-  if (role === "wanderer" || role === "miner") {
+  const model = ROLE_MODEL[role];
+  if (model) {
     return (
       <Suspense fallback={null}>
-        <InscribedModel
-          url={role === "miner" ? PROSPECTOR_URL : SETTLER_URL}
-          size={unit * size * 1.05}
-          yaw={0}
-        />
+        <InscribedModel url={model} size={unit * size * 1.05} yaw={0} />
       </Suspense>
     );
   }

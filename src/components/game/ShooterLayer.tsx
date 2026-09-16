@@ -386,8 +386,11 @@ export function ShooterLayer({
       const result = mineVoxel(oreHit.vein, oreHit.voxel);
       if (!result.mined) return;
       playSfx("ore");
-      const mineral = oreHit.vein.kind === "mineral";
-      const stored = addItem(mineral ? "mineral" : "gold-nugget", 1);
+      const kind = oreHit.vein.kind;
+      const stored = addItem(
+        kind === "mineral" ? "mineral" : kind === "ore" ? "ore-chunk" : "gold-nugget",
+        1,
+      );
       // A key turns up now and then in the rubble — treasure needs one.
       if (Math.random() < 0.07 && addItem("key", 1)) flashNote("A KEY IN THE RUBBLE");
       const gained = grantXp("mining", oreHit.vein.xpPerVoxel);
@@ -401,9 +404,11 @@ export function ShooterLayer({
         playSfx("nugget");
         flashNote(
           result.emptied
-            ? mineral
+            ? kind === "mineral"
               ? "CLUSTER MINED OUT · CLEARED FROM THE SAND"
-              : "SEAM MINED OUT · GONE FOR GOOD"
+              : kind === "ore"
+                ? "MINE WORKED OUT · CLEARED FROM THE SAND"
+                : "SEAM MINED OUT · GONE FOR GOOD"
             : `+${oreHit.vein.xpPerVoxel} MINING XP`,
         );
       }

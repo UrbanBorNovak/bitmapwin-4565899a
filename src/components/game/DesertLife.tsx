@@ -12,6 +12,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { TreasureChests } from "@/components/game/TreasureChests";
 import { MineralNodes } from "@/components/game/MineralNodes";
+import { OreMines } from "@/components/game/OreMines";
 import { PineTrees } from "@/components/game/PineTrees";
 import { Houses } from "@/components/game/Houses";
 import { GoldenEgg } from "@/components/game/GoldenEgg";
@@ -518,6 +519,7 @@ export const DesertLife = memo(function DesertLife({
       <Mirage unit={unit} pose={pose} />
       <GoldVeins unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <MineralNodes unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
+      <OreMines unit={unit} center={center} radius={radius} />
       <PineTrees unit={unit} center={center} radius={radius} />
       <Houses unit={unit} center={center} radius={radius} />
       <GoldenEgg unit={unit} pose={pose} />

@@ -1,10 +1,9 @@
 /**
- * MARIO & LUIGI — two 1/1 specimens, the only pair of their kind in the Oasis.
+ * MARIO BROS — a single 1/1 specimen, the only one of its kind in the Oasis.
  *
- * They run the same insect-style brain the settlers use, so they wander, back
- * off and take breathers on their own — and they never stop jumping. Both are
- * strikeable bodies with huge experience, but they are peaceful: they will not
- * come at you.
+ * It runs the same insect-style brain the settlers use, so it wanders, backs
+ * off and takes breathers on its own — and it never stops jumping. Strikeable,
+ * with huge experience, but peaceful: it will not come at you.
  */
 
 import { Suspense, memo, useEffect, useMemo, useRef, useState } from "react";
@@ -80,7 +79,8 @@ export const MarioBros = memo(function MarioBros({
   unit: number;
   pose: { current: { x: number; z: number } | null };
 }) {
-  const bros = useMemo(() => [makeBro(0, "MARIO", unit), makeBro(1, "LUIGI", unit)], [unit]);
+  // A single specimen: there is only one of these in the whole Oasis.
+  const bros = useMemo(() => [makeBro(0, "MARIO BROS", unit)], [unit]);
   const groups = useRef<(THREE.Group | null)[]>([]);
   const [chatter, setChatter] = useState<Record<number, string>>({});
 

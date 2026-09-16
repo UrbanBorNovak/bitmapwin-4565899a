@@ -5,9 +5,47 @@
  * low sun, night gets a pale moon and a slowly drifting star field. Everything
  * is parented to a dome that follows the camera, so the sky never gets closer.
  */
-import { memo, useMemo, useRef } from "react";
+import { Suspense, memo, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
+import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
+import { MOON_INSCRIPTION } from "@/lib/world-gear";
+
+const MOON_URL = `https://ordinals.com/content/${MOON_INSCRIPTION}`;
+
+/** The inscribed moon, normalised to the size the sky asks for. */
+function InscribedMoon({ size, dim }: { size: number; dim: number }) {
+  const gltf = useGLTF(MOON_URL);
+  const scene = useMemo(() => {
+    const clone = gltf.scene.clone(true);
+    const bounds = new THREE.Box3().setFromObject(clone);
+    const span = bounds.getSize(new THREE.Vector3());
+    const norm = 1 / Math.max(span.x, span.y, span.z, 0.0001);
+    const centre = bounds.getCenter(new THREE.Vector3());
+    clone.position.set(-centre.x * norm, -centre.y * norm, -centre.z * norm);
+    clone.scale.setScalar(norm);
+    clone.traverse((child) => {
+      child.raycast = () => {};
+      const mesh = child as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      const material = (
+        Array.isArray(mesh.material) ? mesh.material[0]! : mesh.material
+      ).clone() as THREE.Material & { toneMapped?: boolean; opacity?: number; transparent?: boolean };
+      material.toneMapped = false;
+      material.transparent = dim < 1;
+      material.opacity = dim;
+      mesh.material = material;
+      mesh.castShadow = false;
+      mesh.receiveShadow = false;
+    });
+    return clone;
+  }, [gltf.scene, dim]);
+  return (
+    <group scale={size}>
+      <primitive object={scene} />
+    </group>
+  );
+}
 
 const SUN = "#ffd7a0";
 const SUN_CORE = "#fff6e0";
@@ -90,12 +128,18 @@ export const SkyBodies = memo(function SkyBodies({ bitcoin }: { bitcoin: string 
         </mesh>
       </group>
 
-      {/* Moon — a pale disc with a hint of crater shading. */}
+      {/* Moon — the inscribed moon, with a soft halo behind it. */}
       <group position={[far * 0.5, moonHeight, far * 0.5]}>
-        <mesh raycast={() => {}}>
-          <sphereGeometry args={[bodyScale * (night ? 0.95 : 0.55), 20, 16]} />
-          <meshBasicMaterial color={MOON} transparent opacity={night ? 1 : 0.45} />
-        </mesh>
+        <Suspense
+          fallback={
+            <mesh raycast={() => {}}>
+              <sphereGeometry args={[bodyScale * (night ? 0.95 : 0.55), 20, 16]} />
+              <meshBasicMaterial color={MOON} transparent opacity={night ? 1 : 0.45} />
+            </mesh>
+          }
+        >
+          <InscribedMoon size={bodyScale * (night ? 2.1 : 1.2)} dim={night ? 1 : 0.5} />
+        </Suspense>
         <mesh raycast={() => {}}>
           <sphereGeometry args={[bodyScale * (night ? 1.5 : 0.8), 16, 12]} />
           <meshBasicMaterial

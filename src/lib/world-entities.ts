@@ -34,7 +34,7 @@ export type BeastEntity = {
 export type OreVoxel = { x: number; y: number; z: number; size: number; alive: boolean };
 
 /** What a seam is made of — this decides what lands in the backpack. */
-export type OreKind = "gold" | "mineral";
+export type OreKind = "gold" | "mineral" | "ore";
 
 export type OreVein = {
   id: string;
@@ -114,7 +114,8 @@ function rebuildVeins() {
   veins.length = 0;
   for (const list of veinGroups.values()) {
     // A worked-out mineral cluster is gone from the world, not left as rubble.
-    for (const vein of list) if (!(vein.kind === "mineral" && vein.depletedUntil)) veins.push(vein);
+    for (const vein of list)
+      if (!(vein.kind !== "gold" && vein.depletedUntil)) veins.push(vein);
   }
 }
 
@@ -197,8 +198,8 @@ export function mineVoxel(vein: OreVein, voxel: OreVoxel) {
   const emptied = vein.voxels.every((v) => !v.alive);
   if (emptied) {
     vein.depletedUntil = Number.POSITIVE_INFINITY;
-    // Mineral clusters are cleared out of the world once the last voxel is gone.
-    if (vein.kind === "mineral") rebuildVeins();
+    // Clusters and mines are cleared out of the world once the last voxel is gone.
+    if (vein.kind !== "gold") rebuildVeins();
   }
   emit();
   return { mined: true, emptied };

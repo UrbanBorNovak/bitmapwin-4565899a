@@ -20,6 +20,10 @@ export const SETTLER_INSCRIPTION =
 export const PROSPECTOR_INSCRIPTION =
   "4319218fc12b00ca48298b0252201ba2a714900f530cf6ecab02d0acbaa691eei0";
 
+/** The traders walk the sand as this inscribed plant. */
+export const TRADER_INSCRIPTION =
+  "855d5edd289bf34d7be22f095958e5a6ea0cff7df9d4ea094db33d3aa545a0b9i0";
+
 export type BotRole = "wanderer" | "miner" | "raider" | "trader";
 
 
