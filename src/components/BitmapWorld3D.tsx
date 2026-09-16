@@ -36,6 +36,8 @@ import { ShooterLayer, type ShooterStats } from "@/components/game/ShooterLayer"
 import { MinerHud } from "@/components/game/MinerHud";
 import { SmeltHud } from "@/components/game/SmeltHud";
 import { EggHunt } from "@/components/game/EggHunt";
+import { FlyBrainPanel } from "@/components/game/FlyBrainPanel";
+
 import { DesertLife } from "@/components/game/DesertLife";
 import { SeaMasses } from "@/components/game/SeaMasses";
 import { Punks } from "@/components/game/Punks";
