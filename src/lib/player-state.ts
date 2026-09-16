@@ -80,6 +80,8 @@ export type PlayerState = {
   chunk: string;
   /** click/tap destination the player is walking to, if any */
   target: { x: number; z: number } | null;
+  /** forward body tilt, radians — leans into flight, flat on foot */
+  lean: number;
 };
 
 const clamp = (value: number, min: number, max: number) =>
@@ -118,6 +120,7 @@ export function createPlayerState(x = 0, z = WORLD_CELL, yaw = 0): PlayerState {
     height: row * WORLD_GRID + col,
     chunk: chunkKey(col, row),
     target: null,
+    lean: 0,
   };
 }
 

@@ -1293,6 +1293,8 @@ const SelfAvatar = memo(function SelfAvatar({
     if (!current || !group.current) return;
     group.current.position.set(current.x, current.y, current.z);
     group.current.rotation.y = current.yaw;
+    // Flight pitches the whole body forward, like leaning into the wind.
+    group.current.rotation.x = current.lean ?? 0;
     if (!mounted.current) return;
     const next: AvatarMotion = current.animation;
     setMotion((previous) => (previous === next ? previous : next));
