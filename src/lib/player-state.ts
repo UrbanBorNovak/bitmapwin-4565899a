@@ -145,6 +145,16 @@ function syncCell(player: PlayerState) {
 }
 
 /**
+ * Height you must gain before you are clear of everything on the ground: above
+ * this, walls and props pass under you and nothing down there can reach you.
+ */
+export const FLY_CLEARANCE = STRIDE * 5;
+
+/** True once the body is high enough to be over the props and out of reach. */
+export const aloft = (player: { y: number } | null | undefined) =>
+  Boolean(player && player.y > FLY_CLEARANCE);
+
+/**
  * Solid-world test the movement step consults. The world registers one (built
  * structures block their tile); movement stays pure physics otherwise.
  */

@@ -17,7 +17,7 @@ type BeltStats = {
 };
 
 /** hand-drawn terminal glyphs, one per weapon, all on a 24-unit box */
-function WeaponGlyph({ kind }: { kind: WeaponKind }) {
+export function WeaponGlyph({ kind }: { kind: WeaponKind }) {
   const stroke = {
     fill: "none",
     stroke: "currentColor",

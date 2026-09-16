@@ -118,6 +118,7 @@ import {
   type WeaponKind,
 } from "@/components/game/weapons";
 import { WeaponBelt } from "@/components/game/WeaponBelt";
+import { CharacterSheet } from "@/components/game/CharacterSheet";
 
 /** the side menu shelves — one open at a time keeps the HUD short */
 type KitTab = "action" | "kit" | "travel" | "view";
@@ -125,7 +126,7 @@ const KIT_TABS: { id: KitTab; label: string }[] = [
   { id: "action", label: "ACTION" },
   { id: "kit", label: "KIT" },
   { id: "travel", label: "TRAVEL" },
-  { id: "view", label: "VIEW" },
+  { id: "view", label: "INVENTORY" },
 ];
 import { isSoundMuted, playSfx, setSoundMuted, unlockAudio } from "@/lib/world-audio";
 import { aimState, aimZoom } from "@/lib/world-aim";
@@ -153,6 +154,7 @@ import {
   type PoseReport,
 } from "@/lib/map-presence";
 import {
+  aloft,
   colAt,
   createPlayerState,
   damp,
@@ -194,6 +196,7 @@ import {
   RIDES,
   currentRide,
   isDriving,
+  rideIsWorn,
   stopDriving,
   selectRide,
   subscribeVehicle,
@@ -1395,11 +1398,15 @@ function PlayerCameraRig({
   // Built structures are solid while you are walking the world.
   useEffect(() => {
     setMoveBlocker((x, z) => {
+      // High enough on the jetpack and everything on the ground passes below:
+      // walls, trees, hulls and the sea are no longer in your way.
+      if (aloft(pose.current)) return false;
       if (blockedAt(x, z, AVATAR_U * 0.3)) return true;
       // Landmarks, trees and other inscribed props are solid too — you go
       // around the cafe, the tower, the arena and the gate posts, never through.
       const wide = isDriving() ? AVATAR_U * 1.1 : AVATAR_U * 0.3;
       if (solidBlocked(x, z, wide)) return true;
+
 
       const afloat = isDriving() && currentRide().kind === "water";
       if (afloat) {
@@ -2185,7 +2192,9 @@ const WorldScene = memo(function WorldScene({
             unit={AVATAR_U}
             pose={pose}
             weapon={weapon}
-            showHead={cameraMode === "third" && !driving}
+            // The jetpack is worn, not boarded: your own body and the helmet
+            // stay on screen in third person while you fly.
+            showHead={cameraMode === "third" && (!driving || rideIsWorn(ride.id))}
             jetpack={driving && ride.id === "jetpack"}
           />
           {self.hp <= 0 ? <GhostShade unit={AVATAR_U} pose={pose} /> : null}
@@ -2227,13 +2236,13 @@ const WorldScene = memo(function WorldScene({
       ) : null}
       <VisitorBeacons cursors={cursors} />
       <SelfBeacon pose={pose} bitcoin={colors.bitcoin} wide={cameraMode === "map"} />
-      {cameraMode !== "map" && (driving || vehicle.placed) ? (
+      {cameraMode !== "map" && (driving || vehicle.placed) && !rideIsWorn(ride.id) ? (
         <Suspense fallback={null}>
           <RideModel key={ride.id} unit={AVATAR_U} pose={pose} driving={driving} ride={ride} />
         </Suspense>
       ) : null}
 
-      {cameraMode === "third" && !driving ? (
+      {cameraMode === "third" && (!driving || rideIsWorn(ride.id)) ? (
         <SelfAvatar
           pose={pose}
           color={self.color}
@@ -2945,6 +2954,8 @@ export function BitmapWorld3D({
     (damage: number, label: string) => {
       // While you are down you are a ghost: nothing can touch you.
       if (hp <= 0) return;
+      // Up on the jetpack you are out of reach — nothing on the ground bites.
+      if (aloft(pose.current)) return;
       hurt(damage);
       playSfx("hurt");
       setBiteNote(`${label} BIT YOU · -${damage}`);
@@ -3333,7 +3344,17 @@ export function BitmapWorld3D({
               ) : null}
 
               {kitTab === "view" ? (
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-2">
+                <CharacterSheet
+                  weapon={weapon}
+                  model={avatarModel ?? null}
+                  flying={driving && ride.id === "jetpack"}
+                  onNote={(text) => {
+                    setBiteNote(text);
+                    window.setTimeout(() => setBiteNote(null), 1500);
+                  }}
+                />
+                <span className="hud-divider" aria-hidden />
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">View &amp; sound</span>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <Button
