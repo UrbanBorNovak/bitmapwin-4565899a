@@ -6,6 +6,8 @@ import { ATTACK_RANGE } from "@/lib/map-presence";
 import type { MapCursor } from "@/lib/map-presence";
 import { playSfx, startMinigunSpin, stopMinigunSpin, unlockAudio } from "@/lib/world-audio";
 import { WEAPONS, WeaponModel, useWeaponMaterials, type WeaponKind } from "./weapons";
+import { stonePower } from "@/lib/world-runestones";
+
 import {
   damageBeast,
   liveBeasts,
