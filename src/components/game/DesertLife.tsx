@@ -952,39 +952,20 @@ const CritterBody = memo(function CritterBody({
     );
   }
 
+  // The snake and the lizard are inscribed models, not voxel builds.
   if (kind === "snake") {
     return (
-      <group>
-        {[0, 1, 2, 3, 4].map((seg) => (
-          <mesh
-            key={seg}
-            position={[Math.sin(seg) * u * 0.02, u * 0.018, -seg * u * 0.05]}
-            raycast={noRaycast}
-          >
-            <boxGeometry args={[u * 0.035 - seg * u * 0.004, u * 0.03, u * 0.05]} />
-            <meshLambertMaterial color={seg === 0 ? colors.foreground : colors.muted} />
-          </mesh>
-        ))}
-      </group>
+      <Suspense fallback={null}>
+        <InscribedModel url={SNAKE_URL} size={u * 0.4} />
+      </Suspense>
     );
   }
 
   if (kind === "lizard") {
     return (
-      <group>
-        <mesh position={[0, u * 0.02, 0]} raycast={noRaycast}>
-          <boxGeometry args={[u * 0.045, u * 0.025, u * 0.1]} />
-          <meshLambertMaterial color={HIDE} />
-        </mesh>
-        <mesh position={[0, u * 0.02, -u * 0.1]} raycast={noRaycast}>
-          <boxGeometry args={[u * 0.018, u * 0.016, u * 0.11]} />
-          <meshLambertMaterial color={HIDE_DARK} />
-        </mesh>
-        <mesh position={[0, u * 0.03, u * 0.06]} raycast={noRaycast}>
-          <boxGeometry args={[u * 0.036, u * 0.026, u * 0.04]} />
-          <meshLambertMaterial color={HIDE} />
-        </mesh>
-      </group>
+      <Suspense fallback={null}>
+        <InscribedModel url={LIZARD_URL} size={u * 0.35} />
+      </Suspense>
     );
   }
 
