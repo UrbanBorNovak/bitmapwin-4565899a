@@ -117,6 +117,7 @@ import {
   useWeaponMaterials,
   type WeaponKind,
 } from "@/components/game/weapons";
+import { WeaponBelt } from "@/components/game/WeaponBelt";
 import { isSoundMuted, playSfx, setSoundMuted, unlockAudio } from "@/lib/world-audio";
 import { aimState, aimZoom } from "@/lib/world-aim";
 import {
