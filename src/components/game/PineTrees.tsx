@@ -7,9 +7,11 @@
  * of geometry buffers.
  */
 
-import { Suspense, memo, useMemo } from "react";
+import { Suspense, memo, useEffect, useMemo } from "react";
 import { useGLTF } from "@react-three/drei";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
+import { dropSolids, registerSolids } from "@/lib/world-solids";
+
 
 export const PINE_INSCRIPTION =
   "a67b9e40973e6cf9df84bfc0d28ac10bcbef8f7d0e3f46ad0f99541876c8e330i0";
@@ -73,6 +75,19 @@ export const PineTrees = memo(function PineTrees({
     }
     return found;
   }, [center, radius, unit]);
+
+  // A trunk is solid: you walk around a pine instead of straight through it.
+  useEffect(() => {
+    const solids = trees.map((tree) => ({
+      key: `pine:${tree.key}`,
+      x: tree.x,
+      z: tree.z,
+      radius: tree.size * 0.13,
+    }));
+    registerSolids(solids);
+    return () => dropSolids(solids.map((solid) => solid.key));
+  }, [trees]);
+
 
   return (
     <>
