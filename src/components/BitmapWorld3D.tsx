@@ -2446,6 +2446,18 @@ export function BitmapWorld3D({
         eat("cheese-slice");
         return;
       }
+      if (key === "h") {
+        eat("candy");
+        return;
+      }
+      if (key === "k") {
+        eat("moon");
+        return;
+      }
+      if (key === "l") {
+        eat("potion");
+        return;
+      }
       if (key !== "b") return;
       setBuildOpen((current) => !current);
       setInventoryOpen(false);
@@ -3064,7 +3076,7 @@ export function BitmapWorld3D({
                         </div>
                         {(Object.keys(FOODS) as FoodId[]).map((id, index) => {
                           const spec = FOODS[id];
-                          const keyHint = ["G", "J", "U"][index];
+                          const keyHint = ["G", "J", "U", "H", "K", "L"][index];
                           return (
                             <button
                               key={id}

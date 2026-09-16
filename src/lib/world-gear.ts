@@ -62,7 +62,13 @@ export const GOGGLES_INSCRIPTION =
 export const PUNK_INSCRIPTION =
   "748e439d2558d567c69d97eba12329e1bd6b6dd2ee1900c738ffbf42c9a9db9fi0";
 
-export type FoodId = "ice-cream" | "ramen" | "cheese-slice";
+export type FoodId =
+  | "ice-cream"
+  | "ramen"
+  | "cheese-slice"
+  | "candy"
+  | "moon"
+  | "potion";
 
 export type FoodSpec = {
   id: FoodId;
@@ -104,6 +110,33 @@ export const FOODS: Record<FoodId, FoodSpec> = {
     bite: 32,
     eatMs: 5_000,
     buff: { label: "CHEESY", ms: 60_000, regenPerSecond: 5, power: 1.2 },
+  },
+  candy: {
+    id: "candy",
+    label: "CANDY",
+    inscription: "d9cbed1d4fec461eb123155a786c8092468123fb14688fffc1f94701b7126f5ai0",
+    fit: 0.28,
+    bite: 14,
+    eatMs: 4_000,
+    buff: { label: "SUGAR BURST", ms: 30_000, regenPerSecond: 3, power: 1.15 },
+  },
+  moon: {
+    id: "moon",
+    label: "MOON",
+    inscription: "37b64538bf925f3780fc22cdab1d0a8bd7a70df3ba74989fd9c891d70b2dcd34i0",
+    fit: 0.32,
+    bite: 24,
+    eatMs: 6_000,
+    buff: { label: "LUNAR FOCUS", ms: 75_000, regenPerSecond: 4, power: 1.25 },
+  },
+  potion: {
+    id: "potion",
+    label: "POTION",
+    inscription: "096f79d3dc7d475f60fa10b2cc285f689cf21b4762ed39735680525198fdc6d3i0",
+    fit: 0.3,
+    bite: 45,
+    eatMs: 3_500,
+    buff: { label: "FORTIFIED", ms: 120_000, regenPerSecond: 6, power: 1.35 },
   },
 };
 

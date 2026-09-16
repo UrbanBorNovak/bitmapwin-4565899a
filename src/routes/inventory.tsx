@@ -106,7 +106,7 @@ function InventoryPage() {
       <section className="mt-10 border border-border">
         <header className="border-b border-border p-5">
           <h2 className="display text-xl">FIELD RATIONS</h2>
-          <p className="label mt-2">EAT IN THE WORLD WITH U — A BITE HEALS, A MEAL BUFFS</p>
+          <p className="label mt-2">OPEN RATIONS IN THE OASIS WITH E — A BITE HEALS, A MEAL BUFFS</p>
         </header>
         <ul className="divide-y divide-border">
           {Object.values(FOODS).map((food) => {
