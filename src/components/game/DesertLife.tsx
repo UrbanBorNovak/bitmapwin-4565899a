@@ -15,6 +15,8 @@ import { MineralNodes } from "@/components/game/MineralNodes";
 import { PineTrees } from "@/components/game/PineTrees";
 import { GoldenEgg } from "@/components/game/GoldenEgg";
 import { AntelopeBody } from "@/components/game/Antelope";
+import { UnicornBody } from "@/components/game/Unicorn";
+
 import {
   registerBeasts,
   registerVeins,
