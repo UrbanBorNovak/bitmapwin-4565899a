@@ -81,6 +81,36 @@ export const LANDMARKS: LandmarkSpec[] = [
     radius: 0.7,
     yaw: -0.4,
   },
+  {
+    id: "great-bitcoin-statue",
+    label: "THE GREAT BITCOIN STATUE",
+    blurb: "The monument standing over the eastern quarter.",
+    inscription: "3d3e0ae2f1123f573d66cb0040b3b7fe114ce72a6278b47e6e910d881b2f1fc3i0",
+    cell: [17, 9],
+    span: 5.5,
+    radius: 1.4,
+    yaw: 0.6,
+  },
+  {
+    id: "bit-museum",
+    label: "THE BIT MUSEUM",
+    blurb: "Where the Oasis keeps its history.",
+    inscription: "70221b5444bb141183767975e86d7b04f144f343925bdf8a1d758eab79d33c74i0",
+    cell: [-9, -8],
+    span: 2.6,
+    radius: 2.1,
+    yaw: -1.1,
+  },
+  {
+    id: "mayor-pepe",
+    label: "MAYOR PEPE",
+    blurb: "The statue at the middle of the whole map — you can see it from anywhere.",
+    inscription: "b51734ac654a32fd201e48034476f961ab334183290555f0a9d992d78b90d76di0",
+    cell: [0, -1],
+    span: 9,
+    radius: 1.8,
+    yaw: Math.PI,
+  },
 ];
 
 /** Where the plaza sits in world units — the spawn on 0.BITMAP. */
