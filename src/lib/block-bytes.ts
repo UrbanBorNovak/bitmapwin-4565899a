@@ -62,3 +62,29 @@ export function blockSizeMapQuery(height: number) {
     retryDelay: (attempt) => Math.min(4_000, 750 * 2 ** attempt),
   });
 }
+
+export type BlockRenderSides = {
+  height: number;
+  hash: string;
+  txCount: number;
+  /** one square side per transaction on the bitmap renderer scale (ceil(log10(sats))-5) */
+  sides: number[];
+};
+
+/** The per-transaction square sides the bitmap render (and punk shapes) are cut on. */
+export async function fetchBlockRenderSides(height: number): Promise<BlockRenderSides> {
+  const res = await fetch(`/api/public/blocks/${height}?sides=1`);
+  if (!res.ok) throw new Error(`block ${height} render sides unavailable (HTTP ${res.status})`);
+  return (await res.json()) as BlockRenderSides;
+}
+
+export function blockRenderSidesQuery(height: number) {
+  return queryOptions({
+    queryKey: ["block-render-sides", height],
+    queryFn: () => fetchBlockRenderSides(height),
+    staleTime: Infinity,
+    gcTime: 30 * 60_000,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(4_000, 750 * 2 ** attempt),
+  });
+}
