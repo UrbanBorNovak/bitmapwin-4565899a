@@ -202,6 +202,24 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     spell: true,
     hint: "LEFT TO CAST A BOLT · H TO HEAL THE WHOLE PARTY",
   },
+  staff: {
+    kind: "staff",
+    label: "RUNESTONE STAFF",
+    short: "STAFF",
+    magazine: 0,
+    reloadMs: 0,
+    cooldownMs: 620,
+    reachStrides: 52,
+    splashStrides: 3.2,
+    damage: 34,
+    mining: false,
+    fireSfx: "spell",
+    cycleSfx: null,
+    cycleDelayMs: 0,
+    reloadSfx: "reload",
+    spell: true,
+    hint: "SEAT A STONE ON THE HEAD · LEFT TO CAST · H TO HEAL THE PARTY",
+  },
 };
 
 export const WEAPON_ORDER: WeaponKind[] = [
@@ -212,7 +230,9 @@ export const WEAPON_ORDER: WeaponKind[] = [
   "hammer",
   "sword",
   "wand",
+  "staff",
 ];
+
 
 
 
