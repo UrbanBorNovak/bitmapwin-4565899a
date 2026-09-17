@@ -504,7 +504,7 @@
     color-mix(in oklab, var(--color-card) 92%, transparent);
   box-shadow:
     inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 9%, transparent),
-    0 0 0 1px color-mix(in oklab, var(--color-bitcoin) 14%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--color-signal) 18%, transparent),
     0 14px 28px -18px color-mix(in oklab, var(--color-bitcoin) 30%, transparent);
 }
 
