@@ -36,7 +36,7 @@ export type Sfx =
   | "eat"
   | "smelt"
   | "splash"
-  | "horn";
+  | "horn"
   | "cannon";
 
 
