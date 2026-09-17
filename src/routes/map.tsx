@@ -43,7 +43,7 @@ function MapPage() {
   const tipHeight = tip.data ?? 0;
   const legend = (
     <>
-      <span className="label mr-1 text-[9px]">LEGEND</span>
+      <span className="hud-telemetry-title mr-1">MAP SIGNALS</span>
       <span className="legend-chip" role="listitem">
         <span className="legend-swatch bg-foreground" /> MINED · UNCLAIMED
       </span>
@@ -55,9 +55,9 @@ function MapPage() {
       </span>
       <span className="legend-chip" role="listitem">
         <span className="flex items-center gap-0.5">
-          <span className="legend-swatch" style={{ background: "hsl(190 70% 58%)" }} />
-          <span className="legend-swatch" style={{ background: "hsl(320 70% 60%)" }} />
-          <span className="legend-swatch" style={{ background: "hsl(90 70% 55%)" }} />
+          <span className="legend-swatch bg-signal" />
+          <span className="legend-swatch bg-bitcoin" />
+          <span className="legend-swatch bg-foreground" />
         </span>
         ONE COLOUR PER HOLDER
       </span>

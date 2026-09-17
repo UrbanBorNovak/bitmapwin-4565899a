@@ -101,6 +101,7 @@ import { DesertBuilds } from "@/components/game/DesertBuilds";
 import { ChunkStreamer } from "@/components/game/ChunkStreamer";
 import { PerfGovernor } from "@/components/game/PerfGovernor";
 import { OasisLoading } from "@/components/game/OasisLoading";
+import { subscribeWorldStream, worldStreamServerSnapshot, worldStreamSnapshot } from "@/lib/world-stream";
 import { FootTrail } from "@/components/game/FootTrail";
 import { VehicleGunner } from "@/components/game/VehicleGunner";
 import { VehicleDamageFx } from "@/components/game/VehicleDamageFx";
@@ -2330,7 +2331,7 @@ const WorldScene = memo(function WorldScene({
             onSnared={onBite}
           />
           <DjEvent unit={AVATAR_U} pose={pose} bitcoin={colors.bitcoin} />
-          <DesertBuilds unit={AVATAR_U} />
+          <DesertBuilds unit={AVATAR_U} pose={pose} />
           <BitmapMineCrew unit={AVATAR_U} pose={pose} heights={ownedHeights} />
 
           <FootTrail unit={AVATAR_U} pose={pose} sand={colors.bitcoin} />
@@ -3301,6 +3302,11 @@ export function BitmapWorld3D({
     target: false,
     airborne: false,
   });
+  const stream = useSyncExternalStore(
+    subscribeWorldStream,
+    worldStreamSnapshot,
+    worldStreamServerSnapshot,
+  );
   useEffect(() => {
     if (!exploring) return;
     const id = window.setInterval(() => {
@@ -4485,7 +4491,7 @@ export function BitmapWorld3D({
           <section
             aria-label={`${selected.height}.bitmap details`}
             data-no-translate
-            className="absolute right-3 top-[13rem] z-40 max-h-[calc(100%-5rem)] w-[min(340px,calc(100%-1.5rem))] overflow-y-auto border border-bitcoin bg-background/95 p-4 font-mono shadow-[8px_8px_0_var(--bitcoin)]"
+            className="hud-panel absolute right-3 top-[13rem] z-40 max-h-[calc(100%-5rem)] w-[min(340px,calc(100%-1.5rem))] overflow-y-auto p-4 font-mono"
           >
             <Button
               aria-label="Close bitmap window"
@@ -4496,14 +4502,14 @@ export function BitmapWorld3D({
             >
               <X />
             </Button>
-            <div className="label text-bitcoin">SELECTED BITMAP</div>
+            <div className="hud-telemetry-title">SELECTED BITMAP</div>
             <h2 className="display mt-2 pr-10 text-2xl">{selected.height}.BITMAP</h2>
             <dl className="mt-4 grid grid-cols-[72px_1fr] gap-x-3 gap-y-2 border-y border-border py-3 text-[11px]">
               <dt className="text-muted-foreground">CLUB</dt>
               <dd>{clubOf(selected.height).label}</dd>
               <dt className="text-muted-foreground">BLOCK</dt>
               <dd>{selected.height.toLocaleString("en-US")}</dd>
-              <dt className="text-muted-foreground">STATUS</dt>
+              <dt className="text-signal">STATUS</dt>
               <dd className="truncate">
                 {selected.height > tipHeight
                   ? "NOT MINED YET"
@@ -4511,7 +4517,7 @@ export function BitmapWorld3D({
                     ? "YOURS"
                     : (selected.owner ?? "NO DATA YET")}
               </dd>
-              <dt className="text-muted-foreground">MODEL</dt>
+              <dt className="text-signal">MODEL</dt>
               <dd>
                 {selectedModel
                   ? "ON-CHAIN GLB VISIBLE"
@@ -4548,7 +4554,10 @@ export function BitmapWorld3D({
       </div>
 
       {/* Detailed map status stays available in overhead mode only. */}
-      {!exploring ? <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border border-t-0 border-border bg-card/60 px-2 py-1.5 font-mono text-[10px] text-muted-foreground">
+      {!exploring ? <div className="hud-panel mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 font-mono text-[10px] text-muted-foreground">
+        <span className="hud-telemetry-title">WORLD STREAM</span>
+        <span className="hud-live" data-no-translate>{stream.syncing ? "SYNCING" : "STABLE"} · {stream.loaded} CHUNKS · Q{stream.queued}</span>
+        <span className="hud-divider" />
         <span>DRAG PAN · RIGHT DRAG ORBIT · SCROLL FLY · CLICK A BLOCK</span>
         <span className="text-border">|</span>
         <span data-no-translate>

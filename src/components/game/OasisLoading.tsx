@@ -46,35 +46,45 @@ export function OasisLoading() {
 
   return (
     <div
-      className={`absolute inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-background transition-opacity duration-500 ${
+      className={`oasis-loader absolute inset-0 z-50 flex items-center justify-center bg-background transition-opacity duration-500 ${
         progress >= 100 ? "opacity-0" : "opacity-100"
       }`}
       role="status"
       aria-live="polite"
     >
-      <img
-        src={oasisLogo}
-        alt="The Oasis"
-        width={816}
-        height={816}
-        className="h-28 w-28 [image-rendering:pixelated]"
-      />
-      <div className="text-center font-mono">
-        <div className="text-sm font-bold tracking-[0.35em] text-foreground" data-no-translate>
-          THE OASIS
+      <div className="hud-panel w-[min(420px,calc(100%-2rem))] px-5 py-4 font-mono">
+        <div className="flex items-center gap-4">
+          <img
+            src={oasisLogo}
+            alt="The Oasis"
+            width={816}
+            height={816}
+            className="h-16 w-16 shrink-0 [image-rendering:pixelated]"
+          />
+          <div className="min-w-0 flex-1">
+            <div className="hud-telemetry-title" data-no-translate>
+              THE OASIS // WORLD LINK
+            </div>
+            <div className="mt-1 truncate text-[10px] text-muted-foreground">
+              {LINES[line]}
+            </div>
+          </div>
         </div>
-        <div className="mt-1 text-[10px] tracking-[0.2em] text-muted-foreground">
-          {LINES[line]}
+        <div className="mt-4 flex items-center justify-between text-[9px] text-muted-foreground">
+          <span>ASSET STREAM</span>
+          <span className="hud-live" data-no-translate>{pct}%{item ? " · LINK ACTIVE" : " · READY"}</span>
         </div>
-      </div>
-      <div className="h-[6px] w-[min(280px,60vw)] border border-border bg-background">
-        <div
-          className="h-full bg-bitcoin transition-[width] duration-300"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <div className="font-mono text-[10px] text-muted-foreground" data-no-translate>
-        {pct}%{item ? " · LOADING" : ""}
+        <div className="mt-2 h-[5px] border border-border bg-background">
+          <div
+            className="h-full bg-bitcoin transition-[width] duration-300"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <div className="mt-3 grid grid-cols-3 gap-2 text-[8px] text-muted-foreground" data-no-translate>
+          <span className="border-l border-signal pl-2">CHAIN / LIVE</span>
+          <span className="border-l border-border pl-2">MODELS / LINKED</span>
+          <span className="border-l border-border pl-2">WORLD / SYNC</span>
+        </div>
       </div>
     </div>
   );

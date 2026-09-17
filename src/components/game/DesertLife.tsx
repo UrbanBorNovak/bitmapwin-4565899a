@@ -32,6 +32,7 @@ import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import {
   registerBeasts,
   registerVeins,
+  updateVeinGroup,
   subscribeWorldEntities,
   tickRespawns,
   worldEntitiesVersion,
@@ -1399,9 +1400,10 @@ const GoldVeins = memo(function GoldVeins({
   }, [center, radius, unit]);
 
   useEffect(() => {
-    registerVeins(veins);
-    return () => registerVeins([]);
+    updateVeinGroup("gold", veins);
   }, [veins]);
+
+  useEffect(() => () => registerVeins([]), []);
 
   return (
     <>
@@ -1421,7 +1423,7 @@ const GoldVeins = memo(function GoldVeins({
             vein.voxels.map((voxel, i) =>
               voxel.alive ? (
                 <mesh
-                  key={`${i}-${version}`}
+                  key={i}
                   position={[voxel.x, voxel.y, voxel.z]}
                   raycast={noRaycast}
                 >

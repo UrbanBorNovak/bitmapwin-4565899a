@@ -285,9 +285,23 @@ function Placed({ item, unit }: { item: PlacedStructure; unit: number }) {
   );
 }
 
-export const DesertBuilds = memo(function DesertBuilds({ unit }: { unit: number }) {
+export const DesertBuilds = memo(function DesertBuilds({
+  unit,
+  pose,
+}: {
+  unit: number;
+  pose: React.RefObject<{ x: number; z: number } | null>;
+}) {
   const builds = useWorldBuilds();
-  const visible = useMemo(() => builds.slice(-120), [builds]);
+  const player = pose.current;
+  const px = player?.x ?? 0;
+  const pz = player?.z ?? 0;
+  const visible = useMemo(
+    () => [...builds]
+      .sort((a, b) => Math.hypot(a.x - px, a.z - pz) - Math.hypot(b.x - px, b.z - pz))
+      .slice(0, 120),
+    [builds, px, pz],
+  );
   return (
     <>
       {visible.map((item) => (

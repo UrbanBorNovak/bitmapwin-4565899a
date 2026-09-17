@@ -12,6 +12,7 @@ import { useGLTF } from "@react-three/drei";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import {
   registerVeinGroup,
+  updateVeinGroup,
   subscribeWorldEntities,
   worldEntitiesVersion,
   type OreVein,
@@ -111,9 +112,10 @@ export const DiamondNodes = memo(function DiamondNodes({
   }, [center, radius, unit]);
 
   useEffect(() => {
-    registerVeinGroup("diamond", pockets);
-    return () => registerVeinGroup("diamond", []);
+    updateVeinGroup("diamond", pockets);
   }, [pockets]);
+
+  useEffect(() => () => registerVeinGroup("diamond", []), []);
 
   return (
     <>
@@ -123,7 +125,7 @@ export const DiamondNodes = memo(function DiamondNodes({
             {vein.voxels.map((voxel, i) =>
               voxel.alive ? (
                 <group
-                  key={`${i}-${version}`}
+                  key={i}
                   position={[voxel.x, voxel.y - voxel.size * 0.5, voxel.z]}
                 >
                   <Suspense

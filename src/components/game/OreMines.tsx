@@ -6,13 +6,14 @@
  * last chunk is out the mine is cleared from the world for good.
  */
 
-import { Suspense, memo, useEffect, useMemo, useState } from "react";
+import { Suspense, memo, useEffect, useMemo, useRef, useState } from "react";
 import { useGLTF } from "@react-three/drei";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
 import { isSea } from "@/lib/world-sea";
 import {
   registerVeinGroup,
+  updateVeinGroup,
   subscribeWorldEntities,
   worldEntitiesVersion,
   type OreVein,
@@ -109,6 +110,7 @@ export const OreMines = memo(function OreMines({
   radius: number;
 }) {
   const version = useSyncVeins();
+  const solidKeys = useRef<string[]>([]);
 
   const mines = useMemo(() => {
     const pitch = unit * 30;
@@ -134,7 +136,7 @@ export const OreMines = memo(function OreMines({
   }, [center, radius, unit]);
 
   useEffect(() => {
-    registerVeinGroup("ore-mine", mines);
+    updateVeinGroup("ore-mine", mines);
     // The mine head itself is a building: you walk and drive around it.
     const solids = mines.map((vein) => ({
       key: `ore-mine:${vein.id}`,
@@ -143,11 +145,16 @@ export const OreMines = memo(function OreMines({
       radius: unit * 1.1,
     }));
     registerSolids(solids);
-    return () => {
-      registerVeinGroup("ore-mine", []);
-      dropSolids(solids.map((solid) => solid.key));
-    };
+    const nextKeys = solids.map((solid) => solid.key);
+    const keep = new Set(nextKeys);
+    dropSolids(solidKeys.current.filter((key) => !keep.has(key)));
+    solidKeys.current = nextKeys;
   }, [mines, unit]);
+
+  useEffect(() => () => {
+    registerVeinGroup("ore-mine", []);
+    dropSolids(solidKeys.current);
+  }, []);
 
   return (
     <>
@@ -164,7 +171,7 @@ export const OreMines = memo(function OreMines({
             {vein.voxels.map((voxel, i) =>
               voxel.alive ? (
                 <group
-                  key={`${i}-${version}`}
+                  key={i}
                   position={[voxel.x, voxel.y - voxel.size * 0.5, voxel.z]}
                 >
                   <Suspense fallback={<ChunkStandIn size={voxel.size} />}>

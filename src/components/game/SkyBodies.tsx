@@ -151,7 +151,7 @@ function AuroraBorealis({ night, far }: { night: boolean; far: number }) {
         uniforms: {
           uTime: { value: 0 },
           uPhase: { value: phase },
-          uOpacity: { value: night ? 0.34 - index * 0.065 : 0.018 },
+          uOpacity: { value: 0 },
         },
         vertexShader: AURORA_VERTEX,
         fragmentShader: AURORA_FRAGMENT,
@@ -172,7 +172,14 @@ function AuroraBorealis({ night, far }: { night: boolean; far: number }) {
     });
     materials.current = meshes.map((mesh) => mesh.material as THREE.ShaderMaterial);
     return { geometry, meshes };
-  }, [far, night]);
+  }, [far]);
+
+  useEffect(() => {
+    materials.current.forEach((material, index) => {
+      const opacity = material.uniforms["uOpacity"];
+      if (opacity) opacity.value = night ? 0.34 - index * 0.065 : 0.018;
+    });
+  }, [night]);
 
   useEffect(
     () => () => {
