@@ -115,7 +115,7 @@ function PreviewWeapon({ kind }: { kind: WeaponKind }) {
   );
 }
 
-function EquippedAvatarPreview({ model, weapon, flying }: { model: string | null; weapon: WeaponKind | null; flying: boolean }) {
+export function EquippedAvatarPreview({ model, weapon, flying }: { model: string | null; weapon: WeaponKind | null; flying: boolean }) {
   const pose = useRef(createPlayerState(0, 0, 0));
   return (
     <Canvas dpr={[1, 1.5]} camera={{ position: [1.55, 1.05, 2.8], fov: 34, near: 0.01, far: 20 }}>
