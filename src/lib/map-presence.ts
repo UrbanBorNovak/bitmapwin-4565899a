@@ -442,11 +442,16 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
             ? damageActiveVehicle(
                 hit.damage,
                 { x: attacker.x, z: attacker.z },
-                {
-                  x: typeof lastCell.x === "number" ? lastCell.x : cellX(lastCell.col),
-                  z: typeof lastCell.z === "number" ? lastCell.z : cellZ(lastCell.row),
-                  y: lastCell.y,
-                },
+                typeof lastCell.y === "number"
+                  ? {
+                      x: typeof lastCell.x === "number" ? lastCell.x : cellX(lastCell.col),
+                      z: typeof lastCell.z === "number" ? lastCell.z : cellZ(lastCell.row),
+                      y: lastCell.y,
+                    }
+                  : {
+                      x: typeof lastCell.x === "number" ? lastCell.x : cellX(lastCell.col),
+                      z: typeof lastCell.z === "number" ? lastCell.z : cellZ(lastCell.row),
+                    },
               )
             : null;
         const appliedDamage = vehicleHit?.absorbed ? vehicleHit.occupantDamage : hit.damage;

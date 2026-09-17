@@ -227,11 +227,7 @@ import {
   vehicle,
   vehicleSnapshot,
 } from "@/lib/world-vehicle";
-import {
-  repairSelectedVehicle,
-  subscribeVehicleCombat,
-  vehicleCombatSnapshot,
-} from "@/lib/world-vehicle-combat";
+import { subscribeVehicleCombat, vehicleCombatSnapshot } from "@/lib/world-vehicle-combat";
 
 
 const GRID = 1_000;
@@ -3950,7 +3946,7 @@ export function BitmapWorld3D({
         ) : null}
 
         {/* Health stays out of sight until damage or death makes it important. */}
-        {(!exploring || hp < MAX_HP || respawnNote || attackTarget) ? <div
+        {(!exploring || hp < MAX_HP || driving || respawnNote || attackTarget) ? <div
           data-no-translate
           className="hud-panel pointer-events-none absolute left-3 top-[9.5rem] z-30 flex max-w-[min(340px,calc(100%-1.5rem))] flex-col gap-1 px-2 py-1.5 font-mono text-[10px] md:top-auto md:bottom-[4.5rem]"
         >
