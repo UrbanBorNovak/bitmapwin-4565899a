@@ -84,7 +84,16 @@ export type GunnerAct = {
   /** direction the crew wants to break towards while under pressure, radians */
   evadeYaw: number;
   /** short crew callout for the HUD */
+  /** 0..1 how much the crew trusts its read of the target's path */
+  confidence: number;
+  /** 0..1 how far through the settle window the sights are */
+  settled: number;
+  /** which doctrine row the crew is following */
+  doctrine: string;
+  /** how fast the turret may swing under this doctrine, rad/s */
+  swingRate: number;
   callout: string;
+
 };
 
 type Contact = {
