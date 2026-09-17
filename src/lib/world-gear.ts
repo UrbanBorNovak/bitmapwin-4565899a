@@ -10,7 +10,7 @@
 
 import { useSyncExternalStore } from "react";
 
-export type CompanionId = "none" | "robo-dog" | "goose";
+export type CompanionId = "none" | "cat" | "dog" | "goose";
 
 export type CompanionSpec = {
   id: CompanionId;
@@ -28,17 +28,25 @@ export type CompanionSpec = {
 export const COMPANIONS: CompanionSpec[] = [
   { id: "none", label: "NO COMPANION", inscription: "", fit: 0, follow: 0, hovers: false },
   {
-    id: "robo-dog",
-    label: "ROBO DOG",
-    inscription: "3eba3eadd0cf32bce7be6a21eccb9b97d9e66e9c0d779a3b1d7463a7a8432d47i0",
-    fit: 0.42,
+    id: "cat",
+    label: "CAT ON A LEASH",
+    inscription: "e1e0b7aa7d4ed669ecf5aabd7d0b0aecf290d4e93700dda66c32b8dffd0c21eai2",
+    fit: 0.38,
+    follow: 0.78,
+    hovers: false,
+  },
+  {
+    id: "dog",
+    label: "DOG ON A LEASH",
+    inscription: "e1e0b7aa7d4ed669ecf5aabd7d0b0aecf290d4e93700dda66c32b8dffd0c21eai1",
+    fit: 0.48,
     follow: 0.85,
     hovers: false,
   },
   {
     id: "goose",
-    label: "PET GOOSE",
-    inscription: "b8f812d363032f4e8acd486a8316544fa28eb156344550ee606cfd33d73a23a9i0",
+    label: "GOOSE ON A LEASH",
+    inscription: "e1e0b7aa7d4ed669ecf5aabd7d0b0aecf290d4e93700dda66c32b8dffd0c21eai0",
     fit: 0.6,
     follow: 0.9,
     hovers: true,
@@ -97,7 +105,8 @@ export type FoodId =
   | "peperoni-slice"
   | "medkit"
   | "crypto-soup"
-  | "cigarette";
+  | "cigarette"
+  | "blue-pill";
 
 
 export type FoodSpec = {
@@ -195,6 +204,15 @@ export const FOODS: Record<FoodId, FoodSpec> = {
     eatMs: 9_000,
     buff: { label: "STEADY HANDS", ms: 80_000, regenPerSecond: 1, power: 1.4 },
   },
+  "blue-pill": {
+    id: "blue-pill",
+    label: "BLUE PILL",
+    inscription: "b9573f72685eedf61ce302776b71943bfffc45e0e00036d61d32b98f88ddd234i0",
+    fit: 0.2,
+    bite: 20,
+    eatMs: 2_500,
+    buff: { label: "COOL FOCUS", ms: 60_000, regenPerSecond: 3, power: 1.18 },
+  },
 };
 
 /** The toys a visitor can carry in the right hand. */
@@ -244,6 +262,8 @@ export type GearSnapshot = {
   comic: boolean;
   /** the ring, worn on the hand */
   ring: boolean;
+  /** the inscribed Batman cowl, worn on the head */
+  batmanHead: boolean;
   /** the toy held in the right hand */
   toy: ToyId;
   /** the meal in hand, while it lasts */
@@ -261,6 +281,7 @@ let state: GearSnapshot = {
   watch: false,
   comic: false,
   ring: false,
+  batmanHead: false,
   toy: "none",
   eating: null,
   buff: null,
@@ -288,6 +309,7 @@ function hydrate() {
       watch?: boolean;
       comic?: boolean;
       ring?: boolean;
+      batmanHead?: boolean;
       toy?: ToyId;
     };
     if (parsed.companion && COMPANIONS.some((c) => c.id === parsed.companion))
@@ -298,6 +320,7 @@ function hydrate() {
     if (typeof parsed.watch === "boolean") state = { ...state, watch: parsed.watch };
     if (typeof parsed.comic === "boolean") state = { ...state, comic: parsed.comic };
     if (typeof parsed.ring === "boolean") state = { ...state, ring: parsed.ring };
+    if (typeof parsed.batmanHead === "boolean") state = { ...state, batmanHead: parsed.batmanHead };
     if (parsed.toy && TOYS.some((t) => t.id === parsed.toy)) state = { ...state, toy: parsed.toy };
   } catch {
     // a lost preference is never worth an error
@@ -316,6 +339,7 @@ function persist() {
         watch: state.watch,
         comic: state.comic,
         ring: state.ring,
+        batmanHead: state.batmanHead,
         toy: state.toy,
       }),
     );
@@ -409,6 +433,14 @@ export function toggleRing() {
   persist();
   emit();
   return state.ring;
+}
+
+export function toggleBatmanHead() {
+  hydrate();
+  state = { ...state, batmanHead: !state.batmanHead };
+  persist();
+  emit();
+  return state.batmanHead;
 }
 
 /** Pull the next toy out of the pack, or put the last one away. */

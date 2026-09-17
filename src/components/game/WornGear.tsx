@@ -33,6 +33,9 @@ import { JETPACK_HELMET_INSCRIPTION, JETPACK_INSCRIPTION } from "@/lib/world-veh
 
 import type { WeaponKind } from "./weapons";
 
+const BATMAN_HEAD_INSCRIPTION =
+  "1463005c01e59bcad08b717804e9c7351f0a802def6cb15fa5aec3513676ab15i0";
+
 /** One on-chain prop, fitted and pinned to a spot on the body. */
 function WornPiece({
   url,
@@ -174,6 +177,18 @@ export function WornGear({
             fit={0.24}
             pose={pose}
             offset={[0, 0.88, 0.07]}
+          />
+        </Suspense>
+      ) : null}
+      {showHead && gear.batmanHead && !jetpack ? (
+        <Suspense fallback={null}>
+          <WornPiece
+            url={`https://ordinals.com/content/${BATMAN_HEAD_INSCRIPTION}`}
+            unit={unit}
+            fit={0.42}
+            pose={pose}
+            offset={[0, 0.79, 0.015]}
+            seatOnBase
           />
         </Suspense>
       ) : null}

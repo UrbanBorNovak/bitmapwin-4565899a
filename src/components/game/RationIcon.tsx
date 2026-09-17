@@ -7,6 +7,7 @@ import {
   Pizza,
   Sandwich,
   Soup,
+  Pill,
   Utensils,
   type LucideIcon,
 } from "lucide-react";
@@ -22,6 +23,7 @@ const RATION_ICONS: Record<FoodId, LucideIcon> = {
   medkit: BriefcaseMedical,
   "crypto-soup": Soup,
   cigarette: Cigarette,
+  "blue-pill": Pill,
 };
 
 export function RationIcon({ id, className = "size-5" }: { id: FoodId; className?: string }) {
