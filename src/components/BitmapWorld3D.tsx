@@ -46,6 +46,7 @@ import { EggHunt } from "@/components/game/EggHunt";
 import { DesertLife } from "@/components/game/DesertLife";
 import { SeaMasses } from "@/components/game/SeaMasses";
 import { SeaIslands } from "@/components/game/SeaIslands";
+import { OnChainFlows } from "@/components/game/OnChainFlows";
 import { BitField } from "@/components/game/BitField";
 import { Landmarks } from "@/components/game/Landmarks";
 import { CastleDistrict } from "@/components/game/CastleDistrict";
@@ -2295,6 +2296,7 @@ const WorldScene = memo(function WorldScene({
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <SeaMasses unit={AVATAR_U} pose={pose} />
           <SeaIslands unit={AVATAR_U} pose={pose} />
+          <OnChainFlows unit={AVATAR_U} pose={pose} />
           <BitField unit={AVATAR_U} pose={pose} />
           <Landmarks />
           <CastleDistrict />
