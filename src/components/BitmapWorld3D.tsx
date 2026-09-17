@@ -3703,7 +3703,7 @@ export function BitmapWorld3D({
         {exploring && touchDevice ? (
           <TouchControls
             flying={driving && ride.kind === "air"}
-            shooter={Boolean(weapon) || (driving && ride.id === "tank")}
+            shooter={Boolean(weapon) || (driving && rideGun(ride.id) !== null)}
             paused={utilityOpen || inventoryOpen || buildOpen || mapOpen || chatOpen || rationsOpen}
           />
         ) : null}
