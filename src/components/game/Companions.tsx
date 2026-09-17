@@ -39,7 +39,12 @@ function Pet({
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
   const { actions } = useAnimations(gltf.animations, scene);
   const group = useRef<THREE.Group>(null);
+  const leash = useRef<THREE.Mesh>(null);
   const at = useRef({ x: 0, z: 0, yaw: 0, started: false });
+  const leashUp = useMemo(() => new THREE.Vector3(0, 1, 0), []);
+  const leashStart = useMemo(() => new THREE.Vector3(), []);
+  const leashEnd = useMemo(() => new THREE.Vector3(), []);
+  const leashDelta = useMemo(() => new THREE.Vector3(), []);
 
   const fitted = useMemo(() => {
     scene.traverse((child) => {
@@ -96,11 +101,13 @@ function Pet({
     }
     const trot = moved / Math.max(delta, 0.0001);
     if (spec.hovers) {
-      // A winged leash companion skims beside the player's boots instead of orbiting.
+      // The goose flies at knee height, climbing higher at pace while its leash
+      // remains attached to the avatar's right hand.
       const flap = Math.sin(t * 9);
+      const flight = unit * (0.34 + Math.min(0.28, trot / Math.max(unit * 12, 0.0001)));
       node.position.set(
         at.current.x,
-        player.y + unit * (0.08 + Math.max(0, flap) * 0.025),
+        player.y + flight + unit * flap * 0.08,
         at.current.z,
       );
       node.rotation.y = at.current.yaw;
@@ -119,16 +126,41 @@ function Pet({
       // Nose dips toward the sand when it stops to sniff.
       node.rotation.x = gait < 0.15 ? 0.18 + Math.sin(t * 2.2) * 0.06 : 0;
     }
+
+    const rightX = Math.cos(player.yaw);
+    const rightZ = -Math.sin(player.yaw);
+    const forwardX = Math.sin(player.yaw);
+    const forwardZ = Math.cos(player.yaw);
+    leashStart.set(
+      player.x + rightX * unit * 0.3 + forwardX * unit * 0.08,
+      player.y + unit * 0.58,
+      player.z + rightZ * unit * 0.3 + forwardZ * unit * 0.08,
+    );
+    leashEnd.set(at.current.x, node.position.y + unit * spec.fit * 0.35, at.current.z);
+    leashDelta.subVectors(leashEnd, leashStart);
+    const rope = leash.current;
+    if (rope) {
+      const ropeLength = leashDelta.length();
+      rope.position.copy(leashStart).addScaledVector(leashDelta, 0.5);
+      rope.scale.set(1, Math.max(ropeLength, unit * 0.01), 1);
+      if (ropeLength > 0.00001) rope.quaternion.setFromUnitVectors(leashUp, leashDelta.multiplyScalar(1 / ropeLength));
+    }
   });
 
   return (
-    <group ref={group}>
-      <group scale={fitted.fit}>
-        <group position={[-fitted.center.x, -fitted.minY, -fitted.center.z]}>
-          <Primitive object={scene} />
+    <>
+      <mesh ref={leash}>
+        <cylinderGeometry args={[unit * 0.012, unit * 0.012, 1, 6]} />
+        <meshStandardMaterial color="#5f3d24" roughness={0.9} />
+      </mesh>
+      <group ref={group}>
+        <group scale={fitted.fit}>
+          <group position={[-fitted.center.x, -fitted.minY, -fitted.center.z]}>
+            <Primitive object={scene} />
+          </group>
         </group>
       </group>
-    </group>
+    </>
   );
 }
 

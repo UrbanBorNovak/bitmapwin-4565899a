@@ -1508,8 +1508,8 @@ function PlayerCameraRig({
       jump: jumpRequested.current || padJump,
     };
 
-    // Aboard a ride the same keys travel it: much faster, wider turns, and no
-    // jumping. The flying ride swaps jumping for climb and sink on Space / X.
+    // Aboard a ride the same keys travel it: much faster and with wider turns.
+    // The Genesis Dog can jump; flying rides swap jumping for climb and sink.
     const ride = currentRide();
     // A boat only runs on the sea. Step off the water and the hull settles.
     const afloatOk = ride.kind !== "water" || isSea(player.x, player.z);
@@ -1527,7 +1527,7 @@ function PlayerCameraRig({
       intent.accelScale = ride.accel;
       intent.dragScale = ride.brake;
       intent.strafe = 0;
-      intent.jump = false;
+      intent.jump = ride.id === "cyberpunk-genesis-dog" ? intent.jump : false;
       // The ride's own live engine voice, fed the throttle and the real pace.
       startEngine(ride.voice ?? "ev");
       driveEngine(Math.abs(intent.forward), pace);

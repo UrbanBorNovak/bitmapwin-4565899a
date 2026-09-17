@@ -345,6 +345,11 @@ export const CreatureGroup = memo(function CreatureGroup({
         const ring = unit * (10 + index * 4);
         creature.x = player.x + Math.cos(angle) * ring;
         creature.z = player.z + Math.sin(angle) * ring;
+        if (spec.water && spec.airborne) {
+          const { sea } = nearestSea(creature.x, creature.z);
+          creature.x = sea.x + Math.cos(angle) * unit * (2 + index * 0.35);
+          creature.z = sea.z + Math.sin(angle) * unit * (2 + index * 0.35);
+        }
       }
 
       let steer = act.steer;
@@ -354,12 +359,12 @@ export const CreatureGroup = memo(function CreatureGroup({
       // it, so frogs and toads stay by the shoreline instead of crossing dunes.
       if (spec.water) {
         const { sea, distance } = nearestSea(creature.x, creature.z);
-        if (distance > unit * 2) {
+        if (distance > unit * (spec.airborne ? 0.5 : 2)) {
           // Strayed inland: turn back for the shoreline.
           const home = Math.atan2(sea.x - creature.x, sea.z - creature.z);
           const diff = ((home - creature.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
           steer = diff * Math.min(1, delta * 2.2);
-          travel = unit * spec.speed;
+          travel = unit * spec.speed * (spec.airborne ? 1.35 : 1);
         } else if (isDeepSea(creature.x, creature.z)) {
           // Waded out too far: turn back for the bank.
           const back = Math.atan2(creature.x - sea.x, creature.z - sea.z);
