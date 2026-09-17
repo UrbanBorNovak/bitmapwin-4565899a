@@ -361,12 +361,12 @@ const HolderColumns = memo(function HolderColumns({
       const col = height % GRID;
       const row = Math.floor(height / GRID);
       const isMine = owner === SELF_OWNER || mine.has(owner.toLowerCase());
-      // Held districts read as chunky voxel plots: a low cube sitting on the
-      // land with a small gap to its neighbours so the grid stays legible.
-      // Your own plots sit a little taller so they stand out from a distance.
-      const tile = AVATAR_U * (isMine ? 0.8 : 0.5);
-      dummy.position.set(worldX(col), tile / 2, worldZ(row));
-      dummy.scale.set(CELL * 0.86, tile, CELL * 0.86);
+      // Ownership is painted just above the terrain. A flat marker keeps the
+      // BITMAP readable without surrounding the player with a giant solid box.
+      const ground = districtHeight(height);
+      dummy.position.set(worldX(col), ground + AVATAR_U * 0.01, worldZ(row));
+      dummy.rotation.set(-Math.PI / 2, 0, 0);
+      dummy.scale.set(CELL * 0.86, CELL * 0.86, 1);
       dummy.updateMatrix();
       mesh.setMatrixAt(index, dummy.matrix);
       // Your own holdings are pure Bitcoin orange. Every other holder gets a
@@ -380,10 +380,10 @@ const HolderColumns = memo(function HolderColumns({
       }
       mesh.setColorAt(index, color);
 
-      // A shallow, slightly oversized additive shell lets every holder's
-      // estate glow in its own address-derived colour without hiding the grid.
-      dummy.position.set(worldX(col), tile / 2 + AVATAR_U * 0.012, worldZ(row));
-      dummy.scale.set(CELL * 0.94, tile + AVATAR_U * 0.12, CELL * 0.94);
+      // A slightly oversized flat wash carries the address colour while
+      // leaving characters, structures and the surrounding world unobscured.
+      dummy.position.set(worldX(col), ground + AVATAR_U * 0.016, worldZ(row));
+      dummy.scale.set(CELL * 0.94, CELL * 0.94, 1);
       dummy.updateMatrix();
       glow.setMatrixAt(index, dummy.matrix);
       glow.setColorAt(index, color);
@@ -415,10 +415,8 @@ const HolderColumns = memo(function HolderColumns({
         frustumCulled
         raycast={noRaycast}
       >
-        <boxGeometry args={[1, 1, 1]} />
-        {/* Unlit on purpose: a lit material turns these plots into black boxes
-            at night or under the flat map camera, hiding held land. */}
-        <meshBasicMaterial vertexColors toneMapped={false} />
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial vertexColors toneMapped={false} side={THREE.DoubleSide} />
       </instancedMesh>
       <instancedMesh
         key={`holder-glow-${entries.length}`}
@@ -428,7 +426,7 @@ const HolderColumns = memo(function HolderColumns({
         raycast={noRaycast}
         renderOrder={2}
       >
-        <boxGeometry args={[1, 1, 1]} />
+        <planeGeometry args={[1, 1]} />
         <meshBasicMaterial
           ref={glowMaterialRef}
           vertexColors
@@ -469,29 +467,30 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
     owned.forEach((height, index) => {
       const x = worldX(height % GRID);
       const z = worldZ(Math.floor(height / GRID));
-      const y = AVATAR_U * 0.55;
+      const y = districtHeight(height) + AVATAR_U * 0.02;
+      dummy.rotation.set(-Math.PI / 2, 0, 0);
 
-      // bright inner column
+      // Flat ground signals replace the old volumetric ownership columns.
       dummy.position.set(x, y, z);
-      dummy.scale.set(CELL * 1.35, AVATAR_U * 2.2, CELL * 1.35);
+      dummy.scale.set(CELL * 1.15, CELL * 1.15, 1);
       dummy.updateMatrix();
       inner.setMatrixAt(index, dummy.matrix);
 
       // soft mid aura
-      dummy.position.set(x, y, z);
-      dummy.scale.set(CELL * 2.6, AVATAR_U * 2.8, CELL * 2.6);
+      dummy.position.set(x, y + AVATAR_U * 0.006, z);
+      dummy.scale.set(CELL * 1.7, CELL * 1.7, 1);
       dummy.updateMatrix();
       aura.setMatrixAt(index, dummy.matrix);
 
       // wide outer halo
-      dummy.position.set(x, y, z);
-      dummy.scale.set(CELL * 4.2, AVATAR_U * 1.4, CELL * 4.2);
+      dummy.position.set(x, y + AVATAR_U * 0.012, z);
+      dummy.scale.set(CELL * 2.35, CELL * 2.35, 1);
       dummy.updateMatrix();
       outer.setMatrixAt(index, dummy.matrix);
 
-      // crisp wireframe cage
-      dummy.position.set(x, y + AVATAR_U * 0.25, z);
-      dummy.scale.set(CELL * 1.75, AVATAR_U * 2.8, CELL * 1.75);
+      // crisp ground outline
+      dummy.position.set(x, y + AVATAR_U * 0.018, z);
+      dummy.scale.set(CELL * 1.35, CELL * 1.35, 1);
       dummy.updateMatrix();
       wire.setMatrixAt(index, dummy.matrix);
     });
@@ -527,7 +526,7 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
         frustumCulled
         raycast={noRaycast}
       >
-        <boxGeometry args={[1, 1, 1]} />
+        <ringGeometry args={[0.44, 0.5, 4]} />
         <meshBasicMaterial
           ref={outerMat}
           color={bitcoin}
@@ -545,7 +544,7 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
         frustumCulled
         raycast={noRaycast}
       >
-        <boxGeometry args={[1, 1, 1]} />
+        <ringGeometry args={[0.4, 0.5, 4]} />
         <meshBasicMaterial
           ref={auraMat}
           color={bitcoin}
@@ -563,7 +562,7 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
         frustumCulled
         raycast={noRaycast}
       >
-        <boxGeometry args={[1, 1, 1]} />
+        <planeGeometry args={[1, 1]} />
         <meshBasicMaterial
           ref={innerMat}
           color={bitcoin}
@@ -581,13 +580,12 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
         frustumCulled
         raycast={noRaycast}
       >
-        <boxGeometry args={[1, 1, 1]} />
+        <ringGeometry args={[0.47, 0.5, 4]} />
         <meshBasicMaterial
           ref={wireMat}
           color={bitcoin}
           transparent
           opacity={0.85}
-          wireframe
           depthWrite={false}
           blending={THREE.AdditiveBlending}
         />
