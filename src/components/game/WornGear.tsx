@@ -163,6 +163,11 @@ export function WornGear({
 }) {
   const gear = useGear();
   const eatingFood = gear.eating ? FOODS[gear.eating.food] : null;
+  // The candy inscription is a horizontal Snickers bar. Keep it in the right
+  // hand instead of using the bowl/bottle pose shared by taller rations.
+  const eatingOffset: [number, number, number] = eatingFood?.id === "candy"
+    ? [0.27, 0.4, 0.16]
+    : [0.18, 0.66, 0.24];
   const toy = toySpec(gear.toy);
   return (
     <>
@@ -331,7 +336,7 @@ export function WornGear({
             unit={unit}
             fit={eatingFood.fit}
             pose={pose}
-            offset={[0.18, 0.66, 0.24]}
+            offset={eatingOffset}
             bob={0.03}
             mountOffset={mountOffset}
           />
