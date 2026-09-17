@@ -115,18 +115,26 @@ function PreviewAvatar({ model }: { model: string | null }) {
   );
 }
 
+/**
+ * The weapon on the paper doll.
+ *
+ * The world holds a piece low, near the hip, because the camera looks over your
+ * shoulder from behind. Face-on in the sheet that reads as a prop floating by
+ * the thigh, so the doll raises it to hand height and turns it broadside.
+ */
 function PreviewWeapon({ kind }: { kind: WeaponKind }) {
   const materials = useWeaponMaterials();
   return (
     <group
-      position={[kind === "sword" ? 0 : 0.3, kind === "sword" ? 0.62 : 0.26, 0.14]}
-      rotation={[kind === "trap" ? 0.5 : -0.06, Math.PI, 0]}
+      position={[kind === "sword" ? 0 : 0.27, kind === "sword" ? 0.66 : 0.52, 0.16]}
+      rotation={[kind === "trap" ? 0.5 : -0.06, Math.PI * 0.86, 0]}
       scale={kind === "sword" ? 0.7 : 0.62}
     >
       <WeaponModel kind={kind} u={1} materials={materials} flashColor="#f7931a" lash={0} />
     </group>
   );
 }
+
 
 export function EquippedAvatarPreview({ model, weapon, flying }: { model: string | null; weapon: WeaponKind | null; flying: boolean }) {
   const pose = useRef(createPlayerState(0, 0, 0));
