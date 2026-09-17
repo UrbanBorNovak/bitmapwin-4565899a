@@ -2313,6 +2313,8 @@ const WorldScene = memo(function WorldScene({
           />
           <DjEvent unit={AVATAR_U} pose={pose} bitcoin={colors.bitcoin} />
           <DesertBuilds unit={AVATAR_U} />
+          <BitmapMineCrew unit={AVATAR_U} pose={pose} heights={ownedHeights} />
+
           <FootTrail unit={AVATAR_U} pose={pose} sand={colors.bitcoin} />
           <MysteryMist unit={AVATAR_U} pose={pose} color={colors.foreground} />
           <VehicleDamageFx
