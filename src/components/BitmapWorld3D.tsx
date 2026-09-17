@@ -226,7 +226,7 @@ import { DamageVeil } from "@/components/game/DamageVeil";
 
 import type { RideSpec } from "@/lib/world-vehicle";
 import { dryLandNear, isDeepSea, isSea, nearestSea } from "@/lib/world-sea";
-import { groundY, requestTerrainAround } from "@/lib/world-terrain";
+import { groundY } from "@/lib/world-terrain";
 import { TerrainField } from "@/components/game/TerrainField";
 import TouchControls from "@/components/game/TouchControls";
 import { consumeTouchJump, isTouchDevice, takeTouchLook, touchPad } from "@/lib/touch-input";

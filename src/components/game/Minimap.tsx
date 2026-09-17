@@ -13,7 +13,7 @@ import type { PlayerState } from "@/lib/player-state";
 import { WORLD_CELL, WORLD_GRID, WORLD_UNITS } from "@/lib/player-state";
 import type { MapCursor } from "@/lib/map-presence";
 import { CHUNK_TILES, TILE, loadedChunks } from "@/lib/world-grid";
-import oasisMinimapAsset from "@/assets/oasis-minimap.jpg.asset.json";
+import { MAX_RELIEF, groundY, requestTerrainAround, terrainVersion } from "@/lib/world-terrain";
 
 /** how many districts fit across the minimap, near to far */
 const ZOOMS = [16, 48, 160] as const;
@@ -56,7 +56,11 @@ export function Minimap({
   inline = false,
 }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null);
-  const backgroundImage = useRef<HTMLImageElement | null>(null);
+  // Offscreen relief raster: the real land shape, repainted only when the view
+  // window moves or new BITMAP rows arrive — never per frame.
+  const terrain = useRef<HTMLCanvasElement | null>(null);
+  const terrainKey = useRef("");
+  const terrainAt = useRef(0);
   const [zoom, setZoom] = useState(1);
   const [internalExpanded, setInternalExpanded] = useState(false);
   // An inline scan never takes over the screen; it always shows the local view.
@@ -93,19 +97,6 @@ export function Minimap({
     () => cursors.filter((peer) => partySet.has(peer.id)),
     [cursors, partySet],
   );
-
-  useEffect(() => {
-    const image = new Image();
-    image.decoding = "async";
-    image.src = oasisMinimapAsset.url;
-    image.onload = () => {
-      backgroundImage.current = image;
-    };
-    return () => {
-      image.onload = null;
-      if (backgroundImage.current === image) backgroundImage.current = null;
-    };
-  }, []);
 
   // M toggles the full-size map.
   useEffect(() => {
@@ -156,30 +147,64 @@ export function Minimap({
       const toPx = (x: number) => (x - centerX) * scale + size / 2;
       const toPy = (z: number) => (z - centerZ) * scale + size / 2;
 
-      // Illustrated Oasis atlas. The image spans the complete million-BITMAP
-      // world, so the compact map crops the same geographic window as its
-      // live markers while the expanded map shows the full artwork.
+      // REAL LAND — the relief is sampled from the same terrain field the world
+      // is built from, so the scan shows the actual hills, basins and water of
+      // every BITMAP in view, anywhere in the world.
       ctx.fillStyle = theme.bg;
       ctx.fillRect(0, 0, size, size);
-      const atlas = backgroundImage.current;
-      if (atlas?.complete && atlas.naturalWidth > 0 && atlas.naturalHeight > 0) {
-        const left = Math.max(-WORLD_UNITS / 2, centerX - span / 2);
-        const right = Math.min(WORLD_UNITS / 2, centerX + span / 2);
-        const top = Math.max(0, centerZ - span / 2);
-        const bottom = Math.min(WORLD_UNITS, centerZ + span / 2);
-        if (right > left && bottom > top) {
-          const sx = ((left + WORLD_UNITS / 2) / WORLD_UNITS) * atlas.naturalWidth;
-          const sy = (top / WORLD_UNITS) * atlas.naturalHeight;
-          const sw = ((right - left) / WORLD_UNITS) * atlas.naturalWidth;
-          const sh = ((bottom - top) / WORLD_UNITS) * atlas.naturalHeight;
-          ctx.globalAlpha = 0.72;
-          ctx.imageSmoothingEnabled = false;
-          ctx.drawImage(atlas, sx, sy, sw, sh, toPx(left), toPy(top), (right - left) * scale, (bottom - top) * scale);
+      const left = centerX - span / 2;
+      const top = centerZ - span / 2;
+      const key = `${Math.round(left * 40)}:${Math.round(top * 40)}:${Math.round(span * 40)}:${terrainVersion()}`;
+      const now0 = performance.now();
+      if (key !== terrainKey.current && now0 - terrainAt.current > 260) {
+        terrainAt.current = now0;
+        terrainKey.current = key;
+        const R = 168;
+        const raster = terrain.current ?? document.createElement("canvas");
+        raster.width = R;
+        raster.height = R;
+        terrain.current = raster;
+        const rctx = raster.getContext("2d");
+        if (rctx) {
+          const image = rctx.createImageData(R, R);
+          const data = image.data;
+          for (let py = 0; py < R; py++) {
+            const wz = top + ((py + 0.5) / R) * span;
+            for (let px = 0; px < R; px++) {
+              const wx = left + ((px + 0.5) / R) * span;
+              const y = groundY(wx, wz);
+              const level = Math.max(-1, Math.min(1, y / MAX_RELIEF));
+              let r: number;
+              let g: number;
+              let b: number;
+              if (level < 0) {
+                // water: deeper reads colder
+                const deep = Math.min(1, -level * 1.5);
+                r = 24 + (1 - deep) * 26;
+                g = 96 + (1 - deep) * 44;
+                b = 128 + (1 - deep) * 46;
+              } else {
+                const t = Math.min(1, level * 1.25);
+                r = 96 + t * 130;
+                g = 62 + t * 112;
+                b = 34 + t * 92;
+              }
+              const o = (py * R + px) * 4;
+              data[o] = r;
+              data[o + 1] = g;
+              data[o + 2] = b;
+              data[o + 3] = 235;
+            }
+          }
+          rctx.putImageData(image, 0, 0);
         }
+        void requestTerrainAround(centerX, centerZ);
       }
-      ctx.fillStyle = theme.bg;
-      ctx.globalAlpha = 0.24;
-      ctx.fillRect(0, 0, size, size);
+      const raster = terrain.current;
+      if (raster && raster.width > 0) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(raster, 0, 0, raster.width, raster.height, 0, 0, size, size);
+      }
       ctx.globalAlpha = 1;
 
       // terrain the world has streamed in: water, rock, built plots
