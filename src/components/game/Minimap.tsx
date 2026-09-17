@@ -31,6 +31,8 @@ type Props = {
   /** Optional controlled state used by the world-first HUD. */
   expanded?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
+  /** Render the scan inside a panel (base menu) instead of floating on the HUD. */
+  inline?: boolean;
 };
 
 const colOf = (x: number) => Math.floor((x + WORLD_UNITS / 2) / WORLD_CELL);
