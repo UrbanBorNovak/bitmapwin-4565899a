@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { ClientOnly, createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Dices, Save } from "lucide-react";
 import {
@@ -108,7 +108,15 @@ function CharacterPage() {
               />
             </label>
 
-            <SkinPicker value={draft.avatarSkin} onPick={(avatarSkin) => set({ avatarSkin })} />
+            <ClientOnly
+              fallback={
+                <div className="h-[26rem] border border-border font-mono text-[10px] text-muted-foreground">
+                  <span className="block p-3">&gt; LOADING SKINS…</span>
+                </div>
+              }
+            >
+              <SkinRack value={draft.avatarSkin} onPick={(avatarSkin) => set({ avatarSkin })} />
+            </ClientOnly>
 
             <Picker label="ORIGIN" options={ORIGINS} value={draft.origin} onPick={(origin) => set({ origin })} />
             <Picker label="CALLING" options={CALLINGS} value={draft.calling} onPick={(calling) => set({ calling })} />
