@@ -32,3 +32,4 @@
 - [x] Align and animate the Genesis Dog mount, enable mounted jumping, hand-anchor leashes, and keep flying geese near water
 - [x] Give companions fly brains and keep shoes and worn items attached through movement and mounted poses
 - [x] Restore stable on-foot idle and walking poses for companions and equipped items
+- [x] Reposition the Snickers ration from above the knees into the avatar's hand
