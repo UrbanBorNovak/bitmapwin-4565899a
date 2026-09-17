@@ -5,7 +5,7 @@
  * low sun, night gets a pale moon and a slowly drifting star field. Everything
  * is parented to a dome that follows the camera, so the sky never gets closer.
  */
-import { Suspense, memo, useMemo, useRef } from "react";
+import { Suspense, memo, useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
