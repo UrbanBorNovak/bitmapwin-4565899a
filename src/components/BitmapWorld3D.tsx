@@ -141,6 +141,7 @@ import { CharacterSheet } from "@/components/game/CharacterSheet";
 import { RationIcon } from "@/components/game/RationIcon";
 import { ClanCrest } from "@/components/game/ClanCrest";
 import { ClanPanel } from "@/components/game/ClanPanel";
+import { BaseMenu } from "@/components/game/BaseMenu";
 import { clanStateQuery, type ClanBadge } from "@/lib/clans";
 
 /** the side menu shelves — one open at a time keeps the HUD short */
