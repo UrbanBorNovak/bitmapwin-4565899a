@@ -145,8 +145,9 @@ export function claimEgg(reach: number) {
   }
   addItem("relic", 1);
   const result = grantXp("hunter", EGG_XP);
+  securedAt = Date.now();
   probe = { ...probe, claimed: true };
-  note = `GOLDEN EGG FOUND · RELIC SECURED · HUNTER ${result.level}`;
+  note = `RELIC SECURED · HUNTER ${result.level} · A NEW EGG HIDES ELSEWHERE IN ${eggHoursUntilReturn()}H`;
   emit();
   return true;
 }
