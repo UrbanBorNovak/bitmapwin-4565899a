@@ -1386,6 +1386,7 @@ const GoldVeins = memo(function GoldVeins({
         if (hash(gx, gz, 60) > 0.16) continue; // gold is rare
         const x = gx * pitch + (hash(gx, gz, 64) - 0.5) * pitch * 0.7;
         const z = gz * pitch + (hash(gx, gz, 65) - 0.5) * pitch * 0.7;
+        if (isSea(x, z)) continue;
         const dx = x - center[0];
         const dz = z - center[1];
         if (dx * dx + dz * dz > radius * radius) continue;
