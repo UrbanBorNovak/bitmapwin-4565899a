@@ -7,7 +7,7 @@
  * day.
  */
 
-import { Suspense, memo, useMemo, useRef } from "react";
+import { Suspense, memo, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
@@ -15,10 +15,17 @@ import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import {
   EGG_INSCRIPTION,
   EGG_REACH,
+  eggClaimCount,
   eggClaimed,
   eggDay,
+  eggSecuredAt,
+  eggVersion,
   setEggProbe,
+  subscribeEgg,
 } from "@/lib/world-egg";
+
+/** How long the sealing flourish plays after the relic is taken, in seconds. */
+const SECURE_TIME = 1.8;
 
 const EGG_URL = contentUrl(EGG_INSCRIPTION);
 const noRaycast = () => {};
@@ -45,29 +52,65 @@ export const GoldenEgg = memo(function GoldenEgg({
 }) {
   const zone = unit * 60;
   const day = eggDay();
+  useSyncExternalStore(subscribeEgg, eggVersion, () => 0);
+  const secured = eggSecuredAt();
+  const claims = eggClaimCount();
 
   const spot = useMemo(() => {
     const player = pose.current;
     const zx = Math.floor((player?.x ?? 0) / zone);
     const zz = Math.floor((player?.z ?? 0) / zone);
-    const seed = seedOf(`${day}`);
+    // The day AND how many relics have been secured seed the hiding place, so
+    // tomorrow's egg always turns up somewhere else.
+    const seed = seedOf(`${day}:${claims}`);
     const x = (zx + hash(zx + seed, zz, 91)) * zone;
     const z = (zz + hash(zx, zz + seed, 92)) * zone;
     return { id: `${day}:${zx}:${zz}`, x, z };
     // Re-hidden when the day turns; the zone follows the hunter as they travel.
-  }, [day, pose, zone]);
+  }, [claims, day, pose, zone]);
 
   const group = useRef<THREE.Group>(null);
   const halo = useRef<THREE.MeshBasicMaterial>(null);
+  const burst = useRef<THREE.Mesh>(null);
+  const burstMat = useRef<THREE.MeshBasicMaterial>(null);
   const probe = useRef(0);
+  const [, redraw] = useState(0);
+
+  const taken = eggClaimed(spot.id);
+  // Once taken, the egg stays on stage just long enough to play the flourish.
+  const sealing = taken && secured > 0 && Date.now() - secured < SECURE_TIME * 1000;
 
   useFrame(({ clock }, delta) => {
     const player = pose.current;
+    const phase = sealing ? Math.min(1, (Date.now() - secured) / (SECURE_TIME * 1000)) : 0;
+
     if (group.current) {
-      group.current.rotation.y += delta * 0.9;
-      group.current.position.y = unit * (0.45 + Math.sin(clock.elapsedTime * 1.6) * 0.08);
+      if (sealing) {
+        // Lift, spin up and shrink away as the relic is locked in.
+        group.current.rotation.y += delta * (0.9 + phase * 16);
+        group.current.position.y = unit * (0.45 + phase * 2.6);
+        group.current.scale.setScalar(Math.max(0.001, 1 - phase * phase));
+      } else {
+        group.current.rotation.y += delta * 0.9;
+        group.current.position.y = unit * (0.45 + Math.sin(clock.elapsedTime * 1.6) * 0.08);
+      }
     }
-    if (!player) return;
+
+    if (burst.current && burstMat.current) {
+      burst.current.visible = sealing;
+      if (sealing) {
+        const ring = 0.3 + phase * 4.4;
+        burst.current.scale.setScalar(ring);
+        burst.current.position.y = unit * (0.3 + phase * 1.2);
+        burstMat.current.opacity = Math.max(0, 0.75 * (1 - phase));
+      }
+    }
+
+    if (halo.current && sealing) halo.current.opacity = Math.max(0, 0.9 * (1 - phase));
+    // The flourish has run its course: re-render so the egg leaves the scene.
+    if (sealing && phase >= 1) redraw((v) => v + 1);
+    if (!player || sealing) return;
+
     const distance = Math.hypot(player.x - spot.x, player.z - spot.z);
     if (halo.current) {
       const near = Math.max(0, 1 - distance / (unit * 14));
@@ -85,7 +128,7 @@ export const GoldenEgg = memo(function GoldenEgg({
     });
   });
 
-  if (eggClaimed(spot.id)) return null;
+  if (taken && !sealing) return null;
 
   return (
     <group position={[spot.x, 0, spot.z]}>
@@ -105,6 +148,18 @@ export const GoldenEgg = memo(function GoldenEgg({
       <mesh position={[0, unit * 0.5, 0]} raycast={noRaycast}>
         <sphereGeometry args={[unit * EGG_REACH * 0.5, 12, 10]} />
         <meshBasicMaterial ref={halo} color={GOLD} transparent opacity={0} depthWrite={false} />
+      </mesh>
+      {/* the shockwave ring that snaps out the moment the relic is secured */}
+      <mesh ref={burst} rotation={[-Math.PI / 2, 0, 0]} visible={false} raycast={noRaycast}>
+        <ringGeometry args={[unit * 0.4, unit * 0.62, 28]} />
+        <meshBasicMaterial
+          ref={burstMat}
+          color={GOLD}
+          transparent
+          opacity={0}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+        />
       </mesh>
     </group>
   );
