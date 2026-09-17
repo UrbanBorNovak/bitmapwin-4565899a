@@ -144,8 +144,9 @@ import { ClanPanel } from "@/components/game/ClanPanel";
 import { clanStateQuery, type ClanBadge } from "@/lib/clans";
 
 /** the side menu shelves — one open at a time keeps the HUD short */
-type KitTab = "action" | "kit" | "travel" | "view" | "clan";
+type KitTab = "base" | "action" | "kit" | "travel" | "view" | "clan";
 const KIT_TABS: { id: KitTab; label: string }[] = [
+  { id: "base", label: "BASE" },
   { id: "action", label: "ACTION" },
   { id: "kit", label: "KIT" },
   { id: "travel", label: "TRAVEL" },
