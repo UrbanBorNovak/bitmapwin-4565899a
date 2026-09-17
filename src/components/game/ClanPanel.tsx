@@ -9,6 +9,7 @@ import { clanStateQuery } from "@/lib/clans";
 import {
   createClanFn,
   decideClanRequestFn,
+  inviteClanMemberFn,
   requestClanJoinFn,
   updateClanCrestFn,
 } from "@/lib/clans.functions";
@@ -20,6 +21,7 @@ export function ClanPanel() {
   const [name, setName] = useState("");
   const [tag, setTag] = useState("");
   const [crest, setCrest] = useState("");
+  const [inviteUserId, setInviteUserId] = useState("");
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["clan-state"] });
   const fail = (title: string) => (error: Error) => toast(title, { description: error.message });
 
@@ -43,6 +45,11 @@ export function ClanPanel() {
     mutationFn: (clanId: string) => updateClanCrestFn({ data: { clanId, crestInscriptionId: crest } }),
     onSuccess: () => { setCrest(""); void refresh(); },
     onError: fail("CREST NOT UPDATED"),
+  });
+  const invite = useMutation({
+    mutationFn: (clanId: string) => inviteClanMemberFn({ data: { clanId, userId: inviteUserId } }),
+    onSuccess: () => { setInviteUserId(""); void refresh(); },
+    onError: fail("INVITE NOT SENT"),
   });
 
   if (!session) return <p className="font-mono text-[10px] text-muted-foreground">SIGN IN TO CREATE OR JOIN A CLAN.</p>;
@@ -73,6 +80,10 @@ export function ClanPanel() {
           <div className="flex gap-1">
             <Input value={crest} onChange={(event) => setCrest(event.target.value)} placeholder="CREST INSCRIPTION ID" className="h-8 rounded-none font-mono text-[10px]" />
             <Button variant="ghost" className="btn-term shrink-0" disabled={updateCrest.isPending || !crest.trim()} onClick={() => updateCrest.mutate(leaderClan.id)}>[ SET ]</Button>
+          </div>
+          <div className="mt-1 flex gap-1">
+            <Input value={inviteUserId} onChange={(event) => setInviteUserId(event.target.value)} placeholder="PLAYER USER ID" className="h-8 rounded-none font-mono text-[10px]" />
+            <Button variant="ghost" className="btn-term shrink-0" disabled={invite.isPending || !inviteUserId.trim()} onClick={() => invite.mutate(leaderClan.id)}>[ INVITE ]</Button>
           </div>
           {state.data?.requests.map((request) => (
             <div key={request.id} className="mt-2 flex items-center gap-1 border-t border-border pt-2">

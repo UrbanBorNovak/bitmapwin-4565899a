@@ -11,6 +11,7 @@ const createSchema = z.object({
 const clanIdSchema = z.object({ clanId: z.string().uuid() });
 const requestSchema = z.object({ requestId: z.string().uuid(), accept: z.boolean() });
 const crestSchema = z.object({ clanId: z.string().uuid(), crestInscriptionId: inscriptionSchema });
+const inviteSchema = z.object({ clanId: z.string().uuid(), userId: z.string().uuid() });
 
 async function assertImageInscription(inscriptionId: string) {
   const response = await fetch(`https://ordinals.com/content/${encodeURIComponent(inscriptionId)}`, {
@@ -132,6 +133,26 @@ export const requestClanJoinFn = createServerFn({ method: "POST" })
       role: "member",
       status: "pending",
     });
+    if (error) throw error;
+    return { ok: true };
+  });
+
+export const inviteClanMemberFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => inviteSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: clan, error: clanError } = await context.supabase
+      .from("clans")
+      .select("leader_user_id")
+      .eq("id", data.clanId)
+      .single();
+    if (clanError) throw clanError;
+    if (clan.leader_user_id !== context.userId) throw new Error("ONLY THE CLAN LEADER CAN INVITE");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("clan_members").upsert(
+      { clan_id: data.clanId, user_id: data.userId, role: "member", status: "pending" },
+      { onConflict: "clan_id,user_id" },
+    );
     if (error) throw error;
     return { ok: true };
   });
