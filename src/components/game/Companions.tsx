@@ -16,6 +16,16 @@ import { Primitive } from "@/components/game/Primitive";
 import type { PlayerState } from "@/lib/player-state";
 import { companionSpec, useGear, type CompanionSpec } from "@/lib/world-gear";
 
+const COMPANION_URLS = [
+  "e1e0b7aa7d4ed669ecf5aabd7d0b0aecf290d4e93700dda66c32b8dffd0c21eai2",
+  "e1e0b7aa7d4ed669ecf5aabd7d0b0aecf290d4e93700dda66c32b8dffd0c21eai1",
+  "e1e0b7aa7d4ed669ecf5aabd7d0b0aecf290d4e93700dda66c32b8dffd0c21eai0",
+];
+
+for (const inscription of COMPANION_URLS) {
+  useGLTF.preload(`https://ordinals.com/content/${inscription}`);
+}
+
 function Pet({
   unit,
   pose,
