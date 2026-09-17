@@ -92,8 +92,8 @@ function analyse(samples: Sample[]): DuelRead {
 
   const legs: { dt: number; dist: number; heading: number; climb: number }[] = [];
   for (let i = 1; i < samples.length; i += 1) {
-    const a = samples[i - 1];
-    const b = samples[i];
+    const a = samples[i - 1]!;
+    const b = samples[i]!;
     const dt = Math.max(0.016, (b.t - a.t) / 1000);
     const dx = b.x - a.x;
     const dz = b.z - a.z;
@@ -119,7 +119,7 @@ function analyse(samples: Sample[]): DuelRead {
   speed /= wSum;
   climb /= wSum;
 
-  const heading = legs[legs.length - 1].heading;
+  const heading = legs[legs.length - 1]!.heading;
 
   // signed turn rate, averaged over the last few legs
   let turnRate = 0;
@@ -127,8 +127,8 @@ function analyse(samples: Sample[]): DuelRead {
   let flips = 0;
   let previousTurn = 0;
   for (let i = 1; i < legs.length; i += 1) {
-    const delta = wrap(legs[i].heading - legs[i - 1].heading);
-    const rate = delta / legs[i].dt;
+    const delta = wrap(legs[i]!.heading - legs[i - 1]!.heading);
+    const rate = delta / legs[i]!.dt;
     const w = i;
     turnRate += rate * w;
     turnWeight += w;
@@ -150,7 +150,7 @@ function analyse(samples: Sample[]): DuelRead {
       ? legs.reduce((a, leg) => a + leg.dt, 0) / flips
       : 0;
 
-  const span = (samples[samples.length - 1].t - samples[0].t) / 1000;
+  const span = (samples[samples.length - 1]!.t - samples[0]!.t) / 1000;
   const sampleTrust = clamp01(samples.length / SAMPLES) * clamp01(span / 0.8);
   const confidence = clamp01(sampleTrust * (1 - jitter * 0.8));
 
