@@ -54,7 +54,7 @@ function PreviewCamera() {
   return null;
 }
 
-function PreviewAvatar({ model }: { model: string | null }) {
+function PreviewAvatar({ model, skin }: { model: string | null; skin?: string | null }) {
   const inscription = model ?? DEFAULT_AVATAR_MODEL;
   const gltf = useGLTF(`https://ordinals.com/content/${inscription}`);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
@@ -71,9 +71,10 @@ function PreviewAvatar({ model }: { model: string | null }) {
       action.stop();
     };
   }, [actions, names]);
+  // The stock rig takes a pixel skin: the chosen BITMAP skin, or the stock one.
   const texture = useTexture(
     inscription === DEFAULT_AVATAR_MODEL
-      ? `https://ordinals.com/content/${DEFAULT_AVATAR_TEXTURE}`
+      ? `https://ordinals.com/content/${skin?.trim() || DEFAULT_AVATAR_TEXTURE}`
       : TRANSPARENT_PIXEL,
   );
   const fitted = useMemo(() => {
@@ -137,7 +138,17 @@ function PreviewWeapon({ kind }: { kind: WeaponKind }) {
 }
 
 
-export function EquippedAvatarPreview({ model, weapon, flying }: { model: string | null; weapon: WeaponKind | null; flying: boolean }) {
+export function EquippedAvatarPreview({
+  model,
+  weapon,
+  flying,
+  skin = null,
+}: {
+  model: string | null;
+  weapon: WeaponKind | null;
+  flying: boolean;
+  skin?: string | null;
+}) {
   const pose = useRef(createPlayerState(0, 0, 0));
   return (
     <SafeCanvas dpr={[1, 1.5]} camera={{ position: [1.05, 0.78, 2.05], fov: 38, near: 0.01, far: 20 }}>
