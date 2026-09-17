@@ -11,6 +11,7 @@
 import type { EngineVoice } from "@/lib/world-audio";
 
 export type RideKind = "ground" | "water" | "air";
+export type TrailProfile = "paw" | "truck" | "sport" | "tread" | "wake" | "none";
 
 export type RideSpec = {
   id: string;
@@ -47,6 +48,10 @@ export type RideSpec = {
   worn?: boolean;
   /** which live engine voice runs while you travel it */
   voice?: EngineVoice;
+  /** correction from the model's inferred longest-axis forward direction */
+  modelYaw?: number;
+  /** ground or water mark made by this ride */
+  trail: TrailProfile;
 };
 
 /** on-chain GLB inscription of the Tesla Cybertruck model */
@@ -74,6 +79,7 @@ export const RIDES: RideSpec[] = [
     accel: 1.65,
     brake: 1.35,
     grip: 0.82,
+    trail: "paw",
   },
   {
     id: "cybertruck",
@@ -90,6 +96,7 @@ export const RIDES: RideSpec[] = [
     accel: 0.5,
     brake: 0.75,
     grip: 0.45,
+    trail: "truck",
   },
   {
     id: "ship",
@@ -105,6 +112,7 @@ export const RIDES: RideSpec[] = [
     accel: 0.2,
     brake: 0.16,
     grip: 0.15,
+    trail: "wake",
   },
   {
     id: "lambo",
@@ -120,6 +128,7 @@ export const RIDES: RideSpec[] = [
     accel: 1.55,
     brake: 1.7,
     grip: 0.75,
+    trail: "sport",
   },
   {
     id: "model-s",
@@ -135,6 +144,7 @@ export const RIDES: RideSpec[] = [
     accel: 1.95,
     brake: 1.2,
     grip: 0.6,
+    trail: "sport",
   },
   {
     id: "testarossa",
@@ -152,6 +162,7 @@ export const RIDES: RideSpec[] = [
     accel: 1.3,
     brake: 1.45,
     grip: 0.8,
+    trail: "sport",
   },
   {
     id: "adamantine-yacht",
@@ -167,6 +178,7 @@ export const RIDES: RideSpec[] = [
     accel: 0.28,
     brake: 0.2,
     grip: 0.12,
+    trail: "wake",
   },
   {
     id: "bitsaucer",
@@ -184,6 +196,7 @@ export const RIDES: RideSpec[] = [
     accel: 0.85,
     brake: 0.5,
     grip: 0.25,
+    trail: "none",
   },
   {
     id: "tank",
@@ -200,6 +213,8 @@ export const RIDES: RideSpec[] = [
     accel: 0.32,
     brake: 0.3,
     grip: 0.95,
+    modelYaw: Math.PI,
+    trail: "tread",
   },
   {
     id: "spacecraft",
@@ -217,6 +232,7 @@ export const RIDES: RideSpec[] = [
     accel: 0.6,
     brake: 0.35,
     grip: 0.2,
+    trail: "none",
   },
   {
     id: "silver-saucer",
@@ -234,6 +250,7 @@ export const RIDES: RideSpec[] = [
     accel: 1.1,
     brake: 0.7,
     grip: 0.22,
+    trail: "none",
   },
   {
     id: "jetpack",
@@ -254,6 +271,7 @@ export const RIDES: RideSpec[] = [
     brake: 1.2,
     grip: 0.4,
     worn: true,
+    trail: "none",
   },
 ];
 

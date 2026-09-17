@@ -36,7 +36,8 @@ export type Sfx =
   | "eat"
   | "smelt"
   | "splash"
-  | "horn";
+  | "horn"
+  | "cannon";
 
 
 const MUTE_KEY = "bitmapwin:sound-muted";
@@ -756,6 +757,12 @@ export function playSfx(name: Sfx) {
     case "horn":
       tone(context, out, { from: 300 * vary, to: 296 * vary, seconds: 0.5, gain: 0.18, type: "square", send: { node: verb, gain: 0.5 } });
       tone(context, out, { from: 402 * vary, to: 398 * vary, seconds: 0.5, gain: 0.14, type: "sawtooth" });
+      break;
+    case "cannon":
+      // Heavy breech blast: sharp crack, deep pressure wave, long desert tail.
+      burst(context, out, { seconds: 0.1, gain: 0.72, type: "highpass", frequency: 1800 * vary, q: 0.7, curve: 2.8, send: { node: verb, gain: 0.75 } });
+      burst(context, out, { seconds: 0.55, gain: 0.8, type: "lowpass", frequency: 180, q: 0.7, delay: 0.015, send: { node: verb, gain: 0.9 } });
+      tone(context, out, { from: 92, to: 28, seconds: 0.7, gain: 0.34, type: "sine", delay: 0.01, send: { node: verb, gain: 0.8 } });
       break;
   }
 }

@@ -13,7 +13,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { PlayerState } from "@/lib/player-state";
 import { MOVE } from "@/lib/player-state";
-import { currentRide, vehicle } from "@/lib/world-vehicle";
+import { currentRide, vehicle, type TrailProfile } from "@/lib/world-vehicle";
 
 const MAX_PRINTS = 96;
 const MAX_DUST = 120;
@@ -24,7 +24,7 @@ const DUST_LIFE = 0.85;
 /** a boat's foam wake lingers on the water longer than dust hangs in air */
 const FOAM_LIFE = 2.2;
 
-type Print = { x: number; z: number; yaw: number; age: number; live: boolean; tire: boolean };
+type Print = { x: number; z: number; yaw: number; age: number; live: boolean; profile: TrailProfile | "boot" };
 type Mote = {
   x: number;
   y: number;
@@ -52,7 +52,7 @@ export function FootTrail({
   const dust = useRef<THREE.InstancedMesh>(null);
 
   const state = useRef({
-    prints: Array.from({ length: MAX_PRINTS }, (): Print => ({ x: 0, z: 0, yaw: 0, age: 0, live: false, tire: false })),
+    prints: Array.from({ length: MAX_PRINTS }, (): Print => ({ x: 0, z: 0, yaw: 0, age: 0, live: false, profile: "boot" })),
     motes: Array.from({ length: MAX_DUST }, (): Mote => ({
       x: 0,
       y: 0,
@@ -107,20 +107,25 @@ export function FootTrail({
 
     /* ---- marks: boot prints on foot, twin tire tracks while driving ---- */
     const driving = vehicle.driving;
-    const kind = driving ? currentRide().kind : "ground";
+    const activeRide = currentRide();
+    const kind = driving ? activeRide.kind : "ground";
+    const profile: TrailProfile | "boot" = driving ? activeRide.trail : "boot";
     // Boats leave a foam wake, not tire tracks; flying rides mark nothing.
     const wheels = driving && kind === "ground";
     const boat = driving && kind === "water";
     if (grounded && travelled > 0 && (wheels || !driving)) {
       store.strideCarry += travelled;
-      const gap = wheels ? unit * 0.34 : unit * (running ? 1.5 : 1.05);
+      const gap = wheels
+        ? unit * (profile === "tread" ? 0.2 : profile === "paw" ? 0.72 : profile === "sport" ? 0.4 : 0.34)
+        : unit * (running ? 1.5 : 1.05);
       while (store.strideCarry >= gap) {
         store.strideCarry -= gap;
         if (wheels) {
           // both wheels lay a segment at once, spaced to the truck's track width
           for (const side of [1, -1]) {
-            const offX = Math.cos(player.yaw) * side * unit * 0.42;
-            const offZ = -Math.sin(player.yaw) * side * unit * 0.42;
+            const halfWidth = profile === "tread" ? 0.68 : profile === "truck" ? 0.56 : profile === "sport" ? 0.46 : 0.3;
+            const offX = Math.cos(player.yaw) * side * unit * halfWidth;
+            const offZ = -Math.sin(player.yaw) * side * unit * halfWidth;
             const slot = store.prints[store.printCursor % MAX_PRINTS]!;
             store.printCursor++;
             slot.x = player.x + offX;
@@ -128,7 +133,7 @@ export function FootTrail({
             slot.yaw = player.yaw;
             slot.age = 0;
             slot.live = true;
-            slot.tire = true;
+            slot.profile = profile;
           }
           continue;
         }
@@ -143,7 +148,7 @@ export function FootTrail({
         slot.yaw = player.yaw;
         slot.age = 0;
         slot.live = true;
-        slot.tire = false;
+        slot.profile = "boot";
       }
     }
 
@@ -219,11 +224,11 @@ export function FootTrail({
         const thickness = unit * 0.012;
         scratch.pos.set(slot.x, thickness * 0.5, slot.z);
         const shrink = 0.6 + fade * 0.4;
-        if (slot.tire) {
-          scratch.scale.set(unit * 0.1 * shrink, thickness, unit * 0.4 * shrink);
-        } else {
-          scratch.scale.set(unit * 0.16 * shrink, thickness, unit * 0.26 * shrink);
-        }
+        if (slot.profile === "tread") scratch.scale.set(unit * 0.26 * shrink, thickness, unit * 0.34 * shrink);
+        else if (slot.profile === "truck") scratch.scale.set(unit * 0.13 * shrink, thickness, unit * 0.44 * shrink);
+        else if (slot.profile === "sport") scratch.scale.set(unit * 0.085 * shrink, thickness, unit * 0.34 * shrink);
+        else if (slot.profile === "paw") scratch.scale.set(unit * 0.18 * shrink, thickness, unit * 0.2 * shrink);
+        else scratch.scale.set(unit * 0.16 * shrink, thickness, unit * 0.26 * shrink);
 
         scratch.matrix.compose(scratch.pos, scratch.quat, scratch.scale);
         printMesh.setMatrixAt(i, scratch.matrix);
