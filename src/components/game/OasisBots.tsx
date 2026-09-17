@@ -10,7 +10,8 @@
  */
 
 import { Suspense, memo, useEffect, useMemo, useRef, useState } from "react";
-import { Html, useGLTF } from "@react-three/drei";
+import { useGLTF } from "@react-three/drei";
+import { SafeHtml } from "@/components/game/SafeHtml";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
@@ -355,7 +356,7 @@ export function OasisBots({
         >
           <BotBody unit={unit} size={bot.size} role={bot.role} />
           {chatter[bot.id] ? (
-            <Html
+            <SafeHtml
               center
               position={[0, unit * bot.size * 1.35, 0]}
               distanceFactor={0.02}
@@ -370,7 +371,7 @@ export function OasisBots({
                   {bot.name} · {BOT_ROLES[bot.role].label}
                 </span>
               </div>
-            </Html>
+            </SafeHtml>
           ) : null}
         </group>
       ))}
