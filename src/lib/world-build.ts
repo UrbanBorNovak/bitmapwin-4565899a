@@ -22,6 +22,7 @@ import {
 } from "./world-structures.functions";
 import { growthOf, terraformAt } from "./world-terraform";
 import { markChunkLoad } from "./world-perf";
+import { isSea } from "./world-sea";
 
 export type StructureId =
   | "camp-fire"
@@ -235,7 +236,9 @@ function stampTiles(items: PlacedStructure[]) {
 }
 
 function recompute(notify = true) {
-  view = [...shared.values(), ...localBuilds].slice(-MAX_BUILDS);
+  view = [...shared.values(), ...localBuilds]
+    .filter((item) => !isSea(item.x, item.z))
+    .slice(-MAX_BUILDS);
   stampTiles(view);
   // Hydration happens during render, so it must never call listeners.
   if (notify) for (const listener of listeners) listener();
@@ -467,6 +470,8 @@ export function build(id: StructureId, x: number, z: number, yaw = 0) {
     );
     if (taken) return null;
   }
+  // Water is reserved for ships, yachts, islands and goose families only.
+  if (isSea(x, z)) return null;
   // Nothing is built inside something else — the ground has to be clear first.
   if (!recipe.walkable && blockedAt(x, z, footprintOf(id) * 0.6)) return null;
   if (!spendItems(recipe.cost)) return null;
@@ -501,7 +506,6 @@ export const CAMP_RECIPE: StructureRecipe = {
 
 export function buildCamp(x: number, z: number, yaw = 0, unit = 1) {
   hydrate();
-  if (!spendItems(CAMP_RECIPE.cost)) return null;
   const spread = unit * 2.4;
 
   const layout: { id: StructureId; dx: number; dz: number }[] = [
@@ -512,18 +516,24 @@ export function buildCamp(x: number, z: number, yaw = 0, unit = 1) {
   const stamp = Date.now();
   const cos = Math.cos(yaw);
   const sin = Math.sin(yaw);
-  const placed = layout.map(
-    (part, index) =>
-      ({
+  const placed = layout.map((part, index) => {
+    const px = x + part.dx * cos - part.dz * sin;
+    const pz = z + part.dx * sin + part.dz * cos;
+    return {
         key: `camp-${stamp}-${index}`,
         id: part.id,
-        x: x + part.dx * cos - part.dz * sin,
-        z: z + part.dx * sin + part.dz * cos,
+        x: px,
+        z: pz,
         yaw,
         at: stamp,
         local: true,
-      }) satisfies PlacedStructure,
+      } satisfies PlacedStructure;
+  });
+  const blocked = placed.some(
+    (item) => isSea(item.x, item.z) || blockedAt(item.x, item.z, footprintOf(item.id) * 0.6),
   );
+  if (blocked) return null;
+  if (!spendItems(CAMP_RECIPE.cost)) return null;
   localBuilds = [...localBuilds, ...placed];
   persistLocal();
   recompute();

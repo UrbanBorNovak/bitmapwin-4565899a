@@ -18,6 +18,7 @@ import type { PlayerState } from "@/lib/player-state";
 import { MOVE } from "@/lib/player-state";
 import type { RideSpec } from "@/lib/world-vehicle";
 import { vehicle } from "@/lib/world-vehicle";
+import { isSea } from "@/lib/world-sea";
 
 export function RideModel({
   unit,
@@ -114,6 +115,7 @@ export function RideModel({
       node.rotation.z = THREE.MathUtils.clamp(lean.current, -limit, limit);
       if (ride.kind === "water") node.rotation.x = Math.cos(clock.elapsedTime * 1.3) * 0.03;
     } else {
+      node.visible = ride.kind === "water" || !isSea(vehicle.x, vehicle.z);
       node.position.set(vehicle.x, vehicle.y + swell, vehicle.z);
       node.rotation.set(0, vehicle.yaw, 0);
     }

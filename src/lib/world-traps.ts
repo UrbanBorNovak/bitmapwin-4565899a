@@ -10,6 +10,8 @@
  * all read the same objects.
  */
 
+import { isSea } from "./world-sea";
+
 /** on-chain GLB inscription of the iron trap */
 export const TRAP_INSCRIPTION =
   "cd4b95f67cd2de6f4b523fe05260fdfaca73fa6268fa9efb0985748d4caf84a3i0";
@@ -73,6 +75,8 @@ export function ownTrapCount(ownerId: string) {
 export function placeTrap(ownerId: string, x: number, z: number, y = 0) {
   const now = performance.now();
   prune(now);
+  // Keep the water clean: traps are sand equipment, never sea models.
+  if (isSea(x, z)) return null;
   if (ownTrapCount(ownerId) >= TRAP_LIMIT) return null;
   const trap: TrapEntity = {
     id: nextId++,
