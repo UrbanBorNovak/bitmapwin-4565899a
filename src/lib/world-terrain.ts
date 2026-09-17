@@ -26,17 +26,17 @@ import { BLOCK_STATS_MAX_HEIGHT, fetchBlockStatsMany } from "./block-stats";
 import { seaDepthAt } from "./world-sea";
 
 /** Spacing of the broad-relief lattice, in BITMAPs. */
-const MACRO = 6;
+const MACRO = 10;
 /**
  * Tallest broad highland, in world units. Kept to a handful of avatar strides:
  * high enough to read as real hills you climb, low enough that scenery standing
  * on the base plane still sits on the land.
  */
-const MACRO_AMP = STRIDE * 14;
+const MACRO_AMP = STRIDE * 2.2;
 /** Extra rise a single busy BITMAP adds. */
-const MICRO_AMP = STRIDE * 4;
+const MICRO_AMP = STRIDE * 0.8;
 /** How deep the sea floor drops below the water line. */
-const SEA_DROP = STRIDE * 6;
+const SEA_DROP = STRIDE * 1.6;
 /** Transaction count that counts as a fully busy block. */
 const BUSY_TX = 3200;
 
