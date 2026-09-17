@@ -1195,12 +1195,10 @@ const VisitorBeacons = memo(function VisitorBeacons({ cursors }: { cursors: MapC
 const SelfBeacon = memo(function SelfBeacon({
   pose,
   bitcoin,
-  clan,
   wide,
 }: {
   pose: React.RefObject<SelfPose>;
   bitcoin: string;
-  clan: ClanBadge | null;
   wide: boolean;
 }) {
   const group = useRef<THREE.Group>(null);
@@ -1288,6 +1286,7 @@ const SelfAvatar = memo(function SelfAvatar({
   lastDamage,
   weapon,
   bitcoin,
+  clan,
 }: {
   pose: React.RefObject<SelfPose>;
   color: string;
@@ -1299,6 +1298,7 @@ const SelfAvatar = memo(function SelfAvatar({
   lastDamage: number;
   weapon: WeaponKind | null;
   bitcoin: string;
+  clan: ClanBadge | null;
 }) {
   const group = useRef<THREE.Group>(null);
   const mounted = useRef(false);
