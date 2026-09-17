@@ -19,6 +19,28 @@ export type InscribedPart = { geometry: THREE.BufferGeometry; material: THREE.Ma
 export const contentUrl = (inscription: string) =>
   `https://ordinals.com/content/${inscription}`;
 
+const STONE_FALLBACK = new THREE.Color("#8d8578");
+
+/**
+ * glTF materials default to metalness 1; with no environment map in the world
+ * they render as solid black blocks. Clone each material once, strip the
+ * metal, and lift near-black untextured surfaces to a readable stone tone.
+ */
+function softenMaterial(source: THREE.Material): THREE.Material {
+  const material = source.clone() as THREE.MeshStandardMaterial;
+  if ("metalness" in material) material.metalness = 0;
+  if ("roughness" in material) material.roughness = Math.max(material.roughness ?? 1, 0.8);
+  if ("envMapIntensity" in material) material.envMapIntensity = 0;
+  const color = (material as THREE.MeshStandardMaterial).color;
+  const hasMap = Boolean((material as THREE.MeshStandardMaterial).map);
+  if (color && !hasMap) {
+    const luminance = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+    if (luminance < 0.02) color.copy(STONE_FALLBACK);
+  }
+  material.needsUpdate = true;
+  return material;
+}
+
 /** Flatten an inscribed model into reusable, unit-sized geometry. */
 export function useInscribedParts(url: string): InscribedPart[] {
   const gltf = useGLTF(url);
@@ -30,7 +52,8 @@ export function useInscribedParts(url: string): InscribedPart[] {
       if (!mesh.isMesh || !mesh.geometry) return;
       const geometry = mesh.geometry.clone();
       geometry.applyMatrix4(mesh.matrixWorld);
-      const material = Array.isArray(mesh.material) ? mesh.material[0]! : mesh.material;
+      const source = Array.isArray(mesh.material) ? mesh.material[0]! : mesh.material;
+      const material = softenMaterial(source);
       parts.push({ geometry, material });
     });
     const bounds = new THREE.Box3();
