@@ -151,6 +151,10 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
       setCursors(Array.from(peers.values()));
     };
 
+    // Tracks whether the realtime socket has actually joined; until it has,
+    // sends go out over the slow REST fallback and must be rationed.
+    let joined = false;
+
     const channel = supabase
       .channel(CHANNEL, { config: { broadcast: { self: false } } })
       .on("broadcast", { event: "cursor" }, ({ payload }) => {
@@ -287,13 +291,18 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
       })
 
 
-      .subscribe();
+      .subscribe((status) => {
+        joined = status === "SUBSCRIBED";
+      });
 
     let last = 0;
     let lastCell: PoseReport | null = null;
     let pending: PoseReport | null = null;
     let timer: ReturnType<typeof setTimeout> | null = null;
     const push = (cell: PoseReport | null) => {
+      // Before the socket joins, every send falls back to a slow REST call, so
+      // position updates are thinned right down instead of flooding it.
+      if (!joined && cell && Date.now() - last < 2_000) return;
       void channel.send({
         type: "broadcast",
         event: "cursor",
@@ -303,6 +312,7 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
       });
       last = Date.now();
     };
+
     // Avatars stay spawned in the world: re-broadcast the last position on a
     // heartbeat so peers never see us expire while the tab is open.
     const heartbeat = setInterval(() => {
