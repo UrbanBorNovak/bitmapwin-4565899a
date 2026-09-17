@@ -22,7 +22,11 @@
  * threshold you can read and tune here.
  */
 
+import { createDuelBook, predictPath, type DuelBook } from "./duel-model";
+import { readPolicy } from "./gunner-policy";
+
 export type GunnerTargetKind = "beast" | "peer";
+
 
 export type GunnerTarget = {
   id: string;
