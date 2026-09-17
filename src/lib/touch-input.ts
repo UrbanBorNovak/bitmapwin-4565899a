@@ -19,6 +19,10 @@ export type TouchPad = {
   jump: boolean;
   /** climb / sink while flying a ride: 1 up, -1 down */
   fly: number;
+  /** held pedal aboard a ride: 1 accelerate, -1 reverse, 0 coast */
+  throttle: number;
+  /** true while a ride's boost pedal is held */
+  boost: boolean;
   /** true while any on-screen pad is being held */
   active: boolean;
 };
@@ -31,6 +35,8 @@ export const touchPad: TouchPad = {
   lookY: 0,
   jump: false,
   fly: 0,
+  throttle: 0,
+  boost: false,
   active: false,
 };
 
@@ -58,6 +64,8 @@ export function resetTouchPad() {
   touchPad.lookY = 0;
   touchPad.jump = false;
   touchPad.fly = 0;
+  touchPad.throttle = 0;
+  touchPad.boost = false;
   touchPad.active = false;
 }
 

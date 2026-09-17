@@ -1554,7 +1554,8 @@ function PlayerCameraRig({
       forward: clampAxis(
         (pressed.has("w") || pressed.has("arrowup") ? 1 : 0) -
           (pressed.has("s") || pressed.has("arrowdown") ? 1 : 0) +
-          touchPad.forward,
+          touchPad.forward +
+          touchPad.throttle,
       ),
       // Modern first person uses familiar WASD strafing. Third person and rides
       // keep body steering, while Q/E remain available as sidestep keys.
@@ -3810,6 +3811,9 @@ export function BitmapWorld3D({
         {exploring && touchDevice ? (
           <TouchControls
             flying={driving && ride.kind === "air"}
+            driving={driving}
+            rideLabel={ride.label}
+            onExitRide={toggleTruck}
             shooter={Boolean(weapon) || (driving && rideGun(ride.id) !== null)}
             paused={utilityOpen || inventoryOpen || buildOpen || mapOpen || chatOpen || rationsOpen}
           />
