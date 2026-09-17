@@ -1186,7 +1186,9 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
     current.yaw = damp(current.yaw, target.yaw, 9, delta, true);
     const t = clock.elapsedTime + phase;
     if (group.current) {
-      group.current.position.set(current.x, current.y, current.z);
+      // Peers stand on the same real terrain you do: their broadcast y is height
+      // above the ground, so the land under them is added here.
+      group.current.position.set(current.x, current.y + groundY(current.x, current.z), current.z);
       group.current.rotation.y = current.yaw;
     }
     if (body.current) {
@@ -1282,7 +1284,7 @@ const SelfBeacon = memo(function SelfBeacon({
     if (!current || !group.current) return;
     // The marker belongs to the terrain under the player. Using world zero
     // makes it cut through the avatar whenever a BITMAP sits above the base plane.
-    group.current.position.set(current.x, current.y, current.z);
+    group.current.position.set(current.x, current.y + groundY(current.x, current.z), current.z);
     if (pulse.current) {
       const beat = 1 + Math.sin(state.clock.elapsedTime * 2.4) * (wide ? 0.28 : 0.14);
       pulse.current.scale.setScalar(beat);
@@ -1392,7 +1394,11 @@ const SelfAvatar = memo(function SelfAvatar({
   useFrame(() => {
     const current = pose.current;
     if (!current || !group.current) return;
-    group.current.position.set(current.x, current.y + mountOffset, current.z);
+    group.current.position.set(
+      current.x,
+      current.y + mountOffset + groundY(current.x, current.z),
+      current.z,
+    );
     group.current.rotation.y = current.yaw;
     // Flight pitches the whole body forward, like leaning into the wind.
     group.current.rotation.x = current.lean ?? 0;
@@ -1693,6 +1699,9 @@ function PlayerCameraRig({
         : 0;
     player.lean = damp(player.lean ?? 0, flyLean, 4, delta);
     const dip = land.current * AVATAR_U * (mode === "first" ? 0.28 : 0.34);
+    // The camera rides the real land: player.y is height above the ground, the
+    // terrain under the feet is added on top of it.
+    const ground = groundY(player.x, player.z);
 
     if (mode === "first" && driving) {
       // Hood cam: sits just ahead of the nose so the road is wide open instead
