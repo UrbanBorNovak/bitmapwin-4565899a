@@ -21,7 +21,8 @@ import {
 import { Suspense } from "react";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useCharacter } from "@/lib/character";
 import { ArrowUpRight, Crosshair, Eye, Map as MapIcon, Menu, MessageSquare, Orbit, X } from "lucide-react";
 import * as THREE from "three";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
