@@ -79,26 +79,26 @@ export function PriceChart({
             <AreaChart data={points} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id="priceFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(var(--bitcoin))" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="hsl(var(--bitcoin))" stopOpacity={0} />
+                  <stop offset="0%" stopColor="var(--color-bitcoin)" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="var(--color-bitcoin)" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis
                 dataKey="label"
                 tick={{ fontSize: 9, fontFamily: "monospace" }}
-                stroke="hsl(var(--border))"
+                stroke="var(--color-border)"
                 interval="preserveStartEnd"
               />
               <YAxis
                 width={34}
                 tick={{ fontSize: 9, fontFamily: "monospace" }}
-                stroke="hsl(var(--border))"
+                stroke="var(--color-border)"
                 domain={["dataMin - 2", "dataMax + 2"]}
               />
               <Tooltip
                 contentStyle={{
-                  background: "hsl(var(--background))",
-                  border: "1px solid hsl(var(--border))",
+                  background: "var(--color-background)",
+                  border: "1px solid var(--color-border)",
                   fontFamily: "monospace",
                   fontSize: 10,
                 }}
@@ -107,7 +107,7 @@ export function PriceChart({
               <Area
                 type="monotone"
                 dataKey="price"
-                stroke="hsl(var(--bitcoin))"
+                stroke="var(--color-bitcoin)"
                 strokeWidth={1.5}
                 fill="url(#priceFill)"
                 dot={false}
