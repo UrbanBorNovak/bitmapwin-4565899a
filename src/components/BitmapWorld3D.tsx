@@ -125,14 +125,18 @@ import {
 import { WeaponBelt } from "@/components/game/WeaponBelt";
 import { CharacterSheet } from "@/components/game/CharacterSheet";
 import { RationIcon } from "@/components/game/RationIcon";
+import { ClanCrest } from "@/components/game/ClanCrest";
+import { ClanPanel } from "@/components/game/ClanPanel";
+import { clanStateQuery, type ClanBadge } from "@/lib/clans";
 
 /** the side menu shelves — one open at a time keeps the HUD short */
-type KitTab = "action" | "kit" | "travel" | "view";
+type KitTab = "action" | "kit" | "travel" | "view" | "clan";
 const KIT_TABS: { id: KitTab; label: string }[] = [
   { id: "action", label: "ACTION" },
   { id: "kit", label: "KIT" },
   { id: "travel", label: "TRAVEL" },
   { id: "view", label: "INVENTORY" },
+  { id: "clan", label: "CLAN" },
 ];
 import {
   driveEngine,
@@ -1041,6 +1045,7 @@ function AvatarLabel({
   hp,
   hitAt,
   lastDamage,
+  clan,
 }: {
   handle: string;
   say: string | null;
@@ -1048,6 +1053,7 @@ function AvatarLabel({
   hp: number;
   hitAt: number;
   lastDamage: number;
+  clan: ClanBadge | null;
 }) {
   const hurt = Date.now() - hitAt < 400;
   return (
@@ -1071,11 +1077,9 @@ function AvatarLabel({
         {hurt ? (
           <span className="font-mono text-[13px] font-bold text-bitcoin">-{lastDamage}</span>
         ) : null}
-        <span
-          className="whitespace-nowrap border bg-background/90 px-2 py-[3px] font-mono text-[12px] font-bold tracking-wide text-foreground shadow-md"
-          style={{ borderColor: hurt ? "var(--bitcoin)" : "var(--color-border)" }}
-        >
-          {hp <= 0 ? `${handle} · DOWN` : handle}
+        <span className="flex items-center gap-1.5 whitespace-nowrap border bg-background/90 px-2 py-[3px] font-mono text-[12px] font-bold tracking-wide text-foreground shadow-md" style={{ borderColor: hurt ? "var(--bitcoin)" : "var(--color-border)" }}>
+          {clan ? <ClanCrest clan={clan} className="size-5" /> : null}
+          <span>{hp <= 0 ? `${handle} · DOWN` : handle}</span>
         </span>
       </div>
     </Html>
@@ -1172,6 +1176,7 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
         hp={cursor.hp}
         hitAt={cursor.hitAt}
         lastDamage={cursor.lastDamage}
+        clan={cursor.clan}
       />
     </group>
   );
@@ -1281,6 +1286,7 @@ const SelfAvatar = memo(function SelfAvatar({
   lastDamage,
   weapon,
   bitcoin,
+  clan,
 }: {
   pose: React.RefObject<SelfPose>;
   color: string;
@@ -1292,6 +1298,7 @@ const SelfAvatar = memo(function SelfAvatar({
   lastDamage: number;
   weapon: WeaponKind | null;
   bitcoin: string;
+  clan: ClanBadge | null;
 }) {
   const group = useRef<THREE.Group>(null);
   const mounted = useRef(false);
@@ -1329,6 +1336,7 @@ const SelfAvatar = memo(function SelfAvatar({
         hp={hp}
         hitAt={hitAt}
         lastDamage={lastDamage}
+        clan={clan}
       />
     </group>
   );
@@ -2102,6 +2110,7 @@ const WorldScene = memo(function WorldScene({
     hp: number;
     hitAt: number;
     lastDamage: number;
+    clan: ClanBadge | null;
   };
   deployments: RuntimeDeployment[];
   onRunning: (running: RunningExtender[]) => void;
@@ -2292,6 +2301,7 @@ const WorldScene = memo(function WorldScene({
           lastDamage={self.lastDamage}
           weapon={weapon}
           bitcoin={colors.bitcoin}
+          clan={self.clan}
         />
       ) : null}
       <mesh
@@ -2340,6 +2350,13 @@ export function BitmapWorld3D({
   const wallet = useWalletSession();
   const { session } = useAuthSession();
   const links = useQuery(myWalletLinksQuery(Boolean(session)));
+  const clans = useQuery(clanStateQuery(Boolean(session)));
+  const clan = useMemo<ClanBadge | null>(() => {
+    const membership = clans.data?.membership;
+    return membership?.status === "accepted"
+      ? { tag: membership.tag, crestInscriptionId: membership.crestInscriptionId }
+      : null;
+  }, [clans.data?.membership]);
   const [colors, setColors] = useState<WorldColors | null>(null);
   const [window_, setWindow] = useState<OwnerWindow | null>(null);
   const [hover, setHover] = useState<HoveredDistrict | null>(null);
@@ -2670,7 +2687,7 @@ export function BitmapWorld3D({
     respawn,
     hurt,
     heal,
-  } = useMapCursors();
+  } = useMapCursors(true, clan);
   const healRef = useRef<(amount: number) => void>(() => {});
   healRef.current = heal;
   const party = useMapParty(selfId, handle, true, (amount, from) => {
@@ -2686,8 +2703,8 @@ export function BitmapWorld3D({
   const [respawnNote, setRespawnNote] = useState<string | null>(null);
   const [mySay, setMySay] = useState<string | null>(null);
   const self = useMemo(
-    () => ({ handle, color, model: avatarModel, say: mySay, hp, hitAt, lastDamage }),
-    [handle, color, avatarModel, mySay, hp, hitAt, lastDamage],
+    () => ({ handle, color, model: avatarModel, say: mySay, hp, hitAt, lastDamage, clan }),
+    [handle, color, avatarModel, mySay, hp, hitAt, lastDamage, clan],
   );
 
   const myAddresses = useMemo(
@@ -3536,6 +3553,8 @@ export function BitmapWorld3D({
                 </div>
               </div>
               ) : null}
+
+              {kitTab === "clan" ? <ClanPanel /> : null}
             </div>
 
           </div>

@@ -47,6 +47,8 @@ export type CreatureGroupSpec = {
   lines: string[];
   /** a single specimen: one of one, and the label says so */
   solo?: boolean;
+  /** Corrects models authored facing away from their forward travel axis. */
+  modelYaw?: number;
 };
 
 export const CREATURE_GROUPS: CreatureGroupSpec[] = [
@@ -133,6 +135,7 @@ export const CREATURE_GROUPS: CreatureGroupSpec[] = [
     water: true,
     eyes: false,
     lines: ["PIKA TWO", "CHUU", "THE SHORE IS CHARGED"],
+    modelYaw: Math.PI,
   },
   {
     id: "birds",
@@ -434,7 +437,7 @@ export const CreatureGroup = memo(function CreatureGroup({
           }}
         >
           <Suspense fallback={null}>
-            <InscribedModel url={url} size={unit * spec.size} yaw={0} />
+            <InscribedModel url={url} size={unit * spec.size} yaw={spec.modelYaw ?? 0} />
           </Suspense>
           {spec.eyes ? (
             <CreatureEyes unit={unit} size={spec.size} seed={creature.seed} mood={creature.mood} />

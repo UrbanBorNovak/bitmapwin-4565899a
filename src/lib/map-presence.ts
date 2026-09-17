@@ -13,6 +13,7 @@ import {
   createCombatResolver,
   tileOfPosition,
 } from "@/lib/world-combat";
+import type { ClanBadge } from "@/lib/clans";
 
 /**
  * Live presence for the land map. Every visitor broadcasts the grid cell they are
@@ -50,6 +51,7 @@ export type MapCursor = {
   movement: MovementState;
   color: string;
   handle: string;
+  clan: ClanBadge | null;
   /** on-chain GLB inscription id worn as the avatar, if any */
   model: string | null;
   /** last thing this visitor said (shown as a speech bubble) */
@@ -95,7 +97,7 @@ const REGEN_PER_SECOND = 3;
 /** how long a knocked-out visitor stays down before respawning at full health */
 const RESPAWN_MS = 15_000;
 
-export function useMapCursors(enabled = true) {
+export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
   const selfId = useMemo(() => mapVisitorId(), []);
   const handle = useMemo(() => mapHandle(), []);
   const [model, setModel] = useState<string | null>(() => avatarModelInscription());
@@ -119,6 +121,8 @@ export function useMapCursors(enabled = true) {
   const healRef = useRef<(amount: number) => void>(() => {});
   const modelRef = useRef(model);
   modelRef.current = model;
+  const clanRef = useRef(clan);
+  clanRef.current = clan;
 
   useEffect(() => {
     if (!enabled) return;
@@ -153,6 +157,7 @@ export function useMapCursors(enabled = true) {
           teleport?: boolean;
           handle?: string;
           model?: string | null;
+          clan?: ClanBadge | null;
           hp?: number;
           gone?: boolean;
         };
@@ -192,6 +197,12 @@ export function useMapCursors(enabled = true) {
             movement: p.movement ?? previous?.movement ?? "idle",
             color: colorForVisitor(p.id),
             handle: typeof p.handle === "string" && p.handle ? p.handle : "ANON",
+            clan:
+              p.clan &&
+              typeof p.clan.tag === "string" &&
+              typeof p.clan.crestInscriptionId === "string"
+                ? { tag: p.clan.tag.slice(0, 6), crestInscriptionId: p.clan.crestInscriptionId }
+                : null,
             model: typeof p.model === "string" && p.model ? p.model : null,
             say: previous?.say ?? null,
             sayAt: previous?.sayAt ?? 0,
@@ -275,7 +286,7 @@ export function useMapCursors(enabled = true) {
         type: "broadcast",
         event: "cursor",
         payload: cell
-          ? { id: selfId, handle, model: modelRef.current, hp: hpRef.current, ...cell }
+          ? { id: selfId, handle, model: modelRef.current, clan: clanRef.current, hp: hpRef.current, ...cell }
           : { id: selfId, gone: true },
       });
       last = Date.now();
