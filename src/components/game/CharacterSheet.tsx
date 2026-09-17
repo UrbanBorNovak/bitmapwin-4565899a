@@ -6,16 +6,12 @@
  * works changes here — only how you see it. Presentation only.
  */
 
+import type { LucideIcon } from "lucide-react";
+import { BookOpen, CircleDot, Footprints, Gem, Glasses, HardHat, ToyBrick, Watch } from "lucide-react";
 import { WeaponGlyph } from "@/components/game/WeaponBelt";
 import { WEAPONS, type WeaponKind } from "@/components/game/weapons";
 import { ordContentUrl } from "@/lib/oci";
 import {
-  COMIC_INSCRIPTION,
-  GOGGLES_INSCRIPTION,
-  NECKLACE_INSCRIPTION,
-  RING_INSCRIPTION,
-  SHOES_INSCRIPTION,
-  WATCH_INSCRIPTION,
   cycleToy,
   toySpec,
   toggleComic,
@@ -26,27 +22,21 @@ import {
   toggleWatch,
   useGear,
 } from "@/lib/world-gear";
-import { JETPACK_HELMET_INSCRIPTION } from "@/lib/world-vehicle";
 import { playSfx } from "@/lib/world-audio";
 
 type SlotView = {
   slot: string;
   label: string;
   filled: boolean;
-  icon: string | null;
+  Icon: LucideIcon | null;
   onPick: (() => void) | null;
 };
 
 function Slot({ view }: { view: SlotView }) {
   const body = (
     <>
-      {view.icon && view.filled ? (
-        <img
-          src={view.icon}
-          alt=""
-          className="size-7 [image-rendering:pixelated]"
-          loading="lazy"
-        />
+      {view.Icon && view.filled ? (
+        <view.Icon aria-hidden="true" className="size-6 text-bitcoin" strokeWidth={1.6} />
       ) : (
         <span className="text-[8px] uppercase tracking-[0.18em] text-muted-foreground">
           {view.slot}
@@ -102,14 +92,14 @@ export function CharacterSheet({
         slot: "HEAD",
         label: "FLIGHT HELMET",
         filled: true,
-        icon: ordContentUrl(JETPACK_HELMET_INSCRIPTION),
+        Icon: HardHat,
         onPick: null,
       }
     : {
         slot: "HEAD",
         label: gear.goggles ? "NIGHT VISION" : "HEAD",
         filled: gear.goggles,
-        icon: ordContentUrl(GOGGLES_INSCRIPTION),
+        Icon: Glasses,
         onPick: () => note(toggleGoggles() ? "NIGHT VISION · ON" : "NIGHT VISION · OFF"),
       };
 
@@ -119,14 +109,14 @@ export function CharacterSheet({
       slot: "NECK",
       label: gear.necklace ? "NECKLACE" : "NECK",
       filled: gear.necklace,
-      icon: ordContentUrl(NECKLACE_INSCRIPTION),
+      Icon: Gem,
       onPick: () => note(toggleNecklace() ? "NECKLACE ON · STEADY RECOVERY" : "NECKLACE OFF"),
     },
     {
       slot: "WRIST",
       label: gear.watch ? "WATCH" : "WRIST",
       filled: gear.watch,
-      icon: ordContentUrl(WATCH_INSCRIPTION),
+      Icon: Watch,
       onPick: () => note(toggleWatch() ? "WATCH ON" : "WATCH OFF"),
     },
   ];
@@ -136,14 +126,14 @@ export function CharacterSheet({
       slot: "HAND",
       label: weapon ? WEAPONS[weapon].label : "MAIN HAND",
       filled: weapon !== null,
-      icon: null,
+      Icon: null,
       onPick: null,
     },
     {
       slot: "OFF",
       label: toy.inscription ? toy.label : "OFF HAND",
       filled: toy.inscription !== "",
-      icon: toy.inscription ? ordContentUrl(toy.inscription) : null,
+      Icon: toy.inscription ? ToyBrick : null,
       onPick: () => {
         const next = cycleToy();
         note(next.inscription ? `TOY IN HAND · ${next.label}` : "TOY PUT AWAY");
@@ -153,7 +143,7 @@ export function CharacterSheet({
       slot: "RING",
       label: gear.ring ? "RING" : "RING",
       filled: gear.ring,
-      icon: ordContentUrl(RING_INSCRIPTION),
+      Icon: CircleDot,
       onPick: () => note(toggleRing() ? "RING ON" : "RING OFF"),
     },
   ];
@@ -163,14 +153,14 @@ export function CharacterSheet({
       slot: "FEET",
       label: gear.shoes ? "SHOES" : "FEET",
       filled: gear.shoes,
-      icon: ordContentUrl(SHOES_INSCRIPTION),
+      Icon: Footprints,
       onPick: () => note(toggleShoes() ? "SHOES ON · FASTER STRIDE" : "SHOES OFF"),
     },
     {
       slot: "TOME",
       label: gear.comic ? "COMIC BOOK" : "TOME",
       filled: gear.comic,
-      icon: ordContentUrl(COMIC_INSCRIPTION),
+      Icon: BookOpen,
       onPick: () => note(toggleComic() ? "COMIC BOOK IN HAND" : "COMIC BOOK AWAY"),
     },
   ];

@@ -1,7 +1,7 @@
 /**
  * DESERT PROPS — the clutter that makes the sand feel lived in.
  *
- * Rocks in three sizes and dumpsters left behind by whoever passed through.
+ * Tiny rocks, dumpsters and empty supply boxes left behind by whoever passed through.
  * Placement is worked out from the tile, so the same stretch of desert holds the
  * same clutter on every visit. Only what is near the avatar is drawn. Big rocks
  * and dumpsters are solid, so you walk and drive around them; pebbles are not,
@@ -19,9 +19,13 @@ export const ROCK_INSCRIPTION =
 /** on-chain dumpster */
 export const DUMPSTER_INSCRIPTION =
   "93da711542a9ae1200e5cbfde32f7346c93eb92d90aa281743a408b3808bfb2ei0";
+/** on-chain empty supply box */
+export const EMPTY_BOX_INSCRIPTION =
+  "0f6880d8a4bc6bedb8ecd8d1705864745d22c9ebca65bec7d16a6cb93f02064ai0";
 
 const ROCK_URL = contentUrl(ROCK_INSCRIPTION);
 const DUMPSTER_URL = contentUrl(DUMPSTER_INSCRIPTION);
+const EMPTY_BOX_URL = contentUrl(EMPTY_BOX_INSCRIPTION);
 
 const noRaycast = () => {};
 
@@ -134,14 +138,21 @@ export const DesertProps = memo(function DesertProps({
     () => scatter(unit, center, radius, unit * 31, 91, 0.22, () => 1.5, 0.5),
     [center, radius, unit],
   );
+  // Empty boxes add light roadside clutter without becoming navigation obstacles.
+  const emptyBoxes = useMemo(
+    () => scatter(unit, center, radius, unit * 19, 113, 0.2, (roll) => 0.45 + roll * 0.25, 9),
+    [center, radius, unit],
+  );
 
   return (
     <>
       <PropField id="rock" url={ROCK_URL} props={rocks} fallbackColor="#7c6a55" />
       <PropField id="dumpster" url={DUMPSTER_URL} props={dumpsters} fallbackColor="#4d5b55" />
+      <PropField id="empty-box" url={EMPTY_BOX_URL} props={emptyBoxes} fallbackColor="#76634c" />
     </>
   );
 });
 
 useGLTF.preload(ROCK_URL);
 useGLTF.preload(DUMPSTER_URL);
+useGLTF.preload(EMPTY_BOX_URL);

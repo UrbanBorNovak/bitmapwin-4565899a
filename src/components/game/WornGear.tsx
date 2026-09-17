@@ -61,6 +61,10 @@ function WornPiece({
   const gltf = useGLTF(url);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
   const group = useRef<THREE.Group>(null);
+  const localOffset = useMemo(() => new THREE.Vector3(), []);
+  const bodyRotation = useMemo(() => new THREE.Euler(0, 0, 0, "XYZ"), []);
+  const turnRotation = useMemo(() => new THREE.Quaternion(), []);
+  const worldRotation = useMemo(() => new THREE.Quaternion(), []);
 
   const fitted = useMemo(() => {
     scene.traverse((child) => {
@@ -89,18 +93,20 @@ function WornPiece({
     const player = pose.current;
     const node = group.current;
     if (!player || !node) return;
-    const sin = Math.sin(player.yaw);
-    const cos = Math.cos(player.yaw);
     const [side, up, forward] = offset;
     const lift = bob ? Math.sin(clock.elapsedTime * 2.4) * unit * bob : 0;
-    node.position.set(
-      player.x + cos * side * unit + sin * forward * unit,
-      player.y + up * unit + lift,
-      player.z - sin * side * unit + cos * forward * unit,
+    const lean = player.lean ?? 0;
+    // Match SelfAvatar's XYZ Euler exactly, then transform the local attachment
+    // point through it. This keeps every piece pinned while climbing or diving.
+    bodyRotation.set(lean, player.yaw, 0);
+    worldRotation.setFromEuler(bodyRotation);
+    localOffset.set(side * unit, up * unit, forward * unit).applyQuaternion(worldRotation);
+    node.position.set(player.x + localOffset.x, player.y + localOffset.y + lift, player.z + localOffset.z);
+    turnRotation.setFromAxisAngle(
+      THREE.Object3D.DEFAULT_UP,
+      turn + (spin ? clock.elapsedTime * spin : 0),
     );
-    node.rotation.y = player.yaw + turn + (spin ? clock.elapsedTime * spin : 0);
-    // Worn pieces lean with the body, so the helmet stays on the head in flight.
-    node.rotation.x = player.lean ?? 0;
+    node.quaternion.copy(worldRotation).multiply(turnRotation);
   });
 
   return (
@@ -237,9 +243,9 @@ export function WornGear({
           <WornPiece
             url={`https://ordinals.com/content/${JETPACK_INSCRIPTION}`}
             unit={unit}
-            fit={0.5}
+            fit={0.46}
             pose={pose}
-            offset={[0, 0.6, -0.18]}
+            offset={[0, 0.52, -0.2]}
           />
         </Suspense>
       ) : null}
@@ -248,9 +254,9 @@ export function WornGear({
           <WornPiece
             url={`https://ordinals.com/content/${JETPACK_HELMET_INSCRIPTION}`}
             unit={unit}
-            fit={0.42}
+            fit={0.38}
             pose={pose}
-            offset={[0, 0.8, 0.01]}
+            offset={[0, 0.82, 0.015]}
             seatOnBase
           />
         </Suspense>
