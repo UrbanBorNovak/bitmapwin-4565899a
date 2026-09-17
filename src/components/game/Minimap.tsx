@@ -53,12 +53,14 @@ export function Minimap({
   showCompact = true,
   expanded: controlledExpanded,
   onExpandedChange,
+  inline = false,
 }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const backgroundImage = useRef<HTMLImageElement | null>(null);
   const [zoom, setZoom] = useState(1);
   const [internalExpanded, setInternalExpanded] = useState(false);
-  const expanded = controlledExpanded ?? internalExpanded;
+  // An inline scan never takes over the screen; it always shows the local view.
+  const expanded = inline ? false : (controlledExpanded ?? internalExpanded);
   const setExpanded = useCallback(
     (next: boolean | ((current: boolean) => boolean)) => {
       const value = typeof next === "function" ? next(expanded) : next;
