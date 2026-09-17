@@ -57,39 +57,38 @@ function ExtendPage() {
       <div data-tour="extend-paths" className="mt-8 grid gap-3 md:grid-cols-3">
         <Choice
           glyph="01"
-          title="IMPORT EXTENDER"
-          body="Add something built by another creator. Point at a package, check its manifest, then test it."
-          to="/studio"
-          action="[ OPEN IMPORT ]"
-          badge={<DataBadge kind="live" note="STUDIO" />}
+          title="JUST DESCRIBE IT"
+          body="Say what you want in plain words. It gets built, previewed and placed on your land — the fastest way, about a minute."
+          to="/create"
+          {...(hasLand ? { search: { height: height as number } } : {})}
+          action="[ START HERE ]"
+          badge={<DataBadge kind="live" note="RECOMMENDED" />}
         />
         <Choice
           glyph="02"
-          title="CREATE WITH AI"
-          body="Describe what you want to build in plain English. The builder plans it, writes the code, runs it, then deploys it."
-          to="/create"
-          {...(hasLand ? { search: { height: height as number } } : {})}
-          action="[ DESCRIBE IT ]"
-          badge={<DataBadge kind="live" note="GEMINI BUILDER" />}
+          title="PICK SOMETHING READY"
+          body="Browse what other people already made, watch it run, then put it on your land in one click."
+          to="/extenders"
+          action="[ BROWSE ]"
+          badge={<DataBadge kind="live" note="PUBLISHED REGISTRY" />}
         />
         <Choice
           glyph="03"
-          title="EXPLORE MARKET"
-          body="Find something that already exists. Preview it running, then deploy it onto your land."
-          to="/extenders"
-          action="[ BROWSE MARKET ]"
-          badge={<DataBadge kind="live" note="PUBLISHED REGISTRY" />}
+          title="BRING YOUR OWN"
+          body="For builders: import a package you or someone else wrote, check it, test it and deploy it."
+          to="/studio"
+          action="[ OPEN STUDIO ]"
+          badge={<DataBadge kind="live" note="ADVANCED" />}
         />
       </div>
 
       <div className="mt-10 border border-border bg-surface p-5 md:p-6">
-        <div className="label text-bitcoin">HOW IT ENDS UP ON THE LAND</div>
-        <ol className="mt-4 grid gap-4 font-mono text-xs text-muted-foreground sm:grid-cols-4">
+        <div className="label text-bitcoin">WHAT HAPPENS AFTER YOU PICK</div>
+        <ol className="mt-4 grid gap-4 font-mono text-xs text-muted-foreground sm:grid-cols-3">
           {[
-            ["01", "TEST IN SANDBOX", "Run it away from your land first."],
-            ["02", "DEPLOY", "Pick the tile, area, permissions and visibility."],
-            ["03", "EXPERIENCE", "Players enter it from the map."],
-            ["04", "PUBLISH", "List it so others can deploy it too."],
+            ["01", "YOU SEE IT FIRST", "It runs in front of you before it touches your land."],
+            ["02", "IT GOES LIVE", "One button places it on the BITMAP you hold."],
+            ["03", "PEOPLE VISIT", "Players walk into it straight from the Oasis."],
           ].map(([n, t, b]) => (
             <li key={n}>
               <div className="text-bitcoin" data-no-translate>{n}</div>
