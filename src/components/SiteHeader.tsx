@@ -54,6 +54,7 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/explore", label: "EXPLORE", note: "Trending BITMAPs and activity" },
       { to: "/experiences", label: "EXPERIENCES", note: "Live deployed worlds" },
       { to: "/builders", label: "BUILDERS", note: "People building on bedrock" },
+      { to: "/world-stats", label: "WORLD STATS", note: "BIT supply, prices and mining" },
     ],
   },
   {

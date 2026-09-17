@@ -60,3 +60,45 @@ export const donationsQuery = (address: string | null) =>
     },
     staleTime: 15_000,
   });
+
+/**
+ * BITCOIN DONATIONS — plain BTC sent to the platform address, paid back in BIT
+ * at the same rate as inscription donations. The scan and the payout happen
+ * server-side against the chain; the browser only asks for it.
+ */
+export type BtcDonation = {
+  id: string;
+  txid: string;
+  donorAddress: string;
+  sats: number;
+  bitsAwarded: number;
+  status: string;
+  confirmed: boolean;
+  createdAt: string;
+};
+
+export const btcDonationsQuery = (address: string | null) =>
+  queryOptions({
+    queryKey: ["btc-donations", address],
+    queryFn: async (): Promise<BtcDonation[]> => {
+      if (!address) return [];
+      const { data, error } = await supabase
+        .from("btc_donations")
+        .select("id, txid, donor_address, sats, bits_awarded, status, confirmed, created_at")
+        .eq("donor_address", address)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw new Error(error.message);
+      return (data ?? []).map((row) => ({
+        id: row.id,
+        txid: row.txid,
+        donorAddress: row.donor_address,
+        sats: Number(row.sats),
+        bitsAwarded: Number(row.bits_awarded),
+        status: row.status,
+        confirmed: Boolean(row.confirmed),
+        createdAt: row.created_at,
+      }));
+    },
+    staleTime: 15_000,
+  });
