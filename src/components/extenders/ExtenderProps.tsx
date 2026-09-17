@@ -1,5 +1,6 @@
 import { Suspense, useMemo } from "react";
-import { Html, useGLTF } from "@react-three/drei";
+import { useGLTF } from "@react-three/drei";
+import { SafeHtml } from "@/components/game/SafeHtml";
 import * as THREE from "three";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import type { ExtenderProp } from "@/lib/extender-sdk";
@@ -91,7 +92,7 @@ export function ExtenderPropMesh({
         </mesh>
       )}
       {labels && prop.label ? (
-        <Html
+        <SafeHtml
           center
           position={[0, (prop.h / 2 + 0.6) * unit, 0]}
           distanceFactor={unit * 90}
@@ -103,7 +104,7 @@ export function ExtenderPropMesh({
           >
             {prop.label}
           </span>
-        </Html>
+        </SafeHtml>
       ) : null}
     </group>
   );

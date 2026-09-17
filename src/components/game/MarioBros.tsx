@@ -7,7 +7,8 @@
  */
 
 import { Suspense, memo, useEffect, useMemo, useRef, useState } from "react";
-import { Html, useGLTF } from "@react-three/drei";
+import { useGLTF } from "@react-three/drei";
+import { SafeHtml } from "@/components/game/SafeHtml";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
@@ -203,7 +204,7 @@ export const MarioBros = memo(function MarioBros({
             <InscribedModel url={BROS_URL} size={unit * bro.size * 1.05} yaw={0} />
           </Suspense>
           {chatter[bro.id] ? (
-            <Html
+            <SafeHtml
               center
               position={[0, unit * bro.size * 1.5, 0]}
               distanceFactor={0.02}
@@ -218,7 +219,7 @@ export const MarioBros = memo(function MarioBros({
                   {bro.name} · 1/1
                 </span>
               </div>
-            </Html>
+            </SafeHtml>
           ) : null}
         </group>
       ))}

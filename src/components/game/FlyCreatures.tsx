@@ -11,7 +11,8 @@
  */
 
 import { Suspense, memo, useEffect, useMemo, useRef, useState } from "react";
-import { Html, useGLTF } from "@react-three/drei";
+import { useGLTF } from "@react-three/drei";
+import { SafeHtml } from "@/components/game/SafeHtml";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
@@ -506,7 +507,7 @@ export const CreatureGroup = memo(function CreatureGroup({
             <CreatureEyes unit={unit} size={spec.size} seed={creature.seed} mood={creature.mood} />
           ) : null}
           {chatter[creature.id] ? (
-            <Html
+            <SafeHtml
               center
               position={[0, unit * spec.size * 1.45, 0]}
               distanceFactor={0.02}
@@ -521,7 +522,7 @@ export const CreatureGroup = memo(function CreatureGroup({
                   {creature.label}
                 </span>
               </div>
-            </Html>
+            </SafeHtml>
           ) : null}
         </group>
       ))}

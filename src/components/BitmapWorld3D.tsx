@@ -12,7 +12,6 @@ import { type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import {
   Environment,
-  Html,
   Lightformer,
   MapControls,
   useAnimations,
@@ -1119,7 +1118,7 @@ function AvatarLabel({
 }) {
   const hurt = Date.now() - hitAt < 400;
   return (
-    <Html
+    <SafeHtml
       center
       position={[0, AVATAR_U * 1.5, 0]}
       distanceFactor={0.02}
@@ -1144,7 +1143,7 @@ function AvatarLabel({
           <span>{hp <= 0 ? `${handle} · DOWN` : handle}</span>
         </span>
       </div>
-    </Html>
+    </SafeHtml>
   );
 }
 
