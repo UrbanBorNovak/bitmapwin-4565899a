@@ -91,7 +91,7 @@ type PlaceInput = {
 export const placeWorldStructures = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: PlaceInput) => ({
-    items: (input?.items ?? []).slice(0, 8).map((item) => ({
+    items: (input?.items ?? []).slice(0, 20).map((item) => ({
       kind: String(item.kind).slice(0, 40),
       chunkKey: String(item.chunkKey),
       height: Math.max(0, Math.floor(Number(item.height) || 0)),

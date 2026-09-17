@@ -10,7 +10,7 @@ import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
 import { dryLandNear, isSea } from "@/lib/world-sea";
 
-const INSCRIPTIONS = {
+export const CLAY_INSCRIPTIONS = {
   shrine: "85bf8d819bf3c403d86523cfa01c39ea947fc914924197cd1828f4957af0e188i0",
   spikes: "f973c9cad80b3c6602b6bdfcdbfb8bd5737a554c3bb073eeecd4bc7e9825e223i0",
   bars: "6c31fbb610af1ee999da8f84fadab566dceac56499bcff7de2e6a3cdf4687db8i0",
@@ -24,7 +24,7 @@ const INSCRIPTIONS = {
   holeWall: "772b8d2ddc053fc5773f24e94b3595a9fed347363ab3f8c488de9691006c3f88i0",
 } as const;
 
-type PieceKind = keyof typeof INSCRIPTIONS;
+type PieceKind = keyof typeof CLAY_INSCRIPTIONS;
 type Piece = {
   id: string;
   kind: PieceKind;
@@ -38,7 +38,7 @@ type Piece = {
 type Site = { key: string; x: number; z: number; yaw: number; variant: number };
 
 const URLS = Object.fromEntries(
-  Object.entries(INSCRIPTIONS).map(([key, inscription]) => [key, contentUrl(inscription)]),
+  Object.entries(CLAY_INSCRIPTIONS).map(([key, inscription]) => [key, contentUrl(inscription)]),
 ) as Record<PieceKind, string>;
 
 const noRaycast = () => {};

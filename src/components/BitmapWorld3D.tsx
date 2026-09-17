@@ -114,15 +114,16 @@ import { ordContentUrl } from "@/lib/oci";
 import {
   blockedAt,
   build as buildStructure,
-  buildCamp,
-  campTouchesWater,
-  CAMP_RECIPE,
+  buildTemplate,
+  templatePlacementIssue,
+  BUILD_TEMPLATES,
   costLabel,
   damageStructure,
   recipeFor,
   respawnAnchor,
   structureInReach,
   STRUCTURES,
+  type BuildTemplateId,
   type StructureId,
 } from "@/lib/world-build";
 
@@ -2610,25 +2611,28 @@ export function BitmapWorld3D({
     setBuildNote(`${recipeFor(id)?.name ?? "STRUCTURE"} BUILT · IT BLOCKS THE WAY UNTIL KNOCKED DOWN`);
   }, []);
 
-  /** Raise a whole camp — shelter, fire and watchtower — around your feet. */
-  const placeCamp = useCallback(() => {
+  /** Raise a complete layout around your feet in one atomic placement. */
+  const placeTemplate = useCallback((id: BuildTemplateId) => {
     const current = pose.current;
-    if (campTouchesWater(current?.x ?? 0, current?.z ?? 0, current?.yaw ?? 0, AVATAR_U)) {
-      setBuildNote("CAMP NEEDS DRY LAND");
+    const issue = templatePlacementIssue(id, current?.x ?? 0, current?.z ?? 0, current?.yaw ?? 0, AVATAR_U);
+    if (issue) {
+      setBuildNote(issue);
       return;
     }
-    const placed = buildCamp(
+    const placed = buildTemplate(
+      id,
       current?.x ?? 0,
       current?.z ?? 0,
       current?.yaw ?? 0,
       AVATAR_U,
     );
     if (!placed) {
-      setBuildNote("NOT ENOUGH MATERIALS FOR A FULL CAMP");
+      setBuildNote("NOT ENOUGH MATERIALS FOR THIS TEMPLATE");
       return;
     }
     playSfx("ui");
-    setBuildNote("CAMP RAISED · SHELTER, FIRE AND WATCHTOWER STAY PUT");
+    const name = BUILD_TEMPLATES.find((template) => template.id === id)?.name ?? "TEMPLATE";
+    setBuildNote(`${name} BUILT · ${placed.length} PIECES LOCKED IN`);
   }, []);
 
 
@@ -3971,7 +3975,7 @@ export function BitmapWorld3D({
         {buildOpen ? (
           <BuildHud
             onBuild={placeBuild}
-            onBuildCamp={placeCamp}
+            onBuildTemplate={placeTemplate}
             note={buildNote}
             onClose={() => setBuildOpen(false)}
           />
@@ -4637,33 +4641,35 @@ function SkillsHud() {
 /** BUILD — a two-step screen: pick one structure, then place it where you stand. */
 function BuildHud({
   onBuild,
-  onBuildCamp,
+  onBuildTemplate,
   note,
   onClose,
 }: {
   onBuild: (id: StructureId) => void;
-  onBuildCamp: () => void;
+  onBuildTemplate: (id: BuildTemplateId) => void;
   note: string | null;
   onClose: () => void;
 }) {
   const { items } = useWorldSkills();
-  const [picked, setPicked] = useState<StructureId | "full-camp" | null>(null);
+  const [picked, setPicked] = useState<StructureId | BuildTemplateId | null>(null);
 
   const options: { key: StructureId | "full-camp"; name: string; blurb: string; cost: Partial<Record<ItemId, number>>; costText: string }[] =
     [
-      {
-        key: "full-camp",
-        name: CAMP_RECIPE.name,
-        blurb: CAMP_RECIPE.blurb,
-        cost: CAMP_RECIPE.cost,
-        costText: costLabel(CAMP_RECIPE),
-      },
+      ...BUILD_TEMPLATES.map((template) => ({
+        key: template.id,
+        name: template.name,
+        blurb: template.blurb,
+        cost: template.cost,
+        costText: costLabel({ ...template, id: template.parts[0]?.id ?? "camp-fire", footprint: 0, hp: 0 }),
+        template: true,
+      })),
       ...STRUCTURES.map((recipe) => ({
         key: recipe.id,
         name: recipe.name,
         blurb: recipe.blurb,
         cost: recipe.cost,
         costText: costLabel(recipe),
+        template: false,
       })),
     ];
 
@@ -4692,26 +4698,25 @@ function BuildHud({
 
       {!chosen ? (
         <>
-          <div className="text-muted-foreground">PICK ONE STRUCTURE</div>
+          <div className="hud-telemetry-title">TEMPLATES</div>
           {options.map((option) => {
+            const previous = options[options.indexOf(option) - 1];
             const ok = affordable(option.cost);
             return (
-              <button
-                key={option.key}
-                type="button"
-                disabled={!ok}
-                onClick={() => setPicked(option.key)}
-                className={
-                  ok
-                    ? "w-full border border-border px-2 py-1 text-left hover:border-bitcoin hover:text-bitcoin"
-                    : "w-full border border-border/60 px-2 py-1 text-left text-muted-foreground/60"
-                }
-              >
-                <span className="block text-foreground">{option.name}</span>
-                <span className="block text-[9px] text-muted-foreground">
-                  {ok ? option.costText : `NEED ${option.costText}`}
-                </span>
-              </button>
+              <Fragment key={option.key}>
+                {!option.template && previous?.template ? <div className="hud-telemetry-title mt-2">SINGLE PIECES</div> : null}
+                <Button
+                  variant="ghost"
+                  disabled={!ok}
+                  onClick={() => setPicked(option.key)}
+                  className={ok
+                    ? "h-auto w-full justify-start rounded-none border border-border px-2 py-1 text-left hover:border-bitcoin"
+                    : "h-auto w-full justify-start rounded-none border border-border/60 px-2 py-1 text-left text-muted-foreground/60"}
+                >
+                  <span><span className="block text-foreground">{option.template ? "▦ " : "□ "}{option.name}</span>
+                  <span className="block text-[9px] text-muted-foreground">{ok ? option.costText : `NEED ${option.costText}`}</span></span>
+                </Button>
+              </Fragment>
             );
           })}
         </>
@@ -4727,8 +4732,8 @@ function BuildHud({
             type="button"
             disabled={!affordable(chosen.cost)}
             onClick={() => {
-              if (chosen.key === "full-camp") onBuildCamp();
-              else onBuild(chosen.key);
+              if (BUILD_TEMPLATES.some((template) => template.id === chosen.key)) onBuildTemplate(chosen.key as BuildTemplateId);
+              else onBuild(chosen.key as StructureId);
               setPicked(null);
             }}
             className={
