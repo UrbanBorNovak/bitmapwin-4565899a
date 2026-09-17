@@ -97,7 +97,13 @@ function WornPiece({
       }
     });
     scene.updateMatrixWorld(true);
-    const bounds = new THREE.Box3().setFromObject(scene);
+    // Some models carry stray helper parts (e.g. a lace curve dipping far
+    // below the sole). When boundsNode names the real body, measure only it
+    // so base seating lands on the true sole, not the dangling extra.
+    const measured = boundsNode
+      ? (scene.getObjectByName(boundsNode) ?? scene)
+      : scene;
+    const bounds = new THREE.Box3().setFromObject(measured);
     const size = bounds.getSize(new THREE.Vector3());
     const center = bounds.getCenter(new THREE.Vector3());
     // A hat is sized by how wide it is, not by its tallest point, so a pointed
