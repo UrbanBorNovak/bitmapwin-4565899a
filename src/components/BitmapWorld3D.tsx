@@ -1287,6 +1287,7 @@ const SelfAvatar = memo(function SelfAvatar({
   weapon,
   bitcoin,
   clan,
+  mountOffset = 0,
 }: {
   pose: React.RefObject<SelfPose>;
   color: string;
@@ -1299,6 +1300,7 @@ const SelfAvatar = memo(function SelfAvatar({
   weapon: WeaponKind | null;
   bitcoin: string;
   clan: ClanBadge | null;
+  mountOffset?: number;
 }) {
   const group = useRef<THREE.Group>(null);
   const mounted = useRef(false);
@@ -1312,7 +1314,7 @@ const SelfAvatar = memo(function SelfAvatar({
   useFrame(() => {
     const current = pose.current;
     if (!current || !group.current) return;
-    group.current.position.set(current.x, current.y, current.z);
+    group.current.position.set(current.x, current.y + mountOffset, current.z);
     group.current.rotation.y = current.yaw;
     // Flight pitches the whole body forward, like leaning into the wind.
     group.current.rotation.x = current.lean ?? 0;
@@ -2302,6 +2304,7 @@ const WorldScene = memo(function WorldScene({
           weapon={weapon}
           bitcoin={colors.bitcoin}
           clan={self.clan}
+          mountOffset={driving && ride.id === "cyberpunk-genesis-dog" ? AVATAR_U * 1.15 : 0}
         />
       ) : null}
       <mesh
