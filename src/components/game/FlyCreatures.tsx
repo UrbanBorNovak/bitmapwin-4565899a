@@ -121,7 +121,7 @@ export const CREATURE_GROUPS: CreatureGroupSpec[] = [
   {
     id: "pikachus-two",
     label: "PIKACHU II",
-    inscription: "174d1b769cde3a82be6982cebc708aad4a9651613130d93336dcd354845741a49i0",
+    inscription: "74d1b769cde3a82be6982cebc708aad4a9651613130d93336dcd354845741a49i0",
     count: 2,
     size: 0.7,
     hp: 75,
