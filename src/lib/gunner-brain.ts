@@ -300,7 +300,11 @@ function think(brain: GunnerBrain, sense: GunnerSense): GunnerAct {
     fire,
     threat,
     evadeYaw,
-    callout: callout(state, target, distance, sense),
+    confidence,
+    settled,
+    doctrine,
+    swingRate,
+    callout: callout(state, target, distance, sense, settled, confidence),
   };
 }
 
@@ -309,11 +313,15 @@ function callout(
   target: GunnerTarget | null,
   distance: number,
   sense: GunnerSense,
+  settled: number,
+  confidence: number,
 ) {
   const label = target?.label ?? "NO CONTACT";
   switch (state) {
     case "fire":
       return `FIRING · ${label}`;
+    case "aim":
+      return `AIMING · ${label} · ${(settled * 100).toFixed(0)}% · READ ${(confidence * 100).toFixed(0)}%`;
     case "lock":
       return `LOCKED · ${label} · ${distance.toFixed(0)}M`;
     case "cool":
@@ -326,3 +334,4 @@ function callout(
       return "SCANNING";
   }
 }
+
