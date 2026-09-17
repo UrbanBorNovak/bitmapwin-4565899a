@@ -181,7 +181,7 @@ export function FootTrail({
         const lateral = unit * (0.18 + Math.random() * 0.16) * side;
         mote.x = player.x - Math.sin(player.yaw) * unit * 0.9 + Math.cos(player.yaw) * lateral;
         mote.z = player.z - Math.cos(player.yaw) * unit * 0.9 - Math.sin(player.yaw) * lateral;
-         mote.y = waterSurfaceY(mote.x, mote.z) + unit * 0.03;
+        mote.y = waterSurfaceY(mote.x, mote.z) + unit * 0.03;
         mote.vx = Math.cos(player.yaw) * side * unit * 0.5 - player.vx * 0.06;
         mote.vz = -Math.sin(player.yaw) * side * unit * 0.5 - player.vz * 0.06;
         mote.vy = unit * 0.05;
@@ -194,7 +194,7 @@ export function FootTrail({
       const spread = unit * (landed ? 0.4 : 0.22);
       mote.x = player.x + (Math.random() - 0.5) * spread - Math.sin(player.yaw) * unit * 0.2;
       mote.z = player.z + (Math.random() - 0.5) * spread - Math.cos(player.yaw) * unit * 0.2;
-       mote.y = groundY(mote.x, mote.z) + unit * 0.06;
+      mote.y = groundY(mote.x, mote.z) + unit * 0.06;
       mote.vx = (Math.random() - 0.5) * unit * (landed ? 1.6 : 0.7) - player.vx * 0.12;
       mote.vz = (Math.random() - 0.5) * unit * (landed ? 1.6 : 0.7) - player.vz * 0.12;
       mote.vy = unit * (0.7 + Math.random() * 0.8);

@@ -1846,12 +1846,17 @@ function OnChainModel({ model }: { model: BitmapModel }) {
       first?.stop();
     };
   }, [actions]);
+  const x = worldX(model.bitmapHeight % GRID);
+  const z = worldZ(Math.floor(model.bitmapHeight / GRID));
+  const waterModel =
+    model.inscriptionId === ISLAND_INSCRIPTION ||
+    RIDES.some((ride) => ride.kind === "water" && ride.inscription === model.inscriptionId);
   return (
     <group
       position={[
-        worldX(model.bitmapHeight % GRID),
-        0.014 + model.heightOffset * CELL,
-        worldZ(Math.floor(model.bitmapHeight / GRID)),
+        x,
+        (waterModel ? 0 : groundY(x, z)) + 0.014 + model.heightOffset * CELL,
+        z,
       ]}
       rotation-y={model.rotationY}
       scale={model.scale}
@@ -1871,12 +1876,14 @@ function OnChainModel({ model }: { model: BitmapModel }) {
 }
 
 function ModelMarker({ model, bitcoin }: { model: BitmapModel; bitcoin: string }) {
+  const x = worldX(model.bitmapHeight % GRID);
+  const z = worldZ(Math.floor(model.bitmapHeight / GRID));
   return (
     <mesh
       position={[
-        worldX(model.bitmapHeight % GRID),
-        districtHeight(model.bitmapHeight) + 0.03,
-        worldZ(Math.floor(model.bitmapHeight / GRID)),
+        x,
+        groundY(x, z) + districtHeight(model.bitmapHeight) + 0.03,
+        z,
       ]}
     >
       <octahedronGeometry args={[CELL * 1.8, 0]} />
