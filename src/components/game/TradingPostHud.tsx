@@ -190,9 +190,11 @@ function Counter() {
         {(
           [
             ["board", "BOARD"],
-            ["sell", "SELL TO MARKET"],
-            ["list", "LIST GOODS"],
+            ["sell", "SELL"],
+            ["list", "LIST"],
+            ["chart", "PRICES"],
           ] as [Mode, string][]
+
         ).map(([id, label]) => (
           <button
             key={id}
