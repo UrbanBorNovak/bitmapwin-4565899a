@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { MapCursor } from "@/lib/map-presence";
-import { ATTACK_RANGE } from "@/lib/map-presence";
 import type { PlayerState } from "@/lib/player-state";
 import { STRIDE } from "@/lib/player-state";
 import { damageBeast, liveBeasts } from "@/lib/world-entities";
@@ -29,7 +28,6 @@ export function TankCannon({
   onShootPeer: (id: string) => void;
   onStatus: (message: string) => void;
 }) {
-  const camera = useThree((state) => state.camera);
   const gl = useThree((state) => state.gl);
   const [shells, setShells] = useState<Shell[]>([]);
   const sequence = useRef(0);
@@ -73,8 +71,7 @@ export function TankCannon({
       const along = relative.dot(forward);
       if (along <= 0 || along >= distance) continue;
       const miss = relative.addScaledVector(forward, -along).length();
-      const legalReach = Math.hypot(peer.x - player.x, peer.z - player.z) <= ATTACK_RANGE;
-      if (miss <= STRIDE * 1.5 && legalReach) {
+      if (miss <= STRIDE * 1.5) {
         distance = along;
         peerTarget = peer;
         beastTarget = null;
