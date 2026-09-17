@@ -6,7 +6,7 @@ import { profileQuery, type ParcelPage } from "@/lib/profiles";
 import { shortenAddress } from "@/lib/registry";
 import { timeAgo } from "@/lib/bitmap";
 import { BUILD_KIND_LABELS, isBuildKind } from "@/lib/build-sdk";
-import { isActive, membershipQuery } from "@/lib/membership";
+import { membershipBadgeQuery } from "@/lib/membership";
 
 export const Route = createFileRoute("/profile/$address")({
   head: ({ params }) => {
@@ -56,8 +56,8 @@ function ProfilePage() {
   const { address } = Route.useParams();
   const profile = useQuery(profileQuery(address));
   const pages = useQuery(ownerPagesQuery(address));
-  const membership = useQuery(membershipQuery(address));
-  const isMember = isActive(membership.data);
+  const membership = useQuery(membershipBadgeQuery(address));
+  const isMember = membership.data === true;
 
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-12 md:px-8">

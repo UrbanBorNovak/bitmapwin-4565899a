@@ -49,7 +49,7 @@ import { solidBlocked } from "@/lib/world-solids";
 
 import { useBits } from "@/lib/world-bits";
 import { MEMBER_TITLE, setMember, useMember } from "@/lib/world-perks";
-import { isActive, membershipQuery } from "@/lib/membership";
+import { membershipBadgeQuery } from "@/lib/membership";
 import { STONES, cycleStone, useFittedStone } from "@/lib/world-runestones";
 
 
@@ -3109,9 +3109,9 @@ export function BitmapWorld3D({
   const bits = useBits();
   const member = useMember();
   // The badge is confirmed on chain by the backend; the world only echoes it.
-  const membership = useQuery(membershipQuery(wallet?.ordinalsAddress ?? ""));
+  const membership = useQuery(membershipBadgeQuery(wallet?.ordinalsAddress ?? ""));
   useEffect(() => {
-    setMember(isActive(membership.data));
+    setMember(membership.data === true);
   }, [membership.data]);
 
   useEffect(() => {
