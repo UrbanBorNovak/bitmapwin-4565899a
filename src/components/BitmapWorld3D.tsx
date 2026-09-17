@@ -13,13 +13,13 @@ import {
 import { type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import {
-  Environment,
   MapControls,
   useAnimations,
   useGLTF,
   useTexture,
 } from "@react-three/drei";
 import { SafeHtml } from "@/components/game/SafeHtml";
+import { SafeEnvironment } from "@/components/game/SafeEnvironment";
 import { SafeLightformer } from "@/components/game/SafeLightformer";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
@@ -2291,7 +2291,7 @@ const WorldScene = memo(function WorldScene({
         decay={2}
       />
       {/* Baked once at low resolution — ambient tint only, no per-frame cubemap cost. */}
-      <Environment frames={1} resolution={64}>
+      <SafeEnvironment frames={1} resolution={64}>
         <SafeLightformer
           intensity={0.85}
           color={colors.bitcoin}
@@ -2305,7 +2305,7 @@ const WorldScene = memo(function WorldScene({
           rotation-y={Math.PI / 2}
           scale={[28, 4, 1]}
         />
-      </Environment>
+      </SafeEnvironment>
       <PerfGovernor pose={pose} active={cameraMode !== "map"} />
       <SkyBodies bitcoin={colors.bitcoin} />
       <LandSurface colors={colors} tipHeight={tipHeight} />
