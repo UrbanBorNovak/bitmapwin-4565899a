@@ -1,5 +1,5 @@
 import { SafeCanvas } from "@/components/game/SafeCanvas";
-import { OrbitControls } from "@react-three/drei";
+import { SafeOrbitControls } from "@/components/game/SafeOrbitControls";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { packParcels } from "@/components/TerritoryCanvas";
@@ -66,7 +66,7 @@ export function BitmapTerritory3D({ height }: { height: number }) {
         <directionalLight position={[3, 5, 2]} intensity={1.15} color="#ffd7a3" />
         <directionalLight position={[-3, 2, -2]} intensity={0.35} color="#f7931a" />
         <Plots classes={data.classes} />
-        <OrbitControls
+        <SafeOrbitControls
           enablePan={false}
           autoRotate
           autoRotateSpeed={0.6}
