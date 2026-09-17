@@ -45,14 +45,37 @@ type SlotView = {
 const TRANSPARENT_PIXEL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==";
 
+/**
+ * Frame the whole figure, gear included.
+ *
+ * The panel is narrow, so a fixed camera distance cropped the head and the
+ * shoes. Measure the panel and pull back until the tallest and widest thing the
+ * doll can wear — hat above the head, sneakers below the feet — fits inside.
+ */
+const DOLL_BOTTOM = -0.34;
+const DOLL_TOP = 1.55;
+const DOLL_HALF_WIDTH = 0.62;
+
 function PreviewCamera() {
-  const { camera } = useThree();
+  const camera = useThree((state) => state.camera) as THREE.PerspectiveCamera;
+  const size = useThree((state) => state.size);
   useEffect(() => {
-    camera.position.set(1.05, 0.78, 2.05);
-    camera.lookAt(0, 0.6, 0);
-  }, [camera]);
+    const aspect = Math.max(size.width / Math.max(size.height, 1), 0.0001);
+    const fov = (camera.fov * Math.PI) / 180;
+    const centerY = (DOLL_TOP + DOLL_BOTTOM) / 2;
+    const halfHeight = (DOLL_TOP - DOLL_BOTTOM) / 2;
+    const forHeight = halfHeight / Math.tan(fov / 2);
+    const forWidth = DOLL_HALF_WIDTH / (Math.tan(fov / 2) * aspect);
+    const distance = Math.max(forHeight, forWidth) * 1.12;
+    // Keep the three-quarter angle the doll was posed for.
+    const dir = new THREE.Vector3(0.42, 0.1, 1).normalize();
+    camera.position.set(dir.x * distance, centerY + dir.y * distance, dir.z * distance);
+    camera.lookAt(0, centerY, 0);
+    camera.updateProjectionMatrix();
+  }, [camera, size.width, size.height]);
   return null;
 }
+
 
 function PreviewAvatar({ model, skin }: { model: string | null; skin?: string | null }) {
   const inscription = model ?? DEFAULT_AVATAR_MODEL;
