@@ -32,7 +32,7 @@ import type { SelfPose } from "@/components/BitmapWorld3D";
 /** how close you have to stand to the counter, in world units */
 const COUNTER_REACH = WORLD_CELL * 1.6;
 
-type Mode = "board" | "sell" | "list";
+type Mode = "board" | "sell" | "list" | "chart";
 
 export function TradingPostHud({ pose }: { pose: React.RefObject<SelfPose> }) {
   const [near, setNear] = useState(false);
