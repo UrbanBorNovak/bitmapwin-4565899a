@@ -44,3 +44,4 @@
 - [x] Add deterministic dry-land clay shrine compounds from the supplied inscribed building set
 
 - [x] Add atomic shrine, wall, and gate templates to the in-world BUILD menu
+- [x] Keep every equipped accessory attached to the character across terrain, movement, flight, mounts, and live loadout

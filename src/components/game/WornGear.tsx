@@ -181,7 +181,7 @@ export function WornGear({
 
         </Suspense>
       ) : null}
-      {showHead && weapon === "wand" ? (
+      {showHead && weapon === "wand" && !jetpack ? (
         <Suspense fallback={null}>
           <WornPiece
             url={`https://ordinals.com/content/${WIZARD_HAT_INSCRIPTION}`}
@@ -194,7 +194,7 @@ export function WornGear({
 
         </Suspense>
       ) : null}
-      {showHead && gear.goggles ? (
+      {showHead && gear.goggles && weapon !== "wand" && !jetpack ? (
         <Suspense fallback={null}>
           <WornPiece
             url={`https://ordinals.com/content/${GOGGLES_INSCRIPTION}`}
@@ -205,7 +205,7 @@ export function WornGear({
           />
         </Suspense>
       ) : null}
-      {showHead && gear.batmanHead && !jetpack ? (
+      {showHead && gear.batmanHead && weapon !== "wand" && !jetpack ? (
         <Suspense fallback={null}>
           <WornPiece
             url={`https://ordinals.com/content/${BATMAN_HEAD_INSCRIPTION}`}
@@ -269,7 +269,7 @@ export function WornGear({
           />
         </Suspense>
       ) : null}
-      {gear.comic ? (
+      {gear.comic && weapon !== "wand" ? (
         <Suspense fallback={null}>
           <WornPiece
             url={`https://ordinals.com/content/${COMIC_INSCRIPTION}`}
@@ -305,7 +305,7 @@ export function WornGear({
           />
         </Suspense>
       ) : null}
-      {toy.inscription && !eatingFood ? (
+      {toy.inscription && !eatingFood && weapon === null ? (
         <Suspense fallback={null}>
           <WornPiece
             url={`https://ordinals.com/content/${toy.inscription}`}
