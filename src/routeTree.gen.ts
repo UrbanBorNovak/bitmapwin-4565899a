@@ -44,6 +44,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StudioRouteImport } from './routes/studio'
 import { Route as TradingPostRouteImport } from './routes/trading-post'
 import { Route as WalletRouteImport } from './routes/wallet'
+import { Route as WorldStatsRouteImport } from './routes/world-stats'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
@@ -237,6 +238,11 @@ const WalletRoute = WalletRouteImport.update({
   path: '/wallet',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WorldStatsRoute = WorldStatsRouteImport.update({
+  id: '/world-stats',
+  path: '/world-stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
   Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
     id: '/.well-known/oauth-protected-resource',
@@ -362,6 +368,7 @@ export interface FileRoutesByFullPath {
   '/studio': typeof StudioRoute
   '/trading-post': typeof TradingPostRoute
   '/wallet': typeof WalletRoute
+  '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/collections/$club': typeof CollectionsClubRoute
@@ -414,6 +421,7 @@ export interface FileRoutesByTo {
   '/studio': typeof StudioRoute
   '/trading-post': typeof TradingPostRoute
   '/wallet': typeof WalletRoute
+  '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/collections/$club': typeof CollectionsClubRoute
@@ -469,6 +477,7 @@ export interface FileRoutesById {
   '/studio': typeof StudioRoute
   '/trading-post': typeof TradingPostRoute
   '/wallet': typeof WalletRoute
+  '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/collections/$club': typeof CollectionsClubRoute
@@ -525,6 +534,7 @@ export interface FileRouteTypes {
     | '/studio'
     | '/trading-post'
     | '/wallet'
+    | '/world-stats'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
     | '/collections/$club'
@@ -577,6 +587,7 @@ export interface FileRouteTypes {
     | '/studio'
     | '/trading-post'
     | '/wallet'
+    | '/world-stats'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
     | '/collections/$club'
@@ -631,6 +642,7 @@ export interface FileRouteTypes {
     | '/studio'
     | '/trading-post'
     | '/wallet'
+    | '/world-stats'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
     | '/collections/$club'
@@ -686,6 +698,7 @@ export interface RootRouteChildren {
   StudioRoute: typeof StudioRoute
   TradingPostRoute: typeof TradingPostRoute
   WalletRoute: typeof WalletRoute
+  WorldStatsRoute: typeof WorldStatsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
   DistrictSlugRoute: typeof DistrictSlugRoute
@@ -940,6 +953,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WalletRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/world-stats': {
+      id: '/world-stats'
+      path: '/world-stats'
+      fullPath: '/world-stats'
+      preLoaderRoute: typeof WorldStatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.well-known/oauth-protected-resource': {
       id: '/.well-known/oauth-protected-resource'
       path: '/.well-known/oauth-protected-resource'
@@ -1161,6 +1181,7 @@ const rootRouteChildren: RootRouteChildren = {
   StudioRoute: StudioRoute,
   TradingPostRoute: TradingPostRoute,
   WalletRoute: WalletRoute,
+  WorldStatsRoute: WorldStatsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   BitmapBlockRoute: BitmapBlockRoute,

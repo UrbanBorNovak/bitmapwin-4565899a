@@ -148,3 +148,132 @@ export async function claimInscriptionDonation(
     alreadyClaimed: false,
   };
 }
+
+export type BtcClaimResult = {
+  credited: Array<{ txid: string; sats: number; bits: number; confirmed: boolean }>;
+  sats: number;
+  bits: number;
+  balance: number;
+  scanned: number;
+};
+
+type MempoolAddressTx = {
+  txid: string;
+  status?: { confirmed?: boolean };
+  vin: Array<{ prevout?: { scriptpubkey_address?: string | null } | null }>;
+  vout: Array<{ scriptpubkey_address?: string | null; value?: number | null }>;
+};
+
+/**
+ * REAL BITCOIN DONATIONS — walks the platform address's transaction history and
+ * credits every payment that came from this donor's verified wallet.
+ *
+ * The chain is the only source of truth: we read the transactions of the
+ * donation address itself, require the donor's address among the inputs, and
+ * count only the sats that actually landed on the donation address. Each txid
+ * is recorded once, and transactions already paid out as inscription donations
+ * are skipped so nothing is credited twice.
+ */
+export async function claimBtcDonations(
+  donorAddress: string,
+  donorUserId: string,
+): Promise<BtcClaimResult> {
+  const db = await admin();
+  const donor = donorAddress.toLowerCase();
+
+  const [chain, pending] = await Promise.all([
+    getJson<MempoolAddressTx[]>(`${MEMPOOL}/address/${DONATION_ADDRESS}/txs`),
+    getJson<MempoolAddressTx[]>(`${MEMPOOL}/address/${DONATION_ADDRESS}/txs/mempool`).catch(
+      () => [] as MempoolAddressTx[],
+    ),
+  ]);
+  const all = [...pending, ...chain];
+
+  const mine = all.filter((tx) =>
+    tx.vin.some((input) => (input.prevout?.scriptpubkey_address ?? "").toLowerCase() === donor),
+  );
+  if (mine.length === 0) {
+    const balances = await db
+      .from("coin_balances")
+      .select("balance")
+      .eq("address", donorAddress)
+      .maybeSingle();
+    return {
+      credited: [],
+      sats: 0,
+      bits: 0,
+      balance: Number(balances.data?.balance ?? 0),
+      scanned: all.length,
+    };
+  }
+
+  const ids = mine.map((tx) => tx.txid);
+  const [seen, viaInscription] = await Promise.all([
+    db.from("btc_donations").select("txid").in("txid", ids),
+    db.from("inscription_donations").select("txid").in("txid", ids),
+  ]);
+  if (seen.error) throw new Error(seen.error.message);
+  const already = new Set<string>([
+    ...(seen.data ?? []).map((row) => row.txid),
+    ...(viaInscription.data ?? []).map((row) => row.txid ?? "").filter(Boolean),
+  ]);
+
+  const credited: BtcClaimResult["credited"] = [];
+  let balance = 0;
+
+  for (const tx of mine) {
+    if (already.has(tx.txid)) continue;
+    const sats = tx.vout
+      .filter(
+        (out) =>
+          (out.scriptpubkey_address ?? "").toLowerCase() === DONATION_ADDRESS.toLowerCase(),
+      )
+      .reduce((sum, out) => sum + Number(out.value ?? 0), 0);
+    if (!Number.isFinite(sats) || sats <= 0) continue;
+
+    const bits = donationPayout(sats);
+    const confirmed = Boolean(tx.status?.confirmed);
+
+    const insert = await db
+      .from("btc_donations")
+      .insert({
+        txid: tx.txid,
+        donor_address: donorAddress,
+        donor_user_id: donorUserId,
+        sats,
+        bits_awarded: bits,
+        status: "credited",
+        confirmed,
+      })
+      .select("id");
+    // A racing claim for the same transaction loses here — that is the point.
+    if (insert.error) continue;
+
+    const paid = await db.rpc("coin_apply", {
+      _address: donorAddress,
+      _delta: bits,
+      _reason: "btc_donation",
+      _ref: tx.txid,
+    });
+    if (paid.error) throw new Error(paid.error.message);
+    balance = Number(paid.data ?? balance);
+    credited.push({ txid: tx.txid, sats, bits, confirmed });
+  }
+
+  if (!credited.length) {
+    const balances = await db
+      .from("coin_balances")
+      .select("balance")
+      .eq("address", donorAddress)
+      .maybeSingle();
+    balance = Number(balances.data?.balance ?? 0);
+  }
+
+  return {
+    credited,
+    sats: credited.reduce((sum, row) => sum + row.sats, 0),
+    bits: credited.reduce((sum, row) => sum + row.bits, 0),
+    balance,
+    scanned: all.length,
+  };
+}

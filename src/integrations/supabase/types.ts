@@ -372,6 +372,48 @@ export type Database = {
         }
         Relationships: []
       }
+      btc_donations: {
+        Row: {
+          bits_awarded: number
+          confirmed: boolean
+          created_at: string
+          donor_address: string
+          donor_user_id: string
+          id: string
+          note: string | null
+          sats: number
+          status: string
+          txid: string
+          updated_at: string
+        }
+        Insert: {
+          bits_awarded: number
+          confirmed?: boolean
+          created_at?: string
+          donor_address: string
+          donor_user_id: string
+          id?: string
+          note?: string | null
+          sats: number
+          status?: string
+          txid: string
+          updated_at?: string
+        }
+        Update: {
+          bits_awarded?: number
+          confirmed?: boolean
+          created_at?: string
+          donor_address?: string
+          donor_user_id?: string
+          id?: string
+          note?: string | null
+          sats?: number
+          status?: string
+          txid?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       build_delegates: {
         Row: {
           bitmap_height: number
@@ -2233,6 +2275,17 @@ export type Database = {
       referral_pay_override: {
         Args: { _amount: number; _ref: string; _referee_address: string }
         Returns: number
+      }
+      world_metrics: { Args: never; Returns: Json }
+      world_metrics_daily: {
+        Args: { _days?: number }
+        Returns: {
+          bit_minted: number
+          day: string
+          mined: number
+          trade_volume: number
+          trades: number
+        }[]
       }
       world_structures_in_chunks: {
         Args: { _keys: string[] }

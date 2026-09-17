@@ -5,10 +5,11 @@ import { toast } from "sonner";
 import {
   BIT_PER_SAT,
   DONATION_ADDRESS,
+  btcDonationsQuery,
   donationPayout,
   donationsQuery,
 } from "@/lib/donations";
-import { donateInscriptionFn } from "@/lib/donations.functions";
+import { claimBtcDonationsFn, donateInscriptionFn } from "@/lib/donations.functions";
 import { coinBalanceQuery, formatBit } from "@/lib/coins";
 import { useWalletSession } from "@/lib/wallet-session";
 
@@ -65,6 +66,27 @@ function DonatePage() {
     onError: (error: Error) => toast.error(error.message.toUpperCase()),
   });
 
+  const btc = useQuery({ ...btcDonationsQuery(address), enabled: Boolean(address) });
+  const btcSats = (btc.data ?? []).reduce((sum, row) => sum + row.sats, 0);
+  const btcBits = (btc.data ?? []).reduce((sum, row) => sum + row.bitsAwarded, 0);
+
+  const scanBtc = useMutation({
+    mutationFn: async () => {
+      if (!address) throw new Error("Connect and verify your wallet first");
+      return claimBtcDonationsFn({ data: { address } });
+    },
+    onSuccess: (result) => {
+      if (result.credited.length === 0) {
+        toast.info("NO NEW BITCOIN FOUND FROM YOUR WALLET YET");
+      } else {
+        toast.success(`+${formatBit(result.bits)} FOR ${result.sats} DONATED SATS`);
+      }
+      void client.invalidateQueries({ queryKey: ["btc-donations"] });
+      void client.invalidateQueries({ queryKey: ["coin-balance"] });
+    },
+    onError: (error: Error) => toast.error(error.message.toUpperCase()),
+  });
+
   const totalSats = (donations.data ?? []).reduce((sum, d) => sum + d.sats, 0);
   const totalBits = (donations.data ?? []).reduce((sum, d) => sum + d.bitsAwarded, 0);
 
@@ -80,8 +102,8 @@ function DonatePage() {
       <section className="mt-8 grid grid-cols-2 border border-border md:grid-cols-4">
         <Stat k="RATE" v={`${BIT_PER_SAT} BIT / SAT`} />
         <Stat k="YOUR DONATIONS" v={String((donations.data ?? []).length)} />
-        <Stat k="SATS DONATED" v={String(totalSats)} />
-        <Stat k="BIT EARNED" v={formatBit(totalBits)} />
+        <Stat k="SATS DONATED" v={String(totalSats + btcSats)} />
+        <Stat k="BIT EARNED" v={formatBit(totalBits + btcBits)} />
       </section>
 
       <section className="mt-10 border border-border">
@@ -134,6 +156,47 @@ function DonatePage() {
             <p className="font-mono text-[11px] text-muted-foreground">
               &gt; CONNECT AND VERIFY YOUR WALLET TO CLAIM<span className="blink">_</span>
             </p>
+          )}
+        </div>
+      </section>
+
+
+      <section className="mt-6 border border-border">
+        <header className="border-b border-border p-5">
+          <h2 className="display text-xl">DONATE BITCOIN</h2>
+          <p className="label mt-2">
+            SEND BTC FROM YOUR VERIFIED WALLET AND COLLECT {BIT_PER_SAT} BIT PER SAT
+          </p>
+        </header>
+        <div className="space-y-3 p-5">
+          <div className="break-all border border-border p-2 font-mono text-[11px]" data-no-translate>
+            {DONATION_ADDRESS}
+          </div>
+          <p className="font-mono text-[11px] text-muted-foreground">
+            SCAN CHECKS THE CHAIN FOR EVERY PAYMENT SENT FROM YOUR WALLET TO THIS ADDRESS AND
+            CREDITS ANYTHING NOT PAID OUT YET — 10,000 SATS PAYS {formatBit(donationPayout(10_000))}
+          </p>
+          <button
+            type="button"
+            disabled={!address || scanBtc.isPending}
+            onClick={() => scanBtc.mutate()}
+            className="label border border-bitcoin px-4 py-3 text-bitcoin hover:bg-bitcoin/10 disabled:opacity-40"
+          >
+            {scanBtc.isPending ? "SCANNING THE CHAIN…" : "SCAN FOR MY BITCOIN"}
+          </button>
+          {(btc.data ?? []).length > 0 && (
+            <ul className="divide-y divide-border border border-border">
+              {(btc.data ?? []).map((row) => (
+                <li key={row.id} className="flex flex-wrap items-center gap-3 p-3">
+                  <span className="break-all font-mono text-[11px]" data-no-translate>
+                    {row.txid.slice(0, 10)}…{row.txid.slice(-4)}
+                  </span>
+                  <span className="label">{row.confirmed ? "CONFIRMED" : "IN MEMPOOL"}</span>
+                  <span className="label ml-auto">{row.sats} SATS</span>
+                  <span className="label text-bitcoin">+{formatBit(row.bitsAwarded)}</span>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </section>

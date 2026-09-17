@@ -83,6 +83,8 @@ export const REASON_LABEL: Record<string, string> = {
   referral_override: "REFERRAL SHARE",
   ai_build: "AI BUILD",
   extender_purchase: "EXTENDER BOUGHT",
+  inscription_donation: "INSCRIPTION DONATED",
+  btc_donation: "BITCOIN DONATED",
 };
 
 export function formatBit(amount: number): string {
