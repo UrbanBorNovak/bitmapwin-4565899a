@@ -4,7 +4,7 @@ import { pruneChunks, visibleChunks } from "@/lib/world-grid";
 import { syncWorldChunks } from "@/lib/world-build";
 import { syncTerraformChunks } from "@/lib/world-terraform";
 import { markFrame } from "@/lib/world-perf";
-import { MOVE, STRIDE, type PlayerState } from "@/lib/player-state";
+import { FAST_PACE, MOVE, STRIDE, type PlayerState } from "@/lib/player-state";
 
 /**
  * CHUNK STREAMING — only the world around you is ever loaded.
@@ -23,10 +23,11 @@ import { MOVE, STRIDE, type PlayerState } from "@/lib/player-state";
  *     pile up work behind itself.
  */
 
-/** How many fresh chunks may be requested in one round trip. */
+/** Normal and fast-travel streaming budgets. */
 const BATCH = 8;
-/** Seconds between streaming passes. */
+const FAST_BATCH = 12;
 const TICK = 0.5;
+const FAST_TICK = 0.22;
 
 export function ChunkStreamer({
   pose,
@@ -49,14 +50,15 @@ export function ChunkStreamer({
     }
 
     const now = clock.getElapsedTime();
-    if (now - last.current.at < TICK) return;
+    const pace = player ? Math.hypot(player.vx, player.vz) : 0;
+    const fast = pace > FAST_PACE;
+    if (now - last.current.at < (fast ? FAST_TICK : TICK)) return;
     last.current.at = now;
     if (!player) return;
 
     // Aim the window ahead of travel: at speed, the land you are about to enter
     // matters more than the land already behind you.
-    const pace = Math.hypot(player.vx, player.vz);
-    const lead = Math.min(1.2, pace * 0.35);
+    const lead = Math.min(fast ? 1.8 : 1.2, pace * (fast ? 1.8 : 0.9));
     const keys = visibleChunks(
       player.x + (pace > 0.001 ? (player.vx / pace) * lead : 0),
       player.z + (pace > 0.001 ? (player.vz / pace) * lead : 0),
@@ -78,8 +80,9 @@ export function ChunkStreamer({
     // Both sources take the same batch, so wait until neither is mid-request.
     if (busy.current.structures || busy.current.terraform) return;
 
-    const batch = queue.current.slice(0, BATCH);
-    queue.current = queue.current.slice(BATCH);
+    const batchSize = fast ? FAST_BATCH : BATCH;
+    const batch = queue.current.slice(0, batchSize);
+    queue.current = queue.current.slice(batchSize);
 
     busy.current.structures = true;
     void syncWorldChunks(batch).finally(() => {

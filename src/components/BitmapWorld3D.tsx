@@ -1466,14 +1466,13 @@ function PlayerCameraRig({
       if (mode !== "first" || document.pointerLockElement !== canvas) return;
       const player = pose.current;
       if (!player) return;
-      // Aiming slows the look down in step with the zoom, so a steadied shot
-      // tracks a distant target instead of skating past it.
-      const steady = 1 - aimState.amount * 0.62;
-      player.yaw -= event.movementX * 0.0022 * steady;
+      // Raw tactical mouse-look: quick at the hip, precise through the sights.
+      const steady = 1 - aimState.amount * 0.58;
+      player.yaw -= event.movementX * 0.00185 * steady;
       pitch.current = THREE.MathUtils.clamp(
-        pitch.current - event.movementY * 0.0018 * steady,
-        -1.05,
-        1.05,
+        pitch.current - event.movementY * 0.00155 * steady,
+        -1.2,
+        1.2,
       );
     };
     canvas.addEventListener("pointerdown", lock);
@@ -1505,11 +1504,20 @@ function PlayerCameraRig({
           (pressed.has("s") || pressed.has("arrowdown") ? 1 : 0) +
           touchPad.forward,
       ),
-      // A/D and the left/right arrows steer the body — sidestepping is Q/E only.
-      strafe: (pressed.has("q") ? 1 : 0) - (pressed.has("e") ? 1 : 0),
+      // Modern first person uses familiar WASD strafing. Third person and rides
+      // keep body steering, while Q/E remain available as sidestep keys.
+      strafe:
+        mode === "first" && !isDriving()
+          ? clampAxis(
+              (pressed.has("d") ? 1 : 0) -
+                (pressed.has("a") ? 1 : 0) +
+                (pressed.has("q") ? 1 : 0) -
+                (pressed.has("e") ? 1 : 0),
+            )
+          : (pressed.has("q") ? 1 : 0) - (pressed.has("e") ? 1 : 0),
       turn: clampAxis(
-        (pressed.has("a") || pressed.has("arrowleft") ? 1 : 0) -
-          (pressed.has("d") || pressed.has("arrowright") ? 1 : 0) +
+        (pressed.has("arrowleft") || (mode !== "first" && pressed.has("a")) ? 1 : 0) -
+          (pressed.has("arrowright") || (mode !== "first" && pressed.has("d")) ? 1 : 0) +
           touchPad.turn,
       ),
       sprint: pressed.has("shift") || touchPad.sprint,
@@ -1556,6 +1564,9 @@ function PlayerCameraRig({
     // On foot the shoes quicken every stride and the engine falls silent.
     else {
       intent.speedScale = walkMultiplier();
+      // A raised weapon trades speed for accuracy, preventing full-speed ADS
+      // strafing and giving first-person combat deliberate tactical weight.
+      if (mode === "first") intent.speedScale *= 1 - aimState.amount * 0.32;
       stopEngine();
     }
 
@@ -1627,11 +1638,12 @@ function PlayerCameraRig({
     } else if (mode === "first") {
       // Footstep bob: vertical bounce plus a light side sway, scaled by pace and
       // held right down while aiming so the sights stay steady.
-      const settle = calm.current ? 0 : 1 - aimState.amount * 0.8;
-      bob.current += speed * delta * 7.5;
-      const bounce = Math.sin(bob.current * 2) * AVATAR_U * 0.03 * gait * settle;
-      const sway = Math.cos(bob.current) * AVATAR_U * 0.042 * gait * settle;
-      const eye = player.y + AVATAR_U * 0.88 + bounce - dip;
+      const settle = calm.current ? 0 : 1 - aimState.amount * 0.92;
+      bob.current += speed * delta * 8.5;
+      const bounce = Math.sin(bob.current * 2) * AVATAR_U * 0.016 * gait * settle;
+      const sway = Math.cos(bob.current) * AVATAR_U * 0.022 * gait * settle;
+      const strideDip = Math.max(0, Math.cos(bob.current * 2)) * AVATAR_U * 0.008 * gait * settle;
+      const eye = player.y + AVATAR_U * 0.91 + bounce - strideDip - dip;
       cameraTarget.current.set(
         player.x + Math.cos(player.yaw) * sway,
         eye,
@@ -1665,13 +1677,13 @@ function PlayerCameraRig({
         player.z + player.vz * lead + Math.cos(player.yaw) * AVATAR_U * (riding ? 2.8 : 3.6),
       );
     }
-    const transitionSpeed = mode === "first" ? 11 : 6;
+    const transitionSpeed = mode === "first" ? 18 : 6;
     camera.position.lerp(cameraTarget.current, 1 - Math.exp(-transitionSpeed * delta));
     lookMatrix.current.lookAt(camera.position, cameraLook.current, camera.up);
     targetRotation.current.setFromRotationMatrix(lookMatrix.current);
     camera.quaternion.slerp(
       targetRotation.current,
-      1 - Math.exp(-(mode === "first" ? 14 : 7) * delta),
+      1 - Math.exp(-(mode === "first" ? 20 : 7) * delta),
     );
     // Lean last, on top of the settled look, so turning banks the frame without
     // ever pulling the camera off its target.
@@ -1685,9 +1697,9 @@ function PlayerCameraRig({
     const zoom = 1 - (1 - aimZoom(weapon)) * aimState.amount;
     // Speed widens the view a little and a landing squeezes it for a beat.
     const targetFov =
-      ((mode === "first" ? 68 : 56) +
-        gait * (mode === "first" ? 7 : 3) -
-        land.current * (mode === "first" ? 5 : 3)) *
+      ((mode === "first" ? 64 : 56) +
+        gait * (mode === "first" ? 3.5 : 3) -
+        land.current * (mode === "first" ? 3 : 3)) *
       zoom;
 
     if (Math.abs(perspective.fov - targetFov) > 0.02) {
@@ -3961,7 +3973,7 @@ export function BitmapWorld3D({
               </span>
               {helpOpen ? (
                 <span className="text-muted-foreground">
-                   W · S WALK · A · D TURN · Q · E SIDESTEP · SHIFT SPRINT · SPACE JUMP · O SWAP
+                   {cameraMode === "first" ? "WASD MOVE · MOUSE LOOK" : "W · S WALK · A · D TURN · Q · E SIDESTEP"} · SHIFT SPRINT · SPACE JUMP · O SWAP
                   VIEW · M MAP · V TRAVEL · SPACE · X CLIMB · SINK WHEN FLYING · B BUILD · T
                   TERRAFORM · F ATTACK · H HEAL SPELL · K OPEN CHEST · P COMPANION · N NIGHT VISION · G
                   ICE CREAM · J RAMEN · U CHEESE SLICE · NEARBY CREATURES NAME THEMSELVES AT THE TOP ·{" "}

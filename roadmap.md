@@ -37,3 +37,4 @@
 - [x] Correct tank direction, add cannon combat, vehicle-specific trails, and mystery fog
 - [x] Modernize third-person character framing with a lower over-the-shoulder camera
 - [x] Replace the empty worn-figure area with a live avatar and equipped-gear preview
+- [x] Modernize tactical first-person controls and cap traversal speeds for reliable world loading

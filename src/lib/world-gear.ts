@@ -76,7 +76,7 @@ export const SHOES_INSCRIPTION =
 export const MOON_INSCRIPTION =
   "37b64538bf925f3780fc22cdab1d0a8bd7a70df3ba74989fd9c891d70b2dcd34i0";
 /** How much faster a visitor travels with the shoes on. */
-export const SHOES_SPEED = 1.16;
+export const SHOES_SPEED = 1.12;
 /** The necklace — worn at the throat, and it steadies a visitor's recovery. */
 export const NECKLACE_INSCRIPTION =
   "aa4b5be5b8aa8460ee7cc6fa19279fb6768f0e376a3901e46f8f942a16d75ac6i0";
