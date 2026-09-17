@@ -6,6 +6,7 @@ import { RIDES } from "@/lib/world-vehicle";
 import { SWORD_INSCRIPTION, SWORD_TWO_INSCRIPTION } from "@/components/game/weapons";
 import { ordContentUrl } from "@/lib/oci";
 import { GoldBarIcon } from "@/components/GoldBarIcon";
+import { RationIcon } from "@/components/game/RationIcon";
 
 export const Route = createFileRoute("/inventory")({
   head: () => ({
@@ -113,11 +114,16 @@ function InventoryPage() {
             const active = eating?.id === food.id;
             return (
               <li key={food.id} className="flex flex-wrap items-center justify-between gap-3 p-5">
-                <div>
-                  <p className="display text-sm">{food.label}</p>
-                  <p className="label mt-1">
-                    +{food.bite} HP A BITE · {food.buff.label} FOR {Math.round(food.buff.ms / 1000)}S
-                  </p>
+                <div className="flex items-center gap-3">
+                  <span className="flex size-10 shrink-0 items-center justify-center border border-border text-bitcoin">
+                    <RationIcon id={food.id} className="size-5" />
+                  </span>
+                  <div>
+                    <p className="display text-sm">{food.label}</p>
+                    <p className="label mt-1">
+                      +{food.bite} HP A BITE · {food.buff.label} FOR {Math.round(food.buff.ms / 1000)}S
+                    </p>
+                  </div>
                 </div>
                 <span className="font-mono text-[11px] text-muted-foreground">
                   {active ? "EATING NOW…" : "IN YOUR PACK"}
