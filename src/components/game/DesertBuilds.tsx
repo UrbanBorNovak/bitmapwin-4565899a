@@ -5,7 +5,7 @@
  * the land world. Nothing raycasts: builds never intercept a shot or a click.
  */
 
-import { Suspense, memo, useMemo, useRef } from "react";
+import { Suspense, memo, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
@@ -293,14 +293,22 @@ export const DesertBuilds = memo(function DesertBuilds({
   pose: React.RefObject<{ x: number; z: number } | null>;
 }) {
   const builds = useWorldBuilds();
-  const player = pose.current;
-  const px = player?.x ?? 0;
-  const pz = player?.z ?? 0;
+  const [center, setCenter] = useState<[number, number]>(() => [pose.current?.x ?? 0, pose.current?.z ?? 0]);
+  const lastUpdate = useRef(0);
+  useFrame(({ clock }) => {
+    const player = pose.current;
+    if (!player || clock.elapsedTime - lastUpdate.current < 0.5) return;
+    const dx = player.x - center[0];
+    const dz = player.z - center[1];
+    if (dx * dx + dz * dz < unit * unit * 64) return;
+    lastUpdate.current = clock.elapsedTime;
+    setCenter([player.x, player.z]);
+  });
   const visible = useMemo(
     () => [...builds]
-      .sort((a, b) => Math.hypot(a.x - px, a.z - pz) - Math.hypot(b.x - px, b.z - pz))
+      .sort((a, b) => Math.hypot(a.x - center[0], a.z - center[1]) - Math.hypot(b.x - center[0], b.z - center[1]))
       .slice(0, 120),
-    [builds, px, pz],
+    [builds, center],
   );
   return (
     <>

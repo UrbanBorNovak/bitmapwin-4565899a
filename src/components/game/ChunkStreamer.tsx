@@ -130,6 +130,8 @@ export function ChunkStreamer({
       }
     }
 
+    report();
+
     if (!queue.current.length) return;
 
     // Both sources take the same batch, so wait until neither is mid-request.
