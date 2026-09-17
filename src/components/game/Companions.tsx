@@ -112,7 +112,10 @@ function Pet({
         playerAngle: Math.atan2(playerDx, playerDz),
         workDistance: targetDistance / Math.max(unit, 0.0001),
         workAngle: Math.atan2(targetDx, targetDz),
-        worker: targetDistance > unit * 0.22,
+        // The heel point remains its job even after it arrives. This lets the
+        // brain choose WORK/rest there instead of falling back to a wandering
+        // cruise while the player is standing normally.
+        worker: true,
         hostile: false,
         vendor: false,
       },

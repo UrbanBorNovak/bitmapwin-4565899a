@@ -108,7 +108,10 @@ function WornPiece({
     const stride = stepSide && moving && player.grounded
       ? Math.sin(clock.elapsedTime * strideRate) * stepSide
       : 0;
-    const lift = (bob ? Math.sin(clock.elapsedTime * 2.4) * unit * bob : 0)
+    const bodyBob = moving && player.grounded
+      ? Math.abs(Math.sin(clock.elapsedTime * strideRate)) * unit * (player.movement === "run" ? 0.025 : 0.014)
+      : 0;
+    const lift = bodyBob + (bob ? Math.sin(clock.elapsedTime * 2.4) * unit * bob : 0)
       + (stepSide ? Math.max(0, stride) * unit * 0.08 : 0);
     const lean = player.lean ?? 0;
     // Match SelfAvatar's XYZ Euler exactly, then transform the local attachment
