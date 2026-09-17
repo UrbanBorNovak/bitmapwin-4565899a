@@ -259,7 +259,7 @@ export function WornGear({
                 unit={unit}
                 fit={0.31}
                 pose={pose}
-                offset={[side * 0.175, 0.02, 0.075]}
+                offset={[side * 0.175, -0.01, 0.075]}
                 seatOnBase
                 fitAllAxes
                 boundsNode="Plane.005"
