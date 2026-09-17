@@ -3109,6 +3109,8 @@ export function BitmapWorld3D({
   const stone = useFittedStone();
   const bits = useBits();
   const member = useMember();
+  /** the character sheet written on /character — its name and title ride the HUD */
+  const character = useCharacter();
   // The badge is confirmed on chain by the backend; the world only echoes it.
   const membership = useQuery(membershipBadgeQuery(wallet?.ordinalsAddress ?? ""));
   useEffect(() => {
