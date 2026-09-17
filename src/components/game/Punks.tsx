@@ -31,6 +31,8 @@ const MOB_MIN = 3;
 const MOB_MAX = 5;
 /** how long a provoked mob keeps coming for you — they cool down quickly now */
 const RAGE_MS = 10_000;
+/** Extra height above the terrain so punks stand proud of the sand. */
+const PUNK_LIFT = 0.12;
 
 type Punk = BeastEntity & {
   mob: number;
@@ -243,7 +245,7 @@ export function Punks({
       if (punk.deadUntil) {
         node.visible = true;
         node.rotation.set(0, punk.heading + Math.PI, Math.PI / 2.1);
-        const rest = groundY(punk.x, punk.z);
+        const rest = groundY(punk.x, punk.z) + PUNK_LIFT * unit;
         node.position.set(punk.x, rest + unit * 0.02, punk.z);
         punk.bodyY = rest + unit * punk.size * 0.2;
         return;
@@ -365,7 +367,7 @@ export function Punks({
       const stride = Math.abs(Math.sin(now / 190 + punk.seed)) * unit * punk.size * 0.03;
       // The sand rises and falls now, so the body — and the sphere a shot has to
       // find — both ride the terrain instead of a flat zero line.
-      const ground = groundY(punk.x, punk.z);
+      const ground = groundY(punk.x, punk.z) + PUNK_LIFT * unit;
       punk.bodyY = ground + unit * punk.size * 0.5;
       node.position.set(punk.x, ground + stride, punk.z);
       // The model's face points down its own -Z, so turn it to walk face-first.
