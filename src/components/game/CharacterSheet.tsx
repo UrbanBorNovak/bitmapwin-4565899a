@@ -6,11 +6,19 @@
  * works changes here — only how you see it. Presentation only.
  */
 
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import type { LucideIcon } from "lucide-react";
 import { BookOpen, CircleDot, Footprints, Gem, Glasses, HardHat, ToyBrick, Watch } from "lucide-react";
+import { Canvas, useThree } from "@react-three/fiber";
+import { useGLTF, useTexture } from "@react-three/drei";
+import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
+import * as THREE from "three";
 import { WeaponGlyph } from "@/components/game/WeaponBelt";
-import { WEAPONS, type WeaponKind } from "@/components/game/weapons";
-import { ordContentUrl } from "@/lib/oci";
+import { WEAPONS, WeaponModel, useWeaponMaterials, type WeaponKind } from "@/components/game/weapons";
+import { Primitive } from "@/components/game/Primitive";
+import { WornGear } from "@/components/game/WornGear";
+import { DEFAULT_AVATAR_MODEL, DEFAULT_AVATAR_TEXTURE } from "@/lib/map-identity";
+import { createPlayerState } from "@/lib/player-state";
 import {
   cycleToy,
   toySpec,
@@ -32,6 +40,99 @@ type SlotView = {
   Icon: LucideIcon | null;
   onPick: (() => void) | null;
 };
+
+const TRANSPARENT_PIXEL =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==";
+
+function PreviewCamera() {
+  const { camera } = useThree();
+  useEffect(() => {
+    camera.position.set(1.55, 1.05, 2.8);
+    camera.lookAt(0, 0.54, 0);
+  }, [camera]);
+  return null;
+}
+
+function PreviewAvatar({ model }: { model: string | null }) {
+  const inscription = model ?? DEFAULT_AVATAR_MODEL;
+  const gltf = useGLTF(`https://ordinals.com/content/${inscription}`);
+  const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
+  const texture = useTexture(
+    inscription === DEFAULT_AVATAR_MODEL
+      ? `https://ordinals.com/content/${DEFAULT_AVATAR_TEXTURE}`
+      : TRANSPARENT_PIXEL,
+  );
+  const fitted = useMemo(() => {
+    if (inscription === DEFAULT_AVATAR_MODEL) {
+      texture.flipY = false;
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.magFilter = THREE.NearestFilter;
+      texture.minFilter = THREE.NearestFilter;
+    }
+    scene.traverse((child) => {
+      const mesh = child as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      mesh.frustumCulled = false;
+      if (inscription !== DEFAULT_AVATAR_MODEL) return;
+      const paint = (source: THREE.Material) => {
+        const material = source.clone() as THREE.MeshStandardMaterial;
+        material.map = texture;
+        material.color.set("#ffffff");
+        material.metalness = 0;
+        material.roughness = 0.85;
+        material.needsUpdate = true;
+        return material;
+      };
+      mesh.material = Array.isArray(mesh.material) ? mesh.material.map(paint) : paint(mesh.material);
+    });
+    scene.updateMatrixWorld(true);
+    const bounds = new THREE.Box3().setFromObject(scene);
+    const size = bounds.getSize(new THREE.Vector3());
+    const center = bounds.getCenter(new THREE.Vector3());
+    const scale = 1.15 / Math.max(size.x, size.y, size.z, 0.0001);
+    return { scale, center, minY: bounds.min.y };
+  }, [inscription, scene, texture]);
+  return (
+    <group
+      scale={fitted.scale}
+      position={[-fitted.center.x * fitted.scale, -fitted.minY * fitted.scale, -fitted.center.z * fitted.scale]}
+    >
+      <Primitive object={scene} />
+    </group>
+  );
+}
+
+function PreviewWeapon({ kind }: { kind: WeaponKind }) {
+  const materials = useWeaponMaterials();
+  return (
+    <group
+      position={[kind === "sword" ? 0 : 0.3, kind === "sword" ? 0.62 : 0.26, 0.14]}
+      rotation={[kind === "trap" ? 0.5 : -0.06, Math.PI, 0]}
+      scale={kind === "sword" ? 0.7 : 0.62}
+    >
+      <WeaponModel kind={kind} u={1} materials={materials} flashColor="#f7931a" lash={0} />
+    </group>
+  );
+}
+
+function EquippedAvatarPreview({ model, weapon, flying }: { model: string | null; weapon: WeaponKind | null; flying: boolean }) {
+  const pose = useRef(createPlayerState(0, 0, 0));
+  return (
+    <Canvas dpr={[1, 1.5]} camera={{ position: [1.55, 1.05, 2.8], fov: 34, near: 0.01, far: 20 }}>
+      <PreviewCamera />
+      <ambientLight intensity={1.5} />
+      <directionalLight position={[2, 3, 3]} intensity={2.2} />
+      <directionalLight position={[-2, 1, -2]} intensity={0.8} />
+      <group rotation-y={-0.18}>
+        <Suspense fallback={null}>
+          <PreviewAvatar model={model} />
+          {weapon ? <PreviewWeapon kind={weapon} /> : null}
+          <WornGear unit={1} pose={pose} weapon={weapon} showHead jetpack={flying} />
+        </Suspense>
+      </group>
+    </Canvas>
+  );
+}
 
 function Slot({ view }: { view: SlotView }) {
   const body = (
@@ -188,19 +289,11 @@ export function CharacterSheet({
           ))}
         </div>
         <div className="flex min-w-0 flex-1 flex-col items-center gap-1">
-          <div className="flex h-[9.5rem] w-full items-center justify-center border border-border bg-background/60">
-            {model ? (
-              <img
-                src={ordContentUrl(model)}
-                alt="Your figure"
-                className="max-h-[8.6rem] max-w-full [image-rendering:pixelated]"
-                loading="lazy"
-              />
-            ) : (
-              <span className="px-2 text-center text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
-                No inscribed figure worn
-              </span>
-            )}
+          <div className="relative h-[12rem] w-full min-w-[8rem] overflow-hidden border border-border bg-background/60">
+            <EquippedAvatarPreview model={model} weapon={weapon} flying={flying} />
+            <span className="pointer-events-none absolute bottom-1 left-1.5 text-[7px] uppercase tracking-[0.16em] text-muted-foreground" data-no-translate>
+              LIVE LOADOUT
+            </span>
           </div>
           <div className="flex items-center gap-1.5">
             {weapon ? (
