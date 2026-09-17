@@ -104,7 +104,9 @@ function PreviewAvatar({ model, skin }: { model: string | null; skin?: string | 
     const bounds = new THREE.Box3().setFromObject(scene);
     const size = bounds.getSize(new THREE.Vector3());
     const center = bounds.getCenter(new THREE.Vector3());
-    const scale = 1.15 / Math.max(size.x, size.y, size.z, 0.0001);
+    // Keep every inscription at one apparent body height in LIVE LOADOUT.
+    // Using its widest axis made broad figures look much shorter than slim ones.
+    const scale = 1.15 / Math.max(size.y, 0.0001);
     return { scale, center, minY: bounds.min.y };
   }, [inscription, scene, texture]);
   return (
