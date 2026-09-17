@@ -207,7 +207,7 @@ export function SiteHeader() {
               <ChevronDown className="hidden size-3 sm:block" />
             </button>
             {openGroup === group.id && (
-              <div className={`nav-menu fixed left-3 right-3 z-50 mt-2 border border-border bg-background shadow-[4px_4px_0_0_var(--color-border)] sm:absolute sm:left-0 sm:right-auto sm:min-w-72 ${group.id === "account" ? "sm:left-auto sm:right-0" : ""}`}>
+              <div className={`nav-menu fixed left-3 right-3 top-[6.25rem] z-50 border border-border bg-background shadow-[4px_4px_0_0_var(--color-border)] sm:absolute sm:left-0 sm:right-auto sm:top-full sm:mt-2 sm:min-w-72 ${group.id === "account" ? "sm:left-auto sm:right-0" : ""}`}>
                 <div className="border-b border-border bg-surface px-4 py-2">
                   <div className="label text-bitcoin">{group.label}</div>
                   <div className="mt-1 font-mono text-[10px] leading-snug text-muted-foreground">{group.note}</div>
