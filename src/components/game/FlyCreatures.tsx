@@ -329,6 +329,13 @@ export const CreatureGroup = memo(function CreatureGroup({
       node.rotation.z = 0;
 
       const away = player ? Math.hypot(player.x - creature.x, player.z - creature.z) : null;
+      if (player && spec.water && creature.x === 0 && creature.z === 0) {
+        const { sea } = nearestSea(player.x, player.z);
+        const shoreAngle = Math.atan2(player.z - sea.z, player.x - sea.x) + (index - spec.count / 2) * 0.035;
+        const home = shorelinePoint(sea, shoreAngle, unit, index);
+        creature.x = home.x;
+        creature.z = home.z;
+      }
       const act = creature.brain.think(
         {
           now,
@@ -370,7 +377,17 @@ export const CreatureGroup = memo(function CreatureGroup({
       // it, so frogs and toads stay by the shoreline instead of crossing dunes.
       if (spec.water) {
         const { sea, distance } = nearestSea(creature.x, creature.z);
-        if (distance > unit * (spec.airborne ? 0.5 : 2)) {
+        if (spec.id === "wild-geese" && player) {
+          const shoreAngle = Math.atan2(player.z - sea.z, player.x - sea.x) + Math.sin(now / 14_000) * 0.16;
+          const home = shorelinePoint(sea, shoreAngle + (index % 8 - 3.5) * 0.035, unit, index);
+          const homeDistance = Math.hypot(home.x - creature.x, home.z - creature.z);
+          if (homeDistance > unit * (1.4 + (index % 6) * 0.35)) {
+            const homeHeading = Math.atan2(home.x - creature.x, home.z - creature.z);
+            const diff = ((homeHeading - creature.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+            steer = diff * Math.min(1, delta * 2.4);
+            travel = unit * spec.speed * 1.25;
+          }
+        } else if (distance > unit * (spec.airborne ? 0.5 : 2)) {
           // Strayed inland: turn back for the shoreline.
           const home = Math.atan2(sea.x - creature.x, sea.z - creature.z);
           const diff = ((home - creature.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
