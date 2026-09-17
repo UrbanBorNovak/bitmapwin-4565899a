@@ -7,7 +7,7 @@
  * day.
  */
 
-import { Suspense, memo, useMemo, useRef, useSyncExternalStore } from "react";
+import { Suspense, memo, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
@@ -74,6 +74,7 @@ export const GoldenEgg = memo(function GoldenEgg({
   const burst = useRef<THREE.Mesh>(null);
   const burstMat = useRef<THREE.MeshBasicMaterial>(null);
   const probe = useRef(0);
+  const [, redraw] = useState(0);
 
   const taken = eggClaimed(spot.id);
   // Once taken, the egg stays on stage just long enough to play the flourish.
@@ -106,6 +107,8 @@ export const GoldenEgg = memo(function GoldenEgg({
     }
 
     if (halo.current && sealing) halo.current.opacity = Math.max(0, 0.9 * (1 - phase));
+    // The flourish has run its course: re-render so the egg leaves the scene.
+    if (sealing && phase >= 1) redraw((v) => v + 1);
     if (!player || sealing) return;
 
     const distance = Math.hypot(player.x - spot.x, player.z - spot.z);
