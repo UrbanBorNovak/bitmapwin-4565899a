@@ -18,7 +18,6 @@ import { ReferralPanel } from "@/components/coins/ReferralPanel";
 import { CoinEventCard } from "@/components/coins/CoinEventCard";
 import { CoinEventForm } from "@/components/coins/CoinEventForm";
 import { useWalletSession } from "@/lib/wallet-session";
-import { shortenAddress } from "@/lib/registry";
 
 export const Route = createFileRoute("/coins")({
   component: CoinsPage,
@@ -147,9 +146,9 @@ function CoinsPage() {
           ) : (
             <ul className="divide-y divide-border font-mono text-[11px]">
               {(leaders.data ?? []).map((holder, i) => (
-                <li key={holder.address} className="flex justify-between gap-3 p-4">
+                <li key={`${holder.rank}-${holder.addressLabel}`} className="flex justify-between gap-3 p-4">
                   <span>
-                    {String(i + 1).padStart(2, "0")} · {shortenAddress(holder.address)}
+                    {String(holder.rank || i + 1).padStart(2, "0")} · {holder.addressLabel}
                   </span>
                   <span className="text-muted-foreground">{formatBit(holder.balance)}</span>
                 </li>
