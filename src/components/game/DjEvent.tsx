@@ -205,7 +205,10 @@ export function DjEvent({
   useEffect(() => {
     if (!live) return;
     startDjSet();
-    return () => stopDjSet();
+    return () => {
+      stopDjSet();
+      setMusicDuck(1);
+    };
   }, [live]);
 
   // the beat swells as you close in on the decks
