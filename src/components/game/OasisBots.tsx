@@ -296,7 +296,9 @@ export function OasisBots({
           bot.heading += Math.PI * 0.7;
         }
       }
-      bot.bodyY = unit * bot.size * 0.6;
+      // The hit sphere has to sit where the figure actually stands on the sand,
+      // otherwise every shot passes above or below the settler.
+      bot.bodyY = groundY(bot.x, bot.z) + unit * bot.size * 0.6;
 
       const stride = travel > 0 ? Math.abs(Math.sin(now / 170 + bot.seed)) * unit * 0.035 : 0;
       node.position.set(bot.x, groundY(bot.x, bot.z) + stride, bot.z);

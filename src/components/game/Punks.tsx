@@ -21,6 +21,7 @@ import { PUNK_INSCRIPTION } from "@/lib/world-gear";
 import { registerBeastGroup, type BeastEntity } from "@/lib/world-entities";
 import { poseDown, simDelta} from "@/lib/player-state";
 import { dryLandNear, isSea } from "@/lib/world-sea";
+import { groundY } from "@/lib/world-terrain";
 
 const PUNK_URL = `https://ordinals.com/content/${PUNK_INSCRIPTION}`;
 
@@ -242,7 +243,9 @@ export function Punks({
       if (punk.deadUntil) {
         node.visible = true;
         node.rotation.set(0, punk.heading + Math.PI, Math.PI / 2.1);
-        node.position.set(punk.x, unit * 0.02, punk.z);
+        const rest = groundY(punk.x, punk.z);
+        node.position.set(punk.x, rest + unit * 0.02, punk.z);
+        punk.bodyY = rest + unit * punk.size * 0.2;
         return;
       }
       node.rotation.z = 0;
@@ -360,8 +363,11 @@ export function Punks({
       }
 
       const stride = Math.abs(Math.sin(now / 190 + punk.seed)) * unit * punk.size * 0.03;
-      punk.bodyY = unit * punk.size * 0.5;
-      node.position.set(punk.x, stride, punk.z);
+      // The sand rises and falls now, so the body — and the sphere a shot has to
+      // find — both ride the terrain instead of a flat zero line.
+      const ground = groundY(punk.x, punk.z);
+      punk.bodyY = ground + unit * punk.size * 0.5;
+      node.position.set(punk.x, ground + stride, punk.z);
       // The model's face points down its own -Z, so turn it to walk face-first.
       node.rotation.y = punk.heading + Math.PI;
       // A struck Punk rocks back so the hit reads.
