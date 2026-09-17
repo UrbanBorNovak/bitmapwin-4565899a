@@ -95,6 +95,8 @@ import { ChunkStreamer } from "@/components/game/ChunkStreamer";
 import { PerfGovernor } from "@/components/game/PerfGovernor";
 import { OasisLoading } from "@/components/game/OasisLoading";
 import { FootTrail } from "@/components/game/FootTrail";
+import { TankCannon } from "@/components/game/TankCannon";
+import { MysteryMist } from "@/components/game/MysteryMist";
 import { LandGrowth } from "@/components/game/LandGrowth";
 import { growthLabel, terraform, terraformAt } from "@/lib/world-terraform";
 import { ordContentUrl } from "@/lib/oci";
@@ -2089,6 +2091,7 @@ const WorldScene = memo(function WorldScene({
   onPrize,
   selfId,
   onShooterStats,
+  onTankStatus,
   driving,
   ride,
 
@@ -2131,6 +2134,7 @@ const WorldScene = memo(function WorldScene({
   /** the local visitor's id — stamps traps and keeps their own jaws harmless */
   selfId: string;
   onShooterStats: (stats: ShooterStats) => void;
+  onTankStatus: (message: string) => void;
   driving: boolean;
   ride: RideSpec;
 
@@ -2173,8 +2177,8 @@ const WorldScene = memo(function WorldScene({
           cameraMode === "map"
             ? [colors.background, 40, 190]
             : cameraMode === "first"
-              ? [colors.background, 10, 88]
-              : [colors.background, 16, 108]
+              ? [colors.background, 8, 64]
+              : [colors.background, 13, 82]
         }
       />
 
@@ -2239,6 +2243,7 @@ const WorldScene = memo(function WorldScene({
           <DjEvent unit={AVATAR_U} pose={pose} bitcoin={colors.bitcoin} />
           <DesertBuilds unit={AVATAR_U} />
           <FootTrail unit={AVATAR_U} pose={pose} sand={colors.bitcoin} />
+          <MysteryMist unit={AVATAR_U} pose={pose} color={colors.foreground} />
           <LandGrowth unit={AVATAR_U} pose={pose} />
           <Companions unit={AVATAR_U} pose={pose} />
           <WornGear
@@ -2273,7 +2278,7 @@ const WorldScene = memo(function WorldScene({
         onRunning={onRunning}
       />
       <ShooterLayer
-        active={weapon !== null && cameraMode !== "map"}
+        active={weapon !== null && cameraMode !== "map" && !(driving && ride.id === "tank")}
         firstPerson={cameraMode === "first"}
         weapon={weapon ?? "minigun"}
         selfId={selfId}
@@ -2283,6 +2288,14 @@ const WorldScene = memo(function WorldScene({
         onShootPeer={onShootPeer}
         onCastHeal={onCastHeal}
         onStats={onShooterStats}
+      />
+      <TankCannon
+        active={driving && ride.id === "tank" && cameraMode !== "map"}
+        pose={pose}
+        cursors={cursors}
+        bitcoin={colors.bitcoin}
+        onShootPeer={onShootPeer}
+        onStatus={onTankStatus}
       />
 
       {selectedHeight !== null ? (
@@ -2405,6 +2418,10 @@ export function BitmapWorld3D({
   const ride = useMemo(() => currentRide(), [rideSnapshot]);
   /** Told to the player when a hull is asked to sail dry sand. */
   const [rideNote, setRideNote] = useState<string | null>(null);
+  const noteTank = useCallback((message: string) => {
+    setRideNote(message);
+    window.setTimeout(() => setRideNote((current) => (current === message ? null : current)), 1600);
+  }, []);
   const toggleTruck = useCallback(() => {
     const player = pose.current;
     if (!player) return;
@@ -3638,6 +3655,7 @@ export function BitmapWorld3D({
               onPrize={takePrize}
               selfId={selfId}
               onShooterStats={handleShooterStats}
+              onTankStatus={noteTank}
               driving={driving}
               ride={ride}
 
@@ -3682,7 +3700,7 @@ export function BitmapWorld3D({
         {exploring && touchDevice ? (
           <TouchControls
             flying={driving && ride.kind === "air"}
-            shooter={Boolean(weapon)}
+            shooter={Boolean(weapon) || (driving && ride.id === "tank")}
             paused={utilityOpen || inventoryOpen || buildOpen || mapOpen || chatOpen || rationsOpen}
           />
         ) : null}
