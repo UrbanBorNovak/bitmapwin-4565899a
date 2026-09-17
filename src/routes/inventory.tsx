@@ -79,6 +79,9 @@ function InventoryPage() {
         <span className="blink">_</span>
       </p>
 
+      <CharacterCard />
+
+
       <section className="mt-10 grid grid-cols-2 border border-border md:grid-cols-4">
         <Stat k="GOLD BARS" v={String(bars)} icon />
         <Stat k="GOLD NUGGETS" v={`${nuggets} / 4 TO A BAR`} />
