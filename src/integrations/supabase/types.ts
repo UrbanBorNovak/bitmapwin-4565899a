@@ -1396,6 +1396,27 @@ export type Database = {
         }
         Relationships: []
       }
+      membership_badges: {
+        Row: {
+          active: boolean
+          address: string
+          expires_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          address: string
+          expires_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          address?: string
+          expires_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       memberships: {
         Row: {
           address: string
@@ -1961,7 +1982,6 @@ export type Database = {
           owner_address: string
         }[]
       }
-      membership_badge: { Args: { _address: string }; Returns: boolean }
       owns_wallet: {
         Args: { _address: string; _user_id: string }
         Returns: boolean
