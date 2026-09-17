@@ -114,7 +114,7 @@ function WornPiece({
     const scale = (unit * fit) / span;
     const drop = seatOnBase ? bounds.min.y : center.y;
     return { scale, center, drop };
-  }, [scene, unit, fit, seatOnBase, fitAllAxes, pitch]);
+  }, [scene, unit, fit, seatOnBase, fitAllAxes, pitch, boundsNode]);
 
   useFrame(({ clock }) => {
     const player = pose.current;
@@ -262,6 +262,7 @@ export function WornGear({
                 offset={[side * 0.175, 0.035, 0.075]}
                 seatOnBase
                 fitAllAxes
+                boundsNode="Plane.005"
                 mountOffset={mountOffset}
                 stepSide={side}
               />
