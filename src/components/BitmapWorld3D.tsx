@@ -97,6 +97,7 @@ import { PerfGovernor } from "@/components/game/PerfGovernor";
 import { OasisLoading } from "@/components/game/OasisLoading";
 import { FootTrail } from "@/components/game/FootTrail";
 import { VehicleGunner } from "@/components/game/VehicleGunner";
+import { VehicleDamageFx } from "@/components/game/VehicleDamageFx";
 import { MysteryMist } from "@/components/game/MysteryMist";
 import { LandGrowth } from "@/components/game/LandGrowth";
 import { growthLabel, terraform, terraformAt } from "@/lib/world-terraform";
@@ -226,6 +227,11 @@ import {
   vehicle,
   vehicleSnapshot,
 } from "@/lib/world-vehicle";
+import {
+  repairSelectedVehicle,
+  subscribeVehicleCombat,
+  vehicleCombatSnapshot,
+} from "@/lib/world-vehicle-combat";
 
 
 const GRID = 1_000;
@@ -1533,13 +1539,16 @@ function PlayerCameraRig({
     const driving = isDriving();
     if (driving) {
       intent.speedScale = ride.speed * (intent.sprint ? ride.sprint : 1);
-      // Steering tightens up at a crawl and washes out flat out, by how much
-      // grip this ride has.
+      // Each ride owns a real combat turning circle. At speed, steering is
+      // limited by v/r; at a crawl tracked and agile rides can still pivot.
       const pace = Math.min(
         1,
         Math.hypot(player.vx, player.vz) / (MOVE.walkSpeed * ride.speed * ride.sprint),
       );
-      intent.turnScale = ride.turn * (1 + ride.grip * 0.5 - ride.grip * pace);
+      const speed = Math.hypot(player.vx, player.vz);
+      const radiusTurn = speed / Math.max(STRIDE * ride.turnRadius, STRIDE);
+      const maxTurn = Math.max(ride.id === "tank" ? 0.42 : 0.24, Math.min(MOVE.turnRate * ride.turn, radiusTurn));
+      intent.turnScale = (maxTurn / MOVE.turnRate) * (1 + ride.grip * 0.25 * (1 - pace));
       intent.accelScale = ride.accel;
       intent.dragScale = ride.brake;
       intent.strafe = 0;
@@ -2105,6 +2114,8 @@ const WorldScene = memo(function WorldScene({
   selfId,
   onShooterStats,
   onTankStatus,
+  vehicleExplosion,
+  vehicleCritical,
   driving,
   ride,
 
@@ -2148,6 +2159,8 @@ const WorldScene = memo(function WorldScene({
   selfId: string;
   onShooterStats: (stats: ShooterStats) => void;
   onTankStatus: (message: string) => void;
+  vehicleExplosion: number;
+  vehicleCritical: boolean;
   driving: boolean;
   ride: RideSpec;
 
@@ -2257,6 +2270,12 @@ const WorldScene = memo(function WorldScene({
           <DesertBuilds unit={AVATAR_U} />
           <FootTrail unit={AVATAR_U} pose={pose} sand={colors.bitcoin} />
           <MysteryMist unit={AVATAR_U} pose={pose} color={colors.foreground} />
+          <VehicleDamageFx
+            pose={pose}
+            explosion={vehicleExplosion}
+            critical={vehicleCritical}
+            color={colors.bitcoin}
+          />
           <LandGrowth unit={AVATAR_U} pose={pose} />
           <Companions unit={AVATAR_U} pose={pose} />
           <WornGear
@@ -2432,6 +2451,11 @@ export function BitmapWorld3D({
   const rideSnapshot = useSyncExternalStore(subscribeVehicle, vehicleSnapshot, () => "0::0");
   const driving = rideSnapshot.startsWith("1");
   const ride = useMemo(() => currentRide(), [rideSnapshot]);
+  const hull = useSyncExternalStore(
+    subscribeVehicleCombat,
+    vehicleCombatSnapshot,
+    vehicleCombatSnapshot,
+  );
   /** Told to the player when a hull is asked to sail dry sand. */
   const [rideNote, setRideNote] = useState<string | null>(null);
   const noteTank = useCallback((message: string) => {
@@ -2443,6 +2467,11 @@ export function BitmapWorld3D({
     if (!player) return;
     unlockAudio();
     const wanted = currentRide();
+    if (!isDriving() && hull.rideId === wanted.id && hull.destroyedUntil > Date.now()) {
+      const seconds = Math.ceil((hull.destroyedUntil - Date.now()) / 1000);
+      setRideNote(`${wanted.label} DESTROYED · FIELD REPAIR ${seconds}S`);
+      return;
+    }
     if (!isDriving() && wanted.kind === "water" && !isSea(player.x, player.z)) {
       const { distance } = nearestSea(player.x, player.z);
       playSfx("hit");
@@ -2455,7 +2484,7 @@ export function BitmapWorld3D({
     const seated = toggleDriving(player.x, player.z, player.yaw);
     playSfx(seated ? "board" : "engineoff");
     if (!seated) stopEngine();
-  }, []);
+  }, [hull.destroyedUntil, hull.rideId]);
   const pickRide = useCallback((id: string) => {
     selectRide(id);
     unlockAudio();
@@ -3688,6 +3717,8 @@ export function BitmapWorld3D({
               onTankStatus={noteTank}
               driving={driving}
               ride={ride}
+              vehicleExplosion={hull.explosion}
+              vehicleCritical={hull.hp > 0 && hull.hp <= hull.maxHp * 0.3}
 
             />
           </Canvas>
@@ -3939,6 +3970,20 @@ export function BitmapWorld3D({
               {hp}/{MAX_HP}
             </span>
           </span>
+          {driving ? (
+            <span className="flex items-center gap-2">
+              <span>HULL</span>
+              <span className="relative block h-[6px] w-[110px] border border-border">
+                <span
+                  className="absolute inset-y-0 left-0 bg-bitcoin"
+                  style={{ width: `${Math.max(0, (hull.hp / hull.maxHp) * 100)}%` }}
+                />
+              </span>
+              <span>{hull.hp}/{hull.maxHp}</span>
+              <span className="text-muted-foreground">ARMOR {Math.round(ride.armor * 100)}%</span>
+              {hull.hullDown ? <span className="text-bitcoin">HULL-DOWN</span> : null}
+            </span>
+          ) : null}
           {hp <= 0 ? (
             <span className="flex items-center gap-2">
               <span className="text-bitcoin">KILLED · RESPAWN IN {respawnIn}s</span>

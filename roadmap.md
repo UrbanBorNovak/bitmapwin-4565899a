@@ -38,3 +38,4 @@
 - [x] Modernize third-person character framing with a lower over-the-shoulder camera
 - [x] Replace the empty worn-figure area with a live avatar and equipped-gear preview
 - [x] Modernize tactical first-person controls and cap traversal speeds for reliable world loading
+- [x] Balance vehicle combat handling and add hull damage, explosions, and hull-down protection
