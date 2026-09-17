@@ -256,11 +256,9 @@ function CreatePage() {
   return (
     <div className="mx-auto max-w-[1500px] px-4 py-10 md:px-8 md:py-14">
       <MvpFlowRail active="deploy" {...(searchHeight === undefined ? {} : { height: searchHeight })} />
-      <div className="label mt-6 text-bitcoin">STEP 03 OF 03 · BUILD AND DEPLOY</div>
-      <h1 className="display mt-3 text-3xl md:text-5xl">WHAT DO YOU WANT TO BUILD?</h1>
+      <h1 className="display mt-6 text-3xl md:text-5xl">WHAT DO YOU WANT TO BUILD?</h1>
       <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-        Describe the place in plain words. The builder plans it, writes the code, runs it in the sandbox in front of
-        you, and then puts it on your land as a published package.
+        Two steps: say what you want, then put it on your land. Everything else is done for you.
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         <DataBadge kind="live" note="REAL CODE · REAL SANDBOX · REAL DEPLOY" />
@@ -269,7 +267,7 @@ function CreatePage() {
       <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
         <div className="space-y-4">
           <div className="border border-bitcoin/50 bg-surface p-4">
-            <div data-tour="create-brief" className="label text-bitcoin">1 · THE BRIEF</div>
+            <div data-tour="create-brief" className="label text-bitcoin">STEP 1 · SAY WHAT YOU WANT</div>
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
