@@ -140,9 +140,10 @@ function Pet({
     leashDelta.subVectors(leashEnd, leashStart);
     const rope = leash.current;
     if (rope) {
+      const ropeLength = leashDelta.length();
       rope.position.copy(leashStart).addScaledVector(leashDelta, 0.5);
-      rope.scale.set(1, Math.max(leashDelta.length(), unit * 0.01), 1);
-      rope.quaternion.setFromUnitVectors(leashUp, leashDelta.clone().normalize());
+      rope.scale.set(1, Math.max(ropeLength, unit * 0.01), 1);
+      if (ropeLength > 0.00001) rope.quaternion.setFromUnitVectors(leashUp, leashDelta.multiplyScalar(1 / ropeLength));
     }
   });
 
