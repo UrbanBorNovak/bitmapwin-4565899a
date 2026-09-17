@@ -7,6 +7,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useAnimations, useGLTF, useTexture } from "@react-three/drei";
+import { useThree } from "@react-three/fiber";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
