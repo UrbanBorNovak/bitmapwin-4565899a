@@ -45,7 +45,7 @@ export function VehicleGunner({
   pose: React.RefObject<PlayerState>;
   cursors: MapCursor[];
   bitcoin: string;
-  onShootPeer: (id: string) => void;
+  onShootPeer: (id: string, damage?: number, reach?: number) => void;
   onStatus: (message: string) => void;
 }) {
   const gl = useThree((state) => state.gl);
@@ -154,7 +154,7 @@ export function VehicleGunner({
         return;
       }
       if (hit.kind === "peer") {
-        onShootPeer(hit.id.slice(5));
+        onShootPeer(hit.id.slice(5), gun.damage, Math.ceil(gun.rangeStrides / 10));
         onStatus(`${gun.label} HIT · ${hit.label}`);
         return;
       }
@@ -339,10 +339,12 @@ function CannonShell({ shell, color }: { shell: Shell; color: THREE.Color }) {
         <sphereGeometry args={[STRIDE * 0.22, 8, 6]} />
         <meshBasicMaterial color={color} toneMapped={false} />
       </mesh>
-      <mesh ref={blastRef} visible={false}>
-        <sphereGeometry args={[STRIDE * 1.2, 10, 8]} />
-        <meshBasicMaterial color={color} wireframe transparent opacity={0.9} depthWrite={false} toneMapped={false} />
-      </mesh>
+      <group>
+        <mesh ref={blastRef} visible={false}>
+          <sphereGeometry args={[STRIDE * 1.2, 10, 8]} />
+          <meshBasicMaterial color={color} wireframe transparent opacity={0.9} depthWrite={false} toneMapped={false} />
+        </mesh>
+      </group>
     </>
   );
 }
