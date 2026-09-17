@@ -3899,6 +3899,9 @@ export function BitmapWorld3D({
 
         {inventoryOpen ? <SmeltHud pose={pose} /> : null}
 
+        {inventoryOpen ? <BitmapMineHud bitmaps={ownedHeights.length} /> : null}
+
+
         {buildOpen ? (
           <MinerHud address={wallet?.ordinalsAddress ?? null} />
         ) : null}
