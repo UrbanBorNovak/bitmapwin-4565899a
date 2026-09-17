@@ -109,7 +109,7 @@ export function Minimap({
 
   // M toggles the full-size map.
   useEffect(() => {
-    if (controlledExpanded !== undefined) return;
+    if (inline || controlledExpanded !== undefined) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() !== "m") return;
       const target = event.target as HTMLElement | null;
