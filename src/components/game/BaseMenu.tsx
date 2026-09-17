@@ -56,8 +56,8 @@ export function BaseMenu({ pose, cursors, ownedHeights, partyIds, onVisit, onInv
         pose={pose}
         cursors={cursors}
         ownedHeights={ownedHeights}
-        partyIds={partyIds}
-        onVisit={onVisit}
+        partyIds={partyIds ?? []}
+        {...(onVisit ? { onVisit } : {})}
       />
 
       <div className="border border-border font-mono text-[10px]">
