@@ -35,6 +35,9 @@ import { runtimeDeploymentsQuery, type RuntimeDeployment } from "@/lib/extender-
 import type { RunningExtender } from "@/lib/use-extender-runtimes";
 import { ShooterLayer, type ShooterStats } from "@/components/game/ShooterLayer";
 import { MinerHud } from "@/components/game/MinerHud";
+import { BitmapMineHud } from "@/components/game/BitmapMineHud";
+import { BitmapMineCrew } from "@/components/game/BitmapMineCrew";
+
 import { SmeltHud } from "@/components/game/SmeltHud";
 import { EggHunt } from "@/components/game/EggHunt";
 
@@ -2310,6 +2313,8 @@ const WorldScene = memo(function WorldScene({
           />
           <DjEvent unit={AVATAR_U} pose={pose} bitcoin={colors.bitcoin} />
           <DesertBuilds unit={AVATAR_U} />
+          <BitmapMineCrew unit={AVATAR_U} pose={pose} heights={ownedHeights} />
+
           <FootTrail unit={AVATAR_U} pose={pose} sand={colors.bitcoin} />
           <MysteryMist unit={AVATAR_U} pose={pose} color={colors.foreground} />
           <VehicleDamageFx
@@ -3893,6 +3898,9 @@ export function BitmapWorld3D({
         {inventoryOpen ? <SkillsHud /> : null}
 
         {inventoryOpen ? <SmeltHud pose={pose} /> : null}
+
+        {inventoryOpen ? <BitmapMineHud bitmaps={ownedHeights.length} /> : null}
+
 
         {buildOpen ? (
           <MinerHud address={wallet?.ordinalsAddress ?? null} />
