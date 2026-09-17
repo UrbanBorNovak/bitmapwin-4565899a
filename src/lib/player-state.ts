@@ -409,8 +409,9 @@ export function clampPeerStep(
   const dx = x - from.x;
   const dz = z - from.z;
   const distance = Math.hypot(dx, dz);
-  // generous allowance: top sprint speed plus a beat of jitter and lost packets
-  const allowed = (MOVE.walkSpeed * MOVE.sprint * Math.max(elapsedMs, 120)) / 1000 + STRIDE * 6;
+  // Allow any legitimate capped ride while still rejecting teleport-like peer
+  // reports. The fixed margin absorbs network jitter and dropped broadcasts.
+  const allowed = (TRAVERSAL_SPEED_CAP * Math.max(elapsedMs, 120)) / 1000 + STRIDE * 6;
   if (distance <= allowed) return { x, z };
   const scale = allowed / distance;
   return { x: from.x + dx * scale, z: from.z + dz * scale };
