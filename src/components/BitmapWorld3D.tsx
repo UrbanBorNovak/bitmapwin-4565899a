@@ -2245,6 +2245,7 @@ const WorldScene = memo(function WorldScene({
             // stay on screen in third person while you fly.
             showHead={cameraMode === "third" && (!driving || rideIsWorn(ride.id))}
             jetpack={driving && ride.id === "jetpack"}
+            mountOffset={driving && ride.id === "cyberpunk-genesis-dog" ? AVATAR_U * 1.15 : 0}
           />
           {self.hp <= 0 ? <GhostShade unit={AVATAR_U} pose={pose} /> : null}
         </>
