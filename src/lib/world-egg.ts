@@ -34,6 +34,9 @@ let note: string | null = null;
 let version = 0;
 const listeners = new Set<() => void>();
 
+/** When the relic was last secured, so the scene can play the sealing flourish. */
+let securedAt = 0;
+
 let claimed: string[] = [];
 let hydrated = false;
 
