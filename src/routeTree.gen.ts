@@ -14,6 +14,7 @@ import { Route as ApiRouteImport } from './routes/api'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BuildersRouteImport } from './routes/builders'
 import { Route as BuildsRouteImport } from './routes/builds'
+import { Route as CharacterRouteImport } from './routes/character'
 import { Route as CitiesRouteImport } from './routes/cities'
 import { Route as CoinsRouteImport } from './routes/coins'
 import { Route as CollectionsRouteImport } from './routes/collections'
@@ -82,6 +83,11 @@ const BuildersRoute = BuildersRouteImport.update({
 const BuildsRoute = BuildsRouteImport.update({
   id: '/builds',
   path: '/builds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CharacterRoute = CharacterRouteImport.update({
+  id: '/character',
+  path: '/character',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CitiesRoute = CitiesRouteImport.update({
@@ -314,6 +320,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
+  '/character': typeof CharacterRoute
   '/cities': typeof CitiesRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
@@ -365,6 +372,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
+  '/character': typeof CharacterRoute
   '/cities': typeof CitiesRoute
   '/coins': typeof CoinsRoute
   '/create': typeof CreateRoute
@@ -415,6 +423,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
+  '/character': typeof CharacterRoute
   '/cities': typeof CitiesRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
@@ -468,6 +477,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/builders'
     | '/builds'
+    | '/character'
     | '/cities'
     | '/coins'
     | '/collections'
@@ -519,6 +529,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/builders'
     | '/builds'
+    | '/character'
     | '/cities'
     | '/coins'
     | '/create'
@@ -568,6 +579,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/builders'
     | '/builds'
+    | '/character'
     | '/cities'
     | '/coins'
     | '/collections'
@@ -620,6 +632,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BuildersRoute: typeof BuildersRoute
   BuildsRoute: typeof BuildsRoute
+  CharacterRoute: typeof CharacterRoute
   CitiesRoute: typeof CitiesRoute
   CoinsRoute: typeof CoinsRoute
   CollectionsRoute: typeof CollectionsRouteWithChildren
@@ -689,6 +702,13 @@ declare module '@tanstack/react-router' {
       path: '/builds'
       fullPath: '/builds'
       preLoaderRoute: typeof BuildsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/character': {
+      id: '/character'
+      path: '/character'
+      fullPath: '/character'
+      preLoaderRoute: typeof CharacterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cities': {
@@ -1071,6 +1091,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BuildersRoute: BuildersRoute,
   BuildsRoute: BuildsRoute,
+  CharacterRoute: CharacterRoute,
   CitiesRoute: CitiesRoute,
   CoinsRoute: CoinsRoute,
   CollectionsRoute: CollectionsRouteWithChildren,

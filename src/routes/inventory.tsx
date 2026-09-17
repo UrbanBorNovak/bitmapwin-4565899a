@@ -7,6 +7,44 @@ import { SWORD_INSCRIPTION, SWORD_TWO_INSCRIPTION } from "@/components/game/weap
 import { ordContentUrl } from "@/lib/oci";
 import { GoldBarIcon } from "@/components/GoldBarIcon";
 import { RationIcon } from "@/components/game/RationIcon";
+import { CharacterPortrait } from "@/components/game/CharacterPortrait";
+import { readCharacter, type Character } from "@/lib/character";
+import { useEffect, useState } from "react";
+
+/** The figure you walk as, with the name and backstory written on the character page. */
+function CharacterCard() {
+  const [character, setCharacter] = useState<Character | null>(null);
+  useEffect(() => {
+    setCharacter(readCharacter());
+    const onChange = (event: Event) => setCharacter((event as CustomEvent<Character>).detail);
+    window.addEventListener("bitmapwin:character", onChange);
+    return () => window.removeEventListener("bitmapwin:character", onChange);
+  }, []);
+
+  return (
+    <section className="mt-10 grid border border-border md:grid-cols-[320px_minmax(0,1fr)]">
+      <CharacterPortrait model={character?.avatarModel ?? null} className="h-80 border-b border-border md:border-b-0 md:border-r" />
+      <div className="p-5">
+        <p className="label">CHARACTER</p>
+        <h2 className="display mt-2 text-2xl">{character?.name?.trim() || "UNNAMED DRIFTER"}</h2>
+        <p className="label mt-2 text-bitcoin">{character?.title ?? "NO SHEET WRITTEN YET"}</p>
+        <div className="mt-4 space-y-3">
+          {(character?.backstory
+            ? character.backstory.split("\n\n")
+            : ["> NOBODY HAS WRITTEN YOUR STORY YET — NAME YOURSELF, PICK A PAST AND THE SHEET WRITES ITSELF"]
+          ).map((paragraph, index) => (
+            <p key={index} className="max-w-[70ch] font-mono text-xs leading-relaxed text-muted-foreground">
+              {paragraph}
+            </p>
+          ))}
+        </div>
+        <Link to="/character" className="btn-term mt-6 inline-flex">
+          [ {character ? "EDIT CHARACTER" : "CREATE CHARACTER"} ]
+        </Link>
+      </div>
+    </section>
+  );
+}
 
 export const Route = createFileRoute("/inventory")({
   head: () => ({
@@ -78,6 +116,9 @@ function InventoryPage() {
         &gt; {accountLabel(user)} — WHAT YOU CARRY THROUGH THE OASIS, KEPT IN YOUR OWN PACK
         <span className="blink">_</span>
       </p>
+
+      <CharacterCard />
+
 
       <section className="mt-10 grid grid-cols-2 border border-border md:grid-cols-4">
         <Stat k="GOLD BARS" v={String(bars)} icon />
