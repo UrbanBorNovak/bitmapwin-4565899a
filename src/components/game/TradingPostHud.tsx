@@ -105,7 +105,7 @@ function Counter() {
       }
     },
     onSuccess: (fill) => {
-      playSfx("coin");
+      playSfx("nugget");
       toast.success(`SOLD ${fill.filled} · +${formatBit(fill.totalCoins)}`);
       refresh();
     },
@@ -136,7 +136,7 @@ function Counter() {
       return buyListingFn({ data: { address, ...input } });
     },
     onSuccess: (fill) => {
-      playSfx("coin");
+      playSfx("nugget");
       addItem(fill.itemId as ItemId, fill.filled);
       toast.success(`BOUGHT ${fill.filled} · −${formatBit(fill.totalCoins)}`);
       refresh();
