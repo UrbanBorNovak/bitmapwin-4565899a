@@ -30,6 +30,16 @@ const TICK = 0.5;
 const FAST_TICK = 0.22;
 /** Keep occupied areas live so builds placed by other players become visible. */
 const SHARED_WORLD_REFRESH = 8;
+/** Only the chunks you are standing in are re-checked for other players' builds. */
+const REFRESH_KEYS = 9;
+/** Queued work never grows without bound on a long flight. */
+const QUEUE_LIMIT = 64;
+
+/** Chunk-grid distance between a chunk key and the chunk the player is in. */
+const keyDistance = (key: string, cx: number, cz: number) => {
+  const cut = key.indexOf(":");
+  return Math.hypot(Number(key.slice(0, cut)) - cx, Number(key.slice(cut + 1)) - cz);
+};
 
 export function ChunkStreamer({
   pose,
@@ -42,7 +52,7 @@ export function ChunkStreamer({
   const lastSharedRefresh = useRef(0);
   const queue = useRef<string[]>([]);
   const seen = useRef(new Set<string>());
-  const busy = useRef({ structures: false, terraform: false });
+  const busy = useRef({ structures: false, terraform: false, refresh: false });
 
   useFrame(({ clock }, delta) => {
     const player = pose.current;
@@ -62,20 +72,17 @@ export function ChunkStreamer({
     // Aim the window ahead of travel: at speed, the land you are about to enter
     // matters more than the land already behind you.
     const lead = Math.min(fast ? 1.8 : 1.2, pace * (fast ? 1.8 : 0.9));
-    const keys = visibleChunks(
-      player.x + (pace > 0.001 ? (player.vx / pace) * lead : 0),
-      player.z + (pace > 0.001 ? (player.vz / pace) * lead : 0),
-      radius,
-    );
+    const aimX = player.x + (pace > 0.001 ? (player.vx / pace) * lead : 0);
+    const aimZ = player.z + (pace > 0.001 ? (player.vz / pace) * lead : 0);
+    const keys = visibleChunks(aimX, aimZ, radius);
 
-    if (
-      now - lastSharedRefresh.current >= SHARED_WORLD_REFRESH &&
-      !busy.current.structures
-    ) {
+    // Re-checking other players' builds uses its own in-flight flag and only the
+    // nearest chunks, so it never holds up first load or fast-travel streaming.
+    if (now - lastSharedRefresh.current >= SHARED_WORLD_REFRESH && !busy.current.refresh) {
       lastSharedRefresh.current = now;
-      busy.current.structures = true;
-      void syncWorldChunks(keys, true).finally(() => {
-        busy.current.structures = false;
+      busy.current.refresh = true;
+      void syncWorldChunks(keys.slice(0, REFRESH_KEYS), true).finally(() => {
+        busy.current.refresh = false;
       });
     }
 
@@ -88,24 +95,53 @@ export function ChunkStreamer({
         queue.current.push(key);
       }
       pruneChunks(keys);
+
+      // On a long flight the queue can fill with land already left behind.
+      // Anything far outside the window is dropped (and forgotten, so it can be
+      // queued again if you return), then the rest is served nearest first.
+      if (queue.current.length > 1) {
+        const [cxRaw, czRaw] = (keys[0] ?? "0:0").split(":");
+        const cx = Number(cxRaw);
+        const cz = Number(czRaw);
+        const cutoff = radius + 2;
+        const kept: string[] = [];
+        for (const key of queue.current) {
+          if (keyDistance(key, cx, cz) > cutoff) {
+            seen.current.delete(key);
+            continue;
+          }
+          kept.push(key);
+        }
+        kept.sort((a, b) => keyDistance(a, cx, cz) - keyDistance(b, cx, cz));
+        if (kept.length > QUEUE_LIMIT) {
+          for (const key of kept.slice(QUEUE_LIMIT)) seen.current.delete(key);
+          kept.length = QUEUE_LIMIT;
+        }
+        queue.current = kept;
+      }
     }
 
     if (!queue.current.length) return;
-    // Both sources take the same batch, so wait until neither is mid-request.
-    if (busy.current.structures || busy.current.terraform) return;
 
     const batchSize = fast ? FAST_BATCH : BATCH;
-    const batch = queue.current.slice(0, batchSize);
+    // The two sources are drained independently: a slow reply on one no longer
+    // stalls the other, so land and terrain keep arriving during long travel.
+    if (!busy.current.structures) {
+      const batch = queue.current.slice(0, batchSize);
+      busy.current.structures = true;
+      void syncWorldChunks(batch).finally(() => {
+        busy.current.structures = false;
+      });
+    }
+    if (!busy.current.terraform) {
+      const batch = queue.current.slice(0, batchSize);
+      busy.current.terraform = true;
+      void syncTerraformChunks(batch).finally(() => {
+        busy.current.terraform = false;
+      });
+    }
+    if (!busy.current.structures && !busy.current.terraform) return;
     queue.current = queue.current.slice(batchSize);
-
-    busy.current.structures = true;
-    void syncWorldChunks(batch).finally(() => {
-      busy.current.structures = false;
-    });
-    busy.current.terraform = true;
-    void syncTerraformChunks(batch).finally(() => {
-      busy.current.terraform = false;
-    });
   });
 
   return null;
