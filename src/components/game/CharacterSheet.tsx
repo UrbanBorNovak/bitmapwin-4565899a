@@ -47,8 +47,8 @@ const TRANSPARENT_PIXEL =
 function PreviewCamera() {
   const { camera } = useThree();
   useEffect(() => {
-    camera.position.set(1.55, 1.05, 2.8);
-    camera.lookAt(0, 0.54, 0);
+    camera.position.set(1.05, 0.78, 2.05);
+    camera.lookAt(0, 0.6, 0);
   }, [camera]);
   return null;
 }
@@ -131,7 +131,7 @@ function PreviewWeapon({ kind }: { kind: WeaponKind }) {
 export function EquippedAvatarPreview({ model, weapon, flying }: { model: string | null; weapon: WeaponKind | null; flying: boolean }) {
   const pose = useRef(createPlayerState(0, 0, 0));
   return (
-    <Canvas dpr={[1, 1.5]} camera={{ position: [1.55, 1.05, 2.8], fov: 34, near: 0.01, far: 20 }}>
+    <Canvas dpr={[1, 1.5]} camera={{ position: [1.05, 0.78, 2.05], fov: 38, near: 0.01, far: 20 }}>
       <PreviewCamera />
       <ambientLight intensity={1.5} />
       <directionalLight position={[2, 3, 3]} intensity={2.2} />
