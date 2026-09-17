@@ -33,7 +33,15 @@ export type StructureId =
   | "graveyard"
   | "btc-miner"
   | "furnace"
-  | "road";
+  | "road"
+  | "clay-shrine"
+  | "clay-steps"
+  | "clay-wall"
+  | "clay-broken-wall"
+  | "clay-window-wall"
+  | "clay-entrance"
+  | "clay-door"
+  | "clay-pillar";
 
 export type StructureRecipe = {
   id: StructureId;
@@ -121,6 +129,125 @@ export const STRUCTURES: StructureRecipe[] = [
     cost: { fang: 3, hide: 2 },
     footprint: 0.55,
     hp: 220,
+  },
+  {
+    id: "clay-shrine",
+    name: "CLAY SHRINE",
+    blurb: "An inscribed sanctuary built from stone and ore.",
+    cost: { mineral: 4, "ore-chunk": 3, "gold-nugget": 1 },
+    footprint: 2.2,
+    hp: 360,
+  },
+  {
+    id: "clay-steps",
+    name: "SHRINE STEPS",
+    blurb: "Broad inscribed steps for a ceremonial approach.",
+    cost: { mineral: 1, "ore-chunk": 1 },
+    footprint: 0,
+    hp: 100,
+    walkable: true,
+  },
+  {
+    id: "clay-wall",
+    name: "CLAY WALL",
+    blurb: "A solid inscribed defensive wall section.",
+    cost: { mineral: 2, "ore-chunk": 1 },
+    footprint: 1.75,
+    hp: 260,
+  },
+  {
+    id: "clay-broken-wall",
+    name: "BROKEN CLAY WALL",
+    blurb: "A weathered defensive wall section.",
+    cost: { mineral: 2 },
+    footprint: 1.7,
+    hp: 190,
+  },
+  {
+    id: "clay-window-wall",
+    name: "WINDOW CLAY WALL",
+    blurb: "A fortified wall section with a lookout opening.",
+    cost: { mineral: 2, "ore-chunk": 1 },
+    footprint: 1.7,
+    hp: 230,
+  },
+  {
+    id: "clay-entrance",
+    name: "CLAY ENTRANCE",
+    blurb: "An inscribed gateway wall with a clear passage.",
+    cost: { mineral: 3, "ore-chunk": 2 },
+    footprint: 0,
+    hp: 280,
+    walkable: true,
+  },
+  {
+    id: "clay-door",
+    name: "CLAY DOOR",
+    blurb: "A heavy inscribed door for a gateway.",
+    cost: { mineral: 1, "ore-chunk": 1 },
+    footprint: 0.3,
+    hp: 160,
+  },
+  {
+    id: "clay-pillar",
+    name: "CLAY PILLAR",
+    blurb: "An inscribed support pillar for walls and gates.",
+    cost: { mineral: 1 },
+    footprint: 0.42,
+    hp: 180,
+  },
+];
+
+export type BuildTemplateId = "full-camp" | "shrine-compound" | "wall-run" | "gate-door";
+export type BuildTemplate = {
+  id: BuildTemplateId;
+  name: string;
+  blurb: string;
+  cost: Partial<Record<ItemId, number>>;
+  parts: { id: StructureId; dx: number; dz: number; yaw?: number }[];
+};
+
+export const BUILD_TEMPLATES: BuildTemplate[] = [
+  {
+    id: "shrine-compound",
+    name: "SHRINE COMPOUND",
+    blurb: "Shrine, courtyard walls and a complete gated entrance.",
+    cost: { mineral: 10, "ore-chunk": 8, "gold-nugget": 2, hide: 1 },
+    parts: [
+      { id: "clay-shrine", dx: 0, dz: -4.8, yaw: Math.PI },
+      { id: "clay-steps", dx: 0, dz: -1.1 },
+      { id: "clay-window-wall", dx: -3.4, dz: -7.7 },
+      { id: "clay-wall", dx: 3.4, dz: -7.7 },
+      { id: "clay-broken-wall", dx: -7.2, dz: -0.5, yaw: Math.PI / 2 },
+      { id: "clay-wall", dx: 7.2, dz: -0.5, yaw: Math.PI / 2 },
+      { id: "clay-entrance", dx: 0, dz: 6.3 },
+      { id: "clay-door", dx: 2.55, dz: 5.75, yaw: -Math.PI / 2 },
+    ],
+  },
+  {
+    id: "wall-run",
+    name: "DEFENSIVE WALL",
+    blurb: "Three aligned wall sections with end pillars.",
+    cost: { mineral: 7, "ore-chunk": 3 },
+    parts: [
+      { id: "clay-pillar", dx: -5.4, dz: 0 },
+      { id: "clay-broken-wall", dx: -3.4, dz: 0 },
+      { id: "clay-wall", dx: 0, dz: 0 },
+      { id: "clay-window-wall", dx: 3.4, dz: 0 },
+      { id: "clay-pillar", dx: 5.4, dz: 0 },
+    ],
+  },
+  {
+    id: "gate-door",
+    name: "GATE + DOOR",
+    blurb: "A complete entrance with door and flanking pillars.",
+    cost: { mineral: 5, "ore-chunk": 3 },
+    parts: [
+      { id: "clay-entrance", dx: 0, dz: 0 },
+      { id: "clay-door", dx: 2.55, dz: -0.55, yaw: -Math.PI / 2 },
+      { id: "clay-pillar", dx: -3.6, dz: -0.05 },
+      { id: "clay-pillar", dx: 3.6, dz: -0.05 },
+    ],
   },
 ];
 
@@ -519,6 +646,61 @@ export const CAMP_RECIPE: StructureRecipe = {
   footprint: 0.5,
   hp: 90,
 };
+
+BUILD_TEMPLATES.unshift({
+  id: "full-camp",
+  name: CAMP_RECIPE.name,
+  blurb: CAMP_RECIPE.blurb,
+  cost: CAMP_RECIPE.cost,
+  parts: [
+    { id: "hide-tent", dx: -2.4, dz: 0 },
+    { id: "camp-fire", dx: 0, dz: 0 },
+    { id: "watchtower", dx: 2.64, dz: 1.44 },
+  ],
+});
+
+function templateParts(template: BuildTemplate, x: number, z: number, yaw = 0, unit = 1) {
+  const cos = Math.cos(yaw);
+  const sin = Math.sin(yaw);
+  return template.parts.map((part) => ({
+    id: part.id,
+    x: x + part.dx * unit * cos - part.dz * unit * sin,
+    z: z + part.dx * unit * sin + part.dz * unit * cos,
+    yaw: yaw + (part.yaw ?? 0),
+  }));
+}
+
+export function templatePlacementIssue(id: BuildTemplateId, x: number, z: number, yaw = 0, unit = 1) {
+  const template = BUILD_TEMPLATES.find((entry) => entry.id === id);
+  if (!template) return "UNKNOWN TEMPLATE";
+  for (const part of templateParts(template, x, z, yaw, unit)) {
+    if (isSea(part.x, part.z)) return "TEMPLATE NEEDS DRY LAND";
+    if (!isWalkable(part.id) && blockedAt(part.x, part.z, footprintOf(part.id) * 0.6)) {
+      return "TEMPLATE AREA IS BLOCKED";
+    }
+  }
+  return null;
+}
+
+/** Place and publish a complete layout as one local transaction. */
+export function buildTemplate(id: BuildTemplateId, x: number, z: number, yaw = 0, unit = 1) {
+  hydrate();
+  const template = BUILD_TEMPLATES.find((entry) => entry.id === id);
+  if (!template || templatePlacementIssue(id, x, z, yaw, unit)) return null;
+  if (!spendItems(template.cost)) return null;
+  const stamp = Date.now();
+  const placed = templateParts(template, x, z, yaw, unit).map((part, index) => ({
+    key: `${id}-${stamp}-${index}`,
+    ...part,
+    at: stamp,
+    local: true,
+  }) satisfies PlacedStructure);
+  localBuilds = [...localBuilds, ...placed];
+  persistLocal();
+  recompute();
+  void publish(placed);
+  return placed;
+}
 
 function campParts(x: number, z: number, yaw = 0, unit = 1) {
   const spread = unit * 2.4;

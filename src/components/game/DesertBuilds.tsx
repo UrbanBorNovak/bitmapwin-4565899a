@@ -16,6 +16,7 @@ import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { ROAD_INSCRIPTION } from "@/lib/world-road";
 import { GOLD_BAR_INSCRIPTION } from "@/lib/world-smelt";
 import { useWorldBuilds, type PlacedStructure, type StructureId } from "@/lib/world-build";
+import { CLAY_INSCRIPTIONS } from "@/components/game/ClayShrines";
 
 const noRaycast = () => {};
 
@@ -48,6 +49,16 @@ function Box({
 }
 
 const MINER_URL = `https://ordinals.com/content/${MINER_INSCRIPTION}`;
+const CLAY_BUILD: Partial<Record<StructureId, { inscription: keyof typeof CLAY_INSCRIPTIONS; size: number }>> = {
+  "clay-shrine": { inscription: "shrine", size: 7.2 },
+  "clay-steps": { inscription: "steps", size: 4.4 },
+  "clay-wall": { inscription: "holeWall", size: 4.8 },
+  "clay-broken-wall": { inscription: "brokenWall", size: 5.1 },
+  "clay-window-wall": { inscription: "windowWall", size: 4.8 },
+  "clay-entrance": { inscription: "entranceWall", size: 5.4 },
+  "clay-door": { inscription: "door", size: 2.7 },
+  "clay-pillar": { inscription: "pillar", size: 4.2 },
+};
 
 /**
  * THE BTC MINER RIG — an inscribed model rather than cubes, with a status lamp
@@ -119,6 +130,15 @@ const Structure = memo(function Structure({ id, unit }: { id: StructureId; unit:
     const beat = 1 + Math.sin(state.clock.elapsedTime * 7) * 0.16;
     flame.current.scale.set(1, beat, 1);
   });
+
+  const clay = CLAY_BUILD[id];
+  if (clay) {
+    return (
+      <Suspense fallback={<Box size={[u, u, u * 0.2]} position={[0, u * 0.5, 0]} color={STONE} />}>
+        <InscribedModel url={contentUrl(CLAY_INSCRIPTIONS[clay.inscription])} size={clay.size * u} />
+      </Suspense>
+    );
+  }
 
   if (id === "road") {
     return (
