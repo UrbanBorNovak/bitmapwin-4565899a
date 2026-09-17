@@ -243,7 +243,7 @@ export function Punks({
       if (punk.deadUntil) {
         node.visible = true;
         node.rotation.set(0, punk.heading + Math.PI, Math.PI / 2.1);
-        const rest = groundY(punk.x, punk.z);
+        const rest = groundY(punk.x, punk.z) + PUNK_LIFT * unit;
         node.position.set(punk.x, rest + unit * 0.02, punk.z);
         punk.bodyY = rest + unit * punk.size * 0.2;
         return;
