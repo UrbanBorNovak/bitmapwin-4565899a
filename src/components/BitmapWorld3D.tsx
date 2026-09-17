@@ -151,13 +151,16 @@ const KIT_TABS: { id: KitTab; label: string }[] = [
 ];
 import {
   driveEngine,
+  isMusicOn,
   isSoundMuted,
   playSfx,
+  setMusicOn,
   setSoundMuted,
   startEngine,
   stopEngine,
   unlockAudio,
 } from "@/lib/world-audio";
+import { WorldMusic } from "@/components/game/WorldMusic";
 import { aimState, aimZoom } from "@/lib/world-aim";
 import {
   ITEM_LABELS,
@@ -2581,7 +2584,11 @@ export function BitmapWorld3D({
     });
   }, []);
   const [muted, setMuted] = useState(false);
-  useEffect(() => setMuted(isSoundMuted()), []);
+  const [musicOn, setMusicPlaying] = useState(true);
+  useEffect(() => {
+    setMuted(isSoundMuted());
+    setMusicPlaying(isMusicOn());
+  }, []);
   /** Craft a structure out of gathered materials and drop it where you stand. */
   const placeBuild = useCallback((id: StructureId) => {
     const current = pose.current;
@@ -2809,6 +2816,14 @@ export function BitmapWorld3D({
       unlockAudio();
       playSfx("ui");
     }
+  }, []);
+
+  const toggleMusic = useCallback(() => {
+    const next = !isMusicOn();
+    unlockAudio();
+    setMusicOn(next);
+    setMusicPlaying(next);
+    playSfx("ui");
   }, []);
 
   const owners = useQuery(mapOwnersQuery(window_));
@@ -3712,6 +3727,9 @@ export function BitmapWorld3D({
                   <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
                     {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
                   </Button>
+                  <Button className="btn-term-ghost" variant="ghost" onClick={toggleMusic}>
+                    {musicOn ? "[ MUSIC · ON ]" : "[ MUSIC · OFF ]"}
+                  </Button>
                 </div>
               </div>
               ) : null}
@@ -3804,6 +3822,9 @@ export function BitmapWorld3D({
         ) : null}
 
         <OasisLoading />
+
+        {/* THE OASIS SCORE — synthesised locally, so it costs nothing to stream. */}
+        <WorldMusic active={musicOn && !muted} />
 
         <DriveBlur active={driving && cameraMode !== "map"} />
 

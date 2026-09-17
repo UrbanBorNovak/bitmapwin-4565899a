@@ -72,6 +72,7 @@ export function setSoundMuted(next: boolean) {
     // storage is a nicety, never a requirement
   }
   if (master && ctx) master.gain.setTargetAtTime(next ? 0 : 0.5, ctx.currentTime, 0.02);
+  applyMusicGain();
 }
 
 /**
@@ -861,4 +862,190 @@ export function setDjLevel(level: number) {
 
 export function stopDjSet() {
   dj?.stop();
+}
+
+/**
+ * THE OASIS SCORE — a slow, generative desert soundtrack.
+ *
+ * Nothing is downloaded: chords, drones and sparse plucks are synthesised right
+ * here, so the music costs no bandwidth and no licence. It drifts through a
+ * fixed set of minor chords in a long cycle, so it never loops audibly, and it
+ * schedules only a couple of seconds ahead so a long session stays cheap. When
+ * the tab is hidden or a DJ set takes over, the score fades out of the way.
+ */
+
+const MUSIC_KEY = "bitmapwin:music-off";
+
+/** Root frequencies of the chord cycle (A minor family, two octaves down). */
+const CHORDS: number[][] = [
+  [110, 130.81, 164.81], // Am
+  [98, 123.47, 146.83], // Gm-ish
+  [87.31, 110, 130.81], // Fmaj
+  [82.41, 103.83, 123.47], // Emin
+];
+/** Pentatonic pluck notes, high and airy. */
+const PLUCKS = [440, 493.88, 587.33, 659.25, 880];
+
+let musicOff = false;
+let musicHydrated = false;
+let music: {
+  bus: GainNode;
+  timer: number;
+  stop: () => void;
+  level: number;
+  duck: number;
+} | null = null;
+
+function readMusicOff() {
+  if (musicHydrated || typeof window === "undefined") return musicOff;
+  musicHydrated = true;
+  try {
+    musicOff = window.localStorage.getItem(MUSIC_KEY) === "1";
+  } catch {
+    musicOff = false;
+  }
+  return musicOff;
+}
+
+export function isMusicOn() {
+  return !readMusicOff();
+}
+
+function applyMusicGain() {
+  if (!music || !ctx) return;
+  const target = readMuted() ? 0.0001 : Math.max(0.0001, music.level * music.duck);
+  music.bus.gain.setTargetAtTime(target, ctx.currentTime, 0.8);
+}
+
+/** Duck the score under louder moments (a DJ set, a boss fight). 0..1 */
+export function setMusicDuck(duck: number) {
+  if (!music) return;
+  music.duck = Math.min(1, Math.max(0, duck));
+  applyMusicGain();
+}
+
+export function startMusic() {
+  if (music || readMusicOff()) return;
+  const rig = audio();
+  if (!rig) return;
+  const { ctx: context, master: out, verb: tail } = rig;
+
+  const bus = context.createGain();
+  bus.gain.value = 0.0001;
+  const warm = context.createBiquadFilter();
+  warm.type = "lowpass";
+  warm.frequency.value = 3200;
+  bus.connect(warm).connect(out);
+  const send = context.createGain();
+  send.gain.value = 0.5;
+  warm.connect(send).connect(tail);
+
+  // A steady sub drone under everything: the horizon of the mix.
+  const drone = context.createOscillator();
+  const droneGain = context.createGain();
+  drone.type = "sine";
+  drone.frequency.value = 55;
+  droneGain.gain.value = 0.12;
+  drone.connect(droneGain).connect(bus);
+  drone.start();
+
+  const pad = (when: number, hz: number, seconds: number, gain: number) => {
+    const osc = context.createOscillator();
+    const detuned = context.createOscillator();
+    const env = context.createGain();
+    const lp = context.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = 1400;
+    osc.type = "triangle";
+    detuned.type = "sine";
+    osc.frequency.value = hz;
+    detuned.frequency.value = hz * 1.005;
+    env.gain.setValueAtTime(0.0001, when);
+    env.gain.linearRampToValueAtTime(gain, when + seconds * 0.4);
+    env.gain.linearRampToValueAtTime(0.0001, when + seconds);
+    osc.connect(lp);
+    detuned.connect(lp);
+    lp.connect(env).connect(bus);
+    osc.start(when);
+    detuned.start(when);
+    osc.stop(when + seconds + 0.05);
+    detuned.stop(when + seconds + 0.05);
+  };
+
+  const pluck = (when: number, hz: number) => {
+    const osc = context.createOscillator();
+    const env = context.createGain();
+    osc.type = "sine";
+    osc.frequency.value = hz;
+    env.gain.setValueAtTime(0.0001, when);
+    env.gain.linearRampToValueAtTime(0.075, when + 0.01);
+    env.gain.exponentialRampToValueAtTime(0.0001, when + 1.6);
+    osc.connect(env).connect(bus);
+    osc.start(when);
+    osc.stop(when + 1.7);
+  };
+
+  const BAR = 7.5; // slow, unhurried desert pacing
+  let bar = 0;
+  let at = context.currentTime + 0.3;
+
+  const schedule = () => {
+    if (!music) return;
+    const ahead = context.currentTime + 3;
+    while (at < ahead) {
+      const chord = CHORDS[bar % CHORDS.length] ?? CHORDS[0]!;
+      chord.forEach((hz, i) => pad(at + i * 0.12, hz * 2, BAR * 0.95, 0.075));
+      pad(at, chord[0]! / 2, BAR, 0.05);
+      // Two or three plucks per bar, placed differently each time round.
+      const seeds = [0.15, 0.42, 0.68, 0.86];
+      seeds.forEach((slot, i) => {
+        if ((bar + i) % 3 === 0) return;
+        const note = PLUCKS[(bar * 3 + i) % PLUCKS.length] ?? 440;
+        pluck(at + slot * BAR, note);
+      });
+      at += BAR;
+      bar += 1;
+    }
+  };
+
+  const timer = window.setInterval(schedule, 1200);
+
+  music = {
+    bus,
+    timer,
+    level: 0.3,
+    duck: 1,
+    stop: () => {
+      window.clearInterval(timer);
+      const now = context.currentTime;
+      bus.gain.setTargetAtTime(0.0001, now, 0.6);
+      drone.stop(now + 3);
+      window.setTimeout(() => {
+        droneGain.disconnect();
+        bus.disconnect();
+        warm.disconnect();
+        send.disconnect();
+      }, 3200);
+      music = null;
+    },
+  };
+  schedule();
+  applyMusicGain();
+}
+
+export function stopMusic() {
+  music?.stop();
+}
+
+/** Turn the score on or off; the choice is remembered per browser. */
+export function setMusicOn(on: boolean) {
+  musicOff = !on;
+  musicHydrated = true;
+  try {
+    window.localStorage.setItem(MUSIC_KEY, on ? "0" : "1");
+  } catch {
+    // storage is a nicety, never a requirement
+  }
+  if (on) startMusic();
+  else stopMusic();
 }

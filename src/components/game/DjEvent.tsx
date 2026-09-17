@@ -17,7 +17,7 @@ import { useFrame } from "@react-three/fiber";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
 import { Primitive } from "@/components/game/Primitive";
-import { setDjLevel, startDjSet, stopDjSet } from "@/lib/world-audio";
+import { setDjLevel, setMusicDuck, startDjSet, stopDjSet } from "@/lib/world-audio";
 
 /** on-chain GLB of Pepe and the Bitmappers */
 export const PEPE_BITMAPPERS_INSCRIPTION =
@@ -205,7 +205,10 @@ export function DjEvent({
   useEffect(() => {
     if (!live) return;
     startDjSet();
-    return () => stopDjSet();
+    return () => {
+      stopDjSet();
+      setMusicDuck(1);
+    };
   }, [live]);
 
   // the beat swells as you close in on the decks
@@ -215,7 +218,10 @@ export function DjEvent({
     if (!me) return;
     const distance = Math.hypot(me.x - stage.x, me.z - stage.z);
     const range = unit * 60;
-    setDjLevel(Math.max(0, 1 - distance / range) ** 1.6);
+    const near = Math.max(0, 1 - distance / range) ** 1.6;
+    setDjLevel(near);
+    // The ambient score steps aside for the decks as you walk up.
+    setMusicDuck(1 - near * 0.9);
   });
 
   if (!live) return null;
