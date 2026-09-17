@@ -98,6 +98,7 @@ export function RideModel({
     const swell =
       ride.kind === "water" ? Math.sin(clock.elapsedTime * 1.6) * unit * 0.06 : 0;
     if (driving && player) {
+      node.visible = true;
       speed = Math.hypot(player.vx, player.vz);
       const gallop = isDogMount
         ? Math.abs(Math.sin(clock.elapsedTime * (5 + Math.min(speed, unit * 8) * 8))) * unit * 0.12
