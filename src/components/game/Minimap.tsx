@@ -121,6 +121,7 @@ export function Minimap({
     const theme = {
       ink: readColor("--foreground", "#e6e6e6"),
       bitcoin: readColor("--bitcoin", "#f7931a"),
+      signal: readColor("--signal", "#55dbea"),
       muted: readColor("--muted-foreground", "#8a8a8a"),
       bg: readColor("--background", "#0a0a0a"),
     };
@@ -258,7 +259,7 @@ export function Minimap({
         const z = toPy(peer.z);
         if (x < 0 || z < 0 || x > size || z > size) continue;
         const inParty = partyRef.current.has(peer.id);
-        ctx.fillStyle = peer.color || theme.ink;
+          ctx.fillStyle = peer.color || theme.signal;
         ctx.beginPath();
         ctx.arc(x, z, inParty ? 4.5 : expanded ? 2.5 : 3, 0, Math.PI * 2);
         ctx.fill();
@@ -374,12 +375,12 @@ export function Minimap({
         aria-label="Minimap"
         className="hud-panel pointer-events-auto absolute bottom-3 right-3 z-40 w-[188px] font-mono"
       >
-        <header className="flex items-center justify-between gap-1 border-b border-border px-1.5 py-1 text-[9px]">
-          <span className="label text-bitcoin">MINIMAP</span>
+        <header className="flex items-center justify-between gap-1 border-b border-signal/20 px-1.5 py-1 text-[9px]">
+          <span className="hud-telemetry-title">LOCAL SCAN</span>
           <span className="flex items-center gap-1">
             <button
               type="button"
-              className="border border-border px-1 text-muted-foreground hover:border-foreground hover:text-foreground"
+              className="border border-border px-1 text-muted-foreground hover:border-signal hover:text-signal"
               title="Zoom the minimap"
               onClick={() => setZoom((current) => (current + 1) % ZOOMS.length)}
             >
@@ -416,7 +417,7 @@ export function Minimap({
             className="hud-panel w-[min(56vh,90%)] max-w-[560px] font-mono"
           >
             <header className="flex items-center justify-between border-b border-border px-2 py-1 text-[10px]">
-              <span className="label text-bitcoin">WORLD MAP · 1,000 × 1,000 DISTRICTS</span>
+              <span className="hud-telemetry-title">WORLD SCAN · 1,000 × 1,000 DISTRICTS</span>
               <button
                 type="button"
                 className="border border-border px-1.5 text-muted-foreground hover:border-foreground hover:text-foreground"

@@ -114,9 +114,9 @@ export function WeaponBelt({
       aria-label="Weapon belt"
     >
       {held ? (
-        <div className="mb-1 flex items-end justify-between gap-3 px-1 font-mono md:justify-start">
+        <div className="mb-1 flex items-end justify-between gap-3 border-l-2 border-signal/60 bg-background/70 px-2 py-1 font-mono backdrop-blur-md md:justify-start">
           <div className="min-w-0">
-            <div className="flex items-center gap-2 text-[11px] text-bitcoin">
+            <div className="flex items-center gap-2 text-[11px] text-signal">
               <span className="label">{held.label}</span>
               {held.magazine > 0 ? (
                 <span className="tabular-nums text-muted-foreground">
@@ -160,8 +160,8 @@ export function WeaponBelt({
                 onClick={() => onEquip(active ? null : kind)}
                 className={`relative flex w-[3.5rem] flex-col items-center gap-1 border px-1 pb-1 pt-1.5 text-[9px] transition-all ${
                   active
-                    ? "-translate-y-1 border-bitcoin bg-bitcoin/10 text-bitcoin shadow-[0_0_0_1px_hsl(var(--bitcoin)/0.35),0_0_18px_-4px_hsl(var(--bitcoin)/0.7)]"
-                    : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                    ? "-translate-y-1 border-bitcoin bg-bitcoin/10 text-bitcoin shadow-[0_0_16px_-6px_var(--bitcoin)]"
+                    : "border-border/80 bg-background/45 text-muted-foreground hover:border-signal/60 hover:text-signal"
                 }`}
               >
                 <span

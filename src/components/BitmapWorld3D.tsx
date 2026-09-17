@@ -3335,9 +3335,9 @@ export function BitmapWorld3D({
         <div className="pointer-events-none absolute inset-x-0 top-0 z-40 p-2">
           {exploring ? (
             <div className="flex items-start justify-between gap-3 px-1 py-1 font-mono">
-              <div className="pointer-events-auto">
-                <div className="display text-base text-foreground md:text-lg">THE OASIS</div>
-                <div className="text-[9px] text-muted-foreground" data-no-translate>
+              <div className="pointer-events-auto border-l-2 border-signal bg-background/65 px-3 py-2 backdrop-blur-md">
+                <div className="display text-base text-foreground md:text-lg">THE OASIS <span className="text-signal">// LIVE</span></div>
+                <div className="hud-live text-[9px]" data-no-translate>
                   {readout.height.toLocaleString("en-US")}.BITMAP
                   {bits.today > 0 ? ` · ${bits.today} BIT TODAY` : ""}
                 </div>
@@ -3370,7 +3370,7 @@ export function BitmapWorld3D({
                 aria-label="Open world tools"
                 aria-expanded={utilityOpen}
                 title="World tools"
-                className="pointer-events-auto border border-border bg-background/55 text-muted-foreground backdrop-blur-sm hover:border-bitcoin hover:text-bitcoin"
+                 className="pointer-events-auto rounded-none border border-bitcoin/50 bg-bitcoin/10 text-bitcoin backdrop-blur-sm hover:bg-bitcoin/20 hover:text-bitcoin"
                 onClick={() => setUtilityOpen((current) => !current)}
               >
                 {utilityOpen ? <X /> : <Menu />}
@@ -3454,7 +3454,7 @@ export function BitmapWorld3D({
                     className={`flex-1 border px-1.5 py-1 font-mono text-[9px] uppercase tracking-[0.18em] transition-colors ${
                       kitTab === tab.id
                         ? "border-bitcoin bg-bitcoin/10 text-bitcoin"
-                        : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                        : "border-border text-muted-foreground hover:border-signal hover:text-signal"
                     }`}
                   >
                     {tab.label}
@@ -3876,7 +3876,7 @@ export function BitmapWorld3D({
             className="hud-panel absolute left-3 top-[13rem] z-40 space-y-1 px-2.5 py-2 font-mono text-[10px] tabular-nums"
             aria-label="Weapon status"
           >
-            <div className="label text-[9px] text-bitcoin">
+            <div className="hud-telemetry-title">
               {WEAPONS[weapon].label} · EQUIPPED
             </div>
             <div className="flex items-center gap-3">
@@ -3985,7 +3985,7 @@ export function BitmapWorld3D({
           data-no-translate
           className="hud-panel absolute right-3 top-[9.5rem] z-30 flex items-center gap-1 p-0.5 pl-2"
         >
-          <span className="label text-[9px] text-muted-foreground">VIEW</span>
+          <span className="hud-telemetry-title">VIEW</span>
           <Button
             type="button"
             variant="ghost"
@@ -4042,7 +4042,7 @@ export function BitmapWorld3D({
             data-no-translate
             className="hud-panel pointer-events-none absolute left-1/2 top-16 z-20 -translate-x-1/2 px-2 py-1 font-mono text-[10px] text-muted-foreground"
           >
-            <span className="text-bitcoin">{sighting.label}</span> ·{" "}
+            <span className="text-signal">{sighting.label}</span> ·{" "}
             {sighting.strides.toFixed(0)} STRIDES
           </div>
         ) : null}
@@ -4050,7 +4050,7 @@ export function BitmapWorld3D({
         {cameraMode === "first" ? (
           <div
             aria-hidden
-            className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 text-bitcoin/80"
+             className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 text-signal/80"
           >
             <Crosshair className="h-5 w-5" strokeWidth={1.5} />
           </div>
