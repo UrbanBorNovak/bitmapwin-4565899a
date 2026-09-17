@@ -1643,25 +1643,24 @@ function PlayerCameraRig({
       );
     } else {
 
-      // Shoulder rig: trails a little further and drops slightly the faster you
-      // travel, and swings a touch wide of the turn so the body stays readable.
-      // The sprint pull-back stays small on purpose — a big one made the avatar
-      // shrink away the moment you ran.
-      const back = AVATAR_U * (isDriving() ? 11 + gait * 2.2 : 6.2 + gait * 1.1);
-
-      const side = -steer.current * AVATAR_U * 1.6;
+      // Contemporary over-the-shoulder framing on foot: lower, closer and
+      // slightly offset so the avatar remains readable without blocking the
+      // road ahead. Rides retain a centered, wider chase camera.
+      const riding = isDriving();
+      const back = AVATAR_U * (riding ? 11 + gait * 2.2 : 5.25 + gait * 0.75);
+      const shoulder = riding ? 0 : AVATAR_U * 0.82;
+      const side = shoulder - steer.current * AVATAR_U * (riding ? 1.6 : 0.7);
       cameraTarget.current.set(
         player.x - Math.sin(player.yaw) * back + Math.cos(player.yaw) * side,
-        player.y + AVATAR_U * (3.3 - gait * 0.45) - dip,
+        player.y + AVATAR_U * (riding ? 3.3 - gait * 0.45 : 2.15 - gait * 0.12) - dip,
         player.z - Math.cos(player.yaw) * back - Math.sin(player.yaw) * side,
       );
-      // Look a little where the body is heading, scaled by pace so standing
-      // still never drags the aim off the avatar.
-      const lead = 0.12 + gait * 0.1;
+      // Keep the avatar on the lower third and reveal more space in front.
+      const lead = riding ? 0.12 + gait * 0.1 : 0.16 + gait * 0.12;
       cameraLook.current.set(
-        player.x + player.vx * lead + Math.sin(player.yaw) * AVATAR_U * 2.8,
-        player.y + AVATAR_U * 0.72,
-        player.z + player.vz * lead + Math.cos(player.yaw) * AVATAR_U * 2.8,
+        player.x + player.vx * lead + Math.sin(player.yaw) * AVATAR_U * (riding ? 2.8 : 3.6),
+        player.y + AVATAR_U * (riding ? 0.72 : 0.92),
+        player.z + player.vz * lead + Math.cos(player.yaw) * AVATAR_U * (riding ? 2.8 : 3.6),
       );
     }
     const transitionSpeed = mode === "first" ? 11 : 6;
@@ -1684,8 +1683,8 @@ function PlayerCameraRig({
     const zoom = 1 - (1 - aimZoom(weapon)) * aimState.amount;
     // Speed widens the view a little and a landing squeezes it for a beat.
     const targetFov =
-      ((mode === "first" ? 68 : 52) +
-        gait * (mode === "first" ? 7 : 4) -
+      ((mode === "first" ? 68 : 56) +
+        gait * (mode === "first" ? 7 : 3) -
         land.current * (mode === "first" ? 5 : 3)) *
       zoom;
 
