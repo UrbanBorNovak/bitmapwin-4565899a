@@ -372,6 +372,27 @@ export function Minimap({
     </ul>
   ) : null;
 
+  // Base menu: the same live scan, sitting inside a panel instead of floating.
+  if (inline) {
+    return (
+      <div data-no-translate aria-label="Base map" className="border border-border font-mono">
+        <header className="flex items-center justify-between gap-1 border-b border-signal/20 px-1.5 py-1 text-[9px]">
+          <span className="hud-telemetry-title">BASE SCAN</span>
+          <button
+            type="button"
+            className="border border-border px-1 text-muted-foreground hover:border-signal hover:text-signal"
+            title="Zoom the scan"
+            onClick={() => setZoom((current) => (current + 1) % ZOOMS.length)}
+          >
+            {ZOOMS[zoom]}
+          </button>
+        </header>
+        {body}
+        {partyRoster}
+      </div>
+    );
+  }
+
   return (
     <>
       {showCompact ? <div
