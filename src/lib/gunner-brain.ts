@@ -62,7 +62,7 @@ export type GunnerSense = {
   contacts: GunnerTarget[];
 };
 
-export type GunnerState = "scan" | "track" | "lock" | "fire" | "evade" | "cool";
+export type GunnerState = "scan" | "track" | "aim" | "lock" | "fire" | "evade" | "cool";
 
 export type GunnerAct = {
   state: GunnerState;
