@@ -123,25 +123,21 @@ export function ChunkStreamer({
 
     if (!queue.current.length) return;
 
+    // Both sources take the same batch, so wait until neither is mid-request.
+    if (busy.current.structures || busy.current.terraform) return;
+
     const batchSize = fast ? FAST_BATCH : BATCH;
-    // The two sources are drained independently: a slow reply on one no longer
-    // stalls the other, so land and terrain keep arriving during long travel.
-    if (!busy.current.structures) {
-      const batch = queue.current.slice(0, batchSize);
-      busy.current.structures = true;
-      void syncWorldChunks(batch).finally(() => {
-        busy.current.structures = false;
-      });
-    }
-    if (!busy.current.terraform) {
-      const batch = queue.current.slice(0, batchSize);
-      busy.current.terraform = true;
-      void syncTerraformChunks(batch).finally(() => {
-        busy.current.terraform = false;
-      });
-    }
-    if (!busy.current.structures && !busy.current.terraform) return;
+    const batch = queue.current.slice(0, batchSize);
     queue.current = queue.current.slice(batchSize);
+
+    busy.current.structures = true;
+    void syncWorldChunks(batch).finally(() => {
+      busy.current.structures = false;
+    });
+    busy.current.terraform = true;
+    void syncTerraformChunks(batch).finally(() => {
+      busy.current.terraform = false;
+    });
   });
 
   return null;
