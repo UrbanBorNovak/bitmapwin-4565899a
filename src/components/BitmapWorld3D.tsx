@@ -2289,7 +2289,7 @@ const WorldScene = memo(function WorldScene({
         </Suspense>
       ) : null}
 
-      {cameraMode === "third" && (!driving || rideIsWorn(ride.id)) ? (
+      {cameraMode === "third" && (!driving || rideIsWorn(ride.id) || ride.id === "cyberpunk-genesis-dog") ? (
         <SelfAvatar
           pose={pose}
           color={self.color}

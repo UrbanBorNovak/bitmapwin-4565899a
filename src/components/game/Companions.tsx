@@ -96,7 +96,7 @@ function Pet({
     }
     const trot = moved / Math.max(delta, 0.0001);
     if (spec.hovers) {
-      // The leash goose skims beside the player's boots instead of orbiting.
+      // A winged leash companion skims beside the player's boots instead of orbiting.
       const flap = Math.sin(t * 9);
       node.position.set(
         at.current.x,

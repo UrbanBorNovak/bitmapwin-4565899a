@@ -29,11 +29,11 @@ export const COMPANIONS: CompanionSpec[] = [
   { id: "none", label: "NO COMPANION", inscription: "", fit: 0, follow: 0, hovers: false },
   {
     id: "cat",
-    label: "CAT ON A LEASH",
+    label: "GOOSE ON A LEASH",
     inscription: "e1e0b7aa7d4ed669ecf5aabd7d0b0aecf290d4e93700dda66c32b8dffd0c21eai2",
-    fit: 0.52,
+    fit: 0.55,
     follow: 0.72,
-    hovers: false,
+    hovers: true,
   },
   {
     id: "dog",
@@ -45,11 +45,11 @@ export const COMPANIONS: CompanionSpec[] = [
   },
   {
     id: "goose",
-    label: "GOOSE ON A LEASH",
+    label: "CAT ON A LEASH",
     inscription: "e1e0b7aa7d4ed669ecf5aabd7d0b0aecf290d4e93700dda66c32b8dffd0c21eai0",
-    fit: 0.55,
+    fit: 0.52,
     follow: 0.8,
-    hovers: true,
+    hovers: false,
   },
 ];
 

@@ -162,7 +162,7 @@ export const CREATURE_GROUPS: CreatureGroupSpec[] = [
   {
     id: "wild-geese",
     label: "WILD GOOSE",
-    inscription: "e1e0b7aa7d4ed669ecf5aabd7d0b0aecf290d4e93700dda66c32b8dffd0c21eai0",
+    inscription: "e1e0b7aa7d4ed669ecf5aabd7d0b0aecf290d4e93700dda66c32b8dffd0c21eai2",
     count: 6,
     size: 0.58,
     hp: 35,
