@@ -25,4 +25,4 @@
 
 - [x] Mobile play: on-screen thumb stick (move/turn/sprint), look swipe, jump/fire buttons, fly up/down pads — touch devices only
 
-- [ ] Add persistent invite/request clans, leader-controlled image inscription crests, and crest nameplates
+- [x] Add persistent invite/request clans, leader-controlled image inscription crests, and crest nameplates
