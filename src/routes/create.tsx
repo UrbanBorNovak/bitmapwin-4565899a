@@ -124,6 +124,13 @@ function CreatePage() {
   const heights = held.data ?? [];
   const testHeight = Number.isFinite(Number(target)) && Number(target) > 0 ? Number(target) : (searchHeight ?? 36095);
 
+  // Pick the first BITMAP the builder holds automatically so nobody has to type a number.
+  useEffect(() => {
+    if (target || heights.length === 0) return;
+    setTarget(String(heights[0]));
+  }, [heights, target]);
+
+
   const generate = useMutation({
     mutationFn: async () => {
       const brief = prompt.trim();
