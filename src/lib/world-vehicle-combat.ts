@@ -21,14 +21,21 @@ let lastDamage = 0;
 let hullDown = false;
 let destroyedUntil = 0;
 let explosion = 0;
+let revision = 0;
 
 function emit() {
+  revision++;
   for (const listener of listeners) listener();
 }
 
 export function subscribeVehicleCombat(listener: () => void) {
   listeners.add(listener);
   return () => listeners.delete(listener);
+}
+
+/** Stable primitive snapshot for React's external-store contract. */
+export function vehicleCombatRevision() {
+  return revision;
 }
 
 export function vehicleCombatSnapshot(): VehicleCombatSnapshot {

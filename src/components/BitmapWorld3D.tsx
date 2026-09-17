@@ -227,7 +227,11 @@ import {
   vehicle,
   vehicleSnapshot,
 } from "@/lib/world-vehicle";
-import { subscribeVehicleCombat, vehicleCombatSnapshot } from "@/lib/world-vehicle-combat";
+import {
+  subscribeVehicleCombat,
+  vehicleCombatRevision,
+  vehicleCombatSnapshot,
+} from "@/lib/world-vehicle-combat";
 
 
 const GRID = 1_000;
@@ -2447,11 +2451,12 @@ export function BitmapWorld3D({
   const rideSnapshot = useSyncExternalStore(subscribeVehicle, vehicleSnapshot, () => "0::0");
   const driving = rideSnapshot.startsWith("1");
   const ride = useMemo(() => currentRide(), [rideSnapshot]);
-  const hull = useSyncExternalStore(
+  const hullRevision = useSyncExternalStore(
     subscribeVehicleCombat,
-    vehicleCombatSnapshot,
-    vehicleCombatSnapshot,
+    vehicleCombatRevision,
+    vehicleCombatRevision,
   );
+  const hull = useMemo(() => vehicleCombatSnapshot(), [hullRevision, rideSnapshot]);
   /** Told to the player when a hull is asked to sail dry sand. */
   const [rideNote, setRideNote] = useState<string | null>(null);
   const noteTank = useCallback((message: string) => {
