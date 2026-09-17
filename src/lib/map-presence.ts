@@ -14,6 +14,7 @@ import {
   tileOfPosition,
 } from "@/lib/world-combat";
 import type { ClanBadge } from "@/lib/clans";
+import { useCharacter } from "@/lib/character";
 
 /**
  * Live presence for the land map. Every visitor broadcasts the grid cell they are
