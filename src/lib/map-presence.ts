@@ -15,6 +15,7 @@ import {
 } from "@/lib/world-combat";
 import type { ClanBadge } from "@/lib/clans";
 import { useCharacter } from "@/lib/character";
+import { damageActiveVehicle } from "@/lib/world-vehicle-combat";
 
 /**
  * Live presence for the land map. Every visitor broadcasts the grid cell they are
@@ -124,7 +125,7 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
   hpRef.current = hp;
   const sendRef = useRef<(pose: PoseReport | null) => void>(() => {});
   const sayRef = useRef<(body: string) => void>(() => {});
-  const attackRef = useRef<(targetId: string) => void>(() => {});
+  const attackRef = useRef<(targetId: string, damage?: number, reach?: number) => void>(() => {});
   const respawnRef = useRef<() => void>(() => {});
   const hurtRef = useRef<(damage: number) => void>(() => {});
   const healRef = useRef<(amount: number) => void>(() => {});
@@ -254,10 +255,12 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
           from?: string;
           to?: string;
           damage?: number;
+          reach?: number;
           at?: number;
         };
         if (!p?.from || !p?.to) return;
         const damage = Math.max(0, Math.min(MAX_HP, Number(p.damage) || ATTACK_DAMAGE));
+        const reach = Math.max(MELEE_REACH_TILES, Math.min(6, Math.round(Number(p.reach) || MELEE_REACH_TILES)));
         const now = Date.now();
         const attacker = peers.get(p.from);
         const target =
@@ -278,7 +281,7 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
           from: tileOfPosition(attacker.x, attacker.z),
           to: tileOfPosition(target.x, target.z),
           damage,
-          reach: MELEE_REACH_TILES,
+          reach,
           at: now,
         });
       })
@@ -350,7 +353,7 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
       );
     };
 
-    attackRef.current = (targetId) => {
+    attackRef.current = (targetId, requestedDamage = ATTACK_DAMAGE, requestedReach = MELEE_REACH_TILES) => {
       if (!targetId || hpRef.current <= 0) return;
       const target = peers.get(targetId);
       if (!target || !lastCell) return;
@@ -358,6 +361,8 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
       const selfZ = typeof lastCell.z === "number" ? lastCell.z : cellZ(lastCell.row);
       const now = Date.now();
       const eventId = `${selfId}-${now}`;
+      const damage = Math.max(1, Math.min(MAX_HP, Math.round(requestedDamage)));
+      const reach = Math.max(MELEE_REACH_TILES, Math.min(6, Math.round(requestedReach)));
       // Our own swing goes through the same tile resolver as everyone else's, so
       // reach, walls and swing rate are judged identically on every screen.
       const accepted = combat.queue({
@@ -366,8 +371,8 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
         target: targetId,
         from: tileOfPosition(selfX, selfZ),
         to: tileOfPosition(target.x, target.z),
-        damage: ATTACK_DAMAGE,
-        reach: MELEE_REACH_TILES,
+        damage,
+        reach,
         at: now,
       });
       if (!accepted) return;
@@ -375,7 +380,7 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
       void channel.send({
         type: "broadcast",
         event: "hit",
-        payload: { id: eventId, from: selfId, to: targetId, damage: ATTACK_DAMAGE, at: now },
+        payload: { id: eventId, from: selfId, to: targetId, damage, reach, at: now },
       });
     };
 
@@ -431,7 +436,21 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
         const mine = hit.target === selfId;
         const targetPeer = peers.get(hit.target);
         const before = mine ? hpRef.current : (targetPeer?.hp ?? MAX_HP);
-        const after = Math.max(0, before - hit.damage);
+        const attacker = peers.get(hit.strikes[0]!.attacker);
+        const vehicleHit =
+          mine && attacker && lastCell
+            ? damageActiveVehicle(
+                hit.damage,
+                { x: attacker.x, z: attacker.z },
+                {
+                  x: typeof lastCell.x === "number" ? lastCell.x : cellX(lastCell.col),
+                  z: typeof lastCell.z === "number" ? lastCell.z : cellZ(lastCell.row),
+                  y: lastCell.y,
+                },
+              )
+            : null;
+        const appliedDamage = vehicleHit?.absorbed ? vehicleHit.occupantDamage : hit.damage;
+        const after = Math.max(0, before - appliedDamage);
         setCombatLog((current) =>
           [
             ...current,
@@ -439,7 +458,7 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
               id: hit.strikes[0]!.id,
               attacker: attackerName,
               target: mine ? handle : (targetPeer?.handle ?? "ANON"),
-              damage: hit.damage,
+              damage: appliedDamage,
               knockout: after === 0,
               at: now,
             },
@@ -449,7 +468,7 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
           hpRef.current = after;
           setHp(after);
           setHitAt(now);
-          setLastDamage(hit.damage);
+          setLastDamage(appliedDamage);
           if (lastCell) push(lastCell);
           if (after === 0) {
             setRespawnAt(now + RESPAWN_MS);
@@ -516,7 +535,7 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
     respawnNonce,
     respawnMs: RESPAWN_MS,
     respawn: () => respawnRef.current(),
-    attack: (targetId: string) => attackRef.current(targetId),
+    attack: (targetId: string, damage?: number, reach?: number) => attackRef.current(targetId, damage, reach),
     hurt: (damage: number) => hurtRef.current(damage),
     heal: (amount: number) => healRef.current(amount),
     say: (body: string) => sayRef.current(body),

@@ -45,7 +45,7 @@ export function VehicleGunner({
   pose: React.RefObject<PlayerState>;
   cursors: MapCursor[];
   bitcoin: string;
-  onShootPeer: (id: string) => void;
+  onShootPeer: (id: string, damage?: number, reach?: number) => void;
   onStatus: (message: string) => void;
 }) {
   const gl = useThree((state) => state.gl);
@@ -154,7 +154,7 @@ export function VehicleGunner({
         return;
       }
       if (hit.kind === "peer") {
-        onShootPeer(hit.id.slice(5));
+        onShootPeer(hit.id.slice(5), gun.damage, Math.ceil(gun.rangeStrides / 10));
         onStatus(`${gun.label} HIT · ${hit.label}`);
         return;
       }

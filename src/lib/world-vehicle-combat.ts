@@ -1,4 +1,4 @@
-import { STRIDE } from "@/lib/player-state";
+import { colAt, rowAt, STRIDE } from "@/lib/player-state";
 import { currentRide, isDriving, rideById, stopDriving } from "@/lib/world-vehicle";
 import { TILE, tileFlags } from "@/lib/world-grid";
 
@@ -58,9 +58,7 @@ export function detectHullDown(
   if (length < STRIDE * 3) return false;
   const probeX = target.x + (dx / length) * STRIDE * 1.8;
   const probeZ = target.z + (dz / length) * STRIDE * 1.8;
-  const col = Math.floor((probeX + 50) / 0.1);
-  const row = Math.floor(probeZ / 0.1);
-  return (tileFlags(col, row) & (TILE.BLOCKED | TILE.OCCUPIED)) !== 0;
+  return (tileFlags(colAt(probeX), rowAt(probeZ)) & (TILE.BLOCKED | TILE.OCCUPIED)) !== 0;
 }
 
 export function damageActiveVehicle(
