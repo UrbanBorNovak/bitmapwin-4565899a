@@ -1,5 +1,7 @@
 import {
+  Fragment,
   memo,
+  Suspense,
   useCallback,
   useEffect,
   useMemo,
@@ -19,7 +21,6 @@ import {
   useTexture,
 } from "@react-three/drei";
 import { SafeHtml } from "@/components/game/SafeHtml";
-import { Suspense } from "react";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -4653,7 +4654,7 @@ function BuildHud({
   const { items } = useWorldSkills();
   const [picked, setPicked] = useState<StructureId | BuildTemplateId | null>(null);
 
-  const options: { key: StructureId | "full-camp"; name: string; blurb: string; cost: Partial<Record<ItemId, number>>; costText: string }[] =
+  const options: { key: StructureId | BuildTemplateId; name: string; blurb: string; cost: Partial<Record<ItemId, number>>; costText: string; template: boolean }[] =
     [
       ...BUILD_TEMPLATES.map((template) => ({
         key: template.id,
