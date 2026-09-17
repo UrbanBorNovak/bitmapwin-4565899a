@@ -23,6 +23,8 @@ export type Character = {
   oath: string;
   /** on-chain GLB inscription the figure wears, or null for the default figure */
   avatarModel: string | null;
+  /** on-chain BITMAP pixel skin painted on the default figure, or null for the stock skin */
+  avatarSkin: string | null;
   /** reroll counter — changes the prose without changing the traits */
   seed: number;
   /** generated, stored so the page and inventory always agree */
@@ -170,6 +172,7 @@ export function blankCharacter(): Character {
     vice: VICES[0]!.id,
     oath: OATHS[0]!.id,
     avatarModel: null,
+    avatarSkin: null,
     seed: 1,
   };
   return {
@@ -192,6 +195,7 @@ export function readCharacter(): Character | null {
       ...base,
       ...parsed,
       avatarModel: typeof parsed.avatarModel === "string" && parsed.avatarModel.trim() ? parsed.avatarModel.trim() : null,
+      avatarSkin: typeof parsed.avatarSkin === "string" && parsed.avatarSkin.trim() ? parsed.avatarSkin.trim() : null,
       seed: Number.isFinite(parsed.seed) ? Number(parsed.seed) : 1,
       savedAt: Number.isFinite(parsed.savedAt) ? Number(parsed.savedAt) : Date.now(),
     };

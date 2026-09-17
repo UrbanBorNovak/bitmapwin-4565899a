@@ -14,7 +14,13 @@ import {
   type Character,
 } from "@/lib/character";
 import { CharacterPortrait } from "@/components/game/CharacterPortrait";
-import { avatarModelInscription, setAvatarModelInscription } from "@/lib/map-identity";
+import { AVATAR_SKINS } from "@/lib/build-sdk";
+import {
+  avatarModelInscription,
+  avatarSkinInscription,
+  setAvatarModelInscription,
+  setAvatarSkinInscription,
+} from "@/lib/map-identity";
 
 export const Route = createFileRoute("/character")({
   head: () => ({
@@ -46,7 +52,8 @@ function CharacterPage() {
     if (stored) setDraft(stored);
     else {
       const worn = avatarModelInscription();
-      if (worn) setDraft((d) => ({ ...d, avatarModel: worn }));
+      const skin = avatarSkinInscription();
+      if (worn || skin) setDraft((d) => ({ ...d, avatarModel: worn ?? d.avatarModel, avatarSkin: skin ?? d.avatarSkin }));
     }
   }, []);
 
@@ -59,6 +66,7 @@ function CharacterPage() {
     const stored = saveCharacter({ ...draft, title, backstory });
     setDraft(stored);
     setAvatarModelInscription(stored.avatarModel);
+    setAvatarSkinInscription(stored.avatarSkin);
     setSaved(Date.now());
   };
 
@@ -100,6 +108,8 @@ function CharacterPage() {
               />
             </label>
 
+            <SkinPicker value={draft.avatarSkin} onPick={(avatarSkin) => set({ avatarSkin })} />
+
             <Picker label="ORIGIN" options={ORIGINS} value={draft.origin} onPick={(origin) => set({ origin })} />
             <Picker label="CALLING" options={CALLINGS} value={draft.calling} onPick={(calling) => set({ calling })} />
             <Picker label="VICE" options={VICES} value={draft.vice} onPick={(vice) => set({ vice })} />
@@ -112,7 +122,11 @@ function CharacterPage() {
             <h2 className="display text-xl">{draft.name.trim() || "UNNAMED"}</h2>
             <p className="label mt-2">{title}</p>
           </header>
-          <CharacterPortrait model={draft.avatarModel} className="h-80 border-b border-border" />
+          <CharacterPortrait
+            model={draft.avatarModel}
+            skin={draft.avatarSkin}
+            className="h-80 border-b border-border"
+          />
           <div className="space-y-4 p-5">
             {backstory.split("\n\n").map((paragraph, index) => (
               <p key={index} className="font-mono text-xs leading-relaxed text-muted-foreground">
@@ -147,6 +161,57 @@ function CharacterPage() {
           </div>
         </aside>
       </div>
+    </div>
+  );
+}
+
+/**
+ * SKIN — every on-chain BITMAP pixel skin, painted on the stock figure.
+ * The thumbnail is the inscription itself, so what you pick is what you wear.
+ */
+function SkinPicker({ value, onPick }: { value: string | null; onPick: (id: string | null) => void }) {
+  const options: { id: string | null; label: string }[] = [
+    { id: null, label: "STOCK" },
+    ...AVATAR_SKINS.map((skin) => ({ id: skin.inscriptionId, label: skin.label })),
+  ];
+  return (
+    <div data-no-translate>
+      <span className="label">SKIN — BITMAP PIXEL SKINS</span>
+      <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-6">
+        {options.map((option) => {
+          const active = (option.id ?? null) === (value ?? null);
+          return (
+            <button
+              key={option.id ?? "stock"}
+              type="button"
+              onClick={() => onPick(option.id)}
+              title={option.label}
+              className={`border p-1 transition-colors ${
+                active ? "border-bitcoin bg-bitcoin/10" : "border-border hover:border-foreground"
+              }`}
+            >
+              {option.id ? (
+                <img
+                  src={`https://ordinals.com/content/${option.id}`}
+                  alt={option.label}
+                  loading="lazy"
+                  className="aspect-square w-full [image-rendering:pixelated]"
+                />
+              ) : (
+                <span className="flex aspect-square w-full items-center justify-center font-mono text-[9px] text-muted-foreground">
+                  STOCK
+                </span>
+              )}
+              <span className="mt-1 block truncate text-center font-mono text-[8px] uppercase tracking-[0.12em] text-muted-foreground">
+                {option.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+        &gt; SKINS PAINT THE STOCK FIGURE — LEAVE THE FIGURE FIELD EMPTY TO SEE THEM
+      </p>
     </div>
   );
 }

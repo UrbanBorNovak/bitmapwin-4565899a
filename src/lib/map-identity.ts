@@ -10,6 +10,7 @@ import { colorForAddress } from "@/lib/map-owners";
 const ID_KEY = "bitmap-map-visitor-id";
 const HANDLE_KEY = "bitmap-map-handle";
 const AVATAR_MODEL_KEY = "bitmap-map-avatar-model";
+const AVATAR_SKIN_KEY = "bitmap-map-avatar-skin";
 
 /** The rigged on-chain GLB every visitor wears unless they equip their own. */
 export const DEFAULT_AVATAR_MODEL =
@@ -30,6 +31,23 @@ export function setAvatarModelInscription(inscriptionId: string | null) {
   const clean = (inscriptionId ?? "").trim();
   if (clean) window.localStorage.setItem(AVATAR_MODEL_KEY, clean);
   else window.localStorage.removeItem(AVATAR_MODEL_KEY);
+}
+
+/**
+ * The pixel skin painted on the default figure. Any of the on-chain BITMAP pixel
+ * skins can be worn; empty means the stock skin.
+ */
+export function avatarSkinInscription(): string | null {
+  if (typeof window === "undefined") return null;
+  const stored = window.localStorage.getItem(AVATAR_SKIN_KEY);
+  return stored && stored.trim() ? stored.trim() : null;
+}
+
+export function setAvatarSkinInscription(inscriptionId: string | null) {
+  if (typeof window === "undefined") return;
+  const clean = (inscriptionId ?? "").trim();
+  if (clean) window.localStorage.setItem(AVATAR_SKIN_KEY, clean);
+  else window.localStorage.removeItem(AVATAR_SKIN_KEY);
 }
 
 
