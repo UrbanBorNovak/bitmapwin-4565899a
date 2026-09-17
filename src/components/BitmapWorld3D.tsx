@@ -226,6 +226,8 @@ import { DamageVeil } from "@/components/game/DamageVeil";
 
 import type { RideSpec } from "@/lib/world-vehicle";
 import { dryLandNear, isDeepSea, isSea, nearestSea } from "@/lib/world-sea";
+import { groundY, requestTerrainAround } from "@/lib/world-terrain";
+import { TerrainField } from "@/components/game/TerrainField";
 import TouchControls from "@/components/game/TouchControls";
 import { consumeTouchJump, isTouchDevice, takeTouchLook, touchPad } from "@/lib/touch-input";
 import {
@@ -1706,7 +1708,7 @@ function PlayerCameraRig({
     if (mode === "first" && driving) {
       // Hood cam: sits just ahead of the nose so the road is wide open instead
       // of being read through the windshield. No footstep bob behind the wheel.
-      const eye = player.y + AVATAR_U * 1.05;
+      const eye = player.y + ground + AVATAR_U * 1.05;
       const ahead = AVATAR_U * 2.2;
       cameraTarget.current.set(
         player.x + Math.sin(player.yaw) * ahead,
@@ -1727,7 +1729,7 @@ function PlayerCameraRig({
       const bounce = Math.sin(bob.current * 2) * AVATAR_U * 0.016 * gait * settle;
       const sway = Math.cos(bob.current) * AVATAR_U * 0.022 * gait * settle;
       const strideDip = Math.max(0, Math.cos(bob.current * 2)) * AVATAR_U * 0.008 * gait * settle;
-      const eye = player.y + AVATAR_U * 0.91 + bounce - strideDip - dip;
+      const eye = player.y + ground + AVATAR_U * 0.91 + bounce - strideDip - dip;
       cameraTarget.current.set(
         player.x + Math.cos(player.yaw) * sway,
         eye,
@@ -1750,14 +1752,14 @@ function PlayerCameraRig({
       const side = shoulder - steer.current * AVATAR_U * (riding ? 1.6 : 0.7);
       cameraTarget.current.set(
         player.x - Math.sin(player.yaw) * back + Math.cos(player.yaw) * side,
-        player.y + AVATAR_U * (riding ? 3.3 - gait * 0.45 : 2.15 - gait * 0.12) - dip,
+        player.y + ground + AVATAR_U * (riding ? 3.3 - gait * 0.45 : 2.15 - gait * 0.12) - dip,
         player.z - Math.cos(player.yaw) * back - Math.sin(player.yaw) * side,
       );
       // Keep the avatar on the lower third and reveal more space in front.
       const lead = riding ? 0.12 + gait * 0.1 : 0.16 + gait * 0.12;
       cameraLook.current.set(
         player.x + player.vx * lead + Math.sin(player.yaw) * AVATAR_U * (riding ? 2.8 : 3.6),
-        player.y + AVATAR_U * (riding ? 0.72 : 0.92),
+        player.y + ground + AVATAR_U * (riding ? 0.72 : 0.92),
         player.z + player.vz * lead + Math.cos(player.yaw) * AVATAR_U * (riding ? 2.8 : 3.6),
       );
     }
@@ -2328,6 +2330,7 @@ const WorldScene = memo(function WorldScene({
       {cameraMode !== "map" ? (
         <>
           <ChunkStreamer pose={pose} />
+          <TerrainField pose={pose} />
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <SeaMasses unit={AVATAR_U} pose={pose} />
           <SeaIslands unit={AVATAR_U} pose={pose} />
