@@ -49,6 +49,10 @@ export type CreatureGroupSpec = {
   solo?: boolean;
   /** Corrects models authored facing away from their forward travel axis. */
   modelYaw?: number;
+  /** Flies in a looping path above the ground rather than walking. */
+  airborne?: boolean;
+  /** Flight height in avatar units. */
+  altitude?: number;
 };
 
 export const CREATURE_GROUPS: CreatureGroupSpec[] = [
@@ -141,17 +145,37 @@ export const CREATURE_GROUPS: CreatureGroupSpec[] = [
     id: "birds",
     label: "BIRD",
     inscription: "9c1ff2e08862fe11e8c671d828e5c128d4ef09d8092abef7dd4fa7c2d23e2a7ai0",
-    count: 4,
-    size: 0.42,
+    count: 7,
+    size: 0.5,
     hp: 28,
     xp: 40,
     speed: 1.2,
     hostile: false,
     bite: 0,
-    hops: true,
+    hops: false,
     water: false,
     eyes: false,
     lines: ["CAW", "THE BLOCKS LOOK SMALL FROM HERE"],
+    airborne: true,
+    altitude: 3.4,
+  },
+  {
+    id: "wild-geese",
+    label: "WILD GOOSE",
+    inscription: "e1e0b7aa7d4ed669ecf5aabd7d0b0aecf290d4e93700dda66c32b8dffd0c21eai0",
+    count: 6,
+    size: 0.58,
+    hp: 35,
+    xp: 45,
+    speed: 1.08,
+    hostile: false,
+    bite: 0,
+    hops: false,
+    water: true,
+    eyes: false,
+    lines: ["HONK", "HONK HONK"],
+    airborne: true,
+    altitude: 2.6,
   },
   {
     id: "frogs",
@@ -362,7 +386,13 @@ export const CreatureGroup = memo(function CreatureGroup({
       creature.z += Math.cos(creature.heading) * travel * delta;
 
       let lift = unit * 0.02;
-      if (spec.hops) {
+      if (spec.airborne) {
+        creature.hop += delta * (4.8 + spec.speed);
+        const flap = Math.sin(creature.hop + index * 0.7);
+        lift = unit * ((spec.altitude ?? 3) + index * 0.13 + flap * 0.28);
+        node.rotation.x = -0.12 + Math.cos(creature.hop) * 0.08;
+        node.rotation.z = flap * 0.18;
+      } else if (spec.hops) {
         creature.hop += delta * (3.1 + spec.speed) * (0.7 + act.throttle * 0.7);
         const swing = Math.abs(Math.sin(creature.hop));
         lift = unit * spec.size * (0.04 + swing * (0.34 + act.throttle * 0.3));

@@ -16,6 +16,16 @@ import { Primitive } from "@/components/game/Primitive";
 import type { PlayerState } from "@/lib/player-state";
 import { companionSpec, useGear, type CompanionSpec } from "@/lib/world-gear";
 
+const COMPANION_URLS = [
+  "e1e0b7aa7d4ed669ecf5aabd7d0b0aecf290d4e93700dda66c32b8dffd0c21eai2",
+  "e1e0b7aa7d4ed669ecf5aabd7d0b0aecf290d4e93700dda66c32b8dffd0c21eai1",
+  "e1e0b7aa7d4ed669ecf5aabd7d0b0aecf290d4e93700dda66c32b8dffd0c21eai0",
+];
+
+for (const inscription of COMPANION_URLS) {
+  useGLTF.preload(`https://ordinals.com/content/${inscription}`);
+}
+
 function Pet({
   unit,
   pose,
@@ -63,31 +73,17 @@ function Pet({
     const node = group.current;
     if (!player || !node) return;
     const t = clock.elapsedTime;
-    const pace = Math.hypot(player.vx, player.vz);
-
-    let targetX: number;
-    let targetZ: number;
-    if (spec.hovers) {
-      // The goose never heels. It circles you, swinging wide when you stand
-      // still and tightening in behind your shoulder once you get moving.
-      const orbit = unit * spec.follow * (pace > unit * 0.4 ? 1.1 : 1.9);
-      const around = t * (pace > unit * 0.4 ? 0.9 : 1.5);
-      targetX = player.x + Math.sin(around) * orbit;
-      targetZ = player.z + Math.cos(around) * orbit;
-    } else {
-      // The dog trots at your heel, then every so often bolts ahead to sniff
-      // something out before dropping back into place.
-      const scouting = Math.sin(t * 0.22) > 0.72 && pace > unit * 0.3;
-      const reach = unit * spec.follow * (scouting ? -1.6 : 1);
-      const side = unit * spec.follow * 0.5 * (scouting ? -0.4 : 1);
-      targetX = player.x - Math.sin(player.yaw) * reach - Math.cos(player.yaw) * side;
-      targetZ = player.z - Math.cos(player.yaw) * reach + Math.sin(player.yaw) * side;
-    }
+    // Keep every leash companion at the player's heel in the player's local
+    // frame, so turning never leaves the pet orbiting or stranded behind.
+    const reach = unit * spec.follow;
+    const side = unit * spec.follow * 0.46;
+    const targetX = player.x - Math.sin(player.yaw) * reach - Math.cos(player.yaw) * side;
+    const targetZ = player.z - Math.cos(player.yaw) * reach + Math.sin(player.yaw) * side;
 
     if (!at.current.started) {
       at.current = { x: targetX, z: targetZ, yaw: player.yaw, started: true };
     }
-    const chase = 1 - Math.exp(-(spec.hovers ? 3.4 : 6) * delta);
+    const chase = 1 - Math.exp(-(spec.hovers ? 5.2 : 7.2) * delta);
     const previousX = at.current.x;
     const previousZ = at.current.z;
     at.current.x += (targetX - at.current.x) * chase;
@@ -100,11 +96,11 @@ function Pet({
     }
     const trot = moved / Math.max(delta, 0.0001);
     if (spec.hovers) {
-      // Flapping: a fast rise-and-fall of the whole body, plus a wing-beat roll.
+      // The leash goose skims beside the player's boots instead of orbiting.
       const flap = Math.sin(t * 9);
       node.position.set(
         at.current.x,
-        player.y + unit * (0.55 + flap * 0.06),
+        player.y + unit * (0.08 + Math.max(0, flap) * 0.025),
         at.current.z,
       );
       node.rotation.y = at.current.yaw;
@@ -127,11 +123,8 @@ function Pet({
 
   return (
     <group ref={group}>
-      <group
-        scale={fitted.fit}
-        position={[0, -fitted.minY * fitted.fit, 0]}
-      >
-        <group position={[-fitted.center.x, 0, -fitted.center.z]}>
+      <group scale={fitted.fit}>
+        <group position={[-fitted.center.x, -fitted.minY, -fitted.center.z]}>
           <Primitive object={scene} />
         </group>
       </group>
