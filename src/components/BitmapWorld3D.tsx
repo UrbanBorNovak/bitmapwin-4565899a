@@ -95,7 +95,7 @@ import { ChunkStreamer } from "@/components/game/ChunkStreamer";
 import { PerfGovernor } from "@/components/game/PerfGovernor";
 import { OasisLoading } from "@/components/game/OasisLoading";
 import { FootTrail } from "@/components/game/FootTrail";
-import { TankCannon } from "@/components/game/TankCannon";
+import { VehicleGunner } from "@/components/game/VehicleGunner";
 import { MysteryMist } from "@/components/game/MysteryMist";
 import { LandGrowth } from "@/components/game/LandGrowth";
 import { growthLabel, terraform, terraformAt } from "@/lib/world-terraform";
@@ -217,6 +217,7 @@ import {
   currentRide,
   isDriving,
   rideIsWorn,
+  rideGun,
   stopDriving,
   selectRide,
   subscribeVehicle,
@@ -2277,7 +2278,7 @@ const WorldScene = memo(function WorldScene({
         onRunning={onRunning}
       />
       <ShooterLayer
-        active={weapon !== null && cameraMode !== "map" && !(driving && ride.id === "tank")}
+        active={weapon !== null && cameraMode !== "map" && !(driving && rideGun(ride.id) !== null)}
         firstPerson={cameraMode === "first"}
         weapon={weapon ?? "minigun"}
         selfId={selfId}
@@ -2288,14 +2289,17 @@ const WorldScene = memo(function WorldScene({
         onCastHeal={onCastHeal}
         onStats={onShooterStats}
       />
-      <TankCannon
-        active={driving && ride.id === "tank" && cameraMode !== "map"}
-        pose={pose}
-        cursors={cursors}
-        bitcoin={colors.bitcoin}
-        onShootPeer={onShootPeer}
-        onStatus={onTankStatus}
-      />
+      {rideGun(ride.id) ? (
+        <VehicleGunner
+          active={driving && cameraMode !== "map"}
+          gun={rideGun(ride.id)!}
+          pose={pose}
+          cursors={cursors}
+          bitcoin={colors.bitcoin}
+          onShootPeer={onShootPeer}
+          onStatus={onTankStatus}
+        />
+      ) : null}
 
       {selectedHeight !== null ? (
         <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} />
@@ -3699,7 +3703,7 @@ export function BitmapWorld3D({
         {exploring && touchDevice ? (
           <TouchControls
             flying={driving && ride.kind === "air"}
-            shooter={Boolean(weapon) || (driving && ride.id === "tank")}
+            shooter={Boolean(weapon) || (driving && rideGun(ride.id) !== null)}
             paused={utilityOpen || inventoryOpen || buildOpen || mapOpen || chatOpen || rationsOpen}
           />
         ) : null}
