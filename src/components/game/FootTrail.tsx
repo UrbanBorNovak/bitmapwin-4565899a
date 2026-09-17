@@ -14,6 +14,7 @@ import * as THREE from "three";
 import type { PlayerState } from "@/lib/player-state";
 import { MOVE } from "@/lib/player-state";
 import { currentRide, vehicle, type TrailProfile } from "@/lib/world-vehicle";
+import { groundY, waterSurfaceY } from "@/lib/world-terrain";
 
 const MAX_PRINTS = 96;
 const MAX_DUST = 120;
@@ -24,7 +25,7 @@ const DUST_LIFE = 0.85;
 /** a boat's foam wake lingers on the water longer than dust hangs in air */
 const FOAM_LIFE = 2.2;
 
-type Print = { x: number; z: number; yaw: number; age: number; live: boolean; profile: TrailProfile | "boot" };
+type Print = { x: number; y: number; z: number; yaw: number; age: number; live: boolean; profile: TrailProfile | "boot" };
 type Mote = {
   x: number;
   y: number;
@@ -52,7 +53,7 @@ export function FootTrail({
   const dust = useRef<THREE.InstancedMesh>(null);
 
   const state = useRef({
-    prints: Array.from({ length: MAX_PRINTS }, (): Print => ({ x: 0, z: 0, yaw: 0, age: 0, live: false, profile: "boot" })),
+    prints: Array.from({ length: MAX_PRINTS }, (): Print => ({ x: 0, y: 0, z: 0, yaw: 0, age: 0, live: false, profile: "boot" })),
     motes: Array.from({ length: MAX_DUST }, (): Mote => ({
       x: 0,
       y: 0,
@@ -130,6 +131,7 @@ export function FootTrail({
             store.printCursor++;
             slot.x = player.x + offX;
             slot.z = player.z + offZ;
+            slot.y = groundY(slot.x, slot.z);
             slot.yaw = player.yaw;
             slot.age = 0;
             slot.live = true;
@@ -145,6 +147,7 @@ export function FootTrail({
         store.printCursor++;
         slot.x = player.x + offX;
         slot.z = player.z + offZ;
+        slot.y = groundY(slot.x, slot.z);
         slot.yaw = player.yaw;
         slot.age = 0;
         slot.live = true;
@@ -178,7 +181,7 @@ export function FootTrail({
         const lateral = unit * (0.18 + Math.random() * 0.16) * side;
         mote.x = player.x - Math.sin(player.yaw) * unit * 0.9 + Math.cos(player.yaw) * lateral;
         mote.z = player.z - Math.cos(player.yaw) * unit * 0.9 - Math.sin(player.yaw) * lateral;
-        mote.y = unit * 0.03;
+         mote.y = waterSurfaceY(mote.x, mote.z) + unit * 0.03;
         mote.vx = Math.cos(player.yaw) * side * unit * 0.5 - player.vx * 0.06;
         mote.vz = -Math.sin(player.yaw) * side * unit * 0.5 - player.vz * 0.06;
         mote.vy = unit * 0.05;
@@ -191,7 +194,7 @@ export function FootTrail({
       const spread = unit * (landed ? 0.4 : 0.22);
       mote.x = player.x + (Math.random() - 0.5) * spread - Math.sin(player.yaw) * unit * 0.2;
       mote.z = player.z + (Math.random() - 0.5) * spread - Math.cos(player.yaw) * unit * 0.2;
-      mote.y = unit * 0.06;
+       mote.y = groundY(mote.x, mote.z) + unit * 0.06;
       mote.vx = (Math.random() - 0.5) * unit * (landed ? 1.6 : 0.7) - player.vx * 0.12;
       mote.vz = (Math.random() - 0.5) * unit * (landed ? 1.6 : 0.7) - player.vz * 0.12;
       mote.vy = unit * (0.7 + Math.random() * 0.8);
@@ -222,7 +225,7 @@ export function FootTrail({
         // Pressed into the sand: half the print's own thickness above zero, so
         // it sits flush with the ground instead of hovering over it.
         const thickness = unit * 0.012;
-        scratch.pos.set(slot.x, thickness * 0.5, slot.z);
+        scratch.pos.set(slot.x, slot.y + thickness * 0.5, slot.z);
         const shrink = 0.6 + fade * 0.4;
         if (slot.profile === "tread") scratch.scale.set(unit * 0.26 * shrink, thickness, unit * 0.34 * shrink);
         else if (slot.profile === "truck") scratch.scale.set(unit * 0.13 * shrink, thickness, unit * 0.44 * shrink);
@@ -258,7 +261,8 @@ export function FootTrail({
         mote.vz *= drag;
         mote.vy = mote.foam ? mote.vy * drag : mote.vy * drag - unit * 0.9 * delta;
         mote.x += mote.vx * delta;
-        mote.y = Math.max(unit * 0.02, mote.y + mote.vy * delta);
+        const floor = mote.foam ? waterSurfaceY(mote.x, mote.z) : groundY(mote.x, mote.z);
+        mote.y = Math.max(floor + unit * 0.02, mote.y + mote.vy * delta);
         mote.z += mote.vz * delta;
         const life = 1 - mote.age / span;
         scratch.pos.set(mote.x, mote.y, mote.z);

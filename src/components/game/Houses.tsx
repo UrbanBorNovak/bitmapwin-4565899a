@@ -11,6 +11,7 @@ import { useGLTF } from "@react-three/drei";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
 import { isSea } from "@/lib/world-sea";
+import { groundY } from "@/lib/world-terrain";
 
 export const HOUSE_INSCRIPTION =
   "2c2c4f69a5baf378ec897b235fffdde6022b05f898d9ab43f7ca64bea7ad8fbfi0";
@@ -80,7 +81,7 @@ export const Houses = memo(function Houses({
   return (
     <>
       {houses.map((house) => (
-        <group key={house.key} position={[house.x, 0, house.z]}>
+        <group key={house.key} position={[house.x, groundY(house.x, house.z), house.z]}>
           <Suspense
             fallback={
               <mesh position={[0, house.size * 0.3, 0]} raycast={noRaycast}>

@@ -24,6 +24,7 @@ import {
   subscribeEgg,
 } from "@/lib/world-egg";
 import { dryLandNear } from "@/lib/world-sea";
+import { groundY } from "@/lib/world-terrain";
 
 /** How long the sealing flourish plays after the relic is taken, in seconds. */
 const SECURE_TIME = 1.8;
@@ -133,7 +134,7 @@ export const GoldenEgg = memo(function GoldenEgg({
   if (taken && !sealing) return null;
 
   return (
-    <group position={[spot.x, 0, spot.z]}>
+    <group position={[spot.x, groundY(spot.x, spot.z), spot.z]}>
       <group ref={group}>
         <Suspense
           fallback={

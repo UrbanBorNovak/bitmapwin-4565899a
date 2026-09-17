@@ -19,6 +19,7 @@ import {
   type OreVoxel,
 } from "@/lib/world-entities";
 import { isSea } from "@/lib/world-sea";
+import { groundY } from "@/lib/world-terrain";
 
 /** on-chain GLB of a jade mineral */
 export const JADE_INSCRIPTION =
@@ -121,7 +122,7 @@ export const JadeNodes = memo(function JadeNodes({
     <>
       {seams.map((vein) =>
         vein.depletedUntil ? null : (
-          <group key={vein.id} position={[vein.x, 0, vein.z]}>
+          <group key={vein.id} position={[vein.x, groundY(vein.x, vein.z), vein.z]}>
             {vein.voxels.map((voxel, i) =>
               voxel.alive ? (
                 <group

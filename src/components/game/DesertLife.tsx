@@ -1412,7 +1412,7 @@ const GoldVeins = memo(function GoldVeins({
   return (
     <>
       {veins.map((vein) => (
-        <group key={vein.id} position={[vein.x, 0, vein.z]}>
+        <group key={vein.id} position={[vein.x, groundY(vein.x, vein.z), vein.z]}>
           {/* the host rock the gold sits in */}
           <mesh position={[0, unit * 0.06, 0]} raycast={noRaycast}>
             <boxGeometry args={[unit * 0.62, unit * 0.12, unit * 0.62]} />

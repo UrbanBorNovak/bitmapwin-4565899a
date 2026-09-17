@@ -2,6 +2,7 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { PlayerState } from "@/lib/player-state";
+import { groundY } from "@/lib/world-terrain";
 
 const BANKS = 10;
 
@@ -21,11 +22,9 @@ export function MysteryMist({ pose, unit, color }: { pose: React.RefObject<Playe
     if (!player || !node) return;
     offsets.forEach((bank, index) => {
       const angle = bank.angle + clock.elapsedTime * bank.speed;
-      dummy.position.set(
-        player.x + Math.cos(angle) * bank.radius,
-        player.y + unit * (0.08 + (index % 2) * 0.06),
-        player.z + Math.sin(angle) * bank.radius,
-      );
+      const x = player.x + Math.cos(angle) * bank.radius;
+      const z = player.z + Math.sin(angle) * bank.radius;
+      dummy.position.set(x, groundY(x, z) + unit * (0.08 + (index % 2) * 0.06), z);
       dummy.rotation.set(-Math.PI / 2, 0, angle);
       dummy.scale.set(bank.width, bank.width * 0.38, 1);
       dummy.updateMatrix();

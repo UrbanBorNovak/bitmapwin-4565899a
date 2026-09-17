@@ -15,6 +15,7 @@ import * as THREE from "three";
 import { SEAS, seaRadiusAt } from "@/lib/world-sea";
 import type { PlayerState } from "@/lib/player-state";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
+import { waterSurfaceY } from "@/lib/world-terrain";
 
 export const ISLAND_INSCRIPTION =
   "707e8ab40e98b87fd571babe7277a8425ce7390086695dd31e95b33bff5291e9i0";
@@ -80,7 +81,7 @@ export const SeaIslands = memo(function SeaIslands({
       {lagoons.map(({ sea, islets }) => (
         <group key={sea.id} userData={{ seaId: sea.id }}>
           {islets.map((islet) => (
-            <group key={islet.key} position={[islet.x, unit * 0.02, islet.z]}>
+            <group key={islet.key} position={[islet.x, waterSurfaceY(islet.x, islet.z) + unit * 0.02, islet.z]}>
               <Suspense
                 fallback={
                   <mesh position={[0, islet.size * 0.12, 0]} raycast={noRaycast}>

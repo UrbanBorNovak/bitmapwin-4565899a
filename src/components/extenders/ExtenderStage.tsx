@@ -5,6 +5,7 @@ import { cellX, cellZ, STRIDE, WORLD_CELL, WORLD_GRID } from "@/lib/player-state
 import type { RuntimeDeployment } from "@/lib/extender-code";
 import { useExtenderRuntimes, type RunningExtender } from "@/lib/use-extender-runtimes";
 import { ExtenderPropGroup } from "@/components/extenders/ExtenderProps";
+import { groundY } from "@/lib/world-terrain";
 
 /**
  * Runs the extenders you are standing near and puts their output on the land.
@@ -112,7 +113,7 @@ export function ExtenderStage({
   return (
     <>
       {placed.map((item) => (
-        <group key={item.deployment.deploymentId} position={[item.x, 0, item.z]}>
+        <group key={item.deployment.deploymentId} position={[item.x, groundY(item.x, item.z), item.z]}>
           <ExtenderPropGroup
             props={item.snapshot.props}
             unit={STRIDE}

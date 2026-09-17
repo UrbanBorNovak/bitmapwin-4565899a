@@ -12,6 +12,7 @@ import { useGLTF } from "@react-three/drei";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
 import { isSea } from "@/lib/world-sea";
+import { groundY } from "@/lib/world-terrain";
 
 
 export const PINE_INSCRIPTION =
@@ -228,7 +229,7 @@ export const PineTrees = memo(function PineTrees({
   return (
     <>
       {trees.map((tree) => (
-        <group key={tree.key} position={[tree.x, 0, tree.z]}>
+        <group key={tree.key} position={[tree.x, groundY(tree.x, tree.z), tree.z]}>
           <Suspense
               fallback={<TreeFallback size={tree.size} />}
           >
@@ -264,14 +265,14 @@ export const PineTrees = memo(function PineTrees({
         </group>
       ))}
       {flowers.map((flower) => (
-        <group key={flower.key} position={[flower.x, 0, flower.z]}>
+        <group key={flower.key} position={[flower.x, groundY(flower.x, flower.z), flower.z]}>
           <Suspense fallback={<FlowerFallback size={flower.size} />}>
             <InscribedModel url={urlAt(FLOWER_URLS, flower.model)} size={flower.size} yaw={flower.yaw} />
           </Suspense>
         </group>
       ))}
       {miners.map((miner) => (
-        <group key={miner.key} position={[miner.x, 0, miner.z]}>
+        <group key={miner.key} position={[miner.x, groundY(miner.x, miner.z), miner.z]}>
           <WildMiner unit={unit} seed={miner.seed} yaw={miner.yaw} />
         </group>
       ))}

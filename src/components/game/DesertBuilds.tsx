@@ -17,6 +17,7 @@ import { ROAD_INSCRIPTION } from "@/lib/world-road";
 import { GOLD_BAR_INSCRIPTION } from "@/lib/world-smelt";
 import { useWorldBuilds, type PlacedStructure, type StructureId } from "@/lib/world-build";
 import { CLAY_INSCRIPTIONS } from "@/components/game/ClayShrines";
+import { groundY } from "@/lib/world-terrain";
 
 const noRaycast = () => {};
 
@@ -299,7 +300,7 @@ const Structure = memo(function Structure({ id, unit }: { id: StructureId; unit:
 
 function Placed({ item, unit }: { item: PlacedStructure; unit: number }) {
   return (
-    <group position={[item.x, 0, item.z]} rotation={[0, item.yaw, 0]}>
+    <group position={[item.x, groundY(item.x, item.z), item.z]} rotation={[0, item.yaw, 0]}>
       <Structure id={item.id} unit={unit} />
     </group>
   );

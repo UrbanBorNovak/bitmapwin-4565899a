@@ -14,6 +14,7 @@ import * as THREE from "three";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import type { PlayerState } from "@/lib/player-state";
 import { tileCentre, tileOfHeight } from "@/lib/world-grid";
+import { groundY } from "@/lib/world-terrain";
 
 /** on-chain GLB inscription of the miner */
 export const BITMAP_MINER_INSCRIPTION =
@@ -115,7 +116,7 @@ export const BitmapMineCrew = memo(function BitmapMineCrew({
         const at = spots.get(height);
         if (!at) return null;
         return (
-          <group key={height} position={[at.x, 0, at.z]}>
+          <group key={height} position={[at.x, groundY(at.x, at.z), at.z]}>
             {Array.from({ length: CREW }, (_, i) => {
               const angle = hash(height, i) * Math.PI * 2;
               const reach = unit * (1.4 + hash(height + i, i * 7) * 1.6);

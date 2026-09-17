@@ -11,6 +11,7 @@ import * as THREE from "three";
 import { SEAS, seaOutline } from "@/lib/world-sea";
 import { patchSurface, surfaceUniforms, tickSurface } from "@/lib/onchain-surface";
 import type { PlayerState } from "@/lib/player-state";
+import { waterSurfaceY } from "@/lib/world-terrain";
 import { Primitive } from "./Primitive";
 
 const SEA_DEEP = "#2c5670";
@@ -110,7 +111,7 @@ export const SeaMasses = memo(function SeaMasses({
   return (
     <group ref={group}>
       {geometries.map(({ sea, water, shore }) => (
-        <group key={sea.id} userData={{ seaId: sea.id }}>
+        <group key={sea.id} userData={{ seaId: sea.id }} position-y={waterSurfaceY(sea.x, sea.z)}>
           <mesh
             geometry={shore}
             position={[0, unit * 0.004, 0]}
