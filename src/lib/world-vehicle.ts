@@ -27,6 +27,8 @@ export type RideSpec = {
   sprint: number;
   /** multiplier on the keyboard turn rate */
   turn: number;
+  /** tightest practical combat turn, measured in avatar strides */
+  turnRadius: number;
   /** how much body roll the ride leans into a turn */
   lean: number;
   /**
@@ -52,6 +54,12 @@ export type RideSpec = {
   modelYaw?: number;
   /** ground or water mark made by this ride */
   trail: TrailProfile;
+  /** combat durability and protection */
+  maxHull: number;
+  /** fraction of incoming damage stopped by the hull, 0..0.8 */
+  armor: number;
+  /** fraction of hull damage that reaches the occupant */
+  occupantExposure: number;
 };
 
 /** on-chain GLB inscription of the Tesla Cybertruck model */
@@ -75,11 +83,15 @@ export const RIDES: RideSpec[] = [
     speed: 2.2,
     sprint: 1.2,
     turn: 1.08,
+    turnRadius: 2.6,
     lean: 0.7,
     accel: 1.65,
     brake: 1.35,
     grip: 0.82,
     trail: "paw",
+    maxHull: 90,
+    armor: 0.08,
+    occupantExposure: 0.45,
   },
   {
     id: "cybertruck",
@@ -91,12 +103,16 @@ export const RIDES: RideSpec[] = [
     speed: 2.5,
     sprint: 1.18,
     turn: 0.75,
+    turnRadius: 5.8,
     lean: 0.6,
     repaint: true,
     accel: 0.5,
     brake: 0.75,
     grip: 0.45,
     trail: "truck",
+    maxHull: 240,
+    armor: 0.3,
+    occupantExposure: 0.22,
   },
   {
     id: "ship",
@@ -108,11 +124,15 @@ export const RIDES: RideSpec[] = [
     speed: 1.8,
     sprint: 1.12,
     turn: 0.5,
+    turnRadius: 10,
     lean: 0.35,
     accel: 0.2,
     brake: 0.16,
     grip: 0.15,
     trail: "wake",
+    maxHull: 360,
+    armor: 0.28,
+    occupantExposure: 0.18,
   },
   {
     id: "lambo",
@@ -124,11 +144,15 @@ export const RIDES: RideSpec[] = [
     speed: 3.4,
     sprint: 1.22,
     turn: 0.68,
+    turnRadius: 7.2,
     lean: 0.8,
     accel: 1.55,
     brake: 1.7,
     grip: 0.75,
     trail: "sport",
+    maxHull: 120,
+    armor: 0.08,
+    occupantExposure: 0.38,
   },
   {
     id: "model-s",
@@ -140,11 +164,15 @@ export const RIDES: RideSpec[] = [
     speed: 3,
     sprint: 1.2,
     turn: 0.78,
+    turnRadius: 5.8,
     lean: 0.6,
     accel: 1.95,
     brake: 1.2,
     grip: 0.6,
     trail: "sport",
+    maxHull: 150,
+    armor: 0.14,
+    occupantExposure: 0.32,
   },
   {
     id: "testarossa",
@@ -156,6 +184,7 @@ export const RIDES: RideSpec[] = [
     speed: 3.25,
     sprint: 1.22,
     turn: 0.72,
+    turnRadius: 6.5,
     lean: 0.9,
     // Mid-engine flat twelve: eager off the line, hard on the brakes, and the
     // steering goes light the faster it runs.
@@ -163,6 +192,9 @@ export const RIDES: RideSpec[] = [
     brake: 1.45,
     grip: 0.8,
     trail: "sport",
+    maxHull: 130,
+    armor: 0.1,
+    occupantExposure: 0.36,
   },
   {
     id: "adamantine-yacht",
@@ -174,11 +206,15 @@ export const RIDES: RideSpec[] = [
     speed: 2,
     sprint: 1.12,
     turn: 0.45,
+    turnRadius: 12,
     lean: 0.3,
     accel: 0.28,
     brake: 0.2,
     grip: 0.12,
     trail: "wake",
+    maxHull: 440,
+    armor: 0.38,
+    occupantExposure: 0.12,
   },
   {
     id: "bitsaucer",
@@ -190,6 +226,7 @@ export const RIDES: RideSpec[] = [
     speed: 3.7,
     sprint: 1.18,
     turn: 0.9,
+    turnRadius: 7,
     lean: 0.5,
     altitude: 6,
     climb: 5.5,
@@ -197,6 +234,9 @@ export const RIDES: RideSpec[] = [
     brake: 0.5,
     grip: 0.25,
     trail: "none",
+    maxHull: 190,
+    armor: 0.2,
+    occupantExposure: 0.28,
   },
   {
     id: "tank",
@@ -209,12 +249,16 @@ export const RIDES: RideSpec[] = [
     speed: 2.15,
     sprint: 1.08,
     turn: 0.42,
+    turnRadius: 3.6,
     lean: 0.15,
     accel: 0.32,
     brake: 0.3,
     grip: 0.95,
     modelYaw: Math.PI,
     trail: "tread",
+    maxHull: 620,
+    armor: 0.58,
+    occupantExposure: 0.08,
   },
   {
     id: "spacecraft",
@@ -226,6 +270,7 @@ export const RIDES: RideSpec[] = [
     speed: 4.2,
     sprint: 1.2,
     turn: 0.6,
+    turnRadius: 14,
     lean: 0.7,
     altitude: 12,
     climb: 7,
@@ -233,6 +278,9 @@ export const RIDES: RideSpec[] = [
     brake: 0.35,
     grip: 0.2,
     trail: "none",
+    maxHull: 280,
+    armor: 0.26,
+    occupantExposure: 0.2,
   },
   {
     id: "silver-saucer",
@@ -244,6 +292,7 @@ export const RIDES: RideSpec[] = [
     speed: 3.9,
     sprint: 1.18,
     turn: 1.05,
+    turnRadius: 6,
     lean: 0.4,
     altitude: 8,
     climb: 6,
@@ -251,6 +300,9 @@ export const RIDES: RideSpec[] = [
     brake: 0.7,
     grip: 0.22,
     trail: "none",
+    maxHull: 210,
+    armor: 0.24,
+    occupantExposure: 0.24,
   },
   {
     id: "jetpack",
@@ -264,6 +316,7 @@ export const RIDES: RideSpec[] = [
     speed: 2.35,
     sprint: 1.18,
     turn: 1.3,
+    turnRadius: 1.8,
     lean: 0.25,
     altitude: 3.5,
     climb: 4.5,
@@ -272,6 +325,9 @@ export const RIDES: RideSpec[] = [
     grip: 0.4,
     worn: true,
     trail: "none",
+    maxHull: 70,
+    armor: 0.02,
+    occupantExposure: 0.62,
   },
 ];
 
