@@ -1109,6 +1109,77 @@ export type Database = {
         }
         Relationships: []
       }
+      goods_market: {
+        Row: {
+          base_price: number
+          baseline_stock: number
+          bought_total: number
+          item_id: string
+          sold_total: number
+          stock: number
+          updated_at: string
+        }
+        Insert: {
+          base_price: number
+          baseline_stock: number
+          bought_total?: number
+          item_id: string
+          sold_total?: number
+          stock?: number
+          updated_at?: string
+        }
+        Update: {
+          base_price?: number
+          baseline_stock?: number
+          bought_total?: number
+          item_id?: string
+          sold_total?: number
+          stock?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      goods_trades: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          item_id: string
+          quantity: number
+          side: string
+          total_coins: number
+          unit_price: number
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          item_id: string
+          quantity: number
+          side: string
+          total_coins: number
+          unit_price: number
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          item_id?: string
+          quantity?: number
+          side?: string
+          total_coins?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goods_trades_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "goods_market"
+            referencedColumns: ["item_id"]
+          },
+        ]
+      }
       inscriptions: {
         Row: {
           bitmap_height: number | null
@@ -1939,6 +2010,20 @@ export type Database = {
       create_clan: {
         Args: { _crest_inscription_id: string; _name: string; _tag: string }
         Returns: string
+      }
+      goods_price: {
+        Args: { _base: number; _baseline: number; _stock: number }
+        Returns: number
+      }
+      goods_trade: {
+        Args: { _address: string; _item: string; _qty: number; _side: string }
+        Returns: {
+          filled: number
+          price: number
+          stock: number
+          total_coins: number
+          unit_price: number
+        }[]
       }
       land_terraform_in_chunks: {
         Args: { _keys: string[] }

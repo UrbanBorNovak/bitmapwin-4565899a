@@ -22,6 +22,7 @@ const GROUPS: { label: string; items: { to: string; label: string }[] }[] = [
     label: "MARKET",
     items: [
       { to: "/marketplace", label: "MARKETPLACE" },
+      { to: "/trading-post", label: "TRADING POST" },
       { to: "/extenders", label: "EXTENDERS" },
       { to: "/experiences", label: "EXPERIENCES" },
       { to: "/builders", label: "BUILDERS" },
