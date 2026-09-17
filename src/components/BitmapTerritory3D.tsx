@@ -1,4 +1,4 @@
-import { Canvas } from "@react-three/fiber";
+import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { OrbitControls } from "@react-three/drei";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
@@ -60,7 +60,7 @@ export function BitmapTerritory3D({ height }: { height: number }) {
 
   return (
     <div className="aspect-square w-full border border-primary/40 bg-background">
-      <Canvas camera={{ position: [1.7, 1.5, 1.7], fov: 40 }} dpr={[1, 1.75]}>
+      <SafeCanvas camera={{ position: [1.7, 1.5, 1.7], fov: 40 }} dpr={[1, 1.75]}>
         <color attach="background" args={["#080808"]} />
         <ambientLight intensity={0.55} />
         <directionalLight position={[3, 5, 2]} intensity={1.15} color="#ffd7a3" />
@@ -74,7 +74,7 @@ export function BitmapTerritory3D({ height }: { height: number }) {
           maxDistance={4}
           maxPolarAngle={Math.PI / 2.15}
         />
-      </Canvas>
+      </SafeCanvas>
     </div>
   );
 }
