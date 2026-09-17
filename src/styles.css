@@ -179,7 +179,7 @@
     border-radius: 999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-bitcoin);
+    background: var(--color-signal);
   }
 }
 
@@ -710,9 +710,10 @@
   border-radius: var(--radius-md);
 }
 
+/* Interaction and live state read cold; ownership and actions stay orange. */
 .route-stage :where(input, textarea, select):focus {
-  border-color: var(--color-bitcoin);
-  box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-bitcoin) 28%, transparent);
+  border-color: var(--color-signal);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-signal) 30%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {
