@@ -3479,6 +3479,17 @@ export function BitmapWorld3D({
                 ))}
               </div>
 
+              {kitTab === "base" ? (
+                <BaseMenu
+                  pose={pose}
+                  cursors={cursors}
+                  ownedHeights={ownedHeights}
+                  partyIds={party.party?.members.map((member) => member.id) ?? []}
+                  onVisit={visitHeight}
+                  onInvite={party.invite}
+                />
+              ) : null}
+
               {kitTab === "action" ? (
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Action</span>
