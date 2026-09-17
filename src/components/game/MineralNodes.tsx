@@ -17,6 +17,7 @@ import {
   type OreVein,
   type OreVoxel,
 } from "@/lib/world-entities";
+import { isSea } from "@/lib/world-sea";
 
 /** on-chain GLB inscription of the mineral cluster */
 export const MINERAL_INSCRIPTION =
@@ -162,6 +163,7 @@ export const MineralNodes = memo(function MineralNodes({
         if (hash(gx, gz, 30) > 0.3) continue;
         const x = gx * pitch + (hash(gx, gz, 37) - 0.5) * pitch * 0.75;
         const z = gz * pitch + (hash(gx, gz, 38) - 0.5) * pitch * 0.75;
+        if (isSea(x, z)) continue;
         const dx = x - center[0];
         const dz = z - center[1];
         if (dx * dx + dz * dz > radius * radius) continue;

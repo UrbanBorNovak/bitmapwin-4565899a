@@ -39,6 +39,7 @@ import {
 import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { brainProbe, publishBrainProbe } from "@/lib/fly-connectome";
 import { poseDown, simDelta} from "@/lib/player-state";
+import { dryLandNear, isSea } from "@/lib/world-sea";
 
 
 type Bot = BeastEntity &
@@ -269,14 +270,30 @@ export function OasisBots({
       if (player && playerDistance !== null && playerDistance > REACH) {
         const angle = bot.seed * 1.7 + now / 20_000;
         const ring = unit * (14 + (bot.id % 5) * 5);
-        bot.x = player.x + Math.cos(angle) * ring;
-        bot.z = player.z + Math.sin(angle) * ring;
+        const dry = dryLandNear(
+          player.x + Math.cos(angle) * ring,
+          player.z + Math.sin(angle) * ring,
+          unit * 260,
+          bot.seed,
+        );
+        if (dry) {
+          bot.x = dry.x;
+          bot.z = dry.z;
+        }
       }
 
       const travel = speed * act.throttle;
       bot.heading += act.steer;
       bot.x += Math.sin(bot.heading) * travel * delta;
       bot.z += Math.cos(bot.heading) * travel * delta;
+      if (isSea(bot.x, bot.z)) {
+        const dry = dryLandNear(bot.x, bot.z, unit * 260, bot.seed + now / 1000);
+        if (dry) {
+          bot.x = dry.x;
+          bot.z = dry.z;
+          bot.heading += Math.PI * 0.7;
+        }
+      }
       bot.bodyY = unit * bot.size * 0.6;
 
       const stride = travel > 0 ? Math.abs(Math.sin(now / 170 + bot.seed)) * unit * 0.035 : 0;

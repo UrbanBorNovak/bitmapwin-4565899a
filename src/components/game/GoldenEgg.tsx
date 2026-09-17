@@ -23,6 +23,7 @@ import {
   setEggProbe,
   subscribeEgg,
 } from "@/lib/world-egg";
+import { dryLandNear } from "@/lib/world-sea";
 
 /** How long the sealing flourish plays after the relic is taken, in seconds. */
 const SECURE_TIME = 1.8;
@@ -65,7 +66,8 @@ export const GoldenEgg = memo(function GoldenEgg({
     const seed = seedOf(`${day}:${claims}`);
     const x = (zx + hash(zx + seed, zz, 91)) * zone;
     const z = (zz + hash(zx, zz + seed, 92)) * zone;
-    return { id: `${day}:${zx}:${zz}`, x, z };
+    const dry = dryLandNear(x, z, unit * 260, seed);
+    return { id: `${day}:${zx}:${zz}`, x: dry?.x ?? x, z: dry?.z ?? z };
     // Re-hidden when the day turns; the zone follows the hunter as they travel.
   }, [claims, day, pose, zone]);
 

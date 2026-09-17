@@ -10,6 +10,7 @@ import { Suspense, memo, useEffect, useMemo } from "react";
 import { useGLTF } from "@react-three/drei";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
+import { isSea } from "@/lib/world-sea";
 
 export const HOUSE_INSCRIPTION =
   "2c2c4f69a5baf378ec897b235fffdde6022b05f898d9ab43f7ca64bea7ad8fbfi0";
@@ -48,6 +49,7 @@ export const Houses = memo(function Houses({
         if (hash(gx, gz, 12) > 0.3) continue;
         const x = gx * pitch + (hash(gx, gz, 13) - 0.5) * pitch * 0.7;
         const z = gz * pitch + (hash(gx, gz, 14) - 0.5) * pitch * 0.7;
+        if (isSea(x, z)) continue;
         const dx = x - center[0];
         const dz = z - center[1];
         if (dx * dx + dz * dz > radius * radius) continue;

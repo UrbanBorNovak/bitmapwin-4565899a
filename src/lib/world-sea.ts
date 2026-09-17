@@ -103,6 +103,21 @@ export function isDeepSea(x: number, z: number) {
   return hit !== null && hit.depth > 0.1;
 }
 
+/** Find the nearest dry point around a water-blocked spot. */
+export function dryLandNear(x: number, z: number, radius: number, salt = 0) {
+  if (!isSea(x, z)) return { x, z };
+  const turns = 32;
+  for (let i = 0; i < turns; i++) {
+    const t = i / Math.max(1, turns - 1);
+    const angle = salt * 1.618 + i * 2.399963;
+    const distance = radius * (0.08 + t * 1.15);
+    const px = x + Math.cos(angle) * distance;
+    const pz = z + Math.sin(angle) * distance;
+    if (!isSea(px, pz)) return { x: px, z: pz };
+  }
+  return null;
+}
+
 /** The closest sea and how far its water is, for pointing a sailor at it. */
 export function nearestSea(x: number, z: number) {
   let best: SeaMass = SEAS[0]!;

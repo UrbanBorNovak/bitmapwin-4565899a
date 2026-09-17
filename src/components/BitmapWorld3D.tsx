@@ -45,7 +45,7 @@ import { EggHunt } from "@/components/game/EggHunt";
 
 import { DesertLife } from "@/components/game/DesertLife";
 import { SeaMasses } from "@/components/game/SeaMasses";
-import { SeaIslands } from "@/components/game/SeaIslands";
+import { ISLAND_INSCRIPTION, SeaIslands } from "@/components/game/SeaIslands";
 import { OnChainFlows } from "@/components/game/OnChainFlows";
 import { BitField } from "@/components/game/BitField";
 import { Landmarks } from "@/components/game/Landmarks";
@@ -1859,14 +1859,22 @@ function ModelMarker({ model, bitcoin }: { model: BitmapModel; bitcoin: string }
 function OnChainModels({ models, bitcoin }: { models: BitmapModel[]; bitcoin: string }) {
   return (
     <>
-      {models.map((model) => (
-        <Suspense
-          key={model.bitmapHeight}
-          fallback={<ModelMarker model={model} bitcoin={bitcoin} />}
-        >
-          <OnChainModel model={model} />
-        </Suspense>
-      ))}
+      {models.map((model) => {
+        const x = worldX(model.bitmapHeight % GRID);
+        const z = worldZ(Math.floor(model.bitmapHeight / GRID));
+        const allowedWaterModel =
+          model.inscriptionId === ISLAND_INSCRIPTION ||
+          RIDES.some((ride) => ride.kind === "water" && ride.inscription === model.inscriptionId);
+        if (isSea(x, z) && !allowedWaterModel) return null;
+        return (
+          <Suspense
+            key={model.bitmapHeight}
+            fallback={<ModelMarker model={model} bitcoin={bitcoin} />}
+          >
+            <OnChainModel model={model} />
+          </Suspense>
+        );
+      })}
     </>
   );
 }

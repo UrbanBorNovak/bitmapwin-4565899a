@@ -43,6 +43,7 @@ import { colAt, rowAt } from "@/lib/player-state";
 import { createFieldCache, fieldDirection } from "@/lib/world-nav";
 import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { Primitive } from "./Primitive";
+import { dryLandNear, isSea } from "@/lib/world-sea";
 
 
 
@@ -209,6 +210,7 @@ export const DesertLife = memo(function DesertLife({
         const jz = (hash(gx, gz, 2) - 0.5) * step * 0.9;
         const x = gx * step + jx;
         const z = gz * step + jz;
+        if (isSea(x, z)) continue;
         const dx = x - center[0];
         const dz = z - center[1];
         if (dx * dx + dz * dz > radius * radius) continue;
@@ -850,6 +852,14 @@ const Critters = memo(function Critters({
       critter.heading += steer;
       critter.x += Math.sin(critter.heading) * travel * delta;
       critter.z += Math.cos(critter.heading) * travel * delta;
+      if (isSea(critter.x, critter.z)) {
+        const dry = dryLandNear(critter.x, critter.z, unit * 260, critter.seed + now / 1000);
+        if (dry) {
+          critter.x = dry.x;
+          critter.z = dry.z;
+          critter.heading += Math.PI * 0.7;
+        }
+      }
 
       if (player) {
         const dx = critter.x - player.x;
@@ -868,8 +878,16 @@ const Critters = memo(function Critters({
         if (away > reach) {
           const angle = critter.seed + now / 6000;
           const ring = unit * ((species.hostile ? 22 : 9) + (index % 5) * 5);
-          critter.x = player.x + Math.cos(angle) * ring;
-          critter.z = player.z + Math.sin(angle) * ring;
+          const dry = dryLandNear(
+            player.x + Math.cos(angle) * ring,
+            player.z + Math.sin(angle) * ring,
+            unit * 260,
+            critter.seed,
+          );
+          if (dry) {
+            critter.x = dry.x;
+            critter.z = dry.z;
+          }
           if (species.hostile) critter.lastBite = now;
         }
 
@@ -1368,6 +1386,7 @@ const GoldVeins = memo(function GoldVeins({
         if (hash(gx, gz, 60) > 0.16) continue; // gold is rare
         const x = gx * pitch + (hash(gx, gz, 64) - 0.5) * pitch * 0.7;
         const z = gz * pitch + (hash(gx, gz, 65) - 0.5) * pitch * 0.7;
+        if (isSea(x, z)) continue;
         const dx = x - center[0];
         const dz = z - center[1];
         if (dx * dx + dz * dz > radius * radius) continue;

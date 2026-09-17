@@ -29,6 +29,7 @@ import {
   creditBits,
   pickBit,
 } from "@/lib/world-bits";
+import { isSea } from "@/lib/world-sea";
 
 const BIT_URL = contentUrl(BIT_INSCRIPTION);
 const noRaycast = () => {};
@@ -64,12 +65,10 @@ export const BitField = memo(function BitField({
         if (bitHash(tx, tz, 3) > (member ? MEMBER_BIT_CHANCE : 0.42)) continue;
         const id = `${day}:${tx}:${tz}`;
         if (bitPicked(id)) continue;
-        list.push({
-          id,
-          x: (tx + 0.15 + bitHash(tx, tz, 7) * 0.7) * tile,
-          z: (tz + 0.15 + bitHash(tx, tz, 11) * 0.7) * tile,
-          spin: 0.6 + bitHash(tx, tz, 13) * 1.4,
-        });
+        const x = (tx + 0.15 + bitHash(tx, tz, 7) * 0.7) * tile;
+        const z = (tz + 0.15 + bitHash(tx, tz, 11) * 0.7) * tile;
+        if (isSea(x, z)) continue;
+        list.push({ id, x, z, spin: 0.6 + bitHash(tx, tz, 13) * 1.4 });
       }
     }
     return list;

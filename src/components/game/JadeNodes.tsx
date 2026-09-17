@@ -17,6 +17,7 @@ import {
   type OreVein,
   type OreVoxel,
 } from "@/lib/world-entities";
+import { isSea } from "@/lib/world-sea";
 
 /** on-chain GLB of a jade mineral */
 export const JADE_INSCRIPTION =
@@ -99,6 +100,7 @@ export const JadeNodes = memo(function JadeNodes({
         if (hash(gx, gz, 40) > 0.26) continue;
         const x = gx * pitch + (hash(gx, gz, 45) - 0.5) * pitch * 0.8;
         const z = gz * pitch + (hash(gx, gz, 46) - 0.5) * pitch * 0.8;
+        if (isSea(x, z)) continue;
         const dx = x - center[0];
         const dz = z - center[1];
         if (dx * dx + dz * dz > radius * radius) continue;

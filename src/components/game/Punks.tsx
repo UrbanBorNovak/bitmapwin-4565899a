@@ -20,6 +20,7 @@ import { playSfx } from "@/lib/world-audio";
 import { PUNK_INSCRIPTION } from "@/lib/world-gear";
 import { registerBeastGroup, type BeastEntity } from "@/lib/world-entities";
 import { poseDown, simDelta} from "@/lib/player-state";
+import { dryLandNear, isSea } from "@/lib/world-sea";
 
 const PUNK_URL = `https://ordinals.com/content/${PUNK_INSCRIPTION}`;
 
@@ -323,6 +324,14 @@ export function Punks({
       punk.heading += steer;
       punk.x += Math.sin(punk.heading) * travel * delta;
       punk.z += Math.cos(punk.heading) * travel * delta;
+      if (isSea(punk.x, punk.z)) {
+        const dry = dryLandNear(punk.x, punk.z, unit * 260, punk.seed + now / 1000);
+        if (dry) {
+          punk.x = dry.x;
+          punk.z = dry.z;
+          punk.heading += Math.PI * 0.7;
+        }
+      }
 
       if (player) {
         const dx = punk.x - player.x;
@@ -337,8 +346,16 @@ export function Punks({
         if (away > reach) {
           const angle = punk.mob * 2.1 + now / 9_000;
           const ring = unit * (16 + punk.mob * 8);
-          punk.x = player.x + Math.cos(angle) * ring + Math.cos(punk.seed) * unit * 1.6;
-          punk.z = player.z + Math.sin(angle) * ring + Math.sin(punk.seed) * unit * 1.6;
+          const dry = dryLandNear(
+            player.x + Math.cos(angle) * ring + Math.cos(punk.seed) * unit * 1.6,
+            player.z + Math.sin(angle) * ring + Math.sin(punk.seed) * unit * 1.6,
+            unit * 260,
+            punk.seed,
+          );
+          if (dry) {
+            punk.x = dry.x;
+            punk.z = dry.z;
+          }
         }
       }
 

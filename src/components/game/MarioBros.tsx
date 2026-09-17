@@ -13,6 +13,7 @@ import * as THREE from "three";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { registerBeastGroup, type BeastEntity } from "@/lib/world-entities";
 import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
+import { dryLandNear, isSea } from "@/lib/world-sea";
 
 export const BROS_INSCRIPTION =
   "ae759a6fba1e5bcd02bd74db802cd4c8d8f07d77ba1ce2327c9032072bf9f1b6i0";
@@ -133,14 +134,30 @@ export const MarioBros = memo(function MarioBros({
       if (player && playerDistance !== null && playerDistance > REACH) {
         const angle = bro.seed * 2.3 + now / 18_000;
         const ring = unit * (12 + index * 4);
-        bro.x = player.x + Math.cos(angle) * ring;
-        bro.z = player.z + Math.sin(angle) * ring;
+        const dry = dryLandNear(
+          player.x + Math.cos(angle) * ring,
+          player.z + Math.sin(angle) * ring,
+          unit * 260,
+          bro.seed,
+        );
+        if (dry) {
+          bro.x = dry.x;
+          bro.z = dry.z;
+        }
       }
 
       const travel = unit * 1.15 * act.throttle;
       bro.heading += act.steer;
       bro.x += Math.sin(bro.heading) * travel * delta;
       bro.z += Math.cos(bro.heading) * travel * delta;
+      if (isSea(bro.x, bro.z)) {
+        const dry = dryLandNear(bro.x, bro.z, unit * 260, bro.seed + now / 1000);
+        if (dry) {
+          bro.x = dry.x;
+          bro.z = dry.z;
+          bro.heading += Math.PI * 0.7;
+        }
+      }
 
       // Always bouncing: a full hop cycle even while standing still, higher and
       // faster while they are on the run.
