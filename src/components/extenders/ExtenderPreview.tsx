@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
-import { OrbitControls } from "@react-three/drei";
+import { SafeOrbitControls } from "@/components/game/SafeOrbitControls";
 import { ClientOnly } from "@tanstack/react-router";
 import { ExtenderPropGroup } from "@/components/extenders/ExtenderProps";
 import { startExtender, type ExtenderRuntime } from "@/lib/extender-runtime";
@@ -117,7 +117,7 @@ export function ExtenderPreview({
               unit={1}
               onInteract={(propId) => runtime.current?.interact(propId)}
             />
-            <OrbitControls enableDamping maxPolarAngle={Math.PI / 2.1} />
+            <SafeOrbitControls enableDamping maxPolarAngle={Math.PI / 2.1} />
           </SafeCanvas>
         </ClientOnly>
       </div>

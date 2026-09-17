@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
-import { OrbitControls } from "@react-three/drei";
+import { SafeOrbitControls } from "@/components/game/SafeOrbitControls";
 import { ClientOnly } from "@tanstack/react-router";
 import { DataBadge } from "@/components/extenders/DataBadge";
 import { ExtenderPropGroup } from "@/components/extenders/ExtenderProps";
@@ -155,7 +155,7 @@ function PlaygroundPage() {
                   unit={1}
                   onInteract={(propId) => runtime.current?.interact(propId)}
                 />
-                <OrbitControls enableDamping maxPolarAngle={Math.PI / 2.1} />
+                <SafeOrbitControls enableDamping maxPolarAngle={Math.PI / 2.1} />
               </SafeCanvas>
             </ClientOnly>
           </div>
