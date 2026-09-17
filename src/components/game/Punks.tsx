@@ -31,6 +31,8 @@ const MOB_MIN = 3;
 const MOB_MAX = 5;
 /** how long a provoked mob keeps coming for you — they cool down quickly now */
 const RAGE_MS = 10_000;
+/** Extra height above the terrain so punks stand proud of the sand. */
+const PUNK_LIFT = 0.12;
 
 type Punk = BeastEntity & {
   mob: number;
