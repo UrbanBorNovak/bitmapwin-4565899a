@@ -14,13 +14,13 @@ import { type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import {
   Environment,
-  Lightformer,
   MapControls,
   useAnimations,
   useGLTF,
   useTexture,
 } from "@react-three/drei";
 import { SafeHtml } from "@/components/game/SafeHtml";
+import { SafeLightformer } from "@/components/game/SafeLightformer";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -2290,13 +2290,13 @@ const WorldScene = memo(function WorldScene({
       />
       {/* Baked once at low resolution — ambient tint only, no per-frame cubemap cost. */}
       <Environment frames={1} resolution={64}>
-        <Lightformer
+        <SafeLightformer
           intensity={0.85}
           color={colors.bitcoin}
           position={[0, 12, -4]}
           scale={[34, 14, 1]}
         />
-        <Lightformer
+        <SafeLightformer
           intensity={1.15}
           color={colors.foreground}
           position={[-20, 5, 20]}
