@@ -72,6 +72,7 @@ export function setSoundMuted(next: boolean) {
     // storage is a nicety, never a requirement
   }
   if (master && ctx) master.gain.setTargetAtTime(next ? 0 : 0.5, ctx.currentTime, 0.02);
+  applyMusicGain();
 }
 
 /**
