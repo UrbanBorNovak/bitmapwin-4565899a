@@ -14,17 +14,27 @@ self.onmessage = async (event: MessageEvent<Request>) => {
   try {
     let raw: Uint8Array | null = null;
     let lastError: unknown = null;
-    for (const url of urls) {
-      try {
-        const response = await fetch(url, { mode: "cors" });
-        if (!response.ok) throw new Error(`${response.status}`);
-        raw = new Uint8Array(await response.arrayBuffer());
-        break;
-      } catch (error) {
-        lastError = error;
+    // A device downloads the inscription once, then reads it locally forever.
+    const store = typeof caches !== "undefined" ? await caches.open(CONNECTOME_CACHE).catch(() => null) : null;
+    const key = urls[0]!;
+    const hit = await store?.match(key).catch(() => undefined);
+    if (hit) raw = new Uint8Array(await hit.arrayBuffer());
+    if (!raw) {
+      for (const url of urls) {
+        try {
+          const response = await fetch(url, { mode: "cors" });
+          if (!response.ok) throw new Error(`${response.status}`);
+          const buffer = await response.arrayBuffer();
+          await store?.put(key, new Response(buffer.slice(0))).catch(() => undefined);
+          raw = new Uint8Array(buffer);
+          break;
+        } catch (error) {
+          lastError = error;
+        }
       }
     }
     if (!raw) throw lastError ?? new Error("connectome unreachable");
+
 
     const graph = buildGraph(await decodeConnectome(raw), edges, nodes);
     const members = graph.members;
