@@ -240,19 +240,19 @@ export function WornGear({
           />
         </Suspense>
       ) : null}
-      {/* Shoes go on the feet: dropped right down to the sand and sized to fit. */}
+      {/* This inscription is already authored sole-down with its toe on +Z.
+          Keep it upright, duplicate it once per foot, and seat each sole at ankle height. */}
       {gear.shoes
         ? [-1, 1].map((side) => (
             <Suspense key={side} fallback={null}>
               <WornPiece
                 url={`https://ordinals.com/content/${SHOES_INSCRIPTION}`}
                 unit={unit}
-                fit={0.3}
+                fit={0.22}
                 pose={pose}
-                offset={[side * 0.12, 0.002, 0.04]}
+                offset={[side * 0.115, 0.018, 0.055]}
                 seatOnBase
                 fitAllAxes
-                pitch={Math.PI / 2}
                 mountOffset={mountOffset}
                 stepSide={side}
               />
