@@ -1208,7 +1208,9 @@ const SelfBeacon = memo(function SelfBeacon({
   useFrame((state) => {
     const current = pose.current;
     if (!current || !group.current) return;
-    group.current.position.set(current.x, 0, current.z);
+    // The marker belongs to the terrain under the player. Using world zero
+    // makes it cut through the avatar whenever a BITMAP sits above the base plane.
+    group.current.position.set(current.x, current.y, current.z);
     if (pulse.current) {
       const beat = 1 + Math.sin(state.clock.elapsedTime * 2.4) * (wide ? 0.28 : 0.14);
       pulse.current.scale.setScalar(beat);
@@ -1233,17 +1235,19 @@ const SelfBeacon = memo(function SelfBeacon({
         <ringGeometry args={[scale * 0.95, scale * 1.2, wide ? 4 : 32]} />
         <meshBasicMaterial color={bitcoin} transparent opacity={0.5} depthWrite={false} />
       </mesh>
-      {/* a faint glow rising just off the ground */}
-      <mesh position-y={height / 2} raycast={noRaycast}>
-        <cylinderGeometry args={[scale * 0.5, scale * 0.95, height, wide ? 4 : 16, 1, true]} />
-        <meshBasicMaterial
-          color={bitcoin}
-          transparent
-          opacity={wide ? 0.3 : 0.12}
-          depthWrite={false}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
+      {/* The tall locator is useful overhead only. On foot, the beacon stays flat. */}
+      {wide ? (
+        <mesh position-y={height / 2} raycast={noRaycast}>
+          <cylinderGeometry args={[scale * 0.5, scale * 0.95, height, 4, 1, true]} />
+          <meshBasicMaterial
+            color={bitcoin}
+            transparent
+            opacity={0.3}
+            depthWrite={false}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      ) : null}
     </group>
   );
 });

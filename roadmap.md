@@ -33,3 +33,4 @@
 - [x] Give companions fly brains and keep shoes and worn items attached through movement and mounted poses
 - [x] Restore stable on-foot idle and walking poses for companions and equipped items
 - [x] Seat both sneakers directly on the avatar's feet instead of above the knees
+- [x] Lay sneakers flat on the feet and anchor the self beacon to local terrain height

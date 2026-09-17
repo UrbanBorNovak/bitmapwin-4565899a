@@ -47,6 +47,7 @@ function WornPiece({
   bob = 0,
   /** extra yaw so a piece modelled sideways still faces where you look */
   turn = 0,
+  pitch = 0,
   mountOffset = 0,
   stepSide = 0,
   /** rest on the piece's own base instead of its middle (hats, helmets) */
@@ -63,6 +64,8 @@ function WornPiece({
   spin?: number;
   bob?: number;
   turn?: number;
+  /** rotate a model authored upright so it lies along the foot */
+  pitch?: number;
   /** extra world lift when the avatar is seated on a mount */
   mountOffset?: number;
   /** -1 left foot, +1 right foot; animates shoes with the avatar stride */
@@ -79,6 +82,9 @@ function WornPiece({
   const worldRotation = useMemo(() => new THREE.Quaternion(), []);
 
   const fitted = useMemo(() => {
+    // Correct authored orientation before measuring, so base seating still
+    // means the sneaker sole—not its former side—lands at foot height.
+    scene.rotation.x = pitch;
     scene.traverse((child) => {
       const mesh = child as THREE.Mesh;
       if (mesh.isMesh) {
@@ -99,7 +105,7 @@ function WornPiece({
     const scale = (unit * fit) / span;
     const drop = seatOnBase ? bounds.min.y : center.y;
     return { scale, center, drop };
-  }, [scene, unit, fit, seatOnBase, fitAllAxes]);
+  }, [scene, unit, fit, seatOnBase, fitAllAxes, pitch]);
 
   useFrame(({ clock }) => {
     const player = pose.current;
@@ -246,6 +252,7 @@ export function WornGear({
                 offset={[side * 0.12, 0.002, 0.04]}
                 seatOnBase
                 fitAllAxes
+                pitch={Math.PI / 2}
                 mountOffset={mountOffset}
                 stepSide={side}
               />
