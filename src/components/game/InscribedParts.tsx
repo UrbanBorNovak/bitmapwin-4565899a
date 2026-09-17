@@ -30,7 +30,8 @@ export function useInscribedParts(url: string): InscribedPart[] {
       if (!mesh.isMesh || !mesh.geometry) return;
       const geometry = mesh.geometry.clone();
       geometry.applyMatrix4(mesh.matrixWorld);
-      const material = Array.isArray(mesh.material) ? mesh.material[0]! : mesh.material;
+      const source = Array.isArray(mesh.material) ? mesh.material[0]! : mesh.material;
+      const material = softenMaterial(source);
       parts.push({ geometry, material });
     });
     const bounds = new THREE.Box3();
