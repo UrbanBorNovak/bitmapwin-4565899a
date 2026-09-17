@@ -10,6 +10,7 @@ import { Suspense, memo, useEffect, useMemo } from "react";
 import { useGLTF } from "@react-three/drei";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
+import { isSea } from "@/lib/world-sea";
 
 export const IGLOO_INSCRIPTION =
   "2332e344525cdc380039b5d760e33a5f8104631cdeeb9047a340cad1fc7a7895i0";
@@ -47,6 +48,7 @@ export const Igloos = memo(function Igloos({
         if (hash(gx, gz, 21) > 0.22) continue;
         const x = gx * pitch + (hash(gx, gz, 22) - 0.5) * pitch * 0.7;
         const z = gz * pitch + (hash(gx, gz, 23) - 0.5) * pitch * 0.7;
+        if (isSea(x, z)) continue;
         const dx = x - center[0];
         const dz = z - center[1];
         if (dx * dx + dz * dz > radius * radius) continue;

@@ -17,6 +17,7 @@ import {
   type OreVein,
   type OreVoxel,
 } from "@/lib/world-entities";
+import { isSea } from "@/lib/world-sea";
 
 /** on-chain GLB of a diamond */
 export const DIAMOND_INSCRIPTION =
@@ -99,6 +100,7 @@ export const DiamondNodes = memo(function DiamondNodes({
         if (hash(gx, gz, 70) > 0.2) continue;
         const x = gx * pitch + (hash(gx, gz, 75) - 0.5) * pitch * 0.8;
         const z = gz * pitch + (hash(gx, gz, 76) - 0.5) * pitch * 0.8;
+        if (isSea(x, z)) continue;
         const dx = x - center[0];
         const dz = z - center[1];
         if (dx * dx + dz * dz > radius * radius) continue;

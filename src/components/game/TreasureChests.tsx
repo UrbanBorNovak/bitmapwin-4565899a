@@ -5,6 +5,7 @@ import { useRef } from "react";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
 import { Primitive } from "@/components/game/Primitive";
+import { isSea } from "@/lib/world-sea";
 import {
   registerChests,
   subscribeWorldEntities,
@@ -66,6 +67,7 @@ export const TreasureChests = memo(function TreasureChests({
         if (hash(gx, gz, 91) > 0.22) continue; // treasure is rarer than gold
         const x = gx * pitch + (hash(gx, gz, 92) - 0.5) * pitch * 0.6;
         const z = gz * pitch + (hash(gx, gz, 93) - 0.5) * pitch * 0.6;
+        if (isSea(x, z)) continue;
         const dx = x - center[0];
         const dz = z - center[1];
         if (dx * dx + dz * dz > radius * radius) continue;

@@ -2,7 +2,7 @@
  * LITTLE ISLANDS AND SHORE BRIDGES.
  *
  * Every inland sea gets a handful of small inscribed islands sitting out on the
- * open water, and one inscribed bridge reaching out from its shore. Placement is
+ * open water. Placement is
  * derived from the sea's own numbers, so every visitor sees the same islands in
  * the same lagoon without a byte of network traffic. Only the seas near the
  * avatar are drawn.
@@ -18,11 +18,7 @@ import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 
 export const ISLAND_INSCRIPTION =
   "707e8ab40e98b87fd571babe7277a8425ce7390086695dd31e95b33bff5291e9i0";
-export const BRIDGE_INSCRIPTION =
-  "7473dfa23a61d7c41611e738bfac92c9a8fc7ad8bbebd9496d62c60d9af06564i0";
-
 const ISLAND_URL = contentUrl(ISLAND_INSCRIPTION);
-const BRIDGE_URL = contentUrl(BRIDGE_INSCRIPTION);
 
 const noRaycast = () => {};
 
@@ -61,16 +57,7 @@ export const SeaIslands = memo(function SeaIslands({
             yaw: seed(sea.id - n, 15) * Math.PI * 2,
           });
         }
-        // One bridge per sea, walking out from the coast onto the water.
-        const bridgeAngle = seed(sea.id, 16) * Math.PI * 2;
-        const bridgeEdge = seaRadiusAt(sea, bridgeAngle);
-        const bridge = {
-          x: sea.x + Math.cos(bridgeAngle) * sea.rx * bridgeEdge * 0.94,
-          z: sea.z + Math.sin(bridgeAngle) * sea.rz * bridgeEdge * 0.94,
-          size: unit * 6.5,
-          yaw: -bridgeAngle + Math.PI / 2,
-        };
-        return { sea, islets, bridge };
+        return { sea, islets };
       }),
     [unit],
   );
@@ -90,7 +77,7 @@ export const SeaIslands = memo(function SeaIslands({
 
   return (
     <group ref={group}>
-      {lagoons.map(({ sea, islets, bridge }) => (
+      {lagoons.map(({ sea, islets }) => (
         <group key={sea.id} userData={{ seaId: sea.id }}>
           {islets.map((islet) => (
             <group key={islet.key} position={[islet.x, unit * 0.02, islet.z]}>
@@ -106,18 +93,6 @@ export const SeaIslands = memo(function SeaIslands({
               </Suspense>
             </group>
           ))}
-          <group position={[bridge.x, unit * 0.02, bridge.z]}>
-            <Suspense
-              fallback={
-                <mesh position={[0, unit * 0.3, 0]} raycast={noRaycast}>
-                  <boxGeometry args={[bridge.size * 0.2, unit * 0.1, bridge.size]} />
-                  <meshLambertMaterial color="#8a6f4a" flatShading />
-                </mesh>
-              }
-            >
-              <InscribedModel url={BRIDGE_URL} size={bridge.size} yaw={bridge.yaw} />
-            </Suspense>
-          </group>
         </group>
       ))}
     </group>
@@ -125,4 +100,3 @@ export const SeaIslands = memo(function SeaIslands({
 });
 
 useGLTF.preload(ISLAND_URL);
-useGLTF.preload(BRIDGE_URL);

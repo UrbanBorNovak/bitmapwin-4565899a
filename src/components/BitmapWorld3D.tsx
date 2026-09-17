@@ -1859,14 +1859,19 @@ function ModelMarker({ model, bitcoin }: { model: BitmapModel; bitcoin: string }
 function OnChainModels({ models, bitcoin }: { models: BitmapModel[]; bitcoin: string }) {
   return (
     <>
-      {models.map((model) => (
-        <Suspense
-          key={model.bitmapHeight}
-          fallback={<ModelMarker model={model} bitcoin={bitcoin} />}
-        >
-          <OnChainModel model={model} />
-        </Suspense>
-      ))}
+      {models.map((model) => {
+        const x = worldX(model.bitmapHeight % GRID);
+        const z = worldZ(Math.floor(model.bitmapHeight / GRID));
+        if (isSea(x, z)) return null;
+        return (
+          <Suspense
+            key={model.bitmapHeight}
+            fallback={<ModelMarker model={model} bitcoin={bitcoin} />}
+          >
+            <OnChainModel model={model} />
+          </Suspense>
+        );
+      })}
     </>
   );
 }

@@ -12,6 +12,7 @@ import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { playSfx } from "@/lib/world-audio";
+import { isSea } from "@/lib/world-sea";
 import {
   MYSTERY_INSCRIPTION,
   MYSTERY_REACH,
@@ -55,13 +56,10 @@ export const MysteryBoxes = memo(function MysteryBoxes({
         if (mysteryHash(tx, tz, 5) > 0.2) continue;
         const id = `${day}:${tx}:${tz}`;
         if (mysteryOpened(id)) continue;
-        list.push({
-          id,
-          x: (tx + 0.2 + mysteryHash(tx, tz, 9) * 0.6) * tile,
-          z: (tz + 0.2 + mysteryHash(tx, tz, 17) * 0.6) * tile,
-          yaw: mysteryHash(tx, tz, 23) * Math.PI * 2,
-          roll: mysteryHash(tx, tz, 29),
-        });
+        const x = (tx + 0.2 + mysteryHash(tx, tz, 9) * 0.6) * tile;
+        const z = (tz + 0.2 + mysteryHash(tx, tz, 17) * 0.6) * tile;
+        if (isSea(x, z)) continue;
+        list.push({ id, x, z, yaw: mysteryHash(tx, tz, 23) * Math.PI * 2, roll: mysteryHash(tx, tz, 29) });
       }
     }
     return list;

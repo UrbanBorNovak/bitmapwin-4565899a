@@ -10,6 +10,7 @@ import { Suspense, memo, useEffect, useMemo, useState } from "react";
 import { useGLTF } from "@react-three/drei";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
+import { isSea } from "@/lib/world-sea";
 import {
   registerVeinGroup,
   subscribeWorldEntities,
@@ -122,6 +123,7 @@ export const OreMines = memo(function OreMines({
         if (hash(gx, gz, 40) > 0.26) continue;
         const x = gx * pitch + (hash(gx, gz, 47) - 0.5) * pitch * 0.7;
         const z = gz * pitch + (hash(gx, gz, 48) - 0.5) * pitch * 0.7;
+        if (isSea(x, z)) continue;
         const dx = x - center[0];
         const dz = z - center[1];
         if (dx * dx + dz * dz > radius * radius) continue;

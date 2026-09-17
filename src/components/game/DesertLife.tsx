@@ -43,6 +43,7 @@ import { colAt, rowAt } from "@/lib/player-state";
 import { createFieldCache, fieldDirection } from "@/lib/world-nav";
 import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { Primitive } from "./Primitive";
+import { dryLandNear, isSea } from "@/lib/world-sea";
 
 
 
@@ -209,6 +210,7 @@ export const DesertLife = memo(function DesertLife({
         const jz = (hash(gx, gz, 2) - 0.5) * step * 0.9;
         const x = gx * step + jx;
         const z = gz * step + jz;
+        if (isSea(x, z)) continue;
         const dx = x - center[0];
         const dz = z - center[1];
         if (dx * dx + dz * dz > radius * radius) continue;
