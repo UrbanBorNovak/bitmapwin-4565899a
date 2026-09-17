@@ -2149,6 +2149,15 @@ export type Database = {
         Args: { _address: string; _event_id: string; _tickets: number }
         Returns: string
       }
+      coin_leaderboard: {
+        Args: { _limit?: number }
+        Returns: {
+          address_label: string
+          balance: number
+          rank: number
+          updated_at: string
+        }[]
+      }
       coin_spend: {
         Args: {
           _address: string
