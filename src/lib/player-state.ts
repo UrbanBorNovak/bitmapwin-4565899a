@@ -31,9 +31,9 @@ export const STRIDE = WORLD_CELL / 10;
 /** Tuning constants for movement feel. Tune these, never the integrator. */
 export const MOVE = {
   /** top walking speed in world units per second */
-  walkSpeed: STRIDE * 9,
+  walkSpeed: STRIDE * 6.5,
   /** multiplier while sprinting */
-  sprint: 2.2,
+  sprint: 1.65,
   jumpSpeed: STRIDE * 28,
   gravity: STRIDE * 78,
   /** how hard the avatar accelerates toward the wanted velocity */
@@ -50,6 +50,12 @@ export const MOVE = {
   /** speed below which the player counts as idle */
   idleSpeed: STRIDE * 0.6,
 } as const;
+
+/**
+ * Absolute traversal ceiling. Even a stacked equipment or vehicle bonus may
+ * not move farther than the streamer can safely prepare in front of it.
+ */
+export const TRAVERSAL_SPEED_CAP = STRIDE * 32;
 
 export type MovementState = "idle" | "walk" | "run" | "turn";
 export type AnimationState = "idle" | "walk" | "run" | "jump" | "hurt" | "attack" | "down";
@@ -314,6 +320,15 @@ export function stepPlayer(player: PlayerState, intent: MoveIntent, rawDelta: nu
   player.vx += (wantX - player.vx) * blend;
   player.vz += (wantZ - player.vz) * blend;
 
+  // Cap the resolved velocity rather than only the requested speed. This also
+  // catches carried momentum when changing from a fast ride back to walking.
+  const resolvedSpeed = Math.hypot(player.vx, player.vz);
+  if (resolvedSpeed > TRAVERSAL_SPEED_CAP) {
+    const cap = TRAVERSAL_SPEED_CAP / resolvedSpeed;
+    player.vx *= cap;
+    player.vz *= cap;
+  }
+
   const nextX = clamp(
     player.x + player.vx * delta,
     -WORLD_UNITS / 2 + WORLD_CELL,
@@ -394,8 +409,9 @@ export function clampPeerStep(
   const dx = x - from.x;
   const dz = z - from.z;
   const distance = Math.hypot(dx, dz);
-  // generous allowance: top sprint speed plus a beat of jitter and lost packets
-  const allowed = (MOVE.walkSpeed * MOVE.sprint * Math.max(elapsedMs, 120)) / 1000 + STRIDE * 6;
+  // Allow any legitimate capped ride while still rejecting teleport-like peer
+  // reports. The fixed margin absorbs network jitter and dropped broadcasts.
+  const allowed = (TRAVERSAL_SPEED_CAP * Math.max(elapsedMs, 120)) / 1000 + STRIDE * 6;
   if (distance <= allowed) return { x, z };
   const scale = allowed / distance;
   return { x: from.x + dx * scale, z: from.z + dz * scale };
