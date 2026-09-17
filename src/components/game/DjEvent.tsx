@@ -17,7 +17,7 @@ import { useFrame } from "@react-three/fiber";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
 import { Primitive } from "@/components/game/Primitive";
-import { setDjLevel, startDjSet, stopDjSet } from "@/lib/world-audio";
+import { setDjLevel, setMusicDuck, startDjSet, stopDjSet } from "@/lib/world-audio";
 
 /** on-chain GLB of Pepe and the Bitmappers */
 export const PEPE_BITMAPPERS_INSCRIPTION =
