@@ -203,7 +203,10 @@ export function VehicleGunner({
     if (active) return;
     autoFire.current = false;
     brain.committed = null;
+    brain.aimingAt = null;
+    brain.aimingSince = 0;
     brain.contacts.clear();
+    brain.duel.book.clear();
     act.current = null;
     setLock(null);
   }, [active, brain]);

@@ -61,6 +61,29 @@ export const membershipQuery = (address: string) =>
     staleTime: 60_000,
   });
 
+/**
+ * The public badge: only whether an address currently counts as a MEMBER, plus
+ * when it lapses. Payment detail stays private to the member.
+ */
+export async function fetchMembershipBadge(address: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("membership_badges")
+    .select("active, expires_at")
+    .eq("address", address)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data?.active || !data.expires_at) return false;
+  return new Date(data.expires_at).getTime() > Date.now();
+}
+
+export const membershipBadgeQuery = (address: string) =>
+  queryOptions({
+    queryKey: ["membership-badge", address],
+    queryFn: () => fetchMembershipBadge(address),
+    enabled: address !== "",
+    staleTime: 60_000,
+  });
+
 export async function startMembership(address: string) {
   return startMembershipFn({ data: { address } });
 }

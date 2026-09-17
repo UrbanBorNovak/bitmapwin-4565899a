@@ -22,7 +22,11 @@
  * threshold you can read and tune here.
  */
 
+import { createDuelBook, predictPath, type DuelBook } from "./duel-model";
+import { readPolicy } from "./gunner-policy";
+
 export type GunnerTargetKind = "beast" | "peer";
+
 
 export type GunnerTarget = {
   id: string;
@@ -62,7 +66,7 @@ export type GunnerSense = {
   contacts: GunnerTarget[];
 };
 
-export type GunnerState = "scan" | "track" | "lock" | "fire" | "evade" | "cool";
+export type GunnerState = "scan" | "track" | "aim" | "lock" | "fire" | "evade" | "cool";
 
 export type GunnerAct = {
   state: GunnerState;
@@ -84,7 +88,16 @@ export type GunnerAct = {
   /** direction the crew wants to break towards while under pressure, radians */
   evadeYaw: number;
   /** short crew callout for the HUD */
+  /** 0..1 how much the crew trusts its read of the target's path */
+  confidence: number;
+  /** 0..1 how far through the settle window the sights are */
+  settled: number;
+  /** which doctrine row the crew is following */
+  doctrine: string;
+  /** how fast the turret may swing under this doctrine, rad/s */
+  swingRate: number;
   callout: string;
+
 };
 
 type Contact = {
@@ -112,8 +125,14 @@ const clamp01 = (value: number) => (value < 0 ? 0 : value > 1 ? 1 : value);
 export type GunnerBrain = {
   /** the contact book, one entry per body the crew has seen */
   contacts: Map<string, Contact>;
+  /** per-body movement reads: speed, curve, dodge rhythm, trust */
+  duel: DuelBook;
   /** id of the body the turret is committed to */
   committed: string | null;
+  /** id the sights have been resting on */
+  aimingAt: string | null;
+  /** when the sights settled on it, ms */
+  aimingSince: number;
   state: GunnerState;
   think: (sense: GunnerSense) => GunnerAct;
 };
@@ -122,21 +141,29 @@ export function createGunnerBrain(): GunnerBrain {
   const contacts = new Map<string, Contact>();
   const brain: GunnerBrain = {
     contacts,
+    duel: createDuelBook(),
     committed: null,
+    aimingAt: null,
+    aimingSince: 0,
     state: "scan",
     think: (sense) => think(brain, sense),
   };
   return brain;
 }
 
+
 function think(brain: GunnerBrain, sense: GunnerSense): GunnerAct {
   const { contacts } = brain;
   const forwardX = Math.sin(sense.yaw);
   const forwardZ = Math.cos(sense.yaw);
 
-  // 1. TRACK — differentiate each contact into a velocity estimate.
+  // 1. TRACK — differentiate each contact into a velocity estimate and let the
+  // duel model read its path: curve, dodge rhythm and how trustworthy it is.
+  brain.duel.forget(sense.now);
   for (const contact of sense.contacts) {
+    brain.duel.observe(contact.id, sense.now, contact.x, contact.y, contact.z);
     const seen = contacts.get(contact.id);
+
     if (seen) {
       const dt = Math.max(16, sense.now - seen.seenAt) / 1000;
       const smooth = dt > 0.6 ? 1 : 0.35;
@@ -217,26 +244,41 @@ function think(brain: GunnerBrain, sense: GunnerSense): GunnerAct {
   if (!target || bestScore > committedScore * SWITCH_MARGIN) target = best;
   brain.committed = target?.id ?? null;
 
-  // 4. LEAD — two-pass intercept solve so the shell meets the body.
+  // 4. LEAD — read the target's arc, then solve the intercept under doctrine.
   let aimX = sense.x + forwardX * sense.range * 0.5;
   let aimY = sense.y;
   let aimZ = sense.z + forwardZ * sense.range * 0.5;
   let distance = sense.range * 0.5;
+  let confidence = 0;
+  let doctrine = "NO DOCTRINE";
+  let fireAlign = FIRE_ALIGN;
+  let settleNeed = 0;
+  let needConfidence = 0;
+  let swingRate = 2;
+
+  const hurt = 1 - clamp01(sense.hp / Math.max(1, sense.maxHp));
 
   if (target) {
-    const seen = contacts.get(target.id);
-    const vx = seen?.vx ?? 0;
-    const vy = seen?.vy ?? 0;
-    const vz = seen?.vz ?? 0;
-    let flight = Math.hypot(target.x - sense.x, target.z - sense.z) / Math.max(1, sense.shellSpeed);
-    for (let pass = 0; pass < 2; pass += 1) {
-      const px = target.x + vx * flight;
-      const pz = target.z + vz * flight;
-      flight = Math.hypot(px - sense.x, pz - sense.z) / Math.max(1, sense.shellSpeed);
+    const read = brain.duel.get(target.id);
+    const raw = Math.hypot(target.x - sense.x, target.z - sense.z);
+    const policy = readPolicy(raw, sense.range, read.speed, read.jitter, threat, hurt);
+    doctrine = `${policy.band} · ${policy.note}`;
+    confidence = read.confidence;
+    fireAlign = policy.align;
+    settleNeed = policy.settleMs;
+    needConfidence = policy.confidence;
+    swingRate = policy.swingRate;
+
+    // two-pass intercept, but each pass predicts along the curved path
+    let flight = raw / Math.max(1, sense.shellSpeed);
+    let point = { x: target.x, y: target.y, z: target.z };
+    for (let pass = 0; pass < 3; pass += 1) {
+      point = predictPath(target.x, target.y, target.z, read, flight * policy.leadTrust);
+      flight = Math.hypot(point.x - sense.x, point.z - sense.z) / Math.max(1, sense.shellSpeed);
     }
-    aimX = target.x + vx * flight;
-    aimY = target.y + vy * flight;
-    aimZ = target.z + vz * flight;
+    aimX = point.x;
+    aimY = point.y;
+    aimZ = point.z;
     distance = Math.hypot(aimX - sense.x, aimZ - sense.z);
   }
 
@@ -244,20 +286,30 @@ function think(brain: GunnerBrain, sense: GunnerSense): GunnerAct {
   const aimPitch = Math.atan2(aimY - sense.y, Math.max(0.001, distance));
   const align = target ? clamp01(Math.cos(wrap(aimYaw - sense.yaw))) : 0;
 
-  // 5. ACT — thresholds do the deciding.
-  const hurt = 1 - clamp01(sense.hp / Math.max(1, sense.maxHp));
+  // 5. ACT — aim first, then fire. The sights must sit on the intercept for the
+  // settle window the doctrine asks for, and the read must be trustworthy.
+  const onTarget = Boolean(target) && align >= fireAlign && distance <= sense.range;
+  if (!onTarget || brain.aimingAt !== brain.committed) {
+    brain.aimingAt = onTarget ? brain.committed : null;
+    brain.aimingSince = onTarget ? sense.now : 0;
+  }
+  const held = brain.aimingSince > 0 ? sense.now - brain.aimingSince : 0;
+  const settled = settleNeed > 0 ? clamp01(held / settleNeed) : onTarget ? 1 : 0;
+  const trusted = confidence >= needConfidence;
   const pressed = threat > 0.75 && hurt > 0.55;
   const ready = sense.cooldownRemaining <= 0;
-  const locked = Boolean(target) && align >= FIRE_ALIGN && distance <= sense.range;
-  const fire = Boolean(sense.autoFire && locked && ready && !pressed);
+  const locked = onTarget;
+  const fire = Boolean(sense.autoFire && locked && ready && !pressed && settled >= 1 && trusted);
 
   let state: GunnerState = "scan";
   if (pressed) state = "evade";
   else if (fire) state = "fire";
   else if (locked && !ready) state = "cool";
+  else if (locked && (settled < 1 || !trusted)) state = "aim";
   else if (locked) state = "lock";
   else if (target) state = "track";
   brain.state = state;
+
 
   const evadeYaw =
     threat > 0 ? Math.atan2(-threatX, -threatZ) : sense.yaw + (sense.speed > 0.2 ? 0 : Math.PI);
@@ -275,7 +327,11 @@ function think(brain: GunnerBrain, sense: GunnerSense): GunnerAct {
     fire,
     threat,
     evadeYaw,
-    callout: callout(state, target, distance, sense),
+    confidence,
+    settled,
+    doctrine,
+    swingRate,
+    callout: callout(state, target, distance, sense, settled, confidence),
   };
 }
 
@@ -284,11 +340,15 @@ function callout(
   target: GunnerTarget | null,
   distance: number,
   sense: GunnerSense,
+  settled: number,
+  confidence: number,
 ) {
   const label = target?.label ?? "NO CONTACT";
   switch (state) {
     case "fire":
       return `FIRING · ${label}`;
+    case "aim":
+      return `AIMING · ${label} · ${(settled * 100).toFixed(0)}% · READ ${(confidence * 100).toFixed(0)}%`;
     case "lock":
       return `LOCKED · ${label} · ${distance.toFixed(0)}M`;
     case "cool":
@@ -301,3 +361,4 @@ function callout(
       return "SCANNING";
   }
 }
+

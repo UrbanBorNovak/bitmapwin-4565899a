@@ -1396,6 +1396,27 @@ export type Database = {
         }
         Relationships: []
       }
+      membership_badges: {
+        Row: {
+          active: boolean
+          address: string
+          expires_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          address: string
+          expires_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          address?: string
+          expires_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       memberships: {
         Row: {
           address: string
