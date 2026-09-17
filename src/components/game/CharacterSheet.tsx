@@ -57,6 +57,19 @@ function PreviewAvatar({ model }: { model: string | null }) {
   const inscription = model ?? DEFAULT_AVATAR_MODEL;
   const gltf = useGLTF(`https://ordinals.com/content/${inscription}`);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
+  // The figure must stand the way it stands in the world, or the gear tuned
+  // against the standing body (shoes at the ankles, weapon in the hand) lands
+  // against a sprawled bind pose instead.
+  const { actions, names } = useAnimations(gltf.animations, scene);
+  useEffect(() => {
+    const name = names.find((entry) => /idle|stand/i.test(entry)) ?? names[0];
+    const action = name ? actions[name] : null;
+    if (!action) return;
+    action.reset().setLoop(THREE.LoopRepeat, Infinity).setEffectiveWeight(1).play();
+    return () => {
+      action.stop();
+    };
+  }, [actions, names]);
   const texture = useTexture(
     inscription === DEFAULT_AVATAR_MODEL
       ? `https://ordinals.com/content/${DEFAULT_AVATAR_TEXTURE}`
