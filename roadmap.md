@@ -41,3 +41,4 @@
 - [x] Balance vehicle combat handling and add hull damage, explosions, and hull-down protection
 - [x] Keep Oasis water clear of all non-whitelisted models except ships, yachts, islands, and geese
 - [x] Add the inscribed sun, varied world trees, flowers, ambient lightning, and roaming miners
+- [x] Add deterministic dry-land clay shrine compounds from the supplied inscribed building set
