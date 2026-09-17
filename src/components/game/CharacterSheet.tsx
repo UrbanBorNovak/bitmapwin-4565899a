@@ -15,6 +15,7 @@ import {
   cycleToy,
   toySpec,
   toggleComic,
+  toggleBatmanHead,
   toggleGoggles,
   toggleNecklace,
   toggleRing,
@@ -95,12 +96,22 @@ export function CharacterSheet({
         Icon: HardHat,
         onPick: null,
       }
-    : {
+    : gear.batmanHead
+      ? {
+          slot: "HEAD",
+          label: "BATMAN HEAD",
+          filled: true,
+          Icon: HardHat,
+          onPick: () => note(toggleBatmanHead() ? "BATMAN HEAD ON" : "BATMAN HEAD OFF"),
+        }
+      : {
         slot: "HEAD",
         label: gear.goggles ? "NIGHT VISION" : "HEAD",
         filled: gear.goggles,
         Icon: Glasses,
-        onPick: () => note(toggleGoggles() ? "NIGHT VISION · ON" : "NIGHT VISION · OFF"),
+        onPick: () => {
+          note(toggleBatmanHead() ? "BATMAN HEAD ON" : "BATMAN HEAD OFF");
+        },
       };
 
   const left: SlotView[] = [

@@ -16,11 +16,13 @@ import { dropSolids, registerSolids } from "@/lib/world-solids";
 export const PINE_INSCRIPTION =
   "a67b9e40973e6cf9df84bfc0d28ac10bcbef8f7d0e3f46ad0f99541876c8e330i0";
 /** Shrooms sprout in the shade at the foot of the pines. */
-export const SHROOM_INSCRIPTION =
-  "171c26e24b94e11fc8dfae620173179ff43fa41674685721464ca28d658ed138i0";
+export const SHROOM_INSCRIPTIONS = [
+  "171c26e24b94e11fc8dfae620173179ff43fa41674685721464ca28d658ed138i0",
+  "792d4855c5d73c501584dcfd14a7a4301b373b4ee6dae3fa5546e216239a680ci0",
+] as const;
 
 const PINE_URL = contentUrl(PINE_INSCRIPTION);
-const SHROOM_URL = contentUrl(SHROOM_INSCRIPTION);
+const SHROOM_URLS = SHROOM_INSCRIPTIONS.map(contentUrl);
 
 
 const noRaycast = () => {};
@@ -122,7 +124,7 @@ export const PineTrees = memo(function PineTrees({
                   }
                 >
                   <InscribedModel
-                    url={SHROOM_URL}
+                    url={SHROOM_URLS[n % SHROOM_URLS.length]!}
                     size={size}
                     yaw={hash(tree.x + n * 3, tree.z + n, 85) * Math.PI * 2}
                   />
@@ -138,4 +140,4 @@ export const PineTrees = memo(function PineTrees({
 
 
 useGLTF.preload(PINE_URL);
-useGLTF.preload(SHROOM_URL);
+for (const url of SHROOM_URLS) useGLTF.preload(url);
