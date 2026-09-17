@@ -47,6 +47,7 @@ function WornPiece({
   bob = 0,
   /** extra yaw so a piece modelled sideways still faces where you look */
   turn = 0,
+  pitch = 0,
   mountOffset = 0,
   stepSide = 0,
   /** rest on the piece's own base instead of its middle (hats, helmets) */
@@ -63,6 +64,8 @@ function WornPiece({
   spin?: number;
   bob?: number;
   turn?: number;
+  /** rotate a model authored upright so it lies along the foot */
+  pitch?: number;
   /** extra world lift when the avatar is seated on a mount */
   mountOffset?: number;
   /** -1 left foot, +1 right foot; animates shoes with the avatar stride */
@@ -129,9 +132,8 @@ function WornPiece({
       player.y + mountOffset + localOffset.y + lift,
       player.z + localOffset.z,
     );
-    turnRotation.setFromAxisAngle(
-      THREE.Object3D.DEFAULT_UP,
-      turn + (spin ? clock.elapsedTime * spin : 0),
+    turnRotation.setFromEuler(
+      new THREE.Euler(pitch, turn + (spin ? clock.elapsedTime * spin : 0), 0, "XYZ"),
     );
     node.quaternion.copy(worldRotation).multiply(turnRotation);
   });
@@ -246,6 +248,7 @@ export function WornGear({
                 offset={[side * 0.12, 0.002, 0.04]}
                 seatOnBase
                 fitAllAxes
+                pitch={Math.PI / 2}
                 mountOffset={mountOffset}
                 stepSide={side}
               />

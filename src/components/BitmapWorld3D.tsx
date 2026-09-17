@@ -1208,7 +1208,9 @@ const SelfBeacon = memo(function SelfBeacon({
   useFrame((state) => {
     const current = pose.current;
     if (!current || !group.current) return;
-    group.current.position.set(current.x, 0, current.z);
+    // The marker belongs to the terrain under the player. Using world zero
+    // makes it cut through the avatar whenever a BITMAP sits above the base plane.
+    group.current.position.set(current.x, current.y, current.z);
     if (pulse.current) {
       const beat = 1 + Math.sin(state.clock.elapsedTime * 2.4) * (wide ? 0.28 : 0.14);
       pulse.current.scale.setScalar(beat);
