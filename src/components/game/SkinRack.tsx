@@ -116,6 +116,28 @@ function SkinFigure({
   );
 }
 
+/**
+ * Fits every figure into view, whatever the panel's aspect ratio ends up as —
+ * wide windows pull the camera back for the columns, tall ones for the rows.
+ */
+function CameraRig({ rows }: { rows: number }) {
+  const camera = useThree((state) => state.camera);
+  const size = useThree((state) => state.size);
+  useEffect(() => {
+    const halfW = ((COLS - 1) / 2) * COL_GAP + 0.62;
+    const halfH = ((rows - 1) / 2) * ROW_GAP + 0.72;
+    const aspect = Math.max(size.width / Math.max(size.height, 1), 0.2);
+    const fov = THREE.MathUtils.degToRad(34);
+    const tan = Math.tan(fov / 2);
+    const distance = Math.max(halfH / tan, halfW / (tan * aspect)) + 0.4;
+    const centerY = ((rows - 1) * ROW_GAP) / 2 + 0.55;
+    camera.position.set(0, centerY, distance);
+    camera.lookAt(0, centerY, 0);
+    camera.updateProjectionMatrix();
+  }, [camera, size.width, size.height, rows]);
+  return null;
+}
+
 export function SkinRack({
   value,
   onPick,
@@ -134,12 +156,13 @@ export function SkinRack({
         <SafeCanvas
           dpr={[1, 1.5]}
           camera={{
-            position: [0, ((rows - 1) * ROW_GAP) / 2 + 0.55, 6.1],
+            position: [0, ((rows - 1) * ROW_GAP) / 2 + 0.55, 9],
             fov: 34,
             near: 0.01,
-            far: 40,
+            far: 60,
           }}
         >
+          <CameraRig rows={rows} />
           <ambientLight intensity={1.5} />
           <directionalLight position={[2, 4, 4]} intensity={2.2} />
           <directionalLight position={[-3, 2, -2]} intensity={0.8} />
