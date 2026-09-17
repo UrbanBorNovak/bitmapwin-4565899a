@@ -13,6 +13,7 @@ import { useFrame } from "@react-three/fiber";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
 import { Primitive } from "@/components/game/Primitive";
+import { createFlyBrain } from "@/lib/fly-brain";
 import type { PlayerState } from "@/lib/player-state";
 import { companionSpec, useGear, type CompanionSpec } from "@/lib/world-gear";
 
@@ -41,6 +42,10 @@ function Pet({
   const group = useRef<THREE.Group>(null);
   const leash = useRef<THREE.Mesh>(null);
   const at = useRef({ x: 0, z: 0, yaw: 0, started: false });
+  const brain = useMemo(
+    () => createFlyBrain(spec.id === "cat" ? 0.271 : spec.id === "dog" ? 0.619 : 0.883),
+    [spec.id],
+  );
   const leashUp = useMemo(() => new THREE.Vector3(0, 1, 0), []);
   const leashStart = useMemo(() => new THREE.Vector3(), []);
   const leashEnd = useMemo(() => new THREE.Vector3(), []);
@@ -88,11 +93,48 @@ function Pet({
     if (!at.current.started) {
       at.current = { x: targetX, z: targetZ, yaw: player.yaw, started: true };
     }
-    const chase = 1 - Math.exp(-(spec.hovers ? 5.2 : 7.2) * delta);
     const previousX = at.current.x;
     const previousZ = at.current.z;
-    at.current.x += (targetX - at.current.x) * chase;
-    at.current.z += (targetZ - at.current.z) * chase;
+    const targetDx = targetX - at.current.x;
+    const targetDz = targetZ - at.current.z;
+    const targetDistance = Math.hypot(targetDx, targetDz);
+    const playerDx = player.x - at.current.x;
+    const playerDz = player.z - at.current.z;
+    const playerDistance = Math.hypot(playerDx, playerDz);
+    const act = brain.think(
+      {
+        now: t * 1_000,
+        hp: 100,
+        maxHp: 100,
+        snared: false,
+        heading: at.current.yaw,
+        playerDistance: playerDistance / Math.max(unit, 0.0001),
+        playerAngle: Math.atan2(playerDx, playerDz),
+        workDistance: targetDistance / Math.max(unit, 0.0001),
+        workAngle: Math.atan2(targetDx, targetDz),
+        worker: targetDistance > unit * 0.22,
+        hostile: false,
+        vendor: false,
+      },
+      delta,
+    );
+    at.current.yaw += act.steer;
+    const brainSpeed = unit * (spec.hovers ? 2.15 : 1.8) * act.throttle;
+    at.current.x += Math.sin(at.current.yaw) * brainSpeed * delta;
+    at.current.z += Math.cos(at.current.yaw) * brainSpeed * delta;
+
+    // The leash is a hard safety radius: the brain may sniff and wander, but
+    // it cannot leave the visitor behind after a sprint, jump, or teleport.
+    const leashLimit = reach * 1.35;
+    const tetherDx = at.current.x - player.x;
+    const tetherDz = at.current.z - player.z;
+    const tetherDistance = Math.hypot(tetherDx, tetherDz);
+    if (tetherDistance > leashLimit) {
+      const pull = leashLimit / tetherDistance;
+      at.current.x = player.x + tetherDx * pull;
+      at.current.z = player.z + tetherDz * pull;
+      at.current.yaw = Math.atan2(targetDx, targetDz);
+    }
     const moved = Math.hypot(at.current.x - previousX, at.current.z - previousZ);
     if (moved > unit * 0.002) {
       const facing = Math.atan2(at.current.x - previousX, at.current.z - previousZ);

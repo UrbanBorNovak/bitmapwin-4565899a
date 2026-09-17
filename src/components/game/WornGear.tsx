@@ -47,6 +47,8 @@ function WornPiece({
   bob = 0,
   /** extra yaw so a piece modelled sideways still faces where you look */
   turn = 0,
+  mountOffset = 0,
+  stepSide = 0,
   /** rest on the piece's own base instead of its middle (hats, helmets) */
   seatOnBase = false,
 }: {
@@ -59,6 +61,10 @@ function WornPiece({
   spin?: number;
   bob?: number;
   turn?: number;
+  /** extra world lift when the avatar is seated on a mount */
+  mountOffset?: number;
+  /** -1 left foot, +1 right foot; animates shoes with the avatar stride */
+  stepSide?: number;
   seatOnBase?: boolean;
 }) {
   const gltf = useGLTF(url);
@@ -97,14 +103,26 @@ function WornPiece({
     const node = group.current;
     if (!player || !node) return;
     const [side, up, forward] = offset;
-    const lift = bob ? Math.sin(clock.elapsedTime * 2.4) * unit * bob : 0;
+    const moving = player.movement === "walk" || player.movement === "run";
+    const strideRate = player.movement === "run" ? 12 : 8;
+    const stride = stepSide && moving && player.grounded
+      ? Math.sin(clock.elapsedTime * strideRate) * stepSide
+      : 0;
+    const lift = (bob ? Math.sin(clock.elapsedTime * 2.4) * unit * bob : 0)
+      + (stepSide ? Math.max(0, stride) * unit * 0.08 : 0);
     const lean = player.lean ?? 0;
     // Match SelfAvatar's XYZ Euler exactly, then transform the local attachment
     // point through it. This keeps every piece pinned while climbing or diving.
     bodyRotation.set(lean, player.yaw, 0);
     worldRotation.setFromEuler(bodyRotation);
-    localOffset.set(side * unit, up * unit, forward * unit).applyQuaternion(worldRotation);
-    node.position.set(player.x + localOffset.x, player.y + localOffset.y + lift, player.z + localOffset.z);
+    localOffset
+      .set(side * unit, up * unit, (forward + (stepSide ? stride * 0.12 : 0)) * unit)
+      .applyQuaternion(worldRotation);
+    node.position.set(
+      player.x + localOffset.x,
+      player.y + mountOffset + localOffset.y + lift,
+      player.z + localOffset.z,
+    );
     turnRotation.setFromAxisAngle(
       THREE.Object3D.DEFAULT_UP,
       turn + (spin ? clock.elapsedTime * spin : 0),
@@ -131,12 +149,14 @@ export function WornGear({
   showHead,
   /** the jetpack is strapped on right now */
   jetpack = false,
+  mountOffset = 0,
 }: {
   unit: number;
   pose: { current: PlayerState | null };
   weapon: WeaponKind | null;
   showHead: boolean;
   jetpack?: boolean;
+  mountOffset?: number;
 }) {
   const gear = useGear();
   const eatingFood = gear.eating ? FOODS[gear.eating.food] : null;
@@ -152,6 +172,7 @@ export function WornGear({
             pose={pose}
             offset={[-0.26, 0.46, 0.2]}
             bob={0.015}
+            mountOffset={mountOffset}
           />
 
         </Suspense>
@@ -165,6 +186,7 @@ export function WornGear({
             pose={pose}
             offset={[0, 0.94, 0]}
             seatOnBase
+            mountOffset={mountOffset}
           />
 
         </Suspense>
@@ -177,6 +199,7 @@ export function WornGear({
             fit={0.24}
             pose={pose}
             offset={[0, 0.88, 0.07]}
+            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
@@ -189,6 +212,7 @@ export function WornGear({
             pose={pose}
             offset={[0, 0.79, 0.015]}
             seatOnBase
+            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
@@ -200,6 +224,7 @@ export function WornGear({
             fit={0.2}
             pose={pose}
             offset={[0, 0.7, 0.11]}
+            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
@@ -212,8 +237,10 @@ export function WornGear({
                 unit={unit}
                 fit={0.42}
                 pose={pose}
-                offset={[side * 0.13, -0.22, 0.04]}
+                offset={[side * 0.13, 0.015, 0.04]}
                 seatOnBase
+                mountOffset={mountOffset}
+                stepSide={side}
               />
             </Suspense>
           ))
@@ -226,6 +253,7 @@ export function WornGear({
             fit={0.14}
             pose={pose}
             offset={[-0.2, 0.46, 0.08]}
+            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
@@ -237,6 +265,7 @@ export function WornGear({
             fit={0.08}
             pose={pose}
             offset={[-0.23, 0.4, 0.12]}
+            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
@@ -249,6 +278,7 @@ export function WornGear({
             pose={pose}
             offset={[-0.28, 0.55, 0.16]}
             bob={0.012}
+            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
@@ -261,6 +291,7 @@ export function WornGear({
             fit={0.46}
             pose={pose}
             offset={[0, 0.52, -0.2]}
+            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
@@ -273,6 +304,7 @@ export function WornGear({
             pose={pose}
             offset={[0, 0.82, 0.015]}
             seatOnBase
+            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
@@ -285,6 +317,7 @@ export function WornGear({
             pose={pose}
             offset={[0.26, 0.58, 0.2]}
             bob={0.02}
+            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
@@ -297,6 +330,7 @@ export function WornGear({
             pose={pose}
             offset={[0.18, 0.66, 0.24]}
             bob={0.03}
+            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
