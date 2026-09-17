@@ -3745,7 +3745,7 @@ export function BitmapWorld3D({
 
         {colors ? (
           <div ref={viewShake} className="absolute inset-0 will-change-transform">
-          <Canvas
+          <SafeCanvas
             dpr={dpr}
             camera={{ position: [0, 108, minedDepth / 2 + 0.01], fov: 50, near: 0.01, far: 350 }}
             gl={{
@@ -3798,7 +3798,7 @@ export function BitmapWorld3D({
               vehicleCritical={hull.hp > 0 && hull.hp <= hull.maxHp * 0.3}
 
             />
-          </Canvas>
+          </SafeCanvas>
           </div>
         ) : null}
 

@@ -139,7 +139,7 @@ function PreviewWeapon({ kind }: { kind: WeaponKind }) {
 export function EquippedAvatarPreview({ model, weapon, flying }: { model: string | null; weapon: WeaponKind | null; flying: boolean }) {
   const pose = useRef(createPlayerState(0, 0, 0));
   return (
-    <Canvas dpr={[1, 1.5]} camera={{ position: [1.05, 0.78, 2.05], fov: 38, near: 0.01, far: 20 }}>
+    <SafeCanvas dpr={[1, 1.5]} camera={{ position: [1.05, 0.78, 2.05], fov: 38, near: 0.01, far: 20 }}>
       <PreviewCamera />
       <ambientLight intensity={1.5} />
       <directionalLight position={[2, 3, 3]} intensity={2.2} />
@@ -151,7 +151,7 @@ export function EquippedAvatarPreview({ model, weapon, flying }: { model: string
           <WornGear unit={1} pose={pose} weapon={weapon} showHead jetpack={flying} />
         </Suspense>
       </group>
-    </Canvas>
+    </SafeCanvas>
   );
 }
 

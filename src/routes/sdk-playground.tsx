@@ -141,7 +141,7 @@ function PlaygroundPage() {
         <div className="space-y-4">
           <div className="h-[420px] border border-border bg-background">
             <ClientOnly fallback={<div className="h-full w-full" />}>
-              <Canvas camera={{ position: [9, 7, 11], fov: 45, near: 0.1, far: 200 }} dpr={[1, 1.75]}>
+              <SafeCanvas camera={{ position: [9, 7, 11], fov: 45, near: 0.1, far: 200 }} dpr={[1, 1.75]}>
                 <color attach="background" args={["#0a0a0a"]} />
                 <ambientLight intensity={0.7} />
                 <directionalLight intensity={1.1} position={[8, 14, 6]} />
@@ -156,7 +156,7 @@ function PlaygroundPage() {
                   onInteract={(propId) => runtime.current?.interact(propId)}
                 />
                 <OrbitControls enableDamping maxPolarAngle={Math.PI / 2.1} />
-              </Canvas>
+              </SafeCanvas>
             </ClientOnly>
           </div>
 
