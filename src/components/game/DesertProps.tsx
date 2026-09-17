@@ -13,6 +13,7 @@ import { useGLTF } from "@react-three/drei";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
 import { isSea } from "@/lib/world-sea";
+import { groundY } from "@/lib/world-terrain";
 
 /** on-chain rock models */
 export const ROCK_INSCRIPTION =
@@ -104,7 +105,7 @@ function PropField({
   return (
     <>
       {items.map((item) => (
-        <group key={item.key} position={[item.x, 0, item.z]}>
+        <group key={item.key} position={[item.x, groundY(item.x, item.z), item.z]}>
           <Suspense
             fallback={
               <mesh position={[0, item.size * 0.25, 0]} raycast={noRaycast}>

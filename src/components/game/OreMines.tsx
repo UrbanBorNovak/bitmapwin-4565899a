@@ -11,6 +11,7 @@ import { useGLTF } from "@react-three/drei";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
 import { isSea } from "@/lib/world-sea";
+import { groundY } from "@/lib/world-terrain";
 import {
   registerVeinGroup,
   updateVeinGroup,
@@ -160,7 +161,7 @@ export const OreMines = memo(function OreMines({
     <>
       {mines.map((vein) =>
         vein.depletedUntil ? null : (
-          <group key={vein.id} position={[vein.x, 0, vein.z]}>
+          <group key={vein.id} position={[vein.x, groundY(vein.x, vein.z), vein.z]}>
             <Suspense fallback={null}>
               <InscribedModel
                 url={ORE_MINE_URL}

@@ -18,6 +18,7 @@ import type { PlayerState } from "@/lib/player-state";
 import { WORLD_CELL, cellX, cellZ } from "@/lib/player-state";
 import { growthOf, useTerraformedLand, type TerraformedLand } from "@/lib/world-terraform";
 import { blockedAt, useWorldBuilds } from "@/lib/world-build";
+import { groundY } from "@/lib/world-terrain";
 
 const MAX_GRASS = 900;
 const MAX_BUSH = 260;
@@ -55,7 +56,7 @@ function planPlot(land: TerraformedLand, growth: number, out: { grass: Item[]; b
     out.grass.push({
       x: cx + rx * half,
       z: cz + rz * half,
-      y: 0,
+      y: groundY(cx + rx * half, cz + rz * half),
       s: 0.5 + r * 0.8 + growth * 0.5,
       yaw: r * Math.PI * 2,
       tint: r,
@@ -70,7 +71,7 @@ function planPlot(land: TerraformedLand, growth: number, out: { grass: Item[]; b
     out.bush.push({
       x: cx + rx * half,
       z: cz + rz * half,
-      y: 0,
+      y: groundY(cx + rx * half, cz + rz * half),
       s: 0.7 + r * 0.6 + growth * 0.4,
       yaw: r * Math.PI * 2,
       tint: r,
@@ -85,7 +86,7 @@ function planPlot(land: TerraformedLand, growth: number, out: { grass: Item[]; b
     out.tree.push({
       x: cx + rx * half * 0.8,
       z: cz + rz * half * 0.8,
-      y: 0,
+      y: groundY(cx + rx * half * 0.8, cz + rz * half * 0.8),
       s: 0.8 + r * 0.5 + growth * 0.6,
       yaw: r * Math.PI * 2,
       tint: r,
@@ -199,7 +200,7 @@ export function LandGrowth({
         const [sx, sy, sz] = size(item);
         scratch.euler.set(0, item.yaw, 0);
         scratch.quat.setFromEuler(scratch.euler);
-        scratch.pos.set(item.x, lift(item, sy), item.z);
+         scratch.pos.set(item.x, item.y + lift(item, sy), item.z);
         scratch.matrix.compose(scratch.pos, scratch.quat, scratch.scale.set(sx, sy, sz));
         mesh.setMatrixAt(i, scratch.matrix);
         mesh.setColorAt(i, colourise(item));

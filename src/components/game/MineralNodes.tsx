@@ -19,6 +19,7 @@ import {
   type OreVoxel,
 } from "@/lib/world-entities";
 import { isSea } from "@/lib/world-sea";
+import { groundY } from "@/lib/world-terrain";
 
 /** on-chain GLB inscription of the mineral cluster */
 export const MINERAL_INSCRIPTION =
@@ -184,7 +185,7 @@ export const MineralNodes = memo(function MineralNodes({
     <>
       {clusters.map((vein) =>
         vein.depletedUntil ? null : (
-          <group key={vein.id} position={[vein.x, 0, vein.z]}>
+          <group key={vein.id} position={[vein.x, groundY(vein.x, vein.z), vein.z]}>
             {vein.voxels.map((voxel, i) =>
               voxel.alive ? (
                 <group

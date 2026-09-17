@@ -10,6 +10,7 @@ import { useGLTF } from "@react-three/drei";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
 import { isSea } from "@/lib/world-sea";
+import { groundY } from "@/lib/world-terrain";
 
 export const PLAYGROUND_INSCRIPTION =
   "f02506be77ab13b40b8f987e5a24a4a67d952287f22d2aeb53f3a07a53cdccb4i0";
@@ -77,7 +78,7 @@ export const Playgrounds = memo(function Playgrounds({
   return (
     <>
       {spots.map((spot) => (
-        <group key={spot.key} position={[spot.x, 0, spot.z]}>
+        <group key={spot.key} position={[spot.x, groundY(spot.x, spot.z), spot.z]}>
           <Suspense
             fallback={
               <mesh position={[0, spot.size * 0.2, 0]} raycast={noRaycast}>
