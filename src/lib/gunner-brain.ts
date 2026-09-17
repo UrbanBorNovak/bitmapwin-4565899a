@@ -162,9 +162,8 @@ function think(brain: GunnerBrain, sense: GunnerSense): GunnerAct {
   brain.duel.forget(sense.now);
   for (const contact of sense.contacts) {
     brain.duel.observe(contact.id, sense.now, contact.x, contact.y, contact.z);
-  }
-
     const seen = contacts.get(contact.id);
+
     if (seen) {
       const dt = Math.max(16, sense.now - seen.seenAt) / 1000;
       const smooth = dt > 0.6 ? 1 : 0.35;
