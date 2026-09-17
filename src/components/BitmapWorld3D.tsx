@@ -14,7 +14,6 @@ import { type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import {
   Environment,
-  Lightformer,
   MapControls,
   useAnimations,
   useGLTF,
