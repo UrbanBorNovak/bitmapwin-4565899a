@@ -1380,6 +1380,8 @@ const SelfAvatar = memo(function SelfAvatar({
 }) {
   const group = useRef<THREE.Group>(null);
   const mounted = useRef(false);
+  /** the saved character carries the BITMAP pixel skin you chose */
+  const character = useCharacter();
   const [motion, setMotion] = useState<AvatarMotion>("idle");
   useEffect(() => {
     mounted.current = true;
@@ -1404,7 +1406,7 @@ const SelfAvatar = memo(function SelfAvatar({
         <circleGeometry args={[AVATAR_U * 0.3, 16]} />
         <meshBasicMaterial color={colorsForShadow} transparent opacity={0.38} depthWrite={false} />
       </mesh>
-      <AvatarSkin color={color} model={model} motion={motion} />
+      <AvatarSkin color={color} model={model} motion={motion} skin={character?.avatarSkin ?? null} />
       {weapon ? <HeldWeapon kind={weapon} bitcoin={bitcoin} /> : null}
 
       <AvatarLabel
