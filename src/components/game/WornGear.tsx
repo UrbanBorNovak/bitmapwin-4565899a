@@ -54,6 +54,7 @@ function WornPiece({
   seatOnBase = false,
   /** size from every axis while still seating the model on its base */
   fitAllAxes = false,
+  boundsNode,
 }: {
   url: string;
   unit: number;
@@ -72,6 +73,8 @@ function WornPiece({
   stepSide?: number;
   seatOnBase?: boolean;
   fitAllAxes?: boolean;
+  /** measure/seat using only this named node (ignores stray parts like lace curves) */
+  boundsNode?: string;
 }) {
   const gltf = useGLTF(url);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
@@ -94,7 +97,13 @@ function WornPiece({
       }
     });
     scene.updateMatrixWorld(true);
-    const bounds = new THREE.Box3().setFromObject(scene);
+    // Some models carry stray helper parts (e.g. a lace curve dipping far
+    // below the sole). When boundsNode names the real body, measure only it
+    // so base seating lands on the true sole, not the dangling extra.
+    const measured = boundsNode
+      ? (scene.getObjectByName(boundsNode) ?? scene)
+      : scene;
+    const bounds = new THREE.Box3().setFromObject(measured);
     const size = bounds.getSize(new THREE.Vector3());
     const center = bounds.getCenter(new THREE.Vector3());
     // A hat is sized by how wide it is, not by its tallest point, so a pointed
@@ -105,7 +114,7 @@ function WornPiece({
     const scale = (unit * fit) / span;
     const drop = seatOnBase ? bounds.min.y : center.y;
     return { scale, center, drop };
-  }, [scene, unit, fit, seatOnBase, fitAllAxes, pitch]);
+  }, [scene, unit, fit, seatOnBase, fitAllAxes, pitch, boundsNode]);
 
   useFrame(({ clock }) => {
     const player = pose.current;
@@ -250,9 +259,10 @@ export function WornGear({
                 unit={unit}
                 fit={0.31}
                 pose={pose}
-                offset={[side * 0.175, 0.035, 0.075]}
+                offset={[side * 0.175, 0.02, 0.075]}
                 seatOnBase
                 fitAllAxes
+                boundsNode="Plane.005"
                 mountOffset={mountOffset}
                 stepSide={side}
               />
