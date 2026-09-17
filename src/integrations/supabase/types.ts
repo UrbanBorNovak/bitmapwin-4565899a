@@ -1961,6 +1961,7 @@ export type Database = {
           owner_address: string
         }[]
       }
+      membership_badge: { Args: { _address: string }; Returns: boolean }
       owns_wallet: {
         Args: { _address: string; _user_id: string }
         Returns: boolean
