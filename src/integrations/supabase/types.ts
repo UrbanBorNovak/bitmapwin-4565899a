@@ -1180,6 +1180,48 @@ export type Database = {
           },
         ]
       }
+      inscription_donations: {
+        Row: {
+          bits_awarded: number
+          created_at: string
+          donor_address: string
+          donor_user_id: string
+          id: string
+          inscription_id: string
+          note: string | null
+          sats: number
+          status: string
+          txid: string | null
+          updated_at: string
+        }
+        Insert: {
+          bits_awarded?: number
+          created_at?: string
+          donor_address: string
+          donor_user_id: string
+          id?: string
+          inscription_id: string
+          note?: string | null
+          sats?: number
+          status?: string
+          txid?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bits_awarded?: number
+          created_at?: string
+          donor_address?: string
+          donor_user_id?: string
+          id?: string
+          inscription_id?: string
+          note?: string | null
+          sats?: number
+          status?: string
+          txid?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inscriptions: {
         Row: {
           bitmap_height: number | null
