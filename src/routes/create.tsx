@@ -333,11 +333,11 @@ function CreatePage() {
           </div>
 
           <div className="border border-border bg-surface p-4">
-            <div className="label text-bitcoin">2 · PLANNING</div>
+            <div className="label text-bitcoin">WHAT IT MADE</div>
             {generate.isPending ? (
-              <p className="mt-3 font-mono text-xs text-muted-foreground">&gt; PLANNING THE PACKAGE<span className="blink">_</span></p>
+              <p className="mt-3 font-mono text-xs text-muted-foreground">&gt; BUILDING IT NOW<span className="blink">_</span></p>
             ) : !design ? (
-              <p className="mt-3 font-mono text-xs text-muted-foreground">&gt; NOTHING PLANNED YET</p>
+              <p className="mt-3 font-mono text-xs text-muted-foreground">&gt; NOTHING BUILT YET</p>
             ) : (
               <div className="mt-3 space-y-3">
                 <div>
