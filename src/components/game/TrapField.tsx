@@ -30,6 +30,7 @@ import {
   type TrapEntity,
 } from "@/lib/world-traps";
 import { isSea } from "@/lib/world-sea";
+import { groundY } from "@/lib/world-terrain";
 
 const TRAP_URL = `https://ordinals.com/content/${TRAP_INSCRIPTION}`;
 
@@ -87,7 +88,7 @@ function Trap({ trap, unit, bitcoin }: { trap: TrapEntity; unit: number; bitcoin
   });
 
   return (
-    <group position={[trap.x, trap.y, trap.z]}>
+    <group position={[trap.x, trap.y + groundY(trap.x, trap.z), trap.z]}>
       <Suspense fallback={<TrapStandIn unit={unit} />}>
         <TrapModel unit={unit} sprung={Boolean(trap.sprungAt)} />
       </Suspense>

@@ -13,6 +13,7 @@ import * as THREE from "three";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { playSfx } from "@/lib/world-audio";
 import { isSea } from "@/lib/world-sea";
+import { groundY } from "@/lib/world-terrain";
 import {
   MYSTERY_INSCRIPTION,
   MYSTERY_REACH,
@@ -75,7 +76,7 @@ export const MysteryBoxes = memo(function MysteryBoxes({
       if (!node) return;
       // A slow hover and turn so a crate catches the eye across the dunes.
       node.rotation.y += delta * 0.35;
-      node.position.y = unit * (0.16 + Math.sin(clock.elapsedTime * 1.4 + box.roll * 6) * 0.05);
+      node.position.y = groundY(box.x, box.z) + unit * (0.16 + Math.sin(clock.elapsedTime * 1.4 + box.roll * 6) * 0.05);
     });
 
     const player = pose.current;

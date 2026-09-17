@@ -12,6 +12,7 @@ import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { LANDMARKS, landmarkSolids, landmarkSpot, type LandmarkSpec } from "@/lib/world-landmarks";
 import { WORLD_CELL } from "@/lib/player-state";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
+import { groundY } from "@/lib/world-terrain";
 
 const noRaycast = () => {};
 
@@ -28,7 +29,7 @@ function Landmark({ spec }: { spec: LandmarkSpec }) {
   const spot = useMemo(() => landmarkSpot(spec), [spec]);
   const size = spec.span * WORLD_CELL;
   return (
-    <group position={[spot.x, 0, spot.z]}>
+    <group position={[spot.x, groundY(spot.x, spot.z), spot.z]}>
       <Suspense
         fallback={
           <mesh position={[0, size * 0.5, 0]} raycast={noRaycast}>

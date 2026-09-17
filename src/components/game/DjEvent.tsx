@@ -18,6 +18,7 @@ import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
 import { Primitive } from "@/components/game/Primitive";
 import { setDjLevel, setMusicDuck, startDjSet, stopDjSet } from "@/lib/world-audio";
+import { groundY } from "@/lib/world-terrain";
 
 /** on-chain GLB of Pepe and the Bitmappers */
 export const PEPE_BITMAPPERS_INSCRIPTION =
@@ -227,7 +228,7 @@ export function DjEvent({
   if (!live) return null;
 
   return (
-    <group position={[stage.x, 0, stage.z]}>
+    <group position={[stage.x, groundY(stage.x, stage.z), stage.z]}>
       <Rig unit={unit} bitcoin={bitcoin} />
       <Suspense fallback={null}>
         <Crew unit={unit} />

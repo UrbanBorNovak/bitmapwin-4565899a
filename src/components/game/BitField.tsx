@@ -30,6 +30,7 @@ import {
   pickBit,
 } from "@/lib/world-bits";
 import { isSea } from "@/lib/world-sea";
+import { groundY } from "@/lib/world-terrain";
 
 const BIT_URL = contentUrl(BIT_INSCRIPTION);
 const noRaycast = () => {};
@@ -84,7 +85,7 @@ export const BitField = memo(function BitField({
       const node = groups.current[index];
       if (!node) return;
       node.rotation.y += delta * bit.spin;
-      node.position.y = unit * (0.3 + Math.sin(clock.elapsedTime * 2 + bit.spin * 3) * 0.06);
+      node.position.y = groundY(bit.x, bit.z) + unit * (0.3 + Math.sin(clock.elapsedTime * 2 + bit.spin * 3) * 0.06);
     });
     if (!player) return;
 

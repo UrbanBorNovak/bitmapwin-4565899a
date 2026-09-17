@@ -149,6 +149,11 @@ export function groundY(x: number, z: number) {
   return land * (1 - depth) - depth * SEA_DROP;
 }
 
+/** Shared liquid plane. Sea beds dip below this; boats and islands stay here. */
+export function waterSurfaceY(_x?: number, _z?: number) {
+  return 0;
+}
+
 /** Uphill steepness 0…1 at a point, for shading and footing feedback. */
 export function slopeAt(x: number, z: number) {
   const step = WORLD_CELL * 0.5;
