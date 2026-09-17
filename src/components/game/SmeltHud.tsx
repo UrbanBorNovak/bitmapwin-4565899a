@@ -60,10 +60,10 @@ export function SmeltHud({ pose }: { pose: React.RefObject<SelfPose> }) {
       className="hud-panel absolute left-3 bottom-52 z-40 w-[min(15rem,calc(100%-1.5rem))] space-y-1 px-2.5 py-2 font-mono text-[10px]"
       aria-label="Smelting furnace"
     >
-      <span className="label text-[9px] text-bitcoin">SMELTING FURNACE</span>
+      <span className="hud-telemetry-title">SMELTING FURNACE</span>
       <div className="flex items-center justify-between">
         <span className="text-muted-foreground">GOLD NUGGETS</span>
-        <span className="tabular-nums text-foreground">{nuggets}</span>
+        <span className="hud-live">{nuggets}</span>
       </div>
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 text-muted-foreground">

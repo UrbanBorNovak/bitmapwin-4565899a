@@ -34,7 +34,7 @@ export function BitmapMineHud({ bitmaps }: { bitmaps: number }) {
       className="hud-panel absolute right-3 bottom-24 z-40 w-[min(15rem,calc(100%-1.5rem))] space-y-1 px-2.5 py-2 font-mono text-[10px]"
       aria-label="Bitmap mining"
     >
-      <span className="label text-[9px] text-bitcoin">BITMAP MINING</span>
+      <span className="hud-telemetry-title">BITMAP MINING · LIVE</span>
       {bitmaps === 0 ? (
         <p className="text-muted-foreground">
           HOLD A BITMAP TO PUT A CREW ON IT · {CREW_PER_BITMAP} MINERS PER BITMAP ·{" "}
@@ -48,11 +48,11 @@ export function BitmapMineHud({ bitmaps }: { bitmaps: number }) {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">MINERS AT WORK</span>
-            <span className="tabular-nums text-foreground">{crew}</span>
+            <span className="hud-live">{crew}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">ORE READY</span>
-            <span className="tabular-nums text-bitcoin">{ready}</span>
+            <span className="hud-live">{ready}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">COLLECTED</span>

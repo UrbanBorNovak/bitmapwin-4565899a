@@ -351,27 +351,22 @@
    land stays visible while playing. */
 @utility hud-panel {
   position: relative;
-  border: 1px solid color-mix(in oklab, var(--color-border) 45%, transparent);
-  border-radius: var(--radius-sm);
-  /* Layered glass: a dark pane, a soft top sheen and a faint scanline weave,
-     so a readout reads as instrument glass rather than a flat box. */
+  border: 1px solid color-mix(in oklab, var(--color-signal) 22%, var(--color-border));
+  border-left: 2px solid color-mix(in oklab, var(--color-signal) 58%, transparent);
+  border-radius: 0;
   background:
-    linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--color-foreground) 6%, transparent),
-      transparent 42%
-    ),
     repeating-linear-gradient(
       180deg,
-      color-mix(in oklab, var(--color-foreground) 3%, transparent) 0 1px,
-      transparent 1px 3px
+      color-mix(in oklab, var(--color-signal) 2.5%, transparent) 0 1px,
+      transparent 1px 4px
     ),
-    color-mix(in oklab, var(--color-background) 40%, transparent);
-  backdrop-filter: blur(8px) saturate(120%);
+    color-mix(in oklab, var(--color-background) 76%, transparent);
+  backdrop-filter: blur(12px) saturate(115%);
   box-shadow:
-    inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 7%, transparent),
-    0 10px 26px -20px color-mix(in oklab, var(--color-background) 90%, transparent);
-  opacity: 0.68;
+    inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 5%, transparent),
+    inset 10px 0 20px -20px color-mix(in oklab, var(--color-signal) 35%, transparent),
+    0 12px 28px -22px color-mix(in oklab, var(--color-background) 95%, transparent);
+  opacity: 0.86;
   transition:
     opacity var(--motion-fast, 150ms) ease,
     background var(--motion-fast, 150ms) ease,
@@ -379,7 +374,7 @@
     box-shadow var(--motion-fast, 150ms) ease;
 }
 
-/* Machined corner brackets, drawn from the border colour and lit on focus. */
+/* Calibration corners keep panels architectural without enclosing the world. */
 .hud-panel::before,
 .hud-panel::after {
   content: "";
@@ -387,8 +382,8 @@
   width: 0.5rem;
   height: 0.5rem;
   pointer-events: none;
-  border-color: color-mix(in oklab, var(--color-bitcoin) 55%, transparent);
-  opacity: 0.55;
+  border-color: color-mix(in oklab, var(--color-signal) 72%, transparent);
+  opacity: 0.7;
   transition:
     opacity var(--motion-fast, 150ms) ease,
     border-color var(--motion-fast, 150ms) ease;
@@ -411,18 +406,13 @@
 .hud-panel:hover,
 .hud-panel:focus-within {
   opacity: 1;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--color-foreground) 8%, transparent),
-      transparent 42%
-    ),
-    color-mix(in oklab, var(--color-background) 86%, transparent);
-  border-color: color-mix(in oklab, var(--color-border) 85%, transparent);
+  background: color-mix(in oklab, var(--color-background) 91%, transparent);
+  border-color: color-mix(in oklab, var(--color-signal) 46%, var(--color-border));
+  border-left-color: var(--color-signal);
   box-shadow:
-    inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 9%, transparent),
-    0 0 0 1px color-mix(in oklab, var(--color-bitcoin) 12%, transparent),
-    0 14px 30px -18px color-mix(in oklab, var(--color-bitcoin) 35%, transparent);
+    inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 8%, transparent),
+    inset 12px 0 24px -22px color-mix(in oklab, var(--color-signal) 55%, transparent),
+    0 0 18px -10px color-mix(in oklab, var(--color-signal) 38%, transparent);
 }
 
 .hud-panel:hover::before,
@@ -442,6 +432,32 @@
     0 8px 22px -14px color-mix(in oklab, var(--color-bitcoin) 55%, transparent);
 }
 
+@utility hud-telemetry-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-signal);
+  font-family: var(--font-display);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.hud-telemetry-title::before {
+  content: "";
+  width: 0.375rem;
+  height: 0.375rem;
+  background: var(--color-signal);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--color-signal) 70%, transparent);
+}
+
+@utility hud-live {
+  color: var(--color-signal);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Cockpit framing over the world: corner falloff plus a hairline lit edge. */
 @utility hud-vignette {
   position: absolute;
@@ -450,12 +466,26 @@
   pointer-events: none;
   background: radial-gradient(
     120% 92% at 50% 48%,
-    transparent 52%,
-    color-mix(in oklab, var(--color-background) 55%, transparent) 100%
+    transparent 58%,
+    color-mix(in oklab, var(--color-background) 62%, transparent) 100%
   );
   box-shadow:
-    inset 0 0 0 1px color-mix(in oklab, var(--color-bitcoin) 10%, transparent),
+    inset 0 0 0 1px color-mix(in oklab, var(--color-signal) 14%, transparent),
     inset 0 0 90px -30px color-mix(in oklab, var(--color-background) 80%, transparent);
+}
+
+.hud-vignette::after {
+  content: "";
+  position: absolute;
+  inset: 0.75rem;
+  background:
+    linear-gradient(var(--color-signal), var(--color-signal)) left top / 2rem 1px no-repeat,
+    linear-gradient(var(--color-signal), var(--color-signal)) left top / 1px 2rem no-repeat,
+    linear-gradient(var(--color-bitcoin), var(--color-bitcoin)) right top / 2rem 1px no-repeat,
+    linear-gradient(var(--color-bitcoin), var(--color-bitcoin)) right top / 1px 2rem no-repeat,
+    linear-gradient(var(--color-signal), var(--color-signal)) left bottom / 2rem 1px no-repeat,
+    linear-gradient(var(--color-signal), var(--color-signal)) left bottom / 1px 2rem no-repeat;
+  opacity: 0.22;
 }
 
 @utility hud-stack {
@@ -471,21 +501,16 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.375rem;
-  border: 1px solid color-mix(in oklab, var(--color-border) 55%, transparent);
-  border-radius: var(--radius-sm);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--color-foreground) 6%, transparent),
-      transparent 45%
-    ),
-    color-mix(in oklab, var(--color-card) 48%, transparent);
-  backdrop-filter: blur(8px) saturate(120%);
+  border: 1px solid color-mix(in oklab, var(--color-signal) 24%, var(--color-border));
+  border-left: 2px solid color-mix(in oklab, var(--color-signal) 60%, transparent);
+  border-radius: 0;
+  background: color-mix(in oklab, var(--color-background) 82%, transparent);
+  backdrop-filter: blur(12px) saturate(115%);
   box-shadow:
     inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 7%, transparent),
     0 10px 24px -20px color-mix(in oklab, var(--color-background) 90%, transparent);
   padding: 0.375rem;
-  opacity: 0.74;
+  opacity: 0.92;
   transition:
     opacity var(--motion-fast, 150ms) ease,
     background var(--motion-fast, 150ms) ease,
@@ -495,17 +520,11 @@
 .hud-toolbar:hover,
 .hud-toolbar:focus-within {
   opacity: 1;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--color-foreground) 8%, transparent),
-      transparent 45%
-    ),
-    color-mix(in oklab, var(--color-card) 92%, transparent);
+  background: color-mix(in oklab, var(--color-background) 94%, transparent);
   box-shadow:
     inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 9%, transparent),
     0 0 0 1px color-mix(in oklab, var(--color-signal) 18%, transparent),
-    0 14px 28px -18px color-mix(in oklab, var(--color-bitcoin) 30%, transparent);
+    0 10px 24px -16px color-mix(in oklab, var(--color-signal) 30%, transparent);
 }
 
 /* Compact controls + legend chrome inside HUD toolbars and map panels. */
@@ -529,7 +548,19 @@
   width: 1px;
   align-self: stretch;
   margin-inline: 0.25rem;
-  background: color-mix(in oklab, var(--color-border) 70%, transparent);
+  background: color-mix(in oklab, var(--color-signal) 35%, transparent);
+}
+
+@media (max-width: 767px) {
+  .hud-panel,
+  .hud-toolbar {
+    backdrop-filter: blur(7px);
+    box-shadow: inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 5%, transparent);
+  }
+
+  .hud-vignette::after {
+    inset: 0.4rem;
+  }
 }
 
 

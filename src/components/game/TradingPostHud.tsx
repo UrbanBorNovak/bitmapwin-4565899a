@@ -183,8 +183,8 @@ function Counter() {
       aria-label="Trading post counter"
     >
       <div className="flex items-center justify-between">
-        <span className="label text-[9px] text-bitcoin">THE TRADING POST</span>
-        <span className="tabular-nums text-muted-foreground">{formatBit(balance)}</span>
+        <span className="hud-telemetry-title">THE TRADING POST</span>
+        <span className="hud-live text-[9px]">{formatBit(balance)}</span>
       </div>
 
       <div className="flex gap-1" role="tablist">

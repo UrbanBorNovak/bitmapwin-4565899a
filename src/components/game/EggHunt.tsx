@@ -41,7 +41,7 @@ export function EggHunt({ unit }: { unit: number }) {
       className="hud-panel absolute right-3 top-[7rem] md:top-[13rem] z-40 w-[min(14rem,calc(100%-1.5rem))] space-y-1 px-2.5 py-2 font-mono text-[10px]"
       aria-label="Golden egg hunt"
     >
-      <span className="label text-[9px] text-bitcoin">GOLDEN EGG HUNT</span>
+      <span className="hud-telemetry-title">ACTIVE EVENT · GOLDEN EGG HUNT</span>
       {!probe ? (
         <p className="text-muted-foreground">WALK THE LAND TO PICK UP THE TRAIL</p>
       ) : probe.claimed ? (
@@ -52,7 +52,7 @@ export function EggHunt({ unit }: { unit: number }) {
         <>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">TRAIL</span>
-            <span className="text-bitcoin">{warmth(probe.distance, unit)}</span>
+            <span className="hud-live">{warmth(probe.distance, unit)}</span>
           </div>
           <button
             type="button"
