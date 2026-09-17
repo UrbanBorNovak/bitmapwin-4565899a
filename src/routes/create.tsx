@@ -414,9 +414,9 @@ function CreatePage() {
 
         <div className="space-y-4">
           <div className="border border-border bg-surface px-3 py-2">
-            <div className="label text-bitcoin">3 · SANDBOX</div>
+            <div className="label text-bitcoin">LIVE PREVIEW</div>
             <p className="mt-1 font-mono text-[10px] text-muted-foreground">
-              THIS IS THE SANDBOX THE WORLD RUNS — WHAT YOU SEE IS WHAT A VISITOR SEES
+              EXACTLY WHAT A VISITOR WILL SEE ON YOUR LAND
             </p>
           </div>
           <ExtenderPreview
