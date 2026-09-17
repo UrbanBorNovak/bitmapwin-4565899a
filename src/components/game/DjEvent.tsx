@@ -215,7 +215,10 @@ export function DjEvent({
     if (!me) return;
     const distance = Math.hypot(me.x - stage.x, me.z - stage.z);
     const range = unit * 60;
-    setDjLevel(Math.max(0, 1 - distance / range) ** 1.6);
+    const near = Math.max(0, 1 - distance / range) ** 1.6;
+    setDjLevel(near);
+    // The ambient score steps aside for the decks as you walk up.
+    setMusicDuck(1 - near * 0.9);
   });
 
   if (!live) return null;
