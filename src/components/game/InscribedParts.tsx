@@ -24,8 +24,11 @@ const STONE_FALLBACK = new THREE.Color("#8d8578");
 /**
  * glTF materials default to metalness 1; with no environment map in the world
  * they render as solid black blocks. Clone each material once, strip the
- * metal, and lift near-black untextured surfaces to a readable stone tone.
+ * metal, and lift every dark surface to a readable stone tone — a baked-dark
+ * base slab under a model otherwise reads as a black square on the sand.
  */
+const DARK_LIMIT = 0.16;
+
 function softenMaterial(source: THREE.Material): THREE.Material {
   const material = source.clone() as THREE.MeshStandardMaterial;
   if ("metalness" in material) material.metalness = 0;
@@ -35,11 +38,17 @@ function softenMaterial(source: THREE.Material): THREE.Material {
   const hasMap = Boolean((material as THREE.MeshStandardMaterial).map);
   if (color && !hasMap) {
     const luminance = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
-    if (luminance < 0.02) color.copy(STONE_FALLBACK);
+    if (luminance < DARK_LIMIT) {
+      // The darker the surface, the more stone it takes on, so a true black
+      // slab lands on plain stone while a deep tone only lightens.
+      const lift = 1 - luminance / DARK_LIMIT;
+      color.lerp(STONE_FALLBACK, 0.35 + lift * 0.65);
+    }
   }
   material.needsUpdate = true;
   return material;
 }
+
 
 /** Flatten an inscribed model into reusable, unit-sized geometry. */
 export function useInscribedParts(url: string): InscribedPart[] {
