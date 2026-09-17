@@ -672,8 +672,10 @@ const DistrictBlocks = memo(function DistrictBlocks({
             float tier = floor(shade * 4.0) / 3.0;
             vec3 baseColor = mix(emberDeep, emberLight, clamp(0.2 + tier * 0.72, 0.0, 1.0));
             baseColor = mix(baseColor, uBitcoin, 0.14);
-            // Unmined land drains to cold stone; mined land keeps the ember wash.
-            baseColor = mix(baseColor, baseColor * 0.36 + uFuture * 0.2, 1.0 - mined);
+            // Unmined land reads as pale cold stone — never near-black, or whole
+            // regions of the world look like empty black slabs.
+            vec3 stone = vec3(0.42, 0.40, 0.44) + uFuture * 0.18;
+            baseColor = mix(baseColor, mix(baseColor * 0.8, stone, 0.72), 1.0 - mined);
             vec3 color = mix(baseColor, mix(baseColor, uBitcoin, 0.18), mined);
 
 
