@@ -52,7 +52,7 @@ export function TradingPostHud({ pose }: { pose: React.RefObject<SelfPose> }) {
 function Counter() {
   const skills = useWorldSkills();
   const wallet = useWalletSession();
-  const address = wallet?.address ?? null;
+  const address = wallet?.ordinalsAddress ?? null;
   const client = useQueryClient();
   const [mode, setMode] = useState<Mode>("board");
 
