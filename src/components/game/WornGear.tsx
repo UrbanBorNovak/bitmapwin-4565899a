@@ -217,9 +217,9 @@ export function WornGear({
           <WornPiece
             url={`https://ordinals.com/content/${GOGGLES_INSCRIPTION}`}
             unit={unit}
-            fit={0.24}
+            fit={0.5}
             pose={pose}
-            offset={[0, 0.88, 0.07]}
+            offset={[0, 0.86, 0.08]}
             mountOffset={mountOffset}
           />
         </Suspense>
