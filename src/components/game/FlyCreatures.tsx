@@ -18,7 +18,7 @@ import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { CreatureEyes } from "@/components/game/CreatureEyes";
 import { registerBeastGroup, type BeastEntity } from "@/lib/world-entities";
 import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
-import { isDeepSea, nearestSea } from "@/lib/world-sea";
+import { isDeepSea, nearestSea, seaRadiusAt, type SeaMass } from "@/lib/world-sea";
 import { poseDown, simDelta} from "@/lib/player-state";
 
 export type CreatureGroupSpec = {
@@ -161,21 +161,21 @@ export const CREATURE_GROUPS: CreatureGroupSpec[] = [
   },
   {
     id: "wild-geese",
-    label: "WILD GOOSE",
-    inscription: "e1e0b7aa7d4ed669ecf5aabd7d0b0aecf290d4e93700dda66c32b8dffd0c21eai2",
-    count: 6,
-    size: 0.58,
+    label: "GOOSE FAMILY",
+    inscription: "b8f812d363032f4e8acd486a8316544fa28eb156344550ee606cfd33d73a23a9i0",
+    count: 24,
+    size: 0.72,
     hp: 35,
     xp: 45,
-    speed: 1.08,
+    speed: 1.18,
     hostile: false,
     bite: 0,
     hops: false,
     water: true,
     eyes: false,
-    lines: ["HONK", "HONK HONK"],
+    lines: ["HONK", "HONK HONK", "FAMILY FLIGHT"],
     airborne: true,
-    altitude: 2.6,
+    altitude: 2.2,
   },
   {
     id: "frogs",
@@ -234,6 +234,15 @@ type Creature = BeastEntity & {
 function hash(a: number, b: number) {
   const n = Math.sin(a * 57.13 + b * 131.7) * 39_211.7431;
   return n - Math.floor(n);
+}
+
+function shorelinePoint(sea: SeaMass, angle: number, unit: number, index: number) {
+  const edge = seaRadiusAt(sea, angle);
+  const family = ((index % 6) - 2.5) * unit * 0.75;
+  const depth = index % 2 === 0 ? 0.9 : 0.98;
+  const x = sea.x + Math.cos(angle) * sea.rx * edge * depth - Math.sin(angle) * family;
+  const z = sea.z + Math.sin(angle) * sea.rz * edge * depth + Math.cos(angle) * family;
+  return { x, z };
 }
 
 function makeCreature(spec: CreatureGroupSpec, index: number, unit: number): Creature {
@@ -345,10 +354,12 @@ export const CreatureGroup = memo(function CreatureGroup({
         const ring = unit * (10 + index * 4);
         creature.x = player.x + Math.cos(angle) * ring;
         creature.z = player.z + Math.sin(angle) * ring;
-        if (spec.water && spec.airborne) {
-          const { sea } = nearestSea(creature.x, creature.z);
-          creature.x = sea.x + Math.cos(angle) * unit * (2 + index * 0.35);
-          creature.z = sea.z + Math.sin(angle) * unit * (2 + index * 0.35);
+        if (spec.water) {
+          const { sea } = nearestSea(player.x, player.z);
+          const shoreAngle = Math.atan2(player.z - sea.z, player.x - sea.x) + (index - spec.count / 2) * 0.04;
+          const home = shorelinePoint(sea, shoreAngle, unit, index);
+          creature.x = home.x;
+          creature.z = home.z;
         }
       }
 
