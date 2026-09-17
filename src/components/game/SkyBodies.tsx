@@ -165,7 +165,7 @@ function LightningStorm({ bitcoin, far }: { bitcoin: string; far: number }) {
     if (bolt) {
       bolt.visible = power.current > 0.02;
       const material = Array.isArray(bolt.material) ? bolt.material[0] : bolt.material;
-      material.opacity = Math.min(1, power.current * 1.4);
+      if (material) material.opacity = Math.min(1, power.current * 1.4);
     }
     if (flash.current) flash.current.intensity = power.current * 4.5;
   });
