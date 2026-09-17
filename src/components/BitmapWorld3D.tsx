@@ -4477,7 +4477,7 @@ export function BitmapWorld3D({
         {hover ? (
           <div
             data-no-translate
-            className="pointer-events-none absolute z-30 -translate-y-full border border-bitcoin bg-background/95 px-2 py-1 font-mono text-[10px]"
+            className="pointer-events-none absolute z-30 -translate-y-full border-l-2 border-bitcoin bg-transparent px-2 py-1 font-mono text-[10px] font-bold text-foreground [text-shadow:0_1px_2px_var(--background),0_0_5px_var(--background)]"
             style={{ left: hover.x + 10, top: hover.y - 8 }}
           >
             <div>
