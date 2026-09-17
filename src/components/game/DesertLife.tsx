@@ -8,6 +8,7 @@
  * the patch you can actually see is ever pushed to the GPU.
  */
 import { Suspense, memo, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { patchSurface, surfaceUniforms, tickSurface } from "@/lib/onchain-surface";
@@ -558,6 +559,7 @@ type CritterKind =
   | "snake"
   | "lizard"
   | "jackrabbit"
+  | "jackal"
   | "coyote"
   | "vulture"
   | "antelope"
@@ -584,11 +586,25 @@ type Species = {
   bodyY: number;
 };
 
+const JACKAL_SPECIES: Species = {
+  kind: "jackal",
+  weight: 9,
+  hostile: true,
+  speed: 1.65,
+  scale: 1,
+  hp: 54,
+  xp: 70,
+  bite: 10,
+  radius: 0.34,
+  bodyY: 0.42,
+};
+
 const SPECIES: Species[] = [
   { kind: "scorpion", weight: 22, hostile: true, speed: 0.9, scale: 1, hp: 18, xp: 20, bite: 5, radius: 0.11, bodyY: 0.05 },
   { kind: "snake", weight: 18, hostile: true, speed: 0.6, scale: 1, hp: 22, xp: 26, bite: 8, radius: 0.13, bodyY: 0.05 },
   { kind: "lizard", weight: 16, hostile: false, speed: 1.3, scale: 1, hp: 14, xp: 12, bite: 0, radius: 0.1, bodyY: 0.05 },
   { kind: "jackrabbit", weight: 14, hostile: false, speed: 1.8, scale: 1, hp: 12, xp: 14, bite: 0, radius: 0.12, bodyY: 0.08 },
+  JACKAL_SPECIES,
   { kind: "coyote", weight: 7, hostile: true, speed: 1.6, scale: 1, hp: 46, xp: 55, bite: 9, radius: 0.26, bodyY: 0.3 },
   { kind: "vulture", weight: 5, hostile: false, speed: 1.1, scale: 1, hp: 26, xp: 34, bite: 0, radius: 0.24, bodyY: 0 },
   // Rare safari sightings — a real sighting, not a regular fixture.
@@ -609,8 +625,8 @@ const SNAKE_URL = contentUrl(
 const LIZARD_URL = contentUrl(
   "290b40f95d637b5f8ac7925eca8d5668536de86e2c5398a3180fc35e0011864fi0",
 );
-/** on-chain coyote */
-const COYOTE_URL = contentUrl(
+/** on-chain jackal */
+const JACKAL_URL = contentUrl(
   "5252a0717cf8c23055b2558585fb24d4038a6281f7d51be4edadb9e16829d46ci0",
 );
 
@@ -637,8 +653,8 @@ type Critter = BeastEntity & {
   brain: FlyBrain;
 };
 
-// Wildlife is thin on the ground — the desert should feel empty between sightings.
-const CRITTER_COUNT = 11;
+// Wildlife is thin on the ground, with a few visible jackals so their model is findable.
+const CRITTER_COUNT = 15;
 
 
 /**
@@ -662,7 +678,7 @@ const Critters = memo(function Critters({
   const state = useRef<Critter[]>(
     Array.from({ length: CRITTER_COUNT }, (_, i) => {
       const roll = hash(i + 1, i * 3 + 7, 41);
-      const species = pickSpecies(roll);
+      const species = i === 0 || i === 7 ? JACKAL_SPECIES : pickSpecies(roll);
       return {
         id: i + 1,
         label: species.kind.toUpperCase(),
@@ -943,6 +959,7 @@ function hostileMarkerHeight(kind: CritterKind) {
       return 0.75;
     case "rhino":
       return 0.95;
+    case "jackal":
     case "coyote":
       return 0.6;
     default:
@@ -1007,10 +1024,10 @@ const CritterBody = memo(function CritterBody({
     );
   }
 
-  if (kind === "coyote") {
+  if (kind === "jackal" || kind === "coyote") {
     return (
-      <Suspense fallback={null}>
-        <InscribedModel url={COYOTE_URL} size={u * 0.55} />
+      <Suspense fallback={<JackalFallback unit={u} /> }>
+        <InscribedModel url={JACKAL_URL} size={u * 1.05} yaw={Math.PI} />
       </Suspense>
     );
   }
@@ -1131,6 +1148,7 @@ function quadruped(kind: CritterKind, u: number) {
     { w: number; h: number; l: number; leg: number; neck: number; tilt: number; hide: string; accent: string }
   > = {
     coyote: { w: 0.13, h: 0.16, l: 0.4, leg: 0.22, neck: 0.1, tilt: 0.5, hide: HIDE, accent: HIDE_DARK },
+    jackal: { w: 0.15, h: 0.18, l: 0.46, leg: 0.24, neck: 0.11, tilt: 0.5, hide: HIDE, accent: HIDE_DARK },
     lion: { w: 0.2, h: 0.22, l: 0.55, leg: 0.28, neck: 0.12, tilt: 0.4, hide: "#b08a52", accent: "#8d6c3c" },
     antelope: { w: 0.2, h: 0.26, l: 0.6, leg: 0.4, neck: 0.26, tilt: 0.9, hide: "#d8d3c8", accent: "#3c3a37" },
     giraffe: { w: 0.22, h: 0.3, l: 0.66, leg: 0.7, neck: 0.95, tilt: 1.15, hide: "#c9a154", accent: "#8a6a2e" },
@@ -1156,6 +1174,43 @@ function quadruped(kind: CritterKind, u: number) {
     accent: p.accent,
   };
 }
+
+function JackalFallback({ unit: u }: { unit: number }) {
+  return (
+    <group>
+      <mesh position={[0, u * 0.24, 0]} raycast={noRaycast}>
+        <boxGeometry args={[u * 0.18, u * 0.16, u * 0.5]} />
+        <meshLambertMaterial color={HIDE} />
+      </mesh>
+      <mesh position={[0, u * 0.35, u * 0.29]} raycast={noRaycast}>
+        <boxGeometry args={[u * 0.14, u * 0.13, u * 0.16]} />
+        <meshLambertMaterial color={HIDE_DARK} />
+      </mesh>
+      <mesh position={[0, u * 0.3, -u * 0.34]} rotation-x={0.55} raycast={noRaycast}>
+        <boxGeometry args={[u * 0.06, u * 0.05, u * 0.34]} />
+        <meshLambertMaterial color={HIDE_DARK} />
+      </mesh>
+      {[-1, 1].map((side) => (
+        <mesh key={side} position={[side * u * 0.04, u * 0.46, u * 0.32]} rotation-z={side * 0.24} raycast={noRaycast}>
+          <coneGeometry args={[u * 0.035, u * 0.12, 4]} />
+          <meshLambertMaterial color={HIDE_DARK} />
+        </mesh>
+      ))}
+      {[-1, 1].map((sx) =>
+        [-1, 1].map((sz) => (
+          <mesh key={`${sx}:${sz}`} position={[sx * u * 0.06, u * 0.11, sz * u * 0.16]} raycast={noRaycast}>
+            <boxGeometry args={[u * 0.035, u * 0.22, u * 0.035]} />
+            <meshLambertMaterial color={HIDE_DARK} />
+          </mesh>
+        )),
+      )}
+    </group>
+  );
+}
+
+useGLTF.preload(SNAKE_URL);
+useGLTF.preload(LIZARD_URL);
+useGLTF.preload(JACKAL_URL);
 
 /**
  * Fata morgana: shimmering false lakes hovering on the horizon that thin out
