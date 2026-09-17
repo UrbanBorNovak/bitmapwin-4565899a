@@ -22,6 +22,7 @@ import { Route as CreateRouteImport } from './routes/create'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DevToolsRouteImport } from './routes/dev-tools'
 import { Route as DocsRouteImport } from './routes/docs'
+import { Route as DonateRouteImport } from './routes/donate'
 import { Route as ExperiencesRouteImport } from './routes/experiences'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as ExtendRouteImport } from './routes/extend'
@@ -124,6 +125,11 @@ const DevToolsRoute = DevToolsRouteImport.update({
 const DocsRoute = DocsRouteImport.update({
   id: '/docs',
   path: '/docs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DonateRoute = DonateRouteImport.update({
+  id: '/donate',
+  path: '/donate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExperiencesRoute = ExperiencesRouteImport.update({
@@ -334,6 +340,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/dev-tools': typeof DevToolsRoute
   '/docs': typeof DocsRoute
+  '/donate': typeof DonateRoute
   '/experiences': typeof ExperiencesRoute
   '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
@@ -386,6 +393,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/dev-tools': typeof DevToolsRoute
   '/docs': typeof DocsRoute
+  '/donate': typeof DonateRoute
   '/experiences': typeof ExperiencesRoute
   '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
@@ -439,6 +447,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/dev-tools': typeof DevToolsRoute
   '/docs': typeof DocsRoute
+  '/donate': typeof DonateRoute
   '/experiences': typeof ExperiencesRoute
   '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
@@ -494,6 +503,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dev-tools'
     | '/docs'
+    | '/donate'
     | '/experiences'
     | '/explore'
     | '/extend'
@@ -546,6 +556,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dev-tools'
     | '/docs'
+    | '/donate'
     | '/experiences'
     | '/explore'
     | '/extend'
@@ -598,6 +609,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dev-tools'
     | '/docs'
+    | '/donate'
     | '/experiences'
     | '/explore'
     | '/extend'
@@ -652,6 +664,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DevToolsRoute: typeof DevToolsRoute
   DocsRoute: typeof DocsRoute
+  DonateRoute: typeof DonateRoute
   ExperiencesRoute: typeof ExperiencesRoute
   ExploreRoute: typeof ExploreRoute
   ExtendRoute: typeof ExtendRoute
@@ -771,6 +784,13 @@ declare module '@tanstack/react-router' {
       path: '/docs'
       fullPath: '/docs'
       preLoaderRoute: typeof DocsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/donate': {
+      id: '/donate'
+      path: '/donate'
+      fullPath: '/donate'
+      preLoaderRoute: typeof DonateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/experiences': {
@@ -1119,6 +1139,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DevToolsRoute: DevToolsRoute,
   DocsRoute: DocsRoute,
+  DonateRoute: DonateRoute,
   ExperiencesRoute: ExperiencesRoute,
   ExploreRoute: ExploreRoute,
   ExtendRoute: ExtendRoute,
