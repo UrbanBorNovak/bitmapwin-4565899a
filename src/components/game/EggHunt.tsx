@@ -9,6 +9,7 @@ import {
   claimEgg,
   clearEggNote,
   eggNote,
+  eggHoursUntilReturn,
   eggProbe,
   eggVersion,
   subscribeEgg,
@@ -44,7 +45,9 @@ export function EggHunt({ unit }: { unit: number }) {
       {!probe ? (
         <p className="text-muted-foreground">WALK THE LAND TO PICK UP THE TRAIL</p>
       ) : probe.claimed ? (
-        <p className="text-muted-foreground">TODAY&apos;S EGG IS YOURS · A NEW ONE HIDES AT MIDNIGHT UTC</p>
+        <p className="text-muted-foreground">
+          RELIC SECURED · A NEW EGG HIDES SOMEWHERE ELSE IN {eggHoursUntilReturn()}H
+        </p>
       ) : (
         <>
           <div className="flex items-center justify-between">
