@@ -18,7 +18,7 @@ const LINES = [
 ];
 
 export function OasisLoading() {
-  const { progress, active, item } = useProgress();
+  const { progress, item } = useProgress();
   const [gone, setGone] = useState(false);
   const [line, setLine] = useState(0);
 
@@ -27,11 +27,18 @@ export function OasisLoading() {
     return () => window.clearInterval(timer);
   }, []);
 
+  // The first view is ready as soon as progress reaches 100 once. Background
+  // chunk streaming keeps the loader "active" forever after that, so the
+  // curtain must never wait for it — and a hard ceiling covers a stalled asset.
   useEffect(() => {
-    if (active || progress < 100) return;
-    const timer = window.setTimeout(() => setGone(true), 520);
-    return () => window.clearTimeout(timer);
-  }, [active, progress]);
+    if (progress >= 100) {
+      const timer = window.setTimeout(() => setGone(true), 520);
+      return () => window.clearTimeout(timer);
+    }
+    const ceiling = window.setTimeout(() => setGone(true), 12_000);
+    return () => window.clearTimeout(ceiling);
+  }, [progress]);
+
 
   if (gone) return null;
 
@@ -40,7 +47,7 @@ export function OasisLoading() {
   return (
     <div
       className={`absolute inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-background transition-opacity duration-500 ${
-        !active && progress >= 100 ? "opacity-0" : "opacity-100"
+        progress >= 100 ? "opacity-0" : "opacity-100"
       }`}
       role="status"
       aria-live="polite"
