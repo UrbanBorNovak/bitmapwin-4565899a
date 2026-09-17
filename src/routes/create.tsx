@@ -289,12 +289,12 @@ function CreatePage() {
             </div>
             <div className="mt-4 border-t border-border pt-3">
               <div className="flex items-center justify-between">
-                <div className="label text-muted-foreground">BUILD TIER · PAID IN BIT</div>
+                <div className="label text-muted-foreground">HOW BIG?</div>
                 <div className="font-mono text-[10px] text-muted-foreground" data-no-translate>
-                  BALANCE {formatBit(bitBalance)}
+                  YOU HOLD {formatBit(bitBalance)}
                 </div>
               </div>
-              <div className="mt-2 grid gap-1">
+              <div className="mt-2 flex flex-wrap gap-1">
                 {BUILD_TIERS.map((option) => {
                   const affordable = bitBalance >= option.costBit;
                   return (
@@ -302,18 +302,15 @@ function CreatePage() {
                       key={option.id}
                       type="button"
                       onClick={() => setTierId(option.id)}
-                      className={`terminal-interactive flex items-center justify-between border px-2 py-2 text-left ${
+                      className={`terminal-interactive border px-2 py-1.5 text-left ${
                         option.id === tierId ? "border-bitcoin" : "border-border"
                       }`}
                     >
-                      <span>
-                        <span className={`label ${option.id === tierId ? "text-bitcoin" : "text-foreground"}`} data-no-translate>
-                          {option.label}
-                        </span>
-                        <span className="ml-2 font-mono text-[10px] text-muted-foreground">{option.note}</span>
+                      <span className={`label ${option.id === tierId ? "text-bitcoin" : "text-foreground"}`} data-no-translate>
+                        {option.label}
                       </span>
                       <span
-                        className={`font-mono text-[10px] ${affordable ? "text-foreground" : "text-muted-foreground line-through"}`}
+                        className={`ml-2 font-mono text-[10px] ${affordable ? "text-muted-foreground" : "text-muted-foreground line-through"}`}
                         data-no-translate
                       >
                         {option.costBit.toLocaleString("en-US")} BIT
@@ -323,8 +320,7 @@ function CreatePage() {
                 })}
               </div>
               <p className="mt-2 font-mono text-[10px] text-muted-foreground">
-                {tier.label} BUILDS {tier.detail.toUpperCase()} · UP TO {tier.maxProps} OBJECTS AND {tier.maxQuests} QUESTS ·
-                BIT IS ONLY CHARGED WHEN A BUILD SUCCEEDS
+                {tier.detail.toUpperCase()} · UP TO {tier.maxProps} OBJECTS AND {tier.maxQuests} QUESTS · ONLY CHARGED IF IT WORKS
               </p>
             </div>
             <button type="button" className="btn-term mt-3 w-full" disabled={generate.isPending} onClick={() => generate.mutate()}>
