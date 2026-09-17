@@ -54,6 +54,7 @@ function WornPiece({
   seatOnBase = false,
   /** size from every axis while still seating the model on its base */
   fitAllAxes = false,
+  boundsNode,
 }: {
   url: string;
   unit: number;
