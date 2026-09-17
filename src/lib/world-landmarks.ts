@@ -121,6 +121,49 @@ export const LANDMARKS: LandmarkSpec[] = [
     radius: 1.15,
     yaw: Math.PI / 2.4,
   },
+  // THE MINING YARD — a row of BTC MINER rigs standing on their own BITMAPS just
+  // north-east of the plaza, so everyone sees what a rig looks like before they
+  // gather the minerals to raise one of their own.
+  {
+    id: "miner-rig-1",
+    label: "BTC MINER RIG",
+    blurb: "One of the rigs humming away in the mining yard.",
+    inscription: "2a3b60a02b6cde7f0cb5faf506306d8ab676beddd0d26cedd043a1546952e8e3i0",
+    cell: [9, -6],
+    span: 1.1,
+    radius: 0.4,
+    yaw: -0.5,
+  },
+  {
+    id: "miner-rig-2",
+    label: "BTC MINER RIG",
+    blurb: "One of the rigs humming away in the mining yard.",
+    inscription: "2a3b60a02b6cde7f0cb5faf506306d8ab676beddd0d26cedd043a1546952e8e3i0",
+    cell: [11, -6],
+    span: 1.1,
+    radius: 0.4,
+    yaw: -0.5,
+  },
+  {
+    id: "miner-rig-3",
+    label: "BTC MINER RIG",
+    blurb: "One of the rigs humming away in the mining yard.",
+    inscription: "2a3b60a02b6cde7f0cb5faf506306d8ab676beddd0d26cedd043a1546952e8e3i0",
+    cell: [10, -8],
+    span: 1.1,
+    radius: 0.4,
+    yaw: 0.8,
+  },
+  {
+    id: "miner-rig-4",
+    label: "BTC MINER RIG",
+    blurb: "A lone rig standing out past the western quarter.",
+    inscription: "2a3b60a02b6cde7f0cb5faf506306d8ab676beddd0d26cedd043a1546952e8e3i0",
+    cell: [-11, 12],
+    span: 1.1,
+    radius: 0.4,
+    yaw: 2.1,
+  },
 ];
 
 /** The trading post itself, so the counter panel knows where to stand. */
