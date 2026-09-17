@@ -23,6 +23,18 @@ import {
   type FlyNet,
   type SenseChannel,
 } from "./fly-connectome";
+import {
+  connectomeGraph,
+  createOnchainNet,
+  loadConnectome,
+  subscribeConnectome,
+} from "./connectome-onchain";
+
+// Pull the inscribed wiring the first time a brain module is touched. Until it
+// lands (or if it never does), bodies run on the bundled slice.
+if (typeof window !== "undefined") loadConnectome();
+
+
 
 
 export type BrainState = "cruise" | "seek" | "work" | "pursue" | "strike" | "flee" | "pitch" | "rest";
@@ -100,13 +112,26 @@ export function createFlyBrain(seed: number): FlyBrain {
   let novelty = 1;
   let lastStrike = 0;
   let lastWork = 0;
-  const net = createFlyNet(seed);
+  // The inscribed connectome wins when it is decoded; the bundled slice runs the
+  // body in the meantime, and a live upgrade swaps the wiring underneath.
+  const initial = connectomeGraph();
+  let net: FlyNet = initial ? createOnchainNet(initial, seed) : createFlyNet(seed);
+  if (!initial) {
+    const stop = subscribeConnectome(() => {
+      const graph = connectomeGraph();
+      if (!graph) return;
+      net = createOnchainNet(graph, seed);
+      stop();
+    });
+  }
 
   const brain: FlyBrain = {
     get state() {
       return state;
     },
-    net,
+    get net() {
+      return net;
+    },
     get readout() {
       return net.readout;
     },
