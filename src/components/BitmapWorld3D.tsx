@@ -113,6 +113,7 @@ import {
   blockedAt,
   build as buildStructure,
   buildCamp,
+  campTouchesWater,
   CAMP_RECIPE,
   costLabel,
   damageStructure,
@@ -2603,7 +2604,7 @@ export function BitmapWorld3D({
   /** Raise a whole camp — shelter, fire and watchtower — around your feet. */
   const placeCamp = useCallback(() => {
     const current = pose.current;
-    if (isSea(current?.x ?? 0, current?.z ?? 0)) {
+    if (campTouchesWater(current?.x ?? 0, current?.z ?? 0, current?.yaw ?? 0, AVATAR_U)) {
       setBuildNote("CAMP NEEDS DRY LAND");
       return;
     }

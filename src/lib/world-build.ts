@@ -504,31 +504,42 @@ export const CAMP_RECIPE: StructureRecipe = {
   hp: 90,
 };
 
-export function buildCamp(x: number, z: number, yaw = 0, unit = 1) {
-  hydrate();
+function campParts(x: number, z: number, yaw = 0, unit = 1) {
   const spread = unit * 2.4;
-
   const layout: { id: StructureId; dx: number; dz: number }[] = [
     { id: "hide-tent", dx: -spread, dz: 0 },
     { id: "camp-fire", dx: 0, dz: 0 },
     { id: "watchtower", dx: spread * 1.1, dz: spread * 0.6 },
   ];
-  const stamp = Date.now();
   const cos = Math.cos(yaw);
   const sin = Math.sin(yaw);
-  const placed = layout.map((part, index) => {
-    const px = x + part.dx * cos - part.dz * sin;
-    const pz = z + part.dx * sin + part.dz * cos;
-    return {
+  return layout.map((part) => ({
+    id: part.id,
+    x: x + part.dx * cos - part.dz * sin,
+    z: z + part.dx * sin + part.dz * cos,
+  }));
+}
+
+export function campTouchesWater(x: number, z: number, yaw = 0, unit = 1) {
+  return campParts(x, z, yaw, unit).some((part) => isSea(part.x, part.z));
+}
+
+export function buildCamp(x: number, z: number, yaw = 0, unit = 1) {
+  hydrate();
+  const parts = campParts(x, z, yaw, unit);
+  const stamp = Date.now();
+  const placed = parts.map(
+    (part, index) =>
+      ({
         key: `camp-${stamp}-${index}`,
         id: part.id,
-        x: px,
-        z: pz,
+        x: part.x,
+        z: part.z,
         yaw,
         at: stamp,
         local: true,
-      } satisfies PlacedStructure;
-  });
+      }) satisfies PlacedStructure,
+  );
   const blocked = placed.some(
     (item) => isSea(item.x, item.z) || blockedAt(item.x, item.z, footprintOf(item.id) * 0.6),
   );
