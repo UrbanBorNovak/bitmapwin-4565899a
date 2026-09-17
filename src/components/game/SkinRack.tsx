@@ -14,9 +14,9 @@ import { Primitive } from "@/components/game/Primitive";
 import { DEFAULT_AVATAR_MODEL, DEFAULT_AVATAR_TEXTURE } from "@/lib/map-identity";
 import { AVATAR_SKINS } from "@/lib/build-sdk";
 
-const COLS = 4;
-const COL_GAP = 1.15;
-const ROW_GAP = 1.75;
+const COLS = 6;
+const COL_GAP = 1.05;
+const ROW_GAP = 1.6;
 
 type RackEntry = { id: string | null; label: string; texture: string };
 
@@ -129,11 +129,11 @@ export function SkinRack({
   return (
     <div data-no-translate>
       <span className="label">SKIN — BITMAP PIXEL SKINS, WORN</span>
-      <div className="mt-2 h-[26rem] border border-border bg-background">
+      <div className="mt-2 h-[22rem] border border-border bg-background">
         <SafeCanvas
           dpr={[1, 1.5]}
           camera={{
-            position: [0, (rows * ROW_GAP) / 2 - 0.2, 7.4],
+            position: [0, ((rows - 1) * ROW_GAP) / 2 + 0.55, 6.1],
             fov: 34,
             near: 0.01,
             far: 40,
