@@ -21,6 +21,7 @@ import { registerBeastGroup, type BeastEntity } from "@/lib/world-entities";
 import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { isDeepSea, nearestSea, seaRadiusAt, type SeaMass } from "@/lib/world-sea";
 import { poseDown, simDelta} from "@/lib/player-state";
+import { groundY } from "@/lib/world-terrain";
 
 export type CreatureGroupSpec = {
   id: string;
@@ -320,7 +321,7 @@ export const CreatureGroup = memo(function CreatureGroup({
 
       if (creature.deadUntil) {
         node.rotation.set(0, creature.heading, Math.PI / 2.1);
-        node.position.set(creature.x, unit * 0.02, creature.z);
+        node.position.set(creature.x, groundY(creature.x, creature.z) + unit * 0.02, creature.z);
         if (creature.say) {
           creature.say = null;
           talkChanged = true;
@@ -449,7 +450,7 @@ export const CreatureGroup = memo(function CreatureGroup({
         }
       }
 
-      node.position.set(creature.x, lift, creature.z);
+      node.position.set(creature.x, groundY(creature.x, creature.z) + lift, creature.z);
       node.rotation.y = creature.heading;
       const sinceHit = now - creature.hitAt;
       if (sinceHit < 250) node.rotation.x -= Math.sin((sinceHit / 250) * Math.PI) * 0.3;

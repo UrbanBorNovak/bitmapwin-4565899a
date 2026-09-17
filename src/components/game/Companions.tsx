@@ -16,6 +16,7 @@ import { Primitive } from "@/components/game/Primitive";
 import { createFlyBrain } from "@/lib/fly-brain";
 import type { PlayerState } from "@/lib/player-state";
 import { companionSpec, useGear, type CompanionSpec } from "@/lib/world-gear";
+import { groundY } from "@/lib/world-terrain";
 
 const COMPANION_URLS = [
   "e1e0b7aa7d4ed669ecf5aabd7d0b0aecf290d4e93700dda66c32b8dffd0c21eai2",
@@ -152,7 +153,8 @@ function Pet({
       const flight = unit * (0.34 + Math.min(0.28, trot / Math.max(unit * 12, 0.0001)));
       node.position.set(
         at.current.x,
-        player.y + flight + unit * flap * 0.08,
+        // Flies above whatever the land is doing underneath it.
+        player.y + groundY(at.current.x, at.current.z) + flight + unit * flap * 0.08,
         at.current.z,
       );
       node.rotation.y = at.current.yaw;
@@ -163,7 +165,10 @@ function Pet({
       const gait = Math.min(1, trot / (unit * 2.4));
       node.position.set(
         at.current.x,
-        player.y + unit * Math.abs(Math.sin(t * 11)) * 0.03 * gait,
+        // Paws stay planted on the terrain surface, not the flat base plane.
+        player.y +
+          groundY(at.current.x, at.current.z) +
+          unit * Math.abs(Math.sin(t * 11)) * 0.03 * gait,
         at.current.z,
       );
       node.rotation.y = at.current.yaw;
