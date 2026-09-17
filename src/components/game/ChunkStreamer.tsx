@@ -28,6 +28,8 @@ const BATCH = 8;
 const FAST_BATCH = 12;
 const TICK = 0.5;
 const FAST_TICK = 0.22;
+/** Keep occupied areas live so builds placed by other players become visible. */
+const SHARED_WORLD_REFRESH = 8;
 
 export function ChunkStreamer({
   pose,
@@ -37,6 +39,7 @@ export function ChunkStreamer({
   radius?: number;
 }) {
   const last = useRef({ at: 0, key: "" });
+  const lastSharedRefresh = useRef(0);
   const queue = useRef<string[]>([]);
   const seen = useRef(new Set<string>());
   const busy = useRef({ structures: false, terraform: false });
@@ -64,6 +67,17 @@ export function ChunkStreamer({
       player.z + (pace > 0.001 ? (player.vz / pace) * lead : 0),
       radius,
     );
+
+    if (
+      now - lastSharedRefresh.current >= SHARED_WORLD_REFRESH &&
+      !busy.current.structures
+    ) {
+      lastSharedRefresh.current = now;
+      busy.current.structures = true;
+      void syncWorldChunks(keys, true).finally(() => {
+        busy.current.structures = false;
+      });
+    }
 
     const signature = keys.join(",");
     if (signature !== last.current.key) {

@@ -415,12 +415,13 @@ async function publish(items: PlacedStructure[]) {
 }
 
 /**
- * Load the shared structures for a set of world chunks. Called by the client as
- * the player walks; each chunk is fetched once per session.
+ * Load the shared structures for a set of world chunks. Newly entered chunks
+ * are fetched immediately; visible chunks can also be refreshed so creations
+ * raised by another player appear without leaving and re-entering the area.
  */
-export async function syncWorldChunks(keys: string[]) {
+export async function syncWorldChunks(keys: string[], refresh = false) {
   hydrate();
-  const missing = keys.filter((key) => !syncedChunks.has(key));
+  const missing = refresh ? [...new Set(keys)] : keys.filter((key) => !syncedChunks.has(key));
   if (!missing.length) return;
   for (const key of missing) syncedChunks.add(key);
   const started = performance.now();
