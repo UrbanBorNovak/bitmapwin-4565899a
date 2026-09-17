@@ -14,6 +14,7 @@ import {
   tileOfPosition,
 } from "@/lib/world-combat";
 import type { ClanBadge } from "@/lib/clans";
+import { useCharacter } from "@/lib/character";
 
 /**
  * Live presence for the land map. Every visitor broadcasts the grid cell they are
@@ -99,8 +100,16 @@ const RESPAWN_MS = 15_000;
 
 export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
   const selfId = useMemo(() => mapVisitorId(), []);
-  const handle = useMemo(() => mapHandle(), []);
+  /** the character sheet, when one has been written, names the figure you walk as */
+  const character = useCharacter();
+  const storedHandle = useMemo(() => mapHandle(), []);
+  const handle = character?.name?.trim() ? character.name.trim() : storedHandle;
   const [model, setModel] = useState<string | null>(() => avatarModelInscription());
+  /** saving a character on another tab swaps the figure here without a reload */
+  useEffect(() => {
+    if (!character) return;
+    setModel((current) => (current === character.avatarModel ? current : character.avatarModel));
+  }, [character]);
   const [cursors, setCursors] = useState<MapCursor[]>([]);
   const [said, setSaid] = useState<WorldSaid[]>([]);
   const [hp, setHp] = useState(MAX_HP);

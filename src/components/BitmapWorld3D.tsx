@@ -21,7 +21,8 @@ import {
 import { Suspense } from "react";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useCharacter } from "@/lib/character";
 import { ArrowUpRight, Crosshair, Eye, Map as MapIcon, Menu, MessageSquare, Orbit, X } from "lucide-react";
 import * as THREE from "three";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
@@ -3108,6 +3109,8 @@ export function BitmapWorld3D({
   const stone = useFittedStone();
   const bits = useBits();
   const member = useMember();
+  /** the character sheet written on /character — its name and title ride the HUD */
+  const character = useCharacter();
   // The badge is confirmed on chain by the backend; the world only echoes it.
   const membership = useQuery(membershipBadgeQuery(wallet?.ordinalsAddress ?? ""));
   useEffect(() => {
@@ -3198,12 +3201,24 @@ export function BitmapWorld3D({
         <div className="pointer-events-none absolute inset-x-0 top-0 z-40 p-2">
           {exploring ? (
             <div className="flex items-start justify-between gap-3 px-1 py-1 font-mono">
-              <div className="pointer-events-none">
+              <div className="pointer-events-auto">
                 <div className="display text-base text-foreground md:text-lg">THE OASIS</div>
                 <div className="text-[9px] text-muted-foreground" data-no-translate>
                   {readout.height.toLocaleString("en-US")}.BITMAP
                   {bits.today > 0 ? ` · ${bits.today} BIT TODAY` : ""}
                 </div>
+                {character ? (
+                  <div className="mt-0.5 text-[9px] text-foreground" data-no-translate>
+                    {character.name.trim() || handle} · <span className="text-bitcoin">{character.title}</span>
+                  </div>
+                ) : (
+                  <Link
+                    to="/character"
+                    className="mt-0.5 block w-fit border border-border px-1 text-[9px] tracking-[0.18em] text-muted-foreground hover:border-bitcoin hover:text-bitcoin"
+                  >
+                    [ CREATE YOUR CHARACTER ]
+                  </Link>
+                )}
                 {member ? (
                   <div
                     className="mt-0.5 w-fit border border-bitcoin px-1 text-[9px] tracking-[0.18em] text-bitcoin"
