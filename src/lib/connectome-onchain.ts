@@ -59,7 +59,7 @@ const CONTENT_URLS = [
   `https://ordiscan.com/content/${CONNECTOME_INSCRIPTION}`,
 ];
 
-const CACHE_NAME = "oasis-connectome-v1";
+export const CONNECTOME_CACHE = "oasis-connectome-v1";
 
 /** Functional groups, in dataset id order. */
 export const GROUP_NAMES = [
@@ -441,7 +441,7 @@ function budgets() {
 }
 
 async function fetchRaw(): Promise<Uint8Array> {
-  const cache = typeof caches !== "undefined" ? await caches.open(CACHE_NAME).catch(() => null) : null;
+  const cache = typeof caches !== "undefined" ? await caches.open(CONNECTOME_CACHE).catch(() => null) : null;
   const key = CONTENT_URLS[0]!;
   const hit = await cache?.match(key).catch(() => undefined);
   if (hit) return new Uint8Array(await hit.arrayBuffer());

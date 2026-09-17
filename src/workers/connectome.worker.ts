@@ -5,7 +5,7 @@
  * world. Posts back plain typed arrays.
  */
 
-import { buildGraph, decodeConnectome } from "@/lib/connectome-onchain";
+import { CONNECTOME_CACHE, buildGraph, decodeConnectome } from "@/lib/connectome-onchain";
 
 type Request = { urls: string[]; edges: number; nodes: number };
 
