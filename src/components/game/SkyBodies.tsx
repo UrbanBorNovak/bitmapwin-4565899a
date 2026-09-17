@@ -9,6 +9,7 @@ import { Suspense, memo, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
+import { Primitive } from "@/components/game/Primitive";
 import { MOON_INSCRIPTION } from "@/lib/world-gear";
 
 const MOON_URL = `https://ordinals.com/content/${MOON_INSCRIPTION}`;
@@ -42,7 +43,7 @@ function InscribedMoon({ size, dim }: { size: number; dim: number }) {
   }, [gltf.scene, dim]);
   return (
     <group scale={size}>
-      <primitive object={scene} />
+      <Primitive object={scene} />
     </group>
   );
 }
