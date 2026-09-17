@@ -172,6 +172,7 @@ export function WornGear({
             pose={pose}
             offset={[-0.26, 0.46, 0.2]}
             bob={0.015}
+            mountOffset={mountOffset}
           />
 
         </Suspense>
@@ -185,6 +186,7 @@ export function WornGear({
             pose={pose}
             offset={[0, 0.94, 0]}
             seatOnBase
+            mountOffset={mountOffset}
           />
 
         </Suspense>
@@ -197,6 +199,7 @@ export function WornGear({
             fit={0.24}
             pose={pose}
             offset={[0, 0.88, 0.07]}
+            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
@@ -209,6 +212,7 @@ export function WornGear({
             pose={pose}
             offset={[0, 0.79, 0.015]}
             seatOnBase
+            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
@@ -220,6 +224,7 @@ export function WornGear({
             fit={0.2}
             pose={pose}
             offset={[0, 0.7, 0.11]}
+            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
@@ -232,7 +237,7 @@ export function WornGear({
                 unit={unit}
                 fit={0.42}
                 pose={pose}
-                offset={[side * 0.13, -0.22, 0.04]}
+                offset={[side * 0.13, 0.015, 0.04]}
                 seatOnBase
                 mountOffset={mountOffset}
                 stepSide={side}
@@ -286,6 +291,7 @@ export function WornGear({
             fit={0.46}
             pose={pose}
             offset={[0, 0.52, -0.2]}
+            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
@@ -298,6 +304,7 @@ export function WornGear({
             pose={pose}
             offset={[0, 0.82, 0.015]}
             seatOnBase
+            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
