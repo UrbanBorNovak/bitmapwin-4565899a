@@ -110,8 +110,7 @@ export function CharacterSheet({
         filled: gear.goggles,
         Icon: Glasses,
         onPick: () => {
-          if (!gear.goggles) toggleBatmanHead();
-          note(toggleGoggles() ? "NIGHT VISION · ON" : "NIGHT VISION · OFF");
+          note(toggleBatmanHead() ? "BATMAN HEAD ON" : "BATMAN HEAD OFF");
         },
       };
 

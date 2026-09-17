@@ -43,6 +43,7 @@ import { SeaMasses } from "@/components/game/SeaMasses";
 import { SeaIslands } from "@/components/game/SeaIslands";
 import { BitField } from "@/components/game/BitField";
 import { Landmarks } from "@/components/game/Landmarks";
+import { CastleDistrict } from "@/components/game/CastleDistrict";
 import { MarioBros } from "@/components/game/MarioBros";
 import { solidBlocked } from "@/lib/world-solids";
 
@@ -2204,6 +2205,7 @@ const WorldScene = memo(function WorldScene({
           <SeaIslands unit={AVATAR_U} pose={pose} />
           <BitField unit={AVATAR_U} pose={pose} />
           <Landmarks />
+          <CastleDistrict />
           <MarioBros unit={AVATAR_U} pose={pose} />
           <FlyCreatures unit={AVATAR_U} pose={pose} onBite={onBite} onSighted={onSighted} />
           <MysteryBoxes unit={AVATAR_U} pose={pose} onPrize={onPrize} />
@@ -2605,6 +2607,10 @@ export function BitmapWorld3D({
       }
       if (key === "x") {
         eat("cigarette");
+        return;
+      }
+      if (key === ".") {
+        eat("blue-pill");
         return;
       }
       if (key === "z") {
@@ -3314,7 +3320,7 @@ export function BitmapWorld3D({
                         </div>
                         {(Object.keys(FOODS) as FoodId[]).map((id, index) => {
                           const spec = FOODS[id];
-                          const keyHint = ["G", "J", "U", "H", "L", "Y", "V", "K", "X"][index];
+                          const keyHint = ["G", "J", "U", "H", "L", "Y", "V", "K", "X", "."][index];
                           return (
                             <button
                               key={id}

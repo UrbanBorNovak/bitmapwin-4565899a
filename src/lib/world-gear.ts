@@ -384,7 +384,8 @@ export function cycleCompanion() {
 
 export function toggleGoggles() {
   hydrate();
-  state = { ...state, goggles: !state.goggles };
+  const goggles = !state.goggles;
+  state = { ...state, goggles, batmanHead: goggles ? false : state.batmanHead };
   persist();
   emit();
   return state.goggles;
@@ -437,7 +438,8 @@ export function toggleRing() {
 
 export function toggleBatmanHead() {
   hydrate();
-  state = { ...state, batmanHead: !state.batmanHead };
+  const batmanHead = !state.batmanHead;
+  state = { ...state, batmanHead, goggles: batmanHead ? false : state.goggles };
   persist();
   emit();
   return state.batmanHead;
