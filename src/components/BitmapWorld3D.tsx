@@ -39,6 +39,7 @@ import { BitmapMineHud } from "@/components/game/BitmapMineHud";
 import { BitmapMineCrew } from "@/components/game/BitmapMineCrew";
 
 import { SmeltHud } from "@/components/game/SmeltHud";
+import { TradingPostHud } from "@/components/game/TradingPostHud";
 import { EggHunt } from "@/components/game/EggHunt";
 
 
@@ -3898,6 +3899,8 @@ export function BitmapWorld3D({
         {inventoryOpen ? <SkillsHud /> : null}
 
         {inventoryOpen ? <SmeltHud pose={pose} /> : null}
+
+        <TradingPostHud pose={pose} />
 
         {inventoryOpen ? <BitmapMineHud bitmaps={ownedHeights.length} /> : null}
 

@@ -111,7 +111,27 @@ export const LANDMARKS: LandmarkSpec[] = [
     radius: 1.8,
     yaw: Math.PI,
   },
+  {
+    id: "trading-post",
+    label: "THE TRADING POST",
+    blurb: "The counter and listing board west of the plaza — goods in, BIT out.",
+    inscription: "2c2c4f69a5baf378ec897b235fffdde6022b05f898d9ab43f7ca64bea7ad8fbfi0",
+    cell: [-6, 6],
+    span: 1.6,
+    radius: 1.15,
+    yaw: Math.PI / 2.4,
+  },
 ];
+
+/** The trading post itself, so the counter panel knows where to stand. */
+export const TRADING_POST = LANDMARKS.find((spec) => spec.id === "trading-post")!;
+
+/** True while the avatar is close enough to use the counter. */
+export function tradingPostReach(x: number, z: number, reach: number) {
+  const spot = landmarkSpot(TRADING_POST);
+  return Math.hypot(spot.x - x, spot.z - z) <= reach;
+}
+
 
 /** Where the plaza sits in world units — the spawn on 0.BITMAP. */
 export const PLAZA = { x: 0, z: WORLD_CELL };

@@ -1467,6 +1467,77 @@ export type Database = {
         }
         Relationships: []
       }
+      market_listings: {
+        Row: {
+          created_at: string
+          filled: number
+          id: string
+          item_id: string
+          quantity: number
+          seller_address: string
+          seller_kind: string
+          seller_name: string
+          status: string
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          filled?: number
+          id?: string
+          item_id: string
+          quantity: number
+          seller_address: string
+          seller_kind?: string
+          seller_name?: string
+          status?: string
+          unit_price: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          filled?: number
+          id?: string
+          item_id?: string
+          quantity?: number
+          seller_address?: string
+          seller_kind?: string
+          seller_name?: string
+          status?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_listings_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "goods_market"
+            referencedColumns: ["item_id"]
+          },
+        ]
+      }
+      market_npc_state: {
+        Row: {
+          bought_total: number
+          id: boolean
+          last_run: string
+          listed_total: number
+        }
+        Insert: {
+          bought_total?: number
+          id?: boolean
+          last_run?: string
+          listed_total?: number
+        }
+        Update: {
+          bought_total?: number
+          id?: boolean
+          last_run?: string
+          listed_total?: number
+        }
+        Relationships: []
+      }
       membership_badges: {
         Row: {
           active: boolean
@@ -2065,6 +2136,39 @@ export type Database = {
         Returns: {
           block_height: number
           owner_address: string
+        }[]
+      }
+      market_buy_listing: {
+        Args: { _buyer_address: string; _listing_id: string; _qty: number }
+        Returns: {
+          filled: number
+          item_id: string
+          total_coins: number
+          unit_price: number
+        }[]
+      }
+      market_cancel_listing: {
+        Args: { _address: string; _listing_id: string }
+        Returns: {
+          item_id: string
+          remaining: number
+        }[]
+      }
+      market_list_goods: {
+        Args: {
+          _address: string
+          _item: string
+          _qty: number
+          _unit_price: number
+        }
+        Returns: string
+      }
+      market_npc_tick: {
+        Args: never
+        Returns: {
+          bought: number
+          listed: number
+          skipped: boolean
         }[]
       }
       owns_wallet: {
