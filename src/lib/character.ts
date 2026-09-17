@@ -8,6 +8,7 @@
  * model call, no tokens, no AI credits, and it works offline.
  */
 
+import { useEffect, useState } from "react";
 import { DEFAULT_AVATAR_MODEL, setMapHandle } from "@/lib/map-identity";
 
 const KEY = "bitmapwin:character";
@@ -227,9 +228,6 @@ export function characterModel(character: Character | null): string | null {
 export { DEFAULT_AVATAR_MODEL };
 
 /* ------------------------------------------------------- live character hook */
-
-import { useEffect, useState } from "react";
-
 /**
  * The saved character, kept live: it updates when the sheet is saved in another
  * tab or on the character page while the world is open.
