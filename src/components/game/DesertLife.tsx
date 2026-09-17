@@ -1011,6 +1011,16 @@ const CritterBody = memo(function CritterBody({
     );
   }
 
+  if (kind === "coyote") {
+    return (
+      <Suspense fallback={null}>
+        <InscribedModel url={COYOTE_URL} size={u * 0.55} />
+      </Suspense>
+    );
+  }
+
+
+
   if (kind === "jackrabbit") {
     return (
       <group>
