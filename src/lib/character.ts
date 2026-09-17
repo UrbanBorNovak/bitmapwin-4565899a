@@ -225,3 +225,29 @@ export function characterModel(character: Character | null): string | null {
 }
 
 export { DEFAULT_AVATAR_MODEL };
+
+/* ------------------------------------------------------- live character hook */
+
+import { useEffect, useState } from "react";
+
+/**
+ * The saved character, kept live: it updates when the sheet is saved in another
+ * tab or on the character page while the world is open.
+ */
+export function useCharacter(): Character | null {
+  const [character, setCharacter] = useState<Character | null>(null);
+  useEffect(() => {
+    setCharacter(readCharacter());
+    const onSave = (event: Event) => setCharacter((event as CustomEvent<Character>).detail);
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === KEY) setCharacter(readCharacter());
+    };
+    window.addEventListener("bitmapwin:character", onSave);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("bitmapwin:character", onSave);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
+  return character;
+}
