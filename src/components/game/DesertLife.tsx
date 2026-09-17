@@ -613,6 +613,10 @@ const SNAKE_URL = contentUrl(
 const LIZARD_URL = contentUrl(
   "290b40f95d637b5f8ac7925eca8d5668536de86e2c5398a3180fc35e0011864fi0",
 );
+/** on-chain coyote */
+const COYOTE_URL = contentUrl(
+  "5252a0717cf8c23055b2558585fb24d4038a6281f7d51be4edadb9e16829d46ci0",
+);
 
 
 function pickSpecies(roll: number): Species {
