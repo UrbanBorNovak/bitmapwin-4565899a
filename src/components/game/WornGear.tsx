@@ -72,6 +72,8 @@ function WornPiece({
   stepSide?: number;
   seatOnBase?: boolean;
   fitAllAxes?: boolean;
+  /** measure/seat using only this named node (ignores stray parts like lace curves) */
+  boundsNode?: string;
 }) {
   const gltf = useGLTF(url);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
