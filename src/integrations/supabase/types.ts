@@ -491,6 +491,74 @@ export type Database = {
           },
         ]
       }
+      clan_members: {
+        Row: {
+          clan_id: string
+          created_at: string
+          id: string
+          role: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          clan_id: string
+          created_at?: string
+          id?: string
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          clan_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clan_members_clan_id_fkey"
+            columns: ["clan_id"]
+            isOneToOne: false
+            referencedRelation: "clans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clans: {
+        Row: {
+          created_at: string
+          crest_inscription_id: string
+          id: string
+          leader_user_id: string
+          name: string
+          tag: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          crest_inscription_id: string
+          id?: string
+          leader_user_id: string
+          name: string
+          tag: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          crest_inscription_id?: string
+          id?: string
+          leader_user_id?: string
+          name?: string
+          tag?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       coin_balances: {
         Row: {
           address: string
@@ -1794,6 +1862,16 @@ export type Database = {
         Returns: boolean
       }
       can_build_on_height: { Args: { _height: number }; Returns: boolean }
+      clan_for_users: {
+        Args: { _user_ids: string[] }
+        Returns: {
+          clan_id: string
+          clan_name: string
+          clan_tag: string
+          crest_inscription_id: string
+          user_id: string
+        }[]
+      }
       coin_apply: {
         Args: {
           _address: string
@@ -1835,6 +1913,10 @@ export type Database = {
       }
       coin_start_lease: {
         Args: { _days: number; _lessee_address: string; _offer_id: string }
+        Returns: string
+      }
+      create_clan: {
+        Args: { _crest_inscription_id: string; _name: string; _tag: string }
         Returns: string
       }
       land_terraform_in_chunks: {
