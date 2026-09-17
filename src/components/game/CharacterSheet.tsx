@@ -10,7 +10,7 @@ import { Suspense, useEffect, useMemo, useRef } from "react";
 import type { LucideIcon } from "lucide-react";
 import { BookOpen, CircleDot, Footprints, Gem, Glasses, HardHat, ToyBrick, Watch } from "lucide-react";
 import { Canvas, useThree } from "@react-three/fiber";
-import { useGLTF, useTexture } from "@react-three/drei";
+import { useAnimations, useGLTF, useTexture } from "@react-three/drei";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
 import { WeaponGlyph } from "@/components/game/WeaponBelt";
@@ -47,8 +47,8 @@ const TRANSPARENT_PIXEL =
 function PreviewCamera() {
   const { camera } = useThree();
   useEffect(() => {
-    camera.position.set(1.55, 1.05, 2.8);
-    camera.lookAt(0, 0.54, 0);
+    camera.position.set(1.05, 0.78, 2.05);
+    camera.lookAt(0, 0.6, 0);
   }, [camera]);
   return null;
 }
@@ -57,6 +57,19 @@ function PreviewAvatar({ model }: { model: string | null }) {
   const inscription = model ?? DEFAULT_AVATAR_MODEL;
   const gltf = useGLTF(`https://ordinals.com/content/${inscription}`);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
+  // The figure must stand the way it stands in the world, or the gear tuned
+  // against the standing body (shoes at the ankles, weapon in the hand) lands
+  // against a sprawled bind pose instead.
+  const { actions, names } = useAnimations(gltf.animations, scene);
+  useEffect(() => {
+    const name = names.find((entry) => /idle|stand/i.test(entry)) ?? names[0];
+    const action = name ? actions[name] : null;
+    if (!action) return;
+    action.reset().setLoop(THREE.LoopRepeat, Infinity).setEffectiveWeight(1).play();
+    return () => {
+      action.stop();
+    };
+  }, [actions, names]);
   const texture = useTexture(
     inscription === DEFAULT_AVATAR_MODEL
       ? `https://ordinals.com/content/${DEFAULT_AVATAR_TEXTURE}`
@@ -102,12 +115,19 @@ function PreviewAvatar({ model }: { model: string | null }) {
   );
 }
 
+/**
+ * The weapon on the paper doll.
+ *
+ * The world holds a piece low, near the hip, because the camera looks over your
+ * shoulder from behind. Face-on in the sheet that reads as a prop floating by
+ * the thigh, so the doll raises it to hand height and turns it broadside.
+ */
 function PreviewWeapon({ kind }: { kind: WeaponKind }) {
   const materials = useWeaponMaterials();
   return (
     <group
-      position={[kind === "sword" ? 0 : 0.3, kind === "sword" ? 0.62 : 0.26, 0.14]}
-      rotation={[kind === "trap" ? 0.5 : -0.06, Math.PI, 0]}
+      position={[kind === "sword" ? 0 : 0.27, kind === "sword" ? 0.66 : 0.52, 0.16]}
+      rotation={[kind === "trap" ? 0.5 : -0.06, Math.PI * 0.86, 0]}
       scale={kind === "sword" ? 0.7 : 0.62}
     >
       <WeaponModel kind={kind} u={1} materials={materials} flashColor="#f7931a" lash={0} />
@@ -115,10 +135,11 @@ function PreviewWeapon({ kind }: { kind: WeaponKind }) {
   );
 }
 
+
 export function EquippedAvatarPreview({ model, weapon, flying }: { model: string | null; weapon: WeaponKind | null; flying: boolean }) {
   const pose = useRef(createPlayerState(0, 0, 0));
   return (
-    <Canvas dpr={[1, 1.5]} camera={{ position: [1.55, 1.05, 2.8], fov: 34, near: 0.01, far: 20 }}>
+    <Canvas dpr={[1, 1.5]} camera={{ position: [1.05, 0.78, 2.05], fov: 38, near: 0.01, far: 20 }}>
       <PreviewCamera />
       <ambientLight intensity={1.5} />
       <directionalLight position={[2, 3, 3]} intensity={2.2} />
