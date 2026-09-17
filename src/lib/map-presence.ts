@@ -151,6 +151,11 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
       setCursors(Array.from(peers.values()));
     };
 
+    // Until the socket has actually joined, every send() falls back to a slow
+    // REST call. Position updates are dropped while we wait — the heartbeat
+    // resends the latest one — so a match never starts on the slow path.
+    let joined = false;
+
     const channel = supabase
       .channel(CHANNEL, { config: { broadcast: { self: false } } })
       .on("broadcast", { event: "cursor" }, ({ payload }) => {
@@ -290,11 +295,6 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
       .subscribe((status) => {
         joined = status === "SUBSCRIBED";
       });
-
-    // Until the socket has actually joined, every send() falls back to a slow
-    // REST call. Position updates are dropped while we wait — the heartbeat
-    // resends the latest one — so a match never starts on the slow path.
-    let joined = false;
 
     let last = 0;
     let lastCell: PoseReport | null = null;
