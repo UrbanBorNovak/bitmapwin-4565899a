@@ -29,6 +29,7 @@ import {
   trapsVersion,
   type TrapEntity,
 } from "@/lib/world-traps";
+import { isSea } from "@/lib/world-sea";
 
 const TRAP_URL = `https://ordinals.com/content/${TRAP_INSCRIPTION}`;
 
@@ -132,6 +133,7 @@ export function TrapField({
     const radius = unit * TRAP_RADIUS_STRIDES;
 
     for (const trap of liveTraps()) {
+      if (isSea(trap.x, trap.z)) continue;
       if (trap.sprungAt || now < trap.armedAt) continue;
 
       // The visitor themself — never caught by their own jaws.
@@ -174,9 +176,11 @@ export function TrapField({
 
   return (
     <group>
-      {liveTraps().map((trap) => (
-        <Trap key={trap.id} trap={trap} unit={unit} bitcoin={bitcoin} />
-      ))}
+      {liveTraps()
+        .filter((trap) => !isSea(trap.x, trap.z))
+        .map((trap) => (
+          <Trap key={trap.id} trap={trap} unit={unit} bitcoin={bitcoin} />
+        ))}
     </group>
   );
 }

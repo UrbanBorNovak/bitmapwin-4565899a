@@ -113,6 +113,7 @@ import {
   blockedAt,
   build as buildStructure,
   buildCamp,
+  campTouchesWater,
   CAMP_RECIPE,
   costLabel,
   damageStructure,
@@ -215,7 +216,7 @@ import { DriveBlur } from "@/components/game/DriveBlur";
 import { DamageVeil } from "@/components/game/DamageVeil";
 
 import type { RideSpec } from "@/lib/world-vehicle";
-import { isDeepSea, isSea, nearestSea } from "@/lib/world-sea";
+import { dryLandNear, isDeepSea, isSea, nearestSea } from "@/lib/world-sea";
 import TouchControls from "@/components/game/TouchControls";
 import { consumeTouchJump, isTouchDevice, takeTouchLook, touchPad } from "@/lib/touch-input";
 import {
@@ -1500,6 +1501,7 @@ function PlayerCameraRig({
         // A hull only holds where there is water: the shoreline is a wall.
         return !isSea(x, z) && isSea(pose.current?.x ?? x, pose.current?.z ?? z);
       }
+      if (isDriving() && currentRide().kind !== "air" && isSea(x, z)) return true;
       // Boots and wheels wade the shelf but never the deep — unless they are
       // already out there, so nobody is ever stuck mid-sea.
       const player = pose.current;
@@ -2541,6 +2543,13 @@ export function BitmapWorld3D({
       window.setTimeout(() => setRideNote(null), 2800);
       return;
     }
+    if (isDriving() && wanted.kind !== "water" && isSea(player.x, player.z)) {
+      const shore = dryLandNear(player.x, player.z, AVATAR_U * 90, player.yaw);
+      if (shore) {
+        player.x = shore.x;
+        player.z = shore.z;
+      }
+    }
     const seated = toggleDriving(player.x, player.z, player.yaw);
     playSfx(seated ? "board" : "engineoff");
     if (!seated) stopEngine();
@@ -2575,6 +2584,10 @@ export function BitmapWorld3D({
   /** Craft a structure out of gathered materials and drop it where you stand. */
   const placeBuild = useCallback((id: StructureId) => {
     const current = pose.current;
+    if (isSea(current?.x ?? 0, current?.z ?? 0)) {
+      setBuildNote("BUILD NEEDS DRY LAND");
+      return;
+    }
     if (blockedAt(current?.x ?? 0, current?.z ?? 0, AVATAR_U * 0.2)) {
       setBuildNote("SOMETHING IS ALREADY STANDING HERE · MOVE OR KNOCK IT DOWN");
       return;
@@ -2591,6 +2604,10 @@ export function BitmapWorld3D({
   /** Raise a whole camp — shelter, fire and watchtower — around your feet. */
   const placeCamp = useCallback(() => {
     const current = pose.current;
+    if (campTouchesWater(current?.x ?? 0, current?.z ?? 0, current?.yaw ?? 0, AVATAR_U)) {
+      setBuildNote("CAMP NEEDS DRY LAND");
+      return;
+    }
     const placed = buildCamp(
       current?.x ?? 0,
       current?.z ?? 0,

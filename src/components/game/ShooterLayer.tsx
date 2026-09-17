@@ -24,6 +24,7 @@ import { addItem, grantXp, skillLevel, spendItems } from "@/lib/world-skills";
 import { Primitive } from "./Primitive";
 import { AIM_FORGIVENESS, AIM_REACH_BONUS, aimState } from "@/lib/world-aim";
 import { TRAP_LIMIT, placeTrap } from "@/lib/world-traps";
+import { isSea } from "@/lib/world-sea";
 
 /**
  * WEAPONS IN THE WORLD — carry a minigun, a revolver, traps or a pickaxe.
@@ -274,10 +275,16 @@ export function ShooterLayer({
       setLash(1);
       recoil.current = 1;
       const ahead = STRIDE * 2.2;
+      const trapX = me.x + Math.sin(me.yaw) * ahead;
+      const trapZ = me.z + Math.cos(me.yaw) * ahead;
+      if (isSea(trapX, trapZ)) {
+        flashNote("TRAP NEEDS DRY LAND");
+        return;
+      }
       const laid = placeTrap(
         selfId,
-        me.x + Math.sin(me.yaw) * ahead,
-        me.z + Math.cos(me.yaw) * ahead,
+        trapX,
+        trapZ,
         0,
       );
       flashNote(laid ? "TRAP SET · ARMING" : `TRAP LIMIT · ${TRAP_LIMIT} IN THE SAND`);
