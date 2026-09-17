@@ -140,7 +140,8 @@ export function groundY(x: number, z: number) {
   const micro = bilinear(fx, fz, activityOfCell);
   const land = macro * MACRO_AMP + micro * MICRO_AMP;
   // Water sits at zero: the sea bed dips under it and the shore eases down.
-  const depth = clamp(seaDepthAt(x, z), 0, 1);
+  const hit = seaDepthAt(x, z);
+  const depth = hit ? clamp(hit.depth, 0, 1) : 0;
   return land * (1 - depth) - depth * SEA_DROP;
 }
 
