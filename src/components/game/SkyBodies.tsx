@@ -186,7 +186,8 @@ function AuroraBorealis({ night, far }: { night: boolean; far: number }) {
   useFrame(({ clock }) => {
     const elapsed = clock.getElapsedTime();
     materials.current.forEach((material) => {
-      material.uniforms.uTime.value = elapsed;
+      const timeUniform = material.uniforms["uTime"];
+      if (timeUniform) timeUniform.value = elapsed;
     });
   });
 
