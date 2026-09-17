@@ -3198,12 +3198,24 @@ export function BitmapWorld3D({
         <div className="pointer-events-none absolute inset-x-0 top-0 z-40 p-2">
           {exploring ? (
             <div className="flex items-start justify-between gap-3 px-1 py-1 font-mono">
-              <div className="pointer-events-none">
+              <div className="pointer-events-auto">
                 <div className="display text-base text-foreground md:text-lg">THE OASIS</div>
                 <div className="text-[9px] text-muted-foreground" data-no-translate>
                   {readout.height.toLocaleString("en-US")}.BITMAP
                   {bits.today > 0 ? ` · ${bits.today} BIT TODAY` : ""}
                 </div>
+                {character ? (
+                  <div className="mt-0.5 text-[9px] text-foreground" data-no-translate>
+                    {character.name.trim() || handle} · <span className="text-bitcoin">{character.title}</span>
+                  </div>
+                ) : (
+                  <Link
+                    to="/character"
+                    className="mt-0.5 block w-fit border border-border px-1 text-[9px] tracking-[0.18em] text-muted-foreground hover:border-bitcoin hover:text-bitcoin"
+                  >
+                    [ CREATE YOUR CHARACTER ]
+                  </Link>
+                )}
                 {member ? (
                   <div
                     className="mt-0.5 w-fit border border-bitcoin px-1 text-[9px] tracking-[0.18em] text-bitcoin"
