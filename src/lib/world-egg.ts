@@ -84,6 +84,29 @@ export function eggClaimed(id: string) {
   return claimed.includes(id);
 }
 
+/** How many eggs have been secured — salts tomorrow's hiding place. */
+export function eggClaimCount() {
+  hydrate();
+  return claimed.length;
+}
+
+/** Timestamp of the last secured relic, or 0. Drives the sealing animation. */
+export function eggSecuredAt() {
+  return securedAt;
+}
+
+/** Midnight UTC after the last claim: when the egg reappears elsewhere. */
+export function eggReturnsAt(now = Date.now()) {
+  const next = new Date(now);
+  next.setUTCHours(24, 0, 0, 0);
+  return next.getTime();
+}
+
+/** Hours until the next egg hides itself somewhere new. */
+export function eggHoursUntilReturn(now = Date.now()) {
+  return Math.max(1, Math.ceil((eggReturnsAt(now) - now) / 3_600_000));
+}
+
 /** Called from the scene each time the hunter's distance to the egg changes. */
 export function setEggProbe(next: EggProbe | null) {
   const same =
