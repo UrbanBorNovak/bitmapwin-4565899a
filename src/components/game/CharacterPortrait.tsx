@@ -13,10 +13,13 @@ export function CharacterPortrait({
   model,
   weapon = null,
   className = "h-72",
+  skin = null,
 }: {
   model: string | null;
   weapon?: WeaponKind | null;
   className?: string;
+  /** on-chain pixel skin painted on the stock figure */
+  skin?: string | null;
 }) {
   return (
     <div className={`relative w-full ${className}`} data-no-translate>
@@ -27,7 +30,7 @@ export function CharacterPortrait({
           </div>
         }
       >
-        <EquippedAvatarPreview model={model} weapon={weapon} flying={false} />
+        <EquippedAvatarPreview model={model} weapon={weapon} flying={false} skin={skin} />
       </ClientOnly>
       <span className="pointer-events-none absolute left-2 top-2 text-[8px] uppercase tracking-[0.2em] text-muted-foreground">
         LIVE LOADOUT

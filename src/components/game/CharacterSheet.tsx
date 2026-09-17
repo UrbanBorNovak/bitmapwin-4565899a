@@ -158,7 +158,7 @@ export function EquippedAvatarPreview({
       <directionalLight position={[-2, 1, -2]} intensity={0.8} />
       <group rotation-y={-0.18}>
         <Suspense fallback={null}>
-          <PreviewAvatar model={model} />
+          <PreviewAvatar model={model} skin={skin} />
           {weapon ? <PreviewWeapon kind={weapon} /> : null}
           <WornGear unit={1} pose={pose} weapon={weapon} showHead jetpack={flying} />
         </Suspense>
