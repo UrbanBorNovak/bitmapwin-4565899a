@@ -7,7 +7,7 @@
  * day.
  */
 
-import { Suspense, memo, useMemo, useRef } from "react";
+import { Suspense, memo, useMemo, useRef, useSyncExternalStore } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
@@ -15,10 +15,17 @@ import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import {
   EGG_INSCRIPTION,
   EGG_REACH,
+  eggClaimCount,
   eggClaimed,
   eggDay,
+  eggSecuredAt,
+  eggVersion,
   setEggProbe,
+  subscribeEgg,
 } from "@/lib/world-egg";
+
+/** How long the sealing flourish plays after the relic is taken, in seconds. */
+const SECURE_TIME = 1.8;
 
 const EGG_URL = contentUrl(EGG_INSCRIPTION);
 const noRaycast = () => {};
