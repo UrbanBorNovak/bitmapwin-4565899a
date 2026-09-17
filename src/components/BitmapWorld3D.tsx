@@ -3823,6 +3823,9 @@ export function BitmapWorld3D({
 
         <OasisLoading />
 
+        {/* THE OASIS SCORE — synthesised locally, so it costs nothing to stream. */}
+        <WorldMusic active={musicOn && !muted} />
+
         <DriveBlur active={driving && cameraMode !== "map"} />
 
         {/* NIGHT VISION — the goggles paint the world green while you wear them. */}
