@@ -151,9 +151,8 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
       setCursors(Array.from(peers.values()));
     };
 
-    // Until the socket has actually joined, every send() falls back to a slow
-    // REST call. Position updates are dropped while we wait — the heartbeat
-    // resends the latest one — so a match never starts on the slow path.
+    // Tracks whether the realtime socket has actually joined; until it has,
+    // sends go out over the slow REST fallback and must be rationed.
     let joined = false;
 
     const channel = supabase
@@ -301,7 +300,9 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
     let pending: PoseReport | null = null;
     let timer: ReturnType<typeof setTimeout> | null = null;
     const push = (cell: PoseReport | null) => {
-      if (!joined) return;
+      // Before the socket joins, every send falls back to a slow REST call, so
+      // position updates are thinned right down instead of flooding it.
+      if (!joined && cell && Date.now() - last < 2_000) return;
       void channel.send({
         type: "broadcast",
         event: "cursor",
