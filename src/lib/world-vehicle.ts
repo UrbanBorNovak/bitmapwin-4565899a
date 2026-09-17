@@ -364,3 +364,112 @@ export function stopDriving() {
   vehicle.driving = false;
   emit();
 }
+
+/**
+ * VEHICLE ARMAMENT — what an armed ride shoots with. The gunner brain
+ * (`gunner-brain.ts`) reads these numbers to work out lead, lock and trigger
+ * timing; the gunner layer draws the tracer from them.
+ */
+export type VehicleGunSpec = {
+  /** short crew name shown on the HUD */
+  label: string;
+  /** damage per shell */
+  damage: number;
+  /** milliseconds between shells */
+  cooldownMs: number;
+  /** reach in avatar strides */
+  rangeStrides: number;
+  /** shell travel in strides per second — feeds the intercept solve */
+  shellStrides: number;
+  /** how forgiving the hit test is, in strides */
+  forgivenessStrides: number;
+  /** muzzle height and reach ahead of the hull, in strides */
+  muzzleUp: number;
+  muzzleAhead: number;
+  /** which cannon voice plays */
+  voice: "cannon" | "shot";
+};
+
+/** Rides that carry a weapon. Everything else drives unarmed. */
+export const RIDE_GUNS: Record<string, VehicleGunSpec> = {
+  tank: {
+    label: "120MM CANNON",
+    damage: 70,
+    cooldownMs: 1_500,
+    rangeStrides: 30,
+    shellStrides: 90,
+    forgivenessStrides: 1.4,
+    muzzleUp: 1.45,
+    muzzleAhead: 2.1,
+    voice: "cannon",
+  },
+  cybertruck: {
+    label: "BED AUTOCANNON",
+    damage: 26,
+    cooldownMs: 420,
+    rangeStrides: 20,
+    shellStrides: 120,
+    forgivenessStrides: 1,
+    muzzleUp: 1.2,
+    muzzleAhead: 1.6,
+    voice: "shot",
+  },
+  bitsaucer: {
+    label: "PLASMA RING",
+    damage: 34,
+    cooldownMs: 700,
+    rangeStrides: 26,
+    shellStrides: 110,
+    forgivenessStrides: 1.6,
+    muzzleUp: 0.4,
+    muzzleAhead: 1.8,
+    voice: "shot",
+  },
+  "silver-saucer": {
+    label: "SILVER LANCE",
+    damage: 40,
+    cooldownMs: 820,
+    rangeStrides: 28,
+    shellStrides: 130,
+    forgivenessStrides: 1.5,
+    muzzleUp: 0.4,
+    muzzleAhead: 1.9,
+    voice: "shot",
+  },
+  spacecraft: {
+    label: "ORBITAL RAIL",
+    damage: 90,
+    cooldownMs: 1_900,
+    rangeStrides: 40,
+    shellStrides: 180,
+    forgivenessStrides: 1.8,
+    muzzleUp: 0.6,
+    muzzleAhead: 2.6,
+    voice: "cannon",
+  },
+  ship: {
+    label: "DECK GUN",
+    damage: 48,
+    cooldownMs: 1_300,
+    rangeStrides: 24,
+    shellStrides: 80,
+    forgivenessStrides: 1.6,
+    muzzleUp: 1.8,
+    muzzleAhead: 2.4,
+    voice: "cannon",
+  },
+  "adamantine-yacht": {
+    label: "BOW BATTERY",
+    damage: 52,
+    cooldownMs: 1_400,
+    rangeStrides: 26,
+    shellStrides: 85,
+    forgivenessStrides: 1.6,
+    muzzleUp: 2,
+    muzzleAhead: 2.8,
+    voice: "cannon",
+  },
+};
+
+/** The weapon the given ride carries, or null when it drives unarmed. */
+export const rideGun = (id: string): VehicleGunSpec | null => RIDE_GUNS[id] ?? null;
