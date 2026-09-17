@@ -38,18 +38,16 @@ function ExtendPage() {
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-10 md:px-8 md:py-16">
       <MvpFlowRail active="extend" {...(hasLand ? { height: height as number } : {})} />
-      <div className="label mt-6 text-bitcoin">STEP 02 OF 03 · EXTEND</div>
-      <h1 className="display mt-3 text-3xl md:text-5xl">EXTEND YOUR LAND</h1>
+      <h1 className="display mt-6 text-3xl md:text-5xl">BUILD ON YOUR LAND</h1>
       <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
         {hasLand ? (
           <>
-            <span className="text-foreground" data-no-translate>{height}.BITMAP</span> is a canvas. Anything that can run
-            on the bedrock can live here — a single building, a shop, a quest, or an entire world.
+            Put something on <span className="text-foreground" data-no-translate>{height}.BITMAP</span> — a house, a shop,
+            a quest, a whole town. Pick one of the three ways below.
           </>
         ) : (
           <>
-            Your BITMAP is a canvas. Anything that can run on the bedrock can live on it — a single building, a shop, a
-            quest, or an entire world.
+            Put something on your BITMAP — a house, a shop, a quest, a whole town. Pick one of the three ways below.
           </>
         )}
       </p>
