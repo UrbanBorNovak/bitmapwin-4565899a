@@ -2081,6 +2081,15 @@ export type Database = {
       }
     }
     Views: {
+      coin_leaderboard_public: {
+        Row: {
+          address_label: string | null
+          balance: number | null
+          rank: number | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
       extender_public_stats: {
         Row: {
           active_deployments: number | null
@@ -2148,15 +2157,6 @@ export type Database = {
       coin_enter_event: {
         Args: { _address: string; _event_id: string; _tickets: number }
         Returns: string
-      }
-      coin_leaderboard: {
-        Args: { _limit?: number }
-        Returns: {
-          address_label: string
-          balance: number
-          rank: number
-          updated_at: string
-        }[]
       }
       coin_spend: {
         Args: {
