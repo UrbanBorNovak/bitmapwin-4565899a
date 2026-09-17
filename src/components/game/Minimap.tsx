@@ -31,6 +31,8 @@ type Props = {
   /** Optional controlled state used by the world-first HUD. */
   expanded?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
+  /** Render the scan inside a panel (base menu) instead of floating on the HUD. */
+  inline?: boolean;
 };
 
 const colOf = (x: number) => Math.floor((x + WORLD_UNITS / 2) / WORLD_CELL);
@@ -51,12 +53,14 @@ export function Minimap({
   showCompact = true,
   expanded: controlledExpanded,
   onExpandedChange,
+  inline = false,
 }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const backgroundImage = useRef<HTMLImageElement | null>(null);
   const [zoom, setZoom] = useState(1);
   const [internalExpanded, setInternalExpanded] = useState(false);
-  const expanded = controlledExpanded ?? internalExpanded;
+  // An inline scan never takes over the screen; it always shows the local view.
+  const expanded = inline ? false : (controlledExpanded ?? internalExpanded);
   const setExpanded = useCallback(
     (next: boolean | ((current: boolean) => boolean)) => {
       const value = typeof next === "function" ? next(expanded) : next;
@@ -105,7 +109,7 @@ export function Minimap({
 
   // M toggles the full-size map.
   useEffect(() => {
-    if (controlledExpanded !== undefined) return;
+    if (inline || controlledExpanded !== undefined) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() !== "m") return;
       const target = event.target as HTMLElement | null;
@@ -367,6 +371,27 @@ export function Minimap({
       ))}
     </ul>
   ) : null;
+
+  // Base menu: the same live scan, sitting inside a panel instead of floating.
+  if (inline) {
+    return (
+      <div data-no-translate aria-label="Base map" className="border border-border font-mono">
+        <header className="flex items-center justify-between gap-1 border-b border-signal/20 px-1.5 py-1 text-[9px]">
+          <span className="hud-telemetry-title">BASE SCAN</span>
+          <button
+            type="button"
+            className="border border-border px-1 text-muted-foreground hover:border-signal hover:text-signal"
+            title="Zoom the scan"
+            onClick={() => setZoom((current) => (current + 1) % ZOOMS.length)}
+          >
+            {ZOOMS[zoom]}
+          </button>
+        </header>
+        {body}
+        {partyRoster}
+      </div>
+    );
+  }
 
   return (
     <>

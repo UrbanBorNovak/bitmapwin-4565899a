@@ -141,11 +141,13 @@ import { CharacterSheet } from "@/components/game/CharacterSheet";
 import { RationIcon } from "@/components/game/RationIcon";
 import { ClanCrest } from "@/components/game/ClanCrest";
 import { ClanPanel } from "@/components/game/ClanPanel";
+import { BaseMenu } from "@/components/game/BaseMenu";
 import { clanStateQuery, type ClanBadge } from "@/lib/clans";
 
 /** the side menu shelves — one open at a time keeps the HUD short */
-type KitTab = "action" | "kit" | "travel" | "view" | "clan";
+type KitTab = "base" | "action" | "kit" | "travel" | "view" | "clan";
 const KIT_TABS: { id: KitTab; label: string }[] = [
+  { id: "base", label: "BASE" },
   { id: "action", label: "ACTION" },
   { id: "kit", label: "KIT" },
   { id: "travel", label: "TRAVEL" },
@@ -3476,6 +3478,17 @@ export function BitmapWorld3D({
                   </button>
                 ))}
               </div>
+
+              {kitTab === "base" ? (
+                <BaseMenu
+                  pose={pose}
+                  cursors={cursors}
+                  ownedHeights={ownedHeights}
+                  partyIds={party.party?.members.map((member) => member.id) ?? []}
+                  onVisit={visitHeight}
+                  onInvite={party.invite}
+                />
+              ) : null}
 
               {kitTab === "action" ? (
               <div className="flex flex-col gap-1">
