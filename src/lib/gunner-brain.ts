@@ -157,8 +157,13 @@ function think(brain: GunnerBrain, sense: GunnerSense): GunnerAct {
   const forwardX = Math.sin(sense.yaw);
   const forwardZ = Math.cos(sense.yaw);
 
-  // 1. TRACK — differentiate each contact into a velocity estimate.
+  // 1. TRACK — differentiate each contact into a velocity estimate and let the
+  // duel model read its path: curve, dodge rhythm and how trustworthy it is.
+  brain.duel.forget(sense.now);
   for (const contact of sense.contacts) {
+    brain.duel.observe(contact.id, sense.now, contact.x, contact.y, contact.z);
+  }
+
     const seen = contacts.get(contact.id);
     if (seen) {
       const dt = Math.max(16, sense.now - seen.seenAt) / 1000;
