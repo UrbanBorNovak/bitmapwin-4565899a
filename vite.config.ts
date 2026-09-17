@@ -26,7 +26,9 @@ function stripThreeSourceAnnotations(): Plugin {
       const cleanId = id.split("?", 1)[0]?.replaceAll("\\", "/");
       if (!cleanId || !THREE_SOURCE_MODULE.test(cleanId)) return null;
 
-      const stripped = code.replace(/\sdata-tsd-source=(?:"[^"]*"|'[^']*'|\{[^}]*\})/g, "");
+      const stripped = code
+        .replace(/\sdata-tsd-source=(?:"[^"]*"|'[^']*'|\{[^}]*\})/g, "")
+        .replace(/\s*"data-tsd-source":\s*"[^"]*",?/g, "");
       if (stripped === code) return null;
       return { code: stripped, map: null };
     },
