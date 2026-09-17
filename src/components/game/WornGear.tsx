@@ -48,7 +48,6 @@ function WornPiece({
   /** extra yaw so a piece modelled sideways still faces where you look */
   turn = 0,
   pitch = 0,
-  mountOffset = 0,
   stepSide = 0,
   /** rest on the piece's own base instead of its middle (hats, helmets) */
   seatOnBase = false,
@@ -67,8 +66,6 @@ function WornPiece({
   turn?: number;
   /** rotate a model authored upright so it lies along the foot */
   pitch?: number;
-  /** extra world lift when the avatar is seated on a mount */
-  mountOffset?: number;
   /** -1 left foot, +1 right foot; animates shoes with the avatar stride */
   stepSide?: number;
   seatOnBase?: boolean;
@@ -79,10 +76,7 @@ function WornPiece({
   const gltf = useGLTF(url);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
   const group = useRef<THREE.Group>(null);
-  const localOffset = useMemo(() => new THREE.Vector3(), []);
-  const bodyRotation = useMemo(() => new THREE.Euler(0, 0, 0, "XYZ"), []);
   const turnRotation = useMemo(() => new THREE.Quaternion(), []);
-  const worldRotation = useMemo(() => new THREE.Quaternion(), []);
 
   const fitted = useMemo(() => {
     // Correct authored orientation before measuring, so base seating still
@@ -131,24 +125,16 @@ function WornPiece({
       : 0;
     const lift = bodyBob + (bob ? Math.sin(clock.elapsedTime * 2.4) * unit * bob : 0)
       + (stepSide ? Math.max(0, stride) * unit * 0.08 : 0);
-    const lean = player.lean ?? 0;
-    // Match SelfAvatar's XYZ Euler exactly, then transform the local attachment
-    // point through it. This keeps every piece pinned while climbing or diving.
-    bodyRotation.set(lean, player.yaw, 0);
-    worldRotation.setFromEuler(bodyRotation);
-    localOffset
-      .set(side * unit, up * unit, (forward + (stepSide ? stride * 0.12 : 0)) * unit)
-      .applyQuaternion(worldRotation);
     node.position.set(
-      player.x + localOffset.x,
-      player.y + mountOffset + localOffset.y + lift,
-      player.z + localOffset.z,
+      side * unit,
+      up * unit + lift,
+      (forward + (stepSide ? stride * 0.12 : 0)) * unit,
     );
     turnRotation.setFromAxisAngle(
       THREE.Object3D.DEFAULT_UP,
       turn + (spin ? clock.elapsedTime * spin : 0),
     );
-    node.quaternion.copy(worldRotation).multiply(turnRotation);
+    node.quaternion.copy(turnRotation);
   });
 
   return (
@@ -170,14 +156,12 @@ export function WornGear({
   showHead,
   /** the jetpack is strapped on right now */
   jetpack = false,
-  mountOffset = 0,
 }: {
   unit: number;
   pose: { current: PlayerState | null };
   weapon: WeaponKind | null;
   showHead: boolean;
   jetpack?: boolean;
-  mountOffset?: number;
 }) {
   const gear = useGear();
   const eatingFood = gear.eating ? FOODS[gear.eating.food] : null;
@@ -193,12 +177,11 @@ export function WornGear({
             pose={pose}
             offset={[-0.26, 0.46, 0.2]}
             bob={0.015}
-            mountOffset={mountOffset}
           />
 
         </Suspense>
       ) : null}
-      {showHead && weapon === "wand" ? (
+      {showHead && weapon === "wand" && !jetpack ? (
         <Suspense fallback={null}>
           <WornPiece
             url={`https://ordinals.com/content/${WIZARD_HAT_INSCRIPTION}`}
@@ -207,12 +190,11 @@ export function WornGear({
             pose={pose}
             offset={[0, 0.94, 0]}
             seatOnBase
-            mountOffset={mountOffset}
           />
 
         </Suspense>
       ) : null}
-      {showHead && gear.goggles ? (
+      {showHead && gear.goggles && weapon !== "wand" && !jetpack ? (
         <Suspense fallback={null}>
           <WornPiece
             url={`https://ordinals.com/content/${GOGGLES_INSCRIPTION}`}
@@ -220,11 +202,10 @@ export function WornGear({
             fit={0.5}
             pose={pose}
             offset={[0, 0.86, 0.08]}
-            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
-      {showHead && gear.batmanHead && !jetpack ? (
+      {showHead && gear.batmanHead && weapon !== "wand" && !jetpack ? (
         <Suspense fallback={null}>
           <WornPiece
             url={`https://ordinals.com/content/${BATMAN_HEAD_INSCRIPTION}`}
@@ -233,7 +214,6 @@ export function WornGear({
             pose={pose}
             offset={[0, 0.79, 0.015]}
             seatOnBase
-            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
@@ -245,7 +225,6 @@ export function WornGear({
             fit={0.2}
             pose={pose}
             offset={[0, 0.7, 0.11]}
-            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
@@ -263,7 +242,6 @@ export function WornGear({
                 seatOnBase
                 fitAllAxes
                 boundsNode="Plane.005"
-                mountOffset={mountOffset}
                 stepSide={side}
               />
             </Suspense>
@@ -277,7 +255,6 @@ export function WornGear({
             fit={0.14}
             pose={pose}
             offset={[-0.2, 0.46, 0.08]}
-            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
@@ -289,11 +266,10 @@ export function WornGear({
             fit={0.08}
             pose={pose}
             offset={[-0.23, 0.4, 0.12]}
-            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
-      {gear.comic ? (
+      {gear.comic && weapon !== "wand" ? (
         <Suspense fallback={null}>
           <WornPiece
             url={`https://ordinals.com/content/${COMIC_INSCRIPTION}`}
@@ -302,7 +278,6 @@ export function WornGear({
             pose={pose}
             offset={[-0.28, 0.55, 0.16]}
             bob={0.012}
-            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
@@ -315,7 +290,6 @@ export function WornGear({
             fit={0.46}
             pose={pose}
             offset={[0, 0.52, -0.2]}
-            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
@@ -328,11 +302,10 @@ export function WornGear({
             pose={pose}
             offset={[0, 0.82, 0.015]}
             seatOnBase
-            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
-      {toy.inscription && !eatingFood ? (
+      {toy.inscription && !eatingFood && weapon === null ? (
         <Suspense fallback={null}>
           <WornPiece
             url={`https://ordinals.com/content/${toy.inscription}`}
@@ -341,7 +314,6 @@ export function WornGear({
             pose={pose}
             offset={[0.26, 0.58, 0.2]}
             bob={0.02}
-            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
@@ -354,7 +326,6 @@ export function WornGear({
             pose={pose}
             offset={[0.18, 0.66, 0.24]}
             bob={0.03}
-            mountOffset={mountOffset}
           />
         </Suspense>
       ) : null}
