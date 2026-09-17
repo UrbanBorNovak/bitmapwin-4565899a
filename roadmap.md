@@ -40,3 +40,4 @@
 - [x] Modernize tactical first-person controls and cap traversal speeds for reliable world loading
 - [x] Balance vehicle combat handling and add hull damage, explosions, and hull-down protection
 - [x] Keep Oasis water clear of all non-whitelisted models except ships, yachts, islands, and geese
+- [x] Add the inscribed sun, varied world trees, flowers, ambient lightning, and roaming miners

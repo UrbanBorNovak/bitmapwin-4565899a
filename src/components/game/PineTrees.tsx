@@ -1,6 +1,6 @@
 /**
- * PINES — inscribed conifers scattered through the desert in clumps, from
- * knee-high saplings to tall old trees.
+ * INSCRIBED FLORA — trees, flowers, shrooms and working miners scattered
+ * through the desert in clumps, from knee-high saplings to tall old trees.
  *
  * Placement is deterministic: the same patch of sand grows the same trees every
  * visit. Only the pines near the avatar are drawn, and every tree shares one set
@@ -16,14 +16,38 @@ import { isSea } from "@/lib/world-sea";
 
 export const PINE_INSCRIPTION =
   "a67b9e40973e6cf9df84bfc0d28ac10bcbef8f7d0e3f46ad0f99541876c8e330i0";
+export const TREE_INSCRIPTIONS = [
+  PINE_INSCRIPTION,
+  "cc6b66d867305e0158f042a69ba9d6edfbb4e32f51763b883de7aaddc6470480i0",
+  "072bca4b19ae94e769fb07794c9e7d90b58ffd820e47e1ca3d624e7db482afddi0",
+  "05f0bccee01c3f63ecc627530dc91e63fec456157bb54742f4566437baf9985bi0",
+  "7f36cae4bfb3ea52dfd1d454e2b16da89deba603988bd2b9415d3a11d24df212i0",
+  "d147e7e01b498c71638e19f8ca4b16dcecefe9c2efd3208e7d98ca31c7c983dci0",
+  "5f55e6743880d1f8adbd8e5e7c730fde9903707c0202bfdd3e19334c88a82808i0",
+  "0be4dfd3d3bb0edc76072b72404c63ac4d3a7f0a2fa136e8be8f01c77a23d96ei0",
+  "4f57fb110ffa81b4905e789f337f9469f620a7106815e2f132409312a6770beci0",
+] as const;
+export const FLOWER_INSCRIPTIONS = [
+  "32d0883ce1e0fbb686cdc50a16d032197cb661be01d465b45e3450ccb8e91604i0",
+  "e34712cd813b2a0aa7330765c530f29e80cdfc6db6202f24ba87bd2d5819447di0",
+  "de0c6c7eb08457d83a5d27a6d46923b71b43f803a139f84285bbbf71d8322eb5i0",
+] as const;
+export const WILD_MINER_INSCRIPTION =
+  "1b8e73e89f510dfa3ac863bcaab6be76688f51cb231c42483c7b84db60b80301i0";
 /** Shrooms sprout in the shade at the foot of the pines. */
 export const SHROOM_INSCRIPTIONS = [
   "171c26e24b94e11fc8dfae620173179ff43fa41674685721464ca28d658ed138i0",
   "792d4855c5d73c501584dcfd14a7a4301b373b4ee6dae3fa5546e216239a680ci0",
 ] as const;
 
-const PINE_URL = contentUrl(PINE_INSCRIPTION);
+const TREE_URLS = TREE_INSCRIPTIONS.map(contentUrl);
 const SHROOM_URLS = SHROOM_INSCRIPTIONS.map(contentUrl);
+const FLOWER_URLS = FLOWER_INSCRIPTIONS.map(contentUrl);
+const WILD_MINER_URL = contentUrl(WILD_MINER_INSCRIPTION);
+
+const MAX_TREES = 92;
+const MAX_FLOWERS = 96;
+const MAX_MINERS = 10;
 
 
 const noRaycast = () => {};
@@ -33,7 +57,62 @@ function hash(x: number, z: number, salt: number) {
   return n - Math.floor(n);
 }
 
-type Pine = { key: string; x: number; z: number; size: number; yaw: number };
+function urlAt(items: readonly string[], index: number) {
+  return items[Math.abs(index) % items.length] ?? items[0] ?? "";
+}
+
+type Pine = { key: string; x: number; z: number; size: number; yaw: number; model: number };
+type Flower = { key: string; x: number; z: number; size: number; yaw: number; model: number };
+type WildMiner = { key: string; x: number; z: number; yaw: number; seed: number };
+
+function TreeFallback({ size }: { size: number }) {
+  return (
+    <mesh position={[0, size * 0.5, 0]} raycast={noRaycast}>
+      <coneGeometry args={[size * 0.22, size, 6, 1]} />
+      <meshLambertMaterial color="#3d6b3f" flatShading />
+    </mesh>
+  );
+}
+
+function FlowerFallback({ size }: { size: number }) {
+  return (
+    <mesh position={[0, size * 0.32, 0]} raycast={noRaycast}>
+      <sphereGeometry args={[size * 0.28, 6, 5]} />
+      <meshLambertMaterial color="#d88b4a" flatShading />
+    </mesh>
+  );
+}
+
+function MinerFallback({ unit }: { unit: number }) {
+  return (
+    <group>
+      <mesh position={[0, unit * 0.45, 0]} raycast={noRaycast}>
+        <boxGeometry args={[unit * 0.34, unit * 0.68, unit * 0.22]} />
+        <meshLambertMaterial color="#8a8a8a" />
+      </mesh>
+      <mesh position={[0, unit * 0.84, 0]} raycast={noRaycast}>
+        <boxGeometry args={[unit * 0.26, unit * 0.18, unit * 0.26]} />
+        <meshBasicMaterial color="#f7931a" />
+      </mesh>
+    </group>
+  );
+}
+
+function WildMiner({ unit, seed, yaw }: { unit: number; seed: number; yaw: number }) {
+  return (
+    <group rotation-y={yaw}>
+      <group rotation-x={0.2 + Math.sin(seed * Math.PI * 2) * 0.12}>
+        <Suspense fallback={<MinerFallback unit={unit} />}>
+          <InscribedModel url={WILD_MINER_URL} size={unit * 1.75} />
+        </Suspense>
+      </group>
+      <mesh position={[0, unit * 0.08, unit * 0.54]} raycast={noRaycast}>
+        <sphereGeometry args={[unit * 0.18, 7, 5]} />
+        <meshBasicMaterial color="#c9a878" transparent opacity={0.18} depthWrite={false} />
+      </mesh>
+    </group>
+  );
+}
 
 export const PineTrees = memo(function PineTrees({
   unit,
@@ -44,12 +123,14 @@ export const PineTrees = memo(function PineTrees({
   center: [number, number];
   radius: number;
 }) {
-  const trees = useMemo(() => {
+  const { trees, flowers, miners } = useMemo(() => {
     const pitch = unit * 9;
     const span = Math.ceil(radius / pitch);
     const cx = Math.round(center[0] / pitch);
     const cz = Math.round(center[1] / pitch);
     const found: Pine[] = [];
+    const petals: Flower[] = [];
+    const workers: WildMiner[] = [];
     for (let ix = -span; ix <= span; ix++) {
       for (let iz = -span; iz <= span; iz++) {
         const gx = cx + ix;
@@ -67,30 +148,81 @@ export const PineTrees = memo(function PineTrees({
           // SIZES — mostly young trees, a few full-grown giants.
           const roll = hash(gx * 3 + n, gz * 11 + n, 75);
           const size = unit * (roll > 0.9 ? 3.4 + roll : roll > 0.6 ? 2 + roll : 0.7 + roll);
+          const model = Math.floor(hash(gx * 13 + n, gz * 17 - n, 78) * TREE_URLS.length);
           found.push({
             key: `${gx}:${gz}:${n}`,
             x,
             z,
             size,
             yaw: hash(gx + n, gz - n, 76) * Math.PI * 2,
+            model,
           });
+          if (hash(gx + n, gz - n, 86) < 0.5) {
+            const blossomCount = 1 + Math.floor(hash(gx - n, gz + n, 87) * 3);
+            for (let f = 0; f < blossomCount; f++) {
+              const angle = hash(gx + f * 5, gz - f * 7, 88) * Math.PI * 2;
+              const reach = size * (0.42 + hash(gx - f, gz + f, 89) * 0.65);
+              petals.push({
+                key: `${gx}:${gz}:${n}:f${f}`,
+                x: x + Math.cos(angle) * reach,
+                z: z + Math.sin(angle) * reach,
+                size: unit * (0.12 + hash(gx + f, gz + n, 90) * 0.12),
+                yaw: angle + Math.PI,
+                model: Math.floor(hash(gx + f, gz - n, 91) * FLOWER_URLS.length),
+              });
+            }
+          }
+        }
+
+        if (hash(gx, gz, 92) < 0.016) {
+          const mx = gx * pitch + (hash(gx, gz, 93) - 0.5) * pitch * 0.7;
+          const mz = gz * pitch + (hash(gx, gz, 94) - 0.5) * pitch * 0.7;
+          if (!isSea(mx, mz)) {
+            const dx = mx - center[0];
+            const dz = mz - center[1];
+            if (dx * dx + dz * dz <= radius * radius) {
+              workers.push({
+                key: `${gx}:${gz}`,
+                x: mx,
+                z: mz,
+                yaw: hash(gx, gz, 95) * Math.PI * 2,
+                seed: hash(gx, gz, 96),
+              });
+            }
+          }
         }
       }
     }
-    return found;
+    const rank = <T extends { x: number; z: number }>(items: T[]) =>
+      items.sort((a, b) =>
+        (a.x - center[0]) ** 2 + (a.z - center[1]) ** 2 - ((b.x - center[0]) ** 2 + (b.z - center[1]) ** 2),
+      );
+    return {
+      trees: rank(found).slice(0, MAX_TREES),
+      flowers: rank(petals).slice(0, MAX_FLOWERS),
+      miners: rank(workers).slice(0, MAX_MINERS),
+    };
   }, [center, radius, unit]);
 
   // A trunk is solid: you walk around a pine instead of straight through it.
   useEffect(() => {
-    const solids = trees.map((tree) => ({
+    const solids = [
+      ...trees.map((tree) => ({
       key: `pine:${tree.key}`,
       x: tree.x,
       z: tree.z,
       radius: tree.size * 0.13,
-    }));
+      })),
+      ...miners.map((miner) => ({
+        key: `wild-miner:${miner.key}`,
+        x: miner.x,
+        z: miner.z,
+        radius: unit * 0.18,
+      })),
+    ];
     registerSolids(solids);
     return () => dropSolids(solids.map((solid) => solid.key));
-  }, [trees]);
+  }, [miners, trees, unit]);
 
 
   return (
@@ -98,14 +230,9 @@ export const PineTrees = memo(function PineTrees({
       {trees.map((tree) => (
         <group key={tree.key} position={[tree.x, 0, tree.z]}>
           <Suspense
-            fallback={
-              <mesh position={[0, tree.size * 0.5, 0]} raycast={noRaycast}>
-                <coneGeometry args={[tree.size * 0.22, tree.size, 6, 1]} />
-                <meshLambertMaterial color="#3d6b3f" flatShading />
-              </mesh>
-            }
+              fallback={<TreeFallback size={tree.size} />}
           >
-            <InscribedModel url={PINE_URL} size={tree.size} yaw={tree.yaw} />
+              <InscribedModel url={urlAt(TREE_URLS, tree.model)} size={tree.size} yaw={tree.yaw} />
           </Suspense>
           {/* SHROOMS — a small ring of them in the shade under the branches. */}
           {Array.from({ length: 1 + Math.floor(hash(tree.x, tree.z, 81) * 4) }, (_, n) => {
@@ -126,7 +253,7 @@ export const PineTrees = memo(function PineTrees({
                   }
                 >
                   <InscribedModel
-                    url={SHROOM_URLS[n % SHROOM_URLS.length]!}
+                    url={urlAt(SHROOM_URLS, n)}
                     size={size}
                     yaw={hash(tree.x + n * 3, tree.z + n, 85) * Math.PI * 2}
                   />
@@ -136,10 +263,24 @@ export const PineTrees = memo(function PineTrees({
           })}
         </group>
       ))}
+      {flowers.map((flower) => (
+        <group key={flower.key} position={[flower.x, 0, flower.z]}>
+          <Suspense fallback={<FlowerFallback size={flower.size} />}>
+            <InscribedModel url={urlAt(FLOWER_URLS, flower.model)} size={flower.size} yaw={flower.yaw} />
+          </Suspense>
+        </group>
+      ))}
+      {miners.map((miner) => (
+        <group key={miner.key} position={[miner.x, 0, miner.z]}>
+          <WildMiner unit={unit} seed={miner.seed} yaw={miner.yaw} />
+        </group>
+      ))}
     </>
   );
 });
 
 
-useGLTF.preload(PINE_URL);
+for (const url of TREE_URLS) useGLTF.preload(url);
 for (const url of SHROOM_URLS) useGLTF.preload(url);
+for (const url of FLOWER_URLS) useGLTF.preload(url);
+useGLTF.preload(WILD_MINER_URL);
