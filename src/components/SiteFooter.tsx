@@ -2,44 +2,45 @@ import { Link } from "@tanstack/react-router";
 
 const GROUPS: { label: string; items: { to: string; label: string }[] }[] = [
   {
-    label: "WORLD",
+    label: "PLAY",
     items: [
-      { to: "/map", label: "OASIS" },
-      { to: "/cities", label: "CITIES" },
-      { to: "/explore", label: "EXPLORE" },
+      { to: "/map", label: "ENTER THE OASIS" },
+      { to: "/cities", label: "VISIT CITIES" },
+      { to: "/trading-post", label: "IN-WORLD TRADING POST" },
+      { to: "/inventory", label: "MY INVENTORY" },
     ],
   },
   {
-    label: "BUILD",
+    label: "TRADE",
+    items: [
+      { to: "/marketplace", label: "BITMAP MARKET" },
+      { to: "/leases", label: "LEASES" },
+      { to: "/history", label: "SALES HISTORY" },
+    ],
+  },
+  {
+    label: "CREATE",
     items: [
       { to: "/my-world", label: "MY WORLD" },
-      { to: "/builds", label: "BUILDS" },
-      { to: "/extend", label: "EXTEND" },
+      { to: "/builds", label: "3D BUILDS" },
+      { to: "/extend", label: "DEPLOY" },
       { to: "/studio", label: "STUDIO" },
+      { to: "/extenders", label: "EXTENDERS" },
     ],
   },
   {
-    label: "MARKET",
+    label: "DISCOVER",
     items: [
-      { to: "/marketplace", label: "MARKETPLACE" },
-      { to: "/trading-post", label: "TRADING POST" },
-      { to: "/extenders", label: "EXTENDERS" },
+      { to: "/explore", label: "EXPLORE" },
       { to: "/experiences", label: "EXPERIENCES" },
       { to: "/builders", label: "BUILDERS" },
     ],
   },
   {
-    label: "LAND",
+    label: "ACCOUNT",
     items: [
-      { to: "/my-land", label: "MY LAND" },
-      { to: "/leases", label: "LEASES" },
+      { to: "/my-land", label: "MY BITMAPS" },
       { to: "/ownership", label: "OWNERSHIP" },
-      { to: "/history", label: "HISTORY" },
-    ],
-  },
-  {
-    label: "DEVELOP",
-    items: [
       { to: "/sdk", label: "SDK" },
       { to: "/docs", label: "DOCS" },
       { to: "/api", label: "API" },
