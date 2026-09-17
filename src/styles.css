@@ -5,8 +5,12 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * BITMAP MARKETPLACE design system.
- * Strictly monochrome: black, white, gray. No gradients. No color.
+ * BITMAPWIN design system — high-tech, minimal, instrument-grade.
+ *
+ * Surfaces are near-black with a faint cold tint. Two accents only: Bitcoin
+ * orange for anything you can act on or own, and a cold signal cyan for live
+ * data, readouts and states. Panels read as instrument glass — thin blur,
+ * hairline edges, a lit rim when active — never as decorative gradients.
  */
 
 @theme inline {
