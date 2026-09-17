@@ -2818,6 +2818,14 @@ export function BitmapWorld3D({
     }
   }, []);
 
+  const toggleMusic = useCallback(() => {
+    const next = !isMusicOn();
+    unlockAudio();
+    setMusicOn(next);
+    setMusicPlaying(next);
+    playSfx("ui");
+  }, []);
+
   const owners = useQuery(mapOwnersQuery(window_));
   const models = useQuery(mapBitmapModelsQuery(window_));
   const deployments = useQuery(runtimeDeploymentsQuery());
