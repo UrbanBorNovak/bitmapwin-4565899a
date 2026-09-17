@@ -18,6 +18,7 @@ import {
   useGLTF,
   useTexture,
 } from "@react-three/drei";
+import { SafeHtml } from "@/components/game/SafeHtml";
 import { Suspense } from "react";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
