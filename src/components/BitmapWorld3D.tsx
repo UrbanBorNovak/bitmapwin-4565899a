@@ -414,7 +414,9 @@ const HolderColumns = memo(function HolderColumns({
         raycast={noRaycast}
       >
         <boxGeometry args={[1, 1, 1]} />
-        <meshLambertMaterial vertexColors />
+        {/* Unlit on purpose: a lit material turns these plots into black boxes
+            at night or under the flat map camera, hiding held land. */}
+        <meshBasicMaterial vertexColors toneMapped={false} />
       </instancedMesh>
       <instancedMesh
         key={`holder-glow-${entries.length}`}
