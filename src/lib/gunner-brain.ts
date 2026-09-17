@@ -112,8 +112,14 @@ const clamp01 = (value: number) => (value < 0 ? 0 : value > 1 ? 1 : value);
 export type GunnerBrain = {
   /** the contact book, one entry per body the crew has seen */
   contacts: Map<string, Contact>;
+  /** per-body movement reads: speed, curve, dodge rhythm, trust */
+  duel: DuelBook;
   /** id of the body the turret is committed to */
   committed: string | null;
+  /** id the sights have been resting on */
+  aimingAt: string | null;
+  /** when the sights settled on it, ms */
+  aimingSince: number;
   state: GunnerState;
   think: (sense: GunnerSense) => GunnerAct;
 };
@@ -122,12 +128,16 @@ export function createGunnerBrain(): GunnerBrain {
   const contacts = new Map<string, Contact>();
   const brain: GunnerBrain = {
     contacts,
+    duel: createDuelBook(),
     committed: null,
+    aimingAt: null,
+    aimingSince: 0,
     state: "scan",
     think: (sense) => think(brain, sense),
   };
   return brain;
 }
+
 
 function think(brain: GunnerBrain, sense: GunnerSense): GunnerAct {
   const { contacts } = brain;
