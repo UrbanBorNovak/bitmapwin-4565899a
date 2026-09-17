@@ -104,7 +104,6 @@ function isNight() {
 
 function LightningStorm({ bitcoin, far }: { bitcoin: string; far: number }) {
   const dome = useRef<THREE.Group>(null);
-  const bolt = useRef<THREE.Line>(null);
   const flash = useRef<THREE.PointLight>(null);
   const camera = useThree((s) => s.camera);
   const power = useRef(0);
@@ -116,6 +115,27 @@ function LightningStorm({ bitcoin, far }: { bitcoin: string; far: number }) {
     geom.setAttribute("position", new THREE.BufferAttribute(points, 3));
     return geom;
   }, []);
+
+  const bolt = useMemo(() => {
+    const material = new THREE.LineBasicMaterial({
+      color: new THREE.Color(bitcoin),
+      transparent: true,
+      opacity: 0,
+    });
+    const line = new THREE.Line(geometry, material);
+    line.visible = false;
+    line.raycast = () => {};
+    return line;
+  }, [bitcoin, geometry]);
+
+  useEffect(
+    () => () => {
+      geometry.dispose();
+      const material = Array.isArray(bolt.material) ? bolt.material[0] : bolt.material;
+      material?.dispose();
+    },
+    [bolt, geometry],
+  );
 
   useFrame(({ clock }, rawDelta) => {
     const delta = Math.min(rawDelta, 0.05);
@@ -142,9 +162,9 @@ function LightningStorm({ bitcoin, far }: { bitcoin: string; far: number }) {
     }
 
     power.current = Math.max(0, power.current - delta * 5.5);
-    if (bolt.current) {
-      bolt.current.visible = power.current > 0.02;
-      const material = bolt.current.material as THREE.LineBasicMaterial;
+    if (bolt) {
+      bolt.visible = power.current > 0.02;
+      const material = Array.isArray(bolt.material) ? bolt.material[0] : bolt.material;
       material.opacity = Math.min(1, power.current * 1.4);
     }
     if (flash.current) flash.current.intensity = power.current * 4.5;
@@ -152,9 +172,7 @@ function LightningStorm({ bitcoin, far }: { bitcoin: string; far: number }) {
 
   return (
     <group ref={dome}>
-      <line ref={bolt} geometry={geometry} visible={false} raycast={() => {}}>
-        <lineBasicMaterial color={bitcoin} transparent opacity={0} />
-      </line>
+      <Primitive object={bolt} />
       <pointLight
         ref={flash}
         color={bitcoin}
