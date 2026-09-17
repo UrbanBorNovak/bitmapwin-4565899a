@@ -717,6 +717,27 @@ export type Database = {
         }
         Relationships: []
       }
+      coin_leaderboard_public: {
+        Row: {
+          address_label: string
+          balance: number
+          rank: number
+          updated_at: string
+        }
+        Insert: {
+          address_label: string
+          balance: number
+          rank: number
+          updated_at: string
+        }
+        Update: {
+          address_label?: string
+          balance?: number
+          rank?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       coin_ledger: {
         Row: {
           address: string
@@ -2276,6 +2297,7 @@ export type Database = {
         Args: { _amount: number; _ref: string; _referee_address: string }
         Returns: number
       }
+      refresh_coin_leaderboard_public: { Args: never; Returns: undefined }
       world_metrics: { Args: never; Returns: Json }
       world_metrics_daily: {
         Args: { _days?: number }

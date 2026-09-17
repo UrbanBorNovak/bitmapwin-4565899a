@@ -1,0 +1,2 @@
+REVOKE ALL ON FUNCTION public.refresh_coin_leaderboard_public() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.coin_balances_refresh_public_leaderboard_trigger() FROM PUBLIC, anon, authenticated;
