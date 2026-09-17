@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Canvas } from "@react-three/fiber";
+import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { OrbitControls } from "@react-three/drei";
 import { ClientOnly } from "@tanstack/react-router";
 import { DataBadge } from "@/components/extenders/DataBadge";

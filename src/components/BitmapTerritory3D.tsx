@@ -1,4 +1,4 @@
-import { Canvas } from "@react-three/fiber";
+import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { OrbitControls } from "@react-three/drei";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";

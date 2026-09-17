@@ -8,7 +8,8 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
+import { type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
+import { SafeCanvas } from "@/components/game/SafeCanvas";
 import {
   Environment,
   Html,
