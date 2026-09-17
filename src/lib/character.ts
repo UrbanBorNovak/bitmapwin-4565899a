@@ -195,6 +195,7 @@ export function readCharacter(): Character | null {
       ...base,
       ...parsed,
       avatarModel: typeof parsed.avatarModel === "string" && parsed.avatarModel.trim() ? parsed.avatarModel.trim() : null,
+      avatarSkin: typeof parsed.avatarSkin === "string" && parsed.avatarSkin.trim() ? parsed.avatarSkin.trim() : null,
       seed: Number.isFinite(parsed.seed) ? Number(parsed.seed) : 1,
       savedAt: Number.isFinite(parsed.savedAt) ? Number(parsed.savedAt) : Date.now(),
     };
