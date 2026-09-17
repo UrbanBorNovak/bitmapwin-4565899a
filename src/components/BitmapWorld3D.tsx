@@ -1071,10 +1071,13 @@ function AvatarSkin({
   color,
   model,
   motion,
+  skin,
 }: {
   color: string;
   model: string | null;
   motion: AvatarMotion;
+  /** chosen BITMAP pixel skin for the stock figure, if any */
+  skin?: string | null;
 }) {
   const worn = model ?? DEFAULT_AVATAR_MODEL;
   return (
@@ -1082,7 +1085,7 @@ function AvatarSkin({
       <ModelAvatar
         inscriptionId={worn}
         motion={motion}
-        skinTexture={worn === DEFAULT_AVATAR_MODEL ? DEFAULT_AVATAR_TEXTURE : undefined}
+        skinTexture={worn === DEFAULT_AVATAR_MODEL ? skin?.trim() || DEFAULT_AVATAR_TEXTURE : undefined}
       />
     </Suspense>
   );
