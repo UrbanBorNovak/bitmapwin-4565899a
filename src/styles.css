@@ -22,8 +22,10 @@
   --radius-3xl: 24px;
   --radius-4xl: 32px;
   --font-mono: "Space Mono", ui-monospace, SFMono-Regular, monospace;
-  --font-sans: "Rubik", "Helvetica Neue", Arial, sans-serif;
-  --font-display: "Space Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "DM Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Space Grotesk", "DM Sans", Arial, sans-serif;
+  --color-signal: var(--signal);
+  --color-signal-foreground: var(--signal-foreground);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -58,28 +60,31 @@
   --ease-terminal: cubic-bezier(0.22, 1, 0.36, 1);
   --bitcoin: oklch(0.72 0.169 55);
   --bitcoin-foreground: oklch(0.14 0 0);
-  --surface: oklch(0.16 0 0);
-  --background: oklch(0.115 0 0);
+  /* cold signal — live data, readouts and states */
+  --signal: oklch(0.82 0.098 213);
+  --signal-foreground: oklch(0.14 0 0);
+  --surface: oklch(0.175 0.008 230);
+  --background: oklch(0.11 0.004 250);
   --foreground: oklch(0.98 0 0);
-  --card: oklch(0.155 0 0);
+  --card: oklch(0.165 0.007 235);
   --card-foreground: oklch(1 0 0);
-  --popover: oklch(0.155 0 0);
+  --popover: oklch(0.165 0.007 235);
   --popover-foreground: oklch(1 0 0);
   --primary: oklch(0.72 0.169 55);
   --primary-foreground: oklch(0.14 0 0);
-  --secondary: oklch(0.2 0 0);
+  --secondary: oklch(0.21 0.007 235);
   --secondary-foreground: oklch(1 0 0);
-  --muted: oklch(0.185 0 0);
-  --muted-foreground: oklch(0.68 0 0);
-  --accent: oklch(0.24 0 0);
+  --muted: oklch(0.195 0.006 235);
+  --muted-foreground: oklch(0.7 0.008 235);
+  --accent: oklch(0.25 0.008 235);
   --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.62 0 0);
   --destructive-foreground: oklch(0 0 0);
-  --border: oklch(0.26 0 0);
-  --border-strong: oklch(0.42 0 0);
-  --input: oklch(0.26 0 0);
+  --border: oklch(0.27 0.008 235);
+  --border-strong: oklch(0.43 0.01 235);
+  --input: oklch(0.27 0.008 235);
   --ring: oklch(0.72 0.169 55);
-  --grid: oklch(0.24 0 0);
+  --grid: oklch(0.25 0.008 235);
 }
 
 .dark {
@@ -200,10 +205,10 @@
 
 @utility display {
   font-family: var(--font-display);
-  font-weight: 900;
-  letter-spacing: 0;
-  word-spacing: 0.12em;
-  line-height: 0.92;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  word-spacing: 0.04em;
+  line-height: 0.96;
   text-transform: uppercase;
 }
 
@@ -212,8 +217,14 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border: 1px solid var(--color-bitcoin);
-  background: color-mix(in oklab, var(--color-bitcoin) 12%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-bitcoin) 70%, transparent);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-foreground) 6%, transparent),
+      transparent 55%
+    ),
+    color-mix(in oklab, var(--color-bitcoin) 12%, transparent);
   color: var(--color-bitcoin);
   border-radius: var(--radius-md);
   font-family: var(--font-mono);
@@ -221,10 +232,13 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   padding: 0.75rem 1.25rem;
+  backdrop-filter: blur(6px);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 8%, transparent);
   transition:
-    background 140ms ease,
-    color 140ms ease,
-    border-color 140ms ease;
+    background var(--motion-fast) var(--ease-terminal),
+    color var(--motion-fast) var(--ease-terminal),
+    border-color var(--motion-fast) var(--ease-terminal),
+    box-shadow var(--motion-fast) var(--ease-terminal);
   cursor: pointer;
 }
 
@@ -260,9 +274,31 @@
 }
 
 @utility card-soft {
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
+  position: relative;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-foreground) 4%, transparent),
+      transparent 38%
+    ),
+    color-mix(in oklab, var(--color-card) 82%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-border) 90%, transparent);
   border-radius: var(--radius-lg);
+  backdrop-filter: blur(10px) saturate(120%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 6%, transparent),
+    0 20px 44px -34px oklch(0 0 0 / 0.9);
+  transition:
+    border-color var(--motion-fast) var(--ease-terminal),
+    box-shadow var(--motion-fast) var(--ease-terminal);
+}
+
+.card-soft:hover {
+  border-color: color-mix(in oklab, var(--color-signal) 35%, var(--color-border));
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 8%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--color-signal) 12%, transparent),
+    0 24px 50px -34px oklch(0 0 0 / 0.95);
 }
 
 @utility page-shell {
@@ -292,9 +328,20 @@
 }
 
 @utility terminal-panel {
-  border: 1px solid var(--color-border);
+  position: relative;
+  border: 1px solid color-mix(in oklab, var(--color-border) 90%, transparent);
   border-radius: var(--radius-md);
-  background: color-mix(in oklab, var(--color-card) 82%, transparent);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-foreground) 4%, transparent),
+      transparent 40%
+    ),
+    color-mix(in oklab, var(--color-card) 74%, transparent);
+  backdrop-filter: blur(10px) saturate(120%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 6%, transparent),
+    0 18px 40px -32px oklch(0 0 0 / 0.9);
 }
 
 /* Heads-up display surfaces layered over the 3D land world. */
@@ -488,8 +535,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4375rem;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  border: 1px solid color-mix(in oklab, var(--color-border) 80%, transparent);
+  background: color-mix(in oklab, var(--color-surface) 70%, transparent);
+  backdrop-filter: blur(6px) saturate(120%);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 6%, transparent);
   padding: 0.3125rem 0.625rem;
   border-radius: var(--radius-sm);
   letter-spacing: 0.08em;
