@@ -82,6 +82,9 @@ function WornPiece({
   const worldRotation = useMemo(() => new THREE.Quaternion(), []);
 
   const fitted = useMemo(() => {
+    // Correct authored orientation before measuring, so base seating still
+    // means the sneaker sole—not its former side—lands at foot height.
+    scene.rotation.x = pitch;
     scene.traverse((child) => {
       const mesh = child as THREE.Mesh;
       if (mesh.isMesh) {
@@ -102,7 +105,7 @@ function WornPiece({
     const scale = (unit * fit) / span;
     const drop = seatOnBase ? bounds.min.y : center.y;
     return { scale, center, drop };
-  }, [scene, unit, fit, seatOnBase, fitAllAxes]);
+  }, [scene, unit, fit, seatOnBase, fitAllAxes, pitch]);
 
   useFrame(({ clock }) => {
     const player = pose.current;
@@ -132,8 +135,9 @@ function WornPiece({
       player.y + mountOffset + localOffset.y + lift,
       player.z + localOffset.z,
     );
-    turnRotation.setFromEuler(
-      new THREE.Euler(pitch, turn + (spin ? clock.elapsedTime * spin : 0), 0, "XYZ"),
+    turnRotation.setFromAxisAngle(
+      THREE.Object3D.DEFAULT_UP,
+      turn + (spin ? clock.elapsedTime * spin : 0),
     );
     node.quaternion.copy(worldRotation).multiply(turnRotation);
   });

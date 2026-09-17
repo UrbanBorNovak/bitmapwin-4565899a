@@ -1235,17 +1235,19 @@ const SelfBeacon = memo(function SelfBeacon({
         <ringGeometry args={[scale * 0.95, scale * 1.2, wide ? 4 : 32]} />
         <meshBasicMaterial color={bitcoin} transparent opacity={0.5} depthWrite={false} />
       </mesh>
-      {/* a faint glow rising just off the ground */}
-      <mesh position-y={height / 2} raycast={noRaycast}>
-        <cylinderGeometry args={[scale * 0.5, scale * 0.95, height, wide ? 4 : 16, 1, true]} />
-        <meshBasicMaterial
-          color={bitcoin}
-          transparent
-          opacity={wide ? 0.3 : 0.12}
-          depthWrite={false}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
+      {/* The tall locator is useful overhead only. On foot, the beacon stays flat. */}
+      {wide ? (
+        <mesh position-y={height / 2} raycast={noRaycast}>
+          <cylinderGeometry args={[scale * 0.5, scale * 0.95, height, 4, 1, true]} />
+          <meshBasicMaterial
+            color={bitcoin}
+            transparent
+            opacity={0.3}
+            depthWrite={false}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      ) : null}
     </group>
   );
 });
