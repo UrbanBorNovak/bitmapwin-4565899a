@@ -3727,6 +3727,9 @@ export function BitmapWorld3D({
                   <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
                     {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
                   </Button>
+                  <Button className="btn-term-ghost" variant="ghost" onClick={toggleMusic}>
+                    {musicOn ? "[ MUSIC · ON ]" : "[ MUSIC · OFF ]"}
+                  </Button>
                 </div>
               </div>
               ) : null}
