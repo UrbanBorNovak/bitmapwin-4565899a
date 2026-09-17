@@ -26,6 +26,13 @@ export type CoinBalance = {
   updatedAt: string;
 };
 
+export type CoinLeaderboardEntry = {
+  rank: number;
+  addressLabel: string;
+  balance: number;
+  updatedAt: string;
+};
+
 export type CoinLedgerEntry = {
   id: string;
   address: string;
@@ -103,6 +110,13 @@ type BalanceRow = {
   address: string;
   balance: number;
   earned_total: number;
+  updated_at: string;
+};
+
+type LeaderboardRow = {
+  rank: number;
+  address_label: string;
+  balance: number;
   updated_at: string;
 };
 
@@ -222,14 +236,19 @@ export const coinLedgerQuery = (addresses: string[], limit = 60) =>
 export const coinLeaderboardQuery = (limit = 20) =>
   queryOptions({
     queryKey: ["coin-leaderboard", limit],
-    queryFn: async (): Promise<CoinBalance[]> => {
+    queryFn: async (): Promise<CoinLeaderboardEntry[]> => {
       const { data, error } = await supabase
-        .from("coin_balances")
-        .select("address, balance, earned_total, updated_at")
-        .order("balance", { ascending: false })
+        .from("coin_leaderboard_public")
+        .select("rank, address_label, balance, updated_at")
+        .order("rank", { ascending: true })
         .limit(limit);
       if (error) throw new Error(error.message);
-      return ((data ?? []) as BalanceRow[]).map(mapBalance);
+      return ((data ?? []) as LeaderboardRow[]).map((row) => ({
+        rank: Number(row.rank),
+        addressLabel: row.address_label,
+        balance: Number(row.balance),
+        updatedAt: row.updated_at,
+      }));
     },
     staleTime: 30_000,
   });
