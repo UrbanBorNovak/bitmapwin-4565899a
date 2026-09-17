@@ -225,7 +225,7 @@ export function FootTrail({
         // Pressed into the sand: half the print's own thickness above zero, so
         // it sits flush with the ground instead of hovering over it.
         const thickness = unit * 0.012;
-        scratch.pos.set(slot.x, thickness * 0.5, slot.z);
+        scratch.pos.set(slot.x, slot.y + thickness * 0.5, slot.z);
         const shrink = 0.6 + fade * 0.4;
         if (slot.profile === "tread") scratch.scale.set(unit * 0.26 * shrink, thickness, unit * 0.34 * shrink);
         else if (slot.profile === "truck") scratch.scale.set(unit * 0.13 * shrink, thickness, unit * 0.44 * shrink);
@@ -261,7 +261,8 @@ export function FootTrail({
         mote.vz *= drag;
         mote.vy = mote.foam ? mote.vy * drag : mote.vy * drag - unit * 0.9 * delta;
         mote.x += mote.vx * delta;
-        mote.y = Math.max(unit * 0.02, mote.y + mote.vy * delta);
+        const floor = mote.foam ? waterSurfaceY(mote.x, mote.z) : groundY(mote.x, mote.z);
+        mote.y = Math.max(floor + unit * 0.02, mote.y + mote.vy * delta);
         mote.z += mote.vz * delta;
         const life = 1 - mote.age / span;
         scratch.pos.set(mote.x, mote.y, mote.z);

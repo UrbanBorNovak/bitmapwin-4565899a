@@ -12,6 +12,7 @@ import * as THREE from "three";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import type { PlayerState } from "@/lib/player-state";
 import { GHOST_INSCRIPTION } from "@/lib/world-gear";
+import { groundY } from "@/lib/world-terrain";
 
 const GHOST_URL = contentUrl(GHOST_INSCRIPTION);
 const noRaycast = () => {};
@@ -32,7 +33,7 @@ export const GhostShade = memo(function GhostShade({
     if (!player || !node) return;
     node.position.set(
       player.x,
-      player.y + unit * (0.55 + Math.sin(clock.elapsedTime * 1.1) * 0.08),
+      groundY(player.x, player.z) + player.y + unit * (0.55 + Math.sin(clock.elapsedTime * 1.1) * 0.08),
       player.z,
     );
     node.rotation.y = player.yaw + Math.sin(clock.elapsedTime * 0.4) * 0.2;

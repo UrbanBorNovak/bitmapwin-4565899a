@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { PlayerState } from "@/lib/player-state";
+import { groundY } from "@/lib/world-terrain";
 
 export function VehicleDamageFx({
   pose,
@@ -27,7 +28,7 @@ export function VehicleDamageFx({
     if (!player) return;
     const delta = Math.min(rawDelta, 0.05);
     if (blast.current) {
-      blast.current.position.set(player.x, player.y + 0.02, player.z);
+      blast.current.position.set(player.x, groundY(player.x, player.z) + player.y + 0.02, player.z);
       const age = born.current ? (performance.now() - born.current) / 1000 : 99;
       blast.current.visible = age < 1.15;
       blast.current.scale.setScalar(0.2 + age * 3.6);
@@ -40,7 +41,7 @@ export function VehicleDamageFx({
     }
     if (smoke.current) {
       smoke.current.visible = critical;
-      smoke.current.position.set(player.x, player.y + 0.035, player.z);
+      smoke.current.position.set(player.x, groundY(player.x, player.z) + player.y + 0.035, player.z);
       smoke.current.position.y += Math.sin(clock.elapsedTime * 2.4) * 0.003;
       smoke.current.rotation.y += delta * 0.6;
     }

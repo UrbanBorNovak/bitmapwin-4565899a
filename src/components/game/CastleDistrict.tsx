@@ -4,6 +4,7 @@ import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { WORLD_CELL } from "@/lib/player-state";
 import { PLAZA } from "@/lib/world-landmarks";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
+import { groundY } from "@/lib/world-terrain";
 
 const CASTLE_WALL = "95d9f6d66ec84350564763dc5548884f52014adc9fae5860fca2a5bc75605deai0";
 const UPPER_FENCE = "c8c0afdb0b9a9aea005a8a8af22bb20324142bead8260e8010f60a00cfd39fe9i0";
@@ -46,7 +47,7 @@ export const CastleDistrict = memo(function CastleDistrict() {
   }, []);
 
   return (
-    <group position={[ORIGIN.x, 0, ORIGIN.z]}>
+    <group position={[ORIGIN.x, groundY(ORIGIN.x, ORIGIN.z), ORIGIN.z]}>
       {PIECES.map((piece) => (
         <group key={piece.id} position={[piece.x * WORLD_CELL, 0, piece.z * WORLD_CELL]}>
           <Suspense fallback={null}>

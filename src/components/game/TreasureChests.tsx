@@ -6,6 +6,7 @@ import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
 import { Primitive } from "@/components/game/Primitive";
 import { isSea } from "@/lib/world-sea";
+import { groundY } from "@/lib/world-terrain";
 import {
   registerChests,
   subscribeWorldEntities,
@@ -125,7 +126,7 @@ function Chest({
   });
 
   return (
-    <group position={[chest.x, 0, chest.z]}>
+    <group position={[chest.x, groundY(chest.x, chest.z), chest.z]}>
       {/* body */}
       <mesh position={[0, h * 0.5, 0]}>
         <boxGeometry args={[w, h, d]} />

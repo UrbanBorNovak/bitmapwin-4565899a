@@ -19,6 +19,7 @@ import { MOVE } from "@/lib/player-state";
 import type { RideSpec } from "@/lib/world-vehicle";
 import { vehicle } from "@/lib/world-vehicle";
 import { isSea } from "@/lib/world-sea";
+import { groundY, waterSurfaceY } from "@/lib/world-terrain";
 
 export function RideModel({
   unit,
@@ -103,7 +104,8 @@ export function RideModel({
       const gallop = isDogMount
         ? Math.abs(Math.sin(clock.elapsedTime * (5 + Math.min(speed, unit * 8) * 8))) * unit * 0.12
         : 0;
-      node.position.set(player.x, player.y + swell + gallop, player.z);
+      const surface = ride.kind === "water" ? waterSurfaceY(player.x, player.z) : groundY(player.x, player.z);
+      node.position.set(player.x, surface + player.y + swell + gallop, player.z);
       node.rotation.y = player.yaw;
       vehicle.x = player.x;
       vehicle.z = player.z;
@@ -117,7 +119,8 @@ export function RideModel({
       if (ride.kind === "water") node.rotation.x = Math.cos(clock.elapsedTime * 1.3) * 0.03;
     } else {
       node.visible = ride.kind === "water" || !isSea(vehicle.x, vehicle.z);
-      node.position.set(vehicle.x, vehicle.y + swell, vehicle.z);
+      const surface = ride.kind === "water" ? waterSurfaceY(vehicle.x, vehicle.z) : groundY(vehicle.x, vehicle.z);
+      node.position.set(vehicle.x, surface + vehicle.y + swell, vehicle.z);
       node.rotation.set(0, vehicle.yaw, 0);
     }
     // How hard the ride is pushing, eased so the streaks build and fade smoothly.

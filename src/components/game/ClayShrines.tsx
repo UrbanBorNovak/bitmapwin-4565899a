@@ -9,6 +9,7 @@ import { useGLTF } from "@react-three/drei";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
 import { dryLandNear, isSea } from "@/lib/world-sea";
+import { groundY } from "@/lib/world-terrain";
 
 export const CLAY_INSCRIPTIONS = {
   shrine: "85bf8d819bf3c403d86523cfa01c39ea947fc914924197cd1828f4957af0e188i0",
@@ -106,7 +107,7 @@ function PieceFallback({ size }: { size: number }) {
 
 function ShrineSite({ site, unit }: { site: Site; unit: number }) {
   return (
-    <group position={[site.x, 0, site.z]} rotation-y={site.yaw}>
+    <group position={[site.x, groundY(site.x, site.z), site.z]} rotation-y={site.yaw}>
       {COMPOUND.map((piece) => {
         const mirror = site.variant === 1 && piece.id.includes("right") ? Math.PI : 0;
         return (
