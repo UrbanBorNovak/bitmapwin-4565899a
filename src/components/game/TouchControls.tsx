@@ -15,12 +15,19 @@ export default function TouchControls({
   flying = false,
   shooter = false,
   paused = false,
+  driving = false,
+  rideLabel,
+  onExitRide,
   onJumpLabel,
 }: {
   flying?: boolean;
   shooter?: boolean;
   /** hide the pads while a panel is open, so nothing sits under the menu */
   paused?: boolean;
+  /** aboard a ride: pedals replace the walking throttle */
+  driving?: boolean;
+  rideLabel?: string;
+  onExitRide?: () => void;
   onJumpLabel?: string;
 }) {
   const stick = useRef<HTMLDivElement | null>(null);
@@ -29,6 +36,11 @@ export default function TouchControls({
   const lookLast = useRef({ x: 0, y: 0 });
   const [knob, setKnob] = useState({ x: 0, y: 0 });
   const [sprinting, setSprinting] = useState(false);
+
+  // Aboard a ride the stick is a steering wheel: the pedals carry the throttle,
+  // so a thumb never has to hold forward and steer with the same push.
+  const drivingRef = useRef(driving);
+  drivingRef.current = driving;
 
   useEffect(() => () => resetTouchPad(), []);
 
@@ -40,6 +52,12 @@ export default function TouchControls({
       setSprinting(false);
     }
   }, [paused]);
+
+  // Stepping out of a ride clears the pedals, so nothing stays held down.
+  useEffect(() => {
+    touchPad.throttle = 0;
+    touchPad.boost = false;
+  }, [driving]);
 
   const readStick = useCallback((clientX: number, clientY: number) => {
     const box = stick.current?.getBoundingClientRect();
@@ -59,9 +77,11 @@ export default function TouchControls({
     const nx = dx / radius;
     const ny = dy / radius;
     const dead = (value: number) => (Math.abs(value) < 0.16 ? 0 : value);
-    touchPad.forward = -dead(ny);
-    touchPad.turn = -dead(nx);
-    touchPad.sprint = sprint;
+    const wheel = drivingRef.current;
+    // Steering wants the full sweep of the stick; walking keeps its deadzone.
+    touchPad.forward = wheel ? 0 : -dead(ny);
+    touchPad.turn = wheel ? -(Math.abs(nx) < 0.08 ? 0 : nx) : -dead(nx);
+    touchPad.sprint = wheel ? touchPad.boost : sprint;
     touchPad.active = true;
   }, []);
 
@@ -71,8 +91,8 @@ export default function TouchControls({
     setSprinting(false);
     touchPad.forward = 0;
     touchPad.turn = 0;
-    touchPad.sprint = false;
-    touchPad.active = false;
+    touchPad.sprint = drivingRef.current ? touchPad.boost : false;
+    touchPad.active = drivingRef.current ? touchPad.throttle !== 0 : false;
   }, []);
 
   // FIRE / STRIKE reuses the canvas mouse path, so every weapon behaves the
@@ -148,12 +168,32 @@ export default function TouchControls({
           style={{ transform: `translate(${knob.x}px, ${knob.y}px)` }}
         />
         <span className="absolute -top-5 left-1 font-mono text-[10px] tracking-widest text-muted-foreground">
-          {sprinting ? "SPRINT" : "MOVE"}
+          {driving ? "STEER" : sprinting ? "SPRINT" : "MOVE"}
         </span>
       </div>
 
       {/* action buttons */}
       <div className="pointer-events-auto absolute bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-5 flex flex-col items-end gap-2">
+        {onExitRide ? (
+          <button
+            type="button"
+            className={cn(
+              "rounded-sm border px-2 py-1 font-mono text-[10px] tracking-widest active:scale-95",
+              driving
+                ? "border-border bg-background/55 text-muted-foreground"
+                : "border-primary/60 bg-primary/15 text-primary",
+            )}
+            style={{ touchAction: "none" }}
+            onPointerDown={(event) => {
+              event.preventDefault();
+              touchPad.throttle = 0;
+              touchPad.boost = false;
+              onExitRide();
+            }}
+          >
+            {driving ? `EXIT ${rideLabel ?? "RIDE"}` : `RIDE ${rideLabel ?? ""}`.trim()}
+          </button>
+        ) : null}
         {flying ? (
           <div className="flex gap-2">
             <PadButton
@@ -172,6 +212,42 @@ export default function TouchControls({
               }}
               onUp={() => {
                 touchPad.fly = 0;
+              }}
+            />
+          </div>
+        ) : null}
+        {driving ? (
+          <div className="flex items-center gap-2">
+            <PadButton
+              label="REV"
+              onDown={() => {
+                touchPad.throttle = -1;
+                touchPad.active = true;
+              }}
+              onUp={() => {
+                touchPad.throttle = 0;
+              }}
+            />
+            <PadButton
+              label="BOOST"
+              onDown={() => {
+                touchPad.boost = true;
+                touchPad.sprint = true;
+              }}
+              onUp={() => {
+                touchPad.boost = false;
+                touchPad.sprint = false;
+              }}
+            />
+            <PadButton
+              label="GAS"
+              strong
+              onDown={() => {
+                touchPad.throttle = 1;
+                touchPad.active = true;
+              }}
+              onUp={() => {
+                touchPad.throttle = 0;
               }}
             />
           </div>
