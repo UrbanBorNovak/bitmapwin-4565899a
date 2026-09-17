@@ -60,7 +60,7 @@ export const PineTrees = memo(function PineTrees({
         for (let n = 0; n < count; n++) {
           const x = gx * pitch + (hash(gx * 5 + n, gz, 73) - 0.5) * pitch * 0.8;
           const z = gz * pitch + (hash(gx, gz * 7 + n, 74) - 0.5) * pitch * 0.8;
-        if (isSea(x, z)) continue;
+          if (isSea(x, z)) continue;
           const dx = x - center[0];
           const dz = z - center[1];
           if (dx * dx + dz * dz > radius * radius) continue;

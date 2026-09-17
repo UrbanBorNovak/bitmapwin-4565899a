@@ -1,5 +1,5 @@
 /**
- * LITTLE ISLANDS AND SHORE BRIDGES.
+ * LITTLE ISLANDS.
  *
  * Every inland sea gets a handful of small inscribed islands sitting out on the
  * open water. Placement is

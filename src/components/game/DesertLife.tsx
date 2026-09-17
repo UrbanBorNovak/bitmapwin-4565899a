@@ -852,6 +852,14 @@ const Critters = memo(function Critters({
       critter.heading += steer;
       critter.x += Math.sin(critter.heading) * travel * delta;
       critter.z += Math.cos(critter.heading) * travel * delta;
+      if (isSea(critter.x, critter.z)) {
+        const dry = dryLandNear(critter.x, critter.z, unit * 260, critter.seed + now / 1000);
+        if (dry) {
+          critter.x = dry.x;
+          critter.z = dry.z;
+          critter.heading += Math.PI * 0.7;
+        }
+      }
 
       if (player) {
         const dx = critter.x - player.x;
@@ -870,8 +878,16 @@ const Critters = memo(function Critters({
         if (away > reach) {
           const angle = critter.seed + now / 6000;
           const ring = unit * ((species.hostile ? 22 : 9) + (index % 5) * 5);
-          critter.x = player.x + Math.cos(angle) * ring;
-          critter.z = player.z + Math.sin(angle) * ring;
+          const dry = dryLandNear(
+            player.x + Math.cos(angle) * ring,
+            player.z + Math.sin(angle) * ring,
+            unit * 260,
+            critter.seed,
+          );
+          if (dry) {
+            critter.x = dry.x;
+            critter.z = dry.z;
+          }
           if (species.hostile) critter.lastBite = now;
         }
 
