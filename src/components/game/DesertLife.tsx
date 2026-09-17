@@ -46,6 +46,7 @@ import { createFieldCache, fieldDirection } from "@/lib/world-nav";
 import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { Primitive } from "./Primitive";
 import { dryLandNear, isSea } from "@/lib/world-sea";
+import { groundY } from "@/lib/world-terrain";
 
 
 
@@ -765,7 +766,7 @@ const Critters = memo(function Critters({
         group.visible = true;
         group.rotation.x = 0;
         group.rotation.z = Math.PI / 2.1;
-        group.position.set(critter.x, unit * 0.02, critter.z);
+        group.position.set(critter.x, groundY(critter.x, critter.z) + unit * 0.02, critter.z);
         const bar = bars.current?.[index];
         if (bar) bar.visible = false;
         return;
@@ -904,10 +905,13 @@ const Critters = memo(function Critters({
       // see the strike land rather than only feel the damage.
       const sinceBite = now - critter.lastBite;
       const lunge = sinceBite < 320 ? Math.sin((sinceBite / 320) * Math.PI) : 0;
+      const stepX = critter.x + Math.sin(critter.heading) * unit * 0.35 * lunge;
+      const stepZ = critter.z + Math.cos(critter.heading) * unit * 0.35 * lunge;
       group.position.set(
-        critter.x + Math.sin(critter.heading) * unit * 0.35 * lunge,
-        lift + unit * 0.12 * lunge,
-        critter.z + Math.cos(critter.heading) * unit * 0.35 * lunge,
+        stepX,
+        // Walkers and flyers alike ride the terrain surface.
+        groundY(stepX, stepZ) + lift + unit * 0.12 * lunge,
+        stepZ,
       );
       group.rotation.y = critter.heading;
       group.rotation.x = -0.5 * lunge;

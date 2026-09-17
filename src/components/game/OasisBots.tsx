@@ -41,6 +41,7 @@ import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { brainProbe, publishBrainProbe } from "@/lib/fly-connectome";
 import { poseDown, simDelta} from "@/lib/player-state";
 import { dryLandNear, isSea } from "@/lib/world-sea";
+import { groundY } from "@/lib/world-terrain";
 
 
 type Bot = BeastEntity &
@@ -204,7 +205,7 @@ export function OasisBots({
 
       if (bot.deadUntil) {
         node.rotation.set(0, bot.heading, Math.PI / 2.1);
-        node.position.set(bot.x, unit * 0.02, bot.z);
+        node.position.set(bot.x, groundY(bot.x, bot.z) + unit * 0.02, bot.z);
         if (bot.say) {
           bot.say = null;
           talkChanged = true;
@@ -298,7 +299,7 @@ export function OasisBots({
       bot.bodyY = unit * bot.size * 0.6;
 
       const stride = travel > 0 ? Math.abs(Math.sin(now / 170 + bot.seed)) * unit * 0.035 : 0;
-      node.position.set(bot.x, stride, bot.z);
+      node.position.set(bot.x, groundY(bot.x, bot.z) + stride, bot.z);
       node.rotation.y = bot.heading;
       const sinceHit = now - bot.hitAt;
       node.rotation.x = sinceHit < 240 ? -Math.sin((sinceHit / 240) * Math.PI) * 0.28 : 0;

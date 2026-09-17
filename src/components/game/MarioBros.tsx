@@ -15,6 +15,7 @@ import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { registerBeastGroup, type BeastEntity } from "@/lib/world-entities";
 import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { dryLandNear, isSea } from "@/lib/world-sea";
+import { groundY } from "@/lib/world-terrain";
 
 export const BROS_INSCRIPTION =
   "ae759a6fba1e5bcd02bd74db802cd4c8d8f07d77ba1ce2327c9032072bf9f1b6i0";
@@ -104,7 +105,7 @@ export const MarioBros = memo(function MarioBros({
 
       if (bro.deadUntil) {
         node.rotation.set(0, bro.heading, Math.PI / 2.1);
-        node.position.set(bro.x, unit * 0.02, bro.z);
+        node.position.set(bro.x, groundY(bro.x, bro.z) + unit * 0.02, bro.z);
         if (bro.say) {
           bro.say = null;
           talkChanged = true;
@@ -167,7 +168,7 @@ export const MarioBros = memo(function MarioBros({
       const lift = unit * bro.size * (0.06 + swing * (0.5 + act.throttle * 0.35));
       bro.bodyY = lift + unit * bro.size * 0.5;
 
-      node.position.set(bro.x, lift, bro.z);
+      node.position.set(bro.x, groundY(bro.x, bro.z) + lift, bro.z);
       node.rotation.y = bro.heading;
       // Tuck the knees at the top of the arc and land square.
       node.rotation.x = -swing * 0.16;
