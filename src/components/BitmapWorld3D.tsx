@@ -3323,7 +3323,7 @@ export function BitmapWorld3D({
                                 eat(id);
                                 setRationsOpen(false);
                               }}
-                              className="flex w-full items-center gap-2 border border-transparent px-1 py-1 text-left font-mono text-[10px] uppercase text-foreground transition-colors hover:border-bitcoin hover:text-bitcoin"
+                              className="group flex w-full items-center gap-2 border border-transparent px-1 py-1 text-left font-mono text-[10px] uppercase text-foreground transition-colors hover:border-bitcoin hover:text-bitcoin"
                             >
                               <span className="flex size-8 shrink-0 items-center justify-center border border-border bg-background text-muted-foreground transition-colors group-hover:border-bitcoin group-hover:text-bitcoin">
                                 <RationIcon id={id} className="size-5" />
