@@ -62,8 +62,7 @@ function WornPiece({
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
   const group = useRef<THREE.Group>(null);
   const localOffset = useMemo(() => new THREE.Vector3(), []);
-  const pitchRotation = useMemo(() => new THREE.Quaternion(), []);
-  const yawRotation = useMemo(() => new THREE.Quaternion(), []);
+  const bodyRotation = useMemo(() => new THREE.Euler(0, 0, 0, "XYZ"), []);
   const turnRotation = useMemo(() => new THREE.Quaternion(), []);
   const worldRotation = useMemo(() => new THREE.Quaternion(), []);
 
@@ -97,10 +96,10 @@ function WornPiece({
     const [side, up, forward] = offset;
     const lift = bob ? Math.sin(clock.elapsedTime * 2.4) * unit * bob : 0;
     const lean = player.lean ?? 0;
-    pitchRotation.setFromAxisAngle(THREE.Object3D.DEFAULT_UP, 0);
-    pitchRotation.setFromAxisAngle(new THREE.Vector3(1, 0, 0), lean);
-    yawRotation.setFromAxisAngle(THREE.Object3D.DEFAULT_UP, player.yaw);
-    worldRotation.copy(yawRotation).multiply(pitchRotation);
+    // Match SelfAvatar's XYZ Euler exactly, then transform the local attachment
+    // point through it. This keeps every piece pinned while climbing or diving.
+    bodyRotation.set(lean, player.yaw, 0);
+    worldRotation.setFromEuler(bodyRotation);
     localOffset.set(side * unit, up * unit, forward * unit).applyQuaternion(worldRotation);
     node.position.set(player.x + localOffset.x, player.y + localOffset.y + lift, player.z + localOffset.z);
     turnRotation.setFromAxisAngle(
