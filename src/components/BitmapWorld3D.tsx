@@ -1368,6 +1368,7 @@ const SelfAvatar = memo(function SelfAvatar({
   bitcoin,
   clan,
   mountOffset = 0,
+  jetpack = false,
 }: {
   pose: React.RefObject<SelfPose>;
   color: string;
@@ -1381,6 +1382,7 @@ const SelfAvatar = memo(function SelfAvatar({
   bitcoin: string;
   clan: ClanBadge | null;
   mountOffset?: number;
+  jetpack?: boolean;
 }) {
   const group = useRef<THREE.Group>(null);
   const mounted = useRef(false);
@@ -1416,6 +1418,7 @@ const SelfAvatar = memo(function SelfAvatar({
       </mesh>
       <AvatarSkin color={color} model={model} motion={motion} skin={character?.avatarSkin ?? null} />
       {weapon ? <HeldWeapon kind={weapon} bitcoin={bitcoin} /> : null}
+      <WornGear unit={AVATAR_U} pose={pose} weapon={weapon} showHead jetpack={jetpack} />
 
       <AvatarLabel
         handle={`${handle} (YOU)`}
@@ -2374,16 +2377,6 @@ const WorldScene = memo(function WorldScene({
           />
           <LandGrowth unit={AVATAR_U} pose={pose} />
           <Companions unit={AVATAR_U} pose={pose} />
-          <WornGear
-            unit={AVATAR_U}
-            pose={pose}
-            weapon={weapon}
-            // The jetpack is worn, not boarded: your own body and the helmet
-            // stay on screen in third person while you fly.
-            showHead={cameraMode === "third" && (!driving || rideIsWorn(ride.id))}
-            jetpack={driving && ride.id === "jetpack"}
-            mountOffset={driving && ride.id === "cyberpunk-genesis-dog" ? AVATAR_U * 1.15 : 0}
-          />
           {self.hp <= 0 ? <GhostShade unit={AVATAR_U} pose={pose} /> : null}
         </>
       ) : null}
@@ -2454,6 +2447,7 @@ const WorldScene = memo(function WorldScene({
           bitcoin={colors.bitcoin}
           clan={self.clan}
           mountOffset={driving && ride.id === "cyberpunk-genesis-dog" ? AVATAR_U * 1.15 : 0}
+          jetpack={driving && ride.id === "jetpack"}
         />
       ) : null}
       <mesh
