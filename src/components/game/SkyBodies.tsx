@@ -97,9 +97,106 @@ const SUN_CORE = "#fff6e0";
 const MOON = "#e8ecf2";
 const STAR = "#ffffff";
 
+const AURORA_VERTEX = /* glsl */ `
+  uniform float uTime;
+  uniform float uPhase;
+  varying vec2 vUv;
+
+  void main() {
+    vUv = uv;
+    vec3 p = position;
+    float broadWave = sin(p.x * 0.34 + uTime * 0.18 + uPhase);
+    float fineWave = sin(p.x * 0.78 - uTime * 0.11 + uPhase * 1.7);
+    p.z += broadWave * 0.72 + fineWave * 0.2;
+    p.y += sin(p.x * 0.22 + uTime * 0.09 + uPhase) * 0.32;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+  }
+`;
+
+const AURORA_FRAGMENT = /* glsl */ `
+  uniform float uTime;
+  uniform float uPhase;
+  uniform float uOpacity;
+  varying vec2 vUv;
+
+  void main() {
+    float sweep = sin(vUv.x * 18.0 + uTime * 0.42 + uPhase) * 0.5 + 0.5;
+    float shimmer = sin(vUv.x * 47.0 - uTime * 0.73 + uPhase * 2.0) * 0.5 + 0.5;
+    float curtain = smoothstep(0.0, 0.2, vUv.y) * (1.0 - smoothstep(0.72, 1.0, vUv.y));
+    float lowerEdge = smoothstep(0.06 + sweep * 0.16, 0.28 + sweep * 0.18, vUv.y);
+    float sideFade = smoothstep(0.0, 0.13, vUv.x) * (1.0 - smoothstep(0.87, 1.0, vUv.x));
+    float rays = mix(0.38, 1.0, pow(shimmer, 3.0));
+    float pulse = 0.82 + sin(uTime * 0.17 + uPhase) * 0.18;
+    vec3 green = vec3(0.22, 1.0, 0.58);
+    vec3 cyan = vec3(0.16, 0.72, 1.0);
+    vec3 color = mix(green, cyan, smoothstep(0.18, 0.82, vUv.y));
+    float alpha = curtain * lowerEdge * sideFade * rays * pulse * uOpacity;
+    gl_FragColor = vec4(color, alpha);
+  }
+`;
+
 function isNight() {
   const hour = new Date().getHours();
   return hour < 7 || hour >= 19;
+}
+
+/** Three translucent, GPU-animated curtains across the northern horizon. */
+function AuroraBorealis({ night, far }: { night: boolean; far: number }) {
+  const materials = useRef<THREE.ShaderMaterial[]>([]);
+  const curtains = useMemo(() => {
+    const geometry = new THREE.PlaneGeometry(far * 1.45, far * 0.34, 28, 4);
+    const phases = [0.2, 2.3, 4.6];
+    const meshes = phases.map((phase, index) => {
+      const material = new THREE.ShaderMaterial({
+        uniforms: {
+          uTime: { value: 0 },
+          uPhase: { value: phase },
+          uOpacity: { value: night ? 0.34 - index * 0.065 : 0.018 },
+        },
+        vertexShader: AURORA_VERTEX,
+        fragmentShader: AURORA_FRAGMENT,
+        transparent: true,
+        depthWrite: false,
+        depthTest: false,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        toneMapped: false,
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set((index - 1) * far * 0.09, far * (0.46 + index * 0.035), -far * (0.55 + index * 0.045));
+      mesh.rotation.set(-0.08, (index - 1) * 0.12, (index - 1) * 0.025);
+      mesh.renderOrder = -8 + index;
+      mesh.frustumCulled = false;
+      mesh.raycast = () => {};
+      return mesh;
+    });
+    materials.current = meshes.map((mesh) => mesh.material as THREE.ShaderMaterial);
+    return { geometry, meshes };
+  }, [far, night]);
+
+  useEffect(
+    () => () => {
+      curtains.geometry.dispose();
+      curtains.meshes.forEach((mesh) => (mesh.material as THREE.Material).dispose());
+      materials.current = [];
+    },
+    [curtains],
+  );
+
+  useFrame(({ clock }) => {
+    const elapsed = clock.getElapsedTime();
+    materials.current.forEach((material) => {
+      material.uniforms.uTime.value = elapsed;
+    });
+  });
+
+  return (
+    <group>
+      {curtains.meshes.map((mesh, index) => (
+        <Primitive key={index} object={mesh} />
+      ))}
+    </group>
+  );
 }
 
 function LightningStorm({ bitcoin, far }: { bitcoin: string; far: number }) {
@@ -240,6 +337,7 @@ export const SkyBodies = memo(function SkyBodies({ bitcoin }: { bitcoin: string 
       </points>
 
       <LightningStorm bitcoin={bitcoin} far={far} />
+      <AuroraBorealis night={night} far={far} />
 
       {/* Sun — inscribed body plus glow halo. */}
       <group position={[-far * 0.5, sunHeight, -far * 0.5]}>
