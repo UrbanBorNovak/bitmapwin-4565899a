@@ -151,13 +151,16 @@ const KIT_TABS: { id: KitTab; label: string }[] = [
 ];
 import {
   driveEngine,
+  isMusicOn,
   isSoundMuted,
   playSfx,
+  setMusicOn,
   setSoundMuted,
   startEngine,
   stopEngine,
   unlockAudio,
 } from "@/lib/world-audio";
+import { WorldMusic } from "@/components/game/WorldMusic";
 import { aimState, aimZoom } from "@/lib/world-aim";
 import {
   ITEM_LABELS,
