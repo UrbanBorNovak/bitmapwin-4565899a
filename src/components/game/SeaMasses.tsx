@@ -9,6 +9,7 @@ import { memo, useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { SEAS, seaOutline } from "@/lib/world-sea";
+import { patchSurface, surfaceUniforms, tickSurface } from "@/lib/onchain-surface";
 import type { PlayerState } from "@/lib/player-state";
 import { Primitive } from "./Primitive";
 
@@ -44,42 +45,23 @@ function sheet(points: Array<[number, number]>, grow: number) {
 }
 
 function SeaSurfaceMaterial() {
-  const uniforms = useMemo(() => ({ uTime: { value: 0 } }), []);
+  const uniforms = useMemo(() => surfaceUniforms(6.4, 0.9), []);
   const material = useMemo(() => {
     const mat = new THREE.MeshBasicMaterial({
       color: new THREE.Color(SEA_DEEP),
       transparent: true,
-      opacity: 0.86,
+      opacity: 0.88,
       depthWrite: false,
       side: THREE.DoubleSide,
     });
-    mat.onBeforeCompile = (shader) => {
-      shader.uniforms["uTime"] = uniforms.uTime;
-      shader.fragmentShader = `uniform float uTime;\n${shader.fragmentShader}`.replace(
-        "#include <color_fragment>",
-        `#include <color_fragment>
-        float swellA = sin(vWorldRipple.x * 26.0 + uTime * 1.4);
-        float swellB = sin(vWorldRipple.y * 19.0 - uTime * 1.05);
-        float crest = pow(clamp((swellA + swellB) * 0.5 + 0.5, 0.0, 1.0), 3.0);
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.80, 0.92, 0.98), crest * 0.5);
-        `,
-      );
-      // Feed world XZ into the fragment stage so the swell is continuous across
-      // the whole sheet instead of repeating per triangle.
-      shader.vertexShader = `varying vec2 vWorldRipple;\n${shader.vertexShader}`.replace(
-        "#include <begin_vertex>",
-        `#include <begin_vertex>
-        vec4 rippleWorld = modelMatrix * vec4(transformed, 1.0);
-        vWorldRipple = rippleWorld.xz;
-        `,
-      );
-      shader.fragmentShader = `varying vec2 vWorldRipple;\n${shader.fragmentShader}`;
-    };
+    // The inscribed still-water surface, read from world XZ so a whole sea
+    // flows as one body instead of repeating per sheet.
+    patchSurface(mat, "water", uniforms, true);
     return mat;
   }, [uniforms]);
   useEffect(() => () => material.dispose(), [material]);
   useFrame((_, delta) => {
-    uniforms.uTime.value += delta;
+    tickSurface(uniforms, delta);
   });
   return <Primitive object={material} attach="material" />;
 }

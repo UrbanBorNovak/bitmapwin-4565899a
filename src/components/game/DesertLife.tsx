@@ -10,6 +10,7 @@
 import { Suspense, memo, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { patchSurface, surfaceUniforms, tickSurface } from "@/lib/onchain-surface";
 import { TreasureChests } from "@/components/game/TreasureChests";
 import { MineralNodes } from "@/components/game/MineralNodes";
 import { OreMines } from "@/components/game/OreMines";
@@ -87,7 +88,7 @@ const noRaycast = () => {};
  * draws early, so wading past it can't tint the whole view.
  */
 function WaterMaterial() {
-  const uniforms = useMemo(() => ({ uTime: { value: 0 } }), []);
+  const uniforms = useMemo(() => surfaceUniforms(6.4, 1), []);
   const material = useMemo(() => {
     const mat = new THREE.MeshBasicMaterial({
       color: new THREE.Color(WATER),
@@ -95,28 +96,23 @@ function WaterMaterial() {
       depthWrite: false,
       side: THREE.DoubleSide,
     });
-    mat.onBeforeCompile = (shader) => {
-      shader.uniforms["uTime"] = uniforms.uTime;
-      shader.vertexShader = `#define USE_UV\n${shader.vertexShader}`;
-      shader.fragmentShader = `#define USE_UV\nuniform float uTime;\n${shader.fragmentShader}`.replace(
-        "#include <color_fragment>",
-        `#include <color_fragment>
-        vec2 wuv = vUv - 0.5;
-        float wdist = length(wuv);
-        float ripple = sin(wdist * 72.0 - uTime * 1.8) * 0.5 + 0.5;
-        float chop = sin(vUv.x * 34.0 + vUv.y * 26.0 + uTime * 1.15) * 0.5 + 0.5;
-        float shimmer = pow(mix(ripple, chop, 0.5), 3.0);
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.84, 0.94, 0.99), shimmer * 0.45);
-        diffuseColor.rgb *= mix(0.72, 1.08, clamp(wdist * 2.0, 0.0, 1.0));
-        diffuseColor.a *= smoothstep(0.5, 0.33, wdist) * (0.66 + 0.2 * shimmer);
-        `,
+    // The inscribed still-water surface, plus a soft fade at the pond rim.
+    patchSurface(mat, "water", uniforms);
+    const inscribed = mat.onBeforeCompile;
+    mat.onBeforeCompile = (shader, renderer) => {
+      inscribed?.call(mat, shader, renderer);
+      shader.fragmentShader = shader.fragmentShader.replace(
+        "diffuseColor.rgb = col;",
+        `diffuseColor.rgb = col;
+         float wdist = length(vUv - 0.5);
+         diffuseColor.a *= smoothstep(0.5, 0.33, wdist) * 0.88;`,
       );
     };
     return mat;
   }, [uniforms]);
   useEffect(() => () => material.dispose(), [material]);
   useFrame((_, delta) => {
-    uniforms.uTime.value += delta;
+    tickSurface(uniforms, delta);
   });
   return <Primitive object={material} attach="material" />;
 }
