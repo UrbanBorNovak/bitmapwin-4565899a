@@ -42,7 +42,7 @@ export function MinerHud({ address }: { address: string | null }) {
       className="hud-panel absolute left-3 bottom-24 z-40 w-[min(15rem,calc(100%-1.5rem))] space-y-1 px-2.5 py-2 font-mono text-[10px]"
       aria-label="Mining rigs"
     >
-      <span className="label text-[9px] text-bitcoin">MINING RIGS</span>
+      <span className="hud-telemetry-title">MINING RIGS · LIVE</span>
       {!address ? (
         <p className="text-muted-foreground">
           CONNECT A WALLET TO RUN RIGS · {BIT_PER_RIG_HOUR} BIT PER RIG PER HOUR
@@ -51,11 +51,11 @@ export function MinerHud({ address }: { address: string | null }) {
         <>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">RIGS STANDING</span>
-            <span className="tabular-nums text-foreground">{data?.rigs ?? "—"}</span>
+            <span className="hud-live">{data?.rigs ?? "—"}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">MINED, UNSETTLED</span>
-            <span className="tabular-nums text-bitcoin">{data?.pending ?? 0} BIT</span>
+            <span className="hud-live">{data?.pending ?? 0} BIT</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">PAID OUT</span>
