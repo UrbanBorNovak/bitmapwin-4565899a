@@ -39,6 +39,7 @@ const NAV_GROUPS: NavGroup[] = [
     note: "Buy land, or buy something to run on it",
     items: [
       { to: "/marketplace", label: "MARKETPLACE", note: "Buy and sell BITMAPs" },
+      { to: "/trading-post", label: "TRADING POST", note: "Trade ore and crafted goods" },
       { to: "/extenders", label: "EXTENDERS", note: "Packages that run on land" },
       { to: "/experiences", label: "EXPERIENCES", note: "Live deployed worlds" },
       { to: "/builders", label: "BUILDERS", note: "Who ships on bedrock" },

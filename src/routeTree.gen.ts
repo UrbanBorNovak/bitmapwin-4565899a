@@ -41,6 +41,7 @@ import { Route as SdkRouteImport } from './routes/sdk'
 import { Route as SdkPlaygroundRouteImport } from './routes/sdk-playground'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StudioRouteImport } from './routes/studio'
+import { Route as TradingPostRouteImport } from './routes/trading-post'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
@@ -220,6 +221,11 @@ const StudioRoute = StudioRouteImport.update({
   path: '/studio',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TradingPostRoute = TradingPostRouteImport.update({
+  id: '/trading-post',
+  path: '/trading-post',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WalletRoute = WalletRouteImport.update({
   id: '/wallet',
   path: '/wallet',
@@ -347,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/sdk-playground': typeof SdkPlaygroundRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/studio': typeof StudioRoute
+  '/trading-post': typeof TradingPostRoute
   '/wallet': typeof WalletRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
@@ -397,6 +404,7 @@ export interface FileRoutesByTo {
   '/sdk-playground': typeof SdkPlaygroundRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/studio': typeof StudioRoute
+  '/trading-post': typeof TradingPostRoute
   '/wallet': typeof WalletRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
@@ -450,6 +458,7 @@ export interface FileRoutesById {
   '/sdk-playground': typeof SdkPlaygroundRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/studio': typeof StudioRoute
+  '/trading-post': typeof TradingPostRoute
   '/wallet': typeof WalletRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
@@ -504,6 +513,7 @@ export interface FileRouteTypes {
     | '/sdk-playground'
     | '/sitemap.xml'
     | '/studio'
+    | '/trading-post'
     | '/wallet'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
@@ -554,6 +564,7 @@ export interface FileRouteTypes {
     | '/sdk-playground'
     | '/sitemap.xml'
     | '/studio'
+    | '/trading-post'
     | '/wallet'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
@@ -606,6 +617,7 @@ export interface FileRouteTypes {
     | '/sdk-playground'
     | '/sitemap.xml'
     | '/studio'
+    | '/trading-post'
     | '/wallet'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
@@ -659,6 +671,7 @@ export interface RootRouteChildren {
   SdkPlaygroundRoute: typeof SdkPlaygroundRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StudioRoute: typeof StudioRoute
+  TradingPostRoute: typeof TradingPostRoute
   WalletRoute: typeof WalletRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
@@ -893,6 +906,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudioRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/trading-post': {
+      id: '/trading-post'
+      path: '/trading-post'
+      fullPath: '/trading-post'
+      preLoaderRoute: typeof TradingPostRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/wallet': {
       id: '/wallet'
       path: '/wallet'
@@ -1118,6 +1138,7 @@ const rootRouteChildren: RootRouteChildren = {
   SdkPlaygroundRoute: SdkPlaygroundRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StudioRoute: StudioRoute,
+  TradingPostRoute: TradingPostRoute,
   WalletRoute: WalletRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
