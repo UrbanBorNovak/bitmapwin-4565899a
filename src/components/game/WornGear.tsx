@@ -248,9 +248,9 @@ export function WornGear({
               <WornPiece
                 url={`https://ordinals.com/content/${SHOES_INSCRIPTION}`}
                 unit={unit}
-                fit={0.22}
+                fit={0.31}
                 pose={pose}
-                offset={[side * 0.115, 0.018, 0.055]}
+                offset={[side * 0.175, 0.035, 0.075]}
                 seatOnBase
                 fitAllAxes
                 mountOffset={mountOffset}
