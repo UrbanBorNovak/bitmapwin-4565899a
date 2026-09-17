@@ -321,6 +321,8 @@ const HolderColumns = memo(function HolderColumns({
   bitcoin: string;
 }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
+  const glowRef = useRef<THREE.InstancedMesh>(null);
+  const glowMaterialRef = useRef<THREE.MeshBasicMaterial>(null);
   // Every claimed cell in view: the registry owners plus the heights the
   // connected wallet actually holds on chain (those can be ahead of the
   // registry, so without them your own land would read as unclaimed).
@@ -335,7 +337,8 @@ const HolderColumns = memo(function HolderColumns({
 
   useEffect(() => {
     const mesh = meshRef.current;
-    if (!mesh) return;
+    const glow = glowRef.current;
+    if (!mesh || !glow) return;
     const dummy = new THREE.Object3D();
     const color = new THREE.Color();
     const holderColor = new THREE.Color();
@@ -361,25 +364,64 @@ const HolderColumns = memo(function HolderColumns({
         color.copy(holderColor).lerp(WHITE_HOT, 0.1);
       }
       mesh.setColorAt(index, color);
+
+      // A shallow, slightly oversized additive shell lets every holder's
+      // estate glow in its own address-derived colour without hiding the grid.
+      dummy.position.set(worldX(col), tile / 2 + AVATAR_U * 0.012, worldZ(row));
+      dummy.scale.set(CELL * 0.94, tile + AVATAR_U * 0.12, CELL * 0.94);
+      dummy.updateMatrix();
+      glow.setMatrixAt(index, dummy.matrix);
+      glow.setColorAt(index, color);
     });
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    glow.instanceMatrix.needsUpdate = true;
+    if (glow.instanceColor) glow.instanceColor.needsUpdate = true;
     mesh.computeBoundingSphere();
+    glow.computeBoundingSphere();
   }, [bitcoin, entries, mine]);
 
+  const nextGlowPulse = useRef(0);
+  useFrame(({ clock }) => {
+    if (clock.elapsedTime < nextGlowPulse.current) return;
+    nextGlowPulse.current = clock.elapsedTime + 0.1;
+    if (glowMaterialRef.current) {
+      glowMaterialRef.current.opacity = 0.1 + (Math.sin(clock.elapsedTime * 1.35) + 1) * 0.035;
+    }
+  });
 
   if (entries.length === 0) return null;
   return (
-    <instancedMesh
-      key={entries.length}
-      ref={meshRef}
-      args={[undefined, undefined, entries.length]}
-      frustumCulled
-      raycast={noRaycast}
-    >
-      <boxGeometry args={[1, 1, 1]} />
-      <meshLambertMaterial vertexColors />
-    </instancedMesh>
+    <group>
+      <instancedMesh
+        key={`holder-${entries.length}`}
+        ref={meshRef}
+        args={[undefined, undefined, entries.length]}
+        frustumCulled
+        raycast={noRaycast}
+      >
+        <boxGeometry args={[1, 1, 1]} />
+        <meshLambertMaterial vertexColors />
+      </instancedMesh>
+      <instancedMesh
+        key={`holder-glow-${entries.length}`}
+        ref={glowRef}
+        args={[undefined, undefined, entries.length]}
+        frustumCulled
+        raycast={noRaycast}
+        renderOrder={2}
+      >
+        <boxGeometry args={[1, 1, 1]} />
+        <meshBasicMaterial
+          ref={glowMaterialRef}
+          vertexColors
+          transparent
+          opacity={0.13}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </instancedMesh>
+    </group>
   );
 });
 
