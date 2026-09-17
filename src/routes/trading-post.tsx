@@ -21,6 +21,7 @@ import {
 import { coinBalanceQuery, formatBit, COIN } from "@/lib/coins";
 import { useWalletSession } from "@/lib/wallet-session";
 import { shortenAddress } from "@/lib/registry";
+import { PriceChart } from "@/components/game/PriceChart";
 
 export const Route = createFileRoute("/trading-post")({
   component: TradingPostPage,
@@ -113,6 +114,10 @@ function GoodRow({
       </dl>
 
       <StockBar good={good} />
+
+      <div className="mt-3">
+        <PriceChart itemId={good.itemId} livePrice={good.buyPrice} />
+      </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {QUANTITIES.map((amount) => (
