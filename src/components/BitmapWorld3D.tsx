@@ -2584,7 +2584,11 @@ export function BitmapWorld3D({
     });
   }, []);
   const [muted, setMuted] = useState(false);
-  useEffect(() => setMuted(isSoundMuted()), []);
+  const [musicOn, setMusicPlaying] = useState(true);
+  useEffect(() => {
+    setMuted(isSoundMuted());
+    setMusicPlaying(isMusicOn());
+  }, []);
   /** Craft a structure out of gathered materials and drop it where you stand. */
   const placeBuild = useCallback((id: StructureId) => {
     const current = pose.current;
