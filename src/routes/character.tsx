@@ -14,7 +14,7 @@ import {
   type Character,
 } from "@/lib/character";
 import { CharacterPortrait } from "@/components/game/CharacterPortrait";
-import { AVATAR_SKINS } from "@/lib/build-sdk";
+import { SkinRack } from "@/components/game/SkinRack";
 import {
   avatarModelInscription,
   avatarSkinInscription,
@@ -169,57 +169,6 @@ function CharacterPage() {
           </div>
         </aside>
       </div>
-    </div>
-  );
-}
-
-/**
- * SKIN — every on-chain BITMAP pixel skin, painted on the stock figure.
- * The thumbnail is the inscription itself, so what you pick is what you wear.
- */
-function SkinPicker({ value, onPick }: { value: string | null; onPick: (id: string | null) => void }) {
-  const options: { id: string | null; label: string }[] = [
-    { id: null, label: "STOCK" },
-    ...AVATAR_SKINS.map((skin) => ({ id: skin.inscriptionId, label: skin.label })),
-  ];
-  return (
-    <div data-no-translate>
-      <span className="label">SKIN — BITMAP PIXEL SKINS</span>
-      <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-6">
-        {options.map((option) => {
-          const active = (option.id ?? null) === (value ?? null);
-          return (
-            <button
-              key={option.id ?? "stock"}
-              type="button"
-              onClick={() => onPick(option.id)}
-              title={option.label}
-              className={`border p-1 transition-colors ${
-                active ? "border-bitcoin bg-bitcoin/10" : "border-border hover:border-foreground"
-              }`}
-            >
-              {option.id ? (
-                <img
-                  src={`https://ordinals.com/content/${option.id}`}
-                  alt={option.label}
-                  loading="lazy"
-                  className="aspect-square w-full [image-rendering:pixelated]"
-                />
-              ) : (
-                <span className="flex aspect-square w-full items-center justify-center font-mono text-[9px] text-muted-foreground">
-                  STOCK
-                </span>
-              )}
-              <span className="mt-1 block truncate text-center font-mono text-[8px] uppercase tracking-[0.12em] text-muted-foreground">
-                {option.label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-      <p className="mt-2 font-mono text-[10px] text-muted-foreground">
-        &gt; SKINS PAINT THE STOCK FIGURE — LEAVE THE FIGURE FIELD EMPTY TO SEE THEM
-      </p>
     </div>
   );
 }
