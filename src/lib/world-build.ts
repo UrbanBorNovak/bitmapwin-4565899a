@@ -168,6 +168,8 @@ export type PlacedStructure = {
   builder?: string | null;
   /** true while this structure exists only in this browser */
   local?: boolean;
+  /** source chunk for stable refresh reconciliation */
+  chunkKey?: string;
 };
 
 const STORE_KEY = "bitmapwin:builds";
@@ -408,6 +410,7 @@ async function publish(items: PlacedStructure[]) {
         yaw: row.yaw,
         at: new Date(row.created_at).getTime(),
         builder: row.builder_address,
+        chunkKey: row.chunk_key,
       });
       syncedChunks.add(row.chunk_key);
     }
@@ -431,8 +434,15 @@ export async function syncWorldChunks(keys: string[], refresh = false) {
   try {
     const result = await listWorldStructures({ data: { keys: missing } });
     markChunkLoad("structures", missing.length, performance.now() - started);
+    const returned = new Set((result?.structures ?? []).map((row) => row.id));
+    if (refresh) {
+      const refreshed = new Set(missing);
+      for (const [id, item] of shared) {
+        if (item.chunkKey && refreshed.has(item.chunkKey) && !returned.has(id)) shared.delete(id);
+      }
+    }
     for (const row of result?.structures ?? []) {
-      shared.set(row.id, {
+      const next: PlacedStructure = {
         key: row.id,
         rowId: row.id,
         id: (isStructureId(row.kind) ? row.kind : "camp-fire") as StructureId,
@@ -441,7 +451,13 @@ export async function syncWorldChunks(keys: string[], refresh = false) {
         yaw: row.yaw,
         at: new Date(row.created_at).getTime(),
         builder: row.builder_address,
-      });
+        chunkKey: row.chunk_key,
+      };
+      const current = shared.get(row.id);
+      if (
+        !current || current.id !== next.id || current.x !== next.x || current.z !== next.z ||
+        current.yaw !== next.yaw || current.builder !== next.builder
+      ) shared.set(row.id, next);
     }
     recompute();
   } catch {

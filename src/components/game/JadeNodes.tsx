@@ -12,6 +12,7 @@ import { useGLTF } from "@react-three/drei";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import {
   registerVeinGroup,
+  updateVeinGroup,
   subscribeWorldEntities,
   worldEntitiesVersion,
   type OreVein,
@@ -111,9 +112,10 @@ export const JadeNodes = memo(function JadeNodes({
   }, [center, radius, unit]);
 
   useEffect(() => {
-    registerVeinGroup("jade", seams);
-    return () => registerVeinGroup("jade", []);
+    updateVeinGroup("jade", seams);
   }, [seams]);
+
+  useEffect(() => () => registerVeinGroup("jade", []), []);
 
   return (
     <>
@@ -123,7 +125,7 @@ export const JadeNodes = memo(function JadeNodes({
             {vein.voxels.map((voxel, i) =>
               voxel.alive ? (
                 <group
-                  key={`${i}-${version}`}
+                  key={i}
                   position={[voxel.x, voxel.y - voxel.size * 0.5, voxel.z]}
                 >
                   <Suspense

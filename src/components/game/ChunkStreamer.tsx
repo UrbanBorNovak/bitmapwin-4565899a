@@ -5,6 +5,7 @@ import { syncWorldChunks } from "@/lib/world-build";
 import { syncTerraformChunks } from "@/lib/world-terraform";
 import { markFrame } from "@/lib/world-perf";
 import { FAST_PACE, MOVE, STRIDE, type PlayerState } from "@/lib/player-state";
+import { updateWorldStream } from "@/lib/world-stream";
 
 /**
  * CHUNK STREAMING — only the world around you is ever loaded.
@@ -75,6 +76,13 @@ export function ChunkStreamer({
     const aimX = player.x + (pace > 0.001 ? (player.vx / pace) * lead : 0);
     const aimZ = player.z + (pace > 0.001 ? (player.vz / pace) * lead : 0);
     const keys = visibleChunks(aimX, aimZ, radius);
+    const report = () => updateWorldStream({
+      chunk: player.chunk,
+      loaded: seen.current.size,
+      queued: queue.current.length,
+      syncing: busy.current.structures || busy.current.terraform || busy.current.refresh,
+      fast,
+    });
 
     // Re-checking other players' builds uses its own in-flight flag and only the
     // nearest chunks, so it never holds up first load or fast-travel streaming.
@@ -83,6 +91,7 @@ export function ChunkStreamer({
       busy.current.refresh = true;
       void syncWorldChunks(keys.slice(0, REFRESH_KEYS), true).finally(() => {
         busy.current.refresh = false;
+        report();
       });
     }
 
@@ -121,6 +130,8 @@ export function ChunkStreamer({
       }
     }
 
+    report();
+
     if (!queue.current.length) return;
 
     // Both sources take the same batch, so wait until neither is mid-request.
@@ -129,14 +140,17 @@ export function ChunkStreamer({
     const batchSize = fast ? FAST_BATCH : BATCH;
     const batch = queue.current.slice(0, batchSize);
     queue.current = queue.current.slice(batchSize);
+    report();
 
     busy.current.structures = true;
     void syncWorldChunks(batch).finally(() => {
       busy.current.structures = false;
+      report();
     });
     busy.current.terraform = true;
     void syncTerraformChunks(batch).finally(() => {
       busy.current.terraform = false;
+      report();
     });
   });
 

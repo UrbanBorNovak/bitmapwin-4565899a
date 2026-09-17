@@ -12,6 +12,7 @@ import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import {
   registerVeinGroup,
+  updateVeinGroup,
   subscribeWorldEntities,
   worldEntitiesVersion,
   type OreVein,
@@ -174,9 +175,10 @@ export const MineralNodes = memo(function MineralNodes({
   }, [center, radius, unit]);
 
   useEffect(() => {
-    registerVeinGroup("mineral", clusters);
-    return () => registerVeinGroup("mineral", []);
+    updateVeinGroup("mineral", clusters);
   }, [clusters]);
+
+  useEffect(() => () => registerVeinGroup("mineral", []), []);
 
   return (
     <>
@@ -186,7 +188,7 @@ export const MineralNodes = memo(function MineralNodes({
             {vein.voxels.map((voxel, i) =>
               voxel.alive ? (
                 <group
-                  key={`${i}-${version}`}
+                  key={i}
                   position={[voxel.x, voxel.y - voxel.size * 0.5, voxel.z]}
                 >
                   <Suspense fallback={<ShardStandIn size={voxel.size} bitcoin={bitcoin} />}>

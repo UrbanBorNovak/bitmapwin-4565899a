@@ -126,6 +126,11 @@ export function registerVeinGroup(source: string, list: OreVein[]) {
   emit();
 }
 
+/** Replace one streamed population atomically, without an empty frame between windows. */
+export function updateVeinGroup(source: string, list: OreVein[]) {
+  registerVeinGroup(source, list);
+}
+
 export function registerVeins(list: OreVein[]) {
   registerVeinGroup("gold", list);
 }
