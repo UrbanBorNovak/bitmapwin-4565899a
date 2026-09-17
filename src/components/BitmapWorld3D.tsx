@@ -1088,7 +1088,7 @@ function AvatarSkin({
 function HealthBar({ hp, color }: { hp: number; color: string }) {
   const pct = Math.max(0, Math.min(100, (hp / MAX_HP) * 100));
   return (
-    <span className="relative block h-[9px] w-[104px] border border-border bg-background/90 shadow-md">
+    <span className="relative block h-[6px] w-[104px] border border-foreground/50 bg-transparent">
       <span
         className="absolute inset-y-0 left-0 transition-[width] duration-200"
         style={{ width: `${pct}%`, background: pct <= 25 ? "var(--bitcoin)" : color }}
@@ -1132,7 +1132,7 @@ function AvatarLabel({
       <div className="flex flex-col items-center gap-[3px]">
         {say ? (
           <span
-            className="max-w-[200px] whitespace-pre-wrap break-words border bg-background/95 px-2 py-1 font-mono text-[11px] text-foreground shadow-md"
+            className="max-w-[200px] whitespace-pre-wrap break-words border-l-2 bg-transparent px-2 py-1 font-mono text-[11px] font-bold text-foreground [text-shadow:0_1px_2px_var(--background),0_0_5px_var(--background)]"
             style={{ borderColor: color }}
           >
             {say}
@@ -1142,7 +1142,7 @@ function AvatarLabel({
         {hurt ? (
           <span className="font-mono text-[13px] font-bold text-bitcoin">-{lastDamage}</span>
         ) : null}
-        <span className="flex items-center gap-1.5 whitespace-nowrap border bg-background/90 px-2 py-[3px] font-mono text-[12px] font-bold tracking-wide text-foreground shadow-md" style={{ borderColor: hurt ? "var(--bitcoin)" : "var(--color-border)" }}>
+        <span className="flex items-center gap-1.5 whitespace-nowrap border-l-2 bg-transparent px-2 py-[3px] font-mono text-[12px] font-bold tracking-wide text-foreground [text-shadow:0_1px_2px_var(--background),0_0_5px_var(--background)]" style={{ borderColor: hurt ? "var(--bitcoin)" : color }}>
           {clan ? <ClanCrest clan={clan} className="size-5" /> : null}
           <span>{hp <= 0 ? `${handle} · DOWN` : handle}</span>
         </span>
