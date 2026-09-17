@@ -319,6 +319,9 @@ function Counter() {
       ) : null}
 
       {mode === "list" ? <ListForm held={held} busy={busy} onList={postListing.mutate} /> : null}
+
+      {mode === "chart" ? <PriceBoard goods={market.data ?? []} /> : null}
+
     </div>
   );
 }
