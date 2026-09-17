@@ -13,54 +13,55 @@ type NavGroup = { id: string; label: string; note: string; items: NavItem[] };
 
 const NAV_GROUPS: NavGroup[] = [
   {
-    id: "world",
-    label: "WORLD",
-    note: "Where the land lives — look around it",
+    id: "play",
+    label: "PLAY",
+    note: "Everything you use inside the 3D Oasis",
     items: [
-      { to: "/map", label: "OASIS", note: "1,000 × 1,000 live world" },
-      { to: "/cities", label: "CITIES", note: "Districts and city hubs" },
-      { to: "/explore", label: "EXPLORE", note: "Trending land and activity" },
+      { to: "/map", label: "ENTER THE OASIS", note: "Walk, drive, build and explore" },
+      { to: "/cities", label: "VISIT CITIES", note: "Districts inside the world" },
+      { to: "/trading-post", label: "IN-WORLD TRADING POST", note: "Trade your Oasis items" },
+      { to: "/inventory", label: "MY INVENTORY", note: "Gear, rations and collectibles" },
     ],
   },
   {
-    id: "build",
-    label: "BUILD",
-    note: "Put something on land you hold",
+    id: "trade",
+    label: "TRADE",
+    note: "Bitcoin land, rentals and confirmed sales",
     items: [
-      { to: "/my-world", label: "MY WORLD", note: "Your land and deployments" },
-      { to: "/builds", label: "BUILDS", note: "On-chain 3D model registry" },
-      { to: "/extend", label: "EXTEND", note: "Deploy software on land" },
-      { to: "/studio", label: "STUDIO", note: "Extender code workbench" },
+      { to: "/marketplace", label: "BITMAP MARKET", note: "Buy and sell BITMAPs" },
+      { to: "/leases", label: "LEASES", note: "Rent BITMAPs by the day" },
+      { to: "/history", label: "SALES HISTORY", note: "Confirmed on-chain sales" },
     ],
   },
   {
-    id: "market",
-    label: "MARKET",
-    note: "Buy land, or buy something to run on it",
+    id: "create",
+    label: "CREATE",
+    note: "Build and publish experiences on your BITMAPs",
     items: [
-      { to: "/marketplace", label: "MARKETPLACE", note: "Buy and sell BITMAPs" },
-      { to: "/trading-post", label: "TRADING POST", note: "Trade ore and crafted goods" },
-      { to: "/extenders", label: "EXTENDERS", note: "Packages that run on land" },
+      { to: "/my-world", label: "MY WORLD", note: "Manage your BITMAPs and deployments" },
+      { to: "/builds", label: "3D BUILDS", note: "On-chain model registry" },
+      { to: "/extend", label: "DEPLOY", note: "Put an experience on your land" },
+      { to: "/studio", label: "STUDIO", note: "Build an Extender" },
+      { to: "/extenders", label: "EXTENDERS", note: "Reusable world packages" },
+    ],
+  },
+  {
+    id: "discover",
+    label: "DISCOVER",
+    note: "See what is active across the network",
+    items: [
+      { to: "/explore", label: "EXPLORE", note: "Trending BITMAPs and activity" },
       { to: "/experiences", label: "EXPERIENCES", note: "Live deployed worlds" },
-      { to: "/builders", label: "BUILDERS", note: "Who ships on bedrock" },
+      { to: "/builders", label: "BUILDERS", note: "People building on bedrock" },
     ],
   },
   {
-    id: "land",
-    label: "LAND",
-    note: "Your holdings, rentals and proof of ownership",
+    id: "account",
+    label: "ACCOUNT",
+    note: "Your holdings, proof and developer resources",
     items: [
-      { to: "/my-land", label: "MY LAND", note: "BITMAPs your wallet holds" },
-      { to: "/leases", label: "LEASES", note: "Rent land by the day" },
-      { to: "/ownership", label: "OWNERSHIP", note: "First-is-first, on chain" },
-      { to: "/history", label: "HISTORY", note: "Confirmed chain sales" },
-    ],
-  },
-  {
-    id: "develop",
-    label: "DEVELOP",
-    note: "Tools and docs for building on top",
-    items: [
+      { to: "/my-land", label: "MY BITMAPS", note: "BITMAPs held by your wallet" },
+      { to: "/ownership", label: "OWNERSHIP", note: "Verify on-chain ownership" },
       { to: "/sdk", label: "SDK", note: "Build for Bitcoin land" },
       { to: "/docs", label: "DOCS", note: "Guides and references" },
       { to: "/api", label: "API", note: "Public HTTP endpoints" },
@@ -104,7 +105,7 @@ export function SiteHeader() {
           <div className="label mt-1 hidden sm:block">BITCOIN LAND BEDROCK</div>
         </Link>
 
-        <nav className="hidden items-center gap-1 lg:flex">
+        <nav className="hidden items-center gap-1 lg:flex" aria-label="Main navigation">
           {NAV_GROUPS.map((group) => (
             <div
               key={group.id}
@@ -147,12 +148,8 @@ export function SiteHeader() {
               )}
             </div>
           ))}
-          <Link
-            to="/map"
-            className="label ml-2 flex items-center gap-1 border border-bitcoin px-3 py-2 text-bitcoin hover:bg-bitcoin/10"
-            title="Map, extend, deploy"
-          >
-            MAP <span aria-hidden="true">→</span> EXTEND <span aria-hidden="true">→</span> DEPLOY
+          <Link to="/map" className="label ml-2 flex items-center gap-1 border border-bitcoin px-3 py-2 text-bitcoin hover:bg-bitcoin/10">
+            ENTER OASIS <span aria-hidden="true">→</span>
           </Link>
         </nav>
 
@@ -195,16 +192,41 @@ export function SiteHeader() {
         </form>
       )}
 
-      <nav className="flex items-center gap-1 overflow-x-auto border-t border-border px-4 py-2 lg:hidden">
-        {NAV_GROUPS.flatMap((g) => g.items).map((item) => (
-          <Link
-            key={item.to}
-            to={item.to}
-           className="nav-link label shrink-0 px-2 py-2"
-            activeProps={{ className: "is-active text-bitcoin" }}
-          >
-            {item.label}
-          </Link>
+      <nav className="flex items-center gap-1 overflow-visible border-t border-border px-4 py-2 lg:hidden" aria-label="Main navigation">
+        {NAV_GROUPS.map((group) => (
+          <div key={group.id} className="relative min-w-0 flex-1">
+            <button
+              type="button"
+              aria-expanded={openGroup === group.id}
+              onClick={() => setOpenGroup((v) => (v === group.id ? null : group.id))}
+              className={`nav-trigger label flex w-full items-center justify-center gap-1 px-1 py-2 sm:px-3 ${
+                openGroup === group.id ? "is-active border border-border text-foreground" : ""
+              }`}
+            >
+              {group.label}
+              <ChevronDown className="hidden size-3 sm:block" />
+            </button>
+            {openGroup === group.id && (
+              <div className={`nav-menu fixed left-3 right-3 z-50 mt-2 border border-border bg-background shadow-[4px_4px_0_0_var(--color-border)] sm:absolute sm:left-0 sm:right-auto sm:min-w-72 ${group.id === "account" ? "sm:left-auto sm:right-0" : ""}`}>
+                <div className="border-b border-border bg-surface px-4 py-2">
+                  <div className="label text-bitcoin">{group.label}</div>
+                  <div className="mt-1 font-mono text-[10px] leading-snug text-muted-foreground">{group.note}</div>
+                </div>
+                {group.items.map((item) => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => setOpenGroup(null)}
+                    className="nav-menu-item block border-b border-border px-4 py-3 last:border-b-0"
+                    activeProps={{ className: "text-bitcoin" }}
+                  >
+                    <div className="label text-foreground">{item.label}</div>
+                    {item.note && <div className="label mt-1 text-[0.55rem]">{item.note}</div>}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         ))}
       </nav>
     </header>
