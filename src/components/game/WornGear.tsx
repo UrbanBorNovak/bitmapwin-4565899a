@@ -51,6 +51,8 @@ function WornPiece({
   stepSide = 0,
   /** rest on the piece's own base instead of its middle (hats, helmets) */
   seatOnBase = false,
+  /** size from every axis while still seating the model on its base */
+  fitAllAxes = false,
 }: {
   url: string;
   unit: number;
@@ -66,6 +68,7 @@ function WornPiece({
   /** -1 left foot, +1 right foot; animates shoes with the avatar stride */
   stepSide?: number;
   seatOnBase?: boolean;
+  fitAllAxes?: boolean;
 }) {
   const gltf = useGLTF(url);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
@@ -90,13 +93,13 @@ function WornPiece({
     const center = bounds.getCenter(new THREE.Vector3());
     // A hat is sized by how wide it is, not by its tallest point, so a pointed
     // brim doesn't shrink the whole thing down to a bead.
-    const span = seatOnBase
+    const span = seatOnBase && !fitAllAxes
       ? Math.max(size.x, size.z, 0.0001)
       : Math.max(size.x, size.y, size.z, 0.0001);
     const scale = (unit * fit) / span;
     const drop = seatOnBase ? bounds.min.y : center.y;
     return { scale, center, drop };
-  }, [scene, unit, fit, seatOnBase]);
+  }, [scene, unit, fit, seatOnBase, fitAllAxes]);
 
   useFrame(({ clock }) => {
     const player = pose.current;
@@ -163,11 +166,6 @@ export function WornGear({
 }) {
   const gear = useGear();
   const eatingFood = gear.eating ? FOODS[gear.eating.food] : null;
-  // The candy inscription is a horizontal Snickers bar. Keep it in the right
-  // hand instead of using the bowl/bottle pose shared by taller rations.
-  const eatingOffset: [number, number, number] = eatingFood?.id === "candy"
-    ? [0.27, 0.4, 0.16]
-    : [0.18, 0.66, 0.24];
   const toy = toySpec(gear.toy);
   return (
     <>
@@ -243,10 +241,11 @@ export function WornGear({
               <WornPiece
                 url={`https://ordinals.com/content/${SHOES_INSCRIPTION}`}
                 unit={unit}
-                fit={0.42}
+                fit={0.3}
                 pose={pose}
-                offset={[side * 0.13, 0.015, 0.04]}
+                offset={[side * 0.12, 0.002, 0.04]}
                 seatOnBase
+                fitAllAxes
                 mountOffset={mountOffset}
                 stepSide={side}
               />
@@ -336,7 +335,7 @@ export function WornGear({
             unit={unit}
             fit={eatingFood.fit}
             pose={pose}
-            offset={eatingOffset}
+            offset={[0.18, 0.66, 0.24]}
             bob={0.03}
             mountOffset={mountOffset}
           />
