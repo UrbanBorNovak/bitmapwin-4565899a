@@ -14,7 +14,13 @@ import {
   type Character,
 } from "@/lib/character";
 import { CharacterPortrait } from "@/components/game/CharacterPortrait";
-import { avatarModelInscription, setAvatarModelInscription } from "@/lib/map-identity";
+import { AVATAR_SKINS } from "@/lib/build-sdk";
+import {
+  avatarModelInscription,
+  avatarSkinInscription,
+  setAvatarModelInscription,
+  setAvatarSkinInscription,
+} from "@/lib/map-identity";
 
 export const Route = createFileRoute("/character")({
   head: () => ({
@@ -46,7 +52,8 @@ function CharacterPage() {
     if (stored) setDraft(stored);
     else {
       const worn = avatarModelInscription();
-      if (worn) setDraft((d) => ({ ...d, avatarModel: worn }));
+      const skin = avatarSkinInscription();
+      if (worn || skin) setDraft((d) => ({ ...d, avatarModel: worn ?? d.avatarModel, avatarSkin: skin ?? d.avatarSkin }));
     }
   }, []);
 
@@ -59,6 +66,7 @@ function CharacterPage() {
     const stored = saveCharacter({ ...draft, title, backstory });
     setDraft(stored);
     setAvatarModelInscription(stored.avatarModel);
+    setAvatarSkinInscription(stored.avatarSkin);
     setSaved(Date.now());
   };
 
@@ -100,6 +108,8 @@ function CharacterPage() {
               />
             </label>
 
+            <SkinPicker value={draft.avatarSkin} onPick={(avatarSkin) => set({ avatarSkin })} />
+
             <Picker label="ORIGIN" options={ORIGINS} value={draft.origin} onPick={(origin) => set({ origin })} />
             <Picker label="CALLING" options={CALLINGS} value={draft.calling} onPick={(calling) => set({ calling })} />
             <Picker label="VICE" options={VICES} value={draft.vice} onPick={(vice) => set({ vice })} />
@@ -112,7 +122,11 @@ function CharacterPage() {
             <h2 className="display text-xl">{draft.name.trim() || "UNNAMED"}</h2>
             <p className="label mt-2">{title}</p>
           </header>
-          <CharacterPortrait model={draft.avatarModel} className="h-80 border-b border-border" />
+          <CharacterPortrait
+            model={draft.avatarModel}
+            skin={draft.avatarSkin}
+            className="h-80 border-b border-border"
+          />
           <div className="space-y-4 p-5">
             {backstory.split("\n\n").map((paragraph, index) => (
               <p key={index} className="font-mono text-xs leading-relaxed text-muted-foreground">
