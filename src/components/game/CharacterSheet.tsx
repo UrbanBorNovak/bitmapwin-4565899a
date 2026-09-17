@@ -129,7 +129,12 @@ function PreviewAvatar({ model, skin }: { model: string | null; skin?: string | 
     const center = bounds.getCenter(new THREE.Vector3());
     // Keep every inscription at one apparent body height in LIVE LOADOUT.
     // Using its widest axis made broad figures look much shorter than slim ones.
-    const scale = 1.15 / Math.max(size.y, 0.0001);
+    // But a flat or degenerate model (lying down, a lone prop, empty bounds)
+    // has almost no height, so a pure height fit blows it up into a closeup —
+    // never let the figure scale past what its width implies, and never past
+    // the hard cap.
+    const impliedHeight = Math.max(size.y, size.x * 0.45, size.z * 0.45, 0.001);
+    const scale = Math.min(1.15 / impliedHeight, 6);
     return { scale, center, minY: bounds.min.y };
   }, [inscription, scene, texture]);
   return (
