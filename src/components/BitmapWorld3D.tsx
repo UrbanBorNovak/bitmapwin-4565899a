@@ -35,6 +35,9 @@ import { runtimeDeploymentsQuery, type RuntimeDeployment } from "@/lib/extender-
 import type { RunningExtender } from "@/lib/use-extender-runtimes";
 import { ShooterLayer, type ShooterStats } from "@/components/game/ShooterLayer";
 import { MinerHud } from "@/components/game/MinerHud";
+import { BitmapMineHud } from "@/components/game/BitmapMineHud";
+import { BitmapMineCrew } from "@/components/game/BitmapMineCrew";
+
 import { SmeltHud } from "@/components/game/SmeltHud";
 import { EggHunt } from "@/components/game/EggHunt";
 
