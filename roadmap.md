@@ -28,3 +28,4 @@
 - [x] Add persistent invite/request clans, leader-controlled image inscription crests, and crest nameplates
 - [x] Correct cat, dog, and goose companion models, scale, and foot-follow behavior
 - [x] Make the supplied bird fly and add natural goose flocks
+- [x] Correct leash goose/cat identities and add the Cyberpunk Genesis Dog as a travel mount

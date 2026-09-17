@@ -35,6 +35,7 @@ export function RideModel({
   const { actions } = useAnimations(gltf.animations, scene);
   const group = useRef<THREE.Group>(null);
   const lean = useRef(0);
+  const isDogMount = ride.id === "cyberpunk-genesis-dog";
 
   // Fit the ride to its own length in avatar units, and drop any stray helper
   // cube the model ships with.
@@ -74,9 +75,9 @@ export function RideModel({
     // Each model is exported facing a different way. The longest horizontal axis
     // is the ride's length, so turn that axis to point where you are heading
     // instead of assuming every ride was modelled the same way.
-    const turn = size.x > size.z ? -Math.PI / 2 : 0;
+    const turn = isDogMount ? Math.PI : size.x > size.z ? -Math.PI / 2 : 0;
     return { fit, center, minY: bounds.min.y, turn };
-  }, [scene, unit, ride.fit, ride.repaint]);
+  }, [scene, unit, ride.fit, ride.repaint, isDogMount]);
 
   useEffect(() => {
     const clips = Object.values(actions);
@@ -96,7 +97,10 @@ export function RideModel({
     const swell =
       ride.kind === "water" ? Math.sin(clock.elapsedTime * 1.6) * unit * 0.06 : 0;
     if (driving && player) {
-      node.position.set(player.x, player.y + swell, player.z);
+      const gallop = isDogMount
+        ? Math.abs(Math.sin(clock.elapsedTime * (5 + Math.min(speed, unit * 8) * 8))) * unit * 0.07
+        : 0;
+      node.position.set(player.x, player.y + swell + gallop, player.z);
       node.rotation.y = player.yaw;
       vehicle.x = player.x;
       vehicle.z = player.z;
@@ -106,7 +110,7 @@ export function RideModel({
       // Body roll into the turn and a light pitch under acceleration.
       const sway = -(player.vx * Math.cos(player.yaw) - player.vz * Math.sin(player.yaw));
       lean.current += (sway * ride.lean - lean.current) * (1 - Math.exp(-6 * delta));
-      const limit = ride.kind === "air" ? 0.24 : 0.09;
+      const limit = ride.kind === "air" ? 0.24 : isDogMount ? 0.16 : 0.09;
       node.rotation.z = THREE.MathUtils.clamp(lean.current, -limit, limit);
       if (ride.kind === "water") node.rotation.x = Math.cos(clock.elapsedTime * 1.3) * 0.03;
     } else {

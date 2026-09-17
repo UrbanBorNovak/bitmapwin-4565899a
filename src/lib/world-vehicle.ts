@@ -61,6 +61,21 @@ export const JETPACK_HELMET_INSCRIPTION =
 
 export const RIDES: RideSpec[] = [
   {
+    id: "cyberpunk-genesis-dog",
+    voice: "ev",
+    label: "CYBERPUNK GENESIS DOG",
+    inscription: "3eba3eadd0cf32bce7be6a21eccb9b97d9e66e9c0d779a3b1d7463a7a8432d47i0",
+    kind: "ground",
+    fit: 2.35,
+    speed: 4.6,
+    sprint: 1.5,
+    turn: 1.08,
+    lean: 0.7,
+    accel: 1.65,
+    brake: 1.35,
+    grip: 0.82,
+  },
+  {
     id: "cybertruck",
     voice: "ev",
     label: "CYBERTRUCK",
