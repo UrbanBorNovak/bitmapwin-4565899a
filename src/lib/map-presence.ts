@@ -287,13 +287,21 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
       })
 
 
-      .subscribe();
+      .subscribe((status) => {
+        joined = status === "SUBSCRIBED";
+      });
+
+    // Until the socket has actually joined, every send() falls back to a slow
+    // REST call. Position updates are dropped while we wait — the heartbeat
+    // resends the latest one — so a match never starts on the slow path.
+    let joined = false;
 
     let last = 0;
     let lastCell: PoseReport | null = null;
     let pending: PoseReport | null = null;
     let timer: ReturnType<typeof setTimeout> | null = null;
     const push = (cell: PoseReport | null) => {
+      if (!joined) return;
       void channel.send({
         type: "broadcast",
         event: "cursor",
@@ -303,6 +311,7 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
       });
       last = Date.now();
     };
+
     // Avatars stay spawned in the world: re-broadcast the last position on a
     // heartbeat so peers never see us expire while the tab is open.
     const heartbeat = setInterval(() => {
