@@ -41,20 +41,25 @@ export function TerrainField({ pose }: { pose: React.RefObject<PlayerState> }) {
   const geometry = useMemo(() => {
     const geo = new THREE.PlaneGeometry(SPAN, SPAN, SEGMENTS, SEGMENTS);
     geo.rotateX(-Math.PI / 2);
-    const count = geo.attributes.position!.count;
+    const count = geo.attributes["position"]!.count;
     geo.setAttribute("color", new THREE.BufferAttribute(new Float32Array(count * 3), 3));
     return geo;
   }, []);
 
   useEffect(() => () => geometry.dispose(), [geometry]);
   // New block rows change the land shape: rebuild when they land.
-  useEffect(() => subscribeTerrain(() => {
-    dirty.current = true;
-  }), []);
+  useEffect(() => {
+    const off = subscribeTerrain(() => {
+      dirty.current = true;
+    });
+    return () => {
+      off();
+    };
+  }, []);
 
   const rebuild = (cx: number, cz: number) => {
-    const position = geometry.attributes.position as THREE.BufferAttribute;
-    const color = geometry.attributes.color as THREE.BufferAttribute;
+    const position = geometry.attributes["position"] as THREE.BufferAttribute;
+    const color = geometry.attributes["color"] as THREE.BufferAttribute;
     const tint = new THREE.Color();
     const half = SPAN / 2;
     for (let i = 0; i < position.count; i++) {
