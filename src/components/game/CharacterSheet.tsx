@@ -10,7 +10,7 @@ import { Suspense, useEffect, useMemo, useRef } from "react";
 import type { LucideIcon } from "lucide-react";
 import { BookOpen, CircleDot, Footprints, Gem, Glasses, HardHat, ToyBrick, Watch } from "lucide-react";
 import { Canvas, useThree } from "@react-three/fiber";
-import { useGLTF, useTexture } from "@react-three/drei";
+import { useAnimations, useGLTF, useTexture } from "@react-three/drei";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
 import { WeaponGlyph } from "@/components/game/WeaponBelt";
