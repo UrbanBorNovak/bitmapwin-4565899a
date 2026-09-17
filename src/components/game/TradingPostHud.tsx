@@ -12,7 +12,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { goodsMarketQuery, quoteOrder } from "@/lib/goods-market";
+import { goodsMarketQuery, quoteOrder, type MarketGood } from "@/lib/goods-market";
+import { PriceChart } from "@/components/game/PriceChart";
 import { tradeGoodsFn } from "@/lib/goods-market.functions";
 import { marketListingsQuery, settlerTradeStatsQuery } from "@/lib/market-listings";
 import {
@@ -408,6 +409,55 @@ function ListForm({
       >
         PUT {quantity} ON THE BOARD
       </button>
+    </div>
+  );
+}
+
+/** The price-movement board: pick a good, watch where its rate has been going. */
+function PriceBoard({ goods }: { goods: MarketGood[] }) {
+  const [itemId, setItemId] = useState<ItemId | null>(null);
+  const picked = itemId ?? goods[0]?.itemId ?? null;
+  const good = goods.find((entry) => entry.itemId === picked) ?? null;
+
+  if (!good || !picked) {
+    return <p className="text-muted-foreground">THE MARKET IS STILL WAKING UP.</p>;
+  }
+
+  return (
+    <div className="max-h-[38vh] space-y-2 overflow-y-auto">
+      <select
+        value={picked}
+        onChange={(event) => setItemId(event.target.value as ItemId)}
+        className="w-full border border-border bg-background/80 px-1.5 py-1 text-[10px] text-foreground outline-none"
+        aria-label="Pick a good to chart"
+      >
+        {goods.map((entry) => (
+          <option key={entry.itemId} value={entry.itemId}>
+            {ITEM_LABELS[entry.itemId] ?? entry.itemId}
+          </option>
+        ))}
+      </select>
+
+      <PriceChart itemId={picked} livePrice={good.buyPrice} />
+
+      <div className="grid grid-cols-3 gap-1">
+        <Cell k="BUY" v={formatBit(good.buyPrice)} />
+        <Cell k="SELL" v={formatBit(good.sellPrice)} />
+        <Cell k="STOCK" v={String(good.stock)} />
+      </div>
+      <p className="text-muted-foreground">
+        DRIFT FROM BASE {good.drift >= 0 ? "+" : ""}
+        {(good.drift * 100).toFixed(1)}% · TRADED {good.boughtTotal + good.soldTotal}
+      </p>
+    </div>
+  );
+}
+
+function Cell({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="border border-border bg-background/70 px-1.5 py-1">
+      <div className="label text-[8px]">{k}</div>
+      <div className="tabular-nums text-bitcoin">{v}</div>
     </div>
   );
 }
