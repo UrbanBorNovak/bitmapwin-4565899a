@@ -30,49 +30,92 @@ const LAVA_SOURCE_LIFT = 0.14;
 const noRaycast = () => {};
 
 type WaterGeometry = { river: THREE.BufferGeometry; falls: THREE.BufferGeometry };
+type RiverPoint = { x: number; z: number };
+type RiverPlan = { id: string; points: RiverPoint[] };
+
+const RIVER_SECTOR_CELLS = 18;
+const RIVER_SECTOR_SPAN = WORLD_CELL * RIVER_SECTOR_CELLS;
+const RIVER_SECTOR_RADIUS = 2;
+const RIVER_CONTROL_POINTS = 15;
+const RIVER_SAMPLES = 64;
+const riverPlanCache = new Map<string, RiverPlan>();
 
 function noise(a: number, b: number) {
   const value = Math.sin(a * 127.1 + b * 311.7) * 43758.5453;
   return value - Math.floor(value);
 }
 
-function terrainWaterGeometry(cx: number, cz: number): WaterGeometry {
+function riverPlan(sectorX: number, sectorZ: number): RiverPlan {
+  const id = `${sectorX}:${sectorZ}`;
+  const cached = riverPlanCache.get(id);
+  if (cached) return cached;
+
+  const seed = sectorX * 73856093 + sectorZ * 19349663;
+  const originX = sectorX * RIVER_SECTOR_SPAN;
+  const originZ = sectorZ * RIVER_SECTOR_SPAN;
+  let x = originX + (0.18 + noise(seed, 1.3) * 0.64) * RIVER_SECTOR_SPAN;
+  let z = originZ + (0.18 + noise(seed, 2.7) * 0.64) * RIVER_SECTOR_SPAN;
+  let direction = noise(seed, 4.1) * Math.PI * 2;
+  const controlStep = WORLD_CELL * 0.78;
+  const points: RiverPoint[] = [];
+
+  for (let step = 0; step < RIVER_CONTROL_POINTS; step += 1) {
+    points.push({ x, z });
+    let bestAngle = direction;
+    let bestScore = Number.POSITIVE_INFINITY;
+    for (let option = -2; option <= 2; option += 1) {
+      const turn = option * 0.28;
+      const angle = direction + turn + (noise(seed + step * 17, option + 9.2) - 0.5) * 0.1;
+      const nx = x + Math.sin(angle) * controlStep;
+      const nz = z + Math.cos(angle) * controlStep;
+      const turnCost = Math.abs(turn) * WORLD_CELL * 0.035;
+      const score = groundY(nx, nz) + turnCost;
+      if (score < bestScore) {
+        bestScore = score;
+        bestAngle = angle;
+      }
+    }
+    direction = THREE.MathUtils.lerp(direction, bestAngle, 0.72);
+    x += Math.sin(direction) * controlStep;
+    z += Math.cos(direction) * controlStep;
+  }
+
+  const plan = { id, points };
+  riverPlanCache.set(id, plan);
+  return plan;
+}
+
+function visibleRiverPlans(centreX: number, centreZ: number) {
+  const plans: RiverPlan[] = [];
+  for (let dz = -RIVER_SECTOR_RADIUS; dz <= RIVER_SECTOR_RADIUS; dz += 1) {
+    for (let dx = -RIVER_SECTOR_RADIUS; dx <= RIVER_SECTOR_RADIUS; dx += 1) {
+      plans.push(riverPlan(centreX + dx, centreZ + dz));
+    }
+  }
+  return plans;
+}
+
+function terrainWaterGeometry(plans: RiverPlan[]): WaterGeometry {
   const riverPositions: number[] = [];
   const riverUvs: number[] = [];
   const riverIndices: number[] = [];
   const fallPositions: number[] = [];
   const fallUvs: number[] = [];
   const fallIndices: number[] = [];
-  const channelStep = WORLD_CELL * 0.58;
-  const halfWidth = WORLD_CELL * 0.16;
   const lift = WORLD_CELL * 0.008;
 
-  for (let stream = 0; stream < 7; stream += 1) {
-    const key = Math.floor(cx / WORLD_CELL) * 37 + Math.floor(cz / WORLD_CELL) * 71 + stream * 101;
-    let x = cx + (noise(key, 1.3) * 2 - 1) * WORLD_CELL * 11;
-    let z = cz + (noise(key, 2.7) * 2 - 1) * WORLD_CELL * 11;
-    let direction = noise(key, 4.1) * Math.PI * 2;
-    const points: THREE.Vector3[] = [];
-
-    for (let step = 0; step < 44; step += 1) {
-      const y = groundY(x, z) + lift;
-      points.push(new THREE.Vector3(x, y, z));
-      let bestAngle = direction;
-      let bestHeight = Number.POSITIVE_INFINITY;
-      for (let option = -2; option <= 2; option += 1) {
-        const angle = direction + option * 0.42 + (noise(key + step, option + 8.2) - 0.5) * 0.18;
-        const nx = x + Math.sin(angle) * channelStep;
-        const nz = z + Math.cos(angle) * channelStep;
-        const candidate = groundY(nx, nz) + Math.abs(option) * WORLD_CELL * 0.012;
-        if (candidate < bestHeight) {
-          bestHeight = candidate;
-          bestAngle = angle;
-        }
-      }
-      direction = bestAngle;
-      x += Math.sin(direction) * channelStep;
-      z += Math.cos(direction) * channelStep;
-    }
+  for (const plan of plans) {
+    const curve = new THREE.CatmullRomCurve3(
+      plan.points.map((point) => new THREE.Vector3(point.x, 0, point.z)),
+      false,
+      "centripetal",
+      0.45,
+    );
+    const points = curve.getSpacedPoints(RIVER_SAMPLES).map((point) =>
+      new THREE.Vector3(point.x, groundY(point.x, point.z) + lift, point.z)
+    );
+    const key = plan.points[0]?.x ?? 0;
+    let arcLength = 0;
 
     for (let i = 0; i < points.length; i += 1) {
       const point = points[i];
@@ -84,12 +127,17 @@ function terrainWaterGeometry(cx: number, cz: number): WaterGeometry {
       const length = Math.hypot(dx, dz) || 1;
       const rx = dz / length;
       const rz = -dx / length;
-      const width = halfWidth * (0.78 + noise(key, i + 17.3) * 0.44);
+      const progress = i / Math.max(1, points.length - 1);
+      const taper = THREE.MathUtils.smoothstep(progress, 0, 1);
+      const widthVariation = 0.94 + noise(key, i * 0.17 + 17.3) * 0.12;
+      const width = WORLD_CELL * (0.018 + taper * 0.125) * widthVariation;
       riverPositions.push(
         point.x - rx * width, point.y, point.z - rz * width,
         point.x + rx * width, point.y, point.z + rz * width,
       );
-      riverUvs.push(0, i * 0.32, 1, i * 0.32);
+      if (i > 0) arcLength += point.distanceTo(points[i - 1] ?? point);
+      const flowV = arcLength / (WORLD_CELL * 0.34);
+      riverUvs.push(0, flowV, 1, flowV);
       if (i > 0) {
         const vertex = (riverPositions.length / 3) - 4;
         riverIndices.push(vertex, vertex + 2, vertex + 1, vertex + 1, vertex + 2, vertex + 3);
@@ -99,7 +147,7 @@ function terrainWaterGeometry(cx: number, cz: number): WaterGeometry {
       const previous = points[i - 1];
       if (!previous) continue;
       const drop = previous.y - point.y;
-      if (drop < WORLD_CELL * 0.08) continue;
+      if (drop < WORLD_CELL * 0.035) continue;
       const base = fallPositions.length / 3;
       fallPositions.push(
         point.x - rx * width, previous.y, point.z - rz * width,
@@ -134,9 +182,8 @@ function TerrainWaterNetwork({ pose }: { pose: React.MutableRefObject<PlayerStat
   useFrame(() => {
     const player = pose.current;
     if (!player) return;
-    const span = WORLD_CELL * 12;
-    const x = Math.round(player.x / span) * span;
-    const z = Math.round(player.z / span) * span;
+    const x = Math.floor(player.x / RIVER_SECTOR_SPAN);
+    const z = Math.floor(player.z / RIVER_SECTOR_SPAN);
     const key = `${x}:${z}`;
     if (key !== lastKey.current) {
       lastKey.current = key;
@@ -146,7 +193,7 @@ function TerrainWaterNetwork({ pose }: { pose: React.MutableRefObject<PlayerStat
 
   const geometry = useMemo(() => {
     void terrain;
-    return terrainWaterGeometry(centre.x, centre.z);
+    return terrainWaterGeometry(visibleRiverPlans(centre.x, centre.z));
   }, [centre, terrain]);
 
   useEffect(
