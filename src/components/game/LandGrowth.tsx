@@ -21,7 +21,7 @@ import { blockedAt, useWorldBuilds } from "@/lib/world-build";
 import { MAX_RELIEF, groundY, subscribeTerrain, terrainVersion } from "@/lib/world-terrain";
 import { isSea } from "@/lib/world-sea";
 
-const MAX_GRASS = 18_000;
+const MAX_GRASS = 24_000;
 const MAX_BUSH = 260;
 const MAX_TREE = 90;
 /** plots this many cells away from the player are still dressed */
@@ -125,8 +125,8 @@ function WindGrassMaterial({
       uTime: { value: 0 },
       uWindStrength: { value: reducedMotion ? 0.035 : 0.14 },
       uPlayerPosition: { value: new THREE.Vector3() },
-      uFadeNear: { value: WORLD_CELL * 17 },
-      uFadeFar: { value: WORLD_CELL * 25 },
+      uFadeNear: { value: WORLD_CELL * 20 },
+      uFadeFar: { value: WORLD_CELL * 28 },
     }),
     [heightmap, reducedMotion, texture],
   );
@@ -258,7 +258,7 @@ function WindGrassMaterial({
           vec4 blade = texture2D(uMap, vUv);
           if (blade.a < 0.06) discard;
           float distanceFade = 1.0 - smoothstep(uFadeNear, uFadeFar, distance(vWorldPosition.xz, uPlayerPosition.xz));
-          float cameraFade = smoothstep(${WORLD_CELL * 0.22}, ${WORLD_CELL * 0.8}, distance(vWorldPosition, cameraPosition));
+          float cameraFade = smoothstep(${WORLD_CELL * 0.08}, ${WORLD_CELL * 0.32}, distance(vWorldPosition, cameraPosition));
           float alpha = blade.a * distanceFade * cameraFade;
           if (alpha < 0.02) discard;
           vec3 colour = blade.rgb * vInstanceColor * 1.45;
@@ -536,12 +536,14 @@ export function LandGrowth({
       mesh.count = count;
     };
 
-    const blade = unit * 0.42;
+    // A BITMAP is ten avatar strides wide. Blades need to reach roughly half an
+    // avatar to read as grass from the third-person camera instead of sub-pixel noise.
+    const blade = unit * 1.35;
     write(
       grass.current,
       plan.grass,
       MAX_GRASS,
-      (item) => [blade * (0.2 + item.tint * 0.12), blade * item.s, blade * (0.2 + item.tint * 0.12)],
+      (item) => [blade * (0.28 + item.tint * 0.16), blade * item.s, blade * (0.28 + item.tint * 0.16)],
       () => 0,
       (item) => scratch.colour.copy(palette.grassA).lerp(palette.grassB, item.tint),
     );
