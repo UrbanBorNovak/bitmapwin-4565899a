@@ -51,3 +51,4 @@
 - [x] Stream every visible BITMAP's real terrain and fill the wider world window with distance-tiered grass
 - [x] Mark the world edges with glass walls and a grayscale outer world
 - [x] Raise small water and lava sources and enrich shorelines with trees, flowers, and grass
+- [ ] Reimplement grass with a heightmap-driven vertex shader for per-blade BITMAP terrain elevation
