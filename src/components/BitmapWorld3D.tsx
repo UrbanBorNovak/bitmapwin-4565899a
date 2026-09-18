@@ -226,7 +226,7 @@ import { DriveBlur } from "@/components/game/DriveBlur";
 import { DamageVeil } from "@/components/game/DamageVeil";
 
 import type { RideSpec } from "@/lib/world-vehicle";
-import { dryLandNear, isDeepSea, isSea, nearestSea } from "@/lib/world-sea";
+import { dryLandNear, isSea, nearestSea } from "@/lib/world-sea";
 import { groundY, waterSurfaceY } from "@/lib/world-terrain";
 import { TerrainField } from "@/components/game/TerrainField";
 import { WorldBoundary } from "@/components/game/WorldBoundary";
@@ -257,6 +257,10 @@ const GRID = 1_000;
 const WORLD_SIZE = 100;
 const CELL = WORLD_SIZE / GRID;
 const OWNER_CELL_BUDGET = 24_000;
+
+/** Feet follow visible land on shore and the visible liquid plane over seas. */
+const traversalSurfaceY = (x: number, z: number) =>
+  isSea(x, z) ? waterSurfaceY(x, z) : groundY(x, z);
 
 /** Everything except the flat picking plane opts out of raycasting — one plane hit test per pointer move. */
 const noRaycast = () => {};
