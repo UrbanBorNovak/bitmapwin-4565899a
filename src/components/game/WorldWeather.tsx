@@ -66,7 +66,7 @@ export function WorldWeather() {
             void main() {
               vec3 p = position;
               float seed = fract(float(gl_VertexID / 2) * 0.569841);
-              float fall = mod(uTime * (3.8 + seed * 2.4) + seed * 19.0, ${WORLD_CELL * 9}.0);
+              float fall = mod(uTime * (3.8 + seed * 2.4) + seed * 19.0, ${WORLD_CELL * 9});
               p.y -= fall;
               p.xz += uWind * (position.y * 0.35 - fall * 0.18);
               vAlpha = uRain * (0.24 + seed * 0.52);
