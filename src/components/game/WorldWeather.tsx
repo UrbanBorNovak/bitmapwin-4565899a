@@ -71,9 +71,10 @@ export function WorldWeather() {
             void main() {
               vec3 p = position;
               float seed = fract(sin(dot(position.xz, vec2(12.9898, 78.233))) * 43758.5453);
-              float fall = mod(uTime * (3.8 + seed * 2.4) + seed * 19.0, ${WORLD_CELL * 9});
-              p.y -= fall;
-              p.xz += uWind * (position.y * 0.35 - fall * 0.18);
+              float span = ${WORLD_CELL * 9};
+              float fall = uTime * (3.8 + seed * 2.4) + seed * 19.0;
+              p.y = mod(position.y - fall + span * 8.0, span) - span * 0.3;
+              p.xz += uWind * (position.y * 0.35 - mod(fall, span) * 0.18);
               vAlpha = uRain * (0.24 + seed * 0.52);
               gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
             }
@@ -89,5 +90,30 @@ export function WorldWeather() {
         />
       </lineSegments>
     </group>
+  );
+}
+
+export function WeatherLighting({ foreground, background, bitcoin }: { foreground: string; background: string; bitcoin: string }) {
+  const sun = useRef<THREE.DirectionalLight>(null);
+  const hemi = useRef<THREE.HemisphereLight>(null);
+  const warm = useRef<THREE.PointLight>(null);
+
+  useFrame(({ clock }) => {
+    const weather = worldWeather(clock.getElapsedTime());
+    if (sun.current) {
+      sun.current.intensity = 0.4 + weather.sun * 0.95;
+      sun.current.position.set(-18 + weather.windX * 3, 24 + weather.sun * 12, -12 + weather.windZ * 3);
+    }
+    if (hemi.current) hemi.current.intensity = 0.28 + weather.sun * 0.24;
+    if (warm.current) warm.current.intensity = 8 + weather.sun * 10;
+  });
+
+  return (
+    <>
+      <ambientLight intensity={0.42} />
+      <hemisphereLight ref={hemi} args={[foreground, background, 0.52]} />
+      <directionalLight ref={sun} color={foreground} position={[-18, 36, -12]} intensity={1.35} castShadow={false} />
+      <pointLight ref={warm} color={bitcoin} position={[14, 10, 3]} intensity={18} distance={28} decay={2} />
+    </>
   );
 }

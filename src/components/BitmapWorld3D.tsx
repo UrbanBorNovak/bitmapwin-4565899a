@@ -108,7 +108,7 @@ import { VehicleGunner } from "@/components/game/VehicleGunner";
 import { VehicleDamageFx } from "@/components/game/VehicleDamageFx";
 import { MysteryMist } from "@/components/game/MysteryMist";
 import { LandGrowth } from "@/components/game/LandGrowth";
-import { WorldWeather } from "@/components/game/WorldWeather";
+import { WeatherLighting, WorldWeather } from "@/components/game/WorldWeather";
 import { growthLabel, terraform, terraformAt } from "@/lib/world-terraform";
 import { ordContentUrl } from "@/lib/oci";
 
@@ -2305,21 +2305,7 @@ const WorldScene = memo(function WorldScene({
         }
       />
 
-      <ambientLight intensity={0.42} />
-      <hemisphereLight args={[colors.foreground, colors.background, 0.52]} />
-      <directionalLight
-        color={colors.foreground}
-        position={[-18, 36, -12]}
-        intensity={1.35}
-        castShadow={false}
-      />
-      <pointLight
-        color={colors.bitcoin}
-        position={[14, 10, 3]}
-        intensity={18}
-        distance={28}
-        decay={2}
-      />
+      <WeatherLighting foreground={colors.foreground} background={colors.background} bitcoin={colors.bitcoin} />
       {/* Baked once at low resolution — ambient tint only, no per-frame cubemap cost. */}
       <SafeEnvironment frames={1} resolution={64}>
         <SafeLightformer
