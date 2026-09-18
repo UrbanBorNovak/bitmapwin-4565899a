@@ -26,7 +26,7 @@ function WeatherGlass({ color }: { color: THREE.Color }) {
     shader.uniforms["uWeatherRain"] = weatherUniforms.rain;
     shader.uniforms["uWeatherSun"] = weatherUniforms.sun;
     shader.uniforms["uWeatherWind"] = weatherUniforms.wind;
-    shader.fragmentShader = `uniform float uWeatherTime; uniform float uWeatherRain; uniform float uWeatherSun; uniform vec2 uWeatherWind;\n${shader.fragmentShader}`.replace(
+    shader.fragmentShader = `#define USE_UV\nuniform float uWeatherTime; uniform float uWeatherRain; uniform float uWeatherSun; uniform vec2 uWeatherWind;\n${shader.fragmentShader}`.replace(
       "#include <output_fragment>",
       `float weatherSweep = fract(vUv.y * 5.0 - uWeatherTime * (0.7 + uWeatherRain) + vUv.x * uWeatherWind.x * 2.0);
        float weatherStreak = smoothstep(0.94, 1.0, weatherSweep) * uWeatherRain;
