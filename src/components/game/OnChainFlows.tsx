@@ -23,8 +23,9 @@ import { worldWeather } from "@/lib/world-weather";
 
 const ROCK = "#4a4642";
 const BASALT = "#2b2724";
-/** Keep small animated sources visibly clear of displaced terrain. */
-const SOURCE_LIFT = 0.14;
+/** Keep liquids just clear of the surface without making them float. */
+const WATER_SOURCE_LIFT = 0.04;
+const LAVA_SOURCE_LIFT = 0.14;
 
 const noRaycast = () => {};
 
@@ -44,7 +45,7 @@ function terrainWaterGeometry(cx: number, cz: number): WaterGeometry {
   const fallIndices: number[] = [];
   const channelStep = WORLD_CELL * 0.58;
   const halfWidth = WORLD_CELL * 0.16;
-  const lift = WORLD_CELL * 0.035;
+  const lift = WORLD_CELL * 0.008;
 
   for (let stream = 0; stream < 7; stream += 1) {
     const key = Math.floor(cx / WORLD_CELL) * 37 + Math.floor(cz / WORLD_CELL) * 71 + stream * 101;
@@ -127,8 +128,8 @@ function TerrainWaterNetwork({ pose }: { pose: React.MutableRefObject<PlayerStat
   const terrain = useSyncExternalStore(subscribeTerrain, terrainVersion, terrainVersion);
   const [centre, setCentre] = useState({ x: 0, z: 0 });
   const lastKey = useRef("");
-  const riverWater = useSurfaceMaterial("waterRun", 0.93, 1.15);
-  const fallingWater = useSurfaceMaterial("waterRun", 0.96, 1.9);
+  const riverWater = useSurfaceMaterial("waterRun", 0.93, 0.38);
+  const fallingWater = useSurfaceMaterial("waterRun", 0.96, 0.62);
 
   useFrame(() => {
     const player = pose.current;
@@ -186,7 +187,7 @@ function useSurfaceMaterial(variant: SurfaceVariant, opacity: number, flow: numb
   useFrame(({ clock }, delta) => {
     const weather = worldWeather(clock.getElapsedTime());
     const wetBoost = variant === "water" || variant === "waterRun"
-      ? 1 + weather.rain * 1.15 + weather.windStrength * 0.2
+      ? 1 + weather.rain * 0.28 + weather.windStrength * 0.06
       : 1;
     uniforms.uFlow.value = flow * wetBoost;
     tickSurface(uniforms, delta);
@@ -204,8 +205,8 @@ export const OnChainFlows = memo(function OnChainFlows({
 }) {
   const group = useRef<THREE.Group>(null);
 
-  const runningWater = useSurfaceMaterial("waterRun", 0.94, 1.6);
-  const stillWater = useSurfaceMaterial("water", 0.9, 0.9);
+  const runningWater = useSurfaceMaterial("waterRun", 0.94, 0.52);
+  const stillWater = useSurfaceMaterial("water", 0.9, 0.2);
   const runningLava = useSurfaceMaterial("lavaRun", 1, 1.3);
   const stillLava = useSurfaceMaterial("lava", 1, 0.6);
 
@@ -231,7 +232,7 @@ export const OnChainFlows = memo(function OnChainFlows({
         return (
           <group
             key={`fall-${fall.id}`}
-            position={[fall.x, waterSurfaceY(fall.x, fall.z) + unit * SOURCE_LIFT, fall.z]}
+            position={[fall.x, waterSurfaceY(fall.x, fall.z) + unit * WATER_SOURCE_LIFT, fall.z]}
             rotation={[0, fall.facing, 0]}
             userData={{ site: { x: fall.x, z: fall.z } }}
           >
@@ -267,7 +268,7 @@ export const OnChainFlows = memo(function OnChainFlows({
         return (
           <group
             key={`lava-${lake.id}`}
-            position={[lake.x, groundY(lake.x, lake.z) + unit * SOURCE_LIFT, lake.z]}
+            position={[lake.x, groundY(lake.x, lake.z) + unit * LAVA_SOURCE_LIFT, lake.z]}
             rotation={[0, lake.facing, 0]}
             userData={{ site: { x: lake.x, z: lake.z } }}
           >

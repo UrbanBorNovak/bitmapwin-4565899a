@@ -159,7 +159,7 @@ export function groundY(x: number, z: number) {
  * but with enough separation to avoid flicker and remain visibly liquid.
  */
 export function waterSurfaceY(_x?: number, _z?: number) {
-  return STRIDE * 0.14;
+  return STRIDE * 0.045;
 }
 
 /** Uphill steepness 0…1 at a point, for shading and footing feedback. */
