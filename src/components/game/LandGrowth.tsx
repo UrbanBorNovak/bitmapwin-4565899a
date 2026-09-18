@@ -171,9 +171,9 @@ function WindGrassMaterial({
       // Fast airborne travel can cross several BITMAPs before React's scenery
       // list refreshes. Keep the terrain texture under those existing blades
       // centred on the live horizontal pose so they never sink and vanish.
-      const moved = sampledCentre.current.distanceToSquared(
-        new THREE.Vector2(player.x, player.z),
-      );
+      const dx = sampledCentre.current.x - player.x;
+      const dz = sampledCentre.current.y - player.z;
+      const moved = dx * dx + dz * dz;
       const airborne = !player.grounded || player.y > 0;
       if (
         moved > (WORLD_CELL * 0.5) ** 2 &&
