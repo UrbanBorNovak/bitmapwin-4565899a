@@ -113,6 +113,8 @@ function WindGrassMaterial({
   terrainRevision: number;
 }) {
   const material = useRef<THREE.ShaderMaterial>(null);
+  const sampledCentre = useRef(new THREE.Vector2(Number.NaN, Number.NaN));
+  const nextAirborneSample = useRef(0);
   const texture = useMemo(makeGrassTexture, []);
   const heightmap = useMemo(makeTerrainHeightmap, []);
   const uniforms = useMemo(
@@ -138,6 +140,7 @@ function WindGrassMaterial({
     fillTerrainHeightmap(heightmap, heightmapCentre.x, heightmapCentre.z);
     const centre = uniforms.uHeightmapCentre.value;
     centre.set(heightmapCentre.x, heightmapCentre.z);
+    sampledCentre.current.set(heightmapCentre.x, heightmapCentre.z);
   }, [heightmap, heightmapCentre, terrainRevision, uniforms]);
 
   useEffect(
@@ -165,6 +168,22 @@ function WindGrassMaterial({
     const player = pose.current;
     if (player && playerPosition?.value instanceof THREE.Vector3) {
       playerPosition.value.set(player.x, groundY(player.x, player.z), player.z);
+      // Fast airborne travel can cross several BITMAPs before React's scenery
+      // list refreshes. Keep the terrain texture under those existing blades
+      // centred on the live horizontal pose so they never sink and vanish.
+      const moved = sampledCentre.current.distanceToSquared(
+        new THREE.Vector2(player.x, player.z),
+      );
+      const airborne = !player.grounded || player.y > 0;
+      if (
+        moved > (WORLD_CELL * 0.5) ** 2 &&
+        (!airborne || clock.elapsedTime >= nextAirborneSample.current)
+      ) {
+        fillTerrainHeightmap(heightmap, player.x, player.z);
+        uniforms.uHeightmapCentre.value.set(player.x, player.z);
+        sampledCentre.current.set(player.x, player.z);
+        nextAirborneSample.current = clock.elapsedTime + (airborne ? 0.2 : 0.5);
+      }
     }
   });
 
