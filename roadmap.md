@@ -55,3 +55,4 @@
 - [x] Restore clearly visible terrain-following grass across nearby BITMAPs
 - [x] Add terrain-following rivers and nearby visible waterfalls
 - [x] Add synchronized sun, wind, and rain affecting grass, rivers, and glass world edges
+- [x] Replace invisible heightmap grass with terrain-placed crossed grass clumps around the player
