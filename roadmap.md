@@ -56,3 +56,4 @@
 - [x] Add terrain-following rivers and nearby visible waterfalls
 - [x] Add synchronized sun, wind, and rain affecting grass, rivers, and glass world edges
 - [x] Lower water to the terrain and slow river and waterfall animation
+- [x] Stabilize rivers as fixed world features with narrow creek sources and smoother widening channels
