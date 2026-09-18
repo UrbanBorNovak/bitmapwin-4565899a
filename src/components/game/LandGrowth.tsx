@@ -105,7 +105,7 @@ function WindGrassMaterial({
       uFadeNear: { value: WORLD_CELL * 20 },
       uFadeFar: { value: WORLD_CELL * 28 },
     }),
-    [heightmap, reducedMotion, texture],
+    [reducedMotion, texture],
   );
 
   useEffect(
