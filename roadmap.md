@@ -45,3 +45,4 @@
 
 - [x] Add atomic shrine, wall, and gate templates to the in-world BUILD menu
 - [x] Keep every equipped accessory attached to the character across terrain, movement, flight, mounts, and live loadout
+- [x] Add terrain-rooted wind-reactive grass and a richer atmospheric Oasis sky

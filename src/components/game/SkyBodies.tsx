@@ -97,6 +97,87 @@ const SUN_CORE = "#fff6e0";
 const MOON = "#e8ecf2";
 const STAR = "#ffffff";
 
+const SKY_VERTEX = /* glsl */ `
+  varying vec3 vSkyDirection;
+
+  void main() {
+    vSkyDirection = normalize(position);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const SKY_FRAGMENT = /* glsl */ `
+  uniform float uTime;
+  uniform float uNight;
+  varying vec3 vSkyDirection;
+
+  float skyNoise(vec2 p) {
+    return sin(p.x) * sin(p.y) * 0.5 + 0.5;
+  }
+
+  void main() {
+    vec3 direction = normalize(vSkyDirection);
+    float altitude = clamp(direction.y * 0.72 + 0.28, 0.0, 1.0);
+    float horizon = pow(1.0 - altitude, 2.3);
+
+    vec3 dayHorizon = vec3(0.76, 0.70, 0.60);
+    vec3 dayMid = vec3(0.20, 0.47, 0.65);
+    vec3 dayZenith = vec3(0.055, 0.18, 0.30);
+    vec3 nightHorizon = vec3(0.10, 0.14, 0.18);
+    vec3 nightMid = vec3(0.025, 0.07, 0.12);
+    vec3 nightZenith = vec3(0.006, 0.018, 0.038);
+
+    vec3 dayColor = mix(dayHorizon, dayMid, smoothstep(0.0, 0.48, altitude));
+    dayColor = mix(dayColor, dayZenith, smoothstep(0.42, 1.0, altitude));
+    vec3 nightColor = mix(nightHorizon, nightMid, smoothstep(0.0, 0.48, altitude));
+    nightColor = mix(nightColor, nightZenith, smoothstep(0.42, 1.0, altitude));
+    vec3 color = mix(dayColor, nightColor, uNight);
+
+    vec2 cloudUv = direction.xz * 9.0 / max(0.24, direction.y + 0.48);
+    float cloudA = skyNoise(cloudUv + vec2(uTime * 0.014, -uTime * 0.006));
+    float cloudB = skyNoise(cloudUv * 1.83 + vec2(-uTime * 0.009, uTime * 0.005));
+    float clouds = smoothstep(0.69, 0.92, cloudA * 0.62 + cloudB * 0.38);
+    clouds *= smoothstep(0.03, 0.34, altitude) * (1.0 - smoothstep(0.72, 0.98, altitude));
+    vec3 cloudColor = mix(vec3(0.62, 0.66, 0.66), vec3(0.12, 0.17, 0.22), uNight);
+    color = mix(color, cloudColor, clouds * mix(0.22, 0.12, uNight));
+    color += mix(vec3(0.12, 0.055, 0.018), vec3(0.018, 0.035, 0.05), uNight) * horizon;
+
+    gl_FragColor = vec4(color, 1.0);
+  }
+`;
+
+function AtmosphereDome({ night, far }: { night: boolean; far: number }) {
+  const material = useRef<THREE.ShaderMaterial>(null);
+  const uniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      uNight: { value: night ? 1 : 0 },
+    }),
+    [night],
+  );
+
+  useFrame(({ clock }) => {
+    if (!material.current) return;
+    material.current.uniforms["uTime"].value = clock.getElapsedTime();
+  });
+
+  return (
+    <mesh renderOrder={-100} raycast={() => {}}>
+      <sphereGeometry args={[far * 1.08, 32, 20]} />
+      <shaderMaterial
+        ref={material}
+        uniforms={uniforms}
+        vertexShader={SKY_VERTEX}
+        fragmentShader={SKY_FRAGMENT}
+        side={THREE.BackSide}
+        depthTest={false}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </mesh>
+  );
+}
+
 const AURORA_VERTEX = /* glsl */ `
   uniform float uTime;
   uniform float uPhase;
@@ -333,6 +414,7 @@ export const SkyBodies = memo(function SkyBodies({ bitcoin }: { bitcoin: string 
 
   return (
     <group ref={dome}>
+      <AtmosphereDome night={night} far={far} />
       <points ref={stars} geometry={starGeometry} raycast={() => {}}>
         <pointsMaterial
           color={STAR}
