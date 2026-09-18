@@ -57,25 +57,17 @@ function riverPlan(sectorX: number, sectorZ: number): RiverPlan {
   let z = originZ + (0.18 + noise(seed, 2.7) * 0.64) * RIVER_SECTOR_SPAN;
   let direction = noise(seed, 4.1) * Math.PI * 2;
   const controlStep = WORLD_CELL * 0.78;
+  const prevailingDirection = direction;
   const points: RiverPoint[] = [];
 
   for (let step = 0; step < RIVER_CONTROL_POINTS; step += 1) {
     points.push({ x, z });
-    let bestAngle = direction;
-    let bestScore = Number.POSITIVE_INFINITY;
-    for (let option = -2; option <= 2; option += 1) {
-      const turn = option * 0.28;
-      const angle = direction + turn + (noise(seed + step * 17, option + 9.2) - 0.5) * 0.1;
-      const nx = x + Math.sin(angle) * controlStep;
-      const nz = z + Math.cos(angle) * controlStep;
-      const turnCost = Math.abs(turn) * WORLD_CELL * 0.035;
-      const score = groundY(nx, nz) + turnCost;
-      if (score < bestScore) {
-        bestScore = score;
-        bestAngle = angle;
-      }
-    }
-    direction = THREE.MathUtils.lerp(direction, bestAngle, 0.72);
+    const meander = (noise(seed + step * 17, 9.2) - 0.5) * 0.42;
+    const returnToCourse = Math.atan2(
+      Math.sin(prevailingDirection - direction),
+      Math.cos(prevailingDirection - direction),
+    ) * 0.24;
+    direction += meander + returnToCourse;
     x += Math.sin(direction) * controlStep;
     z += Math.cos(direction) * controlStep;
   }
