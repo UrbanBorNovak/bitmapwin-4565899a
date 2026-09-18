@@ -32,59 +32,146 @@ const TICK_MS = 20_000;
 type Item = { x: number; y: number; z: number; s: number; yaw: number; tint: number };
 type NearbyCell = { height: number; col: number; row: number };
 
-type WindShader = {
-  uniforms: Record<string, THREE.IUniform> & {
-    uWindTime: { value: number };
-    uWindStrength: { value: number };
-  };
-  vertexShader: string;
-};
+/** Alpha-cut blade used by every instance; transparent corners can never become dark tiles. */
+function makeGrassTexture() {
+  const size = 64;
+  const pixels = new Uint8Array(size * size * 4);
+  for (let y = 0; y < size; y += 1) {
+    const v = y / (size - 1);
+    const halfWidth = Math.max(0.025, (1 - v) * (0.34 + Math.sin(v * Math.PI) * 0.12));
+    for (let x = 0; x < size; x += 1) {
+      const u = x / (size - 1) - 0.5;
+      const edge = halfWidth - Math.abs(u - Math.sin(v * 7.2) * 0.025 * v);
+      const alpha = THREE.MathUtils.clamp(edge * size * 0.8, 0, 1);
+      const offset = (y * size + x) * 4;
+      pixels[offset] = Math.round(116 + v * 84);
+      pixels[offset + 1] = Math.round(156 + v * 76);
+      pixels[offset + 2] = Math.round(54 + v * 35);
+      pixels[offset + 3] = Math.round(alpha * 255);
+    }
+  }
+  const texture = new THREE.DataTexture(pixels, size, size, THREE.RGBAFormat);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.magFilter = THREE.LinearFilter;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.generateMipmaps = true;
+  texture.needsUpdate = true;
+  return texture;
+}
 
-/** Unlit green blades stay visible at night while bending only at their tips. */
-function WindGrassMaterial({ reducedMotion }: { reducedMotion: boolean }) {
-  const shader = useRef<WindShader | null>(null);
-
-  const compile = useCallback(
-    (program: { uniforms: Record<string, THREE.IUniform>; vertexShader: string }) => {
-      const windProgram = program as WindShader;
-      windProgram.uniforms.uWindTime = { value: 0 };
-      windProgram.uniforms.uWindStrength = { value: reducedMotion ? 0.035 : 0.14 };
-      windProgram.vertexShader = windProgram.vertexShader
-        .replace(
-          "#include <common>",
-          `#include <common>
-          uniform float uWindTime;
-          uniform float uWindStrength;`,
-        )
-        .replace(
-          "#include <begin_vertex>",
-          `#include <begin_vertex>
-          float bladeHeight = clamp(position.y + 0.5, 0.0, 1.0);
-          vec3 instanceOrigin = vec3(instanceMatrix[3].x, instanceMatrix[3].y, instanceMatrix[3].z);
-          float broadWind = sin(instanceOrigin.x * 0.31 + instanceOrigin.z * 0.17 + uWindTime * 1.15);
-          float fineWind = sin(instanceOrigin.x * 0.73 - instanceOrigin.z * 0.41 - uWindTime * 1.8);
-          float bend = (broadWind * 0.72 + fineWind * 0.28) * uWindStrength * bladeHeight * bladeHeight;
-          transformed.x += bend;
-          transformed.z += bend * 0.42;`,
-        );
-      shader.current = windProgram;
-    },
-    [reducedMotion],
+/** Demo-style billboard grass: textured planes, GPU wind/player bend and distance fade. */
+function WindGrassMaterial({
+  reducedMotion,
+  pose,
+}: {
+  reducedMotion: boolean;
+  pose: React.RefObject<PlayerState>;
+}) {
+  const material = useRef<THREE.ShaderMaterial>(null);
+  const texture = useMemo(makeGrassTexture, []);
+  const uniforms = useMemo(
+    () => ({
+      uMap: { value: texture },
+      uTime: { value: 0 },
+      uWindStrength: { value: reducedMotion ? 0.035 : 0.14 },
+      uPlayerPosition: { value: new THREE.Vector3() },
+      uFadeNear: { value: WORLD_CELL * 8 },
+      uFadeFar: { value: WORLD_CELL * 13 },
+    }),
+    [reducedMotion, texture],
   );
 
-  useFrame(({ clock }) => {
-    if (!shader.current) return;
-    shader.current.uniforms.uWindTime.value = clock.getElapsedTime();
-    shader.current.uniforms.uWindStrength.value = reducedMotion ? 0.035 : 0.14;
+  useEffect(() => () => texture.dispose(), [texture]);
+
+  useFrame((_, rawDelta) => {
+    const shader = material.current;
+    if (!shader) return;
+    const dt = Math.min(rawDelta, 0.05);
+    const time = shader.uniforms["uTime"];
+    const strength = shader.uniforms["uWindStrength"];
+    const playerPosition = shader.uniforms["uPlayerPosition"];
+    if (time) time.value = Number(time.value) + dt;
+    if (strength) strength.value = reducedMotion ? 0.035 : 0.14;
+    const player = pose.current;
+    if (player && playerPosition?.value instanceof THREE.Vector3) {
+      playerPosition.value.set(player.x, groundY(player.x, player.z), player.z);
+    }
   });
 
   return (
-    <meshBasicMaterial
+    <shaderMaterial
+      ref={material}
+      uniforms={uniforms}
       vertexColors
+      transparent
+      depthWrite={false}
+      depthTest
       side={THREE.DoubleSide}
       toneMapped={false}
-      onBeforeCompile={compile}
-      customProgramCacheKey={() => `bitmap-wind-grass-${reducedMotion ? "reduced" : "full"}`}
+      vertexShader={/* glsl */ `
+        uniform float uTime;
+        uniform float uWindStrength;
+        uniform vec3 uPlayerPosition;
+        varying vec2 vUv;
+        varying vec3 vInstanceColor;
+        varying vec3 vWorldPosition;
+
+        void main() {
+          vUv = uv;
+          vInstanceColor = color;
+
+          vec3 origin = (modelMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+          float width = length(instanceMatrix[0].xyz);
+          float height = length(instanceMatrix[1].xyz);
+          float tip = clamp(position.y + 0.5, 0.0, 1.0);
+
+          vec3 toCamera = normalize(cameraPosition - origin);
+          float angle = -atan(toCamera.x, toCamera.z);
+          mat3 faceCamera = mat3(
+            cos(angle), 0.0, sin(angle),
+            0.0, 1.0, 0.0,
+            -sin(angle), 0.0, cos(angle)
+          );
+
+          vec3 blade = vec3(position.x * width, position.y * height + height * 0.5, 0.0);
+          float broadWind = sin(origin.x * 31.0 + origin.z * 17.0 + uTime * 1.15);
+          float fineWind = sin(origin.x * 73.0 - origin.z * 41.0 - uTime * 1.8);
+          float bend = (broadWind * 0.72 + fineWind * 0.28) * uWindStrength * height * tip * tip;
+          blade.x += bend;
+          blade.z += bend * 0.42;
+
+          vec3 away = origin - uPlayerPosition;
+          float playerDistance = length(away.xz);
+          float touch = 1.0 - smoothstep(0.0, ${WORLD_CELL * 1.8}, playerDistance);
+          if (playerDistance > 0.0001) {
+            blade += normalize(vec3(away.x, 0.0, away.z)) * touch * height * 0.8 * tip * tip;
+          }
+
+          vWorldPosition = origin;
+          vec3 finalPosition = origin + faceCamera * blade;
+          gl_Position = projectionMatrix * viewMatrix * vec4(finalPosition, 1.0);
+        }
+      `}
+      fragmentShader={/* glsl */ `
+        uniform sampler2D uMap;
+        uniform vec3 uPlayerPosition;
+        uniform float uFadeNear;
+        uniform float uFadeFar;
+        varying vec2 vUv;
+        varying vec3 vInstanceColor;
+        varying vec3 vWorldPosition;
+
+        void main() {
+          vec4 blade = texture2D(uMap, vUv);
+          if (blade.a < 0.06) discard;
+          float distanceFade = 1.0 - smoothstep(uFadeNear, uFadeFar, distance(vWorldPosition.xz, uPlayerPosition.xz));
+          float cameraFade = smoothstep(${WORLD_CELL * 0.22}, ${WORLD_CELL * 0.8}, distance(vWorldPosition, cameraPosition));
+          float alpha = blade.a * distanceFade * cameraFade;
+          if (alpha < 0.02) discard;
+          vec3 colour = blade.rgb * vInstanceColor * 1.45;
+          gl_FragColor = vec4(colour, alpha * 0.92);
+        }
+      `}
     />
   );
 }
@@ -381,7 +468,7 @@ export function LandGrowth({
     <group renderOrder={2}>
       <instancedMesh ref={grass} args={[undefined, undefined, MAX_GRASS]} frustumCulled={false}>
         <planeGeometry args={[1, 1, 1, 4]} />
-        <WindGrassMaterial reducedMotion={reducedMotion} />
+        <WindGrassMaterial reducedMotion={reducedMotion} pose={pose} />
       </instancedMesh>
       <instancedMesh ref={bush} args={[undefined, undefined, MAX_BUSH]} frustumCulled={false}>
         <icosahedronGeometry args={[0.5, 0]} />
