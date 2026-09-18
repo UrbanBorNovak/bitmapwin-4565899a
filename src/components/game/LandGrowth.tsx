@@ -40,7 +40,7 @@ type WindShader = {
   vertexShader: string;
 };
 
-/** Preserve the lit material and its fog while bending only each blade's tip. */
+/** Unlit green blades stay visible at night while bending only at their tips. */
 function WindGrassMaterial({ reducedMotion }: { reducedMotion: boolean }) {
   const shader = useRef<WindShader | null>(null);
 
@@ -79,11 +79,10 @@ function WindGrassMaterial({ reducedMotion }: { reducedMotion: boolean }) {
   });
 
   return (
-    <meshStandardMaterial
-      roughness={0.85}
-      metalness={0}
-      flatShading
+    <meshBasicMaterial
       vertexColors
+      side={THREE.DoubleSide}
+      toneMapped={false}
       onBeforeCompile={compile}
       customProgramCacheKey={() => `bitmap-wind-grass-${reducedMotion ? "reduced" : "full"}`}
     />
@@ -325,17 +324,10 @@ export function LandGrowth({
       colourise: (item: Item) => THREE.Color,
     ) => {
       if (!mesh) return;
-      for (let i = 0; i < max; i += 1) {
+      const count = Math.min(items.length, max);
+      for (let i = 0; i < count; i += 1) {
         const item = items[i];
-        if (!item) {
-          scratch.matrix.compose(
-            scratch.hidden,
-            scratch.quat.identity(),
-            scratch.scale.set(0.0001, 0.0001, 0.0001),
-          );
-          mesh.setMatrixAt(i, scratch.matrix);
-          continue;
-        }
+        if (!item) continue;
         const [sx, sy, sz] = size(item);
         scratch.euler.set(0, item.yaw, 0);
         scratch.quat.setFromEuler(scratch.euler);
@@ -346,7 +338,7 @@ export function LandGrowth({
       }
       mesh.instanceMatrix.needsUpdate = true;
       if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-      mesh.count = max;
+      mesh.count = count;
     };
 
     const blade = unit * 0.42;
@@ -389,7 +381,7 @@ export function LandGrowth({
   return (
     <group renderOrder={2}>
       <instancedMesh ref={grass} args={[undefined, undefined, MAX_GRASS]} frustumCulled={false}>
-        <boxGeometry args={[1, 1, 1, 1, 4, 1]} />
+        <planeGeometry args={[1, 1, 1, 4]} />
         <WindGrassMaterial reducedMotion={reducedMotion} />
       </instancedMesh>
       <instancedMesh ref={bush} args={[undefined, undefined, MAX_BUSH]} frustumCulled={false}>
