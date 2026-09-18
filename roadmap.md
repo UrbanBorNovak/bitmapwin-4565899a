@@ -54,3 +54,4 @@
 - [x] Reimplement grass with a heightmap-driven vertex shader for per-blade BITMAP terrain elevation
 - [x] Restore clearly visible terrain-following grass across nearby BITMAPs
 - [x] Add terrain-following rivers and nearby visible waterfalls
+- [x] Add synchronized sun, wind, and rain affecting grass, rivers, and glass world edges

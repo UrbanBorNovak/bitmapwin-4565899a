@@ -20,6 +20,7 @@ import { growthOf, useTerraformedLand, type TerraformedLand } from "@/lib/world-
 import { blockedAt, useWorldBuilds } from "@/lib/world-build";
 import { MAX_RELIEF, groundY, subscribeTerrain, terrainVersion } from "@/lib/world-terrain";
 import { isSea } from "@/lib/world-sea";
+import { worldWeather } from "@/lib/world-weather";
 
 const MAX_GRASS = 24_000;
 const MAX_BUSH = 260;
@@ -124,6 +125,7 @@ function WindGrassMaterial({
       uTerrainStep: { value: HEIGHTMAP_SPAN / (HEIGHTMAP_RESOLUTION - 1) },
       uTime: { value: 0 },
       uWindStrength: { value: reducedMotion ? 0.035 : 0.14 },
+      uWindDirection: { value: new THREE.Vector2(1, 0) },
       uPlayerPosition: { value: new THREE.Vector3() },
       uFadeNear: { value: WORLD_CELL * 20 },
       uFadeFar: { value: WORLD_CELL * 28 },
@@ -146,15 +148,20 @@ function WindGrassMaterial({
     [heightmap, texture],
   );
 
-  useFrame((_, rawDelta) => {
+  useFrame(({ clock }, rawDelta) => {
     const shader = material.current;
     if (!shader) return;
     const dt = Math.min(rawDelta, 0.05);
     const time = shader.uniforms["uTime"];
     const strength = shader.uniforms["uWindStrength"];
     const playerPosition = shader.uniforms["uPlayerPosition"];
+    const windDirection = shader.uniforms["uWindDirection"];
+    const weather = worldWeather(clock.getElapsedTime());
     if (time) time.value = Number(time.value) + dt;
-    if (strength) strength.value = reducedMotion ? 0.035 : 0.14;
+    if (strength) strength.value = (reducedMotion ? 0.04 : 0.12 + weather.windStrength * 0.42);
+    if (windDirection?.value instanceof THREE.Vector2) {
+      windDirection.value.set(weather.windX, weather.windZ);
+    }
     const player = pose.current;
     if (player && playerPosition?.value instanceof THREE.Vector3) {
       playerPosition.value.set(player.x, groundY(player.x, player.z), player.z);
@@ -174,6 +181,7 @@ function WindGrassMaterial({
       vertexShader={/* glsl */ `
         uniform float uTime;
         uniform float uWindStrength;
+        uniform vec2 uWindDirection;
         uniform vec3 uPlayerPosition;
         uniform sampler2D uHeightmap;
         uniform vec2 uHeightmapCentre;
@@ -225,11 +233,14 @@ function WindGrassMaterial({
 
           vec3 blade = bladeRight * (position.x * width);
           blade += terrainNormal * (position.y * height + height * 0.5);
-          float broadWind = sin(origin.x * 31.0 + origin.z * 17.0 + uTime * 1.15);
-          float fineWind = sin(origin.x * 73.0 - origin.z * 41.0 - uTime * 1.8);
+          float windPhase = dot(origin.xz, uWindDirection * vec2(31.0, 17.0));
+          float broadWind = sin(windPhase + uTime * 1.15);
+          float fineWind = sin(windPhase * 2.17 - uTime * 1.8);
           float elevationExposure = 0.82 + clamp(origin.y / ${MAX_RELIEF}, 0.0, 1.0) * 0.42;
           float bend = (broadWind * 0.72 + fineWind * 0.28) * uWindStrength * elevationExposure * height * tip * tip;
-          blade += normalize(bladeRight + bladeForward * 0.42) * bend;
+          vec3 windWorld = normalize(vec3(uWindDirection.x, 0.0, uWindDirection.y));
+          windWorld = normalize(windWorld - terrainNormal * dot(windWorld, terrainNormal));
+          blade += windWorld * bend;
 
           vec3 away = origin - uPlayerPosition;
           float playerDistance = length(away.xz);
