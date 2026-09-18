@@ -18,7 +18,7 @@ import type { PlayerState } from "@/lib/player-state";
 import { WORLD_CELL, WORLD_GRID, cellX, cellZ, colAt, rowAt } from "@/lib/player-state";
 import { growthOf, useTerraformedLand, type TerraformedLand } from "@/lib/world-terraform";
 import { blockedAt, useWorldBuilds } from "@/lib/world-build";
-import { MAX_RELIEF, groundY, subscribeTerrain, terrainVersion } from "@/lib/world-terrain";
+import { groundY, subscribeTerrain, terrainVersion } from "@/lib/world-terrain";
 import { isSea } from "@/lib/world-sea";
 import { worldWeather } from "@/lib/world-weather";
 
@@ -29,11 +29,6 @@ const MAX_TREE = 90;
 const RADIUS_CELLS = 24;
 /** how often the growth amount is re-read from the clock */
 const TICK_MS = 20_000;
-/** Four terrain samples per BITMAP, plus one shared edge sample. */
-const HEIGHTMAP_CELLS = RADIUS_CELLS * 2 + 4;
-const HEIGHTMAP_RESOLUTION = HEIGHTMAP_CELLS * 4 + 1;
-const HEIGHTMAP_SPAN = HEIGHTMAP_CELLS * WORLD_CELL;
-
 type Item = { x: number; y: number; z: number; s: number; yaw: number; tint: number };
 type NearbyCell = { height: number; col: number; row: number; distance: number };
 
@@ -64,65 +59,45 @@ function makeGrassTexture() {
   return texture;
 }
 
-function makeTerrainHeightmap() {
-  const data = new Float32Array(HEIGHTMAP_RESOLUTION * HEIGHTMAP_RESOLUTION * 4);
-  const texture = new THREE.DataTexture(
-    data,
-    HEIGHTMAP_RESOLUTION,
-    HEIGHTMAP_RESOLUTION,
-    THREE.RGBAFormat,
-    THREE.FloatType,
-  );
-  texture.magFilter = THREE.NearestFilter;
-  texture.minFilter = THREE.NearestFilter;
-  texture.wrapS = THREE.ClampToEdgeWrapping;
-  texture.wrapT = THREE.ClampToEdgeWrapping;
-  texture.generateMipmaps = false;
-  return texture;
-}
-
-function fillTerrainHeightmap(texture: THREE.DataTexture, centreX: number, centreZ: number) {
-  const data = texture.image.data as Float32Array;
-  const half = HEIGHTMAP_SPAN / 2;
-  const step = HEIGHTMAP_SPAN / (HEIGHTMAP_RESOLUTION - 1);
-  let offset = 0;
-  for (let z = 0; z < HEIGHTMAP_RESOLUTION; z += 1) {
-    const worldZ = centreZ - half + z * step;
-    for (let x = 0; x < HEIGHTMAP_RESOLUTION; x += 1) {
-      const height = groundY(centreX - half + x * step, worldZ);
-      data[offset] = height;
-      data[offset + 1] = height;
-      data[offset + 2] = height;
-      data[offset + 3] = 1;
-      offset += 4;
+/** Two upright planes crossed at 90 degrees, visible from every camera angle. */
+function makeCrossGrassGeometry() {
+  const positions: number[] = [];
+  const uvs: number[] = [];
+  const indices: number[] = [];
+  const addPlane = (axis: "x" | "z") => {
+    const base = positions.length / 3;
+    for (let row = 0; row < 3; row += 1) {
+      const y = row / 2;
+      if (axis === "x") positions.push(-0.5, y, 0, 0.5, y, 0);
+      else positions.push(0, y, -0.5, 0, y, 0.5);
+      uvs.push(0, y, 1, y);
     }
-  }
-  texture.needsUpdate = true;
+    indices.push(base, base + 2, base + 1, base + 1, base + 2, base + 3);
+    indices.push(base + 2, base + 4, base + 3, base + 3, base + 4, base + 5);
+  };
+  addPlane("x");
+  addPlane("z");
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
 }
 
-/** Demo-style billboard grass: textured planes, GPU wind/player bend and distance fade. */
+/** Reliable crossed-plane grass: direct terrain placement with a small wind bend. */
 function WindGrassMaterial({
   reducedMotion,
   pose,
-  heightmapCentre,
-  terrainRevision,
 }: {
   reducedMotion: boolean;
   pose: React.RefObject<PlayerState>;
-  heightmapCentre: { x: number; z: number };
-  terrainRevision: number;
 }) {
   const material = useRef<THREE.ShaderMaterial>(null);
   const texture = useMemo(makeGrassTexture, []);
-  const heightmap = useMemo(makeTerrainHeightmap, []);
   const uniforms = useMemo(
     () => ({
       uMap: { value: texture },
-      uHeightmap: { value: heightmap },
-      uHeightmapCentre: { value: new THREE.Vector2() },
-      uHeightmapSpan: { value: HEIGHTMAP_SPAN },
-      uHeightmapResolution: { value: HEIGHTMAP_RESOLUTION },
-      uTerrainStep: { value: HEIGHTMAP_SPAN / (HEIGHTMAP_RESOLUTION - 1) },
       uTime: { value: 0 },
       uWindStrength: { value: reducedMotion ? 0.035 : 0.14 },
       uWindDirection: { value: new THREE.Vector2(1, 0) },
@@ -133,19 +108,11 @@ function WindGrassMaterial({
     [heightmap, reducedMotion, texture],
   );
 
-  useEffect(() => {
-    void terrainRevision;
-    fillTerrainHeightmap(heightmap, heightmapCentre.x, heightmapCentre.z);
-    const centre = uniforms.uHeightmapCentre.value;
-    centre.set(heightmapCentre.x, heightmapCentre.z);
-  }, [heightmap, heightmapCentre, terrainRevision, uniforms]);
-
   useEffect(
     () => () => {
       texture.dispose();
-      heightmap.dispose();
     },
-    [heightmap, texture],
+    [texture],
   );
 
   useFrame(({ clock }, rawDelta) => {
@@ -183,77 +150,31 @@ function WindGrassMaterial({
         uniform float uWindStrength;
         uniform vec2 uWindDirection;
         uniform vec3 uPlayerPosition;
-        uniform sampler2D uHeightmap;
-        uniform vec2 uHeightmapCentre;
-        uniform float uHeightmapSpan;
-        uniform float uHeightmapResolution;
-        uniform float uTerrainStep;
         varying vec2 vUv;
         varying vec3 vInstanceColor;
         varying vec3 vWorldPosition;
 
-        float terrainHeight(vec2 worldXZ) {
-          vec2 mapMin = uHeightmapCentre - vec2(uHeightmapSpan * 0.5);
-          vec2 pixel = clamp(
-            (worldXZ - mapMin) / uHeightmapSpan * (uHeightmapResolution - 1.0),
-            vec2(0.0),
-            vec2(uHeightmapResolution - 1.001)
-          );
-          vec2 base = floor(pixel);
-          vec2 blend = smoothstep(vec2(0.0), vec2(1.0), fract(pixel));
-          vec2 texel = vec2(1.0 / uHeightmapResolution);
-          vec2 uv00 = (base + vec2(0.5)) * texel;
-          float h00 = texture2D(uHeightmap, uv00).r;
-          float h10 = texture2D(uHeightmap, uv00 + vec2(texel.x, 0.0)).r;
-          float h01 = texture2D(uHeightmap, uv00 + vec2(0.0, texel.y)).r;
-          float h11 = texture2D(uHeightmap, uv00 + texel).r;
-          return mix(mix(h00, h10, blend.x), mix(h01, h11, blend.x), blend.y);
-        }
-
         void main() {
           vUv = uv;
           vInstanceColor = color;
-
-          vec3 origin = (modelMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
-          origin.y = terrainHeight(origin.xz);
-          float width = length(instanceMatrix[0].xyz);
-          float height = length(instanceMatrix[1].xyz);
-          float tip = clamp(position.y + 0.5, 0.0, 1.0);
-
-          float hLeft = terrainHeight(origin.xz - vec2(uTerrainStep, 0.0));
-          float hRight = terrainHeight(origin.xz + vec2(uTerrainStep, 0.0));
-          float hBack = terrainHeight(origin.xz - vec2(0.0, uTerrainStep));
-          float hFront = terrainHeight(origin.xz + vec2(0.0, uTerrainStep));
-          vec3 terrainNormal = normalize(vec3(hLeft - hRight, uTerrainStep * 2.0, hBack - hFront));
-          vec3 cameraDirection = normalize(cameraPosition - origin);
-          vec3 bladeRight = cross(terrainNormal, cameraDirection);
-          if (dot(bladeRight, bladeRight) < 0.0001) bladeRight = vec3(1.0, 0.0, 0.0);
-          bladeRight = normalize(bladeRight);
-          vec3 bladeForward = normalize(cross(bladeRight, terrainNormal));
-
-          vec3 blade = bladeRight * (position.x * width);
-          blade += terrainNormal * (position.y * height + height * 0.5);
+          vec4 origin = modelMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
+          vec4 world = modelMatrix * instanceMatrix * vec4(position, 1.0);
+          float tip = uv.y;
           float windPhase = dot(origin.xz, uWindDirection * vec2(31.0, 17.0));
           float broadWind = sin(windPhase + uTime * 1.15);
           float fineWind = sin(windPhase * 2.17 - uTime * 1.8);
-          float elevationExposure = 0.82 + clamp(origin.y / ${MAX_RELIEF}, 0.0, 1.0) * 0.42;
-          float bend = (broadWind * 0.72 + fineWind * 0.28) * uWindStrength * elevationExposure * height * tip * tip;
-          vec3 windWorld = normalize(vec3(uWindDirection.x, 0.0, uWindDirection.y));
-          windWorld = normalize(windWorld - terrainNormal * dot(windWorld, terrainNormal));
-          blade += windWorld * bend;
+          float bend = (broadWind * 0.72 + fineWind * 0.28) * uWindStrength * tip * tip;
+          world.xz += normalize(uWindDirection) * bend;
 
-          vec3 away = origin - uPlayerPosition;
+          vec3 away = origin.xyz - uPlayerPosition;
           float playerDistance = length(away.xz);
           float touch = 1.0 - smoothstep(0.0, ${WORLD_CELL * 1.8}, playerDistance);
           if (playerDistance > 0.0001) {
-            vec3 push = normalize(vec3(away.x, 0.0, away.z));
-            push = normalize(push - terrainNormal * dot(push, terrainNormal));
-            blade += push * touch * height * 0.8 * tip * tip;
+            world.xz += normalize(away.xz) * touch * 0.006 * tip * tip;
           }
 
-          vWorldPosition = origin;
-          vec3 finalPosition = origin + blade;
-          gl_Position = projectionMatrix * viewMatrix * vec4(finalPosition, 1.0);
+          vWorldPosition = origin.xyz;
+          gl_Position = projectionMatrix * viewMatrix * world;
         }
       `}
       fragmentShader={/* glsl */ `
@@ -335,7 +256,7 @@ function planGroundCover(cell: NearbyCell, out: Item[]) {
     out.push({
       x,
       z,
-      y: 0,
+      y: groundY(x, z) + 0.001,
       s: 0.7 + r * 0.5 + (shoreline ? 0.18 : 0),
       yaw: r * Math.PI * 2,
       tint: r,
@@ -368,7 +289,7 @@ function planPlot(land: TerraformedLand, growth: number, out: { grass: Item[]; b
     out.grass.push({
       x: cx + rx,
       z: cz + rz,
-      y: 0,
+      y: groundY(cx + rx, cz + rz) + 0.001,
       s: 0.7 + r * 0.8 + growth * 0.65,
       yaw: r * Math.PI * 2,
       tint: r,
@@ -421,7 +342,6 @@ export function LandGrowth({
   const [tick, setTick] = useState(0);
   const [near, setNear] = useState<TerraformedLand[]>([]);
   const [nearbyCells, setNearbyCells] = useState<NearbyCell[]>([]);
-  const [heightmapCentre, setHeightmapCentre] = useState({ x: 0, z: 0 });
   const nearbyAt = useRef("");
 
   const grass = useRef<THREE.InstancedMesh>(null);
@@ -429,6 +349,9 @@ export function LandGrowth({
   const tree = useRef<THREE.InstancedMesh>(null);
   const canopy = useRef<THREE.InstancedMesh>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const grassGeometry = useMemo(makeCrossGrassGeometry, []);
+
+  useEffect(() => () => grassGeometry.dispose(), [grassGeometry]);
 
   // Growth is real-time and very slow: re-read the clock now and then.
   useEffect(() => {
@@ -469,7 +392,6 @@ export function LandGrowth({
     const cellKey = `${centreCol}:${centreRow}`;
     if (nearbyAt.current !== cellKey) {
       nearbyAt.current = cellKey;
-      setHeightmapCentre({ x: cellX(centreCol), z: cellZ(centreRow) });
       const cells: NearbyCell[] = [];
       for (let row = centreRow - RADIUS_CELLS; row <= centreRow + RADIUS_CELLS; row += 1) {
         if (row < 0 || row >= WORLD_GRID) continue;
@@ -557,12 +479,12 @@ export function LandGrowth({
 
     // A BITMAP is ten avatar strides wide. Blades need to reach roughly half an
     // avatar to read as grass from the third-person camera instead of sub-pixel noise.
-    const blade = unit * 1.35;
+    const blade = unit * 1.8;
     write(
       grass.current,
       plan.grass,
       MAX_GRASS,
-      (item) => [blade * (0.28 + item.tint * 0.16), blade * item.s, blade * (0.28 + item.tint * 0.16)],
+      (item) => [blade * (0.48 + item.tint * 0.22), blade * item.s, blade * (0.48 + item.tint * 0.22)],
       () => 0,
       (item) => scratch.colour.copy(palette.grassA).lerp(palette.grassB, item.tint),
     );
@@ -597,13 +519,8 @@ export function LandGrowth({
   return (
     <group renderOrder={2}>
       <instancedMesh ref={grass} args={[undefined, undefined, MAX_GRASS]} frustumCulled={false}>
-        <planeGeometry args={[1, 1, 1, 2]} />
-        <WindGrassMaterial
-          reducedMotion={reducedMotion}
-          pose={pose}
-          heightmapCentre={heightmapCentre}
-          terrainRevision={terrain}
-        />
+        <primitive object={grassGeometry} attach="geometry" />
+        <WindGrassMaterial reducedMotion={reducedMotion} pose={pose} />
       </instancedMesh>
       <instancedMesh ref={bush} args={[undefined, undefined, MAX_BUSH]} frustumCulled={false}>
         <icosahedronGeometry args={[0.5, 0]} />
