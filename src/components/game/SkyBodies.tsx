@@ -123,9 +123,9 @@ const SKY_FRAGMENT = /* glsl */ `
     vec3 dayHorizon = vec3(0.76, 0.70, 0.60);
     vec3 dayMid = vec3(0.20, 0.47, 0.65);
     vec3 dayZenith = vec3(0.055, 0.18, 0.30);
-    vec3 nightHorizon = vec3(0.10, 0.14, 0.18);
-    vec3 nightMid = vec3(0.025, 0.07, 0.12);
-    vec3 nightZenith = vec3(0.006, 0.018, 0.038);
+    vec3 nightHorizon = vec3(0.14, 0.20, 0.25);
+    vec3 nightMid = vec3(0.035, 0.09, 0.15);
+    vec3 nightZenith = vec3(0.008, 0.025, 0.055);
 
     vec3 dayColor = mix(dayHorizon, dayMid, smoothstep(0.0, 0.48, altitude));
     dayColor = mix(dayColor, dayZenith, smoothstep(0.42, 1.0, altitude));
