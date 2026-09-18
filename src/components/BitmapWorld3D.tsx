@@ -2383,13 +2383,18 @@ const WorldScene = memo(function WorldScene({
 
 
 
-      <DistrictBlocks tipHeight={tipHeight} colors={colors} />
-      <HolderColumns
-        owners={owners}
-        mine={mine}
-        ownedHeights={ownedHeights}
-        bitcoin={colors.bitcoin}
-      />
+      {/* The district shader is a flat overview layer. In walk mode it can cut
+          through displaced terrain and expose large dark rectangles, so the
+          real terrain is the only ground surface there. */}
+      {cameraMode === "map" ? <DistrictBlocks tipHeight={tipHeight} colors={colors} /> : null}
+      {cameraMode === "map" ? (
+        <HolderColumns
+          owners={owners}
+          mine={mine}
+          ownedHeights={ownedHeights}
+          bitcoin={colors.bitcoin}
+        />
+      ) : null}
       <OwnedBitmapGlow heights={ownedHeights} bitcoin={colors.bitcoin} />
       <OnChainModels models={models} bitcoin={colors.bitcoin} />
       <ExtenderStage
