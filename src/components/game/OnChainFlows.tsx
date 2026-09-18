@@ -6,10 +6,10 @@
  * lava surface in a basalt rim, and the deeper ones spill running lava down a
  * shelf of their own. Only the flows within sight are drawn.
  */
-import { memo, useEffect, useMemo, useRef } from "react";
+import { memo, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import type { PlayerState } from "@/lib/player-state";
+import { WORLD_CELL, type PlayerState } from "@/lib/player-state";
 import { LAVA_LAKES, WATERFALLS } from "@/lib/world-flows";
 import {
   patchSurface,
@@ -18,7 +18,7 @@ import {
   type SurfaceVariant,
 } from "@/lib/onchain-surface";
 import { Primitive } from "./Primitive";
-import { groundY, waterSurfaceY } from "@/lib/world-terrain";
+import { groundY, subscribeTerrain, terrainVersion, waterSurfaceY } from "@/lib/world-terrain";
 
 const ROCK = "#4a4642";
 const BASALT = "#2b2724";
@@ -26,6 +26,146 @@ const BASALT = "#2b2724";
 const SOURCE_LIFT = 0.14;
 
 const noRaycast = () => {};
+
+type WaterGeometry = { river: THREE.BufferGeometry; falls: THREE.BufferGeometry };
+
+function noise(a: number, b: number) {
+  const value = Math.sin(a * 127.1 + b * 311.7) * 43758.5453;
+  return value - Math.floor(value);
+}
+
+function terrainWaterGeometry(cx: number, cz: number): WaterGeometry {
+  const riverPositions: number[] = [];
+  const riverUvs: number[] = [];
+  const riverIndices: number[] = [];
+  const fallPositions: number[] = [];
+  const fallUvs: number[] = [];
+  const fallIndices: number[] = [];
+  const channelStep = WORLD_CELL * 0.58;
+  const halfWidth = WORLD_CELL * 0.16;
+  const lift = WORLD_CELL * 0.035;
+
+  for (let stream = 0; stream < 7; stream += 1) {
+    const key = Math.floor(cx / WORLD_CELL) * 37 + Math.floor(cz / WORLD_CELL) * 71 + stream * 101;
+    let x = cx + (noise(key, 1.3) * 2 - 1) * WORLD_CELL * 11;
+    let z = cz + (noise(key, 2.7) * 2 - 1) * WORLD_CELL * 11;
+    let direction = noise(key, 4.1) * Math.PI * 2;
+    const points: THREE.Vector3[] = [];
+
+    for (let step = 0; step < 44; step += 1) {
+      const y = groundY(x, z) + lift;
+      points.push(new THREE.Vector3(x, y, z));
+      let bestAngle = direction;
+      let bestHeight = Number.POSITIVE_INFINITY;
+      for (let option = -2; option <= 2; option += 1) {
+        const angle = direction + option * 0.42 + (noise(key + step, option + 8.2) - 0.5) * 0.18;
+        const nx = x + Math.sin(angle) * channelStep;
+        const nz = z + Math.cos(angle) * channelStep;
+        const candidate = groundY(nx, nz) + Math.abs(option) * WORLD_CELL * 0.012;
+        if (candidate < bestHeight) {
+          bestHeight = candidate;
+          bestAngle = angle;
+        }
+      }
+      direction = bestAngle;
+      x += Math.sin(direction) * channelStep;
+      z += Math.cos(direction) * channelStep;
+    }
+
+    for (let i = 0; i < points.length; i += 1) {
+      const point = points[i];
+      if (!point) continue;
+      const before = points[Math.max(0, i - 1)] ?? point;
+      const after = points[Math.min(points.length - 1, i + 1)] ?? point;
+      const dx = after.x - before.x;
+      const dz = after.z - before.z;
+      const length = Math.hypot(dx, dz) || 1;
+      const rx = dz / length;
+      const rz = -dx / length;
+      const width = halfWidth * (0.78 + noise(key, i + 17.3) * 0.44);
+      riverPositions.push(
+        point.x - rx * width, point.y, point.z - rz * width,
+        point.x + rx * width, point.y, point.z + rz * width,
+      );
+      riverUvs.push(0, i * 0.32, 1, i * 0.32);
+      if (i > 0) {
+        const vertex = (riverPositions.length / 3) - 4;
+        riverIndices.push(vertex, vertex + 2, vertex + 1, vertex + 1, vertex + 2, vertex + 3);
+      }
+
+      if (i === 0) continue;
+      const previous = points[i - 1];
+      if (!previous) continue;
+      const drop = previous.y - point.y;
+      if (drop < WORLD_CELL * 0.08) continue;
+      const base = fallPositions.length / 3;
+      fallPositions.push(
+        point.x - rx * width, previous.y, point.z - rz * width,
+        point.x + rx * width, previous.y, point.z + rz * width,
+        point.x - rx * width, point.y, point.z - rz * width,
+        point.x + rx * width, point.y, point.z + rz * width,
+      );
+      fallUvs.push(0, 1, 1, 1, 0, 0, 1, 0);
+      fallIndices.push(base, base + 2, base + 1, base + 1, base + 2, base + 3);
+    }
+  }
+
+  const build = (positions: number[], uvs: number[], indices: number[]) => {
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+    geometry.computeBoundingSphere();
+    return geometry;
+  };
+  return { river: build(riverPositions, riverUvs, riverIndices), falls: build(fallPositions, fallUvs, fallIndices) };
+}
+
+function TerrainWaterNetwork({ pose }: { pose: React.MutableRefObject<PlayerState | null> }) {
+  const terrain = useSyncExternalStore(subscribeTerrain, terrainVersion, terrainVersion);
+  const [centre, setCentre] = useState({ x: 0, z: 0 });
+  const lastKey = useRef("");
+  const riverWater = useSurfaceMaterial("waterRun", 0.93, 1.15);
+  const fallingWater = useSurfaceMaterial("waterRun", 0.96, 1.9);
+
+  useFrame(() => {
+    const player = pose.current;
+    if (!player) return;
+    const span = WORLD_CELL * 12;
+    const x = Math.round(player.x / span) * span;
+    const z = Math.round(player.z / span) * span;
+    const key = `${x}:${z}`;
+    if (key !== lastKey.current) {
+      lastKey.current = key;
+      setCentre({ x, z });
+    }
+  });
+
+  const geometry = useMemo(() => {
+    void terrain;
+    return terrainWaterGeometry(centre.x, centre.z);
+  }, [centre, terrain]);
+
+  useEffect(
+    () => () => {
+      geometry.river.dispose();
+      geometry.falls.dispose();
+    },
+    [geometry],
+  );
+
+  return (
+    <group renderOrder={3} raycast={noRaycast}>
+      <mesh geometry={geometry.river}>
+        <Primitive object={riverWater} attach="material" />
+      </mesh>
+      <mesh geometry={geometry.falls}>
+        <Primitive object={fallingWater} attach="material" />
+      </mesh>
+    </group>
+  );
+}
 
 /** One inscribed surface as a reusable material. */
 function useSurfaceMaterial(variant: SurfaceVariant, opacity: number, flow: number) {
@@ -78,9 +218,10 @@ export const OnChainFlows = memo(function OnChainFlows({
 
   return (
     <group ref={group}>
+      <TerrainWaterNetwork pose={pose} />
       {WATERFALLS.map((fall) => {
-        const h = unit * fall.height * 2.6;
-        const w = unit * fall.width * 2.4;
+        const h = Math.max(WORLD_CELL * 0.9, unit * fall.height * 8);
+        const w = Math.max(WORLD_CELL * 0.7, unit * fall.width * 6);
         return (
           <group
             key={`fall-${fall.id}`}
