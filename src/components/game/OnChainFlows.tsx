@@ -19,6 +19,7 @@ import {
 } from "@/lib/onchain-surface";
 import { Primitive } from "./Primitive";
 import { groundY, subscribeTerrain, terrainVersion, waterSurfaceY } from "@/lib/world-terrain";
+import { worldWeather } from "@/lib/world-weather";
 
 const ROCK = "#4a4642";
 const BASALT = "#2b2724";
@@ -182,7 +183,12 @@ function useSurfaceMaterial(variant: SurfaceVariant, opacity: number, flow: numb
     return mat;
   }, [variant, opacity, uniforms]);
   useEffect(() => () => material.dispose(), [material]);
-  useFrame((_, delta) => {
+  useFrame(({ clock }, delta) => {
+    const weather = worldWeather(clock.getElapsedTime());
+    const wetBoost = variant === "water" || variant === "waterRun"
+      ? 1 + weather.rain * 1.15 + weather.windStrength * 0.2
+      : 1;
+    uniforms.uFlow.value = flow * wetBoost;
     tickSurface(uniforms, delta);
   });
   return material;

@@ -11,6 +11,7 @@ import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { Primitive } from "@/components/game/Primitive";
 import { MOON_INSCRIPTION } from "@/lib/world-gear";
+import { worldWeather } from "@/lib/world-weather";
 
 const SUN_INSCRIPTION = "9dd13ee3171bcd321b7ef2d7a07fe268efc8ec888bab580d1c68ec8673081414i0";
 const SUN_URL = `https://ordinals.com/content/${SUN_INSCRIPTION}`;
@@ -109,6 +110,8 @@ const SKY_VERTEX = /* glsl */ `
 const SKY_FRAGMENT = /* glsl */ `
   uniform float uTime;
   uniform float uNight;
+  uniform float uCloud;
+  uniform float uRain;
   varying vec3 vSkyDirection;
 
   float skyNoise(vec2 p) {
@@ -136,10 +139,11 @@ const SKY_FRAGMENT = /* glsl */ `
     vec2 cloudUv = direction.xz * 9.0 / max(0.24, direction.y + 0.48);
     float cloudA = skyNoise(cloudUv + vec2(uTime * 0.014, -uTime * 0.006));
     float cloudB = skyNoise(cloudUv * 1.83 + vec2(-uTime * 0.009, uTime * 0.005));
-    float clouds = smoothstep(0.69, 0.92, cloudA * 0.62 + cloudB * 0.38);
+    float clouds = smoothstep(mix(0.69, 0.42, uCloud), 0.92, cloudA * 0.62 + cloudB * 0.38);
     clouds *= smoothstep(0.03, 0.34, altitude) * (1.0 - smoothstep(0.72, 0.98, altitude));
     vec3 cloudColor = mix(vec3(0.62, 0.66, 0.66), vec3(0.12, 0.17, 0.22), uNight);
-    color = mix(color, cloudColor, clouds * mix(0.22, 0.12, uNight));
+    color = mix(color, cloudColor, clouds * mix(0.22, 0.12, uNight) * (1.0 + uCloud * 1.8));
+    color = mix(color, vec3(0.12, 0.16, 0.18), uRain * 0.38);
     color += mix(vec3(0.12, 0.055, 0.018), vec3(0.018, 0.035, 0.05), uNight) * horizon;
 
     gl_FragColor = vec4(color, 1.0);
@@ -152,6 +156,8 @@ function AtmosphereDome({ night, far }: { night: boolean; far: number }) {
     () => ({
       uTime: { value: 0 },
       uNight: { value: night ? 1 : 0 },
+      uCloud: { value: 0 },
+      uRain: { value: 0 },
     }),
     [night],
   );
@@ -160,6 +166,11 @@ function AtmosphereDome({ night, far }: { night: boolean; far: number }) {
     if (!material.current) return;
     const time = material.current.uniforms["uTime"];
     if (time) time.value = clock.getElapsedTime();
+    const weather = worldWeather(clock.getElapsedTime());
+    const cloud = material.current.uniforms["uCloud"];
+    const rain = material.current.uniforms["uRain"];
+    if (cloud) cloud.value = weather.cloud;
+    if (rain) rain.value = weather.rain;
   });
 
   return (
