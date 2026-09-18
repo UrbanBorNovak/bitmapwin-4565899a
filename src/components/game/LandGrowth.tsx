@@ -303,23 +303,28 @@ function planGroundCover(cell: NearbyCell, out: Item[]) {
     isSea(cx - shoreReach, cz) ||
     isSea(cx, cz + shoreReach) ||
     isSea(cx, cz - shoreReach);
-  // Full close detail, then progressively lighter silhouettes toward the edge.
-  // Cells are planned nearest-first, so the fixed instance pool can never clip
-  // a random strip from one side of the visible world.
+  // The desert grows in readable oases, not one almost-invisible blade scatter
+  // per BITMAP. A second, wider selector gives shore cells extra greenery.
   const near = cell.distance <= 10;
   const middle = cell.distance <= 17;
-  const patchCount = (near ? 3 : middle ? 2 : 1) + Math.floor(hash(cell.height, 19.7) * 2) + (shoreline ? 1 : 0);
+  const oasis = hash(cell.height, 8.3);
+  const growsHere = oasis > (shoreline ? 0.34 : near ? 0.58 : 0.68);
+  if (!growsHere) return;
+  const patchCount =
+    (near ? 5 : middle ? 4 : 3) +
+    Math.floor(hash(cell.height, 19.7) * 3) +
+    (shoreline ? 2 : 0);
   const bladeCount =
-    (near ? 20 : middle ? 9 : 3) +
-    Math.floor(hash(cell.height, 37.1) * (near ? 12 : middle ? 6 : 3)) +
-    (shoreline ? (near ? 16 : middle ? 8 : 3) : 0);
+    (near ? 96 : middle ? 56 : 24) +
+    Math.floor(hash(cell.height, 37.1) * (near ? 42 : middle ? 24 : 12)) +
+    (shoreline ? (near ? 44 : middle ? 28 : 16) : 0);
 
   for (let i = 0; i < bladeCount && out.length < MAX_GRASS; i += 1) {
     const patch = i % patchCount;
     const patchX = (hash(cell.height, 51.3 + patch * 8.7) * 2 - 1) * half * 0.72;
     const patchZ = (hash(cell.height, 74.9 + patch * 6.1) * 2 - 1) * half * 0.72;
     const angle = hash(cell.height + i * 1.9, 101.7) * Math.PI * 2;
-    const radius = Math.sqrt(hash(cell.height + i * 3.1, 119.3)) * half * 0.2;
+    const radius = Math.sqrt(hash(cell.height + i * 3.1, 119.3)) * half * 0.24;
     const x = cx + Math.max(-half, Math.min(half, patchX + Math.cos(angle) * radius));
     const z = cz + Math.max(-half, Math.min(half, patchZ + Math.sin(angle) * radius));
     if (!clear(x, z) || isSea(x, z)) continue;
@@ -328,7 +333,7 @@ function planGroundCover(cell: NearbyCell, out: Item[]) {
       x,
       z,
       y: 0,
-      s: 0.48 + r * 0.42 + (shoreline ? 0.16 : 0),
+      s: 0.7 + r * 0.5 + (shoreline ? 0.18 : 0),
       yaw: r * Math.PI * 2,
       tint: r,
     });
