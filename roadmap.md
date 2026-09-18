@@ -58,6 +58,6 @@
 - [x] Lower water to the terrain and slow river and waterfall animation
 - [x] Stabilize rivers as fixed world features with narrow creek sources and smoother widening channels
 - [x] Surround the Oasis with monumental grayscale skyscraper inscriptions beyond the glass boundary
-- [ ] Allow walking near and across water with correct surface grounding.
-- [ ] Keep grass visible while jumping and flying.
-- [ ] Add two requested on-chain skyscrapers beyond the glass edges.
+- [x] Allow walking near and across water with correct surface grounding.
+- [x] Keep grass visible while jumping and flying.
+- [x] Add two requested on-chain skyscrapers beyond the glass edges.

@@ -226,8 +226,8 @@ import { DriveBlur } from "@/components/game/DriveBlur";
 import { DamageVeil } from "@/components/game/DamageVeil";
 
 import type { RideSpec } from "@/lib/world-vehicle";
-import { dryLandNear, isDeepSea, isSea, nearestSea } from "@/lib/world-sea";
-import { groundY } from "@/lib/world-terrain";
+import { dryLandNear, isSea, nearestSea } from "@/lib/world-sea";
+import { groundY, waterSurfaceY } from "@/lib/world-terrain";
 import { TerrainField } from "@/components/game/TerrainField";
 import { WorldBoundary } from "@/components/game/WorldBoundary";
 import TouchControls from "@/components/game/TouchControls";
@@ -257,6 +257,10 @@ const GRID = 1_000;
 const WORLD_SIZE = 100;
 const CELL = WORLD_SIZE / GRID;
 const OWNER_CELL_BUDGET = 24_000;
+
+/** Feet follow visible land on shore and the visible liquid plane over seas. */
+const traversalSurfaceY = (x: number, z: number) =>
+  isSea(x, z) ? waterSurfaceY(x, z) : groundY(x, z);
 
 /** Everything except the flat picking plane opts out of raycasting — one plane hit test per pointer move. */
 const noRaycast = () => {};
@@ -1192,7 +1196,7 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
     if (group.current) {
       // Peers stand on the same real terrain you do: their broadcast y is height
       // above the ground, so the land under them is added here.
-      group.current.position.set(current.x, current.y + groundY(current.x, current.z), current.z);
+      group.current.position.set(current.x, current.y + traversalSurfaceY(current.x, current.z), current.z);
       group.current.rotation.y = current.yaw;
     }
     if (body.current) {
@@ -1288,7 +1292,7 @@ const SelfBeacon = memo(function SelfBeacon({
     if (!current || !group.current) return;
     // The marker belongs to the terrain under the player. Using world zero
     // makes it cut through the avatar whenever a BITMAP sits above the base plane.
-    group.current.position.set(current.x, current.y + groundY(current.x, current.z), current.z);
+    group.current.position.set(current.x, current.y + traversalSurfaceY(current.x, current.z), current.z);
     if (pulse.current) {
       const beat = 1 + Math.sin(state.clock.elapsedTime * 2.4) * (wide ? 0.28 : 0.14);
       pulse.current.scale.setScalar(beat);
@@ -1402,7 +1406,7 @@ const SelfAvatar = memo(function SelfAvatar({
     if (!current || !group.current) return;
     group.current.position.set(
       current.x,
-      current.y + mountOffset + groundY(current.x, current.z),
+      current.y + mountOffset + traversalSurfaceY(current.x, current.z),
       current.z,
     );
     group.current.rotation.y = current.yaw;
@@ -1531,11 +1535,9 @@ function PlayerCameraRig({
         return !isSea(x, z) && isSea(pose.current?.x ?? x, pose.current?.z ?? z);
       }
       if (isDriving() && currentRide().kind !== "air" && isSea(x, z)) return true;
-      // Boots and wheels wade the shelf but never the deep — unless they are
-      // already out there, so nobody is ever stuck mid-sea.
-      const player = pose.current;
-      if (player && isDeepSea(player.x, player.z)) return false;
-      return isDeepSea(x, z);
+      // On foot, every shoreline and water surface remains traversable. Ground
+      // rides still stop at the water and boats still stop at the shoreline.
+      return false;
     });
     return () => setMoveBlocker(null);
   }, []);
@@ -1708,7 +1710,7 @@ function PlayerCameraRig({
     const dip = land.current * AVATAR_U * (mode === "first" ? 0.28 : 0.34);
     // The camera rides the real land: player.y is height above the ground, the
     // terrain under the feet is added on top of it.
-    const ground = groundY(player.x, player.z);
+    const ground = traversalSurfaceY(player.x, player.z);
 
     if (mode === "first" && driving) {
       // Hood cam: sits just ahead of the nose so the road is wide open instead

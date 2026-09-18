@@ -113,6 +113,8 @@ function WindGrassMaterial({
   terrainRevision: number;
 }) {
   const material = useRef<THREE.ShaderMaterial>(null);
+  const sampledCentre = useRef(new THREE.Vector2(Number.NaN, Number.NaN));
+  const nextAirborneSample = useRef(0);
   const texture = useMemo(makeGrassTexture, []);
   const heightmap = useMemo(makeTerrainHeightmap, []);
   const uniforms = useMemo(
@@ -138,6 +140,7 @@ function WindGrassMaterial({
     fillTerrainHeightmap(heightmap, heightmapCentre.x, heightmapCentre.z);
     const centre = uniforms.uHeightmapCentre.value;
     centre.set(heightmapCentre.x, heightmapCentre.z);
+    sampledCentre.current.set(heightmapCentre.x, heightmapCentre.z);
   }, [heightmap, heightmapCentre, terrainRevision, uniforms]);
 
   useEffect(
@@ -165,6 +168,22 @@ function WindGrassMaterial({
     const player = pose.current;
     if (player && playerPosition?.value instanceof THREE.Vector3) {
       playerPosition.value.set(player.x, groundY(player.x, player.z), player.z);
+      // Fast airborne travel can cross several BITMAPs before React's scenery
+      // list refreshes. Keep the terrain texture under those existing blades
+      // centred on the live horizontal pose so they never sink and vanish.
+      const dx = sampledCentre.current.x - player.x;
+      const dz = sampledCentre.current.y - player.z;
+      const moved = dx * dx + dz * dz;
+      const airborne = !player.grounded || player.y > 0;
+      if (
+        moved > (WORLD_CELL * 0.5) ** 2 &&
+        (!airborne || clock.elapsedTime >= nextAirborneSample.current)
+      ) {
+        fillTerrainHeightmap(heightmap, player.x, player.z);
+        uniforms.uHeightmapCentre.value.set(player.x, player.z);
+        sampledCentre.current.set(player.x, player.z);
+        nextAirborneSample.current = clock.elapsedTime + (airborne ? 0.2 : 0.5);
+      }
     }
   });
 
@@ -269,7 +288,13 @@ function WindGrassMaterial({
           vec4 blade = texture2D(uMap, vUv);
           if (blade.a < 0.06) discard;
           float distanceFade = 1.0 - smoothstep(uFadeNear, uFadeFar, distance(vWorldPosition.xz, uPlayerPosition.xz));
-          float cameraFade = smoothstep(${WORLD_CELL * 0.08}, ${WORLD_CELL * 0.32}, distance(vWorldPosition, cameraPosition));
+          // Airborne cameras must not erase the ground cover below them. Only
+          // horizontal proximity is relevant to the close-camera softening.
+          float cameraFade = smoothstep(
+            ${WORLD_CELL * 0.08},
+            ${WORLD_CELL * 0.32},
+            distance(vWorldPosition.xz, cameraPosition.xz)
+          );
           float alpha = blade.a * distanceFade * cameraFade;
           if (alpha < 0.02) discard;
           vec3 colour = blade.rgb * vInstanceColor * 1.45;
