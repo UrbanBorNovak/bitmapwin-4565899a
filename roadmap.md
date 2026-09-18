@@ -52,3 +52,5 @@
 - [x] Mark the world edges with glass walls and a grayscale outer world
 - [x] Raise small water and lava sources and enrich shorelines with trees, flowers, and grass
 - [x] Reimplement grass with a heightmap-driven vertex shader for per-blade BITMAP terrain elevation
+- [ ] Restore clearly visible terrain-following grass across nearby BITMAPs
+- [ ] Add terrain-following rivers and nearby visible waterfalls
