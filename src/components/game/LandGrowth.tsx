@@ -20,7 +20,7 @@ import { growthOf, useTerraformedLand, type TerraformedLand } from "@/lib/world-
 import { blockedAt, useWorldBuilds } from "@/lib/world-build";
 import { groundY, subscribeTerrain, terrainVersion } from "@/lib/world-terrain";
 
-const MAX_GRASS = 900;
+const MAX_GRASS = 6_000;
 const MAX_BUSH = 260;
 const MAX_TREE = 90;
 /** plots this many cells away from the player are still dressed */
@@ -101,21 +101,28 @@ function planPlot(land: TerraformedLand, growth: number, out: { grass: Item[]; b
   const cz = cellZ(land.row);
   const half = WORLD_CELL * 0.46;
 
-  const grassCount = Math.round(growth * 46);
+  // Grass needs to read as a patch at avatar scale, not as isolated pixels.
+  // Keep young land sparse, then gather the blades into deterministic clumps.
+  const grassCount = Math.round(12 + growth * 420);
   const bushCount = growth < 0.3 ? 0 : Math.round((growth - 0.3) * 18);
   const treeCount = growth < 0.55 ? 0 : Math.round((growth - 0.55) * 9);
 
   for (let i = 0; i < grassCount; i += 1) {
     if (out.grass.length >= MAX_GRASS) break;
-    const rx = hash(land.height + i * 1.7, 11.3) * 2 - 1;
-    const rz = hash(land.height + i * 2.3, 27.9) * 2 - 1;
+    const cluster = i % 7;
+    const clusterX = (hash(land.height, 41.7 + cluster * 7.9) * 2 - 1) * half * 0.72;
+    const clusterZ = (hash(land.height, 83.1 + cluster * 9.3) * 2 - 1) * half * 0.72;
+    const angle = hash(land.height + i * 1.7, 11.3) * Math.PI * 2;
+    const radius = Math.sqrt(hash(land.height + i * 2.3, 27.9)) * half * 0.2;
+    const rx = Math.max(-half, Math.min(half, clusterX + Math.cos(angle) * radius));
+    const rz = Math.max(-half, Math.min(half, clusterZ + Math.sin(angle) * radius));
     const r = hash(land.height * 0.5 + i, 3.1);
-    if (!clear(cx + rx * half, cz + rz * half)) continue;
+    if (!clear(cx + rx, cz + rz)) continue;
     out.grass.push({
-      x: cx + rx * half,
-      z: cz + rz * half,
-      y: groundY(cx + rx * half, cz + rz * half),
-      s: 0.5 + r * 0.8 + growth * 0.5,
+      x: cx + rx,
+      z: cz + rz,
+      y: groundY(cx + rx, cz + rz),
+      s: 0.7 + r * 0.8 + growth * 0.65,
       yaw: r * Math.PI * 2,
       tint: r,
     });
@@ -278,12 +285,12 @@ export function LandGrowth({
       mesh.count = max;
     };
 
-    const blade = unit * 0.16;
+    const blade = unit * 0.42;
     write(
       grass.current,
       plan.grass,
       MAX_GRASS,
-      (item) => [blade * 0.35, blade * item.s, blade * 0.35],
+      (item) => [blade * (0.2 + item.tint * 0.12), blade * item.s, blade * (0.2 + item.tint * 0.12)],
       (_item, h) => h / 2,
       (item) => scratch.colour.copy(palette.grassA).lerp(palette.grassB, item.tint),
     );
