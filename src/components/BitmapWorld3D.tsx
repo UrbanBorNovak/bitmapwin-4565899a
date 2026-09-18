@@ -2387,12 +2387,14 @@ const WorldScene = memo(function WorldScene({
           through displaced terrain and expose large dark rectangles, so the
           real terrain is the only ground surface there. */}
       {cameraMode === "map" ? <DistrictBlocks tipHeight={tipHeight} colors={colors} /> : null}
-      <HolderColumns
-        owners={owners}
-        mine={mine}
-        ownedHeights={ownedHeights}
-        bitcoin={colors.bitcoin}
-      />
+      {cameraMode === "map" ? (
+        <HolderColumns
+          owners={owners}
+          mine={mine}
+          ownedHeights={ownedHeights}
+          bitcoin={colors.bitcoin}
+        />
+      ) : null}
       <OwnedBitmapGlow heights={ownedHeights} bitcoin={colors.bitcoin} />
       <OnChainModels models={models} bitcoin={colors.bitcoin} />
       <ExtenderStage
