@@ -11,14 +11,14 @@
  * fires, never per frame; the frame loop does nothing but a gentle sway.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { PlayerState } from "@/lib/player-state";
 import { WORLD_CELL, cellX, cellZ } from "@/lib/player-state";
 import { growthOf, useTerraformedLand, type TerraformedLand } from "@/lib/world-terraform";
 import { blockedAt, useWorldBuilds } from "@/lib/world-build";
-import { groundY } from "@/lib/world-terrain";
+import { groundY, subscribeTerrain, terrainVersion } from "@/lib/world-terrain";
 
 const MAX_GRASS = 900;
 const MAX_BUSH = 260;
@@ -162,6 +162,8 @@ export function LandGrowth({
   const land = useTerraformedLand();
   // Re-plan when something is built or demolished: plants clear the new floor.
   const builds = useWorldBuilds();
+  // Re-seat every plant when streamed BITMAP relief replaces fallback terrain.
+  const terrain = useSyncExternalStore(subscribeTerrain, terrainVersion, terrainVersion);
   const [tick, setTick] = useState(0);
   const [near, setNear] = useState<TerraformedLand[]>([]);
 
@@ -209,11 +211,12 @@ export function LandGrowth({
   const plan = useMemo(() => {
     void tick;
     void builds;
+    void terrain;
     const out = { grass: [] as Item[], bush: [] as Item[], tree: [] as Item[] };
     const now = Date.now();
     for (const plot of near) planPlot(plot, growthOf(plot, now), out);
     return out;
-  }, [builds, near, tick]);
+  }, [builds, near, terrain, tick]);
 
   const scratch = useMemo(
     () => ({
@@ -265,7 +268,7 @@ export function LandGrowth({
         const [sx, sy, sz] = size(item);
         scratch.euler.set(0, item.yaw, 0);
         scratch.quat.setFromEuler(scratch.euler);
-         scratch.pos.set(item.x, item.y + lift(item, sy), item.z);
+        scratch.pos.set(item.x, item.y + lift(item, sy), item.z);
         scratch.matrix.compose(scratch.pos, scratch.quat, scratch.scale.set(sx, sy, sz));
         mesh.setMatrixAt(i, scratch.matrix);
         mesh.setColorAt(i, colourise(item));
