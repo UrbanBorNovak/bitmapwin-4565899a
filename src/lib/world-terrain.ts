@@ -45,8 +45,12 @@ export const MAX_RELIEF = MACRO_AMP + MICRO_AMP;
 
 /** height → activity 0…1, real rows only. */
 const real = new Map<number, number>();
-/** heights we already asked for (present or known-missing) — never refetched. */
-const asked = new Set<number>();
+/** Heights whose real row has arrived, or was confirmed absent. */
+const settled = new Set<number>();
+/** Latest visible window, nearest cells first. Replaced as the player travels. */
+let pending: number[] = [];
+const pendingSet = new Set<number>();
+const fetching = new Set<number>();
 
 let version = 0;
 const listeners = new Set<() => void>();
@@ -169,25 +173,57 @@ export function slopeAt(x: number, z: number) {
 let inFlight = false;
 let lastRequest = "";
 
+async function drainTerrainQueue() {
+  if (inFlight || pending.length === 0) return;
+  const batch = pending.splice(0, 900);
+  for (const height of batch) {
+    pendingSet.delete(height);
+    fetching.add(height);
+  }
+
+  inFlight = true;
+  try {
+    const rows = await fetchBlockStatsMany(batch);
+    for (const height of batch) settled.add(height);
+    for (const [height, stats] of rows) {
+      const activity = clamp(Math.log1p(stats.txCount) / Math.log1p(BUSY_TX), 0, 1);
+      real.set(height, activity);
+    }
+    if (rows.size > 0) bump();
+  } catch {
+    // Failed rows remain unsettled, so entering this region again can retry them.
+  } finally {
+    for (const height of batch) fetching.delete(height);
+    inFlight = false;
+    if (pending.length > 0) void drainTerrainQueue();
+  }
+}
+
 /**
  * Stream the real block rows that shape the land around a point. Called as the
- * player moves; each call fetches at most one batch and only rows never asked
- * for before, so walking the world never re-hits the database.
+ * player moves. The complete visible window is queued nearest-first and drained
+ * in bounded batches, so movement cannot drop a request while another is in
+ * flight and every visible BITMAP eventually receives its real chain relief.
  */
 export async function requestTerrainAround(x: number, z: number, cells = 96) {
-  if (inFlight) return;
   const col0 = Math.round((x + WORLD_UNITS / 2) / WORLD_CELL);
   const row0 = Math.round(z / WORLD_CELL);
   const key = `${Math.floor(col0 / 8)}:${Math.floor(row0 / 8)}`;
   if (key === lastRequest) return;
 
-  const wanted: number[] = [];
+  const wanted: Array<{ height: number; distance: number }> = [];
+  const wantedSet = new Set<number>();
   const push = (col: number, row: number) => {
     if (col < 0 || row < 0 || col >= WORLD_GRID || row >= WORLD_GRID) return;
     const height = row * WORLD_GRID + col;
-    if (height > BLOCK_STATS_MAX_HEIGHT || asked.has(height)) return;
-    asked.add(height);
-    wanted.push(height);
+    if (
+      height > BLOCK_STATS_MAX_HEIGHT ||
+      settled.has(height) ||
+      fetching.has(height) ||
+      wantedSet.has(height)
+    ) return;
+    wantedSet.add(height);
+    wanted.push({ height, distance: Math.hypot(col - col0, row - row0) });
   };
 
   // Broad lattice first: it carries the shape of the whole region.
@@ -196,31 +232,23 @@ export async function requestTerrainAround(x: number, z: number, cells = 96) {
   for (let j = -6; j <= 6; j++) {
     for (let i = -6; i <= 6; i++) push((mi + i) * MACRO, (mj + j) * MACRO);
   }
-  // Then the districts you can actually see, every other cell.
+  // Then every visible BITMAP. Real terrain no longer skips alternating cells.
   const half = Math.floor(cells / 2);
-  for (let j = -half; j <= half; j += 2) {
-    for (let i = -half; i <= half; i += 2) {
-      if (wanted.length >= 900) break;
-      push(col0 + i, row0 + j);
-    }
-    if (wanted.length >= 900) break;
+  for (let j = -half; j <= half; j += 1) {
+    for (let i = -half; i <= half; i += 1) push(col0 + i, row0 + j);
   }
 
   lastRequest = key;
-  if (wanted.length === 0) return;
+  wanted.sort((a, b) => a.distance - b.distance);
 
-  inFlight = true;
-  try {
-    const rows = await fetchBlockStatsMany(wanted.slice(0, 900));
-    if (rows.size === 0) return;
-    for (const [height, stats] of rows) {
-      const activity = clamp(Math.log1p(stats.txCount) / Math.log1p(BUSY_TX), 0, 1);
-      real.set(height, activity);
-    }
-    bump();
-  } catch {
-    // A failed batch just leaves those districts on the deterministic shape.
-  } finally {
-    inFlight = false;
+  // Replace stale queued work with the latest visible window. The active batch
+  // is allowed to finish; everything else now follows the player.
+  pending = [];
+  pendingSet.clear();
+  for (const item of wanted) {
+    if (settled.has(item.height) || fetching.has(item.height) || pendingSet.has(item.height)) continue;
+    pending.push(item.height);
+    pendingSet.add(item.height);
   }
+  await drainTerrainQueue();
 }

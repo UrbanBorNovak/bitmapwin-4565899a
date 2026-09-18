@@ -21,16 +21,16 @@ import { blockedAt, useWorldBuilds } from "@/lib/world-build";
 import { groundY, subscribeTerrain, terrainVersion } from "@/lib/world-terrain";
 import { isSea } from "@/lib/world-sea";
 
-const MAX_GRASS = 9_000;
+const MAX_GRASS = 18_000;
 const MAX_BUSH = 260;
 const MAX_TREE = 90;
 /** plots this many cells away from the player are still dressed */
-const RADIUS_CELLS = 12;
+const RADIUS_CELLS = 24;
 /** how often the growth amount is re-read from the clock */
 const TICK_MS = 20_000;
 
 type Item = { x: number; y: number; z: number; s: number; yaw: number; tint: number };
-type NearbyCell = { height: number; col: number; row: number };
+type NearbyCell = { height: number; col: number; row: number; distance: number };
 
 /** Alpha-cut blade used by every instance; transparent corners can never become dark tiles. */
 function makeGrassTexture() {
@@ -75,8 +75,8 @@ function WindGrassMaterial({
       uTime: { value: 0 },
       uWindStrength: { value: reducedMotion ? 0.035 : 0.14 },
       uPlayerPosition: { value: new THREE.Vector3() },
-      uFadeNear: { value: WORLD_CELL * 8 },
-      uFadeFar: { value: WORLD_CELL * 13 },
+      uFadeNear: { value: WORLD_CELL * 17 },
+      uFadeFar: { value: WORLD_CELL * 25 },
     }),
     [reducedMotion, texture],
   );
@@ -199,8 +199,16 @@ function planGroundCover(cell: NearbyCell, out: Item[]) {
     isSea(cx - shoreReach, cz) ||
     isSea(cx, cz + shoreReach) ||
     isSea(cx, cz - shoreReach);
-  const patchCount = 2 + Math.floor(hash(cell.height, 19.7) * 3) + (shoreline ? 2 : 0);
-  const bladeCount = 12 + Math.floor(hash(cell.height, 37.1) * 10) + (shoreline ? 18 : 0);
+  // Full close detail, then progressively lighter silhouettes toward the edge.
+  // Cells are planned nearest-first, so the fixed instance pool can never clip
+  // a random strip from one side of the visible world.
+  const near = cell.distance <= 10;
+  const middle = cell.distance <= 17;
+  const patchCount = (near ? 3 : middle ? 2 : 1) + Math.floor(hash(cell.height, 19.7) * 2) + (shoreline ? 1 : 0);
+  const bladeCount =
+    (near ? 20 : middle ? 9 : 3) +
+    Math.floor(hash(cell.height, 37.1) * (near ? 12 : middle ? 6 : 3)) +
+    (shoreline ? (near ? 16 : middle ? 8 : 3) : 0);
 
   for (let i = 0; i < bladeCount && out.length < MAX_GRASS; i += 1) {
     const patch = i % patchCount;
@@ -353,9 +361,15 @@ export function LandGrowth({
         if (row < 0 || row >= WORLD_GRID) continue;
         for (let col = centreCol - RADIUS_CELLS; col <= centreCol + RADIUS_CELLS; col += 1) {
           if (col < 0 || col >= WORLD_GRID) continue;
-          cells.push({ height: row * WORLD_GRID + col, col, row });
+          cells.push({
+            height: row * WORLD_GRID + col,
+            col,
+            row,
+            distance: Math.hypot(col - centreCol, row - centreRow),
+          });
         }
       }
+      cells.sort((a, b) => a.distance - b.distance);
       setNearbyCells(cells);
     }
   });
@@ -467,7 +481,7 @@ export function LandGrowth({
   return (
     <group renderOrder={2}>
       <instancedMesh ref={grass} args={[undefined, undefined, MAX_GRASS]} frustumCulled={false}>
-        <planeGeometry args={[1, 1, 1, 4]} />
+        <planeGeometry args={[1, 1, 1, 2]} />
         <WindGrassMaterial reducedMotion={reducedMotion} pose={pose} />
       </instancedMesh>
       <instancedMesh ref={bush} args={[undefined, undefined, MAX_BUSH]} frustumCulled={false}>
