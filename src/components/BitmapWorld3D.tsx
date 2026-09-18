@@ -108,6 +108,7 @@ import { VehicleGunner } from "@/components/game/VehicleGunner";
 import { VehicleDamageFx } from "@/components/game/VehicleDamageFx";
 import { MysteryMist } from "@/components/game/MysteryMist";
 import { LandGrowth } from "@/components/game/LandGrowth";
+import { WorldWeather } from "@/components/game/WorldWeather";
 import { growthLabel, terraform, terraformAt } from "@/lib/world-terraform";
 import { ordContentUrl } from "@/lib/oci";
 
@@ -2337,6 +2338,7 @@ const WorldScene = memo(function WorldScene({
       </SafeEnvironment>
       <PerfGovernor pose={pose} active={cameraMode !== "map"} />
       <SkyBodies bitcoin={colors.bitcoin} />
+      {cameraMode !== "map" ? <WorldWeather /> : null}
       <LandSurface colors={colors} tipHeight={tipHeight} />
       <WorldBoundary colors={colors} />
       {cameraMode !== "map" ? (
