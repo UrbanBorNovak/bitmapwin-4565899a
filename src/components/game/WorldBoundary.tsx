@@ -3,6 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { WORLD_UNITS } from "@/lib/player-state";
 import { worldWeather } from "@/lib/world-weather";
+import { OuterSkyline } from "./OuterSkyline";
 
 const WALL_HEIGHT = 1.8;
 const WALL_THICKNESS = 0.018;
@@ -95,6 +96,8 @@ export function WorldBoundary({ colors }: { colors: BoundaryColors }) {
 
   return (
     <group raycast={() => {}}>
+      <OuterSkyline foreground={colors.foreground} background={colors.background} />
+
       {aprons.map((apron) => (
         <mesh key={apron.key} rotation-x={-Math.PI / 2} position={apron.position} renderOrder={-5}>
           <planeGeometry args={apron.size} />
