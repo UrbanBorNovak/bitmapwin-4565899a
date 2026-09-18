@@ -22,6 +22,8 @@ import { groundY, waterSurfaceY } from "@/lib/world-terrain";
 
 const ROCK = "#4a4642";
 const BASALT = "#2b2724";
+/** Keep small animated sources visibly clear of displaced terrain. */
+const SOURCE_LIFT = 0.14;
 
 const noRaycast = () => {};
 
@@ -82,7 +84,7 @@ export const OnChainFlows = memo(function OnChainFlows({
         return (
           <group
             key={`fall-${fall.id}`}
-            position={[fall.x, waterSurfaceY(fall.x, fall.z), fall.z]}
+            position={[fall.x, waterSurfaceY(fall.x, fall.z) + unit * SOURCE_LIFT, fall.z]}
             rotation={[0, fall.facing, 0]}
             userData={{ site: { x: fall.x, z: fall.z } }}
           >
@@ -118,7 +120,7 @@ export const OnChainFlows = memo(function OnChainFlows({
         return (
           <group
             key={`lava-${lake.id}`}
-            position={[lake.x, groundY(lake.x, lake.z), lake.z]}
+            position={[lake.x, groundY(lake.x, lake.z) + unit * SOURCE_LIFT, lake.z]}
             rotation={[0, lake.facing, 0]}
             userData={{ site: { x: lake.x, z: lake.z } }}
           >

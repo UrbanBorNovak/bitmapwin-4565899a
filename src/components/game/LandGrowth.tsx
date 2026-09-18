@@ -107,8 +107,14 @@ function planGroundCover(cell: NearbyCell, out: Item[]) {
   const cx = cellX(cell.col);
   const cz = cellZ(cell.row);
   const half = WORLD_CELL * 0.46;
-  const patchCount = 2 + Math.floor(hash(cell.height, 19.7) * 3);
-  const bladeCount = 10 + Math.floor(hash(cell.height, 37.1) * 9);
+  const shoreReach = WORLD_CELL * 1.7;
+  const shoreline =
+    isSea(cx + shoreReach, cz) ||
+    isSea(cx - shoreReach, cz) ||
+    isSea(cx, cz + shoreReach) ||
+    isSea(cx, cz - shoreReach);
+  const patchCount = 2 + Math.floor(hash(cell.height, 19.7) * 3) + (shoreline ? 2 : 0);
+  const bladeCount = 12 + Math.floor(hash(cell.height, 37.1) * 10) + (shoreline ? 18 : 0);
 
   for (let i = 0; i < bladeCount && out.length < MAX_GRASS; i += 1) {
     const patch = i % patchCount;
@@ -120,7 +126,14 @@ function planGroundCover(cell: NearbyCell, out: Item[]) {
     const z = cz + Math.max(-half, Math.min(half, patchZ + Math.sin(angle) * radius));
     if (!clear(x, z) || isSea(x, z)) continue;
     const r = hash(cell.height + i * 4.3, 143.9);
-    out.push({ x, z, y: groundY(x, z), s: 0.42 + r * 0.38, yaw: r * Math.PI * 2, tint: r });
+    out.push({
+      x,
+      z,
+      y: groundY(x, z),
+      s: 0.48 + r * 0.42 + (shoreline ? 0.16 : 0),
+      yaw: r * Math.PI * 2,
+      tint: r,
+    });
   }
 }
 
