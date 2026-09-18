@@ -33,6 +33,24 @@ const SKYSCRAPERS = [
       [WORLD_UNITS / 2 + 7, 0, 87, 16, -Math.PI / 2 + 0.16],
     ],
   },
+  {
+    id: "c913b1373f54b5ae64424e01186f1f738d124dbdb6671a7f5e0e5fe5691b6ed9i0",
+    placements: [
+      [-36, 0, -11, 27, 0.12],
+      [34, 0, WORLD_UNITS + 12, 24, Math.PI - 0.1],
+      [-WORLD_UNITS / 2 - 12, 0, 82, 28, Math.PI / 2 + 0.08],
+      [WORLD_UNITS / 2 + 12, 0, 18, 25, -Math.PI / 2 - 0.12],
+    ],
+  },
+  {
+    id: "c3387d1dc48cd1b6979999e62fd23c50dfe747bd3b4a37119fde6e032a48fa6ei0",
+    placements: [
+      [4, 0, -13, 32, -0.08],
+      [-7, 0, WORLD_UNITS + 13, 30, Math.PI + 0.1],
+      [-WORLD_UNITS / 2 - 13, 0, 51, 31, Math.PI / 2 - 0.12],
+      [WORLD_UNITS / 2 + 13, 0, 49, 29, -Math.PI / 2 + 0.08],
+    ],
+  },
 ] as const;
 
 type Placement = readonly [x: number, y: number, z: number, height: number, yaw: number];
