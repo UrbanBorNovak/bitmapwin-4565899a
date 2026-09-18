@@ -13,6 +13,7 @@ import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
 import { isSea } from "@/lib/world-sea";
 import { groundY } from "@/lib/world-terrain";
+import { WORLD_CELL } from "@/lib/player-state";
 
 
 export const PINE_INSCRIPTION =
@@ -46,8 +47,8 @@ const SHROOM_URLS = SHROOM_INSCRIPTIONS.map(contentUrl);
 const FLOWER_URLS = FLOWER_INSCRIPTIONS.map(contentUrl);
 const WILD_MINER_URL = contentUrl(WILD_MINER_INSCRIPTION);
 
-const MAX_TREES = 92;
-const MAX_FLOWERS = 96;
+const MAX_TREES = 124;
+const MAX_FLOWERS = 180;
 const MAX_MINERS = 10;
 
 
@@ -56,6 +57,20 @@ const noRaycast = () => {};
 function hash(x: number, z: number, salt: number) {
   const n = Math.sin(x * 127.1 + z * 311.7 + salt * 74.7) * 43758.5453;
   return n - Math.floor(n);
+}
+
+/** Dry shoreline gets the richest vegetation without placing plants in water. */
+function nearWater(x: number, z: number) {
+  if (isSea(x, z)) return false;
+  const reach = WORLD_CELL * 2.4;
+  return (
+    isSea(x + reach, z) ||
+    isSea(x - reach, z) ||
+    isSea(x, z + reach) ||
+    isSea(x, z - reach) ||
+    isSea(x + reach * 0.7, z + reach * 0.7) ||
+    isSea(x - reach * 0.7, z - reach * 0.7)
+  );
 }
 
 function urlAt(items: readonly string[], index: number) {
@@ -136,9 +151,12 @@ export const PineTrees = memo(function PineTrees({
       for (let iz = -span; iz <= span; iz++) {
         const gx = cx + ix;
         const gz = cz + iz;
+        const standX = gx * pitch;
+        const standZ = gz * pitch;
+        const shoreline = nearWater(standX, standZ);
         // Pines grow in stands rather than one by one.
-        if (hash(gx, gz, 71) > 0.22) continue;
-        const count = 2 + Math.floor(hash(gx, gz, 72) * 4);
+        if (hash(gx, gz, 71) > (shoreline ? 0.58 : 0.3)) continue;
+        const count = 2 + Math.floor(hash(gx, gz, 72) * 4) + (shoreline ? 2 : 0);
         for (let n = 0; n < count; n++) {
           const x = gx * pitch + (hash(gx * 5 + n, gz, 73) - 0.5) * pitch * 0.8;
           const z = gz * pitch + (hash(gx, gz * 7 + n, 74) - 0.5) * pitch * 0.8;
@@ -158,8 +176,8 @@ export const PineTrees = memo(function PineTrees({
             yaw: hash(gx + n, gz - n, 76) * Math.PI * 2,
             model,
           });
-          if (hash(gx + n, gz - n, 86) < 0.5) {
-            const blossomCount = 1 + Math.floor(hash(gx - n, gz + n, 87) * 3);
+          if (hash(gx + n, gz - n, 86) < (shoreline ? 0.85 : 0.62)) {
+            const blossomCount = 1 + Math.floor(hash(gx - n, gz + n, 87) * 3) + (shoreline ? 2 : 0);
             for (let f = 0; f < blossomCount; f++) {
               const angle = hash(gx + f * 5, gz - f * 7, 88) * Math.PI * 2;
               const reach = size * (0.42 + hash(gx - f, gz + f, 89) * 0.65);
