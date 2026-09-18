@@ -48,4 +48,5 @@
 - [x] Add terrain-rooted wind-reactive grass and a richer atmospheric Oasis sky
 - [x] Make seeded BITMAP grass form dense, clearly visible terrain-rooted patches
 - [x] Fill nearby BITMAP terrain with deterministic grass patches while preserving denser terraformed growth
+- [x] Stream every visible BITMAP's real terrain and fill the wider world window with distance-tiered grass
 - [x] Raise small water and lava sources and enrich shorelines with trees, flowers, and grass
