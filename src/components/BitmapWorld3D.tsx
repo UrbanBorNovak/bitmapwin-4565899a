@@ -228,6 +228,7 @@ import type { RideSpec } from "@/lib/world-vehicle";
 import { dryLandNear, isDeepSea, isSea, nearestSea } from "@/lib/world-sea";
 import { groundY } from "@/lib/world-terrain";
 import { TerrainField } from "@/components/game/TerrainField";
+import { WorldBoundary } from "@/components/game/WorldBoundary";
 import TouchControls from "@/components/game/TouchControls";
 import { consumeTouchJump, isTouchDevice, takeTouchLook, touchPad } from "@/lib/touch-input";
 import {
@@ -2337,6 +2338,7 @@ const WorldScene = memo(function WorldScene({
       <PerfGovernor pose={pose} active={cameraMode !== "map"} />
       <SkyBodies bitcoin={colors.bitcoin} />
       <LandSurface colors={colors} tipHeight={tipHeight} />
+      <WorldBoundary colors={colors} />
       {cameraMode !== "map" ? (
         <>
           <ChunkStreamer pose={pose} />
