@@ -2383,7 +2383,10 @@ const WorldScene = memo(function WorldScene({
 
 
 
-      <DistrictBlocks tipHeight={tipHeight} colors={colors} />
+      {/* The district shader is a flat overview layer. In walk mode it can cut
+          through displaced terrain and expose large dark rectangles, so the
+          real terrain is the only ground surface there. */}
+      {cameraMode === "map" ? <DistrictBlocks tipHeight={tipHeight} colors={colors} /> : null}
       <HolderColumns
         owners={owners}
         mine={mine}
