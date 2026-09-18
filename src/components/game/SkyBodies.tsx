@@ -158,7 +158,8 @@ function AtmosphereDome({ night, far }: { night: boolean; far: number }) {
 
   useFrame(({ clock }) => {
     if (!material.current) return;
-    material.current.uniforms["uTime"].value = clock.getElapsedTime();
+    const time = material.current.uniforms["uTime"];
+    if (time) time.value = clock.getElapsedTime();
   });
 
   return (

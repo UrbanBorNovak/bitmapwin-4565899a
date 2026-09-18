@@ -30,11 +30,12 @@ const TICK_MS = 20_000;
 
 type Item = { x: number; y: number; z: number; s: number; yaw: number; tint: number };
 
-type WindShader = THREE.Shader & {
-  uniforms: THREE.Shader["uniforms"] & {
+type WindShader = {
+  uniforms: Record<string, THREE.IUniform> & {
     uWindTime: { value: number };
     uWindStrength: { value: number };
   };
+  vertexShader: string;
 };
 
 /** Preserve the lit material and its fog while bending only each blade's tip. */
@@ -42,7 +43,7 @@ function WindGrassMaterial({ reducedMotion }: { reducedMotion: boolean }) {
   const shader = useRef<WindShader | null>(null);
 
   const compile = useCallback(
-    (program: THREE.Shader) => {
+    (program: { uniforms: Record<string, THREE.IUniform>; vertexShader: string }) => {
       const windProgram = program as WindShader;
       windProgram.uniforms.uWindTime = { value: 0 };
       windProgram.uniforms.uWindStrength = { value: reducedMotion ? 0.035 : 0.14 };
