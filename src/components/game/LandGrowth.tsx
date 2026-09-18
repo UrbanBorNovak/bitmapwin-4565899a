@@ -25,7 +25,7 @@ const MAX_GRASS = 9_000;
 const MAX_BUSH = 260;
 const MAX_TREE = 90;
 /** plots this many cells away from the player are still dressed */
-const RADIUS_CELLS = 7;
+const RADIUS_CELLS = 12;
 /** how often the growth amount is re-read from the clock */
 const TICK_MS = 20_000;
 
@@ -202,6 +202,7 @@ export function LandGrowth({
   const [tick, setTick] = useState(0);
   const [near, setNear] = useState<TerraformedLand[]>([]);
   const [nearbyCells, setNearbyCells] = useState<NearbyCell[]>([]);
+  const nearbyAt = useRef("");
 
   const grass = useRef<THREE.InstancedMesh>(null);
   const bush = useRef<THREE.InstancedMesh>(null);
@@ -245,10 +246,9 @@ export function LandGrowth({
 
     const centreCol = colAt(player.x);
     const centreRow = rowAt(player.z);
-    setNearbyCells((current) => {
-      const expectedCentre = centreRow * WORLD_GRID + centreCol;
-      const currentCentre = current[Math.floor(current.length / 2)]?.height;
-      if (currentCentre === expectedCentre) return current;
+    const cellKey = `${centreCol}:${centreRow}`;
+    if (nearbyAt.current !== cellKey) {
+      nearbyAt.current = cellKey;
       const cells: NearbyCell[] = [];
       for (let row = centreRow - RADIUS_CELLS; row <= centreRow + RADIUS_CELLS; row += 1) {
         if (row < 0 || row >= WORLD_GRID) continue;
@@ -257,8 +257,8 @@ export function LandGrowth({
           cells.push({ height: row * WORLD_GRID + col, col, row });
         }
       }
-      return cells;
-    });
+      setNearbyCells(cells);
+    }
   });
 
   const plan = useMemo(() => {
@@ -266,9 +266,13 @@ export function LandGrowth({
     void builds;
     void terrain;
     const out = { grass: [] as Item[], bush: [] as Item[], tree: [] as Item[] };
-    for (const cell of nearbyCells) planGroundCover(cell, out.grass);
     const now = Date.now();
+    // Reserve the richest density for deliberately terraformed BITMAPs.
     for (const plot of near) planPlot(plot, growthOf(plot, now), out);
+    const terraformed = new Set(near.map((plot) => plot.height));
+    for (const cell of nearbyCells) {
+      if (!terraformed.has(cell.height)) planGroundCover(cell, out.grass);
+    }
     return out;
   }, [builds, near, nearbyCells, terrain, tick]);
 
