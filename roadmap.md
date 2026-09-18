@@ -47,3 +47,4 @@
 - [x] Keep every equipped accessory attached to the character across terrain, movement, flight, mounts, and live loadout
 - [x] Add terrain-rooted wind-reactive grass and a richer atmospheric Oasis sky
 - [x] Make seeded BITMAP grass form dense, clearly visible terrain-rooted patches
+- [x] Fill nearby BITMAP terrain with deterministic grass patches while preserving denser terraformed growth

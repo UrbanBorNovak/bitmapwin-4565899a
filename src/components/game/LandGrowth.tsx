@@ -15,12 +15,13 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { PlayerState } from "@/lib/player-state";
-import { WORLD_CELL, cellX, cellZ } from "@/lib/player-state";
+import { WORLD_CELL, WORLD_GRID, cellX, cellZ, colAt, rowAt } from "@/lib/player-state";
 import { growthOf, useTerraformedLand, type TerraformedLand } from "@/lib/world-terraform";
 import { blockedAt, useWorldBuilds } from "@/lib/world-build";
 import { groundY, subscribeTerrain, terrainVersion } from "@/lib/world-terrain";
+import { isSea } from "@/lib/world-sea";
 
-const MAX_GRASS = 6_000;
+const MAX_GRASS = 9_000;
 const MAX_BUSH = 260;
 const MAX_TREE = 90;
 /** plots this many cells away from the player are still dressed */
@@ -29,6 +30,7 @@ const RADIUS_CELLS = 7;
 const TICK_MS = 20_000;
 
 type Item = { x: number; y: number; z: number; s: number; yaw: number; tint: number };
+type NearbyCell = { height: number; col: number; row: number };
 
 type WindShader = {
   uniforms: Record<string, THREE.IUniform> & {
@@ -95,6 +97,32 @@ const hash = (a: number, b: number) => {
 
 /** Nothing grows through a floor: plants skip ground a structure stands on. */
 const clear = (x: number, z: number) => !blockedAt(x, z);
+
+/**
+ * Every BITMAP receives a light, deterministic ground-cover patch. Seeded land
+ * is added below as the much denser, growing layer, so terraforming still has a
+ * clear visual payoff without leaving the rest of the million-cell world bare.
+ */
+function planGroundCover(cell: NearbyCell, out: Item[]) {
+  const cx = cellX(cell.col);
+  const cz = cellZ(cell.row);
+  const half = WORLD_CELL * 0.46;
+  const patchCount = 2 + Math.floor(hash(cell.height, 19.7) * 3);
+  const bladeCount = 10 + Math.floor(hash(cell.height, 37.1) * 9);
+
+  for (let i = 0; i < bladeCount && out.length < MAX_GRASS; i += 1) {
+    const patch = i % patchCount;
+    const patchX = (hash(cell.height, 51.3 + patch * 8.7) * 2 - 1) * half * 0.72;
+    const patchZ = (hash(cell.height, 74.9 + patch * 6.1) * 2 - 1) * half * 0.72;
+    const angle = hash(cell.height + i * 1.9, 101.7) * Math.PI * 2;
+    const radius = Math.sqrt(hash(cell.height + i * 3.1, 119.3)) * half * 0.2;
+    const x = cx + Math.max(-half, Math.min(half, patchX + Math.cos(angle) * radius));
+    const z = cz + Math.max(-half, Math.min(half, patchZ + Math.sin(angle) * radius));
+    if (!clear(x, z) || isSea(x, z)) continue;
+    const r = hash(cell.height + i * 4.3, 143.9);
+    out.push({ x, z, y: groundY(x, z), s: 0.42 + r * 0.38, yaw: r * Math.PI * 2, tint: r });
+  }
+}
 
 function planPlot(land: TerraformedLand, growth: number, out: { grass: Item[]; bush: Item[]; tree: Item[] }) {
   const cx = cellX(land.col);
@@ -173,6 +201,7 @@ export function LandGrowth({
   const terrain = useSyncExternalStore(subscribeTerrain, terrainVersion, terrainVersion);
   const [tick, setTick] = useState(0);
   const [near, setNear] = useState<TerraformedLand[]>([]);
+  const [nearbyCells, setNearbyCells] = useState<NearbyCell[]>([]);
 
   const grass = useRef<THREE.InstancedMesh>(null);
   const bush = useRef<THREE.InstancedMesh>(null);
@@ -213,6 +242,23 @@ export function LandGrowth({
         ? current
         : visible,
     );
+
+    const centreCol = colAt(player.x);
+    const centreRow = rowAt(player.z);
+    setNearbyCells((current) => {
+      const expectedCentre = centreRow * WORLD_GRID + centreCol;
+      const currentCentre = current[Math.floor(current.length / 2)]?.height;
+      if (currentCentre === expectedCentre) return current;
+      const cells: NearbyCell[] = [];
+      for (let row = centreRow - RADIUS_CELLS; row <= centreRow + RADIUS_CELLS; row += 1) {
+        if (row < 0 || row >= WORLD_GRID) continue;
+        for (let col = centreCol - RADIUS_CELLS; col <= centreCol + RADIUS_CELLS; col += 1) {
+          if (col < 0 || col >= WORLD_GRID) continue;
+          cells.push({ height: row * WORLD_GRID + col, col, row });
+        }
+      }
+      return cells;
+    });
   });
 
   const plan = useMemo(() => {
@@ -220,10 +266,11 @@ export function LandGrowth({
     void builds;
     void terrain;
     const out = { grass: [] as Item[], bush: [] as Item[], tree: [] as Item[] };
+    for (const cell of nearbyCells) planGroundCover(cell, out.grass);
     const now = Date.now();
     for (const plot of near) planPlot(plot, growthOf(plot, now), out);
     return out;
-  }, [builds, near, terrain, tick]);
+  }, [builds, near, nearbyCells, terrain, tick]);
 
   const scratch = useMemo(
     () => ({
@@ -321,8 +368,6 @@ export function LandGrowth({
       (item) => scratch.colour.copy(palette.leafA).lerp(palette.leafB, item.tint),
     );
   }, [plan, unit, scratch, palette]);
-
-  if (!land.length) return null;
 
   return (
     <group renderOrder={2}>
