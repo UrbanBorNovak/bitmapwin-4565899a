@@ -44,9 +44,14 @@ export function WorldWeather() {
     if (group.current) group.current.position.set(camera.position.x, camera.position.y - WORLD_CELL * 2, camera.position.z);
     const shader = material.current;
     if (!shader) return;
-    shader.uniforms["uTime"].value = elapsed;
-    shader.uniforms["uRain"].value = weather.rain;
-    shader.uniforms["uWind"].value.set(weather.windX, weather.windZ).multiplyScalar(weather.windStrength);
+    const time = shader.uniforms["uTime"];
+    const rain = shader.uniforms["uRain"];
+    const wind = shader.uniforms["uWind"];
+    if (time) time.value = elapsed;
+    if (rain) rain.value = weather.rain;
+    if (wind?.value instanceof THREE.Vector2) {
+      wind.value.set(weather.windX, weather.windZ).multiplyScalar(weather.windStrength);
+    }
   });
 
   return (
