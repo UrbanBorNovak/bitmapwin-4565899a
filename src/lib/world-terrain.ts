@@ -155,11 +155,11 @@ export function groundY(x: number, z: number) {
 
 /**
  * Shared liquid plane. Sea beds dip below this; boats and islands stay here.
- * Raised a touch above the base plane so the seas read as real water instead
- * of hugging the zero line.
+ * Kept just above the base plane: low enough to sit inside the terrain cut,
+ * but with enough separation to avoid flicker and remain visibly liquid.
  */
 export function waterSurfaceY(_x?: number, _z?: number) {
-  return STRIDE * 0.45;
+  return STRIDE * 0.14;
 }
 
 /** Uphill steepness 0…1 at a point, for shading and footing feedback. */

@@ -307,15 +307,18 @@ function planGroundCover(cell: NearbyCell, out: Item[]) {
   // per BITMAP. A second, wider selector gives shore cells extra greenery.
   const near = cell.distance <= 10;
   const middle = cell.distance <= 17;
+  const walkingZone = cell.distance <= 5;
   const oasis = hash(cell.height, 8.3);
-  const growsHere = oasis > (shoreline ? 0.34 : near ? 0.58 : 0.68);
+  // Always seed the BITMAPs around the avatar. Farther out, retain sandy gaps
+  // so the world still reads as desert rather than an uninterrupted lawn.
+  const growsHere = walkingZone || oasis > (shoreline ? 0.34 : near ? 0.58 : 0.68);
   if (!growsHere) return;
   const patchCount =
-    (near ? 5 : middle ? 4 : 3) +
+    (walkingZone ? 7 : near ? 5 : middle ? 4 : 3) +
     Math.floor(hash(cell.height, 19.7) * 3) +
     (shoreline ? 2 : 0);
   const bladeCount =
-    (near ? 96 : middle ? 56 : 24) +
+    (walkingZone ? 148 : near ? 96 : middle ? 56 : 24) +
     Math.floor(hash(cell.height, 37.1) * (near ? 42 : middle ? 24 : 12)) +
     (shoreline ? (near ? 44 : middle ? 28 : 16) : 0);
 
