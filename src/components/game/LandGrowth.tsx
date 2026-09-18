@@ -296,7 +296,6 @@ export function LandGrowth({
       pos: new THREE.Vector3(),
       scale: new THREE.Vector3(),
       colour: new THREE.Color(),
-      hidden: new THREE.Vector3(0, -9999, 0),
     }),
     [],
   );
