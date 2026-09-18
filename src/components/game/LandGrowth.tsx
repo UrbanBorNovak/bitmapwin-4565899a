@@ -11,7 +11,7 @@
  * fires, never per frame; the frame loop does nothing but a gentle sway.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { PlayerState } from "@/lib/player-state";
@@ -29,6 +29,64 @@ const RADIUS_CELLS = 7;
 const TICK_MS = 20_000;
 
 type Item = { x: number; y: number; z: number; s: number; yaw: number; tint: number };
+
+type WindShader = {
+  uniforms: Record<string, THREE.IUniform> & {
+    uWindTime: { value: number };
+    uWindStrength: { value: number };
+  };
+  vertexShader: string;
+};
+
+/** Preserve the lit material and its fog while bending only each blade's tip. */
+function WindGrassMaterial({ reducedMotion }: { reducedMotion: boolean }) {
+  const shader = useRef<WindShader | null>(null);
+
+  const compile = useCallback(
+    (program: { uniforms: Record<string, THREE.IUniform>; vertexShader: string }) => {
+      const windProgram = program as WindShader;
+      windProgram.uniforms.uWindTime = { value: 0 };
+      windProgram.uniforms.uWindStrength = { value: reducedMotion ? 0.035 : 0.14 };
+      windProgram.vertexShader = windProgram.vertexShader
+        .replace(
+          "#include <common>",
+          `#include <common>
+          uniform float uWindTime;
+          uniform float uWindStrength;`,
+        )
+        .replace(
+          "#include <begin_vertex>",
+          `#include <begin_vertex>
+          float bladeHeight = clamp(position.y + 0.5, 0.0, 1.0);
+          vec3 instanceOrigin = vec3(instanceMatrix[3].x, instanceMatrix[3].y, instanceMatrix[3].z);
+          float broadWind = sin(instanceOrigin.x * 0.31 + instanceOrigin.z * 0.17 + uWindTime * 1.15);
+          float fineWind = sin(instanceOrigin.x * 0.73 - instanceOrigin.z * 0.41 - uWindTime * 1.8);
+          float bend = (broadWind * 0.72 + fineWind * 0.28) * uWindStrength * bladeHeight * bladeHeight;
+          transformed.x += bend;
+          transformed.z += bend * 0.42;`,
+        );
+      shader.current = windProgram;
+    },
+    [reducedMotion],
+  );
+
+  useFrame(({ clock }) => {
+    if (!shader.current) return;
+    shader.current.uniforms.uWindTime.value = clock.getElapsedTime();
+    shader.current.uniforms.uWindStrength.value = reducedMotion ? 0.035 : 0.14;
+  });
+
+  return (
+    <meshStandardMaterial
+      roughness={0.85}
+      metalness={0}
+      flatShading
+      vertexColors
+      onBeforeCompile={compile}
+      customProgramCacheKey={() => `bitmap-wind-grass-${reducedMotion ? "reduced" : "full"}`}
+    />
+  );
+}
 
 const hash = (a: number, b: number) => {
   const n = Math.sin(a * 127.1 + b * 311.7) * 43758.5453;
@@ -111,7 +169,7 @@ export function LandGrowth({
   const bush = useRef<THREE.InstancedMesh>(null);
   const tree = useRef<THREE.InstancedMesh>(null);
   const canopy = useRef<THREE.InstancedMesh>(null);
-  const sway = useRef({ grass: 0 });
+  const [reducedMotion, setReducedMotion] = useState(false);
 
   // Growth is real-time and very slow: re-read the clock now and then.
   useEffect(() => {
@@ -119,10 +177,17 @@ export function LandGrowth({
     return () => window.clearInterval(id);
   }, []);
 
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
   // Which plots are close enough to dress, checked about once a second.
   const check = useRef(0);
-  useFrame(({ clock }, delta) => {
-    sway.current.grass += delta;
+  useFrame(({ clock }) => {
     const now = clock.getElapsedTime();
     if (now - check.current < 1) return;
     check.current = now;
@@ -247,19 +312,13 @@ export function LandGrowth({
     );
   }, [plan, unit, scratch, palette]);
 
-  // A gentle breeze: the grass pool leans a little, nothing recomputed.
-  useFrame(() => {
-    if (!grass.current) return;
-    grass.current.rotation.z = Math.sin(sway.current.grass * 0.7) * 0.035;
-  });
-
   if (!land.length) return null;
 
   return (
     <group renderOrder={2}>
       <instancedMesh ref={grass} args={[undefined, undefined, MAX_GRASS]} frustumCulled={false}>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial roughness={0.85} metalness={0} flatShading />
+        <boxGeometry args={[1, 1, 1, 1, 4, 1]} />
+        <WindGrassMaterial reducedMotion={reducedMotion} />
       </instancedMesh>
       <instancedMesh ref={bush} args={[undefined, undefined, MAX_BUSH]} frustumCulled={false}>
         <icosahedronGeometry args={[0.5, 0]} />
