@@ -166,7 +166,7 @@ export const PineTrees = memo(function PineTrees({
           if (dx * dx + dz * dz > radius * radius) continue;
           // SIZES — mostly young trees, a few full-grown giants.
           const roll = hash(gx * 3 + n, gz * 11 + n, 75);
-          const size = unit * (roll > 0.9 ? 3.4 + roll : roll > 0.6 ? 2 + roll : 0.7 + roll);
+          const size = unit * (roll > 0.9 ? 7.2 + roll * 2 : roll > 0.6 ? 4.2 + roll * 2 : 1.8 + roll * 2);
           const model = Math.floor(hash(gx * 13 + n, gz * 17 - n, 78) * TREE_URLS.length);
           found.push({
             key: `${gx}:${gz}:${n}`,
@@ -185,7 +185,7 @@ export const PineTrees = memo(function PineTrees({
                 key: `${gx}:${gz}:${n}:f${f}`,
                 x: x + Math.cos(angle) * reach,
                 z: z + Math.sin(angle) * reach,
-                size: unit * (0.12 + hash(gx + f, gz + n, 90) * 0.12),
+                size: unit * (0.34 + hash(gx + f, gz + n, 90) * 0.3),
                 yaw: angle + Math.PI,
                 model: Math.floor(hash(gx + f, gz - n, 91) * FLOWER_URLS.length),
               });
@@ -257,7 +257,7 @@ export const PineTrees = memo(function PineTrees({
           {Array.from({ length: 1 + Math.floor(hash(tree.x, tree.z, 81) * 4) }, (_, n) => {
             const angle = hash(tree.x + n, tree.z - n, 82) * Math.PI * 2;
             const reach = tree.size * (0.28 + hash(tree.x - n, tree.z + n, 83) * 0.45);
-            const size = unit * (0.07 + hash(tree.x * 2 + n, tree.z, 84) * 0.09);
+            const size = unit * (0.22 + hash(tree.x * 2 + n, tree.z, 84) * 0.22);
             return (
               <group
                 key={`s${n}`}
