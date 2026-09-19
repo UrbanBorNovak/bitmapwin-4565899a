@@ -172,6 +172,8 @@ export type PlayerBuildRow = {
   yaw: number;
   builder_address: string | null;
   created_at: string;
+  clan_id?: string | null;
+  clan_tag?: string | null;
 };
 
 const MAX_VAULT = 400;
@@ -186,7 +188,27 @@ function normalisePlayerBuild(row: PlayerBuildRow): PlayerBuildRow {
   };
 }
 
-const VAULT_COLUMNS = "id, chunk_key, bitmap_height, kind, x, z, yaw, builder_address, created_at";
+const VAULT_COLUMNS =
+  "id, chunk_key, bitmap_height, kind, x, z, yaw, builder_address, created_at, clan_id, clan_tag";
+
+/** The clan this player belongs to, if any — builds are stamped with it. */
+async function myClan(supabase: { from: (table: string) => any }, userId: string) {
+  const { data: membership } = await supabase
+    .from("clan_members")
+    .select("clan_id")
+    .eq("user_id", userId)
+    .eq("status", "accepted")
+    .limit(1)
+    .maybeSingle();
+  if (!membership?.clan_id) return null;
+  const { data: clan } = await supabase
+    .from("clans")
+    .select("id, tag")
+    .eq("id", membership.clan_id)
+    .maybeSingle();
+  if (!clan) return null;
+  return { id: clan.id as string, tag: String(clan.tag).toUpperCase() };
+}
 
 /** Everything this player has ever raised, newest last. */
 export const listMyBuilds = createServerFn({ method: "GET" })
@@ -227,12 +249,16 @@ export const savePlayerBuilds = createServerFn({ method: "POST" })
       .limit(1)
       .maybeSingle();
 
+    const clan = await myClan(supabase as never, userId);
+
     const { data: rows, error } = await supabase
       .from("player_builds")
       .insert(
         data.items.map((item) => ({
           user_id: userId,
           builder_address: link?.address ?? null,
+          clan_id: clan?.id ?? null,
+          clan_tag: clan?.tag ?? null,
           chunk_key: item.chunkKey,
           bitmap_height: item.height,
           kind: item.kind,
@@ -258,4 +284,41 @@ export const removePlayerBuild = createServerFn({ method: "POST" })
       .eq("user_id", context.userId);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+/**
+ * CLAN BUILDS — everything raised by the player's clan mates. Policies let a
+ * clan member read rows stamped with their own clan, so the whole banner shares
+ * one set of structures in the world.
+ */
+export const listClanBuilds = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const clan = await myClan(context.supabase as never, context.userId);
+    if (!clan) return { tag: null as string | null, builds: [] as PlayerBuildRow[] };
+    const { data: rows, error } = await context.supabase
+      .from("player_builds")
+      .select(VAULT_COLUMNS)
+      .eq("clan_id", clan.id)
+      .order("created_at", { ascending: false })
+      .limit(MAX_VAULT);
+    if (error) throw new Error(error.message);
+    return {
+      tag: clan.tag,
+      builds: (rows ?? []).map((row) => normalisePlayerBuild(row as PlayerBuildRow)),
+    };
+  });
+
+/** Public roll-call of a clan's structures, for the clan page. */
+export const clanBuildsByTag = createServerFn({ method: "GET" })
+  .inputValidator((input: { tag: string }) => ({
+    tag: String(input?.tag ?? "").toUpperCase().slice(0, 6),
+  }))
+  .handler(async ({ data }) => {
+    if (!data.tag) return { builds: [] as PlayerBuildRow[] };
+    const { data: rows, error } = await publicClient().rpc("clan_builds_by_tag", { _tag: data.tag });
+    if (error) throw new Error(error.message);
+    return {
+      builds: ((rows ?? []) as PlayerBuildRow[]).map((row) => normalisePlayerBuild(row)),
+    };
   });

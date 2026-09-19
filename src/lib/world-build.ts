@@ -16,6 +16,7 @@ import { ITEM_LABELS, spendItems, type ItemId } from "./world-skills";
 import { STRIDE, colAt, rowAt } from "./player-state";
 import { TILE, chunkOfTile, heightOfTile, setTiles } from "./world-grid";
 import {
+  listClanBuilds,
   listMyBuilds,
   listWorldStructures,
   placeWorldStructures,
@@ -310,6 +311,8 @@ let localBuilds: PlacedStructure[] = [];
 let shared = new Map<string, PlacedStructure>();
 /** The signed-in player's own saved builds, restored on every world entry. */
 let mine = new Map<string, PlacedStructure>();
+/** Structures raised by clan mates — the whole banner shares them. */
+let clanBuilds = new Map<string, PlacedStructure>();
 let view: PlacedStructure[] = [];
 let hydrated = false;
 const listeners = new Set<() => void>();
@@ -370,7 +373,10 @@ function stampTiles(items: PlacedStructure[]) {
 }
 
 function recompute(notify = true) {
-  view = [...shared.values(), ...mine.values(), ...localBuilds]
+  const mates = [...clanBuilds.values()].filter(
+    (item) => !mine.has(item.key) && !shared.has(item.key),
+  );
+  view = [...shared.values(), ...mates, ...mine.values(), ...localBuilds]
     .filter((item) => !isSea(item.x, item.z))
     .slice(-MAX_BUILDS);
   stampTiles(view);
@@ -626,6 +632,34 @@ export async function syncMyBuilds() {
     recompute();
   } catch {
     // signed out — only the shared world and this browser's builds show
+  }
+}
+
+/**
+ * Restore the clan's shared builds. Every accepted member of a clan sees the
+ * same structures, so a compound raised by one member stands for the banner.
+ */
+export async function syncClanBuilds() {
+  hydrate();
+  if (!(await signedIn())) return;
+  try {
+    const result = await listClanBuilds();
+    for (const row of result?.builds ?? []) {
+      clanBuilds.set(row.id, {
+        key: row.id,
+        rowId: row.id,
+        id: (isStructureId(row.kind) ? row.kind : "camp-fire") as StructureId,
+        x: row.x,
+        z: row.z,
+        yaw: row.yaw,
+        at: new Date(row.created_at).getTime(),
+        builder: row.builder_address,
+        chunkKey: row.chunk_key,
+      });
+    }
+    recompute();
+  } catch {
+    // no clan, or signed out — only own and shared builds show
   }
 }
 
