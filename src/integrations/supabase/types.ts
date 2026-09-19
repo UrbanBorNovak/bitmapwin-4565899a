@@ -1810,6 +1810,45 @@ export type Database = {
         }
         Relationships: []
       }
+      player_builds: {
+        Row: {
+          bitmap_height: number
+          builder_address: string | null
+          chunk_key: string
+          created_at: string
+          id: string
+          kind: string
+          user_id: string
+          x: number
+          yaw: number
+          z: number
+        }
+        Insert: {
+          bitmap_height: number
+          builder_address?: string | null
+          chunk_key: string
+          created_at?: string
+          id?: string
+          kind: string
+          user_id: string
+          x: number
+          yaw?: number
+          z: number
+        }
+        Update: {
+          bitmap_height?: number
+          builder_address?: string | null
+          chunk_key?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          user_id?: string
+          x?: number
+          yaw?: number
+          z?: number
+        }
+        Relationships: []
+      }
       pvp_events: {
         Row: {
           bitmap: number | null

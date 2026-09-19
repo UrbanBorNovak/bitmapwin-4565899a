@@ -1,7 +1,7 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { pruneChunks, visibleChunks } from "@/lib/world-grid";
-import { syncWorldChunks } from "@/lib/world-build";
+import { syncMyBuilds, syncWorldChunks } from "@/lib/world-build";
 import { syncTerraformChunks } from "@/lib/world-terraform";
 import { markFrame } from "@/lib/world-perf";
 import { FAST_PACE, MOVE, STRIDE, type PlayerState } from "@/lib/player-state";
@@ -57,6 +57,13 @@ export function ChunkStreamer({
   const queue = useRef<string[]>([]);
   const seen = useRef(new Set<string>());
   const busy = useRef({ structures: false, terraform: false, refresh: false });
+
+  // A player's own saved builds are restored once, when the world opens, so
+  // whatever they raised in an earlier session is standing again.
+  useEffect(() => {
+    void syncMyBuilds();
+  }, []);
+
 
   useFrame(({ clock }, delta) => {
     const player = pose.current;
