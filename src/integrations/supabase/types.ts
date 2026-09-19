@@ -1946,6 +1946,7 @@ export type Database = {
         Row: {
           address: string
           created_at: string
+          fee_coins: number
           id: string
           player_id: string
           shares: number
@@ -1957,6 +1958,7 @@ export type Database = {
         Insert: {
           address: string
           created_at?: string
+          fee_coins?: number
           id?: string
           player_id: string
           shares: number
@@ -1968,6 +1970,7 @@ export type Database = {
         Update: {
           address?: string
           created_at?: string
+          fee_coins?: number
           id?: string
           player_id?: string
           shares?: number
@@ -1991,27 +1994,42 @@ export type Database = {
           bit_raised: number
           created_at: string
           dividends_paid: number
+          fees_paid: number
+          is_open: boolean
           last_price: number
+          opened_at: string | null
+          owner_address: string | null
           player_id: string
           shares_issued: number
+          shares_offered: number
           updated_at: string
         }
         Insert: {
           bit_raised?: number
           created_at?: string
           dividends_paid?: number
+          fees_paid?: number
+          is_open?: boolean
           last_price?: number
+          opened_at?: string | null
+          owner_address?: string | null
           player_id: string
           shares_issued?: number
+          shares_offered?: number
           updated_at?: string
         }
         Update: {
           bit_raised?: number
           created_at?: string
           dividends_paid?: number
+          fees_paid?: number
+          is_open?: boolean
           last_price?: number
+          opened_at?: string | null
+          owner_address?: string | null
           player_id?: string
           shares_issued?: number
+          shares_offered?: number
           updated_at?: string
         }
         Relationships: [
@@ -2754,6 +2772,16 @@ export type Database = {
       player_share_price: {
         Args: { _base: number; _issued: number }
         Returns: number
+      }
+      player_stock_issue: {
+        Args: { _address: string; _player_id: string; _shares_offered: number }
+        Returns: {
+          fee_coins: number
+          is_open: boolean
+          price: number
+          shares_issued: number
+          shares_offered: number
+        }[]
       }
       player_stock_pay_dividend: {
         Args: { _amount: number; _player_id: string; _source: string }
