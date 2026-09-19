@@ -77,11 +77,21 @@ function ClanBoard() {
               <Td right>{`${medal(index)} ${index + 1}`}</Td>
               <Td>
                 <Link to="/clan/$tag" params={{ tag: clan.tag }} className="flex items-center gap-2 hover:underline">
-                  <span
-                    aria-hidden="true"
-                    className="inline-block size-5 shrink-0 border border-border sm:size-4"
-                    style={{ background: clan.crestColor }}
-                  />
+                  {clanCrestImage(clan.tag) ? (
+                    <img
+                      src={clanCrestImage(clan.tag)!}
+                      alt=""
+                      aria-hidden="true"
+                      className="inline-block size-5 shrink-0 border border-border object-cover sm:size-4"
+                      style={{ imageRendering: "pixelated", background: clan.crestColor }}
+                    />
+                  ) : (
+                    <span
+                      aria-hidden="true"
+                      className="inline-block size-5 shrink-0 border border-border sm:size-4"
+                      style={{ background: clan.crestColor }}
+                    />
+                  )}
                   <span className="border border-bitcoin/50 px-1.5 py-0.5 text-xs font-bold text-bitcoin sm:text-[11px]">[{clan.tag}]</span>
                   <span className="font-bold text-foreground">{clan.name}</span>
                 </Link>
