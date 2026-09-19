@@ -249,12 +249,16 @@ export const savePlayerBuilds = createServerFn({ method: "POST" })
       .limit(1)
       .maybeSingle();
 
+    const clan = await myClan(supabase as never, userId);
+
     const { data: rows, error } = await supabase
       .from("player_builds")
       .insert(
         data.items.map((item) => ({
           user_id: userId,
           builder_address: link?.address ?? null,
+          clan_id: clan?.id ?? null,
+          clan_tag: clan?.tag ?? null,
           chunk_key: item.chunkKey,
           bitmap_height: item.height,
           kind: item.kind,
