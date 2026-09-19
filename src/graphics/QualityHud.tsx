@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, Gauge, SignalHigh, SignalLow, SignalMedium, Wand2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuality } from "./QualityContext";
@@ -150,10 +151,10 @@ export function QualityHud({ touch = false }: { touch?: boolean }) {
           </section>
         ) : null}
       </div>
-      {suggestLow ? (
-        <div className="fixed inset-0 z-[90] grid place-items-end bg-background/30 p-3 sm:place-items-center">
+      {suggestLow ? createPortal(
+        <div className="pointer-events-auto fixed inset-0 z-[100] grid place-items-end overflow-y-auto bg-background/30 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:place-items-center">
           <section
-            className="hud-panel w-full max-w-md p-4"
+            className="hud-panel pointer-events-auto w-full max-w-md p-4"
             role="dialog"
             aria-modal="true"
             aria-label="Graphics recommendation"
@@ -175,7 +176,8 @@ export function QualityHud({ touch = false }: { touch?: boolean }) {
               </Button>
             </div>
           </section>
-        </div>
+        </div>,
+        document.body,
       ) : null}
     </>
   );
