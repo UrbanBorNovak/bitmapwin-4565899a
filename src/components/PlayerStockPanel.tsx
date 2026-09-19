@@ -8,9 +8,14 @@ import type { RankPlayer } from "@/lib/ranks";
 import {
   DEMAND_CAP,
   DIVIDEND_CUT,
+  ISSUE_FEE_OPEN,
+  ISSUE_FEE_RAISE,
+  MAX_SHARES_OFFERED,
+  PLATFORM_FEE_BPS,
   SHARE_SELL_SPREAD,
   baseValueOf,
   demandMultiplier,
+  platformFee,
   playerStockQuery,
   quoteShares,
   shareDividendsQuery,
@@ -18,7 +23,7 @@ import {
   shareTradesQuery,
   sharePrice,
 } from "@/lib/player-stock";
-import { tradePlayerSharesFn } from "@/lib/player-stock.functions";
+import { issuePlayerSharesFn, tradePlayerSharesFn } from "@/lib/player-stock.functions";
 
 type Point = { t: number; price: number; issued: number };
 
