@@ -75,6 +75,7 @@ function normalise(row: WorldStructureRow): WorldStructureRow {
 }
 
 type PlaceInput = {
+  templateId?: string;
   items: {
     kind: string;
     chunkKey: string;
@@ -91,6 +92,7 @@ type PlaceInput = {
 export const placeWorldStructures = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: PlaceInput) => ({
+    templateId: input?.templateId ? String(input.templateId).slice(0, 40) : undefined,
     items: (input?.items ?? []).slice(0, 20).map((item) => ({
       kind: String(item.kind).slice(0, 40),
       chunkKey: String(item.chunkKey),
@@ -105,6 +107,21 @@ export const placeWorldStructures = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     if (!data.items.length) return { structures: [] as WorldStructureRow[] };
     const { supabase, userId } = context;
+
+    const requiredCapability: Record<string, string> = {
+      "trail-marker": "build.trail-marker",
+      "oasis-waystation": "build.oasis-waystation",
+      "fortified-camp": "build.fortified-camp",
+      "district-gate": "build.district-gate",
+    };
+    const capability = data.templateId ? requiredCapability[data.templateId] : undefined;
+    if (capability) {
+      const { data: allowed, error: unlockError } = await supabase.rpc("has_passport_unlock", {
+        _user_id: userId,
+        _capability_key: capability,
+      });
+      if (unlockError || !allowed) throw new Error("THIS BLUEPRINT IS LOCKED BY YOUR PASSPORT HISTORY");
+    }
 
     const { data: link } = await supabase
       .from("wallet_links")
@@ -136,6 +153,13 @@ export const placeWorldStructures = createServerFn({ method: "POST" })
     if (error) {
       if (error.code === "42501") throw new Error("YOU CANNOT BUILD ON A BITMAP YOU DO NOT HOLD");
       throw new Error(error.message);
+    }
+    if (rows?.length) {
+      const { appendProvenance, syncPassport } = await import("@/lib/passport.server");
+      for (const row of rows) {
+        await appendProvenance({ sourceKey: `build:${row.id}`, eventType: "build", userId, wallet: row.builder_address, bitmapHeight: Number(row.bitmap_height), sourceType: "persistent_build", sourceId: row.id, proofLevel: "WORLD", title: "HISTORY BUILT", summary: `${String(row.kind).replaceAll("-", " ").toUpperCase()} placed on ${row.bitmap_height}.BITMAP`, occurredAt: row.created_at });
+      }
+      await syncPassport(userId);
     }
     return { structures: (rows ?? []).map((row) => normalise(row as WorldStructureRow)) };
   });
@@ -228,6 +252,7 @@ export const listMyBuilds = createServerFn({ method: "GET" })
 export const savePlayerBuilds = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: PlaceInput) => ({
+    templateId: input?.templateId ? String(input.templateId).slice(0, 40) : undefined,
     items: (input?.items ?? []).slice(0, 20).map((item) => ({
       kind: String(item.kind).slice(0, 40),
       chunkKey: String(item.chunkKey),
@@ -240,6 +265,18 @@ export const savePlayerBuilds = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     if (!data.items.length) return { builds: [] as PlayerBuildRow[] };
     const { supabase, userId } = context;
+
+    const requiredCapability: Record<string, string> = {
+      "trail-marker": "build.trail-marker",
+      "oasis-waystation": "build.oasis-waystation",
+      "fortified-camp": "build.fortified-camp",
+      "district-gate": "build.district-gate",
+    };
+    const capability = data.templateId ? requiredCapability[data.templateId] : undefined;
+    if (capability) {
+      const { data: allowed, error: unlockError } = await supabase.rpc("has_passport_unlock", { _user_id: userId, _capability_key: capability });
+      if (unlockError || !allowed) throw new Error("THIS BLUEPRINT IS LOCKED BY YOUR PASSPORT HISTORY");
+    }
 
     const { data: link } = await supabase
       .from("wallet_links")
@@ -269,6 +306,13 @@ export const savePlayerBuilds = createServerFn({ method: "POST" })
       )
       .select(VAULT_COLUMNS);
     if (error) throw new Error(error.message);
+    if (rows?.length) {
+      const { appendProvenance, syncPassport } = await import("@/lib/passport.server");
+      for (const row of rows) {
+        await appendProvenance({ sourceKey: `build:${row.id}`, eventType: "build", userId, wallet: row.builder_address, bitmapHeight: Number(row.bitmap_height), sourceType: "persistent_build", sourceId: row.id, proofLevel: "WORLD", title: "HISTORY BUILT", summary: `${String(row.kind).replaceAll("-", " ").toUpperCase()} placed on ${row.bitmap_height}.BITMAP`, occurredAt: row.created_at });
+      }
+      await syncPassport(userId);
+    }
     return { builds: (rows ?? []).map((row) => normalisePlayerBuild(row as PlayerBuildRow)) };
   });
 

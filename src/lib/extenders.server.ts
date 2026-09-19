@@ -287,6 +287,9 @@ export async function deployExtender(
     .select("id")
     .single();
   if (error) throw error;
+  const { appendProvenance, syncPassport } = await import("@/lib/passport.server");
+  await appendProvenance({ sourceKey: `deployment:${data.id}`, eventType: "deployment", userId, wallet: auth.address, bitmapHeight: input.height, sourceType: "extender_deployment", sourceId: data.id, proofLevel: "WORLD", title: "EXTENDER DEPLOYED", summary: `Software activated on ${input.height}.BITMAP` });
+  await syncPassport(userId);
   return { deploymentId: data.id, grantedVia: auth.grantedVia };
 }
 

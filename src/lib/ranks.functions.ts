@@ -107,15 +107,19 @@ export const recordPvpKillFn = createServerFn({ method: "POST" })
       .eq("id", victim.id);
     if (victimError) throw new Error(victimError.message);
 
-    const { error: eventError } = await supabaseAdmin.from("pvp_events").insert({
+    const { data: pvpEvent, error: eventError } = await supabaseAdmin.from("pvp_events").insert({
       killer_id: killer.id,
       victim_id: victim.id,
       district: data.district,
       bitmap: data.bitmap,
       karma_delta: nextKarma - killer.karma,
       was_pk: wasPk,
-    });
+    }).select("id, created_at").single();
     if (eventError) throw new Error(eventError.message);
+    const { appendProvenance, syncPassport } = await import("@/lib/passport.server");
+    const walletLink = await supabaseAdmin.from("wallet_links").select("address").eq("user_id", context.userId).order("verified_at", { ascending: false }).limit(1).maybeSingle();
+    await appendProvenance({ sourceKey: `combat:${pvpEvent.id}`, eventType: "combat", userId: context.userId, wallet: walletLink.data?.address ?? null, bitmapHeight: data.bitmap, sourceType: "pvp_event", sourceId: pvpEvent.id, proofLevel: "WORLD", title: "OASIS DUEL RECORDED", summary: `${killer.name} defeated ${victim.name}${data.district ? ` at ${data.district}` : ""}`, occurredAt: pvpEvent.created_at });
+    await syncPassport(context.userId);
 
     // Clan tags so the world can announce the kill the old way:
     // "[TAG] Killer has slain [TAG] Victim at 65022.BITMAP".

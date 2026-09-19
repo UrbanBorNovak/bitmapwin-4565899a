@@ -202,16 +202,38 @@ export const STRUCTURES: StructureRecipe[] = [
   },
 ];
 
-export type BuildTemplateId = "full-camp" | "shrine-compound" | "wall-run" | "gate-door";
+export type BuildTemplateId = "full-camp" | "shrine-compound" | "wall-run" | "gate-door" | "trail-marker" | "oasis-waystation" | "fortified-camp" | "district-gate";
 export type BuildTemplate = {
   id: BuildTemplateId;
   name: string;
   blurb: string;
   cost: Partial<Record<ItemId, number>>;
+  capability?: import("./passport").BuildCapability;
+  requirement?: string;
   parts: { id: StructureId; dx: number; dz: number; yaw?: number }[];
 };
 
 export const BUILD_TEMPLATES: BuildTemplate[] = [
+  {
+    id: "trail-marker", name: "TRAIL MARKER", blurb: "A lit marker that leaves a route for future travelers.",
+    cost: { mineral: 2 }, capability: "build.trail-marker", requirement: "FIRST ARRIVAL",
+    parts: [{ id: "clay-pillar", dx: 0, dz: 0 }, { id: "camp-fire", dx: 0, dz: 1.3 }],
+  },
+  {
+    id: "oasis-waystation", name: "OASIS WAYSTATION", blurb: "A welcoming shelter raised from your first permanent mark.",
+    cost: { hide: 6, mineral: 3, fang: 1 }, capability: "build.oasis-waystation", requirement: "FIRST MARK",
+    parts: [{ id: "hide-tent", dx: -1.8, dz: 0 }, { id: "camp-fire", dx: 0.7, dz: 0 }, { id: "clay-pillar", dx: 2.3, dz: 0 }],
+  },
+  {
+    id: "fortified-camp", name: "FORTIFIED CAMP", blurb: "A defended home unlocked by sustained building history.",
+    cost: { hide: 10, mineral: 8, "ore-chunk": 4, fang: 2 }, capability: "build.fortified-camp", requirement: "BUILDER",
+    parts: [{ id: "hide-tent", dx: 0, dz: -2 }, { id: "camp-fire", dx: 0, dz: 0 }, { id: "watchtower", dx: 3.2, dz: -2 }, { id: "clay-wall", dx: -3.4, dz: 2 }, { id: "clay-window-wall", dx: 0, dz: 2 }, { id: "clay-wall", dx: 3.4, dz: 2 }],
+  },
+  {
+    id: "district-gate", name: "DISTRICT GATE", blurb: "A ceremonial threshold for proven stewards and deployers.",
+    cost: { mineral: 7, "ore-chunk": 5, "gold-nugget": 1 }, capability: "build.district-gate", requirement: "LAND STEWARD OR DEPLOYER",
+    parts: [{ id: "clay-entrance", dx: 0, dz: 0 }, { id: "clay-door", dx: 2.55, dz: -0.55, yaw: -Math.PI / 2 }, { id: "clay-pillar", dx: -4.2, dz: 0 }, { id: "clay-pillar", dx: 4.2, dz: 0 }, { id: "gold-obelisk", dx: 0, dz: -3 }],
+  },
   {
     id: "shrine-compound",
     name: "SHRINE COMPOUND",
@@ -530,14 +552,14 @@ function toRequest(item: PlacedStructure) {
  * Push freshly placed structures to the shared world. On success they stop
  * being local; if the visitor is not signed in the placement simply stays local.
  */
-async function publish(items: PlacedStructure[]) {
+async function publish(items: PlacedStructure[], templateId?: BuildTemplateId) {
   // Signed-out visitors keep their builds in this browser only.
   if (!(await signedIn())) return;
   try {
-    const result = await placeWorldStructures({ data: { items: items.map(toRequest) } });
+    const result = await placeWorldStructures({ data: { items: items.map(toRequest), templateId } });
     const rows = result?.structures ?? [];
     if (!rows.length) {
-      await save(items);
+      await save(items, templateId);
       return;
     }
     const keys = new Set(items.map((item) => item.key));
@@ -561,7 +583,7 @@ async function publish(items: PlacedStructure[]) {
   } catch {
     // The shared world only takes builds on land you hold. Everything else goes
     // to the player's own vault, so it still comes back after a reload.
-    await save(items);
+    await save(items, templateId);
   }
 }
 
@@ -580,10 +602,10 @@ async function signedIn() {
 }
 
 /** Keep builds in the player's own vault when the shared world will not take them. */
-async function save(items: PlacedStructure[]) {
+async function save(items: PlacedStructure[], templateId?: BuildTemplateId) {
   if (!(await signedIn())) return;
   try {
-    const result = await savePlayerBuilds({ data: { items: items.map(toRequest) } });
+    const result = await savePlayerBuilds({ data: { items: items.map(toRequest), templateId } });
     const rows = result?.builds ?? [];
     if (!rows.length) return;
     const keys = new Set(items.map((item) => item.key));
@@ -814,7 +836,7 @@ export function buildTemplate(id: BuildTemplateId, x: number, z: number, yaw = 0
   localBuilds = [...localBuilds, ...placed];
   persistLocal();
   recompute();
-  void publish(placed);
+  void publish(placed, id);
   return placed;
 }
 
