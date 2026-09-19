@@ -3703,15 +3703,12 @@ function BitmapWorld3DInner({
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Travel</span>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <Button
-                    className={driving ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                  <HudIconButton
+                    label={driving ? `Leave ${ride.label} (V)` : `Travel by ${ride.label} (V)`}
+                    icon={ride.kind === "air" ? <Rocket /> : <Car />}
+                    active={driving}
                     onClick={toggleTruck}
-                  >
-                    <span data-no-translate>
-                      {driving ? `[ LEAVE ${ride.label} · V ]` : `[ TRAVEL BY ${ride.label} · V ]`}
-                    </span>
-                  </Button>
+                  />
                   <select
                     aria-label="Travel source"
                     data-no-translate
