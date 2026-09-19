@@ -4,12 +4,12 @@ import { SPRITES, SpriteCritter } from "@/components/SpriteCritter";
 const HIDDEN_PREFIXES = ["/map", "/auth", "/reset-password", "/wallet", "/studio", "/create"];
 
 const PLACEMENTS = [
-  "left-1 top-[22%] sm:left-4",
-  "right-1 top-[38%] sm:right-5",
-  "left-[8%] bottom-3 sm:left-[14%] sm:bottom-5",
-  "right-[8%] bottom-3 sm:right-[16%] sm:bottom-5",
-  "left-1 bottom-[25%] sm:left-6",
-  "right-1 top-[64%] sm:right-6",
+  "-left-3 top-[36%] sm:left-4 sm:top-[22%]",
+  "-right-3 top-[48%] sm:right-5 sm:top-[38%]",
+  "-left-3 bottom-[8%] sm:left-[14%] sm:bottom-5",
+  "-right-3 bottom-[8%] sm:right-[16%] sm:bottom-5",
+  "-left-3 bottom-[28%] sm:left-6 sm:bottom-[25%]",
+  "-right-3 top-[68%] sm:right-6 sm:top-[64%]",
 ] as const;
 
 function hashPath(pathname: string): number {
