@@ -2,6 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { StatusPill } from "@/components/ranks/RankShell";
 import { PlayerStockPanel } from "@/components/PlayerStockPanel";
+import { formatBit } from "@/lib/coins";
+import {
+  baseValueOf,
+  playerStockQuery,
+  shareHoldersQuery,
+  sharePrice,
+} from "@/lib/player-stock";
 import {
   clanCrestImage,
   kd,
