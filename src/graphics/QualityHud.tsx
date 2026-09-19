@@ -27,9 +27,9 @@ export function QualityHud({ touch = false }: { touch?: boolean }) {
   return (
     <>
       <div className="relative pointer-events-auto" data-no-translate>
-        <Button type="button" variant="ghost" size="sm" aria-expanded={open} onClick={() => setOpen((value) => !value)} className={touch ? "min-h-11 border border-border bg-background/70 px-3 font-mono text-[10px]" : "border border-border bg-background/55 font-mono text-[10px] text-muted-foreground"}>
-          <Gauge className="size-3.5" /> QUALITY
-        </Button>
+        <button type="button" aria-expanded={open} aria-label="Graphics quality" title="Graphics quality" onClick={() => setOpen((value) => !value)} className={`grid place-items-center border border-border bg-background/60 text-muted-foreground backdrop-blur-sm transition-colors hover:border-bitcoin hover:text-bitcoin [&_svg]:size-[1.15rem] ${touch ? "size-11" : "size-11"}`}>
+          <Gauge />
+        </button>
         {open ? <section className="hud-panel absolute bottom-full right-0 mb-2 w-[min(22rem,calc(100vw-1.5rem))] p-2 font-mono text-[10px] shadow-lg" aria-label="Graphics quality">
           <div className="mb-2 flex items-center justify-between"><span className="hud-telemetry-title">GRAPHICS · {quality.resolved.toUpperCase()}</span><Button variant="ghost" size="icon" className="size-7" onClick={() => setOpen(false)} aria-label="Close graphics quality"><X className="size-3.5" /></Button></div>
           <div className="grid grid-cols-4 gap-1">{MODES.map((mode) => <Button key={mode.value} variant="ghost" className={`${touch ? "min-h-11" : "h-8"} rounded-sm border ${stored.mode === mode.value ? "border-bitcoin bg-bitcoin text-bitcoin-foreground" : "border-border text-muted-foreground"}`} onClick={() => setMode(mode.value)}>{mode.label}</Button>)}</div>
