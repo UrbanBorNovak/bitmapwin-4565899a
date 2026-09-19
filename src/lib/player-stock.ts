@@ -146,6 +146,21 @@ export const playerStockQuery = (playerId: string | null) =>
     },
   });
 
+/** Every player's share book, for the market board. */
+export const allPlayerStockQuery = () =>
+  queryOptions({
+    queryKey: ["player-stock-all"],
+    staleTime: 15_000,
+    queryFn: async (): Promise<PlayerStock[]> => {
+      const { data, error } = await supabase
+        .from("player_stock")
+        .select("player_id, shares_issued, bit_raised, dividends_paid, last_price, updated_at")
+        .limit(1000);
+      if (error) throw new Error(error.message);
+      return (data ?? []).map((row) => toStock(row as StockRow));
+    },
+  });
+
 export const shareHoldersQuery = (playerId: string | null) =>
   queryOptions({
     queryKey: ["player-share-holders", playerId],
