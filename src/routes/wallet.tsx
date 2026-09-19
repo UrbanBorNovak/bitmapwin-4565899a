@@ -462,29 +462,6 @@ function OfferList({
             {offer.deliveryNote && <div>NOTE {offer.deliveryNote}</div>}
           </dl>
           <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              className="btn-term-ghost !px-3 !py-1.5"
-              onClick={() => {
-                void navigator.clipboard.writeText(offer.psbtBase64);
-                toast("PSBT COPIED", { description: "SIGN AND BROADCAST FROM YOUR WALLET" });
-              }}
-            >
-              COPY PSBT
-            </button>
-            <button
-              className="btn-term-ghost !px-3 !py-1.5"
-              onClick={() => {
-                const blob = new Blob([offer.psbtBase64], { type: "text/plain" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `${offer.bitmapHeight ?? "offer"}.psbt`;
-                a.click();
-                URL.revokeObjectURL(url);
-              }}
-            >
-              DOWNLOAD .PSBT
-            </button>
           </div>
           {renderExtra?.(offer)}
         </li>
