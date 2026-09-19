@@ -92,7 +92,7 @@ function ApiPage() {
       <section className="mt-8 border border-border p-6">
         <h2 className="display text-xl">EXAMPLE</h2>
         <pre className="mt-3 overflow-x-auto bg-secondary p-4 font-mono text-xs">
-{`curl https://bitmapwin.lovable.app/api/public/blocks/382441`}
+{`curl https://bitmapwin.app/api/public/blocks/382441`}
         </pre>
         <p className="mt-3 text-sm text-muted-foreground">
           Endpoints are rate-limited and read-only apart from the crawler trigger. If a fact cannot be traced on

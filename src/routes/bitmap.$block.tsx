@@ -233,7 +233,7 @@ function BitmapDetail() {
 
         <details className="group border border-border">
           <summary className="flex cursor-pointer list-none items-center justify-between border-b border-border px-6 py-3">
-            <span className="label">BITMAP DATA</span>
+            <h2 className="label">BITMAP DATA</h2>
             <svg
               className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180"
               viewBox="0 0 24 24"
@@ -369,7 +369,7 @@ function BitmapDetail() {
 
       <div className="mt-8 border border-border">
         <div className="flex items-center justify-between border-b border-border px-6 py-3">
-          <span className="label">ON-CHAIN TRADE HISTORY</span>
+          <h2 className="label">ON-CHAIN TRADE HISTORY</h2>
           <span className="label">{history.length} TRANSFER(S)</span>
         </div>
         {history.length === 0 ? (
@@ -412,7 +412,7 @@ function BitmapDetail() {
       {scan.data && scan.data.inscriptions.length > 0 && (
         <div className="mt-8 border border-border">
           <div className="border-b border-border px-6 py-3">
-            <span className="label">INSCRIPTIONS FOUND IN BLOCK {block}</span>
+            <h2 className="label">INSCRIPTIONS FOUND IN BLOCK {block}</h2>
           </div>
           <div className="grid gap-4 px-6 py-5 sm:grid-cols-2 lg:grid-cols-4">
             {scan.data.inscriptions.slice(0, 40).map((i) => (

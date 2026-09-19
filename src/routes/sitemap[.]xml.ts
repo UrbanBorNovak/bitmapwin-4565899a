@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 import { CLUBS } from "@/lib/clubs";
 
-const BASE_URL = "https://bitmapwin.lovable.app";
+const BASE_URL = "https://bitmapwin.app";
 
 interface SitemapEntry {
   path: string;
