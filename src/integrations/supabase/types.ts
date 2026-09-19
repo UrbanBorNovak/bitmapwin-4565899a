@@ -2419,6 +2419,14 @@ export type Database = {
           unit_price: number
         }[]
       }
+      join_rank_clan: {
+        Args: { _clan_id: string; _wallet: string }
+        Returns: {
+          clan_id: string
+          clan_tag: string
+          player_id: string
+        }[]
+      }
       land_terraform_in_chunks: {
         Args: { _keys: string[] }
         Returns: {
