@@ -60,6 +60,7 @@ import { Route as ProfileAddressRouteImport } from './routes/profile.$address'
 import { Route as RanksIndexRouteImport } from './routes/ranks.index'
 import { Route as RanksClansRouteImport } from './routes/ranks.clans'
 import { Route as RanksPvpRouteImport } from './routes/ranks.pvp'
+import { Route as RanksSharesRouteImport } from './routes/ranks.shares'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicCoinRewardsRouteImport } from './routes/api/public/coin-rewards'
 import { Route as ApiPublicCrawlTradesRouteImport } from './routes/api/public/crawl-trades'
@@ -327,6 +328,11 @@ const RanksPvpRoute = RanksPvpRouteImport.update({
   path: '/pvp',
   getParentRoute: () => RanksRoute,
 } as any)
+const RanksSharesRoute = RanksSharesRouteImport.update({
+  id: '/shares',
+  path: '/shares',
+  getParentRoute: () => RanksRoute,
+} as any)
 const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   id: '/.lovable/oauth/consent',
   path: '/.lovable/oauth/consent',
@@ -429,6 +435,7 @@ export interface FileRoutesByFullPath {
   '/profile/$address': typeof ProfileAddressRoute
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
+  '/ranks/shares': typeof RanksSharesRoute
   '/collections/': typeof CollectionsIndexRoute
   '/extenders/': typeof ExtendersIndexRoute
   '/ranks/': typeof RanksIndexRoute
@@ -489,6 +496,7 @@ export interface FileRoutesByTo {
   '/profile/$address': typeof ProfileAddressRoute
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
+  '/ranks/shares': typeof RanksSharesRoute
   '/collections': typeof CollectionsIndexRoute
   '/extenders': typeof ExtendersIndexRoute
   '/ranks': typeof RanksIndexRoute
@@ -553,6 +561,7 @@ export interface FileRoutesById {
   '/profile/$address': typeof ProfileAddressRoute
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
+  '/ranks/shares': typeof RanksSharesRoute
   '/collections/': typeof CollectionsIndexRoute
   '/extenders/': typeof ExtendersIndexRoute
   '/ranks/': typeof RanksIndexRoute
@@ -618,6 +627,7 @@ export interface FileRouteTypes {
     | '/profile/$address'
     | '/ranks/clans'
     | '/ranks/pvp'
+    | '/ranks/shares'
     | '/collections/'
     | '/extenders/'
     | '/ranks/'
@@ -678,6 +688,7 @@ export interface FileRouteTypes {
     | '/profile/$address'
     | '/ranks/clans'
     | '/ranks/pvp'
+    | '/ranks/shares'
     | '/collections'
     | '/extenders'
     | '/ranks'
@@ -741,6 +752,7 @@ export interface FileRouteTypes {
     | '/profile/$address'
     | '/ranks/clans'
     | '/ranks/pvp'
+    | '/ranks/shares'
     | '/collections/'
     | '/extenders/'
     | '/ranks/'
@@ -1163,6 +1175,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RanksPvpRouteImport
       parentRoute: typeof RanksRoute
     }
+    '/ranks/shares': {
+      id: '/ranks/shares'
+      path: '/shares'
+      fullPath: '/ranks/shares'
+      preLoaderRoute: typeof RanksSharesRouteImport
+      parentRoute: typeof RanksRoute
+    }
     '/.lovable/oauth/consent': {
       id: '/.lovable/oauth/consent'
       path: '/.lovable/oauth/consent'
@@ -1302,6 +1321,7 @@ const ExtendersRouteWithChildren = ExtendersRoute._addFileChildren(
 interface RanksRouteChildren {
   RanksClansRoute: typeof RanksClansRoute
   RanksPvpRoute: typeof RanksPvpRoute
+  RanksSharesRoute: typeof RanksSharesRoute
   RanksIndexRoute: typeof RanksIndexRoute
   RanksPlayerIdRoute: typeof RanksPlayerIdRoute
 }
@@ -1309,6 +1329,7 @@ interface RanksRouteChildren {
 const RanksRouteChildren: RanksRouteChildren = {
   RanksClansRoute: RanksClansRoute,
   RanksPvpRoute: RanksPvpRoute,
+  RanksSharesRoute: RanksSharesRoute,
   RanksIndexRoute: RanksIndexRoute,
   RanksPlayerIdRoute: RanksPlayerIdRoute,
 }
