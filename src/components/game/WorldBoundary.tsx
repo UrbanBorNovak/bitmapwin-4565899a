@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { WORLD_UNITS } from "@/lib/player-state";
 import { worldWeather } from "@/lib/world-weather";
 import { OuterSkyline } from "./OuterSkyline";
+import { useQuality } from "@/graphics/QualityContext";
 
 const WALL_HEIGHT = 1.8;
 const WALL_THICKNESS = 0.018;
@@ -59,6 +60,7 @@ function WeatherGlass({ color }: { color: THREE.Color }) {
  * place, without competing with the live world inside the boundary.
  */
 export function WorldBoundary({ colors }: { colors: BoundaryColors }) {
+  const { quality } = useQuality();
   const palette = useMemo(() => {
     const background = new THREE.Color(colors.background);
     const foreground = new THREE.Color(colors.foreground);
@@ -109,7 +111,7 @@ export function WorldBoundary({ colors }: { colors: BoundaryColors }) {
         <group key={pane.key}>
           <mesh position={pane.position} renderOrder={8}>
             <boxGeometry args={pane.size} />
-            <WeatherGlass color={palette.glass} />
+            {quality.resolved === "low" ? <meshBasicMaterial color={palette.glass} transparent opacity={0.22} depthWrite={false} side={THREE.DoubleSide} /> : <WeatherGlass color={palette.glass} />}
           </mesh>
           <lineSegments position={pane.position} renderOrder={9}>
             <edgesGeometry args={[new THREE.BoxGeometry(...pane.size)]} />

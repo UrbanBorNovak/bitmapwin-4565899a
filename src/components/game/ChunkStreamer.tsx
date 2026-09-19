@@ -6,6 +6,7 @@ import { syncTerraformChunks } from "@/lib/world-terraform";
 import { markFrame } from "@/lib/world-perf";
 import { FAST_PACE, MOVE, STRIDE, type PlayerState } from "@/lib/player-state";
 import { updateWorldStream } from "@/lib/world-stream";
+import { useQuality } from "@/graphics/QualityContext";
 
 /**
  * CHUNK STREAMING — only the world around you is ever loaded.
@@ -49,6 +50,8 @@ export function ChunkStreamer({
   pose: React.RefObject<PlayerState>;
   radius?: number;
 }) {
+  const { quality } = useQuality();
+  const streamRadius = quality.chunkRadius;
   const last = useRef({ at: 0, key: "" });
   const lastSharedRefresh = useRef(0);
   const queue = useRef<string[]>([]);
@@ -75,7 +78,7 @@ export function ChunkStreamer({
     const lead = Math.min(fast ? 1.8 : 1.2, pace * (fast ? 1.8 : 0.9));
     const aimX = player.x + (pace > 0.001 ? (player.vx / pace) * lead : 0);
     const aimZ = player.z + (pace > 0.001 ? (player.vz / pace) * lead : 0);
-    const keys = visibleChunks(aimX, aimZ, radius);
+    const keys = visibleChunks(aimX, aimZ, streamRadius);
     const report = () => updateWorldStream({
       chunk: player.chunk,
       loaded: seen.current.size,
@@ -112,7 +115,7 @@ export function ChunkStreamer({
         const [cxRaw, czRaw] = (keys[0] ?? "0:0").split(":");
         const cx = Number(cxRaw);
         const cz = Number(czRaw);
-        const cutoff = radius + 2;
+        const cutoff = streamRadius + 2;
         const kept: string[] = [];
         for (const key of queue.current) {
           if (keyDistance(key, cx, cz) > cutoff) {

@@ -12,6 +12,7 @@ import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
 import { isSea } from "@/lib/world-sea";
 import { groundY } from "@/lib/world-terrain";
+import { useQuality } from "@/graphics/QualityContext";
 
 export const HOUSE_INSCRIPTION =
   "2c2c4f69a5baf378ec897b235fffdde6022b05f898d9ab43f7ca64bea7ad8fbfi0";
@@ -36,6 +37,7 @@ export const Houses = memo(function Houses({
   center: [number, number];
   radius: number;
 }) {
+  const { quality } = useQuality();
   const houses = useMemo(() => {
     // Homesteads sit far apart — one every few hundred strides at most.
     const pitch = unit * 26;
@@ -82,7 +84,7 @@ export const Houses = memo(function Houses({
     <>
       {houses.map((house) => (
         <group key={house.key} position={[house.x, groundY(house.x, house.z), house.z]}>
-          <Suspense
+          {quality.propDetail === "cheap" ? <mesh position={[0, house.size * 0.3, 0]} raycast={noRaycast}><boxGeometry args={[house.size * 0.6, house.size * 0.6, house.size * 0.6]} /><meshLambertMaterial color="#6b5643" flatShading /></mesh> : <Suspense
             fallback={
               <mesh position={[0, house.size * 0.3, 0]} raycast={noRaycast}>
                 <boxGeometry args={[house.size * 0.6, house.size * 0.6, house.size * 0.6]} />
@@ -91,7 +93,7 @@ export const Houses = memo(function Houses({
             }
           >
             <InscribedModel url={HOUSE_URL} size={house.size} yaw={house.yaw} />
-          </Suspense>
+          </Suspense>}
         </group>
       ))}
     </>

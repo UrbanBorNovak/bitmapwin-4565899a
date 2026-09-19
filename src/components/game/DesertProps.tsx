@@ -14,6 +14,7 @@ import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
 import { isSea } from "@/lib/world-sea";
 import { groundY } from "@/lib/world-terrain";
+import { useQuality } from "@/graphics/QualityContext";
 
 /** on-chain rock models */
 export const ROCK_INSCRIPTION =
@@ -89,6 +90,7 @@ function PropField({
   props: Prop[];
   fallbackColor: string;
 }) {
+  const { quality } = useQuality();
   useEffect(() => {
     const solids = items
       .filter((item) => item.solid)
@@ -106,7 +108,7 @@ function PropField({
     <>
       {items.map((item) => (
         <group key={item.key} position={[item.x, groundY(item.x, item.z), item.z]}>
-          <Suspense
+          {quality.propDetail === "cheap" ? <mesh position={[0, item.size * 0.25, 0]} raycast={noRaycast}><boxGeometry args={[item.size * 0.5, item.size * 0.5, item.size * 0.5]} /><meshLambertMaterial color={fallbackColor} flatShading /></mesh> : <Suspense
             fallback={
               <mesh position={[0, item.size * 0.25, 0]} raycast={noRaycast}>
                 <boxGeometry args={[item.size * 0.5, item.size * 0.5, item.size * 0.5]} />
@@ -115,7 +117,7 @@ function PropField({
             }
           >
             <InscribedModel url={url} size={item.size} yaw={item.yaw} />
-          </Suspense>
+          </Suspense>}
         </group>
       ))}
     </>

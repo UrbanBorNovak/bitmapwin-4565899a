@@ -21,6 +21,7 @@ import { blockedAt, useWorldBuilds } from "@/lib/world-build";
 import { MAX_RELIEF, groundY, subscribeTerrain, terrainVersion } from "@/lib/world-terrain";
 import { isSea } from "@/lib/world-sea";
 import { worldWeather } from "@/lib/world-weather";
+import { useQuality } from "@/graphics/QualityContext";
 
 const MAX_GRASS = 24_000;
 const MAX_BUSH = 260;
@@ -439,6 +440,11 @@ export function LandGrowth({
   unit: number;
   pose: React.RefObject<PlayerState>;
 }) {
+  const { quality } = useQuality();
+  const radiusCells = quality.resolved === "low" ? 8 : quality.resolved === "medium" ? 16 : RADIUS_CELLS;
+  const grassBudget = quality.resolved === "low" ? 6_000 : quality.resolved === "medium" ? 14_000 : MAX_GRASS;
+  const bushBudget = quality.resolved === "low" ? 70 : quality.resolved === "medium" ? 160 : MAX_BUSH;
+  const treeBudget = quality.resolved === "low" ? 30 : quality.resolved === "medium" ? 60 : MAX_TREE;
   const land = useTerraformedLand();
   // Re-plan when something is built or demolished: plants clear the new floor.
   const builds = useWorldBuilds();
@@ -478,7 +484,7 @@ export function LandGrowth({
     check.current = now;
     const player = pose.current;
     if (!player) return;
-    const reach = WORLD_CELL * RADIUS_CELLS;
+    const reach = WORLD_CELL * radiusCells;
     const visible = land.filter(
       (plot) =>
         Math.abs(cellX(plot.col) - player.x) < reach && Math.abs(cellZ(plot.row) - player.z) < reach,
@@ -497,9 +503,9 @@ export function LandGrowth({
       nearbyAt.current = cellKey;
       setHeightmapCentre({ x: cellX(centreCol), z: cellZ(centreRow) });
       const cells: NearbyCell[] = [];
-      for (let row = centreRow - RADIUS_CELLS; row <= centreRow + RADIUS_CELLS; row += 1) {
+      for (let row = centreRow - radiusCells; row <= centreRow + radiusCells; row += 1) {
         if (row < 0 || row >= WORLD_GRID) continue;
-        for (let col = centreCol - RADIUS_CELLS; col <= centreCol + RADIUS_CELLS; col += 1) {
+        for (let col = centreCol - radiusCells; col <= centreCol + radiusCells; col += 1) {
           if (col < 0 || col >= WORLD_GRID) continue;
           cells.push({
             height: row * WORLD_GRID + col,
@@ -587,7 +593,7 @@ export function LandGrowth({
     write(
       grass.current,
       plan.grass,
-      MAX_GRASS,
+      grassBudget,
       (item) => [blade * (0.38 + item.tint * 0.2), blade * item.s, blade * (0.38 + item.tint * 0.2)],
       () => 0,
       (item) => scratch.colour.copy(palette.grassA).lerp(palette.grassB, item.tint),
@@ -596,7 +602,7 @@ export function LandGrowth({
     write(
       bush.current,
       plan.bush,
-      MAX_BUSH,
+      bushBudget,
       (item) => [shrub * item.s, shrub * item.s * 0.8, shrub * item.s],
       (_item, h) => h / 2.2,
       (item) => scratch.colour.copy(palette.bushA).lerp(palette.bushB, item.tint),
@@ -605,7 +611,7 @@ export function LandGrowth({
     write(
       tree.current,
       plan.tree,
-      MAX_TREE,
+      treeBudget,
       (item) => [unit * 0.09, trunkH * item.s, unit * 0.09],
       (_item, h) => h / 2,
       () => scratch.colour.copy(palette.trunk),
@@ -613,12 +619,12 @@ export function LandGrowth({
     write(
       canopy.current,
       plan.tree,
-      MAX_TREE,
+      treeBudget,
       (item) => [unit * 0.42 * item.s, unit * 0.36 * item.s, unit * 0.42 * item.s],
       (item, h) => trunkH * item.s + h * 0.28,
       (item) => scratch.colour.copy(palette.leafA).lerp(palette.leafB, item.tint),
     );
-  }, [plan, unit, scratch, palette]);
+  }, [bushBudget, grassBudget, palette, plan, scratch, treeBudget, unit]);
 
   return (
     <group renderOrder={2}>

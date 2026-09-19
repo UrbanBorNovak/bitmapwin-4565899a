@@ -232,6 +232,9 @@ import { TerrainField } from "@/components/game/TerrainField";
 import { WorldBoundary } from "@/components/game/WorldBoundary";
 import TouchControls from "@/components/game/TouchControls";
 import { consumeTouchJump, isTouchDevice, takeTouchLook, touchPad } from "@/lib/touch-input";
+import { QualityProvider, useQuality } from "@/graphics/QualityContext";
+import { QualityHud } from "@/graphics/QualityHud";
+import { GraphicsDebug } from "@/graphics/GraphicsDebug";
 import {
 
   RIDES,
@@ -460,6 +463,7 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
   heights: number[];
   bitcoin: string;
 }) {
+  const { quality } = useQuality();
   const innerRef = useRef<THREE.InstancedMesh>(null);
   const auraRef = useRef<THREE.InstancedMesh>(null);
   const outerRef = useRef<THREE.InstancedMesh>(null);
@@ -523,7 +527,7 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
     if (clock.elapsedTime < nextPulse.current) return;
     nextPulse.current = clock.elapsedTime + 0.05;
     const pulse = (Math.sin(clock.elapsedTime * 2.2) + 1) / 2;
-    if (innerMat.current) innerMat.current.opacity = 0.55 + pulse * 0.35;
+    if (innerMat.current) innerMat.current.opacity = quality.plotGlow ? 0.55 + pulse * 0.35 : 0.82;
     if (auraMat.current) auraMat.current.opacity = 0.18 + pulse * 0.22;
     if (outerMat.current) outerMat.current.opacity = 0.06 + pulse * 0.12;
     if (wireMat.current) wireMat.current.opacity = 0.7 + pulse * 0.25;
@@ -538,6 +542,7 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
         args={[undefined, undefined, owned.length]}
         frustumCulled
         raycast={noRaycast}
+        visible={quality.plotGlow}
       >
         <ringGeometry args={[0.44, 0.5, 4]} />
         <meshBasicMaterial
@@ -556,6 +561,7 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
         args={[undefined, undefined, owned.length]}
         frustumCulled
         raycast={noRaycast}
+        visible={quality.plotGlow}
       >
         <ringGeometry args={[0.4, 0.5, 4]} />
         <meshBasicMaterial
@@ -579,10 +585,10 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
         <meshBasicMaterial
           ref={innerMat}
           color={bitcoin}
-          transparent
+          transparent={quality.plotGlow}
           opacity={0.7}
           depthWrite={false}
-          blending={THREE.AdditiveBlending}
+          blending={quality.plotGlow ? THREE.AdditiveBlending : THREE.NormalBlending}
           side={THREE.DoubleSide}
         />
       </instancedMesh>
@@ -592,6 +598,7 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
         args={[undefined, undefined, owned.length]}
         frustumCulled
         raycast={noRaycast}
+        visible={quality.plotGlow}
       >
         <ringGeometry args={[0.47, 0.5, 4]} />
         <meshBasicMaterial
@@ -2269,6 +2276,7 @@ const WorldScene = memo(function WorldScene({
   ride: RideSpec;
 
 }) {
+  const { quality } = useQuality();
   // Pointer moves fire dozens of times a second; each React state update re-renders
   // the whole overlay. Coalesce them: at most ~20 hover updates a second, and skip
   // updates that land on the same district within a couple of pixels.
@@ -2314,7 +2322,7 @@ const WorldScene = memo(function WorldScene({
 
       <WeatherLighting foreground={colors.foreground} background={colors.background} bitcoin={colors.bitcoin} />
       {/* Baked once at low resolution — ambient tint only, no per-frame cubemap cost. */}
-      <SafeEnvironment frames={1} resolution={64}>
+      {quality.resolved === "high" ? <SafeEnvironment frames={1} resolution={64}>
         <SafeLightformer
           intensity={0.85}
           color={colors.bitcoin}
@@ -2328,10 +2336,10 @@ const WorldScene = memo(function WorldScene({
           rotation-y={Math.PI / 2}
           scale={[28, 4, 1]}
         />
-      </SafeEnvironment>
+      </SafeEnvironment> : null}
       <PerfGovernor pose={pose} active={cameraMode !== "map"} />
       <SkyBodies bitcoin={colors.bitcoin} />
-      {cameraMode !== "map" ? <WorldWeather /> : null}
+      {cameraMode !== "map" && quality.effects !== "off" ? <WorldWeather /> : null}
       <LandSurface colors={colors} tipHeight={tipHeight} />
       <WorldBoundary colors={colors} />
       {cameraMode !== "map" ? (
@@ -2364,14 +2372,14 @@ const WorldScene = memo(function WorldScene({
           <DesertBuilds unit={AVATAR_U} pose={pose} />
           <BitmapMineCrew unit={AVATAR_U} pose={pose} heights={ownedHeights} />
 
-          <FootTrail unit={AVATAR_U} pose={pose} sand={colors.bitcoin} />
-          <MysteryMist unit={AVATAR_U} pose={pose} color={colors.foreground} />
-          <VehicleDamageFx
+          {quality.effects !== "off" ? <FootTrail unit={AVATAR_U} pose={pose} sand={colors.bitcoin} /> : null}
+          {quality.effects === "full" ? <MysteryMist unit={AVATAR_U} pose={pose} color={colors.foreground} /> : null}
+          {quality.effects !== "off" ? <VehicleDamageFx
             pose={pose}
             explosion={vehicleExplosion}
             critical={vehicleCritical}
             color={colors.bitcoin}
-          />
+          /> : null}
           <LandGrowth unit={AVATAR_U} pose={pose} />
           <Companions unit={AVATAR_U} pose={pose} />
           {self.hp <= 0 ? <GhostShade unit={AVATAR_U} pose={pose} /> : null}
@@ -2486,7 +2494,7 @@ const WorldScene = memo(function WorldScene({
   );
 });
 
-export function BitmapWorld3D({
+function BitmapWorld3DInner({
   tipHeight,
   initialHeight,
   highlight = [],
@@ -2514,7 +2522,8 @@ export function BitmapWorld3D({
     nonce: 0,
   });
   const [visitDraft, setVisitDraft] = useState("");
-  const [dpr, setDpr] = useState(1);
+  const { quality } = useQuality();
+  const [contextLost, setContextLost] = useState(false);
   // Thumb pads only mount on a real touch screen, never on a desktop browser.
   const [touchDevice, setTouchDevice] = useState(false);
   useEffect(() => setTouchDevice(isTouchDevice()), []);
@@ -2925,9 +2934,6 @@ export function BitmapWorld3D({
 
   useEffect(() => {
     setColors(readWorldColors());
-    // Keep a fixed renderer resolution. Dynamic DPR changes looked like visual
-    // glitches while moving and cost more than they saved on typical laptops.
-    setDpr(Math.min(window.devicePixelRatio, 1.25));
   }, []);
   useEffect(() => onCursorsChange?.(cursors), [cursors, onCursorsChange]);
 
@@ -3811,10 +3817,19 @@ export function BitmapWorld3D({
         {colors ? (
           <div ref={viewShake} className="absolute inset-0 will-change-transform">
           <SafeCanvas
-            dpr={dpr}
+            dpr={quality.pixelRatio * quality.renderScale}
+            shadows={quality.shadows ? { type: THREE.PCFSoftShadowMap } : false}
+            frameloop="always"
+            onCreated={({ gl }) => {
+              const canvas = gl.domElement;
+              const lost = (event: Event) => { event.preventDefault(); setContextLost(true); };
+              const restored = () => setContextLost(false);
+              canvas.addEventListener("webglcontextlost", lost, false);
+              canvas.addEventListener("webglcontextrestored", restored, false);
+            }}
             camera={{ position: [0, 108, minedDepth / 2 + 0.01], fov: 50, near: 0.01, far: 350 }}
             gl={{
-              antialias: true,
+              antialias: quality.antialias,
               powerPreference: "high-performance",
               stencil: false,
               depth: true,
@@ -3868,6 +3883,7 @@ export function BitmapWorld3D({
         ) : null}
 
         <OasisLoading />
+        {contextLost ? <button type="button" className="hud-panel absolute inset-x-4 top-1/2 z-[80] mx-auto w-fit -translate-y-1/2 border-bitcoin px-4 py-3 font-mono text-xs text-bitcoin" onClick={() => window.location.reload()}>GRAPHICS CONTEXT LOST — TAP TO RELOAD</button> : null}
 
         {/* THE OASIS SCORE — synthesised locally, so it costs nothing to stream. */}
         <WorldMusic active={musicOn && !muted} />
@@ -4506,8 +4522,11 @@ export function BitmapWorld3D({
             >
               <MessageSquare className="size-3.5" /> [C] CHAT
             </Button>
+            <QualityHud touch={touchDevice} />
           </div>
         ) : null}
+
+        <GraphicsDebug />
 
         {hover ? (
           <div
@@ -4628,6 +4647,10 @@ export function BitmapWorld3D({
       </div> : null}
     </div>
   );
+}
+
+export function BitmapWorld3D(props: BitmapWorld3DProps) {
+  return <QualityProvider><BitmapWorld3DInner {...props} /></QualityProvider>;
 }
 
 /** SKILLS AND BACKPACK — what this visitor has earned out in the sand. */
