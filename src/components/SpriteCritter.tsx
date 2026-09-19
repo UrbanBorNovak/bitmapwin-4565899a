@@ -206,12 +206,12 @@ export function SpriteParade({ height = 72 }: { height?: number }) {
 
   useEffect(() => {
     if (reduced) return;
-    const timerId = window.setInterval(
-      () => setSceneIndex((current) => (current + 1) % COMIC_SCENES.length),
+    const timerId = window.setTimeout(
+      () => setSceneIndex((sceneIndex + 1) % COMIC_SCENES.length),
       9_000,
     );
-    return () => window.clearInterval(timerId);
-  }, [reduced]);
+    return () => window.clearTimeout(timerId);
+  }, [reduced, sceneIndex]);
 
   useEffect(() => {
     let active = true;
