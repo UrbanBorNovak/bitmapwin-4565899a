@@ -134,6 +134,10 @@ function PlayerRecord() {
             ["PVP SCORE", Math.round(pvpScore(player)).toLocaleString()],
             ["TIMES CHAOTIC", player.chaoticCount.toLocaleString()],
             ["LAST DEATH", sinceLabel(player.lastDeathAt)],
+            ["SHARE PRICE", formatBit(shareVal)],
+            ["SHARES ISSUED", issued.toLocaleString()],
+            ["SHARE HOLDERS", holderCount.toLocaleString()],
+            ["DIVIDENDS PAID", formatBit(stock.data?.dividendsPaid ?? 0)],
           ].map(([label, value]) => (
             <div key={label} className="bg-background px-4 py-3">
               <dt className="label">{label}</dt>
