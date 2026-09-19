@@ -29,7 +29,6 @@ export function unlistMessage(offerId: string) {
 
 export type Offer = {
   id: string;
-  psbtBase64: string;
   bitmapHeight: number | null;
   inscriptionId: string | null;
   outpoint: string;
@@ -41,7 +40,6 @@ export type Offer = {
 
 type OfferRow = {
   id: string;
-  psbt_base64: string;
   bitmap_height: number | null;
   inscription_id: string | null;
   outpoint: string;
@@ -59,7 +57,6 @@ function toOffer(row: OfferRow): Offer {
 
   return {
     id: row.id,
-    psbtBase64: row.psbt_base64,
     bitmapHeight: row.bitmap_height,
     inscriptionId: row.inscription_id,
     outpoint: row.outpoint,
@@ -74,7 +71,7 @@ export async function fetchOffers(options: { height?: number; limit?: number } =
   let query = supabase
     .from("offers")
     .select(
-      "id, psbt_base64, bitmap_height, inscription_id, outpoint, seller_address, price_sats, status, created_at",
+      "id, bitmap_height, inscription_id, outpoint, seller_address, price_sats, status, created_at",
     );
   if (options.height !== undefined) query = query.eq("bitmap_height", options.height);
   const { data, error } = await query
@@ -97,7 +94,7 @@ export async function fetchOffersForInscriptions(ids: string[]) {
   const { data, error } = await supabase
     .from("offers")
     .select(
-      "id, psbt_base64, bitmap_height, inscription_id, outpoint, seller_address, price_sats, status, created_at",
+      "id, bitmap_height, inscription_id, outpoint, seller_address, price_sats, status, created_at",
     )
     .in("inscription_id", ids.slice(0, 60))
     .eq("status", "open")
@@ -120,7 +117,7 @@ export async function fetchSellerOffers(address: string) {
   const { data, error } = await supabase
     .from("offers")
     .select(
-      "id, psbt_base64, bitmap_height, inscription_id, outpoint, seller_address, price_sats, status, created_at",
+      "id, bitmap_height, inscription_id, outpoint, seller_address, price_sats, status, created_at",
     )
     .ilike("seller_address", address)
     .order("created_at", { ascending: false })

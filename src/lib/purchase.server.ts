@@ -106,7 +106,10 @@ const OFFER_COLUMNS =
   "id, psbt_base64, bitmap_height, inscription_id, outpoint, seller_address, price_sats, status";
 
 async function loadOffer(offerId: string) {
-  const { data, error } = await db().from("offers").select(OFFER_COLUMNS).eq("id", offerId).maybeSingle();
+  // The seller's signed PSBT is not readable with the publishable key — the
+  // buyer half is assembled server-side with privileged access instead.
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin.from("offers").select(OFFER_COLUMNS).eq("id", offerId).maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Offer not found");
   return data;
