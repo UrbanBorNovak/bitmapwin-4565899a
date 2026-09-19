@@ -1,11 +1,14 @@
-import { useEffect, useState } from "react";
-import { ChevronDown, Gauge, X } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { ChevronDown, Gauge, SignalHigh, SignalLow, SignalMedium, Wand2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuality } from "./QualityContext";
 import { QUALITY_PROMPT_KEY, isLimitedHardware, type QualityMode, type ViewDistance } from "./quality";
 
-const MODES: Array<{ value: QualityMode; label: string }> = [
-  { value: "auto", label: "AUTO" }, { value: "low", label: "LOW" }, { value: "medium", label: "MED" }, { value: "high", label: "HIGH" },
+const MODES: Array<{ value: QualityMode; label: string; icon: ReactNode }> = [
+  { value: "auto", label: "AUTO", icon: <Wand2 /> },
+  { value: "low", label: "LOW", icon: <SignalLow /> },
+  { value: "medium", label: "MEDIUM", icon: <SignalMedium /> },
+  { value: "high", label: "HIGH", icon: <SignalHigh /> },
 ];
 
 export function QualityHud({ touch = false }: { touch?: boolean }) {
