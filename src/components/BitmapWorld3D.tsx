@@ -25,7 +25,43 @@ import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useCharacter } from "@/lib/character";
-import { ArrowUpRight, Crosshair, Eye, Map as MapIcon, Menu, MessageSquare, Orbit, Trophy, X } from "lucide-react";
+import {
+  ArrowUpRight,
+  BookOpen,
+  Car,
+  Crosshair,
+  Dog,
+  Eye,
+  Flame,
+  Footprints,
+  Gem,
+  Glasses,
+  Hammer,
+  Map as MapIcon,
+  Maximize,
+  Menu,
+  MessageSquare,
+  Music,
+  Music2,
+  Orbit,
+  Package,
+  Pickaxe,
+  Rocket,
+  Search,
+  Send,
+  Shovel,
+  Sparkles,
+  Swords,
+  Trophy,
+  Users,
+  Utensils,
+  Volume2,
+  VolumeX,
+  Watch,
+  Wrench,
+  X,
+} from "lucide-react";
+import { HudIconButton, HudIconLink } from "@/components/game/HudIconButton";
 import * as THREE from "three";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
 import { Button } from "@/components/ui/button";
