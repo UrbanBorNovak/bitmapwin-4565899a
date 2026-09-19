@@ -62,6 +62,7 @@ function ClanBoard() {
             <>
               <Th>#</Th>
               <Th>[TAG] NAME</Th>
+              <Th>TIER</Th>
               <Th mobileHide>LEADER</Th>
               <Th right>MEMBERS</Th>
               <Th right>FAME</Th>
@@ -85,6 +86,7 @@ function ClanBoard() {
                   <span className="font-bold text-foreground">{clan.name}</span>
                 </Link>
               </Td>
+              <Td>{`${clanTier(clan.xp).level} · ${clanTier(clan.xp).name.toUpperCase()}`}</Td>
               <Td mobileHide>{(clan.leaderId ? leaderName.get(clan.leaderId) : null)?.toUpperCase() ?? "—"}</Td>
               <Td right>{clan.membersCount}</Td>
               <Td right>{clan.fame.toLocaleString()}</Td>
