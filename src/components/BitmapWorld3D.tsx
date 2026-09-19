@@ -4570,6 +4570,15 @@ function BitmapWorld3DInner({
             >
               <MessageSquare className="size-3.5" /> [C] CHAT
             </Button>
+            <a
+              href="/ranks"
+              target="_blank"
+              rel="noreferrer"
+              title="Hall of fame — progression, PvP and clans"
+              className="pointer-events-auto flex items-center gap-1.5 border border-border bg-background/55 px-3 py-2 font-mono text-[10px] text-muted-foreground backdrop-blur-sm hover:border-bitcoin hover:text-bitcoin"
+            >
+              <Trophy className="size-3.5" /> [R] RANKS
+            </a>
             <QualityHud touch={touchDevice} />
           </div>
         ) : null}
