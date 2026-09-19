@@ -244,15 +244,11 @@ function WindGrassMaterial({
           float hBack = terrainHeight(origin.xz - vec2(0.0, uTerrainStep));
           float hFront = terrainHeight(origin.xz + vec2(0.0, uTerrainStep));
           vec3 terrainNormal = normalize(vec3(hLeft - hRight, uTerrainStep * 2.0, hBack - hFront));
-          // Billboard around the horizontal view direction only. Taking the raw
-          // camera vector collapsed every blade to zero width when looking down
-          // from a jump or a flight, which read as the grass disappearing.
-          vec3 toCamera = cameraPosition - origin;
-          vec3 flatToCamera = vec3(toCamera.x, 0.0, toCamera.z);
-          if (dot(flatToCamera, flatToCamera) < 0.0001) flatToCamera = vec3(0.0, 0.0, 1.0);
-          vec3 cameraDirection = normalize(flatToCamera);
-          vec3 bladeRight = normalize(cross(vec3(0.0, 1.0, 0.0), cameraDirection));
-          vec3 bladeForward = normalize(cross(bladeRight, terrainNormal));
+          // Read the camera's right axis directly from the view matrix. Unlike a
+          // camera-to-blade cross product this remains finite at every pitch, so
+          // the cards cannot collapse while walking, jumping, or flying overhead.
+          vec3 bladeRight = normalize(vec3(viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]));
+          bladeRight = normalize(bladeRight - terrainNormal * dot(bladeRight, terrainNormal) * 0.16);
 
           vec3 blade = bladeRight * (position.x * width);
           blade += terrainNormal * (position.y * height + height * 0.5);
@@ -296,14 +292,14 @@ function WindGrassMaterial({
           // distance keeps the cover visible while jumping or flying, where the
           // camera is far above ground yet horizontally overhead.
           float cameraFade = smoothstep(
-            ${WORLD_CELL * 0.08},
-            ${WORLD_CELL * 0.32},
+            ${WORLD_CELL * 0.035},
+            ${WORLD_CELL * 0.14},
             distance(vWorldPosition, cameraPosition)
           );
           float alpha = blade.a * distanceFade * cameraFade;
-          if (alpha < 0.02) discard;
-          vec3 colour = blade.rgb * vInstanceColor * 1.45;
-          gl_FragColor = vec4(colour, alpha * 0.92);
+          if (alpha < 0.012) discard;
+          vec3 colour = max(blade.rgb, vec3(0.34, 0.52, 0.12)) * vInstanceColor * 2.05;
+          gl_FragColor = vec4(colour, min(1.0, alpha * 1.18));
         }
       `}
     />
@@ -587,12 +583,12 @@ export function LandGrowth({
 
     // A BITMAP is ten avatar strides wide. Blades need to reach roughly half an
     // avatar to read as grass from the third-person camera instead of sub-pixel noise.
-    const blade = unit * 1.35;
+    const blade = unit * 1.7;
     write(
       grass.current,
       plan.grass,
       MAX_GRASS,
-      (item) => [blade * (0.28 + item.tint * 0.16), blade * item.s, blade * (0.28 + item.tint * 0.16)],
+      (item) => [blade * (0.38 + item.tint * 0.2), blade * item.s, blade * (0.38 + item.tint * 0.2)],
       () => 0,
       (item) => scratch.colour.copy(palette.grassA).lerp(palette.grassB, item.tint),
     );
