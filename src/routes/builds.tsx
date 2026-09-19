@@ -109,7 +109,7 @@ function BuildCard({
               </h2>
               <div className="label mt-1 text-muted-foreground">{page.bitmapHeight}.BITMAP</div>
             </div>
-            <ClubBadge height={page.bitmapHeight} />
+            <ClubBadge height={page.bitmapHeight} asLink={false} />
           </div>
           <div className="label mt-3 flex items-center justify-between gap-3 border-t border-border pt-3">
             <span>{uniqueVisitors.toLocaleString("en-US")} VISITORS</span>

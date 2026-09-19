@@ -162,7 +162,6 @@ export function OfferBook({ height }: { height?: number }) {
 }
 
 function OfferRow({ offer, showLink }: { offer: Offer; showLink: boolean }) {
-  const [expanded, setExpanded] = useState(false);
   return (
     <li className="p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-3">

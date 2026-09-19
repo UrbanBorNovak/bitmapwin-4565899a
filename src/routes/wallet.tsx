@@ -461,8 +461,6 @@ function OfferList({
             <div className="break-all">UTXO {offer.outpoint}</div>
             {offer.deliveryNote && <div>NOTE {offer.deliveryNote}</div>}
           </dl>
-          <div className="mt-3 flex flex-wrap gap-2">
-          </div>
           {renderExtra?.(offer)}
         </li>
       ))}
