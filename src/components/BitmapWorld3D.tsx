@@ -3628,21 +3628,20 @@ function BitmapWorld3DInner({
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Kit</span>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <Button
-                    className={inventoryOpen ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                  <HudIconButton
+                    label={avatarModel ? "Inventory (I) — wearing a model" : "Inventory (I)"}
+                    icon={<Package />}
+                    active={inventoryOpen}
+                    flag={Boolean(avatarModel)}
                     onClick={() => setInventoryOpen((current) => !current)}
-                  >
-                    {avatarModel ? "[ INVENTORY · WEARING MODEL ]" : "[ INVENTORY · I ]"}
-                  </Button>
+                  />
                   <div className="relative">
-                    <Button
-                      className={rationsOpen ? "btn-term" : "btn-term-ghost"}
-                      variant="ghost"
+                    <HudIconButton
+                      label="Rations (E)"
+                      icon={<Utensils />}
+                      active={rationsOpen}
                       onClick={() => setRationsOpen((current) => !current)}
-                    >
-                      [ RATIONS · E ]
-                    </Button>
+                    />
                     {rationsOpen ? (
                       <div className="hud-panel absolute bottom-full left-0 z-20 mb-2 w-64 p-2">
                         <div className="mb-1.5 text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
