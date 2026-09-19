@@ -181,6 +181,14 @@ function WindGrassMaterial({
       const moved = dx * dx + dz * dz;
       const airborne = !player.grounded || player.y > 0;
       if (
+        !airborne &&
+        (sampledCentre.current.x !== heightmapCentre.x || sampledCentre.current.y !== heightmapCentre.z)
+      ) {
+        fillTerrainHeightmap(heightmap, heightmapCentre.x, heightmapCentre.z);
+        uniforms.uHeightmapCentre.value.set(heightmapCentre.x, heightmapCentre.z);
+        sampledCentre.current.set(heightmapCentre.x, heightmapCentre.z);
+      }
+      if (
         airborne &&
         moved > (WORLD_CELL * 0.5) ** 2 &&
         clock.elapsedTime >= nextAirborneSample.current
