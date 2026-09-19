@@ -25,7 +25,7 @@ import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useCharacter } from "@/lib/character";
-import { ArrowUpRight, Crosshair, Eye, Map as MapIcon, Menu, MessageSquare, Orbit, X } from "lucide-react";
+import { ArrowUpRight, Crosshair, Eye, Map as MapIcon, Menu, MessageSquare, Orbit, Trophy, X } from "lucide-react";
 import * as THREE from "three";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
 import { Button } from "@/components/ui/button";
@@ -144,6 +144,8 @@ import { ClanCrest } from "@/components/game/ClanCrest";
 import { ClanPanel } from "@/components/game/ClanPanel";
 import { BaseMenu } from "@/components/game/BaseMenu";
 import { clanStateQuery, type ClanBadge } from "@/lib/clans";
+import { isChaoticHandle } from "@/lib/ranks";
+import { recordPvpKillFn } from "@/lib/ranks.functions";
 
 /** the side menu shelves — one open at a time keeps the HUD short */
 type KitTab = "base" | "action" | "kit" | "travel" | "view" | "clan";
