@@ -20,6 +20,7 @@ import { BitmapChat } from "@/components/BitmapChat";
 import { BitmapPriceChart } from "@/components/BitmapPriceChart";
 import { ProvenancePanel } from "@/components/ProvenancePanel";
 import { WatchBitmapButton } from "@/components/WatchBitmapButton";
+import { BitmapValuation } from "@/components/BitmapValuation";
 import { ParcelPagePanel } from "@/components/ParcelPagePanel";
 import { ParcelPanel } from "@/components/ParcelPanel";
 import { DistrictReinscriptions } from "@/components/DistrictReinscriptions";
@@ -209,6 +210,11 @@ function BitmapDetail() {
       <div className="mt-6">
         <WatchBitmapButton height={block} />
       </div>
+
+      <BitmapValuation
+        height={block}
+        claimInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
+      />
 
       <BitmapChat height={block} />
 

@@ -45,6 +45,7 @@ import { Route as SdkPlaygroundRouteImport } from './routes/sdk-playground'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StudioRouteImport } from './routes/studio'
 import { Route as TradingPostRouteImport } from './routes/trading-post'
+import { Route as ValuationRouteImport } from './routes/valuation'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as WorldStatsRouteImport } from './routes/world-stats'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
@@ -250,6 +251,11 @@ const TradingPostRoute = TradingPostRouteImport.update({
   path: '/trading-post',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ValuationRoute = ValuationRouteImport.update({
+  id: '/valuation',
+  path: '/valuation',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WalletRoute = WalletRouteImport.update({
   id: '/wallet',
   path: '/wallet',
@@ -411,6 +417,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/studio': typeof StudioRoute
   '/trading-post': typeof TradingPostRoute
+  '/valuation': typeof ValuationRoute
   '/wallet': typeof WalletRoute
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -470,6 +477,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/studio': typeof StudioRoute
   '/trading-post': typeof TradingPostRoute
+  '/valuation': typeof ValuationRoute
   '/wallet': typeof WalletRoute
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -533,6 +541,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/studio': typeof StudioRoute
   '/trading-post': typeof TradingPostRoute
+  '/valuation': typeof ValuationRoute
   '/wallet': typeof WalletRoute
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -597,6 +606,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/studio'
     | '/trading-post'
+    | '/valuation'
     | '/wallet'
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
@@ -656,6 +666,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/studio'
     | '/trading-post'
+    | '/valuation'
     | '/wallet'
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
@@ -718,6 +729,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/studio'
     | '/trading-post'
+    | '/valuation'
     | '/wallet'
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
@@ -781,6 +793,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StudioRoute: typeof StudioRoute
   TradingPostRoute: typeof TradingPostRoute
+  ValuationRoute: typeof ValuationRoute
   WalletRoute: typeof WalletRoute
   WorldStatsRoute: typeof WorldStatsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -1043,6 +1056,13 @@ declare module '@tanstack/react-router' {
       path: '/trading-post'
       fullPath: '/trading-post'
       preLoaderRoute: typeof TradingPostRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/valuation': {
+      id: '/valuation'
+      path: '/valuation'
+      fullPath: '/valuation'
+      preLoaderRoute: typeof ValuationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/wallet': {
@@ -1332,6 +1352,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StudioRoute: StudioRoute,
   TradingPostRoute: TradingPostRoute,
+  ValuationRoute: ValuationRoute,
   WalletRoute: WalletRoute,
   WorldStatsRoute: WorldStatsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
