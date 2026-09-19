@@ -11,7 +11,7 @@ import { useGLTF } from "@react-three/drei";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
 import { isSea } from "@/lib/world-sea";
-import { groundY } from "@/lib/world-terrain";
+import { groundY, useTerrainVersion } from "@/lib/world-terrain";
 import { useQuality } from "@/graphics/QualityContext";
 
 export const HOUSE_INSCRIPTION =
@@ -37,6 +37,8 @@ export const Houses = memo(function Houses({
   center: [number, number];
   radius: number;
 }) {
+  // Landforms registering their slopes re-place this scenery onto them.
+  useTerrainVersion();
   const { quality } = useQuality();
   const houses = useMemo(() => {
     // Homesteads sit far apart — one every few hundred strides at most.

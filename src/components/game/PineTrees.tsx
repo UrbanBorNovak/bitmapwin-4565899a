@@ -12,7 +12,7 @@ import { useGLTF } from "@react-three/drei";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
 import { isSea } from "@/lib/world-sea";
-import { groundY } from "@/lib/world-terrain";
+import { groundY, useTerrainVersion } from "@/lib/world-terrain";
 import { WORLD_CELL } from "@/lib/player-state";
 import { useQuality } from "@/graphics/QualityContext";
 
@@ -140,6 +140,8 @@ export const PineTrees = memo(function PineTrees({
   center: [number, number];
   radius: number;
 }) {
+  // Landforms registering their slopes re-place this scenery onto them.
+  useTerrainVersion();
   const { quality } = useQuality();
   const treeLimit = quality.resolved === "low" ? 28 : quality.resolved === "medium" ? 68 : MAX_TREES;
   const flowerLimit = quality.resolved === "low" ? 36 : quality.resolved === "medium" ? 96 : MAX_FLOWERS;

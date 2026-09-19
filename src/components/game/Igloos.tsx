@@ -11,7 +11,7 @@ import { useGLTF } from "@react-three/drei";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
 import { isSea } from "@/lib/world-sea";
-import { groundY } from "@/lib/world-terrain";
+import { groundY, useTerrainVersion } from "@/lib/world-terrain";
 
 export const IGLOO_INSCRIPTION =
   "2332e344525cdc380039b5d760e33a5f8104631cdeeb9047a340cad1fc7a7895i0";
@@ -36,6 +36,8 @@ export const Igloos = memo(function Igloos({
   center: [number, number];
   radius: number;
 }) {
+  // Landforms registering their slopes re-place this scenery onto them.
+  useTerrainVersion();
   const igloos = useMemo(() => {
     const pitch = unit * 34;
     const span = Math.ceil(radius / pitch);
