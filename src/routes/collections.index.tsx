@@ -1,24 +1,28 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { CLUBS, clubOf, clubSupply, formatRange } from "@/lib/clubs";
+import { GALLERY_COLLECTIONS, type GalleryCollection } from "@/lib/bitmap-collections";
+import { usePunkFilter } from "@/lib/punk-filter";
+import { ordContentUrl } from "@/lib/oci";
 import { registryBaseQuery } from "@/lib/registry";
 import { formatSats } from "@/lib/trades";
 
 export const Route = createFileRoute("/collections/")({
   head: () => ({
     meta: [
-      { title: "Bitmap Collections — Clubs by Block Height" },
+      { title: "Bitmap Collections — Clubs, Punks & Patterns" },
       {
         name: "description",
         content:
-          "Browse Bitmap clubs as collections: SUB 1K, SUB 10K, SUB 100K and SUB 1M, each with fixed supply, indexed count, floor and volume from real Bitcoin transactions.",
+          "Browse Bitmap clubs and inscribed punk collections: SUB 1K to SUB 1M clubs plus pristine, standard, wide neck and perfect punks, with real indexed counts, floors and on-chain volume.",
       },
-      { property: "og:title", content: "Bitmap Collections — Clubs by Block Height" },
+      { property: "og:title", content: "Bitmap Collections — Clubs, Punks & Patterns" },
       {
         property: "og:description",
         content:
-          "Bitmap clubs grouped by block height range, with fixed supply, indexed claims, floor price and on-chain sale volume.",
+          "Bitmap clubs by block height and the inscribed punk collections decided by fixed on-chain facts: transaction count and render shape.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
