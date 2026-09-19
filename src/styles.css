@@ -50,6 +50,10 @@
   --color-bitcoin: var(--bitcoin);
   --color-bitcoin-foreground: var(--bitcoin-foreground);
   --color-surface: var(--surface);
+  --color-profile-surface: var(--profile-surface);
+  --color-profile-surface-raised: var(--profile-surface-raised);
+  --color-profile-warm: var(--profile-warm);
+  --color-profile-warm-muted: var(--profile-warm-muted);
 }
 
 :root {
@@ -85,6 +89,10 @@
   --input: oklch(0.27 0.008 235);
   --ring: oklch(0.72 0.169 55);
   --grid: oklch(0.25 0.008 235);
+  --profile-surface: oklch(0.145 0.012 55);
+  --profile-surface-raised: oklch(0.18 0.018 55);
+  --profile-warm: oklch(0.82 0.135 70);
+  --profile-warm-muted: oklch(0.57 0.085 65);
 }
 
 .dark {
@@ -117,6 +125,10 @@
   --input: oklch(0.8 0 0);
   --ring: oklch(0.64 0.175 50);
   --grid: oklch(0.82 0 0);
+  --profile-surface: oklch(0.98 0.014 75);
+  --profile-surface-raised: oklch(0.94 0.025 75);
+  --profile-warm: oklch(0.57 0.14 55);
+  --profile-warm-muted: oklch(0.5 0.08 55);
 }
 
 @layer base {
@@ -344,6 +356,38 @@
   box-shadow:
     inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 6%, transparent),
     0 18px 40px -32px oklch(0 0 0 / 0.9);
+}
+
+@utility profile-home {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--color-profile-warm) 28%, var(--color-border));
+  border-radius: var(--radius-lg);
+  background:
+    repeating-linear-gradient(
+      180deg,
+      transparent 0 3px,
+      color-mix(in oklab, var(--color-profile-warm) 2.5%, transparent) 3px 4px
+    ),
+    var(--color-profile-surface);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--color-profile-warm) 12%, transparent),
+    0 28px 64px -44px color-mix(in oklab, var(--color-profile-warm) 50%, transparent);
+}
+
+@utility profile-portrait {
+  border: 2px solid color-mix(in oklab, var(--color-profile-warm) 58%, transparent);
+  border-radius: 999px;
+  background: var(--color-profile-surface-raised);
+  box-shadow:
+    0 0 0 5px color-mix(in oklab, var(--color-profile-warm) 9%, transparent),
+    0 0 26px color-mix(in oklab, var(--color-profile-warm) 14%, transparent);
+}
+
+@utility profile-readout {
+  border: 1px solid color-mix(in oklab, var(--color-profile-warm) 18%, var(--color-border));
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--color-profile-surface-raised) 78%, transparent);
 }
 
 /* Heads-up display surfaces layered over the 3D land world. */
