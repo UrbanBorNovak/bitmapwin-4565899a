@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { Crosshair, UserPlus } from "lucide-react";
 import { Minimap } from "@/components/game/Minimap";
 import type { PlayerState } from "@/lib/player-state";
 import { STRIDE } from "@/lib/player-state";
