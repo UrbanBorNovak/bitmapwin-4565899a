@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { SPRITES, SpriteCritter } from "@/components/SpriteCritter";
 
 const GROUPS: { label: string; items: { to: string; label: string }[] }[] = [
   {
@@ -73,6 +74,7 @@ export function SiteFooter() {
         </nav>
         <div className="mt-8 flex flex-col gap-2 border-t border-border pt-6 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
+            <SpriteCritter sheet={SPRITES[2]!} height={44} className="animate-sprite-bob shrink-0" />
             <div className="display text-sm">THE BEDROCK FOR AI-BUILT WORLDS</div>
           </div>
           <div className="label">

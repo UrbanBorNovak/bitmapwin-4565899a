@@ -22,7 +22,6 @@ import { TradeCrawlerDriver } from "@/components/TradeCrawlerDriver";
 import { RegistryResolverDriver } from "@/components/RegistryResolverDriver";
 import { LanguageProvider } from "@/lib/i18n";
 import { GuidedTour } from "@/components/GuidedTour";
-import { AmbientCharacters } from "@/components/AmbientCharacters";
 
 
 
@@ -163,7 +162,6 @@ function RootComponent() {
         <div className="relative z-40">
           <SiteHeader />
         </div>
-        <AmbientCharacters pathname={routeKey} />
         <main className="relative z-10 flex-1">
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <div key={routeKey} className="route-stage">
