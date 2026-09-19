@@ -349,16 +349,14 @@ let chaoticLoading: Promise<void> | null = null;
 /** Lowercase names of everybody flagged chaotic, cached for the whole session. */
 export function chaoticHandles(): Set<string> {
   if (!chaoticNames && !chaoticLoading && typeof window !== "undefined") {
-    chaoticLoading = supabase
-      .from("rank_players")
-      .select("name")
-      .eq("status", "chaotic")
-      .then(({ data }) => {
+    chaoticLoading = (async () => {
+      try {
+        const { data } = await supabase.from("rank_players").select("name").eq("status", "chaotic");
         chaoticNames = new Set((data ?? []).map((row) => String(row.name).toLowerCase()));
-      })
-      .catch(() => {
+      } catch {
         chaoticNames = new Set();
-      });
+      }
+    })();
   }
   return chaoticNames ?? new Set();
 }
