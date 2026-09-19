@@ -266,6 +266,7 @@ import { DamageVeil } from "@/components/game/DamageVeil";
 import type { RideSpec } from "@/lib/world-vehicle";
 import { dryLandNear, isSea, nearestSea } from "@/lib/world-sea";
 import { groundY, waterSurfaceY } from "@/lib/world-terrain";
+import { TerrainModels } from "@/components/game/TerrainModels";
 import { TerrainField } from "@/components/game/TerrainField";
 import { WorldBoundary } from "@/components/game/WorldBoundary";
 import TouchControls from "@/components/game/TouchControls";
@@ -2391,6 +2392,7 @@ const WorldScene = memo(function WorldScene({
         <>
           <ChunkStreamer pose={pose} />
           <TerrainField pose={pose} />
+          <TerrainModels />
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <SeaMasses unit={AVATAR_U} pose={pose} />
           <SeaIslands unit={AVATAR_U} pose={pose} />

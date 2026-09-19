@@ -16,7 +16,7 @@ import type { PlayerState } from "@/lib/player-state";
 import { WORLD_CELL } from "@/lib/player-state";
 import {
   MAX_RELIEF,
-  groundY,
+  baseGroundY,
   requestTerrainAround,
   subscribeTerrain,
 } from "@/lib/world-terrain";
@@ -70,7 +70,7 @@ export function TerrainField({ pose }: { pose: React.RefObject<PlayerState> }) {
       // Ease the outer ring back to the flat far desert, so no cliff edge.
       const edge = Math.max(Math.abs(lx), Math.abs(lz)) / half;
       const fade = 1 - Math.max(0, (edge - 0.82) / 0.18);
-      const y = groundY(x, z) * Math.max(0, Math.min(1, fade));
+      const y = baseGroundY(x, z) * Math.max(0, Math.min(1, fade));
       position.setY(i, y);
 
       const level = Math.max(-1, Math.min(1, y / MAX_RELIEF));
