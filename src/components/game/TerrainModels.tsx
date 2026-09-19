@@ -24,9 +24,6 @@ import {
 } from "@/lib/world-terrain-models";
 import { baseGroundY } from "@/lib/world-terrain";
 
-/** Samples across the footprint. 64 keeps the walk surface smooth and cheap. */
-const RES = 64;
-
 function Landform({ spec }: { spec: TerrainModelSpec }) {
   const gltf = useGLTF(contentUrl(spec.inscription));
   const spot = useMemo(() => terrainModelSpot(spec), [spec]);
@@ -62,6 +59,7 @@ function Landform({ spec }: { spec: TerrainModelSpec }) {
 
   // Read the walkable top surface out of the model.
   useEffect(() => {
+    const RES = spec.res;
     const raycaster = new THREE.Raycaster();
     const down = new THREE.Vector3(0, -1, 0);
     const origin = new THREE.Vector3();
