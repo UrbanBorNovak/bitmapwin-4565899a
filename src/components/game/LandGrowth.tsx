@@ -113,11 +113,6 @@ function WindGrassMaterial({
   heightmapCentre: { x: number; z: number };
   terrainRevision: number;
 }) {
-  const { quality } = useQuality();
-  const radiusCells = quality.resolved === "low" ? 8 : quality.resolved === "medium" ? 16 : RADIUS_CELLS;
-  const grassBudget = quality.resolved === "low" ? 6_000 : quality.resolved === "medium" ? 14_000 : MAX_GRASS;
-  const bushBudget = quality.resolved === "low" ? 70 : quality.resolved === "medium" ? 160 : MAX_BUSH;
-  const treeBudget = quality.resolved === "low" ? 30 : quality.resolved === "medium" ? 60 : MAX_TREE;
   const material = useRef<THREE.ShaderMaterial>(null);
   const sampledCentre = useRef(new THREE.Vector2(Number.NaN, Number.NaN));
   const nextAirborneSample = useRef(0);
@@ -445,6 +440,11 @@ export function LandGrowth({
   unit: number;
   pose: React.RefObject<PlayerState>;
 }) {
+  const { quality } = useQuality();
+  const radiusCells = quality.resolved === "low" ? 8 : quality.resolved === "medium" ? 16 : RADIUS_CELLS;
+  const grassBudget = quality.resolved === "low" ? 6_000 : quality.resolved === "medium" ? 14_000 : MAX_GRASS;
+  const bushBudget = quality.resolved === "low" ? 70 : quality.resolved === "medium" ? 160 : MAX_BUSH;
+  const treeBudget = quality.resolved === "low" ? 30 : quality.resolved === "medium" ? 60 : MAX_TREE;
   const land = useTerraformedLand();
   // Re-plan when something is built or demolished: plants clear the new floor.
   const builds = useWorldBuilds();
