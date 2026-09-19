@@ -25,6 +25,7 @@ const joinClanSchema = z.object({
 type PlayerRow = {
   id: string;
   name: string;
+  clan_id: string | null;
   karma: number;
   fame: number;
   level: number;
@@ -48,14 +49,14 @@ export const recordPvpKillFn = createServerFn({ method: "POST" })
     async function ensure(name: string, userId: string | null): Promise<PlayerRow> {
       const { data: found } = await supabaseAdmin
         .from("rank_players")
-        .select("id, name, karma, fame, level, status, pk_kills, pvp_kills, deaths, chaotic_count")
+        .select("id, name, clan_id, karma, fame, level, status, pk_kills, pvp_kills, deaths, chaotic_count")
         .ilike("name", name)
         .maybeSingle();
       if (found) return found as PlayerRow;
       const { data: created, error } = await supabaseAdmin
         .from("rank_players")
         .insert({ name, title: titleForLevel(1), ...(userId ? { user_id: userId } : {}) })
-        .select("id, name, karma, fame, level, status, pk_kills, pvp_kills, deaths, chaotic_count")
+        .select("id, name, clan_id, karma, fame, level, status, pk_kills, pvp_kills, deaths, chaotic_count")
         .single();
       if (error) throw new Error(error.message);
       return created as PlayerRow;
@@ -100,9 +101,28 @@ export const recordPvpKillFn = createServerFn({ method: "POST" })
     });
     if (eventError) throw new Error(eventError.message);
 
+    // Clan tags so the world can announce the kill the old way:
+    // "[TAG] Killer has slain [TAG] Victim at 65022.BITMAP".
+    const clanIds = [killer.clan_id, victim.clan_id].filter((id): id is string => Boolean(id));
+    const tags = new Map<string, string>();
+    if (clanIds.length) {
+      const { data: clans } = await supabaseAdmin
+        .from("rank_clans")
+        .select("id, tag")
+        .in("id", clanIds);
+      for (const clan of clans ?? []) tags.set(clan.id, clan.tag);
+    }
+    const badge = (row: PlayerRow) => {
+      const tag = row.clan_id ? tags.get(row.clan_id) : null;
+      return tag ? `[${tag}] ${row.name}` : row.name;
+    };
+
     return {
       killer: killer.name,
       victim: victim.name,
+      killerTag: killer.clan_id ? tags.get(killer.clan_id) ?? null : null,
+      victimTag: victim.clan_id ? tags.get(victim.clan_id) ?? null : null,
+      announce: `${badge(killer)} has slain ${badge(victim)}${data.district ? ` at ${data.district}` : ""}`,
       wasPk,
       karma: nextKarma,
       status: nextStatus,
