@@ -3521,9 +3521,7 @@ function BitmapWorld3DInner({
                 data-no-translate
                 className="h-7 w-32 border border-border bg-background/80 px-2 font-mono text-[11px] tabular-nums outline-none transition-colors focus:border-bitcoin"
               />
-              <Button type="submit" className="btn-term" variant="ghost">
-                [ VISIT ]
-              </Button>
+              <HudIconButton type="submit" label="Go to this BITMAP" icon={<Search />} />
             </form>
 
             <span className="hud-divider" aria-hidden />
