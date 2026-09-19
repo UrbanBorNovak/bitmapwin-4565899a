@@ -29,6 +29,7 @@ import { BitmapEvents } from "@/components/coins/BitmapEvents";
 import { MakeOfferButton } from "@/components/MakeOfferButton";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { TerritoryPanel } from "@/components/extenders/TerritoryPanel";
+import { getBitmapHolderFn } from "@/lib/locate-bitmap.functions";
 
 import { InscriptionContent } from "@/components/InscriptionContent";
 import { shortId } from "@/lib/chain";
@@ -54,6 +55,14 @@ const ociQuery = (height: number) =>
     queryFn: () => getBitmapRegistryEntry({ data: { height } }),
     enabled: height >= 0 && height <= MAX_BITMAP,
     staleTime: 30 * 60_000,
+    retry: 1,
+  });
+
+const liveHolderQuery = (height: number) =>
+  queryOptions({
+    queryKey: ["bitmap-live-holder", height],
+    queryFn: () => getBitmapHolderFn({ data: { height } }),
+    staleTime: 60_000,
     retry: 1,
   });
 
@@ -116,13 +125,14 @@ function BitmapDetail() {
   });
 
   const oci = useQuery(ociQuery(block));
+  const liveHolder = useQuery(liveHolderQuery(block));
   const trades = useQuery(tradesForHeightQuery(block));
   const queryClient = useQueryClient();
 
   const claims = (scan.data?.inscriptions ?? []).filter((i) => i.isBitmapClaim);
   const history = [...(trades.data ?? [])].sort((a, b) => b.hop - a.hop);
   const lastSale = history.find((t) => t.price_sats > 0) ?? null;
-  const owner = history[0]?.buyer_address ?? parcel?.ownerAddress ?? null;
+  const owner = liveHolder.data?.ownerAddress ?? parcel?.ownerAddress ?? history[0]?.buyer_address ?? oci.data?.ownerAddress ?? null;
 
   const trace = useMutation({
     mutationFn: async () => {
@@ -196,11 +206,11 @@ function BitmapDetail() {
         <BitmapOrderBook height={block} />
       </div>
 
-      <ProvenancePanel height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
+      <ProvenancePanel height={block} ownerAddress={owner} />
 
       <BitmapPriceChart height={block} />
 
-      <ParcelPagePanel height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
+      <ParcelPagePanel height={block} ownerAddress={owner} />
 
       <ParcelPanel
         height={block}
@@ -255,7 +265,7 @@ function BitmapDetail() {
             <Field k="BITCOIN NETWORK" v="MAINNET" />
             <Field
               k="OWNER"
-              v={owner ? shortenAddress(owner) : oci.data?.ownerAddress ? shortenAddress(oci.data.ownerAddress) : "UNCLAIMED"}
+               v={owner ? shortenAddress(owner) : liveHolder.isPending ? "RESOLVING…" : "UNCLAIMED"}
             />
             <Field
               k="STATUS"
@@ -482,20 +492,20 @@ function BitmapDetail() {
 
       <BidPanel
         height={block}
-        ownerAddress={owner ?? oci.data?.ownerAddress ?? null}
+        ownerAddress={owner}
         askSats={parcel?.listedSats ?? null}
       />
 
       <div className="mt-6">
-        <TerritoryPanel height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
+        <TerritoryPanel height={block} ownerAddress={owner} ownerPending={liveHolder.isPending} />
       </div>
 
       <div className="mt-6">
-        <LeasePanel height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
+        <LeasePanel height={block} ownerAddress={owner} />
       </div>
 
       <div className="mt-6">
-        <BitmapEvents height={block} ownerAddress={owner ?? oci.data?.ownerAddress ?? null} />
+        <BitmapEvents height={block} ownerAddress={owner} />
       </div>
 
 

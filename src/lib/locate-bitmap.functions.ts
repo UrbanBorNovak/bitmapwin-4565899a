@@ -19,3 +19,13 @@ export const locateBitmapFn = createServerFn({ method: "GET" })
     const { locateBitmap } = await import("@/lib/locate-bitmap.server");
     return locateBitmap({ height: data.height, address: data.address });
   });
+
+/** Public read of the address currently holding the BITMAP inscription. */
+export const getBitmapHolderFn = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) =>
+    z.object({ height: z.number().int().min(0).max(10_000_000) }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { locateBitmapHolder } = await import("@/lib/locate-bitmap.server");
+    return locateBitmapHolder(data.height);
+  });

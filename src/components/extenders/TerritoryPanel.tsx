@@ -11,7 +11,15 @@ import { useWalletSession } from "@/lib/wallet-session";
  * build there, and whether it is currently leased. Ownership itself stays on
  * chain — this panel only reads the rights layered on top of it.
  */
-export function TerritoryPanel({ height, ownerAddress }: { height: number; ownerAddress: string | null }) {
+export function TerritoryPanel({
+  height,
+  ownerAddress,
+  ownerPending = false,
+}: {
+  height: number;
+  ownerAddress: string | null;
+  ownerPending?: boolean;
+}) {
   const wallet = useWalletSession();
   const isOwner = Boolean(
     ownerAddress && wallet?.ordinalsAddress && ownerAddress.toLowerCase() === wallet.ordinalsAddress.toLowerCase(),
@@ -34,8 +42,8 @@ export function TerritoryPanel({ height, ownerAddress }: { height: number; owner
       </header>
 
       <dl className="grid grid-cols-2 divide-x divide-y divide-border border-b border-border sm:grid-cols-4">
-        <Cell k="OWNER" v={ownerAddress ? shortenAddress(ownerAddress) : "UNCLAIMED"} />
-        <Cell k="LAND" v={ownerAddress ? "OWNED" : "OPEN"} />
+        <Cell k="OWNER" v={ownerAddress ? shortenAddress(ownerAddress) : ownerPending ? "RESOLVING…" : "UNCLAIMED"} />
+        <Cell k="LAND" v={ownerAddress ? "OWNED" : ownerPending ? "RESOLVING…" : "OPEN"} />
         <Cell k="DEPLOYED" v={deployments.isPending ? "…" : String(stack.length)} />
         <Cell k="BUILDINGS" v={deployments.isPending ? "…" : String(buildings)} />
         <Cell k="EXPERIENCES" v={deployments.isPending ? "…" : String(experiences)} />
