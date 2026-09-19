@@ -3094,6 +3094,9 @@ function BitmapWorld3DInner({
   /** Basic attack: strike the closest visitor standing within melee range. */
   const cursorsRef = useRef(cursors);
   cursorsRef.current = cursors;
+  /** who you last swung at — the ranks hook watches them for a death */
+  const struck = useRef<{ id: string; handle: string; at: number } | null>(null);
+  const logged = useRef(new Set<string>());
   const [attackTarget, setAttackTarget] = useState<string | null>(null);
   const [attackCooldownUntil, setAttackCooldownUntil] = useState(0);
   const [combatNow, setCombatNow] = useState(() => Date.now());
