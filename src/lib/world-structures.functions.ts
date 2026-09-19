@@ -153,3 +153,109 @@ export const removeWorldStructure = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/* ------------------------------------------------ personal build vault */
+
+/**
+ * PLAYER BUILDS — a signed-in player's own structures, saved even when they
+ * stand on land the player does not hold. The shared world only accepts builds
+ * on your own land, so without this vault everything else would be lost on
+ * reload. Rows are private: policies scope every read and write to the owner.
+ */
+export type PlayerBuildRow = {
+  id: string;
+  chunk_key: string;
+  bitmap_height: number;
+  kind: string;
+  x: number;
+  z: number;
+  yaw: number;
+  builder_address: string | null;
+  created_at: string;
+};
+
+const MAX_VAULT = 400;
+
+function normalisePlayerBuild(row: PlayerBuildRow): PlayerBuildRow {
+  return {
+    ...row,
+    bitmap_height: Number(row.bitmap_height),
+    x: Number(row.x),
+    z: Number(row.z),
+    yaw: Number(row.yaw),
+  };
+}
+
+const VAULT_COLUMNS = "id, chunk_key, bitmap_height, kind, x, z, yaw, builder_address, created_at";
+
+/** Everything this player has ever raised, newest last. */
+export const listMyBuilds = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("player_builds")
+      .select(VAULT_COLUMNS)
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false })
+      .limit(MAX_VAULT);
+    if (error) throw new Error(error.message);
+    return { builds: (rows ?? []).map((row) => normalisePlayerBuild(row as PlayerBuildRow)) };
+  });
+
+/** Save builds to the player's own vault. The session decides the owner. */
+export const savePlayerBuilds = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: PlaceInput) => ({
+    items: (input?.items ?? []).slice(0, 20).map((item) => ({
+      kind: String(item.kind).slice(0, 40),
+      chunkKey: String(item.chunkKey),
+      height: Math.max(0, Math.floor(Number(item.height) || 0)),
+      x: Number(item.x) || 0,
+      z: Number(item.z) || 0,
+      yaw: Number(item.yaw) || 0,
+    })),
+  }))
+  .handler(async ({ data, context }) => {
+    if (!data.items.length) return { builds: [] as PlayerBuildRow[] };
+    const { supabase, userId } = context;
+
+    const { data: link } = await supabase
+      .from("wallet_links")
+      .select("address")
+      .eq("user_id", userId)
+      .order("verified_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const { data: rows, error } = await supabase
+      .from("player_builds")
+      .insert(
+        data.items.map((item) => ({
+          user_id: userId,
+          builder_address: link?.address ?? null,
+          chunk_key: item.chunkKey,
+          bitmap_height: item.height,
+          kind: item.kind,
+          x: item.x,
+          z: item.z,
+          yaw: item.yaw,
+        })),
+      )
+      .select(VAULT_COLUMNS);
+    if (error) throw new Error(error.message);
+    return { builds: (rows ?? []).map((row) => normalisePlayerBuild(row as PlayerBuildRow)) };
+  });
+
+/** Drop one saved build. Policies allow only the player's own rows. */
+export const removePlayerBuild = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string }) => ({ id: String(input?.id ?? "") }))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("player_builds")
+      .delete()
+      .eq("id", data.id)
+      .eq("user_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
