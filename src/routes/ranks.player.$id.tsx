@@ -57,11 +57,21 @@ function PlayerRecord() {
       <div className="mt-4 border border-border">
         <header className="flex flex-wrap items-center gap-3 border-b border-border bg-surface px-4 py-3">
           {player.clanTag ? (
-            <span
-              aria-hidden="true"
-              className="inline-block size-6 border border-border"
-              style={{ background: player.crestColor ?? "var(--bitcoin)" }}
-            />
+            clanCrestImage(player.clanTag) ? (
+              <img
+                src={clanCrestImage(player.clanTag)!}
+                alt=""
+                aria-hidden="true"
+                className="inline-block size-6 shrink-0 border border-border object-cover"
+                style={{ imageRendering: "pixelated", background: player.crestColor ?? "var(--bitcoin)" }}
+              />
+            ) : (
+              <span
+                aria-hidden="true"
+                className="inline-block size-6 shrink-0 border border-border"
+                style={{ background: player.crestColor ?? "var(--bitcoin)" }}
+              />
+            )
           ) : null}
           <div className="min-w-0">
             <div className="flex items-center gap-2">
