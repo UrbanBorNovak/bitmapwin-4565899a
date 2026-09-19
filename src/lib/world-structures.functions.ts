@@ -172,6 +172,8 @@ export type PlayerBuildRow = {
   yaw: number;
   builder_address: string | null;
   created_at: string;
+  clan_id?: string | null;
+  clan_tag?: string | null;
 };
 
 const MAX_VAULT = 400;
