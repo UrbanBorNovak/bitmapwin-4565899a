@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { BitmapWorld3D } from "@/components/BitmapWorld3D";
+import { lazy, Suspense } from "react";
 import { getChainBlocks } from "@/lib/chain.functions";
+
+const BitmapWorld3D = lazy(() => import("@/components/BitmapWorld3D").then((module) => ({ default: module.BitmapWorld3D })));
 
 export const Route = createFileRoute("/map")({
   ssr: false,
@@ -67,11 +69,13 @@ function MapPage() {
   return (
     <div className="px-0 pb-0 sm:px-2 sm:pb-2 md:px-3">
       <div data-tour="map-world" className="min-w-0">
-        <BitmapWorld3D
-          tipHeight={tipHeight}
-          {...(height === undefined ? {} : { initialHeight: height })}
-          legend={<span data-tour="map-legend" className="flex flex-wrap items-center gap-2">{legend}</span>}
-        />
+        <Suspense fallback={<div className="grid h-[78vh] min-h-[520px] place-items-center border border-border bg-background font-mono text-xs text-signal">INITIALIZING OASIS RENDERER…</div>}>
+          <BitmapWorld3D
+            tipHeight={tipHeight}
+            {...(height === undefined ? {} : { initialHeight: height })}
+            legend={<span data-tour="map-legend" className="flex flex-wrap items-center gap-2">{legend}</span>}
+          />
+        </Suspense>
       </div>
     </div>
   );

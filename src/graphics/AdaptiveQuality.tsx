@@ -1,23 +1,28 @@
 import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useQuality } from "./QualityContext";
-import { reportFrame } from "./useFps";
+import { reportFrame, reportRenderer } from "./useFps";
 
 export function AdaptiveQuality() {
   const { quality, setAdaptiveScale } = useQuality();
   const invalidate = useThree((state) => state.invalidate);
+  const setFrameloop = useThree((state) => state.setFrameloop);
   const state = useRef({ lowFor: 0, highFor: 0, changedAt: -10, lastRender: 0, firstFrames: 0, firstTime: 0 });
 
   useEffect(() => {
-    const onVisibility = () => { if (!document.hidden) invalidate(); };
+    const onVisibility = () => {
+      setFrameloop(document.hidden ? "never" : "always");
+      if (!document.hidden) invalidate();
+    };
     document.addEventListener("visibilitychange", onVisibility);
     return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, [invalidate]);
+  }, [invalidate, setFrameloop]);
 
   useFrame(({ gl, scene, camera, clock }, rawDelta) => {
     const now = clock.elapsedTime;
     const delta = Math.min(rawDelta, 0.25);
     reportFrame(delta);
+    reportRenderer(gl.info.render.calls, gl.info.render.triangles, gl.getPixelRatio());
     if (!state.current.firstTime) state.current.firstTime = now;
     if (now - state.current.firstTime <= 3) state.current.firstFrames += 1;
     else if (quality.mode === "auto" && state.current.firstFrames / 3 < 40) setAdaptiveScale(0.5);
