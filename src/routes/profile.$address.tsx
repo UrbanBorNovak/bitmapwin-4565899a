@@ -8,6 +8,9 @@ import { timeAgo } from "@/lib/bitmap";
 import { BUILD_KIND_LABELS, isBuildKind } from "@/lib/build-sdk";
 import { membershipBadgeQuery } from "@/lib/membership";
 import { followerCountsQuery } from "@/lib/follows";
+import { formatBit } from "@/lib/coins";
+import { baseValueOf, playerStockQuery, shareHoldersQuery, sharePrice } from "@/lib/player-stock";
+import { rankPlayerByWalletQuery } from "@/lib/ranks";
 
 export const Route = createFileRoute("/profile/$address")({
   head: ({ params }) => {
