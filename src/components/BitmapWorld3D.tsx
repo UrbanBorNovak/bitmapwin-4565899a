@@ -3535,27 +3535,9 @@ function BitmapWorld3DInner({
                   role="group"
                   aria-label="Camera"
                 >
-                  <Button
-                    className="btn-term-ghost"
-                    variant="ghost"
-                    onClick={() => moveCamera("mined")}
-                  >
-                    [ FRAME MINED ]
-                  </Button>
-                  <Button
-                    className="btn-term-ghost"
-                    variant="ghost"
-                    onClick={() => moveCamera("full")}
-                  >
-                    [ FULL WORLD ]
-                  </Button>
-                  <Button
-                    className="btn-term-ghost"
-                    variant="ghost"
-                    onClick={() => moveCamera("tip")}
-                  >
-                    [ FLY TO TIP ]
-                  </Button>
+                  <HudIconButton label="Frame mined land" icon={<Pickaxe />} onClick={() => moveCamera("mined")} />
+                  <HudIconButton label="Full world" icon={<Maximize />} onClick={() => moveCamera("full")} />
+                  <HudIconButton label="Fly to the newest block" icon={<Rocket />} onClick={() => moveCamera("tip")} />
                 </div>
 
                 <span className="hud-divider" aria-hidden />
