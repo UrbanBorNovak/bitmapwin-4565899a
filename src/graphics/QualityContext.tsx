@@ -12,12 +12,11 @@ type QualityContextValue = {
 const QualityContext = createContext<QualityContextValue | null>(null);
 
 export function QualityProvider({ children }: { children: ReactNode }) {
-  const [stored, setStored] = useState<StoredQuality>({ mode: "auto", overrides: {} });
-  const [autoResolved, setAutoResolved] = useState<"low" | "medium" | "high">("medium");
+  const [stored, setStored] = useState<StoredQuality>(() => loadQuality());
+  const [autoResolved, setAutoResolved] = useState<"low" | "medium" | "high">(() => detectAutoQuality());
   const [adaptiveScale, setAdaptiveScaleState] = useState<number | undefined>();
 
   useEffect(() => {
-    setStored(loadQuality());
     setAutoResolved(detectAutoQuality());
   }, []);
 

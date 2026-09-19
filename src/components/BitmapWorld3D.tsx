@@ -536,12 +536,13 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
   if (owned.length === 0) return null;
   return (
     <group renderOrder={10}>
-      {quality.plotGlow ? <instancedMesh
+      <instancedMesh
         key={`outer-${owned.length}`}
         ref={outerRef}
         args={[undefined, undefined, owned.length]}
         frustumCulled
         raycast={noRaycast}
+        visible={quality.plotGlow}
       >
         <ringGeometry args={[0.44, 0.5, 4]} />
         <meshBasicMaterial
@@ -553,13 +554,14 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
           blending={THREE.AdditiveBlending}
           side={THREE.DoubleSide}
         />
-      </instancedMesh> : null}
-      {quality.plotGlow ? <instancedMesh
+      </instancedMesh>
+      <instancedMesh
         key={`aura-${owned.length}`}
         ref={auraRef}
         args={[undefined, undefined, owned.length]}
         frustumCulled
         raycast={noRaycast}
+        visible={quality.plotGlow}
       >
         <ringGeometry args={[0.4, 0.5, 4]} />
         <meshBasicMaterial
@@ -571,7 +573,7 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
           blending={THREE.AdditiveBlending}
           side={THREE.DoubleSide}
         />
-      </instancedMesh> : null}
+      </instancedMesh>
       <instancedMesh
         key={`inner-${owned.length}`}
         ref={innerRef}
@@ -590,12 +592,13 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
           side={THREE.DoubleSide}
         />
       </instancedMesh>
-      {quality.plotGlow ? <instancedMesh
+      <instancedMesh
         key={`wire-${owned.length}`}
         ref={wireRef}
         args={[undefined, undefined, owned.length]}
         frustumCulled
         raycast={noRaycast}
+        visible={quality.plotGlow}
       >
         <ringGeometry args={[0.47, 0.5, 4]} />
         <meshBasicMaterial
@@ -606,7 +609,7 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
           depthWrite={false}
           blending={THREE.AdditiveBlending}
         />
-      </instancedMesh> : null}
+      </instancedMesh>
     </group>
   );
 });
@@ -3814,7 +3817,6 @@ function BitmapWorld3DInner({
         {colors ? (
           <div ref={viewShake} className="absolute inset-0 will-change-transform">
           <SafeCanvas
-            key={quality.antialias ? "aa" : "no-aa"}
             dpr={quality.pixelRatio * quality.renderScale}
             shadows={quality.shadows ? { type: THREE.PCFSoftShadowMap } : false}
             frameloop="always"
