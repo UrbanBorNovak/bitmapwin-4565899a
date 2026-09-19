@@ -900,7 +900,7 @@ const Critters = memo(function Critters({
 
       const flyer = species.kind === "vulture";
       const lift = flyer ? unit * (2.6 + Math.sin(now / 900 + critter.seed) * 0.4) : unit * 0.03;
-      critter.bodyY = lift + unit * species.bodyY;
+      critter.bodyY = lift + unit * species.bodyY * species.scale;
       // A bite throws the body forward and rears it up for a beat, so you can
       // see the strike land rather than only feel the damage.
       const sinceBite = now - critter.lastBite;
@@ -927,7 +927,7 @@ const Critters = memo(function Critters({
         bar.visible = wounded;
         if (wounded) {
           const pct = critter.hp / critter.maxHp;
-          bar.position.set(0, unit * (species.bodyY + species.radius) + unit * 0.22, 0);
+          bar.position.set(0, unit * (species.bodyY + species.radius) * species.scale + unit * 0.22, 0);
           const fill = bar.children[1];
           if (fill) {
             fill.scale.x = Math.max(0.02, pct);
@@ -948,9 +948,9 @@ const Critters = memo(function Critters({
             groups.current[index] = node;
           }}
         >
-          <CritterBody kind={critter.species.kind} unit={unit} colors={colors} />
+          <CritterBody kind={critter.species.kind} unit={unit * critter.species.scale} colors={colors} />
           {critter.species.hostile ? (
-            <mesh position={[0, unit * hostileMarkerHeight(critter.species.kind), 0]} raycast={noRaycast}>
+            <mesh position={[0, unit * critter.species.scale * hostileMarkerHeight(critter.species.kind), 0]} raycast={noRaycast}>
               <octahedronGeometry args={[unit * 0.045, 0]} />
               <meshBasicMaterial color={HOSTILE} />
             </mesh>
