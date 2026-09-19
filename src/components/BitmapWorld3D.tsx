@@ -4497,33 +4497,19 @@ function BitmapWorld3DInner({
             </Button>
           </div>
           <div className="flex gap-1">
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className={
-                chatMode === "world"
-                  ? "h-6 rounded-sm bg-bitcoin px-2 text-[9px] text-bitcoin-foreground"
-                  : "h-6 rounded-sm px-2 text-[9px]"
-              }
+            <HudIconButton
+              label="Everyone in the world"
+              icon={<MessageSquare />}
+              active={chatMode === "world"}
               onClick={() => setChatMode("world")}
-            >
-              WORLD
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
+            />
+            <HudIconButton
+              label="Your party"
+              icon={<Users />}
+              active={chatMode === "party"}
               disabled={!party.party}
-              className={
-                chatMode === "party"
-                  ? "h-6 rounded-sm bg-bitcoin px-2 text-[9px] text-bitcoin-foreground"
-                  : "h-6 rounded-sm px-2 text-[9px]"
-              }
               onClick={() => setChatMode("party")}
-            >
-              PARTY
-            </Button>
+            />
           </div>
           {(chatMode === "party" ? party.messages : chatLines).length > 0 ? (
             <div
