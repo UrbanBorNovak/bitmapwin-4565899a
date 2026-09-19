@@ -1863,6 +1863,167 @@ export type Database = {
           },
         ]
       }
+      player_share_dividends: {
+        Row: {
+          created_at: string
+          holders: number
+          id: string
+          player_id: string
+          shares_issued: number
+          source_reason: string | null
+          total_coins: number
+        }
+        Insert: {
+          created_at?: string
+          holders: number
+          id?: string
+          player_id: string
+          shares_issued: number
+          source_reason?: string | null
+          total_coins: number
+        }
+        Update: {
+          created_at?: string
+          holders?: number
+          id?: string
+          player_id?: string
+          shares_issued?: number
+          source_reason?: string | null
+          total_coins?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_share_dividends_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "rank_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_share_holdings: {
+        Row: {
+          cost_basis: number
+          created_at: string
+          dividends_earned: number
+          holder_address: string
+          id: string
+          player_id: string
+          shares: number
+          updated_at: string
+        }
+        Insert: {
+          cost_basis?: number
+          created_at?: string
+          dividends_earned?: number
+          holder_address: string
+          id?: string
+          player_id: string
+          shares?: number
+          updated_at?: string
+        }
+        Update: {
+          cost_basis?: number
+          created_at?: string
+          dividends_earned?: number
+          holder_address?: string
+          id?: string
+          player_id?: string
+          shares?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_share_holdings_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "rank_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_share_trades: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          player_id: string
+          shares: number
+          shares_issued_after: number
+          side: string
+          total_coins: number
+          unit_price: number
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          player_id: string
+          shares: number
+          shares_issued_after: number
+          side: string
+          total_coins: number
+          unit_price: number
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          player_id?: string
+          shares?: number
+          shares_issued_after?: number
+          side?: string
+          total_coins?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_share_trades_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "rank_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_stock: {
+        Row: {
+          bit_raised: number
+          created_at: string
+          dividends_paid: number
+          last_price: number
+          player_id: string
+          shares_issued: number
+          updated_at: string
+        }
+        Insert: {
+          bit_raised?: number
+          created_at?: string
+          dividends_paid?: number
+          last_price?: number
+          player_id: string
+          shares_issued?: number
+          updated_at?: string
+        }
+        Update: {
+          bit_raised?: number
+          created_at?: string
+          dividends_paid?: number
+          last_price?: number
+          player_id?: string
+          shares_issued?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_stock_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "rank_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pvp_events: {
         Row: {
           bitmap: number | null
@@ -2589,6 +2750,30 @@ export type Database = {
         Returns: boolean
       }
       owns_wallet_address: { Args: { _address: string }; Returns: boolean }
+      player_share_base_value: { Args: { _player_id: string }; Returns: number }
+      player_share_price: {
+        Args: { _base: number; _issued: number }
+        Returns: number
+      }
+      player_stock_pay_dividend: {
+        Args: { _amount: number; _player_id: string; _source: string }
+        Returns: number
+      }
+      player_stock_trade: {
+        Args: {
+          _address: string
+          _player_id: string
+          _shares: number
+          _side: string
+        }
+        Returns: {
+          filled: number
+          price: number
+          shares_issued: number
+          total_coins: number
+          unit_price: number
+        }[]
+      }
       record_bitmap_view: {
         Args: { _address?: string; _height: number; _visitor: string }
         Returns: undefined

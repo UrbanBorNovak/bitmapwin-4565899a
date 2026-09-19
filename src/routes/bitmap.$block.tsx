@@ -21,6 +21,7 @@ import { BitmapPriceChart } from "@/components/BitmapPriceChart";
 import { ProvenancePanel } from "@/components/ProvenancePanel";
 import { WatchBitmapButton } from "@/components/WatchBitmapButton";
 import { BitmapValuation } from "@/components/BitmapValuation";
+import { BitmapDevelopment } from "@/components/BitmapDevelopment";
 import { ParcelPagePanel } from "@/components/ParcelPagePanel";
 import { ParcelPanel } from "@/components/ParcelPanel";
 import { DistrictReinscriptions } from "@/components/DistrictReinscriptions";
@@ -217,6 +218,11 @@ function BitmapDetail() {
         districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
         txCount={stats.data?.txCount ?? scan.data?.txCount ?? null}
       />
+      <BitmapDevelopment
+        height={block}
+        districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
+      />
+
       <div className="mt-6">
         <WatchBitmapButton height={block} />
       </div>
