@@ -1810,6 +1810,115 @@ export type Database = {
         }
         Relationships: []
       }
+      passport_stamps: {
+        Row: {
+          bitmap_height: number | null
+          created_at: string
+          description: string
+          earned_at: string
+          evidence_event_id: string
+          evidence_source_id: string
+          evidence_source_type: string
+          id: string
+          inscription_id: string | null
+          name: string
+          rule_version: number
+          stamp_key: string
+          user_id: string
+          visibility: string
+          wallet_address: string
+        }
+        Insert: {
+          bitmap_height?: number | null
+          created_at?: string
+          description: string
+          earned_at?: string
+          evidence_event_id: string
+          evidence_source_id: string
+          evidence_source_type: string
+          id?: string
+          inscription_id?: string | null
+          name: string
+          rule_version?: number
+          stamp_key: string
+          user_id: string
+          visibility?: string
+          wallet_address: string
+        }
+        Update: {
+          bitmap_height?: number | null
+          created_at?: string
+          description?: string
+          earned_at?: string
+          evidence_event_id?: string
+          evidence_source_id?: string
+          evidence_source_type?: string
+          id?: string
+          inscription_id?: string | null
+          name?: string
+          rule_version?: number
+          stamp_key?: string
+          user_id?: string
+          visibility?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "passport_stamps_evidence_event_id_fkey"
+            columns: ["evidence_event_id"]
+            isOneToOne: false
+            referencedRelation: "provenance_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      passport_unlocks: {
+        Row: {
+          capability_key: string
+          created_at: string
+          description: string
+          granted_at: string
+          granted_by_stamp_id: string
+          id: string
+          name: string
+          user_id: string
+          visibility: string
+          wallet_address: string
+        }
+        Insert: {
+          capability_key: string
+          created_at?: string
+          description: string
+          granted_at?: string
+          granted_by_stamp_id: string
+          id?: string
+          name: string
+          user_id: string
+          visibility?: string
+          wallet_address: string
+        }
+        Update: {
+          capability_key?: string
+          created_at?: string
+          description?: string
+          granted_at?: string
+          granted_by_stamp_id?: string
+          id?: string
+          name?: string
+          user_id?: string
+          visibility?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "passport_unlocks_granted_by_stamp_id_fkey"
+            columns: ["granted_by_stamp_id"]
+            isOneToOne: false
+            referencedRelation: "passport_stamps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_builds: {
         Row: {
           bitmap_height: number
@@ -2041,6 +2150,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      provenance_events: {
+        Row: {
+          actor_user_id: string | null
+          actor_wallet: string | null
+          bitmap_height: number | null
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          occurred_at: string
+          proof_level: string
+          source_id: string
+          source_key: string
+          source_type: string
+          summary: string
+          title: string
+          visibility: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          actor_wallet?: string | null
+          bitmap_height?: number | null
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          proof_level: string
+          source_id: string
+          source_key: string
+          source_type: string
+          summary?: string
+          title: string
+          visibility?: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          actor_wallet?: string | null
+          bitmap_height?: number | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          proof_level?: string
+          source_id?: string
+          source_key?: string
+          source_type?: string
+          summary?: string
+          title?: string
+          visibility?: string
+        }
+        Relationships: []
       }
       pvp_events: {
         Row: {
@@ -2667,6 +2830,10 @@ export type Database = {
           total_coins: number
           unit_price: number
         }[]
+      }
+      has_passport_unlock: {
+        Args: { _capability_key: string; _user_id: string }
+        Returns: boolean
       }
       is_clan_member: {
         Args: { _clan_id: string; _user_id: string }
