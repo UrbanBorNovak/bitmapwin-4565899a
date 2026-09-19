@@ -50,9 +50,14 @@ type StreetProp = {
 };
 
 const STREET_PROPS = [
+  { name: "MARKET KIOSK", crop: [8, 8, 184, 184], width: 76 },
+  { name: "STREET VENDOR", crop: [216, 8, 120, 160], width: 48 },
+  { name: "OASIS TREE", crop: [360, 8, 56, 152], width: 25 },
+  { name: "STONE MONUMENT", crop: [432, 16, 136, 152], width: 58 },
+  { name: "WHITE GOOSE", crop: [584, 16, 112, 152], width: 44 },
   { name: "OASIS SHOP", crop: [8, 208, 280, 216], width: 108 },
+  { name: "BLUE STREET SIGN", crop: [312, 208, 56, 184], width: 25 },
   { name: "BITMAP SIGN", crop: [400, 184, 288, 240], width: 112 },
-  { name: "STREET LIGHT", crop: [360, 8, 56, 152], width: 25 },
 ] as const satisfies readonly StreetProp[];
 
 function useReducedMotion(): boolean {
@@ -146,10 +151,15 @@ export function SpriteParade({ height = 72 }: { height?: number }) {
     >
       <div className="overflow-x-auto">
         <div className="pointer-events-none relative flex min-w-max items-end gap-6 px-4 pb-4 pt-8 sm:gap-10 md:px-8">
-          <StreetProp prop={STREET_PROPS[0]} className="mr-1 shrink-0 opacity-90" />
+          <StreetProp prop={STREET_PROPS[5]} className="mr-1 shrink-0 opacity-90" />
+          <StreetProp prop={STREET_PROPS[6]} className="-ml-4 shrink-0 opacity-90" />
           {SPRITES.map((sheet, index) => (
             <div key={sheet.id} className="flex items-end gap-6 sm:gap-10">
-              {index === 5 && <StreetProp prop={STREET_PROPS[2]} className="shrink-0 opacity-80" />}
+              {index === 1 && <StreetProp prop={STREET_PROPS[0]} className="shrink-0 opacity-90" />}
+              {index === 3 && <StreetProp prop={STREET_PROPS[2]} className="shrink-0 opacity-90" />}
+              {index === 4 && <StreetProp prop={STREET_PROPS[4]} className="shrink-0 opacity-90" />}
+              {index === 5 && <StreetProp prop={STREET_PROPS[3]} className="shrink-0 opacity-90" />}
+              {index === 7 && <StreetProp prop={STREET_PROPS[1]} className="shrink-0 opacity-90" />}
               <div
                 className={reduced ? "" : index % 2 === 0 ? "animate-sprite-stroll" : "animate-sprite-stroll-slow"}
                 style={reduced ? undefined : { animationDelay: `${index * 0.45}s` }}
@@ -158,7 +168,7 @@ export function SpriteParade({ height = 72 }: { height?: number }) {
               </div>
             </div>
           ))}
-          <StreetProp prop={STREET_PROPS[1]} className="ml-1 shrink-0 opacity-90" />
+          <StreetProp prop={STREET_PROPS[7]} className="ml-1 shrink-0 opacity-90" />
         </div>
       </div>
     </div>
