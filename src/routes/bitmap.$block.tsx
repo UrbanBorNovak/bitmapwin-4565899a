@@ -217,6 +217,11 @@ function BitmapDetail() {
         districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
         txCount={stats.data?.txCount ?? scan.data?.txCount ?? null}
       />
+      <BitmapDevelopment
+        height={block}
+        districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
+      />
+
       <div className="mt-6">
         <WatchBitmapButton height={block} />
       </div>
