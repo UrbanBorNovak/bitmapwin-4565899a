@@ -100,7 +100,7 @@ function layout(): TerrainModelSpec[] {
     for (let column = 0; column < columns; column++) {
       const seed = 101 + row * columns + column;
       // A co-prime source shuffle gives every region a mix of all five forms.
-      const source = SOURCES[(column * 3 + row * 2 + seed) % SOURCES.length] ?? SOURCES[0]!;
+      const source = SOURCES[((row * columns + column) * 3) % SOURCES.length] ?? SOURCES[0]!;
       const jitterX = (rand(seed * 3.1) - 0.5) * sectorWidth * 0.55;
       const jitterZ = (rand(seed * 5.7) - 0.5) * sectorDepth * 0.55;
       const cell: [number, number] = [
