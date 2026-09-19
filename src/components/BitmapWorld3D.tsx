@@ -4572,49 +4572,15 @@ function BitmapWorld3DInner({
 
         {exploring && !inventoryOpen && !buildOpen && !mapOpen && !chatOpen ? (
           <div className="pointer-events-none absolute inset-x-0 bottom-[14rem] z-30 flex items-center justify-between px-4 md:bottom-4 md:px-8">
-            <Button
-              type="button"
-              variant="ghost"
-              className="pointer-events-auto border border-border bg-background/55 font-mono text-[10px] text-muted-foreground backdrop-blur-sm hover:border-bitcoin hover:text-bitcoin"
-              onClick={() => setMapOpen(true)}
-            >
-              <MapIcon className="size-3.5" /> [M] MAP
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              aria-label="Switch between first and third person"
-              title="Switch view (O)"
-              className="pointer-events-auto border border-border bg-background/55 font-mono text-[10px] text-muted-foreground backdrop-blur-sm hover:border-bitcoin hover:text-bitcoin"
+            <HudIconButton large label="Map (M)" icon={<MapIcon />} onClick={() => setMapOpen(true)} />
+            <HudIconButton
+              large
+              label={cameraMode === "first" ? "First person view (O)" : "Third person view (O)"}
+              icon={cameraMode === "first" ? <Eye /> : <Orbit />}
               onClick={() => setCameraMode((current) => (current === "first" ? "third" : "first"))}
-            >
-              {cameraMode === "first" ? (
-                <>
-                  <Eye className="size-3.5" /> [O] 1ST
-                </>
-              ) : (
-                <>
-                  <Orbit className="size-3.5" /> [O] 3RD
-                </>
-              )}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="pointer-events-auto border border-border bg-background/55 font-mono text-[10px] text-muted-foreground backdrop-blur-sm hover:border-bitcoin hover:text-bitcoin"
-              onClick={() => setChatOpen(true)}
-            >
-              <MessageSquare className="size-3.5" /> [C] CHAT
-            </Button>
-            <a
-              href="/ranks"
-              target="_blank"
-              rel="noreferrer"
-              title="Hall of fame — progression, PvP and clans"
-              className="pointer-events-auto flex items-center gap-1.5 border border-border bg-background/55 px-3 py-2 font-mono text-[10px] text-muted-foreground backdrop-blur-sm hover:border-bitcoin hover:text-bitcoin"
-            >
-              <Trophy className="size-3.5" /> [R] RANKS
-            </a>
+            />
+            <HudIconButton large label="Chat (C)" icon={<MessageSquare />} onClick={() => setChatOpen(true)} />
+            <HudIconLink label="Ranks — progression, PvP and clans" icon={<Trophy />} href="/ranks" external />
             <QualityHud touch={touchDevice} />
           </div>
         ) : null}
