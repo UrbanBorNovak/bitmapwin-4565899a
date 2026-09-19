@@ -589,7 +589,7 @@ function confidenceOf(state: State, timelineLength: number): number {
 
 export async function scanValuation(input: {
   height: number;
-  claimId?: string | null;
+  claimId?: string | null | undefined;
   full?: boolean;
 }): Promise<ValuationReport> {
   const height = Math.floor(input.height);
