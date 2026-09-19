@@ -29,8 +29,7 @@ function ValuationPage() {
   const [claim, setClaim] = useState("");
   const [target, setTarget] = useState<{ height: number; claim: string | null } | null>(null);
 
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const submit = () => {
     const h = Number(height);
     if (!Number.isFinite(h)) return;
     setTarget({ height: Math.floor(h), claim: claim.trim() || null });
@@ -46,7 +45,7 @@ function ValuationPage() {
         THEN SCORES HOLDERS, SAT GEOLOGY, UTXOS AND ACTIVITY.
       </p>
 
-      <form onSubmit={submit} className="mt-6 grid gap-3 sm:grid-cols-[160px_minmax(0,1fr)_auto]">
+      <div className="mt-6 grid gap-3 sm:grid-cols-[160px_minmax(0,1fr)_auto]">
         <label className="block">
           <span className="label">BLOCK HEIGHT</span>
           <input
@@ -65,10 +64,10 @@ function ValuationPage() {
             className="mt-1 w-full border border-border bg-background px-3 py-3 font-mono text-sm"
           />
         </label>
-        <button type="submit" className="btn-term mt-6 !px-4 !py-3">
+        <button type="button" onClick={submit} className="btn-term mt-6 !px-4 !py-3">
           [ LOAD ]
         </button>
-      </form>
+      </div>
 
       {target ? (
         <>
