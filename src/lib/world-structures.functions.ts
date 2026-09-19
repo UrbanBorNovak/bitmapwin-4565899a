@@ -188,7 +188,27 @@ function normalisePlayerBuild(row: PlayerBuildRow): PlayerBuildRow {
   };
 }
 
-const VAULT_COLUMNS = "id, chunk_key, bitmap_height, kind, x, z, yaw, builder_address, created_at";
+const VAULT_COLUMNS =
+  "id, chunk_key, bitmap_height, kind, x, z, yaw, builder_address, created_at, clan_id, clan_tag";
+
+/** The clan this player belongs to, if any — builds are stamped with it. */
+async function myClan(supabase: { from: (table: string) => any }, userId: string) {
+  const { data: membership } = await supabase
+    .from("clan_members")
+    .select("clan_id")
+    .eq("user_id", userId)
+    .eq("status", "accepted")
+    .limit(1)
+    .maybeSingle();
+  if (!membership?.clan_id) return null;
+  const { data: clan } = await supabase
+    .from("clans")
+    .select("id, tag")
+    .eq("id", membership.clan_id)
+    .maybeSingle();
+  if (!clan) return null;
+  return { id: clan.id as string, tag: String(clan.tag).toUpperCase() };
+}
 
 /** Everything this player has ever raised, newest last. */
 export const listMyBuilds = createServerFn({ method: "GET" })
