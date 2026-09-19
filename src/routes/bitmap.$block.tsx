@@ -210,6 +210,11 @@ function BitmapDetail() {
         <WatchBitmapButton height={block} />
       </div>
 
+      <BitmapValuation
+        height={block}
+        claimInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
+      />
+
       <BitmapChat height={block} />
 
 
