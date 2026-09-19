@@ -124,6 +124,8 @@ export type BitmapLocation = {
   heldByAddress: boolean;
 };
 
+export type BitmapHolder = Omit<BitmapLocation, "heldByAddress">;
+
 async function inscriptionIdFor(height: number): Promise<string | null> {
   const client = db();
   const idx = await client
@@ -144,13 +146,11 @@ async function inscriptionIdFor(height: number): Promise<string | null> {
   return insc.data?.id ?? null;
 }
 
-export async function locateBitmap(input: {
-  height: number;
-  address: string;
-}): Promise<BitmapLocation> {
-  const inscriptionId = await inscriptionIdFor(input.height);
+/** Resolves the current on-chain UTXO and holder without requiring a wallet. */
+export async function locateBitmapHolder(height: number): Promise<BitmapHolder> {
+  const inscriptionId = await inscriptionIdFor(height);
   if (!inscriptionId) {
-    throw new Error(`No indexed inscription for ${input.height}.bitmap yet`);
+    throw new Error(`No indexed inscription for ${height}.bitmap yet`);
   }
 
   const located = (await ordLocation(inscriptionId)) ?? (await chainLocation(inscriptionId));
@@ -177,15 +177,18 @@ export async function locateBitmap(input: {
   }
   if (!valueSats) throw new Error("Could not read the inscription UTXO value");
 
+  return { bitmapHeight: height, inscriptionId, outpoint, valueSats, ownerAddress };
+}
 
+export async function locateBitmap(input: {
+  height: number;
+  address: string;
+}): Promise<BitmapLocation> {
+  const holder = await locateBitmapHolder(input.height);
   return {
-    bitmapHeight: input.height,
-    inscriptionId,
-    outpoint,
-    valueSats,
-    ownerAddress,
+    ...holder,
     heldByAddress:
-      typeof ownerAddress === "string" &&
-      ownerAddress.toLowerCase() === input.address.trim().toLowerCase(),
+      typeof holder.ownerAddress === "string" &&
+      holder.ownerAddress.toLowerCase() === input.address.trim().toLowerCase(),
   };
 }
