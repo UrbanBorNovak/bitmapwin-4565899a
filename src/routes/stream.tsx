@@ -1,0 +1,23 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { LoopNavigator } from "@/components/LoopNavigator";
+import { StreamEventRow } from "@/components/StreamEventRow";
+import { provenanceStreamQuery } from "@/lib/provenance-stream";
+const FILTERS = ["all", "world", "chain", "account", "build", "stamp"] as const;
+export const Route = createFileRoute("/stream")({
+  head: () => ({ meta: [
+    { title: "World Stream — Verified BitmapWin History" },
+    { name: "description", content: "A live feed of verified visits, persistent builds, deployments, trades, leases, combat, and stamps across BitmapWin." },
+    { property: "og:title", content: "BitmapWin World Stream" },
+    { property: "og:description", content: "Watch verifiable history move across the living Bitcoin land world." },
+    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+  ] }), component: StreamPage,
+});
+function StreamPage() {
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all"); const stream = useQuery(provenanceStreamQuery(filter));
+  return <main className="mx-auto max-w-[1200px] px-4 py-10 md:px-8 md:py-14"><p className="label text-bitcoin">HISTORY IN MOTION</p><h1 className="display mt-3 text-4xl md:text-6xl">WORLD STREAM</h1><p className="mt-4 max-w-2xl text-sm text-muted-foreground">Real actions, connected to their proof. CHAIN records come from Bitcoin; WORLD records persist in the Oasis; ACCOUNT records come from verified participation.</p><div className="mt-6"><LoopNavigator active="provenance" /></div>
+    <div className="mt-8 flex gap-1 overflow-x-auto pb-2" role="tablist">{FILTERS.map((id) => <button key={id} type="button" onClick={() => setFilter(id)} aria-pressed={filter === id} className={filter === id ? "btn-term shrink-0" : "btn-term-ghost shrink-0"}>[ {id.toUpperCase()} ]</button>)}</div>
+    <section className="mt-3 border border-border" aria-live="polite">{stream.isPending ? <p className="p-5 font-mono text-xs text-muted-foreground">&gt; READING WORLD HISTORY…</p> : stream.data?.length ? stream.data.map((e) => <StreamEventRow key={e.id} event={e}/>) : <p className="p-5 font-mono text-xs text-muted-foreground">&gt; THE STREAM IS QUIET — ENTER THE OASIS AND MAKE HISTORY_</p>}</section>
+  </main>;
+}
