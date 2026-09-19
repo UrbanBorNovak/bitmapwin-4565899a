@@ -60,7 +60,7 @@ export function BitmapModelPlacement({
       </header>
       <div className={compact ? "mt-3 space-y-3" : "space-y-4 p-4"}>
         {current.data ? (
-          <p data-no-translate className="font-mono text-xs text-muted-foreground">
+          <p data-no-translate className="min-w-0 break-all font-mono text-xs text-muted-foreground">
             {current.data.inscriptionId} · {current.data.triangleCount.toLocaleString("en-US")} TRIANGLES
           </p>
         ) : <p className="font-mono text-xs text-muted-foreground">&gt; NO MODEL PLACED</p>}
