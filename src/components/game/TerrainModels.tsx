@@ -193,6 +193,7 @@ function Landform({ spec }: { spec: TerrainModelSpec }) {
   useEffect(() => {
     const res = spec.res;
     const heights = topSurfaceGrid(object, half, res);
+    console.log("LF-REG", spec.id, half, heights.length);
     registerTerrainModelSurface(spec.id, { x: spot.x, z: spot.z, half, res, heights });
     return () => dropTerrainModelSurface(spec.id);
   }, [object, half, spec, spot.x, spot.z]);
