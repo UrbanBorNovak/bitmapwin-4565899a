@@ -49,11 +49,11 @@ type StreetProp = {
   width: number;
 };
 
-const STREET_PROPS: StreetProp[] = [
+const STREET_PROPS = [
   { name: "OASIS SHOP", crop: [8, 208, 280, 216], width: 108 },
   { name: "BITMAP SIGN", crop: [400, 184, 288, 240], width: 112 },
   { name: "STREET LIGHT", crop: [360, 8, 56, 152], width: 25 },
-];
+] as const satisfies readonly StreetProp[];
 
 function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
