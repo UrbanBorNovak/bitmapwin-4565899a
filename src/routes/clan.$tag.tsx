@@ -16,6 +16,7 @@ import {
 } from "@/lib/ranks";
 import { useWalletSession } from "@/lib/wallet-session";
 import { joinRankClanFn } from "@/lib/ranks.functions";
+import { clanBuildsByTag } from "@/lib/world-structures.functions";
 
 const CREATE_COST_BIT = 500;
 const MAX_MEMBERS = 36;
@@ -48,6 +49,12 @@ function ClanHall() {
   const clans = useQuery(rankClansQuery());
   const players = useQuery(rankPlayersQuery());
   const feed = useQuery(pvpFeedQuery(60));
+  const builds = useQuery({
+    queryKey: ["clan-builds", tag.toUpperCase()],
+    queryFn: () => clanBuildsByTag({ data: { tag } }),
+    staleTime: 30_000,
+  });
+  const clanBuilds = builds.data?.builds ?? [];
 
   const clan = (clans.data ?? []).find((row) => row.tag.toUpperCase() === tag.toUpperCase()) ?? null;
   const roster = useQuery(clanRosterQuery(clan?.id ?? null));
@@ -233,6 +240,29 @@ function ClanHall() {
             </tr>
           ))}
         </RankTable>
+      </div>
+
+      <h2 className="display mt-8 text-lg">
+        CLAN STRUCTURES <span className="font-mono text-xs text-muted-foreground">{clanBuilds.length}</span>
+      </h2>
+      <div className="mt-3 border border-border">
+        {clanBuilds.length === 0 ? (
+          <p className="px-4 py-6 font-mono text-[11px] text-muted-foreground">
+            NOTHING RAISED UNDER THIS BANNER — YET
+          </p>
+        ) : (
+          <ul className="divide-y divide-border/60 font-mono text-[11px]">
+            {clanBuilds.slice(0, 40).map((build) => (
+              <li key={build.id} className="flex flex-wrap items-center gap-2 px-4 py-2">
+                <span className="text-bitcoin">{build.kind.replace(/-/g, " ").toUpperCase()}</span>
+                <Link to="/bitmap/$height" params={{ height: String(build.bitmap_height) }} className="text-foreground underline-offset-2 hover:underline">
+                  {build.bitmap_height}.BITMAP
+                </Link>
+                <span className="ml-auto text-muted-foreground">{sinceLabel(build.created_at)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <h2 className="display mt-8 text-lg">RECENT CLAN KILLS</h2>
