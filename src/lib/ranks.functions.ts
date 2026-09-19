@@ -53,9 +53,25 @@ export const recordPvpKillFn = createServerFn({ method: "POST" })
         .ilike("name", name)
         .maybeSingle();
       if (found) return found as PlayerRow;
+      // A character born from a signed-in player carries their verified
+      // wallet, so the public profile page can find their share book.
+      let wallet: string | null = null;
+      if (userId) {
+        const { data: links } = await supabaseAdmin
+          .from("wallet_links")
+          .select("address")
+          .eq("user_id", userId)
+          .limit(1);
+        wallet = links?.[0]?.address ?? null;
+      }
       const { data: created, error } = await supabaseAdmin
         .from("rank_players")
-        .insert({ name, title: titleForLevel(1), ...(userId ? { user_id: userId } : {}) })
+        .insert({
+          name,
+          title: titleForLevel(1),
+          ...(userId ? { user_id: userId } : {}),
+          ...(wallet ? { wallet } : {}),
+        })
         .select("id, name, clan_id, karma, fame, level, status, pk_kills, pvp_kills, deaths, chaotic_count")
         .single();
       if (error) throw new Error(error.message);
