@@ -24,7 +24,7 @@
 import { STRIDE, WORLD_CELL, WORLD_GRID, WORLD_UNITS } from "./player-state";
 import { BLOCK_STATS_MAX_HEIGHT, fetchBlockStatsMany } from "./block-stats";
 import { seaDepthAt } from "./world-sea";
-import { terrainModelTop } from "./world-terrain-models";
+import { subscribeTerrainModels, terrainModelTop } from "./world-terrain-models";
 
 /** Spacing of the broad-relief lattice, in BITMAPs. */
 const MACRO = 10;
