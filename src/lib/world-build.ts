@@ -372,7 +372,10 @@ function stampTiles(items: PlacedStructure[]) {
 }
 
 function recompute(notify = true) {
-  view = [...shared.values(), ...clanBuilds.values(), ...mine.values(), ...localBuilds]
+  const mates = [...clanBuilds.values()].filter(
+    (item) => !mine.has(item.key) && !shared.has(item.key),
+  );
+  view = [...shared.values(), ...mates, ...mine.values(), ...localBuilds]
     .filter((item) => !isSea(item.x, item.z))
     .slice(-MAX_BUILDS);
   stampTiles(view);
