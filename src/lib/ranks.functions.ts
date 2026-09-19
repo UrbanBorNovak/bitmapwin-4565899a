@@ -123,7 +123,8 @@ export const joinRankClanFn = createServerFn({ method: "POST" })
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: joined, error } = await supabaseAdmin.rpc("join_rank_clan", {
+    const { data: joined, error } = await supabaseAdmin.rpc("join_rank_clan_admin", {
+      _user_id: context.userId,
       _clan_id: data.clanId,
       _wallet: data.wallet,
     });
