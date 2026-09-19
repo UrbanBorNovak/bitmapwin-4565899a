@@ -3163,8 +3163,6 @@ function BitmapWorld3DInner({
    * RANKS — when somebody you just struck goes down, that kill is written to
    * the hall of fame so karma, PK counts and the blood ledger stay honest.
    */
-  const struck = useRef<{ id: string; handle: string; at: number } | null>(null);
-  const logged = useRef(new Set<string>());
   useEffect(() => {
     const mark = struck.current;
     if (!mark || Date.now() - mark.at > 6000) return;
