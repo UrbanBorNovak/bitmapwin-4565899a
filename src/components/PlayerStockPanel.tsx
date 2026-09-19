@@ -8,9 +8,14 @@ import type { RankPlayer } from "@/lib/ranks";
 import {
   DEMAND_CAP,
   DIVIDEND_CUT,
+  ISSUE_FEE_OPEN,
+  ISSUE_FEE_RAISE,
+  MAX_SHARES_OFFERED,
+  PLATFORM_FEE_BPS,
   SHARE_SELL_SPREAD,
   baseValueOf,
   demandMultiplier,
+  platformFee,
   playerStockQuery,
   quoteShares,
   shareDividendsQuery,
@@ -18,7 +23,7 @@ import {
   shareTradesQuery,
   sharePrice,
 } from "@/lib/player-stock";
-import { tradePlayerSharesFn } from "@/lib/player-stock.functions";
+import { issuePlayerSharesFn, tradePlayerSharesFn } from "@/lib/player-stock.functions";
 
 type Point = { t: number; price: number; issued: number };
 
@@ -98,6 +103,7 @@ export function PlayerStockPanel({ player }: { player: RankPlayer }) {
   const wallet = useWalletSession();
   const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState(1);
+  const [offer, setOffer] = useState(100);
 
   const addresses = useMemo(
     () =>
@@ -151,16 +157,101 @@ export function PlayerStockPanel({ player }: { player: RankPlayer }) {
     onError: (error) => toast("TRADE REFUSED", { description: (error as Error).message.toUpperCase() }),
   });
 
-  const busy = trade.isPending;
-  const canBuy = Boolean(payAddress) && buyQuote.total <= balance && quantity > 0;
+  const isOpen = stock.data?.isOpen ?? false;
+  const offered = stock.data?.sharesOffered ?? 0;
+  const remaining = Math.max(0, offered - issued);
+  const isMyCharacter =
+    Boolean(payAddress) &&
+    addresses.some((a) => a.toLowerCase() === (player.wallet ?? "").toLowerCase());
+  const issueFee = isOpen ? ISSUE_FEE_RAISE : ISSUE_FEE_OPEN;
+
+  const issue = useMutation({
+    mutationFn: (sharesOffered: number) =>
+      issuePlayerSharesFn({ data: { playerId: player.id, address: payAddress, sharesOffered } }),
+    onSuccess: (result) => {
+      toast(isOpen ? "MORE SHARES ON OFFER" : "SHARE BOOK OPEN", {
+        description: `${result.sharesOffered.toLocaleString()} SHARES OFFERED · FEE ${formatBit(result.feeCoins)}`,
+      });
+      void queryClient.invalidateQueries({ queryKey: ["player-stock"] });
+      void queryClient.invalidateQueries({ queryKey: ["player-stock-all"] });
+      void queryClient.invalidateQueries({ queryKey: ["coin-balance"] });
+    },
+    onError: (error) => toast("ISSUE REFUSED", { description: (error as Error).message.toUpperCase() }),
+  });
+
+  const buyFee = platformFee(buyQuote.total);
+  const sellFee = platformFee(sellQuote.total);
+  const busy = trade.isPending || issue.isPending;
+  const canBuy =
+    Boolean(payAddress) && isOpen && quantity > 0 && quantity <= remaining && buyQuote.total + buyFee <= balance;
   const canSell = Boolean(payAddress) && (mine?.shares ?? 0) >= quantity && quantity > 0;
+  const canIssue = isMyCharacter && offer > 0 && issueFee <= balance && (!isOpen || offer > offered);
 
   return (
     <section className="mt-6 border border-border" aria-label="Player share desk">
       <header className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border bg-surface px-4 py-3">
         <h2 className="display text-base">SHARE DESK · {player.name}</h2>
-        <span className="label text-muted-foreground">SETTLED IN {COIN}</span>
+        <span className="label text-muted-foreground">
+          {isOpen ? "BOOK OPEN" : "BOOK NOT OPEN"} · SETTLED IN {COIN}
+        </span>
       </header>
+
+      <div className="border-b border-border px-4 py-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <p className="label text-muted-foreground">ISSUE SHARES</p>
+          <p className="font-mono text-[11px] text-muted-foreground">
+            ON OFFER {offered.toLocaleString()} · LEFT {remaining.toLocaleString()}
+          </p>
+        </div>
+        {isMyCharacter ? (
+          <>
+            <div className="mt-2 flex flex-wrap items-end gap-2">
+              <label className="label text-muted-foreground" htmlFor="share-offer">
+                SHARES TO OFFER
+              </label>
+              <input
+                id="share-offer"
+                type="number"
+                min={1}
+                max={MAX_SHARES_OFFERED}
+                value={offer}
+                onChange={(e) =>
+                  setOffer(Math.max(1, Math.min(MAX_SHARES_OFFERED, Number(e.target.value) || 1)))
+                }
+                className="w-28 border border-border bg-background px-2 py-1 font-mono text-xs"
+              />
+              {[100, 500, 1000].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setOffer(n)}
+                  className="label border border-border px-2 py-1 text-muted-foreground"
+                >
+                  {n}
+                </button>
+              ))}
+              <button
+                type="button"
+                disabled={busy || !canIssue}
+                onClick={() => issue.mutate(offer)}
+                className="btn-term disabled:opacity-40"
+              >
+                [ {isOpen ? "OFFER" : "OPEN BOOK WITH"} {offer.toLocaleString()} → FEE {formatBit(issueFee)} ]
+              </button>
+            </div>
+            <p className="mt-3 max-w-[80ch] font-mono text-[11px] leading-relaxed text-muted-foreground">
+              &gt; ONE CLICK OPENS YOUR BOOK. THE PLATFORM FEE IS {formatBit(ISSUE_FEE_OPEN)} TO OPEN AND{" "}
+              {formatBit(ISSUE_FEE_RAISE)} TO OFFER MORE LATER. EVERY {COIN} PAID FOR YOUR SHARES COMES
+              STRAIGHT TO YOUR WALLET, LESS THE {(PLATFORM_FEE_BPS / 100).toFixed(0)}% PLATFORM FEE.
+            </p>
+          </>
+        ) : (
+          <p className="mt-2 max-w-[80ch] font-mono text-[11px] leading-relaxed text-muted-foreground">
+            &gt; ONLY {player.name.toUpperCase()} CAN ISSUE SHARES OF THIS SOUL, FROM THEIR OWN VERIFIED WALLET
+            {isOpen ? "." : " — THE BOOK IS NOT OPEN FOR TRADING YET."}
+          </p>
+        )}
+      </div>
 
       <div className="grid gap-2 p-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="SHARE PRICE" value={formatBit(price)} accent />
@@ -208,7 +299,7 @@ export function PlayerStockPanel({ player }: { player: RankPlayer }) {
             onClick={() => trade.mutate({ side: "buy", shares: quantity })}
             className="btn-term disabled:opacity-40"
           >
-            [ BUY {quantity} → {formatBit(buyQuote.total)} ]
+            [ BUY {quantity} → {formatBit(buyQuote.total + buyFee)} ]
           </button>
           <button
             type="button"
@@ -216,7 +307,7 @@ export function PlayerStockPanel({ player }: { player: RankPlayer }) {
             onClick={() => trade.mutate({ side: "sell", shares: quantity })}
             className="btn-term disabled:opacity-40"
           >
-            [ SELL {quantity} → {formatBit(sellQuote.total)} ]
+            [ SELL {quantity} → {formatBit(Math.max(0, sellQuote.total - sellFee))} ]
           </button>
         </div>
         <p className="mt-3 max-w-[80ch] font-mono text-[11px] leading-relaxed text-muted-foreground">
@@ -229,7 +320,9 @@ export function PlayerStockPanel({ player }: { player: RankPlayer }) {
         <p className="mt-2 max-w-[80ch] font-mono text-[11px] leading-relaxed text-muted-foreground">
           &gt; PRICE = EARNED BASE VALUE × DEMAND (CAPPED AT ×{DEMAND_CAP}). THE DESK PAYS{" "}
           {Math.round(SHARE_SELL_SPREAD * 100)}% OF ITS ASKING PRICE. HOLDERS RECEIVE{" "}
-          {Math.round(DIVIDEND_CUT * 100)}% OF EVERY {COIN} THIS SOUL EARNS, SPLIT BY SHARES HELD.
+          {Math.round(DIVIDEND_CUT * 100)}% OF EVERY {COIN} THIS SOUL EARNS, SPLIT BY SHARES HELD. EVERY
+          TRADE PAYS A {(PLATFORM_FEE_BPS / 100).toFixed(0)}% PLATFORM FEE (
+          {formatBit(buyFee)} ON THIS BUY).
         </p>
       </div>
 

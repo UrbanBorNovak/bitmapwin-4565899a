@@ -24,12 +24,30 @@ export const DIVIDEND_CUT = 0.1;
 export const DEMAND_CAP = 4;
 export const MAX_SHARES_PER_TRADE = 500;
 
+/** Platform cut on every buy and sell, in basis points (2%). */
+export const PLATFORM_FEE_BPS = 200;
+/** Flat BIT fee to open a share book, and to later offer more shares. */
+export const ISSUE_FEE_OPEN = 250;
+export const ISSUE_FEE_RAISE = 50;
+export const MAX_SHARES_OFFERED = 5000;
+
+/** Platform fee in BIT for a trade of this size — mirrors the database. */
+export function platformFee(total: number): number {
+  if (total <= 0) return 0;
+  return Math.max(1, Math.ceil((total * PLATFORM_FEE_BPS) / 10_000));
+}
+
 export type PlayerStock = {
   playerId: string;
   sharesIssued: number;
   bitRaised: number;
   dividendsPaid: number;
   lastPrice: number;
+  isOpen: boolean;
+  sharesOffered: number;
+  ownerAddress: string | null;
+  openedAt: string | null;
+  feesPaid: number;
   updatedAt: string;
 };
 
@@ -116,8 +134,16 @@ type StockRow = {
   bit_raised: number;
   dividends_paid: number;
   last_price: number;
+  is_open?: boolean | null;
+  shares_offered?: number | null;
+  owner_address?: string | null;
+  opened_at?: string | null;
+  fees_paid?: number | null;
   updated_at: string;
 };
+
+const STOCK_SELECT =
+  "player_id, shares_issued, bit_raised, dividends_paid, last_price, is_open, shares_offered, owner_address, opened_at, fees_paid, updated_at";
 
 function toStock(row: StockRow): PlayerStock {
   return {
@@ -126,6 +152,11 @@ function toStock(row: StockRow): PlayerStock {
     bitRaised: Number(row.bit_raised),
     dividendsPaid: Number(row.dividends_paid),
     lastPrice: Number(row.last_price),
+    isOpen: Boolean(row.is_open),
+    sharesOffered: Number(row.shares_offered ?? 0),
+    ownerAddress: row.owner_address ?? null,
+    openedAt: row.opened_at ?? null,
+    feesPaid: Number(row.fees_paid ?? 0),
     updatedAt: row.updated_at,
   };
 }
@@ -138,7 +169,7 @@ export const playerStockQuery = (playerId: string | null) =>
     queryFn: async (): Promise<PlayerStock | null> => {
       const { data, error } = await supabase
         .from("player_stock")
-        .select("player_id, shares_issued, bit_raised, dividends_paid, last_price, updated_at")
+        .select(STOCK_SELECT)
         .eq("player_id", playerId as string)
         .maybeSingle();
       if (error) throw new Error(error.message);
@@ -154,7 +185,7 @@ export const allPlayerStockQuery = () =>
     queryFn: async (): Promise<PlayerStock[]> => {
       const { data, error } = await supabase
         .from("player_stock")
-        .select("player_id, shares_issued, bit_raised, dividends_paid, last_price, updated_at")
+        .select(STOCK_SELECT)
         .limit(1000);
       if (error) throw new Error(error.message);
       return (data ?? []).map((row) => toStock(row as StockRow));
