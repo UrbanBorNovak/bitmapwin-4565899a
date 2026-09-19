@@ -9,6 +9,8 @@ export type ChainParcel = {
   inscriptionNumber: number;
   inscribedInBlock: number | null;
   timestamp: number | null;
+  /** Current address holding this parcel inscription, read live from ord. */
+  ownerAddress: string | null;
   /** true = first child claiming this index (valid), false = later duplicate. */
   valid: boolean;
 };

@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { inscriptionChildrenQuery, parcelName, parcelsQuery } from "@/lib/parcels";
 import { shortId } from "@/lib/chain";
 import { InscriptionContent } from "@/components/InscriptionContent";
+import { shortenAddress } from "@/lib/registry";
 
 /** Rendered children of a single parcel inscription (grandchildren of the district). */
 function ParcelChildren({ inscriptionId, label }: { inscriptionId: string; label: string }) {
@@ -82,6 +84,24 @@ export function ParcelPanel({
   const superseded = (scan.data?.parcels ?? []).length - valid.length;
   const shown = showAll ? valid : valid.slice(0, 24);
 
+  const holders = useMemo(() => {
+    const byAddress = new Map<string, number>();
+    for (const parcel of valid) {
+      if (!parcel.ownerAddress) continue;
+      byAddress.set(parcel.ownerAddress, (byAddress.get(parcel.ownerAddress) ?? 0) + 1);
+    }
+    return [...byAddress.entries()]
+      .map(([address, count]) => ({
+        address,
+        count,
+        share: valid.length > 0 ? (count / valid.length) * 100 : 0,
+      }))
+      .sort((a, b) => b.count - a.count || a.address.localeCompare(b.address));
+  }, [valid]);
+
+  const resolvedParcels = holders.reduce((sum, holder) => sum + holder.count, 0);
+  const largestShare = holders[0]?.share ?? 0;
+
   const children = scan.data?.children ?? [];
   const shownChildren = showAllChildren ? children : children.slice(0, 12);
   const parcelIndexById = new Map(
@@ -110,6 +130,73 @@ export function ParcelPanel({
           </span>{" "}
           — E.G. {parcelName(0, height).toUpperCase()} FOR TRANSACTION 0.
         </p>
+
+        {valid.length > 0 && (
+          <div className="border border-border bg-surface" aria-label="Parcel holder register">
+            <header className="flex flex-wrap items-end justify-between gap-3 border-b border-border px-4 py-3">
+              <div>
+                <h3 className="display text-lg text-bitcoin">BITMAP STAKEHOLDERS</h3>
+                <p className="label mt-1 text-muted-foreground">LIVE PARCEL HOLDER REGISTER</p>
+              </div>
+              <span className="label text-signal">ON-CHAIN VERIFIED</span>
+            </header>
+
+            <dl className="grid grid-cols-2 divide-x divide-y divide-border border-b border-border sm:grid-cols-4">
+              <HolderStat k="HOLDERS" v={holders.length.toLocaleString("en-US")} />
+              <HolderStat k="PARCELS HELD" v={`${resolvedParcels}/${valid.length}`} />
+              <HolderStat k="TOP SHARE" v={`${largestShare.toFixed(1)}%`} />
+              <HolderStat
+                k="DISTRIBUTION"
+                v={holders.length <= 1 ? "SOLE HOLDER" : largestShare >= 50 ? "CONCENTRATED" : "DISTRIBUTED"}
+              />
+            </dl>
+
+            {holders.length > 0 ? (
+              <ol className="divide-y divide-border">
+                {holders.map((holder, index) => (
+                  <li key={holder.address} className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3">
+                    <span className="display text-center text-lg text-bitcoin" aria-label={`Rank ${index + 1}`}>
+                      {index < 3 ? ["Ⅰ", "Ⅱ", "Ⅲ"][index] : String(index + 1).padStart(2, "0")}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <Link
+                          to="/profile/$address"
+                          params={{ address: holder.address }}
+                          className="font-mono text-xs text-foreground hover:text-bitcoin"
+                          data-no-translate
+                        >
+                          {shortenAddress(holder.address)}
+                        </Link>
+                        <span className="label text-muted-foreground">
+                          {holder.share >= 50 ? "ANCHOR HOLDER" : holder.share >= 20 ? "MAJOR HOLDER" : "PARCEL HOLDER"}
+                        </span>
+                      </div>
+                      <div className="mt-2 h-1.5 w-full bg-border" aria-hidden="true">
+                        <div className="h-full bg-bitcoin" style={{ width: `${Math.max(2, holder.share)}%` }} />
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <strong className="display block text-xl text-bitcoin">{holder.share.toFixed(1)}%</strong>
+                      <span className="label text-muted-foreground">
+                        {holder.count} {holder.count === 1 ? "PARCEL" : "PARCELS"}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="px-4 py-4 font-mono text-xs text-muted-foreground">
+                &gt; PARCELS FOUND — CURRENT HOLDERS ARE STILL RESOLVING
+              </p>
+            )}
+
+            <p className="border-t border-border px-4 py-3 font-mono text-[10px] text-muted-foreground">
+              PARCEL SHARE = EACH ADDRESS&apos; SHARE OF VALID INSCRIBED PARCELS. IT RECOGNIZES STAKE IN THE DISTRICT&apos;S
+              PARCEL LAYER; IT DOES NOT TRANSFER OWNERSHIP OF THE PARENT BITMAP.
+            </p>
+          </div>
+        )}
 
         {!districtInscriptionId && (
           <p className="font-mono text-xs text-muted-foreground">
@@ -224,5 +311,14 @@ export function ParcelPanel({
         )}
       </div>
     </section>
+  );
+}
+
+function HolderStat({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="px-3 py-3">
+      <dt className="label text-muted-foreground">{k}</dt>
+      <dd className="display mt-1 text-base text-foreground" data-no-translate>{v}</dd>
+    </div>
   );
 }
