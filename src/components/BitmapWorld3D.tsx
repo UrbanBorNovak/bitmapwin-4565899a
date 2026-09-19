@@ -4837,3 +4837,13 @@ function BuildHud({
     </div>
   );
 }
+
+/** Icon for each kit tab — the HUD carries meaning through pictures, not words. */
+function kitTabIcon(id: KitTab) {
+  if (id === "base") return <MapIcon />;
+  if (id === "action") return <Swords />;
+  if (id === "kit") return <Package />;
+  if (id === "travel") return <Car />;
+  if (id === "clan") return <Users />;
+  return <Wrench />;
+}
