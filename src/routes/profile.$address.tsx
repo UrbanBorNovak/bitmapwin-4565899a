@@ -62,9 +62,17 @@ function ProfilePage() {
   const pages = useQuery(ownerPagesQuery(address));
   const membership = useQuery(membershipBadgeQuery(address));
   const followers = useQuery(followerCountsQuery([address]));
+  const ranked = useQuery(rankPlayerByWalletQuery(address));
+  const stock = useQuery(playerStockQuery(ranked.data?.id ?? null));
+  const holders = useQuery(shareHoldersQuery(ranked.data?.id ?? null));
   const isMember = membership.data === true;
   const followerCount = followers.data?.get(address) ?? 0;
   const displayName = profile.data?.displayName ?? shortenAddress(address);
+
+  const base = ranked.data ? baseValueOf(ranked.data) : 25;
+  const issued = stock.data?.sharesIssued ?? 0;
+  const shareVal = sharePrice(base, issued);
+  const holderCount = (holders.data ?? []).length;
 
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-12 md:px-8">
