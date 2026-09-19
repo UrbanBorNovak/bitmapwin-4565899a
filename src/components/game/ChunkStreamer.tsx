@@ -1,7 +1,7 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { pruneChunks, visibleChunks } from "@/lib/world-grid";
-import { syncWorldChunks } from "@/lib/world-build";
+import { syncMyBuilds, syncWorldChunks } from "@/lib/world-build";
 import { syncTerraformChunks } from "@/lib/world-terraform";
 import { markFrame } from "@/lib/world-perf";
 import { FAST_PACE, MOVE, STRIDE, type PlayerState } from "@/lib/player-state";
