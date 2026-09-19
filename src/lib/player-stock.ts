@@ -169,7 +169,7 @@ export const playerStockQuery = (playerId: string | null) =>
     queryFn: async (): Promise<PlayerStock | null> => {
       const { data, error } = await supabase
         .from("player_stock")
-        .select("player_id, shares_issued, bit_raised, dividends_paid, last_price, updated_at")
+        .select(STOCK_SELECT)
         .eq("player_id", playerId as string)
         .maybeSingle();
       if (error) throw new Error(error.message);
@@ -185,7 +185,7 @@ export const allPlayerStockQuery = () =>
     queryFn: async (): Promise<PlayerStock[]> => {
       const { data, error } = await supabase
         .from("player_stock")
-        .select("player_id, shares_issued, bit_raised, dividends_paid, last_price, updated_at")
+        .select(STOCK_SELECT)
         .limit(1000);
       if (error) throw new Error(error.message);
       return (data ?? []).map((row) => toStock(row as StockRow));
