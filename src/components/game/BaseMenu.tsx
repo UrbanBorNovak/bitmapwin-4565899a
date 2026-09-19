@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { Crosshair, UserPlus } from "lucide-react";
 import { Minimap } from "@/components/game/Minimap";
 import type { PlayerState } from "@/lib/player-state";
 import { STRIDE } from "@/lib/player-state";
@@ -83,20 +84,22 @@ export function BaseMenu({ pose, cursors, ownedHeights, partyIds, onVisit, onInv
                 <span className="shrink-0 tabular-nums text-muted-foreground">{strides} STEPS</span>
                 <button
                   type="button"
-                  className="shrink-0 border border-border px-1 text-[8px] text-muted-foreground hover:border-signal hover:text-signal"
+                  className="grid size-6 shrink-0 place-items-center border border-border text-muted-foreground hover:border-signal hover:text-signal [&_svg]:size-3.5"
                   title="Point the camera at them"
+                  aria-label="Point the camera at them"
                   onClick={() => onVisit?.(peer.height)}
                 >
-                  FIND
+                  <Crosshair />
                 </button>
                 {onInvite && !partySet.has(peer.id) ? (
                   <button
                     type="button"
-                    className="shrink-0 border border-border px-1 text-[8px] text-bitcoin hover:border-bitcoin"
+                    className="grid size-6 shrink-0 place-items-center border border-border text-bitcoin hover:border-bitcoin [&_svg]:size-3.5"
                     title="Invite them to your party"
+                    aria-label="Invite them to your party"
                     onClick={() => onInvite(peer.id)}
                   >
-                    INVITE
+                    <UserPlus />
                   </button>
                 ) : null}
               </li>

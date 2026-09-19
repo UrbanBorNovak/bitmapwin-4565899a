@@ -3521,9 +3521,7 @@ function BitmapWorld3DInner({
                 data-no-translate
                 className="h-7 w-32 border border-border bg-background/80 px-2 font-mono text-[11px] tabular-nums outline-none transition-colors focus:border-bitcoin"
               />
-              <Button type="submit" className="btn-term" variant="ghost">
-                [ VISIT ]
-              </Button>
+              <HudIconButton type="submit" label="Go to this BITMAP" icon={<Search />} />
             </form>
 
             <span className="hud-divider" aria-hidden />
@@ -3535,27 +3533,9 @@ function BitmapWorld3DInner({
                   role="group"
                   aria-label="Camera"
                 >
-                  <Button
-                    className="btn-term-ghost"
-                    variant="ghost"
-                    onClick={() => moveCamera("mined")}
-                  >
-                    [ FRAME MINED ]
-                  </Button>
-                  <Button
-                    className="btn-term-ghost"
-                    variant="ghost"
-                    onClick={() => moveCamera("full")}
-                  >
-                    [ FULL WORLD ]
-                  </Button>
-                  <Button
-                    className="btn-term-ghost"
-                    variant="ghost"
-                    onClick={() => moveCamera("tip")}
-                  >
-                    [ FLY TO TIP ]
-                  </Button>
+                  <HudIconButton label="Frame mined land" icon={<Pickaxe />} onClick={() => moveCamera("mined")} />
+                  <HudIconButton label="Full world" icon={<Maximize />} onClick={() => moveCamera("full")} />
+                  <HudIconButton label="Fly to the newest block" icon={<Rocket />} onClick={() => moveCamera("tip")} />
                 </div>
 
                 <span className="hud-divider" aria-hidden />
@@ -4856,4 +4836,14 @@ function BuildHud({
       {note ? <div className="border-t border-border pt-1.5 text-bitcoin">{note}</div> : null}
     </div>
   );
+}
+
+/** Icon for each kit tab — the HUD carries meaning through pictures, not words. */
+function kitTabIcon(id: KitTab) {
+  if (id === "base") return <MapIcon />;
+  if (id === "action") return <Swords />;
+  if (id === "kit") return <Package />;
+  if (id === "travel") return <Car />;
+  if (id === "clan") return <Users />;
+  return <Wrench />;
 }

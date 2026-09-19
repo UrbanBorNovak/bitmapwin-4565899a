@@ -32,11 +32,20 @@ export function hudTileClass(active = false, large = false) {
 
 export function HudIconButton({ label, icon, active, flag, large, ...rest }: Props) {
   return (
-    <button type="button" aria-label={label} title={label} aria-pressed={active} className={hudTileClass(active, large)} {...rest}>
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      aria-pressed={active}
+      className={hudTileClass(active, large)}
+      {...rest}
+    >
       <span className="grid place-items-center [&_svg]:size-[1.15rem]" aria-hidden>
         {icon}
       </span>
-      {flag ? <span className="absolute right-0.5 top-0.5 size-1.5 bg-bitcoin" aria-hidden /> : null}
+      {flag ? (
+        <span className="absolute right-0.5 top-0.5 size-1.5 bg-bitcoin" aria-hidden />
+      ) : null}
     </button>
   );
 }
