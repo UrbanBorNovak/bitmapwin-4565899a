@@ -134,8 +134,16 @@ type StockRow = {
   bit_raised: number;
   dividends_paid: number;
   last_price: number;
+  is_open?: boolean | null;
+  shares_offered?: number | null;
+  owner_address?: string | null;
+  opened_at?: string | null;
+  fees_paid?: number | null;
   updated_at: string;
 };
+
+const STOCK_SELECT =
+  "player_id, shares_issued, bit_raised, dividends_paid, last_price, is_open, shares_offered, owner_address, opened_at, fees_paid, updated_at";
 
 function toStock(row: StockRow): PlayerStock {
   return {
@@ -144,6 +152,11 @@ function toStock(row: StockRow): PlayerStock {
     bitRaised: Number(row.bit_raised),
     dividendsPaid: Number(row.dividends_paid),
     lastPrice: Number(row.last_price),
+    isOpen: Boolean(row.is_open),
+    sharesOffered: Number(row.shares_offered ?? 0),
+    ownerAddress: row.owner_address ?? null,
+    openedAt: row.opened_at ?? null,
+    feesPaid: Number(row.fees_paid ?? 0),
     updatedAt: row.updated_at,
   };
 }
