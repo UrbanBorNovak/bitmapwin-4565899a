@@ -4564,9 +4564,12 @@ function BitmapWorld3DInner({
               aria-label={chatMode === "party" ? "Party chat message" : "World chat message"}
               className="min-w-0 flex-1 border border-border bg-background/90 px-2 py-1 font-mono text-[11px] text-foreground outline-none placeholder:text-muted-foreground focus:border-bitcoin"
             />
-            <Button className="btn-term" type="submit" disabled={!draft.trim()}>
-              [ {chatMode === "party" ? "PARTY" : "SAY"} ]
-            </Button>
+            <HudIconButton
+              type="submit"
+              label={chatMode === "party" ? "Send to party" : "Say to everyone"}
+              icon={<Send />}
+              disabled={!draft.trim()}
+            />
           </form>
         </div> : null}
 
