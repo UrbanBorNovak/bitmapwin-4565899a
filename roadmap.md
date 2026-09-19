@@ -62,4 +62,4 @@
 - [x] Keep grass visible while jumping and flying.
 - [x] Add two requested on-chain skyscrapers beyond the glass edges.
 
-- [ ] Add persistent Auto / Low / Medium / High graphics quality, adaptive scaling, mobile recovery, and quality-aware world budgets
+- [x] Add persistent Auto / Low / Medium / High graphics quality, adaptive scaling, mobile recovery, and quality-aware world budgets

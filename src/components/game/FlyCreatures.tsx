@@ -22,6 +22,7 @@ import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { isDeepSea, nearestSea, seaRadiusAt, type SeaMass } from "@/lib/world-sea";
 import { poseDown, simDelta} from "@/lib/player-state";
 import { groundY } from "@/lib/world-terrain";
+import { useQuality } from "@/graphics/QualityContext";
 
 export type CreatureGroupSpec = {
   id: string;
@@ -287,10 +288,12 @@ export const CreatureGroup = memo(function CreatureGroup({
   onBite?: ((damage: number, label: string) => void) | undefined;
   onSighted?: ((label: string, strides: number) => void) | undefined;
 }) {
+  const { quality } = useQuality();
+  const groupLimit = quality.resolved === "low" ? 2 : quality.resolved === "medium" ? 4 : spec.count;
   const url = useMemo(() => contentUrl(spec.inscription), [spec.inscription]);
   const creatures = useMemo(
-    () => Array.from({ length: spec.count }, (_, index) => makeCreature(spec, index, unit)),
-    [spec, unit],
+    () => Array.from({ length: Math.min(spec.count, groupLimit) }, (_, index) => makeCreature(spec, index, unit)),
+    [groupLimit, spec, unit],
   );
   const groups = useRef<(THREE.Group | null)[]>([]);
   const [chatter, setChatter] = useState<Record<number, string>>({});
@@ -302,10 +305,13 @@ export const CreatureGroup = memo(function CreatureGroup({
   }, [creatures, spec.id]);
 
   const simBudget = useRef(0);
+  const animationFrame = useRef(0);
   useFrame((_, rawDelta) => {
+    animationFrame.current = (animationFrame.current + 1) % quality.animationStride;
+    if (animationFrame.current !== 0) return;
     // Flying or racing past: the crowd here is out of reach, so their brains
     // tick a few times a second instead of once a frame and travel stays smooth.
-    const delta = simDelta(simBudget, rawDelta, pose);
+    const delta = simDelta(simBudget, rawDelta * quality.animationStride, pose);
     if (delta === null) return;
     const player = pose.current;
     const down = poseDown(pose);

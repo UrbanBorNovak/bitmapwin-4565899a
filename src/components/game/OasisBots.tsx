@@ -42,6 +42,7 @@ import { brainProbe, publishBrainProbe } from "@/lib/fly-connectome";
 import { poseDown, simDelta} from "@/lib/player-state";
 import { dryLandNear, isSea } from "@/lib/world-sea";
 import { groundY } from "@/lib/world-terrain";
+import { useQuality } from "@/graphics/QualityContext";
 
 
 type Bot = BeastEntity &
@@ -120,6 +121,7 @@ const BotBody = memo(function BotBody({
   size: number;
   role: BotRole;
 }) {
+  const { quality } = useQuality();
   const model = ROLE_MODEL[role];
   if (model) {
     return (
@@ -167,7 +169,7 @@ export function OasisBots({
   onBite?: ((damage: number, label: string) => void) | undefined;
 }) {
   // The settlers simply live here — a fixed population, nothing to dial.
-  const count = botCount();
+  const count = Math.min(botCount(), quality.npcLimit);
   const bots = useMemo(() => botRoster(count).map((plan) => makeBot(plan, unit)), [count, unit]);
   const groups = useRef<(THREE.Group | null)[]>([]);
   /** what the labels show — refreshed on a slow timer, never every frame */
@@ -186,10 +188,13 @@ export function OasisBots({
   const nextProbe = useRef(0);
 
   const simBudget = useRef(0);
+  const animationFrame = useRef(0);
   useFrame((_, rawDelta) => {
+    animationFrame.current = (animationFrame.current + 1) % quality.animationStride;
+    if (animationFrame.current !== 0) return;
     // Flying or racing past: the crowd here is out of reach, so their brains
     // tick a few times a second instead of once a frame and travel stays smooth.
-    const delta = simDelta(simBudget, rawDelta, pose);
+    const delta = simDelta(simBudget, rawDelta * quality.animationStride, pose);
     if (delta === null) return;
     const player = pose.current;
     const down = poseDown(pose);

@@ -7,7 +7,7 @@ export function AdaptiveQuality() {
   const { quality, setAdaptiveScale } = useQuality();
   const invalidate = useThree((state) => state.invalidate);
   const setFrameloop = useThree((state) => state.setFrameloop);
-  const state = useRef({ lowFor: 0, highFor: 0, changedAt: -10, lastRender: 0, firstFrames: 0, firstTime: 0 });
+  const state = useRef({ lowFor: 0, highFor: 0, changedAt: -10, lastRender: 0, firstFrames: 0, firstTime: 0, startupChecked: false });
 
   useEffect(() => {
     const onVisibility = () => {
@@ -25,7 +25,10 @@ export function AdaptiveQuality() {
     reportRenderer(gl.info.render.calls, gl.info.render.triangles, gl.getPixelRatio());
     if (!state.current.firstTime) state.current.firstTime = now;
     if (now - state.current.firstTime <= 3) state.current.firstFrames += 1;
-    else if (quality.mode === "auto" && state.current.firstFrames / 3 < 40) setAdaptiveScale(0.5);
+    else if (!state.current.startupChecked) {
+      state.current.startupChecked = true;
+      if (quality.mode === "auto" && state.current.firstFrames / 3 < 40) setAdaptiveScale(0.5);
+    }
 
     const fps = 1 / Math.max(delta, 0.001);
     state.current.lowFor = fps < 25 ? state.current.lowFor + delta : 0;
