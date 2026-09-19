@@ -71,17 +71,17 @@ function ProgressionBoard() {
       ) : rows.length === 0 ? (
         <EmptyState note="NO SOULS MATCH THAT NAME IN THE OASIS" />
       ) : (
-        <RankTable
+        <RankTable compact
           head={
             <>
               <Th>#</Th>
               <Th>NAME [CLAN]</Th>
-              <Th>TITLE</Th>
+              <Th mobileHide>TITLE</Th>
               <Th right>LV</Th>
               <Th right>FAME</Th>
-              <Th>STATUS</Th>
-              <Th>HOME .BITMAP</Th>
-              <Th>LAST SEEN</Th>
+              <Th mobileHide>STATUS</Th>
+              <Th mobileHide>HOME .BITMAP</Th>
+              <Th mobileHide>LAST SEEN</Th>
             </>
           }
         >
@@ -104,13 +104,13 @@ function Row({ player, index, pinned }: { player: RankPlayer; index: number; pin
       <Td>
         <PlayerCell player={player} />
       </Td>
-      <Td>{player.title.toUpperCase()}</Td>
+      <Td mobileHide>{player.title.toUpperCase()}</Td>
       <Td right>{player.level}</Td>
       <Td right>{player.fame.toLocaleString()}</Td>
-      <Td>
+      <Td mobileHide>
         <StatusPill status={player.status} />
       </Td>
-      <Td>
+      <Td mobileHide>
         {player.homeBitmap === null ? (
           "—"
         ) : (
@@ -123,7 +123,7 @@ function Row({ player, index, pinned }: { player: RankPlayer; index: number; pin
           </Link>
         )}
       </Td>
-      <Td>
+      <Td mobileHide>
         {(player.lastDistrict ?? "UNKNOWN").toUpperCase()}
         <span className="ml-2 text-muted-foreground">{sinceLabel(player.lastKillAt ?? player.lastDeathAt)}</span>
       </Td>

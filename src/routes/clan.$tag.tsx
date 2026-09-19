@@ -1,7 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useMemo } from "react";
+import { toast } from "sonner";
 import { RankTable, StatusPill, Td, Th } from "@/components/ranks/RankShell";
+import { Button } from "@/components/ui/button";
 import {
   clanRosterQuery,
   clanScore,
@@ -12,6 +15,7 @@ import {
   statusClass,
 } from "@/lib/ranks";
 import { useWalletSession } from "@/lib/wallet-session";
+import { joinRankClanFn } from "@/lib/ranks.functions";
 
 const CREATE_COST_BIT = 500;
 const MAX_MEMBERS = 36;
@@ -39,6 +43,8 @@ export const Route = createFileRoute("/clan/$tag")({
 function ClanHall() {
   const { tag } = Route.useParams();
   const wallet = useWalletSession();
+  const queryClient = useQueryClient();
+  const joinClan = useServerFn(joinRankClanFn);
   const clans = useQuery(rankClansQuery());
   const players = useQuery(rankPlayersQuery());
   const feed = useQuery(pvpFeedQuery(60));
@@ -75,20 +81,41 @@ function ClanHall() {
   const fameTotal = members.reduce((sum, m) => sum + m.player.fame, 0);
   const pkTotal = members.reduce((sum, m) => sum + m.player.pkKills, 0);
   const full = members.length >= MAX_MEMBERS;
+  const walletAddresses = wallet ? [wallet.ordinalsAddress, wallet.paymentAddress].filter(Boolean) : [];
+  const currentPlayer = (players.data ?? []).find(
+    (player) => player.wallet && walletAddresses.some((address) => address.toLowerCase() === player.wallet?.toLowerCase()),
+  );
+  const isMember = currentPlayer?.clanId === clan.id;
+  const hasClan = Boolean(currentPlayer?.clanId);
+  const join = useMutation({
+    mutationFn: () => {
+      if (!wallet) throw new Error("CONNECT YOUR WALLET FIRST");
+      return joinClan({ data: { clanId: clan.id, wallet: wallet.ordinalsAddress } });
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["rank-players"] }),
+        queryClient.invalidateQueries({ queryKey: ["rank-clans"] }),
+        queryClient.invalidateQueries({ queryKey: ["rank-clan-roster"] }),
+      ]);
+      toast(`JOINED [${clan.tag}]`, { description: "YOUR NAME NOW CARRIES THE BANNER" });
+    },
+    onError: (error) => toast("JOIN FAILED", { description: (error as Error).message.toUpperCase() }),
+  });
 
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-8 md:px-8 md:py-12" data-no-translate>
       <Link to="/ranks/clans" className="label text-bitcoin">← CLAN RANKS</Link>
 
-      <header className="mt-4 flex flex-wrap items-center gap-4 border border-border px-4 py-4">
+      <header className="mt-4 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4 border border-border px-4 py-4">
         <span
           aria-hidden="true"
-          className="inline-block size-12 border border-border"
+          className="inline-block size-16 shrink-0 border border-border sm:size-14"
           style={{ background: clan.crestColor }}
         />
         <div className="min-w-0">
-          <h1 className="display text-2xl md:text-3xl">
-            <span className="text-bitcoin">[{clan.tag}]</span> {clan.name}
+          <h1 className="display text-xl sm:text-2xl md:text-3xl">
+            <span className="mr-1 inline-block border border-bitcoin/50 px-2 py-1 text-bitcoin">[{clan.tag}]</span> {clan.name}
           </h1>
           <p className="mt-1 font-mono text-[11px] text-muted-foreground">{clan.motto || "NO WORDS ON THE BANNER"}</p>
           <p className="label mt-2">
@@ -115,8 +142,24 @@ function ClanHall() {
         ))}
       </dl>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <button
+      <div className="mt-4 grid gap-2 sm:grid-cols-[auto_auto_auto_1fr] sm:items-center">
+        {wallet ? (
+          <Button
+            type="button"
+            variant="terminal"
+            size="lg"
+            disabled={full || isMember || hasClan || join.isPending}
+            onClick={() => join.mutate()}
+            className="min-h-12 w-full text-sm sm:w-auto"
+          >
+            {join.isPending ? "JOINING…" : isMember ? `[ MEMBER OF ${clan.tag} ]` : full ? "[ CLAN FULL ]" : hasClan ? "[ ALREADY IN A CLAN ]" : `[ JOIN ${clan.tag} ]`}
+          </Button>
+        ) : (
+          <Button asChild variant="terminal" size="lg" className="min-h-12 w-full text-sm sm:w-auto">
+            <Link to="/wallet">[ CONNECT WALLET TO JOIN ]</Link>
+          </Button>
+        )}
+        <Button
           type="button"
           disabled
           title={
@@ -124,43 +167,46 @@ function ClanHall() {
               ? `Founding a clan costs ${CREATE_COST_BIT} BIT — clan founding opens with the next world update`
               : "Connect your wallet to found a clan"
           }
-          className="label cursor-not-allowed border border-border px-3 py-2 text-muted-foreground opacity-60"
+          variant="terminalGhost"
+          className="min-h-11 w-full sm:w-auto"
         >
           [ CREATE CLAN · {CREATE_COST_BIT} BIT ]
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           disabled
           title={wallet ? (full ? "This clan is full" : "Only the clan leader can invite") : "Connect your wallet to be invited"}
-          className="label cursor-not-allowed border border-border px-3 py-2 text-muted-foreground opacity-60"
+          variant="terminalGhost"
+          className="min-h-11 w-full sm:w-auto"
         >
           [ INVITE ]
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           disabled
           title={wallet ? "You are not sworn to this banner" : "Connect your wallet first"}
-          className="label cursor-not-allowed border border-border px-3 py-2 text-muted-foreground opacity-60"
+          variant="terminalGhost"
+          className="min-h-11 w-full sm:w-auto"
         >
           [ LEAVE ]
-        </button>
-        <span className="font-mono text-[10px] text-muted-foreground">
-          {wallet ? "TAG 2–6 A–Z · NAME 3–24 CHARS · MAX 36 MEMBERS" : "CONNECT A WALLET TO JOIN A BANNER"}
+        </Button>
+        <span className="font-mono text-[10px] leading-relaxed text-muted-foreground sm:text-right">
+          {wallet ? (hasClan && !isMember ? "LEAVE YOUR CURRENT CLAN BEFORE JOINING ANOTHER" : "MAX 36 MEMBERS · VERIFIED WALLETS ONLY") : "CONNECT AND VERIFY YOUR WALLET TO JOIN A BANNER"}
         </span>
       </div>
 
       <h2 className="display mt-8 text-lg">ROSTER</h2>
       <div className="mt-3">
-        <RankTable
+        <RankTable compact
           head={
             <>
               <Th>RANK</Th>
               <Th>NAME</Th>
-              <Th>TITLE</Th>
+              <Th mobileHide>TITLE</Th>
               <Th right>LV</Th>
-              <Th right>FAME</Th>
-              <Th right>PK</Th>
-              <Th>STATUS</Th>
+              <Th right mobileHide>FAME</Th>
+              <Th right mobileHide>PK</Th>
+              <Th mobileHide>STATUS</Th>
             </>
           }
         >
@@ -176,11 +222,11 @@ function ClanHall() {
                   {player.name}
                 </Link>
               </Td>
-              <Td>{player.title.toUpperCase()}</Td>
+              <Td mobileHide>{player.title.toUpperCase()}</Td>
               <Td right>{player.level}</Td>
-              <Td right>{player.fame.toLocaleString()}</Td>
-              <Td right>{player.pkKills}</Td>
-              <Td>
+              <Td right mobileHide>{player.fame.toLocaleString()}</Td>
+              <Td right mobileHide>{player.pkKills}</Td>
+              <Td mobileHide>
                 <StatusPill status={player.status} />
               </Td>
             </tr>

@@ -17,6 +17,11 @@ const killSchema = z.object({
   bitmap: z.number().int().min(0).max(10_000_000).nullable(),
 });
 
+const joinClanSchema = z.object({
+  clanId: z.string().uuid(),
+  wallet: z.string().trim().min(8).max(128),
+});
+
 type PlayerRow = {
   id: string;
   name: string;
@@ -102,4 +107,27 @@ export const recordPvpKillFn = createServerFn({ method: "POST" })
       karma: nextKarma,
       status: nextStatus,
     };
+  });
+
+/** Joins the signed-in player's verified wallet identity to one rank clan. */
+export const joinRankClanFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => joinClanSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: ownsWallet, error: walletError } = await context.supabase.rpc("owns_wallet", {
+      _user_id: context.userId,
+      _address: data.wallet,
+    });
+    if (walletError || !ownsWallet) {
+      throw new Error("VERIFY THIS WALLET ON YOUR WALLET PAGE FIRST");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: joined, error } = await supabaseAdmin.rpc("join_rank_clan", {
+      _clan_id: data.clanId,
+      _wallet: data.wallet,
+    });
+    if (error) throw new Error(error.message);
+    const result = Array.isArray(joined) ? joined[0] : null;
+    return { ok: true, clanTag: result?.clan_tag ?? null };
   });
