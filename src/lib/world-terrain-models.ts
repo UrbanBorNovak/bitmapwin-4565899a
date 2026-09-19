@@ -24,51 +24,118 @@ export type TerrainModelSpec = {
   /** height of the landform, in BITMAPS */
   span: number;
   yaw: number;
+  /** height-grid resolution — big landforms get a finer walk surface */
+  res: number;
 };
 
-/** Permanent landforms. Fixed cells: they never move for anybody, ever. */
-export const TERRAIN_MODELS: TerrainModelSpec[] = [
+type Source = {
+  key: string;
+  label: string;
+  inscription: string;
+  /** "peak" landforms rise far out, "swell" ones ripple close to the plaza */
+  kind: "peak" | "swell";
+};
+
+const SOURCES: Source[] = [
   {
-    id: "rocky-mountain",
+    key: "rocky-mountain",
     label: "ROCKY MOUNTAIN",
     inscription: "e4d98b1238facb936f24c57298b425869bf343c134fea33d862c57b4744efd42i0",
-    cell: [-32, 34],
-    span: 3.2,
-    yaw: 0.4,
+    kind: "peak",
   },
   {
-    id: "green-mountain",
+    key: "green-mountain",
     label: "GREEN MOUNTAIN",
     inscription: "16957e91d9a75779ae558998cf1b98ef1258095c94fad8cb5ea8802b1e80d7b2i0",
-    cell: [30, 28],
-    span: 2.8,
-    yaw: -0.9,
+    kind: "peak",
   },
   {
-    id: "green-mountain-shore",
+    key: "green-mountain-shore",
     label: "GREEN MOUNTAIN SHORE",
     inscription: "db35b207b9a173e01e9d63ffbb81f27df651ea0f3538382d7305d6dc12ca8ceci0",
-    cell: [-34, -24],
-    span: 2.4,
-    yaw: 1.8,
+    kind: "peak",
   },
   {
-    id: "green-hill",
+    key: "green-hill",
     label: "GREEN HILL",
     inscription: "c0706037ac9ba2b2b15f227b5cda727cd85175b635de6ad19324e65bf96c1dadi0",
-    cell: [22, -20],
-    span: 1.6,
-    yaw: -0.3,
+    kind: "swell",
   },
   {
-    id: "green-hill-beach",
+    key: "green-hill-beach",
     label: "GREEN HILL BEACH",
     inscription: "4da063cec2b236154a76f970621c9803767c75c6e0dccaaff4d82e4342c23254i0",
-    cell: [-20, 18],
-    span: 1.5,
-    yaw: 2.6,
+    kind: "swell",
   },
 ];
+
+/** Deterministic noise, so every player sees the same range of landforms. */
+function rand(seed: number) {
+  const s = Math.sin(seed * 12.9898) * 43758.5453;
+  return s - Math.floor(s);
+}
+
+function resFor(span: number) {
+  return span >= 3 ? 56 : span >= 1.8 ? 40 : 28;
+}
+
+/**
+ * Lay the landforms out as a range: gentle swells close in, taller peaks
+ * further out, each ring turned a different way and sized differently. Fixed
+ * seeds mean the whole range is permanent and identical for everybody.
+ */
+function layout(): TerrainModelSpec[] {
+  const out: TerrainModelSpec[] = [];
+  const taken: { cell: [number, number]; span: number }[] = [];
+  // ring radius in BITMAPS, how many landforms sit on it, and their size band
+  const rings: { radius: number; count: number; low: number; high: number; kind: Source["kind"] }[] = [
+    { radius: 16, count: 6, low: 0.9, high: 1.5, kind: "swell" },
+    { radius: 27, count: 8, low: 1.3, high: 2.2, kind: "swell" },
+    { radius: 40, count: 9, low: 1.8, high: 3.4, kind: "peak" },
+    { radius: 58, count: 10, low: 2.8, high: 5.4, kind: "peak" },
+    { radius: 78, count: 8, low: 4, high: 7.5, kind: "peak" },
+  ];
+
+  let seed = 7;
+  for (const ring of rings) {
+    const pool = SOURCES.filter((source) => source.kind === ring.kind);
+    for (let i = 0; i < ring.count; i++) {
+      seed += 1;
+      const wobble = (rand(seed * 3.1) - 0.5) * 0.6;
+      const angle = (i / ring.count) * Math.PI * 2 + wobble;
+      const reach = ring.radius * (0.86 + rand(seed * 5.7) * 0.32);
+      const cell: [number, number] = [
+        Math.round(Math.cos(angle) * reach),
+        Math.round(Math.sin(angle) * reach),
+      ];
+      const span = ring.low + rand(seed * 9.3) * (ring.high - ring.low);
+      // Keep landforms from growing into each other.
+      const clash = taken.some(([] = [], ) => false) ||
+        taken.some((other) => {
+          const dx = other.cell[0] - cell[0];
+          const dz = other.cell[1] - cell[1];
+          const gap = (other.span + span) * 0.75 + 3;
+          return dx * dx + dz * dz < gap * gap;
+        });
+      if (clash) continue;
+      const source = pool[i % pool.length] ?? SOURCES[0]!;
+      taken.push({ cell, span });
+      out.push({
+        id: `${source.key}-${ring.radius}-${i}`,
+        label: source.label,
+        inscription: source.inscription,
+        cell,
+        span: Math.round(span * 100) / 100,
+        yaw: rand(seed * 13.7) * Math.PI * 2,
+        res: resFor(span),
+      });
+    }
+  }
+  return out;
+}
+
+/** Permanent landforms. Fixed cells: they never move for anybody, ever. */
+export const TERRAIN_MODELS: TerrainModelSpec[] = layout();
 
 /** A landform's spot in world units. */
 export function terrainModelSpot(spec: TerrainModelSpec) {
