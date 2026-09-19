@@ -939,3 +939,33 @@
     animation: none !important;
   }
 }
+
+/* ---------------------------------------------- inscribed sprite characters */
+
+@keyframes sprite-stroll {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  50% { transform: translateX(14px) translateY(-3px); }
+}
+
+@keyframes sprite-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-sprite-stroll {
+  animation: sprite-stroll 3.4s ease-in-out infinite;
+}
+
+.animate-sprite-stroll-slow {
+  animation: sprite-stroll 4.8s ease-in-out infinite;
+}
+
+.animate-sprite-bob {
+  animation: sprite-bob 2.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-sprite-stroll, .animate-sprite-stroll-slow, .animate-sprite-bob {
+    animation: none !important;
+  }
+}
