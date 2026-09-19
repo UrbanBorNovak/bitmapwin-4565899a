@@ -25,7 +25,43 @@ import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useCharacter } from "@/lib/character";
-import { ArrowUpRight, Crosshair, Eye, Map as MapIcon, Menu, MessageSquare, Orbit, Trophy, X } from "lucide-react";
+import {
+  ArrowUpRight,
+  BookOpen,
+  Car,
+  Crosshair,
+  Dog,
+  Eye,
+  Flame,
+  Footprints,
+  Gem,
+  Glasses,
+  Hammer,
+  Map as MapIcon,
+  Maximize,
+  Menu,
+  MessageSquare,
+  Music,
+  Music2,
+  Orbit,
+  Package,
+  Pickaxe,
+  Rocket,
+  Search,
+  Send,
+  Shovel,
+  Sparkles,
+  Swords,
+  Trophy,
+  Users,
+  Utensils,
+  Volume2,
+  VolumeX,
+  Watch,
+  Wrench,
+  X,
+} from "lucide-react";
+import { HudIconButton, HudIconLink } from "@/components/game/HudIconButton";
 import * as THREE from "three";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
 import { Button } from "@/components/ui/button";
@@ -3539,14 +3575,16 @@ function BitmapWorld3DInner({
                     type="button"
                     role="tab"
                     aria-selected={kitTab === tab.id}
+                    aria-label={tab.label}
+                    title={tab.label}
                     onClick={() => setKitTab(tab.id)}
-                    className={`flex-1 border px-1.5 py-1 font-mono text-[9px] uppercase tracking-[0.18em] transition-colors ${
+                    className={`grid flex-1 place-items-center border py-2 transition-colors [&_svg]:size-[1.1rem] ${
                       kitTab === tab.id
                         ? "border-bitcoin bg-bitcoin/10 text-bitcoin"
                         : "border-border text-muted-foreground hover:border-signal hover:text-signal"
                     }`}
                   >
-                    {tab.label}
+                    {kitTabIcon(tab.id)}
                   </button>
                 ))}
               </div>
@@ -3566,24 +3604,23 @@ function BitmapWorld3DInner({
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Action</span>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <Button
-                    className="btn-term-ghost"
-                    variant="ghost"
-                    onClick={attackNearest}
+                  <HudIconButton
+                    label={
+                      attackReady
+                        ? "Attack (F)"
+                        : `Cooling down ${(cooldownRemaining / 1000).toFixed(1)}s`
+                    }
+                    icon={<Swords />}
                     disabled={!attackReady}
-                  >
-                    [ {attackReady ? "ATTACK · F" : `COOLDOWN ${(cooldownRemaining / 1000).toFixed(1)}s`} ]
-                  </Button>
-                  <Button className="btn-term-ghost" variant="ghost" onClick={() => void workLand()}>
-                    [ TERRAFORM · T ]
-                  </Button>
-                  <Button
-                    className={buildOpen ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                    onClick={attackNearest}
+                  />
+                  <HudIconButton label="Terraform (T)" icon={<Shovel />} onClick={() => void workLand()} />
+                  <HudIconButton
+                    label="Build (B)"
+                    icon={<Hammer />}
+                    active={buildOpen}
                     onClick={() => setBuildOpen((current) => !current)}
-                  >
-                    [ BUILD · B ]
-                  </Button>
+                  />
                 </div>
               </div>
               ) : null}
@@ -3592,21 +3629,20 @@ function BitmapWorld3DInner({
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Kit</span>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <Button
-                    className={inventoryOpen ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                  <HudIconButton
+                    label={avatarModel ? "Inventory (I) — wearing a model" : "Inventory (I)"}
+                    icon={<Package />}
+                    active={inventoryOpen}
+                    flag={Boolean(avatarModel)}
                     onClick={() => setInventoryOpen((current) => !current)}
-                  >
-                    {avatarModel ? "[ INVENTORY · WEARING MODEL ]" : "[ INVENTORY · I ]"}
-                  </Button>
+                  />
                   <div className="relative">
-                    <Button
-                      className={rationsOpen ? "btn-term" : "btn-term-ghost"}
-                      variant="ghost"
+                    <HudIconButton
+                      label="Rations (E)"
+                      icon={<Utensils />}
+                      active={rationsOpen}
                       onClick={() => setRationsOpen((current) => !current)}
-                    >
-                      [ RATIONS · E ]
-                    </Button>
+                    />
                     {rationsOpen ? (
                       <div className="hud-panel absolute bottom-full left-0 z-20 mb-2 w-64 p-2">
                         <div className="mb-1.5 text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
@@ -3643,20 +3679,21 @@ function BitmapWorld3DInner({
                       </div>
                     ) : null}
                   </div>
-                  <Button
-                    className={gear.companion !== "none" ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                  <HudIconButton
+                    label={
+                      gear.companion === "none"
+                        ? "Call a companion (P)"
+                        : `${companionSpec(gear.companion).label} (P)`
+                    }
+                    icon={<Dog />}
+                    active={gear.companion !== "none"}
                     onClick={() => {
                       const next = cycleCompanion();
                       playSfx("ui");
                       setBiteNote(next.inscription ? `COMPANION · ${next.label}` : "COMPANION DISMISSED");
                       window.setTimeout(() => setBiteNote(null), 1600);
                     }}
-                  >
-                    <span data-no-translate>
-                      [ {gear.companion === "none" ? "COMPANION" : companionSpec(gear.companion).label} · P ]
-                    </span>
-                  </Button>
+                  />
                 </div>
               </div>
               ) : null}
@@ -3667,15 +3704,12 @@ function BitmapWorld3DInner({
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Travel</span>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <Button
-                    className={driving ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                  <HudIconButton
+                    label={driving ? `Leave ${ride.label} (V)` : `Travel by ${ride.label} (V)`}
+                    icon={ride.kind === "air" ? <Rocket /> : <Car />}
+                    active={driving}
                     onClick={toggleTruck}
-                  >
-                    <span data-no-translate>
-                      {driving ? `[ LEAVE ${ride.label} · V ]` : `[ TRAVEL BY ${ride.label} · V ]`}
-                    </span>
-                  </Button>
+                  />
                   <select
                     aria-label="Travel source"
                     data-no-translate
@@ -3716,96 +3750,88 @@ function BitmapWorld3DInner({
                 <span className="hud-divider" aria-hidden />
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">View &amp; sound</span>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <Button
-                    className={gear.goggles ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                  <HudIconButton
+                    label="Night vision (N)"
+                    icon={<Glasses />}
+                    active={gear.goggles}
                     onClick={() => {
                       const on = toggleGoggles();
                       playSfx("ui");
                       setBiteNote(on ? "NIGHT VISION · ON" : "NIGHT VISION · OFF");
                       window.setTimeout(() => setBiteNote(null), 1400);
                     }}
-                  >
-                    [ NIGHT VISION · N ]
-                  </Button>
-                  <Button
-                    className={gear.shoes ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                  />
+                  <HudIconButton
+                    label="Shoes — faster stride"
+                    icon={<Footprints />}
+                    active={gear.shoes}
                     onClick={() => {
                       const on = toggleShoes();
                       playSfx("ui");
                       setBiteNote(on ? "SHOES ON · FASTER STRIDE" : "SHOES OFF");
                       window.setTimeout(() => setBiteNote(null), 1400);
                     }}
-                  >
-                    [ SHOES ]
-                  </Button>
-                  <Button
-                    className={gear.toy !== "none" ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                  />
+                  <HudIconButton
+                    label="Toy in hand (Z)"
+                    icon={<Sparkles />}
+                    active={gear.toy !== "none"}
                     onClick={() => {
                       const next = cycleToy();
                       playSfx("ui");
                       setBiteNote(next.inscription ? `TOY IN HAND · ${next.label}` : "TOY PUT AWAY");
                       window.setTimeout(() => setBiteNote(null), 1500);
                     }}
-                  >
-                    <span data-no-translate>
-                      [ {gear.toy === "none" ? "TOY" : toySpec(gear.toy).label} · Z ]
-                    </span>
-                  </Button>
-                  <Button
-                    className={gear.necklace ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                  />
+                  <HudIconButton
+                    label="Necklace — steady recovery"
+                    icon={<Gem />}
+                    active={gear.necklace}
                     onClick={() => {
                       const on = toggleNecklace();
                       playSfx("ui");
                       setBiteNote(on ? "NECKLACE ON · STEADY RECOVERY" : "NECKLACE OFF");
                       window.setTimeout(() => setBiteNote(null), 1400);
                     }}
-                  >
-                    [ NECKLACE ]
-                  </Button>
-                  <Button
-                    className={gear.watch ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                  />
+                  <HudIconButton
+                    label="Watch"
+                    icon={<Watch />}
+                    active={gear.watch}
                     onClick={() => {
                       const on = toggleWatch();
                       playSfx("ui");
                       setBiteNote(on ? "WATCH ON" : "WATCH OFF");
                       window.setTimeout(() => setBiteNote(null), 1400);
                     }}
-                  >
-                    [ WATCH ]
-                  </Button>
-                  <Button
-                    className={gear.ring ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                  />
+                  <HudIconButton
+                    label="Ring"
+                    icon={<Orbit />}
+                    active={gear.ring}
                     onClick={() => {
                       const on = toggleRing();
                       playSfx("ui");
                       setBiteNote(on ? "RING ON" : "RING OFF");
                       window.setTimeout(() => setBiteNote(null), 1400);
                     }}
-                  >
-                    [ RING ]
-                  </Button>
-                  <Button
-                    className={gear.comic ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                  />
+                  <HudIconButton
+                    label="Comic book"
+                    icon={<BookOpen />}
+                    active={gear.comic}
                     onClick={() => {
                       const on = toggleComic();
                       playSfx("ui");
                       setBiteNote(on ? "COMIC BOOK IN HAND" : "COMIC BOOK AWAY");
                       window.setTimeout(() => setBiteNote(null), 1400);
                     }}
-                  >
-                    [ COMIC BOOK ]
-                  </Button>
+                  />
                   {weapon === "staff" ? (
-                    <Button
-                      className={stone ? "btn-term" : "btn-term-ghost"}
-                      variant="ghost"
+                    <HudIconButton
+                      label={stone ? `Staff stone — ${stone.label}` : "Staff stone — bare"}
+                      icon={<Flame />}
+                      active={Boolean(stone)}
                       onClick={() => {
                         const next = cycleStone();
                         playSfx("ui");
@@ -3818,18 +3844,21 @@ function BitmapWorld3DInner({
                         );
                         window.setTimeout(() => setBiteNote(null), 1600);
                       }}
-                    >
-                      [ STAFF STONE · {stone ? stone.label : "BARE"} ]
-                    </Button>
+                    />
                   ) : null}
 
-
-                  <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
-                    {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
-                  </Button>
-                  <Button className="btn-term-ghost" variant="ghost" onClick={toggleMusic}>
-                    {musicOn ? "[ MUSIC · ON ]" : "[ MUSIC · OFF ]"}
-                  </Button>
+                  <HudIconButton
+                    label={muted ? "Sound off" : "Sound on"}
+                    icon={muted ? <VolumeX /> : <Volume2 />}
+                    active={!muted}
+                    onClick={toggleSound}
+                  />
+                  <HudIconButton
+                    label={musicOn ? "Music on" : "Music off"}
+                    icon={musicOn ? <Music /> : <Music2 />}
+                    active={musicOn}
+                    onClick={toggleMusic}
+                  />
                 </div>
               </div>
               ) : null}
@@ -4461,33 +4490,19 @@ function BitmapWorld3DInner({
             </Button>
           </div>
           <div className="flex gap-1">
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className={
-                chatMode === "world"
-                  ? "h-6 rounded-sm bg-bitcoin px-2 text-[9px] text-bitcoin-foreground"
-                  : "h-6 rounded-sm px-2 text-[9px]"
-              }
+            <HudIconButton
+              label="Everyone in the world"
+              icon={<MessageSquare />}
+              active={chatMode === "world"}
               onClick={() => setChatMode("world")}
-            >
-              WORLD
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
+            />
+            <HudIconButton
+              label="Your party"
+              icon={<Users />}
+              active={chatMode === "party"}
               disabled={!party.party}
-              className={
-                chatMode === "party"
-                  ? "h-6 rounded-sm bg-bitcoin px-2 text-[9px] text-bitcoin-foreground"
-                  : "h-6 rounded-sm px-2 text-[9px]"
-              }
               onClick={() => setChatMode("party")}
-            >
-              PARTY
-            </Button>
+            />
           </div>
           {(chatMode === "party" ? party.messages : chatLines).length > 0 ? (
             <div
@@ -4528,57 +4543,26 @@ function BitmapWorld3DInner({
               aria-label={chatMode === "party" ? "Party chat message" : "World chat message"}
               className="min-w-0 flex-1 border border-border bg-background/90 px-2 py-1 font-mono text-[11px] text-foreground outline-none placeholder:text-muted-foreground focus:border-bitcoin"
             />
-            <Button className="btn-term" type="submit" disabled={!draft.trim()}>
-              [ {chatMode === "party" ? "PARTY" : "SAY"} ]
-            </Button>
+            <HudIconButton
+              type="submit"
+              label={chatMode === "party" ? "Send to party" : "Say to everyone"}
+              icon={<Send />}
+              disabled={!draft.trim()}
+            />
           </form>
         </div> : null}
 
         {exploring && !inventoryOpen && !buildOpen && !mapOpen && !chatOpen ? (
           <div className="pointer-events-none absolute inset-x-0 bottom-[14rem] z-30 flex items-center justify-between px-4 md:bottom-4 md:px-8">
-            <Button
-              type="button"
-              variant="ghost"
-              className="pointer-events-auto border border-border bg-background/55 font-mono text-[10px] text-muted-foreground backdrop-blur-sm hover:border-bitcoin hover:text-bitcoin"
-              onClick={() => setMapOpen(true)}
-            >
-              <MapIcon className="size-3.5" /> [M] MAP
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              aria-label="Switch between first and third person"
-              title="Switch view (O)"
-              className="pointer-events-auto border border-border bg-background/55 font-mono text-[10px] text-muted-foreground backdrop-blur-sm hover:border-bitcoin hover:text-bitcoin"
+            <HudIconButton large label="Map (M)" icon={<MapIcon />} onClick={() => setMapOpen(true)} />
+            <HudIconButton
+              large
+              label={cameraMode === "first" ? "First person view (O)" : "Third person view (O)"}
+              icon={cameraMode === "first" ? <Eye /> : <Orbit />}
               onClick={() => setCameraMode((current) => (current === "first" ? "third" : "first"))}
-            >
-              {cameraMode === "first" ? (
-                <>
-                  <Eye className="size-3.5" /> [O] 1ST
-                </>
-              ) : (
-                <>
-                  <Orbit className="size-3.5" /> [O] 3RD
-                </>
-              )}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="pointer-events-auto border border-border bg-background/55 font-mono text-[10px] text-muted-foreground backdrop-blur-sm hover:border-bitcoin hover:text-bitcoin"
-              onClick={() => setChatOpen(true)}
-            >
-              <MessageSquare className="size-3.5" /> [C] CHAT
-            </Button>
-            <a
-              href="/ranks"
-              target="_blank"
-              rel="noreferrer"
-              title="Hall of fame — progression, PvP and clans"
-              className="pointer-events-auto flex items-center gap-1.5 border border-border bg-background/55 px-3 py-2 font-mono text-[10px] text-muted-foreground backdrop-blur-sm hover:border-bitcoin hover:text-bitcoin"
-            >
-              <Trophy className="size-3.5" /> [R] RANKS
-            </a>
+            />
+            <HudIconButton large label="Chat (C)" icon={<MessageSquare />} onClick={() => setChatOpen(true)} />
+            <HudIconLink label="Ranks — progression, PvP and clans" icon={<Trophy />} href="/ranks" external />
             <QualityHud touch={touchDevice} />
           </div>
         ) : null}
