@@ -14,6 +14,7 @@ const TABS = [
   { to: "/ranks", label: "PROGRESSION" },
   { to: "/ranks/pvp", label: "PVP / PK" },
   { to: "/ranks/clans", label: "CLANS" },
+  { to: "/ranks/shares", label: "SHARE MARKET" },
 ] as const;
 
 export type Scope = "weekly" | "all";
