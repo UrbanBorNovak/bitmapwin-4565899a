@@ -3108,9 +3108,45 @@ function BitmapWorld3DInner({
       ? Math.max(0, Math.ceil((respawnAt - Math.max(nowTick, Date.now())) / 1000))
       : 0;
 
+  /** Demo kill for the boards. Only reachable with ?debug=1. */
+  const pkTest = useCallback(
+    (victimName: string) => {
+      const district = Math.round(pose.current?.height ?? 0);
+      void recordPvpKillFn({
+        data: {
+          killerName: handle,
+          victimName,
+          district: `${district}.BITMAP`,
+          bitmap: district,
+        },
+      })
+        .then((result) => {
+          say(result.announce.toUpperCase());
+          setAttackTarget(`${result.wasPk ? "☠ PK · " : ""}KARMA ${result.karma}`);
+        })
+        .catch((error: unknown) => {
+          setAttackTarget(String(error instanceof Error ? error.message : error).toUpperCase());
+        });
+    },
+    [handle, say],
+  );
+
   const sendSay = useCallback(() => {
     const body = draft.trim();
     if (!body) return;
+    if (body.toLowerCase().startsWith("/pktest")) {
+      const debug =
+        typeof window !== "undefined" &&
+        new URLSearchParams(window.location.search).get("debug") === "1";
+      if (debug) {
+        const named = body.slice(7).trim();
+        const nearest = cursorsRef.current.find((cursor) => cursor.handle !== handle);
+        const victimName = named || nearest?.handle || "SandWalker";
+        pkTest(victimName);
+        setDraft("");
+        return;
+      }
+    }
     if (chatMode === "party" && party.party) party.say(body);
     else {
       say(body);
@@ -3121,7 +3157,7 @@ function BitmapWorld3DInner({
       );
     }
     setDraft("");
-  }, [chatMode, draft, party, say]);
+  }, [chatMode, draft, handle, party, pkTest, say]);
 
   /** Equip, swap or unequip the worn on-chain model — persists per browser. */
   const equipModel = useCallback(
@@ -3224,6 +3260,8 @@ function BitmapWorld3DInner({
     })
       .then((result) => {
         const note = `${result.wasPk ? "☠ PK · " : ""}SLAIN ${mark.handle.toUpperCase()} · KARMA ${result.karma}`;
+        // Everyone nearby hears the kill, the way the old halls announced it.
+        say(result.announce.toUpperCase());
         setAttackTarget(note);
         window.setTimeout(
           () => setAttackTarget((current) => (current === note ? null : current)),
@@ -3233,7 +3271,7 @@ function BitmapWorld3DInner({
       .catch(() => {
         /* the board is not worth interrupting the fight for */
       });
-  }, [cursors, handle]);
+  }, [cursors, handle, say]);
 
   useEffect(() => {
     if (!attackCooldownUntil) return;
