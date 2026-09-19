@@ -1815,6 +1815,8 @@ export type Database = {
           bitmap_height: number
           builder_address: string | null
           chunk_key: string
+          clan_id: string | null
+          clan_tag: string | null
           created_at: string
           id: string
           kind: string
@@ -1827,6 +1829,8 @@ export type Database = {
           bitmap_height: number
           builder_address?: string | null
           chunk_key: string
+          clan_id?: string | null
+          clan_tag?: string | null
           created_at?: string
           id?: string
           kind: string
@@ -1839,6 +1843,8 @@ export type Database = {
           bitmap_height?: number
           builder_address?: string | null
           chunk_key?: string
+          clan_id?: string | null
+          clan_tag?: string | null
           created_at?: string
           id?: string
           kind?: string
@@ -1847,7 +1853,15 @@ export type Database = {
           yaw?: number
           z?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "player_builds_clan_id_fkey"
+            columns: ["clan_id"]
+            isOneToOne: false
+            referencedRelation: "clans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pvp_events: {
         Row: {
@@ -2387,6 +2401,19 @@ export type Database = {
         Returns: boolean
       }
       can_build_on_height: { Args: { _height: number }; Returns: boolean }
+      clan_builds_by_tag: {
+        Args: { _tag: string }
+        Returns: {
+          bitmap_height: number
+          chunk_key: string
+          created_at: string
+          id: string
+          kind: string
+          x: number
+          yaw: number
+          z: number
+        }[]
+      }
       clan_for_users: {
         Args: { _user_ids: string[] }
         Returns: {
@@ -2457,6 +2484,10 @@ export type Database = {
           total_coins: number
           unit_price: number
         }[]
+      }
+      is_clan_member: {
+        Args: { _clan_id: string; _user_id: string }
+        Returns: boolean
       }
       join_rank_clan: {
         Args: { _clan_id: string; _wallet: string }
