@@ -138,10 +138,11 @@ export function reliefAt(x: number, z: number) {
 }
 
 /**
- * The surface height at a world point, in world units. Everything that stands
- * on the ground reads this — avatars, rides, props, the camera.
+ * The plain block-shaped land, without the inscribed landforms on top. The
+ * displaced terrain mesh draws this, so the sand never bulges up through an
+ * inscribed hill.
  */
-export function groundY(x: number, z: number) {
+export function baseGroundY(x: number, z: number) {
   const fx = (x + WORLD_UNITS / 2) / WORLD_CELL - 0.5;
   const fz = z / WORLD_CELL - 0.5;
   const macro = bilinear(fx / MACRO, fz / MACRO, macroActivity);
@@ -151,6 +152,17 @@ export function groundY(x: number, z: number) {
   const hit = seaDepthAt(x, z);
   const depth = hit ? clamp(hit.depth, 0, 1) : 0;
   return land * (1 - depth) - depth * SEA_DROP;
+}
+
+/**
+ * The surface height at a world point, in world units. Everything that stands
+ * on the ground reads this — avatars, rides, props, the camera — including the
+ * inscribed hills and mountains, which are walkable ground like any other.
+ */
+export function groundY(x: number, z: number) {
+  const base = baseGroundY(x, z);
+  const landform = terrainModelTop(x, z, baseGroundY);
+  return landform > base ? landform : base;
 }
 
 /**
