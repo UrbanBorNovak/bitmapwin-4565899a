@@ -18,6 +18,7 @@ const NAV_GROUPS: NavGroup[] = [
     note: "Everything you use inside the 3D Oasis",
     items: [
       { to: "/map", label: "ENTER THE OASIS", note: "Walk, drive, build and explore" },
+      { to: "/play-guide", label: "PLAYER GUIDE", note: "Controls, devices and what to do" },
       { to: "/cities", label: "VISIT CITIES", note: "Districts inside the world" },
       { to: "/trading-post", label: "IN-WORLD TRADING POST", note: "Trade your Oasis items" },
       { to: "/inventory", label: "MY INVENTORY", note: "Gear, rations and collectibles" },

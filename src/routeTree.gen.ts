@@ -37,6 +37,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as MyLandRouteImport } from './routes/my-land'
 import { Route as MyWorldRouteImport } from './routes/my-world'
 import { Route as OwnershipRouteImport } from './routes/ownership'
+import { Route as PlayGuideRouteImport } from './routes/play-guide'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SdkRouteImport } from './routes/sdk'
 import { Route as SdkPlaygroundRouteImport } from './routes/sdk-playground'
@@ -203,6 +204,11 @@ const OwnershipRoute = OwnershipRouteImport.update({
   path: '/ownership',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlayGuideRoute = PlayGuideRouteImport.update({
+  id: '/play-guide',
+  path: '/play-guide',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -361,6 +367,7 @@ export interface FileRoutesByFullPath {
   '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
   '/ownership': typeof OwnershipRoute
+  '/play-guide': typeof PlayGuideRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
@@ -414,6 +421,7 @@ export interface FileRoutesByTo {
   '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
   '/ownership': typeof OwnershipRoute
+  '/play-guide': typeof PlayGuideRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
@@ -470,6 +478,7 @@ export interface FileRoutesById {
   '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
   '/ownership': typeof OwnershipRoute
+  '/play-guide': typeof PlayGuideRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
@@ -527,6 +536,7 @@ export interface FileRouteTypes {
     | '/my-land'
     | '/my-world'
     | '/ownership'
+    | '/play-guide'
     | '/reset-password'
     | '/sdk'
     | '/sdk-playground'
@@ -580,6 +590,7 @@ export interface FileRouteTypes {
     | '/my-land'
     | '/my-world'
     | '/ownership'
+    | '/play-guide'
     | '/reset-password'
     | '/sdk'
     | '/sdk-playground'
@@ -635,6 +646,7 @@ export interface FileRouteTypes {
     | '/my-land'
     | '/my-world'
     | '/ownership'
+    | '/play-guide'
     | '/reset-password'
     | '/sdk'
     | '/sdk-playground'
@@ -691,6 +703,7 @@ export interface RootRouteChildren {
   MyLandRoute: typeof MyLandRoute
   MyWorldRoute: typeof MyWorldRoute
   OwnershipRoute: typeof OwnershipRoute
+  PlayGuideRoute: typeof PlayGuideRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SdkRoute: typeof SdkRoute
   SdkPlaygroundRoute: typeof SdkPlaygroundRoute
@@ -902,6 +915,13 @@ declare module '@tanstack/react-router' {
       path: '/ownership'
       fullPath: '/ownership'
       preLoaderRoute: typeof OwnershipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/play-guide': {
+      id: '/play-guide'
+      path: '/play-guide'
+      fullPath: '/play-guide'
+      preLoaderRoute: typeof PlayGuideRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -1174,6 +1194,7 @@ const rootRouteChildren: RootRouteChildren = {
   MyLandRoute: MyLandRoute,
   MyWorldRoute: MyWorldRoute,
   OwnershipRoute: OwnershipRoute,
+  PlayGuideRoute: PlayGuideRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SdkRoute: SdkRoute,
   SdkPlaygroundRoute: SdkPlaygroundRoute,

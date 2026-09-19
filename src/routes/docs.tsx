@@ -80,6 +80,11 @@ function DocsPage() {
         BitmapWin gives you land, persistence, ownership, a runtime, extensibility, discovery and a market.
         You bring the world. Start with the loop.
       </p>
+      <div className="mt-6 flex flex-wrap gap-2">
+        <Link to="/play-guide" className="btn-term">[ PLAYER GUIDE ]</Link>
+        <Link to="/sdk" className="btn-term-ghost">[ SDK ]</Link>
+        <Link to="/api" className="btn-term-ghost">[ API ]</Link>
+      </div>
 
       <div className="mt-8">
         <BedrockStackInfographic />
