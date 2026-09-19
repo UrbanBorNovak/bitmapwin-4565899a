@@ -13,8 +13,6 @@ import { formatSats } from "@/lib/trades";
 import { useLiveOffers } from "@/lib/use-live-offers";
 import { TrendingParcels } from "@/components/TrendingParcels";
 import { CLUBS, inClub, type ClubId } from "@/lib/clubs";
-import { GALLERY_COLLECTIONS } from "@/lib/bitmap-collections";
-import { usePunkFilter } from "@/lib/punk-filter";
 import { MyBitmapsPanel } from "@/components/MyBitmapsPanel";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapMarketChart } from "@/components/BitmapMarketChart";
