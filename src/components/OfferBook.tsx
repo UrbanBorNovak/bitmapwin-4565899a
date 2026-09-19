@@ -162,7 +162,6 @@ export function OfferBook({ height }: { height?: number }) {
 }
 
 function OfferRow({ offer, showLink }: { offer: Offer; showLink: boolean }) {
-  const [expanded, setExpanded] = useState(false);
   return (
     <li className="p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -180,19 +179,6 @@ function OfferRow({ offer, showLink }: { offer: Offer; showLink: boolean }) {
       </dl>
       <div className="mt-3 flex flex-wrap gap-2">
         {offer.status === "open" && <BuyButton offerId={offer.id} priceSats={offer.priceSats} />}
-        <button className="btn-term-ghost !px-3 !py-1.5" onClick={() => setExpanded((v) => !v)}>
-          {expanded ? "HIDE PSBT" : "SHOW PSBT"}
-        </button>
-
-        <button
-          className="btn-term-ghost !px-3 !py-1.5"
-          onClick={() => {
-            void navigator.clipboard.writeText(offer.psbtBase64);
-            toast("PSBT COPIED", { description: "TAKE IT TO YOUR WALLET TO SIGN AND BROADCAST" });
-          }}
-        >
-          COPY PSBT
-        </button>
         {showLink && offer.bitmapHeight !== null && (
           <Link
             to="/bitmap/$block"
@@ -203,11 +189,6 @@ function OfferRow({ offer, showLink }: { offer: Offer; showLink: boolean }) {
           </Link>
         )}
       </div>
-      {expanded && (
-        <pre className="mt-3 max-h-48 overflow-auto border border-border p-3 font-mono text-[10px] break-all whitespace-pre-wrap">
-          {offer.psbtBase64}
-        </pre>
-      )}
     </li>
   );
 }

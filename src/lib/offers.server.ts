@@ -296,7 +296,8 @@ export async function submitOffer(psbtBase64: string): Promise<StoredOffer> {
 
 /** Every stored offer as raw base64 PSBTs, matching `GET /offers` on ord. */
 export async function listOfferPsbts(limit = 200): Promise<string[]> {
-  const { data, error } = await db()
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
     .from("offers")
     .select("psbt_base64")
     .eq("status", "open")

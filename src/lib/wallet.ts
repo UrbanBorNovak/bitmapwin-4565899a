@@ -36,11 +36,10 @@ export type DeliveredOffer = Offer & {
 };
 
 const OFFER_COLUMNS =
-  "id, psbt_base64, bitmap_height, inscription_id, outpoint, seller_address, price_sats, status, created_at, buyer_address, delivered_at, delivery_note";
+  "id, bitmap_height, inscription_id, outpoint, seller_address, price_sats, status, created_at, buyer_address, delivered_at, delivery_note";
 
 type Row = {
   id: string;
-  psbt_base64: string;
   bitmap_height: number | null;
   inscription_id: string | null;
   outpoint: string;
@@ -60,7 +59,6 @@ function toDelivered(row: Row): DeliveredOffer {
       : "open";
   return {
     id: row.id,
-    psbtBase64: row.psbt_base64,
     bitmapHeight: row.bitmap_height,
     inscriptionId: row.inscription_id,
     outpoint: row.outpoint,
