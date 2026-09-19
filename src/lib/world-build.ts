@@ -525,6 +525,8 @@ function toRequest(item: PlacedStructure) {
  * being local; if the visitor is not signed in the placement simply stays local.
  */
 async function publish(items: PlacedStructure[]) {
+  // Signed-out visitors keep their builds in this browser only.
+  if (!(await signedIn())) return;
   try {
     const result = await placeWorldStructures({ data: { items: items.map(toRequest) } });
     const rows = result?.structures ?? [];
