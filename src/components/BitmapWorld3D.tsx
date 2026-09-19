@@ -3510,8 +3510,11 @@ function BitmapWorld3DInner({
                   {bits.today > 0 ? ` · ${bits.today} BIT TODAY` : ""}
                 </div>
                 {character ? (
-                  <div className="mt-0.5 text-[9px] text-foreground" data-no-translate>
-                    {character.name.trim() || handle} · <span className="text-bitcoin">{character.title}</span>
+                  <div className="mt-0.5 flex items-center gap-1.5 text-[9px] text-foreground" data-no-translate>
+                    {clan ? <ClanCrest clan={clan} className="size-3.5" /> : null}
+                    <span className="min-w-0">
+                      {character.name.trim() || handle} · <span className="text-bitcoin">{character.title}</span>
+                    </span>
                   </div>
                 ) : (
                   <Link
