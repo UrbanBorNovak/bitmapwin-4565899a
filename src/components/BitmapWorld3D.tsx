@@ -258,9 +258,14 @@ const WORLD_SIZE = 100;
 const CELL = WORLD_SIZE / GRID;
 const OWNER_CELL_BUDGET = 24_000;
 
-/** Feet follow visible land on shore and the visible liquid plane over seas. */
+/**
+ * Feet follow visible land on shore and the visible liquid plane over seas.
+ * Shallow shoreline cells count as sea while their sand still stands above the
+ * water line, so the higher of the two surfaces wins — otherwise the body sinks
+ * through the beach the moment the water flag turns on.
+ */
 const traversalSurfaceY = (x: number, z: number) =>
-  isSea(x, z) ? waterSurfaceY(x, z) : groundY(x, z);
+  isSea(x, z) ? Math.max(groundY(x, z), waterSurfaceY(x, z)) : groundY(x, z);
 
 /** Everything except the flat picking plane opts out of raycasting — one plane hit test per pointer move. */
 const noRaycast = () => {};

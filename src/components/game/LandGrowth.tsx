@@ -288,12 +288,13 @@ function WindGrassMaterial({
           vec4 blade = texture2D(uMap, vUv);
           if (blade.a < 0.06) discard;
           float distanceFade = 1.0 - smoothstep(uFadeNear, uFadeFar, distance(vWorldPosition.xz, uPlayerPosition.xz));
-          // Airborne cameras must not erase the ground cover below them. Only
-          // horizontal proximity is relevant to the close-camera softening.
+          // Only blades pressed right against the lens are softened. True 3D
+          // distance keeps the cover visible while jumping or flying, where the
+          // camera is far above ground yet horizontally overhead.
           float cameraFade = smoothstep(
             ${WORLD_CELL * 0.08},
             ${WORLD_CELL * 0.32},
-            distance(vWorldPosition.xz, cameraPosition.xz)
+            distance(vWorldPosition, cameraPosition)
           );
           float alpha = blade.a * distanceFade * cameraFade;
           if (alpha < 0.02) discard;
