@@ -3575,14 +3575,16 @@ function BitmapWorld3DInner({
                     type="button"
                     role="tab"
                     aria-selected={kitTab === tab.id}
+                    aria-label={tab.label}
+                    title={tab.label}
                     onClick={() => setKitTab(tab.id)}
-                    className={`flex-1 border px-1.5 py-1 font-mono text-[9px] uppercase tracking-[0.18em] transition-colors ${
+                    className={`grid flex-1 place-items-center border py-2 transition-colors [&_svg]:size-[1.1rem] ${
                       kitTab === tab.id
                         ? "border-bitcoin bg-bitcoin/10 text-bitcoin"
                         : "border-border text-muted-foreground hover:border-signal hover:text-signal"
                     }`}
                   >
-                    {tab.label}
+                    {kitTabIcon(tab.id)}
                   </button>
                 ))}
               </div>
