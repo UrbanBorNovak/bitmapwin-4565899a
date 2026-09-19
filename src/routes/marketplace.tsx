@@ -238,6 +238,8 @@ function Marketplace() {
         {CLUBS.map((c) => (
           <button
             key={c.id}
+            aria-label={`Filter by collection ${c.name}`}
+            aria-pressed={club === c.id}
             className={club === c.id ? "btn-term !px-2" : "btn-term-ghost !px-2"}
             onClick={() => {
               setClub(c.id);

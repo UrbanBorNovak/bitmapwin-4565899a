@@ -95,7 +95,7 @@ function DevToolsPage() {
           directly, so an AI can plan and build without scraping the site.
         </p>
         <pre className="mt-3 overflow-x-auto bg-secondary p-4 font-mono text-xs">
-{`https://bitmapwin.lovable.app/mcp`}
+{`https://bitmapwin.app/mcp`}
         </pre>
       </section>
     </div>
