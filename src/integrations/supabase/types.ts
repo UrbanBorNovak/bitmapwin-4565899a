@@ -1810,6 +1810,224 @@ export type Database = {
         }
         Relationships: []
       }
+      pvp_events: {
+        Row: {
+          bitmap: number | null
+          created_at: string
+          district: string | null
+          id: string
+          karma_delta: number
+          killer_id: string | null
+          victim_id: string | null
+          was_pk: boolean
+        }
+        Insert: {
+          bitmap?: number | null
+          created_at?: string
+          district?: string | null
+          id?: string
+          karma_delta?: number
+          killer_id?: string | null
+          victim_id?: string | null
+          was_pk?: boolean
+        }
+        Update: {
+          bitmap?: number | null
+          created_at?: string
+          district?: string | null
+          id?: string
+          karma_delta?: number
+          killer_id?: string | null
+          victim_id?: string | null
+          was_pk?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pvp_events_killer_id_fkey"
+            columns: ["killer_id"]
+            isOneToOne: false
+            referencedRelation: "rank_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pvp_events_victim_id_fkey"
+            columns: ["victim_id"]
+            isOneToOne: false
+            referencedRelation: "rank_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rank_clan_members: {
+        Row: {
+          clan_id: string
+          created_at: string
+          player_id: string
+          rank: string
+        }
+        Insert: {
+          clan_id: string
+          created_at?: string
+          player_id: string
+          rank?: string
+        }
+        Update: {
+          clan_id?: string
+          created_at?: string
+          player_id?: string
+          rank?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rank_clan_members_clan_id_fkey"
+            columns: ["clan_id"]
+            isOneToOne: false
+            referencedRelation: "rank_clans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rank_clan_members_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "rank_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rank_clans: {
+        Row: {
+          created_at: string
+          crest_color: string
+          fame: number
+          home_bitmap: number | null
+          id: string
+          leader_id: string | null
+          level: number
+          members_count: number
+          motto: string
+          name: string
+          pk_kills: number
+          tag: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          crest_color?: string
+          fame?: number
+          home_bitmap?: number | null
+          id?: string
+          leader_id?: string | null
+          level?: number
+          members_count?: number
+          motto?: string
+          name: string
+          pk_kills?: number
+          tag: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          crest_color?: string
+          fame?: number
+          home_bitmap?: number | null
+          id?: string
+          leader_id?: string | null
+          level?: number
+          members_count?: number
+          motto?: string
+          name?: string
+          pk_kills?: number
+          tag?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rank_players: {
+        Row: {
+          bit_earned: number
+          builds_maintained: number
+          chaotic_count: number
+          clan_id: string | null
+          created_at: string
+          deaths: number
+          districts_visited: number
+          fame: number
+          home_bitmap: number | null
+          id: string
+          karma: number
+          last_death_at: string | null
+          last_district: string | null
+          last_kill_at: string | null
+          level: number
+          name: string
+          pk_kills: number
+          pvp_kills: number
+          status: string
+          title: string
+          updated_at: string
+          user_id: string | null
+          wallet: string | null
+        }
+        Insert: {
+          bit_earned?: number
+          builds_maintained?: number
+          chaotic_count?: number
+          clan_id?: string | null
+          created_at?: string
+          deaths?: number
+          districts_visited?: number
+          fame?: number
+          home_bitmap?: number | null
+          id?: string
+          karma?: number
+          last_death_at?: string | null
+          last_district?: string | null
+          last_kill_at?: string | null
+          level?: number
+          name: string
+          pk_kills?: number
+          pvp_kills?: number
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+          wallet?: string | null
+        }
+        Update: {
+          bit_earned?: number
+          builds_maintained?: number
+          chaotic_count?: number
+          clan_id?: string | null
+          created_at?: string
+          deaths?: number
+          districts_visited?: number
+          fame?: number
+          home_bitmap?: number | null
+          id?: string
+          karma?: number
+          last_death_at?: string | null
+          last_district?: string | null
+          last_kill_at?: string | null
+          level?: number
+          name?: string
+          pk_kills?: number
+          pvp_kills?: number
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+          wallet?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rank_players_clan_id_fkey"
+            columns: ["clan_id"]
+            isOneToOne: false
+            referencedRelation: "rank_clans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referral_codes: {
         Row: {
           code: string

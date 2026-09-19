@@ -25,7 +25,7 @@ import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useCharacter } from "@/lib/character";
-import { ArrowUpRight, Crosshair, Eye, Map as MapIcon, Menu, MessageSquare, Orbit, X } from "lucide-react";
+import { ArrowUpRight, Crosshair, Eye, Map as MapIcon, Menu, MessageSquare, Orbit, Trophy, X } from "lucide-react";
 import * as THREE from "three";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
 import { Button } from "@/components/ui/button";
@@ -144,6 +144,8 @@ import { ClanCrest } from "@/components/game/ClanCrest";
 import { ClanPanel } from "@/components/game/ClanPanel";
 import { BaseMenu } from "@/components/game/BaseMenu";
 import { clanStateQuery, type ClanBadge } from "@/lib/clans";
+import { isChaoticHandle } from "@/lib/ranks";
+import { recordPvpKillFn } from "@/lib/ranks.functions";
 
 /** the side menu shelves — one open at a time keeps the HUD short */
 type KitTab = "base" | "action" | "kit" | "travel" | "view" | "clan";
@@ -1148,6 +1150,8 @@ function AvatarLabel({
   clan: ClanBadge | null;
 }) {
   const hurt = Date.now() - hitAt < 400;
+  // Outlaws wear their karma: red name plus a small skull, Lineage style.
+  const outlaw = isChaoticHandle(handle);
   return (
     <SafeHtml
       center
@@ -1169,8 +1173,13 @@ function AvatarLabel({
         {hurt ? (
           <span className="font-mono text-[13px] font-bold text-bitcoin">-{lastDamage}</span>
         ) : null}
-        <span className="flex items-center gap-1.5 whitespace-nowrap border-l-2 bg-transparent px-2 py-[3px] font-mono text-[12px] font-bold tracking-wide text-foreground [text-shadow:0_1px_2px_var(--background),0_0_5px_var(--background)]" style={{ borderColor: hurt ? "var(--bitcoin)" : color }}>
+        <span
+          className={`flex items-center gap-1.5 whitespace-nowrap border-l-2 bg-transparent px-2 py-[3px] font-mono text-[12px] font-bold tracking-wide [text-shadow:0_1px_2px_var(--background),0_0_5px_var(--background)] ${outlaw ? "text-red-500" : "text-foreground"}`}
+          style={{ borderColor: outlaw ? "#ef4444" : hurt ? "var(--bitcoin)" : color }}
+        >
           {clan ? <ClanCrest clan={clan} className="size-5" /> : null}
+          {clan ? <span className="text-[10px] text-bitcoin">[{clan.tag}]</span> : null}
+          {outlaw ? <span aria-hidden="true">☠</span> : null}
           <span>{hp <= 0 ? `${handle} · DOWN` : handle}</span>
         </span>
       </div>
@@ -3085,6 +3094,9 @@ function BitmapWorld3DInner({
   /** Basic attack: strike the closest visitor standing within melee range. */
   const cursorsRef = useRef(cursors);
   cursorsRef.current = cursors;
+  /** who you last swung at — the ranks hook watches them for a death */
+  const struck = useRef<{ id: string; handle: string; at: number } | null>(null);
+  const logged = useRef(new Set<string>());
   const [attackTarget, setAttackTarget] = useState<string | null>(null);
   const [attackCooldownUntil, setAttackCooldownUntil] = useState(0);
   const [combatNow, setCombatNow] = useState(() => Date.now());
@@ -3137,6 +3149,7 @@ function BitmapWorld3DInner({
       return;
     }
     attack(best.id);
+    struck.current = { id: best.id, handle: best.handle, at: now };
     setAttackCooldownUntil(now + ATTACK_COOLDOWN_MS);
     const label = `HIT ${best.handle}`;
     setAttackTarget(label);
@@ -3145,6 +3158,41 @@ function BitmapWorld3DInner({
       1200,
     );
   }, [attack, attackCooldownUntil, hp]);
+
+  /**
+   * RANKS — when somebody you just struck goes down, that kill is written to
+   * the hall of fame so karma, PK counts and the blood ledger stay honest.
+   */
+  useEffect(() => {
+    const mark = struck.current;
+    if (!mark || Date.now() - mark.at > 6000) return;
+    const victim = cursors.find((cursor) => cursor.id === mark.id);
+    if (!victim || victim.hp > 0) return;
+    const key = `${mark.id}:${Math.round(mark.at / 1000)}`;
+    if (logged.current.has(key)) return;
+    logged.current.add(key);
+    struck.current = null;
+    const district = Math.round(pose.current?.height ?? 0);
+    void recordPvpKillFn({
+      data: {
+        killerName: handle,
+        victimName: mark.handle,
+        district: `${district}.BITMAP`,
+        bitmap: district,
+      },
+    })
+      .then((result) => {
+        const note = `${result.wasPk ? "☠ PK · " : ""}SLAIN ${mark.handle.toUpperCase()} · KARMA ${result.karma}`;
+        setAttackTarget(note);
+        window.setTimeout(
+          () => setAttackTarget((current) => (current === note ? null : current)),
+          2600,
+        );
+      })
+      .catch(() => {
+        /* the board is not worth interrupting the fight for */
+      });
+  }, [cursors, handle]);
 
   useEffect(() => {
     if (!attackCooldownUntil) return;
@@ -4522,6 +4570,15 @@ function BitmapWorld3DInner({
             >
               <MessageSquare className="size-3.5" /> [C] CHAT
             </Button>
+            <a
+              href="/ranks"
+              target="_blank"
+              rel="noreferrer"
+              title="Hall of fame — progression, PvP and clans"
+              className="pointer-events-auto flex items-center gap-1.5 border border-border bg-background/55 px-3 py-2 font-mono text-[10px] text-muted-foreground backdrop-blur-sm hover:border-bitcoin hover:text-bitcoin"
+            >
+              <Trophy className="size-3.5" /> [R] RANKS
+            </a>
             <QualityHud touch={touchDevice} />
           </div>
         ) : null}
