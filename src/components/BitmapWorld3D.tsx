@@ -1171,8 +1171,13 @@ function AvatarLabel({
         {hurt ? (
           <span className="font-mono text-[13px] font-bold text-bitcoin">-{lastDamage}</span>
         ) : null}
-        <span className="flex items-center gap-1.5 whitespace-nowrap border-l-2 bg-transparent px-2 py-[3px] font-mono text-[12px] font-bold tracking-wide text-foreground [text-shadow:0_1px_2px_var(--background),0_0_5px_var(--background)]" style={{ borderColor: hurt ? "var(--bitcoin)" : color }}>
+        <span
+          className={`flex items-center gap-1.5 whitespace-nowrap border-l-2 bg-transparent px-2 py-[3px] font-mono text-[12px] font-bold tracking-wide [text-shadow:0_1px_2px_var(--background),0_0_5px_var(--background)] ${outlaw ? "text-red-500" : "text-foreground"}`}
+          style={{ borderColor: outlaw ? "#ef4444" : hurt ? "var(--bitcoin)" : color }}
+        >
           {clan ? <ClanCrest clan={clan} className="size-5" /> : null}
+          {clan ? <span className="text-[10px] text-bitcoin">[{clan.tag}]</span> : null}
+          {outlaw ? <span aria-hidden="true">☠</span> : null}
           <span>{hp <= 0 ? `${handle} · DOWN` : handle}</span>
         </span>
       </div>
