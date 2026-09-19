@@ -2,6 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { StatusPill } from "@/components/ranks/RankShell";
 import { PlayerStockPanel } from "@/components/PlayerStockPanel";
+import { formatBit } from "@/lib/coins";
+import {
+  baseValueOf,
+  playerStockQuery,
+  shareHoldersQuery,
+  sharePrice,
+} from "@/lib/player-stock";
 import {
   clanCrestImage,
   kd,
@@ -36,6 +43,8 @@ function PlayerRecord() {
   const { id } = Route.useParams();
   const players = useQuery(rankPlayersQuery());
   const events = useQuery(playerEventsQuery(id));
+  const stock = useQuery(playerStockQuery(id));
+  const holders = useQuery(shareHoldersQuery(id));
   const player = (players.data ?? []).find((row) => row.id === id) ?? null;
 
   if (players.isLoading) {
@@ -51,6 +60,11 @@ function PlayerRecord() {
   }
 
   const levelPct = Math.min(100, Math.round(((player.level % 10) / 10) * 100));
+
+  const base = player ? baseValueOf(player) : 25;
+  const issued = stock.data?.sharesIssued ?? 0;
+  const shareVal = sharePrice(base, issued);
+  const holderCount = (holders.data ?? []).length;
 
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-8 md:px-8 md:py-12" data-no-translate>
@@ -120,6 +134,10 @@ function PlayerRecord() {
             ["PVP SCORE", Math.round(pvpScore(player)).toLocaleString()],
             ["TIMES CHAOTIC", player.chaoticCount.toLocaleString()],
             ["LAST DEATH", sinceLabel(player.lastDeathAt)],
+            ["SHARE PRICE", formatBit(shareVal)],
+            ["SHARES ISSUED", issued.toLocaleString()],
+            ["SHARE HOLDERS", holderCount.toLocaleString()],
+            ["DIVIDENDS PAID", formatBit(stock.data?.dividendsPaid ?? 0)],
           ].map(([label, value]) => (
             <div key={label} className="bg-background px-4 py-3">
               <dt className="label">{label}</dt>
