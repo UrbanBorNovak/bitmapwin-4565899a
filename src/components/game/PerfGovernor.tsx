@@ -13,11 +13,6 @@
 import type { PlayerState } from "@/lib/player-state";
 import { AdaptiveQuality } from "@/graphics/AdaptiveQuality";
 
-/** Frame budget we aim for, in ms — comfortably inside 60fps. */
-const TARGET_MS = 15;
-/** Above this we are dropping frames and give up resolution. */
-const HEAVY_MS = 24;
-
 export function PerfGovernor({
   pose: _pose,
   active: _active,

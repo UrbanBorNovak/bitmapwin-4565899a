@@ -14,6 +14,7 @@ import { dropSolids, registerSolids } from "@/lib/world-solids";
 import { isSea } from "@/lib/world-sea";
 import { groundY } from "@/lib/world-terrain";
 import { WORLD_CELL } from "@/lib/player-state";
+import { useQuality } from "@/graphics/QualityContext";
 
 
 export const PINE_INSCRIPTION =
@@ -139,6 +140,10 @@ export const PineTrees = memo(function PineTrees({
   center: [number, number];
   radius: number;
 }) {
+  const { quality } = useQuality();
+  const treeLimit = quality.resolved === "low" ? 28 : quality.resolved === "medium" ? 68 : MAX_TREES;
+  const flowerLimit = quality.resolved === "low" ? 36 : quality.resolved === "medium" ? 96 : MAX_FLOWERS;
+  const minerLimit = quality.resolved === "low" ? 4 : quality.resolved === "medium" ? 7 : MAX_MINERS;
   const { trees, flowers, miners } = useMemo(() => {
     const pitch = unit * 9;
     const span = Math.ceil(radius / pitch);
@@ -217,11 +222,11 @@ export const PineTrees = memo(function PineTrees({
         (a.x - center[0]) ** 2 + (a.z - center[1]) ** 2 - ((b.x - center[0]) ** 2 + (b.z - center[1]) ** 2),
       );
     return {
-      trees: rank(found).slice(0, MAX_TREES),
-      flowers: rank(petals).slice(0, MAX_FLOWERS),
-      miners: rank(workers).slice(0, MAX_MINERS),
+      trees: rank(found).slice(0, treeLimit),
+      flowers: rank(petals).slice(0, flowerLimit),
+      miners: rank(workers).slice(0, minerLimit),
     };
-  }, [center, radius, unit]);
+  }, [center, flowerLimit, minerLimit, radius, treeLimit, unit]);
 
   // A trunk is solid: you walk around a pine instead of straight through it.
   useEffect(() => {
@@ -248,13 +253,9 @@ export const PineTrees = memo(function PineTrees({
     <>
       {trees.map((tree) => (
         <group key={tree.key} position={[tree.x, groundY(tree.x, tree.z), tree.z]}>
-          <Suspense
-              fallback={<TreeFallback size={tree.size} />}
-          >
-              <InscribedModel url={urlAt(TREE_URLS, tree.model)} size={tree.size} yaw={tree.yaw} />
-          </Suspense>
+           {quality.propDetail === "cheap" ? <TreeFallback size={tree.size} /> : <Suspense fallback={<TreeFallback size={tree.size} />}><InscribedModel url={urlAt(TREE_URLS, tree.model)} size={tree.size} yaw={tree.yaw} /></Suspense>}
           {/* SHROOMS — a small ring of them in the shade under the branches. */}
-          {Array.from({ length: 1 + Math.floor(hash(tree.x, tree.z, 81) * 4) }, (_, n) => {
+          {Array.from({ length: quality.propDetail === "cheap" ? 1 : 1 + Math.floor(hash(tree.x, tree.z, 81) * 4) }, (_, n) => {
             const angle = hash(tree.x + n, tree.z - n, 82) * Math.PI * 2;
             const reach = tree.size * (0.28 + hash(tree.x - n, tree.z + n, 83) * 0.45);
             const size = unit * (0.22 + hash(tree.x * 2 + n, tree.z, 84) * 0.22);
@@ -284,9 +285,7 @@ export const PineTrees = memo(function PineTrees({
       ))}
       {flowers.map((flower) => (
         <group key={flower.key} position={[flower.x, groundY(flower.x, flower.z), flower.z]}>
-          <Suspense fallback={<FlowerFallback size={flower.size} />}>
-            <InscribedModel url={urlAt(FLOWER_URLS, flower.model)} size={flower.size} yaw={flower.yaw} />
-          </Suspense>
+          {quality.propDetail === "cheap" ? <FlowerFallback size={flower.size} /> : <Suspense fallback={<FlowerFallback size={flower.size} />}><InscribedModel url={urlAt(FLOWER_URLS, flower.model)} size={flower.size} yaw={flower.yaw} /></Suspense>}
         </group>
       ))}
       {miners.map((miner) => (
