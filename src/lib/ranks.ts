@@ -226,7 +226,9 @@ type PlayerRow = {
   rank_clans?: { tag: string; name: string; crest_color: string } | null;
 };
 
-const PLAYER_SELECT = "*, rank_clans(tag, name, crest_color)";
+// Disambiguate the embed: rank_players links to rank_clans both via
+// clan_id and via rank_clan_members, so PostgREST needs the exact FK.
+const PLAYER_SELECT = "*, rank_clans!rank_players_clan_id_fkey(tag, name, crest_color)";
 
 function toPlayer(row: PlayerRow): RankPlayer {
   return {
