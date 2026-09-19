@@ -39,14 +39,6 @@ export type GalleryCollection = {
 
 export const GALLERY_COLLECTIONS: GalleryCollection[] = [
   {
-    id: "999-club",
-    label: "999 CLUB",
-    short: "999",
-    coverInscription: "999bbd123e327789d9b0991a73bb76385b7d9f3d99828576d6b2b0cb8c3cdfdei0",
-    blurb: "The first thousand blocks ever mined — three digits or fewer, forever.",
-    maxHeight: 999,
-  },
-  {
     id: "pristine-punks",
     label: "PRISTINE PUNKS",
     short: "PRISTINE PUNK",
