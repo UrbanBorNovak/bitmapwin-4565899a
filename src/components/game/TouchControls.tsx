@@ -178,7 +178,7 @@ export default function TouchControls({
           <button
             type="button"
             className={cn(
-              "rounded-sm border px-2 py-1 font-mono text-[10px] tracking-widest active:scale-95",
+              "rounded-sm border px-2 py-1 font-mono text-[10px] tracking-widest outline-none active:scale-95 focus-visible:outline-none",
               driving
                 ? "border-border bg-background/55 text-muted-foreground"
                 : "border-primary/60 bg-primary/15 text-primary",
@@ -295,7 +295,7 @@ function PadButton({
     <button
       type="button"
       className={cn(
-        "grid place-items-center rounded-full border font-mono text-[10px] tracking-widest active:scale-95",
+        "grid place-items-center rounded-full border font-mono text-[10px] tracking-widest outline-none active:scale-95 focus-visible:outline-none",
         strong
           ? "h-20 w-20 border-primary bg-primary/25 text-primary"
           : "h-16 w-16 border-primary/50 bg-background/40 text-muted-foreground",
@@ -310,8 +310,14 @@ function PadButton({
         }
         onDown();
       }}
-      onPointerUp={() => onUp?.()}
-      onPointerCancel={() => onUp?.()}
+      onPointerUp={(event) => {
+        onUp?.();
+        event.currentTarget.blur();
+      }}
+      onPointerCancel={(event) => {
+        onUp?.();
+        event.currentTarget.blur();
+      }}
     >
       {label}
     </button>
