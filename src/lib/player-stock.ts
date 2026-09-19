@@ -24,12 +24,30 @@ export const DIVIDEND_CUT = 0.1;
 export const DEMAND_CAP = 4;
 export const MAX_SHARES_PER_TRADE = 500;
 
+/** Platform cut on every buy and sell, in basis points (2%). */
+export const PLATFORM_FEE_BPS = 200;
+/** Flat BIT fee to open a share book, and to later offer more shares. */
+export const ISSUE_FEE_OPEN = 250;
+export const ISSUE_FEE_RAISE = 50;
+export const MAX_SHARES_OFFERED = 5000;
+
+/** Platform fee in BIT for a trade of this size — mirrors the database. */
+export function platformFee(total: number): number {
+  if (total <= 0) return 0;
+  return Math.max(1, Math.ceil((total * PLATFORM_FEE_BPS) / 10_000));
+}
+
 export type PlayerStock = {
   playerId: string;
   sharesIssued: number;
   bitRaised: number;
   dividendsPaid: number;
   lastPrice: number;
+  isOpen: boolean;
+  sharesOffered: number;
+  ownerAddress: string | null;
+  openedAt: string | null;
+  feesPaid: number;
   updatedAt: string;
 };
 
