@@ -9,52 +9,52 @@ const noRaycast = () => {};
  * Clearance kept between the Oasis glass perimeter and the nearest tower base,
  * so no megastructure footprint can ever overlap playable land.
  */
-const OUTER_GAP = 46;
+const OUTER_GAP = 90;
 
 const SKYSCRAPERS = [
   {
     id: "e4a74eceffb5e91f543cc5ff8ad0b740794767c981cde9d5f44151c1d0e491a2i0",
     placements: [
-      [-34, 0, -OUTER_GAP, 21, 0.08],
-      [25, 0, WORLD_UNITS + OUTER_GAP, 18, Math.PI + 0.12],
-      [-WORLD_UNITS / 2 - OUTER_GAP, 0, 34, 16, Math.PI / 2],
-      [WORLD_UNITS / 2 + OUTER_GAP, 0, 71, 22, -Math.PI / 2],
+      [-34, 0, -OUTER_GAP, 88, 0.08],
+      [25, 0, WORLD_UNITS + OUTER_GAP, 76, Math.PI + 0.12],
+      [-WORLD_UNITS / 2 - OUTER_GAP, 0, 34, 68, Math.PI / 2],
+      [WORLD_UNITS / 2 + OUTER_GAP, 0, 71, 92, -Math.PI / 2],
     ],
   },
   {
     id: "491199fef832de010bb65e0db07923400c52ad99e97c37c174a9bec0df8db36ei0",
     placements: [
-      [18, 0, -OUTER_GAP - 14, 29, -0.1],
-      [-23, 0, WORLD_UNITS + OUTER_GAP + 14, 25, Math.PI - 0.08],
-      [-WORLD_UNITS / 2 - OUTER_GAP - 16, 0, 67, 23, Math.PI / 2 + 0.1],
-      [WORLD_UNITS / 2 + OUTER_GAP + 16, 0, 29, 27, -Math.PI / 2 - 0.1],
+      [18, 0, -OUTER_GAP - 30, 122, -0.1],
+      [-23, 0, WORLD_UNITS + OUTER_GAP + 30, 105, Math.PI - 0.08],
+      [-WORLD_UNITS / 2 - OUTER_GAP - 34, 0, 67, 96, Math.PI / 2 + 0.1],
+      [WORLD_UNITS / 2 + OUTER_GAP + 34, 0, 29, 113, -Math.PI / 2 - 0.1],
     ],
   },
   {
     id: "3c47c090679f115f1b5d42a9e1a1e0e3c91581e69a862f89ff03b75847b9ad8ci0",
     placements: [
-      [72, 0, -OUTER_GAP - 6, 17, 0.16],
-      [-74, 0, WORLD_UNITS + OUTER_GAP + 6, 20, Math.PI + 0.16],
-      [-WORLD_UNITS / 2 - OUTER_GAP - 30, 0, 16, 19, Math.PI / 2 - 0.16],
-      [WORLD_UNITS / 2 + OUTER_GAP + 30, 0, 87, 16, -Math.PI / 2 + 0.16],
+      [72, 0, -OUTER_GAP - 14, 72, 0.16],
+      [-74, 0, WORLD_UNITS + OUTER_GAP + 14, 84, Math.PI + 0.16],
+      [-WORLD_UNITS / 2 - OUTER_GAP - 60, 0, 16, 80, Math.PI / 2 - 0.16],
+      [WORLD_UNITS / 2 + OUTER_GAP + 60, 0, 87, 68, -Math.PI / 2 + 0.16],
     ],
   },
   {
     id: "c913b1373f54b5ae64424e01186f1f738d124dbdb6671a7f5e0e5fe5691b6ed9i0",
     placements: [
-      [-62, 0, -OUTER_GAP - 26, 27, 0.12],
-      [58, 0, WORLD_UNITS + OUTER_GAP + 26, 24, Math.PI - 0.1],
-      [-WORLD_UNITS / 2 - OUTER_GAP - 46, 0, 82, 28, Math.PI / 2 + 0.08],
-      [WORLD_UNITS / 2 + OUTER_GAP + 46, 0, 18, 25, -Math.PI / 2 - 0.12],
+      [-62, 0, -OUTER_GAP - 52, 113, 0.12],
+      [58, 0, WORLD_UNITS + OUTER_GAP + 52, 100, Math.PI - 0.1],
+      [-WORLD_UNITS / 2 - OUTER_GAP - 90, 0, 82, 117, Math.PI / 2 + 0.08],
+      [WORLD_UNITS / 2 + OUTER_GAP + 90, 0, 18, 105, -Math.PI / 2 - 0.12],
     ],
   },
   {
     id: "c3387d1dc48cd1b6979999e62fd23c50dfe747bd3b4a37119fde6e032a48fa6ei0",
     placements: [
-      [4, 0, -OUTER_GAP - 40, 32, -0.08],
-      [-7, 0, WORLD_UNITS + OUTER_GAP + 40, 30, Math.PI + 0.1],
-      [-WORLD_UNITS / 2 - OUTER_GAP - 64, 0, 51, 31, Math.PI / 2 - 0.12],
-      [WORLD_UNITS / 2 + OUTER_GAP + 64, 0, 49, 29, -Math.PI / 2 + 0.08],
+      [4, 0, -OUTER_GAP - 80, 134, -0.08],
+      [-7, 0, WORLD_UNITS + OUTER_GAP + 80, 126, Math.PI + 0.1],
+      [-WORLD_UNITS / 2 - OUTER_GAP - 126, 0, 51, 130, Math.PI / 2 - 0.12],
+      [WORLD_UNITS / 2 + OUTER_GAP + 126, 0, 49, 121, -Math.PI / 2 + 0.08],
     ],
   },
 ] as const;
