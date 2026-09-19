@@ -1148,6 +1148,8 @@ function AvatarLabel({
   clan: ClanBadge | null;
 }) {
   const hurt = Date.now() - hitAt < 400;
+  // Outlaws wear their karma: red name plus a small skull, Lineage style.
+  const outlaw = isChaoticHandle(handle);
   return (
     <SafeHtml
       center
