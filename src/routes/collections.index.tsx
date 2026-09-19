@@ -34,6 +34,7 @@ export const Route = createFileRoute("/collections/")({
 function CollectionsIndex() {
   const registry = useQuery(registryBaseQuery(300));
   const parcels = registry.data ?? [];
+  const registryHeights = useMemo(() => parcels.map((p) => p.bitmapHeight), [parcels]);
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-12 md:px-8">
@@ -99,7 +100,87 @@ function CollectionsIndex() {
           );
         })}
       </div>
+
+      <div className="mt-16">
+        <h2 className="display text-2xl md:text-4xl">PUNKS &amp; PATTERNS</h2>
+        <p className="label mt-3">
+          INSCRIBED COLLECTIONS DECIDED BY FIXED ON-CHAIN FACTS — TRANSACTION COUNT AND RENDER SHAPE
+        </p>
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          {GALLERY_COLLECTIONS.map((collection) => (
+            <PunkCard
+              key={collection.id}
+              collection={collection}
+              heights={registryHeights}
+              pending={registry.isPending}
+            />
+          ))}
+        </div>
+      </div>
     </div>
+  );
+}
+
+function PunkCard({
+  collection,
+  heights,
+  pending,
+}: {
+  collection: GalleryCollection;
+  heights: number[];
+  pending: boolean;
+}) {
+  const punk = usePunkFilter(heights, collection.id);
+  const matches = useMemo(
+    () => heights.filter((h) => punk.matches(h)),
+    [heights, punk],
+  );
+
+  return (
+    <a
+      href={`https://ordinals.com/inscription/${collection.coverInscription}`}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={`${collection.label} — view the inscribed gallery on chain`}
+      className="group rounded-lg border border-border bg-card p-5 transition-[border-color,transform] duration-150 hover:border-primary hover:-translate-y-0.5"
+    >
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="display text-lg">{collection.label}</h3>
+        <span className="label">PATTERN</span>
+      </div>
+
+      <div className="mt-4 border border-border p-3">
+        <div className="flex aspect-square items-center justify-center overflow-hidden">
+          <img
+            src={ordContentUrl(collection.coverInscription)}
+            alt={`${collection.label} cover inscription`}
+            loading="lazy"
+            className="h-full w-full object-contain [image-rendering:pixelated]"
+          />
+        </div>
+        <div className="label mt-2">INSCRIBED GALLERY COVER</div>
+      </div>
+
+      <p className="mt-4 font-mono text-[11px] text-muted-foreground">{collection.blurb}</p>
+
+      <dl className="mt-4 space-y-1 text-[11px]">
+        <Row
+          k="MATCHES IN INDEX"
+          v={
+            pending || punk.loading
+              ? "…"
+              : matches.length.toLocaleString("en-US")
+          }
+        />
+        {punk.skipped > 0 ? (
+          <Row k="SHAPE LOOKUPS SKIPPED" v={String(punk.skipped)} />
+        ) : null}
+      </dl>
+
+      <span className="btn-term-ghost mt-4 inline-block !px-2 !py-2">
+        VIEW ON-CHAIN GALLERY →
+      </span>
+    </a>
   );
 }
 
