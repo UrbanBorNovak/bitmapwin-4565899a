@@ -1,3 +1,5 @@
+import type { Json } from "@/integrations/supabase/types";
+
 export type ProofLevel = "CHAIN" | "WORLD" | "ACCOUNT";
 export type StampKey = "first-arrival" | "world-walker" | "first-mark" | "builder" | "land-steward" | "deployer" | "participant" | "historian";
 export type BuildCapability = "build.trail-marker" | "build.oasis-waystation" | "build.fortified-camp" | "build.district-gate";
@@ -5,7 +7,7 @@ export type BuildCapability = "build.trail-marker" | "build.oasis-waystation" | 
 export type ProvenanceEvent = {
   id: string; sourceKey: string; eventType: string; actorWallet: string | null;
   bitmapHeight: number | null; sourceType: string; sourceId: string; proofLevel: ProofLevel;
-  title: string; summary: string; metadata: Record<string, unknown>; occurredAt: string;
+  title: string; summary: string; metadata: Json; occurredAt: string;
 };
 export type PassportStamp = {
   id: string; walletAddress: string; stampKey: StampKey; name: string; description: string;

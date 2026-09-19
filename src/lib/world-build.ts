@@ -556,7 +556,7 @@ async function publish(items: PlacedStructure[], templateId?: BuildTemplateId) {
   // Signed-out visitors keep their builds in this browser only.
   if (!(await signedIn())) return;
   try {
-    const result = await placeWorldStructures({ data: { items: items.map(toRequest), templateId } });
+    const result = await placeWorldStructures({ data: { items: items.map(toRequest), ...(templateId ? { templateId } : {}) } });
     const rows = result?.structures ?? [];
     if (!rows.length) {
       await save(items, templateId);
@@ -605,7 +605,7 @@ async function signedIn() {
 async function save(items: PlacedStructure[], templateId?: BuildTemplateId) {
   if (!(await signedIn())) return;
   try {
-    const result = await savePlayerBuilds({ data: { items: items.map(toRequest), templateId } });
+    const result = await savePlayerBuilds({ data: { items: items.map(toRequest), ...(templateId ? { templateId } : {}) } });
     const rows = result?.builds ?? [];
     if (!rows.length) return;
     const keys = new Set(items.map((item) => item.key));

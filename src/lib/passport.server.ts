@@ -1,4 +1,5 @@
 import type { Passport, PassportStamp, PassportUnlock, ProvenanceEvent, ProofLevel, StampKey } from "@/lib/passport";
+import type { Json } from "@/integrations/supabase/types";
 import { STAMP_RULES, UNLOCK_RULES } from "@/lib/passport";
 
 async function db() { const { supabaseAdmin } = await import("@/integrations/supabase/client.server"); return supabaseAdmin; }
@@ -6,7 +7,7 @@ function event(row: any): ProvenanceEvent { return { id: row.id, sourceKey: row.
 function stamp(row: any): PassportStamp { return { id: row.id, walletAddress: row.wallet_address, stampKey: row.stamp_key, name: row.name, description: row.description, evidenceEventId: row.evidence_event_id, evidenceSourceType: row.evidence_source_type, evidenceSourceId: row.evidence_source_id, bitmapHeight: row.bitmap_height === null ? null : Number(row.bitmap_height), ruleVersion: row.rule_version, inscriptionId: row.inscription_id, earnedAt: row.earned_at }; }
 function unlock(row: any): PassportUnlock { return { id: row.id, walletAddress: row.wallet_address, capabilityKey: row.capability_key, name: row.name, description: row.description, grantedByStampId: row.granted_by_stamp_id, grantedAt: row.granted_at }; }
 
-export async function appendProvenance(input: { sourceKey: string; eventType: string; userId?: string | null; wallet?: string | null; bitmapHeight?: number | null; sourceType: string; sourceId: string; proofLevel: ProofLevel; title: string; summary?: string; metadata?: Record<string, unknown>; occurredAt?: string; visibility?: "public" | "private"; }) {
+export async function appendProvenance(input: { sourceKey: string; eventType: string; userId?: string | null; wallet?: string | null; bitmapHeight?: number | null; sourceType: string; sourceId: string; proofLevel: ProofLevel; title: string; summary?: string; metadata?: Json; occurredAt?: string; visibility?: "public" | "private"; }) {
   const client = await db();
   const { data, error } = await client.from("provenance_events").upsert({ source_key: input.sourceKey, event_type: input.eventType, actor_user_id: input.userId ?? null, actor_wallet: input.wallet ?? null, bitmap_height: input.bitmapHeight ?? null, source_type: input.sourceType, source_id: input.sourceId, proof_level: input.proofLevel, title: input.title, summary: input.summary ?? "", metadata: input.metadata ?? {}, visibility: input.visibility ?? "public", occurred_at: input.occurredAt ?? new Date().toISOString() }, { onConflict: "source_key", ignoreDuplicates: true }).select("*").maybeSingle();
   if (error) throw error;
@@ -50,11 +51,11 @@ export async function syncPassport(userId: string): Promise<Passport> {
   const buildHeights = new Set(rows.builds.map((r) => Number(r.bitmap_height)));
   const held = buildHeights.size ? await client.from("bitmap_index").select("block_height").eq("owner_address", wallet).in("block_height", [...buildHeights]) : { data: [] as any[] };
   const categories = new Set(evidence.map((e) => e.eventType));
-  const candidates: { key: StampKey; evidence?: ProvenanceEvent }[] = [
+  const candidates: { key: StampKey; evidence: ProvenanceEvent | undefined }[] = [
     { key: "first-arrival", evidence: evidence.find((e) => e.eventType === "visit") },
-    { key: "world-walker", evidence: distinctVisits >= 5 ? evidence.findLast((e) => e.eventType === "visit") : undefined },
+    { key: "world-walker", evidence: distinctVisits >= 5 ? [...evidence].reverse().find((e) => e.eventType === "visit") : undefined },
     { key: "first-mark", evidence: evidence.find((e) => e.eventType === "build") },
-    { key: "builder", evidence: rows.builds.length >= 3 || buildHeights.size >= 2 ? evidence.findLast((e) => e.eventType === "build") : undefined },
+    { key: "builder", evidence: rows.builds.length >= 3 || buildHeights.size >= 2 ? [...evidence].reverse().find((e) => e.eventType === "build") : undefined },
     { key: "land-steward", evidence: (held.data?.length ?? 0) > 0 ? evidence.find((e) => e.eventType === "build" && held.data?.some((h) => Number(h.block_height) === e.bitmapHeight)) : undefined },
     { key: "deployer", evidence: evidence.find((e) => e.eventType === "deployment") },
     { key: "participant", evidence: evidence.find((e) => ["trade", "lease", "combat", "event", "clan"].includes(e.eventType)) },
@@ -85,7 +86,7 @@ export async function readPublicPassport(wallet: string): Promise<Passport> {
   ]);
   return { wallet, events: (events.data ?? []).map(event), stamps: (stamps.data ?? []).map(stamp), unlocks: (unlocks.data ?? []).map(unlock) };
 }
-export async function readPublicStream(input: { filter: string; limit: number; wallet?: string; bitmapHeight?: number }) {
+export async function readPublicStream(input: { filter: string; limit: number; wallet?: string | undefined; bitmapHeight?: number | undefined }) {
   const client = await db();
   let query = client.from("provenance_events").select("*").eq("visibility", "public").order("occurred_at", { ascending: false }).limit(input.limit);
   if (input.wallet) query = query.eq("actor_wallet", input.wallet);
