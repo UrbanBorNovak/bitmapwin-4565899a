@@ -121,7 +121,6 @@ const BotBody = memo(function BotBody({
   size: number;
   role: BotRole;
 }) {
-  const { quality } = useQuality();
   const model = ROLE_MODEL[role];
   if (model) {
     return (
@@ -168,6 +167,7 @@ export function OasisBots({
   pose: { current: { x: number; z: number } | null };
   onBite?: ((damage: number, label: string) => void) | undefined;
 }) {
+  const { quality } = useQuality();
   // The settlers simply live here — a fixed population, nothing to dial.
   const count = Math.min(botCount(), quality.npcLimit);
   const bots = useMemo(() => botRoster(count).map((plan) => makeBot(plan, unit)), [count, unit]);
