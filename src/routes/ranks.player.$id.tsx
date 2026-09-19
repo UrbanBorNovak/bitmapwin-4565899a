@@ -43,6 +43,8 @@ function PlayerRecord() {
   const { id } = Route.useParams();
   const players = useQuery(rankPlayersQuery());
   const events = useQuery(playerEventsQuery(id));
+  const stock = useQuery(playerStockQuery(id));
+  const holders = useQuery(shareHoldersQuery(id));
   const player = (players.data ?? []).find((row) => row.id === id) ?? null;
 
   if (players.isLoading) {
