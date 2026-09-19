@@ -310,6 +310,8 @@ let localBuilds: PlacedStructure[] = [];
 let shared = new Map<string, PlacedStructure>();
 /** The signed-in player's own saved builds, restored on every world entry. */
 let mine = new Map<string, PlacedStructure>();
+/** Structures raised by clan mates — the whole banner shares them. */
+let clanBuilds = new Map<string, PlacedStructure>();
 let view: PlacedStructure[] = [];
 let hydrated = false;
 const listeners = new Set<() => void>();
