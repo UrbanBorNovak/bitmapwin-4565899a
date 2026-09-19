@@ -28,11 +28,16 @@ export const Route = createFileRoute("/")({
     ],
   }),
 
-  loader: ({ context }) => {
-    context.queryClient.ensureQueryData(registryParcelsQuery(120));
-    context.queryClient.ensureQueryData(recentTradesQuery(20));
-    context.queryClient.ensureQueryData(registryCountQuery());
-    context.queryClient.ensureQueryData(tradedBitmapCountQuery());
+  loader: async ({ context }) => {
+    // Await every stat so the server-rendered numbers are dehydrated into the
+    // client cache — otherwise the client refetches newer values mid-hydration
+    // and React throws a hydration mismatch on the live counts.
+    await Promise.all([
+      context.queryClient.ensureQueryData(registryParcelsQuery(120)),
+      context.queryClient.ensureQueryData(recentTradesQuery(20)),
+      context.queryClient.ensureQueryData(registryCountQuery()),
+      context.queryClient.ensureQueryData(tradedBitmapCountQuery()),
+    ]);
   },
   component: Index,
   errorComponent: ({ error }) => (
