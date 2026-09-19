@@ -62,6 +62,7 @@ const LOOP = [
 ];
 
 const REFERENCES = [
+  { to: "/play-guide" as const, title: "PLAYER GUIDE", body: "Controls on desktop and phone, what lives in the Oasis, graphics quality presets, BIT, parties, clans and streaming." },
   { to: "/sdk" as const, title: "SDK REFERENCE", body: "Land, build, player, world, economy, social and AI primitives with call signatures and runtime limits." },
   { to: "/api" as const, title: "PUBLIC API", body: "HTTP endpoints for block metadata, offers and the trade crawler — usable from anything." },
   { to: "/dev-tools" as const, title: "DEVELOPER TOOLS", body: "SDK playground, MCP endpoint and the AI package builder." },
