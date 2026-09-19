@@ -96,6 +96,15 @@ function WalletUnavailable({ message }: { message: string }) {
   );
 }
 
+type WalletTab = "land" | "market" | "funds" | "profile";
+
+const WALLET_TABS: { id: WalletTab; label: string }[] = [
+  { id: "land", label: "LAND" },
+  { id: "market", label: "MARKET" },
+  { id: "funds", label: "FUNDS" },
+  { id: "profile", label: "PROFILE" },
+];
+
 function WalletPage() {
   const [input, setInput] = useState("");
   const [address, setAddress] = useState("");
