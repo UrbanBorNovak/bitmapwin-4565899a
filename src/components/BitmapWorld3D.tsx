@@ -3679,20 +3679,21 @@ function BitmapWorld3DInner({
                       </div>
                     ) : null}
                   </div>
-                  <Button
-                    className={gear.companion !== "none" ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                  <HudIconButton
+                    label={
+                      gear.companion === "none"
+                        ? "Call a companion (P)"
+                        : `${companionSpec(gear.companion).label} (P)`
+                    }
+                    icon={<Dog />}
+                    active={gear.companion !== "none"}
                     onClick={() => {
                       const next = cycleCompanion();
                       playSfx("ui");
                       setBiteNote(next.inscription ? `COMPANION · ${next.label}` : "COMPANION DISMISSED");
                       window.setTimeout(() => setBiteNote(null), 1600);
                     }}
-                  >
-                    <span data-no-translate>
-                      [ {gear.companion === "none" ? "COMPANION" : companionSpec(gear.companion).label} · P ]
-                    </span>
-                  </Button>
+                  />
                 </div>
               </div>
               ) : null}
