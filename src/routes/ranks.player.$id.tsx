@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { StatusPill } from "@/components/ranks/RankShell";
+import { PlayerStockPanel } from "@/components/PlayerStockPanel";
 import {
   clanCrestImage,
   kd,
@@ -139,6 +140,8 @@ function PlayerRecord() {
           <span className="ml-4">LAST DISTRICT: {(player.lastDistrict ?? "UNKNOWN").toUpperCase()}</span>
         </div>
       </div>
+
+      <PlayerStockPanel player={player} />
 
       <h2 className="display mt-8 text-lg">LAST DUELS</h2>
       <div className="mt-3 border border-border">

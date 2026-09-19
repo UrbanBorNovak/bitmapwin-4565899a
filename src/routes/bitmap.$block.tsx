@@ -21,6 +21,7 @@ import { BitmapPriceChart } from "@/components/BitmapPriceChart";
 import { ProvenancePanel } from "@/components/ProvenancePanel";
 import { WatchBitmapButton } from "@/components/WatchBitmapButton";
 import { BitmapValuation } from "@/components/BitmapValuation";
+import { BitmapDevelopment } from "@/components/BitmapDevelopment";
 import { ParcelPagePanel } from "@/components/ParcelPagePanel";
 import { ParcelPanel } from "@/components/ParcelPanel";
 import { DistrictReinscriptions } from "@/components/DistrictReinscriptions";
