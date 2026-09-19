@@ -9,6 +9,7 @@ import {
   CLAN_JOIN_XP,
   CLAN_TIERS,
   clanRosterQuery,
+  clanCrestImage,
   clanScore,
   clanTier,
   clanTierProgress,
@@ -123,11 +124,21 @@ function ClanHall() {
       <Link to="/ranks/clans" className="label text-bitcoin">← CLAN RANKS</Link>
 
       <header className="mt-4 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4 border border-border px-4 py-4">
-        <span
-          aria-hidden="true"
-          className="inline-block size-16 shrink-0 border border-border sm:size-14"
-          style={{ background: clan.crestColor }}
-        />
+        {clanCrestImage(clan.tag) ? (
+          <img
+            src={clanCrestImage(clan.tag)!}
+            alt=""
+            aria-hidden="true"
+            className="size-16 shrink-0 border border-border object-cover sm:size-14"
+            style={{ imageRendering: "pixelated", background: clan.crestColor }}
+          />
+        ) : (
+          <span
+            aria-hidden="true"
+            className="inline-block size-16 shrink-0 border border-border sm:size-14"
+            style={{ background: clan.crestColor }}
+          />
+        )}
         <div className="min-w-0">
           <h1 className="display text-xl sm:text-2xl md:text-3xl">
             <span className="mr-1 inline-block border border-bitcoin/50 px-2 py-1 text-bitcoin">[{clan.tag}]</span> {clan.name}

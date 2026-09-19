@@ -126,6 +126,19 @@ export const CLAN_TIERS = [
 
 export const CLAN_JOIN_XP = 250;
 
+/**
+ * Hardcoded clan crests. Tags are uppercase; the crest image is the
+ * inscribed banner carried by that clan everywhere a crest is drawn.
+ */
+export const CLAN_CREST_IMAGES: Readonly<Record<string, string>> = {
+  JGH: "https://ordinals.com/content/f537200970e9592b572e1ae0fe60d2d326ecffe79b1d5e44b494917c57044a13i0",
+};
+
+export function clanCrestImage(tag: string | null | undefined): string | null {
+  if (!tag) return null;
+  return CLAN_CREST_IMAGES[tag.toUpperCase()] ?? null;
+}
+
 export function clanTierIndex(xp: number): number {
   let index = 0;
   for (let i = 0; i < CLAN_TIERS.length; i += 1) {
@@ -213,7 +226,9 @@ type PlayerRow = {
   rank_clans?: { tag: string; name: string; crest_color: string } | null;
 };
 
-const PLAYER_SELECT = "*, rank_clans(tag, name, crest_color)";
+// Disambiguate the embed: rank_players links to rank_clans both via
+// clan_id and via rank_clan_members, so PostgREST needs the exact FK.
+const PLAYER_SELECT = "*, rank_clans!rank_players_clan_id_fkey(tag, name, crest_color)";
 
 function toPlayer(row: PlayerRow): RankPlayer {
   return {
