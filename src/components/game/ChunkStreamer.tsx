@@ -58,6 +58,13 @@ export function ChunkStreamer({
   const seen = useRef(new Set<string>());
   const busy = useRef({ structures: false, terraform: false, refresh: false });
 
+  // A player's own saved builds are restored once, when the world opens, so
+  // whatever they raised in an earlier session is standing again.
+  useEffect(() => {
+    void syncMyBuilds();
+  }, []);
+
+
   useFrame(({ clock }, delta) => {
     const player = pose.current;
     if (player) {
