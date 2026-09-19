@@ -8,6 +8,7 @@ import { UnlockPath } from "@/components/UnlockPath";
 import { useAuthSession } from "@/lib/auth";
 import { getMyPassportFn } from "@/lib/passport.functions";
 import { shortenAddress } from "@/lib/registry";
+import { ParcelClubBadges } from "@/components/ParcelClubBadges";
 
 export const Route = createFileRoute("/passport")({
   head: () => ({ meta: [

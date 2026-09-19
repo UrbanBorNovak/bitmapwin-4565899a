@@ -14,6 +14,7 @@ import { rankPlayerByWalletQuery } from "@/lib/ranks";
 import { PassportSummary } from "@/components/PassportSummary";
 import { StampCard } from "@/components/StampCard";
 import { publicPassportQuery } from "@/lib/provenance-stream";
+import { ParcelClubBadges } from "@/components/ParcelClubBadges";
 
 export const Route = createFileRoute("/profile/$address")({
   head: ({ params }) => {
@@ -105,6 +106,7 @@ function ProfilePage() {
             )}
           </div>
           <p className="mt-3 break-all font-mono text-[10px] text-muted-foreground">{address}</p>
+          <ParcelClubBadges address={address} className="mt-3 justify-center md:justify-start" />
           {profile.data?.bio && (
             <p className="mt-5 max-w-[70ch] whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
               {profile.data.bio}
