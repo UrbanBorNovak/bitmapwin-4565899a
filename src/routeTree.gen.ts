@@ -49,6 +49,7 @@ import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as WorldStatsRouteImport } from './routes/world-stats'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
+import { Route as ClanTagRouteImport } from './routes/clan.$tag'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
 import { Route as CollectionsClubRouteImport } from './routes/collections.$club'
 import { Route as DistrictSlugRouteImport } from './routes/district.$slug'
@@ -64,6 +65,7 @@ import { Route as ApiPublicCrawlTradesRouteImport } from './routes/api/public/cr
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
 import { Route as ApiPublicResolveRegistryRouteImport } from './routes/api/public/resolve-registry'
+import { Route as RanksPlayerIdRouteImport } from './routes/ranks.player.$id'
 import { Route as ApiPublicBlocksHeightRouteImport } from './routes/api/public/blocks.$height'
 import { Route as ApiPublicGalleryIdRouteImport } from './routes/api/public/gallery.$id'
 import { Route as ApiPublicBlocksHeightMetaRouteImport } from './routes/api/public/blocks.$height.meta'
@@ -269,6 +271,11 @@ const BitmapBlockRoute = BitmapBlockRouteImport.update({
   path: '/bitmap/$block',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClanTagRoute = ClanTagRouteImport.update({
+  id: '/clan/$tag',
+  path: '/clan/$tag',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CollectionsIndexRoute = CollectionsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -345,6 +352,11 @@ const ApiPublicResolveRegistryRoute =
     path: '/public/resolve-registry',
     getParentRoute: () => ApiRoute,
   } as any)
+const RanksPlayerIdRoute = RanksPlayerIdRouteImport.update({
+  id: '/player/$id',
+  path: '/player/$id',
+  getParentRoute: () => RanksRoute,
+} as any)
 const ApiPublicBlocksHeightRoute = ApiPublicBlocksHeightRouteImport.update({
   id: '/public/blocks/$height',
   path: '/public/blocks/$height',
@@ -403,6 +415,7 @@ export interface FileRoutesByFullPath {
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
+  '/clan/$tag': typeof ClanTagRoute
   '/collections/$club': typeof CollectionsClubRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
@@ -418,6 +431,7 @@ export interface FileRoutesByFullPath {
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
+  '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
@@ -460,6 +474,7 @@ export interface FileRoutesByTo {
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
+  '/clan/$tag': typeof ClanTagRoute
   '/collections/$club': typeof CollectionsClubRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
@@ -475,6 +490,7 @@ export interface FileRoutesByTo {
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
+  '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
@@ -521,6 +537,7 @@ export interface FileRoutesById {
   '/world-stats': typeof WorldStatsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
+  '/clan/$tag': typeof ClanTagRoute
   '/collections/$club': typeof CollectionsClubRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
@@ -536,6 +553,7 @@ export interface FileRoutesById {
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
+  '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
@@ -583,6 +601,7 @@ export interface FileRouteTypes {
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
+    | '/clan/$tag'
     | '/collections/$club'
     | '/district/$slug'
     | '/extenders/$slug'
@@ -598,6 +617,7 @@ export interface FileRouteTypes {
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
+    | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
     | '/api/public/blocks/$height/meta'
@@ -640,6 +660,7 @@ export interface FileRouteTypes {
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
+    | '/clan/$tag'
     | '/collections/$club'
     | '/district/$slug'
     | '/extenders/$slug'
@@ -655,6 +676,7 @@ export interface FileRouteTypes {
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
+    | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
     | '/api/public/blocks/$height/meta'
@@ -700,6 +722,7 @@ export interface FileRouteTypes {
     | '/world-stats'
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
+    | '/clan/$tag'
     | '/collections/$club'
     | '/district/$slug'
     | '/extenders/$slug'
@@ -715,6 +738,7 @@ export interface FileRouteTypes {
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
+    | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
     | '/api/public/blocks/$height/meta'
@@ -761,6 +785,7 @@ export interface RootRouteChildren {
   WorldStatsRoute: typeof WorldStatsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
+  ClanTagRoute: typeof ClanTagRoute
   DistrictSlugRoute: typeof DistrictSlugRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -1048,6 +1073,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BitmapBlockRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/clan/$tag': {
+      id: '/clan/$tag'
+      path: '/clan/$tag'
+      fullPath: '/clan/$tag'
+      preLoaderRoute: typeof ClanTagRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/collections/': {
       id: '/collections/'
       path: '/'
@@ -1153,6 +1185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicResolveRegistryRouteImport
       parentRoute: typeof ApiRoute
     }
+    '/ranks/player/$id': {
+      id: '/ranks/player/$id'
+      path: '/player/$id'
+      fullPath: '/ranks/player/$id'
+      preLoaderRoute: typeof RanksPlayerIdRouteImport
+      parentRoute: typeof RanksRoute
+    }
     '/api/public/blocks/$height': {
       id: '/api/public/blocks/$height'
       path: '/public/blocks/$height'
@@ -1244,12 +1283,14 @@ interface RanksRouteChildren {
   RanksClansRoute: typeof RanksClansRoute
   RanksPvpRoute: typeof RanksPvpRoute
   RanksIndexRoute: typeof RanksIndexRoute
+  RanksPlayerIdRoute: typeof RanksPlayerIdRoute
 }
 
 const RanksRouteChildren: RanksRouteChildren = {
   RanksClansRoute: RanksClansRoute,
   RanksPvpRoute: RanksPvpRoute,
   RanksIndexRoute: RanksIndexRoute,
+  RanksPlayerIdRoute: RanksPlayerIdRoute,
 }
 
 const RanksRouteWithChildren = RanksRoute._addFileChildren(RanksRouteChildren)
@@ -1296,6 +1337,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   BitmapBlockRoute: BitmapBlockRoute,
+  ClanTagRoute: ClanTagRoute,
   DistrictSlugRoute: DistrictSlugRoute,
   ProfileAddressRoute: ProfileAddressRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
