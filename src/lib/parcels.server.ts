@@ -143,6 +143,7 @@ export async function scanParcels(
       inscriptionNumber: child.number,
       inscribedInBlock: child.height ?? null,
       timestamp: child.timestamp ?? null,
+      ownerAddress: null,
       valid: false,
     });
   }
@@ -157,6 +158,17 @@ export async function scanParcels(
     }
   }
   claims.sort((a, b) => a.index - b.index || a.inscriptionNumber - b.inscriptionNumber);
+
+  const validClaims = claims.filter((claim) => claim.valid);
+  const holderAddresses = await mapLimit(validClaims, 8, async (claim) => {
+    const resp = await ordFetch(`/r/inscription/${claim.inscriptionId}`, 2);
+    if (!resp) return null;
+    const meta = (await resp.json()) as { address?: string | null };
+    return meta.address ?? null;
+  });
+  validClaims.forEach((claim, index) => {
+    claim.ownerAddress = holderAddresses[index] ?? null;
+  });
 
   return {
     height,
