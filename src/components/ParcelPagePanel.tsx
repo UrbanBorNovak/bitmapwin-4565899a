@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -19,6 +20,7 @@ import { BuildDelegates } from "@/components/BuildDelegates";
 import { buildInscriptionPayload, delegatesQuery, downloadJson } from "@/lib/builds";
 import { districtForHeightQuery } from "@/lib/districts";
 import { safeExternalUrl } from "@/lib/safe-url";
+import { recordPassportVisitFn } from "@/lib/views.functions";
 import { BuildEditor } from "@/components/builds/BuildEditor";
 import { BuildRenderer } from "@/components/builds/BuildRenderer";
 import { BuildRaffles } from "@/components/coins/BuildRaffles";
@@ -57,6 +59,7 @@ export function ParcelPagePanel({
   const ownerProfile = useQuery(profileQuery(ownerAddress ?? ""));
   const queryClient = useQueryClient();
   const { session } = useAuthSession();
+  const recordPassportVisit = useServerFn(recordPassportVisitFn);
   const links = useQuery(myWalletLinksQuery(Boolean(session)));
   // Editing needs both wallet control in the UI and a server-verified link, so
   // the write actually passes the ownership policy.
@@ -87,12 +90,13 @@ export function ParcelPagePanel({
     recordBitmapView(height, viewer)
       .then(() => {
         if (!cancelled) queryClient.invalidateQueries({ queryKey: ["view-stats", height] });
+        if (session) void recordPassportVisit({ data: { height } });
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [height, wallet?.ordinalsAddress, queryClient]);
+  }, [height, wallet?.ordinalsAddress, queryClient, recordPassportVisit, session]);
 
   function startEditing() {
     setTitle(page.data?.title ?? "");
