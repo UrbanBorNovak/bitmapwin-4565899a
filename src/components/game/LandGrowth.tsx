@@ -104,11 +104,13 @@ function fillTerrainHeightmap(texture: THREE.DataTexture, centreX: number, centr
 /** Demo-style billboard grass: textured planes, GPU wind/player bend and distance fade. */
 function WindGrassMaterial({
   reducedMotion,
+  firstPerson,
   pose,
   heightmapCentre,
   terrainRevision,
 }: {
   reducedMotion: boolean;
+  firstPerson: boolean;
   pose: React.RefObject<PlayerState>;
   heightmapCentre: { x: number; z: number };
   terrainRevision: number;
@@ -130,10 +132,11 @@ function WindGrassMaterial({
       uWindStrength: { value: reducedMotion ? 0.035 : 0.14 },
       uWindDirection: { value: new THREE.Vector2(1, 0) },
       uPlayerPosition: { value: new THREE.Vector3() },
+      uFirstPerson: { value: firstPerson ? 1 : 0 },
       uFadeNear: { value: WORLD_CELL * 20 },
       uFadeFar: { value: WORLD_CELL * 28 },
     }),
-    [heightmap, reducedMotion, texture],
+    [firstPerson, heightmap, reducedMotion, texture],
   );
 
   useEffect(() => {
@@ -169,16 +172,18 @@ function WindGrassMaterial({
     const player = pose.current;
     if (player && playerPosition?.value instanceof THREE.Vector3) {
       playerPosition.value.set(player.x, groundY(player.x, player.z), player.z);
-      // Fast airborne travel can cross several BITMAPs before React's scenery
-      // list refreshes. Keep the terrain texture under those existing blades
-      // centred on the live horizontal pose so they never sink and vanish.
+      // Keep the heightmap locked to BITMAP centres while walking. Re-centering
+      // it on fractional positions made every nearby blade change height at once,
+      // which reads as a flicker from the first-person camera. Only fast airborne
+      // travel needs an interim refresh before React's scenery list catches up.
       const dx = sampledCentre.current.x - player.x;
       const dz = sampledCentre.current.y - player.z;
       const moved = dx * dx + dz * dz;
       const airborne = !player.grounded || player.y > 0;
       if (
+        airborne &&
         moved > (WORLD_CELL * 0.5) ** 2 &&
-        (!airborne || clock.elapsedTime >= nextAirborneSample.current)
+        clock.elapsedTime >= nextAirborneSample.current
       ) {
         fillTerrainHeightmap(heightmap, player.x, player.z);
         uniforms.uHeightmapCentre.value.set(player.x, player.z);
@@ -203,6 +208,7 @@ function WindGrassMaterial({
         uniform float uWindStrength;
         uniform vec2 uWindDirection;
         uniform vec3 uPlayerPosition;
+        uniform float uFirstPerson;
         uniform sampler2D uHeightmap;
         uniform vec2 uHeightmapCentre;
         uniform float uHeightmapSpan;
@@ -297,7 +303,15 @@ function WindGrassMaterial({
             ${WORLD_CELL * 0.14},
             distance(vWorldPosition, cameraPosition)
           );
-          float alpha = blade.a * distanceFade * cameraFade;
+          // Tall cards crossing the near plane look like flashing green sheets.
+          // Give the first-person view a small clear ring around the player's
+          // feet; third person retains the full ground cover.
+          float firstPersonClearance = mix(
+            1.0,
+            smoothstep(${WORLD_CELL * 0.13}, ${WORLD_CELL * 0.26}, distance(vWorldPosition.xz, uPlayerPosition.xz)),
+            uFirstPerson
+          );
+          float alpha = blade.a * distanceFade * cameraFade * firstPersonClearance;
           if (alpha < 0.012) discard;
           vec3 colour = max(blade.rgb, vec3(0.34, 0.52, 0.12)) * vInstanceColor * 2.05;
           gl_FragColor = vec4(colour, min(1.0, alpha * 1.18));
@@ -436,9 +450,11 @@ function planPlot(land: TerraformedLand, growth: number, out: { grass: Item[]; b
 export function LandGrowth({
   unit,
   pose,
+  firstPerson = false,
 }: {
   unit: number;
   pose: React.RefObject<PlayerState>;
+  firstPerson?: boolean;
 }) {
   const { quality } = useQuality();
   const radiusCells = quality.resolved === "low" ? 8 : quality.resolved === "medium" ? 16 : RADIUS_CELLS;
@@ -632,6 +648,7 @@ export function LandGrowth({
         <planeGeometry args={[1, 1, 1, 2]} />
         <WindGrassMaterial
           reducedMotion={reducedMotion}
+          firstPerson={firstPerson}
           pose={pose}
           heightmapCentre={heightmapCentre}
           terrainRevision={terrain}

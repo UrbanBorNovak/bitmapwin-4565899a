@@ -2430,7 +2430,7 @@ const WorldScene = memo(function WorldScene({
             critical={vehicleCritical}
             color={colors.bitcoin}
           /> : null}
-          <LandGrowth unit={AVATAR_U} pose={pose} />
+          <LandGrowth unit={AVATAR_U} pose={pose} firstPerson={cameraMode === "first"} />
           <Companions unit={AVATAR_U} pose={pose} />
           {self.hp <= 0 ? <GhostShade unit={AVATAR_U} pose={pose} /> : null}
         </>
