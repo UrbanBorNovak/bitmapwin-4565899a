@@ -21,6 +21,8 @@ import { ManagerAI } from "@/components/ManagerAI";
 import { FloorRanking } from "@/components/FloorRanking";
 import { OpportunityFunnel } from "@/components/OpportunityFunnel";
 import { registryBaseQuery } from "@/lib/registry";
+import { getPublicPassportFn } from "@/lib/passport.functions";
+import { PassportSummary } from "@/components/PassportSummary";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -149,6 +151,7 @@ function DashboardPage() {
   const outgoing = useQuery(myBidsQuery(addresses));
   const openBids = useQuery(openBidsQuery(500));
   const followers = useQuery(followerCountsQuery(addresses));
+  const passport = useQuery({ queryKey: ["dashboard-passport", address], queryFn: () => getPublicPassportFn({ data: { wallet: address } }), enabled: Boolean(address), staleTime: 30_000 });
 
   const myBuilds = useMemo(() => {
     const target = address.toLowerCase();
@@ -407,6 +410,7 @@ function DashboardPage() {
       </header>
 
       {/* KPI STRIP — always visible */}
+      {passport.data ? <div className="mt-3"><PassportSummary passport={passport.data} /></div> : null}
       <div className="mt-3 grid gap-3 grid-cols-2 lg:grid-cols-4">
         <Stat
           label="BITMAPS HELD"

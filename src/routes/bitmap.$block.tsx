@@ -31,6 +31,9 @@ import { MakeOfferButton } from "@/components/MakeOfferButton";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { TerritoryPanel } from "@/components/extenders/TerritoryPanel";
 import { getBitmapHolderFn } from "@/lib/locate-bitmap.functions";
+import { LoopNavigator } from "@/components/LoopNavigator";
+import { StreamEventRow } from "@/components/StreamEventRow";
+import { provenanceStreamQuery } from "@/lib/provenance-stream";
 
 import { InscriptionContent } from "@/components/InscriptionContent";
 import { shortId } from "@/lib/chain";
@@ -128,6 +131,7 @@ function BitmapDetail() {
   const oci = useQuery(ociQuery(block));
   const liveHolder = useQuery(liveHolderQuery(block));
   const trades = useQuery(tradesForHeightQuery(block));
+  const localHistory = useQuery(provenanceStreamQuery("all", 12, undefined, block));
   const queryClient = useQueryClient();
 
   const claims = (scan.data?.inscriptions ?? []).filter((i) => i.isBitmapClaim);
@@ -170,6 +174,7 @@ function BitmapDetail() {
           ? `CLAIMED ON CHAIN${parcel.inscribedInBlock !== null ? ` IN BLOCK ${parcel.inscribedInBlock}` : ""}`
           : "UNCLAIMED — NO VALID INSCRIPTION IN THE REGISTRY"}
       </p>
+      <div className="mt-6"><LoopNavigator active="provenance" compact /></div>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <ClubBadge height={block} />
@@ -222,6 +227,7 @@ function BitmapDetail() {
         height={block}
         districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
       />
+      <section className="mt-8 border border-border"><header className="flex items-center justify-between border-b border-border px-4 py-3"><h2 className="display text-xl">HISTORY CREATED HERE</h2><Link to="/stream" className="label text-bitcoin">WORLD STREAM →</Link></header>{localHistory.data?.length ? localHistory.data.map((item) => <StreamEventRow key={item.id} event={item}/>) : <p className="p-5 font-mono text-xs text-muted-foreground">&gt; NO RECORDED WORLD HISTORY ON THIS BITMAP YET_</p>}</section>
 
       <div className="mt-6">
         <WatchBitmapButton height={block} />

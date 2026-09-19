@@ -23,6 +23,7 @@ import { SafeEnvironment } from "@/components/game/SafeEnvironment";
 import { SafeLightformer } from "@/components/game/SafeLightformer";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useCharacter } from "@/lib/character";
 import {
@@ -147,6 +148,8 @@ import { LandGrowth } from "@/components/game/LandGrowth";
 import { WeatherLighting, WorldWeather } from "@/components/game/WorldWeather";
 import { growthLabel, terraform, terraformAt } from "@/lib/world-terraform";
 import { ordContentUrl } from "@/lib/oci";
+import { getMyPassportFn } from "@/lib/passport.functions";
+import type { BuildCapability } from "@/lib/passport";
 
 
 import {
@@ -2555,6 +2558,9 @@ function BitmapWorld3DInner({
   const navigate = useNavigate();
   const wallet = useWalletSession();
   const { session } = useAuthSession();
+  const getPassport = useServerFn(getMyPassportFn);
+  const passport = useQuery({ queryKey: ["oasis-passport", session?.user.id], queryFn: () => getPassport(), enabled: Boolean(session), staleTime: 30_000 });
+  const buildCapabilities = useMemo(() => new Set<BuildCapability>((passport.data?.unlocks ?? []).map((item) => item.capabilityKey)), [passport.data?.unlocks]);
   const links = useQuery(myWalletLinksQuery(Boolean(session)));
   const clans = useQuery(clanStateQuery(Boolean(session)));
   const clan = useMemo<ClanBadge | null>(() => {
@@ -4132,6 +4138,8 @@ function BitmapWorld3DInner({
             onBuild={placeBuild}
             onBuildTemplate={placeTemplate}
             note={buildNote}
+            capabilities={buildCapabilities}
+            passportLoading={Boolean(session) && passport.isPending}
             onClose={() => setBuildOpen(false)}
           />
 
@@ -4769,17 +4777,21 @@ function BuildHud({
   onBuild,
   onBuildTemplate,
   note,
+  capabilities,
+  passportLoading,
   onClose,
 }: {
   onBuild: (id: StructureId) => void;
   onBuildTemplate: (id: BuildTemplateId) => void;
   note: string | null;
+  capabilities: ReadonlySet<BuildCapability>;
+  passportLoading: boolean;
   onClose: () => void;
 }) {
   const { items } = useWorldSkills();
   const [picked, setPicked] = useState<StructureId | BuildTemplateId | null>(null);
 
-  const options: { key: StructureId | BuildTemplateId; name: string; blurb: string; cost: Partial<Record<ItemId, number>>; costText: string; template: boolean }[] =
+  const options: { key: StructureId | BuildTemplateId; name: string; blurb: string; cost: Partial<Record<ItemId, number>>; costText: string; template: boolean; capability?: BuildCapability; requirement?: string }[] =
     [
       ...BUILD_TEMPLATES.map((template) => ({
         key: template.id,
@@ -4788,6 +4800,8 @@ function BuildHud({
         cost: template.cost,
         costText: costLabel({ ...template, id: template.parts[0]?.id ?? "camp-fire", footprint: 0, hp: 0 }),
         template: true,
+        ...(template.capability ? { capability: template.capability } : {}),
+        ...(template.requirement ? { requirement: template.requirement } : {}),
       })),
       ...STRUCTURES.map((recipe) => ({
         key: recipe.id,
@@ -4828,19 +4842,20 @@ function BuildHud({
           {options.map((option) => {
             const previous = options[options.indexOf(option) - 1];
             const ok = affordable(option.cost);
+            const unlocked = !option.capability || capabilities.has(option.capability);
             return (
               <Fragment key={option.key}>
                 {!option.template && previous?.template ? <div className="hud-telemetry-title mt-2">SINGLE PIECES</div> : null}
                 <Button
                   variant="ghost"
-                  disabled={!ok}
+                  disabled={!ok || !unlocked || passportLoading}
                   onClick={() => setPicked(option.key)}
-                  className={ok
+                  className={ok && unlocked
                     ? "h-auto w-full justify-start rounded-none border border-border px-2 py-1 text-left hover:border-bitcoin"
                     : "h-auto w-full justify-start rounded-none border border-border/60 px-2 py-1 text-left text-muted-foreground/60"}
                 >
                   <span><span className="block text-foreground">{option.template ? "▦ " : "□ "}{option.name}</span>
-                  <span className="block text-[9px] text-muted-foreground">{ok ? option.costText : `NEED ${option.costText}`}</span></span>
+                   <span className="block text-[9px] text-muted-foreground">{passportLoading && option.capability ? "CHECKING PASSPORT" : !unlocked ? `LOCKED · EARN ${option.requirement ?? "PASSPORT STAMP"}` : ok ? option.costText : `NEED ${option.costText}`}</span></span>
                 </Button>
               </Fragment>
             );
@@ -4856,7 +4871,7 @@ function BuildHud({
           <div className="text-muted-foreground">PLACE IT WHERE YOU STAND</div>
           <button
             type="button"
-            disabled={!affordable(chosen.cost)}
+            disabled={!affordable(chosen.cost) || Boolean(chosen.capability && !capabilities.has(chosen.capability))}
             onClick={() => {
               if (BUILD_TEMPLATES.some((template) => template.id === chosen.key)) onBuildTemplate(chosen.key as BuildTemplateId);
               else onBuild(chosen.key as StructureId);

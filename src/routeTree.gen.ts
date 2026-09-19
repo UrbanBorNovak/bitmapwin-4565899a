@@ -37,12 +37,14 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as MyLandRouteImport } from './routes/my-land'
 import { Route as MyWorldRouteImport } from './routes/my-world'
 import { Route as OwnershipRouteImport } from './routes/ownership'
+import { Route as PassportRouteImport } from './routes/passport'
 import { Route as PlayGuideRouteImport } from './routes/play-guide'
 import { Route as RanksRouteImport } from './routes/ranks'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SdkRouteImport } from './routes/sdk'
 import { Route as SdkPlaygroundRouteImport } from './routes/sdk-playground'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as StreamRouteImport } from './routes/stream'
 import { Route as StudioRouteImport } from './routes/studio'
 import { Route as TradingPostRouteImport } from './routes/trading-post'
 import { Route as ValuationRouteImport } from './routes/valuation'
@@ -212,6 +214,11 @@ const OwnershipRoute = OwnershipRouteImport.update({
   path: '/ownership',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PassportRoute = PassportRouteImport.update({
+  id: '/passport',
+  path: '/passport',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlayGuideRoute = PlayGuideRouteImport.update({
   id: '/play-guide',
   path: '/play-guide',
@@ -240,6 +247,11 @@ const SdkPlaygroundRoute = SdkPlaygroundRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StreamRoute = StreamRouteImport.update({
+  id: '/stream',
+  path: '/stream',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StudioRoute = StudioRouteImport.update({
@@ -415,12 +427,14 @@ export interface FileRoutesByFullPath {
   '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
   '/ownership': typeof OwnershipRoute
+  '/passport': typeof PassportRoute
   '/play-guide': typeof PlayGuideRoute
   '/ranks': typeof RanksRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/stream': typeof StreamRoute
   '/studio': typeof StudioRoute
   '/trading-post': typeof TradingPostRoute
   '/valuation': typeof ValuationRoute
@@ -477,11 +491,13 @@ export interface FileRoutesByTo {
   '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
   '/ownership': typeof OwnershipRoute
+  '/passport': typeof PassportRoute
   '/play-guide': typeof PlayGuideRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/stream': typeof StreamRoute
   '/studio': typeof StudioRoute
   '/trading-post': typeof TradingPostRoute
   '/valuation': typeof ValuationRoute
@@ -541,12 +557,14 @@ export interface FileRoutesById {
   '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
   '/ownership': typeof OwnershipRoute
+  '/passport': typeof PassportRoute
   '/play-guide': typeof PlayGuideRoute
   '/ranks': typeof RanksRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/stream': typeof StreamRoute
   '/studio': typeof StudioRoute
   '/trading-post': typeof TradingPostRoute
   '/valuation': typeof ValuationRoute
@@ -607,12 +625,14 @@ export interface FileRouteTypes {
     | '/my-land'
     | '/my-world'
     | '/ownership'
+    | '/passport'
     | '/play-guide'
     | '/ranks'
     | '/reset-password'
     | '/sdk'
     | '/sdk-playground'
     | '/sitemap.xml'
+    | '/stream'
     | '/studio'
     | '/trading-post'
     | '/valuation'
@@ -669,11 +689,13 @@ export interface FileRouteTypes {
     | '/my-land'
     | '/my-world'
     | '/ownership'
+    | '/passport'
     | '/play-guide'
     | '/reset-password'
     | '/sdk'
     | '/sdk-playground'
     | '/sitemap.xml'
+    | '/stream'
     | '/studio'
     | '/trading-post'
     | '/valuation'
@@ -732,12 +754,14 @@ export interface FileRouteTypes {
     | '/my-land'
     | '/my-world'
     | '/ownership'
+    | '/passport'
     | '/play-guide'
     | '/ranks'
     | '/reset-password'
     | '/sdk'
     | '/sdk-playground'
     | '/sitemap.xml'
+    | '/stream'
     | '/studio'
     | '/trading-post'
     | '/valuation'
@@ -797,12 +821,14 @@ export interface RootRouteChildren {
   MyLandRoute: typeof MyLandRoute
   MyWorldRoute: typeof MyWorldRoute
   OwnershipRoute: typeof OwnershipRoute
+  PassportRoute: typeof PassportRoute
   PlayGuideRoute: typeof PlayGuideRoute
   RanksRoute: typeof RanksRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   SdkRoute: typeof SdkRoute
   SdkPlaygroundRoute: typeof SdkPlaygroundRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  StreamRoute: typeof StreamRoute
   StudioRoute: typeof StudioRoute
   TradingPostRoute: typeof TradingPostRoute
   ValuationRoute: typeof ValuationRoute
@@ -1014,6 +1040,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OwnershipRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/passport': {
+      id: '/passport'
+      path: '/passport'
+      fullPath: '/passport'
+      preLoaderRoute: typeof PassportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/play-guide': {
       id: '/play-guide'
       path: '/play-guide'
@@ -1054,6 +1087,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stream': {
+      id: '/stream'
+      path: '/stream'
+      fullPath: '/stream'
+      preLoaderRoute: typeof StreamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/studio': {
@@ -1365,12 +1405,14 @@ const rootRouteChildren: RootRouteChildren = {
   MyLandRoute: MyLandRoute,
   MyWorldRoute: MyWorldRoute,
   OwnershipRoute: OwnershipRoute,
+  PassportRoute: PassportRoute,
   PlayGuideRoute: PlayGuideRoute,
   RanksRoute: RanksRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   SdkRoute: SdkRoute,
   SdkPlaygroundRoute: SdkPlaygroundRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  StreamRoute: StreamRoute,
   StudioRoute: StudioRoute,
   TradingPostRoute: TradingPostRoute,
   ValuationRoute: ValuationRoute,
