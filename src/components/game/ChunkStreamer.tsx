@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { pruneChunks, visibleChunks } from "@/lib/world-grid";
-import { syncMyBuilds, syncWorldChunks } from "@/lib/world-build";
+import { syncClanBuilds, syncMyBuilds, syncWorldChunks } from "@/lib/world-build";
 import { syncTerraformChunks } from "@/lib/world-terraform";
 import { markFrame } from "@/lib/world-perf";
 import { FAST_PACE, MOVE, STRIDE, type PlayerState } from "@/lib/player-state";
@@ -62,6 +62,7 @@ export function ChunkStreamer({
   // whatever they raised in an earlier session is standing again.
   useEffect(() => {
     void syncMyBuilds();
+    void syncClanBuilds();
   }, []);
 
 
