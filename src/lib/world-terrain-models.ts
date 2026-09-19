@@ -110,13 +110,12 @@ function layout(): TerrainModelSpec[] {
       ];
       const span = ring.low + rand(seed * 9.3) * (ring.high - ring.low);
       // Keep landforms from growing into each other.
-      const clash = taken.some(([] = [], ) => false) ||
-        taken.some((other) => {
-          const dx = other.cell[0] - cell[0];
-          const dz = other.cell[1] - cell[1];
-          const gap = (other.span + span) * 0.75 + 3;
-          return dx * dx + dz * dz < gap * gap;
-        });
+      const clash = taken.some((other) => {
+        const dx = other.cell[0] - cell[0];
+        const dz = other.cell[1] - cell[1];
+        const gap = (other.span + span) * 0.75 + 3;
+        return dx * dx + dz * dz < gap * gap;
+      });
       if (clash) continue;
       const source = pool[i % pool.length] ?? SOURCES[0]!;
       taken.push({ cell, span });
