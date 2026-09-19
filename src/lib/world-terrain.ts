@@ -70,6 +70,10 @@ export function subscribeTerrain(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
+// An inscribed landform arriving changes the walk surface, so everything that
+// stands on the ground rebuilds exactly as it does for new block rows.
+subscribeTerrainModels(bump);
+
 /** How many real block rows the terrain is currently shaped by. */
 export function terrainRowsLoaded() {
   return real.size;
