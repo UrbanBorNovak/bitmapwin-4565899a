@@ -120,6 +120,45 @@ function ProfilePage() {
         <div className="border-t border-profile-warm/20 bg-background/30 px-6 py-3 font-mono text-[10px] text-profile-warm-muted md:px-8">● A HOME BUILT ON BITCOIN</div>
       </div>
 
+      {ranked.data && (
+        <section className="profile-home mt-8" aria-label="Share book">
+          <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border px-6 py-3">
+            <div>
+              <p className="label text-profile-warm-muted">THEIR STAKE IN THE OASIS</p>
+              <h2 className="display mt-2 text-lg text-profile-warm">SHARE BOOK</h2>
+            </div>
+            <Link
+              to="/ranks/player/$id"
+              params={{ id: ranked.data.id }}
+              className="label text-bitcoin hover:underline"
+            >
+              [ CHARACTER RECORD ]
+            </Link>
+          </header>
+          <div className="grid grid-cols-2 gap-px bg-border md:grid-cols-4">
+            <div className="profile-readout bg-background p-4 text-center">
+              <p className="label">SHARE PRICE</p>
+              <p className="mt-1 font-mono text-sm font-bold tabular-nums text-profile-warm">{formatBit(shareVal)}</p>
+            </div>
+            <div className="profile-readout bg-background p-4 text-center">
+              <p className="label">SHARES ISSUED</p>
+              <p className="mt-1 font-mono text-sm font-bold tabular-nums text-profile-warm">{issued.toLocaleString()}</p>
+            </div>
+            <div className="profile-readout bg-background p-4 text-center">
+              <p className="label">SHARE HOLDERS</p>
+              <p className="mt-1 font-mono text-sm font-bold tabular-nums text-profile-warm">{holderCount.toLocaleString()}</p>
+            </div>
+            <div className="profile-readout bg-background p-4 text-center">
+              <p className="label">DIVIDENDS PAID</p>
+              <p className="mt-1 font-mono text-sm font-bold tabular-nums text-profile-warm">{formatBit(stock.data?.dividendsPaid ?? 0)}</p>
+            </div>
+          </div>
+          <p className="border-t border-profile-warm/20 px-6 py-2 font-mono text-[10px] text-profile-warm-muted">
+            HOLDING A SHARE OF THIS SOUL PAYS A TENTH OF EVERY BIT THEY EARN.
+          </p>
+        </section>
+      )}
+
       <section className="profile-home mt-8">
         <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border px-6 py-3">
           <div><p className="label text-profile-warm-muted">THEIR MARK ON THE OASIS</p><h2 className="display mt-2 text-lg text-profile-warm">BUILT BITMAPS</h2></div>
