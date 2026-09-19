@@ -597,7 +597,7 @@ const JACKAL_SPECIES: Species = {
   weight: 9,
   hostile: true,
   speed: 1.65,
-  scale: 1,
+  scale: 1.7,
   hp: 54,
   xp: 70,
   bite: 10,
@@ -606,21 +606,21 @@ const JACKAL_SPECIES: Species = {
 };
 
 const SPECIES: Species[] = [
-  { kind: "scorpion", weight: 22, hostile: true, speed: 0.9, scale: 1, hp: 18, xp: 20, bite: 5, radius: 0.11, bodyY: 0.05 },
-  { kind: "snake", weight: 18, hostile: true, speed: 0.6, scale: 1, hp: 22, xp: 26, bite: 8, radius: 0.13, bodyY: 0.05 },
-  { kind: "lizard", weight: 16, hostile: false, speed: 1.3, scale: 1, hp: 14, xp: 12, bite: 0, radius: 0.1, bodyY: 0.05 },
-  { kind: "jackrabbit", weight: 14, hostile: false, speed: 1.8, scale: 1, hp: 12, xp: 14, bite: 0, radius: 0.12, bodyY: 0.08 },
+  { kind: "scorpion", weight: 22, hostile: true, speed: 0.9, scale: 2.4, hp: 18, xp: 20, bite: 5, radius: 0.11, bodyY: 0.05 },
+  { kind: "snake", weight: 18, hostile: true, speed: 0.6, scale: 2.2, hp: 22, xp: 26, bite: 8, radius: 0.13, bodyY: 0.05 },
+  { kind: "lizard", weight: 16, hostile: false, speed: 1.3, scale: 2.2, hp: 14, xp: 12, bite: 0, radius: 0.1, bodyY: 0.05 },
+  { kind: "jackrabbit", weight: 14, hostile: false, speed: 1.8, scale: 2.6, hp: 12, xp: 14, bite: 0, radius: 0.12, bodyY: 0.08 },
   JACKAL_SPECIES,
-  { kind: "coyote", weight: 7, hostile: true, speed: 1.6, scale: 1, hp: 46, xp: 55, bite: 9, radius: 0.26, bodyY: 0.3 },
-  { kind: "vulture", weight: 5, hostile: false, speed: 1.1, scale: 1, hp: 26, xp: 34, bite: 0, radius: 0.24, bodyY: 0 },
+  { kind: "coyote", weight: 7, hostile: true, speed: 1.6, scale: 1.7, hp: 46, xp: 55, bite: 9, radius: 0.26, bodyY: 0.3 },
+  { kind: "vulture", weight: 5, hostile: false, speed: 1.1, scale: 2, hp: 26, xp: 34, bite: 0, radius: 0.24, bodyY: 0 },
   // Rare safari sightings — a real sighting, not a regular fixture.
-  { kind: "antelope", weight: 1, hostile: false, speed: 1.5, scale: 1, hp: 80, xp: 110, bite: 0, radius: 0.36, bodyY: 0.52 },
-  { kind: "giraffe", weight: 0.6, hostile: false, speed: 1.0, scale: 1, hp: 130, xp: 190, bite: 0, radius: 0.44, bodyY: 0.85 },
-  { kind: "elephant", weight: 0.5, hostile: false, speed: 0.9, scale: 1, hp: 280, xp: 430, bite: 0, radius: 0.6, bodyY: 0.62 },
-  { kind: "rhino", weight: 0.4, hostile: true, speed: 1.4, scale: 1, hp: 220, xp: 350, bite: 18, radius: 0.52, bodyY: 0.48 },
-  { kind: "lion", weight: 0.4, hostile: true, speed: 1.7, scale: 1, hp: 160, xp: 280, bite: 15, radius: 0.4, bodyY: 0.38 },
+  { kind: "antelope", weight: 1, hostile: false, speed: 1.5, scale: 1.5, hp: 80, xp: 110, bite: 0, radius: 0.36, bodyY: 0.52 },
+  { kind: "giraffe", weight: 0.6, hostile: false, speed: 1.0, scale: 1.4, hp: 130, xp: 190, bite: 0, radius: 0.44, bodyY: 0.85 },
+  { kind: "elephant", weight: 0.5, hostile: false, speed: 0.9, scale: 1.6, hp: 280, xp: 430, bite: 0, radius: 0.6, bodyY: 0.62 },
+  { kind: "rhino", weight: 0.4, hostile: true, speed: 1.4, scale: 1.5, hp: 220, xp: 350, bite: 18, radius: 0.52, bodyY: 0.48 },
+  { kind: "lion", weight: 0.4, hostile: true, speed: 1.7, scale: 1.5, hp: 160, xp: 280, bite: 15, radius: 0.4, bodyY: 0.38 },
   // The rarest sighting of all.
-  { kind: "unicorn", weight: 0.12, hostile: false, speed: 2.1, scale: 1, hp: 120, xp: 520, bite: 0, radius: 0.38, bodyY: 0.55 },
+  { kind: "unicorn", weight: 0.12, hostile: false, speed: 2.1, scale: 1.4, hp: 120, xp: 520, bite: 0, radius: 0.38, bodyY: 0.55 },
 ];
 
 /** on-chain snake */
