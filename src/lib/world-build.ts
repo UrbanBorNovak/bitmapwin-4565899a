@@ -557,8 +557,23 @@ async function publish(items: PlacedStructure[]) {
   }
 }
 
+/**
+ * Only signed-in players have a vault. Asking without a session would make the
+ * server reject the call, so the session is checked first.
+ */
+async function signedIn() {
+  try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data } = await supabase.auth.getSession();
+    return Boolean(data.session);
+  } catch {
+    return false;
+  }
+}
+
 /** Keep builds in the player's own vault when the shared world will not take them. */
 async function save(items: PlacedStructure[]) {
+  if (!(await signedIn())) return;
   try {
     const result = await savePlayerBuilds({ data: { items: items.map(toRequest) } });
     const rows = result?.builds ?? [];
@@ -602,6 +617,7 @@ function adoptMine(row: {
  */
 export async function syncMyBuilds() {
   hydrate();
+  if (!(await signedIn())) return;
   try {
     const result = await listMyBuilds();
     for (const row of result?.builds ?? []) adoptMine(row);
