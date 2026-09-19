@@ -339,6 +339,24 @@ export const rankPlayersQuery = () =>
     staleTime: 30_000,
   });
 
+/** The ranked soul behind a wallet address, for public profile pages. */
+export const rankPlayerByWalletQuery = (address: string | null) =>
+  queryOptions({
+    queryKey: ["rank-player-wallet", address?.toLowerCase() ?? null],
+    enabled: Boolean(address),
+    staleTime: 30_000,
+    queryFn: async (): Promise<RankPlayer | null> => {
+      const { data, error } = await supabase
+        .from("rank_players")
+        .select(PLAYER_SELECT)
+        .ilike("wallet", address as string)
+        .limit(1);
+      if (error) throw new Error(error.message);
+      const row = (data ?? [])[0] as PlayerRow | undefined;
+      return row ? toPlayer(row) : null;
+    },
+  });
+
 export const rankClansQuery = () =>
   queryOptions<RankClan[]>({
     queryKey: ["rank-clans"],
