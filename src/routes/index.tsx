@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ParcelCard } from "@/components/ParcelCard";
 import { HowItWorks } from "@/components/HowItWorks";
+import { SpriteParade } from "@/components/SpriteCritter";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { BitmapConstellations } from "@/components/BitmapConstellations";
 import { registryParcelsQuery, registryCountQuery } from "@/lib/registry";
@@ -151,6 +152,10 @@ function Index() {
           </div>
         </div>
       </section>
+
+      <div className="mt-10">
+        <SpriteParade height={72} />
+      </div>
 
       <HowItWorks />
 
