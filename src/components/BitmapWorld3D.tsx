@@ -3146,6 +3146,7 @@ function BitmapWorld3DInner({
       return;
     }
     attack(best.id);
+    struck.current = { id: best.id, handle: best.handle, at: now };
     setAttackCooldownUntil(now + ATTACK_COOLDOWN_MS);
     const label = `HIT ${best.handle}`;
     setAttackTarget(label);
@@ -3154,6 +3155,43 @@ function BitmapWorld3DInner({
       1200,
     );
   }, [attack, attackCooldownUntil, hp]);
+
+  /**
+   * RANKS — when somebody you just struck goes down, that kill is written to
+   * the hall of fame so karma, PK counts and the blood ledger stay honest.
+   */
+  const struck = useRef<{ id: string; handle: string; at: number } | null>(null);
+  const logged = useRef(new Set<string>());
+  useEffect(() => {
+    const mark = struck.current;
+    if (!mark || Date.now() - mark.at > 6000) return;
+    const victim = cursors.find((cursor) => cursor.id === mark.id);
+    if (!victim || victim.hp > 0) return;
+    const key = `${mark.id}:${Math.round(mark.at / 1000)}`;
+    if (logged.current.has(key)) return;
+    logged.current.add(key);
+    struck.current = null;
+    const district = Math.round(pose.current?.height ?? 0);
+    void recordPvpKillFn({
+      data: {
+        killerName: handle,
+        victimName: mark.handle,
+        district: `${district}.BITMAP`,
+        bitmap: district,
+      },
+    })
+      .then((result) => {
+        const note = `${result.wasPk ? "☠ PK · " : ""}SLAIN ${mark.handle.toUpperCase()} · KARMA ${result.karma}`;
+        setAttackTarget(note);
+        window.setTimeout(
+          () => setAttackTarget((current) => (current === note ? null : current)),
+          2600,
+        );
+      })
+      .catch(() => {
+        /* the board is not worth interrupting the fight for */
+      });
+  }, [cursors, handle]);
 
   useEffect(() => {
     if (!attackCooldownUntil) return;
