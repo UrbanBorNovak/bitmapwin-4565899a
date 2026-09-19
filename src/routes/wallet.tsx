@@ -96,6 +96,15 @@ function WalletUnavailable({ message }: { message: string }) {
   );
 }
 
+type WalletTab = "land" | "market" | "funds" | "profile";
+
+const WALLET_TABS: { id: WalletTab; label: string }[] = [
+  { id: "land", label: "LAND" },
+  { id: "market", label: "MARKET" },
+  { id: "funds", label: "FUNDS" },
+  { id: "profile", label: "PROFILE" },
+];
+
 function WalletPage() {
   const [input, setInput] = useState("");
   const [address, setAddress] = useState("");
@@ -124,15 +133,15 @@ function WalletPage() {
     window.localStorage.setItem(WALLET_ADDRESS_STORAGE_KEY, linked);
   }, [links.data, address]);
 
-  // The profile is rendered after an address is restored. Scroll once that
-  // section exists instead of relying on the browser's initial hash pass.
+  const [tab, setTab] = useState<WalletTab>("land");
+
+  // Deep links (#profile / #list / #earnings) open the matching tab.
   useEffect(() => {
-    if (window.location.hash !== "#profile") return;
-    const frame = window.requestAnimationFrame(() => {
-      document.getElementById("profile")?.scrollIntoView({ block: "start" });
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [address]);
+    const hash = window.location.hash;
+    const target: WalletTab =
+      hash === "#profile" ? "profile" : hash === "#earnings" ? "funds" : hash === "#list" ? "land" : "land";
+    if (hash !== "") setTab(target);
+  }, []);
 
   const wallet = useQuery(walletQuery(address));
   const offers = useQuery(walletOffersQuery(address));
@@ -264,138 +273,158 @@ function WalletPage() {
             <Stat k="BITMAPS" v={wallet.data ? String(parcels.length) : "—"} />
           </section>
 
-          <ProfileEditor
-            address={address}
-            canEdit={isLinked(links.data, address)}
-            inscriptionIds={ownedInscriptionIds}
-          />
-
-          <MembershipPanel address={address} canEdit={isLinked(links.data, address)} />
-
-
-
           {wallet.isError && (
             <p className="mt-6 border border-border p-4 font-mono text-xs text-muted-foreground">
               &gt; {(wallet.error as Error).message.toUpperCase()}
             </p>
           )}
 
-          {parcels.length > 0 && (
-            <section className="mt-10 border border-border">
-              <header className="border-b border-border p-5">
-                <h2 className="display text-xl">MY BITMAPS</h2>
-              </header>
-              <ul className="divide-y divide-border">
-                {parcels.map((p) => (
-                  <li key={p.id} className="p-5">
-                    <div className="flex flex-wrap items-baseline justify-between gap-3">
-                      <Link
-                        to="/bitmap/$block"
-                        params={{ block: String(p.bitmapHeight) }}
-                        className="display text-sm underline decoration-border underline-offset-4 hover:text-foreground"
-                      >
-                        {p.bitmapHeight}.BITMAP
-                      </Link>
-                      <span className="font-mono text-[11px] break-all text-muted-foreground">
-                        {p.outpoint} · {formatSats(p.valueSats)}
-                      </span>
-                    </div>
-                    <ListParcelForm
-                      parcel={p}
-                      sellerAddress={address}
-                      connected={connected}
-                    />
-                  </li>
-                ))}
-              </ul>
+          <nav aria-label="Wallet sections" className="mt-10 flex flex-wrap gap-2">
+            {WALLET_TABS.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                aria-pressed={tab === t.id}
+                className={tab === t.id ? "btn-term !px-3 !py-1.5" : "btn-term-ghost !px-3 !py-1.5"}
+                onClick={() => setTab(t.id)}
+              >
+                [ {t.label} ]
+              </button>
+            ))}
+          </nav>
+
+          {tab === "land" && (
+            <div className="mt-6">
+              {parcels.length > 0 && (
+                <section className="border border-border">
+                  <header className="border-b border-border p-5">
+                    <h2 className="display text-xl">MY BITMAPS</h2>
+                  </header>
+                  <ul className="divide-y divide-border">
+                    {parcels.map((p) => (
+                      <li key={p.id} className="p-5">
+                        <div className="flex flex-wrap items-baseline justify-between gap-3">
+                          <Link
+                            to="/bitmap/$block"
+                            params={{ block: String(p.bitmapHeight) }}
+                            className="display text-sm underline decoration-border underline-offset-4 hover:text-foreground"
+                          >
+                            {p.bitmapHeight}.BITMAP
+                          </Link>
+                          <span className="font-mono text-[11px] break-all text-muted-foreground">
+                            {p.outpoint} · {formatSats(p.valueSats)}
+                          </span>
+                        </div>
+                        <ListParcelForm
+                          parcel={p}
+                          sellerAddress={address}
+                          connected={connected}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              <div className={parcels.length > 0 ? "mt-6" : ""}>
+                <MyBitmapsPanel />
+              </div>
+
+              <section id="list" className="mt-6 scroll-mt-24 border border-border">
+                <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border p-5">
+                  <div>
+                    <h2 className="display text-xl">LIST MY OWN BITMAP</h2>
+                    <p className="label mt-2">SET YOUR OWN PRICE — THE PSBT IS BUILT AND SIGNED FOR YOU</p>
+                  </div>
+                  <button
+                    className={listOpen ? "btn-term !px-3 !py-1.5" : "btn-term-ghost !px-3 !py-1.5"}
+                    onClick={() => setListOpen((o) => !o)}
+                  >
+                    {listOpen ? "[ CLOSE ]" : "[ LIST MY OWN BITMAP ]"}
+                  </button>
+                </header>
+                {listOpen && (
+                  <div className="p-5">
+                    <QuickListForm />
+                  </div>
+                )}
+              </section>
+
+              <section className="mt-6">
+                <DistrictManager address={address} heldHeights={heldHeights} />
+              </section>
+            </div>
+          )}
+
+          {tab === "market" && (
+            <div className="mt-6">
+              <section className="border border-border">
+                <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border p-5">
+                  <h2 className="display text-xl">OFFERS I SENT</h2>
+                  <button
+                    className="btn-term-ghost !px-3 !py-1.5"
+                    disabled={refresh.isPending}
+                    onClick={() => refresh.mutate()}
+                  >
+                    {refresh.isPending ? "CHECKING…" : "CHECK UTXOS"}
+                  </button>
+                </header>
+                <OfferList
+                  offers={offers.data?.outgoing ?? []}
+                  loading={offers.isLoading}
+                  empty="NO OFFERS SIGNED FROM THIS ADDRESS YET"
+                  renderExtra={(offer) => (
+                    <>
+                      {offer.status === "open" && (
+                        <div className="mt-3">
+                          <UnlistButton offerId={offer.id} sellerAddress={offer.sellerAddress} />
+                        </div>
+                      )}
+                      <DeliverForm offer={offer} />
+                    </>
+                  )}
+                />
+              </section>
+
+              <section className="mt-6 border border-border">
+                <header className="border-b border-border p-5">
+                  <h2 className="display text-xl">PSBT INBOX — SENT TO ME</h2>
+                  <p className="label mt-2">SIGNED SELLER PSBTS DELIVERED TO THIS ADDRESS</p>
+                </header>
+                <OfferList
+                  offers={offers.data?.incoming ?? []}
+                  loading={offers.isLoading}
+                  empty="NO PSBT DELIVERED TO THIS ADDRESS YET"
+                  renderExtra={(offer) => <ClaimAction offer={offer} address={address} />}
+                />
+              </section>
+
+              <div className="mt-6">
+                <WalletBids
+                  address={address}
+                  heldHeights={heldHeights}
+                />
+              </div>
+            </div>
+          )}
+
+          {tab === "funds" && (
+            <section id="earnings" className="mt-6 grid gap-6 scroll-mt-24 lg:grid-cols-2">
+              <CoinWallet addresses={[address, sessionWallet?.paymentAddress ?? address]} />
+              <LeaseEarnings addresses={[address, sessionWallet?.paymentAddress ?? address]} />
             </section>
           )}
 
-
-          <div className="mt-10">
-            <MyBitmapsPanel />
-          </div>
-
-          <section id="list" className="mt-10 scroll-mt-24 border border-border">
-            <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border p-5">
-              <div>
-                <h2 className="display text-xl">LIST MY OWN BITMAP</h2>
-                <p className="label mt-2">SET YOUR OWN PRICE — THE PSBT IS BUILT AND SIGNED FOR YOU</p>
-              </div>
-              <button
-                className={listOpen ? "btn-term !px-3 !py-1.5" : "btn-term-ghost !px-3 !py-1.5"}
-                onClick={() => setListOpen((o) => !o)}
-              >
-                {listOpen ? "[ CLOSE ]" : "[ LIST MY OWN BITMAP ]"}
-              </button>
-            </header>
-            {listOpen && (
-              <div className="p-5">
-                <QuickListForm />
-              </div>
-            )}
-          </section>
-
-
-
-          <section className="mt-10 border border-border">
-            <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border p-5">
-              <h2 className="display text-xl">OFFERS I SENT</h2>
-              <button
-                className="btn-term-ghost !px-3 !py-1.5"
-                disabled={refresh.isPending}
-                onClick={() => refresh.mutate()}
-              >
-                {refresh.isPending ? "CHECKING…" : "CHECK UTXOS"}
-              </button>
-            </header>
-            <OfferList
-              offers={offers.data?.outgoing ?? []}
-              loading={offers.isLoading}
-              empty="NO OFFERS SIGNED FROM THIS ADDRESS YET"
-              renderExtra={(offer) => (
-                <>
-                  {offer.status === "open" && (
-                    <div className="mt-3">
-                      <UnlistButton offerId={offer.id} sellerAddress={offer.sellerAddress} />
-                    </div>
-                  )}
-                  <DeliverForm offer={offer} />
-                </>
-              )}
-            />
-          </section>
-
-          <section className="mt-10 border border-border">
-            <header className="border-b border-border p-5">
-              <h2 className="display text-xl">PSBT INBOX — SENT TO ME</h2>
-              <p className="label mt-2">SIGNED SELLER PSBTS DELIVERED TO THIS ADDRESS</p>
-            </header>
-            <OfferList
-              offers={offers.data?.incoming ?? []}
-              loading={offers.isLoading}
-              empty="NO PSBT DELIVERED TO THIS ADDRESS YET"
-              renderExtra={(offer) => <ClaimAction offer={offer} address={address} />}
-            />
-          </section>
-
-          <WalletBids
-            address={address}
-            heldHeights={heldHeights}
-          />
-
-          <section id="earnings" className="mt-10 grid gap-6 scroll-mt-24 lg:grid-cols-2">
-            <CoinWallet addresses={[address, sessionWallet?.paymentAddress ?? address]} />
-            <LeaseEarnings addresses={[address, sessionWallet?.paymentAddress ?? address]} />
-          </section>
-
-          <section className="mt-10">
-            <DistrictManager address={address} heldHeights={heldHeights} />
-          </section>
-
-
-
-
+          {tab === "profile" && (
+            <div id="profile" className="mt-6 scroll-mt-24">
+              <ProfileEditor
+                address={address}
+                canEdit={isLinked(links.data, address)}
+                inscriptionIds={ownedInscriptionIds}
+              />
+              <MembershipPanel address={address} canEdit={isLinked(links.data, address)} />
+            </div>
+          )}
         </>
       )}
     </div>
