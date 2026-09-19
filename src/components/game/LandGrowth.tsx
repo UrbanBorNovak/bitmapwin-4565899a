@@ -244,10 +244,14 @@ function WindGrassMaterial({
           float hBack = terrainHeight(origin.xz - vec2(0.0, uTerrainStep));
           float hFront = terrainHeight(origin.xz + vec2(0.0, uTerrainStep));
           vec3 terrainNormal = normalize(vec3(hLeft - hRight, uTerrainStep * 2.0, hBack - hFront));
-          vec3 cameraDirection = normalize(cameraPosition - origin);
-          vec3 bladeRight = cross(terrainNormal, cameraDirection);
-          if (dot(bladeRight, bladeRight) < 0.0001) bladeRight = vec3(1.0, 0.0, 0.0);
-          bladeRight = normalize(bladeRight);
+          // Billboard around the horizontal view direction only. Taking the raw
+          // camera vector collapsed every blade to zero width when looking down
+          // from a jump or a flight, which read as the grass disappearing.
+          vec3 toCamera = cameraPosition - origin;
+          vec3 flatToCamera = vec3(toCamera.x, 0.0, toCamera.z);
+          if (dot(flatToCamera, flatToCamera) < 0.0001) flatToCamera = vec3(0.0, 0.0, 1.0);
+          vec3 cameraDirection = normalize(flatToCamera);
+          vec3 bladeRight = normalize(cross(vec3(0.0, 1.0, 0.0), cameraDirection));
           vec3 bladeForward = normalize(cross(bladeRight, terrainNormal));
 
           vec3 blade = bladeRight * (position.x * width);
