@@ -126,6 +126,19 @@ export const CLAN_TIERS = [
 
 export const CLAN_JOIN_XP = 250;
 
+/**
+ * Hardcoded clan crests. Tags are uppercase; the crest image is the
+ * inscribed banner carried by that clan everywhere a crest is drawn.
+ */
+export const CLAN_CREST_IMAGES: Readonly<Record<string, string>> = {
+  JGH: "https://ordinals.com/content/f537200970e9592b572e1ae0fe60d2d326ecffe79b1d5e44b494917c57044a13i0",
+};
+
+export function clanCrestImage(tag: string | null | undefined): string | null {
+  if (!tag) return null;
+  return CLAN_CREST_IMAGES[tag.toUpperCase()] ?? null;
+}
+
 export function clanTierIndex(xp: number): number {
   let index = 0;
   for (let i = 0; i < CLAN_TIERS.length; i += 1) {
