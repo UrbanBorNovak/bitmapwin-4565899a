@@ -952,6 +952,11 @@
   50% { transform: translateY(-4px); }
 }
 
+@keyframes comic-scene-enter {
+  0% { opacity: 0; transform: translateX(18px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
 .animate-sprite-stroll {
   animation: sprite-stroll 3.4s ease-in-out infinite;
 }
@@ -964,8 +969,12 @@
   animation: sprite-bob 2.2s ease-in-out infinite;
 }
 
+.animate-comic-scene {
+  animation: comic-scene-enter 0.55s ease-out both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-sprite-stroll, .animate-sprite-stroll-slow, .animate-sprite-bob {
+  .animate-sprite-stroll, .animate-sprite-stroll-slow, .animate-sprite-bob, .animate-comic-scene {
     animation: none !important;
   }
 }

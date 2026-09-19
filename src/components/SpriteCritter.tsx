@@ -49,6 +49,16 @@ type StreetProp = {
   width: number;
 };
 
+type ComicPiece =
+  | { kind: "sprite"; index: number; height?: number; flip?: boolean }
+  | { kind: "prop"; index: number; className?: string };
+
+type ComicScene = {
+  chapter: string;
+  line: string;
+  pieces: readonly ComicPiece[];
+};
+
 const STREET_PROPS = [
   { name: "MARKET KIOSK", crop: [8, 8, 184, 184], width: 76 },
   { name: "STREET VENDOR", crop: [216, 8, 120, 160], width: 48 },
@@ -59,6 +69,54 @@ const STREET_PROPS = [
   { name: "BLUE STREET SIGN", crop: [312, 208, 56, 184], width: 25 },
   { name: "BITMAP SIGN", crop: [400, 184, 288, 240], width: 112 },
 ] as const satisfies readonly StreetProp[];
+
+const COMIC_SCENES: readonly ComicScene[] = [
+  {
+    chapter: "01 // THE SIGNAL",
+    line: "A NEW BITMAP IS FORMING ON BITCOIN…",
+    pieces: [
+      { kind: "prop", index: 2 },
+      { kind: "sprite", index: 0, height: 54 },
+      { kind: "sprite", index: 5, height: 76 },
+      { kind: "prop", index: 6 },
+      { kind: "sprite", index: 6, height: 82, flip: true },
+    ],
+  },
+  {
+    chapter: "02 // THE PLAN",
+    line: "THE OASIS GATHERS AROUND THE NEXT BLOCK.",
+    pieces: [
+      { kind: "sprite", index: 3, height: 72 },
+      { kind: "prop", index: 7 },
+      { kind: "sprite", index: 7, height: 84, flip: true },
+      { kind: "prop", index: 3 },
+      { kind: "sprite", index: 4, height: 82, flip: true },
+    ],
+  },
+  {
+    chapter: "03 // THE BUILD",
+    line: "BUILDERS PREPARE THE STREET BEFORE CONFIRMATION.",
+    pieces: [
+      { kind: "prop", index: 0 },
+      { kind: "sprite", index: 1, height: 78 },
+      { kind: "sprite", index: 2, height: 72, flip: true },
+      { kind: "prop", index: 1 },
+      { kind: "sprite", index: 5, height: 74, flip: true },
+    ],
+  },
+  {
+    chapter: "04 // THE ARRIVAL",
+    line: "ONE BLOCK CLOSES. A NEW WORLD OPENS.",
+    pieces: [
+      { kind: "prop", index: 5 },
+      { kind: "sprite", index: 0, height: 50 },
+      { kind: "sprite", index: 2, height: 70 },
+      { kind: "sprite", index: 7, height: 82, flip: true },
+      { kind: "sprite", index: 6, height: 78, flip: true },
+      { kind: "prop", index: 4 },
+    ],
+  },
+];
 
 function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
@@ -140,36 +198,94 @@ function StreetProp({ prop, className = "" }: { prop: StreetProp; className?: st
   );
 }
 
-/** A row of characters strolling across the page. */
+/** A living, centered comic whose composition changes as Bitcoin advances. */
 export function SpriteParade({ height = 72 }: { height?: number }) {
   const reduced = useReducedMotion();
+  const [sceneIndex, setSceneIndex] = useState(0);
+  const [nextBlock, setNextBlock] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (reduced) return;
+    const timerId = window.setTimeout(
+      () => setSceneIndex((sceneIndex + 1) % COMIC_SCENES.length),
+      9_000,
+    );
+    return () => window.clearTimeout(timerId);
+  }, [reduced, sceneIndex]);
+
+  useEffect(() => {
+    let active = true;
+    const refreshTip = async () => {
+      try {
+        const response = await fetch("https://mempool.space/api/blocks/tip/height");
+        const tip = Number(await response.text());
+        if (active && response.ok && Number.isFinite(tip)) setNextBlock(tip + 1);
+      } catch {
+        // The story remains useful when a public indexer is briefly unavailable.
+      }
+    };
+    void refreshTip();
+    const timerId = window.setInterval(refreshTip, 60_000);
+    return () => {
+      active = false;
+      window.clearInterval(timerId);
+    };
+  }, []);
+
+  const scene = COMIC_SCENES[sceneIndex] ?? COMIC_SCENES[0];
+  if (!scene) return null;
+
   return (
     <div
-      className="relative overflow-hidden border-y border-border bg-background/60"
-      aria-label="Inscribed pixel characters"
-      data-no-translate
+      className="relative overflow-hidden border-y border-border bg-background/60 px-3 py-5 sm:px-6"
+      aria-label="Living story of inscribed pixel characters"
+      data-sprite-parade
     >
-      <div className="overflow-x-auto">
-        <div className="pointer-events-none relative flex min-w-max items-end gap-6 px-4 pb-4 pt-8 sm:gap-10 md:px-8">
-          <StreetProp prop={STREET_PROPS[5]} className="mr-1 shrink-0 opacity-90" />
-          <StreetProp prop={STREET_PROPS[6]} className="-ml-4 shrink-0 opacity-90" />
-          {SPRITES.map((sheet, index) => (
-            <div key={sheet.id} className="flex items-end gap-6 sm:gap-10">
-              {index === 1 && <StreetProp prop={STREET_PROPS[0]} className="shrink-0 opacity-90" />}
-              {index === 3 && <StreetProp prop={STREET_PROPS[2]} className="shrink-0 opacity-90" />}
-              {index === 4 && <StreetProp prop={STREET_PROPS[4]} className="shrink-0 opacity-90" />}
-              {index === 5 && <StreetProp prop={STREET_PROPS[3]} className="shrink-0 opacity-90" />}
-              {index === 7 && <StreetProp prop={STREET_PROPS[1]} className="shrink-0 opacity-90" />}
+      <div className="mx-auto flex max-w-5xl items-end justify-between gap-4 border-b border-border pb-3 font-mono text-[10px]">
+        <span className="text-bitcoin">{scene.chapter}</span>
+        <span className="text-right text-muted-foreground" data-no-translate>
+          {nextBlock ? `AWAITING ${nextBlock}.BITMAP` : "AWAITING NEXT BITMAP"}
+        </span>
+      </div>
+
+      <div key={sceneIndex} className={reduced ? "" : "animate-comic-scene"}>
+        <div className="pointer-events-none mx-auto flex min-h-32 max-w-5xl items-end justify-center gap-3 overflow-hidden px-1 pt-5 sm:gap-8 md:gap-12">
+          {scene.pieces.map((piece, index) => {
+            if (piece.kind === "prop") {
+              const prop = STREET_PROPS[piece.index];
+              return prop ? (
+                <StreetProp
+                  key={`prop-${piece.index}-${index}`}
+                  prop={prop}
+                  className={`shrink-0 opacity-90 ${piece.className ?? ""}`}
+                />
+              ) : null;
+            }
+            const sheet = SPRITES[piece.index];
+            return sheet ? (
               <div
-                className={reduced ? "" : index % 2 === 0 ? "animate-sprite-stroll" : "animate-sprite-stroll-slow"}
+                key={`sprite-${piece.index}-${index}`}
+                className={reduced ? "shrink-0" : `shrink-0 ${index % 2 === 0 ? "animate-sprite-stroll" : "animate-sprite-stroll-slow"}`}
                 style={reduced ? undefined : { animationDelay: `${index * 0.45}s` }}
               >
-                <SpriteCritter sheet={sheet} height={height} flip={index % 2 === 1} />
+                <SpriteCritter
+                  sheet={sheet}
+                  height={Math.min(piece.height ?? height, height + 12)}
+                  flip={piece.flip ?? index % 2 === 1}
+                />
               </div>
-            </div>
-          ))}
-          <StreetProp prop={STREET_PROPS[7]} className="ml-1 shrink-0 opacity-90" />
+            ) : null;
+          })}
         </div>
+        <p className="mx-auto mt-2 min-h-5 max-w-xl text-center font-mono text-[10px] font-bold text-foreground sm:text-xs">
+          {scene.line}
+        </p>
+      </div>
+
+      <div className="mt-4 flex justify-center gap-2" aria-hidden="true">
+        {COMIC_SCENES.map((item, index) => (
+          <span key={item.chapter} className={`h-1 w-7 ${index === sceneIndex ? "bg-bitcoin" : "bg-border-strong"}`} />
+        ))}
       </div>
     </div>
   );
