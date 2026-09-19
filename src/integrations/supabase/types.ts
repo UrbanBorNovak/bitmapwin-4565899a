@@ -1962,6 +1962,7 @@ export type Database = {
           pk_kills: number
           tag: string
           updated_at: string
+          xp: number
         }
         Insert: {
           created_at?: string
@@ -1977,6 +1978,7 @@ export type Database = {
           pk_kills?: number
           tag: string
           updated_at?: string
+          xp?: number
         }
         Update: {
           created_at?: string
@@ -1992,6 +1994,7 @@ export type Database = {
           pk_kills?: number
           tag?: string
           updated_at?: string
+          xp?: number
         }
         Relationships: []
       }
@@ -2424,6 +2427,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      clan_level_for_xp: { Args: { _xp: number }; Returns: number }
       coin_apply: {
         Args: {
           _address: string

@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { EmptyState, RankShell, RankTable, Td, Th, type Scope } from "@/components/ranks/RankShell";
-import { clanScore, medal, rankClansQuery, rankPlayersQuery } from "@/lib/ranks";
+import { clanScore, clanTier, medal, rankClansQuery, rankPlayersQuery } from "@/lib/ranks";
 
 export const Route = createFileRoute("/ranks/clans")({
   head: () => {
@@ -62,6 +62,7 @@ function ClanBoard() {
             <>
               <Th>#</Th>
               <Th>[TAG] NAME</Th>
+              <Th>TIER</Th>
               <Th mobileHide>LEADER</Th>
               <Th right>MEMBERS</Th>
               <Th right>FAME</Th>
@@ -85,6 +86,7 @@ function ClanBoard() {
                   <span className="font-bold text-foreground">{clan.name}</span>
                 </Link>
               </Td>
+              <Td>{`${clanTier(clan.xp).level} · ${clanTier(clan.xp).name.toUpperCase()}`}</Td>
               <Td mobileHide>{(clan.leaderId ? leaderName.get(clan.leaderId) : null)?.toUpperCase() ?? "—"}</Td>
               <Td right>{clan.membersCount}</Td>
               <Td right>{clan.fame.toLocaleString()}</Td>

@@ -20,6 +20,7 @@ export type RankClan = {
   motto: string;
   leaderId: string | null;
   level: number;
+  xp: number;
   fame: number;
   pkKills: number;
   membersCount: number;
@@ -107,6 +108,50 @@ export function progressionScore(p: RankPlayer): number {
 
 export function pvpScore(p: RankPlayer): number {
   return p.pvpKills * 3 + p.pkKills - p.deaths + Math.max(p.karma, 0) / 10;
+}
+
+/**
+ * Clan progression tiers. Clans gain points when souls join the banner
+ * (+250 each) and carry their fame and blood into the total.
+ */
+export const CLAN_TIERS = [
+  { name: "Banner", xp: 0 },
+  { name: "Pledge", xp: 500 },
+  { name: "Order", xp: 1500 },
+  { name: "Chapter", xp: 4000 },
+  { name: "House", xp: 9000 },
+  { name: "Legion", xp: 20000 },
+  { name: "Dynasty", xp: 45000 },
+] as const;
+
+export const CLAN_JOIN_XP = 250;
+
+export function clanTierIndex(xp: number): number {
+  let index = 0;
+  for (let i = 0; i < CLAN_TIERS.length; i += 1) {
+    if (xp >= CLAN_TIERS[i]!.xp) index = i;
+  }
+  return index;
+}
+
+export function clanTier(xp: number): { name: string; level: number; xp: number } {
+  const index = clanTierIndex(xp);
+  const tier = CLAN_TIERS[index]!;
+  return { name: tier.name, level: index + 1, xp: tier.xp };
+}
+
+/** Points still needed for the next tier, and how far through it the clan is. */
+export function clanTierProgress(xp: number): { next: string | null; needed: number; ratio: number } {
+  const index = clanTierIndex(xp);
+  const floor = CLAN_TIERS[index]!.xp;
+  const next = CLAN_TIERS[index + 1];
+  if (!next) return { next: null, needed: 0, ratio: 1 };
+  const span = next.xp - floor;
+  return {
+    next: next.name,
+    needed: next.xp - xp,
+    ratio: span > 0 ? Math.min(1, Math.max(0, (xp - floor) / span)) : 1,
+  };
 }
 
 export function clanScore(c: RankClan): number {
@@ -207,6 +252,7 @@ type ClanRow = {
   motto: string;
   leader_id: string | null;
   level: number;
+  xp: number;
   fame: number;
   pk_kills: number;
   members_count: number;
@@ -222,7 +268,8 @@ function toClan(row: ClanRow): RankClan {
     crestColor: row.crest_color,
     motto: row.motto,
     leaderId: row.leader_id,
-    level: row.level,
+    level: clanTierIndex(Number(row.xp ?? 0)) + 1,
+    xp: Number(row.xp ?? 0),
     fame: Number(row.fame),
     pkKills: row.pk_kills,
     membersCount: row.members_count,

@@ -6,8 +6,12 @@ import { toast } from "sonner";
 import { RankTable, StatusPill, Td, Th } from "@/components/ranks/RankShell";
 import { Button } from "@/components/ui/button";
 import {
+  CLAN_JOIN_XP,
+  CLAN_TIERS,
   clanRosterQuery,
   clanScore,
+  clanTier,
+  clanTierProgress,
   pvpFeedQuery,
   rankClansQuery,
   rankPlayersQuery,
@@ -111,6 +115,9 @@ function ClanHall() {
     );
   }
 
+  const tier = clanTier(clan.xp);
+  const progress = clanTierProgress(clan.xp);
+
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-8 md:px-8 md:py-12" data-no-translate>
       <Link to="/ranks/clans" className="label text-bitcoin">← CLAN RANKS</Link>
@@ -127,7 +134,7 @@ function ClanHall() {
           </h1>
           <p className="mt-1 font-mono text-[11px] text-muted-foreground">{clan.motto || "NO WORDS ON THE BANNER"}</p>
           <p className="label mt-2">
-            LEVEL {clan.level} · SCORE {clanScore(clan).toLocaleString()} · FOUNDED{" "}
+            TIER {tier.level} · {tier.name.toUpperCase()} · SCORE {clanScore(clan).toLocaleString()} · FOUNDED{" "}
             {new Date(clan.createdAt).toISOString().slice(0, 10)}
           </p>
         </div>
@@ -138,6 +145,7 @@ function ClanHall() {
           ["MEMBERS", `${members.length} / ${MAX_MEMBERS}`],
           ["ROSTER FAME", fameTotal.toLocaleString()],
           ["CLAN PKS", pkTotal.toLocaleString()],
+          ["CLAN POINTS", clan.xp.toLocaleString()],
           [
             "HOME BITMAP",
             clan.homeBitmap === null ? "—" : `${clan.homeBitmap}.BITMAP`,
@@ -149,6 +157,45 @@ function ClanHall() {
           </div>
         ))}
       </dl>
+
+      <section className="mt-3 border border-border px-4 py-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="label">CLAN PROGRESSION</h2>
+          <p className="font-mono text-[11px] text-muted-foreground">
+            {progress.next
+              ? `${progress.needed.toLocaleString()} POINTS TO ${progress.next.toUpperCase()}`
+              : "HIGHEST TIER REACHED"}
+          </p>
+        </div>
+
+        <div className="mt-3 h-2 w-full border border-border" role="presentation">
+          <div className="h-full bg-bitcoin" style={{ width: `${Math.round(progress.ratio * 100)}%` }} />
+        </div>
+
+        <ol className="mt-3 grid grid-cols-2 gap-px bg-border sm:grid-cols-4 lg:grid-cols-7">
+          {CLAN_TIERS.map((t, index) => {
+            const reached = clan.xp >= t.xp;
+            const current = index + 1 === tier.level;
+            return (
+              <li
+                key={t.name}
+                className={`bg-background px-3 py-2 ${current ? "border border-bitcoin/60" : ""}`}
+              >
+                <p className={`label ${reached ? "text-bitcoin" : "text-muted-foreground"}`}>
+                  {index + 1} · {t.name.toUpperCase()}
+                </p>
+                <p className="mt-1 font-mono text-[11px] tabular-nums text-muted-foreground">
+                  {t.xp.toLocaleString()} PTS
+                </p>
+              </li>
+            );
+          })}
+        </ol>
+
+        <p className="mt-3 font-mono text-[11px] text-muted-foreground">
+          EVERY SOUL SWORN TO THIS BANNER ADDS {CLAN_JOIN_XP} POINTS. FAME AND BLOOD COUNT TOO.
+        </p>
+      </section>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-[auto_auto_auto_auto_minmax(0,1fr)] sm:items-center">
         {wallet ? (
