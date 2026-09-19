@@ -17,7 +17,6 @@ import { isRecent, kd, medal, pvpScore, rankPlayersQuery, sinceLabel, type RankP
 export const Route = createFileRoute("/ranks/pvp")({
   head: () => {
     const title = "PvP & PK Ranks — The Oasis — BitmapWin";
-    description: "";
     const description =
       "Kills, player kills, deaths and karma in The Oasis. Red names are chaotic outlaws hunted across Bitcoin land.";
     return {
