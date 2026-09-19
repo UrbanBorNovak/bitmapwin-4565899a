@@ -2388,17 +2388,20 @@ const WorldScene = memo(function WorldScene({
       {cameraMode !== "map" && quality.effects !== "off" ? <WorldWeather /> : null}
       <LandSurface colors={colors} tipHeight={tipHeight} />
       <WorldBoundary colors={colors} />
+      {/* Permanent structures — the inscribed buildings and the inscribed
+          hills and mountains. They stand in the same fixed spots in every
+          view, so the overview map shows the same world you walk in. */}
+      <Landmarks boost={cameraMode === "map" ? 8 : 1} />
+      <TerrainModels />
       {cameraMode !== "map" ? (
         <>
           <ChunkStreamer pose={pose} />
           <TerrainField pose={pose} />
-          <TerrainModels />
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <SeaMasses unit={AVATAR_U} pose={pose} />
           <SeaIslands unit={AVATAR_U} pose={pose} />
           <OnChainFlows unit={AVATAR_U} pose={pose} />
           <BitField unit={AVATAR_U} pose={pose} />
-          <Landmarks />
           <CastleDistrict />
           <MarioBros unit={AVATAR_U} pose={pose} />
           <FlyCreatures unit={AVATAR_U} pose={pose} onBite={onBite} onSighted={onSighted} />
