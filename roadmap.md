@@ -63,3 +63,4 @@
 - [x] Add two requested on-chain skyscrapers beyond the glass edges.
 
 - [x] Add persistent Auto / Low / Medium / High graphics quality, adaptive scaling, mobile recovery, and quality-aware world budgets
+- [x] Optimize rank and clan pages for phones with compact tables, larger clan tags, and secure wallet-gated clan joining

@@ -57,17 +57,17 @@ function ClanBoard() {
       ) : rows.length === 0 ? (
         <EmptyState note="NO BANNERS HAVE BEEN RAISED IN THE OASIS — YET" />
       ) : (
-        <RankTable
+        <RankTable compact
           head={
             <>
               <Th>#</Th>
               <Th>[TAG] NAME</Th>
-              <Th>LEADER</Th>
+              <Th mobileHide>LEADER</Th>
               <Th right>MEMBERS</Th>
               <Th right>FAME</Th>
-              <Th right>PKS</Th>
-              <Th>HOME BITMAP</Th>
-              <Th>MOTTO</Th>
+              <Th right mobileHide>PKS</Th>
+              <Th mobileHide>HOME BITMAP</Th>
+              <Th mobileHide>MOTTO</Th>
             </>
           }
         >
@@ -78,18 +78,18 @@ function ClanBoard() {
                 <Link to="/clan/$tag" params={{ tag: clan.tag }} className="flex items-center gap-2 hover:underline">
                   <span
                     aria-hidden="true"
-                    className="inline-block size-3 border border-border"
+                    className="inline-block size-5 shrink-0 border border-border sm:size-4"
                     style={{ background: clan.crestColor }}
                   />
-                  <span className="text-bitcoin">[{clan.tag}]</span>
+                  <span className="border border-bitcoin/50 px-1.5 py-0.5 text-xs font-bold text-bitcoin sm:text-[11px]">[{clan.tag}]</span>
                   <span className="font-bold text-foreground">{clan.name}</span>
                 </Link>
               </Td>
-              <Td>{(clan.leaderId ? leaderName.get(clan.leaderId) : null)?.toUpperCase() ?? "—"}</Td>
+              <Td mobileHide>{(clan.leaderId ? leaderName.get(clan.leaderId) : null)?.toUpperCase() ?? "—"}</Td>
               <Td right>{clan.membersCount}</Td>
               <Td right>{clan.fame.toLocaleString()}</Td>
-              <Td right>{clan.pkKills}</Td>
-              <Td>
+              <Td right mobileHide>{clan.pkKills}</Td>
+              <Td mobileHide>
                 {clan.homeBitmap === null ? (
                   "—"
                 ) : (
@@ -102,7 +102,7 @@ function ClanBoard() {
                   </Link>
                 )}
               </Td>
-              <Td>
+              <Td mobileHide>
                 <span className="text-muted-foreground">{clan.motto || "—"}</span>
               </Td>
             </tr>

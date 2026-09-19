@@ -61,18 +61,18 @@ function PvpBoard() {
       ) : rows.length === 0 ? (
         <EmptyState />
       ) : (
-        <RankTable
+        <RankTable compact
           head={
             <>
               <Th>#</Th>
               <Th>NAME [CLAN]</Th>
-              <Th>STATUS</Th>
+              <Th mobileHide>STATUS</Th>
               <Th right>PK</Th>
               <Th right>PVP</Th>
               <Th right>DEATHS</Th>
               <Th right>K/D</Th>
               <Th right>KARMA</Th>
-              <Th>LAST KILL</Th>
+              <Th mobileHide>LAST KILL</Th>
             </>
           }
         >
@@ -90,7 +90,7 @@ function Row({ player, index, pinned }: { player: RankPlayer; index: number; pin
   return (
     <tr className={pinned ? "bg-surface" : ""}>
       <Td right>{pinned ? "MY ROW" : `${medal(index)} ${index + 1}`}</Td>
-      <Td>
+      <Td mobileHide>
         <PlayerCell player={player} />
       </Td>
       <Td>
@@ -103,7 +103,7 @@ function Row({ player, index, pinned }: { player: RankPlayer; index: number; pin
       <Td right>
         <span className={player.karma < 0 ? "text-red-500" : ""}>{player.karma}</span>
       </Td>
-      <Td>{sinceLabel(player.lastKillAt)}</Td>
+      <Td mobileHide>{sinceLabel(player.lastKillAt)}</Td>
     </tr>
   );
 }

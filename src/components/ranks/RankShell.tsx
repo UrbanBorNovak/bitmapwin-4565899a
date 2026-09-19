@@ -82,10 +82,22 @@ export function RankShell({
 }
 
 /** Horizontally scrollable table frame — phones swipe the columns. */
-export function RankTable({ head, children }: { head: ReactNode; children: ReactNode }) {
+export function RankTable({
+  head,
+  children,
+  compact = false,
+}: {
+  head: ReactNode;
+  children: ReactNode;
+  compact?: boolean;
+}) {
   return (
-    <div className="overflow-x-auto border border-border">
-      <table className="w-full min-w-[46rem] border-collapse font-mono text-[11px]">
+    <div className="overflow-x-auto border border-border [scrollbar-width:thin]">
+      <table
+        className={`w-full border-collapse font-mono text-[10px] sm:text-[11px] ${
+          compact ? "min-w-[27rem] sm:min-w-[42rem]" : "min-w-[32rem] sm:min-w-[46rem]"
+        }`}
+      >
         <thead className="bg-surface">
           <tr className="text-left text-[9px] uppercase tracking-[0.2em] text-muted-foreground">{head}</tr>
         </thead>
@@ -95,17 +107,17 @@ export function RankTable({ head, children }: { head: ReactNode; children: React
   );
 }
 
-export function Th({ children, right }: { children: ReactNode; right?: boolean }) {
+export function Th({ children, right, mobileHide }: { children: ReactNode; right?: boolean; mobileHide?: boolean }) {
   return (
-    <th className={`whitespace-nowrap border-b border-border px-2 py-2 font-normal ${right ? "text-right" : ""}`}>
+    <th className={`whitespace-nowrap border-b border-border px-1.5 py-2 font-normal sm:px-2 ${right ? "text-right" : ""} ${mobileHide ? "hidden sm:table-cell" : ""}`}>
       {children}
     </th>
   );
 }
 
-export function Td({ children, right }: { children: ReactNode; right?: boolean }) {
+export function Td({ children, right, mobileHide }: { children: ReactNode; right?: boolean; mobileHide?: boolean }) {
   return (
-    <td className={`whitespace-nowrap border-b border-border/60 px-2 py-2 ${right ? "text-right tabular-nums" : ""}`}>
+    <td className={`whitespace-nowrap border-b border-border/60 px-1.5 py-2 sm:px-2 ${right ? "text-right tabular-nums" : ""} ${mobileHide ? "hidden sm:table-cell" : ""}`}>
       {children}
     </td>
   );
@@ -121,12 +133,12 @@ export function StatusPill({ status }: { status: RankStatus }) {
 
 export function PlayerCell({ player }: { player: RankPlayer }) {
   return (
-    <span className="flex items-center gap-1.5">
+    <span className="flex items-center gap-2">
       {player.clanTag ? (
         <Link
           to="/clan/$tag"
           params={{ tag: player.clanTag }}
-          className="shrink-0 text-[10px] text-muted-foreground hover:text-bitcoin"
+          className="shrink-0 border border-bitcoin/50 px-1.5 py-0.5 text-[11px] font-bold text-bitcoin hover:border-bitcoin hover:bg-bitcoin/10 sm:text-xs"
         >
           [{player.clanTag}]
         </Link>
