@@ -255,7 +255,7 @@ function ClanHall() {
             {clanBuilds.slice(0, 40).map((build) => (
               <li key={build.id} className="flex flex-wrap items-center gap-2 px-4 py-2">
                 <span className="text-bitcoin">{build.kind.replace(/-/g, " ").toUpperCase()}</span>
-                <Link to="/bitmap/$height" params={{ height: String(build.bitmap_height) }} className="text-foreground underline-offset-2 hover:underline">
+                <Link to="/bitmap/$block" params={{ block: String(build.bitmap_height) }} className="text-foreground underline-offset-2 hover:underline">
                   {build.bitmap_height}.BITMAP
                 </Link>
                 <span className="ml-auto text-muted-foreground">{sinceLabel(build.created_at)}</span>
