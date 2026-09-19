@@ -177,6 +177,7 @@ function DashboardPage() {
   const earned = (balances.data ?? []).reduce((sum, b) => sum + b.earnedTotal, 0);
   const totalViews = myBuilds.reduce((sum, b) => sum + b.totalViews, 0);
   const uniqueVisitors = myBuilds.reduce((sum, b) => sum + b.uniqueVisitors, 0);
+  const followerCount = address ? (followers.data?.get(address) ?? 0) : 0;
 
   const name =
     profile.data?.displayName?.trim() ||
@@ -365,32 +366,43 @@ function DashboardPage() {
   return (
     <div className="page-shell">
       {/* IDENTITY */}
-      <header className="terminal-panel grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 p-4 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-center gap-3">
-          <InscriptionAvatar
-            inscriptionId={profile.data?.avatarInscriptionId}
-            label={name}
-            className="size-14 shrink-0 border border-border [image-rendering:pixelated]"
-            fallbackClassName="text-sm"
-          />
-          <div className="min-w-0">
-            <p className="label">DASHBOARD</p>
-            <h1 className="display truncate text-2xl md:text-4xl">{name.toUpperCase()}</h1>
-            <p className="mt-1 truncate font-mono text-[11px] text-muted-foreground">
-              {address ? address : "NO WALLET LINKED"}
+      <header className="profile-home">
+        <div className="grid items-center gap-7 p-6 md:grid-cols-[auto_minmax(0,1fr)_auto] md:p-8">
+          <div className="relative mx-auto md:mx-0">
+            <div className="profile-portrait size-28 overflow-hidden p-1.5 md:size-32">
+              <InscriptionAvatar
+                inscriptionId={profile.data?.avatarInscriptionId}
+                label={name}
+                className="size-full rounded-full [image-rendering:pixelated]"
+                fallbackClassName="text-2xl text-profile-warm"
+              />
+            </div>
+            <span className="absolute bottom-1 right-1 size-5 rounded-full border-4 border-profile-surface bg-profile-warm shadow-[0_0_12px_color-mix(in_oklab,var(--color-profile-warm)_55%,transparent)]" aria-label="Signed in" />
+          </div>
+          <div className="min-w-0 text-center md:text-left">
+            <div className="flex items-center justify-center gap-3 md:justify-start">
+              <p className="label text-profile-warm-muted">IDENTITY VERIFIED</p>
+              <span className="h-px w-10 bg-profile-warm/20" />
+            </div>
+            <h1 className="display mt-3 truncate text-3xl text-profile-warm md:text-4xl">{name}</h1>
+            <p className="mt-3 break-all font-mono text-[10px] text-muted-foreground">{address || "NO WALLET LINKED"}</p>
+            <p className="mx-auto mt-4 max-w-[60ch] whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground md:mx-0">
+              {profile.data?.bio || "THIS IS YOUR PLACE IN THE OASIS. ADD A STORY AND AN ON-CHAIN PORTRAIT TO MAKE IT FEEL LIKE HOME."}
             </p>
           </div>
+          <div className="grid grid-cols-3 gap-2 md:grid-cols-1">
+            <div className="profile-readout min-w-24 p-3 text-center"><p className="label">BUILDS</p><p className="mt-1 font-mono font-bold text-profile-warm">{myBuilds.length}</p></div>
+            <div className="profile-readout min-w-24 p-3 text-center"><p className="label">VISITORS</p><p className="mt-1 font-mono font-bold text-profile-warm">{uniqueVisitors.toLocaleString()}</p></div>
+            <div className="profile-readout min-w-24 p-3 text-center"><p className="label">FOLLOWERS</p><p className="mt-1 font-mono font-bold text-profile-warm">{followerCount.toLocaleString()}</p></div>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link to="/wallet" hash="profile" reloadDocument className="btn-term">
-            [ EDIT PROFILE ]
-          </Link>
-          <Link to="/wallet" className="btn-term">[ WALLET ]</Link>
-          {address ? (
-            <Link to="/profile/$address" params={{ address }} className="btn-term">
-              [ PUBLIC PROFILE ]
-            </Link>
-          ) : null}
+        <div className="flex flex-col gap-3 border-t border-profile-warm/20 bg-background/30 px-6 py-4 sm:flex-row sm:items-center sm:justify-between md:px-8">
+          <p className="font-mono text-[10px] text-profile-warm-muted"><span className="mr-2 animate-pulse">●</span>WELCOME BACK TO YOUR OASIS</p>
+          <div className="flex flex-wrap gap-2">
+            <Link to="/wallet" hash="profile" reloadDocument className="btn-term">[ EDIT PROFILE ]</Link>
+            <Link to="/wallet" className="btn-term-ghost">[ WALLET ]</Link>
+            {address ? <Link to="/profile/$address" params={{ address }} className="btn-term-ghost">[ PUBLIC PROFILE ]</Link> : null}
+          </div>
         </div>
       </header>
 

@@ -54,32 +54,40 @@ export function ProfileEditor({
   });
 
   return (
-    <section id="profile" className="mt-10 scroll-mt-24 border border-border">
-      <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border p-5">
-        <h2 className="display text-xl">PROFILE</h2>
+    <section id="profile" className="profile-home mt-10 scroll-mt-24">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-profile-warm/20 p-5 md:px-7">
+        <div>
+          <p className="label text-profile-warm-muted">YOUR CORNER OF THE OASIS</p>
+          <h2 className="display mt-2 text-xl text-profile-warm">MAKE IT YOURS</h2>
+        </div>
         <Link
           to="/profile/$address"
           params={{ address }}
-          className="label underline decoration-border underline-offset-4 hover:text-foreground"
+          className="label text-profile-warm-muted underline decoration-profile-warm/30 underline-offset-4 hover:text-profile-warm"
         >
           VIEW PUBLIC PROFILE →
         </Link>
       </header>
 
-      <div className="grid gap-5 p-5 md:grid-cols-[120px_minmax(0,1fr)]">
-        <div className="size-[120px] border border-border">
+      <div className="grid gap-7 p-5 md:grid-cols-[144px_minmax(0,1fr)] md:p-7">
+        <div className="mx-auto md:mx-0">
+          <div className="profile-portrait size-36 overflow-hidden p-1.5">
           <InscriptionAvatar
             inscriptionId={avatar}
             label={name || "?"}
             alt="Profile inscription avatar"
-            className="size-full grayscale"
-            fallbackClassName="text-[10px]"
+            className="size-full rounded-full [image-rendering:pixelated]"
+            fallbackClassName="text-2xl text-profile-warm"
           />
+          </div>
+          <p className="mt-4 text-center font-mono text-[9px] uppercase text-profile-warm-muted">
+            ON-CHAIN PORTRAIT
+          </p>
         </div>
 
         <div className="space-y-3">
           <label className="block">
-            <span className="label">DISPLAY NAME</span>
+            <span className="label text-profile-warm-muted">WHAT SHOULD THE OASIS CALL YOU?</span>
             <input
               value={name}
               disabled={!canEdit}
@@ -88,11 +96,12 @@ export function ProfileEditor({
                 setName(e.target.value.slice(0, 48));
               }}
               placeholder="SATOSHI"
-              className="mt-1 w-full border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-foreground disabled:opacity-40"
+              className="profile-readout mt-2 min-h-11 w-full px-3 py-2 font-mono text-sm text-foreground outline-none focus:border-profile-warm disabled:opacity-40"
             />
+            <span className="mt-1 block text-right font-mono text-[9px] text-muted-foreground">{name.length}/48</span>
           </label>
           <label className="block">
-            <span className="label">BIO</span>
+            <span className="label text-profile-warm-muted">YOUR STORY</span>
             <textarea
               value={bio}
               disabled={!canEdit}
@@ -100,22 +109,23 @@ export function ProfileEditor({
                 setDirty(true);
                 setBio(e.target.value.slice(0, 500));
               }}
-              placeholder="LAND COLLECTOR SINCE BLOCK 840000"
-              className="mt-1 h-20 w-full resize-none border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-foreground disabled:opacity-40"
+              placeholder="TELL OTHER EXPLORERS WHAT YOU BUILD, COLLECT, OR SEEK…"
+              className="profile-readout mt-2 h-28 w-full resize-none px-3 py-2 font-mono text-sm leading-relaxed text-foreground outline-none focus:border-profile-warm disabled:opacity-40"
             />
+            <span className="mt-1 block text-right font-mono text-[9px] text-muted-foreground">{bio.length}/500</span>
           </label>
         </div>
       </div>
 
       {canEdit && (
-        <div className="border-t border-border p-5">
-          <span className="label">PFP — PICK AN INSCRIPTION YOU HOLD</span>
+        <div className="border-t border-profile-warm/20 p-5 md:p-7">
+          <span className="label text-profile-warm-muted">CHOOSE AN INSCRIPTION THAT FEELS LIKE YOU</span>
           {inscriptionIds.length === 0 ? (
             <p className="mt-2 font-mono text-xs text-muted-foreground">
               &gt; NO INSCRIPTIONS FOUND ON THIS ADDRESS<span className="blink">_</span>
             </p>
           ) : (
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-4 grid grid-cols-4 gap-3 sm:grid-cols-6 md:grid-cols-8">
               {inscriptionIds.slice(0, 40).map((id) => (
                 <button
                   key={id}
@@ -124,8 +134,9 @@ export function ProfileEditor({
                     setDirty(true);
                     setAvatar(id === avatar ? null : id);
                   }}
-                  className={`size-16 border ${
-                    id === avatar ? "border-foreground" : "border-border hover:border-primary"
+                  aria-label={id === avatar ? "Remove selected profile portrait" : "Use inscription as profile portrait"}
+                  className={`aspect-square w-full overflow-hidden rounded-full border p-1 ${
+                    id === avatar ? "border-profile-warm bg-profile-warm/10" : "border-border hover:border-profile-warm"
                   }`}
                 >
                   <img
@@ -140,7 +151,7 @@ export function ProfileEditor({
                         "justify-center",
                       );
                     }}
-                    className="size-full object-cover grayscale"
+                    className="size-full rounded-full object-cover [image-rendering:pixelated]"
                   />
                 </button>
               ))}
@@ -150,7 +161,7 @@ export function ProfileEditor({
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <button
               className="btn-term disabled:opacity-30"
-              disabled={save.isPending}
+              disabled={save.isPending || !dirty}
               onClick={() => save.mutate()}
             >
               {save.isPending ? "[ SAVING… ]" : "[ SAVE PROFILE ]"}
@@ -171,7 +182,7 @@ export function ProfileEditor({
       )}
 
       {!canEdit && (
-        <p className="border-t border-border p-5 font-mono text-xs text-muted-foreground">
+        <p className="border-t border-profile-warm/20 p-5 font-mono text-xs text-muted-foreground">
           &gt; SIGN IN WITH THE WALLET THAT HOLDS THIS ADDRESS (UNISAT / XVERSE) TO EDIT ITS
           PROFILE<span className="blink">_</span>
         </p>

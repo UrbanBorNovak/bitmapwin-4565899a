@@ -7,6 +7,7 @@ import { shortenAddress } from "@/lib/registry";
 import { timeAgo } from "@/lib/bitmap";
 import { BUILD_KIND_LABELS, isBuildKind } from "@/lib/build-sdk";
 import { membershipBadgeQuery } from "@/lib/membership";
+import { followerCountsQuery } from "@/lib/follows";
 
 export const Route = createFileRoute("/profile/$address")({
   head: ({ params }) => {
@@ -57,36 +58,40 @@ function ProfilePage() {
   const profile = useQuery(profileQuery(address));
   const pages = useQuery(ownerPagesQuery(address));
   const membership = useQuery(membershipBadgeQuery(address));
+  const followers = useQuery(followerCountsQuery([address]));
   const isMember = membership.data === true;
+  const followerCount = followers.data?.get(address) ?? 0;
+  const displayName = profile.data?.displayName ?? shortenAddress(address);
 
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-12 md:px-8">
-      <Link to="/marketplace" className="label hover:text-foreground">
+      <Link to="/marketplace" className="label hover:text-profile-warm">
         ← BACK TO MARKETPLACE
       </Link>
 
-      <div className="mt-6 flex flex-wrap items-start gap-6 border border-border p-6">
-        <div className="size-28 shrink-0 border border-border">
+      <div className="profile-home mt-6">
+        <div className="grid items-center gap-7 p-6 md:grid-cols-[auto_minmax(0,1fr)_auto] md:p-8">
+        <div className="profile-portrait mx-auto size-32 shrink-0 overflow-hidden p-1.5 md:mx-0">
           <InscriptionAvatar
             inscriptionId={profile.data?.avatarInscriptionId}
-            label={profile.data?.displayName ?? address}
+            label={displayName}
             alt={`Avatar inscription for ${address}`}
-            className="size-full grayscale"
-            fallbackClassName="text-[10px]"
+            className="size-full rounded-full [image-rendering:pixelated]"
+            fallbackClassName="text-2xl text-profile-warm"
           />
         </div>
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="display text-3xl md:text-4xl">
-              {profile.data?.displayName ?? shortenAddress(address)}
+        <div className="min-w-0 text-center md:text-left">
+          <div className="flex flex-wrap items-center justify-center gap-3 md:justify-start">
+            <h1 className="display text-3xl text-profile-warm md:text-4xl">
+              {displayName}
             </h1>
             {isMember && (
               <span className="label border border-bitcoin px-2 py-1 text-bitcoin">MEMBERS</span>
             )}
           </div>
-          <p className="label mt-2 break-all">{address}</p>
+          <p className="mt-3 break-all font-mono text-[10px] text-muted-foreground">{address}</p>
           {profile.data?.bio && (
-            <p className="mt-4 max-w-[70ch] font-mono text-sm whitespace-pre-wrap text-muted-foreground">
+            <p className="mt-5 max-w-[70ch] whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
               {profile.data.bio}
             </p>
           )}
@@ -96,11 +101,17 @@ function ProfilePage() {
             </p>
           )}
         </div>
+        <div className="grid w-full grid-cols-2 gap-2 md:w-auto md:grid-cols-1">
+          <div className="profile-readout min-w-28 p-3 text-center"><p className="label">BUILT BITMAPS</p><p className="mt-1 font-mono font-bold text-profile-warm">{pages.data?.length ?? 0}</p></div>
+          <div className="profile-readout min-w-28 p-3 text-center"><p className="label">FOLLOWERS</p><p className="mt-1 font-mono font-bold text-profile-warm">{followerCount}</p></div>
+        </div>
+        </div>
+        <div className="border-t border-profile-warm/20 bg-background/30 px-6 py-3 font-mono text-[10px] text-profile-warm-muted md:px-8">● A HOME BUILT ON BITCOIN</div>
       </div>
 
-      <section className="mt-8 border border-border">
+      <section className="profile-home mt-8">
         <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border px-6 py-3">
-          <h2 className="display text-lg">BUILT BITMAPS</h2>
+          <div><p className="label text-profile-warm-muted">THEIR MARK ON THE OASIS</p><h2 className="display mt-2 text-lg text-profile-warm">BUILT BITMAPS</h2></div>
           <span className="label">{pages.data?.length ?? 0} PAGE(S)</span>
         </header>
         {pages.isLoading ? (
