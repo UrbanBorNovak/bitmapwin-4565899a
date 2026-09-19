@@ -3,6 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { WORLD_CELL } from "@/lib/player-state";
 import { worldWeather } from "@/lib/world-weather";
+import { useQuality } from "@/graphics/QualityContext";
 
 const DROP_COUNT = 900;
 
@@ -25,6 +26,7 @@ function rainGeometry() {
 }
 
 export function WorldWeather() {
+  const { quality } = useQuality();
   const group = useRef<THREE.Group>(null);
   const material = useRef<THREE.ShaderMaterial>(null);
   const camera = useThree((state) => state.camera);
@@ -55,7 +57,7 @@ export function WorldWeather() {
   });
 
   return (
-    <group ref={group} raycast={() => {}}>
+    <group ref={group} raycast={() => {}} scale={quality.effects === "half" ? 0.72 : 1}>
       <lineSegments geometry={geometry} frustumCulled={false} renderOrder={20}>
         <shaderMaterial
           ref={material}
@@ -94,6 +96,7 @@ export function WorldWeather() {
 }
 
 export function WeatherLighting({ foreground, background, bitcoin }: { foreground: string; background: string; bitcoin: string }) {
+  const { quality } = useQuality();
   const sun = useRef<THREE.DirectionalLight>(null);
   const hemi = useRef<THREE.HemisphereLight>(null);
   const warm = useRef<THREE.PointLight>(null);
@@ -111,9 +114,9 @@ export function WeatherLighting({ foreground, background, bitcoin }: { foregroun
   return (
     <>
       <ambientLight intensity={0.42} />
-      <hemisphereLight ref={hemi} args={[foreground, background, 0.52]} />
-      <directionalLight ref={sun} color={foreground} position={[-18, 36, -12]} intensity={1.35} castShadow={false} />
-      <pointLight ref={warm} color={bitcoin} position={[14, 10, 3]} intensity={18} distance={28} decay={2} />
+      {quality.resolved !== "low" ? <hemisphereLight ref={hemi} args={[foreground, background, 0.52]} /> : null}
+      <directionalLight ref={sun} color={foreground} position={[-18, 36, -12]} intensity={1.35} castShadow={quality.shadows} shadow-mapSize-width={quality.shadowMapSize || 512} shadow-mapSize-height={quality.shadowMapSize || 512} />
+      {quality.resolved === "high" ? <pointLight ref={warm} color={bitcoin} position={[14, 10, 3]} intensity={18} distance={28} decay={2} /> : null}
     </>
   );
 }
