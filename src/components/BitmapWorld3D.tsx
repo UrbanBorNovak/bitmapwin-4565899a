@@ -3752,96 +3752,88 @@ function BitmapWorld3DInner({
                 <span className="hud-divider" aria-hidden />
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">View &amp; sound</span>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <Button
-                    className={gear.goggles ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                  <HudIconButton
+                    label="Night vision (N)"
+                    icon={<Glasses />}
+                    active={gear.goggles}
                     onClick={() => {
                       const on = toggleGoggles();
                       playSfx("ui");
                       setBiteNote(on ? "NIGHT VISION · ON" : "NIGHT VISION · OFF");
                       window.setTimeout(() => setBiteNote(null), 1400);
                     }}
-                  >
-                    [ NIGHT VISION · N ]
-                  </Button>
-                  <Button
-                    className={gear.shoes ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                  />
+                  <HudIconButton
+                    label="Shoes — faster stride"
+                    icon={<Footprints />}
+                    active={gear.shoes}
                     onClick={() => {
                       const on = toggleShoes();
                       playSfx("ui");
                       setBiteNote(on ? "SHOES ON · FASTER STRIDE" : "SHOES OFF");
                       window.setTimeout(() => setBiteNote(null), 1400);
                     }}
-                  >
-                    [ SHOES ]
-                  </Button>
-                  <Button
-                    className={gear.toy !== "none" ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                  />
+                  <HudIconButton
+                    label="Toy in hand (Z)"
+                    icon={<Sparkles />}
+                    active={gear.toy !== "none"}
                     onClick={() => {
                       const next = cycleToy();
                       playSfx("ui");
                       setBiteNote(next.inscription ? `TOY IN HAND · ${next.label}` : "TOY PUT AWAY");
                       window.setTimeout(() => setBiteNote(null), 1500);
                     }}
-                  >
-                    <span data-no-translate>
-                      [ {gear.toy === "none" ? "TOY" : toySpec(gear.toy).label} · Z ]
-                    </span>
-                  </Button>
-                  <Button
-                    className={gear.necklace ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                  />
+                  <HudIconButton
+                    label="Necklace — steady recovery"
+                    icon={<Gem />}
+                    active={gear.necklace}
                     onClick={() => {
                       const on = toggleNecklace();
                       playSfx("ui");
                       setBiteNote(on ? "NECKLACE ON · STEADY RECOVERY" : "NECKLACE OFF");
                       window.setTimeout(() => setBiteNote(null), 1400);
                     }}
-                  >
-                    [ NECKLACE ]
-                  </Button>
-                  <Button
-                    className={gear.watch ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                  />
+                  <HudIconButton
+                    label="Watch"
+                    icon={<Watch />}
+                    active={gear.watch}
                     onClick={() => {
                       const on = toggleWatch();
                       playSfx("ui");
                       setBiteNote(on ? "WATCH ON" : "WATCH OFF");
                       window.setTimeout(() => setBiteNote(null), 1400);
                     }}
-                  >
-                    [ WATCH ]
-                  </Button>
-                  <Button
-                    className={gear.ring ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                  />
+                  <HudIconButton
+                    label="Ring"
+                    icon={<Orbit />}
+                    active={gear.ring}
                     onClick={() => {
                       const on = toggleRing();
                       playSfx("ui");
                       setBiteNote(on ? "RING ON" : "RING OFF");
                       window.setTimeout(() => setBiteNote(null), 1400);
                     }}
-                  >
-                    [ RING ]
-                  </Button>
-                  <Button
-                    className={gear.comic ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                  />
+                  <HudIconButton
+                    label="Comic book"
+                    icon={<BookOpen />}
+                    active={gear.comic}
                     onClick={() => {
                       const on = toggleComic();
                       playSfx("ui");
                       setBiteNote(on ? "COMIC BOOK IN HAND" : "COMIC BOOK AWAY");
                       window.setTimeout(() => setBiteNote(null), 1400);
                     }}
-                  >
-                    [ COMIC BOOK ]
-                  </Button>
+                  />
                   {weapon === "staff" ? (
-                    <Button
-                      className={stone ? "btn-term" : "btn-term-ghost"}
-                      variant="ghost"
+                    <HudIconButton
+                      label={stone ? `Staff stone — ${stone.label}` : "Staff stone — bare"}
+                      icon={<Flame />}
+                      active={Boolean(stone)}
                       onClick={() => {
                         const next = cycleStone();
                         playSfx("ui");
@@ -3854,18 +3846,21 @@ function BitmapWorld3DInner({
                         );
                         window.setTimeout(() => setBiteNote(null), 1600);
                       }}
-                    >
-                      [ STAFF STONE · {stone ? stone.label : "BARE"} ]
-                    </Button>
+                    />
                   ) : null}
 
-
-                  <Button className="btn-term-ghost" variant="ghost" onClick={toggleSound}>
-                    {muted ? "[ SOUND · OFF ]" : "[ SOUND · ON ]"}
-                  </Button>
-                  <Button className="btn-term-ghost" variant="ghost" onClick={toggleMusic}>
-                    {musicOn ? "[ MUSIC · ON ]" : "[ MUSIC · OFF ]"}
-                  </Button>
+                  <HudIconButton
+                    label={muted ? "Sound off" : "Sound on"}
+                    icon={muted ? <VolumeX /> : <Volume2 />}
+                    active={!muted}
+                    onClick={toggleSound}
+                  />
+                  <HudIconButton
+                    label={musicOn ? "Music on" : "Music off"}
+                    icon={musicOn ? <Music /> : <Music2 />}
+                    active={musicOn}
+                    onClick={toggleMusic}
+                  />
                 </div>
               </div>
               ) : null}
