@@ -76,9 +76,12 @@ function Marketplace() {
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [club, setClub] = useState<ClubId | "any">("any");
+  const [gallery, setGallery] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   useLiveOffers();
 
+  const registryHeights = useMemo(() => parcels.map((p) => p.bitmapHeight), [parcels]);
+  const punk = usePunkFilter(registryHeights, gallery);
 
   const listed = useMemo(() => parcels.filter((p) => p.listedSats !== null), [parcels]);
   const traded = useMemo(() => parcels.filter((p) => p.transfers > 0), [parcels]);
@@ -89,6 +92,7 @@ function Marketplace() {
       const def = CLUBS.find((c) => c.id === club);
       if (def) base = base.filter((p) => inClub(p.bitmapHeight, def));
     }
+    if (punk.gallery) base = base.filter((p) => punk.matches(p.bitmapHeight));
     const q = search.trim().toLowerCase();
     if (!q) return base;
     return base.filter(
@@ -98,7 +102,7 @@ function Marketplace() {
         p.txid.toLowerCase().includes(q) ||
         (p.ownerAddress ?? "").toLowerCase().includes(q),
     );
-  }, [tab, traded, listed, parcels, search, club]);
+  }, [tab, traded, listed, parcels, search, club, punk]);
 
   // Paginate first, then resolve holders on chain for the visible page only.
   const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
