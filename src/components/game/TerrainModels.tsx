@@ -63,7 +63,6 @@ function Landform({ spec }: { spec: TerrainModelSpec }) {
   // Read the walkable top surface out of the model.
   useEffect(() => {
     const raycaster = new THREE.Raycaster();
-    raycaster.firstHitOnly = true;
     const down = new THREE.Vector3(0, -1, 0);
     const origin = new THREE.Vector3();
     const top = spec.span * WORLD_CELL * 2;
