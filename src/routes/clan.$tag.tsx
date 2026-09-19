@@ -66,6 +66,32 @@ function ClanHall() {
     return (feed.data ?? []).filter((event) => event.killerId && ids.has(event.killerId)).slice(0, 10);
   }, [feed.data, members]);
 
+  const fameTotal = members.reduce((sum, m) => sum + m.player.fame, 0);
+  const pkTotal = members.reduce((sum, m) => sum + m.player.pkKills, 0);
+  const full = members.length >= MAX_MEMBERS;
+  const walletAddresses = wallet ? [wallet.ordinalsAddress, wallet.paymentAddress].filter(Boolean) : [];
+  const currentPlayer = (players.data ?? []).find(
+    (player) => player.wallet && walletAddresses.some((address) => address.toLowerCase() === player.wallet?.toLowerCase()),
+  );
+  const isMember = Boolean(clan && currentPlayer?.clanId === clan.id);
+  const hasClan = Boolean(currentPlayer?.clanId);
+  const join = useMutation({
+    mutationFn: () => {
+      if (!wallet) throw new Error("CONNECT YOUR WALLET FIRST");
+      if (!clan) throw new Error("CLAN NOT FOUND");
+      return joinClan({ data: { clanId: clan.id, wallet: wallet.ordinalsAddress } });
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["rank-players"] }),
+        queryClient.invalidateQueries({ queryKey: ["rank-clans"] }),
+        queryClient.invalidateQueries({ queryKey: ["rank-clan-roster"] }),
+      ]);
+      toast(`JOINED [${clan?.tag ?? tag.toUpperCase()}]`, { description: "YOUR NAME NOW CARRIES THE BANNER" });
+    },
+    onError: (error) => toast("JOIN FAILED", { description: (error as Error).message.toUpperCase() }),
+  });
+
   if (clans.isLoading) {
     return <p className="mx-auto max-w-[1100px] px-4 py-16 label">OPENING THE CLAN HALL…</p>;
   }
@@ -77,31 +103,6 @@ function ClanHall() {
       </div>
     );
   }
-
-  const fameTotal = members.reduce((sum, m) => sum + m.player.fame, 0);
-  const pkTotal = members.reduce((sum, m) => sum + m.player.pkKills, 0);
-  const full = members.length >= MAX_MEMBERS;
-  const walletAddresses = wallet ? [wallet.ordinalsAddress, wallet.paymentAddress].filter(Boolean) : [];
-  const currentPlayer = (players.data ?? []).find(
-    (player) => player.wallet && walletAddresses.some((address) => address.toLowerCase() === player.wallet?.toLowerCase()),
-  );
-  const isMember = currentPlayer?.clanId === clan.id;
-  const hasClan = Boolean(currentPlayer?.clanId);
-  const join = useMutation({
-    mutationFn: () => {
-      if (!wallet) throw new Error("CONNECT YOUR WALLET FIRST");
-      return joinClan({ data: { clanId: clan.id, wallet: wallet.ordinalsAddress } });
-    },
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["rank-players"] }),
-        queryClient.invalidateQueries({ queryKey: ["rank-clans"] }),
-        queryClient.invalidateQueries({ queryKey: ["rank-clan-roster"] }),
-      ]);
-      toast(`JOINED [${clan.tag}]`, { description: "YOUR NAME NOW CARRIES THE BANNER" });
-    },
-    onError: (error) => toast("JOIN FAILED", { description: (error as Error).message.toUpperCase() }),
-  });
 
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-8 md:px-8 md:py-12" data-no-translate>
