@@ -124,15 +124,15 @@ function WalletPage() {
     window.localStorage.setItem(WALLET_ADDRESS_STORAGE_KEY, linked);
   }, [links.data, address]);
 
-  // The profile is rendered after an address is restored. Scroll once that
-  // section exists instead of relying on the browser's initial hash pass.
+  const [tab, setTab] = useState<WalletTab>("land");
+
+  // Deep links (#profile / #list / #earnings) open the matching tab.
   useEffect(() => {
-    if (window.location.hash !== "#profile") return;
-    const frame = window.requestAnimationFrame(() => {
-      document.getElementById("profile")?.scrollIntoView({ block: "start" });
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [address]);
+    const hash = window.location.hash;
+    const target: WalletTab =
+      hash === "#profile" ? "profile" : hash === "#earnings" ? "funds" : hash === "#list" ? "land" : "land";
+    if (hash !== "") setTab(target);
+  }, []);
 
   const wallet = useQuery(walletQuery(address));
   const offers = useQuery(walletOffersQuery(address));
