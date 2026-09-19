@@ -61,6 +61,11 @@ function PlayerRecord() {
 
   const levelPct = Math.min(100, Math.round(((player.level % 10) / 10) * 100));
 
+  const base = player ? baseValueOf(player) : 25;
+  const issued = stock.data?.sharesIssued ?? 0;
+  const shareVal = sharePrice(base, issued);
+  const holderCount = (holders.data ?? []).length;
+
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-8 md:px-8 md:py-12" data-no-translate>
       <Link to="/ranks" className="label text-bitcoin">← RANKS</Link>
