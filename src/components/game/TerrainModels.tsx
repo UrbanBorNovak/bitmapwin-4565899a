@@ -46,21 +46,28 @@ function topSurfaceGrid(object: THREE.Object3D, half: number, res: number) {
   const c = new THREE.Vector3();
 
   object.updateMatrixWorld(true);
+  // Vertices must land in the landform's own space, centred on its footprint.
+  // Reading them straight from `matrixWorld` gave world coordinates — the grid
+  // then covered empty air beside the hill and every sample came back flat,
+  // which is why the hills were scenery you walked through.
+  const toLocal = new THREE.Matrix4().copy(object.matrixWorld).invert();
+  const intoLocal = new THREE.Matrix4();
   object.traverse((child) => {
     const mesh = child as THREE.Mesh;
     if (!mesh.isMesh) return;
     const geometry = mesh.geometry as THREE.BufferGeometry;
     const position = geometry.getAttribute("position") as THREE.BufferAttribute | undefined;
     if (!position) return;
+    intoLocal.copy(toLocal).multiply(mesh.matrixWorld);
     const index = geometry.getIndex();
     const triangles = index ? index.count / 3 : position.count / 3;
     for (let t = 0; t < triangles; t++) {
       const i0 = index ? index.getX(t * 3) : t * 3;
       const i1 = index ? index.getX(t * 3 + 1) : t * 3 + 1;
       const i2 = index ? index.getX(t * 3 + 2) : t * 3 + 2;
-      a.fromBufferAttribute(position, i0).applyMatrix4(mesh.matrixWorld);
-      b.fromBufferAttribute(position, i1).applyMatrix4(mesh.matrixWorld);
-      c.fromBufferAttribute(position, i2).applyMatrix4(mesh.matrixWorld);
+      a.fromBufferAttribute(position, i0).applyMatrix4(intoLocal);
+      b.fromBufferAttribute(position, i1).applyMatrix4(intoLocal);
+      c.fromBufferAttribute(position, i2).applyMatrix4(intoLocal);
 
       const minX = Math.min(a.x, b.x, c.x);
       const maxX = Math.max(a.x, b.x, c.x);
@@ -193,7 +200,6 @@ function Landform({ spec }: { spec: TerrainModelSpec }) {
   useEffect(() => {
     const res = spec.res;
     const heights = topSurfaceGrid(object, half, res);
-    console.log("LF-REG", spec.id, half, heights.length);
     registerTerrainModelSurface(spec.id, { x: spot.x, z: spot.z, half, res, heights });
     return () => dropTerrainModelSurface(spec.id);
   }, [object, half, spec, spot.x, spot.z]);
