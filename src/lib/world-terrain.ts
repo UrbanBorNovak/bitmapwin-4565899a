@@ -281,7 +281,3 @@ export async function requestTerrainAround(x: number, z: number, cells = 96) {
 export function useTerrainVersion() {
   return useSyncExternalStore(subscribeTerrain, terrainVersion, terrainVersion);
 }
-
-if (typeof window !== "undefined") {
-  (window as unknown as { __probe?: unknown }).__probe = { groundY, baseGroundY };
-}

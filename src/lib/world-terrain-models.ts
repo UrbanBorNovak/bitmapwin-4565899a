@@ -237,7 +237,3 @@ export function terrainModelTop(
   }
   return top;
 }
-
-if (typeof window !== "undefined") {
-  (window as unknown as { __probeModels?: unknown }).__probeModels = () => ({ count: surfaces.size, first: [...surfaces.values()][0] });
-}
