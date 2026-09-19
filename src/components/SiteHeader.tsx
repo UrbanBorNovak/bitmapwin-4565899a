@@ -18,6 +18,7 @@ const NAV_GROUPS: NavGroup[] = [
     note: "Everything you use inside the 3D Oasis",
     items: [
       { to: "/map", label: "ENTER THE OASIS", note: "Walk, drive, build and explore" },
+      { to: "/stream", label: "WORLD STREAM", note: "See verified history as it happens" },
       { to: "/play-guide", label: "PLAYER GUIDE", note: "Controls, devices and what to do" },
       { to: "/cities", label: "VISIT CITIES", note: "Districts inside the world" },
       { to: "/trading-post", label: "IN-WORLD TRADING POST", note: "Trade your Oasis items" },
@@ -65,6 +66,7 @@ const NAV_GROUPS: NavGroup[] = [
     note: "Your holdings, proof and developer resources",
     items: [
       { to: "/my-land", label: "MY BITMAPS", note: "BITMAPs held by your wallet" },
+      { to: "/passport", label: "MY PASSPORT", note: "Stamps, proof and build unlocks" },
       { to: "/ownership", label: "OWNERSHIP", note: "Verify on-chain ownership" },
       { to: "/sdk", label: "SDK", note: "Build for Bitcoin land" },
       { to: "/docs", label: "DOCS", note: "Guides and references" },

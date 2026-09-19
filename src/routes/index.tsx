@@ -8,6 +8,7 @@ import { BitmapConstellations } from "@/components/BitmapConstellations";
 import { registryParcelsQuery, registryCountQuery } from "@/lib/registry";
 import { recentTradesQuery, tradedBitmapCountQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
+import { LoopNavigator } from "@/components/LoopNavigator";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -112,9 +113,9 @@ function Index() {
                     deploy them, and let players walk in.
                   </p>
                   <div data-tour="home-flow" className="mt-6 grid gap-2 sm:mt-8 sm:flex sm:flex-wrap sm:gap-3">
-                    <Link to="/map" className="btn-term min-h-12 w-full sm:min-h-0 sm:w-auto">01 · ENTER THE OASIS</Link>
-                    <Link to="/extend" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">02 · EXTEND</Link>
-                    <Link to="/create" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">03 · DEPLOY</Link>
+                    <Link to="/explore" className="btn-term min-h-12 w-full sm:min-h-0 sm:w-auto">01 · DISCOVER</Link>
+                    <Link to="/map" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">02 · ENTER THE OASIS</Link>
+                    <Link to="/passport" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">03 · OPEN PASSPORT</Link>
                   </div>
                   <Link to="/extenders" className="mt-4 inline-flex font-mono text-xs font-bold text-bitcoin hover:text-foreground">
                     BROWSE THE MARKET →
@@ -158,6 +159,8 @@ function Index() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-[1600px] px-4 pt-6 md:px-8"><LoopNavigator active="discover" /></section>
+
       <div className="mt-10">
         <SpriteParade height={72} />
       </div>
@@ -192,12 +195,12 @@ function Index() {
       </section>
 
       <section className="mx-auto max-w-[1600px] px-4 pt-16 md:px-8">
-        <div className="label text-bitcoin">THE PRIMARY FLOW</div>
-        <h2 className="display mt-2 text-2xl md:text-3xl">OASIS · EXTEND · DEPLOY</h2>
+        <div className="label text-bitcoin">THE LIVING WORLD LOOP</div>
+        <h2 className="display mt-2 text-2xl md:text-3xl">DISCOVER · PARTICIPATE · LEAVE HISTORY</h2>
         <div className="mt-6 grid border-y border-border md:grid-cols-3 md:divide-x md:divide-border">
-          <Journey n="01" title="OASIS" body="Enter the live world and pick the BITMAP you want to work on." to="/map" action="ENTER THE OASIS" />
-          <Journey n="02" title="EXTEND" body="Give that land software: import a package, describe it to AI, or take one from the market." to="/extend" action="EXTEND LAND" />
-          <Journey n="03" title="DEPLOY" body="Run it on the land, then walk in as a visitor." to="/create" action="BUILD AND DEPLOY" />
+          <Journey n="01" title="EXPLORE" body="Find a BITMAP, enter the Oasis, and see what other people have made possible." to="/explore" action="DISCOVER THE WORLD" />
+          <Journey n="02" title="LEAVE PROVENANCE" body="Visits, builds, deployments, trades, leases, and duels become evidence-backed history." to="/stream" action="WATCH HISTORY MOVE" />
+          <Journey n="03" title="UNLOCK + BUILD" body="Your Passport turns verified participation into new building capabilities." to="/passport" action="OPEN YOUR PASSPORT" />
         </div>
         <div className="mt-6 flex flex-wrap gap-2 pb-2">
           <Link to="/marketplace" className="btn-term-ghost">[ GET LAND FIRST ]</Link>
@@ -228,7 +231,7 @@ function Journey({
   n: string;
   title: string;
   body: string;
-  to: "/marketplace" | "/builds" | "/extend" | "/studio" | "/map" | "/extenders" | "/create";
+  to: "/marketplace" | "/builds" | "/extend" | "/studio" | "/map" | "/extenders" | "/create" | "/explore" | "/stream" | "/passport";
   action: string;
 }) {
   return (

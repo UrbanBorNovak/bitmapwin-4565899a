@@ -16,6 +16,7 @@ import {
   type LandPermission,
 } from "@/lib/extenders";
 import { grantLandFn, undeployExtenderFn } from "@/lib/extenders.functions";
+import { LoopNavigator } from "@/components/LoopNavigator";
 
 export const Route = createFileRoute("/my-world")({
   head: () => {
@@ -75,6 +76,7 @@ function MyWorldPage() {
         <DataBadge kind="live" note="ON-CHAIN HOLDINGS" />
         {address ? null : <DataBadge kind="soon" note="CONNECT A WALLET TO POPULATE" />}
       </div>
+      <div className="mt-6"><LoopNavigator active="build" /></div>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="BITMAPS HELD" value={held.isPending ? "…" : heldHeights.length.toLocaleString("en-US")} />

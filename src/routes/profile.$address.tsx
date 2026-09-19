@@ -11,6 +11,9 @@ import { followerCountsQuery } from "@/lib/follows";
 import { formatBit } from "@/lib/coins";
 import { baseValueOf, playerStockQuery, shareHoldersQuery, sharePrice } from "@/lib/player-stock";
 import { rankPlayerByWalletQuery } from "@/lib/ranks";
+import { PassportSummary } from "@/components/PassportSummary";
+import { StampCard } from "@/components/StampCard";
+import { publicPassportQuery } from "@/lib/provenance-stream";
 
 export const Route = createFileRoute("/profile/$address")({
   head: ({ params }) => {
@@ -65,6 +68,7 @@ function ProfilePage() {
   const ranked = useQuery(rankPlayerByWalletQuery(address));
   const stock = useQuery(playerStockQuery(ranked.data?.id ?? null));
   const holders = useQuery(shareHoldersQuery(ranked.data?.id ?? null));
+  const passport = useQuery(publicPassportQuery(address));
   const isMember = membership.data === true;
   const followerCount = followers.data?.get(address) ?? 0;
   const displayName = profile.data?.displayName ?? shortenAddress(address);
@@ -119,6 +123,8 @@ function ProfilePage() {
         </div>
         <div className="border-t border-profile-warm/20 bg-background/30 px-6 py-3 font-mono text-[10px] text-profile-warm-muted md:px-8">● A HOME BUILT ON BITCOIN</div>
       </div>
+
+      {passport.data && (passport.data.stamps.length > 0 || passport.data.events.length > 0) ? <div className="mt-8 space-y-3"><PassportSummary passport={passport.data} publicView /><div className="grid gap-3 md:grid-cols-2">{passport.data.stamps.slice(0, 4).map((item) => <StampCard key={item.id} stamp={item} />)}</div></div> : null}
 
       {ranked.data && (
         <section className="profile-home mt-8" aria-label="Share book">
