@@ -1,14 +1,14 @@
 /**
  * TERRAIN MODELS — inscribed landforms that are part of the ground itself.
  *
- * A handful of inscribed hills and mountains stand on fixed BITMAPS forever.
+ * Inscribed hills and mountains are distributed across the complete Oasis.
  * Unlike the inscribed buildings, these are not obstacles: once a model is
  * loaded, its top surface is sampled into a small height grid and registered
  * here, and `groundY` in `world-terrain` lifts the walkable surface to match.
  * That makes everything that reads the ground — avatars, rides, animals, trees,
  * grass, builds — sit and walk on the landform instead of passing through it.
  *
- * Positions are given in BITMAPS out from the genesis plaza and the model height
+ * Positions are given in BITMAPS from the genesis plaza and the model height
  * (`span`) in BITMAPS too, so the layout survives any change to world scale.
  */
 
@@ -76,51 +76,42 @@ function rand(seed: number) {
 }
 
 function resFor(span: number) {
-  return span >= 3 ? 56 : span >= 1.8 ? 40 : 28;
+  return span >= 5 ? 48 : span >= 2.5 ? 40 : 28;
 }
 
 /**
- * Lay the landforms out as a range: gentle swells close in, taller peaks
- * further out, each ring turned a different way and sized differently. Fixed
- * seeds mean the whole range is permanent and identical for everybody.
+ * Divide the full 1,000 × 1,000 BITMAP Oasis into broad territories and place
+ * one varied landform in every territory. The old radial layout was centred on
+ * the north-edge genesis plaza, which crowded every model into one tiny area
+ * and even sent half of the ring outside the world. This field reaches from the
+ * north approach to the far south and from the west wall to the east wall.
+ *
+ * Every source recurs throughout the field instead of being confined to a ring.
+ * Fixed seeds keep every position, size and rotation permanent for all players.
  */
 function layout(): TerrainModelSpec[] {
   const out: TerrainModelSpec[] = [];
-  const taken: { cell: [number, number]; span: number }[] = [];
-  // ring radius in BITMAPS, how many landforms sit on it, and their size band
-  const rings: { radius: number; count: number; low: number; high: number; kind: Source["kind"] }[] = [
-    { radius: 16, count: 6, low: 0.9, high: 1.5, kind: "swell" },
-    { radius: 27, count: 8, low: 1.3, high: 2.2, kind: "swell" },
-    { radius: 40, count: 9, low: 1.8, high: 3.4, kind: "peak" },
-    { radius: 58, count: 10, low: 2.8, high: 5.4, kind: "peak" },
-    { radius: 78, count: 8, low: 4, high: 7.5, kind: "peak" },
-  ];
+  const columns = 8;
+  const rows = 8;
+  const sectorWidth = 900 / columns;
+  const sectorDepth = 900 / rows;
 
-  let seed = 7;
-  for (const ring of rings) {
-    const pool = SOURCES.filter((source) => source.kind === ring.kind);
-    for (let i = 0; i < ring.count; i++) {
-      seed += 1;
-      const wobble = (rand(seed * 3.1) - 0.5) * 0.6;
-      const angle = (i / ring.count) * Math.PI * 2 + wobble;
-      const reach = ring.radius * (0.86 + rand(seed * 5.7) * 0.32);
+  for (let row = 0; row < rows; row++) {
+    for (let column = 0; column < columns; column++) {
+      const seed = 101 + row * columns + column;
+      // A co-prime source shuffle gives every region a mix of all five forms.
+      const source = SOURCES[((row * columns + column) * 3) % SOURCES.length] ?? SOURCES[0]!;
+      const jitterX = (rand(seed * 3.1) - 0.5) * sectorWidth * 0.55;
+      const jitterZ = (rand(seed * 5.7) - 0.5) * sectorDepth * 0.55;
       const cell: [number, number] = [
-        Math.round(Math.cos(angle) * reach),
-        Math.round(Math.sin(angle) * reach),
+        Math.round(-450 + sectorWidth * (column + 0.5) + jitterX),
+        Math.round(50 + sectorDepth * (row + 0.5) + jitterZ),
       ];
-      const span = ring.low + rand(seed * 9.3) * (ring.high - ring.low);
-      // Keep landforms from growing into each other.
-      const clash = taken.some((other) => {
-        const dx = other.cell[0] - cell[0];
-        const dz = other.cell[1] - cell[1];
-        const gap = (other.span + span) * 0.75 + 3;
-        return dx * dx + dz * dz < gap * gap;
-      });
-      if (clash) continue;
-      const source = pool[i % pool.length] ?? SOURCES[0]!;
-      taken.push({ cell, span });
+      const low = source.kind === "peak" ? 2.8 : 1.1;
+      const high = source.kind === "peak" ? 7.2 : 3.2;
+      const span = low + rand(seed * 9.3) * (high - low);
       out.push({
-        id: `${source.key}-${ring.radius}-${i}`,
+        id: `${source.key}-${column}-${row}`,
         label: source.label,
         inscription: source.inscription,
         cell,
