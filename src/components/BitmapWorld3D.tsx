@@ -3602,24 +3602,23 @@ function BitmapWorld3DInner({
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Action</span>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <Button
-                    className="btn-term-ghost"
-                    variant="ghost"
-                    onClick={attackNearest}
+                  <HudIconButton
+                    label={
+                      attackReady
+                        ? "Attack (F)"
+                        : `Cooling down ${(cooldownRemaining / 1000).toFixed(1)}s`
+                    }
+                    icon={<Swords />}
                     disabled={!attackReady}
-                  >
-                    [ {attackReady ? "ATTACK · F" : `COOLDOWN ${(cooldownRemaining / 1000).toFixed(1)}s`} ]
-                  </Button>
-                  <Button className="btn-term-ghost" variant="ghost" onClick={() => void workLand()}>
-                    [ TERRAFORM · T ]
-                  </Button>
-                  <Button
-                    className={buildOpen ? "btn-term" : "btn-term-ghost"}
-                    variant="ghost"
+                    onClick={attackNearest}
+                  />
+                  <HudIconButton label="Terraform (T)" icon={<Shovel />} onClick={() => void workLand()} />
+                  <HudIconButton
+                    label="Build (B)"
+                    icon={<Hammer />}
+                    active={buildOpen}
                     onClick={() => setBuildOpen((current) => !current)}
-                  >
-                    [ BUILD · B ]
-                  </Button>
+                  />
                 </div>
               </div>
               ) : null}
