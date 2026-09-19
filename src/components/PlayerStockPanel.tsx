@@ -103,6 +103,7 @@ export function PlayerStockPanel({ player }: { player: RankPlayer }) {
   const wallet = useWalletSession();
   const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState(1);
+  const [offer, setOffer] = useState(100);
 
   const addresses = useMemo(
     () =>
@@ -156,9 +157,35 @@ export function PlayerStockPanel({ player }: { player: RankPlayer }) {
     onError: (error) => toast("TRADE REFUSED", { description: (error as Error).message.toUpperCase() }),
   });
 
-  const busy = trade.isPending;
-  const canBuy = Boolean(payAddress) && buyQuote.total <= balance && quantity > 0;
+  const isOpen = stock.data?.isOpen ?? false;
+  const offered = stock.data?.sharesOffered ?? 0;
+  const remaining = Math.max(0, offered - issued);
+  const isMyCharacter =
+    Boolean(payAddress) &&
+    addresses.some((a) => a.toLowerCase() === (player.wallet ?? "").toLowerCase());
+  const issueFee = isOpen ? ISSUE_FEE_RAISE : ISSUE_FEE_OPEN;
+
+  const issue = useMutation({
+    mutationFn: (sharesOffered: number) =>
+      issuePlayerSharesFn({ data: { playerId: player.id, address: payAddress, sharesOffered } }),
+    onSuccess: (result) => {
+      toast(isOpen ? "MORE SHARES ON OFFER" : "SHARE BOOK OPEN", {
+        description: `${result.sharesOffered.toLocaleString()} SHARES OFFERED · FEE ${formatBit(result.feeCoins)}`,
+      });
+      void queryClient.invalidateQueries({ queryKey: ["player-stock"] });
+      void queryClient.invalidateQueries({ queryKey: ["player-stock-all"] });
+      void queryClient.invalidateQueries({ queryKey: ["coin-balance"] });
+    },
+    onError: (error) => toast("ISSUE REFUSED", { description: (error as Error).message.toUpperCase() }),
+  });
+
+  const buyFee = platformFee(buyQuote.total);
+  const sellFee = platformFee(sellQuote.total);
+  const busy = trade.isPending || issue.isPending;
+  const canBuy =
+    Boolean(payAddress) && isOpen && quantity > 0 && quantity <= remaining && buyQuote.total + buyFee <= balance;
   const canSell = Boolean(payAddress) && (mine?.shares ?? 0) >= quantity && quantity > 0;
+  const canIssue = isMyCharacter && offer > 0 && issueFee <= balance && (!isOpen || offer > offered);
 
   return (
     <section className="mt-6 border border-border" aria-label="Player share desk">
