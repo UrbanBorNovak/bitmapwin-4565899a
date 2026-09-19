@@ -9,6 +9,7 @@ import {
   CLAN_JOIN_XP,
   CLAN_TIERS,
   clanRosterQuery,
+  clanCrestImage,
   clanScore,
   clanTier,
   clanTierProgress,
