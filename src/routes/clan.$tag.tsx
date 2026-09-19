@@ -142,7 +142,7 @@ function ClanHall() {
         ))}
       </dl>
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-[auto_auto_auto_1fr] sm:items-center">
+      <div className="mt-4 grid gap-2 sm:grid-cols-[auto_auto_auto_auto_minmax(0,1fr)] sm:items-center">
         {wallet ? (
           <Button
             type="button"
