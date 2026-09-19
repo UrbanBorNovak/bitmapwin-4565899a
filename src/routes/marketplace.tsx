@@ -74,12 +74,9 @@ function Marketplace() {
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [club, setClub] = useState<ClubId | "any">("any");
-  const [gallery, setGallery] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   useLiveOffers();
 
-  const registryHeights = useMemo(() => parcels.map((p) => p.bitmapHeight), [parcels]);
-  const punk = usePunkFilter(registryHeights, gallery);
 
   const listed = useMemo(() => parcels.filter((p) => p.listedSats !== null), [parcels]);
   const traded = useMemo(() => parcels.filter((p) => p.transfers > 0), [parcels]);
@@ -90,7 +87,6 @@ function Marketplace() {
       const def = CLUBS.find((c) => c.id === club);
       if (def) base = base.filter((p) => inClub(p.bitmapHeight, def));
     }
-    if (punk.gallery) base = base.filter((p) => punk.matches(p.bitmapHeight));
     const q = search.trim().toLowerCase();
     if (!q) return base;
     return base.filter(
@@ -100,7 +96,7 @@ function Marketplace() {
         p.txid.toLowerCase().includes(q) ||
         (p.ownerAddress ?? "").toLowerCase().includes(q),
     );
-  }, [tab, traded, listed, parcels, search, club, punk]);
+  }, [tab, traded, listed, parcels, search, club]);
 
   // Paginate first, then resolve holders on chain for the visible page only.
   const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
@@ -235,7 +231,6 @@ function Marketplace() {
                     className={club === "any" ? "btn-term !px-2" : "btn-term-ghost !px-2"}
                     onClick={() => {
                       setClub("any");
-                      setGallery(null);
                       setPage(0);
                     }}
                   >
@@ -249,7 +244,6 @@ function Marketplace() {
                       className={club === c.id ? "btn-term !px-2" : "btn-term-ghost !px-2"}
                       onClick={() => {
                         setClub(c.id);
-                        setGallery(null);
                         setPage(0);
                       }}
                     >
@@ -258,39 +252,7 @@ function Marketplace() {
                   ))}
                 </div>
               </div>
-              <div>
-                <span className="label mb-2 block">PUNKS &amp; PATTERNS</span>
-                <div className="grid grid-cols-2 gap-2 lg:grid-cols-1 xl:grid-cols-2">
-                  {GALLERY_COLLECTIONS.map((g) => (
-                    <button
-                      key={g.id}
-                      aria-label={`Filter by collection ${g.label}`}
-                      aria-pressed={gallery === g.id}
-                      className={gallery === g.id ? "btn-term !px-2" : "btn-term-ghost !px-2"}
-                      onClick={() => {
-                        setGallery(gallery === g.id ? null : g.id);
-                        setClub("any");
-                        setPage(0);
-                      }}
-                    >
-                      {g.short}
-                    </button>
-                  ))}
-                </div>
-                {punk.gallery && (
-                  <p className="mt-2 font-mono text-[10px] text-muted-foreground">
-                    &gt; {punk.gallery.label}
-                    {punk.loading ? (
-                      <>
-                        {" "}· READING BLOCK SHAPES<span className="blink">_</span>
-                      </>
-                    ) : (
-                      ` · ${visible.length} MATCH(ES) IN LOADED INDEX`
-                    )}
-                  </p>
-                )}
-              </div>
-              <Link to="/collections" className="btn-term-ghost w-full">COLLECTION STATS →</Link>
+              <Link to="/collections" className="btn-term-ghost w-full">PUNKS &amp; COLLECTION STATS →</Link>
               <div className="border-t border-border pt-4 label">{holders} HOLDERS IN LOADED INDEX</div>
             </div>
           </div>
