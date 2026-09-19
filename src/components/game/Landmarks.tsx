@@ -25,9 +25,9 @@ function useLandmarkSolids() {
   }, []);
 }
 
-function Landmark({ spec }: { spec: LandmarkSpec }) {
+function Landmark({ spec, boost }: { spec: LandmarkSpec; boost: number }) {
   const spot = useMemo(() => landmarkSpot(spec), [spec]);
-  const size = spec.span * WORLD_CELL;
+  const size = spec.span * WORLD_CELL * boost;
   return (
     <group position={[spot.x, groundY(spot.x, spot.z), spot.z]}>
       <Suspense
@@ -44,13 +44,17 @@ function Landmark({ spec }: { spec: LandmarkSpec }) {
   );
 }
 
-export const Landmarks = memo(function Landmarks() {
+/**
+ * `boost` enlarges the models without moving them, so the far-away overview
+ * map still shows where every permanent building stands.
+ */
+export const Landmarks = memo(function Landmarks({ boost = 1 }: { boost?: number }) {
   useLandmarkSolids();
   // Only five of them stand in the whole world, so all five stay loaded.
   return (
     <>
       {LANDMARKS.map((spec) => (
-        <Landmark key={spec.id} spec={spec} />
+        <Landmark key={spec.id} spec={spec} boost={boost} />
       ))}
     </>
   );

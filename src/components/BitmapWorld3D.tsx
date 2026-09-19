@@ -2391,7 +2391,7 @@ const WorldScene = memo(function WorldScene({
       {/* Permanent structures — the inscribed buildings and the inscribed
           hills and mountains. They stand in the same fixed spots in every
           view, so the overview map shows the same world you walk in. */}
-      <Landmarks />
+      <Landmarks boost={cameraMode === "map" ? 8 : 1} />
       <TerrainModels />
       {cameraMode !== "map" ? (
         <>
