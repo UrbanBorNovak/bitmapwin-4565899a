@@ -16,9 +16,12 @@ import { ITEM_LABELS, spendItems, type ItemId } from "./world-skills";
 import { STRIDE, colAt, rowAt } from "./player-state";
 import { TILE, chunkOfTile, heightOfTile, setTiles } from "./world-grid";
 import {
+  listMyBuilds,
   listWorldStructures,
   placeWorldStructures,
+  removePlayerBuild,
   removeWorldStructure,
+  savePlayerBuilds,
 } from "./world-structures.functions";
 import { growthOf, terraformAt } from "./world-terraform";
 import { markChunkLoad } from "./world-perf";
@@ -305,6 +308,8 @@ const MAX_BUILDS = 400;
 /** Local (unsynced) builds and shared builds pulled from the backend. */
 let localBuilds: PlacedStructure[] = [];
 let shared = new Map<string, PlacedStructure>();
+/** The signed-in player's own saved builds, restored on every world entry. */
+let mine = new Map<string, PlacedStructure>();
 let view: PlacedStructure[] = [];
 let hydrated = false;
 const listeners = new Set<() => void>();
@@ -365,7 +370,7 @@ function stampTiles(items: PlacedStructure[]) {
 }
 
 function recompute(notify = true) {
-  view = [...shared.values(), ...localBuilds]
+  view = [...shared.values(), ...mine.values(), ...localBuilds]
     .filter((item) => !isSea(item.x, item.z))
     .slice(-MAX_BUILDS);
   stampTiles(view);
@@ -523,7 +528,10 @@ async function publish(items: PlacedStructure[]) {
   try {
     const result = await placeWorldStructures({ data: { items: items.map(toRequest) } });
     const rows = result?.structures ?? [];
-    if (!rows.length) return;
+    if (!rows.length) {
+      await save(items);
+      return;
+    }
     const keys = new Set(items.map((item) => item.key));
     localBuilds = localBuilds.filter((item) => !keys.has(item.key));
     persistLocal();
@@ -543,7 +551,63 @@ async function publish(items: PlacedStructure[]) {
     }
     recompute();
   } catch {
-    // not signed in, or the world write failed: the build stays in this browser
+    // The shared world only takes builds on land you hold. Everything else goes
+    // to the player's own vault, so it still comes back after a reload.
+    await save(items);
+  }
+}
+
+/** Keep builds in the player's own vault when the shared world will not take them. */
+async function save(items: PlacedStructure[]) {
+  try {
+    const result = await savePlayerBuilds({ data: { items: items.map(toRequest) } });
+    const rows = result?.builds ?? [];
+    if (!rows.length) return;
+    const keys = new Set(items.map((item) => item.key));
+    localBuilds = localBuilds.filter((item) => !keys.has(item.key));
+    persistLocal();
+    for (const row of rows) adoptMine(row);
+    recompute();
+  } catch {
+    // not signed in: the build stays in this browser only
+  }
+}
+
+function adoptMine(row: {
+  id: string;
+  kind: string;
+  x: number;
+  z: number;
+  yaw: number;
+  created_at: string;
+  builder_address: string | null;
+  chunk_key: string;
+}) {
+  mine.set(row.id, {
+    key: row.id,
+    rowId: row.id,
+    id: (isStructureId(row.kind) ? row.kind : "camp-fire") as StructureId,
+    x: row.x,
+    z: row.z,
+    yaw: row.yaw,
+    at: new Date(row.created_at).getTime(),
+    builder: row.builder_address,
+    chunkKey: row.chunk_key,
+  });
+}
+
+/**
+ * Restore the signed-in player's saved builds. Called when the world opens, so
+ * structures raised in an earlier session are standing again.
+ */
+export async function syncMyBuilds() {
+  hydrate();
+  try {
+    const result = await listMyBuilds();
+    for (const row of result?.builds ?? []) adoptMine(row);
+    recompute();
+  } catch {
+    // signed out — only the shared world and this browser's builds show
   }
 }
 
@@ -752,6 +816,16 @@ export function buildCamp(x: number, z: number, yaw = 0, unit = 1) {
 
 export function removeBuild(key: string) {
   hydrate();
+  const own = mine.get(key);
+  if (own) {
+    mine.delete(key);
+    recompute();
+    void removePlayerBuild({ data: { id: key } }).catch(() => {
+      mine.set(key, own);
+      recompute();
+    });
+    return;
+  }
   const row = shared.get(key);
   if (row) {
     shared.delete(key);
