@@ -228,30 +228,65 @@ function Marketplace() {
               <div>
                 <span className="label mb-2 block">COLLECTION</span>
                 <div className="grid grid-cols-2 gap-2 lg:grid-cols-1 xl:grid-cols-2">
-        <button
-          className={club === "any" ? "btn-term !px-2" : "btn-term-ghost !px-2"}
-          onClick={() => {
-            setClub("any");
-            setPage(0);
-          }}
-        >
-          ALL CLUBS
-        </button>
-        {CLUBS.map((c) => (
-          <button
-            key={c.id}
-            aria-label={`Filter by collection ${c.label}`}
-            aria-pressed={club === c.id}
-            className={club === c.id ? "btn-term !px-2" : "btn-term-ghost !px-2"}
-            onClick={() => {
-              setClub(c.id);
-              setPage(0);
-            }}
-          >
-            {c.short}
-          </button>
-        ))}
+                  <button
+                    aria-pressed={club === "any"}
+                    className={club === "any" ? "btn-term !px-2" : "btn-term-ghost !px-2"}
+                    onClick={() => {
+                      setClub("any");
+                      setGallery(null);
+                      setPage(0);
+                    }}
+                  >
+                    ALL CLUBS
+                  </button>
+                  {CLUBS.map((c) => (
+                    <button
+                      key={c.id}
+                      aria-label={`Filter by collection ${c.label}`}
+                      aria-pressed={club === c.id}
+                      className={club === c.id ? "btn-term !px-2" : "btn-term-ghost !px-2"}
+                      onClick={() => {
+                        setClub(c.id);
+                        setGallery(null);
+                        setPage(0);
+                      }}
+                    >
+                      {c.short}
+                    </button>
+                  ))}
                 </div>
+              </div>
+              <div>
+                <span className="label mb-2 block">PUNKS &amp; PATTERNS</span>
+                <div className="grid grid-cols-2 gap-2 lg:grid-cols-1 xl:grid-cols-2">
+                  {GALLERY_COLLECTIONS.map((g) => (
+                    <button
+                      key={g.id}
+                      aria-label={`Filter by collection ${g.label}`}
+                      aria-pressed={gallery === g.id}
+                      className={gallery === g.id ? "btn-term !px-2" : "btn-term-ghost !px-2"}
+                      onClick={() => {
+                        setGallery(gallery === g.id ? null : g.id);
+                        setClub("any");
+                        setPage(0);
+                      }}
+                    >
+                      {g.short}
+                    </button>
+                  ))}
+                </div>
+                {punk.gallery && (
+                  <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+                    &gt; {punk.gallery.label}
+                    {punk.loading ? (
+                      <>
+                        {" "}· READING BLOCK SHAPES<span className="blink">_</span>
+                      </>
+                    ) : (
+                      ` · ${visible.length} MATCH(ES) IN LOADED INDEX`
+                    )}
+                  </p>
+                )}
               </div>
               <Link to="/collections" className="btn-term-ghost w-full">COLLECTION STATS →</Link>
               <div className="border-t border-border pt-4 label">{holders} HOLDERS IN LOADED INDEX</div>
