@@ -5,6 +5,7 @@ const GROUPS: { label: string; items: { to: string; label: string }[] }[] = [
     label: "PLAY",
     items: [
       { to: "/map", label: "ENTER THE OASIS" },
+      { to: "/play-guide", label: "PLAYER GUIDE" },
       { to: "/cities", label: "VISIT CITIES" },
       { to: "/trading-post", label: "IN-WORLD TRADING POST" },
       { to: "/inventory", label: "MY INVENTORY" },

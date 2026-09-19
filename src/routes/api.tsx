@@ -56,6 +56,11 @@ const ENDPOINTS = [
     path: "/api/public/resolve-registry",
     body: "Resolve a bitmap height to its canonical first inscription and current holder address.",
   },
+  {
+    method: "GET",
+    path: "/api/public/gallery/{inscriptionId}",
+    body: "Membership of an inscribed ordinals gallery, decoded from its reveal transaction. Immutable, so it is cached hard.",
+  },
 ];
 
 function ApiPage() {

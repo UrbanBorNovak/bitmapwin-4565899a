@@ -21,6 +21,13 @@ export const Route = createFileRoute("/sitemap.xml")({
           { path: "/builds", changefreq: "daily", priority: "0.8" },
           { path: "/leases", changefreq: "daily", priority: "0.7" },
           { path: "/coins", changefreq: "daily", priority: "0.6" },
+          { path: "/docs", changefreq: "weekly", priority: "0.8" },
+          { path: "/play-guide", changefreq: "weekly", priority: "0.8" },
+          { path: "/sdk", changefreq: "weekly", priority: "0.7" },
+          { path: "/api", changefreq: "weekly", priority: "0.6" },
+          { path: "/dev-tools", changefreq: "weekly", priority: "0.6" },
+          { path: "/ownership", changefreq: "monthly", priority: "0.6" },
+          { path: "/land-101", changefreq: "monthly", priority: "0.6" },
           ...CLUBS.map((club) => ({
             path: `/collections/${encodeURIComponent(club.id)}`,
             changefreq: "daily" as const,

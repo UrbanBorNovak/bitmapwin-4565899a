@@ -62,6 +62,7 @@ const LOOP = [
 ];
 
 const REFERENCES = [
+  { to: "/play-guide" as const, title: "PLAYER GUIDE", body: "Controls on desktop and phone, what lives in the Oasis, graphics quality presets, BIT, parties, clans and streaming." },
   { to: "/sdk" as const, title: "SDK REFERENCE", body: "Land, build, player, world, economy, social and AI primitives with call signatures and runtime limits." },
   { to: "/api" as const, title: "PUBLIC API", body: "HTTP endpoints for block metadata, offers and the trade crawler — usable from anything." },
   { to: "/dev-tools" as const, title: "DEVELOPER TOOLS", body: "SDK playground, MCP endpoint and the AI package builder." },
@@ -79,6 +80,11 @@ function DocsPage() {
         BitmapWin gives you land, persistence, ownership, a runtime, extensibility, discovery and a market.
         You bring the world. Start with the loop.
       </p>
+      <div className="mt-6 flex flex-wrap gap-2">
+        <Link to="/play-guide" className="btn-term">[ PLAYER GUIDE ]</Link>
+        <Link to="/sdk" className="btn-term-ghost">[ SDK ]</Link>
+        <Link to="/api" className="btn-term-ghost">[ API ]</Link>
+      </div>
 
       <div className="mt-8">
         <BedrockStackInfographic />
