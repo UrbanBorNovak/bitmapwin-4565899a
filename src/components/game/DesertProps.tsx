@@ -13,7 +13,7 @@ import { useGLTF } from "@react-three/drei";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
 import { isSea } from "@/lib/world-sea";
-import { groundY } from "@/lib/world-terrain";
+import { groundY, useTerrainVersion } from "@/lib/world-terrain";
 import { useQuality } from "@/graphics/QualityContext";
 
 /** on-chain rock models */
@@ -133,6 +133,8 @@ export const DesertProps = memo(function DesertProps({
   center: [number, number];
   radius: number;
 }) {
+  // Landforms registering their slopes re-place this scenery onto them.
+  useTerrainVersion();
   // Rocks are common and come in pebbles through boulders.
   const rocks = useMemo(
     () => scatter(unit, center, radius, unit * 7, 71, 0.42, (roll) => 0.09 + roll * roll * 0.24, 9),

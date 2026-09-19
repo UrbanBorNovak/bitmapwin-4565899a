@@ -21,6 +21,7 @@
  * identical on every client, so nobody ever stands on different ground.
  */
 
+import { useSyncExternalStore } from "react";
 import { STRIDE, WORLD_CELL, WORLD_GRID, WORLD_UNITS } from "./player-state";
 import { BLOCK_STATS_MAX_HEIGHT, fetchBlockStatsMany } from "./block-stats";
 import { seaDepthAt } from "./world-sea";
@@ -268,4 +269,15 @@ export async function requestTerrainAround(x: number, z: number, cells = 96) {
     pendingSet.add(item.height);
   }
   await drainTerrainQueue();
+}
+
+
+/**
+ * Re-render on every change to the land shape — a streamed block row or an
+ * inscribed landform registering its slopes. Scenery that reads `groundY` while
+ * it renders uses this, so trees, flowers, shrooms and props climb onto a hill
+ * the moment that hill becomes ground instead of staying on the old flat plain.
+ */
+export function useTerrainVersion() {
+  return useSyncExternalStore(subscribeTerrain, terrainVersion, terrainVersion);
 }

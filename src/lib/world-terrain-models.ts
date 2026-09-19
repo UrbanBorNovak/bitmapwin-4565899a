@@ -21,8 +21,13 @@ export type TerrainModelSpec = {
   inscription: string;
   /** offset from the genesis plaza, in BITMAPS */
   cell: [number, number];
-  /** height of the landform, in BITMAPS */
-  span: number;
+  /**
+   * Footprint width of the landform, in BITMAPS. Sizing by the ground it covers
+   * rather than by height is what keeps a landform climbable: the model's own
+   * proportions then decide how tall it stands, so a hill never turns into a
+   * vertical wall you cannot walk up.
+   */
+  width: number;
   yaw: number;
   /** height-grid resolution — big landforms get a finer walk surface */
   res: number;
@@ -75,8 +80,12 @@ function rand(seed: number) {
   return s - Math.floor(s);
 }
 
-function resFor(span: number) {
-  return span >= 5 ? 48 : span >= 2.5 ? 40 : 28;
+/**
+ * Walk-grid resolution. One sample every couple of BITMAPS is enough for a
+ * smooth slope once the grid is interpolated, and keeps the sampling cheap.
+ */
+function resFor(width: number) {
+  return width >= 22 ? 40 : width >= 12 ? 32 : 24;
 }
 
 /**
@@ -107,17 +116,19 @@ function layout(): TerrainModelSpec[] {
         Math.round(-450 + sectorWidth * (column + 0.5) + jitterX),
         Math.round(50 + sectorDepth * (row + 0.5) + jitterZ),
       ];
-      const low = source.kind === "peak" ? 2.8 : 1.1;
-      const high = source.kind === "peak" ? 7.2 : 3.2;
-      const span = low + rand(seed * 9.3) * (high - low);
+      // Footprints stay well inside a sector, so landforms never merge into one
+      // endless wall, and every one keeps open plain around it.
+      const low = source.kind === "peak" ? 16 : 7;
+      const high = source.kind === "peak" ? 30 : 14;
+      const width = low + rand(seed * 9.3) * (high - low);
       out.push({
         id: `${source.key}-${column}-${row}`,
         label: source.label,
         inscription: source.inscription,
         cell,
-        span: Math.round(span * 100) / 100,
+        width: Math.round(width * 100) / 100,
         yaw: rand(seed * 13.7) * Math.PI * 2,
-        res: resFor(span),
+        res: resFor(width),
       });
     }
   }
