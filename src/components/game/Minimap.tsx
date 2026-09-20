@@ -14,6 +14,7 @@ import { WORLD_CELL, WORLD_GRID, WORLD_UNITS } from "@/lib/player-state";
 import type { MapCursor } from "@/lib/map-presence";
 import { CHUNK_TILES, TILE, loadedChunks } from "@/lib/world-grid";
 import { MAX_RELIEF, groundY, requestTerrainAround, terrainVersion } from "@/lib/world-terrain";
+import { WorldScanSvg } from "@/components/game/WorldScanSvg";
 
 /** how many districts fit across the minimap, near to far */
 const ZOOMS = [16, 48, 160] as const;
@@ -476,11 +477,21 @@ export function Minimap({
                 CLOSE · M
               </button>
             </header>
-            {body}
+            <WorldScanSvg
+              height={readout.height}
+              ownedHeights={ownedHeights}
+              peers={cursors.map((peer) => ({
+                id: peer.id,
+                height: peer.height,
+                color: peer.color,
+                handle: peer.handle,
+              }))}
+              onVisit={onVisit}
+            />
             {partyRoster}
             <p className="border-t border-border px-2 py-1 text-[9px] text-muted-foreground">
-              CLICK ANYWHERE TO SEND THE CAMERA THERE · ORANGE SQUARES ARE YOURS · RINGED DOTS ARE
-              YOUR PARTY
+              CLICK ANY DISTRICT TO SEND THE CAMERA THERE · ORANGE DIAMONDS ARE YOURS · CYAN RING IS
+              THE LIVING FRONTIER · BIOMES ARE BLOCK ERAS
             </p>
           </div>
         </div>
