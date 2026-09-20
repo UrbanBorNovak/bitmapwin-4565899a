@@ -116,6 +116,16 @@ export function AtlasExplorer({ initialHeight }: { initialHeight?: number }) {
   const visibleEvents=useMemo(()=>(stream.data??[]).filter((event)=>{const key=eventLayer(event);return key===null?layers.length===ALL_LAYERS.length:layers.includes(key);}),[stream.data,layers]);
   const toggleLayer=(key:LayerKey)=>setLayers((current)=>current.includes(key)?current.filter((item)=>item!==key):[...current,key]);
   const places=useMemo(()=>placesFrom(visibleEvents),[visibleEvents]); const clusters=useMemo(()=>clusterPlaces(places,camera.zoom),[places,camera.zoom]); const recentBlocks=Array.isArray(chain.data)?chain.data:[]; const tipHeight=recentBlocks.length?Math.max(...recentBlocks.map((block)=>block.height)):0; const totals=stats.data?.totals;
+  // REAL CLAIMED LAND — the indexed inscription and holder behind each sampled
+  // block in view, so the atlas shows land even with no recent activity.
+  const fetchClaims=useServerFn(getAtlasClaims); const runFrontier=useServerFn(indexAtlasFrontier);
+  const window=useMemo(()=>({zoom:Math.round(camera.zoom*2)/2,x:Math.round(camera.x*40)/40,y:Math.round(camera.y*40)/40}),[camera.zoom,camera.x,camera.y]);
+  const sampled=useMemo(()=>tipHeight?sampleVisibleHeights(window,14,ATLAS_SIDE,tipHeight,atlasToBlock):[],[window,tipHeight]);
+  const land=useQuery({queryKey:["atlas","claims",window.zoom,window.x,window.y,tipHeight],queryFn:()=>fetchClaims({data:{heights:sampled}}),enabled:sampled.length>0,staleTime:120_000});
+  const claims=useMemo(()=>{const map=new Map<number,AtlasClaim>();for(const claim of land.data?.claims??[])map.set(claim.height,claim);return map;},[land.data]);
+  const frontierRun=useRef(0);
+  useEffect(()=>{ if(!tipHeight) return; if(Date.now()-frontierRun.current<60_000) return; frontierRun.current=Date.now();
+    runFrontier({data:{chainTip:tipHeight,batch:12}}).then((result)=>{ if(result?.indexed) land.refetch(); }).catch(()=>{}); },[tipHeight,runFrontier,land]);
   const setCamera=useCallback((next:Camera)=>{ const value={zoom:Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,next.zoom)),x:Math.min(0,Math.max(1-Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,next.zoom)),next.x)),y:Math.min(0,Math.max(1-Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,next.zoom)),next.y))}; cameraRef.current=value; setCameraState(value); },[]);
   const focusHeight=useCallback((height:number, preferredZoom=6)=>{ const point=blockToAtlas(height); const zoom=Math.max(cameraRef.current.zoom,preferredZoom); setCamera({zoom,x:.5-((point.x+.5)/ATLAS_SIDE)*zoom,y:.5-((point.y+.5)/ATLAS_SIDE)*zoom}); const known=places.find((place)=>place.height===height); setSelected(known??{height,title:`${height}.BITMAP`,count:0,landmarks:0,events:[],x:(point.x+.5)/ATLAS_SIDE,y:(point.y+.5)/ATLAS_SIDE}); setQuery(String(height)); },[places,setCamera]);
   useEffect(()=>{ if(initialHeight!==undefined) focusHeight(initialHeight,6); },[initialHeight,focusHeight]);
