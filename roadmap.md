@@ -66,3 +66,5 @@
 - [x] Optimize rank and clan pages for phones with compact tables, larger clan tags, and secure wallet-gated clan joining
 - [x] Make private and public user profiles feel warm, personal, and desirable
 - [x] Build Passport, Stream, evidence-backed stamps, build unlocks, and the full provenance product loop
+
+- [ ] Turn the painted Oasis into a spatial Bitcoin atlas with Hilbert placement, zoom, clustering, block jump, and deep links
