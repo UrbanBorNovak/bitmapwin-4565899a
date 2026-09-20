@@ -136,7 +136,7 @@ function Action({
   search,
   primary,
 }: {
-  to: "/map" | "/builds" | "/extend" | "/leases" | "/bitmap/$block";
+  to: "/oasis" | "/builds" | "/extend" | "/leases" | "/bitmap/$block";
   label: string;
   params?: { block: string };
   search?: { height: number };

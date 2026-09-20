@@ -258,7 +258,9 @@ function AtlasPage() {
             events.slice(0, 6).map((event) => (
               <Link
                 key={event.id}
-                to={event.bitmapHeight === null ? "/stream" : `/bitmap/${event.bitmapHeight}`}
+                {...(event.bitmapHeight === null
+                  ? ({ to: "/stream" } as const)
+                  : ({ to: "/bitmap/$block", params: { block: String(event.bitmapHeight) } } as const))}
                 className="min-w-[210px] shrink-0 border-r border-border px-4 py-3 hover:bg-bitcoin/5"
               >
                 <p className="truncate font-mono text-[10px] uppercase" data-no-translate>
