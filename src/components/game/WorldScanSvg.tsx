@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getChainBlocks } from "@/lib/chain.functions";
 import { ATLAS_SIDE, atlasEra, atlasToBlock, blockToAtlas } from "@/lib/atlas-geometry";
+import { atlasPlace } from "@/lib/atlas-places";
 
 type Peer = { id: string; height: number; color: string; handle: string };
 
@@ -179,7 +180,7 @@ export function WorldScanSvg({ height, ownedHeights, peers, onVisit }: Props) {
 
       <div className="flex items-center justify-between border-t border-border px-1.5 py-1 font-mono text-[9px] text-muted-foreground">
         <span className="tabular-nums text-foreground">
-          {(hover ?? height).toLocaleString("en-US")}.BITMAP
+          {atlasPlace(hover ?? height).localName} · {(hover ?? height).toLocaleString("en-US")}.BITMAP
         </span>
         <span className="truncate pl-2">
           {atlasEra(hover ?? height, tip || 0).label} · {tip ? `TIP ${tip.toLocaleString("en-US")}` : "TIP …"}
