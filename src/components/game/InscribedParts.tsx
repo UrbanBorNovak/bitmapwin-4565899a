@@ -19,7 +19,8 @@ export type InscribedPart = { geometry: THREE.BufferGeometry; material: THREE.Ma
 export const contentUrl = (inscription: string) =>
   `https://ordinals.com/content/${inscription}`;
 
-const STONE_FALLBACK = new THREE.Color("#8d8578");
+const STONE_FALLBACK = new THREE.Color("#b9aa8a");
+const STORYBOOK_WARMTH = new THREE.Color("#d7bd82");
 
 /**
  * glTF materials default to metalness 1; with no environment map in the world
@@ -32,7 +33,7 @@ const DARK_LIMIT = 0.16;
 function softenMaterial(source: THREE.Material): THREE.Material {
   const material = source.clone() as THREE.MeshStandardMaterial;
   if ("metalness" in material) material.metalness = 0;
-  if ("roughness" in material) material.roughness = Math.max(material.roughness ?? 1, 0.8);
+  if ("roughness" in material) material.roughness = Math.max(material.roughness ?? 1, 0.92);
   if ("envMapIntensity" in material) material.envMapIntensity = 0;
   const color = (material as THREE.MeshStandardMaterial).color;
   const hasMap = Boolean((material as THREE.MeshStandardMaterial).map);
@@ -44,7 +45,9 @@ function softenMaterial(source: THREE.Material): THREE.Material {
       const lift = 1 - luminance / DARK_LIMIT;
       color.lerp(STONE_FALLBACK, 0.35 + lift * 0.65);
     }
+    color.lerp(STORYBOOK_WARMTH, 0.08);
   }
+  if ("flatShading" in material) material.flatShading = true;
   material.needsUpdate = true;
   return material;
 }

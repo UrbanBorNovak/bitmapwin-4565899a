@@ -6,3 +6,7 @@
 
 - [x] Give every BITMAP a deterministic district, local place, address, and atlas landmark.
 - [x] Add zoom-aware place labels and name search to the atlas and Oasis mini-map.
+
+- [x] Repaint the atlas as a warm hand-painted storybook world.
+- [x] Unify Oasis sky, terrain, water, flora, buildings, and lighting with the painterly atlas.
+- [x] Verify the atlas visually and validate the 3D Oasis changes with typecheck and preview build.

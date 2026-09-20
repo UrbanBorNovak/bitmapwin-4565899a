@@ -60,19 +60,19 @@ export type DesertColors = {
   bitcoin: string;
 };
 
-const CACTUS_GREEN = "#4e7a45";
-const CACTUS_GREEN_DARK = "#3b5f36";
-const SPIKE = "#d9d2b8";
-const BLOSSOM = "#e4738f";
-const HIDE = "#8d7a5e";
-const HIDE_DARK = "#5f5240";
+const CACTUS_GREEN = "#5c874f";
+const CACTUS_GREEN_DARK = "#476c3e";
+const SPIKE = "#ede4c8";
+const BLOSSOM = "#e98798";
+const HIDE = "#a18a67";
+const HIDE_DARK = "#725d43";
 const HOSTILE = "#c0392b";
-const WATER = "#3f6f86";
-const REED = "#5d7a46";
-const PALM_TRUNK = "#7a6242";
-const PALM_LEAF = "#4f8a44";
-const OASIS_BUSH = "#3f7a3c";
-const MIRAGE = "#9fc4d6";
+const WATER = "#4d91a8";
+const REED = "#789353";
+const PALM_TRUNK = "#8d7048";
+const PALM_LEAF = "#629755";
+const OASIS_BUSH = "#518447";
+const MIRAGE = "#b8dce2";
 
 /** Stable pseudo-random in [0,1) from two integers — same cell, same plant. */
 function hash(x: number, z: number, salt: number) {

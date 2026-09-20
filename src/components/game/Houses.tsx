@@ -86,11 +86,11 @@ export const Houses = memo(function Houses({
     <>
       {houses.map((house) => (
         <group key={house.key} position={[house.x, groundY(house.x, house.z), house.z]}>
-          {quality.propDetail === "cheap" ? <mesh position={[0, house.size * 0.3, 0]} raycast={noRaycast}><boxGeometry args={[house.size * 0.6, house.size * 0.6, house.size * 0.6]} /><meshLambertMaterial color="#6b5643" flatShading /></mesh> : <Suspense
+          {quality.propDetail === "cheap" ? <mesh position={[0, house.size * 0.3, 0]} raycast={noRaycast}><boxGeometry args={[house.size * 0.6, house.size * 0.6, house.size * 0.6]} /><meshLambertMaterial color="#a47a55" flatShading /></mesh> : <Suspense
             fallback={
               <mesh position={[0, house.size * 0.3, 0]} raycast={noRaycast}>
                 <boxGeometry args={[house.size * 0.6, house.size * 0.6, house.size * 0.6]} />
-                <meshLambertMaterial color="#6b5643" flatShading />
+                <meshLambertMaterial color="#a47a55" flatShading />
               </mesh>
             }
           >

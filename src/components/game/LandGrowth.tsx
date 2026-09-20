@@ -573,13 +573,13 @@ export function LandGrowth({
 
   const palette = useMemo(
     () => ({
-      grassA: new THREE.Color("#4f7a34"),
-      grassB: new THREE.Color("#86a94a"),
-      bushA: new THREE.Color("#3f6b30"),
-      bushB: new THREE.Color("#6f9440"),
-      trunk: new THREE.Color("#5a4326"),
-      leafA: new THREE.Color("#38602c"),
-      leafB: new THREE.Color("#5c8a37"),
+      grassA: new THREE.Color("#5d8143"),
+      grassB: new THREE.Color("#a2bd62"),
+      bushA: new THREE.Color("#4e733b"),
+      bushB: new THREE.Color("#82a653"),
+      trunk: new THREE.Color("#745538"),
+      leafA: new THREE.Color("#466d38"),
+      leafB: new THREE.Color("#72a04a"),
     }),
     [],
   );

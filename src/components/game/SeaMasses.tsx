@@ -14,8 +14,8 @@ import type { PlayerState } from "@/lib/player-state";
 import { waterSurfaceY } from "@/lib/world-terrain";
 import { Primitive } from "./Primitive";
 
-const SEA_DEEP = "#2c5670";
-const SAND = "#c8b48a";
+const SEA_DEEP = "#3c86a4";
+const SAND = "#e2c98f";
 
 const noRaycast = () => {};
 

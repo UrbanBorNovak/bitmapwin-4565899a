@@ -21,14 +21,14 @@ import { groundY } from "@/lib/world-terrain";
 
 const noRaycast = () => {};
 
-const HIDE = "#8d7a5e";
-const HIDE_DARK = "#5f5240";
-const TIMBER = "#6b563c";
-const BONE = "#d9d2b8";
-const GOLD = "#d8a020";
-const EMBER = "#e2712a";
-const STONE = "#6f6f6f";
-const STONE_DARK = "#4a4a4a";
+const HIDE = "#b19a73";
+const HIDE_DARK = "#765f43";
+const TIMBER = "#805f3e";
+const BONE = "#eee5ca";
+const GOLD = "#dcae37";
+const EMBER = "#eb7135";
+const STONE = "#a89d89";
+const STONE_DARK = "#716b61";
 
 function Box({
   size,

@@ -87,7 +87,7 @@ function TreeFallback({ size }: { size: number }) {
   return (
     <mesh position={[0, size * 0.5, 0]} raycast={noRaycast}>
       <coneGeometry args={[size * 0.22, size, 6, 1]} />
-      <meshLambertMaterial color="#3d6b3f" flatShading />
+      <meshLambertMaterial color="#436a38" flatShading />
     </mesh>
   );
 }
@@ -96,7 +96,7 @@ function FlowerFallback({ size }: { size: number }) {
   return (
     <mesh position={[0, size * 0.32, 0]} raycast={noRaycast}>
       <sphereGeometry args={[size * 0.28, 6, 5]} />
-      <meshLambertMaterial color="#d88b4a" flatShading />
+      <meshLambertMaterial color="#e39a58" flatShading />
     </mesh>
   );
 }
@@ -271,7 +271,7 @@ export const PineTrees = memo(function PineTrees({
                   fallback={
                     <mesh position={[0, size * 0.5, 0]} raycast={noRaycast}>
                       <sphereGeometry args={[size * 0.4, 6, 5]} />
-                      <meshLambertMaterial color="#b8503f" flatShading />
+                      <meshLambertMaterial color="#c95e4c" flatShading />
                     </mesh>
                   }
                 >

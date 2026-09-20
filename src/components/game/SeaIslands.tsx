@@ -86,7 +86,7 @@ export const SeaIslands = memo(function SeaIslands({
                 fallback={
                   <mesh position={[0, islet.size * 0.12, 0]} raycast={noRaycast}>
                     <cylinderGeometry args={[islet.size * 0.4, islet.size * 0.5, islet.size * 0.24, 7]} />
-                    <meshLambertMaterial color="#c8b48a" flatShading />
+                    <meshLambertMaterial color="#e2c98f" flatShading />
                   </mesh>
                 }
               >
