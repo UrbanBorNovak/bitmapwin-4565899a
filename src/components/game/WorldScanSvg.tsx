@@ -20,7 +20,7 @@ type Props = {
   height: number;
   ownedHeights: number[];
   peers: Peer[];
-  onVisit?: (height: number) => void;
+  onVisit?: ((height: number) => void) | undefined;
 };
 
 /** one region = a 32×32 Hilbert subsquare = 1,024 consecutive blocks */
