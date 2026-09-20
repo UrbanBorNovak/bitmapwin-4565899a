@@ -50,7 +50,7 @@ export function AtlasRelief({ tip, recentBlocks }: { tip: number; recentBlocks: 
     return { ...row, x: point.x + 0.5, y: point.y + 0.5 };
   }), [stats.data]);
   const river = useMemo(() => chainRiver(tip), [tip]);
-  const frontier = useMemo(() => [...recentBlocks].sort((a, b) => a.height - b.height).map((block) => {
+  const frontier = useMemo(() => (Array.isArray(recentBlocks) ? [...recentBlocks] : []).sort((a, b) => a.height - b.height).map((block) => {
     const point = blockToAtlas(block.height);
     return { ...block, x: point.x + 0.5, y: point.y + 0.5 };
   }), [recentBlocks]);
