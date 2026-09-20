@@ -51,7 +51,7 @@ function tilesFor(zoom: number, tip: number): Tile[] {
         size: step,
         ridges,
         tone,
-        opacity: era.key === "unmined" ? 0.04 : 0.1 + seed * 0.1,
+        opacity: era.key === "unmined" ? 0.03 : 0.07 + seed * 0.07,
         drift: (hash(height + 7) - 0.5) * step * 0.3,
       });
     }
@@ -60,7 +60,8 @@ function tilesFor(zoom: number, tip: number): Tile[] {
 }
 
 export function AtlasTerrain({ zoom, tip }: { zoom: number; tip: number }) {
-  const tiles = useMemo(() => tilesFor(zoom, tip), [zoom, tip]);
+  const tiles = useMemo(() => (zoom < 1.8 ? [] : tilesFor(zoom, tip)), [zoom, tip]);
+  if (tiles.length === 0) return null;
   return (
     <svg
       aria-hidden
