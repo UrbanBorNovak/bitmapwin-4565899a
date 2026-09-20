@@ -111,7 +111,7 @@ export function AtlasExplorer({ initialHeight }: { initialHeight?: number }) {
   const chain = useQuery({ queryKey:["chain","tip","atlas"], queryFn:()=>fetchBlocks({data:{pages:3,scan:false}}), staleTime:25_000, refetchInterval:30_000 });
   const stats = useQuery(worldStatsQuery()); const stream = useQuery(provenanceStreamQuery("all",80));
   const [camera,setCameraState]=useState<Camera>({zoom:1,x:0,y:0}); const [selected,setSelected]=useState<Place|null>(null); const [query,setQuery]=useState(initialHeight === undefined ? "" : String(initialHeight)); const [message,setMessage]=useState("");
-  const [layers,setLayers]=useState<LayerKey[]>(ALL_LAYERS); const [dropIn,setDropIn]=useState<number|null>(null);
+  const [layers,setLayers]=useState<LayerKey[]>(ALL_LAYERS); const [dropIn,setDropIn]=useState<number|null>(null); const [landOn,setLandOn]=useState(true);
   const navigate=useNavigate();
   const visibleEvents=useMemo(()=>(stream.data??[]).filter((event)=>{const key=eventLayer(event);return key===null?layers.length===ALL_LAYERS.length:layers.includes(key);}),[stream.data,layers]);
   const toggleLayer=(key:LayerKey)=>setLayers((current)=>current.includes(key)?current.filter((item)=>item!==key):[...current,key]);
