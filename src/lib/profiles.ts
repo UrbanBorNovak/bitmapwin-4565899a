@@ -188,6 +188,15 @@ export async function saveParcelPage(input: {
     { onConflict: "bitmap_height" },
   );
   if (error) throw error;
+  // The build becomes a landmark with a provenance pin on the atlas. History is
+  // a bonus, never a blocker: a signed-out or failed record must not lose the build.
+  try {
+    await recordParcelBuildFn({
+      data: { bitmapHeight: input.bitmapHeight, buildKind: kind, title: input.title },
+    });
+  } catch {
+    /* history recording is best-effort */
+  }
 }
 
 /** Batch profile lookup so lists can show real builder names, not addresses. */
