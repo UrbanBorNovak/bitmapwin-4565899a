@@ -511,7 +511,14 @@ function ExtenderWorkbench({ extender }: { extender: Extender }) {
             extenderId={extender.id}
             slug={extender.slug}
             code={code}
+            blueprint={mode === "blueprint" && blueprint.pieces.length > 0 ? blueprint : null}
             suggestedSemver={nextSemver(latestWithCode?.semver ?? (versions.data ?? [])[0]?.semver ?? null)}
+          />
+          <PublishToAtlas
+            extenderId={extender.id}
+            extenderName={extender.name}
+            versionId={latestPublished?.id ?? null}
+            versionSemver={latestPublished?.semver ?? null}
           />
         </div>
       </div>
