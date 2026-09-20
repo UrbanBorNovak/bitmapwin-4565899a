@@ -9,7 +9,6 @@ export function AtlasPlaceLabels({ zoom }: { zoom: number }) {
     {atlasDistricts().filter((district) => district.index % step === 0).map((district) => (
       <Link
         key={district.index}
-        type="button"
         onPointerDown={(event) => event.stopPropagation()}
         to="/map/district/$slug"
         params={{ slug: district.slug }}

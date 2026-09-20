@@ -130,14 +130,18 @@ export function atlasDistrictStory(district: AtlasDistrictIdentity): AtlasDistri
   const row = Math.floor(district.index / DISTRICTS_PER_SIDE);
   const column = district.index % DISTRICTS_PER_SIDE;
   const seed = mix(district.anchorHeight + district.index * 101);
+  const opening = OPENINGS[seed % OPENINGS.length] ?? OPENINGS[0] ?? "The district waits for its next visitor.";
+  const closing = CLOSINGS[Math.floor(seed / 17) % CLOSINGS.length] ?? CLOSINGS[0] ?? "Its history remains open.";
+  const atmosphere = ATMOSPHERES[(row + column * 3) % ATMOSPHERES.length] ?? "CLEAR SKY · OPEN ROAD";
+  const form = DISTRICT_FORMS[row] ?? "Frontier";
   return {
     ...district,
     row,
     column,
     chapter: `CHAPTER ${String(district.index + 1).padStart(2, "0")} · ${district.landmark}`,
-    story: [OPENINGS[seed % OPENINGS.length], CLOSINGS[Math.floor(seed / 17) % CLOSINGS.length]],
-    atmosphere: ATMOSPHERES[(row + column * 3) % ATMOSPHERES.length],
-    motif: DISTRICT_FORMS[row].toLowerCase() as AtlasDistrictStory["motif"],
+    story: [opening, closing],
+    atmosphere,
+    motif: form.toLowerCase() as AtlasDistrictStory["motif"],
   };
 }
 
