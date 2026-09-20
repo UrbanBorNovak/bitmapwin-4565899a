@@ -59,6 +59,7 @@ import { Route as CollectionsClubRouteImport } from './routes/collections.$club'
 import { Route as DistrictSlugRouteImport } from './routes/district.$slug'
 import { Route as ExtendersIndexRouteImport } from './routes/extenders.index'
 import { Route as ExtendersSlugRouteImport } from './routes/extenders.$slug'
+import { Route as MapBlockRouteImport } from './routes/map_.$block'
 import { Route as ProfileAddressRouteImport } from './routes/profile.$address'
 import { Route as RanksIndexRouteImport } from './routes/ranks.index'
 import { Route as RanksClansRouteImport } from './routes/ranks.clans'
@@ -326,6 +327,11 @@ const ExtendersSlugRoute = ExtendersSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => ExtendersRoute,
 } as any)
+const MapBlockRoute = MapBlockRouteImport.update({
+  id: '/map_/$block',
+  path: '/map/$block',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileAddressRoute = ProfileAddressRouteImport.update({
   id: '/profile/$address',
   path: '/profile/$address',
@@ -453,6 +459,7 @@ export interface FileRoutesByFullPath {
   '/collections/$club': typeof CollectionsClubRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
+  '/map/$block': typeof MapBlockRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
@@ -517,6 +524,7 @@ export interface FileRoutesByTo {
   '/collections/$club': typeof CollectionsClubRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
+  '/map/$block': typeof MapBlockRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
@@ -585,6 +593,7 @@ export interface FileRoutesById {
   '/collections/$club': typeof CollectionsClubRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
+  '/map_/$block': typeof MapBlockRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
@@ -654,6 +663,7 @@ export interface FileRouteTypes {
     | '/collections/$club'
     | '/district/$slug'
     | '/extenders/$slug'
+    | '/map/$block'
     | '/profile/$address'
     | '/ranks/clans'
     | '/ranks/pvp'
@@ -718,6 +728,7 @@ export interface FileRouteTypes {
     | '/collections/$club'
     | '/district/$slug'
     | '/extenders/$slug'
+    | '/map/$block'
     | '/profile/$address'
     | '/ranks/clans'
     | '/ranks/pvp'
@@ -785,6 +796,7 @@ export interface FileRouteTypes {
     | '/collections/$club'
     | '/district/$slug'
     | '/extenders/$slug'
+    | '/map_/$block'
     | '/profile/$address'
     | '/ranks/clans'
     | '/ranks/pvp'
@@ -851,6 +863,7 @@ export interface RootRouteChildren {
   BitmapBlockRoute: typeof BitmapBlockRoute
   ClanTagRoute: typeof ClanTagRoute
   DistrictSlugRoute: typeof DistrictSlugRoute
+  MapBlockRoute: typeof MapBlockRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
 }
@@ -1207,6 +1220,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExtendersSlugRouteImport
       parentRoute: typeof ExtendersRoute
     }
+    '/map_/$block': {
+      id: '/map_/$block'
+      path: '/map/$block'
+      fullPath: '/map/$block'
+      preLoaderRoute: typeof MapBlockRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile/$address': {
       id: '/profile/$address'
       path: '/profile/$address'
@@ -1444,6 +1464,7 @@ const rootRouteChildren: RootRouteChildren = {
   BitmapBlockRoute: BitmapBlockRoute,
   ClanTagRoute: ClanTagRoute,
   DistrictSlugRoute: DistrictSlugRoute,
+  MapBlockRoute: MapBlockRoute,
   ProfileAddressRoute: ProfileAddressRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
 }
