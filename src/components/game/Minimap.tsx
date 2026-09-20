@@ -14,6 +14,7 @@ import { WORLD_CELL, WORLD_GRID, WORLD_UNITS } from "@/lib/player-state";
 import type { MapCursor } from "@/lib/map-presence";
 import { CHUNK_TILES, TILE, loadedChunks } from "@/lib/world-grid";
 import { MAX_RELIEF, groundY, requestTerrainAround, terrainVersion } from "@/lib/world-terrain";
+import { WorldScanSvg } from "@/components/game/WorldScanSvg";
 
 /** how many districts fit across the minimap, near to far */
 const ZOOMS = [16, 48, 160] as const;
