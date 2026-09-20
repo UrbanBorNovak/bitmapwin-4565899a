@@ -71,6 +71,7 @@ import { Route as ApiPublicCrawlTradesRouteImport } from './routes/api/public/cr
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
 import { Route as ApiPublicResolveRegistryRouteImport } from './routes/api/public/resolve-registry'
+import { Route as MapDistrictSlugRouteImport } from './routes/map.district.$slug'
 import { Route as RanksPlayerIdRouteImport } from './routes/ranks.player.$id'
 import { Route as ApiPublicBlocksHeightRouteImport } from './routes/api/public/blocks.$height'
 import { Route as ApiPublicGalleryIdRouteImport } from './routes/api/public/gallery.$id'
@@ -388,6 +389,11 @@ const ApiPublicResolveRegistryRoute =
     path: '/public/resolve-registry',
     getParentRoute: () => ApiRoute,
   } as any)
+const MapDistrictSlugRoute = MapDistrictSlugRouteImport.update({
+  id: '/district/$slug',
+  path: '/district/$slug',
+  getParentRoute: () => MapRoute,
+} as any)
 const RanksPlayerIdRoute = RanksPlayerIdRouteImport.update({
   id: '/player/$id',
   path: '/player/$id',
@@ -433,7 +439,7 @@ export interface FileRoutesByFullPath {
   '/inventory': typeof InventoryRoute
   '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
-  '/map': typeof MapRoute
+  '/map': typeof MapRouteWithChildren
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
   '/my-land': typeof MyLandRoute
@@ -473,6 +479,7 @@ export interface FileRoutesByFullPath {
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
+  '/map/district/$slug': typeof MapDistrictSlugRoute
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
@@ -499,7 +506,7 @@ export interface FileRoutesByTo {
   '/inventory': typeof InventoryRoute
   '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
-  '/map': typeof MapRoute
+  '/map': typeof MapRouteWithChildren
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
   '/my-land': typeof MyLandRoute
@@ -538,6 +545,7 @@ export interface FileRoutesByTo {
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
+  '/map/district/$slug': typeof MapDistrictSlugRoute
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
@@ -567,7 +575,7 @@ export interface FileRoutesById {
   '/inventory': typeof InventoryRoute
   '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
-  '/map': typeof MapRoute
+  '/map': typeof MapRouteWithChildren
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
   '/my-land': typeof MyLandRoute
@@ -607,6 +615,7 @@ export interface FileRoutesById {
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
+  '/map/district/$slug': typeof MapDistrictSlugRoute
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
@@ -677,6 +686,7 @@ export interface FileRouteTypes {
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
+    | '/map/district/$slug'
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
@@ -742,6 +752,7 @@ export interface FileRouteTypes {
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
+    | '/map/district/$slug'
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
@@ -810,6 +821,7 @@ export interface FileRouteTypes {
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
+    | '/map/district/$slug'
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
@@ -839,7 +851,7 @@ export interface RootRouteChildren {
   InventoryRoute: typeof InventoryRoute
   Land101Route: typeof Land101Route
   LeasesRoute: typeof LeasesRoute
-  MapRoute: typeof MapRoute
+  MapRoute: typeof MapRouteWithChildren
   MarketplaceRoute: typeof MarketplaceRoute
   McpRoute: typeof McpRoute
   MyLandRoute: typeof MyLandRoute
@@ -1304,6 +1316,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicResolveRegistryRouteImport
       parentRoute: typeof ApiRoute
     }
+    '/map/district/$slug': {
+      id: '/map/district/$slug'
+      path: '/district/$slug'
+      fullPath: '/map/district/$slug'
+      preLoaderRoute: typeof MapDistrictSlugRouteImport
+      parentRoute: typeof MapRoute
+    }
     '/ranks/player/$id': {
       id: '/ranks/player/$id'
       path: '/player/$id'
@@ -1398,6 +1417,16 @@ const ExtendersRouteWithChildren = ExtendersRoute._addFileChildren(
   ExtendersRouteChildren,
 )
 
+interface MapRouteChildren {
+  MapDistrictSlugRoute: typeof MapDistrictSlugRoute
+}
+
+const MapRouteChildren: MapRouteChildren = {
+  MapDistrictSlugRoute: MapDistrictSlugRoute,
+}
+
+const MapRouteWithChildren = MapRoute._addFileChildren(MapRouteChildren)
+
 interface RanksRouteChildren {
   RanksClansRoute: typeof RanksClansRoute
   RanksPvpRoute: typeof RanksPvpRoute
@@ -1439,7 +1468,7 @@ const rootRouteChildren: RootRouteChildren = {
   InventoryRoute: InventoryRoute,
   Land101Route: Land101Route,
   LeasesRoute: LeasesRoute,
-  MapRoute: MapRoute,
+  MapRoute: MapRouteWithChildren,
   MarketplaceRoute: MarketplaceRoute,
   McpRoute: McpRoute,
   MyLandRoute: MyLandRoute,
