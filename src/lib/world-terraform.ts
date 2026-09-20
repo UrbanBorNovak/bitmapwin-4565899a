@@ -168,6 +168,9 @@ export async function terraform(x: number, z: number) {
   recompute();
 
   try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.session) return { land: optimistic, already: false };
     const result = await seedTerraform({
       data: { height, chunkKey: chunkOfTile(col, row), col, row },
     });
