@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_CONFIGS, isBuildKind, parseBuildConfig, type BuildKind } from "@/lib/build-sdk";
+import { recordParcelBuildFn } from "@/lib/passport.functions";
 import { saveWalletProfileFn } from "@/lib/profiles.functions";
 import { assertSafeExternalUrl } from "@/lib/safe-url";
 
