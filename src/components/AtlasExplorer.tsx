@@ -11,7 +11,10 @@ import { worldStatsQuery, formatCount } from "@/lib/world-stats";
 import { provenanceStreamQuery } from "@/lib/provenance-stream";
 import { timeAgo } from "@/lib/bitmap";
 import { atlasEra, atlasScale, atlasToBlock, ATLAS_SIDE, blockToAtlas, parseAtlasBlock } from "@/lib/atlas-geometry";
+import { getAtlasClaims, indexAtlasFrontier } from "@/lib/atlas-land.functions";
+import { colorForAddress } from "@/lib/map-owners";
 import type { ProvenanceEvent } from "@/lib/passport";
+import type { AtlasClaim } from "@/lib/atlas-land.server";
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 10;
