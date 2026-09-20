@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Blocks, Compass, Crosshair, Hammer, KeyRound, LocateFixed, Map as MapIcon, MapPin, Minus, Plus, Radio, Search, Store, Globe2, X } from "lucide-react";
-import atlas from "@/assets/oasis-atlas.jpg.asset.json";
+import atlasHd from "@/assets/oasis-atlas-hd.jpg";
 import { Button } from "@/components/ui/button";
 import { getChainBlocks } from "@/lib/chain.functions";
 import { worldStatsQuery, formatCount } from "@/lib/world-stats";
@@ -50,7 +50,7 @@ function clusterPlaces(places: Place[], zoom: number): Cluster[] {
 }
 
 function BiomeMesh({ tip }: { tip: number }) {
-  return <div className="pointer-events-none absolute inset-0 grid grid-cols-8 grid-rows-8 opacity-25">{Array.from({ length: 64 }, (_, index) => {
+  return <div className="pointer-events-none absolute inset-0 grid grid-cols-8 grid-rows-8 opacity-15 mix-blend-soft-light">{Array.from({ length: 64 }, (_, index) => {
     const x = (index % 8) * 128 + 64; const y = Math.floor(index / 8) * 128 + 64;
     const era = atlasEra(atlasToBlock(x, y), tip);
     const tone = era.key === "frontier" ? "bg-signal/35" : era.key === "genesis" ? "bg-foreground/20" : era.key === "early" ? "bg-signal/15" : era.key === "unmined" ? "bg-background/65" : "bg-bitcoin/10";
@@ -96,13 +96,15 @@ export function AtlasExplorer({ initialHeight }: { initialHeight?: number }) {
         {message&&<p className="mb-2 font-mono text-[10px] text-destructive">{message}</p>}
         <section ref={surfaceRef} aria-label="Interactive Bitcoin land atlas" className="relative h-[64vh] min-h-[480px] touch-none select-none overflow-hidden border border-border bg-background cursor-grab active:cursor-grabbing md:h-[72vh]" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp}>
           <div className="absolute inset-0 origin-top-left will-change-transform" style={{transform:`translate(${camera.x*100}%,${camera.y*100}%) scale(${camera.zoom})`}}>
-            <img src={atlas.url} alt="Painted Oasis atlas skin over the Bitcoin block spatial index" draggable={false} className="absolute inset-0 size-full object-cover"/><BiomeMesh tip={tipHeight}/>
+            <img src={atlasHd} alt="Highly detailed painted Oasis atlas over the Bitcoin block spatial index" draggable={false} width={1920} height={1200} fetchPriority="high" className="absolute inset-0 size-full object-cover [image-rendering:auto]"/>
+            <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,var(--background)_145%)] opacity-35 mix-blend-multiply" />
+            <BiomeMesh tip={tipHeight}/>
             {clusters.map((cluster)=>{ const single=cluster.places.length===1; const place=cluster.places[0]; return <button key={cluster.key} type="button" onPointerDown={(event)=>event.stopPropagation()} onClick={()=>{if(single&&place){setSelected(place);focusHeight(place.height,Math.max(4,camera.zoom));}else{const zoom=Math.min(MAX_ZOOM,camera.zoom*2);setCamera({zoom,x:.5-cluster.x*zoom,y:.5-cluster.y*zoom});}}} style={{left:`${cluster.x*100}%`,top:`${cluster.y*100}%`,transform:`translate(-50%,-50%) scale(${1/camera.zoom})`}} className="absolute grid min-h-9 min-w-9 place-items-center border-2 border-background bg-bitcoin px-2 font-mono text-[10px] font-bold text-bitcoin-foreground shadow-lg" aria-label={single&&place?`${place.height}.BITMAP, ${place.count} verified records`:`Cluster of ${cluster.places.length} BITMAPs`}>{single&&place?<><MapPin className="size-4"/><span className="sr-only">{place.height}</span></>:cluster.places.length}</button>;})}
             {selected&&<span aria-hidden style={{left:`${selected.x*100}%`,top:`${selected.y*100}%`,transform:`translate(-50%,-50%) scale(${1/camera.zoom})`}} className="pointer-events-none absolute size-14 rounded-full border-2 border-signal shadow-[0_0_18px_var(--color-signal)]"/>}
           </div>
           <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-3"><div className="pointer-events-auto flex border border-border bg-background/90 backdrop-blur"><Button type="button" variant="ghost" size="icon" onClick={()=>zoomAtCenter(1.5)} aria-label="Zoom in"><Plus/></Button><Button type="button" variant="ghost" size="icon" onClick={()=>zoomAtCenter(1/1.5)} aria-label="Zoom out"><Minus/></Button><Button type="button" variant="ghost" size="icon" onClick={()=>setCamera({zoom:1,x:0,y:0})} aria-label="Show whole world"><Crosshair/></Button></div><p className="border border-border bg-background/90 px-3 py-2 font-mono text-[9px] text-signal backdrop-blur" data-no-translate>{atlasScale(camera.zoom)} · {camera.zoom.toFixed(1)}×</p></div>
           <div className="pointer-events-none absolute bottom-3 left-3 border border-border bg-background/90 px-3 py-2 font-mono text-[9px] backdrop-blur"><p className="text-muted-foreground">HILBERT 1024² · TIP {tipHeight?tipHeight.toLocaleString("en-US"):"…"}</p><p className="mt-1 text-signal" data-no-translate>{selected?`BLOCK ${selected.height.toLocaleString("en-US")}`:"DRAG · SCROLL · PINCH"}</p></div>
-          <div className="absolute bottom-3 right-3 hidden h-24 w-36 overflow-hidden border border-border bg-background/90 sm:block"><img src={atlas.url} alt="Atlas mini-map" className="size-full object-cover opacity-70"/><span className="absolute border border-signal bg-signal/10" style={{left:`${(-camera.x/camera.zoom)*100}%`,top:`${(-camera.y/camera.zoom)*100}%`,width:`${100/camera.zoom}%`,height:`${100/camera.zoom}%`}}/><Compass className="absolute right-1 top-1 size-4 text-bitcoin"/></div>
+          <div className="absolute bottom-3 right-3 hidden h-24 w-36 overflow-hidden border border-border bg-background/90 sm:block"><img src={atlasHd} alt="Atlas mini-map" loading="lazy" width={1920} height={1200} className="size-full object-cover opacity-80"/><span className="absolute border border-signal bg-signal/10" style={{left:`${(-camera.x/camera.zoom)*100}%`,top:`${(-camera.y/camera.zoom)*100}%`,width:`${100/camera.zoom}%`,height:`${100/camera.zoom}%`}}/><Compass className="absolute right-1 top-1 size-4 text-bitcoin"/></div>
         </section>
         <div className="mt-2 flex flex-wrap gap-2 border border-border bg-surface/60 px-3 py-2 font-mono text-[9px] text-muted-foreground"><span className="text-bitcoin">LEGEND</span><span>■ VERIFIED HISTORY</span><span className="text-signal">□ SELECTED</span><span>SHADE = CHAIN ERA / BIOME</span><span>FOG = UNMINED FRONTIER</span></div>
       </main>

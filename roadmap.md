@@ -68,3 +68,4 @@
 - [x] Build Passport, Stream, evidence-backed stamps, build unlocks, and the full provenance product loop
 
 - [x] Turn the painted Oasis into a spatial Bitcoin atlas with Hilbert placement, zoom, clustering, block jump, and deep links
+- [x] Upgrade the Oasis atlas to a richly detailed HD painterly world render
