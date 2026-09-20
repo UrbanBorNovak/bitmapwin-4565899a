@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Hammer, Footprints, Landmark, MapPin, Boxes } from "lucide-react";
-import type { PassportEstate, EstateTimelineEntry } from "@/lib/passport-estate.server";
+import type { PassportEstate, EstateTimelineEntry } from "@/lib/passport-estate";
 import { atlasPlace } from "@/lib/atlas-places";
 
 function when(at: string) {

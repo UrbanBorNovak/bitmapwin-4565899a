@@ -1,0 +1,31 @@
+/** Shapes for the IDENTITY estate (client-safe). */
+export type EstateLand = { height: number; inscriptionId: string | null };
+export type EstateBuild = { id: string; height: number; kind: string; source: string; createdAt: string };
+export type EstateVisit = { height: number; visits: number; lastAt: string };
+export type EstateBlueprint = {
+  id: string;
+  slug: string;
+  name: string;
+  semver: string;
+  pieces: number;
+  summary: string;
+  publishedAt: string;
+  deployments: number;
+};
+export type EstateTimelineEntry = {
+  id: string;
+  at: string;
+  kind: "land" | "build" | "visit" | "blueprint" | "deployment";
+  height: number | null;
+  title: string;
+  detail: string;
+};
+export type PassportEstate = {
+  wallet: string | null;
+  land: EstateLand[];
+  builds: EstateBuild[];
+  visits: EstateVisit[];
+  blueprints: EstateBlueprint[];
+  timeline: EstateTimelineEntry[];
+};
+
