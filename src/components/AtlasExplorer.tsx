@@ -88,7 +88,7 @@ function BiomeMesh({ tip }: { tip: number }) {
   })}</div>;
 }
 
-function Inspector({ place, tip, close, dropInto }: { place: Place; tip: number; close: () => void; dropInto: (height: number) => void }) {
+function Inspector({ place, tip, close, dropInto, claim }: { place: Place; tip: number; close: () => void; dropInto: (height: number) => void; claim?: AtlasClaim | undefined }) {
   const point = blockToAtlas(place.height); const era = atlasEra(place.height, tip);
   return <div className="min-w-0 border border-bitcoin/60 bg-background/95 p-4 shadow-2xl backdrop-blur-md">
     <div className="flex items-start justify-between gap-3"><div><p className="label text-bitcoin">SELECTED BITMAP</p><h2 className="mt-1 font-mono text-lg font-bold tabular-nums" data-no-translate>{place.height.toLocaleString("en-US")}.BITMAP</h2></div><Button type="button" variant="ghost" size="icon" onClick={close} aria-label="Close selected BITMAP"><X /></Button></div>
