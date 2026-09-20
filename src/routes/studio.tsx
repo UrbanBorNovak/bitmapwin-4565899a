@@ -392,16 +392,55 @@ function ExtenderWorkbench({ extender }: { extender: Extender }) {
 
       <MetadataEditor extender={extender} onSave={() => queryClient.invalidateQueries({ queryKey: ["my-extenders"] })} />
 
+      <div className="flex flex-wrap items-center gap-2 border border-border bg-surface px-3 py-2">
+        <span className="label text-muted-foreground">HOW YOU BUILD IT</span>
+        {([
+          ["blueprint", "BLUEPRINT EDITOR"],
+          ["code", "PLAIN WORDS + CODE"],
+        ] as const).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setMode(id)}
+            className={`border px-2 py-1.5 font-mono text-[10px] ${
+              mode === id ? "border-bitcoin text-bitcoin" : "border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+        {latestWithCode && blueprintFromManifest(latestWithCode.manifest) ? (
+          <button
+            type="button"
+            onClick={() => {
+              const loaded = blueprintFromManifest(latestWithCode.manifest);
+              if (loaded) {
+                setMode("blueprint");
+                applyBlueprint(loaded);
+              }
+            }}
+            className="border border-signal px-2 py-1.5 font-mono text-[10px] text-signal"
+            data-no-translate
+          >
+            LOAD BLUEPRINT v{latestWithCode.semver}
+          </button>
+        ) : null}
+      </div>
+
       <div className="grid gap-4 xl:grid-cols-2">
         <div className="space-y-4">
-          <AiComposer
-            code={code}
-            onCode={setCode}
-            category={extender.category}
-            height={height}
-            name={extender.name}
-            summary={extender.summary}
-          />
+          {mode === "blueprint" ? (
+            <BlueprintEditor blueprint={blueprint} onChange={applyBlueprint} />
+          ) : (
+            <AiComposer
+              code={code}
+              onCode={setCode}
+              category={extender.category}
+              height={height}
+              name={extender.name}
+              summary={extender.summary}
+            />
+          )}
 
           <div className="border border-border bg-surface p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
