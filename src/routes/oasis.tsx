@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { lazy, Suspense } from "react";
 import { getChainBlocks } from "@/lib/chain.functions";
+import { OasisAtlasMinimap } from "@/components/OasisAtlasMinimap";
 
 const BitmapWorld3D = lazy(() => import("@/components/BitmapWorld3D").then((module) => ({ default: module.BitmapWorld3D })));
 
@@ -68,7 +69,7 @@ function OasisPage() {
 
   return (
     <div className="px-0 pb-0 sm:px-2 sm:pb-2 md:px-3">
-      <div data-tour="map-world" className="min-w-0">
+      <div data-tour="map-world" className="relative min-w-0">
         <Suspense fallback={<div className="grid h-[78vh] min-h-[520px] place-items-center border border-border bg-background font-mono text-xs text-signal">INITIALIZING OASIS RENDERER…</div>}>
           <BitmapWorld3D
             tipHeight={tipHeight}
@@ -76,6 +77,7 @@ function OasisPage() {
             legend={<span data-tour="map-legend" className="flex flex-wrap items-center gap-2">{legend}</span>}
           />
         </Suspense>
+        <OasisAtlasMinimap height={height} tipHeight={tipHeight} />
       </div>
     </div>
   );
