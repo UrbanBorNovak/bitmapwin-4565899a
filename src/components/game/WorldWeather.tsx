@@ -104,16 +104,16 @@ export function WeatherLighting({ foreground, background, bitcoin }: { foregroun
   useFrame(({ clock }) => {
     const weather = worldWeather(clock.getElapsedTime());
     if (sun.current) {
-      sun.current.intensity = 0.4 + weather.sun * 0.95;
+      sun.current.intensity = 0.58 + weather.sun * 0.82;
       sun.current.position.set(-18 + weather.windX * 3, 24 + weather.sun * 12, -12 + weather.windZ * 3);
     }
-    if (hemi.current) hemi.current.intensity = 0.28 + weather.sun * 0.24;
-    if (warm.current) warm.current.intensity = 8 + weather.sun * 10;
+    if (hemi.current) hemi.current.intensity = 0.38 + weather.sun * 0.28;
+    if (warm.current) warm.current.intensity = 12 + weather.sun * 11;
   });
 
   return (
     <>
-      <ambientLight intensity={0.42} />
+      <ambientLight intensity={0.56} />
       {quality.resolved !== "low" ? <hemisphereLight ref={hemi} args={[foreground, background, 0.52]} /> : null}
       <directionalLight ref={sun} color={foreground} position={[-18, 36, -12]} intensity={1.35} castShadow={quality.shadows} shadow-mapSize-width={quality.shadowMapSize || 512} shadow-mapSize-height={quality.shadowMapSize || 512} />
       {quality.resolved === "high" ? <pointLight ref={warm} color={bitcoin} position={[14, 10, 3]} intensity={18} distance={28} decay={2} /> : null}

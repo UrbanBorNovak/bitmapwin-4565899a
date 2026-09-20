@@ -183,6 +183,15 @@ function Landform({ spec }: { spec: TerrainModelSpec }) {
     model.traverse((child) => {
       const mesh = child as THREE.Mesh;
       if (!mesh.isMesh) return;
+      const source = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+      if (source) {
+        const material = source.clone() as THREE.MeshStandardMaterial;
+        material.metalness = 0;
+        material.roughness = 1;
+        material.flatShading = true;
+        if (material.color) material.color.lerp(new THREE.Color("#8da56c"), 0.1);
+        mesh.material = material;
+      }
       mesh.castShadow = false;
       mesh.receiveShadow = false;
       mesh.frustumCulled = false;

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Activity, Blocks, Compass, Crosshair, Hammer, KeyRound, LocateFixed, Map as MapIcon, MapPin, Minus, Plus, Radio, Search, Store, Globe2, Swords, Eye, Tag, Flame, Wallet, X } from "lucide-react";
-import atlasHd from "@/assets/oasis-atlas-hd.jpg";
+import atlasHd from "@/assets/oasis-atlas-storybook.jpg";
 import { AtlasRelief } from "@/components/AtlasRelief";
 import { AtlasPlaceLabels } from "@/components/AtlasPlaceLabels";
 import { AtlasTerrain, AtlasBeacon } from "@/components/AtlasTerrain";
@@ -180,11 +180,10 @@ export function AtlasExplorer({ initialHeight }: { initialHeight?: number }) {
       <main className="min-w-0">
         <form onSubmit={jump} className="mb-2 flex min-w-0 gap-2"><label className="relative min-w-0 flex-1"><span className="sr-only">Jump to block, district, or landmark</span><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"/><input value={query} onChange={(event)=>setQuery(event.target.value)} placeholder="BLOCK, DISTRICT, OR LANDMARK" className="h-10 w-full border border-input bg-background pl-10 pr-3 font-mono text-xs outline-none focus:border-bitcoin"/></label><Button type="submit" variant="terminal"><LocateFixed/>JUMP</Button></form>
         {message&&<p className="mb-2 font-mono text-[10px] text-destructive">{message}</p>}
-        <section ref={surfaceRef} aria-label="Interactive Bitcoin land atlas" className="relative h-[64vh] min-h-[480px] touch-none select-none overflow-hidden border border-bitcoin/35 bg-background shadow-[0_18px_60px_-28px_var(--color-bitcoin)] cursor-grab active:cursor-grabbing md:h-[72vh]" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp}>
+        <section ref={surfaceRef} aria-label="Interactive Bitcoin land atlas" className="atlas-storybook relative h-[64vh] min-h-[480px] touch-none select-none overflow-hidden border border-bitcoin/35 bg-background shadow-[0_18px_60px_-28px_var(--color-bitcoin)] cursor-grab active:cursor-grabbing md:h-[72vh]" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp}>
           <div className="absolute inset-0 origin-top-left will-change-transform" style={{transform:`translate(${camera.x*100}%,${camera.y*100}%) scale(${camera.zoom})`}}>
-            <img src={atlasHd} alt="Highly detailed painted Oasis atlas over the Bitcoin block spatial index" draggable={false} width={1920} height={1200} fetchPriority="high" className="absolute inset-0 size-full object-cover [image-rendering:auto] saturate-[.88] contrast-[.96] brightness-[1.04]"/>
-            <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_58%,var(--background)_155%)] opacity-35 mix-blend-multiply" />
-            <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[.055] mix-blend-soft-light [background-image:repeating-linear-gradient(0deg,var(--color-foreground)_0,var(--color-foreground)_1px,transparent_1px,transparent_4px)]" />
+            <img src={atlasHd} alt="Highly detailed hand-painted Oasis atlas over the Bitcoin block spatial index" draggable={false} width={1920} height={1200} fetchPriority="high" className="absolute inset-0 size-full object-cover [image-rendering:auto] saturate-[1.05] contrast-[.94] brightness-[1.04]"/>
+            <div aria-hidden className="atlas-storybook__wash pointer-events-none absolute inset-0" />
             <BiomeMesh tip={tipHeight}/>
              <AtlasRelief tip={tipHeight} recentBlocks={recentBlocks}/>
              <AtlasTerrain zoom={camera.zoom} tip={tipHeight}/>

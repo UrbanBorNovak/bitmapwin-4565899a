@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import atlasHd from "@/assets/oasis-atlas-hd.jpg";
+import atlasHd from "@/assets/oasis-atlas-storybook.jpg";
 import { ATLAS_CAPACITY, ATLAS_SIDE, atlasToBlock, blockToAtlas } from "@/lib/atlas-geometry";
 import { atlasPlace } from "@/lib/atlas-places";
 
@@ -42,7 +42,7 @@ export function OasisAtlasMinimap({ height, tipHeight }: { height?: number | und
             aria-label="Travel to a district on the atlas"
             className="relative block aspect-square w-full overflow-hidden"
           >
-            <img src={atlasHd} alt="Atlas of the Oasis" loading="lazy" className="absolute inset-0 size-full object-cover opacity-80" />
+            <img src={atlasHd} alt="Hand-painted atlas of the Oasis" loading="lazy" className="absolute inset-0 size-full object-cover opacity-90 saturate-[1.05]" />
             {tip && (
               <span
                 className="absolute size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-signal shadow-[0_0_6px_var(--color-signal)]"

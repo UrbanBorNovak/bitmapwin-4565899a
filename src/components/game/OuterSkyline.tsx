@@ -68,7 +68,7 @@ function SkylineFallback({ placements }: { placements: readonly Placement[] }) {
         <group key={index} position={[x, y, z]} rotation-y={yaw}>
           <mesh position={[0, height * 0.5, 0]} raycast={noRaycast}>
             <boxGeometry args={[height * 0.19, height, height * 0.16]} />
-            <meshLambertMaterial color="#777b7d" />
+            <meshLambertMaterial color="#9c9b8f" flatShading />
           </mesh>
         </group>
       ))}

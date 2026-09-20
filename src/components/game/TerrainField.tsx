@@ -26,11 +26,11 @@ const SPAN_CELLS = 72;
 const SEGMENTS = 108;
 const SPAN = WORLD_CELL * SPAN_CELLS;
 
-/** Land tones: low basin, open sand, high rock. Warm desert, never neon. */
-const LOW = new THREE.Color("#7a4a24");
-const MID = new THREE.Color("#c08b4d");
-const HIGH = new THREE.Color("#d9c9ab");
-const WET = new THREE.Color("#4b6a5e");
+/** Painted land tones: mossy lowlands, sunlit ochre, and warm chalk peaks. */
+const LOW = new THREE.Color("#667342");
+const MID = new THREE.Color("#b9a65c");
+const HIGH = new THREE.Color("#e8dfbd");
+const WET = new THREE.Color("#3f7468");
 
 export function TerrainField({ pose }: { pose: React.RefObject<PlayerState> }) {
   const meshRef = useRef<THREE.Mesh>(null);
@@ -109,7 +109,7 @@ export function TerrainField({ pose }: { pose: React.RefObject<PlayerState> }) {
 
   return (
     <mesh ref={meshRef} geometry={geometry} receiveShadow renderOrder={-2}>
-      <meshStandardMaterial vertexColors roughness={0.95} metalness={0} flatShading />
+      <meshStandardMaterial vertexColors roughness={1} metalness={0} flatShading />
     </mesh>
   );
 }

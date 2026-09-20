@@ -93,10 +93,10 @@ function InscribedMoon({ size, dim }: { size: number; dim: number }) {
   );
 }
 
-const SUN = "#ffd7a0";
-const SUN_CORE = "#fff6e0";
-const MOON = "#e8ecf2";
-const STAR = "#ffffff";
+const SUN = "#ffd58a";
+const SUN_CORE = "#fff8d9";
+const MOON = "#eef2e5";
+const STAR = "#fff9e8";
 
 const SKY_VERTEX = /* glsl */ `
   varying vec3 vSkyDirection;
@@ -123,12 +123,12 @@ const SKY_FRAGMENT = /* glsl */ `
     float altitude = clamp(direction.y * 0.72 + 0.28, 0.0, 1.0);
     float horizon = pow(1.0 - altitude, 2.3);
 
-    vec3 dayHorizon = vec3(0.76, 0.70, 0.60);
-    vec3 dayMid = vec3(0.20, 0.47, 0.65);
-    vec3 dayZenith = vec3(0.055, 0.18, 0.30);
-    vec3 nightHorizon = vec3(0.14, 0.20, 0.25);
-    vec3 nightMid = vec3(0.035, 0.09, 0.15);
-    vec3 nightZenith = vec3(0.008, 0.025, 0.055);
+    vec3 dayHorizon = vec3(1.00, 0.86, 0.68);
+    vec3 dayMid = vec3(0.42, 0.72, 0.88);
+    vec3 dayZenith = vec3(0.12, 0.38, 0.68);
+    vec3 nightHorizon = vec3(0.22, 0.28, 0.34);
+    vec3 nightMid = vec3(0.055, 0.13, 0.21);
+    vec3 nightZenith = vec3(0.015, 0.045, 0.09);
 
     vec3 dayColor = mix(dayHorizon, dayMid, smoothstep(0.0, 0.48, altitude));
     dayColor = mix(dayColor, dayZenith, smoothstep(0.42, 1.0, altitude));
@@ -141,10 +141,12 @@ const SKY_FRAGMENT = /* glsl */ `
     float cloudB = skyNoise(cloudUv * 1.83 + vec2(-uTime * 0.009, uTime * 0.005));
     float clouds = smoothstep(mix(0.69, 0.42, uCloud), 0.92, cloudA * 0.62 + cloudB * 0.38);
     clouds *= smoothstep(0.03, 0.34, altitude) * (1.0 - smoothstep(0.72, 0.98, altitude));
-    vec3 cloudColor = mix(vec3(0.62, 0.66, 0.66), vec3(0.12, 0.17, 0.22), uNight);
-    color = mix(color, cloudColor, clouds * mix(0.22, 0.12, uNight) * (1.0 + uCloud * 1.8));
-    color = mix(color, vec3(0.12, 0.16, 0.18), uRain * 0.38);
-    color += mix(vec3(0.12, 0.055, 0.018), vec3(0.018, 0.035, 0.05), uNight) * horizon;
+    vec3 cloudColor = mix(vec3(0.98, 0.95, 0.84), vec3(0.18, 0.23, 0.29), uNight);
+    color = mix(color, cloudColor, clouds * mix(0.34, 0.14, uNight) * (1.0 + uCloud * 1.55));
+    color = mix(color, vec3(0.18, 0.25, 0.27), uRain * 0.3);
+    color += mix(vec3(0.17, 0.075, 0.022), vec3(0.022, 0.045, 0.07), uNight) * horizon;
+    float paper = (skyNoise(direction.xz * 84.0 + direction.xy * 23.0) - 0.5) * 0.018;
+    color += paper;
 
     gl_FragColor = vec4(color, 1.0);
   }

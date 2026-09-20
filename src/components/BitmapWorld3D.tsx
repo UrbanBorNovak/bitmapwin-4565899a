@@ -2107,8 +2107,8 @@ function GroundPlane({ colors }: { colors: WorldColors }) {
       uSand: { value: new THREE.Color(colors.muted) },
       uGlow: { value: new THREE.Color(colors.bitcoin) },
       uFogColor: { value: new THREE.Color(colors.background) },
-      uFogNear: { value: 40 },
-      uFogFar: { value: 190 },
+      uFogNear: { value: 24 },
+      uFogFar: { value: 150 },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -2178,10 +2178,10 @@ function GroundPlane({ colors }: { colors: WorldColors }) {
             float dune = noise(p * 0.045) * 0.65 + noise(p * 0.14) * 0.35;
             // Fine ripples creeping sideways, like wind over sand.
             float ripple = noise(p * 0.9 + vec2(uTime * 0.25, uTime * 0.06));
-            vec3 col = mix(uBase, uSand, 0.25 + dune * 0.4);
-            col += uSand * (ripple - 0.5) * 0.12;
+            vec3 col = mix(uBase, uSand, 0.34 + dune * 0.46);
+            col += uSand * (ripple - 0.5) * 0.08;
             // A faint warm shimmer where the ripples catch the light.
-            col += uGlow * smoothstep(0.72, 1.0, ripple) * 0.05;
+            col += uGlow * smoothstep(0.75, 1.0, ripple) * 0.035;
             float depth = gl_FragCoord.z / gl_FragCoord.w;
             float fogFactor = smoothstep(uFogNear, uFogFar, depth);
             gl_FragColor = vec4(mix(col, uFogColor, fogFactor), 1.0);
@@ -3501,7 +3501,7 @@ function BitmapWorld3DInner({
 
   return (
     <div className={className}>
-      <div className="relative h-[calc(100dvh-3.5rem)] min-h-[360px] w-full overflow-hidden border-0 border-border bg-background sm:h-[78vh] sm:min-h-[520px] sm:border">
+      <div className="oasis-storybook relative h-[calc(100dvh-3.5rem)] min-h-[360px] w-full overflow-hidden border-0 border-border bg-background sm:h-[78vh] sm:min-h-[520px] sm:border">
         {/* A soft frame around the screen: darkened corners and a thin lit edge,
             so the readouts sit inside a cockpit instead of floating loose. */}
         {exploring ? <div className="hud-vignette" aria-hidden="true" /> : null}
@@ -3949,7 +3949,7 @@ function BitmapWorld3DInner({
               // Filmic response: highlights on sand, water and orange tiles roll
               // off instead of clipping to flat white.
               toneMapping: THREE.ACESFilmicToneMapping,
-              toneMappingExposure: 1.08,
+              toneMappingExposure: 1.18,
             }}
             performance={{ min: 0.4 }}
           >

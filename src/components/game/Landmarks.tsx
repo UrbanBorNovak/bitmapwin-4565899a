@@ -34,7 +34,7 @@ function Landmark({ spec, boost }: { spec: LandmarkSpec; boost: number }) {
         fallback={
           <mesh position={[0, size * 0.5, 0]} raycast={noRaycast}>
             <boxGeometry args={[size * 0.6, size, size * 0.6]} />
-            <meshLambertMaterial color="#4a4a4a" flatShading />
+            <meshLambertMaterial color="#aa9675" flatShading />
           </mesh>
         }
       >
