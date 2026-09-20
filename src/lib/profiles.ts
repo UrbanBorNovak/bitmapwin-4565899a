@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_CONFIGS, isBuildKind, parseBuildConfig, type BuildKind } from "@/lib/build-sdk";
+import { recordParcelBuildFn } from "@/lib/passport.functions";
 import { saveWalletProfileFn } from "@/lib/profiles.functions";
 import { assertSafeExternalUrl } from "@/lib/safe-url";
 
@@ -188,6 +189,15 @@ export async function saveParcelPage(input: {
     { onConflict: "bitmap_height" },
   );
   if (error) throw error;
+  // The build becomes a landmark with a provenance pin on the atlas. History is
+  // a bonus, never a blocker: a signed-out or failed record must not lose the build.
+  try {
+    await recordParcelBuildFn({
+      data: { bitmapHeight: input.bitmapHeight, buildKind: kind, title: input.title },
+    });
+  } catch {
+    /* history recording is best-effort */
+  }
 }
 
 /** Batch profile lookup so lists can show real builder names, not addresses. */

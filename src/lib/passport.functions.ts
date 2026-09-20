@@ -34,3 +34,40 @@ export const listProvenanceStreamFn = createServerFn({ method: "GET" })
     const { readPublicStream } = await import("@/lib/passport.server");
     return { events: await readPublicStream(data) };
   });
+
+/**
+ * A parcel page build becomes verified history: the atlas shows it as a
+ * landmark pin on the BITMAP where it was raised.
+ */
+export const recordParcelBuildFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({
+    bitmapHeight: z.number().int().min(0).max(10_000_000),
+    buildKind: z.string().trim().min(1).max(40),
+    title: z.string().trim().max(120).nullable().optional(),
+  }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { appendProvenance, syncPassport } = await import("@/lib/passport.server");
+    const { data: link } = await context.supabase
+      .from("wallet_links")
+      .select("address")
+      .eq("user_id", context.userId)
+      .order("verified_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    await appendProvenance({
+      sourceKey: `page-build:${data.bitmapHeight}:${data.buildKind}`,
+      eventType: "build",
+      userId: context.userId,
+      wallet: link?.address ?? null,
+      bitmapHeight: data.bitmapHeight,
+      sourceType: "parcel_page",
+      sourceId: String(data.bitmapHeight),
+      proofLevel: "WORLD",
+      title: "LANDMARK RAISED",
+      summary: `${data.buildKind.replaceAll("-", " ").toUpperCase()} built on ${data.bitmapHeight}.BITMAP${data.title ? ` — ${data.title}` : ""}`,
+      metadata: { buildKind: data.buildKind, landmark: true },
+    });
+    await syncPassport(context.userId);
+    return { ok: true };
+  });
