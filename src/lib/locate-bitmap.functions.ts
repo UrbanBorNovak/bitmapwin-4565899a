@@ -27,5 +27,10 @@ export const getBitmapHolderFn = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     const { locateBitmapHolder } = await import("@/lib/locate-bitmap.server");
-    return locateBitmapHolder(data.height);
+    try {
+      return await locateBitmapHolder(data.height);
+    } catch {
+      // Not inscribed / not indexed yet, or the ordinals index is unreachable.
+      return null;
+    }
   });
