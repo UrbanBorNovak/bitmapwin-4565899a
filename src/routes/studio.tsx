@@ -21,6 +21,9 @@ import {
 import { createExtenderFn, publishVersionFn, setExtenderStatusFn, updateExtenderMetadataFn } from "@/lib/extenders.functions";
 import { generateExtenderCodeFn } from "@/lib/extender-ai.functions";
 import { RUNTIME_LIMITS, STARTER_TEMPLATES, codeFromManifest } from "@/lib/extender-sdk";
+import { BlueprintEditor } from "@/components/studio/BlueprintEditor";
+import { PublishToAtlas } from "@/components/studio/PublishToAtlas";
+import { EMPTY_BLUEPRINT, blueprintFromManifest, codeFromBlueprint, type Blueprint } from "@/lib/blueprint";
 
 export const Route = createFileRoute("/studio")({
   validateSearch: (search: Record<string, unknown>): { selected?: string } => {
@@ -654,11 +657,13 @@ function PublishVersionForm({
   extenderId,
   slug,
   code,
+  blueprint,
   suggestedSemver,
 }: {
   extenderId: string;
   slug: string;
   code: string;
+  blueprint: Blueprint | null;
   suggestedSemver: string;
 }) {
   const publish = useServerFn(publishVersionFn);
@@ -684,7 +689,11 @@ function PublishVersionForm({
           semver: semver.trim(),
           sdkVersion: SDK_VERSION,
           changelog: changelog.trim(),
-          manifest: code.trim() ? { code: code.trim(), config } : { config },
+          manifest: {
+            ...(code.trim() ? { code: code.trim() } : {}),
+            ...(blueprint ? { blueprint } : {}),
+            config,
+          },
           publish: true,
           dependencies: dependencies.map((d) => ({ dependsOnExtenderId: d.extenderId, versionRange: d.versionRange })),
           permissions: permissions.map((permission) => ({ permission, reason: "" })),
