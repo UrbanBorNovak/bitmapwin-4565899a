@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { atlasEra, blockToAtlas } from "@/lib/atlas-geometry";
 import { atlasDistrictBySlug, atlasDistrictNeighbors, atlasDistrictStory, atlasDistricts } from "@/lib/atlas-places";
 
-export const Route = createFileRoute("/map/district/$slug")({
+export const Route = createFileRoute("/map_/district/$slug")({
   loader: ({ params }) => {
     const district = atlasDistrictBySlug(params.slug);
     if (!district) throw notFound();
