@@ -84,7 +84,7 @@ export function PublishToAtlas({
       </div>
       {placed !== null ? (
         <div className="mt-3 flex flex-wrap gap-2">
-          <Link to="/map/$block" params={{ block: String(placed) }} className="btn-term-ghost">
+          <Link to="/map_/$block" params={{ block: String(placed) }} className="btn-term-ghost">
             [ SEE IT ON THE MAP ]
           </Link>
           <Link to="/oasis" search={{ height: placed }} className="btn-term-ghost">[ WALK INTO IT ]</Link>
