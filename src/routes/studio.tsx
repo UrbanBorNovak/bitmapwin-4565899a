@@ -21,6 +21,9 @@ import {
 import { createExtenderFn, publishVersionFn, setExtenderStatusFn, updateExtenderMetadataFn } from "@/lib/extenders.functions";
 import { generateExtenderCodeFn } from "@/lib/extender-ai.functions";
 import { RUNTIME_LIMITS, STARTER_TEMPLATES, codeFromManifest } from "@/lib/extender-sdk";
+import { BlueprintEditor } from "@/components/studio/BlueprintEditor";
+import { PublishToAtlas } from "@/components/studio/PublishToAtlas";
+import { EMPTY_BLUEPRINT, blueprintFromManifest, codeFromBlueprint, type Blueprint } from "@/lib/blueprint";
 
 export const Route = createFileRoute("/studio")({
   validateSearch: (search: Record<string, unknown>): { selected?: string } => {
@@ -339,9 +342,18 @@ function ExtenderWorkbench({ extender }: { extender: Extender }) {
   const [code, setCode] = useState("");
   const [testHeight, setTestHeight] = useState("36095");
   const [loadedFrom, setLoadedFrom] = useState<string | null>(null);
+  const [mode, setMode] = useState<"blueprint" | "code">("blueprint");
+  const [blueprint, setBlueprint] = useState<Blueprint>({ ...EMPTY_BLUEPRINT, name: extender.name });
 
   const latestWithCode = (versions.data ?? []).find((v) => codeFromManifest(v.manifest));
+  const latestPublished = (versions.data ?? []).find((v) => v.status === "published") ?? null;
   const height = Number.isFinite(Number(testHeight)) ? Number(testHeight) : 0;
+
+  function applyBlueprint(next: Blueprint) {
+    setBlueprint(next);
+    setCode(codeFromBlueprint(next));
+    setLoadedFrom("BLUEPRINT");
+  }
 
   const status = useMutation({
     mutationFn: (next: "draft" | "published" | "archived") =>
@@ -383,16 +395,55 @@ function ExtenderWorkbench({ extender }: { extender: Extender }) {
 
       <MetadataEditor extender={extender} onSave={() => queryClient.invalidateQueries({ queryKey: ["my-extenders"] })} />
 
+      <div className="flex flex-wrap items-center gap-2 border border-border bg-surface px-3 py-2">
+        <span className="label text-muted-foreground">HOW YOU BUILD IT</span>
+        {([
+          ["blueprint", "BLUEPRINT EDITOR"],
+          ["code", "PLAIN WORDS + CODE"],
+        ] as const).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setMode(id)}
+            className={`border px-2 py-1.5 font-mono text-[10px] ${
+              mode === id ? "border-bitcoin text-bitcoin" : "border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+        {latestWithCode && blueprintFromManifest(latestWithCode.manifest) ? (
+          <button
+            type="button"
+            onClick={() => {
+              const loaded = blueprintFromManifest(latestWithCode.manifest);
+              if (loaded) {
+                setMode("blueprint");
+                applyBlueprint(loaded);
+              }
+            }}
+            className="border border-signal px-2 py-1.5 font-mono text-[10px] text-signal"
+            data-no-translate
+          >
+            LOAD BLUEPRINT v{latestWithCode.semver}
+          </button>
+        ) : null}
+      </div>
+
       <div className="grid gap-4 xl:grid-cols-2">
         <div className="space-y-4">
-          <AiComposer
-            code={code}
-            onCode={setCode}
-            category={extender.category}
-            height={height}
-            name={extender.name}
-            summary={extender.summary}
-          />
+          {mode === "blueprint" ? (
+            <BlueprintEditor blueprint={blueprint} onChange={applyBlueprint} />
+          ) : (
+            <AiComposer
+              code={code}
+              onCode={setCode}
+              category={extender.category}
+              height={height}
+              name={extender.name}
+              summary={extender.summary}
+            />
+          )}
 
           <div className="border border-border bg-surface p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -463,7 +514,14 @@ function ExtenderWorkbench({ extender }: { extender: Extender }) {
             extenderId={extender.id}
             slug={extender.slug}
             code={code}
+            blueprint={mode === "blueprint" && blueprint.pieces.length > 0 ? blueprint : null}
             suggestedSemver={nextSemver(latestWithCode?.semver ?? (versions.data ?? [])[0]?.semver ?? null)}
+          />
+          <PublishToAtlas
+            extenderId={extender.id}
+            extenderName={extender.name}
+            versionId={latestPublished?.id ?? null}
+            versionSemver={latestPublished?.semver ?? null}
           />
         </div>
       </div>
@@ -599,11 +657,13 @@ function PublishVersionForm({
   extenderId,
   slug,
   code,
+  blueprint,
   suggestedSemver,
 }: {
   extenderId: string;
   slug: string;
   code: string;
+  blueprint: Blueprint | null;
   suggestedSemver: string;
 }) {
   const publish = useServerFn(publishVersionFn);
@@ -629,7 +689,11 @@ function PublishVersionForm({
           semver: semver.trim(),
           sdkVersion: SDK_VERSION,
           changelog: changelog.trim(),
-          manifest: code.trim() ? { code: code.trim(), config } : { config },
+          manifest: {
+            ...(code.trim() ? { code: code.trim() } : {}),
+            ...(blueprint ? { blueprint } : {}),
+            config,
+          },
           publish: true,
           dependencies: dependencies.map((d) => ({ dependsOnExtenderId: d.extenderId, versionRange: d.versionRange })),
           permissions: permissions.map((permission) => ({ permission, reason: "" })),
