@@ -162,7 +162,7 @@ function AtlasPage() {
         </section>
 
         {/* RIGHT PANEL */}
-        <aside className="grid min-w-0 gap-3">
+        <aside className="grid min-w-0 auto-rows-min content-start gap-3">
           <div className="border border-bitcoin/60 bg-surface/60 p-4">
             <h1 className="display text-2xl">
               <span className="text-bitcoin">THE</span> OASIS
