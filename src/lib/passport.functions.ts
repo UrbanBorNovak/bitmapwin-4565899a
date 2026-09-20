@@ -71,3 +71,11 @@ export const recordParcelBuildFn = createServerFn({ method: "POST" })
     await syncPassport(context.userId);
     return { ok: true };
   });
+
+/** IDENTITY estate: land held, builds raised, places visited, blueprints published. */
+export const getMyEstateFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { readPassportEstate } = await import("@/lib/passport-estate.server");
+    return readPassportEstate(context.userId);
+  });
