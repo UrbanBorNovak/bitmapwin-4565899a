@@ -68,7 +68,7 @@ export function AtlasRelief({ tip, recentBlocks }: { tip: number; recentBlocks: 
       </filter>
     </defs>
     {river && <>
-      <polyline points={river} fill="none" stroke="var(--color-background)" strokeOpacity="0.52" strokeWidth="7" strokeLinejoin="round" strokeLinecap="round" />
+      <polyline points={river} fill="none" stroke="var(--color-background)" strokeOpacity="0.32" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round" />
       <polyline points={river} fill="none" stroke="var(--color-signal)" strokeOpacity="0.34" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round" />
     </>}
     <g filter="url(#atlas-relief-shadow)">
@@ -77,7 +77,7 @@ export function AtlasRelief({ tip, recentBlocks }: { tip: number; recentBlocks: 
         const footprint = Math.min(1.8, Math.sqrt(Math.max(1, point.previewWidth * point.previewHeight)) / 115);
         const radius = 3.5 + activity * 8 + footprint * 2.5;
         return <g key={point.blockHeight} transform={`translate(${point.x} ${point.y})`} opacity={0.18 + activity * 0.42}>
-          <ellipse rx={radius * 1.35} ry={radius * 0.62} fill="var(--color-background)" fillOpacity="0.56" />
+          <ellipse rx={radius * 1.35} ry={radius * 0.62} fill="var(--color-background)" fillOpacity="0.34" />
           <ellipse cy={-activity * 2.5} rx={radius} ry={radius * 0.48} fill="none" stroke="var(--color-bitcoin)" strokeWidth={0.7 + activity * 0.8} />
           <ellipse cy={-activity * 4.5} rx={radius * 0.62} ry={radius * 0.3} fill="var(--color-bitcoin)" fillOpacity={0.16 + activity * 0.18} stroke="var(--color-foreground)" strokeOpacity="0.34" strokeWidth="0.45" />
         </g>;
