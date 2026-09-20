@@ -14,7 +14,7 @@ import { atlasEra, atlasScale, atlasToBlock, ATLAS_SIDE, blockToAtlas, parseAtla
 import { getAtlasClaims, indexAtlasFrontier } from "@/lib/atlas-land.functions";
 import { colorForAddress } from "@/lib/map-owners";
 import type { ProvenanceEvent } from "@/lib/passport";
-import type { AtlasClaim } from "@/lib/atlas-land.server";
+import { sampleVisibleHeights, type AtlasClaim } from "@/lib/atlas-land";
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 10;

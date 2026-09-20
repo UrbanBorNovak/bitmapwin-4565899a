@@ -13,13 +13,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { mapWithConcurrency, resolveOne } from "@/lib/oci.server";
 import { MAX_BITMAP } from "@/lib/oci";
-
-export type AtlasClaim = {
-  height: number;
-  inscriptionId: string;
-  ownerAddress: string | null;
-  isValid: boolean;
-};
+import type { AtlasClaim } from "@/lib/atlas-land";
 
 const CONCURRENCY = 6;
 /** One frontier pass per window, app-wide, so ordinals.com is never hammered. */
