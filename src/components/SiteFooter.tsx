@@ -75,7 +75,7 @@ export function SiteFooter() {
         <div className="mt-8 flex flex-col gap-2 border-t border-border pt-6 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
             <SpriteCritter sheet={SPRITES[2]!} height={44} className="animate-sprite-bob shrink-0" />
-            <div className="display text-sm">THE BEDROCK FOR AI-BUILT WORLDS</div>
+            <div className="display text-sm">THE INTERNET, BUT WITH LAND</div>
           </div>
           <div className="label">
             REAL BLOCKS · LIVE ORDINALS · ON-CHAIN OWNERSHIP

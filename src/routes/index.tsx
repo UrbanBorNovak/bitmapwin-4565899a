@@ -13,16 +13,17 @@ import { LoopNavigator } from "@/components/LoopNavigator";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "BitmapWin — The Bedrock for AI-Built Worlds" },
+      { title: "BitmapWin — The Internet, But With Land" },
       {
         name: "description",
         content:
-          "Own permanent Bitcoin land, extend it with experiences built by you, other creators or AI, deploy them, and let players enter.",
+          "BitmapWin turns Bitcoin blockspace into places you can enter, build on and experience. Own Bitcoin land, extend it, and leave history.",
       },
-      { property: "og:title", content: "BitmapWin — The Bedrock for AI-Built Worlds" },
+      { property: "og:title", content: "BitmapWin — The Internet, But With Land" },
       {
         property: "og:description",
-        content: "Build on permanent Bitcoin land. Own, extend, deploy, experience, publish.",
+        content:
+          "BitmapWin turns Bitcoin blockspace into places you can enter, build on and experience. Own Bitcoin land, extend it, and leave history.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -102,24 +103,28 @@ function Index() {
             <div className="pointer-events-none absolute inset-0 dot-bg" />
             <BitmapConstellations className="opacity-90" />
             <div className="relative flex flex-1 flex-col justify-center p-5 py-8 sm:p-7 md:p-12 lg:p-16">
-              <div className="label text-bitcoin">THE BEDROCK FOR AI-BUILT WORLDS</div>
+              <div className="label text-bitcoin">BITCOIN-NATIVE WORLDS</div>
               <h1 className="display mt-4 text-[2.1rem] leading-[1.05] sm:mt-5 sm:text-6xl lg:text-7xl">
-                BUILD ON PERMANENT<br /><span className="text-bitcoin">BITCOIN LAND.</span>
+                THE INTERNET,<br /><span className="text-bitcoin">BUT WITH LAND.</span>
               </h1>
               <div className="mt-6 grid items-start gap-7 sm:mt-8 md:grid-cols-[minmax(0,1fr)_240px] md:gap-8">
                 <div className="max-w-xl">
                   <p className="text-base leading-relaxed text-foreground sm:text-lg md:text-xl">
-                    BitmapWin is the bedrock for player-owned, AI-built worlds. Own a block, extend it with experiences,
-                    deploy them, and let players walk in.
+                    BitmapWin turns Bitcoin blockspace into places you can enter, build on and experience.
+                  </p>
+                  <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                    The Oasis is the world. Bitmaps are the land. Extenders are what happen there.
+                    Your Passport is the history you leave. Studio is how you create.
                   </p>
                   <div data-tour="home-flow" className="mt-6 grid gap-2 sm:mt-8 sm:flex sm:flex-wrap sm:gap-3">
-                    <Link to="/explore" className="btn-term min-h-12 w-full sm:min-h-0 sm:w-auto">01 · DISCOVER</Link>
-                    <Link to="/oasis" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">02 · ENTER THE OASIS</Link>
+                    <Link to="/oasis" className="btn-term min-h-12 w-full sm:min-h-0 sm:w-auto">01 · ENTER THE WORLD</Link>
+                    <Link to="/marketplace" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">02 · CLAIM LAND</Link>
                     <Link to="/passport" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">03 · OPEN PASSPORT</Link>
                   </div>
-                  <Link to="/extenders" className="mt-4 inline-flex font-mono text-xs font-bold text-bitcoin hover:text-foreground">
-                    BROWSE THE MARKET →
-                  </Link>
+                  <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs font-bold">
+                    <Link to="/extenders" className="text-bitcoin hover:text-foreground">EXPERIENCES →</Link>
+                    <Link to="/studio" className="text-bitcoin hover:text-foreground">CREATION →</Link>
+                  </div>
                 </div>
 
 
@@ -195,12 +200,14 @@ function Index() {
       </section>
 
       <section className="mx-auto max-w-[1600px] px-4 pt-16 md:px-8">
-        <div className="label text-bitcoin">THE LIVING WORLD LOOP</div>
-        <h2 className="display mt-2 text-2xl md:text-3xl">DISCOVER · PARTICIPATE · LEAVE HISTORY</h2>
-        <div className="mt-6 grid border-y border-border md:grid-cols-3 md:divide-x md:divide-border">
-          <Journey n="01" title="EXPLORE" body="Find a BITMAP, enter the Oasis, and see what other people have made possible." to="/explore" action="DISCOVER THE WORLD" />
-          <Journey n="02" title="LEAVE PROVENANCE" body="Visits, builds, deployments, trades, leases, and duels become evidence-backed history." to="/stream" action="WATCH HISTORY MOVE" />
-          <Journey n="03" title="UNLOCK + BUILD" body="Your Passport turns verified participation into new building capabilities." to="/passport" action="OPEN YOUR PASSPORT" />
+        <div className="label text-bitcoin">EVERYTHING LIVES UNDER FIVE THINGS</div>
+        <h2 className="display mt-2 text-2xl md:text-3xl">WORLD · LAND · EXPERIENCES · IDENTITY · CREATION</h2>
+        <div className="mt-6 grid border-y border-border md:grid-cols-3 md:divide-x md:divide-border lg:grid-cols-5">
+          <Pillar n="01" name="WORLD" what="The Oasis" body="The living map. Walk in and see what other people made possible." to="/oasis" action="ENTER" />
+          <Pillar n="02" name="LAND" what="Bitmaps" body="The places. Every block is land you can own, build on, or lease." to="/marketplace" action="CLAIM LAND" />
+          <Pillar n="03" name="EXPERIENCES" what="Extenders" body="The things that happen on those places. Browse, deploy, play." to="/extenders" action="BROWSE" />
+          <Pillar n="04" name="IDENTITY" what="Passport" body="Your history of where you've been and what you've done." to="/passport" action="OPEN PASSPORT" />
+          <Pillar n="05" name="CREATION" what="Studio" body="The machinery that lets owners create experiences." to="/studio" action="OPEN STUDIO" />
         </div>
         <div className="mt-6 flex flex-wrap gap-2 pb-2">
           <Link to="/marketplace" className="btn-term-ghost">[ GET LAND FIRST ]</Link>
@@ -221,23 +228,28 @@ function MarketStat({ k, v }: { k: string; v: string }) {
   );
 }
 
-function Journey({
+function Pillar({
   n,
-  title,
+  name,
+  what,
   body,
   to,
   action,
 }: {
   n: string;
-  title: string;
+  name: string;
+  what: string;
   body: string;
-  to: "/marketplace" | "/builds" | "/extend" | "/studio" | "/map" | "/extenders" | "/create" | "/explore" | "/stream" | "/passport";
+  to: "/oasis" | "/marketplace" | "/extenders" | "/passport" | "/studio";
   action: string;
 }) {
   return (
-    <div className="border-b border-border py-7 md:border-b-0 md:px-6 first:md:pl-0 last:md:pr-0">
-      <div className="label text-bitcoin">{n}</div>
-      <div className="display mt-4 text-xl">{title}</div>
+    <div className="border-b border-border py-7 last:border-b-0 md:border-b-0 md:px-6 first:md:pl-0 last:md:pr-0">
+      <div className="flex items-baseline gap-2">
+        <span className="label text-bitcoin">{n}</span>
+        <span className="display text-xl">{name}</span>
+      </div>
+      <div className="label mt-2 text-muted-foreground">{what}</div>
       <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">{body}</p>
       <Link to={to} className="mt-5 inline-flex font-mono text-[11px] font-bold text-foreground hover:text-bitcoin">{action} →</Link>
     </div>
