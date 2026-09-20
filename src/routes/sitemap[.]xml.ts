@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 import { CLUBS } from "@/lib/clubs";
+import { atlasDistricts } from "@/lib/atlas-places";
 
 const BASE_URL = "https://bitmapwin.app";
 
@@ -36,6 +37,11 @@ export const Route = createFileRoute("/sitemap.xml")({
             path: `/collections/${encodeURIComponent(club.id)}`,
             changefreq: "daily" as const,
             priority: "0.7",
+          })),
+          ...atlasDistricts().map((district) => ({
+            path: `/map/district/${district.slug}`,
+            changefreq: "monthly" as const,
+            priority: "0.6",
           })),
         ];
 

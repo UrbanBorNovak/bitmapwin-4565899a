@@ -12,11 +12,21 @@ const ADDRESS_FORMS = ["WAY", "ROAD", "LANE", "WALK", "ROW", "STREET"] as const;
 
 export type AtlasDistrictIdentity = {
   index: number;
+  slug: string;
   name: string;
   landmark: string;
   x: number;
   y: number;
   anchorHeight: number;
+};
+
+export type AtlasDistrictStory = AtlasDistrictIdentity & {
+  row: number;
+  column: number;
+  chapter: string;
+  story: readonly [string, string];
+  atmosphere: string;
+  motif: "harbor" | "heights" | "quarter" | "gardens" | "reach" | "ward" | "commons" | "frontier";
 };
 
 export type AtlasPlaceIdentity = AtlasDistrictIdentity & {
@@ -31,6 +41,43 @@ function mix(value: number) {
   return (result ^ (result >>> 16)) >>> 0;
 }
 
+const OPENINGS = [
+  "At first light, the paths appear one by one, as if the land remembers every traveler who crossed it.",
+  "When the wind turns, old roofs and young trees answer together, carrying news from one BITMAP to the next.",
+  "Rain leaves a silver map on the stones here, and each shallow pool seems to hold another version of the sky.",
+  "The district wakes slowly: a door opens, a bridge hums, and distant machinery begins its patient rhythm.",
+  "From above, the roads look accidental. On foot, every bend feels placed by someone who expected you.",
+  "At dusk, warm windows gather around the landmark while the surrounding country falls quiet.",
+  "The oldest paths avoid the highest ground, preserving a long view across the neighboring districts.",
+  "Morning mist gathers in the low places before lifting to reveal the district in painted layers.",
+] as const;
+
+const CLOSINGS = [
+  "Nothing here is hurried; meaning arrives through return visits, careful building, and the traces people choose to leave behind.",
+  "Its character belongs less to monuments than to small acts repeated until they become local tradition.",
+  "The place remains unfinished by design, leaving room for its holders and visitors to add the next remembered detail.",
+  "Each new arrival changes the view slightly, while the underlying geography keeps the district recognizably itself.",
+  "It is a place for quiet discoveries: a side path, a distant signal, a structure where yesterday there was open ground.",
+  "The district keeps no artificial score; it values the history that can be followed back to where it happened.",
+  "Seen from the atlas it is a name. Entered from the ground, it becomes a sequence of encounters and choices.",
+  "Its future is held open for real activity, with every lasting addition becoming part of the visible record.",
+] as const;
+
+const ATMOSPHERES = [
+  "MORNING MIST · CEDAR WIND",
+  "GOLDEN HOUR · BELL WEATHER",
+  "SEA LIGHT · HIGH CLOUD",
+  "RAIN-WASHED STONE · LANTERNS",
+  "MEADOW AIR · DISTANT WATER",
+  "BLUE HOUR · WARM WINDOWS",
+  "MOUNTAIN SHADOW · CLEAR SKY",
+  "FRONTIER LIGHT · NEW GROWTH",
+] as const;
+
+function slugify(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
 export function atlasDistricts(): AtlasDistrictIdentity[] {
   const districts: AtlasDistrictIdentity[] = [];
   for (let row = 0; row < DISTRICTS_PER_SIDE; row += 1) {
@@ -40,6 +87,7 @@ export function atlasDistricts(): AtlasDistrictIdentity[] {
       const y = row * DISTRICT_SIDE + DISTRICT_SIDE / 2;
       districts.push({
         index,
+        slug: slugify(`${DISTRICT_ROOTS[column]} ${DISTRICT_FORMS[row]}`),
         name: `${DISTRICT_ROOTS[column]} ${DISTRICT_FORMS[row]}`,
         landmark: `${DISTRICT_ROOTS[(column + row * 3) % DISTRICT_ROOTS.length]} ${LANDMARKS[(row + column * 5) % LANDMARKS.length]}`,
         x,
@@ -71,4 +119,35 @@ export function findAtlasNamedPlace(value: string): AtlasDistrictIdentity | null
   return DISTRICTS.find((district) => district.name === query || district.landmark === query)
     ?? DISTRICTS.find((district) => district.name.includes(query) || district.landmark.includes(query))
     ?? null;
+}
+
+export function atlasDistrictBySlug(slug: string): AtlasDistrictIdentity | null {
+  const normalized = slugify(slug);
+  return DISTRICTS.find((district) => district.slug === normalized) ?? null;
+}
+
+export function atlasDistrictStory(district: AtlasDistrictIdentity): AtlasDistrictStory {
+  const row = Math.floor(district.index / DISTRICTS_PER_SIDE);
+  const column = district.index % DISTRICTS_PER_SIDE;
+  const seed = mix(district.anchorHeight + district.index * 101);
+  return {
+    ...district,
+    row,
+    column,
+    chapter: `CHAPTER ${String(district.index + 1).padStart(2, "0")} · ${district.landmark}`,
+    story: [OPENINGS[seed % OPENINGS.length], CLOSINGS[Math.floor(seed / 17) % CLOSINGS.length]],
+    atmosphere: ATMOSPHERES[(row + column * 3) % ATMOSPHERES.length],
+    motif: DISTRICT_FORMS[row].toLowerCase() as AtlasDistrictStory["motif"],
+  };
+}
+
+export function atlasDistrictNeighbors(district: AtlasDistrictIdentity): AtlasDistrictIdentity[] {
+  const row = Math.floor(district.index / DISTRICTS_PER_SIDE);
+  const column = district.index % DISTRICTS_PER_SIDE;
+  return [[column, row - 1], [column + 1, row], [column, row + 1], [column - 1, row]]
+    .map(([nextColumn, nextRow]) => {
+      if (nextColumn === undefined || nextRow === undefined || nextColumn < 0 || nextRow < 0 || nextColumn >= DISTRICTS_PER_SIDE || nextRow >= DISTRICTS_PER_SIDE) return null;
+      return DISTRICTS[nextRow * DISTRICTS_PER_SIDE + nextColumn] ?? null;
+    })
+    .filter((value): value is AtlasDistrictIdentity => value !== null);
 }
