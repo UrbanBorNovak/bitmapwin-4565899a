@@ -39,6 +39,24 @@ export async function claimsForHeights(heights: number[]): Promise<AtlasClaim[]>
   }));
 }
 
+/** Every indexed BITMAP held by one address, so the atlas can mark "your land". */
+export async function landForAddress(address: string): Promise<AtlasClaim[]> {
+  const { data, error } = await db()
+    .from("bitmap_index")
+    .select("block_height, inscription_id, owner_address, is_valid")
+    .eq("owner_address", address)
+    .not("inscription_id", "is", null)
+    .order("block_height", { ascending: true })
+    .limit(500);
+  if (error) return [];
+  return (data ?? []).map((row) => ({
+    height: Number(row.block_height),
+    inscriptionId: row.inscription_id!,
+    ownerAddress: row.owner_address,
+    isValid: Boolean(row.is_valid),
+  }));
+}
+
 /** Highest block that already carries a resolved inscription. */
 export async function indexedTip(): Promise<number> {
   const { data } = await db()

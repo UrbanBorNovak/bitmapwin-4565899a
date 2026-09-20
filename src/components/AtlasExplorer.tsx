@@ -2,17 +2,20 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Blocks, Compass, Crosshair, Hammer, KeyRound, LocateFixed, Map as MapIcon, MapPin, Minus, Plus, Radio, Search, Store, Globe2, Swords, Eye, Tag, X } from "lucide-react";
+import { ArrowRight, Activity, Blocks, Compass, Crosshair, Hammer, KeyRound, LocateFixed, Map as MapIcon, MapPin, Minus, Plus, Radio, Search, Store, Globe2, Swords, Eye, Tag, Flame, Wallet, X } from "lucide-react";
 import atlasHd from "@/assets/oasis-atlas-hd.jpg";
 import { AtlasRelief } from "@/components/AtlasRelief";
 import { AtlasPlaceLabels } from "@/components/AtlasPlaceLabels";
+import { AtlasTerrain, AtlasBeacon } from "@/components/AtlasTerrain";
+import { AtlasHeatmap } from "@/components/AtlasHeatmap";
 import { Button } from "@/components/ui/button";
 import { getChainBlocks } from "@/lib/chain.functions";
 import { worldStatsQuery, formatCount } from "@/lib/world-stats";
 import { provenanceStreamQuery } from "@/lib/provenance-stream";
 import { timeAgo } from "@/lib/bitmap";
 import { atlasEra, atlasScale, atlasToBlock, ATLAS_SIDE, blockToAtlas, parseAtlasBlock } from "@/lib/atlas-geometry";
-import { getAtlasClaims, indexAtlasFrontier } from "@/lib/atlas-land.functions";
+import { getAtlasClaims, getAtlasLandForAddress, indexAtlasFrontier } from "@/lib/atlas-land.functions";
+import { useWalletSession } from "@/lib/wallet-session";
 import { colorForAddress } from "@/lib/map-owners";
 import type { ProvenanceEvent } from "@/lib/passport";
 import { sampleVisibleHeights, type AtlasClaim } from "@/lib/atlas-land";
@@ -43,6 +46,29 @@ const LAYERS = [
 ] as const;
 type LayerKey = (typeof LAYERS)[number]["key"];
 const ALL_LAYERS: LayerKey[] = LAYERS.map((layer) => layer.key);
+
+/**
+ * TIME AS A CONTROL — history can be read as a window, not one flat pile.
+ * Events inside the window show; the older half of that window reads as a
+ * ghost pin, the freshest hours burn bright.
+ */
+const WINDOWS = [
+  { key: "24h", label: "24H", hours: 24 },
+  { key: "7d", label: "7 DAYS", hours: 24 * 7 },
+  { key: "year", label: "THIS YEAR", hours: 24 * 365 },
+  { key: "all", label: "SINCE GENESIS", hours: Number.POSITIVE_INFINITY },
+] as const;
+type WindowKey = (typeof WINDOWS)[number]["key"];
+const windowHours = (key: WindowKey) => WINDOWS.find((item) => item.key === key)!.hours;
+
+/** 1 = happening now, down to 0.25 for the oldest record still in the window. */
+function freshness(events: ProvenanceEvent[], hours: number): number {
+  const newest = events.reduce((max, event) => Math.max(max, new Date(event.occurredAt).getTime()), 0);
+  if (!newest) return 0.35;
+  const span = Number.isFinite(hours) ? hours * 3600_000 : 365 * 24 * 3600_000;
+  const age = Math.max(0, Date.now() - newest);
+  return Math.max(0.28, 1 - Math.min(1, age / span) * 0.72);
+}
 
 function eventLayer(event: ProvenanceEvent): LayerKey | null {
   const found = LAYERS.find((layer) => (layer.types as readonly string[]).includes(event.eventType));
@@ -116,8 +142,14 @@ export function AtlasExplorer({ initialHeight }: { initialHeight?: number }) {
   const stats = useQuery(worldStatsQuery()); const stream = useQuery(provenanceStreamQuery("all",80));
   const [camera,setCameraState]=useState<Camera>({zoom:1,x:0,y:0}); const [selected,setSelected]=useState<Place|null>(null); const [query,setQuery]=useState(initialHeight === undefined ? "" : String(initialHeight)); const [message,setMessage]=useState("");
   const [layers,setLayers]=useState<LayerKey[]>(ALL_LAYERS); const [dropIn,setDropIn]=useState<number|null>(null); const [landOn,setLandOn]=useState(true);
+  const [timeWindow,setTimeWindow]=useState<WindowKey>("7d"); const [heatOn,setHeatOn]=useState(false); const [mineOn,setMineOn]=useState(true);
+  const wallet=useWalletSession(); const ordinals=wallet?.ordinalsAddress??"";
+  const fetchMyLand=useServerFn(getAtlasLandForAddress);
+  const myLand=useQuery({queryKey:["atlas","my-land",ordinals],queryFn:()=>fetchMyLand({data:{address:ordinals}}),enabled:ordinals!=="",staleTime:120_000});
+  const myHeights=useMemo(()=>new Set((myLand.data?.claims??[]).map((claim)=>claim.height)),[myLand.data]);
   const navigate=useNavigate();
-  const visibleEvents=useMemo(()=>(stream.data??[]).filter((event)=>{const key=eventLayer(event);return key===null?layers.length===ALL_LAYERS.length:layers.includes(key);}),[stream.data,layers]);
+  const hours=windowHours(timeWindow);
+  const visibleEvents=useMemo(()=>(stream.data??[]).filter((event)=>{ if(Number.isFinite(hours)&&Date.now()-new Date(event.occurredAt).getTime()>hours*3600_000) return false; const key=eventLayer(event);return key===null?layers.length===ALL_LAYERS.length:layers.includes(key);}),[stream.data,layers,hours]);
   const toggleLayer=(key:LayerKey)=>setLayers((current)=>current.includes(key)?current.filter((item)=>item!==key):[...current,key]);
   const places=useMemo(()=>placesFrom(visibleEvents),[visibleEvents]); const clusters=useMemo(()=>clusterPlaces(places,camera.zoom),[places,camera.zoom]); const recentBlocks=Array.isArray(chain.data)?chain.data:[]; const tipHeight=recentBlocks.length?Math.max(...recentBlocks.map((block)=>block.height)):0; const totals=stats.data?.totals;
   // REAL CLAIMED LAND — the indexed inscription and holder behind each sampled
@@ -155,9 +187,13 @@ export function AtlasExplorer({ initialHeight }: { initialHeight?: number }) {
             <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[.055] mix-blend-soft-light [background-image:repeating-linear-gradient(0deg,var(--color-foreground)_0,var(--color-foreground)_1px,transparent_1px,transparent_4px)]" />
             <BiomeMesh tip={tipHeight}/>
              <AtlasRelief tip={tipHeight} recentBlocks={recentBlocks}/>
+             <AtlasTerrain zoom={camera.zoom} tip={tipHeight}/>
+             {heatOn&&<AtlasHeatmap events={stream.data??[]}/>}
              <AtlasPlaceLabels zoom={camera.zoom} onSelect={(height)=>focusHeight(height,Math.max(3.4,camera.zoom))}/>
-            {clusters.map((cluster)=>{ const single=cluster.places.length===1; const place=cluster.places[0]; const landmark=single&&place&&place.landmarks>0; return <button key={cluster.key} type="button" onPointerDown={(event)=>event.stopPropagation()} onClick={()=>{if(single&&place){setSelected(place);focusHeight(place.height,Math.max(4,camera.zoom));}else{const zoom=Math.min(MAX_ZOOM,camera.zoom*2);setCamera({zoom,x:.5-cluster.x*zoom,y:.5-cluster.y*zoom});}}} style={{left:`${cluster.x*100}%`,top:`${cluster.y*100}%`,transform:`translate(-50%,-50%) scale(${1/camera.zoom})`}} className={`group absolute grid place-items-center rounded-full border border-background/70 font-mono font-bold backdrop-blur-[1px] transition-all hover:scale-125 ${landmark?"size-7 bg-signal/75 text-background shadow-[0_0_18px_var(--color-signal)]":"size-6 bg-bitcoin/70 text-bitcoin-foreground shadow-[0_0_16px_var(--color-bitcoin)]"}`} aria-label={single&&place?`${place.height}.BITMAP, ${place.landmarks>0?`${place.landmarks} landmark builds, `:""}${place.count} verified records`:`Cluster of ${cluster.places.length} BITMAPs`}><span aria-hidden className={`absolute inset-[-5px] rounded-full opacity-20 ${landmark?"bg-signal":"bg-bitcoin"}`}/>{single&&place?(place.landmarks>0?<Hammer className="relative size-3.5"/>:<span className="relative size-1.5 rounded-full bg-bitcoin-foreground"/>):<span className="relative text-[8px]">{cluster.places.length}</span>}</button>;})}
+            {clusters.map((cluster)=>{ const single=cluster.places.length===1; const place=cluster.places[0]; const landmark=single&&place&&place.landmarks>0; return <button key={cluster.key} type="button" onPointerDown={(event)=>event.stopPropagation()} onClick={()=>{if(single&&place){setSelected(place);focusHeight(place.height,Math.max(4,camera.zoom));}else{const zoom=Math.min(MAX_ZOOM,camera.zoom*2);setCamera({zoom,x:.5-cluster.x*zoom,y:.5-cluster.y*zoom});}}} style={{left:`${cluster.x*100}%`,top:`${cluster.y*100}%`,transform:`translate(-50%,-50%) scale(${1/camera.zoom})`,opacity:freshness(cluster.places.flatMap((item)=>item.events),hours)}} className={`group absolute grid place-items-center rounded-full border border-background/70 font-mono font-bold backdrop-blur-[1px] transition-all hover:scale-125 ${landmark?"size-7 bg-signal/75 text-background shadow-[0_0_18px_var(--color-signal)]":"size-6 bg-bitcoin/70 text-bitcoin-foreground shadow-[0_0_16px_var(--color-bitcoin)]"}`} aria-label={single&&place?`${place.height}.BITMAP, ${place.landmarks>0?`${place.landmarks} landmark builds, `:""}${place.count} verified records`:`Cluster of ${cluster.places.length} BITMAPs`}><span aria-hidden className={`absolute inset-[-5px] rounded-full opacity-20 ${landmark?"bg-signal":"bg-bitcoin"}`}/>{single&&place?(place.landmarks>0?<Hammer className="relative size-3.5"/>:<span className="relative size-1.5 rounded-full bg-bitcoin-foreground"/>):<span className="relative text-[8px]">{cluster.places.length}</span>}</button>;})}
             {landOn&&camera.zoom>=2.8&&[...claims.values()].filter((claim)=>!places.some((place)=>place.height===claim.height)).slice(0,120).map((claim)=>{const point=blockToAtlas(claim.height);return <button key={claim.height} type="button" onPointerDown={(event)=>event.stopPropagation()} onClick={()=>focusHeight(claim.height,Math.max(5,camera.zoom))} style={{left:`${((point.x+.5)/ATLAS_SIDE)*100}%`,top:`${((point.y+.5)/ATLAS_SIDE)*100}%`,transform:`translate(-50%,-50%) scale(${1/camera.zoom})`,backgroundColor:claim.ownerAddress?colorForAddress(claim.ownerAddress):"var(--color-muted-foreground)"}} className="absolute size-1.5 rotate-45 border border-background/50 opacity-60 shadow-sm transition-all hover:scale-[2] hover:opacity-100" aria-label={`${claim.height}.BITMAP claimed land`}/>;})}
+            {mineOn&&[...myHeights].slice(0,200).map((height)=>{const point=blockToAtlas(height);return <button key={`mine-${height}`} type="button" onPointerDown={(event)=>event.stopPropagation()} onClick={()=>focusHeight(height,Math.max(5,camera.zoom))} style={{left:`${((point.x+.5)/ATLAS_SIDE)*100}%`,top:`${((point.y+.5)/ATLAS_SIDE)*100}%`,transform:`translate(-50%,-50%) scale(${1/camera.zoom})`}} className="absolute size-3 rotate-45 border-2 border-bitcoin bg-bitcoin/35 shadow-[0_0_12px_var(--color-bitcoin)] transition-transform hover:scale-150" aria-label={`Your land, ${height}.BITMAP`}/>;})}
+            {mineOn&&selected===null&&[...myHeights][0]!==undefined&&<AtlasBeacon height={[...myHeights][0]!} zoom={camera.zoom}/>}
             {selected&&<span aria-hidden style={{left:`${selected.x*100}%`,top:`${selected.y*100}%`,transform:`translate(-50%,-50%) scale(${1/camera.zoom})`}} className="pointer-events-none absolute size-11 rounded-full border border-signal/80 shadow-[0_0_20px_var(--color-signal)] before:absolute before:inset-2 before:rounded-full before:border before:border-signal/40"/>}
             {dropIn!==null&&<div className="pointer-events-none absolute inset-0 grid place-items-center bg-background/55 backdrop-blur-[1px]"><p className="border border-signal bg-background/90 px-4 py-2 font-mono text-[10px] uppercase text-signal" data-no-translate>DROPPING INTO {dropIn.toLocaleString("en-US")}.BITMAP…</p></div>}
           </div>
@@ -165,8 +201,9 @@ export function AtlasExplorer({ initialHeight }: { initialHeight?: number }) {
           <div className="pointer-events-none absolute bottom-3 left-3 border border-border bg-background/90 px-3 py-2 font-mono text-[9px] backdrop-blur"><p className="text-muted-foreground">HILBERT 1024² · TIP {tipHeight?tipHeight.toLocaleString("en-US"):"…"}</p><p className="mt-1 text-signal" data-no-translate>{selected?`${atlasPlace(selected.height).localName} · ${selected.height.toLocaleString("en-US")}`:"DRAG · SCROLL · PINCH"}</p></div>
           <div className="absolute bottom-3 right-3 hidden h-24 w-36 overflow-hidden border border-border bg-background/90 sm:block"><img src={atlasHd} alt="Atlas mini-map" loading="lazy" width={1920} height={1200} className="size-full object-cover opacity-80"/><span className="absolute border border-signal bg-signal/10" style={{left:`${(-camera.x/camera.zoom)*100}%`,top:`${(-camera.y/camera.zoom)*100}%`,width:`${100/camera.zoom}%`,height:`${100/camera.zoom}%`}}/><Compass className="absolute right-1 top-1 size-4 text-bitcoin"/></div>
         </section>
+        <div className="mt-2 flex flex-wrap items-center gap-2 border border-border bg-surface/60 px-3 py-2" role="group" aria-label="Time window"><span className="label text-bitcoin">TIME</span>{WINDOWS.map((item)=>{const on=timeWindow===item.key;return <button key={item.key} type="button" aria-pressed={on} onClick={()=>setTimeWindow(item.key)} className={`border px-2 py-1 font-mono text-[9px] uppercase transition-colors ${on?"border-bitcoin bg-bitcoin/10 text-bitcoin":"border-border text-muted-foreground hover:border-bitcoin/40"}`}>{item.label}</button>;})}<span className="ml-auto flex flex-wrap gap-2"><button type="button" aria-pressed={heatOn} onClick={()=>setHeatOn((on)=>!on)} className={`flex items-center gap-1.5 border px-2 py-1 font-mono text-[9px] uppercase transition-colors ${heatOn?"border-bitcoin bg-bitcoin/10 text-bitcoin":"border-border text-muted-foreground hover:border-bitcoin/40"}`}><Flame className="size-3"/>24H HEAT</button><button type="button" aria-pressed={mineOn} disabled={ordinals===""} onClick={()=>setMineOn((on)=>!on)} className={`flex items-center gap-1.5 border px-2 py-1 font-mono text-[9px] uppercase transition-colors disabled:opacity-40 ${mineOn&&ordinals!==""?"border-bitcoin bg-bitcoin/10 text-bitcoin":"border-border text-muted-foreground hover:border-bitcoin/40"}`}><Wallet className="size-3"/>MY LAND {ordinals!==""?myHeights.size:""}</button>{ordinals!==""&&myHeights.size>0&&<button type="button" onClick={()=>{const first=[...myHeights][0]; if(first!==undefined) focusHeight(first,6);}} className="flex items-center gap-1.5 border border-signal/60 px-2 py-1 font-mono text-[9px] uppercase text-signal transition-colors hover:bg-signal/10"><Activity className="size-3"/>YOU ARE HERE</button>}</span></div>
         <div className="mt-2 flex flex-wrap items-center gap-2 border border-border bg-surface/60 px-3 py-2" role="group" aria-label="Atlas layers"><span className="label text-bitcoin">LAYERS</span>{LAYERS.map((layer)=>{const on=layers.includes(layer.key);const Icon=layer.icon;return <button key={layer.key} type="button" aria-pressed={on} onClick={()=>toggleLayer(layer.key)} className={`flex items-center gap-1.5 border px-2 py-1 font-mono text-[9px] uppercase transition-colors ${on?`border-bitcoin bg-bitcoin/10 ${layer.tone}`:"border-border text-muted-foreground hover:border-bitcoin/40"}`}><Icon className="size-3"/>{layer.label}</button>;})}<button type="button" aria-pressed={landOn} onClick={()=>setLandOn((on)=>!on)} className={`flex items-center gap-1.5 border px-2 py-1 font-mono text-[9px] uppercase transition-colors ${landOn?"border-bitcoin bg-bitcoin/10 text-bitcoin":"border-border text-muted-foreground hover:border-bitcoin/40"}`}><MapPin className="size-3"/>CLAIMED LAND</button><span className="ml-auto font-mono text-[9px] text-muted-foreground" data-no-translate>{claims.size} CLAIMS · {places.length} PLACES · {visibleEvents.length} RECORDS</span></div>
-        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 border border-border/70 bg-surface/40 px-3 py-2 font-mono text-[9px] text-muted-foreground"><span className="text-bitcoin">MAP KEY</span><span>⌁ TX TOPOGRAPHY</span><span>┈ BLOCK-AGE CONTOUR</span><span className="text-signal">· LIVE FRONTIER</span><span>● VERIFIED HISTORY</span><span className="text-signal">⚒ LANDMARK</span><span>◆ CLAIMED LAND</span></div>
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 border border-border/70 bg-surface/40 px-3 py-2 font-mono text-[9px] text-muted-foreground"><span className="text-bitcoin">MAP KEY</span><span>⌁ TX TOPOGRAPHY</span><span>┈ BLOCK-AGE CONTOUR</span><span className="text-signal">· LIVE FRONTIER</span><span>● VERIFIED HISTORY</span><span className="text-signal">⚒ LANDMARK</span><span>◆ CLAIMED LAND</span><span className="text-bitcoin">◈ YOUR LAND</span><span>◌ GHOST · OLDER RECORD</span></div>
       </main>
       <aside className="hidden min-w-0 auto-rows-min content-start gap-3 lg:grid">
         {selected?<Inspector place={selected} tip={tipHeight} close={()=>setSelected(null)} dropInto={dropInto} claim={claims.get(selected.height)}/>:<div className="border border-bitcoin/60 bg-surface/60 p-4"><h1 className="display text-2xl"><span className="text-bitcoin">THE</span> OASIS</h1><p className="mt-1 font-mono text-[10px] uppercase text-muted-foreground">A spatial index of Bitcoin land</p><p className="mt-3 text-sm leading-relaxed text-muted-foreground">Every mined block is a place. Nearby heights stay nearby; verified history appears where it happened.</p><dl className="mt-4 grid grid-cols-3 gap-px border border-border bg-border"><div className="bg-background p-2 text-center"><dd className="font-mono text-xs font-bold text-bitcoin">{tipHeight?formatCount(tipHeight):"…"}</dd><dt className="label mt-1">PLACES</dt></div><div className="bg-background p-2 text-center"><dd className="font-mono text-xs font-bold">{totals?formatCount(totals.builds):"…"}</dd><dt className="label mt-1">BUILDS</dt></div><div className="bg-background p-2 text-center"><dd className="font-mono text-xs font-bold">{places.length}</dd><dt className="label mt-1">ACTIVE</dt></div></dl><Button asChild variant="terminal" className="mt-4 w-full"><Link to="/oasis">EXPLORE 3D <ArrowRight/></Link></Button></div>}
