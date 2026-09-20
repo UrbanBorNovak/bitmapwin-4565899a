@@ -48,7 +48,7 @@ export function MvpFlowRail({ active, height }: { active: Step; height?: number 
                 {body}
               </div>
             ) : step.id === "map" ? (
-              <Link to="/map" search={search} className={className}>
+              <Link to="/oasis" search={search} className={className}>
                 {body}
               </Link>
             ) : step.id === "extend" ? (

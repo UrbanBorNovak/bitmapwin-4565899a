@@ -98,7 +98,7 @@ function PlayGuidePage() {
         BITMAP terrain, build, trade and leave when you want. Everything below is live today.
       </p>
       <div className="mt-6 flex flex-wrap gap-2">
-        <Link to="/map" className="btn-term">[ ENTER THE OASIS ]</Link>
+        <Link to="/oasis" className="btn-term">[ ENTER THE OASIS ]</Link>
         <Link to="/character" className="btn-term-ghost">[ MAKE YOUR CHARACTER ]</Link>
         <Link to="/docs" className="btn-term-ghost">[ DOCS ]</Link>
       </div>
@@ -187,7 +187,7 @@ function PlayGuidePage() {
       </section>
 
       <div className="mt-10 flex flex-wrap gap-2">
-        <Link to="/map" className="btn-term">[ PLAY NOW ]</Link>
+        <Link to="/oasis" className="btn-term">[ PLAY NOW ]</Link>
         <Link to="/sdk" className="btn-term-ghost">[ BUILD SOMETHING ]</Link>
       </div>
     </div>

@@ -571,7 +571,7 @@ function CreatePage() {
                 {deployed.height}.BITMAP · v{deployed.semver} · ACTIVE
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <Link to="/map" search={{ height: deployed.height }} className="btn-term">[ ENTER EXPERIENCE ]</Link>
+                <Link to="/oasis" search={{ height: deployed.height }} className="btn-term">[ ENTER EXPERIENCE ]</Link>
                 <Link to="/extenders/$slug" params={{ slug: deployed.slug }} className="btn-term-ghost">[ MANAGE ]</Link>
                 <Link to="/studio" search={{ selected: deployed.extenderId }} className="btn-term-ghost">[ OPEN IN STUDIO ]</Link>
               </div>

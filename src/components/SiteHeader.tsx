@@ -154,7 +154,7 @@ export function SiteHeader() {
               )}
             </div>
           ))}
-          <Link to="/map" className="label ml-2 flex items-center gap-1 border border-bitcoin px-3 py-2 text-bitcoin hover:bg-bitcoin/10">
+          <Link to="/oasis" className="label ml-2 flex items-center gap-1 border border-bitcoin px-3 py-2 text-bitcoin hover:bg-bitcoin/10">
             ENTER OASIS <span aria-hidden="true">→</span>
           </Link>
         </nav>
