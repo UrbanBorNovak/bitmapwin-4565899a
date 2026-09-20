@@ -18,6 +18,13 @@ export const getAtlasClaims = createServerFn({ method: "GET" })
     return { claims: await claimsForHeights([...new Set(data.heights)]) };
   });
 
+export const getAtlasLandForAddress = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) => z.object({ address: z.string().min(8).max(120) }).parse(data))
+  .handler(async ({ data }) => {
+    const { landForAddress } = await import("@/lib/atlas-land.server");
+    return { claims: await landForAddress(data.address) };
+  });
+
 export const indexAtlasFrontier = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
