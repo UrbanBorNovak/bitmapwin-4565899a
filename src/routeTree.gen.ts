@@ -36,6 +36,7 @@ import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as MyLandRouteImport } from './routes/my-land'
 import { Route as MyWorldRouteImport } from './routes/my-world'
+import { Route as OasisRouteImport } from './routes/oasis'
 import { Route as OwnershipRouteImport } from './routes/ownership'
 import { Route as PassportRouteImport } from './routes/passport'
 import { Route as PlayGuideRouteImport } from './routes/play-guide'
@@ -207,6 +208,11 @@ const MyLandRoute = MyLandRouteImport.update({
 const MyWorldRoute = MyWorldRouteImport.update({
   id: '/my-world',
   path: '/my-world',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OasisRoute = OasisRouteImport.update({
+  id: '/oasis',
+  path: '/oasis',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OwnershipRoute = OwnershipRouteImport.update({
@@ -426,6 +432,7 @@ export interface FileRoutesByFullPath {
   '/mcp': typeof McpRoute
   '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
+  '/oasis': typeof OasisRoute
   '/ownership': typeof OwnershipRoute
   '/passport': typeof PassportRoute
   '/play-guide': typeof PlayGuideRoute
@@ -490,6 +497,7 @@ export interface FileRoutesByTo {
   '/mcp': typeof McpRoute
   '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
+  '/oasis': typeof OasisRoute
   '/ownership': typeof OwnershipRoute
   '/passport': typeof PassportRoute
   '/play-guide': typeof PlayGuideRoute
@@ -556,6 +564,7 @@ export interface FileRoutesById {
   '/mcp': typeof McpRoute
   '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
+  '/oasis': typeof OasisRoute
   '/ownership': typeof OwnershipRoute
   '/passport': typeof PassportRoute
   '/play-guide': typeof PlayGuideRoute
@@ -624,6 +633,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/my-land'
     | '/my-world'
+    | '/oasis'
     | '/ownership'
     | '/passport'
     | '/play-guide'
@@ -688,6 +698,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/my-land'
     | '/my-world'
+    | '/oasis'
     | '/ownership'
     | '/passport'
     | '/play-guide'
@@ -753,6 +764,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/my-land'
     | '/my-world'
+    | '/oasis'
     | '/ownership'
     | '/passport'
     | '/play-guide'
@@ -820,6 +832,7 @@ export interface RootRouteChildren {
   McpRoute: typeof McpRoute
   MyLandRoute: typeof MyLandRoute
   MyWorldRoute: typeof MyWorldRoute
+  OasisRoute: typeof OasisRoute
   OwnershipRoute: typeof OwnershipRoute
   PassportRoute: typeof PassportRoute
   PlayGuideRoute: typeof PlayGuideRoute
@@ -1031,6 +1044,13 @@ declare module '@tanstack/react-router' {
       path: '/my-world'
       fullPath: '/my-world'
       preLoaderRoute: typeof MyWorldRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oasis': {
+      id: '/oasis'
+      path: '/oasis'
+      fullPath: '/oasis'
+      preLoaderRoute: typeof OasisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ownership': {
@@ -1404,6 +1424,7 @@ const rootRouteChildren: RootRouteChildren = {
   McpRoute: McpRoute,
   MyLandRoute: MyLandRoute,
   MyWorldRoute: MyWorldRoute,
+  OasisRoute: OasisRoute,
   OwnershipRoute: OwnershipRoute,
   PassportRoute: PassportRoute,
   PlayGuideRoute: PlayGuideRoute,
