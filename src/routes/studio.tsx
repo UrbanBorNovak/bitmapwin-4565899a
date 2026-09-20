@@ -339,9 +339,18 @@ function ExtenderWorkbench({ extender }: { extender: Extender }) {
   const [code, setCode] = useState("");
   const [testHeight, setTestHeight] = useState("36095");
   const [loadedFrom, setLoadedFrom] = useState<string | null>(null);
+  const [mode, setMode] = useState<"blueprint" | "code">("blueprint");
+  const [blueprint, setBlueprint] = useState<Blueprint>({ ...EMPTY_BLUEPRINT, name: extender.name });
 
   const latestWithCode = (versions.data ?? []).find((v) => codeFromManifest(v.manifest));
+  const latestPublished = (versions.data ?? []).find((v) => v.status === "published") ?? null;
   const height = Number.isFinite(Number(testHeight)) ? Number(testHeight) : 0;
+
+  function applyBlueprint(next: Blueprint) {
+    setBlueprint(next);
+    setCode(codeFromBlueprint(next));
+    setLoadedFrom("BLUEPRINT");
+  }
 
   const status = useMutation({
     mutationFn: (next: "draft" | "published" | "archived") =>
