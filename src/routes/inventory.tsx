@@ -232,7 +232,7 @@ function InventoryPage() {
         &gt; YOUR KIT IS PERSONAL PLAY STATE — SPOILS LIVE IN YOUR BROWSER, THE MODELS THEMSELVES ARE ON-CHAIN
         <span className="blink">_</span>
       </p>
-      <Link to="/map" className="btn-term mt-6 inline-flex">
+      <Link to="/oasis" className="btn-term mt-6 inline-flex">
         [ ENTER THE OASIS ]
       </Link>
     </div>

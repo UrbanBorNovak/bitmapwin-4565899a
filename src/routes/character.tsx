@@ -162,7 +162,7 @@ function CharacterPage() {
               <Link to="/inventory" className="label underline">
                 OPEN INVENTORY
               </Link>
-              <Link to="/map" className="label underline">
+              <Link to="/oasis" className="label underline">
                 WALK THE OASIS
               </Link>
             </div>

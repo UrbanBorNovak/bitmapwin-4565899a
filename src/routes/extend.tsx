@@ -102,7 +102,7 @@ function ExtendPage() {
               [ BACK TO THE TILE ]
             </Link>
           ) : (
-            <Link to="/map" className="btn-term-ghost">[ PICK A TILE IN THE OASIS ]</Link>
+            <Link to="/oasis" className="btn-term-ghost">[ PICK A TILE IN THE OASIS ]</Link>
           )}
         </div>
       </div>

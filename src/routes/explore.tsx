@@ -46,7 +46,7 @@ function ExplorePage() {
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         <DataBadge kind="live" note="CHAIN SALES" />
-        <Link to="/map" className="btn-term">[ ENTER THE OASIS ]</Link>
+        <Link to="/oasis" className="btn-term">[ ENTER THE OASIS ]</Link>
       </div>
       <div className="mt-6"><LoopNavigator active="explore" /></div>
 

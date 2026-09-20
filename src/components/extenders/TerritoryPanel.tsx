@@ -53,7 +53,7 @@ export function TerritoryPanel({
       </dl>
 
       <div className="grid grid-cols-2 divide-x divide-border border-b border-border sm:grid-cols-5">
-        <Action to="/map" search={{ height }} label="[ ENTER ]" primary />
+        <Action to="/oasis" search={{ height }} label="[ ENTER ]" primary />
         <Action to="/builds" label="[ BUILD ]" />
         <Action to="/extend" search={{ height }} label="[ EXTEND ]" primary />
         <Action to="/leases" label="[ LEASE ]" />
