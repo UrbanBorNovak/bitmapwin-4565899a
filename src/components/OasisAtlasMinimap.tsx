@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import atlasHd from "@/assets/oasis-atlas-hd.jpg";
 import { ATLAS_CAPACITY, ATLAS_SIDE, atlasToBlock, blockToAtlas } from "@/lib/atlas-geometry";
+import { atlasPlace } from "@/lib/atlas-places";
 
 /** Same painted atlas as /map, shrunk into an Oasis HUD overlay. Click to travel. */
 export function OasisAtlasMinimap({ height, tipHeight }: { height?: number | undefined; tipHeight: number }) {
@@ -56,7 +57,7 @@ export function OasisAtlasMinimap({ height, tipHeight }: { height?: number | und
             )}
           </button>
           <p className="px-2 py-1 font-mono text-[9px] leading-tight text-muted-foreground">
-            {here ? `HERE · ${here.x},${here.y}` : "TAP THE ATLAS TO TRAVEL"}
+            {here ? `HERE · ${atlasPlace(height ?? 0).localName} · ${here.x},${here.y}` : "TAP THE ATLAS TO TRAVEL"}
           </p>
         </>
       )}
