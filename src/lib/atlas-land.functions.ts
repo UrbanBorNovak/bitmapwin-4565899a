@@ -25,6 +25,20 @@ export const getAtlasLandForAddress = createServerFn({ method: "GET" })
     return { claims: await landForAddress(data.address) };
   });
 
+export const getAtlasParcelization = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) =>
+    z.object({
+      claims: z.array(z.object({
+        height: z.number().int().min(0).max(1_048_575),
+        inscriptionId: z.string().regex(/^[0-9a-fA-F]{64}i\d+$/),
+      })).max(16),
+    }).parse(data ?? { claims: [] }),
+  )
+  .handler(async ({ data }) => {
+    const { summarizeParcelization } = await import("@/lib/parcels.server");
+    return { parcelized: await summarizeParcelization(data.claims) };
+  });
+
 export const indexAtlasFrontier = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z

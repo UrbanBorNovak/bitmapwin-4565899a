@@ -6,6 +6,15 @@ export type AtlasClaim = {
   isValid: boolean;
 };
 
+/** Verified child-parcel activity for one claimed BITMAP. */
+export type AtlasParcelization = {
+  height: number;
+  validParcels: number;
+  holders: number;
+  maxParcels: number | null;
+  truncated: boolean;
+};
+
 /**
  * The block heights the atlas is showing for a camera window, sampled on a
  * grid so the number of rows read stays bounded at every zoom level.

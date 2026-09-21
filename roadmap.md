@@ -14,3 +14,7 @@
 - [x] Add permanent illustrated story pages for all 64 named atlas districts.
 - [x] Link atlas district labels and inspectors to their story pages.
 - [x] Verify district stories on desktop and phone.
+
+- [x] Show parcelized BITMAPs as a distinct, toggleable atlas layer.
+- [x] Surface valid parcel and holder counts in the selected BITMAP panel.
+- [x] Verify the parcel layer on desktop and phone.
