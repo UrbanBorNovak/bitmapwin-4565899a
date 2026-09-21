@@ -10,6 +10,7 @@
 
 import { useSyncExternalStore } from "react";
 import { addItem, backpackFull, grantXp, type ItemId } from "./world-skills";
+import { landscapeFor } from "./land-biome";
 
 /** Miners standing on each held BITMAP, and what one of them digs in an hour. */
 export const CREW_PER_BITMAP = 2;
@@ -62,20 +63,31 @@ function commit() {
 export const crewFor = (bitmaps: number) => Math.max(0, bitmaps) * CREW_PER_BITMAP;
 
 /** Ore a visitor's crews have dug and not yet collected. */
-export function pendingOre(bitmaps: number, now = Date.now()) {
+export function pendingOre(bitmaps: number, now = Date.now(), yieldScale = 1) {
   hydrate();
   const crew = crewFor(bitmaps);
   if (crew === 0) return 0;
   const hours = Math.min(Math.max(0, now - state.since) / HOUR, MAX_BANKED_HOURS);
-  return Math.floor(hours * crew * ORE_PER_CREW_HOUR);
+  return Math.floor(hours * crew * ORE_PER_CREW_HOUR * Math.max(0, yieldScale));
+}
+
+/**
+ * How much richer than average the land a wallet holds is. A rocky or desert
+ * BITMAP carries a RICH SEAM; green land carries none.
+ */
+export function oreYieldOf(heights: number[]) {
+  if (heights.length === 0) return 1;
+  let total = 0;
+  for (const height of heights) total += landscapeFor(height).effects.ore;
+  return total / heights.length;
 }
 
 export type MiningCollection = { collected: number; full: boolean };
 
 /** Move everything the crews dug into the backpack. */
-export function collectOre(bitmaps: number): MiningCollection {
+export function collectOre(bitmaps: number, yieldScale = 1): MiningCollection {
   hydrate();
-  const ready = pendingOre(bitmaps);
+  const ready = pendingOre(bitmaps, Date.now(), yieldScale);
   if (ready <= 0) return { collected: 0, full: backpackFull() };
   let moved = 0;
   for (let i = 0; i < ready; i++) {
