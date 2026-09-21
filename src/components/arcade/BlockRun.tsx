@@ -56,6 +56,7 @@ export default function BlockRun({ height }: { height: number }) {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
+    const g = ctx;
 
     const level = buildLevel(height);
     setTotalCoins(level.coins.length);
@@ -148,50 +149,50 @@ export default function BlockRun({ height }: { height: number }) {
     }
 
     function draw() {
-      ctx.clearRect(0, 0, VIEW_W, VIEW_H);
-      const sky = ctx.createLinearGradient(0, 0, 0, VIEW_H);
+      g.clearRect(0, 0, VIEW_W, VIEW_H);
+      const sky = g.createLinearGradient(0, 0, 0, VIEW_H);
       sky.addColorStop(0, "#1b2436");
       sky.addColorStop(1, "#2c3627");
-      ctx.fillStyle = sky;
-      ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+      g.fillStyle = sky;
+      g.fillRect(0, 0, VIEW_W, VIEW_H);
 
-      ctx.save();
-      ctx.translate(-camera, 0);
+      g.save();
+      g.translate(-camera, 0);
 
       // distant hills, drawn from the same seed feel as the world
-      ctx.fillStyle = "rgba(120,150,110,0.22)";
+      g.fillStyle = "rgba(120,150,110,0.22)";
       for (let i = 0; i < 16; i++) {
         const hx = i * 300 - (camera * 0.3 - camera);
-        ctx.beginPath();
-        ctx.ellipse(hx, GROUND_Y - 10, 220, 120, 0, Math.PI, 0);
-        ctx.fill();
+        g.beginPath();
+        g.ellipse(hx, GROUND_Y - 10, 220, 120, 0, Math.PI, 0);
+        g.fill();
       }
 
-      ctx.fillStyle = "#3a4a32";
-      ctx.fillRect(-200, GROUND_Y, level.finishX + 800, VIEW_H);
-      ctx.fillStyle = "#4d6040";
-      ctx.fillRect(-200, GROUND_Y, level.finishX + 800, 8);
+      g.fillStyle = "#3a4a32";
+      g.fillRect(-200, GROUND_Y, level.finishX + 800, VIEW_H);
+      g.fillStyle = "#4d6040";
+      g.fillRect(-200, GROUND_Y, level.finishX + 800, 8);
 
-      ctx.fillStyle = "#6b7a5a";
+      g.fillStyle = "#6b7a5a";
       for (const p of level.platforms) {
-        ctx.fillRect(p.x, p.y, p.w, p.h);
-        ctx.fillStyle = "#87996f";
-        ctx.fillRect(p.x, p.y, p.w, 3);
-        ctx.fillStyle = "#6b7a5a";
+        g.fillRect(p.x, p.y, p.w, p.h);
+        g.fillStyle = "#87996f";
+        g.fillRect(p.x, p.y, p.w, 3);
+        g.fillStyle = "#6b7a5a";
       }
 
-      ctx.fillStyle = "#f7931a";
+      g.fillStyle = "#f7931a";
       level.coins.forEach((coin, index) => {
         if (taken.has(index)) return;
-        ctx.beginPath();
-        ctx.arc(coin.x, coin.y, 8, 0, Math.PI * 2);
-        ctx.fill();
+        g.beginPath();
+        g.arc(coin.x, coin.y, 8, 0, Math.PI * 2);
+        g.fill();
       });
 
       // finish banner
-      ctx.fillStyle = "#22d3ee";
-      ctx.fillRect(level.finishX, GROUND_Y - 120, 4, 120);
-      ctx.fillRect(level.finishX, GROUND_Y - 120, 46, 26);
+      g.fillStyle = "#22d3ee";
+      g.fillRect(level.finishX, GROUND_Y - 120, 4, 120);
+      g.fillRect(level.finishX, GROUND_Y - 120, 46, 26);
 
       const drawRunner = (
         x: number,
@@ -200,17 +201,17 @@ export default function BlockRun({ height }: { height: number }) {
         label: string,
         dim: boolean,
       ) => {
-        ctx.globalAlpha = dim ? 0.8 : 1;
-        ctx.fillStyle = color;
-        ctx.fillRect(x, y, BODY, BODY);
-        ctx.fillStyle = "rgba(0,0,0,0.45)";
-        ctx.fillRect(x + 4, y + 6, 5, 5);
-        ctx.fillRect(x + BODY - 9, y + 6, 5, 5);
-        ctx.globalAlpha = 1;
-        ctx.font = "10px monospace";
-        ctx.textAlign = "center";
-        ctx.fillStyle = "rgba(255,255,255,0.85)";
-        ctx.fillText(label.toUpperCase(), x + BODY / 2, y - 8);
+        g.globalAlpha = dim ? 0.8 : 1;
+        g.fillStyle = color;
+        g.fillRect(x, y, BODY, BODY);
+        g.fillStyle = "rgba(0,0,0,0.45)";
+        g.fillRect(x + 4, y + 6, 5, 5);
+        g.fillRect(x + BODY - 9, y + 6, 5, 5);
+        g.globalAlpha = 1;
+        g.font = "10px monospace";
+        g.textAlign = "center";
+        g.fillStyle = "rgba(255,255,255,0.85)";
+        g.fillText(label.toUpperCase(), x + BODY / 2, y - 8);
       };
 
       for (const peer of peersRef.current.values()) {
@@ -220,7 +221,7 @@ export default function BlockRun({ height }: { height: number }) {
       }
       drawRunner(me.x, me.y, selfColor, selfHandle, false);
 
-      ctx.restore();
+      g.restore();
     }
 
     function loop(now: number) {
