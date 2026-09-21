@@ -175,6 +175,9 @@ function RegionPanel({
       <Button type="button" variant="terminalGhost" size="sm" onClick={()=>focusHeight(district.anchorHeight)}>ANCHOR BLOCK {district.anchorHeight.toLocaleString("en-US")}</Button>
     </div>
   </section>;
+}
+
+
 
 
 /** Every claimed parcel on a BITMAP, clickable, revealing the holder behind it. */
