@@ -532,7 +532,7 @@
 .oasis-storybook::before {
   background:
     radial-gradient(ellipse at 50% 36%, color-mix(in oklab, var(--color-bitcoin) 10%, transparent) 0%, transparent 46%),
-    linear-gradient(180deg, color-mix(in oklab, #f7dca0 11%, transparent) 0%, transparent 42%, color-mix(in oklab, #789a68 9%, transparent) 100%),
+    linear-gradient(180deg, color-mix(in oklab, var(--color-foreground) 9%, transparent) 0%, transparent 42%, color-mix(in oklab, var(--color-signal) 7%, transparent) 100%),
     radial-gradient(ellipse at center, transparent 55%, color-mix(in oklab, var(--color-background) 34%, transparent) 118%);
   mix-blend-mode: soft-light;
   opacity: 0.72;
