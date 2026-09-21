@@ -30,8 +30,8 @@ export function AtlasPlaceIllustration({ place }: { place: AtlasPlaceStory }) {
         style={{
           width: `${scale}%`,
           height: `${scale}%`,
-          left: `${place.frame.column * -100}%`,
-          top: `${place.frame.row * -100}%`,
+          left: `${place.frame.left}%`,
+          top: `${place.frame.top}%`,
         }}
       />
       <div className="district-illustration__wash absolute inset-0" aria-hidden="true" />
