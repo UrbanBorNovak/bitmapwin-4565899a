@@ -2497,7 +2497,18 @@ const WorldScene = memo(function WorldScene({
       ) : null}
 
       {selectedHeight !== null ? (
-        <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} />
+        <>
+          <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} />
+          <BssScene3D
+            height={selectedHeight}
+            position={[
+              worldX(selectedHeight % GRID),
+              districtHeight(selectedHeight) + 0.001,
+              worldZ(Math.floor(selectedHeight / GRID)),
+            ]}
+            cell={CELL}
+          />
+        </>
       ) : null}
       <VisitorBeacons cursors={cursors} />
       <SelfBeacon pose={pose} bitcoin={colors.bitcoin} wide={cameraMode === "map"} />
