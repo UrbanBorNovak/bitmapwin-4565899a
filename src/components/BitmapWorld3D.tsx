@@ -2361,6 +2361,9 @@ const WorldScene = memo(function WorldScene({
   );
 
 
+  // A desert reach opens the horizon; a forest or the frontier closes it in.
+  const landView = useStandingLand().landscape.tone.view;
+
   return (
     <>
       <color attach="background" args={[colors.background]} />
@@ -2372,8 +2375,8 @@ const WorldScene = memo(function WorldScene({
           cameraMode === "map"
             ? [colors.background, 40, 190]
             : cameraMode === "first"
-              ? [colors.background, 8, 64]
-              : [colors.background, 13, 82]
+              ? [colors.background, 8 * landView, 64 * landView]
+              : [colors.background, 13 * landView, 82 * landView]
         }
       />
 
