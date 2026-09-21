@@ -67,7 +67,7 @@ function DistrictStoryPage() {
               <div className="col-span-2 bg-background p-3"><dt className="text-muted-foreground">ERA / BIOME</dt><dd className="mt-1">{era.label} · {era.biome}</dd></div>
             </dl>
             <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-              <Button asChild variant="terminal"><Link to="/map/$block" params={{ block: String(district.anchorHeight) }}><Navigation />OPEN LAND</Link></Button>
+              <Button asChild variant="terminal"><Link to="/map/place/$block" params={{ block: String(district.anchorHeight) }}><Navigation />ANCHOR PLACE</Link></Button>
               <Button asChild variant="terminalGhost"><Link to="/oasis" search={{ height: district.anchorHeight }}><Mountain />DROP IN 3D</Link></Button>
             </div>
           </section>

@@ -3,6 +3,7 @@ import { queryOptions, useMutation, useQuery, useQueryClient, useSuspenseQuery }
 import { getBlockInscriptions } from "@/lib/ordinals-scan.functions";
 import { getBitmapRegistryEntry } from "@/lib/oci.functions";
 import { MAX_BITMAP } from "@/lib/oci";
+import { atlasPlace } from "@/lib/atlas-places";
 import { TraitBadges } from "@/components/TraitBadges";
 import { ClubBadge } from "@/components/ClubBadge";
 import { GalleryBadges } from "@/components/GalleryBadges";
@@ -174,6 +175,13 @@ function BitmapDetail() {
           ? `CLAIMED ON CHAIN${parcel.inscribedInBlock !== null ? ` IN BLOCK ${parcel.inscribedInBlock}` : ""}`
           : "UNCLAIMED — NO VALID INSCRIPTION IN THE REGISTRY"}
       </p>
+      <Link to="/map/place/$block" params={{ block: String(block) }} className="mt-4 flex max-w-xl min-w-0 items-center justify-between gap-4 border border-bitcoin/50 bg-bitcoin/5 px-4 py-3 transition-colors hover:bg-bitcoin/10">
+        <span className="min-w-0">
+          <span className="label block text-bitcoin">THIS PLACE IN THE ATLAS</span>
+          <span className="mt-1 block truncate font-mono text-xs">{atlasPlace(block).localName} · {atlasPlace(block).name}</span>
+        </span>
+        <span className="label shrink-0 text-bitcoin">STORY →</span>
+      </Link>
       <div className="mt-6"><LoopNavigator active="provenance" compact /></div>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
