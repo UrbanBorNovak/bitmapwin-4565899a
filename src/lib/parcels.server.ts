@@ -13,6 +13,17 @@ import type { ChainChild, ChainParcel, ParcelScan } from "@/lib/parcels";
 
 export type { ChainChild, ChainParcel, ParcelScan };
 
+export type ParcelizationSummary = {
+  height: number;
+  validParcels: number;
+  holders: number;
+  maxParcels: number | null;
+  truncated: boolean;
+};
+
+const parcelSummaryCache = new Map<string, { expires: number; value: ParcelizationSummary }>();
+const PARCEL_SUMMARY_TTL = 5 * 60_000;
+
 type ChildRow = {
   id: string;
   number: number;
@@ -179,6 +190,32 @@ export async function scanParcels(
     parcels: claims,
     children,
   };
+}
+
+/**
+ * Small atlas read-model backed by the same recursive parcel scan as the land
+ * page. Results are cached so panning back over a BITMAP does not rescan ord.
+ */
+export async function summarizeParcelization(
+  items: Array<{ height: number; inscriptionId: string }>,
+): Promise<ParcelizationSummary[]> {
+  return mapLimit(items, 3, async (item) => {
+    const key = `${item.height}:${item.inscriptionId}`;
+    const cached = parcelSummaryCache.get(key);
+    if (cached && cached.expires > Date.now()) return cached.value;
+
+    const scan = await scanParcels(item.height, item.inscriptionId);
+    const valid = scan.parcels.filter((parcel) => parcel.valid);
+    const value: ParcelizationSummary = {
+      height: item.height,
+      validParcels: valid.length,
+      holders: new Set(valid.flatMap((parcel) => parcel.ownerAddress ? [parcel.ownerAddress] : [])).size,
+      maxParcels: scan.maxParcels,
+      truncated: scan.truncated,
+    };
+    parcelSummaryCache.set(key, { expires: Date.now() + PARCEL_SUMMARY_TTL, value });
+    return value;
+  });
 }
 
 /** Children of a parcel inscription (grandchildren of the district). */
