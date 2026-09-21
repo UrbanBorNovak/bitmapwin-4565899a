@@ -8,23 +8,25 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/tanstack/vite";
 import type { Plugin } from "vite";
 
-const THREE_SOURCE_MODULE = /src\/components\/(?:BitmapWorld3D|extenders\/Extender(?:Props|Stage)|game\/).*\.(?:jsx|tsx)$/;
+const APP_MODULE = /\/src\/.*\.(?:jsx|tsx)$/;
+const R3F_MODULE = /@react-three\/(?:fiber|drei)|from\s+["']three["']/;
 
 /**
- * TanStack's development source inspector annotates every JSX element with a
+ * TanStack's source inspector annotates every JSX element with a
  * data-tsd-source attribute. React Three Fiber treats dashed props as nested
  * Three.js properties, so those DOM-only annotations crash the canvas before
- * it mounts. Strip the annotation from every module that renders into R3F;
- * source inspection remains enabled everywhere else in the app.
+ * it mounts. Strip the annotation from every module that can render into R3F
+ * (detected by its three / @react-three imports, in dev and in production
+ * builds alike); source inspection remains enabled everywhere else.
  */
 function stripThreeSourceAnnotations(): Plugin {
   return {
     name: "bitmap:strip-three-source-annotations",
     enforce: "post",
-    apply: "serve",
     transform(code, id) {
       const cleanId = id.split("?", 1)[0]?.replaceAll("\\", "/");
-      if (!cleanId || !THREE_SOURCE_MODULE.test(cleanId)) return null;
+      if (!cleanId || !APP_MODULE.test(cleanId)) return null;
+      if (!R3F_MODULE.test(code)) return null;
 
       const stripped = code
         .replace(/\sdata-tsd-source=(?:"[^"]*"|'[^']*'|\{[^}]*\})/g, "")
