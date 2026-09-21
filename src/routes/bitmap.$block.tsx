@@ -138,10 +138,24 @@ function BitmapDetail() {
   const localHistory = useQuery(provenanceStreamQuery("all", 12, undefined, block));
   const queryClient = useQueryClient();
 
+  const place = atlasPlace(block);
+  const regionStats = useQuery({
+    queryKey: ["atlas-region-stats", place.slug],
+    queryFn: () => getAtlasRegionStats({ data: districtBlockRange(place) }),
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+
   const claims = (scan.data?.inscriptions ?? []).filter((i) => i.isBitmapClaim);
   const history = [...(trades.data ?? [])].sort((a, b) => b.hop - a.hop);
   const lastSale = history.find((t) => t.price_sats > 0) ?? null;
   const owner = liveHolder.data?.ownerAddress ?? parcel?.ownerAddress ?? history[0]?.buyer_address ?? oci.data?.ownerAddress ?? null;
+
+  const tradedVolume = history.reduce((sum, t) => sum + (t.price_sats > 0 ? t.price_sats : 0), 0);
+  const distinctTraders = new Set(history.flatMap((t) => [t.seller_address, t.buyer_address])).size;
+  const txCount = stats.data?.txCount ?? scan.data?.txCount ?? null;
+  const region = regionStats.data ?? null;
+  const regionHeld = region ? Math.max(0, region.indexed - region.unowned) : 0;
 
   const trace = useMutation({
     mutationFn: async () => {
