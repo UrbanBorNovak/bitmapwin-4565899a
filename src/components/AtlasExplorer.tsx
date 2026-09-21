@@ -161,10 +161,12 @@ export function AtlasExplorer({ initialHeight }: { initialHeight?: number }) {
   // block in view, so the atlas shows land even with no recent activity.
   const fetchClaims=useServerFn(getAtlasClaims); const runFrontier=useServerFn(indexAtlasFrontier);
   const viewWindow=useMemo(()=>({zoom:Math.round(camera.zoom*2)/2,x:Math.round(camera.x*40)/40,y:Math.round(camera.y*40)/40}),[camera.zoom,camera.x,camera.y]);
-  const sampled=useMemo(()=>tipHeight?sampleVisibleHeights(viewWindow,14,ATLAS_SIDE,tipHeight,atlasToBlock):[],[viewWindow,tipHeight]);
-  const land=useQuery({queryKey:["atlas","claims",viewWindow.zoom,viewWindow.x,viewWindow.y,tipHeight],queryFn:()=>fetchClaims({data:{heights:sampled}}),enabled:sampled.length>0,staleTime:120_000});
+  // The selected BITMAP is always read, even when the sampling grid skips it.
+  const sampled=useMemo(()=>{const heights=tipHeight?sampleVisibleHeights(viewWindow,14,ATLAS_SIDE,tipHeight,atlasToBlock):[];if(selected&&!heights.includes(selected.height))heights.push(selected.height);return heights;},[viewWindow,tipHeight,selected]);
+  const land=useQuery({queryKey:["atlas","claims",viewWindow.zoom,viewWindow.x,viewWindow.y,tipHeight,selected?.height??-1],queryFn:()=>fetchClaims({data:{heights:sampled}}),enabled:sampled.length>0,staleTime:120_000});
   const claims=useMemo(()=>{const map=new Map<number,AtlasClaim>();for(const claim of land.data?.claims??[])map.set(claim.height,claim);return map;},[land.data]);
-  const parcelCandidates=useMemo(()=>[...claims.values()].filter((claim)=>claim.isValid).slice(0,16).map((claim)=>({height:claim.height,inscriptionId:claim.inscriptionId})),[claims]);
+  // Selected land first, so opening a BITMAP always scans its parcels.
+  const parcelCandidates=useMemo(()=>{const valid=[...claims.values()].filter((claim)=>claim.isValid);const selectedClaim=selected?valid.find((claim)=>claim.height===selected.height):undefined;const ordered=selectedClaim?[selectedClaim,...valid.filter((claim)=>claim.height!==selectedClaim.height)]:valid;return ordered.slice(0,16).map((claim)=>({height:claim.height,inscriptionId:claim.inscriptionId}));},[claims,selected]);
   const fetchParcelization=useServerFn(getAtlasParcelization);
   const parcelLayer=useQuery({queryKey:["atlas","parcelized",parcelCandidates.map((item)=>`${item.height}:${item.inscriptionId}`).join(",")],queryFn:()=>fetchParcelization({data:{claims:parcelCandidates}}),enabled:parcelsOn&&camera.zoom>=4&&parcelCandidates.length>0,staleTime:300_000});
   const parcelized=useMemo(()=>new Map((parcelLayer.data?.parcelized??[]).filter((item)=>item.validParcels>0).map((item)=>[item.height,item])),[parcelLayer.data]);
