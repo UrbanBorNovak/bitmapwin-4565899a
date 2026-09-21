@@ -68,6 +68,7 @@ import type { MapControls as MapControlsImpl } from "three-stdlib";
 import { Button } from "@/components/ui/button";
 import { BitmapModelPlacement } from "@/components/BitmapModelPlacement";
 import { BssScene3D } from "@/components/game/BssScene3D";
+import { bssSceneQuery } from "@/lib/bss";
 import { AvatarInventory } from "@/components/AvatarInventory";
 import { ExtenderStage } from "@/components/extenders/ExtenderStage";
 import { ExtenderHud } from "@/components/extenders/ExtenderHud";
@@ -3475,6 +3476,8 @@ function BitmapWorld3DInner({
   const selectedModel = selected
     ? models.data?.find((model) => model.bitmapHeight === selected.height)
     : undefined;
+  // The on-chain BSS scene inscribed on the selected land, if it has one.
+  const selectedScene = useQuery(bssSceneQuery(selected?.height ?? null));
   // Every height this visitor owns, whether that came from the registry or
   // straight from the wallet's on-chain inscriptions.
   const myHeights = useMemo(() => new Set(ownedHeights), [ownedHeights]);
@@ -4684,6 +4687,16 @@ function BitmapWorld3DInner({
                   : window_ && models.isPending
                     ? "SCANNING…"
                     : "NO MODEL"}
+              </dd>
+              <dt className="text-signal">SCENE</dt>
+              <dd className="truncate">
+                {selectedScene.isPending
+                  ? "READING CHAIN…"
+                  : selectedScene.data?.status === "ok"
+                    ? `${selectedScene.data.scene.objects.length} OBJECTS · BSS ${selectedScene.data.scene.versionLabel}`
+                    : selectedScene.data?.status === "error"
+                      ? "CANNOT DECODE"
+                      : "NO SCENE"}
               </dd>
             </dl>
             {selectedIsMine && session ? (
