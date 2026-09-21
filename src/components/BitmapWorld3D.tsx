@@ -4685,6 +4685,16 @@ function BitmapWorld3DInner({
                     ? "SCANNING…"
                     : "NO MODEL"}
               </dd>
+              <dt className="text-signal">SCENE</dt>
+              <dd className="truncate">
+                {selectedScene.isPending
+                  ? "READING CHAIN…"
+                  : selectedScene.data?.status === "ok"
+                    ? `${selectedScene.data.scene.objects.length} OBJECTS · BSS ${selectedScene.data.scene.versionLabel}`
+                    : selectedScene.data?.status === "error"
+                      ? "CANNOT DECODE"
+                      : "NO SCENE"}
+              </dd>
             </dl>
             {selectedIsMine && session ? (
               <BitmapModelPlacement height={selected.height} canEdit compact />
