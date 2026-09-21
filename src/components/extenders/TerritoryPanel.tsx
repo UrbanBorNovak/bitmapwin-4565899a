@@ -5,6 +5,7 @@ import { categoryGlyph, landGrantsQuery, tileDeploymentsQuery } from "@/lib/exte
 import { bitmapLeaseQuery } from "@/lib/leases";
 import { shortenAddress } from "@/lib/registry";
 import { useWalletSession } from "@/lib/wallet-session";
+import { landscapeFor } from "@/lib/land-biome";
 
 /**
  * The territory view of one BITMAP: what software runs on it, who else may
@@ -50,6 +51,8 @@ export function TerritoryPanel({
         <Cell k="BUILD RIGHTS" v={grants.isPending ? "…" : String(grantList.length)} />
         <Cell k="LEASE" v={lease.data?.active ? "LEASED" : "NONE"} />
         <Cell k="SURFACE" v="DEPLOYABLE" />
+        <Cell k="LANDSCAPE" v={landscape.name} />
+        <Cell k="LAND PERKS" v={landscape.perks.map((perk) => perk.name).join(" · ")} />
       </dl>
 
       <div className="grid grid-cols-2 divide-x divide-border border-b border-border sm:grid-cols-5">
