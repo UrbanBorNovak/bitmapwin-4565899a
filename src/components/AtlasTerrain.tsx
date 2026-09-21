@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { ATLAS_SIDE, atlasEra, atlasToBlock, blockToAtlas } from "@/lib/atlas-geometry";
 
 /**
@@ -28,8 +28,7 @@ type Tile = {
   drift: number;
 };
 
-function tilesFor(zoom: number, tip: number): Tile[] {
-  const step = zoom < 1.8 ? 128 : zoom < 3.2 ? 64 : zoom < 6 ? 32 : zoom < 10 ? 16 : 8;
+function tilesFor(step: number, tip: number): Tile[] {
   const tiles: Tile[] = [];
   for (let y = 0; y < ATLAS_SIDE; y += step) {
     for (let x = 0; x < ATLAS_SIDE; x += step) {
@@ -60,7 +59,19 @@ function tilesFor(zoom: number, tip: number): Tile[] {
 }
 
 export function AtlasTerrain({ zoom, tip }: { zoom: number; tip: number }) {
-  const tiles = useMemo(() => (zoom < 1.8 ? [] : tilesFor(zoom, tip)), [zoom, tip]);
+  const stepRef = useRef(128);
+  const current = stepRef.current;
+  let step = current;
+  if (current === 128 && zoom > 2.05) step = 64;
+  else if (current === 64 && zoom < 1.55) step = 128;
+  else if (current === 64 && zoom > 3.45) step = 32;
+  else if (current === 32 && zoom < 2.95) step = 64;
+  else if (current === 32 && zoom > 6.3) step = 16;
+  else if (current === 16 && zoom < 5.7) step = 32;
+  else if (current === 16 && zoom > 10.3) step = 8;
+  else if (current === 8 && zoom < 9.7) step = 16;
+  stepRef.current = step;
+  const tiles = useMemo(() => (zoom < 1.55 ? [] : tilesFor(step, tip)), [step, tip, zoom < 1.55]);
   if (tiles.length === 0) return null;
   return (
     <svg

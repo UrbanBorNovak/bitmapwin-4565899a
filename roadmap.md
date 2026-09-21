@@ -18,3 +18,7 @@
 - [x] Show parcelized BITMAPs as a distinct, toggleable atlas layer.
 - [x] Surface valid parcel and holder counts in the selected BITMAP panel.
 - [x] Verify the parcel layer on desktop and phone.
+
+- [x] Smooth atlas wheel, drag, and pinch camera updates.
+- [x] Stabilize close-up terrain and fine-detail thresholds while zooming.
+- [x] Keep atlas pins fixed and visually stable through zoom transitions.
