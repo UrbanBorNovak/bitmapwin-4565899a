@@ -19,6 +19,8 @@ export type ParcelizationSummary = {
   holders: number;
   maxParcels: number | null;
   truncated: boolean;
+  /** Ranked parcel owners on this BITMAP, biggest stake first. */
+  owners: Array<{ address: string | null; parcels: number; indexes: number[] }>;
 };
 
 const parcelSummaryCache = new Map<string, { expires: number; value: ParcelizationSummary }>();
@@ -206,12 +208,21 @@ export async function summarizeParcelization(
 
     const scan = await scanParcels(item.height, item.inscriptionId);
     const valid = scan.parcels.filter((parcel) => parcel.valid);
+    const byOwner = new Map<string, { address: string | null; parcels: number; indexes: number[] }>();
+    for (const parcel of valid) {
+      const key = parcel.ownerAddress ?? "__unknown__";
+      const row = byOwner.get(key) ?? { address: parcel.ownerAddress ?? null, parcels: 0, indexes: [] };
+      row.parcels += 1;
+      if (row.indexes.length < 6) row.indexes.push(parcel.index);
+      byOwner.set(key, row);
+    }
     const value: ParcelizationSummary = {
       height: item.height,
       validParcels: valid.length,
       holders: new Set(valid.flatMap((parcel) => parcel.ownerAddress ? [parcel.ownerAddress] : [])).size,
       maxParcels: scan.maxParcels,
       truncated: scan.truncated,
+      owners: [...byOwner.values()].sort((a, b) => b.parcels - a.parcels).slice(0, 8),
     };
     parcelSummaryCache.set(key, { expires: Date.now() + PARCEL_SUMMARY_TTL, value });
     return value;
