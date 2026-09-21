@@ -118,6 +118,32 @@ function BiomeMesh({ tip }: { tip: number }) {
   })}</div>;
 }
 
+/** Every claimed parcel on a BITMAP, clickable, revealing the holder behind it. */
+function ParcelClaims({ height, parcelization }: { height: number; parcelization: AtlasParcelization }) {
+  const [picked, setPicked] = useState<number | null>(null);
+  const parcels = parcelization.parcels;
+  if (parcels.length === 0) return null;
+  const active = parcels.find((parcel) => parcel.index === picked) ?? null;
+  return <div className="mt-2 border-t border-signal/30 pt-2">
+    <p className="label text-muted-foreground">PARCEL MAP · CLICK A PARCEL FOR ITS HOLDER</p>
+    <div className="mt-1.5 flex flex-wrap gap-1">
+      {parcels.map((parcel) => {
+        const on = parcel.index === picked;
+        return <button key={parcel.index} type="button" aria-pressed={on} onClick={() => setPicked(on ? null : parcel.index)} data-no-translate
+          className={`border px-1 py-0.5 font-mono text-[9px] tabular-nums transition-colors ${on ? "border-bitcoin bg-bitcoin/20 text-bitcoin" : "border-signal/40 bg-background/70 text-signal hover:border-signal"}`}
+          aria-label={`Parcel ${parcel.index} of ${height}.BITMAP`}>#{parcel.index}</button>;
+      })}
+    </div>
+    {active && <div className="mt-2 border border-bitcoin/50 bg-bitcoin/5 p-2">
+      <p className="label text-bitcoin" data-no-translate>PARCEL #{active.index}.{height}.BITMAP</p>
+      <p className="mt-1 break-all font-mono text-[9px] text-foreground" data-no-translate>HOLDER {active.address ?? "UNKNOWN"}</p>
+      <p className="break-all font-mono text-[9px] text-muted-foreground" data-no-translate>{active.inscriptionId}</p>
+      {active.address && <Button asChild variant="terminalGhost" size="sm" className="mt-2 w-full"><Link to="/profile/$address" params={{ address: active.address }}>HOLDER PROFILE <ArrowRight /></Link></Button>}
+    </div>}
+    {parcelization.validParcels > parcels.length && <p className="mt-1 font-mono text-[9px] text-muted-foreground">SHOWING FIRST {parcels.length} OF {parcelization.validParcels} PARCELS</p>}
+  </div>;
+}
+
 function Inspector({ place, tip, close, dropInto, claim, parcelization }: { place: Place; tip: number; close: () => void; dropInto: (height: number) => void; claim?: AtlasClaim | undefined; parcelization?: AtlasParcelization | undefined }) {
   const point = blockToAtlas(place.height); const era = atlasEra(place.height, tip); const identity = atlasPlace(place.height); const landscape = landscapeFor(place.height);
   return <div className="min-w-0 border border-bitcoin/60 bg-background/95 p-4 shadow-2xl backdrop-blur-md">
@@ -132,7 +158,7 @@ function Inspector({ place, tip, close, dropInto, claim, parcelization }: { plac
       <div className="col-span-2 bg-background p-2"><dt className="label">LAND PERKS · ACTIVE WHILE YOU STAND HERE</dt><dd className="mt-1 space-y-1">{landscape.perks.map((perk) => (<span key={perk.key} className="block font-mono text-[9px]"><span className="text-signal">{perk.name}</span> <span className="text-muted-foreground">{perk.effect}</span></span>))}</dd></div>
     </dl>
     {claim&&<div className="mt-3 border border-bitcoin/50 bg-bitcoin/5 p-2"><p className="label text-bitcoin">CLAIMED LAND {claim.isValid?"· VALID":"· CONTESTED"}</p><p className="mt-1 truncate font-mono text-[9px] text-muted-foreground" data-no-translate>HOLDER {claim.ownerAddress??"UNKNOWN"}</p><p className="truncate font-mono text-[9px] text-muted-foreground" data-no-translate>{claim.inscriptionId}</p></div>}
-    {parcelization&&parcelization.validParcels>0&&<div className="mt-3 border border-signal/60 bg-signal/10 p-2"><div className="flex items-center gap-2"><BoxSelect className="size-4 shrink-0 text-signal"/><p className="label text-signal">PARCELIZED BITMAP</p></div><dl className="mt-2 grid grid-cols-3 gap-px bg-border text-center"><div className="bg-background p-2"><dt className="label text-muted-foreground">PARCELS</dt><dd className="font-mono text-sm text-signal">{parcelization.validParcels}</dd></div><div className="bg-background p-2"><dt className="label text-muted-foreground">HOLDERS</dt><dd className="font-mono text-sm">{parcelization.holders||"—"}</dd></div><div className="bg-background p-2"><dt className="label text-muted-foreground">CAPACITY</dt><dd className="font-mono text-sm">{parcelization.maxParcels??"—"}</dd></div></dl>{parcelization.owners.length>0&&<div className="mt-2 border-t border-signal/30 pt-2"><p className="label text-muted-foreground">CLAIMED PARCELS · WHO OWNS THEM</p><ul className="mt-1 space-y-1">{parcelization.owners.map((owner,index)=>(<li key={owner.address??`unknown-${index}`} className="min-w-0"><div className="flex items-baseline justify-between gap-2"><span className="min-w-0 flex-1 truncate font-mono text-[9px] text-foreground" data-no-translate>{owner.address?`${owner.address.slice(0,8)}…${owner.address.slice(-6)}`:"UNKNOWN HOLDER"}</span><span className="shrink-0 font-mono text-[9px] text-signal">{owner.parcels} PARCEL{owner.parcels===1?"":"S"}</span></div><p className="break-words font-mono text-[9px] text-muted-foreground" data-no-translate>#{owner.indexes.join(" #")}{owner.parcels>owner.indexes.length?" …":""}</p></li>))}</ul></div>}{parcelization.truncated&&<p className="mt-2 font-mono text-[9px] text-muted-foreground">PARTIAL CHILD SCAN · MORE PARCELS MAY EXIST</p>}</div>}
+    {parcelization&&parcelization.validParcels>0&&<div className="mt-3 border border-signal/60 bg-signal/10 p-2"><div className="flex items-center gap-2"><BoxSelect className="size-4 shrink-0 text-signal"/><p className="label text-signal">PARCELIZED BITMAP</p></div><dl className="mt-2 grid grid-cols-3 gap-px bg-border text-center"><div className="bg-background p-2"><dt className="label text-muted-foreground">PARCELS</dt><dd className="font-mono text-sm text-signal">{parcelization.validParcels}</dd></div><div className="bg-background p-2"><dt className="label text-muted-foreground">HOLDERS</dt><dd className="font-mono text-sm">{parcelization.holders||"—"}</dd></div><div className="bg-background p-2"><dt className="label text-muted-foreground">CAPACITY</dt><dd className="font-mono text-sm">{parcelization.maxParcels??"—"}</dd></div></dl>{parcelization.owners.length>0&&<div className="mt-2 border-t border-signal/30 pt-2"><p className="label text-muted-foreground">CLAIMED PARCELS · WHO OWNS THEM</p><ul className="mt-1 space-y-1">{parcelization.owners.map((owner,index)=>(<li key={owner.address??`unknown-${index}`} className="min-w-0"><div className="flex items-baseline justify-between gap-2"><span className="min-w-0 flex-1 truncate font-mono text-[9px] text-foreground" data-no-translate>{owner.address?`${owner.address.slice(0,8)}…${owner.address.slice(-6)}`:"UNKNOWN HOLDER"}</span><span className="shrink-0 font-mono text-[9px] text-signal">{owner.parcels} PARCEL{owner.parcels===1?"":"S"}</span></div><p className="break-words font-mono text-[9px] text-muted-foreground" data-no-translate>#{owner.indexes.join(" #")}{owner.parcels>owner.indexes.length?" …":""}</p></li>))}</ul></div>}<ParcelClaims height={place.height} parcelization={parcelization}/>{parcelization.truncated&&<p className="mt-2 font-mono text-[9px] text-muted-foreground">PARTIAL CHILD SCAN · MORE PARCELS MAY EXIST</p>}</div>}
 
     {place.landmarks>0&&<div className="mt-3 flex items-center gap-2 border border-signal/60 bg-signal/10 p-2"><Hammer className="size-4 shrink-0 text-signal"/><div className="min-w-0"><p className="label text-signal">LANDMARK · {place.landmarks} BUILD{place.landmarks===1?"":"S"}</p><p className="truncate font-mono text-[9px] text-muted-foreground">{place.events.find((event)=>event.eventType==="build")?.summary||"Built history stands on this land"}</p></div></div>}
     <div className="mt-3 border-t border-border pt-3"><p className="label">VERIFIED HISTORY · {place.count}</p>{place.events.slice(0,3).map((event) => <div key={event.id} className="mt-2"><p className="truncate font-mono text-[10px] uppercase">{event.title}</p><p className="font-mono text-[9px] text-muted-foreground">{timeAgo(event.occurredAt)} · {event.proofLevel}</p></div>)}</div>
