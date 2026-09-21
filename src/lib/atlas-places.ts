@@ -43,11 +43,11 @@ export type AtlasPlaceStory = AtlasPlaceIdentity & {
   atmosphere: string;
   motif: AtlasDistrictStory["motif"];
   /** Illustration framing: which cell of a FRAME_DIVISIONS grid over the painted atlas this place occupies. */
-  frame: { divisions: number; column: number; row: number };
+  frame: { divisions: number; left: number; top: number };
   neighbors: { previous: number; next: number };
 };
 
-export const PLACE_FRAME_DIVISIONS = 32;
+export const PLACE_FRAME_DIVISIONS = 11;
 
 function mix(value: number) {
   let result = value | 0;
