@@ -15,6 +15,7 @@ import { colAt, rowAt } from "./player-state";
 import { chunkOfTile, heightOfTile, tileOfHeight } from "./world-grid";
 import { listTerraformedLand, seedTerraform } from "./land-terraform.functions";
 import { markChunkLoad } from "./world-perf";
+import { landscapeFor } from "./land-biome";
 
 /** Real time from bare sand to a fully grown BITMAP: 30 days. */
 export const FULL_GROWTH_MS = 30 * 24 * 60 * 60 * 1000;
