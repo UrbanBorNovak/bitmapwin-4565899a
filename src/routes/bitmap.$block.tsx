@@ -3,6 +3,7 @@ import { queryOptions, useMutation, useQuery, useQueryClient, useSuspenseQuery }
 import { getBlockInscriptions } from "@/lib/ordinals-scan.functions";
 import { getBitmapRegistryEntry } from "@/lib/oci.functions";
 import { MAX_BITMAP } from "@/lib/oci";
+import { atlasPlace } from "@/lib/atlas-places";
 import { TraitBadges } from "@/components/TraitBadges";
 import { ClubBadge } from "@/components/ClubBadge";
 import { GalleryBadges } from "@/components/GalleryBadges";
