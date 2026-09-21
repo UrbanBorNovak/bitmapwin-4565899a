@@ -71,6 +71,7 @@ import { Route as ApiPublicCrawlTradesRouteImport } from './routes/api/public/cr
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
 import { Route as ApiPublicResolveRegistryRouteImport } from './routes/api/public/resolve-registry'
+import { Route as MapDistrictSlugRouteImport } from './routes/map_.district.$slug'
 import { Route as RanksPlayerIdRouteImport } from './routes/ranks.player.$id'
 import { Route as ApiPublicBlocksHeightRouteImport } from './routes/api/public/blocks.$height'
 import { Route as ApiPublicGalleryIdRouteImport } from './routes/api/public/gallery.$id'
@@ -388,6 +389,11 @@ const ApiPublicResolveRegistryRoute =
     path: '/public/resolve-registry',
     getParentRoute: () => ApiRoute,
   } as any)
+const MapDistrictSlugRoute = MapDistrictSlugRouteImport.update({
+  id: '/map_/district/$slug',
+  path: '/map/district/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RanksPlayerIdRoute = RanksPlayerIdRouteImport.update({
   id: '/player/$id',
   path: '/player/$id',
@@ -473,6 +479,7 @@ export interface FileRoutesByFullPath {
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
+  '/map/district/$slug': typeof MapDistrictSlugRoute
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
@@ -538,6 +545,7 @@ export interface FileRoutesByTo {
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
+  '/map/district/$slug': typeof MapDistrictSlugRoute
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
@@ -607,6 +615,7 @@ export interface FileRoutesById {
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
+  '/map_/district/$slug': typeof MapDistrictSlugRoute
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
@@ -677,6 +686,7 @@ export interface FileRouteTypes {
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
+    | '/map/district/$slug'
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
@@ -742,6 +752,7 @@ export interface FileRouteTypes {
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
+    | '/map/district/$slug'
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
@@ -810,6 +821,7 @@ export interface FileRouteTypes {
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
+    | '/map_/district/$slug'
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
@@ -866,6 +878,7 @@ export interface RootRouteChildren {
   MapBlockRoute: typeof MapBlockRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
+  MapDistrictSlugRoute: typeof MapDistrictSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1304,6 +1317,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicResolveRegistryRouteImport
       parentRoute: typeof ApiRoute
     }
+    '/map_/district/$slug': {
+      id: '/map_/district/$slug'
+      path: '/map/district/$slug'
+      fullPath: '/map/district/$slug'
+      preLoaderRoute: typeof MapDistrictSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ranks/player/$id': {
       id: '/ranks/player/$id'
       path: '/player/$id'
@@ -1467,6 +1487,7 @@ const rootRouteChildren: RootRouteChildren = {
   MapBlockRoute: MapBlockRoute,
   ProfileAddressRoute: ProfileAddressRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
+  MapDistrictSlugRoute: MapDistrictSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
