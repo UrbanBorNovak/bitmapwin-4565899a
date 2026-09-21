@@ -34,6 +34,21 @@ export type AtlasPlaceIdentity = AtlasDistrictIdentity & {
   address: string;
 };
 
+/** A single BITMAP promoted to a full place: its own story, illustration framing and atlas entry. */
+export type AtlasPlaceStory = AtlasPlaceIdentity & {
+  height: number;
+  point: { x: number; y: number };
+  chapter: string;
+  story: readonly [string, string];
+  atmosphere: string;
+  motif: AtlasDistrictStory["motif"];
+  /** Illustration framing: which cell of a FRAME_DIVISIONS grid over the painted atlas this place occupies. */
+  frame: { divisions: number; column: number; row: number };
+  neighbors: { previous: number; next: number };
+};
+
+export const PLACE_FRAME_DIVISIONS = 32;
+
 function mix(value: number) {
   let result = value | 0;
   result = Math.imul(result ^ (result >>> 16), 0x45d9f3b);
