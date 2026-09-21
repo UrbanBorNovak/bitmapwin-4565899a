@@ -225,6 +225,8 @@ export type MoveIntent = {
   speedScale?: number;
   /** multiplier on the keyboard turn rate */
   turnScale?: number;
+  /** multiplier on jump height — high ground lifts the body further */
+  jumpScale?: number;
   /** multiplier on how hard the body/ride builds speed */
   accelScale?: number;
   /** multiplier on how fast it sheds speed when you let off */
