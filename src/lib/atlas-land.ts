@@ -14,6 +14,8 @@ export type AtlasParcelization = {
   maxParcels: number | null;
   truncated: boolean;
   owners: Array<{ address: string | null; parcels: number; indexes: number[] }>;
+  /** Every valid parcel, so each one can be clicked to reveal its holder. */
+  parcels: Array<{ index: number; address: string | null; inscriptionId: string }>;
 };
 
 /**
