@@ -60,6 +60,25 @@ export function AtlasPlaceLabels({
                   {district.landmark}
                 </span>
               ) : null}
+              {zoom >= 3 ? (
+                <span
+                  style={{ fontSize: `${Math.min(13, 7 + zoom * 0.6)}px`, textShadow: "0 1px 2px rgba(0,0,0,.85)" }}
+                  className="mt-0.5 whitespace-nowrap font-mono font-bold uppercase tracking-[0.2em] text-background/85"
+                >
+                  {districtChapter(district)}
+                </span>
+              ) : null}
+              {zoom >= 3.6 && stats?.[district.index] ? (
+                <span
+                  style={{ fontSize: `${Math.min(13, 7 + zoom * 0.5)}px`, textShadow: "0 1px 2px rgba(0,0,0,.85)" }}
+                  className="mt-0.5 flex items-center gap-1 whitespace-nowrap font-mono font-bold uppercase text-signal"
+                >
+                  <Users style={{ width: 11, height: 11 }} />
+                  {stats[district.index]!.owners.toLocaleString()} OWNERS ·{" "}
+                  {stats[district.index]!.indexed.toLocaleString()} BITMAPS
+                </span>
+              ) : null}
+
             </Link>
           );
         })}
