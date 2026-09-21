@@ -21,6 +21,7 @@ import { BidPanel } from "@/components/BidPanel";
 import { BitmapChat } from "@/components/BitmapChat";
 import { BitmapPriceChart } from "@/components/BitmapPriceChart";
 import { ProvenancePanel } from "@/components/ProvenancePanel";
+import { BssScriptPanel } from "@/components/BssScriptPanel";
 import { WatchBitmapButton } from "@/components/WatchBitmapButton";
 import { BitmapValuation } from "@/components/BitmapValuation";
 import { BitmapDevelopment } from "@/components/BitmapDevelopment";
@@ -238,6 +239,10 @@ function BitmapDetail() {
       </div>
 
       <ProvenancePanel height={block} ownerAddress={owner} />
+
+      <div className="mt-8">
+        <BssScriptPanel height={block} />
+      </div>
 
       <section className="mt-8 border border-border" aria-label="Block analytics">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
