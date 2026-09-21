@@ -2,7 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { Landmark } from "lucide-react";
 import { atlasDistricts } from "@/lib/atlas-places";
 import { ATLAS_SIDE } from "@/lib/atlas-geometry";
-import type { AtlasCamera } from "@/lib/atlas-geometry";
+
+export type AtlasCamera = { zoom: number; x: number; y: number };
 
 /**
  * District names rendered OUTSIDE the zoom transform, in screen space,
