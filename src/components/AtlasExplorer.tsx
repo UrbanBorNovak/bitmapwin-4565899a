@@ -17,7 +17,7 @@ import { worldStatsQuery, formatCount } from "@/lib/world-stats";
 import { provenanceStreamQuery } from "@/lib/provenance-stream";
 import { timeAgo } from "@/lib/bitmap";
 import { atlasEra, atlasScale, atlasToBlock, ATLAS_SIDE, blockToAtlas, parseAtlasBlock } from "@/lib/atlas-geometry";
-import { getAtlasClaims, getAtlasLandForAddress, getAtlasParcelization, indexAtlasFrontier } from "@/lib/atlas-land.functions";
+import { getAtlasClaims, getAtlasLandForAddress, getAtlasParcelization, getAtlasRegionStats, indexAtlasFrontier } from "@/lib/atlas-land.functions";
 import { useWalletSession } from "@/lib/wallet-session";
 import { colorForAddress } from "@/lib/map-owners";
 import type { ProvenanceEvent } from "@/lib/passport";
