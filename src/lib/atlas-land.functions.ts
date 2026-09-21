@@ -52,3 +52,22 @@ export const indexAtlasFrontier = createServerFn({ method: "POST" })
     const { indexFrontier } = await import("@/lib/atlas-land.server");
     return indexFrontier(data.chainTip, data.batch);
   });
+
+/**
+ * Region analytics: how much of a district is indexed and how many distinct
+ * owner addresses hold land inside it. Read-only aggregate over the registry —
+ * no addresses are invented, only the real top holders are returned.
+ */
+export const getAtlasRegionStats = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        lo: z.number().int().min(0).max(1_048_575),
+        hi: z.number().int().min(0).max(1_048_575),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { regionStats } = await import("@/lib/atlas-land.server");
+    return regionStats(data.lo, data.hi);
+  });

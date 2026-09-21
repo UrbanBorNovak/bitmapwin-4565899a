@@ -17,12 +17,12 @@ import { worldStatsQuery, formatCount } from "@/lib/world-stats";
 import { provenanceStreamQuery } from "@/lib/provenance-stream";
 import { timeAgo } from "@/lib/bitmap";
 import { atlasEra, atlasScale, atlasToBlock, ATLAS_SIDE, blockToAtlas, parseAtlasBlock } from "@/lib/atlas-geometry";
-import { getAtlasClaims, getAtlasLandForAddress, getAtlasParcelization, indexAtlasFrontier } from "@/lib/atlas-land.functions";
+import { getAtlasClaims, getAtlasLandForAddress, getAtlasParcelization, getAtlasRegionStats, indexAtlasFrontier } from "@/lib/atlas-land.functions";
 import { useWalletSession } from "@/lib/wallet-session";
 import { colorForAddress } from "@/lib/map-owners";
 import type { ProvenanceEvent } from "@/lib/passport";
 import { sampleVisibleHeights, type AtlasClaim, type AtlasParcelization } from "@/lib/atlas-land";
-import { atlasPlace, findAtlasNamedPlace } from "@/lib/atlas-places";
+import { atlasPlace, atlasDistrictStory, districtAt, districtBlockRange, districtChapter, findAtlasNamedPlace } from "@/lib/atlas-places";
 import { landscapeFor, setLandChainTip } from "@/lib/land-biome";
 
 const MIN_ZOOM = 1;
@@ -120,6 +120,66 @@ function BiomeMesh({ tip }: { tip: number }) {
   })}</div>;
 }
 
+/**
+ * REGION CHAPTER · OWNER ANALYTICS — the district the camera is inside, its
+ * atlas chapter, and the real spread of ownership across its 16,384 blocks.
+ * Every number comes from the indexed inscription registry; nothing is modelled.
+ */
+function RegionPanel({
+  district,
+  range,
+  stats,
+  loading,
+  focusHeight,
+}: {
+  district: ReturnType<typeof districtAt>;
+  range: { lo: number; hi: number };
+  stats: { indexed: number; valid: number; owners: number; unowned: number; top: Array<{ address: string; held: number }> } | undefined;
+  loading: boolean;
+  focusHeight: (height: number) => void;
+}) {
+  const story = atlasDistrictStory(district);
+  const owners = stats?.owners ?? 0;
+  const indexed = stats?.indexed ?? 0;
+  const perOwner = owners > 0 ? indexed / owners : 0;
+  const biggest = stats?.top[0];
+  const concentration = indexed > 0 && biggest ? (biggest.held / indexed) * 100 : 0;
+  return <section className="mt-2 border border-signal/40 bg-surface/60 p-3" aria-label="Region chapter and owner analytics">
+    <div className="flex flex-wrap items-baseline justify-between gap-2">
+      <div className="min-w-0">
+        <p className="label text-signal">{districtChapter(district)} · REGION</p>
+        <h2 className="font-mono text-sm font-bold uppercase text-foreground">{district.name}</h2>
+        <p className="font-mono text-[9px] uppercase text-muted-foreground">{district.landmark} · {story.atmosphere}</p>
+      </div>
+      <p className="font-mono text-[9px] text-muted-foreground" data-no-translate>BLOCKS {range.lo.toLocaleString("en-US")} – {range.hi.toLocaleString("en-US")}</p>
+    </div>
+    <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{story.story[0]}</p>
+    <dl className="mt-3 grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-4">
+      <div className="bg-background p-2 text-center"><dd className="font-mono text-sm font-bold text-signal tabular-nums">{loading&&!stats?"…":owners.toLocaleString("en-US")}</dd><dt className="label mt-1">OWNER ADDRESSES</dt></div>
+      <div className="bg-background p-2 text-center"><dd className="font-mono text-sm font-bold text-bitcoin tabular-nums">{loading&&!stats?"…":indexed.toLocaleString("en-US")}</dd><dt className="label mt-1">BITMAPS INDEXED</dt></div>
+      <div className="bg-background p-2 text-center"><dd className="font-mono text-sm font-bold tabular-nums">{perOwner>0?perOwner.toFixed(1):"—"}</dd><dt className="label mt-1">AVG PER OWNER</dt></div>
+      <div className="bg-background p-2 text-center"><dd className="font-mono text-sm font-bold tabular-nums">{concentration>0?`${concentration.toFixed(1)}%`:"—"}</dd><dt className="label mt-1">TOP HOLDER SHARE</dt></div>
+    </dl>
+    {stats&&stats.top.length>0&&<div className="mt-3">
+      <p className="label text-bitcoin">BIGGEST HOLDERS IN THIS REGION</p>
+      <ul className="mt-1.5 space-y-1">
+        {stats.top.map((holder)=>{const share=indexed>0?(holder.held/indexed)*100:0;return <li key={holder.address} className="flex min-w-0 items-center gap-2">
+          <Link to="/profile/$address" params={{address:holder.address}} className="min-w-0 flex-1 truncate font-mono text-[9px] text-signal hover:text-bitcoin" data-no-translate>{holder.address}</Link>
+          <span aria-hidden className="hidden h-1 w-20 shrink-0 bg-border sm:block"><span className="block h-full bg-bitcoin" style={{width:`${Math.max(4,Math.min(100,share))}%`}}/></span>
+          <span className="shrink-0 font-mono text-[9px] tabular-nums text-muted-foreground" data-no-translate>{holder.held.toLocaleString("en-US")} · {share.toFixed(1)}%</span>
+        </li>;})}
+      </ul>
+    </div>}
+    <div className="mt-3 flex flex-wrap gap-2">
+      <Button asChild variant="terminalGhost" size="sm"><Link to="/map/district/$slug" params={{slug:district.slug}}>READ CHAPTER <ArrowRight/></Link></Button>
+      <Button type="button" variant="terminalGhost" size="sm" onClick={()=>focusHeight(district.anchorHeight)}>ANCHOR BLOCK {district.anchorHeight.toLocaleString("en-US")}</Button>
+    </div>
+  </section>;
+}
+
+
+
+
 /** Every claimed parcel on a BITMAP, clickable, revealing the holder behind it. */
 function ParcelClaims({ height, parcelization }: { height: number; parcelization: AtlasParcelization }) {
   const [picked, setPicked] = useState<number | null>(null);
@@ -198,7 +258,15 @@ export function AtlasExplorer({ initialHeight }: { initialHeight?: number }) {
   const fetchParcelization=useServerFn(getAtlasParcelization);
   const parcelLayer=useQuery({queryKey:["atlas","parcelized",parcelCandidates.map((item)=>`${item.height}:${item.inscriptionId}`).join(",")],queryFn:()=>fetchParcelization({data:{claims:parcelCandidates}}),enabled:parcelsOn&&camera.zoom>=4&&parcelCandidates.length>0,staleTime:300_000});
   const parcelized=useMemo(()=>new Map((parcelLayer.data?.parcelized??[]).filter((item)=>item.validParcels>0).map((item)=>[item.height,item])),[parcelLayer.data]);
+  // REGION ANALYTICS — the district under the camera, and how many distinct
+  // owner addresses actually hold indexed BITMAPs inside it.
+  const focusDistrict=useMemo(()=>{const cx=((.5-camera.x)/camera.zoom)*ATLAS_SIDE;const cy=((.5-camera.y)/camera.zoom)*ATLAS_SIDE;return districtAt(cx,cy);},[camera.x,camera.y,camera.zoom]);
+  const districtRange=useMemo(()=>districtBlockRange(focusDistrict),[focusDistrict]);
+  const fetchRegion=useServerFn(getAtlasRegionStats);
+  const region=useQuery({queryKey:["atlas","region",districtRange.lo],queryFn:()=>fetchRegion({data:districtRange}),enabled:camera.zoom>=2.6,staleTime:600_000});
+  const districtStats=useMemo(()=>region.data?{[focusDistrict.index]:{indexed:region.data.indexed,owners:region.data.owners}}:{},[region.data,focusDistrict.index]);
   const frontierRun=useRef(0);
+
   useEffect(()=>{ if(tipHeight) setLandChainTip(tipHeight); },[tipHeight]);
   useEffect(()=>{ if(!tipHeight) return; if(Date.now()-frontierRun.current<60_000) return; frontierRun.current=Date.now();
     runFrontier({data:{chainTip:tipHeight,batch:12}}).then((result)=>{ if(result?.indexed) land.refetch(); }).catch(()=>{}); },[tipHeight,runFrontier,land]);
@@ -241,14 +309,16 @@ export function AtlasExplorer({ initialHeight }: { initialHeight?: number }) {
             {dropIn!==null&&<div className="pointer-events-none absolute inset-0 grid place-items-center bg-background/55 backdrop-blur-[1px]"><p className="border border-signal bg-background/90 px-4 py-2 font-mono text-[10px] uppercase text-signal" data-no-translate>DROPPING INTO {dropIn.toLocaleString("en-US")}.BITMAP…</p></div>}
           </div>
           {camera.zoom>4&&<div aria-hidden className="atlas-grain pointer-events-none absolute inset-0" style={{opacity:Math.min(0.55,(camera.zoom-4)*0.075)}}/>}
-          <AtlasPlaceLabels camera={camera}/>
+          <AtlasPlaceLabels camera={camera} stats={districtStats}/>
           <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-3"><div className="pointer-events-auto flex border border-border bg-background/90 backdrop-blur"><Button type="button" variant="ghost" size="icon" onClick={()=>zoomAtCenter(1.5)} aria-label="Zoom in"><Plus/></Button><Button type="button" variant="ghost" size="icon" onClick={()=>zoomAtCenter(1/1.5)} aria-label="Zoom out"><Minus/></Button><Button type="button" variant="ghost" size="icon" onClick={()=>setCamera({zoom:1,x:0,y:0})} aria-label="Show whole world"><Crosshair/></Button></div><p className="border border-border bg-background/90 px-3 py-2 font-mono text-[9px] text-signal backdrop-blur" data-no-translate>{atlasScale(camera.zoom)} · {camera.zoom.toFixed(1)}×</p></div>
           <div className="pointer-events-none absolute bottom-3 left-3 border border-border bg-background/90 px-3 py-2 font-mono text-[9px] backdrop-blur"><p className="text-muted-foreground">HILBERT 1024² · TIP {tipHeight?tipHeight.toLocaleString("en-US"):"…"}</p><p className="mt-1 text-signal" data-no-translate>{selected?`${atlasPlace(selected.height).localName} · ${selected.height.toLocaleString("en-US")}`:"DRAG · SCROLL · PINCH"}</p></div>
           <div className="absolute bottom-3 right-3 hidden h-24 w-36 overflow-hidden border border-border bg-background/90 sm:block"><img src={atlasHd} alt="Atlas mini-map" loading="lazy" width={1920} height={1200} className="size-full object-cover opacity-80"/><span className="absolute border border-signal bg-signal/10" style={{left:`${(-camera.x/camera.zoom)*100}%`,top:`${(-camera.y/camera.zoom)*100}%`,width:`${100/camera.zoom}%`,height:`${100/camera.zoom}%`}}/><Compass className="absolute right-1 top-1 size-4 text-bitcoin"/></div>
         </section>
         <div className="mt-2 flex flex-wrap items-center gap-2 border border-border bg-surface/60 px-3 py-2" role="group" aria-label="Time window"><span className="label text-bitcoin">TIME</span>{WINDOWS.map((item)=>{const on=timeWindow===item.key;return <button key={item.key} type="button" aria-pressed={on} onClick={()=>setTimeWindow(item.key)} className={`border px-2 py-1 font-mono text-[9px] uppercase transition-colors ${on?"border-bitcoin bg-bitcoin/10 text-bitcoin":"border-border text-muted-foreground hover:border-bitcoin/40"}`}>{item.label}</button>;})}<span className="ml-auto flex flex-wrap gap-2"><button type="button" aria-pressed={heatOn} onClick={()=>setHeatOn((on)=>!on)} className={`flex items-center gap-1.5 border px-2 py-1 font-mono text-[9px] uppercase transition-colors ${heatOn?"border-bitcoin bg-bitcoin/10 text-bitcoin":"border-border text-muted-foreground hover:border-bitcoin/40"}`}><Flame className="size-3"/>24H HEAT</button><button type="button" aria-pressed={mineOn} disabled={ordinals===""} onClick={()=>setMineOn((on)=>!on)} className={`flex items-center gap-1.5 border px-2 py-1 font-mono text-[9px] uppercase transition-colors disabled:opacity-40 ${mineOn&&ordinals!==""?"border-bitcoin bg-bitcoin/10 text-bitcoin":"border-border text-muted-foreground hover:border-bitcoin/40"}`}><Wallet className="size-3"/>MY LAND {ordinals!==""?myHeights.size:""}</button>{ordinals!==""&&myHeights.size>0&&<button type="button" onClick={()=>{const first=[...myHeights][0]; if(first!==undefined) focusHeight(first,6);}} className="flex items-center gap-1.5 border border-signal/60 px-2 py-1 font-mono text-[9px] uppercase text-signal transition-colors hover:bg-signal/10"><Activity className="size-3"/>YOU ARE HERE</button>}</span></div>
         <div className="mt-2 flex flex-wrap items-center gap-2 border border-border bg-surface/60 px-3 py-2" role="group" aria-label="Atlas layers"><span className="label text-bitcoin">LAYERS</span>{LAYERS.map((layer)=>{const on=layers.includes(layer.key);const Icon=layer.icon;return <button key={layer.key} type="button" aria-pressed={on} onClick={()=>toggleLayer(layer.key)} className={`flex items-center gap-1.5 border px-2 py-1 font-mono text-[9px] uppercase transition-colors ${on?`border-bitcoin bg-bitcoin/10 ${layer.tone}`:"border-border text-muted-foreground hover:border-bitcoin/40"}`}><Icon className="size-3"/>{layer.label}</button>;})}<button type="button" aria-pressed={landOn} onClick={()=>setLandOn((on)=>!on)} className={`flex items-center gap-1.5 border px-2 py-1 font-mono text-[9px] uppercase transition-colors ${landOn?"border-bitcoin bg-bitcoin/10 text-bitcoin":"border-border text-muted-foreground hover:border-bitcoin/40"}`}><MapPin className="size-3"/>CLAIMED LAND</button><button type="button" aria-pressed={parcelsOn} onClick={()=>setParcelsOn((on)=>!on)} className={`flex items-center gap-1.5 border px-2 py-1 font-mono text-[9px] uppercase transition-colors ${parcelsOn?"border-signal bg-signal/10 text-signal":"border-border text-muted-foreground hover:border-signal/40"}`}><BoxSelect className="size-3"/>PARCELIZED {parcelized.size||""}</button><span className="ml-auto font-mono text-[9px] text-muted-foreground" data-no-translate>{claims.size} CLAIMS · {places.length} PLACES · {visibleEvents.length} RECORDS</span></div>
+        {camera.zoom>=2.6&&<RegionPanel district={focusDistrict} range={districtRange} stats={region.data} loading={region.isFetching} focusHeight={focusHeight}/>}
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 border border-border/70 bg-surface/40 px-3 py-2 font-mono text-[9px] text-muted-foreground"><span className="text-bitcoin">MAP KEY</span><span>⌁ TX TOPOGRAPHY</span><span>┈ BLOCK-AGE CONTOUR</span><span className="text-signal">· LIVE FRONTIER</span><span>● VERIFIED HISTORY</span><span className="text-signal">⚒ LANDMARK</span><span>◆ CLAIMED LAND</span><span className="text-signal">▦ PARCELIZED</span><span className="text-bitcoin">◈ YOUR LAND</span><span>◌ GHOST · OLDER RECORD</span><span>▱ LAND SEAM</span><span>⌂ HAMLET · ZOOM IN</span></div>
+
       </main>
       <aside className="hidden min-w-0 auto-rows-min content-start gap-3 lg:grid">
         {selected?<Inspector place={selected} tip={tipHeight} close={()=>setSelected(null)} dropInto={dropInto} claim={claims.get(selected.height)} parcelization={parcelized.get(selected.height)}/>:<div className="border border-bitcoin/60 bg-surface/60 p-4"><h1 className="display text-2xl"><span className="text-bitcoin">THE</span> OASIS</h1><p className="mt-1 font-mono text-[10px] uppercase text-muted-foreground">A spatial index of Bitcoin land</p><p className="mt-3 text-sm leading-relaxed text-muted-foreground">Every mined block is a place. Nearby heights stay nearby; verified history appears where it happened.</p><dl className="mt-4 grid grid-cols-3 gap-px border border-border bg-border"><div className="bg-background p-2 text-center"><dd className="font-mono text-xs font-bold text-bitcoin">{tipHeight?formatCount(tipHeight):"…"}</dd><dt className="label mt-1">PLACES</dt></div><div className="bg-background p-2 text-center"><dd className="font-mono text-xs font-bold">{totals?formatCount(totals.builds):"…"}</dd><dt className="label mt-1">BUILDS</dt></div><div className="bg-background p-2 text-center"><dd className="font-mono text-xs font-bold">{places.length}</dd><dt className="label mt-1">ACTIVE</dt></div></dl><Button asChild variant="terminal" className="mt-4 w-full"><Link to="/oasis">EXPLORE 3D <ArrowRight/></Link></Button></div>}

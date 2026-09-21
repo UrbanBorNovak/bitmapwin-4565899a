@@ -113,3 +113,26 @@ export async function indexFrontier(chainTip: number, batch = 12): Promise<Front
     skipped: false,
   };
 }
+
+export type RegionStats = {
+  indexed: number;
+  valid: number;
+  owners: number;
+  unowned: number;
+  top: Array<{ address: string; held: number }>;
+};
+
+/** Aggregate owner statistics for one contiguous block range (an atlas district). */
+export async function regionStats(lo: number, hi: number): Promise<RegionStats> {
+  const empty: RegionStats = { indexed: 0, valid: 0, owners: 0, unowned: 0, top: [] };
+  const { data, error } = await db().rpc("atlas_region_stats", { p_lo: lo, p_hi: hi });
+  if (error || !data) return empty;
+  const row = data as Partial<RegionStats>;
+  return {
+    indexed: Number(row.indexed ?? 0),
+    valid: Number(row.valid ?? 0),
+    owners: Number(row.owners ?? 0),
+    unowned: Number(row.unowned ?? 0),
+    top: Array.isArray(row.top) ? row.top.slice(0, 8) : [],
+  };
+}

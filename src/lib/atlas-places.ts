@@ -219,3 +219,28 @@ export function atlasDistrictNeighbors(district: AtlasDistrictIdentity): AtlasDi
     })
     .filter((value): value is AtlasDistrictIdentity => value !== null);
 }
+
+/**
+ * Each 128×128 district square is an aligned sub-curve of the order-10 Hilbert
+ * index, so it maps to one contiguous run of block heights. That makes district
+ * analytics a single range query instead of 16,384 point lookups.
+ */
+export const DISTRICT_BLOCK_SPAN = DISTRICT_SIDE * DISTRICT_SIDE;
+
+export function districtBlockRange(district: AtlasDistrictIdentity): { lo: number; hi: number } {
+  const base = Math.floor(atlasToBlock(district.x, district.y) / DISTRICT_BLOCK_SPAN) * DISTRICT_BLOCK_SPAN;
+  return { lo: base, hi: base + DISTRICT_BLOCK_SPAN - 1 };
+}
+
+/** District that contains an atlas coordinate. */
+export function districtAt(x: number, y: number): AtlasDistrictIdentity {
+  const column = Math.min(DISTRICTS_PER_SIDE - 1, Math.max(0, Math.floor(x / DISTRICT_SIDE)));
+  const row = Math.min(DISTRICTS_PER_SIDE - 1, Math.max(0, Math.floor(y / DISTRICT_SIDE)));
+  const district = DISTRICTS[row * DISTRICTS_PER_SIDE + column] ?? DISTRICTS[0];
+  if (!district) throw new Error("Atlas district index is empty");
+  return district;
+}
+
+export function districtChapter(district: AtlasDistrictIdentity): string {
+  return `CHAPTER ${String(district.index + 1).padStart(2, "0")}`;
+}
