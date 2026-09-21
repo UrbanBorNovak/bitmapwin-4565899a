@@ -22,3 +22,7 @@
 - [x] Smooth atlas wheel, drag, and pinch camera updates.
 - [x] Stabilize close-up terrain and fine-detail thresholds while zooming.
 - [x] Keep atlas pins fixed and visually stable through zoom transitions.
+
+- [ ] Carry the grand manuscript mask across BITMAP land and atlas story pages.
+- [ ] Show live holder and BITMAP ownership analytics on every district chapter.
+- [ ] Verify the shared treatment and district analytics on desktop and phone.

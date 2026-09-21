@@ -87,6 +87,8 @@ export const Route = createFileRoute("/bitmap/$block")({
         { name: "description", content: description },
         { property: "og:title", content: title },
         { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary_large_image" },
       ],
     };
   },
@@ -165,7 +167,7 @@ function BitmapDetail() {
 
 
   return (
-    <div className="mx-auto max-w-[1400px] px-4 py-12 md:px-8">
+    <div className="storybook-page mx-auto min-h-screen max-w-[1400px] px-4 py-12 md:px-8">
       <Link to="/marketplace" className="label hover:text-foreground">
         ← BACK TO MARKETPLACE
       </Link>

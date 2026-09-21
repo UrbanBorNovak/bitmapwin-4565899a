@@ -49,7 +49,7 @@ function PlaceStoryPage() {
   const landscape = landscapeFor(place.height);
 
   return (
-    <main className="pb-16 md:pb-24">
+    <main className="storybook-page min-h-screen pb-16 md:pb-24">
       <div className="mx-auto max-w-[1600px] px-0 pt-3 sm:px-4 md:px-8 md:pt-7">
         <div className="mb-3 flex items-center justify-between gap-3 px-4 sm:px-0">
           <Button asChild variant="ghost" size="sm"><Link to="/map/$block" params={{ block: String(place.height) }}><ArrowLeft />ATLAS</Link></Button>
