@@ -10,12 +10,13 @@ import {
   ORE_PER_CREW_HOUR,
   collectOre,
   crewFor,
+  oreYieldOf,
   pendingOre,
   useBitmapMining,
 } from "@/lib/bitmap-mining";
 import { playSfx } from "@/lib/world-audio";
 
-export function BitmapMineHud({ bitmaps }: { bitmaps: number }) {
+export function BitmapMineHud({ bitmaps, heights = [] }: { bitmaps: number; heights?: number[] }) {
   const tally = useBitmapMining();
   const [, tick] = useState(0);
   const [note, setNote] = useState<string | null>(null);
@@ -26,7 +27,8 @@ export function BitmapMineHud({ bitmaps }: { bitmaps: number }) {
   }, []);
 
   const crew = crewFor(bitmaps);
-  const ready = pendingOre(bitmaps);
+  const seam = oreYieldOf(heights);
+  const ready = pendingOre(bitmaps, Date.now(), seam);
 
   return (
     <div
@@ -50,6 +52,12 @@ export function BitmapMineHud({ bitmaps }: { bitmaps: number }) {
             <span className="text-muted-foreground">MINERS AT WORK</span>
             <span className="hud-live">{crew}</span>
           </div>
+          {seam > 1.01 ? (
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">SEAM RICHNESS</span>
+              <span className="hud-live">×{seam.toFixed(2)}</span>
+            </div>
+          ) : null}
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">ORE READY</span>
             <span className="hud-live">{ready}</span>
@@ -61,7 +69,7 @@ export function BitmapMineHud({ bitmaps }: { bitmaps: number }) {
           <button
             type="button"
             onClick={() => {
-              const result = collectOre(bitmaps);
+              const result = collectOre(bitmaps, seam);
               if (result.collected > 0) playSfx("nugget");
               setNote(
                 result.collected > 0
