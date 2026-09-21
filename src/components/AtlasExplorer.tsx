@@ -97,7 +97,7 @@ function placesFrom(events: ProvenanceEvent[]): Place[] {
 }
 
 function clusterPlaces(places: Place[], zoom: number): Cluster[] {
-  const divisions = zoom < 1.7 ? 8 : zoom < 3.2 ? 18 : zoom < 6 ? 40 : 128;
+  const divisions = zoom < 1.7 ? 8 : zoom < 3.2 ? 18 : zoom < 6 ? 40 : zoom < 9 ? 128 : zoom < 13 ? 320 : 768;
   const groups = new Map<string, Cluster>();
   for (const place of places) {
     const key = `${Math.floor(place.x * divisions)}:${Math.floor(place.y * divisions)}`;
