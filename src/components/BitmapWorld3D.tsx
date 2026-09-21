@@ -68,6 +68,7 @@ import type { MapControls as MapControlsImpl } from "three-stdlib";
 import { Button } from "@/components/ui/button";
 import { BitmapModelPlacement } from "@/components/BitmapModelPlacement";
 import { BssScene3D } from "@/components/game/BssScene3D";
+import { bssSceneQuery } from "@/lib/bss";
 import { AvatarInventory } from "@/components/AvatarInventory";
 import { ExtenderStage } from "@/components/extenders/ExtenderStage";
 import { ExtenderHud } from "@/components/extenders/ExtenderHud";
