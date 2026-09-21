@@ -239,6 +239,91 @@ function BitmapDetail() {
 
       <ProvenancePanel height={block} ownerAddress={owner} />
 
+      <section className="mt-8 border border-border" aria-label="Block analytics">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
+          <h2 className="label">BLOCK ANALYTICS</h2>
+          <Link to="/map/district/$slug" params={{ slug: place.slug }} className="label text-bitcoin hover:text-foreground">
+            {place.name.toUpperCase()} →
+          </Link>
+        </div>
+        <div className="grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-4">
+          <Metric label="BLOCK TRANSACTIONS" value={txCount !== null ? txCount.toLocaleString("en-US") : "…"} />
+          <Metric label="ON-CHAIN TRANSFERS" value={String(history.length)} />
+          <Metric
+            label="TOTAL TRADED VOLUME"
+            value={tradedVolume > 0 ? formatSats(tradedVolume) : history.length > 0 ? "TRANSFERS ONLY" : "NO TRADES"}
+          />
+          <Metric label="DISTINCT TRADERS" value={String(distinctTraders)} />
+          <Metric
+            label="INSCRIPTIONS IN BLOCK"
+            value={scan.data ? scan.data.inscriptions.length.toLocaleString("en-US") : "…"}
+          />
+          <Metric
+            label="BITMAP CLAIMS HERE"
+            value={scan.data ? String(claims.length) : "…"}
+          />
+          <Metric label="WORLD EVENTS HERE" value={localHistory.data ? String(localHistory.data.length) : "…"} />
+          <Metric
+            label="BLOCK AGE"
+            value={
+              liveHolder.data || parcel
+                ? `${Math.max(0, (liveHolder.data?.tipHeight ?? 0) - block).toLocaleString("en-US")} BLOCKS`
+                : "…"
+            }
+          />
+        </div>
+        <div className="border-t border-border px-4 py-4">
+          <p className="label text-muted-foreground">
+            DISTRICT OWNERSHIP · {place.name.toUpperCase()} · {place.landmark.toUpperCase()}
+          </p>
+          {regionStats.isPending ? (
+            <p className="mt-3 font-mono text-xs text-muted-foreground">&gt; READING REGION LEDGER…</p>
+          ) : region ? (
+            <>
+              <div className="mt-3 grid gap-px bg-border sm:grid-cols-3">
+                <Metric label="HOLDER ADDRESSES" value={region.owners.toLocaleString("en-US")} />
+                <Metric label="BITMAPS HELD" value={regionHeld.toLocaleString("en-US")} />
+                <Metric
+                  label="AVERAGE PER HOLDER"
+                  value={region.owners > 0 ? (regionHeld / region.owners).toFixed(1) : "—"}
+                />
+              </div>
+              {region.top.length > 0 && (
+                <ul className="mt-4 space-y-2">
+                  {region.top.slice(0, 5).map((holder, rank) => (
+                    <li key={holder.address ?? rank} className="flex min-w-0 items-center gap-3 font-mono text-xs">
+                      <span className="label w-6 shrink-0">{String(rank + 1).padStart(2, "0")}</span>
+                      {holder.address ? (
+                        <Link
+                          to="/profile/$address"
+                          params={{ address: holder.address }}
+                          className="min-w-0 truncate text-foreground hover:text-bitcoin"
+                        >
+                          {shortenAddress(holder.address)}
+                        </Link>
+                      ) : (
+                        <span className="min-w-0 truncate text-muted-foreground">UNKNOWN HOLDER</span>
+                      )}
+                      <span className="relative h-1.5 min-w-10 flex-1 overflow-hidden bg-border">
+                        <span
+                          className="absolute inset-y-0 left-0 bg-bitcoin/70"
+                          style={{ width: `${regionHeld > 0 ? Math.min(100, (holder.held / regionHeld) * 100) : 0}%` }}
+                        />
+                      </span>
+                      <span className="label shrink-0">
+                        {holder.held} · {regionHeld > 0 ? ((holder.held / regionHeld) * 100).toFixed(2) : "0.00"}%
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          ) : (
+            <p className="mt-3 font-mono text-xs text-muted-foreground">&gt; NO REGION DATA INDEXED YET_</p>
+          )}
+        </div>
+      </section>
+
       <BitmapPriceChart height={block} />
 
       <ParcelPagePanel height={block} ownerAddress={owner} />
