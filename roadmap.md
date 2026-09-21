@@ -11,6 +11,6 @@
 - [x] Unify Oasis sky, terrain, water, flora, buildings, and lighting with the painterly atlas.
 - [x] Verify the atlas visually and validate the 3D Oasis changes with typecheck and preview build.
 
-- [ ] Add permanent illustrated story pages for all 64 named atlas districts.
-- [ ] Link atlas district labels and inspectors to their story pages.
-- [ ] Verify district stories on desktop and phone.
+- [x] Add permanent illustrated story pages for all 64 named atlas districts.
+- [x] Link atlas district labels and inspectors to their story pages.
+- [x] Verify district stories on desktop and phone.
