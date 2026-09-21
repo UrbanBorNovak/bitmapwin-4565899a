@@ -23,6 +23,6 @@
 - [x] Stabilize close-up terrain and fine-detail thresholds while zooming.
 - [x] Keep atlas pins fixed and visually stable through zoom transitions.
 
-- [ ] Carry the grand manuscript mask across BITMAP land and atlas story pages.
-- [ ] Show live holder and BITMAP ownership analytics on every district chapter.
-- [ ] Verify the shared treatment and district analytics on desktop and phone.
+- [x] Carry the grand manuscript mask across BITMAP land and atlas story pages.
+- [x] Show live holder and BITMAP ownership analytics on every district chapter.
+- [x] Verify the shared treatment and district analytics on desktop and phone.

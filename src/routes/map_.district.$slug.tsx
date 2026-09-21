@@ -32,6 +32,7 @@ function DistrictStoryPage() {
   const { district, story, neighbors, range, analytics } = Route.useLoaderData();
   const point = blockToAtlas(district.anchorHeight);
   const era = atlasEra(district.anchorHeight, 1_048_575);
+  const heldBitmaps = Math.max(0, analytics.indexed - analytics.unowned);
   const districts = atlasDistricts();
   const previous = districts[(district.index - 1 + districts.length) % districts.length];
   const next = districts[(district.index + 1) % districts.length];
@@ -66,14 +67,14 @@ function DistrictStoryPage() {
             <p className="mt-2 font-mono text-[9px] text-muted-foreground" data-no-translate>BLOCKS {range.lo.toLocaleString("en-US")}–{range.hi.toLocaleString("en-US")}</p>
             <dl className="mt-5 grid grid-cols-2 gap-px border border-border bg-border font-mono">
               <div className="bg-background/90 p-3"><dt className="flex items-center gap-1.5 text-[9px] text-muted-foreground"><Users className="size-3"/>HOLDER ADDRESSES</dt><dd className="mt-2 text-2xl text-bitcoin" data-no-translate>{analytics.owners.toLocaleString("en-US")}</dd></div>
-              <div className="bg-background/90 p-3"><dt className="flex items-center gap-1.5 text-[9px] text-muted-foreground"><Blocks className="size-3"/>BITMAPS HELD</dt><dd className="mt-2 text-2xl text-signal" data-no-translate>{analytics.indexed.toLocaleString("en-US")}</dd></div>
-              <div className="col-span-2 bg-background/90 p-3"><dt className="text-[9px] text-muted-foreground">AVERAGE PER HOLDER</dt><dd className="mt-1 text-sm" data-no-translate>{analytics.owners > 0 ? (analytics.indexed / analytics.owners).toFixed(2) : "—"} BITMAPS</dd></div>
+              <div className="bg-background/90 p-3"><dt className="flex items-center gap-1.5 text-[9px] text-muted-foreground"><Blocks className="size-3"/>BITMAPS HELD</dt><dd className="mt-2 text-2xl text-signal" data-no-translate>{heldBitmaps.toLocaleString("en-US")}</dd></div>
+              <div className="col-span-2 bg-background/90 p-3"><dt className="text-[9px] text-muted-foreground">AVERAGE PER HOLDER</dt><dd className="mt-1 text-sm" data-no-translate>{analytics.owners > 0 ? (heldBitmaps / analytics.owners).toFixed(2) : "—"} BITMAPS</dd></div>
             </dl>
             {analytics.top.length > 0 ? <div className="mt-5">
               <p className="label text-muted-foreground">BIGGEST HOLDERS</p>
               <ol className="mt-2 divide-y divide-border">
                 {analytics.top.slice(0, 5).map((holder, index) => {
-                  const share = analytics.indexed > 0 ? (holder.held / analytics.indexed) * 100 : 0;
+                  const share = heldBitmaps > 0 ? (holder.held / heldBitmaps) * 100 : 0;
                   return (
                   <li key={holder.address} className="flex min-w-0 items-center gap-3 py-2 font-mono text-[10px]">
                     <span className="text-muted-foreground">{String(index + 1).padStart(2, "0")}</span>
