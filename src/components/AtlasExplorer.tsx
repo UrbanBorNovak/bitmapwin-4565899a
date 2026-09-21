@@ -198,7 +198,15 @@ export function AtlasExplorer({ initialHeight }: { initialHeight?: number }) {
   const fetchParcelization=useServerFn(getAtlasParcelization);
   const parcelLayer=useQuery({queryKey:["atlas","parcelized",parcelCandidates.map((item)=>`${item.height}:${item.inscriptionId}`).join(",")],queryFn:()=>fetchParcelization({data:{claims:parcelCandidates}}),enabled:parcelsOn&&camera.zoom>=4&&parcelCandidates.length>0,staleTime:300_000});
   const parcelized=useMemo(()=>new Map((parcelLayer.data?.parcelized??[]).filter((item)=>item.validParcels>0).map((item)=>[item.height,item])),[parcelLayer.data]);
+  // REGION ANALYTICS — the district under the camera, and how many distinct
+  // owner addresses actually hold indexed BITMAPs inside it.
+  const focusDistrict=useMemo(()=>{const cx=((.5-camera.x)/camera.zoom)*ATLAS_SIDE;const cy=((.5-camera.y)/camera.zoom)*ATLAS_SIDE;return districtAt(cx,cy);},[camera.x,camera.y,camera.zoom]);
+  const districtRange=useMemo(()=>districtBlockRange(focusDistrict),[focusDistrict]);
+  const fetchRegion=useServerFn(getAtlasRegionStats);
+  const region=useQuery({queryKey:["atlas","region",districtRange.lo],queryFn:()=>fetchRegion({data:districtRange}),enabled:camera.zoom>=2.6,staleTime:600_000});
+  const districtStats=useMemo(()=>region.data?{[focusDistrict.index]:{indexed:region.data.indexed,owners:region.data.owners}}:{},[region.data,focusDistrict.index]);
   const frontierRun=useRef(0);
+
   useEffect(()=>{ if(tipHeight) setLandChainTip(tipHeight); },[tipHeight]);
   useEffect(()=>{ if(!tipHeight) return; if(Date.now()-frontierRun.current<60_000) return; frontierRun.current=Date.now();
     runFrontier({data:{chainTip:tipHeight,batch:12}}).then((result)=>{ if(result?.indexed) land.refetch(); }).catch(()=>{}); },[tipHeight,runFrontier,land]);
