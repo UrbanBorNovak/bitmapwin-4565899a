@@ -128,6 +128,54 @@ export function atlasPlace(height: number): AtlasPlaceIdentity {
   return { ...district, localName, address: `${(seed % 199) + 1} ${street}` };
 }
 
+const PLACE_OPENINGS = [
+  "It begins as a turning off the main road: a handful of walls, a shared well, and a view that nobody here would trade away.",
+  "The ground rises just enough to hold a single row of roofs, so every window here looks out over the rest of the district.",
+  "Water reaches this corner first, and the paths were laid by people following it rather than fighting it.",
+  "A long wall runs the length of the place, older than the buildings leaning against it, and everything else grew from that line.",
+  "Carts still find the same three bends they always found, and the shape of the place is simply the shape of that habit.",
+  "It sits at the quiet edge of its district, close enough to hear the landmark bell and far enough to keep its own hours.",
+  "Whoever set the first stone here chose shelter over spectacle, and the place has kept that instinct ever since.",
+  "Two paths cross once and never again, and the whole place is arranged around that single meeting.",
+] as const;
+
+const PLACE_CLOSINGS = [
+  "What happens on this block is recorded where it happened, so the place grows a memory instead of a scoreboard.",
+  "Nothing about it is decided yet; its holder writes the next part by building, hosting and returning.",
+  "It is small enough that one structure changes the skyline and one visitor changes the day.",
+  "Its story is held open, waiting for the kind of history that can be followed back to the block it came from.",
+  "Everything lasting here begins as somebody's decision to stay a little longer than they had to.",
+  "Seen from the atlas it is one cell of land. Entered on foot, it is a street with a name and a direction.",
+  "The place keeps its shape and lends the rest to whoever builds on it.",
+  "It asks nothing of arrivals except that they leave something worth finding again.",
+] as const;
+
+export function atlasPlaceStory(height: number): AtlasPlaceStory {
+  const identity = atlasPlace(height);
+  const point = blockToAtlas(height);
+  const seed = mix(height * 31 + 7);
+  const cell = ATLAS_SIDE / PLACE_FRAME_DIVISIONS;
+  const form = DISTRICT_FORMS[Math.floor(identity.index / DISTRICTS_PER_SIDE)] ?? "FRONTIER";
+  return {
+    ...identity,
+    height,
+    point,
+    chapter: `PLACE · ${identity.address}`,
+    story: [
+      PLACE_OPENINGS[seed % PLACE_OPENINGS.length] ?? PLACE_OPENINGS[0]!,
+      PLACE_CLOSINGS[Math.floor(seed / 13) % PLACE_CLOSINGS.length] ?? PLACE_CLOSINGS[0]!,
+    ],
+    atmosphere: ATMOSPHERES[Math.floor(seed / 7) % ATMOSPHERES.length] ?? "CLEAR SKY · OPEN ROAD",
+    motif: form.toLowerCase() as AtlasDistrictStory["motif"],
+    frame: {
+      divisions: PLACE_FRAME_DIVISIONS,
+      column: Math.min(PLACE_FRAME_DIVISIONS - 1, Math.floor(point.x / cell)),
+      row: Math.min(PLACE_FRAME_DIVISIONS - 1, Math.floor(point.y / cell)),
+    },
+    neighbors: { previous: Math.max(0, height - 1), next: height + 1 },
+  };
+}
+
 export function findAtlasNamedPlace(value: string): AtlasDistrictIdentity | null {
   const query = value.trim().toUpperCase().replace(/[^A-Z0-9 ]+/g, " ").replace(/\s+/g, " ");
   if (query.length < 3) return null;
