@@ -37,9 +37,13 @@ export const GROWTH_STAGES = [
   { at: 1, name: "OASIS", blurb: "Fully grown. The land is alive." },
 ] as const;
 
-/** 0 → 1, from the moment the land was seeded to fully grown. */
+/**
+ * 0 → 1, from the moment the land was seeded to fully grown. Fertile ground
+ * grows faster and frozen ground slower — the land's own landscape decides.
+ */
 export function growthOf(land: TerraformedLand, now = Date.now()) {
-  return Math.max(0, Math.min(1, (now - land.seededAt) / FULL_GROWTH_MS));
+  const rate = landscapeFor(land.height).effects.growth;
+  return Math.max(0, Math.min(1, ((now - land.seededAt) * rate) / FULL_GROWTH_MS));
 }
 
 export function stageOf(growth: number) {
