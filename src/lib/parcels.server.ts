@@ -225,6 +225,15 @@ export async function summarizeParcelization(
       maxParcels: scan.maxParcels,
       truncated: scan.truncated,
       owners: [...byOwner.values()].sort((a, b) => b.parcels - a.parcels).slice(0, 8),
+      parcels: valid
+        .slice()
+        .sort((a, b) => a.index - b.index)
+        .slice(0, 240)
+        .map((parcel) => ({
+          index: parcel.index,
+          address: parcel.ownerAddress ?? null,
+          inscriptionId: parcel.inscriptionId,
+        })),
     };
     parcelSummaryCache.set(key, { expires: Date.now() + PARCEL_SUMMARY_TTL, value });
     return value;
