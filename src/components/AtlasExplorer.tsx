@@ -164,6 +164,7 @@ export function AtlasExplorer({ initialHeight }: { initialHeight?: number }) {
   const land=useQuery({queryKey:["atlas","claims",viewWindow.zoom,viewWindow.x,viewWindow.y,tipHeight],queryFn:()=>fetchClaims({data:{heights:sampled}}),enabled:sampled.length>0,staleTime:120_000});
   const claims=useMemo(()=>{const map=new Map<number,AtlasClaim>();for(const claim of land.data?.claims??[])map.set(claim.height,claim);return map;},[land.data]);
   const frontierRun=useRef(0);
+  useEffect(()=>{ if(tipHeight) setLandChainTip(tipHeight); },[tipHeight]);
   useEffect(()=>{ if(!tipHeight) return; if(Date.now()-frontierRun.current<60_000) return; frontierRun.current=Date.now();
     runFrontier({data:{chainTip:tipHeight,batch:12}}).then((result)=>{ if(result?.indexed) land.refetch(); }).catch(()=>{}); },[tipHeight,runFrontier,land]);
   const setCamera=useCallback((next:Camera)=>{ const value={zoom:Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,next.zoom)),x:Math.min(0,Math.max(1-Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,next.zoom)),next.x)),y:Math.min(0,Math.max(1-Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,next.zoom)),next.y))}; cameraRef.current=value; setCameraState(value); },[]);
