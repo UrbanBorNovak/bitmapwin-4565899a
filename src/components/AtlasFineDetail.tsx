@@ -97,7 +97,7 @@ export function AtlasFineDetail({ camera, tip }: { camera: Camera; tip: number }
       preserveAspectRatio="none"
       className="pointer-events-none absolute inset-0 size-full"
     >
-      <g className="mix-blend-soft-light">
+      <g className="mix-blend-multiply" opacity={0.7}>
         {cells.map((cell) => {
           const tone = toneFor(cell.era);
           const cx = cell.x + cell.size / 2;
