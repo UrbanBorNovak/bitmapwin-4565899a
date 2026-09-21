@@ -2741,6 +2741,10 @@ export type Database = {
       }
     }
     Functions: {
+      atlas_region_stats: {
+        Args: { p_hi: number; p_lo: number }
+        Returns: Json
+      }
       can_build_bitmap: {
         Args: { _height: number; _owner_address: string; _user_id: string }
         Returns: boolean
