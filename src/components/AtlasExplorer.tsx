@@ -22,7 +22,7 @@ import { useWalletSession } from "@/lib/wallet-session";
 import { colorForAddress } from "@/lib/map-owners";
 import type { ProvenanceEvent } from "@/lib/passport";
 import { sampleVisibleHeights, type AtlasClaim, type AtlasParcelization } from "@/lib/atlas-land";
-import { atlasPlace, findAtlasNamedPlace } from "@/lib/atlas-places";
+import { atlasPlace, atlasDistrictStory, districtAt, districtBlockRange, districtChapter, findAtlasNamedPlace } from "@/lib/atlas-places";
 import { landscapeFor, setLandChainTip } from "@/lib/land-biome";
 
 const MIN_ZOOM = 1;
