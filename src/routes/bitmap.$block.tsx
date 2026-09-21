@@ -21,6 +21,7 @@ import { BidPanel } from "@/components/BidPanel";
 import { BitmapChat } from "@/components/BitmapChat";
 import { BitmapPriceChart } from "@/components/BitmapPriceChart";
 import { ProvenancePanel } from "@/components/ProvenancePanel";
+import { BssScriptPanel } from "@/components/BssScriptPanel";
 import { WatchBitmapButton } from "@/components/WatchBitmapButton";
 import { BitmapValuation } from "@/components/BitmapValuation";
 import { BitmapDevelopment } from "@/components/BitmapDevelopment";
