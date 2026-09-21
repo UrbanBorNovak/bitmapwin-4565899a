@@ -272,7 +272,7 @@ export function stepPlayer(player: PlayerState, intent: MoveIntent, rawDelta: nu
     player.grounded = false;
   } else {
     if (intent.jump && player.grounded) {
-      player.vy = MOVE.jumpSpeed;
+      player.vy = MOVE.jumpSpeed * (intent.jumpScale ?? 1);
       player.grounded = false;
     }
     if (!player.grounded) {
