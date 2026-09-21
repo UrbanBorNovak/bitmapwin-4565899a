@@ -32,6 +32,9 @@ export function TerritoryPanel({
   const stack = deployments.data ?? [];
   const grantList = grants.data ?? [];
 
+  // The landscape this land reads as, and what it grants anyone standing on it.
+  const landscape = landscapeFor(height);
+
   const experiences = stack.filter((d) => d.category !== "art" && d.category !== "construction").length;
   const buildings = stack.length - experiences;
 
