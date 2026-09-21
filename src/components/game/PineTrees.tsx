@@ -13,7 +13,8 @@ import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
 import { isSea } from "@/lib/world-sea";
 import { groundY, useTerrainVersion } from "@/lib/world-terrain";
-import { WORLD_CELL } from "@/lib/player-state";
+import { WORLD_CELL, WORLD_GRID, colAt, rowAt } from "@/lib/player-state";
+import { landscapeFor } from "@/lib/land-biome";
 import { useQuality } from "@/graphics/QualityContext";
 
 
