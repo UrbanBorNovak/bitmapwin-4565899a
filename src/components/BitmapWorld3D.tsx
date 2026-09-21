@@ -146,6 +146,9 @@ import { VehicleDamageFx } from "@/components/game/VehicleDamageFx";
 import { MysteryMist } from "@/components/game/MysteryMist";
 import { LandGrowth } from "@/components/game/LandGrowth";
 import { WeatherLighting, WorldWeather } from "@/components/game/WorldWeather";
+import { LandPerksHud } from "@/components/game/LandPerksHud";
+import { noteStanding, standingLand, useStandingLand } from "@/lib/land-biome-live";
+import { setLandChainTip } from "@/lib/land-biome";
 import { growthLabel, terraform, terraformAt } from "@/lib/world-terraform";
 import { ordContentUrl } from "@/lib/oci";
 import { getMyPassportFn } from "@/lib/passport.functions";
@@ -1714,7 +1717,12 @@ function PlayerCameraRig({
     }
     // On foot the shoes quicken every stride and the engine falls silent.
     else {
-      intent.speedScale = walkMultiplier();
+      // The land under the feet decides the last of the pace: open ground is
+      // quick, forest is slow, high ground lifts a jump further.
+      noteStanding(player.x, player.z);
+      const perks = standingLand().landscape.effects;
+      intent.speedScale = walkMultiplier() * perks.speed;
+      intent.jumpScale = perks.jump;
       // A raised weapon trades speed for accuracy, preventing full-speed ADS
       // strafing and giving first-person combat deliberate tactical weight.
       if (mode === "first") intent.speedScale *= 1 - aimState.amount * 0.32;
@@ -2353,6 +2361,9 @@ const WorldScene = memo(function WorldScene({
   );
 
 
+  // A desert reach opens the horizon; a forest or the frontier closes it in.
+  const landView = useStandingLand().landscape.tone.view;
+
   return (
     <>
       <color attach="background" args={[colors.background]} />
@@ -2364,8 +2375,8 @@ const WorldScene = memo(function WorldScene({
           cameraMode === "map"
             ? [colors.background, 40, 190]
             : cameraMode === "first"
-              ? [colors.background, 8, 64]
-              : [colors.background, 13, 82]
+              ? [colors.background, 8 * landView, 64 * landView]
+              : [colors.background, 13 * landView, 82 * landView]
         }
       />
 
@@ -4126,7 +4137,10 @@ function BitmapWorld3DInner({
 
         <TradingPostHud pose={pose} />
 
-        {inventoryOpen ? <BitmapMineHud bitmaps={ownedHeights.length} /> : null}
+        {inventoryOpen ? <BitmapMineHud bitmaps={ownedHeights.length} heights={ownedHeights} /> : null}
+
+        {/* THE LAND YOU STAND ON — landscape and the perks it is granting. */}
+        {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <LandPerksHud /> : null}
 
 
         {buildOpen ? (

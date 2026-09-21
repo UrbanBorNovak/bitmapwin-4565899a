@@ -21,6 +21,7 @@ import { colorForAddress } from "@/lib/map-owners";
 import type { ProvenanceEvent } from "@/lib/passport";
 import { sampleVisibleHeights, type AtlasClaim } from "@/lib/atlas-land";
 import { atlasPlace, findAtlasNamedPlace } from "@/lib/atlas-places";
+import { landscapeFor, setLandChainTip } from "@/lib/land-biome";
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 16;
@@ -118,7 +119,7 @@ function BiomeMesh({ tip }: { tip: number }) {
 }
 
 function Inspector({ place, tip, close, dropInto, claim }: { place: Place; tip: number; close: () => void; dropInto: (height: number) => void; claim?: AtlasClaim | undefined }) {
-  const point = blockToAtlas(place.height); const era = atlasEra(place.height, tip); const identity = atlasPlace(place.height);
+  const point = blockToAtlas(place.height); const era = atlasEra(place.height, tip); const identity = atlasPlace(place.height); const landscape = landscapeFor(place.height);
   return <div className="min-w-0 border border-bitcoin/60 bg-background/95 p-4 shadow-2xl backdrop-blur-md">
     <div className="flex items-start justify-between gap-3"><div><p className="label text-bitcoin">SELECTED BITMAP</p><h2 className="mt-1 font-mono text-lg font-bold tabular-nums" data-no-translate>{place.height.toLocaleString("en-US")}.BITMAP</h2></div><Button type="button" variant="ghost" size="icon" onClick={close} aria-label="Close selected BITMAP"><X /></Button></div>
     <div className="mt-3 border-l-2 border-bitcoin pl-3"><p className="font-mono text-sm font-bold text-foreground">{identity.localName}</p><p className="mt-1 font-mono text-[9px] uppercase text-muted-foreground">{identity.address} · {identity.name}</p></div>
@@ -127,6 +128,8 @@ function Inspector({ place, tip, close, dropInto, claim }: { place: Place; tip: 
       <div className="bg-background p-2"><dt className="label">COORDINATES</dt><dd className="mt-1 font-mono text-signal" data-no-translate>{point.x.toString().padStart(4,"0")} : {point.y.toString().padStart(4,"0")}</dd></div>
       <div className="bg-background p-2"><dt className="label">ERA</dt><dd className="mt-1 font-mono text-bitcoin">{era.label}</dd></div>
       <div className="col-span-2 bg-background p-2"><dt className="label">BIOME</dt><dd className="mt-1 font-mono">{era.biome}</dd></div>
+      <div className="col-span-2 bg-background p-2"><dt className="label">LANDSCAPE</dt><dd className="mt-1 font-mono text-bitcoin">{landscape.name}</dd><dd className="mt-1 font-mono text-[9px] text-muted-foreground">{landscape.blurb}</dd></div>
+      <div className="col-span-2 bg-background p-2"><dt className="label">LAND PERKS · ACTIVE WHILE YOU STAND HERE</dt><dd className="mt-1 space-y-1">{landscape.perks.map((perk) => (<span key={perk.key} className="block font-mono text-[9px]"><span className="text-signal">{perk.name}</span> <span className="text-muted-foreground">{perk.effect}</span></span>))}</dd></div>
     </dl>
     {claim&&<div className="mt-3 border border-bitcoin/50 bg-bitcoin/5 p-2"><p className="label text-bitcoin">CLAIMED LAND {claim.isValid?"· VALID":"· CONTESTED"}</p><p className="mt-1 truncate font-mono text-[9px] text-muted-foreground" data-no-translate>HOLDER {claim.ownerAddress??"UNKNOWN"}</p><p className="truncate font-mono text-[9px] text-muted-foreground" data-no-translate>{claim.inscriptionId}</p></div>}
 
@@ -161,6 +164,7 @@ export function AtlasExplorer({ initialHeight }: { initialHeight?: number }) {
   const land=useQuery({queryKey:["atlas","claims",viewWindow.zoom,viewWindow.x,viewWindow.y,tipHeight],queryFn:()=>fetchClaims({data:{heights:sampled}}),enabled:sampled.length>0,staleTime:120_000});
   const claims=useMemo(()=>{const map=new Map<number,AtlasClaim>();for(const claim of land.data?.claims??[])map.set(claim.height,claim);return map;},[land.data]);
   const frontierRun=useRef(0);
+  useEffect(()=>{ if(tipHeight) setLandChainTip(tipHeight); },[tipHeight]);
   useEffect(()=>{ if(!tipHeight) return; if(Date.now()-frontierRun.current<60_000) return; frontierRun.current=Date.now();
     runFrontier({data:{chainTip:tipHeight,batch:12}}).then((result)=>{ if(result?.indexed) land.refetch(); }).catch(()=>{}); },[tipHeight,runFrontier,land]);
   const setCamera=useCallback((next:Camera)=>{ const value={zoom:Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,next.zoom)),x:Math.min(0,Math.max(1-Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,next.zoom)),next.x)),y:Math.min(0,Math.max(1-Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,next.zoom)),next.y))}; cameraRef.current=value; setCameraState(value); },[]);

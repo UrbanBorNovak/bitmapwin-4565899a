@@ -13,7 +13,8 @@ import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { dropSolids, registerSolids } from "@/lib/world-solids";
 import { isSea } from "@/lib/world-sea";
 import { groundY, useTerrainVersion } from "@/lib/world-terrain";
-import { WORLD_CELL } from "@/lib/player-state";
+import { WORLD_CELL, WORLD_GRID, colAt, rowAt } from "@/lib/player-state";
+import { landscapeFor } from "@/lib/land-biome";
 import { useQuality } from "@/graphics/QualityContext";
 
 
@@ -132,6 +133,10 @@ function WildMiner({ unit, seed, yaw }: { unit: number; seed: number; yaw: numbe
   );
 }
 
+/** One BITMAP's landscape decides how crowded its ground is. */
+const densityAt = (x: number, z: number) =>
+  landscapeFor(rowAt(z) * WORLD_GRID + colAt(x)).density;
+
 export const PineTrees = memo(function PineTrees({
   unit,
   center,
@@ -162,9 +167,14 @@ export const PineTrees = memo(function PineTrees({
         const standX = gx * pitch;
         const standZ = gz * pitch;
         const shoreline = nearWater(standX, standZ);
-        // Pines grow in stands rather than one by one.
-        if (hash(gx, gz, 71) > (shoreline ? 0.58 : 0.3)) continue;
-        const count = 2 + Math.floor(hash(gx, gz, 72) * 4) + (shoreline ? 2 : 0);
+        const land = densityAt(standX, standZ);
+        // Pines grow in stands rather than one by one, and a highland forest
+        // stands far thicker than bare stone or open desert.
+        if (hash(gx, gz, 71) > Math.min(0.92, (shoreline ? 0.58 : 0.3) * land.trees)) continue;
+        const count = Math.max(
+          1,
+          Math.round((2 + Math.floor(hash(gx, gz, 72) * 4) + (shoreline ? 2 : 0)) * Math.min(1.8, land.trees)),
+        );
         for (let n = 0; n < count; n++) {
           const x = gx * pitch + (hash(gx * 5 + n, gz, 73) - 0.5) * pitch * 0.8;
           const z = gz * pitch + (hash(gx, gz * 7 + n, 74) - 0.5) * pitch * 0.8;
@@ -184,7 +194,7 @@ export const PineTrees = memo(function PineTrees({
             yaw: hash(gx + n, gz - n, 76) * Math.PI * 2,
             model,
           });
-          if (hash(gx + n, gz - n, 86) < (shoreline ? 0.85 : 0.62)) {
+          if (hash(gx + n, gz - n, 86) < Math.min(0.95, (shoreline ? 0.85 : 0.62) * land.flowers)) {
             const blossomCount = 1 + Math.floor(hash(gx - n, gz + n, 87) * 3) + (shoreline ? 2 : 0);
             for (let f = 0; f < blossomCount; f++) {
               const angle = hash(gx + f * 5, gz - f * 7, 88) * Math.PI * 2;
@@ -201,7 +211,7 @@ export const PineTrees = memo(function PineTrees({
           }
         }
 
-        if (hash(gx, gz, 92) < 0.016) {
+        if (hash(gx, gz, 92) < 0.016 * land.miners) {
           const mx = gx * pitch + (hash(gx, gz, 93) - 0.5) * pitch * 0.7;
           const mz = gz * pitch + (hash(gx, gz, 94) - 0.5) * pitch * 0.7;
           if (!isSea(mx, mz)) {

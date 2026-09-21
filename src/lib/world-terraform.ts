@@ -15,6 +15,7 @@ import { colAt, rowAt } from "./player-state";
 import { chunkOfTile, heightOfTile, tileOfHeight } from "./world-grid";
 import { listTerraformedLand, seedTerraform } from "./land-terraform.functions";
 import { markChunkLoad } from "./world-perf";
+import { landscapeFor } from "./land-biome";
 
 /** Real time from bare sand to a fully grown BITMAP: 30 days. */
 export const FULL_GROWTH_MS = 30 * 24 * 60 * 60 * 1000;
@@ -37,9 +38,13 @@ export const GROWTH_STAGES = [
   { at: 1, name: "OASIS", blurb: "Fully grown. The land is alive." },
 ] as const;
 
-/** 0 → 1, from the moment the land was seeded to fully grown. */
+/**
+ * 0 → 1, from the moment the land was seeded to fully grown. Fertile ground
+ * grows faster and frozen ground slower — the land's own landscape decides.
+ */
 export function growthOf(land: TerraformedLand, now = Date.now()) {
-  return Math.max(0, Math.min(1, (now - land.seededAt) / FULL_GROWTH_MS));
+  const rate = landscapeFor(land.height).effects.growth;
+  return Math.max(0, Math.min(1, ((now - land.seededAt) * rate) / FULL_GROWTH_MS));
 }
 
 export function stageOf(growth: number) {
