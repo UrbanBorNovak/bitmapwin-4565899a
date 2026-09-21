@@ -65,20 +65,23 @@ function DistrictStoryPage() {
             <div className="flex items-center gap-2"><Users className="size-4 text-bitcoin"/><h2 className="label text-bitcoin">DISTRICT OWNERSHIP</h2></div>
             <p className="mt-2 font-mono text-[9px] text-muted-foreground" data-no-translate>BLOCKS {range.lo.toLocaleString("en-US")}–{range.hi.toLocaleString("en-US")}</p>
             <dl className="mt-5 grid grid-cols-2 gap-px border border-border bg-border font-mono">
-              <div className="bg-background/90 p-3"><dt className="flex items-center gap-1.5 text-[9px] text-muted-foreground"><Users className="size-3"/>HOLDER ADDRESSES</dt><dd className="mt-2 text-2xl text-bitcoin" data-no-translate>{analytics.ownerCount.toLocaleString("en-US")}</dd></div>
-              <div className="bg-background/90 p-3"><dt className="flex items-center gap-1.5 text-[9px] text-muted-foreground"><Blocks className="size-3"/>BITMAPS HELD</dt><dd className="mt-2 text-2xl text-signal" data-no-translate>{analytics.bitmapCount.toLocaleString("en-US")}</dd></div>
-              <div className="col-span-2 bg-background/90 p-3"><dt className="text-[9px] text-muted-foreground">AVERAGE PER HOLDER</dt><dd className="mt-1 text-sm" data-no-translate>{analytics.averagePerOwner.toFixed(2)} BITMAPS</dd></div>
+              <div className="bg-background/90 p-3"><dt className="flex items-center gap-1.5 text-[9px] text-muted-foreground"><Users className="size-3"/>HOLDER ADDRESSES</dt><dd className="mt-2 text-2xl text-bitcoin" data-no-translate>{analytics.owners.toLocaleString("en-US")}</dd></div>
+              <div className="bg-background/90 p-3"><dt className="flex items-center gap-1.5 text-[9px] text-muted-foreground"><Blocks className="size-3"/>BITMAPS HELD</dt><dd className="mt-2 text-2xl text-signal" data-no-translate>{analytics.indexed.toLocaleString("en-US")}</dd></div>
+              <div className="col-span-2 bg-background/90 p-3"><dt className="text-[9px] text-muted-foreground">AVERAGE PER HOLDER</dt><dd className="mt-1 text-sm" data-no-translate>{analytics.owners > 0 ? (analytics.indexed / analytics.owners).toFixed(2) : "—"} BITMAPS</dd></div>
             </dl>
-            {analytics.topHolders.length > 0 ? <div className="mt-5">
+            {analytics.top.length > 0 ? <div className="mt-5">
               <p className="label text-muted-foreground">BIGGEST HOLDERS</p>
               <ol className="mt-2 divide-y divide-border">
-                {analytics.topHolders.slice(0, 5).map((holder, index) => (
+                {analytics.top.slice(0, 5).map((holder, index) => {
+                  const share = analytics.indexed > 0 ? (holder.held / analytics.indexed) * 100 : 0;
+                  return (
                   <li key={holder.address} className="flex min-w-0 items-center gap-3 py-2 font-mono text-[10px]">
                     <span className="text-muted-foreground">{String(index + 1).padStart(2, "0")}</span>
                     <Link to="/profile/$address" params={{ address: holder.address }} className="min-w-0 flex-1 truncate hover:text-bitcoin" data-no-translate>{holder.address.slice(0, 10)}…{holder.address.slice(-6)}</Link>
-                    <span className="shrink-0 text-bitcoin" data-no-translate>{holder.count} · {holder.share.toFixed(1)}%</span>
+                    <span className="shrink-0 text-bitcoin" data-no-translate>{holder.held} · {share.toFixed(1)}%</span>
                   </li>
-                ))}
+                  );
+                })}
               </ol>
             </div> : <p className="mt-4 font-mono text-[10px] text-muted-foreground">NO INDEXED HOLDERS IN THIS DISTRICT YET</p>}
           </section>
