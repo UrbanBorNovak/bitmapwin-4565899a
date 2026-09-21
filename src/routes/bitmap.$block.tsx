@@ -264,11 +264,13 @@ function BitmapDetail() {
           />
           <Metric label="WORLD EVENTS HERE" value={localHistory.data ? String(localHistory.data.length) : "…"} />
           <Metric
-            label="BLOCK AGE"
+            label="INSCRIPTION VALUE"
             value={
-              liveHolder.data || parcel
-                ? `${Math.max(0, (liveHolder.data?.tipHeight ?? 0) - block).toLocaleString("en-US")} BLOCKS`
-                : "…"
+              liveHolder.data?.valueSats
+                ? formatSats(liveHolder.data.valueSats)
+                : liveHolder.isPending
+                  ? "…"
+                  : "—"
             }
           />
         </div>
