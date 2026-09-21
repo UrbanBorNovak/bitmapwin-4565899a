@@ -360,7 +360,8 @@ export const clanBuildsByTag = createServerFn({ method: "GET" })
   }))
   .handler(async ({ data }) => {
     if (!data.tag) return { builds: [] as PlayerBuildRow[] };
-    const { data: rows, error } = await publicClient().rpc("clan_builds_by_tag", { _tag: data.tag });
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin.rpc("clan_builds_by_tag", { _tag: data.tag });
     if (error) throw new Error(error.message);
     return {
       builds: ((rows ?? []) as PlayerBuildRow[]).map((row) => normalisePlayerBuild(row)),
