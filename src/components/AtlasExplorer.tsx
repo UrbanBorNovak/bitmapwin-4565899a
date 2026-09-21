@@ -7,6 +7,7 @@ import atlasHd from "@/assets/oasis-atlas-storybook.jpg";
 import { AtlasRelief } from "@/components/AtlasRelief";
 import { AtlasPlaceLabels } from "@/components/AtlasPlaceLabels";
 import { AtlasTerrain, AtlasBeacon } from "@/components/AtlasTerrain";
+import { AtlasFineDetail } from "@/components/AtlasFineDetail";
 import { AtlasHeatmap } from "@/components/AtlasHeatmap";
 import { Button } from "@/components/ui/button";
 import { getChainBlocks } from "@/lib/chain.functions";
