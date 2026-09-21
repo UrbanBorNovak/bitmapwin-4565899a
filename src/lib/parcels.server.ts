@@ -21,6 +21,8 @@ export type ParcelizationSummary = {
   truncated: boolean;
   /** Ranked parcel owners on this BITMAP, biggest stake first. */
   owners: Array<{ address: string | null; parcels: number; indexes: number[] }>;
+  /** Every valid parcel found, so the map can show who holds each one. */
+  parcels: Array<{ index: number; address: string | null; inscriptionId: string }>;
 };
 
 const parcelSummaryCache = new Map<string, { expires: number; value: ParcelizationSummary }>();
