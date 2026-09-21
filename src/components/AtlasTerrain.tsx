@@ -29,7 +29,7 @@ type Tile = {
 };
 
 function tilesFor(zoom: number, tip: number): Tile[] {
-  const step = zoom < 1.8 ? 128 : zoom < 3.2 ? 64 : 32;
+  const step = zoom < 1.8 ? 128 : zoom < 3.2 ? 64 : zoom < 6 ? 32 : zoom < 10 ? 16 : 8;
   const tiles: Tile[] = [];
   for (let y = 0; y < ATLAS_SIDE; y += step) {
     for (let x = 0; x < ATLAS_SIDE; x += step) {
