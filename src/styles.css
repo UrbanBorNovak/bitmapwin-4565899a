@@ -548,6 +548,16 @@
   mix-blend-mode: soft-light;
 }
 
+/* Hand-painted paper tooth that grows as the atlas is pushed in, so deep zoom
+   reads as painted canvas instead of a stretched photograph. */
+.atlas-grain {
+  background:
+    repeating-linear-gradient(58deg, color-mix(in oklab, var(--color-foreground) 9%, transparent) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(-42deg, color-mix(in oklab, var(--color-background) 12%, transparent) 0 1px, transparent 1px 4px),
+    repeating-radial-gradient(circle at 37% 61%, color-mix(in oklab, var(--color-foreground) 10%, transparent) 0 0.5px, transparent 0.7px 3px);
+  mix-blend-mode: overlay;
+}
+
 .district-illustration {
   background: var(--color-background);
   box-shadow:
