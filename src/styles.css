@@ -518,8 +518,8 @@
     inset 0 0 90px -30px color-mix(in oklab, var(--color-background) 80%, transparent);
 }
 
-/* A full-screen storybook grade: warm painted light, softened distance and
-   watercolor paper grain. Both layers sit above WebGL but below every HUD. */
+/* GRAND MANUSCRIPT MASK — a warm rice-paper wash and hand-inked page frame.
+   Both layers sit above WebGL but below every HUD, so the world remains usable. */
 .oasis-storybook::before,
 .oasis-storybook::after {
   content: "";
@@ -531,27 +531,63 @@
 
 .oasis-storybook::before {
   background:
-    radial-gradient(ellipse at 50% 36%, color-mix(in oklab, var(--color-bitcoin) 10%, transparent) 0%, transparent 46%),
-    linear-gradient(180deg, color-mix(in oklab, var(--color-foreground) 9%, transparent) 0%, transparent 42%, color-mix(in oklab, var(--color-signal) 7%, transparent) 100%),
-    radial-gradient(ellipse at center, transparent 55%, color-mix(in oklab, var(--color-background) 34%, transparent) 118%);
+    radial-gradient(ellipse at 50% 34%, color-mix(in oklab, var(--color-bitcoin) 12%, transparent) 0%, transparent 48%),
+    linear-gradient(180deg, color-mix(in oklab, var(--color-foreground) 10%, transparent) 0%, transparent 40%, color-mix(in oklab, var(--color-signal) 6%, transparent) 100%),
+    radial-gradient(ellipse at center, transparent 50%, color-mix(in oklab, var(--color-background) 42%, transparent) 115%);
   mix-blend-mode: soft-light;
-  opacity: 0.72;
+  opacity: 0.78;
+  box-shadow:
+    inset 0 0 0 2px color-mix(in oklab, var(--color-bitcoin) 40%, transparent),
+    inset 0 0 0 5px color-mix(in oklab, var(--color-background) 82%, transparent),
+    inset 0 0 0 7px color-mix(in oklab, var(--color-foreground) 20%, transparent),
+    inset 0 0 42px 8px color-mix(in oklab, var(--color-bitcoin) 16%, transparent),
+    inset 0 0 110px 20px color-mix(in oklab, var(--color-background) 40%, transparent);
 }
 
 .oasis-storybook::after {
-  opacity: 0.16;
-  mix-blend-mode: soft-light;
+  inset: 7px;
+  border: 1px solid color-mix(in oklab, var(--color-foreground) 22%, transparent);
+  outline: 1px solid color-mix(in oklab, var(--color-bitcoin) 32%, transparent);
+  outline-offset: -5px;
+  opacity: 0.36;
+  mix-blend-mode: overlay;
   background-image:
-    radial-gradient(circle at 18% 22%, color-mix(in oklab, var(--color-foreground) 34%, transparent) 0 0.65px, transparent 0.95px),
-    radial-gradient(circle at 71% 64%, color-mix(in oklab, var(--color-bitcoin) 38%, transparent) 0 0.55px, transparent 0.9px),
-    repeating-linear-gradient(103deg, color-mix(in oklab, var(--color-foreground) 9%, transparent) 0 0.45px, transparent 0.7px 5px);
-  background-size: 5px 5px, 7px 7px, 9px 9px;
-  filter: contrast(1.08);
+    /* Dry-brush corner strokes */
+    radial-gradient(ellipse 21% 3px at 7% 2%, color-mix(in oklab, var(--color-foreground) 72%, transparent) 0 45%, transparent 70%),
+    radial-gradient(ellipse 3px 17% at 2% 8%, color-mix(in oklab, var(--color-foreground) 68%, transparent) 0 44%, transparent 72%),
+    radial-gradient(ellipse 21% 3px at 93% 98%, color-mix(in oklab, var(--color-foreground) 72%, transparent) 0 45%, transparent 70%),
+    radial-gradient(ellipse 3px 17% at 98% 92%, color-mix(in oklab, var(--color-foreground) 68%, transparent) 0 44%, transparent 72%),
+    /* Scattered ink freckles */
+    radial-gradient(circle at 9% 15%, color-mix(in oklab, var(--color-foreground) 52%, transparent) 0 0.8px, transparent 1.15px),
+    radial-gradient(circle at 84% 74%, color-mix(in oklab, var(--color-bitcoin) 46%, transparent) 0 0.65px, transparent 1px),
+    /* Cross-laid paper fibres */
+    repeating-linear-gradient(101deg, color-mix(in oklab, var(--color-foreground) 14%, transparent) 0 0.45px, transparent 0.8px 6px),
+    repeating-linear-gradient(7deg, color-mix(in oklab, var(--color-bitcoin) 9%, transparent) 0 0.35px, transparent 0.65px 11px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 7px 7px, 11px 11px, 13px 13px, 17px 17px;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--color-background) 72%, transparent),
+    inset 0 0 0 3px color-mix(in oklab, var(--color-foreground) 18%, transparent),
+    inset 0 0 0 9px color-mix(in oklab, var(--color-background) 28%, transparent),
+    inset 0 0 0 10px color-mix(in oklab, var(--color-foreground) 12%, transparent),
+    inset 0 0 26px color-mix(in oklab, var(--color-background) 52%, transparent);
+  filter: contrast(1.14);
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .oasis-storybook::before { opacity: 0.36; }
-  .oasis-storybook::after { opacity: 0.08; }
+  .oasis-storybook::before { opacity: 0.42; }
+  .oasis-storybook::after { opacity: 0.2; }
+}
+
+@media (max-width: 640px) {
+  .oasis-storybook::after {
+    inset: 4px;
+    outline-offset: -3px;
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--color-background) 72%, transparent),
+      inset 0 0 0 3px color-mix(in oklab, var(--color-foreground) 18%, transparent),
+      inset 0 0 0 6px color-mix(in oklab, var(--color-background) 28%, transparent),
+      inset 0 0 22px color-mix(in oklab, var(--color-background) 48%, transparent);
+  }
 }
 
 .atlas-storybook {
