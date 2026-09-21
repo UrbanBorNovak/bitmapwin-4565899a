@@ -239,6 +239,10 @@ function BitmapDetail() {
 
       <ProvenancePanel height={block} ownerAddress={owner} />
 
+      <div className="mt-8">
+        <BssScriptPanel height={block} />
+      </div>
+
       <section className="mt-8 border border-border" aria-label="Block analytics">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
           <h2 className="label">BLOCK ANALYTICS</h2>
