@@ -3475,6 +3475,8 @@ function BitmapWorld3DInner({
   const selectedModel = selected
     ? models.data?.find((model) => model.bitmapHeight === selected.height)
     : undefined;
+  // The on-chain BSS scene inscribed on the selected land, if it has one.
+  const selectedScene = useQuery(bssSceneQuery(selected?.height ?? null));
   // Every height this visitor owns, whether that came from the registry or
   // straight from the wallet's on-chain inscriptions.
   const myHeights = useMemo(() => new Set(ownedHeights), [ownedHeights]);
