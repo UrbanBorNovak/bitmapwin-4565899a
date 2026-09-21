@@ -295,6 +295,7 @@ function WindGrassMaterial({
         uniform vec3 uPlayerPosition;
         uniform float uFadeNear;
         uniform float uFadeFar;
+        uniform float uFirstPerson;
         varying vec2 vUv;
         varying vec3 vInstanceColor;
         varying vec3 vWorldPosition;
