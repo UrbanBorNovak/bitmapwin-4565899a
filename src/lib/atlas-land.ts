@@ -13,6 +13,7 @@ export type AtlasParcelization = {
   holders: number;
   maxParcels: number | null;
   truncated: boolean;
+  owners: Array<{ address: string | null; parcels: number; indexes: number[] }>;
 };
 
 /**
