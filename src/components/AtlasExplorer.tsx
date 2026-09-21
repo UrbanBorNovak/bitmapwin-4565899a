@@ -22,7 +22,7 @@ import { sampleVisibleHeights, type AtlasClaim } from "@/lib/atlas-land";
 import { atlasPlace, findAtlasNamedPlace } from "@/lib/atlas-places";
 
 const MIN_ZOOM = 1;
-const MAX_ZOOM = 10;
+const MAX_ZOOM = 16;
 const RAIL = [
   { to: "/oasis", label: "THE OASIS", icon: Globe2 }, { to: "/map", label: "MAP", icon: MapIcon },
   { to: "/marketplace", label: "MARKETPLACE", icon: Store }, { to: "/builds", label: "BUILDS", icon: Hammer },
