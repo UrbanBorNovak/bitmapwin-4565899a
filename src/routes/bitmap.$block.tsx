@@ -647,6 +647,15 @@ function Field({ k, v }: { k: string; v: string }) {
   );
 }
 
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 bg-card px-4 py-3">
+      <p className="label text-muted-foreground">{label}</p>
+      <p className="mt-1 truncate font-mono text-sm text-foreground">{value}</p>
+    </div>
+  );
+}
+
 function BitmapMissing() {
   return (
     <div className="mx-auto max-w-[900px] px-4 py-24 md:px-8">
