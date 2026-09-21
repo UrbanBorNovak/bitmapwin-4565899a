@@ -120,6 +120,63 @@ function BiomeMesh({ tip }: { tip: number }) {
   })}</div>;
 }
 
+/**
+ * REGION CHAPTER · OWNER ANALYTICS — the district the camera is inside, its
+ * atlas chapter, and the real spread of ownership across its 16,384 blocks.
+ * Every number comes from the indexed inscription registry; nothing is modelled.
+ */
+function RegionPanel({
+  district,
+  range,
+  stats,
+  loading,
+  focusHeight,
+}: {
+  district: ReturnType<typeof districtAt>;
+  range: { lo: number; hi: number };
+  stats: { indexed: number; valid: number; owners: number; unowned: number; top: Array<{ address: string; held: number }> } | undefined;
+  loading: boolean;
+  focusHeight: (height: number) => void;
+}) {
+  const story = atlasDistrictStory(district);
+  const owners = stats?.owners ?? 0;
+  const indexed = stats?.indexed ?? 0;
+  const perOwner = owners > 0 ? indexed / owners : 0;
+  const biggest = stats?.top[0];
+  const concentration = indexed > 0 && biggest ? (biggest.held / indexed) * 100 : 0;
+  return <section className="mt-2 border border-signal/40 bg-surface/60 p-3" aria-label="Region chapter and owner analytics">
+    <div className="flex flex-wrap items-baseline justify-between gap-2">
+      <div className="min-w-0">
+        <p className="label text-signal">{districtChapter(district)} · REGION</p>
+        <h2 className="font-mono text-sm font-bold uppercase text-foreground">{district.name}</h2>
+        <p className="font-mono text-[9px] uppercase text-muted-foreground">{district.landmark} · {story.atmosphere}</p>
+      </div>
+      <p className="font-mono text-[9px] text-muted-foreground" data-no-translate>BLOCKS {range.lo.toLocaleString("en-US")} – {range.hi.toLocaleString("en-US")}</p>
+    </div>
+    <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{story.story[0]}</p>
+    <dl className="mt-3 grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-4">
+      <div className="bg-background p-2 text-center"><dd className="font-mono text-sm font-bold text-signal tabular-nums">{loading&&!stats?"…":owners.toLocaleString("en-US")}</dd><dt className="label mt-1">OWNER ADDRESSES</dt></div>
+      <div className="bg-background p-2 text-center"><dd className="font-mono text-sm font-bold text-bitcoin tabular-nums">{loading&&!stats?"…":indexed.toLocaleString("en-US")}</dd><dt className="label mt-1">BITMAPS INDEXED</dt></div>
+      <div className="bg-background p-2 text-center"><dd className="font-mono text-sm font-bold tabular-nums">{perOwner>0?perOwner.toFixed(1):"—"}</dd><dt className="label mt-1">AVG PER OWNER</dt></div>
+      <div className="bg-background p-2 text-center"><dd className="font-mono text-sm font-bold tabular-nums">{concentration>0?`${concentration.toFixed(1)}%`:"—"}</dd><dt className="label mt-1">TOP HOLDER SHARE</dt></div>
+    </dl>
+    {stats&&stats.top.length>0&&<div className="mt-3">
+      <p className="label text-bitcoin">BIGGEST HOLDERS IN THIS REGION</p>
+      <ul className="mt-1.5 space-y-1">
+        {stats.top.map((holder)=>{const share=indexed>0?(holder.held/indexed)*100:0;return <li key={holder.address} className="flex min-w-0 items-center gap-2">
+          <Link to="/profile/$address" params={{address:holder.address}} className="min-w-0 flex-1 truncate font-mono text-[9px] text-signal hover:text-bitcoin" data-no-translate>{holder.address}</Link>
+          <span aria-hidden className="hidden h-1 w-20 shrink-0 bg-border sm:block"><span className="block h-full bg-bitcoin" style={{width:`${Math.max(4,Math.min(100,share))}%`}}/></span>
+          <span className="shrink-0 font-mono text-[9px] tabular-nums text-muted-foreground" data-no-translate>{holder.held.toLocaleString("en-US")} · {share.toFixed(1)}%</span>
+        </li>;})}
+      </ul>
+    </div>}
+    <div className="mt-3 flex flex-wrap gap-2">
+      <Button asChild variant="terminalGhost" size="sm"><Link to="/map/district/$slug" params={{slug:district.slug}}>READ CHAPTER <ArrowRight/></Link></Button>
+      <Button type="button" variant="terminalGhost" size="sm" onClick={()=>focusHeight(district.anchorHeight)}>ANCHOR BLOCK {district.anchorHeight.toLocaleString("en-US")}</Button>
+    </div>
+  </section>;
+
+
 /** Every claimed parcel on a BITMAP, clickable, revealing the holder behind it. */
 function ParcelClaims({ height, parcelization }: { height: number; parcelization: AtlasParcelization }) {
   const [picked, setPicked] = useState<number | null>(null);
