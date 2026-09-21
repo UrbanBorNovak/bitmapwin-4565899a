@@ -118,6 +118,32 @@ function BiomeMesh({ tip }: { tip: number }) {
   })}</div>;
 }
 
+/** Every claimed parcel on a BITMAP, clickable, revealing the holder behind it. */
+function ParcelClaims({ height, parcelization }: { height: number; parcelization: AtlasParcelization }) {
+  const [picked, setPicked] = useState<number | null>(null);
+  const parcels = parcelization.parcels;
+  if (parcels.length === 0) return null;
+  const active = parcels.find((parcel) => parcel.index === picked) ?? null;
+  return <div className="mt-2 border-t border-signal/30 pt-2">
+    <p className="label text-muted-foreground">PARCEL MAP · CLICK A PARCEL FOR ITS HOLDER</p>
+    <div className="mt-1.5 flex flex-wrap gap-1">
+      {parcels.map((parcel) => {
+        const on = parcel.index === picked;
+        return <button key={parcel.index} type="button" aria-pressed={on} onClick={() => setPicked(on ? null : parcel.index)} data-no-translate
+          className={`border px-1 py-0.5 font-mono text-[9px] tabular-nums transition-colors ${on ? "border-bitcoin bg-bitcoin/20 text-bitcoin" : "border-signal/40 bg-background/70 text-signal hover:border-signal"}`}
+          aria-label={`Parcel ${parcel.index} of ${height}.BITMAP`}>#{parcel.index}</button>;
+      })}
+    </div>
+    {active && <div className="mt-2 border border-bitcoin/50 bg-bitcoin/5 p-2">
+      <p className="label text-bitcoin" data-no-translate>PARCEL #{active.index}.{height}.BITMAP</p>
+      <p className="mt-1 break-all font-mono text-[9px] text-foreground" data-no-translate>HOLDER {active.address ?? "UNKNOWN"}</p>
+      <p className="break-all font-mono text-[9px] text-muted-foreground" data-no-translate>{active.inscriptionId}</p>
+      {active.address && <Button asChild variant="terminalGhost" size="sm" className="mt-2 w-full"><Link to="/profile/$address" params={{ address: active.address }}>HOLDER PROFILE <ArrowRight /></Link></Button>}
+    </div>}
+    {parcelization.validParcels > parcels.length && <p className="mt-1 font-mono text-[9px] text-muted-foreground">SHOWING FIRST {parcels.length} OF {parcelization.validParcels} PARCELS</p>}
+  </div>;
+}
+
 function Inspector({ place, tip, close, dropInto, claim, parcelization }: { place: Place; tip: number; close: () => void; dropInto: (height: number) => void; claim?: AtlasClaim | undefined; parcelization?: AtlasParcelization | undefined }) {
   const point = blockToAtlas(place.height); const era = atlasEra(place.height, tip); const identity = atlasPlace(place.height); const landscape = landscapeFor(place.height);
   return <div className="min-w-0 border border-bitcoin/60 bg-background/95 p-4 shadow-2xl backdrop-blur-md">
