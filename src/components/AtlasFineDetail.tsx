@@ -18,6 +18,7 @@ const hash = (value: number) => {
 };
 
 type Camera = { zoom: number; x: number; y: number };
+type Bounds = ReturnType<typeof viewBounds>;
 
 type Cell = {
   key: string;
@@ -45,10 +46,7 @@ function viewBounds(camera: Camera) {
   };
 }
 
-function cellsFor(camera: Camera, tip: number): Cell[] {
-  // Detail tiers: settlement scale -> field scale -> single-BITMAP scale.
-  const step = camera.zoom < 4 ? 16 : camera.zoom < 6.5 ? 8 : camera.zoom < 9 ? 4 : 2;
-  const bounds = viewBounds(camera);
+function cellsFor(bounds: Bounds, step: number, tip: number): Cell[] {
   const cells: Cell[] = [];
   const startX = Math.floor(bounds.left / step) * step;
   const startY = Math.floor(bounds.top / step) * step;
@@ -71,7 +69,7 @@ function cellsFor(camera: Camera, tip: number): Cell[] {
         grove: hash(height + 37) > 0.4 ? 3 + Math.floor(hash(height + 38) * 6) : 0,
         terrace: hash(height + 53) > 0.55 ? 2 + Math.floor(hash(height + 54) * 3) : 0,
       });
-      if (cells.length > 900) return cells;
+      if (cells.length > 1800) return cells;
     }
   }
   return cells;
@@ -82,22 +80,27 @@ function toneFor(era: string) {
 }
 
 export function AtlasFineDetail({ camera, tip }: { camera: Camera; tip: number }) {
-  const view = useMemo(
-    () => ({ zoom: Math.round(camera.zoom * 2) / 2, x: Math.round(camera.x * 60) / 60, y: Math.round(camera.y * 60) / 60 }),
-    [camera.zoom, camera.x, camera.y],
-  );
-  const cells = useMemo(() => (view.zoom < 3 ? [] : cellsFor(view, tip)), [view, tip]);
+  const step = camera.zoom < 4.5 ? 16 : camera.zoom < 7 ? 8 : camera.zoom < 12 ? 4 : 2;
+  const rawBounds = viewBounds(camera);
+  const bounds = useMemo(() => ({
+    left: Math.floor(rawBounds.left / step) * step,
+    top: Math.floor(rawBounds.top / step) * step,
+    right: Math.ceil(rawBounds.right / step) * step,
+    bottom: Math.ceil(rawBounds.bottom / step) * step,
+  }), [step, Math.floor(rawBounds.left / step), Math.floor(rawBounds.top / step), Math.ceil(rawBounds.right / step), Math.ceil(rawBounds.bottom / step)]);
+  const cells = useMemo(() => (camera.zoom < 2.85 ? [] : cellsFor(bounds, step, tip)), [bounds, step, tip, camera.zoom < 2.85]);
   if (cells.length === 0) return null;
-  const stroke = 0.7 / Math.min(4, view.zoom / 3);
-  const showParcels = view.zoom >= 7;
+  const stroke = 0.7 / Math.min(4, camera.zoom / 3);
+  const showParcels = camera.zoom >= 7.25;
+  const detailOpacity = Math.min(0.7, Math.max(0, (camera.zoom - 2.85) / 0.65) * 0.7);
   return (
     <svg
       aria-hidden
       viewBox={`0 0 ${ATLAS_SIDE} ${ATLAS_SIDE}`}
       preserveAspectRatio="none"
-      className="pointer-events-none absolute inset-0 size-full"
+      className="pointer-events-none absolute inset-0 size-full transition-opacity duration-300"
     >
-      <g className="mix-blend-multiply" opacity={0.7}>
+      <g className="mix-blend-multiply" opacity={detailOpacity}>
         {cells.map((cell) => {
           const tone = toneFor(cell.era);
           const cx = cell.x + cell.size / 2;
