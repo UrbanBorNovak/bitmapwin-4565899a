@@ -3,7 +3,8 @@ import { queryOptions, useMutation, useQuery, useQueryClient, useSuspenseQuery }
 import { getBlockInscriptions } from "@/lib/ordinals-scan.functions";
 import { getBitmapRegistryEntry } from "@/lib/oci.functions";
 import { MAX_BITMAP } from "@/lib/oci";
-import { atlasPlace } from "@/lib/atlas-places";
+import { atlasPlace, districtBlockRange } from "@/lib/atlas-places";
+import { getAtlasRegionStats } from "@/lib/atlas-land.functions";
 import { TraitBadges } from "@/components/TraitBadges";
 import { ClubBadge } from "@/components/ClubBadge";
 import { GalleryBadges } from "@/components/GalleryBadges";
@@ -137,10 +138,24 @@ function BitmapDetail() {
   const localHistory = useQuery(provenanceStreamQuery("all", 12, undefined, block));
   const queryClient = useQueryClient();
 
+  const place = atlasPlace(block);
+  const regionStats = useQuery({
+    queryKey: ["atlas-region-stats", place.slug],
+    queryFn: () => getAtlasRegionStats({ data: districtBlockRange(place) }),
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+
   const claims = (scan.data?.inscriptions ?? []).filter((i) => i.isBitmapClaim);
   const history = [...(trades.data ?? [])].sort((a, b) => b.hop - a.hop);
   const lastSale = history.find((t) => t.price_sats > 0) ?? null;
   const owner = liveHolder.data?.ownerAddress ?? parcel?.ownerAddress ?? history[0]?.buyer_address ?? oci.data?.ownerAddress ?? null;
+
+  const tradedVolume = history.reduce((sum, t) => sum + (t.price_sats > 0 ? t.price_sats : 0), 0);
+  const distinctTraders = new Set(history.flatMap((t) => [t.seller_address, t.buyer_address])).size;
+  const txCount = stats.data?.txCount ?? scan.data?.txCount ?? null;
+  const region = regionStats.data ?? null;
+  const regionHeld = region ? Math.max(0, region.indexed - region.unowned) : 0;
 
   const trace = useMutation({
     mutationFn: async () => {
@@ -223,6 +238,93 @@ function BitmapDetail() {
       </div>
 
       <ProvenancePanel height={block} ownerAddress={owner} />
+
+      <section className="mt-8 border border-border" aria-label="Block analytics">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
+          <h2 className="label">BLOCK ANALYTICS</h2>
+          <Link to="/map/district/$slug" params={{ slug: place.slug }} className="label text-bitcoin hover:text-foreground">
+            {place.name.toUpperCase()} →
+          </Link>
+        </div>
+        <div className="grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-4">
+          <Metric label="BLOCK TRANSACTIONS" value={txCount !== null ? txCount.toLocaleString("en-US") : "…"} />
+          <Metric label="ON-CHAIN TRANSFERS" value={String(history.length)} />
+          <Metric
+            label="TOTAL TRADED VOLUME"
+            value={tradedVolume > 0 ? formatSats(tradedVolume) : history.length > 0 ? "TRANSFERS ONLY" : "NO TRADES"}
+          />
+          <Metric label="DISTINCT TRADERS" value={String(distinctTraders)} />
+          <Metric
+            label="INSCRIPTIONS IN BLOCK"
+            value={scan.data ? scan.data.inscriptions.length.toLocaleString("en-US") : "…"}
+          />
+          <Metric
+            label="BITMAP CLAIMS HERE"
+            value={scan.data ? String(claims.length) : "…"}
+          />
+          <Metric label="WORLD EVENTS HERE" value={localHistory.data ? String(localHistory.data.length) : "…"} />
+          <Metric
+            label="INSCRIPTION VALUE"
+            value={
+              liveHolder.data?.valueSats
+                ? formatSats(liveHolder.data.valueSats)
+                : liveHolder.isPending
+                  ? "…"
+                  : "—"
+            }
+          />
+        </div>
+        <div className="border-t border-border px-4 py-4">
+          <p className="label text-muted-foreground">
+            DISTRICT OWNERSHIP · {place.name.toUpperCase()} · {place.landmark.toUpperCase()}
+          </p>
+          {regionStats.isPending ? (
+            <p className="mt-3 font-mono text-xs text-muted-foreground">&gt; READING REGION LEDGER…</p>
+          ) : region ? (
+            <>
+              <div className="mt-3 grid gap-px bg-border sm:grid-cols-3">
+                <Metric label="HOLDER ADDRESSES" value={region.owners.toLocaleString("en-US")} />
+                <Metric label="BITMAPS HELD" value={regionHeld.toLocaleString("en-US")} />
+                <Metric
+                  label="AVERAGE PER HOLDER"
+                  value={region.owners > 0 ? (regionHeld / region.owners).toFixed(1) : "—"}
+                />
+              </div>
+              {region.top.length > 0 && (
+                <ul className="mt-4 space-y-2">
+                  {region.top.slice(0, 5).map((holder, rank) => (
+                    <li key={holder.address ?? rank} className="flex min-w-0 items-center gap-3 font-mono text-xs">
+                      <span className="label w-6 shrink-0">{String(rank + 1).padStart(2, "0")}</span>
+                      {holder.address ? (
+                        <Link
+                          to="/profile/$address"
+                          params={{ address: holder.address }}
+                          className="min-w-0 truncate text-foreground hover:text-bitcoin"
+                        >
+                          {shortenAddress(holder.address)}
+                        </Link>
+                      ) : (
+                        <span className="min-w-0 truncate text-muted-foreground">UNKNOWN HOLDER</span>
+                      )}
+                      <span className="relative h-1.5 min-w-10 flex-1 overflow-hidden bg-border">
+                        <span
+                          className="absolute inset-y-0 left-0 bg-bitcoin/70"
+                          style={{ width: `${regionHeld > 0 ? Math.min(100, (holder.held / regionHeld) * 100) : 0}%` }}
+                        />
+                      </span>
+                      <span className="label shrink-0">
+                        {holder.held} · {regionHeld > 0 ? ((holder.held / regionHeld) * 100).toFixed(2) : "0.00"}%
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          ) : (
+            <p className="mt-3 font-mono text-xs text-muted-foreground">&gt; NO REGION DATA INDEXED YET_</p>
+          )}
+        </div>
+      </section>
 
       <BitmapPriceChart height={block} />
 
@@ -541,6 +643,15 @@ function Field({ k, v }: { k: string; v: string }) {
     <div className="px-6 py-4">
       <dt className="label">{k}</dt>
       <dd className="mt-1 break-all font-mono text-sm text-foreground">{v}</dd>
+    </div>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 bg-card px-4 py-3">
+      <p className="label text-muted-foreground">{label}</p>
+      <p className="mt-1 truncate font-mono text-sm text-foreground">{value}</p>
     </div>
   );
 }
