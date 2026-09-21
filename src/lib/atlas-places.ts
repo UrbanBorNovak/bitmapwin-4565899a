@@ -169,8 +169,9 @@ export function atlasPlaceStory(height: number): AtlasPlaceStory {
     motif: form.toLowerCase() as AtlasDistrictStory["motif"],
     frame: {
       divisions: PLACE_FRAME_DIVISIONS,
-      column: Math.min(PLACE_FRAME_DIVISIONS - 1, Math.floor(point.x / cell)),
-      row: Math.min(PLACE_FRAME_DIVISIONS - 1, Math.floor(point.y / cell)),
+      // Continuous crop centred on this block, clamped inside the painting.
+      left: -Math.min((PLACE_FRAME_DIVISIONS - 1) * 100, Math.max(0, (point.x / cell) * 100 - 50)),
+      top: -Math.min((PLACE_FRAME_DIVISIONS - 1) * 100, Math.max(0, (point.y / cell) * 100 - 50)),
     },
     neighbors: { previous: Math.max(0, height - 1), next: height + 1 },
   };
