@@ -20,7 +20,6 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/map", label: "ENTER THE OASIS", note: "Walk, drive, build and explore" },
       { to: "/stream", label: "WORLD STREAM", note: "See verified history as it happens" },
       { to: "/play-guide", label: "PLAYER GUIDE", note: "Controls, devices and what to do" },
-      { to: "/arcade", label: "BLOCK RUN", note: "Multiplayer platformer, one course per block" },
       { to: "/cities", label: "VISIT CITIES", note: "Districts inside the world" },
       { to: "/trading-post", label: "IN-WORLD TRADING POST", note: "Trade your Oasis items" },
       { to: "/inventory", label: "MY INVENTORY", note: "Gear, rations and collectibles" },

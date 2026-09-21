@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiRouteImport } from './routes/api'
-import { Route as ArcadeRouteImport } from './routes/arcade'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BuildersRouteImport } from './routes/builders'
 import { Route as BuildsRouteImport } from './routes/builds'
@@ -87,11 +86,6 @@ const IndexRoute = IndexRouteImport.update({
 const ApiRoute = ApiRouteImport.update({
   id: '/api',
   path: '/api',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ArcadeRoute = ArcadeRouteImport.update({
-  id: '/arcade',
-  path: '/arcade',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -431,7 +425,6 @@ const ApiPublicBlocksHeightMetaRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api': typeof ApiRouteWithChildren
-  '/arcade': typeof ArcadeRoute
   '/auth': typeof AuthRoute
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
@@ -502,7 +495,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api': typeof ApiRouteWithChildren
-  '/arcade': typeof ArcadeRoute
   '/auth': typeof AuthRoute
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
@@ -571,7 +563,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api': typeof ApiRouteWithChildren
-  '/arcade': typeof ArcadeRoute
   '/auth': typeof AuthRoute
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
@@ -644,7 +635,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/api'
-    | '/arcade'
     | '/auth'
     | '/builders'
     | '/builds'
@@ -715,7 +705,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/api'
-    | '/arcade'
     | '/auth'
     | '/builders'
     | '/builds'
@@ -783,7 +772,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/api'
-    | '/arcade'
     | '/auth'
     | '/builders'
     | '/builds'
@@ -855,7 +843,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiRoute: typeof ApiRouteWithChildren
-  ArcadeRoute: typeof ArcadeRoute
   AuthRoute: typeof AuthRoute
   BuildersRoute: typeof BuildersRoute
   BuildsRoute: typeof BuildsRoute
@@ -921,13 +908,6 @@ declare module '@tanstack/react-router' {
       path: '/api'
       fullPath: '/api'
       preLoaderRoute: typeof ApiRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/arcade': {
-      id: '/arcade'
-      path: '/arcade'
-      fullPath: '/arcade'
-      preLoaderRoute: typeof ArcadeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -1479,7 +1459,6 @@ const RanksRouteWithChildren = RanksRoute._addFileChildren(RanksRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiRoute: ApiRouteWithChildren,
-  ArcadeRoute: ArcadeRoute,
   AuthRoute: AuthRoute,
   BuildersRoute: BuildersRoute,
   BuildsRoute: BuildsRoute,
