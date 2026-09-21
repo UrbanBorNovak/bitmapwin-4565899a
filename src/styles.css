@@ -548,6 +548,62 @@
   mix-blend-mode: soft-light;
 }
 
+/* LIVED-IN PASS — tiny breathing marks on the painted world at deep zoom only.
+   Pure CSS transforms so animation never re-enters React or layout. */
+.atlas-livedin {
+  mix-blend-mode: multiply;
+}
+
+.atlas-livedin__smoke,
+.atlas-livedin__boat,
+.atlas-livedin__cart {
+  will-change: transform, opacity;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
+.atlas-livedin__smoke {
+  animation-name: atlas-smoke;
+}
+
+.atlas-livedin__boat {
+  animation-name: atlas-boat;
+  animation-timing-function: linear;
+}
+
+.atlas-livedin__cart {
+  animation-name: atlas-cart;
+  animation-timing-function: linear;
+}
+
+@keyframes atlas-smoke {
+  0% { transform: translate(0, 0) scale(0.9); opacity: 0.25; }
+  45% { opacity: 0.7; }
+  100% { transform: translate(calc(var(--atlas-drift) * 0.5px), calc(var(--atlas-drift) * -1.4px)) scale(1.35); opacity: 0; }
+}
+
+@keyframes atlas-boat {
+  0% { transform: translate(calc(var(--atlas-drift) * -0.7px), 0); opacity: 0.2; }
+  20%, 80% { opacity: 0.75; }
+  100% { transform: translate(calc(var(--atlas-drift) * 0.7px), calc(var(--atlas-drift) * 0.12px)); opacity: 0.2; }
+}
+
+@keyframes atlas-cart {
+  0% { transform: translate(calc(var(--atlas-drift) * -0.6px), 0); opacity: 0.15; }
+  25%, 75% { opacity: 0.7; }
+  100% { transform: translate(calc(var(--atlas-drift) * 0.6px), calc(var(--atlas-drift) * -0.1px)); opacity: 0.15; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atlas-livedin__smoke,
+  .atlas-livedin__boat,
+  .atlas-livedin__cart {
+    animation: none;
+  }
+}
+
+
+
 /* Hand-painted paper tooth that grows as the atlas is pushed in, so deep zoom
    reads as painted canvas instead of a stretched photograph. */
 .atlas-grain {
