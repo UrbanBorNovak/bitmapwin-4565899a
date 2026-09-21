@@ -114,7 +114,7 @@ export function AtlasFineDetail({ camera, tip }: { camera: Camera; tip: number }
                 fill="none"
                 stroke={tone}
                 strokeWidth={stroke * 0.6}
-                opacity={0.14 + cell.seed * 0.1}
+                opacity={0.3 + cell.seed * 0.14}
                 rx={s * 0.08}
               />
               {/* cart roads threading the land */}
@@ -129,7 +129,7 @@ export function AtlasFineDetail({ camera, tip }: { camera: Camera; tip: number }
                     stroke={tone}
                     strokeWidth={stroke * 0.8}
                     strokeLinecap="round"
-                    opacity={0.2}
+                    opacity={0.36}
                   />
                 );
               })}
@@ -144,7 +144,7 @@ export function AtlasFineDetail({ camera, tip }: { camera: Camera; tip: number }
                     stroke={tone}
                     strokeWidth={stroke * 0.5}
                     strokeDasharray={`${s * 0.06} ${s * 0.05}`}
-                    opacity={0.22}
+                    opacity={0.32}
                   />
                 );
               })}
@@ -153,7 +153,7 @@ export function AtlasFineDetail({ camera, tip }: { camera: Camera; tip: number }
                 const gx = cell.x + s * (0.15 + hash(cell.x * 3 + index * 17) * 0.7);
                 const gy = cell.y + s * (0.15 + hash(cell.y * 5 + index * 29) * 0.7);
                 const r = s * (0.035 + hash(index + cell.seed * 100) * 0.03);
-                return <circle key={`g${index}`} cx={gx} cy={gy} r={r} fill={tone} opacity={0.16} />;
+                return <circle key={`g${index}`} cx={gx} cy={gy} r={r} fill={tone} opacity={0.3} />;
               })}
               {/* hamlets — tiny roofs clustered near a road */}
               {showParcels &&
@@ -166,7 +166,7 @@ export function AtlasFineDetail({ camera, tip }: { camera: Camera; tip: number }
                       key={`h${index}`}
                       d={`M ${hx - w} ${hy + w * 0.7} L ${hx} ${hy - w * 0.8} L ${hx + w} ${hy + w * 0.7} Z`}
                       fill={tone}
-                      opacity={0.3}
+                      opacity={0.55}
                     />
                   );
                 })}
