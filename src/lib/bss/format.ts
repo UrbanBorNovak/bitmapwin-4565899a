@@ -141,8 +141,9 @@ export function bssDecode(bytes: Uint8Array, source: string): BssScene | { error
         if (!room(1)) break walk;
         const resourceName = name();
         if (!room(36)) break walk;
+        // Resource txids are stored in display order, not little-endian.
         let txid = "";
-        for (let k = 31; k >= 0; k--) txid += (payload[i + k] ?? 0).toString(16).padStart(2, "0");
+        for (let k = 0; k < 32; k++) txid += (payload[i + k] ?? 0).toString(16).padStart(2, "0");
         i += 32;
         const index = u32();
         resources.push({ name: resourceName, inscriptionId: `${txid}i${index}` });
