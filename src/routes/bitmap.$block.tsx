@@ -42,7 +42,7 @@ import { InscriptionContent } from "@/components/InscriptionContent";
 import { shortId } from "@/lib/chain";
 import { registryParcelQuery, shortenAddress, PARCEL_STATUS_LABEL } from "@/lib/registry";
 
-import { saveTrades, tradesForHeightQuery } from "@/lib/trade-store";
+import { tradesForHeightQuery } from "@/lib/trade-store";
 import { traceBitmapTradesFn } from "@/lib/trades.functions";
 import { formatSats } from "@/lib/trades";
 import { timeAgo } from "@/lib/bitmap";
@@ -162,7 +162,7 @@ function BitmapDetail() {
     mutationFn: async () => {
       const txid = parcel?.txid ?? oci.data?.inscriptionId?.slice(0, 64) ?? null;
       if (!txid) throw new Error("NO CLAIM TRANSACTION KNOWN FOR THIS BITMAP");
-      const traces = await traceBitmapTradesFn({
+      const result = await traceBitmapTradesFn({
         data: {
           claims: [
             { bitmapHeight: block, txid, inscriptionId: parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null },
@@ -170,7 +170,7 @@ function BitmapDetail() {
           maxHops: 8,
         },
       });
-      return saveTrades(traces);
+      return result.stored;
     },
     onSuccess: (stored) => {
       queryClient.invalidateQueries({ queryKey: ["trades"] });
