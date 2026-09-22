@@ -2452,6 +2452,7 @@ const WorldScene = memo(function WorldScene({
             color={colors.bitcoin}
           /> : null}
           <LandGrowth unit={AVATAR_U} pose={pose} firstPerson={cameraMode === "first"} />
+          <LandSkins pose={pose} />
           <Companions unit={AVATAR_U} pose={pose} />
           {self.hp <= 0 ? <GhostShade unit={AVATAR_U} pose={pose} /> : null}
         </>
