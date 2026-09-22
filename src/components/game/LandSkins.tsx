@@ -85,7 +85,6 @@ const PaintedTile = memo(function PaintedTile({ skin }: { skin: LandSkin }) {
 
   useEffect(() => () => geometry.dispose(), [geometry]);
 
-  console.log("[landskin]", skin.height, x, z, groundY(x, z), Boolean(texture));
   if (!texture) return null;
   return (
     <mesh position={[x, 0, z]} geometry={geometry} renderOrder={2} raycast={noRaycast}>
@@ -103,10 +102,13 @@ const PaintedTile = memo(function PaintedTile({ skin }: { skin: LandSkin }) {
 /** Every painted BITMAP within reach of the avatar. */
 export const LandSkins = memo(function LandSkins({
   pose,
+  focus = null,
 }: {
   pose: React.RefObject<PlayerState>;
+  /** The BITMAP under inspection from above, painted even before you walk it. */
+  focus?: number | null;
 }) {
-  const [heights, setHeights] = useState<number[]>([]);
+  const [around, setAround] = useState<number[]>([]);
   const centre = useRef(Number.NaN);
 
   useFrame(() => {
@@ -117,17 +119,23 @@ export const LandSkins = memo(function LandSkins({
     const here = row * WORLD_GRID + col;
     if (here === centre.current) return;
     centre.current = here;
-    const around: number[] = [];
+    const next: number[] = [];
     for (let dr = -1; dr <= 1; dr++) {
       for (let dc = -1; dc <= 1; dc++) {
         const c = col + dc;
         const r = row + dr;
         if (c < 0 || r < 0 || c >= WORLD_GRID || r >= WORLD_GRID) continue;
-        around.push(r * WORLD_GRID + c);
+        next.push(r * WORLD_GRID + c);
       }
     }
-    setHeights(around.sort((a, b) => a - b));
+    setAround(next.sort((a, b) => a - b));
   });
+
+  const heights = useMemo(() => {
+    const all = new Set(around);
+    if (focus !== null && focus >= 0) all.add(focus);
+    return Array.from(all).sort((a, b) => a - b);
+  }, [around, focus]);
 
   const { data } = useQuery(landSkinsQuery(heights));
 
