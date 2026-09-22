@@ -3,7 +3,11 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+import { Map } from "lucide-react";
 import { bssSceneQuery } from "@/lib/bss";
+import { atlasPlace } from "@/lib/atlas-places";
+import { Button } from "@/components/ui/button";
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -17,6 +21,7 @@ function Row({ label, value }: { label: string; value: string }) {
 export function BssScriptPanel({ height }: { height: number }) {
   const query = useQuery(bssSceneQuery(height));
   const load = query.data;
+  const district = atlasPlace(height);
 
   return (
     <section aria-label="Bitmap Sunset Script" className="border border-border bg-background">
@@ -83,6 +88,11 @@ export function BssScriptPanel({ height }: { height: number }) {
           <p className="font-mono text-xs text-muted-foreground">
             THE SCENE IS READ AS DATA AND DRAWN IN THE OASIS ON THIS LAND — NOTHING ON CHAIN IS EXECUTED.
           </p>
+          <Button asChild variant="terminalGhost" size="sm">
+            <Link to="/map/district/$slug" params={{ slug: district.slug }}>
+              <Map /> {district.name} CHAPTER
+            </Link>
+          </Button>
         </div>
       )}
     </section>

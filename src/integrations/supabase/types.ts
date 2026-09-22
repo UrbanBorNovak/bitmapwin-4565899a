@@ -99,6 +99,39 @@ export type Database = {
           },
         ]
       }
+      bitmap_bss_scenes: {
+        Row: {
+          bitmap_height: number
+          bmp_inscription_id: string
+          is_valid: boolean
+          object_count: number
+          resource_count: number
+          updated_at: string
+          verified_at: string
+          version_label: string
+        }
+        Insert: {
+          bitmap_height: number
+          bmp_inscription_id: string
+          is_valid?: boolean
+          object_count?: number
+          resource_count?: number
+          updated_at?: string
+          verified_at?: string
+          version_label: string
+        }
+        Update: {
+          bitmap_height?: number
+          bmp_inscription_id?: string
+          is_valid?: boolean
+          object_count?: number
+          resource_count?: number
+          updated_at?: string
+          verified_at?: string
+          version_label?: string
+        }
+        Relationships: []
+      }
       bitmap_chat_messages: {
         Row: {
           bitmap_height: number

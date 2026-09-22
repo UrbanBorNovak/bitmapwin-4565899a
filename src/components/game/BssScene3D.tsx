@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import * as THREE from "three";
 import { bssSceneQuery, bssToWorld, type BssPlacement } from "@/lib/bss";
 import { contentUrl } from "@/components/game/InscribedParts";
+import { SafeHtml } from "@/components/game/SafeHtml";
 
 const noRaycast = () => {};
 const FALLBACK = "#d7bd82";
@@ -90,13 +91,31 @@ export const BssScene3D = memo(function BssScene3D({
     if (scene.data?.status !== "ok") return [];
     return bssToWorld(scene.data.scene, cell);
   }, [scene.data, cell]);
+  const labelY = useMemo(
+    () => placements.reduce((highest, placement) => Math.max(highest, placement.position[1] + placement.size / 2), cell * 0.7) + cell * 0.25,
+    [placements, cell],
+  );
 
-  if (placements.length === 0) return null;
+  if (placements.length === 0 || scene.data?.status !== "ok") return null;
   return (
     <group position={position} raycast={noRaycast}>
       {placements.map((placement) => (
         <BssQuad key={placement.key} placement={placement} />
       ))}
+      <SafeHtml
+        center
+        position={[0, labelY, 0]}
+        distanceFactor={0.02}
+        style={{ pointerEvents: "none" }}
+        zIndexRange={[12, 1]}
+      >
+        <div
+          data-no-translate
+          className="whitespace-nowrap border border-signal/60 bg-background/85 px-2.5 py-1.5 font-mono text-[10px] font-bold text-signal shadow-[0_0_18px_var(--signal)] backdrop-blur-sm"
+        >
+          {height.toLocaleString("en-US")}.BITMAP · BSS {scene.data.scene.versionLabel} · {scene.data.scene.objects.length} OBJECTS
+        </div>
+      </SafeHtml>
     </group>
   );
 });

@@ -1,9 +1,10 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Blocks, Compass, Landmark, Map, Mountain, Navigation, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, Blocks, Box, Compass, Map, Mountain, Navigation, Users } from "lucide-react";
 import { AtlasDistrictIllustration } from "@/components/AtlasDistrictIllustration";
 import { Button } from "@/components/ui/button";
 import { atlasEra, blockToAtlas } from "@/lib/atlas-geometry";
 import { getAtlasRegionStats } from "@/lib/atlas-land.functions";
+import { getBssScenesInRange } from "@/lib/bss.functions";
 import { atlasDistrictBySlug, atlasDistrictNeighbors, atlasDistrictStory, atlasDistricts, districtBlockRange } from "@/lib/atlas-places";
 
 export const Route = createFileRoute("/map_/district/$slug")({
@@ -11,8 +12,11 @@ export const Route = createFileRoute("/map_/district/$slug")({
     const district = atlasDistrictBySlug(params.slug);
     if (!district) throw notFound();
     const range = districtBlockRange(district);
-    const analytics = await getAtlasRegionStats({ data: range });
-    return { district, story: atlasDistrictStory(district), neighbors: atlasDistrictNeighbors(district), range, analytics };
+    const [analytics, sceneDirectory] = await Promise.all([
+      getAtlasRegionStats({ data: range }),
+      getBssScenesInRange({ data: range }),
+    ]);
+    return { district, story: atlasDistrictStory(district), neighbors: atlasDistrictNeighbors(district), range, analytics, scenes: sceneDirectory.scenes };
   },
   head: ({ loaderData }) => {
     if (!loaderData) return { meta: [{ title: "Atlas district not found — BitmapWin" }, { name: "robots", content: "noindex" }] };
@@ -29,7 +33,7 @@ function DistrictStoryNotFound() {
 }
 
 function DistrictStoryPage() {
-  const { district, story, neighbors, range, analytics } = Route.useLoaderData();
+  const { district, story, neighbors, range, analytics, scenes } = Route.useLoaderData();
   const point = blockToAtlas(district.anchorHeight);
   const era = atlasEra(district.anchorHeight, 1_048_575);
   const heldBitmaps = Math.max(0, analytics.indexed - analytics.unowned);
@@ -85,6 +89,29 @@ function DistrictStoryPage() {
                 })}
               </ol>
             </div> : <p className="mt-4 font-mono text-[10px] text-muted-foreground">NO INDEXED HOLDERS IN THIS DISTRICT YET</p>}
+          </section>
+          <section className="border border-signal/40 bg-signal/5 p-5">
+            <div className="flex items-center gap-2"><Box className="size-4 text-signal"/><h2 className="label text-signal">ON-CHAIN SCENES</h2></div>
+            <p className="mt-2 text-xs leading-5 text-muted-foreground">Verified BSS scenes discovered on BITMAPs in this district.</p>
+            {scenes.length > 0 ? (
+              <ol className="mt-4 divide-y divide-border border-y border-border">
+                {scenes.map((scene) => (
+                  <li key={scene.bitmap_height} className="py-4">
+                    <div className="flex min-w-0 items-start justify-between gap-3 font-mono" data-no-translate>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-foreground">{Number(scene.bitmap_height).toLocaleString("en-US")}.BITMAP</p>
+                        <p className="mt-1 text-[9px] text-signal">BSS {scene.version_label} · {scene.object_count} OBJECTS · {scene.resource_count} RESOURCES</p>
+                      </div>
+                      <span className="shrink-0 text-[9px] text-signal">VALID</span>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <Button asChild variant="terminalGhost" size="sm"><Link to="/bitmap/$block" params={{ block: String(scene.bitmap_height) }}><Blocks />LAND</Link></Button>
+                      <Button asChild variant="terminal" size="sm"><Link to="/oasis" search={{ height: Number(scene.bitmap_height) }}><Mountain />DROP IN 3D</Link></Button>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            ) : <p className="mt-4 font-mono text-[10px] text-muted-foreground">NO VERIFIED BSS SCENES DISCOVERED HERE YET</p>}
           </section>
           <section className="border border-border bg-surface/60 p-5">
             <div className="flex items-center gap-2"><Compass className="size-4 text-signal"/><h2 className="label text-signal">SPATIAL RECORD</h2></div>
