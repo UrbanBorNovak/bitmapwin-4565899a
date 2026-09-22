@@ -35,7 +35,7 @@ function db() {
   );
 }
 
-export async function bitmapInscriptionFor(height: number): Promise<string | null> {
+async function bitmapInscriptionFor(height: number): Promise<string | null> {
   const indexed = await db()
     .from("inscriptions")
     .select("id")

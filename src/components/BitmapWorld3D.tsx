@@ -148,7 +148,6 @@ import { VehicleDamageFx } from "@/components/game/VehicleDamageFx";
 import { MysteryMist } from "@/components/game/MysteryMist";
 import { LandGrowth } from "@/components/game/LandGrowth";
 import { LandSkins } from "@/components/game/LandSkins";
-import { ChildModels } from "@/components/game/ChildModels";
 import { WeatherLighting, WorldWeather } from "@/components/game/WorldWeather";
 import { LandPerksHud } from "@/components/game/LandPerksHud";
 import { noteStanding, standingLand, useStandingLand } from "@/lib/land-biome-live";
@@ -2417,7 +2416,6 @@ const WorldScene = memo(function WorldScene({
       <Landmarks boost={cameraMode === "map" ? 8 : 1} />
       <TerrainModels />
       <LandSkins pose={pose} focus={selectedHeight} />
-      <ChildModels pose={pose} focus={selectedHeight} />
       {cameraMode !== "map" ? (
         <>
           <ChunkStreamer pose={pose} />
