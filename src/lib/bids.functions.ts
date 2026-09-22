@@ -11,6 +11,7 @@ const addressSchema = z
   .regex(/^[a-zA-Z0-9]+$/, "Bitcoin address expected");
 
 export const placeBidFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
     z
       .object({
@@ -28,7 +29,9 @@ export const placeBidFn = createServerFn({ method: "POST" })
       })
       .parse(data),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { assertControls } = await import("@/lib/coins.server");
+    await assertControls(context.supabase, context.userId, data.bidderAddress);
     const { placeBid } = await import("@/lib/bids.server");
     return placeBid(data);
   });

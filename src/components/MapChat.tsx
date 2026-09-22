@@ -190,7 +190,7 @@ export function MapChat({ cursors, className }: { cursors: MapCursor[]; classNam
                     </Link>
                   )}
                   <span data-no-translate>{timeAgo(m.createdAt)}</span>
-                  {user?.id === m.userId && (
+                  {!!user && !!m.visitorId && m.visitorId === selfId && (
                     <button
                       type="button"
                       className="text-muted-foreground hover:text-bitcoin"

@@ -10,6 +10,7 @@ import {
   type Bid,
 } from "@/lib/bids";
 import { cancelBidFn, declineBidFn, placeBidFn } from "@/lib/bids.functions";
+import { useAuthSession } from "@/lib/auth";
 import { useAcceptBid } from "@/lib/use-accept-bid";
 import { signMessageWithWallet } from "@/lib/browser-wallet";
 import { useWalletSession, walletControls } from "@/lib/wallet-session";
@@ -60,8 +61,10 @@ export function BidPanel({
     void queryClient.invalidateQueries({ queryKey: ["registry"] });
   };
 
+  const { user } = useAuthSession();
   const place = useMutation({
     mutationFn: async () => {
+      if (!user) throw new Error("SIGN IN AND LINK YOUR WALLET TO BID");
       if (!wallet) throw new Error("CONNECT A WALLET TO BID");
       const priceSats = Number(amount.replace(/[^0-9]/g, ""));
       if (!Number.isInteger(priceSats) || priceSats < 546) {

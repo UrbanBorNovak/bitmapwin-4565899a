@@ -2,9 +2,9 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
 /**
- * Server side of the bid book. Inserts go through the publishable client (the
- * insert policy allows public bids); status transitions use the admin client so
- * a browser cannot flip someone else's bid to accepted or cancelled.
+ * Server side of the bid book. Every write uses the admin client after the
+ * caller has been authenticated and proven to control the bidding wallet, so a
+ * browser can neither impersonate another wallet nor flip someone else's bid.
  */
 
 function publicDb() {
@@ -25,7 +25,8 @@ export type PlaceBidInput = {
 };
 
 export async function placeBid(input: PlaceBidInput) {
-  const db = publicDb();
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const db = supabaseAdmin;
 
   const expiresAt =
     input.expiresInHours && input.expiresInHours > 0
@@ -57,7 +58,6 @@ export async function placeBid(input: PlaceBidInput) {
 
   const replaced = (existing ?? []).map((row) => row.id);
   if (replaced.length > 0) {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.from("bids").update({ status: "cancelled" }).in("id", replaced);
   }
 

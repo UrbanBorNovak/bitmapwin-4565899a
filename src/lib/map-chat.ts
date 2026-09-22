@@ -9,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type MapChatMessage = {
   id: string;
-  userId: string;
   visitorId: string | null;
   handle: string | null;
   senderAddress: string | null;
@@ -23,14 +22,13 @@ export const MAP_CHAT_MAX_LENGTH = 500;
 export async function fetchMapChat(): Promise<MapChatMessage[]> {
   const { data, error } = await supabase
     .from("map_chat_messages")
-    .select("id, user_id, visitor_id, handle, sender_address, district_height, body, created_at")
+    .select("id, visitor_id, handle, sender_address, district_height, body, created_at")
     .order("created_at", { ascending: false })
     .limit(120);
   if (error) throw error;
   return (data ?? [])
     .map((row) => ({
       id: row.id,
-      userId: row.user_id,
       visitorId: row.visitor_id,
       handle: row.handle,
       senderAddress: row.sender_address,
