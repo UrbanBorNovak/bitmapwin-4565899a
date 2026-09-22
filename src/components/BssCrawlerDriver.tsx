@@ -53,7 +53,7 @@ export function BssCrawlerDriver({ lo, hi }: { lo?: number; hi?: number }) {
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [crawl, queryClient, lo, hi]);
+  }, [crawl, sweep, queryClient, lo, hi]);
 
   return null;
 }
