@@ -9,11 +9,15 @@ export type LandSkin = {
   bitmapInscriptionId: string;
 };
 
-export const landSkinsQuery = (heights: number[]) =>
+/** One tile at a time, so each answer caches on its own and nothing is refetched. */
+export const landSkinQuery = (height: number) =>
   queryOptions({
-    queryKey: ["land-skins", heights.join(",")],
-    queryFn: () => getLandSkins({ data: { heights } }) as Promise<LandSkin[]>,
-    enabled: heights.length > 0,
-    staleTime: 10 * 60_000,
+    queryKey: ["land-skin", height],
+    queryFn: async () => {
+      const found = (await getLandSkins({ data: { heights: [height] } })) as LandSkin[];
+      return found[0] ?? null;
+    },
+    staleTime: 30 * 60_000,
     gcTime: 60 * 60_000,
+    retry: false,
   });

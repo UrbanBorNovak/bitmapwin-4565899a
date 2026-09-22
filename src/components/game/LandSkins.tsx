@@ -13,7 +13,7 @@ import * as THREE from "three";
 import type { PlayerState } from "@/lib/player-state";
 import { WORLD_CELL, WORLD_GRID, cellX, cellZ, colAt, rowAt } from "@/lib/player-state";
 import { groundY } from "@/lib/world-terrain";
-import { landSkinsQuery, type LandSkin } from "@/lib/land-skin";
+import { landSkinQuery, type LandSkin } from "@/lib/land-skin";
 import { contentUrl } from "@/components/game/InscribedParts";
 
 const noRaycast = () => {};
@@ -24,11 +24,12 @@ const LIFT = WORLD_CELL * 0.004;
 
 const textureCache = new Map<string, THREE.Texture | null>();
 
-function useSkinTexture(inscriptionId: string) {
-  const [texture, setTexture] = useState<THREE.Texture | null>(
-    () => textureCache.get(inscriptionId) ?? null,
+function useSkinTexture(inscriptionId: string | null) {
+  const [texture, setTexture] = useState<THREE.Texture | null>(() =>
+    inscriptionId ? textureCache.get(inscriptionId) ?? null : null,
   );
   useEffect(() => {
+    if (!inscriptionId) return;
     const cached = textureCache.get(inscriptionId);
     if (cached !== undefined) {
       setTexture(cached);
@@ -61,10 +62,12 @@ function useSkinTexture(inscriptionId: string) {
   return texture;
 }
 
-const PaintedTile = memo(function PaintedTile({ skin }: { skin: LandSkin }) {
-  const texture = useSkinTexture(skin.inscriptionId);
-  const col = skin.height % WORLD_GRID;
-  const row = Math.floor(skin.height / WORLD_GRID);
+/** Asks the chain about one tile and paints it when an image is reinscribed. */
+const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
+  const { data: skin } = useQuery(landSkinQuery(height));
+  const texture = useSkinTexture(skin?.inscriptionId ?? null);
+  const col = height % WORLD_GRID;
+  const row = Math.floor(height / WORLD_GRID);
   const x = cellX(col);
   const z = cellZ(row);
 
