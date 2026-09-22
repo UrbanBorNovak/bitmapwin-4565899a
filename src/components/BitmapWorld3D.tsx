@@ -274,6 +274,7 @@ import { DamageVeil } from "@/components/game/DamageVeil";
 import type { RideSpec } from "@/lib/world-vehicle";
 import { dryLandNear, isSea, nearestSea } from "@/lib/world-sea";
 import { groundY, waterSurfaceY } from "@/lib/world-terrain";
+import { ATLAS } from "@/lib/atlas-palette";
 import { TerrainModels } from "@/components/game/TerrainModels";
 import { TerrainField } from "@/components/game/TerrainField";
 import { WorldBoundary } from "@/components/game/WorldBoundary";
