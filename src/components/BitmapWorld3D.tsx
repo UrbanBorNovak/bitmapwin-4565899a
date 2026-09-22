@@ -148,6 +148,7 @@ import { VehicleDamageFx } from "@/components/game/VehicleDamageFx";
 import { MysteryMist } from "@/components/game/MysteryMist";
 import { LandGrowth } from "@/components/game/LandGrowth";
 import { LandSkins } from "@/components/game/LandSkins";
+import { WorldDepthLayers } from "@/components/game/WorldDepthLayers";
 import { WeatherLighting, WorldWeather } from "@/components/game/WorldWeather";
 import { LandPerksHud } from "@/components/game/LandPerksHud";
 import { noteStanding, standingLand, useStandingLand } from "@/lib/land-biome-live";
@@ -2007,35 +2008,105 @@ function CameraDirector({
 }) {
   const controls = useRef<MapControlsImpl>(null);
   const { camera } = useThree();
+  const flight = useRef<{
+    active: boolean;
+    inspect: boolean;
+    started: number;
+    duration: number;
+    fromPosition: THREE.Vector3;
+    fromTarget: THREE.Vector3;
+    toPosition: THREE.Vector3;
+    toTarget: THREE.Vector3;
+  } | null>(null);
+  const reducedMotion = useRef(false);
   const initialTarget = useMemo<[number, number, number]>(
     () => [0, 0, Math.max(CELL, (Math.floor(tipHeight / GRID) + 1) * CELL) / 2],
     [tipHeight],
   );
 
   useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => {
+      reducedMotion.current = media.matches;
+    };
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
     const active = controls.current;
     if (!active) return;
     const tipRow = Math.floor(tipHeight / GRID);
     const tipCol = tipHeight % GRID;
+    const toTarget = new THREE.Vector3();
+    const toPosition = new THREE.Vector3();
     if (command.type === "visit" && typeof command.height === "number") {
       // Drop the map camera right onto a BITMAP so anything deployed there runs.
       const col = command.height % GRID;
       const row = Math.floor(command.height / GRID);
-      active.target.set(worldX(col), 0, worldZ(row));
-      camera.position.set(worldX(col) + 0.3, 0.45, worldZ(row) + 0.5);
+      const x = worldX(col);
+      const z = worldZ(row);
+      toTarget.set(x, districtHeight(command.height), z);
+      toPosition.set(x + CELL * 6.5, CELL * 5.4, z + CELL * 8.5);
     } else if (command.type === "full") {
-      active.target.set(0, 0, WORLD_SIZE / 2);
-      camera.position.set(76, 92, 132);
+      toTarget.set(0, 0, WORLD_SIZE / 2);
+      toPosition.set(76, 92, 132);
     } else if (command.type === "tip") {
-      active.target.set(worldX(tipCol), 0, worldZ(tipRow));
-      camera.position.set(worldX(tipCol) + 0.42, 0.6, worldZ(tipRow) + 0.72);
+      toTarget.set(worldX(tipCol), 0, worldZ(tipRow));
+      toPosition.set(worldX(tipCol) + 0.42, 0.6, worldZ(tipRow) + 0.72);
     } else {
       const minedDepth = Math.max(CELL, (tipRow + 1) * CELL);
-      active.target.set(0, 0, minedDepth / 2);
-      camera.position.set(4.8, Math.max(2.4, minedDepth * 1.7), minedDepth + 5.5);
+      toTarget.set(0, 0, minedDepth / 2);
+      toPosition.set(4.8, Math.max(2.4, minedDepth * 1.7), minedDepth + 5.5);
     }
-    active.update();
+    if (reducedMotion.current) {
+      active.target.copy(toTarget);
+      camera.position.copy(toPosition);
+      active.update();
+      flight.current = null;
+      return;
+    }
+    active.enabled = false;
+    flight.current = {
+      active: true,
+      inspect: command.type === "visit",
+      started: performance.now() / 1000,
+      duration: command.type === "visit" ? 2.4 : 1.65,
+      fromPosition: camera.position.clone(),
+      fromTarget: active.target.clone(),
+      toPosition,
+      toTarget,
+    };
   }, [camera, command, tipHeight]);
+
+  useFrame(({ clock }, rawDelta) => {
+    const active = controls.current;
+    const current = flight.current;
+    if (!active || !current?.active) return;
+    const delta = Math.min(rawDelta, 0.05);
+    const elapsed = Math.max(0, clock.elapsedTime - current.started);
+    const progress = THREE.MathUtils.clamp(elapsed / current.duration, 0, 1);
+    const eased = progress * progress * (3 - 2 * progress);
+    camera.position.lerpVectors(current.fromPosition, current.toPosition, eased);
+    active.target.lerpVectors(current.fromTarget, current.toTarget, eased);
+    if (current.inspect && progress > 0.72) {
+      const orbit = (progress - 0.72) * 0.32;
+      const dx = camera.position.x - active.target.x;
+      const dz = camera.position.z - active.target.z;
+      camera.position.x = active.target.x + dx * Math.cos(orbit) - dz * Math.sin(orbit);
+      camera.position.z = active.target.z + dx * Math.sin(orbit) + dz * Math.cos(orbit);
+    }
+    const perspective = camera as THREE.PerspectiveCamera;
+    const targetFov = current.inspect ? 46 : 50;
+    perspective.fov += (targetFov - perspective.fov) * (1 - Math.exp(-5 * delta));
+    perspective.updateProjectionMatrix();
+    active.update();
+    if (progress >= 1) {
+      current.active = false;
+      active.enabled = true;
+    }
+  });
 
   return (
     <MapControls
@@ -2054,6 +2125,10 @@ function CameraDirector({
       maxPolarAngle={Math.PI / 2.08}
       screenSpacePanning={false}
       mouseButtons={{ LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE }}
+      onStart={() => {
+        if (flight.current) flight.current.active = false;
+        if (controls.current) controls.current.enabled = true;
+      }}
     />
 
   );
@@ -2409,6 +2484,7 @@ const WorldScene = memo(function WorldScene({
       <SkyBodies bitcoin={colors.bitcoin} />
       {cameraMode !== "map" && quality.effects !== "off" ? <WorldWeather /> : null}
       <LandSurface colors={colors} tipHeight={tipHeight} />
+      <WorldDepthLayers mapView={cameraMode === "map"} />
       <WorldBoundary colors={colors} />
       {/* Permanent structures — the inscribed buildings and the inscribed
           hills and mountains. They stand in the same fixed spots in every

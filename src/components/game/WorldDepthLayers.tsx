@@ -3,7 +3,7 @@
  * read in layers without adding network assets or colliders.
  */
 
-import { memo, useMemo, useRef } from "react";
+import { memo, useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { useQuality } from "@/graphics/QualityContext";
@@ -23,7 +23,7 @@ function FarTerrain() {
   const mesh = useRef<THREE.InstancedMesh>(null);
   const count = quality.resolved === "low" ? 18 : quality.resolved === "medium" ? 28 : 40;
 
-  useMemo(() => {
+  useEffect(() => {
     const target = mesh.current;
     if (!target) return;
     for (let index = 0; index < count; index++) {
