@@ -18,6 +18,27 @@ const MAX_BMP_BYTES = 2_000_000;
 
 const sceneCache = new Map<string, { expires: number; value: BssLoad }>();
 
+async function recordVerifiedScene(height: number, scene: BssScene) {
+  if (!scene.ok) return;
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("bitmap_bss_scenes").upsert(
+      {
+        bitmap_height: height,
+        bmp_inscription_id: scene.source,
+        version_label: scene.versionLabel,
+        object_count: scene.objects.length,
+        resource_count: scene.resources.length,
+        is_valid: true,
+        verified_at: new Date().toISOString(),
+      },
+      { onConflict: "bitmap_height" },
+    );
+  } catch {
+    // The live scene still renders when the directory is temporarily unavailable.
+  }
+}
+
 async function ordFetch(path: string, attempts = 2): Promise<Response | null> {
   for (let i = 0; i < attempts; i++) {
     try {
@@ -106,5 +127,7 @@ export async function bssSceneForHeight(height: number): Promise<BssLoad> {
 
   const script = await findScriptInscription(bitmapInscription);
   if (!script) return put({ status: "none", reason: "This BITMAP has no BSS script inscribed on it" });
-  return put(await bssSceneFromInscription(script));
+  const loaded = await bssSceneFromInscription(script);
+  if (loaded.status === "ok") await recordVerifiedScene(height, loaded.scene);
+  return put(loaded);
 }
