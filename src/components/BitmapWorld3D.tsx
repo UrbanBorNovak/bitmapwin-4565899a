@@ -2011,7 +2011,7 @@ function CameraDirector({
   const flight = useRef<{
     active: boolean;
     inspect: boolean;
-    started: number;
+    elapsed: number;
     duration: number;
     fromPosition: THREE.Vector3;
     fromTarget: THREE.Vector3;
@@ -2071,7 +2071,7 @@ function CameraDirector({
     flight.current = {
       active: true,
       inspect: command.type === "visit",
-      started: performance.now() / 1000,
+      elapsed: 0,
       duration: command.type === "visit" ? 2.4 : 1.65,
       fromPosition: camera.position.clone(),
       fromTarget: active.target.clone(),
@@ -2080,15 +2080,16 @@ function CameraDirector({
     };
   }, [camera, command, tipHeight]);
 
-  useFrame(({ clock }, rawDelta) => {
+  useFrame((_, rawDelta) => {
     const active = controls.current;
     const current = flight.current;
     if (!active || !current?.active) return;
     const delta = Math.min(rawDelta, 0.05);
-    const elapsed = Math.max(0, clock.elapsedTime - current.started);
-    const progress = THREE.MathUtils.clamp(elapsed / current.duration, 0, 1);
+    current.elapsed += delta;
+    const progress = THREE.MathUtils.clamp(current.elapsed / current.duration, 0, 1);
     const eased = progress * progress * (3 - 2 * progress);
     camera.position.lerpVectors(current.fromPosition, current.toPosition, eased);
+    if (current.inspect) camera.position.y += Math.sin(progress * Math.PI) * CELL * 5;
     active.target.lerpVectors(current.fromTarget, current.toTarget, eased);
     if (current.inspect && progress > 0.72) {
       const orbit = (progress - 0.72) * 0.32;
