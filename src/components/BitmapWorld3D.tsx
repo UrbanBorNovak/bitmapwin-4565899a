@@ -2417,6 +2417,7 @@ const WorldScene = memo(function WorldScene({
       <Landmarks boost={cameraMode === "map" ? 8 : 1} />
       <TerrainModels />
       <LandSkins pose={pose} focus={selectedHeight} />
+      <ChildModels pose={pose} focus={selectedHeight} />
       {cameraMode !== "map" ? (
         <>
           <ChunkStreamer pose={pose} />
