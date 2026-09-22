@@ -85,6 +85,7 @@ const PaintedTile = memo(function PaintedTile({ skin }: { skin: LandSkin }) {
 
   useEffect(() => () => geometry.dispose(), [geometry]);
 
+  console.log("[landskin]", skin.height, x, z, groundY(x, z), Boolean(texture));
   if (!texture) return null;
   return (
     <mesh position={[x, 0, z]} geometry={geometry} renderOrder={2} raycast={noRaycast}>
