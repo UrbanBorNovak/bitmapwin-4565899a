@@ -74,13 +74,55 @@ async function resolve(height: number): Promise<LandSkin | null> {
   };
 }
 
+/** How long a remembered answer stands before ord is asked again. */
+const REMEMBERED = 7 * 24 * 60 * 60 * 1000;
+
+async function remember(height: number, skin: LandSkin | null) {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("bitmap_land_skins").upsert(
+      {
+        bitmap_height: height,
+        bitmap_inscription_id: skin?.bitmapInscriptionId ?? null,
+        image_inscription_id: skin?.inscriptionId ?? null,
+        content_type: skin?.contentType ?? null,
+        has_image: Boolean(skin),
+        checked_at: new Date().toISOString(),
+      },
+      { onConflict: "bitmap_height" },
+    );
+  } catch {
+    // Remembering is a convenience; the lookup still stands on its own.
+  }
+}
+
 /** The image painted on one BITMAP's land, or null when the land is bare. */
 export async function landSkinFor(height: number): Promise<LandSkin | null> {
   const hit = cache.get(height);
   if (hit && Date.now() - hit.at < TTL) return hit.skin;
   const running = inflight.get(height);
   if (running) return running;
-  const task = resolve(height)
+
+  const task = (async (): Promise<LandSkin | null> => {
+    const row = await db()
+      .from("bitmap_land_skins")
+      .select("bitmap_inscription_id, image_inscription_id, content_type, has_image, checked_at")
+      .eq("bitmap_height", height)
+      .maybeSingle();
+    const known = row.data;
+    if (known && Date.now() - new Date(known.checked_at).getTime() < REMEMBERED) {
+      if (!known.has_image || !known.image_inscription_id) return null;
+      return {
+        height,
+        inscriptionId: known.image_inscription_id,
+        contentType: known.content_type ?? "image/*",
+        bitmapInscriptionId: known.bitmap_inscription_id ?? "",
+      };
+    }
+    const fresh = await resolve(height).catch(() => null);
+    await remember(height, fresh);
+    return fresh;
+  })()
     .catch(() => null)
     .then((skin) => {
       cache.set(height, { at: Date.now(), skin });
@@ -90,6 +132,7 @@ export async function landSkinFor(height: number): Promise<LandSkin | null> {
   inflight.set(height, task);
   return task;
 }
+
 
 /** Reads a handful of neighbouring tiles at once for the walkable world. */
 export async function landSkinsFor(heights: number[]): Promise<LandSkin[]> {
