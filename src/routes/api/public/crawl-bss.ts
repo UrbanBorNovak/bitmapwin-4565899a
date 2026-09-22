@@ -14,7 +14,7 @@ export const Route = createFileRoute("/api/public/crawl-bss")({
         const { bssCrawlProgress, crawlBssScenes } = await import("@/lib/bss-crawl.server");
         if (url.searchParams.get("run") === "1") {
           try {
-            return Response.json(await crawlBssScenes(4));
+            return Response.json(await crawlBssScenes(12));
           } catch (error) {
             console.error("[crawl-bss]", error);
             return Response.json(

@@ -22,7 +22,7 @@ export function BssCrawlerDriver({ lo, hi }: { lo?: number; hi?: number }) {
       running.current = true;
       try {
         const range = lo !== undefined && hi !== undefined ? { lo, hi } : undefined;
-        const result = await crawl({ data: { batch: 4, ...(range ? { range } : {}) } });
+        const result = await crawl({ data: { batch: 12, ...(range ? { range } : {}) } });
         if (cancelled || result.skipped) return;
         await queryClient.invalidateQueries({ queryKey: ["bss-crawl"] });
         if (result.scenesFound > 0) {

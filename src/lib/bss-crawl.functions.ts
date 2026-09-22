@@ -17,13 +17,13 @@ const asRange = (input: { lo?: number | undefined; hi?: number | undefined } | u
 export const runBssCrawlFn = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
-      .object({ batch: z.number().int().min(1).max(8).optional(), range: rangeShape })
+      .object({ batch: z.number().int().min(1).max(24).optional(), range: rangeShape })
       .parse(data ?? {}),
   )
   .handler(async ({ data }) => {
     const { crawlBssScenes } = await import("@/lib/bss-crawl.server");
     try {
-      return await crawlBssScenes(data.batch ?? 4, asRange(data.range));
+      return await crawlBssScenes(data.batch ?? 12, asRange(data.range));
     } catch {
       return { skipped: true, scanned: 0, scenesFound: 0, heights: [] as number[] };
     }
