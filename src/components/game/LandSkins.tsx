@@ -20,7 +20,7 @@ const noRaycast = () => {};
 /** Vertices across one tile — enough to hug a hill without costing anything. */
 const SEGMENTS = 16;
 /** Sits a hair above the plate so the image never fights the terrain. */
-const LIFT = 0.0012;
+const LIFT = 0.05;
 
 /**
  * The same tiny plate height the world gives every district, so the image lies
@@ -98,7 +98,7 @@ const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
 
   if (!texture) return null;
   return (
-    <mesh position={[x, 0, z]} geometry={geometry} renderOrder={2} raycast={noRaycast}>
+    <mesh position={[x, 0, z]} geometry={geometry} renderOrder={999} raycast={noRaycast}>
       <meshBasicMaterial
         map={texture}
         color="#ff0000"
