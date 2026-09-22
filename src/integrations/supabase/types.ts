@@ -405,6 +405,30 @@ export type Database = {
         }
         Relationships: []
       }
+      bss_scan_state: {
+        Row: {
+          bitmap_height: number
+          detail: string | null
+          outcome: string
+          scanned_at: string
+          updated_at: string
+        }
+        Insert: {
+          bitmap_height: number
+          detail?: string | null
+          outcome?: string
+          scanned_at?: string
+          updated_at?: string
+        }
+        Update: {
+          bitmap_height?: number
+          detail?: string | null
+          outcome?: string
+          scanned_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       btc_donations: {
         Row: {
           bits_awarded: number
