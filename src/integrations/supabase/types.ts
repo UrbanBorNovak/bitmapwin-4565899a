@@ -195,6 +195,33 @@ export type Database = {
         }
         Relationships: []
       }
+      bitmap_land_skins: {
+        Row: {
+          bitmap_height: number
+          bitmap_inscription_id: string | null
+          checked_at: string
+          content_type: string | null
+          has_image: boolean
+          image_inscription_id: string | null
+        }
+        Insert: {
+          bitmap_height: number
+          bitmap_inscription_id?: string | null
+          checked_at?: string
+          content_type?: string | null
+          has_image?: boolean
+          image_inscription_id?: string | null
+        }
+        Update: {
+          bitmap_height?: number
+          bitmap_inscription_id?: string | null
+          checked_at?: string
+          content_type?: string | null
+          has_image?: boolean
+          image_inscription_id?: string | null
+        }
+        Relationships: []
+      }
       bitmap_models: {
         Row: {
           animation_count: number

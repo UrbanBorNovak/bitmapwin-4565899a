@@ -147,6 +147,7 @@ import { VehicleGunner } from "@/components/game/VehicleGunner";
 import { VehicleDamageFx } from "@/components/game/VehicleDamageFx";
 import { MysteryMist } from "@/components/game/MysteryMist";
 import { LandGrowth } from "@/components/game/LandGrowth";
+import { LandSkins } from "@/components/game/LandSkins";
 import { WeatherLighting, WorldWeather } from "@/components/game/WorldWeather";
 import { LandPerksHud } from "@/components/game/LandPerksHud";
 import { noteStanding, standingLand, useStandingLand } from "@/lib/land-biome-live";
@@ -2414,6 +2415,7 @@ const WorldScene = memo(function WorldScene({
           view, so the overview map shows the same world you walk in. */}
       <Landmarks boost={cameraMode === "map" ? 8 : 1} />
       <TerrainModels />
+      <LandSkins pose={pose} focus={selectedHeight} />
       {cameraMode !== "map" ? (
         <>
           <ChunkStreamer pose={pose} />
