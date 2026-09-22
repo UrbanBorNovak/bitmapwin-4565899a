@@ -18,5 +18,28 @@ export const traceBitmapTradesFn = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     const { traceMany } = await import("@/lib/trades.server");
-    return traceMany(data.claims, data.maxHops);
+    const traces = await traceMany(data.claims, data.maxHops);
+
+    // Traced transfers are indexed on the server with the trusted client: the
+    // trades table is read-only for browsers so nobody can fabricate history.
+    const rows = traces.flatMap((trace) =>
+      trace.trades.map((trade) => ({
+        txid: trade.txid,
+        bitmap_height: trade.bitmapHeight,
+        inscription_id: trade.inscriptionId,
+        seller_address: trade.sellerAddress,
+        buyer_address: trade.buyerAddress,
+        price_sats: trade.priceSats,
+        block_height: trade.blockHeight,
+        block_time: trade.blockTime,
+        hop: trade.hop,
+      })),
+    );
+    if (rows.length > 0) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { error } = await supabaseAdmin.from("trades").upsert(rows, { onConflict: "txid" });
+      if (error) throw new Error(error.message.toUpperCase());
+    }
+
+    return { traces, stored: rows.length };
   });
