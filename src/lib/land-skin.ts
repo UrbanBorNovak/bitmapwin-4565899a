@@ -14,7 +14,9 @@ export const landSkinQuery = (height: number) =>
   queryOptions({
     queryKey: ["land-skin", height],
     queryFn: async () => {
+      console.log("[skinq] fetch", height);
       const found = (await getLandSkins({ data: { heights: [height] } })) as LandSkin[];
+      console.log("[skinq] got", height, JSON.stringify(found));
       return found[0] ?? null;
     },
     staleTime: 30 * 60_000,
