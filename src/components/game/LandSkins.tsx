@@ -80,7 +80,7 @@ const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
 
   // The sheet is built once and displaced onto the land it covers.
   const geometry = useMemo(() => {
-    const geo = new THREE.PlaneGeometry(WORLD_CELL, WORLD_CELL, SEGMENTS, SEGMENTS);
+    const geo = new THREE.PlaneGeometry(WORLD_CELL * 20, WORLD_CELL * 20, SEGMENTS, SEGMENTS);
     geo.rotateX(-Math.PI / 2);
     const position = geo.attributes["position"] as THREE.BufferAttribute;
     for (let i = 0; i < position.count; i++) {
