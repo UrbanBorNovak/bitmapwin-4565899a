@@ -274,6 +274,7 @@ import { DamageVeil } from "@/components/game/DamageVeil";
 import type { RideSpec } from "@/lib/world-vehicle";
 import { dryLandNear, isSea, nearestSea } from "@/lib/world-sea";
 import { groundY, waterSurfaceY } from "@/lib/world-terrain";
+import { ATLAS } from "@/lib/atlas-palette";
 import { TerrainModels } from "@/components/game/TerrainModels";
 import { TerrainField } from "@/components/game/TerrainField";
 import { WorldBoundary } from "@/components/game/WorldBoundary";
@@ -361,11 +362,14 @@ function readWorldColors(): WorldColors {
     return `rgb(${red}, ${green}, ${blue})`;
   };
   return {
-    background: read("--background", "black"),
+    // Sky, ground and linework come from the atlas painting so the world you
+    // walk is the same place the illustrated map shows. Light and highlight
+    // tints still follow the interface tokens.
+    background: ATLAS.sky,
     foreground: read("--foreground", "white"),
-    muted: read("--muted-foreground", "gray"),
+    muted: ATLAS.sand,
     bitcoin: read("--bitcoin", "orange"),
-    border: read("--border", "gray"),
+    border: ATLAS.grid,
   };
 }
 
@@ -2113,8 +2117,9 @@ function GroundPlane({ colors }: { colors: WorldColors }) {
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uBase: { value: new THREE.Color(colors.background) },
-      uSand: { value: new THREE.Color(colors.muted) },
+      // Painted land: mossy base washing into sunlit ochre, as on the atlas.
+      uBase: { value: new THREE.Color(ATLAS.forest) },
+      uSand: { value: new THREE.Color(ATLAS.sand) },
       uGlow: { value: new THREE.Color(colors.bitcoin) },
       uFogColor: { value: new THREE.Color(colors.background) },
       uFogNear: { value: 24 },
@@ -2124,8 +2129,8 @@ function GroundPlane({ colors }: { colors: WorldColors }) {
     [],
   );
   useEffect(() => {
-    uniforms.uBase.value.set(colors.background);
-    uniforms.uSand.value.set(colors.muted);
+    uniforms.uBase.value.set(ATLAS.forest);
+    uniforms.uSand.value.set(ATLAS.sand);
     uniforms.uGlow.value.set(colors.bitcoin);
   }, [colors, uniforms]);
   useFrame(({ scene, clock }) => {

@@ -13,9 +13,10 @@ import { patchSurface, surfaceUniforms, tickSurface } from "@/lib/onchain-surfac
 import type { PlayerState } from "@/lib/player-state";
 import { waterSurfaceY } from "@/lib/world-terrain";
 import { Primitive } from "./Primitive";
+import { ATLAS } from "@/lib/atlas-palette";
 
-const SEA_DEEP = "#3c86a4";
-const SAND = "#e2c98f";
+const SEA_DEEP = ATLAS.water;
+const SAND = ATLAS.beach;
 
 const noRaycast = () => {};
 

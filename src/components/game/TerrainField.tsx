@@ -14,6 +14,7 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { PlayerState } from "@/lib/player-state";
 import { WORLD_CELL } from "@/lib/player-state";
+import { ATLAS } from "@/lib/atlas-palette";
 import {
   MAX_RELIEF,
   baseGroundY,
@@ -27,10 +28,10 @@ const SEGMENTS = 108;
 const SPAN = WORLD_CELL * SPAN_CELLS;
 
 /** Painted land tones: mossy lowlands, sunlit ochre, and warm chalk peaks. */
-const LOW = new THREE.Color("#667342");
-const MID = new THREE.Color("#b9a65c");
-const HIGH = new THREE.Color("#e8dfbd");
-const WET = new THREE.Color("#3f7468");
+const LOW = new THREE.Color(ATLAS.grass);
+const MID = new THREE.Color(ATLAS.sand);
+const HIGH = new THREE.Color(ATLAS.peak);
+const WET = new THREE.Color(ATLAS.water);
 
 export function TerrainField({ pose }: { pose: React.RefObject<PlayerState> }) {
   const meshRef = useRef<THREE.Mesh>(null);
