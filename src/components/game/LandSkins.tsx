@@ -141,6 +141,7 @@ export const LandSkins = memo(function LandSkins({
     return Array.from(all).sort((a, b) => a - b);
   }, [around, focus]);
 
+  console.log("[landskin] heights", JSON.stringify(heights));
   return (
     <>
       {heights.map((height) => (
