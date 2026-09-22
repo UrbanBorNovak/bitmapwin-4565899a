@@ -667,6 +667,142 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
   );
 });
 
+/**
+ * Long-range ownership signals. The existing ground glow identifies the exact
+ * BITMAP up close; these narrow, additive shafts let a holder navigate back to
+ * their land from across the Oasis without adding labels to the world.
+ */
+const OwnedBitmapBeacons = memo(function OwnedBitmapBeacons({
+  heights,
+  bitcoin,
+  mapView,
+}: {
+  heights: number[];
+  bitcoin: string;
+  mapView: boolean;
+}) {
+  const { quality } = useQuality();
+  const beamRef = useRef<THREE.InstancedMesh>(null);
+  const coreRef = useRef<THREE.InstancedMesh>(null);
+  const crownRef = useRef<THREE.InstancedMesh>(null);
+  const beamMat = useRef<THREE.MeshBasicMaterial>(null);
+  const coreMat = useRef<THREE.MeshBasicMaterial>(null);
+  const crownMat = useRef<THREE.MeshBasicMaterial>(null);
+  const limit = quality.resolved === "low" ? 96 : quality.resolved === "medium" ? 192 : 384;
+  const owned = useMemo(
+    () => [...new Set(heights)].filter((height) => Number.isFinite(height)).slice(0, limit),
+    [heights, limit],
+  );
+
+  useEffect(() => {
+    const beam = beamRef.current;
+    const core = coreRef.current;
+    const crown = crownRef.current;
+    if (!beam || !core || !crown) return;
+    const marker = new THREE.Object3D();
+    const beamHeight = mapView ? 4.8 : 1.25;
+    const beamWidth = mapView ? CELL * 0.16 : CELL * 0.1;
+
+    owned.forEach((height, index) => {
+      const x = worldX(height % GRID);
+      const z = worldZ(Math.floor(height / GRID));
+      const ground = districtHeight(height) + AVATAR_U * 0.02;
+
+      marker.position.set(x, ground + beamHeight / 2, z);
+      marker.rotation.set(0, 0, 0);
+      marker.scale.set(beamWidth, beamHeight, beamWidth);
+      marker.updateMatrix();
+      beam.setMatrixAt(index, marker.matrix);
+
+      marker.position.set(x, ground + beamHeight * 0.43, z);
+      marker.scale.set(beamWidth * 0.18, beamHeight * 0.86, beamWidth * 0.18);
+      marker.updateMatrix();
+      core.setMatrixAt(index, marker.matrix);
+
+      marker.position.set(x, ground + beamHeight, z);
+      marker.scale.setScalar(mapView ? CELL * 0.65 : CELL * 0.42);
+      marker.updateMatrix();
+      crown.setMatrixAt(index, marker.matrix);
+    });
+
+    for (const target of [beam, core, crown]) {
+      target.instanceMatrix.needsUpdate = true;
+      target.computeBoundingSphere();
+    }
+  }, [mapView, owned]);
+
+  const nextPulse = useRef(0);
+  useFrame(({ clock }) => {
+    if (clock.elapsedTime < nextPulse.current) return;
+    nextPulse.current = clock.elapsedTime + 0.05;
+    const pulse = (Math.sin(clock.elapsedTime * 1.8) + 1) / 2;
+    if (beamMat.current) beamMat.current.opacity = 0.09 + pulse * 0.08;
+    if (coreMat.current) coreMat.current.opacity = 0.5 + pulse * 0.28;
+    if (crownMat.current) crownMat.current.opacity = 0.38 + pulse * 0.4;
+  });
+
+  if (owned.length === 0) return null;
+  return (
+    <group renderOrder={11}>
+      <instancedMesh
+        key={`owned-beam-${owned.length}-${mapView ? "map" : "land"}`}
+        ref={beamRef}
+        args={[undefined, undefined, owned.length]}
+        frustumCulled={false}
+        raycast={noRaycast}
+      >
+        <cylinderGeometry args={[0.18, 0.5, 1, 8, 1, true]} />
+        <meshBasicMaterial
+          ref={beamMat}
+          color={bitcoin}
+          transparent
+          opacity={0.13}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          side={THREE.DoubleSide}
+          toneMapped={false}
+        />
+      </instancedMesh>
+      <instancedMesh
+        key={`owned-core-${owned.length}-${mapView ? "map" : "land"}`}
+        ref={coreRef}
+        args={[undefined, undefined, owned.length]}
+        frustumCulled={false}
+        raycast={noRaycast}
+      >
+        <cylinderGeometry args={[0.5, 0.5, 1, 5]} />
+        <meshBasicMaterial
+          ref={coreMat}
+          color={bitcoin}
+          transparent
+          opacity={0.64}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          toneMapped={false}
+        />
+      </instancedMesh>
+      <instancedMesh
+        key={`owned-crown-${owned.length}-${mapView ? "map" : "land"}`}
+        ref={crownRef}
+        args={[undefined, undefined, owned.length]}
+        frustumCulled={false}
+        raycast={noRaycast}
+      >
+        <octahedronGeometry args={[1, 0]} />
+        <meshBasicMaterial
+          ref={crownMat}
+          color={bitcoin}
+          transparent
+          opacity={0.62}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          toneMapped={false}
+        />
+      </instancedMesh>
+    </group>
+  );
+});
+
 const DistrictBlocks = memo(function DistrictBlocks({
   tipHeight,
   colors,
@@ -2571,6 +2707,11 @@ const WorldScene = memo(function WorldScene({
         />
       ) : null}
       <OwnedBitmapGlow heights={ownedHeights} bitcoin={colors.bitcoin} />
+      <OwnedBitmapBeacons
+        heights={ownedHeights}
+        bitcoin={colors.bitcoin}
+        mapView={cameraMode === "map"}
+      />
       <OnChainModels models={models} bitcoin={colors.bitcoin} />
       <ExtenderStage
         deployments={deployments}
