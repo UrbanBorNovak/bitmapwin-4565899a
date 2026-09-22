@@ -12,6 +12,19 @@ export const Route = createFileRoute("/api/public/crawl-bss")({
       GET: async ({ request }) => {
         const url = new URL(request.url);
         const { bssCrawlProgress, crawlBssScenes } = await import("@/lib/bss-crawl.server");
+        if (url.searchParams.get("sweep") === "1") {
+          const { sweepBssBlocks } = await import("@/lib/bss-sweep.server");
+          const blocks = Number(url.searchParams.get("blocks") ?? "2");
+          try {
+            return Response.json(await sweepBssBlocks(Number.isFinite(blocks) ? blocks : 2));
+          } catch (error) {
+            console.error("[crawl-bss sweep]", error);
+            return Response.json(
+              { error: error instanceof Error ? error.message : "Sweep failed" },
+              { status: 500 },
+            );
+          }
+        }
         if (url.searchParams.get("run") === "1") {
           try {
             return Response.json(await crawlBssScenes(12));
