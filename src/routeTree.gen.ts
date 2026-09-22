@@ -77,6 +77,8 @@ import { Route as MapPlaceBlockRouteImport } from './routes/map_.place.$block'
 import { Route as RanksPlayerIdRouteImport } from './routes/ranks.player.$id'
 import { Route as ApiPublicBlocksHeightRouteImport } from './routes/api/public/blocks.$height'
 import { Route as ApiPublicGalleryIdRouteImport } from './routes/api/public/gallery.$id'
+import { Route as ApiPublicInscriptionIdRouteImport } from './routes/api/public/inscription.$id'
+import { Route as ApiPublicLandSkinHeightRouteImport } from './routes/api/public/land-skin.$height'
 import { Route as ApiPublicBlocksHeightMetaRouteImport } from './routes/api/public/blocks.$height.meta'
 
 const IndexRoute = IndexRouteImport.update({
@@ -421,6 +423,16 @@ const ApiPublicGalleryIdRoute = ApiPublicGalleryIdRouteImport.update({
   path: '/public/gallery/$id',
   getParentRoute: () => ApiRoute,
 } as any)
+const ApiPublicInscriptionIdRoute = ApiPublicInscriptionIdRouteImport.update({
+  id: '/public/inscription/$id',
+  path: '/public/inscription/$id',
+  getParentRoute: () => ApiRoute,
+} as any)
+const ApiPublicLandSkinHeightRoute = ApiPublicLandSkinHeightRouteImport.update({
+  id: '/public/land-skin/$height',
+  path: '/public/land-skin/$height',
+  getParentRoute: () => ApiRoute,
+} as any)
 const ApiPublicBlocksHeightMetaRoute =
   ApiPublicBlocksHeightMetaRouteImport.update({
     id: '/meta',
@@ -497,6 +509,8 @@ export interface FileRoutesByFullPath {
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
+  '/api/public/inscription/$id': typeof ApiPublicInscriptionIdRoute
+  '/api/public/land-skin/$height': typeof ApiPublicLandSkinHeightRoute
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
 }
 export interface FileRoutesByTo {
@@ -565,6 +579,8 @@ export interface FileRoutesByTo {
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
+  '/api/public/inscription/$id': typeof ApiPublicInscriptionIdRoute
+  '/api/public/land-skin/$height': typeof ApiPublicLandSkinHeightRoute
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
 }
 export interface FileRoutesById {
@@ -637,6 +653,8 @@ export interface FileRoutesById {
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
+  '/api/public/inscription/$id': typeof ApiPublicInscriptionIdRoute
+  '/api/public/land-skin/$height': typeof ApiPublicLandSkinHeightRoute
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
 }
 export interface FileRouteTypes {
@@ -710,6 +728,8 @@ export interface FileRouteTypes {
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
+    | '/api/public/inscription/$id'
+    | '/api/public/land-skin/$height'
     | '/api/public/blocks/$height/meta'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -778,6 +798,8 @@ export interface FileRouteTypes {
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
+    | '/api/public/inscription/$id'
+    | '/api/public/land-skin/$height'
     | '/api/public/blocks/$height/meta'
   id:
     | '__root__'
@@ -849,6 +871,8 @@ export interface FileRouteTypes {
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
+    | '/api/public/inscription/$id'
+    | '/api/public/land-skin/$height'
     | '/api/public/blocks/$height/meta'
   fileRoutesById: FileRoutesById
 }
@@ -1384,6 +1408,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicGalleryIdRouteImport
       parentRoute: typeof ApiRoute
     }
+    '/api/public/inscription/$id': {
+      id: '/api/public/inscription/$id'
+      path: '/public/inscription/$id'
+      fullPath: '/api/public/inscription/$id'
+      preLoaderRoute: typeof ApiPublicInscriptionIdRouteImport
+      parentRoute: typeof ApiRoute
+    }
+    '/api/public/land-skin/$height': {
+      id: '/api/public/land-skin/$height'
+      path: '/public/land-skin/$height'
+      fullPath: '/api/public/land-skin/$height'
+      preLoaderRoute: typeof ApiPublicLandSkinHeightRouteImport
+      parentRoute: typeof ApiRoute
+    }
     '/api/public/blocks/$height/meta': {
       id: '/api/public/blocks/$height/meta'
       path: '/meta'
@@ -1416,6 +1454,8 @@ interface ApiRouteChildren {
   ApiPublicResolveRegistryRoute: typeof ApiPublicResolveRegistryRoute
   ApiPublicBlocksHeightRoute: typeof ApiPublicBlocksHeightRouteWithChildren
   ApiPublicGalleryIdRoute: typeof ApiPublicGalleryIdRoute
+  ApiPublicInscriptionIdRoute: typeof ApiPublicInscriptionIdRoute
+  ApiPublicLandSkinHeightRoute: typeof ApiPublicLandSkinHeightRoute
 }
 
 const ApiRouteChildren: ApiRouteChildren = {
@@ -1427,6 +1467,8 @@ const ApiRouteChildren: ApiRouteChildren = {
   ApiPublicResolveRegistryRoute: ApiPublicResolveRegistryRoute,
   ApiPublicBlocksHeightRoute: ApiPublicBlocksHeightRouteWithChildren,
   ApiPublicGalleryIdRoute: ApiPublicGalleryIdRoute,
+  ApiPublicInscriptionIdRoute: ApiPublicInscriptionIdRoute,
+  ApiPublicLandSkinHeightRoute: ApiPublicLandSkinHeightRoute,
 }
 
 const ApiRouteWithChildren = ApiRoute._addFileChildren(ApiRouteChildren)

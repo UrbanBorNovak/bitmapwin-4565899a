@@ -20,7 +20,7 @@ const noRaycast = () => {};
 /** Vertices across one tile — enough to hug a hill without costing anything. */
 const SEGMENTS = 16;
 /** Sits a hair above the plate so the image never fights the terrain. */
-const LIFT = 0.05;
+const LIFT = 0.006;
 
 /**
  * The same tiny plate height the world gives every district, so the image lies
@@ -29,6 +29,9 @@ const LIFT = 0.05;
 const plateHeight = (height: number) => 0.009 + ((height * 2654435761) >>> 28) * 0.00055;
 
 const textureCache = new Map<string, THREE.Texture | null>();
+
+/** Same bytes, relayed through our own origin so WebGL will accept them. */
+const skinUrl = (inscription: string) => `/api/public/inscription/${inscription}`;
 
 function useSkinTexture(inscriptionId: string | null) {
   const [texture, setTexture] = useState<THREE.Texture | null>(() =>
@@ -45,7 +48,7 @@ function useSkinTexture(inscriptionId: string | null) {
     // The bytes are fetched directly and decoded to a bitmap: image elements
     // quietly fail on some inscription payloads, a bitmap either decodes or throws.
     (async () => {
-      const response = await fetch(contentUrl(inscriptionId), { mode: "cors" });
+      const response = await fetch(skinUrl(inscriptionId));
       if (!response.ok) throw new Error(String(response.status));
       const bitmap = await createImageBitmap(await response.blob());
       const made = new THREE.Texture(bitmap as unknown as TexImageSource);
@@ -57,8 +60,7 @@ function useSkinTexture(inscriptionId: string | null) {
       made.needsUpdate = true;
       textureCache.set(inscriptionId, made);
       if (alive) setTexture(made);
-    })().catch((e) => {
-      console.log("[skinq] texfail", String(e));
+    })().catch(() => {
       textureCache.set(inscriptionId, null);
     });
     return () => {
@@ -69,11 +71,11 @@ function useSkinTexture(inscriptionId: string | null) {
 }
 
 
+
 /** Asks the chain about one tile and paints it when an image is reinscribed. */
 const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
-  const { data: skin, error } = useQuery(landSkinQuery(height));
+  const { data: skin } = useQuery(landSkinQuery(height));
   const texture = useSkinTexture(skin?.inscriptionId ?? null);
-  if (height === 715093) console.log("[skinq] render tex", Boolean(texture), Boolean(skin), String(error));
 
   const col = height % WORLD_GRID;
   const row = Math.floor(height / WORLD_GRID);
@@ -83,7 +85,7 @@ const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
 
   // The sheet is built once and displaced onto the land it covers.
   const geometry = useMemo(() => {
-    const geo = new THREE.PlaneGeometry(WORLD_CELL * 20, WORLD_CELL * 20, SEGMENTS, SEGMENTS);
+    const geo = new THREE.PlaneGeometry(WORLD_CELL, WORLD_CELL, SEGMENTS, SEGMENTS);
     geo.rotateX(-Math.PI / 2);
     const position = geo.attributes["position"] as THREE.BufferAttribute;
     for (let i = 0; i < position.count; i++) {
@@ -100,12 +102,10 @@ const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
 
   if (!texture) return null;
   return (
-    <mesh position={[x, 0, z]} geometry={geometry} renderOrder={999} raycast={noRaycast}>
+    <mesh position={[x, 0, z]} geometry={geometry} renderOrder={3} raycast={noRaycast}>
       <meshBasicMaterial
         map={texture}
-        color="#ff0000"
-        transparent={false}
-        depthTest={false}
+        transparent
         depthWrite={false}
         toneMapped={false}
         side={THREE.DoubleSide}
@@ -113,6 +113,7 @@ const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
     </mesh>
   );
 });
+
 
 /** Every painted BITMAP within reach of the avatar. */
 export const LandSkins = memo(function LandSkins({
@@ -124,8 +125,8 @@ export const LandSkins = memo(function LandSkins({
   focus?: number | null;
 }) {
   const [around, setAround] = useState<number[]>([]);
-  useEffect(() => { console.log("[skinq] LandSkins mount"); return () => console.log("[skinq] LandSkins unmount"); }, []);
   const centre = useRef(Number.NaN);
+
 
   useFrame(() => {
     const player = pose.current;

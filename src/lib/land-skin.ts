@@ -1,5 +1,4 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getLandSkins } from "@/lib/land-skin.functions";
 
 /** An image reinscribed on a BITMAP, painted flat over its land. */
 export type LandSkin = {
@@ -13,13 +12,13 @@ export type LandSkin = {
 export const landSkinQuery = (height: number) =>
   queryOptions({
     queryKey: ["land-skin", height],
-    queryFn: async () => {
-      console.log("[skinq] fetch", height);
-      const found = (await getLandSkins({ data: { heights: [height] } })) as LandSkin[];
-      console.log("[skinq] got", height, JSON.stringify(found));
-      return found[0] ?? null;
+    queryFn: async (): Promise<LandSkin | null> => {
+      const response = await fetch(`/api/public/land-skin/${height}`);
+      if (!response.ok) return null;
+      return (await response.json()) as LandSkin | null;
     },
     staleTime: 30 * 60_000,
     gcTime: 60 * 60_000,
     retry: false,
   });
+
