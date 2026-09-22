@@ -136,6 +136,12 @@ function DistrictStoryPage() {
               <Radar className="size-3 text-signal" />
               {(discovery.data?.scanned ?? 0).toLocaleString("en-US")} BITMAPS CHECKED · {(discovery.data?.scenes ?? scenes.length).toLocaleString("en-US")} SCENES FOUND
             </p>
+            <p className="mt-1 flex items-center gap-1.5 font-mono text-[9px] text-muted-foreground" data-no-translate>
+              <Radar className="size-3 text-signal/60" />
+              {(sweepStats.data?.blocksSwept ?? 0).toLocaleString("en-US")} BLOCKS SWEPT ·{" "}
+              {(sweepStats.data?.inscriptionsSeen ?? 0).toLocaleString("en-US")} INSCRIPTIONS READ ·{" "}
+              {(sweepStats.data?.bmpSeen ?? 0).toLocaleString("en-US")} BMP CANDIDATES
+            </p>
             <BssCrawlerDriver lo={range.lo} hi={range.hi} />
           </section>
           <section className="border border-border bg-surface/60 p-5">
