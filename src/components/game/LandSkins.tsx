@@ -19,8 +19,8 @@ import { contentUrl } from "@/components/game/InscribedParts";
 const noRaycast = () => {};
 /** Vertices across one tile — enough to hug a hill without costing anything. */
 const SEGMENTS = 16;
-/** A whisper above the terrain — low enough to walk on, high enough not to sink. */
-const LIFT = 0.0004;
+/** Hugged right down onto the plate — just enough to keep the texture out of the surface. */
+const LIFT = 0.00008;
 
 /**
  * The same tiny plate height the world gives every district, so the image lies
