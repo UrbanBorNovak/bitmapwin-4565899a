@@ -36,7 +36,19 @@ function DistrictStoryNotFound() {
 }
 
 function DistrictStoryPage() {
-  const { district, story, neighbors, range, analytics, scenes } = Route.useLoaderData();
+  const { district, story, neighbors, range, analytics, scenes: seedScenes } = Route.useLoaderData();
+  const liveScenes = useQuery({
+    queryKey: ["bss-scenes", range.lo, range.hi],
+    queryFn: () => getBssScenesInRange({ data: range }),
+    initialData: { scenes: seedScenes },
+    staleTime: 30_000,
+  });
+  const scenes = liveScenes.data.scenes;
+  const discovery = useQuery({
+    queryKey: ["bss-crawl", range.lo, range.hi],
+    queryFn: () => getBssCrawlProgress({ data: { range } }),
+    staleTime: 30_000,
+  });
   const point = blockToAtlas(district.anchorHeight);
   const era = atlasEra(district.anchorHeight, 1_048_575);
   const heldBitmaps = Math.max(0, analytics.indexed - analytics.unowned);
