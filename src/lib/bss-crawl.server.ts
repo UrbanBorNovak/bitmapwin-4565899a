@@ -7,10 +7,11 @@
  * directory by the decoder itself — nothing here invents a scene.
  */
 
-import { bssSceneForHeight } from "@/lib/bss.server";
+import { bssSceneForBitmapInscription, bssSceneForHeight } from "@/lib/bss.server";
 
 const MIN_INTERVAL_MS = 8_000;
-const MAX_BATCH = 8;
+const MAX_BATCH = 24;
+const CONCURRENCY = 6;
 
 type Outcome = "scene" | "invalid" | "none" | "error";
 
