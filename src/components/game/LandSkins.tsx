@@ -66,6 +66,7 @@ function useSkinTexture(inscriptionId: string | null) {
 const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
   const { data: skin } = useQuery(landSkinQuery(height));
   const texture = useSkinTexture(skin?.inscriptionId ?? null);
+  console.log("[landskin]", height, skin?.inscriptionId ?? null, Boolean(texture));
   const col = height % WORLD_GRID;
   const row = Math.floor(height / WORLD_GRID);
   const x = cellX(col);
