@@ -12,7 +12,9 @@ import { runBssCrawlFn, runBssSweepFn } from "@/lib/bss-crawl.functions";
 export function BssCrawlerDriver({ lo, hi }: { lo?: number; hi?: number }) {
   const queryClient = useQueryClient();
   const crawl = useServerFn(runBssCrawlFn);
+  const sweep = useServerFn(runBssSweepFn);
   const running = useRef(false);
+  const ticks = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -22,7 +24,12 @@ export function BssCrawlerDriver({ lo, hi }: { lo?: number; hi?: number }) {
       running.current = true;
       try {
         const range = lo !== undefined && hi !== undefined ? { lo, hi } : undefined;
-        const result = await crawl({ data: { batch: 12, ...(range ? { range } : {}) } });
+        // Every third pass sweeps real Bitcoin blocks for freshly inscribed
+        // scripts; the others check indexed BITMAPs for scripts already on chain.
+        const sweepTurn = ticks.current++ % 3 === 2;
+        const result = sweepTurn
+          ? await sweep({ data: { blocks: 2 } })
+          : await crawl({ data: { batch: 12, ...(range ? { range } : {}) } });
         if (cancelled || result.skipped) return;
         await queryClient.invalidateQueries({ queryKey: ["bss-crawl"] });
         if (result.scenesFound > 0) {
