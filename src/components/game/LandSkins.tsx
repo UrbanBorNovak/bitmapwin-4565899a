@@ -100,7 +100,9 @@ const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
     <mesh position={[x, 0, z]} geometry={geometry} renderOrder={2} raycast={noRaycast}>
       <meshBasicMaterial
         map={texture}
-        transparent
+        color="#ff0000"
+        transparent={false}
+        depthTest={false}
         depthWrite={false}
         toneMapped={false}
         side={THREE.DoubleSide}
