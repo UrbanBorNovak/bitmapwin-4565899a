@@ -26,34 +26,78 @@ async function admin() {
   return supabaseAdmin;
 }
 
-/** Indexed BITMAPs that have never been checked for a scene. */
+/**
+ * Picks indexed BITMAPs that have never been checked. Land people already care
+ * about (placed models, raised structures, watched land, recorded claims) is
+ * checked first, then the rest of the atlas is sampled from a rotating window so
+ * discovery spreads across the map instead of crawling from block zero.
+ */
 async function candidates(batch: number, range?: { lo: number; hi: number }) {
   const db = await admin();
+  const lo = range?.lo ?? 0;
+  const hi = range?.hi ?? 10_000_000;
+
   const { data: scanned } = await db
     .from("bss_scan_state")
     .select("bitmap_height")
-    .gte("bitmap_height", range?.lo ?? 0)
-    .lte("bitmap_height", range?.hi ?? 10_000_000)
-    .limit(5_000);
+    .gte("bitmap_height", lo)
+    .lte("bitmap_height", hi)
+    .limit(20_000);
   const seen = new Set((scanned ?? []).map((row) => Number(row.bitmap_height)));
 
-  let query = db
-    .from("bitmap_index")
-    .select("block_height")
-    .eq("is_valid", true)
-    .order("block_height", { ascending: true })
-    .limit(batch + seen.size + 50);
-  if (range) query = query.gte("block_height", range.lo).lte("block_height", range.hi);
+  const picked: number[] = [];
+  const take = (value: unknown) => {
+    const height = Number(value);
+    if (!Number.isFinite(height) || height < lo || height > hi) return;
+    if (seen.has(height) || picked.includes(height)) return;
+    picked.push(height);
+  };
 
-  const { data } = await query;
-  const heights: number[] = [];
-  for (const row of data ?? []) {
-    const height = Number(row.block_height);
-    if (!Number.isFinite(height) || seen.has(height)) continue;
-    heights.push(height);
-    if (heights.length >= batch) break;
+  // Engaged land first: these BITMAPs are the likeliest to carry a script.
+  const [models, structures, watches, claims] = await Promise.all([
+    db.from("bitmap_models").select("bitmap_height").gte("bitmap_height", lo).lte("bitmap_height", hi).limit(200),
+    db.from("world_structures").select("bitmap_height").gte("bitmap_height", lo).lte("bitmap_height", hi).limit(200),
+    db.from("bitmap_watches").select("bitmap_height").gte("bitmap_height", lo).lte("bitmap_height", hi).limit(200),
+    db
+      .from("inscriptions")
+      .select("bitmap_height")
+      .eq("is_bitmap_claim", true)
+      .gte("bitmap_height", lo)
+      .lte("bitmap_height", hi)
+      .limit(200),
+  ]);
+  for (const rows of [models.data, structures.data, watches.data, claims.data]) {
+    for (const row of rows ?? []) {
+      take((row as { bitmap_height: number | null }).bitmap_height);
+      if (picked.length >= batch) return picked;
+    }
   }
-  return heights;
+
+  // Then a rotating sample of the wider atlas.
+  const { count } = await db
+    .from("bitmap_index")
+    .select("block_height", { count: "exact", head: true })
+    .eq("is_valid", true)
+    .gte("block_height", lo)
+    .lte("block_height", hi);
+  const total = count ?? 0;
+  const window = Math.max(1, batch * 40);
+  for (let attempt = 0; attempt < 6 && picked.length < batch; attempt++) {
+    const offset = total > window ? Math.floor(Math.random() * (total - window)) : 0;
+    const { data } = await db
+      .from("bitmap_index")
+      .select("block_height")
+      .eq("is_valid", true)
+      .gte("block_height", lo)
+      .lte("block_height", hi)
+      .order("block_height", { ascending: true })
+      .range(offset, offset + window - 1);
+    for (const row of data ?? []) {
+      take(row.block_height);
+      if (picked.length >= batch) break;
+    }
+  }
+  return picked;
 }
 
 async function recentlyRan() {
