@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { runBssCrawlFn } from "@/lib/bss-crawl.functions";
+import { runBssCrawlFn, runBssSweepFn } from "@/lib/bss-crawl.functions";
 
 /**
  * Headless driver that keeps on-chain scene discovery advancing while people
