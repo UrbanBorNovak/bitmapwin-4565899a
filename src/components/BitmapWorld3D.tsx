@@ -361,11 +361,14 @@ function readWorldColors(): WorldColors {
     return `rgb(${red}, ${green}, ${blue})`;
   };
   return {
-    background: read("--background", "black"),
+    // Sky, ground and linework come from the atlas painting so the world you
+    // walk is the same place the illustrated map shows. Light and highlight
+    // tints still follow the interface tokens.
+    background: ATLAS.sky,
     foreground: read("--foreground", "white"),
-    muted: read("--muted-foreground", "gray"),
+    muted: ATLAS.sand,
     bitcoin: read("--bitcoin", "orange"),
-    border: read("--border", "gray"),
+    border: ATLAS.grid,
   };
 }
 
