@@ -2415,6 +2415,7 @@ const WorldScene = memo(function WorldScene({
           view, so the overview map shows the same world you walk in. */}
       <Landmarks boost={cameraMode === "map" ? 8 : 1} />
       <TerrainModels />
+      <LandSkins pose={pose} focus={selectedHeight} />
       {cameraMode !== "map" ? (
         <>
           <ChunkStreamer pose={pose} />
@@ -2453,7 +2454,6 @@ const WorldScene = memo(function WorldScene({
             color={colors.bitcoin}
           /> : null}
           <LandGrowth unit={AVATAR_U} pose={pose} firstPerson={cameraMode === "first"} />
-          <LandSkins pose={pose} />
           <Companions unit={AVATAR_U} pose={pose} />
           {self.hp <= 0 ? <GhostShade unit={AVATAR_U} pose={pose} /> : null}
         </>
