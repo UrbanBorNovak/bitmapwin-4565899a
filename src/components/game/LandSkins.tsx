@@ -19,8 +19,8 @@ import { contentUrl } from "@/components/game/InscribedParts";
 const noRaycast = () => {};
 /** Vertices across one tile — enough to hug a hill without costing anything. */
 const SEGMENTS = 16;
-/** Slightly inset into the walkable surface so it never floats above the avatar's feet. */
-const GROUND_INSET = 0.00035;
+/** A whisper above the walkable surface — visible underfoot, never floating. */
+const GROUND_INSET = -0.00012;
 
 const textureCache = new Map<string, THREE.Texture | null>();
 
