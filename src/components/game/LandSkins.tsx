@@ -140,13 +140,10 @@ export const LandSkins = memo(function LandSkins({
     return Array.from(all).sort((a, b) => a - b);
   }, [around, focus]);
 
-  const { data, error } = useQuery(landSkinsQuery(heights));
-  console.log("[landskin] heights", heights, "data", data, "err", String(error));
-
   return (
     <>
-      {(data ?? []).map((skin) => (
-        <PaintedTile key={skin.height} skin={skin} />
+      {heights.map((height) => (
+        <PaintedTile key={height} height={height} />
       ))}
     </>
   );
