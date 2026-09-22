@@ -20,7 +20,7 @@ const noRaycast = () => {};
 /** Vertices across one tile — enough to hug a hill without costing anything. */
 const SEGMENTS = 16;
 /** A whisper above the walkable surface — visible underfoot, never floating. */
-const GROUND_INSET = -0.00012;
+const LIFT = 0.0035;
 
 const textureCache = new Map<string, THREE.Texture | null>();
 
@@ -84,7 +84,7 @@ const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
     for (let i = 0; i < position.count; i++) {
       const px = position.getX(i) + x;
       const pz = position.getZ(i) + z;
-      position.setY(i, groundY(px, pz) - GROUND_INSET);
+      position.setY(i, groundY(px, pz) + LIFT);
     }
     position.needsUpdate = true;
     geo.computeVertexNormals();
