@@ -128,14 +128,27 @@ export async function crawlBssScenes(
   if (heights.length === 0) return { skipped: false, scanned: 0, scenesFound: 0, heights: [] };
 
   const db = await admin();
+  // Indexed inscription ids let most checks skip the holder lookup entirely.
+  const { data: indexed } = await db
+    .from("bitmap_index")
+    .select("block_height, inscription_id")
+    .in("block_height", heights);
+  const inscriptions = new Map<number, string>();
+  for (const row of indexed ?? []) {
+    if (row.inscription_id) inscriptions.set(Number(row.block_height), row.inscription_id);
+  }
+
   let scenesFound = 0;
   const rows: Array<{ bitmap_height: number; outcome: Outcome; detail: string | null; scanned_at: string }> = [];
 
-  for (const height of heights) {
+  const scan = async (height: number) => {
     let outcome: Outcome = "none";
     let detail: string | null = null;
     try {
-      const load = await bssSceneForHeight(height);
+      const known = inscriptions.get(height);
+      const load = known
+        ? await bssSceneForBitmapInscription(height, known)
+        : await bssSceneForHeight(height);
       if (load.status === "ok") {
         if (load.scene.ok) {
           outcome = "scene";
@@ -161,7 +174,18 @@ export async function crawlBssScenes(
       detail: detail ? detail.slice(0, 300) : null,
       scanned_at: new Date().toISOString(),
     });
-  }
+  };
+
+  const queue = [...heights];
+  await Promise.all(
+    Array.from({ length: Math.min(CONCURRENCY, queue.length) }, async () => {
+      for (;;) {
+        const next = queue.shift();
+        if (next === undefined) return;
+        await scan(next);
+      }
+    }),
+  );
 
   await db.from("bss_scan_state").upsert(rows, { onConflict: "bitmap_height" });
   return { skipped: false, scanned: rows.length, scenesFound, heights };
