@@ -2036,6 +2036,26 @@ function CameraDirector({
 
   useEffect(() => {
     const active = controls.current;
+    const element = active?.domElement;
+    if (!active || !element) return;
+    const cancelFlight = () => {
+      if (flight.current) flight.current.active = false;
+      active.enabled = true;
+    };
+    element.addEventListener("pointerdown", cancelFlight, { passive: true });
+    element.addEventListener("touchstart", cancelFlight, { passive: true });
+    element.addEventListener("wheel", cancelFlight, { passive: true });
+    window.addEventListener("keydown", cancelFlight);
+    return () => {
+      element.removeEventListener("pointerdown", cancelFlight);
+      element.removeEventListener("touchstart", cancelFlight);
+      element.removeEventListener("wheel", cancelFlight);
+      window.removeEventListener("keydown", cancelFlight);
+    };
+  }, []);
+
+  useEffect(() => {
+    const active = controls.current;
     if (!active) return;
     const tipRow = Math.floor(tipHeight / GRID);
     const tipCol = tipHeight % GRID;
