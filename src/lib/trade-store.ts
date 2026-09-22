@@ -34,15 +34,6 @@ function toRow(trade: ChainTrade) {
   };
 }
 
-/** Upserts every traced transfer, keyed by its Bitcoin transaction id. */
-export async function saveTrades(traces: TradeTrace[]): Promise<number> {
-  const rows = traces.flatMap((trace) => trace.trades.map(toRow));
-  if (rows.length === 0) return 0;
-  const { error } = await supabase.from("trades").upsert(rows, { onConflict: "txid" });
-  if (error) throw error;
-  return rows.length;
-}
-
 function normalise(rows: TradeRow[] | null): TradeRow[] {
   return (rows ?? []).map((row) => ({ ...row, price_sats: Number(row.price_sats) }));
 }
