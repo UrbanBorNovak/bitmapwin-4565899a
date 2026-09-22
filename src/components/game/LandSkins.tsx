@@ -42,31 +42,31 @@ function useSkinTexture(inscriptionId: string | null) {
       return;
     }
     let alive = true;
-    const loader = new THREE.TextureLoader();
-    loader.setCrossOrigin("anonymous");
-    loader.load(
-      contentUrl(inscriptionId),
-      (loaded) => {
-        loaded.colorSpace = THREE.SRGBColorSpace;
-        // Pixel art stays crisp; every BITMAP image is small and square.
-        loaded.magFilter = THREE.NearestFilter;
-        loaded.minFilter = THREE.LinearMipmapLinearFilter;
-        loaded.generateMipmaps = true;
-        textureCache.set(inscriptionId, loaded);
-        if (alive) setTexture(loaded);
-      },
-      undefined,
-      () => {
-        textureCache.set(inscriptionId, null);
-        if (alive) setTexture(null);
-      },
-    );
+    // The bytes are fetched directly and decoded to a bitmap: image elements
+    // quietly fail on some inscription payloads, a bitmap either decodes or throws.
+    (async () => {
+      const response = await fetch(contentUrl(inscriptionId), { mode: "cors" });
+      if (!response.ok) throw new Error(String(response.status));
+      const bitmap = await createImageBitmap(await response.blob());
+      const made = new THREE.Texture(bitmap as unknown as TexImageSource);
+      made.colorSpace = THREE.SRGBColorSpace;
+      // Pixel art stays crisp; every BITMAP image is small and square.
+      made.magFilter = THREE.NearestFilter;
+      made.minFilter = THREE.LinearMipmapLinearFilter;
+      made.generateMipmaps = true;
+      made.needsUpdate = true;
+      textureCache.set(inscriptionId, made);
+      if (alive) setTexture(made);
+    })().catch(() => {
+      textureCache.set(inscriptionId, null);
+    });
     return () => {
       alive = false;
     };
   }, [inscriptionId]);
   return texture;
 }
+
 
 /** Asks the chain about one tile and paints it when an image is reinscribed. */
 const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
