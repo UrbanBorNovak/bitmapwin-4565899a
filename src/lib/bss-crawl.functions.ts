@@ -40,3 +40,27 @@ export const getBssCrawlProgress = createServerFn({ method: "GET" })
       return { scanned: 0, scenes: 0 };
     }
   });
+
+/** Sweeps real Bitcoin blocks for BSS scripts and registers what decodes. */
+export const runBssSweepFn = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z.object({ blocks: z.number().int().min(1).max(6).optional() }).parse(data ?? {}),
+  )
+  .handler(async ({ data }) => {
+    const { sweepBssBlocks } = await import("@/lib/bss-sweep.server");
+    try {
+      return await sweepBssBlocks(data.blocks ?? 2);
+    } catch {
+      return { skipped: true, blocks: [] as number[], inscriptions: 0, bmpSeen: 0, scenesFound: 0 };
+    }
+  });
+
+/** Public block-sweep coverage. */
+export const getBssSweepProgress = createServerFn({ method: "GET" }).handler(async () => {
+  const { bssSweepProgress } = await import("@/lib/bss-sweep.server");
+  try {
+    return await bssSweepProgress();
+  } catch {
+    return { blocksSwept: 0, inscriptionsSeen: 0, bmpSeen: 0, scenesFound: 0, newestBlock: null };
+  }
+});
