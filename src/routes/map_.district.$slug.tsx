@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { atlasEra, blockToAtlas } from "@/lib/atlas-geometry";
 import { getAtlasRegionStats } from "@/lib/atlas-land.functions";
 import { getBssScenesInRange } from "@/lib/bss.functions";
-import { getBssCrawlProgress } from "@/lib/bss-crawl.functions";
+import { getBssCrawlProgress, getBssSweepProgress } from "@/lib/bss-crawl.functions";
 import { atlasDistrictBySlug, atlasDistrictNeighbors, atlasDistrictStory, atlasDistricts, districtBlockRange } from "@/lib/atlas-places";
 
 export const Route = createFileRoute("/map_/district/$slug")({
