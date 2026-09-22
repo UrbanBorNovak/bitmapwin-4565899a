@@ -57,7 +57,8 @@ function useSkinTexture(inscriptionId: string | null) {
       made.needsUpdate = true;
       textureCache.set(inscriptionId, made);
       if (alive) setTexture(made);
-    })().catch(() => {
+    })().catch((e) => {
+      console.log("[skinq] texfail", String(e));
       textureCache.set(inscriptionId, null);
     });
     return () => {
