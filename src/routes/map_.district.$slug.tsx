@@ -1,10 +1,13 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Blocks, Box, Compass, Map, Mountain, Navigation, Users } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, ArrowRight, Blocks, Box, Compass, Map, Mountain, Navigation, Radar, Users } from "lucide-react";
 import { AtlasDistrictIllustration } from "@/components/AtlasDistrictIllustration";
+import { BssCrawlerDriver } from "@/components/BssCrawlerDriver";
 import { Button } from "@/components/ui/button";
 import { atlasEra, blockToAtlas } from "@/lib/atlas-geometry";
 import { getAtlasRegionStats } from "@/lib/atlas-land.functions";
 import { getBssScenesInRange } from "@/lib/bss.functions";
+import { getBssCrawlProgress, getBssSweepProgress } from "@/lib/bss-crawl.functions";
 import { atlasDistrictBySlug, atlasDistrictNeighbors, atlasDistrictStory, atlasDistricts, districtBlockRange } from "@/lib/atlas-places";
 
 export const Route = createFileRoute("/map_/district/$slug")({
@@ -33,7 +36,24 @@ function DistrictStoryNotFound() {
 }
 
 function DistrictStoryPage() {
-  const { district, story, neighbors, range, analytics, scenes } = Route.useLoaderData();
+  const { district, story, neighbors, range, analytics, scenes: seedScenes } = Route.useLoaderData();
+  const liveScenes = useQuery({
+    queryKey: ["bss-scenes", range.lo, range.hi],
+    queryFn: () => getBssScenesInRange({ data: range }),
+    initialData: { scenes: seedScenes },
+    staleTime: 30_000,
+  });
+  const scenes = liveScenes.data.scenes;
+  const discovery = useQuery({
+    queryKey: ["bss-crawl", range.lo, range.hi],
+    queryFn: () => getBssCrawlProgress({ data: { range } }),
+    staleTime: 30_000,
+  });
+  const sweepStats = useQuery({
+    queryKey: ["bss-crawl", "sweep"],
+    queryFn: () => getBssSweepProgress(),
+    staleTime: 30_000,
+  });
   const point = blockToAtlas(district.anchorHeight);
   const era = atlasEra(district.anchorHeight, 1_048_575);
   const heldBitmaps = Math.max(0, analytics.indexed - analytics.unowned);
@@ -112,6 +132,17 @@ function DistrictStoryPage() {
                 ))}
               </ol>
             ) : <p className="mt-4 font-mono text-[10px] text-muted-foreground">NO VERIFIED BSS SCENES DISCOVERED HERE YET</p>}
+            <p className="mt-4 flex items-center gap-1.5 font-mono text-[9px] text-muted-foreground" data-no-translate>
+              <Radar className="size-3 text-signal" />
+              {(discovery.data?.scanned ?? 0).toLocaleString("en-US")} BITMAPS CHECKED · {(discovery.data?.scenes ?? scenes.length).toLocaleString("en-US")} SCENES FOUND
+            </p>
+            <p className="mt-1 flex items-center gap-1.5 font-mono text-[9px] text-muted-foreground" data-no-translate>
+              <Radar className="size-3 text-signal/60" />
+              {(sweepStats.data?.blocksSwept ?? 0).toLocaleString("en-US")} BLOCKS SWEPT ·{" "}
+              {(sweepStats.data?.inscriptionsSeen ?? 0).toLocaleString("en-US")} INSCRIPTIONS READ ·{" "}
+              {(sweepStats.data?.bmpSeen ?? 0).toLocaleString("en-US")} BMP CANDIDATES
+            </p>
+            <BssCrawlerDriver lo={range.lo} hi={range.hi} />
           </section>
           <section className="border border-border bg-surface/60 p-5">
             <div className="flex items-center gap-2"><Compass className="size-4 text-signal"/><h2 className="label text-signal">SPATIAL RECORD</h2></div>

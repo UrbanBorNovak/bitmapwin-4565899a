@@ -105,6 +105,21 @@ async function findScriptInscription(bitmapInscription: string): Promise<string 
   return null;
 }
 
+/**
+ * Reads the BSS scene of a BITMAP whose inscription is already known (the
+ * discovery crawler has it indexed), skipping the holder lookup.
+ */
+export async function bssSceneForBitmapInscription(
+  height: number,
+  bitmapInscription: string,
+): Promise<BssLoad> {
+  const script = await findScriptInscription(bitmapInscription);
+  if (!script) return { status: "none", reason: "This BITMAP has no BSS script inscribed on it" };
+  const loaded = await bssSceneFromInscription(script);
+  if (loaded.status === "ok") await recordVerifiedScene(height, loaded.scene);
+  return loaded;
+}
+
 const lookupCache = new Map<number, { expires: number; value: BssLoad }>();
 
 /** Reads the BSS scene published on a BITMAP, if it has one. */
