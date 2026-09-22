@@ -574,13 +574,14 @@ export function LandGrowth({
 
   const palette = useMemo(
     () => ({
-      grassA: new THREE.Color("#5d8143"),
-      grassB: new THREE.Color("#a2bd62"),
-      bushA: new THREE.Color("#4e733b"),
-      bushB: new THREE.Color("#82a653"),
-      trunk: new THREE.Color("#745538"),
-      leafA: new THREE.Color("#466d38"),
-      leafB: new THREE.Color("#72a04a"),
+      // Atlas-painted greens, so growth matches the illustrated map.
+      grassA: new THREE.Color(ATLAS.grass),
+      grassB: new THREE.Color(ATLAS.leaf),
+      bushA: new THREE.Color(ATLAS.forest),
+      bushB: new THREE.Color(ATLAS.grass),
+      trunk: new THREE.Color(ATLAS.timber),
+      leafA: new THREE.Color(ATLAS.forest),
+      leafB: new THREE.Color(ATLAS.leaf),
     }),
     [],
   );
