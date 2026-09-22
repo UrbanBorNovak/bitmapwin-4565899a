@@ -49,6 +49,11 @@ function DistrictStoryPage() {
     queryFn: () => getBssCrawlProgress({ data: { range } }),
     staleTime: 30_000,
   });
+  const sweepStats = useQuery({
+    queryKey: ["bss-crawl", "sweep"],
+    queryFn: () => getBssSweepProgress(),
+    staleTime: 30_000,
+  });
   const point = blockToAtlas(district.anchorHeight);
   const era = atlasEra(district.anchorHeight, 1_048_575);
   const heldBitmaps = Math.max(0, analytics.indexed - analytics.unowned);
