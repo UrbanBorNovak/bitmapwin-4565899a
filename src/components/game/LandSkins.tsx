@@ -20,7 +20,12 @@ const noRaycast = () => {};
 /** Vertices across one tile — enough to hug a hill without costing anything. */
 const SEGMENTS = 16;
 /** A whisper above the walkable surface — visible underfoot, never floating. */
-const LIFT = 0.0035;
+const LIFT = 0.001;
+
+/** Matches the thin BITMAP plate drawn by the world renderer. */
+function bitmapPlateHeight(height: number) {
+  return 0.009 + ((height * 2654435761) >>> 28) * 0.00055;
+}
 
 const textureCache = new Map<string, THREE.Texture | null>();
 
@@ -75,6 +80,7 @@ const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
   const row = Math.floor(height / WORLD_GRID);
   const x = cellX(col);
   const z = cellZ(row);
+  const plate = bitmapPlateHeight(height);
 
   // The sheet is built once and displaced onto the land it covers.
   const geometry = useMemo(() => {
@@ -82,14 +88,14 @@ const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
     geo.rotateX(-Math.PI / 2);
     const position = geo.attributes["position"] as THREE.BufferAttribute;
     for (let i = 0; i < position.count; i++) {
-      const px = position.getX(i) + x;
-      const pz = position.getZ(i) + z;
-      position.setY(i, groundY(px, pz) + LIFT);
+      const localX = position.getX(i);
+      const localZ = position.getZ(i);
+      position.setY(i, groundY(localX + x, localZ + z) + plate + LIFT);
     }
     position.needsUpdate = true;
     geo.computeVertexNormals();
     return geo;
-  }, [x, z]);
+  }, [plate, x, z]);
 
   useEffect(() => () => geometry.dispose(), [geometry]);
 
@@ -100,6 +106,9 @@ const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
         map={texture}
         transparent
         depthWrite={false}
+        polygonOffset
+        polygonOffsetFactor={-2}
+        polygonOffsetUnits={-2}
         toneMapped={false}
         side={THREE.DoubleSide}
       />
