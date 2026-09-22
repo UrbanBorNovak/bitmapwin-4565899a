@@ -27,6 +27,6 @@
 - [x] Show live holder and BITMAP ownership analytics on every district chapter.
 - [x] Verify the shared treatment and district analytics on desktop and phone.
 
-- [ ] Register successfully decoded on-chain BSS scenes in a public scene directory.
-- [ ] Link each verified BSS scene from its atlas district chapter.
-- [ ] Show a readable BSS scene label inside the Oasis and verify the complete flow.
+- [x] Register successfully decoded on-chain BSS scenes in a public scene directory.
+- [x] Link each verified BSS scene from its atlas district chapter.
+- [x] Show a readable BSS scene label inside the Oasis and verify the complete flow.
