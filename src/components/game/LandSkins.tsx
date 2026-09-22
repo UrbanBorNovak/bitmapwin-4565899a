@@ -19,14 +19,8 @@ import { contentUrl } from "@/components/game/InscribedParts";
 const noRaycast = () => {};
 /** Vertices across one tile — enough to hug a hill without costing anything. */
 const SEGMENTS = 16;
-/** Hugged right down onto the plate — just enough to keep the texture out of the surface. */
-const LIFT = 0.00008;
-
-/**
- * The same tiny plate height the world gives every district, so the image lies
- * on the land surface you actually see instead of under it.
- */
-const plateHeight = (height: number) => 0.009 + ((height * 2654435761) >>> 28) * 0.00055;
+/** Slightly inset into the walkable surface so it never floats above the avatar's feet. */
+const GROUND_INSET = 0.00035;
 
 const textureCache = new Map<string, THREE.Texture | null>();
 
@@ -81,7 +75,6 @@ const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
   const row = Math.floor(height / WORLD_GRID);
   const x = cellX(col);
   const z = cellZ(row);
-  const plate = plateHeight(height);
 
   // The sheet is built once and displaced onto the land it covers.
   const geometry = useMemo(() => {
@@ -91,12 +84,12 @@ const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
     for (let i = 0; i < position.count; i++) {
       const px = position.getX(i) + x;
       const pz = position.getZ(i) + z;
-      position.setY(i, groundY(px, pz) + plate + LIFT);
+      position.setY(i, groundY(px, pz) - GROUND_INSET);
     }
     position.needsUpdate = true;
     geo.computeVertexNormals();
     return geo;
-  }, [x, z, plate]);
+  }, [x, z]);
 
   useEffect(() => () => geometry.dispose(), [geometry]);
 
