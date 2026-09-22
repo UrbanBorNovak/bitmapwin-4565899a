@@ -71,8 +71,9 @@ function useSkinTexture(inscriptionId: string | null) {
 /** Asks the chain about one tile and paints it when an image is reinscribed. */
 const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
   const { data: skin, error } = useQuery(landSkinQuery(height));
-  if (height === 715093) console.log("[skinq] render tex", Boolean(texture), Boolean(skin), String(error));
   const texture = useSkinTexture(skin?.inscriptionId ?? null);
+  if (height === 715093) console.log("[skinq] render tex", Boolean(texture), Boolean(skin), String(error));
+
   const col = height % WORLD_GRID;
   const row = Math.floor(height / WORLD_GRID);
   const x = cellX(col);
