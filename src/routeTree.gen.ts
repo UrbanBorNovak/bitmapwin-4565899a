@@ -67,6 +67,7 @@ import { Route as RanksPvpRouteImport } from './routes/ranks.pvp'
 import { Route as RanksSharesRouteImport } from './routes/ranks.shares'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicCoinRewardsRouteImport } from './routes/api/public/coin-rewards'
+import { Route as ApiPublicCrawlBssRouteImport } from './routes/api/public/crawl-bss'
 import { Route as ApiPublicCrawlTradesRouteImport } from './routes/api/public/crawl-trades'
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
@@ -369,6 +370,11 @@ const ApiPublicCoinRewardsRoute = ApiPublicCoinRewardsRouteImport.update({
   path: '/public/coin-rewards',
   getParentRoute: () => ApiRoute,
 } as any)
+const ApiPublicCrawlBssRoute = ApiPublicCrawlBssRouteImport.update({
+  id: '/public/crawl-bss',
+  path: '/public/crawl-bss',
+  getParentRoute: () => ApiRoute,
+} as any)
 const ApiPublicCrawlTradesRoute = ApiPublicCrawlTradesRouteImport.update({
   id: '/public/crawl-trades',
   path: '/public/crawl-trades',
@@ -481,6 +487,7 @@ export interface FileRoutesByFullPath {
   '/ranks/': typeof RanksIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
+  '/api/public/crawl-bss': typeof ApiPublicCrawlBssRoute
   '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
@@ -548,6 +555,7 @@ export interface FileRoutesByTo {
   '/ranks': typeof RanksIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
+  '/api/public/crawl-bss': typeof ApiPublicCrawlBssRoute
   '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
@@ -619,6 +627,7 @@ export interface FileRoutesById {
   '/ranks/': typeof RanksIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
+  '/api/public/crawl-bss': typeof ApiPublicCrawlBssRoute
   '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
@@ -691,6 +700,7 @@ export interface FileRouteTypes {
     | '/ranks/'
     | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
+    | '/api/public/crawl-bss'
     | '/api/public/crawl-trades'
     | '/api/public/offer'
     | '/api/public/offers'
@@ -758,6 +768,7 @@ export interface FileRouteTypes {
     | '/ranks'
     | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
+    | '/api/public/crawl-bss'
     | '/api/public/crawl-trades'
     | '/api/public/offer'
     | '/api/public/offers'
@@ -828,6 +839,7 @@ export interface FileRouteTypes {
     | '/ranks/'
     | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
+    | '/api/public/crawl-bss'
     | '/api/public/crawl-trades'
     | '/api/public/offer'
     | '/api/public/offers'
@@ -1302,6 +1314,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCoinRewardsRouteImport
       parentRoute: typeof ApiRoute
     }
+    '/api/public/crawl-bss': {
+      id: '/api/public/crawl-bss'
+      path: '/public/crawl-bss'
+      fullPath: '/api/public/crawl-bss'
+      preLoaderRoute: typeof ApiPublicCrawlBssRouteImport
+      parentRoute: typeof ApiRoute
+    }
     '/api/public/crawl-trades': {
       id: '/api/public/crawl-trades'
       path: '/public/crawl-trades'
@@ -1390,6 +1409,7 @@ const ApiPublicBlocksHeightRouteWithChildren =
 
 interface ApiRouteChildren {
   ApiPublicCoinRewardsRoute: typeof ApiPublicCoinRewardsRoute
+  ApiPublicCrawlBssRoute: typeof ApiPublicCrawlBssRoute
   ApiPublicCrawlTradesRoute: typeof ApiPublicCrawlTradesRoute
   ApiPublicOfferRoute: typeof ApiPublicOfferRoute
   ApiPublicOffersRoute: typeof ApiPublicOffersRoute
@@ -1400,6 +1420,7 @@ interface ApiRouteChildren {
 
 const ApiRouteChildren: ApiRouteChildren = {
   ApiPublicCoinRewardsRoute: ApiPublicCoinRewardsRoute,
+  ApiPublicCrawlBssRoute: ApiPublicCrawlBssRoute,
   ApiPublicCrawlTradesRoute: ApiPublicCrawlTradesRoute,
   ApiPublicOfferRoute: ApiPublicOfferRoute,
   ApiPublicOffersRoute: ApiPublicOffersRoute,

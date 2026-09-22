@@ -1,10 +1,13 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Blocks, Box, Compass, Map, Mountain, Navigation, Users } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, ArrowRight, Blocks, Box, Compass, Map, Mountain, Navigation, Radar, Users } from "lucide-react";
 import { AtlasDistrictIllustration } from "@/components/AtlasDistrictIllustration";
+import { BssCrawlerDriver } from "@/components/BssCrawlerDriver";
 import { Button } from "@/components/ui/button";
 import { atlasEra, blockToAtlas } from "@/lib/atlas-geometry";
 import { getAtlasRegionStats } from "@/lib/atlas-land.functions";
 import { getBssScenesInRange } from "@/lib/bss.functions";
+import { getBssCrawlProgress } from "@/lib/bss-crawl.functions";
 import { atlasDistrictBySlug, atlasDistrictNeighbors, atlasDistrictStory, atlasDistricts, districtBlockRange } from "@/lib/atlas-places";
 
 export const Route = createFileRoute("/map_/district/$slug")({
