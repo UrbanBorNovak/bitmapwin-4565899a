@@ -8,7 +8,7 @@ const rangeShape = z
   })
   .optional();
 
-const asRange = (input: { lo?: number; hi?: number } | undefined) =>
+const asRange = (input: { lo?: number | undefined; hi?: number | undefined } | undefined) =>
   input && input.lo !== undefined && input.hi !== undefined && input.lo <= input.hi
     ? { lo: input.lo, hi: input.hi }
     : undefined;

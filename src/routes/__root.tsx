@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { rememberReferralCode } from "@/lib/referrals";
 import { SalesBackdrop } from "@/components/SalesBackdrop";
 import { TradeCrawlerDriver } from "@/components/TradeCrawlerDriver";
+import { BssCrawlerDriver } from "@/components/BssCrawlerDriver";
 import { RegistryResolverDriver } from "@/components/RegistryResolverDriver";
 import { LanguageProvider } from "@/lib/i18n";
 import { GuidedTour } from "@/components/GuidedTour";
@@ -174,6 +175,7 @@ function RootComponent() {
       </div>
       <GuidedTour />
       <TradeCrawlerDriver />
+      <BssCrawlerDriver />
       <RegistryResolverDriver />
       <Toaster />
       </LanguageProvider>
