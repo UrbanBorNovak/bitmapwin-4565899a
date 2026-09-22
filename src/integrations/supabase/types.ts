@@ -2850,39 +2850,6 @@ export type Database = {
         }
         Relationships: []
       }
-      map_chat_public: {
-        Row: {
-          body: string | null
-          created_at: string | null
-          district_height: number | null
-          handle: string | null
-          id: string | null
-          is_mine: boolean | null
-          sender_address: string | null
-          visitor_id: string | null
-        }
-        Insert: {
-          body?: string | null
-          created_at?: string | null
-          district_height?: number | null
-          handle?: string | null
-          id?: string | null
-          is_mine?: never
-          sender_address?: string | null
-          visitor_id?: string | null
-        }
-        Update: {
-          body?: string | null
-          created_at?: string | null
-          district_height?: number | null
-          handle?: string | null
-          id?: string | null
-          is_mine?: never
-          sender_address?: string | null
-          visitor_id?: string | null
-        }
-        Relationships: []
-      }
     }
     Functions: {
       atlas_region_stats: {
