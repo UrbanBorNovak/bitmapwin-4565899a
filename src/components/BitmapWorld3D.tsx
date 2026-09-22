@@ -2117,8 +2117,9 @@ function GroundPlane({ colors }: { colors: WorldColors }) {
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uBase: { value: new THREE.Color(colors.background) },
-      uSand: { value: new THREE.Color(colors.muted) },
+      // Painted land: mossy base washing into sunlit ochre, as on the atlas.
+      uBase: { value: new THREE.Color(ATLAS.forest) },
+      uSand: { value: new THREE.Color(ATLAS.sand) },
       uGlow: { value: new THREE.Color(colors.bitcoin) },
       uFogColor: { value: new THREE.Color(colors.background) },
       uFogNear: { value: 24 },
@@ -2128,8 +2129,8 @@ function GroundPlane({ colors }: { colors: WorldColors }) {
     [],
   );
   useEffect(() => {
-    uniforms.uBase.value.set(colors.background);
-    uniforms.uSand.value.set(colors.muted);
+    uniforms.uBase.value.set(ATLAS.forest);
+    uniforms.uSand.value.set(ATLAS.sand);
     uniforms.uGlow.value.set(colors.bitcoin);
   }, [colors, uniforms]);
   useFrame(({ scene, clock }) => {
