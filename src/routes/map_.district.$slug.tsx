@@ -127,6 +127,11 @@ function DistrictStoryPage() {
                 ))}
               </ol>
             ) : <p className="mt-4 font-mono text-[10px] text-muted-foreground">NO VERIFIED BSS SCENES DISCOVERED HERE YET</p>}
+            <p className="mt-4 flex items-center gap-1.5 font-mono text-[9px] text-muted-foreground" data-no-translate>
+              <Radar className="size-3 text-signal" />
+              {(discovery.data?.scanned ?? 0).toLocaleString("en-US")} BITMAPS CHECKED · {(discovery.data?.scenes ?? scenes.length).toLocaleString("en-US")} SCENES FOUND
+            </p>
+            <BssCrawlerDriver lo={range.lo} hi={range.hi} />
           </section>
           <section className="border border-border bg-surface/60 p-5">
             <div className="flex items-center gap-2"><Compass className="size-4 text-signal"/><h2 className="label text-signal">SPATIAL RECORD</h2></div>
