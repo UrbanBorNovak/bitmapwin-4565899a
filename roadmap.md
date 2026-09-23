@@ -45,3 +45,4 @@
 
 - [x] Import parent inscription children as BITMAP-specific PLAY image extenders.
 - [x] Distribute each selected extender pool deterministically across PLAY cards.
+- [x] Head-to-head PLAY tables: friends join by 5-letter code, server-checked moves, live sync
