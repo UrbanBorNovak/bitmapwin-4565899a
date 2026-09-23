@@ -3,7 +3,7 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useWalletSession } from "@/lib/wallet-session";
 import { useAuthSession, accountLabel } from "@/lib/auth";
-import { myWalletLinksQuery } from "@/lib/wallet-links";
+import { myWalletLinksQuery, verifiedWalletAddress } from "@/lib/wallet-links";
 import { ReferralPanel } from "@/components/coins/ReferralPanel";
 import { InscriptionAvatar } from "@/components/InscriptionAvatar";
 import { profileQuery } from "@/lib/profiles";
@@ -131,7 +131,7 @@ function DashboardPage() {
   const { session, user, loading } = useAuthSession();
   const [tab, setTab] = useState<TabId>("overview");
   const links = useQuery(myWalletLinksQuery(Boolean(session)));
-  const address = wallet?.ordinalsAddress ?? links.data?.[0]?.address ?? "";
+  const address = verifiedWalletAddress(links.data, wallet?.ordinalsAddress);
   const addresses = useMemo(() => (address ? [address] : []), [address]);
 
   const market = useQuery(registryBaseQuery(300));
@@ -384,7 +384,9 @@ function DashboardPage() {
           </div>
           <div className="min-w-0 text-center md:text-left">
             <div className="flex items-center justify-center gap-3 md:justify-start">
-              <p className="label text-profile-warm-muted">IDENTITY VERIFIED</p>
+              <p className="label text-profile-warm-muted">
+                {links.isLoading ? "CHECKING VERIFICATION" : address ? "WALLET VERIFIED" : "WALLET NOT VERIFIED"}
+              </p>
               <span className="h-px w-10 bg-profile-warm/20" />
             </div>
             <h1 className="display mt-3 truncate text-3xl text-profile-warm md:text-4xl">{name}</h1>
