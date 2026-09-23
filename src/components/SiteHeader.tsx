@@ -152,6 +152,7 @@ export function SiteHeader() {
                         <div key={item.to} className={divider ? "border-t border-border pt-1" : undefined}>
                           <Link
                             to={item.to}
+                            activeOptions={{ exact: true }}
                             onClick={() => setOpenGroup(null)}
                             aria-current={active ? "page" : undefined}
                             className={`nav-menu-item group block border-border px-3 py-3 ${group.id === "play" ? "border border-transparent" : "border-b last:border-b-0"} ${active ? "border-border bg-surface" : "hover:border-border hover:bg-surface"}`}
@@ -248,6 +249,7 @@ export function SiteHeader() {
                       <div key={item.to} className={divider ? "border-t border-border pt-1" : undefined}>
                         <Link
                           to={item.to}
+                          activeOptions={{ exact: true }}
                           onClick={() => setOpenGroup(null)}
                           aria-current={active ? "page" : undefined}
                           className={`nav-menu-item group block border-border px-3 py-3 ${group.id === "play" ? "border border-transparent" : "border-b last:border-b-0"} ${active ? "border-border bg-surface" : "hover:border-border hover:bg-surface"}`}
