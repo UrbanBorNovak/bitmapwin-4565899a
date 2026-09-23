@@ -56,7 +56,7 @@ function CardProfile() {
                 <li key={t} className="border border-border bg-card px-3 py-2 font-mono text-[10px]"><span className="text-bitcoin">{t}</span> · {TRAIT_RULE[t]}</li>
               ))}
             </ul>
-            <CardDataLayers card={card} />
+            <CardDataLayers card={card} visuals={profile.visuals} />
             <CardHistory card={card} />
           </div>
         </div>
