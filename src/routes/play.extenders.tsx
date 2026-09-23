@@ -237,6 +237,27 @@ function PlayExtenders() {
               </>
             )}
           </article>
+          <article className="border border-border bg-card p-3">
+            <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="label text-bitcoin">{WEIRDOS_COLLECTION} · ORDISCAN</h2>
+                <span className="label text-muted-foreground">POPULAR ORDINALS PFP COLLECTION</span>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant={enabled && selectedCollection === WEIRDOS_COLLECTION ? "terminal" : "terminalGhost"}
+                disabled={!profile || weirdosLoading}
+                onClick={importWeirdos}
+              >
+                {weirdosLoading ? "LOADING…" : enabled && selectedCollection === WEIRDOS_COLLECTION ? "POOL ACTIVE" : "LOAD COLLECTION"}
+              </Button>
+            </header>
+            <p className="break-all font-mono text-[10px] text-muted-foreground">
+              ordiscan.com/collection/bitcoin-weirdos · LOADS THE COLLECTION INTO THE CARD POOL SO EACH CARD GETS A DIFFERENT WEIRDO
+            </p>
+            {weirdosStatus && <p className="mt-2 font-mono text-[10px] text-muted-foreground">{weirdosStatus}</p>}
+          </article>
           {pools.map(([collection, items]) => (
             <article key={collection} className="border border-border bg-card p-3">
               <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
