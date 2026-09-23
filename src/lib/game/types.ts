@@ -89,6 +89,24 @@ export type WorldEventRecord = {
   height?: number | undefined;
 };
 
+export type CardVisualExtender = {
+  id: string;
+  name: string;
+  collection: string;
+  source: "ordinals-html";
+  inscriptionId: string;
+  enabled: boolean;
+  builtIn: boolean;
+  addedAt: number;
+};
+
+export type PlayVisualSettings = {
+  /** Optional cosmetic layer: never changes ownership, stats or gameplay. */
+  pfpExtendersEnabled: boolean;
+  selectedPfpExtenderId: string | null;
+  customPfpExtenders: CardVisualExtender[];
+};
+
 export type PlayStats = {
   matches: number;
   wins: number;
@@ -105,6 +123,7 @@ export type PlayProfile = {
   stats: PlayStats;
   selectedBitmap: number | null;
   events: WorldEventRecord[];
+  visuals: PlayVisualSettings;
 };
 
 /** Visible outcome of a world event on one card — drives the "this card is alive" moment. */
