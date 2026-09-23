@@ -19,6 +19,8 @@ import {
   usePlayProfile,
 } from "@/lib/game/worldState";
 import type { CardVisualExtender } from "@/lib/game/types";
+import { Link } from "@tanstack/react-router";
+import { ORD_TORCHES_PARENT, ORD_TORCHES_SUPPLY, useOrdTorches } from "@/lib/game/ordTorches";
 
 export const Route = createFileRoute("/play/extenders")({
   head: () => ({
@@ -49,6 +51,8 @@ function PlayExtenders() {
   const selected = extenders.find((extender) => extender.id === profile?.visuals.selectedPfpExtenderId) ?? extenders[0] ?? null;
   const previewCard = profile?.order.map((id) => profile.cards[id]).find(Boolean) ?? null;
   const enabled = profile?.visuals.pfpExtendersEnabled === true;
+  const torches = useOrdTorches();
+  const [torchPage, setTorchPage] = useState(0);
   const pools = useMemo(() => {
     const map = new Map<string, CardVisualExtender[]>();
     for (const e of extenders) map.set(e.collection, [...(map.get(e.collection) ?? []), e]);
@@ -152,6 +156,31 @@ function PlayExtenders() {
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] [&>*]:min-w-0">
         <section className="grid content-start gap-4">
+          <article className="border border-bitcoin bg-card p-3">
+            <header className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="label text-bitcoin">ORD TORCHES · HARDCODED</h2>
+              <span className="label text-muted-foreground">{torches ? torches.list.length : "…"} / {ORD_TORCHES_SUPPLY} FOUND ACROSS THE MAP</span>
+            </header>
+            <p className="mb-3 break-all font-mono text-[10px] text-muted-foreground">PARENT <span data-no-translate>{ORD_TORCHES_PARENT}</span> · EACH TORCH LIVES ON ONE BITMAP · A CARD FROM THAT BITMAP ALWAYS CARRIES ITS TORCH</p>
+            {!torches ? <p className="font-mono text-xs text-muted-foreground">&gt; READING 3000 CHILDREN…</p> : (
+              <>
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+                  {torches.list.slice(torchPage * 24, torchPage * 24 + 24).map((t) => (
+                    <div key={t.inscriptionId} className="relative aspect-square border border-border bg-background">
+                      <iframe src={ordinalsPreviewUrl(t.inscriptionId)} title={`Ord Torch #${t.index + 1}`} loading="lazy" sandbox="allow-scripts" scrolling="no" className="pointer-events-none h-full w-full border-0" />
+                      <Link to="/play/card/$id" params={{ id: String(t.bitmap) }} className="absolute inset-0" aria-label={`Torch ${t.index + 1} at ${t.bitmap}.bitmap`} />
+                      <span className="label pointer-events-none absolute bottom-0 left-0 bg-background/85 px-1 text-[9px]" data-no-translate>#{t.index + 1} · {t.bitmap}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <Button type="button" variant="terminalGhost" disabled={torchPage === 0} onClick={() => setTorchPage((p) => p - 1)}>PREV</Button>
+                  <span className="label text-muted-foreground">PAGE {torchPage + 1} / {Math.max(1, Math.ceil(torches.list.length / 24))}</span>
+                  <Button type="button" variant="terminalGhost" disabled={(torchPage + 1) * 24 >= torches.list.length} onClick={() => setTorchPage((p) => p + 1)}>NEXT</Button>
+                </div>
+              </>
+            )}
+          </article>
           {pools.map(([collection, items]) => (
             <article key={collection} className="border border-border bg-card p-3">
               <header className="mb-3 flex flex-wrap items-baseline justify-between gap-2">

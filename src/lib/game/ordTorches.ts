@@ -5,7 +5,7 @@ export const ORD_TORCHES_SUPPLY = 3000;
 /** Map span: BITMAP heights 0 … MAP_SPAN-1. */
 const MAP_SPAN = 840_000;
 // Multiplier coprime with MAP_SPAN → torch index → unique BITMAP (a fixed permutation).
-const MULT = 386_519;
+const MULT = 386_513;
 const OFFSET = 715_093;
 
 export type OrdTorch = { index: number; inscriptionId: string; bitmap: number };
