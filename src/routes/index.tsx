@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ParcelCard } from "@/components/ParcelCard";
 import { HowItWorks } from "@/components/HowItWorks";
-import { SpriteParade } from "@/components/SpriteCritter";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { BitmapConstellations } from "@/components/BitmapConstellations";
 import { registryParcelsQuery, registryCountQuery } from "@/lib/registry";
@@ -73,23 +72,23 @@ function Index() {
   const volume = recentSales.reduce((total, trade) => total + trade.price_sats, 0);
 
   return (
-    <div className="pb-16">
-      <section className="mx-auto max-w-[1600px] px-3 py-4 sm:px-4 md:px-8 md:py-10">
-        <div className="grid overflow-hidden border border-border-strong lg:min-h-[600px] lg:grid-cols-12 lg:border-2">
-          <aside className="order-2 flex flex-col justify-between border-t border-border bg-background p-5 sm:p-6 lg:order-1 lg:col-span-3 lg:border-r-2 lg:border-t-0 lg:p-8">
+    <div className="pb-10">
+      <section className="mx-auto max-w-[1600px] px-3 py-3 md:px-5 md:py-5">
+        <div className="grid overflow-hidden border border-border-strong lg:min-h-[560px] lg:grid-cols-12">
+          <aside className="order-2 flex flex-col justify-between border-t border-border bg-background p-4 lg:order-1 lg:col-span-3 lg:border-r lg:border-t-0 lg:p-5">
             <div>
               <div className="label flex items-center gap-2 text-bitcoin">
                 <span className="size-2 bg-bitcoin" aria-hidden="true" />
                 MARKET STATUS // LIVE
               </div>
-              <dl data-tour="home-market" className="mt-6 grid grid-cols-2 gap-x-5 gap-y-6 lg:mt-9 lg:grid-cols-1 lg:gap-y-8">
+              <dl data-tour="home-market" className="mt-4 grid grid-cols-2 border border-border lg:grid-cols-1">
                 <MarketStat k="OPEN FLOOR" v={floor ? formatSats(floor) : "—"} />
                 <MarketStat k="BITMAPS INDEXED" v={indexedCount.toLocaleString("en-US")} />
                 <MarketStat k="CONFIRMED SALES" v={tradedCount.toLocaleString("en-US")} />
                 <MarketStat k="RECENT VOLUME" v={volume ? formatSats(volume) : "—"} />
               </dl>
             </div>
-            <div className="mt-7 border-t border-border pt-5 lg:mt-10 lg:pt-6">
+            <div className="mt-5 border-t border-border pt-4">
               <p className="text-sm leading-relaxed text-muted-foreground">
                 Every Bitcoin block is a unique BITMAP: digital land you can collect, build on, or lease.
               </p>
@@ -99,24 +98,24 @@ function Index() {
             </div>
           </aside>
 
-          <div className="relative order-1 flex flex-col bg-surface lg:order-2 lg:col-span-9">
+          <div className="relative order-1 flex flex-col bg-card lg:order-2 lg:col-span-9">
             <div className="pointer-events-none absolute inset-0 dot-bg" />
-            <BitmapConstellations className="opacity-90" />
-            <div className="relative flex flex-1 flex-col justify-center p-5 py-8 sm:p-7 md:p-12 lg:p-16">
+            <BitmapConstellations className="opacity-55" />
+            <div className="relative flex flex-1 flex-col justify-center p-5 py-7 md:p-8 lg:p-10">
               <div className="label text-bitcoin">BITCOIN-NATIVE WORLDS</div>
-              <h1 className="display mt-4 text-[2.1rem] leading-[1.05] sm:mt-5 sm:text-6xl lg:text-7xl">
+              <h1 className="display mt-3 text-[2rem] leading-none sm:text-5xl lg:text-6xl">
                 THE INTERNET,<br /><span className="text-bitcoin">BUT WITH LAND.</span>
               </h1>
-              <div className="mt-6 grid items-start gap-7 sm:mt-8 md:grid-cols-[minmax(0,1fr)_240px] md:gap-8">
+              <div className="mt-5 grid items-start gap-5 md:grid-cols-[minmax(0,1fr)_220px] md:gap-6">
                 <div className="max-w-xl">
-                  <p className="text-base leading-relaxed text-foreground sm:text-lg md:text-xl">
+                  <p className="max-w-2xl text-sm leading-relaxed text-foreground sm:text-base">
                     BitmapWin turns Bitcoin blockspace into places you can enter, build on and experience.
                   </p>
-                  <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
                     The Oasis is the world. Bitmaps are the land. Extenders are what happen there.
                     Your Passport is the history you leave. Studio is how you create.
                   </p>
-                  <div data-tour="home-flow" className="mt-6 grid gap-2 sm:mt-8 sm:flex sm:flex-wrap sm:gap-3">
+                  <div data-tour="home-flow" className="mt-5 grid gap-px sm:flex sm:flex-wrap">
                     <Link to="/oasis" className="btn-term min-h-12 w-full sm:min-h-0 sm:w-auto">01 · ENTER THE WORLD</Link>
                     <Link to="/marketplace" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">02 · CLAIM LAND</Link>
                     <Link to="/passport" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">03 · OPEN PASSPORT</Link>
@@ -132,7 +131,7 @@ function Index() {
                   <Link
                     to="/bitmap/$block"
                     params={{ block: String(lead.bitmapHeight) }}
-                    className="group grid w-full grid-cols-[112px_minmax(0,1fr)] items-center gap-4 border border-bitcoin bg-background p-3 transition-transform duration-200 hover:-translate-y-1 md:block md:rotate-2 md:hover:rotate-0"
+                    className="group grid w-full grid-cols-[96px_minmax(0,1fr)] items-center gap-3 border border-border bg-background p-3 hover:border-foreground md:block"
                   >
                     <BlockMosaic height={lead.bitmapHeight} animate className="aspect-square" />
                     <div className="min-w-0 md:contents">
@@ -147,7 +146,7 @@ function Index() {
               </div>
             </div>
 
-            <div className="relative flex flex-col gap-3 border-t border-border bg-background px-4 py-3 md:flex-row md:items-center md:justify-between md:border-t-2 md:border-background md:px-5 md:py-4">
+            <div className="relative flex flex-col gap-2 border-t border-border bg-background px-4 py-2 md:flex-row md:items-center md:justify-between">
               <div className="flex gap-7 overflow-x-auto py-1">
                 {recentSales.slice(0, 3).map((sale) => (
                   <Link key={sale.txid} to="/bitmap/$block" params={{ block: String(sale.bitmap_height) }} className="shrink-0 font-mono text-[10px] hover:text-bitcoin">
@@ -164,15 +163,11 @@ function Index() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-[1600px] px-4 pt-6 md:px-8"><LoopNavigator active="discover" /></section>
-
-      <div className="mt-10">
-        <SpriteParade height={72} />
-      </div>
+      <section className="mx-auto max-w-[1600px] px-3 pt-3 md:px-5"><LoopNavigator active="discover" /></section>
 
       <HowItWorks />
 
-      <section className="mx-auto max-w-[1600px] px-4 pt-10 md:px-8 md:pt-16">
+      <section className="mx-auto max-w-[1600px] px-3 pt-8 md:px-5 md:pt-10">
         <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="label text-bitcoin">START EXPLORING</div>
@@ -189,7 +184,7 @@ function Index() {
             <span className="blink">_</span>
           </p>
         ) : (
-          <div data-tour="home-featured" className="mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-3 sm:mt-8 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:pb-0 lg:grid-cols-3 xl:grid-cols-4">
+          <div data-tour="home-featured" className="mt-4 flex snap-x snap-mandatory gap-px overflow-x-auto bg-border pb-0 sm:grid sm:grid-cols-2 sm:overflow-visible lg:grid-cols-3 xl:grid-cols-4">
             {featured.map((p) => (
               <div key={p.inscriptionId} className="w-[84vw] max-w-[330px] shrink-0 snap-center sm:w-auto sm:max-w-none">
                 <ParcelCard parcel={p} />
@@ -199,7 +194,7 @@ function Index() {
         )}
       </section>
 
-      <section className="mx-auto max-w-[1600px] px-4 pt-16 md:px-8">
+      <section className="mx-auto max-w-[1600px] px-3 pt-10 md:px-5">
         <div className="label text-bitcoin">EVERYTHING LIVES UNDER FIVE THINGS</div>
         <h2 className="display mt-2 text-2xl md:text-3xl">WORLD · LAND · EXPERIENCES · IDENTITY · CREATION</h2>
         <div className="mt-6 grid border-y border-border md:grid-cols-3 md:divide-x md:divide-border lg:grid-cols-5">
@@ -221,9 +216,9 @@ function Index() {
 
 function MarketStat({ k, v }: { k: string; v: string }) {
   return (
-    <div>
+    <div className="border-b border-border p-3 last:border-b-0">
       <dt className="label">{k}</dt>
-      <dd className="display mt-2 text-xl text-foreground md:text-2xl">{v}</dd>
+      <dd className="mt-1 font-mono text-base tabular-nums text-foreground">{v}</dd>
     </div>
   );
 }
