@@ -2030,6 +2030,42 @@ export type Database = {
           },
         ]
       }
+      play_profiles: {
+        Row: {
+          best_streak: number
+          created_at: string
+          losses: number
+          matches: number
+          profile: Json
+          updated_at: string
+          user_id: string
+          wallet_address: string
+          wins: number
+        }
+        Insert: {
+          best_streak?: number
+          created_at?: string
+          losses?: number
+          matches?: number
+          profile: Json
+          updated_at?: string
+          user_id: string
+          wallet_address: string
+          wins?: number
+        }
+        Update: {
+          best_streak?: number
+          created_at?: string
+          losses?: number
+          matches?: number
+          profile?: Json
+          updated_at?: string
+          user_id?: string
+          wallet_address?: string
+          wins?: number
+        }
+        Relationships: []
+      }
       player_builds: {
         Row: {
           bitmap_height: number

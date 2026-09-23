@@ -3,6 +3,7 @@ import { useWalletSession } from "@/lib/wallet-session";
 import { applyWorldEvent, type WorldEvent } from "./events";
 import { localPlayPersistence, newProfile, type PlayPersistence } from "./persistence";
 import { fetchBuildCounts } from "./worldAdapter";
+import { fetchRemotePlayProfile, pickRicher, queueRemoteSave } from "./cloudSync";
 import { createCardFromBitmap, emptyFacts } from "./cardFactory";
 import { allPfpExtenders, normalizeVisualSettings } from "./pfpExtenders";
 import type { CardChange, CardVisualExtender, PlayProfile, PlayVisualSettings } from "./types";
@@ -22,14 +23,27 @@ export function ownerKey(address: string | null | undefined) {
 
 export function loadOwner(owner: string) {
   if (current?.owner === owner) return;
-  current = persistence.load(owner) ?? newProfile(owner);
+  const local = persistence.load(owner);
+  current = local ?? newProfile(owner);
   persistence.save(current);
   emit();
+  void fetchRemotePlayProfile(owner).then((remote) => {
+    if (current?.owner !== owner) return;
+    const best = pickRicher(current, remote);
+    if (best && best !== current) {
+      current = best;
+      persistence.save(best);
+      emit();
+    } else if (current) {
+      queueRemoteSave(current);
+    }
+  });
 }
 
 function commit(next: PlayProfile) {
   current = next;
   persistence.save(next);
+  queueRemoteSave(next);
   emit();
 }
 
