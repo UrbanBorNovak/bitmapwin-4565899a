@@ -1314,3 +1314,56 @@
   mix-blend-mode: multiply;
   opacity: 0.7;
 }
+
+/* ── BITMAPWIN // PLAY — living cards ─────────────────────────── */
+.play-district {
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--color-border) 45%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--color-border) 45%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+.play-field { background: color-mix(in oklab, var(--color-card) 70%, transparent); }
+.living-card {
+  border-color: var(--color-border);
+  transition: transform 160ms ease, box-shadow 200ms ease, border-color 200ms ease, opacity 200ms ease, filter 200ms ease;
+}
+.living-card:is(button):not(:disabled):hover { transform: translateY(-3px); border-color: var(--color-border-strong, var(--color-foreground)); }
+.lc-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--color-foreground) 7%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--color-foreground) 7%, transparent) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+.lc-state { color: var(--color-muted-foreground); }
+.lc-active { border-color: color-mix(in oklab, var(--color-bitcoin) 45%, var(--color-border)); animation: lc-pulse 3.2s ease-in-out infinite; }
+.lc-active .lc-state, .lc-awakened .lc-state, .lc-developed .lc-state, .lc-legendary .lc-state { color: var(--color-bitcoin); }
+.lc-awakened { border-color: var(--color-bitcoin); animation: lc-energy 2.4s ease-in-out infinite; }
+.lc-awakened .lc-cell { animation: lc-cell 2.4s ease-in-out infinite; }
+.lc-developed { border-color: var(--color-bitcoin); animation: lc-energy 3s ease-in-out infinite; }
+.lc-developed .lc-grid { animation: lc-drift 8s linear infinite; }
+.lc-developed .lc-cell { animation: lc-cell 3s ease-in-out infinite; }
+.lc-legendary { border-color: var(--color-bitcoin); outline: 1px solid color-mix(in oklab, var(--color-signal) 60%, transparent); outline-offset: 2px; animation: lc-energy 1.8s ease-in-out infinite; }
+.lc-legendary .lc-grid { animation: lc-drift 5s linear infinite; }
+.lc-legendary .lc-cell { animation: lc-cell 1.8s ease-in-out infinite; }
+.lc-ui-selected { transform: translateY(-12px); border-color: var(--color-bitcoin) !important; box-shadow: 0 10px 24px -12px var(--color-bitcoin); }
+.lc-ui-playable { border-color: color-mix(in oklab, var(--color-signal) 70%, var(--color-border)); }
+.lc-ui-disabled { opacity: 0.55; }
+.lc-ui-attacking { animation: lc-lunge 380ms ease-out; }
+.lc-ui-damaged, .lc-shake { animation: lc-shake 360ms ease-out; }
+.lc-ui-damaged { border-color: var(--color-destructive) !important; }
+.lc-ui-evolved { animation: lc-evolve 700ms ease-out; }
+.lc-ui-defeated { filter: grayscale(1); opacity: 0.35; }
+.lc-enter { animation: lc-enter 420ms cubic-bezier(.2,.8,.2,1); }
+.lc-moment { animation: lc-evolve 600ms ease-out; }
+.lc-blink { animation: blink 1.6s steps(2) infinite; }
+@keyframes lc-pulse { 50% { box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-bitcoin) 25%, transparent); } }
+@keyframes lc-energy { 0%,100% { box-shadow: 0 0 0 0 transparent; } 50% { box-shadow: 0 0 18px -4px var(--color-bitcoin); } }
+@keyframes lc-cell { 50% { opacity: 0.55; } }
+@keyframes lc-drift { to { background-position: 12px 12px; } }
+@keyframes lc-lunge { 40% { transform: translateY(-14px) scale(1.04); } }
+@keyframes lc-shake { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-2px); } }
+@keyframes lc-evolve { 0% { transform: scale(0.92); filter: brightness(1.6); } 100% { transform: scale(1); filter: none; } }
+@keyframes lc-enter { from { transform: translateY(40px) scale(0.85); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .living-card, .living-card *, .lc-enter, .lc-moment, .lc-shake { animation: none !important; transition: none !important; }
+}

@@ -47,7 +47,7 @@ function MatchPage() {
   const deck = useMemo(() => {
     if (!profile) return null;
     const ids = profile.order.filter((id) => profile.cards[id]);
-    if (leaderId && profile.cards[leaderId]) ids.sort((a) => (a === leaderId ? -1 : 0));
+    if (leaderId && profile.cards[leaderId]) ids.splice(0, ids.length, leaderId, ...ids.filter((x) => x !== leaderId));
     return ids.map((id) => profile.cards[id]!);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.owner, seed, leaderId && profile?.cards[leaderId] ? leaderId : null]);
