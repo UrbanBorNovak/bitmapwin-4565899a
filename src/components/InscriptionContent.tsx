@@ -37,7 +37,7 @@ export function InscriptionContent({
           src={`https://ordinals.com/preview/${inscriptionId}`}
           title={title ?? `Inscription ${shortId(inscriptionId)}`}
           loading="lazy"
-          sandbox="allow-scripts"
+          sandbox="allow-scripts allow-same-origin"
           scrolling="no"
           className={`h-full w-full border-0 ${interactive ? "" : "pointer-events-none"}`}
         />

@@ -217,7 +217,7 @@ function PlayExtenders() {
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
                   {torches.list.slice(torchPage * 24, torchPage * 24 + 24).map((t) => (
                     <div key={t.inscriptionId} className="relative aspect-square border border-border bg-background">
-                      <iframe src={ordinalsPreviewUrl(t.inscriptionId)} title={`Ord Torch #${t.index + 1}`} loading="lazy" sandbox="allow-scripts" scrolling="no" className="pointer-events-none h-full w-full border-0" />
+                      <iframe src={ordinalsPreviewUrl(t.inscriptionId)} title={`Ord Torch #${t.index + 1}`} loading="lazy" sandbox="allow-scripts allow-same-origin" scrolling="no" className="pointer-events-none h-full w-full border-0" />
                       <Link to="/bitmap/$block" params={{ block: String(t.bitmap) }} className="absolute inset-0" aria-label={`Torch ${t.index + 1} at ${t.bitmap}.bitmap`} />
                       <span className="label pointer-events-none absolute bottom-0 left-0 bg-background/85 px-1 text-[9px]" data-no-translate>#{t.index + 1} · {t.bitmap}</span>
                     </div>
@@ -337,7 +337,7 @@ function ExtenderPool({ collection, items, enabled, selectedCollection, profileR
             {extender.source === "ordinals-image" ? (
               <img src={inscriptionContentUrl(extender.inscriptionId)} alt={extender.name} loading="lazy" className="h-full w-full object-cover [image-rendering:pixelated]" />
             ) : (
-              <iframe src={ordinalsPreviewUrl(extender.inscriptionId)} title={extender.name} loading="lazy" sandbox="allow-scripts" scrolling="no" className="pointer-events-none h-full w-full border-0" />
+              <iframe src={ordinalsPreviewUrl(extender.inscriptionId)} title={extender.name} loading="lazy" sandbox="allow-scripts allow-same-origin" scrolling="no" className="pointer-events-none h-full w-full border-0" />
             )}
             <span className="label pointer-events-none absolute bottom-0 left-0 bg-background/85 px-1 text-[9px]">{extender.source === "ordinals-html" ? "HTML" : "IMG"}{active ? " · POOL" : ""}</span>
             {!extender.builtIn && (
