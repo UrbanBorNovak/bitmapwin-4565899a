@@ -30,15 +30,15 @@ export async function readPassportEstate(userId: string): Promise<PassportEstate
   const [land, playerBuilds, structures, pages, views, extenders, deployments] = await Promise.all([
     wallet
       ? client.from("bitmap_index").select("block_height, inscription_id, genesis_height").eq("owner_address", wallet).eq("is_valid", true).order("block_height", { ascending: true }).limit(400)
-      : Promise.resolve({ data: [] as any[] }),
+      : Promise.resolve({ data: [] as any[], error: null }),
     client.from("player_builds").select("id, bitmap_height, kind, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(200),
     client.from("world_structures").select("id, bitmap_height, kind, created_at").eq("builder_user_id", userId).order("created_at", { ascending: false }).limit(200),
     wallet
       ? client.from("parcel_pages").select("bitmap_height, build_kind, title, updated_at").eq("owner_address", wallet).order("updated_at", { ascending: false }).limit(200)
-      : Promise.resolve({ data: [] as any[] }),
+      : Promise.resolve({ data: [] as any[], error: null }),
     wallet
       ? client.from("bitmap_views").select("bitmap_height, created_at").eq("viewer_address", wallet).order("created_at", { ascending: false }).limit(500)
-      : Promise.resolve({ data: [] as any[] }),
+      : Promise.resolve({ data: [] as any[], error: null }),
     client.from("extenders").select("id, slug, name, created_at").eq("creator_user_id", userId).limit(60),
     client.from("extender_deployments").select("id, extender_id, bitmap_height, created_at").eq("deployed_by_user_id", userId).order("created_at", { ascending: false }).limit(200),
   ]);

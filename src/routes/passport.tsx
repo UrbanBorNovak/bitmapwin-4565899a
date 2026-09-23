@@ -12,6 +12,7 @@ import { ParcelClubBadges } from "@/components/ParcelClubBadges";
 import { PassportEstatePanels } from "@/components/PassportEstate";
 import { getMyEstateFn } from "@/lib/passport.functions";
 import { PassportArtifact } from "@/components/PassportArtifact";
+import { Button } from "@/components/ui/button";
 import { Activity, Award, Boxes, KeyRound, Landmark, Radio, RefreshCw, ShieldCheck, TriangleAlert } from "lucide-react";
 
 export const Route = createFileRoute("/passport")({
@@ -58,4 +59,4 @@ function MiniMetric({ value, label }: { value: number | null; label: string }) {
 function EvidencePanel({ index, title, icon, className = "", children }: { index: string; title: string; icon: React.ReactNode; className?: string; children: React.ReactNode }) { return <article className={`passport-panel passport-reveal p-4 ${className}`}><header className="mb-5 flex items-center justify-between border-b border-[var(--passport-line)] pb-3"><span className="passport-kicker">{index} / {title}</span><span className="text-[var(--passport-gold)] [&>svg]:size-4">{icon}</span></header>{children}</article>; }
 function PassportSectionHeader({ index, eyebrow, title, count }: { index: string; eyebrow: string; title: string; count?: string }) { return <header className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--passport-line)] p-4"><div><p className="passport-kicker">{index} / {eyebrow}</p><h2 className="mt-2 font-mono text-xl font-bold uppercase text-[var(--passport-paper)] md:text-2xl">{title}</h2></div>{count ? <span className="passport-code">{count}</span> : null}</header>; }
 function EvidenceWarning({ label }: { label: string }) { return <p className="mt-4 flex items-center gap-2 font-mono text-[10px] uppercase text-[var(--passport-gold)]"><TriangleAlert className="size-3.5" />{label}</p>; }
-function RetryButton({ onClick }: { onClick: () => void }) { return <button type="button" onClick={onClick} className="passport-action mt-4"><RefreshCw className="size-3.5" /> RETRY</button>; }
+function RetryButton({ onClick }: { onClick: () => void }) { return <Button type="button" variant="terminalGhost" size="sm" onClick={onClick} className="mt-4 border-[var(--passport-gold)] text-[var(--passport-gold)]"><RefreshCw className="size-3.5" /> RETRY</Button>; }
