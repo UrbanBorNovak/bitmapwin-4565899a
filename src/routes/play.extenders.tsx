@@ -143,7 +143,7 @@ function PlayExtenders() {
     setWeirdosStatus("READING BITCOIN WEIRDOS CHILDREN FROM THE CHAIN…");
     try {
       const result = await scanParent({ data: { parentInscriptionId: WEIRDOS_PARENT, limit: 250 } });
-      const items = result.imageChildren;
+      const items = [{ inscriptionId: WEIRDOS_PARENT, contentType: "image/webp", contentLength: null, number: null }, ...result.imageChildren];
       if (items.length === 0) {
         setWeirdosStatus("NO WEIRDOS RETURNED RIGHT NOW — TRY AGAIN LATER");
         return;
@@ -165,7 +165,7 @@ function PlayExtenders() {
       }));
       addCustomPfpExtenders(imported, imported[0]?.id ?? null);
       updatePlayVisuals({ pfpExtendersEnabled: true, selectedPfpCollection: WEIRDOS_COLLECTION });
-      setWeirdosStatus(`LOADED ${count} WEIRDOS INTO THE CARD POOL${result.truncated ? " · MORE AVAILABLE" : ""}`);
+      setWeirdosStatus(`LOADED ${count} ${count === 1 ? "WEIRDO" : "WEIRDOS"} · ${result.checkedChildren} ${result.checkedChildren === 1 ? "CHILD" : "CHILDREN"} ON-CHAIN + THE PARENT IMAGE${result.truncated ? " · MORE AVAILABLE" : ""}`);
     } catch {
       setWeirdosStatus("BITCOIN WEIRDOS COULD NOT BE READ RIGHT NOW");
     } finally {
