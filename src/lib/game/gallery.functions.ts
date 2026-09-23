@@ -21,8 +21,8 @@ export const getGalleryItemsFn = createServerFn({ method: "GET" })
       const html = await res.text();
       let added = 0;
       for (const m of html.matchAll(ID_IN_HTML)) {
-        const id = m[1];
-        if (id === data.inscriptionId || seen.has(id)) continue;
+        const id = m[1] ?? "";
+        if (!id || id === data.inscriptionId || seen.has(id)) continue;
         seen.add(id);
         ids.push(id);
         added++;
