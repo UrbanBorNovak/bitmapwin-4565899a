@@ -9,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 export type ChatMessage = {
   id: string;
   bitmapHeight: number;
-  userId: string;
   senderAddress: string | null;
   body: string;
   createdAt: string;
@@ -20,7 +19,7 @@ export const CHAT_MAX_LENGTH = 500;
 export async function fetchBitmapChat(height: number): Promise<ChatMessage[]> {
   const { data, error } = await supabase
     .from("bitmap_chat_messages")
-    .select("id, bitmap_height, user_id, sender_address, body, created_at")
+    .select("id, bitmap_height, sender_address, body, created_at")
     .eq("bitmap_height", height)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -29,7 +28,6 @@ export async function fetchBitmapChat(height: number): Promise<ChatMessage[]> {
     .map((row) => ({
       id: row.id,
       bitmapHeight: Number(row.bitmap_height),
-      userId: row.user_id,
       senderAddress: row.sender_address,
       body: row.body,
       createdAt: row.created_at,

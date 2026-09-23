@@ -228,7 +228,8 @@ type PlayerRow = {
 
 // Disambiguate the embed: rank_players links to rank_clans both via
 // clan_id and via rank_clan_members, so PostgREST needs the exact FK.
-const PLAYER_SELECT = "*, rank_clans!rank_players_clan_id_fkey(tag, name, crest_color)";
+const PLAYER_SELECT =
+  "id, wallet, name, title, level, fame, karma, pk_kills, pvp_kills, deaths, chaotic_count, status, clan_id, home_bitmap, last_district, last_kill_at, last_death_at, bit_earned, districts_visited, builds_maintained, created_at, updated_at, rank_clans!rank_players_clan_id_fkey(tag, name, crest_color)";
 
 function toPlayer(row: PlayerRow): RankPlayer {
   return {
