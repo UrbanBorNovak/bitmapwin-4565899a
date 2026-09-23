@@ -5,18 +5,16 @@
  * sparkle and little atlas-paint motes without mounting hundreds of React nodes.
  */
 
-import { memo, useEffect, useMemo, useRef } from "react";
+import { memo, useEffect, useMemo, useRef, type RefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { useQuality } from "@/graphics/QualityContext";
 import { ATLAS } from "@/lib/atlas-palette";
-import { WORLD_CELL, type PlayerState } from "@/lib/player-state";
+import { MOVE, WORLD_CELL, type PlayerState } from "@/lib/player-state";
 import { groundY } from "@/lib/world-terrain";
 
 const noRaycast = () => {};
 const dummy = new THREE.Object3D();
-const WORLD_UP = new THREE.Vector3(0, 1, 0);
-
 type Seed = {
   angle: number;
   radius: number;
@@ -46,7 +44,7 @@ export const WorldAtmosphere = memo(function WorldAtmosphere({
   pose,
   bitcoin,
 }: {
-  pose: React.RefObject<PlayerState>;
+  pose: RefObject<PlayerState>;
   bitcoin: string;
 }) {
   const { quality } = useQuality();
@@ -88,7 +86,7 @@ export const WorldAtmosphere = memo(function WorldAtmosphere({
     if (!player || !motes || !embers || !ring) return;
     const delta = Math.min(rawDelta, 0.05);
     const speed = Math.hypot(player.vx, player.vz);
-    const pace = THREE.MathUtils.clamp(speed / (WORLD_CELL * 0.1), 0, 1.8);
+    const pace = THREE.MathUtils.clamp(speed / MOVE.walkSpeed, 0, 1.8);
     const baseY = groundY(player.x, player.z) + player.y;
     const elapsed = clock.elapsedTime;
     const yaw = Math.atan2(camera.position.x - player.x, camera.position.z - player.z);
@@ -123,7 +121,7 @@ export const WorldAtmosphere = memo(function WorldAtmosphere({
     embers.instanceMatrix.needsUpdate = true;
 
     dummy.position.set(player.x, baseY + WORLD_CELL * 0.014, player.z);
-    dummy.quaternion.setFromUnitVectors(WORLD_UP, new THREE.Vector3(0, 1, 0));
+    dummy.rotation.set(-Math.PI / 2, 0, 0);
     const ringScale = WORLD_CELL * (1.4 + pace * 0.65 + Math.sin(elapsed * 3.2) * 0.08);
     dummy.scale.set(ringScale, ringScale, 1);
     dummy.updateMatrix();
