@@ -276,3 +276,43 @@ export function mvpOf(s: MatchState): string | null {
   const e = Object.entries(s.usage).sort((a, b) => b[1] - a[1]);
   return e[0]?.[0] ?? null;
 }
+
+/** HEAD-TO-HEAD — host sits in "player", guest in "ai". Decks are rebuilt from BITMAP heights on the server. */
+export function newPvpMatch(hostHeights: number[], guestHeights: number[], seed: number): MatchState {
+  const r = rng(seed);
+  const host = hostHeights.slice(0, 12).map((h) => createCardFromBitmap(emptyFacts(h), 0));
+  const guest = guestHeights.slice(0, 12).map((h) => createCardFromBitmap(emptyFacts(h), 0));
+  const hDeck = shuffle(host.map(toUnit), r);
+  const gDeck = shuffle(guest.map(toUnit), r);
+  const s: MatchState = {
+    seed,
+    turn: 1,
+    active: "player",
+    sides: {
+      player: { hp: START_HP, energy: BASE_ENERGY, deck: hDeck.slice(4), hand: hDeck.slice(0, 4), board: [], hurt: 0 },
+      ai: { hp: START_HP, energy: 0, deck: gDeck.slice(4), hand: gDeck.slice(0, 4), board: [], hurt: 0 },
+    },
+    log: [],
+    winner: null,
+    usage: {},
+    playerDeckIds: host.map((c) => c.id),
+    enemyHeights: guest.map((c) => c.bitmap),
+    logId: 0,
+  };
+  say(s, "world", "Two travellers sit at the table. The world is the deck.");
+  return s;
+}
+
+/** Mirror a match so the other seat sees itself as "player". */
+export function flipMatch(s: MatchState): MatchState {
+  const sw = (x: SideId | null): SideId | null => (x === null ? null : other(x));
+  return {
+    ...s,
+    active: other(s.active),
+    winner: sw(s.winner),
+    sides: { player: s.sides.ai, ai: s.sides.player },
+    log: s.log.map((l) => ({ ...l, side: l.side === "world" ? "world" : other(l.side) })),
+    playerDeckIds: s.enemyHeights.map((h) => `bitmap-${h}`),
+    enemyHeights: s.playerDeckIds.map((id) => Number(id.replace("bitmap-", ""))),
+  };
+}
