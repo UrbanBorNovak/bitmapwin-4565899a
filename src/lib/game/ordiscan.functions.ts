@@ -13,7 +13,7 @@ type OrdiscanPage = { data?: unknown[] };
 function pickId(item: unknown): string | null {
   if (typeof item !== "object" || item === null) return null;
   const record = item as Record<string, unknown>;
-  const candidate = record.inscription_id ?? record.inscriptionId ?? record.id;
+  const candidate = record["inscription_id"] ?? record["inscriptionId"] ?? record["id"];
   const id = String(candidate ?? "").toLowerCase();
   return INSCRIPTION_ID_RE.test(id) ? id : null;
 }
@@ -21,13 +21,13 @@ function pickId(item: unknown): string | null {
 function pickContentType(item: unknown): string {
   if (typeof item !== "object" || item === null) return "";
   const record = item as Record<string, unknown>;
-  return String(record.content_type ?? record.contentType ?? "").toLowerCase();
+  return String(record["content_type"] ?? record["contentType"] ?? "").toLowerCase();
 }
 
 function pickNumber(item: unknown): number | null {
   if (typeof item !== "object" || item === null) return null;
   const record = item as Record<string, unknown>;
-  const value = Number(record.inscription_number ?? record.number);
+  const value = Number(record["inscription_number"] ?? record["number"]);
   return Number.isFinite(value) ? value : null;
 }
 
