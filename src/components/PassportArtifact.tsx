@@ -8,6 +8,8 @@ type PassportArtifactProps = {
   unlocks?: number;
   records?: number;
   holdings?: number;
+  loading?: boolean;
+  unavailable?: boolean;
 };
 
 function passportKey(wallet: string | null) {
@@ -17,8 +19,8 @@ function passportKey(wallet: string | null) {
   return `${head}::${tail}`;
 }
 
-export function PassportArtifact({ wallet, stamps = 0, unlocks = 0, records = 0, holdings = 0 }: PassportArtifactProps) {
-  const evidenceLevel = Math.min(99, stamps * 8 + unlocks * 12 + Math.min(records, 25) + Math.min(holdings * 3, 20));
+export function PassportArtifact({ wallet, stamps = 0, unlocks = 0, records = 0, holdings = 0, loading = false, unavailable = false }: PassportArtifactProps) {
+  const state = loading ? "SCANNING" : unavailable ? "UNAVAILABLE" : wallet ? "VERIFIED" : "UNLINKED";
   return (
     <article className="passport-artifact" aria-label={wallet ? "Verified BitmapWin Passport" : "Unlinked BitmapWin Passport"}>
       <div className="passport-artifact__corner passport-artifact__corner--tl" />
@@ -27,11 +29,11 @@ export function PassportArtifact({ wallet, stamps = 0, unlocks = 0, records = 0,
 
       <header className="relative z-10 flex items-start justify-between gap-4">
         <div>
-          <p className="passport-kicker">EVIDENCE LEVEL {String(evidenceLevel).padStart(2, "0")}</p>
+          <p className="passport-kicker">{loading ? "READING VERIFIED EVIDENCE" : `${records} VERIFIED RECORD${records === 1 ? "" : "S"}`}</p>
           <h1 className="passport-wordmark">BITMAPWIN <span>PASSPORT</span></h1>
         </div>
         <div className="passport-status-light" title={wallet ? "Identity linked" : "Identity unlinked"}>
-          <span className={wallet ? "is-linked" : ""} />
+          <span className={wallet && !unavailable ? "is-linked" : ""} />
         </div>
       </header>
 
@@ -41,10 +43,10 @@ export function PassportArtifact({ wallet, stamps = 0, unlocks = 0, records = 0,
           <div className="passport-seal__core">
             {wallet ? <ShieldCheck className="size-16" strokeWidth={1} /> : <Fingerprint className="size-16" strokeWidth={1} />}
           </div>
-          <span className="passport-seal__index">{wallet ? "VERIFIED" : "UNLINKED"}</span>
+          <span className="passport-seal__index">{state}</span>
         </div>
         <p className="mt-8 text-xs uppercase text-[var(--passport-paper)]">
-          Status: <strong>{wallet ? "SOVEREIGN IDENTITY ACTIVE" : "AWAITING IDENTITY"}</strong>
+          Status: <strong>{loading ? "CHECKING EVIDENCE" : unavailable ? "EVIDENCE TEMPORARILY UNAVAILABLE" : wallet ? "SIGNED WALLET PROOF ACTIVE" : "AWAITING IDENTITY"}</strong>
         </p>
         <p className="mt-2 font-mono text-[9px] text-[var(--passport-gold)]" data-no-translate>{passportKey(wallet)}</p>
         {wallet ? <p className="mt-2 font-mono text-[10px] text-[var(--passport-muted)]" data-no-translate>{shortenAddress(wallet)}</p> : null}

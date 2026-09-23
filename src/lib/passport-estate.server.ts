@@ -21,8 +21,10 @@ export async function readPassportEstate(userId: string): Promise<PassportEstate
     .from("wallet_links")
     .select("address")
     .eq("user_id", userId)
+    .not("verified_at", "is", null)
     .order("verified_at", { ascending: false })
     .limit(1);
+  if (links.error) throw links.error;
   const wallet = links.data?.[0]?.address ?? null;
 
   const [land, playerBuilds, structures, pages, views, extenders, deployments] = await Promise.all([
@@ -40,6 +42,9 @@ export async function readPassportEstate(userId: string): Promise<PassportEstate
     client.from("extenders").select("id, slug, name, created_at").eq("creator_user_id", userId).limit(60),
     client.from("extender_deployments").select("id, extender_id, bitmap_height, created_at").eq("deployed_by_user_id", userId).order("created_at", { ascending: false }).limit(200),
   ]);
+  for (const result of [land, playerBuilds, structures, pages, views, extenders, deployments]) {
+    if (result.error) throw result.error;
+  }
 
   const landRows: EstateLand[] = (land.data ?? []).map((row: any) => ({
     height: Number(row.block_height),
@@ -74,6 +79,7 @@ export async function readPassportEstate(userId: string): Promise<PassportEstate
         .order("published_at", { ascending: false })
         .limit(200)
     : { data: [] as any[] };
+  if ("error" in versions && versions.error) throw versions.error;
 
   const deploymentRows = deployments.data ?? [];
   const blueprints: EstateBlueprint[] = [];
