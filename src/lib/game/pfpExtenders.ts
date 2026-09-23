@@ -59,10 +59,10 @@ export function activePfpExtenderForCard(card: LivingCard, settings: PlayVisualS
   if (!settings?.pfpExtendersEnabled) return null;
   const extenders = allPfpExtenders(settings).filter((extender) => extender.enabled !== false && (extender.bitmap === undefined || extender.bitmap === null || extender.bitmap === card.bitmap));
   if (!extenders.length) return null;
-  const selected = settings.selectedPfpExtenderId ? extenders.find((extender) => extender.id === settings.selectedPfpExtenderId) : null;
-  if (selected) return selected;
   const bitmapScoped = extenders.filter((extender) => extender.bitmap === card.bitmap);
   const pool = bitmapScoped.length > 0 ? bitmapScoped : extenders;
+  const selected = settings.selectedPfpExtenderId ? pool.find((extender) => extender.id === settings.selectedPfpExtenderId) : null;
+  if (selected) return selected;
   return pool[hash(card.bitmap) % pool.length] ?? null;
 }
 
