@@ -40,7 +40,6 @@ export const Route = createFileRoute("/play/extenders")({
 function PlayExtenders() {
   const profile = usePlayProfile();
   const scanParent = useServerFn(getParentImageChildrenFn);
-  const readGallery = useServerFn(getGalleryItemsFn);
   const [input, setInput] = useState("");
   const [name, setName] = useState("");
   const [parentInput, setParentInput] = useState("");
@@ -49,8 +48,6 @@ function PlayExtenders() {
   const [parentError, setParentError] = useState<string | null>(null);
   const [parentStatus, setParentStatus] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
-  const [weirdosStatus, setWeirdosStatus] = useState<string | null>(null);
-  const [weirdosLoading, setWeirdosLoading] = useState(false);
   const extenders = useMemo(() => allPfpExtenders(profile?.visuals), [profile?.visuals]);
   const selected = extenders.find((extender) => extender.id === profile?.visuals.selectedPfpExtenderId) ?? extenders[0] ?? null;
   const previewCard = profile?.order.map((id) => profile.cards[id]).find(Boolean) ?? null;
