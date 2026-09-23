@@ -994,10 +994,10 @@
 
 /* PASSPORT — sovereign evidence artifact, isolated from the global market chrome. */
 .passport-terminal {
-  --passport-green: oklch(0.382 0.086 164);
-  --passport-green-live: oklch(0.519 0.111 166);
-  --passport-gold: oklch(0.742 0.11 87);
-  --passport-paper: oklch(0.953 0.022 88);
+  --passport-green: oklch(0.351 0.064 165);
+  --passport-green-live: oklch(0.514 0.103 166);
+  --passport-gold: oklch(0.743 0.106 87);
+  --passport-paper: oklch(0.955 0.022 88);
   --passport-ink: oklch(0.075 0.012 164);
   --passport-panel: oklch(0.115 0.018 164);
   --passport-muted: color-mix(in oklab, var(--passport-paper) 52%, transparent);
