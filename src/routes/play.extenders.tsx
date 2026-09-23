@@ -72,9 +72,9 @@ function PlayExtenders() {
   }
 
   async function importParentChildren() {
-    const parentInscriptionId = normalizeInscriptionInput(parentInput);
+    const typedParent = normalizeInscriptionInput(parentInput);
     const bitmap = Number(bitmapInput);
-    if (!parentInscriptionId) {
+    if (parentInput.trim() && !typedParent) {
       setParentError("PASTE A VALID PARENT INSCRIPTION ID OR URL");
       return;
     }
@@ -86,7 +86,12 @@ function PlayExtenders() {
     setParentStatus("READING CHILD INSCRIPTIONS…");
     setImporting(true);
     try {
-      const result = await scanParent({ data: { parentInscriptionId, limit: 40 } });
+      const result = await scanParent({ data: typedParent ? { parentInscriptionId: typedParent, limit: 250 } : { bitmap, limit: 250 } });
+      const parentInscriptionId = result.parentInscriptionId;
+      if (!parentInscriptionId) {
+        setParentStatus(`${bitmap}.BITMAP INSCRIPTION NOT FOUND`);
+        return;
+      }
       if (result.imageChildren.length === 0) {
         setParentStatus(`NO IMAGE CHILDREN FOUND · ${result.checkedChildren} CHILDREN CHECKED`);
         return;
@@ -215,11 +220,11 @@ function PlayExtenders() {
               </label>
               <label className="grid gap-1">
                 <span className="label">PARENT INSCRIPTION</span>
-                <input value={parentInput} onChange={(event) => setParentInput(event.target.value)} className="h-10 border border-border bg-background px-3 font-mono text-xs" placeholder="https://ordinals.com/inscription/..." data-no-translate />
+                <input value={parentInput} onChange={(event) => setParentInput(event.target.value)} className="h-10 border border-border bg-background px-3 font-mono text-xs" placeholder="EMPTY = USE THE BITMAP INSCRIPTION" data-no-translate />
               </label>
               {parentError && <p className="font-mono text-[10px] text-destructive">{parentError}</p>}
               {parentStatus && <p className="font-mono text-[10px] text-muted-foreground">{parentStatus}</p>}
-              <Button type="button" variant="terminal" disabled={!profile || importing} onClick={importParentChildren}>{importing ? "READING CHILDREN…" : "IMPORT IMAGE CHILDREN"}</Button>
+              <Button type="button" variant="terminal" disabled={!profile || importing} onClick={importParentChildren}>{importing ? "READING CHILDREN…" : "IMPORT ALL IMAGE CHILDREN"}</Button>
             </div>
           </section>
 
@@ -232,7 +237,7 @@ function PlayExtenders() {
               </label>
               <label className="grid gap-1">
                 <span className="label">INSCRIPTION URL OR ID</span>
-                <input value={input} onChange={(event) => setInput(event.target.value)} className="h-10 border border-border bg-background px-3 font-mono text-xs" placeholder="https://ordinals.com/inscription/..." data-no-translate />
+                <input value={input} onChange={(event) => setInput(event.target.value)} className="h-10 border border-border bg-background px-3 font-mono text-xs" placeholder="EMPTY = USE THE BITMAP INSCRIPTION" data-no-translate />
               </label>
               {error && <p className="font-mono text-[10px] text-destructive">{error}</p>}
               <Button type="button" variant="terminal" disabled={!profile} onClick={addExtender}>ADD PFP EXTENDER</Button>
