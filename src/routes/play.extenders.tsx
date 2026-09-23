@@ -134,37 +134,6 @@ function PlayExtenders() {
     }
   }
 
-  async function importWeirdos() {
-    setWeirdosLoading(true);
-    setWeirdosStatus("READING THE BITCOIN WEIRDOS GALLERY FROM THE CHAIN…");
-    try {
-      const result = await readGallery({ data: { inscriptionId: WEIRDOS_PARENT, maxPages: 40 } });
-      const items = [WEIRDOS_PARENT, ...result.ids];
-      const count = items.length;
-      const imported: CardVisualExtender[] = items.map((id, index) => ({
-        id: `weirdos-${id}`,
-        name: index === 0 ? "WEIRDOS PARENT" : `WEIRDO ${index}`,
-        collection: WEIRDOS_COLLECTION,
-        source: "ordinals-image",
-        inscriptionId: id,
-        enabled: true,
-        builtIn: false,
-        addedAt: Date.now(),
-         contentType: index === 0 ? "image/webp" : "image/svg+xml",
-        childIndex: index + 1,
-        childCount: count,
-        parentInscriptionId: WEIRDOS_PARENT,
-      }));
-      addCustomPfpExtenders(imported, imported[1]?.id ?? imported[0]?.id ?? null);
-      updatePlayVisuals({ pfpExtendersEnabled: true, selectedPfpCollection: WEIRDOS_COLLECTION });
-      setWeirdosStatus(`LOADED ${count} WEIRDOS FROM THE GALLERY${result.truncated ? " · MORE AVAILABLE" : ""}`);
-    } catch {
-      setWeirdosStatus("BITCOIN WEIRDOS COULD NOT BE READ RIGHT NOW");
-    } finally {
-      setWeirdosLoading(false);
-    }
-  }
-
   return (
     <main className="play-district mx-auto max-w-[1200px] overflow-x-hidden px-4 py-8 md:px-8">
       <PlayNav />
@@ -224,27 +193,6 @@ function PlayExtenders() {
                 </div>
               </>
             )}
-          </article>
-          <article className="border border-border bg-card p-3">
-            <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h2 className="label text-bitcoin">{WEIRDOS_COLLECTION} · PARENT CHILDREN</h2>
-                <span className="label text-muted-foreground">POPULAR ORDINALS PFP COLLECTION</span>
-              </div>
-              <Button
-                type="button"
-                size="sm"
-                variant={enabled && selectedCollection === WEIRDOS_COLLECTION ? "terminal" : "terminalGhost"}
-                disabled={!profile || weirdosLoading}
-                onClick={importWeirdos}
-              >
-                {weirdosLoading ? "LOADING…" : enabled && selectedCollection === WEIRDOS_COLLECTION ? "POOL ACTIVE" : "LOAD COLLECTION"}
-              </Button>
-            </header>
-            <p className="break-all font-mono text-[10px] text-muted-foreground">
-              PARENT {WEIRDOS_PARENT.slice(0, 10)}…{WEIRDOS_PARENT.slice(-6)} · EVERY IMAGE OR HTML CHILD JOINS THE CARD POOL, EACH CARD GETS A DIFFERENT WEIRDO
-            </p>
-            {weirdosStatus && <p className="mt-2 font-mono text-[10px] text-muted-foreground">{weirdosStatus}</p>}
           </article>
           {pools.map(([collection, items]) => (
             <ExtenderPool key={collection} collection={collection} items={items} enabled={enabled} selectedCollection={selectedCollection} profileReady={Boolean(profile)} />
