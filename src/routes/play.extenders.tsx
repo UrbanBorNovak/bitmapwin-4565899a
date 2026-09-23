@@ -126,7 +126,6 @@ function PlayExtenders() {
         contentType: child.contentType,
         childIndex: index + 1,
         childCount: count,
-        parentInscriptionId: WEIRDOS_PARENT,
       }));
       addCustomPfpExtenders(imported, imported[0]?.id ?? null);
       setParentStatus(`IMPORTED ${count} IMAGE/HTML CHILDREN FOR ${bitmap}.BITMAP`);
