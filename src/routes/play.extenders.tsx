@@ -151,12 +151,12 @@ function PlayExtenders() {
         id: `weirdos-${id}`,
         name: index === 0 ? "WEIRDOS PARENT" : `WEIRDO ${index}`,
         collection: WEIRDOS_COLLECTION,
-        source: index === 0 ? "ordinals-image" : "ordinals-html",
+        source: "ordinals-image",
         inscriptionId: id,
         enabled: true,
         builtIn: false,
         addedAt: Date.now(),
-        contentType: index === 0 ? "image/webp" : "image/svg+xml",
+         contentType: index === 0 ? "image/webp" : "image/svg+xml",
         childIndex: index + 1,
         childCount: count,
         parentInscriptionId: WEIRDOS_PARENT,
@@ -253,41 +253,7 @@ function PlayExtenders() {
             {weirdosStatus && <p className="mt-2 font-mono text-[10px] text-muted-foreground">{weirdosStatus}</p>}
           </article>
           {pools.map(([collection, items]) => (
-            <article key={collection} className="border border-border bg-card p-3">
-              <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <h2 className="label text-bitcoin">{collection}</h2>
-                  <span className="label text-muted-foreground">{items.length} BACKGROUNDS · {items.filter((i) => i.source === "ordinals-html").length} HTML</span>
-                </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={enabled && selectedCollection === collection ? "terminal" : "terminalGhost"}
-                  disabled={!profile}
-                  onClick={() => updatePlayVisuals({ pfpExtendersEnabled: true, selectedPfpCollection: collection, selectedPfpExtenderId: items[0]?.id ?? null })}
-                >
-                  {enabled && selectedCollection === collection ? "POOL ACTIVE" : "USE POOL"}
-                </Button>
-              </header>
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
-                {items.map((extender) => {
-                  const active = enabled && selectedCollection === collection;
-                  return (
-                    <div key={extender.id} className={`group relative aspect-square border bg-background ${active ? "border-bitcoin" : "border-border"}`}>
-                      {extender.source === "ordinals-image" ? (
-                        <img src={inscriptionContentUrl(extender.inscriptionId)} alt={extender.name} loading="lazy" className="h-full w-full object-cover [image-rendering:pixelated]" />
-                      ) : (
-                        <iframe src={ordinalsPreviewUrl(extender.inscriptionId)} title={extender.name} loading="lazy" sandbox="allow-scripts" scrolling="no" className="pointer-events-none h-full w-full border-0" />
-                      )}
-                      <span className="label pointer-events-none absolute bottom-0 left-0 bg-background/85 px-1 text-[9px]">{extender.source === "ordinals-html" ? "HTML" : "IMG"}{active ? " · POOL" : ""}</span>
-                      {!extender.builtIn && (
-                        <button type="button" aria-label={`Remove ${extender.name}`} disabled={!profile} onClick={() => removeCustomPfpExtender(extender.id)} className="label absolute right-0 top-0 hidden bg-background/90 px-1.5 group-hover:block">×</button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </article>
+            <ExtenderPool key={collection} collection={collection} items={items} enabled={enabled} selectedCollection={selectedCollection} profileReady={Boolean(profile)} />
           ))}
         </section>
 
@@ -340,5 +306,53 @@ function PlayExtenders() {
         </aside>
       </div>
     </main>
+  );
+}
+
+function ExtenderPool({ collection, items, enabled, selectedCollection, profileReady }: {
+  collection: string;
+  items: CardVisualExtender[];
+  enabled: boolean;
+  selectedCollection: string | null;
+  profileReady: boolean;
+}) {
+  const [page, setPage] = useState(0);
+  const pageCount = Math.max(1, Math.ceil(items.length / 24));
+  const safePage = Math.min(page, pageCount - 1);
+  const active = enabled && selectedCollection === collection;
+  return (
+    <article className="border border-border bg-card p-3">
+      <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 className="label text-bitcoin">{collection}</h2>
+          <span className="label text-muted-foreground">{items.length} BACKGROUNDS · {items.filter((item) => item.source === "ordinals-html").length} HTML</span>
+        </div>
+        <Button type="button" size="sm" variant={active ? "terminal" : "terminalGhost"} disabled={!profileReady} onClick={() => updatePlayVisuals({ pfpExtendersEnabled: true, selectedPfpCollection: collection, selectedPfpExtenderId: items[0]?.id ?? null })}>
+          {active ? "POOL ACTIVE" : "USE POOL"}
+        </Button>
+      </header>
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+        {items.slice(safePage * 24, safePage * 24 + 24).map((extender) => (
+          <div key={extender.id} className={`group relative aspect-square border bg-background ${active ? "border-bitcoin" : "border-border"}`}>
+            {extender.source === "ordinals-image" ? (
+              <img src={inscriptionContentUrl(extender.inscriptionId)} alt={extender.name} loading="lazy" className="h-full w-full object-cover [image-rendering:pixelated]" />
+            ) : (
+              <iframe src={ordinalsPreviewUrl(extender.inscriptionId)} title={extender.name} loading="lazy" sandbox="allow-scripts" scrolling="no" className="pointer-events-none h-full w-full border-0" />
+            )}
+            <span className="label pointer-events-none absolute bottom-0 left-0 bg-background/85 px-1 text-[9px]">{extender.source === "ordinals-html" ? "HTML" : "IMG"}{active ? " · POOL" : ""}</span>
+            {!extender.builtIn && (
+              <button type="button" aria-label={`Remove ${extender.name}`} disabled={!profileReady} onClick={() => removeCustomPfpExtender(extender.id)} className="label absolute right-0 top-0 hidden bg-background/90 px-1.5 group-hover:block">×</button>
+            )}
+          </div>
+        ))}
+      </div>
+      {pageCount > 1 && (
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <Button type="button" variant="terminalGhost" disabled={safePage === 0} onClick={() => setPage((value) => Math.max(0, value - 1))}>PREV</Button>
+          <span className="label text-muted-foreground">PAGE {safePage + 1} / {pageCount}</span>
+          <Button type="button" variant="terminalGhost" disabled={safePage + 1 >= pageCount} onClick={() => setPage((value) => Math.min(pageCount - 1, value + 1))}>NEXT</Button>
+        </div>
+      )}
+    </article>
   );
 }
