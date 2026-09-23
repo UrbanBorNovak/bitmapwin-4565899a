@@ -1,3 +1,4 @@
+import { abilityFor } from "@/lib/game/abilities";
 import { hash } from "@/lib/game/cardFactory";
 import { activePfpExtenderForCard, inscriptionContentUrl, ordinalsPreviewUrl } from "@/lib/game/pfpExtenders";
 import type { CardState, CardType, LivingCard as Card } from "@/lib/game/types";
@@ -116,7 +117,7 @@ export function LivingCard({ card, size = "md", ui = "idle", live, onClick, labe
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-1 px-2 py-1.5">
         <div className={`display leading-tight ${size === "sm" ? "text-[10px]" : "text-xs"}`}>{card.name}</div>
-        <div className="label text-[8px] text-muted-foreground">{card.type}</div>
+        <div className="label text-[8px] text-muted-foreground">{card.type} · <span className="text-bitcoin">{abilityFor(card.type, card.bitmap).name}</span></div>
         {size !== "sm" && (
           <div className="flex flex-wrap gap-1">
             {card.traits.slice(0, 4).map((t) => (

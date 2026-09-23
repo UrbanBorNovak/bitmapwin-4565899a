@@ -29,12 +29,12 @@ const SUFFIX: Record<CardType, string> = {
 };
 
 export const TYPE_RULE: Record<CardType, string> = {
-  TERRITORY: "+1 energy each of your turns while on the field.",
-  BUILDER: "On play: every ally gains +1 defense.",
-  MINER: "On play: draw a card.",
-  EXPLORER: "Can attack the turn it arrives.",
-  GUARDIAN: "Enemies must attack Guardians first.",
-  EVENT: "Instant: strikes the strongest enemy, or the rival.",
+  TERRITORY: "Land that powers you: extra energy every turn.",
+  BUILDER: "Shapes your field: strengthens allies.",
+  MINER: "Brings cards and energy up from the chain.",
+  EXPLORER: "Fast and far-reaching: charge and sweep.",
+  GUARDIAN: "Protects you: enemies must attack it first.",
+  EVENT: "Instant effect, then returns to the world.",
 };
 
 export const TRAIT_RULE: Record<Trait, string> = {

@@ -46,3 +46,5 @@
 - [x] Import parent inscription children as BITMAP-specific PLAY image extenders.
 - [x] Distribute each selected extender pool deterministically across PLAY cards.
 - [x] Head-to-head PLAY tables: friends join by 5-letter code, server-checked moves, live sync
+- [x] Bitcoin Weirdos extender from parent 89d8bfdc…c2i0 children
+- [x] Card ability system: 18 abilities, 3 per type, picked by BITMAP
