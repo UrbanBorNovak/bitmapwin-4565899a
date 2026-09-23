@@ -44,3 +44,4 @@
 - [x] Verify the new PLAY extender flow on desktop and mobile.
 
 - [x] Import parent inscription children as BITMAP-specific PLAY image extenders.
+- [x] Distribute each selected extender pool deterministically across PLAY cards.
