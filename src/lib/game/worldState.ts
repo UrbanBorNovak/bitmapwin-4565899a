@@ -94,7 +94,7 @@ export function addCustomPfpExtenders(extenders: CardVisualExtender[], selectedI
     ...current.visuals,
     pfpExtendersEnabled: true,
     selectedPfpExtenderId: selectedId ?? firstEnabled ?? current.visuals.selectedPfpExtenderId,
-    customPfpExtenders: [...extenders, ...existing].slice(0, 300),
+    customPfpExtenders: [...extenders, ...existing].slice(0, 4000),
   });
   commit({ ...current, visuals });
 }
