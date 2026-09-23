@@ -79,7 +79,7 @@ function ClanBoard() {
                 <Link to="/clan/$tag" params={{ tag: clan.tag }} className="flex items-center gap-2 hover:underline">
                   {clanCrestImage(clan.tag) ? (
                     <img
-                      src={clanCrestImage(clan.tag)!}
+                      src={clanCrestImage(clan.tag) ?? undefined}
                       alt=""
                       aria-hidden="true"
                       className="inline-block size-5 shrink-0 border border-border object-cover sm:size-4"

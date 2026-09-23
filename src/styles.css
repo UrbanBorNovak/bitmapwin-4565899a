@@ -100,33 +100,33 @@
 }
 
 .light {
-  --signal: oklch(0.72 0.19 55.6);
-  --signal-foreground: oklch(0.1 0 0);
-  --surface: oklch(0.16 0 0);
-  --background: oklch(0.08 0 0);
-  --foreground: oklch(0.955 0 0);
-  --card: oklch(0.14 0 0);
-  --card-foreground: oklch(0.955 0 0);
-  --popover: oklch(0.115 0 0);
-  --popover-foreground: oklch(0.955 0 0);
-  --primary: oklch(0.72 0.19 55.6);
+  --signal: oklch(0.53 0.13 220);
+  --signal-foreground: oklch(0.985 0 0);
+  --surface: oklch(0.955 0 0);
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0.12 0 0);
+  --card: oklch(0.975 0 0);
+  --card-foreground: oklch(0.12 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.12 0 0);
+  --primary: oklch(0.68 0.19 55.6);
   --primary-foreground: oklch(0.1 0 0);
-  --secondary: oklch(0.18 0 0);
-  --secondary-foreground: oklch(0.955 0 0);
-  --muted: oklch(0.17 0 0);
-  --muted-foreground: oklch(0.62 0 0);
-  --accent: oklch(0.22 0 0);
-  --accent-foreground: oklch(0.955 0 0);
+  --secondary: oklch(0.93 0 0);
+  --secondary-foreground: oklch(0.12 0 0);
+  --muted: oklch(0.94 0 0);
+  --muted-foreground: oklch(0.43 0 0);
+  --accent: oklch(0.9 0 0);
+  --accent-foreground: oklch(0.12 0 0);
   --destructive: oklch(0.62 0.2 25);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.255 0 0);
-  --border-strong: oklch(0.38 0 0);
-  --input: oklch(0.3 0 0);
-  --ring: oklch(0.72 0.19 55.6);
-  --grid: oklch(0.22 0 0);
-  --profile-surface: oklch(0.12 0 0);
-  --profile-surface-raised: oklch(0.16 0 0);
-  --profile-warm: oklch(0.72 0.19 55.6);
+  --border: oklch(0.78 0 0);
+  --border-strong: oklch(0.55 0 0);
+  --input: oklch(0.68 0 0);
+  --ring: oklch(0.68 0.19 55.6);
+  --grid: oklch(0.86 0 0);
+  --profile-surface: oklch(0.97 0 0);
+  --profile-surface-raised: oklch(0.93 0 0);
+  --profile-warm: oklch(0.68 0.19 55.6);
   --profile-warm-muted: oklch(0.6 0.14 55.6);
 }
 
@@ -946,6 +946,50 @@
 
 .sales-backdrop {
   display: none;
+}
+
+.atlas-terminal,
+.land-terminal,
+.rank-terminal {
+  background: var(--color-background);
+}
+
+.atlas-terminal :where(.atlas-panel),
+.land-terminal :where(.land-panel),
+.rank-terminal :where(.rank-panel) {
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.atlas-terminal .atlas-storybook {
+  border-color: var(--color-border-strong);
+  box-shadow: none;
+}
+
+.atlas-terminal :where(button, a)[aria-pressed="true"],
+.rank-terminal :where(button, a)[aria-current="page"] {
+  background: var(--color-bitcoin);
+  border-color: var(--color-bitcoin);
+  color: var(--color-bitcoin-foreground);
+}
+
+.rank-terminal table tbody tr {
+  transition: background-color var(--motion-fast) linear;
+}
+
+.rank-terminal table tbody tr:hover {
+  background: var(--color-secondary);
+}
+
+.rank-terminal table th,
+.rank-terminal table td {
+  height: 2.25rem;
+}
+
+.light .atlas-storybook__wash {
+  opacity: 0.32;
 }
 
 .site-header,

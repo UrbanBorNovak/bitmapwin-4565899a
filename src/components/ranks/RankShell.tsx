@@ -5,6 +5,7 @@
 
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 import { statusClass, type RankPlayer, type RankStatus } from "@/lib/ranks";
 import { useWalletSession } from "@/lib/wallet-session";
 
@@ -35,49 +36,51 @@ export function RankShell({
   children: ReactNode;
 }) {
   return (
-    <div className="mx-auto max-w-[1600px] px-4 py-8 md:px-8 md:py-12">
-      <div className="label text-bitcoin">THE OASIS · HALL OF FAME</div>
-      <h1 className="display mt-3 text-3xl md:text-5xl">RANKS</h1>
-      <p className="mt-3 max-w-2xl font-mono text-[11px] leading-relaxed text-muted-foreground md:text-xs">
-        {lore}
-      </p>
+    <div className="rank-terminal mx-auto max-w-[1600px] px-3 py-5 md:px-5 md:py-8">
+      <header className="rank-panel grid gap-4 p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+        <div>
+          <div className="label text-bitcoin">THE OASIS · HALL OF FAME</div>
+          <h1 className="display mt-2 text-3xl md:text-4xl">RANKS</h1>
+        </div>
+        <p className="max-w-2xl font-mono text-[10px] leading-relaxed text-muted-foreground md:text-right md:text-[11px]">{lore}</p>
+      </header>
 
-      <nav className="mt-6 flex flex-wrap gap-2" aria-label="Rank boards">
+      <nav className="mt-px flex flex-wrap gap-px bg-border p-px" aria-label="Rank boards">
         {TABS.map((tab) => (
           <Link
             key={tab.to}
             to={tab.to}
             activeOptions={{ exact: true }}
-            className="label border border-border px-4 py-3 text-[0.6rem] hover:border-bitcoin hover:text-bitcoin md:py-2"
-            activeProps={{ className: "border-bitcoin text-bitcoin" }}
+            className="label flex-1 border border-transparent bg-background px-4 py-3 text-center text-[0.6rem] hover:border-bitcoin hover:text-bitcoin md:flex-none md:py-2"
+            activeProps={{ className: "border-bitcoin bg-bitcoin text-primary-foreground" }}
           >
             {tab.label}
           </Link>
         ))}
       </nav>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="rank-panel mt-px flex flex-wrap items-center gap-px p-2">
         {(["weekly", "all"] as const).map((value) => (
-          <button
+          <Button
             key={value}
             type="button"
             onClick={() => onScope(value)}
-            className={`label border px-4 py-3 text-[0.6rem] md:py-2 ${
-              scope === value ? "border-signal text-signal" : "border-border text-muted-foreground"
-            }`}
+            variant={scope === value ? "terminal" : "terminalGhost"}
+            size="sm"
+            className="text-[0.6rem]"
           >
             {value === "weekly" ? "WEEKLY" : "ALL TIME"}
-          </button>
+          </Button>
         ))}
         <input
           value={term}
           onChange={(event) => onTerm(event.target.value)}
           placeholder="SEARCH NAME OR [TAG]"
-          className="min-w-48 flex-1 border border-border bg-background px-3 py-3 font-mono text-[11px] uppercase outline-none placeholder:text-muted-foreground focus:border-bitcoin md:py-2"
+          className="h-9 min-w-48 flex-1 border border-border bg-background px-3 font-mono text-[11px] uppercase outline-none placeholder:text-muted-foreground focus:border-bitcoin"
         />
       </div>
 
-      <div className="mt-6">{children}</div>
+      <div className="mt-px">{children}</div>
     </div>
   );
 }
@@ -93,14 +96,14 @@ export function RankTable({
   compact?: boolean;
 }) {
   return (
-    <div className="overflow-x-auto border border-border [scrollbar-width:thin]">
+    <div className="rank-panel overflow-x-auto [scrollbar-width:thin]">
       <table
         className={`w-full border-collapse font-mono text-[10px] sm:text-[11px] ${
-          compact ? "min-w-[27rem] sm:min-w-[42rem]" : "min-w-[32rem] sm:min-w-[46rem]"
+          compact ? "min-w-[25rem] sm:min-w-[42rem]" : "min-w-[30rem] sm:min-w-[46rem]"
         }`}
       >
-        <thead className="bg-surface">
-          <tr className="text-left text-[9px] uppercase tracking-[0.2em] text-muted-foreground">{head}</tr>
+        <thead className="bg-secondary">
+          <tr className="text-left text-[9px] uppercase tracking-normal text-muted-foreground">{head}</tr>
         </thead>
         <tbody>{children}</tbody>
       </table>
@@ -110,7 +113,7 @@ export function RankTable({
 
 export function Th({ children, right, mobileHide }: { children: ReactNode; right?: boolean; mobileHide?: boolean }) {
   return (
-    <th className={`whitespace-nowrap border-b border-border px-1.5 py-2 font-normal sm:px-2 ${right ? "text-right" : ""} ${mobileHide ? "hidden sm:table-cell" : ""}`}>
+    <th className={`whitespace-nowrap border-b border-border px-2 py-2 font-normal sm:px-3 ${right ? "text-right" : ""} ${mobileHide ? "hidden sm:table-cell" : ""}`}>
       {children}
     </th>
   );
@@ -118,7 +121,7 @@ export function Th({ children, right, mobileHide }: { children: ReactNode; right
 
 export function Td({ children, right, mobileHide }: { children: ReactNode; right?: boolean; mobileHide?: boolean }) {
   return (
-    <td className={`whitespace-nowrap border-b border-border/60 px-1.5 py-2 sm:px-2 ${right ? "text-right tabular-nums" : ""} ${mobileHide ? "hidden sm:table-cell" : ""}`}>
+    <td className={`whitespace-nowrap border-b border-border/60 px-2 py-2 sm:px-3 ${right ? "text-right tabular-nums" : ""} ${mobileHide ? "hidden sm:table-cell" : ""}`}>
       {children}
     </td>
   );
