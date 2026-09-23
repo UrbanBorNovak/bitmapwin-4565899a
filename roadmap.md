@@ -42,3 +42,5 @@
 - [x] Add optional Ordinals PFP HTML extenders to BITMAPWIN // PLAY.
 - [x] Wire PFP extender previews into living-card art and card profiles.
 - [x] Verify the new PLAY extender flow on desktop and mobile.
+
+- [x] Import parent inscription children as BITMAP-specific PLAY image extenders.

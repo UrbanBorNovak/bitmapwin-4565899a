@@ -41,6 +41,10 @@ export function ordinalsPreviewUrl(inscriptionId: string): string {
   return `https://ordinals.com/preview/${inscriptionId}`;
 }
 
+export function inscriptionContentUrl(inscriptionId: string): string {
+  return `/api/public/inscription/${inscriptionId}`;
+}
+
 export function allPfpExtenders(settings: PlayVisualSettings | null | undefined): CardVisualExtender[] {
   const seen = new Set<string>();
   const combined = [...BUILT_IN_PFP_EXTENDERS, ...(settings?.customPfpExtenders ?? [])];
@@ -53,11 +57,13 @@ export function allPfpExtenders(settings: PlayVisualSettings | null | undefined)
 
 export function activePfpExtenderForCard(card: LivingCard, settings: PlayVisualSettings | null | undefined): CardVisualExtender | null {
   if (!settings?.pfpExtendersEnabled) return null;
-  const extenders = allPfpExtenders(settings).filter((extender) => extender.enabled !== false);
+  const extenders = allPfpExtenders(settings).filter((extender) => extender.enabled !== false && (extender.bitmap === undefined || extender.bitmap === null || extender.bitmap === card.bitmap));
   if (!extenders.length) return null;
-  const selected = settings.selectedPfpExtenderId ? extenders.find((extender) => extender.id === settings.selectedPfpExtenderId) : null;
+  const bitmapScoped = extenders.filter((extender) => extender.bitmap === card.bitmap);
+  const pool = bitmapScoped.length > 0 ? bitmapScoped : extenders;
+  const selected = settings.selectedPfpExtenderId ? pool.find((extender) => extender.id === settings.selectedPfpExtenderId) : null;
   if (selected) return selected;
-  return extenders[hash(card.bitmap) % extenders.length] ?? null;
+  return pool[hash(card.bitmap) % pool.length] ?? null;
 }
 
 export function normalizeVisualSettings(value: unknown): PlayVisualSettings {
@@ -70,16 +76,27 @@ export function normalizeVisualSettings(value: unknown): PlayVisualSettings {
         if (!inscriptionId) return [];
         const safeName = String(candidate.name ?? "CUSTOM HTML PFP").trim().slice(0, 42) || "CUSTOM HTML PFP";
         const safeCollection = String(candidate.collection ?? "CUSTOM ORDINALS PFP").trim().slice(0, 42) || "CUSTOM ORDINALS PFP";
+        const source: CardVisualExtender["source"] = candidate.source === "ordinals-image" ? "ordinals-image" : "ordinals-html";
+        const bitmap = typeof candidate.bitmap === "number" && Number.isInteger(candidate.bitmap) && candidate.bitmap >= 0 && candidate.bitmap <= 999_999 ? candidate.bitmap : null;
+        const parentInscriptionId = normalizeInscriptionInput(String(candidate.parentInscriptionId ?? ""));
+        const contentType = typeof candidate.contentType === "string" ? candidate.contentType.slice(0, 80) : null;
+        const childIndex = typeof candidate.childIndex === "number" && Number.isInteger(candidate.childIndex) ? candidate.childIndex : null;
+        const childCount = typeof candidate.childCount === "number" && Number.isInteger(candidate.childCount) ? candidate.childCount : null;
         return [
           {
-            id: `custom-${inscriptionId}`,
+            id: bitmap !== null && parentInscriptionId ? `parent-${bitmap}-${parentInscriptionId}-${inscriptionId}` : `custom-${inscriptionId}`,
             name: safeName.toUpperCase(),
             collection: safeCollection.toUpperCase(),
-            source: "ordinals-html" as const,
+            source,
             inscriptionId,
             enabled: candidate.enabled !== false,
             builtIn: false,
             addedAt: typeof candidate.addedAt === "number" ? candidate.addedAt : Date.now(),
+            bitmap,
+            parentInscriptionId,
+            contentType,
+            childIndex,
+            childCount,
           },
         ];
       })
