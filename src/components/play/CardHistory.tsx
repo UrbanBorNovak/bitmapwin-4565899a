@@ -1,4 +1,6 @@
-import type { LivingCard } from "@/lib/game/types";
+import { Link } from "@tanstack/react-router";
+import { activePfpExtenderForCard } from "@/lib/game/pfpExtenders";
+import type { LivingCard, PlayVisualSettings } from "@/lib/game/types";
 
 const fmt = (t: number | null) => (t ? new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—");
 
@@ -37,8 +39,9 @@ export function CardHistory({ card }: { card: LivingCard }) {
 }
 
 /** Keeps the three data layers visibly separate. */
-export function CardDataLayers({ card }: { card: LivingCard }) {
+export function CardDataLayers({ card, visuals }: { card: LivingCard; visuals?: PlayVisualSettings | null }) {
   const f = card.facts;
+  const extender = activePfpExtenderForCard(card, visuals);
   return (
     <section className="grid gap-px border border-border bg-border md:grid-cols-3">
       <div className="bg-card p-3">
@@ -62,6 +65,17 @@ export function CardDataLayers({ card }: { card: LivingCard }) {
           <div className="flex justify-between"><dt className="text-muted-foreground">POWER / DEF / COST</dt><dd>{card.power} / {card.defense} / {card.energy}</dd></div>
           <div className="flex justify-between"><dt className="text-muted-foreground">ACTIVITY</dt><dd>{card.activity}</dd></div>
         </dl>
+        <div className="mt-3 border-t border-border pt-2">
+          <h3 className="label text-signal">VISUAL EXTENDER</h3>
+          {extender ? (
+            <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+              {extender.name} · HTML INSCRIPTION · cosmetic only
+            </p>
+          ) : (
+            <p className="mt-1 font-mono text-[10px] text-muted-foreground">BASE BITMAP PATTERN</p>
+          )}
+          <Link to="/play/extenders" className="label mt-2 inline-flex hover:text-bitcoin">MANAGE PFP EXTENDERS →</Link>
+        </div>
       </div>
     </section>
   );
