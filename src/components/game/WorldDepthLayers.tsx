@@ -66,7 +66,7 @@ function FarTerrain() {
   );
 }
 
-function PaintedSkyLife() {
+function PaintedSkyLife({ mapView }: { mapView: boolean }) {
   const { quality } = useQuality();
   const cloudRef = useRef<THREE.InstancedMesh>(null);
   const leafRef = useRef<THREE.InstancedMesh>(null);
@@ -113,7 +113,7 @@ function PaintedSkyLife() {
   if (quality.effects === "off") return null;
   return (
     <group raycast={noRaycast}>
-      <instancedMesh ref={cloudRef} args={[undefined, undefined, cloudCount]} raycast={noRaycast} frustumCulled={false} renderOrder={-6}>
+      <instancedMesh visible={!mapView} ref={cloudRef} args={[undefined, undefined, cloudCount]} raycast={noRaycast} frustumCulled={false} renderOrder={-6}>
         <sphereGeometry args={[1, 12, 7]} />
         <meshBasicMaterial color={ATLAS.peak} transparent opacity={0.38} depthWrite={false} toneMapped={false} />
       </instancedMesh>
@@ -282,7 +282,7 @@ export const WorldDepthLayers = memo(function WorldDepthLayers({ mapView }: { ma
   return (
     <group>
       <FarTerrain />
-      <PaintedSkyLife />
+      <PaintedSkyLife mapView={mapView} />
       <DistantActivity />
       <AtmosphericHaze />
       <group visible={!mapView}>
