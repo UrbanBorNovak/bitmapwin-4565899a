@@ -65,6 +65,7 @@ import { Route as PlayIndexRouteImport } from './routes/play.index'
 import { Route as PlayAtlasRouteImport } from './routes/play.atlas'
 import { Route as PlayCardsRouteImport } from './routes/play.cards'
 import { Route as PlayExtendersRouteImport } from './routes/play.extenders'
+import { Route as PlayImportRouteImport } from './routes/play.import'
 import { Route as PlayMatchRouteImport } from './routes/play.match'
 import { Route as ProfileAddressRouteImport } from './routes/profile.$address'
 import { Route as RanksIndexRouteImport } from './routes/ranks.index'
@@ -369,6 +370,11 @@ const PlayExtendersRoute = PlayExtendersRouteImport.update({
   path: '/extenders',
   getParentRoute: () => PlayRoute,
 } as any)
+const PlayImportRoute = PlayImportRouteImport.update({
+  id: '/import',
+  path: '/import',
+  getParentRoute: () => PlayRoute,
+} as any)
 const PlayMatchRoute = PlayMatchRouteImport.update({
   id: '/match',
   path: '/match',
@@ -536,6 +542,7 @@ export interface FileRoutesByFullPath {
   '/play/atlas': typeof PlayAtlasRoute
   '/play/cards': typeof PlayCardsRoute
   '/play/extenders': typeof PlayExtendersRoute
+  '/play/import': typeof PlayImportRoute
   '/play/match': typeof PlayMatchRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/ranks/clans': typeof RanksClansRoute
@@ -612,6 +619,7 @@ export interface FileRoutesByTo {
   '/play/atlas': typeof PlayAtlasRoute
   '/play/cards': typeof PlayCardsRoute
   '/play/extenders': typeof PlayExtendersRoute
+  '/play/import': typeof PlayImportRoute
   '/play/match': typeof PlayMatchRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/ranks/clans': typeof RanksClansRoute
@@ -693,6 +701,7 @@ export interface FileRoutesById {
   '/play/atlas': typeof PlayAtlasRoute
   '/play/cards': typeof PlayCardsRoute
   '/play/extenders': typeof PlayExtendersRoute
+  '/play/import': typeof PlayImportRoute
   '/play/match': typeof PlayMatchRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/ranks/clans': typeof RanksClansRoute
@@ -775,6 +784,7 @@ export interface FileRouteTypes {
     | '/play/atlas'
     | '/play/cards'
     | '/play/extenders'
+    | '/play/import'
     | '/play/match'
     | '/profile/$address'
     | '/ranks/clans'
@@ -851,6 +861,7 @@ export interface FileRouteTypes {
     | '/play/atlas'
     | '/play/cards'
     | '/play/extenders'
+    | '/play/import'
     | '/play/match'
     | '/profile/$address'
     | '/ranks/clans'
@@ -931,6 +942,7 @@ export interface FileRouteTypes {
     | '/play/atlas'
     | '/play/cards'
     | '/play/extenders'
+    | '/play/import'
     | '/play/match'
     | '/profile/$address'
     | '/ranks/clans'
@@ -1407,6 +1419,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlayExtendersRouteImport
       parentRoute: typeof PlayRoute
     }
+    '/play/import': {
+      id: '/play/import'
+      path: '/import'
+      fullPath: '/play/import'
+      preLoaderRoute: typeof PlayImportRouteImport
+      parentRoute: typeof PlayRoute
+    }
     '/play/match': {
       id: '/play/match'
       path: '/match'
@@ -1637,6 +1656,7 @@ interface PlayRouteChildren {
   PlayAtlasRoute: typeof PlayAtlasRoute
   PlayCardsRoute: typeof PlayCardsRoute
   PlayExtendersRoute: typeof PlayExtendersRoute
+  PlayImportRoute: typeof PlayImportRoute
   PlayMatchRoute: typeof PlayMatchRoute
   PlayIndexRoute: typeof PlayIndexRoute
   PlayCardIdRoute: typeof PlayCardIdRoute
@@ -1646,6 +1666,7 @@ const PlayRouteChildren: PlayRouteChildren = {
   PlayAtlasRoute: PlayAtlasRoute,
   PlayCardsRoute: PlayCardsRoute,
   PlayExtendersRoute: PlayExtendersRoute,
+  PlayImportRoute: PlayImportRoute,
   PlayMatchRoute: PlayMatchRoute,
   PlayIndexRoute: PlayIndexRoute,
   PlayCardIdRoute: PlayCardIdRoute,
