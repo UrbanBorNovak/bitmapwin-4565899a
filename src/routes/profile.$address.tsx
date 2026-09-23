@@ -1,6 +1,7 @@
 import { useEffect as useEffectPlay, useState as useStatePlay } from "react";
 import { PlayStatsPanel } from "@/components/play/PlayStatsPanel";
-import { readProfileFor } from "@/lib/game/worldState";
+import { ownerKey, readProfileFor } from "@/lib/game/worldState";
+import { fetchRemotePlayProfile, pickRicher } from "@/lib/game/cloudSync";
 import type { PlayProfile } from "@/lib/game/types";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useQuery } from "@tanstack/react-query";
@@ -218,7 +219,17 @@ function ProfilePage() {
 
 function ProfilePlayStats({ address }: { address: string }) {
   const [play, setPlay] = useStatePlay<PlayProfile | null>(null);
-  useEffectPlay(() => setPlay(readProfileFor(address)), [address]);
+  useEffectPlay(() => {
+    let live = true;
+    const local = readProfileFor(address);
+    setPlay(local);
+    void fetchRemotePlayProfile(ownerKey(address)).then((remote) => {
+      if (live) setPlay(pickRicher(local, remote));
+    });
+    return () => {
+      live = false;
+    };
+  }, [address]);
   if (!play || play.stats.matches === 0) return null;
   return (
     <div className="mt-8">
