@@ -11,6 +11,10 @@ import {
   ordinalsPreviewUrl,
 } from "@/lib/game/pfpExtenders";
 import { getParentImageChildrenFn } from "@/lib/game/parentExtenders.functions";
+import { getOrdiscanCollectionFn } from "@/lib/game/ordiscan.functions";
+
+const WEIRDOS_SLUG = "bitcoin-weirdos";
+const WEIRDOS_COLLECTION = "BITCOIN WEIRDOS";
 import {
   addCustomPfpExtenders,
   addCustomPfpExtender,
