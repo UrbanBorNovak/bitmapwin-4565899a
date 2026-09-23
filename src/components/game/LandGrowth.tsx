@@ -24,9 +24,9 @@ import { isSea } from "@/lib/world-sea";
 import { worldWeather } from "@/lib/world-weather";
 import { useQuality } from "@/graphics/QualityContext";
 
-const MAX_GRASS = 24_000;
-const MAX_BUSH = 260;
-const MAX_TREE = 90;
+const MAX_GRASS = 12_000;
+const MAX_BUSH = 130;
+const MAX_TREE = 45;
 /** plots this many cells away from the player are still dressed */
 const RADIUS_CELLS = 24;
 /** how often the growth amount is re-read from the clock */
@@ -401,9 +401,9 @@ function planPlot(land: TerraformedLand, growth: number, out: { grass: Item[]; b
 
   // Grass needs to read as a patch at avatar scale, not as isolated pixels.
   // Keep young land sparse, then gather the blades into deterministic clumps.
-  const grassCount = Math.round(12 + growth * 420);
-  const bushCount = growth < 0.3 ? 0 : Math.round((growth - 0.3) * 18);
-  const treeCount = growth < 0.55 ? 0 : Math.round((growth - 0.55) * 9);
+  const grassCount = Math.round(6 + growth * 210);
+  const bushCount = growth < 0.3 ? 0 : Math.round((growth - 0.3) * 9);
+  const treeCount = growth < 0.55 ? 0 : Math.round((growth - 0.55) * 4.5);
 
   for (let i = 0; i < grassCount; i += 1) {
     if (out.grass.length >= MAX_GRASS) break;
@@ -468,9 +468,9 @@ export function LandGrowth({
 }) {
   const { quality } = useQuality();
   const radiusCells = quality.resolved === "low" ? 8 : quality.resolved === "medium" ? 16 : RADIUS_CELLS;
-  const grassBudget = quality.resolved === "low" ? 6_000 : quality.resolved === "medium" ? 14_000 : MAX_GRASS;
-  const bushBudget = quality.resolved === "low" ? 70 : quality.resolved === "medium" ? 160 : MAX_BUSH;
-  const treeBudget = quality.resolved === "low" ? 30 : quality.resolved === "medium" ? 60 : MAX_TREE;
+  const grassBudget = quality.resolved === "low" ? 3_000 : quality.resolved === "medium" ? 7_000 : MAX_GRASS;
+  const bushBudget = quality.resolved === "low" ? 35 : quality.resolved === "medium" ? 80 : MAX_BUSH;
+  const treeBudget = quality.resolved === "low" ? 15 : quality.resolved === "medium" ? 30 : MAX_TREE;
   const land = useTerraformedLand();
   // Re-plan when something is built or demolished: plants clear the new floor.
   const builds = useWorldBuilds();

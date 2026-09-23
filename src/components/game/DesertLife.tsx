@@ -220,7 +220,7 @@ export const DesertLife = memo(function DesertLife({
         const roll = hash(gx, gz, 3);
         const spin = hash(gx, gz, 4) * Math.PI * 2;
 
-        if (roll < 0.014) {
+        if (roll < 0.007) {
           // Saguaro: a tall trunk, sometimes with one or two raised arms.
           const height = unit * (1.2 + hash(gx, gz, 5) * 1.4);
           const girth = unit * (0.22 + hash(gx, gz, 6) * 0.1);
@@ -286,7 +286,7 @@ export const DesertLife = memo(function DesertLife({
           dummy.scale.set(size, size * 0.6, size);
           dummy.updateMatrix();
           pebbles.matrices.push(dummy.matrix.clone());
-        } else if (roll < 0.4) {
+        } else if (roll < 0.32) {
           const size = unit * (0.2 + hash(gx, gz, 14) * 0.25);
           dummy.position.set(x, size * 0.4, z);
           dummy.rotation.set(0, spin, 0);
@@ -318,7 +318,7 @@ export const DesertLife = memo(function DesertLife({
           }
 
           // Palms leaning over the water.
-          const palmCount = 3 + Math.floor(hash(gx, gz, 40) * 3);
+          const palmCount = 2 + Math.floor(hash(gx, gz, 40) * 1.5);
           for (let p = 0; p < palmCount; p++) {
             const angle = (p / palmCount) * Math.PI * 2 + spin * 1.3;
             const ring = span2 * (1.25 + hash(gx + p, gz, 41) * 0.5);
@@ -351,7 +351,7 @@ export const DesertLife = memo(function DesertLife({
           }
 
           // Green bushes crowding the damp ground.
-          const bushCount = 6 + Math.floor(hash(gx, gz, 45) * 5);
+          const bushCount = 3 + Math.floor(hash(gx, gz, 45) * 2.5);
           for (let b = 0; b < bushCount; b++) {
             const angle = hash(gx + b, gz - b, 46) * Math.PI * 2;
             const ring = span2 * (1.0 + hash(gx - b, gz + b, 47) * 0.9);
