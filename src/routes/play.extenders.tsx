@@ -11,6 +11,10 @@ import {
   ordinalsPreviewUrl,
 } from "@/lib/game/pfpExtenders";
 import { getParentImageChildrenFn } from "@/lib/game/parentExtenders.functions";
+import { getOrdiscanCollectionFn } from "@/lib/game/ordiscan.functions";
+
+const WEIRDOS_SLUG = "bitcoin-weirdos";
+const WEIRDOS_COLLECTION = "BITCOIN WEIRDOS";
 import {
   addCustomPfpExtenders,
   addCustomPfpExtender,
@@ -39,6 +43,7 @@ export const Route = createFileRoute("/play/extenders")({
 function PlayExtenders() {
   const profile = usePlayProfile();
   const scanParent = useServerFn(getParentImageChildrenFn);
+  const scanCollection = useServerFn(getOrdiscanCollectionFn);
   const [input, setInput] = useState("");
   const [name, setName] = useState("");
   const [parentInput, setParentInput] = useState("");
@@ -47,6 +52,8 @@ function PlayExtenders() {
   const [parentError, setParentError] = useState<string | null>(null);
   const [parentStatus, setParentStatus] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+  const [weirdosStatus, setWeirdosStatus] = useState<string | null>(null);
+  const [weirdosLoading, setWeirdosLoading] = useState(false);
   const extenders = useMemo(() => allPfpExtenders(profile?.visuals), [profile?.visuals]);
   const selected = extenders.find((extender) => extender.id === profile?.visuals.selectedPfpExtenderId) ?? extenders[0] ?? null;
   const previewCard = profile?.order.map((id) => profile.cards[id]).find(Boolean) ?? null;
@@ -133,6 +140,43 @@ function PlayExtenders() {
     }
   }
 
+  async function importWeirdos() {
+    setWeirdosLoading(true);
+    setWeirdosStatus("READING BITCOIN WEIRDOS FROM ORDISCAN…");
+    try {
+      const result = await scanCollection({ data: { slug: WEIRDOS_SLUG, limit: 250 } });
+      if (result.needsKey) {
+        setWeirdosStatus("ORDISCAN API KEY NEEDED — ADD IT IN PROJECT SETTINGS TO LOAD THIS COLLECTION");
+        return;
+      }
+      if (result.items.length === 0) {
+        setWeirdosStatus("NO WEIRDOS RETURNED RIGHT NOW — TRY AGAIN LATER");
+        return;
+      }
+      const count = result.items.length;
+      const imported: CardVisualExtender[] = result.items.map((item, index) => ({
+        id: `weirdos-${item.inscriptionId}`,
+        name: `WEIRDO ${item.number ?? index + 1}`,
+        collection: WEIRDOS_COLLECTION,
+        source: item.contentType.startsWith("text/html") ? "ordinals-html" : "ordinals-image",
+        inscriptionId: item.inscriptionId,
+        enabled: true,
+        builtIn: false,
+        addedAt: Date.now(),
+        contentType: item.contentType,
+        childIndex: index + 1,
+        childCount: count,
+      }));
+      addCustomPfpExtenders(imported, imported[0]?.id ?? null);
+      updatePlayVisuals({ pfpExtendersEnabled: true, selectedPfpCollection: WEIRDOS_COLLECTION });
+      setWeirdosStatus(`LOADED ${count} WEIRDOS INTO THE CARD POOL${result.truncated ? " · MORE AVAILABLE" : ""}`);
+    } catch {
+      setWeirdosStatus("BITCOIN WEIRDOS COULD NOT BE READ RIGHT NOW");
+    } finally {
+      setWeirdosLoading(false);
+    }
+  }
+
   return (
     <main className="play-district mx-auto max-w-[1200px] overflow-x-hidden px-4 py-8 md:px-8">
       <PlayNav />
@@ -192,6 +236,27 @@ function PlayExtenders() {
                 </div>
               </>
             )}
+          </article>
+          <article className="border border-border bg-card p-3">
+            <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="label text-bitcoin">{WEIRDOS_COLLECTION} · ORDISCAN</h2>
+                <span className="label text-muted-foreground">POPULAR ORDINALS PFP COLLECTION</span>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant={enabled && selectedCollection === WEIRDOS_COLLECTION ? "terminal" : "terminalGhost"}
+                disabled={!profile || weirdosLoading}
+                onClick={importWeirdos}
+              >
+                {weirdosLoading ? "LOADING…" : enabled && selectedCollection === WEIRDOS_COLLECTION ? "POOL ACTIVE" : "LOAD COLLECTION"}
+              </Button>
+            </header>
+            <p className="break-all font-mono text-[10px] text-muted-foreground">
+              ordiscan.com/collection/bitcoin-weirdos · LOADS THE COLLECTION INTO THE CARD POOL SO EACH CARD GETS A DIFFERENT WEIRDO
+            </p>
+            {weirdosStatus && <p className="mt-2 font-mono text-[10px] text-muted-foreground">{weirdosStatus}</p>}
           </article>
           {pools.map(([collection, items]) => (
             <article key={collection} className="border border-border bg-card p-3">
