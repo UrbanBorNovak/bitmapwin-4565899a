@@ -118,7 +118,9 @@ export function BitmapChat({ height }: { height: number }) {
                       <span className="text-foreground">{name}</span>
                     )}
                     <span>{timeAgo(m.createdAt)}</span>
-                    {user?.id === m.userId && (
+                    {Boolean(user) &&
+                      Boolean(address) &&
+                      m.senderAddress?.toLowerCase() === address?.toLowerCase() && (
                       <button
                         type="button"
                         className="text-muted-foreground hover:text-bitcoin"
