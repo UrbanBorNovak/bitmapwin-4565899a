@@ -183,24 +183,26 @@ function BitmapDetail() {
 
 
   return (
-    <div className="storybook-page mx-auto min-h-screen max-w-[1400px] px-4 py-12 md:px-8">
-      <Link to="/marketplace" className="label hover:text-foreground">
-        ← BACK TO MARKETPLACE
-      </Link>
-      <h1 className="display mt-4 text-4xl md:text-6xl">{block}.BITMAP</h1>
-      <p className="label mt-3">
-        {parcel
-          ? `CLAIMED ON CHAIN${parcel.inscribedInBlock !== null ? ` IN BLOCK ${parcel.inscribedInBlock}` : ""}`
-          : "UNCLAIMED — NO VALID INSCRIPTION IN THE REGISTRY"}
-      </p>
-      <Link to="/map/place/$block" params={{ block: String(block) }} className="mt-4 flex max-w-xl min-w-0 items-center justify-between gap-4 border border-bitcoin/50 bg-bitcoin/5 px-4 py-3 transition-colors hover:bg-bitcoin/10">
+    <div className="land-terminal mx-auto min-h-screen max-w-[1400px] px-3 py-5 md:px-5 md:py-8">
+      <header className="land-panel p-4 md:p-5">
+        <Link to="/marketplace" className="label hover:text-foreground">← MARKETPLACE / LAND</Link>
+        <div className="mt-3 flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
+          <h1 className="display text-3xl md:text-5xl">{block}.BITMAP</h1>
+          <p className="label border border-border px-3 py-2 text-bitcoin">
+            {parcel
+              ? `CLAIMED${parcel.inscribedInBlock !== null ? ` · BLOCK ${parcel.inscribedInBlock}` : ""}`
+              : "UNCLAIMED"}
+          </p>
+        </div>
+      </header>
+      <Link to="/map/place/$block" params={{ block: String(block) }} className="land-panel mt-px flex max-w-xl min-w-0 items-center justify-between gap-4 px-4 py-3 transition-colors hover:border-bitcoin">
         <span className="min-w-0">
           <span className="label block text-bitcoin">THIS PLACE IN THE ATLAS</span>
           <span className="mt-1 block truncate font-mono text-xs">{atlasPlace(block).localName} · {atlasPlace(block).name}</span>
         </span>
         <span className="label shrink-0 text-bitcoin">STORY →</span>
       </Link>
-      <div className="mt-6"><LoopNavigator active="provenance" compact /></div>
+      <div className="mt-px"><LoopNavigator active="provenance" compact /></div>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <ClubBadge height={block} />

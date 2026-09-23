@@ -34,3 +34,7 @@
 - [x] Apply the selected ord.net-inspired visual system across shared site chrome.
 - [x] Recompose the home screen as a dense market overview.
 - [x] Verify representative desktop and mobile screens.
+
+- [ ] Extend ord.net styling to the atlas, BITMAP land details, and rank/clan leaderboards.
+- [ ] Restore a true light view and its shared header control.
+- [ ] Verify targeted screens in both themes on desktop and phone.
