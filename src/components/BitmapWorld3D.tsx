@@ -154,6 +154,7 @@ import { MysteryMist } from "@/components/game/MysteryMist";
 import { LandGrowth } from "@/components/game/LandGrowth";
 import { LandSkins } from "@/components/game/LandSkins";
 import { WorldDepthLayers } from "@/components/game/WorldDepthLayers";
+import { WorldAtmosphere } from "@/components/game/WorldAtmosphere";
 import { WeatherLighting, WorldWeather } from "@/components/game/WorldWeather";
 import { LandPerksHud } from "@/components/game/LandPerksHud";
 import { noteStanding, standingLand, useStandingLand } from "@/lib/land-biome-live";
@@ -1916,8 +1917,8 @@ function PlayerCameraRig({
     // steadied right down while aiming so a shot never drifts.
     const leanGoal = calm.current
       ? 0
-      : steer.current * gait * (driving ? 0.08 : 0.045) * (1 - aimState.amount * 0.85);
-    roll.current = damp(roll.current, leanGoal, 6, delta);
+      : steer.current * gait * (driving ? 0.11 : 0.07) * (1 - aimState.amount * 0.85);
+    roll.current = damp(roll.current, leanGoal, 7.5, delta);
     // In the air the body pitches forward, more so the faster you travel, and a
     // climb or a dive tips it further. Back to flat the moment you land.
     const flyLean =
@@ -1951,9 +1952,9 @@ function PlayerCameraRig({
       // held right down while aiming so the sights stay steady.
       const settle = calm.current ? 0 : 1 - aimState.amount * 0.92;
       bob.current += speed * delta * 8.5;
-      const bounce = Math.sin(bob.current * 2) * AVATAR_U * 0.016 * gait * settle;
-      const sway = Math.cos(bob.current) * AVATAR_U * 0.022 * gait * settle;
-      const strideDip = Math.max(0, Math.cos(bob.current * 2)) * AVATAR_U * 0.008 * gait * settle;
+      const bounce = Math.sin(bob.current * 2) * AVATAR_U * 0.021 * gait * settle;
+      const sway = Math.cos(bob.current) * AVATAR_U * 0.028 * gait * settle;
+      const strideDip = Math.max(0, Math.cos(bob.current * 2)) * AVATAR_U * 0.011 * gait * settle;
       const eye = player.y + ground + AVATAR_U * 0.91 + bounce - strideDip - dip;
       cameraTarget.current.set(
         player.x + Math.cos(player.yaw) * sway,
@@ -1972,23 +1973,23 @@ function PlayerCameraRig({
       // slightly offset so the avatar remains readable without blocking the
       // road ahead. Rides retain a centered, wider chase camera.
       const riding = isDriving();
-      const back = AVATAR_U * (riding ? 11 + gait * 2.2 : 5.25 + gait * 0.75);
-      const shoulder = riding ? 0 : AVATAR_U * 0.82;
-      const side = shoulder - steer.current * AVATAR_U * (riding ? 1.6 : 0.7);
+      const back = AVATAR_U * (riding ? 11.6 + gait * 2.7 : 4.75 + gait * 1.15);
+      const shoulder = riding ? 0 : AVATAR_U * 1.05;
+      const side = shoulder - steer.current * AVATAR_U * (riding ? 2 : 1.05);
       cameraTarget.current.set(
         player.x - Math.sin(player.yaw) * back + Math.cos(player.yaw) * side,
-        player.y + ground + AVATAR_U * (riding ? 3.3 - gait * 0.45 : 2.15 - gait * 0.12) - dip,
+        player.y + ground + AVATAR_U * (riding ? 3.15 - gait * 0.55 : 2 - gait * 0.16) - dip,
         player.z - Math.cos(player.yaw) * back - Math.sin(player.yaw) * side,
       );
       // Keep the avatar on the lower third and reveal more space in front.
-      const lead = riding ? 0.12 + gait * 0.1 : 0.16 + gait * 0.12;
+      const lead = riding ? 0.16 + gait * 0.16 : 0.22 + gait * 0.18;
       cameraLook.current.set(
-        player.x + player.vx * lead + Math.sin(player.yaw) * AVATAR_U * (riding ? 2.8 : 3.6),
-        player.y + ground + AVATAR_U * (riding ? 0.72 : 0.92),
-        player.z + player.vz * lead + Math.cos(player.yaw) * AVATAR_U * (riding ? 2.8 : 3.6),
+        player.x + player.vx * lead + Math.sin(player.yaw) * AVATAR_U * (riding ? 3.1 : 4.2),
+        player.y + ground + AVATAR_U * (riding ? 0.78 : 0.98),
+        player.z + player.vz * lead + Math.cos(player.yaw) * AVATAR_U * (riding ? 3.1 : 4.2),
       );
     }
-    const transitionSpeed = mode === "first" ? 18 : 6;
+    const transitionSpeed = mode === "first" ? 20 : 8.5;
     camera.position.lerp(cameraTarget.current, 1 - Math.exp(-transitionSpeed * delta));
     lookMatrix.current.lookAt(camera.position, cameraLook.current, camera.up);
     targetRotation.current.setFromRotationMatrix(lookMatrix.current);
@@ -2009,8 +2010,8 @@ function PlayerCameraRig({
     // Speed widens the view a little and a landing squeezes it for a beat.
     const targetFov =
       ((mode === "first" ? 64 : 56) +
-        gait * (mode === "first" ? 3.5 : 3) -
-        land.current * (mode === "first" ? 3 : 3)) *
+        gait * (mode === "first" ? 5.2 : 4.8) -
+        land.current * (mode === "first" ? 4.2 : 3.8)) *
       zoom;
 
     if (Math.abs(perspective.fov - targetFov) > 0.02) {
@@ -2688,6 +2689,7 @@ const WorldScene = memo(function WorldScene({
           <BitmapMineCrew unit={AVATAR_U} pose={pose} heights={ownedHeights} />
 
           {quality.effects !== "off" ? <FootTrail unit={AVATAR_U} pose={pose} sand={colors.bitcoin} /> : null}
+          {quality.effects !== "off" ? <WorldAtmosphere pose={pose} bitcoin={colors.bitcoin} /> : null}
           {quality.effects === "full" ? <MysteryMist unit={AVATAR_U} pose={pose} color={colors.foreground} /> : null}
           {quality.effects !== "off" ? <VehicleDamageFx
             pose={pose}
