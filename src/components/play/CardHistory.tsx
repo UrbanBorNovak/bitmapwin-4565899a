@@ -1,0 +1,68 @@
+import type { LivingCard } from "@/lib/game/types";
+
+const fmt = (t: number | null) => (t ? new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—");
+
+export function CardHistory({ card }: { card: LivingCard }) {
+  const rows: [string, string][] = [
+    ["BORN", `Block ${card.blockHeight.toLocaleString("en-US")}`],
+    ["DISCOVERED", fmt(card.discoveredAt)],
+    ["FIRST PLAY", fmt(card.firstPlayAt)],
+    ["MATCHES", String(card.matches)],
+    ["WINS", String(card.wins)],
+    ["EXPERIENCE", `${card.experience} XP`],
+    ["LAST EVENT", card.lastEvent.replace(/_/g, " ")],
+    ["CURRENT STATE", card.state],
+  ];
+  return (
+    <section className="border border-border bg-card">
+      <h2 className="label border-b border-border px-3 py-2 text-bitcoin">CARD HISTORY</h2>
+      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 px-3 py-3 font-mono text-[11px]">
+        {rows.map(([k, v]) => (
+          <div key={k} className="contents">
+            <dt className="text-muted-foreground">{k}</dt>
+            <dd className="text-right">{v}</dd>
+          </div>
+        ))}
+      </dl>
+      <ol className="max-h-56 overflow-y-auto border-t border-border">
+        {[...card.history].reverse().map((h, i) => (
+          <li key={i} className="flex justify-between gap-3 border-b border-border/60 px-3 py-1.5 font-mono text-[10px]">
+            <span>{h.note}</span>
+            <span className="shrink-0 text-muted-foreground">{fmt(h.at)}</span>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+/** Keeps the three data layers visibly separate. */
+export function CardDataLayers({ card }: { card: LivingCard }) {
+  const f = card.facts;
+  return (
+    <section className="grid gap-px border border-border bg-border md:grid-cols-3">
+      <div className="bg-card p-3">
+        <h3 className="label text-signal">REAL WORLD DATA</h3>
+        <dl className="mt-2 space-y-1 font-mono text-[10px]">
+          <div className="flex justify-between"><dt className="text-muted-foreground">BLOCK</dt><dd>{f.height.toLocaleString("en-US")}</dd></div>
+          <div className="flex justify-between"><dt className="text-muted-foreground">OASIS BUILDS</dt><dd>{f.buildCount === null ? "NOT READ YET" : f.buildCount}</dd></div>
+          <div className="flex justify-between"><dt className="text-muted-foreground">YOUR LAND</dt><dd>{f.ownedByPlayer ? "YES" : "—"}</dd></div>
+        </dl>
+        {f.source === "unavailable" && <p className="mt-2 font-mono text-[9px] text-muted-foreground">BITMAP DATA UNAVAILABLE — only the height is known.</p>}
+      </div>
+      <div className="bg-card p-3">
+        <h3 className="label text-foreground">DERIVED TRAITS</h3>
+        <p className="mt-2 font-mono text-[10px] text-muted-foreground">Calculated from the block height and world records. Not on-chain.</p>
+        <div className="mt-2 flex flex-wrap gap-1">{card.traits.map((t) => <span key={t} className="border border-border px-1.5 font-mono text-[9px]">{t}</span>)}</div>
+      </div>
+      <div className="bg-card p-3">
+        <h3 className="label text-bitcoin">GAME STATE</h3>
+        <dl className="mt-2 space-y-1 font-mono text-[10px]">
+          <div className="flex justify-between"><dt className="text-muted-foreground">STATE</dt><dd>{card.state}</dd></div>
+          <div className="flex justify-between"><dt className="text-muted-foreground">POWER / DEF / COST</dt><dd>{card.power} / {card.defense} / {card.energy}</dd></div>
+          <div className="flex justify-between"><dt className="text-muted-foreground">ACTIVITY</dt><dd>{card.activity}</dd></div>
+        </dl>
+      </div>
+    </section>
+  );
+}

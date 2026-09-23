@@ -1,0 +1,94 @@
+import { hash } from "@/lib/game/cardFactory";
+import type { CardState, CardType, LivingCard as Card } from "@/lib/game/types";
+
+export type CardUiState =
+  | "idle"
+  | "selected"
+  | "playable"
+  | "disabled"
+  | "attacking"
+  | "damaged"
+  | "evolved"
+  | "defeated";
+
+const TYPE_GLYPH: Record<CardType, string> = {
+  TERRITORY: "▦",
+  BUILDER: "▲",
+  MINER: "◆",
+  EXPLORER: "➤",
+  GUARDIAN: "⛨",
+  EVENT: "✦",
+};
+
+export function BitmapPattern({ height, state, className = "" }: { height: number; state: CardState; className?: string }) {
+  const h = hash(height);
+  const cells: boolean[] = [];
+  for (let r = 0; r < 5; r++)
+    for (let c = 0; c < 5; c++) {
+      const col = c < 3 ? c : 4 - c;
+      cells.push(((h >>> (r * 3 + col)) & 1) === 1);
+    }
+  const lit = state === "DORMANT" ? "text-muted-foreground/60" : "text-bitcoin";
+  return (
+    <svg viewBox="0 0 5 5" className={`${lit} ${className}`} aria-hidden shapeRendering="crispEdges">
+      {cells.map((on, i) =>
+        on ? <rect key={i} x={i % 5} y={Math.floor(i / 5)} width={0.9} height={0.9} fill="currentColor" className="lc-cell" style={{ animationDelay: `${(i % 7) * 0.35}s` }} /> : null,
+      )}
+    </svg>
+  );
+}
+
+type Props = {
+  card: Card;
+  size?: "sm" | "md" | "lg";
+  ui?: CardUiState;
+  /** Live combat values (board units). */
+  live?: { atk: number; hp: number; maxHp: number; ready?: boolean };
+  onClick?: () => void;
+  label?: string;
+};
+
+export function LivingCard({ card, size = "md", ui = "idle", live, onClick, label }: Props) {
+  const w = size === "sm" ? "w-[7.5rem]" : size === "lg" ? "w-[15rem]" : "w-[10rem]";
+  const Tag = onClick ? "button" : "div";
+  const atk = live?.atk ?? card.power;
+  const hp = live?.hp ?? card.defense;
+  return (
+    <Tag
+      type={onClick ? "button" : undefined}
+      onClick={onClick}
+      aria-label={label ?? `${card.name}, ${card.type}, ${card.state}`}
+      aria-pressed={onClick ? ui === "selected" : undefined}
+      disabled={onClick ? ui === "disabled" : undefined}
+      className={`living-card lc-${card.state.toLowerCase()} lc-ui-${ui} ${w} relative flex shrink-0 flex-col border bg-card text-left`}
+    >
+      <div className="flex items-center justify-between border-b border-border px-2 py-1">
+        <span className="font-mono text-[9px] text-muted-foreground">{card.blockHeight.toLocaleString("en-US")}</span>
+        <span className="lc-cost font-mono text-[10px]" title="Energy cost">⚡{card.energy}</span>
+      </div>
+      <div className="lc-art relative grid aspect-[5/4] place-items-center overflow-hidden border-b border-border">
+        <div className="lc-grid absolute inset-0" aria-hidden />
+        <BitmapPattern height={card.bitmap} state={card.state} className="relative size-[58%]" />
+        <span className="absolute left-1.5 top-1 text-sm leading-none text-foreground/80" aria-hidden>{TYPE_GLYPH[card.type]}</span>
+        <span className="lc-state label absolute bottom-1 right-1.5 text-[8px]">{card.state}</span>
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col gap-1 px-2 py-1.5">
+        <div className={`display leading-tight ${size === "sm" ? "text-[10px]" : "text-xs"}`}>{card.name}</div>
+        <div className="label text-[8px] text-muted-foreground">{card.type}</div>
+        {size !== "sm" && (
+          <div className="flex flex-wrap gap-1">
+            {card.traits.slice(0, 4).map((t) => (
+              <span key={t} className="border border-border px-1 font-mono text-[8px] text-muted-foreground">{t}</span>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="mt-auto grid grid-cols-3 border-t border-border font-mono text-[10px]">
+        <span className="px-1.5 py-1 text-bitcoin" title="Power">⚔ {atk}</span>
+        <span className={`border-x border-border px-1.5 py-1 ${live && hp < live.maxHp ? "text-destructive" : ""}`} title="Defense">⛨ {hp}</span>
+        <span className="px-1.5 py-1 text-signal" title="Activity">◉ {card.activity}</span>
+      </div>
+      {live?.ready === false && <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center label text-[8px] text-muted-foreground">RESTING</span>}
+    </Tag>
+  );
+}
