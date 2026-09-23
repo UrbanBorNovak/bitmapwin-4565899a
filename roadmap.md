@@ -49,3 +49,4 @@
 - [x] Bitcoin Weirdos extender from parent 89d8bfdc…c2i0 children
 - [x] Card ability system: 18 abilities, 3 per type, picked by BITMAP
 - [x] Reorganize the PLAY menu as an intuitive brutalist command sidebar.
+- [x] Upgrade Passport into a sovereign evidence-grid identity artifact.

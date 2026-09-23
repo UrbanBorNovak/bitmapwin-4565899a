@@ -11,11 +11,11 @@ function when(at: string) {
 
 function Metric({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-3 border border-border p-4">
-      <span className="text-bitcoin">{icon}</span>
+    <div className="passport-panel passport-reveal flex items-center gap-3 p-4">
+      <span className="text-[var(--passport-gold)]">{icon}</span>
       <span>
-        <span className="block font-mono text-2xl text-foreground">{value}</span>
-        <span className="label text-muted-foreground">{label}</span>
+        <span className="passport-value block">{value}</span>
+        <span className="passport-kicker text-[7px]">{label}</span>
       </span>
     </div>
   );
@@ -54,10 +54,10 @@ export function PassportEstatePanels({ estate }: { estate: PassportEstate }) {
 
   return (
     <>
-      <section className="mt-10">
-        <header className="border-b border-border pb-3">
-          <p className="label text-bitcoin">WHAT YOU HOLD AND WHAT YOU MADE</p>
-          <h2 className="display mt-2 text-2xl">YOUR ESTATE</h2>
+      <section className="mt-8">
+        <header className="border-b border-[var(--passport-line)] p-4">
+          <p className="passport-kicker">05 / WHAT YOU HOLD AND WHAT YOU MADE</p>
+          <h2 className="mt-2 font-mono text-2xl font-bold text-[var(--passport-paper)]">YOUR ESTATE</h2>
         </header>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Metric label="BITMAPS HELD" value={estate.land.length} icon={<Landmark className="size-5" />} />
@@ -67,8 +67,8 @@ export function PassportEstatePanels({ estate }: { estate: PassportEstate }) {
         </div>
       </section>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <section className="border border-border">
+      <div className="mt-3 grid gap-3 lg:grid-cols-2">
+        <section className="passport-panel">
           <header className="flex items-center justify-between border-b border-border px-4 py-3">
             <h3 className="display text-lg">BITMAPS HELD</h3>
             <span className="label">{estate.land.length}</span>
@@ -89,7 +89,7 @@ export function PassportEstatePanels({ estate }: { estate: PassportEstate }) {
           )}
         </section>
 
-        <section className="border border-border">
+        <section className="passport-panel">
           <header className="flex items-center justify-between border-b border-border px-4 py-3">
             <h3 className="display text-lg">BUILDS RAISED</h3>
             <span className="label">{estate.builds.length}</span>
@@ -111,7 +111,7 @@ export function PassportEstatePanels({ estate }: { estate: PassportEstate }) {
           )}
         </section>
 
-        <section className="border border-border">
+        <section className="passport-panel">
           <header className="flex items-center justify-between border-b border-border px-4 py-3">
             <h3 className="display text-lg">PLACES VISITED</h3>
             <span className="label">{estate.visits.length}</span>
@@ -133,7 +133,7 @@ export function PassportEstatePanels({ estate }: { estate: PassportEstate }) {
           )}
         </section>
 
-        <section className="border border-border">
+        <section className="passport-panel">
           <header className="flex items-center justify-between border-b border-border px-4 py-3">
             <h3 className="display text-lg">BLUEPRINTS PUBLISHED</h3>
             <span className="label">{estate.blueprints.length}</span>
@@ -162,7 +162,7 @@ export function PassportEstatePanels({ estate }: { estate: PassportEstate }) {
         </section>
       </div>
 
-      <section className="mt-10 border border-border">
+      <section className="passport-panel mt-8">
         <header className="flex items-center justify-between border-b border-border px-4 py-3">
           <div>
             <p className="label text-bitcoin">HISTORY IN ORDER</p>
