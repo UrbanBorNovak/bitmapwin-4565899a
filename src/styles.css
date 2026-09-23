@@ -1243,3 +1243,17 @@
     animation: none !important;
   }
 }
+
+/* SPACE + TIME — a night wash so recorded light trails read over the painted
+   world. Purely decorative: it never swallows pointer events. */
+.space-time-wash {
+  background:
+    radial-gradient(circle at 50% 45%, transparent 0%, color-mix(in oklab, var(--color-background) 72%, black) 78%),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--color-background) 40%, black) 0%,
+      color-mix(in oklab, var(--color-background) 78%, black) 100%
+    );
+  mix-blend-mode: multiply;
+  opacity: 0.86;
+}
