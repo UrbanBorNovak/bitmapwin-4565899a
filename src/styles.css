@@ -1367,3 +1367,29 @@
 @media (prefers-reduced-motion: reduce) {
   .living-card, .living-card *, .lc-enter, .lc-moment, .lc-shake { animation: none !important; transition: none !important; }
 }
+.pfp-extender-preview iframe,
+.lc-pfp-frame iframe {
+  background: var(--color-background);
+}
+.lc-pfp-frame {
+  background: var(--color-background);
+}
+.lc-pfp-frame iframe {
+  transform: scale(1.02);
+  transform-origin: center;
+}
+.lc-pfp-scan {
+  background:
+    linear-gradient(to bottom, transparent, color-mix(in oklab, var(--color-background) 42%, transparent)),
+    repeating-linear-gradient(to bottom, color-mix(in oklab, var(--color-foreground) 7%, transparent) 0 1px, transparent 1px 5px);
+  mix-blend-mode: normal;
+  pointer-events: none;
+}
+.lc-pfp-badge {
+  background: color-mix(in oklab, var(--color-background) 82%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-bitcoin) 40%, var(--color-border));
+  padding: 0.125rem 0.25rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-pfp-frame iframe { transform: none; }
+}
