@@ -5,6 +5,7 @@ const LINKS = [
   { to: "/play/cards", label: "MY CARDS" },
   { to: "/play/atlas", label: "CARD ATLAS" },
   { to: "/play/extenders", label: "PFP EXTENDERS" },
+  { to: "/play/import", label: "IMPORT" },
 ] as const;
 
 export function PlayNav() {
