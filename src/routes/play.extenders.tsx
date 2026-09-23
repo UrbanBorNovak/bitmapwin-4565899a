@@ -224,7 +224,7 @@ function PlayExtenders() {
               </label>
               {parentError && <p className="font-mono text-[10px] text-destructive">{parentError}</p>}
               {parentStatus && <p className="font-mono text-[10px] text-muted-foreground">{parentStatus}</p>}
-              <Button type="button" variant="terminal" disabled={!profile || importing} onClick={importParentChildren}>{importing ? "READING CHILDREN…" : "IMPORT IMAGE CHILDREN"}</Button>
+              <Button type="button" variant="terminal" disabled={!profile || importing} onClick={importParentChildren}>{importing ? "READING CHILDREN…" : "IMPORT ALL IMAGE CHILDREN"}</Button>
             </div>
           </section>
 
