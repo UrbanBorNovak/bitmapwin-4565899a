@@ -14,8 +14,6 @@ type ChildImage = {
 type ChildrenResponse = { ids?: unknown[]; more?: boolean; page?: number };
 type InscriptionMeta = { content_type?: unknown; content_length?: unknown; number?: unknown };
 
-const IMAGE_TYPES = new Set(["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif", "image/svg+xml"]);
-
 async function readJson<T>(url: string): Promise<T | null> {
   const response = await fetch(url, { headers: { "User-Agent": "bitmapwin/1.0" } });
   if (!response.ok) return null;
@@ -53,7 +51,7 @@ export const getParentImageChildrenFn = createServerFn({ method: "GET" })
       if (images.length >= data.limit) break;
       const meta = await readJson<InscriptionMeta>(`https://ordinals.com/r/inscription/${id}`);
       const contentType = String(meta?.content_type ?? "").toLowerCase();
-      if (!IMAGE_TYPES.has(contentType)) continue;
+      if (!contentType.startsWith("image/")) continue;
       images.push({
         inscriptionId: id,
         contentType,
