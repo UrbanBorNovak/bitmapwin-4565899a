@@ -6,24 +6,32 @@ import { TRAIT_RULE, TYPE_RULE } from "@/lib/game/cardFactory";
 import { usePlayProfile } from "@/lib/game/worldState";
 
 export const Route = createFileRoute("/play/card/$id")({
-  head: ({ params }) => ({
-    meta: [
-      { title: `Living Card ${params.id}.BITMAP — BITMAPWIN // PLAY` },
-      { name: "description", content: `The living card born from block ${params.id}: its origin, traits, state and history.` },
-      { property: "og:title", content: `${params.id}.BITMAP living card — BITMAPWIN // PLAY` },
-      { property: "og:description", content: "A card that remembers the world it came from." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
+  head: ({ params }) => {
+    const displayId = normalizeCardRouteId(params.id);
+    return {
+      meta: [
+        { title: `Living Card ${displayId}.BITMAP — BITMAPWIN // PLAY` },
+        { name: "description", content: `The living card born from block ${displayId}: its origin, traits, state and history.` },
+        { property: "og:title", content: `${displayId}.BITMAP living card — BITMAPWIN // PLAY` },
+        { property: "og:description", content: "A card that remembers the world it came from." },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary" },
+      ],
+    };
+  },
   component: CardProfile,
 });
 
+function normalizeCardRouteId(id: string) {
+  return id.startsWith("bitmap-") ? id.slice("bitmap-".length) : id;
+}
+
 function CardProfile() {
   const { id } = Route.useParams();
+  const normalizedId = normalizeCardRouteId(id);
   const profile = usePlayProfile();
-  const height = Number(id);
-  const card = profile?.cards[`bitmap-${id}`];
+  const height = Number(normalizedId);
+  const card = profile?.cards[`bitmap-${normalizedId}`] ?? profile?.cards[id];
   return (
     <main className="play-district mx-auto max-w-[1100px] px-4 py-8 md:px-8">
       <PlayNav />
