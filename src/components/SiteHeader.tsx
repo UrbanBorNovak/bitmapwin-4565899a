@@ -5,6 +5,7 @@ import { BidInboxBell } from "@/components/BidInboxBell";
 import { HeaderIdentity } from "@/components/HeaderIdentity";
 import { BtcTicker } from "@/components/BtcTicker";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { startGuidedTour } from "@/components/GuidedTour";
 
 type NavItem = { to: string; label: string; note?: string };
@@ -163,6 +164,7 @@ export function SiteHeader() {
         <div className="flex shrink-0 items-center gap-1">
           <BtcTicker className="hidden sm:flex" />
           <LanguageSwitcher />
+          <ThemeToggle />
           <button
             type="button"
             aria-label="Show me around this page"
