@@ -75,6 +75,7 @@ function PlayExtenders() {
           type="button"
           variant={enabled ? "terminal" : "terminalGhost"}
           className="min-h-11"
+          disabled={!profile}
           onClick={() => updatePlayVisuals({ pfpExtendersEnabled: !enabled })}
         >
           {enabled ? "PFP EXTENDERS ON" : "PFP EXTENDERS OFF"}
@@ -111,11 +112,11 @@ function PlayExtenders() {
                       <div className="border border-border px-2 py-1.5"><dt className="text-muted-foreground">INSCRIPTION</dt><dd className="truncate" data-no-translate>{extender.inscriptionId}</dd></div>
                     </dl>
                     <div className="mt-4 flex flex-wrap gap-2">
-                      <Button type="button" variant={active ? "terminal" : "terminalGhost"} onClick={() => updatePlayVisuals({ pfpExtendersEnabled: true, selectedPfpExtenderId: extender.id })}>
+                      <Button type="button" variant={active ? "terminal" : "terminalGhost"} disabled={!profile} onClick={() => updatePlayVisuals({ pfpExtendersEnabled: true, selectedPfpExtenderId: extender.id })}>
                         {active ? "ACTIVE ON CARDS" : "USE ON CARDS"}
                       </Button>
                       {!extender.builtIn && (
-                        <Button type="button" variant="terminalGhost" onClick={() => removeCustomPfpExtender(extender.id)}>
+                          <Button type="button" variant="terminalGhost" disabled={!profile} onClick={() => removeCustomPfpExtender(extender.id)}>
                           REMOVE
                         </Button>
                       )}
@@ -150,7 +151,7 @@ function PlayExtenders() {
                 <input value={input} onChange={(event) => setInput(event.target.value)} className="h-10 border border-border bg-background px-3 font-mono text-xs" placeholder="https://ordinals.com/inscription/..." data-no-translate />
               </label>
               {error && <p className="font-mono text-[10px] text-destructive">{error}</p>}
-              <Button type="button" variant="terminal" onClick={addExtender}>ADD PFP EXTENDER</Button>
+              <Button type="button" variant="terminal" disabled={!profile} onClick={addExtender}>ADD PFP EXTENDER</Button>
             </div>
           </section>
         </aside>
