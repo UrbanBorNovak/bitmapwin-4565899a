@@ -43,4 +43,4 @@
 - [x] Wire PFP extender previews into living-card art and card profiles.
 - [x] Verify the new PLAY extender flow on desktop and mobile.
 
-- [ ] Import parent inscription children as BITMAP-specific PLAY image extenders.
+- [x] Import parent inscription children as BITMAP-specific PLAY image extenders.
