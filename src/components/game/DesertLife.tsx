@@ -660,7 +660,7 @@ type Critter = BeastEntity & {
 };
 
 // Wildlife is thin on the ground, with a few visible jackals so their model is findable.
-const CRITTER_COUNT = 15;
+const CRITTER_COUNT = 7;
 
 
 /**

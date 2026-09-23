@@ -23,7 +23,7 @@ export const BITMAP_MINER_INSCRIPTION =
 const MINER_URL = contentUrl(BITMAP_MINER_INSCRIPTION);
 
 /** Miners per tile, and how many of your tiles are dressed at once. */
-const CREW = 2;
+const CREW = 1;
 const MAX_TILES = 6;
 
 const noRaycast = () => {};

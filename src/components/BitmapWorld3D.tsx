@@ -2122,7 +2122,7 @@ function ModelMarker({ model, bitcoin }: { model: BitmapModel; bitcoin: string }
 function OnChainModels({ models, bitcoin }: { models: BitmapModel[]; bitcoin: string }) {
   return (
     <>
-      {models.map((model) => {
+      {models.slice(0, 10).map((model) => {
         const x = worldX(model.bitmapHeight % GRID);
         const z = worldZ(Math.floor(model.bitmapHeight / GRID));
         const allowedWaterModel =

@@ -66,69 +66,96 @@ function PlayLobby() {
   return (
     <main className="play-district mx-auto min-w-0 overflow-x-hidden max-w-[1200px] px-4 py-8 md:px-8 md:py-12">
       <PlayNav />
-      <header className="mt-8 grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-        <div>
-          <p className="label text-signal">A DISTRICT OF THE OASIS</p>
-          <h1 className="display mt-2 text-4xl md:text-6xl">
-            <span className="text-bitcoin">BITMAPWIN</span> // PLAY
-          </h1>
-          <p className="display mt-3 text-lg md:text-2xl">THE WORLD IS THE DECK.</p>
-          <p className="mt-3 max-w-xl text-sm text-muted-foreground">
-            Every card is born from a BITMAP. It remembers the matches it fought and wakes up as its land changes. Play here, then walk back into the world.
-          </p>
-        </div>
-        <div className="grid gap-2 sm:grid-cols-3 md:w-[26rem] md:grid-cols-1">
-          <Link to="/play/match" className="btn-term min-h-12 justify-center text-base">▶ PLAY AI</Link>
-          <button type="button" className="btn-term-ghost min-h-11" aria-expanded={panel === "create"} disabled={!profile || busy} onClick={() => { setPanel("create"); void openTable(); }}>{busy && panel === "create" ? "OPENING…" : "CREATE TABLE"}</button>
-          <button type="button" className="btn-term-ghost min-h-11" aria-expanded={panel === "join"} onClick={() => setPanel("join")}>JOIN TABLE</button>
-        </div>
+      <header className="mt-8">
+        <p className="label text-signal">A DISTRICT OF THE OASIS</p>
+        <h1 className="display mt-2 text-4xl md:text-5xl">
+          <span className="text-bitcoin">BITMAPWIN</span> // PLAY
+        </h1>
+        <p className="mt-3 max-w-xl text-sm text-muted-foreground">
+          Every card is born from a BITMAP and remembers the matches it fought. Pick how you want to play.
+        </p>
       </header>
 
-      {note && <p className="mt-4 font-mono text-[10px] text-bitcoin" role="status">{note}</p>}
-      {panel === "join" && (
-        <form
-          className="mt-5 flex flex-wrap items-end gap-2 border border-border bg-card p-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const c = code.trim().toUpperCase();
-            if (/^[0-9A-Z]{5}$/.test(c)) void sit(c);
-          }}
-        >
-          <label className="grid gap-1">
-            <span className="label">TABLE CODE</span>
-            <input value={code} onChange={(e) => setCode(e.target.value)} maxLength={5} className="h-11 w-40 border border-border bg-background px-3 font-mono uppercase" placeholder="E.G. 7K2QX" />
-          </label>
-          <button type="submit" className="btn-term min-h-11" disabled={busy || !/^[0-9a-zA-Z]{5}$/.test(code.trim())}>{busy && panel === "join" ? "JOINING…" : "SIT DOWN"}</button>
-        </form>
-      )}
+      {/* STEP 1 — choose how to play */}
+      <section className="mt-8" aria-labelledby="mode-h">
+        <h2 id="mode-h" className="label"><span className="text-bitcoin">1</span> · CHOOSE A MATCH</h2>
+        <div className="mt-3 grid gap-px border border-border bg-border md:grid-cols-3">
+          <Link to="/play/match" className="group grid content-between gap-4 bg-card p-5 hover:bg-secondary">
+            <div>
+              <span className="label text-bitcoin">SOLO</span>
+              <p className="display mt-2 text-2xl">PLAY THE AI</p>
+              <p className="mt-2 text-xs text-muted-foreground">Start instantly against a local rival. Best way to learn.</p>
+            </div>
+            <span className="btn-term min-h-11 justify-center">▶ START MATCH</span>
+          </Link>
+          <div className="grid content-between gap-4 bg-card p-5">
+            <div>
+              <span className="label text-signal">WITH A FRIEND</span>
+              <p className="display mt-2 text-2xl">CREATE TABLE</p>
+              <p className="mt-2 text-xs text-muted-foreground">Get a 5-letter code and a link to share. Your friend joins, you play.</p>
+            </div>
+            <button type="button" className="btn-term-ghost min-h-11" disabled={!profile || busy} onClick={() => { setPanel("create"); void openTable(); }}>
+              {busy && panel === "create" ? "OPENING…" : "OPEN A TABLE"}
+            </button>
+          </div>
+          <form
+            className="grid content-between gap-4 bg-card p-5"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const c = code.trim().toUpperCase();
+              if (/^[0-9A-Z]{5}$/.test(c)) { setPanel("join"); void sit(c); }
+            }}
+          >
+            <div>
+              <span className="label text-signal">HAVE A CODE?</span>
+              <p className="display mt-2 text-2xl">JOIN TABLE</p>
+              <label className="mt-3 grid gap-1">
+                <span className="sr-only">Table code</span>
+                <input value={code} onChange={(e) => setCode(e.target.value)} maxLength={5} className="h-11 w-full border border-border bg-background px-3 font-mono uppercase" placeholder="E.G. 7K2QX" />
+              </label>
+            </div>
+            <button type="submit" className="btn-term-ghost min-h-11" disabled={busy || !/^[0-9a-zA-Z]{5}$/.test(code.trim())}>
+              {busy && panel === "join" ? "JOINING…" : "SIT DOWN"}
+            </button>
+          </form>
+        </div>
+        {note && <p className="mt-3 font-mono text-[10px] text-bitcoin" role="status">{note}</p>}
+      </section>
 
-      <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] [&>*]:min-w-0">
-        <section>
-          <div className="flex items-center justify-between">
-            <h2 className="label">YOUR LIVING CARDS</h2>
-            <Link to="/play/cards" className="label hover:text-bitcoin">ALL CARDS →</Link>
-          </div>
-          <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
-            {profile ? featured.map((c) => (
-              <Link key={c.id} to="/play/card/$id" params={{ id: String(c.bitmap) }}><LivingCard card={c} /></Link>
-            )) : <p className="font-mono text-xs text-muted-foreground">&gt; SHUFFLING THE WORLD…</p>}
-          </div>
-          {world === "unavailable" && <p className="mt-2 font-mono text-[10px] text-muted-foreground">BITMAP DATA UNAVAILABLE — cards will catch up with the world later.</p>}
-          <div className="mt-4 grid gap-px border border-border bg-border sm:grid-cols-5">
-            {[
-              ["/play/atlas", "CARD ATLAS", "Every place you can find"],
-              ["/play/cards", "MY CARDS", "Your collection and its history"],
-              ["/play/cards", "MY STATS", "Wins, streaks, strongest card"],
-              ["/play/extenders", "PFP EXTENDERS", "Optional Ordinals HTML card art"],
-              ["/oasis", "THE OASIS", "Walk the land your cards come from"],
-            ].map(([to, label, note]) => (
-              <Link key={label} to={to as "/play/atlas"} className="bg-card p-3 hover:text-bitcoin">
-                <span className="label">{label}</span>
-                <span className="mt-1 block font-mono text-[10px] text-muted-foreground">{note}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
+      <div className="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] [&>*]:min-w-0">
+        <div className="grid content-start gap-6">
+          {/* STEP 2 — your deck */}
+          <section aria-labelledby="deck-h">
+            <div className="flex items-center justify-between">
+              <h2 id="deck-h" className="label"><span className="text-bitcoin">2</span> · YOUR DECK</h2>
+              <Link to="/play/cards" className="label hover:text-bitcoin">ALL CARDS →</Link>
+            </div>
+            <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
+              {profile ? featured.map((c) => (
+                <Link key={c.id} to="/play/card/$id" params={{ id: String(c.bitmap) }}><LivingCard card={c} /></Link>
+              )) : <p className="font-mono text-xs text-muted-foreground">&gt; SHUFFLING THE WORLD…</p>}
+            </div>
+            {world === "unavailable" && <p className="mt-2 font-mono text-[10px] text-muted-foreground">BITMAP DATA UNAVAILABLE — cards will catch up with the world later.</p>}
+          </section>
+
+          {/* STEP 3 — explore */}
+          <section aria-labelledby="more-h">
+            <h2 id="more-h" className="label"><span className="text-bitcoin">3</span> · EXPLORE</h2>
+            <div className="mt-3 grid gap-px border border-border bg-border sm:grid-cols-2 md:grid-cols-4">
+              {[
+                ["/play/atlas", "CARD ATLAS", "Every card you can find"],
+                ["/play/extenders", "CARD ART", "Pick background pools"],
+                ["/play/import", "IMPORT", "Add an inscription's children"],
+                ["/oasis", "THE OASIS", "Walk the land your cards come from"],
+              ].map(([to, label, sub]) => (
+                <Link key={label} to={to as "/play/atlas"} className="bg-card p-3 hover:text-bitcoin">
+                  <span className="label">{label}</span>
+                  <span className="mt-1 block font-mono text-[10px] text-muted-foreground">{sub}</span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        </div>
         <aside className="grid content-start gap-3">
           {profile && <TerritoryPicker profile={profile} />}
           {profile && <PlayStatsPanel profile={profile} />}
