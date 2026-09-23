@@ -62,7 +62,7 @@ export const getParentImageChildrenFn = createServerFn({ method: "GET" })
       if (images.length >= data.limit) break;
       const meta = metas[i];
       const contentType = String(meta?.content_type ?? "").toLowerCase();
-      if (!contentType.startsWith("image/")) continue;
+      if (!contentType.startsWith("image/") && !contentType.startsWith("text/html")) continue;
       images.push({
         inscriptionId: id,
         contentType,

@@ -49,6 +49,11 @@ function PlayExtenders() {
   const selected = extenders.find((extender) => extender.id === profile?.visuals.selectedPfpExtenderId) ?? extenders[0] ?? null;
   const previewCard = profile?.order.map((id) => profile.cards[id]).find(Boolean) ?? null;
   const enabled = profile?.visuals.pfpExtendersEnabled === true;
+  const pools = useMemo(() => {
+    const map = new Map<string, CardVisualExtender[]>();
+    for (const e of extenders) map.set(e.collection, [...(map.get(e.collection) ?? []), e]);
+    return [...map.entries()];
+  }, [extenders]);
 
   function addExtender() {
     const inscriptionId = normalizeInscriptionInput(input);
@@ -93,15 +98,15 @@ function PlayExtenders() {
         return;
       }
       if (result.imageChildren.length === 0) {
-        setParentStatus(`NO IMAGE CHILDREN FOUND · ${result.checkedChildren} CHILDREN CHECKED`);
+        setParentStatus(`NO IMAGE OR HTML CHILDREN FOUND · ${result.checkedChildren} CHILDREN CHECKED`);
         return;
       }
       const count = result.imageChildren.length;
       const imported: CardVisualExtender[] = result.imageChildren.map((child, index) => ({
         id: `parent-${bitmap}-${parentInscriptionId}-${child.inscriptionId}`,
-        name: `CHILD IMAGE ${index + 1}`,
+        name: `${child.contentType.startsWith("text/html") ? "CHILD HTML" : "CHILD IMAGE"} ${index + 1}`,
         collection: `${bitmap}.BITMAP CHILDREN`,
-        source: "ordinals-image",
+        source: child.contentType.startsWith("text/html") ? "ordinals-html" : "ordinals-image",
         inscriptionId: child.inscriptionId,
         enabled: true,
         builtIn: false,
@@ -113,7 +118,7 @@ function PlayExtenders() {
         childCount: count,
       }));
       addCustomPfpExtenders(imported, imported[0]?.id ?? null);
-      setParentStatus(`IMPORTED ${count} IMAGE CHILDREN FOR ${bitmap}.BITMAP`);
+      setParentStatus(`IMPORTED ${count} IMAGE/HTML CHILDREN FOR ${bitmap}.BITMAP`);
       setParentInput("");
     } catch {
       setParentError("CHILD INSCRIPTIONS COULD NOT BE READ RIGHT NOW");
@@ -146,55 +151,40 @@ function PlayExtenders() {
       </header>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] [&>*]:min-w-0">
-        <section className="grid gap-3">
-          {extenders.map((extender) => {
-            const active = enabled && selected?.id === extender.id;
-            return (
-              <article key={extender.id} className={`border bg-card ${active ? "border-bitcoin" : "border-border"}`}>
-                <div className="grid gap-px bg-border md:grid-cols-[13rem_minmax(0,1fr)]">
-                  <div className="pfp-extender-preview relative aspect-square bg-background">
-                    {extender.source === "ordinals-image" ? (
-                      <img src={inscriptionContentUrl(extender.inscriptionId)} alt="" loading="lazy" className="h-full w-full object-cover" />
-                    ) : (
-                      <iframe
-                        src={ordinalsPreviewUrl(extender.inscriptionId)}
-                        title={`${extender.name} preview`}
-                        loading="lazy"
-                        sandbox="allow-scripts"
-                        scrolling="no"
-                        className="h-full w-full border-0"
+        <section className="grid content-start gap-4">
+          {pools.map(([collection, items]) => (
+            <article key={collection} className="border border-border bg-card p-3">
+              <header className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="label text-bitcoin">{collection}</h2>
+                <span className="label text-muted-foreground">{items.length} BACKGROUNDS · {items.filter((i) => i.source === "ordinals-html").length} HTML</span>
+              </header>
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+                {items.map((extender) => {
+                  const active = enabled && selected?.id === extender.id;
+                  return (
+                    <div key={extender.id} className={`group relative aspect-square border bg-background ${active ? "border-bitcoin" : "border-border"}`}>
+                      {extender.source === "ordinals-image" ? (
+                        <img src={inscriptionContentUrl(extender.inscriptionId)} alt={extender.name} loading="lazy" className="h-full w-full object-cover [image-rendering:pixelated]" />
+                      ) : (
+                        <iframe src={ordinalsPreviewUrl(extender.inscriptionId)} title={extender.name} loading="lazy" sandbox="allow-scripts" scrolling="no" className="pointer-events-none h-full w-full border-0" />
+                      )}
+                      <button
+                        type="button"
+                        aria-label={`Use ${extender.name} on cards`}
+                        disabled={!profile}
+                        onClick={() => updatePlayVisuals({ pfpExtendersEnabled: true, selectedPfpExtenderId: extender.id })}
+                        className="absolute inset-0"
                       />
-                    )}
-                  </div>
-                  <div className="bg-card p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="label text-bitcoin">{extender.collection}</p>
-                        <h2 className="display mt-1 text-xl">{extender.name}</h2>
-                      </div>
-                      <span className="label border border-border px-2 py-1">{extender.builtIn ? "BUILT IN" : extender.bitmap ? `${extender.bitmap}.BITMAP` : "CUSTOM"}</span>
-                    </div>
-                    <dl className="mt-4 grid gap-2 font-mono text-[10px] sm:grid-cols-2">
-                      <div className="border border-border px-2 py-1.5"><dt className="text-muted-foreground">SOURCE</dt><dd>{extender.source === "ordinals-image" ? "CHILD IMAGE" : "ORDINALS HTML"}</dd></div>
-                      <div className="border border-border px-2 py-1.5"><dt className="text-muted-foreground">INSCRIPTION</dt><dd className="truncate" data-no-translate>{extender.inscriptionId}</dd></div>
-                      {extender.parentInscriptionId ? <div className="border border-border px-2 py-1.5"><dt className="text-muted-foreground">PARENT</dt><dd className="truncate" data-no-translate>{extender.parentInscriptionId}</dd></div> : null}
-                      {extender.childCount ? <div className="border border-border px-2 py-1.5"><dt className="text-muted-foreground">CHILD</dt><dd>{extender.childIndex} / {extender.childCount}</dd></div> : null}
-                    </dl>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <Button type="button" variant={active ? "terminal" : "terminalGhost"} disabled={!profile} onClick={() => updatePlayVisuals({ pfpExtendersEnabled: true, selectedPfpExtenderId: extender.id })}>
-                        {active ? "ACTIVE ON CARDS" : "USE ON CARDS"}
-                      </Button>
+                      <span className="label pointer-events-none absolute bottom-0 left-0 bg-background/85 px-1 text-[9px]">{extender.source === "ordinals-html" ? "HTML" : "IMG"}{active ? " · ACTIVE" : ""}</span>
                       {!extender.builtIn && (
-                          <Button type="button" variant="terminalGhost" disabled={!profile} onClick={() => removeCustomPfpExtender(extender.id)}>
-                          REMOVE
-                        </Button>
+                        <button type="button" aria-label={`Remove ${extender.name}`} disabled={!profile} onClick={() => removeCustomPfpExtender(extender.id)} className="label absolute right-0 top-0 hidden bg-background/90 px-1.5 group-hover:block">×</button>
                       )}
                     </div>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
+                  );
+                })}
+              </div>
+            </article>
+          ))}
         </section>
 
         <aside className="grid content-start gap-4">
@@ -224,7 +214,7 @@ function PlayExtenders() {
               </label>
               {parentError && <p className="font-mono text-[10px] text-destructive">{parentError}</p>}
               {parentStatus && <p className="font-mono text-[10px] text-muted-foreground">{parentStatus}</p>}
-              <Button type="button" variant="terminal" disabled={!profile || importing} onClick={importParentChildren}>{importing ? "READING CHILDREN…" : "IMPORT ALL IMAGE CHILDREN"}</Button>
+              <Button type="button" variant="terminal" disabled={!profile || importing} onClick={importParentChildren}>{importing ? "READING CHILDREN…" : "IMPORT ALL IMAGE + HTML CHILDREN"}</Button>
             </div>
           </section>
 
