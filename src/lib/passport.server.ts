@@ -28,12 +28,16 @@ async function sourceRows(userId: string, wallet: string) {
     client.from("leases").select("id, bitmap_height, status, created_at").or(`owner_address.eq.${wallet},lessee_address.eq.${wallet}`).limit(100),
     client.from("rank_players").select("id").or(`user_id.eq.${userId},wallet.eq.${wallet}`).limit(10),
   ]);
+  for (const result of [views, builds, shared, deployments, trades, leases, ranked]) {
+    if (result.error) throw result.error;
+  }
   return { views: views.data ?? [], builds: [...(builds.data ?? []), ...(shared.data ?? [])], deployments: deployments.data ?? [], trades: trades.data ?? [], leases: leases.data ?? [], playerIds: (ranked.data ?? []).map((r) => r.id) };
 }
 
 export async function syncPassport(userId: string): Promise<Passport> {
   const client = await db();
-  const links = await client.from("wallet_links").select("address").eq("user_id", userId).order("verified_at", { ascending: false }).limit(1);
+  const links = await client.from("wallet_links").select("address").eq("user_id", userId).not("verified_at", "is", null).order("verified_at", { ascending: false }).limit(1);
+  if (links.error) throw links.error;
   const wallet = links.data?.[0]?.address ?? null;
   if (!wallet) return { wallet: null, events: [], stamps: [], unlocks: [] };
   const rows = await sourceRows(userId, wallet);
@@ -45,11 +49,14 @@ export async function syncPassport(userId: string): Promise<Passport> {
   for (const row of rows.leases) evidence.push(await appendProvenance({ sourceKey: `lease:${row.id}`, eventType: "lease", userId, wallet, bitmapHeight: Number(row.bitmap_height), sourceType: "lease", sourceId: row.id, proofLevel: "ACCOUNT", title: "BUILD RIGHTS SHARED", summary: `A recorded lease touched ${row.bitmap_height}.BITMAP`, occurredAt: row.created_at }));
   if (rows.playerIds.length) {
     const pvp = await client.from("pvp_events").select("id, bitmap, district, created_at").or(`killer_id.in.(${rows.playerIds.join(",")}),victim_id.in.(${rows.playerIds.join(",")})`).limit(100);
+    if (pvp.error) throw pvp.error;
     for (const row of pvp.data ?? []) evidence.push(await appendProvenance({ sourceKey: `combat:${row.id}`, eventType: "combat", userId, wallet, bitmapHeight: row.bitmap === null ? null : Number(row.bitmap), sourceType: "pvp_event", sourceId: row.id, proofLevel: "WORLD", title: "OASIS DUEL RECORDED", summary: row.district ? `Combat at ${row.district}` : "Combat entered the permanent record", occurredAt: row.created_at }));
   }
+  evidence.sort((a, b) => a.occurredAt.localeCompare(b.occurredAt));
   const distinctVisits = new Set(rows.views.map((r) => Number(r.bitmap_height))).size;
   const buildHeights = new Set(rows.builds.map((r) => Number(r.bitmap_height)));
-  const held = buildHeights.size ? await client.from("bitmap_index").select("block_height").eq("owner_address", wallet).in("block_height", [...buildHeights]) : { data: [] as any[] };
+  const held = buildHeights.size ? await client.from("bitmap_index").select("block_height").eq("owner_address", wallet).eq("is_valid", true).in("block_height", [...buildHeights]) : { data: [] as any[], error: null };
+  if (held.error) throw held.error;
   const categories = new Set(evidence.map((e) => e.eventType));
   const candidates: { key: StampKey; evidence: ProvenanceEvent | undefined }[] = [
     { key: "first-arrival", evidence: evidence.find((e) => e.eventType === "visit") },
@@ -67,6 +74,7 @@ export async function syncPassport(userId: string): Promise<Passport> {
     await client.from("passport_stamps").upsert({ user_id: userId, wallet_address: wallet, stamp_key: candidate.key, name: rule.name, description: rule.description, evidence_event_id: candidate.evidence.id, evidence_source_type: candidate.evidence.sourceType, evidence_source_id: candidate.evidence.sourceId, bitmap_height: candidate.evidence.bitmapHeight }, { onConflict: "user_id,stamp_key", ignoreDuplicates: true });
   }
   const stampsResult = await client.from("passport_stamps").select("*").eq("user_id", userId).order("earned_at", { ascending: false });
+  if (stampsResult.error) throw stampsResult.error;
   const stamps = (stampsResult.data ?? []).map(stamp);
   for (const [capability, rule] of Object.entries(UNLOCK_RULES)) {
     const earned = stamps.find((s) => s.stampKey === rule.stamp) ?? (capability === "build.district-gate" ? stamps.find((s) => s.stampKey === "deployer") : undefined);
@@ -74,6 +82,8 @@ export async function syncPassport(userId: string): Promise<Passport> {
   }
   const unlocksResult = await client.from("passport_unlocks").select("*").eq("user_id", userId).order("granted_at", { ascending: false });
   const eventsResult = await client.from("provenance_events").select("*").eq("actor_user_id", userId).order("occurred_at", { ascending: false }).limit(60);
+  if (unlocksResult.error) throw unlocksResult.error;
+  if (eventsResult.error) throw eventsResult.error;
   return { wallet, events: (eventsResult.data ?? []).map(event), stamps, unlocks: (unlocksResult.data ?? []).map(unlock) };
 }
 
