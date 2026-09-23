@@ -109,6 +109,9 @@ export type CardVisualExtender = {
 export type PlayVisualSettings = {
   /** Optional cosmetic layer: never changes ownership, stats or gameplay. */
   pfpExtendersEnabled: boolean;
+  /** Active background pool. ORD TORCHES is a virtual on-chain pool. */
+  selectedPfpCollection: string | null;
+  /** Legacy selected item; retained so existing saved profiles remain compatible. */
   selectedPfpExtenderId: string | null;
   customPfpExtenders: CardVisualExtender[];
 };

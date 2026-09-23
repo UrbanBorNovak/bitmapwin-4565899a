@@ -20,6 +20,7 @@ export const BUILT_IN_PFP_EXTENDERS: CardVisualExtender[] = [
 
 export const DEFAULT_PLAY_VISUALS: PlayVisualSettings = {
   pfpExtendersEnabled: false,
+  selectedPfpCollection: BUILT_IN_PFP_EXTENDERS[0]?.collection ?? null,
   selectedPfpExtenderId: BUILT_IN_PFP_EXTENDERS[0]?.id ?? null,
   customPfpExtenders: [],
 };
@@ -61,9 +62,13 @@ export function activePfpExtenderForCard(card: LivingCard, settings: PlayVisualS
   if (!extenders.length) return null;
   const bitmapScoped = extenders.filter((extender) => extender.bitmap === card.bitmap);
   const pool = bitmapScoped.length > 0 ? bitmapScoped : extenders;
-  const selected = settings.selectedPfpExtenderId ? pool.find((extender) => extender.id === settings.selectedPfpExtenderId) : null;
-  if (selected) return selected;
-  return pool[hash(card.bitmap) % pool.length] ?? null;
+  const legacySelected = settings.selectedPfpExtenderId
+    ? allPfpExtenders(settings).find((extender) => extender.id === settings.selectedPfpExtenderId)
+    : null;
+  const selectedCollection = settings.selectedPfpCollection ?? legacySelected?.collection ?? null;
+  const selectedPool = selectedCollection ? pool.filter((extender) => extender.collection === selectedCollection) : pool;
+  const finalPool = selectedPool.length > 0 ? selectedPool : pool;
+  return finalPool[hash(card.bitmap) % finalPool.length] ?? null;
 }
 
 export function normalizeVisualSettings(value: unknown): PlayVisualSettings {
@@ -103,8 +108,13 @@ export function normalizeVisualSettings(value: unknown): PlayVisualSettings {
     : [];
   const available = allPfpExtenders({ ...DEFAULT_PLAY_VISUALS, customPfpExtenders: custom });
   const selected = typeof raw.selectedPfpExtenderId === "string" && available.some((x) => x.id === raw.selectedPfpExtenderId) ? raw.selectedPfpExtenderId : DEFAULT_PLAY_VISUALS.selectedPfpExtenderId;
+  const selectedExtender = selected ? available.find((extender) => extender.id === selected) : null;
+  const selectedPfpCollection = typeof raw.selectedPfpCollection === "string" && raw.selectedPfpCollection.trim()
+    ? raw.selectedPfpCollection.trim().slice(0, 80)
+    : selectedExtender?.collection ?? DEFAULT_PLAY_VISUALS.selectedPfpCollection;
   return {
     pfpExtendersEnabled: raw.pfpExtendersEnabled === true,
+    selectedPfpCollection,
     selectedPfpExtenderId: selected,
     customPfpExtenders: custom,
   };

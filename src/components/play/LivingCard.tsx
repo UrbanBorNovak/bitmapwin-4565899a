@@ -2,7 +2,7 @@ import { hash } from "@/lib/game/cardFactory";
 import { activePfpExtenderForCard, inscriptionContentUrl, ordinalsPreviewUrl } from "@/lib/game/pfpExtenders";
 import type { CardState, CardType, LivingCard as Card } from "@/lib/game/types";
 import { usePlayProfile } from "@/lib/game/worldState";
-import { useOrdTorches } from "@/lib/game/ordTorches";
+import { ORD_TORCHES_POOL, useOrdTorches } from "@/lib/game/ordTorches";
 
 export type CardUiState =
   | "idle"
@@ -44,7 +44,10 @@ export function BitmapPattern({ height, state, className = "" }: { height: numbe
 function CardArt({ card }: { card: Card }) {
   const profile = usePlayProfile();
   const torches = useOrdTorches();
-  const torch = torches?.byBitmap.get(card.bitmap);
+  const selectedTorchPool = profile?.visuals.pfpExtendersEnabled === true && profile.visuals.selectedPfpCollection === ORD_TORCHES_POOL;
+  const torch = selectedTorchPool && torches?.list.length
+    ? torches.list[hash(card.bitmap) % torches.list.length]
+    : torches?.byBitmap.get(card.bitmap);
   if (torch)
     return (
       <div className="lc-pfp-frame absolute inset-0" title={`ORD TORCHES · #${torch.index + 1} / 3000`}>

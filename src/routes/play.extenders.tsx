@@ -20,7 +20,7 @@ import {
 } from "@/lib/game/worldState";
 import type { CardVisualExtender } from "@/lib/game/types";
 import { Link } from "@tanstack/react-router";
-import { ORD_TORCHES_PARENT, ORD_TORCHES_SUPPLY, useOrdTorches } from "@/lib/game/ordTorches";
+import { ORD_TORCHES_PARENT, ORD_TORCHES_POOL, ORD_TORCHES_SUPPLY, useOrdTorches } from "@/lib/game/ordTorches";
 
 export const Route = createFileRoute("/play/extenders")({
   head: () => ({
@@ -51,6 +51,7 @@ function PlayExtenders() {
   const selected = extenders.find((extender) => extender.id === profile?.visuals.selectedPfpExtenderId) ?? extenders[0] ?? null;
   const previewCard = profile?.order.map((id) => profile.cards[id]).find(Boolean) ?? null;
   const enabled = profile?.visuals.pfpExtendersEnabled === true;
+  const selectedCollection = profile?.visuals.selectedPfpCollection ?? selected?.collection ?? null;
   const torches = useOrdTorches();
   const [torchPage, setTorchPage] = useState(0);
   const pools = useMemo(() => {
@@ -157,11 +158,22 @@ function PlayExtenders() {
       <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] [&>*]:min-w-0">
         <section className="grid content-start gap-4">
           <article className="border border-bitcoin bg-card p-3">
-            <header className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="label text-bitcoin">ORD TORCHES · HARDCODED</h2>
-              <span className="label text-muted-foreground">{torches ? torches.list.length : "…"} / {ORD_TORCHES_SUPPLY} FOUND ACROSS THE MAP</span>
+            <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="label text-bitcoin">ORD TORCHES · ON-CHAIN POOL</h2>
+                <span className="label text-muted-foreground">{torches ? torches.list.length : "…"} / {ORD_TORCHES_SUPPLY} FOUND ACROSS THE MAP</span>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant={enabled && selectedCollection === ORD_TORCHES_POOL ? "terminal" : "terminalGhost"}
+                disabled={!profile || !torches?.list.length}
+                onClick={() => updatePlayVisuals({ pfpExtendersEnabled: true, selectedPfpCollection: ORD_TORCHES_POOL })}
+              >
+                {enabled && selectedCollection === ORD_TORCHES_POOL ? "POOL ACTIVE" : "USE POOL"}
+              </Button>
             </header>
-            <p className="mb-3 break-all font-mono text-[10px] text-muted-foreground">PARENT <span data-no-translate>{ORD_TORCHES_PARENT}</span> · EACH TORCH LIVES ON ONE BITMAP · A CARD FROM THAT BITMAP ALWAYS CARRIES ITS TORCH</p>
+            <p className="mb-3 break-all font-mono text-[10px] text-muted-foreground">PARENT <span data-no-translate>{ORD_TORCHES_PARENT}</span> · ACTIVATE THE POOL TO DISTRIBUTE A DIFFERENT TORCH ACROSS EACH CARD</p>
             {!torches ? <p className="font-mono text-xs text-muted-foreground">&gt; READING 3000 CHILDREN…</p> : (
               <>
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
@@ -183,13 +195,24 @@ function PlayExtenders() {
           </article>
           {pools.map(([collection, items]) => (
             <article key={collection} className="border border-border bg-card p-3">
-              <header className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="label text-bitcoin">{collection}</h2>
-                <span className="label text-muted-foreground">{items.length} BACKGROUNDS · {items.filter((i) => i.source === "ordinals-html").length} HTML</span>
+              <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="label text-bitcoin">{collection}</h2>
+                  <span className="label text-muted-foreground">{items.length} BACKGROUNDS · {items.filter((i) => i.source === "ordinals-html").length} HTML</span>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={enabled && selectedCollection === collection ? "terminal" : "terminalGhost"}
+                  disabled={!profile}
+                  onClick={() => updatePlayVisuals({ pfpExtendersEnabled: true, selectedPfpCollection: collection, selectedPfpExtenderId: items[0]?.id ?? null })}
+                >
+                  {enabled && selectedCollection === collection ? "POOL ACTIVE" : "USE POOL"}
+                </Button>
               </header>
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
                 {items.map((extender) => {
-                  const active = enabled && selected?.id === extender.id;
+                  const active = enabled && selectedCollection === collection;
                   return (
                     <div key={extender.id} className={`group relative aspect-square border bg-background ${active ? "border-bitcoin" : "border-border"}`}>
                       {extender.source === "ordinals-image" ? (
@@ -197,14 +220,7 @@ function PlayExtenders() {
                       ) : (
                         <iframe src={ordinalsPreviewUrl(extender.inscriptionId)} title={extender.name} loading="lazy" sandbox="allow-scripts" scrolling="no" className="pointer-events-none h-full w-full border-0" />
                       )}
-                      <button
-                        type="button"
-                        aria-label={`Use ${extender.name} on cards`}
-                        disabled={!profile}
-                        onClick={() => updatePlayVisuals({ pfpExtendersEnabled: true, selectedPfpExtenderId: extender.id })}
-                        className="absolute inset-0"
-                      />
-                      <span className="label pointer-events-none absolute bottom-0 left-0 bg-background/85 px-1 text-[9px]">{extender.source === "ordinals-html" ? "HTML" : "IMG"}{active ? " · ACTIVE" : ""}</span>
+                      <span className="label pointer-events-none absolute bottom-0 left-0 bg-background/85 px-1 text-[9px]">{extender.source === "ordinals-html" ? "HTML" : "IMG"}{active ? " · POOL" : ""}</span>
                       {!extender.builtIn && (
                         <button type="button" aria-label={`Remove ${extender.name}`} disabled={!profile} onClick={() => removeCustomPfpExtender(extender.id)} className="label absolute right-0 top-0 hidden bg-background/90 px-1.5 group-hover:block">×</button>
                       )}
