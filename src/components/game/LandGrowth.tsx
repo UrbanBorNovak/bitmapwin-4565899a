@@ -24,9 +24,9 @@ import { isSea } from "@/lib/world-sea";
 import { worldWeather } from "@/lib/world-weather";
 import { useQuality } from "@/graphics/QualityContext";
 
-const MAX_GRASS = 24_000;
-const MAX_BUSH = 260;
-const MAX_TREE = 90;
+const MAX_GRASS = 12_000;
+const MAX_BUSH = 130;
+const MAX_TREE = 45;
 /** plots this many cells away from the player are still dressed */
 const RADIUS_CELLS = 24;
 /** how often the growth amount is re-read from the clock */
@@ -468,9 +468,9 @@ export function LandGrowth({
 }) {
   const { quality } = useQuality();
   const radiusCells = quality.resolved === "low" ? 8 : quality.resolved === "medium" ? 16 : RADIUS_CELLS;
-  const grassBudget = quality.resolved === "low" ? 6_000 : quality.resolved === "medium" ? 14_000 : MAX_GRASS;
-  const bushBudget = quality.resolved === "low" ? 70 : quality.resolved === "medium" ? 160 : MAX_BUSH;
-  const treeBudget = quality.resolved === "low" ? 30 : quality.resolved === "medium" ? 60 : MAX_TREE;
+  const grassBudget = quality.resolved === "low" ? 3_000 : quality.resolved === "medium" ? 7_000 : MAX_GRASS;
+  const bushBudget = quality.resolved === "low" ? 35 : quality.resolved === "medium" ? 80 : MAX_BUSH;
+  const treeBudget = quality.resolved === "low" ? 15 : quality.resolved === "medium" ? 30 : MAX_TREE;
   const land = useTerraformedLand();
   // Re-plan when something is built or demolished: plants clear the new floor.
   const builds = useWorldBuilds();
