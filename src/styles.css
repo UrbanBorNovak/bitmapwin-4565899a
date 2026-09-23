@@ -14,13 +14,13 @@
  */
 
 @theme inline {
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
-  --radius-xl: 14px;
-  --radius-2xl: 18px;
-  --radius-3xl: 24px;
-  --radius-4xl: 32px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-4xl: 0px;
   --font-mono: "Space Mono", ui-monospace, SFMono-Regular, monospace;
   --font-sans: "DM Sans", "Helvetica Neue", Arial, sans-serif;
   --font-display: "Space Grotesk", "DM Sans", Arial, sans-serif;
@@ -57,47 +57,46 @@
 }
 
 :root {
-  --radius: 10px;
-  --motion-fast: 140ms;
-  --motion-base: 220ms;
-  --motion-route: 320ms;
-  --ease-terminal: cubic-bezier(0.22, 1, 0.36, 1);
-  --bitcoin: oklch(0.72 0.169 55);
-  --bitcoin-foreground: oklch(0.14 0 0);
-  /* cold signal — live data, readouts and states */
-  --signal: oklch(0.82 0.098 213);
-  --signal-foreground: oklch(0.14 0 0);
-  --surface: oklch(0.175 0.008 230);
-  --background: oklch(0.11 0.004 250);
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(0.165 0.007 235);
-  --card-foreground: oklch(1 0 0);
-  --popover: oklch(0.165 0.007 235);
-  --popover-foreground: oklch(1 0 0);
-  --primary: oklch(0.72 0.169 55);
-  --primary-foreground: oklch(0.14 0 0);
-  --secondary: oklch(0.21 0.007 235);
-  --secondary-foreground: oklch(1 0 0);
-  --muted: oklch(0.195 0.006 235);
-  --muted-foreground: oklch(0.7 0.008 235);
-  --accent: oklch(0.25 0.008 235);
-  --accent-foreground: oklch(1 0 0);
-  --destructive: oklch(0.62 0 0);
-  --destructive-foreground: oklch(0 0 0);
-  --border: oklch(0.27 0.008 235);
-  --border-strong: oklch(0.43 0.01 235);
-  --input: oklch(0.27 0.008 235);
-  --ring: oklch(0.72 0.169 55);
-  --grid: oklch(0.25 0.008 235);
-  --profile-surface: oklch(0.145 0.012 55);
-  --profile-surface-raised: oklch(0.18 0.018 55);
-  --profile-warm: oklch(0.82 0.135 70);
-  --profile-warm-muted: oklch(0.57 0.085 65);
+  --radius: 0px;
+  --motion-fast: 90ms;
+  --motion-base: 120ms;
+  --motion-route: 120ms;
+  --ease-terminal: linear;
+  --bitcoin: oklch(0.72 0.19 55.6);
+  --bitcoin-foreground: oklch(0.1 0 0);
+  --signal: oklch(0.72 0.19 55.6);
+  --signal-foreground: oklch(0.1 0 0);
+  --surface: oklch(0.16 0 0);
+  --background: oklch(0.08 0 0);
+  --foreground: oklch(0.955 0 0);
+  --card: oklch(0.14 0 0);
+  --card-foreground: oklch(0.955 0 0);
+  --popover: oklch(0.115 0 0);
+  --popover-foreground: oklch(0.955 0 0);
+  --primary: oklch(0.72 0.19 55.6);
+  --primary-foreground: oklch(0.1 0 0);
+  --secondary: oklch(0.18 0 0);
+  --secondary-foreground: oklch(0.955 0 0);
+  --muted: oklch(0.17 0 0);
+  --muted-foreground: oklch(0.62 0 0);
+  --accent: oklch(0.22 0 0);
+  --accent-foreground: oklch(0.955 0 0);
+  --destructive: oklch(0.62 0.2 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.255 0 0);
+  --border-strong: oklch(0.38 0 0);
+  --input: oklch(0.3 0 0);
+  --ring: oklch(0.72 0.19 55.6);
+  --grid: oklch(0.22 0 0);
+  --profile-surface: oklch(0.12 0 0);
+  --profile-surface-raised: oklch(0.16 0 0);
+  --profile-warm: oklch(0.72 0.19 55.6);
+  --profile-warm-muted: oklch(0.6 0.14 55.6);
 }
 
 .dark {
-  --background: oklch(0.115 0 0);
-  --foreground: oklch(0.98 0 0);
+  --background: oklch(0.08 0 0);
+  --foreground: oklch(0.955 0 0);
 }
 
 .light {
@@ -150,6 +149,8 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     min-width: 320px;
+    font-size: 14px;
+    letter-spacing: 0;
   }
 
   :focus-visible {
@@ -188,7 +189,7 @@
   }
   ::-webkit-scrollbar-thumb {
     background: var(--color-accent);
-    border-radius: 999px;
+    border-radius: 0;
   }
   ::-webkit-scrollbar-thumb:hover {
     background: var(--color-signal);
@@ -212,7 +213,7 @@
 @utility label {
   font-family: var(--font-mono);
   font-size: 0.625rem;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-muted-foreground);
 }
@@ -220,9 +221,9 @@
 @utility display {
   font-family: var(--font-display);
   font-weight: 700;
-  letter-spacing: -0.015em;
-  word-spacing: 0.04em;
-  line-height: 0.96;
+  letter-spacing: 0;
+  word-spacing: 0;
+  line-height: 1;
   text-transform: uppercase;
 }
 
@@ -231,23 +232,15 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border: 1px solid color-mix(in oklab, var(--color-bitcoin) 70%, transparent);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--color-foreground) 6%, transparent),
-      transparent 55%
-    ),
-    color-mix(in oklab, var(--color-bitcoin) 12%, transparent);
-  color: var(--color-bitcoin);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--color-bitcoin);
+  background: var(--color-bitcoin);
+  color: var(--color-bitcoin-foreground);
+  border-radius: 0;
   font-family: var(--font-mono);
   font-size: 0.6875rem;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  padding: 0.75rem 1.25rem;
-  backdrop-filter: blur(6px);
-  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 8%, transparent);
+  padding: 0.625rem 0.875rem;
   transition:
     background var(--motion-fast) var(--ease-terminal),
     color var(--motion-fast) var(--ease-terminal),
@@ -262,14 +255,14 @@
   justify-content: center;
   gap: 0.5rem;
   border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: var(--color-background);
   color: var(--color-muted-foreground);
-  border-radius: var(--radius-md);
+  border-radius: 0;
   font-family: var(--font-mono);
   font-size: 0.6875rem;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  padding: 0.75rem 1.25rem;
+  padding: 0.625rem 0.875rem;
   transition:
     background 120ms linear,
     color 120ms linear,
@@ -278,8 +271,9 @@
 }
 
 .btn-term:hover {
-  background: var(--color-bitcoin);
-  color: var(--color-bitcoin-foreground);
+  background: var(--color-foreground);
+  border-color: var(--color-foreground);
+  color: var(--color-background);
 }
 
 .btn-term-ghost:hover {
@@ -289,41 +283,27 @@
 
 @utility card-soft {
   position: relative;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--color-foreground) 4%, transparent),
-      transparent 38%
-    ),
-    color-mix(in oklab, var(--color-card) 82%, transparent);
-  border: 1px solid color-mix(in oklab, var(--color-border) 90%, transparent);
-  border-radius: var(--radius-lg);
-  backdrop-filter: blur(10px) saturate(120%);
-  box-shadow:
-    inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 6%, transparent),
-    0 20px 44px -34px oklch(0 0 0 / 0.9);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 0;
   transition:
     border-color var(--motion-fast) var(--ease-terminal),
     box-shadow var(--motion-fast) var(--ease-terminal);
 }
 
 .card-soft:hover {
-  border-color: color-mix(in oklab, var(--color-signal) 35%, var(--color-border));
-  box-shadow:
-    inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 8%, transparent),
-    0 0 0 1px color-mix(in oklab, var(--color-signal) 12%, transparent),
-    0 24px 50px -34px oklch(0 0 0 / 0.95);
+  border-color: var(--color-foreground);
 }
 
 @utility page-shell {
   width: 100%;
   max-width: 1600px;
   margin-inline: auto;
-  padding: 2.5rem 1rem 3.5rem;
+  padding: 1.5rem 1rem 2.5rem;
 
   @media (min-width: 768px) {
     padding-inline: 2rem;
-    padding-top: 3.5rem;
+    padding-top: 2rem;
   }
 }
 
@@ -343,19 +323,9 @@
 
 @utility terminal-panel {
   position: relative;
-  border: 1px solid color-mix(in oklab, var(--color-border) 90%, transparent);
-  border-radius: var(--radius-md);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--color-foreground) 4%, transparent),
-      transparent 40%
-    ),
-    color-mix(in oklab, var(--color-card) 74%, transparent);
-  backdrop-filter: blur(10px) saturate(120%);
-  box-shadow:
-    inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 6%, transparent),
-    0 18px 40px -32px oklch(0 0 0 / 0.9);
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  background: var(--color-card);
 }
 
 @utility profile-home {
@@ -938,6 +908,56 @@
 .route-stage {
   min-height: 100%;
   animation: route-enter var(--motion-route) var(--ease-terminal) both;
+}
+
+/* ORD MARKET SYSTEM — shared 2D chrome stays dense, black and rule-driven. */
+.site-header {
+  background: color-mix(in oklab, var(--color-background) 97%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.site-footer {
+  background: var(--color-background);
+}
+
+.route-stage :where(.rounded-sm, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl) {
+  border-radius: 0;
+}
+
+.route-stage :where(table) {
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.route-stage :where(th) {
+  height: 2rem;
+  color: var(--color-muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.route-stage :where(td) {
+  border-top: 1px solid var(--color-border);
+}
+
+.route-stage :where(input, textarea, select) {
+  border-radius: 0;
+  background: var(--color-background);
+}
+
+.route-stage :where(.shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl) {
+  box-shadow: none;
+}
+
+.route-stage :where(.bg-card, .bg-surface) {
+  background-color: var(--color-card);
+}
+
+.sales-backdrop {
+  display: none;
 }
 
 .site-header,
