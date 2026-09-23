@@ -24,9 +24,9 @@ export const Route = createFileRoute("/play/extenders")({
   head: () => ({
     meta: [
       { title: "PFP Extenders — BITMAPWIN // PLAY" },
-      { name: "description", content: "Optional Ordinals HTML PFP extenders for living card art inside BitmapWin PLAY." },
+      { name: "description", content: "Optional Ordinals HTML and child-image PFP extenders for living card art inside BitmapWin PLAY." },
       { property: "og:title", content: "Ordinals PFP Extenders — BITMAPWIN // PLAY" },
-      { property: "og:description", content: "Extend living cards with safe HTML inscription previews while keeping BITMAP state intact." },
+      { property: "og:description", content: "Extend living cards with safe HTML previews or parent inscription child images while keeping BITMAP state intact." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -124,9 +124,9 @@ function PlayExtenders() {
       <header className="mt-6 grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
         <div>
           <p className="label text-signal">OPTIONAL VISUAL EXTENDERS</p>
-          <h1 className="display mt-2 text-3xl md:text-5xl">ORDINALS PFP HTML</h1>
+          <h1 className="display mt-2 text-3xl md:text-5xl">ORDINALS PFP EXTENDERS</h1>
           <p className="mt-3 max-w-2xl font-mono text-xs leading-relaxed text-muted-foreground">
-            Load popular PFP inscriptions as HTML card art. The extender changes only the image layer; BITMAP state, traits, history and match rules stay untouched.
+            Load popular PFP inscriptions as HTML card art, or import image children from a parent inscription. The extender changes only the image layer; BITMAP state, traits, history and match rules stay untouched.
           </p>
         </div>
         <Button
