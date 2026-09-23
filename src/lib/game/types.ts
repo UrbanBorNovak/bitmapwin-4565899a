@@ -93,11 +93,17 @@ export type CardVisualExtender = {
   id: string;
   name: string;
   collection: string;
-  source: "ordinals-html";
+  source: "ordinals-html" | "ordinals-image";
   inscriptionId: string;
   enabled: boolean;
   builtIn: boolean;
   addedAt: number;
+  /** Optional parent/child import binding: this visual only appears on that BITMAP. */
+  bitmap?: number | null;
+  parentInscriptionId?: string | null;
+  contentType?: string | null;
+  childIndex?: number | null;
+  childCount?: number | null;
 };
 
 export type PlayVisualSettings = {
