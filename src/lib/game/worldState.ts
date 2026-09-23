@@ -85,6 +85,14 @@ export function setPfpExtenderEnabled(id: string, enabled: boolean) {
   commit({ ...current, visuals });
 }
 
+export function removeCustomPfpExtender(id: string) {
+  if (!current) return;
+  const customPfpExtenders = current.visuals.customPfpExtenders.filter((item) => item.id !== id);
+  const selectedPfpExtenderId = current.visuals.selectedPfpExtenderId === id ? null : current.visuals.selectedPfpExtenderId;
+  const visuals = normalizeVisualSettings({ ...current.visuals, customPfpExtenders, selectedPfpExtenderId });
+  commit({ ...current, visuals });
+}
+
 /** Ensure a card exists for a territory (e.g. opened from the Oasis). */
 export function ensureCard(height: number) {
   if (!current || current.cards[`bitmap-${height}`]) return;
