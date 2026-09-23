@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getGalleryItemsFn } from "@/lib/game/gallery.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { LivingCard } from "@/components/play/LivingCard";
@@ -42,6 +43,7 @@ export const Route = createFileRoute("/play/extenders")({
 function PlayExtenders() {
   const profile = usePlayProfile();
   const scanParent = useServerFn(getParentImageChildrenFn);
+  const readGallery = useServerFn(getGalleryItemsFn);
   const [input, setInput] = useState("");
   const [name, setName] = useState("");
   const [parentInput, setParentInput] = useState("");
@@ -140,32 +142,28 @@ function PlayExtenders() {
 
   async function importWeirdos() {
     setWeirdosLoading(true);
-    setWeirdosStatus("READING BITCOIN WEIRDOS CHILDREN FROM THE CHAIN…");
+    setWeirdosStatus("READING THE BITCOIN WEIRDOS GALLERY FROM THE CHAIN…");
     try {
-      const result = await scanParent({ data: { parentInscriptionId: WEIRDOS_PARENT, limit: 250 } });
-      const items = [{ inscriptionId: WEIRDOS_PARENT, contentType: "image/webp", contentLength: null, number: null }, ...result.imageChildren];
-      if (items.length === 0) {
-        setWeirdosStatus("NO WEIRDOS RETURNED RIGHT NOW — TRY AGAIN LATER");
-        return;
-      }
+      const result = await readGallery({ data: { inscriptionId: WEIRDOS_PARENT, maxPages: 40 } });
+      const items = [WEIRDOS_PARENT, ...result.ids];
       const count = items.length;
-      const imported: CardVisualExtender[] = items.map((item, index) => ({
-        id: `weirdos-${item.inscriptionId}`,
-        name: `WEIRDO ${item.number ?? index + 1}`,
+      const imported: CardVisualExtender[] = items.map((id, index) => ({
+        id: `weirdos-${id}`,
+        name: index === 0 ? "WEIRDOS PARENT" : `WEIRDO ${index}`,
         collection: WEIRDOS_COLLECTION,
-        source: item.contentType.startsWith("text/html") ? "ordinals-html" : "ordinals-image",
-        inscriptionId: item.inscriptionId,
+        source: "ordinals-image",
+        inscriptionId: id,
         enabled: true,
         builtIn: false,
         addedAt: Date.now(),
-        contentType: item.contentType,
+        contentType: "image/*",
         childIndex: index + 1,
         childCount: count,
         parentInscriptionId: WEIRDOS_PARENT,
       }));
-      addCustomPfpExtenders(imported, imported[0]?.id ?? null);
+      addCustomPfpExtenders(imported, imported[1]?.id ?? imported[0]?.id ?? null);
       updatePlayVisuals({ pfpExtendersEnabled: true, selectedPfpCollection: WEIRDOS_COLLECTION });
-      setWeirdosStatus(`LOADED ${count} ${count === 1 ? "WEIRDO" : "WEIRDOS"} · ${result.checkedChildren} ${result.checkedChildren === 1 ? "CHILD" : "CHILDREN"} ON-CHAIN + THE PARENT IMAGE${result.truncated ? " · MORE AVAILABLE" : ""}`);
+      setWeirdosStatus(`LOADED ${count} WEIRDOS FROM THE GALLERY${result.truncated ? " · MORE AVAILABLE" : ""}`);
     } catch {
       setWeirdosStatus("BITCOIN WEIRDOS COULD NOT BE READ RIGHT NOW");
     } finally {
