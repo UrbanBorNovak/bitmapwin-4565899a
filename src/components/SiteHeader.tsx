@@ -4,7 +4,6 @@ import { useState } from "react";
 import { BidInboxBell } from "@/components/BidInboxBell";
 import { HeaderIdentity } from "@/components/HeaderIdentity";
 import { BtcTicker } from "@/components/BtcTicker";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { startGuidedTour } from "@/components/GuidedTour";
 
@@ -101,8 +100,8 @@ export function SiteHeader() {
         <Link to="/" className="site-brand min-w-0 leading-none">
           <div className="display flex items-end gap-1 text-sm sm:text-base">
             <span className="text-bitcoin">BITMAP</span>
-            <span className="relative">
-              <span className="label absolute bottom-full left-0 mb-0.5 text-[0.4rem] leading-none text-bitcoin">
+            <span className="relative hidden sm:inline">
+              <span className="label absolute bottom-full left-0 mb-0.5 hidden text-[0.4rem] leading-none text-bitcoin md:block">
                 ALPHA
               </span>
               UNHINGED
@@ -163,14 +162,13 @@ export function SiteHeader() {
 
         <div className="flex shrink-0 items-center gap-1">
           <BtcTicker className="hidden sm:flex" />
-          <ThemeToggle />
           <LanguageSwitcher />
           <button
             type="button"
             aria-label="Show me around this page"
             title="Show me around this page"
             onClick={() => startGuidedTour()}
-            className="icon-control grid size-10 shrink-0 place-items-center border border-border text-muted-foreground md:size-9"
+            className="icon-control hidden size-10 shrink-0 place-items-center border border-border text-muted-foreground sm:grid md:size-9"
           >
             <HelpCircle className="size-4" />
           </button>
