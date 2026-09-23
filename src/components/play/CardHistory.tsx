@@ -69,7 +69,8 @@ export function CardDataLayers({ card, visuals }: { card: LivingCard; visuals?: 
           <h3 className="label text-signal">VISUAL EXTENDER</h3>
           {extender ? (
             <p className="mt-1 font-mono text-[10px] text-muted-foreground">
-              {extender.name} · HTML INSCRIPTION · cosmetic only
+              {extender.name} · {extender.source === "ordinals-image" ? "CHILD IMAGE" : "HTML INSCRIPTION"} · cosmetic only
+              {extender.bitmap ? ` · ${extender.bitmap}.BITMAP` : ""}
             </p>
           ) : (
             <p className="mt-1 font-mono text-[10px] text-muted-foreground">BASE BITMAP PATTERN</p>

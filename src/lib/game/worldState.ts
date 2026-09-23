@@ -71,6 +71,20 @@ export function addCustomPfpExtender(extender: CardVisualExtender) {
   commit({ ...current, visuals });
 }
 
+export function addCustomPfpExtenders(extenders: CardVisualExtender[], selectedId?: string | null) {
+  if (!current || extenders.length === 0) return;
+  const ids = new Set(extenders.map((extender) => extender.id));
+  const existing = current.visuals.customPfpExtenders.filter((item) => !ids.has(item.id));
+  const firstEnabled = extenders.find((extender) => extender.enabled !== false)?.id ?? selectedId ?? null;
+  const visuals = normalizeVisualSettings({
+    ...current.visuals,
+    pfpExtendersEnabled: true,
+    selectedPfpExtenderId: selectedId ?? firstEnabled ?? current.visuals.selectedPfpExtenderId,
+    customPfpExtenders: [...extenders, ...existing].slice(0, 60),
+  });
+  commit({ ...current, visuals });
+}
+
 export function setPfpExtenderEnabled(id: string, enabled: boolean) {
   if (!current) return;
   const customPfpExtenders = current.visuals.customPfpExtenders.map((item) =>
