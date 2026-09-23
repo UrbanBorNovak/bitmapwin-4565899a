@@ -1,4 +1,5 @@
 import { STARTER_HEIGHTS, createCardFromBitmap, emptyFacts } from "./cardFactory";
+import { DEFAULT_PLAY_VISUALS, normalizeVisualSettings } from "./pfpExtenders";
 import type { PlayProfile } from "./types";
 
 /** Persistence service. The UI never touches storage directly — swap adapters here. */
@@ -16,7 +17,7 @@ export const localPlayPersistence: PlayPersistence = {
       const raw = window.localStorage.getItem(PREFIX + owner);
       if (!raw) return memory.get(owner) ?? null;
       const parsed = JSON.parse(raw) as PlayProfile;
-      return parsed?.version === 1 ? parsed : null;
+      return parsed?.version === 1 ? { ...parsed, visuals: normalizeVisualSettings(parsed.visuals) } : null;
     } catch {
       return memory.get(owner) ?? null;
     }
@@ -42,5 +43,6 @@ export function newProfile(owner: string): PlayProfile {
     stats: { matches: 0, wins: 0, losses: 0, streak: 0, bestStreak: 0 },
     selectedBitmap: null,
     events: [],
+    visuals: DEFAULT_PLAY_VISUALS,
   };
 }

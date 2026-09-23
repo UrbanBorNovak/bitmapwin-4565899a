@@ -98,11 +98,12 @@ function PlayLobby() {
             )) : <p className="font-mono text-xs text-muted-foreground">&gt; SHUFFLING THE WORLD…</p>}
           </div>
           {world === "unavailable" && <p className="mt-2 font-mono text-[10px] text-muted-foreground">BITMAP DATA UNAVAILABLE — cards will catch up with the world later.</p>}
-          <div className="mt-4 grid gap-px border border-border bg-border sm:grid-cols-4">
+          <div className="mt-4 grid gap-px border border-border bg-border sm:grid-cols-5">
             {[
               ["/play/atlas", "CARD ATLAS", "Every place you can find"],
               ["/play/cards", "MY CARDS", "Your collection and its history"],
               ["/play/cards", "MY STATS", "Wins, streaks, strongest card"],
+              ["/play/extenders", "PFP EXTENDERS", "Optional Ordinals HTML card art"],
               ["/oasis", "THE OASIS", "Walk the land your cards come from"],
             ].map(([to, label, note]) => (
               <Link key={label} to={to as "/play/atlas"} className="bg-card p-3 hover:text-bitcoin">

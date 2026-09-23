@@ -18,6 +18,7 @@ const NAV_GROUPS: NavGroup[] = [
     note: "Everything you use inside the 3D Oasis",
     items: [
       { to: "/play", label: "PLAY // LIVING CARDS", note: "The card game where the world is the deck" },
+      { to: "/play/extenders", label: "PFP EXTENDERS", note: "Optional Ordinals HTML card art" },
       { to: "/map", label: "ENTER THE OASIS", note: "Walk, drive, build and explore" },
       { to: "/stream", label: "WORLD STREAM", note: "See verified history as it happens" },
       { to: "/play-guide", label: "PLAYER GUIDE", note: "Controls, devices and what to do" },

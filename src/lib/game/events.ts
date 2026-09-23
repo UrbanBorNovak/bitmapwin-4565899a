@@ -59,7 +59,7 @@ export function applyWorldEvent(
   event: WorldEvent,
   at = Date.now(),
 ): { profile: PlayProfile; changes: CardChange[] } {
-  const p: PlayProfile = { ...profile, cards: { ...profile.cards }, stats: { ...profile.stats }, order: [...profile.order] };
+  const p: PlayProfile = { ...profile, cards: { ...profile.cards }, stats: { ...profile.stats }, order: [...profile.order], visuals: { ...profile.visuals, customPfpExtenders: [...profile.visuals.customPfpExtenders] } };
   const changes: CardChange[] = [];
   const log: WorldEventRecord[] = [];
   const edit = (id: string) => {
