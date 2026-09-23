@@ -22,10 +22,25 @@ export const Route = createFileRoute("/api/public/inscription/$id")({
         if (!upstream.ok || !upstream.body) {
           return new Response("Not available", { status: 502 });
         }
+        const contentType = upstream.headers.get("content-type") ?? "application/octet-stream";
+        if (contentType.toLowerCase().includes("image/svg+xml")) {
+          const svg = (await upstream.text()).replace(
+            /(["'])\/content\/([0-9a-f]{64}i\d+)\1/gi,
+            (_match, quote: string, childId: string) => `${quote}/api/public/inscription/${childId}${quote}`,
+          );
+          return new Response(svg, {
+            status: 200,
+            headers: {
+              "Content-Type": "image/svg+xml; charset=utf-8",
+              "Cache-Control": "public, max-age=31536000, immutable",
+              "Access-Control-Allow-Origin": "*",
+            },
+          });
+        }
         return new Response(upstream.body, {
           status: 200,
           headers: {
-            "Content-Type": upstream.headers.get("content-type") ?? "application/octet-stream",
+            "Content-Type": contentType,
             "Cache-Control": "public, max-age=31536000, immutable",
             "Access-Control-Allow-Origin": "*",
           },
