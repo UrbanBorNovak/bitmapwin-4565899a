@@ -1,3 +1,4 @@
+import { abilityOf } from "./abilities";
 import { attack, canPlay, legalTargets, type MatchState } from "./engine";
 
 export type AiAction = { kind: "play"; uid: string } | { kind: "attack"; uid: string; target: string | "hero" } | { kind: "end" };
@@ -11,12 +12,12 @@ export function nextAiAction(s: MatchState): AiAction {
   // 1. Play: lethal events first, then the best-value affordable card.
   const playable = me.hand.filter((c) => canPlay(s, "ai", c.uid));
   if (playable.length) {
-    const lethal = playable.find((c) => c.type === "EVENT" && foe.board.length === 0 && c.atk >= foe.hp);
+    const lethal = playable.find((c) => abilityOf(c).id === "strike" && foe.board.length === 0 && c.atk >= foe.hp);
     if (lethal) return { kind: "play", uid: lethal.uid };
     const threatened = foe.board.reduce((n, u) => n + u.atk, 0) >= me.hp / 2;
     const score = (c: (typeof playable)[number]) =>
       c.atk + c.hp + (c.type === "GUARDIAN" && threatened ? 6 : 0) + (c.type === "TERRITORY" && s.turn < 4 ? 3 : 0) +
-      (c.type === "EVENT" && foe.board.some((u) => u.hp <= c.atk) ? 5 : 0) + (c.type === "MINER" && me.hand.length < 3 ? 3 : 0);
+      (c.type === "EVENT" && foe.board.some((u) => u.hp <= c.atk) ? 5 : 0) + (abilityOf(c).id === "quake" && foe.board.length > 1 ? 4 : 0) + (abilityOf(c).id === "blessing" && me.board.length > 1 ? 4 : 0) + (abilityOf(c).onPlay && c.type !== "EVENT" ? 1 : 0) + (c.type === "MINER" && me.hand.length < 3 ? 3 : 0);
     const best = [...playable].sort((a, b) => score(b) - score(a))[0]!;
     return { kind: "play", uid: best.uid };
   }

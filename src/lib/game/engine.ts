@@ -1,5 +1,6 @@
 import { createCardFromBitmap, emptyFacts, ATLAS_POOL } from "./cardFactory";
 import type { CardType, LivingCard, Trait } from "./types";
+import { abilityFor, abilityOf, type AbilityCtx } from "./abilities";
 
 /** GAME STATE — ephemeral per match. Cards are snapshots; living cards change only via world events. */
 export type SideId = "player" | "ai";
@@ -15,6 +16,7 @@ export type Unit = {
   hp: number;
   maxHp: number;
   ready: boolean;
+  ability?: string;
   fx: "enter" | "damaged" | "evolved" | "attacking" | null;
 };
 export type Side = { hp: number; energy: number; deck: Unit[]; hand: Unit[]; board: Unit[]; hurt: number };
@@ -71,6 +73,7 @@ function toUnit(card: LivingCard): Unit {
     hp: card.defense,
     maxHp: card.defense,
     ready: false,
+    ability: abilityFor(card.type, card.bitmap).id,
     fx: null,
   };
 }
@@ -170,50 +173,54 @@ export function playCard(state: MatchState, id: SideId, uid: string): MatchState
     side.hp = Math.min(START_HP, side.hp + 2);
   }
 
+  const ab = abilityOf(u);
   if (u.type === "EVENT") {
-    const target = [...foe.board].sort((a, b) => b.atk - a.atk || b.hp - a.hp)[0];
-    if (target) {
-      target.hp -= u.atk;
-      target.fx = "damaged";
-      say(s, id, `${u.name} struck ${target.name} for ${u.atk}.`);
-      if (target.hp <= 0) {
-        foe.board = foe.board.filter((b) => b.uid !== target.uid);
-        say(s, id, `${target.name} returned to the land.`);
-      }
-    } else {
-      const dmg = u.atk + (u.traits.includes("PIONEER") ? 1 : 0);
-      foe.hp -= dmg;
-      foe.hurt = dmg;
-      say(s, id, `${u.name} struck the rival for ${dmg}.`);
-    }
+    say(s, id, `${u.name} · ${ab.name}.`);
+    ab.onPlay?.(ctx(s, id, u));
     checkWin(s);
     return s;
   }
 
   if (u.traits.includes("NEIGHBOR") && side.board.length > 0) u.atk += 1;
   u.fx = "enter";
-  u.ready = u.type === "EXPLORER";
+  u.ready = !!ab.charge;
   side.board.push(u);
-  say(s, id, `${u.name} entered the field.`);
-  if (u.type === "BUILDER") {
-    for (const b of side.board) {
-      b.hp += 1;
-      b.maxHp += 1;
-      if (b.uid !== u.uid) b.fx = "evolved";
-    }
-    say(s, id, "Builders raised the walls: allies +1 defense.");
-  }
-  if (u.type === "MINER") {
-    draw(s, id);
-    say(s, id, `${u.name} dug up a new card.`);
-  }
+  say(s, id, `${u.name} entered the field · ${ab.name}.`);
+  ab.onPlay?.(ctx(s, id, u));
   checkWin(s);
   return s;
 }
 
+function removeDead(s: MatchState) {
+  for (const k of ["player", "ai"] as SideId[]) {
+    const side = s.sides[k];
+    for (const u of side.board) if (u.hp <= 0) say(s, k, `${u.name} returned to the land.`);
+    side.board = side.board.filter((u) => u.hp > 0);
+  }
+}
+
+function hitUnit(t: Unit, n: number) {
+  const dmg = Math.max(0, n - (abilityOf(t).armor ?? 0));
+  t.hp -= dmg;
+  t.fx = "damaged";
+}
+
+function ctx(s: MatchState, id: SideId, self: Unit): AbilityCtx {
+  const side = s.sides[id];
+  const foe = s.sides[other(id)];
+  return {
+    self, side, foe,
+    say: (t) => say(s, id, t),
+    draw: () => draw(s, id),
+    damageUnit: (t, n) => { hitUnit(t as Unit, n); removeDead(s); },
+    damageHero: (n) => { foe.hp -= n; foe.hurt = n; },
+    heal: (n) => { side.hp = Math.min(START_HP, side.hp + n); },
+  };
+}
+
 export function legalTargets(s: MatchState, id: SideId): { units: string[]; hero: boolean } {
   const foe = s.sides[other(id)];
-  const guards = foe.board.filter((u) => u.type === "GUARDIAN" || u.traits.includes("GUARDIAN"));
+  const guards = foe.board.filter((u) => abilityOf(u).taunt || u.traits.includes("GUARDIAN"));
   if (guards.length) return { units: guards.map((g) => g.uid), hero: false };
   return { units: foe.board.map((u) => u.uid), hero: true };
 }
@@ -232,24 +239,18 @@ export function attack(state: MatchState, id: SideId, attackerUid: string, targe
   a.fx = "attacking";
   if (id === "player") s.usage[a.cardId] = (s.usage[a.cardId] ?? 0) + 1;
   if (target === "hero") {
-    const dmg = a.atk + (a.traits.includes("PIONEER") ? 1 : 0);
+    const dmg = a.atk + (a.traits.includes("PIONEER") ? 1 : 0) + (abilityOf(a).heroBonus ?? 0);
     foe.hp -= dmg;
     foe.hurt = dmg;
     say(s, id, `${a.name} hit the rival for ${dmg}.`);
   } else {
     const t = foe.board.find((u) => u.uid === target)!;
-    t.hp -= a.atk;
-    a.hp -= t.atk;
-    t.fx = "damaged";
     say(s, id, `${a.name} clashed with ${t.name}.`);
-    if (t.hp <= 0) {
-      foe.board = foe.board.filter((u) => u.uid !== t.uid);
-      say(s, id, `${t.name} returned to the land.`);
-    }
-    if (a.hp <= 0) {
-      side.board = side.board.filter((u) => u.uid !== a.uid);
-      say(s, id, `${a.name} returned to the land.`);
-    }
+    const back = t.atk;
+    hitUnit(t, a.atk);
+    hitUnit(a, back);
+    a.fx = "attacking";
+    removeDead(s);
   }
   checkWin(s);
   return s;
@@ -263,10 +264,11 @@ export function endTurn(state: MatchState): MatchState {
   s.active = next;
   if (next === "player") s.turn += 1;
   const side = s.sides[next];
-  const territories = side.board.filter((u) => u.type === "TERRITORY").length;
-  side.energy = Math.min(6, BASE_ENERGY + territories);
+  const bonus = side.board.reduce((n, u) => n + (abilityOf(u).energy ?? 0), 0);
+  side.energy = Math.min(6, BASE_ENERGY + bonus);
   for (const u of side.board) u.ready = true;
   draw(s, next);
+  for (const u of [...side.board]) abilityOf(u).onTurnStart?.(ctx(s, next, u));
   checkWin(s);
   return s;
 }

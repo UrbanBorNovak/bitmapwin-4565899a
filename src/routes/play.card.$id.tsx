@@ -3,6 +3,7 @@ import { CardDataLayers, CardHistory } from "@/components/play/CardHistory";
 import { LivingCard } from "@/components/play/LivingCard";
 import { PlayNav } from "@/components/play/PlayNav";
 import { TRAIT_RULE, TYPE_RULE } from "@/lib/game/cardFactory";
+import { abilitiesOf, abilityFor } from "@/lib/game/abilities";
 import { usePlayProfile } from "@/lib/game/worldState";
 
 export const Route = createFileRoute("/play/card/$id")({
@@ -58,6 +59,8 @@ function CardProfile() {
               <p className="label text-signal">{card.origin.label}</p>
               <h1 className="display mt-1 text-3xl md:text-4xl">{card.name}</h1>
               <p className="mt-2 font-mono text-xs"><span className="text-bitcoin">{card.type}</span> — {TYPE_RULE[card.type]}</p>
+              <p className="mt-1 font-mono text-xs">ABILITY · <span className="text-bitcoin">{abilityFor(card.type, card.bitmap).name}</span> — {abilityFor(card.type, card.bitmap).text}</p>
+              <p className="mt-1 font-mono text-[10px] text-muted-foreground">{card.type} FAMILY: {abilitiesOf(card.type).map((a) => a.name).join(" · ")} — the BITMAP decides which one this card carries.</p>
             </div>
             <ul className="grid gap-1 sm:grid-cols-2">
               {card.traits.map((t) => (

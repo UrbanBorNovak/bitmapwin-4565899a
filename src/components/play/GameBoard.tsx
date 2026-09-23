@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { nextAiAction } from "@/lib/game/ai";
-import { TYPE_RULE, createCardFromBitmap, emptyFacts } from "@/lib/game/cardFactory";
+import { abilityOf } from "@/lib/game/abilities";
+import { createCardFromBitmap, emptyFacts } from "@/lib/game/cardFactory";
 import {
   START_HP,
   attack,
@@ -191,7 +192,7 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart,
                 <button type="button" className="btn-term" disabled={!canPlay(match, "player", pickedUnit.uid)} onClick={() => onHand(pickedUnit)}>
                   PLAY {pickedUnit.name} · ⚡{pickedUnit.cost}
                 </button>
-                <span className="font-mono text-[10px] text-muted-foreground">{TYPE_RULE[pickedUnit.type]}</span>
+                <span className="font-mono text-[10px] text-muted-foreground"><span className="text-bitcoin">{abilityOf(pickedUnit).name}</span> — {abilityOf(pickedUnit).text}</span>
               </>
             )}
             {attacker && <span className="font-mono text-[10px] text-bitcoin">CHOOSE A TARGET ↑ {legal?.hero ? "— OR STRIKE THE RIVAL" : "— GUARDIANS FIRST"}</span>}
