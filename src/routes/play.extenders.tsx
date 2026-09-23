@@ -140,6 +140,43 @@ function PlayExtenders() {
     }
   }
 
+  async function importWeirdos() {
+    setWeirdosLoading(true);
+    setWeirdosStatus("READING BITCOIN WEIRDOS FROM ORDISCAN…");
+    try {
+      const result = await scanCollection({ data: { slug: WEIRDOS_SLUG, limit: 250 } });
+      if (result.needsKey) {
+        setWeirdosStatus("ORDISCAN API KEY NEEDED — ADD IT IN PROJECT SETTINGS TO LOAD THIS COLLECTION");
+        return;
+      }
+      if (result.items.length === 0) {
+        setWeirdosStatus("NO WEIRDOS RETURNED RIGHT NOW — TRY AGAIN LATER");
+        return;
+      }
+      const count = result.items.length;
+      const imported: CardVisualExtender[] = result.items.map((item, index) => ({
+        id: `weirdos-${item.inscriptionId}`,
+        name: `WEIRDO ${item.number ?? index + 1}`,
+        collection: WEIRDOS_COLLECTION,
+        source: item.contentType.startsWith("text/html") ? "ordinals-html" : "ordinals-image",
+        inscriptionId: item.inscriptionId,
+        enabled: true,
+        builtIn: false,
+        addedAt: Date.now(),
+        contentType: item.contentType,
+        childIndex: index + 1,
+        childCount: count,
+      }));
+      addCustomPfpExtenders(imported, imported[0]?.id ?? null);
+      updatePlayVisuals({ pfpExtendersEnabled: true, selectedPfpCollection: WEIRDOS_COLLECTION });
+      setWeirdosStatus(`LOADED ${count} WEIRDOS INTO THE CARD POOL${result.truncated ? " · MORE AVAILABLE" : ""}`);
+    } catch {
+      setWeirdosStatus("BITCOIN WEIRDOS COULD NOT BE READ RIGHT NOW");
+    } finally {
+      setWeirdosLoading(false);
+    }
+  }
+
   return (
     <main className="play-district mx-auto max-w-[1200px] overflow-x-hidden px-4 py-8 md:px-8">
       <PlayNav />
