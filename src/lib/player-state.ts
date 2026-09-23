@@ -31,20 +31,20 @@ export const STRIDE = WORLD_CELL / 10;
 /** Tuning constants for movement feel. Tune these, never the integrator. */
 export const MOVE = {
   /** top walking speed in world units per second */
-  walkSpeed: STRIDE * 6.5,
+  walkSpeed: STRIDE * 7.15,
   /** multiplier while sprinting */
-  sprint: 1.65,
+  sprint: 1.72,
   jumpSpeed: STRIDE * 28,
   gravity: STRIDE * 78,
   /** how hard the avatar accelerates toward the wanted velocity */
-  accel: 14,
+  accel: 18,
   /** exponential damping applied when no input is held */
-  drag: 9,
+  drag: 11,
   /** keyboard turn rate in radians per second */
-  turnRate: 2.9,
+  turnRate: 3.25,
 
   /** how fast the body swings toward the direction it is travelling */
-  faceRate: 10,
+  faceRate: 12,
   /** click-to-move stops inside this radius */
   arrive: STRIDE * 1.4,
   /** speed below which the player counts as idle */
