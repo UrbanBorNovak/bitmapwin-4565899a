@@ -11,9 +11,8 @@ import {
   ordinalsPreviewUrl,
 } from "@/lib/game/pfpExtenders";
 import { getParentImageChildrenFn } from "@/lib/game/parentExtenders.functions";
-import { getOrdiscanCollectionFn } from "@/lib/game/ordiscan.functions";
 
-const WEIRDOS_SLUG = "bitcoin-weirdos";
+const WEIRDOS_PARENT = "89d8bfdc528550b34b22741d579645ba7c0899f534c617ed6f18609b280c1bc2i0";
 const WEIRDOS_COLLECTION = "BITCOIN WEIRDOS";
 import {
   addCustomPfpExtenders,
@@ -43,7 +42,6 @@ export const Route = createFileRoute("/play/extenders")({
 function PlayExtenders() {
   const profile = usePlayProfile();
   const scanParent = useServerFn(getParentImageChildrenFn);
-  const scanCollection = useServerFn(getOrdiscanCollectionFn);
   const [input, setInput] = useState("");
   const [name, setName] = useState("");
   const [parentInput, setParentInput] = useState("");
@@ -128,6 +126,7 @@ function PlayExtenders() {
         contentType: child.contentType,
         childIndex: index + 1,
         childCount: count,
+        parentInscriptionId: WEIRDOS_PARENT,
       }));
       addCustomPfpExtenders(imported, imported[0]?.id ?? null);
       setParentStatus(`IMPORTED ${count} IMAGE/HTML CHILDREN FOR ${bitmap}.BITMAP`);
@@ -142,19 +141,16 @@ function PlayExtenders() {
 
   async function importWeirdos() {
     setWeirdosLoading(true);
-    setWeirdosStatus("READING BITCOIN WEIRDOS FROM ORDISCAN…");
+    setWeirdosStatus("READING BITCOIN WEIRDOS CHILDREN FROM THE CHAIN…");
     try {
-      const result = await scanCollection({ data: { slug: WEIRDOS_SLUG, limit: 250 } });
-      if (result.needsKey) {
-        setWeirdosStatus("ORDISCAN API KEY NEEDED — ADD IT IN PROJECT SETTINGS TO LOAD THIS COLLECTION");
-        return;
-      }
-      if (result.items.length === 0) {
+      const result = await scanParent({ data: { parentInscriptionId: WEIRDOS_PARENT, limit: 250 } });
+      const items = result.imageChildren;
+      if (items.length === 0) {
         setWeirdosStatus("NO WEIRDOS RETURNED RIGHT NOW — TRY AGAIN LATER");
         return;
       }
-      const count = result.items.length;
-      const imported: CardVisualExtender[] = result.items.map((item, index) => ({
+      const count = items.length;
+      const imported: CardVisualExtender[] = items.map((item, index) => ({
         id: `weirdos-${item.inscriptionId}`,
         name: `WEIRDO ${item.number ?? index + 1}`,
         collection: WEIRDOS_COLLECTION,
@@ -166,6 +162,7 @@ function PlayExtenders() {
         contentType: item.contentType,
         childIndex: index + 1,
         childCount: count,
+        parentInscriptionId: WEIRDOS_PARENT,
       }));
       addCustomPfpExtenders(imported, imported[0]?.id ?? null);
       updatePlayVisuals({ pfpExtendersEnabled: true, selectedPfpCollection: WEIRDOS_COLLECTION });
@@ -240,7 +237,7 @@ function PlayExtenders() {
           <article className="border border-border bg-card p-3">
             <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h2 className="label text-bitcoin">{WEIRDOS_COLLECTION} · ORDISCAN</h2>
+                <h2 className="label text-bitcoin">{WEIRDOS_COLLECTION} · PARENT CHILDREN</h2>
                 <span className="label text-muted-foreground">POPULAR ORDINALS PFP COLLECTION</span>
               </div>
               <Button
@@ -254,7 +251,7 @@ function PlayExtenders() {
               </Button>
             </header>
             <p className="break-all font-mono text-[10px] text-muted-foreground">
-              ordiscan.com/collection/bitcoin-weirdos · LOADS THE COLLECTION INTO THE CARD POOL SO EACH CARD GETS A DIFFERENT WEIRDO
+              PARENT {WEIRDOS_PARENT.slice(0, 10)}…{WEIRDOS_PARENT.slice(-6)} · EVERY IMAGE OR HTML CHILD JOINS THE CARD POOL, EACH CARD GETS A DIFFERENT WEIRDO
             </p>
             {weirdosStatus && <p className="mt-2 font-mono text-[10px] text-muted-foreground">{weirdosStatus}</p>}
           </article>
