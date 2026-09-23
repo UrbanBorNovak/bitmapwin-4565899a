@@ -2449,9 +2449,11 @@ function GroundPlane({ colors }: { colors: WorldColors }) {
 const LandSurface = memo(function LandSurface({
   colors,
   tipHeight,
+  mapView,
 }: {
   colors: WorldColors;
   tipHeight: number;
+  mapView: boolean;
 }) {
   const tipDepth = Math.max(CELL, (Math.floor(tipHeight / GRID) + 1) * CELL);
   const gridArgs = useMemo(
@@ -2488,14 +2490,16 @@ const LandSurface = memo(function LandSurface({
           depthTest={false}
         />
       </mesh>
-      <gridHelper
-        args={gridArgs as unknown as [number, number, THREE.Color, THREE.Color]}
-        position={[0, -AVATAR_U * 0.1, WORLD_SIZE / 2]}
-        renderOrder={-2}
-        material-depthWrite={false}
-        material-depthTest={false}
-        raycast={noRaycast}
-      />
+      {mapView ? <gridHelper
+          args={gridArgs as unknown as [number, number, THREE.Color, THREE.Color]}
+          position={[0, -AVATAR_U * 0.1, WORLD_SIZE / 2]}
+          renderOrder={-2}
+          material-depthWrite={false}
+          material-depthTest={false}
+          material-transparent
+          material-opacity={0.48}
+          raycast={noRaycast}
+        /> : null}
     </>
   );
 });
@@ -2648,7 +2652,7 @@ const WorldScene = memo(function WorldScene({
       <PerfGovernor pose={pose} active={cameraMode !== "map"} />
       <SkyBodies bitcoin={colors.bitcoin} />
       {cameraMode !== "map" && quality.effects !== "off" ? <WorldWeather /> : null}
-      <LandSurface colors={colors} tipHeight={tipHeight} />
+      <LandSurface colors={colors} tipHeight={tipHeight} mapView={cameraMode === "map"} />
       <WorldDepthLayers mapView={cameraMode === "map"} />
       {/* SPACE + TIME — recorded history replayed as light over the same land. */}
       {spaceTime ? <SpaceTimeWorld track={spaceTime} /> : null}
