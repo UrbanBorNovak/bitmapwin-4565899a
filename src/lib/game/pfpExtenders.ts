@@ -68,6 +68,7 @@ export function normalizeVisualSettings(value: unknown): PlayVisualSettings {
         if (!inscriptionId) return [];
         const safeName = String(candidate.name ?? "CUSTOM HTML PFP").trim().slice(0, 42) || "CUSTOM HTML PFP";
         const safeCollection = String(candidate.collection ?? "CUSTOM ORDINALS PFP").trim().slice(0, 42) || "CUSTOM ORDINALS PFP";
+        if (safeCollection.toUpperCase() === "BITCOIN WEIRDOS") return [];
         const source: CardVisualExtender["source"] = candidate.source === "ordinals-image" ? "ordinals-image" : "ordinals-html";
         const bitmap = typeof candidate.bitmap === "number" && Number.isInteger(candidate.bitmap) && candidate.bitmap >= 0 && candidate.bitmap <= 999_999 ? candidate.bitmap : null;
         const parentInscriptionId = normalizeInscriptionInput(String(candidate.parentInscriptionId ?? ""));
@@ -96,8 +97,9 @@ export function normalizeVisualSettings(value: unknown): PlayVisualSettings {
   const available = allPfpExtenders({ ...DEFAULT_PLAY_VISUALS, customPfpExtenders: custom });
   const selected = typeof raw.selectedPfpExtenderId === "string" && available.some((x) => x.id === raw.selectedPfpExtenderId) ? raw.selectedPfpExtenderId : DEFAULT_PLAY_VISUALS.selectedPfpExtenderId;
   const selectedExtender = selected ? available.find((extender) => extender.id === selected) : null;
-  const selectedPfpCollection = typeof raw.selectedPfpCollection === "string" && raw.selectedPfpCollection.trim()
-    ? raw.selectedPfpCollection.trim().slice(0, 80)
+  const rawCollection = typeof raw.selectedPfpCollection === "string" ? raw.selectedPfpCollection.trim().slice(0, 80) : "";
+  const selectedPfpCollection = rawCollection && rawCollection.toUpperCase() !== "BITCOIN WEIRDOS"
+    ? rawCollection
     : selectedExtender?.collection ?? DEFAULT_PLAY_VISUALS.selectedPfpCollection;
   return {
     pfpExtendersEnabled: raw.pfpExtendersEnabled === true,
