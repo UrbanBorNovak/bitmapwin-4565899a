@@ -93,15 +93,15 @@ function PlayExtenders() {
         return;
       }
       if (result.imageChildren.length === 0) {
-        setParentStatus(`NO IMAGE CHILDREN FOUND · ${result.checkedChildren} CHILDREN CHECKED`);
+        setParentStatus(`NO IMAGE OR HTML CHILDREN FOUND · ${result.checkedChildren} CHILDREN CHECKED`);
         return;
       }
       const count = result.imageChildren.length;
       const imported: CardVisualExtender[] = result.imageChildren.map((child, index) => ({
         id: `parent-${bitmap}-${parentInscriptionId}-${child.inscriptionId}`,
-        name: `CHILD IMAGE ${index + 1}`,
+        name: `${child.contentType.startsWith("text/html") ? "CHILD HTML" : "CHILD IMAGE"} ${index + 1}`,
         collection: `${bitmap}.BITMAP CHILDREN`,
-        source: "ordinals-image",
+        source: child.contentType.startsWith("text/html") ? "ordinals-html" : "ordinals-image",
         inscriptionId: child.inscriptionId,
         enabled: true,
         builtIn: false,
@@ -113,7 +113,7 @@ function PlayExtenders() {
         childCount: count,
       }));
       addCustomPfpExtenders(imported, imported[0]?.id ?? null);
-      setParentStatus(`IMPORTED ${count} IMAGE CHILDREN FOR ${bitmap}.BITMAP`);
+      setParentStatus(`IMPORTED ${count} IMAGE/HTML CHILDREN FOR ${bitmap}.BITMAP`);
       setParentInput("");
     } catch {
       setParentError("CHILD INSCRIPTIONS COULD NOT BE READ RIGHT NOW");
@@ -224,7 +224,7 @@ function PlayExtenders() {
               </label>
               {parentError && <p className="font-mono text-[10px] text-destructive">{parentError}</p>}
               {parentStatus && <p className="font-mono text-[10px] text-muted-foreground">{parentStatus}</p>}
-              <Button type="button" variant="terminal" disabled={!profile || importing} onClick={importParentChildren}>{importing ? "READING CHILDREN…" : "IMPORT ALL IMAGE CHILDREN"}</Button>
+              <Button type="button" variant="terminal" disabled={!profile || importing} onClick={importParentChildren}>{importing ? "READING CHILDREN…" : "IMPORT ALL IMAGE + HTML CHILDREN"}</Button>
             </div>
           </section>
 
