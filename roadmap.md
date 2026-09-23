@@ -39,6 +39,6 @@
 - [x] Restore a true light view and its shared header control.
 - [x] Verify targeted screens in both themes on desktop and phone.
 
-- [ ] Add optional Ordinals PFP HTML extenders to BITMAPWIN // PLAY.
-- [ ] Wire PFP extender previews into living-card art and card profiles.
-- [ ] Verify the new PLAY extender flow on desktop and mobile.
+- [x] Add optional Ordinals PFP HTML extenders to BITMAPWIN // PLAY.
+- [x] Wire PFP extender previews into living-card art and card profiles.
+- [x] Verify the new PLAY extender flow on desktop and mobile.
