@@ -30,3 +30,7 @@
 - [x] Register successfully decoded on-chain BSS scenes in a public scene directory.
 - [x] Link each verified BSS scene from its atlas district chapter.
 - [x] Show a readable BSS scene label inside the Oasis and verify the complete flow.
+
+- [x] Apply the selected ord.net-inspired visual system across shared site chrome.
+- [x] Recompose the home screen as a dense market overview.
+- [x] Verify representative desktop and mobile screens.

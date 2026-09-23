@@ -4,7 +4,6 @@ import { useState } from "react";
 import { BidInboxBell } from "@/components/BidInboxBell";
 import { HeaderIdentity } from "@/components/HeaderIdentity";
 import { BtcTicker } from "@/components/BtcTicker";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { startGuidedTour } from "@/components/GuidedTour";
 
@@ -96,22 +95,22 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="site-header sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
-      <div className="mx-auto grid max-w-[1600px] grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-4 py-2.5 md:flex md:justify-between md:gap-4 md:px-8 md:py-3">
+    <header className="site-header sticky top-0 z-50 border-b border-border">
+      <div className="mx-auto grid max-w-[1600px] grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 py-2 md:flex md:justify-between md:gap-3 md:px-5">
         <Link to="/" className="site-brand min-w-0 leading-none">
-          <div className="display flex items-end gap-1 text-sm sm:text-base md:text-lg">
-            <span>BITMAP</span>
-            <span className="relative">
-              <span className="label absolute bottom-full left-0 mb-0.5 text-[0.4rem] leading-none text-bitcoin">
+          <div className="display flex items-end gap-1 text-sm sm:text-base">
+            <span className="text-bitcoin">BITMAP</span>
+            <span className="relative hidden sm:inline">
+              <span className="label absolute bottom-full left-0 mb-0.5 hidden text-[0.4rem] leading-none text-bitcoin md:block">
                 ALPHA
               </span>
               UNHINGED
             </span>
           </div>
-          <div className="label mt-1 hidden sm:block">BITCOIN LAND BEDROCK</div>
+          <div className="label mt-1 hidden text-[0.5rem] sm:block">BITCOIN-NATIVE WORLDS</div>
         </Link>
 
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Main navigation">
+        <nav className="hidden items-center divide-x divide-border border-x border-border lg:flex" aria-label="Main navigation">
           {NAV_GROUPS.map((group) => (
             <div
               key={group.id}
@@ -123,7 +122,7 @@ export function SiteHeader() {
                 type="button"
                 aria-expanded={openGroup === group.id}
                 onClick={() => setOpenGroup((v) => (v === group.id ? null : group.id))}
-              className={`nav-trigger label flex items-center gap-1 px-3 py-2 ${
+              className={`nav-trigger label flex h-9 items-center gap-1 px-3 py-2 ${
                   openGroup === group.id ? "is-active border border-border text-foreground" : ""
                 }`}
               >
@@ -131,7 +130,7 @@ export function SiteHeader() {
                 <ChevronDown className="size-3" />
               </button>
               {openGroup === group.id && (
-                <div className="nav-menu absolute left-0 top-full min-w-64 border border-border bg-background shadow-[4px_4px_0_0_var(--color-border)]">
+                <div className="nav-menu absolute left-0 top-full min-w-64 border border-border bg-background">
                   <div className="border-b border-border bg-surface px-4 py-2">
                     <div className="label text-bitcoin">{group.label}</div>
                     <div className="mt-1 font-mono text-[10px] leading-snug text-muted-foreground">
@@ -154,30 +153,29 @@ export function SiteHeader() {
               )}
             </div>
           ))}
-          <Link to="/oasis" className="label ml-2 flex items-center gap-1 border border-bitcoin px-3 py-2 text-bitcoin hover:bg-bitcoin/10">
+          <Link to="/oasis" className="label ml-2 flex h-9 items-center gap-1 border border-bitcoin bg-bitcoin px-3 py-2 text-primary-foreground hover:border-foreground hover:bg-foreground">
             ENTER OASIS <span aria-hidden="true">→</span>
           </Link>
         </nav>
 
 
 
-        <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
+        <div className="flex shrink-0 items-center gap-1">
           <BtcTicker className="hidden sm:flex" />
-          <ThemeToggle />
           <LanguageSwitcher />
           <button
             type="button"
             aria-label="Show me around this page"
             title="Show me around this page"
             onClick={() => startGuidedTour()}
-            className="icon-control grid size-11 shrink-0 place-items-center border border-border text-muted-foreground md:size-9"
+            className="icon-control hidden size-10 shrink-0 place-items-center border border-border text-muted-foreground sm:grid md:size-9"
           >
             <HelpCircle className="size-4" />
           </button>
           <button
             aria-label="Search bitmaps"
             onClick={() => setSearchOpen((v) => !v)}
-            className="icon-control grid size-11 shrink-0 place-items-center border border-border text-muted-foreground md:size-9"
+            className="icon-control grid size-10 shrink-0 place-items-center border border-border text-muted-foreground md:size-9"
           >
             {searchOpen ? <X className="size-4" /> : <Search className="size-4" />}
           </button>
@@ -187,7 +185,7 @@ export function SiteHeader() {
       </div>
 
       {searchOpen && (
-        <form onSubmit={submit} className="border-t border-border px-4 py-3 md:px-8">
+        <form onSubmit={submit} className="border-t border-border px-3 py-2 md:px-5">
           <input
             autoFocus
             value={term}
@@ -198,7 +196,7 @@ export function SiteHeader() {
         </form>
       )}
 
-      <nav className="flex items-center gap-1 overflow-visible border-t border-border px-4 py-2 lg:hidden" aria-label="Main navigation">
+      <nav className="flex items-center divide-x divide-border overflow-visible border-t border-border px-3 py-1 lg:hidden" aria-label="Main navigation">
         {NAV_GROUPS.map((group) => (
           <div key={group.id} className="relative min-w-0 flex-1">
             <button
@@ -213,7 +211,7 @@ export function SiteHeader() {
               <ChevronDown className="hidden size-3 sm:block" />
             </button>
             {openGroup === group.id && (
-              <div className={`nav-menu fixed left-3 right-3 top-[6.25rem] z-50 border border-border bg-background shadow-[4px_4px_0_0_var(--color-border)] sm:absolute sm:left-0 sm:right-auto sm:top-full sm:mt-2 sm:min-w-72 ${group.id === "account" ? "sm:left-auto sm:right-0" : ""}`}>
+              <div className={`nav-menu fixed left-3 right-3 top-[5.55rem] z-50 border border-border bg-background sm:absolute sm:left-0 sm:right-auto sm:top-full sm:mt-1 sm:min-w-72 ${group.id === "account" ? "sm:left-auto sm:right-0" : ""}`}>
                 <div className="border-b border-border bg-surface px-4 py-2">
                   <div className="label text-bitcoin">{group.label}</div>
                   <div className="mt-1 font-mono text-[10px] leading-snug text-muted-foreground">{group.note}</div>

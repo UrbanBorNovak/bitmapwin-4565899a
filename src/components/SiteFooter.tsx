@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { SPRITES, SpriteCritter } from "@/components/SpriteCritter";
 
 const GROUPS: { label: string; items: { to: string; label: string }[] }[] = [
   {
@@ -54,13 +53,13 @@ const GROUPS: { label: string; items: { to: string; label: string }[] }[] = [
 
 export function SiteFooter() {
   return (
-    <footer className="site-footer border-t border-border px-4 py-8 md:px-8">
+    <footer className="site-footer border-t border-border px-4 py-6 md:px-5">
       <div className="mx-auto max-w-[1600px]">
-        <nav className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
+        <nav className="grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3 lg:grid-cols-5">
           {GROUPS.map((g) => (
-            <div key={g.label}>
-              <div className="label text-bitcoin">{g.label}</div>
-              <ul className="mt-3 space-y-2">
+            <div key={g.label} className="bg-background p-4">
+              <div className="label text-foreground">{g.label}</div>
+              <ul className="mt-3 space-y-1.5">
                 {g.items.map((item) => (
                   <li key={item.to}>
                     <Link to={item.to} className="footer-link label text-[0.6rem]">
@@ -72,11 +71,8 @@ export function SiteFooter() {
             </div>
           ))}
         </nav>
-        <div className="mt-8 flex flex-col gap-2 border-t border-border pt-6 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
-            <SpriteCritter sheet={SPRITES[2]!} height={44} className="animate-sprite-bob shrink-0" />
-            <div className="display text-sm">THE INTERNET, BUT WITH LAND</div>
-          </div>
+        <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3 md:flex-row md:items-center md:justify-between">
+          <div className="display text-xs">BITMAPWIN · THE INTERNET, BUT WITH LAND</div>
           <div className="label">
             REAL BLOCKS · LIVE ORDINALS · ON-CHAIN OWNERSHIP
             <span className="blink ml-2 text-foreground">_</span>
