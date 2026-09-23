@@ -18,12 +18,19 @@ import { dispatchWorldEvent } from "@/lib/game/worldState";
 import type { CardChange, LivingCard as Card, PlayProfile } from "@/lib/game/types";
 import { LivingCard, type CardUiState } from "./LivingCard";
 
-type Props = { profile: PlayProfile; deck: Card[]; seed: number; leaderId: string | null; tableCode: string | null; onRestart: () => void };
+export type RemoteAction = { kind: "play"; uid: string } | { kind: "attack"; uid: string; target: string } | { kind: "end" };
+export type RemoteTable = { state: MatchState; rivalName: string; send: (a: RemoteAction) => void; busy: boolean };
+type Props = { profile: PlayProfile; deck: Card[]; seed: number; leaderId: string | null; tableCode: string | null; onRestart: () => void; remote?: RemoteTable };
 
 const AI_STEP_MS = 750;
 
-export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart }: Props) {
-  const [match, setMatch] = useState<MatchState>(() => newMatch(deck, seed, leaderId));
+export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart, remote }: Props) {
+  const [localMatch, setMatch] = useState<MatchState>(() => (remote ? remote.state : newMatch(deck, seed, leaderId)));
+  const match = remote ? remote.state : localMatch;
+  const act = (a: RemoteAction) => {
+    if (remote) return remote.send(a);
+    setMatch(a.kind === "play" ? playCard(match, "player", a.uid) : a.kind === "attack" ? attack(match, "player", a.uid, a.target) : endTurn(match));
+  };
   const [picked, setPicked] = useState<string | null>(null);
   const [attacker, setAttacker] = useState<string | null>(null);
   const [moment, setMoment] = useState<CardChange | null>(null);
@@ -44,7 +51,7 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart 
 
   // Local rival turn loop.
   useEffect(() => {
-    if (match.active !== "ai" || match.winner) return;
+    if (remote || match.active !== "ai" || match.winner) return;
     const t = window.setTimeout(() => {
       setMatch((m) => {
         const action = nextAiAction(m);
@@ -57,7 +64,7 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart 
       });
     }, AI_STEP_MS);
     return () => window.clearTimeout(t);
-  }, [match]);
+  }, [match, remote]);
 
   // Match end → world events.
   useEffect(() => {
@@ -75,7 +82,8 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart 
 
   const me = match.sides.player;
   const foe = match.sides.ai;
-  const myTurn = match.active === "player" && !match.winner;
+  const myTurn = match.active === "player" && !match.winner && !remote?.busy;
+  const rival = remote ? `RIVAL · ${remote.rivalName}` : "RIVAL · LOCAL AI";
   const legal = attacker ? legalTargets(match, "player") : null;
 
   function onHand(u: Unit) {
@@ -83,7 +91,7 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart 
     setAttacker(null);
     if (picked !== u.uid) return setPicked(u.uid);
     if (!canPlay(match, "player", u.uid)) return;
-    setMatch(playCard(match, "player", u.uid));
+    act({ kind: "play", uid: u.uid });
     setPicked(null);
     const changes = dispatchWorldEvent({ kind: "CARD_PLAYED", cardId: u.cardId, actor });
     const wake = changes.find((c) => c.from === "DORMANT" && c.to !== "DORMANT");
@@ -98,7 +106,7 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart 
 
   function strike(target: string | "hero") {
     if (!attacker) return;
-    setMatch(attack(match, "player", attacker, target));
+    act({ kind: "attack", uid: attacker, target });
     setAttacker(null);
   }
 
@@ -108,7 +116,7 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart 
     <div className="play-table relative grid min-w-0 grid-cols-1 gap-3 [&>*]:min-w-0">
       {/* OPPONENT */}
       <PlayerStrip
-        who="RIVAL · LOCAL AI"
+        who={rival}
         hp={foe.hp}
         energy={foe.energy}
         hand={foe.hand.length}
@@ -139,7 +147,7 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart 
 
       <div className="flex items-center gap-3 border-y border-border py-2">
         <span className="label text-muted-foreground">TURN {match.turn}</span>
-        <span className={`label ${myTurn ? "text-bitcoin" : "text-signal"}`}>{match.winner ? "MATCH COMPLETE" : myTurn ? "YOUR MOVE" : "RIVAL IS THINKING…"}</span>
+        <span className={`label ${myTurn ? "text-bitcoin" : "text-signal"}`}>{match.winner ? "MATCH COMPLETE" : myTurn ? "YOUR MOVE" : remote?.busy ? "SENDING MOVE…" : remote ? "RIVAL'S MOVE…" : "RIVAL IS THINKING…"}</span>
         <span className="ml-auto hidden font-mono text-[10px] text-muted-foreground sm:block" aria-live="polite">{match.log[0]?.text}</span>
       </div>
 
@@ -187,7 +195,7 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart 
               </>
             )}
             {attacker && <span className="font-mono text-[10px] text-bitcoin">CHOOSE A TARGET ↑ {legal?.hero ? "— OR STRIKE THE RIVAL" : "— GUARDIANS FIRST"}</span>}
-            <button type="button" className="btn-term-ghost ml-auto min-h-11" disabled={!myTurn} onClick={() => { setPicked(null); setAttacker(null); setMatch(endTurn(match)); }}>
+            <button type="button" className="btn-term-ghost ml-auto min-h-11" disabled={!myTurn} onClick={() => { setPicked(null); setAttacker(null); act({ kind: "end" }); }}>
               END TURN →
             </button>
           </div>
