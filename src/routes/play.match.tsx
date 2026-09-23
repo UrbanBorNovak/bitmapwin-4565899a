@@ -53,7 +53,7 @@ function MatchPage() {
   }, [profile?.owner, seed, leaderId && profile?.cards[leaderId] ? leaderId : null]);
 
   return (
-    <main className="play-district mx-auto max-w-[1200px] px-3 py-4 md:px-8 md:py-6">
+    <main className="play-district mx-auto max-w-[1200px] overflow-x-hidden px-3 py-4 md:px-8 md:py-6">
       <div className="mb-3 flex items-center justify-between gap-2">
         <Link to="/play" className="label hover:text-bitcoin">← LOBBY</Link>
         <p className="label"><span className="text-bitcoin">BITMAPWIN</span> // PLAY{table ? ` · TABLE ${table}` : " · VS AI"}</p>

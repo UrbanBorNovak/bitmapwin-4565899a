@@ -105,7 +105,7 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart 
   const pickedUnit = me.hand.find((u) => u.uid === picked);
 
   return (
-    <div className="play-table relative grid gap-3">
+    <div className="play-table relative grid min-w-0 grid-cols-1 gap-3 [&>*]:min-w-0">
       {/* OPPONENT */}
       <PlayerStrip
         who="RIVAL · LOCAL AI"
@@ -164,7 +164,7 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart 
       </Field>
       <PlayerStrip who="YOU" hp={me.hp} energy={me.energy} hand={me.hand.length} deck={me.deck.length} hurt={me.hurt} active={myTurn} />
 
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_16rem]">
+      <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_16rem] [&>*]:min-w-0">
         <div>
           <div className="play-hand flex gap-2 overflow-x-auto pb-3 pt-4" role="list" aria-label="Your hand">
             {me.hand.map((u) => {
@@ -209,7 +209,7 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart 
 }
 
 function Field({ children }: { children: React.ReactNode }) {
-  return <div className="play-field flex min-h-[11.5rem] items-center justify-center gap-2 overflow-x-auto border border-border px-2 py-3">{children}</div>;
+  return <div className="play-field flex min-h-[11.5rem] items-center justify-start sm:justify-center gap-2 overflow-x-auto border border-border px-2 py-3">{children}</div>;
 }
 function EmptyField({ text }: { text: string }) {
   return <span className="label text-muted-foreground/70">{text}</span>;
