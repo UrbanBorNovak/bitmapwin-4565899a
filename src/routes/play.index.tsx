@@ -6,6 +6,9 @@ import { TerritoryPicker } from "@/components/play/TerritoryPicker";
 import { WorldEventFeed } from "@/components/play/WorldEventFeed";
 import { LivingCard } from "@/components/play/LivingCard";
 import { syncWorld, usePlayProfile } from "@/lib/game/worldState";
+import { useServerFn } from "@tanstack/react-start";
+import { createTableFn, joinTableFn } from "@/lib/game/tables.functions";
+import { deckHeights, saveSeat, seatName } from "@/lib/game/tableSeat";
 
 export const Route = createFileRoute("/play/")({
   head: () => ({
@@ -21,14 +24,36 @@ export const Route = createFileRoute("/play/")({
   component: PlayLobby,
 });
 
-const newCode = () => Math.floor(Math.random() * 36 ** 5).toString(36).toUpperCase().padStart(5, "0");
 
 function PlayLobby() {
   const profile = usePlayProfile();
   const navigate = useNavigate();
   const [panel, setPanel] = useState<"create" | "join" | null>(null);
   const [code, setCode] = useState("");
-  const [created, setCreated] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  const createTable = useServerFn(createTableFn);
+  const joinTable = useServerFn(joinTableFn);
+
+  async function openTable() {
+    if (!profile) return;
+    setBusy(true); setNote(null);
+    try {
+      const r = await createTable({ data: { heights: deckHeights(profile), name: seatName(profile) } });
+      saveSeat(r.code, { token: r.token, seat: r.seat });
+      navigate({ to: "/play/table/$code", params: { code: r.code } });
+    } catch { setNote("COULD NOT OPEN A TABLE — TRY AGAIN"); setBusy(false); }
+  }
+  async function sit(c: string) {
+    if (!profile) return;
+    setBusy(true); setNote(null);
+    try {
+      const r = await joinTable({ data: { code: c, heights: deckHeights(profile), name: seatName(profile) } });
+      if ("error" in r) { setNote(r.error); setBusy(false); return; }
+      saveSeat(r.code, { token: r.token, seat: r.seat });
+      navigate({ to: "/play/table/$code", params: { code: r.code } });
+    } catch { setNote("COULD NOT JOIN — TRY AGAIN"); setBusy(false); }
+  }
   const [world, setWorld] = useState<"ok" | "unavailable" | null>(null);
 
   useEffect(() => {
@@ -54,35 +79,26 @@ function PlayLobby() {
         </div>
         <div className="grid gap-2 sm:grid-cols-3 md:w-[26rem] md:grid-cols-1">
           <Link to="/play/match" className="btn-term min-h-12 justify-center text-base">▶ PLAY AI</Link>
-          <button type="button" className="btn-term-ghost min-h-11" aria-expanded={panel === "create"} onClick={() => { setPanel("create"); setCreated(newCode()); }}>CREATE TABLE</button>
+          <button type="button" className="btn-term-ghost min-h-11" aria-expanded={panel === "create"} disabled={!profile || busy} onClick={() => { setPanel("create"); void openTable(); }}>{busy && panel === "create" ? "OPENING…" : "CREATE TABLE"}</button>
           <button type="button" className="btn-term-ghost min-h-11" aria-expanded={panel === "join"} onClick={() => setPanel("join")}>JOIN TABLE</button>
         </div>
       </header>
 
-      {panel === "create" && created && (
-        <section className="mt-5 border border-bitcoin bg-card p-4">
-          <p className="label text-bitcoin">TABLE {created}</p>
-          <p className="mt-1 font-mono text-[10px] text-muted-foreground">A table fixes the rival deck and the draw order. Share the code — everyone who sits here faces the same land. Compare your results.</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Link to="/play/match" search={{ table: created }} className="btn-term">SIT AT TABLE {created}</Link>
-            <button type="button" className="btn-term-ghost" onClick={() => void navigator.clipboard?.writeText(`${window.location.origin}/play/match?table=${created}`)}>COPY LINK</button>
-          </div>
-        </section>
-      )}
+      {note && <p className="mt-4 font-mono text-[10px] text-bitcoin" role="status">{note}</p>}
       {panel === "join" && (
         <form
           className="mt-5 flex flex-wrap items-end gap-2 border border-border bg-card p-4"
           onSubmit={(e) => {
             e.preventDefault();
             const c = code.trim().toUpperCase();
-            if (/^[0-9A-Z]{3,8}$/.test(c)) navigate({ to: "/play/match", search: { table: c } });
+            if (/^[0-9A-Z]{5}$/.test(c)) void sit(c);
           }}
         >
           <label className="grid gap-1">
             <span className="label">TABLE CODE</span>
-            <input value={code} onChange={(e) => setCode(e.target.value)} maxLength={8} className="h-11 w-40 border border-border bg-background px-3 font-mono uppercase" placeholder="E.G. 7K2QX" />
+            <input value={code} onChange={(e) => setCode(e.target.value)} maxLength={5} className="h-11 w-40 border border-border bg-background px-3 font-mono uppercase" placeholder="E.G. 7K2QX" />
           </label>
-          <button type="submit" className="btn-term min-h-11" disabled={!/^[0-9a-zA-Z]{3,8}$/.test(code.trim())}>JOIN TABLE</button>
+          <button type="submit" className="btn-term min-h-11" disabled={busy || !/^[0-9a-zA-Z]{5}$/.test(code.trim())}>{busy && panel === "join" ? "JOINING…" : "SIT DOWN"}</button>
         </form>
       )}
 

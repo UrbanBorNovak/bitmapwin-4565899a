@@ -2066,6 +2066,48 @@ export type Database = {
         }
         Relationships: []
       }
+      play_tables: {
+        Row: {
+          code: string
+          created_at: string
+          guest_name: string | null
+          guest_token_hash: string | null
+          host_heights: number[]
+          host_name: string
+          host_token_hash: string
+          state: Json | null
+          status: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          guest_name?: string | null
+          guest_token_hash?: string | null
+          host_heights?: number[]
+          host_name?: string
+          host_token_hash: string
+          state?: Json | null
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          guest_name?: string | null
+          guest_token_hash?: string | null
+          host_heights?: number[]
+          host_name?: string
+          host_token_hash?: string
+          state?: Json | null
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
       player_builds: {
         Row: {
           bitmap_height: number
