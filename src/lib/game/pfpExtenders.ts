@@ -3,20 +3,7 @@ import { hash } from "./cardFactory";
 
 export const INSCRIPTION_ID_RE = /^[0-9a-f]{64}i\d+$/i;
 
-const WEIRDOS_HTML_ID = "f605a9be62272ad8429081e05ac8984ff0387864ec05a1682457847a684fcbd7i0";
-
-export const BUILT_IN_PFP_EXTENDERS: CardVisualExtender[] = [
-  {
-    id: `ord-html-${WEIRDOS_HTML_ID}`,
-    name: "WEIRDOS HTML SAMPLE",
-    collection: "POPULAR ORDINALS PFP",
-    source: "ordinals-html",
-    inscriptionId: WEIRDOS_HTML_ID,
-    enabled: true,
-    builtIn: true,
-    addedAt: 0,
-  },
-];
+export const BUILT_IN_PFP_EXTENDERS: CardVisualExtender[] = [];
 
 export const DEFAULT_PLAY_VISUALS: PlayVisualSettings = {
   pfpExtendersEnabled: false,
@@ -81,9 +68,7 @@ export function normalizeVisualSettings(value: unknown): PlayVisualSettings {
         if (!inscriptionId) return [];
         const safeName = String(candidate.name ?? "CUSTOM HTML PFP").trim().slice(0, 42) || "CUSTOM HTML PFP";
         const safeCollection = String(candidate.collection ?? "CUSTOM ORDINALS PFP").trim().slice(0, 42) || "CUSTOM ORDINALS PFP";
-        const source: CardVisualExtender["source"] = safeCollection.toUpperCase() === "BITCOIN WEIRDOS"
-          ? "ordinals-image"
-          : candidate.source === "ordinals-image" ? "ordinals-image" : "ordinals-html";
+        const source: CardVisualExtender["source"] = candidate.source === "ordinals-image" ? "ordinals-image" : "ordinals-html";
         const bitmap = typeof candidate.bitmap === "number" && Number.isInteger(candidate.bitmap) && candidate.bitmap >= 0 && candidate.bitmap <= 999_999 ? candidate.bitmap : null;
         const parentInscriptionId = normalizeInscriptionInput(String(candidate.parentInscriptionId ?? ""));
         const contentType = typeof candidate.contentType === "string" ? candidate.contentType.slice(0, 80) : null;
