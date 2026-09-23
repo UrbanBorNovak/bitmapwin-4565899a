@@ -2,6 +2,7 @@ import { hash } from "@/lib/game/cardFactory";
 import { activePfpExtenderForCard, inscriptionContentUrl, ordinalsPreviewUrl } from "@/lib/game/pfpExtenders";
 import type { CardState, CardType, LivingCard as Card } from "@/lib/game/types";
 import { usePlayProfile } from "@/lib/game/worldState";
+import { useOrdTorches } from "@/lib/game/ordTorches";
 
 export type CardUiState =
   | "idle"
@@ -42,6 +43,17 @@ export function BitmapPattern({ height, state, className = "" }: { height: numbe
 
 function CardArt({ card }: { card: Card }) {
   const profile = usePlayProfile();
+  const torches = useOrdTorches();
+  const torch = torches?.byBitmap.get(card.bitmap);
+  if (torch)
+    return (
+      <div className="lc-pfp-frame absolute inset-0" title={`ORD TORCHES · #${torch.index + 1} / 3000`}>
+        <iframe src={ordinalsPreviewUrl(torch.inscriptionId)} title={`Ord Torch #${torch.index + 1}`} loading="lazy" sandbox="allow-scripts" scrolling="no" className="h-full w-full border-0 pointer-events-none" />
+        <div className="lc-pfp-scan absolute inset-0" aria-hidden />
+        <BitmapPattern height={card.bitmap} state={card.state} className="absolute bottom-2 left-2 size-10 opacity-90" />
+        <span className="lc-pfp-badge label absolute left-1.5 top-1 text-[7px] text-bitcoin">TORCH #{torch.index + 1}</span>
+      </div>
+    );
   const extender = activePfpExtenderForCard(card, profile?.visuals);
   if (!extender) return <BitmapPattern height={card.bitmap} state={card.state} className="relative size-[58%]" />;
   return (
