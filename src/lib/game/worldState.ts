@@ -4,7 +4,8 @@ import { applyWorldEvent, type WorldEvent } from "./events";
 import { localPlayPersistence, newProfile, type PlayPersistence } from "./persistence";
 import { fetchBuildCounts } from "./worldAdapter";
 import { createCardFromBitmap, emptyFacts } from "./cardFactory";
-import type { CardChange, PlayProfile } from "./types";
+import { allPfpExtenders, normalizeVisualSettings } from "./pfpExtenders";
+import type { CardChange, CardVisualExtender, PlayProfile, PlayVisualSettings } from "./types";
 
 let persistence: PlayPersistence = localPlayPersistence;
 let current: PlayProfile | null = null;
@@ -49,6 +50,39 @@ export function selectBitmap(height: number | null) {
     next.order.unshift(card.id);
   }
   commit(next);
+}
+
+
+export function updatePlayVisuals(patch: Partial<PlayVisualSettings>) {
+  if (!current) return;
+  const visuals = normalizeVisualSettings({ ...current.visuals, ...patch });
+  commit({ ...current, visuals });
+}
+
+export function addCustomPfpExtender(extender: CardVisualExtender) {
+  if (!current) return;
+  const existing = current.visuals.customPfpExtenders.filter((item) => item.id !== extender.id);
+  const visuals = normalizeVisualSettings({
+    ...current.visuals,
+    pfpExtendersEnabled: true,
+    selectedPfpExtenderId: extender.id,
+    customPfpExtenders: [extender, ...existing].slice(0, 12),
+  });
+  commit({ ...current, visuals });
+}
+
+export function setPfpExtenderEnabled(id: string, enabled: boolean) {
+  if (!current) return;
+  const customPfpExtenders = current.visuals.customPfpExtenders.map((item) =>
+    item.id === id ? { ...item, enabled } : item,
+  );
+  let selectedPfpExtenderId = current.visuals.selectedPfpExtenderId;
+  if (enabled) selectedPfpExtenderId = id;
+  else if (selectedPfpExtenderId === id) {
+    selectedPfpExtenderId = allPfpExtenders({ ...current.visuals, customPfpExtenders }).find((item) => item.id !== id && item.enabled !== false)?.id ?? null;
+  }
+  const visuals = normalizeVisualSettings({ ...current.visuals, customPfpExtenders, selectedPfpExtenderId });
+  commit({ ...current, visuals });
 }
 
 /** Ensure a card exists for a territory (e.g. opened from the Oasis). */
