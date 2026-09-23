@@ -235,7 +235,7 @@ function PlayExtenders() {
             <div className="mt-3 grid gap-2">
               <label className="grid gap-1">
                 <span className="label">DISPLAY NAME</span>
-                <input value={name} onChange={(event) => setName(event.target.value)} maxLength={42} className="h-10 border border-border bg-background px-3 font-mono text-xs" placeholder="WEIRDOS / CUSTOM PFP" />
+                <input value={name} onChange={(event) => setName(event.target.value)} maxLength={42} className="h-10 border border-border bg-background px-3 font-mono text-xs" placeholder="CUSTOM PFP NAME" />
               </label>
               <label className="grid gap-1">
                 <span className="label">INSCRIPTION URL OR ID</span>
