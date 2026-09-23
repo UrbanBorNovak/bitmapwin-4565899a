@@ -1255,5 +1255,5 @@
       color-mix(in oklab, var(--color-background) 78%, black) 100%
     );
   mix-blend-mode: multiply;
-  opacity: 0.86;
+  opacity: 0.7;
 }
