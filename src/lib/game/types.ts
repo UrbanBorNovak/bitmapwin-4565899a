@@ -85,8 +85,8 @@ export type WorldEventRecord = {
   at: number;
   kind: WorldEventKind;
   text: string;
-  cardId?: string;
-  height?: number;
+  cardId?: string | undefined;
+  height?: number | undefined;
 };
 
 export type PlayStats = {

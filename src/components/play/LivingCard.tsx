@@ -44,8 +44,8 @@ type Props = {
   ui?: CardUiState;
   /** Live combat values (board units). */
   live?: { atk: number; hp: number; maxHp: number; ready?: boolean };
-  onClick?: () => void;
-  label?: string;
+  onClick?: (() => void) | undefined;
+  label?: string | undefined;
 };
 
 export function LivingCard({ card, size = "md", ui = "idle", live, onClick, label }: Props) {

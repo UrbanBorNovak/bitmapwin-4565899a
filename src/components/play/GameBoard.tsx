@@ -233,7 +233,7 @@ function PlayerStrip(p: { who: string; hp: number; energy: number; hand: number;
   );
 }
 
-function MagicMoment({ change, card, onClose }: { change: CardChange; card?: Card; onClose: () => void }) {
+function MagicMoment({ change, card, onClose }: { change: CardChange; card?: Card | undefined; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[70] grid place-items-center bg-background/85 p-4" role="dialog" aria-modal="true" aria-label="World event">
       <div className="lc-moment w-full max-w-md border border-bitcoin bg-card p-5 text-center">
@@ -284,7 +284,7 @@ function GameResult({ win, changes, profile, onRestart }: { win: boolean; change
           {card && (
             <Link to="/play/card/$id" params={{ id: String(card.bitmap) }} className="btn-term-ghost">VIEW CARD</Link>
           )}
-          <Link to="/oasis" search={{ height: card?.bitmap ?? profile.selectedBitmap ?? undefined }} className="btn-term-ghost">VIEW IN THE OASIS</Link>
+          <Link to="/oasis" search={card ? { height: card.bitmap } : profile.selectedBitmap !== null ? { height: profile.selectedBitmap } : {}} className="btn-term-ghost">VIEW IN THE OASIS</Link>
         </div>
       </div>
     </div>

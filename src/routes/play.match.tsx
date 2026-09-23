@@ -8,8 +8,8 @@ type Search = { table?: string; height?: number };
 export const Route = createFileRoute("/play/match")({
   validateSearch: (s: Record<string, unknown>): Search => {
     const out: Search = {};
-    if (typeof s.table === "string" && /^[0-9A-Za-z]{3,8}$/.test(s.table)) out.table = s.table.toUpperCase();
-    const h = Number(s.height);
+    if (typeof s["table"] === "string" && /^[0-9A-Za-z]{3,8}$/.test(s["table"])) out.table = s["table"].toUpperCase();
+    const h = Number(s["height"]);
     if (Number.isInteger(h) && h >= 0 && h < 10_000_000) out.height = h;
     return out;
   },
@@ -57,7 +57,7 @@ function MatchPage() {
       <div className="mb-3 flex items-center justify-between gap-2">
         <Link to="/play" className="label hover:text-bitcoin">← LOBBY</Link>
         <p className="label"><span className="text-bitcoin">BITMAPWIN</span> // PLAY{table ? ` · TABLE ${table}` : " · VS AI"}</p>
-        <Link to="/oasis" search={{ height: leaderHeight ?? undefined }} className="label hover:text-bitcoin">OASIS ↗</Link>
+        <Link to="/oasis" search={leaderHeight !== null ? { height: leaderHeight } : {}} className="label hover:text-bitcoin">OASIS ↗</Link>
       </div>
       {profile && deck && seed !== null ? (
         <GameBoard key={`${seed}-${round}`} profile={profile} deck={deck} seed={seed} leaderId={leaderId} tableCode={table ?? null} onRestart={() => setRound((r) => r + 1)} />
