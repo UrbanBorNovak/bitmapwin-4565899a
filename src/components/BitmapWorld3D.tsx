@@ -153,6 +153,7 @@ import { VehicleDamageFx } from "@/components/game/VehicleDamageFx";
 import { MysteryMist } from "@/components/game/MysteryMist";
 import { LandGrowth } from "@/components/game/LandGrowth";
 import { LandSkins } from "@/components/game/LandSkins";
+import { OwnedParcelPlots } from "@/components/game/OwnedParcelPlots";
 import { WorldDepthLayers } from "@/components/game/WorldDepthLayers";
 import { WorldAtmosphere } from "@/components/game/WorldAtmosphere";
 import { WeatherLighting, WorldWeather } from "@/components/game/WorldWeather";
@@ -2663,6 +2664,12 @@ const WorldScene = memo(function WorldScene({
       <Landmarks boost={cameraMode === "map" ? 8 : 1} />
       <TerrainModels />
       <LandSkins pose={pose} focus={selectedHeight} />
+      <OwnedParcelPlots
+        pose={pose}
+        heights={ownedHeights}
+        focus={selectedHeight}
+        bitcoin={colors.bitcoin}
+      />
       {cameraMode !== "map" ? (
         <>
           <ChunkStreamer pose={pose} />
