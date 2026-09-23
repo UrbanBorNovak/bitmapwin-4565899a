@@ -28,10 +28,10 @@ function MyCards() {
   const cards = profile ? profile.order.map((id) => profile.cards[id]!).filter(Boolean) : [];
   const shown = cards.filter((c) => f === "ALL" || c.state === f || c.type === f);
   return (
-    <main className="play-district mx-auto max-w-[1200px] px-4 py-8 md:px-8">
+    <main className="play-district mx-auto min-w-0 overflow-x-hidden max-w-[1200px] px-4 py-8 md:px-8">
       <PlayNav />
       <h1 className="display mt-6 text-3xl md:text-5xl">MY CARDS</h1>
-      <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+      <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem] [&>*]:min-w-0">
         <div>
           <div className="flex gap-1 overflow-x-auto pb-2" role="group" aria-label="Filter cards">
             {FILTERS.map((x) => (

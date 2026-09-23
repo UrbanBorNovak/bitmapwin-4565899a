@@ -39,7 +39,7 @@ function PlayLobby() {
   const featured = profile ? profile.order.map((id) => profile.cards[id]!).filter(Boolean).slice(0, 5) : [];
 
   return (
-    <main className="play-district mx-auto max-w-[1200px] px-4 py-8 md:px-8 md:py-12">
+    <main className="play-district mx-auto min-w-0 overflow-x-hidden max-w-[1200px] px-4 py-8 md:px-8 md:py-12">
       <PlayNav />
       <header className="mt-8 grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
         <div>
@@ -86,7 +86,7 @@ function PlayLobby() {
         </form>
       )}
 
-      <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] [&>*]:min-w-0">
         <section>
           <div className="flex items-center justify-between">
             <h2 className="label">YOUR LIVING CARDS</h2>
