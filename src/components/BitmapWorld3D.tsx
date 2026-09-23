@@ -61,8 +61,13 @@ import {
   Watch,
   Wrench,
   X,
+  Hourglass,
 } from "lucide-react";
 import { HudIconButton, HudIconLink } from "@/components/game/HudIconButton";
+import { SpaceTimeWorld } from "@/components/game/SpaceTimeWorld";
+import { SpaceTimeHud } from "@/components/SpaceTimeHud";
+import { buildSpaceTimeTrack, resetSpaceTimeClock } from "@/lib/space-time";
+import { provenanceStreamQuery } from "@/lib/provenance-stream";
 import * as THREE from "three";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
 import { Button } from "@/components/ui/button";
@@ -2509,6 +2514,7 @@ const WorldScene = memo(function WorldScene({
   models,
   ownedHeights,
   cameraMode,
+  spaceTime,
   pose,
   self,
   deployments,
@@ -2542,6 +2548,7 @@ const WorldScene = memo(function WorldScene({
   models: BitmapModel[];
   ownedHeights: number[];
   cameraMode: CameraMode;
+  spaceTime: ReturnType<typeof buildSpaceTimeTrack> | null;
   pose: React.RefObject<SelfPose>;
   self: {
     handle: string;
@@ -2642,6 +2649,8 @@ const WorldScene = memo(function WorldScene({
       {cameraMode !== "map" && quality.effects !== "off" ? <WorldWeather /> : null}
       <LandSurface colors={colors} tipHeight={tipHeight} />
       <WorldDepthLayers mapView={cameraMode === "map"} />
+      {/* SPACE + TIME — recorded history replayed as light over the same land. */}
+      {spaceTime ? <SpaceTimeWorld track={spaceTime} /> : null}
       <WorldBoundary colors={colors} />
       {/* Permanent structures — the inscribed buildings and the inscribed
           hills and mountains. They stand in the same fixed spots in every
@@ -2856,6 +2865,13 @@ function BitmapWorld3DInner({
   // The side menu is one shelf at a time: ACTION / KIT / TRAVEL / VIEW.
   const [kitTab, setKitTab] = useState<KitTab>("action");
   const exploring = cameraMode !== "map";
+  // SPACE + TIME — a time-lapse of everything recorded on this land.
+  const [spaceTimeOn, setSpaceTimeOn] = useState(false);
+  const history = useQuery({ ...provenanceStreamQuery("all", 80), enabled: spaceTimeOn });
+  const spaceTimeTrack = useMemo(
+    () => (spaceTimeOn ? buildSpaceTimeTrack(history.data ?? []) : null),
+    [spaceTimeOn, history.data],
+  );
   const [draft, setDraft] = useState("");
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [buildOpen, setBuildOpen] = useState(false);
@@ -3858,8 +3874,21 @@ function BitmapWorld3DInner({
                 >
                   <HudIconButton label="Frame mined land" icon={<Pickaxe />} onClick={() => moveCamera("mined")} />
                   <HudIconButton label="Full world" icon={<Maximize />} onClick={() => moveCamera("full")} />
-                  <HudIconButton label="Fly to the newest block" icon={<Rocket />} onClick={() => moveCamera("tip")} />
-                </div>
+                   <HudIconButton label="Fly to the newest block" icon={<Rocket />} onClick={() => moveCamera("tip")} />
+                   {/* SPACE + TIME — replay recorded history as light over the land. */}
+                   <HudIconButton
+                     label="Space and time replay"
+                     icon={<Hourglass />}
+                     onClick={() => {
+                       const next = !spaceTimeOn;
+                       setSpaceTimeOn(next);
+                       if (next) {
+                         resetSpaceTimeClock();
+                         setCameraMode("map");
+                       }
+                     }}
+                   />
+                 </div>
 
                 <span className="hud-divider" aria-hidden />
               </>
@@ -4239,6 +4268,7 @@ function BitmapWorld3DInner({
               models={models.data ?? EMPTY_MODELS}
               ownedHeights={ownedHeights}
               cameraMode={cameraMode}
+              spaceTime={spaceTimeTrack}
               pose={pose}
               self={self}
               deployments={deployments.data ?? EMPTY_DEPLOYMENTS}
@@ -4481,8 +4511,36 @@ function BitmapWorld3DInner({
           >
             <Eye /> <span className="hidden sm:inline">1ST</span>
           </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-label="Space and time replay"
+            aria-pressed={spaceTimeOn}
+            title="Space + time replay"
+            className={
+              spaceTimeOn
+                ? "rounded-sm bg-bitcoin text-bitcoin-foreground hover:bg-bitcoin/90"
+                : "rounded-sm text-muted-foreground"
+            }
+            onClick={() => {
+              const next = !spaceTimeOn;
+              setSpaceTimeOn(next);
+              if (next) {
+                resetSpaceTimeClock();
+                setCameraMode("map");
+              }
+            }}
+          >
+            <Hourglass /> <span className="hidden sm:inline">TIME</span>
+          </Button>
           <span className="hidden pr-1 text-[9px] text-muted-foreground sm:inline">O</span>
         </div> : null}
+
+        {/* SPACE + TIME — the replay scrubber and its dark wash. */}
+        {spaceTimeOn && spaceTimeTrack ? (
+          <SpaceTimeHud track={spaceTimeTrack} onClose={() => setSpaceTimeOn(false)} />
+        ) : null}
 
         {exploring && sighting ? (
           <div
