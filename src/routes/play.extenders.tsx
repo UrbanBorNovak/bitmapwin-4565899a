@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getGalleryItemsFn } from "@/lib/game/gallery.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { LivingCard } from "@/components/play/LivingCard";
@@ -13,8 +12,6 @@ import {
 } from "@/lib/game/pfpExtenders";
 import { getParentImageChildrenFn } from "@/lib/game/parentExtenders.functions";
 
-const WEIRDOS_PARENT = "89d8bfdc528550b34b22741d579645ba7c0899f534c617ed6f18609b280c1bc2i0";
-const WEIRDOS_COLLECTION = "BITCOIN WEIRDOS";
 import {
   addCustomPfpExtenders,
   addCustomPfpExtender,
