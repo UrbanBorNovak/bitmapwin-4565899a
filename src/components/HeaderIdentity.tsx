@@ -5,7 +5,7 @@ import { profileQuery } from "@/lib/profiles";
 import { InscriptionAvatar } from "@/components/InscriptionAvatar";
 import { shortenAddress } from "@/lib/registry";
 import { accountLabel, useAuthSession } from "@/lib/auth";
-import { myWalletLinksQuery } from "@/lib/wallet-links";
+import { myWalletLinksQuery, verifiedWalletAddress } from "@/lib/wallet-links";
 
 /**
  * Header identity chip: the signed-in account with its linked wallet's
@@ -16,7 +16,7 @@ export function HeaderIdentity() {
   const wallet = useWalletSession();
   const { session, user, loading } = useAuthSession();
   const links = useQuery(myWalletLinksQuery(Boolean(session)));
-  const address = wallet?.ordinalsAddress ?? links.data?.[0]?.address ?? "";
+  const address = verifiedWalletAddress(links.data, wallet?.ordinalsAddress);
   const profile = useQuery(profileQuery(address));
 
   if (!session) {

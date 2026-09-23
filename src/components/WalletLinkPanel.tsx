@@ -26,7 +26,8 @@ export function WalletLinkPanel({
   const queryClient = useQueryClient();
 
   const linkTarget = wallet?.ordinalsAddress ?? "";
-  const linked = isLinked(links.data, linkTarget || address);
+  const statusAddress = linkTarget || address;
+  const linked = isLinked(links.data, statusAddress);
 
   const linkWallet = useMutation({
     mutationFn: async () => {
@@ -47,6 +48,13 @@ export function WalletLinkPanel({
       });
     },
     onSuccess: (res) => {
+      queryClient.setQueryData(
+        ["wallet-links", true],
+        (current: Array<{ id: string; address: string; purpose: string; verifiedAt: string }> | undefined) => {
+          if (current?.some((item) => item.address.toLowerCase() === res.address.toLowerCase())) return current;
+          return current;
+        },
+      );
       void queryClient.invalidateQueries({ queryKey: ["wallet-links"] });
       void queryClient.invalidateQueries({ queryKey: ["wallet-profile"] });
       toast("WALLET LINKED", {
@@ -60,7 +68,12 @@ export function WalletLinkPanel({
 
   const unlink = useMutation({
     mutationFn: (addr: string) => unlinkWalletFn({ data: { address: addr } }),
-    onSuccess: () => {
+    onSuccess: (_res, addr) => {
+      queryClient.setQueryData(
+        ["wallet-links", true],
+        (current: Array<{ id: string; address: string; purpose: string; verifiedAt: string }> | undefined) =>
+          current?.filter((item) => item.address.toLowerCase() !== addr.toLowerCase()) ?? [],
+      );
       void queryClient.invalidateQueries({ queryKey: ["wallet-links"] });
       toast("WALLET UNLINKED");
     },
@@ -100,8 +113,26 @@ export function WalletLinkPanel({
               <p className="mt-1 font-mono text-xs text-foreground">
                 {user?.email ?? accountLabel(user)}
               </p>
+              {statusAddress !== "" ? (
+                <p
+                  className={`mt-2 font-mono text-[10px] ${
+                    links.isLoading
+                      ? "text-muted-foreground"
+                      : linked
+                        ? "text-primary"
+                        : "text-muted-foreground"
+                  }`}
+                  role="status"
+                >
+                  {links.isLoading
+                    ? "● CHECKING WALLET VERIFICATION"
+                    : linked
+                      ? "● WALLET VERIFIED"
+                      : "○ WALLET NOT VERIFIED"}
+                </p>
+              ) : null}
             </div>
-            {linkTarget !== "" && !linked && (
+            {linkTarget !== "" && !links.isLoading && !linked && (
               <button
                 type="button"
                 className="btn-term disabled:opacity-30"
