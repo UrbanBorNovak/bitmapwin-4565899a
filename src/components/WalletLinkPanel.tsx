@@ -48,13 +48,6 @@ export function WalletLinkPanel({
       });
     },
     onSuccess: (res) => {
-      queryClient.setQueryData(
-        ["wallet-links", true],
-        (current: Array<{ id: string; address: string; purpose: string; verifiedAt: string }> | undefined) => {
-          if (current?.some((item) => item.address.toLowerCase() === res.address.toLowerCase())) return current;
-          return current;
-        },
-      );
       void queryClient.invalidateQueries({ queryKey: ["wallet-links"] });
       void queryClient.invalidateQueries({ queryKey: ["wallet-profile"] });
       toast("WALLET LINKED", {
