@@ -1,5 +1,7 @@
 import { hash } from "@/lib/game/cardFactory";
+import { activePfpExtenderForCard, ordinalsPreviewUrl } from "@/lib/game/pfpExtenders";
 import type { CardState, CardType, LivingCard as Card } from "@/lib/game/types";
+import { usePlayProfile } from "@/lib/game/worldState";
 
 export type CardUiState =
   | "idle"
@@ -38,6 +40,27 @@ export function BitmapPattern({ height, state, className = "" }: { height: numbe
   );
 }
 
+function CardArt({ card }: { card: Card }) {
+  const profile = usePlayProfile();
+  const extender = activePfpExtenderForCard(card, profile?.visuals);
+  if (!extender) return <BitmapPattern height={card.bitmap} state={card.state} className="relative size-[58%]" />;
+  return (
+    <div className="lc-pfp-frame absolute inset-0" title={`${extender.collection} · ${extender.name}`}>
+      <iframe
+        src={ordinalsPreviewUrl(extender.inscriptionId)}
+        title={`${extender.name} Ordinals HTML PFP`}
+        loading="lazy"
+        sandbox="allow-scripts"
+        scrolling="no"
+        className="h-full w-full border-0 pointer-events-none"
+      />
+      <div className="lc-pfp-scan absolute inset-0" aria-hidden />
+      <BitmapPattern height={card.bitmap} state={card.state} className="absolute bottom-2 left-2 size-10 opacity-90" />
+      <span className="lc-pfp-badge label absolute left-1.5 top-1 text-[7px] text-bitcoin">HTML PFP</span>
+    </div>
+  );
+}
+
 type Props = {
   card: Card;
   size?: "sm" | "md" | "lg";
@@ -68,7 +91,7 @@ export function LivingCard({ card, size = "md", ui = "idle", live, onClick, labe
       </div>
       <div className="lc-art relative grid aspect-[5/4] place-items-center overflow-hidden border-b border-border">
         <div className="lc-grid absolute inset-0" aria-hidden />
-        <BitmapPattern height={card.bitmap} state={card.state} className="relative size-[58%]" />
+        <CardArt card={card} />
         <span className="absolute left-1.5 top-1 text-sm leading-none text-foreground/80" aria-hidden>{TYPE_GLYPH[card.type]}</span>
         <span className="lc-state label absolute bottom-1 right-1.5 text-[8px]">{card.state}</span>
       </div>
