@@ -55,8 +55,22 @@ async function getJson<T>(url: string, attempts = 3): Promise<T> {
  */
 export async function scanBlock(height: number, txPages: number): Promise<ScannedBlock> {
   const header = await getJson<MempoolBlockHeader>(`${MEMPOOL}/v1/blocks/${height}`).then(
-    (value) => (Array.isArray(value) ? (value[0] as MempoolBlockHeader) : value),
+    (value) => (Array.isArray(value) ? (value[0] as MempoolBlockHeader | undefined) : value),
   );
+
+  // Block not mined yet (or not found): return an empty scan instead of crashing.
+  if (!header || header.height !== height) {
+    return {
+      height,
+      hash: "",
+      timestamp: 0,
+      txCount: 0,
+      scannedTxCount: 0,
+      vsizes: [],
+      inscriptions: [],
+    };
+  }
+
 
   const pages = Math.max(1, Math.min(txPages, 12));
   const txs: MempoolTx[] = [];
