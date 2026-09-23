@@ -39,6 +39,7 @@ import { Route as MyWorldRouteImport } from './routes/my-world'
 import { Route as OasisRouteImport } from './routes/oasis'
 import { Route as OwnershipRouteImport } from './routes/ownership'
 import { Route as PassportRouteImport } from './routes/passport'
+import { Route as PlayRouteImport } from './routes/play'
 import { Route as PlayGuideRouteImport } from './routes/play-guide'
 import { Route as RanksRouteImport } from './routes/ranks'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -60,6 +61,10 @@ import { Route as DistrictSlugRouteImport } from './routes/district.$slug'
 import { Route as ExtendersIndexRouteImport } from './routes/extenders.index'
 import { Route as ExtendersSlugRouteImport } from './routes/extenders.$slug'
 import { Route as MapBlockRouteImport } from './routes/map_.$block'
+import { Route as PlayIndexRouteImport } from './routes/play.index'
+import { Route as PlayAtlasRouteImport } from './routes/play.atlas'
+import { Route as PlayCardsRouteImport } from './routes/play.cards'
+import { Route as PlayMatchRouteImport } from './routes/play.match'
 import { Route as ProfileAddressRouteImport } from './routes/profile.$address'
 import { Route as RanksIndexRouteImport } from './routes/ranks.index'
 import { Route as RanksClansRouteImport } from './routes/ranks.clans'
@@ -74,6 +79,7 @@ import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
 import { Route as ApiPublicResolveRegistryRouteImport } from './routes/api/public/resolve-registry'
 import { Route as MapDistrictSlugRouteImport } from './routes/map_.district.$slug'
 import { Route as MapPlaceBlockRouteImport } from './routes/map_.place.$block'
+import { Route as PlayCardIdRouteImport } from './routes/play.card.$id'
 import { Route as RanksPlayerIdRouteImport } from './routes/ranks.player.$id'
 import { Route as ApiPublicBlocksHeightRouteImport } from './routes/api/public/blocks.$height'
 import { Route as ApiPublicGalleryIdRouteImport } from './routes/api/public/gallery.$id'
@@ -231,6 +237,11 @@ const PassportRoute = PassportRouteImport.update({
   path: '/passport',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlayRoute = PlayRouteImport.update({
+  id: '/play',
+  path: '/play',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlayGuideRoute = PlayGuideRouteImport.update({
   id: '/play-guide',
   path: '/play-guide',
@@ -337,6 +348,26 @@ const MapBlockRoute = MapBlockRouteImport.update({
   path: '/map/$block',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlayIndexRoute = PlayIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PlayRoute,
+} as any)
+const PlayAtlasRoute = PlayAtlasRouteImport.update({
+  id: '/atlas',
+  path: '/atlas',
+  getParentRoute: () => PlayRoute,
+} as any)
+const PlayCardsRoute = PlayCardsRouteImport.update({
+  id: '/cards',
+  path: '/cards',
+  getParentRoute: () => PlayRoute,
+} as any)
+const PlayMatchRoute = PlayMatchRouteImport.update({
+  id: '/match',
+  path: '/match',
+  getParentRoute: () => PlayRoute,
+} as any)
 const ProfileAddressRoute = ProfileAddressRouteImport.update({
   id: '/profile/$address',
   path: '/profile/$address',
@@ -408,6 +439,11 @@ const MapPlaceBlockRoute = MapPlaceBlockRouteImport.update({
   path: '/map/place/$block',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlayCardIdRoute = PlayCardIdRouteImport.update({
+  id: '/card/$id',
+  path: '/card/$id',
+  getParentRoute: () => PlayRoute,
+} as any)
 const RanksPlayerIdRoute = RanksPlayerIdRouteImport.update({
   id: '/player/$id',
   path: '/player/$id',
@@ -471,6 +507,7 @@ export interface FileRoutesByFullPath {
   '/oasis': typeof OasisRoute
   '/ownership': typeof OwnershipRoute
   '/passport': typeof PassportRoute
+  '/play': typeof PlayRouteWithChildren
   '/play-guide': typeof PlayGuideRoute
   '/ranks': typeof RanksRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
@@ -490,12 +527,16 @@ export interface FileRoutesByFullPath {
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
   '/map/$block': typeof MapBlockRoute
+  '/play/atlas': typeof PlayAtlasRoute
+  '/play/cards': typeof PlayCardsRoute
+  '/play/match': typeof PlayMatchRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
   '/ranks/shares': typeof RanksSharesRoute
   '/collections/': typeof CollectionsIndexRoute
   '/extenders/': typeof ExtendersIndexRoute
+  '/play/': typeof PlayIndexRoute
   '/ranks/': typeof RanksIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
@@ -506,6 +547,7 @@ export interface FileRoutesByFullPath {
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
   '/map/district/$slug': typeof MapDistrictSlugRoute
   '/map/place/$block': typeof MapPlaceBlockRoute
+  '/play/card/$id': typeof PlayCardIdRoute
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
@@ -560,12 +602,16 @@ export interface FileRoutesByTo {
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
   '/map/$block': typeof MapBlockRoute
+  '/play/atlas': typeof PlayAtlasRoute
+  '/play/cards': typeof PlayCardsRoute
+  '/play/match': typeof PlayMatchRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
   '/ranks/shares': typeof RanksSharesRoute
   '/collections': typeof CollectionsIndexRoute
   '/extenders': typeof ExtendersIndexRoute
+  '/play': typeof PlayIndexRoute
   '/ranks': typeof RanksIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
@@ -576,6 +622,7 @@ export interface FileRoutesByTo {
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
   '/map/district/$slug': typeof MapDistrictSlugRoute
   '/map/place/$block': typeof MapPlaceBlockRoute
+  '/play/card/$id': typeof PlayCardIdRoute
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
@@ -615,6 +662,7 @@ export interface FileRoutesById {
   '/oasis': typeof OasisRoute
   '/ownership': typeof OwnershipRoute
   '/passport': typeof PassportRoute
+  '/play': typeof PlayRouteWithChildren
   '/play-guide': typeof PlayGuideRoute
   '/ranks': typeof RanksRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
@@ -634,12 +682,16 @@ export interface FileRoutesById {
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
   '/map_/$block': typeof MapBlockRoute
+  '/play/atlas': typeof PlayAtlasRoute
+  '/play/cards': typeof PlayCardsRoute
+  '/play/match': typeof PlayMatchRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
   '/ranks/shares': typeof RanksSharesRoute
   '/collections/': typeof CollectionsIndexRoute
   '/extenders/': typeof ExtendersIndexRoute
+  '/play/': typeof PlayIndexRoute
   '/ranks/': typeof RanksIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
@@ -650,6 +702,7 @@ export interface FileRoutesById {
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
   '/map_/district/$slug': typeof MapDistrictSlugRoute
   '/map_/place/$block': typeof MapPlaceBlockRoute
+  '/play/card/$id': typeof PlayCardIdRoute
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
@@ -690,6 +743,7 @@ export interface FileRouteTypes {
     | '/oasis'
     | '/ownership'
     | '/passport'
+    | '/play'
     | '/play-guide'
     | '/ranks'
     | '/reset-password'
@@ -709,12 +763,16 @@ export interface FileRouteTypes {
     | '/district/$slug'
     | '/extenders/$slug'
     | '/map/$block'
+    | '/play/atlas'
+    | '/play/cards'
+    | '/play/match'
     | '/profile/$address'
     | '/ranks/clans'
     | '/ranks/pvp'
     | '/ranks/shares'
     | '/collections/'
     | '/extenders/'
+    | '/play/'
     | '/ranks/'
     | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
@@ -725,6 +783,7 @@ export interface FileRouteTypes {
     | '/api/public/resolve-registry'
     | '/map/district/$slug'
     | '/map/place/$block'
+    | '/play/card/$id'
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
@@ -779,12 +838,16 @@ export interface FileRouteTypes {
     | '/district/$slug'
     | '/extenders/$slug'
     | '/map/$block'
+    | '/play/atlas'
+    | '/play/cards'
+    | '/play/match'
     | '/profile/$address'
     | '/ranks/clans'
     | '/ranks/pvp'
     | '/ranks/shares'
     | '/collections'
     | '/extenders'
+    | '/play'
     | '/ranks'
     | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
@@ -795,6 +858,7 @@ export interface FileRouteTypes {
     | '/api/public/resolve-registry'
     | '/map/district/$slug'
     | '/map/place/$block'
+    | '/play/card/$id'
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
@@ -833,6 +897,7 @@ export interface FileRouteTypes {
     | '/oasis'
     | '/ownership'
     | '/passport'
+    | '/play'
     | '/play-guide'
     | '/ranks'
     | '/reset-password'
@@ -852,12 +917,16 @@ export interface FileRouteTypes {
     | '/district/$slug'
     | '/extenders/$slug'
     | '/map_/$block'
+    | '/play/atlas'
+    | '/play/cards'
+    | '/play/match'
     | '/profile/$address'
     | '/ranks/clans'
     | '/ranks/pvp'
     | '/ranks/shares'
     | '/collections/'
     | '/extenders/'
+    | '/play/'
     | '/ranks/'
     | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
@@ -868,6 +937,7 @@ export interface FileRouteTypes {
     | '/api/public/resolve-registry'
     | '/map_/district/$slug'
     | '/map_/place/$block'
+    | '/play/card/$id'
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
@@ -907,6 +977,7 @@ export interface RootRouteChildren {
   OasisRoute: typeof OasisRoute
   OwnershipRoute: typeof OwnershipRoute
   PassportRoute: typeof PassportRoute
+  PlayRoute: typeof PlayRouteWithChildren
   PlayGuideRoute: typeof PlayGuideRoute
   RanksRoute: typeof RanksRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -1142,6 +1213,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PassportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/play': {
+      id: '/play'
+      path: '/play'
+      fullPath: '/play'
+      preLoaderRoute: typeof PlayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/play-guide': {
       id: '/play-guide'
       path: '/play-guide'
@@ -1289,6 +1367,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MapBlockRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/play/': {
+      id: '/play/'
+      path: '/'
+      fullPath: '/play/'
+      preLoaderRoute: typeof PlayIndexRouteImport
+      parentRoute: typeof PlayRoute
+    }
+    '/play/atlas': {
+      id: '/play/atlas'
+      path: '/atlas'
+      fullPath: '/play/atlas'
+      preLoaderRoute: typeof PlayAtlasRouteImport
+      parentRoute: typeof PlayRoute
+    }
+    '/play/cards': {
+      id: '/play/cards'
+      path: '/cards'
+      fullPath: '/play/cards'
+      preLoaderRoute: typeof PlayCardsRouteImport
+      parentRoute: typeof PlayRoute
+    }
+    '/play/match': {
+      id: '/play/match'
+      path: '/match'
+      fullPath: '/play/match'
+      preLoaderRoute: typeof PlayMatchRouteImport
+      parentRoute: typeof PlayRoute
+    }
     '/profile/$address': {
       id: '/profile/$address'
       path: '/profile/$address'
@@ -1386,6 +1492,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/map/place/$block'
       preLoaderRoute: typeof MapPlaceBlockRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/play/card/$id': {
+      id: '/play/card/$id'
+      path: '/card/$id'
+      fullPath: '/play/card/$id'
+      preLoaderRoute: typeof PlayCardIdRouteImport
+      parentRoute: typeof PlayRoute
     }
     '/ranks/player/$id': {
       id: '/ranks/player/$id'
@@ -1501,6 +1614,24 @@ const ExtendersRouteWithChildren = ExtendersRoute._addFileChildren(
   ExtendersRouteChildren,
 )
 
+interface PlayRouteChildren {
+  PlayAtlasRoute: typeof PlayAtlasRoute
+  PlayCardsRoute: typeof PlayCardsRoute
+  PlayMatchRoute: typeof PlayMatchRoute
+  PlayIndexRoute: typeof PlayIndexRoute
+  PlayCardIdRoute: typeof PlayCardIdRoute
+}
+
+const PlayRouteChildren: PlayRouteChildren = {
+  PlayAtlasRoute: PlayAtlasRoute,
+  PlayCardsRoute: PlayCardsRoute,
+  PlayMatchRoute: PlayMatchRoute,
+  PlayIndexRoute: PlayIndexRoute,
+  PlayCardIdRoute: PlayCardIdRoute,
+}
+
+const PlayRouteWithChildren = PlayRoute._addFileChildren(PlayRouteChildren)
+
 interface RanksRouteChildren {
   RanksClansRoute: typeof RanksClansRoute
   RanksPvpRoute: typeof RanksPvpRoute
@@ -1550,6 +1681,7 @@ const rootRouteChildren: RootRouteChildren = {
   OasisRoute: OasisRoute,
   OwnershipRoute: OwnershipRoute,
   PassportRoute: PassportRoute,
+  PlayRoute: PlayRouteWithChildren,
   PlayGuideRoute: PlayGuideRoute,
   RanksRoute: RanksRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,

@@ -5022,6 +5022,13 @@ function BitmapWorld3DInner({
                 <Button
                   className="btn-term-ghost w-full"
                   variant="ghost"
+                  onClick={() => navigate({ to: "/play/match", search: { height: selected.height } })}
+                >
+                  PLAY WITH THIS TERRITORY
+                </Button>
+                <Button
+                  className="btn-term-ghost w-full"
+                  variant="ghost"
                   onClick={() =>
                     navigate({ to: "/bitmap/$block", params: { block: String(selected.height) } })
                   }

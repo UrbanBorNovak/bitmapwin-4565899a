@@ -1,3 +1,7 @@
+import { useEffect as useEffectPlay, useState as useStatePlay } from "react";
+import { PlayStatsPanel } from "@/components/play/PlayStatsPanel";
+import { readProfileFor } from "@/lib/game/worldState";
+import type { PlayProfile } from "@/lib/game/types";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -126,6 +130,7 @@ function ProfilePage() {
         <div className="border-t border-profile-warm/20 bg-background/30 px-6 py-3 font-mono text-[10px] text-profile-warm-muted md:px-8">● A HOME BUILT ON BITCOIN</div>
       </div>
 
+      <ProfilePlayStats address={address} />
       {passport.data && (passport.data.stamps.length > 0 || passport.data.events.length > 0) ? <div className="mt-8 space-y-3"><PassportSummary passport={passport.data} publicView /><div className="grid gap-3 md:grid-cols-2">{passport.data.stamps.slice(0, 4).map((item) => <StampCard key={item.id} stamp={item} />)}</div></div> : null}
 
       {ranked.data && (
@@ -207,6 +212,17 @@ function ProfilePage() {
           </ul>
         )}
       </section>
+    </div>
+  );
+}
+
+function ProfilePlayStats({ address }: { address: string }) {
+  const [play, setPlay] = useStatePlay<PlayProfile | null>(null);
+  useEffectPlay(() => setPlay(readProfileFor(address)), [address]);
+  if (!play || play.stats.matches === 0) return null;
+  return (
+    <div className="mt-8">
+      <PlayStatsPanel profile={play} title="PLAY" />
     </div>
   );
 }
