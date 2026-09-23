@@ -401,9 +401,9 @@ function planPlot(land: TerraformedLand, growth: number, out: { grass: Item[]; b
 
   // Grass needs to read as a patch at avatar scale, not as isolated pixels.
   // Keep young land sparse, then gather the blades into deterministic clumps.
-  const grassCount = Math.round(12 + growth * 420);
-  const bushCount = growth < 0.3 ? 0 : Math.round((growth - 0.3) * 18);
-  const treeCount = growth < 0.55 ? 0 : Math.round((growth - 0.55) * 9);
+  const grassCount = Math.round(6 + growth * 210);
+  const bushCount = growth < 0.3 ? 0 : Math.round((growth - 0.3) * 9);
+  const treeCount = growth < 0.55 ? 0 : Math.round((growth - 0.55) * 4.5);
 
   for (let i = 0; i < grassCount; i += 1) {
     if (out.grass.length >= MAX_GRASS) break;

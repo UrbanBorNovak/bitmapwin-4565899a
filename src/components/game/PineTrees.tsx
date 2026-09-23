@@ -49,8 +49,8 @@ const SHROOM_URLS = SHROOM_INSCRIPTIONS.map(contentUrl);
 const FLOWER_URLS = FLOWER_INSCRIPTIONS.map(contentUrl);
 const WILD_MINER_URL = contentUrl(WILD_MINER_INSCRIPTION);
 
-const MAX_TREES = 124;
-const MAX_FLOWERS = 180;
+const MAX_TREES = 62;
+const MAX_FLOWERS = 90;
 const MAX_MINERS = 10;
 const FLORA_SCALE = 3;
 
@@ -149,8 +149,8 @@ export const PineTrees = memo(function PineTrees({
   // Landforms registering their slopes re-place this scenery onto them.
   useTerrainVersion();
   const { quality } = useQuality();
-  const treeLimit = quality.resolved === "low" ? 28 : quality.resolved === "medium" ? 68 : MAX_TREES;
-  const flowerLimit = quality.resolved === "low" ? 36 : quality.resolved === "medium" ? 96 : MAX_FLOWERS;
+  const treeLimit = quality.resolved === "low" ? 14 : quality.resolved === "medium" ? 34 : MAX_TREES;
+  const flowerLimit = quality.resolved === "low" ? 18 : quality.resolved === "medium" ? 48 : MAX_FLOWERS;
   const minerLimit = quality.resolved === "low" ? 4 : quality.resolved === "medium" ? 7 : MAX_MINERS;
   const { trees, flowers, miners } = useMemo(() => {
     const pitch = unit * 9;

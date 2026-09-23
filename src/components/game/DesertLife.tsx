@@ -318,7 +318,7 @@ export const DesertLife = memo(function DesertLife({
           }
 
           // Palms leaning over the water.
-          const palmCount = 3 + Math.floor(hash(gx, gz, 40) * 3);
+          const palmCount = 2 + Math.floor(hash(gx, gz, 40) * 1.5);
           for (let p = 0; p < palmCount; p++) {
             const angle = (p / palmCount) * Math.PI * 2 + spin * 1.3;
             const ring = span2 * (1.25 + hash(gx + p, gz, 41) * 0.5);
@@ -351,7 +351,7 @@ export const DesertLife = memo(function DesertLife({
           }
 
           // Green bushes crowding the damp ground.
-          const bushCount = 6 + Math.floor(hash(gx, gz, 45) * 5);
+          const bushCount = 3 + Math.floor(hash(gx, gz, 45) * 2.5);
           for (let b = 0; b < bushCount; b++) {
             const angle = hash(gx + b, gz - b, 46) * Math.PI * 2;
             const ring = span2 * (1.0 + hash(gx - b, gz + b, 47) * 0.9);
