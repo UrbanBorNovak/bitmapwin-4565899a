@@ -168,7 +168,7 @@ function PlayExtenders() {
                   {torches.list.slice(torchPage * 24, torchPage * 24 + 24).map((t) => (
                     <div key={t.inscriptionId} className="relative aspect-square border border-border bg-background">
                       <iframe src={ordinalsPreviewUrl(t.inscriptionId)} title={`Ord Torch #${t.index + 1}`} loading="lazy" sandbox="allow-scripts" scrolling="no" className="pointer-events-none h-full w-full border-0" />
-                      <Link to="/play/card/$id" params={{ id: String(t.bitmap) }} className="absolute inset-0" aria-label={`Torch ${t.index + 1} at ${t.bitmap}.bitmap`} />
+                      <Link to="/bitmap/$block" params={{ block: String(t.bitmap) }} className="absolute inset-0" aria-label={`Torch ${t.index + 1} at ${t.bitmap}.bitmap`} />
                       <span className="label pointer-events-none absolute bottom-0 left-0 bg-background/85 px-1 text-[9px]" data-no-translate>#{t.index + 1} · {t.bitmap}</span>
                     </div>
                   ))}
