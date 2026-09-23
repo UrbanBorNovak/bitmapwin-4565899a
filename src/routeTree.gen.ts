@@ -82,6 +82,7 @@ import { Route as ApiPublicResolveRegistryRouteImport } from './routes/api/publi
 import { Route as MapDistrictSlugRouteImport } from './routes/map_.district.$slug'
 import { Route as MapPlaceBlockRouteImport } from './routes/map_.place.$block'
 import { Route as PlayCardIdRouteImport } from './routes/play.card.$id'
+import { Route as PlayTableCodeRouteImport } from './routes/play.table.$code'
 import { Route as RanksPlayerIdRouteImport } from './routes/ranks.player.$id'
 import { Route as ApiPublicBlocksHeightRouteImport } from './routes/api/public/blocks.$height'
 import { Route as ApiPublicGalleryIdRouteImport } from './routes/api/public/gallery.$id'
@@ -456,6 +457,11 @@ const PlayCardIdRoute = PlayCardIdRouteImport.update({
   path: '/card/$id',
   getParentRoute: () => PlayRoute,
 } as any)
+const PlayTableCodeRoute = PlayTableCodeRouteImport.update({
+  id: '/table/$code',
+  path: '/table/$code',
+  getParentRoute: () => PlayRoute,
+} as any)
 const RanksPlayerIdRoute = RanksPlayerIdRouteImport.update({
   id: '/player/$id',
   path: '/player/$id',
@@ -562,6 +568,7 @@ export interface FileRoutesByFullPath {
   '/map/district/$slug': typeof MapDistrictSlugRoute
   '/map/place/$block': typeof MapPlaceBlockRoute
   '/play/card/$id': typeof PlayCardIdRoute
+  '/play/table/$code': typeof PlayTableCodeRoute
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
@@ -639,6 +646,7 @@ export interface FileRoutesByTo {
   '/map/district/$slug': typeof MapDistrictSlugRoute
   '/map/place/$block': typeof MapPlaceBlockRoute
   '/play/card/$id': typeof PlayCardIdRoute
+  '/play/table/$code': typeof PlayTableCodeRoute
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
@@ -721,6 +729,7 @@ export interface FileRoutesById {
   '/map_/district/$slug': typeof MapDistrictSlugRoute
   '/map_/place/$block': typeof MapPlaceBlockRoute
   '/play/card/$id': typeof PlayCardIdRoute
+  '/play/table/$code': typeof PlayTableCodeRoute
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
@@ -804,6 +813,7 @@ export interface FileRouteTypes {
     | '/map/district/$slug'
     | '/map/place/$block'
     | '/play/card/$id'
+    | '/play/table/$code'
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
@@ -881,6 +891,7 @@ export interface FileRouteTypes {
     | '/map/district/$slug'
     | '/map/place/$block'
     | '/play/card/$id'
+    | '/play/table/$code'
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
@@ -962,6 +973,7 @@ export interface FileRouteTypes {
     | '/map_/district/$slug'
     | '/map_/place/$block'
     | '/play/card/$id'
+    | '/play/table/$code'
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
@@ -1538,6 +1550,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlayCardIdRouteImport
       parentRoute: typeof PlayRoute
     }
+    '/play/table/$code': {
+      id: '/play/table/$code'
+      path: '/table/$code'
+      fullPath: '/play/table/$code'
+      preLoaderRoute: typeof PlayTableCodeRouteImport
+      parentRoute: typeof PlayRoute
+    }
     '/ranks/player/$id': {
       id: '/ranks/player/$id'
       path: '/player/$id'
@@ -1660,6 +1679,7 @@ interface PlayRouteChildren {
   PlayMatchRoute: typeof PlayMatchRoute
   PlayIndexRoute: typeof PlayIndexRoute
   PlayCardIdRoute: typeof PlayCardIdRoute
+  PlayTableCodeRoute: typeof PlayTableCodeRoute
 }
 
 const PlayRouteChildren: PlayRouteChildren = {
@@ -1670,6 +1690,7 @@ const PlayRouteChildren: PlayRouteChildren = {
   PlayMatchRoute: PlayMatchRoute,
   PlayIndexRoute: PlayIndexRoute,
   PlayCardIdRoute: PlayCardIdRoute,
+  PlayTableCodeRoute: PlayTableCodeRoute,
 }
 
 const PlayRouteWithChildren = PlayRoute._addFileChildren(PlayRouteChildren)
