@@ -7,7 +7,7 @@ import { getMyResidencyFn, setMyResidencyFn } from "@/lib/residency.functions";
 import { InscriptionAvatar } from "@/components/InscriptionAvatar";
 import type { EstateLand } from "@/lib/passport-estate";
 
-/** Residency: pick one held BITMAP as home; its sat's newest inscription becomes the profile picture. */
+/** Residency: pick one held BITMAP as home; its sat's newest image becomes the profile picture. */
 export function PassportResidency({ userId, land }: { userId: string; land: EstateLand[] }) {
   const qc = useQueryClient();
   const getFn = useServerFn(getMyResidencyFn);
@@ -19,7 +19,7 @@ export function PassportResidency({ userId, land }: { userId: string; land: Esta
       qc.setQueryData(["my-residency", userId], r);
       if (r.wallet) qc.invalidateQueries({ queryKey: ["wallet-profile", r.wallet] });
       toast(r.height === null ? "RESIDENCY CLEARED" : `RESIDENT OF ${r.height}.BITMAP`, {
-        description: r.latestInscriptionId ? "PROFILE PICTURE SET FROM THE LATEST INSCRIPTION ON ITS SAT" : "NO INSCRIPTION FOUND ON THIS SAT",
+        description: r.avatarInscriptionId ? "PROFILE PICTURE SET FROM THE LATEST IMAGE ON ITS SAT" : "NO IMAGE FOUND ON THIS SAT",
       });
     },
     onError: (e) => toast("RESIDENCY FAILED", { description: (e as Error).message }),
@@ -34,7 +34,7 @@ export function PassportResidency({ userId, land }: { userId: string; land: Esta
       </header>
       <div className="grid gap-6 md:grid-cols-[144px_minmax(0,1fr)]">
         <div className="mx-auto size-36 overflow-hidden rounded-full border border-[var(--passport-line)] p-1.5">
-          <InscriptionAvatar inscriptionId={r?.latestInscriptionId ?? null} label={r?.height ? String(r.height) : "?"} alt="Residency profile picture" className="size-full rounded-full object-cover [image-rendering:pixelated]" fallbackClassName="text-2xl text-[var(--passport-gold)]" />
+          <InscriptionAvatar inscriptionId={r?.avatarInscriptionId ?? null} label={r?.height ? String(r.height) : "?"} alt="Residency profile picture" className="size-full rounded-full object-cover [image-rendering:pixelated]" fallbackClassName="text-2xl text-[var(--passport-gold)]" />
         </div>
         <div>
           {residency.isPending ? <p className="passport-code">READING RESIDENCY…</p> : !r?.wallet ? (
@@ -46,7 +46,10 @@ export function PassportResidency({ userId, land }: { userId: string; land: Esta
                 {r.sat !== null ? `SAT ${r.sat.toLocaleString()}` : r.height !== null ? "SAT NOT INDEXED" : "CHOOSE A BITMAP YOU HOLD"}
                 {r.latestInscriptionId ? ` · LATEST ${r.latestInscriptionId.slice(0, 8)}…${r.latestInscriptionId.slice(-4)}` : ""}
               </p>
-              <p className="passport-copy mt-3">Your profile picture is the newest inscription on your residency's sat.</p>
+              <p className="passport-copy mt-3">
+                Your profile picture is the newest image on your residency's sat.
+                {r.avatarInscriptionId && r.avatarInscriptionId !== r.latestInscriptionId ? " A newer non-image inscription remains recorded above." : ""}
+              </p>
               {land.length === 0 ? <p className="passport-code mt-4">NO HELD BITMAPS FOUND</p> : (
                 <div className="mt-4 flex flex-wrap gap-2">
                   {land.slice(0, 60).map((l) => (
