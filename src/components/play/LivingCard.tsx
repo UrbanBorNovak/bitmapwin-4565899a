@@ -50,7 +50,7 @@ function CardArt({ card }: { card: Card }) {
   const selectedTorchPool = profile?.visuals.pfpExtendersEnabled === true && profile.visuals.selectedPfpCollection === ORD_TORCHES_POOL;
   const torch = selectedTorchPool && torches?.list.length
     ? torches.list[hash(card.bitmap) % torches.list.length]
-    : torches?.byBitmap.get(card.bitmap);
+    : undefined;
   if (torch)
     return (
       <div className="lc-pfp-frame absolute inset-0" title={`ORD TORCHES · #${torch.index + 1} / 3000`}>
