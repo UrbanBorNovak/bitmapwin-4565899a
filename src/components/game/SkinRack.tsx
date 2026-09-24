@@ -44,7 +44,9 @@ function SkinFigure({
     const action = name ? actions[name] : null;
     if (!action) return;
     action.reset().setLoop(THREE.LoopRepeat, Infinity).setEffectiveWeight(1).play();
-    return () => action.stop();
+    return () => {
+      action.stop();
+    };
   }, [actions, names]);
 
   const fitted = useMemo(() => {
