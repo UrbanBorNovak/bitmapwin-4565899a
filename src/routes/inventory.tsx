@@ -8,6 +8,7 @@ import { ordContentUrl } from "@/lib/oci";
 import { GoldBarIcon } from "@/components/GoldBarIcon";
 import { RationIcon } from "@/components/game/RationIcon";
 import { CharacterPortrait } from "@/components/game/CharacterPortrait";
+import { BitmapPixelsCollection } from "@/components/BitmapPixelsCollection";
 import { readCharacter, type Character } from "@/lib/character";
 import { useEffect, useState } from "react";
 
@@ -119,6 +120,7 @@ function InventoryPage() {
 
       <CharacterCard />
 
+      <BitmapPixelsCollection />
 
       <section className="mt-10 grid grid-cols-2 border border-border md:grid-cols-4">
         <Stat k="GOLD BARS" v={String(bars)} icon />
