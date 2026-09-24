@@ -52,3 +52,4 @@
 - [x] Upgrade Passport into a sovereign evidence-grid identity artifact.
 - [x] Bind Passport verification, history, and metrics strictly to signed proof and persisted evidence.
 - [x] Rebuild Inventory around the complete on-chain BITMAP Pixels wearable collection.
+- [x] Add every unique BITMAP Pixels skin to character creation.
