@@ -95,8 +95,8 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart,
     act({ kind: "play", uid: u.uid });
     setPicked(null);
     const changes = dispatchWorldEvent({ kind: "CARD_PLAYED", cardId: u.cardId, actor });
-    const wake = changes.find((c) => c.from === "DORMANT" && c.to !== "DORMANT");
-    if (wake) setMoment(wake);
+    const evolution = changes.find((c) => c.from !== c.to || c.traitUnlocked || c.adaptationUnlocked);
+    if (evolution) setMoment(evolution);
   }
 
   function onMine(u: Unit) {
@@ -107,7 +107,13 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart,
 
   function strike(target: string | "hero") {
     if (!attacker) return;
+    const unit = me.board.find((candidate) => candidate.uid === attacker);
     act({ kind: "attack", uid: attacker, target });
+    if (unit) {
+      const changes = dispatchWorldEvent({ kind: "CARD_ATTACKED", cardId: unit.cardId, actor });
+      const learned = changes.find((change) => change.adaptationUnlocked || change.from !== change.to);
+      if (learned) setMoment(learned);
+    }
     setAttacker(null);
   }
 
@@ -254,6 +260,7 @@ function MagicMoment({ change, card, onClose }: { change: CardChange; card?: Car
         <ul className="mt-3 space-y-1 font-mono text-xs">
           <li>+{change.activity} ACTIVITY</li>
           {change.traitUnlocked && <li className="text-bitcoin">NEW TRAIT UNLOCKED · {change.traitUnlocked}</li>}
+          {change.adaptationUnlocked && <li className="text-signal">ADAPTATION LEARNED · {change.adaptationUnlocked.replace(/_/g, " ")}</li>}
         </ul>
         <p className="mt-3 font-mono text-[10px] text-muted-foreground">This card remembers. Every play is written into its history.</p>
         <button type="button" className="btn-term mt-4 w-full" onClick={onClose} autoFocus>CONTINUE THE MATCH</button>

@@ -12,6 +12,9 @@ export function CardHistory({ card }: { card: LivingCard }) {
     ["MATCHES", String(card.matches)],
     ["WINS", String(card.wins)],
     ["EXPERIENCE", `${card.experience} XP`],
+    ["REMEMBERED ACTIONS", String(card.learning.actions)],
+    ["ATTACKS", String(card.learning.attacks)],
+    ["ABILITY USES", String(card.learning.abilityUses)],
     ["LAST EVENT", card.lastEvent.replace(/_/g, " ")],
     ["CURRENT STATE", card.state],
   ];
@@ -26,6 +29,17 @@ export function CardHistory({ card }: { card: LivingCard }) {
           </div>
         ))}
       </dl>
+      <div className="border-t border-border px-3 py-3">
+        <h3 className="label text-signal">LEARNED ADAPTATIONS</h3>
+        <div className="mt-2 flex flex-wrap gap-1">
+          {card.learning.adaptations.length ? card.learning.adaptations.map((adaptation) => (
+            <span key={adaptation} className="border border-signal/50 px-1.5 py-1 font-mono text-[9px] text-signal">{adaptation.replace(/_/g, " ")}</span>
+          )) : <span className="font-mono text-[9px] text-muted-foreground">PLAY THIS CARD TO TEACH IT</span>}
+        </div>
+        <p className="mt-2 font-mono text-[9px] text-muted-foreground">
+          NEXT · {card.plays < 3 ? `${3 - card.plays} MORE PLAY${3 - card.plays === 1 ? "" : "S"} FOR TYPE ADAPTATION` : card.learning.actions < 8 ? `${8 - card.learning.actions} MORE ACTION${8 - card.learning.actions === 1 ? "" : "S"} FOR BATTLE TESTED` : card.wins < 3 ? `${3 - card.wins} MORE WIN${3 - card.wins === 1 ? "" : "S"} FOR VETERAN` : "CONTINUE TOWARD LEGENDARY"}
+        </p>
+      </div>
       <ol className="max-h-56 overflow-y-auto border-t border-border">
         {[...card.history].reverse().map((h, i) => (
           <li key={i} className="flex justify-between gap-3 border-b border-border/60 px-3 py-1.5 font-mono text-[10px]">

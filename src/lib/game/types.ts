@@ -47,11 +47,29 @@ export type WorldEventKind =
   | "PLAYER_WIN"
   | "PLAYER_LOSS"
   | "CARD_PLAYED"
+  | "CARD_ATTACKED"
   | "CARD_DISCOVERED"
   | "CARD_EVOLVED"
   | "WORLD_EVENT";
 
 export type CardHistoryEntry = { at: number; kind: WorldEventKind | "BORN"; note: string };
+
+export type LearnedAdaptation =
+  | "FORTIFIED"
+  | "MASTERWORK"
+  | "DEEP_MEMORY"
+  | "PATHFINDER"
+  | "RESOLUTE"
+  | "CATALYST"
+  | "BATTLE_TESTED"
+  | "VETERAN";
+
+export type CardLearning = {
+  actions: number;
+  attacks: number;
+  abilityUses: number;
+  adaptations: LearnedAdaptation[];
+};
 
 export type LivingCard = {
   id: string;
@@ -77,6 +95,7 @@ export type LivingCard = {
   plays: number;
   matches: number;
   wins: number;
+  learning: CardLearning;
   facts: BitmapFacts;
 };
 
@@ -145,5 +164,6 @@ export type CardChange = {
   activity: number;
   xp: number;
   traitUnlocked: Trait | null;
+  adaptationUnlocked: LearnedAdaptation | null;
   statNote: string | null;
 };
