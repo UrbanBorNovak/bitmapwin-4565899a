@@ -125,11 +125,11 @@ export const getMyResidencyFn = createServerFn({ method: "GET" })
       (data as any)?.residency_name_inscription_id !== resolved.residencyNameInscriptionId;
     if (profileNeedsSync) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const profileUpdate: Record<string, unknown> = {
+      const profileUpdate = {
         residency_name: resolved.residencyName,
         residency_name_inscription_id: resolved.residencyNameInscriptionId,
+        ...(resolved.avatarInscriptionId ? { avatar_inscription_id: resolved.avatarInscriptionId } : {}),
       };
-      if (resolved.avatarInscriptionId) profileUpdate["avatar_inscription_id"] = resolved.avatarInscriptionId;
       await supabaseAdmin.from("wallet_profiles").update(profileUpdate).eq("address", wallet);
     }
     return resolved;
