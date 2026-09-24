@@ -20,7 +20,8 @@ describe("living card learning", () => {
     const cardId = profile.order[0];
     expect(cardId).toBeDefined();
     if (!cardId) return;
-    for (let i = 0; i < 8; i++) profile = applyWorldEvent(profile, { kind: "CARD_ATTACKED", cardId, actor: "tester" }, i + 1).profile;
+    for (let i = 0; i < 3; i++) profile = applyWorldEvent(profile, { kind: "CARD_PLAYED", cardId, actor: "tester" }, i + 1).profile;
+    for (let i = 0; i < 5; i++) profile = applyWorldEvent(profile, { kind: "CARD_ATTACKED", cardId, actor: "tester" }, i + 4).profile;
     expect(profile.cards[cardId]?.learning.actions).toBe(8);
     expect(profile.cards[cardId]?.learning.adaptations).toContain("BATTLE_TESTED");
     expect(profile.cards[cardId]?.state).toBe("AWAKENED");
