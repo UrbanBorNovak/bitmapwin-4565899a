@@ -42,6 +42,11 @@ export function PassportResidency({ userId, land }: { userId: string; land: Esta
           ) : (
             <>
               <p className="passport-value" data-no-translate>{r.height !== null ? `${r.height}.BITMAP` : "NO RESIDENCY"}</p>
+              {r.residencyName && (
+                <p className="mt-2 font-mono text-lg uppercase text-[var(--passport-gold)]" data-no-translate>
+                  NAME // {r.residencyName}
+                </p>
+              )}
               <p className="passport-code mt-2" data-no-translate>
                 {r.sat !== null ? `SAT ${r.sat.toLocaleString()}` : r.height !== null ? "SAT NOT INDEXED" : "CHOOSE A BITMAP YOU HOLD"}
                 {r.latestInscriptionId ? ` · LATEST ${r.latestInscriptionId.slice(0, 8)}…${r.latestInscriptionId.slice(-4)}` : ""}
@@ -50,6 +55,11 @@ export function PassportResidency({ userId, land }: { userId: string; land: Esta
                 Your profile picture is the newest image on your residency's sat.
                 {r.avatarInscriptionId && r.avatarInscriptionId !== r.latestInscriptionId ? " A newer non-image inscription remains recorded above." : ""}
               </p>
+              {r.residencyNameInscriptionId && (
+                <p className="passport-code mt-2" data-no-translate>
+                  NAME PROOF {r.residencyNameInscriptionId.slice(0, 10)}…{r.residencyNameInscriptionId.slice(-4)} · FOLLOWS RESIDENCY
+                </p>
+              )}
               {land.length === 0 ? <p className="passport-code mt-4">NO HELD BITMAPS FOUND</p> : (
                 <div className="mt-4 flex flex-wrap gap-2">
                   {land.slice(0, 60).map((l) => (

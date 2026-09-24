@@ -32,7 +32,7 @@ export function ProfileEditor({
 
   useEffect(() => {
     if (dirty) return;
-    setName(profile.data?.displayName ?? "");
+    setName(profile.data?.editableDisplayName ?? "");
     setBio(profile.data?.bio ?? "");
     setAvatar(profile.data?.avatarInscriptionId ?? null);
   }, [profile.data, dirty]);
@@ -86,8 +86,17 @@ export function ProfileEditor({
         </div>
 
         <div className="space-y-3">
+          {profile.data?.residencyName && (
+            <div className="profile-readout border-profile-warm px-3 py-3">
+              <span className="label text-profile-warm-muted">VERIFIED RESIDENCY NAME</span>
+              <p className="mt-2 font-mono text-sm text-profile-warm" data-no-translate>{profile.data.residencyName}</p>
+              <p className="mt-1 font-mono text-[9px] text-muted-foreground" data-no-translate>
+                {profile.data.residencyNameInscriptionId?.slice(0, 10)}…{profile.data.residencyNameInscriptionId?.slice(-4)} · FOLLOWS MAIN BITMAP
+              </p>
+            </div>
+          )}
           <label className="block">
-            <span className="label text-profile-warm-muted">WHAT SHOULD THE OASIS CALL YOU?</span>
+            <span className="label text-profile-warm-muted">{profile.data?.residencyName ? "FALLBACK PROFILE NAME" : "WHAT SHOULD THE OASIS CALL YOU?"}</span>
             <input
               value={name}
               disabled={!canEdit}

@@ -14,6 +14,9 @@ import { assertSafeExternalUrl } from "@/lib/safe-url";
 export type WalletProfile = {
   address: string;
   displayName: string | null;
+  editableDisplayName: string | null;
+  residencyName: string | null;
+  residencyNameInscriptionId: string | null;
   bio: string | null;
   avatarInscriptionId: string | null;
   updatedAt: string | null;
@@ -117,14 +120,17 @@ export async function fetchTrending(limit = 12): Promise<ViewStats[]> {
 export async function fetchProfile(address: string): Promise<WalletProfile | null> {
   const { data, error } = await supabase
     .from("wallet_profiles")
-    .select("address, display_name, bio, avatar_inscription_id, updated_at")
+    .select("address, display_name, residency_name, residency_name_inscription_id, bio, avatar_inscription_id, updated_at")
     .eq("address", address)
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
   return {
     address: data.address,
-    displayName: data.display_name,
+    displayName: data.residency_name ?? data.display_name,
+    editableDisplayName: data.display_name,
+    residencyName: data.residency_name,
+    residencyNameInscriptionId: data.residency_name_inscription_id,
     bio: data.bio,
     avatarInscriptionId: data.avatar_inscription_id,
     updatedAt: data.updated_at,
@@ -206,7 +212,7 @@ export async function fetchProfiles(addresses: string[]): Promise<Map<string, Wa
   if (unique.length === 0) return new Map();
   const { data, error } = await supabase
     .from("wallet_profiles")
-    .select("address, display_name, bio, avatar_inscription_id, updated_at")
+    .select("address, display_name, residency_name, residency_name_inscription_id, bio, avatar_inscription_id, updated_at")
     .in("address", unique);
   if (error) throw error;
   return new Map(
@@ -214,7 +220,10 @@ export async function fetchProfiles(addresses: string[]): Promise<Map<string, Wa
       row.address,
       {
         address: row.address,
-        displayName: row.display_name,
+        displayName: row.residency_name ?? row.display_name,
+        editableDisplayName: row.display_name,
+        residencyName: row.residency_name,
+        residencyNameInscriptionId: row.residency_name_inscription_id,
         bio: row.bio,
         avatarInscriptionId: row.avatar_inscription_id,
         updatedAt: row.updated_at,
