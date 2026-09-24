@@ -10,6 +10,7 @@ import { getMyPassportFn } from "@/lib/passport.functions";
 import { shortenAddress } from "@/lib/registry";
 import { ParcelClubBadges } from "@/components/ParcelClubBadges";
 import { PassportEstatePanels } from "@/components/PassportEstate";
+import { PassportProof } from "@/components/PassportProof";
 import { getMyEstateFn } from "@/lib/passport.functions";
 import { PassportArtifact } from "@/components/PassportArtifact";
 import { Button } from "@/components/ui/button";
@@ -47,7 +48,7 @@ function PassportPage() {
       <EvidencePanel index="03" title="CLUB SEALS" icon={<Award />} className="lg:col-span-2"><p className="passport-copy">Live membership seals resolve from valid parcel ownership.</p>{data?.wallet ? <ParcelClubBadges address={data.wallet} className="mt-4" /> : <p className="passport-code mt-4">WALLET LINK REQUIRED</p>}</EvidencePanel>
       <EvidencePanel index="04" title="CREATION INDEX" icon={<Boxes />}><p className="passport-value">{estate.isPending ? "—" : estateUnavailable ? "!" : estate.data?.blueprints.length ?? 0}</p><p className="passport-copy">Published blueprints tied to this identity.</p>{estateUnavailable ? <RetryButton onClick={() => void estate.refetch()} /> : <Link to="/studio" className="passport-text-link">OPEN STUDIO →</Link>}</EvidencePanel>
     </section>
-    {estate.data ? <PassportEstatePanels estate={estate.data} /> : estate.isPending ? <section className="passport-panel mt-8 p-6"><p className="passport-kicker">05 / READING INDEXED LAND AND HISTORY…</p></section> : <section className="passport-panel mt-8 p-6"><EvidenceWarning label="ESTATE RECORDS TEMPORARILY UNAVAILABLE" /><RetryButton onClick={() => void estate.refetch()} /></section>}
+    {estate.data ? <><PassportProof estate={estate.data} /><PassportEstatePanels estate={estate.data} /></> : estate.isPending ? <section className="passport-panel mt-8 p-6"><p className="passport-kicker">05 / READING INDEXED LAND AND HISTORY…</p></section> : <section className="passport-panel mt-8 p-6"><EvidenceWarning label="ESTATE RECORDS TEMPORARILY UNAVAILABLE" /><RetryButton onClick={() => void estate.refetch()} /></section>}
     <section className="mt-8"><PassportSectionHeader index="06" eyebrow="EVIDENCE-BACKED" title="PASSPORT STAMPS" count={`${data?.stamps.length ?? 0} EARNED`}/><div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{data?.stamps.length ? data.stamps.map((s) => <StampCard key={s.id} stamp={s}/>) : <p className="passport-empty">&gt; ENTER THE OASIS TO CREATE YOUR FIRST RECORD_</p>}</div></section>
     <section className="passport-panel mt-8"><PassportSectionHeader index="07" eyebrow="WHAT HISTORY MAKES POSSIBLE" title="BUILD CAPABILITIES"/><UnlockPath stamps={data?.stamps ?? []} unlocks={data?.unlocks ?? []}/></section>
     <section className="passport-panel mt-8"><PassportSectionHeader index="08" eyebrow="ORDERED EVIDENCE" title="RECENT PROVENANCE" count={`${data?.events.length ?? 0} RECORDS`}/>{data?.events.length ? data.events.slice(0, 20).map((e) => <StreamEventRow key={e.id} event={e}/>) : <p className="passport-empty">&gt; NO VERIFIED HISTORY YET_</p>}</section>

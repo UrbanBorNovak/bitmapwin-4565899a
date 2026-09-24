@@ -20,7 +20,14 @@ export type EstateTimelineEntry = {
   title: string;
   detail: string;
 };
+export type ChainProof = { txid: string; height: number; side: "BUY" | "SELL"; priceSats: number; blockHeight: number | null; at: string | null };
+export type GameStats = {
+  level: number | null; fame: number | null; pvpKills: number; deaths: number; districtsVisited: number; buildsMaintained: number;
+  matches: number; wins: number; losses: number; bestStreak: number; bitBalance: number; bitEarned: number;
+};
 export type PassportEstate = {
+  chain: ChainProof[];
+  game: GameStats;
   wallet: string | null;
   land: EstateLand[];
   builds: EstateBuild[];
