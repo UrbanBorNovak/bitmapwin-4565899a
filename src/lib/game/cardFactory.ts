@@ -123,6 +123,7 @@ export function createCardFromBitmap(facts: BitmapFacts, now = Date.now()): Livi
     plays: 0,
     matches: 0,
     wins: 0,
+    learning: { actions: 0, attacks: 0, abilityUses: 0, adaptations: [] },
     facts,
   };
 }

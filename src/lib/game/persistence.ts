@@ -11,13 +11,26 @@ export interface PlayPersistence {
 const PREFIX = "bitmapwin.play.v1:";
 const memory = new Map<string, PlayProfile>();
 
+export function normalizePlayProfile(profile: PlayProfile): PlayProfile {
+  const cards = Object.fromEntries(Object.entries(profile.cards).map(([id, card]) => [id, {
+    ...card,
+    learning: {
+      actions: card.learning?.actions ?? card.plays ?? 0,
+      attacks: card.learning?.attacks ?? 0,
+      abilityUses: card.learning?.abilityUses ?? card.plays ?? 0,
+      adaptations: card.learning?.adaptations ?? [],
+    },
+  }]));
+  return { ...profile, cards, visuals: normalizeVisualSettings(profile.visuals) };
+}
+
 export const localPlayPersistence: PlayPersistence = {
   load(owner) {
     try {
       const raw = window.localStorage.getItem(PREFIX + owner);
       if (!raw) return memory.get(owner) ?? null;
       const parsed = JSON.parse(raw) as PlayProfile;
-      return parsed?.version === 1 ? { ...parsed, visuals: normalizeVisualSettings(parsed.visuals) } : null;
+       return parsed?.version === 1 ? normalizePlayProfile(parsed) : null;
     } catch {
       return memory.get(owner) ?? null;
     }

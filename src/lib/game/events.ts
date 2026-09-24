@@ -5,6 +5,7 @@ import type {
   LivingCard,
   PlayProfile,
   Trait,
+  LearnedAdaptation,
   WorldEventKind,
   WorldEventRecord,
   BitmapFacts,
@@ -13,6 +14,7 @@ import type {
 /** Shared world-event model. Every change to a card flows through applyWorldEvent. */
 export type WorldEvent =
   | { kind: "CARD_PLAYED"; cardId: string; actor: string }
+  | { kind: "CARD_ATTACKED"; cardId: string; actor: string }
   | { kind: "PLAYER_WIN"; mvpId: string | null; deckIds: string[]; actor: string }
   | { kind: "PLAYER_LOSS"; mvpId: string | null; deckIds: string[]; actor: string }
   | { kind: "CARD_DISCOVERED"; facts: BitmapFacts; actor: string }
@@ -41,17 +43,30 @@ function note(card: LivingCard, kind: WorldEventKind, text: string, at: number) 
   card.lastEvent = kind;
 }
 
-function change(card: LivingCard, from: CardState, xp: number, act: number, trait: Trait | null, stat: string | null): CardChange {
-  return { cardId: card.id, name: card.name, height: card.bitmap, from, to: card.state, activity: act, xp, traitUnlocked: trait, statNote: stat };
+function change(card: LivingCard, from: CardState, xp: number, act: number, trait: Trait | null, adaptation: LearnedAdaptation | null, stat: string | null): CardChange {
+  return { cardId: card.id, name: card.name, height: card.bitmap, from, to: card.state, activity: act, xp, traitUnlocked: trait, adaptationUnlocked: adaptation, statNote: stat };
 }
 
-/** LEGENDARY needs a lived history: developed land + real wins. */
-function maybeLegend(card: LivingCard, at: number) {
-  if (card.state === "DEVELOPED" && card.wins >= 5 && card.experience >= 60) {
-    card.state = "LEGENDARY";
-    card.power += 1;
-    note(card, "CARD_EVOLVED", "Became LEGENDARY", at);
-  }
+const TYPE_ADAPTATION: Record<LivingCard["type"], LearnedAdaptation> = {
+  TERRITORY: "FORTIFIED", BUILDER: "MASTERWORK", MINER: "DEEP_MEMORY",
+  EXPLORER: "PATHFINDER", GUARDIAN: "RESOLUTE", EVENT: "CATALYST",
+};
+
+function learn(card: LivingCard, adaptation: LearnedAdaptation, at: number): boolean {
+  if (card.learning.adaptations.includes(adaptation)) return false;
+  card.learning.adaptations.push(adaptation);
+  if (adaptation === "FORTIFIED" || adaptation === "MASTERWORK" || adaptation === "RESOLUTE") card.defense += 1;
+  else card.power += 1;
+  note(card, "CARD_EVOLVED", `Learned ${adaptation.replace(/_/g, " ")}`, at);
+  return true;
+}
+
+function evolve(card: LivingCard, at: number) {
+  const before = card.state;
+  if (card.state === "ACTIVE" && (card.experience >= 12 || card.learning.actions >= 8)) card.state = "AWAKENED";
+  if (rank(card.state) >= rank("AWAKENED") && (card.experience >= 36 || (card.facts.buildCount ?? 0) >= 3)) card.state = raise(card, "DEVELOPED");
+  if (card.state === "DEVELOPED" && card.wins >= 5 && card.experience >= 60) card.state = "LEGENDARY";
+  if (card.state !== before) note(card, "CARD_EVOLVED", `Became ${card.state}`, at);
 }
 
 export function applyWorldEvent(
@@ -65,7 +80,7 @@ export function applyWorldEvent(
   const edit = (id: string) => {
     const c = p.cards[id];
     if (!c) return null;
-    const copy = { ...c, traits: [...c.traits], history: [...c.history] };
+    const copy = { ...c, traits: [...c.traits], history: [...c.history], learning: { ...c.learning, adaptations: [...c.learning.adaptations] } };
     p.cards[id] = copy;
     return copy;
   };
@@ -77,7 +92,10 @@ export function applyWorldEvent(
       const from = c.state;
       c.activity += 1;
       c.plays += 1;
+      c.learning.actions += 1;
+      c.learning.abilityUses += 1;
       let unlocked: Trait | null = null;
+      let adaptation: LearnedAdaptation | null = null;
       if (c.firstPlayAt === null) {
         c.firstPlayAt = at;
         c.state = raise(c, "ACTIVE");
@@ -91,8 +109,25 @@ export function applyWorldEvent(
       } else {
         note(c, "CARD_PLAYED", "Played in a match", at);
       }
+      if (c.plays >= 3 && learn(c, TYPE_ADAPTATION[c.type], at)) adaptation = TYPE_ADAPTATION[c.type];
+      if (c.learning.actions >= 8 && learn(c, "BATTLE_TESTED", at)) adaptation = "BATTLE_TESTED";
       if (c.traits.includes("ACTIVIST") && c.plays % 5 === 0) c.power += 1;
-      changes.push(change(c, from, 0, 1, unlocked, null));
+      evolve(c, at);
+      changes.push(change(c, from, 0, 1, unlocked, adaptation, adaptation ? `LEARNED ${adaptation.replace(/_/g, " ")}` : null));
+      break;
+    }
+    case "CARD_ATTACKED": {
+      const c = edit(event.cardId);
+      if (!c) break;
+      const from = c.state;
+      c.learning.actions += 1;
+      c.learning.attacks += 1;
+      c.activity += 1;
+      let adaptation: LearnedAdaptation | null = null;
+      if (c.learning.actions >= 8 && learn(c, "BATTLE_TESTED", at)) adaptation = "BATTLE_TESTED";
+      else note(c, "CARD_ATTACKED", `Attacked in a match · ${c.learning.attacks} total`, at);
+      evolve(c, at);
+      changes.push(change(c, from, 0, 1, null, adaptation, adaptation ? "LEARNED BATTLE TESTED" : null));
       break;
     }
     case "PLAYER_WIN":
@@ -123,8 +158,9 @@ export function applyWorldEvent(
             c.state = raise(c, "AWAKENED");
           }
           note(c, event.kind, win ? `Won a match (+${xp} XP)` : `Fought and fell (+${xp} XP)`, at);
-          maybeLegend(c, at);
-          changes.push(change(c, from, xp, 1, null, null));
+          const adaptation = c.wins >= 3 && learn(c, "VETERAN", at) ? "VETERAN" : null;
+          evolve(c, at);
+          changes.push(change(c, from, xp, 1, null, adaptation, adaptation ? "LEARNED VETERAN" : null));
         }
       }
       log.push({ id: rid(), at, kind: event.kind, cardId: event.mvpId ?? undefined, text: `${event.actor} ${win ? "won" : "lost"} a match${event.mvpId && p.cards[event.mvpId] ? ` with ${p.cards[event.mvpId]!.name}` : ""}` });
@@ -143,7 +179,7 @@ export function applyWorldEvent(
           c.activity += 1;
         }
       }
-      changes.push(change(card, "DORMANT", 0, 0, null, "NEW CARD"));
+      changes.push(change(card, "DORMANT", 0, 0, null, null, "NEW CARD"));
       log.push({ id: rid(), at, kind: "CARD_DISCOVERED", cardId: id, height: card.bitmap, text: `${event.actor} discovered ${card.name} at ${card.bitmap}.BITMAP` });
       break;
     }
@@ -160,8 +196,8 @@ export function applyWorldEvent(
           if (event.buildCount >= 3 && !c.traits.includes("ARCHITECT")) c.traits.push("ARCHITECT");
           if (rank(c.state) >= rank("ACTIVE")) c.state = raise(c, "DEVELOPED");
           note(c, "NEW_BUILD", `Its land now holds ${event.buildCount} Oasis build${event.buildCount === 1 ? "" : "s"}`, at);
-          maybeLegend(c, at);
-          changes.push(change(c, from, 0, 0, null, "+1 DEFENSE"));
+          evolve(c, at);
+          changes.push(change(c, from, 0, 0, null, null, "+1 DEFENSE"));
         } else {
           c.activity += 1;
         }

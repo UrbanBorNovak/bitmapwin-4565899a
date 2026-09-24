@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeVisualSettings } from "./pfpExtenders";
+import { normalizePlayProfile } from "./persistence";
 import type { PlayProfile } from "./types";
 
 /**
@@ -15,7 +16,7 @@ function score(p: PlayProfile) {
 function sanitize(raw: unknown, owner: string): PlayProfile | null {
   const p = raw as PlayProfile | null;
   if (!p || p.version !== 1 || typeof p.cards !== "object" || !Array.isArray(p.order)) return null;
-  return { ...p, owner, visuals: normalizeVisualSettings(p.visuals) };
+  return normalizePlayProfile({ ...p, owner, visuals: normalizeVisualSettings(p.visuals) });
 }
 
 export async function fetchRemotePlayProfile(owner: string): Promise<PlayProfile | null> {

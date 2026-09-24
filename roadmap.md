@@ -55,3 +55,4 @@
 - [x] Add every unique BITMAP Pixels skin to character creation.
 - [x] Wire BITMAP Pixels into PLAY as deterministic default card characters.
 - [x] Bind the Passport name to a verified `name.height.bitmap` reinscription on the current residency sat.
+- [x] Make PLAY cards remember actions, learn adaptations, and evolve persistently.
