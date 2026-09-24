@@ -59,7 +59,7 @@ export const setMyResidencyFn = createServerFn({ method: "POST" })
     }
     const resolved = await resolve(context.supabase, wallet, data.height);
     const update: Record<string, unknown> = { address: wallet, owner_user_id: context.userId, residency_height: data.height };
-    if (resolved.latestInscriptionId) update.avatar_inscription_id = resolved.latestInscriptionId;
+    if (resolved.latestInscriptionId) update["avatar_inscription_id"] = resolved.latestInscriptionId;
     const { error } = await context.supabase.from("wallet_profiles").upsert(update as any, { onConflict: "address" });
     if (error) throw new Error("COULD NOT SAVE RESIDENCY");
     return resolved;
