@@ -1,4 +1,5 @@
 import { abilityFor } from "@/lib/game/abilities";
+import { bitmapPixelForHeight, useBitmapPixels } from "@/lib/game/bitmapPixels";
 import { hash } from "@/lib/game/cardFactory";
 import { activePfpExtenderForCard, inscriptionContentUrl, ordinalsPreviewUrl } from "@/lib/game/pfpExtenders";
 import type { CardState, CardType, LivingCard as Card } from "@/lib/game/types";
@@ -45,10 +46,11 @@ export function BitmapPattern({ height, state, className = "" }: { height: numbe
 function CardArt({ card }: { card: Card }) {
   const profile = usePlayProfile();
   const torches = useOrdTorches();
+  const bitmapPixels = useBitmapPixels();
   const selectedTorchPool = profile?.visuals.pfpExtendersEnabled === true && profile.visuals.selectedPfpCollection === ORD_TORCHES_POOL;
   const torch = selectedTorchPool && torches?.list.length
     ? torches.list[hash(card.bitmap) % torches.list.length]
-    : torches?.byBitmap.get(card.bitmap);
+    : undefined;
   if (torch)
     return (
       <div className="lc-pfp-frame absolute inset-0" title={`ORD TORCHES · #${torch.index + 1} / 3000`}>
@@ -59,24 +61,41 @@ function CardArt({ card }: { card: Card }) {
       </div>
     );
   const extender = activePfpExtenderForCard(card, profile?.visuals);
-  if (!extender) return <BitmapPattern height={card.bitmap} state={card.state} className="relative size-[58%]" />;
+  if (extender)
+    return (
+      <div className="lc-pfp-frame absolute inset-0" title={`${extender.collection} · ${extender.name}`}>
+        {extender.source === "ordinals-image" ? (
+          <img src={inscriptionContentUrl(extender.inscriptionId)} alt="" loading="lazy" className="h-full w-full object-cover" draggable={false} />
+        ) : (
+          <iframe
+            src={ordinalsPreviewUrl(extender.inscriptionId)}
+            title={`${extender.name} Ordinals HTML PFP`}
+            loading="lazy"
+            sandbox="allow-scripts allow-same-origin"
+            scrolling="no"
+            className="h-full w-full border-0 pointer-events-none"
+          />
+        )}
+        <div className="lc-pfp-scan absolute inset-0" aria-hidden />
+        <BitmapPattern height={card.bitmap} state={card.state} className="absolute bottom-2 left-2 size-10 opacity-90" />
+        <span className="lc-pfp-badge label absolute left-1.5 top-1 text-[7px] text-bitcoin">{extender.source === "ordinals-image" ? "CHILD IMG" : "HTML PFP"}</span>
+      </div>
+    );
+
+  const pixel = bitmapPixelForHeight(card.bitmap, bitmapPixels ?? []);
+  if (!pixel) return <BitmapPattern height={card.bitmap} state={card.state} className="relative size-[58%]" />;
   return (
-    <div className="lc-pfp-frame absolute inset-0" title={`${extender.collection} · ${extender.name}`}>
-      {extender.source === "ordinals-image" ? (
-        <img src={inscriptionContentUrl(extender.inscriptionId)} alt="" loading="lazy" className="h-full w-full object-cover" draggable={false} />
-      ) : (
-        <iframe
-          src={ordinalsPreviewUrl(extender.inscriptionId)}
-          title={`${extender.name} Ordinals HTML PFP`}
-          loading="lazy"
-          sandbox="allow-scripts allow-same-origin"
-          scrolling="no"
-          className="h-full w-full border-0 pointer-events-none"
-        />
-      )}
+    <div className="lc-pfp-frame absolute inset-0 bg-background" title={`BITMAP PIXELS · ${pixel.name}`}>
+      <img
+        src={inscriptionContentUrl(pixel.inscriptionId)}
+        alt={`${pixel.name}, the default character for ${card.name}`}
+        loading="lazy"
+        className="h-full w-full object-contain [image-rendering:pixelated]"
+        draggable={false}
+      />
       <div className="lc-pfp-scan absolute inset-0" aria-hidden />
       <BitmapPattern height={card.bitmap} state={card.state} className="absolute bottom-2 left-2 size-10 opacity-90" />
-      <span className="lc-pfp-badge label absolute left-1.5 top-1 text-[7px] text-bitcoin">{extender.source === "ordinals-image" ? "CHILD IMG" : "HTML PFP"}</span>
+      <span className="lc-pfp-badge label absolute left-1.5 top-1 text-[7px] text-bitcoin">PIXEL #{String(pixel.index).padStart(3, "0")}</span>
     </div>
   );
 }
