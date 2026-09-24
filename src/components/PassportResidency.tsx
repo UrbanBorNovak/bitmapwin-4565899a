@@ -17,6 +17,7 @@ export function PassportResidency({ userId, land }: { userId: string; land: Esta
     mutationFn: (height: number | null) => setFn({ data: { height } }),
     onSuccess: (r) => {
       qc.setQueryData(["my-residency", userId], r);
+      qc.setQueryData(["passport-residency", userId], r);
       if (r.wallet) qc.invalidateQueries({ queryKey: ["wallet-profile", r.wallet] });
       toast(r.height === null ? "RESIDENCY CLEARED" : `RESIDENT OF ${r.height}.BITMAP`, {
         description: r.avatarInscriptionId ? "PROFILE PICTURE SET FROM THE LATEST IMAGE ON ITS SAT" : "NO IMAGE FOUND ON THIS SAT",
