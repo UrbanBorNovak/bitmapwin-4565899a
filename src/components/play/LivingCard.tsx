@@ -5,6 +5,7 @@ import { activePfpExtenderForCard, inscriptionContentUrl, ordinalsPreviewUrl } f
 import type { CardState, CardType, LivingCard as Card } from "@/lib/game/types";
 import { usePlayProfile } from "@/lib/game/worldState";
 import { ORD_TORCHES_POOL, useOrdTorches } from "@/lib/game/ordTorches";
+import { CardCharacter3D } from "./CardCharacter3D";
 
 export type CardUiState =
   | "idle"
@@ -86,13 +87,7 @@ function CardArt({ card }: { card: Card }) {
   if (!pixel) return <BitmapPattern height={card.bitmap} state={card.state} className="relative size-[58%]" />;
   return (
     <div className="lc-pfp-frame absolute inset-0 bg-background" title={`BITMAP PIXELS · ${pixel.name}`}>
-      <img
-        src={inscriptionContentUrl(pixel.inscriptionId)}
-        alt={`${pixel.name}, the default character for ${card.name}`}
-        loading="lazy"
-        className="h-full w-full object-contain [image-rendering:pixelated]"
-        draggable={false}
-      />
+      <CardCharacter3D skin={pixel.inscriptionId} label={`${pixel.name}, the 3D character for ${card.name}`} />
       <div className="lc-pfp-scan absolute inset-0" aria-hidden />
       <BitmapPattern height={card.bitmap} state={card.state} className="absolute bottom-2 left-2 size-10 opacity-90" />
       <span className="lc-pfp-badge label absolute left-1.5 top-1 text-[7px] text-bitcoin">PIXEL #{String(pixel.index).padStart(3, "0")}</span>
