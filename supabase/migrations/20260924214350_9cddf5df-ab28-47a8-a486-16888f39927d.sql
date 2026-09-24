@@ -1,0 +1,1 @@
+ALTER TABLE public.wallet_profiles ADD COLUMN IF NOT EXISTS residency_height bigint;
