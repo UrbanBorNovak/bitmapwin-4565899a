@@ -5,10 +5,11 @@
  */
 import { blueprintFromManifest, blueprintSummary } from "@/lib/blueprint";
 
-import type { EstateLand, EstateBuild, EstateVisit, EstateBlueprint, EstateTimelineEntry, PassportEstate } from "@/lib/passport-estate";
+import type { ChainProof, GameStats, EstateLand, EstateBuild, EstateVisit, EstateBlueprint, EstateTimelineEntry, PassportEstate } from "@/lib/passport-estate";
 export type { EstateLand, EstateBuild, EstateVisit, EstateBlueprint, EstateTimelineEntry, PassportEstate };
 
-const EMPTY: PassportEstate = { wallet: null, land: [], builds: [], visits: [], blueprints: [], timeline: [] };
+const EMPTY_GAME: GameStats = { level: null, fame: null, pvpKills: 0, deaths: 0, districtsVisited: 0, buildsMaintained: 0, matches: 0, wins: 0, losses: 0, bestStreak: 0, bitBalance: 0, bitEarned: 0 };
+const EMPTY: PassportEstate = { chain: [], game: EMPTY_GAME, wallet: null, land: [], builds: [], visits: [], blueprints: [], timeline: [] };
 
 async function db() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -68,6 +69,26 @@ export async function readPassportEstate(userId: string): Promise<PassportEstate
     } else visitMap.set(height, { height, visits: 1, lastAt: at });
   }
   const visits = [...visitMap.values()].sort((a, b) => b.lastAt.localeCompare(a.lastAt));
+
+  const none = Promise.resolve({ data: [] as any[], error: null });
+  const [trades, rank, play, coins] = await Promise.all([
+    wallet ? client.from("trades").select("txid, bitmap_height, buyer_address, seller_address, price_sats, block_height, block_time").or(`buyer_address.eq.${wallet},seller_address.eq.${wallet}`).order("block_height", { ascending: false }).limit(100) : none,
+    client.from("rank_players").select("level, fame, pvp_kills, deaths, districts_visited, builds_maintained, wallet").or(wallet ? `user_id.eq.${userId},wallet.eq.${wallet}` : `user_id.eq.${userId}`).limit(5),
+    client.from("play_profiles").select("matches, wins, losses, best_streak").eq("user_id", userId).limit(1),
+    wallet ? client.from("coin_balances").select("balance, earned_total").eq("address", wallet).limit(1) : none,
+  ]);
+  for (const r of [trades, rank, play, coins]) if (r.error) throw r.error;
+  const chain: ChainProof[] = (trades.data ?? []).map((t: any) => ({
+    txid: t.txid, height: Number(t.bitmap_height), side: t.buyer_address === wallet ? "BUY" : "SELL",
+    priceSats: Number(t.price_sats ?? 0), blockHeight: t.block_height === null ? null : Number(t.block_height), at: t.block_time ?? null,
+  }));
+  const r0: any = (rank.data ?? [])[0]; const p0: any = (play.data ?? [])[0]; const c0: any = (coins.data ?? [])[0];
+  const game: GameStats = {
+    level: r0 ? Number(r0.level) : null, fame: r0 ? Number(r0.fame) : null,
+    pvpKills: Number(r0?.pvp_kills ?? 0), deaths: Number(r0?.deaths ?? 0), districtsVisited: Number(r0?.districts_visited ?? 0), buildsMaintained: Number(r0?.builds_maintained ?? 0),
+    matches: Number(p0?.matches ?? 0), wins: Number(p0?.wins ?? 0), losses: Number(p0?.losses ?? 0), bestStreak: Number(p0?.best_streak ?? 0),
+    bitBalance: Number(c0?.balance ?? 0), bitEarned: Number(c0?.earned_total ?? 0),
+  };
 
   const extenderRows = extenders.data ?? [];
   const versions = extenderRows.length
@@ -139,5 +160,5 @@ export async function readPassportEstate(userId: string): Promise<PassportEstate
     .sort((a, b) => b.at.localeCompare(a.at))
     .slice(0, 120);
 
-  return { ...EMPTY, wallet, land: landRows, builds, visits, blueprints, timeline };
+  return { ...EMPTY, chain, game, wallet, land: landRows, builds, visits, blueprints, timeline };
 }
