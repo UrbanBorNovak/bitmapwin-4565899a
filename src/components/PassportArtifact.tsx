@@ -1,6 +1,7 @@
 import { ArrowRight, Fingerprint, ShieldCheck } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { shortenAddress } from "@/lib/registry";
+import { InscriptionAvatar } from "@/components/InscriptionAvatar";
 
 type PassportArtifactProps = {
   wallet: string | null;
@@ -10,6 +11,10 @@ type PassportArtifactProps = {
   holdings?: number;
   loading?: boolean;
   unavailable?: boolean;
+  residencyName?: string | null;
+  residencyHeight?: number | null;
+  avatarInscriptionId?: string | null;
+  nameInscriptionId?: string | null;
 };
 
 function passportKey(wallet: string | null) {
@@ -19,7 +24,7 @@ function passportKey(wallet: string | null) {
   return `${head}::${tail}`;
 }
 
-export function PassportArtifact({ wallet, stamps = 0, unlocks = 0, records = 0, holdings = 0, loading = false, unavailable = false }: PassportArtifactProps) {
+export function PassportArtifact({ wallet, stamps = 0, unlocks = 0, records = 0, holdings = 0, loading = false, unavailable = false, residencyName = null, residencyHeight = null, avatarInscriptionId = null, nameInscriptionId = null }: PassportArtifactProps) {
   const state = loading ? "SCANNING" : unavailable ? "UNAVAILABLE" : wallet ? "VERIFIED" : "UNLINKED";
   return (
     <article className="passport-artifact" aria-label={wallet ? "Verified BitmapWin Passport" : "Unlinked BitmapWin Passport"}>
@@ -41,10 +46,31 @@ export function PassportArtifact({ wallet, stamps = 0, unlocks = 0, records = 0,
         <div className="passport-seal">
           <div className="passport-seal__orbit" aria-hidden />
           <div className="passport-seal__core">
-            {wallet ? <ShieldCheck className="size-16" strokeWidth={1} /> : <Fingerprint className="size-16" strokeWidth={1} />}
+            {wallet && avatarInscriptionId ? (
+              <InscriptionAvatar
+                inscriptionId={avatarInscriptionId}
+                label={residencyName ?? String(residencyHeight ?? "?")}
+                alt={residencyName ? `${residencyName} on-chain identity` : "Residency profile picture"}
+                className="size-full rounded-full object-cover [image-rendering:pixelated]"
+                fallbackClassName="text-2xl text-[var(--passport-gold)]"
+              />
+            ) : wallet ? <ShieldCheck className="size-16" strokeWidth={1} /> : <Fingerprint className="size-16" strokeWidth={1} />}
           </div>
           <span className="passport-seal__index">{state}</span>
         </div>
+        {residencyName ? (
+          <div className="mt-7" data-no-translate>
+            <p className="font-mono text-2xl font-bold uppercase text-[var(--passport-paper)]">{residencyName}</p>
+            <p className="mt-1 font-mono text-[9px] uppercase text-[var(--passport-gold)]">
+              ON-CHAIN NAME · {residencyHeight}.BITMAP
+            </p>
+            {nameInscriptionId ? (
+              <p className="mt-1 font-mono text-[8px] text-[var(--passport-muted)]">
+                PROOF {nameInscriptionId.slice(0, 10)}…{nameInscriptionId.slice(-4)}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
         <p className="mt-8 text-xs uppercase text-[var(--passport-paper)]">
           Status: <strong>{loading ? "CHECKING EVIDENCE" : unavailable ? "EVIDENCE TEMPORARILY UNAVAILABLE" : wallet ? "SIGNED WALLET PROOF ACTIVE" : "AWAITING IDENTITY"}</strong>
         </p>
