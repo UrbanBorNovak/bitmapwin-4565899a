@@ -252,9 +252,9 @@ export function LivingCard({ card, size = "md", ui = "idle", live, onClick, labe
       </section>
 
       <footer className="lc-relic-stats relative z-10 mx-2 mb-2 mt-1.5 grid shrink-0 grid-cols-[1fr_minmax(2.5rem,.7fr)_1fr] items-stretch">
-        <span className="lc-stat lc-stat-power" title="Power"><small>POWER</small><b>{atk}</b></span>
+        <span className="lc-stat lc-stat-power" title="Power"><small>PWR</small><b>{atk}</b></span>
         <span className="lc-integrity" title="Activity"><small>ACTIVITY</small><b>{card.activity}</b><span><i style={{ width: `${Math.max(12, Math.min(100, card.activity * 10))}%` }} /></span></span>
-        <span className={`lc-stat lc-stat-defense ${live && hp < live.maxHp ? "text-destructive" : ""}`} title="Defense"><small>DEFENSE</small><b>{hp}</b></span>
+        <span className={`lc-stat lc-stat-defense ${live && hp < live.maxHp ? "text-destructive" : ""}`} title="Defense"><small>DEF</small><b>{hp}</b></span>
       </footer>
       <div className="lc-foil absolute inset-0 z-20 pointer-events-none" aria-hidden />
       {live?.ready === false && <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center label text-[8px] text-muted-foreground">RESTING</span>}

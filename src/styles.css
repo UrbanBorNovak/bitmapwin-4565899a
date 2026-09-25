@@ -1478,14 +1478,14 @@
 .lc-stat { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0.25rem; min-width: 0; padding: 0.25rem 0.45rem; background: color-mix(in oklab, var(--color-card) 82%, transparent); }
 .lc-stat:first-child { border-right: 1px solid var(--color-border); }
 .lc-stat:last-child { border-left: 1px solid var(--color-border); }
-.lc-stat small { min-width: 0; overflow: hidden; font-family: var(--font-mono); font-size: 5px; color: var(--color-muted-foreground); text-overflow: ellipsis; }
+.lc-stat small { min-width: 0; font-family: var(--font-mono); font-size: 7px; letter-spacing: 0.08em; color: var(--color-muted-foreground); white-space: nowrap; }
 .lc-stat b { font-family: var(--font-display); font-size: 1rem; color: var(--color-bitcoin); }
 .lc-stat-defense b { color: var(--color-signal); }
 .lc-integrity { display: grid; min-width: 0; place-items: center; align-content: center; gap: 0.1rem; padding: 0.2rem; }
 .lc-integrity > span { position: relative; width: 100%; height: 2px; overflow: hidden; background: var(--color-surface); }
 .lc-integrity i { position: absolute; inset: 0 auto 0 0; max-width: 100%; background: var(--color-signal); }
-.lc-integrity small { font-family: var(--font-mono); font-size: 4px; color: var(--color-muted-foreground); }
-.lc-integrity b { font-family: var(--font-mono); font-size: 6px; color: var(--color-foreground); }
+.lc-integrity small { font-family: var(--font-mono); font-size: 6px; letter-spacing: 0.08em; color: var(--color-muted-foreground); }
+.lc-integrity b { font-family: var(--font-mono); font-size: 9px; color: var(--color-foreground); }
 .lc-rivet { position: absolute; z-index: 30; width: 0.2rem; height: 0.2rem; border-radius: 9999px; background: var(--color-bitcoin); box-shadow: 0 0 4px var(--color-bitcoin); }
 .lc-rivet-nw { left: 0.35rem; top: 0.35rem; } .lc-rivet-ne { right: 0.35rem; top: 0.35rem; } .lc-rivet-sw { left: 0.35rem; bottom: 0.35rem; } .lc-rivet-se { right: 0.35rem; bottom: 0.35rem; }
 .lc-foil { opacity: 0; background: linear-gradient(115deg, transparent 18%, color-mix(in oklab, var(--color-signal) 10%, transparent) 43%, color-mix(in oklab, var(--color-bitcoin) 8%, transparent) 50%, transparent 72%); transform: translateX(-70%); transition: transform 700ms ease, opacity 300ms ease; }
@@ -1500,15 +1500,15 @@
 .living-card[data-size="sm"] .lc-rules strong { font-size: 5px; }
 .living-card[data-size="sm"] .lc-relic-stats { min-height: 1.8rem; margin-bottom: 0.35rem; margin-top: 0.2rem; }
 .living-card[data-size="sm"] .lc-stat { padding-inline: 0.25rem; }
-.living-card[data-size="sm"] .lc-stat small { font-size: 4px; }
+.living-card[data-size="sm"] .lc-stat small { font-size: 5px; }
 .living-card[data-size="sm"] .lc-stat b { font-size: 0.72rem; }
 .living-card[data-size="lg"] .lc-title-band h3 { font-size: 14px; }
 .living-card[data-size="lg"] .lc-type-seal span:last-child { font-size: 8px; }
 .living-card[data-size="lg"] .lc-rules strong { font-size: 10px; }
 .living-card[data-size="lg"] .lc-ability-text { font-size: 10px; }
 .living-card[data-size="lg"] .lc-trait { font-size: 7px; }
-.living-card[data-size="lg"] .lc-stat { width: 2.2rem; height: 2.2rem; }
-.living-card[data-size="lg"] .lc-stat b { font-size: 1rem; }
+.living-card[data-size="lg"] .lc-stat { padding: 0.4rem 0.6rem; }
+.living-card[data-size="lg"] .lc-stat b { font-size: 1.35rem; }
 .lc-grid {
   background-image:
     linear-gradient(to right, color-mix(in oklab, var(--color-foreground) 7%, transparent) 1px, transparent 1px),
