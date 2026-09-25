@@ -93,6 +93,7 @@ function CardArt({ card }: { card: Card }) {
   if (torch)
     return (
       <div className="lc-pfp-frame absolute inset-0" title={`ORD TORCHES · #${torch.index + 1} / 3000`}>
+        <OasisBackdrop height={card.bitmap} />
         <iframe src={ordinalsPreviewUrl(torch.inscriptionId)} title={`Ord Torch #${torch.index + 1}`} loading="lazy" sandbox="allow-scripts allow-same-origin" scrolling="no" className="h-full w-full border-0 pointer-events-none" />
         <div className="lc-pfp-scan absolute inset-0" aria-hidden />
         <BitmapPattern height={card.bitmap} state={card.state} className="absolute bottom-2 left-2 size-10 opacity-90" />
@@ -103,6 +104,7 @@ function CardArt({ card }: { card: Card }) {
   if (extender)
     return (
       <div className="lc-pfp-frame absolute inset-0" title={`${extender.collection} · ${extender.name}`}>
+        <OasisBackdrop height={card.bitmap} />
         {extender.source === "ordinals-image" ? (
           <img src={inscriptionContentUrl(extender.inscriptionId)} alt="" loading="lazy" className="h-full w-full object-cover" draggable={false} />
         ) : (
@@ -122,9 +124,16 @@ function CardArt({ card }: { card: Card }) {
     );
 
   const pixel = bitmapPixelForHeight(card.bitmap, bitmapPixels ?? []);
-  if (!pixel) return <BitmapPattern height={card.bitmap} state={card.state} className="relative size-[58%]" />;
+  if (!pixel)
+    return (
+      <div className="lc-pfp-frame absolute inset-0">
+        <OasisBackdrop height={card.bitmap} />
+        <BitmapPattern height={card.bitmap} state={card.state} className="relative size-[58%]" />
+      </div>
+    );
   return (
-    <div className="lc-pfp-frame absolute inset-0 bg-background" title={`BITMAP PIXELS · ${pixel.name}`}>
+    <div className="lc-pfp-frame absolute inset-0" title={`BITMAP PIXELS · ${pixel.name}`}>
+      <OasisBackdrop height={card.bitmap} />
       <CardCharacter3D skin={pixel.inscriptionId} label={`${pixel.name}, the 3D character for ${card.name}`} />
       <div className="lc-pfp-scan absolute inset-0" aria-hidden />
       <BitmapPattern height={card.bitmap} state={card.state} className="absolute bottom-2 left-2 size-10 opacity-90" />
@@ -163,7 +172,6 @@ export function LivingCard({ card, size = "md", ui = "idle", live, onClick, labe
       </div>
       <div className="lc-art relative grid aspect-[5/4] place-items-center overflow-hidden border-b border-border">
         <div className="lc-grid absolute inset-0" aria-hidden />
-        <OasisBackdrop height={card.bitmap} />
         <CardArt card={card} />
         <span className="absolute left-1.5 top-1 text-sm leading-none text-foreground/80" aria-hidden>{TYPE_GLYPH[card.type]}</span>
         <span className="lc-state label absolute bottom-1 right-1.5 text-[8px]">{card.state}</span>
