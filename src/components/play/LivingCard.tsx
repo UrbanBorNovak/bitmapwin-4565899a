@@ -10,6 +10,7 @@ import type { CardState, CardType, LivingCard as Card } from "@/lib/game/types";
 import { usePlayProfile } from "@/lib/game/worldState";
 import { ORD_TORCHES_POOL, useOrdTorches } from "@/lib/game/ordTorches";
 import { CardCharacter3D } from "./CardCharacter3D";
+import { CardBitmap3D } from "./CardBitmap3D";
 
 export type CardUiState =
   | "idle"
@@ -127,7 +128,7 @@ function CardArt({ card }: { card: Card }) {
         <AtlasPlaceBackdrop height={card.bitmap} className="pointer-events-none opacity-30 mix-blend-soft-light" />
         <OasisBackdrop height={card.bitmap} className="pointer-events-none opacity-60 mix-blend-screen" />
         <div className="lc-pfp-scan absolute inset-0" aria-hidden />
-        <BitmapPattern height={card.bitmap} state={card.state} className="absolute bottom-2 left-2 size-10 opacity-90" />
+        <CardBitmap3D height={card.bitmap} state={card.state} className="absolute bottom-1 left-1 size-12 opacity-95" />
         <span className="lc-pfp-badge label absolute left-1.5 top-1 text-[7px] text-bitcoin">TORCH #{torch.index + 1}</span>
       </div>
     );
@@ -154,7 +155,7 @@ function CardArt({ card }: { card: Card }) {
         <OasisBackdrop height={card.bitmap} className="pointer-events-none opacity-60 mix-blend-screen" />
         {pixel && <CardCharacter3D skin={pixel.inscriptionId} label={`${pixel.name}, the 3D character for ${card.name}`} />}
         <div className="lc-pfp-scan absolute inset-0" aria-hidden />
-        <BitmapPattern height={card.bitmap} state={card.state} className="absolute bottom-2 left-2 size-10 opacity-90" />
+        <CardBitmap3D height={card.bitmap} state={card.state} className="absolute bottom-1 left-1 size-12 opacity-95" />
         <span className="lc-pfp-badge label absolute left-1.5 top-1 text-[7px] text-bitcoin">
           {pixel ? `PIXEL #${String(pixel.index).padStart(3, "0")}` : extender.source === "ordinals-image" ? "CHILD IMG" : "HTML PFP"}
         </span>
@@ -166,7 +167,7 @@ function CardArt({ card }: { card: Card }) {
       <div className="lc-pfp-frame absolute inset-0">
         <AtlasPlaceBackdrop height={card.bitmap} />
         <OasisBackdrop height={card.bitmap} className="pointer-events-none opacity-60 mix-blend-screen" />
-        <BitmapPattern height={card.bitmap} state={card.state} className="relative size-[58%]" />
+        <CardBitmap3D height={card.bitmap} state={card.state} className="absolute inset-[5%] drop-shadow-lg" />
       </div>
     );
   return (
@@ -175,7 +176,7 @@ function CardArt({ card }: { card: Card }) {
       <OasisBackdrop height={card.bitmap} className="pointer-events-none opacity-60 mix-blend-screen" />
       <CardCharacter3D skin={pixel.inscriptionId} label={`${pixel.name}, the 3D character for ${card.name}`} />
       <div className="lc-pfp-scan absolute inset-0" aria-hidden />
-      <BitmapPattern height={card.bitmap} state={card.state} className="absolute bottom-2 left-2 size-10 opacity-90" />
+      <CardBitmap3D height={card.bitmap} state={card.state} className="absolute bottom-1 left-1 size-12 opacity-95" />
       <span className="lc-pfp-badge label absolute left-1.5 top-1 text-[7px] text-bitcoin">PIXEL #{String(pixel.index).padStart(3, "0")}</span>
     </div>
   );
