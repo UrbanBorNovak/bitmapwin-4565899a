@@ -23,7 +23,7 @@ export const Route = createFileRoute("/play/table/$code")({
   component: TablePage,
 });
 
-type Row = { status: string; host_name: string; guest_name: string | null; state: MatchState | null; version: number };
+type Row = { status: string; host_name: string; guest_name: string | null; state: MatchState | null; version: number; tournament_code: string | null; host_entrant: number | null; guest_entrant: number | null };
 
 function TablePage() {
   const code = Route.useParams().code.toUpperCase();
@@ -40,7 +40,7 @@ function TablePage() {
   useEffect(() => setSeat(readSeat(code)), [code]);
 
   const load = useCallback(async () => {
-    const { data } = await supabase.from("play_tables").select("status, host_name, guest_name, state, version").eq("code", code).maybeSingle();
+    const { data } = await supabase.from("play_tables").select("status, host_name, guest_name, state, version, tournament_code, host_entrant, guest_entrant").eq("code", code).maybeSingle();
     setRow((prev) => {
       if (!data) return "missing";
       if (prev && prev !== "missing" && prev.version > data.version) return prev;
@@ -59,6 +59,13 @@ function TablePage() {
   }, [code, load]);
 
   const r = row && row !== "missing" ? row : null;
+  useEffect(() => {
+    if (seat || !r?.tournament_code) return;
+    const t = readSeat(`T:${r.tournament_code}`);
+    if (!t || t.entrant === undefined) return;
+    if (t.entrant === r.host_entrant) setSeat({ token: t.token, seat: "player" });
+    else if (t.entrant === r.guest_entrant) setSeat({ token: t.token, seat: "ai" });
+  }, [seat, r?.tournament_code, r?.host_entrant, r?.guest_entrant]);
   const view = useMemo(() => (r?.state ? (seat?.seat === "ai" ? flipMatch(r.state) : r.state) : null), [r?.state, seat?.seat]);
   const rivalName = r ? (seat?.seat === "ai" ? r.host_name : r.guest_name ?? "RIVAL") : "RIVAL";
 
@@ -90,7 +97,7 @@ function TablePage() {
     <main className="play-district mx-auto max-w-[1200px] overflow-x-hidden px-3 py-4 md:px-8 md:py-6">
       <div className="mb-3 flex items-center justify-between gap-2">
         <Link to="/play" className="label hover:text-bitcoin">← LOBBY</Link>
-        <p className="label"><span className="text-bitcoin">BITMAPWIN</span> // PLAY · TABLE {code}</p>
+        <p className="label"><span className="text-bitcoin">BITMAPWIN</span> // PLAY · TABLE {code}{r?.tournament_code ? <> · <Link to="/play/tournament/$code" params={{ code: r.tournament_code }} className="text-signal hover:text-bitcoin">TOURNAMENT {r.tournament_code}</Link></> : null}</p>
         {seat && r?.state && !r.state.winner ? (
           <button type="button" className="label hover:text-bitcoin" onClick={() => void act({ kind: "resign" })}>RESIGN</button>
         ) : <Link to="/oasis" className="label hover:text-bitcoin">OASIS ↗</Link>}
@@ -135,7 +142,7 @@ function TablePage() {
             seed={0}
             leaderId={null}
             tableCode={code}
-            onRestart={() => navigate({ to: "/play" })}
+            onRestart={() => (r.tournament_code ? navigate({ to: "/play/tournament/$code", params: { code: r.tournament_code } }) : navigate({ to: "/play" }))}
             remote={{ state: view, rivalName: seat ? rivalName : r.guest_name ?? "RIVAL", busy: busy || !seat, send: (a) => void act(a) }}
           />
         </>
