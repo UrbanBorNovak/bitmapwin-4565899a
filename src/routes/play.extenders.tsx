@@ -22,6 +22,7 @@ import {
 import type { CardVisualExtender } from "@/lib/game/types";
 import { Link } from "@tanstack/react-router";
 import { ORD_TORCHES_PARENT, ORD_TORCHES_POOL, ORD_TORCHES_SUPPLY, useOrdTorches } from "@/lib/game/ordTorches";
+import { PUPPETS_PARENT, PUPPETS_POOL, usePuppets } from "@/lib/game/puppets";
 
 export const Route = createFileRoute("/play/extenders")({
   head: () => ({
@@ -55,6 +56,8 @@ function PlayExtenders() {
   const selectedCollection = profile?.visuals.selectedPfpCollection ?? selected?.collection ?? null;
   const torches = useOrdTorches();
   const [torchPage, setTorchPage] = useState(0);
+  const puppets = usePuppets();
+  const [puppetPage, setPuppetPage] = useState(0);
   const pools = useMemo(() => {
     const map = new Map<string, CardVisualExtender[]>();
     for (const e of extenders) map.set(e.collection, [...(map.get(e.collection) ?? []), e]);
@@ -191,6 +194,44 @@ function PlayExtenders() {
                   <span className="label text-muted-foreground">PAGE {torchPage + 1} / {Math.max(1, Math.ceil(torches.list.length / 24))}</span>
                   <Button type="button" variant="terminalGhost" disabled={(torchPage + 1) * 24 >= torches.list.length} onClick={() => setTorchPage((p) => p + 1)}>NEXT</Button>
                 </div>
+              </>
+            )}
+          </article>
+          <article className="border border-bitcoin bg-card p-3">
+            <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="label text-bitcoin">BITCOIN HOODS · ON-CHAIN POOL</h2>
+                <span className="label text-muted-foreground">{puppets ? puppets.list.length : "…"} FOUND ACROSS THE MAP</span>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant={enabled && selectedCollection === PUPPETS_POOL ? "terminal" : "terminalGhost"}
+                disabled={!profile || !puppets?.list.length}
+                onClick={() => updatePlayVisuals({ pfpExtendersEnabled: true, selectedPfpCollection: PUPPETS_POOL })}
+              >
+                {enabled && selectedCollection === PUPPETS_POOL ? "POOL ACTIVE" : "USE POOL"}
+              </Button>
+            </header>
+            <p className="mb-3 break-all font-mono text-[10px] text-muted-foreground">PARENT <span data-no-translate>{PUPPETS_PARENT}</span> · ACTIVATE THE POOL TO DISTRIBUTE A DIFFERENT HOOD ACROSS EACH CARD</p>
+            {!puppets ? <p className="font-mono text-xs text-muted-foreground">&gt; READING CHILDREN…</p> : (
+              <>
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+                  {puppets.list.slice(puppetPage * 24, puppetPage * 24 + 24).map((p) => (
+                    <div key={p.inscriptionId} className="relative aspect-square border border-border bg-background">
+                      <img src={inscriptionContentUrl(p.inscriptionId)} alt={`Bitcoin Hood #${p.index + 1}`} loading="lazy" className="h-full w-full object-cover [image-rendering:pixelated]" />
+                      <Link to="/bitmap/$block" params={{ block: String(p.bitmap) }} className="absolute inset-0" aria-label={`Hood ${p.index + 1} at ${p.bitmap}.bitmap`} />
+                      <span className="label pointer-events-none absolute bottom-0 left-0 bg-background/85 px-1 text-[9px]" data-no-translate>#{p.index + 1} · {p.bitmap}</span>
+                    </div>
+                  ))}
+                </div>
+                {puppets.list.length > 24 && (
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <Button type="button" variant="terminalGhost" disabled={puppetPage === 0} onClick={() => setPuppetPage((p) => p - 1)}>PREV</Button>
+                    <span className="label text-muted-foreground">PAGE {puppetPage + 1} / {Math.max(1, Math.ceil(puppets.list.length / 24))}</span>
+                    <Button type="button" variant="terminalGhost" disabled={(puppetPage + 1) * 24 >= puppets.list.length} onClick={() => setPuppetPage((p) => p + 1)}>NEXT</Button>
+                  </div>
+                )}
               </>
             )}
           </article>
