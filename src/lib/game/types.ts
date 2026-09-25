@@ -52,7 +52,26 @@ export type WorldEventKind =
   | "CARD_EVOLVED"
   | "WORLD_EVENT";
 
-export type CardHistoryEntry = { at: number; kind: WorldEventKind | "BORN"; note: string };
+export type CardGrowthSnapshot = {
+  state: CardState;
+  traits: Trait[];
+  power: number;
+  defense: number;
+  energy: number;
+  activity: number;
+  experience: number;
+  plays: number;
+  wins: number;
+  buildCount: number | null;
+};
+
+export type CardHistoryEntry = {
+  at: number;
+  kind: WorldEventKind | "BORN";
+  note: string;
+  /** Exact card values after this moment. Older saved entries may not have one. */
+  growth?: CardGrowthSnapshot;
+};
 
 export type LearnedAdaptation =
   | "FORTIFIED"

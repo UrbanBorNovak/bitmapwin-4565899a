@@ -1,6 +1,7 @@
 import { createCardFromBitmap } from "./cardFactory";
 import type {
   CardChange,
+  CardGrowthSnapshot,
   CardState,
   LivingCard,
   PlayProfile,
@@ -38,9 +39,30 @@ function rid() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
+function growthSnapshot(card: LivingCard): CardGrowthSnapshot {
+  return {
+    state: card.state,
+    traits: [...card.traits],
+    power: card.power,
+    defense: card.defense,
+    energy: card.energy,
+    activity: card.activity,
+    experience: card.experience,
+    plays: card.plays,
+    wins: card.wins,
+    buildCount: card.facts.buildCount,
+  };
+}
+
 function note(card: LivingCard, kind: WorldEventKind, text: string, at: number) {
-  card.history = [...card.history, { at, kind, note: text }].slice(-40);
+  card.history = [...card.history, { at, kind, note: text, growth: growthSnapshot(card) }].slice(-40);
   card.lastEvent = kind;
+}
+
+function syncLatestGrowth(card: LivingCard) {
+  const latest = card.history.at(-1);
+  if (!latest) return;
+  card.history = [...card.history.slice(0, -1), { ...latest, growth: growthSnapshot(card) }];
 }
 
 function change(card: LivingCard, from: CardState, xp: number, act: number, trait: Trait | null, adaptation: LearnedAdaptation | null, stat: string | null): CardChange {
@@ -113,6 +135,7 @@ export function applyWorldEvent(
       if (c.learning.actions >= 8 && learn(c, "BATTLE_TESTED", at)) adaptation = "BATTLE_TESTED";
       if (c.traits.includes("ACTIVIST") && c.plays % 5 === 0) c.power += 1;
       evolve(c, at);
+      syncLatestGrowth(c);
       changes.push(change(c, from, 0, 1, unlocked, adaptation, adaptation ? `LEARNED ${adaptation.replace(/_/g, " ")}` : null));
       break;
     }
@@ -127,6 +150,7 @@ export function applyWorldEvent(
       if (c.learning.actions >= 8 && learn(c, "BATTLE_TESTED", at)) adaptation = "BATTLE_TESTED";
       else note(c, "CARD_ATTACKED", `Attacked in a match · ${c.learning.attacks} total`, at);
       evolve(c, at);
+      syncLatestGrowth(c);
       changes.push(change(c, from, 0, 1, null, adaptation, adaptation ? "LEARNED BATTLE TESTED" : null));
       break;
     }
@@ -160,6 +184,7 @@ export function applyWorldEvent(
           note(c, event.kind, win ? `Won a match (+${xp} XP)` : `Fought and fell (+${xp} XP)`, at);
           const adaptation = c.wins >= 3 && learn(c, "VETERAN", at) ? "VETERAN" : null;
           evolve(c, at);
+          syncLatestGrowth(c);
           changes.push(change(c, from, xp, 1, null, adaptation, adaptation ? "LEARNED VETERAN" : null));
         }
       }
@@ -197,6 +222,7 @@ export function applyWorldEvent(
           if (rank(c.state) >= rank("ACTIVE")) c.state = raise(c, "DEVELOPED");
           note(c, "NEW_BUILD", `Its land now holds ${event.buildCount} Oasis build${event.buildCount === 1 ? "" : "s"}`, at);
           evolve(c, at);
+           syncLatestGrowth(c);
           changes.push(change(c, from, 0, 0, null, null, "+1 DEFENSE"));
         } else {
           c.activity += 1;

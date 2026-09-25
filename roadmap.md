@@ -57,3 +57,4 @@
 - [x] Bind the Passport name to a verified `name.height.bitmap` reinscription on the current residency sat.
 - [x] Make PLAY cards remember actions, learn adaptations, and evolve persistently.
 - [x] Show every living card's growth, traits, stats, and evolution milestones on Passport.
+- [x] Add a live growth timeline to each card page with trait, stat, play, and build changes.
