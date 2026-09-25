@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
+import { ChevronRight, Heart, Layers3, Sparkles, Swords, Zap } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { nextAiAction } from "@/lib/game/ai";
 import { abilityOf } from "@/lib/game/abilities";
 import { createCardFromBitmap, emptyFacts } from "@/lib/game/cardFactory";
@@ -122,70 +124,76 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart,
   const pickedUnit = me.hand.find((u) => u.uid === picked);
 
   return (
-    <div className="play-table relative grid min-w-0 grid-cols-1 gap-3 [&>*]:min-w-0">
-      {/* OPPONENT */}
-      <PlayerStrip
-        who={rivalLabel}
-        hp={foe.hp}
-        energy={foe.energy}
-        hand={foe.hand.length}
-        deck={foe.deck.length}
-        hurt={foe.hurt}
-        active={match.active === "ai" && !match.winner}
-        targetable={!!legal?.hero}
-        onTarget={() => strike("hero")}
-      />
+    <div className="play-table relative grid min-w-0 grid-cols-1 gap-4 [&>*]:min-w-0">
       <div className="play-arena">
-      <Field lane="RIVAL FIELD" side="foe">
-        {foe.board.length ? (
-          foe.board.map((u) => (
-            <div key={u.uid} className={u.fx === "enter" ? "lc-enter" : ""}>
-              <LivingCard
-                card={cardFor(u, false)}
-                size="sm"
-                live={u}
-                ui={legal?.units.includes(u.uid) ? "playable" : u.fx === "damaged" ? "damaged" : u.fx === "attacking" ? "attacking" : "idle"}
-                onClick={legal?.units.includes(u.uid) ? () => strike(u.uid) : undefined}
-                label={`Rival ${u.name}, ${u.atk} power, ${u.hp} defense`}
-              />
-            </div>
-          ))
-        ) : (
-          <EmptyField text="RIVAL FIELD IS OPEN" />
-        )}
-      </Field>
+        <PlayerStrip
+          who={rivalLabel}
+          hp={foe.hp}
+          energy={foe.energy}
+          hand={foe.hand.length}
+          deck={foe.deck.length}
+          hurt={foe.hurt}
+          active={match.active === "ai" && !match.winner}
+          targetable={!!legal?.hero}
+          onTarget={() => strike("hero")}
+        />
+        <Field lane="RIVAL RELICS" side="foe">
+          {foe.board.length ? (
+            foe.board.map((u) => (
+              <div key={u.uid} className={u.fx === "enter" ? "lc-enter" : ""}>
+                <LivingCard
+                  card={cardFor(u, false)}
+                  size="sm"
+                  live={u}
+                  ui={legal?.units.includes(u.uid) ? "playable" : u.fx === "damaged" ? "damaged" : u.fx === "attacking" ? "attacking" : "idle"}
+                  onClick={legal?.units.includes(u.uid) ? () => strike(u.uid) : undefined}
+                  label={`Rival ${u.name}, ${u.atk} power, ${u.hp} defense`}
+                />
+              </div>
+            ))
+          ) : (
+            <EmptyField text="RIVAL FIELD IS OPEN" />
+          )}
+        </Field>
 
-      <div className="play-divide">
-        <span className="label text-[10px] text-muted-foreground">TURN {String(match.turn).padStart(2, "0")}</span>
-        <span className={`play-turn ${match.winner ? "" : myTurn ? "play-turn-me" : "play-turn-foe"}`} aria-live="polite">{match.winner ? "MATCH COMPLETE" : myTurn ? "YOUR MOVE" : remote?.busy ? "SENDING MOVE…" : remote ? "RIVAL'S MOVE…" : "RIVAL IS THINKING…"}</span>
-        <span className="hidden max-w-[40%] truncate font-mono text-[10px] text-muted-foreground md:block">{match.log[0]?.text}</span>
+        <div className="play-divide">
+          <span className="play-axis-line" aria-hidden />
+          <div className="play-orbit" aria-hidden><Swords /></div>
+          <div className="play-turn-copy">
+            <span className="label text-[8px] text-muted-foreground">TURN {String(match.turn).padStart(2, "0")}</span>
+            <span className={`play-turn ${match.winner ? "" : myTurn ? "play-turn-me" : "play-turn-foe"}`} aria-live="polite">{match.winner ? "MATCH COMPLETE" : myTurn ? "YOUR MOVE" : remote?.busy ? "SENDING MOVE…" : remote ? "RIVAL'S MOVE…" : "RIVAL IS THINKING…"}</span>
+            <span className="play-latest hidden max-w-[22rem] truncate md:block">{match.log[0]?.text}</span>
+          </div>
+        </div>
+
+        <Field lane="YOUR RELICS" side="me">
+          {me.board.length ? (
+            me.board.map((u) => (
+              <div key={u.uid} className={u.fx === "enter" ? "lc-enter" : ""}>
+                <LivingCard
+                  card={cardFor(u, true)}
+                  size="sm"
+                  live={u}
+                  ui={attacker === u.uid ? "selected" : u.fx === "damaged" ? "damaged" : u.fx === "evolved" ? "evolved" : u.fx === "attacking" ? "attacking" : myTurn && u.ready ? "playable" : "idle"}
+                  onClick={myTurn && u.ready ? () => onMine(u) : undefined}
+                  label={`Your ${u.name}${u.ready ? ", ready to attack" : ", resting"}`}
+                />
+              </div>
+            ))
+          ) : (
+            <EmptyField text="PLAY A CARD FROM YOUR HAND" />
+          )}
+        </Field>
+        <PlayerStrip who="YOU" hp={me.hp} energy={me.energy} hand={me.hand.length} deck={me.deck.length} hurt={me.hurt} active={myTurn} />
       </div>
 
-      {/* PLAYER */}
-      <Field lane="YOUR FIELD" side="me">
-        {me.board.length ? (
-          me.board.map((u) => (
-            <div key={u.uid} className={u.fx === "enter" ? "lc-enter" : ""}>
-              <LivingCard
-                card={cardFor(u, true)}
-                size="sm"
-                live={u}
-                ui={attacker === u.uid ? "selected" : u.fx === "damaged" ? "damaged" : u.fx === "evolved" ? "evolved" : u.fx === "attacking" ? "attacking" : myTurn && u.ready ? "playable" : "idle"}
-                onClick={myTurn && u.ready ? () => onMine(u) : undefined}
-                label={`Your ${u.name}${u.ready ? ", ready to attack" : ", resting"}`}
-              />
-            </div>
-          ))
-        ) : (
-          <EmptyField text="PLAY A CARD FROM YOUR HAND" />
-        )}
-      </Field>
-      </div>
-      <PlayerStrip who="YOU" hp={me.hp} energy={me.energy} hand={me.hand.length} deck={me.deck.length} hurt={me.hurt} active={myTurn} />
-
-      <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_16rem] [&>*]:min-w-0">
-        <div>
-          <div className="play-hand flex gap-2 overflow-x-auto pb-3 pt-4" role="list" aria-label="Your hand">
+      <div className="play-command-deck grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_17rem] [&>*]:min-w-0">
+        <div className="min-w-0">
+          <div className="play-hand-head grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+            <div className="flex min-w-0 items-center gap-2"><Sparkles className="size-3 shrink-0 text-bitcoin" /><span className="label truncate text-relic-parchment">YOUR HAND · {me.hand.length} RELICS</span></div>
+            <span className="font-mono text-[9px] text-muted-foreground">ENERGY {me.energy}</span>
+          </div>
+          <div className="play-hand flex gap-3 overflow-x-auto px-3 pb-4 pt-4" role="list" aria-label="Your hand">
             {me.hand.map((u) => {
               const ok = canPlay(match, "player", u.uid);
               const ui: CardUiState = picked === u.uid ? "selected" : !myTurn ? "disabled" : ok ? "playable" : "idle";
@@ -196,25 +204,27 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart,
               );
             })}
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="play-actions grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
             {pickedUnit && (
               <>
-                <button type="button" className="btn-term" disabled={!canPlay(match, "player", pickedUnit.uid)} onClick={() => onHand(pickedUnit)}>
+                <Button type="button" variant="terminal" disabled={!canPlay(match, "player", pickedUnit.uid)} onClick={() => onHand(pickedUnit)}>
                   PLAY {pickedUnit.name} · ⚡{pickedUnit.cost}
-                </button>
+                </Button>
                 <span className="font-mono text-[10px] text-muted-foreground"><span className="text-bitcoin">{abilityOf(pickedUnit).name}</span> — {abilityOf(pickedUnit).text}</span>
                 {pickedUnit.perks?.length ? <span className="font-mono text-[10px] text-signal">LIVING · {pickedUnit.perks.join(" · ")}</span> : null}
               </>
             )}
             {attacker && <span className="font-mono text-[10px] text-bitcoin">CHOOSE A TARGET ↑ {legal?.hero ? "— OR STRIKE THE RIVAL" : "— GUARDIANS FIRST"}</span>}
-            <button type="button" className="btn-term-ghost ml-auto min-h-11" disabled={!myTurn} onClick={() => { setPicked(null); setAttacker(null); act({ kind: "end" }); }}>
-              END TURN →
-            </button>
+            {!pickedUnit && !attacker && <span className="font-mono text-[9px] text-muted-foreground">SELECT A RELIC TO BEGIN</span>}
+            </div>
+            <Button type="button" variant="terminalGhost" className="shrink-0" disabled={!myTurn} onClick={() => { setPicked(null); setAttacker(null); act({ kind: "end" }); }}>
+              END TURN <ChevronRight />
+            </Button>
           </div>
-          <p className="mt-2 font-mono text-[10px] text-muted-foreground">Tap a card to inspect, tap again to play. Tap a ready card on your field, then a target, to attack.</p>
         </div>
-        <ol className="play-log max-h-48 overflow-y-auto border border-border bg-card" aria-label="Match log">
-          <li className="label sticky top-0 border-b border-border bg-card px-3 py-1.5 text-[10px] text-muted-foreground">MATCH LOG</li>
+        <ol className="play-log max-h-64 overflow-y-auto" aria-label="Match log">
+          <li className="play-log-head label sticky top-0 px-3 py-2.5 text-[9px]"><span>FIELD RECORD</span><span>LIVE</span></li>
           {match.log.map((l) => (
             <li key={l.id} className={`border-b border-border/60 px-3 py-1.5 font-mono text-[10px] ${l.side === "ai" ? "text-signal" : l.side === "world" ? "text-muted-foreground" : ""}`}>{l.text}</li>
           ))}
@@ -230,31 +240,34 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart,
 }
 
 function Field({ children, lane, side }: { children: React.ReactNode; lane: string; side: "foe" | "me" }) {
-  return <div data-lane={lane} className={`play-field play-field-${side} flex min-h-[12rem] items-center justify-start gap-3 overflow-x-auto px-3 pb-3 pt-6 sm:justify-center`}>{children}</div>;
+  return <div data-lane={lane} className={`play-field play-field-${side} flex min-h-[10rem] items-center justify-start gap-3 overflow-x-auto px-4 pb-4 pt-7 sm:justify-center`}>{children}</div>;
 }
 function EmptyField({ text }: { text: string }) {
-  return <span className="label text-muted-foreground/70">{text}</span>;
+  return <span className="play-empty-field label text-muted-foreground/70"><Sparkles className="size-3" />{text}</span>;
 }
 
 function PlayerStrip(p: { who: string; hp: number; energy: number; hand: number; deck: number; hurt: number; active: boolean; targetable?: boolean; onTarget?: () => void }) {
   const hp = Math.max(0, p.hp);
   return (
-    <div className={`play-strip flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5 ${p.active ? "play-strip-active" : ""} ${p.hurt ? "lc-shake" : ""}`}>
-      <span className="label min-w-[6rem] truncate">{p.who}</span>
-      <div className={`flex min-w-[10rem] flex-1 items-center gap-2 ${hp <= 6 ? "play-hp-low" : ""}`} aria-label={`${hp} of ${START_HP} health`}>
-        <span className="w-8 font-mono text-xs text-bitcoin">♥{hp}</span>
+    <div className={`play-strip grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-4 py-3 md:grid-cols-[minmax(9rem,1.1fr)_minmax(12rem,2fr)_auto_auto] ${p.active ? "play-strip-active" : ""} ${p.hurt ? "lc-shake" : ""}`}>
+      <div className="flex min-w-0 items-center gap-2">
+        <span className={`play-presence shrink-0 ${p.active ? "play-presence-active" : ""}`} />
+        <span className="label truncate text-relic-parchment">{p.who}</span>
+      </div>
+      <div className={`order-3 col-span-2 flex min-w-0 items-center gap-2 md:order-none md:col-span-1 ${hp <= 6 ? "play-hp-low" : ""}`} aria-label={`${hp} of ${START_HP} health`}>
+        <span className="flex w-10 shrink-0 items-center gap-1 font-mono text-xs text-bitcoin"><Heart className="size-3 fill-current" />{hp}</span>
         <div className="flex flex-1 gap-[2px]">
           {Array.from({ length: START_HP }, (_, i) => <span key={i} className={`play-hp-seg ${i < hp ? "play-hp-seg-on" : ""}`} />)}
         </div>
         {p.hurt ? <span className="font-mono text-[10px] text-destructive">−{p.hurt}</span> : null}
       </div>
-      <div className="flex items-center gap-1.5" aria-label={`${p.energy} energy`}>
-        <span className="mr-1 font-mono text-[10px] text-signal">⚡{p.energy}</span>
+      <div className="flex shrink-0 items-center gap-1.5" aria-label={`${p.energy} energy`}>
+        <span className="mr-1 flex items-center gap-1 font-mono text-[10px] text-signal"><Zap className="size-3 fill-current" />{p.energy}</span>
         {Array.from({ length: 6 }, (_, i) => <span key={i} className={`play-pip ${i < p.energy ? "play-pip-on" : ""}`} />)}
       </div>
-      <span className="font-mono text-[10px] text-muted-foreground">HAND {p.hand} · DECK {p.deck}</span>
+      <span className="flex shrink-0 items-center gap-1.5 font-mono text-[9px] text-muted-foreground"><Layers3 className="size-3" />{p.hand} / {p.deck}</span>
       {p.targetable && (
-        <button type="button" className="btn-term min-h-9" onClick={p.onTarget}>STRIKE RIVAL</button>
+        <Button type="button" variant="terminal" size="sm" className="col-span-2 md:col-span-4" onClick={p.onTarget}><Swords />STRIKE RIVAL</Button>
       )}
     </div>
   );
