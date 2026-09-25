@@ -2066,45 +2066,167 @@ export type Database = {
         }
         Relationships: []
       }
+      play_season_standings: {
+        Row: {
+          display_name: string
+          losses: number
+          points: number
+          season: string
+          titles: number
+          updated_at: string
+          user_id: string
+          wins: number
+        }
+        Insert: {
+          display_name: string
+          losses?: number
+          points?: number
+          season: string
+          titles?: number
+          updated_at?: string
+          user_id: string
+          wins?: number
+        }
+        Update: {
+          display_name?: string
+          losses?: number
+          points?: number
+          season?: string
+          titles?: number
+          updated_at?: string
+          user_id?: string
+          wins?: number
+        }
+        Relationships: []
+      }
       play_tables: {
         Row: {
           code: string
           created_at: string
+          guest_entrant: number | null
           guest_name: string | null
           guest_token_hash: string | null
+          guest_user_id: string | null
+          host_entrant: number | null
           host_heights: number[]
           host_name: string
           host_token_hash: string
+          host_user_id: string | null
+          recorded: boolean
           state: Json | null
           status: string
+          tournament_code: string | null
           updated_at: string
           version: number
         }
         Insert: {
           code: string
           created_at?: string
+          guest_entrant?: number | null
           guest_name?: string | null
           guest_token_hash?: string | null
+          guest_user_id?: string | null
+          host_entrant?: number | null
           host_heights?: number[]
           host_name?: string
           host_token_hash: string
+          host_user_id?: string | null
+          recorded?: boolean
           state?: Json | null
           status?: string
+          tournament_code?: string | null
           updated_at?: string
           version?: number
         }
         Update: {
           code?: string
           created_at?: string
+          guest_entrant?: number | null
           guest_name?: string | null
           guest_token_hash?: string | null
+          guest_user_id?: string | null
+          host_entrant?: number | null
           host_heights?: number[]
           host_name?: string
           host_token_hash?: string
+          host_user_id?: string | null
+          recorded?: boolean
           state?: Json | null
           status?: string
+          tournament_code?: string | null
           updated_at?: string
           version?: number
+        }
+        Relationships: []
+      }
+      play_tournament_entrants: {
+        Row: {
+          entrant: number
+          heights: number[]
+          name: string
+          token_hash: string
+          tournament_code: string
+          user_id: string | null
+        }
+        Insert: {
+          entrant: number
+          heights: number[]
+          name: string
+          token_hash: string
+          tournament_code: string
+          user_id?: string | null
+        }
+        Update: {
+          entrant?: number
+          heights?: number[]
+          name?: string
+          token_hash?: string
+          tournament_code?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "play_tournament_entrants_tournament_code_fkey"
+            columns: ["tournament_code"]
+            isOneToOne: false
+            referencedRelation: "play_tournaments"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      play_tournaments: {
+        Row: {
+          bracket: Json
+          champion: number | null
+          code: string
+          created_at: string
+          name: string
+          players: Json
+          size: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bracket?: Json
+          champion?: number | null
+          code: string
+          created_at?: string
+          name: string
+          players?: Json
+          size: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bracket?: Json
+          champion?: number | null
+          code?: string
+          created_at?: string
+          name?: string
+          players?: Json
+          size?: number
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -3137,6 +3259,16 @@ export type Database = {
         Returns: boolean
       }
       owns_wallet_address: { Args: { _address: string }; Returns: boolean }
+      play_season_record: {
+        Args: {
+          _name: string
+          _season: string
+          _title: boolean
+          _user_id: string
+          _win: boolean
+        }
+        Returns: undefined
+      }
       player_share_base_value: { Args: { _player_id: string }; Returns: number }
       player_share_price: {
         Args: { _base: number; _issued: number }
