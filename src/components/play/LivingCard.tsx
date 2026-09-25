@@ -8,7 +8,6 @@ import { hash } from "@/lib/game/cardFactory";
 import { activePfpExtenderForCard, inscriptionContentUrl, ordinalsPreviewUrl } from "@/lib/game/pfpExtenders";
 import type { CardState, CardType, LivingCard as Card } from "@/lib/game/types";
 import { usePlayProfile } from "@/lib/game/worldState";
-import { ORD_TORCHES_POOL, useOrdTorches } from "@/lib/game/ordTorches";
 import { PUPPETS_POOL, usePuppets } from "@/lib/game/puppets";
 import { CardCharacter3D } from "./CardCharacter3D";
 import { CardBitmap3D } from "./CardBitmap3D";
