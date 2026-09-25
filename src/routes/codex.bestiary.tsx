@@ -44,11 +44,12 @@ const ROWS: Row[] = [
       name: s.kind === "coyote" ? "WIGGLY" : s.kind.toUpperCase(),
       origin: "WILDLIFE",
       // Wiggly the coyote wears the on-chain jackal model.
-      inscription:
-        s.kind === "coyote"
-          ? "5252a0717cf8c23055b2558585fb24d4038a6281f7d51be4edadb9e16829d46ci0"
-          : undefined,
-      yaw: s.kind === "coyote" ? Math.PI : undefined,
+      ...(s.kind === "coyote"
+        ? {
+            inscription: "5252a0717cf8c23055b2558585fb24d4038a6281f7d51be4edadb9e16829d46ci0",
+            yaw: Math.PI,
+          }
+        : {}),
       hostile: s.hostile,
       hp: s.hp,
       xp: s.xp,
