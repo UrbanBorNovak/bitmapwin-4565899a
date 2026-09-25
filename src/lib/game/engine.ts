@@ -194,20 +194,20 @@ export function playCard(state: MatchState, id: SideId, uid: string): MatchState
   if (u.traits.includes("ORIGIN")) {
     side.hp = Math.min(START_HP, side.hp + 2);
   }
-  if (u.adaptations.includes("MASTERWORK")) side.hp = Math.min(START_HP, side.hp + 1);
+  if (u.adaptations?.includes("MASTERWORK")) side.hp = Math.min(START_HP, side.hp + 1);
 
   const ab = abilityOf(u);
   if (u.type === "EVENT") {
     say(s, id, `${u.name} · ${ab.name}.`);
     ab.onPlay?.(ctx(s, id, u));
-    if (u.adaptations.includes("CATALYST")) { foe.hp -= 1; foe.hurt = Math.max(foe.hurt, 1); say(s, id, `${u.name} · CATALYST +1.`); }
+    if (u.adaptations?.includes("CATALYST")) { foe.hp -= 1; foe.hurt = Math.max(foe.hurt, 1); say(s, id, `${u.name} · CATALYST +1.`); }
     checkWin(s);
     return s;
   }
 
   if (u.traits.includes("NEIGHBOR") && side.board.length > 0) u.atk += 1;
   u.fx = "enter";
-  u.ready = !!ab.charge || u.perks.includes("CHARGE");
+  u.ready = !!ab.charge || u.perks?.includes("CHARGE");
   side.board.push(u);
   say(s, id, `${u.name} entered the field · ${ab.name}.`);
   ab.onPlay?.(ctx(s, id, u));

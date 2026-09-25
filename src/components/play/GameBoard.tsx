@@ -199,6 +199,7 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart,
                   PLAY {pickedUnit.name} · ⚡{pickedUnit.cost}
                 </button>
                 <span className="font-mono text-[10px] text-muted-foreground"><span className="text-bitcoin">{abilityOf(pickedUnit).name}</span> — {abilityOf(pickedUnit).text}</span>
+                {pickedUnit.perks?.length ? <span className="font-mono text-[10px] text-signal">LIVING · {pickedUnit.perks.join(" · ")}</span> : null}
               </>
             )}
             {attacker && <span className="font-mono text-[10px] text-bitcoin">CHOOSE A TARGET ↑ {legal?.hero ? "— OR STRIKE THE RIVAL" : "— GUARDIANS FIRST"}</span>}
