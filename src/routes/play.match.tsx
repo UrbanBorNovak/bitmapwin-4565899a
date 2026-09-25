@@ -7,6 +7,7 @@ import { ensureCard, usePlayProfile } from "@/lib/game/worldState";
 type Search = { table?: string; height?: number; cup?: number };
 
 export const Route = createFileRoute("/play/match")({
+  ssr: false,
   validateSearch: (s: Record<string, unknown>): Search => {
     const out: Search = {};
     if (typeof s["table"] === "string" && /^[0-9A-Za-z]{3,8}$/.test(s["table"])) out.table = s["table"].toUpperCase();
