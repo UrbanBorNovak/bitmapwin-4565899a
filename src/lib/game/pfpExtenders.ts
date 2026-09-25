@@ -3,7 +3,29 @@ import { hash } from "./cardFactory";
 
 export const INSCRIPTION_ID_RE = /^[0-9a-f]{64}i\d+$/i;
 
-export const BUILT_IN_PFP_EXTENDERS: CardVisualExtender[] = [];
+export const BUILT_IN_PFP_EXTENDERS: CardVisualExtender[] = [
+  {
+    id: "builtin-89d8bfdc528550b34b22741d579645ba7c0899f534c617ed6f18609b280c1bc2i0",
+    name: "BITCOIN HOOD #1",
+    collection: "BITCOIN HOODS",
+    source: "ordinals-image",
+    inscriptionId: "89d8bfdc528550b34b22741d579645ba7c0899f534c617ed6f18609b280c1bc2i0",
+    enabled: true,
+    builtIn: true,
+    addedAt: 0,
+  },
+  {
+    id: "builtin-ee5022303dbdb2e30c3da28392f40893c318d35c0f05dba4ed62743ec26123b6i0",
+    name: "BITCOIN HOOD #2",
+    collection: "BITCOIN HOODS",
+    source: "ordinals-image",
+    inscriptionId: "ee5022303dbdb2e30c3da28392f40893c318d35c0f05dba4ed62743ec26123b6i0",
+    enabled: true,
+    builtIn: true,
+    addedAt: 0,
+    parentInscriptionId: "89d8bfdc528550b34b22741d579645ba7c0899f534c617ed6f18609b280c1bc2i0",
+  },
+];
 
 export const DEFAULT_PLAY_VISUALS: PlayVisualSettings = {
   pfpExtendersEnabled: false,
