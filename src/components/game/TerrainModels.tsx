@@ -225,7 +225,36 @@ function Landform({ spec }: { spec: TerrainModelSpec }) {
   return (
     <group ref={holder} position={[spot.x, baseGroundY(spot.x, spot.z), spot.z]}>
       <primitive object={object} />
+      <ContactShade radius={half * 1.15} />
     </group>
+  );
+}
+
+let shadeTexture: THREE.CanvasTexture | null = null;
+/** Soft radial shade, drawn once and shared by every landform. */
+function contactShadeTexture() {
+  if (shadeTexture) return shadeTexture;
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 64;
+  const ctx = canvas.getContext("2d")!;
+  const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, "rgba(0,0,0,0.55)");
+  g.addColorStop(0.55, "rgba(0,0,0,0.28)");
+  g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 64, 64);
+  shadeTexture = new THREE.CanvasTexture(canvas);
+  return shadeTexture;
+}
+
+/** Baked-looking contact shade that seats a landform in the ground. */
+function ContactShade({ radius }: { radius: number }) {
+  const map = useMemo(() => contactShadeTexture(), []);
+  return (
+    <mesh rotation-x={-Math.PI / 2} position-y={0.02} renderOrder={-1} raycast={() => null}>
+      <planeGeometry args={[radius * 2, radius * 2]} />
+      <meshBasicMaterial map={map} transparent depthWrite={false} polygonOffset polygonOffsetFactor={-2} />
+    </mesh>
   );
 }
 

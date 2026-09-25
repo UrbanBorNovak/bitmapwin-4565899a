@@ -212,7 +212,7 @@ function rebuildRing(ring: RingState, index: number, cx: number, cz: number, inn
 const innerCentre = { x: 0, z: 0 };
 
 export function TerrainField({ pose }: { pose: React.RefObject<PlayerState> }) {
-  const quality = useQuality();
+  const { quality } = useQuality();
   const ringCount = quality.resolved === "low" ? 2 : 3;
   const cavity = quality.resolved !== "low";
   const meshes = useRef<(THREE.Mesh | null)[]>([]);
