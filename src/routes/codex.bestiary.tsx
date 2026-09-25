@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CREATURE_GROUPS, SPECIES } from "@/lib/bestiary";
+import { CREATURE_GROUPS, SPECIES, type CritterKind } from "@/lib/bestiary";
 import { CreatureModel3D } from "@/components/codex/CreatureModel3D";
 
 export const Route = createFileRoute("/codex/bestiary")({
@@ -29,6 +29,7 @@ type Row = {
   rarity: string;
   habitat: string;
   inscription?: string;
+  kind?: CritterKind;
   yaw?: number | undefined;
 };
 
@@ -39,6 +40,7 @@ const ROWS: Row[] = [
     const pct = (s.weight / totalWeight) * 100;
     return {
       id: s.kind,
+      kind: s.kind,
       name: s.kind.toUpperCase(),
       origin: "WILDLIFE",
       hostile: s.hostile,
@@ -71,8 +73,8 @@ const FILTERS = ["ALL", "WILDLIFE", "INSCRIBED", "HOSTILE", "PEACEFUL"] as const
 function Bestiary() {
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("ALL");
   const [q, setQ] = useState("");
-  const [open, setOpen] = useState<string | null>(ROWS.find((r) => r.inscription)?.id ?? null);
-  const viewing = ROWS.find((r) => r.id === open && r.inscription);
+  const [open, setOpen] = useState<string | null>(ROWS[0]?.id ?? null);
+  const viewing = ROWS.find((r) => r.id === open);
   const rows = useMemo(
     () =>
       ROWS.filter((r) =>
@@ -89,13 +91,13 @@ function Bestiary() {
       <h1 className="display mt-2 text-3xl md:text-4xl">BESTIARY</h1>
       <p className="label mt-2">{ROWS.length} CREATURES · READ FROM THE SAME TABLES THE OASIS SPAWNS FROM</p>
 
-      {viewing?.inscription && (
+      {viewing && (
         <section className="mt-6 grid overflow-hidden rounded-md border border-border bg-card/60 backdrop-blur md:grid-cols-[1.4fr_1fr]">
           <div className="h-72 md:h-96">
-            <CreatureModel3D key={viewing.id} inscription={viewing.inscription} yaw={viewing.yaw} label={viewing.name} />
+            <CreatureModel3D key={viewing.id} inscription={viewing.inscription} kind={viewing.kind} yaw={viewing.yaw} label={viewing.name} />
           </div>
           <div className="border-t border-border p-5 md:border-l md:border-t-0">
-            <p className="label text-signal">ON-CHAIN 3D MODEL · DRAG TO TURN</p>
+            <p className="label text-signal">{viewing.inscription ? "ON-CHAIN 3D MODEL" : "OASIS WILDLIFE MODEL"} · DRAG TO TURN</p>
             <h2 className="display mt-1 text-2xl" data-no-translate>{viewing.name}</h2>
             <p className="mt-1 font-mono text-[10px] text-muted-foreground">{viewing.rarity} · {viewing.habitat}</p>
             <dl className="mt-4 grid grid-cols-4 gap-1 font-mono text-[10px]">
@@ -104,9 +106,11 @@ function Bestiary() {
               <Stat k="BITE" v={viewing.bite} />
               <Stat k="SPD" v={viewing.speed.toFixed(1)} />
             </dl>
+{viewing.inscription && (
             <a href={`https://ordinals.com/inscription/${viewing.inscription}`} target="_blank" rel="noreferrer" className="mt-4 block break-all font-mono text-[10px] text-muted-foreground hover:text-bitcoin" data-no-translate>
               INSCRIPTION {viewing.inscription.slice(0, 10)}…{viewing.inscription.slice(-4)} ↗
             </a>
+            )}
           </div>
         </section>
       )}
@@ -133,12 +137,10 @@ function Bestiary() {
         {rows.map((r) => (
           <article key={r.id} className="flex gap-4 rounded-md border border-border bg-card/60 p-4 backdrop-blur">
             <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded border border-border bg-background">
-              {r.inscription ? (
+              {(
                 <button onClick={() => setOpen(r.id)} className={`size-full font-mono text-[10px] ${open === r.id ? "text-bitcoin" : "text-signal hover:text-bitcoin"}`}>
                   {open === r.id ? "VIEWING" : "VIEW 3D"}
                 </button>
-              ) : (
-                <span className="display text-2xl text-muted-foreground">{r.name[0]}</span>
               )}
             </div>
             <div className="min-w-0 flex-1">

@@ -932,7 +932,7 @@ function hostileMarkerHeight(kind: CritterKind) {
 }
 
 /** Blocky, low-poly bodies — one branch per species. */
-const CritterBody = memo(function CritterBody({
+export const CritterBody = memo(function CritterBody({
   kind,
   unit: u,
   colors,
