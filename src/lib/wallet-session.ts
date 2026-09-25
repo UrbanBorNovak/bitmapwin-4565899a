@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { refreshWalletKeys, type ConnectedWallet } from "@/lib/browser-wallet";
 
 /**
@@ -34,22 +34,25 @@ export function clearWalletSession() {
   window.dispatchEvent(new Event(EVENT));
 }
 
-/** Reactive read of the stored wallet session. */
+/** Reactive read of the stored wallet session. Components mounted after hydration read it immediately. */
+let cachedRaw: string | null | undefined;
+let cachedWallet: ConnectedWallet | null = null;
+function snapshot(): ConnectedWallet | null {
+  let raw: string | null = null;
+  try { raw = window.localStorage.getItem(KEY); } catch { raw = null; }
+  if (raw !== cachedRaw) { cachedRaw = raw; cachedWallet = loadWalletSession(); }
+  return cachedWallet;
+}
+function subscribe(cb: () => void) {
+  window.addEventListener(EVENT, cb);
+  window.addEventListener("storage", cb);
+  return () => {
+    window.removeEventListener(EVENT, cb);
+    window.removeEventListener("storage", cb);
+  };
+}
 export function useWalletSession(): ConnectedWallet | null {
-  const [wallet, setWallet] = useState<ConnectedWallet | null>(null);
-
-  useEffect(() => {
-    const sync = () => setWallet(loadWalletSession());
-    sync();
-    window.addEventListener(EVENT, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(EVENT, sync);
-      window.removeEventListener("storage", sync);
-    };
-  }, []);
-
-  return wallet;
+  return useSyncExternalStore(subscribe, snapshot, () => null);
 }
 
 /**

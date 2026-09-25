@@ -50,7 +50,6 @@ function MatchPage() {
   }, [table, round, cupFlag, cupLive?.id, cupLive?.round]);
 
   const leaderHeight = height ?? profile?.selectedBitmap ?? null;
-  console.warn("DBG", !!profile, profile?.owner, seed, profile?.order.length);
   const leaderId = leaderHeight !== null ? `bitmap-${leaderHeight}` : null;
   // Deck is fixed at match start; later card evolution only changes visuals.
   const deck = useMemo(() => {
