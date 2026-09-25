@@ -145,7 +145,7 @@ function PlayLobby() {
               {[
                 ["/play/atlas", "CARD ATLAS", "Every card you can find"],
                 ["/play/extenders", "CARD ART", "Pick background pools"],
-                ["/play/import", "IMPORT", "Add an inscription's children"],
+                ["/play/import", "IMPORT · OPTIONAL", "Use your own Ordinals as card art"],
                 ["/oasis", "THE OASIS", "Walk the land your cards come from"],
               ].map(([to, label, sub]) => (
                 <Link key={label} to={to as "/play/atlas"} className="bg-card p-3 hover:text-bitcoin">

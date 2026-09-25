@@ -215,30 +215,6 @@ function WalletPage() {
         <span className="blink">_</span>
       </p>
 
-      <form
-        className="mt-8 flex flex-col gap-2 sm:flex-row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          connect(input);
-        }}
-      >
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          spellCheck={false}
-          placeholder="bc1p… PASTE YOUR ORDINALS ADDRESS"
-          className="flex-1 border border-border bg-background px-4 py-3 font-mono text-xs break-all text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
-        />
-        <button className="btn-term" type="submit">
-          [ LOAD WALLET ]
-        </button>
-        {address !== "" && (
-          <button className="btn-term-ghost" type="button" onClick={disconnect}>
-            [ CLEAR ]
-          </button>
-        )}
-      </form>
-
       <div id={address === "" ? "profile" : undefined} className="scroll-mt-24">
         <WalletConnect
           connectedAddress={address}
@@ -256,10 +232,33 @@ function WalletPage() {
         <WalletLinkPanel wallet={connected} address={address} />
       </div>
 
+      <form
+        className="mt-5 flex flex-col gap-2 border-t border-border pt-5 sm:flex-row"
+        onSubmit={(e) => {
+          e.preventDefault();
+          connect(input);
+        }}
+      >
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          spellCheck={false}
+          placeholder="OR INSPECT ANY ORDINALS ADDRESS"
+          className="flex-1 border border-border bg-background px-4 py-3 font-mono text-xs break-all text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+        />
+        <button className="btn-term" type="submit">
+          [ LOAD WALLET ]
+        </button>
+        {address !== "" && (
+          <button className="btn-term-ghost" type="button" onClick={disconnect}>
+            [ CLEAR ]
+          </button>
+        )}
+      </form>
 
       {address === "" ? (
         <p className="mt-10 font-mono text-xs text-muted-foreground">
-          &gt; NO ADDRESS LOADED — PASTE THE ADDRESS THAT HOLDS YOUR BITMAPS<span className="blink">_</span>
+          &gt; NO ADDRESS LOADED — CONNECT A WALLET OR INSPECT AN ADDRESS<span className="blink">_</span>
         </p>
       ) : (
         <>

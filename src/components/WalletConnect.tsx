@@ -25,10 +25,12 @@ export function WalletConnect({
   connectedAddress?: string;
 }) {
   const [installed, setInstalled] = useState<Record<string, boolean>>({});
+  const [touchDevice, setTouchDevice] = useState(false);
   const [busy, setBusy] = useState<WalletProviderId | null>(null);
   const [wallet, setWallet] = useState<ConnectedWallet | null>(null);
 
   useEffect(() => {
+    setTouchDevice(window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0);
     // Extensions inject their provider asynchronously, so keep probing briefly.
     let ticks = 0;
     const probe = () =>
@@ -91,8 +93,13 @@ export function WalletConnect({
           <Field k="PAYMENT" v={shortenAddress(wallet.paymentAddress)} title={wallet.paymentAddress} />
         </div>
       ) : (
-        <div className="flex flex-col gap-3 p-4 sm:flex-row">
-          {PROVIDERS.map((p) => {
+        <div className="p-4">
+          {touchDevice && !Object.values(installed).some(Boolean) ? (
+            <p className="mb-3 border border-border p-3 font-mono text-[10px] leading-relaxed text-muted-foreground">
+              MOBILE · OPEN THIS PAGE INSIDE YOUR WALLET'S BROWSER TO CONNECT. YOU CAN STILL INSPECT ANY ADDRESS BELOW.
+            </p>
+          ) : null}
+          <div className="flex flex-col gap-3 sm:flex-row">{PROVIDERS.map((p) => {
             const has = installed[p] === true;
             return has ? (
               <button
@@ -115,7 +122,7 @@ export function WalletConnect({
                 [ INSTALL {WALLET_LABEL[p]} ]
               </a>
             );
-          })}
+          })}</div>
         </div>
       )}
     </section>

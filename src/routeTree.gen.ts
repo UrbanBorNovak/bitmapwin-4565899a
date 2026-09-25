@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiRouteImport } from './routes/api'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BetaRouteImport } from './routes/beta'
 import { Route as BuildersRouteImport } from './routes/builders'
 import { Route as BuildsRouteImport } from './routes/builds'
 import { Route as CharacterRouteImport } from './routes/character'
@@ -103,6 +104,11 @@ const ApiRoute = ApiRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BetaRoute = BetaRouteImport.update({
+  id: '/beta',
+  path: '/beta',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BuildersRoute = BuildersRouteImport.update({
@@ -498,6 +504,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api': typeof ApiRouteWithChildren
   '/auth': typeof AuthRoute
+  '/beta': typeof BetaRoute
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
   '/character': typeof CharacterRoute
@@ -580,6 +587,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api': typeof ApiRouteWithChildren
   '/auth': typeof AuthRoute
+  '/beta': typeof BetaRoute
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
   '/character': typeof CharacterRoute
@@ -659,6 +667,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/api': typeof ApiRouteWithChildren
   '/auth': typeof AuthRoute
+  '/beta': typeof BetaRoute
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
   '/character': typeof CharacterRoute
@@ -743,6 +752,7 @@ export interface FileRouteTypes {
     | '/'
     | '/api'
     | '/auth'
+    | '/beta'
     | '/builders'
     | '/builds'
     | '/character'
@@ -825,6 +835,7 @@ export interface FileRouteTypes {
     | '/'
     | '/api'
     | '/auth'
+    | '/beta'
     | '/builders'
     | '/builds'
     | '/character'
@@ -903,6 +914,7 @@ export interface FileRouteTypes {
     | '/'
     | '/api'
     | '/auth'
+    | '/beta'
     | '/builders'
     | '/builds'
     | '/character'
@@ -986,6 +998,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiRoute: typeof ApiRouteWithChildren
   AuthRoute: typeof AuthRoute
+  BetaRoute: typeof BetaRoute
   BuildersRoute: typeof BuildersRoute
   BuildsRoute: typeof BuildsRoute
   CharacterRoute: typeof CharacterRoute
@@ -1058,6 +1071,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/beta': {
+      id: '/beta'
+      path: '/beta'
+      fullPath: '/beta'
+      preLoaderRoute: typeof BetaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/builders': {
@@ -1717,6 +1737,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiRoute: ApiRouteWithChildren,
   AuthRoute: AuthRoute,
+  BetaRoute: BetaRoute,
   BuildersRoute: BuildersRoute,
   BuildsRoute: BuildsRoute,
   CharacterRoute: CharacterRoute,

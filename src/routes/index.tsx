@@ -117,7 +117,7 @@ function Index() {
                   </p>
                   <div data-tour="home-flow" className="mt-5 grid gap-px sm:flex sm:flex-wrap">
                     <Link to="/oasis" className="btn-term min-h-12 w-full sm:min-h-0 sm:w-auto">01 · ENTER THE WORLD</Link>
-                    <Link to="/marketplace" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">02 · CLAIM LAND</Link>
+                    <Link to="/play" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">02 · PLAY YOUR BITMAP</Link>
                     <Link to="/passport" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">03 · OPEN PASSPORT</Link>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs font-bold">

@@ -58,3 +58,10 @@
 - [x] Make PLAY cards remember actions, learn adaptations, and evolve persistently.
 - [x] Show every living card's growth, traits, stats, and evolution milestones on Passport.
 - [x] Add a live growth timeline to each card page with trait, stat, play, and build changes.
+
+## Beta release
+- [x] Complete whole-product desktop and mobile quality sweep.
+- [x] Strengthen first-use guidance across Marketplace, Oasis, PLAY, and Passport.
+- [x] Resolve or document release-blocking security and dependency findings.
+- [x] Add beta status and release notes.
+- [x] Verify core journeys and publish the beta release.
