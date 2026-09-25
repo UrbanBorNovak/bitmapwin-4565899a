@@ -1,5 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { craftCardFn } from "@/lib/coins.functions";
+import { coinBalanceQuery } from "@/lib/coins";
 import { useEffect, useState } from "react";
 import { PlayNav } from "@/components/play/PlayNav";
 import { LivingCard } from "@/components/play/LivingCard";
@@ -7,7 +10,7 @@ import { MatchStats } from "@/components/play/MatchStats";
 import { heldHeightsQuery } from "@/lib/held-parcels";
 import { useWalletSession } from "@/lib/wallet-session";
 import { craftCard, syncWorld, upgradeCard, usePlayProfile } from "@/lib/game/worldState";
-import { UPGRADE_LABEL, canUpgrade, upgradeCap, upgradeCost, upgradesOf, UPGRADE_MAX, type UpgradeKind } from "@/lib/game/workshop";
+import { UPGRADE_LABEL, canUpgrade, upgradeCap, upgradeCost, upgradesOf, UPGRADE_MAX, CRAFT_COST_BIT, type UpgradeKind } from "@/lib/game/workshop";
 
 type Search = { card?: string };
 
@@ -37,6 +40,30 @@ function WorkshopPage() {
   const addresses = wallet ? [wallet.ordinalsAddress, wallet.paymentAddress].filter(Boolean) : [];
   const held = useQuery({ ...heldHeightsQuery(addresses), enabled: addresses.length > 0 });
   const [note, setNote] = useState<string | null>(null);
+  const [forging, setForging] = useState<number | null>(null);
+  const [burst, setBurst] = useState<{ id: number; height: number } | null>(null);
+  const qc = useQueryClient();
+  const payCraft = useServerFn(craftCardFn);
+  const bal = useQuery(coinBalanceQuery(addresses));
+  const payer = [...(bal.data ?? [])].sort((a, b) => b.balance - a.balance)[0] ?? null;
+  const bits = payer?.balance ?? 0;
+
+  async function craft(h: number) {
+    if (!payer || bits < CRAFT_COST_BIT) { setNote(`NOT ENOUGH BIT — CRAFTING COSTS ${CRAFT_COST_BIT} BIT`); return; }
+    setForging(h); setNote(null);
+    try {
+      const r = await payCraft({ data: { address: payer.address, height: h } });
+      if (!r.ok) { setNote(r.error); return; }
+      if (craftCard(h)) {
+        setBurst({ id: Date.now(), height: h });
+        setNote(`CRAFTED ${h}.BITMAP · −${CRAFT_COST_BIT} BIT`);
+        void navigate({ search: { card: `bitmap-${h}` } });
+      }
+      void qc.invalidateQueries({ queryKey: ["coin-balance"] });
+    } catch {
+      setNote("SIGN IN TO PAY WITH BIT");
+    } finally { setForging(null); }
+  }
 
   useEffect(() => { if (profile) void syncWorld(); }, [profile?.owner]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -54,7 +81,10 @@ function WorkshopPage() {
       </header>
 
       <section className="border border-border bg-card p-4 md:p-5">
-        <h2 className="label">CRAFT FROM YOUR BITMAPS</h2>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="label">CRAFT FROM YOUR BITMAPS</h2>
+          {wallet && <p className="label">COST <span className="text-bitcoin">{CRAFT_COST_BIT} BIT</span> · BALANCE <span className={bits >= CRAFT_COST_BIT ? "text-signal" : "text-destructive"}>{bal.isPending ? "…" : bits.toLocaleString()} BIT</span></p>}
+        </div>
         {!wallet ? (
           <p className="mt-2 font-mono text-xs text-muted-foreground">Connect a wallet to craft cards from the BITMAPs you hold. <Link to="/wallet" className="text-bitcoin">CONNECT →</Link></p>
         ) : held.isPending ? (
@@ -67,8 +97,8 @@ function WorkshopPage() {
           <ul className="mt-3 flex flex-wrap gap-2">
             {craftable.map((h) => (
               <li key={h}>
-                <button type="button" className="btn-term-ghost min-h-10" onClick={() => { if (craftCard(h)) { setNote(`CRAFTED ${h}.BITMAP`); void navigate({ search: { card: `bitmap-${h}` } }); } }}>
-                  CRAFT {h}.BITMAP
+                <button type="button" className={`btn-term-ghost min-h-10 ${forging === h ? "craft-charge" : ""}`} disabled={forging !== null} onClick={() => void craft(h)}>
+                  {forging === h ? `FORGING ${h}…` : `CRAFT ${h}.BITMAP · ${CRAFT_COST_BIT} BIT`}
                 </button>
               </li>
             ))}
@@ -82,7 +112,12 @@ function WorkshopPage() {
       ) : selected ? (
         <section className="grid gap-5 md:grid-cols-[auto_minmax(0,1fr)]">
           <div className="grid justify-items-center gap-3">
-            <LivingCard card={selected} size="lg" />
+            <div className="relative">
+              <div key={burst?.height === selected.bitmap ? burst.id : "idle"} className={burst?.height === selected.bitmap ? "craft-rise" : ""}>
+                <LivingCard card={selected} size="lg" />
+              </div>
+              {burst?.height === selected.bitmap && <ForgeDust key={burst.id} />}
+            </div>
             <Link to="/play/card/$id" params={{ id: String(selected.bitmap) }} className="btn-term-ghost w-full justify-center">OPEN CARD PAGE</Link>
           </div>
           <div className="grid content-start gap-4">
@@ -114,5 +149,23 @@ function WorkshopPage() {
         <p className="font-mono text-xs text-muted-foreground">No cards yet. <Link to="/play" className="text-bitcoin">Play a match</Link> or craft one above.</p>
       )}
     </main>
+  );
+}
+
+/** Forge dust — orange and signal sparks scattering from the new card. */
+function ForgeDust() {
+  const bits = Array.from({ length: 36 }, (_, i) => {
+    const a = (i / 36) * Math.PI * 2 + (i % 3) * 0.3;
+    const r = 80 + ((i * 37) % 90);
+    return { i, dx: Math.cos(a) * r, dy: Math.sin(a) * r - 30, s: 2 + (i % 4), t: 900 + ((i * 53) % 700), d: (i % 6) * 40 };
+  });
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-visible">
+      <div className="craft-flash" />
+      {bits.map((b) => (
+        <span key={b.i} className={`craft-dust ${b.i % 4 === 0 ? "is-signal" : ""}`}
+          style={{ "--dx": `${b.dx}px`, "--dy": `${b.dy}px`, "--s": `${b.s}px`, "--t": `${b.t}ms`, "--d": `${b.d}ms` } as React.CSSProperties} />
+      ))}
+    </div>
   );
 }
