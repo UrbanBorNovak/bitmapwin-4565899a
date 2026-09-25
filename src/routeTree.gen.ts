@@ -67,7 +67,9 @@ import { Route as PlayAtlasRouteImport } from './routes/play.atlas'
 import { Route as PlayCardsRouteImport } from './routes/play.cards'
 import { Route as PlayExtendersRouteImport } from './routes/play.extenders'
 import { Route as PlayImportRouteImport } from './routes/play.import'
+import { Route as PlayLeagueRouteImport } from './routes/play.league'
 import { Route as PlayMatchRouteImport } from './routes/play.match'
+import { Route as PlayTournamentsRouteImport } from './routes/play.tournaments'
 import { Route as ProfileAddressRouteImport } from './routes/profile.$address'
 import { Route as RanksIndexRouteImport } from './routes/ranks.index'
 import { Route as RanksClansRouteImport } from './routes/ranks.clans'
@@ -84,6 +86,7 @@ import { Route as MapDistrictSlugRouteImport } from './routes/map_.district.$slu
 import { Route as MapPlaceBlockRouteImport } from './routes/map_.place.$block'
 import { Route as PlayCardIdRouteImport } from './routes/play.card.$id'
 import { Route as PlayTableCodeRouteImport } from './routes/play.table.$code'
+import { Route as PlayTournamentCodeRouteImport } from './routes/play.tournament.$code'
 import { Route as RanksPlayerIdRouteImport } from './routes/ranks.player.$id'
 import { Route as ApiPublicBlocksHeightRouteImport } from './routes/api/public/blocks.$height'
 import { Route as ApiPublicGalleryIdRouteImport } from './routes/api/public/gallery.$id'
@@ -382,9 +385,19 @@ const PlayImportRoute = PlayImportRouteImport.update({
   path: '/import',
   getParentRoute: () => PlayRoute,
 } as any)
+const PlayLeagueRoute = PlayLeagueRouteImport.update({
+  id: '/league',
+  path: '/league',
+  getParentRoute: () => PlayRoute,
+} as any)
 const PlayMatchRoute = PlayMatchRouteImport.update({
   id: '/match',
   path: '/match',
+  getParentRoute: () => PlayRoute,
+} as any)
+const PlayTournamentsRoute = PlayTournamentsRouteImport.update({
+  id: '/tournaments',
+  path: '/tournaments',
   getParentRoute: () => PlayRoute,
 } as any)
 const ProfileAddressRoute = ProfileAddressRouteImport.update({
@@ -466,6 +479,11 @@ const PlayCardIdRoute = PlayCardIdRouteImport.update({
 const PlayTableCodeRoute = PlayTableCodeRouteImport.update({
   id: '/table/$code',
   path: '/table/$code',
+  getParentRoute: () => PlayRoute,
+} as any)
+const PlayTournamentCodeRoute = PlayTournamentCodeRouteImport.update({
+  id: '/tournament/$code',
+  path: '/tournament/$code',
   getParentRoute: () => PlayRoute,
 } as any)
 const RanksPlayerIdRoute = RanksPlayerIdRouteImport.update({
@@ -556,7 +574,9 @@ export interface FileRoutesByFullPath {
   '/play/cards': typeof PlayCardsRoute
   '/play/extenders': typeof PlayExtendersRoute
   '/play/import': typeof PlayImportRoute
+  '/play/league': typeof PlayLeagueRoute
   '/play/match': typeof PlayMatchRoute
+  '/play/tournaments': typeof PlayTournamentsRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
@@ -576,6 +596,7 @@ export interface FileRoutesByFullPath {
   '/map/place/$block': typeof MapPlaceBlockRoute
   '/play/card/$id': typeof PlayCardIdRoute
   '/play/table/$code': typeof PlayTableCodeRoute
+  '/play/tournament/$code': typeof PlayTournamentCodeRoute
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
@@ -635,7 +656,9 @@ export interface FileRoutesByTo {
   '/play/cards': typeof PlayCardsRoute
   '/play/extenders': typeof PlayExtendersRoute
   '/play/import': typeof PlayImportRoute
+  '/play/league': typeof PlayLeagueRoute
   '/play/match': typeof PlayMatchRoute
+  '/play/tournaments': typeof PlayTournamentsRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
@@ -655,6 +678,7 @@ export interface FileRoutesByTo {
   '/map/place/$block': typeof MapPlaceBlockRoute
   '/play/card/$id': typeof PlayCardIdRoute
   '/play/table/$code': typeof PlayTableCodeRoute
+  '/play/tournament/$code': typeof PlayTournamentCodeRoute
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
@@ -719,7 +743,9 @@ export interface FileRoutesById {
   '/play/cards': typeof PlayCardsRoute
   '/play/extenders': typeof PlayExtendersRoute
   '/play/import': typeof PlayImportRoute
+  '/play/league': typeof PlayLeagueRoute
   '/play/match': typeof PlayMatchRoute
+  '/play/tournaments': typeof PlayTournamentsRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
@@ -739,6 +765,7 @@ export interface FileRoutesById {
   '/map_/place/$block': typeof MapPlaceBlockRoute
   '/play/card/$id': typeof PlayCardIdRoute
   '/play/table/$code': typeof PlayTableCodeRoute
+  '/play/tournament/$code': typeof PlayTournamentCodeRoute
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
@@ -804,7 +831,9 @@ export interface FileRouteTypes {
     | '/play/cards'
     | '/play/extenders'
     | '/play/import'
+    | '/play/league'
     | '/play/match'
+    | '/play/tournaments'
     | '/profile/$address'
     | '/ranks/clans'
     | '/ranks/pvp'
@@ -824,6 +853,7 @@ export interface FileRouteTypes {
     | '/map/place/$block'
     | '/play/card/$id'
     | '/play/table/$code'
+    | '/play/tournament/$code'
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
@@ -883,7 +913,9 @@ export interface FileRouteTypes {
     | '/play/cards'
     | '/play/extenders'
     | '/play/import'
+    | '/play/league'
     | '/play/match'
+    | '/play/tournaments'
     | '/profile/$address'
     | '/ranks/clans'
     | '/ranks/pvp'
@@ -903,6 +935,7 @@ export interface FileRouteTypes {
     | '/map/place/$block'
     | '/play/card/$id'
     | '/play/table/$code'
+    | '/play/tournament/$code'
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
@@ -966,7 +999,9 @@ export interface FileRouteTypes {
     | '/play/cards'
     | '/play/extenders'
     | '/play/import'
+    | '/play/league'
     | '/play/match'
+    | '/play/tournaments'
     | '/profile/$address'
     | '/ranks/clans'
     | '/ranks/pvp'
@@ -986,6 +1021,7 @@ export interface FileRouteTypes {
     | '/map_/place/$block'
     | '/play/card/$id'
     | '/play/table/$code'
+    | '/play/tournament/$code'
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
     | '/api/public/gallery/$id'
@@ -1458,11 +1494,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlayImportRouteImport
       parentRoute: typeof PlayRoute
     }
+    '/play/league': {
+      id: '/play/league'
+      path: '/league'
+      fullPath: '/play/league'
+      preLoaderRoute: typeof PlayLeagueRouteImport
+      parentRoute: typeof PlayRoute
+    }
     '/play/match': {
       id: '/play/match'
       path: '/match'
       fullPath: '/play/match'
       preLoaderRoute: typeof PlayMatchRouteImport
+      parentRoute: typeof PlayRoute
+    }
+    '/play/tournaments': {
+      id: '/play/tournaments'
+      path: '/tournaments'
+      fullPath: '/play/tournaments'
+      preLoaderRoute: typeof PlayTournamentsRouteImport
       parentRoute: typeof PlayRoute
     }
     '/profile/$address': {
@@ -1575,6 +1625,13 @@ declare module '@tanstack/react-router' {
       path: '/table/$code'
       fullPath: '/play/table/$code'
       preLoaderRoute: typeof PlayTableCodeRouteImport
+      parentRoute: typeof PlayRoute
+    }
+    '/play/tournament/$code': {
+      id: '/play/tournament/$code'
+      path: '/tournament/$code'
+      fullPath: '/play/tournament/$code'
+      preLoaderRoute: typeof PlayTournamentCodeRouteImport
       parentRoute: typeof PlayRoute
     }
     '/ranks/player/$id': {
@@ -1696,10 +1753,13 @@ interface PlayRouteChildren {
   PlayCardsRoute: typeof PlayCardsRoute
   PlayExtendersRoute: typeof PlayExtendersRoute
   PlayImportRoute: typeof PlayImportRoute
+  PlayLeagueRoute: typeof PlayLeagueRoute
   PlayMatchRoute: typeof PlayMatchRoute
+  PlayTournamentsRoute: typeof PlayTournamentsRoute
   PlayIndexRoute: typeof PlayIndexRoute
   PlayCardIdRoute: typeof PlayCardIdRoute
   PlayTableCodeRoute: typeof PlayTableCodeRoute
+  PlayTournamentCodeRoute: typeof PlayTournamentCodeRoute
 }
 
 const PlayRouteChildren: PlayRouteChildren = {
@@ -1707,10 +1767,13 @@ const PlayRouteChildren: PlayRouteChildren = {
   PlayCardsRoute: PlayCardsRoute,
   PlayExtendersRoute: PlayExtendersRoute,
   PlayImportRoute: PlayImportRoute,
+  PlayLeagueRoute: PlayLeagueRoute,
   PlayMatchRoute: PlayMatchRoute,
+  PlayTournamentsRoute: PlayTournamentsRoute,
   PlayIndexRoute: PlayIndexRoute,
   PlayCardIdRoute: PlayCardIdRoute,
   PlayTableCodeRoute: PlayTableCodeRoute,
+  PlayTournamentCodeRoute: PlayTournamentCodeRoute,
 }
 
 const PlayRouteWithChildren = PlayRoute._addFileChildren(PlayRouteChildren)
