@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CREATURE_GROUPS, SPECIES, type CritterKind } from "@/lib/bestiary";
 import { CreatureModel3D } from "@/components/codex/CreatureModel3D";
+import { HuntPanel } from "@/components/codex/HuntPanel";
 
 export const Route = createFileRoute("/codex/bestiary")({
   head: () => ({
@@ -97,6 +98,7 @@ function Bestiary() {
       <Link to="/codex" className="label hover:text-bitcoin">← OASIS CODEX</Link>
       <h1 className="display mt-2 text-3xl md:text-4xl">BESTIARY</h1>
       <p className="label mt-2">{ROWS.length} CREATURES · READ FROM THE SAME TABLES THE OASIS SPAWNS FROM</p>
+      <HuntPanel />
 
       {viewing && (
         <section className="mt-6 grid overflow-hidden rounded-md border border-border bg-card/60 backdrop-blur md:grid-cols-[1.4fr_1fr]">
