@@ -56,6 +56,8 @@ import { Route as WorldStatsRouteImport } from './routes/world-stats'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
 import { Route as ClanTagRouteImport } from './routes/clan.$tag'
+import { Route as CodexIndexRouteImport } from './routes/codex.index'
+import { Route as CodexBestiaryRouteImport } from './routes/codex.bestiary'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
 import { Route as CollectionsClubRouteImport } from './routes/collections.$club'
 import { Route as DistrictSlugRouteImport } from './routes/district.$slug'
@@ -331,6 +333,16 @@ const ClanTagRoute = ClanTagRouteImport.update({
   path: '/clan/$tag',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CodexIndexRoute = CodexIndexRouteImport.update({
+  id: '/codex/',
+  path: '/codex/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CodexBestiaryRoute = CodexBestiaryRouteImport.update({
+  id: '/codex/bestiary',
+  path: '/codex/bestiary',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CollectionsIndexRoute = CollectionsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -572,6 +584,7 @@ export interface FileRoutesByFullPath {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
+  '/codex/bestiary': typeof CodexBestiaryRoute
   '/collections/$club': typeof CollectionsClubRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
@@ -588,6 +601,7 @@ export interface FileRoutesByFullPath {
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
   '/ranks/shares': typeof RanksSharesRoute
+  '/codex/': typeof CodexIndexRoute
   '/collections/': typeof CollectionsIndexRoute
   '/extenders/': typeof ExtendersIndexRoute
   '/play/': typeof PlayIndexRoute
@@ -655,6 +669,7 @@ export interface FileRoutesByTo {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
+  '/codex/bestiary': typeof CodexBestiaryRoute
   '/collections/$club': typeof CollectionsClubRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
@@ -671,6 +686,7 @@ export interface FileRoutesByTo {
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
   '/ranks/shares': typeof RanksSharesRoute
+  '/codex': typeof CodexIndexRoute
   '/collections': typeof CollectionsIndexRoute
   '/extenders': typeof ExtendersIndexRoute
   '/play': typeof PlayIndexRoute
@@ -743,6 +759,7 @@ export interface FileRoutesById {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
+  '/codex/bestiary': typeof CodexBestiaryRoute
   '/collections/$club': typeof CollectionsClubRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
@@ -759,6 +776,7 @@ export interface FileRoutesById {
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
   '/ranks/shares': typeof RanksSharesRoute
+  '/codex/': typeof CodexIndexRoute
   '/collections/': typeof CollectionsIndexRoute
   '/extenders/': typeof ExtendersIndexRoute
   '/play/': typeof PlayIndexRoute
@@ -832,6 +850,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
     | '/clan/$tag'
+    | '/codex/bestiary'
     | '/collections/$club'
     | '/district/$slug'
     | '/extenders/$slug'
@@ -848,6 +867,7 @@ export interface FileRouteTypes {
     | '/ranks/clans'
     | '/ranks/pvp'
     | '/ranks/shares'
+    | '/codex/'
     | '/collections/'
     | '/extenders/'
     | '/play/'
@@ -915,6 +935,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
     | '/clan/$tag'
+    | '/codex/bestiary'
     | '/collections/$club'
     | '/district/$slug'
     | '/extenders/$slug'
@@ -931,6 +952,7 @@ export interface FileRouteTypes {
     | '/ranks/clans'
     | '/ranks/pvp'
     | '/ranks/shares'
+    | '/codex'
     | '/collections'
     | '/extenders'
     | '/play'
@@ -1002,6 +1024,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/bitmap/$block'
     | '/clan/$tag'
+    | '/codex/bestiary'
     | '/collections/$club'
     | '/district/$slug'
     | '/extenders/$slug'
@@ -1018,6 +1041,7 @@ export interface FileRouteTypes {
     | '/ranks/clans'
     | '/ranks/pvp'
     | '/ranks/shares'
+    | '/codex/'
     | '/collections/'
     | '/extenders/'
     | '/play/'
@@ -1090,9 +1114,11 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   BitmapBlockRoute: typeof BitmapBlockRoute
   ClanTagRoute: typeof ClanTagRoute
+  CodexBestiaryRoute: typeof CodexBestiaryRoute
   DistrictSlugRoute: typeof DistrictSlugRoute
   MapBlockRoute: typeof MapBlockRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
+  CodexIndexRoute: typeof CodexIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   MapDistrictSlugRoute: typeof MapDistrictSlugRoute
   MapPlaceBlockRoute: typeof MapPlaceBlockRoute
@@ -1427,6 +1453,20 @@ declare module '@tanstack/react-router' {
       path: '/clan/$tag'
       fullPath: '/clan/$tag'
       preLoaderRoute: typeof ClanTagRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codex/': {
+      id: '/codex/'
+      path: '/codex'
+      fullPath: '/codex/'
+      preLoaderRoute: typeof CodexIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codex/bestiary': {
+      id: '/codex/bestiary'
+      path: '/codex/bestiary'
+      fullPath: '/codex/bestiary'
+      preLoaderRoute: typeof CodexBestiaryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/collections/': {
@@ -1866,9 +1906,11 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   BitmapBlockRoute: BitmapBlockRoute,
   ClanTagRoute: ClanTagRoute,
+  CodexBestiaryRoute: CodexBestiaryRoute,
   DistrictSlugRoute: DistrictSlugRoute,
   MapBlockRoute: MapBlockRoute,
   ProfileAddressRoute: ProfileAddressRoute,
+  CodexIndexRoute: CodexIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   MapDistrictSlugRoute: MapDistrictSlugRoute,
   MapPlaceBlockRoute: MapPlaceBlockRoute,
