@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { activePfpExtenderForCard } from "@/lib/game/pfpExtenders";
+import { nextLearningMilestone } from "@/lib/game/growth";
 import type { LivingCard, PlayVisualSettings } from "@/lib/game/types";
 
 const fmt = (t: number | null) => (t ? new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—");
@@ -37,7 +38,7 @@ export function CardHistory({ card }: { card: LivingCard }) {
           )) : <span className="font-mono text-[9px] text-muted-foreground">PLAY THIS CARD TO TEACH IT</span>}
         </div>
         <p className="mt-2 font-mono text-[9px] text-muted-foreground">
-          NEXT · {card.plays < 3 ? `${3 - card.plays} MORE PLAY${3 - card.plays === 1 ? "" : "S"} FOR TYPE ADAPTATION` : card.learning.actions < 8 ? `${8 - card.learning.actions} MORE ACTION${8 - card.learning.actions === 1 ? "" : "S"} FOR BATTLE TESTED` : card.wins < 3 ? `${3 - card.wins} MORE WIN${3 - card.wins === 1 ? "" : "S"} FOR VETERAN` : "CONTINUE TOWARD LEGENDARY"}
+          NEXT · {nextLearningMilestone(card)}
         </p>
       </div>
       <ol className="max-h-56 overflow-y-auto border-t border-border">
