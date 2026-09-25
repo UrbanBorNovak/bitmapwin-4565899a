@@ -9,6 +9,7 @@ import { activePfpExtenderForCard, inscriptionContentUrl, ordinalsPreviewUrl } f
 import type { CardState, CardType, LivingCard as Card } from "@/lib/game/types";
 import { usePlayProfile } from "@/lib/game/worldState";
 import { ORD_TORCHES_POOL, useOrdTorches } from "@/lib/game/ordTorches";
+import { PUPPETS_POOL, usePuppets } from "@/lib/game/puppets";
 import { CardCharacter3D } from "./CardCharacter3D";
 import { CardBitmap3D } from "./CardBitmap3D";
 
@@ -114,6 +115,7 @@ export function AtlasPlaceBackdrop({ height, className = "" }: { height: number;
 function CardArt({ card }: { card: Card }) {
   const profile = usePlayProfile();
   const torches = useOrdTorches();
+  const puppets = usePuppets();
   const bitmapPixels = useBitmapPixels();
   const pixel = bitmapPixelForHeight(card.bitmap, bitmapPixels ?? []);
   const selectedTorchPool = profile?.visuals.pfpExtendersEnabled === true && profile.visuals.selectedPfpCollection === ORD_TORCHES_POOL;
