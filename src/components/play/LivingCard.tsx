@@ -163,6 +163,7 @@ export function LivingCard({ card, size = "md", ui = "idle", live, onClick, labe
       </div>
       <div className="lc-art relative grid aspect-[5/4] place-items-center overflow-hidden border-b border-border">
         <div className="lc-grid absolute inset-0" aria-hidden />
+        <OasisBackdrop height={card.bitmap} />
         <CardArt card={card} />
         <span className="absolute left-1.5 top-1 text-sm leading-none text-foreground/80" aria-hidden>{TYPE_GLYPH[card.type]}</span>
         <span className="lc-state label absolute bottom-1 right-1.5 text-[8px]">{card.state}</span>
