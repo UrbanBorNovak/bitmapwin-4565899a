@@ -6,7 +6,8 @@ let cache: { ids: string[]; at: number } | null = null;
 
 export const getPuppetsFn = createServerFn({ method: "GET" }).handler(async () => {
   if (cache && Date.now() - cache.at < 6 * 3600_000) return { parent: PUPPETS_PARENT, ids: cache.ids };
-  const ids: string[] = [];
+  // The parent is itself a hood — it leads the pool, children follow.
+  const ids: string[] = [PUPPETS_PARENT];
   let page = 0;
   let more = true;
   while (more && page < 40 && ids.length < PUPPETS_SUPPLY) {
