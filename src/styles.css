@@ -1381,6 +1381,29 @@
   background-size: 48px 48px;
 }
 .play-field { background: color-mix(in oklab, var(--color-card) 70%, transparent); }
+/* Match board — instrument table */
+.play-table { padding: 0.75rem; border: 1px solid var(--color-border); background: color-mix(in oklab, var(--color-background) 88%, transparent); backdrop-filter: blur(6px); box-shadow: inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 8%, transparent); }
+.play-arena { position: relative; border: 1px solid var(--color-border); background:
+  radial-gradient(ellipse at 50% 50%, color-mix(in oklab, var(--color-bitcoin) 7%, transparent), transparent 65%),
+  color-mix(in oklab, var(--color-card) 80%, transparent); }
+.play-arena .play-field { border: 0; background: transparent; position: relative; }
+.play-arena .play-field::before { content: attr(data-lane); position: absolute; left: 0.6rem; top: 0.45rem; font-family: var(--font-mono, monospace); font-size: 9px; letter-spacing: 0.2em; color: var(--color-muted-foreground); opacity: 0.7; }
+.play-arena .play-field-foe { background-image: linear-gradient(to bottom, color-mix(in oklab, var(--color-signal) 5%, transparent), transparent); }
+.play-arena .play-field-me { background-image: linear-gradient(to top, color-mix(in oklab, var(--color-bitcoin) 6%, transparent), transparent); }
+.play-divide { display: flex; align-items: center; gap: 0.75rem; padding: 0.35rem 0.75rem; border-block: 1px solid var(--color-border); background: color-mix(in oklab, var(--color-background) 60%, transparent); }
+.play-divide::before, .play-divide::after { content: ""; height: 1px; flex: 1; background: linear-gradient(to right, transparent, var(--color-border-strong), transparent); }
+.play-turn { font-family: var(--font-mono, monospace); font-size: 10px; letter-spacing: 0.22em; padding: 0.3rem 0.7rem; border: 1px solid var(--color-border); white-space: nowrap; }
+.play-turn-me { border-color: var(--color-bitcoin); color: var(--color-bitcoin); box-shadow: 0 0 16px -6px var(--color-bitcoin); }
+.play-turn-foe { border-color: color-mix(in oklab, var(--color-signal) 60%, var(--color-border)); color: var(--color-signal); }
+.play-strip { position: relative; border: 1px solid var(--color-border); background: var(--color-card); box-shadow: inset 0 1px 0 color-mix(in oklab, var(--color-foreground) 7%, transparent); }
+.play-strip-active { border-color: var(--color-bitcoin); }
+.play-strip-active::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--color-bitcoin); }
+.play-hp-seg { height: 8px; flex: 1; background: var(--color-surface); transition: background-color 300ms ease; }
+.play-hp-seg-on { background: var(--color-bitcoin); }
+.play-hp-low .play-hp-seg-on { background: var(--color-destructive); }
+.play-pip { width: 9px; height: 9px; border: 1px solid color-mix(in oklab, var(--color-signal) 60%, var(--color-border)); transform: rotate(45deg); }
+.play-pip-on { background: var(--color-signal); box-shadow: 0 0 8px -2px var(--color-signal); }
+.play-log li:first-child { color: var(--color-foreground); background: color-mix(in oklab, var(--color-bitcoin) 8%, transparent); }
 .living-card {
   border-color: var(--color-border);
   transition: transform 160ms ease, box-shadow 200ms ease, border-color 200ms ease, opacity 200ms ease, filter 200ms ease;

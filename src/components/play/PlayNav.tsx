@@ -2,6 +2,8 @@ import { Link } from "@tanstack/react-router";
 
 const LINKS = [
   { to: "/play", label: "LOBBY" },
+  { to: "/play/tournaments", label: "TOURNAMENTS" },
+  { to: "/play/league", label: "LEAGUE" },
   { to: "/play/cards", label: "MY CARDS" },
   { to: "/play/atlas", label: "CARD ATLAS" },
   { to: "/play/extenders", label: "PFP EXTENDERS" },

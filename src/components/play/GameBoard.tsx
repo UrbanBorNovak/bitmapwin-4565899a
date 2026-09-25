@@ -21,11 +21,11 @@ import { LivingCard, type CardUiState } from "./LivingCard";
 
 export type RemoteAction = { kind: "play"; uid: string } | { kind: "attack"; uid: string; target: string } | { kind: "end" };
 export type RemoteTable = { state: MatchState; rivalName: string; send: (a: RemoteAction) => void; busy: boolean };
-type Props = { profile: PlayProfile; deck: Card[]; seed: number; leaderId: string | null; tableCode: string | null; onRestart: () => void; remote?: RemoteTable };
+type Props = { profile: PlayProfile; deck: Card[]; seed: number; leaderId: string | null; tableCode: string | null; onRestart: () => void; remote?: RemoteTable; onFinish?: (win: boolean) => void; restartLabel?: string; context?: string };
 
 const AI_STEP_MS = 750;
 
-export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart, remote }: Props) {
+export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart, remote, onFinish, restartLabel, context }: Props) {
   const [localMatch, setMatch] = useState<MatchState>(() => (remote ? remote.state : newMatch(deck, seed, leaderId)));
   const match = remote ? remote.state : localMatch;
   const act = (a: RemoteAction) => {
@@ -72,6 +72,7 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart,
     if (!match.winner || recorded.current) return;
     recorded.current = true;
     const win = match.winner === "player";
+    onFinish?.(win);
     const mvp = mvpOf(match);
     const changes = dispatchWorldEvent({ kind: win ? "PLAYER_WIN" : "PLAYER_LOSS", mvpId: mvp, deckIds: match.playerDeckIds, actor });
     if (win) {
@@ -133,7 +134,8 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart,
         targetable={!!legal?.hero}
         onTarget={() => strike("hero")}
       />
-      <Field>
+      <div className="play-arena">
+      <Field lane="RIVAL FIELD" side="foe">
         {foe.board.length ? (
           foe.board.map((u) => (
             <div key={u.uid} className={u.fx === "enter" ? "lc-enter" : ""}>
@@ -152,14 +154,14 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart,
         )}
       </Field>
 
-      <div className="flex items-center gap-3 border-y border-border py-2">
-        <span className="label text-muted-foreground">TURN {match.turn}</span>
-        <span className={`label ${myTurn ? "text-bitcoin" : "text-signal"}`}>{match.winner ? "MATCH COMPLETE" : myTurn ? "YOUR MOVE" : remote?.busy ? "SENDING MOVE…" : remote ? "RIVAL'S MOVE…" : "RIVAL IS THINKING…"}</span>
-        <span className="ml-auto hidden font-mono text-[10px] text-muted-foreground sm:block" aria-live="polite">{match.log[0]?.text}</span>
+      <div className="play-divide">
+        <span className="label text-[10px] text-muted-foreground">TURN {String(match.turn).padStart(2, "0")}</span>
+        <span className={`play-turn ${match.winner ? "" : myTurn ? "play-turn-me" : "play-turn-foe"}`} aria-live="polite">{match.winner ? "MATCH COMPLETE" : myTurn ? "YOUR MOVE" : remote?.busy ? "SENDING MOVE…" : remote ? "RIVAL'S MOVE…" : "RIVAL IS THINKING…"}</span>
+        <span className="hidden max-w-[40%] truncate font-mono text-[10px] text-muted-foreground md:block">{match.log[0]?.text}</span>
       </div>
 
       {/* PLAYER */}
-      <Field>
+      <Field lane="YOUR FIELD" side="me">
         {me.board.length ? (
           me.board.map((u) => (
             <div key={u.uid} className={u.fx === "enter" ? "lc-enter" : ""}>
@@ -177,6 +179,7 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart,
           <EmptyField text="PLAY A CARD FROM YOUR HAND" />
         )}
       </Field>
+      </div>
       <PlayerStrip who="YOU" hp={me.hp} energy={me.energy} hand={me.hand.length} deck={me.deck.length} hurt={me.hurt} active={myTurn} />
 
       <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_16rem] [&>*]:min-w-0">
@@ -209,7 +212,8 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart,
           </div>
           <p className="mt-2 font-mono text-[10px] text-muted-foreground">Tap a card to inspect, tap again to play. Tap a ready card on your field, then a target, to attack.</p>
         </div>
-        <ol className="max-h-48 overflow-y-auto border border-border bg-card" aria-label="Match log">
+        <ol className="play-log max-h-48 overflow-y-auto border border-border bg-card" aria-label="Match log">
+          <li className="label sticky top-0 border-b border-border bg-card px-3 py-1.5 text-[10px] text-muted-foreground">MATCH LOG</li>
           {match.log.map((l) => (
             <li key={l.id} className={`border-b border-border/60 px-3 py-1.5 font-mono text-[10px] ${l.side === "ai" ? "text-signal" : l.side === "world" ? "text-muted-foreground" : ""}`}>{l.text}</li>
           ))}
@@ -219,28 +223,34 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart,
       {tableCode && <p className="font-mono text-[10px] text-muted-foreground">TABLE {tableCode}</p>}
 
       {moment && <MagicMoment change={moment} card={profile.cards[moment.cardId]} onClose={() => setMoment(null)} />}
-      {result && !moment && <GameResult {...result} profile={profile} onRestart={onRestart} />}
+      {result && !moment && <GameResult {...result} profile={profile} onRestart={onRestart} restartLabel={restartLabel} context={context} />}
     </div>
   );
 }
 
-function Field({ children }: { children: React.ReactNode }) {
-  return <div className="play-field flex min-h-[11.5rem] items-center justify-start sm:justify-center gap-2 overflow-x-auto border border-border px-2 py-3">{children}</div>;
+function Field({ children, lane, side }: { children: React.ReactNode; lane: string; side: "foe" | "me" }) {
+  return <div data-lane={lane} className={`play-field play-field-${side} flex min-h-[12rem] items-center justify-start gap-3 overflow-x-auto px-3 pb-3 pt-6 sm:justify-center`}>{children}</div>;
 }
 function EmptyField({ text }: { text: string }) {
   return <span className="label text-muted-foreground/70">{text}</span>;
 }
 
 function PlayerStrip(p: { who: string; hp: number; energy: number; hand: number; deck: number; hurt: number; active: boolean; targetable?: boolean; onTarget?: () => void }) {
-  const pct = Math.max(0, (p.hp / START_HP) * 100);
+  const hp = Math.max(0, p.hp);
   return (
-    <div className={`flex flex-wrap items-center gap-x-4 gap-y-2 border bg-card px-3 py-2 ${p.active ? "border-bitcoin" : "border-border"} ${p.hurt ? "lc-shake" : ""}`}>
-      <span className="label">{p.who}</span>
-      <div className="flex min-w-[8rem] flex-1 items-center gap-2">
-        <span className="font-mono text-xs text-bitcoin">♥ {Math.max(0, p.hp)}</span>
-        <div className="h-1.5 flex-1 bg-surface"><div className="h-full bg-bitcoin transition-[width] duration-300" style={{ width: `${pct}%` }} /></div>
+    <div className={`play-strip flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5 ${p.active ? "play-strip-active" : ""} ${p.hurt ? "lc-shake" : ""}`}>
+      <span className="label min-w-[6rem] truncate">{p.who}</span>
+      <div className={`flex min-w-[10rem] flex-1 items-center gap-2 ${hp <= 6 ? "play-hp-low" : ""}`} aria-label={`${hp} of ${START_HP} health`}>
+        <span className="w-8 font-mono text-xs text-bitcoin">♥{hp}</span>
+        <div className="flex flex-1 gap-[2px]">
+          {Array.from({ length: START_HP }, (_, i) => <span key={i} className={`play-hp-seg ${i < hp ? "play-hp-seg-on" : ""}`} />)}
+        </div>
+        {p.hurt ? <span className="font-mono text-[10px] text-destructive">−{p.hurt}</span> : null}
       </div>
-      <span className="font-mono text-[10px] text-signal">⚡ {p.energy}</span>
+      <div className="flex items-center gap-1.5" aria-label={`${p.energy} energy`}>
+        <span className="mr-1 font-mono text-[10px] text-signal">⚡{p.energy}</span>
+        {Array.from({ length: 6 }, (_, i) => <span key={i} className={`play-pip ${i < p.energy ? "play-pip-on" : ""}`} />)}
+      </div>
       <span className="font-mono text-[10px] text-muted-foreground">HAND {p.hand} · DECK {p.deck}</span>
       {p.targetable && (
         <button type="button" className="btn-term min-h-9" onClick={p.onTarget}>STRIKE RIVAL</button>
@@ -270,14 +280,14 @@ function MagicMoment({ change, card, onClose }: { change: CardChange; card?: Car
   );
 }
 
-function GameResult({ win, changes, profile, onRestart }: { win: boolean; changes: CardChange[]; profile: PlayProfile; onRestart: () => void }) {
+function GameResult({ win, changes, profile, onRestart, restartLabel, context }: { win: boolean; changes: CardChange[]; profile: PlayProfile; onRestart: () => void; restartLabel?: string | undefined; context?: string | undefined }) {
   const main = changes.find((c) => c.xp > 0);
   const found = changes.find((c) => c.statNote === "NEW CARD");
   const card = main ? profile.cards[main.cardId] : undefined;
   return (
     <div className="fixed inset-0 z-[70] grid place-items-center overflow-y-auto bg-background/90 p-4" role="dialog" aria-modal="true" aria-label="Match complete">
       <div className="lc-moment w-full max-w-md border border-border bg-card p-5 text-center">
-        <p className="label text-signal">MATCH COMPLETE</p>
+        <p className="label text-signal">{context ? `${context} · ` : ""}MATCH COMPLETE</p>
         <p className={`display mt-1 text-2xl ${win ? "text-bitcoin" : ""}`}>{win ? "THE FIELD IS YOURS" : "THE RIVAL HOLDS THE LAND"}</p>
         {main && card ? (
           <>
@@ -297,7 +307,7 @@ function GameResult({ win, changes, profile, onRestart }: { win: boolean; change
         )}
         <p className="display mt-4 text-sm">THE OASIS HAS CHANGED</p>
         <div className="mt-4 grid gap-2">
-          <button type="button" className="btn-term" onClick={onRestart} autoFocus>PLAY AGAIN</button>
+          <button type="button" className="btn-term" onClick={onRestart} autoFocus>{restartLabel ?? "PLAY AGAIN"}</button>
           {card && (
             <Link to="/play/card/$id" params={{ id: String(card.bitmap) }} className="btn-term-ghost">VIEW CARD</Link>
           )}

@@ -2,7 +2,7 @@ import type { PlayProfile } from "./types";
 import type { SideId } from "./engine";
 
 /** Seat keys for head-to-head tables (per browser; the server holds only a hash). */
-export type Seat = { token: string; seat: SideId };
+export type Seat = { token: string; seat: SideId; entrant?: number };
 const KEY = "bitmapwin.play.seats.v1";
 
 function all(): Record<string, Seat> {

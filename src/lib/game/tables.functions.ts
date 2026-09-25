@@ -27,10 +27,11 @@ export const createTableFn = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ heights: HEIGHTS, name: NAME }).parse(d))
   .handler(async ({ data }) => {
     const db = await admin();
+    const uid = await (await import("./league.server")).optionalUserId(db);
     const t = token();
     for (let i = 0; i < 5; i++) {
       const c = code();
-      const { error } = await db.from("play_tables").insert({ code: c, host_name: data.name, host_heights: data.heights, host_token_hash: await sha(t) });
+      const { error } = await db.from("play_tables").insert({ code: c, host_name: data.name, host_heights: data.heights, host_token_hash: await sha(t), host_user_id: uid });
       if (!error) return { code: c, token: t, seat: "player" as SideId };
     }
     throw new Error("Could not open a table. Try again.");
@@ -44,11 +45,12 @@ export const joinTableFn = createServerFn({ method: "POST" })
     if (!row) return { error: "TABLE NOT FOUND" as const };
     if (row.status !== "waiting") return { error: "TABLE IS FULL" as const };
     const t = token();
+    const uid = await (await import("./league.server")).optionalUserId(db);
     const seed = parseInt(data.code, 36) ^ Date.now();
     const state = newPvpMatch((row.host_heights as number[]).map(Number), data.heights, seed);
     const { data: upd } = await db
       .from("play_tables")
-      .update({ status: "playing", guest_name: data.name, guest_token_hash: await sha(t), state: state as never, version: 1, updated_at: new Date().toISOString() })
+      .update({ status: "playing", guest_name: data.name, guest_token_hash: await sha(t), guest_user_id: uid, state: state as never, version: 1, updated_at: new Date().toISOString() })
       .eq("code", data.code)
       .eq("status", "waiting")
       .select("code");
@@ -92,5 +94,8 @@ export const tableActionFn = createServerFn({ method: "POST" })
       .eq("version", row.version)
       .select("code");
     if (!upd?.length) return { ok: false, error: "TABLE MOVED — RETRY" };
+    if (s.winner) {
+      try { await (await import("./league.server")).settleTable(db, data.code); } catch (e) { console.error("settle", e); }
+    }
     return { ok: true, error: null };
   });
