@@ -92,7 +92,7 @@ function TournamentsPage() {
               <button type="button" className="btn-term-ghost min-h-11" onClick={() => abandonCup()}>FORFEIT CUP</button>
             </>
           ) : (
-            <button type="button" className="btn-term min-h-11" disabled={!profile} onClick={() => setCup(startCup())}>{cup ? "ENTER A NEW CUP" : "ENTER SOLO CUP"}</button>
+            <button type="button" className="btn-term min-h-11" disabled={!profile} onClick={() => { void startCup(profile ? Object.values(profile.cards).map((c) => c.bitmap) : []).then(setCup); }}>{cup ? "ENTER A NEW CUP" : "ENTER SOLO CUP"}</button>
           )}
         </div>
       </section>

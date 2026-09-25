@@ -111,17 +111,28 @@ export function enemyHeightsFor(seed: number, exclude: Set<number>) {
   return pool;
 }
 
-export function newMatch(playerCards: LivingCard[], seed: number, leaderId?: string | null): MatchState {
+/** A real rival: their BITMAPs (first leads) and live Oasis build counts. */
+export type RivalDeck = { heights: number[]; builds: Record<number, number> };
+
+export function newMatch(playerCards: LivingCard[], seed: number, leaderId?: string | null, rival?: RivalDeck | null): MatchState {
   const r = rng(seed);
   const exclude = new Set(playerCards.map((c) => c.bitmap));
-  const enemyHeights = enemyHeightsFor(seed, exclude);
-  const enemyCards = enemyHeights.map((h) => createCardFromBitmap(emptyFacts(h), 0));
+  const enemyHeights = rival?.heights.length ? rival.heights.slice(0, 10) : enemyHeightsFor(seed, exclude);
+  while (rival && enemyHeights.length < 10) enemyHeights.push(enemyHeights[enemyHeights.length % Math.max(1, rival.heights.length)]!);
+  const enemyCards = enemyHeights.map((h) => {
+    const b = rival?.builds[h];
+    return createCardFromBitmap(b !== undefined ? { ...emptyFacts(h), buildCount: b, source: "bitmapwin-world", checkedAt: Date.now() } : emptyFacts(h), 0);
+  });
   let pDeck = shuffle(playerCards.slice(0, 12).map(toUnit), r);
   if (leaderId) {
     const i = pDeck.findIndex((u) => u.cardId === leaderId);
     if (i > 0) pDeck = [pDeck[i]!, ...pDeck.slice(0, i), ...pDeck.slice(i + 1)];
   }
-  const eDeck = shuffle(enemyCards.map(toUnit), r);
+  let eDeck = shuffle(enemyCards.map(toUnit), r);
+  if (rival?.heights.length) {
+    const i = eDeck.findIndex((u) => u.height === rival.heights[0]);
+    if (i > 0) eDeck = [eDeck[i]!, ...eDeck.slice(0, i), ...eDeck.slice(i + 1)];
+  }
   const s: MatchState = {
     seed,
     turn: 1,

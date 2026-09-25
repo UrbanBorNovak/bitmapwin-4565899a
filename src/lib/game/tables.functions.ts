@@ -69,11 +69,16 @@ export const tableActionFn = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ code: CODE, token: TOKEN, action: ACTION }).parse(d))
   .handler(async ({ data }) => {
     const db = await admin();
-    const { data: row } = await db.from("play_tables").select("status, state, version, host_token_hash, guest_token_hash").eq("code", data.code).maybeSingle();
+    const { data: row } = await db.from("play_tables").select("status, state, version, host_token_hash, guest_token_hash, host_user_id, guest_user_id").eq("code", data.code).maybeSingle();
     if (!row || !row.state) return { ok: false, error: "TABLE NOT READY" };
     const h = await sha(data.token);
     const seat: SideId | null = h === row.host_token_hash ? "player" : h === row.guest_token_hash ? "ai" : null;
     if (!seat) return { ok: false, error: "NOT YOUR SEAT" };
+    // Signed in after taking the seat? Attach the account so the result counts in the league.
+    if ((seat === "player" && !row.host_user_id) || (seat === "ai" && !row.guest_user_id)) {
+      const uid = await (await import("./league.server")).optionalUserId(db);
+      if (uid) await db.from("play_tables").update(seat === "player" ? { host_user_id: uid } : { guest_user_id: uid }).eq("code", data.code);
+    }
     let s = row.state as unknown as MatchState;
     if (s.winner) return { ok: false, error: "MATCH COMPLETE" };
     const a = data.action;
