@@ -1,4 +1,6 @@
 import { abilityFor } from "@/lib/game/abilities";
+import atlasImage from "@/assets/oasis-atlas-storybook.jpg";
+import { atlasPlaceStory } from "@/lib/atlas-places";
 import { WORLD_CELL, WORLD_GRID, WORLD_UNITS } from "@/lib/player-state";
 import { reliefAt } from "@/lib/world-terrain";
 import { bitmapPixelForHeight, useBitmapPixels } from "@/lib/game/bitmapPixels";
@@ -82,6 +84,32 @@ export function OasisBackdrop({ height, className = "" }: { height: number; clas
   );
 }
 
+/** The exact painted Atlas place crop assigned to this BITMAP. */
+export function AtlasPlaceBackdrop({ height, className = "" }: { height: number; className?: string }) {
+  const place = atlasPlaceStory(height);
+  const scale = place.frame.divisions * 100;
+  return (
+    <div className={`absolute inset-0 overflow-hidden ${className}`} aria-hidden title={`${place.localName} · ${place.name}`}>
+      <img
+        src={atlasImage}
+        alt=""
+        width={1920}
+        height={1200}
+        loading="lazy"
+        draggable={false}
+        className="pointer-events-none absolute max-w-none select-none object-cover"
+        style={{
+          width: `${scale}%`,
+          height: `${scale}%`,
+          left: `${place.frame.left}%`,
+          top: `${place.frame.top}%`,
+        }}
+      />
+      <div className="absolute inset-0 bg-background/15" />
+    </div>
+  );
+}
+
 function CardArt({ card }: { card: Card }) {
   const profile = usePlayProfile();
   const torches = useOrdTorches();
@@ -94,8 +122,9 @@ function CardArt({ card }: { card: Card }) {
   if (torch)
     return (
       <div className="lc-pfp-frame absolute inset-0" title={`ORD TORCHES · #${torch.index + 1} / 3000`}>
-        <OasisBackdrop height={card.bitmap} />
-        <iframe src={ordinalsPreviewUrl(torch.inscriptionId)} title={`Ord Torch #${torch.index + 1}`} loading="lazy" sandbox="allow-scripts allow-same-origin" scrolling="no" className="h-full w-full border-0 pointer-events-none" />
+        <AtlasPlaceBackdrop height={card.bitmap} />
+        <iframe src={ordinalsPreviewUrl(torch.inscriptionId)} title={`Ord Torch #${torch.index + 1}`} loading="lazy" sandbox="allow-scripts allow-same-origin" scrolling="no" className="h-full w-full border-0 opacity-75 pointer-events-none" />
+        <AtlasPlaceBackdrop height={card.bitmap} className="pointer-events-none opacity-30 mix-blend-soft-light" />
         <OasisBackdrop height={card.bitmap} className="pointer-events-none opacity-60 mix-blend-screen" />
         <div className="lc-pfp-scan absolute inset-0" aria-hidden />
         <BitmapPattern height={card.bitmap} state={card.state} className="absolute bottom-2 left-2 size-10 opacity-90" />
@@ -106,8 +135,8 @@ function CardArt({ card }: { card: Card }) {
   if (extender)
     return (
       <div className="lc-pfp-frame absolute inset-0" title={`${extender.collection} · ${extender.name}`}>
-        <OasisBackdrop height={card.bitmap} />
-        <div className="absolute inset-0" aria-hidden={pixel ? true : undefined}>
+        <AtlasPlaceBackdrop height={card.bitmap} />
+        <div className="absolute inset-0 opacity-75" aria-hidden={pixel ? true : undefined}>
           {extender.source === "ordinals-image" ? (
             <img src={inscriptionContentUrl(extender.inscriptionId)} alt="" loading="lazy" className="h-full w-full object-cover" draggable={false} />
           ) : (
@@ -121,6 +150,7 @@ function CardArt({ card }: { card: Card }) {
             />
           )}
         </div>
+        <AtlasPlaceBackdrop height={card.bitmap} className="pointer-events-none opacity-30 mix-blend-soft-light" />
         <OasisBackdrop height={card.bitmap} className="pointer-events-none opacity-60 mix-blend-screen" />
         {pixel && <CardCharacter3D skin={pixel.inscriptionId} label={`${pixel.name}, the 3D character for ${card.name}`} />}
         <div className="lc-pfp-scan absolute inset-0" aria-hidden />
@@ -134,13 +164,15 @@ function CardArt({ card }: { card: Card }) {
   if (!pixel)
     return (
       <div className="lc-pfp-frame absolute inset-0">
-        <OasisBackdrop height={card.bitmap} />
+        <AtlasPlaceBackdrop height={card.bitmap} />
+        <OasisBackdrop height={card.bitmap} className="pointer-events-none opacity-60 mix-blend-screen" />
         <BitmapPattern height={card.bitmap} state={card.state} className="relative size-[58%]" />
       </div>
     );
   return (
     <div className="lc-pfp-frame absolute inset-0" title={`BITMAP PIXELS · ${pixel.name}`}>
-      <OasisBackdrop height={card.bitmap} />
+      <AtlasPlaceBackdrop height={card.bitmap} />
+      <OasisBackdrop height={card.bitmap} className="pointer-events-none opacity-60 mix-blend-screen" />
       <CardCharacter3D skin={pixel.inscriptionId} label={`${pixel.name}, the 3D character for ${card.name}`} />
       <div className="lc-pfp-scan absolute inset-0" aria-hidden />
       <BitmapPattern height={card.bitmap} state={card.state} className="absolute bottom-2 left-2 size-10 opacity-90" />
