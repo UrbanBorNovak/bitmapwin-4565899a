@@ -49,7 +49,6 @@ function MatchPage() {
     setSeed(table ? parseInt(table, 36) + round * 7919 : Math.floor(Math.random() * 2 ** 31));
   }, [table, round, cupFlag, cupLive?.id, cupLive?.round]);
 
-  useEffect(() => { console.warn("MOUNTED"); }, []);
   const leaderHeight = height ?? profile?.selectedBitmap ?? null;
   const leaderId = leaderHeight !== null ? `bitmap-${leaderHeight}` : null;
   // Deck is fixed at match start; later card evolution only changes visuals.
