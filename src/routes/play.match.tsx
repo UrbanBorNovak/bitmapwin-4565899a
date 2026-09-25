@@ -77,10 +77,10 @@ function MatchPage() {
   }, [profile?.owner, seed, leaderId && profile?.cards[leaderId] ? leaderId : null]);
 
   return (
-    <main className="play-district mx-auto max-w-[1200px] overflow-x-hidden px-3 py-4 md:px-8 md:py-6">
-      <div className="mb-3 flex items-center justify-between gap-2">
+    <main className="play-district mx-auto max-w-[1200px] overflow-x-hidden px-2 py-3 sm:px-4 md:px-8 md:py-6">
+      <div className="mb-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-1">
         <Link to="/play" className="label hover:text-bitcoin">← LOBBY</Link>
-        <p className="label"><span className="text-bitcoin">BITMAPWIN</span> // PLAY{cupLive ? ` · SOLO CUP · ${CUP_ROUNDS[cupLive.round]}` : table ? ` · TABLE ${table}` : " · VS AI"}</p>
+        <p className="label truncate text-center"><span className="text-bitcoin">BITMAPWIN</span> // PLAY{cupLive ? ` · SOLO CUP · ${CUP_ROUNDS[cupLive.round]}` : table ? ` · TABLE ${table}` : " · VS AI"}</p>
         <Link to="/oasis" search={leaderHeight !== null ? { height: leaderHeight } : {}} className="label hover:text-bitcoin">OASIS ↗</Link>
       </div>
       {profile && deck && seed !== null && rival !== undefined ? (
