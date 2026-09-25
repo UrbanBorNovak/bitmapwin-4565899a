@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { lazy, Suspense } from "react";
 import { getChainBlocks } from "@/lib/chain.functions";
 import { OasisAtlasMinimap } from "@/components/OasisAtlasMinimap";
+import { OasisWorldGuard } from "@/components/OasisWorldGuard";
 
 const BitmapWorld3D = lazy(() => import("@/components/BitmapWorld3D").then((module) => ({ default: module.BitmapWorld3D })));
 
@@ -69,7 +70,13 @@ function OasisPage() {
 
   return (
     <div className="px-0 pb-0 sm:px-2 sm:pb-2 md:px-3">
+      <h1 className="sr-only">The Oasis</h1>
+      <div className="flex items-center justify-between gap-3 border-x border-t border-border px-3 py-2">
+        <p className="label text-signal">OASIS WORLD · LIVE</p>
+        <Link to="/play-guide" className="label text-bitcoin hover:text-foreground">CONTROLS + FIRST 5 MINUTES →</Link>
+      </div>
       <div data-tour="map-world" className="relative min-w-0">
+        <OasisWorldGuard>
         <Suspense fallback={<div className="grid h-[78vh] min-h-[520px] place-items-center border border-border bg-background font-mono text-xs text-signal">INITIALIZING OASIS RENDERER…</div>}>
           <BitmapWorld3D
             tipHeight={tipHeight}
@@ -77,6 +84,7 @@ function OasisPage() {
             legend={<span data-tour="map-legend" className="flex flex-wrap items-center gap-2">{legend}</span>}
           />
         </Suspense>
+        </OasisWorldGuard>
         <OasisAtlasMinimap height={height} tipHeight={tipHeight} />
       </div>
     </div>

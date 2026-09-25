@@ -4,7 +4,8 @@ const GROUPS: { label: string; items: { to: string; label: string }[] }[] = [
   {
     label: "PLAY",
     items: [
-      { to: "/map", label: "ENTER THE OASIS" },
+      { to: "/oasis", label: "ENTER THE OASIS" },
+      { to: "/play", label: "LIVING CARDS" },
       { to: "/play-guide", label: "PLAYER GUIDE" },
       { to: "/cities", label: "VISIT CITIES" },
       { to: "/trading-post", label: "IN-WORLD TRADING POST" },
@@ -72,7 +73,7 @@ export function SiteFooter() {
           ))}
         </nav>
         <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3 md:flex-row md:items-center md:justify-between">
-          <div className="display text-xs">BITMAPWIN · THE INTERNET, BUT WITH LAND</div>
+          <div className="display text-xs">BITMAPWIN · THE INTERNET, BUT WITH LAND · <Link to="/beta" className="text-bitcoin hover:text-foreground">BETA 0.9</Link></div>
           <div className="label">
             REAL BLOCKS · LIVE ORDINALS · ON-CHAIN OWNERSHIP
             <span className="blink ml-2 text-foreground">_</span>
