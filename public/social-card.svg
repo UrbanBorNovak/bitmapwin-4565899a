@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#050505"/>
+  <g stroke="#2a2a2a" stroke-width="1"><path d="M0 105h1200M0 210h1200M0 315h1200M0 420h1200M0 525h1200"/><path d="M200 0v630M400 0v630M600 0v630M800 0v630M1000 0v630"/></g>
+  <rect x="64" y="64" width="14" height="14" fill="#f7931a"/>
+  <text x="92" y="80" fill="#f7931a" font-family="monospace" font-size="22" font-weight="700">BITMAPWIN // BETA</text>
+  <text x="64" y="290" fill="#f2f2f2" font-family="Arial, sans-serif" font-size="86" font-weight="700">THE INTERNET,</text>
+  <text x="64" y="390" fill="#f2f2f2" font-family="Arial, sans-serif" font-size="86" font-weight="700">BUT WITH LAND.</text>
+  <text x="68" y="488" fill="#8a8a8a" font-family="monospace" font-size="22">EXPLORE · PLAY · BUILD · TRADE ON BITCOIN</text>
+  <rect x="64" y="540" width="1072" height="4" fill="#f7931a"/>
+</svg>

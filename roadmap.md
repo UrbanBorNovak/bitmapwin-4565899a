@@ -60,8 +60,8 @@
 - [x] Add a live growth timeline to each card page with trait, stat, play, and build changes.
 
 ## Beta release
-- [ ] Complete whole-product desktop and mobile quality sweep.
-- [ ] Strengthen first-use guidance across Marketplace, Oasis, PLAY, and Passport.
-- [ ] Resolve or document release-blocking security and dependency findings.
-- [ ] Add beta status and release notes.
-- [ ] Verify core journeys and publish the beta release.
+- [x] Complete whole-product desktop and mobile quality sweep.
+- [x] Strengthen first-use guidance across Marketplace, Oasis, PLAY, and Passport.
+- [x] Resolve or document release-blocking security and dependency findings.
+- [x] Add beta status and release notes.
+- [x] Verify core journeys and publish the beta release.
