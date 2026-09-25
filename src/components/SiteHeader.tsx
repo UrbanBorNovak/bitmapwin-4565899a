@@ -56,6 +56,7 @@ const NAV_GROUPS: NavGroup[] = [
     note: "See what is active across the network",
     items: [
       { to: "/explore", label: "EXPLORE", note: "Trending BITMAPs and activity" },
+      { to: "/codex", label: "CODEX", note: "Field guide: creatures, cards, land" },
       { to: "/ranks", label: "RANKS", note: "Hall of fame, PvP and clans" },
       { to: "/experiences", label: "EXPERIENCES", note: "Live deployed worlds" },
       { to: "/builders", label: "BUILDERS", note: "People building on bedrock" },
