@@ -6,6 +6,7 @@ import { fetchBuildCounts } from "./worldAdapter";
 import { fetchRemotePlayProfile, pickRicher, queueRemoteSave } from "./cloudSync";
 import { createCardFromBitmap, emptyFacts } from "./cardFactory";
 import { allPfpExtenders, normalizeVisualSettings } from "./pfpExtenders";
+import { canUpgrade, upgradeCost, upgradesOf, type UpgradeKind } from "./workshop";
 import type { CardChange, CardVisualExtender, PlayProfile, PlayVisualSettings } from "./types";
 
 let persistence: PlayPersistence = localPlayPersistence;
@@ -119,6 +120,29 @@ export function removeCustomPfpExtender(id: string) {
   const selectedPfpExtenderId = current.visuals.selectedPfpExtenderId === id ? null : current.visuals.selectedPfpExtenderId;
   const visuals = normalizeVisualSettings({ ...current.visuals, customPfpExtenders, selectedPfpExtenderId });
   commit({ ...current, visuals });
+}
+
+/** WORKSHOP — craft a card from a BITMAP the wallet holds. */
+export function craftCard(height: number): boolean {
+  if (!current || current.cards[`bitmap-${height}`]) return false;
+  const card = createCardFromBitmap({ ...emptyFacts(height), ownedByPlayer: true }, Date.now());
+  card.origin = { kind: "territory", label: `CRAFTED IN THE WORKSHOP · ${height}.BITMAP` };
+  card.history = [...card.history, { at: Date.now(), kind: "WORLD_EVENT", note: "Crafted in the workshop from your BITMAP" }];
+  commit({ ...current, cards: { ...current.cards, [card.id]: card }, order: [...current.order, card.id] });
+  void syncWorld();
+  return true;
+}
+
+/** WORKSHOP — spend a card's unspent XP on a permanent upgrade. */
+export function upgradeCard(cardId: string, kind: UpgradeKind): boolean {
+  const card = current?.cards[cardId];
+  if (!current || !card || !canUpgrade(card, kind).ok) return false;
+  const u = upgradesOf(card);
+  const cost = upgradeCost(card, kind);
+  const next = { ...card, upgrades: { ...u, [kind]: u[kind] + 1, spentXp: u.spentXp + cost },
+    history: [...card.history, { at: Date.now(), kind: "WORLD_EVENT" as const, note: `Workshop upgrade · ${kind.toUpperCase()} level ${u[kind] + 1} (−${cost} XP)` }] };
+  commit({ ...current, cards: { ...current.cards, [cardId]: next } });
+  return true;
 }
 
 /** Ensure a card exists for a territory (e.g. opened from the Oasis). */

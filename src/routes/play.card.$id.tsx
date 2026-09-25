@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { MatchStats } from "@/components/play/MatchStats";
 import { CardDataLayers, CardGrowthTimeline, CardHistory } from "@/components/play/CardHistory";
 import { LivingCard } from "@/components/play/LivingCard";
 import { PlayNav } from "@/components/play/PlayNav";
@@ -50,7 +51,8 @@ function CardProfile() {
             <LivingCard card={card} size="lg" />
             <div className="grid w-full gap-2">
               <Link to="/play/match" search={{ height: card.bitmap }} className="btn-term justify-center">PLAY WITH THIS CARD</Link>
-              <Link to="/oasis" search={{ height: card.bitmap }} className="btn-term-ghost justify-center">VIEW IN THE OASIS</Link>
+              <Link to="/play/workshop" search={{ card: card.id }} className="btn-term-ghost justify-center">UPGRADE IN WORKSHOP</Link>
+              <Link to="/oasis" search={{ height: card.bitmap }} className="btn-term-ghost justify-center">BUILD IN THE OASIS</Link>
               <Link to="/bitmap/$block" params={{ block: String(card.bitmap) }} className="btn-term-ghost justify-center">OPEN BITMAP</Link>
             </div>
           </div>
@@ -67,6 +69,7 @@ function CardProfile() {
                 <li key={t} className="border border-border bg-card px-3 py-2 font-mono text-[10px]"><span className="text-bitcoin">{t}</span> · {TRAIT_RULE[t]}</li>
               ))}
             </ul>
+            <MatchStats card={card} />
             <CardDataLayers card={card} visuals={profile.visuals} />
              <CardGrowthTimeline card={card} />
             <CardHistory card={card} />
