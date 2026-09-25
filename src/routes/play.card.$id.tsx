@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CardDataLayers, CardHistory } from "@/components/play/CardHistory";
+import { CardDataLayers, CardGrowthTimeline, CardHistory } from "@/components/play/CardHistory";
 import { LivingCard } from "@/components/play/LivingCard";
 import { PlayNav } from "@/components/play/PlayNav";
 import { TRAIT_RULE, TYPE_RULE } from "@/lib/game/cardFactory";
@@ -68,6 +68,7 @@ function CardProfile() {
               ))}
             </ul>
             <CardDataLayers card={card} visuals={profile.visuals} />
+             <CardGrowthTimeline card={card} />
             <CardHistory card={card} />
           </div>
         </div>

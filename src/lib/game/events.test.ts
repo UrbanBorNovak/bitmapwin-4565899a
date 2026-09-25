@@ -26,4 +26,21 @@ describe("living card learning", () => {
     expect(profile.cards[cardId]?.learning.adaptations).toContain("BATTLE_TESTED");
     expect(profile.cards[cardId]?.state).toBe("AWAKENED");
   });
+
+  it("records exact growth snapshots after play and Oasis builds", () => {
+    let profile = newProfile("historian");
+    const cardId = profile.order[0];
+    expect(cardId).toBeDefined();
+    if (!cardId) return;
+    profile = applyWorldEvent(profile, { kind: "CARD_PLAYED", cardId, actor: "tester" }, 10).profile;
+    const played = profile.cards[cardId];
+    expect(played?.history.at(-1)?.growth).toMatchObject({ state: "ACTIVE", plays: 1, activity: 1 });
+
+    if (!played) return;
+    const defenseBeforeBuild = played.defense;
+    profile = applyWorldEvent(profile, { kind: "NEW_BUILD", height: played.bitmap, buildCount: 1 }, 20).profile;
+    const built = profile.cards[cardId];
+    expect(built?.history.at(-1)?.growth).toMatchObject({ defense: defenseBeforeBuild + 1, buildCount: 1 });
+    expect(built?.history.at(-1)?.growth?.traits).toContain("BUILDER");
+  });
 });

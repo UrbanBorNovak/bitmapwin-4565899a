@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { activePfpExtenderForCard } from "@/lib/game/pfpExtenders";
 import { nextLearningMilestone } from "@/lib/game/growth";
-import type { LivingCard, PlayVisualSettings } from "@/lib/game/types";
+import type { CardGrowthSnapshot, CardHistoryEntry, LivingCard, PlayVisualSettings } from "@/lib/game/types";
 
 const fmt = (t: number | null) => (t ? new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—");
 
@@ -48,6 +48,106 @@ export function CardHistory({ card }: { card: LivingCard }) {
             <span className="shrink-0 text-muted-foreground">{fmt(h.at)}</span>
           </li>
         ))}
+      </ol>
+    </section>
+  );
+}
+
+const currentGrowth = (card: LivingCard): CardGrowthSnapshot => ({
+  state: card.state,
+  traits: card.traits,
+  power: card.power,
+  defense: card.defense,
+  energy: card.energy,
+  activity: card.activity,
+  experience: card.experience,
+  plays: card.plays,
+  wins: card.wins,
+  buildCount: card.facts.buildCount,
+});
+
+function growthChanges(current: CardGrowthSnapshot, previous?: CardGrowthSnapshot) {
+  if (!previous) return [];
+  const changes: string[] = [];
+  if (current.state !== previous.state) changes.push(`${previous.state} → ${current.state}`);
+  for (const trait of current.traits) if (!previous.traits.includes(trait)) changes.push(`+ ${trait} TRAIT`);
+  const metrics: [keyof Pick<CardGrowthSnapshot, "power" | "defense" | "activity" | "experience" | "plays" | "wins">, string][] = [
+    ["power", "POWER"], ["defense", "DEFENSE"], ["activity", "ACTIVITY"],
+    ["experience", "XP"], ["plays", "PLAYS"], ["wins", "WINS"],
+  ];
+  for (const [key, label] of metrics) {
+    const delta = current[key] - previous[key];
+    if (delta !== 0) changes.push(`${delta > 0 ? "+" : ""}${delta} ${label}`);
+  }
+  if (current.buildCount !== previous.buildCount && current.buildCount !== null) changes.push(`${current.buildCount} OASIS BUILD${current.buildCount === 1 ? "" : "S"}`);
+  return changes;
+}
+
+function GrowthStats({ growth }: { growth: CardGrowthSnapshot }) {
+  return (
+    <dl className="mt-2 grid grid-cols-4 gap-px bg-border sm:grid-cols-7">
+      {([
+        ["POWER", growth.power], ["DEF", growth.defense], ["ACT", growth.activity], ["XP", growth.experience],
+        ["PLAYS", growth.plays], ["WINS", growth.wins], ["BUILDS", growth.buildCount ?? "—"],
+      ] as const).map(([label, value]) => (
+        <div key={label} className="bg-card px-2 py-1.5">
+          <dt className="font-mono text-[8px] text-muted-foreground">{label}</dt>
+          <dd className="font-mono text-[11px] text-foreground">{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+export function CardGrowthTimeline({ card }: { card: LivingCard }) {
+  const snapshotEntries = card.history.filter((entry): entry is CardHistoryEntry & { growth: CardGrowthSnapshot } => Boolean(entry.growth));
+  const points = snapshotEntries.map((entry, index) => ({
+    entry,
+    changes: growthChanges(entry.growth, snapshotEntries[index - 1]?.growth),
+  })).reverse();
+  const live = currentGrowth(card);
+  const latest = snapshotEntries.at(-1)?.growth;
+  const liveChanges = growthChanges(live, latest);
+  const currentIsRecorded = latest && JSON.stringify(latest) === JSON.stringify(live);
+
+  return (
+    <section className="border border-border bg-card" aria-labelledby="growth-timeline-title">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
+        <div>
+          <h2 id="growth-timeline-title" className="label text-bitcoin">LIVE GROWTH TIMELINE</h2>
+          <p className="mt-1 font-mono text-[9px] text-muted-foreground">PLAY + OASIS BUILD MEMORY</p>
+        </div>
+        <span className="inline-flex items-center gap-1.5 font-mono text-[9px] text-signal"><span className="size-1.5 bg-signal" />LIVE · {card.state}</span>
+      </header>
+      <ol className="relative px-3 py-3 before:absolute before:bottom-5 before:left-[18px] before:top-5 before:w-px before:bg-border">
+        {!currentIsRecorded && (
+          <li className="relative pb-4 pl-7">
+            <span className="absolute left-0 top-1 size-3 border border-signal bg-card" />
+            <div className="flex flex-wrap items-baseline justify-between gap-2"><strong className="label text-signal">CURRENT SIGNAL</strong><span className="font-mono text-[9px] text-muted-foreground">NOW</span></div>
+            {liveChanges.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{liveChanges.map((change) => <span key={change} className="border border-signal/50 px-1.5 py-0.5 font-mono text-[8px] text-signal">{change}</span>)}</div>}
+            <GrowthStats growth={live} />
+          </li>
+        )}
+        {points.map(({ entry, changes }, index) => (
+          <li key={`${entry.at}-${entry.kind}-${index}`} className="relative pb-4 pl-7 last:pb-0">
+            <span className={`absolute left-0 top-1 size-3 border bg-card ${index === 0 ? "border-bitcoin" : "border-border"}`} />
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <strong className="font-mono text-[10px] text-foreground">{entry.note}</strong>
+              <time className="font-mono text-[9px] text-muted-foreground" dateTime={new Date(entry.at).toISOString()}>{fmt(entry.at)}</time>
+            </div>
+            {changes.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{changes.map((change) => <span key={change} className="border border-bitcoin/50 px-1.5 py-0.5 font-mono text-[8px] text-bitcoin">{change}</span>)}</div>}
+            <div className="mt-1 flex flex-wrap gap-1">{entry.growth.traits.map((trait) => <span key={trait} className="font-mono text-[8px] text-muted-foreground">#{trait}</span>)}</div>
+            <GrowthStats growth={entry.growth} />
+          </li>
+        ))}
+        {points.length === 0 && (
+          <li className="relative pl-7">
+            <span className="absolute left-0 top-1 size-3 border border-signal bg-card" />
+            <strong className="label text-signal">CURRENT RECORD</strong>
+            <p className="mt-1 font-mono text-[9px] text-muted-foreground">Earlier events predate growth snapshots. New play and build moments will appear here live.</p>
+            <GrowthStats growth={live} />
+          </li>
+        )}
       </ol>
     </section>
   );
