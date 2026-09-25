@@ -7,6 +7,7 @@ import { ensureCard, usePlayProfile } from "@/lib/game/worldState";
 type Search = { table?: string; height?: number; cup?: number };
 
 export const Route = createFileRoute("/play/match")({
+  ssr: false,
   validateSearch: (s: Record<string, unknown>): Search => {
     const out: Search = {};
     if (typeof s["table"] === "string" && /^[0-9A-Za-z]{3,8}$/.test(s["table"])) out.table = s["table"].toUpperCase();
@@ -44,13 +45,11 @@ function MatchPage() {
   }, [profile, height]);
 
   useEffect(() => {
-    console.warn("SEEDFX", cupFlag, table);
     if (cupFlag) { if (cupLive) setSeed(cupMatchSeed(cupLive)); return; }
     setSeed(table ? parseInt(table, 36) + round * 7919 : Math.floor(Math.random() * 2 ** 31));
   }, [table, round, cupFlag, cupLive?.id, cupLive?.round]);
 
   const leaderHeight = height ?? profile?.selectedBitmap ?? null;
-  console.warn("DBG", !!profile, profile?.owner, seed, profile?.order.length);
   const leaderId = leaderHeight !== null ? `bitmap-${leaderHeight}` : null;
   // Deck is fixed at match start; later card evolution only changes visuals.
   const deck = useMemo(() => {
