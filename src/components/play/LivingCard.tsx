@@ -46,6 +46,42 @@ export function BitmapPattern({ height, state, className = "" }: { height: numbe
   );
 }
 
+/**
+ * The Oasis horizon around the card's own BITMAP, drawn from the same relief
+ * field the 3D world walks on. Far ridge, near ridge and a low sun, all
+ * deterministic per block height.
+ */
+export function OasisBackdrop({ height, className = "" }: { height: number; className?: string }) {
+  const col = height % WORLD_GRID;
+  const row = Math.floor(height / WORLD_GRID);
+  const cx = (col + 0.5) * WORLD_CELL - WORLD_UNITS / 2;
+  const cz = (row + 0.5) * WORLD_CELL;
+  const span = WORLD_CELL * 6;
+  const N = 24;
+  const ridge = (zOff: number, lift: number, base: number) => {
+    const pts: string[] = [];
+    for (let i = 0; i <= N; i++) {
+      const x = cx - span / 2 + (span * i) / N;
+      const r = reliefAt(x, cz + zOff);
+      const px = (i / N) * 100;
+      const py = base - r * lift;
+      pts.push(`${px.toFixed(2)},${py.toFixed(2)}`);
+    }
+    return `0,100 ${pts.join(" ")} 100,100`;
+  };
+  const sunX = 18 + (hash(height) % 64);
+  const sunY = 16 + (hash(height * 7 + 3) % 18);
+  return (
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className={`absolute inset-0 h-full w-full ${className}`} aria-hidden>
+      <circle cx={sunX} cy={sunY} r="9" className="fill-bitcoin/25" />
+      <circle cx={sunX} cy={sunY} r="5" className="fill-bitcoin/45" />
+      <polygon points={ridge(WORLD_CELL * 4, 34, 74)} className="fill-foreground/10" />
+      <polygon points={ridge(0, 44, 92)} className="fill-foreground/20" />
+      <rect x="0" y="92" width="100" height="8" className="fill-foreground/25" />
+    </svg>
+  );
+}
+
 function CardArt({ card }: { card: Card }) {
   const profile = usePlayProfile();
   const torches = useOrdTorches();
