@@ -21,7 +21,6 @@ import {
 } from "@/lib/game/worldState";
 import type { CardVisualExtender } from "@/lib/game/types";
 import { Link } from "@tanstack/react-router";
-import { ORD_TORCHES_PARENT, ORD_TORCHES_POOL, ORD_TORCHES_SUPPLY, useOrdTorches } from "@/lib/game/ordTorches";
 import { PUPPETS_PARENT, PUPPETS_POOL, usePuppets } from "@/lib/game/puppets";
 
 export const Route = createFileRoute("/play/extenders")({
@@ -54,8 +53,6 @@ function PlayExtenders() {
   const previewCard = profile?.order.map((id) => profile.cards[id]).find(Boolean) ?? null;
   const enabled = profile?.visuals.pfpExtendersEnabled === true;
   const selectedCollection = profile?.visuals.selectedPfpCollection ?? selected?.collection ?? null;
-  const torches = useOrdTorches();
-  const [torchPage, setTorchPage] = useState(0);
   const puppets = usePuppets();
   const [puppetPage, setPuppetPage] = useState(0);
   const pools = useMemo(() => {
@@ -161,42 +158,6 @@ function PlayExtenders() {
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] [&>*]:min-w-0">
         <section className="grid content-start gap-4">
-          <article className="border border-bitcoin bg-card p-3">
-            <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h2 className="label text-bitcoin">ORD TORCHES · ON-CHAIN POOL</h2>
-                <span className="label text-muted-foreground">{torches ? torches.list.length : "…"} / {ORD_TORCHES_SUPPLY} FOUND ACROSS THE MAP</span>
-              </div>
-              <Button
-                type="button"
-                size="sm"
-                variant={enabled && selectedCollection === ORD_TORCHES_POOL ? "terminal" : "terminalGhost"}
-                disabled={!profile || !torches?.list.length}
-                onClick={() => updatePlayVisuals({ pfpExtendersEnabled: true, selectedPfpCollection: ORD_TORCHES_POOL })}
-              >
-                {enabled && selectedCollection === ORD_TORCHES_POOL ? "POOL ACTIVE" : "USE POOL"}
-              </Button>
-            </header>
-            <p className="mb-3 break-all font-mono text-[10px] text-muted-foreground">PARENT <span data-no-translate>{ORD_TORCHES_PARENT}</span> · ACTIVATE THE POOL TO DISTRIBUTE A DIFFERENT TORCH ACROSS EACH CARD</p>
-            {!torches ? <p className="font-mono text-xs text-muted-foreground">&gt; READING 3000 CHILDREN…</p> : (
-              <>
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
-                  {torches.list.slice(torchPage * 24, torchPage * 24 + 24).map((t) => (
-                    <div key={t.inscriptionId} className="relative aspect-square border border-border bg-background">
-                      <iframe src={ordinalsPreviewUrl(t.inscriptionId)} title={`Ord Torch #${t.index + 1}`} loading="lazy" sandbox="allow-scripts allow-same-origin" scrolling="no" className="pointer-events-none h-full w-full border-0" />
-                      <Link to="/bitmap/$block" params={{ block: String(t.bitmap) }} className="absolute inset-0" aria-label={`Torch ${t.index + 1} at ${t.bitmap}.bitmap`} />
-                      <span className="label pointer-events-none absolute bottom-0 left-0 bg-background/85 px-1 text-[9px]" data-no-translate>#{t.index + 1} · {t.bitmap}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-3 flex items-center justify-between gap-2">
-                  <Button type="button" variant="terminalGhost" disabled={torchPage === 0} onClick={() => setTorchPage((p) => p - 1)}>PREV</Button>
-                  <span className="label text-muted-foreground">PAGE {torchPage + 1} / {Math.max(1, Math.ceil(torches.list.length / 24))}</span>
-                  <Button type="button" variant="terminalGhost" disabled={(torchPage + 1) * 24 >= torches.list.length} onClick={() => setTorchPage((p) => p + 1)}>NEXT</Button>
-                </div>
-              </>
-            )}
-          </article>
           <article className="border border-bitcoin bg-card p-3">
             <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
