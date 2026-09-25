@@ -44,6 +44,7 @@ function MatchPage() {
   }, [profile, height]);
 
   useEffect(() => {
+    console.warn("SEEDFX", cupFlag, table);
     if (cupFlag) { if (cupLive) setSeed(cupMatchSeed(cupLive)); return; }
     setSeed(table ? parseInt(table, 36) + round * 7919 : Math.floor(Math.random() * 2 ** 31));
   }, [table, round, cupFlag, cupLive?.id, cupLive?.round]);
