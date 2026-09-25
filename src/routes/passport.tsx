@@ -15,7 +15,9 @@ import { getMyEstateFn } from "@/lib/passport.functions";
 import { getMyResidencyFn } from "@/lib/residency.functions";
 import { PassportArtifact } from "@/components/PassportArtifact";
 import { PassportResidency } from "@/components/PassportResidency";
+import { PassportCardGrowth } from "@/components/PassportCardGrowth";
 import { Button } from "@/components/ui/button";
+import { usePlayProfile } from "@/lib/game/worldState";
 import { Activity, Award, Boxes, KeyRound, Landmark, Radio, RefreshCw, ShieldCheck, TriangleAlert } from "lucide-react";
 
 export const Route = createFileRoute("/passport")({
@@ -31,6 +33,7 @@ function PassportPage() {
   const { session, loading } = useAuthSession(); const getPassport = useServerFn(getMyPassportFn);
   const getEstate = useServerFn(getMyEstateFn);
   const getResidency = useServerFn(getMyResidencyFn);
+  const playProfile = usePlayProfile();
   const estate = useQuery({ queryKey: ["my-estate", session?.user.id ?? "signed-out"], queryFn: () => getEstate(), enabled: Boolean(session), staleTime: 15_000 });
   const passport = useQuery({ queryKey: ["my-passport", session?.user.id ?? "signed-out"], queryFn: () => getPassport(), enabled: Boolean(session), staleTime: 15_000 });
   const residency = useQuery({ queryKey: ["my-residency", session?.user.id ?? "signed-out"], queryFn: () => getResidency(), enabled: Boolean(session), staleTime: 30_000 });
@@ -41,6 +44,7 @@ function PassportPage() {
   const passportUnavailable = passport.isError;
   const estateUnavailable = estate.isError;
   const proofCounts = { CHAIN: 0, WORLD: 0, ACCOUNT: 0 };
+  const livingCards = playProfile ? playProfile.order.map((id) => playProfile.cards[id]).filter((card) => card !== undefined) : [];
   for (const event of data?.events ?? []) proofCounts[event.proofLevel] += 1;
   return <main className="passport-terminal mx-auto max-w-[1500px] px-4 py-8 md:px-8 md:py-12">
     <header className="flex flex-wrap items-end justify-between gap-5 border-b border-[var(--passport-line)] pb-5"><div><p className="passport-kicker">IDENTITY · HISTORY · POSSIBILITY</p><h1 className="mt-3 font-mono text-4xl font-bold uppercase text-[var(--passport-paper)] md:text-6xl">SOVEREIGN PASSPORT</h1><p className="mt-3 font-sans text-sm text-[var(--passport-muted)]">A living record of the places you hold, the marks you leave, and the access your history unlocks.</p></div><Link to="/stream" className="passport-action">WORLD STREAM <Radio className="size-3.5" /></Link></header>
@@ -57,6 +61,7 @@ function PassportPage() {
     <section className="mt-8"><PassportSectionHeader index="06" eyebrow="EVIDENCE-BACKED" title="PASSPORT STAMPS" count={`${data?.stamps.length ?? 0} EARNED`}/><div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{data?.stamps.length ? data.stamps.map((s) => <StampCard key={s.id} stamp={s}/>) : <p className="passport-empty">&gt; ENTER THE OASIS TO CREATE YOUR FIRST RECORD_</p>}</div></section>
     <section className="passport-panel mt-8"><PassportSectionHeader index="07" eyebrow="WHAT HISTORY MAKES POSSIBLE" title="BUILD CAPABILITIES"/><UnlockPath stamps={data?.stamps ?? []} unlocks={data?.unlocks ?? []}/></section>
     <section className="passport-panel mt-8"><PassportSectionHeader index="08" eyebrow="ORDERED EVIDENCE" title="RECENT PROVENANCE" count={`${data?.events.length ?? 0} RECORDS`}/>{data?.events.length ? data.events.slice(0, 20).map((e) => <StreamEventRow key={e.id} event={e}/>) : <p className="passport-empty">&gt; NO VERIFIED HISTORY YET_</p>}</section>
+    <section className="passport-panel mt-8"><PassportSectionHeader index="09" eyebrow="LIVING IDENTITY" title="CARD GROWTH" count={playProfile ? `${livingCards.length} CARDS` : "READING CARDS"}/>{!playProfile ? <p className="passport-empty">&gt; READING PERSISTED CARD MEMORY…</p> : livingCards.length ? <PassportCardGrowth cards={livingCards} /> : <div className="p-4"><p className="passport-empty p-0">&gt; NO LIVING CARDS DISCOVERED YET_</p><Link to="/play" className="passport-action mt-4">ENTER PLAY</Link></div>}</section>
   </main>;
 }
 

@@ -56,3 +56,4 @@
 - [x] Wire BITMAP Pixels into PLAY as deterministic default card characters.
 - [x] Bind the Passport name to a verified `name.height.bitmap` reinscription on the current residency sat.
 - [x] Make PLAY cards remember actions, learn adaptations, and evolve persistently.
+- [x] Show every living card's growth, traits, stats, and evolution milestones on Passport.
