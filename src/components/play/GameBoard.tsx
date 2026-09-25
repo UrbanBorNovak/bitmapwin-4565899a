@@ -190,7 +190,7 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart,
       <div className="play-command-deck grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_17rem] [&>*]:min-w-0">
         <div className="min-w-0">
           <div className="play-hand-head grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-            <div className="flex min-w-0 items-center gap-2"><Sparkles className="size-3 shrink-0 text-bitcoin" /><span className="label truncate text-relic-parchment">YOUR HAND · {me.hand.length} RELICS</span></div>
+            <div className="flex min-w-0 items-center gap-2"><Sparkles className="size-3 shrink-0 text-bitcoin" /><span className="label truncate text-foreground">YOUR HAND · {me.hand.length} RELICS</span></div>
             <span className="font-mono text-[9px] text-muted-foreground">ENERGY {me.energy}</span>
           </div>
           <div className="play-hand flex gap-3 overflow-x-auto px-3 pb-4 pt-4" role="list" aria-label="Your hand">
@@ -252,7 +252,7 @@ function PlayerStrip(p: { who: string; hp: number; energy: number; hand: number;
     <div className={`play-strip grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-4 py-3 md:grid-cols-[minmax(9rem,1.1fr)_minmax(12rem,2fr)_auto_auto] ${p.active ? "play-strip-active" : ""} ${p.hurt ? "lc-shake" : ""}`}>
       <div className="flex min-w-0 items-center gap-2">
         <span className={`play-presence shrink-0 ${p.active ? "play-presence-active" : ""}`} />
-        <span className="label truncate text-relic-parchment">{p.who}</span>
+        <span className="label truncate text-foreground">{p.who}</span>
       </div>
       <div className={`order-3 col-span-2 flex min-w-0 items-center gap-2 md:order-none md:col-span-1 ${hp <= 6 ? "play-hp-low" : ""}`} aria-label={`${hp} of ${START_HP} health`}>
         <span className="flex w-10 shrink-0 items-center gap-1 font-mono text-xs text-bitcoin"><Heart className="size-3 fill-current" />{hp}</span>
