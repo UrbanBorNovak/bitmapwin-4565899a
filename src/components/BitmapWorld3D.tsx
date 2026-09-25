@@ -4621,7 +4621,7 @@ function BitmapWorld3DInner({
                 <span className="text-muted-foreground">
                    {cameraMode === "first" ? "WASD MOVE · MOUSE LOOK" : "W · S WALK · A · D TURN · Q · E SIDESTEP"} · SHIFT SPRINT · SPACE JUMP · O SWAP
                   VIEW · M MAP · V TRAVEL · SPACE · X CLIMB · SINK WHEN FLYING · B BUILD · T
-                  TERRAFORM · F ATTACK · H HEAL SPELL · K OPEN CHEST · P COMPANION · N NIGHT VISION · G
+                  TERRAFORM · F ATTACK · H HEAL SPELL · K OPEN CHEST · P COMPANION · G
                   ICE CREAM · J RAMEN · U CHEESE SLICE · NEARBY CREATURES NAME THEMSELVES AT THE TOP ·{" "}
 
                   {cameraMode === "first"
