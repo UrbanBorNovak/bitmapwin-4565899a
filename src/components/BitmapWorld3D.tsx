@@ -158,6 +158,7 @@ import { WorldDepthLayers } from "@/components/game/WorldDepthLayers";
 import { WorldAtmosphere } from "@/components/game/WorldAtmosphere";
 import { WeatherLighting, WorldWeather } from "@/components/game/WorldWeather";
 import { LandPerksHud } from "@/components/game/LandPerksHud";
+import { HuntPanel } from "@/components/codex/HuntPanel";
 import { noteStanding, standingLand, useStandingLand } from "@/lib/land-biome-live";
 import { setLandChainTip } from "@/lib/land-biome";
 import { growthLabel, terraform, terraformAt } from "@/lib/world-terraform";
@@ -4444,6 +4445,7 @@ function BitmapWorld3DInner({
 
         {/* THE LAND YOU STAND ON — landscape and the perks it is granting. */}
         {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <LandPerksHud /> : null}
+        {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <HuntPanel compact /> : null}
 
 
         {buildOpen ? (

@@ -93,3 +93,29 @@ export const craftCardFn = createServerFn({ method: "POST" })
       return { ok: false as const, balance: null, error: /insufficient|balance/i.test(msg) ? "NOT ENOUGH BIT" : "CRAFT FAILED — TRY AGAIN" };
     }
   });
+
+/** DAILY HUNT — pay the bounty once per day to a verified wallet. */
+export const claimHuntBountyFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ address: addressSchema, day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { assertControls } = await import("@/lib/coins.server");
+    const { HUNT_BIT_REWARD } = await import("@/lib/hunt-quest");
+    if (data.day !== new Date().toISOString().slice(0, 10)) return { ok: false as const, error: "BOUNTY EXPIRED" };
+    await assertControls(context.supabase, context.userId, data.address);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const ref = `hunt:${data.day}:${context.userId}`;
+    const { count } = await supabaseAdmin
+      .from("coin_ledger")
+      .select("id", { count: "exact", head: true })
+      .eq("reason", "hunt_bounty")
+      .eq("ref", ref);
+    if ((count ?? 0) > 0) return { ok: true as const, already: true, error: null };
+    const { error } = await supabaseAdmin.rpc("coin_apply", {
+      _address: data.address, _delta: HUNT_BIT_REWARD, _reason: "hunt_bounty", _ref: ref,
+    });
+    if (error) return { ok: false as const, error: "PAYOUT FAILED — TRY AGAIN" };
+    return { ok: true as const, already: false, error: null };
+  });
