@@ -47,3 +47,6 @@ export function combatBase(card: LivingCard) {
     upgrades: u,
   };
 }
+
+/** BIT charged to craft one living card from a BITMAP. */
+export const CRAFT_COST_BIT = 50;

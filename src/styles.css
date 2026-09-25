@@ -1474,3 +1474,27 @@
 @media (prefers-reduced-motion: reduce) {
   .lc-pfp-frame iframe { transform: none; }
 }
+
+/* WORKSHOP — forge dust when a card is crafted */
+@keyframes craft-dust {
+  0% { transform: translate(0, 0) scale(1); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+}
+@keyframes craft-flash {
+  0% { opacity: 0; transform: scale(0.6); }
+  25% { opacity: 0.9; }
+  100% { opacity: 0; transform: scale(1.8); }
+}
+@keyframes craft-rise {
+  0% { opacity: 0; transform: translateY(16px) scale(0.94); filter: blur(4px) brightness(2); }
+  60% { opacity: 1; filter: blur(0) brightness(1.3); }
+  100% { opacity: 1; transform: none; filter: none; }
+}
+@keyframes craft-charge { 0%,100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--bitcoin) 0%, transparent); } 50% { box-shadow: 0 0 18px 2px color-mix(in oklab, var(--bitcoin) 55%, transparent); } }
+.craft-dust { position: absolute; left: 50%; top: 50%; width: var(--s); height: var(--s); border-radius: 9999px; background: var(--bitcoin); animation: craft-dust var(--t) cubic-bezier(.2,.7,.3,1) var(--d) forwards; opacity: 0; pointer-events: none; }
+.craft-dust.is-signal { background: var(--signal); }
+.craft-flash { position: absolute; inset: 20%; border-radius: 9999px; background: radial-gradient(circle, color-mix(in oklab, var(--bitcoin) 70%, transparent), transparent 70%); animation: craft-flash 900ms ease-out forwards; pointer-events: none; }
+.craft-rise { animation: craft-rise 900ms cubic-bezier(.2,.8,.2,1) 250ms both; }
+.craft-charge { animation: craft-charge 700ms ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .craft-dust, .craft-flash, .craft-rise, .craft-charge { animation: none; opacity: 0; } .craft-rise { opacity: 1; } }

@@ -75,3 +75,21 @@ export const closeEventFn = createServerFn({ method: "POST" })
     await closeEvent(data.eventId);
     return { ok: true };
   });
+
+/** WORKSHOP — pay BIT to craft a living card from a BITMAP. */
+export const craftCardFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ address: addressSchema, height: z.number().int().min(0).max(99_999_999) }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { assertControls, spendBit } = await import("@/lib/coins.server");
+    const { CRAFT_COST_BIT } = await import("@/lib/game/workshop");
+    await assertControls(context.supabase, context.userId, data.address);
+    try {
+      return { ok: true as const, ...(await spendBit({ address: data.address, amount: CRAFT_COST_BIT, reason: "card_craft", ref: `craft:${data.height}` })), error: null };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      return { ok: false as const, balance: null, error: /insufficient|balance/i.test(msg) ? "NOT ENOUGH BIT" : "CRAFT FAILED — TRY AGAIN" };
+    }
+  });
