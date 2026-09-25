@@ -7,6 +7,7 @@
  * same objects to work out what a swing actually struck. Both sides talk through
  * this one module so a beast's position and its health never disagree.
  */
+import { recordBeastKill } from "@/lib/hunt-quest";
 
 export type BeastEntity = {
   id: number;
@@ -188,7 +189,10 @@ export function damageBeast(beast: BeastEntity, damage: number) {
   beast.hp = Math.max(0, beast.hp - dealt);
   beast.hitAt = performance.now();
   const killed = beast.hp === 0;
-  if (killed) beast.deadUntil = performance.now() + 14_000;
+  if (killed) {
+    beast.deadUntil = performance.now() + 14_000;
+    recordBeastKill(beast.label);
+  }
   emit();
   return { killed, damage: dealt };
 }
