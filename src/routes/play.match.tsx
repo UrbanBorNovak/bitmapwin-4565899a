@@ -1,5 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { CUP_ROUNDS, cupMatchSeed, readCup, reportCup, type CupState } from "@/lib/game/cups";
+import { CUP_ROUNDS, cupMatchSeed, readCup, reportCup, yourRival, type CupState } from "@/lib/game/cups";
+import { fetchBuildCounts } from "@/lib/game/worldAdapter";
+import type { RivalDeck } from "@/lib/game/engine";
 import { useEffect, useMemo, useState } from "react";
 import { GameBoard } from "@/components/play/GameBoard";
 import { ensureCard, usePlayProfile } from "@/lib/game/worldState";
@@ -39,6 +41,20 @@ function MatchPage() {
   const profile = usePlayProfile();
   const [round, setRound] = useState(0);
   const [seed, setSeed] = useState<number | null>(null);
+  // Solo cup: the rival fields their own real BITMAPs with live Oasis builds.
+  const [rival, setRival] = useState<RivalDeck | null | undefined>(undefined);
+  const rivalEntrant = cupLive ? yourRival(cupLive) : null;
+  const rivalKey = rivalEntrant?.deck?.join(",") ?? "";
+  useEffect(() => {
+    if (!cupFlag) { setRival(null); return; }
+    const heights = rivalEntrant?.deck ?? [];
+    if (!heights.length) { setRival(null); return; }
+    let live = true;
+    setRival(undefined);
+    void fetchBuildCounts(heights).then((m) => { if (live) setRival({ heights, builds: Object.fromEntries(m ?? []) }); });
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cupFlag, rivalKey]);
 
   useEffect(() => {
     if (profile && height !== undefined) ensureCard(height);
@@ -67,9 +83,9 @@ function MatchPage() {
         <p className="label"><span className="text-bitcoin">BITMAPWIN</span> // PLAY{cupLive ? ` · SOLO CUP · ${CUP_ROUNDS[cupLive.round]}` : table ? ` · TABLE ${table}` : " · VS AI"}</p>
         <Link to="/oasis" search={leaderHeight !== null ? { height: leaderHeight } : {}} className="label hover:text-bitcoin">OASIS ↗</Link>
       </div>
-      {profile && deck && seed !== null ? (
-        <GameBoard key={`${seed}-${round}`} profile={profile} deck={deck} seed={seed} leaderId={leaderId} tableCode={table ?? null} onRestart={() => (cupFlag ? navigate({ to: "/play/tournaments" }) : setRound((r) => r + 1))}
-          {...(cupLive ? { onFinish: (win: boolean) => reportCup(win), restartLabel: "BACK TO THE CUP", context: `SOLO CUP · ${CUP_ROUNDS[cupLive.round]}` } : {})} />
+      {profile && deck && seed !== null && rival !== undefined ? (
+        <GameBoard key={`${seed}-${round}`} profile={profile} deck={deck} seed={seed} leaderId={leaderId} rival={rival} tableCode={table ?? null} onRestart={() => (cupFlag ? navigate({ to: "/play/tournaments" }) : setRound((r) => r + 1))}
+          {...(cupLive ? { onFinish: (win: boolean) => reportCup(win), restartLabel: "BACK TO THE CUP", context: `SOLO CUP · ${CUP_ROUNDS[cupLive.round]}${rivalEntrant ? ` · VS ${rivalEntrant.name}` : ""}` } : {})} />
       ) : cupFlag && cup !== null && !cupLive ? (
         <p className="border border-border p-6 font-mono text-xs text-muted-foreground">&gt; THIS CUP IS OVER. <Link to="/play/tournaments" className="text-bitcoin">OPEN TOURNAMENTS</Link></p>
       ) : (

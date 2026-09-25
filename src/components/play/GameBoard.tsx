@@ -13,6 +13,7 @@ import {
   newMatch,
   playCard,
   type MatchState,
+  type RivalDeck,
   type Unit,
 } from "@/lib/game/engine";
 import { dispatchWorldEvent } from "@/lib/game/worldState";
