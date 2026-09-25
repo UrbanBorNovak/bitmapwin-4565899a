@@ -560,7 +560,7 @@ export const DesertLife = memo(function DesertLife({
   );
 });
 
-import { SPECIES, JACKAL_SPECIES, type Species } from "@/lib/bestiary";
+import { SPECIES, JACKAL_SPECIES, type Species, type CritterKind } from "@/lib/bestiary";
 
 /** on-chain snake */
 const SNAKE_URL = contentUrl(
