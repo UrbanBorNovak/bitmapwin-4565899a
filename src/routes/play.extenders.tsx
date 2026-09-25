@@ -22,6 +22,7 @@ import {
 import type { CardVisualExtender } from "@/lib/game/types";
 import { Link } from "@tanstack/react-router";
 import { ORD_TORCHES_PARENT, ORD_TORCHES_POOL, ORD_TORCHES_SUPPLY, useOrdTorches } from "@/lib/game/ordTorches";
+import { PUPPETS_PARENT, PUPPETS_POOL, usePuppets } from "@/lib/game/puppets";
 
 export const Route = createFileRoute("/play/extenders")({
   head: () => ({
