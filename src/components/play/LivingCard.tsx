@@ -95,6 +95,7 @@ function CardArt({ card }: { card: Card }) {
       <div className="lc-pfp-frame absolute inset-0" title={`ORD TORCHES · #${torch.index + 1} / 3000`}>
         <OasisBackdrop height={card.bitmap} />
         <iframe src={ordinalsPreviewUrl(torch.inscriptionId)} title={`Ord Torch #${torch.index + 1}`} loading="lazy" sandbox="allow-scripts allow-same-origin" scrolling="no" className="h-full w-full border-0 pointer-events-none" />
+        <OasisBackdrop height={card.bitmap} className="pointer-events-none opacity-60 mix-blend-screen" />
         <div className="lc-pfp-scan absolute inset-0" aria-hidden />
         <BitmapPattern height={card.bitmap} state={card.state} className="absolute bottom-2 left-2 size-10 opacity-90" />
         <span className="lc-pfp-badge label absolute left-1.5 top-1 text-[7px] text-bitcoin">TORCH #{torch.index + 1}</span>
@@ -117,6 +118,7 @@ function CardArt({ card }: { card: Card }) {
             className="h-full w-full border-0 pointer-events-none"
           />
         )}
+        <OasisBackdrop height={card.bitmap} className="pointer-events-none opacity-60 mix-blend-screen" />
         <div className="lc-pfp-scan absolute inset-0" aria-hidden />
         <BitmapPattern height={card.bitmap} state={card.state} className="absolute bottom-2 left-2 size-10 opacity-90" />
         <span className="lc-pfp-badge label absolute left-1.5 top-1 text-[7px] text-bitcoin">{extender.source === "ordinals-image" ? "CHILD IMG" : "HTML PFP"}</span>
