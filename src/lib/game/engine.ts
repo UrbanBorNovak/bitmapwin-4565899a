@@ -17,6 +17,11 @@ export type Unit = {
   maxHp: number;
   ready: boolean;
   ability?: string;
+  /** Living-card combat perks derived from state, builds, traits and learned adaptations. */
+  perks: string[];
+  adaptations: string[];
+  armor: number;
+  resolute: boolean;
   fx: "enter" | "damaged" | "evolved" | "attacking" | null;
 };
 export type Side = { hp: number; energy: number; deck: Unit[]; hand: Unit[]; board: Unit[]; hurt: number };
@@ -61,17 +66,34 @@ function shuffle<T>(list: T[], r: () => number) {
 
 let uidN = 0;
 function toUnit(card: LivingCard): Unit {
+  const ad = card.learning?.adaptations ?? [];
+  const perks: string[] = [];
+  let atk = card.power, hp = card.defense, cost = card.energy, armor = 0;
+  if (card.state === "DEVELOPED") { hp += 1; perks.push("DEVELOPED +1 HP"); }
+  if (card.state === "LEGENDARY") { atk += 1; hp += 1; perks.push("LEGENDARY +1/+1"); }
+  const builds = card.facts?.buildCount ?? 0;
+  if (builds > 0 && card.traits.includes("BUILDER")) { hp += Math.min(2, builds); perks.push(`${builds} OASIS BUILD${builds === 1 ? "" : "S"} +${Math.min(2, builds)} HP`); }
+  if (card.traits.includes("ARCHITECT") || ad.includes("FORTIFIED")) { armor += 1; perks.push("ARMOR 1"); }
+  if (card.traits.includes("TRADER") && cost > 1) { cost -= 1; perks.push("TRADER −1 COST"); }
+  if (card.traits.includes("EXPLORER") || ad.includes("PATHFINDER")) perks.push("CHARGE");
+  if (ad.includes("RESOLUTE")) perks.push("RESOLUTE · SURVIVES ONCE");
+  if (ad.includes("MASTERWORK")) perks.push("MASTERWORK · +1 HP ON ENTRY");
+  if (ad.includes("DEEP_MEMORY")) perks.push("DEEP MEMORY · +1 ENERGY");
+  if (ad.includes("CATALYST")) perks.push("CATALYST · +1 EVENT DAMAGE");
+  if (ad.includes("BATTLE_TESTED")) perks.push("BATTLE TESTED · +1 CLASH");
+  if (ad.includes("VETERAN")) perks.push("VETERAN · +1 TO RIVAL");
   return {
+    perks, adaptations: [...ad], armor, resolute: ad.includes("RESOLUTE"),
     uid: `${card.id}#${++uidN}`,
     cardId: card.id,
     name: card.name,
     type: card.type,
     traits: card.traits,
     height: card.bitmap,
-    cost: card.energy,
-    atk: card.power,
-    hp: card.defense,
-    maxHp: card.defense,
+    cost,
+    atk,
+    hp,
+    maxHp: hp,
     ready: false,
     ability: abilityFor(card.type, card.bitmap).id,
     fx: null,
@@ -172,18 +194,20 @@ export function playCard(state: MatchState, id: SideId, uid: string): MatchState
   if (u.traits.includes("ORIGIN")) {
     side.hp = Math.min(START_HP, side.hp + 2);
   }
+  if (u.adaptations?.includes("MASTERWORK")) side.hp = Math.min(START_HP, side.hp + 1);
 
   const ab = abilityOf(u);
   if (u.type === "EVENT") {
     say(s, id, `${u.name} · ${ab.name}.`);
     ab.onPlay?.(ctx(s, id, u));
+    if (u.adaptations?.includes("CATALYST")) { foe.hp -= 1; foe.hurt = Math.max(foe.hurt, 1); say(s, id, `${u.name} · CATALYST +1.`); }
     checkWin(s);
     return s;
   }
 
   if (u.traits.includes("NEIGHBOR") && side.board.length > 0) u.atk += 1;
   u.fx = "enter";
-  u.ready = !!ab.charge;
+  u.ready = !!ab.charge || u.perks?.includes("CHARGE");
   side.board.push(u);
   say(s, id, `${u.name} entered the field · ${ab.name}.`);
   ab.onPlay?.(ctx(s, id, u));
@@ -200,8 +224,9 @@ function removeDead(s: MatchState) {
 }
 
 function hitUnit(t: Unit, n: number) {
-  const dmg = Math.max(0, n - (abilityOf(t).armor ?? 0));
+  const dmg = Math.max(0, n - (abilityOf(t).armor ?? 0) - (t.armor ?? 0));
   t.hp -= dmg;
+  if (t.hp <= 0 && t.resolute) { t.hp = 1; t.resolute = false; }
   t.fx = "damaged";
 }
 
@@ -239,7 +264,7 @@ export function attack(state: MatchState, id: SideId, attackerUid: string, targe
   a.fx = "attacking";
   if (id === "player") s.usage[a.cardId] = (s.usage[a.cardId] ?? 0) + 1;
   if (target === "hero") {
-    const dmg = a.atk + (a.traits.includes("PIONEER") ? 1 : 0) + (abilityOf(a).heroBonus ?? 0);
+    const dmg = a.atk + (a.traits.includes("PIONEER") ? 1 : 0) + (abilityOf(a).heroBonus ?? 0) + (a.adaptations?.includes("VETERAN") ? 1 : 0);
     foe.hp -= dmg;
     foe.hurt = dmg;
     say(s, id, `${a.name} hit the rival for ${dmg}.`);
@@ -247,7 +272,7 @@ export function attack(state: MatchState, id: SideId, attackerUid: string, targe
     const t = foe.board.find((u) => u.uid === target)!;
     say(s, id, `${a.name} clashed with ${t.name}.`);
     const back = t.atk;
-    hitUnit(t, a.atk);
+    hitUnit(t, a.atk + (a.adaptations?.includes("BATTLE_TESTED") ? 1 : 0));
     hitUnit(a, back);
     a.fx = "attacking";
     removeDead(s);
@@ -264,7 +289,7 @@ export function endTurn(state: MatchState): MatchState {
   s.active = next;
   if (next === "player") s.turn += 1;
   const side = s.sides[next];
-  const bonus = side.board.reduce((n, u) => n + (abilityOf(u).energy ?? 0), 0);
+  const bonus = side.board.reduce((n, u) => n + (abilityOf(u).energy ?? 0) + (u.adaptations?.includes("DEEP_MEMORY") ? 1 : 0), 0);
   side.energy = Math.min(6, BASE_ENERGY + bonus);
   for (const u of side.board) u.ready = true;
   draw(s, next);
