@@ -251,9 +251,9 @@ export function LivingCard({ card, size = "md", ui = "idle", live, onClick, labe
         )}
       </section>
 
-      <footer className="lc-relic-stats relative z-10 mx-3 mb-2 mt-1.5 grid shrink-0 grid-cols-[1fr_auto_1fr] items-end">
+      <footer className="lc-relic-stats relative z-10 mx-2 mb-2 mt-1.5 grid shrink-0 grid-cols-[1fr_minmax(2.5rem,.7fr)_1fr] items-stretch">
         <span className="lc-stat lc-stat-power" title="Power"><small>POWER</small><b>{atk}</b></span>
-        <span className="lc-integrity" title="Activity"><i style={{ width: `${Math.max(12, Math.min(100, card.activity * 10))}%` }} /><small>ACT {card.activity}</small></span>
+        <span className="lc-integrity" title="Activity"><small>ACTIVITY</small><b>{card.activity}</b><span><i style={{ width: `${Math.max(12, Math.min(100, card.activity * 10))}%` }} /></span></span>
         <span className={`lc-stat lc-stat-defense ${live && hp < live.maxHp ? "text-destructive" : ""}`} title="Defense"><small>DEFENSE</small><b>{hp}</b></span>
       </footer>
       <div className="lc-foil absolute inset-0 z-20 pointer-events-none" aria-hidden />
