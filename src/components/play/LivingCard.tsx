@@ -1,4 +1,6 @@
 import { abilityFor } from "@/lib/game/abilities";
+import { WORLD_CELL, WORLD_GRID, WORLD_UNITS } from "@/lib/player-state";
+import { reliefAt } from "@/lib/world-terrain";
 import { bitmapPixelForHeight, useBitmapPixels } from "@/lib/game/bitmapPixels";
 import { hash } from "@/lib/game/cardFactory";
 import { activePfpExtenderForCard, inscriptionContentUrl, ordinalsPreviewUrl } from "@/lib/game/pfpExtenders";
