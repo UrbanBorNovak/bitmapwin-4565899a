@@ -5,17 +5,17 @@ type Props = { children: ReactNode };
 type State = { failed: boolean };
 
 export class OasisWorldGuard extends Component<Props, State> {
-  state: State = { failed: false };
+  override state: State = { failed: false };
 
   static getDerivedStateFromError(): State {
     return { failed: true };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo) {
+  override componentDidCatch(error: Error, info: ErrorInfo) {
     console.error("Oasis renderer failed", error, info.componentStack);
   }
 
-  render() {
+  override render() {
     if (!this.state.failed) return this.props.children;
     return (
       <section className="grid h-[78vh] min-h-[520px] place-items-center border border-border bg-background px-5 text-center" role="alert">
