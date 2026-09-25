@@ -192,10 +192,11 @@ type Props = {
 };
 
 export function LivingCard({ card, size = "md", ui = "idle", live, onClick, label }: Props) {
-  const w = size === "sm" ? "w-[7.5rem]" : size === "lg" ? "w-[15rem]" : "w-[10rem]";
+  const dimensions = size === "sm" ? "h-[11.625rem] w-[7.5rem]" : size === "lg" ? "h-[23.25rem] w-[15rem]" : "h-[15.5rem] w-[10rem]";
   const Tag = onClick ? "button" : "div";
   const atk = live?.atk ?? card.power;
   const hp = live?.hp ?? card.defense;
+  const ability = abilityFor(card.type, card.bitmap);
   return (
     <Tag
       type={onClick ? "button" : undefined}
@@ -203,34 +204,58 @@ export function LivingCard({ card, size = "md", ui = "idle", live, onClick, labe
       aria-label={label ?? `${card.name}, ${card.type}, ${card.state}`}
       aria-pressed={onClick ? ui === "selected" : undefined}
       disabled={onClick ? ui === "disabled" : undefined}
-      className={`living-card lc-${card.state.toLowerCase()} lc-ui-${ui} ${w} relative flex shrink-0 flex-col border bg-card text-left`}
+      data-size={size}
+      className={`living-card lc-${card.state.toLowerCase()} lc-ui-${ui} ${dimensions} group relative isolate flex shrink-0 flex-col overflow-hidden text-left`}
     >
-      <div className="flex items-center justify-between border-b border-border px-2 py-1">
-        <span className="font-mono text-[9px] text-muted-foreground">{card.blockHeight.toLocaleString("en-US")}</span>
-        <span className="lc-cost font-mono text-[10px]" title="Energy cost">⚡{card.energy}</span>
-      </div>
-      <div className="lc-art relative grid aspect-[5/4] place-items-center overflow-hidden border-b border-border">
+      <div className="lc-relic-shell absolute inset-0" aria-hidden />
+      <div className="lc-relic-rim absolute inset-1" aria-hidden />
+      <i className="lc-rivet lc-rivet-nw" aria-hidden />
+      <i className="lc-rivet lc-rivet-ne" aria-hidden />
+      <i className="lc-rivet lc-rivet-sw" aria-hidden />
+      <i className="lc-rivet lc-rivet-se" aria-hidden />
+
+      <header className="lc-crown relative z-10 mx-2 mt-2 shrink-0 text-center">
+        <div className="lc-title-band flex min-w-0 items-center justify-center px-5 py-0.5">
+          <h3 className="display truncate text-[10px] font-bold uppercase text-card-foreground">{card.name}</h3>
+        </div>
+        <div className="lc-type-seal mx-auto -mt-px flex max-w-[82%] items-center justify-center gap-1 px-2 py-px">
+          <span aria-hidden>{TYPE_GLYPH[card.type]}</span>
+          <span className="truncate font-mono text-[6px] font-bold uppercase">{card.type} · {card.state}</span>
+        </div>
+        <span className="lc-cost absolute right-0 top-0 grid size-5 place-items-center font-mono text-[8px]" title="Energy cost">{card.energy}</span>
+      </header>
+
+      <div className="lc-art relative z-[1] mx-2 mt-1.5 min-h-0 flex-[1.35] overflow-hidden">
         <div className="lc-grid absolute inset-0" aria-hidden />
         <CardArt card={card} />
-        <span className="absolute left-1.5 top-1 text-sm leading-none text-foreground/80" aria-hidden>{TYPE_GLYPH[card.type]}</span>
-        <span className="lc-state label absolute bottom-1 right-1.5 text-[8px]">{card.state}</span>
+        <span className="lc-block-stamp absolute bottom-1 left-1 font-mono text-[6px]" data-no-translate>{card.blockHeight.toLocaleString("en-US")}.BITMAP</span>
+        <span className="lc-state absolute bottom-1 right-1 font-mono text-[6px]">{card.state}</span>
+        <i className="lc-corner lc-corner-nw" aria-hidden />
+        <i className="lc-corner lc-corner-ne" aria-hidden />
       </div>
-      <div className="flex min-h-0 flex-1 flex-col gap-1 px-2 py-1.5">
-        <div className={`display leading-tight ${size === "sm" ? "text-[10px]" : "text-xs"}`}>{card.name}</div>
-        <div className="label text-[8px] text-muted-foreground">{card.type} · <span className="text-bitcoin">{abilityFor(card.type, card.bitmap).name}</span></div>
+
+      <section className="lc-rules relative z-10 mx-2 mt-1.5 flex min-h-0 flex-[0.72] flex-col px-2 py-1.5">
+        <div className="flex items-center justify-center gap-1.5">
+          <i className="lc-sigil" aria-hidden />
+          <strong className="display text-[7px] uppercase text-card-foreground">{ability.name}</strong>
+          <i className="lc-sigil lc-sigil-moss" aria-hidden />
+        </div>
+        {size !== "sm" && <p className="lc-ability-text mt-1 text-center text-[7px] leading-[1.25] text-card-foreground/80">{ability.text}</p>}
         {size !== "sm" && (
-          <div className="flex flex-wrap gap-1">
-            {card.traits.slice(0, 4).map((t) => (
-              <span key={t} className="border border-border px-1 font-mono text-[8px] text-muted-foreground">{t}</span>
+          <div className="mt-auto flex min-w-0 flex-wrap justify-center gap-1 border-t border-relic/25 pt-1">
+            {card.traits.slice(0, size === "lg" ? 4 : 2).map((trait) => (
+              <span key={trait} className="lc-trait px-1 py-px font-mono text-[5px] uppercase">{trait}</span>
             ))}
           </div>
         )}
-      </div>
-      <div className="mt-auto grid grid-cols-3 border-t border-border font-mono text-[10px]">
-        <span className="px-1.5 py-1 text-bitcoin" title="Power">⚔ {atk}</span>
-        <span className={`border-x border-border px-1.5 py-1 ${live && hp < live.maxHp ? "text-destructive" : ""}`} title="Defense">⛨ {hp}</span>
-        <span className="px-1.5 py-1 text-signal" title="Activity">◉ {card.activity}</span>
-      </div>
+      </section>
+
+      <footer className="lc-relic-stats relative z-10 mx-3 mb-2 mt-1.5 grid shrink-0 grid-cols-[1fr_auto_1fr] items-end">
+        <span className="lc-stat lc-stat-power" title="Power"><small>POWER</small><b>{atk}</b></span>
+        <span className="lc-integrity" title="Activity"><i style={{ width: `${Math.max(12, Math.min(100, card.activity * 10))}%` }} /><small>ACT {card.activity}</small></span>
+        <span className={`lc-stat lc-stat-defense ${live && hp < live.maxHp ? "text-destructive" : ""}`} title="Defense"><small>DEFENSE</small><b>{hp}</b></span>
+      </footer>
+      <div className="lc-foil absolute inset-0 z-20 pointer-events-none" aria-hidden />
       {live?.ready === false && <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center label text-[8px] text-muted-foreground">RESTING</span>}
     </Tag>
   );

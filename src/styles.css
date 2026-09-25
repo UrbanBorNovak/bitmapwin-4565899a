@@ -50,6 +50,10 @@
   --color-bitcoin: var(--bitcoin);
   --color-bitcoin-foreground: var(--bitcoin-foreground);
   --color-surface: var(--surface);
+  --color-relic: var(--relic);
+  --color-relic-dark: var(--relic-dark);
+  --color-relic-moss: var(--relic-moss);
+  --color-relic-parchment: var(--relic-parchment);
   --color-profile-surface: var(--profile-surface);
   --color-profile-surface-raised: var(--profile-surface-raised);
   --color-profile-warm: var(--profile-warm);
@@ -71,6 +75,10 @@
   --foreground: oklch(0.955 0 0);
   --card: oklch(0.14 0 0);
   --card-foreground: oklch(0.955 0 0);
+  --relic: oklch(0.548 0.104 62.5);
+  --relic-dark: oklch(0.257 0.022 58.1);
+  --relic-moss: oklch(0.532 0.069 126.6);
+  --relic-parchment: oklch(0.874 0.047 83.2);
   --popover: oklch(0.115 0 0);
   --popover-foreground: oklch(0.955 0 0);
   --primary: oklch(0.72 0.19 55.6);
@@ -107,6 +115,10 @@
   --foreground: oklch(0.12 0 0);
   --card: oklch(0.975 0 0);
   --card-foreground: oklch(0.12 0 0);
+  --relic: oklch(0.47 0.095 62.5);
+  --relic-dark: oklch(0.33 0.028 58.1);
+  --relic-moss: oklch(0.45 0.062 126.6);
+  --relic-parchment: oklch(0.91 0.039 83.2);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.12 0 0);
   --primary: oklch(0.68 0.19 55.6);
@@ -1405,10 +1417,68 @@
 .play-pip-on { background: var(--color-signal); box-shadow: 0 0 8px -2px var(--color-signal); }
 .play-log li:first-child { color: var(--color-foreground); background: color-mix(in oklab, var(--color-bitcoin) 8%, transparent); }
 .living-card {
-  border-color: var(--color-border);
-  transition: transform 160ms ease, box-shadow 200ms ease, border-color 200ms ease, opacity 200ms ease, filter 200ms ease;
+  border: 0;
+  border-radius: 0.75rem;
+  background: var(--color-background);
+  color: var(--color-relic-parchment);
+  box-shadow: 0 14px 34px -18px color-mix(in oklab, var(--color-background) 80%, transparent), 0 0 18px -12px var(--color-relic);
+  transition: transform 240ms ease, box-shadow 300ms ease, opacity 200ms ease, filter 200ms ease;
 }
-.living-card:is(button):not(:disabled):hover { transform: translateY(-3px); border-color: var(--color-border-strong, var(--color-foreground)); }
+.living-card:is(button):not(:disabled):hover { transform: translateY(-5px); box-shadow: 0 20px 40px -18px var(--color-background), 0 0 24px -10px var(--color-relic); }
+.lc-relic-shell {
+  border: 6px solid var(--color-relic-dark);
+  border-radius: inherit;
+  background:
+    linear-gradient(145deg, color-mix(in oklab, var(--color-relic) 34%, var(--color-relic-dark)), var(--color-background) 42%, var(--color-relic-dark));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-relic-parchment) 18%, transparent), inset 0 0 18px var(--color-background);
+}
+.lc-relic-rim { border: 1px solid color-mix(in oklab, var(--color-relic) 60%, transparent); border-radius: 0.55rem; }
+.lc-title-band {
+  border-block: 1px solid color-mix(in oklab, var(--color-relic) 58%, transparent);
+  background: linear-gradient(to right, transparent, color-mix(in oklab, var(--color-relic) 22%, transparent), transparent);
+  text-shadow: 0 1px 2px var(--color-background);
+}
+.lc-type-seal { border: 1px solid color-mix(in oklab, var(--color-relic) 58%, transparent); border-radius: 9999px; background: var(--color-relic-dark); color: var(--color-relic); }
+.lc-cost { border: 1px solid var(--color-relic); border-radius: 9999px; background: var(--color-relic-dark); color: var(--color-relic-parchment); box-shadow: 0 0 8px -3px var(--color-relic); }
+.lc-art { border: 2px solid var(--color-relic-dark); border-radius: 0.35rem; box-shadow: inset 0 0 14px var(--color-background); }
+.lc-block-stamp, .lc-state { padding: 0.1rem 0.2rem; background: color-mix(in oklab, var(--color-background) 78%, transparent); color: var(--color-relic-parchment); }
+.lc-corner { position: absolute; top: 0.25rem; width: 1.1rem; height: 1.1rem; border-top: 1px solid var(--color-relic); }
+.lc-corner-nw { left: 0.25rem; border-left: 1px solid var(--color-relic); }
+.lc-corner-ne { right: 0.25rem; border-right: 1px solid var(--color-relic); }
+.lc-rules { border: 1px solid color-mix(in oklab, var(--color-relic) 42%, transparent); border-radius: 0.3rem; background: color-mix(in oklab, var(--color-relic-dark) 88%, transparent); box-shadow: inset 0 1px 0 color-mix(in oklab, var(--color-relic-parchment) 8%, transparent); }
+.lc-ability-text { font-family: var(--font-sans); }
+.lc-sigil { width: 0.35rem; height: 0.35rem; transform: rotate(45deg); background: var(--color-relic); box-shadow: 0 0 5px var(--color-relic); }
+.lc-sigil-moss { background: var(--color-relic-moss); box-shadow: 0 0 5px var(--color-relic-moss); }
+.lc-trait { border: 1px solid color-mix(in oklab, var(--color-relic) 32%, transparent); background: color-mix(in oklab, var(--color-background) 55%, transparent); color: var(--color-relic-parchment); }
+.lc-relic-stats { min-height: 1.75rem; }
+.lc-stat { position: relative; display: grid; place-items: center; justify-self: center; width: 1.7rem; height: 1.7rem; transform: rotate(45deg); border: 1px solid var(--color-relic); background: var(--color-relic-dark); box-shadow: 0 0 8px -4px var(--color-relic); }
+.lc-stat > * { transform: rotate(-45deg); }
+.lc-stat small { position: absolute; top: -0.5rem; font-family: var(--font-mono); font-size: 4px; color: var(--color-relic); }
+.lc-stat b { font-family: var(--font-display); font-size: 0.75rem; color: var(--color-relic-parchment); }
+.lc-integrity { align-self: center; display: flex; width: 2.3rem; flex-direction: column; align-items: center; gap: 0.15rem; }
+.lc-integrity::before { content: ""; width: 100%; height: 2px; background: color-mix(in oklab, var(--color-relic) 22%, transparent); }
+.lc-integrity i { position: absolute; margin-top: 0; align-self: flex-start; height: 2px; max-width: 100%; background: var(--color-relic-moss); }
+.lc-integrity small { font-family: var(--font-mono); font-size: 4px; color: color-mix(in oklab, var(--color-relic) 70%, transparent); }
+.lc-rivet { position: absolute; z-index: 30; width: 0.24rem; height: 0.24rem; border-radius: 9999px; background: var(--color-relic); box-shadow: inset 1px 1px color-mix(in oklab, var(--color-relic-parchment) 35%, transparent), 1px 1px 2px var(--color-background); }
+.lc-rivet-nw { left: 0.35rem; top: 0.35rem; } .lc-rivet-ne { right: 0.35rem; top: 0.35rem; } .lc-rivet-sw { left: 0.35rem; bottom: 0.35rem; } .lc-rivet-se { right: 0.35rem; bottom: 0.35rem; }
+.lc-foil { opacity: 0; background: linear-gradient(115deg, transparent 18%, color-mix(in oklab, var(--color-relic-parchment) 14%, transparent) 43%, color-mix(in oklab, var(--color-relic-moss) 10%, transparent) 50%, transparent 72%); transform: translateX(-70%); transition: transform 700ms ease, opacity 300ms ease; }
+.living-card:hover .lc-foil { opacity: 1; transform: translateX(55%); }
+.living-card[data-size="sm"] .lc-relic-shell { border-width: 4px; }
+.living-card[data-size="sm"] .lc-crown { margin-top: 0.3rem; }
+.living-card[data-size="sm"] .lc-title-band { padding-inline: 1rem; }
+.living-card[data-size="sm"] .lc-title-band h3 { font-size: 7px; }
+.living-card[data-size="sm"] .lc-type-seal { font-size: 5px; }
+.living-card[data-size="sm"] .lc-art { margin-top: 0.2rem; }
+.living-card[data-size="sm"] .lc-rules { margin-top: 0.2rem; padding: 0.2rem; flex-basis: 0.36rem; }
+.living-card[data-size="sm"] .lc-rules strong { font-size: 5px; }
+.living-card[data-size="sm"] .lc-relic-stats { margin-bottom: 0.35rem; margin-top: 0.2rem; }
+.living-card[data-size="lg"] .lc-title-band h3 { font-size: 14px; }
+.living-card[data-size="lg"] .lc-type-seal span:last-child { font-size: 8px; }
+.living-card[data-size="lg"] .lc-rules strong { font-size: 10px; }
+.living-card[data-size="lg"] .lc-ability-text { font-size: 10px; }
+.living-card[data-size="lg"] .lc-trait { font-size: 7px; }
+.living-card[data-size="lg"] .lc-stat { width: 2.2rem; height: 2.2rem; }
+.living-card[data-size="lg"] .lc-stat b { font-size: 1rem; }
 .lc-grid {
   background-image:
     linear-gradient(to right, color-mix(in oklab, var(--color-foreground) 7%, transparent) 1px, transparent 1px),
