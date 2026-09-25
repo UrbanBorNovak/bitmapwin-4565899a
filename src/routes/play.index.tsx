@@ -130,9 +130,9 @@ function PlayLobby() {
               <h2 id="deck-h" className="label"><span className="text-bitcoin">2</span> · YOUR DECK</h2>
               <Link to="/play/cards" className="label hover:text-bitcoin">ALL CARDS →</Link>
             </div>
-            <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
+            <div className="relative mt-3 flex gap-3 overflow-x-auto overflow-y-hidden px-1 pb-3 pt-2 [contain:paint]">
               {profile ? featured.map((c) => (
-                <Link key={c.id} to="/play/card/$id" params={{ id: String(c.bitmap) }}><LivingCard card={c} /></Link>
+                <Link key={c.id} to="/play/card/$id" params={{ id: String(c.bitmap) }} className="shrink-0"><LivingCard card={c} /></Link>
               )) : <p className="font-mono text-xs text-muted-foreground">&gt; SHUFFLING THE WORLD…</p>}
             </div>
             {world === "unavailable" && <p className="mt-2 font-mono text-[10px] text-muted-foreground">BITMAP DATA UNAVAILABLE — cards will catch up with the world later.</p>}
@@ -156,7 +156,7 @@ function PlayLobby() {
             </div>
           </section>
         </div>
-        <aside className="grid content-start gap-3">
+        <aside className="relative z-10 grid content-start gap-3">
           {profile && <TerritoryPicker profile={profile} />}
           {profile && <PlayStatsPanel profile={profile} />}
           {profile && <WorldEventFeed events={profile.events} />}
