@@ -1,6 +1,7 @@
 import { createCardFromBitmap, emptyFacts, ATLAS_POOL } from "./cardFactory";
 import type { CardType, LivingCard, Trait } from "./types";
 import { abilityFor, abilityOf, type AbilityCtx } from "./abilities";
+import { combatBase } from "./workshop";
 
 /** GAME STATE — ephemeral per match. Cards are snapshots; living cards change only via world events. */
 export type SideId = "player" | "ai";
@@ -68,11 +69,13 @@ let uidN = 0;
 function toUnit(card: LivingCard): Unit {
   const ad = card.learning?.adaptations ?? [];
   const perks: string[] = [];
-  let atk = card.power, hp = card.defense, cost = card.energy, armor = 0;
+  const base = combatBase(card);
+  let atk = base.atk, hp = base.hp, cost = base.cost, armor = 0;
+  if (base.build.builds > 0) perks.push(`${base.build.builds} OASIS BUILD${base.build.builds === 1 ? "" : "S"} +${base.build.atk}/+${base.build.hp}`);
+  const up = base.upgrades;
+  if (up.power || up.defense || up.efficiency) perks.push(`FORGED +${up.power}/+${up.defense}${up.efficiency ? " −1 COST" : ""}`);
   if (card.state === "DEVELOPED") { hp += 1; perks.push("DEVELOPED +1 HP"); }
   if (card.state === "LEGENDARY") { atk += 1; hp += 1; perks.push("LEGENDARY +1/+1"); }
-  const builds = card.facts?.buildCount ?? 0;
-  if (builds > 0 && card.traits.includes("BUILDER")) { hp += Math.min(2, builds); perks.push(`${builds} OASIS BUILD${builds === 1 ? "" : "S"} +${Math.min(2, builds)} HP`); }
   if (card.traits.includes("ARCHITECT") || ad.includes("FORTIFIED")) { armor += 1; perks.push("ARMOR 1"); }
   if (card.traits.includes("TRADER") && cost > 1) { cost -= 1; perks.push("TRADER −1 COST"); }
   if (card.traits.includes("EXPLORER") || ad.includes("PATHFINDER")) perks.push("CHARGE");

@@ -116,6 +116,8 @@ export type LivingCard = {
   wins: number;
   learning: CardLearning;
   facts: BitmapFacts;
+  /** Workshop upgrades (optional for older saves). */
+  upgrades?: { power: number; defense: number; efficiency: number; spentXp: number };
 };
 
 export type WorldEventRecord = {
