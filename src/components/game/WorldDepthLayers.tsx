@@ -258,6 +258,26 @@ function AtmosphericHaze() {
   );
 }
 
+function DistrictRoads() {
+  const strips = useMemo(() => Array.from({ length: 7 }, (_, index) => 12.5 * (index + 1)), []);
+  return (
+    <group position-y={0.001} raycast={noRaycast}>
+      {strips.map((offset) => (
+        <group key={offset}>
+          <mesh rotation-x={-Math.PI / 2} position={[0, 0, offset]}>
+            <planeGeometry args={[WORLD_UNITS, 0.035]} />
+            <meshBasicMaterial color={ATLAS.grid} transparent opacity={0.2} depthWrite={false} />
+          </mesh>
+          <mesh rotation-x={-Math.PI / 2} position={[offset - WORLD_UNITS / 2, 0, WORLD_UNITS / 2]}>
+            <planeGeometry args={[0.035, WORLD_UNITS]} />
+            <meshBasicMaterial color={ATLAS.grid} transparent opacity={0.2} depthWrite={false} />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
 export const WorldDepthLayers = memo(function WorldDepthLayers({ mapView }: { mapView: boolean }) {
   return (
     <group>
@@ -266,6 +286,7 @@ export const WorldDepthLayers = memo(function WorldDepthLayers({ mapView }: { ma
       <DistantActivity />
       <AtmosphericHaze />
       <group visible={!mapView}>
+        <DistrictRoads />
         <MidDistrictLandmarks />
       </group>
     </group>

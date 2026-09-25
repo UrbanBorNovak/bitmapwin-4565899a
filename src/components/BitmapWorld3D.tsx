@@ -36,7 +36,6 @@ import {
   Flame,
   Footprints,
   Gem,
-  Glasses,
   Hammer,
   Map as MapIcon,
   Maximize,
@@ -120,7 +119,6 @@ import { creditBits } from "@/lib/world-bits";
 import { grantXp } from "@/lib/world-skills";
 import { FlyCreatures } from "@/components/game/FlyCreatures";
 import { MysteryBoxes } from "@/components/game/MysteryBoxes";
-import { NightVision } from "@/components/game/NightVision";
 import {
   activeRegen,
   companionSpec,
@@ -129,7 +127,6 @@ import {
   startEating,
   tickGear,
   toggleComic,
-  toggleGoggles,
   toggleNecklace,
   toggleRing,
   toggleWatch,
@@ -3049,7 +3046,7 @@ function BitmapWorld3DInner({
   }, []);
 
   // B opens the build panel, T works the land under your feet, and the kit keys
-  // whistle for a pet, flip the goggles, and open a ration.
+  // whistle for a pet and open a ration.
   const eat = useCallback((food: FoodId) => {
     const spec = startEating(food);
     if (!spec) {
@@ -3129,13 +3126,6 @@ function BitmapWorld3DInner({
         playSfx("ui");
         setBiteNote(next.inscription ? `COMPANION · ${next.label}` : "COMPANION DISMISSED");
         window.setTimeout(() => setBiteNote(null), 1600);
-        return;
-      }
-      if (key === "n") {
-        const on = toggleGoggles();
-        playSfx("ui");
-        setBiteNote(on ? "NIGHT VISION · ON" : "NIGHT VISION · OFF");
-        window.setTimeout(() => setBiteNote(null), 1400);
         return;
       }
       if (key === "g") {
@@ -4096,17 +4086,6 @@ function BitmapWorld3DInner({
                 <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">View &amp; sound</span>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <HudIconButton
-                    label="Night vision (N)"
-                    icon={<Glasses />}
-                    active={gear.goggles}
-                    onClick={() => {
-                      const on = toggleGoggles();
-                      playSfx("ui");
-                      setBiteNote(on ? "NIGHT VISION · ON" : "NIGHT VISION · OFF");
-                      window.setTimeout(() => setBiteNote(null), 1400);
-                    }}
-                  />
-                  <HudIconButton
                     label="Shoes — faster stride"
                     icon={<Footprints />}
                     active={gear.shoes}
@@ -4312,9 +4291,6 @@ function BitmapWorld3DInner({
         <WorldMusic active={musicOn && !muted} />
 
         <DriveBlur active={driving && cameraMode !== "map"} />
-
-        {/* NIGHT VISION — the goggles paint the world green while you wear them. */}
-        <NightVision active={gear.goggles && cameraMode === "first"} />
 
         {/* DAMAGE — a bite or a bullet is felt: red edges, a kick, a heartbeat. */}
         {exploring ? (
