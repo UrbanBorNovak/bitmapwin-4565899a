@@ -84,8 +84,10 @@ function AuthPage() {
   const oauth = async (provider: "google" | "apple") => {
     setBusy(true);
     try {
+      const callback = new URL("/auth", window.location.origin);
+      if (next) callback.searchParams.set("next", next);
       await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: next ? `${window.location.origin}${next}` : window.location.origin,
+        redirect_uri: callback.toString(),
       });
     } catch (err) {
       toast(`${provider.toUpperCase()} SIGN-IN FAILED`, { description: (err as Error).message.toUpperCase() });

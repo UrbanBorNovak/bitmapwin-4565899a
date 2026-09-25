@@ -108,7 +108,7 @@ export function SiteHeader() {
             <span className="text-bitcoin">BITMAP</span>
             <span className="relative hidden sm:inline">
               <span className="label absolute bottom-full left-0 mb-0.5 hidden text-[0.4rem] leading-none text-bitcoin md:block">
-                ALPHA
+                BETA
               </span>
               UNHINGED
             </span>

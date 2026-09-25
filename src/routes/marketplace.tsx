@@ -320,7 +320,7 @@ function Pager({
     (n) => n < pageCount,
   );
   return (
-    <nav className="mt-6 flex flex-wrap items-center gap-2" aria-label="Parcel pages">
+    <nav className="mt-6 flex flex-wrap items-center gap-2" aria-label="Marketplace pages">
       <button className="btn-term-ghost" disabled={page === 0} onClick={() => onPage(page - 1)}>
         [ PREV ]
       </button>
