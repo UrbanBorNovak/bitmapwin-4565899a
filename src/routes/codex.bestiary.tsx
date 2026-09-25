@@ -29,7 +29,7 @@ type Row = {
   rarity: string;
   habitat: string;
   inscription?: string;
-  yaw?: number;
+  yaw?: number | undefined;
 };
 
 const totalWeight = SPECIES.reduce((s, x) => s + x.weight, 0);

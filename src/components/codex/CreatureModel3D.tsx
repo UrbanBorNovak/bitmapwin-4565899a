@@ -5,7 +5,7 @@ import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 
 /** Turntable of a creature's on-chain 3D model, loaded straight from its inscription. */
-export function CreatureModel3D({ inscription, yaw = 0, label }: { inscription: string; yaw?: number; label: string }) {
+export function CreatureModel3D({ inscription, yaw = 0, label }: { inscription: string; yaw?: number | undefined; label: string }) {
   const fallback = (
     <div className="grid size-full place-items-center font-mono text-[11px] text-muted-foreground">
       &gt; LOADING MODEL<span className="blink">_</span>
