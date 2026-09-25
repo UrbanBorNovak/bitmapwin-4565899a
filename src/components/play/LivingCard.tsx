@@ -86,6 +86,7 @@ function CardArt({ card }: { card: Card }) {
   const profile = usePlayProfile();
   const torches = useOrdTorches();
   const bitmapPixels = useBitmapPixels();
+  const pixel = bitmapPixelForHeight(card.bitmap, bitmapPixels ?? []);
   const selectedTorchPool = profile?.visuals.pfpExtendersEnabled === true && profile.visuals.selectedPfpCollection === ORD_TORCHES_POOL;
   const torch = selectedTorchPool && torches?.list.length
     ? torches.list[hash(card.bitmap) % torches.list.length]
@@ -106,26 +107,30 @@ function CardArt({ card }: { card: Card }) {
     return (
       <div className="lc-pfp-frame absolute inset-0" title={`${extender.collection} · ${extender.name}`}>
         <OasisBackdrop height={card.bitmap} />
-        {extender.source === "ordinals-image" ? (
-          <img src={inscriptionContentUrl(extender.inscriptionId)} alt="" loading="lazy" className="h-full w-full object-cover" draggable={false} />
-        ) : (
-          <iframe
-            src={ordinalsPreviewUrl(extender.inscriptionId)}
-            title={`${extender.name} Ordinals HTML PFP`}
-            loading="lazy"
-            sandbox="allow-scripts allow-same-origin"
-            scrolling="no"
-            className="h-full w-full border-0 pointer-events-none"
-          />
-        )}
+        <div className="absolute inset-0" aria-hidden={pixel ? true : undefined}>
+          {extender.source === "ordinals-image" ? (
+            <img src={inscriptionContentUrl(extender.inscriptionId)} alt="" loading="lazy" className="h-full w-full object-cover" draggable={false} />
+          ) : (
+            <iframe
+              src={ordinalsPreviewUrl(extender.inscriptionId)}
+              title={`${extender.name} Ordinals HTML PFP`}
+              loading="lazy"
+              sandbox="allow-scripts allow-same-origin"
+              scrolling="no"
+              className="h-full w-full border-0 pointer-events-none"
+            />
+          )}
+        </div>
         <OasisBackdrop height={card.bitmap} className="pointer-events-none opacity-60 mix-blend-screen" />
+        {pixel && <CardCharacter3D skin={pixel.inscriptionId} label={`${pixel.name}, the 3D character for ${card.name}`} />}
         <div className="lc-pfp-scan absolute inset-0" aria-hidden />
         <BitmapPattern height={card.bitmap} state={card.state} className="absolute bottom-2 left-2 size-10 opacity-90" />
-        <span className="lc-pfp-badge label absolute left-1.5 top-1 text-[7px] text-bitcoin">{extender.source === "ordinals-image" ? "CHILD IMG" : "HTML PFP"}</span>
+        <span className="lc-pfp-badge label absolute left-1.5 top-1 text-[7px] text-bitcoin">
+          {pixel ? `PIXEL #${String(pixel.index).padStart(3, "0")}` : extender.source === "ordinals-image" ? "CHILD IMG" : "HTML PFP"}
+        </span>
       </div>
     );
 
-  const pixel = bitmapPixelForHeight(card.bitmap, bitmapPixels ?? []);
   if (!pixel)
     return (
       <div className="lc-pfp-frame absolute inset-0">
