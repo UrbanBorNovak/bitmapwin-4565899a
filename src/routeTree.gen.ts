@@ -70,6 +70,7 @@ import { Route as PlayImportRouteImport } from './routes/play.import'
 import { Route as PlayLeagueRouteImport } from './routes/play.league'
 import { Route as PlayMatchRouteImport } from './routes/play.match'
 import { Route as PlayTournamentsRouteImport } from './routes/play.tournaments'
+import { Route as PlayWorkshopRouteImport } from './routes/play.workshop'
 import { Route as ProfileAddressRouteImport } from './routes/profile.$address'
 import { Route as RanksIndexRouteImport } from './routes/ranks.index'
 import { Route as RanksClansRouteImport } from './routes/ranks.clans'
@@ -400,6 +401,11 @@ const PlayTournamentsRoute = PlayTournamentsRouteImport.update({
   path: '/tournaments',
   getParentRoute: () => PlayRoute,
 } as any)
+const PlayWorkshopRoute = PlayWorkshopRouteImport.update({
+  id: '/workshop',
+  path: '/workshop',
+  getParentRoute: () => PlayRoute,
+} as any)
 const ProfileAddressRoute = ProfileAddressRouteImport.update({
   id: '/profile/$address',
   path: '/profile/$address',
@@ -577,6 +583,7 @@ export interface FileRoutesByFullPath {
   '/play/league': typeof PlayLeagueRoute
   '/play/match': typeof PlayMatchRoute
   '/play/tournaments': typeof PlayTournamentsRoute
+  '/play/workshop': typeof PlayWorkshopRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
@@ -659,6 +666,7 @@ export interface FileRoutesByTo {
   '/play/league': typeof PlayLeagueRoute
   '/play/match': typeof PlayMatchRoute
   '/play/tournaments': typeof PlayTournamentsRoute
+  '/play/workshop': typeof PlayWorkshopRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
@@ -746,6 +754,7 @@ export interface FileRoutesById {
   '/play/league': typeof PlayLeagueRoute
   '/play/match': typeof PlayMatchRoute
   '/play/tournaments': typeof PlayTournamentsRoute
+  '/play/workshop': typeof PlayWorkshopRoute
   '/profile/$address': typeof ProfileAddressRoute
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
@@ -834,6 +843,7 @@ export interface FileRouteTypes {
     | '/play/league'
     | '/play/match'
     | '/play/tournaments'
+    | '/play/workshop'
     | '/profile/$address'
     | '/ranks/clans'
     | '/ranks/pvp'
@@ -916,6 +926,7 @@ export interface FileRouteTypes {
     | '/play/league'
     | '/play/match'
     | '/play/tournaments'
+    | '/play/workshop'
     | '/profile/$address'
     | '/ranks/clans'
     | '/ranks/pvp'
@@ -1002,6 +1013,7 @@ export interface FileRouteTypes {
     | '/play/league'
     | '/play/match'
     | '/play/tournaments'
+    | '/play/workshop'
     | '/profile/$address'
     | '/ranks/clans'
     | '/ranks/pvp'
@@ -1515,6 +1527,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlayTournamentsRouteImport
       parentRoute: typeof PlayRoute
     }
+    '/play/workshop': {
+      id: '/play/workshop'
+      path: '/workshop'
+      fullPath: '/play/workshop'
+      preLoaderRoute: typeof PlayWorkshopRouteImport
+      parentRoute: typeof PlayRoute
+    }
     '/profile/$address': {
       id: '/profile/$address'
       path: '/profile/$address'
@@ -1756,6 +1775,7 @@ interface PlayRouteChildren {
   PlayLeagueRoute: typeof PlayLeagueRoute
   PlayMatchRoute: typeof PlayMatchRoute
   PlayTournamentsRoute: typeof PlayTournamentsRoute
+  PlayWorkshopRoute: typeof PlayWorkshopRoute
   PlayIndexRoute: typeof PlayIndexRoute
   PlayCardIdRoute: typeof PlayCardIdRoute
   PlayTableCodeRoute: typeof PlayTableCodeRoute
@@ -1770,6 +1790,7 @@ const PlayRouteChildren: PlayRouteChildren = {
   PlayLeagueRoute: PlayLeagueRoute,
   PlayMatchRoute: PlayMatchRoute,
   PlayTournamentsRoute: PlayTournamentsRoute,
+  PlayWorkshopRoute: PlayWorkshopRoute,
   PlayIndexRoute: PlayIndexRoute,
   PlayCardIdRoute: PlayCardIdRoute,
   PlayTableCodeRoute: PlayTableCodeRoute,
