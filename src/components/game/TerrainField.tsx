@@ -117,6 +117,9 @@ type RingState = {
   half: number;
   cx: number;
   cz: number;
+  /** Finer ring centre this ring was last sunk against. */
+  sunkX: number;
+  sunkZ: number;
 };
 
 function rebuildRing(ring: RingState, index: number, cx: number, cz: number, innerHalf: number | null, cavity: boolean) {
@@ -175,8 +178,8 @@ function rebuildRing(ring: RingState, index: number, cx: number, cz: number, inn
     const lz = position.getZ(i);
     let y = heights[i]!;
     if (innerHalf !== null) {
-      const ox = Math.abs(cx + lx - (innerCentre.x)) ;
-      const oz = Math.abs(cz + lz - (innerCentre.z));
+      const ox = Math.abs(cx + lx - innerCentre.x);
+      const oz = Math.abs(cz + lz - innerCentre.z);
       if (Math.max(ox, oz) < innerHalf - step) y -= sink;
     }
     position.setY(i, y);
@@ -232,6 +235,8 @@ export function TerrainField({ pose }: { pose: React.RefObject<PlayerState> }) {
           half: span / 2,
           cx: Number.NaN,
           cz: Number.NaN,
+          sunkX: Number.NaN,
+          sunkZ: Number.NaN,
         };
       }),
     [],
@@ -269,18 +274,19 @@ export function TerrainField({ pose }: { pose: React.RefObject<PlayerState> }) {
       const snap = index === 0 ? WORLD_CELL * 2 : ring.step * 2;
       const cx = Math.round(player.x / snap) * snap;
       const cz = Math.round(player.z / snap) * snap;
-      const innerMoved = index > 0 && dirty.current[index - 1] === false && (rings[index - 1]!.cx !== innerCentre.x || rings[index - 1]!.cz !== innerCentre.z);
+      const inner = index > 0 ? rings[index - 1]! : null;
+      const innerMoved = inner !== null && (inner.cx !== ring.sunkX || inner.cz !== ring.sunkZ);
       if (cx === ring.cx && cz === ring.cz && !dirty.current[index] && !innerMoved) continue;
       let innerHalf: number | null = null;
-      if (index > 0) {
-        const inner = rings[index - 1]!;
+      if (inner) {
         if (!Number.isFinite(inner.cx)) continue;
         innerCentre.x = inner.cx;
         innerCentre.z = inner.cz;
         innerHalf = inner.half;
+        ring.sunkX = inner.cx;
+        ring.sunkZ = inner.cz;
       }
       rebuildRing(ring, index, cx, cz, innerHalf, cavity);
-      ring.sunkFor = index > 0 ? { x: innerCentre.x, z: innerCentre.z } : undefined;
       dirty.current[index] = false;
       meshes.current[index]?.position.set(cx, 0, cz);
       if (index === 0) void requestTerrainAround(player.x, player.z, RINGS[0]!.cells);
