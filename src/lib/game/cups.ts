@@ -1,8 +1,10 @@
 import { ATLAS_POOL } from "./cardFactory";
 import { rng } from "./engine";
+import { supabase } from "@/integrations/supabase/client";
 
 /** SOLO CUP — an 8-seat knockout bracket against game-run rival decks. Stored on this device. */
-export type CupEntrant = { name: string; you?: boolean };
+/** Rivals are real BITMAPs: `height` leads, `deck` is the 5 BITMAPs they field (their builds count live). */
+export type CupEntrant = { name: string; you?: boolean; height?: number; deck?: number[] };
 export type CupState = {
   id: string;
   seed: number;
@@ -30,15 +32,34 @@ function save(c: CupState | null) {
   window.dispatchEvent(new Event("bitmapwin-cup"));
 }
 
-export function startCup(): CupState {
+/** BITMAPs that carry real Oasis builds, most-built first. */
+async function builtHeights(): Promise<number[]> {
+  try {
+    const { data } = await supabase.from("world_structures").select("bitmap_height").limit(2000);
+    const n = new Map<number, number>();
+    for (const r of data ?? []) n.set(Number(r.bitmap_height), (n.get(Number(r.bitmap_height)) ?? 0) + 1);
+    return [...n.entries()].sort((a, b) => b[1] - a[1]).map(([h]) => h);
+  } catch { return []; }
+}
+
+export async function startCup(exclude: number[] = []): Promise<CupState> {
   const seed = Math.floor(Math.random() * 2 ** 31);
   const r = rng(seed);
-  const pool = [...ATLAS_POOL].sort(() => r() - 0.5).slice(0, 7);
+  const skip = new Set(exclude);
+  const built = (await builtHeights()).filter((h) => !skip.has(h));
+  const atlas = [...ATLAS_POOL].filter((h) => !skip.has(h) && !built.includes(h)).sort(() => r() - 0.5);
+  const leaders = [...built.slice(0, 7), ...atlas].slice(0, 7);
+  const spare = [...built.slice(7), ...atlas.filter((h) => !leaders.includes(h))];
+  const rivals = leaders.map((h, i) => {
+    const deck = [h];
+    for (let k = 0; deck.length < 5 && k < spare.length; k++) { const c = spare[(i * 4 + k) % spare.length]!; if (!deck.includes(c)) deck.push(c); }
+    return { name: `${h}.BITMAP`, height: h, deck };
+  });
   const cup: CupState = {
     id: seed.toString(36),
     seed,
     startedAt: Date.now(),
-    entrants: [{ name: "YOU", you: true }, ...pool.map((h) => ({ name: `${h}.BITMAP` }))],
+    entrants: [{ name: "YOU", you: true }, ...rivals.sort(() => r() - 0.5)],
     rounds: [[null, null, null, null], [null, null], [null]],
     round: 0,
     status: "running",
@@ -56,6 +77,14 @@ export function pairOf(c: CupState, r: number, m: number): [number | null, numbe
 export function yourMatch(c: CupState) {
   const i = c.rounds[c.round]!.findIndex((_, m) => pairOf(c, c.round, m).includes(0));
   return i;
+}
+/** The rival entrant you face this round. */
+export function yourRival(c: CupState): CupEntrant | null {
+  const m = yourMatch(c);
+  if (m < 0) return null;
+  const [a, b] = pairOf(c, c.round, m);
+  const o = a === 0 ? b : a;
+  return o === null ? null : c.entrants[o] ?? null;
 }
 /** Seed for your match this round — also picks the rival deck. */
 export const cupMatchSeed = (c: CupState) => (c.seed + (c.round + 1) * 104_729) >>> 0;

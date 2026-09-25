@@ -21,12 +21,12 @@ import { LivingCard, type CardUiState } from "./LivingCard";
 
 export type RemoteAction = { kind: "play"; uid: string } | { kind: "attack"; uid: string; target: string } | { kind: "end" };
 export type RemoteTable = { state: MatchState; rivalName: string; send: (a: RemoteAction) => void; busy: boolean };
-type Props = { profile: PlayProfile; deck: Card[]; seed: number; leaderId: string | null; tableCode: string | null; onRestart: () => void; remote?: RemoteTable; onFinish?: (win: boolean) => void; restartLabel?: string; context?: string };
+type Props = { profile: PlayProfile; deck: Card[]; seed: number; leaderId: string | null; tableCode: string | null; onRestart: () => void; remote?: RemoteTable; onFinish?: (win: boolean) => void; restartLabel?: string; context?: string; rival?: RivalDeck | null };
 
 const AI_STEP_MS = 750;
 
-export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart, remote, onFinish, restartLabel, context }: Props) {
-  const [localMatch, setMatch] = useState<MatchState>(() => (remote ? remote.state : newMatch(deck, seed, leaderId)));
+export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart, remote, onFinish, restartLabel, context, rival }: Props) {
+  const [localMatch, setMatch] = useState<MatchState>(() => (remote ? remote.state : newMatch(deck, seed, leaderId, rival)));
   const match = remote ? remote.state : localMatch;
   const act = (a: RemoteAction) => {
     if (remote) return remote.send(a);
@@ -85,7 +85,7 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart,
   const me = match.sides.player;
   const foe = match.sides.ai;
   const myTurn = match.active === "player" && !match.winner && !remote?.busy;
-  const rival = remote ? `RIVAL · ${remote.rivalName}` : "RIVAL · LOCAL AI";
+  const rivalLabel = remote ? `RIVAL · ${remote.rivalName}` : rival?.heights[0] !== undefined ? `RIVAL · ${rival.heights[0]}.BITMAP · ${rival.builds[rival.heights[0]] ?? 0} BUILDS` : "RIVAL · LOCAL AI";
   const legal = attacker ? legalTargets(match, "player") : null;
 
   function onHand(u: Unit) {
@@ -124,7 +124,7 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart,
     <div className="play-table relative grid min-w-0 grid-cols-1 gap-3 [&>*]:min-w-0">
       {/* OPPONENT */}
       <PlayerStrip
-        who={rival}
+        who={rivalLabel}
         hp={foe.hp}
         energy={foe.energy}
         hand={foe.hand.length}
