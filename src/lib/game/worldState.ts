@@ -23,6 +23,7 @@ export function ownerKey(address: string | null | undefined) {
 
 export function loadOwner(owner: string) {
   if (current?.owner === owner) return;
+  console.warn("LOADOWNER", owner.slice(0,8), new Error().stack?.split("\n").slice(2,6).join(" | "));
   const local = persistence.load(owner);
   current = local ?? newProfile(owner);
   persistence.save(current);
