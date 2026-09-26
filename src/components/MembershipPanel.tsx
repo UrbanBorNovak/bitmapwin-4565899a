@@ -5,6 +5,7 @@ import {
   MEMBERSHIP_DAYS,
   MEMBERSHIP_SATS,
   checkMembership,
+  claimHolderMembership,
   isActive,
   membershipQuery,
   startMembership,
