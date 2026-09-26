@@ -118,6 +118,22 @@ const SKY_FRAGMENT = /* glsl */ `
     return sin(p.x) * sin(p.y) * 0.5 + 0.5;
   }
 
+  // On-chain sky recipe (inscription 7b381ffe…f18i0): horizon→zenith by
+  // altitude, a tight sun glint, then height-falloff fog toward the horizon.
+  const vec3 OC_SUN_DIR = normalize(vec3(-0.77, 0.638, 0.0));
+  const vec3 OC_SUN_COLOR = vec3(2.0, 1.75, 1.65);
+  vec3 ocAtmosphere(vec3 dir, vec3 horizonC, vec3 zenithC) {
+    float a = max(0.0, dot(dir, vec3(0.0, 1.0, 0.0)));
+    vec3 sky = mix(horizonC, zenithC, a);
+    float sunTheta = max(dot(dir, OC_SUN_DIR), 0.0);
+    return sky + OC_SUN_COLOR * pow(sunTheta, 256.0) * 0.5;
+  }
+  vec3 ocFog(vec3 albedo, vec3 dir, vec3 fogC) {
+    float d = max(dir.y, 0.001) * 20.0;
+    float fog = (1.0 - exp(-100000.0 * d * 0.00006)) / d;
+    return mix(albedo, fogC, clamp(fog, 0.0, 1.0));
+  }
+
   void main() {
     vec3 direction = normalize(vSkyDirection);
     float altitude = clamp(direction.y * 0.72 + 0.28, 0.0, 1.0);
@@ -135,6 +151,10 @@ const SKY_FRAGMENT = /* glsl */ `
     vec3 nightColor = mix(nightHorizon, nightMid, smoothstep(0.0, 0.48, altitude));
     nightColor = mix(nightColor, nightZenith, smoothstep(0.42, 1.0, altitude));
     vec3 color = mix(dayColor, nightColor, uNight);
+    vec3 hC = mix(dayHorizon, nightHorizon, uNight);
+    vec3 zC = mix(dayZenith, nightZenith, uNight);
+    vec3 chain = ocFog(ocAtmosphere(direction, hC, zC), direction, hC);
+    color = mix(color, chain, 0.45 * (1.0 - uNight * 0.6));
 
     vec2 cloudUv = direction.xz * 9.0 / max(0.24, direction.y + 0.48);
     float cloudA = skyNoise(cloudUv + vec2(uTime * 0.014, -uTime * 0.006));
