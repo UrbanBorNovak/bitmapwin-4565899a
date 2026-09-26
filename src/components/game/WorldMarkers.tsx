@@ -18,7 +18,7 @@ function loadArrowTexture(): Promise<THREE.Texture | null> {
   if (!arrowTexturePromise) {
     arrowTexturePromise = new Promise((resolve) => {
       new THREE.TextureLoader().load(
-        inscriptionContentUrl(ONCHAIN_ENGINE.arrowTexture.id),
+        inscriptionContentUrl(ONCHAIN_ENGINE["arrowTexture"]!.id),
         (texture) => {
           texture.colorSpace = THREE.SRGBColorSpace;
           resolve(texture);
@@ -70,7 +70,8 @@ export const BitmapPixelLabel = memo(function BitmapPixelLabel({
   }, [text, color]);
 
   if (!texture) return null;
-  const aspect = texture.image.width / texture.image.height;
+  const image = texture.image as { width: number; height: number };
+  const aspect = image.width / image.height;
   const height = 0.11 * size;
   return (
     <sprite

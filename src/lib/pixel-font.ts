@@ -42,11 +42,11 @@ export function loadPixelFont(): Promise<PixelFont | null> {
     fontPromise = (async () => {
       try {
         const [metrics, atlas] = await Promise.all([
-          fetch(inscriptionContentUrl(ONCHAIN_ENGINE.pixelFontJson.id)).then((r) => {
+          fetch(inscriptionContentUrl(ONCHAIN_ENGINE["pixelFontJson"]!.id)).then((r) => {
             if (!r.ok) throw new Error(`font metrics ${r.status}`);
             return r.json() as Promise<{ chars: Record<string, Glyph> }>;
           }),
-          loadImage(inscriptionContentUrl(ONCHAIN_ENGINE.pixelFontPng.id)),
+          loadImage(inscriptionContentUrl(ONCHAIN_ENGINE["pixelFontPng"]!.id)),
         ]);
         const chars = new Map<number, Glyph>();
         for (const [code, glyph] of Object.entries(metrics.chars)) chars.set(Number(code), glyph);
