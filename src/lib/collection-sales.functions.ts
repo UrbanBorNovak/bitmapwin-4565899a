@@ -39,9 +39,10 @@ export const getJigglypuffSalesFn = createServerFn({ method: "GET" }).handler(as
       };
       const [inputTxid, outputIndex] = offer.outpoint.split(":");
       if (tx.txid !== offer.buyer_txid || !tx.status.confirmed || !tx.status.block_height ||
-        !tx.vin.some((v) => v.txid === inputTxid && v.vout === Number(outputIndex)) ||
-        !tx.vout.some((v) => v.scriptpubkey_address === offer.seller_address && v.value === Number(offer.price_sats)) ||
-        !tx.vout.some((v) => v.scriptpubkey_address === offer.buyer_address)) return null;
+        tx.vin[0]?.txid !== inputTxid || tx.vin[0]?.vout !== Number(outputIndex) ||
+        tx.vout[0]?.scriptpubkey_address !== offer.seller_address ||
+        tx.vout[0].value < Number(offer.price_sats) ||
+        tx.vout[1]?.scriptpubkey_address !== offer.buyer_address) return null;
       return {
         txid: tx.txid,
         inscriptionId: offer.inscription_id,
