@@ -60,6 +60,7 @@ import { Route as CodexIndexRouteImport } from './routes/codex.index'
 import { Route as CodexBestiaryRouteImport } from './routes/codex.bestiary'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
 import { Route as CollectionsClubRouteImport } from './routes/collections.$club'
+import { Route as CollectionsJigglypuffRouteImport } from './routes/collections.jigglypuff'
 import { Route as DistrictSlugRouteImport } from './routes/district.$slug'
 import { Route as ExtendersIndexRouteImport } from './routes/extenders.index'
 import { Route as ExtendersSlugRouteImport } from './routes/extenders.$slug'
@@ -353,6 +354,11 @@ const CollectionsClubRoute = CollectionsClubRouteImport.update({
   path: '/$club',
   getParentRoute: () => CollectionsRoute,
 } as any)
+const CollectionsJigglypuffRoute = CollectionsJigglypuffRouteImport.update({
+  id: '/jigglypuff',
+  path: '/jigglypuff',
+  getParentRoute: () => CollectionsRoute,
+} as any)
 const DistrictSlugRoute = DistrictSlugRouteImport.update({
   id: '/district/$slug',
   path: '/district/$slug',
@@ -586,6 +592,7 @@ export interface FileRoutesByFullPath {
   '/clan/$tag': typeof ClanTagRoute
   '/codex/bestiary': typeof CodexBestiaryRoute
   '/collections/$club': typeof CollectionsClubRoute
+  '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
   '/map/$block': typeof MapBlockRoute
@@ -671,6 +678,7 @@ export interface FileRoutesByTo {
   '/clan/$tag': typeof ClanTagRoute
   '/codex/bestiary': typeof CodexBestiaryRoute
   '/collections/$club': typeof CollectionsClubRoute
+  '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
   '/map/$block': typeof MapBlockRoute
@@ -761,6 +769,7 @@ export interface FileRoutesById {
   '/clan/$tag': typeof ClanTagRoute
   '/codex/bestiary': typeof CodexBestiaryRoute
   '/collections/$club': typeof CollectionsClubRoute
+  '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
   '/map_/$block': typeof MapBlockRoute
@@ -852,6 +861,7 @@ export interface FileRouteTypes {
     | '/clan/$tag'
     | '/codex/bestiary'
     | '/collections/$club'
+    | '/collections/jigglypuff'
     | '/district/$slug'
     | '/extenders/$slug'
     | '/map/$block'
@@ -937,6 +947,7 @@ export interface FileRouteTypes {
     | '/clan/$tag'
     | '/codex/bestiary'
     | '/collections/$club'
+    | '/collections/jigglypuff'
     | '/district/$slug'
     | '/extenders/$slug'
     | '/map/$block'
@@ -1026,6 +1037,7 @@ export interface FileRouteTypes {
     | '/clan/$tag'
     | '/codex/bestiary'
     | '/collections/$club'
+    | '/collections/jigglypuff'
     | '/district/$slug'
     | '/extenders/$slug'
     | '/map_/$block'
@@ -1483,6 +1495,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CollectionsClubRouteImport
       parentRoute: typeof CollectionsRoute
     }
+    '/collections/jigglypuff': {
+      id: '/collections/jigglypuff'
+      path: '/jigglypuff'
+      fullPath: '/collections/jigglypuff'
+      preLoaderRoute: typeof CollectionsJigglypuffRouteImport
+      parentRoute: typeof CollectionsRoute
+    }
     '/district/$slug': {
       id: '/district/$slug'
       path: '/district/$slug'
@@ -1781,11 +1800,13 @@ const ApiRouteWithChildren = ApiRoute._addFileChildren(ApiRouteChildren)
 
 interface CollectionsRouteChildren {
   CollectionsClubRoute: typeof CollectionsClubRoute
+  CollectionsJigglypuffRoute: typeof CollectionsJigglypuffRoute
   CollectionsIndexRoute: typeof CollectionsIndexRoute
 }
 
 const CollectionsRouteChildren: CollectionsRouteChildren = {
   CollectionsClubRoute: CollectionsClubRoute,
+  CollectionsJigglypuffRoute: CollectionsJigglypuffRoute,
   CollectionsIndexRoute: CollectionsIndexRoute,
 }
 
