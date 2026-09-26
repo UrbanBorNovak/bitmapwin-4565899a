@@ -23,7 +23,7 @@ export const getJigglypuffSalesFn = createServerFn({ method: "GET" }).handler(as
       .in("inscription_id", JIGGLYPUFF_IDS.slice(n * 60, n * 60 + 60))
       .not("buyer_txid", "is", null),
   ));
-  for (const row of rows) if (row.error) throw new Error("SALE RECORDS UNAVAILABLE");
+  for (const row of rows) if (row.error) throw new Error(`SALE RECORDS UNAVAILABLE: ${row.error.message}`);
   const offers = rows.flatMap((r) => r.data ?? []);
   const sales = await Promise.all(offers.map(async (offer) => {
     if (!offer.buyer_txid || !offer.inscription_id || !offer.seller_address || !offer.buyer_address ||
