@@ -1,5 +1,7 @@
+import { useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { MemberRibbon } from "@/components/MemberRibbon";
 import {
   MEMBERSHIP_ADDRESS,
   MEMBERSHIP_DAYS,
@@ -19,6 +21,7 @@ export function MembershipPanel({ address, canEdit }: { address: string; canEdit
   const queryClient = useQueryClient();
   const membership = useQuery(membershipQuery(address));
   const active = isActive(membership.data);
+  const checkedAddress = useRef<string | null>(null);
 
   const invoice = useMutation({
     mutationFn: () => startMembership(address),
@@ -49,6 +52,21 @@ export function MembershipPanel({ address, canEdit }: { address: string; canEdit
     onError: (error: Error) => toast.error(error.message.toUpperCase()),
   });
 
+  // The verified owner needn't know to press CLAIM: check their holdings once
+  // when this panel opens, and leave the public badge to the server's verdict.
+  useEffect(() => {
+    if (!canEdit || !address || membership.isPending || membership.isError || checkedAddress.current === address) return;
+    checkedAddress.current = address;
+    claimHolderMembership(address).then((result) => {
+      if (result.claimed) {
+        void queryClient.invalidateQueries({ queryKey: ["membership", address] });
+        void queryClient.invalidateQueries({ queryKey: ["membership-badge", address] });
+      }
+    }).catch(() => {
+      // Manual claim stays available if the chain is temporarily unreachable.
+    });
+  }, [address, canEdit, membership.isPending, membership.isError, queryClient]);
+
   const amount = invoice.data?.invoiceSats ?? null;
 
   return (
@@ -56,7 +74,7 @@ export function MembershipPanel({ address, canEdit }: { address: string; canEdit
       <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border p-5">
         <h2 className="display text-xl">MEMBERSHIP</h2>
         {active ? (
-          <span className="label border border-bitcoin px-2 py-1 text-bitcoin">MEMBERS</span>
+          <MemberRibbon />
         ) : (
           <span className="label">{MEMBERSHIP_SATS.toLocaleString()} SATS / MONTH</span>
         )}
