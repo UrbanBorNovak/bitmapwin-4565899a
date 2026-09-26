@@ -5,15 +5,20 @@ import { JIGGLYPUFF_IDS } from "@/lib/game/jigglypuff";
  * can be checked against a confirmed Bitcoin transaction. A transfer that
  * happens to pay its sender (including change) is not proof of a sale. */
 export const getJigglypuffSalesFn = createServerFn({ method: "GET" }).handler(async () => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const rows = await Promise.all(Array.from({ length: Math.ceil(JIGGLYPUFF_IDS.length / 60) }, (_, n) =>
-    supabaseAdmin.from("offers")
-      .select("inscription_id, outpoint, seller_address, buyer_address, buyer_txid, price_sats")
-      .in("inscription_id", JIGGLYPUFF_IDS.slice(n * 60, n * 60 + 60))
-      .not("buyer_txid", "is", null),
-  ));
-  for (const row of rows) if (row.error) throw new Error("SALE RECORDS UNAVAILABLE");
-  const offers = rows.flatMap((r) => r.data ?? []);
+  let offers: Array<{ buyer_txid: string | null; inscription_id: string | null; seller_address: string | null; buyer_address: string | null; price_sats: number; outpoint: string }>;
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const rows = await Promise.all(Array.from({ length: Math.ceil(JIGGLYPUFF_IDS.length / 60) }, (_, n) =>
+      supabaseAdmin.from("offers")
+        .select("inscription_id, outpoint, seller_address, buyer_address, buyer_txid, price_sats")
+        .in("inscription_id", JIGGLYPUFF_IDS.slice(n * 60, n * 60 + 60))
+        .not("buyer_txid", "is", null),
+    ));
+    if (rows.some((row) => row.error)) return { sales: [], unavailable: true };
+    offers = rows.flatMap((r) => r.data ?? []);
+  } catch {
+    return { sales: [], unavailable: true };
+  }
   const sales = await Promise.all(offers.map(async (offer) => {
     if (!offer.buyer_txid || !offer.inscription_id || !offer.seller_address || !offer.buyer_address ||
       offer.seller_address === offer.buyer_address || !Number.isSafeInteger(Number(offer.price_sats)) || Number(offer.price_sats) <= 0) return null;
@@ -43,6 +48,6 @@ export const getJigglypuffSalesFn = createServerFn({ method: "GET" }).handler(as
       };
     } catch { return null; }
   }));
-  return sales.filter((sale): sale is NonNullable<typeof sale> => sale !== null)
-    .sort((a, b) => b.blockHeight - a.blockHeight);
+  return { sales: sales.filter((sale): sale is NonNullable<typeof sale> => sale !== null)
+    .sort((a, b) => b.blockHeight - a.blockHeight), unavailable: false };
 });

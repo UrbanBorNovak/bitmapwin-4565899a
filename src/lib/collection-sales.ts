@@ -12,10 +12,12 @@ export type CollectionSale = {
   blockTime: string | null;
 };
 
+export type CollectionSalesResult = { sales: CollectionSale[]; unavailable: boolean };
+
 export const collectionSalesQuery = (collection: string) =>
   queryOptions({
     queryKey: ["collection-sales", collection],
-    queryFn: (): Promise<CollectionSale[]> => getJigglypuffSalesFn(),
+    queryFn: (): Promise<CollectionSalesResult> => getJigglypuffSalesFn(),
     staleTime: 60_000,
   });
 

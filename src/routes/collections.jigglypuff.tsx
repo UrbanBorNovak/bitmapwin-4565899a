@@ -42,7 +42,7 @@ function JigglypuffCollection() {
   const [prices, setPrices] = useState<Record<string, string>>({});
 
   const stats = useMemo(() => {
-    const paid = (sales.data ?? []).filter((s) => s.priceSats > 0);
+    const paid = (sales.data?.sales ?? []).filter((s) => s.priceSats > 0);
     const lastSale = new Map<string, number>();
     for (const s of paid) if (!lastSale.has(s.inscriptionId)) lastSale.set(s.inscriptionId, s.priceSats);
     const open = listings.data ?? [];
@@ -70,8 +70,8 @@ function JigglypuffCollection() {
         {[
           ["COLLECTION VALUE", "UNAVAILABLE"],
           ["ASKING FLOOR", stats.floor ? formatSats(stats.floor) : "NO LISTINGS"],
-           ["CONFIRMED VOLUME", sales.isPending || sales.isError ? "—" : stats.volume ? formatSats(stats.volume) : "0 SATS"],
-           ["SALES", sales.isPending || sales.isError ? "—" : String(stats.paid.length)],
+           ["CONFIRMED VOLUME", sales.isPending || sales.isError || sales.data?.unavailable ? "—" : stats.volume ? formatSats(stats.volume) : "0 SATS"],
+           ["SALES", sales.isPending || sales.isError || sales.data?.unavailable ? "—" : String(stats.paid.length)],
           ["LISTED", `${stats.listed} / ${JIGGLYPUFF_IDS.length}`],
         ].map(([k, v]) => (
           <div key={k} className="border border-border bg-card/60 p-3 backdrop-blur">
@@ -174,7 +174,7 @@ function JigglypuffCollection() {
 
        <h2 className="display mt-12 text-xl">CONFIRMED BITMAPWIN SALES</h2>
        {sales.isPending && <p className="label mt-3 text-muted-foreground">VERIFYING PURCHASES ON CHAIN…</p>}
-       {sales.isError && <p className="label mt-3 text-destructive">SALE VERIFICATION UNAVAILABLE — TRY AGAIN LATER</p>}
+       {(sales.isError || sales.data?.unavailable) && <p className="label mt-3 text-destructive">SALE VERIFICATION UNAVAILABLE — TRY AGAIN LATER</p>}
       <div className="mt-3 overflow-x-auto border border-border">
         <table className="w-full font-mono text-xs" data-no-translate>
           <thead className="label text-muted-foreground">
@@ -188,7 +188,7 @@ function JigglypuffCollection() {
             </tr>
           </thead>
           <tbody>
-             {stats.paid.length === 0 && !sales.isPending && !sales.isError && (
+             {stats.paid.length === 0 && !sales.isPending && !sales.isError && !sales.data?.unavailable && (
               <tr>
                 <td colSpan={6} className="p-4 text-muted-foreground">
                    NO VERIFIED BITMAPWIN SALES YET
