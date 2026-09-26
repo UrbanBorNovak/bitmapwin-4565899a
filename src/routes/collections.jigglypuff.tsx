@@ -70,8 +70,8 @@ function JigglypuffCollection() {
         {[
           ["COLLECTION VALUE", "UNAVAILABLE"],
           ["ASKING FLOOR", stats.floor ? formatSats(stats.floor) : "NO LISTINGS"],
-          ["CONFIRMED VOLUME", stats.volume ? formatSats(stats.volume) : "—"],
-          ["SALES", String(stats.paid.length)],
+           ["CONFIRMED VOLUME", sales.isPending || sales.isError ? "—" : formatSats(stats.volume)],
+           ["SALES", sales.isPending || sales.isError ? "—" : String(stats.paid.length)],
           ["LISTED", `${stats.listed} / ${JIGGLYPUFF_IDS.length}`],
         ].map(([k, v]) => (
           <div key={k} className="border border-border bg-card/60 p-3 backdrop-blur">
@@ -173,6 +173,7 @@ function JigglypuffCollection() {
       </div>
 
        <h2 className="display mt-12 text-xl">CONFIRMED BITMAPWIN SALES</h2>
+       {sales.isPending && <p className="label mt-3 text-muted-foreground">VERIFYING PURCHASES ON CHAIN…</p>}
        {sales.isError && <p className="label mt-3 text-destructive">SALE VERIFICATION UNAVAILABLE — TRY AGAIN LATER</p>}
       <div className="mt-3 overflow-x-auto border border-border">
         <table className="w-full font-mono text-xs" data-no-translate>
@@ -187,7 +188,7 @@ function JigglypuffCollection() {
             </tr>
           </thead>
           <tbody>
-             {stats.paid.length === 0 && !sales.isError && (
+             {stats.paid.length === 0 && !sales.isPending && !sales.isError && (
               <tr>
                 <td colSpan={6} className="p-4 text-muted-foreground">
                    NO VERIFIED BITMAPWIN SALES YET
