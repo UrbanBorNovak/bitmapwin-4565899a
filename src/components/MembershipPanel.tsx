@@ -35,6 +35,20 @@ export function MembershipPanel({ address, canEdit }: { address: string; canEdit
     onError: (error: Error) => toast.error(error.message.toUpperCase()),
   });
 
+  const holderClaim = useMutation({
+    mutationFn: () => claimHolderMembership(address),
+    onSuccess: (result) => {
+      if (result.claimed) {
+        void queryClient.invalidateQueries({ queryKey: ["membership", address] });
+        void queryClient.invalidateQueries({ queryKey: ["membership-badge", address] });
+        toast.success("JIGGLYPUFF HOLDER — MEMBERSHIP ACTIVE");
+      } else {
+        toast.message("NO JIGGLYPUFF INSCRIPTION FOUND ON THIS ADDRESS");
+      }
+    },
+    onError: (error: Error) => toast.error(error.message.toUpperCase()),
+  });
+
   const amount = invoice.data?.invoiceSats ?? null;
 
   return (
