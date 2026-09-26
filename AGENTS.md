@@ -9,3 +9,4 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 - On-chain engine references live in src/lib/onchain-engine.ts; PlayCanvas scripts are never loaded — only their maths (noise/shaders) is ported to Three.js, because the world runs on Three.js.
+- Use the shared MemberRibbon for active profile and wallet membership markers, backed by the verified membership badge; this keeps holder and donation displays consistent without trusting browser-held ownership claims.
