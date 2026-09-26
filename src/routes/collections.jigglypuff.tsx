@@ -70,7 +70,7 @@ function JigglypuffCollection() {
         {[
           ["COLLECTION VALUE", "UNAVAILABLE"],
           ["ASKING FLOOR", stats.floor ? formatSats(stats.floor) : "NO LISTINGS"],
-           ["CONFIRMED VOLUME", sales.isPending || sales.isError ? "—" : formatSats(stats.volume)],
+           ["CONFIRMED VOLUME", sales.isPending || sales.isError ? "—" : stats.volume ? formatSats(stats.volume) : "0 SATS"],
            ["SALES", sales.isPending || sales.isError ? "—" : String(stats.paid.length)],
           ["LISTED", `${stats.listed} / ${JIGGLYPUFF_IDS.length}`],
         ].map(([k, v]) => (
