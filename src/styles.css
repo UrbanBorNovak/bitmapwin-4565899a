@@ -372,6 +372,39 @@
   background: color-mix(in oklab, var(--color-profile-surface-raised) 78%, transparent);
 }
 
+/* An earned insignia, not a button: inset frame and a clipped ribbon edge. */
+.member-ribbon {
+  display: inline-flex;
+  min-height: 2rem;
+  max-width: 100%;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.3rem 0.9rem 0.3rem 0.6rem;
+  clip-path: polygon(0 0, 100% 0, 100% 72%, calc(100% - 0.4rem) 100%, 0 100%);
+  border-left: 2px solid var(--color-bitcoin);
+  background: var(--color-bitcoin);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-bitcoin-foreground) 20%, transparent);
+  color: var(--color-bitcoin-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.member-ribbon-mark {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.member-ribbon-origin {
+  border-left: 1px solid currentColor;
+  padding-left: 0.5rem;
+  font-size: 0.55rem;
+  opacity: 0.82;
+}
+
 /* Heads-up display surfaces layered over the 3D land world. */
 /* In-world readouts sit back out of the way until they are looked at, so the
    land stays visible while playing. */

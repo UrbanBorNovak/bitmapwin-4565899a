@@ -20,6 +20,7 @@ import { PassportSummary } from "@/components/PassportSummary";
 import { StampCard } from "@/components/StampCard";
 import { publicPassportQuery } from "@/lib/provenance-stream";
 import { ParcelClubBadges } from "@/components/ParcelClubBadges";
+import { MemberRibbon } from "@/components/MemberRibbon";
 
 export const Route = createFileRoute("/profile/$address")({
   head: ({ params }) => {
@@ -107,7 +108,7 @@ function ProfilePage() {
               {displayName}
             </h1>
             {isMember && (
-              <span className="label border border-bitcoin px-2 py-1 text-bitcoin">MEMBERS</span>
+              <MemberRibbon />
             )}
           </div>
           <p className="mt-3 break-all font-mono text-[10px] text-muted-foreground">{address}</p>
