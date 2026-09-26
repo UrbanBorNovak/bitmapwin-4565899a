@@ -55,7 +55,7 @@ export function MembershipPanel({ address, canEdit }: { address: string; canEdit
   // The verified owner needn't know to press CLAIM: check their holdings once
   // when this panel opens, and leave the public badge to the server's verdict.
   useEffect(() => {
-    if (!canEdit || !address || membership.isPending || membership.isError || active || checkedAddress.current === address) return;
+    if (!canEdit || !address || membership.isPending || membership.isError || checkedAddress.current === address) return;
     checkedAddress.current = address;
     claimHolderMembership(address).then((result) => {
       if (result.claimed) {
@@ -65,7 +65,7 @@ export function MembershipPanel({ address, canEdit }: { address: string; canEdit
     }).catch(() => {
       // Manual claim stays available if the chain is temporarily unreachable.
     });
-  }, [address, canEdit, membership.isPending, membership.isError, active, queryClient]);
+  }, [address, canEdit, membership.isPending, membership.isError, queryClient]);
 
   const amount = invoice.data?.invoiceSats ?? null;
 

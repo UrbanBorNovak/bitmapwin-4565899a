@@ -398,12 +398,6 @@
   line-height: 1;
 }
 
-.member-ribbon-origin {
-  border-left: 1px solid currentColor;
-  padding-left: 0.5rem;
-  font-size: 0.55rem;
-  opacity: 0.82;
-}
 
 /* Heads-up display surfaces layered over the 3D land world. */
 /* In-world readouts sit back out of the way until they are looked at, so the
