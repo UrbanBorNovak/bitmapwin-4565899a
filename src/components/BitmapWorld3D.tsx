@@ -20,6 +20,7 @@ import {
 } from "@react-three/drei";
 import { SafeHtml } from "@/components/game/SafeHtml";
 import { SafeEnvironment } from "@/components/game/SafeEnvironment";
+import { BitmapPixelLabel, DestinationArrow } from "@/components/game/WorldMarkers";
 import { SafeLightformer } from "@/components/game/SafeLightformer";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
