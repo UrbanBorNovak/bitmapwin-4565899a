@@ -918,6 +918,69 @@ export type Database = {
         }
         Relationships: []
       }
+      collection_crawl_state: {
+        Row: {
+          collection: string
+          inscription_id: string
+          last_traced_at: string
+          owner_address: string | null
+          transfers: number
+        }
+        Insert: {
+          collection: string
+          inscription_id: string
+          last_traced_at?: string
+          owner_address?: string | null
+          transfers?: number
+        }
+        Update: {
+          collection?: string
+          inscription_id?: string
+          last_traced_at?: string
+          owner_address?: string | null
+          transfers?: number
+        }
+        Relationships: []
+      }
+      collection_sales: {
+        Row: {
+          block_height: number | null
+          block_time: string | null
+          buyer_address: string | null
+          collection: string
+          created_at: string
+          hop: number
+          inscription_id: string
+          price_sats: number
+          seller_address: string | null
+          txid: string
+        }
+        Insert: {
+          block_height?: number | null
+          block_time?: string | null
+          buyer_address?: string | null
+          collection: string
+          created_at?: string
+          hop?: number
+          inscription_id: string
+          price_sats?: number
+          seller_address?: string | null
+          txid: string
+        }
+        Update: {
+          block_height?: number | null
+          block_time?: string | null
+          buyer_address?: string | null
+          collection?: string
+          created_at?: string
+          hop?: number
+          inscription_id?: string
+          price_sats?: number
+          seller_address?: string | null
+          txid?: string
+        }
+        Relationships: []
+      }
       district_bitmaps: {
         Row: {
           bitmap_height: number

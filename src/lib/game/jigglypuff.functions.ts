@@ -1,7 +1,7 @@
 /**
  * JIGGLYPUFF holder claim — a wallet that holds any inscription from the
  * hardcoded JIGGLYPUFF pool earns MEMBER status without a donation.
- * Holdings are verified against the chain (Hiro Ordinals API), never the
+ * Holdings are verified against the chain (ordinals.com), never the
  * browser's word.
  */
 
@@ -13,31 +13,12 @@ import { JIGGLYPUFF_IDS, JIGGLYPUFF_POOL } from "./jigglypuff";
 const input = z.object({ address: z.string().trim().min(16).max(120) });
 
 const POOL = new Set(JIGGLYPUFF_IDS);
-const HIRO = "https://api.hiro.so/ordinals/v1/inscriptions";
-const PAGE = 60;
-const MAX_PAGES = 20;
-
-type HiroResult = { results?: Array<{ id?: string }>; total?: number };
-
-/** Inscription IDs currently sitting on this address, per the chain index. */
+/** Inscription IDs currently sitting on this address, read from ordinals.com. */
 async function addressInscriptions(address: string): Promise<Set<string>> {
+  const { fetchWallet } = await import("@/lib/wallet.server");
+  const snap = await fetchWallet(address, 400);
   const held = new Set<string>();
-  for (let page = 0; page < MAX_PAGES; page++) {
-    const res = await fetch(`${HIRO}?address=${encodeURIComponent(address)}&limit=${PAGE}&offset=${page * PAGE}`, {
-      headers: { accept: "application/json", "user-agent": "bitmapwin/1.0" },
-      signal: AbortSignal.timeout(15000),
-    });
-    if (!res.ok) throw new Error("Could not reach the chain index right now");
-    const body = (await res.json()) as HiroResult;
-    const results = body.results ?? [];
-    for (const item of results) {
-      const id = String(item.id ?? "").toLowerCase();
-      if (id) held.add(id);
-    }
-    if (results.length < PAGE) break;
-    // Early exit once a pool match is seen — no need to page further.
-    if ([...held].some((id) => POOL.has(id))) break;
-  }
+  for (const u of snap.utxos) for (const i of u.inscriptions) held.add(String(i.id).toLowerCase());
   return held;
 }
 

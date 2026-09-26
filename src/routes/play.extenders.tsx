@@ -242,6 +242,7 @@ function PlayExtenders() {
             <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h2 className="label text-bitcoin">JIGGLYPUFF · HARDCODED POOL</h2>
+                <Link to="/collections/jigglypuff" className="label hover:text-foreground">VIEW COLLECTION · TRADE →</Link>
                 <span className="label text-muted-foreground">{jigglypuff.list.length} INSCRIPTIONS · HOLDERS GET MEMBER STATUS</span>
               </div>
               <Button

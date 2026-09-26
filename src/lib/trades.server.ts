@@ -66,10 +66,11 @@ export async function traceBitmapTrades(
   revealTxid: string,
   inscriptionId: string | null,
   maxHops = 6,
+  startVout = 0,
 ): Promise<TradeTrace> {
   const trades: ChainTrade[] = [];
   let txid = revealTxid;
-  let vout = 0;
+  let vout = startVout;
   let offset = 0;
   let ownerAddress: string | null = null;
 
