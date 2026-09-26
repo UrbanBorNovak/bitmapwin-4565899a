@@ -12,14 +12,36 @@ import { JIGGLYPUFF_IDS, JIGGLYPUFF_POOL } from "./jigglypuff";
 
 const input = z.object({ address: z.string().trim().min(16).max(120) });
 
-const POOL = new Set(JIGGLYPUFF_IDS);
-/** Inscription IDs currently sitting on this address, read from ordinals.com. */
-async function addressInscriptions(address: string): Promise<Set<string>> {
-  const { fetchWallet } = await import("@/lib/wallet.server");
-  const snap = await fetchWallet(address, 400);
-  const held = new Set<string>();
-  for (const u of snap.utxos) for (const i of u.inscriptions) held.add(String(i.id).toLowerCase());
-  return held;
+/** Check each pool inscription's current owner, instead of scanning hundreds of
+ * wallet outputs and fetching content for unrelated inscriptions. An incomplete
+ * chain response must never be interpreted as proof that the wallet owns none. */
+async function heldJigglypuff(address: string): Promise<string | null> {
+  const target = address.toLowerCase();
+  let cursor = 0;
+  let match: string | null = null;
+  let unavailable = false;
+  await Promise.all(Array.from({ length: 8 }, async () => {
+    while (cursor < JIGGLYPUFF_IDS.length && !match) {
+      const id = JIGGLYPUFF_IDS[cursor++];
+      if (!id) break;
+      try {
+        const response = await fetch(`https://ordinals.com/r/inscription/${id}`, {
+          headers: { accept: "application/json" },
+          signal: AbortSignal.timeout(8000),
+        });
+        if (response.status === 404) continue;
+        if (!response.ok) { unavailable = true; continue; }
+        const info = await response.json() as { id?: string; address?: string | null };
+        if (info.id?.toLowerCase() !== id.toLowerCase()) { unavailable = true; continue; }
+        if (info.address?.toLowerCase() === target) match = id;
+      } catch {
+        unavailable = true;
+      }
+    }
+  }));
+  if (match) return match;
+  if (unavailable) throw new Error("CHAIN OWNERSHIP CHECK INCOMPLETE — TRY AGAIN SHORTLY");
+  return null;
 }
 
 export const claimJigglypuffMembershipFn = createServerFn({ method: "POST" })
@@ -29,8 +51,7 @@ export const claimJigglypuffMembershipFn = createServerFn({ method: "POST" })
     const { assertControls } = await import("@/lib/coins.server");
     await assertControls(context.supabase, context.userId, data.address);
 
-    const held = await addressInscriptions(data.address);
-    const match = JIGGLYPUFF_IDS.find((id) => held.has(id));
+    const match = await heldJigglypuff(data.address);
     if (!match) {
       return { claimed: false as const, pool: JIGGLYPUFF_POOL, inscriptionId: null as string | null };
     }
