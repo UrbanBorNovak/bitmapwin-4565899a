@@ -5,6 +5,7 @@ import {
   MEMBERSHIP_DAYS,
   MEMBERSHIP_SATS,
   checkMembership,
+  claimHolderMembership,
   isActive,
   membershipQuery,
   startMembership,
@@ -30,6 +31,20 @@ export function MembershipPanel({ address, canEdit }: { address: string; canEdit
       void queryClient.invalidateQueries({ queryKey: ["membership", address] });
       if (result.justActivated) toast.success("MEMBERSHIP ACTIVE — BADGE ADDED");
       else toast.message("NO MATCHING DONATION FOUND YET");
+    },
+    onError: (error: Error) => toast.error(error.message.toUpperCase()),
+  });
+
+  const holderClaim = useMutation({
+    mutationFn: () => claimHolderMembership(address),
+    onSuccess: (result) => {
+      if (result.claimed) {
+        void queryClient.invalidateQueries({ queryKey: ["membership", address] });
+        void queryClient.invalidateQueries({ queryKey: ["membership-badge", address] });
+        toast.success("JIGGLYPUFF HOLDER — MEMBERSHIP ACTIVE");
+      } else {
+        toast.message("NO JIGGLYPUFF INSCRIPTION FOUND ON THIS ADDRESS");
+      }
     },
     onError: (error: Error) => toast.error(error.message.toUpperCase()),
   });
@@ -102,6 +117,22 @@ export function MembershipPanel({ address, canEdit }: { address: string; canEdit
               &gt; SEND THE EXACT AMOUNT FROM YOUR OWN WALLET, THEN PRESS CHECK. THE PAYMENT IS
               CONFIRMED AGAINST THE CHAIN.
             </p>
+
+            <div className="border border-border p-4">
+              <p className="label text-bitcoin">JIGGLYPUFF HOLDERS</p>
+              <p className="mt-2">
+                &gt; HOLD ANY JIGGLYPUFF INSCRIPTION ON THIS ADDRESS AND MEMBERSHIP IS FREE — NO
+                DONATION NEEDED. HOLDINGS ARE CHECKED AGAINST THE CHAIN.
+              </p>
+              <button
+                type="button"
+                onClick={() => holderClaim.mutate()}
+                disabled={holderClaim.isPending}
+                className="label mt-3 border border-bitcoin px-4 py-2 text-bitcoin hover:bg-bitcoin hover:text-background disabled:opacity-50"
+              >
+                {holderClaim.isPending ? "CHECKING THE CHAIN…" : "CLAIM AS JIGGLYPUFF HOLDER"}
+              </button>
+            </div>
           </>
         )}
       </div>

@@ -91,3 +91,9 @@ export async function startMembership(address: string) {
 export async function checkMembership(address: string) {
   return checkMembershipFn({ data: { address } });
 }
+
+/** JIGGLYPUFF holders claim MEMBER status with no donation — verified on chain. */
+export async function claimHolderMembership(address: string) {
+  const { claimJigglypuffMembershipFn } = await import("@/lib/game/jigglypuff.functions");
+  return claimJigglypuffMembershipFn({ data: { address } });
+}

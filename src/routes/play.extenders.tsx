@@ -23,6 +23,7 @@ import type { CardVisualExtender } from "@/lib/game/types";
 import { Link } from "@tanstack/react-router";
 import { ORD_TORCHES_PARENT, ORD_TORCHES_POOL, ORD_TORCHES_SUPPLY, useOrdTorches } from "@/lib/game/ordTorches";
 import { PUPPETS_PARENT, PUPPETS_POOL, usePuppets } from "@/lib/game/puppets";
+import { JIGGLYPUFF_IDS, JIGGLYPUFF_POOL, useJigglypuff } from "@/lib/game/jigglypuff";
 
 export const Route = createFileRoute("/play/extenders")({
   head: () => ({
@@ -58,6 +59,8 @@ function PlayExtenders() {
   const [torchPage, setTorchPage] = useState(0);
   const puppets = usePuppets();
   const [puppetPage, setPuppetPage] = useState(0);
+  const jigglypuff = useJigglypuff();
+  const [jigPage, setJigPage] = useState(0);
   const pools = useMemo(() => {
     const map = new Map<string, CardVisualExtender[]>();
     for (const e of extenders) map.set(e.collection, [...(map.get(e.collection) ?? []), e]);
@@ -233,6 +236,42 @@ function PlayExtenders() {
                   </div>
                 )}
               </>
+            )}
+          </article>
+          <article className="border border-bitcoin bg-card p-3">
+            <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="label text-bitcoin">JIGGLYPUFF · HARDCODED POOL</h2>
+                <span className="label text-muted-foreground">{jigglypuff.list.length} INSCRIPTIONS · HOLDERS GET MEMBER STATUS</span>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant={enabled && selectedCollection === JIGGLYPUFF_POOL ? "terminal" : "terminalGhost"}
+                disabled={!profile}
+                onClick={() => updatePlayVisuals({ pfpExtendersEnabled: true, selectedPfpCollection: JIGGLYPUFF_POOL })}
+              >
+                {enabled && selectedCollection === JIGGLYPUFF_POOL ? "POOL ACTIVE" : "USE POOL"}
+              </Button>
+            </header>
+            <p className="mb-3 font-mono text-[10px] text-muted-foreground">
+              A FIXED LIST OF {JIGGLYPUFF_IDS.length} INSCRIPTIONS SHIPPED WITH THE APP · ACTIVATE THE POOL TO DISTRIBUTE ONE ACROSS EACH CARD
+            </p>
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+              {jigglypuff.list.slice(jigPage * 24, jigPage * 24 + 24).map((j) => (
+                <div key={j.inscriptionId} className="relative aspect-square border border-border bg-background">
+                  <img src={inscriptionContentUrl(j.inscriptionId)} alt={`Jigglypuff #${j.index + 1}`} loading="lazy" className="h-full w-full object-cover [image-rendering:pixelated]" />
+                  <Link to="/bitmap/$block" params={{ block: String(j.bitmap) }} className="absolute inset-0" aria-label={`Jigglypuff ${j.index + 1} at ${j.bitmap}.bitmap`} />
+                  <span className="label pointer-events-none absolute bottom-0 left-0 bg-background/85 px-1 text-[9px]" data-no-translate>#{j.index + 1} · {j.bitmap}</span>
+                </div>
+              ))}
+            </div>
+            {jigglypuff.list.length > 24 && (
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <Button type="button" variant="terminalGhost" disabled={jigPage === 0} onClick={() => setJigPage((p) => p - 1)}>PREV</Button>
+                <span className="label text-muted-foreground">PAGE {jigPage + 1} / {Math.max(1, Math.ceil(jigglypuff.list.length / 24))}</span>
+                <Button type="button" variant="terminalGhost" disabled={(jigPage + 1) * 24 >= jigglypuff.list.length} onClick={() => setJigPage((p) => p + 1)}>NEXT</Button>
+              </div>
             )}
           </article>
           {pools.map(([collection, items]) => (
