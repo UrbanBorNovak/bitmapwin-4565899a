@@ -1,14 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { JIGGLYPUFF_IDS, JIGGLYPUFF_POOL } from "@/lib/game/jigglypuff";
 import { inscriptionContentUrl } from "@/lib/game/pfpExtenders";
 import {
   collectionListingsQuery,
-  collectionProgressQuery,
   collectionSalesQuery,
 } from "@/lib/collection-sales";
-import { crawlJigglypuffSalesFn } from "@/lib/collection-sales.functions";
 import { formatSats } from "@/lib/trades";
 import { BuyButton } from "@/components/BuyButton";
 import { ShopListButton } from "@/components/builds/ShopListButton";
@@ -16,7 +14,7 @@ import { ShopListButton } from "@/components/builds/ShopListButton";
 const PAGE = 24;
 const TITLE = "JIGGLYPUFF — On-chain Collection on BITMAPWIN";
 const DESC =
-  "218 JIGGLYPUFF inscriptions: combined collection value, floor, on-chain sales history and live PSBT trading on BITMAPWIN.";
+  "218 JIGGLYPUFF inscriptions: confirmed BITMAPWIN sales, current listings and signed PSBT trading.";
 
 export const Route = createFileRoute("/collections/jigglypuff")({
   head: () => ({
@@ -37,48 +35,20 @@ function short(a: string | null) {
 }
 
 function JigglypuffCollection() {
-  const qc = useQueryClient();
   const sales = useQuery(collectionSalesQuery(JIGGLYPUFF_POOL));
-  const progress = useQuery(collectionProgressQuery(JIGGLYPUFF_POOL));
   const listings = useQuery(collectionListingsQuery(JIGGLYPUFF_POOL, JIGGLYPUFF_IDS));
   const [page, setPage] = useState(0);
   const [filter, setFilter] = useState<"all" | "listed">("all");
   const [prices, setPrices] = useState<Record<string, string>>({});
 
-  // Visitors keep the on-chain sales crawl moving until every item is traced.
-  useEffect(() => {
-    if ((progress.data ?? 0) >= JIGGLYPUFF_IDS.length) return;
-    let alive = true;
-    const tick = async () => {
-      try {
-        const r = await crawlJigglypuffSalesFn();
-        if (alive && r.checked > 0) {
-          void qc.invalidateQueries({ queryKey: ["collection-sales", JIGGLYPUFF_POOL] });
-          void qc.invalidateQueries({ queryKey: ["collection-progress", JIGGLYPUFF_POOL] });
-        }
-      } catch {
-        /* chain source busy — try next tick */
-      }
-    };
-    void tick();
-    const t = setInterval(tick, 25_000);
-    return () => {
-      alive = false;
-      clearInterval(t);
-    };
-  }, [progress.data, qc]);
-
   const stats = useMemo(() => {
-    const paid = (sales.data ?? []).filter((s) => s.priceSats > 0);
+    const paid = (sales.data?.sales ?? []).filter((s) => s.priceSats > 0);
     const lastSale = new Map<string, number>();
     for (const s of paid) if (!lastSale.has(s.inscriptionId)) lastSale.set(s.inscriptionId, s.priceSats);
     const open = listings.data ?? [];
     const floor = open.length ? Math.min(...open.map((o) => o.priceSats)) : null;
     const volume = paid.reduce((n, s) => n + s.priceSats, 0);
-    // Combined value: each item at its last on-chain sale, unsold items at the floor.
-    let value = 0;
-    for (const id of JIGGLYPUFF_IDS) value += lastSale.get(id) ?? floor ?? 0;
-    return { paid, lastSale, floor, volume, value, listed: open.length };
+    return { paid, lastSale, floor, volume, listed: open.length };
   }, [sales.data, listings.data]);
 
   const offerById = useMemo(
@@ -88,7 +58,6 @@ function JigglypuffCollection() {
   const items = filter === "listed" ? JIGGLYPUFF_IDS.filter((id) => offerById.has(id)) : JIGGLYPUFF_IDS;
   const pages = Math.max(1, Math.ceil(items.length / PAGE));
   const view = items.slice(page * PAGE, page * PAGE + PAGE);
-  const traced = Math.min(progress.data ?? 0, JIGGLYPUFF_IDS.length);
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-8 md:px-8">
@@ -99,10 +68,10 @@ function JigglypuffCollection() {
 
       <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-5">
         {[
-          ["COLLECTION VALUE", stats.value ? formatSats(stats.value) : "—"],
-          ["FLOOR", stats.floor ? formatSats(stats.floor) : "NO LISTINGS"],
-          ["VOLUME", formatSats(stats.volume)],
-          ["SALES", String(stats.paid.length)],
+          ["COLLECTION VALUE", "UNAVAILABLE"],
+          ["ASKING FLOOR", stats.floor ? formatSats(stats.floor) : "NO LISTINGS"],
+           ["CONFIRMED VOLUME", sales.isPending || sales.isError || sales.data?.unavailable ? "—" : stats.volume ? formatSats(stats.volume) : "0 SATS"],
+           ["SALES", sales.isPending || sales.isError || sales.data?.unavailable ? "—" : String(stats.paid.length)],
           ["LISTED", `${stats.listed} / ${JIGGLYPUFF_IDS.length}`],
         ].map(([k, v]) => (
           <div key={k} className="border border-border bg-card/60 p-3 backdrop-blur">
@@ -114,9 +83,7 @@ function JigglypuffCollection() {
         ))}
       </div>
       <p className="label mt-2 text-muted-foreground">
-        VALUE = LAST ON-CHAIN SALE PER ITEM, UNSOLD ITEMS AT FLOOR · CHAIN TRACED {traced}/
-        {JIGGLYPUFF_IDS.length}
-        {traced < JIGGLYPUFF_IDS.length ? " — SCANNING…" : ""}
+         SALES COUNT ONLY CONFIRMED BITMAPWIN PURCHASES WITH MATCHING CHAIN PAYOUTS · ASKING FLOOR IS NOT A SALE · NO VERIFIED COLLECTION VALUATION
       </p>
 
       <div className="mt-8 flex flex-wrap items-center gap-2">
@@ -205,7 +172,9 @@ function JigglypuffCollection() {
         })}
       </div>
 
-      <h2 className="display mt-12 text-xl">ON-CHAIN SALES</h2>
+       <h2 className="display mt-12 text-xl">CONFIRMED BITMAPWIN SALES</h2>
+       {sales.isPending && <p className="label mt-3 text-muted-foreground">VERIFYING PURCHASES ON CHAIN…</p>}
+       {(sales.isError || sales.data?.unavailable) && <p className="label mt-3 text-destructive">SALE VERIFICATION UNAVAILABLE — TRY AGAIN LATER</p>}
       <div className="mt-3 overflow-x-auto border border-border">
         <table className="w-full font-mono text-xs" data-no-translate>
           <thead className="label text-muted-foreground">
@@ -219,10 +188,10 @@ function JigglypuffCollection() {
             </tr>
           </thead>
           <tbody>
-            {stats.paid.length === 0 && (
+             {stats.paid.length === 0 && !sales.isPending && !sales.isError && !sales.data?.unavailable && (
               <tr>
                 <td colSpan={6} className="p-4 text-muted-foreground">
-                  NO PAID SALES FOUND ON CHAIN YET
+                   NO VERIFIED BITMAPWIN SALES YET
                 </td>
               </tr>
             )}
