@@ -23,6 +23,7 @@ import type { CardVisualExtender } from "@/lib/game/types";
 import { Link } from "@tanstack/react-router";
 import { ORD_TORCHES_PARENT, ORD_TORCHES_POOL, ORD_TORCHES_SUPPLY, useOrdTorches } from "@/lib/game/ordTorches";
 import { PUPPETS_PARENT, PUPPETS_POOL, usePuppets } from "@/lib/game/puppets";
+import { JIGGLYPUFF_IDS, JIGGLYPUFF_POOL, useJigglypuff } from "@/lib/game/jigglypuff";
 
 export const Route = createFileRoute("/play/extenders")({
   head: () => ({
@@ -58,6 +59,8 @@ function PlayExtenders() {
   const [torchPage, setTorchPage] = useState(0);
   const puppets = usePuppets();
   const [puppetPage, setPuppetPage] = useState(0);
+  const jigglypuff = useJigglypuff();
+  const [jigPage, setJigPage] = useState(0);
   const pools = useMemo(() => {
     const map = new Map<string, CardVisualExtender[]>();
     for (const e of extenders) map.set(e.collection, [...(map.get(e.collection) ?? []), e]);
