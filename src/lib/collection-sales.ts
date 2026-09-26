@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { fetchOffersForInscriptions } from "@/lib/offers";
+import { getJigglypuffSalesFn } from "@/lib/collection-sales.functions";
 
 export type CollectionSale = {
   txid: string;
@@ -12,45 +12,11 @@ export type CollectionSale = {
   blockTime: string | null;
 };
 
-export async function fetchCollectionSales(collection: string): Promise<CollectionSale[]> {
-  const { data, error } = await supabase
-    .from("collection_sales")
-    .select("txid, inscription_id, seller_address, buyer_address, price_sats, block_height, block_time")
-    .eq("collection", collection)
-    .order("block_height", { ascending: false, nullsFirst: false })
-    .limit(1000);
-  if (error) throw error;
-  return (data ?? []).map((r) => ({
-    txid: r.txid,
-    inscriptionId: r.inscription_id,
-    sellerAddress: r.seller_address,
-    buyerAddress: r.buyer_address,
-    priceSats: Number(r.price_sats),
-    blockHeight: r.block_height,
-    blockTime: r.block_time,
-  }));
-}
-
-export async function fetchCollectionProgress(collection: string) {
-  const { count } = await supabase
-    .from("collection_crawl_state")
-    .select("inscription_id", { count: "exact", head: true })
-    .eq("collection", collection);
-  return count ?? 0;
-}
-
 export const collectionSalesQuery = (collection: string) =>
   queryOptions({
     queryKey: ["collection-sales", collection],
-    queryFn: () => fetchCollectionSales(collection),
-    staleTime: 30_000,
-  });
-
-export const collectionProgressQuery = (collection: string) =>
-  queryOptions({
-    queryKey: ["collection-progress", collection],
-    queryFn: () => fetchCollectionProgress(collection),
-    staleTime: 20_000,
+    queryFn: (): Promise<CollectionSale[]> => getJigglypuffSalesFn(),
+    staleTime: 60_000,
   });
 
 /** All open listings across the pool (offers are read 60 ids at a time). */
