@@ -117,6 +117,22 @@ export function MembershipPanel({ address, canEdit }: { address: string; canEdit
               &gt; SEND THE EXACT AMOUNT FROM YOUR OWN WALLET, THEN PRESS CHECK. THE PAYMENT IS
               CONFIRMED AGAINST THE CHAIN.
             </p>
+
+            <div className="border border-border p-4">
+              <p className="label text-bitcoin">JIGGLYPUFF HOLDERS</p>
+              <p className="mt-2">
+                &gt; HOLD ANY JIGGLYPUFF INSCRIPTION ON THIS ADDRESS AND MEMBERSHIP IS FREE — NO
+                DONATION NEEDED. HOLDINGS ARE CHECKED AGAINST THE CHAIN.
+              </p>
+              <button
+                type="button"
+                onClick={() => holderClaim.mutate()}
+                disabled={holderClaim.isPending}
+                className="label mt-3 border border-bitcoin px-4 py-2 text-bitcoin hover:bg-bitcoin hover:text-background disabled:opacity-50"
+              >
+                {holderClaim.isPending ? "CHECKING THE CHAIN…" : "CLAIM AS JIGGLYPUFF HOLDER"}
+              </button>
+            </div>
           </>
         )}
       </div>
