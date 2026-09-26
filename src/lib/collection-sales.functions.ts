@@ -1,29 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
 import { JIGGLYPUFF_IDS } from "@/lib/game/jigglypuff";
 
 /** Only count completed BITMAPWIN purchases whose payment and inscription input
  * can be checked against a confirmed Bitcoin transaction. A transfer that
  * happens to pay its sender (including change) is not proof of a sale. */
 export const getJigglypuffSalesFn = createServerFn({ method: "GET" }).handler(async () => {
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
-  const client = createClient<Database>(process.env["SUPABASE_URL"]!, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: { fetch: (input, init) => {
-      const headers = new Headers(init?.headers);
-      if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) headers.delete("Authorization");
-      headers.set("apikey", key);
-      return fetch(input, { ...init, headers });
-    } },
-  });
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const rows = await Promise.all(Array.from({ length: Math.ceil(JIGGLYPUFF_IDS.length / 60) }, (_, n) =>
-    client.from("offers")
+    supabaseAdmin.from("offers")
       .select("inscription_id, outpoint, seller_address, buyer_address, buyer_txid, price_sats")
       .in("inscription_id", JIGGLYPUFF_IDS.slice(n * 60, n * 60 + 60))
       .not("buyer_txid", "is", null),
   ));
-  for (const row of rows) if (row.error) throw new Error(`SALE RECORDS UNAVAILABLE: ${row.error.message}`);
+  for (const row of rows) if (row.error) throw new Error("SALE RECORDS UNAVAILABLE");
   const offers = rows.flatMap((r) => r.data ?? []);
   const sales = await Promise.all(offers.map(async (offer) => {
     if (!offer.buyer_txid || !offer.inscription_id || !offer.seller_address || !offer.buyer_address ||
