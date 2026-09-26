@@ -20,6 +20,7 @@ import {
 } from "@react-three/drei";
 import { SafeHtml } from "@/components/game/SafeHtml";
 import { SafeEnvironment } from "@/components/game/SafeEnvironment";
+import { BitmapPixelLabel, DestinationArrow } from "@/components/game/WorldMarkers";
 import { SafeLightformer } from "@/components/game/SafeLightformer";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
@@ -2769,6 +2770,22 @@ const WorldScene = memo(function WorldScene({
       {selectedHeight !== null ? (
         <>
           <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} />
+          <DestinationArrow
+            position={[
+              worldX(selectedHeight % GRID),
+              districtHeight(selectedHeight),
+              worldZ(Math.floor(selectedHeight / GRID)),
+            ]}
+          />
+          <BitmapPixelLabel
+            text={`${selectedHeight}.BITMAP`}
+            color={colors.bitcoin}
+            position={[
+              worldX(selectedHeight % GRID),
+              districtHeight(selectedHeight) + 0.95,
+              worldZ(Math.floor(selectedHeight / GRID)),
+            ]}
+          />
           <BssScene3D
             height={selectedHeight}
             position={[

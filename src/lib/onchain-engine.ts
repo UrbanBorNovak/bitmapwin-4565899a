@@ -37,7 +37,7 @@ export const ONCHAIN_ENGINE: Record<string, OnChainRef> = {
   raycaster: { id: "fd02d76da92a111b3e0d88e61173d514e85ff9244cd2f1b1e50864edbb91383ei0", kind: "script", usable: "engine-only", note: "Raycaster" },
   screen: { id: "7537cd8c4ac1d22005868ab63ffe5cdcb7fa3e7bf3a49827ed18053b449b2657i0", kind: "script", usable: "engine-only", note: "Screen" },
   baseTexture: { id: "dbb64a250ef86a6aa338a08d9fbf659b9e17119d6e30f8dc5c15aa274926bf5bi0", kind: "texture", usable: "recipe", note: "512px soft white disc" },
-  arrowTexture: { id: "8656d26a274a3f0ec7ff46afe903accc15bab3e6df09400a16df472cbad82ac8i0", kind: "texture", usable: "recipe", note: "512px arrow marker" },
-  pixelFontJson: { id: "a1f5a259aab4651425b7e6869435fd6747eaf4d6b063d1971466d966841dd7b4i0", kind: "font", usable: "recipe", note: "Pixel font metrics" },
-  pixelFontPng: { id: "f240d09b2f6177f1dcad189132e8c2ed64df38b0d2f381f70b8304e2850d3bf2i0", kind: "font", usable: "recipe", note: "Pixel font atlas" },
+  arrowTexture: { id: "8656d26a274a3f0ec7ff46afe903accc15bab3e6df09400a16df472cbad82ac8i0", kind: "texture", usable: "in-use", note: "512px arrow — the destination marker over a visited BITMAP" },
+  pixelFontJson: { id: "a1f5a259aab4651425b7e6869435fd6747eaf4d6b063d1971466d966841dd7b4i0", kind: "font", usable: "in-use", note: "Pixel font metrics — BITMAP name labels in the world" },
+  pixelFontPng: { id: "f240d09b2f6177f1dcad189132e8c2ed64df38b0d2f381f70b8304e2850d3bf2i0", kind: "font", usable: "in-use", note: "Pixel font atlas — BITMAP name labels in the world" },
 };
