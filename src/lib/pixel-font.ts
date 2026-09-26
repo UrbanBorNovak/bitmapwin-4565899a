@@ -19,7 +19,7 @@ type Glyph = {
   bounds?: [number, number, number, number];
 };
 
-type PixelFont = {
+export type PixelFont = {
   chars: Map<number, Glyph>;
   atlas: HTMLImageElement;
 };
