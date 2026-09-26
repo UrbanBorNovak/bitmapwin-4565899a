@@ -16,11 +16,28 @@ export const Route = createFileRoute("/api/public/inscription/$id")({
       GET: async ({ params }) => {
         const id = String(params.id ?? "").toLowerCase();
         if (!ID.test(id)) return new Response("Bad inscription id", { status: 400 });
-        const upstream = await fetch(`https://ordinals.com/content/${id}`, {
-          headers: { "User-Agent": "bitmapwin/1.0" },
-        });
-        if (!upstream.ok || !upstream.body) {
-          return new Response("Not available", { status: 502 });
+        const source = `https://ordinals.com/content/${id}`;
+        let upstream: Response | null = null;
+        // ordinals.com rate-limits bursts (a gallery page asks for many at once): retry briefly.
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            const res = await fetch(source, { headers: { "User-Agent": "bitmapwin/1.0" } });
+            if (res.ok && res.body) {
+              upstream = res;
+              break;
+            }
+            if (res.status === 404) return new Response("Not found", { status: 404 });
+          } catch {
+            /* network hiccup — retry */
+          }
+          await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+        }
+        if (!upstream) {
+          // Still busy: send the browser straight to the source (it allows cross-origin use).
+          return new Response(null, {
+            status: 302,
+            headers: { Location: source, "Cache-Control": "no-store" },
+          });
         }
         const contentType = upstream.headers.get("content-type") ?? "application/octet-stream";
         if (contentType.toLowerCase().includes("image/svg+xml")) {
