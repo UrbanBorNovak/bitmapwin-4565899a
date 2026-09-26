@@ -2769,6 +2769,22 @@ const WorldScene = memo(function WorldScene({
       {selectedHeight !== null ? (
         <>
           <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} />
+          <DestinationArrow
+            position={[
+              worldX(selectedHeight % GRID),
+              districtHeight(selectedHeight),
+              worldZ(Math.floor(selectedHeight / GRID)),
+            ]}
+          />
+          <BitmapPixelLabel
+            text={`${selectedHeight}.BITMAP`}
+            color={colors.bitcoin}
+            position={[
+              worldX(selectedHeight % GRID),
+              districtHeight(selectedHeight) + 0.95,
+              worldZ(Math.floor(selectedHeight / GRID)),
+            ]}
+          />
           <BssScene3D
             height={selectedHeight}
             position={[

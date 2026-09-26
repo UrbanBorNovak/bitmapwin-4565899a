@@ -71,7 +71,7 @@ export const BitmapPixelLabel = memo(function BitmapPixelLabel({
 
   if (!texture) return null;
   const aspect = texture.image.width / texture.image.height;
-  const height = 0.16 * size;
+  const height = 0.11 * size;
   return (
     <sprite
       ref={spriteRef}
@@ -140,7 +140,7 @@ export const DestinationArrow = memo(function DestinationArrow({
     <group ref={groupRef} position={position} raycast={noRaycast}>
       {texture ? (
         <mesh raycast={noRaycast} renderOrder={29}>
-          <planeGeometry args={[0.5, 0.5]} />
+          <planeGeometry args={[0.28, 0.28]} />
           <meshBasicMaterial
             map={texture}
             transparent
