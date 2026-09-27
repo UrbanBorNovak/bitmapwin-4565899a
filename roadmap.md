@@ -75,4 +75,4 @@
 ## BITMAP Archaeology
 - [x] Introduce archaeology as a community research layer in the official trait catalogue.
 - [x] Add evidence-backed BITMAP nominations with private review states and public accepted records.
-- [ ] Verify supported-trait validation, signed-in submission, public visibility, and desktop/mobile layouts.
+- [x] Verify supported-trait validation, signed-in submission, public visibility, and desktop/mobile layouts.
