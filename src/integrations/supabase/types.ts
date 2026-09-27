@@ -1846,6 +1846,8 @@ export type Database = {
           id: string
           invoice_sats: number
           paid_at: string | null
+          qualifying_trait: string | null
+          source: string
           status: string
           txid: string | null
           updated_at: string
@@ -1858,6 +1860,8 @@ export type Database = {
           id?: string
           invoice_sats: number
           paid_at?: string | null
+          qualifying_trait?: string | null
+          source?: string
           status?: string
           txid?: string | null
           updated_at?: string
@@ -1870,6 +1874,8 @@ export type Database = {
           id?: string
           invoice_sats?: number
           paid_at?: string | null
+          qualifying_trait?: string | null
+          source?: string
           status?: string
           txid?: string | null
           updated_at?: string
@@ -2928,6 +2934,39 @@ export type Database = {
           seller_address?: string | null
           txid?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      trait_holder_badges: {
+        Row: {
+          active: boolean
+          address: string
+          bitmap_height: number
+          expires_at: string
+          inscription_id: string
+          trait_ids: string[]
+          updated_at: string
+          verified_at: string
+        }
+        Insert: {
+          active?: boolean
+          address: string
+          bitmap_height: number
+          expires_at: string
+          inscription_id: string
+          trait_ids?: string[]
+          updated_at?: string
+          verified_at?: string
+        }
+        Update: {
+          active?: boolean
+          address?: string
+          bitmap_height?: number
+          expires_at?: string
+          inscription_id?: string
+          trait_ids?: string[]
+          updated_at?: string
+          verified_at?: string
         }
         Relationships: []
       }
