@@ -46,10 +46,10 @@ function ArchaeologyFacts() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("block_facts")
-        .select("height, hash, mined_at, pool_name")
-        .in("height", TIMELINE.map((t) => t.height));
+        .select("block_height, block_hash, mined_at, pool_name")
+        .in("block_height", TIMELINE.map((t) => t.height));
       if (error) throw error;
-      return new Map<number, BlockFact>((data ?? []).map((r) => [Number(r.height), r as BlockFact]));
+      return new Map<number, BlockFact>((data ?? []).map((r) => [Number(r.block_height), r as BlockFact]));
     },
     staleTime: 60_000,
   });
