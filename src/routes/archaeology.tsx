@@ -144,7 +144,7 @@ function ArchaeologyFacts() {
                 {fact ? (
                   <div className="mt-3 border border-border bg-card p-3">
                     <p className="label text-signal">CHAIN VERIFIED · INDEXED</p>
-                    <p className="mt-1 break-all font-mono text-[10px] text-muted-foreground">HASH {fact.hash}</p>
+                    <p className="mt-1 break-all font-mono text-[10px] text-muted-foreground">HASH {fact.block_hash}</p>
                     <p className="mt-1 font-mono text-[10px] text-muted-foreground">
                       {fact.mined_at ? `MINED ${new Date(fact.mined_at).toUTCString()}` : "MINED TIME PENDING"}
                       {fact.pool_name ? ` · POOL ${fact.pool_name}` : ""}
