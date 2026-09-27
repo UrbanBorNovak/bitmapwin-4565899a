@@ -44,6 +44,7 @@ function TraitsIndex() {
       <div className="mt-8 flex flex-wrap gap-3">
         <span className="label border border-bitcoin px-3 py-2 text-bitcoin">PROVABLE NOW · {supported}</span>
         <span className="label border border-border px-3 py-2">INDEX DATA REQUIRED · {ALL_OFFICIAL_TRAITS.length - supported}</span>
+        <Link to="/archaeology" className="btn-term-ghost">ARCHAEOLOGY FACTS →</Link>
         <a href="https://docs.bitmap.community/bitmap.community/trait-definitions" target="_blank" rel="noreferrer" className="btn-term-ghost">OFFICIAL SOURCE ↗</a>
       </div>
 
