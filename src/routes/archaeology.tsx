@@ -35,7 +35,7 @@ const TIMELINE: TimelineEntry[] = [
   { height: 840000, title: "FOURTH HALVING", note: "Subsidy drops to 3.125 BTC. The most recent EPIC block." },
 ];
 
-type BlockFact = { height: number; hash: string; mined_at: string | null; pool_name: string | null };
+type BlockFact = { block_height: number; block_hash: string; mined_at: string | null; pool_name: string | null };
 
 function ArchaeologyFacts() {
   const supported = ALL_OFFICIAL_TRAITS.filter((t) => t.supported);
