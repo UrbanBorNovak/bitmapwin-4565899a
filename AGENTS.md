@@ -15,3 +15,4 @@
 - Official trait holder badges require a live verified-wallet scan of unspent BITMAP inscriptions and expire after 30 days; public UI reads only the resulting badge proof.
 - Official trait lists detect a next page without full-index counts, keeping the 900k+ BITMAP index responsive.
 - BITMAP Archaeology separates chain-verified facts from attributed community field notes; only reviewed records are public and at most three are featured per official trait.
+- Block-derived official traits read only from stored block_facts (mempool.space headers/extras) and the published Patoshi list; a block without a record never matches.
