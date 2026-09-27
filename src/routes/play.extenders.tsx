@@ -237,7 +237,7 @@ function PlayExtenders() {
           <article className="border border-bitcoin bg-card p-3">
             <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h2 className="label text-bitcoin">BITCOIN HOODS · ON-CHAIN POOL</h2>
+                <h2 className="label text-bitcoin">BITCOIN WIERDOS · ON-CHAIN POOL</h2>
                 <span className="label text-muted-foreground">{puppets ? puppets.list.length : "…"} FOUND ACROSS THE MAP</span>
               </div>
               <Button
@@ -250,14 +250,14 @@ function PlayExtenders() {
                 {enabled && selectedCollection === PUPPETS_POOL ? "POOL ACTIVE" : "USE POOL"}
               </Button>
             </header>
-            <p className="mb-3 break-all font-mono text-[10px] text-muted-foreground">PARENT <span data-no-translate>{PUPPETS_PARENT}</span> · ACTIVATE THE POOL TO DISTRIBUTE A DIFFERENT HOOD ACROSS EACH CARD</p>
+            <p className="mb-3 break-all font-mono text-[10px] text-muted-foreground">PARENT <span data-no-translate>{PUPPETS_PARENT}</span> · ACTIVATE THE POOL TO DISTRIBUTE A DIFFERENT WIERDO ACROSS EACH CARD</p>
             {!puppets ? <p className="font-mono text-xs text-muted-foreground">&gt; READING CHILDREN…</p> : (
               <>
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
                   {puppets.list.slice(puppetPage * 24, puppetPage * 24 + 24).map((p) => (
                     <div key={p.inscriptionId} className="relative aspect-square border border-border bg-background">
-                      <img src={inscriptionContentUrl(p.inscriptionId)} alt={`Bitcoin Hood #${p.index + 1}`} loading="lazy" className="h-full w-full object-cover [image-rendering:pixelated]" />
-                      <Link to="/bitmap/$block" params={{ block: String(p.bitmap) }} className="absolute inset-0" aria-label={`Hood ${p.index + 1} at ${p.bitmap}.bitmap`} />
+                      <img src={inscriptionContentUrl(p.inscriptionId)} alt={`Bitcoin Wierdo #${p.index + 1}`} loading="lazy" className="h-full w-full object-cover [image-rendering:pixelated]" />
+                      <Link to="/bitmap/$block" params={{ block: String(p.bitmap) }} className="absolute inset-0" aria-label={`Wierdo ${p.index + 1} at ${p.bitmap}.bitmap`} />
                       <span className="label pointer-events-none absolute bottom-0 left-0 bg-background/85 px-1 text-[9px]" data-no-translate>#{p.index + 1} · {p.bitmap}</span>
                     </div>
                   ))}
