@@ -1740,6 +1740,22 @@ function PlayerCameraRig({
     setMoveBlocker((x, z) => {
       // High enough on the jetpack and everything on the ground passes below:
       // walls, trees, hulls and the sea are no longer in your way.
+      // Mountains are solid: steep rock walls stop you on foot or on wheels,
+      // and anything flying cannot pass through a peak taller than it flies.
+      const here = pose.current;
+      if (here) {
+        const fromY = groundY(here.x, here.z);
+        const toY = groundY(x, z);
+        const run = Math.hypot(x - here.x, z - here.z);
+        if (run > 1e-6) {
+          const flying = isDriving() && currentRide().kind === "air";
+          if (flying || aloft(here)) {
+            if (toY > fromY + here.y + AVATAR_U * 0.2) return true;
+          } else if (toY - fromY > run * 1.15 && toY - fromY > AVATAR_U * 0.02) {
+            return true;
+          }
+        }
+      }
       if (aloft(pose.current)) return false;
       if (blockedAt(x, z, AVATAR_U * 0.3)) return true;
       // Landmarks, trees and other inscribed props are solid too — you go
