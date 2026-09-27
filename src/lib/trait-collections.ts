@@ -12,20 +12,26 @@ export type TraitBitmap = {
   totalCount: number;
 };
 
-export async function fetchTraitBitmaps(trait: TraitId, offset = 0, limit = 24): Promise<TraitBitmap[]> {
+export type TraitBitmapPage = {
+  items: TraitBitmap[];
+  hasMore: boolean;
+};
+
+export async function fetchTraitBitmaps(trait: TraitId, offset = 0, limit = 24): Promise<TraitBitmapPage> {
   const { data, error } = await supabase.rpc("official_trait_bitmaps", {
     p_trait: trait,
     p_offset: offset,
-    p_limit: limit,
+    p_limit: limit + 1,
   });
   if (error) throw error;
-  return (data ?? []).map((row) => ({
+  const rows = (data ?? []).map((row) => ({
     bitmapHeight: Number(row.block_height),
     inscriptionId: row.inscription_id,
     ownerAddress: row.owner_address,
     genesisHeight: row.genesis_height === null ? null : Number(row.genesis_height),
     totalCount: Number(row.total_count),
   }));
+  return { items: rows.slice(0, limit), hasMore: rows.length > limit };
 }
 
 export const traitBitmapsQuery = (trait: TraitId, page = 0, limit = 24) => queryOptions({
@@ -37,7 +43,7 @@ export const traitBitmapsQuery = (trait: TraitId, page = 0, limit = 24) => query
 export async function fetchTraitExtenderPool(): Promise<TraitBitmap[]> {
   const groups = await Promise.all(OFFICIAL_TRAITS.map((trait) => fetchTraitBitmaps(trait.id, 0, 24)));
   const unique = new Map<string, TraitBitmap>();
-  for (const item of groups.flat()) unique.set(item.inscriptionId, item);
+  for (const item of groups.flatMap((group) => group.items)) unique.set(item.inscriptionId, item);
   return [...unique.values()].sort((a, b) => a.bitmapHeight - b.bitmapHeight);
 }
 

@@ -13,10 +13,19 @@ import { formatSats } from "@/lib/trades";
 const PAGE_SIZE = 24;
 
 export const Route = createFileRoute("/traits/$trait")({
-  beforeLoad: ({ params }) => {
-    if (!officialTrait(params.trait)) throw notFound();
+  beforeLoad: ({ params }) => { if (!officialTrait(params.trait)) throw notFound(); },
+  head: ({ params }) => {
+    const label = officialTrait(params.trait)?.label ?? "Official Trait";
+    const description = `Official ${label} BITMAP definition, indexed inscriptions, listings and verified sales on BITMAPWIN.`;
+    return { meta: [
+      { title: `${label} BITMAPs — BITMAPWIN` },
+      { name: "description", content: description },
+      { property: "og:title", content: `${label} BITMAPs — BITMAPWIN` },
+      { property: "og:description", content: description },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ] };
   },
-  head: ({ params }) => ({ meta: [{ title: `${officialTrait(params.trait)?.label ?? "Trait"} BITMAPs — BITMAPWIN` }] }),
   component: TraitDetail,
 });
 
@@ -26,8 +35,8 @@ function TraitDetail() {
   const [page, setPage] = useState(0);
   const [prices, setPrices] = useState<Record<string, string>>({});
   const rows = useQuery({ ...traitBitmapsQuery(id as TraitId, page, PAGE_SIZE), enabled: trait.supported });
-  const ids = useMemo(() => (rows.data ?? []).map((row) => row.inscriptionId), [rows.data]);
-  const heights = useMemo(() => (rows.data ?? []).map((row) => row.bitmapHeight), [rows.data]);
+  const ids = useMemo(() => (rows.data?.items ?? []).map((row) => row.inscriptionId), [rows.data]);
+  const heights = useMemo(() => (rows.data?.items ?? []).map((row) => row.bitmapHeight), [rows.data]);
   const offers = useQuery({ ...inscriptionOffersQuery(ids), enabled: ids.length > 0 });
   const trades = useQuery({
     queryKey: ["trait-trades", id, page, heights.join(",")],
@@ -37,8 +46,6 @@ function TraitDetail() {
   });
   const offerById = new Map((offers.data ?? []).map((offer) => [offer.inscriptionId, offer]));
   const saleByHeight = new Map((trades.data ?? []).filter((trade) => trade.price_sats > 0).map((trade) => [trade.bitmap_height, trade]));
-  const total = rows.data?.[0]?.totalCount ?? 0;
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <main className="mx-auto max-w-[1400px] px-4 py-12 md:px-8">
@@ -65,15 +72,15 @@ function TraitDetail() {
       ) : (
         <>
           <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border border-border p-4">
-            <span className="label">{total.toLocaleString()} INDEXED INSCRIPTIONS</span>
+            <span className="label">GENUINE INDEXED INSCRIPTIONS</span>
             <div className="flex items-center gap-2">
               <button className="btn-term-ghost" disabled={page === 0} onClick={() => setPage((value) => value - 1)}>PREV</button>
-              <span className="label">PAGE {page + 1} / {pages}</span>
-              <button className="btn-term-ghost" disabled={page >= pages - 1} onClick={() => setPage((value) => value + 1)}>NEXT</button>
+              <span className="label">PAGE {page + 1}</span>
+              <button className="btn-term-ghost" disabled={!rows.data?.hasMore} onClick={() => setPage((value) => value + 1)}>NEXT</button>
             </div>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
-            {(rows.data ?? []).map((row) => {
+            {(rows.data?.items ?? []).map((row) => {
               const offer = offerById.get(row.inscriptionId);
               const sale = saleByHeight.get(row.bitmapHeight);
               const price = Number(prices[row.inscriptionId] ?? "");
