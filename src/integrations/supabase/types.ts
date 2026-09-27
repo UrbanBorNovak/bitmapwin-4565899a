@@ -3218,6 +3218,10 @@ export type Database = {
         Args: { p_hi: number; p_lo: number }
         Returns: Json
       }
+      bitmap_has_height_trait: {
+        Args: { _height: number; _trait: string }
+        Returns: boolean
+      }
       can_build_bitmap: {
         Args: { _height: number; _owner_address: string; _user_id: string }
         Returns: boolean
