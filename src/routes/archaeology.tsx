@@ -35,7 +35,7 @@ const TIMELINE: TimelineEntry[] = [
   { height: 840000, title: "FOURTH HALVING", note: "Subsidy drops to 3.125 BTC. The most recent EPIC block." },
 ];
 
-type BlockFact = { height: number; hash: string; mined_at: string | null; pool_name: string | null };
+type BlockFact = { block_height: number; block_hash: string; mined_at: string | null; pool_name: string | null };
 
 function ArchaeologyFacts() {
   const supported = ALL_OFFICIAL_TRAITS.filter((t) => t.supported);
@@ -46,10 +46,10 @@ function ArchaeologyFacts() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("block_facts")
-        .select("height, hash, mined_at, pool_name")
-        .in("height", TIMELINE.map((t) => t.height));
+        .select("block_height, block_hash, mined_at, pool_name")
+        .in("block_height", TIMELINE.map((t) => t.height));
       if (error) throw error;
-      return new Map<number, BlockFact>((data ?? []).map((r) => [Number(r.height), r as BlockFact]));
+      return new Map<number, BlockFact>((data ?? []).map((r) => [Number(r.block_height), r as BlockFact]));
     },
     staleTime: 60_000,
   });
@@ -144,7 +144,7 @@ function ArchaeologyFacts() {
                 {fact ? (
                   <div className="mt-3 border border-border bg-card p-3">
                     <p className="label text-signal">CHAIN VERIFIED · INDEXED</p>
-                    <p className="mt-1 break-all font-mono text-[10px] text-muted-foreground">HASH {fact.hash}</p>
+                    <p className="mt-1 break-all font-mono text-[10px] text-muted-foreground">HASH {fact.block_hash}</p>
                     <p className="mt-1 font-mono text-[10px] text-muted-foreground">
                       {fact.mined_at ? `MINED ${new Date(fact.mined_at).toUTCString()}` : "MINED TIME PENDING"}
                       {fact.pool_name ? ` · POOL ${fact.pool_name}` : ""}
