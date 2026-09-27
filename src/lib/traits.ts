@@ -1,30 +1,76 @@
 /**
- * Bitmap traits derived purely from the block number — no chain lookup needed,
- * so they can be computed and filtered instantly for all ~900k parcels.
+ * Official Bitmap.Community Blocktributes that can be proven from block height
+ * alone. Traits requiring transaction values, miner identity, timestamps or
+ * community-maintained lists are deliberately omitted until that data exists.
  */
 
 export type TraitId =
-  | "genesis"
-  | "halving"
-  | "pizza"
-  | "patoshi"
-  | "nakamoto"
+  | "mythic"
+  | "epic"
+  | "rare"
+  | "first-transaction"
   | "palindrome"
+  | "pizza-transaction"
+  | "pizza-day"
   | "same-digits"
+  | "block-9"
+  | "block-78"
+  | "66-dao"
+  | "prime-number"
+  | "fibonacci"
+  | "binary"
+  | "power-of-10"
+  | "sub-10"
+  | "sub-100"
+  | "sub-1k"
+  | "sub-10k"
+  | "sub-25k"
+  | "sub-50k"
   | "sub-100k"
-  | "billionaire"
-  | "block-9";
+  ;
 
-export type Trait = { id: TraitId; label: string; rare: boolean };
+export type TraitDefinition = {
+  id: TraitId;
+  sourceKey: string;
+  label: string;
+  description: string;
+  rare: boolean;
+};
+
+export type Trait = TraitDefinition;
 
 /** Halving blocks (every 210,000). */
 const HALVINGS = [210_000, 420_000, 630_000, 840_000, 1_050_000];
 /** The block containing the famous 10,000 BTC pizza transaction. */
 const PIZZA_BLOCK = 57_043;
-/** Highest block credibly attributed to the Patoshi mining pattern. */
-const PATOSHI_MAX = 54_316;
-/** Blocks Satoshi is generally credited with mining (the early chain). */
-const NAKAMOTO_MAX = 20_000;
+const FIRST_TRANSACTION_BLOCK = 170;
+
+export const OFFICIAL_TRAITS: TraitDefinition[] = [
+  { id: "mythic", sourceKey: "is_mythic", label: "MYTHIC", description: "The genesis block.", rare: true },
+  { id: "epic", sourceKey: "is_epic", label: "EPIC", description: "First block of a halving epoch.", rare: true },
+  { id: "rare", sourceKey: "is_rare", label: "RARE", description: "First block of a difficulty adjustment period.", rare: true },
+  { id: "first-transaction", sourceKey: "is_first_transaction", label: "FIRST TRANSACTION", description: "Contains the first peer-to-peer transaction between Satoshi and Hal Finney.", rare: true },
+  { id: "palindrome", sourceKey: "is_palindrome", label: "PALINDROME", description: "Block number reads the same forwards and backwards.", rare: true },
+  { id: "pizza-transaction", sourceKey: "is_pizza_transaction", label: "PIZZA TRANSACTION", description: "Contains the transaction exchanging 10,000 BTC for two pizzas.", rare: true },
+  { id: "pizza-day", sourceKey: "is_pizza_day", label: "PIZZA DAY", description: "A block mined on the day of the famous pizza transaction.", rare: true },
+  { id: "block-9", sourceKey: "is_block_9", label: "BLOCK 9", description: "Oldest block with spent coinbase rewards.", rare: true },
+  { id: "block-78", sourceKey: "is_block_78", label: "BLOCK 78", description: "First block mined by Hal Finney.", rare: true },
+  { id: "66-dao", sourceKey: "is_66_dao", label: "66 DAO", description: "A block from 660000 through 669999 recognized by 66 DAO.", rare: false },
+  { id: "prime-number", sourceKey: "is_prime_number", label: "PRIME NUMBER", description: "Block height is a prime number.", rare: false },
+  { id: "fibonacci", sourceKey: "is_fibonacci", label: "FIBONACCI", description: "Block height is a Fibonacci number.", rare: true },
+  { id: "same-digits", sourceKey: "is_same_digits", label: "SAME DIGITS", description: "Every digit in the block height is the same.", rare: false },
+  { id: "binary", sourceKey: "is_binary", label: "BINARY", description: "Block height contains only binary digits.", rare: false },
+  { id: "power-of-10", sourceKey: "is_power_of_10", label: "POWER OF 10", description: "Block height is a power of ten.", rare: true },
+  { id: "sub-10", sourceKey: "is_sub_10", label: "SUB 10", description: "Mined within the first 10 blocks.", rare: true },
+  { id: "sub-100", sourceKey: "is_sub_100", label: "SUB 100", description: "Mined within the first 100 blocks.", rare: true },
+  { id: "sub-1k", sourceKey: "is_sub_1k", label: "SUB 1K", description: "Mined within the first 1,000 blocks.", rare: true },
+  { id: "sub-10k", sourceKey: "is_sub_10k", label: "SUB 10K", description: "Mined within the first 10,000 blocks.", rare: true },
+  { id: "sub-25k", sourceKey: "is_sub_25k", label: "SUB 25K", description: "Mined within the first 25,000 blocks.", rare: false },
+  { id: "sub-50k", sourceKey: "is_sub_50k", label: "SUB 50K", description: "Mined within the first 50,000 blocks.", rare: false },
+  { id: "sub-100k", sourceKey: "is_sub_100k", label: "SUB 100K", description: "Mined within the first 100,000 blocks.", rare: false },
+];
+
+const BY_ID = new Map(OFFICIAL_TRAITS.map((trait) => [trait.id, trait]));
 
 function isPalindrome(height: number): boolean {
   const s = String(height);
@@ -37,26 +83,60 @@ function isSameDigits(height: number): boolean {
   return s.length >= 3 && new Set(s).size === 1;
 }
 
-export function traitsOf(height: number): Trait[] {
-  const traits: Trait[] = [];
-
-  if (height === 0) traits.push({ id: "genesis", label: "GENESIS", rare: true });
-  if (HALVINGS.includes(height)) {
-    const era = HALVINGS.indexOf(height) + 1;
-    traits.push({ id: "halving", label: `HALVING ${"I".repeat(era)}`, rare: true });
+function isPrime(height: number): boolean {
+  if (height < 2) return false;
+  if (height % 2 === 0) return height === 2;
+  for (let divisor = 3; divisor * divisor <= height; divisor += 2) {
+    if (height % divisor === 0) return false;
   }
-  if (height === PIZZA_BLOCK) traits.push({ id: "pizza", label: "PIZZA BLOCK", rare: true });
-  if (height === 9) traits.push({ id: "block-9", label: "BLOCK 9", rare: true });
-  if (height > 0 && height <= NAKAMOTO_MAX)
-    traits.push({ id: "nakamoto", label: "NAKAMOTO ERA", rare: true });
-  if (height > 0 && height <= PATOSHI_MAX)
-    traits.push({ id: "patoshi", label: "PATOSHI", rare: true });
-  if (isPalindrome(height)) traits.push({ id: "palindrome", label: "PALINDROME", rare: true });
-  if (isSameDigits(height)) traits.push({ id: "same-digits", label: "SAME DIGITS", rare: true });
-  if (height < 100_000) traits.push({ id: "sub-100k", label: "SUB 100K", rare: false });
-  if (height % 1_000 === 0) traits.push({ id: "billionaire", label: "ROUND THOUSAND", rare: false });
+  return true;
+}
 
-  return traits;
+function isFibonacci(height: number): boolean {
+  if (height < 1) return false;
+  let previous = 0;
+  let current = 1;
+  while (current < height) [previous, current] = [current, previous + current];
+  return current === height;
+}
+
+function isPowerOfTen(height: number): boolean {
+  if (height < 1) return false;
+  while (height % 10 === 0) height /= 10;
+  return height === 1;
+}
+
+function definition(id: TraitId): TraitDefinition {
+  const trait = BY_ID.get(id);
+  if (!trait) throw new Error(`Unknown Bitmap trait: ${id}`);
+  return trait;
+}
+
+export function traitsOf(height: number): Trait[] {
+  const ids: TraitId[] = [];
+  if (height === 0) ids.push("mythic");
+  if (HALVINGS.includes(height)) ids.push("epic");
+  if (height > 0 && height % 2_016 === 0) ids.push("rare");
+  if (height === FIRST_TRANSACTION_BLOCK) ids.push("first-transaction");
+  if (isPalindrome(height)) ids.push("palindrome");
+  if (height === PIZZA_BLOCK) ids.push("pizza-transaction");
+  if (height >= 56_899 && height <= 57_093) ids.push("pizza-day");
+  if (height === 9) ids.push("block-9");
+  if (height === 78) ids.push("block-78");
+  if (height >= 660_000 && height <= 669_999) ids.push("66-dao");
+  if (isPrime(height)) ids.push("prime-number");
+  if (isFibonacci(height)) ids.push("fibonacci");
+  if (isSameDigits(height)) ids.push("same-digits");
+  if (/^[01]+$/.test(String(height))) ids.push("binary");
+  if (isPowerOfTen(height)) ids.push("power-of-10");
+  if (height >= 0 && height < 10) ids.push("sub-10");
+  if (height >= 0 && height < 100) ids.push("sub-100");
+  if (height >= 0 && height < 1_000) ids.push("sub-1k");
+  if (height >= 0 && height < 10_000) ids.push("sub-10k");
+  if (height >= 0 && height < 25_000) ids.push("sub-25k");
+  if (height >= 0 && height < 50_000) ids.push("sub-50k");
+  if (height >= 0 && height < 100_000) ids.push("sub-100k");
+  return ids.map(definition);
 }
 
 export function hasTrait(height: number, id: TraitId): boolean {
@@ -66,18 +146,10 @@ export function hasTrait(height: number, id: TraitId): boolean {
 /** Coarse rarity tier used for badges. */
 export function rarityOf(height: number): "LEGENDARY" | "RARE" | "COMMON" {
   const traits = traitsOf(height);
-  if (traits.some((t) => t.id === "genesis" || t.id === "halving" || t.id === "pizza" || t.id === "block-9"))
+  if (traits.some((t) => t.id === "mythic" || t.id === "epic" || t.id === "pizza-transaction" || t.id === "block-9"))
     return "LEGENDARY";
   if (traits.some((t) => t.rare)) return "RARE";
   return "COMMON";
 }
 
-export const TRAIT_FILTERS: Array<{ id: TraitId; label: string }> = [
-  { id: "halving", label: "HALVING" },
-  { id: "pizza", label: "PIZZA BLOCK" },
-  { id: "patoshi", label: "PATOSHI" },
-  { id: "nakamoto", label: "NAKAMOTO" },
-  { id: "palindrome", label: "PALINDROME" },
-  { id: "same-digits", label: "SAME DIGITS" },
-  { id: "sub-100k", label: "SUB 100K" },
-];
+export const TRAIT_FILTERS = OFFICIAL_TRAITS;
