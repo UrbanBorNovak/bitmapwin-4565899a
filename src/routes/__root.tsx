@@ -21,6 +21,7 @@ import { SalesBackdrop } from "@/components/SalesBackdrop";
 import { TradeCrawlerDriver } from "@/components/TradeCrawlerDriver";
 import { BssCrawlerDriver } from "@/components/BssCrawlerDriver";
 import { RegistryResolverDriver } from "@/components/RegistryResolverDriver";
+import { BlockFactsDriver } from "@/components/BlockFactsDriver";
 import { LanguageProvider } from "@/lib/i18n";
 import { GuidedTour } from "@/components/GuidedTour";
 
@@ -180,6 +181,7 @@ function RootComponent() {
       <TradeCrawlerDriver />
       <BssCrawlerDriver />
       <RegistryResolverDriver />
+      <BlockFactsDriver />
       <Toaster />
       </LanguageProvider>
     </QueryClientProvider>

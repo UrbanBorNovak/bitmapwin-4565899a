@@ -10,6 +10,7 @@ import { traitBitmapsQuery } from "@/lib/trait-collections";
 import { inscriptionOffersQuery } from "@/lib/offers";
 import { fetchTradesForHeights } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
+import { supabase } from "@/integrations/supabase/client";
 
 const PAGE_SIZE = 24;
 
@@ -46,6 +47,16 @@ function TraitDetail() {
     enabled: heights.length > 0,
     staleTime: 30_000,
   });
+  const factsTrait = trait.marketplaceUse.startsWith("Indexed from real block records");
+  const progress = useQuery({
+    queryKey: ["block-facts-progress"],
+    queryFn: async () => {
+      const { data } = await supabase.from("block_facts_crawl_state").select("next_height").eq("id", "main").maybeSingle();
+      return data ? Number(data.next_height) : 0;
+    },
+    enabled: factsTrait,
+    refetchInterval: 30_000,
+  });
   const offerById = new Map((offers.data ?? []).map((offer) => [offer.inscriptionId, offer]));
   const saleByHeight = new Map((trades.data ?? []).filter((trade) => trade.price_sats > 0).map((trade) => [trade.bitmap_height, trade]));
 
@@ -76,7 +87,7 @@ function TraitDetail() {
       ) : (
         <>
           <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border border-border p-4">
-            <span className="label">GENUINE INDEXED INSCRIPTIONS</span>
+            <span className="label">GENUINE INDEXED INSCRIPTIONS{factsTrait && progress.data !== undefined ? <span className="ml-3 text-signal">BLOCK RECORDS INDEXED THROUGH {Math.max(0, progress.data - 1).toLocaleString("en-US")}</span> : null}</span>
             <div className="flex items-center gap-2">
               <button className="btn-term-ghost" disabled={page === 0} onClick={() => setPage((value) => value - 1)}>PREV</button>
               <span className="label">PAGE {page + 1}</span>
