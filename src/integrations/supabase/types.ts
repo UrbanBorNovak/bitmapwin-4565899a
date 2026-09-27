@@ -3356,6 +3356,16 @@ export type Database = {
           skipped: boolean
         }[]
       }
+      official_trait_bitmaps: {
+        Args: { p_limit?: number; p_offset?: number; p_trait: string }
+        Returns: {
+          block_height: number
+          genesis_height: number
+          inscription_id: string
+          owner_address: string
+          total_count: number
+        }[]
+      }
       owns_wallet: {
         Args: { _address: string; _user_id: string }
         Returns: boolean
