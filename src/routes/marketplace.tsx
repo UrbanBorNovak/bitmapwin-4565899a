@@ -18,6 +18,7 @@ import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapMarketChart } from "@/components/BitmapMarketChart";
 import { TrendExplorer } from "@/components/TrendExplorer";
 import { hasTrait, OFFICIAL_TRAITS, type TraitId } from "@/lib/traits";
+import { traitHolderBadgesQuery } from "@/lib/trait-collections";
 
 import { SalesLog } from "@/components/SalesLog";
 import { TradeCrawlerStatus } from "@/components/TradeCrawlerStatus";
@@ -125,6 +126,7 @@ function Marketplace() {
       }),
     [pageParcels, owners.data],
   );
+  const traitHolders = useQuery(traitHolderBadgesQuery(pageWithOwners.map((parcel) => parcel.ownerAddress ?? "")));
 
   const saleSats = sold.map((p) => p.lastSaleSats ?? 0).filter((v) => v > 0);
   const floor = saleSats.length ? Math.min(...saleSats) : null;
@@ -290,6 +292,7 @@ function Marketplace() {
                 >
                   SOURCE: BITMAP.COMMUNITY ↗
                 </a>
+                <Link to="/traits" className="label ml-3 inline-block text-bitcoin hover:text-foreground">FULL INDEX →</Link>
               </details>
               <Link to="/collections" className="btn-term-ghost w-full">PUNKS &amp; COLLECTION STATS →</Link>
               <div className="border-t border-border pt-4 label">{holders} HOLDERS IN LOADED INDEX</div>
@@ -330,7 +333,7 @@ function Marketplace() {
 
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {pageWithOwners.map((p) => (
-              <ParcelCard key={p.inscriptionId} parcel={p} />
+              <ParcelCard key={p.inscriptionId} parcel={p} traitHolder={p.ownerAddress ? traitHolders.data?.get(p.ownerAddress.toLowerCase()) : undefined} />
             ))}
           </div>
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { MemberRibbon } from "@/components/MemberRibbon";
@@ -8,6 +9,7 @@ import {
   MEMBERSHIP_SATS,
   checkMembership,
   claimHolderMembership,
+  claimTraitHolderMembership,
   isActive,
   membershipQuery,
   startMembership,
@@ -48,6 +50,19 @@ export function MembershipPanel({ address, canEdit }: { address: string; canEdit
       } else {
         toast.message("NO JIGGLYPUFF INSCRIPTION FOUND ON THIS ADDRESS");
       }
+    },
+    onError: (error: Error) => toast.error(error.message.toUpperCase()),
+  });
+
+  const traitClaim = useMutation({
+    mutationFn: () => claimTraitHolderMembership(address),
+    onSuccess: (result) => {
+      if (result.claimed) {
+        void queryClient.invalidateQueries({ queryKey: ["membership", address] });
+        void queryClient.invalidateQueries({ queryKey: ["membership-badge", address] });
+        void queryClient.invalidateQueries({ queryKey: ["trait-holder-badges"] });
+        toast.success(`TRAIT HOLDER — ${result.bitmapHeight}.BITMAP VERIFIED`);
+      } else toast.message("NO SUPPORTED OFFICIAL-TRAIT BITMAP FOUND");
     },
     onError: (error: Error) => toast.error(error.message.toUpperCase()),
   });
@@ -150,6 +165,16 @@ export function MembershipPanel({ address, canEdit }: { address: string; canEdit
               >
                 {holderClaim.isPending ? "CHECKING THE CHAIN…" : "CLAIM AS JIGGLYPUFF HOLDER"}
               </button>
+            </div>
+            <div className="border border-signal/60 p-4">
+              <p className="label text-signal">OFFICIAL TRAIT HOLDERS</p>
+              <p className="mt-2">
+                &gt; HOLD A HEIGHT-PROVABLE OFFICIAL BLOCKTRIBUTE BITMAP TO RECEIVE MEMBER STATUS, A PUBLIC TRAIT HOLDER RIBBON AND MARKET TRADING BADGE. PROOF EXPIRES AFTER 30 DAYS.
+              </p>
+              <button type="button" onClick={() => traitClaim.mutate()} disabled={traitClaim.isPending} className="label mt-3 border border-signal px-4 py-2 text-signal hover:bg-signal hover:text-background disabled:opacity-50">
+                {traitClaim.isPending ? "SCANNING WALLET…" : "CLAIM AS OFFICIAL TRAIT HOLDER"}
+              </button>
+              <Link to="/traits" className="label ml-3 inline-block hover:text-bitcoin">VIEW ELIGIBLE TRAITS →</Link>
             </div>
           </>
         )}

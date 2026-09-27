@@ -50,6 +50,10 @@ function CollectionsIndex() {
         <span className="display text-xl">JIGGLYPUFF</span>
         <span className="label text-muted-foreground">218 INSCRIPTIONS · VALUE, SALES & TRADING →</span>
       </Link>
+      <Link to="/traits" className="mt-3 flex items-baseline justify-between border border-bitcoin/70 bg-card/60 p-4 backdrop-blur hover:border-primary">
+        <span className="display text-xl">OFFICIAL TRAITS</span>
+        <span className="label text-muted-foreground">COMPLETE GLOSSARY · INDEXED INSCRIPTIONS · HOLDER STATUS →</span>
+      </Link>
       <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         {CLUBS.map((club) => {
           const members = parcels.filter((p) => clubOf(p.bitmapHeight).id === club.id);

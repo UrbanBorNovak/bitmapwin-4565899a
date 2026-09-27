@@ -11,9 +11,11 @@ import { VerificationChip } from "@/components/ProvenancePanel";
 import { formatSats } from "@/lib/trades";
 import { openBidsQuery, topBidByHeight } from "@/lib/bids";
 import { PARCEL_STATUS_LABEL, shortenAddress, type RegistryParcel } from "@/lib/registry";
+import { TraitHolderBadge } from "@/components/TraitHolderBadge";
+import type { TraitHolderBadge as TraitHolderProof } from "@/lib/trait-collections";
 
 /** Card for a real, on-chain bitmap claim held in the registry. */
-export function ParcelCard({ parcel }: { parcel: RegistryParcel }) {
+export function ParcelCard({ parcel, traitHolder }: { parcel: RegistryParcel; traitHolder?: TraitHolderProof }) {
   const bids = useQuery(openBidsQuery(500));
   const topBid = topBidByHeight(bids.data ?? []).get(parcel.bitmapHeight) ?? null;
 
@@ -45,6 +47,7 @@ export function ParcelCard({ parcel }: { parcel: RegistryParcel }) {
 
         <SatBadges height={parcel.bitmapHeight} rarityOnly className="mt-2" />
         <TraitBadges height={parcel.bitmapHeight} max={3} className="mt-2" />
+        {traitHolder && <div className="mt-2"><TraitHolderBadge traits={traitHolder.traitIds} /></div>}
 
         <dl className="mt-3 space-y-1 text-[11px]">
           <Row k="OWNER" v={shortenAddress(parcel.ownerAddress)} />
