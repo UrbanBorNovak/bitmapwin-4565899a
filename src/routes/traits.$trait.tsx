@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { BuyButton } from "@/components/BuyButton";
 import { ShopListButton } from "@/components/builds/ShopListButton";
 import { BlockMosaic } from "@/components/BlockMosaic";
+import { ArchaeologyPanel } from "@/components/ArchaeologyPanel";
 import { officialTrait, type TraitId } from "@/lib/traits";
 import { traitBitmapsQuery } from "@/lib/trait-collections";
 import { inscriptionOffersQuery } from "@/lib/offers";
@@ -31,7 +32,8 @@ export const Route = createFileRoute("/traits/$trait")({
 
 function TraitDetail() {
   const { trait: id } = Route.useParams();
-  const trait = officialTrait(id)!;
+  const trait = officialTrait(id);
+  if (!trait) return null;
   const [page, setPage] = useState(0);
   const [prices, setPrices] = useState<Record<string, string>>({});
   const rows = useQuery({ ...traitBitmapsQuery(id as TraitId, page, PAGE_SIZE), enabled: trait.supported });
@@ -59,6 +61,8 @@ function TraitDetail() {
         <p className="label text-bitcoin">HOW BITMAPWIN USES IT</p>
         <p className="mt-2 font-mono text-xs text-muted-foreground">{trait.marketplaceUse}</p>
       </section>
+
+      <ArchaeologyPanel trait={trait} />
 
       {!trait.supported ? (
         <div className="mt-8 border border-dashed border-border p-8">
