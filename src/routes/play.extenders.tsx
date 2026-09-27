@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { LivingCard } from "@/components/play/LivingCard";
 import { PlayNav } from "@/components/play/PlayNav";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ import { Link } from "@tanstack/react-router";
 import { ORD_TORCHES_PARENT, ORD_TORCHES_POOL, ORD_TORCHES_SUPPLY, useOrdTorches } from "@/lib/game/ordTorches";
 import { PUPPETS_PARENT, PUPPETS_POOL, usePuppets } from "@/lib/game/puppets";
 import { JIGGLYPUFF_IDS, JIGGLYPUFF_POOL, useJigglypuff } from "@/lib/game/jigglypuff";
+import { OFFICIAL_TRAITS_POOL, traitExtenderPoolQuery } from "@/lib/trait-collections";
 
 export const Route = createFileRoute("/play/extenders")({
   head: () => ({
@@ -61,6 +63,8 @@ function PlayExtenders() {
   const [puppetPage, setPuppetPage] = useState(0);
   const jigglypuff = useJigglypuff();
   const [jigPage, setJigPage] = useState(0);
+  const traits = useQuery(traitExtenderPoolQuery());
+  const [traitPage, setTraitPage] = useState(0);
   const pools = useMemo(() => {
     const map = new Map<string, CardVisualExtender[]>();
     for (const e of extenders) map.set(e.collection, [...(map.get(e.collection) ?? []), e]);
@@ -164,6 +168,36 @@ function PlayExtenders() {
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] [&>*]:min-w-0">
         <section className="grid content-start gap-4">
+          <article className="border border-bitcoin bg-card p-3">
+            <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="label text-bitcoin">OFFICIAL TRAITS · INDEXED BITMAP POOL</h2>
+                <Link to="/traits" className="label hover:text-foreground">VIEW TRAIT INDEX · TRADE →</Link>
+                <span className="label block text-muted-foreground">{traits.data?.length ?? "…"} GENUINE INDEXED INSCRIPTIONS</span>
+              </div>
+              <Button type="button" size="sm" variant={enabled && selectedCollection === OFFICIAL_TRAITS_POOL ? "terminal" : "terminalGhost"} disabled={!profile || !traits.data?.length} onClick={() => updatePlayVisuals({ pfpExtendersEnabled: true, selectedPfpCollection: OFFICIAL_TRAITS_POOL })}>
+                {enabled && selectedCollection === OFFICIAL_TRAITS_POOL ? "POOL ACTIVE" : "USE POOL"}
+              </Button>
+            </header>
+            <p className="mb-3 font-mono text-[10px] text-muted-foreground">REAL VALID BITMAP CLAIMS MATCHED BY HEIGHT-PROVABLE BLOCKTRIBUTES · DETERMINISTICALLY DISTRIBUTED ACROSS LIVING CARDS</p>
+            {traits.isPending ? <p className="font-mono text-xs text-muted-foreground">&gt; READING TRAIT INDEX…</p> : (
+              <>
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+                  {(traits.data ?? []).slice(traitPage * 24, traitPage * 24 + 24).map((item) => (
+                    <div key={item.inscriptionId} className="relative aspect-square border border-border bg-background p-1">
+                      <div className="flex h-full items-center justify-center font-mono text-xs text-bitcoin">{item.bitmapHeight}.BITMAP</div>
+                      <Link to="/bitmap/$block" params={{ block: String(item.bitmapHeight) }} className="absolute inset-0" aria-label={`Trait bitmap ${item.bitmapHeight}`} />
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <Button type="button" variant="terminalGhost" disabled={traitPage === 0} onClick={() => setTraitPage((p) => p - 1)}>PREV</Button>
+                  <span className="label text-muted-foreground">PAGE {traitPage + 1} / {Math.max(1, Math.ceil((traits.data?.length ?? 0) / 24))}</span>
+                  <Button type="button" variant="terminalGhost" disabled={(traitPage + 1) * 24 >= (traits.data?.length ?? 0)} onClick={() => setTraitPage((p) => p + 1)}>NEXT</Button>
+                </div>
+              </>
+            )}
+          </article>
           <article className="border border-bitcoin bg-card p-3">
             <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
