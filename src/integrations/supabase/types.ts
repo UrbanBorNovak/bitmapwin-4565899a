@@ -456,6 +456,69 @@ export type Database = {
         }
         Relationships: []
       }
+      block_facts: {
+        Row: {
+          avg_fee_rate: number | null
+          block_hash: string
+          block_height: number
+          btc_usd: number | null
+          coinbase_text: string | null
+          created_at: string
+          mined_at: string
+          pool_name: string | null
+          size_bytes: number
+          total_output_sats: number | null
+        }
+        Insert: {
+          avg_fee_rate?: number | null
+          block_hash: string
+          block_height: number
+          btc_usd?: number | null
+          coinbase_text?: string | null
+          created_at?: string
+          mined_at: string
+          pool_name?: string | null
+          size_bytes: number
+          total_output_sats?: number | null
+        }
+        Update: {
+          avg_fee_rate?: number | null
+          block_hash?: string
+          block_height?: number
+          btc_usd?: number | null
+          coinbase_text?: string | null
+          created_at?: string
+          mined_at?: string
+          pool_name?: string | null
+          size_bytes?: number
+          total_output_sats?: number | null
+        }
+        Relationships: []
+      }
+      block_facts_crawl_state: {
+        Row: {
+          id: string
+          last_error: string | null
+          locked_until: string
+          next_height: number
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          last_error?: string | null
+          locked_until?: string
+          next_height?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          last_error?: string | null
+          locked_until?: string
+          next_height?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       block_stats: {
         Row: {
           block_height: number
@@ -2150,6 +2213,18 @@ export type Database = {
           },
         ]
       }
+      patoshi_blocks: {
+        Row: {
+          block_height: number
+        }
+        Insert: {
+          block_height: number
+        }
+        Update: {
+          block_height?: number
+        }
+        Relationships: []
+      }
       play_profiles: {
         Row: {
           best_streak: number
@@ -3222,11 +3297,19 @@ export type Database = {
         Args: { _height: number; _trait: string }
         Returns: boolean
       }
+      block_fact_trait: {
+        Args: { _height: number; _trait: string }
+        Returns: boolean
+      }
       can_build_bitmap: {
         Args: { _height: number; _owner_address: string; _user_id: string }
         Returns: boolean
       }
       can_build_on_height: { Args: { _height: number }; Returns: boolean }
+      claim_block_facts_crawl: {
+        Args: { _lock_seconds: number }
+        Returns: number
+      }
       clan_builds_by_tag: {
         Args: { _tag: string }
         Returns: {
