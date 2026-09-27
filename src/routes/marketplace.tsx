@@ -333,7 +333,13 @@ function Marketplace() {
 
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {pageWithOwners.map((p) => (
-              <ParcelCard key={p.inscriptionId} parcel={p} traitHolder={p.ownerAddress ? traitHolders.data?.get(p.ownerAddress.toLowerCase()) : undefined} />
+              <ParcelCard
+                key={p.inscriptionId}
+                parcel={p}
+                {...(p.ownerAddress && traitHolders.data?.get(p.ownerAddress.toLowerCase())
+                  ? { traitHolder: traitHolders.data.get(p.ownerAddress.toLowerCase())! }
+                  : {})}
+              />
             ))}
           </div>
 

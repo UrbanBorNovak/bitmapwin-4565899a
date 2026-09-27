@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BuyButton } from "@/components/BuyButton";
-import { ShopListButton } from "@/components/ShopListButton";
+import { ShopListButton } from "@/components/builds/ShopListButton";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { officialTrait, type TraitId } from "@/lib/traits";
 import { traitBitmapsQuery } from "@/lib/trait-collections";

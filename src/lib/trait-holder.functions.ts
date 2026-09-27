@@ -47,7 +47,7 @@ export const claimTraitHolderMembershipFn = createServerFn({ method: "POST" })
       invoice_sats: 0,
       txid: held.inscription.id,
       paid_at: now.toISOString(),
-      expires_at: currentExpiry > Date.parse(expiresAt) ? existing.data?.expires_at : expiresAt,
+      expires_at: currentExpiry > Date.parse(expiresAt) ? (existing.data?.expires_at ?? expiresAt) : expiresAt,
       source: "official-trait",
       qualifying_trait: traitIds[0] ?? null,
     };

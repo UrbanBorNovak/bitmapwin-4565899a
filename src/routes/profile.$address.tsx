@@ -113,7 +113,7 @@ function ProfilePage() {
             {isMember && (
               <MemberRibbon />
             )}
-            {traitHolders.data?.get(address.toLowerCase()) && <TraitHolderBadge traits={traitHolders.data.get(address.toLowerCase())?.traitIds} />}
+            {traitHolders.data?.get(address.toLowerCase()) && <TraitHolderBadge traits={traitHolders.data.get(address.toLowerCase())!.traitIds} />}
           </div>
           <p className="mt-3 break-all font-mono text-[10px] text-muted-foreground">{address}</p>
           <ParcelClubBadges address={address} className="mt-3 justify-center md:justify-start" />
