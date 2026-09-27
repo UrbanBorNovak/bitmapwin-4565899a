@@ -49,7 +49,7 @@ const SHROOM_URLS = SHROOM_INSCRIPTIONS.map(contentUrl);
 const FLOWER_URLS = FLOWER_INSCRIPTIONS.map(contentUrl);
 const WILD_MINER_URL = contentUrl(WILD_MINER_INSCRIPTION);
 
-const MAX_TREES = 62;
+const MAX_TREES = 38;
 const MAX_FLOWERS = 90;
 const MAX_MINERS = 5;
 const FLORA_SCALE = 3;
@@ -149,7 +149,7 @@ export const PineTrees = memo(function PineTrees({
   // Landforms registering their slopes re-place this scenery onto them.
   useTerrainVersion();
   const { quality } = useQuality();
-  const treeLimit = quality.resolved === "low" ? 14 : quality.resolved === "medium" ? 34 : MAX_TREES;
+  const treeLimit = quality.resolved === "low" ? 10 : quality.resolved === "medium" ? 22 : MAX_TREES;
   const flowerLimit = quality.resolved === "low" ? 18 : quality.resolved === "medium" ? 48 : MAX_FLOWERS;
   const minerLimit = quality.resolved === "low" ? 4 : quality.resolved === "medium" ? 7 : MAX_MINERS;
   const { trees, flowers, miners } = useMemo(() => {
@@ -170,10 +170,10 @@ export const PineTrees = memo(function PineTrees({
         const land = densityAt(standX, standZ);
         // Pines grow in stands rather than one by one, and a highland forest
         // stands far thicker than bare stone or open desert.
-        if (hash(gx, gz, 71) > Math.min(0.92, (shoreline ? 0.58 : 0.3) * land.trees)) continue;
+        if (hash(gx, gz, 71) > Math.min(0.92, (shoreline ? 0.34 : 0.16) * land.trees)) continue;
         const count = Math.max(
           1,
-          Math.round((2 + Math.floor(hash(gx, gz, 72) * 4) + (shoreline ? 2 : 0)) * Math.min(1.8, land.trees)),
+          Math.round((1 + Math.floor(hash(gx, gz, 72) * 3) + (shoreline ? 1 : 0)) * Math.min(1.5, land.trees)),
         );
         for (let n = 0; n < count; n++) {
           const x = gx * pitch + (hash(gx * 5 + n, gz, 73) - 0.5) * pitch * 0.8;
