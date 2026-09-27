@@ -165,14 +165,16 @@ export const TRAIT_FILTERS = OFFICIAL_TRAITS;
 
 const INDEX_REQUIRED = "Shown in the official glossary; marketplace matching waits for the required indexed block data.";
 const TX_MARKET = "Indexed from stored block transaction counts (blocks 0–839,999); browse and trade matching BITMAP inscriptions.";
+const FACTS_MARKET = "Indexed from real block records (mined time, hash, size, outputs, fees, coinbase); fills in as the block indexer advances.";
+const PATOSHI_MARKET = "Matched against the published Patoshi block list (Sergio Demian Lerner / Jameson Lopp dataset, 21,953 blocks).";
 const HEIGHT_MARKET = "Filter, badge, trade and use matching BITMAP inscriptions in the Official Traits extender pool.";
 
 /** Complete Bitmap.Community Blocktributes glossary. Supported entries are provable from block height today. */
 export const ALL_OFFICIAL_TRAITS: OfficialTraitDefinition[] = [
   ...OFFICIAL_TRAITS.map((trait) => ({ ...trait, supported: true, marketplaceUse: HEIGHT_MARKET })),
-  { id: "patoshi", sourceKey: "is_patoshi", label: "PATOSHI", description: "Block mined by Satoshi Nakamoto.", supported: false, marketplaceUse: INDEX_REQUIRED },
-  { id: "billionaire", sourceKey: "is_billionaire", label: "BILLIONAIRE", description: "Total block outputs are worth at least $1 billion using the official fixed $30k BTC threshold.", supported: false, marketplaceUse: INDEX_REQUIRED },
-  { id: "mined-billionaire", sourceKey: "is_mined_billionaire", label: "MINED BILLIONAIRE", description: "Total block outputs were worth at least $1 billion when the block was mined.", supported: false, marketplaceUse: INDEX_REQUIRED },
+  { id: "patoshi", sourceKey: "is_patoshi", label: "PATOSHI", description: "Block mined by Satoshi Nakamoto.", supported: true, marketplaceUse: PATOSHI_MARKET },
+  { id: "billionaire", sourceKey: "is_billionaire", label: "BILLIONAIRE", description: "Total block outputs are worth at least $1 billion using the official fixed $30k BTC threshold.", supported: true, marketplaceUse: FACTS_MARKET },
+  { id: "mined-billionaire", sourceKey: "is_mined_billionaire", label: "MINED BILLIONAIRE", description: "Total block outputs were worth at least $1 billion when the block was mined.", supported: true, marketplaceUse: FACTS_MARKET },
   ...[5, 7, 10, 13, 17, 21, 26, 43].map((count) => ({ id: `${count}tx-perfect-punk`, sourceKey: `is_${count}tx_perfect_punk`, label: `${count}TX PERFECT PUNK`, description: `Perfectly aligned ${count}-transaction punk.`, supported: false, marketplaceUse: INDEX_REQUIRED })),
   { id: "pristine-punk", sourceKey: "Pristine Punk", label: "PRISTINE PUNK", description: "Two-transaction punk with a small neck.", supported: false, marketplaceUse: "Available in the Punks & Patterns collection; official trait indexing remains pending." },
   { id: "standard-punk", sourceKey: "Standard Punk", label: "STANDARD PUNK", description: "Two-transaction punk with a medium neck.", supported: false, marketplaceUse: "Available in the Punks & Patterns collection; official trait indexing remains pending." },
@@ -181,21 +183,21 @@ export const ALL_OFFICIAL_TRAITS: OfficialTraitDefinition[] = [
   { id: "community-punk", sourceKey: "is_community_punk", label: "COMMUNITY PUNK", description: "Distinctive punk recognized by the community.", supported: false, marketplaceUse: INDEX_REQUIRED },
   { id: "ross-ulbricht", sourceKey: "is_ross_ulbricht", label: "ROSS ULBRICHT", description: "Contains a transaction in which payments were made from Silk Road to Ross Ulbricht.", supported: false, marketplaceUse: INDEX_REQUIRED },
   { id: "mondrian", sourceKey: "is_mondrian", label: "MONDRIAN", description: "Block resembling the grid-based work of Piet Mondrian.", supported: false, marketplaceUse: INDEX_REQUIRED },
-  { id: "leap-day", sourceKey: "is_leap_day", label: "LEAP DAY", description: "Block mined on a leap day.", supported: false, marketplaceUse: INDEX_REQUIRED },
+  { id: "leap-day", sourceKey: "is_leap_day", label: "LEAP DAY", description: "Block mined on a leap day.", supported: true, marketplaceUse: FACTS_MARKET },
   { id: "notable-event", sourceKey: "is_notable_event", label: "NOTABLE EVENT", description: "Block associated with a historical event.", supported: false, marketplaceUse: INDEX_REQUIRED },
   { id: "1-tx", sourceKey: "is_1_tx", label: "1 TX", description: "Block containing one transaction.", supported: true, marketplaceUse: TX_MARKET },
   { id: "2-tx", sourceKey: "is_2_tx", label: "2 TX", description: "Block containing two transactions.", supported: true, marketplaceUse: TX_MARKET },
-  { id: "miner-message", sourceKey: "is_miner_message", label: "MINER MESSAGE", description: "Contains a message encoded by the miner.", supported: false, marketplaceUse: INDEX_REQUIRED },
+  { id: "miner-message", sourceKey: "is_miner_message", label: "MINER MESSAGE", description: "Contains a message encoded by the miner.", supported: true, marketplaceUse: FACTS_MARKET },
   { id: "xspectar", sourceKey: "is_xspectar", label: "XSPECTAR", description: "xSPECTAR land on Bitmap Island.", supported: false, marketplaceUse: INDEX_REQUIRED },
   { id: "bitmap-valley", sourceKey: "is_bitmap_valley", label: "BITMAP VALLEY", description: "Land in Bitmap Valley.", supported: false, marketplaceUse: INDEX_REQUIRED },
-  ...[100_000, 250_000, 500_000, 1_000_000, 3_000_000, 5_000_000].map((amount) => ({ id: `${amount}-out`, sourceKey: `is_${amount >= 1_000_000 ? `${amount / 1_000_000}m` : `${amount / 1_000}k`}_out`, label: `${amount >= 1_000_000 ? `${amount / 1_000_000}M` : `${amount / 1_000}K`} OUT`, description: `Block with total outputs greater than ${amount.toLocaleString("en-US")} BTC.`, supported: false, marketplaceUse: INDEX_REQUIRED })),
+  ...[100_000, 250_000, 500_000, 1_000_000, 3_000_000, 5_000_000].map((amount) => ({ id: `${amount}-out`, sourceKey: `is_${amount >= 1_000_000 ? `${amount / 1_000_000}m` : `${amount / 1_000}k`}_out`, label: `${amount >= 1_000_000 ? `${amount / 1_000_000}M` : `${amount / 1_000}K`} OUT`, description: `Block with total outputs greater than ${amount.toLocaleString("en-US")} BTC.`, supported: true, marketplaceUse: FACTS_MARKET })),
   { id: "micro-strategy", sourceKey: "is_micro_strategy", label: "MICROSTRATEGY", description: "Contains a transaction initiated by MicroStrategy.", supported: false, marketplaceUse: INDEX_REQUIRED },
-  { id: "chinese-lucky-number", sourceKey: "is_chinese_lucky_number", label: "CHINESE LUCKY NUMBER", description: "Contains 168, associated with prosperity in Chinese numerology.", supported: false, marketplaceUse: INDEX_REQUIRED },
-  { id: "pre-segwit-full", sourceKey: "is_pre_segwit_full", label: "PRE-SEGWIT FULL", description: "Maxed out the 1 MB block size before SegWit.", supported: false, marketplaceUse: INDEX_REQUIRED },
+  { id: "chinese-lucky-number", sourceKey: "is_chinese_lucky_number", label: "CHINESE LUCKY NUMBER", description: "Block height contains 168, associated with prosperity in Chinese numerology.", supported: true, marketplaceUse: FACTS_MARKET },
+  { id: "pre-segwit-full", sourceKey: "is_pre_segwit_full", label: "PRE-SEGWIT FULL", description: "Maxed out the 1 MB block size before SegWit.", supported: true, marketplaceUse: FACTS_MARKET },
   { id: "dual-palindrome", sourceKey: "is_dual_palindrome", label: "DUAL PALINDROME", description: "Palindrome block number inscribed on a palindrome sat.", supported: false, marketplaceUse: INDEX_REQUIRED },
   ...[1, 2, 3, 4, 5, 6, 7, 8].map((count) => ({ id: `${count}k-txs`, sourceKey: `is_${count}k_txs`, label: `${count}K TXS`, description: `Block containing ${count.toLocaleString("en-US")},000${count === 8 ? "+" : "–" + count + ",999"} transactions.`, supported: true, marketplaceUse: TX_MARKET })),
-  ...[1, 2, 3, 4, 5, 6, 7].map((rate) => ({ id: `${rate}k-fee-rate`, sourceKey: `is_${rate}k_fee_rate`, label: `${rate}K FEE RATE`, description: `Block with an average fee rate of ${rate.toLocaleString("en-US")},000 sat/vB.`, supported: false, marketplaceUse: INDEX_REQUIRED })),
-  { id: "21e8", sourceKey: "is_21e8", label: "21E8", description: "Block with a hash containing 21e8.", supported: false, marketplaceUse: INDEX_REQUIRED },
+  ...[1, 2, 3, 4, 5, 6, 7].map((rate) => ({ id: `${rate}k-fee-rate`, sourceKey: `is_${rate}k_fee_rate`, label: `${rate}K FEE RATE`, description: `Block with an average fee rate of ${rate.toLocaleString("en-US")},000 sat/vB.`, supported: true, marketplaceUse: FACTS_MARKET })),
+  { id: "21e8", sourceKey: "is_21e8", label: "21E8", description: "Block with a hash containing 21e8.", supported: true, marketplaceUse: FACTS_MARKET },
 ];
 
 export function officialTrait(id: string): OfficialTraitDefinition | null {
