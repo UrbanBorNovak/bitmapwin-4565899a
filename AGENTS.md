@@ -13,3 +13,4 @@
 - Count JIGGLYPUFF sales only from confirmed BITMAPWIN purchases with a matching inscription input and exact seller payout; ordinary transfers and change outputs cannot prove a sale price.
 - Marketplace trait labels and filters use Bitmap.Community definitions, but expose only traits provable from locally verified on-chain fields; this prevents unsupported rarity claims.
 - Official trait holder badges require a live verified-wallet scan of unspent BITMAP inscriptions and expire after 30 days; public UI reads only the resulting badge proof.
+- Official trait lists detect a next page without full-index counts, keeping the 900k+ BITMAP index responsive.
