@@ -261,6 +261,7 @@ import {
   STRIDE,
   type MoveIntent,
   type PlayerState,
+  SPACECRAFT_SPEED_CAP,
 } from "@/lib/player-state";
 import {
   DEFAULT_AVATAR_MODEL,
@@ -1686,6 +1687,7 @@ function PlayerCameraRig({
   const lookMatrix = useRef(new THREE.Matrix4());
   const targetRotation = useRef(new THREE.Quaternion());
   const pitch = useRef(0);
+  const thrust = useRef(1);
   const steer = useRef(0);
   const bob = useRef(0);
   const jumpRequested = useRef(false);
@@ -1866,7 +1868,27 @@ function PlayerCameraRig({
         );
         intent.climbRate = AVATAR_U * (ride.climb ?? 9);
         intent.cruise = AVATAR_U * (ride.altitude ?? 6);
+        if (ride.id === "spacecraft") {
+          // Spacecraft throttle: thrust builds the longer you hold forward, so
+          // it launches gently and then keeps pulling toward real high speed.
+          // Shift lights the afterburner for the last stage.
+          const dt = Math.min(delta, 0.05);
+          const goal = intent.forward > 0 ? (intent.sprint ? 7 : 3.2) : 1;
+          const rate = goal > thrust.current ? 0.22 + thrust.current * 0.12 : 1.4;
+          thrust.current += (goal - thrust.current) * (1 - Math.exp(-rate * dt));
+          intent.speedScale *= thrust.current;
+          intent.speedCap = SPACECRAFT_SPEED_CAP;
+          // Keep momentum: very low drag when coasting, stronger push at speed.
+          intent.accelScale = ride.accel * (0.6 + thrust.current * 0.25);
+          intent.dragScale = ride.brake * 0.35;
+          // Higher and faster: cruise climbs with speed so the land can stream in.
+          intent.cruise *= 1 + (thrust.current - 1) * 0.9;
+          intent.climbRate *= 1 + (thrust.current - 1) * 0.5;
+          // Steering widens at speed like a real craft.
+          intent.turnScale = (intent.turnScale ?? 1) / (1 + (thrust.current - 1) * 0.35);
+        }
       }
+      if (ride.id !== "spacecraft") thrust.current = 1;
     }
     // On foot the shoes quicken every stride and the engine falls silent.
     else {

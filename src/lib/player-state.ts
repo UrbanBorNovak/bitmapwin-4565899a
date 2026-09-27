@@ -56,6 +56,8 @@ export const MOVE = {
  * not move farther than the streamer can safely prepare in front of it.
  */
 export const TRAVERSAL_SPEED_CAP = STRIDE * 32;
+/** Spacecraft afterburner ceiling — high above the land it may outrun the ground. */
+export const SPACECRAFT_SPEED_CAP = STRIDE * 140;
 
 export type MovementState = "idle" | "walk" | "run" | "turn";
 export type AnimationState = "idle" | "walk" | "run" | "jump" | "hurt" | "attack" | "down";
@@ -238,6 +240,8 @@ export type MoveIntent = {
   fly?: number;
   /** climb rate in world units per second while flying */
   climbRate?: number;
+  /** per-intent traversal ceiling override (spacecraft afterburner) */
+  speedCap?: number;
   /** altitude held while flying with no climb input */
   cruise?: number;
 };
@@ -325,8 +329,9 @@ export function stepPlayer(player: PlayerState, intent: MoveIntent, rawDelta: nu
   // Cap the resolved velocity rather than only the requested speed. This also
   // catches carried momentum when changing from a fast ride back to walking.
   const resolvedSpeed = Math.hypot(player.vx, player.vz);
-  if (resolvedSpeed > TRAVERSAL_SPEED_CAP) {
-    const cap = TRAVERSAL_SPEED_CAP / resolvedSpeed;
+  const ceiling = intent.speedCap ?? TRAVERSAL_SPEED_CAP;
+  if (resolvedSpeed > ceiling) {
+    const cap = ceiling / resolvedSpeed;
     player.vx *= cap;
     player.vz *= cap;
   }
@@ -413,7 +418,7 @@ export function clampPeerStep(
   const distance = Math.hypot(dx, dz);
   // Allow any legitimate capped ride while still rejecting teleport-like peer
   // reports. The fixed margin absorbs network jitter and dropped broadcasts.
-  const allowed = (TRAVERSAL_SPEED_CAP * Math.max(elapsedMs, 120)) / 1000 + STRIDE * 6;
+  const allowed = (SPACECRAFT_SPEED_CAP * Math.max(elapsedMs, 120)) / 1000 + STRIDE * 6;
   if (distance <= allowed) return { x, z };
   const scale = allowed / distance;
   return { x: from.x + dx * scale, z: from.z + dz * scale };
