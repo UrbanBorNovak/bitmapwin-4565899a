@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 export const PUPPETS_PARENT = "89d8bfdc528550b34b22741d579645ba7c0899f534c617ed6f18609b280c1bc2i0";
-export const PUPPETS_POOL = "BITCOIN HOODS";
+export const PUPPETS_POOL = "BITCOIN WIERDOS";
 /** Safety cap while reading children pages; the real supply is whatever the parent has on-chain. */
 export const PUPPETS_SUPPLY = 500;
 /** Map span: BITMAP heights 0 … MAP_SPAN-1. */

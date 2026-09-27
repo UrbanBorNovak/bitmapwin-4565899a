@@ -1,6 +1,6 @@
 /**
  * JIGGLYPUFF — a hardcoded on-chain pool for living cards.
- * Unlike ORD TORCHES / BITCOIN HOODS (read live from a parent inscription),
+ * Unlike ORD TORCHES / BITCOIN WIERDOS (read live from a parent inscription),
  * this pool is a fixed list of inscription IDs shipped with the app.
  * Holders of any of these inscriptions can claim MEMBER status
  * (see jigglypuff.functions.ts).
