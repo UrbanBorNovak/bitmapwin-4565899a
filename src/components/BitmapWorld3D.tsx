@@ -261,6 +261,7 @@ import {
   STRIDE,
   type MoveIntent,
   type PlayerState,
+  SPACECRAFT_SPEED_CAP,
 } from "@/lib/player-state";
 import {
   DEFAULT_AVATAR_MODEL,
@@ -1686,6 +1687,7 @@ function PlayerCameraRig({
   const lookMatrix = useRef(new THREE.Matrix4());
   const targetRotation = useRef(new THREE.Quaternion());
   const pitch = useRef(0);
+  const thrust = useRef(1);
   const steer = useRef(0);
   const bob = useRef(0);
   const jumpRequested = useRef(false);
