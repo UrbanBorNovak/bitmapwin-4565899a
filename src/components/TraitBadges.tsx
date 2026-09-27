@@ -32,7 +32,7 @@ export function TraitBadges({
       {shown.map((t) => (
         <li
           key={t.id}
-          title={t.rare ? "RARE TRAIT" : "TRAIT"}
+          title={`${t.sourceKey} — ${t.description}`}
           className={
             t.rare
               ? "border border-foreground px-1.5 py-0.5 font-mono text-[9px]"

@@ -17,6 +17,7 @@ import { MyBitmapsPanel } from "@/components/MyBitmapsPanel";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapMarketChart } from "@/components/BitmapMarketChart";
 import { TrendExplorer } from "@/components/TrendExplorer";
+import { hasTrait, OFFICIAL_TRAITS, type TraitId } from "@/lib/traits";
 
 import { SalesLog } from "@/components/SalesLog";
 import { TradeCrawlerStatus } from "@/components/TradeCrawlerStatus";
@@ -74,6 +75,7 @@ function Marketplace() {
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [club, setClub] = useState<ClubId | "any">("any");
+  const [trait, setTrait] = useState<TraitId | "any">("any");
   const [page, setPage] = useState(0);
   useLiveOffers();
 
@@ -87,6 +89,7 @@ function Marketplace() {
       const def = CLUBS.find((c) => c.id === club);
       if (def) base = base.filter((p) => inClub(p.bitmapHeight, def));
     }
+    if (trait !== "any") base = base.filter((p) => hasTrait(p.bitmapHeight, trait));
     const q = search.trim().toLowerCase();
     if (!q) return base;
     return base.filter(
@@ -96,7 +99,7 @@ function Marketplace() {
         p.txid.toLowerCase().includes(q) ||
         (p.ownerAddress ?? "").toLowerCase().includes(q),
     );
-  }, [tab, traded, listed, parcels, search, club]);
+  }, [tab, traded, listed, parcels, search, club, trait]);
 
   // Paginate first, then resolve holders on chain for the visible page only.
   const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
@@ -252,6 +255,42 @@ function Marketplace() {
                   ))}
                 </div>
               </div>
+              <div>
+                <label className="label mb-2 block" htmlFor="bitmap-trait-filter">OFFICIAL TRAIT</label>
+                <select
+                  id="bitmap-trait-filter"
+                  value={trait}
+                  onChange={(event) => {
+                    setTrait(event.target.value as TraitId | "any");
+                    setPage(0);
+                  }}
+                  className="w-full border border-border bg-background px-3 py-2.5 font-mono text-xs uppercase text-foreground focus:border-primary focus:outline-none"
+                >
+                  <option value="any">ALL OFFICIAL TRAITS</option>
+                  {OFFICIAL_TRAITS.map((item) => (
+                    <option key={item.id} value={item.id}>{item.label}</option>
+                  ))}
+                </select>
+              </div>
+              <details className="border-t border-border pt-4">
+                <summary className="label cursor-pointer text-bitcoin">TRAIT GLOSSARY</summary>
+                <div className="mt-3 max-h-64 space-y-3 overflow-y-auto pr-2">
+                  {OFFICIAL_TRAITS.map((item) => (
+                    <div key={item.id}>
+                      <div className="font-mono text-[10px] text-foreground">{item.label}</div>
+                      <div className="mt-0.5 font-mono text-[9px] leading-relaxed text-muted-foreground">{item.description}</div>
+                    </div>
+                  ))}
+                </div>
+                <a
+                  href="https://docs.bitmap.community/bitmap.community/trait-definitions"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="label mt-4 inline-block text-bitcoin hover:text-foreground"
+                >
+                  SOURCE: BITMAP.COMMUNITY ↗
+                </a>
+              </details>
               <Link to="/collections" className="btn-term-ghost w-full">PUNKS &amp; COLLECTION STATS →</Link>
               <div className="border-t border-border pt-4 label">{holders} HOLDERS IN LOADED INDEX</div>
             </div>
