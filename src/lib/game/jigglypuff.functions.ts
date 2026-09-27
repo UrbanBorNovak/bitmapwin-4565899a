@@ -76,6 +76,8 @@ export const claimJigglypuffMembershipFn = createServerFn({ method: "POST" })
       txid: match,
       paid_at: new Date().toISOString(),
       expires_at: keepExpiry ? existing.data!.expires_at : expiresAt,
+      source: "jigglypuff",
+      qualifying_trait: null,
     };
     const write = existing.data
       ? await supabaseAdmin.from("memberships").update(row).eq("address", data.address)

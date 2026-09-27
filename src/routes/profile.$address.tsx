@@ -21,6 +21,8 @@ import { StampCard } from "@/components/StampCard";
 import { publicPassportQuery } from "@/lib/provenance-stream";
 import { ParcelClubBadges } from "@/components/ParcelClubBadges";
 import { MemberRibbon } from "@/components/MemberRibbon";
+import { TraitHolderBadge } from "@/components/TraitHolderBadge";
+import { traitHolderBadgesQuery } from "@/lib/trait-collections";
 
 export const Route = createFileRoute("/profile/$address")({
   head: ({ params }) => {
@@ -71,6 +73,7 @@ function ProfilePage() {
   const profile = useQuery(profileQuery(address));
   const pages = useQuery(ownerPagesQuery(address));
   const membership = useQuery(membershipBadgeQuery(address));
+  const traitHolders = useQuery(traitHolderBadgesQuery([address]));
   const followers = useQuery(followerCountsQuery([address]));
   const ranked = useQuery(rankPlayerByWalletQuery(address));
   const stock = useQuery(playerStockQuery(ranked.data?.id ?? null));
@@ -110,6 +113,7 @@ function ProfilePage() {
             {isMember && (
               <MemberRibbon />
             )}
+            {traitHolders.data?.get(address.toLowerCase()) && <TraitHolderBadge traits={traitHolders.data.get(address.toLowerCase())!.traitIds} />}
           </div>
           <p className="mt-3 break-all font-mono text-[10px] text-muted-foreground">{address}</p>
           <ParcelClubBadges address={address} className="mt-3 justify-center md:justify-start" />

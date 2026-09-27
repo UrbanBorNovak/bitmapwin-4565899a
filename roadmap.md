@@ -65,3 +65,9 @@
 - [x] Resolve or document release-blocking security and dependency findings.
 - [x] Add beta status and release notes.
 - [x] Verify core journeys and publish the beta release.
+
+## Official traits
+- [x] Add complete official trait catalogue and indexed inscription detail pages.
+- [x] Add an official-traits PLAY extender pool using real indexed inscriptions.
+- [x] Add server-verified trait-holder membership ribbons and marketplace trading badges.
+- [ ] Verify trait catalogue, holder claim, Marketplace, Profile, and PLAY on desktop and mobile.

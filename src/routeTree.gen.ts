@@ -79,6 +79,8 @@ import { Route as RanksIndexRouteImport } from './routes/ranks.index'
 import { Route as RanksClansRouteImport } from './routes/ranks.clans'
 import { Route as RanksPvpRouteImport } from './routes/ranks.pvp'
 import { Route as RanksSharesRouteImport } from './routes/ranks.shares'
+import { Route as TraitsIndexRouteImport } from './routes/traits.index'
+import { Route as TraitsTraitRouteImport } from './routes/traits.$trait'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicCoinRewardsRouteImport } from './routes/api/public/coin-rewards'
 import { Route as ApiPublicCrawlBssRouteImport } from './routes/api/public/crawl-bss'
@@ -449,6 +451,16 @@ const RanksSharesRoute = RanksSharesRouteImport.update({
   path: '/shares',
   getParentRoute: () => RanksRoute,
 } as any)
+const TraitsIndexRoute = TraitsIndexRouteImport.update({
+  id: '/traits/',
+  path: '/traits/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TraitsTraitRoute = TraitsTraitRouteImport.update({
+  id: '/traits/$trait',
+  path: '/traits/$trait',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   id: '/.lovable/oauth/consent',
   path: '/.lovable/oauth/consent',
@@ -608,11 +620,13 @@ export interface FileRoutesByFullPath {
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
   '/ranks/shares': typeof RanksSharesRoute
+  '/traits/$trait': typeof TraitsTraitRoute
   '/codex/': typeof CodexIndexRoute
   '/collections/': typeof CollectionsIndexRoute
   '/extenders/': typeof ExtendersIndexRoute
   '/play/': typeof PlayIndexRoute
   '/ranks/': typeof RanksIndexRoute
+  '/traits/': typeof TraitsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/crawl-bss': typeof ApiPublicCrawlBssRoute
@@ -694,11 +708,13 @@ export interface FileRoutesByTo {
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
   '/ranks/shares': typeof RanksSharesRoute
+  '/traits/$trait': typeof TraitsTraitRoute
   '/codex': typeof CodexIndexRoute
   '/collections': typeof CollectionsIndexRoute
   '/extenders': typeof ExtendersIndexRoute
   '/play': typeof PlayIndexRoute
   '/ranks': typeof RanksIndexRoute
+  '/traits': typeof TraitsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/crawl-bss': typeof ApiPublicCrawlBssRoute
@@ -785,11 +801,13 @@ export interface FileRoutesById {
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
   '/ranks/shares': typeof RanksSharesRoute
+  '/traits/$trait': typeof TraitsTraitRoute
   '/codex/': typeof CodexIndexRoute
   '/collections/': typeof CollectionsIndexRoute
   '/extenders/': typeof ExtendersIndexRoute
   '/play/': typeof PlayIndexRoute
   '/ranks/': typeof RanksIndexRoute
+  '/traits/': typeof TraitsIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/crawl-bss': typeof ApiPublicCrawlBssRoute
@@ -877,11 +895,13 @@ export interface FileRouteTypes {
     | '/ranks/clans'
     | '/ranks/pvp'
     | '/ranks/shares'
+    | '/traits/$trait'
     | '/codex/'
     | '/collections/'
     | '/extenders/'
     | '/play/'
     | '/ranks/'
+    | '/traits/'
     | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
     | '/api/public/crawl-bss'
@@ -963,11 +983,13 @@ export interface FileRouteTypes {
     | '/ranks/clans'
     | '/ranks/pvp'
     | '/ranks/shares'
+    | '/traits/$trait'
     | '/codex'
     | '/collections'
     | '/extenders'
     | '/play'
     | '/ranks'
+    | '/traits'
     | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
     | '/api/public/crawl-bss'
@@ -1053,11 +1075,13 @@ export interface FileRouteTypes {
     | '/ranks/clans'
     | '/ranks/pvp'
     | '/ranks/shares'
+    | '/traits/$trait'
     | '/codex/'
     | '/collections/'
     | '/extenders/'
     | '/play/'
     | '/ranks/'
+    | '/traits/'
     | '/.lovable/oauth/consent'
     | '/api/public/coin-rewards'
     | '/api/public/crawl-bss'
@@ -1130,7 +1154,9 @@ export interface RootRouteChildren {
   DistrictSlugRoute: typeof DistrictSlugRoute
   MapBlockRoute: typeof MapBlockRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
+  TraitsTraitRoute: typeof TraitsTraitRoute
   CodexIndexRoute: typeof CodexIndexRoute
+  TraitsIndexRoute: typeof TraitsIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   MapDistrictSlugRoute: typeof MapDistrictSlugRoute
   MapPlaceBlockRoute: typeof MapPlaceBlockRoute
@@ -1628,6 +1654,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RanksSharesRouteImport
       parentRoute: typeof RanksRoute
     }
+    '/traits/': {
+      id: '/traits/'
+      path: '/traits'
+      fullPath: '/traits/'
+      preLoaderRoute: typeof TraitsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/traits/$trait': {
+      id: '/traits/$trait'
+      path: '/traits/$trait'
+      fullPath: '/traits/$trait'
+      preLoaderRoute: typeof TraitsTraitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.lovable/oauth/consent': {
       id: '/.lovable/oauth/consent'
       path: '/.lovable/oauth/consent'
@@ -1931,7 +1971,9 @@ const rootRouteChildren: RootRouteChildren = {
   DistrictSlugRoute: DistrictSlugRoute,
   MapBlockRoute: MapBlockRoute,
   ProfileAddressRoute: ProfileAddressRoute,
+  TraitsTraitRoute: TraitsTraitRoute,
   CodexIndexRoute: CodexIndexRoute,
+  TraitsIndexRoute: TraitsIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   MapDistrictSlugRoute: MapDistrictSlugRoute,
   MapPlaceBlockRoute: MapPlaceBlockRoute,

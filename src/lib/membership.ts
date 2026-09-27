@@ -97,3 +97,9 @@ export async function claimHolderMembership(address: string) {
   const { claimJigglypuffMembershipFn } = await import("@/lib/game/jigglypuff.functions");
   return claimJigglypuffMembershipFn({ data: { address } });
 }
+
+/** Official-trait BITMAP holders claim MEMBER status after a live wallet scan. */
+export async function claimTraitHolderMembership(address: string) {
+  const { claimTraitHolderMembershipFn } = await import("@/lib/trait-holder.functions");
+  return claimTraitHolderMembershipFn({ data: { address } });
+}

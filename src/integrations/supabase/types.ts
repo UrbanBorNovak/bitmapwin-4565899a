@@ -1846,6 +1846,8 @@ export type Database = {
           id: string
           invoice_sats: number
           paid_at: string | null
+          qualifying_trait: string | null
+          source: string
           status: string
           txid: string | null
           updated_at: string
@@ -1858,6 +1860,8 @@ export type Database = {
           id?: string
           invoice_sats: number
           paid_at?: string | null
+          qualifying_trait?: string | null
+          source?: string
           status?: string
           txid?: string | null
           updated_at?: string
@@ -1870,6 +1874,8 @@ export type Database = {
           id?: string
           invoice_sats?: number
           paid_at?: string | null
+          qualifying_trait?: string | null
+          source?: string
           status?: string
           txid?: string | null
           updated_at?: string
@@ -2931,6 +2937,39 @@ export type Database = {
         }
         Relationships: []
       }
+      trait_holder_badges: {
+        Row: {
+          active: boolean
+          address: string
+          bitmap_height: number
+          expires_at: string
+          inscription_id: string
+          trait_ids: string[]
+          updated_at: string
+          verified_at: string
+        }
+        Insert: {
+          active?: boolean
+          address: string
+          bitmap_height: number
+          expires_at: string
+          inscription_id: string
+          trait_ids?: string[]
+          updated_at?: string
+          verified_at?: string
+        }
+        Update: {
+          active?: boolean
+          address?: string
+          bitmap_height?: number
+          expires_at?: string
+          inscription_id?: string
+          trait_ids?: string[]
+          updated_at?: string
+          verified_at?: string
+        }
+        Relationships: []
+      }
       ui_translations: {
         Row: {
           created_at: string
@@ -3315,6 +3354,16 @@ export type Database = {
           bought: number
           listed: number
           skipped: boolean
+        }[]
+      }
+      official_trait_bitmaps: {
+        Args: { p_limit?: number; p_offset?: number; p_trait: string }
+        Returns: {
+          block_height: number
+          genesis_height: number
+          inscription_id: string
+          owner_address: string
+          total_count: number
         }[]
       }
       owns_wallet: {
