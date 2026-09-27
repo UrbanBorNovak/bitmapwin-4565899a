@@ -11,3 +11,4 @@
 - On-chain engine references live in src/lib/onchain-engine.ts; PlayCanvas scripts are never loaded — only their maths (noise/shaders) is ported to Three.js, because the world runs on Three.js.
 - Use the shared MemberRibbon for active profile and wallet membership markers, backed by the verified membership badge; this keeps holder and donation displays consistent without trusting browser-held ownership claims.
 - Count JIGGLYPUFF sales only from confirmed BITMAPWIN purchases with a matching inscription input and exact seller payout; ordinary transfers and change outputs cannot prove a sale price.
+- Marketplace trait labels and filters use Bitmap.Community definitions, but expose only traits provable from locally verified on-chain fields; this prevents unsupported rarity claims.
