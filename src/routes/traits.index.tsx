@@ -5,6 +5,10 @@ export const Route = createFileRoute("/traits/")({
   head: () => ({ meta: [
     { title: "Official Bitmap Traits — BITMAPWIN" },
     { name: "description", content: "Every official Bitmap.Community Blocktribute, its verification status, indexed BITMAP inscriptions and marketplace use." },
+    { property: "og:title", content: "Official Bitmap Traits — BITMAPWIN" },
+    { property: "og:description", content: "Every official Bitmap.Community Blocktribute, its verification status, indexed BITMAP inscriptions and marketplace use." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
   ] }),
   component: TraitsIndex,
 });

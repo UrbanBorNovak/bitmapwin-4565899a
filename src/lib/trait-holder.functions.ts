@@ -14,6 +14,9 @@ export const claimTraitHolderMembershipFn = createServerFn({ method: "POST" })
     await assertControls(context.supabase, context.userId, data.address);
 
     const wallet = await fetchWallet(data.address, 400);
+    if (wallet.scannedOutputs < wallet.utxoCount) {
+      throw new Error("CHAIN OWNERSHIP CHECK INCOMPLETE — CONSOLIDATE WALLET OUTPUTS OR TRY AGAIN SHORTLY");
+    }
     const held = wallet.utxos.flatMap((utxo) => utxo.inscriptions)
       .map((inscription) => ({ inscription, traits: inscription.bitmapHeight === null ? [] : traitsOf(inscription.bitmapHeight) }))
       .find((item) => item.inscription.bitmapHeight !== null && item.traits.length > 0);
