@@ -149,7 +149,7 @@ export const PineTrees = memo(function PineTrees({
   // Landforms registering their slopes re-place this scenery onto them.
   useTerrainVersion();
   const { quality } = useQuality();
-  const treeLimit = quality.resolved === "low" ? 14 : quality.resolved === "medium" ? 34 : MAX_TREES;
+  const treeLimit = quality.resolved === "low" ? 10 : quality.resolved === "medium" ? 22 : MAX_TREES;
   const flowerLimit = quality.resolved === "low" ? 18 : quality.resolved === "medium" ? 48 : MAX_FLOWERS;
   const minerLimit = quality.resolved === "low" ? 4 : quality.resolved === "medium" ? 7 : MAX_MINERS;
   const { trees, flowers, miners } = useMemo(() => {
