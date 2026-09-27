@@ -99,6 +99,57 @@ export type Database = {
           },
         ]
       }
+      bitmap_archaeology_nominations: {
+        Row: {
+          bitmap_height: number
+          contributor_name: string
+          created_at: string
+          evidence_url: string
+          featured_position: number | null
+          id: string
+          inscription_id: string
+          review_note: string | null
+          reviewed_at: string | null
+          status: string
+          thesis: string
+          trait_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bitmap_height: number
+          contributor_name: string
+          created_at?: string
+          evidence_url: string
+          featured_position?: number | null
+          id?: string
+          inscription_id: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          status?: string
+          thesis: string
+          trait_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bitmap_height?: number
+          contributor_name?: string
+          created_at?: string
+          evidence_url?: string
+          featured_position?: number | null
+          id?: string
+          inscription_id?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          status?: string
+          thesis?: string
+          trait_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bitmap_bss_scenes: {
         Row: {
           bitmap_height: number
@@ -3166,6 +3217,10 @@ export type Database = {
       atlas_region_stats: {
         Args: { p_hi: number; p_lo: number }
         Returns: Json
+      }
+      bitmap_has_height_trait: {
+        Args: { _height: number; _trait: string }
+        Returns: boolean
       }
       can_build_bitmap: {
         Args: { _height: number; _owner_address: string; _user_id: string }

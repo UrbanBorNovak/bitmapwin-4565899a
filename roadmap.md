@@ -71,3 +71,8 @@
 - [x] Add an official-traits PLAY extender pool using real indexed inscriptions.
 - [x] Add server-verified trait-holder membership ribbons and marketplace trading badges.
 - [x] Verify trait catalogue, holder claim, Marketplace, Profile, and PLAY on desktop and mobile.
+
+## BITMAP Archaeology
+- [x] Introduce archaeology as a community research layer in the official trait catalogue.
+- [x] Add evidence-backed BITMAP nominations with private review states and public accepted records.
+- [x] Verify supported-trait validation, signed-in submission, public visibility, and desktop/mobile layouts.

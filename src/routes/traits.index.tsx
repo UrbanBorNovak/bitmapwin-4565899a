@@ -3,10 +3,10 @@ import { ALL_OFFICIAL_TRAITS } from "@/lib/traits";
 
 export const Route = createFileRoute("/traits/")({
   head: () => ({ meta: [
-    { title: "Official Bitmap Traits — BITMAPWIN" },
-    { name: "description", content: "Every official Bitmap.Community Blocktribute, its verification status, indexed BITMAP inscriptions and marketplace use." },
-    { property: "og:title", content: "Official Bitmap Traits — BITMAPWIN" },
-    { property: "og:description", content: "Every official Bitmap.Community Blocktribute, its verification status, indexed BITMAP inscriptions and marketplace use." },
+    { title: "BITMAP Archaeology & Official Traits — BITMAPWIN" },
+    { name: "description", content: "Excavate official Bitmap traits through verified chain facts, indexed inscriptions and community-nominated field records." },
+    { property: "og:title", content: "BITMAP Archaeology & Official Traits — BITMAPWIN" },
+    { property: "og:description", content: "Excavate official Bitmap traits through verified chain facts, indexed inscriptions and community-nominated field records." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),
@@ -19,12 +19,27 @@ function TraitsIndex() {
     <main className="mx-auto max-w-[1400px] px-4 py-12 md:px-8">
       <Link to="/collections" className="label hover:text-bitcoin">← COLLECTIONS</Link>
       <header className="mt-6 border-l-2 border-bitcoin pl-5">
-        <p className="label text-bitcoin">BITMAP.COMMUNITY · BLOCKTRIBUTES</p>
+        <p className="label text-signal">BITMAP ARCHAEOLOGY · BITMAP.COMMUNITY BLOCKTRIBUTES</p>
         <h1 className="display mt-2 text-3xl md:text-5xl">OFFICIAL TRAIT INDEX</h1>
         <p className="mt-3 max-w-3xl font-mono text-xs leading-relaxed text-muted-foreground">
           Every definition in the official glossary. {supported} height-derived traits are matched to genuine indexed BITMAP inscriptions now; traits needing transaction, miner, date, fee, hash or community data remain visible without invented matches.
         </p>
       </header>
+
+      <section className="mt-8 grid border border-border bg-card md:grid-cols-3">
+        <div className="p-5 md:col-span-2 md:p-6">
+          <p className="label text-bitcoin">READ THE BLOCK AS AN ARTIFACT</p>
+          <p className="mt-3 max-w-3xl font-mono text-xs leading-relaxed text-muted-foreground">
+            BITMAP Archaeology connects a block's verifiable Bitcoin record, its first valid BITMAP inscription and its ownership provenance with attributed community field notes. Nominate discoveries inside any trait; three accepted records can be featured per category.
+          </p>
+        </div>
+        <div className="border-t border-border p-5 md:border-l md:border-t-0 md:p-6">
+          <p className="label text-signal">CHAIN VERIFIED</p>
+          <p className="mt-2 font-mono text-[10px] text-muted-foreground">DETERMINISTIC BLOCK, INSCRIPTION OR INDEX FACT</p>
+          <p className="label mt-4 text-bitcoin">COMMUNITY FIELD NOTE</p>
+          <p className="mt-2 font-mono text-[10px] text-muted-foreground">ATTRIBUTED INTERPRETATION · NEVER A VALUE CLAIM</p>
+        </div>
+      </section>
 
       <div className="mt-8 flex flex-wrap gap-3">
         <span className="label border border-bitcoin px-3 py-2 text-bitcoin">PROVABLE NOW · {supported}</span>
