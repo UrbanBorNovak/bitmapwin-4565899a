@@ -49,7 +49,7 @@ const SHROOM_URLS = SHROOM_INSCRIPTIONS.map(contentUrl);
 const FLOWER_URLS = FLOWER_INSCRIPTIONS.map(contentUrl);
 const WILD_MINER_URL = contentUrl(WILD_MINER_INSCRIPTION);
 
-const MAX_TREES = 62;
+const MAX_TREES = 38;
 const MAX_FLOWERS = 90;
 const MAX_MINERS = 5;
 const FLORA_SCALE = 3;
