@@ -8,7 +8,7 @@
 
 import { Suspense, useEffect, useMemo, useRef } from "react";
 import type { LucideIcon } from "lucide-react";
-import { BookOpen, CircleDot, Footprints, Gem, Glasses, HardHat, ToyBrick, Watch } from "lucide-react";
+import { BookOpen, CircleDot, Footprints, Gem, Glasses, HardHat, PawPrint, ToyBrick, Watch } from "lucide-react";
 import { useThree } from "@react-three/fiber";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { useAnimations, useGLTF, useTexture } from "@react-three/drei";
@@ -269,6 +269,7 @@ export function CharacterSheet({
     onNote?.(text);
   };
   const toy = toySpec(gear.toy);
+  const pet = companionSpec(gear.companion);
 
   const head: SlotView = flying
     ? {
