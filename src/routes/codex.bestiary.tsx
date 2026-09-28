@@ -6,6 +6,7 @@ import { HuntPanel } from "@/components/codex/HuntPanel";
 import { useQuery } from "@tanstack/react-query";
 import { WORLD_CREATURES } from "@/lib/creature-codex";
 import { allGuardiansQuery } from "@/lib/bitmon-queries";
+import type { GuardianRarity, GuardianSpecies } from "@/lib/bitmon";
 
 export const Route = createFileRoute("/codex/bestiary")({
   head: () => ({
@@ -35,8 +36,9 @@ type Row = {
   inscription?: string;
   kind?: CritterKind;
   yaw?: number | undefined;
-  /** Guardians have no single model; they link to their home BITMAP. */
+  /** Guardians render their procedural body and link to their home BITMAP. */
   height?: number;
+  guardian?: { species: GuardianSpecies; rarity: GuardianRarity; body: string; accent: string };
 };
 
 const totalWeight = SPECIES.reduce((s, x) => s + x.weight, 0);
@@ -105,11 +107,12 @@ function Bestiary() {
         rarity: `GUARDIAN · ${g.rarity}`,
         habitat: `PATROLS ${g.height}.BITMAP`,
         height: g.height,
+        guardian: { species: g.species, rarity: g.rarity, body: g.body, accent: g.accent },
       })),
     ],
     [guardians],
   );
-  const viewing = all.find((r) => r.id === open && (r.inscription || r.kind));
+  const viewing = all.find((r) => r.id === open && (r.inscription || r.kind || r.guardian));
   const rows = useMemo(
     () =>
       all.filter((r) =>
@@ -130,10 +133,10 @@ function Bestiary() {
       {viewing && (
         <section className="mt-6 grid overflow-hidden rounded-md border border-border bg-card/60 backdrop-blur md:grid-cols-[1.4fr_1fr]">
           <div className="h-72 md:h-96">
-            <CreatureModel3D key={viewing.id} inscription={viewing.inscription} kind={viewing.kind} yaw={viewing.yaw} label={viewing.name} />
+            <CreatureModel3D key={viewing.id} inscription={viewing.inscription} kind={viewing.kind} guardian={viewing.guardian} yaw={viewing.yaw} label={viewing.name} />
           </div>
           <div className="border-t border-border p-5 md:border-l md:border-t-0">
-            <p className="label text-signal">{viewing.inscription ? "ON-CHAIN 3D MODEL" : "OASIS WILDLIFE MODEL"} · DRAG TO TURN</p>
+            <p className="label text-signal">{viewing.guardian ? "BLOCK-DNA GUARDIAN" : viewing.inscription ? "ON-CHAIN 3D MODEL" : "OASIS WILDLIFE MODEL"} · DRAG TO TURN</p>
             <h2 className="display mt-1 text-2xl" data-no-translate>{viewing.name}</h2>
             <p className="mt-1 font-mono text-[10px] text-muted-foreground">{viewing.rarity} · {viewing.habitat}</p>
             <dl className="mt-4 grid grid-cols-4 gap-1 font-mono text-[10px]">
@@ -142,6 +145,11 @@ function Bestiary() {
               <Stat k="BITE" v={viewing.bite} />
               <Stat k="SPD" v={viewing.speed.toFixed(1)} />
             </dl>
+{viewing.height != null && (
+            <Link to="/bitmap/$block" params={{ block: String(viewing.height) }} className="mt-4 block font-mono text-[10px] text-signal hover:text-bitcoin">
+              VISIT {viewing.height}.BITMAP IN THE OASIS →
+            </Link>
+            )}
 {viewing.inscription && (
             <a href={`https://ordinals.com/inscription/${viewing.inscription}`} target="_blank" rel="noreferrer" className="mt-4 block break-all font-mono text-[10px] text-muted-foreground hover:text-bitcoin" data-no-translate>
               INSCRIPTION {viewing.inscription.slice(0, 10)}…{viewing.inscription.slice(-4)} ↗
@@ -173,7 +181,7 @@ function Bestiary() {
         {rows.map((r) => (
           <article key={r.id} className="flex gap-4 rounded-md border border-border bg-card/60 p-4 backdrop-blur">
             <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded border border-border bg-background">
-              {r.height != null ? (
+              {r.height != null && !r.guardian ? (
                 <Link to="/bitmap/$block" params={{ block: String(r.height) }} className="grid size-full place-items-center font-mono text-[10px] text-signal hover:text-bitcoin">
                   VISIT
                 </Link>
