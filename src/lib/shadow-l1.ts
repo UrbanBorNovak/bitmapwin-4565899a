@@ -24,3 +24,14 @@ export type ShadowL1Note = {
 export function mempoolTxUrl(txid: string): string {
   return `https://mempool.space/tx/${txid}`;
 }
+
+/**
+ * The public identity hash of a gate: derived only from the gate's slug and its
+ * land, so anyone can recompute it and find the genesis note on Bitcoin.
+ */
+export function gateDigest(slug: string, territoryBlock: number): string {
+  const bytes = sha256(new TextEncoder().encode(`bitmapwin:shadow:gate|${slug}|${territoryBlock}`));
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
