@@ -114,3 +114,8 @@
 - [x] Replace the separate World Scan terrain with the painted Atlas map and shared Hilbert positions.
 - [x] Preserve direct in-world travel, ownership, player, and frontier markers.
 - [x] Link the overlay to the full Atlas and verify it in the Oasis.
+
+## Workshop crafting unboxing
+- [x] Staged reveal overlay (block scan reel, rarity lock, card slam, counting stats)
+- [x] Era rarity flare from the real block height plus synthesised terminal SFX
+- [ ] Verify the full reveal with a wallet that holds BITMAPs and BIT
