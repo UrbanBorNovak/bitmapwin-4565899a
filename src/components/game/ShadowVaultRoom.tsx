@@ -356,12 +356,15 @@ export function ShadowVaultRoom() {
             ◈ SHADOW VAULT · {pass ? shadowHandle(pass.nullifier) : "NO PASS ON THIS DEVICE"}
           </div>
           {l1Note.data ? (
-            <div className="border border-bitcoin/50 bg-background/70 px-2 py-1 text-bitcoin">
-              ◆ ON BITCOIN ·{" "}
-              {l1Note.data.status === "confirmed"
-                ? `BLOCK ${l1Note.data.confirmedHeight ?? "—"}`
-                : "IN THE MEMPOOL"}
-            </div>
+            l1Note.data.status === "confirmed" ? (
+              <div className="border border-bitcoin bg-bitcoin/15 px-2 py-1 text-bitcoin">
+                ◆ ANCHORED ON BITCOIN · BLOCK {l1Note.data.confirmedHeight ?? "—"}
+              </div>
+            ) : (
+              <div className="animate-pulse border border-signal/50 bg-background/70 px-2 py-1 text-signal">
+                ◈ ANCHORING · WAITING FOR A MINER
+              </div>
+            )
           ) : null}
         </div>
         <button
