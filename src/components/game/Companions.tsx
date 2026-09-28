@@ -13,7 +13,6 @@ import { useFrame } from "@react-three/fiber";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
 import { Primitive } from "@/components/game/Primitive";
-import { createFlyBrain } from "@/lib/fly-brain";
 import type { PlayerState } from "@/lib/player-state";
 import { companionSpec, useGear, type CompanionSpec } from "@/lib/world-gear";
 import { groundY } from "@/lib/world-terrain";
@@ -43,10 +42,6 @@ function Pet({
   const group = useRef<THREE.Group>(null);
   const leash = useRef<THREE.Mesh>(null);
   const at = useRef({ x: 0, z: 0, yaw: 0, started: false });
-  const brain = useMemo(
-    () => createFlyBrain(spec.id === "cat" ? 0.271 : spec.id === "dog" ? 0.619 : 0.883),
-    [spec.id],
-  );
   const leashUp = useMemo(() => new THREE.Vector3(0, 1, 0), []);
   const leashStart = useMemo(() => new THREE.Vector3(), []);
   const leashEnd = useMemo(() => new THREE.Vector3(), []);
@@ -87,64 +82,44 @@ function Pet({
     // Keep every leash companion at the player's heel in the player's local
     // frame, so turning never leaves the pet orbiting or stranded behind.
     const reach = unit * spec.follow;
-    const side = unit * spec.follow * 0.46;
-    const targetX = player.x - Math.sin(player.yaw) * reach - Math.cos(player.yaw) * side;
-    const targetZ = player.z - Math.cos(player.yaw) * reach + Math.sin(player.yaw) * side;
+    const side = unit * spec.follow * 0.5;
+    // Heel point sits behind and to the RIGHT — the leash hand side.
+    const rightX = Math.cos(player.yaw);
+    const rightZ = -Math.sin(player.yaw);
+    const fwdX = Math.sin(player.yaw);
+    const fwdZ = Math.cos(player.yaw);
+    const targetX = player.x - fwdX * reach + rightX * side;
+    const targetZ = player.z - fwdZ * reach + rightZ * side;
 
     if (!at.current.started) {
       at.current = { x: targetX, z: targetZ, yaw: player.yaw, started: true };
     }
     const previousX = at.current.x;
     const previousZ = at.current.z;
-    const targetDx = targetX - at.current.x;
-    const targetDz = targetZ - at.current.z;
-    const targetDistance = Math.hypot(targetDx, targetDz);
-    const playerDx = player.x - at.current.x;
-    const playerDz = player.z - at.current.z;
-    const playerDistance = Math.hypot(playerDx, playerDz);
-    const act = brain.think(
-      {
-        now: t * 1_000,
-        hp: 100,
-        maxHp: 100,
-        snared: false,
-        heading: at.current.yaw,
-        playerDistance: playerDistance / Math.max(unit, 0.0001),
-        playerAngle: Math.atan2(playerDx, playerDz),
-        workDistance: targetDistance / Math.max(unit, 0.0001),
-        workAngle: Math.atan2(targetDx, targetDz),
-        // The heel point remains its job even after it arrives. This lets the
-        // brain choose WORK/rest there instead of falling back to a wandering
-        // cruise while the player is standing normally.
-        worker: true,
-        hostile: false,
-        vendor: false,
-      },
-      delta,
-    );
-    at.current.yaw += act.steer;
-    const brainSpeed = unit * (spec.hovers ? 2.15 : 1.8) * act.throttle;
-    at.current.x += Math.sin(at.current.yaw) * brainSpeed * delta;
-    at.current.z += Math.cos(at.current.yaw) * brainSpeed * delta;
+    // Critically damped spring toward the heel point: lags a touch, never drifts.
+    const k = 1 - Math.exp(-(spec.hovers ? 5 : 7) * delta);
+    at.current.x += (targetX - at.current.x) * k;
+    at.current.z += (targetZ - at.current.z) * k;
 
-    // The leash is a hard safety radius: the brain may sniff and wander, but
-    // it cannot leave the visitor behind after a sprint, jump, or teleport.
-    const leashLimit = reach * 1.35;
-    const tetherDx = at.current.x - player.x;
-    const tetherDz = at.current.z - player.z;
+    // Hard leash so sprints, rides and teleports never strand the pet.
+    const leashLimit = reach * 1.6;
+    const tetherDx = at.current.x - targetX;
+    const tetherDz = at.current.z - targetZ;
     const tetherDistance = Math.hypot(tetherDx, tetherDz);
     if (tetherDistance > leashLimit) {
       const pull = leashLimit / tetherDistance;
-      at.current.x = player.x + tetherDx * pull;
-      at.current.z = player.z + tetherDz * pull;
-      at.current.yaw = Math.atan2(targetDx, targetDz);
+      at.current.x = targetX + tetherDx * pull;
+      at.current.z = targetZ + tetherDz * pull;
+    }
+    if (tetherDistance > reach * 12) {
+      at.current.x = targetX;
+      at.current.z = targetZ;
     }
     const moved = Math.hypot(at.current.x - previousX, at.current.z - previousZ);
-    if (moved > unit * 0.002) {
-      const facing = Math.atan2(at.current.x - previousX, at.current.z - previousZ);
-      const diff = ((facing - at.current.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-      at.current.yaw += diff * Math.min(1, delta * (spec.hovers ? 5 : 8));
-    }
+    const facing =
+      moved > unit * 0.004 ? Math.atan2(at.current.x - previousX, at.current.z - previousZ) : player.yaw;
+    const diff = ((facing - at.current.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+    at.current.yaw += diff * Math.min(1, delta * 6);
     const trot = moved / Math.max(delta, 0.0001);
     if (spec.hovers) {
       // The goose flies at knee height, climbing higher at pace while its leash
@@ -177,10 +152,8 @@ function Pet({
       node.rotation.x = gait < 0.15 ? 0.18 + Math.sin(t * 2.2) * 0.06 : 0;
     }
 
-    const rightX = Math.cos(player.yaw);
-    const rightZ = -Math.sin(player.yaw);
-    const forwardX = Math.sin(player.yaw);
-    const forwardZ = Math.cos(player.yaw);
+    const forwardX = fwdX;
+    const forwardZ = fwdZ;
     leashStart.set(
       player.x + rightX * unit * 0.3 + forwardX * unit * 0.08,
       player.y + unit * 0.58,
