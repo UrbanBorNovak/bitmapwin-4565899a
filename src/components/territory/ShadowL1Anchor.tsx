@@ -1,4 +1,6 @@
 import { useCallback, useState } from "react";
+import { Link } from "@tanstack/react-router";
+
 import { useMempoolWatch } from "@/lib/use-mempool-watch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -189,6 +191,10 @@ export function ShadowL1Anchor({
           >
             {existing.txid}
           </a>
+          <Link to="/shadow-notes" className="label mt-1 inline-block text-signal hover:text-bitcoin">
+            SEE EVERY PASS NOTE LIVE →
+          </Link>
+
           {signed?.rawHex ? (
             <details className="mt-2">
               <summary className="label cursor-pointer text-muted-foreground hover:text-signal">

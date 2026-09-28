@@ -47,6 +47,7 @@ import { Route as RanksRouteImport } from './routes/ranks'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SdkRouteImport } from './routes/sdk'
 import { Route as SdkPlaygroundRouteImport } from './routes/sdk-playground'
+import { Route as ShadowNotesRouteImport } from './routes/shadow-notes'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StreamRouteImport } from './routes/stream'
 import { Route as StudioRouteImport } from './routes/studio'
@@ -289,6 +290,11 @@ const SdkRoute = SdkRouteImport.update({
 const SdkPlaygroundRoute = SdkPlaygroundRouteImport.update({
   id: '/sdk-playground',
   path: '/sdk-playground',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShadowNotesRoute = ShadowNotesRouteImport.update({
+  id: '/shadow-notes',
+  path: '/shadow-notes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -599,6 +605,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
+  '/shadow-notes': typeof ShadowNotesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stream': typeof StreamRoute
   '/studio': typeof StudioRoute
@@ -688,6 +695,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
+  '/shadow-notes': typeof ShadowNotesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stream': typeof StreamRoute
   '/studio': typeof StudioRoute
@@ -782,6 +790,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
+  '/shadow-notes': typeof ShadowNotesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stream': typeof StreamRoute
   '/studio': typeof StudioRoute
@@ -877,6 +886,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sdk'
     | '/sdk-playground'
+    | '/shadow-notes'
     | '/sitemap.xml'
     | '/stream'
     | '/studio'
@@ -966,6 +976,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sdk'
     | '/sdk-playground'
+    | '/shadow-notes'
     | '/sitemap.xml'
     | '/stream'
     | '/studio'
@@ -1059,6 +1070,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sdk'
     | '/sdk-playground'
+    | '/shadow-notes'
     | '/sitemap.xml'
     | '/stream'
     | '/studio'
@@ -1153,6 +1165,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SdkRoute: typeof SdkRoute
   SdkPlaygroundRoute: typeof SdkPlaygroundRoute
+  ShadowNotesRoute: typeof ShadowNotesRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StreamRoute: typeof StreamRoute
   StudioRoute: typeof StudioRoute
@@ -1441,6 +1454,13 @@ declare module '@tanstack/react-router' {
       path: '/sdk-playground'
       fullPath: '/sdk-playground'
       preLoaderRoute: typeof SdkPlaygroundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shadow-notes': {
+      id: '/shadow-notes'
+      path: '/shadow-notes'
+      fullPath: '/shadow-notes'
+      preLoaderRoute: typeof ShadowNotesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -1977,6 +1997,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SdkRoute: SdkRoute,
   SdkPlaygroundRoute: SdkPlaygroundRoute,
+  ShadowNotesRoute: ShadowNotesRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StreamRoute: StreamRoute,
   StudioRoute: StudioRoute,

@@ -129,3 +129,9 @@ export const getShadowNoteFn = createServerFn({ method: "GET" })
     const { readShadowNoteByDigest } = await import("@/lib/shadow-l1.server");
     return readShadowNoteByDigest(data.digest);
   });
+
+/** Every SHAD note with its live mempool / block status. Public chain data. */
+export const getAllShadowNotesFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { readAllShadowNotes } = await import("@/lib/shadow-l1.server");
+  return readAllShadowNotes();
+});
