@@ -162,6 +162,33 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
       <p className="label mt-3 break-all text-muted-foreground">
         POOL {pool.data?.poolAddress ?? "…"} · {pool.data?.leaves.length ?? 0} NOTES · {pool.data?.spent ?? 0} SPENT
       </p>
+      <div className="mt-3 border border-border p-3">
+        <p className="label text-signal">RELAYER · SPONSORS EACH PRIVATE TRANSFER ON BITCOIN</p>
+        <p className="label mt-1 break-all text-muted-foreground">
+          {relayer.data?.address ?? "…"} · {relayer.data?.sats ?? 0} SATS FOR FEES
+        </p>
+        {relayer.data?.anchors.length ? (
+          <ul className="mt-2 space-y-1">
+            {relayer.data.anchors.map((a) => (
+              <li key={a.nullifier} className="label break-all">
+                {a.relay_status === "broadcast" && a.relay_txid ? (
+                  <a className="text-signal" href={`https://mempool.space/tx/${a.relay_txid}`} target="_blank" rel="noreferrer">
+                    ✓ ANCHORED {a.relay_txid.slice(0, 16)}… · {a.relay_fee_sats} SATS
+                  </a>
+                ) : (
+                  <span className="text-bitcoin">QUEUED · {a.relay_error ?? "WAITING"}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {relayer.data?.anchors.some((a) => a.relay_status === "queued") ? (
+          <button type="button" disabled={busy} className={`${btn} mt-2 border-signal text-signal`}
+            onClick={() => run("RETRYING QUEUED ANCHORS…", async () => { await relayRetry(); setMsg("✓ RETRY DONE"); })}>
+            RETRY QUEUED ANCHORS
+          </button>
+        ) : null}
+      </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
         <input value={inscription} onChange={(e) => setInscription(e.target.value)} placeholder="GUARDIAN INSCRIPTION ID …i0"
