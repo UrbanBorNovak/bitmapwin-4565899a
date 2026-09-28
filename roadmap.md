@@ -81,3 +81,8 @@
 - [x] Add public live-preview and read-only code views to published BITMAP builds.
 - [x] Verify the public build viewer and unobstructed Oasis navigation on desktop; controls use responsive layouts for phone widths.
 - [x] Show active extenders as runnable, interactive 3D previews with their exact published code.
+
+## BITMAP pages
+- [x] Recompose BITMAP details as a brutalist editorial story with clearer actions and navigation.
+- [x] Make the live territory the primary experience and reduce nested panel clutter.
+- [x] Verify the refreshed BITMAP page on desktop and phone.

@@ -23,6 +23,7 @@ import { safeExternalUrl } from "@/lib/safe-url";
 import { recordPassportVisitFn } from "@/lib/views.functions";
 import { BuildEditor } from "@/components/builds/BuildEditor";
 import { PublicBuildViewer } from "@/components/builds/PublicBuildViewer";
+import { runtimeDeploymentsForHeightQuery } from "@/lib/extender-code";
 import { BuildRaffles } from "@/components/coins/BuildRaffles";
 import { LiveBitmapPresence } from "@/components/LiveBitmapPresence";
 import { BitmapModelPlacement } from "@/components/BitmapModelPlacement";
@@ -65,6 +66,7 @@ export function ParcelPagePanel({
   // the write actually passes the ownership policy.
   const delegates = useQuery(delegatesQuery(height));
   const district = useQuery(districtForHeightQuery(height));
+  const deployments = useQuery(runtimeDeploymentsForHeightQuery(height));
   const isHolder = walletControls(wallet, ownerAddress) && isLinked(links.data, ownerAddress);
   // A delegate the holder granted can build too (RLS mirrors this check).
   const isDelegate = (delegates.data ?? []).some(
@@ -132,11 +134,24 @@ export function ParcelPagePanel({
   });
 
   const built = page.data;
+  const viewerPage = built ?? (deployments.data?.length
+    ? {
+        bitmapHeight: height,
+        ownerAddress: ownerAddress ?? "",
+        title: null,
+        description: null,
+        linkUrl: null,
+        bannerInscriptionId: null,
+        buildKind: "info" as const,
+        buildConfig: DEFAULT_CONFIGS.info,
+        updatedAt: null,
+      }
+    : null);
 
   return (
-    <section className="mt-8 border border-border">
-      <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border px-6 py-3">
-        <span className="label">BITMAP PAGE — {height}.BITMAP</span>
+    <section id="world" className="border-x border-b border-border scroll-mt-20">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 md:px-6">
+        <span className="label text-signal">LIVE TERRITORY — {height}.BITMAP</span>
         <span className="label">
           {stats.data
             ? `${stats.data.totalViews.toLocaleString("en-US")} VIEWS · ${stats.data.uniqueVisitors.toLocaleString("en-US")} VISITORS`
@@ -149,16 +164,16 @@ export function ParcelPagePanel({
           src={inscriptionImageUrl(built.bannerInscriptionId)}
           alt={`${height}.bitmap parcel banner`}
           loading="lazy"
-          className="h-40 w-full border-b border-border object-cover grayscale"
+          className="h-48 w-full border-b border-border object-cover grayscale md:h-64"
         />
       )}
 
       <LiveBitmapPresence height={height} placeName={built?.title || `${height}.BITMAP`} />
 
-      <div className="space-y-3 px-6 py-5">
+      <div className="space-y-4 px-4 py-5 md:px-6 md:py-7">
         {built ? (
           <>
-            {built.title && <h2 className="display text-xl">{built.title}</h2>}
+            {built.title && <h2 className="display text-2xl md:text-4xl">{built.title}</h2>}
             {built.description && (
               <p className="max-w-[70ch] font-mono text-sm whitespace-pre-wrap text-muted-foreground">
                 {built.description}
@@ -195,14 +210,19 @@ export function ParcelPagePanel({
           </p>
         )}
 
-        {built && (
+        {viewerPage && (
           <div className="pt-2">
-            <p className="label mb-3">{BUILD_KIND_LABELS[built.buildKind]}</p>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="label text-bitcoin">
+                {built ? BUILD_KIND_LABELS[built.buildKind] : "DEPLOYED EXTENDER"}
+              </p>
+              <span className="label hidden text-signal sm:block">INTERACTIVE · PUBLIC</span>
+            </div>
             <PublicBuildViewer
-              page={built}
+              page={viewerPage}
               district={district.data ? { name: district.data.name, slug: district.data.slug } : null}
             />
-            <BuildRaffles height={height} />
+            {built && <BuildRaffles height={height} />}
           </div>
         )}
 
