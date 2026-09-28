@@ -128,14 +128,27 @@ export function guardianLevel(dna: Pick<GuardianDna, "hp" | "bite" | "speed" | "
   return Math.max(1, Math.min(99, Math.round((dna.hp / 12 + dna.bite + dna.speed + dna.armor) / 12)));
 }
 
+export const ESPLORA_MIRRORS = ["https://mempool.space/api", "https://blockstream.info/api", "https://mempool.emzy.de/api"];
+
+/** Try each public Esplora mirror in turn, each with a short timeout. */
+export async function esploraFetch(path: string): Promise<Response> {
+  let last: unknown = null;
+  for (const base of ESPLORA_MIRRORS) {
+    try {
+      const res = await fetch(`${base}${path}`, { signal: AbortSignal.timeout(8000) });
+      if (res.ok) return res;
+      last = new Error(`HTTP ${res.status}`);
+    } catch (e) {
+      last = e;
+    }
+  }
+  throw last instanceof Error ? last : new Error("BITCOIN NETWORK UNREACHABLE");
+}
+
 /** Browser-safe fetch of the public block facts a Guardian is read from. */
 export async function fetchBlockDnaSource(height: number): Promise<BlockDnaSource> {
-  const hashRes = await fetch(`https://mempool.space/api/block-height/${height}`);
-  if (!hashRes.ok) throw new Error("BLOCK NOT FOUND");
-  const hash = (await hashRes.text()).trim();
-  const blockRes = await fetch(`https://mempool.space/api/block/${hash}`);
-  if (!blockRes.ok) throw new Error("BLOCK READ FAILED");
-  const b = (await blockRes.json()) as { tx_count: number; size: number; weight: number; timestamp: number };
+  const hash = (await (await esploraFetch(`/block-height/${height}`)).text()).trim();
+  const b = (await (await esploraFetch(`/block/${hash}`)).json()) as { tx_count: number; size: number; weight: number; timestamp: number };
   return { height, hash, txCount: b.tx_count, size: b.size, weight: b.weight, timestamp: b.timestamp };
 }
 
