@@ -154,7 +154,7 @@ export function MempoolSportsbook() {
           </p>
         )}
         <p className="mt-2 font-mono text-[9px] text-muted-foreground">
-          &gt; EVERY SLIP SETTLES ON THE REAL MINED BLOCK · HEIGHT, POOL AND MEDIAN FEE READ FROM MEMPOOL.SPACE
+          &gt; EVERY SLIP SETTLES ON REAL MINED BLOCKS · FEE PRESSURE USES THE LATEST 10-BLOCK MEDIAN FROM MEMPOOL.SPACE
         </p>
       </div>
     </section>

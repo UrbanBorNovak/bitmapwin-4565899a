@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 /**
  * NEXT-BLOCK PROPS — fast BIT predictions on the next real Bitcoin block.
  * Everything settles against the mined block itself (transaction count,
- * mining pool, median fee rate) read from mempool.space. No odds are
+ * mining pool, 10-block median fee rate) read from mempool.space. No odds are
  * simulated and no result is decided locally: the chain is the referee.
  * Every market must be genuinely unknowable before the block is mined —
  * the next height is always tip + 1, so height itself is never a market.
@@ -37,16 +37,17 @@ export const PROP_MARKETS: readonly { market: PropMarket; title: string; note: s
   {
     market: "fee",
     title: "FEE PRESSURE",
-    note: "MEDIAN FEE OVER 25 SAT/VB?",
+    note: "10-BLOCK MEDIAN FEE OVER 25 SAT/VB?",
     options: [
       { pick: "HIGH", label: "HIGH · OVER 25", multiplier: 1.9 },
-      { pick: "STANDARD", label: "STANDARD · UNDER 25", multiplier: 1.9 },
+      { pick: "STANDARD", label: "STANDARD · 25 OR LESS", multiplier: 1.9 },
     ],
   },
 ];
 
 export const STAKES = [10, 25, 50] as const;
 export const FEE_THRESHOLD = 25;
+export const FEE_WINDOW_BLOCKS = 10;
 export const TX_THRESHOLD = 3000;
 
 export function optionFor(market: PropMarket, pick: string): PropOption | null {
