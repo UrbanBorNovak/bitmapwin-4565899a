@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { getMyShadowEventsFn, issueShadowEventFn, setShadowEventActiveFn } from "@/lib/shadow-assets.functions";
+import { ShadowL1Anchor } from "@/components/territory/ShadowL1Anchor";
+import { gateDigest } from "@/lib/shadow-l1";
 
 /** Holders open a Shadow Gate on a BITMAP they hold and choose how many passes exist. */
 export function ShadowGateIssuer() {
