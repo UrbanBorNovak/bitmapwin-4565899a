@@ -79,6 +79,17 @@ export type ShadowNoteQuote = {
   feeRate: number;
   totalSats: number;
   treasury: string;
+  /** what the envelope says, so the payer can read it before signing */
+  op: ShadowOp;
+  territoryBlock: number;
+  passIndex: number;
+  digest: string;
+  /** transaction shape: how the miner fee was arrived at */
+  estimatedVBytes: number;
+  inputCount: number;
+  fundedSats: number;
+  changeSats: number;
+  payerAddress: string;
 };
 
 /** Builds the note transaction against the payer's live confirmed UTXO set. */
