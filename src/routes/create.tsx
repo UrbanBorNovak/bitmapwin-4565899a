@@ -83,7 +83,7 @@ type Deployed = { slug: string; height: number; semver: string; extenderId: stri
 
 
 function CreatePage() {
-  const { height: searchHeight } = Route.useSearch();
+  const { height: searchHeight, prompt: searchPrompt } = Route.useSearch();
   const { session, user, loading } = useAuthSession();
   const wallet = useWalletSession();
   const links = useQuery(myWalletLinksQuery(Boolean(session)));
@@ -94,7 +94,9 @@ function CreatePage() {
   const balances = useQuery({ ...coinBalanceQuery(addresses), enabled: addresses.length > 0 });
   const bitBalance = (balances.data ?? []).reduce((sum, row) => sum + row.balance, 0);
 
-  const [prompt, setPrompt] = useState("");
+  // A brief typed on the home page arrives as a search param and pre-fills the builder.
+  const [prompt, setPrompt] = useState(searchPrompt ?? "");
+
   const [tierId, setTierId] = useState<BuildTierId>(DEFAULT_BUILD_TIER);
   const [priceBit, setPriceBit] = useState("0");
   const tier = buildTier(tierId);
