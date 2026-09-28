@@ -9,7 +9,7 @@
 import { cellX, cellZ, WORLD_GRID } from "@/lib/player-state";
 
 /** Region side, in BITMAPS. One pod per region per block. */
-export const REGION = 96;
+export const REGION = 32;
 
 export type Airdrop = {
   /** Ledger key — one payout per account per key. */
@@ -37,19 +37,25 @@ export function airdropFor(block: number, col: number, row: number): Airdrop | n
   const salt = regionCol * 7919 + regionRow * 104_729;
   const dropCol = Math.min(WORLD_GRID - 1, regionCol * REGION + Math.floor(seed(block, salt) * REGION));
   const dropRow = Math.min(WORLD_GRID - 1, regionRow * REGION + Math.floor(seed(block, salt + 13) * REGION));
+  // Pods only land on mined land — never past the chain tip.
+  let height = dropRow * WORLD_GRID + dropCol;
+  if (height > block) height = Math.max(0, block - Math.floor(seed(block, salt + 17) * REGION * WORLD_GRID));
+  const finalRow = Math.floor(height / WORLD_GRID);
+  const finalCol = height % WORLD_GRID;
   const bit = 50 + Math.floor(seed(block, salt + 29) * 16) * 10; // 50 – 200 BIT
   return {
     key: `${block}:${regionCol}:${regionRow}`,
     block,
-    height: dropRow * WORLD_GRID + dropCol,
-    col: dropCol,
-    row: dropRow,
-    x: cellX(dropCol),
-    z: cellZ(dropRow),
+    height,
+    col: finalCol,
+    row: finalRow,
+    x: cellX(finalCol),
+    z: cellZ(finalRow),
     bit,
     xp: 150,
   };
 }
+
 
 const KEY = "bitmapwin:oasis-airdrops";
 
