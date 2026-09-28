@@ -95,6 +95,33 @@ export const craftCardFn = createServerFn({ method: "POST" })
   });
 
 /** DAILY HUNT — pay the bounty once per day to a verified wallet. */
+/** OASIS EXPLORATION — each fixed milestone pays BIT once per account. */
+export const claimExploreMilestoneFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ address: addressSchema, milestone: z.string().min(1).max(8) }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { assertControls } = await import("@/lib/coins.server");
+    const { EXPLORE_MILESTONES } = await import("@/lib/oasis-discovery");
+    const milestone = EXPLORE_MILESTONES.find((m) => m.id === data.milestone);
+    if (!milestone) return { ok: false as const, already: false, error: "UNKNOWN MILESTONE" };
+    await assertControls(context.supabase, context.userId, data.address);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const ref = `explore:${milestone.id}:${context.userId}`;
+    const { count } = await supabaseAdmin
+      .from("coin_ledger")
+      .select("id", { count: "exact", head: true })
+      .eq("reason", "explore_milestone")
+      .eq("ref", ref);
+    if ((count ?? 0) > 0) return { ok: true as const, already: true, error: null };
+    const { error } = await supabaseAdmin.rpc("coin_apply", {
+      _address: data.address, _delta: milestone.bit, _reason: "explore_milestone", _ref: ref,
+    });
+    if (error) return { ok: false as const, already: false, error: "PAYOUT FAILED — TRY AGAIN" };
+    return { ok: true as const, already: false, error: null };
+  });
+
 export const claimHuntBountyFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
