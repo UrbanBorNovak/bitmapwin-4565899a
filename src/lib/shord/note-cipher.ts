@@ -1,8 +1,8 @@
 /**
  * SHORD note cipher — the 71-byte AEAD payload inside every envelope.
  *
- * key    = sha256("bitmapwin:shord:note" | PoseidonECDH(scalar, ephemeralPub))
- * nonce  = first 24 bytes of sha256("bitmapwin:shord:nonce" | ephemeralPub)
+  * key   = sha256("bitmapwin:shord:note"  | PoseidonECDH(scalar, counterpartyPub))
+  * nonce = first 24 bytes of sha256("bitmapwin:shord:nonce" | same shared secret)
  * plain  = 55 bytes, sealed with XChaCha20-Poly1305 (16-byte tag) = 71 bytes
  *
  *   leaf        32 B  note secret / leaf preimage in the Poseidon state tree
