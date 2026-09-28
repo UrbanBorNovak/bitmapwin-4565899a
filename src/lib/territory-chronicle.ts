@@ -63,13 +63,18 @@ export const territoryChronicleQuery = (height: number) =>
       for (const result of [stats, events, builds, installs]) {
         if (result.error) throw result.error;
       }
+      const allEvents = (events.data ?? []).map(toEvent);
+      const milestoneEvents = allEvents.filter((item) => item.eventType !== "visit");
+      const recentArrivals = allEvents.filter((item) => item.eventType === "visit").slice(0, 6);
       return {
         totalViews: Number(stats.data?.total_views ?? 0),
         uniqueVisitors: Number(stats.data?.unique_visitors ?? 0),
         lastViewedAt: stats.data?.last_viewed_at ?? null,
         buildRecords: builds.count ?? 0,
         installRecords: installs.count ?? 0,
-        events: (events.data ?? []).map(toEvent),
+        events: [...milestoneEvents, ...recentArrivals]
+          .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
+          .slice(0, 24),
       };
     },
     staleTime: 20_000,

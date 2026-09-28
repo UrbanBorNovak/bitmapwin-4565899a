@@ -50,7 +50,14 @@ export function TerritoryChronicle({ height }: { height: number }) {
           <Button type="button" variant="terminalGhost" size="sm" onClick={() => void chronicle.refetch()}>RETRY</Button>
         </div>
       ) : data?.events.length ? (
-        <div>{data.events.map((event) => <StreamEventRow key={event.id} event={event} />)}</div>
+        <div>
+          {data.events.map((event) => <StreamEventRow key={event.id} event={event} />)}
+          {data.totalViews > data.events.filter((event) => event.eventType === "visit").length ? (
+            <p className="border-t border-border px-4 py-3 font-mono text-[10px] text-muted-foreground">
+              &gt; VISITOR TOTALS INCLUDE THE COMPLETE PRIVATE AGGREGATE; ONLY RECENT VERIFIED ARRIVALS APPEAR ABOVE_
+            </p>
+          ) : null}
+        </div>
       ) : (
         <p className="p-5 font-mono text-xs text-muted-foreground">&gt; NO BUILDS OR INSTALLS HAVE BEEN RECORDED HERE YET_</p>
       )}
