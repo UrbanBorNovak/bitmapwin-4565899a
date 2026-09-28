@@ -53,15 +53,20 @@ export const listWorldStructures = createServerFn({ method: "GET" })
   }))
   .handler(async ({ data }) => {
     if (!data.keys.length) return { structures: [] as WorldStructureRow[] };
-    const supabase = publicClient();
-    const { data: rows, error } = await (
-      supabase.rpc as unknown as (
-        fn: string,
-        args: Record<string, unknown>,
-      ) => Promise<{ data: WorldStructureRow[] | null; error: unknown }>
-    )("world_structures_in_chunks", { _keys: data.keys });
-    if (error) return { structures: [] as WorldStructureRow[], error: "WORLD READ FAILED" };
-    return { structures: (rows ?? []).map(normalise) };
+    try {
+      const supabase = publicClient();
+      const { data: rows, error } = await (
+        supabase.rpc as unknown as (
+          fn: string,
+          args: Record<string, unknown>,
+        ) => Promise<{ data: WorldStructureRow[] | null; error: unknown }>
+      )("world_structures_in_chunks", { _keys: data.keys });
+      if (error) return { structures: [] as WorldStructureRow[], error: "WORLD READ FAILED" };
+      return { structures: (rows ?? []).map(normalise) };
+    } catch {
+      // A brief backend or network hiccup must never blank the Oasis.
+      return { structures: [] as WorldStructureRow[], error: "WORLD READ FAILED" };
+    }
   });
 
 function normalise(row: WorldStructureRow): WorldStructureRow {

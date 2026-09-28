@@ -23,3 +23,4 @@
 - Expected Oasis permission denials return results, not thrown errors, so actions remain recoverable in-world.
 - Oasis maps share painted Atlas/Hilbert/fog; block-fee props lock to the prior 10-block median.
 - Oasis discovery progress is device-local; BIT pays only on fixed EXPLORE_MILESTONES, once per account via ledger ref, so farming is bounded.
+- Block-DNA Guardians are derived purely from public block data (src/lib/bitmon.ts) and created only server-side after an exact-amount treasury payment confirms; one per block, because the chain payment is the only trusted proof.
