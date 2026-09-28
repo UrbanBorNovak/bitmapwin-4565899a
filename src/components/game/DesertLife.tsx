@@ -16,7 +16,6 @@ import { TreasureChests } from "@/components/game/TreasureChests";
 import { MineralNodes } from "@/components/game/MineralNodes";
 import { OreMines } from "@/components/game/OreMines";
 import { PineTrees } from "@/components/game/PineTrees";
-import { BiomeStructures } from "@/components/game/BiomeStructures";
 import { Houses } from "@/components/game/Houses";
 import { ClayShrines } from "@/components/game/ClayShrines";
 import { Igloos } from "@/components/game/Igloos";
@@ -547,7 +546,6 @@ export const DesertLife = memo(function DesertLife({
       <DesertProps unit={unit} center={center} radius={radius} />
       <OreMines unit={unit} center={center} radius={radius} />
       <PineTrees unit={unit} center={center} radius={radius} />
-      <BiomeStructures unit={unit} center={center} radius={radius} />
       <Houses unit={unit} center={center} radius={radius} />
       <ClayShrines unit={unit} center={center} radius={radius} />
       <Igloos unit={unit} center={center} radius={radius} />
