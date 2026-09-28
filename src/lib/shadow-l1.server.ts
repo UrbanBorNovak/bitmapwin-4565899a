@@ -279,6 +279,96 @@ export async function readShadowNotes(slug: string): Promise<ShadowL1Note[]> {
   return refreshPending((data ?? []).map(rowToNote));
 }
 
+export type ShadowNoteLive = ShadowL1Note & {
+  /** the gate this note belongs to, for display only */
+  gateTitle: string | null;
+  /** how many blocks deep, 0 while unmined */
+  confirmations: number;
+  /** true when a public mempool still relays it and it is unmined */
+  inMempool: boolean;
+  /** null when no mirror has ever seen this txid (dropped or replaced) */
+  seen: boolean | null;
+  minerFeeSats: number | null;
+  vbytes: number | null;
+  firstSeenAt: string | null;
+};
+
+type EsploraTx = {
+  fee?: number;
+  weight?: number;
+  size?: number;
+  status?: { confirmed?: boolean; block_height?: number; block_time?: number };
+};
+
+/**
+ * Every SHAD note ever anchored, checked against Bitcoin right now: whether a
+ * public mempool still carries it, how deep it is, and what the miner was paid.
+ * Public chain data only — no wallet, account or secret is involved.
+ */
+export async function readAllShadowNotes(): Promise<{ tipHeight: number | null; notes: ShadowNoteLive[] }> {
+  const db = await admin();
+  const { data } = await db
+    .from("shadow_l1_notes")
+    .select(NOTE_COLUMNS)
+    .order("created_at", { ascending: false })
+    .limit(200);
+  const rows = await refreshPending((data ?? []).map(rowToNote));
+
+  const slugs = Array.from(new Set(rows.map((n) => n.slug)));
+  const titles = new Map<string, string>();
+  if (slugs.length > 0) {
+    const { data: gates } = await db.from("shadow_events").select("slug, title").in("slug", slugs);
+    for (const g of gates ?? []) titles.set(g.slug, g.title);
+  }
+
+  const tipText = await (async () => {
+    for (const host of ESPLORA_HOSTS) {
+      try {
+        const resp = await fetch(`${host}/blocks/tip/height`, {
+          headers: { "user-agent": UA },
+          signal: AbortSignal.timeout(10_000),
+        });
+        if (resp.ok) return Number(await resp.text());
+      } catch {
+        /* next mirror */
+      }
+    }
+    return null;
+  })();
+  const tipHeight = tipText !== null && Number.isFinite(tipText) ? tipText : null;
+
+  /** live chain lookup for the newest 40 notes; older ones read from the record */
+  const live = new Map<string, EsploraTx | null>();
+  await Promise.all(
+    rows.slice(0, 40).map(async (n) => {
+      live.set(n.txid, await esplora<EsploraTx>(`/tx/${n.txid}`));
+    }),
+  );
+
+  const notes: ShadowNoteLive[] = rows.map((n) => {
+    const tx = live.get(n.txid);
+    const confirmedHeight = n.confirmedHeight ?? (tx?.status?.confirmed ? Number(tx.status.block_height) : null);
+    const confirmations =
+      confirmedHeight !== null && tipHeight !== null ? Math.max(1, tipHeight - confirmedHeight + 1) : 0;
+    const blockTime = tx?.status?.block_time;
+    return {
+      ...n,
+      confirmedHeight,
+      status: confirmedHeight !== null ? "confirmed" : n.status,
+      gateTitle: titles.get(n.slug) ?? null,
+      confirmations,
+      inMempool: tx !== undefined && tx !== null && tx.status?.confirmed !== true,
+      seen: tx === undefined ? null : tx !== null,
+      minerFeeSats: typeof tx?.fee === "number" ? tx.fee : null,
+      vbytes: typeof tx?.weight === "number" ? Math.ceil(tx.weight / 4) : null,
+      firstSeenAt: typeof blockTime === "number" ? new Date(blockTime * 1000).toISOString() : null,
+    };
+  });
+
+  return { tipHeight, notes };
+}
+
+
 /** The note anchoring one specific commitment or nullifier, if any. */
 export async function readShadowNoteByDigest(digest: string): Promise<ShadowL1Note | null> {
   if (!HEX64.test(digest)) return null;
