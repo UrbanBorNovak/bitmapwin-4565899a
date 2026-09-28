@@ -4533,6 +4533,10 @@ function BitmapWorld3DInner({
         {exploring ? <OasisDiscovery pose={pose} unit={AVATAR_U} showTracker={!inventoryOpen && !buildOpen && !mapOpen} /> : null}
         {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <AirdropHud pose={pose} unit={AVATAR_U} block={tipHeight} /> : null}
 
+        {/* THE SHADOW VAULT — the sealed chamber behind an obsidian archway. */}
+        <ShadowVaultRoom />
+
+
 
 
         {buildOpen ? (
