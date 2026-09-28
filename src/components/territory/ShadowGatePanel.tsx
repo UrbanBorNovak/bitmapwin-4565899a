@@ -272,6 +272,13 @@ function ShadowEventCard({
                 <p className="label text-signal">PASS HELD · {handle}</p>
                 <p className="label mt-1 text-muted-foreground">SHIELDED · NOT LINKED TO YOUR WALLET</p>
               </div>
+              <ShadowL1Anchor
+                op="pass"
+                slug={event.slug}
+                digest={pass.commitment}
+                label="◆ WRITE THIS PASS ONTO BITCOIN"
+                note="ONE BITCOIN TRANSACTION CARRIES THE PASS HASH. YOUR SECRET STAYS ON THIS DEVICE."
+              />
               {!unlocked ? (
                 <button
                   type="button"
