@@ -119,3 +119,8 @@
 - [x] Staged reveal overlay (block scan reel, rarity lock, card slam, counting stats)
 - [x] Era rarity flare from the real block height plus synthesised terminal SFX
 - [ ] Verify the full reveal with a wallet that holds BITMAPs and BIT
+
+## Oasis discovery loop
+- [x] Districts unlock on first visit and gate fast travel
+- [x] Ruins collected by rarity with instant XP toasts
+- [x] BIT paid only on fixed once-per-account milestones
