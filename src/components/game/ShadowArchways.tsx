@@ -10,6 +10,10 @@ import { WORLD_CELL, WORLD_GRID, cellX, cellZ, type PlayerState } from "@/lib/pl
 import { groundY } from "@/lib/world-terrain";
 import { getAllShadowGatesFn } from "@/lib/shadow-assets.functions";
 import { SafeHtml } from "@/components/game/SafeHtml";
+import { toast } from "sonner";
+import { getPass } from "@/lib/shadow-vault";
+import { enterShadowRoom } from "@/lib/shadow-room";
+
 
 type Spot = { slug: string; title: string; active: boolean; x: number; z: number; y: number; yaw: number };
 
