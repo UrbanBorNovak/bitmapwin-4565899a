@@ -19,6 +19,7 @@ import {
   type Unit,
 } from "@/lib/game/engine";
 import { dispatchWorldEvent } from "@/lib/game/worldState";
+import { playSfx, unlockAudio } from "@/lib/world-audio";
 import type { CardChange, LivingCard as Card, PlayProfile } from "@/lib/game/types";
 import { LivingCard, type CardUiState } from "./LivingCard";
 
@@ -32,6 +33,8 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart,
   const [localMatch, setMatch] = useState<MatchState>(() => (remote ? remote.state : newMatch(deck, seed, leaderId, rival)));
   const match = remote ? remote.state : localMatch;
   const act = (a: RemoteAction) => {
+    unlockAudio();
+    playSfx(a.kind === "play" ? "board" : a.kind === "attack" ? "slash" : "ui");
     if (remote) return remote.send(a);
     setMatch(a.kind === "play" ? playCard(match, "player", a.uid) : a.kind === "attack" ? attack(match, "player", a.uid, a.target) : endTurn(match));
   };
@@ -52,6 +55,23 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart,
     }
     return c;
   };
+
+  // Rival moves and hero damage get their own cues.
+  const lastLog = useRef<string | number | null>(null);
+  useEffect(() => {
+    const top = match.log[0];
+    if (!top || top.id === lastLog.current) return;
+    const first = lastLog.current === null;
+    lastLog.current = top.id;
+    if (!first && top.side === "ai") playSfx("hit");
+  }, [match.log]);
+  const hpSeen = useRef({ me: match.sides.player.hp, foe: match.sides.ai.hp });
+  useEffect(() => {
+    const now = { me: match.sides.player.hp, foe: match.sides.ai.hp };
+    if (now.me < hpSeen.current.me) playSfx("hurt");
+    else if (now.foe < hpSeen.current.foe) playSfx("kill");
+    hpSeen.current = now;
+  }, [match.sides.player.hp, match.sides.ai.hp]);
 
   // Local rival turn loop.
   useEffect(() => {
@@ -75,6 +95,7 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart,
     if (!match.winner || recorded.current) return;
     recorded.current = true;
     const win = match.winner === "player";
+    playSfx(win ? "levelup" : "hurt");
     onFinish?.(win);
     const mvp = mvpOf(match);
     const changes = dispatchWorldEvent({ kind: win ? "PLAYER_WIN" : "PLAYER_LOSS", mvpId: mvp, deckIds: match.playerDeckIds, actor });
@@ -94,18 +115,20 @@ export function GameBoard({ profile, deck, seed, leaderId, tableCode, onRestart,
   function onHand(u: Unit) {
     if (!myTurn) return;
     setAttacker(null);
-    if (picked !== u.uid) return setPicked(u.uid);
+    if (picked !== u.uid) { unlockAudio(); playSfx("ui"); return setPicked(u.uid); }
     if (!canPlay(match, "player", u.uid)) return;
     act({ kind: "play", uid: u.uid });
     setPicked(null);
     const changes = dispatchWorldEvent({ kind: "CARD_PLAYED", cardId: u.cardId, actor });
     const evolution = changes.find((c) => c.from !== c.to || c.traitUnlocked || c.adaptationUnlocked);
-    if (evolution) setMoment(evolution);
+    if (evolution) { playSfx("spell"); setMoment(evolution); }
   }
 
   function onMine(u: Unit) {
     if (!myTurn || !u.ready) return;
     setPicked(null);
+    unlockAudio();
+    playSfx("cock");
     setAttacker((a) => (a === u.uid ? null : u.uid));
   }
 
