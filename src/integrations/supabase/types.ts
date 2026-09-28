@@ -3197,6 +3197,51 @@ export type Database = {
         }
         Relationships: []
       }
+      shadow_l1_notes: {
+        Row: {
+          confirmed_height: number | null
+          created_at: string
+          digest_hex: string
+          id: string
+          op: string
+          pass_index: number
+          payload_hex: string
+          slug: string
+          status: string
+          territory_block: number
+          txid: string
+          updated_at: string
+        }
+        Insert: {
+          confirmed_height?: number | null
+          created_at?: string
+          digest_hex: string
+          id?: string
+          op: string
+          pass_index?: number
+          payload_hex: string
+          slug: string
+          status?: string
+          territory_block: number
+          txid: string
+          updated_at?: string
+        }
+        Update: {
+          confirmed_height?: number | null
+          created_at?: string
+          digest_hex?: string
+          id?: string
+          op?: string
+          pass_index?: number
+          payload_hex?: string
+          slug?: string
+          status?: string
+          territory_block?: number
+          txid?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       shadow_whispers: {
         Row: {
           content: string
