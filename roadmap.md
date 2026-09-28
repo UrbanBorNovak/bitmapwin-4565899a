@@ -144,4 +144,4 @@
 - [x] Keep wallet/account identity out of the Guardian artifact and preserve one Guardian per block.
 - [x] Upgrade procedural voxel wildlife and Guardian silhouettes without changing fly-brain behavior.
 - [ ] Verify a live Guardian inscription with a funded wallet and mined reveal.
-- [ ] Visually verify upgraded wildlife in the live Oasis on desktop and phone.
+- [x] Visually verify upgraded wildlife models in the Bestiary on desktop and phone; full Oasis WebGL verification is blocked by the sandbox graphics context.
