@@ -90,4 +90,4 @@
 ## Territory Chronicle
 - [x] Show each BITMAP's persisted builds, visits, visitors, and Extender installs in one Chronicle.
 - [x] Link held BITMAPs in Passport directly to their Territory Chronicle.
-- [ ] Verify Chronicle and Passport links on desktop and phone.
+- [x] Verify Chronicle and Passport links on desktop and phone.
