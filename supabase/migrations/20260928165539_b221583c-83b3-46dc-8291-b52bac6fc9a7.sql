@@ -1,0 +1,2 @@
+ALTER TABLE public.bitmon_summon_orders DROP CONSTRAINT bitmon_summon_orders_amount_sats_key;
+CREATE UNIQUE INDEX bitmon_orders_open_amount ON public.bitmon_summon_orders(amount_sats) WHERE status = 'pending';
