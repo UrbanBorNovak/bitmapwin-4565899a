@@ -16,13 +16,30 @@ type Spot = { slug: string; title: string; active: boolean; x: number; z: number
 const Arch = memo(function Arch({ s, unit, pose }: { s: Spot; unit: number; pose: React.MutableRefObject<PlayerState | null> }) {
   const ref = useRef<THREE.Group>(null);
   const veil = useRef<THREE.MeshStandardMaterial>(null);
+  const armed = useRef(true);
   useFrame(({ clock }) => {
     const p = pose.current;
     const node = ref.current;
     if (!node) return;
-    node.visible = !p || Math.hypot(p.x - s.x, p.z - s.z) < WORLD_CELL * 3;
+    const dist = p ? Math.hypot(p.x - s.x, p.z - s.z) : Infinity;
+    node.visible = !p || dist < WORLD_CELL * 3;
     if (veil.current) veil.current.emissiveIntensity = s.active ? 0.9 + Math.sin(clock.elapsedTime * 1.6) * 0.5 : 0.1;
+    // STEPPING THROUGH — the pass is checked on this device only.
+    const reach = unit * 2.6;
+    if (dist > reach * 2.2) armed.current = true;
+    if (!armed.current || dist > reach) return;
+    armed.current = false;
+    if (!s.active) {
+      toast.error("GATEWAY SEALED", { description: `${s.title} IS CLOSED.` });
+      return;
+    }
+    if (!getPass(s.slug)) {
+      toast("GATEWAY SEALED", { description: `NO SHADOW PASS ON THIS DEVICE FOR ${s.title}.` });
+      return;
+    }
+    enterShadowRoom({ slug: s.slug, title: s.title });
   });
+
   const h = unit * 6;
   const w = unit * 4;
   const t = unit * 0.7;
