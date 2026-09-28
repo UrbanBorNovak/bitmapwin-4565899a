@@ -338,6 +338,10 @@ function ShieldedVaultPage() {
               <span className="text-destructive">✕ PROVING OFFLINE · {prover.reason}</span>
             )}
           </p>
+          {prover?.ready ? <ProofTest keys={keys} /> : null}
+          <p className="label mt-3 text-muted-foreground">
+            BITMAPWIN POOL v1 · OWN CIRCUIT · SINGLE-PARTY DEV SETUP · UNAUDITED — NOT COMPATIBLE WITH THE EXTERNAL SHORD POOL
+          </p>
         </section>
       </div>
     </main>
