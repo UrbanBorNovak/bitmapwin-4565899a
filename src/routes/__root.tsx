@@ -13,6 +13,8 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteTickerTape } from "@/components/SiteTickerTape";
+
 import { SiteFooter } from "@/components/SiteFooter";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -165,8 +167,10 @@ function RootComponent() {
       <div className="relative flex min-h-screen flex-col bg-background">
         <SalesBackdrop />
         <div className="relative z-40">
+          <SiteTickerTape />
           <SiteHeader />
         </div>
+
         <main className="relative z-10 flex-1">
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <div key={routeKey} className="route-stage">

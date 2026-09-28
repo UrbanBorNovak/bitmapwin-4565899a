@@ -4,6 +4,8 @@ import { PlayNav } from "@/components/play/PlayNav";
 import { PlayStatsPanel } from "@/components/play/PlayStatsPanel";
 import { TerritoryPicker } from "@/components/play/TerritoryPicker";
 import { WorldEventFeed } from "@/components/play/WorldEventFeed";
+import { MempoolSportsbook } from "@/components/play/MempoolSportsbook";
+
 import { LivingCard } from "@/components/play/LivingCard";
 import { syncWorld, usePlayProfile } from "@/lib/game/worldState";
 import { useServerFn } from "@tanstack/react-start";
@@ -157,7 +159,9 @@ function PlayLobby() {
           </section>
         </div>
         <aside className="relative z-10 grid content-start gap-3">
+          <MempoolSportsbook />
           {profile && <TerritoryPicker profile={profile} />}
+
           {profile && <PlayStatsPanel profile={profile} />}
           {profile && <WorldEventFeed events={profile.events} />}
         </aside>

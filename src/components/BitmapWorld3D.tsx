@@ -162,6 +162,9 @@ import { WeatherLighting, WorldWeather } from "@/components/game/WorldWeather";
 import { LandPerksHud } from "@/components/game/LandPerksHud";
 import { HuntPanel } from "@/components/codex/HuntPanel";
 import { OasisDiscovery } from "@/components/game/OasisDiscovery";
+import { AirdropBeacon } from "@/components/game/AirdropBeacon";
+import { AirdropHud } from "@/components/game/AirdropHud";
+
 import { isDistrictUnlocked } from "@/lib/oasis-discovery";
 import { atlasPlace } from "@/lib/atlas-places";
 import { toast } from "sonner";
@@ -2726,6 +2729,8 @@ const WorldScene = memo(function WorldScene({
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <SeaMasses unit={AVATAR_U} pose={pose} />
           <Whales unit={AVATAR_U} pose={pose} />
+          <AirdropBeacon unit={AVATAR_U} pose={pose} block={tipHeight} />
+
           <SeaIslands unit={AVATAR_U} pose={pose} />
           <OnChainFlows unit={AVATAR_U} pose={pose} />
           <BitField unit={AVATAR_U} pose={pose} />
@@ -4522,6 +4527,8 @@ function BitmapWorld3DInner({
         {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <LandPerksHud /> : null}
         {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <HuntPanel compact /> : null}
         {exploring ? <OasisDiscovery pose={pose} unit={AVATAR_U} showTracker={!inventoryOpen && !buildOpen && !mapOpen} /> : null}
+        {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <AirdropHud pose={pose} unit={AVATAR_U} block={tipHeight} /> : null}
+
 
 
         {buildOpen ? (
