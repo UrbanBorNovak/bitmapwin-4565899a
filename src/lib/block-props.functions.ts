@@ -70,7 +70,7 @@ export const settleBlockPropsFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { FEE_THRESHOLD, TX_THRESHOLD } = await import("@/lib/block-props");
+    const { FEE_THRESHOLD, FEE_WINDOW_BLOCKS, TX_THRESHOLD } = await import("@/lib/block-props");
     const tip = await fetchTipHeight();
     if (tip == null) return { settled: [] as SettledSlip[] };
 
@@ -87,7 +87,9 @@ export const settleBlockPropsFn = createServerFn({ method: "POST" })
       const height = Number(slip.target_height);
       const block = await fetchBlock(height);
       if (!block) continue;
+      if (slip.market === "fee" && block.feeWindow.length < FEE_WINDOW_BLOCKS) continue;
       const poolName = (block.pool ?? "").toUpperCase();
+      const feeMedian = median(block.feeWindow);
       const actual =
         slip.market === "txs"
           ? (block.txCount ?? 0) > TX_THRESHOLD
@@ -99,7 +101,7 @@ export const settleBlockPropsFn = createServerFn({ method: "POST" })
               : poolName.includes("ANTPOOL")
                 ? "ANTPOOL"
                 : "FIELD"
-            : (block.medianFee ?? 0) > FEE_THRESHOLD
+            : feeMedian > FEE_THRESHOLD
               ? "HIGH"
               : "STANDARD";
       const won = actual === slip.pick;
@@ -109,7 +111,7 @@ export const settleBlockPropsFn = createServerFn({ method: "POST" })
           ? `${(block.txCount ?? 0).toLocaleString("en-US")} TXS IN BLOCK`
           : slip.market === "pool"
             ? `MINED BY ${block.pool ?? "UNKNOWN POOL"}`
-            : `MEDIAN FEE ${(block.medianFee ?? 0).toFixed(1)} SAT/VB`;
+            : `10-BLOCK MEDIAN FEE ${feeMedian.toFixed(1)} SAT/VB`;
 
       if (won) {
         const { error } = await supabaseAdmin.rpc("coin_apply", {
@@ -146,7 +148,16 @@ async function fetchTipHeight(): Promise<number | null> {
   }
 }
 
-async function fetchBlock(height: number): Promise<{ pool: string | null; medianFee: number | null; txCount: number | null } | null> {
+function median(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? ((sorted[middle - 1] ?? 0) + (sorted[middle] ?? 0)) / 2
+    : (sorted[middle] ?? 0);
+}
+
+async function fetchBlock(height: number): Promise<{ pool: string | null; feeWindow: number[]; txCount: number | null } | null> {
   try {
     const res = await fetch(`${MEMPOOL}/v1/blocks/${height}`, {
       headers: { accept: "application/json" },
@@ -162,7 +173,10 @@ async function fetchBlock(height: number): Promise<{ pool: string | null; median
     if (!match) return null;
     return {
       pool: match.extras?.pool?.name ?? null,
-      medianFee: match.extras?.medianFee ?? null,
+      feeWindow: blocks
+        .filter((block) => block.height <= height && block.height > height - 10)
+        .map((block) => block.extras?.medianFee)
+        .filter((fee): fee is number => Number.isFinite(fee)),
       txCount: match.tx_count ?? null,
     };
   } catch {
