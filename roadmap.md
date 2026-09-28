@@ -97,4 +97,5 @@
 
 ## Oasis ecology
 - [x] Concentrate trees and most mushrooms beside inland seas and oasis ponds.
+- [x] Verify shoreline clustering in the live Oasis.
 - [ ] Verify shoreline clustering in the live Oasis.
