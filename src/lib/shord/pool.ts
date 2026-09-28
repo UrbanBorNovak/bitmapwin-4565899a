@@ -77,3 +77,11 @@ export function merkleRoot(leaves: bigint[]): bigint {
   if (leaves.length === 0) return ZEROS[POOL_DEPTH]!;
   return merkleProof(leaves, 0).root;
 }
+
+/** Public intent for a withdrawal: binds the proof to one Bitcoin destination. */
+export function exitIntent(destination: string): bigint {
+  const h = sha256(new TextEncoder().encode(`bitmapwin:shord:exit:v1:${destination.trim()}`));
+  let v = 0n;
+  for (const b of h) v = (v << 8n) | BigInt(b);
+  return v % FIELD_P;
+}

@@ -25,3 +25,9 @@ export const shordConfirmDeposit = createServerFn({ method: "POST" })
 export const shordSubmitSpend = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ proof: z.record(z.string(), z.unknown()), publicSignals: z.array(field).length(6) }).parse(d))
   .handler(async ({ data }) => (await import("@/lib/shord-pool.server")).submitSpend(data.proof, data.publicSignals));
+
+export const shordWithdraw = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z.object({ proof: z.record(z.string(), z.unknown()), publicSignals: z.array(field).length(6), destination: z.string().min(14).max(100) }).parse(d),
+  )
+  .handler(async ({ data }) => (await import("@/lib/shord-pool.server")).submitWithdraw(data.proof, data.publicSignals, data.destination));
