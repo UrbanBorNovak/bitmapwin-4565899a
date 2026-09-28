@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 /**
  * NEXT-BLOCK PROPS — fast BIT predictions on the next real Bitcoin block.
  * Everything settles against the mined block itself (transaction count,
- * mining pool, 10-block median fee rate) read from mempool.space. No odds are
+  * mining pool, rolling 10-block median fee rate) read from mempool.space. No odds are
  * simulated and no result is decided locally: the chain is the referee.
  * Every market must be genuinely unknowable before the block is mined —
  * the next height is always tip + 1, so height itself is never a market.
@@ -37,16 +37,15 @@ export const PROP_MARKETS: readonly { market: PropMarket; title: string; note: s
   {
     market: "fee",
     title: "FEE PRESSURE",
-    note: "10-BLOCK MEDIAN FEE OVER 25 SAT/VB?",
+    note: "WILL THE 10-BLOCK MEDIAN RISE AFTER THE NEXT BLOCK?",
     options: [
-      { pick: "HIGH", label: "HIGH · OVER 25", multiplier: 1.9 },
-      { pick: "STANDARD", label: "STANDARD · 25 OR LESS", multiplier: 1.9 },
+      { pick: "HIGH", label: "RISING", multiplier: 1.9 },
+      { pick: "STANDARD", label: "FLAT / LOWER", multiplier: 1.9 },
     ],
   },
 ];
 
 export const STAKES = [10, 25, 50] as const;
-export const FEE_THRESHOLD = 25;
 export const FEE_WINDOW_BLOCKS = 10;
 export const TX_THRESHOLD = 3000;
 
@@ -92,16 +91,26 @@ export async function fetchMyProps(): Promise<BlockProp[]> {
 export const myPropsQuery = () =>
   queryOptions({ queryKey: ["block-props", "mine"], queryFn: fetchMyProps, staleTime: 10_000 });
 
-export type ChainTipInfo = { height: number; timestamp: number };
+export type ChainTipInfo = { height: number; timestamp: number; feeMedian: number | null };
+
+function median(values: number[]): number | null {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? ((sorted[middle - 1] ?? 0) + (sorted[middle] ?? 0)) / 2
+    : (sorted[middle] ?? null);
+}
 
 /** Live chain tip straight from mempool.space — the clock the slips run on. */
 export async function fetchChainTip(): Promise<ChainTipInfo> {
   const res = await fetch("https://mempool.space/api/v1/blocks", { headers: { accept: "application/json" } });
   if (!res.ok) throw new Error(`CHAIN FEED ${res.status}`);
-  const blocks = (await res.json()) as { height: number; timestamp: number }[];
+  const blocks = (await res.json()) as { height: number; timestamp: number; extras?: { medianFee?: number } }[];
   const tip = blocks[0];
   if (!tip) throw new Error("CHAIN FEED EMPTY");
-  return { height: Number(tip.height), timestamp: Number(tip.timestamp) };
+  const fees = blocks.slice(0, FEE_WINDOW_BLOCKS).map((block) => block.extras?.medianFee).filter((fee): fee is number => Number.isFinite(fee));
+  return { height: Number(tip.height), timestamp: Number(tip.timestamp), feeMedian: fees.length === FEE_WINDOW_BLOCKS ? median(fees) : null };
 }
 
 export const chainTipQuery = () =>
