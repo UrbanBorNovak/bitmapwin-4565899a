@@ -73,10 +73,20 @@ function WorkshopPage() {
   const cards = profile ? profile.order.map((id) => profile.cards[id]).filter((c): c is NonNullable<typeof c> => !!c) : [];
   const selected = (search.card && profile?.cards[search.card]) || cards[0] || null;
   const craftable = (held.data ?? []).filter((h) => !profile?.cards[`bitmap-${h}`]).slice(0, 60);
+  const unboxedCard = unboxed !== null ? (profile?.cards[`bitmap-${unboxed}`] ?? null) : null;
 
   return (
     <main className="play-district mx-auto max-w-[1200px] space-y-5 overflow-x-hidden px-3 py-4 md:px-8 md:py-6">
+      {unboxedCard && (
+        <CraftUnboxing
+          key={unboxedCard.id}
+          card={unboxedCard}
+          onClose={() => setUnboxed(null)}
+          onCraftAnother={() => { setUnboxed(null); document.getElementById("craft-list")?.scrollIntoView({ behavior: "smooth", block: "center" }); }}
+        />
+      )}
       <PlayNav />
+
       <header>
         <p className="label text-signal">FORGE</p>
         <h1 className="display mt-1 text-3xl md:text-4xl">WORKSHOP</h1>
