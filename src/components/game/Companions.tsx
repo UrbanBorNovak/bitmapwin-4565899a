@@ -15,6 +15,7 @@ import * as THREE from "three";
 import { Primitive } from "@/components/game/Primitive";
 import type { PlayerState } from "@/lib/player-state";
 import { companionSpec, useGear, type CompanionSpec } from "@/lib/world-gear";
+import { createFlyBrain } from "@/lib/fly-brain";
 import { groundY } from "@/lib/world-terrain";
 
 const COMPANION_URLS = [
@@ -41,7 +42,11 @@ function Pet({
   const { actions } = useAnimations(gltf.animations, scene);
   const group = useRef<THREE.Group>(null);
   const leash = useRef<THREE.Mesh>(null);
-  const at = useRef({ x: 0, z: 0, yaw: 0, started: false });
+  const at = useRef({ x: 0, z: 0, yaw: 0, started: false, heelX: 0, heelZ: 0 });
+  // Each pet thinks for itself: the same connectome slice the settlers and
+  // whales run on, seeded per species so cat, dog and goose never move alike.
+  const brain = useMemo(() => createFlyBrain(spec.id.length * 7 + spec.fit * 13), [spec]);
+  const whim = useRef({ x: 0, z: 0, until: 0 });
   const leashUp = useMemo(() => new THREE.Vector3(0, 1, 0), []);
   const leashStart = useMemo(() => new THREE.Vector3(), []);
   const leashEnd = useMemo(() => new THREE.Vector3(), []);
@@ -92,14 +97,58 @@ function Pet({
     const targetZ = player.z - fwdZ * reach + rightZ * side;
 
     if (!at.current.started) {
-      at.current = { x: targetX, z: targetZ, yaw: player.yaw, started: true };
+      at.current = { x: targetX, z: targetZ, yaw: player.yaw, started: true, heelX: targetX, heelZ: targetZ };
     }
     const previousX = at.current.x;
     const previousZ = at.current.z;
-    // Critically damped spring toward the heel point: lags a touch, never drifts.
-    const k = 1 - Math.exp(-(spec.hovers ? 5 : 7) * delta);
-    at.current.x += (targetX - at.current.x) * k;
-    at.current.z += (targetZ - at.current.z) * k;
+
+    // --- fly brain ---------------------------------------------------------
+    // The pet senses how far its owner is and decides what it feels like
+    // doing: heel, wander to a sniff spot, or dart back when left behind.
+    const distToPlayer = Math.hypot(player.x - at.current.x, player.z - at.current.z);
+    const act = brain.think(
+      {
+        now: t * 1000,
+        hp: 1,
+        maxHp: 1,
+        snared: false,
+        heading: at.current.yaw,
+        playerDistance: distToPlayer / Math.max(unit, 0.0001),
+        playerAngle: Math.atan2(player.x - at.current.x, player.z - at.current.z),
+        workDistance: null,
+        workAngle: 0,
+        worker: false,
+        hostile: false,
+        vendor: false,
+      },
+      delta,
+    );
+
+    // While the owner dawdles, a cruising brain picks a nearby whim spot —
+    // a bush to sniff, a patch to flutter over — and the pet drifts to it.
+    const playerSpeed = Math.hypot(targetX - (at.current.heelX ?? targetX), targetZ - (at.current.heelZ ?? targetZ)) / Math.max(delta, 0.0001);
+    at.current.heelX = targetX;
+    at.current.heelZ = targetZ;
+    const ownerIdle = playerSpeed < unit * 2.2;
+    if (act.state === "cruise" && ownerIdle && t * 1000 > whim.current.until) {
+      const wander = unit * spec.follow * (1.2 + (Math.sin(t * 3.1) * 0.5 + 0.5) * 2.2);
+      const bearing = at.current.yaw + act.steer * 40 + Math.sin(t * 0.9) * 1.4;
+      whim.current = {
+        x: targetX + Math.sin(bearing) * wander,
+        z: targetZ + Math.cos(bearing) * wander,
+        until: t * 1000 + 1800 + (Math.sin(t * 5.3) * 0.5 + 0.5) * 2600,
+      };
+    }
+    const wandering = ownerIdle && t * 1000 <= whim.current.until && act.state !== "rest";
+    const goalX = wandering ? whim.current.x : targetX;
+    const goalZ = wandering ? whim.current.z : targetZ;
+
+    // Brain throttle sets how eagerly the pet closes the gap; rest means it
+    // plants itself and just watches you.
+    const eagerness = act.state === "rest" && ownerIdle ? 0 : 0.45 + act.throttle * 0.55;
+    const k = (1 - Math.exp(-(spec.hovers ? 5 : 7) * delta)) * eagerness;
+    at.current.x += (goalX - at.current.x) * k;
+    at.current.z += (goalZ - at.current.z) * k;
 
     // Hard leash so sprints, rides and teleports never strand the pet.
     const leashLimit = reach * 1.6;
