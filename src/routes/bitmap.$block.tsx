@@ -38,7 +38,6 @@ import { LoopNavigator } from "@/components/LoopNavigator";
 import { TerritoryShareCard } from "@/components/TerritoryShareCard";
 import { TerritoryChronicle } from "@/components/TerritoryChronicle";
 
-import { StreamEventRow } from "@/components/StreamEventRow";
 import { provenanceStreamQuery } from "@/lib/provenance-stream";
 
 import { InscriptionContent } from "@/components/InscriptionContent";

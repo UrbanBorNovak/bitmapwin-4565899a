@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Blocks, Eye, Radio, Users } from "lucide-react";
 import { StreamEventRow } from "@/components/StreamEventRow";
+import { Button } from "@/components/ui/button";
 import { territoryChronicleQuery } from "@/lib/territory-chronicle";
 
 function ChronicleMetric({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
@@ -46,7 +47,7 @@ export function TerritoryChronicle({ height }: { height: number }) {
       ) : chronicle.isError ? (
         <div className="flex flex-wrap items-center justify-between gap-3 p-5">
           <p className="font-mono text-xs text-destructive">&gt; CHRONICLE TEMPORARILY UNAVAILABLE_</p>
-          <button type="button" className="btn-term-ghost" onClick={() => void chronicle.refetch()}>[ RETRY ]</button>
+          <Button type="button" variant="terminalGhost" size="sm" onClick={() => void chronicle.refetch()}>RETRY</Button>
         </div>
       ) : data?.events.length ? (
         <div>{data.events.map((event) => <StreamEventRow key={event.id} event={event} />)}</div>
