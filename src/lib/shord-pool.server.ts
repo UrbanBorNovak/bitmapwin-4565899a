@@ -11,14 +11,12 @@ import { schnorr } from "@noble/curves/secp256k1.js";
 import { p2tr } from "@scure/btc-signer";
 import vkey from "@/lib/shord/spend.vkey.json";
 import { merkleRoot } from "@/lib/shord/pool";
+import { depositMessage } from "@/lib/shord/deposit";
 
 const ORD = "https://ordinals.com";
 const UA = "bitmapwin-shord-pool/1.0";
 const FIELD = /^[0-9]{1,78}$/;
 
-export function depositMessage(inscriptionId: string, commitment: string) {
-  return `BITMAPWIN SHIELDED POOL DEPOSIT\ninscription: ${inscriptionId}\nnote: ${commitment}`;
-}
 
 function poolPrivateKey(): Uint8Array {
   const seed = process.env["SHORD_POOL_SEED"];
