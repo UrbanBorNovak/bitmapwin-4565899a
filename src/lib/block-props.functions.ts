@@ -17,7 +17,7 @@ export const placeBlockPropFn = createServerFn({ method: "POST" })
     z
       .object({
         address: addressSchema,
-        market: z.enum(["parity", "pool", "fee"]),
+        market: z.enum(["txs", "pool", "fee"]),
         pick: z.string().trim().min(1).max(24),
         stake: z.number().int().min(1).max(1000),
         targetHeight: z.number().int().min(1).max(99_999_999),

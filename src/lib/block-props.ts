@@ -3,23 +3,25 @@ import { supabase } from "@/integrations/supabase/client";
 
 /**
  * NEXT-BLOCK PROPS — fast BIT predictions on the next real Bitcoin block.
- * Everything settles against the mined block itself (height parity, mining
- * pool, median fee rate) read from mempool.space. No odds are simulated and
- * no result is decided locally: the chain is the referee.
+ * Everything settles against the mined block itself (transaction count,
+ * mining pool, median fee rate) read from mempool.space. No odds are
+ * simulated and no result is decided locally: the chain is the referee.
+ * Every market must be genuinely unknowable before the block is mined —
+ * the next height is always tip + 1, so height itself is never a market.
  */
 
-export type PropMarket = "parity" | "pool" | "fee";
+export type PropMarket = "txs" | "pool" | "fee";
 
 export type PropOption = { pick: string; label: string; multiplier: number };
 
 export const PROP_MARKETS: readonly { market: PropMarket; title: string; note: string; options: readonly PropOption[] }[] = [
   {
-    market: "parity",
-    title: "BLOCK HEIGHT",
-    note: "IS THE NEXT BLOCK NUMBER EVEN OR ODD?",
+    market: "txs",
+    title: "BLOCK LOAD",
+    note: "OVER 3,000 TRANSACTIONS IN THE NEXT BLOCK?",
     options: [
-      { pick: "EVEN", label: "EVEN", multiplier: 1.95 },
-      { pick: "ODD", label: "ODD", multiplier: 1.95 },
+      { pick: "FULL", label: "FULL · OVER 3,000", multiplier: 1.9 },
+      { pick: "LIGHT", label: "LIGHT · UNDER 3,000", multiplier: 1.9 },
     ],
   },
   {
