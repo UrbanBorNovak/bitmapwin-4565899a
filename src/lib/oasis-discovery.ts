@@ -28,7 +28,7 @@ export type DiscoveryEvent =
   | { id: number; kind: "ruin"; name: string; rarity: RuinRarity; xp: number }
   | { id: number; kind: "milestone"; name: string; bit: number };
 
-type Stored = { districts: string[]; ruins: Record<string, number>; xp: number; claimed: string[] };
+type Stored = { districts: string[]; ruins: Record<string, number>; xp: number; claimed: string[]; seen?: string[] };
 const KEY = "bitmapwin:oasis-discovery";
 const blank = (): Stored => ({ districts: [], ruins: {}, xp: 0, claimed: [] });
 
@@ -53,6 +53,7 @@ function read(): Stored {
 function commit(next: Stored) {
   state = next;
   snap = null;
+  seenSnap = null;
   try {
     window.localStorage.setItem(KEY, JSON.stringify(next));
   } catch {
@@ -131,5 +132,32 @@ export function useDiscovery() {
     },
     () => (snap ??= snapshotOf(read())),
     () => SERVER,
+  );
+}
+
+/** Atlas fog-of-war: coarse atlas cells (FOG_CELL px) this device has walked through. */
+export const FOG_CELL = 24;
+const MAX_SEEN = 6000;
+let seenSnap: string[] | null = null;
+
+export function recordVisit(ax: number, ay: number) {
+  if (typeof window === "undefined") return;
+  const key = `${Math.floor(ax / FOG_CELL)}:${Math.floor(ay / FOG_CELL)}`;
+  const s = read();
+  const seen = s.seen ?? [];
+  if (seen.includes(key)) return;
+  seenSnap = null;
+  commit({ ...s, seen: [...seen, key].slice(-MAX_SEEN) });
+}
+
+const NO_SEEN: string[] = [];
+export function useSeenCells() {
+  return useSyncExternalStore(
+    (l) => {
+      listeners.add(l);
+      return () => listeners.delete(l);
+    },
+    () => (seenSnap ??= read().seen ?? NO_SEEN),
+    () => NO_SEEN,
   );
 }
