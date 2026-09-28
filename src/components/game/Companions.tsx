@@ -42,7 +42,7 @@ function Pet({
   const { actions } = useAnimations(gltf.animations, scene);
   const group = useRef<THREE.Group>(null);
   const leash = useRef<THREE.Mesh>(null);
-  const at = useRef({ x: 0, z: 0, yaw: 0, started: false });
+  const at = useRef({ x: 0, z: 0, yaw: 0, started: false, heelX: 0, heelZ: 0 });
   // Each pet thinks for itself: the same connectome slice the settlers and
   // whales run on, seeded per species so cat, dog and goose never move alike.
   const brain = useMemo(() => createFlyBrain(spec.id.length * 7 + spec.fit * 13), [spec]);
@@ -147,8 +147,8 @@ function Pet({
     // plants itself and just watches you.
     const eagerness = act.state === "rest" && ownerIdle ? 0 : 0.45 + act.throttle * 0.55;
     const k = (1 - Math.exp(-(spec.hovers ? 5 : 7) * delta)) * eagerness;
-    at.current.x += (targetX - at.current.x) * k;
-    at.current.z += (targetZ - at.current.z) * k;
+    at.current.x += (goalX - at.current.x) * k;
+    at.current.z += (goalZ - at.current.z) * k;
 
     // Hard leash so sprints, rides and teleports never strand the pet.
     const leashLimit = reach * 1.6;
