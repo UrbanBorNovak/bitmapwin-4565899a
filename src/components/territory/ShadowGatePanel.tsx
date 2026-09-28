@@ -17,6 +17,7 @@ import {
   shadowHandle,
   type ShadowPass,
 } from "@/lib/shadow-vault";
+import { ShadowL1Anchor } from "@/components/territory/ShadowL1Anchor";
 
 type Whisper = { id: string; nullifier: string; content: string; createdAt: string };
 
