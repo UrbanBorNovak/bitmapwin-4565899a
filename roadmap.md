@@ -131,3 +131,10 @@
 - [ ] 3D obsidian gate in the Oasis at the event coordinates
 - [ ] Creator flow: issue Shadow Keys from Studio for any held BITMAP
 - [ ] Phase B: shielded pass transfers (encrypted notes + nullifier double-spend tracking)
+
+## Shadow L1 notes (Bitcoin anchor)
+- [x] 43-byte SHAD OP_RETURN envelope, quote → sign → broadcast → record
+- [x] Pre-sign review: exact miner fee, fee rate, anchor fee, total, decoded envelope, output map
+- [x] Post-broadcast: signed raw transaction, txid, mempool link
+- [x] Mempool polling every 15s; vault chamber badge flips to ANCHORED at the mined block
+- [ ] Confirm end to end with one real wallet broadcast (needs funded wallet + a mined block)
