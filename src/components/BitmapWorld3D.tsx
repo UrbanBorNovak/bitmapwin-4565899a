@@ -95,6 +95,8 @@ import { SeaMasses } from "@/components/game/SeaMasses";
 import { Whales } from "@/components/game/Whales";
 import { TerritoryGuardians } from "@/components/game/TerritoryGuardians";
 import { ShadowArchways } from "@/components/game/ShadowArchways";
+import { ShadowVaultRoom } from "@/components/game/ShadowVaultRoom";
+
 import { ISLAND_INSCRIPTION, SeaIslands } from "@/components/game/SeaIslands";
 import { OnChainFlows } from "@/components/game/OnChainFlows";
 import { BitField } from "@/components/game/BitField";
@@ -4532,6 +4534,10 @@ function BitmapWorld3DInner({
         {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <HuntPanel compact /> : null}
         {exploring ? <OasisDiscovery pose={pose} unit={AVATAR_U} showTracker={!inventoryOpen && !buildOpen && !mapOpen} /> : null}
         {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <AirdropHud pose={pose} unit={AVATAR_U} block={tipHeight} /> : null}
+
+        {/* THE SHADOW VAULT — the sealed chamber behind an obsidian archway. */}
+        <ShadowVaultRoom />
+
 
 
 
