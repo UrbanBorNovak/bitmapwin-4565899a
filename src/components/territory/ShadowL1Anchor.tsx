@@ -97,7 +97,6 @@ export function ShadowL1Anchor({
     queryFn: () => loadNote({ data: { digest } }),
     staleTime: 20_000,
     // while the note sits in the mempool, keep asking Bitcoin whether it is mined
-    refetchInterval: (q) => (q.state.data && q.state.data.status === "broadcast" ? 15_000 : false),
   });
 
   const existing = anchored.data;
