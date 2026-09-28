@@ -110,7 +110,7 @@ function InventoryPage() {
   const buff = gear.buff && gear.buff.until > Date.now() ? gear.buff : null;
 
   return (
-    <div className="mx-auto max-w-[1400px] px-4 py-12 md:px-8">
+    <div className="mx-auto max-w-[1600px] px-4 py-12 md:px-8">
       <p className="label">INVENTORY</p>
       <h1 className="display mt-4 text-4xl md:text-6xl">YOUR KIT</h1>
       <p className="mt-4 max-w-[70ch] font-mono text-sm text-muted-foreground">
@@ -118,9 +118,9 @@ function InventoryPage() {
         <span className="blink">_</span>
       </p>
 
-      <CharacterCard />
-
-      <BitmapPixelsCollection />
+      <div className="mt-8">
+        <ModernInventory who={accountLabel(user)} character={character} />
+      </div>
 
       <section className="mt-10 grid grid-cols-2 border border-border md:grid-cols-4">
         <Stat k="GOLD BARS" v={String(bars)} icon />
@@ -128,6 +128,9 @@ function InventoryPage() {
         <Stat k="PACK LOAD" v={`${skills.carried} / 28`} />
         <Stat k="ACTIVE BUFF" v={buff ? buff.label : "NONE"} />
       </section>
+
+      <BitmapPixelsCollection />
+
 
       <section className="mt-10 border border-border">
         <header className="border-b border-border p-5">
