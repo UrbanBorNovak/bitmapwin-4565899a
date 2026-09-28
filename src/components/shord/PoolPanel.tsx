@@ -5,7 +5,7 @@ import { useWalletSession } from "@/lib/wallet-session";
 import { signMessageWithWallet } from "@/lib/browser-wallet";
 import type { ShordKeys } from "@/lib/shord/keys";
 import { decodeShordAddress } from "@/lib/shord/keys";
-import { assetIdFromInscription, poolNote, randomField } from "@/lib/shord/pool";
+import { assetIdFromInscription, exitIntent, poolNote, randomField } from "@/lib/shord/pool";
 import { proveSpend } from "@/lib/shord/prover";
 import {
   decodeNoteGift,
@@ -15,7 +15,7 @@ import {
   savePoolNotes,
   type PoolNoteRecord,
 } from "@/lib/shord/deposit";
-import { shordConfirmDeposit, shordPoolInfo, shordPrepareDeposit, shordSubmitSpend } from "@/lib/shord-pool.functions";
+import { shordConfirmDeposit, shordPoolInfo, shordPrepareDeposit, shordSubmitSpend, shordWithdraw } from "@/lib/shord-pool.functions";
 
 const btn = "label border px-3 py-2 disabled:opacity-40";
 
@@ -26,6 +26,8 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
   const prepare = useServerFn(shordPrepareDeposit);
   const confirm = useServerFn(shordConfirmDeposit);
   const spend = useServerFn(shordSubmitSpend);
+  const withdraw = useServerFn(shordWithdraw);
+  const [exitTo, setExitTo] = useState<Record<string, string>>({});
   const pool = useQuery({ queryKey: ["shord", "own-pool"], queryFn: () => info(), refetchInterval: 60_000 });
 
   const [notes, setNotes] = useState<PoolNoteRecord[]>([]);
@@ -106,6 +108,26 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
       setMsg(`✓ SENT PRIVATELY · NEW NOTE #${res.idx}. GIVE THE RECIPIENT THE CODE BELOW.`);
     });
 
+  const withdrawNote = (n: PoolNoteRecord) =>
+    run("PROVING WITHDRAWAL ON THIS DEVICE…", async () => {
+      if (!keys) throw new Error("CREATE A SHIELDED KEY FIRST");
+      const dest = (exitTo[n.commitment] ?? wallet?.ordinalsAddress ?? "").trim();
+      if (!dest) throw new Error("ENTER THE BITCOIN ADDRESS TO RECEIVE THE GUARDIAN");
+      const fresh = await info();
+      const leaves = fresh.leaves.map((l) => BigInt(l.commitment));
+      const idx = leaves.findIndex((l) => l.toString() === n.commitment);
+      if (idx < 0) throw new Error("NOTE IS NOT IN THE POOL YET");
+      const proof = await proveSpend({
+        keys, assetId: BigInt(n.assetId), salt: BigInt(n.salt), leaves, leafIndex: idx,
+        recipientPublicKey: keys.publicKey, newSalt: randomField(), exit: true, intent: exitIntent(dest),
+      });
+      setMsg("POOL IS CHECKING THE PROOF AND SIGNING…");
+      const res = await withdraw({ data: { proof: proof.proof as Record<string, unknown>, publicSignals: proof.publicSignals, destination: dest } });
+      if (!res.ok) throw new Error(res.reason);
+      persist(loadPoolNotes().map((x) => (x.commitment === n.commitment ? { ...x, status: "spent" } : x)));
+      setMsg(`✓ WITHDRAWN TO ${dest} · FEE ${res.feeSats} SATS · https://mempool.space/tx/${res.txid}`);
+    });
+
   const importGift = () =>
     run("CHECKING THE NOTE…", async () => {
       if (!keys) throw new Error("CREATE A SHIELDED KEY FIRST");
@@ -155,6 +177,9 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
                   <input value={sendTo[n.commitment] ?? ""} onChange={(e) => setSendTo({ ...sendTo, [n.commitment]: e.target.value })}
                     placeholder="RECIPIENT shord1…" className="min-w-[240px] flex-1 border border-border bg-background px-3 py-2" />
                   <button type="button" disabled={busy} onClick={() => sendPrivately(n)} className={`${btn} border-bitcoin text-bitcoin`}>SEND PRIVATELY</button>
+                  <input value={exitTo[n.commitment] ?? wallet?.ordinalsAddress ?? ""} onChange={(e) => setExitTo({ ...exitTo, [n.commitment]: e.target.value })}
+                    placeholder="WITHDRAW TO bc1…" className="min-w-[240px] flex-1 border border-border bg-background px-3 py-2" />
+                  <button type="button" disabled={busy} onClick={() => withdrawNote(n)} className={`${btn} border-signal text-signal`}>WITHDRAW TO BITCOIN</button>
                 </div>
               ) : null}
             </li>
@@ -171,7 +196,7 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
       </div>
 
       {msg ? <p className="label mt-3 break-all text-signal">{msg}</p> : null}
-      <p className="label mt-3 text-muted-foreground">WITHDRAWING BACK TO A BITCOIN WALLET IS NOT OPEN YET.</p>
+      <p className="label mt-3 text-muted-foreground">WITHDRAWALS PAY THE BITCOIN FEE FROM THE GUARDIAN OUTPUT ITSELF; THE POOL REFUSES WHEN FEES ARE TOO HIGH.</p>
     </section>
   );
 }

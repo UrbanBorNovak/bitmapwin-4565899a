@@ -8,9 +8,10 @@
  */
 import { sha256 } from "@noble/hashes/sha2.js";
 import { schnorr } from "@noble/curves/secp256k1.js";
-import { p2tr } from "@scure/btc-signer";
+import { p2tr, Transaction, Address, OutScript, NETWORK } from "@scure/btc-signer";
+import { hex } from "@scure/base";
 import vkey from "@/lib/shord/spend.vkey.json";
-import { merkleRoot } from "@/lib/shord/pool";
+import { merkleRoot, assetIdFromInscription, exitIntent } from "@/lib/shord/pool";
 import { depositMessage } from "@/lib/shord/deposit";
 
 const ORD = "https://ordinals.com";
@@ -136,7 +137,7 @@ export async function confirmDeposit(inscriptionId: string): Promise<PoolResult<
 export async function submitSpend(proof: unknown, publicSignals: string[]): Promise<PoolResult<{ idx: number; root: string }>> {
   if (publicSignals.length !== 6 || !publicSignals.every((s) => FIELD.test(s))) return { ok: false, reason: "MALFORMED PUBLIC SIGNALS" };
   const [root, nullifier, outCommitment, exitFlag] = publicSignals as [string, string, string, string];
-  if (exitFlag !== "0") return { ok: false, reason: "WITHDRAWALS TO BITCOIN ARE NOT OPEN YET" };
+  if (exitFlag !== "0") return { ok: false, reason: "USE WITHDRAW TO LEAVE THE POOL" };
   const db = await admin();
   const { data: known } = await db.from("shord_pool_leaves").select("idx").eq("root_after", root).limit(1);
   if (!known?.length) return { ok: false, reason: "PROOF IS AGAINST AN UNKNOWN POOL ROOT" };
@@ -147,4 +148,98 @@ export async function submitSpend(proof: unknown, publicSignals: string[]): Prom
   if (error) return { ok: false, reason: /duplicate/i.test(error.message) ? "THIS NOTE WAS ALREADY SPENT" : error.message };
   const leaf = await appendLeaf({ commitment: outCommitment, kind: "transfer" });
   return { ok: true, ...leaf };
+}
+
+const ESPLORA = ["https://mempool.space/api", "https://blockstream.info/api"];
+const TAPROOT_DUST = 330;
+const WITHDRAW_VBYTES = 125;
+
+async function esplora<T>(path: string, init?: RequestInit): Promise<T> {
+  let last = "EXPLORER UNAVAILABLE";
+  for (const host of ESPLORA) {
+    try {
+      const res = await fetch(`${host}${path}`, { ...init, headers: { "User-Agent": UA, ...((init?.headers as Record<string, string>) ?? {}) } });
+      const body = await res.text();
+      if (res.ok) return (body.startsWith("{") || body.startsWith("[") ? JSON.parse(body) : body) as T;
+      last = body.slice(0, 200) || `HTTP ${res.status}`;
+    } catch (e) {
+      last = (e as Error).message;
+    }
+  }
+  throw new Error(last);
+}
+
+/** Unshield: verify an exit proof, then sign the Guardian out of the pool to a Bitcoin address. */
+export async function submitWithdraw(
+  proof: unknown,
+  publicSignals: string[],
+  destination: string,
+): Promise<PoolResult<{ txid: string; feeSats: number; inscriptionId: string }>> {
+  if (publicSignals.length !== 6 || !publicSignals.every((s) => FIELD.test(s))) return { ok: false, reason: "MALFORMED PUBLIC SIGNALS" };
+  const [root, nullifier, , exitFlag, exitAsset, intent] = publicSignals as [string, string, string, string, string, string];
+  if (exitFlag !== "1") return { ok: false, reason: "THIS PROOF IS NOT A WITHDRAWAL" };
+  let destScript: Uint8Array;
+  try {
+    destScript = OutScript.encode(Address(NETWORK).decode(destination.trim()));
+  } catch {
+    return { ok: false, reason: "THAT IS NOT A VALID BITCOIN ADDRESS" };
+  }
+  if (exitIntent(destination).toString() !== intent) return { ok: false, reason: "PROOF IS NOT BOUND TO THAT ADDRESS" };
+
+  const db = await admin();
+  const { data: known } = await db.from("shord_pool_leaves").select("idx").eq("root_after", root).limit(1);
+  if (!known?.length) return { ok: false, reason: "PROOF IS AGAINST AN UNKNOWN POOL ROOT" };
+  const { data: deposits } = await db.from("shord_pool_leaves").select("inscription_id").eq("kind", "deposit");
+  const inscriptionId = (deposits ?? [])
+    .map((d) => d.inscription_id)
+    .find((id): id is string => !!id && assetIdFromInscription(id).toString() === exitAsset);
+  if (!inscriptionId) return { ok: false, reason: "THAT GUARDIAN WAS NEVER DEPOSITED" };
+
+  const { groth16 } = await import("snarkjs");
+  if (!(await groth16.verify(vkey, publicSignals, proof as never))) return { ok: false, reason: "PROOF REJECTED" };
+
+  const ins = await readInscription(inscriptionId);
+  if (ins?.address !== poolAddress() || !ins.satpoint) return { ok: false, reason: "THE GUARDIAN IS NOT AT THE POOL ADDRESS" };
+  const [txid = "", voutStr = "0", offsetStr = "0"] = ins.satpoint.split(":");
+  const vout = Number(voutStr);
+  const offset = Number(offsetStr);
+  let utxo: { value: number; scriptpubkey: string } | undefined;
+  try {
+    utxo = (await esplora<{ vout: { value: number; scriptpubkey: string }[] }>(`/tx/${txid}`)).vout[vout];
+  } catch {
+    utxo = undefined;
+  }
+  if (!utxo) return { ok: false, reason: "COULD NOT READ THE POOL UTXO — TRY AGAIN" };
+  const fees = await esplora<{ halfHourFee: number }>(`/v1/fees/recommended`).catch(() => ({ halfHourFee: 2 }));
+  const feeSats = Math.max(1, Math.ceil(fees.halfHourFee)) * WITHDRAW_VBYTES;
+  const outValue = utxo.value - feeSats;
+  if (outValue < TAPROOT_DUST || offset >= outValue)
+    return { ok: false, reason: `THE GUARDIAN'S ${utxo.value}-SAT OUTPUT CANNOT COVER A ${feeSats}-SAT FEE RIGHT NOW — TRY WHEN FEES DROP` };
+
+  // Lock the note before signing so one proof can never withdraw twice.
+  const { error: lockErr } = await db.from("shord_pool_nullifiers").insert({ nullifier, root, out_commitment: `exit:${inscriptionId}` });
+  if (lockErr) return { ok: false, reason: /duplicate/i.test(lockErr.message) ? "THIS NOTE WAS ALREADY SPENT" : lockErr.message };
+  await db.from("shord_pool_withdrawals").insert({ nullifier, inscription_id: inscriptionId, destination: destination.trim(), fee_sats: feeSats });
+
+  try {
+    const priv = poolPrivateKey();
+    const tx = new Transaction();
+    tx.addInput({
+      txid,
+      index: vout,
+      witnessUtxo: { script: hex.decode(utxo.scriptpubkey), amount: BigInt(utxo.value) },
+      tapInternalKey: schnorr.getPublicKey(priv),
+    });
+    tx.addOutput({ script: destScript, amount: BigInt(outValue) });
+    tx.sign(priv);
+    tx.finalize();
+    const sent = await esplora<string>(`/tx`, { method: "POST", body: tx.hex, headers: { "Content-Type": "text/plain" } });
+    const outTxid = String(sent).trim() || tx.id;
+    await db.from("shord_pool_withdrawals").update({ txid: outTxid, status: "broadcast" }).eq("nullifier", nullifier);
+    return { ok: true, txid: outTxid, feeSats, inscriptionId };
+  } catch (e) {
+    await db.from("shord_pool_nullifiers").delete().eq("nullifier", nullifier);
+    await db.from("shord_pool_withdrawals").delete().eq("nullifier", nullifier);
+    return { ok: false, reason: `BROADCAST FAILED — YOUR NOTE IS STILL SHIELDED: ${(e as Error).message.slice(0, 160)}` };
+  }
 }
