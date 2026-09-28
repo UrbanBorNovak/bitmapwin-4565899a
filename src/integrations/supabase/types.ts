@@ -3300,6 +3300,93 @@ export type Database = {
           },
         ]
       }
+      shord_pool_deposits: {
+        Row: {
+          commitment: string
+          created_at: string
+          deposit_txid: string | null
+          holder_address: string
+          id: string
+          inscription_id: string
+          signature: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          commitment: string
+          created_at?: string
+          deposit_txid?: string | null
+          holder_address: string
+          id?: string
+          inscription_id: string
+          signature: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          commitment?: string
+          created_at?: string
+          deposit_txid?: string | null
+          holder_address?: string
+          id?: string
+          inscription_id?: string
+          signature?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      shord_pool_leaves: {
+        Row: {
+          commitment: string
+          created_at: string
+          deposit_txid: string | null
+          idx: number
+          inscription_id: string | null
+          kind: string
+          root_after: string
+        }
+        Insert: {
+          commitment: string
+          created_at?: string
+          deposit_txid?: string | null
+          idx: number
+          inscription_id?: string | null
+          kind: string
+          root_after: string
+        }
+        Update: {
+          commitment?: string
+          created_at?: string
+          deposit_txid?: string | null
+          idx?: number
+          inscription_id?: string | null
+          kind?: string
+          root_after?: string
+        }
+        Relationships: []
+      }
+      shord_pool_nullifiers: {
+        Row: {
+          created_at: string
+          nullifier: string
+          out_commitment: string
+          root: string
+        }
+        Insert: {
+          created_at?: string
+          nullifier: string
+          out_commitment: string
+          root: string
+        }
+        Update: {
+          created_at?: string
+          nullifier?: string
+          out_commitment?: string
+          root?: string
+        }
+        Relationships: []
+      }
       trade_crawl_state: {
         Row: {
           block_height: number
