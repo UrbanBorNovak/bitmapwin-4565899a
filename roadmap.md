@@ -99,3 +99,13 @@
 - [x] Concentrate trees and most mushrooms beside inland seas and oasis ponds.
 - [x] Verify shoreline clustering in the live Oasis.
 - [ ] Verify shoreline clustering in the live Oasis.
+
+## Marketplace price trends
+- [x] Consolidate trait, collection, and timeframe controls into one compact analysis bar.
+- [x] Upgrade the confirmed-sale chart, metrics, and matching-listings hierarchy.
+- [x] Verify trend filtering and layout on desktop and phone.
+
+## Oasis land permissions
+- [x] Keep rejected terraform actions inside the Oasis without blanking the screen.
+- [x] Roll back temporary growth when the current wallet does not hold the BITMAP.
+- [x] Verify the Oasis remains visible after land-permission failures.

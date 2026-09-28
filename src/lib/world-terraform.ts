@@ -179,17 +179,24 @@ export async function terraform(x: number, z: number) {
     const result = await seedTerraform({
       data: { height, chunkKey: chunkOfTile(col, row), col, row },
     });
+    if (result?.denied) {
+      local.delete(height);
+      persistLocal();
+      recompute();
+      return { land: null, already: false, denied: true };
+    }
     if (result?.land) {
       shared.set(height, fromRow(result.land));
       local.delete(height);
       persistLocal();
       recompute();
-      return { land: shared.get(height)!, already: Boolean(result.already) };
+      const saved = shared.get(height);
+      if (saved) return { land: saved, already: Boolean(result.already), denied: false };
     }
   } catch {
     // not signed in, or the write failed — the seeding stays in this browser
   }
-  return { land: optimistic, already: false };
+  return { land: optimistic, already: false, denied: false };
 }
 
 export function listTerraformed() {
