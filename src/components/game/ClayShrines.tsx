@@ -60,8 +60,8 @@ function entranceSolids() {
   ];
 }
 
-/** A complete compound: shrine at the back, open gate and steps at the front. */
-const COMPOUND: Piece[] = [
+/** Six readable arrangements built only from the same on-chain architectural pieces. */
+const COURTYARD: Piece[] = [
   { id: "shrine", kind: "shrine", x: 0, z: -4.8, size: 7.2, yaw: Math.PI, solids: [{ x: 0, z: 0, radius: 2.2 }] },
   { id: "steps", kind: "steps", x: 0, z: -1.1, size: 4.4, yaw: 0 },
   { id: "back-left", kind: "windowWall", x: -3.4, z: -7.7, size: 4.8, yaw: 0, solids: wallSolids() },
@@ -79,6 +79,67 @@ const COMPOUND: Piece[] = [
   { id: "spikes-right", kind: "spikes", x: 5.2, z: 7.2, size: 2.3, yaw: Math.PI, solids: [{ x: 0, z: 0, radius: 0.75 }] },
   { id: "saw", kind: "saw", x: -5.7, z: -6.4, size: 1.8, yaw: Math.PI / 4, solids: [{ x: 0, z: 0, radius: 0.65 }] },
 ];
+
+const GATEHOUSE: Piece[] = [
+  { id: "gate-front", kind: "entranceWall", x: 0, z: 6.8, size: 6.1, yaw: 0, solids: entranceSolids() },
+  { id: "gate-back", kind: "entranceWall", x: 0, z: -6.8, size: 6.1, yaw: Math.PI, solids: entranceSolids() },
+  { id: "tower-nw", kind: "pillar", x: -4.5, z: -5.4, size: 5.3, yaw: 0, solids: [{ x: 0, z: 0, radius: 0.85 }] },
+  { id: "tower-ne", kind: "pillar", x: 4.5, z: -5.4, size: 5.3, yaw: Math.PI / 2, solids: [{ x: 0, z: 0, radius: 0.85 }] },
+  { id: "tower-sw", kind: "pillar", x: -4.5, z: 5.4, size: 5.3, yaw: Math.PI, solids: [{ x: 0, z: 0, radius: 0.85 }] },
+  { id: "tower-se", kind: "pillar", x: 4.5, z: 5.4, size: 5.3, yaw: -Math.PI / 2, solids: [{ x: 0, z: 0, radius: 0.85 }] },
+  { id: "wall-left", kind: "windowWall", x: -5.8, z: 0, size: 5.4, yaw: Math.PI / 2, solids: wallSolids() },
+  { id: "wall-right", kind: "holeWall", x: 5.8, z: 0, size: 5.4, yaw: Math.PI / 2, solids: wallSolids() },
+  { id: "steps", kind: "steps", x: 0, z: 3.5, size: 4.3, yaw: 0 },
+  { id: "bars", kind: "bars", x: 0, z: -5.9, size: 3.5, yaw: 0, solids: [{ x: 0, z: 0, radius: 0.9 }] },
+];
+
+const BROKEN_KEEP: Piece[] = [
+  { id: "shrine", kind: "shrine", x: -2.2, z: -1.8, size: 7.8, yaw: Math.PI / 2, solids: [{ x: 0, z: 0, radius: 2.3 }] },
+  { id: "wall-a", kind: "brokenWall", x: -7.3, z: -5.5, size: 5.3, yaw: 0, solids: wallSolids() },
+  { id: "wall-b", kind: "holeWall", x: -7.8, z: 0.2, size: 4.8, yaw: Math.PI / 2, solids: wallSolids() },
+  { id: "wall-c", kind: "windowWall", x: 5.8, z: -6.3, size: 5.2, yaw: 0, solids: wallSolids() },
+  { id: "wall-d", kind: "brokenWall", x: 7.4, z: 3.4, size: 4.6, yaw: Math.PI / 2, solids: wallSolids() },
+  { id: "fallen-gate", kind: "entranceWall", x: 1.8, z: 7.3, size: 4.8, yaw: -0.22, solids: entranceSolids() },
+  { id: "lone-pillar", kind: "pillar", x: -5.2, z: 6.8, size: 5.4, yaw: 0, solids: [{ x: 0, z: 0, radius: 0.8 }] },
+  { id: "saw", kind: "saw", x: 5.3, z: 5.7, size: 2.1, yaw: Math.PI / 3, solids: [{ x: 0, z: 0, radius: 0.7 }] },
+];
+
+const PROCESSIONAL_WAY: Piece[] = [
+  { id: "shrine", kind: "shrine", x: 0, z: -8.2, size: 7.6, yaw: Math.PI, solids: [{ x: 0, z: 0, radius: 2.3 }] },
+  { id: "steps", kind: "steps", x: 0, z: -4.5, size: 4.6, yaw: 0 },
+  { id: "left-outer", kind: "brokenWall", x: -5.2, z: 1.8, size: 5, yaw: Math.PI / 2, solids: wallSolids() },
+  { id: "right-outer", kind: "windowWall", x: 5.2, z: 1.8, size: 5, yaw: Math.PI / 2, solids: wallSolids() },
+  { id: "left-inner", kind: "holeWall", x: -5.2, z: -3.8, size: 5, yaw: Math.PI / 2, solids: wallSolids() },
+  { id: "right-inner", kind: "brokenWall", x: 5.2, z: -3.8, size: 5, yaw: Math.PI / 2, solids: wallSolids() },
+  { id: "gate", kind: "entranceWall", x: 0, z: 7.2, size: 5.8, yaw: 0, solids: entranceSolids() },
+  { id: "spikes-a", kind: "spikes", x: -5.2, z: 7.6, size: 2.5, yaw: 0, solids: [{ x: 0, z: 0, radius: 0.8 }] },
+  { id: "spikes-b", kind: "spikes", x: 5.2, z: 7.6, size: 2.5, yaw: Math.PI, solids: [{ x: 0, z: 0, radius: 0.8 }] },
+];
+
+const RING_SANCTUM: Piece[] = [
+  { id: "shrine", kind: "shrine", x: 0, z: 0, size: 6.8, yaw: Math.PI / 4, solids: [{ x: 0, z: 0, radius: 2.1 }] },
+  { id: "north", kind: "windowWall", x: 0, z: -7.5, size: 4.8, yaw: 0, solids: wallSolids() },
+  { id: "east", kind: "holeWall", x: 7.5, z: 0, size: 4.8, yaw: Math.PI / 2, solids: wallSolids() },
+  { id: "south", kind: "entranceWall", x: 0, z: 7.5, size: 5.2, yaw: Math.PI, solids: entranceSolids() },
+  { id: "west", kind: "brokenWall", x: -7.5, z: 0, size: 4.8, yaw: Math.PI / 2, solids: wallSolids() },
+  { id: "pillar-ne", kind: "pillar", x: 5.3, z: -5.3, size: 4.4, yaw: 0, solids: [{ x: 0, z: 0, radius: 0.72 }] },
+  { id: "pillar-sw", kind: "pillar", x: -5.3, z: 5.3, size: 4.4, yaw: Math.PI, solids: [{ x: 0, z: 0, radius: 0.72 }] },
+  { id: "bars", kind: "bars", x: -5.1, z: -5.1, size: 3.4, yaw: Math.PI / 4, solids: [{ x: 0, z: 0, radius: 0.85 }] },
+];
+
+const TWIN_COURTS: Piece[] = [
+  { id: "shrine-left", kind: "shrine", x: -5.3, z: -3.8, size: 6.4, yaw: Math.PI, solids: [{ x: 0, z: 0, radius: 2 }] },
+  { id: "shrine-right", kind: "shrine", x: 5.3, z: -3.8, size: 6.4, yaw: Math.PI, solids: [{ x: 0, z: 0, radius: 2 }] },
+  { id: "gate", kind: "entranceWall", x: 0, z: 6.8, size: 5.7, yaw: 0, solids: entranceSolids() },
+  { id: "divider", kind: "holeWall", x: 0, z: -1.3, size: 5, yaw: Math.PI / 2, solids: wallSolids() },
+  { id: "left-wing", kind: "windowWall", x: -8.2, z: 3.1, size: 4.7, yaw: Math.PI / 2, solids: wallSolids() },
+  { id: "right-wing", kind: "brokenWall", x: 8.2, z: 3.1, size: 4.7, yaw: Math.PI / 2, solids: wallSolids() },
+  { id: "steps-left", kind: "steps", x: -5.3, z: 0.2, size: 3.8, yaw: 0 },
+  { id: "steps-right", kind: "steps", x: 5.3, z: 0.2, size: 3.8, yaw: 0 },
+  { id: "spikes", kind: "spikes", x: 0, z: 8.1, size: 2.5, yaw: Math.PI / 2, solids: [{ x: 0, z: 0, radius: 0.78 }] },
+];
+
+const LAYOUTS: readonly Piece[][] = [COURTYARD, GATEHOUSE, BROKEN_KEEP, PROCESSIONAL_WAY, RING_SANCTUM, TWIN_COURTS];
 
 function rotate(x: number, z: number, yaw: number) {
   const c = Math.cos(yaw);
@@ -106,17 +167,17 @@ function PieceFallback({ size }: { size: number }) {
 }
 
 function ShrineSite({ site, unit }: { site: Site; unit: number }) {
+  const layout = LAYOUTS[site.variant] ?? COURTYARD;
   return (
     <group position={[site.x, groundY(site.x, site.z), site.z]} rotation-y={site.yaw}>
-      {COMPOUND.map((piece) => {
-        const mirror = site.variant === 1 && piece.id.includes("right") ? Math.PI : 0;
+      {layout.map((piece) => {
         return (
           <group key={piece.id} position={[piece.x * unit, 0, piece.z * unit]}>
             <Suspense fallback={<PieceFallback size={piece.size * unit} />}>
               <InscribedModel
                 url={URLS[piece.kind]}
                 size={piece.size * unit}
-                yaw={piece.yaw + mirror}
+                yaw={piece.yaw}
               />
             </Suspense>
           </group>
@@ -158,7 +219,7 @@ export const ClayShrines = memo(function ClayShrines({
           x: dry.x,
           z: dry.z,
           yaw: Math.floor(hash(gx, gz, 304) * 4) * (Math.PI / 2),
-          variant: Math.floor(hash(gx, gz, 305) * 2),
+          variant: Math.floor(hash(gx, gz, 305) * LAYOUTS.length),
         });
       }
     }
@@ -169,7 +230,7 @@ export const ClayShrines = memo(function ClayShrines({
 
   useEffect(() => {
     const solids = sites.flatMap((site) =>
-      COMPOUND.flatMap((piece) =>
+      (LAYOUTS[site.variant] ?? COURTYARD).flatMap((piece) =>
         (piece.solids ?? []).map((solid, index) => {
           const pieceOffset = rotate(piece.x * unit, piece.z * unit, site.yaw);
           const localOffset = rotate(solid.x * unit, solid.z * unit, site.yaw + piece.yaw);
