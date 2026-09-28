@@ -208,12 +208,12 @@ function ShadowEventCard({
   return (
     <div className="border border-border/70 bg-card p-5">
       <div className="flex flex-wrap items-start gap-5">
-        <span className={unlocked ? "text-[hsl(var(--signal))]" : "text-muted-foreground"}>
+        <span className={unlocked ? "text-signal" : "text-muted-foreground"}>
           <GateGlyph open={unlocked} />
         </span>
         <div className="min-w-[220px] flex-1">
           <h3 className="font-display text-lg tracking-wide">{event.title}</h3>
-          <p className="label mt-1 text-[hsl(var(--signal))]">{event.subtitle}</p>
+          <p className="label mt-1 text-signal">{event.subtitle}</p>
           <p className="mt-2 max-w-prose font-mono text-xs leading-relaxed text-muted-foreground">
             {event.description}
           </p>
@@ -227,7 +227,7 @@ function ShadowEventCard({
             </div>
             <span className="relative mt-1 block h-1.5 w-full overflow-hidden bg-muted">
               <span
-                className="absolute inset-y-0 left-0 bg-[hsl(var(--signal))]"
+                className="absolute inset-y-0 left-0 bg-signal"
                 style={{ width: `${fill}%` }}
               />
             </span>
@@ -244,7 +244,7 @@ function ShadowEventCard({
                 type="button"
                 disabled={busy || remaining === 0 || !event.isActive}
                 onClick={onClaim}
-                className="border border-[hsl(var(--signal))] px-3 py-2 font-mono text-xs text-[hsl(var(--signal))] hover:bg-[hsl(var(--signal))] hover:text-background disabled:opacity-40"
+                className="border border-signal px-3 py-2 font-mono text-xs text-signal hover:bg-signal hover:text-background disabled:opacity-40"
               >
                 ◈ TAKE A SHADOW PASS
               </button>
@@ -268,8 +268,8 @@ function ShadowEventCard({
             </>
           ) : (
             <>
-              <div className="border border-[hsl(var(--signal))]/40 bg-[hsl(var(--signal))]/5 px-3 py-2">
-                <p className="label text-[hsl(var(--signal))]">PASS HELD · {handle}</p>
+              <div className="border border-signal/40 bg-signal/5 px-3 py-2">
+                <p className="label text-signal">PASS HELD · {handle}</p>
                 <p className="label mt-1 text-muted-foreground">SHIELDED · NOT LINKED TO YOUR WALLET</p>
               </div>
               {!unlocked ? (
@@ -277,12 +277,12 @@ function ShadowEventCard({
                   type="button"
                   disabled={busy}
                   onClick={() => onEnter()}
-                  className="border border-[hsl(var(--signal))] px-3 py-2 font-mono text-xs text-[hsl(var(--signal))] hover:bg-[hsl(var(--signal))] hover:text-background disabled:opacity-40"
+                  className="border border-signal px-3 py-2 font-mono text-xs text-signal hover:bg-signal hover:text-background disabled:opacity-40"
                 >
                   {busy ? "PROVING…" : "◈ PROVE PASS & ENTER"}
                 </button>
               ) : (
-                <span className="border border-[hsl(var(--signal))] px-3 py-2 text-center font-mono text-xs text-[hsl(var(--signal))]">
+                <span className="border border-signal px-3 py-2 text-center font-mono text-xs text-signal">
                   GATE OPEN
                 </span>
               )}
@@ -338,7 +338,7 @@ function ShadowEventCard({
               type="button"
               disabled={busy || !draftText.trim()}
               onClick={onWhisper}
-              className="border border-[hsl(var(--signal))] px-3 py-2 font-mono text-xs text-[hsl(var(--signal))] disabled:opacity-40"
+              className="border border-signal px-3 py-2 font-mono text-xs text-signal disabled:opacity-40"
             >
               TRANSMIT
             </button>
@@ -351,7 +351,7 @@ function ShadowEventCard({
               whispers.map((w) => (
                 <li key={w.id} className="border border-border/60 bg-background/60 px-3 py-2">
                   <div className="flex items-baseline justify-between gap-3">
-                    <span className="label text-[hsl(var(--signal))]">{shadowHandle(w.nullifier)}</span>
+                    <span className="label text-signal">{shadowHandle(w.nullifier)}</span>
                     <span className="label text-muted-foreground">{ago(w.createdAt)}</span>
                   </div>
                   <p className="mt-1 break-words font-mono text-xs leading-relaxed">{w.content}</p>
