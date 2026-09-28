@@ -33,10 +33,16 @@ import { coinBalanceQuery, formatBit } from "@/lib/coins";
  * builder actually holds. Every step here writes real rows — nothing is mocked.
  */
 export const Route = createFileRoute("/create")({
-  validateSearch: (search: Record<string, unknown>): { height?: number } => {
+  validateSearch: (search: Record<string, unknown>): { height?: number; prompt?: string } => {
     const height = Number(search["height"]);
-    return Number.isFinite(height) && height >= 0 ? { height } : {};
+    const raw = search["prompt"];
+    const brief = typeof raw === "string" && raw.trim().length > 0 ? raw.trim().slice(0, 1200) : undefined;
+    return {
+      ...(Number.isFinite(height) && height >= 0 ? { height } : {}),
+      ...(brief ? { prompt: brief } : {}),
+    };
   },
+
   head: () => {
     const title = "Create With AI — Build an Experience for Your BITMAP";
     const description =
