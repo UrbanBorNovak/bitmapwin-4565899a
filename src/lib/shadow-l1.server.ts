@@ -141,6 +141,15 @@ export async function quoteShadowNote(input: {
     feeRate: rate,
     totalSats: fee + built.feeSats,
     treasury: SHADOW_L1_TREASURY,
+    op: input.target.op,
+    territoryBlock: input.target.height,
+    passIndex: input.target.index,
+    digest: input.target.digest,
+    estimatedVBytes: Math.max(1, Math.round(built.feeSats / rate)),
+    inputCount: built.usedFunding.length,
+    fundedSats: built.usedFunding.reduce((sum, u) => sum + u.valueSats, 0),
+    changeSats: built.changeSats,
+    payerAddress: input.payerAddress,
   };
 }
 
