@@ -7,6 +7,7 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/tanstack/vite";
 import type { Plugin } from "vite";
+import { fileURLToPath } from "node:url";
 
 const APP_MODULE = /\/src\/.*\.(?:jsx|tsx)$/;
 const R3F_MODULE = /@react-three\/(?:fiber|drei)|from\s+["']three["']/;
@@ -45,5 +46,17 @@ export default defineConfig({
   },
   vite: {
     plugins: [mcpPlugin(), stripThreeSourceAnnotations()],
+    resolve: {
+      alias: {
+        // snarkjs' exports map only defines "node"/"browser" conditions, which
+        // the workerd SSR build cannot match; point at the browser ESM build.
+        snarkjs: fileURLToPath(
+          new URL("./node_modules/snarkjs/build/browser.esm.js", import.meta.url),
+        ),
+        ffjavascript: fileURLToPath(
+          new URL("./node_modules/ffjavascript/build/browser.esm.js", import.meta.url),
+        ),
+      },
+    },
   },
 });
