@@ -124,3 +124,10 @@
 - [x] Districts unlock on first visit and gate fast travel
 - [x] Ruins collected by rarity with instant XP toasts
 - [x] BIT paid only on fixed once-per-account milestones
+
+## Shadow Assets (Phase A — shipped)
+- [x] Shielded territory access passes: on-device commitment/nullifier, anonymous whispers chamber
+- [x] First private event: THE CYPHERPUNK ASSEMBLY, 819,245.BITMAP, 21 passes
+- [ ] 3D obsidian gate in the Oasis at the event coordinates
+- [ ] Creator flow: issue Shadow Keys from Studio for any held BITMAP
+- [ ] Phase B: shielded pass transfers (encrypted notes + nullifier double-spend tracking)
