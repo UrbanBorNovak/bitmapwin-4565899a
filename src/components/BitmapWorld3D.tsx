@@ -161,6 +161,10 @@ import { WorldAtmosphere } from "@/components/game/WorldAtmosphere";
 import { WeatherLighting, WorldWeather } from "@/components/game/WorldWeather";
 import { LandPerksHud } from "@/components/game/LandPerksHud";
 import { HuntPanel } from "@/components/codex/HuntPanel";
+import { OasisDiscovery } from "@/components/game/OasisDiscovery";
+import { isDistrictUnlocked } from "@/lib/oasis-discovery";
+import { atlasPlace } from "@/lib/atlas-places";
+import { toast } from "sonner";
 import { noteStanding, standingLand, useStandingLand } from "@/lib/land-biome-live";
 import { setLandChainTip } from "@/lib/land-biome";
 import { growthLabel, terraform, terraformAt } from "@/lib/world-terraform";
@@ -3801,6 +3805,12 @@ function BitmapWorld3DInner({
     setCommand((current) => ({ type, nonce: current.nonce + 1 }));
   };
   const visitHeight = (height: number) => {
+    const target = atlasPlace(height);
+    if (!isDistrictUnlocked(target.slug) && !ownedHeights.includes(height)) {
+      playSfx("empty");
+      toast(`${target.name} IS LOCKED`, { description: "WALK INTO THIS DISTRICT ONCE TO UNLOCK FAST TRAVEL" });
+      return;
+    }
     setCameraMode("map");
     setCommand((current) => ({ type: "visit", nonce: current.nonce + 1, height }));
     setSelected({ height, owner: ownersRef.current?.get(height) ?? null });
@@ -4511,6 +4521,7 @@ function BitmapWorld3DInner({
         {/* THE LAND YOU STAND ON — landscape and the perks it is granting. */}
         {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <LandPerksHud /> : null}
         {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <HuntPanel compact /> : null}
+        {exploring ? <OasisDiscovery pose={pose} unit={AVATAR_U} showTracker={!inventoryOpen && !buildOpen && !mapOpen} /> : null}
 
 
         {buildOpen ? (
