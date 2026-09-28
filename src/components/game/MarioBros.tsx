@@ -17,8 +17,8 @@ import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { dryLandNear, isSea } from "@/lib/world-sea";
 import { groundY } from "@/lib/world-terrain";
 
-export const BROS_INSCRIPTION =
-  "ae759a6fba1e5bcd02bd74db802cd4c8d8f07d77ba1ce2327c9032072bf9f1b6i0";
+import { BROS_INSCRIPTION } from "@/lib/creature-codex";
+export { BROS_INSCRIPTION };
 
 const BROS_URL = contentUrl(BROS_INSCRIPTION);
 
