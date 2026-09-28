@@ -77,7 +77,7 @@ export async function createSummonOrder(userDb: SupabaseClient, userId: string, 
   if (open.data) return { order: toOrder(open.data as OrderRow), denied: null };
 
   for (let i = 0; i < 12; i++) {
-    const amount = GUARDIAN_PRICE_SATS + 1 + Math.floor(Math.random() * 9_999);
+    const amount = GUARDIAN_PRICE_SATS + 1 + Math.floor(Math.random() * 999);
     const created = await db
       .from("bitmon_summon_orders")
       .insert({ user_id: userId, block_height: height, payer_address: holder, amount_sats: amount })

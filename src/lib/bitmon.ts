@@ -10,7 +10,7 @@ import { MEMBERSHIP_ADDRESS } from "@/lib/membership";
 /** Every summon pays the project treasury. */
 export const GUARDIAN_TREASURY = MEMBERSHIP_ADDRESS;
 /** Base summon price, before the unique sats that identify the payer. */
-export const GUARDIAN_PRICE_SATS = 10_000;
+export const GUARDIAN_PRICE_SATS = 1_000;
 
 export type BlockDnaSource = {
   height: number;
