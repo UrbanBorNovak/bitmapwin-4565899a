@@ -6,6 +6,7 @@ import { coinBalanceQuery } from "@/lib/coins";
 import { useEffect, useState } from "react";
 import { PlayNav } from "@/components/play/PlayNav";
 import { LivingCard } from "@/components/play/LivingCard";
+import { CraftUnboxing } from "@/components/play/CraftUnboxing";
 import { MatchStats } from "@/components/play/MatchStats";
 import { heldHeightsQuery } from "@/lib/held-parcels";
 import { useWalletSession } from "@/lib/wallet-session";
@@ -42,6 +43,7 @@ function WorkshopPage() {
   const [note, setNote] = useState<string | null>(null);
   const [forging, setForging] = useState<number | null>(null);
   const [burst, setBurst] = useState<{ id: number; height: number } | null>(null);
+  const [unboxed, setUnboxed] = useState<number | null>(null);
   const qc = useQueryClient();
   const payCraft = useServerFn(craftCardFn);
   const bal = useQuery(coinBalanceQuery(addresses));
@@ -57,6 +59,7 @@ function WorkshopPage() {
       if (craftCard(h)) {
         setBurst({ id: Date.now(), height: h });
         setNote(`CRAFTED ${h}.BITMAP · −${CRAFT_COST_BIT} BIT`);
+        setUnboxed(h);
         void navigate({ search: { card: `bitmap-${h}` } });
       }
       void qc.invalidateQueries({ queryKey: ["coin-balance"] });
@@ -65,15 +68,26 @@ function WorkshopPage() {
     } finally { setForging(null); }
   }
 
+
   useEffect(() => { if (profile) void syncWorld(); }, [profile?.owner]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const cards = profile ? profile.order.map((id) => profile.cards[id]).filter((c): c is NonNullable<typeof c> => !!c) : [];
   const selected = (search.card && profile?.cards[search.card]) || cards[0] || null;
   const craftable = (held.data ?? []).filter((h) => !profile?.cards[`bitmap-${h}`]).slice(0, 60);
+  const unboxedCard = unboxed !== null ? (profile?.cards[`bitmap-${unboxed}`] ?? null) : null;
 
   return (
     <main className="play-district mx-auto max-w-[1200px] space-y-5 overflow-x-hidden px-3 py-4 md:px-8 md:py-6">
+      {unboxedCard && (
+        <CraftUnboxing
+          key={unboxedCard.id}
+          card={unboxedCard}
+          onClose={() => setUnboxed(null)}
+          onCraftAnother={() => { setUnboxed(null); document.getElementById("craft-list")?.scrollIntoView({ behavior: "smooth", block: "center" }); }}
+        />
+      )}
       <PlayNav />
+
       <header>
         <p className="label text-signal">FORGE</p>
         <h1 className="display mt-1 text-3xl md:text-4xl">WORKSHOP</h1>
@@ -94,7 +108,7 @@ function WorkshopPage() {
         ) : craftable.length === 0 ? (
           <p className="mt-2 font-mono text-xs text-muted-foreground">{(held.data ?? []).length ? "Every BITMAP you hold already has a card." : "No BITMAPs found in this wallet."}</p>
         ) : (
-          <ul className="mt-3 flex flex-wrap gap-2">
+          <ul id="craft-list" className="mt-3 flex flex-wrap gap-2">
             {craftable.map((h) => (
               <li key={h}>
                 <button type="button" className={`btn-term-ghost min-h-10 ${forging === h ? "craft-charge" : ""}`} disabled={forging !== null} onClick={() => void craft(h)}>
