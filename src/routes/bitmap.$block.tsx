@@ -35,6 +35,8 @@ import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { TerritoryPanel } from "@/components/extenders/TerritoryPanel";
 import { getBitmapHolderFn } from "@/lib/locate-bitmap.functions";
 import { LoopNavigator } from "@/components/LoopNavigator";
+import { TerritoryShareCard } from "@/components/TerritoryShareCard";
+
 import { StreamEventRow } from "@/components/StreamEventRow";
 import { provenanceStreamQuery } from "@/lib/provenance-stream";
 
