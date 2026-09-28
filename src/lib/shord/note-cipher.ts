@@ -39,14 +39,13 @@ export const SHORD_KIND_LABEL: Record<number, string> = {
 
 const enc = new TextEncoder();
 
-function cipherFor(scalar: bigint, ephemeralPublicKeyHex: string) {
-  const shared = noteSharedSecret(scalar, ephemeralPublicKeyHex);
-  const key = sha256(new Uint8Array([...enc.encode("bitmapwin:shord:note"), ...hexToBytes(fieldToHex(shared))]));
-  const nonce = sha256(
-    new Uint8Array([...enc.encode("bitmapwin:shord:nonce"), ...hexToBytes(ephemeralPublicKeyHex)]),
-  ).subarray(0, 24);
+function cipherFor(scalar: bigint, counterpartyPublicKeyHex: string) {
+  const shared = hexToBytes(fieldToHex(noteSharedSecret(scalar, counterpartyPublicKeyHex)));
+  const key = sha256(new Uint8Array([...enc.encode("bitmapwin:shord:note"), ...shared]));
+  const nonce = sha256(new Uint8Array([...enc.encode("bitmapwin:shord:nonce"), ...shared])).subarray(0, 24);
   return xchacha20poly1305(key, nonce);
 }
+
 
 export function sealNote(scalar: bigint, ephemeralPublicKeyHex: string, body: ShordNoteBody): string {
   const plain = new Uint8Array(SHORD_PLAINTEXT_BYTES);
