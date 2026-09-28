@@ -159,6 +159,15 @@ function BitmapDetail() {
   const txCount = stats.data?.txCount ?? scan.data?.txCount ?? null;
   const region = regionStats.data ?? null;
   const regionHeld = region ? Math.max(0, region.indexed - region.unowned) : 0;
+  const inscriptionId = parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null;
+  const status = parcel
+    ? PARCEL_STATUS_LABEL[lastSale ? "sold" : parcel.status]
+    : PARCEL_STATUS_LABEL.unclaimed;
+  const headlinePrice = parcel?.listedSats
+    ? formatSats(parcel.listedSats)
+    : lastSale
+      ? formatSats(lastSale.price_sats)
+      : "NOT LISTED";
 
   const trace = useMutation({
     mutationFn: async () => {
@@ -185,65 +194,79 @@ function BitmapDetail() {
 
 
   return (
-    <div className="land-terminal mx-auto min-h-screen max-w-[1400px] px-3 py-5 md:px-5 md:py-8">
-      <header className="land-panel p-4 md:p-5">
+    <div className="land-terminal mx-auto min-h-screen max-w-[1400px] px-3 py-5 md:px-6 md:py-8">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <Link to="/marketplace" className="label hover:text-foreground">← MARKETPLACE / LAND</Link>
-        <div className="mt-3 flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
-          <h1 className="display text-3xl md:text-5xl">{block}.BITMAP</h1>
-          <p className="label border border-border px-3 py-2 text-bitcoin">
-            {parcel
-              ? `CLAIMED${parcel.inscribedInBlock !== null ? ` · BLOCK ${parcel.inscribedInBlock}` : ""}`
-              : "UNCLAIMED"}
-          </p>
+        <Link to="/map/place/$block" params={{ block: String(block) }} className="label text-bitcoin hover:text-foreground">
+          {place.localName} · {place.name} →
+        </Link>
+      </div>
+
+      <header className="border border-border">
+        <div className="grid lg:grid-cols-12">
+          <div className="flex min-w-0 flex-col justify-between border-b border-border p-5 md:p-10 lg:col-span-8 lg:border-b-0 lg:border-r">
+            <div>
+              <div className="mb-5 flex flex-wrap items-center gap-3">
+                <span className="h-2 w-2 bg-signal motion-safe:animate-pulse" aria-hidden="true" />
+                <span className="label text-signal">BITCOIN MAINNET · {status}</span>
+              </div>
+              <h1 className="display break-all text-[clamp(3.25rem,9vw,8.5rem)] leading-[0.78]">
+                {block}<span className="text-bitcoin">.</span><br />BITMAP
+              </h1>
+            </div>
+            <div className="mt-10 flex flex-wrap items-end gap-5 md:gap-8">
+              <div>
+                <p className="label text-bitcoin">{parcel?.listedSats ? "CURRENT ASK" : lastSale ? "LAST VERIFIED SALE" : "MARKET STATUS"}</p>
+                <p className="display mt-1 text-2xl md:text-4xl">{headlinePrice}</p>
+              </div>
+              <MakeOfferButton height={block} askSats={parcel?.listedSats ?? null} className="btn-term min-h-12 px-6" label="MAKE OFFER" />
+              <WatchBitmapButton height={block} />
+            </div>
+          </div>
+          <aside className="flex flex-col justify-between bg-card/40 p-5 md:p-8 lg:col-span-4">
+            <dl className="space-y-6">
+              <HeroField label="OWNER" value={owner ? shortenAddress(owner) : liveHolder.isPending ? "RESOLVING…" : "UNCLAIMED"} signal />
+              <HeroField label="INSCRIPTION ID" value={inscriptionId ? shortId(inscriptionId) : oci.isLoading ? "RESOLVING…" : "—"} />
+              <HeroField label="ATLAS PLACE" value={`${place.localName} · ${place.name}`} />
+            </dl>
+            <div className="mt-8 grid grid-cols-2 gap-px border-t border-border bg-border pt-px">
+              <HeroStat label="TRANSACTIONS" value={txCount !== null ? txCount.toLocaleString("en-US") : "…"} />
+              <HeroStat label="TRANSFERS" value={String(history.length)} />
+            </div>
+          </aside>
         </div>
+        <nav className="flex overflow-x-auto border-t border-border" aria-label="BITMAP sections">
+          <a href="#world" className="label shrink-0 border-r border-border px-4 py-3 text-signal hover:bg-card">01 · LIVE WORLD</a>
+          <a href="#market" className="label shrink-0 border-r border-border px-4 py-3 hover:bg-card hover:text-bitcoin">02 · MARKET</a>
+          <a href="#facts" className="label shrink-0 border-r border-border px-4 py-3 hover:bg-card hover:text-bitcoin">03 · FACTS</a>
+          <a href="#history" className="label shrink-0 border-r border-border px-4 py-3 hover:bg-card hover:text-bitcoin">04 · HISTORY</a>
+          <a href="#community" className="label shrink-0 px-4 py-3 hover:bg-card hover:text-bitcoin">05 · COMMUNITY</a>
+        </nav>
       </header>
-      <Link to="/map/place/$block" params={{ block: String(block) }} className="land-panel mt-px flex max-w-xl min-w-0 items-center justify-between gap-4 px-4 py-3 transition-colors hover:border-bitcoin">
-        <span className="min-w-0">
-          <span className="label block text-bitcoin">THIS PLACE IN THE ATLAS</span>
-          <span className="mt-1 block truncate font-mono text-xs">{atlasPlace(block).localName} · {atlasPlace(block).name}</span>
-        </span>
-        <span className="label shrink-0 text-bitcoin">STORY →</span>
-      </Link>
+
       <div className="mt-px"><LoopNavigator active="provenance" compact /></div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <ClubBadge height={block} />
-        <GalleryBadges
-          height={block}
-          txCount={stats.data?.txCount ?? scan.data?.txCount ?? null}
-          sides={
-            (stats.data?.txCount ?? scan.data?.txCount ?? null) === 2
-              ? punkSides.data?.sides ?? null
-              : null
-          }
-        />
-        <TraitBadges height={block} showRarity />
-        <SatBadges height={block} />
+      <div className="border-x border-b border-border px-4 py-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <ClubBadge height={block} />
+          <GalleryBadges
+            height={block}
+            txCount={stats.data?.txCount ?? scan.data?.txCount ?? null}
+            sides={(stats.data?.txCount ?? scan.data?.txCount ?? null) === 2 ? punkSides.data?.sides ?? null : null}
+          />
+          <TraitBadges height={block} showRarity />
+          <SatBadges height={block} />
+        </div>
       </div>
 
-      <DistrictReinscriptions
-        height={block}
-        districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
-      />
+      <ParcelPagePanel height={block} ownerAddress={owner} />
 
-
-
-
-      <div className="mt-6 flex flex-wrap gap-2">
-        <MakeOfferButton
-          height={block}
-          askSats={parcel?.listedSats ?? null}
-          className="btn-term"
-          label="[ MAKE OFFER ]"
-        />
+      <div id="market" className="scroll-mt-20">
+        <DistrictReinscriptions height={block} districtInscriptionId={inscriptionId} />
       </div>
 
-      <div className="mt-6 max-w-2xl">
-        <TerritoryShareCard
-          height={block}
-          placeName={`${place.localName} · ${place.name}`}
-          tags={[parcel ? "CLAIMED LAND" : "UNCLAIMED LAND", "BITCOIN BLOCK"]}
-        />
+      <div className="mt-8 max-w-2xl">
+        <TerritoryShareCard height={block} placeName={`${place.localName} · ${place.name}`} tags={[parcel ? "CLAIMED LAND" : "UNCLAIMED LAND", "BITCOIN BLOCK"]} />
       </div>
 
 
@@ -257,7 +280,7 @@ function BitmapDetail() {
         <BssScriptPanel height={block} />
       </div>
 
-      <section className="mt-8 border border-border" aria-label="Block analytics">
+      <section id="facts" className="mt-8 scroll-mt-20 border border-border" aria-label="Block analytics">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
           <h2 className="label">BLOCK ANALYTICS</h2>
           <Link to="/map/district/$slug" params={{ slug: place.slug }} className="label text-bitcoin hover:text-foreground">
@@ -346,8 +369,6 @@ function BitmapDetail() {
 
       <BitmapPriceChart height={block} />
 
-      <ParcelPagePanel height={block} ownerAddress={owner} />
-
       <ParcelPanel
         height={block}
         districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
@@ -357,18 +378,14 @@ function BitmapDetail() {
         height={block}
         districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
       />
-      <section className="mt-8 border border-border"><header className="flex items-center justify-between border-b border-border px-4 py-3"><h2 className="display text-xl">HISTORY CREATED HERE</h2><Link to="/stream" className="label text-bitcoin">WORLD STREAM →</Link></header>{localHistory.data?.length ? localHistory.data.map((item) => <StreamEventRow key={item.id} event={item}/>) : <p className="p-5 font-mono text-xs text-muted-foreground">&gt; NO RECORDED WORLD HISTORY ON THIS BITMAP YET_</p>}</section>
-
-      <div className="mt-6">
-        <WatchBitmapButton height={block} />
-      </div>
+      <section id="history" className="mt-8 scroll-mt-20 border border-border"><header className="flex items-center justify-between border-b border-border px-4 py-3"><h2 className="display text-xl">HISTORY CREATED HERE</h2><Link to="/stream" className="label text-bitcoin">WORLD STREAM →</Link></header>{localHistory.data?.length ? localHistory.data.map((item) => <StreamEventRow key={item.id} event={item}/>) : <p className="p-5 font-mono text-xs text-muted-foreground">&gt; NO RECORDED WORLD HISTORY ON THIS BITMAP YET_</p>}</section>
 
       <BitmapValuation
         height={block}
         claimInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
       />
 
-      <BitmapChat height={block} />
+      <div id="community" className="scroll-mt-20"><BitmapChat height={block} /></div>
 
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
