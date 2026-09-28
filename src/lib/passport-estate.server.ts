@@ -50,7 +50,54 @@ export async function readPassportEstate(userId: string): Promise<PassportEstate
   const landRows: EstateLand[] = (land.data ?? []).map((row: any) => ({
     height: Number(row.block_height),
     inscriptionId: row.inscription_id ?? null,
+    totalViews: 0,
+    uniqueVisitors: 0,
+    buildRecords: 0,
+    installRecords: 0,
+    lastActivityAt: null,
   }));
+
+  if (landRows.length > 0) {
+    const heights = landRows.map((row) => row.height);
+    const [viewStats, territoryEvents] = await Promise.all([
+      client
+        .from("bitmap_view_stats")
+        .select("bitmap_height, total_views, unique_visitors, last_viewed_at")
+        .in("bitmap_height", heights),
+      client
+        .from("provenance_events")
+        .select("bitmap_height, event_type, occurred_at")
+        .in("bitmap_height", heights)
+        .eq("visibility", "public")
+        .in("event_type", ["build", "deployment"])
+        .limit(5000),
+    ]);
+    if (viewStats.error) throw viewStats.error;
+    if (territoryEvents.error) throw territoryEvents.error;
+    const statsByHeight = new Map((viewStats.data ?? []).map((row: any) => [Number(row.bitmap_height), row]));
+    const eventsByHeight = new Map<number, { builds: number; installs: number; latest: string | null }>();
+    for (const row of territoryEvents.data ?? []) {
+      const height = Number((row as any).bitmap_height);
+      const current = eventsByHeight.get(height) ?? { builds: 0, installs: 0, latest: null };
+      if ((row as any).event_type === "build") current.builds += 1;
+      if ((row as any).event_type === "deployment") current.installs += 1;
+      const occurredAt = (row as any).occurred_at as string;
+      if (!current.latest || occurredAt > current.latest) current.latest = occurredAt;
+      eventsByHeight.set(height, current);
+    }
+    for (const row of landRows) {
+      const stats = statsByHeight.get(row.height) as any;
+      const events = eventsByHeight.get(row.height);
+      row.totalViews = Number(stats?.total_views ?? 0);
+      row.uniqueVisitors = Number(stats?.unique_visitors ?? 0);
+      row.buildRecords = events?.builds ?? 0;
+      row.installRecords = events?.installs ?? 0;
+      row.lastActivityAt = [stats?.last_viewed_at ?? null, events?.latest ?? null]
+        .filter((value): value is string => Boolean(value))
+        .sort()
+        .at(-1) ?? null;
+    }
+  }
 
   const builds: EstateBuild[] = [
     ...(playerBuilds.data ?? []).map((row: any) => ({ id: `pb-${row.id}`, height: Number(row.bitmap_height), kind: String(row.kind), source: "OASIS BUILD", createdAt: row.created_at })),

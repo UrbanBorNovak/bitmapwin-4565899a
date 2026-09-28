@@ -1,5 +1,13 @@
 /** Shapes for the IDENTITY estate (client-safe). */
-export type EstateLand = { height: number; inscriptionId: string | null };
+export type EstateLand = {
+  height: number;
+  inscriptionId: string | null;
+  totalViews: number;
+  uniqueVisitors: number;
+  buildRecords: number;
+  installRecords: number;
+  lastActivityAt: string | null;
+};
 export type EstateBuild = { id: string; height: number; kind: string; source: string; createdAt: string };
 export type EstateVisit = { height: number; visits: number; lastAt: string };
 export type EstateBlueprint = {

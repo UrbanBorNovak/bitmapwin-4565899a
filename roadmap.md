@@ -86,3 +86,8 @@
 - [x] Recompose BITMAP details as a brutalist editorial story with clearer actions and navigation.
 - [x] Make the live territory the primary experience and reduce nested panel clutter.
 - [x] Verify the refreshed BITMAP page on desktop and phone.
+
+## Territory Chronicle
+- [x] Show each BITMAP's persisted builds, visits, visitors, and Extender installs in one Chronicle.
+- [x] Link held BITMAPs in Passport directly to their Territory Chronicle.
+- [ ] Verify Chronicle and Passport links on desktop and phone.
