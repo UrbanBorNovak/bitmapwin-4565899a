@@ -14,6 +14,8 @@ import { SafeHtml } from "@/components/game/SafeHtml";
 import { onShadowRoom, type ShadowRoomRequest } from "@/lib/shadow-room";
 import { getPass, shadowHandle } from "@/lib/shadow-vault";
 import { verifyShadowPassFn, postShadowWhisperFn } from "@/lib/shadow-assets.functions";
+import { getShadowNoteFn } from "@/lib/shadow-l1.functions";
+import { useQuery } from "@tanstack/react-query";
 
 type Whisper = { id: string; nullifier: string; content: string; createdAt: string };
 type EventInfo = { title: string; subtitle: string; description: string; maxPasses: number; passesIssued: number; territoryBlock: number };
