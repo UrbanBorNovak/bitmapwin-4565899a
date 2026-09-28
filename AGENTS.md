@@ -24,3 +24,4 @@
 - Oasis maps share painted Atlas/Hilbert/fog; block-fee props lock to the prior 10-block median.
 - Oasis discovery progress is device-local; BIT pays only on fixed EXPLORE_MILESTONES, once per account via ledger ref, so farming is bounded.
 - Block-DNA Guardians are derived purely from public block data (src/lib/bitmon.ts) and created only server-side after an exact-amount treasury payment confirms; one per block, because the chain payment is the only trusted proof.
+- Shadow Assets store only pass commitment/nullifier hashes (src/lib/shadow-vault.ts derives them on-device); shadow_commitments has no RLS policy and is reached solely through the security-definer routines, so no wallet or account is ever linked to a pass.
