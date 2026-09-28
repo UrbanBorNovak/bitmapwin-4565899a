@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { DataBadge } from "@/components/extenders/DataBadge";
 import { MvpFlowRail } from "@/components/MvpFlowRail";
 import { ExtenderPreview } from "@/components/extenders/ExtenderPreview";
+import { TerritoryShareCard } from "@/components/TerritoryShareCard";
+
 import { useAuthSession } from "@/lib/auth";
 import { heldHeightsQuery } from "@/lib/held-parcels";
 import { myWalletLinksQuery } from "@/lib/wallet-links";
@@ -585,6 +587,15 @@ function CreatePage() {
               </div>
             </div>
           ) : null}
+
+          {deployed ? (
+            <TerritoryShareCard
+              height={deployed.height}
+              title={design?.name ?? null}
+              tags={design ? [categoryLabel(design.category), ...design.tags.slice(0, 3)] : []}
+            />
+          ) : null}
+
         </div>
       </div>
     </div>
