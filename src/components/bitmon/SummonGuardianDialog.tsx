@@ -61,6 +61,19 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
     supabase.auth.getSession().then(({ data }) => setSignedIn(Boolean(data.session)));
   }, [open]);
 
+  // If this player already has an open invoice (paid or unpaid), pick up where
+  // they left off instead of offering a fresh summon.
+  useEffect(() => {
+    if (!open || signedIn !== true || order || already) return;
+    resumeOrder({ data: { height } })
+      .then((existing) => {
+        if (existing) setOrder(existing);
+      })
+      .catch(() => {
+        /* no session or network hiccup — the summon button still works */
+      });
+  }, [open, signedIn, order, already, resumeOrder, height]);
+
   useEffect(() => {
     if (!order) return setQr(null);
     QRCode.toDataURL(bip21(order.payTo, order.amountSats, `GUARDIAN ${height}`), { margin: 1, width: 240 }).then(setQr).catch(() => setQr(null));
