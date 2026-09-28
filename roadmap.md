@@ -138,3 +138,10 @@
 - [x] Post-broadcast: signed raw transaction, txid, mempool link
 - [x] Mempool polling every 15s; vault chamber badge flips to ANCHORED at the mined block
 - [ ] Confirm end to end with one real wallet broadcast (needs funded wallet + a mined block)
+
+## Guardian shielded Ordinals and wildlife detail
+- [x] Add a deterministic rich Guardian Ordinal artifact after a confirmed summon.
+- [x] Keep wallet/account identity out of the Guardian artifact and preserve one Guardian per block.
+- [x] Upgrade procedural voxel wildlife and Guardian silhouettes without changing fly-brain behavior.
+- [ ] Verify a live Guardian inscription with a funded wallet and mined reveal.
+- [x] Visually verify upgraded wildlife models in the Bestiary on desktop and phone; full Oasis WebGL verification is blocked by the sandbox graphics context.

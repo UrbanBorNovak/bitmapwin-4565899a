@@ -957,15 +957,13 @@ export const CritterBody = memo(function CritterBody({
           <meshBasicMaterial color={colors.bitcoin} />
         </mesh>
         {[-1, 1].map((side) => (
-          <mesh
-            key={side}
-            position={[side * u * 0.05, u * 0.02, -u * 0.07]}
-            rotation-y={side * 0.5}
-            raycast={noRaycast}
-          >
-            <boxGeometry args={[u * 0.05, u * 0.018, u * 0.02]} />
-            <meshLambertMaterial color={colors.foreground} />
-          </mesh>
+          <group key={side}>
+            {[-0.055, 0, 0.055].map((z, i) => <group key={z} position={[side * u * 0.055, u * 0.018, z * u]} rotation-y={side * (0.45 + i * 0.12)}>
+              <mesh position={[side * u * 0.028, 0, 0]} raycast={noRaycast}><boxGeometry args={[u * 0.06, u * 0.014, u * 0.018]} /><meshLambertMaterial color={colors.foreground} /></mesh>
+              <mesh position={[side * u * 0.065, -u * 0.006, 0]} raycast={noRaycast}><boxGeometry args={[u * 0.045, u * 0.012, u * 0.014]} /><meshLambertMaterial color={colors.muted} /></mesh>
+            </group>)}
+            <mesh position={[side * u * 0.085, u * 0.03, u * 0.07]} rotation-y={side * 0.4} raycast={noRaycast}><boxGeometry args={[u * 0.06, u * 0.035, u * 0.055]} /><meshLambertMaterial color={colors.foreground} /></mesh>
+          </group>
         ))}
       </group>
     );
@@ -1010,11 +1008,13 @@ export const CritterBody = memo(function CritterBody({
           <meshLambertMaterial color={HIDE} />
         </mesh>
         {[-1, 1].map((side) => (
-          <mesh key={side} position={[side * u * 0.014, u * 0.14, u * 0.045]} raycast={noRaycast}>
-            <boxGeometry args={[u * 0.012, u * 0.07, u * 0.016]} />
-            <meshLambertMaterial color={HIDE_DARK} />
-          </mesh>
+          <group key={side}>
+            <mesh position={[side * u * 0.014, u * 0.145, u * 0.045]} rotation-z={side * 0.08} raycast={noRaycast}><boxGeometry args={[u * 0.014, u * 0.09, u * 0.018]} /><meshLambertMaterial color={HIDE_DARK} /></mesh>
+            <mesh position={[side * u * 0.013, u * 0.098, u * 0.073]} raycast={noRaycast}><boxGeometry args={[u * 0.009, u * 0.009, u * 0.006]} /><meshBasicMaterial color={colors.background} /></mesh>
+          </group>
         ))}
+        <mesh position={[0, u * 0.055, -u * 0.065]} raycast={noRaycast}><sphereGeometry args={[u * 0.025, 6, 5]} /><meshLambertMaterial color={SPIKE} /></mesh>
+        {[-1, 1].map((side) => <mesh key={`foot-${side}`} position={[side * u * 0.028, u * 0.012, -u * 0.025]} raycast={noRaycast}><boxGeometry args={[u * 0.025, u * 0.015, u * 0.06]} /><meshLambertMaterial color={HIDE_DARK} /></mesh>)}
       </group>
     );
   }
@@ -1027,16 +1027,14 @@ export const CritterBody = memo(function CritterBody({
           <meshLambertMaterial color={colors.foreground} />
         </mesh>
         {[-1, 1].map((side) => (
-          <mesh
-            key={side}
-            position={[side * u * 0.16, u * 0.02, 0]}
-            rotation-z={side * 0.15}
-            raycast={noRaycast}
-          >
-            <boxGeometry args={[u * 0.28, u * 0.012, u * 0.1]} />
-            <meshLambertMaterial color={colors.muted} />
-          </mesh>
+          <group key={side}>
+            <mesh position={[side * u * 0.13, u * 0.02, 0]} rotation-z={side * 0.15} raycast={noRaycast}><boxGeometry args={[u * 0.22, u * 0.018, u * 0.12]} /><meshLambertMaterial color={colors.muted} /></mesh>
+            <mesh position={[side * u * 0.3, 0, -u * 0.015]} rotation-z={side * 0.25} raycast={noRaycast}><boxGeometry args={[u * 0.16, u * 0.012, u * 0.08]} /><meshLambertMaterial color={colors.foreground} /></mesh>
+          </group>
         ))}
+        <mesh position={[0, u * 0.035, u * 0.105]} raycast={noRaycast}><boxGeometry args={[u * 0.045, u * 0.045, u * 0.055]} /><meshLambertMaterial color={HIDE_DARK} /></mesh>
+        <mesh position={[0, u * 0.025, u * 0.15]} rotation-x={Math.PI / 2} raycast={noRaycast}><coneGeometry args={[u * 0.018, u * 0.06, 4]} /><meshLambertMaterial color={colors.bitcoin} /></mesh>
+        {[-1, 0, 1].map((side) => <mesh key={`tail-${side}`} position={[side * u * 0.025, 0, -u * 0.12]} raycast={noRaycast}><boxGeometry args={[u * 0.025, u * 0.012, u * 0.11]} /><meshLambertMaterial color={colors.foreground} /></mesh>)}
       </group>
     );
   }
@@ -1054,6 +1052,10 @@ export const CritterBody = memo(function CritterBody({
         <boxGeometry args={[build.bodyW, build.bodyH, build.bodyL]} />
         <meshLambertMaterial color={build.hide} />
       </mesh>
+      <mesh position={[0, build.bodyY - build.bodyH * 0.18, build.bodyL * 0.08]} raycast={noRaycast}>
+        <boxGeometry args={[build.bodyW * 0.76, build.bodyH * 0.22, build.bodyL * 0.58]} />
+        <meshLambertMaterial color={build.accent} />
+      </mesh>
       <mesh position={[0, build.neckY, build.bodyL * 0.4]} rotation-x={-build.neckTilt} raycast={noRaycast}>
         <boxGeometry args={[build.bodyW * 0.5, build.neckH, build.bodyW * 0.5]} />
         <meshLambertMaterial color={build.hide} />
@@ -1062,29 +1064,35 @@ export const CritterBody = memo(function CritterBody({
         <boxGeometry args={[build.bodyW * 0.5, build.bodyH * 0.45, build.bodyL * 0.28]} />
         <meshLambertMaterial color={build.accent} />
       </mesh>
+      <mesh position={[0, build.headY - build.bodyH * 0.04, build.bodyL * 0.62 + build.headZ]} raycast={noRaycast}>
+        <boxGeometry args={[build.bodyW * 0.34, build.bodyH * 0.22, build.bodyL * 0.18]} />
+        <meshLambertMaterial color={build.hide} />
+      </mesh>
+      {[-1, 1].map((side) => <group key={`face-${side}`}>
+        <mesh position={[side * build.bodyW * 0.17, build.headY + build.bodyH * 0.18, build.bodyL * 0.53 + build.headZ]} rotation-z={side * 0.35} raycast={noRaycast}><boxGeometry args={[build.bodyW * 0.16, build.bodyH * 0.22, build.bodyW * 0.08]} /><meshLambertMaterial color={build.accent} /></mesh>
+        <mesh position={[side * build.bodyW * 0.13, build.headY + build.bodyH * 0.05, build.bodyL * 0.72 + build.headZ]} raycast={noRaycast}><boxGeometry args={[build.bodyW * 0.055, build.bodyW * 0.055, build.bodyW * 0.03]} /><meshBasicMaterial color={colors.background} /></mesh>
+      </group>)}
       {[
         [-1, 1],
         [1, 1],
         [-1, -1],
         [1, -1],
       ].map(([sx, sz], i) => (
-        <mesh
+        <group
           key={i}
           position={[sx! * build.bodyW * 0.36, build.legH / 2, sz! * build.bodyL * 0.34]}
-          raycast={noRaycast}
         >
-          <boxGeometry args={[build.bodyW * 0.2, build.legH, build.bodyW * 0.2]} />
-          <meshLambertMaterial color={build.accent} />
-        </mesh>
+          <mesh position={[0, build.legH * 0.18, 0]} raycast={noRaycast}><boxGeometry args={[build.bodyW * 0.22, build.legH * 0.56, build.bodyW * 0.22]} /><meshLambertMaterial color={build.accent} /></mesh>
+          <mesh position={[0, -build.legH * 0.25, sz! * build.bodyW * 0.04]} raycast={noRaycast}><boxGeometry args={[build.bodyW * 0.16, build.legH * 0.38, build.bodyW * 0.16]} /><meshLambertMaterial color={build.hide} /></mesh>
+          <mesh position={[0, -build.legH * 0.47, build.bodyW * 0.08]} raycast={noRaycast}><boxGeometry args={[build.bodyW * 0.23, build.legH * 0.1, build.bodyW * 0.34]} /><meshLambertMaterial color={build.accent} /></mesh>
+        </group>
       ))}
+      <mesh position={[0, build.bodyY + build.bodyH * 0.1, -build.bodyL * 0.58]} rotation-x={0.75} raycast={noRaycast}><boxGeometry args={[build.bodyW * 0.16, build.bodyH * 0.16, build.bodyL * 0.55]} /><meshLambertMaterial color={build.accent} /></mesh>
       {kind === "elephant" ? (
-        <mesh
-          position={[0, build.headY - build.bodyH * 0.3, build.bodyL * 0.6]}
-          raycast={noRaycast}
-        >
-          <boxGeometry args={[build.bodyW * 0.16, build.bodyH * 0.6, build.bodyW * 0.16]} />
-          <meshLambertMaterial color={build.accent} />
-        </mesh>
+        <group>
+          <mesh position={[0, build.headY - build.bodyH * 0.3, build.bodyL * 0.69]} raycast={noRaycast}><boxGeometry args={[build.bodyW * 0.16, build.bodyH * 0.6, build.bodyW * 0.16]} /><meshLambertMaterial color={build.accent} /></mesh>
+          {[-1, 1].map((side) => <mesh key={side} position={[side * build.bodyW * 0.16, build.headY - build.bodyH * 0.14, build.bodyL * 0.72]} rotation-x={-0.25} raycast={noRaycast}><coneGeometry args={[build.bodyW * 0.035, build.bodyH * 0.34, 5]} /><meshLambertMaterial color={SPIKE} /></mesh>)}
+        </group>
       ) : null}
       {kind === "rhino" ? (
         <mesh
@@ -1102,6 +1110,7 @@ export const CritterBody = memo(function CritterBody({
           <meshLambertMaterial color={HIDE_DARK} />
         </mesh>
       ) : null}
+      {kind === "giraffe" ? [0.18, 0.42, 0.7].map((z, i) => <mesh key={z} position={[i % 2 ? build.bodyW * 0.22 : -build.bodyW * 0.18, build.bodyY + build.bodyH * 0.22, (z - 0.45) * build.bodyL]} raycast={noRaycast}><boxGeometry args={[build.bodyW * 0.2, build.bodyH * 0.08, build.bodyL * 0.13]} /><meshLambertMaterial color={build.accent} /></mesh>) : null}
     </group>
   );
 });
