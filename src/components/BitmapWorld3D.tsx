@@ -1525,16 +1525,20 @@ const SelfBeacon = memo(function SelfBeacon({
         <circleGeometry args={[scale * 1.4, wide ? 4 : 24]} />
         <meshBasicMaterial color={bitcoin} transparent opacity={wide ? 0.34 : 0.2} depthWrite={false} />
       </mesh>
-      {/* pulsing ring so the eye finds you while the camera moves */}
-      <mesh
-        ref={pulse}
-        rotation-x={-Math.PI / 2}
-        position-y={wide ? CELL * 0.09 : AVATAR_U * 0.035}
-        raycast={noRaycast}
-      >
-        <ringGeometry args={[scale * 0.95, scale * 1.2, wide ? 4 : 32]} />
-        <meshBasicMaterial color={bitcoin} transparent opacity={0.5} depthWrite={false} />
-      </mesh>
+      {/* Pulsing locator ring — overhead map only; on foot it read as a
+          glowing animation circling the avatar, so it stays off there. */}
+      {wide ? (
+        <mesh
+          ref={pulse}
+          rotation-x={-Math.PI / 2}
+          position-y={CELL * 0.09}
+          raycast={noRaycast}
+        >
+          <ringGeometry args={[scale * 0.95, scale * 1.2, 4]} />
+          <meshBasicMaterial color={bitcoin} transparent opacity={0.5} depthWrite={false} />
+        </mesh>
+      ) : null}
+
       {/* The tall locator is useful overhead only. On foot, the beacon stays flat. */}
       {wide ? (
         <mesh position-y={height / 2} raycast={noRaycast}>
