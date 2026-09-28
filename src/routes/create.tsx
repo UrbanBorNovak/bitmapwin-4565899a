@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { DataBadge } from "@/components/extenders/DataBadge";
 import { MvpFlowRail } from "@/components/MvpFlowRail";
 import { ExtenderPreview } from "@/components/extenders/ExtenderPreview";
+import { TerritoryShareCard } from "@/components/TerritoryShareCard";
+
 import { useAuthSession } from "@/lib/auth";
 import { heldHeightsQuery } from "@/lib/held-parcels";
 import { myWalletLinksQuery } from "@/lib/wallet-links";
@@ -33,10 +35,16 @@ import { coinBalanceQuery, formatBit } from "@/lib/coins";
  * builder actually holds. Every step here writes real rows — nothing is mocked.
  */
 export const Route = createFileRoute("/create")({
-  validateSearch: (search: Record<string, unknown>): { height?: number } => {
+  validateSearch: (search: Record<string, unknown>): { height?: number; prompt?: string } => {
     const height = Number(search["height"]);
-    return Number.isFinite(height) && height >= 0 ? { height } : {};
+    const raw = search["prompt"];
+    const brief = typeof raw === "string" && raw.trim().length > 0 ? raw.trim().slice(0, 1200) : undefined;
+    return {
+      ...(Number.isFinite(height) && height >= 0 ? { height } : {}),
+      ...(brief ? { prompt: brief } : {}),
+    };
   },
+
   head: () => {
     const title = "Create With AI — Build an Experience for Your BITMAP";
     const description =
@@ -77,7 +85,7 @@ type Deployed = { slug: string; height: number; semver: string; extenderId: stri
 
 
 function CreatePage() {
-  const { height: searchHeight } = Route.useSearch();
+  const { height: searchHeight, prompt: searchPrompt } = Route.useSearch();
   const { session, user, loading } = useAuthSession();
   const wallet = useWalletSession();
   const links = useQuery(myWalletLinksQuery(Boolean(session)));
@@ -88,7 +96,9 @@ function CreatePage() {
   const balances = useQuery({ ...coinBalanceQuery(addresses), enabled: addresses.length > 0 });
   const bitBalance = (balances.data ?? []).reduce((sum, row) => sum + row.balance, 0);
 
-  const [prompt, setPrompt] = useState("");
+  // A brief typed on the home page arrives as a search param and pre-fills the builder.
+  const [prompt, setPrompt] = useState(searchPrompt ?? "");
+
   const [tierId, setTierId] = useState<BuildTierId>(DEFAULT_BUILD_TIER);
   const [priceBit, setPriceBit] = useState("0");
   const tier = buildTier(tierId);
@@ -577,6 +587,15 @@ function CreatePage() {
               </div>
             </div>
           ) : null}
+
+          {deployed ? (
+            <TerritoryShareCard
+              height={deployed.height}
+              title={design?.name ?? null}
+              tags={design ? [categoryLabel(design.category), ...design.tags.slice(0, 3)] : []}
+            />
+          ) : null}
+
         </div>
       </div>
     </div>

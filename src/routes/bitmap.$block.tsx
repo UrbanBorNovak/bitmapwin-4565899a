@@ -35,6 +35,8 @@ import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { TerritoryPanel } from "@/components/extenders/TerritoryPanel";
 import { getBitmapHolderFn } from "@/lib/locate-bitmap.functions";
 import { LoopNavigator } from "@/components/LoopNavigator";
+import { TerritoryShareCard } from "@/components/TerritoryShareCard";
+
 import { StreamEventRow } from "@/components/StreamEventRow";
 import { provenanceStreamQuery } from "@/lib/provenance-stream";
 
@@ -235,6 +237,15 @@ function BitmapDetail() {
           label="[ MAKE OFFER ]"
         />
       </div>
+
+      <div className="mt-6 max-w-2xl">
+        <TerritoryShareCard
+          height={block}
+          placeName={`${place.localName} · ${place.name}`}
+          tags={[parcel ? "CLAIMED LAND" : "UNCLAIMED LAND", "BITCOIN BLOCK"]}
+        />
+      </div>
+
 
       <div className="mt-8">
         <BitmapOrderBook height={block} />

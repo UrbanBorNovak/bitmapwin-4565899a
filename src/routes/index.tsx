@@ -8,6 +8,8 @@ import { registryParcelsQuery, registryCountQuery } from "@/lib/registry";
 import { recentTradesQuery, tradedBitmapCountQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
 import { LoopNavigator } from "@/components/LoopNavigator";
+import { LandPromptTerminal } from "@/components/LandPromptTerminal";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -109,22 +111,20 @@ function Index() {
               <div className="mt-5 grid items-start gap-5 md:grid-cols-[minmax(0,1fr)_220px] md:gap-6">
                 <div className="max-w-xl">
                   <p className="max-w-2xl text-sm leading-relaxed text-foreground sm:text-base">
-                    BitmapWin turns Bitcoin blockspace into places you can enter, build on and experience.
+                    You own a piece of Bitcoin. Now make something happen there.
                   </p>
-                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                    The Oasis is the world. Bitmaps are the land. Extenders are what happen there.
-                    Your Passport is the history you leave. Studio is how you create.
-                  </p>
-                  <div data-tour="home-flow" className="mt-5 grid gap-px sm:flex sm:flex-wrap">
-                    <Link to="/oasis" className="btn-term min-h-12 w-full sm:min-h-0 sm:w-auto">01 · ENTER THE WORLD</Link>
-                    <Link to="/play" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">02 · PLAY YOUR BITMAP</Link>
-                    <Link to="/passport" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">03 · OPEN PASSPORT</Link>
+                  <LandPromptTerminal />
+                  <div data-tour="home-flow" className="mt-4 grid gap-px sm:flex sm:flex-wrap">
+                    <Link to="/oasis" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">ENTER THE WORLD</Link>
+                    <Link to="/play" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">PLAY YOUR BITMAP</Link>
+                    <Link to="/passport" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">OPEN PASSPORT</Link>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs font-bold">
                     <Link to="/extenders" className="text-bitcoin hover:text-foreground">EXPERIENCES →</Link>
                     <Link to="/studio" className="text-bitcoin hover:text-foreground">CREATION →</Link>
                   </div>
                 </div>
+
 
 
                 {lead && (
