@@ -2,6 +2,7 @@ import { useEffect, useState, type MutableRefObject } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { atlasPlace } from "@/lib/atlas-places";
+import { blockToAtlas } from "@/lib/atlas-geometry";
 import { claimExploreMilestoneFn } from "@/lib/coins.functions";
 import { SHRINE_LAYOUT_NAMES, shrineSitesNear } from "@/components/game/ClayShrines";
 import {
@@ -9,6 +10,7 @@ import {
   onDiscovery,
   recordDistrict,
   recordRuin,
+  recordVisit,
   useDiscovery,
   type DiscoveryEvent,
 } from "@/lib/oasis-discovery";
@@ -33,6 +35,8 @@ export function OasisDiscovery({ pose, unit, showTracker }: { pose: MutableRefOb
       const p = pose.current;
       const district = atlasPlace(p.height);
       recordDistrict(district.slug, district.name);
+      const cell = blockToAtlas(p.height);
+      recordVisit(cell.x, cell.y);
       const reach = unit * 18;
       for (const site of shrineSitesNear(unit, [p.x, p.z], unit * 40, 3)) {
         if ((site.x - p.x) ** 2 + (site.z - p.z) ** 2 <= reach * reach) {
