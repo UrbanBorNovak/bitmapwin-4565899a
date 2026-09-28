@@ -7,8 +7,7 @@ import { districtsQuery } from "@/lib/districts";
 import { worldDeploymentsQuery } from "@/lib/extenders";
 import { shortenAddress } from "@/lib/registry";
 import { LoopNavigator } from "@/components/LoopNavigator";
-import { StreamEventRow } from "@/components/StreamEventRow";
-import { provenanceStreamQuery } from "@/lib/provenance-stream";
+import { WorldPulse } from "@/components/WorldPulse";
 
 export const Route = createFileRoute("/explore")({
   head: () => {
