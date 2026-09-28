@@ -23,6 +23,7 @@ import { safeExternalUrl } from "@/lib/safe-url";
 import { recordPassportVisitFn } from "@/lib/views.functions";
 import { BuildEditor } from "@/components/builds/BuildEditor";
 import { PublicBuildViewer } from "@/components/builds/PublicBuildViewer";
+import { runtimeDeploymentsForHeightQuery } from "@/lib/extender-code";
 import { BuildRaffles } from "@/components/coins/BuildRaffles";
 import { LiveBitmapPresence } from "@/components/LiveBitmapPresence";
 import { BitmapModelPlacement } from "@/components/BitmapModelPlacement";
@@ -65,6 +66,7 @@ export function ParcelPagePanel({
   // the write actually passes the ownership policy.
   const delegates = useQuery(delegatesQuery(height));
   const district = useQuery(districtForHeightQuery(height));
+  const deployments = useQuery(runtimeDeploymentsForHeightQuery(height));
   const isHolder = walletControls(wallet, ownerAddress) && isLinked(links.data, ownerAddress);
   // A delegate the holder granted can build too (RLS mirrors this check).
   const isDelegate = (delegates.data ?? []).some(
@@ -132,6 +134,19 @@ export function ParcelPagePanel({
   });
 
   const built = page.data;
+  const viewerPage = built ?? (deployments.data?.length
+    ? {
+        bitmapHeight: height,
+        ownerAddress: ownerAddress ?? "",
+        title: null,
+        description: null,
+        linkUrl: null,
+        bannerInscriptionId: null,
+        buildKind: "info" as const,
+        buildConfig: DEFAULT_CONFIGS.info,
+        updatedAt: null,
+      }
+    : null);
 
   return (
     <section id="world" className="border-x border-b border-border scroll-mt-20">
@@ -195,17 +210,19 @@ export function ParcelPagePanel({
           </p>
         )}
 
-        {built && (
+        {viewerPage && (
           <div className="pt-2">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="label text-bitcoin">{BUILD_KIND_LABELS[built.buildKind]}</p>
+              <p className="label text-bitcoin">
+                {built ? BUILD_KIND_LABELS[built.buildKind] : "DEPLOYED EXTENDER"}
+              </p>
               <span className="label hidden text-signal sm:block">INTERACTIVE · PUBLIC</span>
             </div>
             <PublicBuildViewer
-              page={built}
+              page={viewerPage}
               district={district.data ? { name: district.data.name, slug: district.data.slug } : null}
             />
-            <BuildRaffles height={height} />
+            {built && <BuildRaffles height={height} />}
           </div>
         )}
 
