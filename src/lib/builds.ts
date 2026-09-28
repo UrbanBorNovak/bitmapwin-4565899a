@@ -1,7 +1,8 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { ParcelPage } from "@/lib/profiles";
-import { isBuildKind, parseBuildConfig } from "@/lib/build-sdk";
+import { DEFAULT_CONFIGS, isBuildKind, parseBuildConfig } from "@/lib/build-sdk";
+import { fetchRuntimeDeployments } from "@/lib/extender-code";
 
 /**
  * The public builds directory plus build delegation. A "build" is an owner-made
@@ -14,6 +15,8 @@ export type BuildEntry = {
   totalViews: number;
   uniqueVisitors: number;
   lastViewedAt: string | null;
+  hasActiveExtender: boolean;
+  extenderNames: string[];
 };
 
 export type BuildDelegate = {
@@ -25,16 +28,32 @@ export type BuildDelegate = {
   createdAt: string;
 };
 
-export async function fetchBuilds(limit = 60): Promise<BuildEntry[]> {
-  const { data, error } = await supabase
-    .from("parcel_pages")
-    .select(
-      "bitmap_height, owner_address, title, description, link_url, banner_inscription_id, build_kind, build_config, updated_at",
-    )
-    .order("updated_at", { ascending: false })
-    .limit(limit);
-  if (error) throw error;
-  const pages = (data ?? []).map((row) => ({
+export async function fetchBuilds(): Promise<BuildEntry[]> {
+  const pageRows: Array<{
+    bitmap_height: number; owner_address: string; title: string | null; description: string | null;
+    link_url: string | null; banner_inscription_id: string | null; build_kind: string; build_config: unknown; updated_at: string | null;
+  }> = [];
+  const pageSize = 500;
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from("parcel_pages")
+      .select("bitmap_height, owner_address, title, description, link_url, banner_inscription_id, build_kind, build_config, updated_at")
+      .order("updated_at", { ascending: false })
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    pageRows.push(...((data ?? []) as typeof pageRows));
+    if ((data ?? []).length < pageSize) break;
+  }
+
+  const deployments = await fetchRuntimeDeployments();
+  const deploymentsByHeight = new Map<number, typeof deployments>();
+  for (const deployment of deployments) {
+    const stack = deploymentsByHeight.get(deployment.height) ?? [];
+    stack.push(deployment);
+    deploymentsByHeight.set(deployment.height, stack);
+  }
+
+  const pages = pageRows.map((row) => ({
     bitmapHeight: Number(row.bitmap_height),
     ownerAddress: row.owner_address,
     title: row.title,
@@ -46,16 +65,37 @@ export async function fetchBuilds(limit = 60): Promise<BuildEntry[]> {
     updatedAt: row.updated_at,
   })) satisfies ParcelPage[];
 
+  const pageHeights = new Set(pages.map((page) => page.bitmapHeight));
+  for (const deployment of deployments) {
+    if (pageHeights.has(deployment.height)) continue;
+    pages.push({
+      bitmapHeight: deployment.height,
+      ownerAddress: "",
+      title: deployment.name,
+      description: `ACTIVE ${deployment.category.toUpperCase()} EXTENDER`,
+      linkUrl: null,
+      bannerInscriptionId: null,
+      buildKind: "game3d",
+      buildConfig: DEFAULT_CONFIGS.game3d,
+      updatedAt: null,
+    });
+    pageHeights.add(deployment.height);
+  }
+
   if (pages.length === 0) return [];
 
-  const { data: stats, error: statsError } = await supabase
-    .from("bitmap_view_stats")
-    .select("bitmap_height, total_views, unique_visitors, last_viewed_at")
-    .in("bitmap_height", pages.map((p) => p.bitmapHeight));
-  if (statsError) throw statsError;
+  const stats: Array<{ bitmap_height: number; total_views: number; unique_visitors: number; last_viewed_at: string | null }> = [];
+  for (let start = 0; start < pages.length; start += 250) {
+    const { data, error } = await supabase
+      .from("bitmap_view_stats")
+      .select("bitmap_height, total_views, unique_visitors, last_viewed_at")
+      .in("bitmap_height", pages.slice(start, start + 250).map((page) => page.bitmapHeight));
+    if (error) throw error;
+    stats.push(...((data ?? []) as typeof stats));
+  }
 
   const byHeight = new Map(
-    (stats ?? []).map((s) => [Number(s.bitmap_height), s] as const),
+    stats.map((s) => [Number(s.bitmap_height), s] as const),
   );
 
   return pages
@@ -66,6 +106,8 @@ export async function fetchBuilds(limit = 60): Promise<BuildEntry[]> {
         totalViews: stat ? Number(stat.total_views) : 0,
         uniqueVisitors: stat ? Number(stat.unique_visitors) : 0,
         lastViewedAt: stat?.last_viewed_at ?? null,
+        hasActiveExtender: deploymentsByHeight.has(page.bitmapHeight),
+        extenderNames: (deploymentsByHeight.get(page.bitmapHeight) ?? []).map((deployment) => deployment.name),
       };
     })
     .sort((a, b) => b.totalViews - a.totalViews || b.uniqueVisitors - a.uniqueVisitors);
@@ -108,8 +150,8 @@ export async function removeDelegate(id: string) {
   if (error) throw error;
 }
 
-export const buildsQuery = (limit = 60) =>
-  queryOptions({ queryKey: ["builds", limit], queryFn: () => fetchBuilds(limit), staleTime: 30_000 });
+export const buildsQuery = () =>
+  queryOptions({ queryKey: ["builds", "all-public"], queryFn: fetchBuilds, staleTime: 30_000 });
 
 export const delegatesQuery = (height: number) =>
   queryOptions({

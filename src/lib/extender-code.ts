@@ -20,6 +20,8 @@ export type RuntimeDeployment = {
   config: Record<string, unknown>;
 };
 
+const PUBLIC_DEPLOYMENT_PAGE_SIZE = 500;
+
 type Row = {
   id: string;
   extender_id: string;
@@ -46,26 +48,31 @@ function toRuntimeDeployment(row: Row): RuntimeDeployment | null {
   };
 }
 
-export const runtimeDeploymentsQuery = (limit = 400) =>
+export async function fetchRuntimeDeployments(): Promise<RuntimeDeployment[]> {
+  const out: RuntimeDeployment[] = [];
+  for (let from = 0; ; from += PUBLIC_DEPLOYMENT_PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from("extender_deployments")
+      .select(
+        "id, extender_id, bitmap_height, config, extenders(name, slug, category), extender_versions(semver, manifest)",
+      )
+      .eq("status", "active")
+      .order("active_from", { ascending: false })
+      .range(from, from + PUBLIC_DEPLOYMENT_PAGE_SIZE - 1);
+    if (error) throw error;
+    for (const row of (data ?? []) as Row[]) {
+      const deployment = toRuntimeDeployment(row);
+      if (deployment) out.push(deployment);
+    }
+    if ((data ?? []).length < PUBLIC_DEPLOYMENT_PAGE_SIZE) break;
+  }
+  return out;
+}
+
+export const runtimeDeploymentsQuery = () =>
   queryOptions({
-    queryKey: ["runtime-deployments", limit],
-    queryFn: async (): Promise<RuntimeDeployment[]> => {
-      const { data, error } = await supabase
-        .from("extender_deployments")
-        .select(
-          "id, extender_id, bitmap_height, config, extenders(name, slug, category), extender_versions(semver, manifest)",
-        )
-        .eq("status", "active")
-        .order("active_from", { ascending: false })
-        .limit(limit);
-      if (error) throw error;
-      const out: RuntimeDeployment[] = [];
-      for (const row of (data ?? []) as Row[]) {
-        const deployment = toRuntimeDeployment(row);
-        if (deployment) out.push(deployment);
-      }
-      return out;
-    },
+    queryKey: ["runtime-deployments", "all"],
+    queryFn: fetchRuntimeDeployments,
     staleTime: 60_000,
   });
 
