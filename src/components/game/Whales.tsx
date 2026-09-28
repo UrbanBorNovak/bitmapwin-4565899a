@@ -20,6 +20,8 @@ export const WHALE_INSCRIPTION =
 
 type Whale = {
   sea: SeaMass;
+  /** one shoreline swimmer per sea stays discoverable from the nearest bank */
+  shoreline: boolean;
   /** orbit radius as a fraction of the sea's safe middle */
   orbit: number;
   /** swim speed in radians per second */
@@ -40,13 +42,14 @@ function seed(n: number, salt: number) {
 function buildPod(unit: number): Whale[] {
   const whales: Whale[] = [];
   for (const sea of SEAS) {
-    // Bigger seas carry up to three whales, small ones may carry none.
+    // Every sea carries a whale. Bigger seas can carry up to three.
     const span = Math.min(sea.rx, sea.rz);
-    const count = Math.floor(seed(sea.id, 21) * 2 + span / (unit * 260));
+    const count = Math.max(1, Math.floor(seed(sea.id, 21) * 2 + span / (unit * 260)));
     for (let i = 0; i < Math.min(3, count); i++) {
       whales.push({
         sea,
-        orbit: 0.25 + seed(sea.id * 7 + i, 22) * 0.45,
+        shoreline: i === 0,
+        orbit: i === 0 ? 0.74 : 0.3 + seed(sea.id * 7 + i, 22) * 0.35,
         speed: (0.05 + seed(sea.id * 7 + i, 23) * 0.06) * (i % 2 === 0 ? 1 : -1),
         phase: seed(sea.id * 7 + i, 24) * Math.PI * 2,
         size: unit * (5 + seed(sea.id * 7 + i, 25) * 3),
@@ -78,20 +81,32 @@ export const Whales = memo(function Whales({
       const child = node.children[i]!;
       const whale = whales[i]!;
       const { sea } = whale;
-      if (player) {
-        const distance = Math.hypot(player.x - sea.x, player.z - sea.z);
-        child.visible = distance < range + Math.max(sea.rx, sea.rz);
-        if (!child.visible) continue;
-      }
       // Circle the sea's middle, always inside the wobbled coast.
-      const angle = whale.phase + t * whale.speed;
+      // The first whale in each sea patrols the visitor-facing shore. This
+      // prevents a whole pod being hidden on the far side of a 30-BITMAP sea.
+      const visitorBearing = player
+        ? Math.atan2((player.z - sea.z) / sea.rz, (player.x - sea.x) / sea.rx)
+        : whale.phase;
+      const angle = whale.shoreline && player
+        ? visitorBearing + Math.sin(t * whale.speed + whale.phase) * 0.16
+        : whale.phase + t * whale.speed;
       const edge = seaRadiusAt(sea, angle);
-      const radius = Math.min(whale.orbit, edge * 0.55);
+      const radius = whale.shoreline
+        ? edge * whale.orbit
+        : Math.min(whale.orbit, edge * 0.58);
       const x = sea.x + Math.cos(angle) * sea.rx * radius;
       const z = sea.z + Math.sin(angle) * sea.rz * radius;
+      if (player) {
+        const distance = Math.hypot(player.x - x, player.z - z);
+        child.visible = distance < range;
+        if (!child.visible) continue;
+      }
       // Slow breathing cycle: break the surface, then slip under.
       const breath = Math.sin(t * 0.35 + whale.phase * 3);
-      const y = waterSurfaceY(sea.x, sea.z) - whale.dive * (0.5 - breath * 0.5) - whale.size * 0.25;
+      const surfaced = Math.max(0, breath);
+      const y = waterSurfaceY(sea.x, sea.z)
+        - whale.dive * (0.3 + (1 - surfaced) * 0.45)
+        - whale.size * (0.2 - surfaced * 0.1);
       child.position.set(x, y, z);
       // Face along the direction of travel.
       child.rotation.y = -angle + (whale.speed > 0 ? -Math.PI / 2 : Math.PI / 2);
