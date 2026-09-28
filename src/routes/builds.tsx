@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X } from "lucide-react";
+import { Eye, Search, X } from "lucide-react";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { ClubBadge } from "@/components/ClubBadge";
 import { FollowBuilderButton } from "@/components/FollowBuilderButton";
@@ -14,6 +14,15 @@ import { BuilderName } from "@/components/BuilderName";
 import { DistrictRarity } from "@/components/DistrictRarity";
 import { shortenAddress } from "@/lib/registry";
 import { Button } from "@/components/ui/button";
+import { PublicBuildViewer } from "@/components/builds/PublicBuildViewer";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { BUILD_KIND_LABELS, BUILD_KINDS, type BuildKind } from "@/lib/build-sdk";
 
 export const Route = createFileRoute("/builds")({
@@ -125,7 +134,32 @@ function BuildCard({
         >
           <BuilderName address={page.ownerAddress} profile={profile ?? null} avatar />
         </Link>
-        <FollowBuilderButton address={page.ownerAddress} followers={followers} />
+        <div className="flex shrink-0 items-center gap-1">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button type="button" size="sm" variant="outline" aria-label={`Preview ${page.bitmapHeight}.bitmap build`}>
+                <Eye /> PREVIEW
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto rounded-none p-0">
+              <DialogHeader className="border-b border-border p-4 pr-12">
+                <DialogTitle className="display text-left text-xl">
+                  {page.title || `${page.bitmapHeight}.BITMAP`}
+                </DialogTitle>
+                <DialogDescription className="label text-left">
+                  {page.bitmapHeight}.BITMAP · PUBLIC BUILD
+                </DialogDescription>
+              </DialogHeader>
+              <div className="p-3 sm:p-4">
+                <PublicBuildViewer page={page} />
+                <Button asChild variant="outline" className="mt-3 w-full">
+                  <Link to="/bitmap/$block" params={{ block: String(page.bitmapHeight) }}>OPEN BITMAP</Link>
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <FollowBuilderButton address={page.ownerAddress} followers={followers} />
+        </div>
       </div>
     </article>
   );
