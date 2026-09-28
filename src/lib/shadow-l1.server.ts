@@ -168,7 +168,6 @@ export async function submitShadowNote(input: {
   rawBytes?: number;
   payloadHex?: string;
   anchorSats?: number;
-  minerFeeSats?: number;
 }> {
   const payloadHex = encodeShadowNote({
     op: input.target.op,
