@@ -101,8 +101,52 @@ function Pet({
     }
     const previousX = at.current.x;
     const previousZ = at.current.z;
-    // Critically damped spring toward the heel point: lags a touch, never drifts.
-    const k = 1 - Math.exp(-(spec.hovers ? 5 : 7) * delta);
+
+    // --- fly brain ---------------------------------------------------------
+    // The pet senses how far its owner is and decides what it feels like
+    // doing: heel, wander to a sniff spot, or dart back when left behind.
+    const distToPlayer = Math.hypot(player.x - at.current.x, player.z - at.current.z);
+    const act = brain.think(
+      {
+        now: t * 1000,
+        hp: 1,
+        maxHp: 1,
+        snared: false,
+        heading: at.current.yaw,
+        playerDistance: distToPlayer / Math.max(unit, 0.0001),
+        playerAngle: Math.atan2(player.x - at.current.x, player.z - at.current.z),
+        workDistance: null,
+        workAngle: 0,
+        worker: false,
+        hostile: false,
+        vendor: false,
+      },
+      delta,
+    );
+
+    // While the owner dawdles, a cruising brain picks a nearby whim spot —
+    // a bush to sniff, a patch to flutter over — and the pet drifts to it.
+    const playerSpeed = Math.hypot(targetX - (at.current.heelX ?? targetX), targetZ - (at.current.heelZ ?? targetZ)) / Math.max(delta, 0.0001);
+    at.current.heelX = targetX;
+    at.current.heelZ = targetZ;
+    const ownerIdle = playerSpeed < unit * 2.2;
+    if (act.state === "cruise" && ownerIdle && t * 1000 > whim.current.until) {
+      const wander = unit * spec.follow * (1.2 + (Math.sin(t * 3.1) * 0.5 + 0.5) * 2.2);
+      const bearing = at.current.yaw + act.steer * 40 + Math.sin(t * 0.9) * 1.4;
+      whim.current = {
+        x: targetX + Math.sin(bearing) * wander,
+        z: targetZ + Math.cos(bearing) * wander,
+        until: t * 1000 + 1800 + (Math.sin(t * 5.3) * 0.5 + 0.5) * 2600,
+      };
+    }
+    const wandering = ownerIdle && t * 1000 <= whim.current.until && act.state !== "rest";
+    const goalX = wandering ? whim.current.x : targetX;
+    const goalZ = wandering ? whim.current.z : targetZ;
+
+    // Brain throttle sets how eagerly the pet closes the gap; rest means it
+    // plants itself and just watches you.
+    const eagerness = act.state === "rest" && ownerIdle ? 0 : 0.45 + act.throttle * 0.55;
+    const k = (1 - Math.exp(-(spec.hovers ? 5 : 7) * delta)) * eagerness;
     at.current.x += (targetX - at.current.x) * k;
     at.current.z += (targetZ - at.current.z) * k;
 
