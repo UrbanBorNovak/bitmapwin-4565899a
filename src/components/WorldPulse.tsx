@@ -79,7 +79,7 @@ function LiveBeacon() {
   );
 }
 
-function PulseRow({ event }: { event: ProvenanceEvent }) {
+function PulseRow({ event, repeats }: { event: ProvenanceEvent; repeats: number }) {
   const kind = kindOf(event);
   const Icon = kind.icon;
   const accent = kind.tone === "bitcoin" ? "text-bitcoin" : "text-signal";
@@ -102,6 +102,11 @@ function PulseRow({ event }: { event: ProvenanceEvent }) {
           <span className={`label text-[9px] ${accent}`}>{kind.word}</span>
           <span aria-hidden className="h-px w-3 bg-border" />
           <span className="display truncate text-sm">{event.title}</span>
+          {repeats > 1 ? (
+            <span className={`label border px-1.5 py-0.5 text-[8px] ${accent} border-current/40`} data-no-translate>
+              ×{repeats}
+            </span>
+          ) : null}
         </span>
 
         <span className="mt-1.5 block break-words font-mono text-[11px] leading-relaxed text-muted-foreground">
