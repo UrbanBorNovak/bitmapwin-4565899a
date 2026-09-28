@@ -11,7 +11,7 @@
 - On-chain engine references live in src/lib/onchain-engine.ts; PlayCanvas scripts are never loaded — only their maths (noise/shaders) is ported to Three.js, because the world runs on Three.js.
 - Use the shared MemberRibbon for active profile and wallet membership markers, backed by the verified membership badge; this keeps holder and donation displays consistent without trusting browser-held ownership claims.
 - Count JIGGLYPUFF sales only from confirmed BITMAPWIN purchases with a matching inscription input and exact seller payout; ordinary transfers and change outputs cannot prove a sale price.
-- Marketplace trait labels and filters use Bitmap.Community definitions, but expose only traits provable from locally verified on-chain fields; this prevents unsupported rarity claims.
+- Marketplace traits use Bitmap.Community definitions but expose only locally proven on-chain traits.
 - Official trait holder badges require a live verified-wallet scan of unspent BITMAP inscriptions and expire after 30 days; public UI reads only the resulting badge proof.
 - Official trait lists detect a next page without full-index counts, keeping the 900k+ BITMAP index responsive.
 - BITMAP Archaeology separates chain-verified facts from attributed community field notes; only reviewed records are public and at most three are featured per official trait.
@@ -21,3 +21,4 @@
 - Territory Chronicles derive only from persisted public provenance and aggregate visitor statistics; never expose visitor identities or synthesize missing history.
 - Community Builds joins public BITMAP pages with active Extenders and mounts one live viewer for WebGL stability.
 - Expected Oasis permission denials return results, not thrown errors, so actions remain recoverable in-world.
+- Oasis World Scan uses the painted Atlas and Hilbert coordinates; never maintain separate map geography.
