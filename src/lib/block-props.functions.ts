@@ -89,10 +89,10 @@ export const settleBlockPropsFn = createServerFn({ method: "POST" })
       if (!block) continue;
       const poolName = (block.pool ?? "").toUpperCase();
       const actual =
-        slip.market === "parity"
-          ? height % 2 === 0
-            ? "EVEN"
-            : "ODD"
+        slip.market === "txs"
+          ? (block.txCount ?? 0) > TX_THRESHOLD
+            ? "FULL"
+            : "LIGHT"
           : slip.market === "pool"
             ? poolName.includes("FOUNDRY")
               ? "FOUNDRY"
@@ -105,8 +105,8 @@ export const settleBlockPropsFn = createServerFn({ method: "POST" })
       const won = actual === slip.pick;
       const payout = won ? Math.round(Number(slip.stake) * Number(slip.multiplier)) : 0;
       const outcome =
-        slip.market === "parity"
-          ? `BLOCK ${height.toLocaleString("en-US")} · ${actual}`
+        slip.market === "txs"
+          ? `${(block.txCount ?? 0).toLocaleString("en-US")} TXS IN BLOCK`
           : slip.market === "pool"
             ? `MINED BY ${block.pool ?? "UNKNOWN POOL"}`
             : `MEDIAN FEE ${(block.medianFee ?? 0).toFixed(1)} SAT/VB`;

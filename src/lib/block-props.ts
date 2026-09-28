@@ -47,6 +47,7 @@ export const PROP_MARKETS: readonly { market: PropMarket; title: string; note: s
 
 export const STAKES = [10, 25, 50] as const;
 export const FEE_THRESHOLD = 25;
+export const TX_THRESHOLD = 3000;
 
 export function optionFor(market: PropMarket, pick: string): PropOption | null {
   return PROP_MARKETS.find((m) => m.market === market)?.options.find((o) => o.pick === pick) ?? null;
