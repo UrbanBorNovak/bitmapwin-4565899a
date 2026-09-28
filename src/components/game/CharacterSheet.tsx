@@ -18,9 +18,12 @@ import { WeaponGlyph } from "@/components/game/WeaponBelt";
 import { WEAPONS, WeaponModel, useWeaponMaterials, type WeaponKind } from "@/components/game/weapons";
 import { Primitive } from "@/components/game/Primitive";
 import { WornGear } from "@/components/game/WornGear";
+import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { DEFAULT_AVATAR_MODEL, DEFAULT_AVATAR_TEXTURE } from "@/lib/map-identity";
 import { createPlayerState } from "@/lib/player-state";
 import {
+  companionSpec,
+  cycleCompanion,
   cycleToy,
   toySpec,
   toggleComic,
