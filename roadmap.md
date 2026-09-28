@@ -99,3 +99,8 @@
 - [x] Concentrate trees and most mushrooms beside inland seas and oasis ponds.
 - [x] Verify shoreline clustering in the live Oasis.
 - [ ] Verify shoreline clustering in the live Oasis.
+
+## Marketplace price trends
+- [ ] Consolidate trait, collection, and timeframe controls into one compact analysis bar.
+- [ ] Upgrade the confirmed-sale chart, metrics, and matching-listings hierarchy.
+- [ ] Verify trend filtering and layout on desktop and phone.
