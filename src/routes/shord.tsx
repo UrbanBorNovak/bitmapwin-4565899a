@@ -21,6 +21,7 @@ import {
 } from "@/lib/shord/scanner";
 import { proverStatus, proveSpend, verifySpend, type ProverStatus } from "@/lib/shord/prover";
 import { assetIdFromInscription, poolNote, randomField } from "@/lib/shord/pool";
+import { PoolPanel } from "@/components/shord/PoolPanel";
 
 export const Route = createFileRoute("/shord")({
   head: () => ({
@@ -344,6 +345,7 @@ function ShieldedVaultPage() {
             BITMAPWIN POOL v1 · OWN CIRCUIT · SINGLE-PARTY DEV SETUP · UNAUDITED — NOT COMPATIBLE WITH THE EXTERNAL SHORD POOL
           </p>
         </section>
+        <PoolPanel keys={keys} />
       </div>
     </main>
   );
