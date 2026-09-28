@@ -519,6 +519,54 @@ export type Database = {
         }
         Relationships: []
       }
+      block_props: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          market: string
+          multiplier: number
+          outcome: string | null
+          payout: number
+          pick: string
+          settled_at: string | null
+          stake: number
+          status: string
+          target_height: number
+          user_id: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          market: string
+          multiplier: number
+          outcome?: string | null
+          payout?: number
+          pick: string
+          settled_at?: string | null
+          stake: number
+          status?: string
+          target_height: number
+          user_id: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          market?: string
+          multiplier?: number
+          outcome?: string | null
+          payout?: number
+          pick?: string
+          settled_at?: string | null
+          stake?: number
+          status?: string
+          target_height?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       block_stats: {
         Row: {
           block_height: number
