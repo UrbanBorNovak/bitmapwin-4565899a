@@ -97,7 +97,7 @@ function Pet({
     const targetZ = player.z - fwdZ * reach + rightZ * side;
 
     if (!at.current.started) {
-      at.current = { x: targetX, z: targetZ, yaw: player.yaw, started: true };
+      at.current = { x: targetX, z: targetZ, yaw: player.yaw, started: true, heelX: targetX, heelZ: targetZ };
     }
     const previousX = at.current.x;
     const previousZ = at.current.z;
