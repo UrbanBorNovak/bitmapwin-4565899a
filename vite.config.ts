@@ -51,7 +51,7 @@ export default defineConfig({
         // snarkjs' exports map only defines "node"/"browser" conditions, which
         // the workerd SSR build cannot match; point at the browser ESM build.
         snarkjs: fileURLToPath(
-          import.meta.resolve("snarkjs/build/browser.esm.js"),
+          new URL("./node_modules/snarkjs/build/browser.esm.js", import.meta.url),
         ),
       },
     },
