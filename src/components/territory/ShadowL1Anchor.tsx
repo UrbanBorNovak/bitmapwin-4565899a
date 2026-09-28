@@ -1,4 +1,6 @@
+import { useCallback } from "react";
 import { useState } from "react";
+import { useMempoolWatch } from "@/lib/use-mempool-watch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -96,11 +98,16 @@ export function ShadowL1Anchor({
     queryKey: ["shadow-note", digest],
     queryFn: () => loadNote({ data: { digest } }),
     staleTime: 20_000,
-    // while the note sits in the mempool, keep asking Bitcoin whether it is mined
   });
 
   const existing = anchored.data;
   const waiting = existing?.status === "broadcast";
+  // live mempool websocket: re-read the note the moment a block carries it
+  const refreshNote = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ["shadow-note"] });
+    void queryClient.invalidateQueries({ queryKey: ["shadow-notes", slug] });
+  }, [queryClient, slug]);
+  useMempoolWatch(waiting ? existing?.txid : null, refreshNote);
 
   /** Step 1 — price the transaction against the payer's real coins. */
   const price = useMutation({
