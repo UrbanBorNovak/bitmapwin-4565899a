@@ -6,6 +6,7 @@ import { coinBalanceQuery } from "@/lib/coins";
 import { useEffect, useState } from "react";
 import { PlayNav } from "@/components/play/PlayNav";
 import { LivingCard } from "@/components/play/LivingCard";
+import { CraftUnboxing } from "@/components/play/CraftUnboxing";
 import { MatchStats } from "@/components/play/MatchStats";
 import { heldHeightsQuery } from "@/lib/held-parcels";
 import { useWalletSession } from "@/lib/wallet-session";
