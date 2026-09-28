@@ -5,6 +5,7 @@ import { useWorldSkills } from "@/lib/world-skills";
 import { useGear, gearSnapshot } from "@/lib/world-gear";
 import { GoldBarIcon } from "@/components/GoldBarIcon";
 import { BitmapPixelsCollection } from "@/components/BitmapPixelsCollection";
+import { MyGuardians } from "@/components/bitmon/MyGuardians";
 import { ModernInventory } from "@/components/inventory/ModernInventory";
 import { readCharacter, type Character } from "@/lib/character";
 
@@ -105,6 +106,7 @@ function InventoryPage() {
         <ModernInventory who={accountLabel(user)} character={character} />
       </div>
 
+      <MyGuardians />
       <BitmapPixelsCollection />
 
       <p className="mt-8 font-mono text-[11px] text-muted-foreground">
