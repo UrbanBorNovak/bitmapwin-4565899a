@@ -73,7 +73,7 @@ function hexInt(hash: string, from: number, len: number) {
 }
 
 function hsl(h: number, s: number, l: number) {
-  return `hsl(${Math.round(h)} ${Math.round(s)}% ${Math.round(l)}%)`;
+  return `hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;
 }
 
 export function shapeOf(species: GuardianSpecies) {
