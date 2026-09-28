@@ -264,6 +264,9 @@ export function ShadowVaultRoom() {
     enabled: Boolean(pass?.commitment),
     staleTime: 30_000,
     queryFn: () => getShadowNoteFn({ data: { digest: pass!.commitment } }),
+    // a note in the mempool is re-checked until a block carries it, so the
+    // chamber flips to ANCHORED without the visitor reloading anything
+    refetchInterval: (q) => (q.state.data && q.state.data.status === "broadcast" ? 15_000 : false),
   });
 
   useEffect(
