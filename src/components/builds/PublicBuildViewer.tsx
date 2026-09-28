@@ -39,7 +39,7 @@ export function PublicBuildViewer({
   }
 
   return (
-    <div className="overflow-hidden border border-border bg-background">
+    <div className="overflow-hidden border-y border-border bg-background md:-mx-6">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-card p-2">
         <div className="flex min-w-0 items-center gap-1" role="tablist" aria-label="Public build view">
           <Button
@@ -74,15 +74,15 @@ export function PublicBuildViewer({
 
       <div role="tabpanel" aria-label={view === "preview" ? "Live build preview" : "Build code"}>
         {view === "preview" ? (
-          <div className="min-h-48 p-3 sm:p-4">
+          <div className="min-h-48">
             {deployments.isPending ? (
               <div className="flex h-80 items-center justify-center border border-dashed border-border">
                 <span className="label text-muted-foreground">LOADING LIVE 3D EXTENDER…</span>
               </div>
             ) : activeDeployment ? (
-              <div className="space-y-2">
+              <div className="space-y-px">
                 {(deployments.data?.length ?? 0) > 1 ? (
-                  <div className="flex gap-1 overflow-x-auto pb-1">
+                  <div className="flex gap-1 overflow-x-auto border-b border-border p-2">
                     {deployments.data?.map((deployment) => (
                       <Button
                         key={deployment.deploymentId}
@@ -103,7 +103,7 @@ export function PublicBuildViewer({
                   config={activeDeployment.config}
                   autoRun
                   publicView
-                  canvasHeight={420}
+                  canvasHeight={520}
                 />
               </div>
             ) : (

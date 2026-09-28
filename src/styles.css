@@ -68,7 +68,7 @@
   --ease-terminal: linear;
   --bitcoin: oklch(0.72 0.19 55.6);
   --bitcoin-foreground: oklch(0.1 0 0);
-  --signal: oklch(0.72 0.19 55.6);
+  --signal: oklch(0.82 0.12 205);
   --signal-foreground: oklch(0.1 0 0);
   --surface: oklch(0.16 0 0);
   --background: oklch(0.08 0 0);
