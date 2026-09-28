@@ -3,6 +3,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { CREATURE_GROUPS, SPECIES, type CritterKind } from "@/lib/bestiary";
 import { CreatureModel3D } from "@/components/codex/CreatureModel3D";
 import { HuntPanel } from "@/components/codex/HuntPanel";
+import { useQuery } from "@tanstack/react-query";
+import { WORLD_CREATURES } from "@/lib/creature-codex";
+import { allGuardiansQuery } from "@/lib/bitmon-queries";
 
 export const Route = createFileRoute("/codex/bestiary")({
   head: () => ({
@@ -32,6 +35,8 @@ type Row = {
   inscription?: string;
   kind?: CritterKind;
   yaw?: number | undefined;
+  /** Guardians have no single model; they link to their home BITMAP. */
+  height?: number;
 };
 
 const totalWeight = SPECIES.reduce((s, x) => s + x.weight, 0);
@@ -74,6 +79,7 @@ const ROWS: Row[] = [
     inscription: g.inscription,
     yaw: g.modelYaw,
   })),
+  ...WORLD_CREATURES.map((c): Row => ({ ...c, origin: "INSCRIBED" })),
 ];
 
 const FILTERS = ["ALL", "WILDLIFE", "INSCRIBED", "HOSTILE", "PEACEFUL"] as const;
@@ -82,22 +88,43 @@ function Bestiary() {
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("ALL");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<string | null>(ROWS[0]?.id ?? null);
-  const viewing = ROWS.find((r) => r.id === open);
+  const { data: guardians = [] } = useQuery(allGuardiansQuery());
+  // Every awakened Guardian joins the codex as soon as it is summoned.
+  const all = useMemo<Row[]>(
+    () => [
+      ...ROWS,
+      ...guardians.map((g): Row => ({
+        id: `guardian-${g.height}`,
+        name: `${g.species} · ${g.height}`,
+        origin: "INSCRIBED",
+        hostile: false,
+        hp: g.hp,
+        xp: 0,
+        bite: g.bite,
+        speed: g.speed,
+        rarity: `GUARDIAN · ${g.rarity}`,
+        habitat: `PATROLS ${g.height}.BITMAP`,
+        height: g.height,
+      })),
+    ],
+    [guardians],
+  );
+  const viewing = all.find((r) => r.id === open && (r.inscription || r.kind));
   const rows = useMemo(
     () =>
-      ROWS.filter((r) =>
+      all.filter((r) =>
         filter === "ALL" ? true : filter === "HOSTILE" ? r.hostile : filter === "PEACEFUL" ? !r.hostile : r.origin === filter,
       )
         .filter((r) => r.name.includes(q.trim().toUpperCase()))
         .sort((a, b) => b.xp - a.xp),
-    [filter, q],
+    [filter, q, all],
   );
 
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-8 md:px-8">
       <Link to="/codex" className="label hover:text-bitcoin">← OASIS CODEX</Link>
       <h1 className="display mt-2 text-3xl md:text-4xl">BESTIARY</h1>
-      <p className="label mt-2">{ROWS.length} CREATURES · READ FROM THE SAME TABLES THE OASIS SPAWNS FROM</p>
+      <p className="label mt-2">{all.length} CREATURES · READ FROM THE SAME TABLES THE OASIS SPAWNS FROM</p>
       <HuntPanel />
 
       {viewing && (
@@ -146,7 +173,11 @@ function Bestiary() {
         {rows.map((r) => (
           <article key={r.id} className="flex gap-4 rounded-md border border-border bg-card/60 p-4 backdrop-blur">
             <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded border border-border bg-background">
-              {(
+              {r.height != null ? (
+                <Link to="/bitmap/$block" params={{ block: String(r.height) }} className="grid size-full place-items-center font-mono text-[10px] text-signal hover:text-bitcoin">
+                  VISIT
+                </Link>
+              ) : (
                 <button onClick={() => setOpen(r.id)} className={`size-full font-mono text-[10px] ${open === r.id ? "text-bitcoin" : "text-signal hover:text-bitcoin"}`}>
                   {open === r.id ? "VIEWING" : "VIEW 3D"}
                 </button>
