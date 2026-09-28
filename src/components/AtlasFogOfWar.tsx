@@ -33,9 +33,9 @@ export function AtlasFogOfWar({ currentHeight, className = "" }: Props) {
       </mask>
     </defs>
     <g mask={`url(#${maskId})`}>
-      <rect width={ATLAS_SIDE} height={ATLAS_SIDE} fill="var(--color-muted)" fillOpacity="0.92" />
-      <rect width={ATLAS_SIDE} height={ATLAS_SIDE} filter={`url(#${cloudId})`} className="animate-pulse opacity-75 motion-reduce:animate-none" />
-      <rect width={ATLAS_SIDE} height={ATLAS_SIDE} fill="var(--color-background)" fillOpacity="0.22" />
+      <rect width={ATLAS_SIDE} height={ATLAS_SIDE} fill="var(--color-muted)" fillOpacity="0.88" />
+      <rect width={ATLAS_SIDE} height={ATLAS_SIDE} fill="var(--color-foreground)" fillOpacity="0.38" />
+      <rect width={ATLAS_SIDE} height={ATLAS_SIDE} filter={`url(#${cloudId})`} className="animate-pulse opacity-45 motion-reduce:animate-none" />
     </g>
   </svg>;
 }
