@@ -219,14 +219,14 @@ export function WorldPulse({ limit = 24, visible = 8 }: { limit?: number; visibl
       ) : shown.length ? (
         <>
           <div>
-            {shown.map((event) => (
-              <PulseRow key={event.id} event={event} />
+            {shown.map((row) => (
+              <PulseRow key={row.event.id} event={row.event} repeats={row.repeats} />
             ))}
           </div>
-          {filtered.length > visible ? (
+          {grouped.length > visible ? (
             <div className="px-4 py-3">
               <button type="button" onClick={() => setExpanded((value) => !value)} className="btn-term-ghost text-[9px]">
-                {expanded ? "[ SHOW LESS ]" : `[ SHOW ALL ${filtered.length} RECORDS ]`}
+                {expanded ? "[ SHOW LESS ]" : `[ SHOW ALL ${grouped.length} RECORDS ]`}
               </button>
             </div>
           ) : null}
