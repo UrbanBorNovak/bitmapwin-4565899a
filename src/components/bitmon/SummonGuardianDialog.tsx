@@ -64,7 +64,7 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
   // If this player already has an open invoice (paid or unpaid), pick up where
   // they left off instead of offering a fresh summon.
   useEffect(() => {
-    if (!open || signedIn !== true || order || already) return;
+    if (!open || signedIn !== true || order || awake.data) return;
     resumeOrder({ data: { height } })
       .then((existing) => {
         if (existing) setOrder(existing);
@@ -72,7 +72,7 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
       .catch(() => {
         /* no session or network hiccup — the summon button still works */
       });
-  }, [open, signedIn, order, already, resumeOrder, height]);
+  }, [open, signedIn, order, awake.data, resumeOrder, height]);
 
   useEffect(() => {
     if (!order) return setQr(null);
