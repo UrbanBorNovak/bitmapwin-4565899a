@@ -111,6 +111,6 @@
 - [x] Verify the Oasis remains visible after land-permission failures.
 
 ## Unified Oasis Atlas
-- [ ] Replace the separate World Scan terrain with the painted Atlas map and shared Hilbert positions.
-- [ ] Preserve direct in-world travel, ownership, player, and frontier markers.
-- [ ] Link the overlay to the full Atlas and verify it in the Oasis.
+- [x] Replace the separate World Scan terrain with the painted Atlas map and shared Hilbert positions.
+- [x] Preserve direct in-world travel, ownership, player, and frontier markers.
+- [x] Link the overlay to the full Atlas and verify it in the Oasis.
