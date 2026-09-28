@@ -85,4 +85,4 @@
 ## BITMAP pages
 - [x] Recompose BITMAP details as a brutalist editorial story with clearer actions and navigation.
 - [x] Make the live territory the primary experience and reduce nested panel clutter.
-- [ ] Verify the refreshed BITMAP page on desktop and phone.
+- [x] Verify the refreshed BITMAP page on desktop and phone.
