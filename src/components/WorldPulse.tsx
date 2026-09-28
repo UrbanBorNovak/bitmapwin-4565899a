@@ -156,7 +156,7 @@ export function WorldPulse({ limit = 24, visible = 8 }: { limit?: number; visibl
   const shown = expanded ? filtered : filtered.slice(0, visible);
 
   return (
-    <section className="glass-panel mt-10 border border-border" aria-label="World pulse">
+    <section className="mt-10 border border-border bg-card/40" aria-label="World pulse">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
           <Activity className="size-4 shrink-0 text-signal" aria-hidden />

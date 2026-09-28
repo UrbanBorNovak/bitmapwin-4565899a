@@ -50,10 +50,7 @@ function ExplorePage() {
       </div>
       <div className="mt-6"><LoopNavigator active="explore" /></div>
 
-      <section className="mt-10 border border-border">
-        <header className="flex items-center justify-between border-b border-border px-4 py-3"><h2 className="display text-xl">WORLD PULSE</h2><Link to="/stream" className="label text-bitcoin hover:text-foreground">FULL STREAM →</Link></header>
-        {stream.data?.length ? stream.data.map((event) => <StreamEventRow key={event.id} event={event} />) : <p className="p-5 label">THE STREAM IS QUIET — ENTER THE OASIS AND MAKE HISTORY.</p>}
-      </section>
+      <WorldPulse />
 
       <section className="mt-10">
         <div className="flex items-baseline justify-between border-b border-border pb-2">
