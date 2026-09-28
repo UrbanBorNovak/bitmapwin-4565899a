@@ -171,6 +171,20 @@ function PreviewWeapon({ kind }: { kind: WeaponKind }) {
 }
 
 
+/**
+ * The companion at the doll's heel, sized the way it reads in the world.
+ */
+function PreviewCompanion() {
+  const gear = useGear();
+  const pet = companionSpec(gear.companion);
+  if (!pet.inscription) return null;
+  return (
+    <group position={[-0.42, 0, 0.3]} rotation-y={0.5}>
+      <InscribedModel url={contentUrl(pet.inscription)} size={pet.fit} />
+    </group>
+  );
+}
+
 export function EquippedAvatarPreview({
   model,
   weapon,
@@ -192,6 +206,7 @@ export function EquippedAvatarPreview({
       <group rotation-y={-0.18}>
         <Suspense fallback={null}>
           <PreviewAvatar model={model} skin={skin} />
+          <PreviewCompanion />
           {weapon ? <PreviewWeapon kind={weapon} /> : null}
           <WornGear unit={1} pose={pose} weapon={weapon} showHead jetpack={flying} />
         </Suspense>
