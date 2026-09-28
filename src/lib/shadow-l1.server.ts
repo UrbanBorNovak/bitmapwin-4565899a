@@ -79,6 +79,17 @@ export type ShadowNoteQuote = {
   feeRate: number;
   totalSats: number;
   treasury: string;
+  /** what the envelope says, so the payer can read it before signing */
+  op: ShadowOp;
+  territoryBlock: number;
+  passIndex: number;
+  digest: string;
+  /** transaction shape: how the miner fee was arrived at */
+  estimatedVBytes: number;
+  inputCount: number;
+  fundedSats: number;
+  changeSats: number;
+  payerAddress: string;
 };
 
 /** Builds the note transaction against the payer's live confirmed UTXO set. */
@@ -130,6 +141,15 @@ export async function quoteShadowNote(input: {
     feeRate: rate,
     totalSats: fee + built.feeSats,
     treasury: SHADOW_L1_TREASURY,
+    op: input.target.op,
+    territoryBlock: input.target.height,
+    passIndex: input.target.index,
+    digest: input.target.digest,
+    estimatedVBytes: Math.max(1, Math.round(built.feeSats / rate)),
+    inputCount: built.usedFunding.length,
+    fundedSats: built.usedFunding.reduce((sum, u) => sum + u.valueSats, 0),
+    changeSats: built.changeSats,
+    payerAddress: input.payerAddress,
   };
 }
 
@@ -140,7 +160,15 @@ export async function quoteShadowNote(input: {
 export async function submitShadowNote(input: {
   target: NoteTarget;
   psbtBase64: string;
-}): Promise<{ ok: boolean; reason?: string; txid?: string }> {
+}): Promise<{
+  ok: boolean;
+  reason?: string;
+  txid?: string;
+  rawHex?: string;
+  rawBytes?: number;
+  payloadHex?: string;
+  anchorSats?: number;
+}> {
   const payloadHex = encodeShadowNote({
     op: input.target.op,
     height: input.target.height,
@@ -160,7 +188,8 @@ export async function submitShadowNote(input: {
     return { ok: false, reason: "REFUSING TO BROADCAST: THE SHIELDED NOTE WAS ALTERED" };
   }
   const treasuryScript = byteArrayToHex(addressToScriptPubKey(SHADOW_L1_TREASURY));
-  if (outs[1]?.scriptHex !== treasuryScript || Number(outs[1]?.valueSats) < anchorSats(input.target.op)) {
+  const anchorPaid = Number(outs[1]?.valueSats ?? 0);
+  if (outs[1]?.scriptHex !== treasuryScript || anchorPaid < anchorSats(input.target.op)) {
     return { ok: false, reason: "REFUSING TO BROADCAST: THE ANCHOR PAYMENT WAS ALTERED" };
   }
 
@@ -180,7 +209,14 @@ export async function submitShadowNote(input: {
     payload_hex: payloadHex,
     txid: result.txid,
   });
-  return { ok: true, txid: result.txid };
+  return {
+    ok: true,
+    txid: result.txid,
+    rawHex,
+    rawBytes: Math.round(rawHex.length / 2),
+    payloadHex,
+    anchorSats: anchorPaid,
+  };
 }
 
 const rowToNote = (r: {
