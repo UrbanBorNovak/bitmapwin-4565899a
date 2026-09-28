@@ -103,7 +103,7 @@ function ExploreTracker() {
   }
 
   return (
-    <div data-no-translate className="hud-panel absolute left-3 bottom-24 z-30 w-[min(13rem,calc(100%-1.5rem))] px-2.5 py-2 font-mono text-[10px]" aria-label="Exploration">
+    <div data-no-translate className="hud-panel absolute right-3 bottom-[13.5rem] z-30 w-[min(13rem,calc(100%-1.5rem))] px-2.5 py-2 font-mono text-[10px]" aria-label="Exploration">
       <span className="hud-telemetry-title">EXPLORER · {d.xp.toLocaleString("en-US")} XP</span>
       <p className="text-foreground">DISTRICTS {d.districts}{nextDistrict ? ` / ${nextDistrict.goal}` : ""}</p>
       <p className="text-foreground">RUINS {d.ruins}{nextRuin ? ` / ${nextRuin.goal}` : ""}</p>
