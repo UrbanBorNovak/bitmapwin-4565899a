@@ -1,31 +1,43 @@
 /**
- * SHORD spend prover — Groth16 over BN254, generated on this device.
+ * SHORD spend prover — Groth16 over BN254, generated on this device against
+ * BITMAPWIN's own pool circuit (circuits/shord/spend.circom).
  *
- * A spend proof shows three things at once without revealing any of them:
- *   1. the note being spent exists in the on-chain Poseidon state tree,
- *   2. the spender holds its spending key,
- *   3. the new commitment is well formed and conserves value.
- *
- * The circuit is not something we can invent at runtime: proving needs the
- * compiled artifacts (`spend.wasm` + `spend.zkey`) that match the pool's
- * on-chain verifying key. Until those are installed under
- * `public/wasm/shord/`, this module reports plainly that proving is offline.
- * It never fabricates a proof, because a fabricated proof would be rejected
- * by the pool and would be a lie about what the app can do.
+ * The artifacts under public/wasm/shord come from a SINGLE-PARTY DEV setup:
+ * whoever ran it could forge proofs. Research only, not audited.
+ * Proofs are never fabricated — if proving fails, the caller sees why.
  */
+import vkey from "./spend.vkey.json";
+import { merkleProof, poolNote, poolNullifier, ownerPoint } from "./pool";
+import type { ShordKeys } from "./keys";
+
 export const SHORD_ARTIFACT_BASE = "/wasm/shord";
 export const SHORD_PROOF_BYTES = 256;
+export const SHORD_SETUP = "single-party dev setup";
 
 export type ProverStatus =
   | { ready: true; circuitHash: string }
   | { ready: false; reason: string };
 
-export type SpendWitness = {
-  anchor: string;
+export type SpendRequest = {
+  keys: ShordKeys;
+  assetId: bigint;
+  salt: bigint;
+  leaves: bigint[];
+  leafIndex: number;
+  /** recipient shielded public key (hex); ignored for exits */
+  recipientPublicKey: string;
+  newSalt: bigint;
+  exit: boolean;
+  intent: bigint;
+};
+
+export type SpendProof = {
+  proof: unknown;
+  publicSignals: string[];
   nullifier: string;
-  commitment: string;
-  /** decimal field elements, private to this device */
-  privateInputs: Record<string, string>;
+  outCommitment: string;
+  root: string;
+  ms: number;
 };
 
 async function head(path: string): Promise<boolean> {
@@ -37,31 +49,59 @@ async function head(path: string): Promise<boolean> {
   }
 }
 
-/** Checks whether the local circuit artifacts are installed. */
 export async function proverStatus(): Promise<ProverStatus> {
   const [wasm, zkey] = await Promise.all([
     head(`${SHORD_ARTIFACT_BASE}/spend.wasm`),
     head(`${SHORD_ARTIFACT_BASE}/spend.zkey`),
   ]);
   if (!wasm || !zkey) {
-    return {
-      ready: false,
-      reason: !wasm && !zkey ? "CIRCUIT ARTIFACTS NOT INSTALLED" : !wasm ? "SPEND CIRCUIT MISSING" : "PROVING KEY MISSING",
-    };
+    return { ready: false, reason: !wasm ? "SPEND CIRCUIT MISSING" : "PROVING KEY MISSING" };
   }
-  return { ready: true, circuitHash: "spend.zkey" };
+  return { ready: true, circuitHash: "BITMAPWIN POOL v1 · DEV SETUP" };
 }
 
-/**
- * Generates a spend proof inside a worker. Throws a clear, recoverable error
- * while the artifacts are absent — callers surface it, they never fake a proof.
- */
-export async function proveSpend(_witness: SpendWitness): Promise<string> {
-  const status = await proverStatus();
-  if (!status.ready) {
-    throw new Error(
-      `Shielded proving is offline on this device: ${status.reason}. A spend cannot be built without the pool's own circuit.`,
-    );
-  }
-  throw new Error("Shielded proving artifacts found but the worker bridge is not wired yet.");
+export async function proveSpend(req: SpendRequest): Promise<SpendProof> {
+  const started = performance.now();
+  const spendKey = BigInt(req.keys.spend);
+  const note = poolNote(req.keys.publicKey, req.assetId, req.salt);
+  if (req.leaves[req.leafIndex] !== note) throw new Error("This note is not at that position in the pool");
+  const path = merkleProof(req.leaves, req.leafIndex);
+  const recipient = ownerPoint(req.recipientPublicKey);
+  const outCommitment = poolNote(req.recipientPublicKey, req.assetId, req.newSalt);
+  const nullifier = poolNullifier(spendKey, note);
+  const input = {
+    root: path.root.toString(),
+    nullifier: nullifier.toString(),
+    outCommitment: outCommitment.toString(),
+    exitFlag: req.exit ? "1" : "0",
+    exitAsset: req.exit ? req.assetId.toString() : "0",
+    intent: req.intent.toString(),
+    spendKey: spendKey.toString(),
+    assetId: req.assetId.toString(),
+    salt: req.salt.toString(),
+    pathElements: path.pathElements.map(String),
+    pathIndices: path.pathIndices.map(String),
+    newOwnerX: recipient.x.toString(),
+    newOwnerY: recipient.y.toString(),
+    newSalt: req.newSalt.toString(),
+  };
+  const { groth16 } = await import("snarkjs");
+  const { proof, publicSignals } = await groth16.fullProve(
+    input,
+    `${SHORD_ARTIFACT_BASE}/spend.wasm`,
+    `${SHORD_ARTIFACT_BASE}/spend.zkey`,
+  );
+  return {
+    proof,
+    publicSignals,
+    nullifier: nullifier.toString(),
+    outCommitment: outCommitment.toString(),
+    root: path.root.toString(),
+    ms: Math.round(performance.now() - started),
+  };
+}
+
+export async function verifySpend(proof: unknown, publicSignals: string[]): Promise<boolean> {
+  const { groth16 } = await import("snarkjs");
+  return groth16.verify(vkey, publicSignals, proof as never);
 }
