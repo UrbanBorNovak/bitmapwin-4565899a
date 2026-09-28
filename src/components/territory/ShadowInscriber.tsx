@@ -59,7 +59,10 @@ export function ShadowInscriber(props: { slug: string; height: number; index: nu
 
   const onFile = async (f: File | undefined) => {
     if (!f) return;
-    if (f.size > INSCRIBE_MAX_BYTES) return toast.error("FILE TOO LARGE — KEEP IT UNDER 60 KB");
+    if (f.size > INSCRIBE_MAX_BYTES) {
+      toast.error("FILE TOO LARGE — KEEP IT UNDER 60 KB");
+      return;
+    }
     const bytes = new Uint8Array(await f.arrayBuffer());
     setFile({ type: f.type || "application/octet-stream", bytes, url: URL.createObjectURL(f) });
   };

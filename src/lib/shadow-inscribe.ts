@@ -135,7 +135,7 @@ export async function revealJob(job: InscribeJob, utxo: { txid: string; vout: nu
     txid: utxo.txid,
     index: utxo.vout,
     witnessUtxo: { script: pay.script, amount: BigInt(utxo.value) },
-  });
+  } as never);
   tx.addOutputAddress(job.receiveAddress, BigInt(utxo.value - job.revealFee), btc.NETWORK);
   tx.sign(hex.decode(job.privHex), undefined, new Uint8Array(32));
   tx.finalize();
