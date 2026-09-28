@@ -70,7 +70,7 @@ export const settleBlockPropsFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { FEE_THRESHOLD } = await import("@/lib/block-props");
+    const { FEE_THRESHOLD, TX_THRESHOLD } = await import("@/lib/block-props");
     const tip = await fetchTipHeight();
     if (tip == null) return { settled: [] as SettledSlip[] };
 
@@ -146,17 +146,25 @@ async function fetchTipHeight(): Promise<number | null> {
   }
 }
 
-async function fetchBlock(height: number): Promise<{ pool: string | null; medianFee: number | null } | null> {
+async function fetchBlock(height: number): Promise<{ pool: string | null; medianFee: number | null; txCount: number | null } | null> {
   try {
     const res = await fetch(`${MEMPOOL}/v1/blocks/${height}`, {
       headers: { accept: "application/json" },
       signal: AbortSignal.timeout(9000),
     });
     if (!res.ok) return null;
-    const blocks = (await res.json()) as { height: number; extras?: { pool?: { name?: string } | null; medianFee?: number } }[];
+    const blocks = (await res.json()) as {
+      height: number;
+      tx_count?: number;
+      extras?: { pool?: { name?: string } | null; medianFee?: number };
+    }[];
     const match = blocks.find((b) => Number(b.height) === height);
     if (!match) return null;
-    return { pool: match.extras?.pool?.name ?? null, medianFee: match.extras?.medianFee ?? null };
+    return {
+      pool: match.extras?.pool?.name ?? null,
+      medianFee: match.extras?.medianFee ?? null,
+      txCount: match.tx_count ?? null,
+    };
   } catch {
     return null;
   }
