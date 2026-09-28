@@ -12,7 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import * as THREE from "three";
 import type { PlayerState } from "@/lib/player-state";
 import { WORLD_CELL, WORLD_GRID, cellX, cellZ, colAt, rowAt } from "@/lib/player-state";
-import { groundY } from "@/lib/world-terrain";
+import { baseGroundY } from "@/lib/world-terrain";
 import { landSkinQuery, type LandSkin } from "@/lib/land-skin";
 import { contentUrl } from "@/components/game/InscribedParts";
 
@@ -90,7 +90,7 @@ const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
     for (let i = 0; i < position.count; i++) {
       const localX = position.getX(i);
       const localZ = position.getZ(i);
-      position.setY(i, groundY(localX + x, localZ + z) + LIFT);
+      position.setY(i, baseGroundY(localX + x, localZ + z) + LIFT);
     }
     position.needsUpdate = true;
     geo.computeVertexNormals();
