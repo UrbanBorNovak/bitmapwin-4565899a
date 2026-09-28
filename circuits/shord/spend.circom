@@ -12,9 +12,9 @@ pragma circom 2.1.6;
 //
 // Dev trusted setup only (single party). Not audited.
 
-include "../../node_modules/circomlib/circuits/poseidon.circom";
-include "../../node_modules/circomlib/circuits/babyjub.circom";
-include "../../node_modules/circomlib/circuits/mux1.circom";
+include "circomlib/circuits/poseidon.circom";
+include "circomlib/circuits/babyjub.circom";
+include "circomlib/circuits/mux1.circom";
 
 template MerkleRoot(depth) {
     signal input leaf;
