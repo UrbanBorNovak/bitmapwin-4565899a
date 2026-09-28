@@ -354,24 +354,84 @@ export function ShadowVaultRoom() {
       {terminalOpen ? (
         <div className="absolute right-3 top-14 flex max-h-[70vh] w-[min(92vw,22rem)] flex-col border border-signal/40 bg-background/95 p-3 font-mono text-[10px]">
           <div className="mb-2 flex items-center justify-between text-signal">
-            <span>◈ ANONYMOUS WHISPERS</span>
+            <span>◈ VOID TERMINAL</span>
             <button type="button" onClick={() => setTerminalOpen(false)} className="text-muted-foreground hover:text-signal">
               ✕
             </button>
           </div>
+          <div className="mb-2 grid grid-cols-3 border border-border/60">
+            {(["whispers", "attendees", "lore"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTab(t)}
+                className={`py-1 ${tab === t ? "bg-signal/15 text-signal" : "text-muted-foreground hover:text-signal"}`}
+              >
+                {t === "whispers" ? `WHISPERS · ${whispers.length}` : t === "attendees" ? `PRESENT · ${event?.passesIssued ?? "—"}` : "LORE"}
+              </button>
+            ))}
+          </div>
           <div className="flex-1 space-y-2 overflow-y-auto">
-            {whispers.length === 0 ? (
-              <p className="text-muted-foreground">NO WHISPERS YET. BE THE FIRST VOICE IN THE DARK.</p>
-            ) : (
-              whispers.map((w) => (
-                <div key={w.id} className="border border-border/50 p-2">
-                  <div className="text-signal/80">{shadowHandle(w.nullifier)}</div>
-                  <p className="mt-1 whitespace-pre-wrap text-foreground">{w.content}</p>
+            {tab === "whispers" ? (
+              whispers.length === 0 ? (
+                <p className="text-muted-foreground">NO WHISPERS YET. BE THE FIRST VOICE IN THE DARK.</p>
+              ) : (
+                whispers.map((w) => (
+                  <div key={w.id} className="border border-border/50 p-2">
+                    <div className="flex justify-between text-signal/80">
+                      <span>{shadowHandle(w.nullifier)}{pass && w.nullifier === pass.nullifier ? " · YOU" : ""}</span>
+                      <span className="text-muted-foreground">{ago(w.createdAt)}</span>
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap text-foreground">{w.content}</p>
+                  </div>
+                ))
+              )
+            ) : tab === "attendees" ? (
+              <div className="space-y-2">
+                <div className="border border-signal/30 p-2">
+                  <div className="text-signal">{event?.passesIssued ?? 0} / {event?.maxPasses ?? "—"} PASSES TAKEN</div>
+                  <div className="mt-1 h-1 bg-border/50">
+                    <div className="h-1 bg-signal" style={{ width: `${event ? Math.min(100, (event.passesIssued / Math.max(1, event.maxPasses)) * 100) : 0}%` }} />
+                  </div>
+                  <p className="mt-2 text-muted-foreground">
+                    ONLY PASS HANDLES OF THOSE WHO HAVE SPOKEN ARE SHOWN. NO WALLET OR ACCOUNT IS EVER LINKED.
+                  </p>
                 </div>
-              ))
+                {pass && !attendees.some((a) => a.nullifier === pass.nullifier) ? (
+                  <div className="flex justify-between border border-border/50 p-2">
+                    <span className="text-signal">{shadowHandle(pass.nullifier)} · YOU</span>
+                    <span className="text-muted-foreground">SILENT</span>
+                  </div>
+                ) : null}
+                {attendees.map((a) => (
+                  <div key={a.nullifier} className="flex justify-between border border-border/50 p-2">
+                    <span className="text-signal/90">{a.handle}{pass && a.nullifier === pass.nullifier ? " · YOU" : ""}</span>
+                    <span className="text-muted-foreground">{a.count} WHISPER{a.count === 1 ? "" : "S"} · {ago(a.last)}</span>
+                  </div>
+                ))}
+                {event ? (
+                  <p className="text-muted-foreground">
+                    +{Math.max(0, event.passesIssued - attendees.length - (pass && !attendees.some((a) => a.nullifier === pass.nullifier) ? 1 : 0))} SILENT HOLDERS
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div>
+                  <div className="text-[12px] text-signal">{(event?.title ?? room.title).toUpperCase()}</div>
+                  {event?.subtitle ? <div className="text-muted-foreground">{event.subtitle.toUpperCase()}</div> : null}
+                  {event ? <div className="mt-1 text-bitcoin">HELD ON {event.territoryBlock}.BITMAP</div> : null}
+                </div>
+                {event?.description ? <p className="whitespace-pre-wrap leading-relaxed text-foreground">{event.description}</p> : null}
+                <div className="space-y-1 border-t border-border/50 pt-2">
+                  {LORE.map((l) => (
+                    <p key={l} className="text-signal/80">› {l}</p>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
-          {pass ? (
+          {pass && tab === "whispers" ? (
             <div className="mt-2 space-y-2">
               <textarea
                 value={draft}
