@@ -16,6 +16,15 @@ import { getPass, shadowHandle } from "@/lib/shadow-vault";
 import { verifyShadowPassFn, postShadowWhisperFn } from "@/lib/shadow-assets.functions";
 
 type Whisper = { id: string; nullifier: string; content: string; createdAt: string };
+type EventInfo = { title: string; subtitle: string; description: string; maxPasses: number; passesIssued: number; territoryBlock: number };
+
+function ago(iso: string) {
+  const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60) return "JUST NOW";
+  if (s < 3600) return `${Math.floor(s / 60)}M AGO`;
+  if (s < 86400) return `${Math.floor(s / 3600)}H AGO`;
+  return `${Math.floor(s / 86400)}D AGO`;
+}
 
 const HALL = 26; // half-extent of the hall floor, in metres
 const LORE = [
@@ -213,6 +222,8 @@ function Hall({ title, onTerminal, onLeave }: { title: string; onTerminal: () =>
 export function ShadowVaultRoom() {
   const [room, setRoom] = useState<ShadowRoomRequest | null>(null);
   const [whispers, setWhispers] = useState<Whisper[]>([]);
+  const [event, setEvent] = useState<EventInfo | null>(null);
+  const [tab, setTab] = useState<"whispers" | "attendees" | "lore">("whispers");
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -224,11 +235,26 @@ export function ShadowVaultRoom() {
   const refresh = useCallback(async (slug: string, commitment: string) => {
     try {
       const res = await verifyShadowPassFn({ data: { slug, commitment } });
-      if (res.valid) setWhispers(res.whispers as Whisper[]);
+      if (res.valid) {
+        setWhispers(res.whispers as Whisper[]);
+        setEvent(res.event as EventInfo | null);
+      }
     } catch {
       /* the chamber stays open even if the board cannot load */
     }
   }, []);
+
+  // Attendees are shown only as pass handles of those who have spoken; the
+  // rest are counted, never named — no wallet is ever linked to a presence.
+  const attendees = useMemo(() => {
+    const m = new Map<string, { handle: string; count: number; last: string }>();
+    for (const w of whispers) {
+      const cur = m.get(w.nullifier);
+      if (cur) cur.count += 1;
+      else m.set(w.nullifier, { handle: shadowHandle(w.nullifier), count: 1, last: w.createdAt });
+    }
+    return [...m.entries()].map(([n, v]) => ({ nullifier: n, ...v }));
+  }, [whispers]);
 
   useEffect(
     () =>
