@@ -206,3 +206,15 @@ export async function setShadowEventActive(userId: string, slug: string, active:
   if (error || !data?.length) return { ok: false, reason: "NOT YOUR GATE" };
   return { ok: true };
 }
+
+export async function transferShadowPass(slug: string, salt: string, newCommitment: string) {
+  if (!HEX64.test(salt) || !HEX64.test(newCommitment)) return { ok: false as const, reason: "MALFORMED TRANSFER" };
+  const { data, error } = await supabaseAdmin.rpc("shadow_transfer_pass" as never, {
+    _slug: slug,
+    _salt: salt,
+    _new_commitment: newCommitment,
+  } as never);
+  if (error) return { ok: false as const, reason: "GATE UNAVAILABLE" };
+  const row = (Array.isArray(data) ? data[0] : data) as { ok?: boolean; reason?: string } | null;
+  return { ok: Boolean(row?.ok), reason: String(row?.reason ?? "GATE UNAVAILABLE") };
+}

@@ -18,6 +18,7 @@ import {
   type ShadowPass,
 } from "@/lib/shadow-vault";
 import { ShadowL1Anchor } from "@/components/territory/ShadowL1Anchor";
+import { ShadowReceive, ShadowSend } from "@/components/territory/ShadowTransfer";
 
 type Whisper = { id: string; nullifier: string; content: string; createdAt: string };
 
@@ -266,6 +267,13 @@ function ShadowEventCard({
                   </button>
                 </div>
               </details>
+              <ShadowReceive
+                slug={event.slug}
+                onReceived={(p) => {
+                  setPass(p);
+                  void onEnter(p);
+                }}
+              />
             </>
           ) : (
             <>
@@ -294,6 +302,14 @@ function ShadowEventCard({
                   GATE OPEN
                 </span>
               )}
+              <ShadowSend
+                pass={pass}
+                onSent={() => {
+                  setPass(null);
+                  setUnlocked(false);
+                  setShowBackup(false);
+                }}
+              />
               <button
                 type="button"
                 onClick={() => setShowBackup((v) => !v)}

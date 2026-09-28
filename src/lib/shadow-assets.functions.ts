@@ -84,3 +84,10 @@ export const setShadowEventActiveFn = createServerFn({ method: "POST" })
     const { setShadowEventActive } = await import("@/lib/shadow-assets.server");
     return setShadowEventActive(context.userId, data.slug, data.active);
   });
+
+export const transferShadowPassFn = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({ slug, salt: hex64, newCommitment: hex64 }).parse(d))
+  .handler(async ({ data }) => {
+    const { transferShadowPass } = await import("@/lib/shadow-assets.server");
+    return transferShadowPass(data.slug, data.salt, data.newCommitment);
+  });
