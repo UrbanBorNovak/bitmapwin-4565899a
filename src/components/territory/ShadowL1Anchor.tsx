@@ -189,6 +189,10 @@ export function ShadowL1Anchor({
           >
             {existing.txid}
           </a>
+          <Link to="/shadow-notes" className="label mt-1 inline-block text-signal hover:text-bitcoin">
+            SEE EVERY PASS NOTE LIVE →
+          </Link>
+
           {signed?.rawHex ? (
             <details className="mt-2">
               <summary className="label cursor-pointer text-muted-foreground hover:text-signal">
