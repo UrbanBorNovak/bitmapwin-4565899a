@@ -682,6 +682,24 @@ function Field({ k, v }: { k: string; v: string }) {
   );
 }
 
+function HeroField({ label, value, signal = false }: { label: string; value: string; signal?: boolean }) {
+  return (
+    <div className="min-w-0">
+      <dt className="label">{label}</dt>
+      <dd className={`mt-2 break-words font-mono text-sm ${signal ? "text-signal" : "text-foreground"}`}>{value}</dd>
+    </div>
+  );
+}
+
+function HeroStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 bg-card px-3 py-3">
+      <dt className="label">{label}</dt>
+      <dd className="display mt-1 truncate text-lg">{value}</dd>
+    </div>
+  );
+}
+
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 bg-card px-4 py-3">

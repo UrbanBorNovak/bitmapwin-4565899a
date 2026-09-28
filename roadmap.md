@@ -83,6 +83,6 @@
 - [x] Show active extenders as runnable, interactive 3D previews with their exact published code.
 
 ## BITMAP pages
-- [ ] Recompose BITMAP details as a brutalist editorial story with clearer actions and navigation.
-- [ ] Make the live territory the primary experience and reduce nested panel clutter.
+- [x] Recompose BITMAP details as a brutalist editorial story with clearer actions and navigation.
+- [x] Make the live territory the primary experience and reduce nested panel clutter.
 - [ ] Verify the refreshed BITMAP page on desktop and phone.
