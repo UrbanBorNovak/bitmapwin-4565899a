@@ -15,6 +15,7 @@ import * as THREE from "three";
 import { Primitive } from "@/components/game/Primitive";
 import type { PlayerState } from "@/lib/player-state";
 import { companionSpec, useGear, type CompanionSpec } from "@/lib/world-gear";
+import { createFlyBrain } from "@/lib/fly-brain";
 import { groundY } from "@/lib/world-terrain";
 
 const COMPANION_URLS = [
