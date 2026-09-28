@@ -36,7 +36,7 @@ type Piece = {
   solids?: { x: number; z: number; radius: number }[];
 };
 
-type Site = { key: string; x: number; z: number; yaw: number; variant: number };
+export type Site = { key: string; x: number; z: number; yaw: number; variant: number };
 
 const URLS = Object.fromEntries(
   Object.entries(CLAY_INSCRIPTIONS).map(([key, inscription]) => [key, contentUrl(inscription)]),
@@ -187,16 +187,8 @@ function ShrineSite({ site, unit }: { site: Site; unit: number }) {
   );
 }
 
-export const ClayShrines = memo(function ClayShrines({
-  unit,
-  center,
-  radius,
-}: {
-  unit: number;
-  center: [number, number];
-  radius: number;
-}) {
-  const sites = useMemo(() => {
+/** Ruin sites near a point — shared by the renderer and the Oasis discovery loop. */
+export function shrineSitesNear(unit: number, center: [number, number], radius: number, limit = 2): Site[] {
     const pitch = unit * 105;
     const span = Math.ceil(radius / pitch) + 1;
     const cx = Math.round(center[0] / pitch);
@@ -225,8 +217,21 @@ export const ClayShrines = memo(function ClayShrines({
     }
     return found
       .sort((a, b) => (a.x - center[0]) ** 2 + (a.z - center[1]) ** 2 - ((b.x - center[0]) ** 2 + (b.z - center[1]) ** 2))
-      .slice(0, 2);
-  }, [center, radius, unit]);
+      .slice(0, limit);
+}
+
+export const SHRINE_LAYOUT_NAMES = ["COURTYARD", "GATEHOUSE", "BROKEN KEEP", "PROCESSIONAL WAY", "RING SANCTUM", "TWIN COURTS"] as const;
+
+export const ClayShrines = memo(function ClayShrines({
+  unit,
+  center,
+  radius,
+}: {
+  unit: number;
+  center: [number, number];
+  radius: number;
+}) {
+  const sites = useMemo(() => shrineSitesNear(unit, center, radius), [center, radius, unit]);
 
   useEffect(() => {
     const solids = sites.flatMap((site) =>
