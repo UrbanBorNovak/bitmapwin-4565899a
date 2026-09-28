@@ -109,3 +109,8 @@
 - [x] Keep rejected terraform actions inside the Oasis without blanking the screen.
 - [x] Roll back temporary growth when the current wallet does not hold the BITMAP.
 - [x] Verify the Oasis remains visible after land-permission failures.
+
+## Unified Oasis Atlas
+- [ ] Replace the separate World Scan terrain with the painted Atlas map and shared Hilbert positions.
+- [ ] Preserve direct in-world travel, ownership, player, and frontier markers.
+- [ ] Link the overlay to the full Atlas and verify it in the Oasis.

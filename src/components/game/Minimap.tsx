@@ -9,6 +9,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import type { PlayerState } from "@/lib/player-state";
 import { WORLD_CELL, WORLD_GRID, WORLD_UNITS } from "@/lib/player-state";
 import type { MapCursor } from "@/lib/map-presence";
@@ -468,14 +469,23 @@ export function Minimap({
             className="hud-panel w-[min(56vh,90%)] max-w-[560px] font-mono"
           >
             <header className="flex items-center justify-between border-b border-border px-2 py-1 text-[10px]">
-              <span className="hud-telemetry-title">WORLD SCAN · 1,000 × 1,000 DISTRICTS</span>
-              <button
-                type="button"
-                className="border border-border px-1.5 text-muted-foreground hover:border-foreground hover:text-foreground"
-                onClick={() => setExpanded(false)}
-              >
-                CLOSE · M
-              </button>
+              <span className="hud-telemetry-title">OASIS ATLAS · 1,000 × 1,000 BITMAPS</span>
+              <span className="flex items-center gap-1">
+                <Link
+                  to="/map/$block"
+                  params={{ block: String(readout.height) }}
+                  className="border border-signal/50 px-1.5 py-0.5 text-signal hover:border-signal hover:bg-signal/10"
+                >
+                  OPEN ATLAS
+                </Link>
+                <button
+                  type="button"
+                  className="border border-border px-1.5 py-0.5 text-muted-foreground hover:border-foreground hover:text-foreground"
+                  onClick={() => setExpanded(false)}
+                >
+                  CLOSE · M
+                </button>
+              </span>
             </header>
             <WorldScanSvg
               height={readout.height}
@@ -490,8 +500,8 @@ export function Minimap({
             />
             {partyRoster}
             <p className="border-t border-border px-2 py-1 text-[9px] text-muted-foreground">
-              CLICK ANY DISTRICT TO SEND THE CAMERA THERE · ORANGE DIAMONDS ARE YOURS · CYAN RING IS
-              THE LIVING FRONTIER · BIOMES ARE BLOCK ERAS
+              CLICK ANY BITMAP TO TRAVEL THERE · ORANGE DIAMONDS ARE YOURS · CYAN RING IS THE LIVING
+              FRONTIER · OPEN ATLAS FOR ZOOM, HISTORY, CLAIMS AND BUILDS
             </p>
           </div>
         </div>
