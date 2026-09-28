@@ -110,7 +110,7 @@ export function BitmapDevelopment({
   districtInscriptionId: string | null;
 }) {
   const scan = useQuery(parcelsQuery(height, districtInscriptionId));
-  const builds = useQuery(buildsQuery());
+  const builds = useQuery(buildsQuery(height));
   const [showAll, setShowAll] = useState(false);
 
   const children = scan.data?.children ?? [];
@@ -127,12 +127,8 @@ export function BitmapDevelopment({
     const out: Series[] = [];
     if (childTimes.length > 0) out.push(cumulative(childTimes, "CHILD INSCRIPTIONS", "oklch(0.82 0.098 213)"));
     if (parcelTimes.length > 0) out.push(cumulative(parcelTimes, "VALID PARCELS", "oklch(0.72 0.169 55)"));
-    const buildTimes = (builds.data ?? [])
-      .filter((entry) => entry.page.bitmapHeight === height && entry.page.updatedAt)
-      .map((entry) => new Date(entry.page.updatedAt as string).getTime())
-      .filter(Number.isFinite);
-    if (buildTimes.length > 0)
-      out.push(cumulative(buildTimes, "BUILDS RAISED", "oklch(0.92 0 0)"));
+    if ((builds.data ?? []).length > 0)
+      out.push(cumulative(builds.data ?? [], "BUILDS RAISED", "oklch(0.92 0 0)"));
     return out;
   }, [children, parcels, builds.data]);
 
@@ -150,7 +146,7 @@ export function BitmapDevelopment({
           { label: "CHILDREN", value: String(children.length) },
           { label: "VALID PARCELS", value: String(parcels.filter((p) => p.valid).length) },
           { label: "MAX PARCELS", value: scan.data?.maxParcels === null || scan.data === undefined ? "—" : String(scan.data.maxParcels) },
-          { label: "BUILDS RAISED", value: String((builds.data ?? []).filter((entry) => entry.page.bitmapHeight === height).length) },
+          { label: "BUILDS RAISED", value: String((builds.data ?? []).length) },
         ].map((s) => (
           <div key={s.label} className="border border-border px-3 py-2">
             <p className="label text-muted-foreground">{s.label}</p>
