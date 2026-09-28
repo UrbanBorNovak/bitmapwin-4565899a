@@ -33,7 +33,6 @@ function ExplorePage() {
   const tradedCount = useQuery(tradedBitmapCountQuery());
   const districts = useQuery(districtsQuery(12));
   const deployments = useQuery(worldDeploymentsQuery(12));
-  const stream = useQuery(provenanceStreamQuery("all", 8));
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-10 md:px-8 md:py-14">
