@@ -22,7 +22,7 @@ import { districtForHeightQuery } from "@/lib/districts";
 import { safeExternalUrl } from "@/lib/safe-url";
 import { recordPassportVisitFn } from "@/lib/views.functions";
 import { BuildEditor } from "@/components/builds/BuildEditor";
-import { BuildRenderer } from "@/components/builds/BuildRenderer";
+import { PublicBuildViewer } from "@/components/builds/PublicBuildViewer";
 import { BuildRaffles } from "@/components/coins/BuildRaffles";
 import { LiveBitmapPresence } from "@/components/LiveBitmapPresence";
 import { BitmapModelPlacement } from "@/components/BitmapModelPlacement";
@@ -198,7 +198,10 @@ export function ParcelPagePanel({
         {built && (
           <div className="pt-2">
             <p className="label mb-3">{BUILD_KIND_LABELS[built.buildKind]}</p>
-            <BuildRenderer kind={built.buildKind} config={built.buildConfig} height={height} />
+            <PublicBuildViewer
+              page={built}
+              district={district.data ? { name: district.data.name, slug: district.data.slug } : null}
+            />
             <BuildRaffles height={height} />
           </div>
         )}
