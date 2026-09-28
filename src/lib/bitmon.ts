@@ -6,6 +6,7 @@
  * recompute a Guardian from public chain data.
  */
 import { MEMBERSHIP_ADDRESS } from "@/lib/membership";
+import { sha256 } from "@noble/hashes/sha2.js";
 
 /** Every summon pays the project treasury. */
 export const GUARDIAN_TREASURY = MEMBERSHIP_ADDRESS;
@@ -126,6 +127,30 @@ export function guardianFromBlock(src: BlockDnaSource): GuardianDna {
 
 export function guardianLevel(dna: Pick<GuardianDna, "hp" | "bite" | "speed" | "armor">) {
   return Math.max(1, Math.min(99, Math.round((dna.hp / 12 + dna.bite + dna.speed + dna.armor) / 12)));
+}
+
+const bytesToHex = (bytes: Uint8Array) => Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+
+/** Public Guardian commitment: no wallet or BITMAPWIN account identity. */
+export function guardianShieldDigest(dna: GuardianDna, summonTxid: string) {
+  const record = ["bitmapwin:guardian:v1", dna.height, dna.dnaHash, dna.species, dna.rarity, dna.hp, dna.bite, dna.speed, dna.armor, dna.ability, summonTxid].join("|");
+  return bytesToHex(sha256(new TextEncoder().encode(record)));
+}
+
+/** Compact deterministic SVG made only from public block DNA and summon proof. */
+export function guardianArtifactSvg(dna: GuardianDna, summonTxid: string): string {
+  const digest = guardianShieldDigest(dna, summonTxid);
+  const level = guardianLevel(dna);
+  const cells: string[] = [];
+  for (let i = 0; i < 96; i++) {
+    const value = parseInt(digest.slice((i % 32) * 2, (i % 32) * 2 + 2), 16);
+    if (((value >> (i % 5)) & 1) === 0) continue;
+    const x = 34 + (i % 12) * 27;
+    const y = 70 + Math.floor(i / 12) * 27;
+    cells.push(`<rect x="${x}" y="${y}" width="23" height="23" rx="2" fill="${value % 4 === 0 ? dna.accent : dna.body}" opacity="${(0.35 + (value % 55) / 100).toFixed(2)}"/>`);
+  }
+  const stat = (label: string, value: number, x: number) => `<text x="${x}" y="344" fill="#87939b" font-family="monospace" font-size="9">${label}</text><text x="${x}" y="363" fill="#e9eef0" font-family="monospace" font-size="17">${value}</text>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500"><rect width="400" height="500" fill="#07090b"/><path d="M20 20h360v460H20z" fill="none" stroke="${dna.accent}" stroke-opacity=".55"/><path d="M28 54h344M28 316h344M28 390h344" stroke="#253038"/>${cells.join("")}<text x="28" y="43" fill="#f7931a" font-family="monospace" font-size="12">BLOCK-DNA GUARDIAN · ${dna.height}.BITMAP</text><text x="28" y="296" fill="#e9eef0" font-family="monospace" font-weight="700" font-size="24">${dna.species}</text><text x="28" y="313" fill="${dna.accent}" font-family="monospace" font-size="10">${dna.rarity} · LV ${level} · ERA ${dna.epoch}</text>${stat("HP", dna.hp, 28)}${stat("BITE", dna.bite, 112)}${stat("SPEED", dna.speed, 210)}${stat("ARMOR", dna.armor, 304)}<text x="28" y="414" fill="${dna.accent}" font-family="monospace" font-size="11">${dna.ability}</text><text x="28" y="438" fill="#87939b" font-family="monospace" font-size="8">DNA ${dna.dnaHash}</text><text x="28" y="454" fill="#87939b" font-family="monospace" font-size="7">SUMMON ${summonTxid}</text><text x="28" y="470" fill="#87939b" font-family="monospace" font-size="7">SHIELD ${digest}</text></svg>`;
 }
 
 export const ESPLORA_MIRRORS = ["https://mempool.space/api", "https://blockstream.info/api", "https://mempool.emzy.de/api"];

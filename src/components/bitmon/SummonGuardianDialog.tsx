@@ -8,7 +8,8 @@ import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { GuardianBody } from "@/components/bitmon/GuardianBody";
-import { RARITY_TONE, bip21, guardianLevel, GUARDIAN_PRICE_SATS, type GuardianDna } from "@/lib/bitmon";
+import { ShadowInscriber } from "@/components/territory/ShadowInscriber";
+import { RARITY_TONE, bip21, guardianArtifactSvg, guardianLevel, guardianShieldDigest, GUARDIAN_PRICE_SATS, type GuardianDna } from "@/lib/bitmon";
 import { guardianDnaQuery, guardianQuery } from "@/lib/bitmon-queries";
 import { checkSummonOrderFn, createSummonOrderFn, resumeSummonOrderFn } from "@/lib/bitmon.functions";
 import type { SummonOrder } from "@/lib/bitmon.server";
@@ -116,6 +117,9 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
 
   const d = dna.data;
   const already = awake.data;
+  const summonTxid = already?.txid ?? (celebrate ? order?.txid : null);
+  const guardianArtifact = d && summonTxid ? guardianArtifactSvg(d, summonTxid) : null;
+  const guardianDigest = d && summonTxid ? guardianShieldDigest(d, summonTxid) : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -155,6 +159,17 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
               <p className="font-mono text-xs text-bitcoin">THIS GUARDIAN IS AWAKE AND PATROLS {height}.BITMAP IN THE OASIS.</p>
               {already ? <p className="font-mono text-[10px] text-muted-foreground">SUMMONED BY {already.owner.slice(0, 8)}…{already.owner.slice(-6)} · TX {already.txid.slice(0, 10)}…</p> : null}
               <Link to="/oasis" search={{ height }} className="inline-block border border-bitcoin px-3 py-2 font-mono text-xs text-bitcoin hover:bg-bitcoin hover:text-background">SEE IT IN THE OASIS →</Link>
+              {guardianArtifact && guardianDigest ? <ShadowInscriber
+                slug={`guardian-${height}`}
+                height={height}
+                index={0}
+                digest={guardianDigest}
+                artifactSvg={guardianArtifact}
+                artifactLabel="SHIELDED GUARDIAN ORDINAL"
+                actionLabel="◆ INSCRIBE THIS GUARDIAN"
+                description="THE GUARDIAN IS ALREADY SUMMONED. THIS OPTIONAL SECOND STEP PAYS THE LIVE BITCOIN MINER COST FOR A PUBLIC ORDINAL THAT CONTAINS NO WALLET OR ACCOUNT IDENTITY."
+                allowUpload={false}
+              /> : null}
             </div>
           ) : order ? (
             <div className="grid gap-4 sm:grid-cols-[auto_1fr]">

@@ -19,14 +19,24 @@ import {
  * Default art is drawn from the pass's public note fields; the holder may swap
  * in their own file. Keys for the reveal are made and kept on this device.
  */
-export function ShadowInscriber(props: { slug: string; height: number; index: number; digest: string }) {
+export function ShadowInscriber(props: {
+  slug: string;
+  height: number;
+  index: number;
+  digest: string;
+  artifactSvg?: string;
+  artifactLabel?: string;
+  actionLabel?: string;
+  description?: string;
+  allowUpload?: boolean;
+}) {
   const [job, setJob] = useState<InscribeJob | null>(null);
   const [file, setFile] = useState<{ type: string; bytes: Uint8Array; url: string } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => setJob(loadJob(props.digest)), [props.digest]);
 
-  const svg = useMemo(() => passArtifactSvg(props), [props]);
+  const svg = useMemo(() => props.artifactSvg ?? passArtifactSvg(props), [props.artifactSvg, props.digest, props.height, props.index, props.slug]);
   const defaultUrl = useMemo(() => `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`, [svg]);
 
   // Watch for the commit payment, then reveal automatically.
@@ -96,7 +106,7 @@ export function ShadowInscriber(props: { slug: string; height: number; index: nu
     const blob = new Blob([JSON.stringify(job, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `shadow-inscribe-recovery-${job.digest.slice(0, 8)}.json`;
+    a.download = `${props.artifactLabel ?? "shadow-pass"}-inscribe-recovery-${job.digest.slice(0, 8)}.json`;
     a.click();
   };
 
@@ -104,7 +114,7 @@ export function ShadowInscriber(props: { slug: string; height: number; index: nu
 
   return (
     <div className="border border-bitcoin/40 bg-bitcoin/5 p-3 space-y-2">
-      <p className="label text-bitcoin">◆ INSCRIBE AN ARTIFACT BESIDE THIS NOTE</p>
+      <p className="label text-bitcoin">◆ {props.artifactLabel ?? "INSCRIBE AN ARTIFACT BESIDE THIS NOTE"}</p>
       {file?.type.startsWith("image/") || !file ? (
         <img src={preview} alt="Artifact preview" className="w-full max-w-[220px] border border-border/40" />
       ) : (
@@ -113,10 +123,10 @@ export function ShadowInscriber(props: { slug: string; height: number; index: nu
 
       {!job?.commitTxid ? (
         <>
-          <label className="label block cursor-pointer text-muted-foreground hover:text-foreground">
+          {props.allowUpload !== false ? <label className="label block cursor-pointer text-muted-foreground hover:text-foreground">
             {file ? "◇ SWAP FILE" : "◇ USE MY OWN FILE INSTEAD (UNDER 60 KB)"}
             <input type="file" className="hidden" onChange={(e) => void onFile(e.target.files?.[0])} />
-          </label>
+          </label> : null}
           {file ? (
             <button type="button" className="label text-muted-foreground underline" onClick={() => setFile(null)}>
               ← BACK TO THE PASS ART
@@ -128,10 +138,10 @@ export function ShadowInscriber(props: { slug: string; height: number; index: nu
             onClick={() => void start()}
             className="w-full border border-bitcoin px-3 py-2 font-mono text-xs text-bitcoin hover:bg-bitcoin hover:text-background disabled:opacity-40"
           >
-            {busy ?? "◆ INSCRIBE ON BITCOIN"}
+            {busy ?? props.actionLabel ?? "◆ INSCRIBE ON BITCOIN"}
           </button>
           <p className="label text-muted-foreground">
-            TWO STEPS: YOUR WALLET PAYS ONCE, THEN THIS DEVICE FINISHES THE INSCRIPTION. KEEP THE TAB OPEN.
+            {props.description ?? "TWO STEPS: YOUR WALLET PAYS ONCE, THEN THIS DEVICE FINISHES THE INSCRIPTION. KEEP THE TAB OPEN."}
           </p>
         </>
       ) : (
