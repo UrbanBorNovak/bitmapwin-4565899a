@@ -3387,6 +3387,36 @@ export type Database = {
         }
         Relationships: []
       }
+      shord_pool_withdrawals: {
+        Row: {
+          created_at: string
+          destination: string
+          fee_sats: number | null
+          inscription_id: string
+          nullifier: string
+          status: string
+          txid: string | null
+        }
+        Insert: {
+          created_at?: string
+          destination: string
+          fee_sats?: number | null
+          inscription_id: string
+          nullifier: string
+          status?: string
+          txid?: string | null
+        }
+        Update: {
+          created_at?: string
+          destination?: string
+          fee_sats?: number | null
+          inscription_id?: string
+          nullifier?: string
+          status?: string
+          txid?: string | null
+        }
+        Relationships: []
+      }
       trade_crawl_state: {
         Row: {
           block_height: number
