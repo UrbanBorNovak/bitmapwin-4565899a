@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { FirstTenMinutes } from "@/components/FirstTenMinutes";
 
 export const Route = createFileRoute("/land-101")({
   head: () => ({
@@ -236,6 +237,7 @@ function Land101() {
       </Reveal>
 
       <div className="mt-6 space-y-6">
+        <FirstTenMinutes />
         <Chapter
           n="01"
           kicker="THE RAW MATERIAL"

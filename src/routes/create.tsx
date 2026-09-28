@@ -7,6 +7,7 @@ import { DataBadge } from "@/components/extenders/DataBadge";
 import { MvpFlowRail } from "@/components/MvpFlowRail";
 import { ExtenderPreview } from "@/components/extenders/ExtenderPreview";
 import { TerritoryShareCard } from "@/components/TerritoryShareCard";
+import { FirstTenMinutes } from "@/components/FirstTenMinutes";
 
 import { useAuthSession } from "@/lib/auth";
 import { heldHeightsQuery } from "@/lib/held-parcels";
@@ -273,6 +274,10 @@ function CreatePage() {
       <div className="mt-4 flex flex-wrap gap-2">
         <DataBadge kind="live" note="REAL CODE · REAL SANDBOX · REAL DEPLOY" />
       </div>
+      <div className="mt-6 max-w-3xl">
+        <FirstTenMinutes compact />
+      </div>
+
 
       <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
         <div className="space-y-4">
