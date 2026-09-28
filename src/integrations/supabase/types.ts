@@ -456,6 +456,84 @@ export type Database = {
         }
         Relationships: []
       }
+      bitmon_guardians: {
+        Row: {
+          block_height: number
+          created_at: string
+          dna_hash: string
+          id: string
+          payment_txid: string
+          rarity: string
+          species: string
+          stats: Json
+          summoned_by_address: string
+          summoned_by_user_id: string | null
+        }
+        Insert: {
+          block_height: number
+          created_at?: string
+          dna_hash: string
+          id?: string
+          payment_txid: string
+          rarity: string
+          species: string
+          stats?: Json
+          summoned_by_address: string
+          summoned_by_user_id?: string | null
+        }
+        Update: {
+          block_height?: number
+          created_at?: string
+          dna_hash?: string
+          id?: string
+          payment_txid?: string
+          rarity?: string
+          species?: string
+          stats?: Json
+          summoned_by_address?: string
+          summoned_by_user_id?: string | null
+        }
+        Relationships: []
+      }
+      bitmon_summon_orders: {
+        Row: {
+          amount_sats: number
+          block_height: number
+          created_at: string
+          expires_at: string
+          id: string
+          payer_address: string
+          status: string
+          txid: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_sats: number
+          block_height: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          payer_address: string
+          status?: string
+          txid?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_sats?: number
+          block_height?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          payer_address?: string
+          status?: string
+          txid?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       block_facts: {
         Row: {
           avg_fee_rate: number | null
