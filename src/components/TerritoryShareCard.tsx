@@ -114,11 +114,12 @@ export function TerritoryShareCard({
         ctx.fillText(tagLine.slice(0, 60), 72, 336);
       }
 
-      if (placeName) {
+      if (placeName && headline !== placeName) {
         ctx.fillStyle = dim;
         ctx.font = "400 22px 'DM Sans', Arial, sans-serif";
         ctx.fillText(placeName.toUpperCase().slice(0, 48), 72, 384);
       }
+
 
       ctx.strokeStyle = "#2a2a2c";
       ctx.beginPath();
@@ -162,9 +163,10 @@ export function TerritoryShareCard({
               {tagLine}
             </div>
           ) : null}
-          {placeName ? (
+          {placeName && headline !== placeName ? (
             <div className="mt-2 font-mono text-[10px] text-muted-foreground">{placeName.toUpperCase()}</div>
           ) : null}
+
           <div className="mt-5 border-t border-border pt-3 font-mono text-[10px] text-muted-foreground">
             BUILT ON BITCOIN · ENTER THE OASIS → <span data-no-translate>{url.replace("https://", "")}</span>
           </div>
