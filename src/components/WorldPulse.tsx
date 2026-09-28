@@ -157,11 +157,28 @@ export function WorldPulse({ limit = 24, visible = 8 }: { limit?: number; visibl
   }, [events]);
 
   const active: Channel = CHANNELS.find((item) => item.key === channel) ?? { key: "all", label: "ALL SIGNAL", types: [] };
-  const filtered = active.types.length ? events.filter((event) => active.types.includes(event.eventType)) : events;
-  const shown = expanded ? filtered : filtered.slice(0, visible);
+
+  /** Identical repeat records collapse into one row with a ×N marker. */
+  const grouped = useMemo(() => {
+    const list = active.types.length ? events.filter((event) => active.types.includes(event.eventType)) : events;
+    const rows: { event: ProvenanceEvent; repeats: number }[] = [];
+    for (const event of list) {
+      const found = rows.find(
+        (row) =>
+          row.event.eventType === event.eventType &&
+          row.event.bitmapHeight === event.bitmapHeight &&
+          row.event.actorWallet === event.actorWallet,
+      );
+      if (found) found.repeats += 1;
+      else rows.push({ event, repeats: 1 });
+    }
+    return rows;
+  }, [events, active]);
+
+  const shown = expanded ? grouped : grouped.slice(0, visible);
 
   return (
-    <section className="mt-10 border border-border bg-card/40" aria-label="World pulse">
+    <section className="mt-10 border border-border bg-card" aria-label="World pulse">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
           <Activity className="size-4 shrink-0 text-signal" aria-hidden />
