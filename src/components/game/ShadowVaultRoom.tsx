@@ -1,0 +1,371 @@
+/**
+ * THE SHADOW VAULT — the interior chamber behind an obsidian archway.
+ *
+ * A separate scene from the open Oasis: stepping through the veil drops you
+ * into a sealed subterranean hall. Entry is proven on the device that holds
+ * the pass; the server only ever sees the commitment hash.
+ */
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import * as THREE from "three";
+import { toast } from "sonner";
+import { SafeCanvas } from "@/components/game/SafeCanvas";
+import { SafeHtml } from "@/components/game/SafeHtml";
+import { onShadowRoom, type ShadowRoomRequest } from "@/lib/shadow-room";
+import { getPass, shadowHandle } from "@/lib/shadow-vault";
+import { verifyShadowPassFn, postShadowWhisperFn } from "@/lib/shadow-assets.functions";
+
+type Whisper = { id: string; nullifier: string; content: string; createdAt: string };
+
+const HALL = 26; // half-extent of the hall floor, in metres
+const LORE = [
+  "PRIVACY IS NECESSARY FOR AN OPEN SOCIETY IN THE ELECTRONIC AGE.",
+  "THE LAND IS PUBLIC. WHO GATHERS ON IT NEED NOT BE.",
+  "A PASS IS A SECRET ON YOUR DEVICE — NOT A NAME IN A LEDGER.",
+  "NOTHING HERE LINKS A WALLET TO A PRESENCE.",
+];
+
+/* ---------------------------------------------------------------- controller */
+
+function Walker({ look }: { look: React.MutableRefObject<{ yaw: number; pitch: number }> }) {
+  const { camera } = useThree();
+  const keys = useRef<Record<string, boolean>>({});
+  const vel = useRef(new THREE.Vector3());
+
+  useEffect(() => {
+    camera.position.set(0, 1.7, HALL * 0.72);
+    const down = (e: KeyboardEvent) => {
+      keys.current[e.key.toLowerCase()] = true;
+    };
+    const up = (e: KeyboardEvent) => {
+      keys.current[e.key.toLowerCase()] = false;
+    };
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+    };
+  }, [camera]);
+
+  useFrame((_, raw) => {
+    const dt = Math.min(raw, 0.05);
+    const k = keys.current;
+    const fwd = (k["w"] || k["arrowup"] ? 1 : 0) - (k["s"] || k["arrowdown"] ? 1 : 0);
+    const side = (k["d"] || k["arrowright"] ? 1 : 0) - (k["a"] || k["arrowleft"] ? 1 : 0);
+    const speed = k["shift"] ? 9 : 4.6;
+    const yaw = look.current.yaw;
+    const dir = new THREE.Vector3(
+      Math.sin(yaw) * -fwd + Math.cos(yaw) * side,
+      0,
+      Math.cos(yaw) * -fwd - Math.sin(yaw) * side,
+    );
+    if (dir.lengthSq() > 0) dir.normalize().multiplyScalar(speed);
+    vel.current.lerp(dir, 1 - Math.exp(-9 * dt));
+    camera.position.addScaledVector(vel.current, dt);
+    const edge = HALL - 1.4;
+    camera.position.x = THREE.MathUtils.clamp(camera.position.x, -edge, edge);
+    camera.position.z = THREE.MathUtils.clamp(camera.position.z, -edge, edge);
+    camera.position.y = 1.7;
+    camera.rotation.set(look.current.pitch, look.current.yaw, 0, "YXZ");
+  });
+  return null;
+}
+
+/* -------------------------------------------------------------------- scene */
+
+function Monolith({ x, z, text, rot }: { x: number; z: number; text: string; rot: number }) {
+  return (
+    <group position={[x, 0, z]} rotation={[0, rot, 0]}>
+      <mesh position={[0, 2.6, 0]} castShadow>
+        <boxGeometry args={[2.6, 5.2, 0.55]} />
+        <meshStandardMaterial color="#0b0a11" roughness={0.35} metalness={0.5} />
+      </mesh>
+      <mesh position={[0, 2.6, 0.31]}>
+        <planeGeometry args={[2.1, 4.4]} />
+        <meshStandardMaterial color="#04060a" emissive="#0e7490" emissiveIntensity={0.5} />
+      </mesh>
+      <SafeHtml position={[0, 2.7, 0.4]} center distanceFactor={12} style={{ pointerEvents: "none" }}>
+        <div className="w-40 text-center font-mono text-[8px] leading-relaxed tracking-wide text-signal/90">
+          {text}
+        </div>
+      </SafeHtml>
+    </group>
+  );
+}
+
+function Hall({ title, onTerminal, onLeave }: { title: string; onTerminal: () => void; onLeave: () => void }) {
+  const veil = useRef<THREE.MeshStandardMaterial>(null);
+  const core = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    if (veil.current) veil.current.emissiveIntensity = 0.7 + Math.sin(t * 1.4) * 0.35;
+    if (core.current) {
+      core.current.rotation.y = t * 0.5;
+      core.current.position.y = 1.5 + Math.sin(t * 1.1) * 0.12;
+    }
+  });
+  const obsidian = { color: "#0a0910", roughness: 0.28, metalness: 0.55 } as const;
+  const lines = useMemo(() => [-18, -9, 0, 9, 18], []);
+
+  return (
+    <group>
+      {/* floor + bioluminescent seams */}
+      <mesh rotation-x={-Math.PI / 2} receiveShadow>
+        <planeGeometry args={[HALL * 2, HALL * 2]} />
+        <meshStandardMaterial color="#080711" roughness={0.5} metalness={0.35} />
+      </mesh>
+      {lines.map((v) => (
+        <group key={v}>
+          <mesh rotation-x={-Math.PI / 2} position={[v, 0.02, 0]}>
+            <planeGeometry args={[0.08, HALL * 2]} />
+            <meshStandardMaterial color="#06121a" emissive="#22d3ee" emissiveIntensity={1.4} />
+          </mesh>
+          <mesh rotation-x={-Math.PI / 2} position={[0, 0.02, v]}>
+            <planeGeometry args={[HALL * 2, 0.08]} />
+            <meshStandardMaterial color="#06121a" emissive="#22d3ee" emissiveIntensity={1.1} />
+          </mesh>
+        </group>
+      ))}
+      {/* walls + ceiling */}
+      {[
+        [0, -HALL, 0],
+        [0, HALL, Math.PI],
+        [-HALL, 0, Math.PI / 2],
+        [HALL, 0, -Math.PI / 2],
+      ].map(([x, z, r], i) => (
+        <mesh key={i} position={[x as number, 5, z as number]} rotation={[0, r as number, 0]}>
+          <boxGeometry args={[HALL * 2, 10, 0.6]} />
+          <meshStandardMaterial {...obsidian} side={THREE.DoubleSide} />
+        </mesh>
+      ))}
+      <mesh position={[0, 10, 0]} rotation-x={Math.PI / 2}>
+        <planeGeometry args={[HALL * 2, HALL * 2]} />
+        <meshStandardMaterial color="#05040a" roughness={0.8} />
+      </mesh>
+
+      {/* the void terminal at the heart of the hall */}
+      <group position={[0, 0, 0]}>
+        <mesh position={[0, 0.5, 0]} castShadow>
+          <cylinderGeometry args={[1.6, 2.1, 1, 8]} />
+          <meshStandardMaterial {...obsidian} />
+        </mesh>
+        <mesh ref={core} position={[0, 1.5, 0]} onClick={onTerminal}>
+          <octahedronGeometry args={[0.8, 0]} />
+          <meshStandardMaterial color="#031017" emissive="#22d3ee" emissiveIntensity={1.6} />
+        </mesh>
+        <pointLight position={[0, 2.4, 0]} color="#22d3ee" intensity={18} distance={22} />
+        <SafeHtml position={[0, 3.1, 0]} center distanceFactor={16}>
+          <button
+            type="button"
+            onClick={onTerminal}
+            className="whitespace-nowrap border border-signal/70 bg-background/85 px-2 py-1 font-mono text-[10px] text-signal hover:bg-signal/15"
+          >
+            ◈ VOID TERMINAL
+          </button>
+        </SafeHtml>
+      </group>
+
+      {/* lore monoliths */}
+      <Monolith x={-11} z={-11} rot={Math.PI * 0.25} text={LORE[0]!} />
+      <Monolith x={11} z={-11} rot={-Math.PI * 0.25} text={LORE[1]!} />
+      <Monolith x={-11} z={6} rot={Math.PI * 0.75} text={LORE[2]!} />
+      <Monolith x={11} z={6} rot={-Math.PI * 0.75} text={LORE[3]!} />
+
+      {/* the return archway */}
+      <group position={[0, 0, HALL - 2]}>
+        {[-1, 1].map((s) => (
+          <mesh key={s} position={[s * 2.2, 3, 0]}>
+            <boxGeometry args={[0.6, 6, 0.8]} />
+            <meshStandardMaterial {...obsidian} />
+          </mesh>
+        ))}
+        <mesh position={[0, 6, 0]}>
+          <torusGeometry args={[2.5, 0.3, 8, 24, Math.PI]} />
+          <meshStandardMaterial {...obsidian} />
+        </mesh>
+        <mesh position={[0, 3.1, 0]} onClick={onLeave}>
+          <planeGeometry args={[4, 6]} />
+          <meshStandardMaterial ref={veil} color="#05030a" emissive="#f7931a" emissiveIntensity={0.8} transparent opacity={0.5} side={THREE.DoubleSide} />
+        </mesh>
+        <SafeHtml position={[0, 7.1, 0]} center distanceFactor={18}>
+          <button
+            type="button"
+            onClick={onLeave}
+            className="whitespace-nowrap border border-bitcoin/70 bg-background/85 px-2 py-1 font-mono text-[10px] text-bitcoin hover:bg-bitcoin/15"
+          >
+            ← BACK TO THE OASIS
+          </button>
+        </SafeHtml>
+      </group>
+
+      <SafeHtml position={[0, 8, -HALL + 1]} center distanceFactor={26} style={{ pointerEvents: "none" }}>
+        <div className="whitespace-nowrap border border-signal/40 bg-background/70 px-3 py-1 font-mono text-[11px] tracking-[0.3em] text-signal">
+          ◈ {title.toUpperCase()}
+        </div>
+      </SafeHtml>
+    </group>
+  );
+}
+
+/* ------------------------------------------------------------------ overlay */
+
+export function ShadowVaultRoom() {
+  const [room, setRoom] = useState<ShadowRoomRequest | null>(null);
+  const [whispers, setWhispers] = useState<Whisper[]>([]);
+  const [terminalOpen, setTerminalOpen] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
+  const look = useRef({ yaw: 0, pitch: 0 });
+  const drag = useRef<{ x: number; y: number } | null>(null);
+
+  const pass = room ? getPass(room.slug) : null;
+
+  const refresh = useCallback(async (slug: string, commitment: string) => {
+    try {
+      const res = await verifyShadowPassFn({ data: { slug, commitment } });
+      if (res.valid) setWhispers(res.whispers as Whisper[]);
+    } catch {
+      /* the chamber stays open even if the board cannot load */
+    }
+  }, []);
+
+  useEffect(
+    () =>
+      onShadowRoom((req) => {
+        look.current = { yaw: 0, pitch: 0 };
+        setTerminalOpen(false);
+        setRoom(req);
+        const held = getPass(req.slug);
+        if (held) void refresh(req.slug, held.commitment);
+      }),
+    [refresh],
+  );
+
+  useEffect(() => {
+    if (!room) return;
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setRoom(null);
+    };
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [room]);
+
+  const send = async () => {
+    if (!room || !pass || !draft.trim()) return;
+    setSending(true);
+    try {
+      const res = await postShadowWhisperFn({
+        data: { slug: room.slug, commitment: pass.commitment, nullifier: pass.nullifier, content: draft.trim() },
+      });
+      if (res.ok) {
+        setWhispers(res.whispers as Whisper[]);
+        setDraft("");
+      } else {
+        toast.error("THE TERMINAL REFUSED THAT WHISPER");
+      }
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (!room) return null;
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-black">
+      <div
+        className="absolute inset-0"
+        onPointerDown={(e) => {
+          drag.current = { x: e.clientX, y: e.clientY };
+        }}
+        onPointerMove={(e) => {
+          const d = drag.current;
+          if (!d) return;
+          look.current.yaw -= (e.clientX - d.x) * 0.004;
+          look.current.pitch = THREE.MathUtils.clamp(look.current.pitch - (e.clientY - d.y) * 0.004, -1.1, 1.1);
+          drag.current = { x: e.clientX, y: e.clientY };
+        }}
+        onPointerUp={() => {
+          drag.current = null;
+        }}
+        onPointerLeave={() => {
+          drag.current = null;
+        }}
+      >
+        <SafeCanvas shadows camera={{ fov: 68, near: 0.1, far: 200 }}>
+          <color attach="background" args={["#03030a"]} />
+          <fog attach="fog" args={["#03030a", 12, 52]} />
+          <ambientLight intensity={0.35} color="#7dd3fc" />
+          <directionalLight position={[8, 14, 6]} intensity={0.5} color="#a5f3fc" castShadow />
+          <pointLight position={[-14, 6, -14]} color="#22d3ee" intensity={14} distance={30} />
+          <pointLight position={[14, 6, 14]} color="#f7931a" intensity={8} distance={26} />
+          <Walker look={look} />
+          <Hall
+            title={room.title}
+            onTerminal={() => setTerminalOpen((v) => !v)}
+            onLeave={() => setRoom(null)}
+          />
+        </SafeCanvas>
+      </div>
+
+      {/* chamber HUD */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-3 font-mono text-[10px] text-signal">
+        <div className="border border-signal/40 bg-background/70 px-2 py-1">
+          ◈ SHADOW VAULT · {pass ? shadowHandle(pass.nullifier) : "NO PASS ON THIS DEVICE"}
+        </div>
+        <button
+          type="button"
+          onClick={() => setRoom(null)}
+          className="pointer-events-auto border border-bitcoin/60 bg-background/80 px-2 py-1 text-bitcoin hover:bg-bitcoin/15"
+        >
+          LEAVE · ESC
+        </button>
+      </div>
+      <div className="pointer-events-none absolute bottom-3 left-3 border border-border/60 bg-background/70 px-2 py-1 font-mono text-[9px] text-muted-foreground">
+        WASD / ARROWS TO WALK · DRAG TO LOOK · SHIFT TO HURRY
+      </div>
+
+      {terminalOpen ? (
+        <div className="absolute right-3 top-14 flex max-h-[70vh] w-[min(92vw,22rem)] flex-col border border-signal/40 bg-background/95 p-3 font-mono text-[10px]">
+          <div className="mb-2 flex items-center justify-between text-signal">
+            <span>◈ ANONYMOUS WHISPERS</span>
+            <button type="button" onClick={() => setTerminalOpen(false)} className="text-muted-foreground hover:text-signal">
+              ✕
+            </button>
+          </div>
+          <div className="flex-1 space-y-2 overflow-y-auto">
+            {whispers.length === 0 ? (
+              <p className="text-muted-foreground">NO WHISPERS YET. BE THE FIRST VOICE IN THE DARK.</p>
+            ) : (
+              whispers.map((w) => (
+                <div key={w.id} className="border border-border/50 p-2">
+                  <div className="text-signal/80">{shadowHandle(w.nullifier)}</div>
+                  <p className="mt-1 whitespace-pre-wrap text-foreground">{w.content}</p>
+                </div>
+              ))
+            )}
+          </div>
+          {pass ? (
+            <div className="mt-2 space-y-2">
+              <textarea
+                value={draft}
+                onChange={(e) => setDraft(e.target.value.slice(0, 500))}
+                rows={3}
+                placeholder="SPEAK WITHOUT A NAME…"
+                className="w-full resize-none border border-border/60 bg-background p-2 text-foreground outline-none focus:border-signal/60"
+              />
+              <button
+                type="button"
+                onClick={() => void send()}
+                disabled={sending || !draft.trim()}
+                className="w-full border border-signal/60 py-1.5 text-signal hover:bg-signal/15 disabled:opacity-40"
+              >
+                {sending ? "SENDING…" : "LEAVE WHISPER"}
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
