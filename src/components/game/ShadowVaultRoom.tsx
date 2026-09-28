@@ -15,7 +15,8 @@ import { onShadowRoom, type ShadowRoomRequest } from "@/lib/shadow-room";
 import { getPass, shadowHandle } from "@/lib/shadow-vault";
 import { verifyShadowPassFn, postShadowWhisperFn } from "@/lib/shadow-assets.functions";
 import { getShadowNoteFn } from "@/lib/shadow-l1.functions";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMempoolWatch } from "@/lib/use-mempool-watch";
 
 type Whisper = { id: string; nullifier: string; content: string; createdAt: string };
 type EventInfo = { title: string; subtitle: string; description: string; maxPasses: number; passesIssued: number; territoryBlock: number };
@@ -264,10 +265,29 @@ export function ShadowVaultRoom() {
     enabled: Boolean(pass?.commitment),
     staleTime: 30_000,
     queryFn: () => getShadowNoteFn({ data: { digest: pass!.commitment } }),
-    // a note in the mempool is re-checked until a block carries it, so the
-    // chamber flips to ANCHORED without the visitor reloading anything
-    refetchInterval: (q) => (q.state.data && q.state.data.status === "broadcast" ? 15_000 : false),
   });
+  // Live watcher: a mempool websocket tracks the note's txid and the chamber
+  // re-reads the note the moment a block carries it — no timer polling.
+  const qc = useQueryClient();
+  const pending = l1Note.data && l1Note.data.status === "broadcast" ? l1Note.data.txid : null;
+  const onChain = useCallback(() => {
+    void qc.invalidateQueries({ queryKey: ["shadow-note"] });
+    void qc.invalidateQueries({ queryKey: ["shadow-notes"] });
+  }, [qc]);
+  const watch = useMempoolWatch(pending, onChain);
+  const prevStatus = useRef<string | null>(null);
+  useEffect(() => {
+    const st = l1Note.data?.status ?? null;
+    if (prevStatus.current === "broadcast" && st === "confirmed") {
+      toast.success(`PASS ANCHORED ON BITCOIN · BLOCK ${l1Note.data?.confirmedHeight ?? ""}`);
+    }
+    prevStatus.current = st;
+  }, [l1Note.data]);
+  const anchorLine = l1Note.data
+    ? l1Note.data.status === "confirmed"
+      ? `◆ ANCHORED ON BITCOIN · BLOCK ${l1Note.data.confirmedHeight ?? "—"}`
+      : `◈ ANCHORING · WAITING FOR A MINER${watch === "live" ? " · WATCHING LIVE" : watch === "offline" ? " · RECONNECTING" : ""}`
+    : null;
 
   useEffect(
     () =>
@@ -362,7 +382,7 @@ export function ShadowVaultRoom() {
               </div>
             ) : (
               <div className="animate-pulse border border-signal/50 bg-background/70 px-2 py-1 text-signal">
-                ◈ ANCHORING · WAITING FOR A MINER
+                {anchorLine}
               </div>
             )
           ) : null}
@@ -450,6 +470,11 @@ export function ShadowVaultRoom() {
                   {event?.subtitle ? <div className="text-muted-foreground">{event.subtitle.toUpperCase()}</div> : null}
                   {event ? <div className="mt-1 text-bitcoin">HELD ON {event.territoryBlock}.BITMAP</div> : null}
                 </div>
+                {anchorLine ? (
+                  <div className={l1Note.data?.status === "confirmed" ? "border border-bitcoin/60 px-2 py-1 text-bitcoin" : "border border-signal/40 px-2 py-1 text-signal"}>
+                    YOUR PASS · {anchorLine}
+                  </div>
+                ) : null}
                 {event?.description ? <p className="whitespace-pre-wrap leading-relaxed text-foreground">{event.description}</p> : null}
                 <div className="space-y-1 border-t border-border/50 pt-2">
                   {LORE.map((l) => (
