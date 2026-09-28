@@ -260,7 +260,9 @@ export function ShadowVaultRoom() {
     () =>
       onShadowRoom((req) => {
         look.current = { yaw: 0, pitch: 0 };
-        setTerminalOpen(false);
+        setTerminalOpen(true);
+        setTab("lore");
+        setEvent(null);
         setRoom(req);
         const held = getPass(req.slug);
         if (held) void refresh(req.slug, held.commitment);
