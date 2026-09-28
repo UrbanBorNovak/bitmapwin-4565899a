@@ -134,7 +134,10 @@ export async function confirmDeposit(inscriptionId: string): Promise<PoolResult<
   return { ok: true, idx: leaf.idx, root: leaf.root, commitment: dep.commitment };
 }
 
-export async function submitSpend(proof: unknown, publicSignals: string[]): Promise<PoolResult<{ idx: number; root: string }>> {
+export async function submitSpend(
+  proof: unknown,
+  publicSignals: string[],
+): Promise<PoolResult<{ idx: number; root: string; relay: { status: string; txid?: string; feeSats?: number; error?: string } }>> {
   if (publicSignals.length !== 6 || !publicSignals.every((s) => FIELD.test(s))) return { ok: false, reason: "MALFORMED PUBLIC SIGNALS" };
   const [root, nullifier, outCommitment, exitFlag] = publicSignals as [string, string, string, string];
   if (exitFlag !== "0") return { ok: false, reason: "USE WITHDRAW TO LEAVE THE POOL" };
@@ -144,10 +147,20 @@ export async function submitSpend(proof: unknown, publicSignals: string[]): Prom
   const { groth16 } = await import("snarkjs");
   const valid = await groth16.verify(vkey, publicSignals, proof as never);
   if (!valid) return { ok: false, reason: "PROOF REJECTED" };
-  const { error } = await db.from("shord_pool_nullifiers").insert({ nullifier, root, out_commitment: outCommitment });
+  const { transferEnvelope, relayNullifier } = await import("@/lib/shord-relayer.server");
+  let envelope: string;
+  try {
+    envelope = transferEnvelope(proof as Record<string, unknown>, publicSignals);
+  } catch {
+    return { ok: false, reason: "PROOF COULD NOT BE PACKED FOR BITCOIN" };
+  }
+  const { error } = await db
+    .from("shord_pool_nullifiers")
+    .insert({ nullifier, root, out_commitment: outCommitment, envelope_hex: envelope, relay_status: "queued" });
   if (error) return { ok: false, reason: /duplicate/i.test(error.message) ? "THIS NOTE WAS ALREADY SPENT" : error.message };
   const leaf = await appendLeaf({ commitment: outCommitment, kind: "transfer" });
-  return { ok: true, ...leaf };
+  const relay = await relayNullifier(nullifier);
+  return { ok: true, ...leaf, relay };
 }
 
 const ESPLORA = ["https://mempool.space/api", "https://blockstream.info/api"];

@@ -15,7 +15,7 @@ import {
   savePoolNotes,
   type PoolNoteRecord,
 } from "@/lib/shord/deposit";
-import { shordConfirmDeposit, shordPoolInfo, shordPrepareDeposit, shordSubmitSpend, shordWithdraw } from "@/lib/shord-pool.functions";
+import { shordConfirmDeposit, shordPoolInfo, shordPrepareDeposit, shordSubmitSpend, shordWithdraw, shordRelayerInfo, shordRelayQueued } from "@/lib/shord-pool.functions";
 
 const btn = "label border px-3 py-2 disabled:opacity-40";
 
@@ -27,6 +27,9 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
   const confirm = useServerFn(shordConfirmDeposit);
   const spend = useServerFn(shordSubmitSpend);
   const withdraw = useServerFn(shordWithdraw);
+  const relayerInfo = useServerFn(shordRelayerInfo);
+  const relayRetry = useServerFn(shordRelayQueued);
+  const relayer = useQuery({ queryKey: ["shord", "relayer"], queryFn: () => relayerInfo(), refetchInterval: 60_000 });
   const [exitTo, setExitTo] = useState<Record<string, string>>({});
   const pool = useQuery({ queryKey: ["shord", "own-pool"], queryFn: () => info(), refetchInterval: 60_000 });
 
@@ -54,6 +57,7 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
     } finally {
       setBusy(false);
       void qc.invalidateQueries({ queryKey: ["shord", "own-pool"] });
+      void qc.invalidateQueries({ queryKey: ["shord", "relayer"] });
     }
   }
 
@@ -105,7 +109,11 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
       if (!res.ok) throw new Error(res.reason);
       persist(loadPoolNotes().map((x) => (x.commitment === n.commitment ? { ...x, status: "spent" } : x)));
       setGiftOut(encodeNoteGift({ inscriptionId: n.inscriptionId, assetId: n.assetId, salt: newSalt.toString(), commitment: proof.outCommitment }));
-      setMsg(`✓ SENT PRIVATELY · NEW NOTE #${res.idx}. GIVE THE RECIPIENT THE CODE BELOW.`);
+      setMsg(
+        res.relay.status === "broadcast"
+          ? `✓ SENT PRIVATELY · NEW NOTE #${res.idx} · ANCHORED ON BITCOIN https://mempool.space/tx/${res.relay.txid}. GIVE THE RECIPIENT THE CODE BELOW.`
+          : `✓ SENT PRIVATELY · NEW NOTE #${res.idx} · BITCOIN ANCHOR QUEUED (${res.relay.error ?? "WAITING"}). GIVE THE RECIPIENT THE CODE BELOW.`,
+      );
     });
 
   const withdrawNote = (n: PoolNoteRecord) =>
@@ -154,6 +162,33 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
       <p className="label mt-3 break-all text-muted-foreground">
         POOL {pool.data?.poolAddress ?? "…"} · {pool.data?.leaves.length ?? 0} NOTES · {pool.data?.spent ?? 0} SPENT
       </p>
+      <div className="mt-3 border border-border p-3">
+        <p className="label text-signal">RELAYER · SPONSORS EACH PRIVATE TRANSFER ON BITCOIN</p>
+        <p className="label mt-1 break-all text-muted-foreground">
+          {relayer.data?.address ?? "…"} · {relayer.data?.sats ?? 0} SATS FOR FEES
+        </p>
+        {relayer.data?.anchors.length ? (
+          <ul className="mt-2 space-y-1">
+            {relayer.data.anchors.map((a) => (
+              <li key={a.nullifier} className="label break-all">
+                {a.relay_status === "broadcast" && a.relay_txid ? (
+                  <a className="text-signal" href={`https://mempool.space/tx/${a.relay_txid}`} target="_blank" rel="noreferrer">
+                    ✓ ANCHORED {a.relay_txid.slice(0, 16)}… · {a.relay_fee_sats} SATS
+                  </a>
+                ) : (
+                  <span className="text-bitcoin">QUEUED · {a.relay_error ?? "WAITING"}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {relayer.data?.anchors.some((a) => a.relay_status === "queued") ? (
+          <button type="button" disabled={busy} className={`${btn} mt-2 border-signal text-signal`}
+            onClick={() => run("RETRYING QUEUED ANCHORS…", async () => { await relayRetry(); setMsg("✓ RETRY DONE"); })}>
+            RETRY QUEUED ANCHORS
+          </button>
+        ) : null}
+      </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
         <input value={inscription} onChange={(e) => setInscription(e.target.value)} placeholder="GUARDIAN INSCRIPTION ID …i0"

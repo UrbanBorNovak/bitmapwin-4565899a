@@ -31,3 +31,20 @@ export const shordWithdraw = createServerFn({ method: "POST" })
     z.object({ proof: z.record(z.string(), z.unknown()), publicSignals: z.array(field).length(6), destination: z.string().min(14).max(100) }).parse(d),
   )
   .handler(async ({ data }) => (await import("@/lib/shord-pool.server")).submitWithdraw(data.proof, data.publicSignals, data.destination));
+
+export const shordRelayerInfo = createServerFn({ method: "GET" }).handler(async () => {
+  const { relayerBalance } = await import("@/lib/shord-relayer.server");
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("shord_pool_nullifiers")
+    .select("nullifier, relay_status, relay_txid, relay_fee_sats, relay_error, created_at")
+    .neq("relay_status", "none")
+    .order("created_at", { ascending: false })
+    .limit(20);
+  return { ...(await relayerBalance()), anchors: data ?? [] };
+});
+
+/** Public retry: only rebroadcasts anchors the pool already verified and queued. */
+export const shordRelayQueued = createServerFn({ method: "POST" }).handler(async () =>
+  (await import("@/lib/shord-relayer.server")).relayQueued(5),
+);
