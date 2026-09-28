@@ -19,7 +19,8 @@ import {
   scanShieldedPool,
   type ShordChainNote,
 } from "@/lib/shord/scanner";
-import { proverStatus, type ProverStatus } from "@/lib/shord/prover";
+import { proverStatus, proveSpend, verifySpend, type ProverStatus } from "@/lib/shord/prover";
+import { assetIdFromInscription, poolNote, randomField } from "@/lib/shord/pool";
 
 export const Route = createFileRoute("/shord")({
   head: () => ({
@@ -345,5 +346,39 @@ function ShieldedVaultPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+function ProofTest({ keys }: { keys: ShordKeys | null }) {
+  const [state, setState] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  async function run() {
+    if (!keys) return;
+    setBusy(true);
+    setState("PROVING ON THIS DEVICE…");
+    try {
+      const asset = assetIdFromInscription("889c13edcf268feaa4fe706bd8686985504e1206d091427477600de42f573e21i0");
+      const salt = randomField();
+      const note = poolNote(keys.publicKey, asset, salt);
+      const result = await proveSpend({
+        keys, assetId: asset, salt, leaves: [note], leafIndex: 0,
+        recipientPublicKey: keys.publicKey, newSalt: randomField(), exit: false, intent: 1n,
+      });
+      const ok = await verifySpend(result.proof, result.publicSignals);
+      setState(ok ? `✓ PROOF VALID · ${result.ms} MS · NULLIFIER ${result.nullifier.slice(0, 12)}…` : "✕ PROOF REJECTED");
+    } catch (e) {
+      setState(`✕ ${(e as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-3">
+      <button type="button" disabled={!keys || busy} onClick={run}
+        className="label border border-bitcoin px-3 py-2 text-bitcoin disabled:opacity-40">
+        {keys ? "PROVE A TEST GUARDIAN TRANSFER" : "CREATE A KEY FIRST"}
+      </button>
+      {state ? <span className="label text-signal">{state}</span> : null}
+    </div>
   );
 }
