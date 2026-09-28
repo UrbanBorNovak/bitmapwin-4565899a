@@ -217,10 +217,6 @@ export async function submitShadowNote(input: {
     rawBytes: Math.round(rawHex.length / 2),
     payloadHex,
     anchorSats: anchorPaid,
-    minerFeeSats: Math.max(
-      0,
-      outs.reduce((sum, o) => sum + Number(o.valueSats), 0) * -1 + 0,
-    ),
   };
 }
 
