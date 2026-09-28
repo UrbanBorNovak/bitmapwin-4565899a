@@ -16,7 +16,6 @@ import { TreasureChests } from "@/components/game/TreasureChests";
 import { MineralNodes } from "@/components/game/MineralNodes";
 import { OreMines } from "@/components/game/OreMines";
 import { PineTrees } from "@/components/game/PineTrees";
-import { BiomeStructures } from "@/components/game/BiomeStructures";
 import { Houses } from "@/components/game/Houses";
 import { ClayShrines } from "@/components/game/ClayShrines";
 import { Igloos } from "@/components/game/Igloos";
