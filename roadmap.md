@@ -104,3 +104,8 @@
 - [x] Consolidate trait, collection, and timeframe controls into one compact analysis bar.
 - [x] Upgrade the confirmed-sale chart, metrics, and matching-listings hierarchy.
 - [x] Verify trend filtering and layout on desktop and phone.
+
+## Oasis land permissions
+- [ ] Keep rejected terraform actions inside the Oasis without blanking the screen.
+- [ ] Roll back temporary growth when the current wallet does not hold the BITMAP.
+- [ ] Verify the rejected action shows a recoverable holder-access message.

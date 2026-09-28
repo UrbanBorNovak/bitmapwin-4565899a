@@ -87,7 +87,7 @@ export const seedTerraform = createServerFn({ method: "POST" })
       .select("id, chunk_key, bitmap_height, tile_col, tile_row, seeded_at, seeded_by_address")
       .eq("bitmap_height", data.height)
       .maybeSingle();
-    if (existing) return { land: normalise(existing as TerraformRow), already: true };
+    if (existing) return { land: normalise(existing as TerraformRow), already: true, denied: false };
 
     const { data: link } = await supabase
       .from("wallet_links")
@@ -110,8 +110,8 @@ export const seedTerraform = createServerFn({ method: "POST" })
       .select("id, chunk_key, bitmap_height, tile_col, tile_row, seeded_at, seeded_by_address")
       .maybeSingle();
     if (error) {
-      if (error.code === "42501") throw new Error("YOU CANNOT TERRAFORM A BITMAP YOU DO NOT HOLD");
+      if (error.code === "42501") return { land: null, already: false, denied: true };
       throw new Error(error.message);
     }
-    return { land: row ? normalise(row as TerraformRow) : null, already: false };
+    return { land: row ? normalise(row as TerraformRow) : null, already: false, denied: false };
   });

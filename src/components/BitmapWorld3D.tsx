@@ -3103,6 +3103,10 @@ function BitmapWorld3DInner({
     playSfx("ui");
     setTerraformNote("TERRAFORMING · GROWTH STARTS NOW, IN REAL TIME");
     const result = await terraform(x, z);
+    if (result.denied || !result.land) {
+      setTerraformNote("HOLDER ACCESS REQUIRED · VERIFY THE WALLET THAT HOLDS THIS BITMAP");
+      return;
+    }
     setTerraformNote(
       result.already
         ? `ALREADY TERRAFORMED · ${growthLabel(result.land)}`
