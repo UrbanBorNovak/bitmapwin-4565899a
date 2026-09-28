@@ -7,6 +7,7 @@ import { startExtender, type ExtenderRuntime } from "@/lib/extender-runtime";
 import { EMPTY_SNAPSHOT, type ExtenderSnapshot } from "@/lib/extender-sdk";
 
 type LogLine = { kind: "log" | "error"; text: string; time: number };
+const EMPTY_CONFIG: Record<string, unknown> = {};
 
 /**
  * The tile-sized test bench: runs code in the same sandbox the world uses and
@@ -18,7 +19,7 @@ export function ExtenderPreview({
   club = "STUDIO",
   autoRun = false,
   canvasHeight = 320,
-  config = {},
+  config = EMPTY_CONFIG,
   publicView = false,
   onStatus,
 }: {
