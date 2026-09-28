@@ -8,7 +8,7 @@
 
 import { Suspense, useEffect, useMemo, useRef } from "react";
 import type { LucideIcon } from "lucide-react";
-import { BookOpen, CircleDot, Footprints, Gem, Glasses, HardHat, ToyBrick, Watch } from "lucide-react";
+import { BookOpen, CircleDot, Footprints, Gem, Glasses, HardHat, PawPrint, ToyBrick, Watch } from "lucide-react";
 import { useThree } from "@react-three/fiber";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { useAnimations, useGLTF, useTexture } from "@react-three/drei";
@@ -18,9 +18,12 @@ import { WeaponGlyph } from "@/components/game/WeaponBelt";
 import { WEAPONS, WeaponModel, useWeaponMaterials, type WeaponKind } from "@/components/game/weapons";
 import { Primitive } from "@/components/game/Primitive";
 import { WornGear } from "@/components/game/WornGear";
+import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { DEFAULT_AVATAR_MODEL, DEFAULT_AVATAR_TEXTURE } from "@/lib/map-identity";
 import { createPlayerState } from "@/lib/player-state";
 import {
+  companionSpec,
+  cycleCompanion,
   cycleToy,
   toySpec,
   toggleComic,
@@ -168,6 +171,20 @@ function PreviewWeapon({ kind }: { kind: WeaponKind }) {
 }
 
 
+/**
+ * The companion at the doll's heel, sized the way it reads in the world.
+ */
+function PreviewCompanion() {
+  const gear = useGear();
+  const pet = companionSpec(gear.companion);
+  if (!pet.inscription) return null;
+  return (
+    <group position={[-0.42, 0, 0.3]} rotation-y={0.5}>
+      <InscribedModel url={contentUrl(pet.inscription)} size={pet.fit} />
+    </group>
+  );
+}
+
 export function EquippedAvatarPreview({
   model,
   weapon,
@@ -189,6 +206,7 @@ export function EquippedAvatarPreview({
       <group rotation-y={-0.18}>
         <Suspense fallback={null}>
           <PreviewAvatar model={model} skin={skin} />
+          <PreviewCompanion />
           {weapon ? <PreviewWeapon kind={weapon} /> : null}
           <WornGear unit={1} pose={pose} weapon={weapon} showHead jetpack={flying} />
         </Suspense>
@@ -251,6 +269,7 @@ export function CharacterSheet({
     onNote?.(text);
   };
   const toy = toySpec(gear.toy);
+  const pet = companionSpec(gear.companion);
 
   const head: SlotView = flying
     ? {
@@ -337,6 +356,17 @@ export function CharacterSheet({
       filled: gear.comic,
       Icon: BookOpen,
       onPick: () => note(toggleComic() ? "COMIC BOOK IN HAND" : "COMIC BOOK AWAY"),
+    },
+    {
+      slot: "PET",
+      label: pet.inscription ? pet.label : "COMPANION",
+      filled: pet.inscription !== "",
+      Icon: PawPrint,
+      onPick: () => {
+        cycleCompanion();
+        const next = companionSpec(gear.companion === "goose" ? "none" : gear.companion === "none" ? "cat" : gear.companion === "cat" ? "dog" : "goose");
+        note(next.inscription ? `COMPANION · ${next.label}` : "COMPANION LEFT BEHIND");
+      },
     },
   ];
 
