@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.shadow_block_spent_claim() FROM PUBLIC, anon, authenticated;
