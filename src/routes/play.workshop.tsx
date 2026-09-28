@@ -42,6 +42,7 @@ function WorkshopPage() {
   const [note, setNote] = useState<string | null>(null);
   const [forging, setForging] = useState<number | null>(null);
   const [burst, setBurst] = useState<{ id: number; height: number } | null>(null);
+  const [unboxed, setUnboxed] = useState<number | null>(null);
   const qc = useQueryClient();
   const payCraft = useServerFn(craftCardFn);
   const bal = useQuery(coinBalanceQuery(addresses));
@@ -57,6 +58,7 @@ function WorkshopPage() {
       if (craftCard(h)) {
         setBurst({ id: Date.now(), height: h });
         setNote(`CRAFTED ${h}.BITMAP · −${CRAFT_COST_BIT} BIT`);
+        setUnboxed(h);
         void navigate({ search: { card: `bitmap-${h}` } });
       }
       void qc.invalidateQueries({ queryKey: ["coin-balance"] });
@@ -64,6 +66,7 @@ function WorkshopPage() {
       setNote("SIGN IN TO PAY WITH BIT");
     } finally { setForging(null); }
   }
+
 
   useEffect(() => { if (profile) void syncWorld(); }, [profile?.owner]); // eslint-disable-line react-hooks/exhaustive-deps
 
