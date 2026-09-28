@@ -7,6 +7,7 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/tanstack/vite";
 import type { Plugin } from "vite";
+import { fileURLToPath } from "node:url";
 
 const APP_MODULE = /\/src\/.*\.(?:jsx|tsx)$/;
 const R3F_MODULE = /@react-three\/(?:fiber|drei)|from\s+["']three["']/;
@@ -49,7 +50,9 @@ export default defineConfig({
       alias: {
         // snarkjs' exports map only defines "node"/"browser" conditions, which
         // the workerd SSR build cannot match; point at the browser ESM build.
-        snarkjs: "snarkjs/build/browser.esm.js",
+        snarkjs: fileURLToPath(
+          import.meta.resolve("snarkjs/build/browser.esm.js"),
+        ),
       },
     },
   },
