@@ -73,7 +73,12 @@ function hexInt(hash: string, from: number, len: number) {
 }
 
 function hsl(h: number, s: number, l: number) {
-  return `hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;
+  const S = s / 100, L = l / 100;
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = S * Math.min(L, 1 - L);
+  const f = (n: number) => L - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  const x = (v: number) => Math.round(v * 255).toString(16).padStart(2, "0");
+  return `#${x(f(0))}${x(f(8))}${x(f(4))}`;
 }
 
 export function shapeOf(species: GuardianSpecies) {
