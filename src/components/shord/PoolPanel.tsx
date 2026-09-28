@@ -15,7 +15,7 @@ import {
   savePoolNotes,
   type PoolNoteRecord,
 } from "@/lib/shord/deposit";
-import { shordConfirmDeposit, shordPoolInfo, shordPrepareDeposit, shordSubmitSpend, shordWithdraw } from "@/lib/shord-pool.functions";
+import { shordConfirmDeposit, shordPoolInfo, shordPrepareDeposit, shordSubmitSpend, shordWithdraw, shordRelayerInfo, shordRelayQueued } from "@/lib/shord-pool.functions";
 
 const btn = "label border px-3 py-2 disabled:opacity-40";
 
@@ -27,6 +27,9 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
   const confirm = useServerFn(shordConfirmDeposit);
   const spend = useServerFn(shordSubmitSpend);
   const withdraw = useServerFn(shordWithdraw);
+  const relayerInfo = useServerFn(shordRelayerInfo);
+  const relayRetry = useServerFn(shordRelayQueued);
+  const relayer = useQuery({ queryKey: ["shord", "relayer"], queryFn: () => relayerInfo(), refetchInterval: 60_000 });
   const [exitTo, setExitTo] = useState<Record<string, string>>({});
   const pool = useQuery({ queryKey: ["shord", "own-pool"], queryFn: () => info(), refetchInterval: 60_000 });
 
@@ -54,6 +57,7 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
     } finally {
       setBusy(false);
       void qc.invalidateQueries({ queryKey: ["shord", "own-pool"] });
+      void qc.invalidateQueries({ queryKey: ["shord", "relayer"] });
     }
   }
 
@@ -105,7 +109,11 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
       if (!res.ok) throw new Error(res.reason);
       persist(loadPoolNotes().map((x) => (x.commitment === n.commitment ? { ...x, status: "spent" } : x)));
       setGiftOut(encodeNoteGift({ inscriptionId: n.inscriptionId, assetId: n.assetId, salt: newSalt.toString(), commitment: proof.outCommitment }));
-      setMsg(`✓ SENT PRIVATELY · NEW NOTE #${res.idx}. GIVE THE RECIPIENT THE CODE BELOW.`);
+      setMsg(
+        res.relay.status === "broadcast"
+          ? `✓ SENT PRIVATELY · NEW NOTE #${res.idx} · ANCHORED ON BITCOIN https://mempool.space/tx/${res.relay.txid}. GIVE THE RECIPIENT THE CODE BELOW.`
+          : `✓ SENT PRIVATELY · NEW NOTE #${res.idx} · BITCOIN ANCHOR QUEUED (${res.relay.error ?? "WAITING"}). GIVE THE RECIPIENT THE CODE BELOW.`,
+      );
     });
 
   const withdrawNote = (n: PoolNoteRecord) =>
