@@ -11,7 +11,7 @@ function Part({ position, scale, rotation, color, metalness = 0.18, roughness = 
   position: Vec3; scale: Vec3; rotation?: Vec3; color: string; metalness?: number; roughness?: number; glow?: number;
 }) {
   return (
-    <mesh position={position} rotation={rotation} castShadow receiveShadow raycast={noRaycast}>
+    <mesh position={position} {...(rotation ? { rotation } : {})} castShadow receiveShadow raycast={noRaycast}>
       <boxGeometry args={scale} />
       <meshStandardMaterial color={color} emissive={color} emissiveIntensity={glow} metalness={metalness} roughness={roughness} flatShading />
     </mesh>
@@ -87,7 +87,7 @@ export const GuardianBody = memo(function GuardianBody({ species, rarity, body, 
     <Part position={position} scale={scale} color={accent} metalness={0.25} roughness={0.2} glow={glow + 0.75} />
   );
   const rune = (position: Vec3, scale: Vec3, rotation?: Vec3) => (
-    <Part position={position} scale={scale} rotation={rotation} color={accent} metalness={0.58} roughness={0.22} glow={glow * 0.72} />
+    <Part position={position} scale={scale} {...(rotation ? { rotation } : {})} color={accent} metalness={0.58} roughness={0.22} glow={glow * 0.72} />
   );
 
   let creature: React.ReactNode;
@@ -163,7 +163,7 @@ export const GuardianBody = memo(function GuardianBody({ species, rarity, body, 
       <group>
         {/* Gryphon body: feathered eagle front, plated feline rear. */}
         <Part position={[0, 0.82 * u, -0.08 * u]} scale={[0.52 * u, 0.54 * u, 1.05 * u]} color={body} />
-        {[[-0.18, 0.12], [0, 0.06], [0.18, 0.12]].map(([x, y], i) => <Part key={`breast-${i}`} position={[x * u, (0.94 + y) * u, 0.46 * u]} scale={[0.17 * u, 0.3 * u, 0.1 * u]} rotation={[0.15, 0, x * 0.4]} color={i === 1 ? tones.light : tones.mid} />)}
+        {([[-0.18, 0.12], [0, 0.06], [0.18, 0.12]] as const).map(([x, y], i) => <Part key={`breast-${i}`} position={[x * u, (0.94 + y) * u, 0.46 * u]} scale={[0.17 * u, 0.3 * u, 0.1 * u]} rotation={[0.15, 0, x * 0.4]} color={i === 1 ? tones.light : tones.mid} />)}
         <Part position={[0, 1.28 * u, 0.48 * u]} scale={[0.42 * u, 0.42 * u, 0.42 * u]} color={body} />
         <Part position={[0, 1.22 * u, 0.78 * u]} scale={[0.28 * u, 0.2 * u, 0.28 * u]} color={tones.light} />
         <Spike position={[0, 1.18 * u, 0.98 * u]} rotation={[Math.PI / 2, 0, 0]} size={[0.11 * u, 0.35 * u, 4]} color={accent} glow={glow * 0.24} />
@@ -210,7 +210,7 @@ export const GuardianBody = memo(function GuardianBody({ species, rarity, body, 
         <Part position={[0, 0.72 * u, -0.08 * u]} scale={[0.54 * u, 0.58 * u, 1.14 * u]} color={body} />
         <Part position={[0, 0.91 * u, 0.2 * u]} scale={[0.62 * u, 0.25 * u, 0.55 * u]} color={tones.mid} metalness={0.34} />
         {[-1, 1].map((s) => <Part key={`shoulder-${s}`} position={[s * 0.34 * u, 0.92 * u, 0.28 * u]} scale={[0.24 * u, 0.24 * u, 0.42 * u]} rotation={[0, 0, s * 0.16]} color={accent} metalness={0.68} glow={glow * 0.15} />)}
-        {[[-0.2, -0.18], [0, -0.05], [0.2, -0.18]].map(([x, z], i) => <Part key={`back-${i}`} position={[x * u, 1.055 * u, z * u]} scale={[0.15 * u, 0.08 * u, 0.42 * u]} color={i === 1 ? accent : tones.light} metalness={0.55} glow={i === 1 ? glow * 0.18 : 0} />)}
+        {([[-0.2, -0.18], [0, -0.05], [0.2, -0.18]] as const).map(([x, z], i) => <Part key={`back-${i}`} position={[x * u, 1.055 * u, z * u]} scale={[0.15 * u, 0.08 * u, 0.42 * u]} color={i === 1 ? accent : tones.light} metalness={0.55} glow={i === 1 ? glow * 0.18 : 0} />)}
         {/* Angular expressive head, long muzzle, nose, cheek plates. */}
         <Part position={[0, 1.18 * u, 0.58 * u]} scale={[0.48 * u, 0.48 * u, 0.5 * u]} color={body} />
         <Part position={[0, 1.08 * u, 0.93 * u]} scale={[0.34 * u, 0.25 * u, 0.42 * u]} color={tones.light} />
