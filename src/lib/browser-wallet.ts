@@ -329,6 +329,7 @@ export async function signMessageWithWallet(
 
 
 const SIGHASH_SINGLE_ANYONECANPAY = 0x83;
+const SIGHASH_ALL = 0x01;
 
 /**
  * Signs the seller half of a listing PSBT without finalizing it, so the buyer
@@ -400,6 +401,52 @@ async function xverseSignListingPsbt(psbtBase64: string, sellerAddress: string):
   });
 }
 
+/**
+ * Xverse's generic signPsbt request rejects otherwise-valid transactions that
+ * contain the Shadow protocol's OP_RETURN output. Its transaction-signing API
+ * accepts the same PSBT when every payer input and SIGHASH_ALL are explicit.
+ */
+async function xverseSignPaymentPsbt(
+  psbtBase64: string,
+  payerAddress: string,
+  signIndices: number[],
+): Promise<string> {
+  const provider = getXverse();
+  if (!provider || typeof provider.signTransaction !== "function") {
+    throw new Error("XVERSE TRANSACTION SIGNING IS UNAVAILABLE — UPDATE THE XVERSE EXTENSION");
+  }
+
+  return new Promise<string>((resolve, reject) => {
+    void signXverseTransaction({
+      payload: {
+        network: { type: BitcoinNetworkType.Mainnet },
+        message: "Write Shadow pass note onto Bitcoin",
+        psbtBase64,
+        inputsToSign: [
+          {
+            address: payerAddress,
+            signingIndexes: signIndices,
+            sigHash: SIGHASH_ALL,
+          },
+        ],
+        broadcast: false,
+      },
+      getProvider: async () => provider as unknown as BitcoinProvider,
+      onFinish: (response) => {
+        const signed = response.psbtBase64?.trim();
+        if (!signed || signed.length < 20) {
+          reject(new Error("XVERSE RETURNED NO SIGNED PSBT"));
+          return;
+        }
+        resolve(signed);
+      },
+      onCancel: () => reject(new Error("XVERSE SIGNING WAS DECLINED IN THE WALLET")),
+    }).catch((error: unknown) => {
+      reject(new Error(describeXverseSignError(normalizeXverseError(error))));
+    });
+  });
+}
+
 function normalizeXverseError(error: unknown): { code?: unknown; message?: string } {
   if (error instanceof Error) return { message: error.message };
   if (error && typeof error === "object") return error as { code?: unknown; message?: string };
@@ -443,11 +490,7 @@ export async function signPurchasePsbt(
     }
     return /^[0-9a-fA-F]+$/.test(signed.trim()) ? hexToBase64(signed) : signed.trim();
   }
-  return xverseSignPsbt({
-    psbt: psbtBase64,
-    signInputs: { [buyerPaymentAddress]: signIndices },
-    broadcast: false,
-  });
+  return xverseSignPaymentPsbt(psbtBase64, buyerPaymentAddress, signIndices);
 }
 
 
