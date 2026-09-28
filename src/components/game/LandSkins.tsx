@@ -90,7 +90,7 @@ const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
     for (let i = 0; i < position.count; i++) {
       const localX = position.getX(i);
       const localZ = position.getZ(i);
-      position.setY(i, groundY(localX + x, localZ + z) + plate + LIFT);
+      position.setY(i, groundY(localX + x, localZ + z) + LIFT);
     }
     position.needsUpdate = true;
     geo.computeVertexNormals();
