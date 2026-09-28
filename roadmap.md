@@ -146,3 +146,5 @@
 - [ ] Verify a live Guardian inscription with a funded wallet and mined reveal.
 - [x] Visually verify upgraded wildlife models in the Bestiary on desktop and phone; full Oasis WebGL verification is blocked by the sandbox graphics context.
 - [x] Add a second detail pass with articulated anatomy, layered markings, armor, claws, feathers, and species-specific silhouettes.
+- [x] Rebuild every named Guardian as a premium species-specific voxel collectible with animated details and rarity regalia.
+- [ ] Verify all six Guardian body variants in close-up on desktop and phone, plus grounding at Oasis scale.
