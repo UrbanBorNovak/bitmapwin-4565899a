@@ -21,5 +21,5 @@
 - Territory Chronicles derive only from persisted public provenance and aggregate visitor statistics; never expose visitor identities or synthesize missing history.
 - Community Builds joins public BITMAP pages with active Extenders and mounts one live viewer for WebGL stability.
 - Expected Oasis permission denials return results, not thrown errors, so actions remain recoverable in-world.
-- Oasis World Scan uses the painted Atlas and Hilbert coordinates; never maintain separate map geography.
+- Oasis maps share painted Atlas, Hilbert coordinates and fog; never reveal unexplored geography.
 - Oasis discovery progress is device-local; BIT pays only on fixed EXPLORE_MILESTONES, once per account via ledger ref, so farming is bounded.
