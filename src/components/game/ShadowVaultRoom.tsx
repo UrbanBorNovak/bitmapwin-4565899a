@@ -338,8 +338,18 @@ export function ShadowVaultRoom() {
 
       {/* chamber HUD */}
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-3 font-mono text-[10px] text-signal">
-        <div className="border border-signal/40 bg-background/70 px-2 py-1">
-          ◈ SHADOW VAULT · {pass ? shadowHandle(pass.nullifier) : "NO PASS ON THIS DEVICE"}
+        <div className="space-y-1">
+          <div className="border border-signal/40 bg-background/70 px-2 py-1">
+            ◈ SHADOW VAULT · {pass ? shadowHandle(pass.nullifier) : "NO PASS ON THIS DEVICE"}
+          </div>
+          {l1Note.data ? (
+            <div className="border border-bitcoin/50 bg-background/70 px-2 py-1 text-bitcoin">
+              ◆ ON BITCOIN ·{" "}
+              {l1Note.data.status === "confirmed"
+                ? `BLOCK ${l1Note.data.confirmedHeight ?? "—"}`
+                : "IN THE MEMPOOL"}
+            </div>
+          ) : null}
         </div>
         <button
           type="button"
