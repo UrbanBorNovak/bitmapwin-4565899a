@@ -256,6 +256,14 @@ export function ShadowVaultRoom() {
     return [...m.entries()].map(([n, v]) => ({ nullifier: n, ...v }));
   }, [whispers]);
 
+  // Whether this device's own pass has been written onto Bitcoin.
+  const l1Note = useQuery({
+    queryKey: ["shadow-note", pass?.commitment ?? "none"],
+    enabled: Boolean(pass?.commitment),
+    staleTime: 30_000,
+    queryFn: () => getShadowNoteFn({ data: { digest: pass!.commitment } }),
+  });
+
   useEffect(
     () =>
       onShadowRoom((req) => {
