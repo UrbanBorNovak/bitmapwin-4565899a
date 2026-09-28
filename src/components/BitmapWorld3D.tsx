@@ -95,6 +95,8 @@ import { SeaMasses } from "@/components/game/SeaMasses";
 import { Whales } from "@/components/game/Whales";
 import { TerritoryGuardians } from "@/components/game/TerritoryGuardians";
 import { ShadowArchways } from "@/components/game/ShadowArchways";
+import { ShadowVaultRoom } from "@/components/game/ShadowVaultRoom";
+
 import { ISLAND_INSCRIPTION, SeaIslands } from "@/components/game/SeaIslands";
 import { OnChainFlows } from "@/components/game/OnChainFlows";
 import { BitField } from "@/components/game/BitField";
