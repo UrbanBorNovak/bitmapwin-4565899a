@@ -3120,6 +3120,112 @@ export type Database = {
           },
         ]
       }
+      shadow_commitments: {
+        Row: {
+          commitment_hash: string
+          created_at: string
+          event_id: string
+          id: string
+        }
+        Insert: {
+          commitment_hash: string
+          created_at?: string
+          event_id: string
+          id?: string
+        }
+        Update: {
+          commitment_hash?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shadow_commitments_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "shadow_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shadow_events: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          is_active: boolean
+          max_passes: number
+          passes_issued: number
+          slug: string
+          starts_at: string
+          subtitle: string
+          territory_block: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          is_active?: boolean
+          max_passes: number
+          passes_issued?: number
+          slug: string
+          starts_at?: string
+          subtitle?: string
+          territory_block: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          is_active?: boolean
+          max_passes?: number
+          passes_issued?: number
+          slug?: string
+          starts_at?: string
+          subtitle?: string
+          territory_block?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      shadow_whispers: {
+        Row: {
+          content: string
+          created_at: string
+          event_id: string
+          id: string
+          nullifier_hash: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          event_id: string
+          id?: string
+          nullifier_hash: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          nullifier_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shadow_whispers_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "shadow_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trade_crawl_state: {
         Row: {
           block_height: number
@@ -3696,6 +3802,29 @@ export type Database = {
         Returns: number
       }
       refresh_coin_leaderboard_public: { Args: never; Returns: undefined }
+      shadow_claim_pass: {
+        Args: { _commitment: string; _slug: string }
+        Returns: {
+          max_passes: number
+          ok: boolean
+          pass_index: number
+          passes_issued: number
+          reason: string
+        }[]
+      }
+      shadow_post_whisper: {
+        Args: {
+          _commitment: string
+          _content: string
+          _nullifier: string
+          _slug: string
+        }
+        Returns: boolean
+      }
+      shadow_verify_pass: {
+        Args: { _commitment: string; _slug: string }
+        Returns: boolean
+      }
       world_metrics: { Args: never; Returns: Json }
       world_metrics_daily: {
         Args: { _days?: number }

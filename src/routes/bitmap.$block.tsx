@@ -38,6 +38,7 @@ import { LoopNavigator } from "@/components/LoopNavigator";
 import { TerritoryShareCard } from "@/components/TerritoryShareCard";
 import { SummonGuardianButton } from "@/components/bitmon/SummonGuardianDialog";
 import { TerritoryChronicle } from "@/components/TerritoryChronicle";
+import { ShadowGatePanel } from "@/components/territory/ShadowGatePanel";
 
 import { provenanceStreamQuery } from "@/lib/provenance-stream";
 
@@ -387,6 +388,7 @@ function BitmapDetail() {
         height={block}
         districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
       />
+      <ShadowGatePanel height={block} />
       <TerritoryChronicle height={block} />
 
       <BitmapValuation
