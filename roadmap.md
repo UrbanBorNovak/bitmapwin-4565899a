@@ -101,6 +101,6 @@
 - [ ] Verify shoreline clustering in the live Oasis.
 
 ## Marketplace price trends
-- [ ] Consolidate trait, collection, and timeframe controls into one compact analysis bar.
-- [ ] Upgrade the confirmed-sale chart, metrics, and matching-listings hierarchy.
-- [ ] Verify trend filtering and layout on desktop and phone.
+- [x] Consolidate trait, collection, and timeframe controls into one compact analysis bar.
+- [x] Upgrade the confirmed-sale chart, metrics, and matching-listings hierarchy.
+- [x] Verify trend filtering and layout on desktop and phone.
