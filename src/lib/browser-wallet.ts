@@ -540,3 +540,25 @@ export function keyCandidates(wallet: ConnectedWallet): string[] {
   );
   return [...new Set(list)].slice(0, 4);
 }
+
+/** Asks the connected wallet to pay a plain amount to one address. Returns the txid. */
+export async function sendBitcoinFromWallet(
+  provider: WalletProviderId,
+  address: string,
+  amountSats: number,
+): Promise<string> {
+  if (provider === "unisat") {
+    const unisat = getUnisat() as (UnisatProvider & { sendBitcoin?: (a: string, s: number) => Promise<string> }) | null;
+    if (!unisat?.sendBitcoin) throw new Error("UNISAT CANNOT SEND FROM HERE — UPDATE THE EXTENSION");
+    return unisat.sendBitcoin(address, amountSats);
+  }
+  const res = await requestSatsConnect(
+    "sendTransfer",
+    { recipients: [{ address, amount: amountSats }] } as never,
+    getXverseProviderId(),
+  );
+  if (res.status !== "success") throw new Error(describeXverseSignError(res.error));
+  const txid = (res.result as { txid?: string }).txid;
+  if (!txid) throw new Error("XVERSE RETURNED NO TRANSACTION ID");
+  return txid;
+}
