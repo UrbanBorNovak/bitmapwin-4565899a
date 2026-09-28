@@ -139,7 +139,7 @@ export function ModernInventory({ who, character }: { who: string; character: Ch
   return (
     <div className="grid gap-4 xl:grid-cols-[340px_minmax(0,1fr)_380px]">
       {/* ─────────── CHARACTER ─────────── */}
-      <section className="border border-border bg-card/40">
+      <section className="border border-border bg-card">
         <Panel title="CHARACTER" />
         <div className="border-b border-border">
           <CharacterPortrait model={character?.avatarModel ?? null} className="h-64" />
@@ -216,7 +216,7 @@ export function ModernInventory({ who, character }: { who: string; character: Ch
       </section>
 
       {/* ─────────── BAG ─────────── */}
-      <section className="border border-border bg-card/40">
+      <section className="border border-border bg-card">
         <Panel title="BAG" />
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
           <p className="label flex items-center gap-2">
@@ -331,7 +331,7 @@ export function ModernInventory({ who, character }: { who: string; character: Ch
       </section>
 
       {/* ─────────── CRAFTING ─────────── */}
-      <section className="border border-border bg-card/40">
+      <section className="border border-border bg-card">
         <Panel title="CRAFTING" />
         <label className="flex items-center gap-2 border-b border-border p-3">
           <Search className="size-3.5 text-muted-foreground" />
