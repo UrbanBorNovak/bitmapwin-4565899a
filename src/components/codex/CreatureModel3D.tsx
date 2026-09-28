@@ -4,7 +4,9 @@ import { Bounds, Center, Environment, Lightformer, OrbitControls } from "@react-
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { CritterBody } from "@/components/game/DesertLife";
+import { GuardianBody } from "@/components/bitmon/GuardianBody";
 import type { CritterKind } from "@/lib/bestiary";
+import type { GuardianRarity, GuardianSpecies } from "@/lib/bitmon";
 
 /** Same body tones the Oasis uses in its dark theme. */
 const VIEW_COLORS = { foreground: "#e8e4dc", background: "#050505", muted: "#8b8780", border: "#2a2a2a", bitcoin: "#f7931a" };
@@ -16,11 +18,13 @@ const VIEW_COLORS = { foreground: "#e8e4dc", background: "#050505", muted: "#8b8
 export function CreatureModel3D({
   inscription,
   kind,
+  guardian,
   yaw = 0,
   label,
 }: {
   inscription?: string | undefined;
   kind?: CritterKind | undefined;
+  guardian?: { species: GuardianSpecies; rarity: GuardianRarity; body: string; accent: string } | undefined;
   yaw?: number | undefined;
   label: string;
 }) {
@@ -42,7 +46,9 @@ export function CreatureModel3D({
           <Suspense fallback={null}>
             <Bounds fit clip observe margin={1.3}>
               <Center rotation-y={0.6}>
-                {inscription ? (
+                {guardian ? (
+                  <GuardianBody species={guardian.species} rarity={guardian.rarity} body={guardian.body} accent={guardian.accent} unit={1.4} />
+                ) : inscription ? (
                   <InscribedModel url={contentUrl(inscription)} size={2} yaw={yaw} />
                 ) : kind ? (
                   <CritterBody kind={kind} unit={4} colors={VIEW_COLORS} />
