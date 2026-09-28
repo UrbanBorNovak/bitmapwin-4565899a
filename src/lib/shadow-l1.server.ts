@@ -160,7 +160,16 @@ export async function quoteShadowNote(input: {
 export async function submitShadowNote(input: {
   target: NoteTarget;
   psbtBase64: string;
-}): Promise<{ ok: boolean; reason?: string; txid?: string }> {
+}): Promise<{
+  ok: boolean;
+  reason?: string;
+  txid?: string;
+  rawHex?: string;
+  rawBytes?: number;
+  payloadHex?: string;
+  anchorSats?: number;
+  minerFeeSats?: number;
+}> {
   const payloadHex = encodeShadowNote({
     op: input.target.op,
     height: input.target.height,
@@ -180,7 +189,8 @@ export async function submitShadowNote(input: {
     return { ok: false, reason: "REFUSING TO BROADCAST: THE SHIELDED NOTE WAS ALTERED" };
   }
   const treasuryScript = byteArrayToHex(addressToScriptPubKey(SHADOW_L1_TREASURY));
-  if (outs[1]?.scriptHex !== treasuryScript || Number(outs[1]?.valueSats) < anchorSats(input.target.op)) {
+  const anchorPaid = Number(outs[1]?.valueSats ?? 0);
+  if (outs[1]?.scriptHex !== treasuryScript || anchorPaid < anchorSats(input.target.op)) {
     return { ok: false, reason: "REFUSING TO BROADCAST: THE ANCHOR PAYMENT WAS ALTERED" };
   }
 
@@ -200,7 +210,18 @@ export async function submitShadowNote(input: {
     payload_hex: payloadHex,
     txid: result.txid,
   });
-  return { ok: true, txid: result.txid };
+  return {
+    ok: true,
+    txid: result.txid,
+    rawHex,
+    rawBytes: Math.round(rawHex.length / 2),
+    payloadHex,
+    anchorSats: anchorPaid,
+    minerFeeSats: Math.max(
+      0,
+      outs.reduce((sum, o) => sum + Number(o.valueSats), 0) * -1 + 0,
+    ),
+  };
 }
 
 const rowToNote = (r: {
