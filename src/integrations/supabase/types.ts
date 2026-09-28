@@ -3369,20 +3369,35 @@ export type Database = {
       shord_pool_nullifiers: {
         Row: {
           created_at: string
+          envelope_hex: string | null
           nullifier: string
           out_commitment: string
+          relay_error: string | null
+          relay_fee_sats: number | null
+          relay_status: string
+          relay_txid: string | null
           root: string
         }
         Insert: {
           created_at?: string
+          envelope_hex?: string | null
           nullifier: string
           out_commitment: string
+          relay_error?: string | null
+          relay_fee_sats?: number | null
+          relay_status?: string
+          relay_txid?: string | null
           root: string
         }
         Update: {
           created_at?: string
+          envelope_hex?: string | null
           nullifier?: string
           out_commitment?: string
+          relay_error?: string | null
+          relay_fee_sats?: number | null
+          relay_status?: string
+          relay_txid?: string | null
           root?: string
         }
         Relationships: []
