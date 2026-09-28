@@ -181,9 +181,13 @@ function serializeMap(entries: Kv[]): number[] {
 }
 
 function serializePsbt(psbt: ParsedPsbt): string {
-  const global = psbt.global.map((kv) =>
-    kv.key[0] === 0x00 ? { key: kv.key, value: serializeTx(psbt.tx) } : kv,
-  );
+  const unsignedTx = { key: [0x00], value: serializeTx(psbt.tx) };
+  const hasUnsignedTx = psbt.global.some((kv) => kv.key.length === 1 && kv.key[0] === 0x00);
+  const global = hasUnsignedTx
+    ? psbt.global.map((kv) =>
+        kv.key.length === 1 && kv.key[0] === 0x00 ? unsignedTx : kv,
+      )
+    : [unsignedTx, ...psbt.global];
   const bytes = [
     ...MAGIC,
     ...serializeMap(global),
@@ -602,6 +606,7 @@ export function buildPaymentPsbt(input: PaymentPsbtInput): PaymentPsbtResult {
   );
 
   const psbtBase64 = serializePsbt({
+    // serializePsbt inserts the mandatory BIP-174 unsigned transaction entry.
     global: [],
     inputs: inputMaps,
     outputs: tx.outputs.map(() => []),
