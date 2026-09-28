@@ -24,7 +24,7 @@ export function useMempoolWatch(txid: string | null | undefined, onEvent: () => 
     const open = () => {
       if (closed) return;
       setState("connecting");
-      ws = new WebSocket(WS_MIRRORS[attempt % WS_MIRRORS.length]);
+      ws = new WebSocket(WS_MIRRORS[attempt % WS_MIRRORS.length]!);
       ws.onopen = () => {
         attempt = 0;
         setState("live");
@@ -34,7 +34,7 @@ export function useMempoolWatch(txid: string | null | undefined, onEvent: () => 
       ws.onmessage = (m) => {
         try {
           const msg = JSON.parse(String(m.data)) as Record<string, unknown>;
-          if (msg.txConfirmed || msg.block || msg.txReplaced) onEvent();
+          if (msg["txConfirmed"] || msg["block"] || msg["txReplaced"]) onEvent();
         } catch {
           /* ignore non-JSON frames */
         }
