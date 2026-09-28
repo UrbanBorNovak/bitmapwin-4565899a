@@ -10,7 +10,7 @@
  * The commitment proves membership. The nullifier gives a stable, unlinkable
  * pen name inside a private room.
  */
-import { sha256 } from "@noble/hashes/sha256";
+import { sha256 } from "@noble/hashes/sha2.js";
 
 const STORAGE_KEY = "bitmapwin:shadow-vault";
 
