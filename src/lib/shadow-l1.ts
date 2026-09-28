@@ -1,3 +1,4 @@
+import { sha256 } from "@noble/hashes/sha2.js";
 import { MEMBERSHIP_ADDRESS } from "@/lib/membership";
 
 /** Where the territory anchor fee is collected. */
