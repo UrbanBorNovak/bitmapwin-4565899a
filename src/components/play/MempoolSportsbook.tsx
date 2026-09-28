@@ -58,7 +58,11 @@ export function MempoolSportsbook() {
 
   async function bet(market: PropMarket, pick: string) {
     if (target == null) return;
-    if (!address) return toast.error("CONNECT A VERIFIED WALLET TO PLACE A SLIP");
+    if (!address) {
+      toast.error("CONNECT A VERIFIED WALLET TO PLACE A SLIP");
+      return;
+    }
+
     setBusy(`${market}:${pick}`);
     try {
       const res = await place({ data: { address, market, pick, stake, targetHeight: target } });
