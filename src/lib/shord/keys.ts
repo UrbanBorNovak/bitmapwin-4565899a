@@ -47,7 +47,7 @@ function scalarFromSeed(seed: Uint8Array): bigint {
   const h = sha256(new Uint8Array([...new TextEncoder().encode("bitmapwin:shord:spend"), ...seed]));
   let value = 0n;
   for (const b of h) value = (value << 8n) | BigInt(b);
-  return value % BabyJub.Point.Fn.ORDER;
+  return value % BabyJub.Fn.ORDER;
 }
 
 export function keysFromSeedHex(seedHex: string): ShordKeys {
@@ -55,7 +55,7 @@ export function keysFromSeedHex(seedHex: string): ShordKeys {
   if (seed.length !== 32) throw new Error("SHORD seed must be 32 bytes");
   const spend = scalarFromSeed(seed);
   const viewing = poseidon1([spend]);
-  const point = BabyJub.Point.BASE.multiply(spend);
+  const point = BabyJub.BASE.multiply(spend);
   const publicKey = bytesToHex(point.toBytes());
   return {
     seed: seedHex.toLowerCase(),
@@ -86,14 +86,14 @@ export function decodeShordAddress(address: string): string | null {
 
 /** Shared secret for the note cipher: ECDH on BabyJubjub, hashed with Poseidon. */
 export function noteSharedSecret(scalar: bigint, otherPublicKeyHex: string): bigint {
-  const other = BabyJub.Point.fromBytes(hexToBytes(otherPublicKeyHex));
+  const other = BabyJub.fromBytes(hexToBytes(otherPublicKeyHex));
   const shared = other.multiply(scalar).toAffine();
   return poseidon2([shared.x, shared.y]);
 }
 
 /** Note commitment: Poseidon(ownerPubX, valueOrLeafHash). */
 export function noteCommitment(ownerPublicKeyHex: string, leaf: bigint): bigint {
-  const point = BabyJub.Point.fromBytes(hexToBytes(ownerPublicKeyHex)).toAffine();
+  const point = BabyJub.fromBytes(hexToBytes(ownerPublicKeyHex)).toAffine();
   return poseidon2([point.x, leaf]);
 }
 
