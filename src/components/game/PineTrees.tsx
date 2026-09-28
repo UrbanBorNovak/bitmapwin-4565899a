@@ -1,6 +1,6 @@
 /**
  * INSCRIBED FLORA — trees, flowers, shrooms and working miners scattered
- * through the desert in clumps, from knee-high saplings to tall old trees.
+ * along wet shores in clumps, from knee-high saplings to tall old trees.
  *
  * Placement is deterministic: the same patch of sand grows the same trees every
  * visit. Only the pines near the avatar are drawn, and every tree shares one set
@@ -62,7 +62,26 @@ function hash(x: number, z: number, salt: number) {
   return n - Math.floor(n);
 }
 
-/** Dry shoreline gets the richest vegetation without placing plants in water. */
+/** The small procedural water holes use the same lattice and seed as DesertLife. */
+function nearOasisPond(x: number, z: number) {
+  const pondPitch = WORLD_CELL * 0.24;
+  const gx0 = Math.round(x / pondPitch);
+  const gz0 = Math.round(z / pondPitch);
+  for (let ix = -5; ix <= 5; ix++) {
+    for (let iz = -5; iz <= 5; iz++) {
+      const gx = gx0 + ix;
+      const gz = gz0 + iz;
+      if (hash(gx, gz, 3) <= 0.9975) continue;
+      const px = gx * pondPitch + (hash(gx, gz, 1) - 0.5) * pondPitch * 0.9;
+      const pz = gz * pondPitch + (hash(gx, gz, 2) - 0.5) * pondPitch * 0.9;
+      const pondRadius = WORLD_CELL * (0.18 + hash(gx, gz, 30) * 0.26);
+      if (Math.hypot(x - px, z - pz) <= pondRadius + WORLD_CELL * 1.35) return true;
+    }
+  }
+  return false;
+}
+
+/** Dry shoreline beside an inland sea or oasis pond; never inside water. */
 function nearWater(x: number, z: number) {
   if (isSea(x, z)) return false;
   const reach = WORLD_CELL * 2.4;
@@ -72,7 +91,8 @@ function nearWater(x: number, z: number) {
     isSea(x, z + reach) ||
     isSea(x, z - reach) ||
     isSea(x + reach * 0.7, z + reach * 0.7) ||
-    isSea(x - reach * 0.7, z - reach * 0.7)
+    isSea(x - reach * 0.7, z - reach * 0.7) ||
+    nearOasisPond(x, z)
   );
 }
 
@@ -80,7 +100,7 @@ function urlAt(items: readonly string[], index: number) {
   return items[Math.abs(index) % items.length] ?? items[0] ?? "";
 }
 
-type Pine = { key: string; x: number; z: number; size: number; yaw: number; model: number };
+type Pine = { key: string; x: number; z: number; size: number; yaw: number; model: number; damp: boolean };
 type Flower = { key: string; x: number; z: number; size: number; yaw: number; model: number };
 type WildMiner = { key: string; x: number; z: number; yaw: number; seed: number };
 
@@ -168,9 +188,9 @@ export const PineTrees = memo(function PineTrees({
         const standZ = gz * pitch;
         const shoreline = nearWater(standX, standZ);
         const land = densityAt(standX, standZ);
-        // Pines grow in stands rather than one by one, and a highland forest
-        // stands far thicker than bare stone or open desert.
-        if (hash(gx, gz, 71) > Math.min(0.92, (shoreline ? 0.34 : 0.16) * land.trees)) continue;
+        // Water defines the forest. A few windblown trees survive inland, but
+        // almost every stand follows a sea edge or encircles an oasis pond.
+        if (hash(gx, gz, 71) > Math.min(0.92, (shoreline ? 0.48 : 0.018) * land.trees)) continue;
         const count = Math.max(
           1,
           Math.round((1 + Math.floor(hash(gx, gz, 72) * 3) + (shoreline ? 1 : 0)) * Math.min(1.5, land.trees)),
@@ -179,6 +199,8 @@ export const PineTrees = memo(function PineTrees({
           const x = gx * pitch + (hash(gx * 5 + n, gz, 73) - 0.5) * pitch * 0.8;
           const z = gz * pitch + (hash(gx, gz * 7 + n, 74) - 0.5) * pitch * 0.8;
           if (isSea(x, z)) continue;
+          const damp = nearWater(x, z);
+          if (!damp && hash(gx + n, gz - n, 97) > 0.14) continue;
           const dx = x - center[0];
           const dz = z - center[1];
           if (dx * dx + dz * dz > radius * radius) continue;
@@ -193,6 +215,7 @@ export const PineTrees = memo(function PineTrees({
             size,
             yaw: hash(gx + n, gz - n, 76) * Math.PI * 2,
             model,
+            damp,
           });
           if (hash(gx + n, gz - n, 86) < Math.min(0.95, (shoreline ? 0.85 : 0.62) * land.flowers)) {
             const blossomCount = 1 + Math.floor(hash(gx - n, gz + n, 87) * 3) + (shoreline ? 2 : 0);
@@ -267,8 +290,12 @@ export const PineTrees = memo(function PineTrees({
       {trees.map((tree) => (
         <group key={tree.key} position={[tree.x, groundY(tree.x, tree.z), tree.z]}>
            {quality.propDetail === "cheap" ? <TreeFallback size={tree.size} /> : <Suspense fallback={<TreeFallback size={tree.size} />}><InscribedModel url={urlAt(TREE_URLS, tree.model)} size={tree.size} yaw={tree.yaw} /></Suspense>}
-          {/* SHROOMS — a small ring of them in the shade under the branches. */}
-          {Array.from({ length: quality.propDetail === "cheap" ? 1 : 1 + Math.floor(hash(tree.x, tree.z, 81) * 4) }, (_, n) => {
+          {/* SHROOMS — damp shoreline trees carry rings; dry trees rarely carry one. */}
+          {Array.from({
+            length: tree.damp
+              ? quality.propDetail === "cheap" ? 1 : 1 + Math.floor(hash(tree.x, tree.z, 81) * 4)
+              : hash(tree.x, tree.z, 80) < 0.18 ? 1 : 0,
+          }, (_, n) => {
             const angle = hash(tree.x + n, tree.z - n, 82) * Math.PI * 2;
             const reach = tree.size * (0.28 + hash(tree.x - n, tree.z + n, 83) * 0.45);
             const size = unit * FLORA_SCALE * (0.22 + hash(tree.x * 2 + n, tree.z, 84) * 0.22);
