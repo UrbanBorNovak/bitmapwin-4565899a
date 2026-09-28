@@ -94,6 +94,7 @@ import { DesertLife } from "@/components/game/DesertLife";
 import { SeaMasses } from "@/components/game/SeaMasses";
 import { Whales } from "@/components/game/Whales";
 import { TerritoryGuardians } from "@/components/game/TerritoryGuardians";
+import { ShadowArchways } from "@/components/game/ShadowArchways";
 import { ISLAND_INSCRIPTION, SeaIslands } from "@/components/game/SeaIslands";
 import { OnChainFlows } from "@/components/game/OnChainFlows";
 import { BitField } from "@/components/game/BitField";
@@ -2731,6 +2732,7 @@ const WorldScene = memo(function WorldScene({
           <SeaMasses unit={AVATAR_U} pose={pose} />
           <Whales unit={AVATAR_U} pose={pose} />
           <TerritoryGuardians unit={AVATAR_U} pose={pose} />
+          <ShadowArchways unit={AVATAR_U} pose={pose} />
           <AirdropBeacon unit={AVATAR_U} pose={pose} block={tipHeight} />
 
           <SeaIslands unit={AVATAR_U} pose={pose} />

@@ -3155,6 +3155,7 @@ export type Database = {
           description: string
           id: string
           is_active: boolean
+          issuer_user_id: string | null
           max_passes: number
           passes_issued: number
           slug: string
@@ -3169,6 +3170,7 @@ export type Database = {
           description?: string
           id?: string
           is_active?: boolean
+          issuer_user_id?: string | null
           max_passes: number
           passes_issued?: number
           slug: string
@@ -3183,6 +3185,7 @@ export type Database = {
           description?: string
           id?: string
           is_active?: boolean
+          issuer_user_id?: string | null
           max_passes?: number
           passes_issued?: number
           slug?: string

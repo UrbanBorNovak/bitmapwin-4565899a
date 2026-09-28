@@ -123,3 +123,86 @@ export async function postShadowWhisper(
   if (data !== true) return { ok: false, reason: "NO VALID PASS" };
   return { ok: true };
 }
+
+export type ShadowGateSpot = { slug: string; title: string; territoryBlock: number; isActive: boolean };
+
+/** Every gate's territory, for placing archways in the Oasis. No holder data. */
+export async function readAllShadowGates(): Promise<ShadowGateSpot[]> {
+  const { data, error } = await supabaseAdmin
+    .from("shadow_events")
+    .select("slug, title, territory_block, is_active")
+    .limit(500);
+  if (error || !data) return [];
+  return data.map((d) => ({ slug: d.slug, title: d.title, territoryBlock: Number(d.territory_block), isActive: d.is_active }));
+}
+
+type Db = { from: (t: string) => any };
+
+export async function readMyShadowEvents(userId: string): Promise<ShadowEventPublic[]> {
+  const { data } = await supabaseAdmin
+    .from("shadow_events")
+    .select("slug, territory_block, title, subtitle, description, max_passes, passes_issued, is_active")
+    .eq("issuer_user_id", userId)
+    .order("created_at", { ascending: false });
+  return (data ?? []).map((d) => ({
+    slug: d.slug,
+    territoryBlock: Number(d.territory_block),
+    title: d.title,
+    subtitle: d.subtitle,
+    description: d.description,
+    maxPasses: d.max_passes,
+    passesIssued: d.passes_issued,
+    isActive: d.is_active,
+  }));
+}
+
+/** Only the verified holder of a BITMAP may open a gate on it. Denials are results. */
+export async function issueShadowEvent(
+  userDb: Db,
+  userId: string,
+  input: { height: number; title: string; subtitle: string; description: string; maxPasses: number },
+): Promise<{ ok: boolean; reason?: string; slug?: string }> {
+  const { data: links } = await userDb.from("wallet_links").select("address").eq("user_id", userId);
+  const mine = new Set(((links ?? []) as { address: string }[]).map((l) => l.address));
+  if (!mine.size) return { ok: false, reason: "VERIFY A WALLET FIRST ON THE WALLET PAGE" };
+  const { locateBitmapHolder } = await import("@/lib/locate-bitmap.server");
+  let holder: string | null = null;
+  try {
+    holder = (await locateBitmapHolder(input.height)).ownerAddress;
+  } catch {
+    return { ok: false, reason: "COULD NOT CONFIRM WHO HOLDS THIS BITMAP — TRY AGAIN" };
+  }
+  if (!holder || !mine.has(holder)) return { ok: false, reason: "ONLY THE HOLDER OF THIS BITMAP CAN OPEN A GATE ON IT" };
+
+  const { count } = await supabaseAdmin
+    .from("shadow_events")
+    .select("id", { count: "exact", head: true })
+    .eq("issuer_user_id", userId)
+    .eq("is_active", true);
+  if ((count ?? 0) >= 5) return { ok: false, reason: "CLOSE ONE OF YOUR 5 OPEN GATES FIRST" };
+
+  const base = input.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "gate";
+  const slug = `${base}-${input.height}-${Math.random().toString(36).slice(2, 6)}`;
+  const { error } = await supabaseAdmin.from("shadow_events").insert({
+    slug,
+    territory_block: input.height,
+    title: input.title,
+    subtitle: input.subtitle,
+    description: input.description,
+    max_passes: input.maxPasses,
+    issuer_user_id: userId,
+  });
+  if (error) return { ok: false, reason: "GATE COULD NOT BE OPENED — TRY AGAIN" };
+  return { ok: true, slug };
+}
+
+export async function setShadowEventActive(userId: string, slug: string, active: boolean) {
+  const { data, error } = await supabaseAdmin
+    .from("shadow_events")
+    .update({ is_active: active })
+    .eq("slug", slug)
+    .eq("issuer_user_id", userId)
+    .select("slug");
+  if (error || !data?.length) return { ok: false, reason: "NOT YOUR GATE" };
+  return { ok: true };
+}

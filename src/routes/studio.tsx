@@ -23,6 +23,7 @@ import { generateExtenderCodeFn } from "@/lib/extender-ai.functions";
 import { RUNTIME_LIMITS, STARTER_TEMPLATES, codeFromManifest } from "@/lib/extender-sdk";
 import { BlueprintEditor } from "@/components/studio/BlueprintEditor";
 import { PublishToAtlas } from "@/components/studio/PublishToAtlas";
+import { ShadowGateIssuer } from "@/components/studio/ShadowGateIssuer";
 import { EMPTY_BLUEPRINT, blueprintFromManifest, codeFromBlueprint, type Blueprint } from "@/lib/blueprint";
 
 export const Route = createFileRoute("/studio")({
@@ -99,6 +100,7 @@ function StudioPage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
         <div className="space-y-4">
           <CreateExtenderForm onCreated={(id) => setSelected(id)} />
+          <ShadowGateIssuer />
           <div className="border border-border bg-surface">
             <header className="border-b border-border px-4 py-3">
               <h2 className="label">YOUR EXTENDERS</h2>
