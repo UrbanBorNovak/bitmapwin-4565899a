@@ -142,6 +142,6 @@
 ## Guardian shielded Ordinals and wildlife detail
 - [x] Add a deterministic rich Guardian Ordinal artifact after a confirmed summon.
 - [x] Keep wallet/account identity out of the Guardian artifact and preserve one Guardian per block.
-- [ ] Upgrade procedural voxel wildlife and Guardian silhouettes without changing fly-brain behavior.
+- [x] Upgrade procedural voxel wildlife and Guardian silhouettes without changing fly-brain behavior.
 - [ ] Verify a live Guardian inscription with a funded wallet and mined reveal.
 - [ ] Visually verify upgraded wildlife in the live Oasis on desktop and phone.
