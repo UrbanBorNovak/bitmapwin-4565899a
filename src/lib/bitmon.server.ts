@@ -101,8 +101,13 @@ export async function checkSummonOrder(userId: string, orderId: string) {
   const row = data as OrderRow;
   if (row.status === "settled" || row.status === "taken") return { order: toOrder(row), awakened: row.status === "settled" };
 
-  const res = await fetch(`https://mempool.space/api/address/${GUARDIAN_TREASURY}/txs`);
-  if (!res.ok) return { order: toOrder(row), awakened: false };
+  let res: Response;
+  try {
+    const { esploraFetch } = await import("@/lib/bitmon");
+    res = await esploraFetch(`/address/${GUARDIAN_TREASURY}/txs`);
+  } catch {
+    return { order: toOrder(row), awakened: false };
+  }
   const txs = (await res.json()) as MempoolTx[];
   const since = new Date(row.created_at).getTime() - 10 * 60_000;
   const match = txs.find(
