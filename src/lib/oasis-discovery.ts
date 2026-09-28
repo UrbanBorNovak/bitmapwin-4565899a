@@ -61,7 +61,8 @@ function commit(next: Stored) {
   for (const l of listeners) l();
 }
 
-function emit(e: Omit<DiscoveryEvent, "id">) {
+type Distribute<T> = T extends DiscoveryEvent ? Omit<T, "id"> : never;
+function emit(e: Distribute<DiscoveryEvent>) {
   const full = { ...e, id: ++eventId } as DiscoveryEvent;
   for (const l of eventListeners) l(full);
 }
