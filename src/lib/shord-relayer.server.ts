@@ -89,7 +89,7 @@ export async function relayNullifier(nullifier: string): Promise<{ status: strin
   const db = await admin();
   const { data: row } = await db.from("shord_pool_nullifiers").select("envelope_hex, relay_status, relay_txid").eq("nullifier", nullifier).maybeSingle();
   if (!row?.envelope_hex) return { status: "none", error: "NOTHING TO RELAY" };
-  if (row.relay_status === "broadcast") return { status: "broadcast", txid: row.relay_txid ?? undefined };
+  if (row.relay_status === "broadcast") return row.relay_txid ? { status: "broadcast", txid: row.relay_txid } : { status: "broadcast" };
   const fail = async (error: string) => {
     await db.from("shord_pool_nullifiers").update({ relay_status: "queued", relay_error: error }).eq("nullifier", nullifier);
     return { status: "queued", error };
