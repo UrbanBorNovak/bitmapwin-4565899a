@@ -81,9 +81,9 @@
 - [x] Add public live-preview and read-only code views to published BITMAP builds.
 - [x] Verify the public build viewer and unobstructed Oasis navigation on desktop; controls use responsive layouts for phone widths.
 - [x] Show active extenders as runnable, interactive 3D previews with their exact published code.
-- [ ] Turn the public directory into a Community Builds hub with one focused live 3D stage.
-- [ ] Include every public BITMAP page and active executable Extender without fixed result caps.
-- [ ] Verify build selection and direct Oasis entry on desktop and phone.
+- [x] Turn the public directory into a Community Builds hub with one focused live 3D stage.
+- [x] Include every public BITMAP page and active executable Extender without fixed result caps.
+- [x] Verify build selection and direct Oasis entry on desktop and phone.
 
 ## BITMAP pages
 - [x] Recompose BITMAP details as a brutalist editorial story with clearer actions and navigation.
