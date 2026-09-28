@@ -547,7 +547,6 @@ export const DesertLife = memo(function DesertLife({
       <DesertProps unit={unit} center={center} radius={radius} />
       <OreMines unit={unit} center={center} radius={radius} />
       <PineTrees unit={unit} center={center} radius={radius} />
-      <BiomeStructures unit={unit} center={center} radius={radius} />
       <Houses unit={unit} center={center} radius={radius} />
       <ClayShrines unit={unit} center={center} radius={radius} />
       <Igloos unit={unit} center={center} radius={radius} />
