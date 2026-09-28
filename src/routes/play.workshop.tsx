@@ -108,7 +108,7 @@ function WorkshopPage() {
         ) : craftable.length === 0 ? (
           <p className="mt-2 font-mono text-xs text-muted-foreground">{(held.data ?? []).length ? "Every BITMAP you hold already has a card." : "No BITMAPs found in this wallet."}</p>
         ) : (
-          <ul className="mt-3 flex flex-wrap gap-2">
+          <ul id="craft-list" className="mt-3 flex flex-wrap gap-2">
             {craftable.map((h) => (
               <li key={h}>
                 <button type="button" className={`btn-term-ghost min-h-10 ${forging === h ? "craft-charge" : ""}`} disabled={forging !== null} onClick={() => void craft(h)}>
