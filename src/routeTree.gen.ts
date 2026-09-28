@@ -48,6 +48,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SdkRouteImport } from './routes/sdk'
 import { Route as SdkPlaygroundRouteImport } from './routes/sdk-playground'
 import { Route as ShadowNotesRouteImport } from './routes/shadow-notes'
+import { Route as ShordRouteImport } from './routes/shord'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StreamRouteImport } from './routes/stream'
 import { Route as StudioRouteImport } from './routes/studio'
@@ -295,6 +296,11 @@ const SdkPlaygroundRoute = SdkPlaygroundRouteImport.update({
 const ShadowNotesRoute = ShadowNotesRouteImport.update({
   id: '/shadow-notes',
   path: '/shadow-notes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShordRoute = ShordRouteImport.update({
+  id: '/shord',
+  path: '/shord',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -606,6 +612,7 @@ export interface FileRoutesByFullPath {
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
   '/shadow-notes': typeof ShadowNotesRoute
+  '/shord': typeof ShordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stream': typeof StreamRoute
   '/studio': typeof StudioRoute
@@ -696,6 +703,7 @@ export interface FileRoutesByTo {
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
   '/shadow-notes': typeof ShadowNotesRoute
+  '/shord': typeof ShordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stream': typeof StreamRoute
   '/studio': typeof StudioRoute
@@ -791,6 +799,7 @@ export interface FileRoutesById {
   '/sdk': typeof SdkRoute
   '/sdk-playground': typeof SdkPlaygroundRoute
   '/shadow-notes': typeof ShadowNotesRoute
+  '/shord': typeof ShordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stream': typeof StreamRoute
   '/studio': typeof StudioRoute
@@ -887,6 +896,7 @@ export interface FileRouteTypes {
     | '/sdk'
     | '/sdk-playground'
     | '/shadow-notes'
+    | '/shord'
     | '/sitemap.xml'
     | '/stream'
     | '/studio'
@@ -977,6 +987,7 @@ export interface FileRouteTypes {
     | '/sdk'
     | '/sdk-playground'
     | '/shadow-notes'
+    | '/shord'
     | '/sitemap.xml'
     | '/stream'
     | '/studio'
@@ -1071,6 +1082,7 @@ export interface FileRouteTypes {
     | '/sdk'
     | '/sdk-playground'
     | '/shadow-notes'
+    | '/shord'
     | '/sitemap.xml'
     | '/stream'
     | '/studio'
@@ -1166,6 +1178,7 @@ export interface RootRouteChildren {
   SdkRoute: typeof SdkRoute
   SdkPlaygroundRoute: typeof SdkPlaygroundRoute
   ShadowNotesRoute: typeof ShadowNotesRoute
+  ShordRoute: typeof ShordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StreamRoute: typeof StreamRoute
   StudioRoute: typeof StudioRoute
@@ -1461,6 +1474,13 @@ declare module '@tanstack/react-router' {
       path: '/shadow-notes'
       fullPath: '/shadow-notes'
       preLoaderRoute: typeof ShadowNotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shord': {
+      id: '/shord'
+      path: '/shord'
+      fullPath: '/shord'
+      preLoaderRoute: typeof ShordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -1998,6 +2018,7 @@ const rootRouteChildren: RootRouteChildren = {
   SdkRoute: SdkRoute,
   SdkPlaygroundRoute: SdkPlaygroundRoute,
   ShadowNotesRoute: ShadowNotesRoute,
+  ShordRoute: ShordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StreamRoute: StreamRoute,
   StudioRoute: StudioRoute,

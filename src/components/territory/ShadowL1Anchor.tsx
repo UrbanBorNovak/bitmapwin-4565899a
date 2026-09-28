@@ -194,6 +194,10 @@ export function ShadowL1Anchor({
           <Link to="/shadow-notes" className="label mt-1 inline-block text-signal hover:text-bitcoin">
             SEE EVERY PASS NOTE LIVE →
           </Link>
+          <Link to="/shord" className="label mt-1 block text-signal hover:text-bitcoin">
+            OPEN THE SHIELDED VAULT (SHORD) →
+          </Link>
+
 
           {signed?.rawHex ? (
             <details className="mt-2">
