@@ -18,6 +18,7 @@ import {
   type ShadowPass,
 } from "@/lib/shadow-vault";
 import { ShadowL1Anchor } from "@/components/territory/ShadowL1Anchor";
+import { ShadowInscriber } from "@/components/territory/ShadowInscriber";
 import { ShadowReceive, ShadowSend } from "@/components/territory/ShadowTransfer";
 
 type Whisper = { id: string; nullifier: string; content: string; createdAt: string };
@@ -287,6 +288,12 @@ function ShadowEventCard({
                 digest={pass.commitment}
                 label="◆ WRITE THIS PASS ONTO BITCOIN"
                 note="ONE BITCOIN TRANSACTION CARRIES THE PASS HASH. YOUR SECRET STAYS ON THIS DEVICE."
+              />
+              <ShadowInscriber
+                slug={event.slug}
+                height={event.territoryBlock}
+                index={pass.passIndex ?? 0}
+                digest={pass.commitment}
               />
               {!unlocked ? (
                 <button
