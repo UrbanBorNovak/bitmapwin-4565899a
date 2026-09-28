@@ -43,6 +43,10 @@ function Pet({
   const group = useRef<THREE.Group>(null);
   const leash = useRef<THREE.Mesh>(null);
   const at = useRef({ x: 0, z: 0, yaw: 0, started: false });
+  // Each pet thinks for itself: the same connectome slice the settlers and
+  // whales run on, seeded per species so cat, dog and goose never move alike.
+  const brain = useMemo(() => createFlyBrain(spec.id.length * 7 + spec.fit * 13), [spec]);
+  const whim = useRef({ x: 0, z: 0, until: 0 });
   const leashUp = useMemo(() => new THREE.Vector3(0, 1, 0), []);
   const leashStart = useMemo(() => new THREE.Vector3(), []);
   const leashEnd = useMemo(() => new THREE.Vector3(), []);
