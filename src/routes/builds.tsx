@@ -1,437 +1,234 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Eye, Search, X } from "lucide-react";
+import { ArrowUpRight, Box, Eye, Search, Users, X } from "lucide-react";
 import { BlockMosaic } from "@/components/BlockMosaic";
-import { ClubBadge } from "@/components/ClubBadge";
-import { FollowBuilderButton } from "@/components/FollowBuilderButton";
-import { buildsQuery, type BuildEntry } from "@/lib/builds";
-import { districtsQuery } from "@/lib/districts";
-import { followerCountsQuery, myFollowsQuery } from "@/lib/follows";
-import { useAuthSession } from "@/lib/auth";
-import { inscriptionImageUrl, profilesQuery, type WalletProfile } from "@/lib/profiles";
 import { BuilderName } from "@/components/BuilderName";
-import { DistrictRarity } from "@/components/DistrictRarity";
-import { shortenAddress } from "@/lib/registry";
-import { Button } from "@/components/ui/button";
+import { ClubBadge } from "@/components/ClubBadge";
 import { PublicBuildViewer } from "@/components/builds/PublicBuildViewer";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { BUILD_KIND_LABELS, BUILD_KINDS, type BuildKind } from "@/lib/build-sdk";
+import { buildsQuery, type BuildEntry } from "@/lib/builds";
+import { inscriptionImageUrl, profilesQuery } from "@/lib/profiles";
 
 export const Route = createFileRoute("/builds")({
   head: () => ({
     meta: [
-      { title: "Builds Feed — Recently Built & Most Visited Bitmaps" },
-      {
-        name: "description",
-        content:
-          "Live feed of Bitcoin bitmaps people build on: newest builds, most visited builds, zones, and the builders you follow.",
-      },
-      { property: "og:title", content: "Builds Feed — Recently Built & Most Visited Bitmaps" },
-      {
-        property: "og:description",
-        content: "Newest and most visited owner-built bitmap pages, plus the builders you follow.",
-      },
+      { title: "Community Builds — Live 3D BITMAP Worlds" },
+      { name: "description", content: "Browse every public BITMAP build, inspect its live 3D world, and enter the exact territory in the Oasis." },
+      { property: "og:title", content: "Community Builds — Live 3D BITMAP Worlds" },
+      { property: "og:description", content: "Preview and enter public BITMAP worlds built by the community." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: BuildsPage,
+  component: CommunityBuildsPage,
 });
 
-type FeedTab = "recent" | "visited" | "following";
+type SortMode = "newest" | "popular";
 type KindFilter = "all" | BuildKind;
+const PAGE_SIZE = 16;
 
-const PAGE_SIZE = 12;
-
-const TABS: { id: FeedTab; label: string }[] = [
-  { id: "recent", label: "NEWEST" },
-  { id: "visited", label: "POPULAR" },
-  { id: "following", label: "FOLLOWING" },
-];
-
-function timeAgo(iso: string | null): string {
-  if (!iso) return "—";
-  const ms = Date.now() - new Date(iso).getTime();
-  if (!Number.isFinite(ms) || ms < 0) return "NOW";
-  const mins = Math.floor(ms / 60_000);
-  if (mins < 1) return "NOW";
-  if (mins < 60) return `${mins}M AGO`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}H AGO`;
-  return `${Math.floor(hours / 24)}D AGO`;
+function timestamp(value: string | null) {
+  if (!value) return 0;
+  const parsed = new Date(value).getTime();
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function BuildCard({
-  entry,
-  followers,
-  profile,
-}: {
-  entry: BuildEntry;
-  followers?: number;
-  profile?: WalletProfile | null;
-}) {
-  const { page, totalViews, uniqueVisitors } = entry;
-  return (
-    <article className="group overflow-hidden rounded-lg border border-border bg-card transition-[border-color,transform] duration-150 hover:-translate-y-0.5 hover:border-primary">
-      <Link to="/bitmap/$block" params={{ block: String(page.bitmapHeight) }}>
-        <div className="relative aspect-[4/3] overflow-hidden border-b border-border bg-background">
-          {page.bannerInscriptionId ? (
-            <img
-              src={inscriptionImageUrl(page.bannerInscriptionId)}
-              alt={`Banner built on bitmap ${page.bitmapHeight}`}
-              loading="lazy"
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-            />
-          ) : (
-            <div className="h-full w-full [&>div]:h-full [&_svg]:h-full [&_svg]:w-full">
-              <BlockMosaic height={page.bitmapHeight} />
-            </div>
-          )}
-          <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"
-            aria-hidden="true"
-          />
-          <div
-            className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(247,147,26,0.12)_0%,transparent_50%,rgba(0,0,0,0.25)_100%)]"
-            aria-hidden="true"
-          />
-          <span className="label absolute left-2 top-2 rounded border border-border bg-background/90 px-2 py-1 text-primary backdrop-blur-sm">
-            {BUILD_KIND_LABELS[page.buildKind]}
-          </span>
-          <span className="label absolute bottom-2 right-2 rounded border border-border bg-background/90 px-2 py-1 text-foreground backdrop-blur-sm">
-            {totalViews.toLocaleString("en-US")} VIEWS
-          </span>
-        </div>
-        <div className="p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h2 className="display truncate text-base leading-tight">
-                {page.title || `${page.bitmapHeight}.BITMAP`}
-              </h2>
-              <div className="label mt-1 text-muted-foreground">{page.bitmapHeight}.BITMAP</div>
-            </div>
-            <ClubBadge height={page.bitmapHeight} asLink={false} />
-          </div>
-          <div className="label mt-3 flex items-center justify-between gap-3 border-t border-border pt-3">
-            <span>{uniqueVisitors.toLocaleString("en-US")} VISITORS</span>
-            <span>UPDATED {timeAgo(page.updatedAt ?? null)}</span>
-          </div>
-        </div>
-      </Link>
-      <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-3">
-        <Link
-          to="/profile/$address"
-          params={{ address: page.ownerAddress }}
-          className="label min-w-0 hover:text-primary"
-        >
-          <BuilderName address={page.ownerAddress} profile={profile ?? null} avatar />
-        </Link>
-        <div className="flex shrink-0 items-center gap-1">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button type="button" size="sm" variant="outline" aria-label={`Preview ${page.bitmapHeight}.bitmap build`}>
-                <Eye /> PREVIEW
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto rounded-none p-0">
-              <DialogHeader className="border-b border-border p-4 pr-12">
-                <DialogTitle className="display text-left text-xl">
-                  {page.title || `${page.bitmapHeight}.BITMAP`}
-                </DialogTitle>
-                <DialogDescription className="label text-left">
-                  {page.bitmapHeight}.BITMAP · PUBLIC BUILD
-                </DialogDescription>
-              </DialogHeader>
-              <div className="p-3 sm:p-4">
-                <PublicBuildViewer page={page} />
-                <Button asChild variant="outline" className="mt-3 w-full">
-                  <Link to="/bitmap/$block" params={{ block: String(page.bitmapHeight) }}>OPEN BITMAP</Link>
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-          <FollowBuilderButton address={page.ownerAddress} followers={followers} />
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function BuildsPage() {
-  const [tab, setTab] = useState<FeedTab>("recent");
+function CommunityBuildsPage() {
+  const builds = useQuery(buildsQuery());
+  const [selectedHeight, setSelectedHeight] = useState<number | null>(null);
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState<KindFilter>("all");
+  const [sort, setSort] = useState<SortMode>("newest");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const { user } = useAuthSession();
-  const builds = useQuery(buildsQuery(500));
-  const districts = useQuery(districtsQuery(40));
+  const stageRef = useRef<HTMLElement | null>(null);
 
   const addresses = useMemo(
-    () => Array.from(new Set((builds.data ?? []).map((b) => b.page.ownerAddress))),
+    () => Array.from(new Set((builds.data ?? []).map((entry) => entry.page.ownerAddress).filter(Boolean))),
     [builds.data],
   );
-  const counts = useQuery({
-    ...followerCountsQuery(addresses),
-    enabled: addresses.length > 0,
-  });
-  const follows = useQuery({ ...myFollowsQuery(), enabled: Boolean(user) });
   const profiles = useQuery({ ...profilesQuery(addresses), enabled: addresses.length > 0 });
 
   const entries = useMemo(() => {
-    const all = builds.data ?? [];
-    const followed = new Set(follows.data ?? []);
-    const normalizedQuery = query.trim().toLowerCase();
-    const filtered = all.filter((entry) => {
-      if (tab === "following" && !followed.has(entry.page.ownerAddress)) return false;
+    const term = query.trim().toLowerCase();
+    const filtered = (builds.data ?? []).filter((entry) => {
       if (kind !== "all" && entry.page.buildKind !== kind) return false;
-      if (!normalizedQuery) return true;
-      const profileName = profiles.data?.get(entry.page.ownerAddress)?.displayName ?? "";
+      if (!term) return true;
+      const profileName = entry.page.ownerAddress ? profiles.data?.get(entry.page.ownerAddress)?.displayName ?? "" : "";
       return [
-        String(entry.page.bitmapHeight),
+        entry.page.bitmapHeight,
         entry.page.title ?? "",
         entry.page.description ?? "",
-        entry.page.ownerAddress,
         profileName,
-      ].some((value) => value.toLowerCase().includes(normalizedQuery));
+        ...entry.extenderNames,
+      ].some((value) => String(value).toLowerCase().includes(term));
     });
-    if (tab === "visited") {
-      return [...filtered].sort(
-        (a, b) => b.totalViews - a.totalViews || b.uniqueVisitors - a.uniqueVisitors,
-      );
-    }
-    return [...filtered].sort(
-      (a, b) =>
-        new Date(b.page.updatedAt ?? 0).getTime() - new Date(a.page.updatedAt ?? 0).getTime(),
-    );
-  }, [builds.data, tab, follows.data, kind, query, profiles.data]);
+    return filtered.sort((a, b) => sort === "popular"
+      ? b.totalViews - a.totalViews || b.uniqueVisitors - a.uniqueVisitors
+      : timestamp(b.page.updatedAt) - timestamp(a.page.updatedAt) || b.page.bitmapHeight - a.page.bitmapHeight);
+  }, [builds.data, kind, profiles.data, query, sort]);
 
-  useEffect(() => setVisibleCount(PAGE_SIZE), [tab, query, kind]);
+  const selected = useMemo(() => {
+    if (selectedHeight !== null) {
+      const exact = (builds.data ?? []).find((entry) => entry.page.bitmapHeight === selectedHeight);
+      if (exact) return exact;
+    }
+    return entries[0] ?? builds.data?.[0] ?? null;
+  }, [builds.data, entries, selectedHeight]);
+
+  useEffect(() => setVisibleCount(PAGE_SIZE), [kind, query, sort]);
+
+  function preview(entry: BuildEntry) {
+    setSelectedHeight(entry.page.bitmapHeight);
+    window.requestAnimationFrame(() => stageRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
 
   const visibleEntries = entries.slice(0, visibleCount);
-  const hasMore = visibleCount < entries.length;
-  const totalViews = useMemo(
-    () => (builds.data ?? []).reduce((sum, entry) => sum + entry.totalViews, 0),
-    [builds.data],
-  );
-
-  const topBuilders = useMemo(() => {
-    const byAddress = new Map<string, { builds: number; views: number }>();
-    for (const entry of builds.data ?? []) {
-      const current = byAddress.get(entry.page.ownerAddress) ?? { builds: 0, views: 0 };
-      byAddress.set(entry.page.ownerAddress, {
-        builds: current.builds + 1,
-        views: current.views + entry.totalViews,
-      });
-    }
-    return Array.from(byAddress.entries())
-      .map(([address, stat]) => ({ address, ...stat }))
-      .sort((a, b) => b.views - a.views || b.builds - a.builds)
-      .slice(0, 8);
-  }, [builds.data]);
-
-  const emptyLabel =
-    tab === "following"
-      ? user
-        ? "YOU FOLLOW NO BUILDERS YET — FOLLOW ONE FROM ANY BUILD"
-        : "SIGN IN TO FOLLOW BUILDERS AND SEE THEIR FEED"
-      : "NOTHING BUILT YET — OPEN A BITMAP YOU HOLD AND BUILD ON IT";
-
-  const clearFilters = () => {
-    setQuery("");
-    setKind("all");
-  };
+  const publicExtenders = (builds.data ?? []).filter((entry) => entry.hasActiveExtender).length;
+  const totalViews = (builds.data ?? []).reduce((sum, entry) => sum + entry.totalViews, 0);
 
   return (
-    <main className="mx-auto max-w-[1600px] px-4 py-8 md:px-8 md:py-12">
-      <header className="border-b border-border pb-8">
-        <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+    <main className="mx-auto max-w-[1600px] px-3 py-6 sm:px-5 md:py-10">
+      <header className="border-b border-border pb-7">
+        <div className="label text-bitcoin">DISCOVER · PUBLIC BITMAP EXPERIENCES</div>
+        <div className="mt-3 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
           <div>
-            <div className="label text-primary">BITMAP WORLDS · LIVE DIRECTORY</div>
-            <h1 className="display mt-3 text-4xl md:text-6xl">DISCOVER BUILDS</h1>
-            <p className="mt-4 max-w-2xl font-mono text-xs leading-6 text-muted-foreground">
-              ENTER OWNER-BUILT WORLDS, GALLERIES, SHOPS, GAMES AND PERSONAL SPACES.
+            <h1 className="display text-4xl sm:text-5xl md:text-7xl">COMMUNITY BUILDS</h1>
+            <p className="mt-3 max-w-2xl font-mono text-xs leading-6 text-muted-foreground">
+              BROWSE LIVE 3D WORLDS BUILT ON BITCOIN LAND. PREVIEW THE EXPERIENCE, THEN ENTER ITS EXACT BITMAP.
             </p>
           </div>
-          <dl className="grid grid-cols-3 border border-border bg-card lg:min-w-[420px]">
-            <div className="border-r border-border p-4">
-              <dt className="label">BUILDS</dt>
-              <dd className="display mt-2 text-2xl text-primary">{(builds.data ?? []).length}</dd>
-            </div>
-            <div className="border-r border-border p-4">
-              <dt className="label">BUILDERS</dt>
-              <dd className="display mt-2 text-2xl">{addresses.length}</dd>
-            </div>
-            <div className="p-4">
-              <dt className="label">VIEWS</dt>
-              <dd className="display mt-2 text-2xl">{totalViews.toLocaleString("en-US")}</dd>
-            </div>
+          <dl className="grid grid-cols-3 border border-border bg-card lg:min-w-[440px]">
+            <Metric label="PUBLIC BUILDS" value={(builds.data ?? []).length} />
+            <Metric label="LIVE EXTENDERS" value={publicExtenders} />
+            <Metric label="VISITS" value={totalViews} last />
           </dl>
         </div>
       </header>
 
-      <section className="mt-8" aria-label="Build directory">
-        <div className="sticky top-16 z-20 border-y border-border bg-background/95 py-3 backdrop-blur-md">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
-            <div className="relative min-w-0 flex-1">
-              <Search aria-hidden="true" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="SEARCH TITLE, BITMAP OR BUILDER"
-                aria-label="Search builds"
-                className="h-10 w-full rounded-md border border-input bg-card pl-10 pr-10 font-mono text-xs text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary"
-              />
-              {query ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 top-1/2 h-10 w-10 -translate-y-1/2"
-                  onClick={() => setQuery("")}
-                  aria-label="Clear search"
-                >
-                  <X />
-                </Button>
-              ) : null}
-            </div>
-            <select
-              value={kind}
-              onChange={(event) => setKind(event.target.value as KindFilter)}
-              aria-label="Filter by build type"
-              className="h-10 rounded-md border border-input bg-card px-3 font-mono text-[11px] text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-            >
-              <option value="all">ALL BUILD TYPES</option>
-              {BUILD_KINDS.map((buildKind) => (
-                <option key={buildKind} value={buildKind}>{BUILD_KIND_LABELS[buildKind]}</option>
-              ))}
-            </select>
-            <div className="grid grid-cols-3 rounded-md border border-border bg-card p-1">
-              {TABS.map((entry) => (
-                <Button
-                  key={entry.id}
-                  type="button"
-                  size="sm"
-                  variant={tab === entry.id ? "default" : "ghost"}
-                  onClick={() => setTab(entry.id)}
-                  className="label h-8 px-3"
-                >
-                  {entry.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-5 flex items-center justify-between gap-4">
-          <p className="label">
-            <span className="text-foreground">{entries.length.toLocaleString("en-US")}</span> RESULT{entries.length === 1 ? "" : "S"}
-            {hasMore ? ` · SHOWING ${visibleEntries.length}` : ""}
-          </p>
-          {(query || kind !== "all") ? (
-            <Button type="button" variant="ghost" size="sm" onClick={clearFilters} className="label">
-              <X /> RESET
-            </Button>
-          ) : null}
-        </div>
-
-        {visibleEntries.length > 0 ? (
+      <section ref={stageRef} className="scroll-mt-24 border-x border-b border-border" aria-label="Selected live build">
+        {selected ? (
           <>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-            {visibleEntries.map((entry) => (
-              <BuildCard
-                key={entry.page.bitmapHeight}
-                entry={entry}
-                followers={counts.data?.get(entry.page.ownerAddress) ?? 0}
-                profile={profiles.data?.get(entry.page.ownerAddress) ?? null}
-              />
-            ))}
-            </div>
-            {hasMore ? (
-              <div className="mt-8 flex flex-col items-center gap-3 border-t border-border pt-8">
-                <span className="label">{entries.length - visibleCount} MORE BUILDS</span>
-                <Button type="button" variant="outline" onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}>
-                  LOAD {Math.min(PAGE_SIZE, entries.length - visibleCount)} MORE
-                </Button>
+            <div className="grid gap-px border-b border-border bg-border lg:grid-cols-[minmax(0,1fr)_20rem]">
+              <div className="bg-background px-4 py-4 sm:px-6">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="label text-signal">LIVE 3D · {selected.hasActiveExtender ? "EXTENDER ACTIVE" : BUILD_KIND_LABELS[selected.page.buildKind]}</div>
+                    <h2 className="display mt-2 text-2xl sm:text-4xl">{selected.page.title || `${selected.page.bitmapHeight}.BITMAP`}</h2>
+                    <p className="label mt-2 text-muted-foreground">{selected.page.bitmapHeight}.BITMAP{selected.extenderNames.length ? ` · ${selected.extenderNames.join(" · ")}` : ""}</p>
+                  </div>
+                  <ClubBadge height={selected.page.bitmapHeight} asLink={false} />
+                </div>
               </div>
-            ) : null}
+              <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-4 lg:grid-cols-2">
+                <StageMetric icon={<Eye />} label="VIEWS" value={selected.totalViews} />
+                <StageMetric icon={<Users />} label="VISITORS" value={selected.uniqueVisitors} />
+              </div>
+            </div>
+            <PublicBuildViewer key={selected.page.bitmapHeight} page={selected.page} />
+            <div className="grid gap-px border-t border-border bg-border sm:grid-cols-2">
+              <Button asChild size="lg" className="h-12 rounded-none">
+                <Link to="/oasis" search={{ height: selected.page.bitmapHeight }}><ArrowUpRight /> ENTER BUILD</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="h-12 rounded-none border-0">
+                <Link to="/bitmap/$block" params={{ block: String(selected.page.bitmapHeight) }}><Box /> OPEN BITMAP</Link>
+              </Button>
+            </div>
           </>
         ) : (
-          <div className="mt-4 flex min-h-48 flex-col items-center justify-center border border-dashed border-border p-8 text-center">
-            <span className="display text-xl">{builds.isPending ? "SYNCING BUILDS" : "NO BUILDS FOUND"}</span>
-            <span className="label mt-3 max-w-lg text-muted-foreground">{builds.isPending ? "READING THE LIVE DIRECTORY" : (query || kind !== "all") ? "TRY A DIFFERENT SEARCH OR BUILD TYPE" : emptyLabel}</span>
-            {!builds.isPending && (query || kind !== "all") ? (
-              <Button type="button" variant="outline" size="sm" onClick={clearFilters} className="mt-5">RESET FILTERS</Button>
-            ) : null}
+          <div className="grid min-h-72 place-items-center px-6 text-center">
+            <p className="label text-muted-foreground">{builds.isPending ? "READING EVERY PUBLIC BUILD…" : "NO PUBLIC BUILDS RECORDED"}</p>
           </div>
         )}
       </section>
 
-      <div className="mt-16 grid gap-12 xl:grid-cols-[1fr_1.35fr]">
-        <section>
-          <div className="flex items-end justify-between border-b border-border pb-3">
-            <div>
-              <h2 className="display text-xl">TOP BUILDERS</h2>
-              <p className="label mt-2">RANKED BY REAL BUILD VIEWS</p>
+      <section className="mt-8" aria-label="Community build directory">
+        <div className="sticky top-16 z-20 border-y border-border bg-background/95 py-3 backdrop-blur-md">
+          <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto_auto]">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="SEARCH BUILD, BITMAP, EXTENDER OR BUILDER"
+                aria-label="Search community builds"
+                className="h-10 w-full border border-input bg-card pl-10 pr-10 font-mono text-xs text-foreground outline-none focus:border-bitcoin"
+              />
+              {query ? <Button type="button" size="icon" variant="ghost" onClick={() => setQuery("")} aria-label="Clear search" className="absolute right-0 top-0 h-10"><X /></Button> : null}
+            </div>
+            <select value={kind} onChange={(event) => setKind(event.target.value as KindFilter)} aria-label="Filter by build type" className="h-10 border border-input bg-card px-3 font-mono text-[11px] text-foreground">
+              <option value="all">ALL BUILD TYPES</option>
+              {BUILD_KINDS.map((value) => <option key={value} value={value}>{BUILD_KIND_LABELS[value]}</option>)}
+            </select>
+            <div className="grid grid-cols-2 border border-border bg-card p-1">
+              <Button type="button" size="sm" variant={sort === "newest" ? "default" : "ghost"} onClick={() => setSort("newest")}>NEWEST</Button>
+              <Button type="button" size="sm" variant={sort === "popular" ? "default" : "ghost"} onClick={() => setSort("popular")}>POPULAR</Button>
             </div>
           </div>
-          <div className="divide-y divide-border border-b border-border">
-            {topBuilders.map((builder, index) => (
-              <div key={builder.address} className="flex items-center gap-3 py-3">
-                <span className="display w-7 text-lg text-muted-foreground">{String(index + 1).padStart(2, "0")}</span>
-                <Link to="/profile/$address" params={{ address: builder.address }} className="min-w-0 flex-1">
-                  <div className="display text-sm"><BuilderName address={builder.address} profile={profiles.data?.get(builder.address) ?? null} avatar /></div>
-                  <div className="label mt-1">{builder.builds} BUILDS · {builder.views.toLocaleString("en-US")} VIEWS</div>
-                </Link>
-                <FollowBuilderButton address={builder.address} followers={counts.data?.get(builder.address) ?? 0} />
-              </div>
-            ))}
-          </div>
-        </section>
+        </div>
 
-        <section>
-          <div className="border-b border-border pb-3">
-            <h2 className="display text-xl">EXPLORE ZONES</h2>
-            <p className="label mt-2">BITMAP NEIGHBORHOODS BUILT BY HOLDERS</p>
-          </div>
-          {districts.data && districts.data.length > 0 ? (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {districts.data.map((d) => (
-              <Link
-                key={d.id}
-                to="/district/$slug"
-                params={{ slug: d.slug }}
-                className="rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary"
-              >
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="display text-base">{d.name.toUpperCase()}</span>
-                  <span className="label">{d.heights.length} BITMAPS</span>
-                </div>
-                <div className="label mt-2">{shortenAddress(d.ownerAddress)}</div>
-                <DistrictRarity heights={d.heights} max={4} className="mt-2" />
-                {d.description ? (
-                  <p className="mt-2 font-mono text-[11px] text-muted-foreground">{d.description}</p>
-                ) : null}
-              </Link>
-            ))}
-          </div>
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <h2 className="display text-xl">ALL PUBLIC BUILDS</h2>
+          <span className="label">{entries.length.toLocaleString("en-US")} FOUND</span>
+        </div>
+
+        {visibleEntries.length ? (
+          <>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {visibleEntries.map((entry) => (
+                <BuildCard key={entry.page.bitmapHeight} entry={entry} active={selected?.page.bitmapHeight === entry.page.bitmapHeight} profile={entry.page.ownerAddress ? profiles.data?.get(entry.page.ownerAddress) ?? null : null} onPreview={() => preview(entry)} />
+              ))}
+            </div>
+            {visibleCount < entries.length ? (
+              <div className="mt-7 flex justify-center border-t border-border pt-7">
+                <Button type="button" variant="outline" onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}>LOAD {Math.min(PAGE_SIZE, entries.length - visibleCount)} MORE</Button>
+              </div>
+            ) : null}
+          </>
         ) : (
-          <div className="mt-4 rounded-lg border border-dashed border-border p-6">
-            <span className="label text-muted-foreground">
-              {districts.isPending ? "SYNC" : "NO ZONES YET — CREATE ONE FROM YOUR WALLET"}
-            </span>
+          <div className="mt-4 grid min-h-40 place-items-center border border-dashed border-border px-5 text-center">
+            <p className="label text-muted-foreground">{builds.isPending ? "SYNCING PUBLIC BUILDS…" : "NO BUILDS MATCH THESE FILTERS"}</p>
           </div>
         )}
-        </section>
-      </div>
+      </section>
     </main>
+  );
+}
+
+function Metric({ label, value, last = false }: { label: string; value: number; last?: boolean }) {
+  return <div className={`${last ? "" : "border-r border-border"} p-3 sm:p-4`}><dt className="label">{label}</dt><dd className="display mt-2 text-xl text-bitcoin sm:text-2xl">{value.toLocaleString("en-US")}</dd></div>;
+}
+
+function StageMetric({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
+  return <div className="bg-card p-3"><div className="flex items-center gap-2 text-signal [&_svg]:size-3.5">{icon}<span className="label">{label}</span></div><div className="display mt-2 text-xl">{value.toLocaleString("en-US")}</div></div>;
+}
+
+function BuildCard({ entry, active, profile, onPreview }: { entry: BuildEntry; active: boolean; profile: NonNullable<Parameters<typeof BuilderName>[0]["profile"]> | null; onPreview: () => void }) {
+  const { page } = entry;
+  return (
+    <article className={`overflow-hidden border bg-card ${active ? "border-signal" : "border-border"}`}>
+      <button type="button" onClick={onPreview} className="group block w-full text-left" aria-label={`Preview ${page.bitmapHeight}.BITMAP`}>
+        <div className="relative aspect-[16/10] overflow-hidden border-b border-border bg-background">
+          {page.bannerInscriptionId ? <img src={inscriptionImageUrl(page.bannerInscriptionId)} alt="" loading="lazy" className="h-full w-full object-cover transition-transform group-hover:scale-[1.02]" /> : <div className="h-full [&>div]:h-full [&_svg]:h-full [&_svg]:w-full"><BlockMosaic height={page.bitmapHeight} /></div>}
+          <span className={`label absolute left-2 top-2 border px-2 py-1 backdrop-blur ${entry.hasActiveExtender ? "border-signal bg-background/90 text-signal" : "border-border bg-background/90 text-bitcoin"}`}>{entry.hasActiveExtender ? "LIVE 3D" : BUILD_KIND_LABELS[page.buildKind]}</span>
+          <span className="label absolute bottom-2 right-2 border border-border bg-background/90 px-2 py-1">{entry.totalViews.toLocaleString("en-US")} VIEWS</span>
+        </div>
+        <div className="p-3">
+          <h3 className="display truncate text-base">{page.title || `${page.bitmapHeight}.BITMAP`}</h3>
+          <p className="label mt-1 truncate text-muted-foreground">{page.bitmapHeight}.BITMAP{entry.extenderNames[0] ? ` · ${entry.extenderNames[0]}` : ""}</p>
+        </div>
+      </button>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-t border-border px-3 py-2">
+        <div className="min-w-0 label text-muted-foreground">
+          {page.ownerAddress ? <Link to="/profile/$address" params={{ address: page.ownerAddress }} className="hover:text-bitcoin"><BuilderName address={page.ownerAddress} profile={profile} avatar /></Link> : "ACTIVE PUBLIC DEPLOYMENT"}
+        </div>
+        <Button type="button" size="sm" variant={active ? "default" : "outline"} onClick={onPreview}><Eye /> {active ? "VIEWING" : "PREVIEW"}</Button>
+      </div>
+      <Button asChild variant="ghost" className="h-9 w-full rounded-none border-t border-border">
+        <Link to="/oasis" search={{ height: page.bitmapHeight }}>ENTER BUILD <ArrowUpRight /></Link>
+      </Button>
+    </article>
   );
 }

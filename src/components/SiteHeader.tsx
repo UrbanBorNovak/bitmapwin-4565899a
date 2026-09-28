@@ -44,7 +44,7 @@ const NAV_GROUPS: NavGroup[] = [
     note: "Build and publish experiences on your BITMAPs",
     items: [
       { to: "/my-world", label: "MY WORLD", note: "Manage your BITMAPs and deployments" },
-      { to: "/builds", label: "3D BUILDS", note: "On-chain model registry" },
+      { to: "/builds", label: "COMMUNITY BUILDS", note: "Preview and enter public BITMAP worlds" },
       { to: "/extend", label: "DEPLOY", note: "Put an experience on your land" },
       { to: "/studio", label: "STUDIO", note: "Build an Extender" },
       { to: "/extenders", label: "EXTENDERS", note: "Reusable world packages" },
@@ -59,6 +59,7 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/codex", label: "CODEX", note: "Field guide: creatures, cards, land" },
       { to: "/ranks", label: "RANKS", note: "Hall of fame, PvP and clans" },
       { to: "/experiences", label: "EXPERIENCES", note: "Live deployed worlds" },
+      { to: "/builds", label: "COMMUNITY BUILDS", note: "Browse every public BITMAP build" },
       { to: "/builders", label: "BUILDERS", note: "People building on bedrock" },
       { to: "/world-stats", label: "WORLD STATS", note: "BIT supply, prices and mining" },
       { to: "/archaeology", label: "ARCHAEOLOGY FACTS", note: "Trait definitions and block history" },
