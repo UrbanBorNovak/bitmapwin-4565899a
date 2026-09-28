@@ -136,7 +136,7 @@ function Bestiary() {
             <CreatureModel3D key={viewing.id} inscription={viewing.inscription} kind={viewing.kind} guardian={viewing.guardian} yaw={viewing.yaw} label={viewing.name} />
           </div>
           <div className="border-t border-border p-5 md:border-l md:border-t-0">
-            <p className="label text-signal">{viewing.inscription ? "ON-CHAIN 3D MODEL" : "OASIS WILDLIFE MODEL"} · DRAG TO TURN</p>
+            <p className="label text-signal">{viewing.guardian ? "BLOCK-DNA GUARDIAN" : viewing.inscription ? "ON-CHAIN 3D MODEL" : "OASIS WILDLIFE MODEL"} · DRAG TO TURN</p>
             <h2 className="display mt-1 text-2xl" data-no-translate>{viewing.name}</h2>
             <p className="mt-1 font-mono text-[10px] text-muted-foreground">{viewing.rarity} · {viewing.habitat}</p>
             <dl className="mt-4 grid grid-cols-4 gap-1 font-mono text-[10px]">
@@ -145,6 +145,11 @@ function Bestiary() {
               <Stat k="BITE" v={viewing.bite} />
               <Stat k="SPD" v={viewing.speed.toFixed(1)} />
             </dl>
+{viewing.height != null && (
+            <Link to="/bitmap/$block" params={{ block: String(viewing.height) }} className="mt-4 block font-mono text-[10px] text-signal hover:text-bitcoin">
+              VISIT {viewing.height}.BITMAP IN THE OASIS →
+            </Link>
+            )}
 {viewing.inscription && (
             <a href={`https://ordinals.com/inscription/${viewing.inscription}`} target="_blank" rel="noreferrer" className="mt-4 block break-all font-mono text-[10px] text-muted-foreground hover:text-bitcoin" data-no-translate>
               INSCRIPTION {viewing.inscription.slice(0, 10)}…{viewing.inscription.slice(-4)} ↗
