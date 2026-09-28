@@ -16,8 +16,8 @@ import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { InscribedModel, contentUrl } from "./InscribedParts";
 
 /** The inscribed whale, read once from chain and reused by every copy. */
-export const WHALE_INSCRIPTION =
-  "09434427a0f5bddda76416dc60331212cd16312a538ef1b5c475e903ba318ecdi0";
+import { WHALE_INSCRIPTION } from "@/lib/creature-codex";
+export { WHALE_INSCRIPTION };
 
 /** Whales stay inside this fraction of the coast, i.e. the open middle. */
 const CORE = 0.4;
