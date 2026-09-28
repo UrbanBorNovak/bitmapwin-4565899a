@@ -127,3 +127,59 @@ export function importPass(backup: string): ShadowPass | null {
 export function shadowHandle(nullifier: string): string {
   return `SHADOW-${nullifier.slice(0, 6).toUpperCase()}`;
 }
+
+/* ── Private transfer ─────────────────────────────────────────────
+ * The recipient makes fresh secrets on their own device and shares only
+ * a receive code (the new commitment). The sender reveals their old salt
+ * once to retire their pass; the server swaps old commitment for new.
+ * No wallet, account or IP-to-pass link is stored.
+ */
+const PENDING_KEY = "bitmapwin:shadow-receive";
+
+type Pending = Record<string, Pick<ShadowPass, "slug" | "salt" | "nullifierSecret" | "commitment" | "nullifier">>;
+
+function readPending(): Pending {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(window.localStorage.getItem(PENDING_KEY) || "{}") as Pending;
+  } catch {
+    return {};
+  }
+}
+
+function writePending(p: Pending) {
+  try {
+    window.localStorage.setItem(PENDING_KEY, JSON.stringify(p));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function getPendingReceive(slug: string) {
+  return readPending()[slug] ?? null;
+}
+
+export function createPendingReceive(slug: string) {
+  const p = readPending();
+  p[slug] = p[slug] ?? draftPass(slug);
+  writePending(p);
+  return p[slug]!;
+}
+
+export function clearPendingReceive(slug: string) {
+  const p = readPending();
+  delete p[slug];
+  writePending(p);
+}
+
+export function receiveCodeFor(slug: string, commitment: string) {
+  return `SHADOW-RECV-v1.${slug}.${commitment}`;
+}
+
+export function parseReceiveCode(code: string): { slug: string; commitment: string } | null {
+  const parts = code.trim().split(".");
+  if (parts.length !== 3 || parts[0] !== "SHADOW-RECV-v1") return null;
+  const [, slug, commitment] = parts as [string, string, string];
+  if (!/^[a-z0-9-]+$/.test(slug) || !/^[0-9a-f]{64}$/.test(commitment)) return null;
+  return { slug, commitment };
+}
