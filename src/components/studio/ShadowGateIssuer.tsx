@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { getMyShadowEventsFn, issueShadowEventFn, setShadowEventActiveFn } from "@/lib/shadow-assets.functions";
+import { ShadowL1Anchor } from "@/components/territory/ShadowL1Anchor";
+import { gateDigest } from "@/lib/shadow-l1";
 
 /** Holders open a Shadow Gate on a BITMAP they hold and choose how many passes exist. */
 export function ShadowGateIssuer() {
@@ -80,20 +82,29 @@ export function ShadowGateIssuer() {
       {(mine.data ?? []).length > 0 ? (
         <ul className="border-t border-border p-2">
           {mine.data!.map((g) => (
-            <li key={g.slug} className="flex items-center justify-between gap-2 px-2 py-1.5">
-              <Link to="/bitmap/$block" params={{ block: String(g.territoryBlock) }} hash="shadow-gate" className="min-w-0">
-                <p className="truncate font-mono text-xs">{g.title}</p>
-                <p className="label text-muted-foreground">
-                  {g.territoryBlock}.BITMAP · {g.passesIssued}/{g.maxPasses}
-                </p>
-              </Link>
-              <button
-                type="button"
-                onClick={() => flip.mutate({ slug: g.slug, active: !g.isActive })}
-                className={`shrink-0 border px-2 py-1 font-mono text-[10px] ${g.isActive ? "border-signal text-signal" : "border-border text-muted-foreground"}`}
-              >
-                {g.isActive ? "OPEN · CLOSE" : "CLOSED · REOPEN"}
-              </button>
+            <li key={g.slug} className="space-y-2 px-2 py-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <Link to="/bitmap/$block" params={{ block: String(g.territoryBlock) }} hash="shadow-gate" className="min-w-0">
+                  <p className="truncate font-mono text-xs">{g.title}</p>
+                  <p className="label text-muted-foreground">
+                    {g.territoryBlock}.BITMAP · {g.passesIssued}/{g.maxPasses}
+                  </p>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => flip.mutate({ slug: g.slug, active: !g.isActive })}
+                  className={`shrink-0 border px-2 py-1 font-mono text-[10px] ${g.isActive ? "border-signal text-signal" : "border-border text-muted-foreground"}`}
+                >
+                  {g.isActive ? "OPEN · CLOSE" : "CLOSED · REOPEN"}
+                </button>
+              </div>
+              <ShadowL1Anchor
+                op="gate"
+                slug={g.slug}
+                digest={gateDigest(g.slug, g.territoryBlock)}
+                label="◆ WRITE THIS GATE ONTO BITCOIN"
+                note="ANCHORS THE GATE, ITS LAND AND ITS PASS LIMIT IN ONE BITCOIN TRANSACTION."
+              />
             </li>
           ))}
         </ul>

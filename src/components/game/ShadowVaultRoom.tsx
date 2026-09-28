@@ -14,6 +14,8 @@ import { SafeHtml } from "@/components/game/SafeHtml";
 import { onShadowRoom, type ShadowRoomRequest } from "@/lib/shadow-room";
 import { getPass, shadowHandle } from "@/lib/shadow-vault";
 import { verifyShadowPassFn, postShadowWhisperFn } from "@/lib/shadow-assets.functions";
+import { getShadowNoteFn } from "@/lib/shadow-l1.functions";
+import { useQuery } from "@tanstack/react-query";
 
 type Whisper = { id: string; nullifier: string; content: string; createdAt: string };
 type EventInfo = { title: string; subtitle: string; description: string; maxPasses: number; passesIssued: number; territoryBlock: number };
@@ -256,6 +258,14 @@ export function ShadowVaultRoom() {
     return [...m.entries()].map(([n, v]) => ({ nullifier: n, ...v }));
   }, [whispers]);
 
+  // Whether this device's own pass has been written onto Bitcoin.
+  const l1Note = useQuery({
+    queryKey: ["shadow-note", pass?.commitment ?? "none"],
+    enabled: Boolean(pass?.commitment),
+    staleTime: 30_000,
+    queryFn: () => getShadowNoteFn({ data: { digest: pass!.commitment } }),
+  });
+
   useEffect(
     () =>
       onShadowRoom((req) => {
@@ -338,8 +348,18 @@ export function ShadowVaultRoom() {
 
       {/* chamber HUD */}
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-3 font-mono text-[10px] text-signal">
-        <div className="border border-signal/40 bg-background/70 px-2 py-1">
-          ◈ SHADOW VAULT · {pass ? shadowHandle(pass.nullifier) : "NO PASS ON THIS DEVICE"}
+        <div className="space-y-1">
+          <div className="border border-signal/40 bg-background/70 px-2 py-1">
+            ◈ SHADOW VAULT · {pass ? shadowHandle(pass.nullifier) : "NO PASS ON THIS DEVICE"}
+          </div>
+          {l1Note.data ? (
+            <div className="border border-bitcoin/50 bg-background/70 px-2 py-1 text-bitcoin">
+              ◆ ON BITCOIN ·{" "}
+              {l1Note.data.status === "confirmed"
+                ? `BLOCK ${l1Note.data.confirmedHeight ?? "—"}`
+                : "IN THE MEMPOOL"}
+            </div>
+          ) : null}
         </div>
         <button
           type="button"
