@@ -29,10 +29,11 @@ export const claimShadowPassFn = createServerFn({ method: "POST" })
 export const verifyShadowPassFn = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ slug, commitment: hex64 }).parse(d))
   .handler(async ({ data }) => {
-    const { verifyShadowPass, readShadowWhispers } = await import("@/lib/shadow-assets.server");
+    const { verifyShadowPass, readShadowWhispers, readShadowEvent } = await import("@/lib/shadow-assets.server");
     const valid = await verifyShadowPass(data.slug, data.commitment);
-    if (!valid) return { valid: false as const, whispers: [] };
-    return { valid: true as const, whispers: await readShadowWhispers(data.slug) };
+    if (!valid) return { valid: false as const, whispers: [], event: null };
+    const [whispers, event] = await Promise.all([readShadowWhispers(data.slug), readShadowEvent(data.slug)]);
+    return { valid: true as const, whispers, event };
   });
 
 export const postShadowWhisperFn = createServerFn({ method: "POST" })
