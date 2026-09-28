@@ -25,3 +25,4 @@
 - Oasis progress is device-local; BIT pays fixed EXPLORE_MILESTONES once per account ledger ref.
 - Guardians are one-per-block after exact payment; procedural species visuals share GuardianBody. Ordinals use public DNA/summon proof and device-local keys without identity.
 - Shadow Assets store only device-derived commitment/nullifier hashes; shadow_commitments has no RLS policy and is reached only through security-definer routines.
+- SHORD (src/lib/shord/*) is client-only: BabyJubjub/Poseidon keys and notes live in the browser, the scanner reads Esplora directly, and prover.ts never fabricates a Groth16 proof without installed circuit artifacts.
