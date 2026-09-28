@@ -49,6 +49,7 @@ import { ordContentUrl } from "@/lib/oci";
 import { GoldBarIcon } from "@/components/GoldBarIcon";
 import { RationIcon } from "@/components/game/RationIcon";
 import { CharacterPortrait } from "@/components/game/CharacterPortrait";
+import { CreatureModel3D } from "@/components/codex/CreatureModel3D";
 import type { Character } from "@/lib/character";
 
 /** Short tile glyphs so every backpack stack reads at a glance. */
@@ -169,6 +170,21 @@ export function ModernInventory({ who, character }: { who: string; character: Ch
                 <span className="px-1 text-center leading-tight">{slot.label}</span>
               </button>
             ))}
+          </div>
+          <div className="mt-3 border border-border">
+            <div className="flex items-center justify-between border-b border-border px-2 py-1">
+              <span className="label">COMPANION</span>
+              <span className="font-mono text-[9px] uppercase text-bitcoin">{pet.label}</span>
+            </div>
+            <div className="h-36">
+              {pet.inscription ? (
+                <CreatureModel3D key={pet.id} inscription={pet.inscription} label={pet.label} />
+              ) : (
+                <button type="button" onClick={cycleCompanion} className="grid size-full place-items-center font-mono text-[10px] uppercase text-muted-foreground hover:text-foreground">
+                  NO COMPANION · TAP TO CHOOSE
+                </button>
+              )}
+            </div>
           </div>
           <div className="mt-2 grid grid-cols-2 gap-2">
             <button
