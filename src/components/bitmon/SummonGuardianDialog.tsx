@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { GuardianBody } from "@/components/bitmon/GuardianBody";
 import { RARITY_TONE, bip21, guardianLevel, GUARDIAN_PRICE_SATS, type GuardianDna } from "@/lib/bitmon";
 import { guardianDnaQuery, guardianQuery } from "@/lib/bitmon-queries";
-import { checkSummonOrderFn, createSummonOrderFn } from "@/lib/bitmon.functions";
+import { checkSummonOrderFn, createSummonOrderFn, resumeSummonOrderFn } from "@/lib/bitmon.functions";
 import type { SummonOrder } from "@/lib/bitmon.server";
 import { playSfx } from "@/lib/world-audio";
 
@@ -48,6 +48,7 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
   const awake = useQuery({ ...guardianQuery(height), enabled: open });
   const createOrder = useServerFn(createSummonOrderFn);
   const checkOrder = useServerFn(checkSummonOrderFn);
+  const resumeOrder = useServerFn(resumeSummonOrderFn);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [order, setOrder] = useState<SummonOrder | null>(null);
   const [denied, setDenied] = useState<string | null>(null);
