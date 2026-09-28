@@ -16,6 +16,7 @@
 - Official trait lists detect a next page without full-index counts, keeping the 900k+ BITMAP index responsive.
 - BITMAP Archaeology separates chain-verified facts from attributed community field notes; only reviewed records are public and at most three are featured per official trait.
 - Block-derived official traits read only from stored block_facts (mempool.space headers/extras) and the published Patoshi list; a block without a record never matches.
-- Published BITMAP pages use one public viewer that runs active extender code as interactive 3D with its deployment config and shows that exact code; BITMAPs without an extender fall back to their page preview and portable payload.
-- BITMAP detail pages use a brutalist editorial hierarchy: identity and market actions first, live territory second, then verified facts, history, and community; this keeps exploration inviting without hiding provenance.
+- One public viewer runs active Extender code/config as interactive 3D and shows exact code; otherwise it uses the BITMAP page preview/payload.
+- BITMAP pages order identity/market, live territory, facts, history, then community.
 - Territory Chronicles derive only from persisted public provenance and aggregate visitor statistics; never expose visitor identities or synthesize missing history.
+- Community Builds joins all public BITMAP pages with active executable Extenders and mounts one live 3D viewer to protect WebGL stability.
