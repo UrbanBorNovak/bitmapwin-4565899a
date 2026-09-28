@@ -10,6 +10,14 @@ export const createSummonOrderFn = createServerFn({ method: "POST" })
     return createSummonOrder(context.supabase as never, context.userId, data.height);
   });
 
+export const resumeSummonOrderFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ height: z.number().int().min(0).max(5_000_000) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { resumeSummonOrder } = await import("@/lib/bitmon.server");
+    return resumeSummonOrder(context.userId, data.height);
+  });
+
 export const checkSummonOrderFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ orderId: z.string().uuid() }).parse(d))

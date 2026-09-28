@@ -88,6 +88,19 @@ export async function createSummonOrder(userDb: SupabaseClient, userId: string, 
   throw new Error("Could not issue a summon amount — try again");
 }
 
+/** Resume an existing open summon order without creating a new invoice. */
+export async function resumeSummonOrder(userId: string, height: number): Promise<SummonOrder | null> {
+  const db = await admin();
+  const { data } = await db
+    .from("bitmon_summon_orders")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("block_height", height)
+    .in("status", ["pending", "seen"])
+    .maybeSingle();
+  return data ? toOrder(data as OrderRow) : null;
+}
+
 type MempoolTx = {
   txid: string;
   status?: { confirmed?: boolean; block_time?: number };
