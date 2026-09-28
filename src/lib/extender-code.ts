@@ -29,6 +29,23 @@ type Row = {
   extender_versions: { semver: string; manifest: unknown } | null;
 };
 
+function toRuntimeDeployment(row: Row): RuntimeDeployment | null {
+  const code = codeFromManifest(row.extender_versions?.manifest);
+  if (!code) return null;
+  return {
+    deploymentId: row.id,
+    extenderId: row.extender_id,
+    slug: row.extenders?.slug ?? "",
+    name: row.extenders?.name ?? "EXTENDER",
+    category: row.extenders?.category ?? "world-systems",
+    semver: row.extender_versions?.semver ?? "—",
+    height: Number(row.bitmap_height),
+    code,
+    config:
+      row.config && typeof row.config === "object" ? (row.config as Record<string, unknown>) : {},
+  };
+}
+
 export const runtimeDeploymentsQuery = (limit = 400) =>
   queryOptions({
     queryKey: ["runtime-deployments", limit],
@@ -44,22 +61,31 @@ export const runtimeDeploymentsQuery = (limit = 400) =>
       if (error) throw error;
       const out: RuntimeDeployment[] = [];
       for (const row of (data ?? []) as Row[]) {
-        const code = codeFromManifest(row.extender_versions?.manifest);
-        if (!code) continue;
-        out.push({
-          deploymentId: row.id,
-          extenderId: row.extender_id,
-          slug: row.extenders?.slug ?? "",
-          name: row.extenders?.name ?? "EXTENDER",
-          category: row.extenders?.category ?? "world-systems",
-          semver: row.extender_versions?.semver ?? "—",
-          height: Number(row.bitmap_height),
-          code,
-          config:
-            row.config && typeof row.config === "object" ? (row.config as Record<string, unknown>) : {},
-        });
+        const deployment = toRuntimeDeployment(row);
+        if (deployment) out.push(deployment);
       }
       return out;
     },
     staleTime: 60_000,
+  });
+
+/** Exact public runtime stack for one BITMAP, including executable published code. */
+export const runtimeDeploymentsForHeightQuery = (height: number) =>
+  queryOptions({
+    queryKey: ["runtime-deployments", "height", height],
+    queryFn: async (): Promise<RuntimeDeployment[]> => {
+      const { data, error } = await supabase
+        .from("extender_deployments")
+        .select(
+          "id, extender_id, bitmap_height, config, extenders(name, slug, category), extender_versions(semver, manifest)",
+        )
+        .eq("bitmap_height", height)
+        .eq("status", "active")
+        .order("active_from", { ascending: false });
+      if (error) throw error;
+      return ((data ?? []) as Row[])
+        .map(toRuntimeDeployment)
+        .filter((deployment): deployment is RuntimeDeployment => deployment !== null);
+    },
+    staleTime: 30_000,
   });
