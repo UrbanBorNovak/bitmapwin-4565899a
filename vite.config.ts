@@ -53,6 +53,9 @@ export default defineConfig({
         snarkjs: fileURLToPath(
           new URL("./node_modules/snarkjs/build/browser.esm.js", import.meta.url),
         ),
+        ffjavascript: fileURLToPath(
+          new URL("./node_modules/ffjavascript/build/browser.esm.js", import.meta.url),
+        ),
       },
     },
   },
