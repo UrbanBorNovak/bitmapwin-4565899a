@@ -7,6 +7,7 @@ import { startExtender, type ExtenderRuntime } from "@/lib/extender-runtime";
 import { EMPTY_SNAPSHOT, type ExtenderSnapshot } from "@/lib/extender-sdk";
 
 type LogLine = { kind: "log" | "error"; text: string; time: number };
+const EMPTY_CONFIG: Record<string, unknown> = {};
 
 /**
  * The tile-sized test bench: runs code in the same sandbox the world uses and
@@ -18,6 +19,8 @@ export function ExtenderPreview({
   club = "STUDIO",
   autoRun = false,
   canvasHeight = 320,
+  config = EMPTY_CONFIG,
+  publicView = false,
   onStatus,
 }: {
   code: string;
@@ -25,6 +28,8 @@ export function ExtenderPreview({
   club?: string;
   autoRun?: boolean;
   canvasHeight?: number;
+  config?: Record<string, unknown>;
+  publicView?: boolean;
   onStatus?: (status: { running: boolean; error: string | null; props: number }) => void;
 }) {
   const [snapshot, setSnapshot] = useState<ExtenderSnapshot>(EMPTY_SNAPSHOT);
@@ -65,7 +70,7 @@ export function ExtenderPreview({
     setSnapshot(EMPTY_SNAPSHOT);
     runtime.current = startExtender(
       code,
-      { height, club, owner: null, config: {} },
+      { height, club, owner: null, config },
       {
         onSnapshot: (next) => {
           setSnapshot(next);
@@ -80,7 +85,7 @@ export function ExtenderPreview({
     );
     setRunning(true);
     runtime.current.setPlayer({ x: 0, z: 0, y: 0 });
-  }, [code, height, club, stop, appendLog]);
+  }, [code, height, club, config, stop, appendLog]);
 
   useEffect(() => {
     if (!autoRun) return;
@@ -94,7 +99,7 @@ export function ExtenderPreview({
   return (
     <div className="border border-border bg-surface">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
-        <span className="label text-bitcoin">TEST ON A TILE</span>
+        <span className="label text-bitcoin">{publicView ? "LIVE 3D EXTENDER" : "TEST ON A TILE"}</span>
         <span className="font-mono text-[10px] text-muted-foreground" data-no-translate>
           {statusLabel} · {snapshot.props.length} OBJECTS · {snapshot.quests.length} QUESTS ·{" "}
           {snapshot.time.toFixed(1)}s
@@ -122,7 +127,7 @@ export function ExtenderPreview({
         </ClientOnly>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 border-t border-border px-3 py-2">
+      {!publicView ? <div className="flex flex-wrap items-center gap-2 border-t border-border px-3 py-2">
         <button type="button" className="btn-term" onClick={run}>
           [ RUN ]
         </button>
@@ -138,7 +143,11 @@ export function ExtenderPreview({
           [ {logsOpen ? "HIDE LOG" : "SHOW LOG"} ]
         </button>
         <span className="font-mono text-[10px] text-muted-foreground">CLICK GLOWING OBJECTS TO TEST INTERACTION</span>
-      </div>
+      </div> : (
+        <div className="border-t border-border px-3 py-2 font-mono text-[10px] text-muted-foreground">
+          DRAG TO ORBIT · SCROLL TO ZOOM · CLICK LIT OBJECTS
+        </div>
+      )}
 
       {error ? (
         <p className="border-t border-border px-3 py-2 font-mono text-[11px] text-destructive" data-no-translate>
@@ -157,7 +166,7 @@ export function ExtenderPreview({
         </ul>
       ) : null}
 
-      {logsOpen ? (
+      {!publicView && logsOpen ? (
         <div className="max-h-40 space-y-0.5 overflow-y-auto border-t border-border bg-background px-3 py-2 font-mono text-[10px]">
           {logLines.length === 0 ? (
             <p className="text-muted-foreground">&gt; NO OUTPUT YET</p>

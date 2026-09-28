@@ -80,3 +80,4 @@
 ## Public builds
 - [x] Add public live-preview and read-only code views to published BITMAP builds.
 - [x] Verify the public build viewer and unobstructed Oasis navigation on desktop; controls use responsive layouts for phone widths.
+- [x] Show active extenders as runnable, interactive 3D previews with their exact published code.
