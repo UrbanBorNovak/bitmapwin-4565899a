@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Hammer, Footprints, Landmark, MapPin, Boxes } from "lucide-react";
+import { Hammer, Footprints, Landmark, MapPin, Boxes, BookOpen } from "lucide-react";
 import type { PassportEstate, EstateTimelineEntry } from "@/lib/passport-estate";
 import { atlasPlace } from "@/lib/atlas-places";
 
@@ -76,11 +76,20 @@ export function PassportEstatePanels({ estate }: { estate: PassportEstate }) {
           {estate.land.length ? (
             <ul className="max-h-[320px] divide-y divide-border overflow-y-auto">
               {estate.land.map((item) => (
-                <li key={item.height} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                <li key={item.height} className="flex items-center justify-between gap-3 px-4 py-3">
                   <PlaceLine height={item.height} />
-                  <Link to="/oasis" search={{ height: item.height }} className="btn-term-ghost shrink-0 text-[10px]">
-                    [ ENTER ]
-                  </Link>
+                  <span className="flex shrink-0 items-center gap-2">
+                    <span className="hidden text-right xl:block">
+                      <span className="block font-mono text-[9px] text-signal">{item.totalViews} VISITS · {item.uniqueVisitors} UNIQUE</span>
+                      <span className="block font-mono text-[9px] text-muted-foreground">{item.buildRecords} BUILDS · {item.installRecords} INSTALLS</span>
+                    </span>
+                    <Link to="/bitmap/$block" params={{ block: String(item.height) }} hash="chronicle" className="btn-term-ghost grid size-8 shrink-0 place-items-center p-0" aria-label={`Open ${item.height}.BITMAP Territory Chronicle`} title="Territory Chronicle">
+                      <BookOpen className="size-3.5" />
+                    </Link>
+                    <Link to="/oasis" search={{ height: item.height }} className="btn-term-ghost shrink-0 text-[10px]">
+                      [ ENTER ]
+                    </Link>
+                  </span>
                 </li>
               ))}
             </ul>

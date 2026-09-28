@@ -36,8 +36,8 @@ import { TerritoryPanel } from "@/components/extenders/TerritoryPanel";
 import { getBitmapHolderFn } from "@/lib/locate-bitmap.functions";
 import { LoopNavigator } from "@/components/LoopNavigator";
 import { TerritoryShareCard } from "@/components/TerritoryShareCard";
+import { TerritoryChronicle } from "@/components/TerritoryChronicle";
 
-import { StreamEventRow } from "@/components/StreamEventRow";
 import { provenanceStreamQuery } from "@/lib/provenance-stream";
 
 import { InscriptionContent } from "@/components/InscriptionContent";
@@ -239,7 +239,7 @@ function BitmapDetail() {
           <a href="#world" className="label shrink-0 border-r border-border px-4 py-3 text-signal hover:bg-card">01 · LIVE WORLD</a>
           <a href="#market" className="label shrink-0 border-r border-border px-4 py-3 hover:bg-card hover:text-bitcoin">02 · MARKET</a>
           <a href="#facts" className="label shrink-0 border-r border-border px-4 py-3 hover:bg-card hover:text-bitcoin">03 · FACTS</a>
-          <a href="#history" className="label shrink-0 border-r border-border px-4 py-3 hover:bg-card hover:text-bitcoin">04 · HISTORY</a>
+          <a href="#chronicle" className="label shrink-0 border-r border-border px-4 py-3 hover:bg-card hover:text-bitcoin">04 · CHRONICLE</a>
           <a href="#community" className="label shrink-0 px-4 py-3 hover:bg-card hover:text-bitcoin">05 · COMMUNITY</a>
         </nav>
       </header>
@@ -378,7 +378,7 @@ function BitmapDetail() {
         height={block}
         districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
       />
-      <section id="history" className="mt-8 scroll-mt-20 border border-border"><header className="flex items-center justify-between border-b border-border px-4 py-3"><h2 className="display text-xl">HISTORY CREATED HERE</h2><Link to="/stream" className="label text-bitcoin">WORLD STREAM →</Link></header>{localHistory.data?.length ? localHistory.data.map((item) => <StreamEventRow key={item.id} event={item}/>) : <p className="p-5 font-mono text-xs text-muted-foreground">&gt; NO RECORDED WORLD HISTORY ON THIS BITMAP YET_</p>}</section>
+      <TerritoryChronicle height={block} />
 
       <BitmapValuation
         height={block}
