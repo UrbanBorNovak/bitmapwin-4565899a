@@ -50,7 +50,7 @@ function PulseTrace({ events }: { events: ProvenanceEvent[] }) {
       const age = now - new Date(event.occurredAt).getTime();
       if (age < 0 || age > span) continue;
       const slot = slots - 1 - Math.min(slots - 1, Math.floor((age / span) * slots));
-      buckets[slot] += 1;
+      buckets[slot] = (buckets[slot] ?? 0) + 1;
     }
     const peak = Math.max(1, ...buckets);
     return buckets
@@ -151,7 +151,7 @@ export function WorldPulse({ limit = 24, visible = 8 }: { limit?: number; visibl
     return map;
   }, [events]);
 
-  const active = CHANNELS.find((item) => item.key === channel) ?? CHANNELS[0];
+  const active: Channel = CHANNELS.find((item) => item.key === channel) ?? { key: "all", label: "ALL SIGNAL", types: [] };
   const filtered = active.types.length ? events.filter((event) => active.types.includes(event.eventType)) : events;
   const shown = expanded ? filtered : filtered.slice(0, visible);
 
