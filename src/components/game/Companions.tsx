@@ -203,12 +203,20 @@ function Pet({
 
     const forwardX = fwdX;
     const forwardZ = fwdZ;
+    // Hand end: the avatar's right hand, lifted off the terrain surface the
+    // avatar itself stands on (same frame HeldWeapon uses).
     leashStart.set(
-      player.x + rightX * unit * 0.3 + forwardX * unit * 0.08,
-      player.y + unit * 0.58,
-      player.z + rightZ * unit * 0.3 + forwardZ * unit * 0.08,
+      player.x + rightX * unit * 0.3 + forwardX * unit * 0.14,
+      player.y + groundY(player.x, player.z) + unit * 0.42,
+      player.z + rightZ * unit * 0.3 + forwardZ * unit * 0.14,
     );
-    leashEnd.set(at.current.x, node.position.y + unit * spec.fit * 0.35, at.current.z);
+    // Pet end: the collar at the front of the pet, not its belly on the sand.
+    const collar = unit * spec.fit * 0.32;
+    leashEnd.set(
+      at.current.x + Math.sin(at.current.yaw) * collar,
+      node.position.y + unit * spec.fit * 0.55,
+      at.current.z + Math.cos(at.current.yaw) * collar,
+    );
     leashDelta.subVectors(leashEnd, leashStart);
     const rope = leash.current;
     if (rope) {
