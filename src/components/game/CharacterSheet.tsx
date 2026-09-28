@@ -357,6 +357,17 @@ export function CharacterSheet({
       Icon: BookOpen,
       onPick: () => note(toggleComic() ? "COMIC BOOK IN HAND" : "COMIC BOOK AWAY"),
     },
+    {
+      slot: "PET",
+      label: pet.inscription ? pet.label : "COMPANION",
+      filled: pet.inscription !== "",
+      Icon: PawPrint,
+      onPick: () => {
+        cycleCompanion();
+        const next = companionSpec(gear.companion === "goose" ? "none" : gear.companion === "none" ? "cat" : gear.companion === "cat" ? "dog" : "goose");
+        note(next.inscription ? `COMPANION · ${next.label}` : "COMPANION LEFT BEHIND");
+      },
+    },
   ];
 
   return (
