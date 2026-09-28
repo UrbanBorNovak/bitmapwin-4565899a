@@ -14,6 +14,7 @@ import atlasHd from "@/assets/oasis-atlas-storybook.jpg";
 import { getChainBlocks } from "@/lib/chain.functions";
 import { ATLAS_SIDE, atlasEra, atlasToBlock, blockToAtlas } from "@/lib/atlas-geometry";
 import { atlasPlace } from "@/lib/atlas-places";
+import { FOG_CELL, useSeenCells } from "@/lib/oasis-discovery";
 
 type Peer = { id: string; height: number; color: string; handle: string };
 
@@ -36,6 +37,15 @@ export function WorldScanSvg({ height, ownedHeights, peers, onVisit }: Props) {
   const blocks = Array.isArray(chain.data) ? chain.data : [];
   const tip = blocks.length ? Math.max(...blocks.map((block) => block.height)) : 0;
   const [hover, setHover] = useState<number | null>(null);
+  const seen = useSeenCells();
+  const cleared = useMemo(
+    () =>
+      seen.map((key) => {
+        const [cx, cy] = key.split(":").map(Number);
+        return { key, x: (cx! + 0.5) * FOG_CELL, y: (cy! + 0.5) * FOG_CELL };
+      }),
+    [seen],
+  );
 
   const you = blockToAtlas(height);
   const frontier = tip ? blockToAtlas(tip) : null;
@@ -71,6 +81,23 @@ export function WorldScanSvg({ height, ownedHeights, peers, onVisit }: Props) {
             <stop offset="58%" stopColor="var(--color-background)" stopOpacity="0" />
             <stop offset="100%" stopColor="var(--color-background)" stopOpacity="0.58" />
           </radialGradient>
+          {/* Fog of war: everything is fogged except where you have walked. */}
+          <filter id="fog-soft" x="-10%" y="-10%" width="120%" height="120%">
+            <feGaussianBlur stdDeviation="14" />
+          </filter>
+          <filter id="fog-cloud" x="0" y="0" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="4" seed="21" result="n" />
+            <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.62  0 0 0 0 0.64  0 0 0 0 0.68  0 0 0 1.4 -0.1" />
+          </filter>
+          <mask id="fog-mask" maskUnits="userSpaceOnUse" x="0" y="0" width={ATLAS_SIDE} height={ATLAS_SIDE}>
+            <rect width={ATLAS_SIDE} height={ATLAS_SIDE} fill="white" />
+            <g filter="url(#fog-soft)" fill="black">
+              {cleared.map((c) => (
+                <circle key={c.key} cx={c.x} cy={c.y} r={FOG_CELL * 1.6} />
+              ))}
+              <circle cx={you.x} cy={you.y} r={FOG_CELL * 2.2} />
+            </g>
+          </mask>
         </defs>
 
         <image
@@ -91,6 +118,14 @@ export function WorldScanSvg({ height, ownedHeights, peers, onVisit }: Props) {
               <line x1={0} y1={offset} x2={ATLAS_SIDE} y2={offset} />
             </g>
           ))}
+        </g>
+
+        {/* fog of war over unvisited land */}
+        <g mask="url(#fog-mask)" pointerEvents="none">
+          <rect width={ATLAS_SIDE} height={ATLAS_SIDE} fill="var(--color-muted)" fillOpacity="0.9" />
+          <rect width={ATLAS_SIDE} height={ATLAS_SIDE} filter="url(#fog-cloud)" opacity="0.75">
+            <animate attributeName="opacity" values="0.6;0.85;0.6" dur="9s" repeatCount="indefinite" />
+          </rect>
         </g>
 
         {/* your land */}
@@ -145,7 +180,7 @@ export function WorldScanSvg({ height, ownedHeights, peers, onVisit }: Props) {
           {atlasPlace(hover ?? height).localName} · {(hover ?? height).toLocaleString("en-US")}.BITMAP
         </span>
         <span className="truncate pl-2">
-          {atlasEra(hover ?? height, tip || 0).label} · {tip ? `TIP ${tip.toLocaleString("en-US")}` : "TIP …"}
+          {cleared.length} CHARTED · {atlasEra(hover ?? height, tip || 0).label} · {tip ? `TIP ${tip.toLocaleString("en-US")}` : "TIP …"}
         </span>
       </div>
     </div>
