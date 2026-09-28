@@ -95,12 +95,13 @@ export function ExtenderPropMesh({
         <SafeHtml
           center
           position={[0, (prop.h / 2 + 0.6) * unit, 0]}
-          distanceFactor={unit * 90}
+          distanceFactor={0.02}
+          style={{ pointerEvents: "none" }}
           zIndexRange={[8, 0]}
         >
           <span
             data-no-translate
-            className="whitespace-nowrap border border-bitcoin bg-background/85 px-1 py-0.5 font-mono text-[9px] text-bitcoin"
+            className="block max-w-44 truncate whitespace-nowrap border border-bitcoin bg-background/85 px-1.5 py-1 font-mono text-[9px] text-bitcoin"
           >
             {prop.label}
           </span>

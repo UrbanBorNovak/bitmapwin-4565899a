@@ -76,3 +76,7 @@
 - [x] Introduce archaeology as a community research layer in the official trait catalogue.
 - [x] Add evidence-backed BITMAP nominations with private review states and public accepted records.
 - [x] Verify supported-trait validation, signed-in submission, public visibility, and desktop/mobile layouts.
+
+## Public builds
+- [x] Add public live-preview and read-only code views to published BITMAP builds.
+- [ ] Verify the public build viewer and unobstructed Oasis navigation on desktop and phone.
