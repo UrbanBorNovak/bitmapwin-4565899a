@@ -144,7 +144,7 @@ function DashboardPage() {
   const profile = useQuery(profileQuery(address));
 
   const held = useQuery(heldHeightsQuery(addresses));
-  const builds = useQuery(buildsQuery(200));
+  const builds = useQuery(buildsQuery());
   const balances = useQuery(coinBalanceQuery(addresses));
   const ledger = useQuery(coinLedgerQuery(addresses, 12));
   const leases = useQuery(leasesQuery(200));

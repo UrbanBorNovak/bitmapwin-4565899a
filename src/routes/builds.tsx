@@ -205,7 +205,7 @@ function StageMetric({ icon, label, value }: { icon: React.ReactNode; label: str
   return <div className="bg-card p-3"><div className="flex items-center gap-2 text-signal [&_svg]:size-3.5">{icon}<span className="label">{label}</span></div><div className="display mt-2 text-xl">{value.toLocaleString("en-US")}</div></div>;
 }
 
-function BuildCard({ entry, active, profile, onPreview }: { entry: BuildEntry; active: boolean; profile: Parameters<typeof BuilderName>[0]["profile"]; onPreview: () => void }) {
+function BuildCard({ entry, active, profile, onPreview }: { entry: BuildEntry; active: boolean; profile: NonNullable<Parameters<typeof BuilderName>[0]["profile"]> | null; onPreview: () => void }) {
   const { page } = entry;
   return (
     <article className={`overflow-hidden border bg-card ${active ? "border-signal" : "border-border"}`}>
