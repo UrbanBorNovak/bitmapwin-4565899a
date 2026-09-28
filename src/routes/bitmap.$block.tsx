@@ -236,6 +236,15 @@ function BitmapDetail() {
         />
       </div>
 
+      <div className="mt-6 max-w-2xl">
+        <TerritoryShareCard
+          height={block}
+          placeName={`${place.localName} · ${place.name}`}
+          tags={[parcel ? "CLAIMED LAND" : "UNCLAIMED LAND", "BITCOIN BLOCK"]}
+        />
+      </div>
+
+
       <div className="mt-8">
         <BitmapOrderBook height={block} />
       </div>
