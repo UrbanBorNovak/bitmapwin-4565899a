@@ -1645,3 +1645,15 @@
   .unbox-scrim, .unbox-stage, .unbox-recoil, .unbox-charge, .unbox-slam { animation: none; }
   .unbox-flare { display: none; }
 }
+
+/* THE FLOOR IS MOVING — live network ribbon */
+@keyframes ticker-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+.ticker-tape { min-height: 1.5rem; }
+.ticker-track { animation: ticker-scroll 75s linear infinite; }
+.ticker-tape:hover .ticker-track { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { .ticker-track { animation: none; } }
+
+/* MEMPOOL PROPS — block settlement flash */
+@keyframes prop-win { 0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--bitcoin) 0%, transparent); } 25% { box-shadow: 0 0 34px 6px color-mix(in oklab, var(--bitcoin) 65%, transparent); } 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--bitcoin) 0%, transparent); } }
+.prop-win { animation: prop-win 1400ms ease-out 2; }
+@media (prefers-reduced-motion: reduce) { .prop-win { animation: none; } }
