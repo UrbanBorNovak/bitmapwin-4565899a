@@ -27,6 +27,7 @@ export function MempoolSportsbook() {
   const tipHeight = tip.data?.height ?? null;
   const target = tipHeight == null ? null : tipHeight + 1;
   const balance = balances.data?.[0]?.balance ?? 0;
+  const feeLine = tip.data?.feeMedian ?? null;
   const open = (slips.data ?? []).filter((s) => s.status === "open");
 
   // A new block landed: ask the server to settle this player's open slips.
@@ -109,7 +110,9 @@ export function MempoolSportsbook() {
         {PROP_MARKETS.map((m) => (
           <div key={m.market} className="border-b border-border px-3 py-2 sm:border-b-0 sm:border-r sm:last:border-r-0">
             <p className="label text-[0.5rem] text-signal">{m.title}</p>
-            <p className="mb-2 font-mono text-[9px] text-muted-foreground">{m.note}</p>
+            <p className="mb-2 font-mono text-[9px] text-muted-foreground">
+              {m.market === "fee" && feeLine != null ? `CURRENT 10-BLOCK LINE · ${feeLine.toFixed(2)} SAT/VB` : m.note}
+            </p>
             <div className="flex flex-col gap-1.5">
               {m.options.map((o) => {
                 const taken = open.find((s) => s.market === m.market && s.targetHeight === target);
@@ -122,7 +125,13 @@ export function MempoolSportsbook() {
                     onClick={() => bet(m.market, o.pick)}
                     className={`btn-term flex items-center justify-between gap-2 px-2 py-1.5 font-mono text-[10px] ${mine ? "border-bitcoin text-bitcoin" : ""}`}
                   >
-                    <span>{mine ? `${o.label} · LOCKED` : o.label}</span>
+                    <span>
+                      {mine
+                        ? `${o.label} · LOCKED`
+                        : m.market === "fee" && feeLine != null
+                          ? o.pick === "HIGH" ? `RISING · OVER ${feeLine.toFixed(2)}` : `FLAT / LOWER · ${feeLine.toFixed(2)} OR LESS`
+                          : o.label}
+                    </span>
                     <span className="text-bitcoin">{o.multiplier.toFixed(2)}×</span>
                   </button>
                 );
@@ -154,7 +163,7 @@ export function MempoolSportsbook() {
           </p>
         )}
         <p className="mt-2 font-mono text-[9px] text-muted-foreground">
-          &gt; EVERY SLIP SETTLES ON REAL MINED BLOCKS · FEE PRESSURE USES THE LATEST 10-BLOCK MEDIAN FROM MEMPOOL.SPACE
+          &gt; EVERY SLIP SETTLES ON REAL MINED BLOCKS · FEE LINE LOCKS TO THE CURRENT 10-BLOCK MEDIAN
         </p>
       </div>
     </section>
