@@ -45,5 +45,12 @@ export default defineConfig({
   },
   vite: {
     plugins: [mcpPlugin(), stripThreeSourceAnnotations()],
+    resolve: {
+      alias: {
+        // snarkjs' exports map only defines "node"/"browser" conditions, which
+        // the workerd SSR build cannot match; point at the browser ESM build.
+        snarkjs: "snarkjs/build/browser.esm.js",
+      },
+    },
   },
 });
