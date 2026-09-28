@@ -1,51 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useAuthSession, accountLabel } from "@/lib/auth";
-import { useWorldSkills, ITEM_LABELS, type ItemId } from "@/lib/world-skills";
-import { FOODS, useGear, gearSnapshot } from "@/lib/world-gear";
-import { RIDES } from "@/lib/world-vehicle";
-import { SWORD_INSCRIPTION, SWORD_TWO_INSCRIPTION } from "@/components/game/weapons";
-import { ordContentUrl } from "@/lib/oci";
-import { GoldBarIcon } from "@/components/GoldBarIcon";
-import { RationIcon } from "@/components/game/RationIcon";
-import { CharacterPortrait } from "@/components/game/CharacterPortrait";
-import { BitmapPixelsCollection } from "@/components/BitmapPixelsCollection";
-import { readCharacter, type Character } from "@/lib/character";
 import { useEffect, useState } from "react";
-
-/** The figure you walk as, with the name and backstory written on the character page. */
-function CharacterCard() {
-  const [character, setCharacter] = useState<Character | null>(null);
-  useEffect(() => {
-    setCharacter(readCharacter());
-    const onChange = (event: Event) => setCharacter((event as CustomEvent<Character>).detail);
-    window.addEventListener("bitmapwin:character", onChange);
-    return () => window.removeEventListener("bitmapwin:character", onChange);
-  }, []);
-
-  return (
-    <section className="mt-10 grid border border-border md:grid-cols-[320px_minmax(0,1fr)]">
-      <CharacterPortrait model={character?.avatarModel ?? null} className="h-80 border-b border-border md:border-b-0 md:border-r" />
-      <div className="p-5">
-        <p className="label">CHARACTER</p>
-        <h2 className="display mt-2 text-2xl">{character?.name?.trim() || "UNNAMED DRIFTER"}</h2>
-        <p className="label mt-2 text-bitcoin">{character?.title ?? "NO SHEET WRITTEN YET"}</p>
-        <div className="mt-4 space-y-3">
-          {(character?.backstory
-            ? character.backstory.split("\n\n")
-            : ["> NOBODY HAS WRITTEN YOUR STORY YET — NAME YOURSELF, PICK A PAST AND THE SHEET WRITES ITSELF"]
-          ).map((paragraph, index) => (
-            <p key={index} className="max-w-[70ch] font-mono text-xs leading-relaxed text-muted-foreground">
-              {paragraph}
-            </p>
-          ))}
-        </div>
-        <Link to="/character" className="btn-term mt-6 inline-flex">
-          [ {character ? "EDIT CHARACTER" : "CREATE CHARACTER"} ]
-        </Link>
-      </div>
-    </section>
-  );
-}
+import { useAuthSession, accountLabel } from "@/lib/auth";
+import { useWorldSkills } from "@/lib/world-skills";
+import { useGear, gearSnapshot } from "@/lib/world-gear";
+import { GoldBarIcon } from "@/components/GoldBarIcon";
+import { BitmapPixelsCollection } from "@/components/BitmapPixelsCollection";
+import { ModernInventory } from "@/components/inventory/ModernInventory";
+import { readCharacter, type Character } from "@/lib/character";
 
 export const Route = createFileRoute("/inventory")({
   head: () => ({
@@ -69,13 +30,23 @@ export const Route = createFileRoute("/inventory")({
   component: InventoryPage,
 });
 
-/** Backpack spoils worth surfacing, in the order a miner thinks about them. */
-const SPOIL_ORDER: ItemId[] = ["gold-bar", "gold-nugget", "mineral", "ore-chunk", "hide", "fang", "relic", "key"];
+/** The figure you walk as, kept in this browser and written on the character page. */
+function useCharacter() {
+  const [character, setCharacter] = useState<Character | null>(null);
+  useEffect(() => {
+    setCharacter(readCharacter());
+    const onChange = (event: Event) => setCharacter((event as CustomEvent<Character>).detail);
+    window.addEventListener("bitmapwin:character", onChange);
+    return () => window.removeEventListener("bitmapwin:character", onChange);
+  }, []);
+  return character;
+}
 
 function InventoryPage() {
   const { user, loading } = useAuthSession();
   const skills = useWorldSkills();
   const gear = useGear();
+  const character = useCharacter();
 
   if (loading) {
     return (
@@ -106,139 +77,42 @@ function InventoryPage() {
 
   const bars = skills.items["gold-bar"];
   const nuggets = skills.items["gold-nugget"];
-  const eating = gear.eating ? FOODS[gear.eating.food] : null;
   const buff = gear.buff && gear.buff.until > Date.now() ? gear.buff : null;
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-12 md:px-8">
-      <p className="label">INVENTORY</p>
-      <h1 className="display mt-4 text-4xl md:text-6xl">YOUR KIT</h1>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="label">INVENTORY</p>
+          <h1 className="display mt-3 text-4xl md:text-6xl">YOUR KIT</h1>
+        </div>
+        <Link to="/oasis" className="btn-term inline-flex">
+          [ CLOSE · ENTER THE OASIS ]
+        </Link>
+      </div>
       <p className="mt-4 max-w-[70ch] font-mono text-sm text-muted-foreground">
-        &gt; {accountLabel(user)} — WHAT YOU CARRY THROUGH THE OASIS, KEPT IN YOUR OWN PACK
-        <span className="blink">_</span>
+        &gt; WHAT YOU CARRY THROUGH THE OASIS, KEPT IN YOUR OWN PACK<span className="blink">_</span>
       </p>
 
-      <div className="mt-8">
-        <ModernInventory who={accountLabel(user)} character={character} />
-      </div>
-
-      <section className="mt-10 grid grid-cols-2 border border-border md:grid-cols-4">
+      <section className="mt-8 grid grid-cols-2 border border-border md:grid-cols-4">
         <Stat k="GOLD BARS" v={String(bars)} icon />
         <Stat k="GOLD NUGGETS" v={`${nuggets} / 4 TO A BAR`} />
         <Stat k="PACK LOAD" v={`${skills.carried} / 28`} />
         <Stat k="ACTIVE BUFF" v={buff ? buff.label : "NONE"} />
       </section>
 
+      <div className="mt-4">
+        <ModernInventory who={accountLabel(user)} character={character} />
+      </div>
+
       <BitmapPixelsCollection />
-
-
-      <section className="mt-10 border border-border">
-        <header className="border-b border-border p-5">
-          <h2 className="display text-xl">SPOILS</h2>
-          <p className="label mt-2">MINED, HUNTED AND SMELTED — YOUR BACKPACK</p>
-        </header>
-        <ul className="grid grid-cols-2 divide-border sm:grid-cols-4">
-          {SPOIL_ORDER.map((item) => (
-            <li key={item} className="border-b border-r border-border p-5">
-              <p className="label flex items-center gap-1.5">
-                {item === "gold-bar" ? <GoldBarIcon size={12} /> : null}
-                {ITEM_LABELS[item]}
-              </p>
-              <p className="display mt-2 text-2xl">{skills.items[item]}</p>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="mt-10 border border-border">
-        <header className="border-b border-border p-5">
-          <h2 className="display text-xl">FIELD RATIONS</h2>
-          <p className="label mt-2">OPEN RATIONS IN THE OASIS WITH E — A BITE HEALS, A MEAL BUFFS</p>
-        </header>
-        <ul className="divide-y divide-border">
-          {Object.values(FOODS).map((food) => {
-            const active = eating?.id === food.id;
-            return (
-              <li key={food.id} className="flex flex-wrap items-center justify-between gap-3 p-5">
-                <div className="flex items-center gap-3">
-                  <span className="flex size-10 shrink-0 items-center justify-center border border-border text-bitcoin">
-                    <RationIcon id={food.id} className="size-5" />
-                  </span>
-                  <div>
-                    <p className="display text-sm">{food.label}</p>
-                    <p className="label mt-1">
-                      +{food.bite} HP A BITE · {food.buff.label} FOR {Math.round(food.buff.ms / 1000)}S
-                    </p>
-                  </div>
-                </div>
-                <span className="font-mono text-[11px] text-muted-foreground">
-                  {active ? "EATING NOW…" : "IN YOUR PACK"}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-
-      <section className="mt-10 border border-border">
-        <header className="border-b border-border p-5">
-          <h2 className="display text-xl">RIDES</h2>
-          <p className="label mt-2">ON-CHAIN VEHICLES YOU CAN CALL ANYWHERE IN THE OASIS</p>
-        </header>
-        <ul className="divide-y divide-border">
-          {RIDES.map((ride) => (
-            <li key={ride.id} className="flex flex-wrap items-center justify-between gap-3 p-5">
-              <div>
-                <p className="display text-sm">{ride.label}</p>
-                <p className="label mt-1">
-                  {ride.kind === "ground" ? "LAND" : ride.kind === "water" ? "SEA ONLY" : "FLIES"} ·{" "}
-                  {ride.speed}× WALK SPEED
-                </p>
-              </div>
-              <a
-                href={ordContentUrl(ride.inscription)}
-                target="_blank"
-                rel="noreferrer"
-                className="font-mono text-[11px] text-muted-foreground underline decoration-border underline-offset-4 hover:text-bitcoin"
-              >
-                {ride.inscription.slice(0, 10)}…{ride.inscription.slice(-4)}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="mt-10 border border-border">
-        <header className="border-b border-border p-5">
-          <h2 className="display text-xl">BLADES</h2>
-          <p className="label mt-2">DUAL BLADES — ONE ON-CHAIN SWORD PER HAND</p>
-        </header>
-        <ul className="divide-y divide-border">
-          {[
-            { label: "RIGHT-HAND BLADE", inscription: SWORD_INSCRIPTION },
-            { label: "LEFT-HAND BLADE", inscription: SWORD_TWO_INSCRIPTION },
-          ].map((blade) => (
-            <li key={blade.inscription} className="flex flex-wrap items-center justify-between gap-3 p-5">
-              <p className="display text-sm">{blade.label}</p>
-              <a
-                href={ordContentUrl(blade.inscription)}
-                target="_blank"
-                rel="noreferrer"
-                className="font-mono text-[11px] text-muted-foreground underline decoration-border underline-offset-4 hover:text-bitcoin"
-              >
-                {blade.inscription.slice(0, 10)}…{blade.inscription.slice(-4)}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
 
       <p className="mt-8 font-mono text-[11px] text-muted-foreground">
         &gt; YOUR KIT IS PERSONAL PLAY STATE — SPOILS LIVE IN YOUR BROWSER, THE MODELS THEMSELVES ARE ON-CHAIN
         <span className="blink">_</span>
       </p>
-      <Link to="/oasis" className="btn-term mt-6 inline-flex">
-        [ ENTER THE OASIS ]
+      <Link to="/character" className="btn-term mt-6 inline-flex">
+        [ {character ? "EDIT CHARACTER" : "CREATE CHARACTER"} ]
       </Link>
     </div>
   );
