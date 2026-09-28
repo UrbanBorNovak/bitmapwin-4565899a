@@ -3242,6 +3242,32 @@ export type Database = {
         }
         Relationships: []
       }
+      shadow_spent_commitments: {
+        Row: {
+          commitment_hash: string
+          event_id: string
+          spent_at: string
+        }
+        Insert: {
+          commitment_hash: string
+          event_id: string
+          spent_at?: string
+        }
+        Update: {
+          commitment_hash?: string
+          event_id?: string
+          spent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shadow_spent_commitments_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "shadow_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shadow_whispers: {
         Row: {
           content: string
@@ -3868,6 +3894,13 @@ export type Database = {
           _slug: string
         }
         Returns: boolean
+      }
+      shadow_transfer_pass: {
+        Args: { _new_commitment: string; _salt: string; _slug: string }
+        Returns: {
+          ok: boolean
+          reason: string
+        }[]
       }
       shadow_verify_pass: {
         Args: { _commitment: string; _slug: string }
