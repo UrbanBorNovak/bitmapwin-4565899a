@@ -3,7 +3,7 @@
  * height, tx count and size, so the same BITMAP always yields the same design.
  * Goes beyond the 8 lore species: 8 body plans × parts × patterns × palettes.
  */
-import type { BlockDnaSource } from "@/lib/bitmon";
+import { guardianFromBlock, type BlockDnaSource, type GuardianDna } from "@/lib/bitmon";
 
 export type BodyPlan = "QUADRUPED" | "HEXAPOD" | "SERPENT" | "BIPED" | "AVIAN" | "FLOATER" | "ARACHNID" | "CENTAUR";
 export type HornStyle = "NONE" | "SPIKE" | "CURL" | "ANTLER" | "CROWN";
@@ -66,7 +66,7 @@ function rng(seedHex: string) {
   };
 }
 
-function hsl(h: number, s: number, l: number) {
+export function _hsl(h: number, s: number, l: number) {
   const S = s / 100, L = l / 100;
   const k = (n: number) => (n + h / 30) % 12;
   const a = S * Math.min(L, 1 - L);
@@ -76,7 +76,19 @@ function hsl(h: number, s: number, l: number) {
 }
 
 export function morphFromBlock(src: BlockDnaSource): CreatureMorph {
-  const hash = src.hash.toLowerCase();
+  return morphFromDna(guardianFromBlock(src));
+}
+
+function shade(hex: string, k: number) {
+  const n = parseInt(hex.slice(1), 16);
+  const c = (v: number) => Math.max(0, Math.min(255, Math.round(v * k))).toString(16).padStart(2, "0");
+  return `#${c(n >> 16)}${c((n >> 8) & 255)}${c(n & 255)}`;
+}
+
+/** The collection design of a Guardian: body plan from its block DNA, colours from its Guardian palette. */
+export function morphFromDna(dna: GuardianDna): CreatureMorph {
+  const hash = dna.dnaHash.toLowerCase();
+  const src = { height: dna.height, hash, txCount: Math.pow(Math.max(0, dna.hp / 1.2 - 120) / 18, 2), size: Math.max(0, dna.armor - 10) * 50_000 };
   const r = rng(hash + src.height.toString(16));
   const pick = <T,>(xs: T[]) => xs[Math.floor(r() * xs.length)]!;
   const range = (lo: number, hi: number) => lo + r() * (hi - lo);
@@ -88,8 +100,6 @@ export function morphFromBlock(src: BlockDnaSource): CreatureMorph {
   const legPairs =
     plan === "HEXAPOD" ? 3 : plan === "ARACHNID" ? 4 : plan === "CENTAUR" ? 2 : plan === "BIPED" || plan === "AVIAN" ? 1 : plan === "QUADRUPED" ? 2 : 0;
   const wings: 0 | 2 | 4 = plan === "AVIAN" ? 2 : plan === "SERPENT" || plan === "ARACHNID" ? 0 : r() < 0.12 ? 4 : r() < 0.28 ? 2 : 0;
-  const hue = r() * 360;
-  const scheme = pick([150, 180, 30, 210, 120]);
   const horns = pick(HORNS);
   const prefix = pick(PREFIX);
 
@@ -115,9 +125,9 @@ export function morphFromBlock(src: BlockDnaSource): CreatureMorph {
     tailSegs: plan === "FLOATER" ? 4 + Math.floor(r() * 4) : Math.floor(r() * 6),
     spines: Math.floor(r() * 7),
     pattern: pick(PATTERNS),
-    primary: hsl(hue, 30 + r() * 40, 32 + r() * 18),
-    secondary: hsl((hue + 30) % 360, 25 + r() * 30, 20 + r() * 15),
-    glow: hsl((hue + scheme) % 360, 85, 60),
+    primary: dna.body,
+    secondary: shade(dna.body, 0.55),
+    glow: dna.accent,
     gait: range(1.2, 3),
   };
 }
