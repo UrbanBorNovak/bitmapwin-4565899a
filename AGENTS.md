@@ -28,3 +28,5 @@
 - SHORD (src/lib/shord/*) is client-only: keys/notes stay in the browser, prover.ts never fakes a proof.
 - SHORD own pool: spend.circom (depth-20 Poseidon) → public/wasm/shord; custodial key from SHORD_POOL_SEED in shord-pool.server.ts, which checks every spend (known root, unused nullifier, Groth16). Single-party dev setup; never claim external-pool compatibility. Why: Bitcoin cannot verify Groth16, so the pool key holder is the trust anchor.
 - Direct-to-shield mints bind the note to the inscription's one-time commit address plus a device-held claim secret, accepting only a reveal that spends it and pays output 0 to the pool.
+
+- Guardian collection visuals come from morphFromDna (src/lib/creature-morph.ts) via GuardianBody height prop; species only sets ability/lore line. Why: one block-derived design per BITMAP everywhere.
