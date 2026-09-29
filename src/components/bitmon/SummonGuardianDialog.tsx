@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { supabase } from "@/integrations/supabase/client";
 import { GuardianBody } from "@/components/bitmon/GuardianBody";
 import { ShadowInscriber } from "@/components/territory/ShadowInscriber";
+import { ShieldedGuardianMint } from "@/components/bitmon/ShieldedGuardianMint";
 import { RARITY_TONE, bip21, guardianArtifactSvg, guardianLevel, guardianShieldDigest, GUARDIAN_PRICE_SATS, type GuardianDna } from "@/lib/bitmon";
 import { guardianDnaQuery, guardianQuery } from "@/lib/bitmon-queries";
 import { checkSummonOrderFn, createSummonOrderFn, resumeSummonOrderFn } from "@/lib/bitmon.functions";
@@ -56,6 +57,7 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
   const [busy, setBusy] = useState(false);
   const [qr, setQr] = useState<string | null>(null);
   const [celebrate, setCelebrate] = useState(false);
+  const [mintMode, setMintMode] = useState<"public" | "shielded">("shielded");
 
   useEffect(() => {
     if (!open) return;
