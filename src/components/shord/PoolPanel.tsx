@@ -15,7 +15,7 @@ import {
   savePoolNotes,
   type PoolNoteRecord,
 } from "@/lib/shord/deposit";
-import { shordConfirmDeposit, shordPoolInfo, shordPrepareDeposit, shordSubmitSpend, shordWithdraw, shordRelayerInfo, shordRelayQueued } from "@/lib/shord-pool.functions";
+import { shordConfirmDeposit, shordPoolInfo, shordPrepareDeposit, shordSubmitSpend, shordWithdraw, shordRelayerInfo, shordRelayQueued, shordPendingDeposits } from "@/lib/shord-pool.functions";
 
 const btn = "label border px-3 py-2 disabled:opacity-40";
 
