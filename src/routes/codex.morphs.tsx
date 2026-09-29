@@ -92,7 +92,7 @@ function MorphLab() {
               <dl className="mt-4 grid grid-cols-2 gap-y-1 font-mono text-xs">
                 {rows.flatMap(([k, v]) => [<dt key={`${k}k`} className="text-muted-foreground">{k}</dt>, <dd key={`${k}v`} className="text-right text-signal">{v}</dd>])}
               </dl>
-              <Link to="/bitmap/$height" params={{ height: String(m.height) }} className="btn-term-ghost mt-4 inline-block">VIEW {m.height}.BITMAP</Link>
+              <Link to="/bitmap/$block" params={{ block: String(m.height) }} className="btn-term-ghost mt-4 inline-block">VIEW {m.height}.BITMAP</Link>
             </>
           )}
         </aside>
