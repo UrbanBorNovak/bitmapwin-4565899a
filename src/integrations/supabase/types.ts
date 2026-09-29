@@ -3300,6 +3300,45 @@ export type Database = {
           },
         ]
       }
+      shord_mint_claims: {
+        Row: {
+          block_height: number | null
+          claim_hash: string
+          commit_address: string
+          commitment: string
+          created_at: string
+          id: string
+          inscription_id: string | null
+          reveal_txid: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          block_height?: number | null
+          claim_hash: string
+          commit_address: string
+          commitment: string
+          created_at?: string
+          id?: string
+          inscription_id?: string | null
+          reveal_txid?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          block_height?: number | null
+          claim_hash?: string
+          commit_address?: string
+          commitment?: string
+          created_at?: string
+          id?: string
+          inscription_id?: string | null
+          reveal_txid?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       shord_pool_deposits: {
         Row: {
           commitment: string

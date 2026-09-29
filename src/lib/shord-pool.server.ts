@@ -256,3 +256,80 @@ export async function submitWithdraw(
     return { ok: false, reason: `BROADCAST FAILED — YOUR NOTE IS STILL SHIELDED: ${(e as Error).message.slice(0, 160)}` };
   }
 }
+
+/* ── direct-to-shield minting ─────────────────────────────────────
+ * A Guardian can be inscribed straight into the pool: the reveal sends the
+ * inscribed sat to the pool address, so the artifact never sits at a public
+ * wallet address at all. The device reserves the mint against its one-time
+ * commit address plus a secret claim code, then finishes it after the reveal.
+ */
+
+const claimHash = (secret: string) => hex.encode(sha256(new TextEncoder().encode(`bitmapwin:shord:mint:v1:${secret}`)));
+
+export async function reserveMint(input: {
+  commitAddress: string;
+  claimSecret: string;
+  blockHeight: number;
+}): Promise<PoolResult<{ poolAddress: string }>> {
+  const commitAddress = input.commitAddress.trim();
+  try {
+    Address(NETWORK).decode(commitAddress);
+  } catch {
+    return { ok: false, reason: "THAT IS NOT A VALID INSCRIPTION PAYMENT ADDRESS" };
+  }
+  const db = await admin();
+  const { error } = await db.from("shord_mint_claims").insert({
+    commit_address: commitAddress,
+    commitment: "0",
+    claim_hash: claimHash(input.claimSecret),
+    block_height: input.blockHeight,
+  });
+  if (error) return { ok: false, reason: /duplicate/i.test(error.message) ? "THIS MINT IS ALREADY RESERVED" : error.message };
+  return { ok: true, poolAddress: poolAddress() };
+}
+
+/** Finishes a direct-to-shield mint: the reveal must spend the reserved commit address and pay the pool. */
+export async function claimMint(input: {
+  commitAddress: string;
+  claimSecret: string;
+  commitment: string;
+  revealTxid: string;
+}): Promise<PoolResult<{ inscriptionId: string }>> {
+  if (!FIELD.test(input.commitment) || input.commitment === "0") return { ok: false, reason: "NOTE FINGERPRINT IS MALFORMED" };
+  const db = await admin();
+  const { data: claim } = await db
+    .from("shord_mint_claims")
+    .select("id, claim_hash, status")
+    .eq("commit_address", input.commitAddress.trim())
+    .maybeSingle();
+  if (!claim) return { ok: false, reason: "NO SHIELDED MINT WAS RESERVED FOR THAT INSCRIPTION" };
+  if (claim.claim_hash !== claimHash(input.claimSecret)) return { ok: false, reason: "THIS DEVICE DID NOT RESERVE THAT MINT" };
+  if (claim.status !== "reserved") return { ok: false, reason: "THAT MINT WAS ALREADY CLAIMED" };
+
+  type TxView = { vin: { prevout?: { scriptpubkey_address?: string } }[]; vout: { scriptpubkey_address?: string }[] };
+  let tx: TxView;
+  try {
+    tx = await esplora<TxView>(`/tx/${input.revealTxid}`);
+  } catch {
+    return { ok: false, reason: "BITCOIN HAS NOT SEEN THAT INSCRIPTION YET — TRY AGAIN IN A MINUTE" };
+  }
+  if (tx.vin[0]?.prevout?.scriptpubkey_address !== input.commitAddress.trim())
+    return { ok: false, reason: "THAT TRANSACTION IS NOT THIS RESERVED MINT" };
+  if (tx.vout[0]?.scriptpubkey_address !== poolAddress())
+    return { ok: false, reason: "THE INSCRIPTION WAS NOT SENT TO THE POOL ADDRESS" };
+
+  const inscriptionId = `${input.revealTxid}i0`;
+  await db.from("shord_pool_deposits").delete().eq("inscription_id", inscriptionId).eq("status", "awaiting");
+  const { error } = await db.from("shord_pool_deposits").insert({
+    inscription_id: inscriptionId,
+    commitment: input.commitment,
+    holder_address: poolAddress(),
+    signature: `direct-mint:${input.commitAddress.trim()}`,
+  });
+  if (error) return { ok: false, reason: /duplicate/i.test(error.message) ? "THAT NOTE IS ALREADY REGISTERED" : error.message };
+  await db
+    .from("shord_mint_claims")
+    .update({ status: "claimed", commitment: input.commitment, inscription_id: inscriptionId, reveal_txid: input.revealTxid })
+    .eq("id", claim.id);
+  return { ok: true, inscriptionId };
+}

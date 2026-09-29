@@ -29,6 +29,12 @@ export function ShadowInscriber(props: {
   actionLabel?: string;
   description?: string;
   allowUpload?: boolean;
+  /** Where the inscribed sat lands. Defaults to the connected wallet's ordinals address. */
+  receiveAddress?: string;
+  /** Runs after the one-time payment address exists, before the wallet pays. Throw to abort. */
+  onPrepared?: (job: InscribeJob) => Promise<void> | void;
+  /** Runs once the inscription reveal is broadcast. */
+  onRevealed?: (revealTxid: string, job: InscribeJob) => Promise<void> | void;
 }) {
   const [job, setJob] = useState<InscribeJob | null>(null);
   const [file, setFile] = useState<{ type: string; bytes: Uint8Array; url: string } | null>(null);
@@ -52,6 +58,7 @@ export function ShadowInscriber(props: {
         const done = { ...job, revealTxid };
         saveJob(done);
         setJob(done);
+        await props.onRevealed?.(revealTxid, done);
         toast.success("ARTIFACT INSCRIBED — WAITING FOR A MINER");
       } catch (e) {
         toast.error((e as Error).message);
@@ -86,9 +93,13 @@ export function ShadowInscriber(props: {
         digest: props.digest,
         contentType: file?.type ?? "image/svg+xml",
         body,
-        receiveAddress: wallet.ordinalsAddress,
+        receiveAddress: props.receiveAddress ?? wallet.ordinalsAddress,
       });
       setJob(prepared);
+      if (props.onPrepared) {
+        setBusy("RESERVING THE SHIELDED NOTE…");
+        await props.onPrepared(prepared);
+      }
       setBusy("APPROVE IN YOUR WALLET…");
       const commitTxid = await sendBitcoinFromWallet(wallet.provider, prepared.commitAddress, prepared.commitAmount);
       const paid = { ...prepared, commitTxid };
