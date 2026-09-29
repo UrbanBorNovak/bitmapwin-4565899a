@@ -93,6 +93,8 @@ export function ShieldedGuardianMint({
         actionLabel="◈ INSCRIBE INTO THE SHIELDED POOL"
         description="YOUR WALLET PAYS THE MINER COST ONCE. THE GUARDIAN IS INSCRIBED TO THE POOL ADDRESS, NOT TO YOUR WALLET, AND ONLY THIS DEVICE'S SHIELDED KEY CAN MOVE IT AFTERWARDS."
         allowUpload={false}
+        claimParentsForHeight={height}
+
         {...(pool.data?.poolAddress ? { receiveAddress: pool.data.poolAddress } : {})}
         onPrepared={async (job) => {
           if (!pool.data?.poolAddress) throw new Error("THE POOL ADDRESS IS NOT READY YET — TRY AGAIN");

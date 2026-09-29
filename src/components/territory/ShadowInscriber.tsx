@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { resolveWallet } from "@/components/BuyButton";
-import { sendBitcoinFromWallet } from "@/lib/browser-wallet";
+import { sendBitcoinFromWallet, signParentInputsPsbt } from "@/lib/browser-wallet";
+import { mintParentsFn, signCollectionParentFn } from "@/lib/ord-parents.functions";
+import type { ParentSpend } from "@/lib/ord-parents";
 import {
   INSCRIBE_MAX_BYTES,
   clearJob,
@@ -12,12 +15,17 @@ import {
   revealJob,
   saveJob,
   type InscribeJob,
+  type ParentSigners,
 } from "@/lib/shadow-inscribe";
 
 /**
  * Inscribes a visual artifact as a real Ordinals inscription beside a SHAD note.
  * Default art is drawn from the pass's public note fields; the holder may swap
  * in their own file. Keys for the reveal are made and kept on this device.
+ *
+ * With `claimParentsForHeight`, the reveal also claims two parents: that
+ * `<height>.bitmap` and the BITMAPWIN master collection inscription. Both are
+ * spent as inputs and returned to their holders in the same transaction.
  */
 export function ShadowInscriber(props: {
   slug: string;
@@ -29,6 +37,8 @@ export function ShadowInscriber(props: {
   actionLabel?: string;
   description?: string;
   allowUpload?: boolean;
+  /** Claim `<height>.bitmap` + the master collection as parents of this child. */
+  claimParentsForHeight?: number;
   /** Where the inscribed sat lands. Defaults to the connected wallet's ordinals address. */
   receiveAddress?: string;
   /** Runs after the one-time payment address exists, before the wallet pays. Throw to abort. */
@@ -39,11 +49,15 @@ export function ShadowInscriber(props: {
   const [job, setJob] = useState<InscribeJob | null>(null);
   const [file, setFile] = useState<{ type: string; bytes: Uint8Array; url: string } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [parentNotes, setParentNotes] = useState<string[]>([]);
+  const resolveParents = useServerFn(mintParentsFn);
+  const signCollection = useServerFn(signCollectionParentFn);
 
   useEffect(() => setJob(loadJob(props.digest)), [props.digest]);
 
   const svg = useMemo(() => props.artifactSvg ?? passArtifactSvg(props), [props.artifactSvg, props.digest, props.height, props.index, props.slug]);
   const defaultUrl = useMemo(() => `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`, [svg]);
+
 
   // Watch for the commit payment, then reveal automatically.
   useEffect(() => {
@@ -54,7 +68,22 @@ export function ShadowInscriber(props: {
       if (!utxo || stop) return;
       try {
         setBusy("REVEALING…");
-        const revealTxid = await revealJob(job, utxo);
+        const signers: ParentSigners = {};
+        if (job.parents?.length) {
+          if (job.parents.some((p) => p.signer === "wallet")) {
+            setBusy("APPROVE THE PARENT CLAIM IN YOUR WALLET…");
+            const wallet = await resolveWallet();
+            signers.wallet = (psbt, indices) => signParentInputsPsbt(wallet.provider, psbt, wallet.ordinalsAddress, indices);
+          }
+          if (job.parents.some((p) => p.signer === "platform")) {
+            signers.platform = async (psbt) => {
+              const res = await signCollection({ data: { psbt } });
+              if (!res.ok) throw new Error(res.reason);
+              return res.psbt;
+            };
+          }
+        }
+        const revealTxid = await revealJob(job, utxo, signers);
         const done = { ...job, revealTxid };
         saveJob(done);
         setJob(done);
@@ -74,6 +103,7 @@ export function ShadowInscriber(props: {
     };
   }, [job]);
 
+
   const onFile = async (f: File | undefined) => {
     if (!f) return;
     if (f.size > INSCRIBE_MAX_BYTES) {
@@ -89,12 +119,25 @@ export function ShadowInscriber(props: {
       setBusy("PRICING…");
       const wallet = await resolveWallet();
       const body = file?.bytes ?? new TextEncoder().encode(svg);
+      let parents: ParentSpend[] = [];
+      if (props.claimParentsForHeight !== undefined) {
+        setBusy("CHECKING THE PARENT BITMAP…");
+        try {
+          const res = await resolveParents({ data: { height: props.claimParentsForHeight, holderAddress: wallet.ordinalsAddress } });
+          parents = res.parents;
+          setParentNotes(res.notes);
+        } catch {
+          setParentNotes(["COULD NOT CHECK THE PARENTS — INSCRIBING WITHOUT THEM"]);
+        }
+      }
       const prepared = await prepareJob({
         digest: props.digest,
         contentType: file?.type ?? "image/svg+xml",
         body,
         receiveAddress: props.receiveAddress ?? wallet.ordinalsAddress,
+        ...(parents.length ? { parents } : {}),
       });
+
       setJob(prepared);
       if (props.onPrepared) {
         setBusy("RESERVING THE SHIELDED NOTE…");
@@ -154,6 +197,18 @@ export function ShadowInscriber(props: {
           <p className="label text-muted-foreground">
             {props.description ?? "TWO STEPS: YOUR WALLET PAYS ONCE, THEN THIS DEVICE FINISHES THE INSCRIPTION. KEEP THE TAB OPEN."}
           </p>
+          {props.claimParentsForHeight !== undefined ? (
+            <p className="label text-signal">
+              ⧉ THIS CREATURE IS INSCRIBED AS A CHILD OF {props.claimParentsForHeight}.BITMAP AND OF THE BITMAPWIN COLLECTION. BOTH PARENTS PASS
+              THROUGH THE SAME TRANSACTION AND GO STRAIGHT BACK TO THEIR HOLDERS.
+            </p>
+          ) : null}
+          {parentNotes.map((n) => (
+            <p key={n} className="label text-bitcoin">
+              ⚠ {n}
+            </p>
+          ))}
+
         </>
       ) : (
         <div className="space-y-1 font-mono text-[11px]">

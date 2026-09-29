@@ -1,5 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { DataBadge } from "@/components/extenders/DataBadge";
+import { collectionParentStatusFn } from "@/lib/ord-parents.functions";
+
 
 export const Route = createFileRoute("/dev-tools")({
   head: () => {
@@ -85,6 +89,8 @@ function DevToolsPage() {
         ))}
       </div>
 
+      <CollectionParentPanel />
+
       <section className="mt-8 border border-border p-6">
         <div className="flex flex-wrap items-center gap-3">
           <h2 className="display text-xl">MCP ENDPOINT</h2>
@@ -101,3 +107,35 @@ function DevToolsPage() {
     </div>
   );
 }
+
+/** Setup state of the master collection parent every creature is inscribed under. */
+function CollectionParentPanel() {
+  const status = useServerFn(collectionParentStatusFn);
+  const q = useQuery({ queryKey: ["collection-parent", "status"], queryFn: () => status(), staleTime: 60_000 });
+  const d = q.data;
+  return (
+    <section className="mt-8 border border-border p-6">
+      <div className="flex flex-wrap items-center gap-3">
+        <h2 className="display text-xl">COLLECTION PARENT</h2>
+        <DataBadge kind={d?.ready ? "live" : "pending"} note={d?.ready ? "CLAIMED ON EVERY MINT" : "SETUP NEEDED"} />
+      </div>
+      <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+        Every creature is inscribed as a child of two parents: the bitmap it patrols, and one master collection
+        inscription held by BitmapWin. Both parents are spent in the same transaction and returned to their
+        holders untouched, which is what groups the whole collection together on explorers.
+      </p>
+      <pre className="mt-3 overflow-x-auto bg-secondary p-4 font-mono text-xs">
+{`COLLECTION ADDRESS   ${d?.address || "—"}
+MASTER INSCRIPTION   ${d?.masterInscriptionId ?? "NOT SET"}
+STATUS               ${d?.ready ? "READY" : d?.reason ?? (q.isLoading ? "CHECKING…" : "UNKNOWN")}`}
+      </pre>
+      {!d?.ready ? (
+        <p className="mt-3 max-w-3xl font-mono text-xs text-bitcoin">
+          UNTIL THE MASTER INSCRIPTION SITS ON THAT ADDRESS, CREATURES ARE STILL INSCRIBED AS CHILDREN OF THEIR BITMAP —
+          ONLY THE COLLECTION PARENT IS SKIPPED.
+        </p>
+      ) : null}
+    </section>
+  );
+}
+

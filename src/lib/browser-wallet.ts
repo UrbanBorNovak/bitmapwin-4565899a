@@ -410,6 +410,7 @@ async function xverseSignPaymentPsbt(
   psbtBase64: string,
   payerAddress: string,
   signIndices: number[],
+  message = "Write Shadow pass note onto Bitcoin",
 ): Promise<string> {
   const provider = getXverse();
   if (!provider || typeof provider.signTransaction !== "function") {
@@ -420,7 +421,8 @@ async function xverseSignPaymentPsbt(
     void signXverseTransaction({
       payload: {
         network: { type: BitcoinNetworkType.Mainnet },
-        message: "Write Shadow pass note onto Bitcoin",
+        message,
+
         psbtBase64,
         inputsToSign: [
           {
@@ -491,6 +493,31 @@ export async function signPurchasePsbt(
     return /^[0-9a-fA-F]+$/.test(signed.trim()) ? hexToBase64(signed) : signed.trim();
   }
   return xverseSignPaymentPsbt(psbtBase64, buyerPaymentAddress, signIndices);
+}
+
+/**
+ * Signs the inputs that pass the holder's own inscription through a reveal
+ * transaction, leaving the transaction unfinalized so the other signers (the
+ * throwaway inscription key and the collection key) can add theirs.
+ */
+export async function signParentInputsPsbt(
+  provider: WalletProviderId,
+  psbtBase64: string,
+  holderAddress: string,
+  signIndices: number[],
+): Promise<string> {
+  if (signIndices.length === 0) return psbtBase64;
+  if (provider === "unisat") {
+    const unisat = getUnisat();
+    if (!unisat) throw new Error("UNISAT NOT DETECTED");
+    const signed = await unisat.signPsbt(base64ToHex(psbtBase64), {
+      autoFinalized: false,
+      toSignInputs: signIndices.map((index) => ({ index, address: holderAddress, sighashTypes: [SIGHASH_ALL] })),
+    });
+    if (typeof signed !== "string" || signed.length < 20) throw new Error("UNISAT RETURNED NO SIGNED PSBT");
+    return /^[0-9a-fA-F]+$/.test(signed.trim()) ? hexToBase64(signed) : signed.trim();
+  }
+  return xverseSignPaymentPsbt(psbtBase64, holderAddress, signIndices, "Claim this bitmap as the parent of a new inscription");
 }
 
 
