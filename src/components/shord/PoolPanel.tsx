@@ -89,7 +89,15 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
     run("CHECKING THE POOL ADDRESS…", async () => {
       const id = inscriptionId.trim().toLowerCase();
       const res = await confirm({ data: { inscriptionId: id } });
-      if (!res.ok) throw new Error(res.reason);
+      if (!res.ok) {
+        // Fallback: this device's note may already be a leaf even if the deposit row is gone.
+        const local = loadPoolNotes().find((x) => x.inscriptionId === id);
+        const leaf = local ? (await info()).leaves.find((l) => l.commitment === local.commitment) : undefined;
+        if (!leaf) throw new Error(res.reason);
+        persist(loadPoolNotes().map((x) => (x.inscriptionId === id ? { ...x, status: "shielded", idx: leaf.idx } : x)));
+        setMsg(`✓ GUARDIAN SHIELDED AS POOL NOTE #${leaf.idx}`);
+        return;
+      }
       if ("waiting" in res) return setMsg(res.waiting);
       const mine = loadPoolNotes().find((x) => x.commitment === res.commitment);
       if (mine) {
@@ -101,6 +109,8 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
         `✓ SEALED AS POOL NOTE #${res.idx}. THIS BROWSER DOES NOT HOLD THAT NOTE'S KEY, SO IT CANNOT MOVE IT — OPEN THE VAULT ON THE DEVICE THAT MINTED IT.`,
       );
     });
+
+
 
   const sendPrivately = (n: PoolNoteRecord) =>
     run("PROVING ON THIS DEVICE…", async () => {
