@@ -140,7 +140,7 @@ export function ShadowInscriber(props: {
     try {
       setBusy("PRICING…");
       const wallet = await resolveWallet();
-      const body = file?.bytes ?? new TextEncoder().encode(svg);
+      const body = file?.bytes ?? new TextEncoder().encode(artifactSource);
       let parents: ParentSpend[] = [];
       if (props.claimParentsForHeight !== undefined) {
         setBusy("CHECKING THE PARENT BITMAP…");
@@ -154,7 +154,7 @@ export function ShadowInscriber(props: {
       }
       const prepared = await prepareJob({
         digest: props.digest,
-        contentType: file?.type ?? "image/svg+xml",
+        contentType: file?.type ?? artifactType,
         body,
         receiveAddress: props.receiveAddress ?? wallet.ordinalsAddress,
         ...(parents.length ? { parents } : {}),
