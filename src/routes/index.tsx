@@ -9,6 +9,8 @@ import { recentTradesQuery, tradedBitmapCountQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
 import { LoopNavigator } from "@/components/LoopNavigator";
 import { LandPromptTerminal } from "@/components/LandPromptTerminal";
+import { FirstTenMinutes } from "@/components/FirstTenMinutes";
+import { startGuidedTour } from "@/components/GuidedTour";
 
 
 export const Route = createFileRoute("/")({
