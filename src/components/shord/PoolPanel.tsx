@@ -30,6 +30,8 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
   const relayerInfo = useServerFn(shordRelayerInfo);
   const relayRetry = useServerFn(shordRelayQueued);
   const relayer = useQuery({ queryKey: ["shord", "relayer"], queryFn: () => relayerInfo(), refetchInterval: 60_000 });
+  const pendingFn = useServerFn(shordPendingDeposits);
+  const pending = useQuery({ queryKey: ["shord", "pending-deposits"], queryFn: () => pendingFn(), refetchInterval: 60_000 });
   const [exitTo, setExitTo] = useState<Record<string, string>>({});
   const pool = useQuery({ queryKey: ["shord", "own-pool"], queryFn: () => info(), refetchInterval: 60_000 });
 
