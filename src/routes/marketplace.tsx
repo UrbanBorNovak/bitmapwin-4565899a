@@ -138,7 +138,7 @@ function Marketplace() {
   return (
     <div className="marketplace-shell mx-auto max-w-[1600px] px-4 py-8 md:px-8 md:py-12">
       <div>
-        <header className="flex flex-col justify-between gap-5 border-b border-border pb-7">
+        <header data-tour="market-header" className="flex flex-col justify-between gap-5 border-b border-border pb-7">
           <div className="border-l-2 border-primary pl-4">
             <span className="label text-primary">LIVE BITCOIN LAND MARKET</span>
             <h1 className="mt-2 font-mono text-3xl font-bold uppercase text-foreground md:text-5xl">BITMAP MARKETPLACE</h1>
@@ -152,7 +152,7 @@ function Marketplace() {
 
       </div>
 
-      <div className="mt-6 grid grid-cols-2 divide-border border border-border bg-card sm:grid-cols-5 sm:divide-x">
+      <div data-tour="market-stats" className="mt-6 grid grid-cols-2 divide-border border border-border bg-card sm:grid-cols-5 sm:divide-x">
         <Stat
           k="REGISTERED BITMAPS"
           v={
@@ -202,7 +202,7 @@ function Marketplace() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-12">
         <aside className="lg:col-span-3">
-          <div className="border border-border bg-card lg:sticky lg:top-24">
+          <div data-tour="market-filters" className="border border-border bg-card lg:sticky lg:top-24">
             <div className="border-b border-border p-4">
               <h2 className="border-l-2 border-primary pl-3 font-mono text-sm font-bold text-foreground">FIND BITMAPS</h2>
               <p className="label mt-2 pl-[14px]">FILTER THE REGISTRY</p>
@@ -300,7 +300,7 @@ function Marketplace() {
           </div>
         </aside>
 
-        <section className="lg:col-span-9">
+        <section data-tour="market-grid" className="lg:col-span-9">
 
       <div className="mb-6">
         <MyBitmapsPanel />

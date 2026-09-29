@@ -48,7 +48,7 @@ function MintPage() {
         Shielded mints go straight to BITMAPWIN's pool instead of your wallet, so explorers show the pool as the first owner, not you. It's our own pool, not yet audited: BITMAPWIN holds the coins, and your browser holds the only key that can move them.
       </p>
 
-      <ol className="mt-6 grid gap-3 md:grid-cols-3">
+      <ol data-tour="mint-steps" className="mt-6 grid gap-3 md:grid-cols-3">
         {STEPS.map(([n, t, note]) => (
           <li key={n} className="panel rounded-md border border-border p-4">
             <p className="font-mono text-xs text-bitcoin">{n}</p>
@@ -58,7 +58,7 @@ function MintPage() {
         ))}
       </ol>
 
-      <form className="mt-8 flex flex-wrap items-center gap-2" onSubmit={(e) => { e.preventDefault(); go(Number(input)); }}>
+      <form data-tour="mint-pick" className="mt-8 flex flex-wrap items-center gap-2" onSubmit={(e) => { e.preventDefault(); go(Number(input)); }}>
         <input value={input} onChange={(e) => setInput(e.target.value.replace(/\D/g, ""))} aria-label="BITMAP number" className="w-40 rounded-sm border border-border bg-background px-3 py-2 font-mono text-sm" />
         <span className="font-mono text-sm text-muted-foreground">.bitmap</span>
         <button type="submit" className="btn-term-ghost">PREVIEW</button>
@@ -73,7 +73,7 @@ function MintPage() {
             </div>
           )}
         </div>
-        <aside className="panel space-y-3 rounded-md border border-border p-4">
+        <aside data-tour="mint-buy" className="panel space-y-3 rounded-md border border-border p-4">
           {d && m ? (
             <>
               <p className={`font-mono text-[11px] ${RARITY_TONE[d.rarity]}`}>{d.rarity} · ERA {d.epoch} · LV {guardianLevel(d)}</p>
