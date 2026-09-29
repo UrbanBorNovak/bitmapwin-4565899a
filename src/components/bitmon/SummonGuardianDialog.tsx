@@ -11,6 +11,7 @@ import { GuardianBody } from "@/components/bitmon/GuardianBody";
 import { ShadowInscriber, type ArtifactVariant } from "@/components/territory/ShadowInscriber";
 import { ShieldedGuardianMint } from "@/components/bitmon/ShieldedGuardianMint";
 import { RARITY_TONE, bip21, guardianArtifactSvg, guardianLevel, guardianShieldDigest, GUARDIAN_PRICE_SATS, type GuardianDna } from "@/lib/bitmon";
+import { morphFromDna } from "@/lib/creature-morph";
 import { guardianArtifactHtml, guardianHoloCardSvg } from "@/lib/guardian-artifact";
 
 import { guardianDnaQuery, guardianQuery } from "@/lib/bitmon-queries";
@@ -166,7 +167,8 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
             <div className="space-y-3">
               <div>
                 <p className={`font-mono text-[11px] ${RARITY_TONE[d.rarity]}`}>{d.rarity} · ERA {d.epoch}</p>
-                <p className="font-display text-2xl text-foreground">{d.species}</p>
+                <p className="font-display text-2xl text-foreground">{morphFromDna(d).name}</p>
+                <p className="font-mono text-[10px] text-muted-foreground">{d.species} LINE · {morphFromDna(d).plan} · {morphFromDna(d).code}</p>
                 <p className="font-mono text-[11px] text-signal">ABILITY · {d.ability}</p>
               </div>
               <div className="grid grid-cols-4 gap-1.5">
