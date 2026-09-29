@@ -1,0 +1,1 @@
+ALTER TABLE public.shord_mint_claims ADD COLUMN claim_hash TEXT NOT NULL;

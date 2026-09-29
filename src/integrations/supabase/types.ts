@@ -3303,6 +3303,7 @@ export type Database = {
       shord_mint_claims: {
         Row: {
           block_height: number | null
+          claim_hash: string
           commit_address: string
           commitment: string
           created_at: string
@@ -3314,6 +3315,7 @@ export type Database = {
         }
         Insert: {
           block_height?: number | null
+          claim_hash: string
           commit_address: string
           commitment: string
           created_at?: string
@@ -3325,6 +3327,7 @@ export type Database = {
         }
         Update: {
           block_height?: number | null
+          claim_hash?: string
           commit_address?: string
           commitment?: string
           created_at?: string
