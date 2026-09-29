@@ -8,8 +8,9 @@
  * recovery record until the reveal is broadcast — nothing is custodial.
  */
 import * as btc from "@scure/btc-signer";
-import { hex } from "@scure/base";
+import { base64, hex } from "@scure/base";
 import { OutOrdinalReveal, p2tr_ord_reveal } from "micro-ordinals";
+import { outScriptForAddress, type ParentSpend } from "@/lib/ord-parents";
 
 export const INSCRIBE_POSTAGE = 546;
 export const INSCRIBE_MAX_BYTES = 60_000;
@@ -26,10 +27,19 @@ export type InscribeJob = {
   feeRate: number;
   revealFee: number;
   commitAmount: number;
+  /** parent inscriptions claimed by this child, spent and returned in the reveal */
+  parents?: ParentSpend[];
   commitTxid?: string;
   revealTxid?: string;
   createdAt: string;
 };
+
+/** Signs the parent inputs it owns in a reveal PSBT, without finalizing. */
+export type ParentSigners = {
+  wallet?: (psbtBase64: string, indices: number[]) => Promise<string>;
+  platform?: (psbtBase64: string, indices: number[]) => Promise<string>;
+};
+
 
 const KEY = (digest: string) => `bitmapwin:shadow-inscribe:${digest}`;
 export const loadJob = (digest: string): InscribeJob | null => {
@@ -80,9 +90,15 @@ export function passArtifactSvg(p: { slug: string; height: number; index: number
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 460"><rect width="400" height="460" fill="#07090b"/><rect x="20" y="40" width="360" height="360" fill="none" stroke="#3fe0d0" stroke-opacity=".35"/>${cells.join("")}<text x="20" y="28" fill="#f7931a" font-family="monospace" font-size="14">SHAD · ${p.height}.BITMAP · #${p.index}</text><text x="20" y="424" fill="#3fe0d0" font-family="monospace" font-size="10">${p.slug.toUpperCase()}</text><text x="20" y="442" fill="#8a949c" font-family="monospace" font-size="7">${p.digest}</text></svg>`;
 }
 
-function revealPayment(privHex: string, contentType: string, body: Uint8Array, digest: string) {
+function revealPayment(privHex: string, contentType: string, body: Uint8Array, digest: string, parents: ParentSpend[] = []) {
   const pub = btc.utils.pubSchnorr(hex.decode(privHex));
-  const inscription = { tags: { contentType, metaprotocol: `shad:${digest}` }, body };
+  // Tag 3 may repeat: one entry per parent, in the order the reveal spends them.
+  const tags = {
+    contentType,
+    metaprotocol: `shad:${digest}`,
+    ...(parents.length ? { parent: parents.map((p) => p.inscriptionId) } : {}),
+  } as never;
+  const inscription = { tags, body };
   return btc.p2tr(undefined, p2tr_ord_reveal(pub, [inscription]), btc.NETWORK, false, customScripts);
 }
 
@@ -92,14 +108,18 @@ export async function prepareJob(input: {
   contentType: string;
   body: Uint8Array;
   receiveAddress: string;
+  parents?: ParentSpend[];
 }): Promise<InscribeJob> {
   if (input.body.length > INSCRIBE_MAX_BYTES) throw new Error("FILE TOO LARGE — KEEP IT UNDER 60 KB");
+  const parents = input.parents ?? [];
   const priv = btc.utils.randomPrivateKeyBytes();
   const privHex = hex.encode(priv);
-  const pay = revealPayment(privHex, input.contentType, input.body, input.digest);
+  const pay = revealPayment(privHex, input.contentType, input.body, input.digest, parents);
   const feeRate = await liveFeeRate();
-  // witness bytes count a quarter; ~ 150 vB of fixed overhead for 1-in/1-out taproot
-  const vbytes = Math.ceil((input.body.length + input.contentType.length + 120) / 4) + 150;
+  // witness bytes count a quarter; ~ 150 vB of fixed overhead for 1-in/1-out taproot.
+  // Each parent adds one taproot input (~58 vB) and its pass-through output (~43 vB).
+  const parentIds = parents.reduce((n, p) => n + p.inscriptionId.length, 0);
+  const vbytes = Math.ceil((input.body.length + input.contentType.length + parentIds + 120) / 4) + 150 + parents.length * 101;
   const revealFee = Math.ceil(vbytes * feeRate);
   const job: InscribeJob = {
     digest: input.digest,
@@ -111,6 +131,7 @@ export async function prepareJob(input: {
     feeRate,
     revealFee,
     commitAmount: INSCRIBE_POSTAGE + revealFee,
+    ...(parents.length ? { parents } : {}),
     createdAt: new Date().toISOString(),
   };
   saveJob(job);
@@ -125,10 +146,22 @@ export async function findCommitOutput(job: InscribeJob): Promise<{ txid: string
   return utxos.find((u) => u.value >= job.commitAmount) ?? null;
 }
 
-/** Signs the reveal with the throwaway key and broadcasts it. */
-export async function revealJob(job: InscribeJob, utxo: { txid: string; vout: number; value: number }): Promise<string> {
+/**
+ * Signs the reveal and broadcasts it.
+ *
+ * Input 0 is the commit output, signed here by the throwaway key. Every claimed
+ * parent follows as its own input and is handed straight back to its holder in
+ * the matching output, so the wallet holding the bitmap and the platform key
+ * holding the collection inscription each sign only their own input.
+ */
+export async function revealJob(
+  job: InscribeJob,
+  utxo: { txid: string; vout: number; value: number },
+  signers: ParentSigners = {},
+): Promise<string> {
   const body = hex.decode(job.bodyHex);
-  const pay = revealPayment(job.privHex, job.contentType, body, job.digest);
+  const parents = job.parents ?? [];
+  const pay = revealPayment(job.privHex, job.contentType, body, job.digest, parents);
   const tx = new btc.Transaction({ customScripts });
   tx.addInput({
     ...pay,
@@ -136,10 +169,37 @@ export async function revealJob(job: InscribeJob, utxo: { txid: string; vout: nu
     index: utxo.vout,
     witnessUtxo: { script: pay.script, amount: BigInt(utxo.value) },
   } as never);
+  for (const parent of parents) {
+    tx.addInput({
+      txid: parent.txid,
+      index: parent.vout,
+      witnessUtxo: { script: outScriptForAddress(parent.address), amount: BigInt(parent.value) },
+      ...(parent.tapInternalKey ? { tapInternalKey: hex.decode(parent.tapInternalKey) } : {}),
+    });
+  }
+  // Output 0 carries the new inscription; each parent returns to its own holder.
   tx.addOutputAddress(job.receiveAddress, BigInt(utxo.value - job.revealFee), btc.NETWORK);
-  tx.sign(hex.decode(job.privHex), undefined, new Uint8Array(32));
-  tx.finalize();
-  const r = await esplora("/tx", { method: "POST", body: tx.hex });
+  for (const parent of parents) tx.addOutputAddress(parent.address, BigInt(parent.value), btc.NETWORK);
+  tx.signIdx(hex.decode(job.privHex), 0, undefined, new Uint8Array(32));
+
+  let signed = tx;
+  if (parents.length) {
+    const indicesFor = (who: ParentSpend["signer"]) =>
+      parents.map((p, i) => ({ p, i: i + 1 })).filter((x) => x.p.signer === who).map((x) => x.i);
+    let psbt = base64.encode(tx.toPSBT());
+    for (const who of ["platform", "wallet"] as const) {
+      const indices = indicesFor(who);
+      const sign = signers[who];
+      if (indices.length === 0) continue;
+      if (!sign) throw new Error(`NO SIGNER AVAILABLE FOR THE ${who === "wallet" ? "BITMAP" : "COLLECTION"} PARENT`);
+      psbt = await sign(psbt, indices);
+    }
+    signed = btc.Transaction.fromPSBT(base64.decode(psbt), { allowUnknown: true, allowUnknownInputs: true, customScripts });
+  }
+
+  signed.finalize();
+  const r = await esplora("/tx", { method: "POST", body: signed.hex });
   if (!r) throw new Error("BITCOIN DID NOT ACCEPT THE REVEAL YET — TRY AGAIN IN A MINUTE");
   return (await r.text()).trim();
 }
+
