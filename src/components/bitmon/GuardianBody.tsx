@@ -2,6 +2,10 @@
 import { memo, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { useQuery } from "@tanstack/react-query";
+import { guardianDnaQuery } from "@/lib/bitmon-queries";
+import { morphFromDna } from "@/lib/creature-morph";
+import { MorphBody } from "@/components/bitmon/MorphBody";
 import { shapeOf, type GuardianRarity, type GuardianSpecies } from "@/lib/bitmon";
 
 const noRaycast = () => {};
@@ -93,7 +97,7 @@ function EnergyAura({ rarity, accent, u, glow }: { rarity: GuardianRarity; accen
 }
 
 
-export const GuardianBody = memo(function GuardianBody({ species, rarity, body, accent, unit = 1 }: {
+const SpeciesBody = memo(function SpeciesBody({ species, rarity, body, accent, unit = 1 }: {
   species: GuardianSpecies; rarity: GuardianRarity; body: string; accent: string; unit?: number;
 }) {
   const root = useRef<THREE.Group>(null);
@@ -289,3 +293,14 @@ export const GuardianBody = memo(function GuardianBody({ species, rarity, body, 
   );
 
 });
+/**
+ * Collection body: when the home block is known, the Guardian wears its own
+ * procedural design grown from that block's DNA; until then its species body.
+ */
+export function GuardianBody(props: { species: GuardianSpecies; rarity: GuardianRarity; body: string; accent: string; unit?: number; height?: number | undefined }) {
+  const { height, ...rest } = props;
+  const dna = useQuery({ ...guardianDnaQuery(height ?? 0), enabled: height != null, staleTime: Infinity });
+  const morph = useMemo(() => (dna.data ? morphFromDna(dna.data) : null), [dna.data]);
+  if (height != null && morph) return <MorphBody m={morph} unit={(rest.unit ?? 1) * 1.1} />;
+  return <SpeciesBody {...rest} />;
+}
