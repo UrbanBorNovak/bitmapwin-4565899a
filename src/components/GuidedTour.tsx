@@ -102,6 +102,86 @@ const TOURS: Record<string, Tour> = {
       },
     ],
   },
+  "/marketplace": {
+    id: "marketplace",
+    steps: [
+      {
+        target: "market-header",
+        title: "THE LAND MARKET",
+        body: "Every BITMAP for sale or ever sold, read from real Bitcoin transactions. Nothing here is made up.",
+      },
+      {
+        target: "market-stats",
+        title: "THE NUMBERS AT A GLANCE",
+        body: "How much land is known, how much has traded, and the cheapest price right now.",
+      },
+      {
+        target: "market-filters",
+        title: "FIND YOUR LAND",
+        body: "Search a block number, filter by what is for sale, or browse by collection and traits.",
+      },
+      {
+        target: "market-grid",
+        title: "OPEN A CARD",
+        body: "Each card is one block of land. Open one to see its full record, price history and holder — then buy or bid.",
+      },
+    ],
+  },
+  "/wallet": {
+    id: "wallet",
+    steps: [
+      {
+        target: "wallet-connect",
+        title: "CONNECT OR INSPECT",
+        body: "Connect your Bitcoin wallet to see your land — or paste any address to look at someone else's. Nothing is moved or spent.",
+      },
+      {
+        target: "wallet-stats",
+        title: "WHAT THIS WALLET HOLDS",
+        body: "Balance, coins and how many BITMAPs live here, scanned straight from the chain.",
+      },
+      {
+        target: "wallet-tabs",
+        title: "YOUR LAND, LISTED HERE",
+        body: "The LAND tab lists every BITMAP this wallet holds. From there you can set a price or open each one.",
+      },
+    ],
+  },
+  "/mint": {
+    id: "mint",
+    steps: [
+      {
+        target: "mint-steps",
+        title: "THREE STEPS TO A GUARDIAN",
+        body: "Pick a block, pay the mint, and the Guardian lands in the shielded pool — no wallet trace on the first owner.",
+      },
+      {
+        target: "mint-pick",
+        title: "PICK ANY BLOCK",
+        body: "Type a BITMAP number or press RANDOM. Every block grows a different creature — preview as many as you like for free.",
+      },
+      {
+        target: "mint-buy",
+        title: "MEET YOUR GUARDIAN",
+        body: "Name, rarity, stats and ability all come from the block itself. Happy with it? Press MINT SHIELDED to make it yours.",
+      },
+    ],
+  },
+  "/my-land": {
+    id: "my-land",
+    steps: [
+      {
+        target: "myland-stats",
+        title: "YOUR LAND AT A GLANCE",
+        body: "How many BITMAPs this wallet holds and how many already have something built on them.",
+      },
+      {
+        target: "myland-grid",
+        title: "EVERY TILE IS YOURS",
+        body: "Open any tile to see its full record, or press EXTEND MY LAND to put something on it.",
+      },
+    ],
+  },
 };
 
 const STORE = "bitmapwin:tour:seen";

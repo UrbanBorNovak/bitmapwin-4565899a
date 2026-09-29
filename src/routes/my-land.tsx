@@ -66,7 +66,7 @@ function MyLandPage() {
         <Link to="/my-world" className="btn-term-ghost">[ MANAGE MY WORLD ]</Link>
       </div>
 
-      <section className="mt-8 grid grid-cols-2 border border-border md:grid-cols-4">
+      <section data-tour="myland-stats" className="mt-8 grid grid-cols-2 border border-border md:grid-cols-4">
         <div className="border-b border-r border-border p-4">
           <div className="label">BITMAPS HELD</div>
           <div className="display mt-2 text-2xl">{held.isLoading ? "…" : heights.length}</div>
@@ -95,7 +95,7 @@ function MyLandPage() {
           </div>
         </div>
       ) : (
-        <div className="mt-8 grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+        <div data-tour="myland-grid" className="mt-8 grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
           {heights.map((h) => (
             <Link
               key={h}

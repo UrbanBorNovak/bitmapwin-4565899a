@@ -233,6 +233,7 @@ function WalletPage() {
       </div>
 
       <form
+        data-tour="wallet-connect"
         className="mt-5 flex flex-col gap-2 border-t border-border pt-5 sm:flex-row"
         onSubmit={(e) => {
           e.preventDefault();
@@ -262,7 +263,7 @@ function WalletPage() {
         </p>
       ) : (
         <>
-          <section className="mt-10 grid grid-cols-2 border border-border md:grid-cols-4">
+          <section data-tour="wallet-stats" className="mt-10 grid grid-cols-2 border border-border md:grid-cols-4">
             <Stat k="ADDRESS" v={shortenAddress(address)} />
             <Stat
               k="BALANCE"
@@ -278,7 +279,7 @@ function WalletPage() {
             </p>
           )}
 
-          <nav aria-label="Wallet sections" className="mt-10 flex flex-wrap gap-2">
+          <nav data-tour="wallet-tabs" aria-label="Wallet sections" className="mt-10 flex flex-wrap gap-2">
             {WALLET_TABS.map((t) => (
               <button
                 key={t.id}

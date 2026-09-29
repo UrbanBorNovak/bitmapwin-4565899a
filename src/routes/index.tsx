@@ -9,6 +9,8 @@ import { recentTradesQuery, tradedBitmapCountQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
 import { LoopNavigator } from "@/components/LoopNavigator";
 import { LandPromptTerminal } from "@/components/LandPromptTerminal";
+import { FirstTenMinutes } from "@/components/FirstTenMinutes";
+import { startGuidedTour } from "@/components/GuidedTour";
 
 
 export const Route = createFileRoute("/")({
@@ -164,6 +166,22 @@ function Index() {
       </section>
 
       <section className="mx-auto max-w-[1600px] px-3 pt-3 md:px-5"><LoopNavigator active="discover" /></section>
+
+      <section className="mx-auto max-w-[1600px] px-3 pt-6 md:px-5">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 border border-border bg-background p-4">
+          <div>
+            <div className="label text-bitcoin">FIRST TIME HERE?</div>
+            <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+              Take the 60-second tour of this page, or follow the step-by-step checklist below — it saves your progress on this device.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => startGuidedTour()} className="btn-term">[ START THE TOUR ]</button>
+            <Link to="/land-101" className="btn-term-ghost">[ READ THE 2-MINUTE PRIMER ]</Link>
+          </div>
+        </div>
+        <FirstTenMinutes compact />
+      </section>
 
       <HowItWorks />
 
