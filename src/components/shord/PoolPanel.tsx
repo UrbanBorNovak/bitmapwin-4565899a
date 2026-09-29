@@ -15,7 +15,7 @@ import {
   savePoolNotes,
   type PoolNoteRecord,
 } from "@/lib/shord/deposit";
-import { shordConfirmDeposit, shordPoolInfo, shordPrepareDeposit, shordSubmitSpend, shordWithdraw, shordRelayerInfo, shordRelayQueued, shordPendingDeposits } from "@/lib/shord-pool.functions";
+import { shordConfirmDeposit, shordPoolInfo, shordPrepareDeposit, shordSubmitSpend, shordWithdraw, shordRelayerInfo, shordRelayQueued, shordPendingDeposits, shordDirectMints } from "@/lib/shord-pool.functions";
 
 const btn = "label border px-3 py-2 disabled:opacity-40";
 
@@ -32,6 +32,8 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
   const relayer = useQuery({ queryKey: ["shord", "relayer"], queryFn: () => relayerInfo(), refetchInterval: 60_000 });
   const pendingFn = useServerFn(shordPendingDeposits);
   const pending = useQuery({ queryKey: ["shord", "pending-deposits"], queryFn: () => pendingFn(), refetchInterval: 60_000 });
+  const directMintsFn = useServerFn(shordDirectMints);
+  const directMints = useQuery({ queryKey: ["shord", "direct-mints"], queryFn: () => directMintsFn(), refetchInterval: 60_000 });
   const [exitTo, setExitTo] = useState<Record<string, string>>({});
   const pool = useQuery({ queryKey: ["shord", "own-pool"], queryFn: () => info(), refetchInterval: 60_000 });
 
@@ -61,6 +63,7 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
       void qc.invalidateQueries({ queryKey: ["shord", "own-pool"] });
       void qc.invalidateQueries({ queryKey: ["shord", "relayer"] });
       void qc.invalidateQueries({ queryKey: ["shord", "pending-deposits"] });
+      void qc.invalidateQueries({ queryKey: ["shord", "direct-mints"] });
     }
   }
 
@@ -223,6 +226,33 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
       <p className="label mt-1 text-muted-foreground">
         SIGN DEPOSIT IS FOR A GUARDIAN IN YOUR OWN WALLET. A DIRECT-TO-SHIELD MINT IS ALREADY AT THE POOL — JUST PRESS CHECK DEPOSIT.
       </p>
+
+      {directMints.data?.length ? (
+        <div className="mt-4 border border-bitcoin/40 p-3">
+          <p className="label text-bitcoin">MINTED STRAIGHT TO THE POOL · NEVER SAT IN A WALLET</p>
+          <ul className="mt-2 space-y-2">
+            {directMints.data.map((m) => (
+              <li key={m.commitment} className="flex flex-wrap items-center gap-2 font-mono text-xs">
+                <span className={m.status === "shielded" ? "text-signal" : "text-bitcoin"}>
+                  {m.status === "shielded" ? `◆ SHIELDED · NOTE #${m.idx}` : "◌ AWAITING DEPOSIT"}
+                </span>
+                <a className="break-all text-muted-foreground underline decoration-dotted"
+                  href={`https://ordinals.com/inscription/${m.inscriptionId}`} target="_blank" rel="noreferrer">
+                  {m.inscriptionId.slice(0, 20)}…{m.inscriptionId.slice(-3)}
+                </a>
+                {m.depositTxid ? (
+                  <a className="text-muted-foreground underline decoration-dotted"
+                    href={`https://mempool.space/tx/${m.depositTxid}`} target="_blank" rel="noreferrer">TX</a>
+                ) : null}
+                {m.status !== "shielded" ? (
+                  <button type="button" disabled={busy} onClick={() => sealAtPool(m.inscriptionId)}
+                    className={`${btn} border-signal text-signal`}>CHECK DEPOSIT</button>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {pending.data?.length ? (
         <div className="mt-4 border border-signal/40 p-3">

@@ -17,6 +17,11 @@ export const shordPendingDeposits = createServerFn({ method: "GET" }).handler(
   async () => (await import("@/lib/shord-pool.server")).pendingDeposits(),
 );
 
+/** Every direct-to-shield mint registered at the pool, sealed or awaiting. */
+export const shordDirectMints = createServerFn({ method: "GET" }).handler(
+  async () => (await import("@/lib/shord-pool.server")).directPoolMints(),
+);
+
 export const shordPrepareDeposit = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z.object({ inscriptionId, commitment: field, holderAddress: z.string().min(20).max(100), signature: z.string().min(8).max(2000) }).parse(d),

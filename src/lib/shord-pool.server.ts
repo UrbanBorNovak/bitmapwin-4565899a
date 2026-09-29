@@ -139,6 +139,31 @@ export async function pendingDeposits(): Promise<{ inscriptionId: string; commit
   }));
 }
 
+/** Every mint registered straight to the pool address, sealed or still awaiting. */
+export async function directPoolMints(): Promise<
+  { inscriptionId: string; commitment: string; status: string; idx: number | null; depositTxid: string | null }[]
+> {
+  const db = await admin();
+  const { data: deposits } = await db
+    .from("shord_pool_deposits")
+    .select("inscription_id, commitment, status, signature, deposit_txid")
+    .like("signature", "direct-mint:%")
+    .order("created_at", { ascending: false })
+    .limit(50);
+  const { data: leaves } = await db
+    .from("shord_pool_leaves")
+    .select("inscription_id, idx")
+    .not("inscription_id", "is", null);
+  const leafIdx = new Map((leaves ?? []).map((l) => [l.inscription_id as string, l.idx as number]));
+  return (deposits ?? []).map((d) => ({
+    inscriptionId: d.inscription_id,
+    commitment: d.commitment,
+    status: leafIdx.has(d.inscription_id) ? "shielded" : d.status,
+    idx: leafIdx.get(d.inscription_id) ?? null,
+    depositTxid: d.deposit_txid ?? null,
+  }));
+}
+
 export async function prepareDeposit(input: {
   inscriptionId: string;
   commitment: string;
