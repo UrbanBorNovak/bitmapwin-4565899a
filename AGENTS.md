@@ -25,5 +25,6 @@
 - Oasis progress is device-local; BIT pays fixed EXPLORE_MILESTONES once per account ledger ref.
 - Guardians are one-per-block after exact payment; procedural species visuals share GuardianBody. Ordinals use public DNA/summon proof and device-local keys without identity.
 - Shadow Assets store only device-derived commitment/nullifier hashes; shadow_commitments has no RLS policy and is reached only through security-definer routines.
-- SHORD (src/lib/shord/*) is client-only: BabyJubjub/Poseidon keys and notes live in the browser, the scanner reads Esplora directly, and prover.ts never fabricates a Groth16 proof without installed circuit artifacts.
-- SHORD own pool: circuits/shord/spend.circom (depth-20 Poseidon tree, BabyJub owner) compiles to public/wasm/shord; custodial pool key derives from SHORD_POOL_SEED in shord-pool.server.ts, which verifies every spend (known root, unused nullifier, Groth16) and accepts only holder-signed Guardian deposits. Single-party dev setup; never claim compatibility with the external SHORD pool. Why: Bitcoin cannot verify Groth16, so the pool key holder is the trust anchor.
+- SHORD (src/lib/shord/*) is client-only: keys/notes stay in the browser, prover.ts never fakes a proof.
+- SHORD own pool: spend.circom (depth-20 Poseidon) → public/wasm/shord; custodial key from SHORD_POOL_SEED in shord-pool.server.ts, which checks every spend (known root, unused nullifier, Groth16). Single-party dev setup; never claim external-pool compatibility. Why: Bitcoin cannot verify Groth16, so the pool key holder is the trust anchor.
+- Direct-to-shield mints bind the note to the inscription's one-time commit address plus a device-held claim secret, accepting only a reveal that spends it and pays output 0 to the pool.
