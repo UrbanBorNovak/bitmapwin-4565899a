@@ -253,7 +253,7 @@ export async function submitSpend(
 
 const ESPLORA = ["https://mempool.space/api", "https://blockstream.info/api"];
 const TAPROOT_DUST = 330;
-const WITHDRAW_VBYTES = 125;
+const WITHDRAW_VBYTES = 215; // 2 taproot inputs + 2 taproot outputs
 
 async function esplora<T>(path: string, init?: RequestInit): Promise<T> {
   let last = "EXPLORER UNAVAILABLE";
@@ -311,11 +311,13 @@ export async function submitWithdraw(
     utxo = undefined;
   }
   if (!utxo) return { ok: false, reason: "COULD NOT READ THE POOL UTXO — TRY AGAIN" };
+  if (offset >= utxo.value) return { ok: false, reason: "UNEXPECTED GUARDIAN POSITION IN THE POOL OUTPUT" };
   const fees = await esplora<{ halfHourFee: number }>(`/v1/fees/recommended`).catch(() => ({ halfHourFee: 2 }));
   const feeSats = Math.max(1, Math.ceil(fees.halfHourFee)) * WITHDRAW_VBYTES;
-  const outValue = utxo.value - feeSats;
-  if (outValue < TAPROOT_DUST || offset >= outValue)
-    return { ok: false, reason: `THE GUARDIAN'S ${utxo.value}-SAT OUTPUT CANNOT COVER A ${feeSats}-SAT FEE RIGHT NOW — TRY WHEN FEES DROP` };
+  // The fee wallet pays the miner; the Guardian's output passes through whole.
+  const { relayerFeeInput } = await import("@/lib/shord-relayer.server");
+  const sponsor = await relayerFeeInput(feeSats);
+  if (!sponsor.ok) return { ok: false, reason: sponsor.reason };
 
   // Lock the note before signing so one proof can never withdraw twice.
   const { error: lockErr } = await db.from("shord_pool_nullifiers").insert({ nullifier, root, out_commitment: `exit:${inscriptionId}` });
@@ -325,14 +327,23 @@ export async function submitWithdraw(
   try {
     const priv = poolPrivateKey();
     const tx = new Transaction();
+    // Input 0 / output 0 carry the Guardian so its sat lands first at the destination.
     tx.addInput({
       txid,
       index: vout,
       witnessUtxo: { script: hex.decode(utxo.scriptpubkey), amount: BigInt(utxo.value) },
       tapInternalKey: schnorr.getPublicKey(priv),
     });
-    tx.addOutput({ script: destScript, amount: BigInt(outValue) });
-    tx.sign(priv);
+    tx.addInput({
+      txid: sponsor.utxo.txid,
+      index: sponsor.utxo.vout,
+      witnessUtxo: { script: sponsor.script, amount: BigInt(sponsor.utxo.value) },
+      tapInternalKey: sponsor.pub,
+    });
+    tx.addOutput({ script: destScript, amount: BigInt(utxo.value) });
+    tx.addOutput({ script: sponsor.script, amount: BigInt(sponsor.utxo.value - feeSats) });
+    tx.signIdx(priv, 0);
+    tx.signIdx(sponsor.priv, 1);
     tx.finalize();
     const sent = await esplora<string>(`/tx`, { method: "POST", body: tx.hex, headers: { "Content-Type": "text/plain" } });
     const outTxid = String(sent).trim() || tx.id;

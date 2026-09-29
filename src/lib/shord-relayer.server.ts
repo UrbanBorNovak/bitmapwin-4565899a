@@ -58,6 +58,32 @@ export async function relayerBalance(): Promise<{ address: string; sats: number;
   }
 }
 
+/**
+ * A plain-sats relayer UTXO able to cover `feeSats` and still leave dust-safe
+ * change, plus the key material to sign it. Used to sponsor withdrawal fees so
+ * the Guardian's own output is passed through untouched.
+ */
+export async function relayerFeeInput(feeSats: number): Promise<
+  | { ok: true; priv: Uint8Array; pub: Uint8Array; script: Uint8Array; address: string; utxo: Utxo }
+  | { ok: false; reason: string; address: string }
+> {
+  const priv = relayerKey();
+  const pub = schnorr.getPublicKey(priv);
+  const pay = p2tr(pub);
+  const address = pay.address!;
+  let utxos: Utxo[] = [];
+  try {
+    utxos = await esplora<Utxo[]>(`/address/${address}/utxo`);
+  } catch {
+    return { ok: false, reason: "COULD NOT READ THE FEE WALLET — TRY AGAIN", address };
+  }
+  const pick = utxos
+    .filter((u) => u.value >= feeSats + DUST)
+    .sort((x, y) => Number(y.status.confirmed) - Number(x.status.confirmed) || y.value - x.value)[0];
+  if (!pick) return { ok: false, reason: `THE FEE WALLET NEEDS AT LEAST ${feeSats + DUST} SATS AT ${address}`, address };
+  return { ok: true, priv, pub, script: pay.script, address, utxo: pick };
+}
+
 const f32 = (v: unknown) => BigInt(String(v)).toString(16).padStart(64, "0");
 
 /** 462-byte envelope for a verified pool transfer. Proof packs A(64) · B(128) · C(64). */

@@ -307,7 +307,7 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
       </div>
 
       {msg ? <p className="label mt-3 break-all text-signal">{msg}</p> : null}
-      <p className="label mt-3 text-muted-foreground">WITHDRAWALS PAY THE BITCOIN FEE FROM THE GUARDIAN OUTPUT ITSELF; THE POOL REFUSES WHEN FEES ARE TOO HIGH.</p>
+      <p className="label mt-3 text-muted-foreground">THE RELAYER FEE WALLET PAYS THE BITCOIN FEE FOR WITHDRAWALS; THE GUARDIAN ARRIVES WITH ITS FULL OUTPUT. FUND THE RELAYER FIRST.</p>
     </section>
   );
 }
