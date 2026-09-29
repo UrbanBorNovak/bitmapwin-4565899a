@@ -207,7 +207,31 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
           className="min-w-[280px] flex-1 border border-border bg-background px-3 py-2 font-mono text-xs" />
         <button type="button" disabled={busy || !/^[0-9a-f]{64}i\d+$/i.test(inscription.trim())} onClick={startDeposit}
           className={`${btn} border-bitcoin text-bitcoin`}>SIGN DEPOSIT</button>
+        <button type="button" disabled={busy || !/^[0-9a-f]{64}i\d+$/i.test(inscription.trim())} onClick={() => sealAtPool(inscription)}
+          className={`${btn} border-signal text-signal`}>CHECK DEPOSIT</button>
       </div>
+      <p className="label mt-1 text-muted-foreground">
+        SIGN DEPOSIT IS FOR A GUARDIAN IN YOUR OWN WALLET. A DIRECT-TO-SHIELD MINT IS ALREADY AT THE POOL — JUST PRESS CHECK DEPOSIT.
+      </p>
+
+      {pending.data?.length ? (
+        <div className="mt-4 border border-signal/40 p-3">
+          <p className="label text-signal">◌ REGISTERED AT THE POOL · NOT SEALED YET</p>
+          <ul className="mt-2 space-y-2">
+            {pending.data.map((p) => (
+              <li key={p.commitment} className="flex flex-wrap items-center gap-2 font-mono text-xs">
+                <span className="break-all text-muted-foreground">
+                  {p.direct ? "DIRECT MINT · " : ""}
+                  {p.inscriptionId}
+                </span>
+                <button type="button" disabled={busy} onClick={() => sealAtPool(p.inscriptionId)}
+                  className={`${btn} border-signal text-signal`}>CHECK DEPOSIT</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
 
       {notes.length ? (
         <ul className="mt-4 space-y-2">
