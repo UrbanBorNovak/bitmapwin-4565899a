@@ -85,6 +85,22 @@ async function appendLeaf(row: { commitment: string; kind: "deposit" | "transfer
 
 export type PoolResult<T> = ({ ok: true } & T) | { ok: false; reason: string };
 
+/** Guardians registered for the pool that have not been sealed into the tree yet. */
+export async function pendingDeposits(): Promise<{ inscriptionId: string; commitment: string; direct: boolean }[]> {
+  const db = await admin();
+  const { data } = await db
+    .from("shord_pool_deposits")
+    .select("inscription_id, commitment, signature")
+    .eq("status", "awaiting")
+    .order("created_at", { ascending: false })
+    .limit(50);
+  return (data ?? []).map((d) => ({
+    inscriptionId: d.inscription_id,
+    commitment: d.commitment,
+    direct: (d.signature ?? "").startsWith("direct-mint:"),
+  }));
+}
+
 export async function prepareDeposit(input: {
   inscriptionId: string;
   commitment: string;
