@@ -29,6 +29,12 @@ export function ShadowInscriber(props: {
   actionLabel?: string;
   description?: string;
   allowUpload?: boolean;
+  /** Where the inscribed sat lands. Defaults to the connected wallet's ordinals address. */
+  receiveAddress?: string;
+  /** Runs after the one-time payment address exists, before the wallet pays. Throw to abort. */
+  onPrepared?: (job: InscribeJob) => Promise<void> | void;
+  /** Runs once the inscription reveal is broadcast. */
+  onRevealed?: (revealTxid: string, job: InscribeJob) => Promise<void> | void;
 }) {
   const [job, setJob] = useState<InscribeJob | null>(null);
   const [file, setFile] = useState<{ type: string; bytes: Uint8Array; url: string } | null>(null);
