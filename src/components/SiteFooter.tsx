@@ -27,6 +27,7 @@ const GROUPS: { label: string; items: { to: string; label: string }[] }[] = [
       { to: "/builds", label: "3D BUILDS" },
       { to: "/extend", label: "DEPLOY" },
       { to: "/studio", label: "STUDIO" },
+      { to: "/mint", label: "MINT GUARDIAN" },
       { to: "/extenders", label: "EXTENDERS" },
     ],
   },
