@@ -27,12 +27,27 @@ import {
  * `<height>.bitmap` and the BITMAPWIN master collection inscription. Both are
  * spent as inputs and returned to their holders in the same transaction.
  */
+export type ArtifactVariant = {
+  /** Stable key used for the picker. */
+  key: string;
+  /** Short label shown on the picker button. */
+  label: string;
+  /** Inscription content type, e.g. `text/html;charset=utf-8`. */
+  contentType: string;
+  /** The artifact source itself, inscribed as UTF-8 text. */
+  source: string;
+  /** One line explaining what this form does in a viewer. */
+  note?: string;
+};
+
 export function ShadowInscriber(props: {
   slug: string;
   height: number;
   index: number;
   digest: string;
   artifactSvg?: string;
+  /** Two or more forms of the same artifact; the holder picks one before paying. */
+  artifactVariants?: ArtifactVariant[];
   artifactLabel?: string;
   actionLabel?: string;
   description?: string;
@@ -50,13 +65,20 @@ export function ShadowInscriber(props: {
   const [file, setFile] = useState<{ type: string; bytes: Uint8Array; url: string } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [parentNotes, setParentNotes] = useState<string[]>([]);
+  const [variantKey, setVariantKey] = useState<string | null>(null);
   const resolveParents = useServerFn(mintParentsFn);
   const signCollection = useServerFn(signCollectionParentFn);
 
   useEffect(() => setJob(loadJob(props.digest)), [props.digest]);
 
+  const variants = props.artifactVariants ?? [];
+  const variant = variants.find((v) => v.key === variantKey) ?? variants[0] ?? null;
+
   const svg = useMemo(() => props.artifactSvg ?? passArtifactSvg(props), [props.artifactSvg, props.digest, props.height, props.index, props.slug]);
+  const artifactSource = variant?.source ?? svg;
+  const artifactType = variant?.contentType ?? "image/svg+xml";
   const defaultUrl = useMemo(() => `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`, [svg]);
+
 
 
   // Watch for the commit payment, then reveal automatically.
@@ -118,7 +140,7 @@ export function ShadowInscriber(props: {
     try {
       setBusy("PRICING…");
       const wallet = await resolveWallet();
-      const body = file?.bytes ?? new TextEncoder().encode(svg);
+      const body = file?.bytes ?? new TextEncoder().encode(artifactSource);
       let parents: ParentSpend[] = [];
       if (props.claimParentsForHeight !== undefined) {
         setBusy("CHECKING THE PARENT BITMAP…");
@@ -132,7 +154,7 @@ export function ShadowInscriber(props: {
       }
       const prepared = await prepareJob({
         digest: props.digest,
-        contentType: file?.type ?? "image/svg+xml",
+        contentType: file?.type ?? artifactType,
         body,
         receiveAddress: props.receiveAddress ?? wallet.ordinalsAddress,
         ...(parents.length ? { parents } : {}),
@@ -165,15 +187,44 @@ export function ShadowInscriber(props: {
   };
 
   const preview = file?.url ?? defaultUrl;
+  const liveArtifact = !file && variant?.contentType.startsWith("text/html");
+  const artifactBytes = file?.bytes.length ?? new TextEncoder().encode(artifactSource).length;
 
   return (
     <div className="border border-bitcoin/40 bg-bitcoin/5 p-3 space-y-2">
       <p className="label text-bitcoin">◆ {props.artifactLabel ?? "INSCRIBE AN ARTIFACT BESIDE THIS NOTE"}</p>
-      {file?.type.startsWith("image/") || !file ? (
+      {liveArtifact ? (
+        <iframe
+          title="Live artifact preview"
+          srcDoc={artifactSource}
+          sandbox="allow-scripts"
+          className="aspect-square w-full max-w-[280px] border border-border/40 bg-background"
+        />
+      ) : file?.type.startsWith("image/") || !file ? (
         <img src={preview} alt="Artifact preview" className="w-full max-w-[220px] border border-border/40" />
       ) : (
         <p className="font-mono text-[11px] text-muted-foreground">{file.type} · {file.bytes.length} BYTES</p>
       )}
+      {variants.length > 1 && !file && !job?.commitTxid ? (
+        <div className="space-y-1">
+          <div className="flex flex-wrap gap-1">
+            {variants.map((v) => (
+              <button
+                key={v.key}
+                type="button"
+                onClick={() => setVariantKey(v.key)}
+                className={`border px-2 py-1 font-mono text-[10px] ${v.key === variant?.key ? "border-bitcoin bg-bitcoin text-background" : "border-border text-muted-foreground hover:border-bitcoin"}`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+          <p className="label text-muted-foreground">
+            {variant?.note ?? ""} · {artifactBytes.toLocaleString()} BYTES ON CHAIN
+          </p>
+        </div>
+      ) : null}
+
 
       {!job?.commitTxid ? (
         <>

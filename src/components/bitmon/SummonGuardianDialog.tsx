@@ -8,9 +8,11 @@ import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { GuardianBody } from "@/components/bitmon/GuardianBody";
-import { ShadowInscriber } from "@/components/territory/ShadowInscriber";
+import { ShadowInscriber, type ArtifactVariant } from "@/components/territory/ShadowInscriber";
 import { ShieldedGuardianMint } from "@/components/bitmon/ShieldedGuardianMint";
 import { RARITY_TONE, bip21, guardianArtifactSvg, guardianLevel, guardianShieldDigest, GUARDIAN_PRICE_SATS, type GuardianDna } from "@/lib/bitmon";
+import { guardianArtifactHtml, guardianHoloCardSvg } from "@/lib/guardian-artifact";
+
 import { guardianDnaQuery, guardianQuery } from "@/lib/bitmon-queries";
 import { checkSummonOrderFn, createSummonOrderFn, resumeSummonOrderFn } from "@/lib/bitmon.functions";
 import type { SummonOrder } from "@/lib/bitmon.server";
@@ -122,6 +124,26 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
   const summonTxid = already?.txid ?? (celebrate ? order?.txid : null);
   const guardianArtifact = d && summonTxid ? guardianArtifactSvg(d, summonTxid) : null;
   const guardianDigest = d && summonTxid ? guardianShieldDigest(d, summonTxid) : null;
+  const artifactVariants: ArtifactVariant[] | null =
+    d && summonTxid
+      ? [
+          {
+            key: "live",
+            label: "◆ LIVE 3D ARTIFACT",
+            contentType: "text/html;charset=utf-8",
+            source: guardianArtifactHtml(d, summonTxid),
+            note: "A LIVING VOXEL GUARDIAN YOU CAN SPIN, DRAWN BY ITS OWN CODE AND ON-CHAIN NOISE LIBRARY",
+          },
+          {
+            key: "holo",
+            label: "◇ HOLOGRAM CARD",
+            contentType: "image/svg+xml",
+            source: guardianHoloCardSvg(d, summonTxid),
+            note: "A STILL HOLOGRAPHIC CARD THAT SHOWS UP EVERYWHERE, EVEN IN BASIC VIEWERS",
+          },
+        ]
+      : null;
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -180,6 +202,7 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
                       index={0}
                       digest={guardianDigest}
                       artifactSvg={guardianArtifact}
+                      {...(artifactVariants ? { artifactVariants } : {})}
                       artifactLabel="GUARDIAN ORDINAL"
                       actionLabel="◆ INSCRIBE THIS GUARDIAN"
                       description="THE GUARDIAN IS ALREADY SUMMONED. THIS OPTIONAL SECOND STEP PAYS THE LIVE BITCOIN MINER COST FOR A PUBLIC ORDINAL THAT CONTAINS NO WALLET OR ACCOUNT IDENTITY. THE INSCRIBED SAT LANDS IN YOUR OWN WALLET."
@@ -188,7 +211,8 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
 
                     />
                   ) : (
-                    <ShieldedGuardianMint height={height} digest={guardianDigest} artifactSvg={guardianArtifact} />
+                    <ShieldedGuardianMint height={height} digest={guardianDigest} artifactSvg={guardianArtifact} {...(artifactVariants ? { artifactVariants } : {})} />
+
                   )}
                 </div>
               ) : null}
