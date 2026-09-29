@@ -36,6 +36,7 @@ import { Route as LeasesRouteImport } from './routes/leases'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as MintRouteImport } from './routes/mint'
 import { Route as MyLandRouteImport } from './routes/my-land'
 import { Route as MyWorldRouteImport } from './routes/my-world'
 import { Route as OasisRouteImport } from './routes/oasis'
@@ -237,6 +238,11 @@ const MarketplaceRoute = MarketplaceRouteImport.update({
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MintRoute = MintRouteImport.update({
+  id: '/mint',
+  path: '/mint',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MyLandRoute = MyLandRouteImport.update({
@@ -606,6 +612,7 @@ export interface FileRoutesByFullPath {
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
+  '/mint': typeof MintRoute
   '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
   '/oasis': typeof OasisRoute
@@ -700,6 +707,7 @@ export interface FileRoutesByTo {
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
+  '/mint': typeof MintRoute
   '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
   '/oasis': typeof OasisRoute
@@ -795,6 +803,7 @@ export interface FileRoutesById {
   '/map': typeof MapRoute
   '/marketplace': typeof MarketplaceRoute
   '/mcp': typeof McpRoute
+  '/mint': typeof MintRoute
   '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
   '/oasis': typeof OasisRoute
@@ -893,6 +902,7 @@ export interface FileRouteTypes {
     | '/map'
     | '/marketplace'
     | '/mcp'
+    | '/mint'
     | '/my-land'
     | '/my-world'
     | '/oasis'
@@ -987,6 +997,7 @@ export interface FileRouteTypes {
     | '/map'
     | '/marketplace'
     | '/mcp'
+    | '/mint'
     | '/my-land'
     | '/my-world'
     | '/oasis'
@@ -1081,6 +1092,7 @@ export interface FileRouteTypes {
     | '/map'
     | '/marketplace'
     | '/mcp'
+    | '/mint'
     | '/my-land'
     | '/my-world'
     | '/oasis'
@@ -1178,6 +1190,7 @@ export interface RootRouteChildren {
   MapRoute: typeof MapRoute
   MarketplaceRoute: typeof MarketplaceRoute
   McpRoute: typeof McpRoute
+  MintRoute: typeof MintRoute
   MyLandRoute: typeof MyLandRoute
   MyWorldRoute: typeof MyWorldRoute
   OasisRoute: typeof OasisRoute
@@ -1403,6 +1416,13 @@ declare module '@tanstack/react-router' {
       path: '/mcp'
       fullPath: '/mcp'
       preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mint': {
+      id: '/mint'
+      path: '/mint'
+      fullPath: '/mint'
+      preLoaderRoute: typeof MintRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/my-land': {
@@ -2026,6 +2046,7 @@ const rootRouteChildren: RootRouteChildren = {
   MapRoute: MapRoute,
   MarketplaceRoute: MarketplaceRoute,
   McpRoute: McpRoute,
+  MintRoute: MintRoute,
   MyLandRoute: MyLandRoute,
   MyWorldRoute: MyWorldRoute,
   OasisRoute: OasisRoute,
