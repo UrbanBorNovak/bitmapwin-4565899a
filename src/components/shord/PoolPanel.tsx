@@ -242,7 +242,7 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
               </p>
               <p className="mt-1 break-all text-muted-foreground">{n.inscriptionId}</p>
               {n.status === "awaiting" ? (
-                <button type="button" disabled={busy} onClick={() => checkDeposit(n)} className={`${btn} mt-2 border-signal text-signal`}>CHECK DEPOSIT</button>
+                <button type="button" disabled={busy} onClick={() => sealAtPool(n.inscriptionId)} className={`${btn} mt-2 border-signal text-signal`}>CHECK DEPOSIT</button>
               ) : n.status === "shielded" ? (
                 <div className="mt-2 flex flex-wrap gap-2">
                   <input value={sendTo[n.commitment] ?? ""} onChange={(e) => setSendTo({ ...sendTo, [n.commitment]: e.target.value })}
