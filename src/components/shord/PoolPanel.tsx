@@ -93,6 +93,24 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
       setMsg(`✓ GUARDIAN SHIELDED AS POOL NOTE #${res.idx}`);
     });
 
+  /** Seals any Guardian already sitting at the pool address, including direct-to-shield mints. */
+  const sealAtPool = (inscriptionId: string) =>
+    run("CHECKING THE POOL ADDRESS…", async () => {
+      const id = inscriptionId.trim().toLowerCase();
+      const res = await confirm({ data: { inscriptionId: id } });
+      if (!res.ok) throw new Error(res.reason);
+      if ("waiting" in res) return setMsg(res.waiting);
+      const mine = loadPoolNotes().find((x) => x.commitment === res.commitment);
+      if (mine) {
+        persist(loadPoolNotes().map((x) => (x.commitment === res.commitment ? { ...x, status: "shielded", idx: res.idx } : x)));
+        setMsg(`✓ GUARDIAN SHIELDED AS POOL NOTE #${res.idx}`);
+        return;
+      }
+      setMsg(
+        `✓ SEALED AS POOL NOTE #${res.idx}. THIS BROWSER DOES NOT HOLD THAT NOTE'S KEY, SO IT CANNOT MOVE IT — OPEN THE VAULT ON THE DEVICE THAT MINTED IT.`,
+      );
+    });
+
   const sendPrivately = (n: PoolNoteRecord) =>
     run("PROVING ON THIS DEVICE…", async () => {
       if (!keys) throw new Error("CREATE A SHIELDED KEY FIRST");
