@@ -93,9 +93,13 @@ export function ShadowInscriber(props: {
         digest: props.digest,
         contentType: file?.type ?? "image/svg+xml",
         body,
-        receiveAddress: wallet.ordinalsAddress,
+        receiveAddress: props.receiveAddress ?? wallet.ordinalsAddress,
       });
       setJob(prepared);
+      if (props.onPrepared) {
+        setBusy("RESERVING THE SHIELDED NOTE…");
+        await props.onPrepared(prepared);
+      }
       setBusy("APPROVE IN YOUR WALLET…");
       const commitTxid = await sendBitcoinFromWallet(wallet.provider, prepared.commitAddress, prepared.commitAmount);
       const paid = { ...prepared, commitTxid };
