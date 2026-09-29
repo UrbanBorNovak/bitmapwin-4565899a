@@ -29,11 +29,14 @@ export function ShieldedGuardianMint({
   height,
   digest,
   artifactSvg,
+  artifactVariants,
 }: {
   height: number;
   digest: string;
   artifactSvg: string;
+  artifactVariants?: ArtifactVariant[];
 }) {
+
   const poolInfo = useServerFn(shordPoolInfo);
   const reserve = useServerFn(shordReserveMint);
   const claim = useServerFn(shordClaimMint);
