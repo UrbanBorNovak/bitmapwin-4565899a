@@ -53,6 +53,46 @@ function RarityRegalia({ rarity, accent, u, glow }: { rarity: GuardianRarity; ac
   );
 }
 
+/**
+ * Ground light pool plus orbiting energy motes. Purely decorative and driven by
+ * rarity, so a COMMON Guardian keeps a quiet silhouette.
+ */
+function EnergyAura({ rarity, accent, u, glow }: { rarity: GuardianRarity; accent: string; u: number; glow: number }) {
+  const motes = useRef<THREE.Group>(null);
+  const count = rarity === "MYTHIC" ? 10 : rarity === "EPIC" ? 7 : rarity === "RARE" ? 4 : 0;
+  useFrame(({ clock }) => {
+    if (!motes.current) return;
+    const t = clock.elapsedTime;
+    motes.current.rotation.y = t * 0.45;
+    motes.current.children.forEach((child, i) => {
+      child.position.y = (0.35 + Math.sin(t * 1.5 + i) * 0.28 + i * 0.06) * u;
+      const s = 0.7 + (Math.sin(t * 3 + i * 1.7) + 1) * 0.35;
+      child.scale.setScalar(s);
+    });
+  });
+  return (
+    <group raycast={noRaycast}>
+      <mesh position={[0, 0.012 * u, 0]} rotation-x={-Math.PI / 2} raycast={noRaycast}>
+        <circleGeometry args={[(rarity === "MYTHIC" ? 1.15 : 0.95) * u, 28]} />
+        <meshBasicMaterial color={accent} transparent opacity={0.07 + glow * 0.05} depthWrite={false} />
+      </mesh>
+      <group ref={motes}>
+        {Array.from({ length: count }, (_, i) => {
+          const angle = (i / Math.max(1, count)) * Math.PI * 2;
+          const radius = (0.62 + (i % 3) * 0.14) * u;
+          return (
+            <mesh key={i} position={[Math.sin(angle) * radius, 0.5 * u, Math.cos(angle) * radius]} raycast={noRaycast}>
+              <boxGeometry args={[0.035 * u, 0.035 * u, 0.035 * u]} />
+              <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={glow + 0.9} transparent opacity={0.85} />
+            </mesh>
+          );
+        })}
+      </group>
+    </group>
+  );
+}
+
+
 export const GuardianBody = memo(function GuardianBody({ species, rarity, body, accent, unit = 1 }: {
   species: GuardianSpecies; rarity: GuardianRarity; body: string; accent: string; unit?: number;
 }) {
