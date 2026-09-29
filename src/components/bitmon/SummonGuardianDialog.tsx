@@ -202,6 +202,7 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
                       index={0}
                       digest={guardianDigest}
                       artifactSvg={guardianArtifact}
+                      {...(artifactVariants ? { artifactVariants } : {})}
                       artifactLabel="GUARDIAN ORDINAL"
                       actionLabel="◆ INSCRIBE THIS GUARDIAN"
                       description="THE GUARDIAN IS ALREADY SUMMONED. THIS OPTIONAL SECOND STEP PAYS THE LIVE BITCOIN MINER COST FOR A PUBLIC ORDINAL THAT CONTAINS NO WALLET OR ACCOUNT IDENTITY. THE INSCRIBED SAT LANDS IN YOUR OWN WALLET."
@@ -210,7 +211,8 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
 
                     />
                   ) : (
-                    <ShieldedGuardianMint height={height} digest={guardianDigest} artifactSvg={guardianArtifact} />
+                    <ShieldedGuardianMint height={height} digest={guardianDigest} artifactSvg={guardianArtifact} {...(artifactVariants ? { artifactVariants } : {})} />
+
                   )}
                 </div>
               ) : null}
