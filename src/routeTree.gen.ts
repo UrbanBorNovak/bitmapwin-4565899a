@@ -61,6 +61,7 @@ import { Route as BitmapBlockRouteImport } from './routes/bitmap.$block'
 import { Route as ClanTagRouteImport } from './routes/clan.$tag'
 import { Route as CodexIndexRouteImport } from './routes/codex.index'
 import { Route as CodexBestiaryRouteImport } from './routes/codex.bestiary'
+import { Route as CodexMorphsRouteImport } from './routes/codex.morphs'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
 import { Route as CollectionsClubRouteImport } from './routes/collections.$club'
 import { Route as CollectionsJigglypuffRouteImport } from './routes/collections.jigglypuff'
@@ -364,6 +365,11 @@ const CodexBestiaryRoute = CodexBestiaryRouteImport.update({
   path: '/codex/bestiary',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CodexMorphsRoute = CodexMorphsRouteImport.update({
+  id: '/codex/morphs',
+  path: '/codex/morphs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CollectionsIndexRoute = CollectionsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -624,6 +630,7 @@ export interface FileRoutesByFullPath {
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
   '/codex/bestiary': typeof CodexBestiaryRoute
+  '/codex/morphs': typeof CodexMorphsRoute
   '/collections/$club': typeof CollectionsClubRoute
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/district/$slug': typeof DistrictSlugRoute
@@ -715,6 +722,7 @@ export interface FileRoutesByTo {
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
   '/codex/bestiary': typeof CodexBestiaryRoute
+  '/codex/morphs': typeof CodexMorphsRoute
   '/collections/$club': typeof CollectionsClubRoute
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/district/$slug': typeof DistrictSlugRoute
@@ -811,6 +819,7 @@ export interface FileRoutesById {
   '/bitmap/$block': typeof BitmapBlockRoute
   '/clan/$tag': typeof ClanTagRoute
   '/codex/bestiary': typeof CodexBestiaryRoute
+  '/codex/morphs': typeof CodexMorphsRoute
   '/collections/$club': typeof CollectionsClubRoute
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/district/$slug': typeof DistrictSlugRoute
@@ -908,6 +917,7 @@ export interface FileRouteTypes {
     | '/bitmap/$block'
     | '/clan/$tag'
     | '/codex/bestiary'
+    | '/codex/morphs'
     | '/collections/$club'
     | '/collections/jigglypuff'
     | '/district/$slug'
@@ -999,6 +1009,7 @@ export interface FileRouteTypes {
     | '/bitmap/$block'
     | '/clan/$tag'
     | '/codex/bestiary'
+    | '/codex/morphs'
     | '/collections/$club'
     | '/collections/jigglypuff'
     | '/district/$slug'
@@ -1094,6 +1105,7 @@ export interface FileRouteTypes {
     | '/bitmap/$block'
     | '/clan/$tag'
     | '/codex/bestiary'
+    | '/codex/morphs'
     | '/collections/$club'
     | '/collections/jigglypuff'
     | '/district/$slug'
@@ -1190,6 +1202,7 @@ export interface RootRouteChildren {
   BitmapBlockRoute: typeof BitmapBlockRoute
   ClanTagRoute: typeof ClanTagRoute
   CodexBestiaryRoute: typeof CodexBestiaryRoute
+  CodexMorphsRoute: typeof CodexMorphsRoute
   DistrictSlugRoute: typeof DistrictSlugRoute
   MapBlockRoute: typeof MapBlockRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
@@ -1565,6 +1578,13 @@ declare module '@tanstack/react-router' {
       path: '/codex/bestiary'
       fullPath: '/codex/bestiary'
       preLoaderRoute: typeof CodexBestiaryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codex/morphs': {
+      id: '/codex/morphs'
+      path: '/codex/morphs'
+      fullPath: '/codex/morphs'
+      preLoaderRoute: typeof CodexMorphsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/collections/': {
@@ -2031,6 +2051,7 @@ const rootRouteChildren: RootRouteChildren = {
   BitmapBlockRoute: BitmapBlockRoute,
   ClanTagRoute: ClanTagRoute,
   CodexBestiaryRoute: CodexBestiaryRoute,
+  CodexMorphsRoute: CodexMorphsRoute,
   DistrictSlugRoute: DistrictSlugRoute,
   MapBlockRoute: MapBlockRoute,
   ProfileAddressRoute: ProfileAddressRoute,
