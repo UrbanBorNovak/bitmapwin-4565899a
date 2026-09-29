@@ -38,7 +38,7 @@ type Row = {
   yaw?: number | undefined;
   /** Guardians render their procedural body and link to their home BITMAP. */
   height?: number;
-  guardian?: { species: GuardianSpecies; rarity: GuardianRarity; body: string; accent: string };
+  guardian?: { species: GuardianSpecies; rarity: GuardianRarity; body: string; accent: string; height?: number };
 };
 
 const totalWeight = SPECIES.reduce((s, x) => s + x.weight, 0);
@@ -107,7 +107,7 @@ function Bestiary() {
         rarity: `GUARDIAN · ${g.rarity}`,
         habitat: `PATROLS ${g.height}.BITMAP`,
         height: g.height,
-        guardian: { species: g.species, rarity: g.rarity, body: g.body, accent: g.accent },
+        guardian: { species: g.species, rarity: g.rarity, body: g.body, accent: g.accent, height: g.height },
       })),
     ],
     [guardians],

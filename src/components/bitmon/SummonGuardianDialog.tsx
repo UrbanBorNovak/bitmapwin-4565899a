@@ -18,7 +18,7 @@ import { checkSummonOrderFn, createSummonOrderFn, resumeSummonOrderFn } from "@/
 import type { SummonOrder } from "@/lib/bitmon.server";
 import { playSfx } from "@/lib/world-audio";
 
-export function GuardianTurntable({ dna, className = "h-56" }: { dna: Pick<GuardianDna, "species" | "rarity" | "body" | "accent">; className?: string }) {
+export function GuardianTurntable({ dna, className = "h-56" }: { dna: Pick<GuardianDna, "species" | "rarity" | "body" | "accent"> & { height?: number }; className?: string }) {
   return (
     <div className={`${className} w-full border border-border bg-background`}>
       <ClientOnly fallback={<div className="grid size-full place-items-center font-mono text-[10px] text-muted-foreground">LOADING…</div>}>
@@ -27,7 +27,7 @@ export function GuardianTurntable({ dna, className = "h-56" }: { dna: Pick<Guard
           <directionalLight position={[3, 5, 2]} intensity={1.4} />
           <pointLight position={[0, 1, 2]} intensity={0.6} color={dna.accent} />
           <group position={[0, -0.8, 0]}>
-            <GuardianBody species={dna.species} rarity={dna.rarity} body={dna.body} accent={dna.accent} />
+            <GuardianBody species={dna.species} rarity={dna.rarity} body={dna.body} accent={dna.accent} height={dna.height} />
             <mesh rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[1.2, 32]} /><meshStandardMaterial color="#111" /></mesh>
           </group>
           <OrbitControls enablePan={false} autoRotate autoRotateSpeed={1.6} minDistance={2} maxDistance={6} />
