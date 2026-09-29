@@ -187,15 +187,44 @@ export function ShadowInscriber(props: {
   };
 
   const preview = file?.url ?? defaultUrl;
+  const liveArtifact = !file && variant?.contentType.startsWith("text/html");
+  const artifactBytes = file?.bytes.length ?? new TextEncoder().encode(artifactSource).length;
 
   return (
     <div className="border border-bitcoin/40 bg-bitcoin/5 p-3 space-y-2">
       <p className="label text-bitcoin">◆ {props.artifactLabel ?? "INSCRIBE AN ARTIFACT BESIDE THIS NOTE"}</p>
-      {file?.type.startsWith("image/") || !file ? (
+      {liveArtifact ? (
+        <iframe
+          title="Live artifact preview"
+          srcDoc={artifactSource}
+          sandbox="allow-scripts"
+          className="aspect-square w-full max-w-[280px] border border-border/40 bg-background"
+        />
+      ) : file?.type.startsWith("image/") || !file ? (
         <img src={preview} alt="Artifact preview" className="w-full max-w-[220px] border border-border/40" />
       ) : (
         <p className="font-mono text-[11px] text-muted-foreground">{file.type} · {file.bytes.length} BYTES</p>
       )}
+      {variants.length > 1 && !file && !job?.commitTxid ? (
+        <div className="space-y-1">
+          <div className="flex flex-wrap gap-1">
+            {variants.map((v) => (
+              <button
+                key={v.key}
+                type="button"
+                onClick={() => setVariantKey(v.key)}
+                className={`border px-2 py-1 font-mono text-[10px] ${v.key === variant?.key ? "border-bitcoin bg-bitcoin text-background" : "border-border text-muted-foreground hover:border-bitcoin"}`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+          <p className="label text-muted-foreground">
+            {variant?.note ?? ""} · {artifactBytes.toLocaleString()} BYTES ON CHAIN
+          </p>
+        </div>
+      ) : null}
+
 
       {!job?.commitTxid ? (
         <>
