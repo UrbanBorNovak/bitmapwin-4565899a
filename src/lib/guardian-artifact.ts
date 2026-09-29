@@ -204,16 +204,37 @@ function backdrop(w,h,t){
   g.globalAlpha=1;
 }
 
+/* ---- fit the whole creature inside the frame, whatever its shape ---- */
+var EXT=null;
+function extents(){
+  var ax=0,ymin=1e9,ymax=-1e9,k,i;
+  for(k=0;k<12;k++){var a=k/12*Math.PI*2,cy=Math.cos(a),sy=Math.sin(a);
+    for(i=0;i<VOX.length;i++){var v=VOX[i],dx,dy,dz;
+      for(dx=-1;dx<2;dx+=2)for(dy=-1;dy<2;dy+=2)for(dz=-1;dz<2;dz+=2){
+        var p=project(v[0]+dx*v[3]/2,v[1]+dy*v[4]/2,v[2]+dz*v[5]/2,cy,sy,1,0,0);
+        if(Math.abs(p[0])>ax)ax=Math.abs(p[0]);
+        if(p[1]<ymin)ymin=p[1];if(p[1]>ymax)ymax=p[1];
+      }}}
+  return {ax:ax,ymin:ymin,ymax:ymax};
+}
+function fitScale(){
+  if(!EXT)EXT=extents();
+  var availW=W*.84,availH=H*.58;
+  return Math.min(availW/(EXT.ax*2||1),availH/((EXT.ymax-EXT.ymin)||1));
+}
 function frame(now){
   var t=(now-t0)/1000,pulse=(Math.sin(t*2.2)+1)/2;
   if(!drag){yaw+=.0045+yawV;yawV*=.92}
   g.clearRect(0,0,W,H);
   backdrop(W,H,t);
+  if(!EXT)EXT=extents();
   var sc=fitScale();
-  drawVox(sc,W/2,H*.68+Math.sin(t*1.5)*3,pulse);
+  var oy=H*.46-((EXT.ymin+EXT.ymax)/2)*sc+Math.sin(t*1.5)*3;
+  drawVox(sc,W/2,oy,pulse);
   hud(W,H,pulse);
   requestAnimationFrame(frame);
 }
+
 function px(e){return (e.touches&&e.touches[0]?e.touches[0].clientX:e.clientX)}
 c.addEventListener("pointerdown",function(e){drag=px(e)});
 window.addEventListener("pointermove",function(e){if(drag===null)return;var x=px(e);yawV=(x-drag)*.00035;yaw+=(x-drag)*.006;drag=x});
