@@ -117,7 +117,7 @@ function CollectionParentPanel() {
     <section className="mt-8 border border-border p-6">
       <div className="flex flex-wrap items-center gap-3">
         <h2 className="display text-xl">COLLECTION PARENT</h2>
-        <DataBadge kind={d?.ready ? "live" : "pending"} note={d?.ready ? "CLAIMED ON EVERY MINT" : "SETUP NEEDED"} />
+        <DataBadge kind={d?.ready ? "live" : "soon"} note={d?.ready ? "CLAIMED ON EVERY MINT" : "SETUP NEEDED"} />
       </div>
       <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
         Every creature is inscribed as a child of two parents: the bitmap it patrols, and one master collection
