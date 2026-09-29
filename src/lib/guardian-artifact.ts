@@ -184,7 +184,7 @@ function hud(w,h,pulse){
   for(i=0;i<4;i++){txt(stats[i][0],pad+i*cw,h-pad-small*4,small*.85,"#87939b");
     txt(String(stats[i][1]),pad+i*cw,h-pad-small*2.5,small*1.5,"#e9eef0")}
   txt(G.ab,pad,h-pad-small*1.1,small,ACC,.7+pulse*.3);
-  txt("DNA "+G.dnaHash+"  SHIELD "+G.shield.slice(0,24)+"\\u2026",pad,h-pad*.55,small*.7,"#5d676e");
+  txt("DNA "+G.dnaHash+"  SHIELD "+G.shield.slice(0,20)+"\\u2026",pad,h-pad*.95,small*.7,"#5d676e");
   txt("DRAG TO ORBIT",w-pad-small*7.6,pad+small*1.4,small*.8,"#5d676e",.7);
 }
 
