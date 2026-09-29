@@ -60,6 +60,7 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
       setBusy(false);
       void qc.invalidateQueries({ queryKey: ["shord", "own-pool"] });
       void qc.invalidateQueries({ queryKey: ["shord", "relayer"] });
+      void qc.invalidateQueries({ queryKey: ["shord", "pending-deposits"] });
     }
   }
 
