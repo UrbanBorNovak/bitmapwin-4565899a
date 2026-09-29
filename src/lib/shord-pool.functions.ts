@@ -12,6 +12,11 @@ export const shordPoolInfo = createServerFn({ method: "GET" }).handler(async () 
   return { poolAddress: poolAddress(), leaves: data ?? [], spent: count ?? 0 };
 });
 
+/** Guardians waiting at the pool address that have not been sealed into the tree yet. */
+export const shordPendingDeposits = createServerFn({ method: "GET" }).handler(
+  async () => (await import("@/lib/shord-pool.server")).pendingDeposits(),
+);
+
 export const shordPrepareDeposit = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z.object({ inscriptionId, commitment: field, holderAddress: z.string().min(20).max(100), signature: z.string().min(8).max(2000) }).parse(d),
