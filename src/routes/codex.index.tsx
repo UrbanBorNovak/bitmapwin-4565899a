@@ -26,6 +26,7 @@ function CodexHub() {
 
   const explore = [
     { to: "/codex/bestiary" as const, title: "BESTIARY", note: `${creatures} creatures · health, reward & temper` },
+    { to: "/codex/morphs" as const, title: "MORPH LAB", note: "A new creature design grown from every BITMAP" },
     { to: "/play/atlas" as const, title: "LIVING CARDS", note: `${ATLAS_POOL.length} Atlas cards to discover` },
     { to: "/map" as const, title: "BITMAP LAND", note: "840,000 BITMAPs, one per block" },
     { to: "/builds" as const, title: "BUILDS", note: builds != null ? `${formatCount(builds)} builds raised` : "Everything raised on the land" },
