@@ -230,7 +230,15 @@ function frame(now){
   if(!EXT)EXT=extents();
   var sc=fitScale();
   var oy=H*.46-((EXT.ymin+EXT.ymax)/2)*sc+Math.sin(t*1.5)*3;
+  var baseY=oy+EXT.ymax*sc, rad=EXT.ax*sc*.95;
+  g.save();
+  g.translate(W/2,baseY+rad*.1);g.scale(1,.26);
+  var gr=g.createRadialGradient(0,0,0,0,0,rad);
+  gr.addColorStop(0,ACC);gr.addColorStop(.45,mix(ACC,"#000",.7));gr.addColorStop(1,"rgba(0,0,0,0)");
+  g.globalAlpha=.32+pulse*.12;g.fillStyle=gr;g.beginPath();g.arc(0,0,rad,0,Math.PI*2);g.fill();
+  g.restore();
   drawVox(sc,W/2,oy,pulse);
+
   hud(W,H,pulse);
   requestAnimationFrame(frame);
 }
