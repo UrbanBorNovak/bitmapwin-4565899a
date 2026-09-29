@@ -15,7 +15,7 @@ import {
   savePoolNotes,
   type PoolNoteRecord,
 } from "@/lib/shord/deposit";
-import { shordConfirmDeposit, shordPoolInfo, shordPrepareDeposit, shordSubmitSpend, shordWithdraw, shordRelayerInfo, shordRelayQueued } from "@/lib/shord-pool.functions";
+import { shordConfirmDeposit, shordPoolInfo, shordPrepareDeposit, shordSubmitSpend, shordWithdraw, shordRelayerInfo, shordRelayQueued, shordPendingDeposits } from "@/lib/shord-pool.functions";
 
 const btn = "label border px-3 py-2 disabled:opacity-40";
 
@@ -30,6 +30,8 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
   const relayerInfo = useServerFn(shordRelayerInfo);
   const relayRetry = useServerFn(shordRelayQueued);
   const relayer = useQuery({ queryKey: ["shord", "relayer"], queryFn: () => relayerInfo(), refetchInterval: 60_000 });
+  const pendingFn = useServerFn(shordPendingDeposits);
+  const pending = useQuery({ queryKey: ["shord", "pending-deposits"], queryFn: () => pendingFn(), refetchInterval: 60_000 });
   const [exitTo, setExitTo] = useState<Record<string, string>>({});
   const pool = useQuery({ queryKey: ["shord", "own-pool"], queryFn: () => info(), refetchInterval: 60_000 });
 
@@ -58,6 +60,7 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
       setBusy(false);
       void qc.invalidateQueries({ queryKey: ["shord", "own-pool"] });
       void qc.invalidateQueries({ queryKey: ["shord", "relayer"] });
+      void qc.invalidateQueries({ queryKey: ["shord", "pending-deposits"] });
     }
   }
 
@@ -80,14 +83,23 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
       setMsg(`✓ SIGNED. NOW SEND THE GUARDIAN FROM YOUR WALLET TO ${res.poolAddress}, THEN PRESS CHECK DEPOSIT.`);
     });
 
-  const checkDeposit = (n: PoolNoteRecord) =>
+
+  /** Seals any Guardian already sitting at the pool address, including direct-to-shield mints. */
+  const sealAtPool = (inscriptionId: string) =>
     run("CHECKING THE POOL ADDRESS…", async () => {
-      const res = await confirm({ data: { inscriptionId: n.inscriptionId } });
+      const id = inscriptionId.trim().toLowerCase();
+      const res = await confirm({ data: { inscriptionId: id } });
       if (!res.ok) throw new Error(res.reason);
       if ("waiting" in res) return setMsg(res.waiting);
-      if (res.commitment !== n.commitment) throw new Error("THE POOL SHIELDED A DIFFERENT NOTE — THIS DEVICE'S DEPOSIT WAS REPLACED");
-      persist(loadPoolNotes().map((x) => (x.commitment === n.commitment ? { ...x, status: "shielded", idx: res.idx } : x)));
-      setMsg(`✓ GUARDIAN SHIELDED AS POOL NOTE #${res.idx}`);
+      const mine = loadPoolNotes().find((x) => x.commitment === res.commitment);
+      if (mine) {
+        persist(loadPoolNotes().map((x) => (x.commitment === res.commitment ? { ...x, status: "shielded", idx: res.idx } : x)));
+        setMsg(`✓ GUARDIAN SHIELDED AS POOL NOTE #${res.idx}`);
+        return;
+      }
+      setMsg(
+        `✓ SEALED AS POOL NOTE #${res.idx}. THIS BROWSER DOES NOT HOLD THAT NOTE'S KEY, SO IT CANNOT MOVE IT — OPEN THE VAULT ON THE DEVICE THAT MINTED IT.`,
+      );
     });
 
   const sendPrivately = (n: PoolNoteRecord) =>
@@ -195,7 +207,31 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
           className="min-w-[280px] flex-1 border border-border bg-background px-3 py-2 font-mono text-xs" />
         <button type="button" disabled={busy || !/^[0-9a-f]{64}i\d+$/i.test(inscription.trim())} onClick={startDeposit}
           className={`${btn} border-bitcoin text-bitcoin`}>SIGN DEPOSIT</button>
+        <button type="button" disabled={busy || !/^[0-9a-f]{64}i\d+$/i.test(inscription.trim())} onClick={() => sealAtPool(inscription)}
+          className={`${btn} border-signal text-signal`}>CHECK DEPOSIT</button>
       </div>
+      <p className="label mt-1 text-muted-foreground">
+        SIGN DEPOSIT IS FOR A GUARDIAN IN YOUR OWN WALLET. A DIRECT-TO-SHIELD MINT IS ALREADY AT THE POOL — JUST PRESS CHECK DEPOSIT.
+      </p>
+
+      {pending.data?.length ? (
+        <div className="mt-4 border border-signal/40 p-3">
+          <p className="label text-signal">◌ REGISTERED AT THE POOL · NOT SEALED YET</p>
+          <ul className="mt-2 space-y-2">
+            {pending.data.map((p) => (
+              <li key={p.commitment} className="flex flex-wrap items-center gap-2 font-mono text-xs">
+                <span className="break-all text-muted-foreground">
+                  {p.direct ? "DIRECT MINT · " : ""}
+                  {p.inscriptionId}
+                </span>
+                <button type="button" disabled={busy} onClick={() => sealAtPool(p.inscriptionId)}
+                  className={`${btn} border-signal text-signal`}>CHECK DEPOSIT</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
 
       {notes.length ? (
         <ul className="mt-4 space-y-2">
@@ -206,7 +242,7 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
               </p>
               <p className="mt-1 break-all text-muted-foreground">{n.inscriptionId}</p>
               {n.status === "awaiting" ? (
-                <button type="button" disabled={busy} onClick={() => checkDeposit(n)} className={`${btn} mt-2 border-signal text-signal`}>CHECK DEPOSIT</button>
+                <button type="button" disabled={busy} onClick={() => sealAtPool(n.inscriptionId)} className={`${btn} mt-2 border-signal text-signal`}>CHECK DEPOSIT</button>
               ) : n.status === "shielded" ? (
                 <div className="mt-2 flex flex-wrap gap-2">
                   <input value={sendTo[n.commitment] ?? ""} onChange={(e) => setSendTo({ ...sendTo, [n.commitment]: e.target.value })}

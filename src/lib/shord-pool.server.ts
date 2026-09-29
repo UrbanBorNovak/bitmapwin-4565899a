@@ -34,10 +34,48 @@ export function poolAddress(): string {
 
 type OrdInscription = { address?: string; satpoint?: string; content_type?: string };
 
+/**
+ * Where a first-sat inscription sits, read straight from Bitcoin. Used when
+ * ordinals.com's JSON API is unavailable; only valid while the reveal output
+ * is still unspent, which is the case for a Guardian sitting in the pool.
+ */
+async function readInscriptionFromChain(id: string): Promise<OrdInscription | null> {
+  const m = /^([0-9a-f]{64})i(\d+)$/i.exec(id.trim());
+  if (!m || m[2] !== "0") return null;
+  const txid = m[1]!.toLowerCase();
+  for (const host of ["https://mempool.space/api", "https://blockstream.info/api"]) {
+    try {
+      const txRes = await fetch(`${host}/tx/${txid}`, { headers: { "User-Agent": UA } });
+      if (!txRes.ok) continue;
+      const tx = (await txRes.json()) as { vout?: { scriptpubkey_address?: string }[] };
+      const address = tx.vout?.[0]?.scriptpubkey_address;
+      if (!address) continue;
+      const outRes = await fetch(`${host}/tx/${txid}/outspend/0`, { headers: { "User-Agent": UA } });
+      if (!outRes.ok) continue;
+      const out = (await outRes.json()) as { spent?: boolean };
+      if (out.spent) return null;
+      return { address, satpoint: `${txid}:0:0` };
+    } catch {
+      /* next host */
+    }
+  }
+  return null;
+}
+
 async function readInscription(id: string): Promise<OrdInscription | null> {
-  const res = await fetch(`${ORD}/inscription/${id}`, { headers: { Accept: "application/json", "User-Agent": UA } });
-  if (!res.ok) return null;
-  return (await res.json()) as OrdInscription;
+  try {
+    const res = await fetch(`${ORD}/inscription/${id}`, { headers: { Accept: "application/json", "User-Agent": UA } });
+    if (res.ok) {
+      const body = await res.text();
+      if (body.startsWith("{")) {
+        const json = JSON.parse(body) as OrdInscription;
+        if (json.address) return json;
+      }
+    }
+  } catch {
+    /* fall through to the chain read */
+  }
+  return readInscriptionFromChain(id);
 }
 
 async function isGuardianArtifact(id: string): Promise<boolean> {
@@ -84,6 +122,22 @@ async function appendLeaf(row: { commitment: string; kind: "deposit" | "transfer
 }
 
 export type PoolResult<T> = ({ ok: true } & T) | { ok: false; reason: string };
+
+/** Guardians registered for the pool that have not been sealed into the tree yet. */
+export async function pendingDeposits(): Promise<{ inscriptionId: string; commitment: string; direct: boolean }[]> {
+  const db = await admin();
+  const { data } = await db
+    .from("shord_pool_deposits")
+    .select("inscription_id, commitment, signature")
+    .eq("status", "awaiting")
+    .order("created_at", { ascending: false })
+    .limit(50);
+  return (data ?? []).map((d) => ({
+    inscriptionId: d.inscription_id,
+    commitment: d.commitment,
+    direct: (d.signature ?? "").startsWith("direct-mint:"),
+  }));
+}
 
 export async function prepareDeposit(input: {
   inscriptionId: string;
