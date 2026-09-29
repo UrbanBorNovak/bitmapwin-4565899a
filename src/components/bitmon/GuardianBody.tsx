@@ -231,6 +231,8 @@ export const GuardianBody = memo(function GuardianBody({ species, rarity, body, 
     <group ref={root} raycast={noRaycast}>
       <group ref={motion}>{creature}</group>
       <RarityRegalia rarity={rarity} accent={accent} u={u} glow={glow} />
+      <EnergyAura rarity={rarity} accent={accent} u={u} glow={glow} />
     </group>
   );
+
 });
