@@ -58,6 +58,7 @@ export function ShadowInscriber(props: {
         const done = { ...job, revealTxid };
         saveJob(done);
         setJob(done);
+        await props.onRevealed?.(revealTxid, done);
         toast.success("ARTIFACT INSCRIBED — WAITING FOR A MINER");
       } catch (e) {
         toast.error((e as Error).message);
