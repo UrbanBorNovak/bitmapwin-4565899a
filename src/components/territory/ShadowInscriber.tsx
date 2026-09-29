@@ -27,12 +27,27 @@ import {
  * `<height>.bitmap` and the BITMAPWIN master collection inscription. Both are
  * spent as inputs and returned to their holders in the same transaction.
  */
+export type ArtifactVariant = {
+  /** Stable key used for the picker. */
+  key: string;
+  /** Short label shown on the picker button. */
+  label: string;
+  /** Inscription content type, e.g. `text/html;charset=utf-8`. */
+  contentType: string;
+  /** The artifact source itself, inscribed as UTF-8 text. */
+  source: string;
+  /** One line explaining what this form does in a viewer. */
+  note?: string;
+};
+
 export function ShadowInscriber(props: {
   slug: string;
   height: number;
   index: number;
   digest: string;
   artifactSvg?: string;
+  /** Two or more forms of the same artifact; the holder picks one before paying. */
+  artifactVariants?: ArtifactVariant[];
   artifactLabel?: string;
   actionLabel?: string;
   description?: string;
@@ -50,13 +65,20 @@ export function ShadowInscriber(props: {
   const [file, setFile] = useState<{ type: string; bytes: Uint8Array; url: string } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [parentNotes, setParentNotes] = useState<string[]>([]);
+  const [variantKey, setVariantKey] = useState<string | null>(null);
   const resolveParents = useServerFn(mintParentsFn);
   const signCollection = useServerFn(signCollectionParentFn);
 
   useEffect(() => setJob(loadJob(props.digest)), [props.digest]);
 
+  const variants = props.artifactVariants ?? [];
+  const variant = variants.find((v) => v.key === variantKey) ?? variants[0] ?? null;
+
   const svg = useMemo(() => props.artifactSvg ?? passArtifactSvg(props), [props.artifactSvg, props.digest, props.height, props.index, props.slug]);
+  const artifactSource = variant?.source ?? svg;
+  const artifactType = variant?.contentType ?? "image/svg+xml";
   const defaultUrl = useMemo(() => `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`, [svg]);
+
 
 
   // Watch for the commit payment, then reveal automatically.
