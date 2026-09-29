@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ShadowInscriber } from "@/components/territory/ShadowInscriber";
+import { ShadowInscriber, type ArtifactVariant } from "@/components/territory/ShadowInscriber";
 import { createKeys, loadKeys, type ShordKeys } from "@/lib/shord/keys";
 import { assetIdFromInscription, poolNote, randomField } from "@/lib/shord/pool";
 import { loadPoolNotes, savePoolNotes } from "@/lib/shord/deposit";
@@ -92,6 +92,8 @@ export function ShieldedGuardianMint({
         index={0}
         digest={`${digest}-shielded`}
         artifactSvg={artifactSvg}
+        {...(artifactVariants ? { artifactVariants } : {})}
+
         artifactLabel="SHIELDED GUARDIAN · DIRECT TO POOL"
         actionLabel="◈ INSCRIBE INTO THE SHIELDED POOL"
         description="YOUR WALLET PAYS THE MINER COST ONCE. THE GUARDIAN IS INSCRIBED TO THE POOL ADDRESS, NOT TO YOUR WALLET, AND ONLY THIS DEVICE'S SHIELDED KEY CAN MOVE IT AFTERWARDS."
