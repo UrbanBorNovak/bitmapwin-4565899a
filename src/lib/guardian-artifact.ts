@@ -209,7 +209,7 @@ function frame(now){
   if(!drag){yaw+=.0045+yawV;yawV*=.92}
   g.clearRect(0,0,W,H);
   backdrop(W,H,t);
-  var sc=Math.min(W,H)/(G.sh==="wyrm"?46:30);
+  var sc=fitScale();
   drawVox(sc,W/2,H*.68+Math.sin(t*1.5)*3,pulse);
   hud(W,H,pulse);
   requestAnimationFrame(frame);
