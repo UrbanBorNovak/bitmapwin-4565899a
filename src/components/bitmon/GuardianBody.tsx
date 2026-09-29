@@ -120,7 +120,20 @@ export const GuardianBody = memo(function GuardianBody({ species, rarity, body, 
     if (motion.current) {
       motion.current.rotation.y = Math.sin(t * 0.72) * 0.055;
       motion.current.position.y = (shape === "wisp" ? Math.sin(t * 1.8) * 0.08 : Math.sin(t * 1.4) * 0.018) * u;
+      // Breathing light: every lit plate, eye and rune pulses around its own base level.
+      const pulse = 0.72 + (Math.sin(t * 2.1) + 1) * 0.3;
+      motion.current.traverse((obj) => {
+        const mesh = obj as THREE.Mesh;
+        const mat = mesh.material as THREE.MeshStandardMaterial | undefined;
+        if (!mat || !("emissiveIntensity" in mat)) return;
+        if (mesh.userData.glowBase === undefined) {
+          if (mat.emissiveIntensity <= 0.001) return;
+          mesh.userData.glowBase = mat.emissiveIntensity;
+        }
+        mat.emissiveIntensity = (mesh.userData.glowBase as number) * pulse;
+      });
     }
+
   });
 
   const eye = (position: Vec3, scale: Vec3 = [0.055 * u, 0.055 * u, 0.035 * u]) => (
