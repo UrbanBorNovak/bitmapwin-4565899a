@@ -83,15 +83,6 @@ export function PoolPanel({ keys }: { keys: ShordKeys | null }) {
       setMsg(`✓ SIGNED. NOW SEND THE GUARDIAN FROM YOUR WALLET TO ${res.poolAddress}, THEN PRESS CHECK DEPOSIT.`);
     });
 
-  const checkDeposit = (n: PoolNoteRecord) =>
-    run("CHECKING THE POOL ADDRESS…", async () => {
-      const res = await confirm({ data: { inscriptionId: n.inscriptionId } });
-      if (!res.ok) throw new Error(res.reason);
-      if ("waiting" in res) return setMsg(res.waiting);
-      if (res.commitment !== n.commitment) throw new Error("THE POOL SHIELDED A DIFFERENT NOTE — THIS DEVICE'S DEPOSIT WAS REPLACED");
-      persist(loadPoolNotes().map((x) => (x.commitment === n.commitment ? { ...x, status: "shielded", idx: res.idx } : x)));
-      setMsg(`✓ GUARDIAN SHIELDED AS POOL NOTE #${res.idx}`);
-    });
 
   /** Seals any Guardian already sitting at the pool address, including direct-to-shield mints. */
   const sealAtPool = (inscriptionId: string) =>
