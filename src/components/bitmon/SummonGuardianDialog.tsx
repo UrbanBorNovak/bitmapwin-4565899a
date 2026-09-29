@@ -122,6 +122,26 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
   const summonTxid = already?.txid ?? (celebrate ? order?.txid : null);
   const guardianArtifact = d && summonTxid ? guardianArtifactSvg(d, summonTxid) : null;
   const guardianDigest = d && summonTxid ? guardianShieldDigest(d, summonTxid) : null;
+  const artifactVariants: ArtifactVariant[] | null =
+    d && summonTxid
+      ? [
+          {
+            key: "live",
+            label: "◆ LIVE 3D ARTIFACT",
+            contentType: "text/html;charset=utf-8",
+            source: guardianArtifactHtml(d, summonTxid),
+            note: "A LIVING VOXEL GUARDIAN YOU CAN SPIN, DRAWN BY ITS OWN CODE AND ON-CHAIN NOISE LIBRARY",
+          },
+          {
+            key: "holo",
+            label: "◇ HOLOGRAM CARD",
+            contentType: "image/svg+xml",
+            source: guardianHoloCardSvg(d, summonTxid),
+            note: "A STILL HOLOGRAPHIC CARD THAT SHOWS UP EVERYWHERE, EVEN IN BASIC VIEWERS",
+          },
+        ]
+      : null;
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
