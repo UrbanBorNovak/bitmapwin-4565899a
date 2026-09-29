@@ -11,6 +11,7 @@ import { GuardianBody } from "@/components/bitmon/GuardianBody";
 import { ShadowInscriber, type ArtifactVariant } from "@/components/territory/ShadowInscriber";
 import { ShieldedGuardianMint } from "@/components/bitmon/ShieldedGuardianMint";
 import { RARITY_TONE, bip21, guardianArtifactSvg, guardianLevel, guardianShieldDigest, GUARDIAN_PRICE_SATS, type GuardianDna } from "@/lib/bitmon";
+import { morphFromDna } from "@/lib/creature-morph";
 import { guardianArtifactHtml, guardianHoloCardSvg } from "@/lib/guardian-artifact";
 
 import { guardianDnaQuery, guardianQuery } from "@/lib/bitmon-queries";
@@ -18,7 +19,7 @@ import { checkSummonOrderFn, createSummonOrderFn, resumeSummonOrderFn } from "@/
 import type { SummonOrder } from "@/lib/bitmon.server";
 import { playSfx } from "@/lib/world-audio";
 
-export function GuardianTurntable({ dna, className = "h-56" }: { dna: Pick<GuardianDna, "species" | "rarity" | "body" | "accent">; className?: string }) {
+export function GuardianTurntable({ dna, className = "h-56" }: { dna: Pick<GuardianDna, "species" | "rarity" | "body" | "accent"> & { height?: number }; className?: string }) {
   return (
     <div className={`${className} w-full border border-border bg-background`}>
       <ClientOnly fallback={<div className="grid size-full place-items-center font-mono text-[10px] text-muted-foreground">LOADING…</div>}>
@@ -27,7 +28,7 @@ export function GuardianTurntable({ dna, className = "h-56" }: { dna: Pick<Guard
           <directionalLight position={[3, 5, 2]} intensity={1.4} />
           <pointLight position={[0, 1, 2]} intensity={0.6} color={dna.accent} />
           <group position={[0, -0.8, 0]}>
-            <GuardianBody species={dna.species} rarity={dna.rarity} body={dna.body} accent={dna.accent} />
+            <GuardianBody species={dna.species} rarity={dna.rarity} body={dna.body} accent={dna.accent} height={dna.height} />
             <mesh rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[1.2, 32]} /><meshStandardMaterial color="#111" /></mesh>
           </group>
           <OrbitControls enablePan={false} autoRotate autoRotateSpeed={1.6} minDistance={2} maxDistance={6} />
@@ -166,7 +167,8 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
             <div className="space-y-3">
               <div>
                 <p className={`font-mono text-[11px] ${RARITY_TONE[d.rarity]}`}>{d.rarity} · ERA {d.epoch}</p>
-                <p className="font-display text-2xl text-foreground">{d.species}</p>
+                <p className="font-display text-2xl text-foreground">{morphFromDna(d).name}</p>
+                <p className="font-mono text-[10px] text-muted-foreground">{d.species} LINE · {morphFromDna(d).plan} · {morphFromDna(d).code}</p>
                 <p className="font-mono text-[11px] text-signal">ABILITY · {d.ability}</p>
               </div>
               <div className="grid grid-cols-4 gap-1.5">

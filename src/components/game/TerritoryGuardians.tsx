@@ -59,7 +59,7 @@ const Guardian = memo(function Guardian({ w, unit, pose }: { w: Walker; unit: nu
   });
   return (
     <group ref={ref}>
-      <GuardianBody species={w.g.species} rarity={w.g.rarity} body={w.g.body} accent={w.g.accent} unit={unit * 1.6} />
+      <GuardianBody species={w.g.species} rarity={w.g.rarity} body={w.g.body} accent={w.g.accent} unit={unit * 1.6} height={w.g.height} />
       <SafeHtml position={[0, unit * 3.2, 0]} center distanceFactor={unit * 40} style={{ pointerEvents: "none" }}>
         <div className="whitespace-nowrap border border-bitcoin/60 bg-background/80 px-1.5 py-0.5 font-mono text-[9px] text-bitcoin">
           {w.g.species} · LV {w.g.level} · {w.g.height}

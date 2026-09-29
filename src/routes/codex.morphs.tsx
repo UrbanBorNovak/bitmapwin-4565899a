@@ -61,7 +61,7 @@ function MorphLab() {
       <p className="label text-signal">BITMAPWIN / CODEX / MORPH LAB</p>
       <h1 className="display mt-2 text-4xl md:text-5xl">A NEW CREATURE. <span className="text-bitcoin">EVERY BITMAP.</span></h1>
       <p className="mt-3 max-w-2xl text-muted-foreground">
-        Beyond the eight Guardian species: each block's hash picks a body plan, limbs, wings, horns, pattern and colours; busier blocks grow longer bodies and bigger blocks grow bulkier ones. The same BITMAP always grows the same creature.
+        Every Guardian in the collection wears this design. Beyond the eight species lines: each block's hash picks a body plan, limbs, wings, horns, pattern and colours; busier blocks grow longer bodies and bigger blocks grow bulkier ones. The same BITMAP always grows the same creature.
       </p>
 
       <form className="mt-6 flex flex-wrap items-center gap-2" onSubmit={(e) => { e.preventDefault(); go(Number(input)); }}>
@@ -92,6 +92,7 @@ function MorphLab() {
               <dl className="mt-4 grid grid-cols-2 gap-y-1 font-mono text-xs">
                 {rows.flatMap(([k, v]) => [<dt key={`${k}k`} className="text-muted-foreground">{k}</dt>, <dd key={`${k}v`} className="text-right text-signal">{v}</dd>])}
               </dl>
+              <Link to="/mint" search={{ height: m.height }} className="btn-term mt-4 mr-2 inline-block">MINT SHIELDED</Link>
               <Link to="/bitmap/$block" params={{ block: String(m.height) }} className="btn-term-ghost mt-4 inline-block">VIEW {m.height}.BITMAP</Link>
             </>
           )}

@@ -24,7 +24,7 @@ export function CreatureModel3D({
 }: {
   inscription?: string | undefined;
   kind?: CritterKind | undefined;
-  guardian?: { species: GuardianSpecies; rarity: GuardianRarity; body: string; accent: string } | undefined;
+  guardian?: { species: GuardianSpecies; rarity: GuardianRarity; body: string; accent: string; height?: number } | undefined;
   yaw?: number | undefined;
   label: string;
 }) {
@@ -47,7 +47,7 @@ export function CreatureModel3D({
             <Bounds fit clip observe margin={1.3}>
               <Center rotation-y={0.6}>
                 {guardian ? (
-                  <GuardianBody species={guardian.species} rarity={guardian.rarity} body={guardian.body} accent={guardian.accent} unit={1.4} />
+                  <GuardianBody species={guardian.species} rarity={guardian.rarity} body={guardian.body} accent={guardian.accent} unit={1.4} height={guardian.height} />
                 ) : inscription ? (
                   <InscribedModel url={contentUrl(inscription)} size={2} yaw={yaw} />
                 ) : kind ? (

@@ -47,6 +47,7 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/builds", label: "COMMUNITY BUILDS", note: "Preview and enter public BITMAP worlds" },
       { to: "/extend", label: "DEPLOY", note: "Put an experience on your land" },
       { to: "/studio", label: "STUDIO", note: "Build an Extender" },
+      { to: "/mint", label: "MINT GUARDIAN", note: "Shielded Block-DNA ordinals" },
       { to: "/extenders", label: "EXTENDERS", note: "Reusable world packages" },
     ],
   },
