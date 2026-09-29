@@ -178,7 +178,16 @@ export async function confirmDeposit(inscriptionId: string): Promise<PoolResult<
     .eq("inscription_id", inscriptionId)
     .eq("status", "awaiting")
     .maybeSingle();
-  if (!dep) return { ok: false, reason: "NO SIGNED DEPOSIT IS WAITING FOR THAT INSCRIPTION" };
+  if (!dep) {
+    // Already sealed: report the existing leaf so the browser can mark its note shielded.
+    const { data: leaf } = await db
+      .from("shord_pool_leaves")
+      .select("idx, root_after, commitment")
+      .eq("inscription_id", inscriptionId)
+      .maybeSingle();
+    if (leaf) return { ok: true, idx: leaf.idx, root: leaf.root_after, commitment: leaf.commitment };
+    return { ok: false, reason: "NO SIGNED DEPOSIT IS WAITING FOR THAT INSCRIPTION" };
+  }
   const ins = await readInscription(inscriptionId);
   if (ins?.address !== poolAddress()) return { ok: true, waiting: "THE GUARDIAN HAS NOT REACHED THE POOL ADDRESS YET" };
   const txid = ins.satpoint?.split(":")[0] ?? "";
