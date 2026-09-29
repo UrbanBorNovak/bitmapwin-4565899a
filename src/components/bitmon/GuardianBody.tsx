@@ -126,11 +126,11 @@ export const GuardianBody = memo(function GuardianBody({ species, rarity, body, 
         const mesh = obj as THREE.Mesh;
         const mat = mesh.material as THREE.MeshStandardMaterial | undefined;
         if (!mat || !("emissiveIntensity" in mat)) return;
-        if (mesh.userData.glowBase === undefined) {
+        if (mesh.userData['glowBase'] === undefined) {
           if (mat.emissiveIntensity <= 0.001) return;
-          mesh.userData.glowBase = mat.emissiveIntensity;
+          mesh.userData['glowBase'] = mat.emissiveIntensity;
         }
-        mat.emissiveIntensity = (mesh.userData.glowBase as number) * pulse;
+        mat.emissiveIntensity = (mesh.userData['glowBase'] as number) * pulse;
       });
     }
 
