@@ -22,6 +22,33 @@ export const shordConfirmDeposit = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ inscriptionId }).parse(d))
   .handler(async ({ data }) => (await import("@/lib/shord-pool.server")).confirmDeposit(data.inscriptionId));
 
+/** Reserves a direct-to-shield mint before the wallet pays the inscription. */
+export const shordReserveMint = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        commitAddress: z.string().min(14).max(100),
+        claimSecret: z.string().min(32).max(200),
+        blockHeight: z.number().int().min(0).max(10_000_000),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => (await import("@/lib/shord-pool.server")).reserveMint(data));
+
+/** Finishes a direct-to-shield mint once the inscription reveal is broadcast. */
+export const shordClaimMint = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        commitAddress: z.string().min(14).max(100),
+        claimSecret: z.string().min(32).max(200),
+        commitment: field,
+        revealTxid: z.string().regex(/^[0-9a-f]{64}$/),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => (await import("@/lib/shord-pool.server")).claimMint(data));
+
 export const shordSubmitSpend = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ proof: z.record(z.string(), z.unknown()), publicSignals: z.array(field).length(6) }).parse(d))
   .handler(async ({ data }) => (await import("@/lib/shord-pool.server")).submitSpend(data.proof, data.publicSignals));
