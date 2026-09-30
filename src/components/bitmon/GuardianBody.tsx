@@ -301,6 +301,6 @@ export function GuardianBody(props: { species: GuardianSpecies; rarity: Guardian
   const { height, ...rest } = props;
   const dna = useQuery({ ...guardianDnaQuery(height ?? 0), enabled: height != null, staleTime: Infinity });
   const morph = useMemo(() => (dna.data ? morphFromDna(dna.data) : null), [dna.data]);
-  if (height != null && morph) return <MorphBody m={morph} unit={(rest.unit ?? 1) * 1.1} />;
+  if (height != null && morph) return <MorphBody m={morph} unit={(rest.unit ?? 1) * 1.1} rarity={rest.rarity} />;
   return <SpeciesBody {...rest} />;
 }
