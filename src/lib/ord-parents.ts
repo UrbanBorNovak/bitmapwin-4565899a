@@ -42,6 +42,24 @@ async function readJson<T>(url: string): Promise<T | null> {
 
 type OrdInscription = { satpoint?: string; address?: string; value?: number };
 
+type Outspend = { spent?: boolean; txid?: string; status?: { confirmed?: boolean } };
+
+/**
+ * Tells whether the outpoint an indexer reports has already been spent by a
+ * transfer that has not been mined yet. Indexers only move a satpoint once the
+ * transfer confirms, so without this a freshly sent parent looks like it is
+ * still sitting at the old address.
+ */
+export async function pendingTransferOf(txid: string, vout: number): Promise<{ txid: string } | null> {
+  for (const host of ESPLORA) {
+    const out = await readJson<Outspend>(`${host}/tx/${txid}/outspend/${vout}`);
+    if (!out) continue;
+    if (out.spent && out.txid && out.status?.confirmed === false) return { txid: out.txid };
+    return null;
+  }
+  return null;
+}
+
 /**
  * Resolves where a parent inscription sits right now: its outpoint, value and
  * holding address. Returns null when no indexer can confirm it, so callers can
@@ -71,3 +89,4 @@ export async function fetchParentSpend(inscriptionId: string, signer: ParentSign
   if (!value || !address) return null;
   return { inscriptionId, signer, txid, vout, value, address };
 }
+

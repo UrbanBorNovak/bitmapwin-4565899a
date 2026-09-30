@@ -11,7 +11,7 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { schnorr } from "@noble/curves/secp256k1.js";
 import { p2tr, Transaction } from "@scure/btc-signer";
 import { base64, hex } from "@scure/base";
-import { fetchParentSpend, type ParentSpend } from "@/lib/ord-parents";
+import { fetchParentSpend, pendingTransferOf, type ParentSpend } from "@/lib/ord-parents";
 
 function collectionKey(): Uint8Array {
   const seed = process.env["SHORD_POOL_SEED"];
@@ -31,10 +31,18 @@ export function collectionAddress(): string {
   return collectionPayment().address;
 }
 
+/**
+ * The BITMAPWIN master collection root, inscribed and transferred to the
+ * platform collection address. An env override stays available for testing.
+ */
+const MASTER_PARENT_DEFAULT = "db491e1109b60249583f2cf0f06f7578e715fda420d7a9458e1a7750c16df163i2";
+
 export function masterParentInscriptionId(): string | null {
-  const id = (process.env["MASTER_PARENT_INSCRIPTION_ID"] ?? "").trim().toLowerCase();
+  const raw = (process.env["MASTER_PARENT_INSCRIPTION_ID"] ?? "").trim().toLowerCase();
+  const id = raw || MASTER_PARENT_DEFAULT;
   return /^[0-9a-f]{64}i\d+$/.test(id) ? id : null;
 }
+
 
 /**
  * The master collection parent, ready to be spent. Returns null (with a reason)
@@ -48,10 +56,19 @@ export async function masterParentSpend(): Promise<{ spend: ParentSpend | null; 
   const spend = await fetchParentSpend(id, "platform");
   if (!spend) return { spend: null, reason: "COULD NOT LOCATE THE MASTER COLLECTION INSCRIPTION RIGHT NOW", address };
   if (spend.address !== address) {
+    const pending = await pendingTransferOf(spend.txid, spend.vout);
+    if (pending) {
+      return {
+        spend: null,
+        reason: `THE MASTER COLLECTION INSCRIPTION IS IN TRANSIT — AWAITING 1 CONFIRMATION (TX ${pending.txid.slice(0, 12)}…)`,
+        address,
+      };
+    }
     return { spend: null, reason: "THE MASTER COLLECTION INSCRIPTION IS NOT HELD BY THE PLATFORM ADDRESS", address };
   }
   return { spend: { ...spend, tapInternalKey: hex.encode(pub) }, reason: null, address };
 }
+
 
 /**
  * Signs only the reveal inputs that spend the collection address, and only when
