@@ -31,10 +31,18 @@ export function collectionAddress(): string {
   return collectionPayment().address;
 }
 
+/**
+ * The BITMAPWIN master collection root, inscribed and transferred to the
+ * platform collection address. An env override stays available for testing.
+ */
+const MASTER_PARENT_DEFAULT = "db491e1109b60249583f2cf0f06f7578e715fda420d7a9458e1a7750c16df163i2";
+
 export function masterParentInscriptionId(): string | null {
-  const id = (process.env["MASTER_PARENT_INSCRIPTION_ID"] ?? "").trim().toLowerCase();
+  const raw = (process.env["MASTER_PARENT_INSCRIPTION_ID"] ?? "").trim().toLowerCase();
+  const id = raw || MASTER_PARENT_DEFAULT;
   return /^[0-9a-f]{64}i\d+$/.test(id) ? id : null;
 }
+
 
 /**
  * The master collection parent, ready to be spent. Returns null (with a reason)
