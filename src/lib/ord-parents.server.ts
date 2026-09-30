@@ -11,7 +11,7 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { schnorr } from "@noble/curves/secp256k1.js";
 import { p2tr, Transaction } from "@scure/btc-signer";
 import { base64, hex } from "@scure/base";
-import { fetchParentSpend, type ParentSpend } from "@/lib/ord-parents";
+import { fetchParentSpend, pendingTransferOf, type ParentSpend } from "@/lib/ord-parents";
 
 function collectionKey(): Uint8Array {
   const seed = process.env["SHORD_POOL_SEED"];
