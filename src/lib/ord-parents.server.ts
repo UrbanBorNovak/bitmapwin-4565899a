@@ -56,10 +56,19 @@ export async function masterParentSpend(): Promise<{ spend: ParentSpend | null; 
   const spend = await fetchParentSpend(id, "platform");
   if (!spend) return { spend: null, reason: "COULD NOT LOCATE THE MASTER COLLECTION INSCRIPTION RIGHT NOW", address };
   if (spend.address !== address) {
+    const pending = await pendingTransferOf(spend.txid, spend.vout);
+    if (pending) {
+      return {
+        spend: null,
+        reason: `THE MASTER COLLECTION INSCRIPTION IS IN TRANSIT — AWAITING 1 CONFIRMATION (TX ${pending.txid.slice(0, 12)}…)`,
+        address,
+      };
+    }
     return { spend: null, reason: "THE MASTER COLLECTION INSCRIPTION IS NOT HELD BY THE PLATFORM ADDRESS", address };
   }
   return { spend: { ...spend, tapInternalKey: hex.encode(pub) }, reason: null, address };
 }
+
 
 /**
  * Signs only the reveal inputs that spend the collection address, and only when
