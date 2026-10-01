@@ -330,6 +330,32 @@ export type Database = {
         }
         Relationships: []
       }
+      bitmap_storefront_listings: {
+        Row: {
+          created_at: string
+          offer_id: string
+          storefront_height: number
+        }
+        Insert: {
+          created_at?: string
+          offer_id: string
+          storefront_height: number
+        }
+        Update: {
+          created_at?: string
+          offer_id?: string
+          storefront_height?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bitmap_storefront_listings_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: true
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bitmap_view_stats: {
         Row: {
           bitmap_height: number
