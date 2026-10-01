@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { queryOptions, useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { getBlockInscriptions } from "@/lib/ordinals-scan.functions";
@@ -44,6 +44,7 @@ import { TerritoryShareCard } from "@/components/TerritoryShareCard";
 import { SummonGuardianButton } from "@/components/bitmon/SummonGuardianDialog";
 import { TerritoryChronicle } from "@/components/TerritoryChronicle";
 import { ShadowGatePanel } from "@/components/territory/ShadowGatePanel";
+import { Button } from "@/components/ui/button";
 
 import { provenanceStreamQuery } from "@/lib/provenance-stream";
 
@@ -147,12 +148,18 @@ function BitmapDetail() {
   const trades = useQuery(tradesForHeightQuery(block));
   const localHistory = useQuery(provenanceStreamQuery("all", 12, undefined, block));
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<TabId>("world");
-  useEffect(() => {
-    const read = () => { const h = window.location.hash.slice(1); if (TABS.some((t) => t.id === h)) setTab(h as TabId); };
-    read(); window.addEventListener("hashchange", read); return () => window.removeEventListener("hashchange", read);
-  }, []);
-  const selectTab = (id: TabId) => { setTab(id); history_replace(id); };
+  const tab = useBitmapTab();
+  const selectTab = (id: TabId) => {
+    history_replace(id);
+  };
+  const moveTab = (current: TabId, direction: -1 | 1) => {
+    const currentIndex = TABS.findIndex((item) => item.id === current);
+    const nextIndex = (currentIndex + direction + TABS.length) % TABS.length;
+    const next = TABS[nextIndex];
+    if (!next) return;
+    selectTab(next.id);
+    document.getElementById(`bitmap-tab-${next.id}`)?.focus();
+  };
 
   const place = atlasPlace(block);
   const regionStats = useQuery({
@@ -250,10 +257,25 @@ function BitmapDetail() {
         </div>
         <nav className="flex overflow-x-auto border-t border-border" role="tablist" aria-label="BITMAP sections">
           {TABS.map((t, i) => (
-            <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => selectTab(t.id)}
-              className={`label shrink-0 border-r border-border px-4 py-3 hover:bg-card ${tab === t.id ? "bg-card text-signal" : "hover:text-bitcoin"}`}>
+            <Button
+              key={t.id}
+              id={`bitmap-tab-${t.id}`}
+              type="button"
+              variant="ghost"
+              role="tab"
+              aria-selected={tab === t.id}
+              aria-controls={`bitmap-panel-${t.id}`}
+              tabIndex={tab === t.id ? 0 : -1}
+              onClick={() => selectTab(t.id)}
+              onKeyDown={(event) => {
+                if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+                event.preventDefault();
+                moveTab(t.id, event.key === "ArrowLeft" ? -1 : 1);
+              }}
+              className={`label h-auto shrink-0 rounded-none border-r border-border px-4 py-3 hover:bg-card ${tab === t.id ? "bg-card text-signal" : "hover:text-bitcoin"}`}
+            >
               {String(i + 1).padStart(2, "0")} · {t.label}
-            </button>
+            </Button>
           ))}
         </nav>
       </header>
@@ -274,7 +296,7 @@ function BitmapDetail() {
       </div>
 
       {tab === "world" && (
-        <div className="mt-6 space-y-6">
+        <div id="bitmap-panel-world" role="tabpanel" aria-labelledby="bitmap-tab-world" className="mt-6 space-y-6">
       <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="group rounded-lg border border-border bg-card p-6">
           <BlockMosaic height={block} txCount={stats.data?.txCount ?? scan.data?.txCount ?? null} />
@@ -450,7 +472,7 @@ function BitmapDetail() {
         </div>
       )}
       {tab === "market" && (
-        <div className="mt-6 space-y-6">
+        <div id="bitmap-panel-market" role="tabpanel" aria-labelledby="bitmap-tab-market" className="mt-6 space-y-6">
         <BitmapOrderBook height={block} />
         <BitmapStorefront height={block} />
       <BidPanel
@@ -469,7 +491,7 @@ function BitmapDetail() {
         </div>
       )}
       {tab === "facts" && (
-        <div className="mt-6 space-y-6">
+        <div id="bitmap-panel-facts" role="tabpanel" aria-labelledby="bitmap-tab-facts" className="mt-6 space-y-6">
       <section id="facts" className="mt-8 scroll-mt-20 border border-border" aria-label="Block analytics">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
           <h2 className="label">BLOCK ANALYTICS</h2>
@@ -597,7 +619,7 @@ function BitmapDetail() {
         </div>
       )}
       {tab === "chronicle" && (
-        <div className="mt-6 space-y-6">
+        <div id="bitmap-panel-chronicle" role="tabpanel" aria-labelledby="bitmap-tab-chronicle" className="mt-6 space-y-6">
       <ProvenancePanel height={block} ownerAddress={owner} />
       <TerritoryChronicle height={block} />
       <div className="mt-8 border border-border">
@@ -672,7 +694,7 @@ function BitmapDetail() {
         </div>
       )}
       {tab === "community" && (
-        <div className="mt-6 space-y-6">
+        <div id="bitmap-panel-community" role="tabpanel" aria-labelledby="bitmap-tab-community" className="mt-6 space-y-6">
       <div id="community" className="scroll-mt-20"><BitmapChat height={block} /></div>
 <ClientOnly><TerritoryDispatches height={block} /></ClientOnly>
       <div className="mt-6">
@@ -690,15 +712,41 @@ function BitmapDetail() {
 }
 
 const TABS = [
-  { id: "world", label: "LIVE WORLD" },
+  { id: "world", label: "WORLD" },
   { id: "market", label: "MARKET" },
   { id: "facts", label: "FACTS" },
   { id: "chronicle", label: "CHRONICLE" },
   { id: "community", label: "COMMUNITY" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
+
+function isTabId(value: string): value is TabId {
+  return TABS.some((tab) => tab.id === value);
+}
+
+function readBitmapTab(): TabId {
+  const hash = window.location.hash.slice(1);
+  return isTabId(hash) ? hash : "world";
+}
+
+function subscribeToBitmapTab(onChange: () => void) {
+  window.addEventListener("hashchange", onChange);
+  window.addEventListener("popstate", onChange);
+  window.addEventListener("bitmap-tab-change", onChange);
+  return () => {
+    window.removeEventListener("hashchange", onChange);
+    window.removeEventListener("popstate", onChange);
+    window.removeEventListener("bitmap-tab-change", onChange);
+  };
+}
+
+function useBitmapTab() {
+  return useSyncExternalStore(subscribeToBitmapTab, readBitmapTab, () => "world");
+}
+
 function history_replace(id: string) {
   window.history.replaceState(window.history.state, "", `#${id}`);
+  window.dispatchEvent(new Event("bitmap-tab-change"));
 }
 
 function Field({ k, v }: { k: string; v: string }) {
