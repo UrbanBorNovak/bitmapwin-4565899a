@@ -1,12 +1,18 @@
 /**
  * BLOCK PARCELS — the real transactions of a BITMAP, drawn on its own tile in
- * the Oasis. One parcel per transaction, sized by its real vbyte class, all in
- * a single instanced draw call. Only the block you stand on and the block you
- * selected are detailed; every other tile stays on the cheap ground shader.
+ * the Oasis. One parcel per transaction, sized by its real vbyte class.
+ *
+ * Canonical parcel metric: a parcel of class N is always N × PARCEL_UNIT wide,
+ * whatever district it sits in — a size-5 parcel on #9 has the same build
+ * envelope as a size-5 parcel on #840000. Districts are never rescaled to fit
+ * their tile; parcels that fall outside the tile window are culled instead.
+ *
+ * Streaming: a 3×3 neighbourhood around the walker is mounted, a 5×5 ring is
+ * prefetched, and packed layouts are kept in a 16-block cache.
  */
-import { memo, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as THREE from "three";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { packParcels } from "@/components/TerritoryCanvas";
@@ -15,65 +21,104 @@ import { groundY } from "@/lib/world-terrain";
 const GRID = 1_000;
 const WORLD_SIZE = 100;
 const CELL = WORLD_SIZE / GRID;
+/** Avatar stride (one BITMAP is 10 strides across). */
+const STRIDE = CELL / 10;
+/** Canonical edge of a size-1 parcel, identical in every district. */
+export const PARCEL_UNIT = CELL / 24;
+/** Canonical footprint (edge length, world units) of a parcel of a given class. */
+export const parcelFootprint = (size: number) => size * PARCEL_UNIT;
+/** Canonical footprint in avatar strides — the portable build envelope. */
+export const parcelStrides = (size: number) => parcelFootprint(size) / STRIDE;
+
 const PALETTE = ["#ffb45a", "#f7931a", "#e6810e", "#c96d08", "#a95a06"].map((c) => new THREE.Color(c));
 const noRaycast = () => {};
 const dummy = new THREE.Object3D();
+const MAX_CACHE = 16;
 
 const packCache = new Map<string, ReturnType<typeof packParcels>>();
 function cachedPack(height: number, classes: number[]) {
   const key = `${height}:${classes.length}`;
   let hit = packCache.get(key);
-  if (!hit) {
-    hit = packParcels(classes);
+  if (hit) {
+    packCache.delete(key);
     packCache.set(key, hit);
-    if (packCache.size > 12) packCache.delete(packCache.keys().next().value as string);
+    return hit;
   }
+  hit = packParcels(classes);
+  packCache.set(key, hit);
+  if (packCache.size > MAX_CACHE) packCache.delete(packCache.keys().next().value as string);
   return hit;
 }
 
 const ParcelSlab = memo(function ParcelSlab({ height }: { height: number }) {
   const { data } = useQuery(blockSizeMapQuery(height));
   const mesh = useRef<THREE.InstancedMesh>(null);
+  const group = useRef<THREE.Group>(null);
+  const grow = useRef(0);
   const packed = useMemo(
     () => (data?.classes?.length ? cachedPack(height, data.classes) : null),
     [data, height],
   );
   const cx = (height % GRID + 0.5) * CELL - WORLD_SIZE / 2;
   const cz = (Math.floor(height / GRID) + 0.5) * CELL;
-  const baseY = useMemo(() => groundY(cx, cz), [cx, cz]);
+
+  const count = useMemo(() => {
+    if (!packed) return 0;
+    const half = (packed.grid * PARCEL_UNIT) / 2;
+    const lim = CELL * 0.49;
+    return packed.parcels.filter((p) => {
+      const x = p.x * PARCEL_UNIT - half;
+      const z = p.y * PARCEL_UNIT - half;
+      const s = p.size * PARCEL_UNIT;
+      return x >= -lim && z >= -lim && x + s <= lim && z + s <= lim;
+    }).length;
+  }, [packed]);
 
   useLayoutEffect(() => {
     const target = mesh.current;
     if (!target || !packed) return;
-    const unit = (CELL * 0.94) / packed.grid;
-    const half = packed.grid / 2;
-    packed.parcels.forEach((p, i) => {
-      const lift = unit * (0.6 + p.size * 0.9);
-      dummy.position.set((p.x + p.size / 2 - half) * unit, lift / 2 + 0.0015, (p.y + p.size / 2 - half) * unit);
-      dummy.scale.set(p.size * unit * 0.86, lift, p.size * unit * 0.86);
+    const half = (packed.grid * PARCEL_UNIT) / 2;
+    const lim = CELL * 0.49;
+    let i = 0;
+    for (const p of packed.parcels) {
+      const x0 = p.x * PARCEL_UNIT - half;
+      const z0 = p.y * PARCEL_UNIT - half;
+      const s = p.size * PARCEL_UNIT;
+      if (x0 < -lim || z0 < -lim || x0 + s > lim || z0 + s > lim) continue;
+      const lx = x0 + s / 2;
+      const lz = z0 + s / 2;
+      // Seat each parcel on the dunes: sink a foundation below the local ground.
+      const ground = groundY(cx + lx, cz + lz);
+      const lift = PARCEL_UNIT * (0.5 + p.size * 0.55);
+      const sink = STRIDE * 0.6;
+      const h = lift + sink;
+      dummy.position.set(lx, ground + lift - h / 2, lz);
+      dummy.scale.set(s * 0.88, h, s * 0.88);
       dummy.updateMatrix();
       target.setMatrixAt(i, dummy.matrix);
       target.setColorAt(i, PALETTE[p.index % PALETTE.length]!);
-    });
-    target.count = packed.parcels.length;
+      i++;
+    }
+    target.count = i;
     target.instanceMatrix.needsUpdate = true;
     if (target.instanceColor) target.instanceColor.needsUpdate = true;
     target.computeBoundingSphere();
-  }, [packed]);
+    grow.current = 0;
+  }, [packed, cx, cz]);
 
-  if (!packed) return null;
+  // Rise out of the ground instead of popping in.
+  useFrame((_, raw) => {
+    const g = group.current;
+    if (!g || grow.current >= 1) return;
+    grow.current = Math.min(1, grow.current + Math.min(raw, 0.05) * 2.5);
+    const e = 1 - Math.pow(1 - grow.current, 3);
+    g.scale.y = Math.max(0.001, e);
+  });
+
+  if (!packed || count === 0) return null;
   return (
-    <group position={[cx, baseY, cz]}>
-      <mesh position={[0, 0.0008, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={noRaycast}>
-        <planeGeometry args={[CELL * 0.98, CELL * 0.98]} />
-        <meshStandardMaterial color="#201103" roughness={1} />
-      </mesh>
-      <instancedMesh
-        key={packed.parcels.length}
-        ref={mesh}
-        args={[undefined, undefined, packed.parcels.length]}
-        raycast={noRaycast}
-      >
+    <group ref={group} position={[cx, 0, cz]} scale={[1, 0.001, 1]}>
+      <instancedMesh key={count} ref={mesh} args={[undefined, undefined, count]} raycast={noRaycast}>
         <boxGeometry args={[1, 1, 1]} />
         <meshStandardMaterial roughness={0.6} metalness={0.1} />
       </instancedMesh>
@@ -81,7 +126,21 @@ const ParcelSlab = memo(function ParcelSlab({ height }: { height: number }) {
   );
 });
 
-/** Tracks the tile under the player and mounts detailed parcels there + on the selection. */
+function neighbourhood(center: number, radius: number) {
+  const col = center % GRID;
+  const row = Math.floor(center / GRID);
+  const out: number[] = [];
+  for (let dr = -radius; dr <= radius; dr++) {
+    for (let dc = -radius; dc <= radius; dc++) {
+      const c = col + dc;
+      const r = row + dr;
+      if (c >= 0 && r >= 0 && c < GRID && r < GRID) out.push(r * GRID + c);
+    }
+  }
+  return out;
+}
+
+/** Mounts a 3×3 detailed horizon around the walker plus the selection; prefetches a 5×5 ring. */
 export function BlockParcels({
   pose,
   selectedHeight,
@@ -91,10 +150,11 @@ export function BlockParcels({
 }) {
   const [here, setHere] = useState<number | null>(null);
   const last = useRef(-1);
+  const qc = useQueryClient();
+
   useFrame(() => {
     const p = pose.current;
     if (!p) return;
-    // Hide detail when flying high above the land — the shader reads better there.
     if (p.y - groundY(p.x, p.z) > CELL * 6) {
       if (last.current !== -2) { last.current = -2; setHere(null); }
       return;
@@ -108,10 +168,19 @@ export function BlockParcels({
     }
   });
 
+  const visible = useMemo(() => (here === null ? [] : neighbourhood(here, 1)), [here]);
+
+  useEffect(() => {
+    if (here === null) return;
+    for (const h of neighbourhood(here, 2)) void qc.prefetchQuery(blockSizeMapQuery(h));
+  }, [here, qc]);
+
   return (
     <>
-      {here !== null ? <ParcelSlab height={here} /> : null}
-      {selectedHeight !== null && selectedHeight !== here ? <ParcelSlab height={selectedHeight} /> : null}
+      {visible.map((h) => <ParcelSlab key={h} height={h} />)}
+      {selectedHeight !== null && !visible.includes(selectedHeight) ? (
+        <ParcelSlab key={`sel-${selectedHeight}`} height={selectedHeight} />
+      ) : null}
     </>
   );
 }
