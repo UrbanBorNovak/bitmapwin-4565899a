@@ -15,6 +15,8 @@ import { WORLD_CELL, type PlayerState } from "@/lib/player-state";
 import { groundY } from "@/lib/world-terrain";
 
 const noRaycast = () => {};
+/** Avatar unit (one stride). */
+const DUST_U = 0.01;
 const dummy = new THREE.Object3D();
 type Seed = {
   angle: number;
@@ -34,10 +36,11 @@ function makeSeeds(count: number) {
   return Array.from({ length: count }, (_, index): Seed => ({
     angle: seeded(index, 1) * Math.PI * 2,
     radius: WORLD_CELL * (1.5 + seeded(index, 2) * 13.5),
-    height: WORLD_CELL * (0.7 + seeded(index, 3) * 9.5),
+    // Ground dust: ankle to head height above the terrain, never in the sky.
+    height: DUST_U * (0.1 + seeded(index, 3) * 1.1),
     speed: 0.18 + seeded(index, 4) * 0.62,
     phase: seeded(index, 5) * Math.PI * 2,
-    size: WORLD_CELL * (0.1 + seeded(index, 6) * 0.34),
+    size: DUST_U * (0.03 + seeded(index, 6) * 0.05),
   }));
 }
 
