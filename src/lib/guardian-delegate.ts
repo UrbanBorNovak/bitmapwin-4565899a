@@ -165,38 +165,44 @@ function blueprint(G){
   return V;
 }
 
-/* ---------- 6. painter ---------- */
+/* ---------- 6. painter: free orbit (yaw + pitch), culled, outlined voxels ---------- */
 var c=document.getElementById("c"),g=c.getContext("2d"),W=0,H=0,DPR=Math.min(2,window.devicePixelRatio||1);
 function fit(){W=c.clientWidth;H=c.clientHeight;c.width=W*DPR;c.height=H*DPR;g.setTransform(DPR,0,0,DPR,0,0)}
 window.addEventListener("resize",fit);
-var yaw=.7,yawV=0,drag=null,t0=performance.now(),VOX=null,G=null,EXT=null,STATE="LOADING",WHY="";
-function project(x,y,z,cy,sy,sc,ox,oy){var rx=x*cy-z*sy,rz=x*sy+z*cy;
-  return[ox+(rx-rz)*.866*sc,oy-(y*.92+(rx+rz)*.5)*sc,rx+rz]}
-function face(p,col,a){g.fillStyle=col;g.globalAlpha=a;g.beginPath();g.moveTo(p[0][0],p[0][1]);
-  for(var i=1;i<p.length;i++)g.lineTo(p[i][0],p[i][1]);g.closePath();g.fill();g.globalAlpha=1}
-function extents(){
-  var ax=0,ymin=1e9,ymax=-1e9,k,i;
-  for(k=0;k<12;k++){var a=k/12*Math.PI*2,cy=Math.cos(a),sy=Math.sin(a);
-    for(i=0;i<VOX.length;i++){var v=VOX[i],dx,dy,dz;
-      for(dx=-1;dx<2;dx+=2)for(dy=-1;dy<2;dy+=2)for(dz=-1;dz<2;dz+=2){
-        var p=project(v[0]+dx*v[3]/2,v[1]+dy*v[4]/2,v[2]+dz*v[5]/2,cy,sy,1,0,0);
-        if(Math.abs(p[0])>ax)ax=Math.abs(p[0]);
-        if(p[1]<ymin)ymin=p[1];if(p[1]>ymax)ymax=p[1]}}}
-  return{ax:ax,ymin:ymin,ymax:ymax}
+var yaw=.7,yawV=0,pitch=.62,pitchV=0,zoom=1,drag=null,t0=performance.now(),VOX=null,LAND=null,G=null,STATE="LOADING",WHY="";
+var MC={};function mx(a,b,k){var key=a+b+k;return MC[key]||(MC[key]=mix(a,b,k))}
+var CY,SY,CP,SP,SC,OX,OY;
+function cam(){CY=Math.cos(yaw);SY=Math.sin(yaw);CP=Math.cos(pitch);SP=Math.sin(pitch)}
+function P3(x,y,z){var rx=x*CY-z*SY,rz=x*SY+z*CY;return[OX+rx*SC,OY-(y*CP-rz*SP)*SC,rz*CP+y*SP]}
+function poly(p,col,line){g.fillStyle=col;g.beginPath();g.moveTo(p[0][0],p[0][1]);
+  for(var i=1;i<p.length;i++)g.lineTo(p[i][0],p[i][1]);g.closePath();g.fill();
+  if(line){g.strokeStyle=line;g.stroke()}}
+function cube(v,col,gl,pulse){
+  var hw=v[3]/2,hh=v[4]/2,hd=v[5]/2,x=v[0],y=v[1],z=v[2],ln=mx(col,"#000000",.6);
+  var A=function(dx,dy,dz){return P3(x+dx,y+dy,z+dz)};
+  if(gl>0){g.shadowColor=col;g.shadowBlur=14*gl*(1+pulse*.5)}else g.shadowBlur=0;
+  var sx=SY>0?hw:-hw,sz=CY>0?hd:-hd;
+  poly([A(sx,hh,-hd),A(sx,hh,hd),A(sx,-hh,hd),A(sx,-hh,-hd)],mx(col,"#000000",.36),ln);
+  poly([A(-hw,hh,sz),A(hw,hh,sz),A(hw,-hh,sz),A(-hw,-hh,sz)],mx(col,"#000000",.16),ln);
+  poly([A(-hw,hh,-hd),A(hw,hh,-hd),A(hw,hh,hd),A(-hw,hh,hd)],mx(col,"#ffffff",gl>0?.3:.2),ln);
 }
-function drawVox(sc,ox,oy,pulse,stone){
-  var cy=Math.cos(yaw),sy=Math.sin(yaw),list=[],i;
-  for(i=0;i<VOX.length;i++){var v=VOX[i],d=project(v[0],v[1],v[2],cy,sy,sc,ox,oy);list.push([d[2]+v[1]*.01,v])}
-  list.sort(function(a,b){return a[0]-b[0]});
-  for(i=0;i<list.length;i++){
-    var v=list[i][1],hw=v[3]/2,hh=v[4]/2,hd=v[5]/2,x=v[0],y=v[1],z=v[2];
-    var col=stone?mix("#6b6f74","#2a2d31",(i%5)/6):v[6],gl=stone?0:v[7];
-    var P=function(dx,dy,dz){return project(x+dx,y+dy,z+dz,cy,sy,sc,ox,oy)};
-    if(gl>0){g.shadowColor=col;g.shadowBlur=16*gl*(1+pulse*.5)}else{g.shadowBlur=0}
-    face([P(-hw,hh,-hd),P(hw,hh,-hd),P(hw,hh,hd),P(-hw,hh,hd)],mix(col,"#ffffff",.22+gl*.25*pulse),1);
-    face([P(-hw,hh,hd),P(-hw,-hh,hd),P(-hw,-hh,-hd),P(-hw,hh,-hd)],mix(col,"#000000",.34),1);
-    face([P(-hw,hh,hd),P(hw,hh,hd),P(hw,-hh,hd),P(-hw,-hh,hd)],mix(col,"#000000",.14),1);
-  }
+function drawLand(pulse){
+  if(!LAND)return;var L=LAND,i,s=L.half,d=L.depth;
+  g.lineWidth=1;g.shadowBlur=0;
+  /* the slab: the bitmap's solid orange body */
+  cube([0,-d/2,0,s*2,d,s*2],"#c86d08",0,0);
+  /* one square per transaction, packed exactly like the bitmap renderer */
+  for(i=0;i<L.p.length;i++){var q=L.p[i],x0=q[0],z0=q[1],w=q[2],gp=Math.min(.18,w*.08);
+    poly([P3(x0+gp,.02,z0+gp),P3(x0+w-gp,.02,z0+gp),P3(x0+w-gp,.02,z0+w-gp),P3(x0+gp,.02,z0+w-gp)],q[3],null)}
+  g.globalAlpha=.35+pulse*.25;g.strokeStyle="#ffb03a";
+  poly([P3(-s,.03,-s),P3(s,.03,-s),P3(s,.03,s),P3(-s,.03,s)],"rgba(0,0,0,0)","#ffb03a");g.globalAlpha=1;
+}
+function drawVox(pulse,stone){
+  var list=[],i;
+  for(i=0;i<VOX.length;i++){var v=VOX[i];list.push([P3(v[0],v[1],v[2])[2],v])}
+  list.sort(function(a,b){return a[0]-b[0]});g.lineWidth=.6;
+  for(i=0;i<list.length;i++){var v=list[i][1];
+    cube(v,stone?mx("#6b6f74","#2a2d31",(i%5)/6):v[6],stone?0:v[7],pulse)}
   g.shadowBlur=0
 }
 function txt(s,x,y,size,col,a){g.globalAlpha=a===undefined?1:a;g.fillStyle=col;
@@ -207,6 +213,7 @@ function hud(w,h,pulse){
   g.strokeStyle=stone?"#6b6f74":ACC;g.globalAlpha=.5;g.lineWidth=1;
   g.strokeRect(pad*.55,pad*.55,w-pad*1.1,h-pad*1.1);g.globalAlpha=1;
   txt("BLOCK-DNA GUARDIAN"+(G?" \\u00B7 "+G.h+".BITMAP":""),pad,pad+small*1.4,small,"#f7931a");
+  if(LAND)txt(LAND.n+" PARCELS \\u00B7 ONE PER TRANSACTION",pad,pad+small*3,small*.8,"#f7931a",.75);
   if(!G){txt(STATE==="LOADING"?"READING THE CHAIN\\u2026":"STONE RELIC",pad,h/2,big,"#8a949c");
     if(WHY)txt(WHY,pad,h/2+small*2.4,small,"#d2493c");return}
   txt(G.nm,pad,h-pad-small*7.4,big,stone?"#8a949c":"#e9eef0");
@@ -217,71 +224,82 @@ function hud(w,h,pulse){
   if(stone)txt(WHY,pad,h-pad-small*1.1,small,"#d2493c");
   else txt("TRIBUTE VERIFIED ON CHAIN",pad,h-pad-small*1.1,small,ACC,.7+pulse*.3);
   txt("DNA "+G.dna+"  "+SELF.slice(0,16)+"\\u2026",pad,h-pad*.95,small*.7,"#5d676e");
-  txt("DRAG TO ORBIT",w-pad-small*7.6,pad+small*1.4,small*.8,"#5d676e",.7);
+  txt("DRAG \\u00B7 SCROLL TO ZOOM",w-pad-small*11.5,pad+small*1.4,small*.8,"#5d676e",.7);
 }
-function backdrop(w,h,t){
-  var ACC=G?G.accent:"#17313a";
+function backdrop(w,h){
   var grd=g.createRadialGradient(w/2,h*.55,10,w/2,h*.55,Math.max(w,h)*.75);
-  grd.addColorStop(0,mix("#04060a",STATE==="AWAKE"?ACC:"#3a3f45",.09));grd.addColorStop(1,"#04060a");
-  g.fillStyle=grd;g.fillRect(0,0,w,h);
-  var cols=26,i,j2,cw=w/cols;g.globalAlpha=.14;
-  for(i=0;i<cols;i++)for(j2=0;j2<10;j2++){
-    var n=Math.sin(i*.7+j2*1.9+t*.06);if(n<.42)continue;
-    g.fillStyle=STATE==="AWAKE"?ACC:"#30353b";
-    g.fillRect(i*cw,h-(j2+1)*(h*.045)-h*.02,cw*.72,h*.03*n)}
-  g.globalAlpha=1
+  grd.addColorStop(0,"#1a0f04");grd.addColorStop(1,"#04060a");g.fillStyle=grd;g.fillRect(0,0,w,h);
 }
 function frame(now){
   var t=(now-t0)/1000,pulse=(Math.sin(t*2.2)+1)/2;
-  if(!drag)
-    {yaw+=(STATE==="AWAKE"?.0045:.0012)+yawV;yawV*=.92}
-  g.clearRect(0,0,W,H);backdrop(W,H,t);
-  if(VOX){
-    if(!EXT)EXT=extents();
-    var sc=Math.min(W*.84/(EXT.ax*2||1),H*.58/((EXT.ymax-EXT.ymin)||1));
-    var oy=H*.46-((EXT.ymin+EXT.ymax)/2)*sc+(STATE==="AWAKE"?Math.sin(t*1.5)*3:0);
-    var baseY=oy+EXT.ymax*sc,rad=EXT.ax*sc*.95;
-    g.save();g.translate(W/2,baseY+rad*.1);g.scale(1,.26);
-    var gr=g.createRadialGradient(0,0,0,0,0,rad);
-    gr.addColorStop(0,STATE==="AWAKE"?G.accent:"#4a4f55");
-    gr.addColorStop(.45,"rgba(0,0,0,.6)");gr.addColorStop(1,"rgba(0,0,0,0)");
-    g.globalAlpha=.3+pulse*.1;g.fillStyle=gr;g.beginPath();g.arc(0,0,rad,0,Math.PI*2);g.fill();g.restore();
-    drawVox(sc,W/2,oy,pulse,STATE!=="AWAKE");
+  if(!drag){yaw+=(STATE==="AWAKE"?.003:.001)+yawV;yawV*=.94;pitch+=pitchV;pitchV*=.9}
+  pitch=Math.max(.1,Math.min(1.45,pitch));
+  backdrop(W,H);
+  if(VOX&&LAND){cam();
+    var span=LAND.half*3.4;SC=Math.min(W,H)/span*zoom;OX=W/2;OY=H*.56+Math.sin(pitch)*LAND.half*.1*SC;
+    drawLand(pulse);drawVox(pulse,STATE!=="AWAKE");
   }
   hud(W,H,pulse);requestAnimationFrame(frame)
 }
-function px(e){return(e.touches&&e.touches[0]?e.touches[0].clientX:e.clientX)}
-c.addEventListener("pointerdown",function(e){drag=px(e)});
-window.addEventListener("pointermove",function(e){if(drag===null)return;var x=px(e);
-  yawV=(x-drag)*.00035;yaw+=(x-drag)*.006;drag=x});
+function pt(e){return[e.clientX,e.clientY]}
+c.style.touchAction="none";
+c.addEventListener("pointerdown",function(e){drag=pt(e);yawV=pitchV=0});
+window.addEventListener("pointermove",function(e){if(!drag)return;var p=pt(e),dx=p[0]-drag[0],dy=p[1]-drag[1];
+  yaw+=dx*.008;pitch+=dy*.006;yawV=dx*.0006;pitchV=dy*.0004;drag=p});
 window.addEventListener("pointerup",function(){drag=null});
+c.addEventListener("wheel",function(e){e.preventDefault();zoom=Math.max(.5,Math.min(3,zoom*(e.deltaY>0?.9:1.1)))},{passive:false});
 
 /* ---------- 7. resolve, then render ---------- */
-/* ---------- 7a. the bitmap itself: a parcel island read from the block ---------- */
-function land(G,txs,hash){
-  /* one tile per transaction group, packed into the block's square like the
-     bitmap renderer: side = ceil(sqrt(txs)), drawn at most 9x9 so it stays light */
-  var side=Math.max(3,Math.min(9,Math.ceil(Math.sqrt(Math.max(1,txs))/6))),T=26/side,r=rng(h32(hash+":land")),L=[],x,z;
-  var TOP=mix(G.body,"#04060a",.55),EDGE=mix(G.accent,"#04060a",.35),VEIN=G.accent,ORA="#f7931a";
-  for(x=0;x<side;x++)for(z=0;z<side;z++){
-    var cx=(x-(side-1)/2)*T,cz=(z-(side-1)/2)*T,centre=Math.abs(cx)<T&&Math.abs(cz)<T;
-    var hgt=centre?2.4:1.2+r()*2.2,rim=(x===0||z===0||x===side-1||z===side-1);
-    var col=r()>.93?ORA:rim?EDGE:TOP,gl=col===ORA?.6:0;
-    L.push([cx,-hgt/2-.05,cz,T*.94,hgt,T*.94,col,gl]);
-    if(r()>.8)L.push([cx,.05,cz,T*.5,.12,T*.12,VEIN,.9]);
-  }
-  /* the genesis tile under the guardian: block 0 of the island */
-  L.push([0,.06,0,T*.9,.12,T*.9,mix(G.accent,"#ffffff",.15),.7]);
-  return L;
+/* ---------- 7a. the bitmap: mondrian layout, one parcel per transaction (bitfeed order) ---------- */
+function mondrian(sizes){
+  var wt=0,i;for(i=0;i<sizes.length;i++)wt+=sizes[i]*sizes[i];
+  var width=Math.max(1,Math.ceil(Math.sqrt(wt))),rows=[],out=[];
+  function row(y){return rows[y]}
+  function addRow(){var r={y:rows.length,s:[],m:{}};rows.push(r);return r}
+  function add(sl){if(sl.r<=0)return;var r=row(sl.y);if(!r)return;var e=r.m[sl.x];if(e){if(sl.r>e.r)e.r=sl.r;return}
+    var at=-1;for(var k=0;k<r.s.length;k++)if(r.s[k].x>sl.x){at=k;break}
+    if(at<0)r.s.push(sl);else r.s.splice(at,0,sl);r.m[sl.x]=sl}
+  function rm(sl){var r=row(sl.y);if(!r)return;delete r.m[sl.x];var k=r.s.indexOf(sl);if(k>=0)r.s.splice(k,1)}
+  function fill(sl,sw){var sq={x:sl.x,y:sl.y,r:sw},ri,k;rm(sl);
+    for(ri=sl.y;ri<sl.y+sw;ri++){var r=row(ri);
+      if(r){var col=[],ex=0,ss=r.s.slice();
+        for(k=0;k<ss.length;k++){var ts=ss[k];if(!(ts.x+ts.r<=sq.x||ts.x>=sq.x+sw)){col.push(ts);ex=Math.max(ex,Math.max(0,ts.x+ts.r-(sl.x+sl.r)))}}
+        if(sq.x+sw<width&&!r.m[sq.x+sw])add({x:sq.x+sw,y:ri,r:sl.r-sw+ex});
+        for(k=0;k<col.length;k++){col[k].r=sl.x-col[k].x;if(col[k].r<=0)rm(col[k])}
+      }else{addRow();if(sl.x>0)add({x:0,y:ri,r:sl.x});if(sq.x+sw<width)add({x:sq.x+sw,y:ri,r:width-(sq.x+sw)})}}
+    for(ri=Math.max(0,sl.y-sw);ri<sl.y;ri++){var r2=row(ri);if(!r2)continue;var s2=r2.s.slice();
+      for(k=0;k<s2.length;k++){var t2=s2[k];
+        if(t2.x<sq.x+sw&&t2.x+t2.r>sq.x&&t2.y+t2.r>=sl.y){var ow=t2.r;t2.r=sl.y-t2.y;if(t2.r<=0){rm(t2);continue}
+          var re={x:t2.x+t2.r,y:t2.y,w:ow-t2.r,h:t2.r};
+          while(re.w>0&&re.h>0){if(re.w<=re.h){add({x:re.x,y:re.y,r:re.w});re.y+=re.w;re.h-=re.w}
+            else{add({x:re.x,y:re.y,r:re.h});re.x+=re.h;re.w-=re.h}}}}}
+    return sq}
+  for(i=0;i<sizes.length;i++){var size=Math.max(1,sizes[i]),sq=null;
+    outer:for(var a=0;a<rows.length;a++){var rs=rows[a].s.slice();for(var b=0;b<rs.length;b++)if(rs[b].r>=size){sq=fill(rs[b],size);break outer}}
+    if(!sq){var nr=addRow(),s0={x:0,y:nr.y,r:width};nr.s.push(s0);nr.m[0]=s0;sq=fill(s0,size)}
+    out.push(sq)}
+  var hgt=0;for(i=0;i<out.length;i++)hgt=Math.max(hgt,out[i].y+out[i].r);
+  return{w:width,h:hgt,sq:out}
+}
+function land(txs,hash){
+  /* parcel size scales with sqrt(tx weight) like the bitmap renderer; the block's
+     per-transaction sizes are not served by recursive endpoints, so the size mix is
+     seeded from the block hash. the parcel COUNT is exact: one per transaction. */
+  var r=rng(h32(hash+":land")),sizes=[],i,n=Math.max(1,Math.min(txs,12000));
+  for(i=0;i<n;i++){var u=r();sizes.push(i===0?Math.max(2,Math.ceil(Math.sqrt(n)/12)):u<.72?1:u<.9?2:u<.97?3:u<.995?4:5+Math.floor(r()*4))}
+  var M=mondrian(sizes),side=Math.max(M.w,M.h),S=28/side,half=14,p=[];
+  var OR=["#f7931a","#f9a23c","#e8850e","#ffb03a","#d97a0a"];
+  for(i=0;i<M.sq.length;i++){var q=M.sq[i];
+    p.push([q.x*S-half+(side-M.w)*S/2,q.y*S-half+(side-M.h)*S/2,q.r*S,OR[(h32(hash+i)>>>3)%OR.length]])}
+  return{p:p,half:half,depth:2.6,n:n}
 }
 function build(height,blk){
-  var txs=(blk&&(blk.transaction_count||blk.transactions||blk.tx_count))||1200,hash=(blk&&blk.hash)||String(height);
+  var txs=(blk&&(blk.transaction_count||blk.transactions||blk.tx_count||blk.n_tx))||1,hash=(blk&&blk.hash)||String(height);
   G=dnaOf(height,hash,txs,(blk&&blk.size)||900000);
-  VOX=land(G,txs,hash).concat(blueprint(G));EXT=null;
+  LAND=land(txs,hash);VOX=blueprint(G);
 }
 function blockData(height){
   return j("/r/blockinfo/"+height).catch(function(){
-    /* older ord: fall back to the block hash alone */
     return t("/r/blockhash/"+height).then(function(h){return{hash:h.replace(/"/g,"").trim()}});
   }).catch(function(){return null});
 }
