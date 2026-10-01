@@ -3,7 +3,8 @@
 // sent straight from the visitor's browser to public relays. No server copy.
 import { SimplePool } from "nostr-tools/pool";
 import { finalizeEvent, generateSecretKey, getPublicKey, verifyEvent, type Event, type EventTemplate } from "nostr-tools/pure";
-import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
+const bytesToHex = (b: Uint8Array) => Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+const hexToBytes = (h: string) => Uint8Array.from(h.match(/../g) ?? [], (x) => parseInt(x, 16));
 
 export const RELAYS = [
   "wss://relay.damus.io",
