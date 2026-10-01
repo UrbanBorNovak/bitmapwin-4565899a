@@ -249,3 +249,98 @@ export function bssDecode(bytes: Uint8Array, source: string): BssScene | { error
     diagnostics,
   };
 }
+
+/** World columns per row on the BSS map (block = row * 1000 + column). */
+const LEGACY_COLUMNS = 1000;
+
+/**
+ * BSS 0.0.9 / 0.0.10 reader, matching the official on-chain app's reader for
+ * those versions: header is magic(2) + version(3) with no size field; opcodes
+ * 0x01 sunset image (u16 column, u16 row, 32-byte txid, u32 index),
+ * 0x02 colour (u24), 0x03 painted BITMAP list, 0x04 pixel colours (u16 n, n × u24),
+ * 0x05 palette-indexed pixels. Any other byte (including zero padding) ends the script.
+ */
+function bssDecodeLegacy(payload: Uint8Array, version: BssVersion, source: string): BssScene {
+  const diagnostics: string[] = [];
+  const resources: BssResource[] = [];
+  const objects: BssObject[] = [];
+  const painted: number[] = [];
+  const n = payload.length;
+  let i = 5;
+  let clean = true;
+  const u8 = () => payload[i++]!;
+  const u16 = () => (u8() << 8) | u8();
+  const u32 = () => ((u8() << 24) | (u8() << 16) | (u8() << 8) | u8()) >>> 0;
+
+  walk: while (i < n) {
+    const op = payload[i]!;
+    if (op < 1 || op > 5) break;
+    i += 1;
+    switch (op) {
+      case 0x01: {
+        if (i + 40 > n) { clean = false; break walk; }
+        u16(); u16(); // map column / row of the sunset billboard
+        let txid = "";
+        for (let k = 0; k < 32; k++) txid += u8().toString(16).padStart(2, "0");
+        const inscriptionId = `${txid}i${u32()}`;
+        const name = `res${resources.length}`;
+        resources.push({ name, inscriptionId });
+        for (const kind of ["billboard", "mosaic"] as const)
+          objects.push({ kind, bind: name, inscriptionId, position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: 1 });
+        break;
+      }
+      case 0x02: {
+        if (i + 3 > n) { clean = false; break walk; }
+        i += 3;
+        break;
+      }
+      case 0x03: {
+        if (i + 2 > n) { clean = false; break walk; }
+        const groups = u16();
+        for (let g = 0; g < groups; g++) {
+          if (i + 3 > n) { clean = false; break walk; }
+          const col8 = u8(), row8 = u8(), rows = u8();
+          for (let r = 0; r < 8; r++) {
+            if (!(rows & (1 << r))) continue;
+            if (i >= n) { clean = false; break walk; }
+            const cols = u8();
+            for (let c = 0; c < 8; c++)
+              if (cols & (1 << c)) painted.push((8 * row8 + r) * LEGACY_COLUMNS + (8 * col8 + c));
+          }
+        }
+        break;
+      }
+      case 0x04: {
+        if (i + 2 > n) { clean = false; break walk; }
+        const count = u16();
+        if (i + count * 3 > n) { clean = false; break walk; }
+        i += count * 3;
+        break;
+      }
+      default: {
+        diagnostics.push(`Palette pixel lists (byte ${i - 1}) are not drawn by this reader yet`);
+        clean = false;
+        break walk;
+      }
+    }
+  }
+
+  const consumed = i;
+  for (let k = consumed; k < n; k++)
+    if (payload[k] !== 0) { diagnostics.push(`Unread data after byte ${consumed}`); clean = false; break; }
+
+  return {
+    version,
+    versionLabel: versionLabel(version),
+    source,
+    blockTarget: painted[0] ?? null,
+    sunsetTarget: null,
+    resources,
+    objects,
+    declaredSize: consumed,
+    payloadSize: n,
+    consumed,
+    ok: clean && objects.length > 0,
+    diagnostics,
+  };
+}
