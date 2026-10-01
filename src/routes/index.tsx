@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { GeoTransfers } from "@/components/GeoTransfers";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ParcelCard } from "@/components/ParcelCard";
 import { HowItWorks } from "@/components/HowItWorks";
