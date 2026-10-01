@@ -168,10 +168,16 @@ export async function findCommitOutput(job: InscribeJob): Promise<{ txid: string
 /**
  * Signs the reveal and broadcasts it.
  *
- * Input 0 is the commit output, signed here by the throwaway key. Every claimed
- * parent follows as its own input and is handed straight back to its holder in
- * the matching output, so the wallet holding the bitmap and the platform key
- * holding the collection inscription each sign only their own input.
+ * Satoshi order matters. Ordinals tracks sats first-in-first-out across the
+ * whole input stream, and the miner fee is whatever is left at the very end of
+ * that stream. So every claimed parent is spent first, one input per parent,
+ * each mapped one-to-one onto the output that hands it straight back to its
+ * holder. The commit output comes last and carries both the new inscription and
+ * the entire miner fee, which means no parent sat can ever be shifted forward
+ * into the fee and lost to the coinbase.
+ *
+ * Inputs:  [ parent 0 .. parent n-1 ] [ commit ]
+ * Outputs: [ parent 0 .. parent n-1 ] [ inscription (546) ]  + fee from the tail
  */
 export async function revealJob(
   job: InscribeJob,
@@ -180,14 +186,8 @@ export async function revealJob(
 ): Promise<string> {
   const body = hex.decode(job.bodyHex);
   const parents = job.parents ?? [];
-  const pay = revealPayment(job.privHex, job.contentType, body, job.digest, parents);
+  const pay = revealPayment(job.privHex, job.contentType, body, job.digest, parents, job.delegate);
   const tx = new btc.Transaction({ customScripts });
-  tx.addInput({
-    ...pay,
-    txid: utxo.txid,
-    index: utxo.vout,
-    witnessUtxo: { script: pay.script, amount: BigInt(utxo.value) },
-  } as never);
   for (const parent of parents) {
     tx.addInput({
       txid: parent.txid,
@@ -196,15 +196,24 @@ export async function revealJob(
       ...(parent.tapInternalKey ? { tapInternalKey: hex.decode(parent.tapInternalKey) } : {}),
     });
   }
-  // Output 0 carries the new inscription; each parent returns to its own holder.
-  tx.addOutputAddress(job.receiveAddress, BigInt(utxo.value - job.revealFee), btc.NETWORK);
+  const commitIdx = parents.length;
+  tx.addInput({
+    ...pay,
+    txid: utxo.txid,
+    index: utxo.vout,
+    witnessUtxo: { script: pay.script, amount: BigInt(utxo.value) },
+  } as never);
+  // Each parent returns to its own holder, sat-for-sat; the inscription lands on
+  // the first sat of the commit input, which is exactly where this last output
+  // starts, so no pointer tag is needed.
   for (const parent of parents) tx.addOutputAddress(parent.address, BigInt(parent.value), btc.NETWORK);
-  tx.signIdx(hex.decode(job.privHex), 0, undefined, new Uint8Array(32));
+  tx.addOutputAddress(job.receiveAddress, BigInt(utxo.value - job.revealFee), btc.NETWORK);
+  tx.signIdx(hex.decode(job.privHex), commitIdx, undefined, new Uint8Array(32));
 
   let signed = tx;
   if (parents.length) {
     const indicesFor = (who: ParentSpend["signer"]) =>
-      parents.map((p, i) => ({ p, i: i + 1 })).filter((x) => x.p.signer === who).map((x) => x.i);
+      parents.map((p, i) => ({ p, i })).filter((x) => x.p.signer === who).map((x) => x.i);
     let psbt = base64.encode(tx.toPSBT());
     for (const who of ["platform", "wallet"] as const) {
       const indices = indicesFor(who);
@@ -215,6 +224,7 @@ export async function revealJob(
     }
     signed = btc.Transaction.fromPSBT(base64.decode(psbt), { allowUnknown: true, allowUnknownInputs: true, customScripts });
   }
+
 
   signed.finalize();
   const r = await esplora("/tx", { method: "POST", body: signed.hex });
