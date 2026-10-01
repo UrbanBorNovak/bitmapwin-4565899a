@@ -11,7 +11,6 @@ import { memo, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import * as THREE from "three";
 import { bssSceneQuery, bssToWorld, type BssPlacement } from "@/lib/bss";
-import { contentUrl } from "@/components/game/InscribedParts";
 import { SafeHtml } from "@/components/game/SafeHtml";
 
 const noRaycast = () => {};
@@ -69,6 +68,10 @@ const BssQuad = memo(function BssQuad({ placement }: { placement: BssPlacement }
         side={THREE.DoubleSide}
         transparent
         toneMapped={false}
+        polygonOffset={placement.kind === "mosaic"}
+        polygonOffsetFactor={-3}
+        polygonOffsetUnits={-3}
+        depthWrite={placement.kind !== "mosaic"}
       />
     </mesh>
   );
