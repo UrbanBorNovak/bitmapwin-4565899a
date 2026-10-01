@@ -5082,6 +5082,20 @@ function BitmapWorld3DInner({
               onClick={() => setCameraMode((current) => (current === "first" ? "third" : "first"))}
             />
             <HudIconButton large label="Chat (C)" icon={<MessageSquare />} onClick={() => setChatOpen(true)} />
+            <HudIconButton
+              large
+              label={muted ? "Sound off — tap to unmute" : "Sound on — tap to mute"}
+              icon={muted ? <VolumeX /> : <Volume2 />}
+              active={!muted}
+              onClick={toggleSound}
+            />
+            <HudIconButton
+              large
+              label={musicOn ? "Music on — tap to mute" : "Music off — tap to unmute"}
+              icon={musicOn ? <Music /> : <Music2 />}
+              active={musicOn}
+              onClick={toggleMusic}
+            />
             <HudIconLink label="Ranks — progression, PvP and clans" icon={<Trophy />} href="/ranks" external />
             <QualityHud touch={touchDevice} />
           </div>
