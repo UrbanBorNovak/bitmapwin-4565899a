@@ -329,6 +329,29 @@ function Marketplace() {
       )}
         </section>
       </div>
+
+      <details className="group mt-10 border border-border bg-card">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 md:p-5">
+          <div>
+            <h2 className="font-mono text-sm font-bold text-foreground">MARKET INSIGHTS</h2>
+            <p className="label mt-1">PRICE CHART · RECENT SALES · TRENDS · ORDER BOOK</p>
+          </div>
+          <span className="label text-primary group-open:hidden">SHOW +</span>
+          <span className="label hidden text-primary group-open:inline">HIDE −</span>
+        </summary>
+        <div className="space-y-6 border-t border-border p-4 md:p-5">
+          <div className="grid gap-6 xl:grid-cols-12">
+            <div className="xl:col-span-8"><BitmapMarketChart /></div>
+            <div className="space-y-6 xl:col-span-4 [&>section]:mt-0">
+              <TradeCrawlerStatus />
+              <TrendingParcels limit={3} />
+              <SalesLog limit={30} />
+            </div>
+          </div>
+          <TrendExplorer parcels={parcels} />
+          <BitmapOrderBook />
+        </div>
+      </details>
     </div>
   );
 }
