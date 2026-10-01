@@ -616,7 +616,7 @@ export function LandGrowth({
 
     // A BITMAP is ten avatar strides wide. Blades need to reach roughly half an
     // avatar to read as grass from the third-person camera instead of sub-pixel noise.
-    const blade = unit * 1.7;
+    const blade = unit * 2.8;
     write(
       grass.current,
       plan.grass,

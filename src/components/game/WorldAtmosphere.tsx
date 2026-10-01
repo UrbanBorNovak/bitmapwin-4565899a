@@ -15,6 +15,8 @@ import { WORLD_CELL, type PlayerState } from "@/lib/player-state";
 import { groundY } from "@/lib/world-terrain";
 
 const noRaycast = () => {};
+/** Avatar unit (one stride). */
+const DUST_U = 0.01;
 const dummy = new THREE.Object3D();
 type Seed = {
   angle: number;
@@ -34,10 +36,11 @@ function makeSeeds(count: number) {
   return Array.from({ length: count }, (_, index): Seed => ({
     angle: seeded(index, 1) * Math.PI * 2,
     radius: WORLD_CELL * (1.5 + seeded(index, 2) * 13.5),
-    height: WORLD_CELL * (0.7 + seeded(index, 3) * 9.5),
+    // Ground dust: ankle to head height above the terrain, never in the sky.
+    height: DUST_U * (0.1 + seeded(index, 3) * 1.1),
     speed: 0.18 + seeded(index, 4) * 0.62,
     phase: seeded(index, 5) * Math.PI * 2,
-    size: WORLD_CELL * (0.1 + seeded(index, 6) * 0.34),
+    size: DUST_U * (0.03 + seeded(index, 6) * 0.05),
   }));
 }
 
@@ -54,8 +57,8 @@ export const WorldAtmosphere = memo(function WorldAtmosphere({
   const seeds = useMemo(() => makeSeeds(count), [count]);
   const palette = useMemo(() => ({
     haze: new THREE.Color(ATLAS.haze),
-    leaf: new THREE.Color(ATLAS.leaf),
-    live: new THREE.Color(ATLAS.shallow),
+    leaf: new THREE.Color(ATLAS.sand),
+    live: new THREE.Color(ATLAS.beach),
   }), []);
 
   useEffect(() => {
@@ -84,11 +87,11 @@ export const WorldAtmosphere = memo(function WorldAtmosphere({
       const radius = seed.radius * (0.72 + Math.sin(drift * 0.41) * 0.12);
       const x = player.x + Math.cos(seed.angle + drift * 0.08) * radius;
       const z = player.z + Math.sin(seed.angle + drift * 0.08) * radius;
-      const y = groundY(x, z) + seed.height + Math.sin(drift) * WORLD_CELL * 0.22;
+      const y = groundY(x, z) + seed.height + Math.sin(drift) * DUST_U * 0.08;
       dummy.position.set(x, y, z);
       dummy.rotation.set(0, yaw, 0);
       const moteSize = seed.size * (1 + Math.sin(drift * 1.7) * 0.18);
-      dummy.scale.set(moteSize, moteSize * 1.9, moteSize);
+      dummy.scale.set(moteSize, moteSize, moteSize);
       dummy.updateMatrix();
       motes.setMatrixAt(index, dummy.matrix);
     }
