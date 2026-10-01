@@ -297,32 +297,26 @@ function WalletPage() {
 
           {tab === "land" && (
             <div className="mt-6">
-              {parcels.length > 0 && (
+              {sessionWallet?.ordinalsAddress?.toLowerCase() === address.toLowerCase() ? (
+                <MyBitmapsPanel />
+              ) : parcels.length > 0 && (
                 <section className="border border-border">
                   <header className="border-b border-border p-5">
-                    <h2 className="display text-xl">MY BITMAPS</h2>
-                    <p className="label mt-2">{parcels.length} HELD AT THIS ADDRESS — LIVE FROM THE CHAIN</p>
+                    <h2 className="display text-xl">BITMAPS AT THIS ADDRESS</h2>
+                    <p className="label mt-2">{parcels.length} HELD — LIVE FROM THE CHAIN</p>
                   </header>
-                  <ul className="divide-y divide-border">
+                  <ul className="grid gap-px bg-border sm:grid-cols-3 lg:grid-cols-5">
                     {parcels.map((p) => (
-                      <li key={p.id} className="p-5">
-                        <div className="flex flex-wrap items-baseline justify-between gap-3">
-                          <Link
-                            to="/bitmap/$block"
-                            params={{ block: String(p.bitmapHeight) }}
-                            className="display text-sm underline decoration-border underline-offset-4 hover:text-foreground"
-                          >
-                            {p.bitmapHeight}.BITMAP
-                          </Link>
-                          <span className="font-mono text-[11px] break-all text-muted-foreground">
-                            {p.outpoint} · {formatSats(p.valueSats)}
-                          </span>
-                        </div>
-                        <ListParcelForm
-                          parcel={p}
-                          sellerAddress={address}
-                          connected={connected}
-                        />
+                      <li key={p.id} className="bg-background p-3">
+                        <Link
+                          to="/bitmap/$block"
+                          params={{ block: String(p.bitmapHeight) }}
+                          className="display text-sm underline decoration-border underline-offset-4"
+                        >
+                          {p.bitmapHeight}.BITMAP
+                        </Link>
+                        <div className="font-mono text-[10px] text-muted-foreground">{formatSats(p.valueSats)}</div>
+                        <ListParcelForm parcel={p} sellerAddress={address} connected={connected} />
                       </li>
                     ))}
                   </ul>
@@ -337,14 +331,14 @@ function WalletPage() {
               >
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5">
                   <div>
-                    <h2 className="font-mono text-sm font-bold text-foreground">SELL & MANAGE</h2>
-                    <p className="label mt-1">SELLER CONSOLE · QUICK LIST · DISTRICTS</p>
+                    <h2 className="font-mono text-sm font-bold text-foreground">MORE TOOLS</h2>
+                    <p className="label mt-1">QUICK LIST · DISTRICTS</p>
                   </div>
                   <span className="label text-primary group-open:hidden">SHOW +</span>
                   <span className="label hidden text-primary group-open:inline">HIDE −</span>
                 </summary>
                 <div className="space-y-6 border-t border-border p-4 md:p-5">
-                  <MyBitmapsPanel />
+
 
                   <section className="border border-border">
                     <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border p-5">
