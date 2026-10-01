@@ -50,7 +50,7 @@ function MyLandPage() {
   }
 
   const liveHeights = live.data
-    ? [...new Set(live.data.inscriptions.map((i) => i.bitmapHeight).filter((h): h is number => h !== null))].sort((a, b) => a - b)
+    ? [...new Set(live.data.utxos.flatMap((u) => u.inscriptions.map((i) => i.bitmapHeight)).filter((h): h is number => h !== null))].sort((a, b) => a - b)
     : null;
   const usingLive = liveHeights !== null;
   const heights = liveHeights ?? held.data ?? [];
