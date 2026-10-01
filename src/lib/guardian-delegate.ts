@@ -236,7 +236,7 @@ function frame(now){
   pitch=Math.max(.1,Math.min(1.45,pitch));
   backdrop(W,H);
   if(VOX&&LAND){cam();
-    var span=LAND.half*2.6;SC=Math.min(W,H)/span*zoom;OX=W/2;OY=H*.56+Math.sin(pitch)*LAND.half*.1*SC;
+    var span=LAND.half*3.4;SC=Math.min(W,H)/span*zoom;OX=W/2;OY=H*.56+Math.sin(pitch)*LAND.half*.1*SC;
     drawLand(pulse);drawVox(pulse,STATE!=="AWAKE");
   }
   hud(W,H,pulse);requestAnimationFrame(frame)
