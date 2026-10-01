@@ -104,6 +104,7 @@ function Index() {
 
           <div className="relative order-1 flex flex-col bg-card lg:order-2 lg:col-span-9">
             <div className="pointer-events-none absolute inset-0 dot-bg" />
+            <GeoTransfers className="opacity-80" heights={recentSales.map((s) => s.bitmap_height)} />
             <BitmapConstellations className="opacity-55" />
             <div className="relative flex flex-1 flex-col justify-center p-5 py-7 md:p-8 lg:p-10">
               <div className="label text-bitcoin">BITCOIN-NATIVE WORLDS</div>
