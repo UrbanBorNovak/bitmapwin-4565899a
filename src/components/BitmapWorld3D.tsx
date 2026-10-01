@@ -1215,6 +1215,7 @@ function ModelAvatar({
       material.roughness = 0.85;
       material.envMapIntensity = 0.25;
       material.transparent = false;
+      material.depthWrite = true;
       material.alphaTest = 0.5;
       material.side = THREE.FrontSide;
       material.needsUpdate = true;
@@ -1225,7 +1226,16 @@ function ModelAvatar({
       if (!mesh.isMesh) return;
       mesh.frustumCulled = false;
       mesh.castShadow = false;
-      if (!skinTexture) return;
+      // Drawn after glass parcels and water so they never show through the body.
+      mesh.renderOrder = 6;
+      if (!skinTexture) {
+        for (const m of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
+          m.transparent = false;
+          m.depthWrite = true;
+          m.opacity = 1;
+        }
+        return;
+      }
       mesh.material = Array.isArray(mesh.material)
         ? mesh.material.map(paint)
         : paint(mesh.material);
@@ -1656,7 +1666,7 @@ const SelfAvatar = memo(function SelfAvatar({
         <circleGeometry args={[AVATAR_U * 0.3, 16]} />
         <meshBasicMaterial color={colorsForShadow} transparent opacity={0.38} depthWrite={false} />
       </mesh>
-      <AvatarSkin color={color} model={model} motion={motion} skin={character?.avatarSkin ?? null} />
+      {hp > 0 ? <AvatarSkin color={color} model={model} motion={motion} skin={character?.avatarSkin ?? null} /> : null}
       {weapon ? <HeldWeapon kind={weapon} bitcoin={bitcoin} /> : null}
       <WornGear unit={AVATAR_U} pose={pose} weapon={weapon} showHead jetpack={jetpack} />
 

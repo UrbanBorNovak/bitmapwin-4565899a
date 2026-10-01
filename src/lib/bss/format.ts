@@ -287,7 +287,6 @@ function bssDecodeLegacy(payload: Uint8Array, version: BssVersion, source: strin
         resources.push({ name, inscriptionId });
         // Locked to the district grid: upright billboard facing south, flat mosaic covering the cell.
         objects.push({ kind: "billboard", bind: name, inscriptionId, position: { x: 5000, y: 3000, z: 5000 }, rotation: { x: 0, y: 0, z: 0 }, scale: 6000 });
-        objects.push({ kind: "mosaic", bind: name, inscriptionId, position: { x: 5000, y: 4, z: 5000 }, rotation: { x: -90, y: 0, z: 0 }, scale: 9400 });
         break;
       }
       case 0x02: {

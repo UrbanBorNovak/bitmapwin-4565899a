@@ -20,7 +20,7 @@ const noRaycast = () => {};
 /** Vertices across one tile — enough to hug a hill without costing anything. */
 const SEGMENTS = 16;
 /** A whisper above the walkable surface — visible underfoot, never floating. */
-const LIFT = 0.001;
+const LIFT = 0.0001;
 
 /** Matches the thin BITMAP plate drawn by the world renderer. */
 function bitmapPlateHeight(height: number) {
@@ -101,14 +101,14 @@ const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
 
   if (!texture) return null;
   return (
-    <mesh position={[x, 0, z]} geometry={geometry} renderOrder={3} raycast={noRaycast}>
+    <mesh position={[x, 0, z]} geometry={geometry} renderOrder={1} raycast={noRaycast}>
       <meshBasicMaterial
         map={texture}
         transparent
         depthWrite={false}
         polygonOffset
-        polygonOffsetFactor={-2}
-        polygonOffsetUnits={-2}
+        polygonOffsetFactor={-4}
+        polygonOffsetUnits={-4}
         toneMapped={false}
         side={THREE.DoubleSide}
       />
