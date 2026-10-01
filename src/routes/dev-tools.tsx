@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { DataBadge } from "@/components/extenders/DataBadge";
+import { useMemo, useState } from "react";
+import { DELEGATE_CONTENT_TYPE, GUARDIAN_MASTER_DELEGATE_ID, TRIBUTE_ADDRESS, TRIBUTE_SATS, guardianMasterGeneratorHtml } from "@/lib/guardian-delegate";
 import { collectionParentStatusFn } from "@/lib/ord-parents.functions";
 
 
@@ -90,6 +92,7 @@ function DevToolsPage() {
       </div>
 
       <CollectionParentPanel />
+      <MasterGeneratorPanel />
 
       <section className="mt-8 border border-border p-6">
         <div className="flex flex-wrap items-center gap-3">
@@ -139,3 +142,46 @@ STATUS               ${d?.ready ? "READY" : d?.reason ?? (q.isLoading ? "CHECKIN
   );
 }
 
+
+
+/** The single master inscription every tiny Guardian delegate mint renders with. */
+function MasterGeneratorPanel() {
+  const html = useMemo(() => guardianMasterGeneratorHtml(), []);
+  const bytes = useMemo(() => new TextEncoder().encode(html).length, [html]);
+  const [copied, setCopied] = useState(false);
+  const download = () => {
+    const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "guardian-master.html";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  return (
+    <section className="mt-8 border border-border p-6">
+      <div className="flex flex-wrap items-center gap-3">
+        <h2 className="display text-xl">GUARDIAN MASTER GENERATOR</h2>
+        <DataBadge kind={GUARDIAN_MASTER_DELEGATE_ID ? "live" : "soon"} note={GUARDIAN_MASTER_DELEGATE_ID ? "DELEGATE MINTS ON" : "NOT INSCRIBED YET"} />
+      </div>
+      <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+        Inscribe this page once. After that every Guardian can be minted as an almost empty inscription that points
+        here; explorers draw it with this code. The page reads its own bitmap parent and checks the {TRIBUTE_SATS.toLocaleString()}-sat
+        tribute in its own reveal transaction. Outside an ordinals explorer it shows the stone relic, which is expected.
+      </p>
+      <pre className="mt-3 overflow-x-auto bg-secondary p-4 font-mono text-xs">
+{`SIZE           ${bytes.toLocaleString()} BYTES
+CONTENT TYPE   ${DELEGATE_CONTENT_TYPE}
+TRIBUTE        ${TRIBUTE_SATS} SATS → ${TRIBUTE_ADDRESS}
+MASTER ID      ${GUARDIAN_MASTER_DELEGATE_ID || "NOT SET — SEND THE INSCRIPTION ID ONCE IT IS MINED"}`}
+      </pre>
+      <div className="mt-3 flex flex-wrap gap-2 font-mono text-xs">
+        <button type="button" className="border border-bitcoin px-3 py-2 text-bitcoin hover:bg-bitcoin hover:text-background"
+          onClick={() => { void navigator.clipboard?.writeText(html); setCopied(true); }}>
+          {copied ? "✓ COPIED" : "COPY RAW HTML"}
+        </button>
+        <button type="button" className="border border-border px-3 py-2 hover:border-signal" onClick={download}>DOWNLOAD .HTML</button>
+      </div>
+      <iframe title="Master generator preview" srcDoc={html} sandbox="allow-scripts" className="mt-4 h-80 w-full border border-border bg-background" />
+    </section>
+  );
+}

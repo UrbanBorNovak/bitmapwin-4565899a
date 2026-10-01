@@ -47,14 +47,14 @@ export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
 });
 
-function DashboardError({ error, reset }: { error: Error; reset: () => void }) {
+function DashboardError({ error, reset }: { error: unknown; reset: () => void }) {
   const router = useRouter();
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-20 md:px-8">
       <p className="label">DASHBOARD</p>
       <h1 className="display mt-4 text-4xl">DASHBOARD UNAVAILABLE</h1>
       <p className="mt-4 font-mono text-xs text-muted-foreground">
-        &gt; {error.message.toUpperCase()}
+        &gt; {(error as Error).message.toUpperCase()}
       </p>
       <button
         type="button"

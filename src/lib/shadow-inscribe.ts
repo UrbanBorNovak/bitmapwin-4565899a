@@ -31,6 +31,8 @@ export type InscribeJob = {
   parents?: ParentSpend[];
   /** tag 11: render this inscription with another inscription's code (near-zero bytes) */
   delegate?: string;
+  /** extra output paid inside the reveal itself, read back on chain by the master generator */
+  tribute?: { address: string; sats: number };
   commitTxid?: string;
   revealTxid?: string;
   createdAt: string;
@@ -123,10 +125,13 @@ export async function prepareJob(input: {
   parents?: ParentSpend[];
   /** tag 11 target: the body is dropped and the master generator renders this child */
   delegate?: string;
+  /** pays this output inside the reveal, after the inscription output */
+  tribute?: { address: string; sats: number };
 }): Promise<InscribeJob> {
   if (input.body.length > INSCRIBE_MAX_BYTES) throw new Error("FILE TOO LARGE — KEEP IT UNDER 60 KB");
   const parents = input.parents ?? [];
   const delegate = input.delegate?.trim() || undefined;
+  const tribute = input.tribute && input.tribute.sats > 0 ? input.tribute : undefined;
   const body = delegate ? new Uint8Array(0) : input.body;
   const priv = btc.utils.randomPrivateKeyBytes();
   const privHex = hex.encode(priv);
@@ -136,7 +141,7 @@ export async function prepareJob(input: {
   // Each parent adds one taproot input (~58 vB) and its pass-through output (~43 vB).
   const parentIds = parents.reduce((n, p) => n + p.inscriptionId.length, 0);
   const tagBytes = parentIds + (delegate ? 36 : input.contentType.length) + 120;
-  const vbytes = Math.ceil((body.length + tagBytes) / 4) + 150 + parents.length * 101;
+  const vbytes = Math.ceil((body.length + tagBytes) / 4) + 150 + parents.length * 101 + (tribute ? 43 : 0);
   const revealFee = Math.ceil(vbytes * feeRate);
   const job: InscribeJob = {
     digest: input.digest,
@@ -147,9 +152,10 @@ export async function prepareJob(input: {
     receiveAddress: input.receiveAddress,
     feeRate,
     revealFee,
-    commitAmount: INSCRIBE_POSTAGE + revealFee,
+    commitAmount: INSCRIBE_POSTAGE + revealFee + (tribute?.sats ?? 0),
     ...(parents.length ? { parents } : {}),
     ...(delegate ? { delegate } : {}),
+    ...(tribute ? { tribute } : {}),
     createdAt: new Date().toISOString(),
   };
   saveJob(job);
@@ -207,7 +213,10 @@ export async function revealJob(
   // the first sat of the commit input, which is exactly where this last output
   // starts, so no pointer tag is needed.
   for (const parent of parents) tx.addOutputAddress(parent.address, BigInt(parent.value), btc.NETWORK);
-  tx.addOutputAddress(job.receiveAddress, BigInt(utxo.value - job.revealFee), btc.NETWORK);
+  const tributeSats = job.tribute?.sats ?? 0;
+  tx.addOutputAddress(job.receiveAddress, BigInt(utxo.value - job.revealFee - tributeSats), btc.NETWORK);
+  // The tribute sits after the inscription output, so it can never carry the inscribed sat.
+  if (job.tribute) tx.addOutputAddress(job.tribute.address, BigInt(tributeSats), btc.NETWORK);
   tx.signIdx(hex.decode(job.privHex), commitIdx, undefined, new Uint8Array(32));
 
   let signed = tx;

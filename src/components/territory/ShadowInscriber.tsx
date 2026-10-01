@@ -38,6 +38,10 @@ export type ArtifactVariant = {
   source: string;
   /** One line explaining what this form does in a viewer. */
   note?: string;
+  /** Tag 11 target: inscribe an empty body that renders with this inscription's code. */
+  delegate?: string;
+  /** Output paid inside the reveal, so the master generator can verify it on chain. */
+  tribute?: { address: string; sats: number };
 };
 
 export function ShadowInscriber(props: {
@@ -158,6 +162,8 @@ export function ShadowInscriber(props: {
         body,
         receiveAddress: props.receiveAddress ?? wallet.ordinalsAddress,
         ...(parents.length ? { parents } : {}),
+        ...(!file && variant?.delegate ? { delegate: variant.delegate } : {}),
+        ...(!file && variant?.tribute ? { tribute: variant.tribute } : {}),
       });
 
       setJob(prepared);

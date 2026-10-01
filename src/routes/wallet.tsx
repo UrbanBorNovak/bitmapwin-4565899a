@@ -63,14 +63,14 @@ export const Route = createFileRoute("/wallet")({
   component: WalletPage,
 });
 
-function WalletError({ error, reset }: { error: Error; reset: () => void }) {
+function WalletError({ error, reset }: { error: unknown; reset: () => void }) {
   const router = useRouter();
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-20 md:px-8">
       <p className="label">WALLET</p>
       <h1 className="display mt-4 text-4xl">WALLET UNAVAILABLE</h1>
       <p className="mt-4 font-mono text-xs text-muted-foreground">
-        &gt; {error.message.toUpperCase()}
+        &gt; {(error as Error).message.toUpperCase()}
       </p>
       <button
         type="button"

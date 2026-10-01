@@ -8,6 +8,7 @@ import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { GuardianBody } from "@/components/bitmon/GuardianBody";
+import { GUARDIAN_MASTER_DELEGATE_ID, DELEGATE_CONTENT_TYPE, TRIBUTE_ADDRESS, TRIBUTE_SATS, guardianMasterGeneratorHtml } from "@/lib/guardian-delegate";
 import { ShadowInscriber, type ArtifactVariant } from "@/components/territory/ShadowInscriber";
 import { ShieldedGuardianMint } from "@/components/bitmon/ShieldedGuardianMint";
 import { RARITY_TONE, bip21, guardianArtifactSvg, guardianLevel, guardianShieldDigest, GUARDIAN_PRICE_SATS, type GuardianDna } from "@/lib/bitmon";
@@ -142,6 +143,19 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
             source: guardianHoloCardSvg(d, summonTxid),
             note: "A STILL HOLOGRAPHIC CARD THAT SHOWS UP EVERYWHERE, EVEN IN BASIC VIEWERS",
           },
+          ...(GUARDIAN_MASTER_DELEGATE_ID
+            ? [
+                {
+                  key: "delegate",
+                  label: "◈ TINY DELEGATE MINT",
+                  contentType: DELEGATE_CONTENT_TYPE,
+                  source: guardianMasterGeneratorHtml(),
+                  delegate: GUARDIAN_MASTER_DELEGATE_ID,
+                  tribute: { address: TRIBUTE_ADDRESS, sats: TRIBUTE_SATS },
+                  note: `ALMOST ZERO BYTES: DRAWN BY THE MASTER GENERATOR, WHICH CHECKS ITS BITMAP PARENT AND A ${TRIBUTE_SATS.toLocaleString()}-SAT TRIBUTE INSIDE THIS SAME TRANSACTION`,
+                },
+              ]
+            : []),
         ]
       : null;
 

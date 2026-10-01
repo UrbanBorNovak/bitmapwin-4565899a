@@ -48,7 +48,7 @@ export const Route = createFileRoute("/")({
   errorComponent: ({ error }) => (
     <div className="mx-auto max-w-[900px] px-4 py-24 md:px-8" role="alert">
       <h1 className="display text-3xl">REGISTRY UNAVAILABLE</h1>
-      <p className="mt-4 font-mono text-sm text-muted-foreground">&gt; {error.message}</p>
+      <p className="mt-4 font-mono text-sm text-muted-foreground">&gt; {(error as Error).message}</p>
     </div>
   ),
   notFoundComponent: () => null,
