@@ -16,7 +16,7 @@
 /** Districts per side of the world grid — mirrors the 3D world. */
 export const WORLD_GRID = 1_000;
 /** World units across one side of the terrain. */
-export const WORLD_UNITS = 100;
+export const WORLD_UNITS = 300;
 /** World units per district cell. */
 export const WORLD_CELL = WORLD_UNITS / WORLD_GRID;
 /** Chunk side in cells — the region label a player reports as their locale. */
@@ -26,7 +26,7 @@ export const CHUNK_CELLS = 50;
  * One stride unit — the avatar's own scale. A BITMAP is ten strides across, so
  * districts read as walkable plots rather than single steps.
  */
-export const STRIDE = WORLD_CELL / 10;
+export const STRIDE = 0.01;
 
 /** Tuning constants for movement feel. Tune these, never the integrator. */
 export const MOVE = {

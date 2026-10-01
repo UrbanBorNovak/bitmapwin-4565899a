@@ -19,12 +19,12 @@ import { packParcels } from "@/components/TerritoryCanvas";
 import { groundY } from "@/lib/world-terrain";
 
 const GRID = 1_000;
-const WORLD_SIZE = 100;
+const WORLD_SIZE = 300;
 const CELL = WORLD_SIZE / GRID;
 /** Avatar stride (one BITMAP is 10 strides across). */
-const STRIDE = CELL / 10;
+const STRIDE = 0.01;
 /** Canonical edge of a size-1 parcel, identical in every district. */
-export const PARCEL_UNIT = CELL / 24;
+export const PARCEL_UNIT = (STRIDE * 10) / 24;
 /** Canonical footprint (edge length, world units) of a parcel of a given class. */
 export const parcelFootprint = (size: number) => size * PARCEL_UNIT;
 /** Canonical footprint in avatar strides — the portable build envelope. */

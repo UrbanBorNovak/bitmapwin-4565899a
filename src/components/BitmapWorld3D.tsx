@@ -330,7 +330,7 @@ import {
 
 
 const GRID = 1_000;
-const WORLD_SIZE = 100;
+const WORLD_SIZE = 300;
 const CELL = WORLD_SIZE / GRID;
 const OWNER_CELL_BUDGET = 24_000;
 
@@ -990,7 +990,7 @@ const SelectedBlock = memo(function SelectedBlock({
 // One avatar ≈ a tenth of a district cell tall, so every BITMAP reads as a wide
 // plot you walk across. Geometry is shared across visitors — a crowd costs no
 // extra GPU buffers.
-const AVATAR_U = CELL / 10;
+const AVATAR_U = 0.01;
 const avatarGeometry = {
   ring: new THREE.RingGeometry(AVATAR_U * 0.42, AVATAR_U * 0.5, 16),
   boot: new THREE.BoxGeometry(AVATAR_U * 0.16, AVATAR_U * 0.07, AVATAR_U * 0.2),
