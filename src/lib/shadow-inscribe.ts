@@ -93,13 +93,22 @@ export function passArtifactSvg(p: { slug: string; height: number; index: number
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 460"><rect width="400" height="460" fill="#07090b"/><rect x="20" y="40" width="360" height="360" fill="none" stroke="#3fe0d0" stroke-opacity=".35"/>${cells.join("")}<text x="20" y="28" fill="#f7931a" font-family="monospace" font-size="14">SHAD · ${p.height}.BITMAP · #${p.index}</text><text x="20" y="424" fill="#3fe0d0" font-family="monospace" font-size="10">${p.slug.toUpperCase()}</text><text x="20" y="442" fill="#8a949c" font-family="monospace" font-size="7">${p.digest}</text></svg>`;
 }
 
-function revealPayment(privHex: string, contentType: string, body: Uint8Array, digest: string, parents: ParentSpend[] = []) {
+function revealPayment(
+  privHex: string,
+  contentType: string,
+  body: Uint8Array,
+  digest: string,
+  parents: ParentSpend[] = [],
+  delegate?: string,
+) {
   const pub = btc.utils.pubSchnorr(hex.decode(privHex));
   // Tag 3 may repeat: one entry per parent, in the order the reveal spends them.
+  // Tag 11 (delegate) points at the master generator; the body then stays empty.
   const tags = {
-    contentType,
+    ...(delegate ? {} : { contentType }),
     metaprotocol: `shad:${digest}`,
     ...(parents.length ? { parent: parents.map((p) => p.inscriptionId) } : {}),
+    ...(delegate ? { delegate } : {}),
   } as never;
   const inscription = { tags, body };
   return btc.p2tr(undefined, p2tr_ord_reveal(pub, [inscription]), btc.NETWORK, false, customScripts);
@@ -112,34 +121,41 @@ export async function prepareJob(input: {
   body: Uint8Array;
   receiveAddress: string;
   parents?: ParentSpend[];
+  /** tag 11 target: the body is dropped and the master generator renders this child */
+  delegate?: string;
 }): Promise<InscribeJob> {
   if (input.body.length > INSCRIBE_MAX_BYTES) throw new Error("FILE TOO LARGE — KEEP IT UNDER 60 KB");
   const parents = input.parents ?? [];
+  const delegate = input.delegate?.trim() || undefined;
+  const body = delegate ? new Uint8Array(0) : input.body;
   const priv = btc.utils.randomPrivateKeyBytes();
   const privHex = hex.encode(priv);
-  const pay = revealPayment(privHex, input.contentType, input.body, input.digest, parents);
+  const pay = revealPayment(privHex, input.contentType, body, input.digest, parents, delegate);
   const feeRate = await liveFeeRate();
   // witness bytes count a quarter; ~ 150 vB of fixed overhead for 1-in/1-out taproot.
   // Each parent adds one taproot input (~58 vB) and its pass-through output (~43 vB).
   const parentIds = parents.reduce((n, p) => n + p.inscriptionId.length, 0);
-  const vbytes = Math.ceil((input.body.length + input.contentType.length + parentIds + 120) / 4) + 150 + parents.length * 101;
+  const tagBytes = parentIds + (delegate ? 36 : input.contentType.length) + 120;
+  const vbytes = Math.ceil((body.length + tagBytes) / 4) + 150 + parents.length * 101;
   const revealFee = Math.ceil(vbytes * feeRate);
   const job: InscribeJob = {
     digest: input.digest,
     privHex,
     commitAddress: pay.address!,
     contentType: input.contentType,
-    bodyHex: hex.encode(input.body),
+    bodyHex: hex.encode(body),
     receiveAddress: input.receiveAddress,
     feeRate,
     revealFee,
     commitAmount: INSCRIBE_POSTAGE + revealFee,
     ...(parents.length ? { parents } : {}),
+    ...(delegate ? { delegate } : {}),
     createdAt: new Date().toISOString(),
   };
   saveJob(job);
   return job;
 }
+
 
 /** Finds the commit output once it has reached a public mempool. */
 export async function findCommitOutput(job: InscribeJob): Promise<{ txid: string; vout: number; value: number } | null> {
