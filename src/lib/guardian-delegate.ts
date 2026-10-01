@@ -341,9 +341,9 @@ function build(height,blk){
   var txs=(blk&&(blk.transaction_count||blk.transactions||blk.tx_count||blk.n_tx))||1,hash=(blk&&blk.hash)||String(height);
   G=dnaOf(height,hash,txs,(blk&&blk.size)||900000);
   LAND=land(txs,hash);VOX=blueprint(G);
-  /* fit the creature to its land: never taller than 17, never wider than 22 */
+  /* fit the creature to its land: never taller than 22, never wider than 28 */
   var ty=0,ex=0,i;for(i=0;i<VOX.length;i++){var v=VOX[i];ty=Math.max(ty,v[1]+v[4]/2);ex=Math.max(ex,Math.abs(v[0])+v[3]/2,Math.abs(v[2])+v[5]/2)}
-  var k=Math.min(1.25,17/ty,11/ex);
+  var k=Math.min(1.6,22/ty,14/ex);
   for(i=0;i<VOX.length;i++){var w=VOX[i];w[0]*=k;w[1]*=k;w[2]*=k;w[3]*=k;w[4]*=k;w[5]*=k}
 }
 function blockData(height){
