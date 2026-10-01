@@ -74,6 +74,9 @@ import type { MapControls as MapControlsImpl } from "three-stdlib";
 import { Button } from "@/components/ui/button";
 import { BitmapModelPlacement } from "@/components/BitmapModelPlacement";
 import { BssScene3D } from "@/components/game/BssScene3D";
+import { StreamJumbotron } from "@/components/game/StreamJumbotron";
+/** WarpSpeedTV / bitmap.stream genesis channel. */
+const JUMBOTRON_HEIGHT = 145_159;
 import { bssSceneQuery } from "@/lib/bss";
 import { AvatarInventory } from "@/components/AvatarInventory";
 import { ExtenderStage } from "@/components/extenders/ExtenderStage";
@@ -2890,6 +2893,15 @@ const WorldScene = memo(function WorldScene({
           />
         </>
       ) : null}
+      <StreamJumbotron
+        height={JUMBOTRON_HEIGHT}
+        position={[
+          worldX(JUMBOTRON_HEIGHT % GRID),
+          groundY(worldX(JUMBOTRON_HEIGHT % GRID), worldZ(Math.floor(JUMBOTRON_HEIGHT / GRID))),
+          worldZ(Math.floor(JUMBOTRON_HEIGHT / GRID)),
+        ]}
+        cell={CELL}
+      />
       <VisitorBeacons cursors={cursors} />
       <SelfBeacon pose={pose} bitcoin={colors.bitcoin} wide={cameraMode === "map"} />
       {cameraMode !== "map" && (driving || vehicle.placed) && !rideIsWorn(ride.id) ? (
