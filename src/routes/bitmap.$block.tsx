@@ -37,6 +37,7 @@ import { BitmapStorefront } from "@/components/BitmapStorefront";
 import { TerritoryKiosk } from "@/components/territory/TerritoryKiosk";
 import { TerritoryDispatches } from "@/components/territory/TerritoryDispatches";
 import { BitmapStreamPlayer } from "@/components/territory/BitmapStreamPlayer";
+import { StreamChat } from "@/components/territory/StreamChat";
 import { ClientOnly } from "@tanstack/react-router";
 import { TerritoryPanel } from "@/components/extenders/TerritoryPanel";
 import { getBitmapHolderFn } from "@/lib/locate-bitmap.functions";
@@ -298,7 +299,10 @@ function BitmapDetail() {
 
       {tab === "world" && (
         <div id="bitmap-panel-world" role="tabpanel" aria-labelledby="bitmap-tab-world" className="mt-6 space-y-6">
-      <BitmapStreamPlayer height={block} />
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <BitmapStreamPlayer height={block} />
+        <StreamChat height={block} />
+      </div>
       <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="group rounded-lg border border-border bg-card p-6">
           <BlockMosaic height={block} txCount={stats.data?.txCount ?? scan.data?.txCount ?? null} />

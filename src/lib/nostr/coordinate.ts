@@ -54,3 +54,28 @@ export async function postDispatch(height: number, text: string, useExtension: b
   if (ok === 0) throw new Error("NO RELAY ACCEPTED THE DISPATCH");
   return { event: e, relays: ok };
 }
+
+/** Live-stream chat: short kind-1 notes tagged ["t","bitmap-stream:<height>"]. */
+export const streamTag = (height: number) => `bitmap-stream:${height}`;
+
+export function subscribeStreamChat(height: number, onEvent: (e: Event) => void) {
+  const sub = getPool().subscribeMany(
+    RELAYS,
+    { kinds: [1], "#t": [streamTag(height)], since: Math.floor(Date.now() / 1000) - 6 * 3600, limit: 80 },
+    { onevent: (e) => { if (verifyEvent(e)) onEvent(e); } },
+  );
+  return () => sub.close();
+}
+
+export async function postStreamChat(height: number, text: string, useExtension: boolean) {
+  const template: EventTemplate = {
+    kind: 1,
+    created_at: Math.floor(Date.now() / 1000),
+    tags: [["t", "bitmap"], ["t", streamTag(height)], ["t", coordTag(height)]],
+    content: text.trim().slice(0, 280),
+  };
+  const e = useExtension && ext() ? await ext()!.signEvent(template) : finalizeEvent(template, localSecret());
+  const results = await Promise.allSettled(getPool().publish(RELAYS, e));
+  if (!results.some((r) => r.status === "fulfilled")) throw new Error("NO RELAY ACCEPTED THE MESSAGE");
+  return e;
+}
