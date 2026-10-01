@@ -17,6 +17,7 @@ import * as THREE from "three";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { packParcels } from "@/components/TerritoryCanvas";
 import { groundY } from "@/lib/world-terrain";
+import { getValidParcelIndexes } from "@/lib/oasis-parcels.functions";
 
 const GRID = 1_000;
 const WORLD_SIZE = 850;
@@ -30,7 +31,9 @@ export const parcelFootprint = (size: number) => size * PARCEL_UNIT;
 /** Canonical footprint in avatar strides — the portable build envelope. */
 export const parcelStrides = (size: number) => parcelFootprint(size) / STRIDE;
 
-const PALETTE = ["#ffb45a", "#f7931a", "#e6810e", "#c96d08", "#a95a06"].map((c) => new THREE.Color(c));
+/** Valid child-parcel inscriptions glow Bitcoin orange; the rest stay neutral stone. */
+const VALID_COLOR = new THREE.Color("#f7931a");
+const NEUTRAL_COLOR = new THREE.Color("#4a4238");
 const noRaycast = () => {};
 const dummy = new THREE.Object3D();
 const MAX_CACHE = 16;
