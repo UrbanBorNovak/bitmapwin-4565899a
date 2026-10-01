@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { queryOptions, useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { getBlockInscriptions } from "@/lib/ordinals-scan.functions";
@@ -148,13 +148,8 @@ function BitmapDetail() {
   const trades = useQuery(tradesForHeightQuery(block));
   const localHistory = useQuery(provenanceStreamQuery("all", 12, undefined, block));
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<TabId>("world");
-  useEffect(() => {
-    const read = () => { const h = window.location.hash.slice(1); if (TABS.some((t) => t.id === h)) setTab(h as TabId); };
-    read(); window.addEventListener("hashchange", read); return () => window.removeEventListener("hashchange", read);
-  }, []);
+  const tab = useBitmapTab();
   const selectTab = (id: TabId) => {
-    setTab(id);
     history_replace(id);
   };
   const moveTab = (current: TabId, direction: -1 | 1) => {
@@ -724,8 +719,34 @@ const TABS = [
   { id: "community", label: "COMMUNITY" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
+
+function isTabId(value: string): value is TabId {
+  return TABS.some((tab) => tab.id === value);
+}
+
+function readBitmapTab(): TabId {
+  const hash = window.location.hash.slice(1);
+  return isTabId(hash) ? hash : "world";
+}
+
+function subscribeToBitmapTab(onChange: () => void) {
+  window.addEventListener("hashchange", onChange);
+  window.addEventListener("popstate", onChange);
+  window.addEventListener("bitmap-tab-change", onChange);
+  return () => {
+    window.removeEventListener("hashchange", onChange);
+    window.removeEventListener("popstate", onChange);
+    window.removeEventListener("bitmap-tab-change", onChange);
+  };
+}
+
+function useBitmapTab() {
+  return useSyncExternalStore(subscribeToBitmapTab, readBitmapTab, () => "world");
+}
+
 function history_replace(id: string) {
   window.history.replaceState(window.history.state, "", `#${id}`);
+  window.dispatchEvent(new Event("bitmap-tab-change"));
 }
 
 function Field({ k, v }: { k: string; v: string }) {
