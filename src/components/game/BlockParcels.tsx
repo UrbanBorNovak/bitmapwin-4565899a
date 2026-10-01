@@ -89,14 +89,14 @@ const ParcelSlab = memo(function ParcelSlab({ height }: { height: number }) {
       const lz = z0 + s / 2;
       // Seat each parcel on the dunes: sink a foundation below the local ground.
       const ground = groundY(cx + lx, cz + lz);
-      const lift = PARCEL_UNIT * (0.5 + p.size * 0.55);
+      // Height carries the transaction's size class: bigger tx, taller parcel.
+      const lift = PARCEL_UNIT * p.size * p.size * 0.9;
       const sink = STRIDE * 0.6;
       const h = lift + sink;
       dummy.position.set(lx, ground + lift - h / 2, lz);
       dummy.scale.set(s * 0.88, h, s * 0.88);
       dummy.updateMatrix();
       target.setMatrixAt(i, dummy.matrix);
-      target.setColorAt(i, PALETTE[p.index % PALETTE.length]!);
       i++;
     }
     target.count = i;
