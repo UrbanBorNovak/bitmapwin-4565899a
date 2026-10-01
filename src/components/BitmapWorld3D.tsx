@@ -4339,7 +4339,7 @@ function BitmapWorld3DInner({
               canvas.addEventListener("webglcontextlost", lost, false);
               canvas.addEventListener("webglcontextrestored", restored, false);
             }}
-            camera={{ position: [0, 108, minedDepth / 2 + 0.01], fov: 50, near: 0.01, far: 350 }}
+            camera={{ position: [0, 108, minedDepth / 2 + 0.01], fov: 50, near: 0.01, far: 1000 }}
             gl={{
               antialias: quality.antialias,
               powerPreference: "high-performance",
