@@ -31,7 +31,8 @@ export const TRIBUTE_SATS = 1000;
  * The inscription id of the master generator, once it has been inscribed.
  * Empty means delegate mints are not offered yet.
  */
-export const GUARDIAN_MASTER_DELEGATE_ID = "";
+export const GUARDIAN_MASTER_DELEGATE_ID =
+  "a44f4d01312f944260d59a770e08d63ac3d7c6c9c99177183b50c784837a8de1i0";
 
 export const DELEGATE_CONTENT_TYPE = "text/html;charset=utf-8";
 
