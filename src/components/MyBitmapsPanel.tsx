@@ -99,17 +99,67 @@ export function MyBitmapsPanel() {
           &gt; NO BITMAP INSCRIPTION FOUND IN {shortenAddress(wallet.ordinalsAddress)}
         </p>
       ) : (
-        <ul className="divide-y divide-border">
-          {held.map((bitmap) => (
-            <HeldRow
-              key={`${bitmap.outpoint}-${bitmap.bitmapHeight}`}
-              bitmap={bitmap}
-              offer={openByOutpoint.get(bitmap.outpoint) ?? null}
-            />
-          ))}
-        </ul>
+        <HeldList held={held} openByOutpoint={openByOutpoint} />
       )}
     </section>
+  );
+}
+
+const PAGE = 20;
+
+function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint: Map<string, Offer> }) {
+  const [q, setQ] = useState("");
+  const [filter, setFilter] = useState<"all" | "listed" | "unlisted">("all");
+  const [page, setPage] = useState(0);
+  const rows = useMemo(
+    () =>
+      held.filter((b) => {
+        if (q.trim() && !String(b.bitmapHeight).includes(q.trim())) return false;
+        const listed = openByOutpoint.has(b.outpoint);
+        return filter === "all" || (filter === "listed" ? listed : !listed);
+      }),
+    [held, q, filter, openByOutpoint],
+  );
+  const pages = Math.max(1, Math.ceil(rows.length / PAGE));
+  const p = Math.min(page, pages - 1);
+  return (
+    <>
+      <div className="flex flex-wrap items-center gap-2 border-b border-border p-4">
+        <input
+          value={q}
+          onChange={(e) => { setQ(e.target.value); setPage(0); }}
+          inputMode="numeric"
+          placeholder="SEARCH BLOCK #"
+          className="w-40 border border-border bg-background px-3 py-1.5 font-mono text-[11px] text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+        />
+        {(["all", "listed", "unlisted"] as const).map((f) => (
+          <button
+            key={f}
+            className={filter === f ? "btn-term !px-3 !py-1" : "btn-term-ghost !px-3 !py-1"}
+            onClick={() => { setFilter(f); setPage(0); }}
+          >
+            {f.toUpperCase()}
+          </button>
+        ))}
+        <span className="label ml-auto">{rows.length} SHOWN</span>
+      </div>
+      <ul className="divide-y divide-border">
+        {rows.slice(p * PAGE, p * PAGE + PAGE).map((bitmap) => (
+          <HeldRow
+            key={`${bitmap.outpoint}-${bitmap.bitmapHeight}`}
+            bitmap={bitmap}
+            offer={openByOutpoint.get(bitmap.outpoint) ?? null}
+          />
+        ))}
+      </ul>
+      {pages > 1 && (
+        <div className="flex items-center justify-between border-t border-border p-4">
+          <button className="btn-term-ghost !px-3 !py-1" disabled={p === 0} onClick={() => setPage(p - 1)}>[ PREV ]</button>
+          <span className="label">PAGE {p + 1} / {pages}</span>
+          <button className="btn-term-ghost !px-3 !py-1" disabled={p >= pages - 1} onClick={() => setPage(p + 1)}>[ NEXT ]</button>
+        </div>
+      )}
+    </>
   );
 }
 
