@@ -298,6 +298,7 @@ import { DamageVeil } from "@/components/game/DamageVeil";
 import type { RideSpec } from "@/lib/world-vehicle";
 import { dryLandNear, isSea, nearestSea } from "@/lib/world-sea";
 import { groundY, waterSurfaceY } from "@/lib/world-terrain";
+import { BlockParcels } from "@/components/game/BlockParcels";
 import { ATLAS } from "@/lib/atlas-palette";
 import { TerrainModels } from "@/components/game/TerrainModels";
 import { TerrainField } from "@/components/game/TerrainField";
@@ -2825,6 +2826,8 @@ const WorldScene = memo(function WorldScene({
           onStatus={onTankStatus}
         />
       ) : null}
+
+      <BlockParcels pose={pose} selectedHeight={selectedHeight} />
 
       {selectedHeight !== null ? (
         <>
