@@ -22,7 +22,7 @@ type Row = {
   } | null;
 };
 
-const storefrontQuery = (height: number) => ({
+export const storefrontQuery = (height: number) => ({
   queryKey: ["storefront", height],
   queryFn: async () => {
     const { data, error } = await supabase

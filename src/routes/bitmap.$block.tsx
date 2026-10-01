@@ -33,6 +33,7 @@ import { BitmapEvents } from "@/components/coins/BitmapEvents";
 import { MakeOfferButton } from "@/components/MakeOfferButton";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapStorefront } from "@/components/BitmapStorefront";
+import { TerritoryKiosk } from "@/components/territory/TerritoryKiosk";
 import { TerritoryPanel } from "@/components/extenders/TerritoryPanel";
 import { getBitmapHolderFn } from "@/lib/locate-bitmap.functions";
 import { LoopNavigator } from "@/components/LoopNavigator";
@@ -284,6 +285,7 @@ function BitmapDetail() {
       <div className="mt-8">
         <BitmapOrderBook height={block} />
         <BitmapStorefront height={block} />
+        <ClientOnly><TerritoryKiosk height={block} /></ClientOnly>
       </div>
 
       <ProvenancePanel height={block} ownerAddress={owner} />
