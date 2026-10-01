@@ -55,6 +55,13 @@ function cachedPack(height: number, classes: number[]) {
 
 const ParcelSlab = memo(function ParcelSlab({ height }: { height: number }) {
   const { data } = useQuery(blockSizeMapQuery(height));
+  const { data: validParcels } = useQuery({
+    queryKey: ["valid-parcel-indexes", height],
+    queryFn: () => getValidParcelIndexes({ data: { height } }),
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+  const validSet = useMemo(() => new Set(validParcels?.indexes ?? []), [validParcels]);
   const mesh = useRef<THREE.InstancedMesh>(null);
   const group = useRef<THREE.Group>(null);
   const grow = useRef(0);
