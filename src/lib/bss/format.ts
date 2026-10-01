@@ -82,6 +82,9 @@ export function bssDecode(bytes: Uint8Array, source: string): BssScene | { error
 
   const view = new DataView(payload.buffer, payload.byteOffset, payload.byteLength);
   const version: BssVersion = { major: payload[2]!, minor: payload[3]!, patch: payload[4]! };
+  // 0.0.9 / 0.0.10 use a different, smaller opcode set and carry no size field.
+  if (version.major === 0 && version.minor === 0 && (version.patch === 9 || version.patch === 10))
+    return bssDecodeLegacy(payload, version, source);
   const declaredSize = view.getUint32(5, false);
 
   const diagnostics: string[] = [];
