@@ -295,7 +295,7 @@ import { DriveBlur } from "@/components/game/DriveBlur";
 import { DamageVeil } from "@/components/game/DamageVeil";
 
 import type { RideSpec } from "@/lib/world-vehicle";
-import { dryLandNear, isSea, nearestSea } from "@/lib/world-sea";
+import { dryLandNear, isDeepSea, isSea, nearestSea } from "@/lib/world-sea";
 import { groundY, waterSurfaceY } from "@/lib/world-terrain";
 import { BlockParcels } from "@/components/game/BlockParcels";
 import { ATLAS } from "@/lib/atlas-palette";
@@ -1656,6 +1656,15 @@ const SelfAvatar = memo(function SelfAvatar({
     group.current.rotation.y = current.yaw;
     // Flight pitches the whole body forward, like leaning into the wind.
     group.current.rotation.x = current.lean ?? 0;
+    // Swimming: in deep water the body sinks to the chest, tips forward into a
+    // stroke while moving and bobs on the swell.
+    if (!isDriving() && current.y <= AVATAR_U * 0.05 && isDeepSea(current.x, current.z)) {
+      const t = performance.now() / 1000;
+      const stroking = Math.hypot(current.vx, current.vz) > STRIDE * 0.6;
+      group.current.position.y -= AVATAR_U * (stroking ? 0.62 : 0.5) - Math.sin(t * 2.2) * AVATAR_U * 0.03;
+      group.current.rotation.x = stroking ? 1.05 + Math.sin(t * 5) * 0.06 : 0.12;
+      group.current.rotation.z = stroking ? Math.sin(t * 5) * 0.12 : 0;
+    } else group.current.rotation.z = 0;
     if (!mounted.current) return;
     const next: AvatarMotion = current.animation;
     setMotion((previous) => (previous === next ? previous : next));
@@ -1715,6 +1724,9 @@ function PlayerCameraRig({
   const pitch = useRef(0);
   const thrust = useRef(1);
   const steer = useRef(0);
+  /** S in third person turns the body round to face the way it walks. */
+  const turnGoal = useRef<number | null>(null);
+  const sHeld = useRef(false);
   const bob = useRef(0);
   const jumpRequested = useRef(false);
   // Landing impact and body lean — feel only, and both switched off for anyone
@@ -1845,10 +1857,20 @@ function PlayerCameraRig({
       pitch.current = THREE.MathUtils.clamp(pitch.current - swipe.y * 0.004 * steady, -1.05, 1.05);
     }
     const padJump = consumeTouchJump();
+    // Third person on foot: S swings the body round and walks the way it faces.
+    const bodySteer = mode !== "first" && !isDriving();
+    const sDown = pressed.has("s") || pressed.has("arrowdown");
+    if (bodySteer && sDown && !sHeld.current) turnGoal.current = player.yaw + Math.PI;
+    sHeld.current = sDown;
+    if (turnGoal.current !== null) {
+      player.yaw = damp(player.yaw, turnGoal.current, 10, delta, true);
+      const left = Math.abs(((((turnGoal.current - player.yaw + Math.PI) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) - Math.PI);
+      if (left < 0.01) turnGoal.current = null;
+    }
     const intent: MoveIntent = {
       forward: clampAxis(
         (pressed.has("w") || pressed.has("arrowup") ? 1 : 0) -
-          (pressed.has("s") || pressed.has("arrowdown") ? 1 : 0) +
+          (sDown ? (bodySteer ? -1 : 1) : 0) +
           touchPad.forward +
           touchPad.throttle,
       ),
@@ -1943,6 +1965,12 @@ function PlayerCameraRig({
       // A raised weapon trades speed for accuracy, preventing full-speed ADS
       // strafing and giving first-person combat deliberate tactical weight.
       if (mode === "first") intent.speedScale *= 1 - aimState.amount * 0.32;
+      // Swimming: deep water slows the stroke and there is nothing to jump off.
+      if (isDeepSea(player.x, player.z) && player.y <= AVATAR_U * 0.05) {
+        intent.speedScale *= 0.55;
+        intent.sprint = false;
+        intent.jump = false;
+      }
       stopEngine();
     }
 
