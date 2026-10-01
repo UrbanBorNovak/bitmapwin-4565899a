@@ -115,6 +115,32 @@ async function loadOffer(offerId: string) {
   return data;
 }
 
+/**
+ * Storefront sales pay 1% (min 546 sats) to the address holding the BITMAP the
+ * storefront belongs to, read live from the chain. Skipped when the holder is
+ * the seller or cannot be resolved.
+ */
+async function storefrontTribute(offerId: string, seller: string | null, priceSats: number) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("bitmap_storefront_listings")
+    .select("storefront_height")
+    .eq("offer_id", offerId)
+    .maybeSingle();
+  if (!data) return undefined;
+  try {
+    const { locateBitmapHolder } = await import("@/lib/locate-bitmap.server");
+    const holder = await locateBitmapHolder(data.storefront_height);
+    if (!holder.ownerAddress || holder.ownerAddress === seller) return undefined;
+    return {
+      scriptHex: byteArrayToHex(addressToScriptPubKey(holder.ownerAddress)),
+      sats: Math.max(546, Math.ceil(priceSats / 100)),
+    };
+  } catch {
+    return undefined;
+  }
+}
+
 export type PurchaseQuote = {
   offerId: string;
   bitmapHeight: number | null;
@@ -126,6 +152,8 @@ export type PurchaseQuote = {
   feeSats: number;
   /** marketplace commission paid to the platform address */
   marketFeeSats: number;
+  /** 1% tribute paid to the BITMAP holder for sales made in its storefront */
+  landTributeSats: number;
   feeRate: number;
   changeSats: number;
   inscriptionValueSats: number;
@@ -184,7 +212,9 @@ export async function buildPurchase(input: {
   }));
 
   const rate = await feeRate();
+  const landTribute = await storefrontTribute(offer.id, offer.seller_address, Number(offer.price_sats));
   const built = buildBuyerPsbt({
+    landTribute,
     sellerPsbtBase64: offer.psbt_base64,
     inscriptionOutpoint: offer.outpoint,
     inscriptionValueSats,
@@ -206,6 +236,7 @@ export async function buildPurchase(input: {
     priceSats: built.priceSats,
     feeSats: built.feeSats,
     marketFeeSats: built.marketFeeSats,
+    landTributeSats: built.landTributeSats,
     feeRate: rate,
     changeSats: built.changeSats,
     inscriptionValueSats,

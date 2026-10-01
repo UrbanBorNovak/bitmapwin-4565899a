@@ -335,6 +335,8 @@ export type BuyerPsbtInput = {
   tapInternalKeyHex?: string | undefined;
   /** buyer compressed payment public key(s), required for nested-segwit (3…) inputs */
   paymentPublicKeyHex?: string | string[] | undefined;
+  /** optional landholder tribute for sales made in a BITMAP storefront */
+  landTribute?: { scriptHex: string; sats: number } | undefined;
 };
 
 export type BuyerPsbtResult = {
@@ -345,6 +347,7 @@ export type BuyerPsbtResult = {
   feeSats: number;
   /** marketplace commission paid to the platform address */
   marketFeeSats: number;
+  landTributeSats: number;
   changeSats: number;
   spentSats: number;
   usedFunding: FundingUtxo[];
@@ -436,6 +439,9 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
   // marketplace commission: extra output paid by the buyer to the platform
   const marketFeeSats = marketplaceFeeSats(priceSats);
   const marketFeeScript = addressToScriptPubKey(MARKETPLACE_FEE_ADDRESS);
+  const landTribute =
+    input.landTribute && input.landTribute.sats >= DUST ? input.landTribute : undefined;
+  const landTributeSats = landTribute?.sats ?? 0;
   // Relay nodes reject a fee-paying transaction with a sub-dust output. Older
   // inscriptions commonly sit on postage below today's 546-sat threshold, so
   // the buyer contributes enough sats to make the receive output relayable.
@@ -454,17 +460,17 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
   for (const candidate of candidates) {
     used.push(candidate);
     funded += candidate.valueSats;
-    feeSats = Math.ceil(estimateVsize(1 + used.length, 4) * Math.max(1, input.feeRate));
-    needed = priceSats + marketFeeSats + inscriptionTopUpSats + feeSats;
+    feeSats = Math.ceil(estimateVsize(1 + used.length, landTribute ? 5 : 4) * Math.max(1, input.feeRate));
+    needed = priceSats + marketFeeSats + landTributeSats + inscriptionTopUpSats + feeSats;
     if (funded >= needed + DUST) break;
   }
   if (used.length === 0 || funded < needed) {
     throw new Error(
-      `Not enough confirmed funds: need ~${priceSats + marketFeeSats + inscriptionTopUpSats + feeSats} sats plus fees, have ${funded}`,
+      `Not enough confirmed funds: need ~${priceSats + marketFeeSats + landTributeSats + inscriptionTopUpSats + feeSats} sats plus fees, have ${funded}`,
     );
   }
 
-  let changeSats = funded - priceSats - marketFeeSats - inscriptionTopUpSats - feeSats;
+  let changeSats = funded - priceSats - marketFeeSats - landTributeSats - inscriptionTopUpSats - feeSats;
   if (changeSats < DUST) {
     // fold sub-dust change into the fee rather than creating an unspendable output
     feeSats += changeSats;
@@ -486,6 +492,7 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
       priceOutput,
       { valueSats: inscriptionOutputSats, script: receiveScript },
       { valueSats: marketFeeSats, script: marketFeeScript },
+      ...(landTribute ? [{ valueSats: landTributeSats, script: hexToByteArray(landTribute.scriptHex) }] : []),
       ...(changeSats > 0 ? [{ valueSats: changeSats, script: changeScript }] : []),
     ],
   };
@@ -511,8 +518,9 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
     priceSats,
     feeSats,
     marketFeeSats,
+    landTributeSats,
     changeSats,
-    spentSats: priceSats + marketFeeSats + inscriptionTopUpSats + feeSats,
+    spentSats: priceSats + marketFeeSats + landTributeSats + inscriptionTopUpSats + feeSats,
     usedFunding: used,
   };
 
