@@ -135,7 +135,7 @@ function blueprint(G){
   function box(x,y,z,w,h,d,c,g,pt,ph){V.push([x,y,z,w*b,h,d*b,c,g||0,pt||0,ph||0])}
   function sym(x,y,z,w,h,d,c,g,pt,ph){box(x,y,z,w,h,d,c,g,pt,ph);box(-x,y,z,w,h,d,c,g,pt,(ph||0)+Math.PI)}
   var up=p==="biped"||p==="avian",low=p==="arachnid",serp=p==="serpent",fl=p==="floater";
-  var LEG=serp||fl?0:low?3.2:up?6.5:4.8,seg=serp?G.seg+4:p==="hexapod"?4:G.seg>4?4:3;
+  var LEG=serp||fl?0:low?3.2:up?6.5:4.8,seg=serp?G.seg+4:up?2:p==="hexapod"?4:G.seg>4?4:3;
   var BY=fl?9:serp?2.2:LEG+2.4,SW=up?4.6:low?6.4:5.6,SH=up?5.4:low?3.4:4.6,SL=serp?3:up?3.2:3.6;
   var front=0;
   /* torso: tapered armoured segments with dorsal plates and flank bands */
@@ -236,8 +236,8 @@ function drawLand(pulse){
 }
 function shadow(){
   var x0=1e9,x1=-1e9,z0=1e9,z1=-1e9,i,pts=[];
-  for(i=0;i<VOX.length;i++){var v=VOX[i];if(v[8]===5)continue;x0=Math.min(x0,v[0]-v[3]/2);x1=Math.max(x1,v[0]+v[3]/2);z0=Math.min(z0,v[2]-v[5]/2);z1=Math.max(z1,v[2]+v[5]/2)}
-  var cx=(x0+x1)/2,cz=(z0+z1)/2,rx=(x1-x0)*.6,rz=(z1-z0)*.6;
+  for(i=0;i<VOX.length;i++){var v=VOX[i];if(v[8]===5||v[8]===2)continue;x0=Math.min(x0,v[0]-v[3]/2);x1=Math.max(x1,v[0]+v[3]/2);z0=Math.min(z0,v[2]-v[5]/2);z1=Math.max(z1,v[2]+v[5]/2)}
+  var cx=(x0+x1)/2,cz=(z0+z1)/2,rx=(x1-x0)*.42,rz=(z1-z0)*.42;
   for(i=0;i<20;i++){var a=i/20*Math.PI*2;pts.push(P3(cx+Math.cos(a)*rx,.05,cz+Math.sin(a)*rz))}
   g.globalAlpha=.45;poly(pts,"#1a0b00",null);g.globalAlpha=1;
 }
@@ -341,6 +341,10 @@ function build(height,blk){
   var txs=(blk&&(blk.transaction_count||blk.transactions||blk.tx_count||blk.n_tx))||1,hash=(blk&&blk.hash)||String(height);
   G=dnaOf(height,hash,txs,(blk&&blk.size)||900000);
   LAND=land(txs,hash);VOX=blueprint(G);
+  /* fit the creature to its land: never taller than 17, never wider than 22 */
+  var ty=0,ex=0,i;for(i=0;i<VOX.length;i++){var v=VOX[i];ty=Math.max(ty,v[1]+v[4]/2);ex=Math.max(ex,Math.abs(v[0])+v[3]/2,Math.abs(v[2])+v[5]/2)}
+  var k=Math.min(1.25,17/ty,11/ex);
+  for(i=0;i<VOX.length;i++){var w=VOX[i];w[0]*=k;w[1]*=k;w[2]*=k;w[3]*=k;w[4]*=k;w[5]*=k}
 }
 function blockData(height){
   return j("/r/blockinfo/"+height).catch(function(){
