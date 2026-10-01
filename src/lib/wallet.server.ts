@@ -146,18 +146,137 @@ async function inscriptionsOfOutpoint(
   state: { ordDown: boolean },
 ): Promise<string[]> {
   if (state.ordDown) return [];
-  const output = await ordJson<{ inscriptions?: string[] | null }>(`/output/${outpoint}`, 3);
-  if (output === null) {
-    // Keep trying other outputs; only mark ord as down after repeated failures.
-    return [];
+  const html = await ordHtml(`/output/${outpoint}`);
+  if (html === null) return [];
+  return idsInHtml(html);
+}
+
+const ID_RE = /\/inscription\/([0-9a-f]{64}i\d+)/g;
+
+function idsInHtml(html: string): string[] {
+  return [...new Set([...html.matchAll(ID_RE)].map((m) => m[1]!))];
+}
+
+/** ord's HTML views stay up when its JSON API is disabled. */
+async function ordHtml(path: string, attempts = 3): Promise<string | null> {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const resp = await fetch(`${ORD}${path}`, {
+        headers: { "user-agent": "Mozilla/5.0 (bitmapwin)", accept: "text/html" },
+      });
+      if (resp.ok) return await resp.text();
+      lastFailure = `HTTP ${resp.status}`;
+      if (resp.status === 404) return null;
+    } catch (error) {
+      lastFailure = error instanceof Error ? error.message : "network error";
+    }
+    await new Promise((r) => setTimeout(r, 400 * (i + 1)));
   }
-  return (output.inscriptions ?? []).filter((id): id is string => typeof id === "string");
+  return null;
+}
+
+type RecursiveMeta = { output?: string; value?: number; content_type?: string | null };
+
+async function recursiveMeta(id: string): Promise<RecursiveMeta | null> {
+  for (let i = 0; i < 3; i++) {
+    try {
+      const resp = await fetch(`${ORD}/r/inscription/${id}`, {
+        headers: { "user-agent": "Mozilla/5.0 (bitmapwin)" },
+      });
+      if (resp.ok) return (await resp.json()) as RecursiveMeta;
+      if (resp.status === 404) return null;
+    } catch {
+      // retry
+    }
+    await new Promise((r) => setTimeout(r, 300 * (i + 1)));
+  }
+  return null;
+}
+
+/** Bulk inscription id -> bitmap height from the local index. */
+async function indexedHeights(ids: string[]): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  const url = process.env["SUPABASE_URL"];
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+  if (!url || !key || ids.length === 0) return out;
+  const { createClient } = await import("@supabase/supabase-js");
+  const client = createClient(url, key, {
+    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+  });
+  for (let i = 0; i < ids.length; i += 300) {
+    const chunk = ids.slice(i, i + 300);
+    const { data } = await client
+      .from("bitmap_index")
+      .select("block_height, inscription_id")
+      .in("inscription_id", chunk);
+    for (const row of (data ?? []) as Array<{ block_height: number; inscription_id: string }>) {
+      out.set(row.inscription_id, Number(row.block_height));
+    }
+  }
+  return out;
+}
+
+/**
+ * Full holdings from ord's address page: every inscription the address holds,
+ * in one request. Bitmaps are found via the index (plus a capped content check
+ * for unindexed ones) and located to their live outpoint.
+ */
+async function fetchWalletViaAddressPage(address: string): Promise<WalletSnapshot | null> {
+  const html = await ordHtml(`/address/${address}`);
+  if (html === null) return null;
+  const balanceMatch = /<dt>sat balance<\/dt>\s*<dd>(\d+)<\/dd>/.exec(html);
+  const [head, outputsSection = ""] = html.split("<dt>outputs</dt>");
+  const outpoints = [...new Set([...outputsSection.matchAll(/\/output\/([0-9a-f]{64}:\d+)/g)].map((m) => m[1]!))];
+  const ids = idsInHtml(head ?? html);
+
+  const heights = await indexedHeights(ids);
+  const unindexed = ids.filter((id) => !heights.has(id)).slice(0, 80);
+  await mapWithConcurrency(unindexed, 6, async (id) => {
+    const h = await bitmapHeightOf(id);
+    if (h !== null) heights.set(id, h);
+  });
+
+  const others = ids.filter((id) => !heights.has(id)).slice(0, 40);
+  const toLocate = [...ids.filter((id) => heights.has(id)), ...others];
+  const byOutpoint = new Map<string, WalletUtxo>();
+  await mapWithConcurrency(toLocate, 6, async (id) => {
+    const meta = await recursiveMeta(id);
+    if (!meta?.output) return;
+    const utxo: WalletUtxo = byOutpoint.get(meta.output) ?? {
+      outpoint: meta.output,
+      valueSats: Number(meta.value ?? 0),
+      confirmations: 1,
+      inscriptions: [],
+    };
+    utxo.inscriptions.push({
+      id,
+      bitmapHeight: heights.get(id) ?? null,
+      contentType: meta.content_type ?? null,
+    });
+    byOutpoint.set(meta.output, utxo);
+  });
+
+  const utxos = [...byOutpoint.values()];
+  utxos.sort((a, b) => b.inscriptions.length - a.inscriptions.length || b.valueSats - a.valueSats);
+  return {
+    address,
+    utxoCount: outpoints.length,
+    scannedOutputs: outpoints.length,
+    balanceSats: balanceMatch ? Number(balanceMatch[1]) : utxos.reduce((s, u) => s + u.valueSats, 0),
+    utxos,
+  };
 }
 
 export async function fetchWallet(address: string, maxOutputs = 60): Promise<WalletSnapshot> {
+  try {
+    const full = await fetchWalletViaAddressPage(address);
+    if (full) return full;
+  } catch (error) {
+    lastFailure = error instanceof Error ? error.message : "address page failed";
+  }
   const ordState = { ordDown: false };
   let needsInscriptionLookup = false;
-  let outputs = await ordJson<OrdAddressOutput[]>(`/outputs/${address}`);
+  let outputs = await ordJson<OrdAddressOutput[]>(`/outputs/${address}`, 1);
   if (outputs === null) {
     outputs = await fetchOutputsViaEsplora(address);
     needsInscriptionLookup = true;
@@ -167,6 +286,8 @@ export async function fetchWallet(address: string, maxOutputs = 60): Promise<Wal
       `Could not read unspent outputs for ${address} (${lastFailure || "no response"}) — try again shortly`,
     );
   }
+
+
 
 
   const unspent = outputs.filter((output) => output.spent !== true);
