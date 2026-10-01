@@ -15,7 +15,7 @@ import { SPACE_TIME_CELL, spaceTimeClock, type SpaceTimeTrack } from "@/lib/spac
 
 const noRaycast = () => {};
 const dummy = new THREE.Object3D();
-const WORLD_SIZE = 100;
+const WORLD_SIZE = 300;
 const LIVE = new THREE.Color("#ffd9a0");
 const GHOST = new THREE.Color("#63c4cb");
 
