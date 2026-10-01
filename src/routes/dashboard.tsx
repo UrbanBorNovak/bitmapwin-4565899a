@@ -47,7 +47,7 @@ export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
 });
 
-function DashboardError({ error, reset }: { error: Error; reset: () => void }) {
+function DashboardError({ error, reset }: { error: unknown; reset: () => void }) {
   const router = useRouter();
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-20 md:px-8">

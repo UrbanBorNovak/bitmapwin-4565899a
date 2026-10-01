@@ -100,7 +100,7 @@ export const Route = createFileRoute("/bitmap/$block")({
   },
   component: BitmapDetail,
   notFoundComponent: BitmapMissing,
-  errorComponent: ({ error, reset }) => <ParcelError error={error} reset={reset} />,
+  errorComponent: ({ error, reset }) => <ParcelError error={error as Error} reset={reset} />,
 });
 
 function ParcelError({ error, reset }: { error: Error; reset: () => void }) {

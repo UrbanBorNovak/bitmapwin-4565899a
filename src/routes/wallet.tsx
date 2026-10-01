@@ -63,7 +63,7 @@ export const Route = createFileRoute("/wallet")({
   component: WalletPage,
 });
 
-function WalletError({ error, reset }: { error: Error; reset: () => void }) {
+function WalletError({ error, reset }: { error: unknown; reset: () => void }) {
   const router = useRouter();
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-20 md:px-8">
