@@ -20,7 +20,7 @@ const noRaycast = () => {};
 /** Vertices across one tile — enough to hug a hill without costing anything. */
 const SEGMENTS = 16;
 /** A whisper above the walkable surface — visible underfoot, never floating. */
-const LIFT = 0.0001;
+const LIFT = 0.0003;
 
 /** Matches the thin BITMAP plate drawn by the world renderer. */
 function bitmapPlateHeight(height: number) {
