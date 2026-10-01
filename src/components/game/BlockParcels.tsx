@@ -18,6 +18,9 @@ import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { packParcels } from "@/components/TerritoryCanvas";
 import { groundY, subscribeTerrain, terrainVersion } from "@/lib/world-terrain";
 import { getValidParcelIndexes } from "@/lib/oasis-parcels.functions";
+import { SafeHtml } from "@/components/game/SafeHtml";
+
+const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
 const GRID = 1_000;
 const WORLD_SIZE = 850;
@@ -63,6 +66,8 @@ const ParcelSlab = memo(function ParcelSlab({ height }: { height: number }) {
   });
   const validSet = useMemo(() => new Set(validParcels?.indexes ?? []), [validParcels]);
   const solid = useRef<THREE.InstancedMesh>(null);
+  const [picked, setPicked] = useState<number | null>(null);
+  const owners = useMemo(() => new Map((validParcels?.parcels ?? []).map((p) => [p.index, p])), [validParcels]);
   const glass = useRef<THREE.InstancedMesh>(null);
   const group = useRef<THREE.Group>(null);
   const grow = useRef(0);
@@ -87,6 +92,7 @@ const ParcelSlab = memo(function ParcelSlab({ height }: { height: number }) {
   }, [packed]);
   const solidCount = inside.filter((p) => validSet.has(p.index)).length;
   const glassCount = inside.length - solidCount;
+  const solidList = useMemo(() => inside.filter((p) => validSet.has(p.index)), [inside, validSet]);
 
   useLayoutEffect(() => {
     if (!packed) return;
@@ -129,7 +135,18 @@ const ParcelSlab = memo(function ParcelSlab({ height }: { height: number }) {
   return (
     <group ref={group} position={[cx, 0, cz]} scale={[1, 0.001, 1]}>
       {solidCount > 0 ? (
-        <instancedMesh key={`s${solidCount}`} ref={solid} args={[undefined, undefined, solidCount]} raycast={noRaycast}>
+        <instancedMesh
+          key={`s${solidCount}`}
+          ref={solid}
+          args={[undefined, undefined, solidCount]}
+          onClick={(e) => {
+            e.stopPropagation();
+            const p = e.instanceId !== undefined ? solidList[e.instanceId] : undefined;
+            setPicked(p ? p.index : null);
+          }}
+          onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = "pointer"; }}
+          onPointerOut={() => { document.body.style.cursor = ""; }}
+        >
           <boxGeometry args={[1, 1, 1]} />
           <meshStandardMaterial color={VALID_COLOR} roughness={0.6} metalness={0.1} />
         </instancedMesh>
@@ -149,6 +166,38 @@ const ParcelSlab = memo(function ParcelSlab({ height }: { height: number }) {
           />
         </instancedMesh>
       ) : null}
+      {picked !== null && packed ? (() => {
+        const p = inside.find((q) => q.index === picked);
+        const info = owners.get(picked);
+        if (!p || !info) return null;
+        const half = (packed.grid * PARCEL_UNIT) / 2;
+        const s = p.size * PARCEL_UNIT;
+        const lx = p.x * PARCEL_UNIT - half + s / 2;
+        const lz = p.y * PARCEL_UNIT - half + s / 2;
+        const top = groundY(cx + lx, cz + lz) + PARCEL_UNIT * p.size * p.size * 0.9 + STRIDE;
+        return (
+          <SafeHtml center position={[lx, top, lz]} zIndexRange={[20, 0]}>
+            <div className="w-56 border border-border bg-background/95 p-3 font-mono text-[11px] text-foreground shadow-lg">
+              <div className="mb-1 flex items-center justify-between">
+                <span className="font-bold text-bitcoin" data-no-translate>{info.index}.{height}.BITMAP</span>
+                <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => setPicked(null)} aria-label="Close">×</button>
+              </div>
+              <div className="text-muted-foreground">PARCEL #{info.index}</div>
+              <div className="mt-1">
+                HOLDER{" "}
+                {info.owner ? (
+                  <a className="text-signal underline" href={`/profile/${info.owner}`} data-no-translate>{short(info.owner)}</a>
+                ) : (
+                  <span className="text-muted-foreground">UNKNOWN</span>
+                )}
+              </div>
+              <a className="mt-1 block truncate text-signal underline" href={`https://ordinals.com/inscription/${info.inscriptionId}`} target="_blank" rel="noreferrer" data-no-translate>
+                #{info.inscriptionNumber} · {info.inscriptionId.slice(0, 10)}…
+              </a>
+            </div>
+          </SafeHtml>
+        );
+      })() : null}
     </group>
   );
 });
