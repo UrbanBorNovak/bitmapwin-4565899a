@@ -2845,7 +2845,7 @@ const WorldScene = memo(function WorldScene({
             height={selectedHeight}
             position={[
               worldX(selectedHeight % GRID),
-              districtHeight(selectedHeight) + 0.001,
+              groundY(worldX(selectedHeight % GRID), worldZ(Math.floor(selectedHeight / GRID))) + 0.002,
               worldZ(Math.floor(selectedHeight / GRID)),
             ]}
             cell={CELL}

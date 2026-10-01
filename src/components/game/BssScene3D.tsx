@@ -34,7 +34,7 @@ function useInscriptionTexture(inscriptionId: string | null) {
     const loader = new THREE.TextureLoader();
     loader.setCrossOrigin("anonymous");
     loader.load(
-      contentUrl(inscriptionId),
+      `/api/public/inscription/${inscriptionId}`,
       (loaded) => {
         loaded.colorSpace = THREE.SRGBColorSpace;
         textureCache.set(inscriptionId, loaded);
