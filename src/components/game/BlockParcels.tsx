@@ -107,6 +107,7 @@ const ParcelSlab = memo(function ParcelSlab({ height }: { height: number }) {
       dummy.scale.set(s * 0.88, h, s * 0.88);
       dummy.updateMatrix();
       target.setMatrixAt(i, dummy.matrix);
+      target.setColorAt(i, validSet.has(p.index) ? VALID_COLOR : NEUTRAL_COLOR);
       i++;
     }
     target.count = i;
@@ -114,7 +115,7 @@ const ParcelSlab = memo(function ParcelSlab({ height }: { height: number }) {
     if (target.instanceColor) target.instanceColor.needsUpdate = true;
     target.computeBoundingSphere();
     grow.current = 0;
-  }, [packed, cx, cz]);
+  }, [packed, cx, cz, validSet]);
 
   // Rise out of the ground instead of popping in.
   useFrame((_, raw) => {
