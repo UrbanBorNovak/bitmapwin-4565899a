@@ -234,9 +234,16 @@ function drawLand(pulse){
   g.globalAlpha=.35+pulse*.25;g.strokeStyle="#ffb03a";
   poly([P3(-s,.03,-s),P3(s,.03,-s),P3(s,.03,s),P3(-s,.03,s)],"rgba(0,0,0,0)","#ffb03a");g.globalAlpha=1;
 }
-function drawVox(pulse,stone){
-  var list=[],i;
-  for(i=0;i<VOX.length;i++){var v=VOX[i];list.push([P3(v[0],v[1],v[2])[2],v])}
+function shadow(){
+  var x0=1e9,x1=-1e9,z0=1e9,z1=-1e9,i,pts=[];
+  for(i=0;i<VOX.length;i++){var v=VOX[i];if(v[8]===5)continue;x0=Math.min(x0,v[0]-v[3]/2);x1=Math.max(x1,v[0]+v[3]/2);z0=Math.min(z0,v[2]-v[5]/2);z1=Math.max(z1,v[2]+v[5]/2)}
+  var cx=(x0+x1)/2,cz=(z0+z1)/2,rx=(x1-x0)*.6,rz=(z1-z0)*.6;
+  for(i=0;i<20;i++){var a=i/20*Math.PI*2;pts.push(P3(cx+Math.cos(a)*rx,.05,cz+Math.sin(a)*rz))}
+  g.globalAlpha=.45;poly(pts,"#1a0b00",null);g.globalAlpha=1;
+}
+function drawVox(pulse,stone,t){
+  var list=[],i;shadow();
+  for(i=0;i<VOX.length;i++){var v=anim(VOX[i],t,!stone);list.push([P3(v[0],v[1],v[2])[2],v])}
   list.sort(function(a,b){return a[0]-b[0]});g.lineWidth=.6;
   for(i=0;i<list.length;i++){var v=list[i][1];
     cube(v,stone?mx("#6b6f74","#2a2d31",(i%5)/6):v[6],stone?0:v[7],pulse)}
@@ -274,7 +281,7 @@ function frame(now){
   backdrop(W,H);
   if(VOX&&LAND){cam();
     var span=LAND.half*3.4;SC=Math.min(W,H)/span*zoom;OX=W/2;OY=H*.56+Math.sin(pitch)*LAND.half*.1*SC;
-    drawLand(pulse);drawVox(pulse,STATE!=="AWAKE");
+    drawLand(pulse);drawVox(pulse,STATE!=="AWAKE",t);
   }
   hud(W,H,pulse);requestAnimationFrame(frame)
 }
