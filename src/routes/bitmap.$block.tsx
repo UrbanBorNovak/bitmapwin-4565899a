@@ -34,6 +34,7 @@ import { MakeOfferButton } from "@/components/MakeOfferButton";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapStorefront } from "@/components/BitmapStorefront";
 import { TerritoryKiosk } from "@/components/territory/TerritoryKiosk";
+import { TerritoryDispatches } from "@/components/territory/TerritoryDispatches";
 import { ClientOnly } from "@tanstack/react-router";
 import { TerritoryPanel } from "@/components/extenders/TerritoryPanel";
 import { getBitmapHolderFn } from "@/lib/locate-bitmap.functions";
@@ -287,6 +288,7 @@ function BitmapDetail() {
         <BitmapOrderBook height={block} />
         <BitmapStorefront height={block} />
         <ClientOnly><TerritoryKiosk height={block} /></ClientOnly>
+        <ClientOnly><TerritoryDispatches height={block} /></ClientOnly>
       </div>
 
       <ProvenancePanel height={block} ownerAddress={owner} />
