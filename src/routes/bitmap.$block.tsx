@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { queryOptions, useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { getBlockInscriptions } from "@/lib/ordinals-scan.functions";
@@ -146,6 +147,12 @@ function BitmapDetail() {
   const trades = useQuery(tradesForHeightQuery(block));
   const localHistory = useQuery(provenanceStreamQuery("all", 12, undefined, block));
   const queryClient = useQueryClient();
+  const [tab, setTab] = useState<TabId>("world");
+  useEffect(() => {
+    const read = () => { const h = window.location.hash.slice(1); if (TABS.some((t) => t.id === h)) setTab(h as TabId); };
+    read(); window.addEventListener("hashchange", read); return () => window.removeEventListener("hashchange", read);
+  }, []);
+  const selectTab = (id: TabId) => { setTab(id); history_replace(id); };
 
   const place = atlasPlace(block);
   const regionStats = useQuery({
@@ -241,12 +248,13 @@ function BitmapDetail() {
             </div>
           </aside>
         </div>
-        <nav className="flex overflow-x-auto border-t border-border" aria-label="BITMAP sections">
-          <a href="#world" className="label shrink-0 border-r border-border px-4 py-3 text-signal hover:bg-card">01 · LIVE WORLD</a>
-          <a href="#market" className="label shrink-0 border-r border-border px-4 py-3 hover:bg-card hover:text-bitcoin">02 · MARKET</a>
-          <a href="#facts" className="label shrink-0 border-r border-border px-4 py-3 hover:bg-card hover:text-bitcoin">03 · FACTS</a>
-          <a href="#chronicle" className="label shrink-0 border-r border-border px-4 py-3 hover:bg-card hover:text-bitcoin">04 · CHRONICLE</a>
-          <a href="#community" className="label shrink-0 px-4 py-3 hover:bg-card hover:text-bitcoin">05 · COMMUNITY</a>
+        <nav className="flex overflow-x-auto border-t border-border" role="tablist" aria-label="BITMAP sections">
+          {TABS.map((t, i) => (
+            <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => selectTab(t.id)}
+              className={`label shrink-0 border-r border-border px-4 py-3 hover:bg-card ${tab === t.id ? "bg-card text-signal" : "hover:text-bitcoin"}`}>
+              {String(i + 1).padStart(2, "0")} · {t.label}
+            </button>
+          ))}
         </nav>
       </header>
 
@@ -265,147 +273,8 @@ function BitmapDetail() {
         </div>
       </div>
 
-      <ParcelPagePanel height={block} ownerAddress={owner} />
-
-      <div id="market" className="scroll-mt-20">
-        <DistrictReinscriptions height={block} districtInscriptionId={inscriptionId} />
-      </div>
-
-      <div className="mt-8 flex flex-wrap items-center gap-3 border border-border p-4">
-        <div className="min-w-0 flex-1">
-          <p className="label text-bitcoin">BLOCK-DNA GUARDIAN</p>
-          <p className="font-mono text-[11px] text-muted-foreground">A creature read from this block's real data. The holder can summon it to patrol this land in the Oasis.</p>
-        </div>
-        <SummonGuardianButton height={block} />
-      </div>
-
-      <div className="mt-8 max-w-2xl">
-        <TerritoryShareCard height={block} placeName={`${place.localName} · ${place.name}`} tags={[parcel ? "CLAIMED LAND" : "UNCLAIMED LAND", "BITCOIN BLOCK"]} />
-      </div>
-
-
-      <div className="mt-8">
-        <BitmapOrderBook height={block} />
-        <BitmapStorefront height={block} />
-        <ClientOnly><TerritoryKiosk height={block} /></ClientOnly>
-        <ClientOnly><TerritoryDispatches height={block} /></ClientOnly>
-      </div>
-
-      <ProvenancePanel height={block} ownerAddress={owner} />
-
-      <div className="mt-8">
-        <BssScriptPanel height={block} />
-      </div>
-
-      <section id="facts" className="mt-8 scroll-mt-20 border border-border" aria-label="Block analytics">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
-          <h2 className="label">BLOCK ANALYTICS</h2>
-          <Link to="/map/district/$slug" params={{ slug: place.slug }} className="label text-bitcoin hover:text-foreground">
-            {place.name.toUpperCase()} →
-          </Link>
-        </div>
-        <div className="grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-4">
-          <Metric label="BLOCK TRANSACTIONS" value={txCount !== null ? txCount.toLocaleString("en-US") : "…"} />
-          <Metric label="ON-CHAIN TRANSFERS" value={String(history.length)} />
-          <Metric
-            label="TOTAL TRADED VOLUME"
-            value={tradedVolume > 0 ? formatSats(tradedVolume) : history.length > 0 ? "TRANSFERS ONLY" : "NO TRADES"}
-          />
-          <Metric label="DISTINCT TRADERS" value={String(distinctTraders)} />
-          <Metric
-            label="INSCRIPTIONS IN BLOCK"
-            value={scan.data ? scan.data.inscriptions.length.toLocaleString("en-US") : "…"}
-          />
-          <Metric
-            label="BITMAP CLAIMS HERE"
-            value={scan.data ? String(claims.length) : "…"}
-          />
-          <Metric label="WORLD EVENTS HERE" value={localHistory.data ? String(localHistory.data.length) : "…"} />
-          <Metric
-            label="INSCRIPTION VALUE"
-            value={
-              liveHolder.data?.valueSats
-                ? formatSats(liveHolder.data.valueSats)
-                : liveHolder.isPending
-                  ? "…"
-                  : "—"
-            }
-          />
-        </div>
-        <div className="border-t border-border px-4 py-4">
-          <p className="label text-muted-foreground">
-            DISTRICT OWNERSHIP · {place.name.toUpperCase()} · {place.landmark.toUpperCase()}
-          </p>
-          {regionStats.isPending ? (
-            <p className="mt-3 font-mono text-xs text-muted-foreground">&gt; READING REGION LEDGER…</p>
-          ) : region ? (
-            <>
-              <div className="mt-3 grid gap-px bg-border sm:grid-cols-3">
-                <Metric label="HOLDER ADDRESSES" value={region.owners.toLocaleString("en-US")} />
-                <Metric label="BITMAPS HELD" value={regionHeld.toLocaleString("en-US")} />
-                <Metric
-                  label="AVERAGE PER HOLDER"
-                  value={region.owners > 0 ? (regionHeld / region.owners).toFixed(1) : "—"}
-                />
-              </div>
-              {region.top.length > 0 && (
-                <ul className="mt-4 space-y-2">
-                  {region.top.slice(0, 5).map((holder, rank) => (
-                    <li key={holder.address ?? rank} className="flex min-w-0 items-center gap-3 font-mono text-xs">
-                      <span className="label w-6 shrink-0">{String(rank + 1).padStart(2, "0")}</span>
-                      {holder.address ? (
-                        <Link
-                          to="/profile/$address"
-                          params={{ address: holder.address }}
-                          className="min-w-0 truncate text-foreground hover:text-bitcoin"
-                        >
-                          {shortenAddress(holder.address)}
-                        </Link>
-                      ) : (
-                        <span className="min-w-0 truncate text-muted-foreground">UNKNOWN HOLDER</span>
-                      )}
-                      <span className="relative h-1.5 min-w-10 flex-1 overflow-hidden bg-border">
-                        <span
-                          className="absolute inset-y-0 left-0 bg-bitcoin/70"
-                          style={{ width: `${regionHeld > 0 ? Math.min(100, (holder.held / regionHeld) * 100) : 0}%` }}
-                        />
-                      </span>
-                      <span className="label shrink-0">
-                        {holder.held} · {regionHeld > 0 ? ((holder.held / regionHeld) * 100).toFixed(2) : "0.00"}%
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </>
-          ) : (
-            <p className="mt-3 font-mono text-xs text-muted-foreground">&gt; NO REGION DATA INDEXED YET_</p>
-          )}
-        </div>
-      </section>
-
-      <BitmapPriceChart height={block} />
-
-      <ParcelPanel
-        height={block}
-        districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
-        txCount={stats.data?.txCount ?? scan.data?.txCount ?? null}
-      />
-      <BitmapDevelopment
-        height={block}
-        districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
-      />
-      <ShadowGatePanel height={block} />
-      <TerritoryChronicle height={block} />
-
-      <BitmapValuation
-        height={block}
-        claimInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
-      />
-
-      <div id="community" className="scroll-mt-20"><BitmapChat height={block} /></div>
-
-
+      {tab === "world" && (
+        <div className="mt-6 space-y-6">
       <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="group rounded-lg border border-border bg-card p-6">
           <BlockMosaic height={block} txCount={stats.data?.txCount ?? scan.data?.txCount ?? null} />
@@ -556,10 +425,181 @@ function BitmapDetail() {
           </dl>
         </details>
       </div>
-
-
-
-
+      <ParcelPagePanel height={block} ownerAddress={owner} />
+      <div id="market" className="scroll-mt-20">
+        <DistrictReinscriptions height={block} districtInscriptionId={inscriptionId} />
+      </div>
+      <div className="mt-8">
+        <BssScriptPanel height={block} />
+      </div>
+<ClientOnly><TerritoryKiosk height={block} /></ClientOnly>
+      <div className="mt-6">
+        <TerritoryPanel height={block} ownerAddress={owner} ownerPending={liveHolder.isPending} />
+      </div>
+      <BitmapDevelopment
+        height={block}
+        districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
+      />
+      <div className="mt-8 flex flex-wrap items-center gap-3 border border-border p-4">
+        <div className="min-w-0 flex-1">
+          <p className="label text-bitcoin">BLOCK-DNA GUARDIAN</p>
+          <p className="font-mono text-[11px] text-muted-foreground">A creature read from this block's real data. The holder can summon it to patrol this land in the Oasis.</p>
+        </div>
+        <SummonGuardianButton height={block} />
+      </div>
+        </div>
+      )}
+      {tab === "market" && (
+        <div className="mt-6 space-y-6">
+        <BitmapOrderBook height={block} />
+        <BitmapStorefront height={block} />
+      <BidPanel
+        height={block}
+        ownerAddress={owner}
+        askSats={parcel?.listedSats ?? null}
+      />
+      <BitmapPriceChart height={block} />
+      <div className="mt-6">
+        <LeasePanel height={block} ownerAddress={owner} />
+      </div>
+      <BitmapValuation
+        height={block}
+        claimInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
+      />
+        </div>
+      )}
+      {tab === "facts" && (
+        <div className="mt-6 space-y-6">
+      <section id="facts" className="mt-8 scroll-mt-20 border border-border" aria-label="Block analytics">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
+          <h2 className="label">BLOCK ANALYTICS</h2>
+          <Link to="/map/district/$slug" params={{ slug: place.slug }} className="label text-bitcoin hover:text-foreground">
+            {place.name.toUpperCase()} →
+          </Link>
+        </div>
+        <div className="grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-4">
+          <Metric label="BLOCK TRANSACTIONS" value={txCount !== null ? txCount.toLocaleString("en-US") : "…"} />
+          <Metric label="ON-CHAIN TRANSFERS" value={String(history.length)} />
+          <Metric
+            label="TOTAL TRADED VOLUME"
+            value={tradedVolume > 0 ? formatSats(tradedVolume) : history.length > 0 ? "TRANSFERS ONLY" : "NO TRADES"}
+          />
+          <Metric label="DISTINCT TRADERS" value={String(distinctTraders)} />
+          <Metric
+            label="INSCRIPTIONS IN BLOCK"
+            value={scan.data ? scan.data.inscriptions.length.toLocaleString("en-US") : "…"}
+          />
+          <Metric
+            label="BITMAP CLAIMS HERE"
+            value={scan.data ? String(claims.length) : "…"}
+          />
+          <Metric label="WORLD EVENTS HERE" value={localHistory.data ? String(localHistory.data.length) : "…"} />
+          <Metric
+            label="INSCRIPTION VALUE"
+            value={
+              liveHolder.data?.valueSats
+                ? formatSats(liveHolder.data.valueSats)
+                : liveHolder.isPending
+                  ? "…"
+                  : "—"
+            }
+          />
+        </div>
+        <div className="border-t border-border px-4 py-4">
+          <p className="label text-muted-foreground">
+            DISTRICT OWNERSHIP · {place.name.toUpperCase()} · {place.landmark.toUpperCase()}
+          </p>
+          {regionStats.isPending ? (
+            <p className="mt-3 font-mono text-xs text-muted-foreground">&gt; READING REGION LEDGER…</p>
+          ) : region ? (
+            <>
+              <div className="mt-3 grid gap-px bg-border sm:grid-cols-3">
+                <Metric label="HOLDER ADDRESSES" value={region.owners.toLocaleString("en-US")} />
+                <Metric label="BITMAPS HELD" value={regionHeld.toLocaleString("en-US")} />
+                <Metric
+                  label="AVERAGE PER HOLDER"
+                  value={region.owners > 0 ? (regionHeld / region.owners).toFixed(1) : "—"}
+                />
+              </div>
+              {region.top.length > 0 && (
+                <ul className="mt-4 space-y-2">
+                  {region.top.slice(0, 5).map((holder, rank) => (
+                    <li key={holder.address ?? rank} className="flex min-w-0 items-center gap-3 font-mono text-xs">
+                      <span className="label w-6 shrink-0">{String(rank + 1).padStart(2, "0")}</span>
+                      {holder.address ? (
+                        <Link
+                          to="/profile/$address"
+                          params={{ address: holder.address }}
+                          className="min-w-0 truncate text-foreground hover:text-bitcoin"
+                        >
+                          {shortenAddress(holder.address)}
+                        </Link>
+                      ) : (
+                        <span className="min-w-0 truncate text-muted-foreground">UNKNOWN HOLDER</span>
+                      )}
+                      <span className="relative h-1.5 min-w-10 flex-1 overflow-hidden bg-border">
+                        <span
+                          className="absolute inset-y-0 left-0 bg-bitcoin/70"
+                          style={{ width: `${regionHeld > 0 ? Math.min(100, (holder.held / regionHeld) * 100) : 0}%` }}
+                        />
+                      </span>
+                      <span className="label shrink-0">
+                        {holder.held} · {regionHeld > 0 ? ((holder.held / regionHeld) * 100).toFixed(2) : "0.00"}%
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          ) : (
+            <p className="mt-3 font-mono text-xs text-muted-foreground">&gt; NO REGION DATA INDEXED YET_</p>
+          )}
+        </div>
+      </section>
+      <ParcelPanel
+        height={block}
+        districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
+        txCount={stats.data?.txCount ?? scan.data?.txCount ?? null}
+      />
+      {scan.data && scan.data.inscriptions.length > 0 && (
+        <div className="mt-8 border border-border">
+          <div className="border-b border-border px-6 py-3">
+            <h2 className="label">INSCRIPTIONS FOUND IN BLOCK {block}</h2>
+          </div>
+          <div className="grid gap-4 px-6 py-5 sm:grid-cols-2 lg:grid-cols-4">
+            {scan.data.inscriptions.slice(0, 40).map((i) => (
+              <a
+                key={i.id}
+                href={`https://ordinals.com/inscription/${i.id}`}
+                target="_blank"
+                rel="noreferrer"
+                className="border border-border transition-colors hover:border-primary"
+              >
+                <InscriptionContent
+                  inscriptionId={i.id}
+                  contentType={i.contentType}
+                  className="aspect-square w-full"
+                  title={i.isBitmapClaim ? `${i.bitmapHeight}.bitmap` : `Inscription ${shortId(i.id)}`}
+                />
+                <div className="border-t border-border px-3 py-2 font-mono text-[11px] text-muted-foreground">
+                  <span className="block truncate text-foreground">
+                    {i.isBitmapClaim ? `${i.bitmapHeight}.BITMAP` : shortId(i.id)}
+                  </span>
+                  <span className="block truncate">
+                    {i.contentType ?? "UNKNOWN"} · {i.bodyBytes} B
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+        </div>
+      )}
+      {tab === "chronicle" && (
+        <div className="mt-6 space-y-6">
+      <ProvenancePanel height={block} ownerAddress={owner} />
+      <TerritoryChronicle height={block} />
       <div className="mt-8 border border-border">
         <div className="flex items-center justify-between border-b border-border px-6 py-3">
           <h2 className="label">ON-CHAIN TRADE HISTORY</h2>
@@ -601,42 +641,6 @@ function BitmapDetail() {
           </ul>
         )}
       </div>
-
-      {scan.data && scan.data.inscriptions.length > 0 && (
-        <div className="mt-8 border border-border">
-          <div className="border-b border-border px-6 py-3">
-            <h2 className="label">INSCRIPTIONS FOUND IN BLOCK {block}</h2>
-          </div>
-          <div className="grid gap-4 px-6 py-5 sm:grid-cols-2 lg:grid-cols-4">
-            {scan.data.inscriptions.slice(0, 40).map((i) => (
-              <a
-                key={i.id}
-                href={`https://ordinals.com/inscription/${i.id}`}
-                target="_blank"
-                rel="noreferrer"
-                className="border border-border transition-colors hover:border-primary"
-              >
-                <InscriptionContent
-                  inscriptionId={i.id}
-                  contentType={i.contentType}
-                  className="aspect-square w-full"
-                  title={i.isBitmapClaim ? `${i.bitmapHeight}.bitmap` : `Inscription ${shortId(i.id)}`}
-                />
-                <div className="border-t border-border px-3 py-2 font-mono text-[11px] text-muted-foreground">
-                  <span className="block truncate text-foreground">
-                    {i.isBitmapClaim ? `${i.bitmapHeight}.BITMAP` : shortId(i.id)}
-                  </span>
-                  <span className="block truncate">
-                    {i.contentType ?? "UNKNOWN"} · {i.bodyBytes} B
-                  </span>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-
-
       <div className="mt-8 flex flex-wrap gap-3">
         <button
           className="btn-term disabled:opacity-30"
@@ -665,30 +669,36 @@ function BitmapDetail() {
           </a>
         )}
       </div>
-
-
-      <BidPanel
-        height={block}
-        ownerAddress={owner}
-        askSats={parcel?.listedSats ?? null}
-      />
-
-      <div className="mt-6">
-        <TerritoryPanel height={block} ownerAddress={owner} ownerPending={liveHolder.isPending} />
-      </div>
-
-      <div className="mt-6">
-        <LeasePanel height={block} ownerAddress={owner} />
-      </div>
-
+        </div>
+      )}
+      {tab === "community" && (
+        <div className="mt-6 space-y-6">
+      <div id="community" className="scroll-mt-20"><BitmapChat height={block} /></div>
+<ClientOnly><TerritoryDispatches height={block} /></ClientOnly>
       <div className="mt-6">
         <BitmapEvents height={block} ownerAddress={owner} />
       </div>
-
-
+      <ShadowGatePanel height={block} />
+      <div className="mt-8 max-w-2xl">
+        <TerritoryShareCard height={block} placeName={`${place.localName} · ${place.name}`} tags={[parcel ? "CLAIMED LAND" : "UNCLAIMED LAND", "BITCOIN BLOCK"]} />
+      </div>
+        </div>
+      )}
 
     </div>
   );
+}
+
+const TABS = [
+  { id: "world", label: "LIVE WORLD" },
+  { id: "market", label: "MARKET" },
+  { id: "facts", label: "FACTS" },
+  { id: "chronicle", label: "CHRONICLE" },
+  { id: "community", label: "COMMUNITY" },
+] as const;
+type TabId = (typeof TABS)[number]["id"];
+function history_replace(id: string) {
+  window.history.replaceState(window.history.state, "", `#${id}`);
 }
 
 function Field({ k, v }: { k: string; v: string }) {
