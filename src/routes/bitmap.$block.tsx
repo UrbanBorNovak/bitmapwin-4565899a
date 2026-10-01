@@ -34,6 +34,7 @@ import { MakeOfferButton } from "@/components/MakeOfferButton";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapStorefront } from "@/components/BitmapStorefront";
 import { TerritoryKiosk } from "@/components/territory/TerritoryKiosk";
+import { ClientOnly } from "@tanstack/react-router";
 import { TerritoryPanel } from "@/components/extenders/TerritoryPanel";
 import { getBitmapHolderFn } from "@/lib/locate-bitmap.functions";
 import { LoopNavigator } from "@/components/LoopNavigator";
