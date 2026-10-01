@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DataBadge } from "@/components/extenders/DataBadge";
 import { useWalletSession } from "@/lib/wallet-session";
 import { heldHeightsQuery } from "@/lib/held-parcels";
+import { walletQuery } from "@/lib/wallet";
 import { myDeploymentsQuery } from "@/lib/extenders";
 
 export const Route = createFileRoute("/my-land")({
@@ -28,6 +29,8 @@ function MyLandPage() {
   const wallet = useWalletSession();
   const addresses = wallet ? [wallet.ordinalsAddress, wallet.paymentAddress].filter(Boolean) : [];
   const held = useQuery(heldHeightsQuery(addresses));
+  // Same live Taproot scan as /wallet (shared cache); records are only a fallback.
+  const live = useQuery(walletQuery(wallet?.ordinalsAddress ?? ""));
   const deployments = useQuery(myDeploymentsQuery(addresses));
 
   if (!wallet) {
@@ -46,7 +49,12 @@ function MyLandPage() {
     );
   }
 
-  const heights = held.data ?? [];
+  const liveHeights = live.data
+    ? [...new Set(live.data.inscriptions.map((i) => i.bitmapHeight).filter((h): h is number => h !== null))].sort((a, b) => a - b)
+    : null;
+  const usingLive = liveHeights !== null;
+  const heights = liveHeights ?? held.data ?? [];
+  const scanning = live.isLoading || (!usingLive && held.isLoading);
   const deployedOn = new Map<number, number>();
   for (const d of deployments.data ?? []) {
     deployedOn.set(d.bitmapHeight, (deployedOn.get(d.bitmapHeight) ?? 0) + 1);
@@ -57,11 +65,12 @@ function MyLandPage() {
       <div className="label text-bitcoin">LAND · MY LAND</div>
       <h1 className="display mt-3 text-3xl md:text-5xl">MY LAND</h1>
       <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
-        Every BITMAP this wallet holds, straight from the chain index. Extend a tile to deploy software on it,
+        Every BITMAP this wallet holds, read live from Bitcoin — the same scan as your wallet page. Extend a tile to deploy software on it,
         or open it in the world.
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
-        <DataBadge kind="live" note="WALLET HOLDINGS" />
+        <DataBadge kind="live" note={usingLive ? "LIVE CHAIN SCAN" : "INDEXED RECORDS"} />
+        <button type="button" className="btn-term-ghost" onClick={() => live.refetch()} disabled={live.isFetching}>{live.isFetching ? "[ SCANNING… ]" : "[ REFRESH ]"}</button>
         <Link to="/extend" className="btn-term">[ EXTEND MY LAND ]</Link>
         <Link to="/my-world" className="btn-term-ghost">[ MANAGE MY WORLD ]</Link>
       </div>
@@ -69,7 +78,7 @@ function MyLandPage() {
       <section data-tour="myland-stats" className="mt-8 grid grid-cols-2 border border-border md:grid-cols-4">
         <div className="border-b border-r border-border p-4">
           <div className="label">BITMAPS HELD</div>
-          <div className="display mt-2 text-2xl">{held.isLoading ? "…" : heights.length}</div>
+          <div className="display mt-2 text-2xl">{scanning ? "…" : heights.length}</div>
         </div>
         <div className="border-b border-border p-4 md:border-r">
           <div className="label">WITH DEPLOYMENTS</div>
@@ -85,7 +94,7 @@ function MyLandPage() {
         </div>
       </section>
 
-      {held.isLoading ? (
+      {scanning ? (
         <p className="mt-8 label">SCANNING WALLET HOLDINGS…</p>
       ) : heights.length === 0 ? (
         <div className="mt-8 border border-border p-8 text-center">
