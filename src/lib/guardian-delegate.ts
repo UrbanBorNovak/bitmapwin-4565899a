@@ -236,7 +236,7 @@ function frame(now){
   pitch=Math.max(.1,Math.min(1.45,pitch));
   backdrop(W,H);
   if(VOX&&LAND){cam();
-    var span=LAND.half*2.3;SC=Math.min(W,H)/span*zoom;OX=W/2;OY=H*.56+Math.sin(pitch)*LAND.half*.1*SC;
+    var span=LAND.half*2.6;SC=Math.min(W,H)/span*zoom;OX=W/2;OY=H*.56+Math.sin(pitch)*LAND.half*.1*SC;
     drawLand(pulse);drawVox(pulse,STATE!=="AWAKE");
   }
   hud(W,H,pulse);requestAnimationFrame(frame)
@@ -287,7 +287,7 @@ function land(txs,hash){
      seeded from the block hash. the parcel COUNT is exact: one per transaction. */
   var r=rng(h32(hash+":land")),sizes=[],i,n=Math.max(1,Math.min(txs,12000));
   for(i=0;i<n;i++){var u=r();sizes.push(i===0?Math.max(2,Math.ceil(Math.sqrt(n)/12)):u<.72?1:u<.9?2:u<.97?3:u<.995?4:5+Math.floor(r()*4))}
-  var M=mondrian(sizes),side=Math.max(M.w,M.h),S=36/side,half=18,p=[];
+  var M=mondrian(sizes),side=Math.max(M.w,M.h),S=28/side,half=14,p=[];
   var OR=["#f7931a","#f9a23c","#e8850e","#ffb03a","#d97a0a"];
   for(i=0;i<M.sq.length;i++){var q=M.sq[i];
     p.push([q.x*S-half+(side-M.w)*S/2,q.y*S-half+(side-M.h)*S/2,q.r*S,OR[(h32(hash+i)>>>3)%OR.length]])}
