@@ -6,6 +6,7 @@ import { GuardianTurntable, SummonGuardianDialog } from "@/components/bitmon/Sum
 import { guardianDnaQuery, guardianQuery } from "@/lib/bitmon-queries";
 import { GUARDIAN_PRICE_SATS, RARITY_TONE, guardianLevel } from "@/lib/bitmon";
 import { morphFromDna } from "@/lib/creature-morph";
+import { DelegateGuardianSummon } from "@/components/bitmon/DelegateGuardianSummon";
 
 export const Route = createFileRoute("/mint")({
   validateSearch: z.object({ height: z.coerce.number().int().min(0).optional() }),
@@ -99,6 +100,16 @@ function MintPage() {
           ) : null}
         </aside>
       </div>
+      {d ? (
+        <section data-tour="mint-delegate" className="panel mt-6 space-y-3 rounded-md border border-border p-4">
+          <p className="label text-signal">HOLDER SUMMON · DELEGATE</p>
+          <h2 className="display text-2xl">SUMMON FROM <span className="text-bitcoin">{height}.BITMAP</span></h2>
+          <p className="max-w-2xl text-sm text-muted-foreground">
+            Hold this BITMAP? Inscribe a tiny child of it that borrows the master generator. It lands in your own wallet, not the pool.
+          </p>
+          <DelegateGuardianSummon dna={d} />
+        </section>
+      ) : null}
       {open ? <SummonGuardianDialog height={height} open={open} onOpenChange={setOpen} /> : null}
     </div>
   );

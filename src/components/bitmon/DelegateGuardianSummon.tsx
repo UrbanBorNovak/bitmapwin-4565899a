@@ -1,0 +1,62 @@
+/**
+ * Delegate summon: a near-empty child inscription that points (tag 11) at the
+ * master generator and claims the holder's `<height>.bitmap` as parent (tag 3).
+ * The tribute is paid inside the same reveal, so the master generator can
+ * verify both on chain and awaken the Guardian in full colour by itself.
+ */
+import { ShadowInscriber, type ArtifactVariant } from "@/components/territory/ShadowInscriber";
+import { DELEGATE_CONTENT_TYPE, GUARDIAN_MASTER_DELEGATE_ID, TRIBUTE_ADDRESS, TRIBUTE_SATS, guardianMasterGeneratorHtml } from "@/lib/guardian-delegate";
+import { guardianArtifactSvg, guardianShieldDigest, type GuardianDna } from "@/lib/bitmon";
+
+const STEPS = [
+  ["A", "PARENT", "Your BITMAP is spent into the reveal and returned to your own address in the same transaction."],
+  ["B", "TRIBUTE", `${TRIBUTE_SATS.toLocaleString()} sats go to the BITMAPWIN treasury in output 1 of the reveal.`],
+  ["C", "AWAKENS", "The master generator reads its parent and tribute on chain and draws the full-colour Guardian."],
+] as const;
+
+export function DelegateGuardianSummon({ dna }: { dna: GuardianDna }) {
+  if (!GUARDIAN_MASTER_DELEGATE_ID) {
+    return <p className="font-mono text-xs text-muted-foreground">DELEGATE SUMMONS ARE NOT OPEN YET.</p>;
+  }
+  // No summon order exists for a delegate mint, so the commitment is bound to
+  // the master generator instead of a payment txid.
+  const anchor = `delegate:${GUARDIAN_MASTER_DELEGATE_ID}`;
+  const digest = guardianShieldDigest(dna, anchor);
+  const variants: ArtifactVariant[] = [
+    {
+      key: "delegate",
+      label: "◈ DELEGATE GUARDIAN",
+      contentType: DELEGATE_CONTENT_TYPE,
+      source: guardianMasterGeneratorHtml(),
+      delegate: GUARDIAN_MASTER_DELEGATE_ID,
+      tribute: { address: TRIBUTE_ADDRESS, sats: TRIBUTE_SATS },
+      note: `EMPTY BODY + DELEGATE TAG. THE MASTER GENERATOR CHECKS THE ${dna.height}.BITMAP PARENT AND THE ${TRIBUTE_SATS.toLocaleString()}-SAT TRIBUTE INSIDE THIS TRANSACTION.`,
+    },
+  ];
+
+  return (
+    <div className="space-y-3">
+      <ol className="grid gap-2 sm:grid-cols-3">
+        {STEPS.map(([n, t, note]) => (
+          <li key={n} className="border border-border p-2">
+            <p className="font-mono text-[10px] text-bitcoin">{n} · {t}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{note}</p>
+          </li>
+        ))}
+      </ol>
+      <ShadowInscriber
+        slug={`guardian-delegate-${dna.height}`}
+        height={dna.height}
+        index={0}
+        digest={digest}
+        artifactSvg={guardianArtifactSvg(dna, anchor)}
+        artifactVariants={variants}
+        artifactLabel="DELEGATE GUARDIAN"
+        actionLabel="◆ SUMMON FULL-COLOUR GUARDIAN"
+        description={`ONLY THE WALLET HOLDING ${dna.height}.BITMAP CAN SIGN THIS. WITHOUT A VALID BITMAP PARENT OR TRIBUTE, THE INSCRIPTION RENDERS AS A STONE RELIC. YOUR WALLET PAYS THE LIVE MINER FEE.`}
+        allowUpload={false}
+        claimParentsForHeight={dna.height}
+      />
+    </div>
+  );
+}
