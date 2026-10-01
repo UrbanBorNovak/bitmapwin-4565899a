@@ -26,7 +26,7 @@ export function resetSpaceTimeClock() {
 }
 
 const GRID = 1_000;
-const WORLD_SIZE = 300;
+const WORLD_SIZE = 850;
 export const SPACE_TIME_CELL = WORLD_SIZE / GRID;
 
 /** Same placement the walkable world uses, so a mark lands on its own BITMAP. */

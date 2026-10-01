@@ -16,7 +16,7 @@
 /** Districts per side of the world grid — mirrors the 3D world. */
 export const WORLD_GRID = 1_000;
 /** World units across one side of the terrain. */
-export const WORLD_UNITS = 300;
+export const WORLD_UNITS = 850;
 /** World units per district cell. */
 export const WORLD_CELL = WORLD_UNITS / WORLD_GRID;
 /** Chunk side in cells — the region label a player reports as their locale. */

@@ -19,7 +19,7 @@ import { packParcels } from "@/components/TerritoryCanvas";
 import { groundY } from "@/lib/world-terrain";
 
 const GRID = 1_000;
-const WORLD_SIZE = 300;
+const WORLD_SIZE = 850;
 const CELL = WORLD_SIZE / GRID;
 /** Avatar stride (one BITMAP is 10 strides across). */
 const STRIDE = 0.01;
