@@ -12,7 +12,7 @@ const tmp = new THREE.Vector3();
 export function StreamJumbotron({ height, position, cell }: { height: number; position: [number, number, number]; cell: number }) {
   const group = useRef<THREE.Group>(null);
   const [near, setNear] = useState(false);
-  const w = cell * 0.7;
+  const w = cell * 0.8;
   const h = w * 9 / 16;
   const lift = cell * 0.12;
 
@@ -36,7 +36,8 @@ export function StreamJumbotron({ height, position, cell }: { height: number; po
         <boxGeometry args={[w + cell * 0.02, h + cell * 0.02, cell * 0.006]} />
         <meshStandardMaterial color="#0b0b0b" emissive="#f7931a" emissiveIntensity={0.08} />
       </mesh>
-      <SafeHtml transform position={[0, lift + h / 2, 0]} scale={w / 640} zIndexRange={[10, 0]}>
+      {/* distanceFactor 400 makes drei's transform 1 CSS px = 1 local unit, so 640px spans exactly w */}
+      <SafeHtml transform distanceFactor={400} position={[0, lift + h / 2, cell * 0.001]} scale={w / 640} zIndexRange={[10, 0]}>
         <div style={{ width: 640, height: 360, background: "#000" }}>
           {near ? (
             <iframe
