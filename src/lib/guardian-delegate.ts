@@ -98,7 +98,7 @@ function tribute(){
 /* ---------- 4. block dna -> creature, the same maths as bitmapwin ---------- */
 function h32(s){var h=2166136261,i;for(i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
 function rng(seed){var s=seed>>>0;return function(){s^=s<<13;s>>>=0;s^=s>>17;s^=s<<5;s>>>=0;return s/4294967296}}
-var SHAPES=["golem","bird","wisp","wyrm","beast"];
+var SHAPES=["quadruped","hexapod","serpent","biped","avian","floater","arachnid","centaur"];
 var NAME_A=["VOID","SOLAR","OBSIDIAN","GLASS","CYBER","ORPHAN","EMBER","FROST","IRON","HOLLOW"];
 var NAME_B=["WYRM","GRYPHON","BEHEMOTH","PHANTOM","RAM","LEVIATHAN","SENTINEL","STALKER","WARDEN","SERAPH"];
 function dnaOf(height,hash,txs,size){
@@ -114,7 +114,8 @@ function dnaOf(height,hash,txs,size){
     lv:1+Math.floor(Math.min(20,Math.log2(1+txs)*2)),
     body:"hsl("+hue+",62%,46%)",accent:"hsl("+hue2+",88%,58%)",
     seg:Math.max(3,Math.min(7,3+Math.floor(txs/900))),
-    bulk:Math.max(.8,Math.min(1.45,.8+size/2600000)),
+    bulk:Math.max(.85,Math.min(1.35,.85+size/3000000)),
+    horn:Math.floor(r()*4),wing:r()>.7,spine:r()>.5,pat:r()>.4,gait:.7+r()*.6,
     dna:h32(hash).toString(16)};
 }
 
@@ -126,43 +127,79 @@ function mix(a,b,k){
   var A=rgb(a),B=rgb(b),o=[],i;for(i=0;i<3;i++)o.push(Math.round(A[i]+(B[i]-A[i])*k));
   return "rgb("+o.join(",")+")";
 }
+/* every voxel: [x,y,z,w,h,d,colour,glow,part,phase]
+   part 0 body · 1 leg · 2 wing · 3 tail · 4 head · 5 mote */
 function blueprint(G){
-  var BODY=G.body,ACC=G.accent,DARK=mix(BODY,"#000000",.55),LIGHT=mix(BODY,"#ffffff",.26),MID=mix(BODY,ACC,.2);
-  var V=[],s=G.sh,b=G.bulk,i,k,f;
-  function box(x,y,z,w,h,d,c,g){V.push([x,y,z,w*b,h,d*b,c,g||0])}
-  function sym(x,y,z,w,h,d,c,g){box(x,y,z,w,h,d,c,g);box(-x,y,z,w,h,d,c,g)}
-  if(s==="golem"){
-    box(0,10,0,9,8,6,BODY);box(0,11,-3.4,6,5,1.2,DARK);box(0,11,3.2,6,4,.6,mix(ACC,"#000000",.3),.5);
-    box(0,16.6,.2,5.6,4.4,4.8,BODY);box(0,18.8,0,4.4,1.2,3.8,LIGHT);sym(1.4,17.2,2.8,1,.6,.4,ACC,1);
-    sym(6.7,14.2,0,4.2,3.6,5.4,BODY);sym(7.2,15.8,0,4.8,1.3,5.8,ACC,.4);
-    sym(6.6,10.3,0,2.2,4.6,2.6,DARK);sym(2.6,5.5,0,3.1,5,3.4,BODY);sym(2.6,.7,1.3,4.2,1.4,5.5,BODY);
-  }else if(s==="bird"){
-    box(0,8.2,-.8,5.2,5.4,10.5,BODY);box(0,12.8,4.8,4.2,4.2,4.2,BODY);box(0,12.2,7.8,2.8,2,2.8,LIGHT);
-    box(0,11.8,9.6,1.6,1.2,1.8,ACC,.8);sym(1.2,13.6,7,.9,.7,.4,ACC,1);
-    for(i=0;i<5;i++)sym(7.2+i*1.9,9.7-i*.6,-1-i,4.4-i*.35,.5,1.6,i%2?LIGHT:BODY);
-    sym(1.7,3.5,3.5,1.2,5.5,1.2,LIGHT);sym(1.7,.8,4.9,2,1,3,BODY);
-    for(i=-1;i<2;i++)box(i*1.3,7.3,-8.3,1.2,.7,7.2,i?LIGHT:ACC,i?0:.3);
-  }else if(s==="wisp"){
-    box(0,12,0,4.6,4.6,4.6,BODY,.7);box(0,14.8,-.8,6.5,1.8,5.2,DARK);sym(2.7,12.9,.5,2,4.8,4.8,DARK);
-    box(0,10.6,3.5,3.8,3.4,.8,DARK);sym(1.05,12,4.1,.8,.5,.3,ACC,1);sym(7,9.6,.8,2.5,2,2.8,MID);
-    for(i=0;i<6;i++){var a=i*1.047;box(Math.sin(a)*7.2,11+Math.sin(a*2)*2.2,Math.cos(a)*7.2,1.4,1.4,1.4,ACC,.9)}
-  }else if(s==="wyrm"){
-    for(i=0;i<G.seg;i++){k=(i-(G.seg-1)/2)*3.6;f=Math.abs(i-(G.seg-1)/2);
-      box(0,6.2+((G.seg-1)/2-f)*.45,k,5.4-f*.45,4.2,4.2,i%2?MID:BODY);
-      box(0,8.6,k,4.2-f*.35,.9,3,i%2?LIGHT:ACC,i%2?0:.4)}
-    box(0,8.8,G.seg*2,4.8,4.2,5.6,BODY);box(0,8,G.seg*2+3.4,3.4,2.5,4.2,LIGHT);
-    sym(1.4,9.8,G.seg*2+2.5,.9,.7,.4,ACC,1);sym(1.6,12,G.seg*2-.5,1.1,3.4,1.1,ACC,.5);
-  }else{
-    box(0,7.2,-.8,5.4,5.8,11.4,BODY);box(0,9.1,2,6.2,2.5,5.5,MID);sym(3.4,9.2,2.8,2.4,2.4,4.2,ACC,.3);
-    box(0,11.8,5.8,4.8,4.8,5,BODY);box(0,10.8,9.3,3.4,2.5,4.2,LIGHT);box(0,10.8,11.7,2.4,1.6,1.2,DARK);
-    sym(1.4,13,8.4,.9,.7,.4,ACC,1);sym(2,15.7,4.8,1.5,5.6,1.9,BODY);
-    for(i=0;i<2;i++){sym(2.5,4.7,i?3.8:-3.4,1.9,4.3,2.2,BODY);sym(2.7,1.3,i?4.4:-2.8,2.8,1,3.4,BODY)}
-    for(i=0;i<4;i++)box(Math.sin(i*.55)*1.8,7.6+i*.9,-7.8-i*2.7,2-i*.25,2-i*.25,3.4,i%2?ACC:BODY,i%2?.3:0);
-  }
-  var pts=G.ra==="MYTHIC"?8:G.ra==="EPIC"?6:G.ra==="RARE"?4:0;
-  for(i=0;i<pts;i++){var an=i/pts*Math.PI*2,r=G.ra==="MYTHIC"?7.6:6.6;
-    box(Math.sin(an)*r,(s==="golem"?21.5:s==="wyrm"?13.5:17.5),Math.cos(an)*r,.7,G.ra==="MYTHIC"?2.6:1.7,.7,ACC,1)}
+  var BODY=G.body,ACC=G.accent,DARK=mix(BODY,"#000000",.55),LIGHT=mix(BODY,"#ffffff",.26),MID=mix(BODY,ACC,.25),BONE=mix(LIGHT,"#ffffff",.35);
+  var V=[],p=G.sh,b=G.bulk,r=rng(h32(G.dna+":anat")),i,k;
+  function box(x,y,z,w,h,d,c,g,pt,ph){V.push([x,y,z,w*b,h,d*b,c,g||0,pt||0,ph||0])}
+  function sym(x,y,z,w,h,d,c,g,pt,ph){box(x,y,z,w,h,d,c,g,pt,ph);box(-x,y,z,w,h,d,c,g,pt,(ph||0)+Math.PI)}
+  var up=p==="biped"||p==="avian",low=p==="arachnid",serp=p==="serpent",fl=p==="floater";
+  var LEG=serp||fl?0:low?3.2:up?6.5:4.8,seg=serp?G.seg+4:p==="hexapod"?4:G.seg>4?4:3;
+  var BY=fl?9:serp?2.2:LEG+2.4,SW=up?4.6:low?6.4:5.6,SH=up?5.4:low?3.4:4.6,SL=serp?3:up?3.2:3.6;
+  var front=0;
+  /* torso: tapered armoured segments with dorsal plates and flank bands */
+  for(i=0;i<seg;i++){var tp=serp?1-i/(seg*1.6):1-Math.abs(i-(seg-1)/2)/(seg*1.4),z=serp?-i*SL*.9:(i-(seg-1)/2)*SL;
+    var y=up?BY+i*SH*.82:BY+(serp?Math.sin(i*.9)*.6:0),zz=up?0:z;
+    box(0,y,zz,SW*tp,SH*tp,up?SW*.8:SL,i%2?MID:BODY,0,serp?3:0,i*.7);
+    box(0,y+SH*tp*.5,zz,SW*tp*.7,.7,up?SW*.5:SL*.8,i%2?LIGHT:ACC,i%2?0:.35,serp?3:0,i*.7);
+    sym(SW*tp*.52,y,zz,.5,SH*tp*.6,up?SW*.5:SL*.6,DARK,0,serp?3:0,i*.7);
+    if(G.pat&&i%2===0)sym(SW*tp*.53,y+.4,zz,.2,.6,SL*.5,ACC,.8,serp?3:0,i*.7);
+    if(!up&&!serp&&(G.spine||i===0))box(0,y+SH*tp*.5+1,zz,.8,1.6,.8,ACC,.5);
+    if(up)front=SW*.4;else front=Math.max(front,zz+SL/2)}
+  if(serp)front=SL/2;
+  var topY=up?BY+(seg-1)*SH*.82+SH*.5:BY;
+  /* head: skull, brow, jaw, snout, glowing eyes, horns */
+  var HY=up?topY+2.6:BY+SH*.35,HZ=up?.6:front+2.2,HS=up?4:3.8;
+  box(0,HY,HZ,HS,HS*.85,HS,BODY,0,4);
+  box(0,HY+HS*.42,HZ+.2,HS*1.05,.7,HS*.8,DARK,0,4);
+  box(0,HY-HS*.38,HZ+.6,HS*.8,1,HS*.9,DARK,0,4);
+  box(0,HY-.4,HZ+HS*.62,HS*.6,HS*.45,1.4,LIGHT,0,4);
+  sym(HS*.26,HY+.35,HZ+HS*.5,.8,.5,.3,ACC,1.2,4);
+  sym(HS*.2,HY-HS*.55,HZ+HS*.7,.35,.8,.35,BONE,0,4);
+  var horn=G.horn;
+  for(k=0;k<(horn===3?5:2);k++){
+    if(horn===0)sym(HS*.35,HY+HS*.7+k*.9,HZ-.3-k*.5,.7,1.2,.7,BONE,0,4);
+    else if(horn===1)sym(HS*.55+k*.7,HY+HS*.5+k*.8,HZ-k*.9,.8,.8,1.3,BONE,0,4);
+    else if(horn===2){sym(HS*.4+k*.6,HY+HS*.6+k*1.3,HZ-.4,.5,1.5,.5,BONE,0,4);sym(HS*.4+k*1.3,HY+HS*.6+k*1.3+.6,HZ-.4,1.2,.4,.4,BONE,0,4)}
+    else box((k-2)*.9,HY+HS*.62+(k%2?.4:.9),HZ,.6,1.2+(k===2?1:0),.6,ACC,.7,4)}
+  /* legs: thigh, shin, joint, clawed foot */
+  var nl=p==="hexapod"?6:low?8:p==="quadruped"||p==="centaur"?4:up?2:0;
+  for(i=0;i<nl/2;i++){var lz=up?0:nl===2?0:-((seg-1)/2*SL)+i*((seg-1)*SL)/Math.max(1,nl/2-1),lx=low?SW*.5+2.2:SW*.36,ph=i*1.6;
+    sym(lx,LEG*.72,lz,1.8,LEG*.5,1.9,BODY,0,1,ph);
+    sym(lx+(low?1:0),LEG*.42,lz,.9,.9,.9,mix(ACC,"#000000",.2),.3,1,ph);
+    sym(lx+(low?1.6:0),LEG*.22,lz+.2,1.3,LEG*.42,1.3,MID,0,1,ph);
+    sym(lx+(low?1.6:0),.35,lz+.6,2.1,.7,2.6,DARK,0,1,ph);
+    for(k=-1;k<2;k++)sym(lx+(low?1.6:0)+k*.6,.25,lz+2,.35,.4,.7,BONE,0,1,ph)}
+  if(up){/* arms */
+    sym(SW*.7,topY-1.4,0,1.5,3.4,1.5,BODY,0,1,.5);sym(SW*.7,topY-3.8,.4,1.2,2.6,1.2,MID,0,1,.5);sym(SW*.7,topY-5.3,.7,1.6,.9,1.6,BONE,0,1,.5)}
+  if(p==="centaur"){/* upright rider torso over the front */
+    box(0,BY+SH*.5+3,front-1.5,4.2,5,3.4,BODY);box(0,BY+SH*.5+5.4,front-1.5,4.4,.8,3.6,ACC,.3);HY+=0}
+  /* wings: shoulder, arm bone, layered feathers */
+  if(G.wing||p==="avian"||fl){var wy=up?topY-.6:BY+SH*.6,wz=up?-1.2:0;
+    for(i=0;i<5;i++)sym(SW*.5+1.2+i*1.9,wy+1-i*.3,wz-i*.6,2.2,.45,3.4-i*.35,i%2?LIGHT:BODY,i===4?.4:0,2,i*.2);
+    sym(SW*.5+5,wy+1.4,wz+.6,8,.6,.6,BONE,0,2,.1)}
+  /* tail: tapering segments */
+  if(!serp&&!fl){var tz=up?-SW*.5:-((seg-1)/2*SL)-SL/2;
+    for(i=0;i<5;i++)box(0,(up?BY:BY+.4)+i*.25,tz-1-i*1.7,1.8-i*.25,1.6-i*.2,1.9,i===4?ACC:i%2?MID:BODY,i===4?.6:0,3,i*.8)}
+  if(fl){for(i=0;i<4;i++)box(0,BY-3-i*1.4,0,2.2-i*.4,1.2,2.2-i*.4,i%2?ACC:MID,.4+i*.1,3,i)}
+  /* rarity aura motes */
+  var pts=G.ra==="MYTHIC"?10:G.ra==="EPIC"?7:G.ra==="RARE"?4:0,mt=(up?topY+5:BY+SH+5);
+  for(i=0;i<pts;i++){var an=i/pts*Math.PI*2;box(Math.sin(an)*9,mt+Math.sin(i)*1.5,Math.cos(an)*9,.7,.7,.7,ACC,1.2,5,an)}
+  if(G.ra==="MYTHIC")for(i=0;i<12;i++){var a2=i/12*Math.PI*2;box(Math.sin(a2)*2.6,HY+HS+1.6,HZ+Math.cos(a2)*2.6,.5,.3,.5,"#f7931a",1.4,4)}
   return V;
+}
+/* animated position of a voxel at time t */
+function anim(v,t,awake){
+  if(!awake)return v;
+  var x=v[0],y=v[1],z=v[2],pt=v[8],ph=v[9],s=G.gait;
+  if(pt===1){y+=Math.max(0,Math.sin(t*s*4+ph))*.5;z+=Math.sin(t*s*4+ph)*.6}
+  else if(pt===2){var f=Math.sin(t*s*5+ph)*.42;y+=Math.abs(x)*f*.5}
+  else if(pt===3){x+=Math.sin(t*s*2.2-ph)*(.25+ph*.18)}
+  else if(pt===4){y+=Math.sin(t*1.6)*.18;x+=Math.sin(t*.7)*.15}
+  else if(pt===5){var a=ph+t*.6,rr=9+Math.sin(t+ph)*.8;x=Math.sin(a)*rr;z=Math.cos(a)*rr;y+=Math.sin(t*2+ph)*.6}
+  if(pt!==5)y+=Math.sin(t*2)*.12*(y/10)+(G.sh==="floater"?Math.sin(t*1.3)*.8:0);
+  return[x,y,z,v[3],v[4],v[5],v[6],v[7]];
 }
 
 /* ---------- 6. painter: free orbit (yaw + pitch), culled, outlined voxels ---------- */
