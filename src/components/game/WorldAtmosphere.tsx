@@ -57,8 +57,8 @@ export const WorldAtmosphere = memo(function WorldAtmosphere({
   const seeds = useMemo(() => makeSeeds(count), [count]);
   const palette = useMemo(() => ({
     haze: new THREE.Color(ATLAS.haze),
-    leaf: new THREE.Color(ATLAS.leaf),
-    live: new THREE.Color(ATLAS.shallow),
+    leaf: new THREE.Color(ATLAS.sand),
+    live: new THREE.Color(ATLAS.beach),
   }), []);
 
   useEffect(() => {
@@ -87,11 +87,11 @@ export const WorldAtmosphere = memo(function WorldAtmosphere({
       const radius = seed.radius * (0.72 + Math.sin(drift * 0.41) * 0.12);
       const x = player.x + Math.cos(seed.angle + drift * 0.08) * radius;
       const z = player.z + Math.sin(seed.angle + drift * 0.08) * radius;
-      const y = groundY(x, z) + seed.height + Math.sin(drift) * WORLD_CELL * 0.22;
+      const y = groundY(x, z) + seed.height + Math.sin(drift) * DUST_U * 0.08;
       dummy.position.set(x, y, z);
       dummy.rotation.set(0, yaw, 0);
       const moteSize = seed.size * (1 + Math.sin(drift * 1.7) * 0.18);
-      dummy.scale.set(moteSize, moteSize * 1.9, moteSize);
+      dummy.scale.set(moteSize, moteSize, moteSize);
       dummy.updateMatrix();
       motes.setMatrixAt(index, dummy.matrix);
     }
