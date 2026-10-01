@@ -113,7 +113,7 @@ function PaintedSkyLife({ mapView }: { mapView: boolean }) {
   if (quality.effects === "off") return null;
   return (
     <group raycast={noRaycast}>
-      <instancedMesh visible={!mapView} ref={cloudRef} args={[undefined, undefined, cloudCount]} raycast={noRaycast} frustumCulled={false} renderOrder={-6}>
+      <instancedMesh visible={false} ref={cloudRef} args={[undefined, undefined, cloudCount]} raycast={noRaycast} frustumCulled={false} renderOrder={-6}>
         <sphereGeometry args={[1, 12, 7]} />
         <meshBasicMaterial color={ATLAS.peak} transparent opacity={0.38} depthWrite={false} toneMapped={false} />
       </instancedMesh>

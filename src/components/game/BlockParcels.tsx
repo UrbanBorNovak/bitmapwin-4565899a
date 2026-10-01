@@ -10,13 +10,13 @@
  * Streaming: a 3×3 neighbourhood around the walker is mounted, a 5×5 ring is
  * prefetched, and packed layouts are kept in a 16-block cache.
  */
-import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as THREE from "three";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { packParcels } from "@/components/TerritoryCanvas";
-import { groundY } from "@/lib/world-terrain";
+import { groundY, subscribeTerrain, terrainVersion } from "@/lib/world-terrain";
 import { getValidParcelIndexes } from "@/lib/oasis-parcels.functions";
 
 const GRID = 1_000;
@@ -31,9 +31,9 @@ export const parcelFootprint = (size: number) => size * PARCEL_UNIT;
 /** Canonical footprint in avatar strides — the portable build envelope. */
 export const parcelStrides = (size: number) => parcelFootprint(size) / STRIDE;
 
-/** Valid child-parcel inscriptions glow Bitcoin orange; the rest stay neutral stone. */
+/** Valid child-parcel inscriptions are solid Bitcoin orange; unclaimed transactions are clear glass. */
 const VALID_COLOR = new THREE.Color("#f7931a");
-const NEUTRAL_COLOR = new THREE.Color("#4a4238");
+const GLASS_COLOR = new THREE.Color("#cfe8f0");
 const noRaycast = () => {};
 const dummy = new THREE.Object3D();
 const MAX_CACHE = 16;
@@ -62,9 +62,11 @@ const ParcelSlab = memo(function ParcelSlab({ height }: { height: number }) {
     retry: 1,
   });
   const validSet = useMemo(() => new Set(validParcels?.indexes ?? []), [validParcels]);
-  const mesh = useRef<THREE.InstancedMesh>(null);
+  const solid = useRef<THREE.InstancedMesh>(null);
+  const glass = useRef<THREE.InstancedMesh>(null);
   const group = useRef<THREE.Group>(null);
   const grow = useRef(0);
+  const terrain = useSyncExternalStore(subscribeTerrain, terrainVersion, terrainVersion);
   const packed = useMemo(
     () => (data?.classes?.length ? cachedPack(height, data.classes) : null),
     [data, height],
@@ -72,8 +74,8 @@ const ParcelSlab = memo(function ParcelSlab({ height }: { height: number }) {
   const cx = (height % GRID + 0.5) * CELL - WORLD_SIZE / 2;
   const cz = (Math.floor(height / GRID) + 0.5) * CELL;
 
-  const count = useMemo(() => {
-    if (!packed) return 0;
+  const inside = useMemo(() => {
+    if (!packed) return [];
     const half = (packed.grid * PARCEL_UNIT) / 2;
     const lim = CELL * 0.49;
     return packed.parcels.filter((p) => {
@@ -81,41 +83,38 @@ const ParcelSlab = memo(function ParcelSlab({ height }: { height: number }) {
       const z = p.y * PARCEL_UNIT - half;
       const s = p.size * PARCEL_UNIT;
       return x >= -lim && z >= -lim && x + s <= lim && z + s <= lim;
-    }).length;
+    });
   }, [packed]);
+  const solidCount = inside.filter((p) => validSet.has(p.index)).length;
+  const glassCount = inside.length - solidCount;
 
   useLayoutEffect(() => {
-    const target = mesh.current;
-    if (!target || !packed) return;
+    if (!packed) return;
     const half = (packed.grid * PARCEL_UNIT) / 2;
-    const lim = CELL * 0.49;
-    let i = 0;
-    for (const p of packed.parcels) {
-      const x0 = p.x * PARCEL_UNIT - half;
-      const z0 = p.y * PARCEL_UNIT - half;
+    let si = 0;
+    let gi = 0;
+    for (const p of inside) {
       const s = p.size * PARCEL_UNIT;
-      if (x0 < -lim || z0 < -lim || x0 + s > lim || z0 + s > lim) continue;
-      const lx = x0 + s / 2;
-      const lz = z0 + s / 2;
-      // Seat each parcel on the dunes: sink a foundation below the local ground.
+      const lx = p.x * PARCEL_UNIT - half + s / 2;
+      const lz = p.y * PARCEL_UNIT - half + s / 2;
       const ground = groundY(cx + lx, cz + lz);
-      // Height carries the transaction's size class: bigger tx, taller parcel.
       const lift = PARCEL_UNIT * p.size * p.size * 0.9;
       const sink = STRIDE * 0.6;
       const h = lift + sink;
       dummy.position.set(lx, ground + lift - h / 2, lz);
       dummy.scale.set(s * 0.88, h, s * 0.88);
       dummy.updateMatrix();
-      target.setMatrixAt(i, dummy.matrix);
-      target.setColorAt(i, validSet.has(p.index) ? VALID_COLOR : NEUTRAL_COLOR);
-      i++;
+      const target = validSet.has(p.index) ? solid.current : glass.current;
+      if (!target) continue;
+      target.setMatrixAt(target === solid.current ? si++ : gi++, dummy.matrix);
     }
-    target.count = i;
-    target.instanceMatrix.needsUpdate = true;
-    if (target.instanceColor) target.instanceColor.needsUpdate = true;
-    target.computeBoundingSphere();
+    for (const t of [solid.current, glass.current]) {
+      if (!t) continue;
+      t.instanceMatrix.needsUpdate = true;
+      t.computeBoundingSphere();
+    }
     grow.current = 0;
-  }, [packed, cx, cz, validSet]);
+  }, [packed, inside, cx, cz, validSet, terrain, solidCount, glassCount]);
 
   // Rise out of the ground instead of popping in.
   useFrame((_, raw) => {
@@ -126,13 +125,30 @@ const ParcelSlab = memo(function ParcelSlab({ height }: { height: number }) {
     g.scale.y = Math.max(0.001, e);
   });
 
-  if (!packed || count === 0) return null;
+  if (!packed || inside.length === 0) return null;
   return (
     <group ref={group} position={[cx, 0, cz]} scale={[1, 0.001, 1]}>
-      <instancedMesh key={count} ref={mesh} args={[undefined, undefined, count]} raycast={noRaycast}>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial roughness={0.6} metalness={0.1} />
-      </instancedMesh>
+      {solidCount > 0 ? (
+        <instancedMesh key={`s${solidCount}`} ref={solid} args={[undefined, undefined, solidCount]} raycast={noRaycast}>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial color={VALID_COLOR} roughness={0.6} metalness={0.1} />
+        </instancedMesh>
+      ) : null}
+      {glassCount > 0 ? (
+        <instancedMesh key={`g${glassCount}`} ref={glass} args={[undefined, undefined, glassCount]} raycast={noRaycast} renderOrder={4}>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshPhysicalMaterial
+            color={GLASS_COLOR}
+            transparent
+            opacity={0.22}
+            roughness={0.08}
+            metalness={0.1}
+            clearcoat={1}
+            clearcoatRoughness={0.05}
+            depthWrite={false}
+          />
+        </instancedMesh>
+      ) : null}
     </group>
   );
 });
