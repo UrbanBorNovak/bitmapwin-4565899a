@@ -9,7 +9,7 @@
 import { memo, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { WORLD_CELL, type PlayerState } from "@/lib/player-state";
+import { STRIDE, WORLD_CELL, type PlayerState } from "@/lib/player-state";
 import { LAVA_LAKES, WATERFALLS } from "@/lib/world-flows";
 import {
   patchSurface,
@@ -94,7 +94,10 @@ function terrainWaterGeometry(plans: RiverPlan[]): WaterGeometry {
   const fallPositions: number[] = [];
   const fallUvs: number[] = [];
   const fallIndices: number[] = [];
-  const lift = WORLD_CELL * 0.008;
+  // Only clear the terrain by a hair. The old WORLD_CELL-relative lift became
+  // almost an avatar-height after the world scale increased, which made whole
+  // stretches of river hover above the land.
+  const lift = STRIDE * 0.015;
 
   for (const plan of plans) {
     const curve = new THREE.CatmullRomCurve3(
@@ -123,9 +126,17 @@ function terrainWaterGeometry(plans: RiverPlan[]): WaterGeometry {
       const taper = THREE.MathUtils.smoothstep(progress, 0, 1);
       const widthVariation = 0.94 + noise(key, i * 0.17 + 17.3) * 0.12;
       const width = WORLD_CELL * (0.018 + taper * 0.125) * widthVariation;
+      const leftX = point.x - rx * width;
+      const leftZ = point.z - rz * width;
+      const rightX = point.x + rx * width;
+      const rightZ = point.z + rz * width;
+      // Sample both banks independently. Reusing the centre height made the
+      // outside edge bridge over sloped ground and read as a floating sheet.
+      const leftY = groundY(leftX, leftZ) + lift;
+      const rightY = groundY(rightX, rightZ) + lift;
       riverPositions.push(
-        point.x - rx * width, point.y, point.z - rz * width,
-        point.x + rx * width, point.y, point.z + rz * width,
+        leftX, leftY, leftZ,
+        rightX, rightY, rightZ,
       );
       if (i > 0) arcLength += point.distanceTo(points[i - 1] ?? point);
       const flowV = arcLength / (WORLD_CELL * 0.34);
