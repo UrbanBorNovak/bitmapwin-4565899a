@@ -70,7 +70,7 @@ function WalletError({ error, reset }: { error: unknown; reset: () => void }) {
       <p className="label">WALLET</p>
       <h1 className="display mt-4 text-4xl">WALLET UNAVAILABLE</h1>
       <p className="mt-4 font-mono text-xs text-muted-foreground">
-        &gt; {error.message.toUpperCase()}
+        &gt; {(error as Error).message.toUpperCase()}
       </p>
       <button
         type="button"
