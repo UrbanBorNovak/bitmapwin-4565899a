@@ -330,7 +330,7 @@ import {
 
 
 const GRID = 1_000;
-const WORLD_SIZE = 300;
+const WORLD_SIZE = 850;
 const CELL = WORLD_SIZE / GRID;
 const OWNER_CELL_BUDGET = 24_000;
 
@@ -4339,7 +4339,7 @@ function BitmapWorld3DInner({
               canvas.addEventListener("webglcontextlost", lost, false);
               canvas.addEventListener("webglcontextrestored", restored, false);
             }}
-            camera={{ position: [0, 108, minedDepth / 2 + 0.01], fov: 50, near: 0.01, far: 1000 }}
+            camera={{ position: [0, 108, minedDepth / 2 + 0.01], fov: 50, near: 0.01, far: 3000 }}
             gl={{
               antialias: quality.antialias,
               powerPreference: "high-performance",
