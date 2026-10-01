@@ -29,10 +29,13 @@ export type InscribeJob = {
   commitAmount: number;
   /** parent inscriptions claimed by this child, spent and returned in the reveal */
   parents?: ParentSpend[];
+  /** tag 11: render this inscription with another inscription's code (near-zero bytes) */
+  delegate?: string;
   commitTxid?: string;
   revealTxid?: string;
   createdAt: string;
 };
+
 
 /** Signs the parent inputs it owns in a reveal PSBT, without finalizing. */
 export type ParentSigners = {
