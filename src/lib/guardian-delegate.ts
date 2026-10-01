@@ -257,14 +257,38 @@ window.addEventListener("pointermove",function(e){if(drag===null)return;var x=px
 window.addEventListener("pointerup",function(){drag=null});
 
 /* ---------- 7. resolve, then render ---------- */
+/* ---------- 7a. the bitmap itself: a parcel island read from the block ---------- */
+function land(G,txs,hash){
+  /* one tile per transaction group, packed into the block's square like the
+     bitmap renderer: side = ceil(sqrt(txs)), drawn at most 9x9 so it stays light */
+  var side=Math.max(3,Math.min(9,Math.ceil(Math.sqrt(Math.max(1,txs))/6))),T=26/side,r=rng(h32(hash+":land")),L=[],x,z;
+  var TOP=mix(G.body,"#04060a",.55),EDGE=mix(G.accent,"#04060a",.35),VEIN=G.accent,ORA="#f7931a";
+  for(x=0;x<side;x++)for(z=0;z<side;z++){
+    var cx=(x-(side-1)/2)*T,cz=(z-(side-1)/2)*T,centre=Math.abs(cx)<T&&Math.abs(cz)<T;
+    var hgt=centre?2.4:1.2+r()*2.2,rim=(x===0||z===0||x===side-1||z===side-1);
+    var col=r()>.93?ORA:rim?EDGE:TOP,gl=col===ORA?.6:0;
+    L.push([cx,-hgt/2-.05,cz,T*.94,hgt,T*.94,col,gl]);
+    if(r()>.8)L.push([cx,.05,cz,T*.5,.12,T*.12,VEIN,.9]);
+  }
+  /* the genesis tile under the guardian: block 0 of the island */
+  L.push([0,.06,0,T*.9,.12,T*.9,mix(G.accent,"#ffffff",.15),.7]);
+  return L;
+}
 function build(height,blk){
-  G=dnaOf(height,(blk&&blk.hash)||String(height),(blk&&(blk.transactions||blk.tx_count))||1200,(blk&&blk.size)||900000);
-  VOX=blueprint(G);EXT=null;
+  var txs=(blk&&(blk.transaction_count||blk.transactions||blk.tx_count))||1200,hash=(blk&&blk.hash)||String(height);
+  G=dnaOf(height,hash,txs,(blk&&blk.size)||900000);
+  VOX=land(G,txs,hash).concat(blueprint(G));EXT=null;
+}
+function blockData(height){
+  return j("/r/blockinfo/"+height).catch(function(){
+    /* older ord: fall back to the block hash alone */
+    return t("/r/blockhash/"+height).then(function(h){return{hash:h.replace(/"/g,"").trim()}});
+  }).catch(function(){return null});
 }
 Promise.all([parentHeight().catch(function(){return null}),tribute()]).then(function(r){
   var height=r[0],paid=r[1];
   if(height===null){STATE="RELIC";WHY="INVALID BITMAP PARENT";build(0,null);STATE="RELIC";return}
-  return j("/r/blockinfo/"+height).catch(function(){return null}).then(function(blk){
+  return blockData(height).then(function(blk){
     build(height,blk);
     if(paid===true)STATE="AWAKE";
     else if(paid===false){STATE="RELIC";WHY="UNVERIFIED TRIBUTE \\u00B7 NO "+TRIBUTE_MIN+"-SAT SUMMON"}
