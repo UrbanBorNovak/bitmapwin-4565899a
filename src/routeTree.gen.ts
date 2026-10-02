@@ -84,6 +84,7 @@ import { Route as RanksIndexRouteImport } from './routes/ranks.index'
 import { Route as RanksClansRouteImport } from './routes/ranks.clans'
 import { Route as RanksPvpRouteImport } from './routes/ranks.pvp'
 import { Route as RanksSharesRouteImport } from './routes/ranks.shares'
+import { Route as RanksWalkersRouteImport } from './routes/ranks.walkers'
 import { Route as TraitsIndexRouteImport } from './routes/traits.index'
 import { Route as TraitsTraitRouteImport } from './routes/traits.$trait'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
@@ -481,6 +482,11 @@ const RanksSharesRoute = RanksSharesRouteImport.update({
   path: '/shares',
   getParentRoute: () => RanksRoute,
 } as any)
+const RanksWalkersRoute = RanksWalkersRouteImport.update({
+  id: '/walkers',
+  path: '/walkers',
+  getParentRoute: () => RanksRoute,
+} as any)
 const TraitsIndexRoute = TraitsIndexRouteImport.update({
   id: '/traits/',
   path: '/traits/',
@@ -655,6 +661,7 @@ export interface FileRoutesByFullPath {
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
   '/ranks/shares': typeof RanksSharesRoute
+  '/ranks/walkers': typeof RanksWalkersRoute
   '/traits/$trait': typeof TraitsTraitRoute
   '/codex/': typeof CodexIndexRoute
   '/collections/': typeof CollectionsIndexRoute
@@ -748,6 +755,7 @@ export interface FileRoutesByTo {
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
   '/ranks/shares': typeof RanksSharesRoute
+  '/ranks/walkers': typeof RanksWalkersRoute
   '/traits/$trait': typeof TraitsTraitRoute
   '/codex': typeof CodexIndexRoute
   '/collections': typeof CollectionsIndexRoute
@@ -846,6 +854,7 @@ export interface FileRoutesById {
   '/ranks/clans': typeof RanksClansRoute
   '/ranks/pvp': typeof RanksPvpRoute
   '/ranks/shares': typeof RanksSharesRoute
+  '/ranks/walkers': typeof RanksWalkersRoute
   '/traits/$trait': typeof TraitsTraitRoute
   '/codex/': typeof CodexIndexRoute
   '/collections/': typeof CollectionsIndexRoute
@@ -945,6 +954,7 @@ export interface FileRouteTypes {
     | '/ranks/clans'
     | '/ranks/pvp'
     | '/ranks/shares'
+    | '/ranks/walkers'
     | '/traits/$trait'
     | '/codex/'
     | '/collections/'
@@ -1038,6 +1048,7 @@ export interface FileRouteTypes {
     | '/ranks/clans'
     | '/ranks/pvp'
     | '/ranks/shares'
+    | '/ranks/walkers'
     | '/traits/$trait'
     | '/codex'
     | '/collections'
@@ -1135,6 +1146,7 @@ export interface FileRouteTypes {
     | '/ranks/clans'
     | '/ranks/pvp'
     | '/ranks/shares'
+    | '/ranks/walkers'
     | '/traits/$trait'
     | '/codex/'
     | '/collections/'
@@ -1754,6 +1766,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RanksSharesRouteImport
       parentRoute: typeof RanksRoute
     }
+    '/ranks/walkers': {
+      id: '/ranks/walkers'
+      path: '/walkers'
+      fullPath: '/ranks/walkers'
+      preLoaderRoute: typeof RanksWalkersRouteImport
+      parentRoute: typeof RanksRoute
+    }
     '/traits/': {
       id: '/traits/'
       path: '/traits'
@@ -2004,6 +2023,7 @@ interface RanksRouteChildren {
   RanksClansRoute: typeof RanksClansRoute
   RanksPvpRoute: typeof RanksPvpRoute
   RanksSharesRoute: typeof RanksSharesRoute
+  RanksWalkersRoute: typeof RanksWalkersRoute
   RanksIndexRoute: typeof RanksIndexRoute
   RanksPlayerIdRoute: typeof RanksPlayerIdRoute
 }
@@ -2012,6 +2032,7 @@ const RanksRouteChildren: RanksRouteChildren = {
   RanksClansRoute: RanksClansRoute,
   RanksPvpRoute: RanksPvpRoute,
   RanksSharesRoute: RanksSharesRoute,
+  RanksWalkersRoute: RanksWalkersRoute,
   RanksIndexRoute: RanksIndexRoute,
   RanksPlayerIdRoute: RanksPlayerIdRoute,
 }
