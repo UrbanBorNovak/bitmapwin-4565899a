@@ -284,6 +284,8 @@ import {
   readLastPose,
   saveLastPose,
   setAvatarModelInscription,
+  rigAnimations,
+  rigTexture,
 } from "@/lib/map-identity";
 
 import { useWalletSession } from "@/lib/wallet-session";
@@ -1191,8 +1193,11 @@ function ModelAvatar({
   skinTexture?: string | undefined;
 }) {
   const gltf = useGLTF(`https://ordinals.com/content/${inscriptionId}`);
+  // Some rigs keep their clips in a separate inscription; bones bind by name.
+  const clipSource = rigAnimations(inscriptionId);
+  const clipGltf = useGLTF(`https://ordinals.com/content/${clipSource ?? inscriptionId}`);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
-  const { actions, names } = useAnimations(gltf.animations, scene);
+  const { actions, names } = useAnimations(clipSource ? clipGltf.animations : gltf.animations, scene);
   const texture = useTexture(
     skinTexture ? `https://ordinals.com/content/${skinTexture}` : TRANSPARENT_PIXEL,
   );
@@ -1330,7 +1335,7 @@ function AvatarSkin({
       <ModelAvatar
         inscriptionId={worn}
         motion={motion}
-        skinTexture={worn === DEFAULT_AVATAR_MODEL ? skin?.trim() || DEFAULT_AVATAR_TEXTURE : undefined}
+        skinTexture={rigTexture(worn, skin)}
       />
     </Suspense>
   );

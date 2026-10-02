@@ -19,6 +19,32 @@ export const DEFAULT_AVATAR_MODEL =
 export const DEFAULT_AVATAR_TEXTURE =
   "02a42a16913bfcdb1d48323850c1a2fab1633e4c1e151bc64c2bd8a5a5cdfacfi0";
 
+/** Second official rig: skinned body, clips in a separate GLB, its own skin. */
+export const RIG2_AVATAR_MODEL =
+  "76e8ed3cf79ff6b7c020f03c9a265709a41b6cd9197ec5732a15479a23ea45d3i0";
+export const RIG2_AVATAR_ANIMATIONS =
+  "9f27942cbd485aca8379a61668d5962473605e684ba7ac74a488899a0e671c11i0";
+export const RIG2_AVATAR_TEXTURE =
+  "57ff07ad8376f6cfdc2c2bfe42a16ba6b99c983ea463e9a33cc148985e736ed3i0";
+
+/** The two official figures offered at character creation. */
+export const OFFICIAL_RIGS: { id: string; label: string }[] = [
+  { id: DEFAULT_AVATAR_MODEL, label: "EXPLORER" },
+  { id: RIG2_AVATAR_MODEL, label: "OPERATOR" },
+];
+
+/** Inscription holding the animation clips for a rig, when they live apart. */
+export function rigAnimations(model: string): string | null {
+  return model === RIG2_AVATAR_MODEL ? RIG2_AVATAR_ANIMATIONS : null;
+}
+
+/** The skin texture a rig wears; only the stock figure takes pixel skins. */
+export function rigTexture(model: string, skin?: string | null): string | undefined {
+  if (model === DEFAULT_AVATAR_MODEL) return skin?.trim() || DEFAULT_AVATAR_TEXTURE;
+  if (model === RIG2_AVATAR_MODEL) return RIG2_AVATAR_TEXTURE;
+  return undefined;
+}
+
 /** Inscription id of the on-chain GLB this browser wears as its avatar. */
 export function avatarModelInscription(): string | null {
   if (typeof window === "undefined") return null;

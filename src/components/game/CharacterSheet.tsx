@@ -83,11 +83,13 @@ function PreviewCamera() {
 function PreviewAvatar({ model, skin }: { model: string | null; skin?: string | null }) {
   const inscription = model ?? DEFAULT_AVATAR_MODEL;
   const gltf = useGLTF(`https://ordinals.com/content/${inscription}`);
+  const clipSource = rigAnimations(inscription);
+  const clipGltf = useGLTF(`https://ordinals.com/content/${clipSource ?? inscription}`);
   const scene = useMemo(() => clone(gltf.scene), [gltf.scene]);
   // The figure must stand the way it stands in the world, or the gear tuned
   // against the standing body (shoes at the ankles, weapon in the hand) lands
   // against a sprawled bind pose instead.
-  const { actions, names } = useAnimations(gltf.animations, scene);
+  const { actions, names } = useAnimations(clipSource ? clipGltf.animations : gltf.animations, scene);
   useEffect(() => {
     const name = names.find((entry) => /idle|stand/i.test(entry)) ?? names[0];
     const action = name ? actions[name] : null;
