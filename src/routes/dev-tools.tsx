@@ -173,8 +173,8 @@ function MasterGeneratorPanel() {
 CONTENT TYPE   ${DELEGATE_CONTENT_TYPE}
 TRIBUTE        ${TRIBUTE_SATS} SATS → ${TRIBUTE_ADDRESS}
 MASTER ID      ${GUARDIAN_MASTER_DELEGATE_ID || "NOT SET — SEND THE INSCRIPTION ID ONCE IT IS MINED"}
-VERSION        V5 · LIVING AGE · VOICE · STANCES · X-RAY · .OBJ EXPORT · REAL-WORLD CAMERA MODE
-STATUS         LIVE ON BITCOIN · INSCRIPTION #127,506,616 · NEW DELEGATE MINTS USE V5`}
+VERSION        V6 · HONEST PARENT LABEL · HUD OVERLAP FIX · ALL V5 FEATURES
+STATUS         V6 READY TO INSCRIBE · CHAIN STILL RUNS V5 (#127,506,616) · SET MASTER ID AFTER INSCRIBING`}
       </pre>
       <div className="mt-3 flex flex-wrap gap-2 font-mono text-xs">
         <button type="button" className="border border-bitcoin px-3 py-2 text-bitcoin hover:bg-bitcoin hover:text-background"
