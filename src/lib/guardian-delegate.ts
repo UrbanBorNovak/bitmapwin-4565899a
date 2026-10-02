@@ -363,8 +363,8 @@ function hud(w,h,pulse){
     if(WHY)txt(WHY,pad,h/2+small*2.4,small,"#d2493c");return}
   txt(G.nm,pad,h-pad-small*7.4,big,stone?"#8a949c":"#e9eef0");
   if(G.tr&&!MASTER){var tn=G.tr.length-1,tl=[];for(var q=1;q<G.tr.length;q++)tl.push(G.tr[q][1].split(" ").pop());
-    txt(tn+"-TRAIT GUARDIAN"+(tl.length?" \\u00B7 "+tl.join(" \\u00B7 "):" \\u00B7 PURE"),pad,h-pad-small*8.9,small*.85,"#f7931a")}
-  if(MASTER)txt("TRAIT ENGINE \\u00B7 0 TO 6 TRAIT GUARDIANS",pad,h-pad-small*8.9,small*.85,"#f7931a");
+    txt(tn+"-TRAIT GUARDIAN"+(tl.length?" \\u00B7 "+tl.join(" \\u00B7 "):" \\u00B7 PURE"),pad,h-pad-small*7.4-big*1.1,small*.85,"#f7931a")}
+  if(MASTER)txt("TRAIT ENGINE \\u00B7 0 TO 6 TRAIT GUARDIANS",pad,h-pad-small*7.4-big*1.1,small*.85,"#f7931a");
   txt(G.ra+" \\u00B7 LV "+G.lv+" \\u00B7 ERA "+G.ep+" \\u00B7 "+G.sh.toUpperCase(),pad,h-pad-small*5.9,small,stone?"#6b6f74":ACC);
   var stats=[["HP",G.hp],["BITE",G.bi],["SPEED",G.sd],["ARMOR",G.ar]],i,cw=(w-pad*2)/4;
   for(i=0;i<4;i++){txt(stats[i][0],pad+i*cw,h-pad-small*4,small*.85,"#87939b");
