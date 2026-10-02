@@ -3623,6 +3623,60 @@ export type Database = {
         }
         Relationships: []
       }
+      walker_raid_scores: {
+        Row: {
+          damage: number
+          kills: number
+          last_hit_at: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          damage?: number
+          kills?: number
+          last_hit_at?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          damage?: number
+          kills?: number
+          last_hit_at?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      walker_raids: {
+        Row: {
+          hp: number
+          id: string
+          last_killer: string | null
+          max_hp: number
+          respawn_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          hp: number
+          id: string
+          last_killer?: string | null
+          max_hp: number
+          respawn_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          hp?: number
+          id?: string
+          last_killer?: string | null
+          max_hp?: number
+          respawn_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       wallet_link_challenges: {
         Row: {
           address: string
@@ -4102,6 +4156,15 @@ export type Database = {
       shadow_verify_pass: {
         Args: { _commitment: string; _slug: string }
         Returns: boolean
+      }
+      walker_hit: {
+        Args: { _damage: number; _name: string; _user: string; _walker: string }
+        Returns: {
+          hp: number
+          killed: boolean
+          max_hp: number
+          respawn_at: string
+        }[]
       }
       world_metrics: { Args: never; Returns: Json }
       world_metrics_daily: {
