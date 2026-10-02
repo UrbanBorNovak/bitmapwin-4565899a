@@ -3000,6 +3000,36 @@ function BitmapWorld3DInner({
   const [visitDraft, setVisitDraft] = useState("");
   const { quality } = useQuality();
   const [contextLost, setContextLost] = useState(false);
+  // VR — the button only appears when the device actually speaks WebXR
+  // (Android Chrome, Quest browser, headset pass-through). Desktop browsers
+  // without a headset never see it.
+  const glRef = useRef<THREE.WebGLRenderer | null>(null);
+  const [vrSupported, setVrSupported] = useState(false);
+  const [vrActive, setVrActive] = useState(false);
+  useEffect(() => {
+    const xr = (navigator as Navigator & { xr?: { isSessionSupported(m: string): Promise<boolean> } }).xr;
+    if (!xr) return;
+    let alive = true;
+    xr.isSessionSupported("immersive-vr").then((ok) => { if (alive) setVrSupported(ok); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  const toggleVr = async () => {
+    const gl = glRef.current;
+    const xr = (navigator as Navigator & { xr?: { requestSession(m: string, o?: object): Promise<XRSession> } }).xr;
+    if (!gl || !xr) return;
+    try {
+      if (vrActive) {
+        await gl.xr.getSession()?.end();
+        return;
+      }
+      const session = await xr.requestSession("immersive-vr", { optionalFeatures: ["local-floor", "bounded-floor"] });
+      session.addEventListener("end", () => setVrActive(false));
+      await gl.xr.setSession(session);
+      setVrActive(true);
+    } catch {
+      // Session denied or headset busy — stay on the flat screen.
+    }
+  };
   // Thumb pads only mount on a real touch screen, never on a desktop browser.
   const [touchDevice, setTouchDevice] = useState(false);
   useEffect(() => setTouchDevice(isTouchDevice()), []);
@@ -4046,7 +4076,15 @@ function BitmapWorld3DInner({
                 >
                   <HudIconButton label="Frame mined land" icon={<Pickaxe />} onClick={() => moveCamera("mined")} />
                   <HudIconButton label="Full world" icon={<Maximize />} onClick={() => moveCamera("full")} />
-                   <HudIconButton label="Fly to the newest block" icon={<Rocket />} onClick={() => moveCamera("tip")} />
+                    <HudIconButton label="Fly to the newest block" icon={<Rocket />} onClick={() => moveCamera("tip")} />
+                    {vrSupported ? (
+                      <HudIconButton
+                        label={vrActive ? "Leave VR" : "Enter VR (headset or phone + viewer)"}
+                        icon={<Glasses />}
+                        active={vrActive}
+                        onClick={() => void toggleVr()}
+                      />
+                    ) : null}
                    {/* SPACE + TIME — replay recorded history as light over the land. */}
                    <HudIconButton
                      label="Space and time replay"
@@ -4402,6 +4440,10 @@ function BitmapWorld3DInner({
             shadows={quality.shadows ? { type: THREE.PCFSoftShadowMap } : false}
             frameloop="always"
             onCreated={({ gl }) => {
+              glRef.current = gl;
+              // WebXR ready — the render loop switches to the headset when a
+              // session starts, and back to the screen when it ends.
+              gl.xr.enabled = true;
               const canvas = gl.domElement;
               const lost = (event: Event) => { event.preventDefault(); setContextLost(true); };
               const restored = () => setContextLost(false);
