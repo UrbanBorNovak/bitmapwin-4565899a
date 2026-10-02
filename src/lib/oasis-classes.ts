@@ -9,6 +9,7 @@ export type ClassId = "miner" | "hashrunner" | "archaeologist" | "cypherpunk" | 
 export type SkillEffect =
   | { kind: "heal"; amount: number }
   | { kind: "speed"; factor: number; seconds: number }
+  | { kind: "strike"; range: number }
   | { kind: "note" };
 
 export type ClassSkill = { name: string; cooldown: number; note: string; effect: SkillEffect };
