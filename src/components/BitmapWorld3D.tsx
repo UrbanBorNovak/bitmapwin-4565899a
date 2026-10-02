@@ -281,7 +281,6 @@ import {
 import {
   DEFAULT_AVATAR_MODEL,
   DEFAULT_AVATAR_TEXTURE,
-  readLastPose,
   saveLastPose,
   setAvatarModelInscription,
 } from "@/lib/map-identity";
