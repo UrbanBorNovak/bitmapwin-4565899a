@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowDown, ArrowUp, Crosshair, Gauge, LogOut, MoveUp, Play, Square } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { resetTouchPad, touchPad } from "@/lib/touch-input";
 import { cn } from "@/lib/utils";
 
@@ -36,27 +38,52 @@ export default function TouchControls({
   const lookLast = useRef({ x: 0, y: 0 });
   const [knob, setKnob] = useState({ x: 0, y: 0 });
   const [sprinting, setSprinting] = useState(false);
+  const [autoRun, setAutoRun] = useState(false);
+  const autoRunRef = useRef(false);
 
   // Aboard a ride the stick is a steering wheel: the pedals carry the throttle,
   // so a thumb never has to hold forward and steer with the same push.
   const drivingRef = useRef(driving);
   drivingRef.current = driving;
 
-  useEffect(() => () => resetTouchPad(), []);
+  const stopAll = useCallback(() => {
+    resetTouchPad();
+    stickId.current = null;
+    lookId.current = null;
+    autoRunRef.current = false;
+    setAutoRun(false);
+    setKnob({ x: 0, y: 0 });
+    setSprinting(false);
+  }, []);
+
+  useEffect(() => {
+    const stopOnHidden = () => {
+      if (document.visibilityState === "hidden") stopAll();
+    };
+    window.addEventListener("blur", stopAll);
+    document.addEventListener("visibilitychange", stopOnHidden);
+    return () => {
+      window.removeEventListener("blur", stopAll);
+      document.removeEventListener("visibilitychange", stopOnHidden);
+      resetTouchPad();
+    };
+  }, [stopAll]);
 
   // A panel opening hides the pads, so drop whatever was held down.
   useEffect(() => {
     if (paused) {
-      resetTouchPad();
-      setKnob({ x: 0, y: 0 });
-      setSprinting(false);
+      stopAll();
     }
-  }, [paused]);
+  }, [paused, stopAll]);
 
   // Stepping out of a ride clears the pedals, so nothing stays held down.
   useEffect(() => {
     touchPad.throttle = 0;
     touchPad.boost = false;
+    if (driving) {
+      autoRunRef.current = false;
+      setAutoRun(false);
+    }
   }, [driving]);
 
   const readStick = useCallback((clientX: number, clientY: number) => {
@@ -66,8 +93,8 @@ export default function TouchControls({
     let dx = clientX - (box.left + radius);
     let dy = clientY - (box.top + radius);
     const length = Math.hypot(dx, dy);
-    const sprint = length > radius * 1.02;
-    const clamped = Math.min(length, radius);
+    const sprint = !drivingRef.current && length > radius * 0.78 && dy < -radius * 0.28;
+    const clamped = Math.min(length, radius * 0.62);
     if (length > 0) {
       dx = (dx / length) * clamped;
       dy = (dy / length) * clamped;
@@ -78,6 +105,10 @@ export default function TouchControls({
     const ny = dy / radius;
     const dead = (value: number) => (Math.abs(value) < 0.16 ? 0 : value);
     const wheel = drivingRef.current;
+    if (!wheel && autoRunRef.current) {
+      autoRunRef.current = false;
+      setAutoRun(false);
+    }
     // Steering wants the full sweep of the stick; walking keeps its deadzone.
     touchPad.forward = wheel ? 0 : -dead(ny);
     touchPad.turn = wheel ? -(Math.abs(nx) < 0.08 ? 0 : nx) : -dead(nx);
@@ -89,10 +120,22 @@ export default function TouchControls({
     stickId.current = null;
     setKnob({ x: 0, y: 0 });
     setSprinting(false);
-    touchPad.forward = 0;
+    touchPad.forward = autoRunRef.current ? 1 : 0;
     touchPad.turn = 0;
     touchPad.sprint = drivingRef.current ? touchPad.boost : false;
-    touchPad.active = drivingRef.current ? touchPad.throttle !== 0 : false;
+    touchPad.active = drivingRef.current ? touchPad.throttle !== 0 : autoRunRef.current;
+  }, []);
+
+  const toggleAutoRun = useCallback(() => {
+    const next = !autoRunRef.current;
+    autoRunRef.current = next;
+    setAutoRun(next);
+    touchPad.forward = next ? 1 : 0;
+    touchPad.turn = 0;
+    touchPad.sprint = false;
+    touchPad.active = next;
+    setKnob({ x: 0, y: next ? -35 : 0 });
+    setSprinting(false);
   }, []);
 
   // FIRE / STRIKE reuses the canvas mouse path, so every weapon behaves the
@@ -113,11 +156,11 @@ export default function TouchControls({
   if (paused) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-40 select-none">
+    <div className="pointer-events-none fixed inset-0 z-40 select-none overscroll-none" data-no-translate>
       {/* look pad: the right side of the screen, clear of the on-screen buttons
           so the menu, map, chat and belt stay tappable */}
       <div
-        className="pointer-events-auto absolute right-0 top-[4.5rem] bottom-[17rem] w-1/2"
+        className="pointer-events-auto absolute right-0 top-[4.5rem] bottom-[12.5rem] w-[62%]"
         style={{ touchAction: "none" }}
         onPointerDown={(event) => {
           if (lookId.current !== null) return;
@@ -133,6 +176,9 @@ export default function TouchControls({
         onPointerUp={(event) => {
           if (lookId.current === event.pointerId) lookId.current = null;
         }}
+        onLostPointerCapture={() => {
+          lookId.current = null;
+        }}
         onPointerCancel={() => {
           lookId.current = null;
         }}
@@ -141,7 +187,8 @@ export default function TouchControls({
       {/* left stick */}
       <div
         ref={stick}
-        className="pointer-events-auto absolute bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-5 grid h-32 w-32 place-items-center rounded-full border border-primary/40 bg-background/35 backdrop-blur-[2px]"
+        aria-label="Movement joystick"
+        className="pointer-events-auto absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-[max(1rem,env(safe-area-inset-left))] grid size-36 place-items-center rounded-full border border-primary/45 bg-background/45 shadow-[inset_0_0_0_1px_var(--color-background)] backdrop-blur-sm landscape:size-32"
         style={{ touchAction: "none" }}
         onPointerDown={(event) => {
           if (stickId.current !== null) return;
@@ -159,28 +206,58 @@ export default function TouchControls({
         }}
         onPointerUp={releaseStick}
         onPointerCancel={releaseStick}
+        onLostPointerCapture={releaseStick}
       >
+        <span className="absolute top-3 font-mono text-[9px] text-muted-foreground">▲</span>
+        <span className="absolute bottom-3 font-mono text-[9px] text-muted-foreground">▼</span>
+        <span className="absolute left-3 font-mono text-[9px] text-muted-foreground">◀</span>
+        <span className="absolute right-3 font-mono text-[9px] text-muted-foreground">▶</span>
         <div
           className={cn(
-            "h-12 w-12 rounded-full border transition-colors",
-            sprinting ? "border-primary bg-primary/40" : "border-primary/60 bg-primary/15",
+            "grid size-14 place-items-center rounded-full border shadow-[0_0_18px_color-mix(in_oklab,var(--color-primary)_22%,transparent)] transition-colors landscape:size-12",
+            sprinting || autoRun ? "border-primary bg-primary/40 text-primary" : "border-primary/70 bg-background/75 text-muted-foreground",
           )}
           style={{ transform: `translate(${knob.x}px, ${knob.y}px)` }}
-        />
-        <span className="absolute -top-5 left-1 font-mono text-[10px] tracking-widest text-muted-foreground">
-          {driving ? "STEER" : sprinting ? "SPRINT" : "MOVE"}
+        >
+          <Gauge className="size-5" aria-hidden="true" />
+        </div>
+        <span className="absolute -top-6 left-0 font-mono text-[10px] tracking-widest text-foreground">
+          {driving ? "STEER" : sprinting ? "SPRINT" : autoRun ? "AUTO-RUN" : "MOVE"}
         </span>
       </div>
 
       {/* action buttons */}
-      <div className="pointer-events-auto absolute bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-5 flex flex-col items-end gap-2">
-        {onExitRide ? (
-          <button
+      <div className="pointer-events-auto absolute bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] flex flex-col items-end gap-2">
+        {!driving ? (
+          <Button
             type="button"
+            variant="terminalGhost"
+            size="sm"
+            aria-pressed={autoRun}
+            aria-label={autoRun ? "Stop auto-run" : "Start auto-run"}
             className={cn(
-              "rounded-sm border px-2 py-1 font-mono text-[10px] tracking-widest outline-none active:scale-95 focus-visible:outline-none",
+              "h-10 border bg-background/60 px-3 text-[10px] backdrop-blur-sm active:scale-95",
+              autoRun && "border-primary bg-primary/20 text-primary",
+            )}
+            style={{ touchAction: "none" }}
+            onPointerDown={(event) => {
+              event.preventDefault();
+              toggleAutoRun();
+            }}
+          >
+            {autoRun ? <Square /> : <Play />}
+            {autoRun ? "STOP" : "AUTO"}
+          </Button>
+        ) : null}
+        {onExitRide ? (
+          <Button
+            type="button"
+            variant="terminalGhost"
+            size="sm"
+            className={cn(
+              "h-10 border bg-background/60 px-3 text-[10px] backdrop-blur-sm active:scale-95",
               driving
-                ? "border-border bg-background/55 text-muted-foreground"
+                ? "border-border text-muted-foreground"
                 : "border-primary/60 bg-primary/15 text-primary",
             )}
             style={{ touchAction: "none" }}
@@ -191,13 +268,15 @@ export default function TouchControls({
               onExitRide();
             }}
           >
+            <LogOut />
             {driving ? `EXIT ${rideLabel ?? "RIDE"}` : `RIDE ${rideLabel ?? ""}`.trim()}
-          </button>
+          </Button>
         ) : null}
         {flying ? (
           <div className="flex gap-2">
             <PadButton
               label="DOWN"
+              icon={<ArrowDown />}
               onDown={() => {
                 touchPad.fly = -1;
               }}
@@ -207,6 +286,7 @@ export default function TouchControls({
             />
             <PadButton
               label="UP"
+              icon={<ArrowUp />}
               onDown={() => {
                 touchPad.fly = 1;
               }}
@@ -220,6 +300,7 @@ export default function TouchControls({
           <div className="flex items-center gap-2">
             <PadButton
               label="REV"
+              icon={<ArrowDown />}
               onDown={() => {
                 touchPad.throttle = -1;
                 touchPad.active = true;
@@ -230,6 +311,7 @@ export default function TouchControls({
             />
             <PadButton
               label="BOOST"
+              icon={<Gauge />}
               onDown={() => {
                 touchPad.boost = true;
                 touchPad.sprint = true;
@@ -241,6 +323,7 @@ export default function TouchControls({
             />
             <PadButton
               label="GAS"
+              icon={<ArrowUp />}
               strong
               onDown={() => {
                 touchPad.throttle = 1;
@@ -255,6 +338,7 @@ export default function TouchControls({
         <div className="flex items-center gap-2">
           <PadButton
             label={onJumpLabel ?? "JUMP"}
+            icon={<MoveUp />}
             onDown={() => {
               touchPad.jump = true;
             }}
@@ -262,6 +346,7 @@ export default function TouchControls({
           {shooter ? (
             <PadButton
               label="FIRE"
+              icon={<Crosshair />}
               strong
               onDown={() => canvasButton(true)}
               onUp={() => canvasButton(false)}
@@ -269,6 +354,7 @@ export default function TouchControls({
           ) : (
             <PadButton
               label="HIT"
+              icon={<Crosshair />}
               strong
               onDown={() => canvasButton(true)}
               onUp={() => canvasButton(false)}
@@ -282,23 +368,27 @@ export default function TouchControls({
 
 function PadButton({
   label,
+  icon,
   onDown,
   onUp,
   strong = false,
 }: {
   label: string;
+  icon: React.ReactNode;
   onDown: () => void;
   onUp?: () => void;
   strong?: boolean;
 }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="terminalGhost"
+      aria-label={label}
       className={cn(
-        "grid place-items-center rounded-full border font-mono text-[10px] tracking-widest outline-none active:scale-95 focus-visible:outline-none",
+        "flex rounded-full border bg-background/55 p-0 font-mono text-[9px] tracking-widest shadow-[0_0_18px_color-mix(in_oklab,var(--color-background)_70%,transparent)] backdrop-blur-sm active:scale-95",
         strong
-          ? "h-20 w-20 border-primary bg-primary/25 text-primary"
-          : "h-16 w-16 border-primary/50 bg-background/40 text-muted-foreground",
+          ? "size-20 flex-col gap-0.5 border-primary bg-primary/25 text-primary [&_svg]:size-6"
+          : "size-16 flex-col gap-0.5 border-primary/50 text-muted-foreground [&_svg]:size-5",
       )}
       style={{ touchAction: "none" }}
       onPointerDown={(event) => {
@@ -319,7 +409,8 @@ function PadButton({
         event.currentTarget.blur();
       }}
     >
-      {label}
-    </button>
+      {icon}
+      <span>{label}</span>
+    </Button>
   );
 }
