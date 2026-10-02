@@ -85,10 +85,20 @@ function parentHeight(){
           var h=heightFrom(body);
           if(h===null)return null;
           BMP=id;
-          /* OCI sanity check: a bitmap can only claim a block that exists */
+          /* a bitmap can only claim a block that exists */
           return t("/r/blockheight").then(function(tip){
             return h<=parseInt(tip,10)?h:null;
-          },function(){return h});
+          },function(){return h}).then(function(hh){
+            if(hh===null)return null;
+            /* first-is-first: compare against the on-chain bitmap index (OCI) module */
+            return import("/content/942b5886158d57fc70cb8fb7d9bd4d37aa95b8b145be1a351326336b087262dbi0").then(function(oci){
+              if(hh>=942000)return hh;
+              return oci.getBitmapInscriptionId(hh).then(function(cid){
+                if(cid){CANON=(cid===id);if(!CANON)DUPE=true}
+                return CANON===false?null:hh;
+              });
+            }).catch(function(){return hh});
+          });
         },function(){return null});
       });
     },Promise.resolve(null));
