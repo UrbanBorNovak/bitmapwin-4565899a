@@ -1,7 +1,7 @@
 // In-world jumbotron playing a BITMAP's bitmap.stream channel.
 // The cross-origin player can't become a WebGL texture, so it is a real iframe
 // pinned into the 3D scene; it only loads while the camera is close by.
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { SafeHtml } from "@/components/game/SafeHtml";
