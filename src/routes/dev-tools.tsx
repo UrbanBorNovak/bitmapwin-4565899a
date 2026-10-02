@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { DataBadge } from "@/components/extenders/DataBadge";
 import { useMemo, useState } from "react";
 import { DELEGATE_CONTENT_TYPE, GUARDIAN_MASTER_DELEGATE_ID, TRIBUTE_ADDRESS, TRIBUTE_SATS, guardianMasterGeneratorHtml } from "@/lib/guardian-delegate";
+import { brotliMasterGenerator } from "@/lib/brotli.functions";
 import { collectionParentStatusFn } from "@/lib/ord-parents.functions";
 
 
@@ -157,6 +158,26 @@ function MasterGeneratorPanel() {
     a.click();
     URL.revokeObjectURL(url);
   };
+  const [brBusy, setBrBusy] = useState(false);
+  const [brInfo, setBrInfo] = useState<string | null>(null);
+  const downloadBr = async () => {
+    setBrBusy(true);
+    try {
+      const r = await brotliMasterGenerator();
+      const bin = Uint8Array.from(atob(r.base64), (c) => c.charCodeAt(0));
+      const url = URL.createObjectURL(new Blob([bin], { type: "application/octet-stream" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "guardian-master.html.br";
+      a.click();
+      URL.revokeObjectURL(url);
+      setBrInfo(`${r.rawBytes.toLocaleString()} → ${r.packedBytes.toLocaleString()} BYTES (${Math.round((1 - r.packedBytes / r.rawBytes) * 100)}% SMALLER)`);
+    } catch (e) {
+      setBrInfo(`FAILED · ${(e as Error).message}`);
+    } finally {
+      setBrBusy(false);
+    }
+  };
   return (
     <section className="mt-8 border border-border p-6">
       <div className="flex flex-wrap items-center gap-3">
@@ -182,7 +203,20 @@ STATUS         V6 READY TO INSCRIBE · CHAIN STILL RUNS V5 (#127,506,616) · SET
           {copied ? "✓ COPIED" : "COPY RAW HTML"}
         </button>
         <button type="button" className="border border-border px-3 py-2 hover:border-signal" onClick={download}>DOWNLOAD .HTML</button>
+        <button type="button" className="border border-signal px-3 py-2 text-signal hover:bg-signal hover:text-background" onClick={() => void downloadBr()}>
+          {brBusy ? "COMPRESSING…" : "DOWNLOAD BROTLI (.HTML.BR)"}
+        </button>
       </div>
+      {brInfo && (
+        <pre className="mt-3 overflow-x-auto bg-secondary p-4 font-mono text-xs">
+{`BROTLI         ${brInfo}
+INSCRIBE AS    content-type: ${DELEGATE_CONTENT_TYPE}
+               content-encoding: br
+TOOL           ord wallet inscribe --compress --file guardian-master.html
+               (or any inscriber that sets the content-encoding br field)
+WARNING        never inscribe the .br file without content-encoding: br — it renders as garbage`}
+        </pre>
+      )}
       <iframe title="Master generator preview" srcDoc={html} sandbox="allow-scripts" className="mt-4 h-80 w-full border border-border bg-background" />
     </section>
   );
