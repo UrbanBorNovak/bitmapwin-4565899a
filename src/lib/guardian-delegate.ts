@@ -39,6 +39,7 @@ export const GUARDIAN_MASTER_DELEGATE_ID =
 /** Every generator Guardians may delegate to: the current one first, then older versions still on chain. */
 export const GUARDIAN_MASTER_DELEGATE_IDS: readonly string[] = [
   GUARDIAN_MASTER_DELEGATE_ID,
+  "cafa642afc2fd984beeae8648c46fbfdf45e8b4082ca6c057d29465f871573f5i0",
   "a44f4d01312f944260d59a770e08d63ac3d7c6c9c99177183b50c784837a8de1i0",
 ];
 
