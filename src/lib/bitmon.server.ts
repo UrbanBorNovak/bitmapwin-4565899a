@@ -177,3 +177,56 @@ export async function checkSummonOrder(userId: string, orderId: string) {
   }
   return { order: { ...toOrder(row), status: status as SummonOrder["status"], txid: match.txid }, awakened: Boolean(inserted.data) };
 }
+
+/**
+ * Awaken a delegate-minted Guardian from on-chain proof alone. Every check is
+ * read from the chain: delegate = master generator, a parent whose content is
+ * exactly `<height>.bitmap`, a confirmed reveal paying the tribute, and the
+ * first Guardian for that block. Anything else is refused.
+ */
+export async function verifyDelegateGuardian(inscriptionId: string): Promise<{ awakened: boolean; height: number | null; denied: string | null }> {
+  const { GUARDIAN_MASTER_DELEGATE_ID, TRIBUTE_ADDRESS, TRIBUTE_SATS } = await import("@/lib/guardian-delegate");
+  const ord = (p: string) => fetch(`https://ordinals.com${p}`, { signal: AbortSignal.timeout(8000) });
+  const deny = (denied: string, height: number | null = null) => ({ awakened: false, height, denied });
+
+  const insRes = await ord(`/r/inscription/${inscriptionId}`);
+  if (!insRes.ok) return deny("INSCRIPTION NOT FOUND");
+  const ins = (await insRes.json()) as { delegate?: string; address?: string };
+  if (ins.delegate !== GUARDIAN_MASTER_DELEGATE_ID) return deny("NOT A GUARDIAN DELEGATE MINT");
+
+  const parRes = await ord(`/r/parents/${inscriptionId}`);
+  const ids: string[] = parRes.ok ? ((await parRes.json()) as { ids?: string[] }).ids ?? [] : [];
+  let height: number | null = null;
+  for (const id of ids) {
+    const r = await ord(`/content/${id}`);
+    const m = r.ok ? /^\s*(\d{1,7})\.bitmap\s*$/i.exec(await r.text()) : null;
+    if (m) { height = Number(m[1]); break; }
+  }
+  if (height === null) return deny("INVALID BITMAP PARENT");
+
+  const txid = inscriptionId.slice(0, inscriptionId.lastIndexOf("i"));
+  const { esploraFetch } = await import("@/lib/bitmon");
+  let tx: MempoolTx;
+  try { tx = (await (await esploraFetch(`/tx/${txid}`)).json()) as MempoolTx; } catch { return deny("COULD NOT READ THE REVEAL — TRY AGAIN", height); }
+  if (!tx.status?.confirmed) return deny("REVEAL NOT CONFIRMED YET", height);
+  const paid = (tx.vout ?? []).some((o) => o.scriptpubkey_address === TRIBUTE_ADDRESS && Number(o.value) >= TRIBUTE_SATS);
+  if (!paid) return deny(`NO ${TRIBUTE_SATS}-SAT TRIBUTE IN THE REVEAL`, height);
+
+  const db = await admin();
+  const existing = await db.from("bitmon_guardians").select("payment_txid").eq("block_height", height).maybeSingle();
+  if (existing.data) return { awakened: existing.data.payment_txid === txid, height, denied: existing.data.payment_txid === txid ? null : "THIS BLOCK'S GUARDIAN IS ALREADY AWAKE" };
+
+  const dna = guardianFromBlock(await fetchBlockDnaSource(height));
+  const inserted = await db.from("bitmon_guardians").insert({
+    block_height: height,
+    species: dna.species,
+    rarity: dna.rarity,
+    stats: { hp: dna.hp, bite: dna.bite, speed: dna.speed, armor: dna.armor, ability: dna.ability, epoch: dna.epoch, body: dna.body, accent: dna.accent, level: guardianLevel(dna), inscription: inscriptionId },
+    dna_hash: dna.dnaHash,
+    summoned_by_address: ins.address ?? "",
+    summoned_by_user_id: null,
+    payment_txid: txid,
+  }).select("id").maybeSingle();
+  if (!inserted.data) return deny("THIS BLOCK'S GUARDIAN IS ALREADY AWAKE", height);
+  return { awakened: true, height, denied: null };
+}

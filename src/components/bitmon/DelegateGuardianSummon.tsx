@@ -6,6 +6,10 @@
  */
 import { ShadowInscriber, type ArtifactVariant } from "@/components/territory/ShadowInscriber";
 import { DELEGATE_CONTENT_TYPE, GUARDIAN_MASTER_DELEGATE_ID, TRIBUTE_ADDRESS, TRIBUTE_SATS, guardianMasterGeneratorHtml } from "@/lib/guardian-delegate";
+import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQueryClient } from "@tanstack/react-query";
+import { verifyDelegateGuardianFn } from "@/lib/bitmon.functions";
 import { guardianArtifactSvg, guardianShieldDigest, type GuardianDna } from "@/lib/bitmon";
 
 const STEPS = [
@@ -57,6 +61,34 @@ export function DelegateGuardianSummon({ dna }: { dna: GuardianDna }) {
         allowUpload={false}
         claimParentsForHeight={dna.height}
       />
+      <ClaimAwakening />
+    </div>
+  );
+}
+
+function ClaimAwakening() {
+  const verify = useServerFn(verifyDelegateGuardianFn);
+  const qc = useQueryClient();
+  const [id, setId] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const run = async () => {
+    setBusy(true); setMsg(null);
+    try {
+      const r = await verify({ data: { inscriptionId: id.trim() } });
+      setMsg(r.awakened ? `GUARDIAN AWAKE ON ${r.height}.BITMAP` : r.denied);
+      if (r.awakened) qc.invalidateQueries({ queryKey: ["guardians"] });
+    } catch { setMsg("PASTE A FULL INSCRIPTION ID (…i0)"); }
+    setBusy(false);
+  };
+  return (
+    <div className="space-y-2 border border-border p-2">
+      <p className="font-mono text-[10px] text-signal">ALREADY INSCRIBED? AWAKEN IT FROM CHAIN PROOF</p>
+      <div className="flex gap-2">
+        <input value={id} onChange={(e) => setId(e.target.value)} placeholder="INSCRIPTION ID …i0" className="min-w-0 flex-1 border border-border bg-background px-2 py-1 font-mono text-xs" />
+        <button type="button" disabled={busy || !id.trim()} onClick={run} className="border border-bitcoin px-2 font-mono text-[10px] text-bitcoin disabled:opacity-50">{busy ? "CHECKING…" : "[ VERIFY ]"}</button>
+      </div>
+      {msg ? <p className="font-mono text-[10px] text-muted-foreground">{msg}</p> : null}
     </div>
   );
 }
