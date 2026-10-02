@@ -281,6 +281,7 @@ import {
 import {
   DEFAULT_AVATAR_MODEL,
   DEFAULT_AVATAR_TEXTURE,
+  readLastPose,
   saveLastPose,
   setAvatarModelInscription,
 } from "@/lib/map-identity";
@@ -3425,8 +3426,11 @@ function BitmapWorld3DInner({
     if (spawnedRef.current || !tipHeight) return;
     spawnedRef.current = true;
     const deepLink = initialHeight !== undefined && initialHeight <= tipHeight;
+    // Returning visitors resume where they left off; first visits start on 0.bitmap.
+    const saved = deepLink ? null : readLastPose();
     const spawnHeight = deepLink ? (initialHeight as number) : 0;
-    placePlayer(pose.current, worldX(spawnHeight % GRID), worldZ(Math.floor(spawnHeight / GRID)), 0);
+    if (saved) placePlayer(pose.current, saved.x, saved.z, saved.yaw);
+    else placePlayer(pose.current, worldX(spawnHeight % GRID), worldZ(Math.floor(spawnHeight / GRID)), 0);
     publish({
       col: pose.current.col,
       row: pose.current.row,
@@ -3453,10 +3457,12 @@ function BitmapWorld3DInner({
     };
     const timer = window.setInterval(remember, 4_000);
     window.addEventListener("pagehide", remember);
+    window.addEventListener("beforeunload", remember);
     return () => {
       remember();
       window.clearInterval(timer);
       window.removeEventListener("pagehide", remember);
+      window.removeEventListener("beforeunload", remember);
     };
   }, []);
 
@@ -3607,9 +3613,11 @@ function BitmapWorld3DInner({
   const [combatNow, setCombatNow] = useState(() => Date.now());
   const cooldownRemaining = Math.max(0, attackCooldownUntil - combatNow);
   const attackReady = cooldownRemaining === 0 && hp > 0;
-  const attackNearest = useCallback(() => {
+  const attackNearest = useCallback((skill?: { name: string; range: number }) => {
     const now = Date.now();
-    if (hp <= 0 || now < attackCooldownUntil) return;
+    if (hp <= 0 || (!skill && now < attackCooldownUntil)) return;
+    const reach = ATTACK_RANGE * (skill?.range ?? 1);
+    const prefix = skill ? `${skill.name} · ` : "";
     const me = pose.current;
     // The swing itself plays on the skeleton, not only in the HUD.
     if (me.combat === "alive") {
@@ -3624,21 +3632,21 @@ function BitmapWorld3DInner({
       const dx = cursor.x - me.x;
       const dz = cursor.z - me.z;
       const distance = Math.hypot(dx, dz);
-      if (distance <= ATTACK_RANGE && (!best || distance < best.distance)) {
+      if (distance <= reach && (!best || distance < best.distance)) {
         best = { id: cursor.id, handle: cursor.handle, distance };
       }
     }
     if (!best) {
       // Nobody in range: swing at whatever is built in front of you instead.
-      const target = structureInReach(me.x, me.z, ATTACK_RANGE * 0.5);
+      const target = structureInReach(me.x, me.z, reach * 0.5);
       if (target) {
         const result = damageStructure(target.key, ATTACK_DAMAGE);
-        setAttackCooldownUntil(now + ATTACK_COOLDOWN_MS);
-        const note = result
+        if (!skill) setAttackCooldownUntil(now + ATTACK_COOLDOWN_MS);
+        const note = prefix + (result
           ? result.destroyed
             ? `${result.name} DESTROYED`
             : `${result.name} ${result.hp}/${result.max}`
-          : "NOTHING TO HIT";
+          : "NOTHING TO HIT");
         setAttackTarget(note);
         window.setTimeout(
           () => setAttackTarget((current) => (current === note ? null : current)),
@@ -3646,17 +3654,18 @@ function BitmapWorld3DInner({
         );
         return;
       }
-      setAttackTarget("NO TARGET IN RANGE");
+      const miss = `${prefix}NO TARGET IN RANGE`;
+      setAttackTarget(miss);
       window.setTimeout(
-        () => setAttackTarget((current) => (current === "NO TARGET IN RANGE" ? null : current)),
+        () => setAttackTarget((current) => (current === miss ? null : current)),
         1200,
       );
       return;
     }
     attack(best.id);
     struck.current = { id: best.id, handle: best.handle, at: now };
-    setAttackCooldownUntil(now + ATTACK_COOLDOWN_MS);
-    const label = `HIT ${best.handle}`;
+    if (!skill) setAttackCooldownUntil(now + ATTACK_COOLDOWN_MS);
+    const label = `${prefix}HIT ${best.handle}`;
     setAttackTarget(label);
     window.setTimeout(
       () => setAttackTarget((current) => (current === label ? null : current)),
@@ -3847,10 +3856,15 @@ function BitmapWorld3DInner({
     const onSkill = (e: Event) => {
       const skill = (e as CustomEvent<ClassSkill>).detail;
       if (skill?.effect.kind === "heal") heal(skill.effect.amount);
+      if (skill?.effect.kind === "strike") {
+        unlockAudio();
+        playSfx("hit");
+        attackNearest({ name: skill.name, range: skill.effect.range });
+      }
     };
     window.addEventListener(SKILL_EVENT, onSkill);
     return () => window.removeEventListener(SKILL_EVENT, onSkill);
-  }, [heal]);
+  }, [heal, attackNearest]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -4097,7 +4111,7 @@ function BitmapWorld3DInner({
                     }
                     icon={<Swords />}
                     disabled={!attackReady}
-                    onClick={attackNearest}
+                    onClick={() => attackNearest()}
                   />
                   <HudIconButton label="Terraform (T)" icon={<Shovel />} onClick={() => void workLand()} />
                   <HudIconButton
