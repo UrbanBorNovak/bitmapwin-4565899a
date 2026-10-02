@@ -7,7 +7,13 @@ import { Input } from "@/components/ui/input";
 import { CLASSES, readClass, saveClass, type ClassId } from "@/lib/oasis-classes";
 import { CharacterPortrait } from "@/components/game/CharacterPortrait";
 import { BITMAP_PIXELS_INSCRIPTION, getBitmapPixelsCollection } from "@/lib/bitmap-pixels.functions";
-import { avatarSkinInscription, setAvatarSkinInscription } from "@/lib/map-identity";
+import {
+  OFFICIAL_RIGS,
+  avatarModelInscription,
+  avatarSkinInscription,
+  setAvatarModelInscription,
+  setAvatarSkinInscription,
+} from "@/lib/map-identity";
 import { readCharacter, saveCharacter } from "@/lib/character";
 
 const PROLOGUE = [
@@ -53,6 +59,12 @@ export function OasisEntry({ onEnter }: { onEnter: () => void }) {
   });
   const skins = collection.data?.pixels ?? [];
   const [skin, setSkin] = useState<string | null>(null);
+  const [rigIndex, setRigIndex] = useState(0);
+  useEffect(() => {
+    const worn = avatarModelInscription();
+    const i = OFFICIAL_RIGS.findIndex((r) => r.id === worn);
+    if (i > 0) setRigIndex(i);
+  }, []);
   useEffect(() => {
     setSkin(readCharacter()?.avatarSkin ?? avatarSkinInscription() ?? null);
   }, []);
@@ -74,12 +86,18 @@ export function OasisEntry({ onEnter }: { onEnter: () => void }) {
 
   const chosen = CLASSES.find((c) => c.id === pick)!;
 
+  const stepRig = (dir: number) =>
+    setRigIndex((i) => (((i + dir) % OFFICIAL_RIGS.length) + OFFICIAL_RIGS.length) % OFFICIAL_RIGS.length);
+
   const enter = () => {
     saveClass(pick);
     if (name.trim()) window.localStorage.setItem(NAME_KEY, name.trim().slice(0, 24));
     setAvatarSkinInscription(skin);
+    // The stock figure is stored as "no model", the second rig by its id.
+    const model = rigIndex === 0 ? null : OFFICIAL_RIGS[rigIndex]!.id;
+    setAvatarModelInscription(model);
     const existing = readCharacter();
-    if (existing) saveCharacter({ ...existing, avatarSkin: skin });
+    if (existing) saveCharacter({ ...existing, avatarSkin: skin, avatarModel: model });
     onEnter();
   };
 
@@ -143,6 +161,7 @@ export function OasisEntry({ onEnter }: { onEnter: () => void }) {
 
         <div className="space-y-1.5" data-no-translate>
           <p className="label text-signal">APPEARANCE</p>
+          <Stepper label="MODEL" value={OFFICIAL_RIGS[rigIndex]!.label} onStep={stepRig} />
           <Stepper label="SKIN" value={`#${String(skinIndex).padStart(3, "0")}`} onStep={stepSkin} />
           <p className="truncate font-mono text-[10px] text-bitcoin">{skinLabel}</p>
           <p className="font-mono text-[9px] text-muted-foreground">
@@ -170,7 +189,7 @@ export function OasisEntry({ onEnter }: { onEnter: () => void }) {
           aria-label="Character preview — scroll to change skin"
         >
           <div className="pointer-events-none absolute inset-x-[15%] bottom-[6%] h-10 rounded-[50%] border border-bitcoin/50 bg-bitcoin/10 shadow-[0_0_60px_-6px_hsl(var(--bitcoin,30_93%_54%))]" />
-          <CharacterPortrait model={null} skin={skin} className="h-full min-h-[420px]" />
+          <CharacterPortrait model={OFFICIAL_RIGS[rigIndex]!.id} skin={skin} className="h-full min-h-[420px]" />
           <button
             aria-label="Previous skin"
             onClick={() => stepSkin(-1)}
