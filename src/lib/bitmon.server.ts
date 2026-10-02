@@ -185,14 +185,14 @@ export async function checkSummonOrder(userId: string, orderId: string) {
  * first Guardian for that block. Anything else is refused.
  */
 export async function verifyDelegateGuardian(inscriptionId: string): Promise<{ awakened: boolean; height: number | null; denied: string | null }> {
-  const { GUARDIAN_MASTER_DELEGATE_ID, TRIBUTE_ADDRESS, TRIBUTE_SATS } = await import("@/lib/guardian-delegate");
+  const { GUARDIAN_MASTER_DELEGATE_IDS, TRIBUTE_ADDRESS, TRIBUTE_SATS } = await import("@/lib/guardian-delegate");
   const ord = (p: string) => fetch(`https://ordinals.com${p}`, { signal: AbortSignal.timeout(8000) });
   const deny = (denied: string, height: number | null = null) => ({ awakened: false, height, denied });
 
   const insRes = await ord(`/r/inscription/${inscriptionId}`);
   if (!insRes.ok) return deny("INSCRIPTION NOT FOUND");
   const ins = (await insRes.json()) as { delegate?: string; address?: string };
-  if (ins.delegate !== GUARDIAN_MASTER_DELEGATE_ID) return deny("NOT A GUARDIAN DELEGATE MINT");
+  if (!ins.delegate || !GUARDIAN_MASTER_DELEGATE_IDS.includes(ins.delegate)) return deny("NOT A GUARDIAN DELEGATE MINT");
 
   const parRes = await ord(`/r/parents/${inscriptionId}`);
   const ids: string[] = parRes.ok ? ((await parRes.json()) as { ids?: string[] }).ids ?? [] : [];
