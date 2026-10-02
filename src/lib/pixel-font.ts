@@ -112,7 +112,8 @@ export function renderPixelText(
   if (width <= 0) return null;
   const canvas = document.createElement("canvas");
   canvas.width = Math.ceil(width) + 2;
-  canvas.height = Math.ceil(CELL * scale);
+  const TOP = 16; // tallest glyph top in the cell
+  canvas.height = Math.ceil((CELL - TOP * 2) * scale);
   const context = canvas.getContext("2d");
   if (!context) return null;
   context.imageSmoothingEnabled = false;
@@ -130,7 +131,7 @@ export function renderPixelText(
         bw,
         bh,
         pen,
-        0,
+        Math.max(0, glyph.yoffset + by - TOP) * scale,
         bw * scale,
         bh * scale,
       );
