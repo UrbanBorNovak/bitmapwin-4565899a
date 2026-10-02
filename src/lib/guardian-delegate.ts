@@ -65,16 +65,20 @@ function t(u){return fetch(u).then(function(r){if(!r.ok)throw 0;return r.text()}
 
 /* ---------- 2. the bitmap parent, verified against the chain ---------- */
 function heightFrom(s){var m=/(\\d{1,7})\\.bitmap/i.exec(s||"");return m?parseInt(m[1],10):null}
+var PIDS=[],BMP=null,COLL=null;
 function parentHeight(){
   return j("/r/parents/"+SELF).then(function(p){
     var ids=(p&&p.ids)||p||[];
-    if(!ids.length)throw 0;
+    PIDS=ids;
+    /* no parents at all: this is the collection root (the master itself) */
+    if(!ids.length)return -1;
     return ids.reduce(function(chain,id){
       return chain.then(function(found){
         if(found!==null)return found;
         return t("/content/"+id).then(function(body){
           var h=heightFrom(body);
           if(h===null)return null;
+          BMP=id;
           /* OCI sanity check: a bitmap can only claim a block that exists */
           return t("/r/blockheight").then(function(tip){
             return h<=parseInt(tip,10)?h:null;
@@ -83,6 +87,23 @@ function parentHeight(){
       });
     },Promise.resolve(null));
   });
+}
+
+/* ---------- 2b. live collection analytics from /r/children (paged) ---------- */
+function kids(id){
+  var all=[];
+  function page(n){
+    return j("/r/children/"+id+"/"+n).then(function(r){
+      all=all.concat((r&&r.ids)||[]);
+      return r&&r.more&&n<200?page(n+1):all;
+    },function(){return all});
+  }
+  return page(0);
+}
+function collection(root){
+  return kids(root).then(function(ids){
+    COLL={n:ids.length,rank:ids.indexOf(SELF)+1,last:ids.length?ids[ids.length-1]:""};
+  },function(){});
 }
 
 /* ---------- 3. the tribute, read straight off the reveal transaction ---------- */
