@@ -12,6 +12,7 @@ import { LoopNavigator } from "@/components/LoopNavigator";
 import { LandPromptTerminal } from "@/components/LandPromptTerminal";
 import { FirstTenMinutes } from "@/components/FirstTenMinutes";
 import { startGuidedTour } from "@/components/GuidedTour";
+import { MobileAppInstall } from "@/components/MobileAppInstall";
 
 
 export const Route = createFileRoute("/")({
@@ -118,6 +119,7 @@ function Index() {
                     You own a piece of Bitcoin. Now make something happen there.
                   </p>
                   <LandPromptTerminal />
+                  <MobileAppInstall />
                   <div data-tour="home-flow" className="mt-4 grid gap-px sm:flex sm:flex-wrap">
                     <Link to="/oasis" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">ENTER THE WORLD</Link>
                     <Link to="/play" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">PLAY YOUR BITMAP</Link>
