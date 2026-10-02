@@ -91,8 +91,8 @@ export function qualitySettings(
   const defaults = resolved === "low"
     ? { pixelRatio: 1, renderScale: 0.65, viewDistance: "short" as const, shadows: false, plotGlow: false, fpsCap: 30 as const, adaptive: true }
     : resolved === "medium"
-      ? { pixelRatio: Math.min(typeof window === "undefined" ? 1 : window.devicePixelRatio, 1.5), renderScale: 0.85, viewDistance: "medium" as const, shadows: !touch, plotGlow: false, fpsCap: (touch ? 30 : 45) as 30 | 45, adaptive: true }
-      : { pixelRatio: Math.min(typeof window === "undefined" ? 1 : window.devicePixelRatio, 2), renderScale: 1, viewDistance: "far" as const, shadows: !touch, plotGlow: true, fpsCap: (touch ? 30 : 60) as 30 | 60, adaptive: true };
+      ? { pixelRatio: Math.min(typeof window === "undefined" ? 1 : window.devicePixelRatio, 1.25), renderScale: 0.85, viewDistance: "medium" as const, shadows: !touch, plotGlow: false, fpsCap: 60 as const, adaptive: true }
+      : { pixelRatio: Math.min(typeof window === "undefined" ? 1 : window.devicePixelRatio, 1.5), renderScale: 1, viewDistance: "far" as const, shadows: !touch, plotGlow: true, fpsCap: 60 as const, adaptive: true };
   const viewDistance = stored.overrides.viewDistance ?? defaults.viewDistance;
   const renderScale = clampScale(adaptiveScale ?? stored.overrides.renderScale ?? defaults.renderScale);
   const shadows = stored.overrides.shadows ?? defaults.shadows;
