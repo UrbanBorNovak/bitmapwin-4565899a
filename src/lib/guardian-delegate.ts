@@ -71,7 +71,7 @@ function t(u){return fetch(u).then(function(r){if(!r.ok)throw 0;return r.text()}
 
 /* ---------- 2. the bitmap parent, verified against the chain ---------- */
 function heightFrom(s){var m=/(\\d{1,7})\\.bitmap/i.exec(s||"");return m?parseInt(m[1],10):null}
-var PIDS=[],BMP=null,COLL=null;
+var PIDS=[],BMP=null,COLL=null,CANON=null,DUPE=false;
 function parentHeight(){
   return j("/r/parents/"+SELF).then(function(p){
     var ids=(p&&p.ids)||p||[];
@@ -406,7 +406,7 @@ function hud(w,h,pulse){
     txt(String(stats[i][1]),pad+i*cw,h-pad-small*2.5,small*1.5,stone?"#8a949c":"#e9eef0")}
   if(MASTER)txt("COLLECTION PARENT \\u00B7 GENESIS PROGENITOR",pad,h-pad-small*1.1,small,"#f7931a",.7+pulse*.3);
   else if(stone)txt(WHY,pad,h-pad-small*1.1,small,"#d2493c");
-  else txt("TRIBUTE VERIFIED ON CHAIN \\u00B7 FIRST-IS-FIRST CHECK IN APP",pad,h-pad-small*1.1,small,ACC,.7+pulse*.3);
+  else txt(CANON===true?"TRIBUTE VERIFIED \\u00B7 FIRST-IS-FIRST BITMAP (OCI)":"TRIBUTE VERIFIED ON CHAIN \\u00B7 FIRST-IS-FIRST CHECK IN APP",pad,h-pad-small*1.1,small,ACC,.7+pulse*.3);
   if(COLL){var cl=MASTER?COLL.n+" GUARDIANS INSCRIBED AS CHILDREN":(COLL.rank>0?"COLLECTION #"+COLL.rank+" OF "+COLL.n:COLL.n+" IN COLLECTION");
     txt(cl,pad,pad+small*4.6,small*.85,"#3fe0d0");
     if(MASTER&&COLL.last)txt("LATEST "+COLL.last.slice(0,12)+"\\u2026",pad,pad+small*6,small*.75,"#3fe0d0",.7)}
@@ -505,7 +505,7 @@ Promise.all([parentHeight().catch(function(){return null}),tribute()]).then(func
   var height=r[0],paid=r[1];
   if(height===-1){MASTER=true;collection(SELF);
     return blockData(0).then(function(blk){build(0,blk);STATE="AWAKE";WHY=""})}
-  if(height===null){STATE="RELIC";WHY="INVALID BITMAP PARENT";build(0,null);STATE="RELIC";return}
+  if(height===null){STATE="RELIC";WHY=DUPE?"DUPLICATE BITMAP \\u00B7 NOT FIRST-IS-FIRST (OCI)":"INVALID BITMAP PARENT";build(0,null);STATE="RELIC";return}
   var root=null,i;for(i=0;i<PIDS.length;i++)if(PIDS[i]!==BMP){root=PIDS[i];break}
   if(root)collection(root);
   return blockData(height).then(function(blk){
