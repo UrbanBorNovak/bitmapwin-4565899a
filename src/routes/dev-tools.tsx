@@ -172,7 +172,9 @@ function MasterGeneratorPanel() {
 {`SIZE           ${bytes.toLocaleString()} BYTES
 CONTENT TYPE   ${DELEGATE_CONTENT_TYPE}
 TRIBUTE        ${TRIBUTE_SATS} SATS → ${TRIBUTE_ADDRESS}
-MASTER ID      ${GUARDIAN_MASTER_DELEGATE_ID || "NOT SET — SEND THE INSCRIPTION ID ONCE IT IS MINED"}`}
+MASTER ID      ${GUARDIAN_MASTER_DELEGATE_ID || "NOT SET — SEND THE INSCRIPTION ID ONCE IT IS MINED"}
+VERSION        V2 · READS THE RAW REVEAL HEX (V1 ON CHAIN CANNOT VERIFY TRIBUTES)
+NEXT STEP      INSCRIBE THIS FILE, THEN SET MASTER ID TO THE NEW INSCRIPTION`}
       </pre>
       <div className="mt-3 flex flex-wrap gap-2 font-mono text-xs">
         <button type="button" className="border border-bitcoin px-3 py-2 text-bitcoin hover:bg-bitcoin hover:text-background"
