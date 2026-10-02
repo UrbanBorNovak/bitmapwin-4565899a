@@ -319,7 +319,7 @@ function exportObj(){if(!VOX||!G)return;var L=["# "+G.nm+" \u00B7 "+G.h+".bitmap
   a.href=URL.createObjectURL(bl);a.download=G.h+"_"+G.nm.toLowerCase().replace(/[^a-z0-9]+/g,"_")+"_guardian.obj";
   document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500)}
 /* ---------- 6d. controls bar ---------- */
-function bar(){var d=document.createElement("div");d.style.cssText="position:fixed;right:2.5%;bottom:3.5%;display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:60%;z-index:2";
+function bar(){var d=document.createElement("div");d.style.cssText="position:fixed;right:2.5%;bottom:9%;display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:60%;z-index:2";
   [["1 IDLE",function(){stance(0)}],["2 PROWL",function(){stance(1)}],["3 STRIKE",function(){stance(2)}],["4 ROAR",function(){stance(3)}],
    ["X X-RAY",function(){XR=!XR}],["H HUM",drone],["E .OBJ",exportObj],["R REAL WORLD",arToggle]].forEach(function(b){var e=document.createElement("button");
     e.textContent=b[0];e.style.cssText="font:10px ui-monospace,monospace;letter-spacing:.08em;color:#f7931a;background:rgba(4,6,10,.7);border:1px solid #f7931a55;padding:4px 7px;cursor:pointer";
@@ -396,7 +396,7 @@ function hud(w,h,pulse){
     txt(String(stats[i][1]),pad+i*cw,h-pad-small*2.5,small*1.5,stone?"#8a949c":"#e9eef0")}
   if(MASTER)txt("COLLECTION PARENT \\u00B7 GENESIS PROGENITOR",pad,h-pad-small*1.1,small,"#f7931a",.7+pulse*.3);
   else if(stone)txt(WHY,pad,h-pad-small*1.1,small,"#d2493c");
-  else txt("TRIBUTE VERIFIED ON CHAIN",pad,h-pad-small*1.1,small,ACC,.7+pulse*.3);
+  else txt("TRIBUTE VERIFIED ON CHAIN \\u00B7 FIRST-IS-FIRST CHECK IN APP",pad,h-pad-small*1.1,small,ACC,.7+pulse*.3);
   if(COLL){var cl=MASTER?COLL.n+" GUARDIANS INSCRIBED AS CHILDREN":(COLL.rank>0?"COLLECTION #"+COLL.rank+" OF "+COLL.n:COLL.n+" IN COLLECTION");
     txt(cl,pad,pad+small*4.6,small*.85,"#3fe0d0");
     if(MASTER&&COLL.last)txt("LATEST "+COLL.last.slice(0,12)+"\\u2026",pad,pad+small*6,small*.75,"#3fe0d0",.7)}
