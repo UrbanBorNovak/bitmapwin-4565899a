@@ -65,16 +65,20 @@ function t(u){return fetch(u).then(function(r){if(!r.ok)throw 0;return r.text()}
 
 /* ---------- 2. the bitmap parent, verified against the chain ---------- */
 function heightFrom(s){var m=/(\\d{1,7})\\.bitmap/i.exec(s||"");return m?parseInt(m[1],10):null}
+var PIDS=[],BMP=null,COLL=null;
 function parentHeight(){
   return j("/r/parents/"+SELF).then(function(p){
     var ids=(p&&p.ids)||p||[];
-    if(!ids.length)throw 0;
+    PIDS=ids;
+    /* no parents at all: this is the collection root (the master itself) */
+    if(!ids.length)return -1;
     return ids.reduce(function(chain,id){
       return chain.then(function(found){
         if(found!==null)return found;
         return t("/content/"+id).then(function(body){
           var h=heightFrom(body);
           if(h===null)return null;
+          BMP=id;
           /* OCI sanity check: a bitmap can only claim a block that exists */
           return t("/r/blockheight").then(function(tip){
             return h<=parseInt(tip,10)?h:null;
@@ -83,6 +87,23 @@ function parentHeight(){
       });
     },Promise.resolve(null));
   });
+}
+
+/* ---------- 2b. live collection analytics from /r/children (paged) ---------- */
+function kids(id){
+  var all=[];
+  function page(n){
+    return j("/r/children/"+id+"/"+n).then(function(r){
+      all=all.concat((r&&r.ids)||[]);
+      return r&&r.more&&n<200?page(n+1):all;
+    },function(){return all});
+  }
+  return page(0);
+}
+function collection(root){
+  return kids(root).then(function(ids){
+    COLL={n:ids.length,rank:ids.indexOf(SELF)+1,last:ids.length?ids[ids.length-1]:""};
+  },function(){});
 }
 
 /* ---------- 3. the tribute, read straight off the reveal transaction ---------- */
@@ -213,7 +234,7 @@ function anim(v,t,awake){
 var c=document.getElementById("c"),g=c.getContext("2d"),W=0,H=0,DPR=Math.min(2,window.devicePixelRatio||1);
 function fit(){W=c.clientWidth;H=c.clientHeight;c.width=W*DPR;c.height=H*DPR;g.setTransform(DPR,0,0,DPR,0,0)}
 window.addEventListener("resize",fit);
-var yaw=.7,yawV=0,pitch=.62,pitchV=0,zoom=1,drag=null,t0=performance.now(),VOX=null,LAND=null,G=null,STATE="LOADING",WHY="";
+var yaw=.7,yawV=0,pitch=.62,pitchV=0,zoom=1,drag=null,t0=performance.now(),VOX=null,LAND=null,G=null,STATE="LOADING",WHY="",MASTER=false;
 var MC={};function mx(a,b,k){var key=a+b+k;return MC[key]||(MC[key]=mix(a,b,k))}
 var CY,SY,CP,SP,SC,OX,OY;
 function cam(){CY=Math.cos(yaw);SY=Math.sin(yaw);CP=Math.cos(pitch);SP=Math.sin(pitch)}
@@ -263,7 +284,7 @@ function hud(w,h,pulse){
   var ACC=G?G.accent:"#3fe0d0",stone=STATE!=="AWAKE";
   g.strokeStyle=stone?"#6b6f74":ACC;g.globalAlpha=.5;g.lineWidth=1;
   g.strokeRect(pad*.55,pad*.55,w-pad*1.1,h-pad*1.1);g.globalAlpha=1;
-  txt("BLOCK-DNA GUARDIAN"+(G?" \\u00B7 "+G.h+".BITMAP":""),pad,pad+small*1.4,small,"#f7931a");
+  txt((MASTER?"GUARDIAN MASTER GENERATOR":"BLOCK-DNA GUARDIAN")+(G&&!MASTER?" \\u00B7 "+G.h+".BITMAP":""),pad,pad+small*1.4,small,"#f7931a");
   if(LAND)txt(LAND.n+" PARCELS \\u00B7 ONE PER TRANSACTION",pad,pad+small*3,small*.8,"#f7931a",.75);
   if(!G){txt(STATE==="LOADING"?"READING THE CHAIN\\u2026":"STONE RELIC",pad,h/2,big,"#8a949c");
     if(WHY)txt(WHY,pad,h/2+small*2.4,small,"#d2493c");return}
@@ -272,8 +293,12 @@ function hud(w,h,pulse){
   var stats=[["HP",G.hp],["BITE",G.bi],["SPEED",G.sd],["ARMOR",G.ar]],i,cw=(w-pad*2)/4;
   for(i=0;i<4;i++){txt(stats[i][0],pad+i*cw,h-pad-small*4,small*.85,"#87939b");
     txt(String(stats[i][1]),pad+i*cw,h-pad-small*2.5,small*1.5,stone?"#8a949c":"#e9eef0")}
-  if(stone)txt(WHY,pad,h-pad-small*1.1,small,"#d2493c");
+  if(MASTER)txt("COLLECTION PARENT \\u00B7 GENESIS PROGENITOR",pad,h-pad-small*1.1,small,"#f7931a",.7+pulse*.3);
+  else if(stone)txt(WHY,pad,h-pad-small*1.1,small,"#d2493c");
   else txt("TRIBUTE VERIFIED ON CHAIN",pad,h-pad-small*1.1,small,ACC,.7+pulse*.3);
+  if(COLL){var cl=MASTER?COLL.n+" GUARDIANS INSCRIBED AS CHILDREN":(COLL.rank>0?"COLLECTION #"+COLL.rank+" OF "+COLL.n:COLL.n+" IN COLLECTION");
+    txt(cl,pad,pad+small*4.6,small*.85,"#3fe0d0");
+    if(MASTER&&COLL.last)txt("LATEST "+COLL.last.slice(0,12)+"\\u2026",pad,pad+small*6,small*.75,"#3fe0d0",.7)}
   txt("DNA "+G.dna+"  "+SELF.slice(0,16)+"\\u2026",pad,h-pad*.95,small*.7,"#5d676e");
   txt("DRAG \\u00B7 SCROLL TO ZOOM",w-pad-small*11.5,pad+small*1.4,small*.8,"#5d676e",.7);
 }
@@ -360,7 +385,11 @@ function blockData(height){
 }
 Promise.all([parentHeight().catch(function(){return null}),tribute()]).then(function(r){
   var height=r[0],paid=r[1];
+  if(height===-1){MASTER=true;collection(SELF);
+    return blockData(0).then(function(blk){build(0,blk);STATE="AWAKE";WHY=""})}
   if(height===null){STATE="RELIC";WHY="INVALID BITMAP PARENT";build(0,null);STATE="RELIC";return}
+  var root=null,i;for(i=0;i<PIDS.length;i++)if(PIDS[i]!==BMP){root=PIDS[i];break}
+  if(root)collection(root);
   return blockData(height).then(function(blk){
     build(height,blk);
     if(paid===true)STATE="AWAKE";
