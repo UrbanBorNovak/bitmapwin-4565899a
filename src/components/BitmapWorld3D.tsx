@@ -1,3 +1,4 @@
+import { skillSpeed, SKILL_EVENT, type ClassSkill } from "@/lib/oasis-classes";
 import {
   Fragment,
   memo,
@@ -280,7 +281,6 @@ import {
 import {
   DEFAULT_AVATAR_MODEL,
   DEFAULT_AVATAR_TEXTURE,
-  readLastPose,
   saveLastPose,
   setAvatarModelInscription,
 } from "@/lib/map-identity";
@@ -1963,7 +1963,7 @@ function PlayerCameraRig({
       // quick, forest is slow, high ground lifts a jump further.
       noteStanding(player.x, player.z);
       const perks = standingLand().landscape.effects;
-      intent.speedScale = walkMultiplier() * perks.speed;
+      intent.speedScale = walkMultiplier() * perks.speed * skillSpeed();
       intent.jumpScale = perks.jump;
       // A raised weapon trades speed for accuracy, preventing full-speed ADS
       // strafing and giving first-person combat deliberate tactical weight.
@@ -3418,18 +3418,15 @@ function BitmapWorld3DInner({
   }, []);
   useEffect(() => onCursorsChange?.(cursors), [cursors, onCursorsChange]);
 
-  // Deep links spawn directly on the requested experience; otherwise you come
-  // back exactly where you left off, falling back to the live chain tip.
+  // Deep links spawn directly on the requested experience; every other entry
+  // begins the journey at the Genesis block, 0.bitmap.
   const spawnedRef = useRef(false);
   useEffect(() => {
     if (spawnedRef.current || !tipHeight) return;
     spawnedRef.current = true;
     const deepLink = initialHeight !== undefined && initialHeight <= tipHeight;
-    const saved = deepLink ? null : readLastPose();
-    const spawnHeight = deepLink ? (initialHeight as number) : tipHeight;
-    if (saved) placePlayer(pose.current, saved.x, saved.z, saved.yaw);
-    else
-      placePlayer(pose.current, worldX(spawnHeight % GRID), worldZ(Math.floor(spawnHeight / GRID)), 0);
+    const spawnHeight = deepLink ? (initialHeight as number) : 0;
+    placePlayer(pose.current, worldX(spawnHeight % GRID), worldZ(Math.floor(spawnHeight / GRID)), 0);
     publish({
       col: pose.current.col,
       row: pose.current.row,
@@ -3844,6 +3841,16 @@ function BitmapWorld3DInner({
   useEffect(() => {
     setMember(membership.data === true);
   }, [membership.data]);
+
+  // Class skills: heals arrive from the hotbar as window events.
+  useEffect(() => {
+    const onSkill = (e: Event) => {
+      const skill = (e as CustomEvent<ClassSkill>).detail;
+      if (skill?.effect.kind === "heal") heal(skill.effect.amount);
+    };
+    window.addEventListener(SKILL_EVENT, onSkill);
+    return () => window.removeEventListener(SKILL_EVENT, onSkill);
+  }, [heal]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
