@@ -174,7 +174,7 @@ CONTENT TYPE   ${DELEGATE_CONTENT_TYPE}
 TRIBUTE        ${TRIBUTE_SATS} SATS → ${TRIBUTE_ADDRESS}
 MASTER ID      ${GUARDIAN_MASTER_DELEGATE_ID || "NOT SET — SEND THE INSCRIPTION ID ONCE IT IS MINED"}
 VERSION        V5 · LIVING AGE · VOICE · STANCES · X-RAY · .OBJ EXPORT · REAL-WORLD CAMERA MODE
-NEXT STEP      INSCRIBE THIS FILE, THEN SET MASTER ID TO THE NEW INSCRIPTION`}
+STATUS         LIVE ON BITCOIN · INSCRIPTION #127,506,616 · NEW DELEGATE MINTS USE V5`}
       </pre>
       <div className="mt-3 flex flex-wrap gap-2 font-mono text-xs">
         <button type="button" className="border border-bitcoin px-3 py-2 text-bitcoin hover:bg-bitcoin hover:text-background"
