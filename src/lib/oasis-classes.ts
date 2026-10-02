@@ -9,6 +9,7 @@ export type ClassId = "miner" | "hashrunner" | "archaeologist" | "cypherpunk" | 
 export type SkillEffect =
   | { kind: "heal"; amount: number }
   | { kind: "speed"; factor: number; seconds: number }
+  | { kind: "strike"; range: number }
   | { kind: "note" };
 
 export type ClassSkill = { name: string; cooldown: number; note: string; effect: SkillEffect };
@@ -28,7 +29,7 @@ export const CLASSES: OasisClass[] = [
     role: "HEAVY · SUSTAIN",
     lore: "Forged in the deep shafts beneath the first blocks. Slow to fall, quick to dig.",
     skills: [
-      { name: "STOPE STRIKE", cooldown: 4, note: "PICKAXE SLAM", effect: { kind: "note" } },
+      { name: "STOPE STRIKE", cooldown: 4, note: "PICKAXE SLAM", effect: { kind: "strike", range: 1 } },
       { name: "FORTIFY", cooldown: 20, note: "+25 HP", effect: { kind: "heal", amount: 25 } },
       { name: "ORE SENSE", cooldown: 15, note: "VEINS STIR NEARBY", effect: { kind: "note" } },
     ],
@@ -40,7 +41,7 @@ export const CLASSES: OasisClass[] = [
     lore: "A nomad of the high block heights who outruns the next difficulty adjustment.",
     skills: [
       { name: "GHOST DASH", cooldown: 6, note: "BURST OF SPEED", effect: { kind: "speed", factor: 2.2, seconds: 1.5 } },
-      { name: "VOLLEY", cooldown: 3, note: "DART LOOSED", effect: { kind: "note" } },
+      { name: "VOLLEY", cooldown: 3, note: "DART LOOSED", effect: { kind: "strike", range: 2.5 } },
       { name: "ELUSION", cooldown: 18, note: "+40% PACE", effect: { kind: "speed", factor: 1.4, seconds: 6 } },
     ],
   },
@@ -50,7 +51,7 @@ export const CLASSES: OasisClass[] = [
     role: "MYSTIC · PROVENANCE",
     lore: "Reads the ledger like scripture and mends wounds with its oldest verses.",
     skills: [
-      { name: "INSCRIPTION PULSE", cooldown: 5, note: "THE LAND REMEMBERS", effect: { kind: "note" } },
+      { name: "INSCRIPTION PULSE", cooldown: 5, note: "THE LAND REMEMBERS", effect: { kind: "strike", range: 1.6 } },
       { name: "CHRONO MEND", cooldown: 15, note: "+30 HP", effect: { kind: "heal", amount: 30 } },
       { name: "SANCTUARY WARD", cooldown: 30, note: "+15 HP", effect: { kind: "heal", amount: 15 } },
     ],
@@ -62,7 +63,7 @@ export const CLASSES: OasisClass[] = [
     lore: "Speaks only in encrypted channels and leaves nothing but a nullifier behind.",
     skills: [
       { name: "NULLIFIER VEIL", cooldown: 15, note: "SLIPPED INTO SHADOW", effect: { kind: "speed", factor: 1.6, seconds: 3 } },
-      { name: "HASH STRIKE", cooldown: 5, note: "PIERCING BLOW", effect: { kind: "note" } },
+      { name: "HASH STRIKE", cooldown: 5, note: "PIERCING BLOW", effect: { kind: "strike", range: 1.2 } },
       { name: "ZK SHIELD", cooldown: 25, note: "+20 HP", effect: { kind: "heal", amount: 20 } },
     ],
   },
