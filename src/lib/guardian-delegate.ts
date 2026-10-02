@@ -52,7 +52,7 @@ html,body{margin:0;height:100%;background:#04060a;overflow:hidden;font-family:ui
 #o{position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.34) 0 1px,rgba(0,0,0,0) 1px 3px);mix-blend-mode:multiply;opacity:.55}
 #v{position:fixed;inset:0;pointer-events:none;box-shadow:inset 0 0 180px 60px #000}
 </style></head><body>
-<canvas id="c"></canvas><div id="o"></div><div id="v"></div>
+<script type="application/json" id="traits">{}</script><canvas id="c"></canvas><div id="o"></div><div id="v"></div>
 <script>
 var TRIBUTE_TO=${JSON.stringify(TRIBUTE_ADDRESS)},TRIBUTE_SCRIPT=${JSON.stringify(TRIBUTE_SCRIPT)},TRIBUTE_MIN=${TRIBUTE_SATS};
 
@@ -145,6 +145,28 @@ function dnaOf(height,hash,txs,size){
     bulk:Math.max(.85,Math.min(1.35,.85+size/3000000)),
     horn:Math.floor(r()*4),wing:r()>.7,spine:r()>.5,pat:r()>.4,gait:.7+r()*.6,
     dna:h32(hash).toString(16)};
+}
+
+/* ---------- 4b. punk-style traits: every optional mutation the body really renders ---------- */
+var HORNS=["SHORT HORNS","CURVED TUSKS","ANTLERS","CROWN CREST"];
+function traitsOf(G){
+  var t=[["Horns",HORNS[G.horn]]];
+  if(G.wing||G.sh==="avian"||G.sh==="floater")t.push(["Wings","AETHER WINGS"]);
+  if(G.spine)t.push(["Spines","SPINED RIDGE"]);
+  if(G.pat)t.push(["Markings","GLOWING RUNES"]);
+  if(G.ra!=="COMMON")t.push(["Aura","ORBITING MOTES"]);
+  if(G.ra==="MYTHIC")t.push(["Halo","SATOSHI CROWN"]);
+  if(G.seg>=6)t.push(["Plating","HEAVY CARAPACE"]);
+  return t;
+}
+function publish(G,n){
+  var tr=G.tr,a=[{trait_type:"Trait Count",value:(tr.length-1)+" Traits"},
+    {trait_type:"Body",value:G.sh.toUpperCase()},{trait_type:"Rarity",value:G.ra},
+    {trait_type:"Epoch",value:G.ep},{trait_type:"Level",value:G.lv},{trait_type:"Parcels",value:n}],i;
+  for(i=0;i<tr.length;i++)a.push({trait_type:tr[i][0],value:tr[i][1]});
+  var el=document.getElementById("traits");
+  if(el)el.textContent=JSON.stringify({name:G.nm+" \\u00B7 "+G.h+".bitmap",attributes:a});
+  document.title=G.nm+" \\u00B7 "+(tr.length-1)+"-TRAIT \\u00B7 "+G.h+".BITMAP";
 }
 
 /* ---------- 5. voxel blueprint ---------- */
@@ -289,6 +311,9 @@ function hud(w,h,pulse){
   if(!G){txt(STATE==="LOADING"?"READING THE CHAIN\\u2026":"STONE RELIC",pad,h/2,big,"#8a949c");
     if(WHY)txt(WHY,pad,h/2+small*2.4,small,"#d2493c");return}
   txt(G.nm,pad,h-pad-small*7.4,big,stone?"#8a949c":"#e9eef0");
+  if(G.tr&&!MASTER){var tn=G.tr.length-1,tl=[];for(var q=1;q<G.tr.length;q++)tl.push(G.tr[q][1].split(" ").pop());
+    txt(tn+"-TRAIT GUARDIAN"+(tl.length?" \\u00B7 "+tl.join(" \\u00B7 "):" \\u00B7 PURE"),pad,h-pad-small*8.9,small*.85,"#f7931a")}
+  if(MASTER)txt("TRAIT ENGINE \\u00B7 0 TO 6 TRAIT GUARDIANS",pad,h-pad-small*8.9,small*.85,"#f7931a");
   txt(G.ra+" \\u00B7 LV "+G.lv+" \\u00B7 ERA "+G.ep+" \\u00B7 "+G.sh.toUpperCase(),pad,h-pad-small*5.9,small,stone?"#6b6f74":ACC);
   var stats=[["HP",G.hp],["BITE",G.bi],["SPEED",G.sd],["ARMOR",G.ar]],i,cw=(w-pad*2)/4;
   for(i=0;i<4;i++){txt(stats[i][0],pad+i*cw,h-pad-small*4,small*.85,"#87939b");
@@ -372,7 +397,7 @@ function land(txs,hash){
 function build(height,blk){
   var txs=(blk&&(blk.transaction_count||blk.transactions||blk.tx_count||blk.n_tx))||1,hash=(blk&&blk.hash)||String(height);
   G=dnaOf(height,hash,txs,(blk&&blk.size)||900000);
-  LAND=land(txs,hash);VOX=blueprint(G);
+  LAND=land(txs,hash);VOX=blueprint(G);G.tr=traitsOf(G);if(!MASTER)publish(G,LAND.n);
   /* fit the creature to its land: never taller than 22, never wider than 28 */
   var ty=0,ex=0,i;for(i=0;i<VOX.length;i++){var v=VOX[i];ty=Math.max(ty,v[1]+v[4]/2);ex=Math.max(ex,Math.abs(v[0])+v[3]/2,Math.abs(v[2])+v[5]/2)}
   var k=Math.min(1.6,22/ty,14/ex);
