@@ -134,7 +134,9 @@ export const TerritoryGuardians = memo(function TerritoryGuardians({ unit, pose 
         const row = Math.floor(g.height / WORLD_GRID);
         const hx = cellX(col);
         const hz = cellZ(row);
-        return { g, hx, hz, x: hx, z: hz, yaw: 0, brain: createFlyBrain((g.height % 997) / 97), phase: (g.height % 360) * 0.0174 };
+        const lap = (g.height % 400) / 100;
+        const [sx, sz] = perimeterPoint(lap, hx, hz, WORLD_CELL * EDGE);
+        return { g, hx, hz, x: sx, z: sz, yaw: 0, brain: createFlyBrain((g.height % 997) / 97), phase: (g.height % 360) * 0.0174, lap, dir: g.height % 2 ? 1 : -1, roarUntil: 0, roarReady: 0, inside: false };
       }),
     [data],
   );
