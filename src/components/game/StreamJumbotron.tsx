@@ -5,6 +5,8 @@ import { useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { SafeHtml } from "@/components/game/SafeHtml";
+import type { Event } from "nostr-tools/pure";
+import { subscribeStreamChat } from "@/lib/nostr/coordinate";
 
 const NEAR = 6; // in cells: start the stream when this close
 const tmp = new THREE.Vector3();
@@ -53,7 +55,31 @@ export function StreamJumbotron({ height, position, cell }: { height: number; po
             <div style={{ color: "#7fe7ff", font: "12px monospace", padding: 16 }}>● {height}.BITMAP · WALK CLOSER TO TUNE IN</div>
           )}
         </div>
+        {near ? <JumbotronChat height={height} /> : null}
       </SafeHtml>
     </group>
+  );
+}
+
+/** Read-only ticker of the stream's Nostr chat — the same notes shown on the BITMAP page. */
+function JumbotronChat({ height }: { height: number }) {
+  const [lines, setLines] = useState<Event[]>([]);
+  useEffect(() => {
+    const seen = new Set<string>();
+    return subscribeStreamChat(height, (e) => {
+      if (seen.has(e.id)) return;
+      seen.add(e.id);
+      setLines((m) => [...m, e].sort((a, b) => a.created_at - b.created_at).slice(-5));
+    });
+  }, [height]);
+  return (
+    <div style={{ width: 640, background: "rgba(0,0,0,0.85)", color: "#e8e8e8", font: "12px monospace", padding: "6px 10px", borderTop: "1px solid #f7931a" }}>
+      <div style={{ color: "#7fe7ff" }}>● LIVE CHAT · chat on {height}.bitmap page</div>
+      {lines.length === 0 ? <div style={{ opacity: 0.6 }}>No messages yet.</div> : lines.map((l) => (
+        <div key={l.id} style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <span style={{ color: "#f7931a" }}>{l.pubkey.slice(0, 6)}</span> {l.content}
+        </div>
+      ))}
+    </div>
   );
 }

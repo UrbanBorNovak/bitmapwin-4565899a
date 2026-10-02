@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Event } from "nostr-tools/pure";
 import { Button } from "@/components/ui/button";
-import { hasExtension, localPubkey, postStreamChat, subscribeStreamChat } from "@/lib/nostr/coordinate";
+import { hasExtension, localPubkey, postStreamChat, relayStatus, subscribeStreamChat } from "@/lib/nostr/coordinate";
 
 const short = (pk: string) => `${pk.slice(0, 6)}…${pk.slice(-4)}`;
 const time = (s: number) => new Date(s * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -16,6 +16,15 @@ export function StreamChat({ height }: { height: number }) {
   const [me, setMe] = useState<string | null>(null);
   const [ext, setExt] = useState(false);
   const list = useRef<HTMLDivElement>(null);
+  const [relays, setRelays] = useState<{ url: string; connected: boolean }[]>([]);
+
+  useEffect(() => {
+    const tick = () => setRelays(relayStatus());
+    tick();
+    const id = window.setInterval(tick, 2000);
+    return () => window.clearInterval(id);
+  }, []);
+  const online = relays.filter((r) => r.connected).length;
 
   useEffect(() => {
     setMe(localPubkey());
@@ -54,6 +63,16 @@ export function StreamChat({ height }: { height: number }) {
         <h2 id={`stream-chat-${height}`} className="label text-signal">● LIVE CHAT</h2>
         <span className="font-mono text-[10px] text-muted-foreground" data-no-translate>#bitmap-stream:{height}</span>
       </header>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border px-4 py-2 font-mono text-[10px]" data-no-translate>
+        <span className={online > 0 ? "text-signal" : "text-muted-foreground"}>
+          {online}/{relays.length || 4} RELAYS
+        </span>
+        {relays.map((r) => (
+          <span key={r.url} className={r.connected ? "text-signal" : "text-muted-foreground"} title={r.url}>
+            {r.connected ? "●" : "○"} {r.url.replace("wss://", "").replace(/^relay\./, "")}
+          </span>
+        ))}
+      </div>
       <div ref={list} className="h-72 space-y-2 overflow-y-auto px-4 py-3 font-mono text-[12px]" aria-live="polite">
         {messages.length === 0 ? (
           <p className="text-muted-foreground">&gt; No messages in the last 6 hours. Say hello.</p>
