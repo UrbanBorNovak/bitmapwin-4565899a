@@ -1,3 +1,4 @@
+import { skillSpeed, SKILL_EVENT, type ClassSkill } from "@/lib/oasis-classes";
 import {
   Fragment,
   memo,

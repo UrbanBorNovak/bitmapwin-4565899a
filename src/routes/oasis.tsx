@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { getChainBlocks } from "@/lib/chain.functions";
 import { OasisWorldGuard } from "@/components/OasisWorldGuard";
+import { OasisEntry } from "@/components/game/OasisEntry";
+import { ClassSkillBar } from "@/components/game/ClassSkillBar";
 
 const BitmapWorld3D = lazy(() => import("@/components/BitmapWorld3D").then((module) => ({ default: module.BitmapWorld3D })));
 
@@ -33,6 +35,8 @@ export const Route = createFileRoute("/oasis")({
 
 function OasisPage() {
   const { height } = Route.useSearch();
+  // Deep links skip the story and drop straight into the world.
+  const [entered, setEntered] = useState(height !== undefined);
   const fetchBlocks = useServerFn(getChainBlocks);
   const tip = useQuery({
     queryKey: ["chain", "tip", "map"],
@@ -75,6 +79,9 @@ function OasisPage() {
         <Link to="/play-guide" className="label text-bitcoin hover:text-foreground">CONTROLS + FIRST 5 MINUTES →</Link>
       </div>
       <div data-tour="map-world" className="relative min-w-0">
+        {!entered ? (
+          <OasisEntry onEnter={() => setEntered(true)} />
+        ) : (
         <OasisWorldGuard>
         <Suspense fallback={<div className="grid h-[78vh] min-h-[520px] place-items-center border border-border bg-background font-mono text-xs text-signal">INITIALIZING OASIS RENDERER…</div>}>
           <BitmapWorld3D
@@ -82,8 +89,10 @@ function OasisPage() {
             {...(height === undefined ? {} : { initialHeight: height })}
             legend={<span data-tour="map-legend" className="flex flex-wrap items-center gap-2">{legend}</span>}
           />
+          <ClassSkillBar />
         </Suspense>
         </OasisWorldGuard>
+        )}
       </div>
     </div>
   );
