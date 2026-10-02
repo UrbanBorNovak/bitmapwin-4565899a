@@ -131,7 +131,8 @@ export function renderPixelText(
         bw,
         bh,
         pen,
-        Math.max(0, glyph.yoffset + by - TOP) * scale,
+        // The inscribed metrics centre '.' and ',' in the cell; sit them on the baseline.
+        (char === "." || char === "," ? 46 - bh - TOP : Math.max(0, glyph.yoffset + by - TOP)) * scale,
         bw * scale,
         bh * scale,
       );
