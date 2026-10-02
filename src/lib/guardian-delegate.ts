@@ -259,6 +259,24 @@ var c=document.getElementById("c"),g=c.getContext("2d"),W=0,H=0,DPR=Math.min(2,w
 function fit(){W=c.clientWidth;H=c.clientHeight;c.width=W*DPR;c.height=H*DPR;g.setTransform(DPR,0,0,DPR,0,0)}
 window.addEventListener("resize",fit);
 var yaw=.7,yawV=0,pitch=.62,pitchV=0,zoom=1,drag=null,t0=performance.now(),VOX=null,LAND=null,G=null,STATE="LOADING",WHY="",MASTER=false,STANCE=0,ACT=null,XR=false,AGE=null,AC=null,DRONE=null;
+/* real-world mode: back camera behind a transparent canvas, the creature roams the floor */
+var AR=false,VID=null,WX=0,WZ=0,HEAD=0,TGT=null,REST=0,GYRO=false,LT=0;
+function arToggle(){if(AR){AR=false;if(VID){var s=VID.srcObject;if(s)s.getTracks().forEach(function(k){k.stop()});VID.remove();VID=null}WX=WZ=HEAD=0;TGT=null;return}
+  var md=navigator.mediaDevices;if(!md||!md.getUserMedia){WHY="NO CAMERA ON THIS DEVICE";return}
+  md.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false}).then(function(s){
+    VID=document.createElement("video");VID.setAttribute("playsinline","");VID.muted=true;VID.autoplay=true;VID.srcObject=s;
+    VID.style.cssText="position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:0";
+    document.body.insertBefore(VID,document.body.firstChild);c.style.position="relative";c.style.zIndex="1";VID.play();AR=true;zoom=Math.max(zoom,1.3);
+    var D=window.DeviceOrientationEvent;if(D&&typeof D.requestPermission==="function")D.requestPermission().then(gyro,function(){});else gyro("granted");
+  },function(){WHY="CAMERA PERMISSION DENIED"})}
+function gyro(p){if(p!=="granted"||GYRO)return;GYRO=true;window.addEventListener("deviceorientation",function(e){if(!AR||e.beta===null)return;
+  pitch=Math.max(.1,Math.min(1.45,(90-Math.abs(e.beta))/90*1.4+.15));yaw=(e.alpha||0)*Math.PI/180;yawV=pitchV=0})}
+function roam(t){var dt=Math.min(.1,t-LT);LT=t;if(!AR||STATE!=="AWAKE")return;
+  if(!TGT){if(t<REST)return;var a=Math.random()*6.283,r=6+Math.random()*16;TGT=[Math.cos(a)*r,Math.sin(a)*r]}
+  var dx=TGT[0]-WX,dz=TGT[1]-WZ,d=Math.sqrt(dx*dx+dz*dz);
+  if(d<.6){TGT=null;REST=t+1+Math.random()*3;STANCE=0;return}
+  STANCE=1;var want=Math.atan2(dx,dz),dh=want-HEAD;while(dh>3.1416)dh-=6.2832;while(dh<-3.1416)dh+=6.2832;HEAD+=dh*Math.min(1,dt*3);
+  var sp=(2+(G?G.sd:30)/12)*dt;WX+=Math.sin(HEAD)*sp;WZ+=Math.cos(HEAD)*sp}
 var STN=["IDLE","PROWL","STRIKE","ROAR"];
 /* ---------- 6a. living block clock: the guardian ages with every block bitcoin mines ---------- */
 function ageOf(){t("/r/blockheight").then(function(x){var tip=parseInt(String(x).replace(/[^0-9]/g,""),10);
@@ -297,14 +315,15 @@ function exportObj(){if(!VOX||!G)return;var L=["# "+G.nm+" \u00B7 "+G.h+".bitmap
 /* ---------- 6d. controls bar ---------- */
 function bar(){var d=document.createElement("div");d.style.cssText="position:fixed;right:2.5%;bottom:3.5%;display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:60%;z-index:2";
   [["1 IDLE",function(){stance(0)}],["2 PROWL",function(){stance(1)}],["3 STRIKE",function(){stance(2)}],["4 ROAR",function(){stance(3)}],
-   ["X X-RAY",function(){XR=!XR}],["H HUM",drone],["E .OBJ",exportObj]].forEach(function(b){var e=document.createElement("button");
+   ["X X-RAY",function(){XR=!XR}],["H HUM",drone],["E .OBJ",exportObj],["R REAL WORLD",arToggle]].forEach(function(b){var e=document.createElement("button");
     e.textContent=b[0];e.style.cssText="font:10px ui-monospace,monospace;letter-spacing:.08em;color:#f7931a;background:rgba(4,6,10,.7);border:1px solid #f7931a55;padding:4px 7px;cursor:pointer";
     e.onclick=function(ev){ev.stopPropagation();b[1]()};d.appendChild(e)});document.body.appendChild(d)}
-window.addEventListener("keydown",function(e){var k=e.key.toLowerCase();if(k>="1"&&k<="4")stance(+k-1);else if(k==="x")XR=!XR;else if(k==="h")drone();else if(k==="e")exportObj()});
+window.addEventListener("keydown",function(e){var k=e.key.toLowerCase();if(k>="1"&&k<="4")stance(+k-1);else if(k==="x")XR=!XR;else if(k==="h")drone();else if(k==="e")exportObj();else if(k==="r")arToggle()});
 var MC={};function mx(a,b,k){var key=a+b+k;return MC[key]||(MC[key]=mix(a,b,k))}
 var CY,SY,CP,SP,SC,OX,OY;
 function cam(){CY=Math.cos(yaw);SY=Math.sin(yaw);CP=Math.cos(pitch);SP=Math.sin(pitch)}
-function P3(x,y,z){var rx=x*CY-z*SY,rz=x*SY+z*CY;return[OX+rx*SC,OY-(y*CP-rz*SP)*SC,rz*CP+y*SP]}
+function P3(x,y,z){if(AR){var ch=Math.cos(HEAD),sh=Math.sin(HEAD),x2=x*ch+z*sh;z=-x*sh+z*ch+WZ;x=x2+WX}
+  var rx=x*CY-z*SY,rz=x*SY+z*CY;return[OX+rx*SC,OY-(y*CP-rz*SP)*SC,rz*CP+y*SP]}
 function poly(p,col,line){g.fillStyle=col;g.beginPath();g.moveTo(p[0][0],p[0][1]);
   for(var i=1;i<p.length;i++)g.lineTo(p[i][0],p[i][1]);g.closePath();g.fill();
   if(line){g.strokeStyle=line;g.stroke()}}
@@ -388,10 +407,11 @@ function frame(now){
   var t=(now-t0)/1000,pulse=(Math.sin(t*2.2)+1)/2;
   if(!drag){yaw+=(STATE==="AWAKE"?.003:.001)+yawV;yawV*=.94;pitch+=pitchV;pitchV*=.9}
   pitch=Math.max(.1,Math.min(1.45,pitch));
-  backdrop(W,H);
+  roam(t);
+  if(AR){g.clearRect(0,0,W,H);document.body.style.background="transparent"}else{backdrop(W,H);document.body.style.background=""}
   if(VOX&&LAND){cam();
     var span=LAND.half*3.4;SC=Math.min(W,H)/span*zoom;OX=W/2;OY=H*.56+Math.sin(pitch)*LAND.half*.1*SC;
-    drawLand(pulse);drawVox(pulse,STATE!=="AWAKE",t);
+    if(!AR)drawLand(pulse);drawVox(pulse,STATE!=="AWAKE",t);
   }
   hud(W,H,pulse);requestAnimationFrame(frame)
 }
@@ -401,7 +421,10 @@ c.addEventListener("pointerdown",function(e){drag=pt(e);yawV=pitchV=0});
 window.addEventListener("pointermove",function(e){if(!drag)return;var p=pt(e),dx=p[0]-drag[0],dy=p[1]-drag[1];
   yaw+=dx*.008;pitch+=dy*.006;yawV=dx*.0006;pitchV=dy*.0004;drag=p});
 var DN=null;c.addEventListener("pointerdown",function(e){DN=pt(e)});
-window.addEventListener("pointerup",function(e){drag=null;if(DN){var p=pt(e);if(Math.abs(p[0]-DN[0])+Math.abs(p[1]-DN[1])<6)act("roar")}DN=null});
+window.addEventListener("pointerup",function(e){drag=null;if(DN){var p=pt(e);if(Math.abs(p[0]-DN[0])+Math.abs(p[1]-DN[1])<6){
+  if(AR&&SC&&SP>.05){var me=P3(0,4,0),near=Math.abs(p[0]-me[0])+Math.abs(p[1]-me[1])<Math.min(W,H)*.12;
+    if(near)act("roar");else{var rx=(p[0]-OX)/SC,rz=(p[1]-OY)/(SP*SC);TGT=[rx*CY+rz*SY,-rx*SY+rz*CY]}}
+  else act("roar")}}DN=null});
 c.addEventListener("wheel",function(e){e.preventDefault();zoom=Math.max(.5,Math.min(3,zoom*(e.deltaY>0?.9:1.1)))},{passive:false});
 
 /* ---------- 7. resolve, then render ---------- */
