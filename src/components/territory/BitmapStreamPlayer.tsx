@@ -1,4 +1,5 @@
 // Live channel for a BITMAP. Embeds bitmap.stream when the channel exists;
+import { GoLiveKick } from "./GoLiveKick";
 // otherwise offers a Kick player and the Kick broadcast pipeline.
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -113,30 +114,7 @@ function KickPipeline({ height }: { height: number }) {
         </div>
       </div>
 
-      <div>
-        <p className="label text-bitcoin">02 · GO LIVE FROM THIS BITMAP</p>
-        <ol className="mt-2 space-y-2 text-muted-foreground">
-          <li>1. Open kick.com → Creator Dashboard → Settings → Stream URL &amp; Key.</li>
-          <li className="flex flex-wrap items-center gap-2">
-            2. In OBS / Streamlabs set Server:
-            <code className="border border-border bg-card px-2 py-0.5 text-signal">{RTMP}</code>
-            <button
-              type="button"
-              className="label hover:text-bitcoin"
-              onClick={() => {
-                navigator.clipboard?.writeText(RTMP);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 1500);
-              }}
-            >
-              {copied ? "[ COPIED ]" : "[ COPY ]"}
-            </button>
-          </li>
-          <li>3. Paste your private stream key into OBS. Never share it here or anywhere else.</li>
-          <li>4. Title your stream "{height}.bitmap" and start streaming.</li>
-          <li>5. Enter your Kick channel above so visitors of this BITMAP can watch.</li>
-        </ol>
-      </div>
+      <GoLiveKick label={`${height}.bitmap`} />
 
       <p className="text-muted-foreground">
         &gt; Prefer a native channel? Holders can open one at{" "}
