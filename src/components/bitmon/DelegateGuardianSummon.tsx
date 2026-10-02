@@ -7,6 +7,7 @@
 import { ShadowInscriber, type ArtifactVariant } from "@/components/territory/ShadowInscriber";
 import { DELEGATE_CONTENT_TYPE, GUARDIAN_MASTER_DELEGATE_ID, TRIBUTE_ADDRESS, TRIBUTE_SATS, guardianMasterGeneratorHtml } from "@/lib/guardian-delegate";
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { verifyDelegateGuardianFn } from "@/lib/bitmon.functions";
@@ -72,12 +73,17 @@ function ClaimAwakening() {
   const [id, setId] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [oasis, setOasis] = useState<number | null>(null);
   const run = async () => {
     setBusy(true); setMsg(null);
     try {
       const r = await verify({ data: { inscriptionId: id.trim() } });
       setMsg(r.awakened ? `GUARDIAN AWAKE ON ${r.height}.BITMAP` : r.denied);
-      if (r.awakened) qc.invalidateQueries({ queryKey: ["guardians"] });
+      if (r.awakened) {
+        qc.invalidateQueries({ queryKey: ["guardians"] });
+        if (r.height != null) qc.invalidateQueries({ queryKey: ["guardian", r.height] });
+        if (r.height != null) setOasis(r.height);
+      }
     } catch { setMsg("PASTE A FULL INSCRIPTION ID (…i0)"); }
     setBusy(false);
   };
@@ -89,6 +95,11 @@ function ClaimAwakening() {
         <button type="button" disabled={busy || !id.trim()} onClick={run} className="border border-bitcoin px-2 font-mono text-[10px] text-bitcoin disabled:opacity-50">{busy ? "CHECKING…" : "[ VERIFY ]"}</button>
       </div>
       {msg ? <p className="font-mono text-[10px] text-muted-foreground">{msg}</p> : null}
+      {oasis != null ? (
+        <Link to="/oasis" search={{ height: oasis }} className="inline-block font-mono text-[10px] text-bitcoin hover:text-foreground">
+          → MEET IT ON {oasis}.BITMAP IN THE OASIS
+        </Link>
+      ) : null}
     </div>
   );
 }
