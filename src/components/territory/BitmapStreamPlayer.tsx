@@ -1,4 +1,5 @@
 // Live channel for a BITMAP. Embeds bitmap.stream when the channel exists;
+import { GoLiveKick } from "./GoLiveKick";
 // otherwise offers a Kick player and the Kick broadcast pipeline.
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
