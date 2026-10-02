@@ -11,7 +11,14 @@
  *  - `guardianHoloCardSvg`  a holographic vector card for viewers that only
  *    render still images.
  */
-import { guardianLevel, guardianShieldDigest, shapeOf, type GuardianDna } from "@/lib/bitmon";
+import { guardianLevel, guardianShieldDigest, type GuardianDna } from "@/lib/bitmon";
+import { morphFromDna, type BodyPlan } from "@/lib/creature-morph";
+
+/** The artifact voxel shape follows the block-DNA body plan, never the lore species. */
+const PLAN_SHAPE: Record<BodyPlan, string> = {
+  SERPENT: "wyrm", AVIAN: "bird", FLOATER: "wisp", BIPED: "golem",
+  QUADRUPED: "beast", HEXAPOD: "beast", ARACHNID: "beast", CENTAUR: "beast",
+};
 
 /** On-chain modules referenced recursively by the inscription. */
 export const ONCHAIN_LIBS = {
@@ -32,8 +39,8 @@ export function guardianArtifactHtml(dna: GuardianDna, summonTxid: string): stri
   const digest = guardianShieldDigest(dna, summonTxid);
   const meta = {
     h: dna.height,
-    sp: dna.species,
-    sh: shapeOf(dna.species),
+    sp: morphFromDna(dna).name,
+    sh: PLAN_SHAPE[morphFromDna(dna).plan],
     ra: dna.rarity,
     ep: dna.epoch,
     ab: dna.ability,
@@ -301,8 +308,8 @@ ${rings}
 <path d="M14 14h44M14 14v44M386 506h-44M386 506v-44" stroke="${dna.accent}" stroke-width="3" fill="none"/>
 <text x="26" y="40" fill="#f7931a" font-family="monospace" font-size="11">BLOCK-DNA GUARDIAN · ${dna.height}.BITMAP</text>
 <path d="M26 322h348" stroke="#253038"/>
-<text x="26" y="312" fill="#e9eef0" font-family="monospace" font-weight="700" font-size="25">${esc(dna.species)}</text>
-<text x="26" y="342" fill="${dna.accent}" font-family="monospace" font-size="10">${dna.rarity} · LV ${level} · ERA ${dna.epoch}</text>
+<text x="26" y="312" fill="#e9eef0" font-family="monospace" font-weight="700" font-size="25">${esc(morphFromDna(dna).name)}</text>
+<text x="26" y="342" fill="${dna.accent}" font-family="monospace" font-size="10">${dna.rarity} · LV ${level} · ERA ${dna.epoch} · ${esc(dna.species)} LINE</text>
 ${stat("HP", dna.hp, 26)}${stat("BITE", dna.bite, 116)}${stat("SPEED", dna.speed, 212)}${stat("ARMOR", dna.armor, 308)}
 <path d="M26 412h348" stroke="#253038"/>
 <text x="26" y="436" fill="${dna.accent}" font-family="monospace" font-size="11">${esc(dna.ability)}</text>
