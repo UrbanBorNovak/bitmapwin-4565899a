@@ -21,7 +21,7 @@ type Glyph = {
 
 export type PixelFont = {
   chars: Map<number, Glyph>;
-  atlas: HTMLImageElement;
+  atlas: CanvasImageSource;
 };
 
 let fontPromise: Promise<PixelFont | null> | null = null;
@@ -36,12 +36,42 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
+/**
+ * The inscribed atlas is a multi-channel distance field: every glyph box is
+ * opaque and the letter shape lives in the median of R/G/B. Turn it into a
+ * white-ink atlas with real transparency so only the strokes get tinted.
+ */
+function decodeDistanceAtlas(image: HTMLImageElement): CanvasImageSource {
+  const canvas = document.createElement("canvas");
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) return image;
+  context.drawImage(image, 0, 0);
+  try {
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+    const d = pixels.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const r = d[i]!, g = d[i + 1]!, b = d[i + 2]!;
+      const median = Math.max(Math.min(r, g), Math.min(Math.max(r, g), b));
+      d[i] = 255;
+      d[i + 1] = 255;
+      d[i + 2] = 255;
+      d[i + 3] = median > 127 ? 255 : 0;
+    }
+    context.putImageData(pixels, 0, 0);
+    return canvas;
+  } catch {
+    return image;
+  }
+}
+
 /** Loads the inscribed font once; resolves null when the chain is unreachable. */
 export function loadPixelFont(): Promise<PixelFont | null> {
   if (!fontPromise) {
     fontPromise = (async () => {
       try {
-        const [metrics, atlas] = await Promise.all([
+        const [metrics, image] = await Promise.all([
           fetch(inscriptionContentUrl(ONCHAIN_ENGINE["pixelFontJson"]!.id)).then((r) => {
             if (!r.ok) throw new Error(`font metrics ${r.status}`);
             return r.json() as Promise<{ chars: Record<string, Glyph> }>;
@@ -50,7 +80,7 @@ export function loadPixelFont(): Promise<PixelFont | null> {
         ]);
         const chars = new Map<number, Glyph>();
         for (const [code, glyph] of Object.entries(metrics.chars)) chars.set(Number(code), glyph);
-        return { chars, atlas };
+        return { chars, atlas: decodeDistanceAtlas(image) };
       } catch {
         return null;
       }
@@ -82,7 +112,8 @@ export function renderPixelText(
   if (width <= 0) return null;
   const canvas = document.createElement("canvas");
   canvas.width = Math.ceil(width) + 2;
-  canvas.height = Math.ceil(CELL * scale);
+  const TOP = 16; // tallest glyph top in the cell
+  canvas.height = Math.ceil((CELL - TOP * 2) * scale);
   const context = canvas.getContext("2d");
   if (!context) return null;
   context.imageSmoothingEnabled = false;
@@ -100,7 +131,8 @@ export function renderPixelText(
         bw,
         bh,
         pen,
-        0,
+        // The inscribed metrics centre '.' and ',' in the cell; sit them on the baseline.
+        (char === "." || char === "," ? 46 - bh - TOP : Math.max(0, glyph.yoffset + by - TOP)) * scale,
         bw * scale,
         bh * scale,
       );
