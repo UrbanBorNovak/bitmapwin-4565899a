@@ -137,6 +137,9 @@ export function guardianShieldDigest(dna: GuardianDna, summonTxid: string) {
   return bytesToHex(sha256(new TextEncoder().encode(record)));
 }
 
+import { morphFromDna } from "@/lib/creature-morph";
+const morphName = (dna: GuardianDna) => morphFromDna(dna).name;
+
 /** Compact deterministic SVG made only from public block DNA and summon proof. */
 export function guardianArtifactSvg(dna: GuardianDna, summonTxid: string): string {
   const digest = guardianShieldDigest(dna, summonTxid);
