@@ -205,12 +205,19 @@ export async function verifyDelegateGuardian(inscriptionId: string): Promise<{ a
   }
   if (height === null || !parentId) return deny("INVALID BITMAP PARENT");
 
-  // Canonical check: the parent must be the first-is-first BITMAP recorded in
-  // the index. A later duplicate "<height>.bitmap" text inscription never matches.
-  const idxDb = await admin();
-  const canon = await idxDb.from("bitmap_index").select("inscription_id").eq("block_height", height).maybeSingle();
-  if (!canon.data?.inscription_id) return deny(`${height}.BITMAP IS NOT IN THE INDEX YET — TRY AGAIN LATER`, height);
-  if (canon.data.inscription_id !== parentId) return deny(`PARENT IS NOT THE CANONICAL ${height}.BITMAP (DUPLICATE CLAIM)`, height);
+  // Canonical check: the parent must be the first-is-first BITMAP per the
+  // on-chain index (OCI) module; our bitmap_index is the fallback when the
+  // OCI can't resolve the block (out of range or unreachable).
+  const { ociBitmapInscriptionId } = await import("@/lib/bitmap-oci.server");
+  let canonId: string | null = null;
+  try { canonId = await ociBitmapInscriptionId(height); } catch { canonId = null; }
+  if (!canonId) {
+    const idxDb = await admin();
+    const canon = await idxDb.from("bitmap_index").select("inscription_id").eq("block_height", height).maybeSingle();
+    canonId = canon.data?.inscription_id ?? null;
+  }
+  if (!canonId) return deny(`${height}.BITMAP IS NOT IN THE INDEX YET — TRY AGAIN LATER`, height);
+  if (canonId !== parentId) return deny(`PARENT IS NOT THE CANONICAL ${height}.BITMAP (DUPLICATE CLAIM)`, height);
 
   const txid = inscriptionId.slice(0, inscriptionId.lastIndexOf("i"));
   const { esploraFetch } = await import("@/lib/bitmon");
