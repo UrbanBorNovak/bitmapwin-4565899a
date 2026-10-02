@@ -34,7 +34,13 @@ export const TRIBUTE_SCRIPT = "001406f9acffc33370a676b610326bfffae7f636d9db";
  * Empty means delegate mints are not offered yet.
  */
 export const GUARDIAN_MASTER_DELEGATE_ID =
-  "a44f4d01312f944260d59a770e08d63ac3d7c6c9c99177183b50c784837a8de1i0";
+  "cafa642afc2fd984beeae8648c46fbfdf45e8b4082ca6c057d29465f871573f5i0";
+
+/** Every generator Guardians may delegate to: the current one first, then older versions still on chain. */
+export const GUARDIAN_MASTER_DELEGATE_IDS: readonly string[] = [
+  GUARDIAN_MASTER_DELEGATE_ID,
+  "a44f4d01312f944260d59a770e08d63ac3d7c6c9c99177183b50c784837a8de1i0",
+];
 
 export const DELEGATE_CONTENT_TYPE = "text/html;charset=utf-8";
 
