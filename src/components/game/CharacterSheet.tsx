@@ -19,7 +19,7 @@ import { WEAPONS, WeaponModel, useWeaponMaterials, type WeaponKind } from "@/com
 import { Primitive } from "@/components/game/Primitive";
 import { WornGear } from "@/components/game/WornGear";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
-import { DEFAULT_AVATAR_MODEL, DEFAULT_AVATAR_TEXTURE } from "@/lib/map-identity";
+import { DEFAULT_AVATAR_MODEL, rigAnimations, rigTexture } from "@/lib/map-identity";
 import { createPlayerState } from "@/lib/player-state";
 import {
   companionSpec,
@@ -100,13 +100,10 @@ function PreviewAvatar({ model, skin }: { model: string | null; skin?: string | 
     };
   }, [actions, names]);
   // The stock rig takes a pixel skin: the chosen BITMAP skin, or the stock one.
-  const texture = useTexture(
-    inscription === DEFAULT_AVATAR_MODEL
-      ? `https://ordinals.com/content/${skin?.trim() || DEFAULT_AVATAR_TEXTURE}`
-      : TRANSPARENT_PIXEL,
-  );
+  const skinId = rigTexture(inscription, skin);
+  const texture = useTexture(skinId ? `https://ordinals.com/content/${skinId}` : TRANSPARENT_PIXEL);
   const fitted = useMemo(() => {
-    if (inscription === DEFAULT_AVATAR_MODEL) {
+    if (skinId) {
       texture.flipY = false;
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.magFilter = THREE.NearestFilter;
@@ -116,7 +113,7 @@ function PreviewAvatar({ model, skin }: { model: string | null; skin?: string | 
       const mesh = child as THREE.Mesh;
       if (!mesh.isMesh) return;
       mesh.frustumCulled = false;
-      if (inscription !== DEFAULT_AVATAR_MODEL) return;
+      if (!skinId) return;
       const paint = (source: THREE.Material) => {
         const material = source.clone() as THREE.MeshStandardMaterial;
         material.map = texture;
