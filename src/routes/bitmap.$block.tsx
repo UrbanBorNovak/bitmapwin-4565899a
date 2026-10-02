@@ -12,7 +12,6 @@ import { GalleryBadges } from "@/components/GalleryBadges";
 import { SatBadges } from "@/components/SatBadges";
 import { toast } from "sonner";
 import { BlockMosaic } from "@/components/BlockMosaic";
-import { BitmapTerritory } from "@/components/BitmapTerritory";
 
 import { blockSizeMapQuery, blockRenderSidesQuery } from "@/lib/block-bytes";
 import { blockStatsQuery, patternSiblingsQuery } from "@/lib/block-stats";
@@ -315,9 +314,6 @@ function BitmapDetail() {
                   }`
                 : "> SIZE MAP UNAVAILABLE — DETERMINISTIC FALLBACK RENDER"}
           </p>
-          <div className="mt-6 border-t border-border pt-6">
-            <BitmapTerritory height={block} />
-          </div>
         </div>
 
 
