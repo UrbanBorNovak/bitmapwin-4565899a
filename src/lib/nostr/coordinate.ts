@@ -9,14 +9,23 @@ const hexToBytes = (h: string) => Uint8Array.from(h.match(/../g) ?? [], (x) => p
 export const RELAYS = [
   "wss://relay.damus.io",
   "wss://nos.lol",
-  "wss://relay.snort.social",
   "wss://relay.primal.net",
+  "wss://relay.nostr.band",
 ];
 
 export const coordTag = (height: number) => `bitmap:${height}`;
 
 let pool: SimplePool | null = null;
 const getPool = () => (pool ??= new SimplePool());
+
+/** Which relays currently hold an open socket (url → connected). */
+export function relayStatus(): { url: string; connected: boolean }[] {
+  const live = pool?.listConnectionStatus() ?? new Map<string, boolean>();
+  return RELAYS.map((url) => ({
+    url,
+    connected: [...live.entries()].some(([u, ok]) => ok && u.replace(/\/$/, "") === url),
+  }));
+}
 
 type Nip07 = { getPublicKey(): Promise<string>; signEvent(e: EventTemplate): Promise<Event> };
 const ext = () => (globalThis as unknown as { nostr?: Nip07 }).nostr;
