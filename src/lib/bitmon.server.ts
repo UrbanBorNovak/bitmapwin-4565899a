@@ -197,12 +197,20 @@ export async function verifyDelegateGuardian(inscriptionId: string): Promise<{ a
   const parRes = await ord(`/r/parents/${inscriptionId}`);
   const ids: string[] = parRes.ok ? ((await parRes.json()) as { ids?: string[] }).ids ?? [] : [];
   let height: number | null = null;
+  let parentId: string | null = null;
   for (const id of ids) {
     const r = await ord(`/content/${id}`);
     const m = r.ok ? /^\s*(\d{1,7})\.bitmap\s*$/i.exec(await r.text()) : null;
-    if (m) { height = Number(m[1]); break; }
+    if (m) { height = Number(m[1]); parentId = id; break; }
   }
-  if (height === null) return deny("INVALID BITMAP PARENT");
+  if (height === null || !parentId) return deny("INVALID BITMAP PARENT");
+
+  // Canonical check: the parent must be the first-is-first BITMAP recorded in
+  // the index. A later duplicate "<height>.bitmap" text inscription never matches.
+  const idxDb = await admin();
+  const canon = await idxDb.from("bitmap_index").select("inscription_id").eq("block_height", height).maybeSingle();
+  if (!canon.data?.inscription_id) return deny(`${height}.BITMAP IS NOT IN THE INDEX YET — TRY AGAIN LATER`, height);
+  if (canon.data.inscription_id !== parentId) return deny(`PARENT IS NOT THE CANONICAL ${height}.BITMAP (DUPLICATE CLAIM)`, height);
 
   const txid = inscriptionId.slice(0, inscriptionId.lastIndexOf("i"));
   const { esploraFetch } = await import("@/lib/bitmon");
