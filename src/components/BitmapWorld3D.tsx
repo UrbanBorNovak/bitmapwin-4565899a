@@ -107,6 +107,7 @@ import { BitField } from "@/components/game/BitField";
 import { Landmarks } from "@/components/game/Landmarks";
 import { CastleDistrict } from "@/components/game/CastleDistrict";
 import { MarioBros } from "@/components/game/MarioBros";
+import { IronWalkers } from "@/components/game/IronWalkers";
 import { solidBlocked } from "@/lib/world-solids";
 
 import { useBits } from "@/lib/world-bits";
@@ -2783,6 +2784,7 @@ const WorldScene = memo(function WorldScene({
           <BitField unit={AVATAR_U} pose={pose} />
           <CastleDistrict />
           <MarioBros unit={AVATAR_U} pose={pose} />
+          <IronWalkers unit={AVATAR_U} pose={pose} />
           <FlyCreatures unit={AVATAR_U} pose={pose} onBite={onBite} onSighted={onSighted} />
           <MysteryBoxes unit={AVATAR_U} pose={pose} onPrize={onPrize} />
 

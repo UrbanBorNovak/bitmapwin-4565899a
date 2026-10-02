@@ -14,6 +14,7 @@ export const EMPTY_LINE = "NO BLOOD HAS BEEN SPILLED IN THE OASIS — YET";
 const TABS = [
   { to: "/ranks", label: "PROGRESSION" },
   { to: "/ranks/pvp", label: "PVP / PK" },
+  { to: "/ranks/walkers", label: "IRON WALKERS" },
   { to: "/ranks/clans", label: "CLANS" },
   { to: "/ranks/shares", label: "SHARE MARKET" },
 ] as const;

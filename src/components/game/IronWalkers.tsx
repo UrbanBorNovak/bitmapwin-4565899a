@@ -345,10 +345,10 @@ export const IronWalkers = memo(function IronWalkers({
       const ahead = routeAt(t + 2, i);
       r.x = p.x;
       r.z = p.z;
-      r.heading = Math.atan2(ahead.x - p.x, ahead.z - p.z) - Math.PI / 2;
+      r.heading = Math.atan2(-(ahead.z - p.z), ahead.x - p.x);
       const down = r.deadUntil > 0;
       root.position.set(p.x, groundY(p.x, p.z), p.z);
-      root.rotation.y = THREE.MathUtils.damp(root.rotation.y, -r.heading, 1.2, dt);
+      root.rotation.y = r.heading;
 
       // Heavy gait: diagonal pairs, slow phase, hull sway.
       if (!down) r.phase += dt * 0.9;
@@ -375,8 +375,8 @@ export const IronWalkers = memo(function IronWalkers({
         const dz = player.z - p.z;
         inRange = Math.hypot(dx, dz) < unit * 140;
         if (inRange) {
-          const local = Math.atan2(dz, dx) + root.rotation.y;
-          aim = THREE.MathUtils.clamp(Math.atan2(Math.sin(local), Math.cos(local)), -0.7, 0.7) * -1;
+          const local = Math.atan2(-dz, dx) - root.rotation.y;
+          aim = THREE.MathUtils.clamp(Math.atan2(Math.sin(local), Math.cos(local)), -0.7, 0.7);
         }
       }
       if (head) head.rotation.y = THREE.MathUtils.damp(head.rotation.y, aim, 2, dt);
