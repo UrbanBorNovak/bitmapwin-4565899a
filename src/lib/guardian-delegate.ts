@@ -26,6 +26,8 @@
 export const TRIBUTE_ADDRESS = "bc1qqmu6el7rxdc2va4kzqexhll6ulmrdkwmcdqkxd";
 /** Minimum tribute, in sats, checked on chain by the master generator. */
 export const TRIBUTE_SATS = 1000;
+/** Output script of TRIBUTE_ADDRESS (P2WPKH), matched byte-for-byte in the raw reveal. */
+export const TRIBUTE_SCRIPT = "001406f9acffc33370a676b610326bfffae7f636d9db";
 
 /**
  * The inscription id of the master generator, once it has been inscribed.
@@ -52,7 +54,7 @@ html,body{margin:0;height:100%;background:#04060a;overflow:hidden;font-family:ui
 </style></head><body>
 <canvas id="c"></canvas><div id="o"></div><div id="v"></div>
 <script>
-var TRIBUTE_TO=${JSON.stringify(TRIBUTE_ADDRESS)},TRIBUTE_MIN=${TRIBUTE_SATS};
+var TRIBUTE_TO=${JSON.stringify(TRIBUTE_ADDRESS)},TRIBUTE_SCRIPT=${JSON.stringify(TRIBUTE_SCRIPT)},TRIBUTE_MIN=${TRIBUTE_SATS};
 
 /* ---------- 1. who am i, with zero network calls ---------- */
 var SELF=(window.location.pathname.split("/").filter(Boolean).pop()||"");
@@ -86,12 +88,16 @@ function parentHeight(){
 /* ---------- 3. the tribute, read straight off the reveal transaction ---------- */
 function tribute(){
   if(!REVEAL)return Promise.resolve(false);
-  return j("/r/tx/"+REVEAL).then(function(tx){
-    var outs=(tx&&(tx.vout||tx.outputs))||[];
-    for(var i=0;i<outs.length;i++){
-      var o=outs[i],a=o.scriptpubkey_address||o.address||"",v=o.value||0;
-      if(a===TRIBUTE_TO&&v>=TRIBUTE_MIN)return true;
-    }
+  /* /r/tx/ serves the raw transaction as a hex string: walk its outputs */
+  return t("/r/tx/"+REVEAL).then(function(raw){
+    var x=String(raw).replace(/[^0-9a-f]/gi,"").toLowerCase(),p=8;
+    if(x.length<20)return null;
+    function b(n){var s=x.substr(p,n*2);p+=n*2;return s}
+    function le(h){var v=0,i;for(i=h.length-2;i>=0;i-=2)v=v*256+parseInt(h.substr(i,2),16);return v}
+    function vi(){var f=parseInt(b(1),16);return f<253?f:le(b(f===253?2:f===254?4:8))}
+    if(x.substr(8,4)==="0001")p+=4;
+    var n=vi(),i;for(i=0;i<n;i++){b(36);b(vi());b(4)}
+    n=vi();for(i=0;i<n;i++){var v=le(b(8)),spk=b(vi());if(spk===TRIBUTE_SCRIPT&&v>=TRIBUTE_MIN)return true}
     return false;
   },function(){return null}); /* null = could not read, not a failure */
 }
