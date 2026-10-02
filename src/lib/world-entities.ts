@@ -30,6 +30,8 @@ export type BeastEntity = {
   snaredUntil?: number;
   /** last time the jaws bled it */
   snaredTickAt?: number;
+  /** shared-health bosses forward every landed hit to the server */
+  onHit?: (dealt: number) => void;
 };
 
 export type OreVoxel = { x: number; y: number; z: number; size: number; alive: boolean };
@@ -188,6 +190,7 @@ export function damageBeast(beast: BeastEntity, damage: number) {
   const dealt = Math.max(1, Math.round(damage));
   beast.hp = Math.max(0, beast.hp - dealt);
   beast.hitAt = performance.now();
+  beast.onHit?.(dealt);
   const killed = beast.hp === 0;
   if (killed) {
     beast.deadUntil = performance.now() + 14_000;
