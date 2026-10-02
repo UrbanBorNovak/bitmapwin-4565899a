@@ -291,7 +291,7 @@ function exportObj(){if(!VOX||!G)return;var L=["# "+G.nm+" \u00B7 "+G.h+".bitmap
     var P=[[-hw,-hh,-hd],[hw,-hh,-hd],[hw,-hh,hd],[-hw,-hh,hd],[-hw,hh,-hd],[hw,hh,-hd],[hw,hh,hd],[-hw,hh,hd]];
     for(k=0;k<8;k++)L.push("v "+(v[0]+P[k][0]).toFixed(3)+" "+(v[1]+P[k][1]).toFixed(3)+" "+(v[2]+P[k][2]).toFixed(3)+" "+R+" "+Gc+" "+B);
     for(k=0;k<6;k++)L.push("f "+(vi+F[k][0])+" "+(vi+F[k][1])+" "+(vi+F[k][2])+" "+(vi+F[k][3]));vi+=8}
-  var bl=new Blob([L.join("\n")],{type:"text/plain"}),a=document.createElement("a");
+  var bl=new Blob([L.join("\\n")],{type:"text/plain"}),a=document.createElement("a");
   a.href=URL.createObjectURL(bl);a.download=G.h+"_"+G.nm.toLowerCase().replace(/[^a-z0-9]+/g,"_")+"_guardian.obj";
   document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500)}
 /* ---------- 6d. controls bar ---------- */
