@@ -111,6 +111,7 @@ export function OasisEntry({ onEnter }: { onEnter: () => void }) {
     const next = (((skinIndex + dir) % skinCount) + skinCount) % skinCount;
     setSkin(next === 0 ? null : skins[next - 1]!.inscriptionId);
   };
+  stepRef.current = stepSkin;
   const skinLabel = skinIndex === 0 ? "STOCK EXPLORER" : skins[skinIndex - 1]?.name ?? "—";
 
   return (
