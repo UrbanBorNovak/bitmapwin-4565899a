@@ -25,7 +25,7 @@ const cache = new Map<number, Promise<Page>>();
 
 function undelta(d: Array<number | string>): number[] {
   const out: number[] = [];
-  d.forEach((s, i) => out.push(i === 0 ? Number(s) : out[i - 1] + Number(s)));
+  d.forEach((s, i) => out.push(i === 0 ? Number(s) : (out[i - 1] ?? 0) + Number(s)));
   return out;
 }
 
@@ -50,7 +50,7 @@ async function loadPage(p: number): Promise<Page> {
   const [deltas, order] = data as [Array<number | string>, number[]];
   const full = undelta(deltas);
   const filled = new Array<number>(100000).fill(0);
-  order.forEach((idx, i) => { filled[idx] = full[i]; });
+  order.forEach((idx, i) => { filled[idx] = full[i] ?? 0; });
   return { sats: filled, satIndex: {} };
 }
 
