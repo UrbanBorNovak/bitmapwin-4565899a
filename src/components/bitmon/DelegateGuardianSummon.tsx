@@ -77,7 +77,11 @@ function ClaimAwakening() {
     try {
       const r = await verify({ data: { inscriptionId: id.trim() } });
       setMsg(r.awakened ? `GUARDIAN AWAKE ON ${r.height}.BITMAP` : r.denied);
-      if (r.awakened) qc.invalidateQueries({ queryKey: ["guardians"] });
+      if (r.awakened) {
+        qc.invalidateQueries({ queryKey: ["guardians"] });
+        if (r.height != null) qc.invalidateQueries({ queryKey: ["guardian", r.height] });
+        if (r.height != null) setOasis(r.height);
+      }
     } catch { setMsg("PASTE A FULL INSCRIPTION ID (…i0)"); }
     setBusy(false);
   };

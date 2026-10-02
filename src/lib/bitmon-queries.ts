@@ -68,7 +68,10 @@ export const allGuardiansQuery = () =>
       const { data } = await supabase.from("bitmon_guardians").select(COLS).order("created_at", { ascending: false }).limit(500);
       return (data ?? []).map((r) => toGuardian(r as Row));
     },
-    staleTime: 60_000,
+    staleTime: 30_000,
+    // An open Oasis picks up Guardians awakened anywhere (other tabs, other players).
+    refetchInterval: 45_000,
+    refetchOnWindowFocus: true,
   });
 
 export const guardianDnaQuery = (height: number) =>
