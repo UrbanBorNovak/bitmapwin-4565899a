@@ -57,7 +57,9 @@ const SHOWCASE = [0, 840000, 800541, 210000, 630000];
 
 function GuardiansPromo() {
   const [height, setHeight] = useState(840000);
+  const [open, setOpen] = useState(false);
   const dna = useQuery(guardianDnaQuery(height));
+  const awake = useQuery(guardianQuery(height));
   const market = useQuery(marketQuery);
   const d = dna.data;
   const m = d ? morphFromDna(d) : null;
