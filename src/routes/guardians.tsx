@@ -262,7 +262,7 @@ const TUTORIAL: { n: string; t: string; body: string; see: string }[] = [
 
 function SummonWalkthrough({ height, onSummon }: { height: number; onSummon: () => void }) {
   const [step, setStep] = useState(0);
-  const s = TUTORIAL[step];
+  const s = TUTORIAL[step] ?? TUTORIAL[0]!;
   return (
     <section className="mt-12" id="how-to-summon">
       <h2 className="display text-2xl md:text-3xl">
