@@ -3,7 +3,6 @@ import { ClientOnly, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { OrbitControls } from "@react-three/drei";
-import QRCode from "qrcode";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
