@@ -1,5 +1,5 @@
 /** Renders a block-derived CreatureMorph as a detailed animated voxel collectible. */
-import { memo, useMemo, useRef } from "react";
+import { memo, useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { GuardianRarity } from "@/lib/bitmon";
@@ -40,6 +40,77 @@ function Sigil({ p, r, c, u, glow = 0.9 }: { p: Vec3; r?: Vec3; c: string; u: nu
     <group position={p} {...(r ? { rotation: r } : {})}>
       <Box p={[0, 0, 0]} s={[0.035 * u, 0.19 * u, 0.018 * u]} c={c} g={glow} m={0.7} rough={0.2} />
       <Box p={[0, 0, 0]} s={[0.19 * u, 0.035 * u, 0.02 * u]} c={c} g={glow} m={0.7} rough={0.2} />
+    </group>
+  );
+}
+
+
+/** Every 4 s: lightning arcs over the body, a rune overcharge and a DNA mutation shimmer. */
+export const SURGE_PERIOD = 4;
+function DnaSurge({ host, span, top, glow, accent }: { host: React.RefObject<THREE.Group | null>; span: number; top: number; glow: string; accent: string }) {
+  const bolts = useRef<THREE.Group>(null);
+  const flash = useRef<THREE.PointLight>(null);
+  const ring = useRef<THREE.Mesh>(null);
+  const lastCycle = useRef(-1);
+  const lines = useMemo(() => Array.from({ length: 4 }, (_, i) => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(10 * 3), 3));
+    const mat = new THREE.LineBasicMaterial({ color: i % 2 ? accent : glow, transparent: true, opacity: 0, depthWrite: false });
+    return new THREE.Line(g, mat);
+  }), [glow, accent]);
+  useEffect(() => () => lines.forEach((l) => { l.geometry.dispose(); (l.material as THREE.Material).dispose(); }), [lines]);
+
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    const cycle = Math.floor(t / SURGE_PERIOD);
+    const phase = t - cycle * SURGE_PERIOD; // 0..4
+    const k = phase < 0.6 ? 1 - phase / 0.6 : 0; // surge envelope
+    if (cycle !== lastCycle.current) {
+      lastCycle.current = cycle;
+      // regrow each bolt: jagged path from above the crest down to the pedestal
+      lines.forEach((l, i) => {
+        const a = (l.geometry.getAttribute("position") as THREE.BufferAttribute);
+        const ang = Math.random() * Math.PI * 2;
+        const sx = Math.cos(ang) * span * 0.3, sz = Math.sin(ang) * span * 0.3;
+        const ex = Math.cos(ang + 1 + i) * span * 0.9, ez = Math.sin(ang + 1 + i) * span * 0.9;
+        for (let j = 0; j < 10; j++) {
+          const f = j / 9;
+          const jit = j === 0 || j === 9 ? 0 : (Math.random() - 0.5) * span * 0.35;
+          a.setXYZ(j, sx + (ex - sx) * f + jit, top * 1.25 * (1 - f) + 0.02, sz + (ez - sz) * f + jit);
+        }
+        a.needsUpdate = true;
+      });
+    }
+    const flick = k > 0 ? (Math.sin(t * 70) > -0.3 ? 1 : 0.2) : 0;
+    lines.forEach((l) => ((l.material as THREE.LineBasicMaterial).opacity = k * flick));
+    if (flash.current) flash.current.intensity = k * 6 * flick;
+    if (ring.current) {
+      const s = 0.2 + (1 - k) * 1.6;
+      ring.current.scale.setScalar(k > 0 ? s : 0.001);
+      (ring.current.material as THREE.MeshBasicMaterial).opacity = k * 0.7;
+    }
+    const h = host.current;
+    if (h) {
+      // mutation shimmer: brief voxel jitter + rune overcharge
+      const m = k > 0 ? 1 + Math.sin(t * 55) * 0.025 * k : 1;
+      h.scale.set(m, 1 + (m - 1) * -1, m);
+      h.traverse((o) => {
+        const mat = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
+        if (!mat || !("emissiveIntensity" in mat)) return;
+        if (mat.userData.baseGlow === undefined) mat.userData.baseGlow = mat.emissiveIntensity;
+        const b = mat.userData.baseGlow as number;
+        mat.emissiveIntensity = b + (b > 0 ? b * 1.5 * k : 0);
+      });
+    }
+  });
+  return (
+    <group ref={bolts} raycast={noRay}>
+      {lines.map((l, i) => <primitive key={i} object={l} />)}
+      <pointLight ref={flash} position={[0, top * 1.1, 0]} color={glow} intensity={0} distance={span * 4} />
+      <mesh ref={ring} rotation-x={-Math.PI / 2} position={[0, 0.02, 0]} raycast={noRay}>
+        <ringGeometry args={[span * 0.85, span * 0.92, 40]} />
+        <meshBasicMaterial color={accent} transparent opacity={0} depthWrite={false} />
+      </mesh>
     </group>
   );
 }
@@ -185,8 +256,12 @@ export const MorphBody = memo(function MorphBody({ m, unit = 1, rarity = "COMMON
 
   const auraCount = rarityRank === 3 ? 8 : rarityRank === 2 ? 5 : rarityRank === 1 ? 3 : 0;
 
+  const creature = useRef<THREE.Group>(null);
+  const surgeTop = bodyY + headY + H;
   return (
-    <group ref={bob} raycast={noRay}>
+    <group raycast={noRay}>
+    <DnaSurge host={creature} span={Math.max(L, W)} top={surgeTop} glow={G} accent={S} />
+    <group ref={(g) => { bob.current = g; creature.current = g; }} raycast={noRay}>
       <group position={[0, bodyY, 0]} rotation={[upright ? -0.9 : 0, 0, 0]}>
         {torso}
         {legNodes.length && !upright ? legNodes : null}
@@ -218,6 +293,7 @@ export const MorphBody = memo(function MorphBody({ m, unit = 1, rarity = "COMMON
         <circleGeometry args={[Math.max(L, W) * 0.9, 32]} />
         <meshBasicMaterial color={G} transparent opacity={0.08 + rarityRank * 0.025} depthWrite={false} />
       </mesh>
+    </group>
     </group>
   );
 });
