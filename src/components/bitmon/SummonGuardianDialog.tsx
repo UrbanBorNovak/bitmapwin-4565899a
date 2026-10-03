@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useFrame } from "@react-three/fiber";
+import * as THREE from "three";
 import { ClientOnly, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -19,9 +21,52 @@ import { checkSummonOrderFn, createSummonOrderFn, resumeSummonOrderFn } from "@/
 import type { SummonOrder } from "@/lib/bitmon.server";
 import { playSfx } from "@/lib/world-audio";
 
+/** V6-style orange BITMAP slab with packed transaction tiles and orbiting epoch motes. */
+function BitmapPedestal({ seed, accent }: { seed: number; accent: string }) {
+  const tiles = useMemo(() => {
+    let a = (seed * 2654435761) >>> 0 || 7;
+    const r = () => ((a = (a * 1664525 + 1013904223) >>> 0) / 4294967296);
+    const out: [number, number, number, string][] = [];
+    for (let x = 0; x < 8; x++) for (let z = 0; z < 8; z++) if (r() > 0.25) out.push([(x - 3.5) * 0.25, (z - 3.5) * 0.25, 0.02 + r() * 0.05, r() > 0.8 ? "#ffb03a" : "#e07a10"]);
+    return out;
+  }, [seed]);
+  const motes = useRef<THREE.Group>(null);
+  const epochs = Math.max(1, Math.min(16, Math.floor(Math.max(0, 969_000 - seed) / 2016 / 8)));
+  useFrame(({ clock }) => { if (motes.current) motes.current.rotation.y = clock.elapsedTime * 0.25; });
+  return (
+    <group>
+      <mesh position={[0, -0.08, 0]} receiveShadow><boxGeometry args={[2.1, 0.16, 2.1]} /><meshStandardMaterial color="#c86d08" roughness={0.7} /></mesh>
+      {tiles.map(([x, z, h, c], i) => (
+        <mesh key={i} position={[x, h / 2, z]}><boxGeometry args={[0.22, h, 0.22]} /><meshStandardMaterial color={c} roughness={0.5} /></mesh>
+      ))}
+      <group ref={motes}>
+        {Array.from({ length: epochs }, (_, i) => { const a = (i / epochs) * Math.PI * 2; return (
+          <mesh key={i} position={[Math.sin(a) * 1.5, 0.5 + (i % 3) * 0.25, Math.cos(a) * 1.5]}><boxGeometry args={[0.05, 0.05, 0.05]} /><meshStandardMaterial color="#f7931a" emissive="#f7931a" emissiveIntensity={2} /></mesh>
+        ); })}
+      </group>
+      <pointLight position={[0, 0.3, 0]} color={accent} intensity={0.8} distance={3} />
+    </group>
+  );
+}
+
+function SurgeHud() {
+  const [n, setN] = useState(0);
+  const [hot, setHot] = useState(false);
+  useEffect(() => {
+    const id = setInterval(() => { setN((v) => v + 1); setHot(true); setTimeout(() => setHot(false), 600); }, 4000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div className="pointer-events-none absolute left-2 top-2 font-mono text-[10px]">
+      <p className={hot ? "text-signal" : "text-muted-foreground"}>⚡ DNA RESONANCE {hot ? "· SURGE" : "· CHARGING"}</p>
+      <p className="text-bitcoin" data-no-translate>MUTATION CYCLE #{n}</p>
+    </div>
+  );
+}
+
 export function GuardianTurntable({ dna, className = "h-56" }: { dna: Pick<GuardianDna, "species" | "rarity" | "body" | "accent"> & { height?: number }; className?: string }) {
   return (
-    <div className={`${className} w-full border border-border bg-background`}>
+    <div className={`${className} relative w-full border border-border bg-background`}>
       <ClientOnly fallback={<div className="grid size-full place-items-center font-mono text-[10px] text-muted-foreground">LOADING…</div>}>
         <SafeCanvas dpr={[1, 1.5]} camera={{ position: [2.4, 1.9, 2.8], fov: 38 }} gl={{ powerPreference: "low-power" }}>
           <ambientLight intensity={0.7} />
@@ -29,11 +74,12 @@ export function GuardianTurntable({ dna, className = "h-56" }: { dna: Pick<Guard
           <pointLight position={[0, 1, 2]} intensity={0.6} color={dna.accent} />
           <group position={[0, -0.8, 0]}>
             <GuardianBody species={dna.species} rarity={dna.rarity} body={dna.body} accent={dna.accent} height={dna.height} />
-            <mesh rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[1.2, 32]} /><meshStandardMaterial color="#111" /></mesh>
+            <BitmapPedestal seed={dna.height ?? 0} accent={dna.accent} />
           </group>
           <OrbitControls enablePan={false} autoRotate autoRotateSpeed={1.6} minDistance={2} maxDistance={6} />
         </SafeCanvas>
       </ClientOnly>
+      <SurgeHud />
     </div>
   );
 }
