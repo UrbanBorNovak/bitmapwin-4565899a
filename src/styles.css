@@ -1657,3 +1657,8 @@
 @keyframes prop-win { 0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--bitcoin) 0%, transparent); } 25% { box-shadow: 0 0 34px 6px color-mix(in oklab, var(--bitcoin) 65%, transparent); } 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--bitcoin) 0%, transparent); } }
 .prop-win { animation: prop-win 1400ms ease-out 2; }
 @media (prefers-reduced-motion: reduce) { .prop-win { animation: none; } }
+
+@keyframes guardian-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
