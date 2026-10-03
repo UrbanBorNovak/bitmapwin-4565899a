@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Area, AreaChart, Bar, BarChart, Cell, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { allGuardiansQuery, type AwakeGuardian } from "@/lib/bitmon-queries";
-import type { GuardianRarity } from "@/lib/bitmon";
+import { GUARDIAN_PRICE_SATS, type GuardianRarity } from "@/lib/bitmon";
 
 type Sale = { txid: string; priceSats: number; blockHeight: number | null };
 const RARITIES: GuardianRarity[] = ["COMMON", "RARE", "EPIC", "MYTHIC"];
@@ -80,7 +80,11 @@ export function GuardianLiveFloor({ sales, listedFloor }: { sales: Sale[]; liste
     const avg = d7 / 7;
     // Momentum: today's mints vs. the 7-day daily average (real numbers only).
     const charge = list.length === 0 ? 0 : Math.min(100, Math.round((d1 / Math.max(1, avg)) * 50));
-    const byRarity = RARITIES.map((r) => ({ r, n: list.filter((g) => g.rarity === r).length }));
+    const byRarity = RARITIES.map((r) => {
+      const xs = list.filter((g) => g.rarity === r);
+      const avg = (k: "hp" | "bite" | "speed" | "armor") => (xs.length ? Math.round(xs.reduce((a, g) => a + g[k], 0) / xs.length) : 0);
+      return { r, n: xs.length, pct: list.length ? Math.round((xs.length / list.length) * 1000) / 10 : 0, hp: avg("hp"), bite: avg("bite"), spd: avg("speed"), arm: avg("armor") };
+    });
     const sorted = [...list].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
     const cumulative = sorted.map((g, i) => ({ t: g.createdAt.slice(5, 16).replace("T", " "), n: i + 1 }));
     return { d1, d7, charge, byRarity, cumulative };
@@ -90,6 +94,17 @@ export function GuardianLiveFloor({ sales, listedFloor }: { sales: Sale[]; liste
     () => [...sales].filter((s) => s.blockHeight).sort((a, b) => (a.blockHeight ?? 0) - (b.blockHeight ?? 0)).map((s) => ({ b: s.blockHeight, p: s.priceSats })),
     [sales],
   );
+  // Primary market: every confirmed summon paid the fixed summon price on chain.
+  const primary = useMemo(() => {
+    const sorted = [...list].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    let sum = 0;
+    return sorted.map((g, i) => {
+      sum += GUARDIAN_PRICE_SATS;
+      return { t: g.createdAt.slice(5, 16).replace("T", " "), p: GUARDIAN_PRICE_SATS, vol: sum, n: i + 1 };
+    });
+  }, [list]);
+  const primaryVolume = list.length * GUARDIAN_PRICE_SATS;
+  const secondaryVolume = sales.reduce((n, s) => n + s.priceSats, 0);
   const lastSale = salesSeries.at(-1)?.p ?? null;
   const prevSale = salesSeries.at(-2)?.p ?? null;
   const delta = lastSale && prevSale ? ((lastSale - prevSale) / prevSale) * 100 : null;
@@ -116,7 +131,8 @@ export function GuardianLiveFloor({ sales, listedFloor }: { sales: Sale[]; liste
             {[...list.slice(0, 20), ...list.slice(0, 20)].map((g, i) => (
               <span key={i} data-no-translate>
                 <span style={{ color: RARITY_VAR[g.rarity] }}>◆ {g.rarity}</span>{" "}
-                {g.height}.BITMAP · {g.species} · LV{g.level} · <span className="text-muted-foreground">{ago(g.createdAt)} AGO</span>
+                {g.height}.BITMAP · {g.species} · LV{g.level} · <span className="text-bitcoin">{GUARDIAN_PRICE_SATS.toLocaleString()} SATS</span> ·{" "}
+                <a href={`https://mempool.space/tx/${g.txid}`} target="_blank" rel="noreferrer" className="text-signal hover:underline">TX {g.txid.slice(0, 6)}</a> · <span className="text-muted-foreground">{ago(g.createdAt)} AGO</span>
               </span>
             ))}
           </div>
@@ -147,10 +163,10 @@ export function GuardianLiveFloor({ sales, listedFloor }: { sales: Sale[]; liste
 
         {/* Floor */}
         <div className="panel rounded-md border border-border p-5">
-          <p className="label text-signal">ASKING FLOOR / LAST SALE</p>
-          <p className="display mt-2 text-4xl tabular-nums">{listedFloor ? `${listedFloor.toLocaleString()} SATS` : "—"}</p>
+          <p className="label text-signal">{listedFloor ? "ASKING FLOOR" : "MINT FLOOR · PRIMARY"} / LAST PRICE</p>
+          <p className="display mt-2 text-4xl tabular-nums">{(listedFloor ?? GUARDIAN_PRICE_SATS).toLocaleString()} SATS</p>
           <p className="mt-1 font-mono text-sm">
-            LAST {lastSale ? `${lastSale.toLocaleString()} SATS` : "—"}{" "}
+            LAST {lastSale ? `${lastSale.toLocaleString()} SATS · RESALE` : list.length ? `${GUARDIAN_PRICE_SATS.toLocaleString()} SATS · SUMMON` : "—"}{" "}
             {delta !== null && <span className={delta >= 0 ? "text-signal" : "text-destructive"}>{delta >= 0 ? "▲" : "▼"} {Math.abs(delta).toFixed(1)}%</span>}
           </p>
           <div className="mt-3 h-24">
@@ -162,10 +178,21 @@ export function GuardianLiveFloor({ sales, listedFloor }: { sales: Sale[]; liste
                   <Tooltip contentStyle={{ background: "var(--background)", border: "1px solid var(--border)" }} />
                 </LineChart>
               </ResponsiveContainer>
+            ) : primary.length > 0 ? (
+              <ResponsiveContainer>
+                <AreaChart data={primary}>
+                  <Area type="stepAfter" dataKey="vol" stroke="var(--signal)" fill="var(--signal)" fillOpacity={0.15} strokeWidth={2} />
+                  <YAxis hide domain={[0, "auto"]} />
+                  <Tooltip contentStyle={{ background: "var(--background)", border: "1px solid var(--border)" }} formatter={(v: number) => [`${v.toLocaleString()} SATS`, "SUMMON VOLUME"]} />
+                </AreaChart>
+              </ResponsiveContainer>
             ) : (
-              <p className="font-mono text-xs text-muted-foreground">CHART STARTS AFTER TWO CONFIRMED SALES.</p>
+              <p className="font-mono text-xs text-muted-foreground">NO SUMMONS CONFIRMED YET.</p>
             )}
           </div>
+          <p className="mt-2 font-mono text-[10px] text-muted-foreground" data-no-translate>
+            SUMMON VOL {primaryVolume.toLocaleString()} SATS · RESALE VOL {secondaryVolume.toLocaleString()} SATS · {sales.length} RESALES
+          </p>
         </div>
 
         {/* Rarity */}
@@ -175,13 +202,24 @@ export function GuardianLiveFloor({ sales, listedFloor }: { sales: Sale[]; liste
             <ResponsiveContainer>
               <BarChart data={stats.byRarity}>
                 <XAxis dataKey="r" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
-                <Tooltip contentStyle={{ background: "var(--background)", border: "1px solid var(--border)" }} />
+                <Tooltip
+                  contentStyle={{ background: "var(--background)", border: "1px solid var(--border)" }}
+                  formatter={(v: number, _k, it) => {
+                    const x = it.payload as (typeof stats.byRarity)[number];
+                    return [`${v} (${x.pct}%) · AVG HP ${x.hp} BITE ${x.bite} SPD ${x.spd} ARM ${x.arm}`, "PULLED"];
+                  }}
+                />
                 <Bar dataKey="n">
                   {stats.byRarity.map((x) => <Cell key={x.r} fill={RARITY_VAR[x.r]} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
+          <ul className="mt-2 grid grid-cols-2 gap-x-3 font-mono text-[10px]" data-no-translate>
+            {stats.byRarity.map((x) => (
+              <li key={x.r} className="flex justify-between"><span style={{ color: RARITY_VAR[x.r] }}>{x.r}</span><span>{x.n} · {x.pct}%</span></li>
+            ))}
+          </ul>
         </div>
       </div>
 
