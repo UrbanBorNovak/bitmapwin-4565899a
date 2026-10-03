@@ -57,6 +57,13 @@ function CollectionsIndex() {
         <span className="display text-xl">BLOCK-DNA GUARDIANS</span>
         <span className="label text-muted-foreground">V6 COLLECTION · BUY, SELL, PRICE CHART & HOW-TO →</span>
       </Link>
+      <Link
+        to="/guardians"
+        className="mt-3 flex items-baseline justify-between border border-signal/60 bg-card/60 p-4 backdrop-blur hover:border-primary"
+      >
+        <span className="display text-xl">GUARDIANS DROP</span>
+        <span className="label text-muted-foreground">MINT ANNOUNCEMENT · SUPPLY · SPECS →</span>
+      </Link>
       <Link to="/traits" className="mt-3 flex items-baseline justify-between border border-bitcoin/70 bg-card/60 p-4 backdrop-blur hover:border-primary">
         <span className="display text-xl">OFFICIAL TRAITS</span>
         <span className="label text-muted-foreground">COMPLETE GLOSSARY · INDEXED INSCRIPTIONS · HOLDER STATUS →</span>
