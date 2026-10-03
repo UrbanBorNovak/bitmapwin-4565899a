@@ -48,10 +48,23 @@ function NotFoundComponent() {
   );
 }
 
+/** A page file fetched after an update no longer exists: reload once to get the fresh one. */
+function reloadOnStaleChunk(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : String(error ?? "");
+  if (!/dynamically imported module|Importing a module script failed|error loading dynamically imported/i.test(msg)) return false;
+  const key = "bitmapwin:chunk-reload";
+  const last = Number(sessionStorage.getItem(key) ?? 0);
+  if (Date.now() - last < 10_000) return false;
+  sessionStorage.setItem(key, String(Date.now()));
+  window.location.reload();
+  return true;
+}
+
 function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
+    if (reloadOnStaleChunk(error)) return;
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
@@ -149,6 +162,14 @@ function RootComponent() {
   const routeKey = useRouterState({ select: (state) => state.location.pathname });
 
   // Remember an incoming ?ref= invite so it can be claimed once a wallet is verified.
+  useEffect(() => {
+    const onPreload = (e: Event) => { if (reloadOnStaleChunk((e as Event & { payload?: unknown }).payload ?? new Error("dynamically imported module"))) e.preventDefault(); };
+    const onRejection = (e: PromiseRejectionEvent) => { reloadOnStaleChunk(e.reason); };
+    window.addEventListener("vite:preloadError", onPreload);
+    window.addEventListener("unhandledrejection", onRejection);
+    return () => { window.removeEventListener("vite:preloadError", onPreload); window.removeEventListener("unhandledrejection", onRejection); };
+  }, []);
+
   useEffect(() => {
     const ref = new URLSearchParams(window.location.search).get("ref");
     if (ref) rememberReferralCode(ref);
