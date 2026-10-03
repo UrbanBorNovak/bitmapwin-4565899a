@@ -127,7 +127,7 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
   const sayRef = useRef<(body: string) => void>(() => {});
   const attackRef = useRef<(targetId: string, damage?: number, reach?: number) => void>(() => {});
   const respawnRef = useRef<() => void>(() => {});
-  const hurtRef = useRef<(damage: number) => void>(() => {});
+  const hurtRef = useRef<(damage: number, source?: string) => void>(() => {});
   const healRef = useRef<(amount: number) => void>(() => {});
   const modelRef = useRef(model);
   modelRef.current = model;
@@ -397,16 +397,26 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
 
     // Something in the world bit us — wildlife, a fall, a trap. Same health path
     // as a peer's hit, so the rest of the world sees the new value straight away.
-    hurtRef.current = (damage) => {
+    hurtRef.current = (damage, source) => {
       if (hpRef.current <= 0 || damage <= 0) return;
-      const next = Math.max(0, hpRef.current - Math.round(damage));
+      const dealt = Math.round(damage);
+      const next = Math.max(0, hpRef.current - dealt);
+      const now = Date.now();
       hpRef.current = next;
       setHp(next);
-      setHitAt(Date.now());
-      setLastDamage(Math.round(damage));
+      setHitAt(now);
+      setLastDamage(dealt);
+      if (source) {
+        setCombatLog((current) =>
+          [
+            ...current,
+            { id: `${source}:${now}:${Math.random().toString(36).slice(2, 7)}`, attacker: source, target: handle, damage: dealt, knockout: next === 0, at: now },
+          ].slice(-40),
+        );
+      }
       if (lastCell) push(lastCell);
       if (next === 0) {
-        setRespawnAt(Date.now() + RESPAWN_MS);
+        setRespawnAt(now + RESPAWN_MS);
         if (respawnTimer) clearTimeout(respawnTimer);
         respawnTimer = setTimeout(() => respawnRef.current(), RESPAWN_MS);
       }
@@ -551,7 +561,7 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
     respawnMs: RESPAWN_MS,
     respawn: () => respawnRef.current(),
     attack: (targetId: string, damage?: number, reach?: number) => attackRef.current(targetId, damage, reach),
-    hurt: (damage: number) => hurtRef.current(damage),
+    hurt: (damage: number, source?: string) => hurtRef.current(damage, source),
     heal: (amount: number) => healRef.current(amount),
     say: (body: string) => sayRef.current(body),
     publish: (pose: PoseReport | null) => sendRef.current(pose),

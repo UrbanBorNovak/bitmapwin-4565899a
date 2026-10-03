@@ -2784,7 +2784,7 @@ const WorldScene = memo(function WorldScene({
           <BitField unit={AVATAR_U} pose={pose} />
           <CastleDistrict />
           <MarioBros unit={AVATAR_U} pose={pose} />
-          <IronWalkers unit={AVATAR_U} pose={pose} />
+          <IronWalkers unit={AVATAR_U} pose={pose} onBite={onBite} />
           <FlyCreatures unit={AVATAR_U} pose={pose} onBite={onBite} onSighted={onSighted} />
           <MysteryBoxes unit={AVATAR_U} pose={pose} onPrize={onPrize} />
 
@@ -3824,9 +3824,9 @@ function BitmapWorld3DInner({
       if (hp <= 0) return;
       // Up on the jetpack you are out of reach — nothing on the ground bites.
       if (aloft(pose.current)) return;
-      hurt(damage);
+      hurt(damage, label);
       playSfx("hurt");
-      setBiteNote(`${label} BIT YOU · -${damage}`);
+      setBiteNote(/CANNON/.test(label) ? `${label} HIT YOU · -${damage}` : `${label} BIT YOU · -${damage}`);
       window.setTimeout(() => setBiteNote(null), 1600);
     },
     [hp, hurt],
