@@ -126,7 +126,12 @@ function GuardiansPromo() {
                   <div key={k} className="border border-border px-1.5 py-1"><p className="text-muted-foreground">{k}</p><p>{v}</p></div>
                 ))}
               </div>
-              <Link to="/mint" search={{ height }} className="btn-term block w-full text-center">MINT THIS GUARDIAN →</Link>
+              {awake.data ? (
+                <p className="font-mono text-xs text-muted-foreground">✕ ALREADY AWAKE — PICK ANOTHER BLOCK</p>
+              ) : (
+                <button type="button" onClick={() => setOpen(true)} className="btn-term w-full">◆ SUMMON LIVE</button>
+              )}
+              <Link to="/mint" search={{ height }} className="btn-term-ghost block w-full text-center">SHIELDED MINT →</Link>
             </>
           ) : null}
         </aside>

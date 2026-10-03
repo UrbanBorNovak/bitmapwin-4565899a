@@ -256,6 +256,18 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
                   {order.status === "expired" && "INVOICE EXPIRED — START AGAIN"}
                   {order.status === "taken" && "ANOTHER SUMMON LANDED FIRST FOR THIS BLOCK."}
                 </p>
+                {order.status === "pending" || order.status === "seen" ? (
+                  <div aria-label="Progress to on-chain confirmation">
+                    <div className="h-1.5 w-full overflow-hidden border border-border">
+                      <div className={`h-full transition-all duration-700 ${order.status === "seen" ? "w-2/3 bg-signal animate-pulse" : "w-1/3 bg-bitcoin"}`} />
+                    </div>
+                    <div className="mt-1 flex justify-between text-[9px] text-muted-foreground">
+                      <span className="text-bitcoin">INVOICE</span>
+                      <span className={order.status === "seen" ? "text-signal" : ""}>MEMPOOL</span>
+                      <span>1 CONF · AWAKE</span>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
           ) : signedIn === false ? (
