@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { BuyButton } from "@/components/BuyButton";
 import { MakeOfferButton } from "@/components/MakeOfferButton";
 import { BlockMosaic } from "@/components/BlockMosaic";
+import { GuardianMintStatus } from "@/components/bitmon/GuardianMintStatus";
 
 import { SatBadges } from "@/components/SatBadges";
 import { TraitBadges } from "@/components/TraitBadges";
@@ -47,6 +48,7 @@ export function ParcelCard({ parcel, traitHolder }: { parcel: RegistryParcel; tr
 
         <SatBadges height={parcel.bitmapHeight} rarityOnly className="mt-2" />
         <TraitBadges height={parcel.bitmapHeight} max={3} className="mt-2" />
+        <GuardianMintStatus height={parcel.bitmapHeight} className="mt-2" />
         {traitHolder && <div className="mt-2"><TraitHolderBadge traits={traitHolder.traitIds} /></div>}
 
         <dl className="mt-3 space-y-1 text-[11px]">
