@@ -1662,3 +1662,5 @@
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
+
+@keyframes bestiary-scan { 0% { top: 0%; } 100% { top: 100%; } }

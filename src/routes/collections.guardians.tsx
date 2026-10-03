@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { getGuardianMarketFn } from "@/lib/guardian-market.functions";
+import { allGuardiansQuery } from "@/lib/bitmon-queries";
 import { collectionListingsQuery } from "@/lib/collection-sales";
 import { formatSats } from "@/lib/trades";
 import { BuyButton } from "@/components/BuyButton";
@@ -68,6 +69,7 @@ const STEPS: { n: string; title: string; body: string; to: "/mint" | "/shord" | 
 
 function GuardianMarket() {
   const market = useQuery(marketQuery);
+  const awakened = useQuery({ ...allGuardiansQuery(), refetchInterval: 15_000 });
   const ids = market.data?.ids ?? [];
   const listings = useQuery({ ...collectionListingsQuery("guardians", ids), enabled: ids.length > 0 });
   const [page, setPage] = useState(0);
@@ -121,9 +123,10 @@ function GuardianMarket() {
         · ONE PER BLOCK · TRADED BY SIGNED PSBT
       </p>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-5">
         {[
-          ["GUARDIANS ON CHAIN", market.isPending ? "…" : String(ids.length)],
+          ["INSCRIBED · TRADABLE", market.isPending ? "…" : String(ids.length)],
+          ["OASIS AWAKENED", awakened.data ? awakened.data.length.toLocaleString() : "…"],
           ["ASKING FLOOR", stats.floor ? formatSats(stats.floor) : "NO LISTINGS"],
           ["CONFIRMED VOLUME", salesUnknown ? "—" : stats.volume ? formatSats(stats.volume) : "0 SATS"],
           ["LISTED", `${stats.listed} / ${ids.length}`],
@@ -134,6 +137,9 @@ function GuardianMarket() {
           </div>
         ))}
       </div>
+      <p className="label mt-2 text-muted-foreground">
+        OASIS AWAKENED GUARDIANS LIVE IN THE APP ONLY AND CANNOT BE LISTED OR SOLD. ONLY GUARDIANS INSCRIBED AS CHILDREN OF THEIR &lt;HEIGHT&gt;.BITMAP APPEAR BELOW AND CAN BE TRADED.
+      </p>
       {market.data?.indexUnavailable ? (
         <p className="label mt-2 text-destructive">ORDINALS.COM DID NOT ANSWER IN FULL — SOME GUARDIANS MAY BE MISSING</p>
       ) : null}

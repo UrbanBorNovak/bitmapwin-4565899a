@@ -25,6 +25,8 @@ export function MyGuardians() {
                 <p className={RARITY_TONE[g.rarity]}>{g.rarity} · LV {g.level}</p>
                 <p className="text-foreground">{g.species}</p>
                 <p className="text-muted-foreground">{g.height}.BITMAP · {g.hp} HP</p>
+                <p className="mt-1 text-signal">● OASIS AWAKENED · NOT TRADABLE</p>
+                <p className="text-muted-foreground">INSCRIBE AS A CHILD OF ITS BITMAP TO TRADE</p>
               </div>
             </button>
           ))}
