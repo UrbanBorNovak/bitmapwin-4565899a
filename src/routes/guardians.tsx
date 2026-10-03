@@ -7,6 +7,7 @@ import { GUARDIAN_PRICE_SATS, RARITY_TONE, guardianLevel } from "@/lib/bitmon";
 import { morphFromDna } from "@/lib/creature-morph";
 import { GUARDIAN_MASTER_DELEGATE_ID, GUARDIAN_MASTER_DELEGATE_IDS, TRIBUTE_SATS } from "@/lib/guardian-delegate";
 import { getGuardianMarketFn } from "@/lib/guardian-market.functions";
+import { GuardianLiveFloor } from "@/components/bitmon/GuardianLiveFloor";
 
 const TITLE = "Block-DNA Guardians — Collection Drop & Mint";
 const DESC =
@@ -17,6 +18,7 @@ const marketQuery = queryOptions({
   queryKey: ["guardian-market"],
   queryFn: () => getGuardianMarketFn(),
   staleTime: 60_000,
+  refetchInterval: 60_000,
 });
 
 export const Route = createFileRoute("/guardians")({
@@ -178,6 +180,7 @@ function GuardiansPromo() {
           <p className="mt-2 text-sm text-muted-foreground">Pay {GUARDIAN_PRICE_SATS.toLocaleString()} sats and the Guardian lands in BITMAPWIN's shielded pool. Only your browser's key can withdraw it. The pool is our own and not yet audited.</p>
         </div>
       </section>
+      <GuardianLiveFloor sales={sales} listedFloor={null} />
       <SummonWalkthrough height={height} onSummon={() => setOpen(true)} />
 
       {/* Rules */}
