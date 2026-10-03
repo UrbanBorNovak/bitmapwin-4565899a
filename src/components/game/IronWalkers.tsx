@@ -231,11 +231,18 @@ type LegRef = { hip: THREE.Group | null; knee: THREE.Group | null; ankle: THREE.
 export const IronWalkers = memo(function IronWalkers({
   unit,
   pose,
+  onBite,
 }: {
   unit: number;
   pose: { current: { x: number; z: number } | null };
+  /** cannon bolt landed on the local player */
+  onBite?: (damage: number, label: string) => void;
 }) {
   const raids = useMemo(() => [makeRaid("walker-a", 0, unit), makeRaid("walker-b", 1, unit)], [unit]);
+  const biteRef = useRef(onBite);
+  biteRef.current = onBite;
+  /** last volley index that already hit, per walker — one hit per volley */
+  const volleyHit = useRef<number[]>([-1, -1]);
   const geo = useMemo(
     () => ({
       hull: build(hullBoxes()),
@@ -384,6 +391,20 @@ export const IronWalkers = memo(function IronWalkers({
         const cycle = (t * 1.3 + i * 0.4) % 1;
         bolt.visible = inRange && cycle < 0.35;
         bolt.position.x = 12 + cycle * 120;
+        // Every 3rd volley is aimed true; it lands when the bolt reaches you.
+        const volley = Math.floor(t * 1.3 + i * 0.4);
+        if (inRange && player && volley % 3 === 0 && cycle > 0.25 && volleyHit.current[i] !== volley) {
+          volleyHit.current[i] = volley;
+          // Only a head pointed at you (not clamped away) connects.
+          const dx = player.x - p.x;
+          const dz = player.z - p.z;
+          const local = Math.atan2(-dz, dx) - root.rotation.y;
+          const off = Math.abs(Math.atan2(Math.sin(local), Math.cos(local)));
+          if (off < 0.75) {
+            const dmg = 14 + Math.floor(Math.random() * 9);
+            biteRef.current?.(dmg, i === 0 ? "IRON WALKER A CANNON" : "IRON WALKER B CANNON");
+          }
+        }
       }
       // Flinch when struck.
       const since = performance.now() - r.hitAt;
