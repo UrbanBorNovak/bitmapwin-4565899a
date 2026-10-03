@@ -178,20 +178,7 @@ function GuardiansPromo() {
           <p className="mt-2 text-sm text-muted-foreground">Pay {GUARDIAN_PRICE_SATS.toLocaleString()} sats and the Guardian lands in BITMAPWIN's shielded pool. Only your browser's key can withdraw it. The pool is our own and not yet audited.</p>
         </div>
       </section>
-      <ol className="mt-3 grid gap-3 md:grid-cols-4">
-        {[
-          ["01", "PICK A BITMAP", "Every block grows exactly one Guardian."],
-          ["02", "INSCRIBE & PAY", "Sign one transaction with the tribute."],
-          ["03", "AWAKEN", "The master checks parent and tribute on chain."],
-          ["04", "ROAM & TRADE", "Meet it in the Oasis, list it on the market."],
-        ].map(([n, t, b]) => (
-          <li key={n} className="panel rounded-md border border-border p-4">
-            <p className="font-mono text-xs text-bitcoin">{n}</p>
-            <p className="display mt-1">{t}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{b}</p>
-          </li>
-        ))}
-      </ol>
+      <SummonWalkthrough height={height} onSummon={() => setOpen(true)} />
 
       {/* Rules */}
       <section className="mt-12 panel rounded-md border border-border p-5">
