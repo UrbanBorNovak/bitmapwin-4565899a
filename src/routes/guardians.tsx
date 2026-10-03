@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { GuardianTurntable, SummonGuardianDialog } from "@/components/bitmon/SummonGuardianDialog";
-import { guardianDnaQuery, guardianQuery } from "@/lib/bitmon-queries";
+import { allGuardiansQuery, guardianDnaQuery, guardianQuery } from "@/lib/bitmon-queries";
 import { GUARDIAN_PRICE_SATS, RARITY_TONE, guardianLevel } from "@/lib/bitmon";
 import { morphFromDna } from "@/lib/creature-morph";
 import { GUARDIAN_MASTER_DELEGATE_ID, GUARDIAN_MASTER_DELEGATE_IDS, TRIBUTE_SATS } from "@/lib/guardian-delegate";
@@ -70,6 +70,7 @@ function GuardiansPromo() {
   const dna = useQuery(guardianDnaQuery(height));
   const awake = useQuery(guardianQuery(height));
   const market = useQuery(marketQuery);
+  const summons = useQuery(allGuardiansQuery());
   const d = dna.data;
   const m = d ? morphFromDna(d) : null;
   const minted = market.data?.ids.length;
@@ -93,19 +94,24 @@ function GuardiansPromo() {
       </div>
 
       {/* Live stats */}
-      <section className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <section className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-5">
         {([
-          ["MAX SUPPLY", "1 / BLOCK"],
-          ["SUMMONED", minted === undefined ? "…" : minted.toLocaleString()],
-          ["CONFIRMED SALES", market.data ? sales.length.toLocaleString() : "…"],
-          ["VOLUME", market.data ? `${volume.toLocaleString()} SATS` : "…"],
-        ] as const).map(([k, v]) => (
+          ["MAX SUPPLY", "1 / BLOCK", "ONE GUARDIAN PER BITCOIN BLOCK"],
+          ["ON-CHAIN CHILDREN", minted === undefined ? "…" : minted.toLocaleString(), "REAL INSCRIPTIONS · CHILD OF <HEIGHT>.BITMAP"],
+          ["OASIS SUMMONS", summons.data ? summons.data.length.toLocaleString() : "…", "AWAKE IN THE APP · NOT YET AN ORDINAL"],
+          ["CONFIRMED SALES", market.data ? sales.length.toLocaleString() : "…", "ON-CHAIN CHILDREN ONLY"],
+          ["VOLUME", market.data ? `${volume.toLocaleString()} SATS` : "…", "CONFIRMED ON BITCOIN"],
+        ] as const).map(([k, v, note]) => (
           <div key={k} className="panel rounded-md border border-border p-4">
             <p className="label text-muted-foreground">{k}</p>
             <p className="display mt-1 text-2xl text-signal" data-no-translate>{v}</p>
+            <p className="mt-1 font-mono text-[9px] text-muted-foreground">{note}</p>
           </div>
         ))}
       </section>
+      <p className="mt-3 max-w-3xl font-mono text-[11px] text-muted-foreground">
+        A SUMMON WAKES A GUARDIAN IN THE OASIS. IT ONLY JOINS THE COLLECTION ONCE THE HOLDER INSCRIBES IT AS A CHILD OF THEIR <span className="text-bitcoin">&lt;HEIGHT&gt;.BITMAP</span> — ONLY THOSE CAN BE LISTED AND TRADED.
+      </p>
 
       {/* Preview */}
       <section className="mt-10 grid gap-4 md:grid-cols-[1fr_360px]">
