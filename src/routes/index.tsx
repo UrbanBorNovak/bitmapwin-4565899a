@@ -13,6 +13,7 @@ import { LandPromptTerminal } from "@/components/LandPromptTerminal";
 import { FirstTenMinutes } from "@/components/FirstTenMinutes";
 import { startGuidedTour } from "@/components/GuidedTour";
 import { MobileAppInstall } from "@/components/MobileAppInstall";
+import { GuardianMintStatus } from "@/components/bitmon/GuardianMintStatus";
 
 
 export const Route = createFileRoute("/")({
@@ -146,6 +147,7 @@ function Index() {
                       <div className="mt-2 font-mono text-[10px] text-muted-foreground">
                         {lead.listedSats ? `ASK ${formatSats(lead.listedSats)}` : lead.lastSaleSats ? `LAST ${formatSats(lead.lastSaleSats)}` : "VIEW ON-CHAIN RECORD"}
                       </div>
+                      <GuardianMintStatus height={lead.bitmapHeight} className="mt-2" />
                     </div>
                   </Link>
                 )}
