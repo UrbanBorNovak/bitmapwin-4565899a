@@ -178,20 +178,7 @@ function GuardiansPromo() {
           <p className="mt-2 text-sm text-muted-foreground">Pay {GUARDIAN_PRICE_SATS.toLocaleString()} sats and the Guardian lands in BITMAPWIN's shielded pool. Only your browser's key can withdraw it. The pool is our own and not yet audited.</p>
         </div>
       </section>
-      <ol className="mt-3 grid gap-3 md:grid-cols-4">
-        {[
-          ["01", "PICK A BITMAP", "Every block grows exactly one Guardian."],
-          ["02", "INSCRIBE & PAY", "Sign one transaction with the tribute."],
-          ["03", "AWAKEN", "The master checks parent and tribute on chain."],
-          ["04", "ROAM & TRADE", "Meet it in the Oasis, list it on the market."],
-        ].map(([n, t, b]) => (
-          <li key={n} className="panel rounded-md border border-border p-4">
-            <p className="font-mono text-xs text-bitcoin">{n}</p>
-            <p className="display mt-1">{t}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{b}</p>
-          </li>
-        ))}
-      </ol>
+      <SummonWalkthrough height={height} onSummon={() => setOpen(true)} />
 
       {/* Rules */}
       <section className="mt-12 panel rounded-md border border-border p-5">
@@ -227,3 +214,135 @@ function GuardiansPromo() {
     </div>
   );
 }
+
+const STAGES: [string, string][] = [
+  ["INVOICE", "OPEN"],
+  ["MEMPOOL", "SEEN"],
+  ["1 CONF", "AWAKE"],
+];
+
+const TUTORIAL: { n: string; t: string; body: string; see: string }[] = [
+  {
+    n: "01",
+    t: "PICK A BLOCK",
+    body: "Every Bitcoin block grows exactly one Guardian, forever. Choose a block in the DNA inspector above — or type any height on the mint page — and the creature is already decided by that block's hash, transactions, size and era.",
+    see: "> THE SAME BLOCK ALWAYS MAKES THE SAME GUARDIAN",
+  },
+  {
+    n: "02",
+    t: "SIGN IN",
+    body: "Summons are tied to an account so the app can prove who holds the BITMAP. Sign in first — the summon button shows a sign-in link when you are not signed in.",
+    see: "> SIGN IN TO SUMMON →",
+  },
+  {
+    n: "03",
+    t: "OPEN THE INVOICE",
+    body: "Press SUMMON. The app checks the Bitcoin index for the verified holder of that BITMAP and only opens an invoice for that wallet. If you do not hold it, the request is refused with a short reason and nothing is charged.",
+    see: "> CHECKING HOLDER…",
+  },
+  {
+    n: "04",
+    t: "PAY THE INVOICE",
+    body: "Send exactly the amount shown, in one transaction, to the address on screen. Scan the QR code or press COPY ADDRESS. The total is the summon price plus a small id sat; the network fee is paid by your wallet, not taken from the invoice.",
+    see: `> SEND EXACTLY ${GUARDIAN_PRICE_SATS.toLocaleString()}+ SATS · ONE TRANSACTION`,
+  },
+  {
+    n: "05",
+    t: "WAIT FOR THE CHAIN",
+    body: "The app re-checks the Bitcoin network every 15 seconds. Your payment first appears in the mempool, then needs one confirmation before the Guardian wakes — usually a few minutes, longer when the network is busy. Keep the window open.",
+    see: "> WATCHING THE BLOCKCHAIN FOR YOUR PAYMENT…",
+  },
+  {
+    n: "06",
+    t: "IT WAKES",
+    body: "The master inscription reads the parent BITMAP and the tribute straight from Bitcoin. When both check out, the Guardian is awake: it patrols its own BITMAP in the Oasis, roars at visitors, and can be inscribed as a public ordinal or listed on the market.",
+    see: "> THIS GUARDIAN IS AWAKE AND PATROLS ITS BITMAP",
+  },
+];
+
+function SummonWalkthrough({ height, onSummon }: { height: number; onSummon: () => void }) {
+  const [step, setStep] = useState(0);
+  const s = TUTORIAL[step] ?? TUTORIAL[0]!;
+  return (
+    <section className="mt-12" id="how-to-summon">
+      <h2 className="display text-2xl md:text-3xl">
+        HOW TO SUMMON <span className="text-bitcoin">STEP BY STEP</span>
+      </h2>
+      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+        Six steps, one transaction, no middleman. Follow them in order — the numbers below are the exact words the summon window shows you at each stage.
+      </p>
+
+      <div className="mt-5 grid gap-4 md:grid-cols-[280px_1fr]">
+        <ol className="space-y-px overflow-hidden rounded-md border border-border bg-border">
+          {TUTORIAL.map((t, i) => (
+            <li key={t.n}>
+              <button
+                type="button"
+                onClick={() => setStep(i)}
+                aria-current={i === step}
+                className={`flex w-full items-center gap-3 px-4 py-3 text-left font-mono text-xs transition-colors ${
+                  i === step ? "bg-bitcoin text-background" : "bg-card text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <span className={i === step ? "" : "text-bitcoin"}>{t.n}</span>
+                <span className="tracking-wide">{t.t}</span>
+              </button>
+            </li>
+          ))}
+        </ol>
+
+        <div className="panel rounded-md border border-border p-5">
+          <p className="font-mono text-xs text-bitcoin">STEP {s.n} / 06 · {s.t}</p>
+          <p className="mt-3 text-sm text-foreground">{s.body}</p>
+          <p className="mt-4 border border-border bg-background px-3 py-2 font-mono text-[10px] text-signal" data-no-translate>
+            {s.see}
+          </p>
+
+          <div className="mt-5">
+            <p className="label text-muted-foreground">THE PROGRESS BAR YOU WILL SEE</p>
+            <div className="mt-2 h-1.5 w-full overflow-hidden border border-border">
+              <div
+                className={`h-full transition-all duration-700 ${step >= 4 ? "w-2/3 bg-signal animate-pulse" : step >= 3 ? "w-1/3 bg-bitcoin" : "w-0"}`}
+              />
+            </div>
+            <div className="mt-1 flex justify-between font-mono text-[9px] text-muted-foreground">
+              {STAGES.map(([k, v], i) => (
+                <span key={k} className={step >= 3 + i ? (i === 2 ? "text-signal" : "text-bitcoin") : ""}>
+                  {k} · {v}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-3">
+            <button type="button" onClick={onSummon} className="btn-term">◆ OPEN THE SUMMON WINDOW</button>
+            <Link to="/mint" search={{ height }} className="btn-term-ghost">MINT PAGE →</Link>
+            <Link to="/auth" className="btn-term-ghost">SIGN IN →</Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <div className="panel rounded-md border border-border p-4">
+          <p className="label text-bitcoin">WHAT YOU PAY</p>
+          <dl className="mt-2 space-y-1.5 font-mono text-[11px]">
+            <div className="flex justify-between gap-4"><dt className="text-muted-foreground">SUMMON PRICE</dt><dd>{GUARDIAN_PRICE_SATS.toLocaleString()} SATS</dd></div>
+            <div className="flex justify-between gap-4"><dt className="text-muted-foreground">TRIBUTE CHECKED ON CHAIN</dt><dd>{TRIBUTE_SATS.toLocaleString()} SATS</dd></div>
+            <div className="flex justify-between gap-4"><dt className="text-muted-foreground">ID SATS</dt><dd>A FEW HUNDRED</dd></div>
+            <div className="flex justify-between gap-4"><dt className="text-muted-foreground">NETWORK FEE</dt><dd>PAID BY YOUR WALLET</dd></div>
+          </dl>
+        </div>
+        <div className="panel rounded-md border border-border p-4">
+          <p className="label text-signal">IF THE WINDOW SAYS…</p>
+          <ul className="mt-2 space-y-1.5 font-mono text-[11px] text-muted-foreground">
+            <li>▸ WATCHING THE BLOCKCHAIN FOR YOUR PAYMENT… — nothing has arrived yet. Check the amount and address, then wait.</li>
+            <li>▸ PAYMENT SEEN · AWAKENS AFTER 1 CONFIRMATION — it is in the mempool. Do not send twice.</li>
+            <li>▸ INVOICE EXPIRED — START AGAIN — the invoice timed out before payment. Open a fresh one.</li>
+            <li>▸ ANOTHER SUMMON LANDED FIRST FOR THIS BLOCK — someone else woke this Guardian. Pick another block.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
+
