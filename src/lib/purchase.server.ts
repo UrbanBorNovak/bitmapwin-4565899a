@@ -103,7 +103,7 @@ async function feeRate(): Promise<number> {
 }
 
 const OFFER_COLUMNS =
-  "id, psbt_base64, bitmap_height, inscription_id, outpoint, seller_address, price_sats, status";
+  "id, psbt_base64, bitmap_height, inscription_id, outpoint, seller_address, price_sats, status, reserved_by, reserved_until";
 
 async function loadOffer(offerId: string) {
   // The seller's signed PSBT is not readable with the publishable key — the
