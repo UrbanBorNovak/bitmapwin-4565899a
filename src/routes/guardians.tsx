@@ -223,6 +223,7 @@ function GuardiansPromo() {
         <Link to="/mint" className="btn-term">◆ MINT YOUR GUARDIAN</Link>
         <Link to="/codex/bestiary" className="btn-term-ghost">BESTIARY →</Link>
       </div>
+      {open ? <SummonGuardianDialog height={height} open={open} onOpenChange={setOpen} /> : null}
     </div>
   );
 }
