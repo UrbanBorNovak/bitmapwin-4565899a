@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import { GuardianTurntable } from "@/components/bitmon/SummonGuardianDialog";
-import { guardianDnaQuery } from "@/lib/bitmon-queries";
+import { GuardianTurntable, SummonGuardianDialog } from "@/components/bitmon/SummonGuardianDialog";
+import { guardianDnaQuery, guardianQuery } from "@/lib/bitmon-queries";
 import { GUARDIAN_PRICE_SATS, RARITY_TONE, guardianLevel } from "@/lib/bitmon";
 import { morphFromDna } from "@/lib/creature-morph";
 import { GUARDIAN_MASTER_DELEGATE_ID, GUARDIAN_MASTER_DELEGATE_IDS, TRIBUTE_SATS } from "@/lib/guardian-delegate";
@@ -57,7 +57,9 @@ const SHOWCASE = [0, 840000, 800541, 210000, 630000];
 
 function GuardiansPromo() {
   const [height, setHeight] = useState(840000);
+  const [open, setOpen] = useState(false);
   const dna = useQuery(guardianDnaQuery(height));
+  const awake = useQuery(guardianQuery(height));
   const market = useQuery(marketQuery);
   const d = dna.data;
   const m = d ? morphFromDna(d) : null;
@@ -126,7 +128,12 @@ function GuardiansPromo() {
                   <div key={k} className="border border-border px-1.5 py-1"><p className="text-muted-foreground">{k}</p><p>{v}</p></div>
                 ))}
               </div>
-              <Link to="/mint" search={{ height }} className="btn-term block w-full text-center">MINT THIS GUARDIAN →</Link>
+              {awake.data ? (
+                <p className="font-mono text-xs text-muted-foreground">✕ ALREADY AWAKE — PICK ANOTHER BLOCK</p>
+              ) : (
+                <button type="button" onClick={() => setOpen(true)} className="btn-term w-full">◆ SUMMON LIVE</button>
+              )}
+              <Link to="/mint" search={{ height }} className="btn-term-ghost block w-full text-center">SHIELDED MINT →</Link>
             </>
           ) : null}
         </aside>
@@ -216,6 +223,7 @@ function GuardiansPromo() {
         <Link to="/mint" className="btn-term">◆ MINT YOUR GUARDIAN</Link>
         <Link to="/codex/bestiary" className="btn-term-ghost">BESTIARY →</Link>
       </div>
+      {open ? <SummonGuardianDialog height={height} open={open} onOpenChange={setOpen} /> : null}
     </div>
   );
 }
