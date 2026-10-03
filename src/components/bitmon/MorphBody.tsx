@@ -97,8 +97,8 @@ function DnaSurge({ host, span, top, glow, accent }: { host: React.RefObject<THR
       h.traverse((o) => {
         const mat = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
         if (!mat || !("emissiveIntensity" in mat)) return;
-        if (mat.userData.baseGlow === undefined) mat.userData.baseGlow = mat.emissiveIntensity;
-        const b = mat.userData.baseGlow as number;
+        if (mat.userData['baseGlow'] === undefined) mat.userData['baseGlow'] = mat.emissiveIntensity;
+        const b = mat.userData['baseGlow'] as number;
         mat.emissiveIntensity = b + (b > 0 ? b * 1.5 * k : 0);
       });
     }
