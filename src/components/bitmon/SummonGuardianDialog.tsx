@@ -25,38 +25,97 @@ import { playSfx } from "@/lib/world-audio";
 
 /** The Guardian's own BITMAP: its block's real transactions, one extruded parcel each, packed in block order. */
 const PARCEL_TONES = ["#ffb45a", "#f7931a", "#e6810e", "#c96d08", "#a95a06"].map((c) => new THREE.Color(c));
-function BitmapPedestal({ seed, accent }: { seed: number; accent: string }) {
+const HOT = new THREE.Color("#7fe7ff");
+const PULSE = 4;
+type Hover = { index: number; size: number } | null;
+
+function BitmapPedestal({ seed, accent, onHover }: { seed: number; accent: string; onHover: (h: Hover) => void }) {
   const { data } = useQuery({ ...blockSizeMapQuery(seed), enabled: seed >= 0 });
   const packed = useMemo(() => (data?.classes?.length ? packParcels(data.classes) : null), [data]);
   const mesh = useRef<THREE.InstancedMesh>(null);
   const count = packed?.parcels.length ?? 0;
-  useEffect(() => {
+  // per-parcel: x, z, footprint, height, radial delay
+  const layout = useMemo(() => {
+    if (!packed) return null;
+    const k = 2 / packed.grid, half = packed.grid / 2;
+    return packed.parcels.map((p) => {
+      const x = (p.x + p.size / 2 - half) * k, z = (p.y + p.size / 2 - half) * k;
+      return { x, z, w: p.size * k * 0.88, h: 0.02 + Math.min(0.25, p.size * p.size * 0.006), d: Math.hypot(x, z) / 1.45, size: p.size };
+    });
+  }, [packed]);
+  const born = useRef(0);
+  const hovered = useRef(-1);
+  const o = useMemo(() => new THREE.Object3D(), []);
+  const c = useMemo(() => new THREE.Color(), []);
+  useEffect(() => { born.current = -1; }, [layout]);
+  useFrame(({ clock }) => {
     const m = mesh.current;
-    if (!m || !packed) return;
-    const k = 2 / packed.grid, half = packed.grid / 2, o = new THREE.Object3D();
-    packed.parcels.forEach((p, i) => {
-      const h = 0.02 + Math.min(0.25, (p.size * p.size) * 0.006);
-      o.position.set((p.x + p.size / 2 - half) * k, h / 2, (p.y + p.size / 2 - half) * k);
-      o.scale.set(p.size * k * 0.88, h, p.size * k * 0.88);
+    if (!m || !layout) return;
+    const t = clock.elapsedTime;
+    if (born.current < 0) born.current = t;
+    const age = t - born.current;
+    const wave = (t % PULSE) / PULSE * 1.6; // shockwave radius (0..1.6)
+    if (age > 2.2 && hovered.current < 0 && Math.floor(t * 30) % 2) return; // settle: update at ~15 Hz
+    layout.forEach((p, i) => {
+      const rise = Math.min(1, Math.max(0, (age - p.d * 1.1) / 0.5));
+      const e = 1 - Math.pow(1 - rise, 3);
+      const ripple = Math.max(0, 1 - Math.abs(p.d * 1.45 - wave) * 6);
+      const lift = i === hovered.current ? 1.8 : 1 + ripple * 0.6;
+      const h = Math.max(0.001, p.h * e * lift);
+      o.position.set(p.x, h / 2, p.z);
+      o.scale.set(p.w, h, p.w);
       o.updateMatrix();
       m.setMatrixAt(i, o.matrix);
-      m.setColorAt(i, PARCEL_TONES[Math.min(4, p.size - 1)]!);
+      c.copy(PARCEL_TONES[Math.min(4, p.size - 1)]!);
+      if (i === hovered.current) c.copy(HOT);
+      else if (ripple > 0) c.lerp(HOT, ripple * 0.55);
+      m.setColorAt(i, c);
     });
     m.instanceMatrix.needsUpdate = true;
     if (m.instanceColor) m.instanceColor.needsUpdate = true;
-  }, [packed]);
+  });
   const motes = useRef<THREE.Group>(null);
+  const ring = useRef<THREE.Group>(null);
+  const shock = useRef<THREE.Mesh>(null);
   const epochs = Math.max(1, Math.min(16, Math.floor(Math.max(0, 969_000 - seed) / 2016 / 8)));
-  useFrame(({ clock }) => { if (motes.current) motes.current.rotation.y = clock.elapsedTime * 0.25; });
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    if (motes.current) motes.current.rotation.y = t * 0.25;
+    if (ring.current) ring.current.rotation.y = -t * 0.12;
+    if (shock.current) {
+      const k = (t % PULSE) / PULSE;
+      shock.current.scale.setScalar(0.2 + k * 1.6);
+      (shock.current.material as THREE.MeshBasicMaterial).opacity = 0.55 * (1 - k);
+    }
+  });
   return (
     <group>
       <mesh position={[0, -0.08, 0]} receiveShadow><boxGeometry args={[2.1, 0.16, 2.1]} /><meshStandardMaterial color="#5a3104" roughness={0.8} /></mesh>
       {count ? (
-        <instancedMesh key={count} ref={mesh} args={[undefined, undefined, count]}>
+        <instancedMesh
+          key={count}
+          ref={mesh}
+          args={[undefined, undefined, count]}
+          onPointerMove={(e) => { e.stopPropagation(); const i = e.instanceId ?? -1; if (i !== hovered.current) { hovered.current = i; onHover(i >= 0 && layout?.[i] ? { index: i, size: layout[i]!.size } : null); } }}
+          onPointerOut={() => { hovered.current = -1; onHover(null); }}
+        >
           <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial roughness={0.5} metalness={0.15} />
+          <meshStandardMaterial roughness={0.45} metalness={0.2} emissive="#f7931a" emissiveIntensity={0.08} />
         </instancedMesh>
       ) : null}
+      <mesh ref={shock} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
+        <ringGeometry args={[0.92, 1, 64]} />
+        <meshBasicMaterial color="#7fe7ff" transparent opacity={0.4} depthWrite={false} blending={THREE.AdditiveBlending} />
+      </mesh>
+      <group ref={ring} position={[0, 0.005, 0]}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[1.62, 1.635, 96]} /><meshBasicMaterial color="#7fe7ff" transparent opacity={0.55} /></mesh>
+        {Array.from({ length: 36 }, (_, i) => { const a = (i / 36) * Math.PI * 2; const big = i % 9 === 0; return (
+          <mesh key={i} position={[Math.sin(a) * 1.7, 0, Math.cos(a) * 1.7]} rotation={[0, a, 0]}>
+            <boxGeometry args={[0.008, 0.004, big ? 0.12 : 0.05]} /><meshBasicMaterial color={big ? "#f7931a" : "#7fe7ff"} />
+          </mesh>
+        ); })}
+      </group>
+      <Embers seed={seed} />
       <group ref={motes}>
         {Array.from({ length: epochs }, (_, i) => { const a = (i / epochs) * Math.PI * 2; return (
           <mesh key={i} position={[Math.sin(a) * 1.5, 0.5 + (i % 3) * 0.25, Math.cos(a) * 1.5]}><boxGeometry args={[0.05, 0.05, 0.05]} /><meshStandardMaterial color="#f7931a" emissive="#f7931a" emissiveIntensity={2} /></mesh>
@@ -67,12 +126,105 @@ function BitmapPedestal({ seed, accent }: { seed: number; accent: string }) {
   );
 }
 
-function ParcelHud({ height }: { height: number }) {
+/** Hash embers: orange sparks rising off the land, seeded by the block. */
+function Embers({ seed, n = 140 }: { seed: number; n?: number }) {
+  const geo = useMemo(() => {
+    let a = (seed * 2654435761) >>> 0;
+    const r = () => ((a = (a * 1664525 + 1013904223) >>> 0) / 4294967296);
+    const pos = new Float32Array(n * 3), meta = new Float32Array(n * 2);
+    for (let i = 0; i < n; i++) {
+      pos[i * 3] = (r() - 0.5) * 2; pos[i * 3 + 1] = r() * 2.4; pos[i * 3 + 2] = (r() - 0.5) * 2;
+      meta[i * 2] = 0.15 + r() * 0.35; meta[i * 2 + 1] = r() * Math.PI * 2;
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    g.userData["meta"] = meta;
+    return g;
+  }, [seed, n]);
+  useFrame((_, raw) => {
+    const dt = Math.min(raw, 0.05);
+    const pos = geo.attributes["position"] as THREE.BufferAttribute;
+    const meta = geo.userData["meta"] as Float32Array;
+    const arr = pos.array as Float32Array;
+    for (let i = 0; i < n; i++) {
+      arr[i * 3 + 1]! += meta[i * 2]! * dt;
+      meta[i * 2 + 1]! += dt * 1.3;
+      arr[i * 3]! += Math.sin(meta[i * 2 + 1]!) * dt * 0.05;
+      if (arr[i * 3 + 1]! > 2.4) arr[i * 3 + 1] = 0;
+    }
+    pos.needsUpdate = true;
+  });
+  return (
+    <points geometry={geo}>
+      <pointsMaterial size={0.035} color="#ffb45a" transparent opacity={0.85} depthWrite={false} blending={THREE.AdditiveBlending} sizeAttenuation />
+    </points>
+  );
+}
+
+/** Idle life: breathing, a slow head-sway and a crouch-and-rise on every surge. */
+function Breathing({ children }: { children: React.ReactNode }) {
+  const g = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    if (!g.current) return;
+    const t = clock.elapsedTime, k = (t % PULSE) / PULSE;
+    const surge = k < 0.12 ? Math.sin((k / 0.12) * Math.PI) : 0;
+    const breath = Math.sin(t * 1.6) * 0.018;
+    g.current.scale.set(1 + breath * 0.6, 1 + breath - surge * 0.05, 1 + breath * 0.6);
+    g.current.rotation.y = Math.sin(t * 0.45) * 0.12;
+    g.current.rotation.z = Math.sin(t * 0.7) * 0.02;
+    g.current.position.y = surge * 0.04;
+  });
+  return <group ref={g}>{children}</group>;
+}
+
+/** Lens flash: a full-frame additive veil that pops on every surge. */
+function SurgeFlash() {
+  const m = useRef<THREE.Mesh>(null);
+  useFrame(({ clock, camera }) => {
+    if (!m.current) return;
+    const k = (clock.elapsedTime % PULSE) / PULSE;
+    m.current.position.copy(camera.position).add(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(0.5));
+    m.current.quaternion.copy(camera.quaternion);
+    (m.current.material as THREE.MeshBasicMaterial).opacity = k < 0.08 ? 0.22 * (1 - k / 0.08) : 0;
+  });
+  return (
+    <mesh ref={m} renderOrder={999}>
+      <planeGeometry args={[4, 4]} />
+      <meshBasicMaterial color="#cfefff" transparent opacity={0} depthTest={false} depthWrite={false} blending={THREE.AdditiveBlending} />
+    </mesh>
+  );
+}
+
+const SHOTS = {
+  HERO: { pos: [1.6, 0.9, 2.4], auto: true },
+  MAP: { pos: [0.01, 4.2, 0.01], auto: false },
+  DETAIL: { pos: [0.9, 1.3, 1.4], auto: true },
+} as const;
+type Shot = keyof typeof SHOTS;
+
+function CameraRig({ shot }: { shot: Shot }) {
+  const until = useRef(0);
+  const target = useMemo(() => new THREE.Vector3(...SHOTS[shot].pos), [shot]);
+  useEffect(() => { until.current = -1; }, [shot]);
+  useFrame(({ camera, clock }) => {
+    if (until.current < 0) until.current = clock.elapsedTime + 1.1;
+    if (clock.elapsedTime < until.current) {
+      camera.position.lerp(target, 0.09);
+      camera.lookAt(0, shot === "DETAIL" ? 0.2 : -0.2, 0);
+    }
+  });
+  return null;
+}
+
+function ParcelHud({ height, hover }: { height: number; hover: Hover }) {
   const { data, isError } = useQuery(blockSizeMapQuery(height));
   return (
-    <p className="pointer-events-none absolute bottom-2 left-2 font-mono text-[10px] text-bitcoin" data-no-translate>
-      {data?.classes?.length ? `${height}.BITMAP · ${data.classes.length.toLocaleString()} REAL TX PARCELS` : isError ? "PARCELS UNAVAILABLE" : "READING PARCELS…"}
-    </p>
+    <div className="pointer-events-none absolute bottom-2 left-2 font-mono text-[10px]" data-no-translate>
+      {hover ? <p className="text-signal">TX #{hover.index.toLocaleString()} · SIZE CLASS {hover.size} / 8</p> : null}
+      <p className="text-bitcoin">
+        {data?.classes?.length ? `${height}.BITMAP · ${data.classes.length.toLocaleString()} REAL TX PARCELS` : isError ? "PARCELS UNAVAILABLE" : "READING PARCELS…"}
+      </p>
+    </div>
   );
 }
 
@@ -92,22 +244,41 @@ function SurgeHud() {
 }
 
 export function GuardianTurntable({ dna, className = "h-56" }: { dna: Pick<GuardianDna, "species" | "rarity" | "body" | "accent"> & { height?: number }; className?: string }) {
+  const [shot, setShot] = useState<Shot>("HERO");
+  const [hover, setHover] = useState<Hover>(null);
   return (
     <div className={`${className} relative w-full border border-border bg-background`}>
       <ClientOnly fallback={<div className="grid size-full place-items-center font-mono text-[10px] text-muted-foreground">LOADING…</div>}>
         <SafeCanvas dpr={[1, 1.5]} camera={{ position: [2.4, 1.9, 2.8], fov: 38 }} gl={{ powerPreference: "low-power" }}>
+          <fog attach="fog" args={["#050505", 4, 9]} />
           <ambientLight intensity={0.7} />
           <directionalLight position={[3, 5, 2]} intensity={1.4} />
           <pointLight position={[0, 1, 2]} intensity={0.6} color={dna.accent} />
           <group position={[0, -0.8, 0]}>
-            <GuardianBody species={dna.species} rarity={dna.rarity} body={dna.body} accent={dna.accent} height={dna.height} />
-            <BitmapPedestal seed={dna.height ?? 0} accent={dna.accent} />
+            <Breathing>
+              <GuardianBody species={dna.species} rarity={dna.rarity} body={dna.body} accent={dna.accent} height={dna.height} />
+            </Breathing>
+            <BitmapPedestal seed={dna.height ?? 0} accent={dna.accent} onHover={setHover} />
           </group>
-          <OrbitControls enablePan={false} autoRotate autoRotateSpeed={1.6} minDistance={2} maxDistance={6} />
+          <SurgeFlash />
+          <CameraRig shot={shot} />
+          <OrbitControls enablePan={false} autoRotate={SHOTS[shot].auto && !hover} autoRotateSpeed={1.6} minDistance={1.2} maxDistance={6} />
         </SafeCanvas>
       </ClientOnly>
       <SurgeHud />
-      {dna.height != null ? <ParcelHud height={dna.height} /> : null}
+      {dna.height != null ? <ParcelHud height={dna.height} hover={hover} /> : null}
+      <div className="absolute right-2 top-2 flex gap-1 font-mono text-[9px]">
+        {(Object.keys(SHOTS) as Shot[]).map((k) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => setShot(k)}
+            className={`border px-1.5 py-0.5 ${shot === k ? "border-signal text-signal" : "border-border text-muted-foreground hover:text-foreground"}`}
+          >
+            {k}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
