@@ -30,3 +30,4 @@
 - Direct-to-shield mints bind the note to the inscription's one-time commit address plus a device-held claim secret, accepting only a reveal that spends it and pays output 0 to the pool.
 
 - Guardian collection visuals come from morphFromDna (src/lib/creature-morph.ts) via GuardianBody height prop; species only sets ability/lore line. Why: one block-derived design per BITMAP everywhere.
+- Marketplace buys take a 90s server-side checkout hold (reserve_offer RPC, service-role only) before building the PSBT; submit requires the live hold. Why: snipe protection without exposing seller PSBTs.

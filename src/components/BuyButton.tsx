@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { mascotReact } from "@/lib/mascot";
-import { buildPurchaseFn, submitPurchaseFn } from "@/lib/purchase.functions";
+import { useEffect, useRef, useState } from "react";
+import { buildPurchaseFn, releasePurchaseReservationFn, submitPurchaseFn } from "@/lib/purchase.functions";
 import {
   WALLET_LABEL,
   WALLET_PROVIDER_STORAGE_KEY,
@@ -49,6 +50,15 @@ export function BuyButton({
   className?: string;
 }) {
   const queryClient = useQueryClient();
+  const [lockUntil, setLockUntil] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const holdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (lockUntil === null) return;
+    const t = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(t);
+  }, [lockUntil]);
+  const secondsLeft = lockUntil ? Math.max(0, Math.ceil((lockUntil - now) / 1000)) : 0;
 
   const buy = useMutation({
     mutationFn: async () => {
@@ -65,6 +75,11 @@ export function BuyButton({
             : {}),
         },
       });
+      holdRef.current = wallet.ordinalsAddress;
+      if (quote.reservedUntil) {
+        setNow(Date.now());
+        setLockUntil(new Date(quote.reservedUntil).getTime());
+      }
       toast(`SIGN PURCHASE IN ${WALLET_LABEL[wallet.provider]}`, {
         description: `${formatSats(quote.priceSats)} + ${quote.marketFeeSats} SATS MARKET FEE (${MARKETPLACE_FEE_PERCENT}%) + ${quote.feeSats} SATS MINER FEE @ ${quote.feeRate} SAT/VB`,
       });
@@ -78,7 +93,9 @@ export function BuyButton({
         data: { offerId, psbt: signed, buyerAddress: wallet.ordinalsAddress },
       });
     },
+    onSettled: () => setLockUntil(null),
     onSuccess: (result) => {
+      holdRef.current = null;
       void queryClient.invalidateQueries({ queryKey: ["offers"] });
       void queryClient.invalidateQueries({ queryKey: ["registry"] });
       void queryClient.invalidateQueries({ queryKey: ["bids"] });
@@ -91,12 +108,22 @@ export function BuyButton({
 
     },
 
-    onError: (e) => toast("BUY FAILED", { description: (e as Error).message.toUpperCase() }),
+    onError: (e) => {
+      const buyer = holdRef.current;
+      holdRef.current = null;
+      if (buyer) void releasePurchaseReservationFn({ data: { offerId, buyerAddress: buyer } }).catch(() => {});
+      void queryClient.invalidateQueries({ queryKey: ["offers"] });
+      toast("BUY FAILED", { description: (e as Error).message.toUpperCase() });
+    },
   });
 
   return (
     <button className={className} disabled={buy.isPending} onClick={() => buy.mutate()}>
-      {buy.isPending ? "[ BUYING… ]" : `[ BUY ${formatSats(priceSats)} ]`}
+      {buy.isPending
+        ? lockUntil
+          ? `[ LOCKED ${secondsLeft}s · SIGN WALLET ]`
+          : "[ RESERVING… ]"
+        : `[ BUY ${formatSats(priceSats)} ]`}
     </button>
   );
 }

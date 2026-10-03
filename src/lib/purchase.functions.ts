@@ -59,3 +59,12 @@ export const submitPurchaseFn = createServerFn({ method: "POST" })
       buyerAddress: data.buyerAddress,
     });
   });
+
+export const releasePurchaseReservationFn = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z.object({ offerId: z.string().uuid(), buyerAddress: addressSchema }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { releaseReservation } = await import("@/lib/purchase.server");
+    return { released: await releaseReservation(data.offerId, data.buyerAddress) };
+  });

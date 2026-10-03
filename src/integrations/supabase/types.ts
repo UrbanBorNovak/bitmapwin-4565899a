@@ -2165,6 +2165,8 @@ export type Database = {
           price_sats: number
           psbt_base64: string
           psbt_hash: string
+          reserved_by: string | null
+          reserved_until: string | null
           seller_address: string | null
           status: string
           updated_at: string
@@ -2184,6 +2186,8 @@ export type Database = {
           price_sats?: number
           psbt_base64: string
           psbt_hash: string
+          reserved_by?: string | null
+          reserved_until?: string | null
           seller_address?: string | null
           status?: string
           updated_at?: string
@@ -2203,6 +2207,8 @@ export type Database = {
           price_sats?: number
           psbt_base64?: string
           psbt_hash?: string
+          reserved_by?: string | null
+          reserved_until?: string | null
           seller_address?: string | null
           status?: string
           updated_at?: string
@@ -4127,6 +4133,18 @@ export type Database = {
         Returns: number
       }
       refresh_coin_leaderboard_public: { Args: never; Returns: undefined }
+      release_offer_reservation: {
+        Args: { _buyer: string; _offer_id: string }
+        Returns: boolean
+      }
+      reserve_offer: {
+        Args: { _buyer: string; _offer_id: string; _seconds?: number }
+        Returns: {
+          ok: boolean
+          reason: string
+          reserved_until: string
+        }[]
+      }
       shadow_claim_pass: {
         Args: { _commitment: string; _slug: string }
         Returns: {

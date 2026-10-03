@@ -103,7 +103,7 @@ async function feeRate(): Promise<number> {
 }
 
 const OFFER_COLUMNS =
-  "id, psbt_base64, bitmap_height, inscription_id, outpoint, seller_address, price_sats, status";
+  "id, psbt_base64, bitmap_height, inscription_id, outpoint, seller_address, price_sats, status, reserved_by, reserved_until";
 
 async function loadOffer(offerId: string) {
   // The seller's signed PSBT is not readable with the publishable key — the
@@ -158,7 +158,32 @@ export type PurchaseQuote = {
   changeSats: number;
   inscriptionValueSats: number;
   fundingInputs: number;
+  /** ISO time this buyer's exclusive checkout hold expires */
+  reservedUntil: string | null;
 };
+
+/** Places (or renews) this buyer's exclusive 90-second checkout hold. */
+async function reserveOffer(offerId: string, buyer: string): Promise<string | null> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin.rpc("reserve_offer", {
+    _offer_id: offerId,
+    _buyer: buyer,
+    _seconds: 90,
+  });
+  if (error) throw new Error("Could not reserve this listing — try again");
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row?.ok) throw new Error(row?.reason ?? "Listing is not available");
+  return row.reserved_until ?? null;
+}
+
+export async function releaseReservation(offerId: string, buyer: string): Promise<boolean> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin.rpc("release_offer_reservation", {
+    _offer_id: offerId,
+    _buyer: buyer,
+  });
+  return data === true;
+}
 
 /** Builds the buyer half of the sale PSBT against the buyer's live UTXO set. */
 export async function buildPurchase(input: {
@@ -173,6 +198,9 @@ export async function buildPurchase(input: {
   if (offer.seller_address && offer.seller_address === input.buyerOrdinalsAddress) {
     throw new Error("This is your own listing");
   }
+
+  // Snipe protection: claim an exclusive checkout window before anything else.
+  const reservedUntil = await reserveOffer(offer.id, input.buyerOrdinalsAddress);
 
   const [txidHex, voutRaw] = offer.outpoint.split(":");
   if (!txidHex || voutRaw === undefined) throw new Error("Offer has a malformed outpoint");
@@ -241,6 +269,7 @@ export async function buildPurchase(input: {
     changeSats: built.changeSats,
     inscriptionValueSats,
     fundingInputs: built.usedFunding.length,
+    reservedUntil,
   };
 }
 
@@ -263,6 +292,16 @@ export async function submitPurchase(input: {
   buyerAddress: string;
 }): Promise<PurchaseSubmission> {
   const offer = await loadOffer(input.offerId);
+  if (offer.status !== "open") throw new Error("This offer is no longer open");
+  const holder = (offer as { reserved_by?: string | null }).reserved_by ?? null;
+  const until = (offer as { reserved_until?: string | null }).reserved_until ?? null;
+  const live = until !== null && new Date(until).getTime() > Date.now();
+  if (live && holder !== input.buyerAddress) {
+    throw new Error("Listing is reserved by another buyer");
+  }
+  if (!live || holder !== input.buyerAddress) {
+    throw new Error("Your checkout hold expired — press Buy again to start a new one");
+  }
   const clean = input.psbtBase64.replace(/\s+/g, "");
   const finalized = finalizeSignedPsbt(clean);
 
@@ -343,6 +382,8 @@ export async function submitPurchase(input: {
       buyer_txid: result.txid,
       delivered_at: new Date().toISOString(),
       status: "spent",
+      reserved_by: null,
+      reserved_until: null,
     })
     .eq("id", offer.id);
   if (error) throw new Error(error.message);
