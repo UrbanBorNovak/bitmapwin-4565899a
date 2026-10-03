@@ -65,6 +65,7 @@ import { Route as CodexBestiaryRouteImport } from './routes/codex.bestiary'
 import { Route as CodexMorphsRouteImport } from './routes/codex.morphs'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
 import { Route as CollectionsClubRouteImport } from './routes/collections.$club'
+import { Route as CollectionsGuardiansRouteImport } from './routes/collections.guardians'
 import { Route as CollectionsJigglypuffRouteImport } from './routes/collections.jigglypuff'
 import { Route as DistrictSlugRouteImport } from './routes/district.$slug'
 import { Route as ExtendersIndexRouteImport } from './routes/extenders.index'
@@ -387,6 +388,11 @@ const CollectionsClubRoute = CollectionsClubRouteImport.update({
   path: '/$club',
   getParentRoute: () => CollectionsRoute,
 } as any)
+const CollectionsGuardiansRoute = CollectionsGuardiansRouteImport.update({
+  id: '/guardians',
+  path: '/guardians',
+  getParentRoute: () => CollectionsRoute,
+} as any)
 const CollectionsJigglypuffRoute = CollectionsJigglypuffRouteImport.update({
   id: '/jigglypuff',
   path: '/jigglypuff',
@@ -645,6 +651,7 @@ export interface FileRoutesByFullPath {
   '/codex/bestiary': typeof CodexBestiaryRoute
   '/codex/morphs': typeof CodexMorphsRoute
   '/collections/$club': typeof CollectionsClubRoute
+  '/collections/guardians': typeof CollectionsGuardiansRoute
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
@@ -739,6 +746,7 @@ export interface FileRoutesByTo {
   '/codex/bestiary': typeof CodexBestiaryRoute
   '/codex/morphs': typeof CodexMorphsRoute
   '/collections/$club': typeof CollectionsClubRoute
+  '/collections/guardians': typeof CollectionsGuardiansRoute
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
@@ -838,6 +846,7 @@ export interface FileRoutesById {
   '/codex/bestiary': typeof CodexBestiaryRoute
   '/codex/morphs': typeof CodexMorphsRoute
   '/collections/$club': typeof CollectionsClubRoute
+  '/collections/guardians': typeof CollectionsGuardiansRoute
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
@@ -938,6 +947,7 @@ export interface FileRouteTypes {
     | '/codex/bestiary'
     | '/codex/morphs'
     | '/collections/$club'
+    | '/collections/guardians'
     | '/collections/jigglypuff'
     | '/district/$slug'
     | '/extenders/$slug'
@@ -1032,6 +1042,7 @@ export interface FileRouteTypes {
     | '/codex/bestiary'
     | '/codex/morphs'
     | '/collections/$club'
+    | '/collections/guardians'
     | '/collections/jigglypuff'
     | '/district/$slug'
     | '/extenders/$slug'
@@ -1130,6 +1141,7 @@ export interface FileRouteTypes {
     | '/codex/bestiary'
     | '/codex/morphs'
     | '/collections/$club'
+    | '/collections/guardians'
     | '/collections/jigglypuff'
     | '/district/$slug'
     | '/extenders/$slug'
@@ -1633,6 +1645,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CollectionsClubRouteImport
       parentRoute: typeof CollectionsRoute
     }
+    '/collections/guardians': {
+      id: '/collections/guardians'
+      path: '/guardians'
+      fullPath: '/collections/guardians'
+      preLoaderRoute: typeof CollectionsGuardiansRouteImport
+      parentRoute: typeof CollectionsRoute
+    }
     '/collections/jigglypuff': {
       id: '/collections/jigglypuff'
       path: '/jigglypuff'
@@ -1959,12 +1978,14 @@ const ApiRouteWithChildren = ApiRoute._addFileChildren(ApiRouteChildren)
 
 interface CollectionsRouteChildren {
   CollectionsClubRoute: typeof CollectionsClubRoute
+  CollectionsGuardiansRoute: typeof CollectionsGuardiansRoute
   CollectionsJigglypuffRoute: typeof CollectionsJigglypuffRoute
   CollectionsIndexRoute: typeof CollectionsIndexRoute
 }
 
 const CollectionsRouteChildren: CollectionsRouteChildren = {
   CollectionsClubRoute: CollectionsClubRoute,
+  CollectionsGuardiansRoute: CollectionsGuardiansRoute,
   CollectionsJigglypuffRoute: CollectionsJigglypuffRoute,
   CollectionsIndexRoute: CollectionsIndexRoute,
 }
