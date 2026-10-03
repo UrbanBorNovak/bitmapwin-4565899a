@@ -29,6 +29,7 @@ import { Route as ExperiencesRouteImport } from './routes/experiences'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as ExtendRouteImport } from './routes/extend'
 import { Route as ExtendersRouteImport } from './routes/extenders'
+import { Route as GuardiansRouteImport } from './routes/guardians'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as Land101RouteImport } from './routes/land-101'
@@ -205,6 +206,11 @@ const ExtendRoute = ExtendRouteImport.update({
 const ExtendersRoute = ExtendersRouteImport.update({
   id: '/extenders',
   path: '/extenders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuardiansRoute = GuardiansRouteImport.update({
+  id: '/guardians',
+  path: '/guardians',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoryRoute = HistoryRouteImport.update({
@@ -617,6 +623,7 @@ export interface FileRoutesByFullPath {
   '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
   '/extenders': typeof ExtendersRouteWithChildren
+  '/guardians': typeof GuardiansRoute
   '/history': typeof HistoryRoute
   '/inventory': typeof InventoryRoute
   '/land-101': typeof Land101Route
@@ -714,6 +721,7 @@ export interface FileRoutesByTo {
   '/experiences': typeof ExperiencesRoute
   '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
+  '/guardians': typeof GuardiansRoute
   '/history': typeof HistoryRoute
   '/inventory': typeof InventoryRoute
   '/land-101': typeof Land101Route
@@ -812,6 +820,7 @@ export interface FileRoutesById {
   '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
   '/extenders': typeof ExtendersRouteWithChildren
+  '/guardians': typeof GuardiansRoute
   '/history': typeof HistoryRoute
   '/inventory': typeof InventoryRoute
   '/land-101': typeof Land101Route
@@ -913,6 +922,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/extend'
     | '/extenders'
+    | '/guardians'
     | '/history'
     | '/inventory'
     | '/land-101'
@@ -1010,6 +1020,7 @@ export interface FileRouteTypes {
     | '/experiences'
     | '/explore'
     | '/extend'
+    | '/guardians'
     | '/history'
     | '/inventory'
     | '/land-101'
@@ -1107,6 +1118,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/extend'
     | '/extenders'
+    | '/guardians'
     | '/history'
     | '/inventory'
     | '/land-101'
@@ -1207,6 +1219,7 @@ export interface RootRouteChildren {
   ExploreRoute: typeof ExploreRoute
   ExtendRoute: typeof ExtendRoute
   ExtendersRoute: typeof ExtendersRouteWithChildren
+  GuardiansRoute: typeof GuardiansRoute
   HistoryRoute: typeof HistoryRoute
   InventoryRoute: typeof InventoryRoute
   Land101Route: typeof Land101Route
@@ -1391,6 +1404,13 @@ declare module '@tanstack/react-router' {
       path: '/extenders'
       fullPath: '/extenders'
       preLoaderRoute: typeof ExtendersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guardians': {
+      id: '/guardians'
+      path: '/guardians'
+      fullPath: '/guardians'
+      preLoaderRoute: typeof GuardiansRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/history': {
@@ -2081,6 +2101,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExploreRoute: ExploreRoute,
   ExtendRoute: ExtendRoute,
   ExtendersRoute: ExtendersRouteWithChildren,
+  GuardiansRoute: GuardiansRoute,
   HistoryRoute: HistoryRoute,
   InventoryRoute: InventoryRoute,
   Land101Route: Land101Route,
