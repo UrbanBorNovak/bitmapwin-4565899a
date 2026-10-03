@@ -35,15 +35,22 @@ export const Route = createFileRoute("/guardians")({
   component: GuardiansPromo,
 });
 
-const SPECS: [string, string][] = [
-  ["SUPPLY", "ONE PER BLOCK, EVER — CAPPED BY BITCOIN ITSELF"],
-  ["PARENT", "THE FIRST-IS-FIRST <HEIGHT>.BITMAP + V6 MASTER"],
-  ["RENDERER", "TAG 11 DELEGATE → ONE V6 MASTER INSCRIPTION"],
-  ["ENGINE", "12,132 BYTES · BROTLI · ZERO EXTERNAL FILES"],
-  ["TRIBUTE", `${TRIBUTE_SATS.toLocaleString()} SATS, CHECKED ON CHAIN`],
-  ["SHIELDED MINT", `${GUARDIAN_PRICE_SATS.toLocaleString()} SATS + NETWORK FEE`],
-  ["METADATA", "NONE OFF-CHAIN — EVERY TRAIT READ FROM THE BLOCK"],
-  ["STORAGE", "100% BITCOIN L1 · NO IPFS · NO SERVERS"],
+const SPECS: [string, string, string][] = [
+  ["SUPPLY", "1 PER BITCOIN BLOCK", "Hard ceiling set by Bitcoin itself. The first paid Guardian for a block is the only one, ever."],
+  ["PARENTS", "DUAL TAG 3", "The first-is-first <height>.bitmap, checked against the on-chain Bitmap index, plus the V6 master."],
+  ["RENDERER", "TAG 11 DELEGATE", "Every Guardian borrows one master inscription (#127,507,146). The code is inscribed once, never copied."],
+  ["DNA", "READ FROM THE BLOCK", "Hash, transaction count, size and era decide body, colours, stats and rarity. Same block, same creature."],
+  ["TRIBUTE", `${TRIBUTE_SATS.toLocaleString()} SATS · PROVEN`, "The engine decodes the reveal transaction itself and only wakes if the tribute output is really there."],
+  ["SHIELDED MINT", `${GUARDIAN_PRICE_SATS.toLocaleString()} SATS + FEE`, "Optional route into BITMAPWIN's own pool. Withdraw any time with your browser-held key."],
+  ["METADATA", "ZERO OFF-CHAIN", "No JSON, no trait files. Every trait is computed live from Bitcoin data."],
+  ["STORAGE", "100% BITCOIN L1", "No IPFS, no CDN, no servers. If ordinals.com and Bitcoin exist, the Guardian exists."],
+];
+
+const ENGINE: [string, string][] = [
+  ["12 KB OF LIFE", "Voxel body, animation, lighting, voice, camera mode and 3D export packed into 12,132 bytes with Brotli — 32 KB unpacked, zero outside files."],
+  ["SELF-VERIFYING", "On load it reads its own parents and transaction from Bitcoin. A copied parent turns it to grey stone; a missing tribute keeps it a sleeping relic."],
+  ["A BITCOIN CLOCK", "Every 10 minutes it asks the chain for the latest block. Age, epochs survived and halvings witnessed grow on its crest as orange sparks."],
+  ["VOICE FROM THE HASH", "Roars and hums are synthesized in the browser from the block's hash — no sound files, no two alike."],
 ];
 
 const FEATURES: [string, string][] = [
@@ -144,14 +151,35 @@ function GuardiansPromo() {
       {/* Specs */}
       <section className="mt-12">
         <h2 className="display text-2xl md:text-3xl">COLLECTION <span className="text-bitcoin">SPECS</span></h2>
-        <dl className="mt-4 grid gap-px overflow-hidden rounded-md border border-border bg-border md:grid-cols-2">
-          {SPECS.map(([k, v]) => (
-            <div key={k} className="flex justify-between gap-4 bg-card px-4 py-3">
+        <dl className="mt-4 grid gap-px overflow-hidden rounded-md border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
+          {SPECS.map(([k, v, note]) => (
+            <div key={k} className="bg-card p-4">
               <dt className="label text-muted-foreground">{k}</dt>
-              <dd className="text-right font-mono text-xs">{v}</dd>
+              <dd className="display mt-1 text-lg text-bitcoin">{v}</dd>
+              <p className="mt-2 text-xs text-muted-foreground">{note}</p>
             </div>
           ))}
         </dl>
+      </section>
+
+      {/* Engine */}
+      <section className="mt-12 panel rounded-md border border-signal/50 p-5">
+        <p className="label text-signal">V6 MASTER ENGINE · #127,507,146</p>
+        <h2 className="display mt-2 text-2xl md:text-3xl">ONE INSCRIPTION. <span className="text-bitcoin">EVERY GUARDIAN.</span></h2>
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+          The whole collection runs on a single program written to Bitcoin. Each Guardian is a tiny pointer to it, so the engine draws, checks and animates every creature straight from chain data.
+        </p>
+        <div className="mt-4 grid gap-3 md:grid-cols-4">
+          {ENGINE.map(([t, b]) => (
+            <div key={t} className="border border-border p-4">
+              <p className="display text-base text-signal">{t}</p>
+              <p className="mt-2 text-xs text-muted-foreground">{b}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-4 font-mono text-[10px] text-muted-foreground" data-no-translate>
+          12,132 B BROTLI · 32,380 B RAW · TEXT/HTML · CONTENT-ENCODING BR · V5 + V1 STILL ACCEPTED
+        </p>
       </section>
 
       {/* Features */}
