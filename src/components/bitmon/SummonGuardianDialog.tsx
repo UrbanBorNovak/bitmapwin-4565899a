@@ -14,6 +14,8 @@ import { ShadowInscriber, type ArtifactVariant } from "@/components/territory/Sh
 import { ShieldedGuardianMint } from "@/components/bitmon/ShieldedGuardianMint";
 import { RARITY_TONE, bip21, guardianArtifactSvg, guardianLevel, guardianShieldDigest, GUARDIAN_PRICE_SATS, type GuardianDna } from "@/lib/bitmon";
 import { morphFromDna } from "@/lib/creature-morph";
+import { blockSizeMapQuery } from "@/lib/block-bytes";
+import { packParcels } from "@/components/TerritoryCanvas";
 import { guardianArtifactHtml, guardianHoloCardSvg } from "@/lib/guardian-artifact";
 
 import { guardianDnaQuery, guardianQuery } from "@/lib/bitmon-queries";
@@ -21,24 +23,40 @@ import { checkSummonOrderFn, createSummonOrderFn, resumeSummonOrderFn } from "@/
 import type { SummonOrder } from "@/lib/bitmon.server";
 import { playSfx } from "@/lib/world-audio";
 
-/** V6-style orange BITMAP slab with packed transaction tiles and orbiting epoch motes. */
+/** The Guardian's own BITMAP: its block's real transactions, one extruded parcel each, packed in block order. */
+const PARCEL_TONES = ["#ffb45a", "#f7931a", "#e6810e", "#c96d08", "#a95a06"].map((c) => new THREE.Color(c));
 function BitmapPedestal({ seed, accent }: { seed: number; accent: string }) {
-  const tiles = useMemo(() => {
-    let a = (seed * 2654435761) >>> 0 || 7;
-    const r = () => ((a = (a * 1664525 + 1013904223) >>> 0) / 4294967296);
-    const out: [number, number, number, string][] = [];
-    for (let x = 0; x < 8; x++) for (let z = 0; z < 8; z++) if (r() > 0.25) out.push([(x - 3.5) * 0.25, (z - 3.5) * 0.25, 0.02 + r() * 0.05, r() > 0.8 ? "#ffb03a" : "#e07a10"]);
-    return out;
-  }, [seed]);
+  const { data } = useQuery({ ...blockSizeMapQuery(seed), enabled: seed >= 0 });
+  const packed = useMemo(() => (data?.classes?.length ? packParcels(data.classes) : null), [data]);
+  const mesh = useRef<THREE.InstancedMesh>(null);
+  const count = packed?.parcels.length ?? 0;
+  useEffect(() => {
+    const m = mesh.current;
+    if (!m || !packed) return;
+    const k = 2 / packed.grid, half = packed.grid / 2, o = new THREE.Object3D();
+    packed.parcels.forEach((p, i) => {
+      const h = 0.02 + Math.min(0.25, (p.size * p.size) * 0.006);
+      o.position.set((p.x + p.size / 2 - half) * k, h / 2, (p.y + p.size / 2 - half) * k);
+      o.scale.set(p.size * k * 0.88, h, p.size * k * 0.88);
+      o.updateMatrix();
+      m.setMatrixAt(i, o.matrix);
+      m.setColorAt(i, PARCEL_TONES[Math.min(4, p.size - 1)]!);
+    });
+    m.instanceMatrix.needsUpdate = true;
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+  }, [packed]);
   const motes = useRef<THREE.Group>(null);
   const epochs = Math.max(1, Math.min(16, Math.floor(Math.max(0, 969_000 - seed) / 2016 / 8)));
   useFrame(({ clock }) => { if (motes.current) motes.current.rotation.y = clock.elapsedTime * 0.25; });
   return (
     <group>
-      <mesh position={[0, -0.08, 0]} receiveShadow><boxGeometry args={[2.1, 0.16, 2.1]} /><meshStandardMaterial color="#c86d08" roughness={0.7} /></mesh>
-      {tiles.map(([x, z, h, c], i) => (
-        <mesh key={i} position={[x, h / 2, z]}><boxGeometry args={[0.22, h, 0.22]} /><meshStandardMaterial color={c} roughness={0.5} /></mesh>
-      ))}
+      <mesh position={[0, -0.08, 0]} receiveShadow><boxGeometry args={[2.1, 0.16, 2.1]} /><meshStandardMaterial color="#5a3104" roughness={0.8} /></mesh>
+      {count ? (
+        <instancedMesh key={count} ref={mesh} args={[undefined, undefined, count]}>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial roughness={0.5} metalness={0.15} />
+        </instancedMesh>
+      ) : null}
       <group ref={motes}>
         {Array.from({ length: epochs }, (_, i) => { const a = (i / epochs) * Math.PI * 2; return (
           <mesh key={i} position={[Math.sin(a) * 1.5, 0.5 + (i % 3) * 0.25, Math.cos(a) * 1.5]}><boxGeometry args={[0.05, 0.05, 0.05]} /><meshStandardMaterial color="#f7931a" emissive="#f7931a" emissiveIntensity={2} /></mesh>
@@ -46,6 +64,15 @@ function BitmapPedestal({ seed, accent }: { seed: number; accent: string }) {
       </group>
       <pointLight position={[0, 0.3, 0]} color={accent} intensity={0.8} distance={3} />
     </group>
+  );
+}
+
+function ParcelHud({ height }: { height: number }) {
+  const { data, isError } = useQuery(blockSizeMapQuery(height));
+  return (
+    <p className="pointer-events-none absolute bottom-2 left-2 font-mono text-[10px] text-bitcoin" data-no-translate>
+      {data?.classes?.length ? `${height}.BITMAP · ${data.classes.length.toLocaleString()} REAL TX PARCELS` : isError ? "PARCELS UNAVAILABLE" : "READING PARCELS…"}
+    </p>
   );
 }
 
@@ -80,6 +107,7 @@ export function GuardianTurntable({ dna, className = "h-56" }: { dna: Pick<Guard
         </SafeCanvas>
       </ClientOnly>
       <SurgeHud />
+      {dna.height != null ? <ParcelHud height={dna.height} /> : null}
     </div>
   );
 }
