@@ -448,6 +448,12 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
           {already || celebrate ? (
             <div className="space-y-2">
               <p className="font-mono text-xs text-bitcoin">THIS GUARDIAN IS AWAKE AND PATROLS {height}.BITMAP IN THE OASIS.</p>
+              <div className="border border-signal/60 p-2">
+                <p className="font-mono text-[11px] text-signal">NEXT · INSCRIBE IT AS AN ON-CHAIN CHILD OF {height}.BITMAP</p>
+                <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+                  THE SUMMON WOKE IT IN THE APP ONLY. TO JOIN THE COLLECTION AND BE LISTABLE, THE {height}.BITMAP HOLDER INSCRIBES A CHILD OF THAT BITMAP BELOW (TO MY WALLET) OR WITH THE HOLDER SUMMON ON THE MINT PAGE.
+                </p>
+              </div>
               {already ? <p className="font-mono text-[10px] text-muted-foreground">SUMMONED BY {already.owner.slice(0, 8)}…{already.owner.slice(-6)} · TX {already.txid.slice(0, 10)}…</p> : null}
               <Link to="/oasis" search={{ height }} className="inline-block border border-bitcoin px-3 py-2 font-mono text-xs text-bitcoin hover:bg-bitcoin hover:text-background">SEE IT IN THE OASIS →</Link>
               {guardianArtifact && guardianDigest ? (
