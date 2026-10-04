@@ -16,7 +16,6 @@ import { RARITY_TONE, bip21, guardianArtifactSvg, guardianLevel, guardianShieldD
 import { morphFromDna } from "@/lib/creature-morph";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { packParcels } from "@/components/TerritoryCanvas";
-import { guardianArtifactHtml, guardianHoloCardSvg } from "@/lib/guardian-artifact";
 
 import { guardianDnaQuery, guardianQuery } from "@/lib/bitmon-queries";
 import { checkSummonOrderFn, createSummonOrderFn, resumeSummonOrderFn } from "@/lib/bitmon.functions";
