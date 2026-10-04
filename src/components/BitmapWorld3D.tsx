@@ -170,6 +170,8 @@ import { WeatherLighting, WorldWeather } from "@/components/game/WorldWeather";
 import { LandPerksHud } from "@/components/game/LandPerksHud";
 import { HuntPanel } from "@/components/codex/HuntPanel";
 import { OasisDiscovery } from "@/components/game/OasisDiscovery";
+import { GuardianEncounterHud } from "@/components/game/GuardianEncounterHud";
+import { strideJump, strideSpeed } from "@/lib/guardian-encounter";
 import { AirdropBeacon } from "@/components/game/AirdropBeacon";
 import { AirdropHud } from "@/components/game/AirdropHud";
 
@@ -1970,8 +1972,8 @@ function PlayerCameraRig({
       // quick, forest is slow, high ground lifts a jump further.
       noteStanding(player.x, player.z);
       const perks = standingLand().landscape.effects;
-      intent.speedScale = walkMultiplier() * perks.speed * skillSpeed();
-      intent.jumpScale = perks.jump;
+      intent.speedScale = walkMultiplier() * perks.speed * skillSpeed() * strideSpeed();
+      intent.jumpScale = perks.jump * strideJump();
       // A raised weapon trades speed for accuracy, preventing full-speed ADS
       // strafing and giving first-person combat deliberate tactical weight.
       if (mode === "first") intent.speedScale *= 1 - aimState.amount * 0.32;
@@ -4648,6 +4650,7 @@ function BitmapWorld3DInner({
         {/* THE LAND YOU STAND ON — landscape and the perks it is granting. */}
         {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <LandPerksHud /> : null}
         {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <HuntPanel compact /> : null}
+        {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <GuardianEncounterHud /> : null}
         {exploring ? <OasisDiscovery pose={pose} unit={AVATAR_U} showTracker={!inventoryOpen && !buildOpen && !mapOpen} /> : null}
         {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <AirdropHud pose={pose} unit={AVATAR_U} block={tipHeight} /> : null}
 
