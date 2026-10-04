@@ -339,7 +339,7 @@ function tickerHud(w,h){chainHud(w,h);
     g.strokeStyle="#f7931a";g.lineWidth=1.5;g.stroke()}
   txt("ALL SALES ADDED UP \u00B7 "+(tot?tot.toLocaleString()+" SATS":"WAITING FOR THE FIRST SALE"),pad,gy+gh+small*1.3,small*.75,"#3fe0d0",.85);
   if(typeof GMASTER!=="undefined"){var ch=G?G.h:"";
-    if(GMASTER)txt("CURRENT GUARDIAN MASTER \u00B7 "+GMASTER.toUpperCase()+"."+ch+".BITMAP",pad,gy+gh+small*2.8,small*.85,"#f7931a",.95);
+    if(GMASTER)txt("CURRENT GUARDIAN MASTER \u00B7 "+GMASTER.toUpperCase(),pad,gy+gh+small*2.8,small*.85,"#f7931a",.95);
     else txt("GUARDIAN MASTER \u00B7 "+(SKFOR?"UNCLAIMED":"SCANNING\u2026"),pad,gy+gh+small*2.8,small*.75,"#8a949c",.7)}
 }
 /* ================= /V7 ================= */
