@@ -86,7 +86,13 @@ function GuardianMarket() {
     const volume = sales.reduce((n, s) => n + s.priceSats, 0);
     const last = new Map<string, number>();
     for (const s of sales) if (!last.has(s.inscriptionId)) last.set(s.inscriptionId, s.priceSats);
-    return { floor, volume, listed: open.length, last };
+    const ordered = [...sales].sort((a, b) => b.blockHeight - a.blockHeight);
+    const lastSale = ordered[0] ?? null;
+    const prev = ordered[1] ?? null;
+    const delta = lastSale && prev && prev.priceSats > 0
+      ? Math.round(((lastSale.priceSats - prev.priceSats) / prev.priceSats) * 100)
+      : null;
+    return { floor, volume, listed: open.length, last, lastSale, delta };
   }, [listings.data, sales]);
 
   const chart = useMemo(
@@ -124,11 +130,19 @@ function GuardianMarket() {
         · ONE PER BLOCK · TRADED BY SIGNED PSBT
       </p>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-5">
+      <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         {[
           ["INSCRIBED · TRADABLE", market.isPending ? "…" : String(ids.length)],
           ["OASIS AWAKENED", awakened.data ? awakened.data.length.toLocaleString() : "…"],
           ["ASKING FLOOR", stats.floor ? formatSats(stats.floor) : "NO LISTINGS"],
+          [
+            "LAST SALE",
+            salesUnknown
+              ? "—"
+              : stats.lastSale
+                ? `${formatSats(stats.lastSale.priceSats)} · #${stats.lastSale.blockHeight}${stats.delta !== null ? ` · ${stats.delta >= 0 ? "+" : ""}${stats.delta}%` : ""}`
+                : "NO SALE YET",
+          ],
           ["CONFIRMED VOLUME", salesUnknown ? "—" : stats.volume ? formatSats(stats.volume) : "0 SATS"],
           ["LISTED", `${stats.listed} / ${ids.length}`],
         ].map(([k, v]) => (

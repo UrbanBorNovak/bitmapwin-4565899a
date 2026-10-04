@@ -8,6 +8,7 @@ import { OasisWorldGuard } from "@/components/OasisWorldGuard";
 import { OasisEntry } from "@/components/game/OasisEntry";
 import { ClassSkillBar } from "@/components/game/ClassSkillBar";
 import { GoLiveKick } from "@/components/territory/GoLiveKick";
+import { OasisTradeTicker } from "@/components/game/OasisTradeTicker";
 
 const BitmapWorld3D = lazy(() => import("@/components/BitmapWorld3D").then((module) => ({ default: module.BitmapWorld3D })));
 
@@ -91,6 +92,7 @@ function OasisPage() {
             {...(height === undefined ? {} : { initialHeight: height })}
             legend={<span data-tour="map-legend" className="flex flex-wrap items-center gap-2">{legend}</span>}
           />
+          <OasisTradeTicker />
           <ClassSkillBar />
           <GuardianRadar {...(height === undefined ? {} : { current: height })} />
           <details className="mt-3 border border-border bg-card p-4">
