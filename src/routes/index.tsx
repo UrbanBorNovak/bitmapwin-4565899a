@@ -135,6 +135,7 @@ function Index() {
 
 
 
+                <div className="min-w-0">
                 {lead && (
                   <Link
                     to="/bitmap/$block"
@@ -153,6 +154,7 @@ function Index() {
                   </Link>
                 )}
                 <LatestGuardianCard />
+                </div>
               </div>
             </div>
 

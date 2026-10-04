@@ -27,7 +27,7 @@ export const getBlockCircuit = createServerFn({ method: "GET" })
         if (r.ok) {
           const html = await r.text();
           const ids = [...new Set(html.match(/[0-9a-f]{64}i\d+/g) ?? [])];
-          inscriptions = { ids: ids.slice(0, 100), more: /class=next/.test(html) };
+          inscriptions = { ids: ids.slice(0, 100), more: html.includes(`/inscriptions/block/${data.height}/1`) };
         }
       } catch {
         inscriptions = null;
