@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   GUARDIAN_PRICE_SATS,
   GUARDIAN_TREASURY,
+  GUARDIAN_TREASURIES,
   fetchBlockDnaSource,
   guardianFromBlock,
   guardianLevel,

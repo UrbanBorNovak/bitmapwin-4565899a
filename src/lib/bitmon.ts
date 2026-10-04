@@ -10,6 +10,9 @@ import { sha256 } from "@noble/hashes/sha2.js";
 
 /** Every summon pays the project treasury. */
 export const GUARDIAN_TREASURY = MEMBERSHIP_ADDRESS;
+/** Previous treasury: invoices issued before the switch still settle against it. */
+export const GUARDIAN_LEGACY_TREASURY = "bc1qqmu6el7rxdc2va4kzqexhll6ulmrdkwmcdqkxd";
+export const GUARDIAN_TREASURIES = [GUARDIAN_TREASURY, GUARDIAN_LEGACY_TREASURY];
 /** Base summon price, before the unique sats that identify the payer. */
 export const GUARDIAN_PRICE_SATS = 1_000;
 
