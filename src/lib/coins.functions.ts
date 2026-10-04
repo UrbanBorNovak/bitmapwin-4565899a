@@ -146,3 +146,21 @@ export const claimHuntBountyFn = createServerFn({ method: "POST" })
     if (error) return { ok: false as const, error: "PAYOUT FAILED — TRY AGAIN" };
     return { ok: true as const, already: false, error: null };
   });
+
+/** Offer 10 BIT to an awakened Guardian; the boon itself is applied on the device. */
+export const payGuardianTributeFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ address: addressSchema, height: z.number().int().min(0).max(2_000_000) }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { assertControls, spendBit } = await import("@/lib/coins.server");
+    await assertControls(context.supabase, context.userId, data.address);
+    try {
+      const r = await spendBit({ address: data.address, amount: 10, reason: "guardian_tribute", ref: `guardian:${data.height}:${Date.now()}` });
+      return { ok: true as const, balance: r.balance, error: null };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      return { ok: false as const, balance: null, error: /insufficient|balance/i.test(msg) ? "NOT ENOUGH BIT" : "TRIBUTE FAILED — TRY AGAIN" };
+    }
+  });
