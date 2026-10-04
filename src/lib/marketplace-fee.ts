@@ -7,7 +7,7 @@
  * (their payment), so appending the fee output does not invalidate the offer.
  */
 
-export const MARKETPLACE_FEE_ADDRESS = "bc1qmp0x47twrjududsj9txvdkvv9kmcl6r8u3eteq";
+export const MARKETPLACE_FEE_ADDRESS = "bc1qgunjcn7a7njky4xzj4ahj79cg6muzj4qg5pfpv";
 
 /** 200 basis points = 2% of the sale price. */
 export const MARKETPLACE_FEE_BPS = 200;
