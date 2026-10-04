@@ -146,7 +146,7 @@ function nstep(t){
   var I=[NB.px,NB.py,Math.sin(t*.9)*.6,Math.cos(t*.53)*.6,0,0,0,0],r=NB.r,n=[],i,k;
   for(i=0;i<8;i++){var a=I[i];for(k=0;k<8;k++)a+=NB.W[k][i]*r[k];n.push(r[i]+dt*3*(-r[i]+Math.tanh(a)))}
   NB.r=n;NB.o=[n[5],n[6],Math.max(0,n[7]),n[4]];
-  if(STATE==="AWAKE"&&!MASTER&&n[4]>.85&&t-NB.lr>25&&t>8){NB.lr=t;ACT={k:"roar",t:t}}
+  if(STATE==="AWAKE"&&!MASTER&&n[4]>.85&&t-NB.lr>25&&t>8){NB.lr=t;ACT={k:"roar",t:t};strike()}
 }
 function sense(x,y){NB.px=Math.max(-1,Math.min(1,(x/(W||1)-.5)*2));NB.py=Math.max(-1,Math.min(1,(y/(H||1)-.5)*2))}
 window.addEventListener("mousemove",function(e){sense(e.clientX,e.clientY)});
