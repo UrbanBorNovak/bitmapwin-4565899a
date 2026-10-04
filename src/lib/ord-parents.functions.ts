@@ -12,6 +12,12 @@ export const mintParentsFn = createServerFn({ method: "GET" })
       .object({
         height: z.number().int().min(0).max(999_999),
         holderAddress: z.string().trim().min(14).max(120).optional(),
+        bitmapInscriptionId: z
+          .string()
+          .trim()
+          .toLowerCase()
+          .regex(/^[0-9a-f]{64}i\d+$/)
+          .optional(),
       })
       .parse(input),
   )
@@ -19,13 +25,24 @@ export const mintParentsFn = createServerFn({ method: "GET" })
     const { fetchParentSpend } = await import("@/lib/ord-parents");
     const { bitmapInscriptionFor } = await import("@/lib/land-skin.server");
     const { masterParentSpend, collectionAddress } = await import("@/lib/ord-parents.server");
+    const { isBitmapInscription, scanWalletForBitmap } = await import("@/lib/bitmap-parent-scan.server");
 
     const notes: string[] = [];
     const parents: ParentSpend[] = [];
 
-    const bitmapId = await bitmapInscriptionFor(data.height).catch(() => null);
+    let bitmapId: string | null = null;
+    if (data.bitmapInscriptionId) {
+      // User-supplied id: accept only if its on-chain content is exactly <height>.bitmap.
+      if (await isBitmapInscription(data.bitmapInscriptionId, data.height)) bitmapId = data.bitmapInscriptionId;
+      else notes.push(`THAT INSCRIPTION IS NOT ${data.height}.BITMAP`);
+    }
+    if (!bitmapId && !data.bitmapInscriptionId) bitmapId = await bitmapInscriptionFor(data.height).catch(() => null);
+    if (!bitmapId && !data.bitmapInscriptionId && data.holderAddress) {
+      bitmapId = await scanWalletForBitmap(data.holderAddress, data.height).catch(() => null);
+      if (bitmapId) notes.push(`FOUND ${data.height}.BITMAP IN YOUR WALLET`);
+    }
     if (!bitmapId) {
-      notes.push(`COULD NOT FIND THE INSCRIPTION FOR ${data.height}.BITMAP`);
+      notes.push(`COULD NOT FIND THE INSCRIPTION FOR ${data.height}.BITMAP — PASTE ITS INSCRIPTION ID`);
     } else {
       const spend = await fetchParentSpend(bitmapId.toLowerCase(), "wallet");
       if (!spend) notes.push("COULD NOT LOCATE THAT BITMAP ON CHAIN RIGHT NOW");
