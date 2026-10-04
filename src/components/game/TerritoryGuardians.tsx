@@ -14,11 +14,17 @@ import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { allGuardiansQuery, type AwakeGuardian } from "@/lib/bitmon-queries";
 import { GuardianBody } from "@/components/bitmon/GuardianBody";
 import { SafeHtml } from "@/components/game/SafeHtml";
+import { encounterSnapshot, guardianBite, setNearGuardian } from "@/lib/guardian-encounter";
+
+/** Commune prompt radius, in BITMAP widths. */
+const COMMUNE = 0.35;
+const BITE_RANGE = 0.12;
 
 type Walker = {
   g: AwakeGuardian; hx: number; hz: number; x: number; z: number; yaw: number; brain: FlyBrain; phase: number;
   /** progress 0..4 around the BITMAP's border square */
   lap: number; dir: 1 | -1; roarUntil: number; roarReady: number; inside: boolean;
+  lastRoarReq: number; biteReady: number; lunge: number;
 };
 
 /** Patrol ring: the guardian walks the border of its BITMAP, just inside the edge. */
@@ -67,10 +73,40 @@ const Guardian = memo(function Guardian({ w, unit, pose }: { w: Walker; unit: nu
       setRoaring(true);
     }
     w.inside = close;
+    const enc = encounterSnapshot();
+    // Roar on request from the encounter panel.
+    const req = enc.roarAt[w.g.height] ?? 0;
+    if (req > w.lastRoarReq) {
+      w.lastRoarReq = req;
+      w.roarUntil = t + ROAR_SECONDS;
+      playSfx("beast");
+      setRoaring(true);
+    }
+    const commune = visitorDist < WORLD_CELL * COMMUNE;
+    if (commune) setNearGuardian(w.g);
+    else if (enc.near?.height === w.g.height) setNearGuardian(null);
+    const sparring = enc.spar?.height === w.g.height && !enc.spar.over;
     const isRoaring = t < w.roarUntil;
     if (!isRoaring && roaring) setRoaring(false);
 
-    if (isRoaring && p) {
+    if (sparring && p) {
+      // Friendly spar: face the visitor, close in, lunge and nip.
+      const want = Math.atan2(p.x - w.x, p.z - w.z);
+      const diff = Math.atan2(Math.sin(want - w.yaw), Math.cos(want - w.yaw));
+      w.yaw += diff * (1 - Math.exp(-10 * dt));
+      const reach = WORLD_CELL * BITE_RANGE;
+      if (visitorDist > reach * 0.7) {
+        const sp = unit * (1.2 + w.g.speed / 40);
+        w.x += Math.sin(w.yaw) * sp * dt;
+        w.z += Math.cos(w.yaw) * sp * dt;
+      }
+      if (visitorDist < reach && t >= w.biteReady) {
+        w.biteReady = t + Math.max(0.9, 2.2 - w.g.speed / 60);
+        w.lunge = t;
+        playSfx("beast");
+        guardianBite(4 + w.g.bite / 6);
+      }
+    } else if (isRoaring && p) {
       // Plant the feet and face the intruder.
       const want = Math.atan2(p.x - w.x, p.z - w.z);
       const diff = Math.atan2(Math.sin(want - w.yaw), Math.cos(want - w.yaw));
@@ -107,7 +143,9 @@ const Guardian = memo(function Guardian({ w, unit, pose }: { w: Walker; unit: nu
     if (body.current) {
       // Rear up and swell while roaring.
       const q = isRoaring ? Math.sin(((w.roarUntil - t) / ROAR_SECONDS) * Math.PI) : 0;
-      body.current.rotation.x = -q * 0.35;
+      const l = t - w.lunge < 0.35 ? Math.sin(((t - w.lunge) / 0.35) * Math.PI) : 0;
+      body.current.rotation.x = -q * 0.35 + l * 0.4;
+      body.current.position.z = l * unit * 0.6;
       body.current.scale.setScalar(1 + q * 0.18);
     }
   });
@@ -136,7 +174,7 @@ export const TerritoryGuardians = memo(function TerritoryGuardians({ unit, pose 
         const hz = cellZ(row);
         const lap = (g.height % 400) / 100;
         const [sx, sz] = perimeterPoint(lap, hx, hz, WORLD_CELL * EDGE);
-        return { g, hx, hz, x: sx, z: sz, yaw: 0, brain: createFlyBrain((g.height % 997) / 97), phase: (g.height % 360) * 0.0174, lap, dir: g.height % 2 ? 1 : -1, roarUntil: 0, roarReady: 0, inside: false };
+        return { g, hx, hz, x: sx, z: sz, yaw: 0, brain: createFlyBrain((g.height % 997) / 97), phase: (g.height % 360) * 0.0174, lap, dir: g.height % 2 ? 1 : -1, roarUntil: 0, roarReady: 0, inside: false, lastRoarReq: Date.now(), biteReady: 0, lunge: -9 };
       }),
     [data],
   );
