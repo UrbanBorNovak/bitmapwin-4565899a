@@ -8,6 +8,7 @@ import { collectionListingsQuery } from "@/lib/collection-sales";
 import { formatSats } from "@/lib/trades";
 import { BuyButton } from "@/components/BuyButton";
 import { ShopListButton } from "@/components/builds/ShopListButton";
+import { GuardianBrowser } from "@/components/bitmon/GuardianBrowser";
 
 const PAGE = 12;
 const TITLE = "Block-DNA Guardians Market — BITMAPWIN";
@@ -245,6 +246,8 @@ function GuardianMarket() {
           );
         })}
       </div>
+
+      <GuardianBrowser />
 
       <h2 className="display mt-12 text-xl">CONFIRMED SALES</h2>
       <div className="mt-3 overflow-x-auto border border-border">
