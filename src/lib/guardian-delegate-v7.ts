@@ -394,6 +394,21 @@ function tickerHud(w,h){chainHud(w,h);
     if(GMASTER)txt("CURRENT GUARDIAN MASTER \u00B7 "+GMASTER.toUpperCase(),pad,gy+gh+small*2.8,small*.85,"#f7931a",.95);
     else txt("GUARDIAN MASTER \u00B7 "+(SKFOR?"UNCLAIMED":"SCANNING\u2026"),pad,gy+gh+small*2.8,small*.75,"#8a949c",.7)}
 }
+/* ---------- 7j. party mode + mood ring: pure silliness, zero consensus ---------- */
+var PARTY=0,MOODS=["VIBING","ZOOMIES","HUNGRY FOR SATS","JUDGING YOUR WALLET","PLOTTING WORLD DOMINATION","DOING STRETCHES","PRETENDING TO WORK","DREAMING OF BLOCK 1000000"],MOOD=MOODS[0];
+setInterval(function(){MOOD=MOODS[Math.floor(Math.random()*MOODS.length)]},9000);
+function party(){PARTY=performance.now()/1000+12;act("roar");strike();for(var i=0;i<8;i++)setTimeout(function(){tone(400+Math.random()*800,900+Math.random()*900,.25,"square",.04)},i*140)}
+setTimeout(function(){var b=document.createElement("button");b.textContent="🎉 PARTY";
+  b.style.cssText="position:fixed;right:2.5%;bottom:24%;font:10px ui-monospace,monospace;letter-spacing:.08em;color:#ff9ff3;background:rgba(4,6,10,.7);border:1px solid #ff9ff377;padding:4px 7px;cursor:pointer;z-index:2";
+  b.onclick=function(ev){ev.stopPropagation();party()};document.body.appendChild(b)},800);
+var A2=anim;anim=function(v,tt,aw){var o=A2(v,tt,aw);if(!aw)return o;if(performance.now()/1000>=PARTY)return o;o=o.slice();
+  if(o[8]===0){var hh=(tt*180+o[0]*40+o[2]*40)%360;o[6]="hsl("+hh+",90%,60%)";o[7]=Math.max(o[7],.5+Math.sin(tt*9+o[2])*.4)}
+  return o};
+var B3=backdrop;backdrop=function(w,h){B3(w,h);var now=performance.now()/1000,pt=now<PARTY;
+  if(pt){g.globalAlpha=.1+.08*Math.sin(now*10);g.fillStyle="hsl("+((now*140)%360)+",90%,60%)";g.fillRect(0,0,w,h);g.globalAlpha=1;
+    for(var i=0;i<40;i++){var cf=(h32("cf"+i)%1000)/1000,cy2=((now*.25+cf)%1)*h,cx2=(cf*7.13%1)*w+Math.sin(now*3+i)*20;
+      g.fillStyle="hsl("+((cf*360+now*200)%360)+",95%,65%)";g.fillRect(cx2,cy2,5,5)}}
+  var small=Math.max(8,Math.min(11,w*.012));txt("MOOD \u00B7 "+(pt?"PARTY!!!":MOOD),w*.5-small*7,h-small*2.2,small,pt?"#ff9ff3":"#8a949c",pt?1:.7)};
 /* ================= /V7 ================= */
 `;
 
@@ -459,6 +474,7 @@ export function guardianMasterGeneratorHtmlV7(): string {
   if (cached) return cached;
   let s = guardianMasterGeneratorHtml();
   s = swap(s, "<title>BLOCK-DNA GUARDIAN</title>", "<title>BLOCK-DNA GUARDIAN V7</title>");
+  s = swap(s, '"GUARDIAN MASTER GENERATOR"', '"\\uD83E\\uDD5A GUARDIAN HATCHERY \\u00B7 MASTER GENERATOR"');
   s = swap(s, JSON.stringify(TRIBUTE_ADDRESS), JSON.stringify(V7_TRIBUTE_ADDRESS));
   s = swap(s, JSON.stringify(TRIBUTE_SCRIPT), JSON.stringify(V7_TRIBUTE_SCRIPT));
   s = swap(s, `/content/${OLD_OCI}`, `/content/${LIVE_OCI_MODULE_ID}`);
