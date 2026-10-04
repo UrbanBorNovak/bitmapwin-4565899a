@@ -71,6 +71,17 @@ function CharacterPage() {
   };
 
   return (
+    <div className="relative isolate min-h-screen overflow-hidden">
+      <ClientOnly fallback={null}>
+        <iframe
+          src="/oasis?height=0"
+          title="Oasis backdrop"
+          aria-hidden="true"
+          tabIndex={-1}
+          className="pointer-events-none fixed inset-x-0 -top-24 -z-20 h-[calc(100%+6rem)] w-full border-0 opacity-45 blur-[2px]"
+        />
+      </ClientOnly>
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-background/55" aria-hidden="true" />
     <div className="mx-auto max-w-[1400px] px-4 py-12 md:px-8">
       <p className="label">CHARACTER</p>
       <h1 className="display mt-4 text-4xl md:text-6xl">WHO YOU ARE</h1>
@@ -80,7 +91,7 @@ function CharacterPage() {
       </p>
 
       <div className="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <section className="border border-border">
+        <section className="border border-border bg-background/60 backdrop-blur-md">
           <header className="border-b border-border p-5">
             <h2 className="display text-xl">THE SHEET</h2>
             <p className="label mt-2">FOUR CHOICES SHAPE THE WRITING</p>
@@ -125,16 +136,26 @@ function CharacterPage() {
           </div>
         </section>
 
-        <aside className="border border-border">
+        <aside className="border border-border bg-background/60 backdrop-blur-md">
           <header className="border-b border-border p-5">
             <h2 className="display text-xl">{draft.name.trim() || "UNNAMED"}</h2>
             <p className="label mt-2">{title}</p>
           </header>
-          <CharacterPortrait
-            model={draft.avatarModel}
-            skin={draft.avatarSkin}
-            className="h-80 border-b border-border"
-          />
+          <div className="relative h-96 overflow-hidden border-b border-border">
+            <div key={`${draft.avatarModel}-${draft.avatarSkin}`} className="holo-materialize absolute inset-0">
+              <CharacterPortrait model={draft.avatarModel} skin={draft.avatarSkin} className="h-full" />
+            </div>
+            <span className="holo-ring h-10 w-48" style={{ perspective: "600px" }}><i /></span>
+            <span className="holo-ring h-6 w-32 opacity-70"><i style={{ animationDirection: "reverse" }} /></span>
+            {Array.from({ length: 14 }, (_, i) => (
+              <span
+                key={i}
+                className="holo-spark text-bitcoin"
+                style={{ left: `${22 + ((i * 37) % 56)}%`, animationDelay: `${(i * 0.27) % 3.6}s` }}
+              />
+            ))}
+            <span className="holo-scanline" />
+          </div>
           <div className="space-y-4 p-5">
             {backstory.split("\n\n").map((paragraph, index) => (
               <p key={index} className="font-mono text-xs leading-relaxed text-muted-foreground">
@@ -169,6 +190,7 @@ function CharacterPage() {
           </div>
         </aside>
       </div>
+    </div>
     </div>
   );
 }
