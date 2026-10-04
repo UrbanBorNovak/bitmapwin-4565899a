@@ -132,6 +132,7 @@ export function guardianMasterGeneratorHtmlV7(): string {
   );
   s = swap(s, "var t=(now-t0)/1000,pulse=(Math.sin(t*2.2)+1)/2;", "var t=(now-t0)/1000,pulse=(Math.sin(t*2.2)+1)/2;nstep(t);");
   s = swap(s, 'txt("STANCE "+STN[STANCE]', 'txt(NB.src,w-pad-small*11.5,pad+small*4.4,small*.7,"#3fe0d0",.7);txt("STANCE "+STN[STANCE]');
+  s = swap(s, "FIRST-IS-FIRST BITMAP (OCI)", "FIRST-IS-FIRST BITMAP (LIVEOCI)");
   s = swap(s, "0 TO 6 TRAIT GUARDIANS", "0 TO 11 TRAIT GUARDIANS");
   s = swap(s, "bar();fit();requestAnimationFrame(frame);", V7_BLOCK + "bar();fit();requestAnimationFrame(frame);");
   cached = s;
