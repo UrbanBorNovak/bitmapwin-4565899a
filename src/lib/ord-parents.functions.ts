@@ -37,6 +37,11 @@ export const mintParentsFn = createServerFn({ method: "GET" })
       else notes.push(`THAT INSCRIPTION IS NOT ${data.height}.BITMAP`);
     }
     if (!bitmapId && !data.bitmapInscriptionId) bitmapId = await bitmapInscriptionFor(data.height).catch(() => null);
+    if (!bitmapId && !data.bitmapInscriptionId && data.height >= 942_000) {
+      // LiveOCI: read the blocks themselves for the first valid <height>.bitmap.
+      const { resolveBitmapFromChain } = await import("@/lib/bitmap-live-resolver.server");
+      bitmapId = await resolveBitmapFromChain(data.height).catch(() => null);
+    }
     if (!bitmapId && !data.bitmapInscriptionId && data.holderAddress) {
       bitmapId = await scanWalletForBitmap(data.holderAddress, data.height).catch(() => null);
       if (bitmapId) notes.push(`FOUND ${data.height}.BITMAP IN YOUR WALLET`);

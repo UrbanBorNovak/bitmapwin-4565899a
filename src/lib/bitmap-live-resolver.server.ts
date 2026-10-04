@@ -66,3 +66,31 @@ export async function learnBitmap(id: string, height: number): Promise<string | 
   );
   return clean;
 }
+
+const BLOCKS_AHEAD = 6;
+
+/**
+ * LiveOCI rule (0c18b83c…i0): the BITMAP for block N is the first valid
+ * `N.bitmap` inscription found reading blocks N, N+1, … in transaction order.
+ * Valid = exact raw bytes, complete, no content-encoding, no delegate.
+ * Reads up to BLOCKS_AHEAD blocks; a hit is verified and stored via learnBitmap.
+ */
+export async function resolveBitmapFromChain(height: number): Promise<string | null> {
+  if (!Number.isInteger(height) || height < 942_000) return null;
+  const { fetchBlock, listInscriptions, toHex } = await import("@/lib/vendor/ord-block-parser.js");
+  const target = toHex(new TextEncoder().encode(`${height}.bitmap`));
+  for (let h = height; h < height + BLOCKS_AHEAD; h++) {
+    let block;
+    try {
+      block = await fetchBlock(h, { classify: false, locate: false });
+    } catch {
+      return null; // not mined yet or ordinals.com unavailable
+    }
+    for (const ins of listInscriptions(block) as Array<Record<string, unknown>>) {
+      if (ins.bodyHex !== target || ins.complete !== true || ins.contentEncoding || ins.delegate) continue;
+      const id = String(ins.id ?? "");
+      return (await learnBitmap(id, height)) ?? null;
+    }
+  }
+  return null;
+}
