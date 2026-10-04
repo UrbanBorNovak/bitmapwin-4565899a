@@ -250,20 +250,31 @@ function out0(raw){var x=String(raw).replace(/[^0-9a-f]/gi,"").toLowerCase(),p=8
   function vi(){var f=parseInt(b(1),16);return f<253?f:le(b(f===253?2:f===254?4:8))}
   if(x.substr(8,4)==="0001")p+=4;var n=vi(),i;for(i=0;i<n;i++){b(36);b(vi());b(4)}
   n=vi();if(!(n>=2))return null;var v=le(b(8));return isFinite(v)?v:null}
+/* SALES: every proven sale found, oldest-minted first; drives the running-total chart */
+var SALES=[];
 function tradeScan(){if(!COLL||!COLL.ids){if(TRDS===3)collection("9d1da99caec6afbf69b89bdafdc0a7ab679c6dd67920f7b38d3a3fd116d0e21fi0");if(TRDS++<20)setTimeout(tradeScan,1500);else TRD=false;return}
   var L=COLL.ids.slice(-80).reverse(),i=0;
   function nx(){if(i>=L.length){if(!TRD)TRD=false;return}var id=L[i++];
     return j("/r/inscription/"+id).then(function(r){var sp=String((r&&r.satpoint)||"").split(":")[0];
       if(!sp||sp===id.split("i")[0])return nx();
-      return t("/r/tx/"+sp).then(function(raw){var v=out0(raw);if(typeof v==="number"&&v>1000){TRD={sats:v,id:id};return}return nx()})})
+      return t("/r/tx/"+sp).then(function(raw){var v=out0(raw);if(typeof v==="number"&&v>1000){if(!TRD)TRD={sats:v,id:id};SALES.unshift(v)}return nx()})})
     .catch(function(){return nx()})}
   nx()}
 setTimeout(tradeScan,2000);
+/* on-chain typeface for every HUD label; plain monospace until it arrives */
+try{var OCF=new FontFace("OCF","url(/content/f558af98ebf22b85a7de7ccd8943b2e27ad84de505d73b00a9041212b9643118i0)");OCF.load().then(function(f){document.fonts.add(f)}).catch(function(){})}catch(_){}
 function tickerHud(w,h){
   var pad=Math.max(14,w*.035),small=Math.max(8,Math.min(13,w*.016)),y=pad+small*8.8;
-  var n=COLL&&typeof COLL.n==="number"?COLL.n:null;
-  txt("COLLECTION \u00B7 "+(n===null?"SCANNING\u2026":n.toLocaleString()+" GUARDIANS"),pad,y,small*.8,"#3fe0d0",.9);
-  txt("LAST TRADED \u00B7 "+(TRD&&typeof TRD.sats==="number"?TRD.sats.toLocaleString()+" SATS":TRD===false?"NO SALE YET":"SCANNING\u2026"),pad,y+small*1.4,small*.8,"#f7931a",.9);
+  txt("LAST SALE \u00B7 "+(TRD&&typeof TRD.sats==="number"?TRD.sats.toLocaleString()+" SATS":TRD===false?"NO TRADES YET":"LOOKING\u2026"),pad,y,small*.8,"#f7931a",.9);
+  var gw=Math.min(w*.32,220),gh=small*4,gx=pad,gy=y+small*1.2,k,tot=0,pts=[0];
+  for(k=0;k<SALES.length;k++){tot+=SALES[k];pts.push(tot)}
+  g.globalAlpha=.35;g.strokeStyle="#3fe0d0";g.lineWidth=1;g.beginPath();g.moveTo(gx,gy+gh);g.lineTo(gx+gw,gy+gh);g.stroke();g.globalAlpha=1;
+  if(pts.length>1){var sx=gw/(pts.length-1),px,py;g.beginPath();g.moveTo(gx,gy+gh);
+    for(k=0;k<pts.length;k++){px=gx+k*sx;py=gy+gh-pts[k]/tot*gh;if(k)g.lineTo(px,gy+gh-pts[k-1]/tot*gh);g.lineTo(px,py)}
+    g.lineTo(gx+gw,gy+gh);g.closePath();var fg=g.createLinearGradient(0,gy,0,gy+gh);fg.addColorStop(0,"rgba(247,147,26,.45)");fg.addColorStop(1,"rgba(247,147,26,0)");g.fillStyle=fg;g.fill();
+    g.beginPath();for(k=0;k<pts.length;k++){px=gx+k*sx;py=gy+gh-pts[k]/tot*gh;if(k)g.lineTo(px,gy+gh-pts[k-1]/tot*gh);else g.moveTo(px,py);g.lineTo(px,py)}
+    g.strokeStyle="#f7931a";g.lineWidth=1.5;g.stroke()}
+  txt("ALL SALES ADDED UP \u00B7 "+(tot?tot.toLocaleString()+" SATS":"WAITING FOR THE FIRST SALE"),pad,gy+gh+small*1.3,small*.75,"#3fe0d0",.85);
 }
 /* ================= /V7 ================= */
 `;
@@ -304,6 +315,12 @@ export function guardianMasterGeneratorHtmlV7(): string {
   s = swap(s, "FIRST-IS-FIRST BITMAP (OCI)", "FIRST-IS-FIRST BITMAP (LIVEOCI)");
   s = swap(s, "0 TO 6 TRAIT GUARDIANS", "0 TO 11 TRAIT GUARDIANS");
   s = swap(s, "hud(W,H,pulse);requestAnimationFrame(frame)", "hud(W,H,pulse);tickerHud(W,H);requestAnimationFrame(frame)");
+  // Friendly HUD words + on-chain typeface.
+  s = swap(s, '" GUARDIANS INSCRIBED AS CHILDREN"', '" GUARDIANS BORN TO THE PACK"');
+  s = swap(s, '"COLLECTION #"+COLL.rank+" OF "', '"PACK MEMBER #"+COLL.rank+" OF "');
+  s = swap(s, '" IN COLLECTION"', '" IN THE PACK"');
+  s = swap(s, 'txt("LATEST "+', 'txt("NEWEST GUARDIAN \\u00B7 "+');
+  s = swap(s, 'g.font=size+"px ui-monospace,monospace"', 'g.font=size+"px OCF,ui-monospace,monospace"');
   s = swap(s, "bar();fit();requestAnimationFrame(frame);", V7_BLOCK + "bar();fit();requestAnimationFrame(frame);");
   cached = s;
   return s;
