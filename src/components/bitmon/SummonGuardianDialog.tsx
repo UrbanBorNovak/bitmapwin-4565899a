@@ -12,6 +12,7 @@ import { GuardianBody } from "@/components/bitmon/GuardianBody";
 import { GUARDIAN_MASTER_DELEGATE_ID, DELEGATE_CONTENT_TYPE, TRIBUTE_ADDRESS, TRIBUTE_SATS, guardianMasterGeneratorHtml } from "@/lib/guardian-delegate";
 import { UnfinishedInscriptions } from "@/components/territory/UnfinishedInscriptions";
 import { ShadowInscriber, type ArtifactVariant } from "@/components/territory/ShadowInscriber";
+import { SHORD_VAULT_DISABLED } from "@/lib/shord-flag";
 import { ShieldedGuardianMint } from "@/components/bitmon/ShieldedGuardianMint";
 import { InscriptionWatcher } from "@/components/bitmon/InscriptionWatcher";
 import { RARITY_TONE, bip21, guardianArtifactSvg, guardianLevel, guardianShieldDigest, GUARDIAN_PRICE_SATS, type GuardianDna } from "@/lib/bitmon";
@@ -306,7 +307,7 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
   const [busy, setBusy] = useState(false);
   const [qr, setQr] = useState<string | null>(null);
   const [celebrate, setCelebrate] = useState(false);
-  const [mintMode, setMintMode] = useState<"public" | "shielded">("shielded");
+  const [mintMode, setMintMode] = useState<"public" | "shielded">(SHORD_VAULT_DISABLED ? "public" : "shielded");
 
   useEffect(() => {
     if (!open) return;
@@ -452,12 +453,14 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
                       className={`flex-1 border px-2 py-1.5 font-mono text-[10px] ${mintMode === "public" ? "border-bitcoin text-bitcoin" : "border-border text-muted-foreground"}`}>
                       ◆ TO MY WALLET
                     </button>
+{!SHORD_VAULT_DISABLED && (
                     <button type="button" onClick={() => setMintMode("shielded")}
                       className={`flex-1 border px-2 py-1.5 font-mono text-[10px] ${mintMode === "shielded" ? "border-signal text-signal" : "border-border text-muted-foreground"}`}>
                       ◈ STRAIGHT INTO THE SHIELDED POOL
                     </button>
+                    )}
                   </div>
-                  {mintMode === "public" ? (
+                  {mintMode === "public" || SHORD_VAULT_DISABLED ? (
                     <ShadowInscriber
                       slug={`guardian-${height}`}
                       height={height}

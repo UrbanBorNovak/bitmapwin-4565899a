@@ -116,7 +116,11 @@ export const getMyResidencyFn = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<Residency> => {
     const wallet = await verifiedWallet(context.supabase, context.userId);
     if (!wallet) return { wallet: null, height: null, sat: null, latestInscriptionId: null, avatarInscriptionId: null, residencyName: null, residencyNameInscriptionId: null };
-    const { data } = await context.supabase.from("wallet_profiles").select("residency_height, avatar_inscription_id, residency_name, residency_name_inscription_id").eq("address", wallet).maybeSingle();
+    // residency_height is not readable by signed-in users directly; the wallet is
+    // verified as the caller's own above, so read just that row server-side.
+    const { supabaseAdmin: admin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await admin.from("wallet_profiles").select("residency_height, avatar_inscription_id, residency_name, residency_name_inscription_id").eq("address", wallet).maybeSingle();
+    if (error) console.error("getMyResidencyFn wallet_profiles read failed", error.message);
     const height = (data as any)?.residency_height != null ? Number((data as any).residency_height) : null;
     const resolved = await resolve(context.supabase, wallet, height);
     const profileNeedsSync =
