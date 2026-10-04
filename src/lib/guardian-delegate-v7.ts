@@ -207,24 +207,24 @@ function strike(){FLA=1;FLX=.15+Math.random()*.7}
 setInterval(function(){fetch("/r/blockheight").then(function(r){return r.text()}).then(function(t){var n=+t;if(n>0){if(TIP&&n!==TIP)strike();TIP=n}}).catch(function(){})},30000);
 setInterval(function(){var bh=G?G.h:0,em=bh%2016;if(bh>0&&(em>=1944||em<=72)&&Math.random()<.5)strike()},9000);
 /* ---------- 7e2. 4-second cosmic heartbeat: pull · shockwave · roar · spine surge ---------- */
-var CY={n:-1,t:0},ZP=1;
+var PCY={n:-1,t:0},ZP=1;
 function tone(f0,f1,d,ty,v){var A=AC;if(!A||A.state!=="running")return;var o=A.createOscillator(),gn=A.createGain(),n=A.currentTime;
   o.type=ty;o.frequency.setValueAtTime(f0,n);o.frequency.exponentialRampToValueAtTime(Math.max(20,f1),n+d);
   gn.gain.setValueAtTime(v,n);gn.gain.exponentialRampToValueAtTime(.0001,n+d);o.connect(gn);gn.connect(A.destination);o.start(n);o.stop(n+d+.05)}
-setInterval(function(){if(STATE!=="AWAKE"||RC)return;CY.n=(CY.n+1)%4;CY.t=performance.now()/1000;
-  if(CY.n===0){tone(660,1320,.9,"sine",.05);tone(990,1980,.7,"triangle",.03)}
-  else if(CY.n===1)tone(90,40,1.1,"sine",.18);
-  else if(CY.n===2){act("roar");strike()}
+setInterval(function(){if(STATE!=="AWAKE"||RC)return;PCY.n=(PCY.n+1)%4;PCY.t=performance.now()/1000;
+  if(PCY.n===0){tone(660,1320,.9,"sine",.05);tone(990,1980,.7,"triangle",.03)}
+  else if(PCY.n===1)tone(90,40,1.1,"sine",.18);
+  else if(PCY.n===2){act("roar");strike()}
   else{for(var i=0;i<5;i++)setTimeout(function(){tone(1800+Math.random()*900,400,.08,"square",.02)},i*90)}},4000);
-function cyk(){var k=performance.now()/1000-CY.t;return k<0||k>2?0:Math.sin(Math.min(1,k/2)*Math.PI)}
-var A1=anim;anim=function(v,tt,aw){var o=A1(v,tt,aw);if(!aw||CY.n<0)return o;var k=cyk();if(!k)return o;o=o.slice();
-  if(CY.n===0&&(o[8]===4||o[8]===5)){o[7]=Math.max(o[7],1.4*k);if(o[8]===4)o[6]="#3fe0d0"}
-  if(CY.n===3&&o[8]!==5){var el=performance.now()/1000-CY.t,wave=Math.exp(-Math.pow(((o[2]+12)/24)-el*.9,2)*30);
+function cyk(){var k=performance.now()/1000-PCY.t;return k<0||k>2?0:Math.sin(Math.min(1,k/2)*Math.PI)}
+var A1=anim;anim=function(v,tt,aw){var o=A1(v,tt,aw);if(!aw||PCY.n<0)return o;var k=cyk();if(!k)return o;o=o.slice();
+  if(PCY.n===0&&(o[8]===4||o[8]===5)){o[7]=Math.max(o[7],1.4*k);if(o[8]===4)o[6]="#3fe0d0"}
+  if(PCY.n===3&&o[8]!==5){var el=performance.now()/1000-PCY.t,wave=Math.exp(-Math.pow(((o[2]+12)/24)-el*.9,2)*30);
     if(wave>.2){o[7]=Math.max(o[7],1.5*wave);o[6]=wave>.6?"#bff6ff":"#3fe0d0";o[0]+=Math.sin(tt*70+o[2])*.12*wave}}
   return o};
 var B1=backdrop;backdrop=function(w,h){B1(w,h);
-  var k=CY.n===0?cyk():0,zt=1+.18*k;zoom=zoom/ZP*zt;ZP=zt;
-  if(CY.n===1){var el=performance.now()/1000-CY.t;if(el<2.2){var r=el/2.2,cx=w/2,cy=h*.64;
+  var k=PCY.n===0?cyk():0,zt=1+.18*k;zoom=zoom/ZP*zt;ZP=zt;
+  if(PCY.n===1){var el=performance.now()/1000-PCY.t;if(el<2.2){var r=el/2.2,cx=w/2,cy=h*.64;
     for(var q=0;q<2;q++){var rr=r-q*.12;if(rr<=0)continue;g.strokeStyle=q?"rgba(63,224,208,"+(1-rr)*.8+")":"rgba(247,147,26,"+(1-rr)+")";g.lineWidth=(1-rr)*8+1;
       g.shadowColor=g.strokeStyle;g.shadowBlur=18;g.beginPath();g.ellipse(cx,cy,rr*w*.55,rr*w*.18,0,0,6.283);g.stroke()}g.shadowBlur=0}}};
 /* ---------- 7f. 5s cinematic 360 video recorder ---------- */
@@ -347,10 +347,10 @@ function modeBar(){var d=document.createElement("div");d.style.cssText="position
   [mb,tb].forEach(function(b){b.style.cssText="font:10px OCF,ui-monospace,monospace;letter-spacing:.08em;color:#f7931a;background:rgba(4,6,10,.7);border:1px solid #f7931a77;padding:4px 7px;cursor:pointer";d.appendChild(b)});
   mb.onclick=function(e){e.stopPropagation();setMode(LM?"void":VD?"light":"dark");label()};tb.onclick=function(e){e.stopPropagation();GTLON=!GTLON;label()};label();document.body.appendChild(d);paintControls()}
 setTimeout(modeBar,500);
-function timelineHud(w,h){if(!GTLON)return;var pad=Math.max(14,w*.035),small=Math.max(8,Math.min(12,w*.014)),pw=Math.min(w-pad*2,520),lh=small*1.28,x=pad,y=Math.max(pad+small*10.3,h*.24),rows=GTL.length||1,ph=small*2.8+rows*lh;
+function timelineHud(w,h){if(!GTLON)return;var pad=Math.max(14,w*.035),small=Math.max(8,Math.min(12,w*.014)),pw=Math.min(w-pad*2,520),lh=small*1.28,x=pad,y=pad+Math.max(8,Math.min(13,w*.016))*19+small,rows=GTL.length||1,ph=small*2.8+rows*lh;
   g.globalAlpha=LM?.92:.7;g.fillStyle=LM?"#f4f5f2":"#04060a";g.fillRect(x-8,y-small*1.25,pw+16,ph);
   g.globalAlpha=.55;g.strokeStyle="#f7931a";g.strokeRect(x-8,y-small*1.25,pw+16,ph);g.globalAlpha=1;
-  var pn=CY.n<0?"WAITING":["PULL-IN","PARCEL WAVE","ROAR + LIGHTNING","SPINE SURGE"][CY.n],left=Math.max(0,4-(performance.now()/1000-CY.t));
+  var pn=PCY.n<0?"WAITING":["PULL-IN","PARCEL WAVE","ROAR + LIGHTNING","SPINE SURGE"][PCY.n],left=Math.max(0,4-(performance.now()/1000-PCY.t));
   txt("PACK CHAIN TIMELINE · LATEST 12",x,y,small*.82,"#f7931a");txt("LIVE PULSE · "+pn+" · "+left.toFixed(1)+"S",x+pw*.57,y,small*.72,"#3fe0d0");
   if(!GTL.length){txt("READING GUARDIANS FROM THE CHAIN…",x,y+lh*1.5,small*.72,"#8a949c");return}
   for(var i=0;i<GTL.length;i++){var r=GTL[i],yy=y+small*1.9+i*lh,em=r.h%2016,bm=r.h>0&&(em>=1944||em<=72),date=r.at?new Date(r.at*(r.at<1e12?1000:1)).toISOString().slice(0,10):"CHAIN";
@@ -362,7 +362,7 @@ try{var OCF=new FontFace("OCF","url(/content/f558af98ebf22b85a7de7ccd8943b2e27ad
 /* on-chain proof card: both Tag 3 parents, difficulty armour, block weight mass, consensus crests */
 function fmtD(d){return d>=1e12?(d/1e12).toFixed(2)+"T":d>=1e9?(d/1e9).toFixed(2)+"G":d>=1e6?(d/1e6).toFixed(2)+"M":d>=1e3?(d/1e3).toFixed(1)+"K":String(Math.round(d))}
 function chainHud(w,h){if(!G)return;
-  var small=Math.max(8,Math.min(12,w*.015)),lh=small*1.45,pw=Math.min(w*.42,300),pad=Math.max(14,w*.035),x=w-pw-pad,y=pad+small*4.5;
+  var small=Math.max(8,Math.min(12,w*.015)),lh=small*1.45,pw=Math.min(w*.42,300),pad=Math.max(14,w*.035),x=w-pw-pad,y=pad+small*6.6;
   var arm=G.th==="CLAY"?"GENESIS CLAY":G.th==="TERA"?"TERAHASH ARMOUR":"FORGED STEEL";
   var ms=G.ms==="TITAN"?"TITAN":G.ms==="WRAITH"?"WRAITH":"STANDARD";
   var cr=[];if(G.tp)cr.push("TAPROOT");if(G.sw)cr.push("SEGWIT");if(G.lz)cr.push("SUPER-ZERO");
@@ -498,6 +498,7 @@ export function guardianMasterGeneratorHtmlV7(): string {
   s = swap(s, 'txt("STANCE "+STN[STANCE]', 'txt(NB.src,w-pad-small*11.5,pad+small*4.4,small*.7,"#3fe0d0",.7);txt("STANCE "+STN[STANCE]');
   s = swap(s, "FIRST-IS-FIRST BITMAP (OCI)", "FIRST-IS-FIRST BITMAP (LIVEOCI)");
   s = swap(s, "0 TO 6 TRAIT GUARDIANS", "0 TO 11 TRAIT GUARDIANS");
+  s = swap(s, "cw=(w-pad*2)/4", "cw=Math.min((w-pad*2)/4,w*.1)");
   s = swap(s, "hud(W,H,pulse);requestAnimationFrame(frame)", "hud(W,H,pulse);tickerHud(W,H);timelineHud(W,H);requestAnimationFrame(frame)");
   // Friendly HUD words + on-chain typeface.
   s = swap(s, '" GUARDIANS INSCRIBED AS CHILDREN"', '" GUARDIANS BORN TO THE PACK"');
