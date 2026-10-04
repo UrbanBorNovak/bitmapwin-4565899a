@@ -15,10 +15,10 @@ export const Route = createFileRoute("/mint")({
   validateSearch: z.object({ height: z.coerce.number().int().min(0).optional() }),
   head: () => ({
     meta: [
-      { title: "Mint a Shielded Guardian — BITMAPWIN" },
-      { name: "description", content: "Pick any BITMAP, preview the Guardian grown from its block, and mint it straight into the shielded pool — no wallet trace on the genesis owner." },
-      { property: "og:title", content: "Mint a shielded Guardian ordinal" },
-      { property: "og:description", content: "One block, one Guardian. Minted straight to the shielded pool." },
+      { title: "Summon a DMT Guardian — BITMAPWIN" },
+      { name: "description", content: "Pick any BITMAP and summon the Guardian read straight from its block — Digital Matter Theory, no invented traits. Optional shielded experiment." },
+      { property: "og:title", content: "Summon a DMT Guardian from any BITMAP" },
+      { property: "og:description", content: "One block, one Guardian. Every trait is read from Bitcoin itself." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -27,9 +27,9 @@ export const Route = createFileRoute("/mint")({
 });
 
 const STEPS = [
-  ["01", "PICK A BITMAP", "Every block grows one Guardian. Its body, colours and stats come from that block."],
+  ["01", "PICK A BITMAP", "Every block grows one Guardian. Armor from difficulty, size from block weight, crests from fork signals — read, not invented."],
   ["02", "PAY & INSCRIBE", `${GUARDIAN_PRICE_SATS.toLocaleString()} sats plus the network fee. Your wallet signs; this browser writes the inscription.`],
-  ["03", "LANDS SHIELDED", "The inscription goes straight to the pool. Only this browser holds the key that can move it — back it up."],
+  ["03", "LANDS IN YOUR WALLET", "Your Guardian arrives in your own wallet. Want to try something new? Opt into the shielded experiment instead."],
 ] as const;
 
 function MintPage() {
@@ -46,11 +46,18 @@ function MintPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-8 md:px-8">
-      <p className="label text-signal">BITMAPWIN / MINT</p>
-      <h1 className="display mt-2 text-4xl md:text-5xl">MINT A GUARDIAN. <span className="text-bitcoin">SHIELDED.</span></h1>
+      <p className="label text-signal">BITMAPWIN / SUMMON</p>
+      <h1 className="display mt-2 text-4xl md:text-5xl">SUMMON A GUARDIAN. <span className="text-bitcoin">PURE DIGITAL MATTER.</span></h1>
       <p className="mt-3 max-w-2xl text-muted-foreground">
-        Shielded mints go straight to BITMAPWIN's pool instead of your wallet, so explorers show the pool as the first owner, not you. It's our own pool, not yet audited: BITMAPWIN holds the coins, and your browser holds the only key that can move them.
+        Digital Matter Theory (DMT) means nothing is made up: every Guardian is read straight from its Bitcoin block — difficulty, weight, hash, transactions. Anyone with a node gets the exact same creature.
       </p>
+
+      <div className="panel mt-4 max-w-2xl rounded-md border border-signal/40 p-3">
+        <p className="label text-signal">◇ EXPERIMENT · FIRST SHIELDED DMT</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Optional: send your Guardian into a private pool instead of your wallet, so explorers can't link the first owner to you. Your browser holds the only key. Unaudited research — try it only if you want to be part of the first real shielded DMT.
+        </p>
+      </div>
 
       <div className="mt-6 space-y-2"><UnfinishedInscriptions /><Link to="/payments" className="label text-signal underline">◇ MY INSCRIPTION PAYMENTS →</Link></div>
 
@@ -94,9 +101,9 @@ function MintPage() {
               {awake.data ? (
                 <p className="font-mono text-xs text-muted-foreground">✕ {height}.BITMAP'S GUARDIAN IS ALREADY SUMMONED — PICK ANOTHER BLOCK.</p>
               ) : (
-                <button type="button" onClick={() => setOpen(true)} className="btn-term w-full">◆ MINT SHIELDED · {GUARDIAN_PRICE_SATS.toLocaleString()} SATS</button>
+                <button type="button" onClick={() => setOpen(true)} className="btn-term w-full">◆ SUMMON · {GUARDIAN_PRICE_SATS.toLocaleString()} SATS</button>
               )}
-              <p className="font-mono text-[10px] text-muted-foreground">SHIELDED IS THE DEFAULT IN THE NEXT STEP. SIGN IN AND CONNECT A WALLET TO PAY.</p>
+              <p className="font-mono text-[10px] text-muted-foreground">DELIVERS TO YOUR WALLET. THE SHIELDED EXPERIMENT IS OPTIONAL IN THE NEXT STEP. SIGN IN AND CONNECT A WALLET TO PAY.</p>
               <div className="flex gap-3 font-mono text-[10px]">
                 {!SHORD_VAULT_DISABLED && <Link to="/shord" className="text-signal underline">YOUR POOL NOTES</Link>}
                 <Link to="/codex/morphs" className="text-signal underline">MORPH LAB</Link>

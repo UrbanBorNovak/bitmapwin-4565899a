@@ -456,7 +456,7 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
 {!SHORD_VAULT_DISABLED && (
                     <button type="button" onClick={() => setMintMode("shielded")}
                       className={`flex-1 border px-2 py-1.5 font-mono text-[10px] ${mintMode === "shielded" ? "border-signal text-signal" : "border-border text-muted-foreground"}`}>
-                      ◈ STRAIGHT INTO THE SHIELDED POOL
+                      ◇ EXPERIMENT · SHIELDED DMT
                     </button>
                     )}
                   </div>

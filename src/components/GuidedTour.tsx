@@ -153,7 +153,7 @@ const TOURS: Record<string, Tour> = {
       {
         target: "mint-steps",
         title: "THREE STEPS TO A GUARDIAN",
-        body: "Pick a block, pay the mint, and the Guardian lands in the shielded pool — no wallet trace on the first owner.",
+        body: "Pick a block and summon the Guardian read straight from it — pure digital matter. Shielded delivery is an optional experiment.",
       },
       {
         target: "mint-pick",
