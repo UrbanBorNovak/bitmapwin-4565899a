@@ -112,13 +112,14 @@ export function ShadowInscriber(props: {
           toReveal = {
             ...current,
             parents: current.parents.map((p) =>
-              p.signer === "wallet" && !p.tapInternalKey && internal &&
-              p.address.toLowerCase() === wallet.ordinalsAddress.toLowerCase()
+              p.signer === "wallet" && internal && /^bc1p/i.test(p.address)
                 ? { ...p, tapInternalKey: internal }
                 : p,
             ),
           };
-          signers.wallet = (psbt, indices) => signParentInputsPsbt(wallet.provider, psbt, wallet.ordinalsAddress, indices);
+          saveJob(toReveal);
+          const holder = toReveal.parents?.find((p) => p.signer === "wallet")?.address ?? wallet.ordinalsAddress;
+          signers.wallet = (psbt, indices) => signParentInputsPsbt(wallet.provider, psbt, holder, indices);
         }
         if (current.parents.some((p) => p.signer === "platform")) {
           signers.platform = async (psbt) => {
