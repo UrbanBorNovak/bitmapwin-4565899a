@@ -181,8 +181,17 @@ function kids(id,max){var out=[];function pg(n){return j("/r/children/"+id+"/"+n
   return pg(0).then(function(){return out.slice(0,max)},function(){return out})}
 function txt0(id){return fetch("/content/"+id).then(function(r){return r.ok?r.text():""}).catch(function(){return ""})}
 function ownerOf(id){return j("/r/inscription/"+id).then(function(r){return r.address||String(r.satpoint||"").split(":")[0]||null}).catch(function(){return null})}
+/* dynamic OCI: newest "OCI:<id>" child of the collection root wins; else LiveOCI alpha; else 942k OCI.
+   Only the root's holder can add children, so the pointer cannot be hijacked. */
+var OCI_ROOT="9d1da99caec6afbf69b89bdafdc0a7ab679c6dd67920f7b38d3a3fd116d0e21fi0",OCI_LIVE="0c18b83ca6aa6f5653bb57dafb491ac786b7fa738b6c5190f4542d1d7f15c43ai0",OCI_BASE="942b5886158d57fc70cb8fb7d9bd4d37aa95b8b145be1a351326336b087262dbi0";
+function ociPtr(){var to=new Promise(function(r){setTimeout(function(){r(null)},1500)});
+  var look=kids(OCI_ROOT,400).then(function(ids){ids=ids.slice(-40).reverse();var i=0;function nx(){if(i>=ids.length)return null;return txt0(ids[i++]).then(function(t){var m=/^\s*OCI:([0-9a-f]{64}i\d+)\s*$/.exec(t||"");return m?m[1]:nx()})}return nx()}).catch(function(){return null});
+  return Promise.race([look,to])}
+function viaOci(id,H){return import("/content/"+id).then(function(m){return m.getBitmapInscriptionId(H)}).then(function(b){if(!b)throw 0;return b})}
+function bitmapId(H){return ociPtr().then(function(p){return p?viaOci(p,H):Promise.reject(0)})
+  .catch(function(){return viaOci(OCI_LIVE,H)}).catch(function(){return viaOci(OCI_BASE,H)}).catch(function(){return null})}
 function parcels(){if(!G||!LAND)return setTimeout(parcels,2000);if(PSCAN)return;PSCAN=1;var H=G.h,N=LAND.n;
-  import("/content/0c18b83ca6aa6f5653bb57dafb491ac786b7fa738b6c5190f4542d1d7f15c43ai0").then(function(m){return m.getBitmapInscriptionId(H)}).then(function(bid){
+  bitmapId(H).then(function(bid){
     if(!bid)return;BID=bid;ownerOf(bid).then(function(a){BOWN=a});
     return kids(bid,300).then(function(ids){var seen={},q=[];
       return Promise.all(ids.map(function(cid){return txt0(cid).then(function(t){var m=/^\s*(\d+)\.(\d+)\.bitmap\s*$/.exec(t||"");
