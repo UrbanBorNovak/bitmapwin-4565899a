@@ -222,6 +222,28 @@ export function ShadowInscriber(props: {
     }
   };
 
+  // Resume a paid commit from its recovery file (e.g. after site data was cleared),
+  // so the holder finishes Step 2 instead of paying a new fee.
+  const importRecovery = async (f: File | undefined) => {
+    if (!f) return;
+    try {
+      const parsed = JSON.parse(await f.text()) as InscribeJob;
+      if (!/^[0-9a-f]{64}$/i.test(parsed.privHex ?? "") || !parsed.commitAddress || !parsed.bodyHex || !parsed.digest) {
+        throw new Error("THAT IS NOT A VALID RECOVERY FILE");
+      }
+      const resumed = { ...parsed, digest: props.digest };
+      const utxo = await findCommitOutput(resumed);
+      if (!utxo && !resumed.revealTxid) throw new Error("NO UNSPENT PAYMENT FOUND AT THAT RECOVERY ADDRESS");
+      if (!resumed.commitTxid && utxo) resumed.commitTxid = utxo.txid;
+      saveJob(resumed);
+      setCommitUtxo(null);
+      setJob(resumed);
+      toast.success("PAYMENT RECOVERED — CONTINUE WITH STEP 2, NO NEW FEE");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
   const downloadRecovery = () => {
     if (!job) return;
     const blob = new Blob([JSON.stringify(job, null, 2)], { type: "application/json" });
@@ -293,6 +315,10 @@ export function ShadowInscriber(props: {
           <p className="label text-muted-foreground">
             {props.description ?? "TWO STEPS: YOUR WALLET PAYS ONCE, THEN THIS DEVICE FINISHES THE INSCRIPTION. KEEP THE TAB OPEN."}
           </p>
+          <label className="label block cursor-pointer text-signal underline">
+            ↺ ALREADY PAID? RESUME FROM YOUR RECOVERY FILE (NO NEW FEE)
+            <input type="file" accept="application/json,.json" className="hidden" onChange={(e) => void importRecovery(e.target.files?.[0])} />
+          </label>
           {props.claimParentsForHeight !== undefined ? (
             <p className="label text-signal">
               ⧉ THIS CREATURE IS INSCRIBED AS A CHILD OF {props.claimParentsForHeight}.BITMAP AND OF THE BITMAPWIN COLLECTION. BOTH PARENTS PASS
