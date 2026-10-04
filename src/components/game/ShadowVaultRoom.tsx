@@ -366,6 +366,9 @@ export function ShadowVaultRoom() {
             onTerminal={() => setTerminalOpen((v) => !v)}
             onLeave={() => setRoom(null)}
           />
+          {room.slug === "cypherpunk-assembly" ? (
+            <AssemblyDecor taken={event?.passesIssued ?? 0} max={event?.maxPasses ?? 21} />
+          ) : null}
         </SafeCanvas>
       </div>
 
