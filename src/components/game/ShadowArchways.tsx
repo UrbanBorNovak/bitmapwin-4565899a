@@ -15,7 +15,7 @@ import { getPass } from "@/lib/shadow-vault";
 import { enterShadowRoom } from "@/lib/shadow-room";
 
 
-type Spot = { slug: string; title: string; active: boolean; x: number; z: number; y: number; yaw: number };
+type Spot = { block: number; slug: string; title: string; active: boolean; x: number; z: number; y: number; yaw: number };
 
 const Arch = memo(function Arch({ s, unit, pose }: { s: Spot; unit: number; pose: React.MutableRefObject<PlayerState | null> }) {
   const ref = useRef<THREE.Group>(null);
@@ -68,6 +68,28 @@ const Arch = memo(function Arch({ s, unit, pose }: { s: Spot; unit: number; pose
         <planeGeometry args={[w, h]} />
         <meshStandardMaterial ref={veil} color="#05030a" emissive="#22d3ee" emissiveIntensity={0.9} transparent opacity={s.active ? 0.55 : 0.25} side={THREE.DoubleSide} />
       </mesh>
+      {s.block === 819245 ? (
+        <group position={[0, 0, -unit * 9]}>
+          <mesh position={[0, unit * 3, 0]}>
+            <boxGeometry args={[unit * 12, unit * 6, unit * 8]} />
+            <meshStandardMaterial color="#2a1a10" roughness={0.9} />
+          </mesh>
+          <mesh position={[0, unit * 7.5, 0]} rotation-y={Math.PI / 4}>
+            <coneGeometry args={[unit * 9, unit * 3.5, 4]} />
+            <meshStandardMaterial color="#14100c" roughness={0.8} />
+          </mesh>
+          {[-3.5, 3.5].map((x) => (
+            <mesh key={x} position={[unit * x, unit * 3.4, unit * 4.05]}>
+              <planeGeometry args={[unit * 2, unit * 1.6]} />
+              <meshStandardMaterial color="#1a0d02" emissive="#f7931a" emissiveIntensity={1.6} />
+            </mesh>
+          ))}
+          <pointLight position={[0, unit * 4, unit * 6]} color="#f7931a" intensity={2} distance={unit * 30} />
+          <SafeHtml position={[0, unit * 10.5, 0]} center distanceFactor={unit * 40} style={{ pointerEvents: "none" }}>
+            <div className="whitespace-nowrap font-mono text-[10px] tracking-[0.3em] text-bitcoin">THE ORANGE TAVERN</div>
+          </SafeHtml>
+        </group>
+      ) : null}
       <SafeHtml position={[0, h + unit * 3, 0]} center distanceFactor={unit * 40} style={{ pointerEvents: "none" }}>
         <div className="whitespace-nowrap border border-signal/60 bg-background/80 px-1.5 py-0.5 font-mono text-[9px] text-signal">
           ◈ {s.title} · {s.active ? "SHADOW GATE" : "SEALED"}
@@ -87,7 +109,7 @@ export const ShadowArchways = memo(function ShadowArchways({ unit, pose }: { uni
       seen.add(g.territoryBlock);
       const x = cellX(g.territoryBlock % WORLD_GRID) + WORLD_CELL * 0.22;
       const z = cellZ(Math.floor(g.territoryBlock / WORLD_GRID)) - WORLD_CELL * 0.22;
-      return [{ slug: g.slug, title: g.title, active: g.isActive, x, z, y: groundY(x, z), yaw: Math.PI / 4 }];
+      return [{ block: g.territoryBlock, slug: g.slug, title: g.title, active: g.isActive, x, z, y: groundY(x, z), yaw: Math.PI / 4 }];
     });
   }, [data]);
   return <group>{spots.map((s) => <Arch key={s.slug} s={s} unit={unit} pose={pose} />)}</group>;
