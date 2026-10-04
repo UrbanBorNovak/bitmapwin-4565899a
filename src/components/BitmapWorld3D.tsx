@@ -2877,7 +2877,7 @@ const WorldScene = memo(function WorldScene({
 
       {selectedHeight !== null ? (
         <>
-          <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} />
+          {cameraMode === "map" ? <SelectedBlock height={selectedHeight} bitcoin={colors.bitcoin} /> : null}
           <DestinationArrow
             position={[
               worldX(selectedHeight % GRID),
