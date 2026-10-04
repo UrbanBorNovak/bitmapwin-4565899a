@@ -114,20 +114,31 @@ export async function checkSummonOrder(userId: string, orderId: string) {
   const row = data as OrderRow;
   if (row.status === "settled" || row.status === "taken") return { order: toOrder(row), awakened: row.status === "settled" };
 
-  let res: Response;
-  try {
-    const { esploraFetch } = await import("@/lib/bitmon");
-    res = await esploraFetch(`/address/${GUARDIAN_TREASURY}/txs`);
-  } catch {
-    return { order: toOrder(row), awakened: false };
+  const { esploraFetch } = await import("@/lib/bitmon");
+  let match: MempoolTx | undefined;
+  if (row.txid) {
+    // A txid was already recorded: verify that exact tx, however old it is.
+    try {
+      const tx = (await (await esploraFetch(`/tx/${row.txid}`)).json()) as MempoolTx;
+      const pays = (tx.vout ?? []).some((o) => o.scriptpubkey_address === GUARDIAN_TREASURY && Number(o.value) === Number(row.amount_sats));
+      if (pays) match = tx;
+    } catch { /* fall through to address scan */ }
   }
-  const txs = (await res.json()) as MempoolTx[];
-  const since = new Date(row.created_at).getTime() - 10 * 60_000;
-  const match = txs.find(
-    (tx) =>
-      (!tx.status?.block_time || tx.status.block_time * 1000 >= since) &&
-      (tx.vout ?? []).some((o) => o.scriptpubkey_address === GUARDIAN_TREASURY && Number(o.value) === Number(row.amount_sats)),
-  );
+  if (!match) {
+    let res: Response;
+    try {
+      res = await esploraFetch(`/address/${GUARDIAN_TREASURY}/txs`);
+    } catch {
+      return { order: toOrder(row), awakened: false };
+    }
+    const txs = (await res.json()) as MempoolTx[];
+    const since = new Date(row.created_at).getTime() - 10 * 60_000;
+    match = txs.find(
+      (tx) =>
+        (!tx.status?.block_time || tx.status.block_time * 1000 >= since) &&
+        (tx.vout ?? []).some((o) => o.scriptpubkey_address === GUARDIAN_TREASURY && Number(o.value) === Number(row.amount_sats)),
+    );
+  }
   if (!match) {
     if (row.status === "pending" && new Date(row.expires_at).getTime() < Date.now()) {
       await db.from("bitmon_summon_orders").update({ status: "expired" }).eq("id", row.id);
