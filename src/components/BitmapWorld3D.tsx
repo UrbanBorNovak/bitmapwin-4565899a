@@ -1715,6 +1715,19 @@ function clampAxis(value: number) {
   return Math.max(-1, Math.min(1, value));
 }
 
+/** Walking needs a tiny near plane so nearby Guardians/objects never clip away;
+ *  the overhead map keeps a wide range for depth precision at altitude. */
+function AdaptiveClipping({ walking }: { walking: boolean }) {
+  const { camera } = useThree();
+  useEffect(() => {
+    const cam = camera as THREE.PerspectiveCamera;
+    cam.near = walking ? 0.002 : 0.1;
+    cam.far = walking ? 250 : 1200;
+    cam.updateProjectionMatrix();
+  }, [camera, walking]);
+  return null;
+}
+
 function PlayerCameraRig({
   pose,
   onPose,
@@ -2759,6 +2772,7 @@ const WorldScene = memo(function WorldScene({
         />
       </SafeEnvironment> : null}
       <PerfGovernor pose={pose} active={cameraMode !== "map"} />
+      <AdaptiveClipping walking={cameraMode !== "map"} />
       <SkyBodies bitcoin={colors.bitcoin} />
       {cameraMode !== "map" && quality.effects !== "off" ? <WorldWeather /> : null}
       <LandSurface colors={colors} tipHeight={tipHeight} mapView={cameraMode === "map"} />
