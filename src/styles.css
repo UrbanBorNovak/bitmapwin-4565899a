@@ -543,19 +543,15 @@
     radial-gradient(ellipse at 50% 34%, color-mix(in oklab, var(--color-bitcoin) 12%, transparent) 0%, transparent 48%),
     linear-gradient(180deg, color-mix(in oklab, var(--color-foreground) 10%, transparent) 0%, transparent 40%, color-mix(in oklab, var(--color-signal) 6%, transparent) 100%),
     radial-gradient(ellipse at center, transparent 50%, color-mix(in oklab, var(--color-background) 22%, transparent) 115%);
-  mix-blend-mode: soft-light;
-  opacity: 0.44;
+  /* Plain alpha only: blend modes and CSS filters over a WebGL canvas get
+     split into GPU tiles and graded unevenly, producing a hard vertical seam. */
+  opacity: 0.22;
   box-shadow:
     inset 0 0 0 2px color-mix(in oklab, var(--color-bitcoin) 40%, transparent),
     inset 0 0 0 5px color-mix(in oklab, var(--color-background) 82%, transparent),
     inset 0 0 0 7px color-mix(in oklab, var(--color-foreground) 20%, transparent),
     inset 0 0 42px 8px color-mix(in oklab, var(--color-bitcoin) 16%, transparent),
     inset 0 0 110px 20px color-mix(in oklab, var(--color-background) 22%, transparent);
-}
-
-/* Rich watercolor grading stays on the painted world only; HUD text remains crisp. */
-.oasis-storybook canvas {
-  filter: saturate(1.22) contrast(1.07) brightness(1.025) sepia(0.035);
 }
 
 .oasis-storybook::after {
