@@ -306,6 +306,9 @@ function tickerHud(w,h){
     g.beginPath();for(k=0;k<pts.length;k++){px=gx+k*sx;py=gy+gh-pts[k]/tot*gh;if(k)g.lineTo(px,gy+gh-pts[k-1]/tot*gh);else g.moveTo(px,py);g.lineTo(px,py)}
     g.strokeStyle="#f7931a";g.lineWidth=1.5;g.stroke()}
   txt("ALL SALES ADDED UP \u00B7 "+(tot?tot.toLocaleString()+" SATS":"WAITING FOR THE FIRST SALE"),pad,gy+gh+small*1.3,small*.75,"#3fe0d0",.85);
+  if(typeof GMASTER!=="undefined"){var ch=G?G.h:"";
+    if(GMASTER)txt("CURRENT GUARDIAN MASTER \u00B7 "+GMASTER.toUpperCase()+"."+ch+".BITMAP",pad,gy+gh+small*2.8,small*.85,"#f7931a",.95);
+    else txt("GUARDIAN MASTER \u00B7 "+(SKFOR?"UNCLAIMED":"SCANNING\u2026"),pad,gy+gh+small*2.8,small*.75,"#8a949c",.7)}
 }
 /* ================= /V7 ================= */
 `;
@@ -321,15 +324,20 @@ setTimeout(function(){if(!MASTER)return;var b=document.createElement("button");b
   b.onclick=function(ev){ev.stopPropagation();pvCycle()};document.body.appendChild(b)},2500);
 `;
 
-/* Reinscription skin: when the BITMAP's sat carries a newer image inscription, that image is
-   painted across the parcel tops only, so it reads as built from the block's parcels. */
+/* Reinscription skin + Guardian Master: scans the BITMAP's sat; newest image skins the parcel
+   tops, newest <name>.<height>.bitmap text names the current Guardian Master. */
 const SKIN_BLOCK = `
-var SKIN=null,SKFOR=null;
-function skinScan(){setTimeout(skinScan,4000);if(!BID||BID===SKFOR)return;var bid=BID;SKFOR=bid;SKIN=null;
-  j("/r/inscription/"+bid).then(function(r){if(r.sat===undefined||r.sat===null)throw 0;return j("/r/sat/"+r.sat+"/at/-1")})
-  .then(function(a){var id=a&&a.id;if(!id||id===bid)return;return j("/r/inscription/"+id).then(function(r){
-    if(String(r.content_type||"").indexOf("image/")!==0)return;var im=new Image();
-    im.onload=function(){if(SKFOR===bid)SKIN=im};im.src="/content/"+id})}).catch(function(){})}
+var SKIN=null,SKFOR=null,GMASTER=null;
+function skinScan(){setTimeout(skinScan,4000);if(!BID||BID===SKFOR)return;var bid=BID,bh=G?G.h:null;SKFOR=bid;SKIN=null;GMASTER=null;
+  j("/r/inscription/"+bid).then(function(r){if(r.sat===undefined||r.sat===null)throw 0;return j("/r/sat/"+r.sat)})
+  .then(function(body){var ids=((body&&body.ids)||[]).filter(function(x){return x!==bid}).slice(-8).reverse(),imgDone=false,nmDone=false;
+    return ids.reduce(function(ch,id){return ch.then(function(){if(imgDone&&nmDone)return;
+      return j("/r/inscription/"+id).then(function(m){var ct=String((m&&m.content_type)||"").toLowerCase();
+        if(!imgDone&&ct.indexOf("image/")===0){imgDone=true;var im=new Image();im.onload=function(){if(SKFOR===bid)SKIN=im};im.src="/content/"+id;return}
+        if(!nmDone&&ct.indexOf("text/plain")===0&&(m.content_length||0)<=256)return t("/content/"+id).then(function(tx){
+          var mm=/^\\s*([a-z0-9][a-z0-9_-]{0,47})\\.(\\d+)\\.bitmap\\s*$/i.exec(tx||"");
+          if(mm&&bh!==null&&+mm[2]===bh&&SKFOR===bid){nmDone=true;GMASTER=mm[1]}})}).catch(function(){})})},Promise.resolve())})
+  .catch(function(){})}
 setTimeout(skinScan,3500);
 function skinTop(x0,z0,w,y){var L=LAND,s=L.half,iw=SKIN.naturalWidth,ih=SKIN.naturalHeight;
   var a=P3(x0,y,z0),b=P3(x0+w,y,z0),cc=P3(x0+w,y,z0+w),d=P3(x0,y,z0+w);
