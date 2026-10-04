@@ -66,6 +66,11 @@ export const clearJob = (digest: string) => localStorage.removeItem(KEY(digest))
 
 /** Every locally held job not yet revealed, one per one-time address. */
 export function listUnrevealedJobs(): InscribeJob[] {
+  return listAllJobs().filter((j) => !j.revealTxid);
+}
+
+/** Every locally held job, one per one-time address, revealed ones included. */
+export function listAllJobs(): InscribeJob[] {
   const byAddr = new Map<string, InscribeJob>();
   try {
     for (let i = 0; i < localStorage.length; i++) {
@@ -73,9 +78,9 @@ export function listUnrevealedJobs(): InscribeJob[] {
       if (!k || !(k.startsWith("bitmapwin:shadow-inscribe:") || k.startsWith(ARCHIVE_PREFIX))) continue;
       try {
         const j = JSON.parse(localStorage.getItem(k) ?? "") as InscribeJob;
-        if (!j?.privHex || !j.commitAddress || j.revealTxid) continue;
+        if (!j?.privHex || !j.commitAddress) continue;
         const prev = byAddr.get(j.commitAddress);
-        if (!prev || (j.commitTxid && !prev.commitTxid)) byAddr.set(j.commitAddress, j);
+        if (!prev || (j.revealTxid && !prev.revealTxid) || (j.commitTxid && !prev.commitTxid && !prev.revealTxid)) byAddr.set(j.commitAddress, j);
       } catch {
         /* skip */
       }
