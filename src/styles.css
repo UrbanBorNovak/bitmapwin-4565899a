@@ -1670,3 +1670,15 @@
 }
 
 @keyframes bestiary-scan { 0% { top: 0%; } 100% { top: 100%; } }
+
+/* Character creator — holographic dais effects */
+@keyframes holo-spin { to { transform: rotateX(72deg) rotateZ(360deg); } }
+@keyframes holo-rise { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: .9; } 100% { transform: translateY(-260px); opacity: 0; } }
+@keyframes holo-scan { 0% { top: -10%; } 100% { top: 110%; } }
+@keyframes holo-materialize { 0% { opacity: 0; filter: brightness(3) blur(6px); clip-path: inset(100% 0 0 0); } 100% { opacity: 1; filter: none; clip-path: inset(0 0 0 0); } }
+.holo-ring { position:absolute; left:50%; bottom:6%; border-radius:9999px; border:1px solid color-mix(in oklab, var(--signal, oklch(0.8 0.14 210)) 70%, transparent); transform: translateX(-50%); pointer-events:none; }
+.holo-ring > i { position:absolute; inset:0; border-radius:inherit; border:1px dashed color-mix(in oklab, var(--bitcoin, oklch(0.72 0.18 55)) 60%, transparent); animation: holo-spin 9s linear infinite; transform: rotateX(72deg); }
+.holo-spark { position:absolute; bottom:10%; width:2px; height:2px; border-radius:9999px; background: var(--bitcoin, oklch(0.72 0.18 55)); box-shadow:0 0 6px currentColor; animation: holo-rise 3.6s linear infinite; pointer-events:none; }
+.holo-scanline { position:absolute; left:0; right:0; height:12%; background: linear-gradient(to bottom, transparent, color-mix(in oklab, var(--signal, oklch(0.8 0.14 210)) 22%, transparent), transparent); animation: holo-scan 3.2s linear infinite; pointer-events:none; mix-blend-mode: screen; }
+.holo-materialize { animation: holo-materialize .9s cubic-bezier(.2,.7,.2,1) both; }
+@media (prefers-reduced-motion: reduce) { .holo-ring > i, .holo-spark, .holo-scanline, .holo-materialize { animation: none; } }
