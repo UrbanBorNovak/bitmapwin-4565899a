@@ -62,6 +62,20 @@ function mutate(G,blk){
   if(ts>0){var hr=Math.floor((ts%86400)/3600);G.as=hr>=6&&hr<18?"SOLAR":"VOID";G.mx.push(["Aspect",G.as==="SOLAR"?"DAYBORN":"VOIDBORN"])}
   if(wt>0&&sz>0){G.dn=wt/(sz*4)>.9?"CARAPACE":"CHITIN";G.mx.push(["Density",G.dn==="CARAPACE"?"HEAVY CARAPACE":"CRYSTAL CHITIN"])}
   if(G.sh!=="serpent"&&G.sh!=="floater"){var tk=h32(G.dna+":tail:"+mr)%5;if(tk>0){G.tl=TAILS[tk];G.mx.push(["Tail",TAILS[tk]+" TAIL"])}}
+  /* thermodynamics: proof-of-work difficulty sets the armour */
+  var df=Number(blk.difficulty||0);
+  if(df>0&&df<=1){G.th="CLAY";G.mx.push(["Thermodynamics","GENESIS CLAY \u00B7 CPU ERA"])}
+  else if(df>1e12){G.th="TERA";G.mx.push(["Thermodynamics","TERAHASH SINGULARITY"])}
+  /* mass: block weight decides wraith or titan */
+  if(wt>0&&wt<50000){G.ms="WRAITH";G.mx.push(["Mass","EMPTY BLOCK WRAITH"])}
+  else if(wt>3950000){G.ms="TITAN";G.mx.push(["Mass","MONOLITHIC TITAN"])}
+  /* consensus crests: version bits or activation era */
+  var ver=Number(blk.version||0);
+  if(G.h>=709632||(G.h>=687221&&(ver&4))){G.tp=1;G.mx.push(["Consensus","TAPROOT SCHNORR CREST"])}
+  else if(G.h>=481824||(ver&2&&G.h>=470000)){G.sw=1;G.mx.push(["Consensus","SEGWIT WITNESS FINS"])}
+  /* super-zero: hash beat its own target by 2+ extra hex zeroes */
+  var hs=String(blk.hash||""),lz=0;while(lz<hs.length&&hs.charAt(lz)==="0")lz++;
+  if(df>0&&hs.length===64){var need=8+Math.floor(Math.log(df)/Math.log(16));if(lz>=need+2){G.lz=lz;G.mx.push(["Entropy","SUPER-ZERO SUPERNOVA \u00B7 "+lz+" ZEROES"])}}
   if(G.au)G.mx.push(["Sky","AURORA BOREALIS"]);
 }
 function extras(G,V){
@@ -78,6 +92,23 @@ function extras(G,V){
   if(G.dn==="CHITIN")for(i=0;i<V.length;i++)if(V[i][8]===0&&V[i][7]===0)V[i][7]=.12;
   if(G.dn==="CARAPACE")for(i=0;i<V.length;i++)if(V[i][8]===0){V[i][4]*=1.06;V[i][3]*=1.04}
   if(G.as){var col=G.as==="SOLAR"?"#ffb03a":"#3fe0d0";for(i=0;i<6;i++){var b=i/6*Math.PI*2+.5;V.push([Math.sin(b)*12,4+i,Math.cos(b)*12,.45,.45,.45,col,1.2,5,b])}}
+  /* thermodynamic armour */
+  var n0=V.length,bx=0,by=0,bz=0,bn=0,hzx=-1e9;
+  for(i=0;i<n0;i++){if(V[i][8]===0){bx=Math.max(bx,Math.abs(V[i][0])+V[i][3]/2);by=Math.max(by,V[i][1]+V[i][4]/2);bz+=V[i][2];bn++}if(V[i][8]===4)hzx=Math.max(hzx,V[i][2]+V[i][5]/2)}
+  bz=bn?bz/bn:0;
+  if(G.th==="CLAY")for(i=0;i<n0;i++)if(V[i][8]===0){V[i][6]=i%2?"#c26d38":"#7a4220";V[i][7]=0}
+  if(G.th==="TERA")for(i=0;i<n0;i++)if(V[i][8]===0&&i%2===0){V[i][6]=i%4?"#e8edf2":"#9aa3ab";V[i][7]=Math.max(V[i][7],.35)}
+  /* mass */
+  if(G.ms==="TITAN"){for(i=0;i<n0;i++)if(V[i][8]===0){V[i][0]*=1.25;V[i][3]*=1.25;V[i][5]*=1.1}
+    for(i=-1;i<2;i+=2)V.push([i*(bx*1.25+.6),by*.85,bz,2.2,1.6,2.2,"#4a4f56",0,0,0])}
+  if(G.ms==="WRAITH"){for(i=0;i<n0;i++){V[i][1]+=2;if(V[i][8]===0&&i%3===0){V[i][6]="#bff6ff";V[i][7]=.9}}
+    for(i=0;i<10;i++){var m=i/10*Math.PI*2;V.push([Math.sin(m)*3,.6+(i%3)*.4,bz+Math.cos(m)*3,.4,.4,.4,"#3fe0d0",1.2,5,m])}}
+  var lift=G.ms==="WRAITH"?2:0;
+  /* consensus crests */
+  if(G.tp&&hy>-1e9)for(i=0;i<5;i++)V.push([0,hy+lift+2.4+i*.55,hz,1.6-i*.3,.5,.4,i%2?"#ffd23a":"#ff7a1a",1.5,4,0]);
+  if(G.sw)for(i=-1;i<2;i+=2)for(var k=0;k<3;k++)V.push([i*(bx+.4+k*.7),by+lift+.4-k*.3,bz-1-k*.9,.35,1.8-k*.4,1.1,"#3fe0d0",1.1,0,0]);
+  /* super-zero laser eyes */
+  if(G.lz&&hy>-1e9&&hzx>-1e9)for(i=-1;i<2;i+=2){V.push([i*.7,hy+lift-.6,hzx+4,.25,.25,8,"#3fe0d0",2,4,0]);V.push([i*.7,hy+lift-.6,hzx+.2,.55,.55,.55,"#ffd23a",2,4,0])}
   if(tz<1e9&&G.tl){
     if(G.tl==="STINGER")for(i=0;i<3;i++)V.push([tx,ty+1+i*1.1,tz-.6+i*.7,.7-i*.15,1.1,.7-i*.15,i===2?G.accent:"#e9e0c8",i===2?1:0,3,4])
     else if(G.tl==="MACE"){V.push([tx,ty,tz-1.2,1.8,1.8,1.8,"#4a4f56",0,3,4]);for(i=0;i<6;i++){var c=i/6*Math.PI*2;V.push([tx+Math.sin(c)*1.1,ty+Math.cos(c)*1.1,tz-1.2,.5,.5,.5,G.accent,.6,3,4])}}
