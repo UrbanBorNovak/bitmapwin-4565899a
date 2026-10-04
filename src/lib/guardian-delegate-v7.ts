@@ -183,8 +183,9 @@ function lerpC(a,b,k){return "rgb("+[0,1,2].map(function(i){return Math.round(a[
 backdrop=function(w,h){var now=performance.now()/1000,d=new Date(),hr=d.getUTCHours()+d.getUTCMinutes()/60,
     el=Math.sin((hr-6)/12*Math.PI),day=Math.max(0,el),night=Math.max(0,-el),dusk=Math.max(0,1-Math.abs(el)*3);
   if(LM){day=Math.max(day,.82);night=0;dusk=Math.min(dusk,.18)}
+  if(VD){day=0;night=1;dusk=0}
   BS+=(BT-BS)*.02;if(RC)yaw+=.021;
-  var top=lerpC([3,5,12],[28,52,82],day),bot=lerpC([10,8,14],[120,70,30],Math.max(dusk,day*.5));
+  var top=VD?"#000104":lerpC([1,2,7],[28,52,82],day),bot=VD?"#040309":lerpC([7,5,10],[120,70,30],Math.max(dusk,day*.5));
   var grd=g.createLinearGradient(0,0,0,h);grd.addColorStop(0,top);grd.addColorStop(1,bot);g.fillStyle=grd;g.fillRect(0,0,w,h);
   var sx=w*(.1+((hr+18)%24)/24*.8),sy=h*(.6-Math.abs(el)*.45);
   g.fillStyle=day>0?"#ffd890":"#dfe8f0";g.shadowColor=g.fillStyle;g.shadowBlur=30;g.beginPath();g.arc(sx,sy,day>0?18:12,0,6.283);g.fill();g.shadowBlur=0;
@@ -328,12 +329,12 @@ function tradeScan(){if(!COLL||!COLL.ids){if(TRDS===3)collection("9d1da99caec6af
   nx()}
 setTimeout(tradeScan,2000);
 /* ---------- 7i. latest-12 Guardian chain timeline + remembered light/dark view ---------- */
-var GTL=[],GTLS=0,GTLON=true,LM=false;
-try{var sm=localStorage.getItem("guardian-v7-theme");LM=sm?sm==="light":!!(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches)}catch(_){LM=false}
-function tc(c){if(!LM)return c;var M={"#e9eef0":"#17191c","#e8eef2":"#17191c","#87939b":"#62676c","#8a949c":"#62676c","#5d676e":"#73787d","#04060a":"#f4f5f2"};return M[c]||c}
+var GTL=[],GTLS=0,GTLON=true,LM=false,VD=false;
+try{var sm=localStorage.getItem("guardian-v7-theme");if(sm){LM=sm==="light";VD=sm==="void"}else LM=!!(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches)}catch(_){LM=false}
+function tc(c){if(!LM)return c;var M={"#e9eef0":"#17191c","#e8eef2":"#17191c","#87939b":"#4c5257","#8a949c":"#4c5257","#5d676e":"#5f6469","#04060a":"#f4f5f2","#3fe0d0":"#0a8f84","#bff6ff":"#0a6f84","#f7931a":"#c96a08","#c81e1e":"#a01414","#ff9ff3":"#b0309f"};return M[c]||c}
 var TX7=txt;txt=function(s,x,y,z,col,a){TX7(s,x,y,z,tc(col),a)};
 function paintControls(){var bs=document.querySelectorAll("button");for(var i=0;i<bs.length;i++){bs[i].style.background=LM?"rgba(248,249,246,.88)":"rgba(4,6,10,.7)";if(LM&&bs[i].style.color==="rgb(233, 238, 240)")bs[i].style.color="#17191c"}}
-function setMode(light){LM=!!light;try{localStorage.setItem("guardian-v7-theme",LM?"light":"dark")}catch(_){}paintControls()}
+function setMode(m){LM=m==="light";VD=m==="void";try{localStorage.setItem("guardian-v7-theme",m)}catch(_){}paintControls()}
 function guardianRow(id){return Promise.all([j("/r/inscription/"+id).catch(function(){return{}}),j("/r/parents/"+id).catch(function(){return{ids:[]}})]).then(function(v){
   var meta=v[0]||{},ps=(v[1]&&v[1].ids)||v[1]||[],i=0;
   function nx(){if(i>=ps.length)return null;return t("/content/"+ps[i++]).then(function(body){var h=heightFrom(body);return h===null?nx():blockData(h).then(function(blk){return{id:id,h:h,df:Number((blk&&blk.difficulty)||0),wt:Number((blk&&blk.weight)||0),at:Number(meta.timestamp||meta.time||0)}})},function(){return nx()})}
@@ -342,12 +343,12 @@ function guardianTimeline(){if(!COLL||!COLL.ids){if(GTLS++<24)setTimeout(guardia
 setTimeout(guardianTimeline,2200);
 function modeBar(){var d=document.createElement("div");d.style.cssText="position:fixed;right:2.5%;top:2.5%;display:flex;gap:4px;z-index:4";
   var mb=document.createElement("button"),tb=document.createElement("button");
-  function label(){mb.textContent=LM?"☾ DARK":"☀ LIGHT";tb.textContent=GTLON?"TIMELINE ×":"TIMELINE +"}
+  function label(){mb.textContent=LM?"⬛ VOID":VD?"☀ LIGHT":"☾ DARK";tb.textContent=GTLON?"TIMELINE ×":"TIMELINE +"}
   [mb,tb].forEach(function(b){b.style.cssText="font:10px OCF,ui-monospace,monospace;letter-spacing:.08em;color:#f7931a;background:rgba(4,6,10,.7);border:1px solid #f7931a77;padding:4px 7px;cursor:pointer";d.appendChild(b)});
-  mb.onclick=function(e){e.stopPropagation();setMode(!LM);label()};tb.onclick=function(e){e.stopPropagation();GTLON=!GTLON;label()};label();document.body.appendChild(d);paintControls()}
+  mb.onclick=function(e){e.stopPropagation();setMode(LM?"void":VD?"light":"dark");label()};tb.onclick=function(e){e.stopPropagation();GTLON=!GTLON;label()};label();document.body.appendChild(d);paintControls()}
 setTimeout(modeBar,500);
 function timelineHud(w,h){if(!GTLON)return;var pad=Math.max(14,w*.035),small=Math.max(8,Math.min(12,w*.014)),pw=Math.min(w-pad*2,520),lh=small*1.28,x=pad,y=Math.max(pad+small*10.3,h*.24),rows=GTL.length||1,ph=small*2.8+rows*lh;
-  g.globalAlpha=LM?.82:.62;g.fillStyle=LM?"#f4f5f2":"#04060a";g.fillRect(x-8,y-small*1.25,pw+16,ph);
+  g.globalAlpha=LM?.92:.7;g.fillStyle=LM?"#f4f5f2":"#04060a";g.fillRect(x-8,y-small*1.25,pw+16,ph);
   g.globalAlpha=.55;g.strokeStyle="#f7931a";g.strokeRect(x-8,y-small*1.25,pw+16,ph);g.globalAlpha=1;
   var pn=CY.n<0?"WAITING":["PULL-IN","PARCEL WAVE","ROAR + LIGHTNING","SPINE SURGE"][CY.n],left=Math.max(0,4-(performance.now()/1000-CY.t));
   txt("PACK CHAIN TIMELINE · LATEST 12",x,y,small*.82,"#f7931a");txt("LIVE PULSE · "+pn+" · "+left.toFixed(1)+"S",x+pw*.57,y,small*.72,"#3fe0d0");
@@ -371,8 +372,8 @@ function chainHud(w,h){if(!G)return;
     ["ARMOUR",arm+(G.df?" \u00B7 DIFF "+fmtD(G.df):""),"#e8eef2"],
     ["BLOCK WEIGHT",(G.wt?(G.wt/1e6).toFixed(2)+" MWU":"\u2026")+" \u00B7 "+ms,"#e8eef2"],
     ["CRESTS",cr.length?cr.join(" + "):"NONE (PRE-SEGWIT)",cr.length?"#f7931a":"#8a949c"]];
-  g.globalAlpha=.55;g.fillStyle="#04060a";g.fillRect(x-8,y-small*1.2,pw+16,lh*R.length+small*.6);
-  g.globalAlpha=.5;g.strokeStyle="#3fe0d0";g.lineWidth=1;g.strokeRect(x-8,y-small*1.2,pw+16,lh*R.length+small*.6);g.globalAlpha=1;
+  g.globalAlpha=LM?.88:.62;g.fillStyle=LM?"#f4f5f2":"#04060a";g.fillRect(x-8,y-small*1.2,pw+16,lh*R.length+small*.6);
+  g.globalAlpha=.5;g.strokeStyle=LM?"#0a8f84":"#3fe0d0";g.lineWidth=1;g.strokeRect(x-8,y-small*1.2,pw+16,lh*R.length+small*.6);g.globalAlpha=1;
   for(var i=0;i<R.length;i++){var yy=y+i*lh;
     if(!R[i][1]){txt(R[i][0],x,yy,small*.85,R[i][2]);continue}
     txt(R[i][0],x,yy,small*.72,"#8a949c",.85);txt(R[i][1],x+pw*.36,yy,small*.8,R[i][2])}
