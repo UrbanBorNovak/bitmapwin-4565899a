@@ -29,6 +29,7 @@ import { DiamondNodes } from "@/components/game/DiamondNodes";
 import { poseDown, simDelta} from "@/lib/player-state";
 import { DesertProps } from "@/components/game/DesertProps";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
+import { VoxelCritter, hasVoxelSculpt } from "@/components/game/CritterVoxels";
 
 import {
   registerBeasts,
@@ -943,6 +944,7 @@ export const CritterBody = memo(function CritterBody({
   unit: number;
   colors: DesertColors;
 }) {
+  if (hasVoxelSculpt(kind as string)) return <VoxelCritter kind={kind as "scorpion"} unit={u} />;
   if (kind === "scorpion") {
     return (
       <group>
