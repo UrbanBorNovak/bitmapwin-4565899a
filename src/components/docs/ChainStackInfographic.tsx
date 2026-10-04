@@ -124,41 +124,38 @@ export function ChainStackInfographic() {
       </figcaption>
 
       <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)]">
-        {/* stack + side wing */}
-        <div className="grid grid-cols-[minmax(0,1fr)_28px_minmax(0,0.85fr)] items-stretch gap-0">
-          <div className="flex flex-col gap-1">
-            {STACK.map((id, i) => (
-              <div key={id} className="flex flex-col">
-                {layerBtn(id, id === "bitcoin" ? "border-b-2" : "")}
-                {i < STACK.length - 1 ? (
-                  <div className="flex items-center justify-center py-1" aria-hidden="true">
-                    <div className="relative h-4 w-px bg-border">
-                      <span className="infogfx-runner absolute -left-[3px] h-[7px] w-[7px] bg-bitcoin" />
-                    </div>
-                    <span className="label ml-2 text-muted-foreground">{i === 0 ? "BUILT ON" : "WRITTEN INTO"}</span>
-                  </div>
-                ) : null}
-              </div>
-            ))}
+        {/* closed-loop circuit: one block, four faces */}
+        <div className="grid grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)] grid-rows-[auto_minmax(72px,auto)_auto] items-stretch">
+          {layerBtn("bitcoin")}
+          <div className="flex items-center" aria-hidden="true">
+            <div className="relative h-px w-full bg-bitcoin/50"><span className="infogfx-runner absolute -top-[3px] size-[7px] bg-bitcoin" /></div>
+          </div>
+          {layerBtn("ordinals")}
+
+          <div className="flex justify-center" aria-hidden="true">
+            <div className="relative w-px bg-signal/50"><span className="infogfx-runner absolute -left-[3px] size-[7px] bg-signal" /></div>
+          </div>
+          <div className="flex items-center justify-center" aria-hidden="true">
+            <span className="label text-center text-[9px] leading-tight text-muted-foreground">↻</span>
+          </div>
+          <div className="flex justify-center" aria-hidden="true">
+            <div className="relative w-px bg-bitcoin/50"><span className="infogfx-runner absolute -left-[3px] size-[7px] bg-bitcoin" /></div>
           </div>
 
-          {/* conduit from L1 to DMT */}
-          <div className="relative" aria-hidden="true">
-            <div className="absolute bottom-10 left-1/2 top-10 w-px -translate-x-1/2 bg-signal/40" />
-            <div className="absolute bottom-10 left-0 right-0 h-px bg-signal/60" />
-            <span className="infogfx-runner absolute bottom-[38px] left-0 h-[5px] w-[5px] bg-signal" />
+          {layerBtn("dmt", "border-dashed")}
+          <div className="flex items-center" aria-hidden="true">
+            <div className="relative h-px w-full bg-signal/50"><span className="infogfx-runner absolute -top-[3px] size-[7px] bg-signal" /></div>
           </div>
+          {layerBtn("bitmap")}
 
-          <div className="flex flex-col justify-end">
-            <div className="label mb-2 text-signal">READS RAW BLOCK DATA ↓</div>
-            {layerBtn("dmt", "flex-1 border-dashed")}
-            <div className="mt-2 grid grid-cols-3 gap-px border border-border bg-border font-mono text-[9px]">
-              {["HASH", "NONCE", "BITS", "SIZE", "TX#", "TIME"].map((f) => (
-                <span key={f} className="bg-background px-1 py-1 text-center text-muted-foreground">{f}</span>
-              ))}
-            </div>
+          <div className="col-span-3 mt-3 border border-border bg-background px-3 py-2 text-center">
+            <div className="label text-bitcoin">ONE BLOCK · ONE UNIT</div>
+            <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+              BLOCK MINED → SAT INSCRIBED → TXS BECOME LAND → BLOCK DATA BECOMES ITS PHYSICS → BACK TO THE SAME BLOCK
+            </p>
           </div>
         </div>
+
 
         {/* inspector */}
         <div className="border border-border bg-background p-4" aria-live="polite">
