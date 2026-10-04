@@ -65,6 +65,8 @@ export function ShadowInscriber(props: {
   onPrepared?: (job: InscribeJob) => Promise<void> | void;
   /** Runs once the inscription reveal is broadcast. */
   onRevealed?: (revealTxid: string, job: InscribeJob) => Promise<void> | void;
+  /** Start signing and broadcasting Step 2 as soon as the paid commit is seen. */
+  autoReveal?: boolean;
 }) {
   const [job, setJob] = useState<InscribeJob | null>(null);
   const [file, setFile] = useState<{ type: string; bytes: Uint8Array; url: string } | null>(null);
@@ -155,7 +157,7 @@ export function ShadowInscriber(props: {
       if (!utxo || stop) return;
       setCommitUtxo(utxo);
       // No wallet prompt needed → finish once by itself.
-      if (!needsWallet && autoTried.current !== job.digest) {
+      if ((!needsWallet || props.autoReveal) && autoTried.current !== job.digest) {
         autoTried.current = job.digest;
         void reveal(job, utxo);
       }

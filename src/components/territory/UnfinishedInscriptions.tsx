@@ -1,6 +1,7 @@
+import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { ShadowInscriber } from "@/components/territory/ShadowInscriber";
-import { findCommitOutput, listUnrevealedJobs, saveJob, type InscribeJob } from "@/lib/shadow-inscribe";
+import { findCommitOutput, listUnrevealedJobs, markRevealed, saveJob, type InscribeJob } from "@/lib/shadow-inscribe";
 
 type Found = { job: InscribeJob; value: number };
 
@@ -54,6 +55,11 @@ export function UnfinishedInscriptions() {
               digest={job.digest}
               artifactLabel="FINISH THIS INSCRIPTION"
               allowUpload={false}
+              autoReveal
+              onRevealed={(txid) => {
+                markRevealed(job, txid);
+                toast.success("STEP 2 SENT — YOUR GUARDIAN IS BEING INSCRIBED");
+              }}
             />
           ) : (
             <button
@@ -64,7 +70,7 @@ export function UnfinishedInscriptions() {
               }}
               className="w-full border border-bitcoin px-3 py-2 font-mono text-xs text-bitcoin hover:bg-bitcoin hover:text-background"
             >
-              ◆ FINISH STEP 2 (NO NEW FEE)
+              ◆ FINISH STEP 2 · SIGN IN WALLET (NO NEW FEE)
             </button>
           )}
         </div>
