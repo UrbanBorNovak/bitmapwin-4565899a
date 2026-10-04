@@ -290,6 +290,34 @@ setTimeout(function(){if(!MASTER)return;var b=document.createElement("button");b
   b.onclick=function(ev){ev.stopPropagation();pvCycle()};document.body.appendChild(b)},2500);
 `;
 
+/* Reinscription skin: when the BITMAP's sat carries a newer image inscription, that image is
+   painted across the parcel tops only, so it reads as built from the block's parcels. */
+const SKIN_BLOCK = `
+var SKIN=null,SKFOR=null;
+function skinScan(){setTimeout(skinScan,4000);if(!BID||BID===SKFOR)return;var bid=BID;SKFOR=bid;SKIN=null;
+  j("/r/inscription/"+bid).then(function(r){if(r.sat===undefined||r.sat===null)throw 0;return j("/r/sat/"+r.sat+"/at/-1")})
+  .then(function(a){var id=a&&a.id;if(!id||id===bid)return;return j("/r/inscription/"+id).then(function(r){
+    if(String(r.content_type||"").indexOf("image/")!==0)return;var im=new Image();
+    im.onload=function(){if(SKFOR===bid)SKIN=im};im.src="/content/"+id})}).catch(function(){})}
+setTimeout(skinScan,3500);
+function skinTop(x0,z0,w,y){var L=LAND,s=L.half,iw=SKIN.naturalWidth,ih=SKIN.naturalHeight;
+  var a=P3(x0,y,z0),b=P3(x0+w,y,z0),cc=P3(x0+w,y,z0+w),d=P3(x0,y,z0+w);
+  var sx=(x0+s)/(2*s)*iw,sy=(z0+s)/(2*s)*ih,sw=w/(2*s)*iw,shh=w/(2*s)*ih;if(sw<=0||shh<=0)return;
+  g.save();g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.lineTo(cc[0],cc[1]);g.lineTo(d[0],d[1]);g.closePath();g.clip();
+  var m11=(b[0]-a[0])/sw,m12=(b[1]-a[1])/sw,m21=(d[0]-a[0])/shh,m22=(d[1]-a[1])/shh;
+  g.transform(m11,m12,m21,m22,a[0]-m11*sx-m21*sy,a[1]-m12*sx-m22*sy);
+  g.drawImage(SKIN,sx,sy,sw,shh,sx,sy,sw,shh);g.restore()}
+var _dl7=drawLand;
+drawLand=function(pulse){_dl7(pulse);if(!SKIN||!LAND||!SKIN.naturalWidth)return;var L=LAND,own={},i,gp;
+  g.imageSmoothingEnabled=false;g.shadowBlur=0;
+  for(i=0;i<PARC.length;i++)own[PARC[i].i]=PARC[i];
+  for(i=0;i<L.p.length&&i<1500;i++){var q=L.p[i],P=own[i];gp=Math.min(.18,q[2]*.08);
+    if(P&&P.c){var bw=Math.max(.25,q[2]*.82),cx=q[0]+q[2]/2,cz=q[1]+q[2]/2;skinTop(cx-bw/2,cz-bw/2,bw,P.c[1]+.02)}
+    else skinTop(q[0]+gp,q[1]+gp,q[2]-gp*2,.05)}
+  g.imageSmoothingEnabled=true};
+`;
+
+
 function swap(src: string, from: string, to: string, all = false): string {
   if (!src.includes(from)) throw new Error(`V7 build: missing anchor ${from.slice(0, 40)}`);
   return all ? src.split(from).join(to) : src.replace(from, to);
