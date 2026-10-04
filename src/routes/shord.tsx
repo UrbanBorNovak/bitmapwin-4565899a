@@ -216,6 +216,7 @@ function KeyPanel({ keys, onChange }: { keys: ShordKeys | null; onChange: (k: Sh
 }
 
 function ShieldedVaultPage() {
+  const disabled = SHORD_VAULT_DISABLED;
   const [keys, setKeys] = useState<ShordKeys | null>(null);
   const [lookup, setLookup] = useState("");
   const [lookupNote, setLookupNote] = useState<ShordChainNote | null>(null);
