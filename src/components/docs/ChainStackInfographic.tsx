@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ATLAS_SIDE, blockToAtlas } from "@/lib/atlas-geometry";
 import { allGuardiansQuery } from "@/lib/bitmon-queries";
 import { TRIBUTE_SATS } from "@/lib/guardian-delegate";
+import { LiveBlockCircuit } from "@/components/docs/LiveBlockCircuit";
 
 /**
  * Interactive explainer: Bitcoin L1 at the base, the Ordinals inscription layer
@@ -247,6 +248,7 @@ export function ChainStackInfographic() {
       <p className="label border-t border-border px-4 py-2 text-muted-foreground">
         BITCOIN SECURES IT · ORDINALS RECORDS IT · BITMAP MAPS IT · DMT READS IT
       </p>
+      <LiveBlockCircuit height={guardian?.height ?? 840000} guardian={guardian} />
     </figure>
   );
 }

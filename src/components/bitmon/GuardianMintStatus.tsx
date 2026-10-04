@@ -9,7 +9,7 @@ export function GuardianMintStatus({ height, className = "" }: { height: number;
     return (
       <div className={`flex items-center gap-2 font-mono text-[10px] text-signal ${className}`}>
         <span className="size-1.5 bg-signal" aria-hidden="true" />
-        GUARDIAN AWAKE · {g.data.species}
+        GUARDIAN MINTED · {g.data.species}
       </div>
     );
   }

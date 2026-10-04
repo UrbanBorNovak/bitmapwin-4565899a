@@ -14,6 +14,7 @@ import { FirstTenMinutes } from "@/components/FirstTenMinutes";
 import { startGuidedTour } from "@/components/GuidedTour";
 import { MobileAppInstall } from "@/components/MobileAppInstall";
 import { GuardianMintStatus } from "@/components/bitmon/GuardianMintStatus";
+import { LatestGuardianCard } from "@/components/bitmon/LatestGuardianCard";
 
 
 export const Route = createFileRoute("/")({
@@ -134,6 +135,7 @@ function Index() {
 
 
 
+                <div className="min-w-0">
                 {lead && (
                   <Link
                     to="/bitmap/$block"
@@ -151,6 +153,8 @@ function Index() {
                     </div>
                   </Link>
                 )}
+                <LatestGuardianCard />
+                </div>
               </div>
             </div>
 
