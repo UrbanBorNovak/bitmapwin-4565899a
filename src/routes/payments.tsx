@@ -18,7 +18,7 @@ export const Route = createFileRoute("/payments")({
 
 const API = "https://mempool.space/api";
 type Stage = "PAYMENT PENDING" | "PAID · NEEDS STEP 2" | "PAID · KEY NOT ON THIS DEVICE" | "INSCRIBING · PENDING" | "INSCRIBED · CONFIRMED" | "UNKNOWN";
-type Row = { address: string; sats: number; commitTxid?: string; revealTxid?: string; stage: Stage; hasKey: boolean; time?: number };
+type Row = { address: string; sats: number; commitTxid?: string | undefined; revealTxid?: string | undefined; stage: Stage; hasKey: boolean; time?: number | undefined };
 
 async function j<T>(path: string): Promise<T | null> {
   try {
@@ -79,7 +79,7 @@ function PaymentsPage() {
         if (!t.vin.some((v) => v.prevout?.scriptpubkey_address === walletAddr)) continue;
         for (const o of t.vout) {
           const a = o.scriptpubkey_address;
-          if (a && a !== walletAddr && /^bc1p/i.test(a) && o.value > 546 && o.value < 100_000) addrs.add(a);
+          if (a && a !== walletAddr && /^bc1p/i.test(a) && o.value > 1_000 && o.value < 100_000) addrs.add(a);
         }
       }
     }
