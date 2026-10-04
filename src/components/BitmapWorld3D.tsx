@@ -2698,6 +2698,7 @@ const WorldScene = memo(function WorldScene({
   // the whole overlay. Coalesce them: at most ~20 hover updates a second, and skip
   // updates that land on the same district within a couple of pixels.
   const lastHover = useRef({ height: -1, x: -99, y: -99, at: 0 });
+  const guardianSeat = useGuardianMountOffset(AVATAR_U);
   const handleMove = useCallback(
     (event: ThreeEvent<PointerEvent>) => {
       const height = heightAtPoint(event.point);
