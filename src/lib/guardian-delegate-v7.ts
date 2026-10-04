@@ -279,6 +279,17 @@ function tickerHud(w,h){
 /* ================= /V7 ================= */
 `;
 
+/* Master preview: featured multi-parcel blocks; RANDOM / B cycles them on the master only. */
+const PREVIEW_BLOCK = `
+var PVH=[819245,347001,777777,208,969569],PVI=0;
+function pvCycle(){PVI=(PVI+1)%PVH.length;var h=PVH[PVI];blockData(h).then(function(b){build(h,b);PARC=[];PSEL=null;PSCAN=0;parcels()})}
+var _stp=step;step=function(d){if(MASTER&&d===0)return pvCycle();_stp(d)};
+window.addEventListener("keydown",function(e){if(MASTER&&e.key.toLowerCase()==="b")pvCycle()});
+setTimeout(function(){if(!MASTER)return;var b=document.createElement("button");b.textContent="B \\u21BB NEXT BITMAP";
+  b.style.cssText="position:fixed;right:2.5%;bottom:19%;font:10px ui-monospace,monospace;letter-spacing:.08em;color:#f7931a;background:rgba(4,6,10,.7);border:1px solid #f7931a77;padding:4px 7px;cursor:pointer;z-index:2";
+  b.onclick=function(ev){ev.stopPropagation();pvCycle()};document.body.appendChild(b)},2500);
+`;
+
 function swap(src: string, from: string, to: string, all = false): string {
   if (!src.includes(from)) throw new Error(`V7 build: missing anchor ${from.slice(0, 40)}`);
   return all ? src.split(from).join(to) : src.replace(from, to);
@@ -321,7 +332,17 @@ export function guardianMasterGeneratorHtmlV7(): string {
   s = swap(s, '" IN COLLECTION"', '" IN THE PACK"');
   s = swap(s, 'txt("LATEST "+', 'txt("NEWEST GUARDIAN \\u00B7 "+');
   s = swap(s, 'g.font=size+"px ui-monospace,monospace"', 'g.font=size+"px OCF,ui-monospace,monospace"');
-  s = swap(s, "bar();fit();requestAnimationFrame(frame);", V7_BLOCK + "bar();fit();requestAnimationFrame(frame);");
+  // Architecture labels: V7 is the Tag 11 code delegate; the V6 root stays the Tag 3 collection parent.
+  s = swap(s, '"COLLECTION PARENT \\u00B7 GENESIS PROGENITOR"', '"MASTER CODE DELEGATE V7 \\u00B7 ROOT 9d1da99c\\u2026"');
+  s = swap(
+    s,
+    'txt("DNA "+G.dna+"  "+SELF.slice(0,16)+"\\u2026"',
+    'txt("DNA "+G.dna+"  "+SELF.slice(0,16)+"\\u2026"+(MASTER?"":" \\u00B7 TAG 3 PARENTS: "+G.h+".BITMAP + ROOT 9d1da99c\\u2026 \\u00B7 TAG 11 DELEGATE V7")',
+  );
+  s = swap(s, 'LAND.n+" PARCELS \\u00B7', 'LAND.n+(LAND.n===1?" PARCEL":" PARCELS")+" \\u00B7');
+  // Master preview stands on a featured multi-parcel BITMAP instead of the 1-tx genesis block.
+  s = swap(s, "return blockData(0).then(function(blk){build(0,blk);", "return blockData(PVH[0]).then(function(blk){build(PVH[0],blk);");
+  s = swap(s, "bar();fit();requestAnimationFrame(frame);", V7_BLOCK + PREVIEW_BLOCK + "bar();fit();requestAnimationFrame(frame);");
   cached = s;
   return s;
 }
