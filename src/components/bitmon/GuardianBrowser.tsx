@@ -125,6 +125,7 @@ export function GuardianBrowser() {
                 {probeHeight !== null ? "PREVIEW ONLY · NOT SUMMONED" : `AWAKENED BY ${short(cur?.owner ?? "")}`}
               </div>
               <div className="mt-2 flex flex-wrap gap-2">
+                <Link to="/collections/guardians/$height" params={{ height: String(shown.height) }} className="btn-term-ghost">DETAILS</Link>
                 <Link to="/bitmap/$block" params={{ block: String(shown.height) }} className="btn-term-ghost">OPEN BITMAP</Link>
                 <Link to="/oasis" search={{ height: shown.height }} className="btn-term-ghost">FIND IN OASIS</Link>
               </div>
