@@ -1,7 +1,9 @@
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { SafeOrbitControls } from "@/components/game/SafeOrbitControls";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
+import { GuardianBody } from "@/components/bitmon/GuardianBody";
+import type { AwakeGuardian } from "@/lib/bitmon-queries";
 import { packParcels } from "@/components/TerritoryCanvas";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 
@@ -47,7 +49,7 @@ function Plots({ classes }: { classes: number[] }) {
 }
 
 /** The block's real transaction parcels, extruded into land you can orbit. */
-export function BitmapTerritory3D({ height }: { height: number }) {
+export function BitmapTerritory3D({ height, guardian }: { height: number; guardian?: AwakeGuardian | null }) {
   const { data, isError } = useQuery(blockSizeMapQuery(height));
 
   if (!data?.classes?.length) {
@@ -66,6 +68,13 @@ export function BitmapTerritory3D({ height }: { height: number }) {
         <directionalLight position={[3, 5, 2]} intensity={1.15} color="#ffd7a3" />
         <directionalLight position={[-3, 2, -2]} intensity={0.35} color="#f7931a" />
         <Plots classes={data.classes} />
+        {guardian && (
+          <Suspense fallback={null}>
+            <group position={[0, 0.25, 0]} scale={0.32}>
+              <GuardianBody species={guardian.species} rarity={guardian.rarity} body={guardian.body} accent={guardian.accent} height={guardian.height} />
+            </group>
+          </Suspense>
+        )}
         <SafeOrbitControls
           enablePan={false}
           autoRotate
