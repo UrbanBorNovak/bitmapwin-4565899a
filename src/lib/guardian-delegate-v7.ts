@@ -190,7 +190,20 @@ backdrop=function(w,h){var now=performance.now()/1000,d=new Date(),hr=d.getUTCHo
   if(night>.05){for(var i=0;i<STARS.length;i++){var s=STARS[i];g.globalAlpha=night*(.4+.6*Math.abs(Math.sin(now*1.3+s[3])));g.fillStyle="#fff";g.fillRect(s[0]*w,s[1]*h,s[2],s[2])}g.globalAlpha=1;
     if(G&&G.au)for(var k=0;k<3;k++){var ag=g.createLinearGradient(0,h*.08,0,h*.42);ag.addColorStop(0,"rgba(63,224,208,0)");ag.addColorStop(.5,k===1?"rgba(170,110,255,.5)":"rgba(63,224,208,.55)");ag.addColorStop(1,"rgba(63,224,208,0)");
       g.fillStyle=ag;g.globalAlpha=night*.45;for(var x=0;x<w;x+=5){var y=h*(.12+k*.05)+Math.sin(x*.006+now*.35+k*2)*h*.05+Math.sin(x*.017-now*.6)*h*.015;g.fillRect(x,y,5,h*.16+Math.sin(x*.01+now+k)*h*.04)}g.globalAlpha=1}}
+  /* on-chain sky events: Blood Moon near a difficulty adjustment, lightning on new tip blocks, meteors at night */
+  var bh=G?G.h:0,em=bh%2016,blood=bh>0&&(em>=1944||em<=72);
+  if(blood){var bx=w*.78,by=h*.18,bg=g.createRadialGradient(bx,by,4,bx,by,90);bg.addColorStop(0,"rgba(200,30,30,.55)");bg.addColorStop(1,"rgba(120,10,10,0)");g.fillStyle=bg;g.fillRect(0,0,w,h*.6);
+    g.fillStyle="#c81e1e";g.shadowColor="#ff3a2a";g.shadowBlur=40;g.beginPath();g.arc(bx,by,20,0,6.283);g.fill();g.shadowBlur=0;
+    g.fillStyle="rgba(120,0,0,.08)";g.fillRect(0,0,w,h)}
+  if(night>.05||blood){if(!MET||MET.t>1){if(Math.random()<(blood?.02:.006))MET={x:Math.random()*w,y:Math.random()*h*.3,t:0}}
+    if(MET&&MET.t<=1){MET.t+=.03;var mx=MET.x-MET.t*w*.25,my=MET.y+MET.t*h*.15;g.strokeStyle="rgba(255,240,210,"+(1-MET.t)+")";g.lineWidth=2;g.beginPath();g.moveTo(mx,my);g.lineTo(mx+40,my-24);g.stroke()}}
+  if(LT>0){var lx=LX*w,ly=0;g.strokeStyle="rgba(232,246,255,"+LT+")";g.lineWidth=2.5;g.shadowColor="#9fd8ff";g.shadowBlur=20;g.beginPath();g.moveTo(lx,ly);
+    for(var j=1;j<9;j++){lx+=Math.sin(j*7.3+LX*50)*22;ly=j*h*.065;g.lineTo(lx,ly)}g.stroke();g.shadowBlur=0;g.fillStyle="rgba(220,235,255,"+LT*.25+")";g.fillRect(0,0,w,h);LT-=.06}
 };
+var LT=0,LX=.5,MET=null,TIP=0;
+function strike(){LT=1;LX=.15+Math.random()*.7}
+setInterval(function(){fetch("/r/blockheight").then(function(r){return r.text()}).then(function(t){var n=+t;if(n>0){if(TIP&&n!==TIP)strike();TIP=n}}).catch(function(){})},30000);
+setInterval(function(){var bh=G?G.h:0,em=bh%2016;if(bh>0&&(em>=1944||em<=72)&&Math.random()<.5)strike()},9000);
 /* ---------- 7f. 5s cinematic 360 video recorder ---------- */
 var RC=null;
 function rec(){if(RC||!c.captureStream||!window.MediaRecorder)return;var st=c.captureStream(60),mt=["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm","video/mp4"].filter(function(m){return MediaRecorder.isTypeSupported(m)})[0];
