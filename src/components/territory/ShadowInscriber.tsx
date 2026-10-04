@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { resolveWallet } from "@/components/BuyButton";
@@ -85,49 +85,74 @@ export function ShadowInscriber(props: {
 
 
 
-  // Watch for the commit payment, then reveal automatically.
+  // Watch for the commit payment. Polling never opens the wallet: a wallet
+  // parent claim waits for the user's explicit click, and a lock ensures only
+  // one reveal attempt runs at a time.
+  const [commitUtxo, setCommitUtxo] = useState<Awaited<ReturnType<typeof findCommitOutput>>>(null);
+  const [revealError, setRevealError] = useState<string | null>(null);
+  const revealing = useRef(false);
+  const autoTried = useRef<string | null>(null);
+  const needsWallet = !!job?.parents?.some((p) => p.signer === "wallet");
+
+  const reveal = async (current: InscribeJob, utxo: NonNullable<typeof commitUtxo>) => {
+    if (revealing.current || current.revealTxid) return;
+    revealing.current = true;
+    setRevealError(null);
+    try {
+      setBusy("REVEALING…");
+      const signers: ParentSigners = {};
+      if (current.parents?.length) {
+        if (current.parents.some((p) => p.signer === "wallet")) {
+          setBusy("APPROVE THE PARENT CLAIM IN YOUR WALLET…");
+          const wallet = await resolveWallet();
+          signers.wallet = (psbt, indices) => signParentInputsPsbt(wallet.provider, psbt, wallet.ordinalsAddress, indices);
+        }
+        if (current.parents.some((p) => p.signer === "platform")) {
+          signers.platform = async (psbt) => {
+            const res = await signCollection({ data: { psbt } });
+            if (!res.ok) throw new Error(res.reason);
+            return res.psbt;
+          };
+        }
+      }
+      const revealTxid = await revealJob(current, utxo, signers);
+      const done = { ...current, revealTxid };
+      saveJob(done);
+      setJob(done);
+      await props.onRevealed?.(revealTxid, done);
+      toast.success("ARTIFACT INSCRIBED — WAITING FOR A MINER");
+    } catch (e) {
+      const msg = (e as Error).message;
+      setRevealError(msg);
+      toast.error(msg);
+    } finally {
+      revealing.current = false;
+      setBusy(null);
+    }
+  };
+
   useEffect(() => {
     if (!job?.commitTxid || job.revealTxid) return;
     let stop = false;
-    const tick = async () => {
+    const poll = async () => {
+      if (commitUtxo) return;
       const utxo = await findCommitOutput(job);
       if (!utxo || stop) return;
-      try {
-        setBusy("REVEALING…");
-        const signers: ParentSigners = {};
-        if (job.parents?.length) {
-          if (job.parents.some((p) => p.signer === "wallet")) {
-            setBusy("APPROVE THE PARENT CLAIM IN YOUR WALLET…");
-            const wallet = await resolveWallet();
-            signers.wallet = (psbt, indices) => signParentInputsPsbt(wallet.provider, psbt, wallet.ordinalsAddress, indices);
-          }
-          if (job.parents.some((p) => p.signer === "platform")) {
-            signers.platform = async (psbt) => {
-              const res = await signCollection({ data: { psbt } });
-              if (!res.ok) throw new Error(res.reason);
-              return res.psbt;
-            };
-          }
-        }
-        const revealTxid = await revealJob(job, utxo, signers);
-        const done = { ...job, revealTxid };
-        saveJob(done);
-        setJob(done);
-        await props.onRevealed?.(revealTxid, done);
-        toast.success("ARTIFACT INSCRIBED — WAITING FOR A MINER");
-      } catch (e) {
-        toast.error((e as Error).message);
-      } finally {
-        setBusy(null);
+      setCommitUtxo(utxo);
+      // No wallet prompt needed → finish once by itself.
+      if (!needsWallet && autoTried.current !== job.digest) {
+        autoTried.current = job.digest;
+        void reveal(job, utxo);
       }
     };
-    void tick();
-    const t = setInterval(tick, 15_000);
+    void poll();
+    const t = setInterval(poll, 15_000);
     return () => {
       stop = true;
       clearInterval(t);
     };
-  }, [job]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [job, commitUtxo]);
 
 
   const onFile = async (f: File | undefined) => {
@@ -286,7 +311,27 @@ export function ShadowInscriber(props: {
               </button>
             </>
           ) : (
-            <p className="text-signal">{busy ?? "WAITING FOR YOUR PAYMENT TO APPEAR · FINISHES BY ITSELF"}</p>
+            <div className="space-y-2">
+              {!commitUtxo ? (
+                <p className="text-signal">{busy ?? "STEP 1 · WAITING FOR YOUR FEE PAYMENT TO APPEAR…"}</p>
+              ) : busy ? (
+                <p className="text-signal">{busy}</p>
+              ) : (
+                <>
+                  <p className="text-signal">
+                    STEP 1 DONE · FEE PAYMENT SEEN. {needsWallet ? "STEP 2 · YOUR WALLET MUST SIGN THE BITMAP PARENT CLAIM (NO NEW FEE)." : ""}
+                  </p>
+                  {revealError ? <p className="text-destructive">{revealError}</p> : null}
+                  <button
+                    type="button"
+                    className="border border-bitcoin px-3 py-2 label text-bitcoin hover:bg-bitcoin/10"
+                    onClick={() => job && commitUtxo && void reveal(job, commitUtxo)}
+                  >
+                    {revealError ? "↻ RETRY SIGNING" : needsWallet ? "◆ STEP 2 · SIGN & BROADCAST REVEAL" : "◆ BROADCAST REVEAL"}
+                  </button>
+                </>
+              )}
+            </div>
           )}
           {!job.revealTxid ? (
             <button type="button" className="label text-bitcoin underline" onClick={downloadRecovery}>
