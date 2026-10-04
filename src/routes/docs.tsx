@@ -7,6 +7,7 @@ import {
   ParcelsInfographic,
   RightsInfographic,
 } from "@/components/docs/Infographics";
+import { ChainStackInfographic } from "@/components/docs/ChainStackInfographic";
 
 
 export const Route = createFileRoute("/docs")({
@@ -87,6 +88,9 @@ function DocsPage() {
       </div>
 
       <div className="mt-8">
+        <ChainStackInfographic />
+      </div>
+      <div className="mt-6">
         <BedrockStackInfographic />
       </div>
 
