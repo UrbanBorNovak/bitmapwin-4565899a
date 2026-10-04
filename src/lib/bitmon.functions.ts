@@ -26,6 +26,13 @@ export const checkSummonOrderFn = createServerFn({ method: "POST" })
     return checkSummonOrder(context.userId, data.orderId);
   });
 
+export const listMySummonOrdersFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { listMySummonOrders } = await import("@/lib/bitmon.server");
+    return listMySummonOrders(context.userId);
+  });
+
 /** Public: proof comes entirely from the chain, so no session is needed. */
 export const verifyDelegateGuardianFn = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ inscriptionId: z.string().regex(/^[0-9a-f]{64}i\d+$/) }).parse(d))
