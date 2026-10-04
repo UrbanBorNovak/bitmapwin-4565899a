@@ -199,11 +199,11 @@ backdrop=function(w,h){var now=performance.now()/1000,d=new Date(),hr=d.getUTCHo
     g.fillStyle="rgba(120,0,0,.08)";g.fillRect(0,0,w,h)}
   if(night>.05||blood){if(!MET||MET.t>1){if(Math.random()<(blood?.02:.006))MET={x:Math.random()*w,y:Math.random()*h*.3,t:0}}
     if(MET&&MET.t<=1){MET.t+=.03;var mx=MET.x-MET.t*w*.25,my=MET.y+MET.t*h*.15;g.strokeStyle="rgba(255,240,210,"+(1-MET.t)+")";g.lineWidth=2;g.beginPath();g.moveTo(mx,my);g.lineTo(mx+40,my-24);g.stroke()}}
-  if(LT>0){var lx=LX*w,ly=0;g.strokeStyle="rgba(232,246,255,"+LT+")";g.lineWidth=2.5;g.shadowColor="#9fd8ff";g.shadowBlur=20;g.beginPath();g.moveTo(lx,ly);
-    for(var j=1;j<9;j++){lx+=Math.sin(j*7.3+LX*50)*22;ly=j*h*.065;g.lineTo(lx,ly)}g.stroke();g.shadowBlur=0;g.fillStyle="rgba(220,235,255,"+LT*.25+")";g.fillRect(0,0,w,h);LT-=.06}
+  if(FLA>0){var lx=FLX*w,ly=0;g.strokeStyle="rgba(232,246,255,"+Math.min(1,FLA)+")";g.lineWidth=2.5;g.shadowColor="#9fd8ff";g.shadowBlur=20;g.beginPath();g.moveTo(lx,ly);
+    for(var j=1;j<9;j++){lx+=Math.sin(j*7.3+FLX*50)*22;ly=j*h*.065;g.lineTo(lx,ly)}g.stroke();g.shadowBlur=0;g.fillStyle="rgba(220,235,255,"+Math.min(1,FLA)*.25+")";g.fillRect(0,0,w,h);FLA-=.06}
 };
-var LT=0,LX=.5,MET=null,TIP=0;
-function strike(){LT=1;LX=.15+Math.random()*.7}
+var FLA=0,FLX=.5,MET=null,TIP=0;
+function strike(){FLA=1;FLX=.15+Math.random()*.7}
 setInterval(function(){fetch("/r/blockheight").then(function(r){return r.text()}).then(function(t){var n=+t;if(n>0){if(TIP&&n!==TIP)strike();TIP=n}}).catch(function(){})},30000);
 setInterval(function(){var bh=G?G.h:0,em=bh%2016;if(bh>0&&(em>=1944||em<=72)&&Math.random()<.5)strike()},9000);
 /* ---------- 7e2. 4-second cosmic heartbeat: pull · shockwave · roar · spine surge ---------- */
