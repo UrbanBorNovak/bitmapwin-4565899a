@@ -178,5 +178,21 @@ export const TerritoryGuardians = memo(function TerritoryGuardians({ unit, pose 
       }),
     [data],
   );
-  return <group>{walkers.map((w) => <Guardian key={w.g.height} w={w} unit={unit} pose={pose} />)}</group>;
+  return (
+    <group>
+      {walkers.map((w) => <Guardian key={w.g.height} w={w} unit={unit} pose={pose} />)}
+      {walkers.map((w) => <Beacon key={`b${w.g.height}`} x={w.hx} z={w.hz} />)}
+    </group>
+  );
+});
+
+/** Cyan light column over each Guardian's home BITMAP, visible from the horizon. */
+const Beacon = memo(function Beacon({ x, z }: { x: number; z: number }) {
+  const h = WORLD_CELL * 6;
+  return (
+    <mesh position={[x, groundY(x, z) + h / 2, z]} renderOrder={3}>
+      <cylinderGeometry args={[WORLD_CELL * 0.04, WORLD_CELL * 0.08, h, 8, 1, true]} />
+      <meshBasicMaterial color="#38e1ff" transparent opacity={0.22} depthWrite={false} side={THREE.DoubleSide} />
+    </mesh>
+  );
 });
