@@ -153,3 +153,8 @@
 - [x] Add a second detail pass with articulated anatomy, layered markings, armor, claws, feathers, and species-specific silhouettes.
 - [x] Rebuild every named Guardian as a premium species-specific voxel collectible with animated details and rarity regalia.
 - [x] Verify all eight Guardian species in close-up on desktop and phone; procedural feet remain grounded at Oasis scale.
+
+## V7 Guardian on-chain artifact
+- [x] Add a latest-12 Guardian chain timeline with block height, difficulty, weight, inscription date, and Blood Moon markers.
+- [x] Show the selected Guardian's live four-second pulse phase separately from immutable chain history.
+- [x] Add a device-aware, remembered dark/light view control to the V7 inscription.

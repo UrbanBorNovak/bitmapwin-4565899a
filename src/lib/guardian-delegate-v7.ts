@@ -182,6 +182,7 @@ var STARS=[];(function(){var r=rng(h32("stars:"+SELF));for(var i=0;i<500;i++)STA
 function lerpC(a,b,k){return "rgb("+[0,1,2].map(function(i){return Math.round(a[i]+(b[i]-a[i])*k)}).join(",")+")"}
 backdrop=function(w,h){var now=performance.now()/1000,d=new Date(),hr=d.getUTCHours()+d.getUTCMinutes()/60,
     el=Math.sin((hr-6)/12*Math.PI),day=Math.max(0,el),night=Math.max(0,-el),dusk=Math.max(0,1-Math.abs(el)*3);
+  if(LM){day=Math.max(day,.82);night=0;dusk=Math.min(dusk,.18)}
   BS+=(BT-BS)*.02;if(RC)yaw+=.021;
   var top=lerpC([3,5,12],[28,52,82],day),bot=lerpC([10,8,14],[120,70,30],Math.max(dusk,day*.5));
   var grd=g.createLinearGradient(0,0,0,h);grd.addColorStop(0,top);grd.addColorStop(1,bot);g.fillStyle=grd;g.fillRect(0,0,w,h);
@@ -242,7 +243,7 @@ var PARC=[],PSEL=null,BOWN=null,BID=null,BABY=null,PSCAN=0;
 function hueOf(a){var h=h32("owner:"+a)%360;return "hsl("+h+",85%,58%)"}
 function hexOf(a){var h=(h32("owner:"+a)%360)/360,s=.85,l=.58,q=l+s-l*s,p=2*l-q;function f(t){t=(t+1)%1;return t<1/6?p+(q-p)*6*t:t<.5?q:t<2/3?p+(q-p)*(2/3-t)*6:p}
   return "#"+[f(h+1/3),f(h),f(h-1/3)].map(function(v){return("0"+Math.round(v*255).toString(16)).slice(-2)}).join("")}
-function kids(id,max){var out=[];function pg(n){return j("/r/children/"+id+"/"+n).then(function(r){out=out.concat(r.ids||[]);if(r.more&&out.length<max)return pg(n+1)})}
+function kids(id,max){max=max||1000000;var out=[];function pg(n){return j("/r/children/"+id+"/"+n).then(function(r){out=out.concat(r.ids||[]);if(r.more&&out.length<max)return pg(n+1)})}
   return pg(0).then(function(){return out.slice(0,max)},function(){return out})}
 function txt0(id){return fetch("/content/"+id).then(function(r){return r.ok?r.text():""}).catch(function(){return ""})}
 function ownerOf(id){return j("/r/inscription/"+id).then(function(r){return r.address||String(r.satpoint||"").split(":")[0]||null}).catch(function(){return null})}
@@ -326,6 +327,35 @@ function tradeScan(){if(!COLL||!COLL.ids){if(TRDS===3)collection("9d1da99caec6af
     .catch(function(){return nx()})}
   nx()}
 setTimeout(tradeScan,2000);
+/* ---------- 7i. latest-12 Guardian chain timeline + remembered light/dark view ---------- */
+var GTL=[],GTLS=0,GTLON=true,LM=false;
+try{var sm=localStorage.getItem("guardian-v7-theme");LM=sm?sm==="light":!!(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches)}catch(_){LM=false}
+function tc(c){if(!LM)return c;var M={"#e9eef0":"#17191c","#e8eef2":"#17191c","#87939b":"#62676c","#8a949c":"#62676c","#5d676e":"#73787d","#04060a":"#f4f5f2"};return M[c]||c}
+var TX7=txt;txt=function(s,x,y,z,col,a){TX7(s,x,y,z,tc(col),a)};
+function paintControls(){var bs=document.querySelectorAll("button");for(var i=0;i<bs.length;i++){bs[i].style.background=LM?"rgba(248,249,246,.88)":"rgba(4,6,10,.7)";if(LM&&bs[i].style.color==="rgb(233, 238, 240)")bs[i].style.color="#17191c"}}
+function setMode(light){LM=!!light;try{localStorage.setItem("guardian-v7-theme",LM?"light":"dark")}catch(_){}paintControls()}
+function guardianRow(id){return Promise.all([j("/r/inscription/"+id).catch(function(){return{}}),j("/r/parents/"+id).catch(function(){return{ids:[]}})]).then(function(v){
+  var meta=v[0]||{},ps=(v[1]&&v[1].ids)||v[1]||[],i=0;
+  function nx(){if(i>=ps.length)return null;return t("/content/"+ps[i++]).then(function(body){var h=heightFrom(body);return h===null?nx():blockData(h).then(function(blk){return{id:id,h:h,df:Number((blk&&blk.difficulty)||0),wt:Number((blk&&blk.weight)||0),at:Number(meta.timestamp||meta.time||0)}})},function(){return nx()})}
+  return nx().then(function(r){if(r)r.at=Number(meta.timestamp||meta.time||meta.block_time||0);return r})})}
+function guardianTimeline(){if(!COLL||!COLL.ids){if(GTLS++<24)setTimeout(guardianTimeline,1500);return}var ids=COLL.ids.slice(-12).reverse();Promise.all(ids.map(guardianRow)).then(function(rows){GTL=rows.filter(Boolean)})}
+setTimeout(guardianTimeline,2200);
+function modeBar(){var d=document.createElement("div");d.style.cssText="position:fixed;right:2.5%;top:2.5%;display:flex;gap:4px;z-index:4";
+  var mb=document.createElement("button"),tb=document.createElement("button");
+  function label(){mb.textContent=LM?"☾ DARK":"☀ LIGHT";tb.textContent=GTLON?"TIMELINE ×":"TIMELINE +"}
+  [mb,tb].forEach(function(b){b.style.cssText="font:10px OCF,ui-monospace,monospace;letter-spacing:.08em;color:#f7931a;background:rgba(4,6,10,.7);border:1px solid #f7931a77;padding:4px 7px;cursor:pointer";d.appendChild(b)});
+  mb.onclick=function(e){e.stopPropagation();setMode(!LM);label()};tb.onclick=function(e){e.stopPropagation();GTLON=!GTLON;label()};label();document.body.appendChild(d);paintControls()}
+setTimeout(modeBar,500);
+function timelineHud(w,h){if(!GTLON)return;var pad=Math.max(14,w*.035),small=Math.max(8,Math.min(12,w*.014)),pw=Math.min(w-pad*2,520),lh=small*1.28,x=pad,y=Math.max(pad+small*10.3,h*.24),rows=GTL.length||1,ph=small*2.8+rows*lh;
+  g.globalAlpha=LM?.82:.62;g.fillStyle=LM?"#f4f5f2":"#04060a";g.fillRect(x-8,y-small*1.25,pw+16,ph);
+  g.globalAlpha=.55;g.strokeStyle="#f7931a";g.strokeRect(x-8,y-small*1.25,pw+16,ph);g.globalAlpha=1;
+  var pn=CY.n<0?"WAITING":["PULL-IN","PARCEL WAVE","ROAR + LIGHTNING","SPINE SURGE"][CY.n],left=Math.max(0,4-(performance.now()/1000-CY.t));
+  txt("PACK CHAIN TIMELINE · LATEST 12",x,y,small*.82,"#f7931a");txt("LIVE PULSE · "+pn+" · "+left.toFixed(1)+"S",x+pw*.57,y,small*.72,"#3fe0d0");
+  if(!GTL.length){txt("READING GUARDIANS FROM THE CHAIN…",x,y+lh*1.5,small*.72,"#8a949c");return}
+  for(var i=0;i<GTL.length;i++){var r=GTL[i],yy=y+small*1.9+i*lh,em=r.h%2016,bm=r.h>0&&(em>=1944||em<=72),date=r.at?new Date(r.at*(r.at<1e12?1000:1)).toISOString().slice(0,10):"CHAIN";
+    txt((i+1)+" · "+r.h+".BITMAP",x,yy,small*.7,r.id===SELF?"#f7931a":"#3fe0d0");
+    txt("D "+fmtD(r.df)+" · W "+(r.wt?(r.wt/1e6).toFixed(2)+"M":"…")+" · "+date+(bm?" · BLOOD MOON":""),x+pw*.34,yy,small*.67,bm?"#c81e1e":"#e8eef2",.9)}
+}
 /* on-chain typeface for every HUD label; plain monospace until it arrives */
 try{var OCF=new FontFace("OCF","url(/content/f558af98ebf22b85a7de7ccd8943b2e27ad84de505d73b00a9041212b9643118i0)");OCF.load().then(function(f){document.fonts.add(f)}).catch(function(){})}catch(_){}
 /* on-chain proof card: both Tag 3 parents, difficulty armour, block weight mass, consensus crests */
@@ -451,7 +481,7 @@ export function guardianMasterGeneratorHtmlV7(): string {
   s = swap(s, 'txt("STANCE "+STN[STANCE]', 'txt(NB.src,w-pad-small*11.5,pad+small*4.4,small*.7,"#3fe0d0",.7);txt("STANCE "+STN[STANCE]');
   s = swap(s, "FIRST-IS-FIRST BITMAP (OCI)", "FIRST-IS-FIRST BITMAP (LIVEOCI)");
   s = swap(s, "0 TO 6 TRAIT GUARDIANS", "0 TO 11 TRAIT GUARDIANS");
-  s = swap(s, "hud(W,H,pulse);requestAnimationFrame(frame)", "hud(W,H,pulse);tickerHud(W,H);requestAnimationFrame(frame)");
+  s = swap(s, "hud(W,H,pulse);requestAnimationFrame(frame)", "hud(W,H,pulse);tickerHud(W,H);timelineHud(W,H);requestAnimationFrame(frame)");
   // Friendly HUD words + on-chain typeface.
   s = swap(s, '" GUARDIANS INSCRIBED AS CHILDREN"', '" GUARDIANS BORN TO THE PACK"');
   s = swap(s, '"COLLECTION #"+COLL.rank+" OF "', '"PACK MEMBER #"+COLL.rank+" OF "');
