@@ -38,7 +38,9 @@ export const Route = createFileRoute("/collections/guardians")({
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
-const STEPS: { n: string; title: string; body: string; to: "/mint" | "/shord" | null; cta: string }[] = [
+const STEPS_ALL: { n: string; title: string; body: string; to: "/mint" | "/shord" | null; cta: string }[] = STEPS_RAW;
+const STEPS = SHORD_VAULT_DISABLED ? STEPS_ALL.filter((s) => s.to !== "/shord") : STEPS_ALL;
+const STEPS_RAW: { n: string; title: string; body: string; to: "/mint" | "/shord" | null; cta: string }[] = [
   {
     n: "01",
     title: "MINT A SHIELDED GUARDIAN",
