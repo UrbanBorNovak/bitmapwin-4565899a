@@ -10,6 +10,7 @@
  * Punk eyes go on the face.
  */
 
+import { farFromPlayer } from "./simGate";
 import { Suspense, memo, useEffect, useMemo, useRef, useState } from "react";
 import { useGLTF } from "@react-three/drei";
 import { SafeHtml } from "@/components/game/SafeHtml";
@@ -132,6 +133,7 @@ export const CreatureGroup = memo(function CreatureGroup({
     creatures.forEach((creature, index) => {
       const node = groups.current[index];
       if (!node) return;
+      if (farFromPlayer(player, creature.x, creature.z, unit)) return;
 
       if (creature.deadUntil) {
         node.rotation.set(0, creature.heading, Math.PI / 2.1);

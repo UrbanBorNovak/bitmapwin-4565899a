@@ -9,6 +9,7 @@
  * log treat them exactly like wildlife and Punks.
  */
 
+import { farFromPlayer } from "./simGate";
 import { Suspense, memo, useEffect, useMemo, useRef, useState } from "react";
 import { useGLTF } from "@react-three/drei";
 import { SafeHtml } from "@/components/game/SafeHtml";
@@ -207,6 +208,7 @@ export function OasisBots({
     bots.forEach((bot, index) => {
       const node = groups.current[index];
       if (!node) return;
+      if (farFromPlayer(player, bot.x, bot.z, unit)) return;
 
       if (bot.deadUntil) {
         node.rotation.set(0, bot.heading, Math.PI / 2.1);

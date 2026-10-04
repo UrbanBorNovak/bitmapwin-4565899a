@@ -4457,7 +4457,7 @@ function BitmapWorld3DInner({
               canvas.addEventListener("webglcontextlost", lost, false);
               canvas.addEventListener("webglcontextrestored", restored, false);
             }}
-            camera={{ position: [0, 108, minedDepth / 2 + 0.01], fov: 50, near: 0.01, far: 3000 }}
+            camera={{ position: [0, 108, minedDepth / 2 + 0.01], fov: 50, near: 0.1, far: 1200 }}
             gl={{
               antialias: quality.antialias,
               powerPreference: "high-performance",
@@ -4466,7 +4466,7 @@ function BitmapWorld3DInner({
               // The world is tiny in world units (one BITMAP is 0.1 across) and
               // the camera sees from 0.01 out to 350, so plain depth precision
               // runs out and surfaces on models tear as you move past them.
-              logarithmicDepthBuffer: true,
+              logarithmicDepthBuffer: false,
               // Filmic response: highlights on sand, water and orange tiles roll
               // off instead of clipping to flat white.
               toneMapping: THREE.ACESFilmicToneMapping,
