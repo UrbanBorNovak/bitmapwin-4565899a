@@ -220,10 +220,9 @@ drawLand=function(pulse){_dl(pulse);if(!LAND)return;var t=performance.now()/1000
   list.sort(function(a,b){return a[0]-b[0]});
   for(i=0;i<list.length;i++){var P=list[i][2],col=P.own?hexOf(P.own):"#f7931a",sel=PSEL===P,b=list[i][1];
     /* body is always Bitcoin orange; the holder colour is the glow + crown rim */
-    var gl=sel?1.6:P.sp>=5?1.2:P.sp>0?.8:.5;g.shadowColor=col;g.shadowBlur=14*gl*(1+pulse*.5);
-    cube(b,"#f7931a",0,0);g.shadowBlur=0;
-    var hx=b[3]/2,tp=b[1]+b[4]/2+.01;g.lineWidth=2;g.globalAlpha=.75+pulse*.25;
-    poly([P3(b[0]-hx,tp,b[2]-hx),P3(b[0]+hx,tp,b[2]-hx),P3(b[0]+hx,tp,b[2]+hx),P3(b[0]-hx,tp,b[2]+hx)],"rgba(0,0,0,0)",col);g.globalAlpha=1;g.lineWidth=1;
+    var gl=sel?1.6:P.sp>=5?1.2:P.sp>0?.8:.5;cube(b,"#f7931a",0,0);
+    var hx=b[3]/2,tp=b[1]+b[4]/2+.01;g.shadowColor=col;g.shadowBlur=14*gl*(1+pulse*.5);g.lineWidth=2;g.globalAlpha=.75+pulse*.25;
+    poly([P3(b[0]-hx,tp,b[2]-hx),P3(b[0]+hx,tp,b[2]-hx),P3(b[0]+hx,tp,b[2]+hx),P3(b[0]-hx,tp,b[2]+hx)],"rgba(0,0,0,0)",col);g.globalAlpha=1;g.lineWidth=1;g.shadowBlur=0;
     if(P.sp>=5){var c=P.c;g.globalAlpha=.35+pulse*.3;g.strokeStyle=col;g.lineWidth=2;var a=P3(c[0],c[1],c[2]),b=P3(c[0],c[1]+40,c[2]);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();
       var rg=[];for(var k=0;k<16;k++){var an=k/16*6.283+t;rg.push(P3(c[0]+Math.cos(an)*1.4,c[1]*.6,c[2]+Math.sin(an)*1.4))}poly(rg,"rgba(0,0,0,0)",col);g.globalAlpha=1;g.lineWidth=1}}
 };
