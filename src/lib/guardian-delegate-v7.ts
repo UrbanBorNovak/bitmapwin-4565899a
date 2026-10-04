@@ -235,28 +235,29 @@ c.addEventListener("pointerup",function(e){if(!pdn||Math.abs(e.clientX-pdn[0])+M
    satpoint txid differs from its reveal txid and whose spend pays output 0
    (the seller payout in a signed-PSBT sale) more than dust. Newest-minted
    traded item is scanned first; nothing is shown that the chain cannot prove. */
-var TK=document.createElement("div");TK.style.cssText="position:fixed;right:2.5%;top:9%;font:10px ui-monospace,monospace;letter-spacing:.08em;color:#3fe0d0;background:rgba(4,6,10,.72);border:1px solid #3fe0d055;padding:5px 8px;z-index:2;line-height:1.7;text-align:right";
-TK.innerHTML="COLLECTION \u2026<br>LAST TRADED \u2026";document.body.appendChild(TK);
-var LT=null,LTS=0;
+/* TRD: null = scanning, false = no proven sale, {sats,id} = last proven sale */
+var TRD=null,TRDS=0;
 function out0(raw){var x=String(raw).replace(/[^0-9a-f]/gi,"").toLowerCase(),p=8;if(x.length<20)return null;
   function b(n){var s=x.substr(p,n*2);p+=n*2;return s}
   function le(h){var v=0;for(var i=h.length-2;i>=0;i-=2)v=v*256+parseInt(h.substr(i,2),16);return v}
   function vi(){var f=parseInt(b(1),16);return f<253?f:le(b(f===253?2:f===254?4:8))}
   if(x.substr(8,4)==="0001")p+=4;var n=vi(),i;for(i=0;i<n;i++){b(36);b(vi());b(4)}
-  n=vi();if(n<2)return null;return le(b(8))}
-function tradeScan(){if(!COLL||!COLL.ids){if(LTS++<20)setTimeout(tradeScan,1500);return}
+  n=vi();if(!(n>=2))return null;var v=le(b(8));return isFinite(v)?v:null}
+function tradeScan(){if(!COLL||!COLL.ids){if(TRDS===3)collection("9d1da99caec6afbf69b89bdafdc0a7ab679c6dd67920f7b38d3a3fd116d0e21fi0");if(TRDS++<20)setTimeout(tradeScan,1500);else TRD=false;return}
   var L=COLL.ids.slice(-80).reverse(),i=0;
-  function nx(){if(i>=L.length){LT=LT||0;return}var id=L[i++];
-    return j("/r/inscription/"+id).then(function(r){var sp=String(r.satpoint||"").split(":")[0];
+  function nx(){if(i>=L.length){if(!TRD)TRD=false;return}var id=L[i++];
+    return j("/r/inscription/"+id).then(function(r){var sp=String((r&&r.satpoint)||"").split(":")[0];
       if(!sp||sp===id.split("i")[0])return nx();
-      return t("/r/tx/"+sp).then(function(raw){var v=out0(raw);if(v&&v>1000){LT={s:v,id:id,tx:sp};return}return nx()})})
+      return t("/r/tx/"+sp).then(function(raw){var v=out0(raw);if(typeof v==="number"&&v>1000){TRD={sats:v,id:id};return}return nx()})})
     .catch(function(){return nx()})}
   nx()}
 setTimeout(tradeScan,2000);
-setInterval(function(){var n=COLL?COLL.n:null;
-  TK.innerHTML="COLLECTION "+(n===null?"\u2026":n.toLocaleString()+" GUARDIANS")+"<br>"+
-    '<span style="color:#f7931a">LAST TRADED '+(LT===null?"\u2026":LT?LT.s.toLocaleString()+" SATS":"NO SALE YET")+"</span>"+
-    (LT?"<br>"+LT.id.slice(0,10)+"\u2026":"")},1000);
+function tickerHud(w,h){
+  var pad=Math.max(14,w*.035),small=Math.max(8,Math.min(13,w*.016)),y=pad+small*8.8;
+  var n=COLL&&typeof COLL.n==="number"?COLL.n:null;
+  txt("COLLECTION \u00B7 "+(n===null?"SCANNING\u2026":n.toLocaleString()+" GUARDIANS"),pad,y,small*.8,"#3fe0d0",.9);
+  txt("LAST TRADED \u00B7 "+(TRD&&typeof TRD.sats==="number"?TRD.sats.toLocaleString()+" SATS":TRD===false?"NO SALE YET":"SCANNING\u2026"),pad,y+small*1.4,small*.8,"#f7931a",.9);
+}
 /* ================= /V7 ================= */
 `;
 
@@ -295,6 +296,7 @@ export function guardianMasterGeneratorHtmlV7(): string {
   s = swap(s, 'txt("STANCE "+STN[STANCE]', 'txt(NB.src,w-pad-small*11.5,pad+small*4.4,small*.7,"#3fe0d0",.7);txt("STANCE "+STN[STANCE]');
   s = swap(s, "FIRST-IS-FIRST BITMAP (OCI)", "FIRST-IS-FIRST BITMAP (LIVEOCI)");
   s = swap(s, "0 TO 6 TRAIT GUARDIANS", "0 TO 11 TRAIT GUARDIANS");
+  s = swap(s, "hud(W,H,pulse);requestAnimationFrame(frame)", "hud(W,H,pulse);tickerHud(W,H);requestAnimationFrame(frame)");
   s = swap(s, "bar();fit();requestAnimationFrame(frame);", V7_BLOCK + "bar();fit();requestAnimationFrame(frame);");
   cached = s;
   return s;
