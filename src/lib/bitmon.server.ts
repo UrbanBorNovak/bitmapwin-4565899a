@@ -275,7 +275,7 @@ export async function listMySummonOrders(userId: string): Promise<SummonOrderSta
  * first Guardian for that block. Anything else is refused.
  */
 export async function verifyDelegateGuardian(inscriptionId: string): Promise<{ awakened: boolean; height: number | null; denied: string | null }> {
-  const { GUARDIAN_MASTER_DELEGATE_IDS, TRIBUTE_ADDRESS, TRIBUTE_SATS } = await import("@/lib/guardian-delegate");
+  const { GUARDIAN_MASTER_DELEGATE_IDS, ACCEPTED_TRIBUTE_ADDRESSES, TRIBUTE_SATS } = await import("@/lib/guardian-delegate");
   const ord = (p: string) => fetch(`https://ordinals.com${p}`, { signal: AbortSignal.timeout(8000) });
   const deny = (denied: string, height: number | null = null) => ({ awakened: false, height, denied });
 
@@ -314,7 +314,7 @@ export async function verifyDelegateGuardian(inscriptionId: string): Promise<{ a
   let tx: MempoolTx;
   try { tx = (await (await esploraFetch(`/tx/${txid}`)).json()) as MempoolTx; } catch { return deny("COULD NOT READ THE REVEAL — TRY AGAIN", height); }
   if (!tx.status?.confirmed) return deny("REVEAL NOT CONFIRMED YET", height);
-  const paid = (tx.vout ?? []).some((o) => o.scriptpubkey_address === TRIBUTE_ADDRESS && Number(o.value) >= TRIBUTE_SATS);
+  const paid = (tx.vout ?? []).some((o) => ACCEPTED_TRIBUTE_ADDRESSES.includes(String(o.scriptpubkey_address)) && Number(o.value) >= TRIBUTE_SATS);
   if (!paid) return deny(`NO ${TRIBUTE_SATS}-SAT TRIBUTE IN THE REVEAL`, height);
 
   const db = await admin();
