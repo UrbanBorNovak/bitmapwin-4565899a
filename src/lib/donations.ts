@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
  */
 
 /** The platform address inscriptions are donated to. */
-export const DONATION_ADDRESS = "bc1qqmu6el7rxdc2va4kzqexhll6ulmrdkwmcdqkxd";
+export const DONATION_ADDRESS = "bc1qgunjcn7a7njky4xzj4ahj79cg6muzj4qg5pfpv";
 
 /** BIT paid for each sat carried by a donated inscription. */
 export const BIT_PER_SAT = 10;

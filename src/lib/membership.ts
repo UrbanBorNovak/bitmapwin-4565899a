@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { checkMembershipFn, startMembershipFn } from "@/lib/membership.functions";
 
 /** Where the monthly donation goes. */
-export const MEMBERSHIP_ADDRESS = "bc1qqmu6el7rxdc2va4kzqexhll6ulmrdkwmcdqkxd";
+export const MEMBERSHIP_ADDRESS = "bc1qgunjcn7a7njky4xzj4ahj79cg6muzj4qg5pfpv";
 /** The monthly donation, before the unique few sats that identify the payer. */
 export const MEMBERSHIP_SATS = 10_000;
 /** How long one donation counts for. */
