@@ -240,15 +240,23 @@ export function ShadowInscriber(props: {
     }
   };
 
-  // Queue the inscription by itself once (e.g. right after a summon confirms).
+  // Queue the inscription by itself once (e.g. right after a summon confirms):
+  // Step 1 opens the wallet to pay the commit (fee + 1,000-sat tribute), then the
+  // poller above signs and broadcasts the reveal as soon as that payment is seen.
+  // Reads storage directly so a paid or revealed job is never charged twice.
   const autoStarted = useRef(false);
   useEffect(() => {
-    if (!props.autoStart || autoStarted.current || job || busy) return;
+    if (!props.autoStart || autoStarted.current || busy) return;
+    const stored = loadJob(props.digest);
+    if (stored?.commitTxid || stored?.revealTxid || job?.commitTxid) {
+      autoStarted.current = true;
+      return;
+    }
     autoStarted.current = true;
-    toast.info("GUARDIAN AWAKE — QUEUING ITS ON-CHAIN INSCRIPTION");
+    toast.info("GUARDIAN AWAKE — STEP 1 · APPROVE THE INSCRIPTION PAYMENT IN YOUR WALLET");
     void start();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.autoStart, job]);
+  }, [props.autoStart, job, props.digest]);
 
   // Resume a paid commit from its recovery file (e.g. after site data was cleared),
   // so the holder finishes Step 2 instead of paying a new fee.
@@ -382,7 +390,11 @@ export function ShadowInscriber(props: {
           ) : (
             <div className="space-y-2">
               {!commitUtxo ? (
-                <p className="text-signal">{busy ?? "STEP 1 · WAITING FOR YOUR FEE PAYMENT TO APPEAR…"}</p>
+                <p className="text-signal">
+                  {busy ?? (props.autoReveal
+                    ? "STEP 1 · WAITING FOR YOUR PAYMENT TO APPEAR — THE REVEAL SIGNS BY ITSELF RIGHT AFTER"
+                    : "STEP 1 · WAITING FOR YOUR FEE PAYMENT TO APPEAR…")}
+                </p>
               ) : busy ? (
                 <p className="text-signal">{busy}</p>
               ) : (
