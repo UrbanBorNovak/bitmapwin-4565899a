@@ -172,6 +172,55 @@ window.addEventListener("keydown",function(e){if(e.key.toLowerCase()==="v")rec()
 (function(){var b=document.createElement("button");b.textContent="V \u25CF REC 5S";
   b.style.cssText="position:fixed;right:2.5%;bottom:14%;font:10px ui-monospace,monospace;letter-spacing:.08em;color:#ff4a4a;background:rgba(4,6,10,.7);border:1px solid #ff4a4a77;padding:4px 7px;cursor:pointer;z-index:2";
   b.onclick=function(ev){ev.stopPropagation();rec()};document.body.appendChild(b)})();
+/* ---------- 7g. extruded parcels: LiveOCI parent -> /r/children -> first-is-first {i}.{h}.bitmap ---------- */
+var PARC=[],PSEL=null,BOWN=null,BID=null,BABY=null,PSCAN=0;
+function hueOf(a){var h=h32("owner:"+a)%360;return "hsl("+h+",85%,58%)"}
+function hexOf(a){var h=(h32("owner:"+a)%360)/360,s=.85,l=.58,q=l+s-l*s,p=2*l-q;function f(t){t=(t+1)%1;return t<1/6?p+(q-p)*6*t:t<.5?q:t<2/3?p+(q-p)*(2/3-t)*6:p}
+  return "#"+[f(h+1/3),f(h),f(h-1/3)].map(function(v){return("0"+Math.round(v*255).toString(16)).slice(-2)}).join("")}
+function kids(id,max){var out=[];function pg(n){return j("/r/children/"+id+"/"+n).then(function(r){out=out.concat(r.ids||[]);if(r.more&&out.length<max)return pg(n+1)})}
+  return pg(0).then(function(){return out.slice(0,max)},function(){return out})}
+function txt0(id){return fetch("/content/"+id).then(function(r){return r.ok?r.text():""}).catch(function(){return ""})}
+function ownerOf(id){return j("/r/inscription/"+id).then(function(r){return r.address||String(r.satpoint||"").split(":")[0]||null}).catch(function(){return null})}
+function parcels(){if(!G||!LAND)return setTimeout(parcels,2000);if(PSCAN)return;PSCAN=1;var H=G.h,N=LAND.n;
+  import("/content/0c18b83ca6aa6f5653bb57dafb491ac786b7fa738b6c5190f4542d1d7f15c43ai0").then(function(m){return m.getBitmapInscriptionId(H)}).then(function(bid){
+    if(!bid)return;BID=bid;ownerOf(bid).then(function(a){BOWN=a});
+    return kids(bid,300).then(function(ids){var seen={},q=[];
+      return Promise.all(ids.map(function(cid){return txt0(cid).then(function(t){var m=/^\s*(\d+)\.(\d+)\.bitmap\s*$/.exec(t||"");
+        if(m&&+m[2]===H&&+m[1]<N)q.push([cid,+m[1]])})})).then(function(){
+        /* children are served in inscription order: first-is-first wins each index */
+        q.sort(function(a,b){return ids.indexOf(a[0])-ids.indexOf(b[0])});
+        q.forEach(function(e){if(seen[e[1]])return;seen[e[1]]=1;var P={id:e[0],i:e[1],own:null,sp:0};PARC.push(P);
+          ownerOf(e[0]).then(function(a){P.own=a});kids(e[0],60).then(function(k){P.sp=k.length})})})})}).catch(function(){})}
+setTimeout(parcels,3000);
+/* baby mode: a guardian whose Tag 3 parents include a valid parcel is its offspring */
+setTimeout(function babyScan(){if(!G||MASTER)return G?0:setTimeout(babyScan,2500);
+  j("/r/parents/"+SELF).then(function(r){var ps=r.ids||r.parents||[];return Promise.all(ps.map(function(pid){return txt0(pid).then(function(t){var m=/^\s*(\d+)\.(\d+)\.bitmap\s*$/.exec(t||"");if(m&&+m[2]===G.h)return{id:pid,i:+m[1]}})}))})
+  .then(function(rs){var b=(rs||[]).filter(Boolean)[0];if(!b)return;BABY=b;ownerOf(b.id).then(function(a){BABY.own=a;
+    var col=a?hexOf(a):G.accent;G.accent=col;
+    if(VOX)for(var i=0;i<VOX.length;i++){var v=VOX[i];v[0]*=.58;v[1]*=.58;v[2]*=.58;v[3]*=.58;v[4]*=.58;v[5]*=.58;if(i%4===0)v[6]=mx(v[6],col,.5)}
+    G.tr=(G.tr||[]).concat([["Generation","II \u00B7 OFFSPRING"],["Lineage","PARCEL #"+b.i+" SANCTUARY"],["Founder",a?a.slice(0,6)+"\u2026"+a.slice(-4):"UNKNOWN"]])})}).catch(function(){})},3500);
+var _dl=drawLand;
+drawLand=function(pulse){_dl(pulse);if(!LAND||!PARC.length)return;var t=performance.now()/1000,L=LAND,list=[];
+  for(var i=0;i<PARC.length;i++){var P=PARC[i],q=L.p[P.i];if(!q)continue;var w=q[2],hgt=P.sp>=5?6:P.sp>0?1.2+Math.min(4,P.sp)*.58:1.2;
+    if(P.sp>0)hgt*=1+Math.sin(t*1.4+i)*.04;var cx=q[0]+w/2,cz=q[1]+w/2;P.c=[cx,hgt,cz];
+    list.push([P3(cx,hgt/2,cz)[2],[cx,hgt/2,cz,Math.max(.25,w*.82),hgt,Math.max(.25,w*.82)],P])}
+  list.sort(function(a,b){return a[0]-b[0]});
+  for(i=0;i<list.length;i++){var P=list[i][2],col=P.own?hexOf(P.own):"#8a949c",sel=PSEL===P;
+    cube(list[i][1],col,sel?1.6:P.sp>=5?1.2:P.sp>0?.6:.15,pulse);
+    if(P.sp>=5){var c=P.c;g.globalAlpha=.35+pulse*.3;g.strokeStyle=col;g.lineWidth=2;var a=P3(c[0],c[1],c[2]),b=P3(c[0],c[1]+40,c[2]);g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();
+      var rg=[];for(var k=0;k<16;k++){var an=k/16*6.283+t;rg.push(P3(c[0]+Math.cos(an)*1.4,c[1]*.6,c[2]+Math.sin(an)*1.4))}poly(rg,"rgba(0,0,0,0)",col);g.globalAlpha=1;g.lineWidth=1}}
+};
+/* parcel HUD: tap a monolith */
+var PH=document.createElement("div");PH.style.cssText="position:fixed;left:2.5%;bottom:14%;max-width:320px;font:10px ui-monospace,monospace;letter-spacing:.06em;color:#e9eef0;background:rgba(4,6,10,.82);border:1px solid #3fe0d055;padding:7px 9px;display:none;z-index:3;line-height:1.6";document.body.appendChild(PH);
+function sh(a){return a?a.slice(0,6)+"\u2026"+a.slice(-4):"\u2026"}
+function showP(P){PSEL=P;if(!P){PH.style.display="none";return}var col=P.own?hexOf(P.own):"#8a949c",lv=P.sp>=5?"MASTER SANCTUARY":P.sp>0?"SANCTUARY LV "+P.sp:"DORMANT";
+  PH.innerHTML='<b style="color:'+col+'">PARCEL #'+P.i+"."+G.h+".BITMAP</b><br>HOLDER "+sh(P.own)+"<br>"+lv+" \u00B7 "+P.sp+" OFFSPRING<br>"+
+  '<span style="color:#f7931a">SPAWN: INSCRIBE A CHILD OF THIS PARCEL + PAY 546 SATS TO BITMAP OWNER '+sh(BOWN)+"</span><br>"+
+  '<button style="margin-top:4px;font:inherit;color:#f7931a;background:none;border:1px solid #f7931a77;padding:2px 6px;cursor:pointer">COPY PARCEL ID</button>';
+  PH.style.display="block";PH.querySelector("button").onclick=function(e){e.stopPropagation();try{navigator.clipboard.writeText(P.id)}catch(_){}this.textContent="COPIED"}}
+var pdn=null;c.addEventListener("pointerdown",function(e){pdn=[e.clientX,e.clientY]});
+c.addEventListener("pointerup",function(e){if(!pdn||Math.abs(e.clientX-pdn[0])+Math.abs(e.clientY-pdn[1])>6)return;var r=c.getBoundingClientRect(),dpr=c.width/r.width,mxp=(e.clientX-r.left)*dpr,myp=(e.clientY-r.top)*dpr,best=null,bd=28*dpr;
+  for(var i=0;i<PARC.length;i++){var P=PARC[i];if(!P.c)continue;var p=P3(P.c[0],P.c[1],P.c[2]),d=Math.hypot(p[0]-mxp,p[1]-myp);if(d<bd){bd=d;best=P}}showP(best)});
 /* ================= /V7 ================= */
 `;
 
