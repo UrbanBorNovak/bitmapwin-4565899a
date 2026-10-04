@@ -5,6 +5,7 @@ import { DataBadge } from "@/components/extenders/DataBadge";
 import { useMemo, useState } from "react";
 import { DELEGATE_CONTENT_TYPE, GUARDIAN_MASTER_DELEGATE_ID, TRIBUTE_ADDRESS, TRIBUTE_SATS, guardianMasterGeneratorHtml } from "@/lib/guardian-delegate";
 import { brotliMasterGenerator } from "@/lib/brotli.functions";
+import { LIVE_OCI_MODULE_ID, V7_CONNECTOME_ID, V7_TRIBUTE_ADDRESS, guardianMasterGeneratorHtmlV7 } from "@/lib/guardian-delegate-v7";
 import { collectionParentStatusFn } from "@/lib/ord-parents.functions";
 
 
@@ -93,7 +94,8 @@ function DevToolsPage() {
       </div>
 
       <CollectionParentPanel />
-      <MasterGeneratorPanel />
+      <MasterGeneratorPanel version="v7" />
+      <MasterGeneratorPanel version="v6" />
 
       <section className="mt-8 border border-border p-6">
         <div className="flex flex-wrap items-center gap-3">
@@ -146,15 +148,16 @@ STATUS               ${d?.ready ? "READY" : d?.reason ?? (q.isLoading ? "CHECKIN
 
 
 /** The single master inscription every tiny Guardian delegate mint renders with. */
-function MasterGeneratorPanel() {
-  const html = useMemo(() => guardianMasterGeneratorHtml(), []);
+function MasterGeneratorPanel({ version }: { version: "v6" | "v7" }) {
+  const v7 = version === "v7";
+  const html = useMemo(() => (v7 ? guardianMasterGeneratorHtmlV7() : guardianMasterGeneratorHtml()), [v7]);
   const bytes = useMemo(() => new TextEncoder().encode(html).length, [html]);
   const [copied, setCopied] = useState(false);
   const download = () => {
     const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = "guardian-master.html";
+    a.download = `guardian-master-${version}.html`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -163,12 +166,12 @@ function MasterGeneratorPanel() {
   const downloadBr = async () => {
     setBrBusy(true);
     try {
-      const r = await brotliMasterGenerator();
+      const r = await brotliMasterGenerator({ data: { version } });
       const bin = Uint8Array.from(atob(r.base64), (c) => c.charCodeAt(0));
       const url = URL.createObjectURL(new Blob([bin], { type: "application/octet-stream" }));
       const a = document.createElement("a");
       a.href = url;
-      a.download = "guardian-master.html.br";
+      a.download = `guardian-master-${version}.html.br`;
       a.click();
       URL.revokeObjectURL(url);
       setBrInfo(`${r.rawBytes.toLocaleString()} → ${r.packedBytes.toLocaleString()} BYTES (${Math.round((1 - r.packedBytes / r.rawBytes) * 100)}% SMALLER)`);
@@ -181,8 +184,8 @@ function MasterGeneratorPanel() {
   return (
     <section className="mt-8 border border-border p-6">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="display text-xl">GUARDIAN MASTER GENERATOR</h2>
-        <DataBadge kind={GUARDIAN_MASTER_DELEGATE_ID ? "live" : "soon"} note={GUARDIAN_MASTER_DELEGATE_ID ? "DELEGATE MINTS ON" : "NOT INSCRIBED YET"} />
+        <h2 className="display text-xl">GUARDIAN MASTER GENERATOR · {version.toUpperCase()}</h2>
+        {v7 ? <DataBadge kind="soon" note="READY TO INSCRIBE" /> : <DataBadge kind={GUARDIAN_MASTER_DELEGATE_ID ? "live" : "soon"} note={GUARDIAN_MASTER_DELEGATE_ID ? "ACTIVE · DELEGATE MINTS ON" : "NOT INSCRIBED YET"} />}
       </div>
       <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
         Inscribe this page once. After that every Guardian can be minted as an almost empty inscription that points
@@ -192,10 +195,14 @@ function MasterGeneratorPanel() {
       <pre className="mt-3 overflow-x-auto bg-secondary p-4 font-mono text-xs">
 {`SIZE           ${bytes.toLocaleString()} BYTES
 CONTENT TYPE   ${DELEGATE_CONTENT_TYPE}
-TRIBUTE        ${TRIBUTE_SATS} SATS → ${TRIBUTE_ADDRESS}
-MASTER ID      ${GUARDIAN_MASTER_DELEGATE_ID || "NOT SET — SEND THE INSCRIPTION ID ONCE IT IS MINED"}
+${v7 ? `TRIBUTE        ${TRIBUTE_SATS} SATS → ${V7_TRIBUTE_ADDRESS}
+BITMAP CHECK   LIVEOCI ${LIVE_OCI_MODULE_ID.slice(0, 12)}…i0 · EVERY HEIGHT TO THE TIP
+BRAIN          FLY CONNECTOME ${V7_CONNECTOME_ID.slice(0, 12)}…i0
+VERSION        V7 · LIVEOCI · BLOCK MUTATIONS · CONNECTOME MOTOR · CHILD NAVIGATOR
+STATUS         NOT INSCRIBED · SEND THE ID ONCE MINED TO MAKE IT THE ACTIVE MASTER` : `TRIBUTE        ${TRIBUTE_SATS} SATS → ${TRIBUTE_ADDRESS}
+MASTER ID      ${GUARDIAN_MASTER_DELEGATE_ID || "NOT SET"}
 VERSION        V6 · HONEST PARENT LABEL · HUD OVERLAP FIX · ALL V5 FEATURES
-STATUS         V6 INSCRIBED (9d1da99c…i0) · WIRED AS ACTIVE MASTER · V5/V1 STILL ACCEPTED`}
+STATUS         V6 INSCRIBED (9d1da99c…i0) · WIRED AS ACTIVE MASTER · V5/V1 STILL ACCEPTED`}`}
       </pre>
       <div className="mt-3 flex flex-wrap gap-2 font-mono text-xs">
         <button type="button" className="border border-bitcoin px-3 py-2 text-bitcoin hover:bg-bitcoin hover:text-background"
@@ -212,7 +219,7 @@ STATUS         V6 INSCRIBED (9d1da99c…i0) · WIRED AS ACTIVE MASTER · V5/V1 S
 {`BROTLI         ${brInfo}
 INSCRIBE AS    content-type: ${DELEGATE_CONTENT_TYPE}
                content-encoding: br
-TOOL           ord wallet inscribe --compress --file guardian-master.html
+TOOL           ord wallet inscribe --compress --file guardian-master-${version}.html
                (or any inscriber that sets the content-encoding br field)
 WARNING        never inscribe the .br file without content-encoding: br — it renders as garbage`}
         </pre>
