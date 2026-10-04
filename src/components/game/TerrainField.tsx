@@ -49,17 +49,9 @@ const PEAK = new THREE.Color(ATLAS.peak);
 const WET = new THREE.Color(ATLAS.water);
 
 function makeMaterial(ring: number) {
-  // Slightly see-through land: inscriptions hidden just under the surface stay
-  // faintly visible. Depth writes stay off so buried art shows through, while
-  // the transparent pass draws the land over everything opaque beneath it.
-  const mat = new THREE.MeshStandardMaterial({
-    vertexColors: true,
-    roughness: 1,
-    metalness: 0,
-    transparent: true,
-    opacity: 0.85,
-    depthWrite: false,
-  });
+  // Solid, fully opaque land that writes depth — the ground you walk on must
+  // always render, never show the void beneath it.
+  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 });
   if (ring > 0) {
     mat.polygonOffset = true;
     mat.polygonOffsetFactor = ring * 2;
