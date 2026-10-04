@@ -41,6 +41,15 @@ export const mintParentsFn = createServerFn({ method: "GET" })
       bitmapId = await scanWalletForBitmap(data.holderAddress, data.height).catch(() => null);
       if (bitmapId) notes.push(`FOUND ${data.height}.BITMAP IN YOUR WALLET`);
     }
+    if (bitmapId) {
+      // Save verified finds so this block resolves instantly next time.
+      const { learnBitmap } = await import("@/lib/bitmap-live-resolver.server");
+      const canonical = await learnBitmap(bitmapId, data.height).catch(() => null);
+      if (canonical && canonical !== bitmapId.toLowerCase()) {
+        notes.push(`AN EARLIER ${data.height}.BITMAP CLAIM EXISTS — ONLY THE FIRST INSCRIPTION COUNTS`);
+        bitmapId = null;
+      }
+    }
     if (!bitmapId) {
       notes.push(`COULD NOT FIND THE INSCRIPTION FOR ${data.height}.BITMAP — PASTE ITS INSCRIPTION ID`);
     } else {
