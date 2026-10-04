@@ -22,6 +22,7 @@ import {
 import { proverStatus, proveSpend, verifySpend, type ProverStatus } from "@/lib/shord/prover";
 import { assetIdFromInscription, poolNote, randomField } from "@/lib/shord/pool";
 import { PoolPanel } from "@/components/shord/PoolPanel";
+import { SHORD_VAULT_DISABLED } from "@/lib/shord-flag";
 
 export const Route = createFileRoute("/shord")({
   head: () => ({
