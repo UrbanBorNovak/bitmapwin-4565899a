@@ -16,6 +16,7 @@ import {
   saveJob,
   type InscribeJob,
   type ParentSigners,
+  listUnrevealedJobs,
 } from "@/lib/shadow-inscribe";
 
 /**
@@ -183,10 +184,10 @@ export function ShadowInscriber(props: {
     try {
       setBusy("CHECKING FOR AN EARLIER PAYMENT…");
       // Never ask for a second fee while an earlier paid commit sits unspent.
-      for (const old of listUnrevealedJobs()) {
+      for (const old of listUnrevealedJobs().filter((j) => j.digest === props.digest)) {
         const utxo = await findCommitOutput(old);
         if (utxo) {
-          const resumed = { ...old, commitTxid: old.commitTxid ?? utxo.txid, digest: props.digest };
+          const resumed = { ...old, commitTxid: old.commitTxid ?? utxo.txid };
           saveJob(resumed);
           setCommitUtxo(null);
           setJob(resumed);
@@ -244,7 +245,8 @@ export function ShadowInscriber(props: {
       if (!/^[0-9a-f]{64}$/i.test(parsed.privHex ?? "") || !parsed.commitAddress || !parsed.bodyHex || !parsed.digest) {
         throw new Error("THAT IS NOT A VALID RECOVERY FILE");
       }
-      const resumed = { ...parsed, digest: props.digest };
+      // The digest is baked into the one-time script; it must stay the original.
+      const resumed = { ...parsed };
       const utxo = await findCommitOutput(resumed);
       if (!utxo && !resumed.revealTxid) throw new Error("NO UNSPENT PAYMENT FOUND AT THAT RECOVERY ADDRESS");
       if (!resumed.commitTxid && utxo) resumed.commitTxid = utxo.txid;
