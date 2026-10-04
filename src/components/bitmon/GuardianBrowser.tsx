@@ -126,7 +126,7 @@ export function GuardianBrowser() {
               </div>
               <div className="mt-2 flex flex-wrap gap-2">
                 <Link to="/bitmap/$block" params={{ block: String(shown.height) }} className="btn-term-ghost">OPEN BITMAP</Link>
-                <Link to="/oasis" search={{ height: shown.height } as never} className="btn-term-ghost">FIND IN OASIS</Link>
+                <Link to="/oasis" search={{ height: shown.height }} className="btn-term-ghost">FIND IN OASIS</Link>
               </div>
             </div>
           ) : null}
