@@ -47,6 +47,9 @@ export type ParentSigners = {
 
 
 const KEY = (digest: string) => `bitmapwin:shadow-inscribe:${digest}`;
+// Every job is also archived by its one-time address, so starting again on the
+// same artifact can never overwrite the key of an earlier paid commit.
+const ARCHIVE_PREFIX = "bitmapwin:shadow-inscribe-archive:";
 export const loadJob = (digest: string): InscribeJob | null => {
   try {
     const raw = localStorage.getItem(KEY(digest));
@@ -55,8 +58,37 @@ export const loadJob = (digest: string): InscribeJob | null => {
     return null;
   }
 };
-export const saveJob = (job: InscribeJob) => localStorage.setItem(KEY(job.digest), JSON.stringify(job));
+export const saveJob = (job: InscribeJob) => {
+  localStorage.setItem(KEY(job.digest), JSON.stringify(job));
+  localStorage.setItem(ARCHIVE_PREFIX + job.commitAddress, JSON.stringify(job));
+};
 export const clearJob = (digest: string) => localStorage.removeItem(KEY(digest));
+
+/** Every locally held job not yet revealed, one per one-time address. */
+export function listUnrevealedJobs(): InscribeJob[] {
+  const byAddr = new Map<string, InscribeJob>();
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || !(k.startsWith("bitmapwin:shadow-inscribe:") || k.startsWith(ARCHIVE_PREFIX))) continue;
+      try {
+        const j = JSON.parse(localStorage.getItem(k) ?? "") as InscribeJob;
+        if (!j?.privHex || !j.commitAddress || j.revealTxid) continue;
+        const prev = byAddr.get(j.commitAddress);
+        if (!prev || (j.commitTxid && !prev.commitTxid)) byAddr.set(j.commitAddress, j);
+      } catch {
+        /* skip */
+      }
+    }
+  } catch {
+    /* storage blocked */
+  }
+  return [...byAddr.values()];
+}
+
+/** Marks an archived job revealed so it leaves the recovery list. */
+export const markRevealed = (job: InscribeJob, revealTxid: string) =>
+  localStorage.setItem(ARCHIVE_PREFIX + job.commitAddress, JSON.stringify({ ...job, revealTxid }));
 
 async function esplora(path: string, init?: RequestInit): Promise<Response | null> {
   for (const host of ESPLORA) {
