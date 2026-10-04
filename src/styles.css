@@ -1337,6 +1337,11 @@
   50% { background-color: color-mix(in oklab, var(--bitcoin) 45%, transparent); }
 }
 
+@keyframes infogfx-hilbert {
+  from { stroke-dashoffset: 180; }
+  to { stroke-dashoffset: 0; }
+}
+
 .infogfx-sweep {
   animation: infogfx-sweep 2.4s ease-in-out infinite;
 }
@@ -1353,8 +1358,13 @@
   animation: infogfx-cell 4s ease-in-out infinite;
 }
 
+.infogfx-hilbert {
+  stroke-dasharray: 3 1.5;
+  animation: infogfx-hilbert 9s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .infogfx-sweep, .infogfx-runner, .infogfx-rise, .infogfx-cell {
+  .infogfx-sweep, .infogfx-runner, .infogfx-rise, .infogfx-cell, .infogfx-hilbert {
     animation: none !important;
   }
 }
