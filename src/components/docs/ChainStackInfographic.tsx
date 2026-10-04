@@ -119,7 +119,7 @@ export function ChainStackInfographic() {
   return (
     <figure className="infogfx border border-border bg-surface">
       <figcaption className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2">
-        <span className="label text-bitcoin">THE BITCOIN LAND STACK</span>
+        <span className="label text-bitcoin">THE SOVEREIGN BLOCK CIRCUIT</span>
         <span className="label text-muted-foreground">TAP A LAYER TO INSPECT</span>
       </figcaption>
 
