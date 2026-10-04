@@ -7,6 +7,7 @@ import { guardianDnaQuery, guardianQuery } from "@/lib/bitmon-queries";
 import { GUARDIAN_PRICE_SATS, RARITY_TONE, guardianLevel } from "@/lib/bitmon";
 import { morphFromDna } from "@/lib/creature-morph";
 import { DelegateGuardianSummon } from "@/components/bitmon/DelegateGuardianSummon";
+import { SummonDashboard } from "@/components/bitmon/SummonDashboard";
 
 export const Route = createFileRoute("/mint")({
   validateSearch: z.object({ height: z.coerce.number().int().min(0).optional() }),
@@ -110,6 +111,7 @@ function MintPage() {
           <DelegateGuardianSummon dna={d} />
         </section>
       ) : null}
+      <SummonDashboard />
       {open ? <SummonGuardianDialog height={height} open={open} onOpenChange={setOpen} /> : null}
     </div>
   );

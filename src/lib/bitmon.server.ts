@@ -178,6 +178,71 @@ export async function checkSummonOrder(userId: string, orderId: string) {
   return { order: { ...toOrder(row), status: status as SummonOrder["status"], txid: match.txid }, awakened: Boolean(inserted.data) };
 }
 
+export type SummonOrderStatus = {
+  id: string;
+  height: number;
+  amountSats: number;
+  status: SummonOrder["status"];
+  txid: string | null;
+  expiresAt: string;
+  createdAt: string;
+  /** Live chain data: null until a payment tx is seen. */
+  confirmations: number | null;
+  confirmed: boolean;
+  awake: boolean;
+};
+
+/** Every summon order for this user, enriched with live confirmation counts. */
+export async function listMySummonOrders(userId: string): Promise<SummonOrderStatus[]> {
+  const db = await admin();
+  await db.from("bitmon_summon_orders").update({ status: "expired" }).eq("status", "pending").lt("expires_at", new Date().toISOString());
+  const { data } = await db
+    .from("bitmon_summon_orders")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  const rows = (data ?? []) as OrderRow[];
+
+  let tip = 0;
+  try {
+    const { esploraFetch } = await import("@/lib/bitmon");
+    tip = Number(await (await esploraFetch(`/blocks/tip/height`)).text()) || 0;
+  } catch { /* tip stays 0; confirmations fall back to confirmed flag */ }
+
+  const awake = new Set<number>();
+  if (rows.length) {
+    const { data: gs } = await db.from("bitmon_guardians").select("block_height").in("block_height", rows.map((r) => Number(r.block_height)));
+    for (const g of gs ?? []) awake.add(Number((g as { block_height: number }).block_height));
+  }
+
+  return Promise.all(rows.map(async (r) => {
+    let confirmations: number | null = null;
+    let confirmed = false;
+    if (r.txid) {
+      try {
+        const { esploraFetch } = await import("@/lib/bitmon");
+        const tx = (await (await esploraFetch(`/tx/${r.txid}`)).json()) as MempoolTx;
+        confirmed = Boolean(tx.status?.confirmed);
+        const bh = (tx.status as { block_height?: number } | undefined)?.block_height;
+        confirmations = confirmed && tip && bh ? Math.max(1, tip - bh + 1) : confirmed ? 1 : 0;
+      } catch { /* leave null */ }
+    }
+    return {
+      id: r.id,
+      height: Number(r.block_height),
+      amountSats: Number(r.amount_sats),
+      status: r.status as SummonOrder["status"],
+      txid: r.txid,
+      expiresAt: r.expires_at,
+      createdAt: r.created_at,
+      confirmations,
+      confirmed,
+      awake: awake.has(Number(r.block_height)),
+    };
+  }));
+}
+
 /**
  * Awaken a delegate-minted Guardian from on-chain proof alone. Every check is
  * read from the chain: delegate = master generator, a parent whose content is
