@@ -944,7 +944,7 @@ export const CritterBody = memo(function CritterBody({
   unit: number;
   colors: DesertColors;
 }) {
-  if (hasVoxelSculpt(kind)) return <VoxelCritter kind={kind} unit={u} />;
+  if (hasVoxelSculpt(kind as string)) return <VoxelCritter kind={kind as "scorpion"} unit={u} />;
   if (kind === "scorpion") {
     return (
       <group>

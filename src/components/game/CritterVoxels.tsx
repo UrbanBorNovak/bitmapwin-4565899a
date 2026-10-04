@@ -23,7 +23,7 @@ function bake(boxes: Box[], s: number): THREE.BufferGeometry | null {
     m.makeRotationFromEuler(e.set(rx, ry, rz)).setPosition(x * s, y * s, z * s);
     g.applyMatrix4(m);
     c.set(col);
-    const n = g.attributes.position!.count;
+    const n = g.attributes['position']!.count;
     const arr = new Float32Array(n * 3);
     // a touch of per-face shade so voxels read even under flat light
     for (let i = 0; i < n; i++) {
