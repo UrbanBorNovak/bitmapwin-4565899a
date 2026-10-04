@@ -204,6 +204,27 @@ var LT=0,LX=.5,MET=null,TIP=0;
 function strike(){LT=1;LX=.15+Math.random()*.7}
 setInterval(function(){fetch("/r/blockheight").then(function(r){return r.text()}).then(function(t){var n=+t;if(n>0){if(TIP&&n!==TIP)strike();TIP=n}}).catch(function(){})},30000);
 setInterval(function(){var bh=G?G.h:0,em=bh%2016;if(bh>0&&(em>=1944||em<=72)&&Math.random()<.5)strike()},9000);
+/* ---------- 7e2. 4-second cosmic heartbeat: pull · shockwave · roar · spine surge ---------- */
+var CY={n:-1,t:0},ZP=1;
+function tone(f0,f1,d,ty,v){var A=AC;if(!A||A.state!=="running")return;var o=A.createOscillator(),gn=A.createGain(),n=A.currentTime;
+  o.type=ty;o.frequency.setValueAtTime(f0,n);o.frequency.exponentialRampToValueAtTime(Math.max(20,f1),n+d);
+  gn.gain.setValueAtTime(v,n);gn.gain.exponentialRampToValueAtTime(.0001,n+d);o.connect(gn);gn.connect(A.destination);o.start(n);o.stop(n+d+.05)}
+setInterval(function(){if(STATE!=="AWAKE"||RC)return;CY.n=(CY.n+1)%4;CY.t=performance.now()/1000;
+  if(CY.n===0){tone(660,1320,.9,"sine",.05);tone(990,1980,.7,"triangle",.03)}
+  else if(CY.n===1)tone(90,40,1.1,"sine",.18);
+  else if(CY.n===2){act("roar");strike()}
+  else{for(var i=0;i<5;i++)setTimeout(function(){tone(1800+Math.random()*900,400,.08,"square",.02)},i*90)}},4000);
+function cyk(){var k=performance.now()/1000-CY.t;return k<0||k>2?0:Math.sin(Math.min(1,k/2)*Math.PI)}
+var A1=anim;anim=function(v,tt,aw){var o=A1(v,tt,aw);if(!aw||CY.n<0)return o;var k=cyk();if(!k)return o;o=o.slice();
+  if(CY.n===0&&(o[8]===4||o[8]===5)){o[7]=Math.max(o[7],1.4*k);if(o[8]===4)o[6]="#3fe0d0"}
+  if(CY.n===3&&o[8]!==5){var el=performance.now()/1000-CY.t,wave=Math.exp(-Math.pow(((o[2]+12)/24)-el*.9,2)*30);
+    if(wave>.2){o[7]=Math.max(o[7],1.5*wave);o[6]=wave>.6?"#bff6ff":"#3fe0d0";o[0]+=Math.sin(tt*70+o[2])*.12*wave}}
+  return o};
+var B1=backdrop;backdrop=function(w,h){B1(w,h);
+  var k=CY.n===0?cyk():0,zt=1+.18*k;zoom=zoom/ZP*zt;ZP=zt;
+  if(CY.n===1){var el=performance.now()/1000-CY.t;if(el<2.2){var r=el/2.2,cx=w/2,cy=h*.64;
+    for(var q=0;q<2;q++){var rr=r-q*.12;if(rr<=0)continue;g.strokeStyle=q?"rgba(63,224,208,"+(1-rr)*.8+")":"rgba(247,147,26,"+(1-rr)+")";g.lineWidth=(1-rr)*8+1;
+      g.shadowColor=g.strokeStyle;g.shadowBlur=18;g.beginPath();g.ellipse(cx,cy,rr*w*.55,rr*w*.18,0,0,6.283);g.stroke()}g.shadowBlur=0}}};
 /* ---------- 7f. 5s cinematic 360 video recorder ---------- */
 var RC=null;
 function rec(){if(RC||!c.captureStream||!window.MediaRecorder)return;var st=c.captureStream(60),mt=["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm","video/mp4"].filter(function(m){return MediaRecorder.isTypeSupported(m)})[0];
