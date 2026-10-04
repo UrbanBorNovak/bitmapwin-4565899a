@@ -47,6 +47,14 @@ export function ShieldedGuardianMint({
 
   useEffect(() => setKeys(loadKeys()), []);
 
+  if (SHORD_VAULT_DISABLED) {
+    return (
+      <p className="border border-border p-3 font-mono text-[11px] text-muted-foreground">
+        SHIELDED MINTS ARE PAUSED WHILE THE SHIELDED VAULT IS OFFLINE. INSCRIBE TO YOUR OWN WALLET INSTEAD.
+      </p>
+    );
+  }
+
   if (!keys) {
     return (
       <div className="space-y-2 border border-signal/40 bg-signal/5 p-3">
