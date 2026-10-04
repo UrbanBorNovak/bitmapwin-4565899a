@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { SHORD_VAULT_DISABLED } from "@/lib/shord-flag";
 
 import { useMempoolWatch } from "@/lib/use-mempool-watch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -194,9 +195,11 @@ export function ShadowL1Anchor({
           <Link to="/shadow-notes" className="label mt-1 inline-block text-signal hover:text-bitcoin">
             SEE EVERY PASS NOTE LIVE →
           </Link>
-          <Link to="/shord" className="label mt-1 block text-signal hover:text-bitcoin">
-            OPEN THE SHIELDED VAULT (SHORD) →
-          </Link>
+          {!SHORD_VAULT_DISABLED && (
+            <Link to="/shord" className="label mt-1 block text-signal hover:text-bitcoin">
+              OPEN THE SHIELDED VAULT (SHORD) →
+            </Link>
+          )}
 
 
           {signed?.rawHex ? (

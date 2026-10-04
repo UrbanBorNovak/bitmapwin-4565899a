@@ -22,6 +22,7 @@ import {
 import { proverStatus, proveSpend, verifySpend, type ProverStatus } from "@/lib/shord/prover";
 import { assetIdFromInscription, poolNote, randomField } from "@/lib/shord/pool";
 import { PoolPanel } from "@/components/shord/PoolPanel";
+import { SHORD_VAULT_DISABLED } from "@/lib/shord-flag";
 
 export const Route = createFileRoute("/shord")({
   head: () => ({
@@ -216,6 +217,19 @@ function KeyPanel({ keys, onChange }: { keys: ShordKeys | null; onChange: (k: Sh
 }
 
 function ShieldedVaultPage() {
+  if (SHORD_VAULT_DISABLED) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-24 text-center">
+        <h1 className="font-display text-2xl text-foreground">SHIELDED VAULT</h1>
+        <p className="label mt-2 text-bitcoin">◆ TEMPORARILY OFFLINE ◆</p>
+        <p className="mt-4 font-mono text-xs text-muted-foreground">
+          THE VAULT IS UNDER MAINTENANCE AND CANNOT BE OPENED RIGHT NOW.
+          ANY GUARDIAN ALREADY SEALED IN THE POOL IS SAFE AND STILL ON-CHAIN.
+          YOUR SHIELDED KEY STAYS ON THIS DEVICE — KEEP IT BACKED UP.
+        </p>
+      </div>
+    );
+  }
   const [keys, setKeys] = useState<ShordKeys | null>(null);
   const [lookup, setLookup] = useState("");
   const [lookupNote, setLookupNote] = useState<ShordChainNote | null>(null);

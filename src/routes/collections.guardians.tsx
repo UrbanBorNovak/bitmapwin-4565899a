@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { getGuardianMarketFn } from "@/lib/guardian-market.functions";
+import { SHORD_VAULT_DISABLED } from "@/lib/shord-flag";
 import { allGuardiansQuery } from "@/lib/bitmon-queries";
 import { collectionListingsQuery } from "@/lib/collection-sales";
 import { formatSats } from "@/lib/trades";
@@ -37,7 +38,7 @@ export const Route = createFileRoute("/collections/guardians")({
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
-const STEPS: { n: string; title: string; body: string; to: "/mint" | "/shord" | null; cta: string }[] = [
+const STEPS_ALL: { n: string; title: string; body: string; to: "/mint" | "/shord" | null; cta: string }[] = [
   {
     n: "01",
     title: "MINT A SHIELDED GUARDIAN",
@@ -67,6 +68,7 @@ const STEPS: { n: string; title: string; body: string; to: "/mint" | "/shord" | 
     cta: "",
   },
 ];
+const STEPS = SHORD_VAULT_DISABLED ? STEPS_ALL.filter((s) => s.to !== "/shord") : STEPS_ALL;
 
 function GuardianMarket() {
   const market = useQuery(marketQuery);
