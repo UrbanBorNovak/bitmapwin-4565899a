@@ -16,7 +16,6 @@ import { RARITY_TONE, bip21, guardianArtifactSvg, guardianLevel, guardianShieldD
 import { morphFromDna } from "@/lib/creature-morph";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { packParcels } from "@/components/TerritoryCanvas";
-import { guardianArtifactHtml, guardianHoloCardSvg } from "@/lib/guardian-artifact";
 
 import { guardianDnaQuery, guardianQuery } from "@/lib/bitmon-queries";
 import { checkSummonOrderFn, createSummonOrderFn, resumeSummonOrderFn } from "@/lib/bitmon.functions";
@@ -378,35 +377,17 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
   const guardianArtifact = d && summonTxid ? guardianArtifactSvg(d, summonTxid) : null;
   const guardianDigest = d && summonTxid ? guardianShieldDigest(d, summonTxid) : null;
   const artifactVariants: ArtifactVariant[] | null =
-    d && summonTxid
+    d && summonTxid && GUARDIAN_MASTER_DELEGATE_ID
       ? [
           {
-            key: "live",
-            label: "◆ LIVE 3D ARTIFACT",
-            contentType: "text/html;charset=utf-8",
-            source: guardianArtifactHtml(d, summonTxid),
-            note: "A LIVING VOXEL GUARDIAN YOU CAN SPIN, DRAWN BY ITS OWN CODE AND ON-CHAIN NOISE LIBRARY",
+            key: "delegate",
+            label: "◈ TINY DELEGATE MINT",
+            contentType: DELEGATE_CONTENT_TYPE,
+            source: guardianMasterGeneratorHtml(),
+            delegate: GUARDIAN_MASTER_DELEGATE_ID,
+            tribute: { address: TRIBUTE_ADDRESS, sats: TRIBUTE_SATS },
+            note: `ALMOST ZERO BYTES: DRAWN BY THE MASTER GENERATOR, WHICH CHECKS ITS BITMAP PARENT AND A ${TRIBUTE_SATS.toLocaleString()}-SAT TRIBUTE INSIDE THIS SAME TRANSACTION`,
           },
-          {
-            key: "holo",
-            label: "◇ HOLOGRAM CARD",
-            contentType: "image/svg+xml",
-            source: guardianHoloCardSvg(d, summonTxid),
-            note: "A STILL HOLOGRAPHIC CARD THAT SHOWS UP EVERYWHERE, EVEN IN BASIC VIEWERS",
-          },
-          ...(GUARDIAN_MASTER_DELEGATE_ID
-            ? [
-                {
-                  key: "delegate",
-                  label: "◈ TINY DELEGATE MINT",
-                  contentType: DELEGATE_CONTENT_TYPE,
-                  source: guardianMasterGeneratorHtml(),
-                  delegate: GUARDIAN_MASTER_DELEGATE_ID,
-                  tribute: { address: TRIBUTE_ADDRESS, sats: TRIBUTE_SATS },
-                  note: `ALMOST ZERO BYTES: DRAWN BY THE MASTER GENERATOR, WHICH CHECKS ITS BITMAP PARENT AND A ${TRIBUTE_SATS.toLocaleString()}-SAT TRIBUTE INSIDE THIS SAME TRANSACTION`,
-                },
-              ]
-            : []),
         ]
       : null;
 
