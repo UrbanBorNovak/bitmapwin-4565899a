@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { supabase } from "@/integrations/supabase/client";
 import { GuardianBody } from "@/components/bitmon/GuardianBody";
 import { GUARDIAN_MASTER_DELEGATE_ID, DELEGATE_CONTENT_TYPE, TRIBUTE_ADDRESS, TRIBUTE_SATS, guardianMasterGeneratorHtml } from "@/lib/guardian-delegate";
+import { UnfinishedInscriptions } from "@/components/territory/UnfinishedInscriptions";
 import { ShadowInscriber, type ArtifactVariant } from "@/components/territory/ShadowInscriber";
 import { ShieldedGuardianMint } from "@/components/bitmon/ShieldedGuardianMint";
 import { InscriptionWatcher } from "@/components/bitmon/InscriptionWatcher";
@@ -427,6 +428,7 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
           </div>
         )}
 
+        <UnfinishedInscriptions />
         <div className="border-t border-border pt-4">
           {already || celebrate ? (
             <div className="space-y-2">
