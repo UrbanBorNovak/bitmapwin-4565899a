@@ -59,7 +59,7 @@ function MintPage() {
         </p>
       </div>
 
-      <div className="mt-6 space-y-2"><UnfinishedInscriptions /><Link to="/payments" className="label text-signal underline">◇ MY INSCRIPTION PAYMENTS →</Link></div>
+      <div className="mt-6 space-y-2"><UnfinishedInscriptions /><div className="flex gap-3"><Link to="/guardians-guide" className="label text-signal underline">? WHAT ARE GUARDIANS →</Link><Link to="/payments" className="label text-signal underline">◇ MY INSCRIPTION PAYMENTS →</Link></div></div>
 
       <ol data-tour="mint-steps" className="mt-6 grid gap-3 md:grid-cols-3">
         {STEPS.map(([n, t, note]) => (
