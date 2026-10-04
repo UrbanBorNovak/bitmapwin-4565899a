@@ -102,7 +102,9 @@ export function BuyButton({
       void queryClient.invalidateQueries({ queryKey: ["trades"] });
       void queryClient.invalidateQueries({ queryKey: ["activity"] });
       toast(result.broadcast ? "PURCHASE BROADCAST — SALE CLOSED" : "PURCHASE PENDING", {
-        description: result.txid ? `TXID ${result.txid}` : result.message.toUpperCase(),
+        description: result.txid
+          ? `${result.route === "private_direct" ? "PRIVATE RELAY" : "PUBLIC FALLBACK"} · TXID ${result.txid}`
+          : result.message.toUpperCase(),
       });
       mascotReact(result.broadcast ? "SALE CLOSED ON CHAIN" : "WAITING ON THE MEMPOOL", "cheer");
 

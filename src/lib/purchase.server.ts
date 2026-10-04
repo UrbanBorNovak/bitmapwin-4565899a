@@ -278,6 +278,7 @@ export type PurchaseSubmission = {
   broadcast: boolean;
   txid: string | null;
   message: string;
+  route?: "private_direct" | "public_fallback";
 };
 
 /**
@@ -361,7 +362,8 @@ export async function submitPurchase(input: {
   }
 
 
-  const result = await broadcastRawTransaction(rawHex);
+  const { relayTransaction } = await import("@/lib/mempool-relay.server");
+  const result = await relayTransaction(rawHex);
   if ("error" in result) {
     await supabaseAdmin
       .from("offers")
@@ -417,6 +419,8 @@ export async function submitPurchase(input: {
       bitmap_height: offer.bitmap_height,
       price_sats: Number(offer.price_sats ?? 0),
       seller_address: offer.seller_address,
+      relay_route: result.route,
+      relay: result.relay,
     },
   });
 
@@ -424,6 +428,10 @@ export async function submitPurchase(input: {
     offerId: offer.id,
     broadcast: true,
     txid: result.txid,
-    message: "Purchase broadcast to the network",
+    route: result.route,
+    message:
+      result.route === "private_direct"
+        ? "Purchase sent through a private relay"
+        : "Purchase broadcast via public mempool fallback",
   };
 }
