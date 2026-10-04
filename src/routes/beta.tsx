@@ -26,7 +26,7 @@ function BetaPage() {
   return (
     <main className="mx-auto max-w-[1100px] px-4 py-10 md:px-8 md:py-14">
       <header className="border-b border-border pb-7">
-        <p className="label text-bitcoin">RELEASE · 0.9.0-BETA.1</p>
+        <p className="label text-bitcoin">RELEASE · 0.9.0-BETA.2</p>
         <h1 className="display mt-3 text-4xl md:text-6xl">BITMAPWIN BETA</h1>
         <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
           The connected world is open for testing. Use real BITMAP data, report rough edges, and keep valuable assets in wallets you control.
