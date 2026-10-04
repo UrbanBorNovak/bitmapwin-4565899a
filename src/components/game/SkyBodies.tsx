@@ -222,26 +222,25 @@ function LightningStorm({ bitcoin, far }: { bitcoin: string; far: number }) {
   const flash = useRef<THREE.PointLight>(null);
   const camera = useThree((s) => s.camera);
   const power = useRef(0);
-  const nextStrike = useRef(2.5);
+  const pending = useRef<number>(0);
+
+  useEffect(() => onLightning((epic) => { pending.current = epic ? 2 : Math.max(pending.current, 1); }), []);
 
   const geometry = useMemo(() => {
-    const points = new Float32Array(8 * 3);
+    // Main bolt (8 points) + two forks (4 points each) as line segments.
+    const points = new Float32Array(30 * 3);
     const geom = new THREE.BufferGeometry();
     geom.setAttribute("position", new THREE.BufferAttribute(points, 3));
     return geom;
   }, []);
 
   const bolt = useMemo(() => {
-    const material = new THREE.LineBasicMaterial({
-      color: new THREE.Color(bitcoin),
-      transparent: true,
-      opacity: 0,
-    });
-    const line = new THREE.Line(geometry, material);
+    const material = new THREE.LineBasicMaterial({ color: new THREE.Color("#e8f6ff"), transparent: true, opacity: 0 });
+    const line = new THREE.LineSegments(geometry, material);
     line.visible = false;
     line.raycast = () => {};
     return line;
-  }, [bitcoin, geometry]);
+  }, [geometry]);
 
   useEffect(
     () => () => {
@@ -256,49 +255,85 @@ function LightningStorm({ bitcoin, far }: { bitcoin: string; far: number }) {
     const delta = Math.min(rawDelta, 0.05);
     const now = clock.getElapsedTime();
     if (dome.current) dome.current.position.set(camera.position.x, 0, camera.position.z);
-    if (now > nextStrike.current) {
+    if (pending.current > 0) {
+      const epic = pending.current > 1;
+      pending.current = 0;
       const positions = geometry.getAttribute("position") as THREE.BufferAttribute;
-      const drift = Math.sin(now * 7.13) * far * 0.22;
-      const x = Math.sin(now * 3.7) * far * 0.45 + drift;
-      const z = Math.cos(now * 4.9) * far * 0.45 - drift * 0.5;
+      const x = Math.sin(now * 3.7) * far * 0.45;
+      const z = -Math.abs(Math.cos(now * 4.9)) * far * 0.45 - far * 0.1;
+      const pts: [number, number, number][] = [];
       for (let i = 0; i < 8; i++) {
         const t = i / 7;
-        const fork = Math.sin(now * (i + 1) * 19.7) * far * 0.035;
-        positions.setXYZ(
-          i,
-          x + Math.sin(i * 2.1 + now) * far * 0.04 + fork,
-          far * (0.84 - t * 0.5),
-          z + Math.cos(i * 1.7 - now) * far * 0.04 - fork,
-        );
+        pts.push([x + Math.sin(i * 2.3 + now * 11) * far * 0.05, far * (0.86 - t * 0.6), z + Math.cos(i * 1.7 - now * 9) * far * 0.03]);
       }
+      let n = 0;
+      const seg = (a: number[], b: number[]) => { positions.setXYZ(n++, a[0], a[1], a[2]); positions.setXYZ(n++, b[0], b[1], b[2]); };
+      for (let i = 0; i < 7; i++) seg(pts[i], pts[i + 1]);
+      for (const [start, dir] of [[2, 1], [4, -1]] as const) {
+        let p = pts[start];
+        for (let k = 0; k < 4; k++) {
+          const q = [p[0] + dir * far * 0.05, p[1] - far * 0.06, p[2] + Math.sin(now + k) * far * 0.02];
+          seg(p, q);
+          p = q as [number, number, number];
+        }
+      }
+      while (n < 30) positions.setXYZ(n++, 0, -999, 0);
       positions.needsUpdate = true;
-      power.current = 1;
-      nextStrike.current = now + 5.5 + Math.abs(Math.sin(now * 2.31)) * 8;
+      power.current = epic ? 1.6 : 1;
     }
-
-    power.current = Math.max(0, power.current - delta * 5.5);
-    if (bolt) {
-      bolt.visible = power.current > 0.02;
-      const material = Array.isArray(bolt.material) ? bolt.material[0] : bolt.material;
-      if (material) material.opacity = Math.min(1, power.current * 1.4);
-    }
-    if (flash.current) flash.current.intensity = power.current * 4.5;
+    power.current = Math.max(0, power.current - delta * 4.5);
+    // flicker
+    const flick = power.current * (0.6 + 0.4 * Math.abs(Math.sin(now * 60)));
+    bolt.visible = power.current > 0.02;
+    const material = Array.isArray(bolt.material) ? bolt.material[0] : bolt.material;
+    if (material) material.opacity = Math.min(1, flick * 1.4);
+    if (flash.current) flash.current.intensity = flick * 6;
   });
 
   return (
     <group ref={dome}>
       <Primitive object={bolt} />
-      <pointLight
-        ref={flash}
-        color={bitcoin}
-        intensity={0}
-        distance={far * 2}
-        decay={2}
-        position={[0, far * 0.34, -far * 0.18]}
-      />
+      <pointLight ref={flash} color={bitcoin} intensity={0} distance={far * 2.4} decay={2} position={[0, far * 0.34, -far * 0.18]} />
     </group>
   );
 }
+
+/** Night meteors — streaks across the dome, more frequent during a Blood Moon. */
+function Meteors({ far, active, blood }: { far: number; active: boolean; blood: boolean }) {
+  const geometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute("position", new THREE.BufferAttribute(new Float32Array(6 * 2 * 3), 3));
+    return geom;
+  }, []);
+  const lines = useMemo(() => {
+    const l = new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({ color: "#fff3d6", transparent: true, opacity: 0.9, depthWrite: false }));
+    l.raycast = () => {};
+    return l;
+  }, [geometry]);
+  const state = useRef(Array.from({ length: 6 }, () => ({ t: 1, x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0 })));
+  useEffect(() => () => { geometry.dispose(); (lines.material as THREE.Material).dispose(); }, [geometry, lines]);
+  useFrame((_, raw) => {
+    const d = Math.min(raw, 0.05);
+    const pos = geometry.getAttribute("position") as THREE.BufferAttribute;
+    const rate = blood ? 1.4 : 0.35;
+    state.current.forEach((m, i) => {
+      if (m.t >= 1) {
+        if (!active || Math.random() > rate * d) { pos.setXYZ(i * 2, 0, -999, 0); pos.setXYZ(i * 2 + 1, 0, -999, 0); return; }
+        const a = Math.random() * Math.PI * 2;
+        m.t = 0; m.x = Math.cos(a) * far * 0.6; m.z = Math.sin(a) * far * 0.6; m.y = far * (0.6 + Math.random() * 0.25);
+        m.dx = -Math.cos(a) * far * 0.9; m.dz = -Math.sin(a) * far * 0.9; m.dy = -far * 0.25;
+      }
+      m.t += d * 1.6;
+      const hx = m.x + m.dx * m.t, hy = m.y + m.dy * m.t, hz = m.z + m.dz * m.t;
+      pos.setXYZ(i * 2, hx, hy, hz);
+      pos.setXYZ(i * 2 + 1, hx - m.dx * 0.12, hy - m.dy * 0.12, hz - m.dz * 0.12);
+    });
+    pos.needsUpdate = true;
+    (lines.material as THREE.LineBasicMaterial).color.set(blood ? "#ffb4a0" : "#fff3d6");
+  });
+  return <Primitive object={lines} />;
+}
+
 
 export const SkyBodies = memo(function SkyBodies({ bitcoin }: { bitcoin: string }) {
   const night = useMemo(isNight, []);
