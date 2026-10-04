@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { GUARDIAN_MASTER_DELEGATE_ID, GUARDIAN_MASTER_DELEGATE_IDS } from "@/lib/guardian-delegate";
+import { GUARDIAN_MASTER_DELEGATE_ID, GUARDIAN_MASTER_DELEGATE_IDS, GUARDIAN_V6_MASTER_ID } from "@/lib/guardian-delegate";
 
 const ORD = "https://ordinals.com";
 const MAX_PAGES = 20;
@@ -33,7 +33,7 @@ export const getGuardianMarketFn = createServerFn({ method: "GET" }).handler(asy
   const sales = await verifiedSalesFor(ids);
   return {
     ids,
-    parent: GUARDIAN_MASTER_DELEGATE_ID,
+    parent: GUARDIAN_V6_MASTER_ID,
     indexUnavailable: unavailable,
     sales: sales.sales,
     salesUnavailable: sales.unavailable,

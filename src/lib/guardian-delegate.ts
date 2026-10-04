@@ -29,16 +29,23 @@ export const TRIBUTE_SATS = 1000;
 /** Output script of TRIBUTE_ADDRESS (P2WPKH), matched byte-for-byte in the raw reveal. */
 export const TRIBUTE_SCRIPT = "001406f9acffc33370a676b610326bfffae7f636d9db";
 
-/**
- * The inscription id of the master generator, once it has been inscribed.
- * Empty means delegate mints are not offered yet.
- */
-export const GUARDIAN_MASTER_DELEGATE_ID =
+/** Treasury the active V7 master checks the tribute against (new mints pay here). */
+export const MINT_TRIBUTE_ADDRESS = "bc1qgunjcn7a7njky4xzj4ahj79cg6muzj4qg5pfpv";
+/** Every tribute address any live master accepts (V7 first, then V6). */
+export const ACCEPTED_TRIBUTE_ADDRESSES: readonly string[] = [MINT_TRIBUTE_ADDRESS, TRIBUTE_ADDRESS];
+
+/** V6 master: still the Tag 3 collection root every Guardian is a child of. */
+export const GUARDIAN_V6_MASTER_ID =
   "9d1da99caec6afbf69b89bdafdc0a7ab679c6dd67920f7b38d3a3fd116d0e21fi0";
+
+/** Active master generator (Tag 11 delegate): V7, inscription #127,517,786, block 969,894. */
+export const GUARDIAN_MASTER_DELEGATE_ID =
+  "4bf943b16b00addd1d667dea9df048a05ad9146687893002cb21b2d0c075075di0";
 
 /** Every generator Guardians may delegate to: the current one first, then older versions still on chain. */
 export const GUARDIAN_MASTER_DELEGATE_IDS: readonly string[] = [
   GUARDIAN_MASTER_DELEGATE_ID,
+  GUARDIAN_V6_MASTER_ID,
   "cafa642afc2fd984beeae8648c46fbfdf45e8b4082ca6c057d29465f871573f5i0",
   "a44f4d01312f944260d59a770e08d63ac3d7c6c9c99177183b50c784837a8de1i0",
 ];

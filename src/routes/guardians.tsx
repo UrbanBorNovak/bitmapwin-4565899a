@@ -11,7 +11,7 @@ import { GuardianLiveFloor } from "@/components/bitmon/GuardianLiveFloor";
 
 const TITLE = "Block-DNA Guardians — Collection Drop & Mint";
 const DESC =
-  "One block, one BITMAP, one Guardian. Living 3D creatures grown from Bitcoin block DNA, rendered fully on-chain by a single V6 master inscription.";
+  "One block, one BITMAP, one Guardian. Living 3D creatures grown from Bitcoin block DNA, rendered fully on-chain by a single V7 master inscription.";
 const COLLECTION_ADDRESS = "bc1pjpa5333aef8f9rnqhfmkncdrhdca2qnvdy23ag3e7708kccp2dssgpnz7l";
 
 const marketQuery = queryOptions({
@@ -80,7 +80,7 @@ function GuardiansPromo() {
   return (
     <div className="mx-auto max-w-[1300px] px-4 py-10 md:px-8">
       {/* Announcement */}
-      <p className="label inline-block border border-bitcoin/60 px-2 py-1 text-bitcoin">● MINT LIVE · V6 MASTER ON BITCOIN</p>
+      <p className="label inline-block border border-bitcoin/60 px-2 py-1 text-bitcoin">● MINT LIVE · V7 MASTER ON BITCOIN</p>
       <h1 className="display mt-5 text-4xl leading-tight md:text-6xl">
         1 BLOCK = 1 BITMAP = <span className="text-bitcoin">1 GUARDIAN.</span>
       </h1>
@@ -170,7 +170,7 @@ function GuardiansPromo() {
 
       {/* Engine */}
       <section className="mt-12 panel rounded-md border border-signal/50 p-5">
-        <p className="label text-signal">V6 MASTER ENGINE · #127,507,146</p>
+        <p className="label text-signal">V7 MASTER ENGINE · #127,517,786</p>
         <h2 className="display mt-2 text-2xl md:text-3xl">ONE INSCRIPTION. <span className="text-bitcoin">EVERY GUARDIAN.</span></h2>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           The whole collection runs on a single program written to Bitcoin. Each Guardian is a tiny pointer to it, so the engine draws, checks and animates every creature straight from chain data.
@@ -232,7 +232,7 @@ function GuardiansPromo() {
       <section className="mt-12">
         <h2 className="display text-2xl">PROVENANCE</h2>
         <div className="mt-3 space-y-2 font-mono text-xs" data-no-translate>
-          <p><span className="text-muted-foreground">V6 MASTER · #127,507,146 · </span>
+          <p><span className="text-muted-foreground">V7 MASTER · #127,517,786 · </span>
             <a className="break-all text-bitcoin hover:underline" href={`https://ordinals.com/inscription/${GUARDIAN_MASTER_DELEGATE_ID}`} target="_blank" rel="noreferrer">{GUARDIAN_MASTER_DELEGATE_ID}</a></p>
           {GUARDIAN_MASTER_DELEGATE_IDS.slice(1).map((id, i) => (
             <p key={id}><span className="text-muted-foreground">{i === 0 ? "V5" : "V1"} · </span>

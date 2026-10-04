@@ -185,7 +185,7 @@ function MasterGeneratorPanel({ version }: { version: "v6" | "v7" }) {
     <section className="mt-8 border border-border p-6">
       <div className="flex flex-wrap items-center gap-3">
         <h2 className="display text-xl">GUARDIAN MASTER GENERATOR · {version.toUpperCase()}</h2>
-        {v7 ? <DataBadge kind="soon" note="READY TO INSCRIBE" /> : <DataBadge kind={GUARDIAN_MASTER_DELEGATE_ID ? "live" : "soon"} note={GUARDIAN_MASTER_DELEGATE_ID ? "ACTIVE · DELEGATE MINTS ON" : "NOT INSCRIBED YET"} />}
+        {v7 ? <DataBadge kind="live" note="ACTIVE · #127,517,786" /> : <DataBadge kind={GUARDIAN_MASTER_DELEGATE_ID ? "live" : "soon"} note={GUARDIAN_MASTER_DELEGATE_ID ? "ACTIVE · DELEGATE MINTS ON" : "NOT INSCRIBED YET"} />}
       </div>
       <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
         Inscribe this page once. After that every Guardian can be minted as an almost empty inscription that points
@@ -199,10 +199,10 @@ ${v7 ? `TRIBUTE        ${TRIBUTE_SATS} SATS → ${V7_TRIBUTE_ADDRESS}
 BITMAP CHECK   LIVEOCI ${LIVE_OCI_MODULE_ID.slice(0, 12)}…i0 · EVERY HEIGHT TO THE TIP
 BRAIN          FLY CONNECTOME ${V7_CONNECTOME_ID.slice(0, 12)}…i0
 VERSION        V7 · LIVEOCI · BLOCK MUTATIONS · CONNECTOME MOTOR · CHILD NAVIGATOR
-STATUS         NOT INSCRIBED · SEND THE ID ONCE MINED TO MAKE IT THE ACTIVE MASTER` : `TRIBUTE        ${TRIBUTE_SATS} SATS → ${TRIBUTE_ADDRESS}
-MASTER ID      ${GUARDIAN_MASTER_DELEGATE_ID || "NOT SET"}
+STATUS         INSCRIBED #127,517,786 · BLOCK 969,894 · ACTIVE MASTER` : `TRIBUTE        ${TRIBUTE_SATS} SATS → ${TRIBUTE_ADDRESS}
+MASTER ID      9d1da99caec6afbf69b89bdafdc0a7ab679c6dd67920f7b38d3a3fd116d0e21fi0
 VERSION        V6 · HONEST PARENT LABEL · HUD OVERLAP FIX · ALL V5 FEATURES
-STATUS         V6 INSCRIBED (9d1da99c…i0) · WIRED AS ACTIVE MASTER · V5/V1 STILL ACCEPTED`}`}
+STATUS         V6 INSCRIBED (9d1da99c…i0) · COLLECTION ROOT · STILL ACCEPTED`}`}
       </pre>
       <div className="mt-3 flex flex-wrap gap-2 font-mono text-xs">
         <button type="button" className="border border-bitcoin px-3 py-2 text-bitcoin hover:bg-bitcoin hover:text-background"

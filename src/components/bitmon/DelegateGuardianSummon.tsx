@@ -5,7 +5,7 @@
  * verify both on chain and awaken the Guardian in full colour by itself.
  */
 import { ShadowInscriber, type ArtifactVariant } from "@/components/territory/ShadowInscriber";
-import { DELEGATE_CONTENT_TYPE, GUARDIAN_MASTER_DELEGATE_ID, TRIBUTE_ADDRESS, TRIBUTE_SATS, guardianMasterGeneratorHtml } from "@/lib/guardian-delegate";
+import { DELEGATE_CONTENT_TYPE, GUARDIAN_MASTER_DELEGATE_ID, MINT_TRIBUTE_ADDRESS, TRIBUTE_SATS, guardianMasterGeneratorHtml } from "@/lib/guardian-delegate";
 import { useState } from "react";
 import { InscriptionWatcher } from "@/components/bitmon/InscriptionWatcher";
 import { Link } from "@tanstack/react-router";
@@ -36,7 +36,7 @@ export function DelegateGuardianSummon({ dna }: { dna: GuardianDna }) {
       contentType: DELEGATE_CONTENT_TYPE,
       source: guardianMasterGeneratorHtml(),
       delegate: GUARDIAN_MASTER_DELEGATE_ID,
-      tribute: { address: TRIBUTE_ADDRESS, sats: TRIBUTE_SATS },
+      tribute: { address: MINT_TRIBUTE_ADDRESS, sats: TRIBUTE_SATS },
       note: `EMPTY BODY + DELEGATE TAG. THE MASTER GENERATOR CHECKS THE ${dna.height}.BITMAP PARENT AND THE ${TRIBUTE_SATS.toLocaleString()}-SAT TRIBUTE INSIDE THIS TRANSACTION.`,
     },
   ];
