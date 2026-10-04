@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { listMySummonOrdersFn } from "@/lib/bitmon.functions";
-import { useSession } from "@/lib/auth-hooks";
+import { useAuthSession } from "@/lib/auth";
 
 const STATUS_TONE: Record<string, string> = {
   pending: "text-bitcoin",
@@ -13,7 +13,7 @@ const STATUS_TONE: Record<string, string> = {
 
 /** Live tracker for the signed-in user's summon orders: confirmations until AWAKE. */
 export function SummonDashboard() {
-  const { data: session } = useSession();
+  const { session } = useAuthSession();
   const q = useQuery({
     queryKey: ["my-summon-orders"],
     queryFn: () => listMySummonOrdersFn(),
