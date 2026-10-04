@@ -18,9 +18,9 @@ import { contentUrl } from "@/components/game/InscribedParts";
 
 const noRaycast = () => {};
 /** Vertices across one tile — enough to hug a hill without costing anything. */
-const SEGMENTS = 16;
+const SEGMENTS = 32;
 /** A whisper above the walkable surface — visible underfoot, never floating. */
-const LIFT = 0.0003;
+const LIFT = 0.004;
 
 /** Matches the thin BITMAP plate drawn by the world renderer. */
 function bitmapPlateHeight(height: number) {
@@ -101,14 +101,13 @@ const PaintedTile = memo(function PaintedTile({ height }: { height: number }) {
 
   if (!texture) return null;
   return (
-    <mesh position={[x, 0, z]} geometry={geometry} renderOrder={1} raycast={noRaycast}>
+    <mesh position={[x, 0, z]} geometry={geometry} renderOrder={2} raycast={noRaycast}>
       <meshBasicMaterial
         map={texture}
-        transparent
-        depthWrite={false}
+        alphaTest={0.05}
         polygonOffset
-        polygonOffsetFactor={-4}
-        polygonOffsetUnits={-4}
+        polygonOffsetFactor={-8}
+        polygonOffsetUnits={-8}
         toneMapped={false}
         side={THREE.DoubleSide}
       />
