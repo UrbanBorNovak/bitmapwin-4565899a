@@ -240,6 +240,22 @@ function BitmapDetail() {
                 <p className="label text-bitcoin">{parcel?.listedSats ? "CURRENT ASK" : lastSale ? "LAST VERIFIED SALE" : "MARKET STATUS"}</p>
                 <p className="display mt-1 text-2xl md:text-4xl">{headlinePrice}</p>
               </div>
+              {parcel?.listedSats && lastSale ? (
+                <a
+                  href={`https://mempool.space/tx/${lastSale.txid}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block border-l border-border pl-5 hover:text-signal"
+                >
+                  <p className="label text-signal">LAST TRADED</p>
+                  <p className="display mt-1 text-2xl text-signal md:text-4xl" data-no-translate>{formatSats(lastSale.price_sats)}</p>
+                  <p className="label mt-1 text-muted-foreground" data-no-translate>
+                    {lastSale.block_height ? `BLOCK #${lastSale.block_height}` : "UNCONFIRMED"} ·{" "}
+                    {parcel.listedSats >= lastSale.price_sats ? "+" : ""}
+                    {Math.round(((parcel.listedSats - lastSale.price_sats) / lastSale.price_sats) * 100)}% VS ASK
+                  </p>
+                </a>
+              ) : null}
               <MakeOfferButton height={block} askSats={parcel?.listedSats ?? null} className="btn-term min-h-12 px-6" label="MAKE OFFER" />
               <WatchBitmapButton height={block} />
             </div>

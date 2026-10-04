@@ -10,6 +10,8 @@ import {
   type RegistryParcel,
 } from "@/lib/registry";
 import { formatSats } from "@/lib/trades";
+import { recentTradesQuery } from "@/lib/trade-store";
+import { timeAgo } from "@/lib/bitmap";
 import { useLiveOffers } from "@/lib/use-live-offers";
 import { TrendingParcels } from "@/components/TrendingParcels";
 import { CLUBS, inClub, type ClubId } from "@/lib/clubs";
@@ -78,6 +80,9 @@ function Marketplace() {
   const [club, setClub] = useState<ClubId | "any">("any");
   const [trait, setTrait] = useState<TraitId | "any">("any");
   const [page, setPage] = useState(0);
+  const [recentFirst, setRecentFirst] = useState(false);
+  const recent = useQuery({ ...recentTradesQuery(40), refetchInterval: 30_000 });
+  const lastTrade = (recent.data ?? []).find((t) => t.price_sats > 0) ?? null;
   useLiveOffers();
 
 
@@ -91,6 +96,9 @@ function Marketplace() {
       if (def) base = base.filter((p) => inClub(p.bitmapHeight, def));
     }
     if (trait !== "any") base = base.filter((p) => hasTrait(p.bitmapHeight, trait));
+    if (recentFirst) {
+      base = [...base].sort((a, b) => (b.lastSaleBlock ?? -1) - (a.lastSaleBlock ?? -1));
+    }
     const q = search.trim().toLowerCase();
     if (!q) return base;
     return base.filter(
@@ -100,7 +108,7 @@ function Marketplace() {
         p.txid.toLowerCase().includes(q) ||
         (p.ownerAddress ?? "").toLowerCase().includes(q),
     );
-  }, [tab, traded, listed, parcels, search, club, trait]);
+  }, [tab, traded, listed, parcels, search, club, trait, recentFirst]);
 
   // Paginate first, then resolve holders on chain for the visible page only.
   const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
@@ -152,7 +160,7 @@ function Marketplace() {
 
       </div>
 
-      <div data-tour="market-stats" className="mt-6 grid grid-cols-2 divide-border border border-border bg-card sm:grid-cols-5 sm:divide-x">
+      <div data-tour="market-stats" className="mt-6 grid grid-cols-2 divide-border border border-border bg-card sm:grid-cols-3 sm:divide-x lg:grid-cols-6">
         <Stat
           k="REGISTERED BITMAPS"
           v={
@@ -179,6 +187,26 @@ function Marketplace() {
         />
         <Stat k="LOWEST SALE" v={floor ? formatSats(floor) : "—"} />
         <Stat k="SALE VOLUME" v={volume ? formatSats(volume) : "—"} />
+        <div className="border-t border-border p-4 sm:border-t-0">
+          <p className="label text-signal">LAST TRADED</p>
+          {lastTrade ? (
+            <a
+              href={`https://mempool.space/tx/${lastTrade.txid}`}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1 block font-mono text-sm font-bold text-foreground hover:text-signal"
+              data-no-translate
+            >
+              {formatSats(lastTrade.price_sats)}
+              <span className="mt-0.5 block text-[10px] font-normal text-muted-foreground">
+                {lastTrade.bitmap_height}.BITMAP{lastTrade.block_height ? ` · #${lastTrade.block_height}` : ""}
+                {lastTrade.block_time ?? lastTrade.created_at ? ` · ${timeAgo(lastTrade.block_time ?? lastTrade.created_at)}` : ""}
+              </span>
+            </a>
+          ) : (
+            <p className="mt-1 font-mono text-sm text-muted-foreground">{recent.isPending ? "…" : "—"}</p>
+          )}
+        </div>
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-12">
@@ -208,6 +236,17 @@ function Marketplace() {
                     </button>
                   ))}
                 </div>
+              </div>
+              <div>
+                <span className="label mb-2 block">SORT</span>
+                <button
+                  type="button"
+                  aria-pressed={recentFirst}
+                  className={recentFirst ? "btn-term w-full justify-start" : "btn-term-ghost w-full justify-start"}
+                  onClick={() => { setRecentFirst((v) => !v); setPage(0); }}
+                >
+                  RECENT SALES FIRST
+                </button>
               </div>
               <div>
                 <span className="label mb-2 block">COLLECTION</span>
