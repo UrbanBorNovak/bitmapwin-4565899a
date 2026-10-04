@@ -42,6 +42,11 @@ const dummy = new THREE.Object3D();
 const MAX_CACHE = 16;
 
 const packCache = new Map<string, ReturnType<typeof packParcels>>();
+/** Low, capped slab height: big parcels used to grow into walls that cut across the view. */
+function parcelLift(size: number) {
+  return Math.min(PARCEL_UNIT * Math.sqrt(size) * 0.9, STRIDE * 0.35);
+}
+
 function cachedPack(height: number, classes: number[]) {
   const key = `${height}:${classes.length}`;
   let hit = packCache.get(key);
@@ -104,7 +109,7 @@ const ParcelSlab = memo(function ParcelSlab({ height }: { height: number }) {
       const lx = p.x * PARCEL_UNIT - half + s / 2;
       const lz = p.y * PARCEL_UNIT - half + s / 2;
       const ground = groundY(cx + lx, cz + lz);
-      const lift = PARCEL_UNIT * p.size * p.size * 0.9;
+      const lift = parcelLift(p.size);
       const sink = STRIDE * 0.6;
       const h = lift + sink;
       dummy.position.set(lx, ground + lift - h / 2, lz);
@@ -174,7 +179,7 @@ const ParcelSlab = memo(function ParcelSlab({ height }: { height: number }) {
         const s = p.size * PARCEL_UNIT;
         const lx = p.x * PARCEL_UNIT - half + s / 2;
         const lz = p.y * PARCEL_UNIT - half + s / 2;
-        const top = groundY(cx + lx, cz + lz) + PARCEL_UNIT * p.size * p.size * 0.9 + STRIDE;
+        const top = groundY(cx + lx, cz + lz) + parcelLift(p.size) + STRIDE;
         return (
           <SafeHtml center position={[lx, top, lz]} zIndexRange={[20, 0]}>
             <div className="w-56 border border-border bg-background/95 p-3 font-mono text-[11px] text-foreground shadow-lg">
