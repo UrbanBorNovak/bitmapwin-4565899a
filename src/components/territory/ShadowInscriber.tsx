@@ -181,6 +181,19 @@ export function ShadowInscriber(props: {
 
   const start = async () => {
     try {
+      setBusy("CHECKING FOR AN EARLIER PAYMENT…");
+      // Never ask for a second fee while an earlier paid commit sits unspent.
+      for (const old of listUnrevealedJobs()) {
+        const utxo = await findCommitOutput(old);
+        if (utxo) {
+          const resumed = { ...old, commitTxid: old.commitTxid ?? utxo.txid, digest: props.digest };
+          saveJob(resumed);
+          setCommitUtxo(null);
+          setJob(resumed);
+          toast.success("YOU ALREADY PAID — CONTINUE WITH STEP 2, NO NEW FEE");
+          return;
+        }
+      }
       setBusy("PRICING…");
       const wallet = await resolveWallet();
       const body = file?.bytes ?? new TextEncoder().encode(artifactSource);
