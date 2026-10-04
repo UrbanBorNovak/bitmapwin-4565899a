@@ -12,8 +12,11 @@ import * as THREE from "three";
 import { Primitive } from "@/components/game/Primitive";
 import { MOON_INSCRIPTION } from "@/lib/world-gear";
 import { worldWeather } from "@/lib/world-weather";
+import { isBloodMoonHeight, onLightning, strikeLightning, watchTip } from "@/lib/sky-events";
+import { useState } from "react";
 
 const SUN_INSCRIPTION = "9dd13ee3171bcd321b7ef2d7a07fe268efc8ec888bab580d1c68ec8673081414i0";
+const BLOOD = "#c81e1e";
 const SUN_URL = `https://ordinals.com/content/${SUN_INSCRIPTION}`;
 const MOON_URL = `https://ordinals.com/content/${MOON_INSCRIPTION}`;
 
@@ -340,6 +343,8 @@ export const SkyBodies = memo(function SkyBodies({ bitcoin }: { bitcoin: string 
   const dome = useRef<THREE.Group>(null);
   const stars = useRef<THREE.Points>(null);
   const camera = useThree((s) => s.camera);
+  const [blood, setBlood] = useState(false);
+  useEffect(() => watchTip((h, isNew) => { setBlood(isBloodMoonHeight(h)); if (isNew) strikeLightning(true); }), []);
   // Sky sits just inside the fog/camera range of the land world, in world units.
   const far = 26;
   const bodyScale = 2.2;
@@ -391,6 +396,7 @@ export const SkyBodies = memo(function SkyBodies({ bitcoin }: { bitcoin: string 
       </points>
 
       <LightningStorm bitcoin={bitcoin} far={far} />
+      <Meteors far={far} active={night || blood} blood={blood} />
 
       {/* Sun — inscribed body plus glow halo. */}
       <group position={[-far * 0.5, sunHeight, -far * 0.5]}>
@@ -421,18 +427,18 @@ export const SkyBodies = memo(function SkyBodies({ bitcoin }: { bitcoin: string 
           fallback={
             <mesh raycast={() => {}}>
               <sphereGeometry args={[bodyScale * (night ? 0.95 : 0.55), 20, 16]} />
-              <meshBasicMaterial color={MOON} transparent opacity={night ? 1 : 0.45} />
+              <meshBasicMaterial color={blood ? BLOOD : MOON} transparent opacity={night ? 1 : 0.45} />
             </mesh>
           }
         >
           <InscribedMoon size={bodyScale * (night ? 2.1 : 1.2)} dim={night ? 1 : 0.5} />
         </Suspense>
         <mesh raycast={() => {}}>
-          <sphereGeometry args={[bodyScale * (night ? 1.5 : 0.8), 16, 12]} />
+          <sphereGeometry args={[bodyScale * (blood ? 2.4 : night ? 1.5 : 0.8), 16, 12]} />
           <meshBasicMaterial
-            color={MOON}
+            color={blood ? BLOOD : MOON}
             transparent
-            opacity={night ? 0.12 : 0.05}
+            opacity={blood ? 0.42 : night ? 0.12 : 0.05}
             depthWrite={false}
           />
         </mesh>
