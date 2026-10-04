@@ -336,12 +336,14 @@ export function stepPlayer(player: PlayerState, intent: MoveIntent, rawDelta: nu
     player.vz *= cap;
   }
 
+  // Edge margin is half a stride so row 0 / column 0 BITMAPs stay walkable.
+  const edge = STRIDE * 0.5;
   const nextX = clamp(
     player.x + player.vx * delta,
-    -WORLD_UNITS / 2 + WORLD_CELL,
-    WORLD_UNITS / 2 - WORLD_CELL,
+    -WORLD_UNITS / 2 + edge,
+    WORLD_UNITS / 2 - edge,
   );
-  const nextZ = clamp(player.z + player.vz * delta, WORLD_CELL, WORLD_UNITS - WORLD_CELL);
+  const nextZ = clamp(player.z + player.vz * delta, edge, WORLD_UNITS - edge);
   // Solid things (built structures) stop the body. Each axis is tested on its
   // own, so walking into a wall slides along it instead of sticking.
   if (blocker) {
