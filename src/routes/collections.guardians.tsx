@@ -68,6 +68,7 @@ const STEPS_ALL: { n: string; title: string; body: string; to: "/mint" | "/shord
     cta: "",
   },
 ];
+const STEPS = SHORD_VAULT_DISABLED ? STEPS_ALL.filter((s) => s.to !== "/shord") : STEPS_ALL;
 
 function GuardianMarket() {
   const market = useQuery(marketQuery);
