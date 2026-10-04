@@ -18,6 +18,8 @@ export const LIVE_OCI_MODULE_ID = "0c18b83ca6aa6f5653bb57dafb491ac786b7fa738b6c5
 export const BLOCK_PARSER_MODULE_ID = "bbbb2172ebca174579884df1ad7487196c39e860b3aacdf4e052a33bf5ec31fai0";
 export const V7_CONNECTOME_ID = "18cacc9e069063e09fe3a0d3f96fd49117ffb2e6d9bcb68f1ccf79206afdef0ai0";
 const OLD_OCI = "942b5886158d57fc70cb8fb7d9bd4d37aa95b8b145be1a351326336b087262dbi0";
+/** The original collection parent every Guardian stays under (V6 master, tag 3 parent). */
+export const COLLECTION_ROOT_ID = "9d1da99caec6afbf69b89bdafdc0a7ab679c6dd67920f7b38d3a3fd116d0e21fi0";
 
 /** Treasury the V7 generator checks the tribute against. */
 export const V7_TRIBUTE_ADDRESS = "bc1qgunjcn7a7njky4xzj4ahj79cg6muzj4qg5pfpv";
@@ -119,6 +121,9 @@ export function guardianMasterGeneratorHtmlV7(): string {
   s = swap(s, `/content/${OLD_OCI}`, `/content/${LIVE_OCI_MODULE_ID}`);
   s = swap(s, "if(hh>=942000)return hh;", "");
   s = swap(s, "rank:ids.indexOf(SELF)+1,", "ids:ids,rank:ids.indexOf(SELF)+1,");
+  // Baked collection root: the master itself and any child without a second parent read the original collection.
+  s = swap(s, "MASTER=true;collection(SELF);", `MASTER=true;collection(${JSON.stringify(COLLECTION_ROOT_ID)});`);
+  s = swap(s, "if(root)collection(root);", `collection(root||${JSON.stringify(COLLECTION_ROOT_ID)});`);
   s = swap(
     s,
     "LAND=land(txs,hash);VOX=blueprint(G);G.tr=traitsOf(G);",
