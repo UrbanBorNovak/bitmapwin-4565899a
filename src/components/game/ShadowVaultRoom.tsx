@@ -11,6 +11,7 @@ import * as THREE from "three";
 import { toast } from "sonner";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { SafeHtml } from "@/components/game/SafeHtml";
+import { AssemblyDecor } from "@/components/game/AssemblyDecor";
 import { onShadowRoom, type ShadowRoomRequest } from "@/lib/shadow-room";
 import { getPass, shadowHandle } from "@/lib/shadow-vault";
 import { verifyShadowPassFn, postShadowWhisperFn } from "@/lib/shadow-assets.functions";
