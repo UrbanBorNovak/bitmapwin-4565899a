@@ -28,8 +28,8 @@ export const Route = createFileRoute("/mint")({
 
 const STEPS = [
   ["01", "PICK A BITMAP", "Every block grows one Guardian. Armor from difficulty, size from block weight, crests from fork signals — read, not invented."],
-  ["02", "PAY & INSCRIBE", `${GUARDIAN_PRICE_SATS.toLocaleString()} sats plus the network fee. Your wallet signs; this browser writes the inscription.`],
-  ["03", "LANDS IN YOUR WALLET", "Your Guardian arrives in your own wallet. Want to try something new? Opt into the shielded experiment instead."],
+  ["02", "SUMMON IN THE OASIS", `Pay ${GUARDIAN_PRICE_SATS.toLocaleString()} sats. After one confirmation your Guardian wakes up and patrols its BITMAP in the Oasis.`],
+  ["03", "INSCRIBE ON-CHAIN", "Inscribe your awake Guardian as a real Ordinal child of its BITMAP. It lands in your own wallet — or try the shielded experiment."],
 ] as const;
 
 function MintPage() {
@@ -103,7 +103,7 @@ function MintPage() {
               ) : (
                 <button type="button" onClick={() => setOpen(true)} className="btn-term w-full">◆ SUMMON · {GUARDIAN_PRICE_SATS.toLocaleString()} SATS</button>
               )}
-              <p className="font-mono text-[10px] text-muted-foreground">DELIVERS TO YOUR WALLET. THE SHIELDED EXPERIMENT IS OPTIONAL IN THE NEXT STEP. SIGN IN AND CONNECT A WALLET TO PAY.</p>
+              <p className="font-mono text-[10px] text-muted-foreground">SUMMON WAKES IT IN THE OASIS. INSCRIBE IS THE NEXT STEP — IT MAKES THE ON-CHAIN ORDINAL IN YOUR WALLET. SIGN IN AND CONNECT A WALLET TO PAY.</p>
               <div className="flex gap-3 font-mono text-[10px]">
                 {!SHORD_VAULT_DISABLED && <Link to="/shord" className="text-signal underline">YOUR POOL NOTES</Link>}
                 <Link to="/codex/morphs" className="text-signal underline">MORPH LAB</Link>
@@ -114,10 +114,10 @@ function MintPage() {
       </div>
       {d ? (
         <section data-tour="mint-delegate" className="panel mt-6 space-y-3 rounded-md border border-border p-4">
-          <p className="label text-signal">HOLDER SUMMON · DELEGATE</p>
-          <h2 className="display text-2xl">SUMMON FROM <span className="text-bitcoin">{height}.BITMAP</span></h2>
+          <p className="label text-signal">HOLDER INSCRIBE · DELEGATE</p>
+          <h2 className="display text-2xl">INSCRIBE FROM <span className="text-bitcoin">{height}.BITMAP</span></h2>
           <p className="max-w-2xl text-sm text-muted-foreground">
-            Hold this BITMAP? Inscribe a tiny child of it that borrows the master generator. It lands in your own wallet, not the pool.
+            Hold this BITMAP? Inscribe a tiny on-chain child of it that borrows the master generator. It lands in your own wallet, not the pool.
           </p>
           <DelegateGuardianSummon dna={d} />
         </section>
