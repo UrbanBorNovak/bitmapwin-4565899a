@@ -121,7 +121,7 @@ export async function checkSummonOrder(userId: string, orderId: string) {
     // A txid was already recorded: verify that exact tx, however old it is.
     try {
       const tx = (await (await esploraFetch(`/tx/${row.txid}`)).json()) as MempoolTx;
-      const pays = (tx.vout ?? []).some((o) => o.scriptpubkey_address === GUARDIAN_TREASURY && Number(o.value) === Number(row.amount_sats));
+      const pays = (tx.vout ?? []).some((o) => GUARDIAN_TREASURIES.includes(o.scriptpubkey_address ?? "") && Number(o.value) === Number(row.amount_sats));
       if (pays) match = tx;
     } catch { /* fall through to address scan */ }
   }
@@ -137,7 +137,7 @@ export async function checkSummonOrder(userId: string, orderId: string) {
     match = txs.find(
       (tx) =>
         (!tx.status?.block_time || tx.status.block_time * 1000 >= since) &&
-        (tx.vout ?? []).some((o) => o.scriptpubkey_address === GUARDIAN_TREASURY && Number(o.value) === Number(row.amount_sats)),
+        (tx.vout ?? []).some((o) => GUARDIAN_TREASURIES.includes(o.scriptpubkey_address ?? "") && Number(o.value) === Number(row.amount_sats)),
     );
   }
   if (!match) {
