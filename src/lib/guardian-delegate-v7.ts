@@ -63,7 +63,7 @@ function mutate(G,blk){
   if(wt>0&&sz>0){G.dn=wt/(sz*4)>.9?"CARAPACE":"CHITIN";G.mx.push(["Density",G.dn==="CARAPACE"?"HEAVY CARAPACE":"CRYSTAL CHITIN"])}
   if(G.sh!=="serpent"&&G.sh!=="floater"){var tk=h32(G.dna+":tail:"+mr)%5;if(tk>0){G.tl=TAILS[tk];G.mx.push(["Tail",TAILS[tk]+" TAIL"])}}
   /* thermodynamics: proof-of-work difficulty sets the armour */
-  var df=Number(blk.difficulty||0);
+  var df=Number(blk.difficulty||0);G.df=df;G.wt=wt;
   if(df>0&&df<=1){G.th="CLAY";G.mx.push(["Thermodynamics","GENESIS CLAY \u00B7 CPU ERA"])}
   else if(df>1e12){G.th="TERA";G.mx.push(["Thermodynamics","TERAHASH SINGULARITY"])}
   /* mass: block weight decides wraith or titan */
@@ -294,7 +294,26 @@ function tradeScan(){if(!COLL||!COLL.ids){if(TRDS===3)collection("9d1da99caec6af
 setTimeout(tradeScan,2000);
 /* on-chain typeface for every HUD label; plain monospace until it arrives */
 try{var OCF=new FontFace("OCF","url(/content/f558af98ebf22b85a7de7ccd8943b2e27ad84de505d73b00a9041212b9643118i0)");OCF.load().then(function(f){document.fonts.add(f)}).catch(function(){})}catch(_){}
-function tickerHud(w,h){
+/* on-chain proof card: both Tag 3 parents, difficulty armour, block weight mass, consensus crests */
+function fmtD(d){return d>=1e12?(d/1e12).toFixed(2)+"T":d>=1e9?(d/1e9).toFixed(2)+"G":d>=1e6?(d/1e6).toFixed(2)+"M":d>=1e3?(d/1e3).toFixed(1)+"K":String(Math.round(d))}
+function chainHud(w,h){if(!G)return;
+  var small=Math.max(8,Math.min(12,w*.015)),lh=small*1.45,pw=Math.min(w*.42,300),pad=Math.max(14,w*.035),x=w-pw-pad,y=pad+small*4.5;
+  var arm=G.th==="CLAY"?"GENESIS CLAY":G.th==="TERA"?"TERAHASH ARMOUR":"FORGED STEEL";
+  var ms=G.ms==="TITAN"?"TITAN":G.ms==="WRAITH"?"WRAITH":"STANDARD";
+  var cr=[];if(G.tp)cr.push("TAPROOT");if(G.sw)cr.push("SEGWIT");if(G.lz)cr.push("SUPER-ZERO");
+  var R=[["ON-CHAIN PROOF","","#f7931a"],
+    ["PARENT 1",G.h+".BITMAP","#3fe0d0"],
+    ["PARENT 2","ROOT 9d1da99c\u2026i0","#3fe0d0"],
+    ["ARMOUR",arm+(G.df?" \u00B7 DIFF "+fmtD(G.df):""),"#e8eef2"],
+    ["BLOCK WEIGHT",(G.wt?(G.wt/1e6).toFixed(2)+" MWU":"\u2026")+" \u00B7 "+ms,"#e8eef2"],
+    ["CRESTS",cr.length?cr.join(" + "):"NONE (PRE-SEGWIT)",cr.length?"#f7931a":"#8a949c"]];
+  g.globalAlpha=.55;g.fillStyle="#04060a";g.fillRect(x-8,y-small*1.2,pw+16,lh*R.length+small*.6);
+  g.globalAlpha=.5;g.strokeStyle="#3fe0d0";g.lineWidth=1;g.strokeRect(x-8,y-small*1.2,pw+16,lh*R.length+small*.6);g.globalAlpha=1;
+  for(var i=0;i<R.length;i++){var yy=y+i*lh;
+    if(!R[i][1]){txt(R[i][0],x,yy,small*.85,R[i][2]);continue}
+    txt(R[i][0],x,yy,small*.72,"#8a949c",.85);txt(R[i][1],x+pw*.36,yy,small*.8,R[i][2])}
+}
+function tickerHud(w,h){chainHud(w,h);
   var pad=Math.max(14,w*.035),small=Math.max(8,Math.min(13,w*.016)),y=pad+small*8.8;
   txt("LAST SALE \u00B7 "+(TRD&&typeof TRD.sats==="number"?TRD.sats.toLocaleString()+" SATS":TRD===false?"NO TRADES YET":"LOOKING\u2026"),pad,y,small*.8,"#f7931a",.9);
   var gw=Math.min(w*.32,220),gh=small*4,gx=pad,gy=y+small*1.2,k,tot=0,pts=[0];
