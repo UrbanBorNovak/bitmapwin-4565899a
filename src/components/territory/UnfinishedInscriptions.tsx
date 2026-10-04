@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { ShadowInscriber } from "@/components/territory/ShadowInscriber";
 import { findCommitOutput, listUnrevealedJobs, markRevealed, saveJob, type InscribeJob } from "@/lib/shadow-inscribe";
 
@@ -40,7 +41,8 @@ export function UnfinishedInscriptions() {
     <div className="space-y-2 border border-bitcoin bg-bitcoin/5 p-3">
       <p className="label text-bitcoin">◆ {found.length} UNFINISHED INSCRIPTION{found.length > 1 ? "S" : ""} FOUND ON THIS DEVICE</p>
       <p className="font-mono text-[11px] text-muted-foreground">
-        THE FEE IS ALREADY PAID ON BITCOIN. FINISH STEP 2 BELOW — NO NEW PAYMENT.
+        THE FEE IS ALREADY PAID ON BITCOIN. FINISH STEP 2 BELOW — NO NEW PAYMENT.{" "}
+        <Link to="/payments" className="text-signal underline">SEE ALL PAYMENTS →</Link>
       </p>
       {found.map(({ job, value }) => (
         <div key={job.commitAddress} className="space-y-2 border border-border p-2">
