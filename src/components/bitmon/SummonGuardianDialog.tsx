@@ -22,6 +22,7 @@ import { packParcels } from "@/components/TerritoryCanvas";
 
 import { guardianDnaQuery, guardianQuery } from "@/lib/bitmon-queries";
 import { checkSummonOrderFn, createSummonOrderFn, resumeSummonOrderFn } from "@/lib/bitmon.functions";
+import { mintParentsFn } from "@/lib/ord-parents.functions";
 import type { SummonOrder } from "@/lib/bitmon.server";
 import { playSfx } from "@/lib/world-audio";
 
@@ -364,6 +365,18 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
     setBusy(true);
     setDenied(null);
     try {
+      // Stop before any payment unless the connected wallet holds <height>.bitmap.
+      const { resolveWallet } = await import("@/components/BuyButton");
+      const wallet = await resolveWallet();
+      const check = await checkParents({ data: { height, holderAddress: wallet.ordinalsAddress } });
+      if (!check.bitmapParentId) {
+        setDenied(`YOUR CONNECTED ORDINALS WALLET MUST HOLD ${height}.BITMAP TO SUMMON ITS GUARDIAN. NOTHING WAS PAID.`);
+        return;
+      }
+      if (!check.masterInscriptionId) {
+        setDenied("THE COLLECTION PARENT IS UNAVAILABLE RIGHT NOW — TRY AGAIN SHORTLY. NOTHING WAS PAID.");
+        return;
+      }
       const res = await createOrder({ data: { height } });
       if (res.denied) setDenied(res.denied);
       else setOrder(res.order);
