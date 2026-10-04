@@ -31,4 +31,4 @@
 
 - Guardian collection visuals come from morphFromDna (src/lib/creature-morph.ts) via GuardianBody height prop; species only sets ability/lore line. Why: one block-derived design per BITMAP everywhere.
 - Marketplace buys take a 90s server-side checkout hold (reserve_offer RPC, service-role only) before building the PSBT; submit requires the live hold. Why: snipe protection without exposing seller PSBTs.
-- Guardian master V7 (src/lib/guardian-delegate-v7.ts) is built from the V6 source by checked string swaps plus one V7 block; V6 stays the active master until V7's inscription id is wired. Why: keeps the live V6 bytes untouched.
+- Guardian master V7 (src/lib/guardian-delegate-v7.ts) is built from the V6 source by checked string swaps plus one V7 block; V7 (#127,517,786) is the active Tag 11 delegate; V6 stays the Tag 3 root. Why: keeps the live V6 bytes untouched.
