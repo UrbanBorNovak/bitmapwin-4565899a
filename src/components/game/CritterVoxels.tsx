@@ -76,18 +76,16 @@ function scorpion(): Sculpt {
     glow.push([sx * 6.0, 3.6, 16.9, 0.7, 0.7, 0.7, AMBER], [sx * 7.9, 3.4, 16.3, 0.6, 0.6, 0.6, AMBER]);
   }
   // metasoma: 5 segments arching up and forward over the back
-  const segs = 5;
-  let y = 3.6, z = -9.6, a = -0.35;
-  for (let i = 0; i < segs; i++) {
-    const len = 2.6 - i * 0.05, w = 2.8 - i * 0.2;
-    lit.push([0, y, z, w, w * 0.9, len, i % 2 ? SHELL : PLATE, a], [0, y + w * 0.5, z, w * 0.4, 0.4, len * 0.8, RIM, a]);
-    a -= 0.42;
-    y += Math.sin(-a) * len * 0.95 + 0.2;
-    z += Math.cos(-a) * len * -0.95 * (a > -1.57 ? 1 : -1);
+  let y = 3.4, z = -9.2;
+  for (let i = 0; i < 5; i++) {
+    const th = 0.35 + i * 0.5, len = 2.7 - i * 0.08, w = 2.8 - i * 0.2;
+    const cy = y + Math.sin(th) * len * 0.5, cz = z - Math.cos(th) * len * 0.5;
+    lit.push([0, cy, cz, w, w * 0.9, len, i % 2 ? SHELL : PLATE, th], [0, cy + w * 0.45, cz, w * 0.4, 0.4, len * 0.8, RIM, th]);
+    y += Math.sin(th) * len; z -= Math.cos(th) * len;
   }
   // telson: venom bulb + forward hooked barb
-  lit.push([0, y + 0.4, z + 0.8, 2.6, 2.2, 2.6, RIM]);
-  glow.push([0, y + 0.4, z + 0.8, 1.6, 1.4, 1.8, VENOM], [0, y - 0.6, z + 2.4, 0.7, 0.7, 2.2, AMBER, 0.7], [0, y - 1.4, z + 3.3, 0.45, 1.1, 0.45, AMBER, 0.4]);
+  lit.push([0, y + 0.6, z + 1, 2.6, 2.2, 2.8, RIM]);
+  glow.push([0, y + 0.6, z + 1, 1.7, 1.5, 2, VENOM], [0, y - 0.2, z + 2.8, 0.7, 0.7, 2, AMBER, 0.8], [0, y - 1.1, z + 3.6, 0.45, 1.2, 0.45, AMBER, 0.3]);
   return { lit, glow };
 }
 
