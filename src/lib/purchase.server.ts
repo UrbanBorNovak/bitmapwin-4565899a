@@ -278,6 +278,7 @@ export type PurchaseSubmission = {
   broadcast: boolean;
   txid: string | null;
   message: string;
+  route?: "private_direct" | "public_fallback";
 };
 
 /**
