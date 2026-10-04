@@ -196,6 +196,19 @@ export type SummonOrderStatus = {
 export async function listMySummonOrders(userId: string): Promise<SummonOrderStatus[]> {
   const db = await admin();
   await db.from("bitmon_summon_orders").update({ status: "expired" }).eq("status", "pending").lt("expires_at", new Date().toISOString());
+
+  // Auto-settle: re-check every open order against the chain so a confirmed
+  // payment awakens its Guardian even if the summon dialog was closed.
+  const { data: open } = await db
+    .from("bitmon_summon_orders")
+    .select("id")
+    .eq("user_id", userId)
+    .in("status", ["pending", "seen"])
+    .limit(10);
+  for (const o of (open ?? []) as { id: string }[]) {
+    try { await checkSummonOrder(userId, o.id); } catch { /* keep listing even if one check fails */ }
+  }
+
   const { data } = await db
     .from("bitmon_summon_orders")
     .select("*")
