@@ -312,7 +312,7 @@ function tickerHud(w,h){
 
 /* Master preview: featured multi-parcel blocks; RANDOM / B cycles them on the master only. */
 const PREVIEW_BLOCK = `
-var PVH=[819245,347001,777777,208,969569],PVI=0;
+var PVH=[715093,819245,347001,777777,208,969569],PVI=0;
 function pvCycle(){PVI=(PVI+1)%PVH.length;var h=PVH[PVI];blockData(h).then(function(b){BID=null;build(h,b);PARC=[];PSEL=null;PSCAN=0;parcels()})}
 var _stp=step;step=function(d){if(MASTER&&d===0)return pvCycle();_stp(d)};
 window.addEventListener("keydown",function(e){if(MASTER&&e.key.toLowerCase()==="b")pvCycle()});
@@ -339,12 +339,18 @@ function skinTop(x0,z0,w,y){var L=LAND,s=L.half,iw=SKIN.naturalWidth,ih=SKIN.nat
   g.transform(m11,m12,m21,m22,a[0]-m11*sx-m21*sy,a[1]-m12*sx-m22*sy);
   g.drawImage(SKIN,sx,sy,sw,shh,sx,sy,sw,shh);g.restore()}
 var _dl7=drawLand;
-drawLand=function(pulse){_dl7(pulse);if(!SKIN||!LAND||!SKIN.naturalWidth)return;var L=LAND,own={},i,gp;
+drawLand=function(pulse){_dl7(pulse);if(!SKIN||!LAND||!SKIN.naturalWidth)return;var L=LAND,own={},i,gp,s=L.half,raised=[];
   g.imageSmoothingEnabled=false;g.shadowBlur=0;
   for(i=0;i<PARC.length;i++)own[PARC[i].i]=PARC[i];
-  for(i=0;i<L.p.length&&i<1500;i++){var q=L.p[i],P=own[i];gp=Math.min(.18,q[2]*.08);
-    if(P&&P.c){var bw=Math.max(.25,q[2]*.82),cx=q[0]+q[2]/2,cz=q[1]+q[2]/2;skinTop(cx-bw/2,cz-bw/2,bw,P.c[1]+.02)}
-    else skinTop(q[0]+gp,q[1]+gp,q[2]-gp*2,.05)}
+  /* one compound clip of every flat parcel top, then a single image draw across the whole block */
+  g.save();g.beginPath();
+  for(i=0;i<L.p.length;i++){var q=L.p[i],P=own[i];
+    if(P&&P.c){raised.push([q,P]);continue}
+    gp=Math.min(.18,q[2]*.08);var a=P3(q[0]+gp,.05,q[1]+gp),b=P3(q[0]+q[2]-gp,.05,q[1]+gp),c=P3(q[0]+q[2]-gp,.05,q[1]+q[2]-gp),d=P3(q[0]+gp,.05,q[1]+q[2]-gp);
+    g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.lineTo(c[0],c[1]);g.lineTo(d[0],d[1]);g.closePath()}
+  g.clip();var iw=SKIN.naturalWidth,ih=SKIN.naturalHeight,A=P3(-s,.05,-s),B=P3(s,.05,-s),D=P3(-s,.05,s);
+  g.transform((B[0]-A[0])/iw,(B[1]-A[1])/iw,(D[0]-A[0])/ih,(D[1]-A[1])/ih,A[0],A[1]);g.drawImage(SKIN,0,0);g.restore();
+  for(i=0;i<raised.length;i++){var q2=raised[i][0],P2=raised[i][1],bw=Math.max(.25,q2[2]*.82),cx=q2[0]+q2[2]/2,cz=q2[1]+q2[2]/2;skinTop(cx-bw/2,cz-bw/2,bw,P2.c[1]+.02)}
   g.imageSmoothingEnabled=true};
 `;
 
