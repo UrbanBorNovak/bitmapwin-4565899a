@@ -171,7 +171,8 @@ import { LandPerksHud } from "@/components/game/LandPerksHud";
 import { HuntPanel } from "@/components/codex/HuntPanel";
 import { OasisDiscovery } from "@/components/game/OasisDiscovery";
 import { GuardianEncounterHud } from "@/components/game/GuardianEncounterHud";
-import { strideJump, strideSpeed } from "@/lib/guardian-encounter";
+import { strideJump, strideSpeed, mountSpeed, mountJump } from "@/lib/guardian-encounter";
+import { GuardianMount, useGuardianMountOffset } from "@/components/game/GuardianMount";
 import { AirdropBeacon } from "@/components/game/AirdropBeacon";
 import { AirdropHud } from "@/components/game/AirdropHud";
 
@@ -1972,8 +1973,8 @@ function PlayerCameraRig({
       // quick, forest is slow, high ground lifts a jump further.
       noteStanding(player.x, player.z);
       const perks = standingLand().landscape.effects;
-      intent.speedScale = walkMultiplier() * perks.speed * skillSpeed() * strideSpeed();
-      intent.jumpScale = perks.jump * strideJump();
+      intent.speedScale = walkMultiplier() * perks.speed * skillSpeed() * strideSpeed() * mountSpeed();
+      intent.jumpScale = perks.jump * strideJump() * mountJump();
       // A raised weapon trades speed for accuracy, preventing full-speed ADS
       // strafing and giving first-person combat deliberate tactical weight.
       if (mode === "first") intent.speedScale *= 1 - aimState.amount * 0.32;
@@ -2920,6 +2921,7 @@ const WorldScene = memo(function WorldScene({
         </Suspense>
       ) : null}
 
+      {cameraMode !== "map" ? <GuardianMount unit={AVATAR_U} pose={pose} /> : null}
       {cameraMode === "third" && (!driving || rideIsWorn(ride.id) || ride.id === "cyberpunk-genesis-dog") ? (
         <SelfAvatar
           pose={pose}
@@ -2933,7 +2935,7 @@ const WorldScene = memo(function WorldScene({
           weapon={weapon}
           bitcoin={colors.bitcoin}
           clan={self.clan}
-          mountOffset={driving && ride.id === "cyberpunk-genesis-dog" ? AVATAR_U * 1.15 : 0}
+          mountOffset={driving && ride.id === "cyberpunk-genesis-dog" ? AVATAR_U * 1.15 : guardianSeat}
           jetpack={driving && ride.id === "jetpack"}
         />
       ) : null}
