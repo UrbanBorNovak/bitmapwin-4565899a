@@ -43,6 +43,7 @@ import { Route as MyWorldRouteImport } from './routes/my-world'
 import { Route as OasisRouteImport } from './routes/oasis'
 import { Route as OwnershipRouteImport } from './routes/ownership'
 import { Route as PassportRouteImport } from './routes/passport'
+import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as PlayRouteImport } from './routes/play'
 import { Route as PlayGuideRouteImport } from './routes/play-guide'
 import { Route as RanksRouteImport } from './routes/ranks'
@@ -276,6 +277,11 @@ const OwnershipRoute = OwnershipRouteImport.update({
 const PassportRoute = PassportRouteImport.update({
   id: '/passport',
   path: '/passport',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentsRoute = PaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlayRoute = PlayRouteImport.update({
@@ -637,6 +643,7 @@ export interface FileRoutesByFullPath {
   '/oasis': typeof OasisRoute
   '/ownership': typeof OwnershipRoute
   '/passport': typeof PassportRoute
+  '/payments': typeof PaymentsRoute
   '/play': typeof PlayRouteWithChildren
   '/play-guide': typeof PlayGuideRoute
   '/ranks': typeof RanksRouteWithChildren
@@ -735,6 +742,7 @@ export interface FileRoutesByTo {
   '/oasis': typeof OasisRoute
   '/ownership': typeof OwnershipRoute
   '/passport': typeof PassportRoute
+  '/payments': typeof PaymentsRoute
   '/play-guide': typeof PlayGuideRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sdk': typeof SdkRoute
@@ -834,6 +842,7 @@ export interface FileRoutesById {
   '/oasis': typeof OasisRoute
   '/ownership': typeof OwnershipRoute
   '/passport': typeof PassportRoute
+  '/payments': typeof PaymentsRoute
   '/play': typeof PlayRouteWithChildren
   '/play-guide': typeof PlayGuideRoute
   '/ranks': typeof RanksRouteWithChildren
@@ -936,6 +945,7 @@ export interface FileRouteTypes {
     | '/oasis'
     | '/ownership'
     | '/passport'
+    | '/payments'
     | '/play'
     | '/play-guide'
     | '/ranks'
@@ -1034,6 +1044,7 @@ export interface FileRouteTypes {
     | '/oasis'
     | '/ownership'
     | '/passport'
+    | '/payments'
     | '/play-guide'
     | '/reset-password'
     | '/sdk'
@@ -1132,6 +1143,7 @@ export interface FileRouteTypes {
     | '/oasis'
     | '/ownership'
     | '/passport'
+    | '/payments'
     | '/play'
     | '/play-guide'
     | '/ranks'
@@ -1233,6 +1245,7 @@ export interface RootRouteChildren {
   OasisRoute: typeof OasisRoute
   OwnershipRoute: typeof OwnershipRoute
   PassportRoute: typeof PassportRoute
+  PaymentsRoute: typeof PaymentsRoute
   PlayRoute: typeof PlayRouteWithChildren
   PlayGuideRoute: typeof PlayGuideRoute
   RanksRoute: typeof RanksRouteWithChildren
@@ -1502,6 +1515,13 @@ declare module '@tanstack/react-router' {
       path: '/passport'
       fullPath: '/passport'
       preLoaderRoute: typeof PassportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payments': {
+      id: '/payments'
+      path: '/payments'
+      fullPath: '/payments'
+      preLoaderRoute: typeof PaymentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/play': {
@@ -2115,6 +2135,7 @@ const rootRouteChildren: RootRouteChildren = {
   OasisRoute: OasisRoute,
   OwnershipRoute: OwnershipRoute,
   PassportRoute: PassportRoute,
+  PaymentsRoute: PaymentsRoute,
   PlayRoute: PlayRouteWithChildren,
   PlayGuideRoute: PlayGuideRoute,
   RanksRoute: RanksRouteWithChildren,

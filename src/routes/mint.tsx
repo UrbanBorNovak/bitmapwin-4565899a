@@ -52,7 +52,7 @@ function MintPage() {
         Shielded mints go straight to BITMAPWIN's pool instead of your wallet, so explorers show the pool as the first owner, not you. It's our own pool, not yet audited: BITMAPWIN holds the coins, and your browser holds the only key that can move them.
       </p>
 
-      <div className="mt-6"><UnfinishedInscriptions /></div>
+      <div className="mt-6 space-y-2"><UnfinishedInscriptions /><Link to="/payments" className="label text-signal underline">◇ MY INSCRIPTION PAYMENTS →</Link></div>
 
       <ol data-tour="mint-steps" className="mt-6 grid gap-3 md:grid-cols-3">
         {STEPS.map(([n, t, note]) => (
