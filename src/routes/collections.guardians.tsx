@@ -41,10 +41,10 @@ const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 const STEPS_ALL: { n: string; title: string; body: string; to: "/mint" | "/shord" | null; cta: string }[] = [
   {
     n: "01",
-    title: "MINT A SHIELDED GUARDIAN",
-    body: "OPEN MINT, PICK THE BITMAP YOU HOLD AND CHOOSE ◈ MINT STRAIGHT INTO THE SHIELDED POOL. MAKE YOUR SHIELDED KEY, THEN SIGN ONE INSCRIBE TRANSACTION. THE GUARDIAN IS BORN AS A CHILD OF THE V6 MASTER.",
+    title: "SUMMON, THEN INSCRIBE",
+    body: "OPEN MINT AND PICK THE BITMAP YOU HOLD. SUMMON WAKES THE GUARDIAN IN THE OASIS; INSCRIBE MAKES IT A REAL ON-CHAIN ORDINAL CHILD OF THAT BITMAP IN YOUR WALLET. ONLY INSCRIBED GUARDIANS CAN BE LISTED.",
     to: "/mint",
-    cta: "GO TO MINT →",
+    cta: "SUMMON & INSCRIBE →",
   },
   {
     n: "02",
