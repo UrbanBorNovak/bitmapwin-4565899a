@@ -270,10 +270,10 @@ function LightningStorm({ bitcoin, far }: { bitcoin: string; far: number }) {
         pts.push([x + Math.sin(i * 2.3 + now * 11) * far * 0.05, far * (0.86 - t * 0.6), z + Math.cos(i * 1.7 - now * 9) * far * 0.03]);
       }
       let n = 0;
-      const seg = (a: number[], b: number[]) => { positions.setXYZ(n++, a[0], a[1], a[2]); positions.setXYZ(n++, b[0], b[1], b[2]); };
+      const seg = (a: readonly number[] = [0, -999, 0], b: readonly number[] = [0, -999, 0]) => { positions.setXYZ(n++, a[0] ?? 0, a[1] ?? 0, a[2] ?? 0); positions.setXYZ(n++, b[0] ?? 0, b[1] ?? 0, b[2] ?? 0); };
       for (let i = 0; i < 7; i++) seg(pts[i], pts[i + 1]);
       for (const [start, dir] of [[2, 1], [4, -1]] as const) {
-        let p = pts[start];
+        let p: [number, number, number] = pts[start] ?? [0, 0, 0];
         for (let k = 0; k < 4; k++) {
           const q = [p[0] + dir * far * 0.05, p[1] - far * 0.06, p[2] + Math.sin(now + k) * far * 0.02];
           seg(p, q);
