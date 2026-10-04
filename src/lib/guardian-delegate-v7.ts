@@ -255,8 +255,8 @@ setTimeout(tradeScan,2000);
 function tickerHud(w,h){
   var pad=Math.max(14,w*.035),small=Math.max(8,Math.min(13,w*.016)),y=pad+small*8.8;
   var n=COLL&&typeof COLL.n==="number"?COLL.n:null;
-  txt("COLLECTION \\u00B7 "+(n===null?"SCANNING\\u2026":n.toLocaleString()+" GUARDIANS"),pad,y,small*.8,"#3fe0d0",.9);
-  txt("LAST TRADED \\u00B7 "+(LT&&typeof LT.sats==="number"?LT.sats.toLocaleString()+" SATS":LT===false?"NO SALE YET":"SCANNING\\u2026"),pad,y+small*1.4,small*.8,"#f7931a",.9);
+  txt("COLLECTION \u00B7 "+(n===null?"SCANNING\u2026":n.toLocaleString()+" GUARDIANS"),pad,y,small*.8,"#3fe0d0",.9);
+  txt("LAST TRADED \u00B7 "+(LT&&typeof LT.sats==="number"?LT.sats.toLocaleString()+" SATS":LT===false?"NO SALE YET":"SCANNING\u2026"),pad,y+small*1.4,small*.8,"#f7931a",.9);
 }
 /* ================= /V7 ================= */
 `;
