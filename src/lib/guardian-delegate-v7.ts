@@ -243,7 +243,7 @@ function out0(raw){var x=String(raw).replace(/[^0-9a-f]/gi,"").toLowerCase(),p=8
   function vi(){var f=parseInt(b(1),16);return f<253?f:le(b(f===253?2:f===254?4:8))}
   if(x.substr(8,4)==="0001")p+=4;var n=vi(),i;for(i=0;i<n;i++){b(36);b(vi());b(4)}
   n=vi();if(!(n>=2))return null;var v=le(b(8));return isFinite(v)?v:null}
-function tradeScan(){if(!COLL||!COLL.ids){if(TRDS++<20)setTimeout(tradeScan,1500);else TRD=false;return}
+function tradeScan(){if(!COLL||!COLL.ids){if(TRDS===3)collection("9d1da99caec6afbf69b89bdafdc0a7ab679c6dd67920f7b38d3a3fd116d0e21fi0");if(TRDS++<20)setTimeout(tradeScan,1500);else TRD=false;return}
   var L=COLL.ids.slice(-80).reverse(),i=0;
   function nx(){if(i>=L.length){if(!TRD)TRD=false;return}var id=L[i++];
     return j("/r/inscription/"+id).then(function(r){var sp=String((r&&r.satpoint)||"").split(":")[0];
