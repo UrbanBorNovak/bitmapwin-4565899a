@@ -306,6 +306,9 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [order, setOrder] = useState<SummonOrder | null>(null);
   const [denied, setDenied] = useState<string | null>(null);
+  const [bitmapIdInput, setBitmapIdInput] = useState("");
+  const [needBitmapId, setNeedBitmapId] = useState(false);
+  const [parentBitmapId, setParentBitmapId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [qr, setQr] = useState<string | null>(null);
   const [celebrate, setCelebrate] = useState(false);
@@ -369,11 +372,23 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
       // Stop before any payment unless the connected wallet holds <height>.bitmap.
       const { resolveWallet } = await import("@/components/BuyButton");
       const wallet = await resolveWallet();
-      const check = await checkParents({ data: { height, holderAddress: wallet.ordinalsAddress } });
-      if (!check.bitmapParentId) {
-        setDenied(`YOUR CONNECTED ORDINALS WALLET MUST HOLD ${height}.BITMAP TO SUMMON ITS GUARDIAN. NOTHING WAS PAID.`);
+      const manual = bitmapIdInput.trim().toLowerCase();
+      if (manual && !/^[0-9a-f]{64}i\d+$/.test(manual)) {
+        setDenied("THAT IS NOT A VALID INSCRIPTION ID (64 HEX CHARACTERS + i0). NOTHING WAS PAID.");
+        setNeedBitmapId(true);
         return;
       }
+      const check = await checkParents({
+        data: { height, holderAddress: wallet.ordinalsAddress, ...(manual ? { bitmapInscriptionId: manual } : {}) },
+      });
+      if (!check.bitmapParentId) {
+        setNeedBitmapId(true);
+        setDenied(
+          `${check.notes.join(" · ")} — YOUR CONNECTED ORDINALS WALLET MUST HOLD ${height}.BITMAP. NOTHING WAS PAID.`,
+        );
+        return;
+      }
+      setParentBitmapId(check.bitmapParentId);
       if (!check.masterInscriptionId) {
         setDenied("THE COLLECTION PARENT IS UNAVAILABLE RIGHT NOW — TRY AGAIN SHORTLY. NOTHING WAS PAID.");
         return;
@@ -488,6 +503,9 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
                       description="THE GUARDIAN IS ALREADY SUMMONED. THIS OPTIONAL SECOND STEP PAYS THE LIVE BITCOIN MINER COST FOR A PUBLIC ORDINAL THAT CONTAINS NO WALLET OR ACCOUNT IDENTITY. THE INSCRIBED SAT LANDS IN YOUR OWN WALLET."
                       allowUpload={false}
                       claimParentsForHeight={height}
+                      {...(parentBitmapId || bitmapIdInput.trim()
+                        ? { parentBitmapInscriptionId: parentBitmapId ?? bitmapIdInput.trim().toLowerCase() }
+                        : {})}
                       onRevealed={(revealTxid) => setRevealedId(`${revealTxid}i0`)}
                       autoStart={celebrate}
                       autoReveal
@@ -540,6 +558,21 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
               </button>
               <p className="font-mono text-[10px] text-muted-foreground">ONLY THE VERIFIED HOLDER OF THIS BITMAP CAN SUMMON. ONE GUARDIAN PER BLOCK, EVER.</p>
               {denied ? <p className="font-mono text-[11px] text-destructive">{denied}</p> : null}
+              {needBitmapId ? (
+                <label className="block space-y-1">
+                  <span className="font-mono text-[10px] text-muted-foreground">
+                    PARENT {height}.BITMAP INSCRIPTION ID — WE CHECK ITS CONTENT ON CHAIN AND THAT IT SITS IN YOUR WALLET
+                  </span>
+                  <input
+                    value={bitmapIdInput}
+                    onChange={(e) => setBitmapIdInput(e.target.value)}
+                    placeholder="txid…i0"
+                    maxLength={80}
+                    spellCheck={false}
+                    className="w-full border border-border bg-background px-2 py-1.5 font-mono text-[11px] text-foreground focus:border-signal focus:outline-none"
+                  />
+                </label>
+              ) : null}
             </div>
           )}
         </div>
