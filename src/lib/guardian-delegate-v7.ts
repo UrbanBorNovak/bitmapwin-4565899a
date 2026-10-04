@@ -30,14 +30,39 @@ const V7_BLOCK = String.raw`
 /* ================= V7 ================= */
 /* ---------- 7a. block mutations from /r/blockinfo ---------- */
 var TAILS=["PLAIN","STINGER","MACE","FAN","ANCHOR"];
+/* ---------- 7a'. inherited bitmap rarity: proven from the parent block height alone ---------- */
+function isPrime(n){if(n<2)return false;if(n%2===0)return n===2;for(var d=3;d*d<=n;d+=2)if(n%d===0)return false;return true}
+function isFib(n){var a=0,b=1;while(b<n){var c=a+b;a=b;b=c}return n===0||n===b}
+function bmTraits(h,ts){var s=String(h),o=[],u=new Date(ts*1000);
+  if(h===0)o.push(["Bitmap Tier","MYTHIC GENESIS"]);
+  else if(h%210000===0)o.push(["Bitmap Tier","EPIC HALVING"]);
+  else if(h%2016===0)o.push(["Bitmap Tier","RARE DIFFICULTY"]);
+  if(s.length>1&&s===s.split("").reverse().join(""))o.push(["Numerology","PALINDROME"]);
+  if(s.length>1&&/^(\d)\1+$/.test(s))o.push(["Numerology","SAME DIGITS"]);
+  if(h>1&&/^[01]+$/.test(s))o.push(["Numerology","BINARY"]);
+  if(h>=10&&/^10*$/.test(s))o.push(["Numerology","POWER OF 10"]);
+  if(isFib(h)&&h>2)o.push(["Numerology","FIBONACCI"]);
+  if(isPrime(h))o.push(["Numerology","PRIME"]);
+  if(h===9)o.push(["Relic","BLOCK 9"]);if(h===78)o.push(["Relic","BLOCK 78 \u00B7 HAL"]);
+  if(h===170)o.push(["Relic","FIRST TRANSACTION"]);if(h===57043)o.push(["Relic","PIZZA TRANSACTION"]);
+  if(ts>0&&u.getUTCFullYear()===2010&&u.getUTCMonth()===4&&u.getUTCDate()===22)o.push(["Relic","PIZZA DAY"]);
+  if(h>=660000&&h<=669999)o.push(["Club","66 DAO"]);
+  var cl=h<10?"SUB-10":h<100?"SUB-100":h<1000?"SUB-1K":h<10000?"SUB-10K":h<100000?"SUB-100K":"";if(cl)o.push(["Club",cl]);
+  return o}
 function mutate(G,blk){
-  G.mx=[];if(!blk)return;
-  var nonce=Number(blk.nonce),mr=String(blk.merkle_root||""),ts=Number(blk.timestamp||blk.time||0),wt=Number(blk.weight||0),sz=Number(blk.size||0);
+  G.mx=[];var ts0=blk?Number(blk.timestamp||blk.time||0):0,bt=bmTraits(G.h,ts0),i;
+  for(i=0;i<bt.length;i++){G.mx.push(bt[i]);var v=bt[i][1];
+    if(/EPIC|MYTHIC/.test(v))G.ep7=1;if(/RARE/.test(v))G.pr7=1;if(bt[i][0]==="Numerology")G.sg7=(G.sg7||0)+1;if(bt[i][0]==="Relic"||/SUB-1/.test(v))G.vt7=1}
+  if(ts0>0){var mo=new Date(ts0*1000).getUTCMonth();if(mo===11||mo<2)G.au=1}
+  if(G.ep7||G.pr7||G.sg7>1)G.au=1;
+  if(!blk)return;
+  var nonce=Number(blk.nonce),mr=String(blk.merkle_root||""),ts=ts0,wt=Number(blk.weight||0),sz=Number(blk.size||0);
   if(nonce>0&&nonce%21===0){G.gc=1;G.mx.push(["Crown","GOLDEN NONCE"])}
   if(mr.length>2&&parseInt(mr.slice(-2),16)<40){G.mr=1;G.mx.push(["Runes","MERKLE RUNES"])}
   if(ts>0){var hr=Math.floor((ts%86400)/3600);G.as=hr>=6&&hr<18?"SOLAR":"VOID";G.mx.push(["Aspect",G.as==="SOLAR"?"DAYBORN":"VOIDBORN"])}
   if(wt>0&&sz>0){G.dn=wt/(sz*4)>.9?"CARAPACE":"CHITIN";G.mx.push(["Density",G.dn==="CARAPACE"?"HEAVY CARAPACE":"CRYSTAL CHITIN"])}
   if(G.sh!=="serpent"&&G.sh!=="floater"){var tk=h32(G.dna+":tail:"+mr)%5;if(tk>0){G.tl=TAILS[tk];G.mx.push(["Tail",TAILS[tk]+" TAIL"])}}
+  if(G.au)G.mx.push(["Sky","AURORA BOREALIS"]);
 }
 function extras(G,V){
   var hy=-1e9,hz=0,hn=0,tz=1e9,tx=0,ty=0,i;
