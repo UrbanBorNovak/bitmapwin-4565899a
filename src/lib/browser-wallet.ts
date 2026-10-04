@@ -523,15 +523,18 @@ export async function signParentInputsPsbt(
     return /^[0-9a-fA-F]+$/.test(signed.trim()) ? hexToBase64(signed) : signed.trim();
   }
   if (taproot) {
-    // Native JSON-RPC signPsbt handles BIP-371 key-path inputs; the legacy
-    // path reports "No taproot scripts signed" for them.
-    try {
-      return await xverseSignPsbt({ psbt: psbtBase64, signInputs: { [holderAddress]: signIndices }, broadcast: false } as SignPsbtParams);
-    } catch (e) {
-      if (/DECLINED/i.test((e as Error).message)) throw e;
-    }
+    // Native JSON-RPC signPsbt handles BIP-371 key-path inputs. Xverse treats
+    // allowedSignHash as required, so pin SIGHASH_DEFAULT (0). Never fall back
+    // to the legacy modal: it only signs script-path spends and always fails
+    // with "No taproot scripts signed" for a key-path parent.
+    return xverseSignPsbt({
+      psbt: psbtBase64,
+      signInputs: { [holderAddress]: signIndices },
+      allowedSignHash: 0,
+      broadcast: false,
+    } as SignPsbtParams);
   }
-  return xverseSignPaymentPsbt(psbtBase64, holderAddress, signIndices, "Claim this bitmap as the parent of a new inscription", taproot ? undefined : SIGHASH_ALL);
+  return xverseSignPaymentPsbt(psbtBase64, holderAddress, signIndices, "Claim this bitmap as the parent of a new inscription", SIGHASH_ALL);
 }
 
 
