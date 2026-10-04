@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { resolveWallet } from "@/components/BuyButton";
-import { sendBitcoinFromWallet, signParentInputsPsbt } from "@/lib/browser-wallet";
+import { sendBitcoinFromWallet, signParentInputsPsbt, xOnlyPubKeyHex } from "@/lib/browser-wallet";
 import { mintParentsFn, signCollectionParentFn } from "@/lib/ord-parents.functions";
 import type { ParentSpend } from "@/lib/ord-parents";
 import {
@@ -101,10 +101,23 @@ export function ShadowInscriber(props: {
     try {
       setBusy("REVEALING…");
       const signers: ParentSigners = {};
+      let toReveal = current;
       if (current.parents?.length) {
         if (current.parents.some((p) => p.signer === "wallet")) {
           setBusy("APPROVE THE PARENT CLAIM IN YOUR WALLET…");
           const wallet = await resolveWallet();
+          // Taproot key-path spends need the holder's internal key on the PSBT
+          // input, otherwise Xverse fails with "No taproot scripts signed".
+          const internal = xOnlyPubKeyHex(wallet.publicKey);
+          toReveal = {
+            ...current,
+            parents: current.parents.map((p) =>
+              p.signer === "wallet" && !p.tapInternalKey && internal &&
+              p.address.toLowerCase() === wallet.ordinalsAddress.toLowerCase()
+                ? { ...p, tapInternalKey: internal }
+                : p,
+            ),
+          };
           signers.wallet = (psbt, indices) => signParentInputsPsbt(wallet.provider, psbt, wallet.ordinalsAddress, indices);
         }
         if (current.parents.some((p) => p.signer === "platform")) {
@@ -115,7 +128,7 @@ export function ShadowInscriber(props: {
           };
         }
       }
-      const revealTxid = await revealJob(current, utxo, signers);
+      const revealTxid = await revealJob(toReveal, utxo, signers);
       const done = { ...current, revealTxid };
       saveJob(done);
       setJob(done);

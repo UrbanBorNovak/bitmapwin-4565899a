@@ -411,6 +411,7 @@ async function xverseSignPaymentPsbt(
   payerAddress: string,
   signIndices: number[],
   message = "Write Shadow pass note onto Bitcoin",
+  sigHash: number | undefined = SIGHASH_ALL,
 ): Promise<string> {
   const provider = getXverse();
   if (!provider || typeof provider.signTransaction !== "function") {
@@ -428,7 +429,7 @@ async function xverseSignPaymentPsbt(
           {
             address: payerAddress,
             signingIndexes: signIndices,
-            sigHash: SIGHASH_ALL,
+            ...(sigHash === undefined ? {} : { sigHash }),
           },
         ],
         broadcast: false,
@@ -507,17 +508,21 @@ export async function signParentInputsPsbt(
   signIndices: number[],
 ): Promise<string> {
   if (signIndices.length === 0) return psbtBase64;
+  // Taproot key-path inputs sign with SIGHASH_DEFAULT; forcing ALL is rejected.
+  const taproot = /^bc1p/i.test(holderAddress);
   if (provider === "unisat") {
     const unisat = getUnisat();
     if (!unisat) throw new Error("UNISAT NOT DETECTED");
     const signed = await unisat.signPsbt(base64ToHex(psbtBase64), {
       autoFinalized: false,
-      toSignInputs: signIndices.map((index) => ({ index, address: holderAddress, sighashTypes: [SIGHASH_ALL] })),
+      toSignInputs: signIndices.map((index) =>
+        taproot ? { index, address: holderAddress } : { index, address: holderAddress, sighashTypes: [SIGHASH_ALL] },
+      ),
     });
     if (typeof signed !== "string" || signed.length < 20) throw new Error("UNISAT RETURNED NO SIGNED PSBT");
     return /^[0-9a-fA-F]+$/.test(signed.trim()) ? hexToBase64(signed) : signed.trim();
   }
-  return xverseSignPaymentPsbt(psbtBase64, holderAddress, signIndices, "Claim this bitmap as the parent of a new inscription");
+  return xverseSignPaymentPsbt(psbtBase64, holderAddress, signIndices, "Claim this bitmap as the parent of a new inscription", taproot ? undefined : SIGHASH_ALL);
 }
 
 
