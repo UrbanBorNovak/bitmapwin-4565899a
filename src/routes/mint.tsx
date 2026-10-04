@@ -8,6 +8,7 @@ import { GUARDIAN_PRICE_SATS, RARITY_TONE, guardianLevel } from "@/lib/bitmon";
 import { morphFromDna } from "@/lib/creature-morph";
 import { DelegateGuardianSummon } from "@/components/bitmon/DelegateGuardianSummon";
 import { SummonDashboard } from "@/components/bitmon/SummonDashboard";
+import { SHORD_VAULT_DISABLED } from "@/lib/shord-flag";
 
 export const Route = createFileRoute("/mint")({
   validateSearch: z.object({ height: z.coerce.number().int().min(0).optional() }),
@@ -94,7 +95,7 @@ function MintPage() {
               )}
               <p className="font-mono text-[10px] text-muted-foreground">SHIELDED IS THE DEFAULT IN THE NEXT STEP. SIGN IN AND CONNECT A WALLET TO PAY.</p>
               <div className="flex gap-3 font-mono text-[10px]">
-                <Link to="/shord" className="text-signal underline">YOUR POOL NOTES</Link>
+                {!SHORD_VAULT_DISABLED && <Link to="/shord" className="text-signal underline">YOUR POOL NOTES</Link>}
                 <Link to="/codex/morphs" className="text-signal underline">MORPH LAB</Link>
               </div>
             </>

@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { getGuardianMarketFn } from "@/lib/guardian-market.functions";
+import { SHORD_VAULT_DISABLED } from "@/lib/shord-flag";
 import { allGuardiansQuery } from "@/lib/bitmon-queries";
 import { collectionListingsQuery } from "@/lib/collection-sales";
 import { formatSats } from "@/lib/trades";

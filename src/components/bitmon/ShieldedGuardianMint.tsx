@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { SHORD_VAULT_DISABLED } from "@/lib/shord-flag";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -73,9 +74,11 @@ export function ShieldedGuardianMint({
       <div className="space-y-2 border border-signal/40 bg-signal/5 p-3 font-mono text-[11px]">
         <p className="label text-signal">◈ SHIELDED MINT SENT</p>
         <p className="break-all text-muted-foreground">{done}</p>
-        <Link to="/shord" className="block text-signal underline">
-          OPEN THE SHIELDED VAULT AND PRESS CHECK DEPOSIT →
-        </Link>
+        {!SHORD_VAULT_DISABLED && (
+          <Link to="/shord" className="block text-signal underline">
+            OPEN THE SHIELDED VAULT AND PRESS CHECK DEPOSIT →
+          </Link>
+        )}
       </div>
     );
   }
