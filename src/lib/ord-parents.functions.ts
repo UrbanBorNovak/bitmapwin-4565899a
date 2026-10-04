@@ -54,7 +54,8 @@ export const mintParentsFn = createServerFn({ method: "GET" })
       }
     }
 
-    return { parents, notes, masterInscriptionId: master, collectionAddress: address };
+    const bitmapParentId = bitmapId && parents.some((p) => p.inscriptionId === bitmapId.toLowerCase()) ? bitmapId.toLowerCase() : null;
+    return { parents, notes, masterInscriptionId: master, bitmapParentId, collectionAddress: address };
   });
 
 /** Co-signs the master collection input of a creature reveal. */

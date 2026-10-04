@@ -205,13 +205,23 @@ export function ShadowInscriber(props: {
       let parents: ParentSpend[] = [];
       if (props.claimParentsForHeight !== undefined) {
         setBusy("CHECKING THE PARENT BITMAP…");
+        let res: Awaited<ReturnType<typeof resolveParents>>;
         try {
-          const res = await resolveParents({ data: { height: props.claimParentsForHeight, holderAddress: wallet.ordinalsAddress } });
-          parents = res.parents;
-          setParentNotes(res.notes);
+          res = await resolveParents({ data: { height: props.claimParentsForHeight, holderAddress: wallet.ordinalsAddress } });
         } catch {
-          setParentNotes(["COULD NOT CHECK THE PARENTS — INSCRIBING WITHOUT THEM"]);
+          setParentNotes(["COULD NOT CHECK THE PARENTS — NOTHING WAS PAID"]);
+          throw new Error("COULD NOT CHECK THE PARENT BITMAP — NOTHING WAS PAID, TRY AGAIN");
         }
+        setParentNotes(res.notes);
+        if (!res.bitmapParentId) {
+          throw new Error(
+            `MINT STOPPED — YOUR CONNECTED ORDINALS WALLET MUST HOLD ${props.claimParentsForHeight}.BITMAP. NOTHING WAS PAID.`,
+          );
+        }
+        if (!res.masterInscriptionId) {
+          throw new Error("MINT STOPPED — THE COLLECTION PARENT IS UNAVAILABLE RIGHT NOW. NOTHING WAS PAID.");
+        }
+        parents = res.parents;
       }
       const prepared = await prepareJob({
         digest: props.digest,
