@@ -1,3 +1,4 @@
+import { GuardianRadar } from "@/components/game/GuardianRadar";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -91,6 +92,7 @@ function OasisPage() {
             legend={<span data-tour="map-legend" className="flex flex-wrap items-center gap-2">{legend}</span>}
           />
           <ClassSkillBar />
+          <GuardianRadar {...(height === undefined ? {} : { current: height })} />
           <details className="mt-3 border border-border bg-card p-4">
             <summary className="label cursor-pointer text-bitcoin">● GO LIVE ON KICK</summary>
             <div className="mt-3"><GoLiveKick label="oasis" /></div>

@@ -282,7 +282,11 @@ function Bestiary() {
                     PROOF {cur.inscription.slice(0, 8)}…{cur.inscription.slice(-4)} ↗
                   </a>
                 )}
-                <Link to="/oasis" className="btn-term-ghost block text-center">HUNT IN THE OASIS →</Link>
+                {cur.guardian && cur.height != null ? (
+                  <Link to="/oasis" search={{ height: cur.height }} className="btn-term-ghost block text-center">TRACK IN OASIS · {cur.height}.BITMAP →</Link>
+                ) : (
+                  <Link to="/oasis" className="btn-term-ghost block text-center">HUNT IN THE OASIS →</Link>
+                )}
               </div>
             </>
           )}
