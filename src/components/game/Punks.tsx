@@ -10,6 +10,7 @@
  * here so every Punk reads as a Punk at a glance.
  */
 
+import { farFromPlayer } from "./simGate";
 import { Suspense, useEffect, useMemo, useRef } from "react";
 import { useAnimations, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
@@ -239,6 +240,7 @@ export function Punks({
     punks.current.forEach((punk, index) => {
       const node = groups.current?.[index];
       if (!node) return;
+      if (farFromPlayer(player, punk.x, punk.z, unit)) return;
       const angry = now - (rage.current[punk.mob] ?? 0) < RAGE_MS;
       punk.hostile = angry;
 

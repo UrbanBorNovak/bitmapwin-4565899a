@@ -7,6 +7,7 @@
  * hash keeps every plant in the same place each time you come back, while only
  * the patch you can actually see is ever pushed to the GPU.
  */
+import { farFromPlayer } from "./simGate";
 import { Suspense, memo, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
@@ -698,6 +699,7 @@ const Critters = memo(function Critters({
     state.current.forEach((critter, index) => {
       const group = groups.current?.[index];
       if (!group) return;
+      if (farFromPlayer(player, critter.x, critter.z, unit)) return;
       const { species } = critter;
 
       // Down: lie where it fell, out of the fight, until it comes back.
