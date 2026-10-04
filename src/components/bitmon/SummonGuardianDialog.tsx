@@ -435,7 +435,8 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
             <div className="space-y-2">
               <p className="font-mono text-xs text-bitcoin">THIS GUARDIAN IS AWAKE AND PATROLS {height}.BITMAP IN THE OASIS.</p>
               <div className="border border-signal/60 p-2">
-                <p className="font-mono text-[11px] text-signal">NEXT · INSCRIBE IT AS AN ON-CHAIN CHILD OF {height}.BITMAP</p>
+                <p className="font-mono text-[11px] text-bitcoin">✓ STEP 1 · AWAKE IN THE OASIS (CONFIRMED)</p>
+                <p className="font-mono text-[11px] text-signal">{celebrate ? "→ STEP 2 · INSCRIPTION QUEUED" : "→ STEP 2 · INSCRIBE"} — ON-CHAIN CHILD OF {height}.BITMAP · {TRIBUTE_SATS.toLocaleString()}-SAT TRIBUTE TO THE TREASURY INSIDE THE REVEAL</p>
                 <p className="mt-1 font-mono text-[10px] text-muted-foreground">
                   THE SUMMON WOKE IT IN THE APP ONLY. TO JOIN THE COLLECTION AND BE LISTABLE, THE {height}.BITMAP HOLDER INSCRIBES A CHILD OF THAT BITMAP BELOW (TO MY WALLET) OR WITH THE HOLDER SUMMON ON THE MINT PAGE.
                 </p>
@@ -474,6 +475,8 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
                       allowUpload={false}
                       claimParentsForHeight={height}
                       onRevealed={(revealTxid) => setRevealedId(`${revealTxid}i0`)}
+                      autoStart={celebrate}
+                      autoReveal
 
                     />
                   ) : (

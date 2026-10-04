@@ -67,6 +67,8 @@ export function ShadowInscriber(props: {
   onRevealed?: (revealTxid: string, job: InscribeJob) => Promise<void> | void;
   /** Start signing and broadcasting Step 2 as soon as the paid commit is seen. */
   autoReveal?: boolean;
+  /** Price and open the payment by itself once on mount, when no job exists yet. */
+  autoStart?: boolean;
 }) {
   const [job, setJob] = useState<InscribeJob | null>(null);
   const [file, setFile] = useState<{ type: string; bytes: Uint8Array; url: string } | null>(null);
@@ -237,6 +239,16 @@ export function ShadowInscriber(props: {
       setBusy(null);
     }
   };
+
+  // Queue the inscription by itself once (e.g. right after a summon confirms).
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (!props.autoStart || autoStarted.current || job || busy) return;
+    autoStarted.current = true;
+    toast.info("GUARDIAN AWAKE — QUEUING ITS ON-CHAIN INSCRIPTION");
+    void start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.autoStart, job]);
 
   // Resume a paid commit from its recovery file (e.g. after site data was cleared),
   // so the holder finishes Step 2 instead of paying a new fee.
