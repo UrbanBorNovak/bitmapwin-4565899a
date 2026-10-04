@@ -7,6 +7,7 @@ import { guardianDnaQuery, guardianQuery } from "@/lib/bitmon-queries";
 import { GUARDIAN_PRICE_SATS, RARITY_TONE, guardianLevel } from "@/lib/bitmon";
 import { morphFromDna } from "@/lib/creature-morph";
 import { DelegateGuardianSummon } from "@/components/bitmon/DelegateGuardianSummon";
+import { UnfinishedInscriptions } from "@/components/territory/UnfinishedInscriptions";
 import { SummonDashboard } from "@/components/bitmon/SummonDashboard";
 import { SHORD_VAULT_DISABLED } from "@/lib/shord-flag";
 
@@ -50,6 +51,8 @@ function MintPage() {
       <p className="mt-3 max-w-2xl text-muted-foreground">
         Shielded mints go straight to BITMAPWIN's pool instead of your wallet, so explorers show the pool as the first owner, not you. It's our own pool, not yet audited: BITMAPWIN holds the coins, and your browser holds the only key that can move them.
       </p>
+
+      <div className="mt-6"><UnfinishedInscriptions /></div>
 
       <ol data-tour="mint-steps" className="mt-6 grid gap-3 md:grid-cols-3">
         {STEPS.map(([n, t, note]) => (
