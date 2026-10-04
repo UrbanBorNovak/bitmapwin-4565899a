@@ -122,3 +122,19 @@ export function guardianBite(damage: number) {
   const dmg = Math.max(1, Math.round(damage));
   return apply(s, { you: Math.max(1, s.you - dmg) }, line(`GUARDIAN BITES · −${dmg}`, "hurt"));
 }
+
+/* ---------- MOUNTS — only the Guardian's summoner may ride it ---------- */
+let mounted: AwakeGuardian | null = null;
+const mountSubs = new Set<() => void>();
+export function mountedGuardian() { return mounted; }
+export function useMountedGuardian() {
+  return useSyncExternalStore((f) => { mountSubs.add(f); return () => mountSubs.delete(f); }, mountedGuardian, () => null);
+}
+export function isGuardianOwner(g: AwakeGuardian, addresses: Array<string | null | undefined>) {
+  return addresses.some((a) => a && a === g.owner);
+}
+export function mountGuardian(g: AwakeGuardian) { mounted = g; set({ open: null, spar: null }); mountSubs.forEach((f) => f()); }
+export function dismountGuardian() { mounted = null; mountSubs.forEach((f) => f()); }
+/** 1.35×–1.75× speed from the Guardian's on-chain speed stat. */
+export function mountSpeed() { return mounted ? 1.35 + Math.min(1, mounted.speed / 100) * 0.4 : 1; }
+export function mountJump() { return mounted ? 1.3 : 1; }

@@ -14,7 +14,7 @@ import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { allGuardiansQuery, type AwakeGuardian } from "@/lib/bitmon-queries";
 import { GuardianBody } from "@/components/bitmon/GuardianBody";
 import { SafeHtml } from "@/components/game/SafeHtml";
-import { encounterSnapshot, guardianBite, setNearGuardian } from "@/lib/guardian-encounter";
+import { mountedGuardian, encounterSnapshot, guardianBite, setNearGuardian } from "@/lib/guardian-encounter";
 
 /** Commune prompt radius, in BITMAP widths. */
 const COMMUNE = 0.35;
@@ -55,7 +55,7 @@ const Guardian = memo(function Guardian({ w, unit, pose }: { w: Walker; unit: nu
     const node = ref.current;
     const p = pose.current;
     if (!node) return;
-    const near = !p || Math.hypot(p.x - w.hx, p.z - w.hz) < WORLD_CELL * 2.5;
+    const near = (!p || Math.hypot(p.x - w.hx, p.z - w.hz) < WORLD_CELL * 2.5) && mountedGuardian()?.height !== w.g.height;
     node.visible = near;
     if (!near) return;
     const dt = Math.min(raw, 0.05);

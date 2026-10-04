@@ -12,6 +12,7 @@ import { playSfx } from "@/lib/world-audio";
 import {
   SPAR_PLAYER_HP, TRIBUTE_BIT, endSpar, grantStride, hydrateBoon, openEncounter,
   playerStrike, requestRoar, startSpar, useEncounter,
+  dismountGuardian, isGuardianOwner, mountGuardian, mountSpeed, useMountedGuardian,
 } from "@/lib/guardian-encounter";
 
 const STRIKE_COOLDOWN = 600;
@@ -26,6 +27,7 @@ export function GuardianEncounterHud() {
   const [now, setNow] = useState(() => Date.now());
   const [strikeAt, setStrikeAt] = useState(0);
   const address = wallet?.ordinalsAddress || wallet?.paymentAddress || null;
+  const riding = useMountedGuardian();
 
   useEffect(() => { hydrateBoon(); }, []);
   useEffect(() => {
@@ -47,7 +49,9 @@ export function GuardianEncounterHud() {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
       const key = e.key.toLowerCase();
-      if (key === "e" && enc.near && !enc.open && !enc.spar) { e.preventDefault(); openEncounter(enc.near); }
+      if (key === "e" && riding) { e.preventDefault(); dismountGuardian(); }
+      else if (key === "r" && riding) { e.preventDefault(); requestRoar(riding.height); playSfx("beast"); }
+      else if (key === "e" && enc.near && !enc.open && !enc.spar) { e.preventDefault(); openEncounter(enc.near); }
       else if (key === "f" && enc.spar) { e.preventDefault(); strike(); }
       else if (e.key === "Escape" && enc.open) openEncounter(null);
     };
@@ -97,7 +101,15 @@ export function GuardianEncounterHud() {
         </div>
       )}
 
-      {enc.near && !g && !s && (
+      {riding && (
+        <div className="hud-panel pointer-events-auto absolute left-1/2 top-24 flex -translate-x-1/2 items-center gap-2 border-bitcoin px-2.5 py-1 text-[10px] text-bitcoin">
+          <span>● RIDING {riding.species} · {riding.height}.BITMAP · ×{mountSpeed().toFixed(2)} SPEED</span>
+          <button type="button" className="btn-term-ghost" onClick={() => { requestRoar(riding.height); playSfx("beast"); }}><span className="hidden md:inline">[R] </span>ROAR</button>
+          <button type="button" className="btn-term-ghost" onClick={dismountGuardian}><span className="hidden md:inline">[E] </span>DISMOUNT</button>
+        </div>
+      )}
+
+      {enc.near && !riding && !g && !s && (
         <button
           type="button"
           onClick={() => openEncounter(enc.near)}
@@ -124,6 +136,11 @@ export function GuardianEncounterHud() {
           </dl>
           <p className="text-muted-foreground">{g.ability}</p>
           <div className="grid gap-1.5">
+            {isGuardianOwner(g, [wallet?.ordinalsAddress, wallet?.paymentAddress]) ? (
+              <button type="button" className="btn-term" onClick={() => { mountGuardian(g); playSfx("beast"); }}>MOUNT YOUR GUARDIAN</button>
+            ) : (
+              <p className="rounded border border-border px-2 py-1 text-[10px] text-muted-foreground">MOUNT · OWNER ONLY · SUMMONED BY {g.owner.slice(0, 6)}…{g.owner.slice(-4)}{address ? "" : " · CONNECT WALLET"}</p>
+            )}
             <button type="button" className="btn-term-ghost" onClick={() => requestRoar(g.height)}>HEAR ITS ROAR</button>
             <button type="button" className="btn-term" disabled={busy} onClick={tribute}>
               {busy ? "OFFERING…" : `OFFER ${TRIBUTE_BIT} BIT · SOVEREIGN STRIDE (10 MIN)`}
