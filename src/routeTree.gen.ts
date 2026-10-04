@@ -97,6 +97,7 @@ import { Route as ApiPublicCrawlTradesRouteImport } from './routes/api/public/cr
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
 import { Route as ApiPublicResolveRegistryRouteImport } from './routes/api/public/resolve-registry'
+import { Route as CollectionsGuardiansHeightRouteImport } from './routes/collections.guardians.$height'
 import { Route as MapDistrictSlugRouteImport } from './routes/map_.district.$slug'
 import { Route as MapPlaceBlockRouteImport } from './routes/map_.place.$block'
 import { Route as PlayCardIdRouteImport } from './routes/play.card.$id'
@@ -551,6 +552,12 @@ const ApiPublicResolveRegistryRoute =
     path: '/public/resolve-registry',
     getParentRoute: () => ApiRoute,
   } as any)
+const CollectionsGuardiansHeightRoute =
+  CollectionsGuardiansHeightRouteImport.update({
+    id: '/$height',
+    path: '/$height',
+    getParentRoute: () => CollectionsGuardiansRoute,
+  } as any)
 const MapDistrictSlugRoute = MapDistrictSlugRouteImport.update({
   id: '/map_/district/$slug',
   path: '/map/district/$slug',
@@ -665,7 +672,7 @@ export interface FileRoutesByFullPath {
   '/codex/bestiary': typeof CodexBestiaryRoute
   '/codex/morphs': typeof CodexMorphsRoute
   '/collections/$club': typeof CollectionsClubRoute
-  '/collections/guardians': typeof CollectionsGuardiansRoute
+  '/collections/guardians': typeof CollectionsGuardiansRouteWithChildren
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
@@ -697,6 +704,7 @@ export interface FileRoutesByFullPath {
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
+  '/collections/guardians/$height': typeof CollectionsGuardiansHeightRoute
   '/map/district/$slug': typeof MapDistrictSlugRoute
   '/map/place/$block': typeof MapPlaceBlockRoute
   '/play/card/$id': typeof PlayCardIdRoute
@@ -762,7 +770,7 @@ export interface FileRoutesByTo {
   '/codex/bestiary': typeof CodexBestiaryRoute
   '/codex/morphs': typeof CodexMorphsRoute
   '/collections/$club': typeof CollectionsClubRoute
-  '/collections/guardians': typeof CollectionsGuardiansRoute
+  '/collections/guardians': typeof CollectionsGuardiansRouteWithChildren
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
@@ -794,6 +802,7 @@ export interface FileRoutesByTo {
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
+  '/collections/guardians/$height': typeof CollectionsGuardiansHeightRoute
   '/map/district/$slug': typeof MapDistrictSlugRoute
   '/map/place/$block': typeof MapPlaceBlockRoute
   '/play/card/$id': typeof PlayCardIdRoute
@@ -864,7 +873,7 @@ export interface FileRoutesById {
   '/codex/bestiary': typeof CodexBestiaryRoute
   '/codex/morphs': typeof CodexMorphsRoute
   '/collections/$club': typeof CollectionsClubRoute
-  '/collections/guardians': typeof CollectionsGuardiansRoute
+  '/collections/guardians': typeof CollectionsGuardiansRouteWithChildren
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
@@ -896,6 +905,7 @@ export interface FileRoutesById {
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
+  '/collections/guardians/$height': typeof CollectionsGuardiansHeightRoute
   '/map_/district/$slug': typeof MapDistrictSlugRoute
   '/map_/place/$block': typeof MapPlaceBlockRoute
   '/play/card/$id': typeof PlayCardIdRoute
@@ -999,6 +1009,7 @@ export interface FileRouteTypes {
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
+    | '/collections/guardians/$height'
     | '/map/district/$slug'
     | '/map/place/$block'
     | '/play/card/$id'
@@ -1096,6 +1107,7 @@ export interface FileRouteTypes {
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
+    | '/collections/guardians/$height'
     | '/map/district/$slug'
     | '/map/place/$block'
     | '/play/card/$id'
@@ -1197,6 +1209,7 @@ export interface FileRouteTypes {
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
+    | '/collections/guardians/$height'
     | '/map_/district/$slug'
     | '/map_/place/$block'
     | '/play/card/$id'
@@ -1895,6 +1908,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicResolveRegistryRouteImport
       parentRoute: typeof ApiRoute
     }
+    '/collections/guardians/$height': {
+      id: '/collections/guardians/$height'
+      path: '/$height'
+      fullPath: '/collections/guardians/$height'
+      preLoaderRoute: typeof CollectionsGuardiansHeightRouteImport
+      parentRoute: typeof CollectionsGuardiansRoute
+    }
     '/map_/district/$slug': {
       id: '/map_/district/$slug'
       path: '/map/district/$slug'
@@ -2016,16 +2036,27 @@ const ApiRouteChildren: ApiRouteChildren = {
 
 const ApiRouteWithChildren = ApiRoute._addFileChildren(ApiRouteChildren)
 
+interface CollectionsGuardiansRouteChildren {
+  CollectionsGuardiansHeightRoute: typeof CollectionsGuardiansHeightRoute
+}
+
+const CollectionsGuardiansRouteChildren: CollectionsGuardiansRouteChildren = {
+  CollectionsGuardiansHeightRoute: CollectionsGuardiansHeightRoute,
+}
+
+const CollectionsGuardiansRouteWithChildren =
+  CollectionsGuardiansRoute._addFileChildren(CollectionsGuardiansRouteChildren)
+
 interface CollectionsRouteChildren {
   CollectionsClubRoute: typeof CollectionsClubRoute
-  CollectionsGuardiansRoute: typeof CollectionsGuardiansRoute
+  CollectionsGuardiansRoute: typeof CollectionsGuardiansRouteWithChildren
   CollectionsJigglypuffRoute: typeof CollectionsJigglypuffRoute
   CollectionsIndexRoute: typeof CollectionsIndexRoute
 }
 
 const CollectionsRouteChildren: CollectionsRouteChildren = {
   CollectionsClubRoute: CollectionsClubRoute,
-  CollectionsGuardiansRoute: CollectionsGuardiansRoute,
+  CollectionsGuardiansRoute: CollectionsGuardiansRouteWithChildren,
   CollectionsJigglypuffRoute: CollectionsJigglypuffRoute,
   CollectionsIndexRoute: CollectionsIndexRoute,
 }
