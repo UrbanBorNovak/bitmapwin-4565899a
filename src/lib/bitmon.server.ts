@@ -217,7 +217,7 @@ export async function listMySummonOrders(userId: string): Promise<SummonOrderSta
     .in("status", ["pending", "seen"])
     .limit(10);
   for (const o of (open ?? []) as { id: string }[]) {
-    try { await checkSummonOrder(userId, o.id); } catch { /* keep listing even if one check fails */ }
+    try { await checkSummonOrder(userId, o.id); } catch (e) { console.error("[summon-dashboard] settle failed for order", o.id, e); }
   }
 
   const { data } = await db
