@@ -300,6 +300,7 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
   const dna = useQuery({ ...guardianDnaQuery(height), enabled: open });
   const awake = useQuery({ ...guardianQuery(height), enabled: open });
   const createOrder = useServerFn(createSummonOrderFn);
+  const checkParents = useServerFn(mintParentsFn);
   const checkOrder = useServerFn(checkSummonOrderFn);
   const resumeOrder = useServerFn(resumeSummonOrderFn);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
