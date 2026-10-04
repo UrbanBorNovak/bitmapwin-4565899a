@@ -78,7 +78,7 @@ function CharacterPage() {
           title="Oasis backdrop"
           aria-hidden="true"
           tabIndex={-1}
-          className="pointer-events-none fixed inset-0 -z-20 h-full w-full scale-105 border-0 opacity-45 blur-[2px]"
+          className="pointer-events-none fixed inset-x-0 -top-24 -z-20 h-[calc(100%+6rem)] w-full border-0 opacity-45 blur-[2px]"
         />
       </ClientOnly>
       <div className="pointer-events-none fixed inset-0 -z-10 bg-background/55" aria-hidden="true" />
@@ -145,8 +145,8 @@ function CharacterPage() {
             <div key={`${draft.avatarModel}-${draft.avatarSkin}`} className="holo-materialize absolute inset-0">
               <CharacterPortrait model={draft.avatarModel} skin={draft.avatarSkin} className="h-full" />
             </div>
-            <span className="holo-ring h-24 w-64" style={{ perspective: "600px" }}><i /></span>
-            <span className="holo-ring h-16 w-44 opacity-70"><i style={{ animationDirection: "reverse" }} /></span>
+            <span className="holo-ring h-10 w-48" style={{ perspective: "600px" }}><i /></span>
+            <span className="holo-ring h-6 w-32 opacity-70"><i style={{ animationDirection: "reverse" }} /></span>
             {Array.from({ length: 14 }, (_, i) => (
               <span
                 key={i}
@@ -155,7 +155,6 @@ function CharacterPage() {
               />
             ))}
             <span className="holo-scanline" />
-            <span className="label absolute left-3 top-3 text-signal">LIVE FORM // DRAG TO ROTATE</span>
           </div>
           <div className="space-y-4 p-5">
             {backstory.split("\n\n").map((paragraph, index) => (
