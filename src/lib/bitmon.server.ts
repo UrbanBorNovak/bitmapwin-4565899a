@@ -318,8 +318,20 @@ export async function verifyDelegateGuardian(inscriptionId: string): Promise<{ a
   if (!paid) return deny(`NO ${TRIBUTE_SATS}-SAT TRIBUTE IN THE REVEAL`, height);
 
   const db = await admin();
-  const existing = await db.from("bitmon_guardians").select("payment_txid").eq("block_height", height).maybeSingle();
-  if (existing.data) return { awakened: existing.data.payment_txid === txid, height, denied: existing.data.payment_txid === txid ? null : "THIS BLOCK'S GUARDIAN IS ALREADY AWAKE" };
+  const existing = await db.from("bitmon_guardians").select("id, payment_txid, stats").eq("block_height", height).maybeSingle();
+  if (existing.data) {
+    if (existing.data.payment_txid === txid) return { awakened: true, height, denied: null };
+    // An in-app awakening becomes the collection item once its verified
+    // on-chain child is attached. First verified child for the block wins.
+    const stats = (existing.data.stats ?? {}) as Record<string, unknown>;
+    const current = typeof stats["inscription"] === "string" ? (stats["inscription"] as string) : null;
+    if (current && current !== inscriptionId) return deny("THIS BLOCK'S GUARDIAN IS ALREADY INSCRIBED", height);
+    if (!current) {
+      const upd = await db.from("bitmon_guardians").update({ stats: { ...stats, inscription: inscriptionId } }).eq("id", existing.data.id).select("id").maybeSingle();
+      if (!upd.data) return deny("COULD NOT RECORD THE INSCRIPTION — TRY AGAIN", height);
+    }
+    return { awakened: true, height, denied: null };
+  }
 
   const dna = guardianFromBlock(await fetchBlockDnaSource(height));
   const inserted = await db.from("bitmon_guardians").insert({

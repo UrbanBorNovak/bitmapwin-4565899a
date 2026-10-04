@@ -17,6 +17,8 @@ export type AwakeGuardian = {
   owner: string;
   txid: string;
   createdAt: string;
+  /** Verified on-chain child inscription (Tag 3 of the BITMAP + master delegate), if attached. */
+  inscriptionId: string | null;
 };
 
 type Row = {
@@ -46,6 +48,7 @@ function toGuardian(r: Row): AwakeGuardian {
     owner: r.summoned_by_address,
     txid: r.payment_txid,
     createdAt: r.created_at,
+    inscriptionId: typeof s["inscription"] === "string" ? (s["inscription"] as string) : null,
   };
 }
 
