@@ -88,7 +88,7 @@ export async function parseBlock(blockHex, options = {}) {
 
 export async function fetchBlock(heightOrHash, options = {}) {
     if (/^\d+$/.test(String(heightOrHash))) options = { height: Number(heightOrHash), ...options }
-    const response = await fetch(`${originParam || ''}/r/block/${heightOrHash}`)
+    const response = await fetch(`${originParam}/r/block/${heightOrHash}`, { headers: { 'user-agent': 'Mozilla/5.0 (bitmapwin liveOCI)' } })
     if (!response.ok) throw new Error(`/r/block/${heightOrHash} returned HTTP ${response.status}`)
     return parseBlock((await response.text()).replace(/"/g, ''), options)
 }

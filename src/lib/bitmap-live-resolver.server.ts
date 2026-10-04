@@ -86,7 +86,7 @@ export async function resolveBitmapFromChain(height: number): Promise<string | n
     } catch {
       return null; // not mined yet or ordinals.com unavailable
     }
-    for (const ins of listInscriptions(block) as Array<Record<string, unknown>>) {
+    for (const ins of listInscriptions(block) as Array<{ id?: string; bodyHex?: string; complete?: boolean; contentEncoding?: unknown; delegate?: unknown }>) {
       if (ins.bodyHex !== target || ins.complete !== true || ins.contentEncoding || ins.delegate) continue;
       const id = String(ins.id ?? "");
       return (await learnBitmap(id, height)) ?? null;
