@@ -559,8 +559,7 @@
   border: 1px solid color-mix(in oklab, var(--color-foreground) 22%, transparent);
   outline: 1px solid color-mix(in oklab, var(--color-bitcoin) 32%, transparent);
   outline-offset: -5px;
-  opacity: 0.3;
-  mix-blend-mode: overlay;
+  opacity: 0.22;
   background-image:
     /* Dry-brush corner strokes */
     radial-gradient(ellipse 21% 3px at 7% 2%, color-mix(in oklab, var(--color-foreground) 72%, transparent) 0 45%, transparent 70%),
@@ -580,7 +579,6 @@
     inset 0 0 0 9px color-mix(in oklab, var(--color-background) 28%, transparent),
     inset 0 0 0 10px color-mix(in oklab, var(--color-foreground) 12%, transparent),
     inset 0 0 26px color-mix(in oklab, var(--color-background) 52%, transparent);
-  filter: contrast(1.14);
 }
 
 @media (prefers-reduced-transparency: reduce) {
