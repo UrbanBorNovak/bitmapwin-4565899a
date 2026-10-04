@@ -59,6 +59,8 @@ export function ShadowInscriber(props: {
   allowUpload?: boolean;
   /** Claim `<height>.bitmap` + the master collection as parents of this child. */
   claimParentsForHeight?: number;
+  /** Optional user-supplied `<height>.bitmap` inscription id (verified server-side). */
+  parentBitmapInscriptionId?: string;
   /** Where the inscribed sat lands. Defaults to the connected wallet's ordinals address. */
   receiveAddress?: string;
   /** Runs after the one-time payment address exists, before the wallet pays. Throw to abort. */
@@ -207,7 +209,13 @@ export function ShadowInscriber(props: {
         setBusy("CHECKING THE PARENT BITMAP…");
         let res: Awaited<ReturnType<typeof resolveParents>>;
         try {
-          res = await resolveParents({ data: { height: props.claimParentsForHeight, holderAddress: wallet.ordinalsAddress } });
+          res = await resolveParents({
+            data: {
+              height: props.claimParentsForHeight,
+              holderAddress: wallet.ordinalsAddress,
+              ...(props.parentBitmapInscriptionId ? { bitmapInscriptionId: props.parentBitmapInscriptionId } : {}),
+            },
+          });
         } catch {
           setParentNotes(["COULD NOT CHECK THE PARENTS — NOTHING WAS PAID"]);
           throw new Error("COULD NOT CHECK THE PARENT BITMAP — NOTHING WAS PAID, TRY AGAIN");
