@@ -522,6 +522,15 @@ export async function signParentInputsPsbt(
     if (typeof signed !== "string" || signed.length < 20) throw new Error("UNISAT RETURNED NO SIGNED PSBT");
     return /^[0-9a-fA-F]+$/.test(signed.trim()) ? hexToBase64(signed) : signed.trim();
   }
+  if (taproot) {
+    // Native JSON-RPC signPsbt handles BIP-371 key-path inputs; the legacy
+    // path reports "No taproot scripts signed" for them.
+    try {
+      return await xverseSignPsbt({ psbt: psbtBase64, signInputs: { [holderAddress]: signIndices }, broadcast: false } as SignPsbtParams);
+    } catch (e) {
+      if (/DECLINED/i.test((e as Error).message)) throw e;
+    }
+  }
   return xverseSignPaymentPsbt(psbtBase64, holderAddress, signIndices, "Claim this bitmap as the parent of a new inscription", taproot ? undefined : SIGHASH_ALL);
 }
 
