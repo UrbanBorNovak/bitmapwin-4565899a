@@ -219,7 +219,7 @@ function showP(P){PSEL=P;if(!P){PH.style.display="none";return}var col=P.own?hex
   '<button style="margin-top:4px;font:inherit;color:#f7931a;background:none;border:1px solid #f7931a77;padding:2px 6px;cursor:pointer">COPY PARCEL ID</button>';
   PH.style.display="block";PH.querySelector("button").onclick=function(e){e.stopPropagation();try{navigator.clipboard.writeText(P.id)}catch(_){}this.textContent="COPIED"}}
 var pdn=null;c.addEventListener("pointerdown",function(e){pdn=[e.clientX,e.clientY]});
-c.addEventListener("pointerup",function(e){if(!pdn||Math.abs(e.clientX-pdn[0])+Math.abs(e.clientY-pdn[1])>6)return;var r=c.getBoundingClientRect(),dpr=c.width/r.width,mxp=(e.clientX-r.left)*dpr,myp=(e.clientY-r.top)*dpr,best=null,bd=28*dpr;
+c.addEventListener("pointerup",function(e){if(!pdn||Math.abs(e.clientX-pdn[0])+Math.abs(e.clientY-pdn[1])>6)return;var r=c.getBoundingClientRect(),dpr=1,mxp=(e.clientX-r.left)*dpr,myp=(e.clientY-r.top)*dpr,best=null,bd=28*dpr;
   for(var i=0;i<PARC.length;i++){var P=PARC[i];if(!P.c)continue;var p=P3(P.c[0],P.c[1],P.c[2]),d=Math.hypot(p[0]-mxp,p[1]-myp);if(d<bd){bd=d;best=P}}showP(best)});
 /* ================= /V7 ================= */
 `;
