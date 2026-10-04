@@ -12,6 +12,7 @@ import { GuardianBody } from "@/components/bitmon/GuardianBody";
 import { GUARDIAN_MASTER_DELEGATE_ID, DELEGATE_CONTENT_TYPE, TRIBUTE_ADDRESS, TRIBUTE_SATS, guardianMasterGeneratorHtml } from "@/lib/guardian-delegate";
 import { ShadowInscriber, type ArtifactVariant } from "@/components/territory/ShadowInscriber";
 import { ShieldedGuardianMint } from "@/components/bitmon/ShieldedGuardianMint";
+import { InscriptionWatcher } from "@/components/bitmon/InscriptionWatcher";
 import { RARITY_TONE, bip21, guardianArtifactSvg, guardianLevel, guardianShieldDigest, GUARDIAN_PRICE_SATS, type GuardianDna } from "@/lib/bitmon";
 import { morphFromDna } from "@/lib/creature-morph";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
@@ -371,6 +372,7 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
     }
   };
 
+  const [revealedId, setRevealedId] = useState<string | null>(null);
   const d = dna.data;
   const already = awake.data;
   const summonTxid = already?.txid ?? (celebrate ? order?.txid : null);
@@ -437,7 +439,11 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
               </div>
               {already ? <p className="font-mono text-[10px] text-muted-foreground">SUMMONED BY {already.owner.slice(0, 8)}…{already.owner.slice(-6)} · TX {already.txid.slice(0, 10)}…</p> : null}
               <Link to="/oasis" search={{ height }} className="inline-block border border-bitcoin px-3 py-2 font-mono text-xs text-bitcoin hover:bg-bitcoin hover:text-background">SEE IT IN THE OASIS →</Link>
-              {guardianArtifact && guardianDigest ? (
+              {already?.inscriptionId ? (
+                <InscriptionWatcher inscriptionId={already.inscriptionId} height={height} />
+              ) : revealedId ? (
+                <InscriptionWatcher inscriptionId={revealedId} height={height} />
+              ) : guardianArtifact && guardianDigest ? (
                 <div className="space-y-2">
                   <div className="flex gap-2">
                     <button type="button" onClick={() => setMintMode("public")}
@@ -462,6 +468,7 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
                       description="THE GUARDIAN IS ALREADY SUMMONED. THIS OPTIONAL SECOND STEP PAYS THE LIVE BITCOIN MINER COST FOR A PUBLIC ORDINAL THAT CONTAINS NO WALLET OR ACCOUNT IDENTITY. THE INSCRIBED SAT LANDS IN YOUR OWN WALLET."
                       allowUpload={false}
                       claimParentsForHeight={height}
+                      onRevealed={(revealTxid) => setRevealedId(`${revealTxid}i0`)}
 
                     />
                   ) : (

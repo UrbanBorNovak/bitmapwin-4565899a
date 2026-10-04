@@ -7,6 +7,7 @@
 import { ShadowInscriber, type ArtifactVariant } from "@/components/territory/ShadowInscriber";
 import { DELEGATE_CONTENT_TYPE, GUARDIAN_MASTER_DELEGATE_ID, TRIBUTE_ADDRESS, TRIBUTE_SATS, guardianMasterGeneratorHtml } from "@/lib/guardian-delegate";
 import { useState } from "react";
+import { InscriptionWatcher } from "@/components/bitmon/InscriptionWatcher";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
@@ -20,6 +21,7 @@ const STEPS = [
 ] as const;
 
 export function DelegateGuardianSummon({ dna }: { dna: GuardianDna }) {
+  const [revealedId, setRevealedId] = useState<string | null>(null);
   if (!GUARDIAN_MASTER_DELEGATE_ID) {
     return <p className="font-mono text-xs text-muted-foreground">DELEGATE SUMMONS ARE NOT OPEN YET.</p>;
   }
@@ -61,7 +63,9 @@ export function DelegateGuardianSummon({ dna }: { dna: GuardianDna }) {
         description={`ONLY THE WALLET HOLDING ${dna.height}.BITMAP CAN SIGN THIS. WITHOUT A VALID BITMAP PARENT OR TRIBUTE, THE INSCRIPTION RENDERS AS A STONE RELIC. YOUR WALLET PAYS THE LIVE MINER FEE.`}
         allowUpload={false}
         claimParentsForHeight={dna.height}
+        onRevealed={(revealTxid) => setRevealedId(`${revealTxid}i0`)}
       />
+      {revealedId ? <InscriptionWatcher inscriptionId={revealedId} height={dna.height} /> : null}
       <ClaimAwakening />
     </div>
   );
