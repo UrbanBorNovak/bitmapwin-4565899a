@@ -21,12 +21,13 @@ export const getBlockCircuit = createServerFn({ method: "GET" })
       let inscriptions: BlockCircuit["inscriptions"] = null;
       try {
         const r = await fetch(`https://ordinals.com/inscriptions/block/${data.height}`, {
-          headers: { accept: "application/json", "user-agent": "bitmapwin/1.0" },
+          headers: { "user-agent": "bitmapwin/1.0" },
           signal: AbortSignal.timeout(8000),
         });
         if (r.ok) {
-          const j = (await r.json()) as { ids?: string[]; more?: boolean };
-          inscriptions = { ids: (j.ids ?? []).slice(0, 100), more: Boolean(j.more) };
+          const html = await r.text();
+          const ids = [...new Set(html.match(/[0-9a-f]{64}i\d+/g) ?? [])];
+          inscriptions = { ids: ids.slice(0, 100), more: /class=next/.test(html) };
         }
       } catch {
         inscriptions = null;
