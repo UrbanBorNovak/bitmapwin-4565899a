@@ -1728,6 +1728,53 @@ export type Database = {
           },
         ]
       }
+      guardian_dispatches: {
+        Row: {
+          created_at: string
+          directive: string
+          ends_at: string
+          guardian_height: number
+          id: string
+          recalled_at: string | null
+          started_at: string
+          target_height: number | null
+          user_id: string
+          waypoints: Json
+        }
+        Insert: {
+          created_at?: string
+          directive: string
+          ends_at: string
+          guardian_height: number
+          id?: string
+          recalled_at?: string | null
+          started_at?: string
+          target_height?: number | null
+          user_id: string
+          waypoints: Json
+        }
+        Update: {
+          created_at?: string
+          directive?: string
+          ends_at?: string
+          guardian_height?: number
+          id?: string
+          recalled_at?: string | null
+          started_at?: string
+          target_height?: number | null
+          user_id?: string
+          waypoints?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guardian_dispatches_guardian_height_fkey"
+            columns: ["guardian_height"]
+            isOneToOne: false
+            referencedRelation: "bitmon_guardians"
+            referencedColumns: ["block_height"]
+          },
+        ]
+      }
       inscription_donations: {
         Row: {
           bits_awarded: number
