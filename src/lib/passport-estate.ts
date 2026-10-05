@@ -42,5 +42,6 @@ export type PassportEstate = {
   visits: EstateVisit[];
   blueprints: EstateBlueprint[];
   timeline: EstateTimelineEntry[];
+  epoch?: import("@/lib/holder-epoch").HolderEpoch | null;
 };
 

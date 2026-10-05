@@ -207,5 +207,21 @@ export async function readPassportEstate(userId: string): Promise<PassportEstate
     .sort((a, b) => b.at.localeCompare(a.at))
     .slice(0, 120);
 
-  return { ...EMPTY, chain, game, wallet, land: landRows, builds, visits, blueprints, timeline };
+  // Holder Epoch: genesis heights of held land + this wallet's latest traced buy.
+  let epoch: PassportEstate["epoch"] = null;
+  if (wallet && (land.data ?? []).length) {
+    const tip = await fetch("https://mempool.space/api/blocks/tip/height", { signal: AbortSignal.timeout(6000) })
+      .then((r) => (r.ok ? r.text() : "")).then((t) => Number(t)).catch(() => 0);
+    if (tip > 0) {
+      const { computeHolderEpoch } = await import("@/lib/holder-epoch");
+      const purchases = new Map<number, number>();
+      for (const t of trades.data ?? []) {
+        if ((t as any).buyer_address !== wallet || (t as any).block_height == null) continue;
+        const h = Number((t as any).bitmap_height); const b = Number((t as any).block_height);
+        if ((purchases.get(h) ?? 0) < b) purchases.set(h, b);
+      }
+      epoch = computeHolderEpoch(tip, (land.data ?? []).map((r: any) => ({ height: Number(r.block_height), genesisHeight: r.genesis_height == null ? null : Number(r.genesis_height) })), purchases);
+    }
+  }
+  return { ...EMPTY, chain, game, wallet, land: landRows, builds, visits, blueprints, timeline, epoch };
 }
