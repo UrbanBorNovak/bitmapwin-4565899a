@@ -29,6 +29,7 @@ import { Route as ExperiencesRouteImport } from './routes/experiences'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as ExtendRouteImport } from './routes/extend'
 import { Route as ExtendersRouteImport } from './routes/extenders'
+import { Route as GenesisRanksRouteImport } from './routes/genesis-ranks'
 import { Route as GuardiansRouteImport } from './routes/guardians'
 import { Route as GuardiansGuideRouteImport } from './routes/guardians-guide'
 import { Route as HistoryRouteImport } from './routes/history'
@@ -209,6 +210,11 @@ const ExtendRoute = ExtendRouteImport.update({
 const ExtendersRoute = ExtendersRouteImport.update({
   id: '/extenders',
   path: '/extenders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GenesisRanksRoute = GenesisRanksRouteImport.update({
+  id: '/genesis-ranks',
+  path: '/genesis-ranks',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GuardiansRoute = GuardiansRouteImport.update({
@@ -642,6 +648,7 @@ export interface FileRoutesByFullPath {
   '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
   '/extenders': typeof ExtendersRouteWithChildren
+  '/genesis-ranks': typeof GenesisRanksRoute
   '/guardians': typeof GuardiansRoute
   '/guardians-guide': typeof GuardiansGuideRoute
   '/history': typeof HistoryRoute
@@ -743,6 +750,7 @@ export interface FileRoutesByTo {
   '/experiences': typeof ExperiencesRoute
   '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
+  '/genesis-ranks': typeof GenesisRanksRoute
   '/guardians': typeof GuardiansRoute
   '/guardians-guide': typeof GuardiansGuideRoute
   '/history': typeof HistoryRoute
@@ -845,6 +853,7 @@ export interface FileRoutesById {
   '/explore': typeof ExploreRoute
   '/extend': typeof ExtendRoute
   '/extenders': typeof ExtendersRouteWithChildren
+  '/genesis-ranks': typeof GenesisRanksRoute
   '/guardians': typeof GuardiansRoute
   '/guardians-guide': typeof GuardiansGuideRoute
   '/history': typeof HistoryRoute
@@ -950,6 +959,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/extend'
     | '/extenders'
+    | '/genesis-ranks'
     | '/guardians'
     | '/guardians-guide'
     | '/history'
@@ -1051,6 +1061,7 @@ export interface FileRouteTypes {
     | '/experiences'
     | '/explore'
     | '/extend'
+    | '/genesis-ranks'
     | '/guardians'
     | '/guardians-guide'
     | '/history'
@@ -1152,6 +1163,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/extend'
     | '/extenders'
+    | '/genesis-ranks'
     | '/guardians'
     | '/guardians-guide'
     | '/history'
@@ -1256,6 +1268,7 @@ export interface RootRouteChildren {
   ExploreRoute: typeof ExploreRoute
   ExtendRoute: typeof ExtendRoute
   ExtendersRoute: typeof ExtendersRouteWithChildren
+  GenesisRanksRoute: typeof GenesisRanksRoute
   GuardiansRoute: typeof GuardiansRoute
   GuardiansGuideRoute: typeof GuardiansGuideRoute
   HistoryRoute: typeof HistoryRoute
@@ -1443,6 +1456,13 @@ declare module '@tanstack/react-router' {
       path: '/extenders'
       fullPath: '/extenders'
       preLoaderRoute: typeof ExtendersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/genesis-ranks': {
+      id: '/genesis-ranks'
+      path: '/genesis-ranks'
+      fullPath: '/genesis-ranks'
+      preLoaderRoute: typeof GenesisRanksRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/guardians': {
@@ -2172,6 +2192,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExploreRoute: ExploreRoute,
   ExtendRoute: ExtendRoute,
   ExtendersRoute: ExtendersRouteWithChildren,
+  GenesisRanksRoute: GenesisRanksRoute,
   GuardiansRoute: GuardiansRoute,
   GuardiansGuideRoute: GuardiansGuideRoute,
   HistoryRoute: HistoryRoute,
