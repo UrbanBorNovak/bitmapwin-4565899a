@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { RUNTIME_LIMITS } from "@/lib/extender-sdk";
 import { EPOCH_ERAS, type EpochEra, type HolderEpoch } from "@/lib/holder-epoch";
 
 const fmt = (n: number) => n.toLocaleString("en-US");
@@ -42,14 +43,20 @@ export function PassportEpoch({ epoch, wallet }: { epoch: HolderEpoch | null | u
         </p>
       ) : null}
       <div className="border-t border-[var(--passport-line)]">
-        {epoch.lands.slice(0, 8).map((l) => (
-          <div key={l.height} className="flex items-center justify-between gap-3 border-b border-[var(--passport-line)] px-4 py-2 font-mono text-[11px] last:border-b-0" data-no-translate>
-            <span className="text-[var(--passport-paper)]">{l.height}.BITMAP</span>
+        <div className="hidden grid-cols-[1.2fr_1.6fr_0.9fr_0.7fr_0.8fr_0.7fr] gap-3 border-b border-[var(--passport-line)] px-4 py-2 md:grid">
+          {["BITMAP", "ERA · HELD", "LAND BOOST", "VISITOR BIT", "BUILD HEIGHT", "EPOCH"].map((h) => <span key={h} className="passport-kicker text-[7px]">{h}</span>)}
+        </div>
+        {epoch.lands.slice(0, 12).map((l) => (
+          <div key={l.height} className="grid grid-cols-2 gap-x-3 gap-y-1 border-b border-[var(--passport-line)] px-4 py-2 font-mono text-[11px] last:border-b-0 md:grid-cols-[1.2fr_1.6fr_0.9fr_0.7fr_0.8fr_0.7fr] md:items-center" data-no-translate>
+            <Link to="/bitmap/$block" params={{ block: String(l.height) }} className="text-[var(--passport-paper)] hover:text-[var(--passport-gold)]">{l.height}.BITMAP</Link>
             <span className="text-[var(--passport-muted)]">{EPOCH_ERAS[l.era].label} · {fmt(l.blocksHeld)} BLK{l.traced ? "" : " *"}</span>
+            <span className="text-[var(--signal)]">{l.boost?.label ?? "—"}</span>
+            <span className="text-[var(--passport-paper)]">{l.boost ? `×${l.boost.dividend}` : "—"}</span>
+            <span className="text-[var(--passport-paper)]">{l.boost ? `${RUNTIME_LIMITS.maxHeight + l.boost.heightBonus}${l.boost.heightBonus ? ` (+${l.boost.heightBonus})` : ""}` : "—"}</span>
             <span className="text-[var(--passport-gold)]">+{fmt(l.points)}</span>
           </div>
         ))}
-        <p className="px-4 py-2 font-mono text-[9px] text-[var(--passport-muted)]">* No traced sale into this wallet — counted from inscription block.</p>
+        <p className="px-4 py-2 font-mono text-[9px] text-[var(--passport-muted)]">* No traced sale into this wallet — counted from inscription block. Land boost resets on any traced sale; visitor BIT multiplies the daily attention dividend, build height is the Extender ceiling in the Oasis.</p>
       </div>
     </section>
   );

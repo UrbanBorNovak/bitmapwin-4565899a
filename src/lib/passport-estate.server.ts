@@ -221,6 +221,11 @@ export async function readPassportEstate(userId: string): Promise<PassportEstate
         if ((purchases.get(h) ?? 0) < b) purchases.set(h, b);
       }
       epoch = computeHolderEpoch(tip, (land.data ?? []).map((r: any) => ({ height: Number(r.block_height), genesisHeight: r.genesis_height == null ? null : Number(r.genesis_height) })), purchases);
+      try {
+        const { readLandBoosts } = await import("@/lib/land-epoch.server");
+        const boosts = await readLandBoosts(epoch.lands.map((l) => l.height));
+        for (const l of epoch.lands) { const b = boosts.get(l.height); if (b) l.boost = b; }
+      } catch { /* boosts are optional decoration */ }
     }
   }
   return { ...EMPTY, chain, game, wallet, land: landRows, builds, visits, blueprints, timeline, epoch };
