@@ -354,6 +354,27 @@ export type Database = {
         }
         Relationships: []
       }
+      bitmap_spoils: {
+        Row: {
+          bit: number
+          block_height: number
+          raids_won: number
+          updated_at: string
+        }
+        Insert: {
+          bit?: number
+          block_height: number
+          raids_won?: number
+          updated_at?: string
+        }
+        Update: {
+          bit?: number
+          block_height?: number
+          raids_won?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bitmap_storefront_listings: {
         Row: {
           created_at: string
@@ -1772,6 +1793,47 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "bitmon_guardians"
             referencedColumns: ["block_height"]
+          },
+        ]
+      }
+      guardian_raids: {
+        Row: {
+          attacker_height: number
+          defender_height: number
+          dispatch_id: string
+          id: string
+          log: Json
+          resolved_at: string
+          spoils: number
+          winner_height: number
+        }
+        Insert: {
+          attacker_height: number
+          defender_height: number
+          dispatch_id: string
+          id?: string
+          log?: Json
+          resolved_at?: string
+          spoils?: number
+          winner_height: number
+        }
+        Update: {
+          attacker_height?: number
+          defender_height?: number
+          dispatch_id?: string
+          id?: string
+          log?: Json
+          resolved_at?: string
+          spoils?: number
+          winner_height?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guardian_raids_dispatch_id_fkey"
+            columns: ["dispatch_id"]
+            isOneToOne: true
+            referencedRelation: "guardian_dispatches"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -4074,6 +4136,10 @@ export type Database = {
           clan_tag: string
           player_id: string
         }[]
+      }
+      land_raid_spoils: {
+        Args: { _bit: number; _height: number }
+        Returns: undefined
       }
       land_terraform_in_chunks: {
         Args: { _keys: string[] }
