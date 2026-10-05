@@ -49,5 +49,5 @@ export function computeHolderEpoch(tip: number, held: { height: number; genesisH
   const rank = EPOCH_RANKS.find((r) => score >= r.min)!;
   const idx = EPOCH_RANKS.indexOf(rank);
   const longest = lands.reduce<EpochLand | null>((m, l) => (!m || l.blocksHeld > m.blocksHeld ? l : m), null);
-  return { tip, score, tier: rank.tier, title: rank.title, nextAt: idx > 0 ? EPOCH_RANKS[idx - 1].min : null, eras, longest, lands };
+  return { tip, score, tier: rank.tier, title: rank.title, nextAt: idx > 0 ? (EPOCH_RANKS[idx - 1]?.min ?? null) : null, eras, longest, lands };
 }
