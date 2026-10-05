@@ -1,0 +1,2 @@
+REVOKE SELECT ON public.guardian_dispatches FROM anon, authenticated;
+GRANT SELECT (id, guardian_height, directive, target_height, waypoints, started_at, ends_at, recalled_at, created_at, repeat) ON public.guardian_dispatches TO anon, authenticated;
