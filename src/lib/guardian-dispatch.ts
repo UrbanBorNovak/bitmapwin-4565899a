@@ -94,3 +94,19 @@ export type Dispatch = {
   startMs: number;
   endMs: number;
 };
+
+export const DISPATCH_COLS = "id, guardian_height, directive, target_height, waypoints, started_at, ends_at";
+export function toDispatch(r: {
+  id: string; guardian_height: number; directive: string; target_height: number | null;
+  waypoints: unknown; started_at: string; ends_at: string;
+}): Dispatch {
+  return {
+    id: r.id,
+    height: Number(r.guardian_height),
+    directive: r.directive as Directive,
+    target: r.target_height == null ? null : Number(r.target_height),
+    waypoints: Array.isArray(r.waypoints) ? (r.waypoints as unknown[]).map(Number) : [Number(r.guardian_height)],
+    startMs: Date.parse(r.started_at),
+    endMs: Date.parse(r.ends_at),
+  };
+}

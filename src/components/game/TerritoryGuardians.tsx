@@ -12,6 +12,8 @@ import { WORLD_CELL, WORLD_GRID, cellX, cellZ, type PlayerState } from "@/lib/pl
 import { groundY } from "@/lib/world-terrain";
 import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { allGuardiansQuery, type AwakeGuardian } from "@/lib/bitmon-queries";
+import { liveDispatchesQuery } from "@/lib/guardian-dispatch-queries";
+import { positionAt, type Dispatch } from "@/lib/guardian-dispatch";
 import { GuardianBody } from "@/components/bitmon/GuardianBody";
 import { SafeHtml } from "@/components/game/SafeHtml";
 import { mountedGuardian, encounterSnapshot, guardianBite, setNearGuardian } from "@/lib/guardian-encounter";
@@ -25,6 +27,8 @@ type Walker = {
   /** progress 0..4 around the BITMAP's border square */
   lap: number; dir: 1 | -1; roarUntil: number; roarReady: number; inside: boolean;
   lastRoarReq: number; biteReady: number; lunge: number;
+  /** commanded route shared by every player, if deployed */
+  order: Dispatch | null;
 };
 
 /** Patrol ring: the guardian walks the border of its BITMAP, just inside the edge. */
@@ -55,7 +59,21 @@ const Guardian = memo(function Guardian({ w, unit, pose }: { w: Walker; unit: nu
     const node = ref.current;
     const p = pose.current;
     if (!node) return;
-    const near = (!p || Math.hypot(p.x - w.hx, p.z - w.hz) < WORLD_CELL * 2.5) && mountedGuardian()?.height !== w.g.height;
+    const ord = w.order && Date.now() < w.order.endMs ? w.order : null;
+    if (ord) {
+      // Commanded: position comes from shared server timestamps, so all players agree.
+      const at = positionAt(ord.waypoints, ord.startMs, ord.endMs, Date.now());
+      w.x = at.x; w.z = at.z;
+      if (at.moving) w.yaw += Math.atan2(Math.sin(at.yaw - w.yaw), Math.cos(at.yaw - w.yaw)) * 0.15;
+      const nearO = !p || Math.hypot(p.x - w.x, p.z - w.z) < WORLD_CELL * 2.5;
+      node.visible = nearO;
+      if (!nearO) return;
+      const tt = clock.elapsedTime;
+      node.position.set(w.x, groundY(w.x, w.z) + (at.moving ? Math.abs(Math.sin(tt * 6)) * unit * 0.05 : 0), w.z);
+      node.rotation.y = w.yaw;
+      return;
+    }
+    const near = (!p || Math.hypot(p.x - (w.order ? w.x : w.hx), p.z - (w.order ? w.z : w.hz)) < WORLD_CELL * 2.5) && mountedGuardian()?.height !== w.g.height;
     node.visible = near;
     if (!near) return;
     const dt = Math.min(raw, 0.05);
@@ -156,7 +174,7 @@ const Guardian = memo(function Guardian({ w, unit, pose }: { w: Walker; unit: nu
       </group>
       <SafeHtml position={[0, unit * 3.2, 0]} center distanceFactor={unit * 40} style={{ pointerEvents: "none" }}>
         <div className={`whitespace-nowrap border bg-background/80 px-1.5 py-0.5 font-mono text-[9px] ${roaring ? "border-bitcoin text-bitcoin animate-pulse" : "border-bitcoin/60 text-bitcoin"}`}>
-          {roaring ? `ROAR · ${w.g.height}.BITMAP GUARDIAN` : `${w.g.species} · LV ${w.g.level} · ${w.g.height}`}
+          {roaring ? `ROAR · ${w.g.height}.BITMAP GUARDIAN` : w.order && Date.now() < w.order.endMs ? `${w.order.directive.toUpperCase()} · ${w.g.height}.BITMAP${w.order.target != null ? ` → ${w.order.target}` : ""}` : `${w.g.species} · LV ${w.g.level} · ${w.g.height}`}
         </div>
       </SafeHtml>
     </group>
@@ -165,6 +183,7 @@ const Guardian = memo(function Guardian({ w, unit, pose }: { w: Walker; unit: nu
 
 export const TerritoryGuardians = memo(function TerritoryGuardians({ unit, pose }: { unit: number; pose: React.MutableRefObject<PlayerState | null> }) {
   const { data } = useQuery(allGuardiansQuery());
+  const { data: orders } = useQuery(liveDispatchesQuery());
   const walkers = useMemo<Walker[]>(
     () =>
       (data ?? []).map((g) => {
@@ -174,10 +193,13 @@ export const TerritoryGuardians = memo(function TerritoryGuardians({ unit, pose 
         const hz = cellZ(row);
         const lap = (g.height % 400) / 100;
         const [sx, sz] = perimeterPoint(lap, hx, hz, WORLD_CELL * EDGE);
-        return { g, hx, hz, x: sx, z: sz, yaw: 0, brain: createFlyBrain((g.height % 997) / 97), phase: (g.height % 360) * 0.0174, lap, dir: g.height % 2 ? 1 : -1, roarUntil: 0, roarReady: 0, inside: false, lastRoarReq: Date.now(), biteReady: 0, lunge: -9 };
+        return { g, hx, hz, x: sx, z: sz, yaw: 0, brain: createFlyBrain((g.height % 997) / 97), phase: (g.height % 360) * 0.0174, lap, dir: g.height % 2 ? 1 : -1, roarUntil: 0, roarReady: 0, inside: false, lastRoarReq: Date.now(), biteReady: 0, lunge: -9, order: null };
       }),
     [data],
   );
+  // Attach live orders without rebuilding walkers (keeps their positions).
+  const byHeight = useMemo(() => new Map((orders ?? []).map((o) => [o.height, o])), [orders]);
+  for (const w of walkers) w.order = byHeight.get(w.g.height) ?? null;
   return (
     <group>
       {walkers.map((w) => <Guardian key={w.g.height} w={w} unit={unit} pose={pose} />)}
