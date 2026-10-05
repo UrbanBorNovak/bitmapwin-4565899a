@@ -33,3 +33,4 @@
 - Marketplace buys take a 90s server-side checkout hold (reserve_offer RPC, service-role only) before building the PSBT; submit requires the live hold. Why: snipe protection without exposing seller PSBTs.
 - Guardian master V7 (src/lib/guardian-delegate-v7.ts) is built from the V6 source by checked string swaps plus one V7 block; V7 (#127,517,786) is the active Tag 11 delegate; V6 stays the Tag 3 root. Why: keeps the live V6 bytes untouched.
 - BITMAPs ≥942,000 resolve via the vendored on-chain LiveOCI block parser (src/lib/vendor/ord-block-parser.js) in resolveBitmapFromChain, then cache in bitmap_index. Why: OCI pages stop at 941,999.
+- Holder Epoch land perks (src/lib/holder-epoch.ts landBoost) come only from bitmap_index genesis + latest traced sale; they scale the daily visitor dividend and the Extender maxHeight. Why: holding is rewarded from chain facts, never browser claims.
