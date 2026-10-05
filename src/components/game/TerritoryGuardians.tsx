@@ -13,6 +13,7 @@ import { groundY } from "@/lib/world-terrain";
 import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { allGuardiansQuery, type AwakeGuardian } from "@/lib/bitmon-queries";
 import { liveDispatchesQuery } from "@/lib/guardian-dispatch-queries";
+import { settleRaidsFn } from "@/lib/guardian-raid.functions";
 import { dispatchPosition, isLive, type Dispatch } from "@/lib/guardian-dispatch";
 import { GuardianBody } from "@/components/bitmon/GuardianBody";
 import { SafeHtml } from "@/components/game/SafeHtml";
@@ -184,6 +185,8 @@ const Guardian = memo(function Guardian({ w, unit, pose }: { w: Walker; unit: nu
 export const TerritoryGuardians = memo(function TerritoryGuardians({ unit, pose }: { unit: number; pose: React.MutableRefObject<PlayerState | null> }) {
   const { data } = useQuery(allGuardiansQuery());
   const { data: orders } = useQuery(liveDispatchesQuery());
+  // Anyone in the Oasis helps settle due raid laps; results are deterministic and idempotent.
+  useQuery({ queryKey: ["guardian-raids", "settle"], queryFn: () => settleRaidsFn().catch(() => null), refetchInterval: 60_000, enabled: (orders?.length ?? 0) > 0 });
   const walkers = useMemo<Walker[]>(
     () =>
       (data ?? []).map((g) => {
