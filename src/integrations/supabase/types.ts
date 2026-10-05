@@ -1751,7 +1751,6 @@ export type Database = {
       }
       guardian_dispatches: {
         Row: {
-          chained: boolean
           created_at: string
           directive: string
           ends_at: string
@@ -1765,7 +1764,6 @@ export type Database = {
           waypoints: Json
         }
         Insert: {
-          chained?: boolean
           created_at?: string
           directive: string
           ends_at: string
@@ -1779,7 +1777,6 @@ export type Database = {
           waypoints: Json
         }
         Update: {
-          chained?: boolean
           created_at?: string
           directive?: string
           ends_at?: string
@@ -1808,6 +1805,7 @@ export type Database = {
           defender_height: number
           dispatch_id: string
           id: string
+          lap: number
           log: Json
           resolved_at: string
           spoils: number
@@ -1818,6 +1816,7 @@ export type Database = {
           defender_height: number
           dispatch_id: string
           id?: string
+          lap?: number
           log?: Json
           resolved_at?: string
           spoils?: number
@@ -1828,6 +1827,7 @@ export type Database = {
           defender_height?: number
           dispatch_id?: string
           id?: string
+          lap?: number
           log?: Json
           resolved_at?: string
           spoils?: number
@@ -1837,7 +1837,7 @@ export type Database = {
           {
             foreignKeyName: "guardian_raids_dispatch_id_fkey"
             columns: ["dispatch_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "guardian_dispatches"
             referencedColumns: ["id"]
           },
