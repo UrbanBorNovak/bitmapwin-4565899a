@@ -224,7 +224,7 @@ export async function readPassportEstate(userId: string): Promise<PassportEstate
       try {
         const { readLandBoosts } = await import("@/lib/land-epoch.server");
         const boosts = await readLandBoosts(epoch.lands.map((l) => l.height));
-        for (const l of epoch.lands) l.boost = boosts.get(l.height);
+        for (const l of epoch.lands) { const b = boosts.get(l.height); if (b) l.boost = b; }
       } catch { /* boosts are optional decoration */ }
     }
   }
