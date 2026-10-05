@@ -210,6 +210,30 @@ export type Database = {
         }
         Relationships: []
       }
+      bitmap_custody: {
+        Row: {
+          block_height: number
+          checked_at: string
+          inscription_id: string
+          last_move_block: number | null
+          satpoint: string | null
+        }
+        Insert: {
+          block_height: number
+          checked_at?: string
+          inscription_id: string
+          last_move_block?: number | null
+          satpoint?: string | null
+        }
+        Update: {
+          block_height?: number
+          checked_at?: string
+          inscription_id?: string
+          last_move_block?: number | null
+          satpoint?: string | null
+        }
+        Relationships: []
+      }
       bitmap_index: {
         Row: {
           block_height: number

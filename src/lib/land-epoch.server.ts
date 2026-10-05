@@ -30,10 +30,14 @@ export async function readLandBoosts(heights: number[]): Promise<Map<number, Lan
     const h = Number(s.bitmap_height); const b = Number(s.block_height);
     if ((last.get(h) ?? 0) < b) last.set(h, b);
   }
+  // Every UTXO hop (transfer, atomic swap, sale) resets the clock — not just traced sales.
+  const { lastMoveBlocks } = await import("@/lib/bitmap-custody.server");
+  const moves = await lastMoveBlocks(unique).catch(() => new Map<number, number>());
   for (const r of idx.data ?? []) {
     if (r.genesis_height == null) continue;
     const h = Number(r.block_height);
-    out.set(h, landBoost(h, tip, Number(r.genesis_height), last.get(h) ?? null));
+    const mv = Math.max(moves.get(h) ?? 0, last.get(h) ?? 0);
+    out.set(h, landBoost(h, tip, Number(r.genesis_height), mv || null));
   }
   return out;
 }

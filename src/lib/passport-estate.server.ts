@@ -220,6 +220,11 @@ export async function readPassportEstate(userId: string): Promise<PassportEstate
         const h = Number((t as any).bitmap_height); const b = Number((t as any).block_height);
         if ((purchases.get(h) ?? 0) < b) purchases.set(h, b);
       }
+      try {
+        const { lastMoveBlocks } = await import("@/lib/bitmap-custody.server");
+        const moves = await lastMoveBlocks((land.data ?? []).map((r: any) => Number(r.block_height)));
+        for (const [h, b] of moves) if ((purchases.get(h) ?? 0) < b) purchases.set(h, b);
+      } catch { /* fall back to traced sales */ }
       epoch = computeHolderEpoch(tip, (land.data ?? []).map((r: any) => ({ height: Number(r.block_height), genesisHeight: r.genesis_height == null ? null : Number(r.genesis_height) })), purchases);
       try {
         const { readLandBoosts } = await import("@/lib/land-epoch.server");
