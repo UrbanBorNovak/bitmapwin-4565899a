@@ -7,6 +7,7 @@ const deploySchema = z.object({
   height: z.number().int().min(0),
   directive: z.enum(["patrol", "march", "farm"]),
   target: z.number().int().min(0).nullable(),
+  repeat: z.boolean().optional(),
 });
 
 /** Command one of your own Guardians. Ownership = the account that summoned it. */
@@ -49,6 +50,7 @@ export const deployGuardianFn = createServerFn({ method: "POST" })
       waypoints,
       started_at: new Date(start).toISOString(),
       ends_at: new Date(start + secs * 1000).toISOString(),
+      repeat: Boolean(data.repeat),
     });
     if (error) return { ok: false as const, error: "DISPATCH NOT RECORDED" };
     return { ok: true as const, seconds: secs };

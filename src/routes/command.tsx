@@ -56,6 +56,7 @@ function CommandPage() {
   const [directive, setDirective] = useState<Record<number, Directive>>({});
   const [target, setTarget] = useState<Record<number, string>>({});
   const [busy, setBusy] = useState<number | null>(null);
+  const [loop, setLoop] = useState<Record<number, boolean>>({});
   const byHeight = new Map((live.data ?? []).map((d) => [d.height, d]));
   const settle = useServerFn(settleRaidsFn);
   const raids = useQuery({
@@ -77,7 +78,7 @@ function CommandPage() {
     if (dir === "march" && !Number.isInteger(t)) { toast.error("ENTER A TARGET BLOCK HEIGHT"); return; }
     setBusy(h);
     try {
-      const r = await deploy({ data: { height: h, directive: dir, target: t } });
+      const r = await deploy({ data: { height: h, directive: dir, target: t, repeat: loop[h] ?? true } });
       if (!r.ok) toast.error(r.error);
       else toast.success(`${h}.BITMAP GUARDIAN DEPLOYED · ${Math.ceil(r.seconds / 60)} MIN ROUTE — VISIBLE TO EVERY PLAYER IN THE OASIS`);
       await qc.invalidateQueries({ queryKey: ["guardian-dispatches"] });
@@ -142,6 +143,10 @@ function CommandPage() {
                     <input value={target[g.height] ?? ""} onChange={(e) => setTarget((s) => ({ ...s, [g.height]: e.target.value.replace(/\D/g, "") }))}
                       placeholder={`TARGET BLOCK (≤${MAX_RANGE} AWAY)`} className="w-48 border border-border bg-background px-2 py-1 text-xs" />
                   )}
+                  <label className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <input type="checkbox" checked={loop[g.height] ?? true} onChange={(e) => setLoop((s) => ({ ...s, [g.height]: e.target.checked }))} />
+                    WALKER LOOP · KEEPS GOING WITH YOUR BROWSER CLOSED
+                  </label>
                   <button disabled={busy === g.height} onClick={() => send(g.height)} className="ml-auto border border-bitcoin px-3 py-1 text-xs text-bitcoin hover:bg-bitcoin/10">DEPLOY</button>
                 </div>
               )}
