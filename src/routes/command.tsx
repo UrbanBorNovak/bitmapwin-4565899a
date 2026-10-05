@@ -8,6 +8,7 @@ import { myGuardiansQuery } from "@/lib/bitmon-queries";
 import { liveDispatchesQuery } from "@/lib/guardian-dispatch-queries";
 import { DIRECTIVES, MAX_RANGE, positionAt, type Directive, type Dispatch } from "@/lib/guardian-dispatch";
 import { deployGuardianFn, recallGuardianFn } from "@/lib/guardian-dispatch.functions";
+import { settleRaidsFn } from "@/lib/guardian-raid.functions";
 
 export const Route = createFileRoute("/command")({
   head: () => ({
@@ -56,6 +57,19 @@ function CommandPage() {
   const [target, setTarget] = useState<Record<number, string>>({});
   const [busy, setBusy] = useState<number | null>(null);
   const byHeight = new Map((live.data ?? []).map((d) => [d.height, d]));
+  const settle = useServerFn(settleRaidsFn);
+  const raids = useQuery({
+    queryKey: ["guardian-raids", "recent"],
+    queryFn: async () => {
+      await settle().catch(() => null);
+      const [{ data: r }, { data: sp }] = await Promise.all([
+        supabase.from("guardian_raids").select("id, attacker_height, defender_height, winner_height, spoils, log, resolved_at").order("resolved_at", { ascending: false }).limit(30),
+        supabase.from("bitmap_spoils").select("block_height, bit, raids_won"),
+      ]);
+      return { raids: r ?? [], spoils: new Map((sp ?? []).map((x) => [Number(x.block_height), x])) };
+    },
+    refetchInterval: 15_000,
+  });
 
   async function send(h: number) {
     const dir = directive[h] ?? "patrol";
@@ -131,8 +145,35 @@ function CommandPage() {
                   <button disabled={busy === g.height} onClick={() => send(g.height)} className="ml-auto border border-bitcoin px-3 py-1 text-xs text-bitcoin hover:bg-bitcoin/10">DEPLOY</button>
                 </div>
               )}
-              <p className="mt-2 text-[10px] text-muted-foreground">{DIRECTIVES.find((o) => o.id === dir)?.note}</p>
+              <p className="mt-2 text-[10px] text-muted-foreground">
+                {DIRECTIVES.find((o) => o.id === dir)?.note}
+                {dir === "march" && " Marching onto a BITMAP with a Guardian starts a raid — Bite, Armor and Speed decide it; spoils land on the winner's BITMAP."}
+              </p>
+              <p className="mt-1 text-[10px] text-bitcoin">
+                SPOILS ON {g.height}.BITMAP · {Number(raids.data?.spoils.get(g.height)?.bit ?? 0)} BIT · {raids.data?.spoils.get(g.height)?.raids_won ?? 0} RAIDS WON
+              </p>
             </section>
+          );
+        })}
+      </div>
+
+      <h2 className="mt-12 text-[10px] tracking-[0.3em] text-signal">RAID LOG · LIVE</h2>
+      <div className="mt-3 grid gap-2">
+        {(raids.data?.raids ?? []).length === 0 && <p className="text-xs text-muted-foreground">No raids settled yet. March a Guardian onto a guarded BITMAP.</p>}
+        {(raids.data?.raids ?? []).map((r) => {
+          const log = (r.log as { round: number; by: number; damage: number }[]) ?? [];
+          return (
+            <details key={r.id} className="border border-border bg-card/40 p-3 text-xs">
+              <summary className="cursor-pointer">
+                <span className="text-bitcoin">{r.attacker_height}</span> RAIDED <span className="text-bitcoin">{r.defender_height}</span> · WINNER{" "}
+                <span className="text-signal">{r.winner_height}.BITMAP</span> · +{r.spoils} BIT LANDED
+              </summary>
+              <ol className="mt-2 grid gap-0.5 text-[10px] text-muted-foreground">
+                {log.map((x, i) => (
+                  <li key={i}>R{x.round} · {x.by} {x.damage ? `HITS FOR ${x.damage}` : "MISSES"}</li>
+                ))}
+              </ol>
+            </details>
           );
         })}
       </div>
