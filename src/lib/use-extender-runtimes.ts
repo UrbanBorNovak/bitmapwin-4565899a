@@ -7,6 +7,7 @@ import {
   type ExtenderPersistedState,
 } from "@/lib/extender-state";
 import type { RuntimeDeployment } from "@/lib/extender-code";
+import { getLandBoostsFn } from "@/lib/land-epoch.functions";
 
 /**
  * Keeps one sandbox alive per nearby deployment, wired to real world state.
@@ -42,6 +43,7 @@ export function useExtenderRuntimes(
 } {
   const runtimes = useRef(new Map<string, { runtime: ExtenderRuntime; code: string }>());
   const restored = useRef(new Map<string, ExtenderPersistedState>());
+  const heightBonus = useRef(new Map<number, number>());
   const dirty = useRef(new Map<string, ExtenderPersistedState>());
   const [snapshots, setSnapshots] = useState<Record<string, ExtenderSnapshot>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -95,13 +97,24 @@ export function useExtenderRuntimes(
           for (const id of missing) restored.current.set(id, { shared: {}, player: {} });
         }
       }
+      // Holder Epoch: lands held longer get a taller build ceiling.
+      const unknown = [...new Set([...wanted.values()].map((e) => e.height))].filter((h) => !heightBonus.current.has(h));
+      if (unknown.length > 0) {
+        try {
+          const { boosts } = await getLandBoostsFn({ data: { heights: unknown.slice(0, 200) } });
+          for (const h of unknown) heightBonus.current.set(h, 0);
+          for (const b of boosts) heightBonus.current.set(b.height, b.heightBonus);
+        } catch {
+          for (const h of unknown) heightBonus.current.set(h, 0);
+        }
+      }
       if (cancelled) return;
 
       for (const [id, entry] of wanted) {
         if (runtimes.current.has(id)) continue;
         const runtime = startExtender(
           entry.code,
-          { height: entry.height, club: `${entry.height}`, owner: null, config: entry.config },
+          { height: entry.height, club: `${entry.height}`, owner: null, config: entry.config, heightBonus: heightBonus.current.get(entry.height) ?? 0 },
           {
             onSnapshot: (snapshot) => setSnapshots((current) => ({ ...current, [id]: snapshot })),
             onError: (message) => setErrors((current) => ({ ...current, [id]: message })),
