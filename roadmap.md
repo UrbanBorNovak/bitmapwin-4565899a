@@ -1,5 +1,11 @@
 # Roadmap
 
+## Private player records
+- [x] Lock tournament entrant secrets and identity links to trusted server routines.
+- [x] Lock Shadow commitment and spent-commitment records to trusted server routines.
+- [x] Lock SHORD mint, deposit, and withdrawal records to trusted server routines.
+- [x] Verify anonymous and signed-in browser roles have no direct read access.
+
 ## Oasis raid outcomes
 - [x] Load recent public Guardian raid results in the shared world.
 - [x] Show each winning BITMAP and its spoils directly above the land.
