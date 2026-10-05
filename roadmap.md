@@ -1,5 +1,10 @@
 # Roadmap
 
+## Oasis raid outcomes
+- [x] Load recent public Guardian raid results in the shared world.
+- [x] Show each winning BITMAP and its spoils directly above the land.
+- [x] Verify the live marker rendering and current preview build.
+
 ## Live DMT diagram
 - [x] Route confirmed Guardian summon payments through the Bitcoin, inscription, and DMT layers.
 - [x] Map the live Guardian BITMAP onto the shared order-10 Hilbert atlas.

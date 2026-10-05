@@ -12,7 +12,7 @@ import { WORLD_CELL, WORLD_GRID, cellX, cellZ, type PlayerState } from "@/lib/pl
 import { groundY } from "@/lib/world-terrain";
 import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { allGuardiansQuery, type AwakeGuardian } from "@/lib/bitmon-queries";
-import { liveDispatchesQuery } from "@/lib/guardian-dispatch-queries";
+import { liveDispatchesQuery, recentGuardianRaidsQuery } from "@/lib/guardian-dispatch-queries";
 import { settleRaidsFn } from "@/lib/guardian-raid.functions";
 import { dispatchPosition, isLive, type Dispatch } from "@/lib/guardian-dispatch";
 import { GuardianBody } from "@/components/bitmon/GuardianBody";
@@ -30,6 +30,13 @@ type Walker = {
   lastRoarReq: number; biteReady: number; lunge: number;
   /** commanded route shared by every player, if deployed */
   order: Dispatch | null;
+};
+
+type LandRaidResult = {
+  height: number;
+  latestSpoils: number;
+  recentSpoils: number;
+  wins: number;
 };
 
 /** Patrol ring: the guardian walks the border of its BITMAP, just inside the edge. */
@@ -185,6 +192,7 @@ const Guardian = memo(function Guardian({ w, unit, pose }: { w: Walker; unit: nu
 export const TerritoryGuardians = memo(function TerritoryGuardians({ unit, pose }: { unit: number; pose: React.MutableRefObject<PlayerState | null> }) {
   const { data } = useQuery(allGuardiansQuery());
   const { data: orders } = useQuery(liveDispatchesQuery());
+  const { data: raids } = useQuery(recentGuardianRaidsQuery());
   // Anyone in the Oasis helps settle due raid laps; results are deterministic and idempotent.
   useQuery({ queryKey: ["guardian-raids", "settle"], queryFn: () => settleRaidsFn().catch(() => null), refetchInterval: 60_000, enabled: (orders?.length ?? 0) > 0 });
   const walkers = useMemo<Walker[]>(
@@ -203,10 +211,69 @@ export const TerritoryGuardians = memo(function TerritoryGuardians({ unit, pose 
   // Attach live orders without rebuilding walkers (keeps their positions).
   const byHeight = useMemo(() => new Map((orders ?? []).map((o) => [o.height, o])), [orders]);
   for (const w of walkers) w.order = byHeight.get(w.g.height) ?? null;
+  const raidResults = useMemo(() => {
+    const byWinner = new Map<number, LandRaidResult>();
+    for (const raid of raids ?? []) {
+      const prior = byWinner.get(raid.winnerHeight);
+      if (prior) {
+        prior.recentSpoils += raid.spoils;
+        prior.wins += 1;
+      } else {
+        byWinner.set(raid.winnerHeight, {
+          height: raid.winnerHeight,
+          latestSpoils: raid.spoils,
+          recentSpoils: raid.spoils,
+          wins: 1,
+        });
+      }
+    }
+    return [...byWinner.values()];
+  }, [raids]);
   return (
     <group>
       {walkers.map((w) => <Guardian key={w.g.height} w={w} unit={unit} pose={pose} />)}
       {walkers.map((w) => <Beacon key={`b${w.g.height}`} x={w.hx} z={w.hz} />)}
+      {raidResults.map((result) => <RaidLandMarker key={result.height} result={result} unit={unit} pose={pose} />)}
+    </group>
+  );
+});
+
+/** Public raid outcome anchored to the winning Guardian's home BITMAP. */
+const RaidLandMarker = memo(function RaidLandMarker({
+  result,
+  unit,
+  pose,
+}: {
+  result: LandRaidResult;
+  unit: number;
+  pose: React.MutableRefObject<PlayerState | null>;
+}) {
+  const ref = useRef<THREE.Group>(null);
+  const col = result.height % WORLD_GRID;
+  const row = Math.floor(result.height / WORLD_GRID);
+  const x = cellX(col);
+  const z = cellZ(row);
+  const y = groundY(x, z) + unit * 4.25;
+
+  useFrame(() => {
+    const node = ref.current;
+    if (!node) return;
+    const player = pose.current;
+    node.visible = !player || Math.hypot(player.x - x, player.z - z) < WORLD_CELL * 3.5;
+  });
+
+  return (
+    <group ref={ref} position={[x, y, z]}>
+      <SafeHtml center distanceFactor={unit * 42} style={{ pointerEvents: "none" }}>
+        <div className="min-w-max border border-signal bg-background/90 px-2.5 py-1.5 text-center font-mono shadow-lg backdrop-blur-sm">
+          <p className="text-[8px] tracking-[0.22em] text-signal">RAID WINNER</p>
+          <p className="mt-0.5 text-[10px] text-foreground">{result.height}.BITMAP</p>
+          <p className="mt-0.5 text-[10px] text-bitcoin">+{result.latestSpoils} BIT SPOILS</p>
+          {result.wins > 1 ? (
+            <p className="mt-0.5 text-[8px] text-muted-foreground">{result.wins} RECENT WINS · {result.recentSpoils} BIT</p>
+          ) : null}
+        </div>
+      </SafeHtml>
     </group>
   );
 });
