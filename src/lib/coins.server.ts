@@ -105,6 +105,10 @@ export async function runDailyRewards(): Promise<RewardRunResult> {
     updated_at: string;
   }[] = [];
 
+  // Holder Epoch: lands kept longer in one wallet earn a larger visitor dividend.
+  const { readLandBoosts } = await import("@/lib/land-epoch.server");
+  const boosts = await readLandBoosts(heights).catch(() => new Map());
+
   for (const height of heights) {
     const owner = ownerByHeight.get(height) ?? null;
     add(awards, owner, "build_maintained", EMISSION.perBuildMaintained);
@@ -113,7 +117,8 @@ export async function runDailyRewards(): Promise<RewardRunResult> {
     const before = snapshots.get(height) ?? { views: 0, uniques: 0 };
     const newViews = Math.max(0, now.views - before.views);
     const newUniques = Math.max(0, now.uniques - before.uniques);
-    add(awards, owner, "build_attention", newViews * EMISSION.perView + newUniques * EMISSION.perUniqueVisitor);
+    const dividend = boosts.get(height)?.dividend ?? 1;
+    add(awards, owner, "build_attention", (newViews * EMISSION.perView + newUniques * EMISSION.perUniqueVisitor) * dividend);
     snapshotUpserts.push({
       bitmap_height: height,
       total_views: now.views,

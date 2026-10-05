@@ -502,7 +502,8 @@ export function startExtender(
     worker.terminate();
   };
 
-  worker.postMessage({ type: "init", code, context, limits: RUNTIME_LIMITS, state: restored });
+  const heightBonus = Math.max(0, Math.min(8, Math.floor(context.heightBonus ?? 0)));
+  worker.postMessage({ type: "init", code, context, limits: { ...RUNTIME_LIMITS, maxHeight: RUNTIME_LIMITS.maxHeight + heightBonus }, state: restored });
 
   return {
     snapshot: () => latest,
