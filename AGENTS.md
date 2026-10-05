@@ -35,3 +35,4 @@
 - BITMAPs ≥942,000 resolve via the vendored on-chain LiveOCI block parser (src/lib/vendor/ord-block-parser.js) in resolveBitmapFromChain, then cache in bitmap_index. Why: OCI pages stop at 941,999.
 - Holder Epoch land perks (src/lib/holder-epoch.ts landBoost) come only from bitmap_index genesis + latest traced sale; they scale the daily visitor dividend and the Extender maxHeight. Why: holding is rewarded from chain facts, never browser claims.
 - Holding time resets on every on-chain move of the inscription (satpoint tx block via bitmap-custody.server.ts), not only traced sales. Why: transfers and swaps outside recorded sales must not overcount custody.
+- Guardian command routes (guardian_dispatches) are waypoint lists between server timestamps; every client derives position from positionAt in src/lib/guardian-dispatch.ts. Why: all players see the same Guardian position without per-frame networking; only the summoning account may deploy.

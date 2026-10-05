@@ -84,3 +84,15 @@ export const guardianDnaQuery = (height: number) =>
     staleTime: Infinity,
     retry: 1,
   });
+
+/** Guardians summoned by the signed-in account — the ones it may command. */
+export const myGuardiansQuery = (userId: string | null) =>
+  queryOptions({
+    queryKey: ["guardians", "mine", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data } = await supabase.from("bitmon_guardians").select(COLS).eq("summoned_by_user_id", userId!).order("block_height");
+      return (data ?? []).map((r) => toGuardian(r as Row));
+    },
+    staleTime: 30_000,
+  });
