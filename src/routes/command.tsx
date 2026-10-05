@@ -121,9 +121,22 @@ function CommandPage() {
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <div>
                   <span className="text-bitcoin">{g.height}.BITMAP</span>
-                  <span className="ml-2 text-xs text-muted-foreground">{g.species} · LV {g.level} · SPD {g.speed} · BITE {g.bite} · ARM {g.armor}</span>
+                  <span className="ml-2 text-xs text-muted-foreground">{g.species} · LV {g.level}</span>
                 </div>
                 <span className={`text-[11px] ${d ? "text-signal" : "text-muted-foreground"}`}>{status(d, now)}</span>
+              </div>
+              <div className="mt-3 grid grid-cols-4 gap-px border border-border bg-border">
+                {([
+                  ["BITE", g.bite],
+                  ["ARMOR", g.armor],
+                  ["SPEED", g.speed],
+                  ["HP", g.hp],
+                ] as const).map(([label, val]) => (
+                  <div key={label} className="bg-background px-3 py-2">
+                    <p className="text-[9px] tracking-[0.25em] text-muted-foreground">{label}</p>
+                    <p className={`font-display text-lg ${label === "BITE" ? "text-bitcoin" : "text-foreground"}`}>{val}</p>
+                  </div>
+                ))}
               </div>
               {d ? (
                 <div className="mt-3 flex items-center gap-3">
