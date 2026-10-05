@@ -51,3 +51,23 @@ export function computeHolderEpoch(tip: number, held: { height: number; genesisH
   const longest = lands.reduce<EpochLand | null>((m, l) => (!m || l.blocksHeld > m.blocksHeld ? l : m), null);
   return { tip, score, tier: rank.tier, title: rank.title, nextAt: idx > 0 ? (EPOCH_RANKS[idx - 1]?.min ?? null) : null, eras, longest, lands };
 }
+
+/** Land perks unlocked by how long a BITMAP has stayed in one wallet. */
+export const LAND_EPOCH_TIERS = [
+  { blocks: 150_000, label: "RELIC", dividend: 2.5, heightBonus: 8 },
+  { blocks: 100_000, label: "ANCIENT", dividend: 2, heightBonus: 6 },
+  { blocks: 50_000, label: "SETTLED", dividend: 1.5, heightBonus: 4 },
+  { blocks: 10_000, label: "ROOTED", dividend: 1.25, heightBonus: 2 },
+  { blocks: 0, label: "FRESH", dividend: 1, heightBonus: 0 },
+] as const;
+
+export type LandBoost = { height: number; blocksHeld: number; traced: boolean; era: EpochEra; label: string; dividend: number; heightBonus: number };
+
+export function landBoost(height: number, tip: number, genesisHeight: number, lastSaleBlock: number | null): LandBoost {
+  const holdSince = lastSaleBlock != null && lastSaleBlock > genesisHeight ? lastSaleBlock : genesisHeight;
+  const blocksHeld = Math.max(0, tip - holdSince);
+  const tier = LAND_EPOCH_TIERS.find((t) => blocksHeld >= t.blocks) ?? LAND_EPOCH_TIERS[LAND_EPOCH_TIERS.length - 1]!;
+  const era = eraFor(genesisHeight);
+  const dividend = tier.dividend + (era === "VANGUARD" ? 0.5 : 0);
+  return { height, blocksHeld, traced: lastSaleBlock != null, era, label: tier.label, dividend, heightBonus: tier.heightBonus };
+}
