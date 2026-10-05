@@ -3852,6 +3852,7 @@ export type Database = {
       }
     }
     Functions: {
+      archaeology_ledger: { Args: never; Returns: Json }
       atlas_region_stats: {
         Args: { p_hi: number; p_lo: number }
         Returns: Json
