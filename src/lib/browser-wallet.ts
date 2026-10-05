@@ -527,6 +527,8 @@ export async function signParentInputsPsbt(
     // allowedSignHash as required, so pin SIGHASH_DEFAULT (0). Never fall back
     // to the legacy modal: it only signs script-path spends and always fails
     // with "No taproot scripts signed" for a key-path parent.
+    const direct = await xverseSignPsbtDirect(psbtBase64, holderAddress, signIndices);
+    if (direct) return direct;
     return xverseSignPsbt({
       psbt: psbtBase64,
       signInputs: { [holderAddress]: signIndices },
@@ -537,6 +539,51 @@ export async function signParentInputsPsbt(
   return xverseSignPaymentPsbt(psbtBase64, holderAddress, signIndices, "Claim this bitmap as the parent of a new inscription", SIGHASH_ALL);
 }
 
+/**
+ * Calls Xverse's injected provider directly so `allowedSignHash` survives —
+ * Sats-Connect's schema sanitizer strips it. Returns null when no direct
+ * provider exists; throws on user decline or a definitive signing error.
+ */
+async function xverseSignPsbtDirect(
+  psbtBase64: string,
+  address: string,
+  indices: number[],
+): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  const w = window as unknown as {
+    XverseProviders?: { BitcoinProvider?: { request?: (m: string, p: unknown) => Promise<unknown> } };
+    BitcoinProvider?: { request?: (m: string, p: unknown) => Promise<unknown> };
+  };
+  const provider = w.XverseProviders?.BitcoinProvider ?? w.BitcoinProvider;
+  if (!provider?.request) return null;
+  let lastError: unknown = null;
+  for (const allowedSignHash of [0, 1]) {
+    try {
+      const res = (await provider.request("signPsbt", {
+        psbt: psbtBase64,
+        signInputs: { [address]: indices },
+        allowedSignHash,
+        broadcast: false,
+      })) as { result?: { psbt?: string } | string; error?: { code?: unknown; message?: string }; psbt?: string } | string;
+      if (typeof res === "string" && res.length > 20) return res;
+      if (res && typeof res === "object") {
+        if (res.error) throw res.error;
+        const r = res.result;
+        const signed = typeof r === "string" ? r : r?.psbt ?? res.psbt;
+        if (typeof signed === "string" && signed.length > 20) return signed;
+      }
+      lastError = new Error("XVERSE RETURNED NO SIGNED PSBT");
+    } catch (error) {
+      const n = normalizeXverseError(error);
+      if (String(n.code) === "4001" || /reject|denied|cancel/i.test(n.message ?? "")) {
+        throw new Error("XVERSE SIGNING WAS DECLINED IN THE WALLET");
+      }
+      lastError = error;
+    }
+  }
+  console.warn("[xverse direct signPsbt] falling back", lastError);
+  return null;
+}
 
 
 
