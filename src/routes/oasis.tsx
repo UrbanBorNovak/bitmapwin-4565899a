@@ -94,6 +94,9 @@ function OasisPage() {
           />
           <OasisTradeTicker />
           <ClassSkillBar />
+          <Link to="/command" className="mt-3 flex items-center justify-between border border-bitcoin bg-card px-4 py-3 font-mono text-xs text-bitcoin hover:bg-bitcoin/10">
+            <span>◆ GUARDIAN COMMAND CENTRE — PATROL · MARCH · RAID</span><span aria-hidden="true">→</span>
+          </Link>
           <GuardianRadar {...(height === undefined ? {} : { current: height })} />
           <details className="mt-3 border border-border bg-card p-4">
             <summary className="label cursor-pointer text-bitcoin">● GO LIVE ON KICK</summary>
