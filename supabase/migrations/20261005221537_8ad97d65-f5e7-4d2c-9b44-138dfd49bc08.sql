@@ -1,0 +1,1 @@
+ALTER FUNCTION public.archaeology_ledger() SECURITY INVOKER;
