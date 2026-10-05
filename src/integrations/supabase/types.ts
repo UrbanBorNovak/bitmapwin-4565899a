@@ -1751,36 +1751,42 @@ export type Database = {
       }
       guardian_dispatches: {
         Row: {
+          chained: boolean
           created_at: string
           directive: string
           ends_at: string
           guardian_height: number
           id: string
           recalled_at: string | null
+          repeat: boolean
           started_at: string
           target_height: number | null
           user_id: string
           waypoints: Json
         }
         Insert: {
+          chained?: boolean
           created_at?: string
           directive: string
           ends_at: string
           guardian_height: number
           id?: string
           recalled_at?: string | null
+          repeat?: boolean
           started_at?: string
           target_height?: number | null
           user_id: string
           waypoints: Json
         }
         Update: {
+          chained?: boolean
           created_at?: string
           directive?: string
           ends_at?: string
           guardian_height?: number
           id?: string
           recalled_at?: string | null
+          repeat?: boolean
           started_at?: string
           target_height?: number | null
           user_id?: string
