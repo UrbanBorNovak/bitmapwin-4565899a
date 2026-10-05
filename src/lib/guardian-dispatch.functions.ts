@@ -37,7 +37,7 @@ export const deployGuardianFn = createServerFn({ method: "POST" })
       .gt("ends_at", nowIso)
       .limit(1);
     if (live?.length) return { ok: false as const, error: "ALREADY DEPLOYED — RECALL IT FIRST" };
-    const speed = Number((g.stats as Record<string, unknown>)?.speed ?? 30) || 30;
+    const speed = Number((g.stats as Record<string, unknown>)?.["speed"] ?? 30) || 30;
     const start = Date.now();
     const waypoints = planRoute(data.directive, data.height, data.target, start / 1000);
     const secs = routeSeconds(waypoints, speed, data.directive);

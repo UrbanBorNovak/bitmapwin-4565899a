@@ -39,7 +39,7 @@ export function planRoute(directive: Directive, home: number, target: number | n
   if (directive === "patrol") {
     const ring: number[] = [home];
     for (let lap = 0; lap < 2; lap++)
-      for (const [dc, dr] of [[-2, -2], [2, -2], [2, 2], [-2, 2]]) if (valid(hc + dc, hr + dr)) ring.push(at(hc + dc, hr + dr));
+      for (const [dc, dr] of [[-2, -2], [2, -2], [2, 2], [-2, 2]] as const) if (valid(hc + dc, hr + dr)) ring.push(at(hc + dc, hr + dr));
     ring.push(home);
     return ring;
   }
@@ -57,7 +57,7 @@ export function planRoute(directive: Directive, home: number, target: number | n
 /** Seconds a route takes, including the hold at a march target. */
 export function routeSeconds(points: number[], speed: number, directive: Directive) {
   let len = 0;
-  for (let i = 1; i < points.length; i++) len += cellDistance(points[i - 1], points[i]);
+  for (let i = 1; i < points.length; i++) len += cellDistance(points[i - 1]!, points[i]!);
   return Math.ceil(len / cellsPerSecond(speed)) + (directive === "march" ? HOLD_SECONDS : 0);
 }
 
@@ -67,22 +67,23 @@ export function positionAt(points: number[], startMs: number, endMs: number, now
   const segs: number[] = [];
   let total = 0;
   for (let i = 1; i < pos.length; i++) {
-    const d = Math.hypot(pos[i].x - pos[i - 1].x, pos[i].z - pos[i - 1].z);
+    const d = Math.hypot(pos[i]!.x - pos[i - 1]!.x, pos[i]!.z - pos[i - 1]!.z);
     segs.push(d);
     total += d;
   }
   const f = Math.min(1, Math.max(0, (now - startMs) / Math.max(1, endMs - startMs)));
   let want = f * total;
   for (let i = 0; i < segs.length; i++) {
-    const a = pos[i], b = pos[i + 1];
-    if (want <= segs[i] || i === segs.length - 1) {
-      const k = segs[i] ? Math.min(1, want / segs[i]) : 1;
-      const yaw = segs[i] ? Math.atan2(b.x - a.x, b.z - a.z) : 0;
-      return { x: a.x + (b.x - a.x) * k, z: a.z + (b.z - a.z) * k, yaw, moving: segs[i] > 0, progress: f, leg: i };
+    const a = pos[i]!, b = pos[i + 1]!;
+    const sg = segs[i]!;
+    if (want <= sg || i === segs.length - 1) {
+      const k = sg ? Math.min(1, want / sg) : 1;
+      const yaw = sg ? Math.atan2(b.x - a.x, b.z - a.z) : 0;
+      return { x: a.x + (b.x - a.x) * k, z: a.z + (b.z - a.z) * k, yaw, moving: sg > 0, progress: f, leg: i };
     }
-    want -= segs[i];
+    want -= sg;
   }
-  return { x: pos[0].x, z: pos[0].z, yaw: 0, moving: false, progress: f, leg: 0 };
+  return { x: pos[0]?.x ?? 0, z: pos[0]?.z ?? 0, yaw: 0, moving: false, progress: f, leg: 0 };
 }
 
 export type Dispatch = {
