@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { resolveWallet } from "@/components/BuyButton";
-import { sendBitcoinFromWallet, signParentInputsPsbt, xOnlyPubKeyHex } from "@/lib/browser-wallet";
+import { refreshWalletKeys, sendBitcoinFromWallet, signParentInputsPsbt, xOnlyPubKeyHex } from "@/lib/browser-wallet";
 import { mintParentsFn, signCollectionParentFn } from "@/lib/ord-parents.functions";
 import type { ParentSpend } from "@/lib/ord-parents";
 import {
@@ -112,10 +112,14 @@ export function ShadowInscriber(props: {
       if (current.parents?.length) {
         if (current.parents.some((p) => p.signer === "wallet")) {
           setBusy("APPROVE THE PARENT CLAIM IN YOUR WALLET…");
-          const wallet = await resolveWallet();
+          let wallet = await resolveWallet();
           // Taproot key-path spends need the holder's internal key on the PSBT
           // input, otherwise Xverse fails with "No taproot scripts signed".
+          if (!xOnlyPubKeyHex(wallet.publicKey)) wallet = await refreshWalletKeys(wallet);
           const internal = xOnlyPubKeyHex(wallet.publicKey);
+          if (!internal && current.parents.some((p) => p.signer === "wallet" && /^bc1p/i.test(p.address))) {
+            throw new Error("YOUR WALLET DID NOT SHARE ITS ORDINALS KEY — RECONNECT THE WALLET AND RETRY STEP 2");
+          }
           toReveal = {
             ...current,
             parents: current.parents.map((p) =>

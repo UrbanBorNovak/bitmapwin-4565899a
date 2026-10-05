@@ -523,18 +523,20 @@ export async function signParentInputsPsbt(
     return /^[0-9a-fA-F]+$/.test(signed.trim()) ? hexToBase64(signed) : signed.trim();
   }
   if (taproot) {
-    // Native JSON-RPC signPsbt handles BIP-371 key-path inputs. Xverse treats
-    // allowedSignHash as required, so pin SIGHASH_DEFAULT (0). Never fall back
-    // to the legacy modal: it only signs script-path spends and always fails
-    // with "No taproot scripts signed" for a key-path parent.
-    const direct = await xverseSignPsbtDirect(psbtBase64, holderAddress, signIndices);
-    if (direct) return direct;
-    return xverseSignPsbt({
-      psbt: psbtBase64,
-      signInputs: { [holderAddress]: signIndices },
-      allowedSignHash: 0,
-      broadcast: false,
-    } as SignPsbtParams);
+    // Documented Sats Connect signPsbt (SIGHASH_ALL default) first; the raw
+    // provider call is only a fallback for older extension builds.
+    try {
+      return await xverseSignPsbt({
+        psbt: psbtBase64,
+        signInputs: { [holderAddress]: signIndices },
+        broadcast: false,
+      });
+    } catch (error) {
+      if (/DECLINED/i.test((error as Error).message)) throw error;
+      const direct = await xverseSignPsbtDirect(psbtBase64, holderAddress, signIndices);
+      if (direct) return direct;
+      throw error;
+    }
   }
   return xverseSignPaymentPsbt(psbtBase64, holderAddress, signIndices, "Claim this bitmap as the parent of a new inscription", SIGHASH_ALL);
 }
@@ -557,7 +559,7 @@ async function xverseSignPsbtDirect(
   const provider = w.XverseProviders?.BitcoinProvider ?? w.BitcoinProvider;
   if (!provider?.request) return null;
   let lastError: unknown = null;
-  for (const allowedSignHash of [0, 1]) {
+  for (const allowedSignHash of [1, 0]) {
     try {
       const res = (await provider.request("signPsbt", {
         psbt: psbtBase64,
