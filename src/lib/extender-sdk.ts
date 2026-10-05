@@ -72,6 +72,8 @@ export type ExtenderContext = {
   club: string;
   owner: string | null;
   config: Record<string, unknown>;
+  /** extra build height earned by Holder Epoch (0–8), added to RUNTIME_LIMITS.maxHeight */
+  heightBonus?: number;
 };
 
 export type SdkModule = {
