@@ -20,6 +20,7 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/play", label: "PLAY // LIVING CARDS", note: "The card game where the world is the deck" },
       { to: "/play/extenders", label: "PFP EXTENDERS", note: "Optional Ordinals HTML card art" },
       { to: "/oasis", label: "ENTER THE OASIS", note: "Walk, drive, build and explore" },
+      { to: "/command", label: "GUARDIAN COMMAND CENTRE", note: "Send Guardians on patrols, marches and raids" },
       { to: "/stream", label: "WORLD STREAM", note: "See verified history as it happens" },
       { to: "/play-guide", label: "PLAYER GUIDE", note: "Controls, devices and what to do" },
       { to: "/cities", label: "VISIT CITIES", note: "Districts inside the world" },
@@ -170,7 +171,7 @@ export function SiteHeader() {
                   </div>
                   {group.id === "play" ? (
                     <div className="flex items-center justify-between border-t border-border bg-card px-4 py-3">
-                      <span className="label">8 COMMANDS</span>
+                      <span className="label">9 COMMANDS</span>
                       <span className="label text-bitcoin">READY</span>
                     </div>
                   ) : null}
@@ -267,7 +268,7 @@ export function SiteHeader() {
                 </div>
                 {group.id === "play" ? (
                   <div className="flex items-center justify-between border-t border-border bg-card px-4 py-3">
-                    <span className="label">8 COMMANDS</span>
+                    <span className="label">9 COMMANDS</span>
                     <span className="label text-bitcoin">READY</span>
                   </div>
                 ) : null}
