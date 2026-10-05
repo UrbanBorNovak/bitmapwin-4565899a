@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ALL_OFFICIAL_TRAITS, traitsOf } from "@/lib/traits";
+import { ArchaeologyLedger } from "@/components/ArchaeologyLedger";
 
 export const Route = createFileRoute("/archaeology")({
   head: () => ({ meta: [
@@ -158,6 +159,8 @@ function ArchaeologyFacts() {
           })}
         </ol>
       </section>
+
+      <ArchaeologyLedger />
 
       <div className="mt-10 flex flex-wrap gap-3">
         <Link to="/traits" className="btn-term-ghost">OFFICIAL TRAIT INDEX →</Link>
