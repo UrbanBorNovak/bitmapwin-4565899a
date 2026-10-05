@@ -1636,6 +1636,27 @@ export type Database = {
         }
         Relationships: []
       }
+      genesis_minters: {
+        Row: {
+          block_height: number
+          inscription_id: string
+          minter_address: string
+          resolved_at: string
+        }
+        Insert: {
+          block_height: number
+          inscription_id: string
+          minter_address: string
+          resolved_at?: string
+        }
+        Update: {
+          block_height?: number
+          inscription_id?: string
+          minter_address?: string
+          resolved_at?: string
+        }
+        Relationships: []
+      }
       goods_market: {
         Row: {
           base_price: number
