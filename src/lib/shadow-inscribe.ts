@@ -237,6 +237,8 @@ export async function revealJob(
       index: parent.vout,
       witnessUtxo: { script: outScriptForAddress(parent.address), amount: BigInt(parent.value) },
       ...(parent.tapInternalKey ? { tapInternalKey: hex.decode(parent.tapInternalKey) } : {}),
+      // Taproot key-path parents sign with SIGHASH_DEFAULT (0) — Xverse needs it explicit.
+      ...(parent.tapInternalKey || /^bc1p/i.test(parent.address) ? { sighashType: 0 } : {}),
     });
   }
   const commitIdx = parents.length;
