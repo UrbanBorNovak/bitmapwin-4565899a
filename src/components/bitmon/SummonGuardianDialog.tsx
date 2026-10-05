@@ -382,7 +382,8 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
         data: { height, holderAddress: wallet.ordinalsAddress, ...(manual ? { bitmapInscriptionId: manual } : {}) },
       });
       if (!check.bitmapParentId) {
-        setNeedBitmapId(true);
+        // The LiveOCI resolver finds the BITMAP itself; only ask for a paste when it truly can't.
+        setNeedBitmapId(check.notes.some((n) => /COULD NOT FIND|IS NOT \d+\.BITMAP|EARLIER/.test(n)));
         setDenied(
           `${check.notes.join(" · ")} — YOUR CONNECTED ORDINALS WALLET MUST HOLD ${height}.BITMAP. NOTHING WAS PAID.`,
         );
