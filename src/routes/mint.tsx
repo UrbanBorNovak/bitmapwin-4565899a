@@ -10,6 +10,8 @@ import { DelegateGuardianSummon } from "@/components/bitmon/DelegateGuardianSumm
 import { UnfinishedInscriptions } from "@/components/territory/UnfinishedInscriptions";
 import { SummonDashboard } from "@/components/bitmon/SummonDashboard";
 import { SHORD_VAULT_DISABLED } from "@/lib/shord-flag";
+import { GuardianShowcase } from "@/components/bitmon/GuardianShowcase";
+import { GuardianStory, WalletMintGuide } from "@/components/bitmon/WalletMintGuide";
 
 export const Route = createFileRoute("/mint")({
   validateSearch: z.object({ height: z.coerce.number().int().min(0).optional() }),
@@ -122,6 +124,9 @@ function MintPage() {
           <DelegateGuardianSummon dna={d} />
         </section>
       ) : null}
+      <WalletMintGuide />
+      <GuardianShowcase />
+      <GuardianStory />
       <SummonDashboard />
       {open ? <SummonGuardianDialog height={height} open={open} onOpenChange={setOpen} /> : null}
     </div>
