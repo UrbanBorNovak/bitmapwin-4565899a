@@ -60,7 +60,7 @@ function CommandPage() {
   async function send(h: number) {
     const dir = directive[h] ?? "patrol";
     const t = dir === "march" ? Number(target[h]) : null;
-    if (dir === "march" && !Number.isInteger(t)) return toast.error("ENTER A TARGET BLOCK HEIGHT");
+    if (dir === "march" && !Number.isInteger(t)) { toast.error("ENTER A TARGET BLOCK HEIGHT"); return; }
     setBusy(h);
     try {
       const r = await deploy({ data: { height: h, directive: dir, target: t } });
