@@ -18,7 +18,7 @@ async function trace(inscriptionId: string): Promise<{ satpoint: string; block: 
   try {
     const m = await json(`https://ordinals.com/r/inscription/${inscriptionId}`);
     const satpoint = String(m?.satpoint ?? "");
-    const txid = satpoint.split(":")[0];
+    const txid = satpoint.split(":")[0] ?? "";
     if (!/^[0-9a-f]{64}$/.test(txid)) return null;
     const s = await json(`https://mempool.space/api/tx/${txid}/status`);
     if (!s?.confirmed || !Number.isFinite(Number(s.block_height))) return null; // unconfirmed move: clock resets, unknown yet
