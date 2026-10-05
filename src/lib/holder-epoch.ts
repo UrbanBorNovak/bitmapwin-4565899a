@@ -18,7 +18,7 @@ export const EPOCH_RANKS = [
   { min: 0, tier: "I", title: "WANDERER" },
 ] as const;
 
-export type EpochLand = { height: number; genesisHeight: number; era: EpochEra; holdSince: number; traced: boolean; blocksHeld: number; points: number };
+export type EpochLand = { height: number; genesisHeight: number; era: EpochEra; holdSince: number; traced: boolean; blocksHeld: number; points: number; boost?: LandBoost };
 export type HolderEpoch = {
   tip: number; score: number; tier: string; title: string; nextAt: number | null;
   eras: Record<EpochEra, number>; longest: EpochLand | null; lands: EpochLand[];
