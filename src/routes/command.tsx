@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { myGuardiansQuery } from "@/lib/bitmon-queries";
 import { liveDispatchesQuery } from "@/lib/guardian-dispatch-queries";
-import { DIRECTIVES, MAX_RANGE, positionAt, type Directive, type Dispatch } from "@/lib/guardian-dispatch";
+import { DIRECTIVES, MAX_RANGE, dispatchPosition, type Directive, type Dispatch } from "@/lib/guardian-dispatch";
 import { deployGuardianFn, recallGuardianFn } from "@/lib/guardian-dispatch.functions";
 import { settleRaidsFn } from "@/lib/guardian-raid.functions";
 
@@ -35,10 +35,11 @@ function useNow(ms = 1000) {
 
 function status(d: Dispatch | undefined, now: number) {
   if (!d) return "AT HOME";
-  const left = Math.max(0, Math.ceil((d.endMs - now) / 1000));
-  const p = positionAt(d.waypoints, d.startMs, d.endMs, now);
+  const p = dispatchPosition(d, now);
+  const lapMs = d.endMs - d.startMs;
+  const left = Math.max(0, Math.ceil((d.repeat ? lapMs - ((now - d.startMs) % lapMs) : d.endMs - now) / 1000));
   const label = d.directive === "march" ? (p.leg === 0 ? "MARCHING OUT" : p.leg === 1 ? "HOLDING TARGET" : "RETURNING") : d.directive === "patrol" ? "ON PATROL" : "FARMING";
-  return `${label} · ${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")} LEFT`;
+  return `${d.repeat ? `WALKER LAP ${p.lap} · ` : ""}${label} · ${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")} ${d.repeat ? "TO NEXT LAP" : "LEFT"}`;
 }
 
 function CommandPage() {
@@ -127,7 +128,7 @@ function CommandPage() {
               {d ? (
                 <div className="mt-3 flex items-center gap-3">
                   <div className="h-1 flex-1 bg-border">
-                    <div className="h-1 bg-signal" style={{ width: `${Math.round(positionAt(d.waypoints, d.startMs, d.endMs, now).progress * 100)}%` }} />
+                    <div className="h-1 bg-signal" style={{ width: `${Math.round(dispatchPosition(d, now).progress * 100)}%` }} />
                   </div>
                   <button disabled={busy === g.height} onClick={() => pull(g.height)} className="border border-border px-3 py-1 text-xs hover:border-bitcoin">RECALL</button>
                 </div>

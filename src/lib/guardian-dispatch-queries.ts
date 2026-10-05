@@ -11,7 +11,7 @@ export const liveDispatchesQuery = () =>
         .from("guardian_dispatches")
         .select(DISPATCH_COLS)
         .is("recalled_at", null)
-        .gt("ends_at", new Date().toISOString())
+        .or(`repeat.eq.true,ends_at.gt.${new Date().toISOString()}`)
         .limit(300);
       return (data ?? []).map(toDispatch);
     },

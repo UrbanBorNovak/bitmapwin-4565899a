@@ -35,7 +35,7 @@ export const deployGuardianFn = createServerFn({ method: "POST" })
       .select("id")
       .eq("guardian_height", data.height)
       .is("recalled_at", null)
-      .gt("ends_at", nowIso)
+      .or(`repeat.eq.true,ends_at.gt.${nowIso}`)
       .limit(1);
     if (live?.length) return { ok: false as const, error: "ALREADY DEPLOYED — RECALL IT FIRST" };
     const speed = Number((g.stats as Record<string, unknown>)?.["speed"] ?? 30) || 30;

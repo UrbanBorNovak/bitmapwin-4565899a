@@ -13,7 +13,8 @@ import { groundY } from "@/lib/world-terrain";
 import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { allGuardiansQuery, type AwakeGuardian } from "@/lib/bitmon-queries";
 import { liveDispatchesQuery } from "@/lib/guardian-dispatch-queries";
-import { positionAt, type Dispatch } from "@/lib/guardian-dispatch";
+import { settleRaidsFn } from "@/lib/guardian-raid.functions";
+import { dispatchPosition, isLive, type Dispatch } from "@/lib/guardian-dispatch";
 import { GuardianBody } from "@/components/bitmon/GuardianBody";
 import { SafeHtml } from "@/components/game/SafeHtml";
 import { mountedGuardian, encounterSnapshot, guardianBite, setNearGuardian } from "@/lib/guardian-encounter";
@@ -59,10 +60,10 @@ const Guardian = memo(function Guardian({ w, unit, pose }: { w: Walker; unit: nu
     const node = ref.current;
     const p = pose.current;
     if (!node) return;
-    const ord = w.order && Date.now() < w.order.endMs ? w.order : null;
+    const ord = w.order && isLive(w.order, Date.now()) ? w.order : null;
     if (ord) {
       // Commanded: position comes from shared server timestamps, so all players agree.
-      const at = positionAt(ord.waypoints, ord.startMs, ord.endMs, Date.now());
+      const at = dispatchPosition(ord, Date.now());
       w.x = at.x; w.z = at.z;
       if (at.moving) w.yaw += Math.atan2(Math.sin(at.yaw - w.yaw), Math.cos(at.yaw - w.yaw)) * 0.15;
       const nearO = !p || Math.hypot(p.x - w.x, p.z - w.z) < WORLD_CELL * 2.5;
@@ -174,7 +175,7 @@ const Guardian = memo(function Guardian({ w, unit, pose }: { w: Walker; unit: nu
       </group>
       <SafeHtml position={[0, unit * 3.2, 0]} center distanceFactor={unit * 40} style={{ pointerEvents: "none" }}>
         <div className={`whitespace-nowrap border bg-background/80 px-1.5 py-0.5 font-mono text-[9px] ${roaring ? "border-bitcoin text-bitcoin animate-pulse" : "border-bitcoin/60 text-bitcoin"}`}>
-          {roaring ? `ROAR · ${w.g.height}.BITMAP GUARDIAN` : w.order && Date.now() < w.order.endMs ? `${w.order.directive.toUpperCase()} · ${w.g.height}.BITMAP${w.order.target != null ? ` → ${w.order.target}` : ""}` : `${w.g.species} · LV ${w.g.level} · ${w.g.height}`}
+          {roaring ? `ROAR · ${w.g.height}.BITMAP GUARDIAN` : w.order && isLive(w.order, Date.now()) ? `${w.order.repeat ? "WALKER " : ""}${w.order.directive.toUpperCase()} · ${w.g.height}.BITMAP${w.order.target != null ? ` → ${w.order.target}` : ""}` : `${w.g.species} · LV ${w.g.level} · ${w.g.height}`}
         </div>
       </SafeHtml>
     </group>
@@ -184,6 +185,8 @@ const Guardian = memo(function Guardian({ w, unit, pose }: { w: Walker; unit: nu
 export const TerritoryGuardians = memo(function TerritoryGuardians({ unit, pose }: { unit: number; pose: React.MutableRefObject<PlayerState | null> }) {
   const { data } = useQuery(allGuardiansQuery());
   const { data: orders } = useQuery(liveDispatchesQuery());
+  // Anyone in the Oasis helps settle due raid laps; results are deterministic and idempotent.
+  useQuery({ queryKey: ["guardian-raids", "settle"], queryFn: () => settleRaidsFn().catch(() => null), refetchInterval: 60_000, enabled: (orders?.length ?? 0) > 0 });
   const walkers = useMemo<Walker[]>(
     () =>
       (data ?? []).map((g) => {

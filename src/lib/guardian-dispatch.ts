@@ -94,12 +94,23 @@ export type Dispatch = {
   waypoints: number[];
   startMs: number;
   endMs: number;
+  /** Walker loop: the route repeats forever by clock until recalled. */
+  repeat: boolean;
 };
 
-export const DISPATCH_COLS = "id, guardian_height, directive, target_height, waypoints, started_at, ends_at";
+/** Live position for a dispatch, folding repeat laps onto the first lap. */
+export function dispatchPosition(d: Dispatch, now: number) {
+  const lap = Math.max(1, d.endMs - d.startMs);
+  const t = d.repeat && now > d.startMs ? d.startMs + ((now - d.startMs) % lap) : now;
+  return { ...positionAt(d.waypoints, d.startMs, d.endMs, t), lap: d.repeat ? Math.floor((now - d.startMs) / lap) + 1 : 1 };
+}
+
+export const isLive = (d: Dispatch, now: number) => d.repeat || now < d.endMs;
+
+export const DISPATCH_COLS = "id, guardian_height, directive, target_height, waypoints, started_at, ends_at, repeat";
 export function toDispatch(r: {
   id: string; guardian_height: number; directive: string; target_height: number | null;
-  waypoints: unknown; started_at: string; ends_at: string;
+  waypoints: unknown; started_at: string; ends_at: string; repeat?: boolean;
 }): Dispatch {
   return {
     id: r.id,
@@ -109,5 +120,6 @@ export function toDispatch(r: {
     waypoints: Array.isArray(r.waypoints) ? (r.waypoints as unknown[]).map(Number) : [Number(r.guardian_height)],
     startMs: Date.parse(r.started_at),
     endMs: Date.parse(r.ends_at),
+    repeat: Boolean(r.repeat),
   };
 }
