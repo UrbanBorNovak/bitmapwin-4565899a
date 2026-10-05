@@ -171,7 +171,7 @@ export function SiteHeader() {
                   </div>
                   {group.id === "play" ? (
                     <div className="flex items-center justify-between border-t border-border bg-card px-4 py-3">
-                      <span className="label">8 COMMANDS</span>
+                      <span className="label">9 COMMANDS</span>
                       <span className="label text-bitcoin">READY</span>
                     </div>
                   ) : null}
@@ -268,7 +268,7 @@ export function SiteHeader() {
                 </div>
                 {group.id === "play" ? (
                   <div className="flex items-center justify-between border-t border-border bg-card px-4 py-3">
-                    <span className="label">8 COMMANDS</span>
+                    <span className="label">9 COMMANDS</span>
                     <span className="label text-bitcoin">READY</span>
                   </div>
                 ) : null}
