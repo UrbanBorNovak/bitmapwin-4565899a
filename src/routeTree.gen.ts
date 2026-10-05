@@ -97,6 +97,7 @@ import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.
 import { Route as ApiPublicCoinRewardsRouteImport } from './routes/api/public/coin-rewards'
 import { Route as ApiPublicCrawlBssRouteImport } from './routes/api/public/crawl-bss'
 import { Route as ApiPublicCrawlTradesRouteImport } from './routes/api/public/crawl-trades'
+import { Route as ApiPublicGuardianTickRouteImport } from './routes/api/public/guardian-tick'
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
 import { Route as ApiPublicResolveRegistryRouteImport } from './routes/api/public/resolve-registry'
@@ -554,6 +555,11 @@ const ApiPublicCrawlTradesRoute = ApiPublicCrawlTradesRouteImport.update({
   path: '/public/crawl-trades',
   getParentRoute: () => ApiRoute,
 } as any)
+const ApiPublicGuardianTickRoute = ApiPublicGuardianTickRouteImport.update({
+  id: '/public/guardian-tick',
+  path: '/public/guardian-tick',
+  getParentRoute: () => ApiRoute,
+} as any)
 const ApiPublicOfferRoute = ApiPublicOfferRouteImport.update({
   id: '/public/offer',
   path: '/public/offer',
@@ -722,6 +728,7 @@ export interface FileRoutesByFullPath {
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/crawl-bss': typeof ApiPublicCrawlBssRoute
   '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
+  '/api/public/guardian-tick': typeof ApiPublicGuardianTickRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
@@ -823,6 +830,7 @@ export interface FileRoutesByTo {
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/crawl-bss': typeof ApiPublicCrawlBssRoute
   '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
+  '/api/public/guardian-tick': typeof ApiPublicGuardianTickRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
@@ -929,6 +937,7 @@ export interface FileRoutesById {
   '/api/public/coin-rewards': typeof ApiPublicCoinRewardsRoute
   '/api/public/crawl-bss': typeof ApiPublicCrawlBssRoute
   '/api/public/crawl-trades': typeof ApiPublicCrawlTradesRoute
+  '/api/public/guardian-tick': typeof ApiPublicGuardianTickRoute
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
@@ -1036,6 +1045,7 @@ export interface FileRouteTypes {
     | '/api/public/coin-rewards'
     | '/api/public/crawl-bss'
     | '/api/public/crawl-trades'
+    | '/api/public/guardian-tick'
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
@@ -1137,6 +1147,7 @@ export interface FileRouteTypes {
     | '/api/public/coin-rewards'
     | '/api/public/crawl-bss'
     | '/api/public/crawl-trades'
+    | '/api/public/guardian-tick'
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
@@ -1242,6 +1253,7 @@ export interface FileRouteTypes {
     | '/api/public/coin-rewards'
     | '/api/public/crawl-bss'
     | '/api/public/crawl-trades'
+    | '/api/public/guardian-tick'
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
@@ -1947,6 +1959,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCrawlTradesRouteImport
       parentRoute: typeof ApiRoute
     }
+    '/api/public/guardian-tick': {
+      id: '/api/public/guardian-tick'
+      path: '/public/guardian-tick'
+      fullPath: '/api/public/guardian-tick'
+      preLoaderRoute: typeof ApiPublicGuardianTickRouteImport
+      parentRoute: typeof ApiRoute
+    }
     '/api/public/offer': {
       id: '/api/public/offer'
       path: '/public/offer'
@@ -2072,6 +2091,7 @@ interface ApiRouteChildren {
   ApiPublicCoinRewardsRoute: typeof ApiPublicCoinRewardsRoute
   ApiPublicCrawlBssRoute: typeof ApiPublicCrawlBssRoute
   ApiPublicCrawlTradesRoute: typeof ApiPublicCrawlTradesRoute
+  ApiPublicGuardianTickRoute: typeof ApiPublicGuardianTickRoute
   ApiPublicOfferRoute: typeof ApiPublicOfferRoute
   ApiPublicOffersRoute: typeof ApiPublicOffersRoute
   ApiPublicResolveRegistryRoute: typeof ApiPublicResolveRegistryRoute
@@ -2085,6 +2105,7 @@ const ApiRouteChildren: ApiRouteChildren = {
   ApiPublicCoinRewardsRoute: ApiPublicCoinRewardsRoute,
   ApiPublicCrawlBssRoute: ApiPublicCrawlBssRoute,
   ApiPublicCrawlTradesRoute: ApiPublicCrawlTradesRoute,
+  ApiPublicGuardianTickRoute: ApiPublicGuardianTickRoute,
   ApiPublicOfferRoute: ApiPublicOfferRoute,
   ApiPublicOffersRoute: ApiPublicOffersRoute,
   ApiPublicResolveRegistryRoute: ApiPublicResolveRegistryRoute,
