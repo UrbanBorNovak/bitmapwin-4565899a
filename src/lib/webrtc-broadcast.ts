@@ -90,6 +90,8 @@ export function useBitmapLiveStream(height: number) {
         if (p.to !== id || !p.sdp) return;
         pcRef.current?.close();
         host = p.from;
+        lastBeacon = Date.now();
+        setLive(true);
         const pc = new RTCPeerConnection(ICE);
         pcRef.current = pc;
         pc.ontrack = (e) => setStream(e.streams[0] ?? new MediaStream([e.track]));
@@ -109,7 +111,7 @@ export function useBitmapLiveStream(height: number) {
       });
 
     const watchdog = window.setInterval(() => {
-      if (lastBeacon && Date.now() - lastBeacon > 12_000) { lastBeacon = 0; reset(); }
+      if (lastBeacon && Date.now() - lastBeacon > 90_000 && pcRef.current?.connectionState !== "connected") { lastBeacon = 0; reset(); }
     }, 3000);
     return () => {
       window.clearInterval(watchdog);
