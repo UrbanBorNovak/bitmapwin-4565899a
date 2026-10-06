@@ -207,5 +207,5 @@ function MintPage() {
   );
 }
 
-const TABS = [["tour", "GUARDIAN TOUR"], ["wallet", "WALLET GUIDE"], ["story", "THE STORY"], ["mine", "MY SUMMONS"]] as const;
+const TABS = [["tutorial", "SUMMON TUTORIAL"], ["tour", "GUARDIAN TOUR"], ["wallet", "WALLET GUIDE"], ["story", "THE STORY"], ["mine", "MY SUMMONS"]] as const;
 type Tab = (typeof TABS)[number][0];
