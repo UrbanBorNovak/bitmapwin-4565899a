@@ -4,6 +4,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { GuardianRarity } from "@/lib/bitmon";
 import type { CreatureMorph } from "@/lib/creature-morph";
+import { GuardianGear } from "@/components/bitmon/GuardianGear";
 
 type Vec3 = [number, number, number];
 const noRay = () => {};
@@ -293,6 +294,7 @@ export const MorphBody = memo(function MorphBody({ m, unit = 1, rarity = "COMMON
         <circleGeometry args={[Math.max(L, W) * 0.9, 32]} />
         <meshBasicMaterial color={G} transparent opacity={0.08 + rarityRank * 0.025} depthWrite={false} />
       </mesh>
+      <GuardianGear height={m.height} seed={m.seed} u={u} H={H} L={L} backY={bodyY + T * 0.55} head={[0, bodyY + headY, upright ? L * 0.1 : headZ]} />
     </group>
     </group>
   );
