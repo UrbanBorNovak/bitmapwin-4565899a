@@ -12,6 +12,7 @@ import { SummonDashboard } from "@/components/bitmon/SummonDashboard";
 import { SHORD_VAULT_DISABLED } from "@/lib/shord-flag";
 import { GuardianShowcase } from "@/components/bitmon/GuardianShowcase";
 import { GuardianStory, WalletMintGuide } from "@/components/bitmon/WalletMintGuide";
+import { SummonTutorial } from "@/components/bitmon/SummonTutorial";
 import { MintHero } from "@/components/bitmon/MintHero";
 import { MintMusic } from "@/components/bitmon/MintMusic";
 
@@ -186,6 +187,7 @@ function MintPage() {
         </div>
       </div>
       <div className="[&>*:first-child]:mt-4">
+        {tab === "tutorial" ? <SummonTutorial height={height} /> : null}
         {tab === "tour" ? <GuardianShowcase /> : null}
         {tab === "wallet" ? <WalletMintGuide /> : null}
         {tab === "story" ? (
@@ -205,5 +207,5 @@ function MintPage() {
   );
 }
 
-const TABS = [["tour", "GUARDIAN TOUR"], ["wallet", "WALLET GUIDE"], ["story", "THE STORY"], ["mine", "MY SUMMONS"]] as const;
+const TABS = [["tutorial", "SUMMON TUTORIAL"], ["tour", "GUARDIAN TOUR"], ["wallet", "WALLET GUIDE"], ["story", "THE STORY"], ["mine", "MY SUMMONS"]] as const;
 type Tab = (typeof TABS)[number][0];
