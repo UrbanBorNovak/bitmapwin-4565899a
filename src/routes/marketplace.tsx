@@ -89,6 +89,10 @@ function Marketplace() {
   const listed = useMemo(() => parcels.filter((p) => p.listedSats !== null), [parcels]);
   const traded = useMemo(() => parcels.filter((p) => p.transfers > 0), [parcels]);
   const sold = useMemo(() => parcels.filter((p) => p.lastSaleSats), [parcels]);
+  const traitCounts = useMemo(() => {
+    const base = tab === "traded" ? traded : tab === "listed" ? listed : parcels;
+    return new Map(OFFICIAL_TRAITS.map((t) => [t.id, base.filter((p) => hasTrait(p.bitmapHeight, t.id)).length]));
+  }, [tab, traded, listed, parcels]);
   const visible = useMemo(() => {
     let base = tab === "traded" ? traded : tab === "listed" ? listed : parcels;
     if (club !== "any") {
@@ -278,21 +282,42 @@ function Marketplace() {
                 </div>
               </div>
               <div>
-                <label className="label mb-2 block" htmlFor="bitmap-trait-filter">OFFICIAL TRAIT</label>
-                <select
-                  id="bitmap-trait-filter"
-                  value={trait}
-                  onChange={(event) => {
-                    setTrait(event.target.value as TraitId | "any");
-                    setPage(0);
-                  }}
-                  className="w-full border border-border bg-background px-3 py-2.5 font-mono text-xs uppercase text-foreground focus:border-primary focus:outline-none"
-                >
-                  <option value="any">ALL OFFICIAL TRAITS</option>
-                  {OFFICIAL_TRAITS.map((item) => (
-                    <option key={item.id} value={item.id}>{item.label}</option>
-                  ))}
-                </select>
+                <div className="mb-2 flex items-baseline justify-between gap-2">
+                  <span className="label text-bitcoin">OFFICIAL TRAIT INDEX</span>
+                  <Link to="/traits" className="label hover:text-bitcoin">ALL →</Link>
+                </div>
+                <div className="grid max-h-72 grid-cols-2 gap-1.5 overflow-y-auto pr-1 lg:grid-cols-1 xl:grid-cols-2">
+                  <button
+                    type="button"
+                    aria-pressed={trait === "any"}
+                    className={trait === "any" ? "btn-term !px-2 justify-between" : "btn-term-ghost !px-2 justify-between"}
+                    onClick={() => { setTrait("any"); setPage(0); }}
+                  >
+                    ALL <span className="opacity-70">{parcels.length}</span>
+                  </button>
+                  {OFFICIAL_TRAITS.map((item) => {
+                    const count = traitCounts.get(item.id) ?? 0;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        title={`${item.sourceKey} — ${item.description}`}
+                        aria-pressed={trait === item.id}
+                        disabled={count === 0 && trait !== item.id}
+                        className={`${trait === item.id ? "btn-term" : "btn-term-ghost"} !px-2 justify-between disabled:opacity-40`}
+                        onClick={() => { setTrait(item.id); setPage(0); }}
+                      >
+                        <span className="truncate">{item.label}</span>
+                        <span className="opacity-70">{count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {trait !== "any" && (
+                  <Link to="/traits/$trait" params={{ trait }} className="label mt-2 inline-block text-bitcoin hover:text-foreground">
+                    FULL {OFFICIAL_TRAITS.find((t) => t.id === trait)?.label} INDEX →
+                  </Link>
+                )}
               </div>
               <details className="border-t border-border pt-4">
                 <summary className="label cursor-pointer text-bitcoin">TRAIT GLOSSARY</summary>
