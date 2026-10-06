@@ -32,6 +32,7 @@ import { DistrictReinscriptions } from "@/components/DistrictReinscriptions";
 import { LeasePanel } from "@/components/leases/LeasePanel";
 import { BitmapEvents } from "@/components/coins/BitmapEvents";
 import { MakeOfferButton } from "@/components/MakeOfferButton";
+import { BuyButton } from "@/components/BuyButton";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapStorefront } from "@/components/BitmapStorefront";
 import { TerritoryKiosk } from "@/components/territory/TerritoryKiosk";
@@ -258,6 +259,9 @@ function BitmapDetail() {
                   </p>
                 </a>
               ) : null}
+              {parcel?.listedOfferId && parcel.listedSats !== null && (
+                <BuyButton offerId={parcel.listedOfferId} priceSats={parcel.listedSats} inscriptionId={parcel.inscriptionId} height={block} className="btn-term min-h-12 px-6" />
+              )}
               <MakeOfferButton height={block} askSats={parcel?.listedSats ?? null} className="btn-term min-h-12 px-6" label="MAKE OFFER" />
               <WatchBitmapButton height={block} />
             </div>

@@ -97,6 +97,8 @@ export function ParcelCard({ parcel, traitHolder }: { parcel: RegistryParcel; tr
             <BuyButton
               offerId={parcel.listedOfferId}
               priceSats={parcel.listedSats}
+              inscriptionId={parcel.inscriptionId}
+              height={parcel.bitmapHeight}
               className="btn-term w-full !px-2 !py-2"
             />
           </div>

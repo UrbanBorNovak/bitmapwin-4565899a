@@ -15,6 +15,7 @@ import { signMessageWithWallet } from "@/lib/browser-wallet";
 import { useWalletSession } from "@/lib/wallet-session";
 import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
+import { resolveWallet } from "@/components/BuyButton";
 
 const EXPIRY = [
   { label: "24H", hours: 24 },
@@ -44,7 +45,8 @@ export function MakeOfferButton({
   defaultAmountSats?: number | null;
   initialNote?: string;
 }) {
-  const wallet = useWalletSession();
+  const sessionWallet = useWalletSession();
+  const wallet = sessionWallet;
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState(() =>
@@ -61,9 +63,13 @@ export function MakeOfferButton({
     return sats >= 546 ? sats : null;
   }, [amount, unit]);
 
+  const connect = useMutation({
+    mutationFn: () => resolveWallet(),
+    onError: (e) => toast("WALLET NOT CONNECTED", { description: (e as Error).message.toUpperCase() }),
+  });
   const place = useMutation({
     mutationFn: async () => {
-      if (!wallet) throw new Error("CONNECT UNISAT OR XVERSE ON /WALLET FIRST");
+      const wallet = sessionWallet ?? (await resolveWallet());
       if (priceSats === null) throw new Error("OFFER AT LEAST 546 SATS");
       const bidder = wallet.paymentAddress || wallet.ordinalsAddress;
       let signature: string | undefined;
@@ -185,10 +191,16 @@ export function MakeOfferButton({
               </button>
             </div>
           ) : (
-            <p className="font-mono text-[11px] text-muted-foreground">
-              &gt; CONNECT UNISAT OR XVERSE ON /WALLET TO OFFER ON THIS BITMAP
-              <span className="blink">_</span>
-            </p>
+            <div className="space-y-2">
+              <p className="font-mono text-[11px] text-muted-foreground">&gt; CONNECT UNISAT OR XVERSE TO OFFER ON THIS BITMAP</p>
+              <button
+                className="btn-term w-full"
+                disabled={connect.isPending}
+                onClick={() => connect.mutate()}
+              >
+                {connect.isPending ? "[ CONNECTING… ]" : "[ CONNECT WALLET ]"}
+              </button>
+            </div>
           )}
         </DialogContent>
       </Dialog>
