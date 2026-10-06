@@ -120,5 +120,14 @@ export const MINT_COPY = {
 };
 
 export function MintLangToggle({ lang, setLang }: { lang: MintLang; setLang: (l: MintLang) => void }) {
-  return null as unknown as never;
+  return (
+    <div data-no-translate className="inline-flex overflow-hidden rounded-sm border border-border font-mono text-[10px]">
+      {(["en", "zh"] as const).map((l) => (
+        <button key={l} type="button" onClick={() => setLang(l)}
+          className={`px-2 py-1 ${lang === l ? "bg-bitcoin text-background" : "text-muted-foreground hover:text-foreground"}`}>
+          {l === "en" ? "EN" : "中文"}
+        </button>
+      ))}
+    </div>
+  );
 }
