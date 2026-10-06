@@ -8,6 +8,7 @@ import {
   registryBaseQuery,
   registryCountQuery,
   type RegistryParcel,
+  fetchRegistryParcel,
 } from "@/lib/registry";
 import { formatSats } from "@/lib/trades";
 import { recentTradesQuery } from "@/lib/trade-store";
@@ -94,6 +95,14 @@ function Marketplace() {
   const lastTrade = (recent.data ?? []).find((t) => t.price_sats > 0) ?? null;
   useLiveOffers();
   const inhabited = useQuery(inhabitedQuery());
+  // Every inhabited BITMAP, fetched directly — not limited to the loaded page.
+  const inhabitedHeights = useMemo(() => [...(inhabited.data?.keys() ?? [])].sort((a, b) => a - b), [inhabited.data]);
+  const inhabitedParcels = useQuery({
+    queryKey: ["registry", "inhabited", inhabitedHeights],
+    enabled: tab === "inhabited" && inhabitedHeights.length > 0,
+    queryFn: async () => (await Promise.all(inhabitedHeights.map((h) => fetchRegistryParcel(h).catch(() => null)))).filter((p): p is RegistryParcel => p !== null),
+    staleTime: 60_000,
+  });
 
 
   const listed = useMemo(() => parcels.filter((p) => p.listedSats !== null), [parcels]);
@@ -105,7 +114,7 @@ function Marketplace() {
   }, [tab, traded, listed, parcels]);
   const visible = useMemo(() => {
     let base = tab === "traded" ? traded : tab === "listed" ? listed : parcels;
-    if (tab === "inhabited") base = parcels.filter((p) => inhabited.data?.has(p.bitmapHeight));
+    if (tab === "inhabited") base = inhabitedParcels.data ?? [];
     if (club !== "any") {
       const def = CLUBS.find((c) => c.id === club);
       if (def) base = base.filter((p) => inClub(p.bitmapHeight, def));
@@ -123,7 +132,7 @@ function Marketplace() {
         p.txid.toLowerCase().includes(q) ||
         (p.ownerAddress ?? "").toLowerCase().includes(q),
     );
-  }, [tab, traded, listed, parcels, search, club, trait, recentFirst, inhabited.data]);
+  }, [tab, traded, listed, parcels, search, club, trait, recentFirst, inhabitedParcels.data]);
 
   // Paginate first, then resolve holders on chain for the visible page only.
   const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
