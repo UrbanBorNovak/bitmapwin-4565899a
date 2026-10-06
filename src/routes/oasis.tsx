@@ -7,7 +7,6 @@ import { getChainBlocks } from "@/lib/chain.functions";
 import { OasisWorldGuard } from "@/components/OasisWorldGuard";
 import { OasisEntry } from "@/components/game/OasisEntry";
 import { ClassSkillBar } from "@/components/game/ClassSkillBar";
-import { GoLiveKick } from "@/components/territory/GoLiveKick";
 import { OasisTradeTicker } from "@/components/game/OasisTradeTicker";
 
 const BitmapWorld3D = lazy(() => import("@/components/BitmapWorld3D").then((module) => ({ default: module.BitmapWorld3D })));
