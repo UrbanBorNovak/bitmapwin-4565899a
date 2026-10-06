@@ -12,6 +12,7 @@ import { SummonDashboard } from "@/components/bitmon/SummonDashboard";
 import { SHORD_VAULT_DISABLED } from "@/lib/shord-flag";
 import { GuardianShowcase } from "@/components/bitmon/GuardianShowcase";
 import { GuardianStory, WalletMintGuide } from "@/components/bitmon/WalletMintGuide";
+import { SummonTutorial } from "@/components/bitmon/SummonTutorial";
 import { MintHero } from "@/components/bitmon/MintHero";
 import { MintMusic } from "@/components/bitmon/MintMusic";
 
