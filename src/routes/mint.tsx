@@ -144,10 +144,27 @@ function MintPage() {
 
       {d ? (
         <section data-tour="mint-delegate" className="panel mt-6 space-y-3 rounded-md border border-border p-4">
-          <p className="label text-signal">HOLD THIS BITMAP? INSCRIBE FROM IT</p>
+          <p className="label text-signal">STEP 03 · INSCRIBE ON-CHAIN</p>
           <h2 className="display text-2xl">Inscribe from <span className="text-bitcoin">{height}.bitmap</span></h2>
-          <p className="max-w-2xl text-sm text-muted-foreground">A tiny on-chain child that borrows the master generator. It lands in your own wallet.</p>
-          <DelegateGuardianSummon dna={d} />
+          {awake.isPending ? (
+            <p className="font-mono text-xs text-muted-foreground animate-pulse">&gt; CHECKING SUMMON STATUS…</p>
+          ) : !awake.data ? (
+            <div className="rounded-sm border border-border p-3 font-mono text-[11px]">
+              <p className="text-bitcoin">🔒 LOCKED · SUMMON THIS GUARDIAN FIRST</p>
+              <p className="mt-1 text-muted-foreground">Inscribing opens once the summon payment confirms and the Guardian wakes in the Oasis.</p>
+              <button type="button" onClick={() => setOpen(true)} className="btn-term mt-3">◆ SUMMON · {GUARDIAN_PRICE_SATS.toLocaleString()} SATS</button>
+            </div>
+          ) : awake.data.inscriptionId ? (
+            <div className="rounded-sm border border-signal/40 p-3 font-mono text-[11px]">
+              <p className="text-signal">✓ ALREADY INSCRIBED ON-CHAIN</p>
+              <a href={`https://ordinals.com/inscription/${awake.data.inscriptionId}`} target="_blank" rel="noreferrer" className="mt-2 inline-block text-bitcoin underline">VIEW INSCRIPTION →</a>
+            </div>
+          ) : (
+            <>
+              <p className="max-w-2xl text-sm text-muted-foreground">Summon confirmed. A tiny on-chain child that borrows the master generator. It lands in your own wallet.</p>
+              <DelegateGuardianSummon dna={d} />
+            </>
+          )}
         </section>
       ) : null}
 
