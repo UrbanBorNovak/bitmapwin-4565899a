@@ -93,6 +93,7 @@ import { Route as RanksSharesRouteImport } from './routes/ranks.shares'
 import { Route as RanksWalkersRouteImport } from './routes/ranks.walkers'
 import { Route as TraitsIndexRouteImport } from './routes/traits.index'
 import { Route as TraitsTraitRouteImport } from './routes/traits.$trait'
+import { Route as TraitsRanksRouteImport } from './routes/traits.ranks'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicCoinRewardsRouteImport } from './routes/api/public/coin-rewards'
 import { Route as ApiPublicCrawlBssRouteImport } from './routes/api/public/crawl-bss'
@@ -534,6 +535,11 @@ const TraitsTraitRoute = TraitsTraitRouteImport.update({
   path: '/traits/$trait',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TraitsRanksRoute = TraitsRanksRouteImport.update({
+  id: '/traits/ranks',
+  path: '/traits/ranks',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   id: '/.lovable/oauth/consent',
   path: '/.lovable/oauth/consent',
@@ -712,6 +718,7 @@ export interface FileRoutesByFullPath {
   '/ranks/shares': typeof RanksSharesRoute
   '/ranks/walkers': typeof RanksWalkersRoute
   '/traits/$trait': typeof TraitsTraitRoute
+  '/traits/ranks': typeof TraitsRanksRoute
   '/codex/': typeof CodexIndexRoute
   '/collections/': typeof CollectionsIndexRoute
   '/extenders/': typeof ExtendersIndexRoute
@@ -813,6 +820,7 @@ export interface FileRoutesByTo {
   '/ranks/shares': typeof RanksSharesRoute
   '/ranks/walkers': typeof RanksWalkersRoute
   '/traits/$trait': typeof TraitsTraitRoute
+  '/traits/ranks': typeof TraitsRanksRoute
   '/codex': typeof CodexIndexRoute
   '/collections': typeof CollectionsIndexRoute
   '/extenders': typeof ExtendersIndexRoute
@@ -919,6 +927,7 @@ export interface FileRoutesById {
   '/ranks/shares': typeof RanksSharesRoute
   '/ranks/walkers': typeof RanksWalkersRoute
   '/traits/$trait': typeof TraitsTraitRoute
+  '/traits/ranks': typeof TraitsRanksRoute
   '/codex/': typeof CodexIndexRoute
   '/collections/': typeof CollectionsIndexRoute
   '/extenders/': typeof ExtendersIndexRoute
@@ -1026,6 +1035,7 @@ export interface FileRouteTypes {
     | '/ranks/shares'
     | '/ranks/walkers'
     | '/traits/$trait'
+    | '/traits/ranks'
     | '/codex/'
     | '/collections/'
     | '/extenders/'
@@ -1127,6 +1137,7 @@ export interface FileRouteTypes {
     | '/ranks/shares'
     | '/ranks/walkers'
     | '/traits/$trait'
+    | '/traits/ranks'
     | '/codex'
     | '/collections'
     | '/extenders'
@@ -1232,6 +1243,7 @@ export interface FileRouteTypes {
     | '/ranks/shares'
     | '/ranks/walkers'
     | '/traits/$trait'
+    | '/traits/ranks'
     | '/codex/'
     | '/collections/'
     | '/extenders/'
@@ -1322,6 +1334,7 @@ export interface RootRouteChildren {
   MapBlockRoute: typeof MapBlockRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
   TraitsTraitRoute: typeof TraitsTraitRoute
+  TraitsRanksRoute: typeof TraitsRanksRoute
   CodexIndexRoute: typeof CodexIndexRoute
   TraitsIndexRoute: typeof TraitsIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -1919,6 +1932,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TraitsTraitRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/traits/ranks': {
+      id: '/traits/ranks'
+      path: '/traits/ranks'
+      fullPath: '/traits/ranks'
+      preLoaderRoute: typeof TraitsRanksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.lovable/oauth/consent': {
       id: '/.lovable/oauth/consent'
       path: '/.lovable/oauth/consent'
@@ -2255,6 +2275,7 @@ const rootRouteChildren: RootRouteChildren = {
   MapBlockRoute: MapBlockRoute,
   ProfileAddressRoute: ProfileAddressRoute,
   TraitsTraitRoute: TraitsTraitRoute,
+  TraitsRanksRoute: TraitsRanksRoute,
   CodexIndexRoute: CodexIndexRoute,
   TraitsIndexRoute: TraitsIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
