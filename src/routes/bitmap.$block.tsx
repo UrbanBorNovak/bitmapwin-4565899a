@@ -311,6 +311,7 @@ function BitmapDetail() {
           />
           <TraitBadges height={block} showRarity />
           <SatBadges height={block} />
+          <GuardianMintStatus height={block} />
         </div>
       </div>
 
