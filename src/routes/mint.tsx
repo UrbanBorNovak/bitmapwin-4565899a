@@ -13,6 +13,7 @@ import { SHORD_VAULT_DISABLED } from "@/lib/shord-flag";
 import { GuardianShowcase } from "@/components/bitmon/GuardianShowcase";
 import { GuardianStory, WalletMintGuide } from "@/components/bitmon/WalletMintGuide";
 import { MintHero } from "@/components/bitmon/MintHero";
+import { MintMusic } from "@/components/bitmon/MintMusic";
 
 export const Route = createFileRoute("/mint")({
   validateSearch: z.object({ height: z.coerce.number().int().min(0).optional() }),
@@ -65,6 +66,7 @@ function MintPage() {
           <div>
             <p className="label text-signal">MINT CONSOLE</p>
             <h1 className="display text-2xl md:text-3xl">Pick a block. <span className="text-bitcoin">Meet its Guardian.</span></h1>
+            <div className="mt-2"><MintMusic seed={height} /></div>
           </div>
           <form data-tour="mint-pick" className="flex flex-wrap items-center gap-2" onSubmit={(e) => { e.preventDefault(); go(Number(input)); }}>
             <div className="flex items-center rounded-sm border border-border bg-background px-2">
