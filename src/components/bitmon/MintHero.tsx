@@ -1,12 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import hero from "@/assets/mint-hero.jpg";
 import { allGuardiansQuery } from "@/lib/bitmon-queries";
+import { getGuardianChildrenFn } from "@/lib/guardian-market.functions";
 
 /** Mint page hero: art + live, real collection counts from the Guardian index. */
 export function MintHero() {
   const all = useQuery(allGuardiansQuery());
+  const children = useQuery({ queryKey: ["guardian-children-v6"], queryFn: () => getGuardianChildrenFn(), staleTime: 60_000, refetchInterval: 120_000 });
   const list = all.data ?? [];
-  const inscribed = list.filter((g) => g.inscriptionId).length;
+  const inscribed = children.data && !children.data.unavailable ? children.data.ids.length : null;
+  const onChain = new Set(children.data?.ids ?? []);
   const latest = list.slice(0, 6);
 
   return (
@@ -21,7 +24,7 @@ export function MintHero() {
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2 font-mono text-[11px]">
           <span className="panel rounded-sm border border-bitcoin/50 px-2 py-1 text-bitcoin">{all.isLoading ? "…" : list.length} AWAKENED</span>
-          <span className="panel rounded-sm border border-signal/50 px-2 py-1 text-signal">{all.isLoading ? "…" : inscribed} INSCRIBED ON-CHAIN</span>
+          <span className="panel rounded-sm border border-signal/50 px-2 py-1 text-signal">{inscribed ?? "…"} INSCRIBED ON-CHAIN</span>
           <span className="font-mono text-[10px] text-muted-foreground">[YOUR BITMAP] + [MASTER PARENT] → [YOUR GUARDIAN]</span>
         </div>
         {latest.length ? (
@@ -29,7 +32,7 @@ export function MintHero() {
             <span className="text-muted-foreground">LATEST:</span>
             {latest.map((g) => (
               <span key={g.height} className="border border-border bg-background/70 px-1.5 py-0.5">
-                {g.height}.BITMAP · {g.rarity} · {g.inscriptionId ? "◆ INSCRIBED" : "AWAKE"}
+                {g.height}.BITMAP · {g.rarity} · {g.inscriptionId && onChain.has(g.inscriptionId) ? "◆ INSCRIBED" : "AWAKE"}
               </span>
             ))}
           </div>
