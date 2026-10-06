@@ -1,5 +1,4 @@
 // Live channel for a BITMAP. Embeds bitmap.stream when the channel exists;
-import { GoLiveKick } from "./GoLiveKick";
 // otherwise offers a Kick player and the Kick broadcast pipeline.
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -97,24 +96,6 @@ function KickPipeline({ height }: { height: number }) {
       <p className="text-muted-foreground">
         &gt; NO BITMAP.STREAM CHANNEL FOR {height}.BITMAP YET. STREAM IT OVER KICK INSTEAD.
       </p>
-
-      <div>
-        <p className="label text-bitcoin">01 · WATCH A KICK CHANNEL HERE</p>
-        <div className="mt-2 flex gap-2">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && save()}
-            placeholder="kick channel name or link"
-            className="min-w-0 flex-1 border border-border bg-card px-3 py-2 text-foreground outline-none focus:border-signal"
-          />
-          <button type="button" onClick={save} className="btn-term px-4">
-            [ PLAY ]
-          </button>
-        </div>
-      </div>
-
-      <GoLiveKick label={`${height}.bitmap`} />
 
       <p className="text-muted-foreground">
         &gt; Prefer a native channel? Holders can open one at{" "}
