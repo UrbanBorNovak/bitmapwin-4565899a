@@ -39,6 +39,18 @@ export function ParcelCard({ parcel, traitHolder }: { parcel: RegistryParcel; tr
           <span className="label">{PARCEL_STATUS_LABEL[parcel.status]}</span>
         </div>
 
+        <div className="mt-3 flex flex-wrap items-center gap-2 font-mono text-[11px]" data-no-translate>
+          {parcel.listedSats ? (
+            <span className="flex items-center gap-1.5 border border-bitcoin bg-bitcoin/10 px-2 py-1 font-bold text-bitcoin">
+              <span className="relative flex size-1.5"><span className="absolute inline-flex size-full animate-ping rounded-full bg-bitcoin opacity-70" /><span className="relative inline-flex size-1.5 rounded-full bg-bitcoin" /></span>
+              FOR SALE · {formatSats(parcel.listedSats)}
+            </span>
+          ) : parcel.lastSaleSats ? (
+            <span className="border border-border px-2 py-1 text-foreground">LAST {formatSats(parcel.lastSaleSats)}</span>
+          ) : null}
+          {topBid && <span className="border border-signal/50 bg-signal/10 px-2 py-1 text-signal">BID {formatSats(topBid.priceSats)}</span>}
+        </div>
+
         <div className="mt-2">
           <VerificationChip
             inscriptionId={parcel.inscriptionId}

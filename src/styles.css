@@ -1676,3 +1676,6 @@
 .holo-scanline { position:absolute; left:0; right:0; height:12%; background: linear-gradient(to bottom, transparent, color-mix(in oklab, var(--signal, oklch(0.8 0.14 210)) 22%, transparent), transparent); animation: holo-scan 3.2s linear infinite; pointer-events:none; mix-blend-mode: screen; }
 .holo-materialize { animation: holo-materialize .9s cubic-bezier(.2,.7,.2,1) both; }
 @media (prefers-reduced-motion: reduce) { .holo-ring > i, .holo-spark, .holo-scanline, .holo-materialize { animation: none; } }
+@keyframes market-ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.market-ticker { animation: market-ticker 60s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .market-ticker { animation: none; } }
