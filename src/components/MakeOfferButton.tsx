@@ -15,6 +15,7 @@ import { signMessageWithWallet } from "@/lib/browser-wallet";
 import { useWalletSession } from "@/lib/wallet-session";
 import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
+import { resolveWallet } from "@/components/BuyButton";
 
 const EXPIRY = [
   { label: "24H", hours: 24 },
@@ -44,7 +45,8 @@ export function MakeOfferButton({
   defaultAmountSats?: number | null;
   initialNote?: string;
 }) {
-  const wallet = useWalletSession();
+  const sessionWallet = useWalletSession();
+  const wallet = sessionWallet;
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState(() =>
@@ -63,7 +65,7 @@ export function MakeOfferButton({
 
   const place = useMutation({
     mutationFn: async () => {
-      if (!wallet) throw new Error("CONNECT UNISAT OR XVERSE ON /WALLET FIRST");
+      const wallet = sessionWallet ?? (await resolveWallet());
       if (priceSats === null) throw new Error("OFFER AT LEAST 546 SATS");
       const bidder = wallet.paymentAddress || wallet.ordinalsAddress;
       let signature: string | undefined;
