@@ -94,7 +94,7 @@ function KickPipeline({ height }: { height: number }) {
   return (
     <div className="space-y-5 bg-background p-5 font-mono text-[12px]">
       <p className="text-muted-foreground">
-        &gt; NO BITMAP.STREAM CHANNEL FOR {height}.BITMAP YET. STREAM IT OVER KICK INSTEAD.
+        &gt; NO BITMAP.STREAM CHANNEL FOR {height}.BITMAP YET.
       </p>
 
       <p className="text-muted-foreground">

@@ -1,5 +1,11 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { ChevronDown, HelpCircle, Search, X } from "lucide-react";
+import {
+  ChevronDown, HelpCircle, Search, X, Gamepad2, Store, Hammer, Compass, User,
+  Layers, Sparkles, Globe, Swords, Radio, BookOpen, Building2, ArrowLeftRight, Backpack,
+  Map as MapIcon, CalendarClock, History, Gift, Home, Users, Rocket, PenTool, Shield, Package,
+  TrendingUp, Library, Trophy, Boxes, HardHat, BarChart3, Pickaxe, IdCard, BadgeCheck, Code2,
+  FileText, Terminal, Wrench, ArrowRight, type LucideIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { BidInboxBell } from "@/components/BidInboxBell";
 import { HeaderIdentity } from "@/components/HeaderIdentity";
@@ -10,6 +16,31 @@ import { startGuidedTour } from "@/components/GuidedTour";
 
 type NavItem = { to: string; label: string; note?: string };
 type NavGroup = { id: string; label: string; note: string; items: NavItem[] };
+
+const GROUP_ICONS: Record<string, LucideIcon> = {
+  play: Gamepad2, trade: Store, create: Hammer, discover: Compass, account: User,
+};
+const ITEM_ICONS: Record<string, LucideIcon> = {
+  "/play": Layers, "/play/extenders": Sparkles, "/oasis": Globe, "/command": Swords, "/stream": Radio,
+  "/play-guide": BookOpen, "/cities": Building2, "/trading-post": ArrowLeftRight, "/inventory": Backpack,
+  "/marketplace": MapIcon, "/leases": CalendarClock, "/history": History, "/donate": Gift,
+  "/my-world": Home, "/builds": Users, "/extend": Rocket, "/studio": PenTool, "/mint": Shield, "/extenders": Package,
+  "/explore": TrendingUp, "/codex": Library, "/ranks": Trophy, "/experiences": Boxes, "/builders": HardHat,
+  "/world-stats": BarChart3, "/archaeology": Pickaxe, "/my-land": MapIcon, "/passport": IdCard,
+  "/ownership": BadgeCheck, "/sdk": Code2, "/docs": FileText, "/api": Terminal, "/dev-tools": Wrench,
+};
+function ItemIcon({ to, active }: { to: string; active: boolean }) {
+  const I = ITEM_ICONS[to] ?? ArrowRight;
+  return (
+    <span className={`grid size-8 shrink-0 place-items-center border ${active ? "border-bitcoin text-bitcoin" : "border-border text-muted-foreground group-hover:border-signal group-hover:text-signal"}`}>
+      <I className="size-4" strokeWidth={1.75} />
+    </span>
+  );
+}
+function GroupIcon({ id }: { id: string }) {
+  const I = GROUP_ICONS[id] ?? Compass;
+  return <I className="size-3.5" strokeWidth={1.75} aria-hidden="true" />;
+}
 
 const NAV_GROUPS: NavGroup[] = [
   {
@@ -137,6 +168,7 @@ export function SiteHeader() {
                   openGroup === group.id ? "is-active border border-border text-foreground" : ""
                 }`}
               >
+                <GroupIcon id={group.id} />
                 {group.label}
                 <ChevronDown className="size-3" />
               </button>
@@ -160,10 +192,15 @@ export function SiteHeader() {
                             activeOptions={{ exact: true }}
                             onClick={() => setOpenGroup(null)}
                             aria-current={active ? "page" : undefined}
-                            className={`nav-menu-item group block border-border px-3 py-3 ${group.id === "play" ? "border border-transparent" : "border-b last:border-b-0"} ${active ? "border-border bg-surface" : "hover:border-border hover:bg-surface"}`}
+                            className={`nav-menu-item group block border-border px-3 py-2.5 ${group.id === "play" ? "border border-transparent" : "border-b last:border-b-0"} ${active ? "border-border bg-surface" : "hover:border-border hover:bg-surface"}`}
                           >
-                            <div className={`label transition-transform group-hover:translate-x-1 ${active ? "text-bitcoin" : "text-foreground"}`}>{item.label}</div>
-                            {item.note && <div className="label mt-1 text-[0.55rem] leading-snug">{item.note}</div>}
+                            <div className="flex items-center gap-3">
+                              <ItemIcon to={item.to} active={active} />
+                              <div className="min-w-0">
+                                <div className={`label transition-transform group-hover:translate-x-0.5 ${active ? "text-bitcoin" : "text-foreground"}`}>{item.label}</div>
+                                {item.note && <div className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{item.note}</div>}
+                              </div>
+                            </div>
                           </Link>
                         </div>
                       );
@@ -180,7 +217,7 @@ export function SiteHeader() {
             </div>
           ))}
           <Link to="/oasis" className="label ml-2 flex h-9 items-center gap-1 border border-bitcoin bg-bitcoin px-3 py-2 text-primary-foreground hover:border-foreground hover:bg-foreground">
-            ENTER OASIS <span aria-hidden="true">→</span>
+            <Globe className="size-3.5" strokeWidth={1.75} /> ENTER OASIS
           </Link>
         </nav>
 
@@ -234,7 +271,8 @@ export function SiteHeader() {
                 openGroup === group.id ? "is-active border border-border text-foreground" : ""
               }`}
             >
-              {group.label}
+              <GroupIcon id={group.id} />
+              <span className="hidden min-[400px]:inline">{group.label}</span>
               <ChevronDown className="hidden size-3 sm:block" />
             </button>
             {openGroup === group.id && (
@@ -257,10 +295,15 @@ export function SiteHeader() {
                           activeOptions={{ exact: true }}
                           onClick={() => setOpenGroup(null)}
                           aria-current={active ? "page" : undefined}
-                          className={`nav-menu-item group block border-border px-3 py-3 ${group.id === "play" ? "border border-transparent" : "border-b last:border-b-0"} ${active ? "border-border bg-surface" : "hover:border-border hover:bg-surface"}`}
+                          className={`nav-menu-item group block border-border px-3 py-2.5 ${group.id === "play" ? "border border-transparent" : "border-b last:border-b-0"} ${active ? "border-border bg-surface" : "hover:border-border hover:bg-surface"}`}
                         >
-                          <div className={`label transition-transform group-hover:translate-x-1 ${active ? "text-bitcoin" : "text-foreground"}`}>{item.label}</div>
-                          {item.note && <div className="label mt-1 text-[0.55rem] leading-snug">{item.note}</div>}
+                            <div className="flex items-center gap-3">
+                              <ItemIcon to={item.to} active={active} />
+                              <div className="min-w-0">
+                                <div className={`label transition-transform group-hover:translate-x-0.5 ${active ? "text-bitcoin" : "text-foreground"}`}>{item.label}</div>
+                                {item.note && <div className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{item.note}</div>}
+                              </div>
+                            </div>
                         </Link>
                       </div>
                     );
