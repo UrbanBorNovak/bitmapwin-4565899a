@@ -13,7 +13,7 @@ export function BitmapStreamPlayer({ height }: { height: number }) {
   });
 
   return (
-    <section className="border border-border bg-card" aria-labelledby={`bitmap-stream-${height}`}>
+    <section className="self-start border border-border bg-card" aria-labelledby={`bitmap-stream-${height}`}>
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
         <h2 id={`bitmap-stream-${height}`} className="label text-signal">● {height}.BITMAP · LIVE CHANNEL</h2>
         {probe.data?.exists && (
