@@ -59,7 +59,7 @@ export function DelegateGuardianSummon({ dna }: { dna: GuardianDna }) {
         artifactSvg={guardianArtifactSvg(dna, anchor)}
         artifactVariants={variants}
         artifactLabel="DELEGATE GUARDIAN"
-        actionLabel="◆ SUMMON FULL-COLOUR GUARDIAN"
+        actionLabel="◆ INSCRIBE FULL-COLOUR GUARDIAN"
         description={`ONLY THE WALLET HOLDING ${dna.height}.BITMAP CAN SIGN THIS. WITHOUT A VALID BITMAP PARENT OR TRIBUTE, THE INSCRIPTION RENDERS AS A STONE RELIC. YOUR WALLET PAYS THE LIVE MINER FEE.`}
         allowUpload={false}
         claimParentsForHeight={dna.height}

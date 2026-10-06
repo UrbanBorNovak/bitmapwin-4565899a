@@ -155,7 +155,7 @@ function MintPage() {
             <div className="rounded-sm border border-border p-3 font-mono text-[11px]">
               <p className="text-bitcoin">🔒 LOCKED · SUMMON THIS GUARDIAN FIRST</p>
               <p className="mt-1 text-muted-foreground">Inscribing opens once the summon payment confirms and the Guardian wakes in the Oasis.</p>
-              <button type="button" onClick={() => setOpen(true)} className="btn-term mt-3">◆ SUMMON · {GUARDIAN_PRICE_SATS.toLocaleString()} SATS</button>
+              <button type="button" onClick={() => setOpen(true)} className="btn-term mt-3">◆ INSCRIBE ON-CHAIN</button>
             </div>
           ) : awake.data.inscriptionId ? (
             <div className="rounded-sm border border-signal/40 p-3 font-mono text-[11px]">
