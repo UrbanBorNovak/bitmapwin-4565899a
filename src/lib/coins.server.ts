@@ -82,7 +82,7 @@ export async function runDailyRewards(): Promise<RewardRunResult> {
     .limit(2000);
   const creatorByHeight = new Map<number, string>();
   for (const d of (hosted.data ?? []) as { bitmap_height: number; deployed_by_address: string; config: unknown; extenders: { creator_address: string | null } | null }[]) {
-    if (!(d.config && typeof d.config === "object" && (d.config as Record<string, unknown>).hostAndEarn === true)) continue;
+    if (!(d.config && typeof d.config === "object" && (d.config as Record<string, unknown>)["hostAndEarn"] === true)) continue;
     const h = Number(d.bitmap_height);
     if (!ownerByHeight.has(h)) ownerByHeight.set(h, d.deployed_by_address);
     const creator = d.extenders?.creator_address;
