@@ -26,6 +26,7 @@ import { SalesLog } from "@/components/SalesLog";
 import { TradeCrawlerStatus } from "@/components/TradeCrawlerStatus";
 import { useServerFn } from "@tanstack/react-start";
 import { tradeCrawlProgressFn } from "@/lib/trade-crawler.functions";
+import { liveOciStatusFn } from "@/lib/live-oci.functions";
 
 
 
@@ -68,6 +69,13 @@ function Marketplace() {
   const parcels = registry.data ?? [];
   const registryCount = useQuery(registryCountQuery());
   const progressFn = useServerFn(tradeCrawlProgressFn);
+  const liveOciFn = useServerFn(liveOciStatusFn);
+  const liveOci = useQuery({
+    queryKey: ["live-oci", "status"],
+    queryFn: () => liveOciFn(),
+    staleTime: 60_000,
+    refetchInterval: 90_000,
+  });
   // Real registry-wide numbers from the crawler, not just the loaded page.
   const crawl = useQuery({
     queryKey: ["trade-crawl", "progress"],
@@ -165,14 +173,22 @@ function Marketplace() {
       </div>
 
       <div data-tour="market-stats" className="mt-6 grid grid-cols-2 divide-border border border-border bg-card sm:grid-cols-3 sm:divide-x lg:grid-cols-6">
-        <Stat
-          k="REGISTERED BITMAPS"
-          v={
-            registryCount.data !== undefined
-              ? registryCount.data.toLocaleString("en-US")
-              : "…"
-          }
-        />
+        <div className="p-4">
+          <p className="label">REGISTERED BITMAPS</p>
+          <p className="mt-1 font-mono text-sm font-bold text-foreground" data-no-translate>
+            {liveOci.data
+              ? liveOci.data.total.toLocaleString("en-US")
+              : registryCount.data !== undefined
+                ? registryCount.data.toLocaleString("en-US")
+                : "…"}
+          </p>
+          {liveOci.data && (
+            <p className="mt-0.5 font-mono text-[10px] text-muted-foreground" data-no-translate>
+              OCI {liveOci.data.ociCount.toLocaleString("en-US")} + LIVEOCI {liveOci.data.liveCount.toLocaleString("en-US")}
+              {liveOci.data.tip ? ` · TIP #${liveOci.data.tip.toLocaleString("en-US")}` : ""}
+            </p>
+          )}
+        </div>
         <Stat
           k="TRADED ON CHAIN"
           v={
