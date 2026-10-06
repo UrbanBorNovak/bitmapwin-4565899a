@@ -98,10 +98,6 @@ function OasisPage() {
             <span>◆ GUARDIAN COMMAND CENTRE — PATROL · MARCH · RAID</span><span aria-hidden="true">→</span>
           </Link>
           <GuardianRadar {...(height === undefined ? {} : { current: height })} />
-          <details className="mt-3 border border-border bg-card p-4">
-            <summary className="label cursor-pointer text-bitcoin">● GO LIVE ON KICK</summary>
-            <div className="mt-3"><GoLiveKick label="oasis" /></div>
-          </details>
         </Suspense>
         </OasisWorldGuard>
         )}
