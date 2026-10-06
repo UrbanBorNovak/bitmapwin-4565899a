@@ -193,6 +193,7 @@ function Marketplace() {
             <span className="label text-primary">LIVE BITCOIN LAND MARKET</span>
             <h1 className="mt-2 font-mono text-3xl font-bold uppercase text-foreground md:text-5xl">BITMAP MARKETPLACE</h1>
             <p className="mt-3 max-w-2xl text-sm text-muted-foreground">Buy, bid, list and track Bitmaps through verified Bitcoin transactions.</p>
+            <a href="#sell-bitmap" className="btn-term mt-4 inline-flex">◆ SELL YOUR BITMAP</a>
           </div>
           <div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
             <span className="relative flex size-2" aria-hidden>

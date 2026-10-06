@@ -11,6 +11,7 @@ import { useWalletSession } from "@/lib/wallet-session";
 import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
 import { MARKETPLACE_FEE_PERCENT } from "@/lib/marketplace-fee";
+import { resolveWallet } from "@/components/BuyButton";
 
 type HeldBitmap = {
   outpoint: string;
@@ -55,7 +56,7 @@ export function MyBitmapsPanel() {
 
   if (!wallet) {
     return (
-      <section className="border border-border">
+      <section id="sell-bitmap" className="border border-border">
         <header className="border-b border-border p-5">
           <h2 className="display text-xl">MY BITMAPS</h2>
           <p className="label mt-2">CONNECT A WALLET TO LIST, REPRICE OR UNLIST YOUR OWN BITMAPS</p>
@@ -64,12 +65,15 @@ export function MyBitmapsPanel() {
           &gt; CONNECT UNISAT OR XVERSE — YOU CAN ONLY LIST BITMAPS HELD BY YOUR OWN WALLET
           <span className="blink">_</span>
         </p>
+        <div className="px-5 pb-5">
+          <ConnectToSell />
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="border border-border" data-tour="my-bitmaps">
+    <section id="sell-bitmap" className="border border-border" data-tour="my-bitmaps">
       <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border p-5">
         <div>
           <h2 className="display text-xl">MY BITMAPS</h2>
@@ -102,6 +106,18 @@ export function MyBitmapsPanel() {
         <HeldList held={held} openByOutpoint={openByOutpoint} />
       )}
     </section>
+  );
+}
+
+function ConnectToSell() {
+  const connect = useMutation({
+    mutationFn: () => resolveWallet(),
+    onError: (e) => toast("WALLET NOT CONNECTED", { description: (e as Error).message.toUpperCase() }),
+  });
+  return (
+    <button className="btn-term" disabled={connect.isPending} onClick={() => connect.mutate()}>
+      {connect.isPending ? "[ CONNECTING… ]" : "[ CONNECT WALLET TO SELL ]"}
+    </button>
   );
 }
 
