@@ -69,6 +69,7 @@ export function useBitmapLiveStream(height: number) {
   const pcRef = useRef<RTCPeerConnection | null>(null);
 
   useEffect(() => {
+    if (height < 0) return;
     const id = rid();
     let host: string | null = null;
     let lastBeacon = 0;
