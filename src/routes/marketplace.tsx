@@ -27,6 +27,7 @@ import { TradeCrawlerStatus } from "@/components/TradeCrawlerStatus";
 import { useServerFn } from "@tanstack/react-start";
 import { tradeCrawlProgressFn } from "@/lib/trade-crawler.functions";
 import { liveOciStatusFn } from "@/lib/live-oci.functions";
+import { inhabitedQuery } from "@/lib/inhabited.functions";
 
 
 
@@ -60,7 +61,7 @@ export const Route = createFileRoute("/marketplace")({
   notFoundComponent: () => <EmptyRegistry />,
 });
 
-type Tab = "traded" | "listed" | "all";
+type Tab = "traded" | "listed" | "all" | "inhabited";
 
 const PAGE_SIZE = 24;
 
@@ -92,6 +93,7 @@ function Marketplace() {
   const recent = useQuery({ ...recentTradesQuery(40), refetchInterval: 30_000 });
   const lastTrade = (recent.data ?? []).find((t) => t.price_sats > 0) ?? null;
   useLiveOffers();
+  const inhabited = useQuery(inhabitedQuery());
 
 
   const listed = useMemo(() => parcels.filter((p) => p.listedSats !== null), [parcels]);
@@ -103,6 +105,7 @@ function Marketplace() {
   }, [tab, traded, listed, parcels]);
   const visible = useMemo(() => {
     let base = tab === "traded" ? traded : tab === "listed" ? listed : parcels;
+    if (tab === "inhabited") base = parcels.filter((p) => inhabited.data?.has(p.bitmapHeight));
     if (club !== "any") {
       const def = CLUBS.find((c) => c.id === club);
       if (def) base = base.filter((p) => inClub(p.bitmapHeight, def));
@@ -120,7 +123,7 @@ function Marketplace() {
         p.txid.toLowerCase().includes(q) ||
         (p.ownerAddress ?? "").toLowerCase().includes(q),
     );
-  }, [tab, traded, listed, parcels, search, club, trait, recentFirst]);
+  }, [tab, traded, listed, parcels, search, club, trait, recentFirst, inhabited.data]);
 
   // Paginate first, then resolve holders on chain for the visible page only.
   const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
@@ -250,9 +253,9 @@ function Marketplace() {
               <div>
                 <span className="label mb-2 block">MARKET STATUS</span>
                 <div className="grid grid-cols-1 gap-2">
-                  {(["all", "listed", "traded"] as const).map((value) => (
+                  {(["all", "listed", "traded", "inhabited"] as const).map((value) => (
                     <button key={value} className={tab === value ? "btn-term justify-start" : "btn-term-ghost justify-start"} onClick={() => { setTab(value); setPage(0); }}>
-                      {value === "all" ? "ALL BITMAPS" : value.toUpperCase()}
+                      {value === "all" ? "ALL BITMAPS" : value === "inhabited" ? `INHABITED${inhabited.data ? ` · ${inhabited.data.size}` : ""}` : value.toUpperCase()}
                     </button>
                   ))}
                 </div>
