@@ -168,6 +168,7 @@ export function SiteHeader() {
                   openGroup === group.id ? "is-active border border-border text-foreground" : ""
                 }`}
               >
+                <GroupIcon id={group.id} />
                 {group.label}
                 <ChevronDown className="size-3" />
               </button>
@@ -191,10 +192,15 @@ export function SiteHeader() {
                             activeOptions={{ exact: true }}
                             onClick={() => setOpenGroup(null)}
                             aria-current={active ? "page" : undefined}
-                            className={`nav-menu-item group block border-border px-3 py-3 ${group.id === "play" ? "border border-transparent" : "border-b last:border-b-0"} ${active ? "border-border bg-surface" : "hover:border-border hover:bg-surface"}`}
+                            className={`nav-menu-item group block border-border px-3 py-2.5 ${group.id === "play" ? "border border-transparent" : "border-b last:border-b-0"} ${active ? "border-border bg-surface" : "hover:border-border hover:bg-surface"}`}
                           >
-                            <div className={`label transition-transform group-hover:translate-x-1 ${active ? "text-bitcoin" : "text-foreground"}`}>{item.label}</div>
-                            {item.note && <div className="label mt-1 text-[0.55rem] leading-snug">{item.note}</div>}
+                            <div className="flex items-center gap-3">
+                              <ItemIcon to={item.to} active={active} />
+                              <div className="min-w-0">
+                                <div className={`label transition-transform group-hover:translate-x-0.5 ${active ? "text-bitcoin" : "text-foreground"}`}>{item.label}</div>
+                                {item.note && <div className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{item.note}</div>}
+                              </div>
+                            </div>
                           </Link>
                         </div>
                       );
@@ -211,7 +217,7 @@ export function SiteHeader() {
             </div>
           ))}
           <Link to="/oasis" className="label ml-2 flex h-9 items-center gap-1 border border-bitcoin bg-bitcoin px-3 py-2 text-primary-foreground hover:border-foreground hover:bg-foreground">
-            ENTER OASIS <span aria-hidden="true">→</span>
+            <Globe className="size-3.5" strokeWidth={1.75} /> ENTER OASIS
           </Link>
         </nav>
 
@@ -265,7 +271,8 @@ export function SiteHeader() {
                 openGroup === group.id ? "is-active border border-border text-foreground" : ""
               }`}
             >
-              {group.label}
+              <GroupIcon id={group.id} />
+              <span className="hidden min-[400px]:inline">{group.label}</span>
               <ChevronDown className="hidden size-3 sm:block" />
             </button>
             {openGroup === group.id && (
@@ -288,10 +295,15 @@ export function SiteHeader() {
                           activeOptions={{ exact: true }}
                           onClick={() => setOpenGroup(null)}
                           aria-current={active ? "page" : undefined}
-                          className={`nav-menu-item group block border-border px-3 py-3 ${group.id === "play" ? "border border-transparent" : "border-b last:border-b-0"} ${active ? "border-border bg-surface" : "hover:border-border hover:bg-surface"}`}
+                          className={`nav-menu-item group block border-border px-3 py-2.5 ${group.id === "play" ? "border border-transparent" : "border-b last:border-b-0"} ${active ? "border-border bg-surface" : "hover:border-border hover:bg-surface"}`}
                         >
-                          <div className={`label transition-transform group-hover:translate-x-1 ${active ? "text-bitcoin" : "text-foreground"}`}>{item.label}</div>
-                          {item.note && <div className="label mt-1 text-[0.55rem] leading-snug">{item.note}</div>}
+                            <div className="flex items-center gap-3">
+                              <ItemIcon to={item.to} active={active} />
+                              <div className="min-w-0">
+                                <div className={`label transition-transform group-hover:translate-x-0.5 ${active ? "text-bitcoin" : "text-foreground"}`}>{item.label}</div>
+                                {item.note && <div className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{item.note}</div>}
+                              </div>
+                            </div>
                         </Link>
                       </div>
                     );

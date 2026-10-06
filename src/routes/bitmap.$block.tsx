@@ -1,3 +1,4 @@
+import { Activity, ArrowLeft, ArrowLeftRight, Database, Fingerprint, Globe, MapPin, ScrollText, ShieldCheck, Store, Users, Wallet, type LucideIcon } from "lucide-react";
 import { useSyncExternalStore } from "react";
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { queryOptions, useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
@@ -217,9 +218,9 @@ function BitmapDetail() {
   return (
     <div className="land-terminal mx-auto min-h-screen max-w-[1400px] px-3 py-5 md:px-6 md:py-8">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <Link to="/marketplace" className="label hover:text-foreground">← MARKETPLACE / LAND</Link>
+        <Link to="/marketplace" className="label inline-flex items-center gap-1.5 hover:text-foreground"><ArrowLeft className="size-3.5" /> MARKETPLACE</Link>
         <Link to="/map/place/$block" params={{ block: String(block) }} className="label text-bitcoin hover:text-foreground">
-          {place.localName} · {place.name} →
+          <MapPin className="mr-1 inline size-3.5 align-[-2px]" />{place.localName} · {place.name}
         </Link>
       </div>
 
@@ -229,7 +230,7 @@ function BitmapDetail() {
             <div>
               <div className="mb-5 flex flex-wrap items-center gap-3">
                 <span className="h-2 w-2 bg-signal motion-safe:animate-pulse" aria-hidden="true" />
-                <span className="label text-signal">BITCOIN MAINNET · {status}</span>
+                <span className="label inline-flex items-center gap-1.5 text-signal"><ShieldCheck className="size-3.5" strokeWidth={1.75} /> BITCOIN MAINNET · {status}</span>
               </div>
               <h1 className="display break-all text-[clamp(3.25rem,9vw,8.5rem)] leading-[0.78]">
                 {block}<span className="text-bitcoin">.</span><br />BITMAP
@@ -262,18 +263,18 @@ function BitmapDetail() {
           </div>
           <aside className="flex flex-col justify-between bg-card/40 p-5 md:p-8 lg:col-span-4">
             <dl className="space-y-6">
-              <HeroField label="OWNER" value={owner ? shortenAddress(owner) : liveHolder.isPending ? "RESOLVING…" : "UNCLAIMED"} signal />
-              <HeroField label="INSCRIPTION ID" value={inscriptionId ? shortId(inscriptionId) : oci.isLoading ? "RESOLVING…" : "—"} />
-              <HeroField label="ATLAS PLACE" value={`${place.localName} · ${place.name}`} />
+              <HeroField icon={Wallet} label="OWNER" value={owner ? shortenAddress(owner) : liveHolder.isPending ? "RESOLVING…" : "UNCLAIMED"} signal />
+              <HeroField icon={Fingerprint} label="INSCRIPTION ID" value={inscriptionId ? shortId(inscriptionId) : oci.isLoading ? "RESOLVING…" : "—"} />
+              <HeroField icon={MapPin} label="ATLAS PLACE" value={`${place.localName} · ${place.name}`} />
             </dl>
             <div className="mt-8 grid grid-cols-2 gap-px border-t border-border bg-border pt-px">
-              <HeroStat label="TRANSACTIONS" value={txCount !== null ? txCount.toLocaleString("en-US") : "…"} />
-              <HeroStat label="TRANSFERS" value={String(history.length)} />
+              <HeroStat icon={Activity} label="TRANSACTIONS" value={txCount !== null ? txCount.toLocaleString("en-US") : "…"} />
+              <HeroStat icon={ArrowLeftRight} label="TRANSFERS" value={String(history.length)} />
             </div>
           </aside>
         </div>
         <nav className="flex overflow-x-auto border-t border-border" role="tablist" aria-label="BITMAP sections">
-          {TABS.map((t, i) => (
+          {TABS.map((t) => (
             <Button
               key={t.id}
               id={`bitmap-tab-${t.id}`}
@@ -289,9 +290,10 @@ function BitmapDetail() {
                 event.preventDefault();
                 moveTab(t.id, event.key === "ArrowLeft" ? -1 : 1);
               }}
-              className={`label h-auto shrink-0 rounded-none border-r border-border px-4 py-3 hover:bg-card ${tab === t.id ? "bg-card text-signal" : "hover:text-bitcoin"}`}
+              className={`label flex h-auto shrink-0 items-center gap-2 rounded-none border-r border-border border-b-2 px-5 py-3.5 ${tab === t.id ? "border-b-signal" : "border-b-transparent"} hover:bg-card ${tab === t.id ? "bg-card text-signal" : "hover:text-bitcoin"}`}
             >
-              {String(i + 1).padStart(2, "0")} · {t.label}
+              <t.icon className="size-4" strokeWidth={1.75} aria-hidden="true" />
+              {t.label}
             </Button>
           ))}
         </nav>
@@ -730,11 +732,11 @@ function BitmapDetail() {
 }
 
 const TABS = [
-  { id: "world", label: "WORLD" },
-  { id: "market", label: "MARKET" },
-  { id: "facts", label: "FACTS" },
-  { id: "chronicle", label: "CHRONICLE" },
-  { id: "community", label: "COMMUNITY" },
+  { id: "world", label: "WORLD", icon: Globe },
+  { id: "market", label: "MARKET", icon: Store },
+  { id: "facts", label: "FACTS", icon: Database },
+  { id: "chronicle", label: "CHRONICLE", icon: ScrollText },
+  { id: "community", label: "COMMUNITY", icon: Users },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
@@ -776,19 +778,19 @@ function Field({ k, v }: { k: string; v: string }) {
   );
 }
 
-function HeroField({ label, value, signal = false }: { label: string; value: string; signal?: boolean }) {
+function HeroField({ icon: I, label, value, signal = false }: { icon: LucideIcon; label: string; value: string; signal?: boolean }) {
   return (
     <div className="min-w-0">
-      <dt className="label">{label}</dt>
+      <dt className="label flex items-center gap-2"><I className="size-3.5" strokeWidth={1.75} aria-hidden="true" />{label}</dt>
       <dd className={`mt-2 break-words font-mono text-sm ${signal ? "text-signal" : "text-foreground"}`}>{value}</dd>
     </div>
   );
 }
 
-function HeroStat({ label, value }: { label: string; value: string }) {
+function HeroStat({ icon: I, label, value }: { icon: LucideIcon; label: string; value: string }) {
   return (
     <div className="min-w-0 bg-card px-3 py-3">
-      <dt className="label">{label}</dt>
+      <dt className="label flex items-center gap-1.5"><I className="size-3.5" strokeWidth={1.75} aria-hidden="true" />{label}</dt>
       <dd className="display mt-1 truncate text-lg">{value}</dd>
     </div>
   );
