@@ -63,6 +63,7 @@ export function DelegateGuardianSummon({ dna }: { dna: GuardianDna }) {
         description={`ONLY THE WALLET HOLDING ${dna.height}.BITMAP CAN SIGN THIS. WITHOUT A VALID BITMAP PARENT OR TRIBUTE, THE INSCRIPTION RENDERS AS A STONE RELIC. YOUR WALLET PAYS THE LIVE MINER FEE.`}
         allowUpload={false}
         claimParentsForHeight={dna.height}
+        requireAwake
         onRevealed={(revealTxid) => setRevealedId(`${revealTxid}i0`)}
       />
       {revealedId ? <InscriptionWatcher inscriptionId={revealedId} height={dna.height} /> : null}

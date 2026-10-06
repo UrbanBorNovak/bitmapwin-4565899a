@@ -61,6 +61,8 @@ export function ShadowInscriber(props: {
   claimParentsForHeight?: number;
   /** Optional user-supplied `<height>.bitmap` inscription id (verified server-side). */
   parentBitmapInscriptionId?: string;
+  /** Server refuses to price the inscription unless this block's Guardian is already summoned. */
+  requireAwake?: boolean;
   /** Where the inscribed sat lands. Defaults to the connected wallet's ordinals address. */
   receiveAddress?: string;
   /** Runs after the one-time payment address exists, before the wallet pays. Throw to abort. */
@@ -218,6 +220,7 @@ export function ShadowInscriber(props: {
               height: props.claimParentsForHeight,
               holderAddress: wallet.ordinalsAddress,
               ...(props.parentBitmapInscriptionId ? { bitmapInscriptionId: props.parentBitmapInscriptionId } : {}),
+              ...(props.requireAwake ? { requireAwake: true } : {}),
             },
           });
         } catch {
@@ -225,6 +228,11 @@ export function ShadowInscriber(props: {
           throw new Error("COULD NOT CHECK THE PARENT BITMAP — NOTHING WAS PAID, TRY AGAIN");
         }
         setParentNotes(res.notes);
+        if (res.notAwake) {
+          throw new Error(
+            `MINT STOPPED — SUMMON THE ${props.claimParentsForHeight}.BITMAP GUARDIAN FIRST. NOTHING WAS PAID.`,
+          );
+        }
         if (!res.bitmapParentId) {
           throw new Error(
             `MINT STOPPED — YOUR CONNECTED ORDINALS WALLET MUST HOLD ${props.claimParentsForHeight}.BITMAP. NOTHING WAS PAID.`,
