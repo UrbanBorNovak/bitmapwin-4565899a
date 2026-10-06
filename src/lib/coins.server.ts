@@ -69,10 +69,26 @@ export async function runDailyRewards(): Promise<RewardRunResult> {
     .select("bitmap_height, owner_address")
     .limit(2000);
   if (pages.error) throw new Error(pages.error.message);
-  const heights = (pages.data ?? []).map((p) => Number(p.bitmap_height));
   const ownerByHeight = new Map(
     (pages.data ?? []).map((p) => [Number(p.bitmap_height), p.owner_address] as const),
   );
+
+  // Host & Earn: holder-hosted community experiences earn visitor BIT too,
+  // split between the land holder and the experience's creator.
+  const hosted = await db
+    .from("extender_deployments")
+    .select("bitmap_height, deployed_by_address, config, extenders(creator_address)")
+    .eq("status", "active")
+    .limit(2000);
+  const creatorByHeight = new Map<number, string>();
+  for (const d of (hosted.data ?? []) as { bitmap_height: number; deployed_by_address: string; config: unknown; extenders: { creator_address: string | null } | null }[]) {
+    if (!(d.config && typeof d.config === "object" && (d.config as Record<string, unknown>).hostAndEarn === true)) continue;
+    const h = Number(d.bitmap_height);
+    if (!ownerByHeight.has(h)) ownerByHeight.set(h, d.deployed_by_address);
+    const creator = d.extenders?.creator_address;
+    if (creator && creator !== ownerByHeight.get(h)) creatorByHeight.set(h, creator);
+  }
+  const heights = [...ownerByHeight.keys()];
 
   const snapshots = new Map<number, { views: number; uniques: number }>();
   const stats = new Map<number, { views: number; uniques: number }>();

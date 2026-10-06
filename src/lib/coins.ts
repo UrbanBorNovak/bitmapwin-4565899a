@@ -19,6 +19,9 @@ export const EMISSION = {
   perLeaseDayRented: 8,
 } as const;
 
+/** Host & Earn: share of a hosted BITMAP's visitor BIT that goes to the land holder; the rest goes to the experience's creator. */
+export const HOST_SPLIT = { holderPercent: 70, creatorPercent: 30 } as const;
+
 export type CoinBalance = {
   address: string;
   balance: number;
