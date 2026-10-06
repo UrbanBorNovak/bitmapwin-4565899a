@@ -37,7 +37,8 @@ export const mintParentsFn = createServerFn({ method: "GET" })
           bitmapParentId: null,
           masterInscriptionId: null,
           notes: [`SUMMON FIRST — ${data.height}.BITMAP HAS NO AWAKE GUARDIAN YET`],
-          notAwake: true as const,
+          collectionAddress: "",
+          notAwake: true as boolean,
         };
       }
     }
@@ -105,7 +106,7 @@ export const mintParentsFn = createServerFn({ method: "GET" })
     }
 
     const bitmapParentId = bitmapId && parents.some((p) => p.inscriptionId === bitmapId.toLowerCase()) ? bitmapId.toLowerCase() : null;
-    return { parents, notes, masterInscriptionId: master, bitmapParentId, collectionAddress: address };
+    return { parents, notes, masterInscriptionId: master, bitmapParentId, collectionAddress: address, notAwake: false as boolean };
   });
 
 /** Co-signs the master collection input of a creature reveal. */
