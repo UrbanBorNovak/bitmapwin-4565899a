@@ -1,5 +1,11 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { ChevronDown, HelpCircle, Search, X } from "lucide-react";
+import {
+  ChevronDown, HelpCircle, Search, X, Gamepad2, Store, Hammer, Compass, User,
+  Layers, Sparkles, Globe, Swords, Radio, BookOpen, Building2, ArrowLeftRight, Backpack,
+  Map as MapIcon, CalendarClock, History, Gift, Home, Users, Rocket, PenTool, Shield, Package,
+  TrendingUp, Library, Trophy, Boxes, HardHat, BarChart3, Pickaxe, IdCard, BadgeCheck, Code2,
+  FileText, Terminal, Wrench, ArrowRight, type LucideIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { BidInboxBell } from "@/components/BidInboxBell";
 import { HeaderIdentity } from "@/components/HeaderIdentity";
@@ -10,6 +16,31 @@ import { startGuidedTour } from "@/components/GuidedTour";
 
 type NavItem = { to: string; label: string; note?: string };
 type NavGroup = { id: string; label: string; note: string; items: NavItem[] };
+
+const GROUP_ICONS: Record<string, LucideIcon> = {
+  play: Gamepad2, trade: Store, create: Hammer, discover: Compass, account: User,
+};
+const ITEM_ICONS: Record<string, LucideIcon> = {
+  "/play": Layers, "/play/extenders": Sparkles, "/oasis": Globe, "/command": Swords, "/stream": Radio,
+  "/play-guide": BookOpen, "/cities": Building2, "/trading-post": ArrowLeftRight, "/inventory": Backpack,
+  "/marketplace": MapIcon, "/leases": CalendarClock, "/history": History, "/donate": Gift,
+  "/my-world": Home, "/builds": Users, "/extend": Rocket, "/studio": PenTool, "/mint": Shield, "/extenders": Package,
+  "/explore": TrendingUp, "/codex": Library, "/ranks": Trophy, "/experiences": Boxes, "/builders": HardHat,
+  "/world-stats": BarChart3, "/archaeology": Pickaxe, "/my-land": MapIcon, "/passport": IdCard,
+  "/ownership": BadgeCheck, "/sdk": Code2, "/docs": FileText, "/api": Terminal, "/dev-tools": Wrench,
+};
+function ItemIcon({ to, active }: { to: string; active: boolean }) {
+  const I = ITEM_ICONS[to] ?? ArrowRight;
+  return (
+    <span className={`grid size-8 shrink-0 place-items-center border ${active ? "border-bitcoin text-bitcoin" : "border-border text-muted-foreground group-hover:border-signal group-hover:text-signal"}`}>
+      <I className="size-4" strokeWidth={1.75} />
+    </span>
+  );
+}
+function GroupIcon({ id }: { id: string }) {
+  const I = GROUP_ICONS[id] ?? Compass;
+  return <I className="size-3.5" strokeWidth={1.75} aria-hidden="true" />;
+}
 
 const NAV_GROUPS: NavGroup[] = [
   {
