@@ -171,3 +171,11 @@ export const joinCityFn = createServerFn({ method: "POST" })
     const { joinCity } = await import("@/lib/extenders.server");
     return joinCity(context.userId, data);
   });
+
+export const hostExtenderFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ extenderId: uuid, height }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { hostExtender } = await import("@/lib/extenders.server");
+    return hostExtender(context.userId, data);
+  });

@@ -399,3 +399,28 @@ export async function joinCity(userId: string, input: { cityId: string; height: 
   if (error) throw error;
   return { ok: true };
 }
+
+/**
+ * Host & Earn: a land holder hosts someone else's published extender on a
+ * BITMAP they hold. Ownership is re-checked live inside deployExtender; the
+ * newest published version is always used so hosts never pick stale code.
+ */
+export async function hostExtender(userId: string, input: { extenderId: string; height: number }) {
+  const db = await admin();
+  const { data: version, error } = await db
+    .from("extender_versions")
+    .select("id")
+    .eq("extender_id", input.extenderId)
+    .eq("status", "published")
+    .order("published_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  if (!version) throw new Error("THIS EXPERIENCE HAS NO PUBLISHED VERSION YET");
+  return deployExtender(userId, {
+    extenderId: input.extenderId,
+    versionId: version.id,
+    height: input.height,
+    config: { hostAndEarn: true },
+  });
+}
