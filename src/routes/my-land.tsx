@@ -6,6 +6,7 @@ import { heldHeightsQuery } from "@/lib/held-parcels";
 import { walletQuery } from "@/lib/wallet";
 import { myDeploymentsQuery } from "@/lib/extenders";
 import { HostEarnPanel } from "@/components/extenders/HostEarnPanel";
+import { MyParcelsPanel } from "@/components/MyParcelsPanel";
 import { HostEarnTutorial } from "@/components/extenders/HostEarnTutorial";
 
 export const Route = createFileRoute("/my-land")({
@@ -122,6 +123,7 @@ function MyLandPage() {
           ))}
         </div>
       )}
+      <MyParcelsPanel address={wallet.ordinalsAddress} snapshot={live.data} />
       {!scanning && heights.length > 0 && (
         <>
           <HostEarnTutorial />
