@@ -41,96 +41,150 @@ function MintPage() {
   const [input, setInput] = useState(String(initial ?? 840000));
   const height = initial ?? 840000;
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<Tab>("tour");
   const dna = useQuery(guardianDnaQuery(height));
   const awake = useQuery(guardianQuery(height));
   const d = dna.data;
   const m = d ? morphFromDna(d) : null;
   const go = (h: number) => Number.isInteger(h) && h >= 0 && navigate({ search: { height: h } });
 
+  const stats = d ? ([["HP", d.hp], ["BITE", d.bite], ["SPEED", d.speed], ["ARMOR", d.armor]] as const) : [];
+  const maxStat = Math.max(100, ...stats.map(([, v]) => Number(v) || 0));
+
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-8 md:px-8">
       <MintHero />
-      <p className="label text-signal">BITMAPWIN / SUMMON</p>
-      <h1 className="display mt-2 text-4xl md:text-5xl">SUMMON A GUARDIAN. <span className="text-bitcoin">PURE DIGITAL MATTER.</span></h1>
-      <p className="mt-3 max-w-2xl text-muted-foreground">
-        Digital Matter Theory (DMT) means nothing is made up: every Guardian is read straight from its Bitcoin block — difficulty, weight, hash, transactions. Anyone with a node gets the exact same creature.
-      </p>
 
-      <div className="panel mt-4 max-w-2xl rounded-md border border-signal/40 p-3">
-        <p className="label text-signal">◇ EXPERIMENT · FIRST SHIELDED DMT</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Optional: send your Guardian into a private pool instead of your wallet, so explorers can't link the first owner to you. Your browser holds the only key. Unaudited research — try it only if you want to be part of the first real shielded DMT.
-        </p>
+      <div className="mb-4 space-y-2">
+        <UnfinishedInscriptions />
       </div>
 
-      <div className="mt-6 space-y-2"><UnfinishedInscriptions /><div className="flex gap-3"><Link to="/guardians-guide" className="label text-signal underline">? WHAT ARE GUARDIANS →</Link><Link to="/payments" className="label text-signal underline">◇ MY INSCRIPTION PAYMENTS →</Link></div></div>
-
-      <ol data-tour="mint-steps" className="mt-6 grid gap-3 md:grid-cols-3">
-        {STEPS.map(([n, t, note]) => (
-          <li key={n} className="panel rounded-md border border-border p-4">
-            <p className="font-mono text-xs text-bitcoin">{n}</p>
-            <p className="display mt-1 text-lg">{t}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{note}</p>
-          </li>
-        ))}
-      </ol>
-
-      <form data-tour="mint-pick" className="mt-8 flex flex-wrap items-center gap-2" onSubmit={(e) => { e.preventDefault(); go(Number(input)); }}>
-        <input value={input} onChange={(e) => setInput(e.target.value.replace(/\D/g, ""))} aria-label="BITMAP number" className="w-40 rounded-sm border border-border bg-background px-3 py-2 font-mono text-sm" />
-        <span className="font-mono text-sm text-muted-foreground">.bitmap</span>
-        <button type="submit" className="btn-term-ghost">PREVIEW</button>
-        <button type="button" className="btn-term-ghost" onClick={() => go(Math.floor(Math.random() * 840000))}>RANDOM</button>
-      </form>
-
-      <div className="mt-4 grid gap-4 md:grid-cols-[1fr_340px]">
-        <div className="panel rounded-md border border-border">
-          {d ? <GuardianTurntable dna={d} className="h-[420px]" /> : (
-            <div className="grid h-[420px] place-items-center font-mono text-xs text-muted-foreground">
-              {dna.isError ? "✕ COULD NOT READ THIS BLOCK — TRY AGAIN" : "> READING BLOCK DNA…"}
+      {/* Mint console */}
+      <section className="panel overflow-hidden rounded-md border border-border">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-3 md:p-4">
+          <div>
+            <p className="label text-signal">MINT CONSOLE</p>
+            <h1 className="display text-2xl md:text-3xl">Pick a block. <span className="text-bitcoin">Meet its Guardian.</span></h1>
+          </div>
+          <form data-tour="mint-pick" className="flex flex-wrap items-center gap-2" onSubmit={(e) => { e.preventDefault(); go(Number(input)); }}>
+            <div className="flex items-center rounded-sm border border-border bg-background px-2">
+              <input value={input} onChange={(e) => setInput(e.target.value.replace(/\D/g, ""))} aria-label="BITMAP number" className="w-28 bg-transparent py-2 font-mono text-sm outline-none" />
+              <span className="font-mono text-xs text-muted-foreground">.bitmap</span>
             </div>
-          )}
+            <button type="submit" className="btn-term-ghost">PREVIEW</button>
+            <button type="button" className="btn-term-ghost" onClick={() => go(Math.floor(Math.random() * 840000))}>⟳ RANDOM</button>
+          </form>
+        </header>
+
+        <div className="grid md:grid-cols-[1fr_360px]">
+          <div className="relative border-b border-border md:border-b-0 md:border-r">
+            {d ? <GuardianTurntable dna={d} className="h-[380px] md:h-[460px]" /> : (
+              <div className="grid h-[380px] place-items-center font-mono text-xs text-muted-foreground md:h-[460px]">
+                {dna.isError ? "✕ COULD NOT READ THIS BLOCK — TRY AGAIN" : <span className="animate-pulse">&gt; READING BLOCK DNA…</span>}
+              </div>
+            )}
+            <p className="pointer-events-none absolute left-3 top-3 font-mono text-[11px] text-bitcoin">{height}.BITMAP</p>
+          </div>
+
+          <aside data-tour="mint-buy" className="flex flex-col gap-4 p-4">
+            {d && m ? (
+              <>
+                <div>
+                  <p className={`font-mono text-[11px] ${RARITY_TONE[d.rarity]}`}>{d.rarity} · ERA {d.epoch} · LV {guardianLevel(d)}</p>
+                  <h2 className="display mt-1 text-3xl">{m.name}</h2>
+                  <p className="font-mono text-[10px] text-muted-foreground">{d.species} LINE · {m.plan} · {m.code}</p>
+                  <p className="mt-2 font-mono text-[11px] text-signal">ABILITY · {d.ability}</p>
+                </div>
+
+                <div className="space-y-2">
+                  {stats.map(([k, v]) => (
+                    <div key={k} className="font-mono text-[10px]">
+                      <div className="flex justify-between"><span className="text-muted-foreground">{k}</span><span>{v}</span></div>
+                      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
+                        <div className="h-full rounded-full bg-bitcoin transition-all duration-700" style={{ width: `${Math.min(100, (Number(v) / maxStat) * 100)}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-auto space-y-2">
+                  {awake.data ? (
+                    <div className="rounded-sm border border-signal/40 p-3 font-mono text-[11px]">
+                      <p className="text-signal">● ALREADY AWAKE IN THE OASIS</p>
+                      <p className="mt-1 text-muted-foreground">Each block has one Guardian. Try another block.</p>
+                      <div className="mt-2 flex gap-3">
+                        <button type="button" className="text-bitcoin underline" onClick={() => go(Math.floor(Math.random() * 840000))}>ROLL ANOTHER →</button>
+                        {awake.data.inscriptionId ? <a href={`https://ordinals.com/inscription/${awake.data.inscriptionId}`} target="_blank" rel="noreferrer" className="text-signal underline">VIEW ON-CHAIN</a> : null}
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="font-mono text-[11px] text-signal">● AVAILABLE TO SUMMON</p>
+                      <button type="button" onClick={() => setOpen(true)} className="btn-term w-full py-3 text-base">◆ SUMMON · {GUARDIAN_PRICE_SATS.toLocaleString()} SATS</button>
+                    </>
+                  )}
+                  <p className="font-mono text-[10px] text-muted-foreground">
+                    Summon wakes it in the Oasis. Then inscribe it as a child of {height}.bitmap and the BITMAPWIN master — it joins the collection automatically.
+                  </p>
+                </div>
+              </>
+            ) : <p className="font-mono text-xs text-muted-foreground">Pick a block to begin.</p>}
+          </aside>
         </div>
-        <aside data-tour="mint-buy" className="panel space-y-3 rounded-md border border-border p-4">
-          {d && m ? (
-            <>
-              <p className={`font-mono text-[11px] ${RARITY_TONE[d.rarity]}`}>{d.rarity} · ERA {d.epoch} · LV {guardianLevel(d)}</p>
-              <h2 className="display text-2xl">{m.name}</h2>
-              <p className="font-mono text-[10px] text-muted-foreground">{d.species} LINE · {m.plan} · {m.code}</p>
-              <p className="font-mono text-[11px] text-signal">ABILITY · {d.ability}</p>
-              <div className="grid grid-cols-4 gap-1 font-mono text-[10px]">
-                {([["HP", d.hp], ["BITE", d.bite], ["SPD", d.speed], ["ARM", d.armor]] as const).map(([k, v]) => (
-                  <div key={k} className="border border-border px-1.5 py-1"><p className="text-muted-foreground">{k}</p><p>{v}</p></div>
-                ))}
-              </div>
-              {awake.data ? (
-                <p className="font-mono text-xs text-muted-foreground">✕ {height}.BITMAP'S GUARDIAN IS ALREADY SUMMONED — PICK ANOTHER BLOCK.</p>
-              ) : (
-                <button type="button" onClick={() => setOpen(true)} className="btn-term w-full">◆ SUMMON · {GUARDIAN_PRICE_SATS.toLocaleString()} SATS</button>
-              )}
-              <p className="font-mono text-[10px] text-muted-foreground">SUMMON WAKES IT IN THE OASIS. INSCRIBE IS THE NEXT STEP — IT MAKES THE ON-CHAIN ORDINAL IN YOUR WALLET. SIGN IN AND CONNECT A WALLET TO PAY.</p>
-              <div className="flex gap-3 font-mono text-[10px]">
-                {!SHORD_VAULT_DISABLED && <Link to="/shord" className="text-signal underline">YOUR POOL NOTES</Link>}
-                <Link to="/codex/morphs" className="text-signal underline">MORPH LAB</Link>
-              </div>
-            </>
-          ) : null}
-        </aside>
-      </div>
+
+        <ol data-tour="mint-steps" className="grid border-t border-border md:grid-cols-3">
+          {STEPS.map(([n, t, note]) => (
+            <li key={n} className="border-b border-border p-4 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0">
+              <p className="font-mono text-xs text-bitcoin">{n} · {t}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{note}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
       {d ? (
         <section data-tour="mint-delegate" className="panel mt-6 space-y-3 rounded-md border border-border p-4">
-          <p className="label text-signal">HOLDER INSCRIBE · DELEGATE</p>
-          <h2 className="display text-2xl">INSCRIBE FROM <span className="text-bitcoin">{height}.BITMAP</span></h2>
-          <p className="max-w-2xl text-sm text-muted-foreground">
-            Hold this BITMAP? Inscribe a tiny on-chain child of it that borrows the master generator. It lands in your own wallet, not the pool.
-          </p>
+          <p className="label text-signal">HOLD THIS BITMAP? INSCRIBE FROM IT</p>
+          <h2 className="display text-2xl">Inscribe from <span className="text-bitcoin">{height}.bitmap</span></h2>
+          <p className="max-w-2xl text-sm text-muted-foreground">A tiny on-chain child that borrows the master generator. It lands in your own wallet.</p>
           <DelegateGuardianSummon dna={d} />
         </section>
       ) : null}
-      <WalletMintGuide />
-      <GuardianShowcase />
-      <GuardianStory />
-      <SummonDashboard />
+
+      {/* Secondary content */}
+      <div className="mt-8 flex flex-wrap gap-1 border-b border-border">
+        {TABS.map(([k, label]) => (
+          <button key={k} type="button" onClick={() => setTab(k)}
+            className={`px-3 py-2 font-mono text-[11px] transition-colors ${tab === k ? "border-b-2 border-bitcoin text-bitcoin" : "text-muted-foreground hover:text-foreground"}`}>
+            {label}
+          </button>
+        ))}
+        <div className="ml-auto flex items-center gap-3 font-mono text-[10px]">
+          <Link to="/guardians-guide" className="text-signal underline">GUIDE</Link>
+          <Link to="/payments" className="text-signal underline">MY PAYMENTS</Link>
+          <Link to="/codex/morphs" className="text-signal underline">MORPH LAB</Link>
+          {!SHORD_VAULT_DISABLED && <Link to="/shord" className="text-signal underline">POOL NOTES</Link>}
+        </div>
+      </div>
+      <div className="[&>*:first-child]:mt-4">
+        {tab === "tour" ? <GuardianShowcase /> : null}
+        {tab === "wallet" ? <WalletMintGuide /> : null}
+        {tab === "story" ? (
+          <>
+            <GuardianStory />
+            <div className="panel mt-4 rounded-md border border-signal/40 p-3">
+              <p className="label text-signal">◇ EXPERIMENT · FIRST SHIELDED DMT</p>
+              <p className="mt-1 text-sm text-muted-foreground">Optional: send your Guardian into a private pool instead of your wallet. Your browser holds the only key. Unaudited research.</p>
+            </div>
+          </>
+        ) : null}
+        {tab === "mine" ? <SummonDashboard /> : null}
+      </div>
+
       {open ? <SummonGuardianDialog height={height} open={open} onOpenChange={setOpen} /> : null}
     </div>
   );
 }
+
+const TABS = [["tour", "GUARDIAN TOUR"], ["wallet", "WALLET GUIDE"], ["story", "THE STORY"], ["mine", "MY SUMMONS"]] as const;
+type Tab = (typeof TABS)[number][0];
