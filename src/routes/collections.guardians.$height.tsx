@@ -140,7 +140,7 @@ function GuardianDetails() {
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[620px] overflow-hidden" aria-hidden>
         <div className="absolute left-1/2 top-24 size-[620px] -translate-x-1/2 rounded-full bg-bitcoin/10 blur-3xl" />
         <div className="absolute right-[10%] top-10 size-[280px] rounded-full bg-signal/10 blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/.35)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/.35)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,color-mix(in_oklab,var(--border)_35%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklab,var(--border)_35%,transparent)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
       </div>
 
       <div className="mx-auto max-w-[1280px] px-4 py-6 md:px-8">
@@ -228,7 +228,7 @@ function GuardianDetails() {
                           <span className="text-xl font-bold text-foreground">{v}</span>
                         </div>
                         <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
-                          <div className="h-full rounded-full bg-bitcoin shadow-[0_0_12px_hsl(var(--bitcoin)/.7)] transition-all duration-1000"
+                          <div className="h-full rounded-full bg-bitcoin shadow-[0_0_12px_color-mix(in_oklab,var(--bitcoin)_70%,transparent)] transition-all duration-1000"
                             style={{ width: `${Math.min(100, (Number(v) / peak) * 100)}%` }} />
                         </div>
                       </div>
