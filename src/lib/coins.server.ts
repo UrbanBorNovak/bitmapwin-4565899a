@@ -1,4 +1,4 @@
-import { EMISSION } from "@/lib/coins";
+import { EMISSION, HOST_SPLIT } from "@/lib/coins";
 import { REFERRAL } from "@/lib/referrals";
 
 /**
@@ -134,7 +134,14 @@ export async function runDailyRewards(): Promise<RewardRunResult> {
     const newViews = Math.max(0, now.views - before.views);
     const newUniques = Math.max(0, now.uniques - before.uniques);
     const dividend = boosts.get(height)?.dividend ?? 1;
-    add(awards, owner, "build_attention", (newViews * EMISSION.perView + newUniques * EMISSION.perUniqueVisitor) * dividend);
+    const attention = (newViews * EMISSION.perView + newUniques * EMISSION.perUniqueVisitor) * dividend;
+    const creator = creatorByHeight.get(height);
+    if (creator) {
+      add(awards, owner, "host_earn_holder", (attention * HOST_SPLIT.holderPercent) / 100);
+      add(awards, creator, "host_earn_creator", (attention * HOST_SPLIT.creatorPercent) / 100);
+    } else {
+      add(awards, owner, "build_attention", attention);
+    }
     snapshotUpserts.push({
       bitmap_height: height,
       total_views: now.views,
