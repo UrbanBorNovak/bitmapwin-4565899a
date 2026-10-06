@@ -12,6 +12,7 @@ import { SummonDashboard } from "@/components/bitmon/SummonDashboard";
 import { SHORD_VAULT_DISABLED } from "@/lib/shord-flag";
 import { GuardianShowcase } from "@/components/bitmon/GuardianShowcase";
 import { GuardianStory, WalletMintGuide } from "@/components/bitmon/WalletMintGuide";
+import { MintHero } from "@/components/bitmon/MintHero";
 
 export const Route = createFileRoute("/mint")({
   validateSearch: z.object({ height: z.coerce.number().int().min(0).optional() }),
@@ -48,6 +49,7 @@ function MintPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-8 md:px-8">
+      <MintHero />
       <p className="label text-signal">BITMAPWIN / SUMMON</p>
       <h1 className="display mt-2 text-4xl md:text-5xl">SUMMON A GUARDIAN. <span className="text-bitcoin">PURE DIGITAL MATTER.</span></h1>
       <p className="mt-3 max-w-2xl text-muted-foreground">
