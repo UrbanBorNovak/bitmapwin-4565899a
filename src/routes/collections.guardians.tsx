@@ -10,6 +10,7 @@ import { formatSats } from "@/lib/trades";
 import { BuyButton } from "@/components/BuyButton";
 import { ShopListButton } from "@/components/builds/ShopListButton";
 import { GuardianBrowser } from "@/components/bitmon/GuardianBrowser";
+import { MyGuardianCollection } from "@/components/bitmon/MyGuardianCollection";
 
 const PAGE = 12;
 const TITLE = "Block-DNA Guardians Market — BITMAPWIN";
