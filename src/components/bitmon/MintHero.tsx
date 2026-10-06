@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import hero from "@/assets/mint-hero.jpg";
+import hero from "@/assets/mint-guardians.jpg";
 import { allGuardiansQuery } from "@/lib/bitmon-queries";
 import { getGuardianChildrenFn } from "@/lib/guardian-market.functions";
 
@@ -14,8 +14,8 @@ export function MintHero() {
 
   return (
     <section className="relative mb-8 overflow-hidden rounded-md border border-border">
-      <img src={hero} alt="A Bitcoin block cracking open to reveal its Guardian" width={1600} height={704} className="h-[300px] w-full object-cover md:h-[380px]" />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+      <img src={hero} alt="Nine voxel Guardians standing on glowing BITMAP land" width={1920} height={832} className="h-[340px] w-full object-cover object-top md:h-[460px]" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
       <div className="absolute inset-x-0 bottom-0 p-4 md:p-6">
         <p className="label text-signal">OFFICIAL ON-CHAIN COLLECTION · ONE GUARDIAN PER BLOCK, FOREVER</p>
         <p className="display mt-1 text-2xl md:text-4xl">EVERY INSCRIPTION <span className="text-bitcoin">JOINS THE COLLECTION.</span></p>
