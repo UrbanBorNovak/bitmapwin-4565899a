@@ -6,6 +6,7 @@ import { heldHeightsQuery } from "@/lib/held-parcels";
 import { walletQuery } from "@/lib/wallet";
 import { myDeploymentsQuery } from "@/lib/extenders";
 import { HostEarnPanel } from "@/components/extenders/HostEarnPanel";
+import { HostEarnTutorial } from "@/components/extenders/HostEarnTutorial";
 
 export const Route = createFileRoute("/my-land")({
   head: () => {
@@ -121,7 +122,12 @@ function MyLandPage() {
           ))}
         </div>
       )}
-      {!scanning && heights.length > 0 && <HostEarnPanel heights={heights} deployments={deployments.data ?? []} />}
+      {!scanning && heights.length > 0 && (
+        <>
+          <HostEarnTutorial />
+          <HostEarnPanel heights={heights} deployments={deployments.data ?? []} />
+        </>
+      )}
     </div>
   );
 }
