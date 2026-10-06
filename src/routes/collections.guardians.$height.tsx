@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { SeasonalMutationPanel } from "@/components/bitmon/SeasonalMutationPanel";
 import { useEffect, useMemo, useState } from "react";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { allGuardiansQuery, guardianQuery } from "@/lib/bitmon-queries";
