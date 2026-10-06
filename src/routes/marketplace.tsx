@@ -29,6 +29,17 @@ import { useServerFn } from "@tanstack/react-start";
 import { tradeCrawlProgressFn } from "@/lib/trade-crawler.functions";
 import { liveOciStatusFn } from "@/lib/live-oci.functions";
 import { inhabitedQuery } from "@/lib/inhabited.functions";
+import { LiveMarketTicker } from "@/components/market/LiveMarketTicker";
+
+type Sort = "default" | "recent" | "ask" | "height-asc" | "height-desc" | "transfers";
+const SORTS: { id: Sort; label: string }[] = [
+  { id: "default", label: "DEFAULT" },
+  { id: "recent", label: "RECENT SALES" },
+  { id: "ask", label: "LOWEST ASK" },
+  { id: "height-asc", label: "OLDEST BLOCK" },
+  { id: "height-desc", label: "NEWEST BLOCK" },
+  { id: "transfers", label: "MOST TRADED" },
+];
 
 
 
@@ -90,7 +101,7 @@ function Marketplace() {
   const [club, setClub] = useState<ClubId | "any">("any");
   const [trait, setTrait] = useState<TraitId | "any">("any");
   const [page, setPage] = useState(0);
-  const [recentFirst, setRecentFirst] = useState(false);
+  const [sort, setSort] = useState<Sort>("default");
   const recent = useQuery({ ...recentTradesQuery(40), refetchInterval: 30_000 });
   const lastTrade = (recent.data ?? []).find((t) => t.price_sats > 0) ?? null;
   useLiveOffers();
@@ -120,8 +131,15 @@ function Marketplace() {
       if (def) base = base.filter((p) => inClub(p.bitmapHeight, def));
     }
     if (trait !== "any") base = base.filter((p) => hasTrait(p.bitmapHeight, trait));
-    if (recentFirst) {
-      base = [...base].sort((a, b) => (b.lastSaleBlock ?? -1) - (a.lastSaleBlock ?? -1));
+    if (sort !== "default") {
+      const cmp: Record<Exclude<Sort, "default">, (a: RegistryParcel, b: RegistryParcel) => number> = {
+        recent: (a, b) => (b.lastSaleBlock ?? -1) - (a.lastSaleBlock ?? -1),
+        ask: (a, b) => (a.listedSats ?? Infinity) - (b.listedSats ?? Infinity),
+        "height-asc": (a, b) => a.bitmapHeight - b.bitmapHeight,
+        "height-desc": (a, b) => b.bitmapHeight - a.bitmapHeight,
+        transfers: (a, b) => b.transfers - a.transfers,
+      };
+      base = [...base].sort(cmp[sort]);
     }
     const q = search.trim().toLowerCase();
     if (!q) return base;
@@ -132,7 +150,7 @@ function Marketplace() {
         p.txid.toLowerCase().includes(q) ||
         (p.ownerAddress ?? "").toLowerCase().includes(q),
     );
-  }, [tab, traded, listed, parcels, search, club, trait, recentFirst, inhabitedParcels.data]);
+  }, [tab, traded, listed, parcels, search, club, trait, sort, inhabitedParcels.data]);
 
   // Paginate first, then resolve holders on chain for the visible page only.
   const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
@@ -177,12 +195,17 @@ function Marketplace() {
             <p className="mt-3 max-w-2xl text-sm text-muted-foreground">Buy, bid, list and track Bitmaps through verified Bitcoin transactions.</p>
           </div>
           <div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
-            <span className="size-2 bg-primary" aria-hidden />
-            ON-CHAIN MARKET DATA
+            <span className="relative flex size-2" aria-hidden>
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-signal opacity-60" />
+              <span className="relative inline-flex size-2 rounded-full bg-signal" />
+            </span>
+            <span className="text-signal">LIVE SYNC</span> · ON-CHAIN MARKET DATA · REFRESHES EVERY 15S
           </div>
         </header>
 
       </div>
+
+      <LiveMarketTicker trades={recent.data ?? []} inhabited={inhabited.data} syncedAt={crawl.dataUpdatedAt} />
 
       <div data-tour="market-stats" className="mt-6 grid grid-cols-2 divide-border border border-border bg-card sm:grid-cols-3 sm:divide-x lg:grid-cols-6">
         <div className="p-4">
@@ -271,14 +294,13 @@ function Marketplace() {
               </div>
               <div>
                 <span className="label mb-2 block">SORT</span>
-                <button
-                  type="button"
-                  aria-pressed={recentFirst}
-                  className={recentFirst ? "btn-term w-full justify-start" : "btn-term-ghost w-full justify-start"}
-                  onClick={() => { setRecentFirst((v) => !v); setPage(0); }}
-                >
-                  RECENT SALES FIRST
-                </button>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {SORTS.map((o) => (
+                    <button key={o.id} type="button" aria-pressed={sort === o.id} className={`${sort === o.id ? "btn-term" : "btn-term-ghost"} !px-2`} onClick={() => { setSort(o.id); setPage(0); }}>
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div>
                 <span className="label mb-2 block">COLLECTION</span>
@@ -380,6 +402,27 @@ function Marketplace() {
       </div>
 
 
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        {([
+          ["all", "ALL", parcels.length],
+          ["listed", "⚡ LISTED NOW", listed.length],
+          ["inhabited", "◆ INHABITED", inhabited.data?.size ?? 0],
+          ["traded", "▲ TRADED", traded.length],
+        ] as const).map(([id, label, n]) => (
+          <button key={id} type="button" aria-pressed={tab === id} onClick={() => { setTab(id); setPage(0); }}
+            className={`flex items-center gap-2 border px-3 py-1.5 font-mono text-[11px] transition-colors ${tab === id ? "border-bitcoin bg-bitcoin/10 text-bitcoin" : "border-border text-muted-foreground hover:border-signal hover:text-signal"}`}>
+            {label}<span className="opacity-70" data-no-translate>{n}</span>
+          </button>
+        ))}
+        {(club !== "any" || trait !== "any" || search || sort !== "default") && (
+          <span className="mx-1 h-4 w-px bg-border" aria-hidden />
+        )}
+        {club !== "any" && <Chip label={CLUBS.find((c) => c.id === club)?.short ?? club} onClear={() => setClub("any")} />}
+        {trait !== "any" && <Chip label={OFFICIAL_TRAITS.find((t) => t.id === trait)?.label ?? trait} onClear={() => setTrait("any")} />}
+        {search && <Chip label={`"${search}"`} onClear={() => setSearch("")} />}
+        {sort !== "default" && <Chip label={SORTS.find((o) => o.id === sort)!.label} onClear={() => setSort("default")} />}
+      </div>
+
       {registry.isPending ? (
         <p className="mt-10 border border-border p-10 font-mono text-sm text-muted-foreground">
           &gt; READING THE REGISTRY FROM CHAIN<span className="blink">_</span>
@@ -422,7 +465,7 @@ function Marketplace() {
         </section>
       </div>
 
-      <details className="group mt-10 border border-border bg-card">
+      <details open className="group mt-10 border border-border bg-card">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 md:p-5">
           <div>
             <h2 className="font-mono text-sm font-bold text-foreground">MARKET INSIGHTS</h2>
@@ -515,5 +558,13 @@ function Stat({ k, v }: { k: string; v: string }) {
       <div className="label">{k}</div>
       <div className="mt-2 font-mono text-lg font-bold text-foreground md:text-xl">{v}</div>
     </div>
+  );
+}
+
+function Chip({ label, onClear }: { label: string; onClear: () => void }) {
+  return (
+    <button type="button" onClick={onClear} className="flex items-center gap-1.5 border border-signal/50 bg-signal/10 px-2 py-1 font-mono text-[10px] text-signal hover:bg-signal/20" aria-label={`Clear ${label}`}>
+      {label} <span aria-hidden>✕</span>
+    </button>
   );
 }
