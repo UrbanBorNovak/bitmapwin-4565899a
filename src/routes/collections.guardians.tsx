@@ -162,6 +162,8 @@ function GuardianMarket() {
         <p className="label mt-2 text-destructive">ORDINALS.COM DID NOT ANSWER IN FULL — SOME GUARDIANS MAY BE MISSING</p>
       ) : null}
 
+      <MyGuardianCollection />
+
       {/* Tutorial */}
       <h2 className="display mt-10 text-xl">HOW TO MINT, WITHDRAW AND LIST</h2>
       <ol className="mt-3 grid gap-3 md:grid-cols-4">
