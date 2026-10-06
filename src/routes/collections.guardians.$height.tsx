@@ -238,6 +238,8 @@ function GuardianDetails() {
                 </>
               ) : <p className="mt-2 animate-pulse font-mono text-xs text-muted-foreground">READING…</p>}
             </section>
+            {morph ? <SeasonalMutationPanel height={height} seed={morph.seed} /> : null}
+
 
             <section className="panel rounded-md border border-border p-4" data-no-translate>
               <p className="label text-muted-foreground">PROVENANCE</p>
