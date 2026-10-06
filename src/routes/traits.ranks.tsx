@@ -43,6 +43,7 @@ function TraitRanks() {
       <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {OFFICIAL_TRAITS.map((trait, index) => {
           const query = queries[index];
+          if (!query) return null;
           const items = query.data?.items ?? [];
           return (
             <article key={trait.id} className="border border-border bg-card">
