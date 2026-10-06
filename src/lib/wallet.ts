@@ -12,6 +12,8 @@ export type WalletInscription = {
   id: string;
   bitmapHeight: number | null;
   contentType: string | null;
+  /** Set when the inscription body is a `{index}.{height}.bitmap` parcel claim (validity checked separately). */
+  parcel?: { index: number; height: number } | null;
 };
 
 export type WalletUtxo = {

@@ -25,10 +25,6 @@
 - Oasis progress is device-local; BIT pays fixed EXPLORE_MILESTONES once per account ledger ref.
 - Guardians are one-per-block after exact payment; procedural species visuals share GuardianBody. Ordinals use public DNA/summon proof and device-local keys without identity.
 - Shadow Assets store only device-derived commitment/nullifier hashes; shadow_commitments has no RLS policy and is reached only through security-definer routines.
-- SHORD (src/lib/shord/*) is client-only: keys/notes stay in the browser, prover.ts never fakes a proof.
-- SHORD own pool: spend.circom (depth-20 Poseidon) → public/wasm/shord; custodial key from SHORD_POOL_SEED in shord-pool.server.ts, which checks every spend (known root, unused nullifier, Groth16). Single-party dev setup; never claim external-pool compatibility. Why: Bitcoin cannot verify Groth16, so the pool key holder is the trust anchor.
-- Direct-to-shield mints bind the note to the inscription's one-time commit address plus a device-held claim secret, accepting only a reveal that spends it and pays output 0 to the pool.
-
 - Guardian collection visuals come from morphFromDna (src/lib/creature-morph.ts) via GuardianBody height prop; species only sets ability/lore line. Why: one block-derived design per BITMAP everywhere.
 - Marketplace buys take a 90s server-side checkout hold (reserve_offer RPC, service-role only) before building the PSBT; submit requires the live hold. Why: snipe protection without exposing seller PSBTs.
 - Guardian master V7 (src/lib/guardian-delegate-v7.ts) is built from the V6 source by checked string swaps plus one V7 block; V7 (#127,517,786) is the active Tag 11 delegate; V6 stays the Tag 3 root. Why: keeps the live V6 bytes untouched.
@@ -39,3 +35,4 @@
 - Guardian raids settle lazily in settleRaids (guardian-walker.server.ts, called from Command Centre and Oasis): each lap of a march (repeat orders loop by clock, no cron) that reaches a guarded BITMAP fights via resolveRaid seeded by dispatch id + lap; spoils go to bitmap_spoils via land_raid_spoils, and recent public outcomes render on the winner's Oasis land. Why: deterministic, replayable, publicly visible outcomes with no polling job.
 - Server-managed secret tables use explicit deny-all browser policies plus revoked anon/authenticated grants; only trusted server routines receive table access. Why: player tokens, commitments, wallet proofs, and withdrawal details must never be readable through the Data API.
 - Host & Earn deployments are extender_deployments with config.hostAndEarn=true, created via hostExtender (latest published version, live ownership via deployExtender); runDailyRewards splits their visitor BIT by HOST_SPLIT between land holder and extender creator. Why: holders earn from land without coding, transfers, or payment.
+- District Fiefdom: runDailyRewards pays FIEF_SPLIT of each visited BITMAP's visitor BIT pro-rata to valid on-chain parcel holders via parcelHoldersFor (src/lib/parcel-fief.server.ts, first claim per tx index, live holder). Why: parcel shares come only from chain scans, never browser claims.

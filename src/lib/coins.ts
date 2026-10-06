@@ -22,6 +22,9 @@ export const EMISSION = {
 /** Host & Earn: share of a hosted BITMAP's visitor BIT that goes to the land holder; the rest goes to the experience's creator. */
 export const HOST_SPLIT = { holderPercent: 70, creatorPercent: 30 } as const;
 
+/** District Fiefdom Dividend: share of a BITMAP's daily visitor BIT paid pro-rata to its valid on-chain parcel holders. */
+export const FIEF_SPLIT = { parcelPercent: 25 } as const;
+
 export type CoinBalance = {
   address: string;
   balance: number;
