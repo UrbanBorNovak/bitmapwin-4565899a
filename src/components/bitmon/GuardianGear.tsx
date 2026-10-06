@@ -54,7 +54,7 @@ export function GuardianGear({ height, seed, u, head, H, backY, L }: { height: n
       {gear.back === "THRUSTERS" && [-1, 1].map((s) => (
         <group key={s} position={[s * 0.16 * u, backY, -L * 0.25]}>
           <mesh rotation-x={Math.PI / 2} raycast={noRay}><cylinderGeometry args={[0.07 * u, 0.09 * u, 0.3 * u, 8]} /><meshStandardMaterial color="#3a3a3a" metalness={0.8} roughness={0.3} /></mesh>
-          <group ref={s === 1 ? flame : undefined} position={[0, 0, -0.2 * u]}><B p={[0, 0, 0]} s={[0.08 * u, 0.08 * u, 0.12 * u]} c="#7fd6e6" g={2.4} /></group>
+          <group ref={s === 1 ? flame : null} position={[0, 0, -0.2 * u]}><B p={[0, 0, 0]} s={[0.08 * u, 0.08 * u, 0.12 * u]} c="#7fd6e6" g={2.4} /></group>
         </group>
       ))}
       {gear.back === "BATTERY" && <group position={[0, backY, -L * 0.1]}><B p={[0, 0, 0]} s={[0.28 * u, 0.18 * u, 0.36 * u]} c="#2a2a2a" /><B p={[0, 0.1 * u, 0]} s={[0.2 * u, 0.03 * u, 0.28 * u]} c="#f7931a" g={1.4} /></group>}
