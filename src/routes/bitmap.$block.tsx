@@ -37,6 +37,7 @@ import { BitmapStorefront } from "@/components/BitmapStorefront";
 import { TerritoryKiosk } from "@/components/territory/TerritoryKiosk";
 import { TerritoryDispatches } from "@/components/territory/TerritoryDispatches";
 import { BitmapStreamPlayer } from "@/components/territory/BitmapStreamPlayer";
+import { GuardianMintStatus } from "@/components/bitmon/GuardianMintStatus";
 import { StreamChat } from "@/components/territory/StreamChat";
 import { ClientOnly } from "@tanstack/react-router";
 import { TerritoryPanel } from "@/components/extenders/TerritoryPanel";
@@ -311,6 +312,7 @@ function BitmapDetail() {
           />
           <TraitBadges height={block} showRarity />
           <SatBadges height={block} />
+          <GuardianMintStatus height={block} />
         </div>
       </div>
 
