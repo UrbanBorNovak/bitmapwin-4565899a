@@ -1,4 +1,4 @@
-import { EMISSION, HOST_SPLIT } from "@/lib/coins";
+import { EMISSION, FIEF_SPLIT, HOST_SPLIT } from "@/lib/coins";
 import { REFERRAL } from "@/lib/referrals";
 
 /**
@@ -125,6 +125,8 @@ export async function runDailyRewards(): Promise<RewardRunResult> {
   const { readLandBoosts } = await import("@/lib/land-epoch.server");
   const boosts = await readLandBoosts(heights).catch(() => new Map());
 
+  // District Fiefdom: valid parcel holders of a visited BITMAP share part of its visitor BIT.
+  const { parcelHoldersFor } = await import("@/lib/parcel-fief.server");
   for (const height of heights) {
     const owner = ownerByHeight.get(height) ?? null;
     add(awards, owner, "build_maintained", EMISSION.perBuildMaintained);
@@ -134,7 +136,15 @@ export async function runDailyRewards(): Promise<RewardRunResult> {
     const newViews = Math.max(0, now.views - before.views);
     const newUniques = Math.max(0, now.uniques - before.uniques);
     const dividend = boosts.get(height)?.dividend ?? 1;
-    const attention = (newViews * EMISSION.perView + newUniques * EMISSION.perUniqueVisitor) * dividend;
+    let attention = (newViews * EMISSION.perView + newUniques * EMISSION.perUniqueVisitor) * dividend;
+    if (attention > 0) {
+      const holders = await parcelHoldersFor(height).catch(() => null);
+      if (holders && holders.total > 0) {
+        const pool = (attention * FIEF_SPLIT.parcelPercent) / 100;
+        for (const [address, count] of holders.byAddress) add(awards, address, "fief_dividend", (pool * count) / holders.total);
+        attention -= pool;
+      }
+    }
     const creator = creatorByHeight.get(height);
     if (creator) {
       add(awards, owner, "host_earn_holder", (attention * HOST_SPLIT.holderPercent) / 100);

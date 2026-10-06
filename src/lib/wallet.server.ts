@@ -43,6 +43,12 @@ type OrdAddressOutput = {
 };
 
 /** Inscription body -> the bitmap number it claims, when it is a claim. */
+const parcelClaims = new Map<string, { index: number; height: number }>();
+/** Parcel claim `{index}.{height}.bitmap` seen during the last content read, if any. */
+export function parcelClaimOf(inscriptionId: string) {
+  return parcelClaims.get(inscriptionId) ?? null;
+}
+
 async function bitmapHeightOf(inscriptionId: string): Promise<number | null> {
   try {
     const resp = await fetch(`${ORD}/content/${inscriptionId}`, {
@@ -50,6 +56,8 @@ async function bitmapHeightOf(inscriptionId: string): Promise<number | null> {
     });
     if (!resp.ok) return null;
     const body = (await resp.text()).trim();
+    const parcel = /^(\d+)\.(\d+)\.bitmap$/.exec(body);
+    if (parcel) parcelClaims.set(inscriptionId, { index: Number(parcel[1]), height: Number(parcel[2]) });
     const match = /^(\d+)\.bitmap$/.exec(body);
     return match ? Number(match[1]) : null;
   } catch {
@@ -252,6 +260,7 @@ async function fetchWalletViaAddressPage(address: string): Promise<WalletSnapsho
       id,
       bitmapHeight: heights.get(id) ?? null,
       contentType: meta.content_type ?? null,
+      parcel: parcelClaimOf(id),
     });
     byOutpoint.set(meta.output, utxo);
   });
