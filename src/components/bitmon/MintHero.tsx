@@ -27,7 +27,7 @@ export function MintHero() {
           {t.heroBody}
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2 font-mono text-[11px]">
-          <span className="panel rounded-sm border border-bitcoin/50 px-2 py-1 text-bitcoin">{all.isLoading ? "…" : list.length} AWAKENED</span>
+          <span className="panel rounded-sm border border-bitcoin/50 px-2 py-1 text-bitcoin">{all.isLoading ? "…" : list.length} {t.awakened}</span>
           <span className="panel rounded-sm border border-signal/50 px-2 py-1 text-signal">{inscribed ?? "…"} {t.inscribedOnChain}</span>
           <span className="font-mono text-[10px] text-muted-foreground">{t.formula}</span>
         </div>
