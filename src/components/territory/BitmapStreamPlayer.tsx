@@ -1,11 +1,7 @@
 // Live channel for a BITMAP. Embeds bitmap.stream when the channel exists;
-// otherwise offers a Kick player and the Kick broadcast pipeline.
-import { useState } from "react";
+// otherwise shows a compact status line so it never eats screen space.
 import { useQuery } from "@tanstack/react-query";
 import { probeBitmapStream } from "@/lib/bitmap-stream.functions";
-
-const KICK_KEY = (h: number) => `bitmapwin:kick-channel:${h}`;
-const RTMP = "rtmp://live.kick.com/app/";
 
 export function BitmapStreamPlayer({ height }: { height: number }) {
   const channel = `https://${height}.bitmap.stream`;
@@ -27,7 +23,7 @@ export function BitmapStreamPlayer({ height }: { height: number }) {
         )}
       </header>
       {probe.isPending ? (
-        <div className="flex aspect-video items-center justify-center bg-background font-mono text-[11px] text-muted-foreground">
+        <div className="px-4 py-2 font-mono text-[11px] text-muted-foreground">
           &gt; CHECKING CHANNEL…
         </div>
       ) : probe.data?.exists ? (
@@ -42,68 +38,18 @@ export function BitmapStreamPlayer({ height }: { height: number }) {
           />
         </div>
       ) : (
-        <KickPipeline height={height} />
+        <div className="flex flex-wrap items-center justify-between gap-2 bg-background px-4 py-2 font-mono text-[11px]">
+          <span className="text-muted-foreground">&gt; NO LIVE CHANNEL FOR {height}.BITMAP.</span>
+          <a
+            href="https://bitmap.stream"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="label text-muted-foreground hover:text-bitcoin"
+          >
+            [ START ONE AT BITMAP.STREAM ↗ ]
+          </a>
+        </div>
       )}
     </section>
-  );
-}
-
-function KickPipeline({ height }: { height: number }) {
-  const [input, setInput] = useState("");
-  const [kick, setKick] = useState<string | null>(() =>
-    typeof window === "undefined" ? null : localStorage.getItem(KICK_KEY(height)),
-  );
-  const [copied, setCopied] = useState(false);
-
-  const save = () => {
-    const slug = input.trim().toLowerCase().replace(/^.*kick\.com\//, "").replace(/[^a-z0-9_-]/g, "");
-    if (!slug) return;
-    localStorage.setItem(KICK_KEY(height), slug);
-    setKick(slug);
-  };
-
-  if (kick) {
-    return (
-      <div>
-        <div className="relative aspect-video w-full bg-background">
-          <iframe
-            src={`https://player.kick.com/${kick}`}
-            title={`${kick} on Kick`}
-            className="absolute inset-0 h-full w-full"
-            allow="autoplay; fullscreen; picture-in-picture"
-            allowFullScreen
-          />
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 font-mono text-[11px] text-muted-foreground">
-          <span>&gt; KICK · {kick}</span>
-          <button
-            type="button"
-            className="label hover:text-bitcoin"
-            onClick={() => {
-              localStorage.removeItem(KICK_KEY(height));
-              setKick(null);
-            }}
-          >
-            [ CHANGE CHANNEL ]
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-5 bg-background p-5 font-mono text-[12px]">
-      <p className="text-muted-foreground">
-        &gt; NO BITMAP.STREAM CHANNEL FOR {height}.BITMAP YET.
-      </p>
-
-      <p className="text-muted-foreground">
-        &gt; Prefer a native channel? Holders can open one at{" "}
-        <a href="https://bitmap.stream" target="_blank" rel="noopener noreferrer" className="text-bitcoin hover:underline">
-          bitmap.stream
-        </a>
-        .
-      </p>
-    </div>
   );
 }
