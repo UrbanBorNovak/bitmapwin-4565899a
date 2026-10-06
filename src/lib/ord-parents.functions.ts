@@ -18,10 +18,29 @@ export const mintParentsFn = createServerFn({ method: "GET" })
           .toLowerCase()
           .regex(/^[0-9a-f]{64}i\d+$/)
           .optional(),
+        /** Inscribe step: refuse unless this block's Guardian was summoned (paid + confirmed). */
+        requireAwake: z.boolean().optional(),
       })
       .parse(input),
   )
   .handler(async ({ data }) => {
+    if (data.requireAwake) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: g } = await supabaseAdmin
+        .from("bitmon_guardians")
+        .select("id")
+        .eq("block_height", data.height)
+        .maybeSingle();
+      if (!g) {
+        return {
+          parents: [] as ParentSpend[],
+          bitmapParentId: null,
+          masterInscriptionId: null,
+          notes: [`SUMMON FIRST — ${data.height}.BITMAP HAS NO AWAKE GUARDIAN YET`],
+          notAwake: true as const,
+        };
+      }
+    }
     const { fetchParentSpend } = await import("@/lib/ord-parents");
     const { bitmapInscriptionFor } = await import("@/lib/land-skin.server");
     const { masterParentSpend, collectionAddress } = await import("@/lib/ord-parents.server");
