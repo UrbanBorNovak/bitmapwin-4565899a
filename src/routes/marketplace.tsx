@@ -264,6 +264,26 @@ function Marketplace() {
         </div>
       </div>
 
+      <section className="mt-6 border border-border bg-card" aria-labelledby="market-live-panel">
+        <div className="flex items-center justify-between gap-4 border-b border-border p-4">
+          <div>
+            <h2 id="market-live-panel" className="font-mono text-sm font-bold text-foreground">LIVE MARKET</h2>
+            <p className="label mt-1">PRICE CHART · CONFIRMED SALES · CRAWLER</p>
+          </div>
+          <span className="flex items-center gap-2 font-mono text-[10px] text-signal">
+            <span className="size-2 animate-pulse rounded-full bg-signal" aria-hidden /> LIVE
+          </span>
+        </div>
+        <div className="grid gap-6 p-4 md:p-5 xl:grid-cols-12">
+          <div className="xl:col-span-8"><BitmapMarketChart /></div>
+          <div className="space-y-6 xl:col-span-4 [&>section]:mt-0">
+            <TradeCrawlerStatus />
+            <TrendingParcels limit={3} />
+            <SalesLog limit={12} />
+          </div>
+        </div>
+      </section>
+
       <div className="mt-8 grid gap-6 lg:grid-cols-12">
         <aside className="lg:col-span-3">
           <div data-tour="market-filters" className="border border-border bg-card lg:sticky lg:top-24">
@@ -421,6 +441,22 @@ function Marketplace() {
         {trait !== "any" && <Chip label={OFFICIAL_TRAITS.find((t) => t.id === trait)?.label ?? trait} onClear={() => setTrait("any")} />}
         {search && <Chip label={`"${search}"`} onClear={() => setSearch("")} />}
         {sort !== "default" && <Chip label={SORTS.find((o) => o.id === sort)!.label} onClear={() => setSort("default")} />}
+        {[club !== "any", trait !== "any", !!search, sort !== "default"].filter(Boolean).length > 1 && (
+          <button type="button" className="font-mono text-[10px] text-muted-foreground underline hover:text-bitcoin"
+            onClick={() => { setClub("any"); setTrait("any"); setSearch(""); setSort("default"); setPage(0); }}>
+            CLEAR ALL
+          </button>
+        )}
+      </div>
+
+      <div className="mb-4 flex flex-wrap items-center gap-1.5" role="group" aria-label="Sort BITMAPs">
+        <span className="label mr-1">SORT</span>
+        {SORTS.map((o) => (
+          <button key={o.id} type="button" aria-pressed={sort === o.id} onClick={() => { setSort(o.id); setPage(0); }}
+            className={`border px-2.5 py-1 font-mono text-[10px] transition-colors ${sort === o.id ? "border-bitcoin bg-bitcoin/10 text-bitcoin" : "border-border text-muted-foreground hover:border-signal hover:text-signal"}`}>
+            {o.label}
+          </button>
+        ))}
       </div>
 
       {registry.isPending ? (
@@ -465,28 +501,10 @@ function Marketplace() {
         </section>
       </div>
 
-      <details open className="group mt-10 border border-border bg-card">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 md:p-5">
-          <div>
-            <h2 className="font-mono text-sm font-bold text-foreground">MARKET INSIGHTS</h2>
-            <p className="label mt-1">PRICE CHART · RECENT SALES · TRENDS · ORDER BOOK</p>
-          </div>
-          <span className="label text-primary group-open:hidden">SHOW +</span>
-          <span className="label hidden text-primary group-open:inline">HIDE −</span>
-        </summary>
-        <div className="space-y-6 border-t border-border p-4 md:p-5">
-          <div className="grid gap-6 xl:grid-cols-12">
-            <div className="xl:col-span-8"><BitmapMarketChart /></div>
-            <div className="space-y-6 xl:col-span-4 [&>section]:mt-0">
-              <TradeCrawlerStatus />
-              <TrendingParcels limit={3} />
-              <SalesLog limit={30} />
-            </div>
-          </div>
-          <TrendExplorer parcels={parcels} />
-          <BitmapOrderBook />
-        </div>
-      </details>
+      <section className="mt-10 space-y-6 border border-border bg-card p-4 md:p-5" aria-label="Order book and trends">
+        <TrendExplorer parcels={parcels} />
+        <BitmapOrderBook />
+      </section>
     </div>
   );
 }
