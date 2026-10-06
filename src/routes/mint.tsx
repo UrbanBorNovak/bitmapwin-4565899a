@@ -185,12 +185,12 @@ function MintPage() {
         </div>
       </div>
       <div className="[&>*:first-child]:mt-4">
-        {tab === "tutorial" ? <SummonTutorial height={height} /> : null}
-        {tab === "tour" ? <GuardianShowcase /> : null}
-        {tab === "wallet" ? <WalletMintGuide /> : null}
+        {tab === "tutorial" ? <SummonTutorial height={height} lang={lang} /> : null}
+        {tab === "tour" ? <GuardianShowcase lang={lang} /> : null}
+        {tab === "wallet" ? <WalletMintGuide lang={lang} /> : null}
         {tab === "story" ? (
           <>
-            <GuardianStory />
+            <GuardianStory lang={lang} />
             <div className="panel mt-4 rounded-md border border-signal/40 p-3">
               <p className="label text-signal">{t.expTitle}</p>
               <p className="mt-1 text-sm text-muted-foreground">{t.expBody}</p>
