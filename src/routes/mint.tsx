@@ -187,6 +187,7 @@ function MintPage() {
         </div>
       </div>
       <div className="[&>*:first-child]:mt-4">
+        {tab === "tutorial" ? <SummonTutorial height={height} /> : null}
         {tab === "tour" ? <GuardianShowcase /> : null}
         {tab === "wallet" ? <WalletMintGuide /> : null}
         {tab === "story" ? (
