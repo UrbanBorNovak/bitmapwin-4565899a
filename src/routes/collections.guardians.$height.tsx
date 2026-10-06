@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import { guardianQuery, guardianDnaQuery } from "@/lib/bitmon-queries";
-import { guardianFromBlock, esploraFetch, fetchBlockDnaSource, SPECIES, type GuardianDna } from "@/lib/bitmon";
+import { allGuardiansQuery, guardianQuery } from "@/lib/bitmon-queries";
+import { guardianFromBlock, esploraFetch, RARITY_TONE, type GuardianDna } from "@/lib/bitmon";
 import { guardianLevel } from "@/lib/bitmon";
 import { formatBytes, shortId, timeAgoFromUnix } from "@/lib/chain";
-import { CreatureModel3D } from "@/components/codex/CreatureModel3D";
+import { GuardianTurntable } from "@/components/bitmon/SummonGuardianDialog";
+import { morphFromDna } from "@/lib/creature-morph";
 
 /** The shared 4-second cosmic pulse the V7 master runs on. */
 const PULSE_MS = 4000;
@@ -107,6 +108,8 @@ function GuardianDetails() {
     [facts.data],
   );
   const awakened = useQuery({ ...guardianQuery(height), enabled: valid });
+  const all = useQuery(allGuardiansQuery());
+  const [view, setView] = useState<"3D" | "INSCRIPTION">("3D");
   const { phase, progress } = usePulse();
 
   if (!valid) {
@@ -121,155 +124,183 @@ function GuardianDetails() {
   const level = dna ? guardianLevel(dna) : null;
   const blood = isBloodMoon(height);
   const crests = forkCrests(height);
+  const morph = dna ? morphFromDna(dna) : null;
+  const heights = [...new Set((all.data ?? []).map((g) => g.height))].sort((a, b) => a - b);
+  const idx = heights.indexOf(height);
+  const prev = idx > 0 ? heights[idx - 1] : heights.length && idx < 0 ? heights[heights.length - 1] : undefined;
+  const next = idx >= 0 && idx < heights.length - 1 ? heights[idx + 1] : undefined;
+  const stats = dna ? ([["HP", dna.hp], ["BITE", dna.bite], ["SPEED", dna.speed], ["ARMOR", dna.armor]] as const) : [];
+  const peak = Math.max(100, ...stats.map(([, v]) => Number(v) || 0));
+  const role = dna ? combatRole(dna) : null;
+  const inscriptionId = awakened.data?.inscriptionId ?? null;
 
   return (
-    <div className="mx-auto max-w-[1200px] px-4 py-8 md:px-8">
-      <Link to="/collections/guardians" className="label text-muted-foreground hover:text-foreground">← ALL GUARDIANS</Link>
-
-      <div className="mt-4 flex flex-wrap items-baseline gap-3">
-        <h1 className="display text-3xl md:text-4xl" data-no-translate>{height}.BITMAP GUARDIAN</h1>
-        {blood ? <span className="label border border-destructive px-2 py-0.5 text-destructive">BLOOD MOON BLOCK</span> : null}
+    <div className="relative">
+      {/* Atmospheric hero backdrop */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[620px] overflow-hidden" aria-hidden>
+        <div className="absolute left-1/2 top-24 size-[620px] -translate-x-1/2 rounded-full bg-bitcoin/10 blur-3xl" />
+        <div className="absolute right-[10%] top-10 size-[280px] rounded-full bg-signal/10 blur-3xl" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,color-mix(in_oklab,var(--border)_35%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklab,var(--border)_35%,transparent)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-[420px_1fr]">
-        {/* 3D + inscription */}
-        <div>
-          <div className="aspect-square w-full border border-border bg-background">
-            {dna ? (
-              <CreatureModel3D
-                guardian={{ species: dna.species, rarity: dna.rarity, body: dna.body, accent: dna.accent, height: dna.height }}
-                label={`${dna.species} · ${dna.height}.BITMAP`}
-              />
-            ) : (
-              <p className="label grid size-full place-items-center p-4 text-center text-muted-foreground">
-                {facts.isPending ? "READING THE BLOCK…" : facts.isError ? "BLOCK NOT FOUND" : "…"}
-              </p>
-            )}
+      <div className="mx-auto max-w-[1280px] px-4 py-6 md:px-8">
+        <nav className="flex items-center justify-between gap-2 font-mono text-[11px]">
+          <Link to="/collections/guardians" className="text-muted-foreground hover:text-foreground">← ALL GUARDIANS</Link>
+          <div className="flex items-center gap-2">
+            {prev !== undefined ? <Link to="/collections/guardians/$height" params={{ height: String(prev) }} className="btn-term-ghost px-2 py-1">‹ {prev}</Link> : null}
+            {heights.length ? <span className="text-muted-foreground">{idx >= 0 ? `${idx + 1} / ${heights.length}` : `${heights.length} AWAKE`}</span> : null}
+            {next !== undefined ? <Link to="/collections/guardians/$height" params={{ height: String(next) }} className="btn-term-ghost px-2 py-1">{next} ›</Link> : null}
           </div>
-          {awakened.data?.inscriptionId ? (
-            <div className="mt-3 border border-border bg-card/60 p-2 backdrop-blur">
-              <div className="label mb-1 text-muted-foreground">ON-CHAIN INSCRIPTION</div>
-              <iframe
-                src={`https://ordinals.com/preview/${awakened.data.inscriptionId}`}
-                title={`Guardian inscription ${shortId(awakened.data.inscriptionId)}`}
-                loading="lazy"
-                sandbox="allow-scripts"
-                className="aspect-square w-full border-0 bg-muted"
-              />
-              <a
-                href={`https://ordinals.com/inscription/${awakened.data.inscriptionId}`}
-                target="_blank"
-                rel="noreferrer"
-                className="label mt-1 inline-block text-bitcoin hover:underline"
-                data-no-translate
-              >
-                {shortId(awakened.data.inscriptionId)} ↗
-              </a>
-            </div>
-          ) : (
-            <p className="label mt-3 text-muted-foreground">
-              {awakened.isPending ? "CHECKING INSCRIPTION…" : "NOT INSCRIBED ON CHAIN YET — APP-ONLY UNTIL A DELEGATE MINT CONFIRMS"}
-            </p>
-          )}
-        </div>
+        </nav>
 
-        {/* Facts */}
-        <div className="space-y-4">
-          {dna ? (
-            <div className="border border-border bg-card/60 p-3 backdrop-blur">
-              <div className="flex flex-wrap items-baseline gap-2" data-no-translate>
-                <span className="display text-xl">{dna.species}</span>
-                <span className="label text-bitcoin">{dna.rarity} · LV {level}</span>
+        {/* Title block */}
+        <header className="mt-6">
+          <p className="label text-signal">BLOCK-DNA GUARDIAN · READ FROM BITCOIN</p>
+          <h1 className="display mt-2 text-4xl leading-none md:text-6xl" data-no-translate>
+            {morph ? morph.name : <span className="animate-pulse text-muted-foreground">READING…</span>}
+          </h1>
+          <div className="mt-3 flex flex-wrap items-center gap-2 font-mono text-[11px]" data-no-translate>
+            <span className="rounded-sm border border-bitcoin/60 bg-bitcoin/10 px-2 py-0.5 text-bitcoin">{height}.BITMAP</span>
+            {dna ? <span className={`rounded-sm border border-border px-2 py-0.5 ${RARITY_TONE[dna.rarity]}`}>{dna.rarity}</span> : null}
+            {dna ? <span className="rounded-sm border border-border px-2 py-0.5 text-foreground">LV {level} · ERA {dna.epoch}</span> : null}
+            {role ? <span className="rounded-sm border border-signal/50 px-2 py-0.5 text-signal">{role}</span> : null}
+            {crests.map((c) => <span key={c} className="rounded-sm border border-signal/40 px-2 py-0.5 text-signal">{c} CREST</span>)}
+            {blood ? <span className="rounded-sm border border-destructive px-2 py-0.5 text-destructive">BLOOD MOON</span> : null}
+            {inscriptionId ? <span className="rounded-sm border border-signal px-2 py-0.5 text-signal">● INSCRIBED</span>
+              : awakened.data ? <span className="rounded-sm border border-bitcoin/50 px-2 py-0.5 text-bitcoin">● AWAKE</span>
+              : <span className="rounded-sm border border-border px-2 py-0.5 text-muted-foreground">○ DORMANT</span>}
+          </div>
+        </header>
+
+        <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+          {/* 3D stage */}
+          <section className="panel relative overflow-hidden rounded-md border border-border">
+            <div className="flex items-center justify-between border-b border-border px-3 py-2 font-mono text-[10px]">
+              <span className="text-signal">● LIVE STAGE</span>
+              <div className="flex gap-1">
+                {(["3D", "INSCRIPTION"] as const).map((v) => (
+                  <button key={v} type="button" disabled={v === "INSCRIPTION" && !inscriptionId} onClick={() => setView(v)}
+                    className={`rounded-sm border px-2 py-0.5 transition-colors disabled:opacity-40 ${view === v ? "border-bitcoin text-bitcoin" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                    {v === "3D" ? "3D MODEL" : "ON-CHAIN"}
+                  </button>
+                ))}
               </div>
-              <div className="label mt-1 text-bitcoin" data-no-translate>{dna.ability}</div>
-              <div className="mt-3 grid grid-cols-4 gap-2 font-mono text-xs" data-no-translate>
-                {([["HP", dna.hp], ["BITE", dna.bite], ["SPEED", dna.speed], ["ARMOR", dna.armor]] as const).map(([k, v]) => (
-                  <div key={k} className="border border-border p-2">
-                    <div className="label text-muted-foreground">{k}</div>
-                    <div className="mt-1 text-lg text-foreground">{v}</div>
+            </div>
+            {view === "INSCRIPTION" && inscriptionId ? (
+              <iframe src={`https://ordinals.com/preview/${inscriptionId}`} title={`Guardian inscription ${shortId(inscriptionId)}`}
+                loading="lazy" sandbox="allow-scripts" className="h-[460px] w-full border-0 bg-background md:h-[560px]" />
+            ) : dna ? (
+              <GuardianTurntable dna={dna} className="h-[460px] md:h-[560px] border-0" />
+            ) : (
+              <div className="grid h-[460px] place-items-center font-mono text-xs text-muted-foreground md:h-[560px]">
+                {facts.isError ? "✕ BLOCK NOT FOUND" : <span className="animate-pulse">&gt; READING BLOCK DNA…</span>}
+              </div>
+            )}
+            {/* Pulse ticker */}
+            <div className="border-t border-border px-3 py-2" data-no-translate>
+              <div className="flex items-center justify-between font-mono text-[10px]">
+                <span className="text-muted-foreground">COSMIC PULSE · <span className="text-bitcoin">{PULSE_PHASES[phase]}</span></span>
+                <span className="text-signal">{(PULSE_MS / 1000 - progress * (PULSE_MS / 1000)).toFixed(1)}S</span>
+              </div>
+              <div className="mt-1.5 grid grid-cols-4 gap-1">
+                {PULSE_PHASES.map((n, i) => (
+                  <div key={n} className="h-1 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full bg-signal" style={{ width: i < phase ? "100%" : i === phase ? `${Math.round(progress * 100)}%` : "0%" }} />
                   </div>
                 ))}
               </div>
-              <div className="label mt-2 text-muted-foreground" data-no-translate>DNA {dna.dnaHash} · ERA {dna.epoch}</div>
             </div>
-          ) : null}
+          </section>
 
-          {/* Block facts */}
-          <div className="border border-border bg-card/60 p-3 backdrop-blur" data-no-translate>
-            <div className="label text-muted-foreground">BLOCK FACTS</div>
-            {facts.data ? (
-              <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 font-mono text-xs md:grid-cols-3">
-                <div><dt className="label text-muted-foreground">HEIGHT</dt><dd className="text-foreground">{facts.data.height}</dd></div>
-                <div><dt className="label text-muted-foreground">MINED</dt><dd className="text-foreground">{timeAgoFromUnix(facts.data.timestamp)}</dd></div>
-                <div><dt className="label text-muted-foreground">TXS</dt><dd className="text-foreground">{facts.data.txCount.toLocaleString()}</dd></div>
-                <div>
-                  <dt className="label text-muted-foreground">DIFFICULTY</dt>
-                  <dd className="text-foreground">{(facts.data.difficulty / 1e12).toFixed(2)}T · {armorClass(facts.data.difficulty)}</dd>
-                </div>
-                <div>
-                  <dt className="label text-muted-foreground">WEIGHT</dt>
-                  <dd className="text-foreground">{formatBytes(facts.data.weight)} · {massClass(facts.data.weight)}</dd>
-                </div>
-                <div><dt className="label text-muted-foreground">SIZE</dt><dd className="text-foreground">{formatBytes(facts.data.size)}</dd></div>
-                <div className="col-span-2 md:col-span-3">
-                  <dt className="label text-muted-foreground">HASH</dt>
-                  <dd className="break-all text-foreground">{facts.data.hash}</dd>
-                </div>
-                {crests.length ? (
-                  <div className="col-span-2 md:col-span-3">
-                    <dt className="label text-muted-foreground">FORK CRESTS</dt>
-                    <dd className="text-signal">{crests.join(" · ")}</dd>
+          {/* Combat HUD */}
+          <div className="space-y-4">
+            <section className="panel rounded-md border border-border p-4" data-no-translate>
+              <p className="label text-muted-foreground">COMBAT READINESS</p>
+              {dna ? (
+                <>
+                  <p className="mt-1 font-mono text-[11px] text-signal">ABILITY · {dna.ability}</p>
+                  <p className="font-mono text-[10px] text-muted-foreground">{dna.species} LINE{morph ? ` · ${morph.plan} · ${morph.code}` : ""}</p>
+                  <div className="mt-4 space-y-3">
+                    {stats.map(([k, v]) => (
+                      <div key={k}>
+                        <div className="flex items-baseline justify-between font-mono">
+                          <span className="text-[10px] text-muted-foreground">{k}</span>
+                          <span className="text-xl font-bold text-foreground">{v}</span>
+                        </div>
+                        <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
+                          <div className="h-full rounded-full bg-bitcoin shadow-[0_0_12px_color-mix(in_oklab,var(--bitcoin)_70%,transparent)] transition-all duration-1000"
+                            style={{ width: `${Math.min(100, (Number(v) / peak) * 100)}%` }} />
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ) : null}
-              </dl>
-            ) : (
-              <p className="label mt-2 text-muted-foreground">{facts.isPending ? "READING…" : "UNAVAILABLE"}</p>
-            )}
-          </div>
+                  <p className="mt-3 break-all font-mono text-[10px] text-muted-foreground">DNA {dna.dnaHash}</p>
+                </>
+              ) : <p className="mt-2 animate-pulse font-mono text-xs text-muted-foreground">READING…</p>}
+            </section>
 
-          {/* Live pulse cycle */}
-          <div className="border border-border bg-card/60 p-3 backdrop-blur" data-no-translate>
-            <div className="flex items-baseline justify-between">
-              <div className="label text-muted-foreground">COSMIC PULSE · 4S CYCLE</div>
-              <div className="label text-signal">LIVE</div>
-            </div>
-            <div className="mt-2 grid grid-cols-2 gap-1 md:grid-cols-4">
-              {PULSE_PHASES.map((name, i) => (
-                <div
-                  key={name}
-                  className={`border p-2 text-center font-mono text-[10px] ${i === phase ? "border-bitcoin text-bitcoin" : "border-border text-muted-foreground"}`}
-                >
-                  {i + 1} · {name}
+            <section className="panel rounded-md border border-border p-4" data-no-translate>
+              <p className="label text-muted-foreground">PROVENANCE</p>
+              {awakened.data ? (
+                <div className="mt-2 space-y-1 font-mono text-xs">
+                  <p className="text-foreground">AWAKENED BY <span className="text-bitcoin">{short(awakened.data.owner)}</span></p>
+                  <p className="text-[10px] text-muted-foreground">SUMMON TX {shortId(awakened.data.txid)} · {new Date(awakened.data.createdAt).toLocaleDateString()}</p>
+                  {inscriptionId ? (
+                    <a href={`https://ordinals.com/inscription/${inscriptionId}`} target="_blank" rel="noreferrer" className="inline-block text-[11px] text-signal hover:underline">
+                      INSCRIPTION {shortId(inscriptionId)} ↗
+                    </a>
+                  ) : <p className="text-[10px] text-muted-foreground">NOT INSCRIBED YET — APP-ONLY UNTIL THE HOLDER INSCRIBES IT</p>}
                 </div>
-              ))}
-            </div>
-            <div className="mt-2 h-1.5 w-full border border-border bg-background">
-              <div className="h-full bg-signal transition-none" style={{ width: `${Math.round(progress * 100)}%` }} />
-            </div>
-            <div className="label mt-1 text-muted-foreground">
-              PHASE {phase + 1}/4 · {(PULSE_MS / 1000 - progress * (PULSE_MS / 1000)).toFixed(1)}S TO NEXT
-            </div>
-          </div>
-
-          {/* Ownership / awakened state */}
-          <div className="border border-border bg-card/60 p-3 backdrop-blur" data-no-translate>
-            <div className="label text-muted-foreground">SUMMON STATE</div>
-            {awakened.data ? (
-              <div className="mt-2 font-mono text-xs">
-                <div className="text-foreground">AWAKENED BY {short(awakened.data.owner)}</div>
-                <div className="label mt-1 text-muted-foreground">SUMMON TX {shortId(awakened.data.txid)} · {new Date(awakened.data.createdAt).toLocaleDateString()}</div>
+              ) : <p className="mt-2 font-mono text-xs text-muted-foreground">{awakened.isPending ? "CHECKING…" : "NOT SUMMONED YET — THIS GUARDIAN IS STILL DORMANT IN ITS BLOCK"}</p>}
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {awakened.data ? (
+                  <>
+                    <Link to="/oasis" search={{ height }} className="btn-term py-2 text-center">FIND IN OASIS</Link>
+                    <Link to="/command" className="btn-term-ghost py-2 text-center">COMMAND</Link>
+                  </>
+                ) : (
+                  <Link to="/mint" search={{ height }} className="btn-term col-span-2 py-2 text-center">◆ SUMMON THIS GUARDIAN</Link>
+                )}
+                <Link to="/bitmap/$block" params={{ block: String(height) }} className="btn-term-ghost py-2 text-center">OPEN BITMAP</Link>
+                {facts.data ? <a href={`https://mempool.space/block/${facts.data.hash}`} target="_blank" rel="noreferrer" className="btn-term-ghost py-2 text-center">BLOCK ↗</a> : null}
               </div>
-            ) : (
-              <p className="label mt-2 text-muted-foreground">{awakened.isPending ? "CHECKING…" : "NOT SUMMONED YET"}</p>
-            )}
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Link to="/bitmap/$block" params={{ block: String(height) }} className="btn-term-ghost">OPEN BITMAP</Link>
-              <Link to="/oasis" search={{ height }} className="btn-term-ghost">FIND IN OASIS</Link>
-              <Link to="/mint" className="btn-term-ghost">SUMMON</Link>
-            </div>
+            </section>
           </div>
         </div>
+
+        {/* Block matrix */}
+        <section className="panel mt-5 rounded-md border border-border" data-no-translate>
+          <div className="border-b border-border px-4 py-2"><p className="label text-muted-foreground">BLOCK MATRIX · WHERE EVERY TRAIT COMES FROM</p></div>
+          {facts.data ? (
+            <dl className="grid grid-cols-2 divide-border md:grid-cols-6 md:divide-x">
+              {([
+                ["HEIGHT", facts.data.height.toLocaleString()],
+                ["MINED", timeAgoFromUnix(facts.data.timestamp)],
+                ["TRANSACTIONS", facts.data.txCount.toLocaleString()],
+                ["DIFFICULTY", `${(facts.data.difficulty / 1e12).toFixed(2)}T · ${armorClass(facts.data.difficulty)}`],
+                ["WEIGHT", `${formatBytes(facts.data.weight)} · ${massClass(facts.data.weight)}`],
+                ["SIZE", formatBytes(facts.data.size)],
+              ] as const).map(([k, v]) => (
+                <div key={k} className="border-b border-border p-4 md:border-b-0">
+                  <dt className="label text-muted-foreground">{k}</dt>
+                  <dd className="mt-1 font-mono text-sm text-foreground">{v}</dd>
+                </div>
+              ))}
+              <div className="col-span-2 border-t border-border p-4 md:col-span-6">
+                <dt className="label text-muted-foreground">BLOCK HASH</dt>
+                <dd className="mt-1 break-all font-mono text-xs text-bitcoin">{facts.data.hash}</dd>
+              </div>
+            </dl>
+          ) : <p className="p-4 font-mono text-xs text-muted-foreground">{facts.isPending ? "READING…" : "UNAVAILABLE"}</p>}
+        </section>
       </div>
     </div>
   );
+}
+
+/** Role label from the Guardian's strongest real stat. */
+function combatRole(d: GuardianDna): string {
+  const top = ([["HEAVY VANGUARD", d.armor], ["APEX STRIKER", d.bite], ["AGILE RAIDER", d.speed], ["IRON WARDEN", d.hp]] as const)
+    .reduce((a, b) => (Number(b[1]) > Number(a[1]) ? b : a));
+  return top[0];
 }
