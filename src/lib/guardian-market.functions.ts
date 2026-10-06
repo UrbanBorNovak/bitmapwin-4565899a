@@ -26,6 +26,25 @@ async function guardianIds(): Promise<{ ids: string[]; unavailable: boolean }> {
   return { ids: [...seen], unavailable };
 }
 
+/** Public: on-chain children of the V6 collection root (the official collection). */
+export const getGuardianChildrenFn = createServerFn({ method: "GET" }).handler(async () => {
+  const ids: string[] = [];
+  let unavailable = false;
+  for (let page = 0; page < MAX_PAGES; page++) {
+    try {
+      const res = await fetch(`${ORD}/r/children/${GUARDIAN_V6_MASTER_ID}/${page}`, {
+        headers: { Accept: "application/json", "User-Agent": "curl/8.5.0" },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) { unavailable = true; break; }
+      const body = (await res.json()) as { ids?: string[]; more?: boolean };
+      for (const id of body.ids ?? []) if (/^[0-9a-f]{64}i\d+$/.test(id)) ids.push(id);
+      if (!body.more) break;
+    } catch { unavailable = true; break; }
+  }
+  return { ids, unavailable };
+});
+
 /** Public: the collection and its sales come from the chain only. */
 export const getGuardianMarketFn = createServerFn({ method: "GET" }).handler(async () => {
   const { ids, unavailable } = await guardianIds();

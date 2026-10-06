@@ -1,12 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import hero from "@/assets/mint-hero.jpg";
 import { allGuardiansQuery } from "@/lib/bitmon-queries";
+import { getGuardianChildrenFn } from "@/lib/guardian-market.functions";
 
 /** Mint page hero: art + live, real collection counts from the Guardian index. */
 export function MintHero() {
   const all = useQuery(allGuardiansQuery());
+  const children = useQuery({ queryKey: ["guardian-children-v6"], queryFn: () => getGuardianChildrenFn(), staleTime: 60_000, refetchInterval: 120_000 });
   const list = all.data ?? [];
-  const inscribed = list.filter((g) => g.inscriptionId).length;
+  const inscribed = children.data && !children.data.unavailable ? children.data.ids.length : null;
+  const onChain = new Set(children.data?.ids ?? []);
   const latest = list.slice(0, 6);
 
   return (
