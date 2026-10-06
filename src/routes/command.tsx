@@ -4,7 +4,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { myGuardiansQuery } from "@/lib/bitmon-queries";
+import { myGuardiansQuery, allGuardiansQuery } from "@/lib/bitmon-queries";
+import { GuardianTurntable } from "@/components/bitmon/SummonGuardianDialog";
+import { TargetRadar, BattleReport, combatRole } from "@/components/command/TacticalDeck";
 import { liveDispatchesQuery } from "@/lib/guardian-dispatch-queries";
 import { DIRECTIVES, MAX_RANGE, dispatchPosition, type Directive, type Dispatch } from "@/lib/guardian-dispatch";
 import { deployGuardianFn, recallGuardianFn } from "@/lib/guardian-dispatch.functions";
@@ -50,6 +52,8 @@ function CommandPage() {
   }, []);
   const mine = useQuery(myGuardiansQuery(userId));
   const live = useQuery(liveDispatchesQuery());
+  const all = useQuery(allGuardiansQuery());
+  const [view3d, setView3d] = useState<Record<number, boolean>>({});
   const qc = useQueryClient();
   const deploy = useServerFn(deployGuardianFn);
   const recall = useServerFn(recallGuardianFn);
@@ -92,7 +96,7 @@ function CommandPage() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10 font-mono">
+    <main className="mx-auto max-w-5xl px-4 py-10 font-mono [background-image:linear-gradient(color-mix(in_oklab,var(--signal)_6%,transparent)_1px,transparent_1px),linear-gradient(90deg,color-mix(in_oklab,var(--signal)_6%,transparent)_1px,transparent_1px)] [background-size:32px_32px]">
       <p className="text-[10px] tracking-[0.3em] text-signal">COMMAND CENTRE</p>
       <h1 className="mt-2 font-display text-3xl text-foreground">Command your Guardians</h1>
       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
@@ -100,7 +104,19 @@ function CommandPage() {
       </p>
       <div className="mt-4 flex gap-3 text-xs">
         <Link to="/oasis" className="border border-bitcoin px-3 py-1.5 text-bitcoin hover:bg-bitcoin/10">ENTER THE OASIS →</Link>
-        <span className="py-1.5 text-muted-foreground">{live.data?.length ?? 0} GUARDIANS DEPLOYED WORLDWIDE</span>
+      </div>
+      <div className="mt-6 grid grid-cols-2 gap-px border border-border bg-border md:grid-cols-4">
+        {([
+          ["DEPLOYED WORLDWIDE", live.data?.length ?? 0],
+          ["GUARDIANS AWAKE", all.data?.length ?? 0],
+          ["YOUR GARRISON", mine.data?.length ?? 0],
+          ["RAIDS SETTLED (RECENT)", raids.data?.raids.length ?? 0],
+        ] as const).map(([l, v]) => (
+          <div key={l} className="bg-background/80 px-4 py-3 backdrop-blur">
+            <p className="text-[9px] tracking-[0.25em] text-muted-foreground">{l}</p>
+            <p className="font-display text-2xl text-signal">{v}</p>
+          </div>
+        ))}
       </div>
 
       {ready && !userId && (
@@ -121,10 +137,13 @@ function CommandPage() {
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <div>
                   <span className="text-bitcoin">{g.height}.BITMAP</span>
-                  <span className="ml-2 text-xs text-muted-foreground">{g.species} · LV {g.level}</span>
+                  <span className="ml-2 text-xs text-muted-foreground">{g.species} · LV {g.level} · {g.rarity}</span>
+                  <span className="ml-2 border border-bitcoin/40 px-1.5 py-0.5 text-[9px] tracking-[0.2em] text-bitcoin">{combatRole(g)}</span>
+                  <button onClick={() => setView3d((s) => ({ ...s, [g.height]: !s[g.height] }))} className="ml-2 text-[10px] text-signal hover:underline">{view3d[g.height] ? "HIDE 3D" : "INSPECT 3D"}</button>
                 </div>
                 <span className={`text-[11px] ${d ? "text-signal" : "text-muted-foreground"}`}>{status(d, now)}</span>
               </div>
+              {view3d[g.height] && <GuardianTurntable dna={{ ...g, height: g.height }} className="mt-3 h-56 border border-border" />}
               <div className="mt-3 grid grid-cols-4 gap-px border border-border bg-border">
                 {([
                   ["BITE", g.bite],
@@ -164,6 +183,9 @@ function CommandPage() {
                   <button disabled={busy === g.height} onClick={() => send(g.height)} className="ml-auto border border-bitcoin px-3 py-1 text-xs text-bitcoin hover:bg-bitcoin/10">DEPLOY</button>
                 </div>
               )}
+              {!d && dir === "march" && (
+                <TargetRadar me={g} all={all.data ?? []} onPick={(t) => setTarget((s) => ({ ...s, [g.height]: String(t) }))} />
+              )}
               <p className="mt-2 text-[10px] text-muted-foreground">
                 {DIRECTIVES.find((o) => o.id === dir)?.note}
                 {dir === "march" && " Marching onto a BITMAP with a Guardian starts a raid — Bite, Armor and Speed decide it; spoils land on the winner's BITMAP."}
@@ -179,22 +201,9 @@ function CommandPage() {
       <h2 className="mt-12 text-[10px] tracking-[0.3em] text-signal">RAID LOG · LIVE</h2>
       <div className="mt-3 grid gap-2">
         {(raids.data?.raids ?? []).length === 0 && <p className="text-xs text-muted-foreground">No raids settled yet. March a Guardian onto a guarded BITMAP.</p>}
-        {(raids.data?.raids ?? []).map((r) => {
-          const log = (r.log as { round: number; by: number; damage: number }[]) ?? [];
-          return (
-            <details key={r.id} className="border border-border bg-card/40 p-3 text-xs">
-              <summary className="cursor-pointer">
-                <span className="text-bitcoin">{r.attacker_height}</span> RAIDED <span className="text-bitcoin">{r.defender_height}</span> · WINNER{" "}
-                <span className="text-signal">{r.winner_height}.BITMAP</span> · +{r.spoils} BIT LANDED
-              </summary>
-              <ol className="mt-2 grid gap-0.5 text-[10px] text-muted-foreground">
-                {log.map((x, i) => (
-                  <li key={i}>R{x.round} · {x.by} {x.damage ? `HITS FOR ${x.damage}` : "MISSES"}</li>
-                ))}
-              </ol>
-            </details>
-          );
-        })}
+        {(raids.data?.raids ?? []).map((r) => (
+          <BattleReport key={r.id} r={r} maxHp={(h) => all.data?.find((x) => x.height === h)?.hp} />
+        ))}
       </div>
     </main>
   );
