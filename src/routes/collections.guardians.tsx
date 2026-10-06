@@ -10,6 +10,7 @@ import { formatSats } from "@/lib/trades";
 import { BuyButton } from "@/components/BuyButton";
 import { ShopListButton } from "@/components/builds/ShopListButton";
 import { GuardianBrowser } from "@/components/bitmon/GuardianBrowser";
+import { MyGuardianCollection } from "@/components/bitmon/MyGuardianCollection";
 
 const PAGE = 12;
 const TITLE = "Block-DNA Guardians Market — BITMAPWIN";
@@ -160,6 +161,8 @@ function GuardianMarket() {
       {market.data?.indexUnavailable ? (
         <p className="label mt-2 text-destructive">ORDINALS.COM DID NOT ANSWER IN FULL — SOME GUARDIANS MAY BE MISSING</p>
       ) : null}
+
+      <MyGuardianCollection />
 
       {/* Tutorial */}
       <h2 className="display mt-10 text-xl">HOW TO MINT, WITHDRAW AND LIST</h2>
