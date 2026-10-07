@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   VOXEL, VOXEL_DEPTH, VOXEL_RADIUS, VOXEL_REACH, applyEdit, blockAt, blockColor, edits,
-  onVoxelMode, onVoxels, terrainTop, toCell, voxelMode, vkey,
+  columnSurface, onVoxelMode, onVoxels, terrainTop, toCell, voxelMode, vkey,
 } from "@/lib/voxel-world";
 import { editVoxelFn, voxelsNearFn } from "@/lib/voxel-world.functions";
 import { playSfx } from "@/lib/world-audio";
@@ -105,8 +105,8 @@ export function VoxelLayer({ pose, firstPerson, armed }: { pose: React.RefObject
         // never entomb yourself
         const me = pose.current;
         if (me && toCell(me.x) === px && toCell(me.z) === pz) {
-          const feet = toCell((me.y ?? 0) + terrainTop(px, pz) * 0 + 0);
-          void feet;
+          const feet = Math.round((columnSurface(me.x, me.z) ?? 0) / VOXEL);
+          if (py >= feet && py <= feet + 1) return;
         }
         playSfx("hit");
         void commit(px, py, pz, voxelMode.block);
@@ -147,7 +147,7 @@ export function VoxelLayer({ pose, firstPerson, armed }: { pose: React.RefObject
       const put = (x: number, y: number, z: number, kind: string) => {
         const target = kind === "glow" ? gm : im;
         const i = kind === "glow" ? g++ : n++;
-        if (i >= MAX) return;
+        if (i >= (kind === "glow" ? 512 : MAX)) return;
         m4.makeTranslation((x + 0.5) * VOXEL, (y + 0.5) * VOXEL, (z + 0.5) * VOXEL);
         target.setMatrixAt(i, m4);
         const b = blockColor(kind);
@@ -178,7 +178,7 @@ export function VoxelLayer({ pose, firstPerson, armed }: { pose: React.RefObject
         put(x, y, z, kind);
       }
       im.count = Math.min(n, MAX);
-      gm.count = Math.min(g, MAX);
+      gm.count = Math.min(g, 512);
       im.instanceMatrix.needsUpdate = true;
       gm.instanceMatrix.needsUpdate = true;
       if (im.instanceColor) im.instanceColor.needsUpdate = true;
