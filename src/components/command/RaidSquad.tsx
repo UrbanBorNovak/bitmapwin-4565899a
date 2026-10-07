@@ -75,3 +75,61 @@ export function RaidSquad({ boss, guardian, mine }: { boss: string; guardian: nu
     </div>
   );
 }
+
+/** Player-written raid calls, saved on this device per boss; editable and removable. */
+function TacticComposer({ boss, presets, send }: {
+  boss: string;
+  presets: readonly string[];
+  send: (p: { text?: string; index?: number }) => Promise<void>;
+}) {
+  const store = `raid-tactics:${boss}`;
+  const [mine, setMine] = useState<string[]>([]);
+  const [draft, setDraft] = useState("");
+  const [editing, setEditing] = useState<number | null>(null);
+  useEffect(() => {
+    try { setMine(JSON.parse(localStorage.getItem(store) ?? "[]")); } catch { setMine([]); }
+  }, [store]);
+  const save = (list: string[]) => { setMine(list); localStorage.setItem(store, JSON.stringify(list.slice(0, 12))); };
+  const commit = () => {
+    const t = draft.trim().slice(0, 140);
+    if (t.length < 2) return;
+    if (editing != null) save(mine.map((m, i) => (i === editing ? t : m)));
+    else save([...mine, t]);
+    setDraft(""); setEditing(null);
+  };
+  return (
+    <div className="mt-2 grid gap-1">
+      <span className="tracking-[0.2em] text-muted-foreground">YOUR TACTICS → WORLD CHAT</span>
+      <div className="flex gap-1">
+        <input value={draft} maxLength={140} onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter") commit(); }}
+          placeholder={editing != null ? "Edit tactic…" : "Write a tactic, e.g. Tanks pull left, burn on 3"}
+          className="min-w-0 flex-1 border border-border bg-background px-2 py-1 text-foreground outline-none focus:border-signal" />
+        <button onClick={commit} className="border border-signal px-2 text-signal hover:bg-signal/10">{editing != null ? "SAVE" : "ADD"}</button>
+        <button disabled={draft.trim().length < 2} onClick={() => void send({ text: draft.trim() })}
+          className="border border-bitcoin px-2 text-bitcoin hover:bg-bitcoin/10 disabled:opacity-40">SEND</button>
+        {editing != null && <button onClick={() => { setEditing(null); setDraft(""); }} className="border border-border px-2 text-muted-foreground">✕</button>}
+      </div>
+      {mine.map((t, i) => (
+        <div key={i} className="flex items-center gap-1">
+          <button onClick={() => void send({ text: t })}
+            className="flex-1 border border-border px-2 py-0.5 text-left text-foreground hover:border-signal hover:text-signal">{t}</button>
+          <button title="Edit" onClick={() => { setEditing(i); setDraft(t); }} className="border border-border px-1.5 py-0.5 text-muted-foreground hover:text-signal">✎</button>
+          <button title="Delete" onClick={() => save(mine.filter((_, j) => j !== i))} className="border border-border px-1.5 py-0.5 text-muted-foreground hover:text-destructive">🗑</button>
+        </div>
+      ))}
+      <details className="mt-1">
+        <summary className="cursor-pointer text-muted-foreground">QUICK CALLS</summary>
+        <div className="mt-1 grid gap-0.5">
+          {presets.map((t, i) => (
+            <div key={t} className="flex gap-1">
+              <button onClick={() => void send({ index: i })}
+                className="flex-1 border border-border px-2 py-0.5 text-left text-foreground hover:border-signal hover:text-signal">{t}</button>
+              <button title="Copy to edit" onClick={() => { setEditing(null); setDraft(t); }} className="border border-border px-1.5 text-muted-foreground hover:text-signal">✎</button>
+            </div>
+          ))}
+        </div>
+      </details>
+    </div>
+  );
+}
