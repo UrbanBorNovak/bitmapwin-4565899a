@@ -38,9 +38,9 @@ const RINGS: RingSpec[] = [
 ];
 
 /** Baked sun: same bearing as the live sun, kept low so hills throw long shade. */
-const SUN_AZ = new THREE.Vector2(-18, -12).normalize();
-const SUN_TAN = Math.tan((24 * Math.PI) / 180);
-const SHADOW_STEPS = 14;
+
+
+
 
 const GRASS = new THREE.Color(ATLAS.grass);
 const SAND = new THREE.Color(ATLAS.sand);
