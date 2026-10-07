@@ -3197,6 +3197,33 @@ export type Database = {
           },
         ]
       }
+      raid_squad_members: {
+        Row: {
+          boss_slug: string
+          guardian_height: number
+          id: string
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          boss_slug: string
+          guardian_height: number
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          boss_slug?: string
+          guardian_height?: number
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       rank_clan_members: {
         Row: {
           clan_id: string

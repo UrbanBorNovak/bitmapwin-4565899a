@@ -76,3 +76,23 @@ export function rollLoot(boss: Boss, share: number, isTop: boolean, seed: string
 export const RARITY_COLOR: Record<string, string> = {
   legendary: "text-bitcoin", epic: "text-signal", rare: "text-foreground", common: "text-muted-foreground",
 };
+
+export type SquadRole = "tank" | "striker" | "support";
+export const SQUAD_ROLES: { id: SquadRole; label: string; hint: string }[] = [
+  { id: "tank", label: "TANK", hint: "High Armor — holds aggro" },
+  { id: "striker", label: "STRIKER", hint: "High Bite — main damage" },
+  { id: "support", label: "SUPPORT", hint: "High Speed — chips and finishes" },
+];
+export const SQUAD_MAX = 12;
+
+/** Ready-made raid calls posted into world chat by squad members. */
+export const BOSS_TACTICS: Record<string, string[]> = {
+  valakas: ["Tanks front — Meteor Storm incoming, spread out!", "Strikers hit the tail cores while he breathes fire", "Burst now — Valakas under 30%!"],
+  antharas: ["Earth Tremor — everyone jump on my mark", "Tanks hold the head, strikers flank the crags", "Petrify phase — supports finish him!"],
+  "queen-ant": ["Kill the Royal Guards first", "Poison Mist — rotate tanks", "All in on the Queen — no healing larvae left!"],
+  baium: ["Tanks absorb Celestial Fist", "Archangels up — strikers focus the guardians", "Burst Baium now!"],
+  zaken: ["Night teleport — regroup on the deck", "Watch the life leech — supports chip", "Zaken low — finish!"],
+  orfen: ["Spore Web — Speed Guardians lead", "Strikers on Orfen after the blink", "Final push!"],
+  core: ["Destroy the Susceptor drones first", "Barrier down — all strikers in", "Core is cracking — burst!"],
+};
+export const GENERIC_TACTICS = ["Squad assemble — strike on my mark!", "Tanks first, strikers follow", "Boss low — everyone strike now!"];
