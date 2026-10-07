@@ -52,6 +52,7 @@ import { createFlyBrain, type FlyBrain } from "@/lib/fly-brain";
 import { Primitive } from "./Primitive";
 import { dryLandNear, isSea } from "@/lib/world-sea";
 import { groundY } from "@/lib/world-terrain";
+import { creatureCanReach } from "@/lib/creature-reach";
 
 
 
@@ -810,6 +811,7 @@ const Critters = memo(function Critters({
           if (
             !outrunning &&
             !down &&
+            creatureCanReach(player as { x: number; z: number; y?: number }, critter.x, critter.z, critter.bodyY, unit) &&
             away < standoff * 1.8 &&
             now - critter.lastBite > 1_400 &&
             species.bite > 0

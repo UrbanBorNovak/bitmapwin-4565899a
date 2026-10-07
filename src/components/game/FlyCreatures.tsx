@@ -11,6 +11,7 @@
  */
 
 import { farFromPlayer } from "./simGate";
+import { creatureCanReach } from "@/lib/creature-reach";
 import { Suspense, memo, useEffect, useMemo, useRef, useState } from "react";
 import { useGLTF } from "@react-three/drei";
 import { SafeHtml } from "@/components/game/SafeHtml";
@@ -221,7 +222,7 @@ export const CreatureGroup = memo(function CreatureGroup({
 
       if (spec.hostile && !down && player && away !== null && away < unit * 9) {
         const standoff = unit * (0.8 + spec.size * 0.3);
-        if (away < standoff * 1.7 && now - creature.lastBite > 2_400 && spec.bite > 0) {
+        if (away < standoff * 1.7 && now - creature.lastBite > 2_400 && spec.bite > 0 && (creatureCanReach(player as { x: number; z: number; y?: number }, creature.x, creature.z, creature.bodyY ?? 0, unit))) {
           creature.lastBite = now;
           onBite?.(spec.bite, creature.label);
         }
