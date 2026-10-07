@@ -5,7 +5,6 @@
  */
 import { groundY } from "@/lib/world-terrain";
 import { VOXEL, columnSurface, edits } from "@/lib/voxel-world";
-import { AVATAR_U } from "@/lib/player-state";
 
 type Pose = { x: number; z: number; y?: number };
 
@@ -14,7 +13,7 @@ function solidVoxel(x: number, y: number, z: number) {
   return Boolean(e && e !== "air");
 }
 
-export function creatureCanReach(player: Pose, cx: number, cz: number, bodyY: number): boolean {
+export function creatureCanReach(player: Pose, cx: number, cz: number, bodyY: number, AVATAR_U: number): boolean {
   const pg = columnSurface(player.x, player.z) ?? groundY(player.x, player.z);
   const feet = pg + (player.y ?? 0);
   const cg = groundY(cx, cz);
