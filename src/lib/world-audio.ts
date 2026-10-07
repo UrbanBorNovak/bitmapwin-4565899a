@@ -1005,10 +1005,10 @@ export function startMusic() {
     detuned.stop(when + seconds + 0.05);
   };
 
-  const pluck = (when: number, hz: number) => {
+  const pluck = (when: number, hz: number, type: OscillatorType) => {
     const osc = context.createOscillator();
     const env = context.createGain();
-    osc.type = "sine";
+    osc.type = type;
     osc.frequency.value = hz;
     env.gain.setValueAtTime(0.0001, when);
     env.gain.linearRampToValueAtTime(0.075, when + 0.01);
@@ -1018,7 +1018,6 @@ export function startMusic() {
     osc.stop(when + 1.7);
   };
 
-  const BAR = 7.5; // slow, unhurried desert pacing
   let bar = 0;
   let at = context.currentTime + 0.3;
 
@@ -1026,15 +1025,18 @@ export function startMusic() {
     if (!music) return;
     const ahead = context.currentTime + 3;
     while (at < ahead) {
-      const chord = CHORDS[bar % CHORDS.length] ?? CHORDS[0]!;
-      chord.forEach((hz, i) => pad(at + i * 0.12, hz * 2, BAR * 0.95, 0.075));
+      const score = ZONES[zone];
+      const BAR = score.bar;
+      drone.frequency.setTargetAtTime(score.drone, at, 2);
+      const chord = score.chords[bar % score.chords.length] ?? score.chords[0]!;
+      chord.forEach((hz, i) => pad(at + i * 0.12, hz * 2, BAR * 0.95, zone === "lair" ? 0.09 : 0.075));
       pad(at, chord[0]! / 2, BAR, 0.05);
       // Two or three plucks per bar, placed differently each time round.
       const seeds = [0.15, 0.42, 0.68, 0.86];
       seeds.forEach((slot, i) => {
         if ((bar + i) % 3 === 0) return;
-        const note = PLUCKS[(bar * 3 + i) % PLUCKS.length] ?? 440;
-        pluck(at + slot * BAR, note);
+        const note = score.plucks[(bar * 3 + i) % score.plucks.length] ?? 440;
+        pluck(at + slot * BAR, note, score.pluck);
       });
       at += BAR;
       bar += 1;
