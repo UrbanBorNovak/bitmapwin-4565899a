@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 import { ExternalLink } from "lucide-react";
 import { OasisWorldGuard } from "@/components/OasisWorldGuard";
+import { EmbedPlayControls } from "@/components/game/EmbedPlayControls";
 
 const BitmapWorld3D = lazy(() => import("@/components/BitmapWorld3D").then((m) => ({ default: m.BitmapWorld3D })));
 
@@ -35,6 +36,7 @@ function EmbedOasis() {
           <BitmapWorld3D tipHeight={0} initialHeight={h} />
         </Suspense>
       </OasisWorldGuard>
+      <EmbedPlayControls />
       <div className="pointer-events-none absolute inset-x-2 top-2 z-[90] flex items-start justify-between gap-2">
         <span className="hud-panel px-2 py-1 font-mono text-xs text-bitcoin">{h}.BITMAP · OASIS LIVE</span>
         <a
