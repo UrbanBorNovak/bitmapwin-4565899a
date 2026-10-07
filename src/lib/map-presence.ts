@@ -16,6 +16,7 @@ import {
 import type { ClanBadge } from "@/lib/clans";
 import { useCharacter } from "@/lib/character";
 import { damageActiveVehicle } from "@/lib/world-vehicle-combat";
+import { guardedDamage } from "@/lib/saber-duel";
 
 /**
  * Live presence for the land map. Every visitor broadcasts the grid cell they are
