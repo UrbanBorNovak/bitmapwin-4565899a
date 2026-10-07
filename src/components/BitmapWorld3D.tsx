@@ -2695,7 +2695,7 @@ const WorldScene = memo(function WorldScene({
   deployments: RuntimeDeployment[];
   onRunning: (running: RunningExtender[]) => void;
   weapon: WeaponKind | null;
-  onShootPeer: (id: string) => void;
+  onShootPeer: (id: string, damage?: number) => void;
   onCastHeal: (amount: number) => void;
   onBite: (damage: number, label: string) => void;
   /** nearest fly-brain creature, for the sighting readout in the HUD */

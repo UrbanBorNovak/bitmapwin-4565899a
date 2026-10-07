@@ -23,6 +23,7 @@ import { MEMBER_MINE_RATE, MEMBER_MINE_XP, isMember } from "@/lib/world-perks";
 import { addItem, grantXp, skillLevel, spendItems } from "@/lib/world-skills";
 import { Primitive } from "./Primitive";
 import { partyIds } from "@/lib/party-ids";
+import { DUEL_DAMAGE_BONUS, duel, setDuel } from "@/lib/saber-duel";
 import { AIM_FORGIVENESS, AIM_REACH_BONUS, aimState } from "@/lib/world-aim";
 import { TRAP_LIMIT, placeTrap } from "@/lib/world-traps";
 import { isSea } from "@/lib/world-sea";
@@ -90,7 +91,7 @@ export function ShooterLayer({
   cursors: MapCursor[];
   bitcoin: string;
   /** land a strike on another visitor through the world's shared combat rules */
-  onShootPeer: (id: string) => void;
+  onShootPeer: (id: string, damage?: number) => void;
   /** the wand's healing spell — mends the caster and the whole party */
   onCastHeal?: (amount: number) => void;
   onStats: (stats: ShooterStats) => void;
@@ -109,6 +110,9 @@ export function ShooterLayer({
   const [tracers, setTracers] = useState<Tracer[]>([]);
   const [flash, setFlash] = useState(0);
   const [bursts, setBursts] = useState<Burst[]>([]);
+  const [rings, setRings] = useState<Burst[]>([]);
+  const [arcs, setArcs] = useState<{ id: number; born: number }[]>([]);
+  const [duelTarget, setDuelTarget] = useState<string | null>(duel.targetId);
   const nextBurst = useRef(0);
   const [lash, setLash] = useState(0);
   const [guard, setGuard] = useState(0);
@@ -162,6 +166,8 @@ export function ShooterLayer({
     if (flash && now - flash > 70) setFlash(0);
     setTracers((current) => (current.length && now - current[0]!.born > BOLT_LIFE_MS ? current.slice(1) : current));
     setBursts((current) => (current.length && now - current[0]!.born > 620 ? current.slice(1) : current));
+    setRings((current) => (current.length && now - current[0]!.born > 700 ? current.slice(1) : current));
+    setArcs((current) => (current.length && now - current[0]!.born > 260 ? current.slice(1) : current));
 
     const next = Math.max(0, recoil.current - delta * 3.4);
     if (next !== recoil.current) {
@@ -203,7 +209,7 @@ export function ShooterLayer({
       const aim = aimState.amount;
       // The blade rig itself needs to know about the guard, so mirror the aim
       // into React state, but only in coarse steps to keep renders cheap.
-      if (dual) {
+      if (dual || spec.saber) {
         const step = Math.round(aim * 5) / 5;
         setGuard((current) => (current === step ? current : step));
       }
@@ -369,7 +375,9 @@ export function ShooterLayer({
       .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
       .sort((a, b) => a.distance - b.distance)[0];
 
-    if (!spec.mining) {
+    if (spec.saber) {
+      setArcs((current) => [...current.slice(-2), { id: ++nextTracer.current, born: now }]);
+    } else if (!spec.mining) {
       const end = nearest
         ? nearest.point.clone()
         : origin.clone().addScaledVector(ray.direction, range * 0.5);
@@ -381,6 +389,7 @@ export function ShooterLayer({
       ? nearest.point.clone()
       : origin.clone().addScaledVector(ray.direction, range * 0.35);
     setBursts((current) => [...current.slice(-3), { id: ++nextBurst.current, at: impact, born: now }]);
+    if (spec.ion) setRings((current) => [...current.slice(-2), { id: ++nextBurst.current, at: impact, born: now }]);
 
     if (!nearest) {
       if (spec.mining) flashNote("NOTHING TO MINE HERE");
@@ -472,7 +481,12 @@ export function ShooterLayer({
       const inRange = Math.hypot(peer.x - me.x, peer.z - me.z) <= ATTACK_RANGE;
       return near && inRange;
     });
-    for (const peer of caught) onShootPeer(peer.id);
+    for (const peer of caught) {
+      // Sabers cut harder, and harder still against the rival you are duelling.
+      const base = spec.saber ? SHOT_DAMAGE * 1.4 : SHOT_DAMAGE;
+      const bonus = duel.targetId === peer.id ? DUEL_DAMAGE_BONUS : 1;
+      onShootPeer(peer.id, Math.round(base * bonus));
+    }
     playSfx("hit");
     setScore((current) => current + 25 * caught.length);
     setKills((current) => current + caught.filter((peer) => peer.hp - SHOT_DAMAGE <= 0).length);
@@ -574,6 +588,7 @@ export function ShooterLayer({
     // Hold the right button to keep the sights up for as long as it is down;
     // the left button fires at any time, aimed or not, without dropping aim.
     const onDown = (event: PointerEvent) => {
+      if (event.button === 2 && spec.saber) duel.guarding = true;
       if (event.button === 2) {
         if (firstPerson) {
           event.preventDefault();
@@ -590,7 +605,10 @@ export function ShooterLayer({
     };
     const onUp = (event: PointerEvent) => {
       if (event.button === 0) holding.current = false;
-      if (event.button === 2 || (event.buttons & 2) === 0) aimState.active = false;
+      if (event.button === 2 || (event.buttons & 2) === 0) {
+        aimState.active = false;
+        duel.guarding = false;
+      }
     };
     // keep the sights and the trigger honest if a button is released elsewhere
     const onMove = (event: PointerEvent) => {
@@ -609,6 +627,28 @@ export function ShooterLayer({
       if (event.code === "KeyR") {
         event.preventDefault();
         reload();
+      }
+      if (event.code === "KeyG" && spec.saber) {
+        event.preventDefault();
+        const me = pose.current;
+        if (duel.targetId) {
+          setDuel(null, null);
+          setDuelTarget(null);
+          flashNote("DUEL ENDED · BLADE LOWERED");
+        } else if (me) {
+          const rival = cursorsRef.current
+            .filter((peer) => peer.hp > 0 && !partyIds.has(peer.id))
+            .map((peer) => ({ peer, d: Math.hypot(peer.x - me.x, peer.z - me.z) }))
+            .filter((entry) => entry.d <= STRIDE * 40)
+            .sort((a, b) => a.d - b.d)[0];
+          if (!rival) flashNote("NO RIVAL CLOSE ENOUGH TO DUEL");
+          else {
+            setDuel(rival.peer.id, rival.peer.handle);
+            setDuelTarget(rival.peer.id);
+            playSfx("saber");
+            flashNote(`LIGHTSABER DUEL · ${rival.peer.handle} · +50% BLADE DAMAGE`);
+          }
+        }
       }
       if (event.code === "KeyH") {
         event.preventDefault();
@@ -677,7 +717,19 @@ export function ShooterLayer({
     });
   }, [ammo, kills, liveTargets, note, onStats, reloading, score, spec.magazine, weapon]);
 
-  const strikeColor = spec.spell ? "#6cc6ff" : bitcoin;
+  const strikeColor = spec.saber ?? spec.boltColor ?? (spec.spell ? "#6cc6ff" : bitcoin);
+
+  // Only a held saber can guard or duel; drop both when it goes away.
+  useEffect(() => {
+    duel.saber = active && Boolean(spec.saber);
+    if (!duel.saber) {
+      duel.guarding = false;
+      if (duel.targetId) {
+        setDuel(null, null);
+        setDuelTarget(null);
+      }
+    }
+  }, [active, spec.saber]);
 
   if (!active) return null;
 
@@ -707,9 +759,17 @@ export function ShooterLayer({
           from={tracer.from}
           to={tracer.to}
           born={tracer.born}
-          color={weapon === "minigun" || weapon === "revolver" ? BOLT_RED : strikeColor}
+          color={spec.boltColor ?? (weapon === "minigun" || weapon === "revolver" ? BOLT_RED : strikeColor)}
+          fat={spec.ion}
         />
       ))}
+      {rings.map((ring) => (
+        <IonRing key={ring.id} at={ring.at} born={ring.born} color={strikeColor} radius={STRIDE * spec.splashStrides} />
+      ))}
+      {arcs.map((arc) => (
+        <SaberArc key={arc.id} pose={pose} born={arc.born} color={strikeColor} />
+      ))}
+      {duelTarget ? <DuelRing cursorsRef={cursorsRef} targetId={duelTarget} color={strikeColor} /> : null}
       {flash ? (
         <pointLight color={strikeColor} intensity={12} distance={STRIDE * 16} position={camera.position} />
       ) : null}
@@ -732,11 +792,13 @@ function BlasterBolt({
   to,
   born,
   color,
+  fat = false,
 }: {
   from: THREE.Vector3;
   to: THREE.Vector3;
   born: number;
   color: string;
+  fat?: boolean;
 }) {
   const group = useRef<THREE.Group>(null);
   const flare = useRef<THREE.Mesh>(null);
@@ -769,7 +831,7 @@ function BlasterBolt({
     }
   });
 
-  const r = STRIDE * 0.07;
+  const r = STRIDE * (fat ? 0.14 : 0.07);
   return (
     <>
       <group ref={group} quaternion={quat} position={from}>
@@ -867,5 +929,78 @@ function VoxelBurst({
         </mesh>
       ))}
     </group>
+  );
+}
+
+/** An ion bolt's landing: an expanding electric shock ring on the ground. */
+function IonRing({ at, born, color, radius }: { at: THREE.Vector3; born: number; color: string; radius: number }) {
+  const mesh = useRef<THREE.Mesh>(null);
+  useFrame(() => {
+    const m = mesh.current;
+    if (!m) return;
+    const t = Math.min(1, (performance.now() - born) / 700);
+    m.scale.setScalar(radius * (0.2 + t * 1.3));
+    (m.material as THREE.MeshBasicMaterial).opacity = (1 - t) * 0.9;
+  });
+  return (
+    <mesh ref={mesh} position={at} rotation-x={-Math.PI / 2}>
+      <ringGeometry args={[0.75, 1, 36]} />
+      <meshBasicMaterial color={color} transparent toneMapped={false} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.DoubleSide} />
+    </mesh>
+  );
+}
+
+/** A saber swing: a bright crescent of light sweeping across in front of you. */
+function SaberArc({ pose, born, color }: { pose: React.RefObject<PlayerState>; born: number; color: string }) {
+  const group = useRef<THREE.Group>(null);
+  const mesh = useRef<THREE.Mesh>(null);
+  useFrame(() => {
+    const g = group.current;
+    const me = pose.current;
+    if (!g || !me) return;
+    const t = Math.min(1, (performance.now() - born) / 260);
+    g.position.set(me.x, me.y + STRIDE * 1.1, me.z);
+    g.rotation.set(0, me.yaw + Math.PI, 0);
+    if (mesh.current) {
+      mesh.current.rotation.z = -1.2 + t * 2.4;
+      (mesh.current.material as THREE.MeshBasicMaterial).opacity = (1 - t) * 0.8;
+    }
+  });
+  return (
+    <group ref={group}>
+      <mesh ref={mesh} rotation-x={Math.PI / 2.4}>
+        <torusGeometry args={[STRIDE * 1.4, STRIDE * 0.06, 6, 24, Math.PI * 0.7]} />
+        <meshBasicMaterial color={color} transparent toneMapped={false} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.DoubleSide} />
+      </mesh>
+    </group>
+  );
+}
+
+/** Duel arena: a pulsing ring of light locked around your rival's feet. */
+function DuelRing({
+  cursorsRef,
+  targetId,
+  color,
+}: {
+  cursorsRef: React.RefObject<MapCursor[]>;
+  targetId: string;
+  color: string;
+}) {
+  const mesh = useRef<THREE.Mesh>(null);
+  useFrame(() => {
+    const m = mesh.current;
+    if (!m) return;
+    const rival = cursorsRef.current?.find((peer) => peer.id === targetId);
+    m.visible = Boolean(rival && rival.hp > 0);
+    if (!rival) return;
+    m.position.set(rival.x, (rival.y ?? 0) + STRIDE * 0.05, rival.z);
+    const pulse = 1 + Math.sin(performance.now() / 160) * 0.08;
+    m.scale.setScalar(STRIDE * 1.6 * pulse);
+  });
+  return (
+    <mesh ref={mesh} rotation-x={-Math.PI / 2}>
+      <ringGeometry args={[0.85, 1, 40]} />
+      <meshBasicMaterial color={color} transparent opacity={0.85} toneMapped={false} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.DoubleSide} />
+    </mesh>
   );
 }
