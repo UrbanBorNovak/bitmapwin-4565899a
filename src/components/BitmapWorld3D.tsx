@@ -2787,7 +2787,9 @@ const WorldScene = memo(function WorldScene({
       <AdaptiveClipping walking={cameraMode !== "map"} />
       <SkyBodies bitcoin={colors.bitcoin} />
       {cameraMode !== "map" && quality.effects !== "off" ? <WorldWeather /> : null}
-      <LandSurface colors={colors} tipHeight={tipHeight} mapView={cameraMode === "map"} />
+      {/* Flat map planes skip depth testing, so in 3D they would slice through
+          the avatar; the walkable terrain mesh covers the ground there. */}
+      {cameraMode === "map" ? <LandSurface colors={colors} tipHeight={tipHeight} mapView /> : null}
       <WorldDepthLayers mapView={cameraMode === "map"} />
       {/* SPACE + TIME — recorded history replayed as light over the same land. */}
       {spaceTime ? <SpaceTimeWorld track={spaceTime} /> : null}
