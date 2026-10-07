@@ -81,16 +81,14 @@ export function blockAt(x: number, y: number, z: number, top = terrainTop(x, z))
  */
 export function columnSurface(wx: number, wz: number): number | null {
   const x = toCell(wx), z = toCell(wz);
-  const top = terrainTop(x, z);
-  let best = top;
-  // Dug terrain: walk down through air.
-  while (best > top - 64 && edits.get(vkey(x, best, z)) === "air") best--;
   const col = columns.get(`${x},${z}`);
-  if (col) for (const y of col) {
+  if (!col) return null; // no player blocks here: smooth terrain rules
+  let best = -Infinity;
+  for (const y of col) {
     const e = edits.get(vkey(x, y, z));
     if (e && e !== "air" && y > best) best = y;
   }
-  return (best + 1) * VOXEL;
+  return best === -Infinity ? null : (best + 1) * VOXEL;
 }
 
 export function blockColor(id: string) {
