@@ -128,6 +128,7 @@ export function ShooterLayer({
   const nextTracer = useRef(0);
   const heldRef = useRef<THREE.Group>(null);
   const recoil = useRef(0);
+  const swayQ = useRef(new THREE.Quaternion());
   const materials = useWeaponMaterials();
   // The carried model is a view model: it lives a few centimetres from the eye,
   // so it must draw over the world instead of clipping into terrain or props.
@@ -215,9 +216,11 @@ export function ShooterLayer({
       }
       const still = 1 - aim * 0.85;
       held.position.copy(camera.position);
-      held.quaternion.copy(camera.quaternion);
-      const restX = (dual ? 0 : long ? 0.28 : 0.19) + drift * still;
-      const restY = -(dual ? 0.2 : long ? 0.17 : 0.1) + breath * still - kick * 0.05;
+      // Look sway: the piece trails the view a touch when turning, then settles.
+      swayQ.current.slerp(camera.quaternion, 1 - Math.exp(-(aim > 0.5 ? 40 : 18) * (1 / 60)));
+      held.quaternion.copy(swayQ.current);
+      const restX = (dual ? 0 : long ? 0.3 : 0.22) + drift * still;
+      const restY = -(dual ? 0.22 : long ? 0.2 : 0.14) + breath * still - kick * 0.05;
       const restZ = -(dual ? 0.34 : long ? 0.4 : 0.32) + kick * (dual ? 0.1 : 0.16);
       const sightX = dual ? 0 : long ? 0.012 : 0.028;
       // A guard brings the blades up in front of the eyes, not down to a sight.
@@ -446,6 +449,7 @@ export function ShooterLayer({
 
       if (!struck.damage) return;
       playSfx(struck.killed ? "kill" : "hit");
+      window.dispatchEvent(new CustomEvent("oasis:hitmark", { detail: { kill: struck.killed } }));
       setScore((current) => current + (struck.killed ? 40 : 10));
       if (struck.killed) {
         setKills((current) => current + 1);
@@ -488,6 +492,7 @@ export function ShooterLayer({
       onShootPeer(peer.id, Math.round(base * bonus));
     }
     playSfx("hit");
+    window.dispatchEvent(new CustomEvent("oasis:hitmark", { detail: { kill: caught.some((p) => p.hp - SHOT_DAMAGE <= 0) } }));
     setScore((current) => current + 25 * caught.length);
     setKills((current) => current + caught.filter((peer) => peer.hp - SHOT_DAMAGE <= 0).length);
     grantXp("attack", 20 * caught.length);

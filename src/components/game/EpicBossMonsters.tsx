@@ -4,7 +4,7 @@
  * state (same pool Guardians strike from the Command Centre); a slain boss
  * vanishes until its respawn time. Each boss is two merged meshes.
  */
-import { memo, useMemo, useRef } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useQuery } from "@tanstack/react-query";
 import * as THREE from "three";
@@ -154,6 +154,26 @@ const BossMonster = memo(function BossMonster({ def, unit, hp, maxHp }: { def: B
   });
   const boss = bossBySlug(def.slug)!;
   const pct = Math.max(0, Math.min(100, (hp / maxHp) * 100));
+  // Each drop in shared health (a Guardian strike from the Command Centre)
+  // floats as a damage number and makes the body flinch.
+  const prev = useRef(hp);
+  const [hits, setHits] = useState<{ id: number; dmg: number }[]>([]);
+  const flinch = useRef(0);
+  useEffect(() => {
+    const dmg = prev.current - hp;
+    prev.current = hp;
+    if (dmg <= 0) return;
+    flinch.current = 1;
+    const id = Date.now() + Math.random();
+    setHits((h) => [...h.slice(-4), { id, dmg }]);
+    const t = window.setTimeout(() => setHits((h) => h.filter((x) => x.id !== id)), 1800);
+    return () => window.clearTimeout(t);
+  }, [hp]);
+  useFrame((_, d) => {
+    if (!body.current || flinch.current <= 0) return;
+    flinch.current = Math.max(0, flinch.current - d * 2.5);
+    body.current.position.x = Math.sin(flinch.current * 40) * flinch.current * 0.6;
+  });
   return (
     <group ref={root} position={pos} scale={unit * def.scale}>
       <group ref={body}>
@@ -163,9 +183,14 @@ const BossMonster = memo(function BossMonster({ def, unit, hp, maxHp }: { def: B
         <pointLight color={def.glow} intensity={6} distance={40} position={[0, 10, 4]} />
       </group>
       <SafeHtml center position={[0, 30, 0]} distanceFactor={0.6} style={{ pointerEvents: "none" }} zIndexRange={[8, 0]}>
-        <div className="hud-panel min-w-40 px-2 py-1 font-mono text-[10px] text-bitcoin" data-no-translate>
+        <div className="hud-panel relative min-w-40 px-2 py-1 font-mono text-[10px] text-bitcoin" data-no-translate>
+          {hits.map((h, i) => (
+            <span key={h.id} className="boss-hit absolute -top-4 font-display text-sm text-destructive" style={{ left: `${30 + i * 12}%` }}>
+              -{h.dmg}
+            </span>
+          ))}
           <div className="flex justify-between gap-3"><span>☠ {boss.name.toUpperCase()}</span><span>LV {boss.level}</span></div>
-          <div className="mt-1 h-1 w-full bg-border"><div className="h-full bg-bitcoin" style={{ width: `${pct}%` }} /></div>
+          <div className="mt-1 h-1 w-full bg-border"><div className="h-full bg-bitcoin transition-[width] duration-700" style={{ width: `${pct}%` }} /></div>
           <div className="mt-0.5 text-muted-foreground">{hp}/{maxHp} · RAID FROM COMMAND CENTRE</div>
         </div>
       </SafeHtml>

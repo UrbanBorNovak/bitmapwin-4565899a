@@ -70,7 +70,12 @@ export const squadStateFn = createServerFn({ method: "GET" })
 /** Post a preset raid call into world chat. Squad members only. */
 export const postTacticFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ boss: z.string().max(40), index: z.number().int().min(0).max(10) }).parse(d))
+  .inputValidator((d: unknown) =>
+    z.object({
+      boss: z.string().max(40),
+      index: z.number().int().min(0).max(10).optional(),
+      text: z.string().trim().min(2).max(140).optional(),
+    }).parse(d))
   .handler(async ({ data, context }) => {
     const boss = bossBySlug(data.boss);
     if (!boss) return { ok: false as const, error: "UNKNOWN BOSS" };
@@ -79,8 +84,10 @@ export const postTacticFn = createServerFn({ method: "POST" })
       .eq("boss_slug", data.boss).eq("user_id", context.userId).limit(1).maybeSingle();
     if (!m) return { ok: false as const, error: "JOIN THE SQUAD TO CALL TACTICS" };
     const list = BOSS_TACTICS[boss.slug] ?? GENERIC_TACTICS;
-    const call = list[data.index];
-    if (!call) return { ok: false as const, error: "UNKNOWN TACTIC" };
+    // Player-written calls: strip control characters and collapse whitespace.
+    const custom = data.text?.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
+    const call = custom || (data.index != null ? list[data.index] : undefined);
+    if (!call) return { ok: false as const, error: "WRITE A TACTIC FIRST" };
     const { error } = await supabaseAdmin.from("map_chat_messages").insert({
       user_id: context.userId,
       visitor_id: `raid-${m.guardian_height}`,

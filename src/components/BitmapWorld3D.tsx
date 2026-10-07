@@ -1,4 +1,5 @@
 import { PvpFx } from "@/components/game/PvpFx";
+import { FpsCrosshair } from "@/components/game/FpsCrosshair";
 import { LandBuilderBar } from "@/components/game/LandBuilderBar";
 import { getSpawnPoint } from "@/lib/land-spawn.functions";
 import { skillSpeed, SKILL_EVENT, type ClassSkill } from "@/lib/oasis-classes";
@@ -4915,18 +4916,7 @@ function BitmapWorld3DInner({
           </div>
         ) : null}
 
-        {cameraMode === "first" ? (
-          <div
-            aria-hidden
-            className="pointer-events-none absolute left-1/2 top-1/2 z-20 size-6 -translate-x-1/2 -translate-y-1/2"
-          >
-            <span className="absolute left-1/2 top-0 h-2 w-px -translate-x-1/2 bg-signal/80" />
-            <span className="absolute bottom-0 left-1/2 h-2 w-px -translate-x-1/2 bg-signal/80" />
-            <span className="absolute left-0 top-1/2 h-px w-2 -translate-y-1/2 bg-signal/80" />
-            <span className="absolute right-0 top-1/2 h-px w-2 -translate-y-1/2 bg-signal/80" />
-            <span className="absolute left-1/2 top-1/2 size-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-bitcoin" />
-          </div>
-        ) : null}
+        {cameraMode === "first" ? <FpsCrosshair /> : null}
 
         {/* Health stays out of sight until damage or death makes it important. */}
         {(!exploring || hp < MAX_HP || driving || respawnNote || attackTarget) ? <div

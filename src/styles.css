@@ -1715,3 +1715,6 @@
 /* PvP feedback stays visible inside the X post player. */
 .embed-lite .oasis-storybook div.pvp-fx.pvp-fx-show { display: block !important; }
 .embed-lite .oasis-storybook .pvp-fx .hud-panel { display: inline-block !important; }
+
+@keyframes boss-hit-rise { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-28px); opacity: 0; } }
+.boss-hit { animation: boss-hit-rise 1.6s ease-out forwards; }
