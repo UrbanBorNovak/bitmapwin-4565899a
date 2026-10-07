@@ -20,10 +20,12 @@ export const Route = createFileRoute("/oasis")({
     const height = Number(search["height"]);
     return Number.isInteger(height) && height >= 0 && height < 1_000_000 ? { height } : {};
   },
-  head: () => {
-    const title = "The Oasis — 1,000 × 1,000 Bitmap Districts";
+  head: ({ match }) => {
+    const h = (match.search as { height?: number }).height ?? 0;
+    const title = `${h}.BITMAP in The Oasis — Bitcoin-native world`;
     const description =
       "Explore every Bitcoin bitmap district as a live 3D land world. Fly, orbit and click any district to open its on-chain view.";
+    const player = `https://bitmapwin.app/embed/oasis?height=${h}`;
     return {
       meta: [
         { title },
@@ -31,7 +33,14 @@ export const Route = createFileRoute("/oasis")({
         { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
-        { name: "twitter:card", content: "summary_large_image" },
+        { property: "og:url", content: `https://bitmapwin.app/oasis?height=${h}` },
+        { name: "twitter:card", content: "player" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        { name: "twitter:player", content: player },
+        { name: "twitter:player:width", content: "1280" },
+        { name: "twitter:player:height", content: "720" },
+        { name: "twitter:image", content: "https://bitmapwin.app/social-card.svg" },
       ],
     };
   },
