@@ -11,6 +11,22 @@ import { touchPad } from "@/lib/touch-input";
 export function EmbedPlayControls() {
   const [hint, setHint] = useState(true);
   const [foe, setFoe] = useState({ inRange: false, ready: true });
+  const [full, setFull] = useState(false);
+  const [first, setFirst] = useState(false);
+  useEffect(() => {
+    const onFs = () => setFull(Boolean(document.fullscreenElement));
+    const onCam = (e: Event) => setFirst((e as CustomEvent<string>).detail === "first");
+    document.addEventListener("fullscreenchange", onFs);
+    window.addEventListener("oasis:camera", onCam);
+    return () => {
+      document.removeEventListener("fullscreenchange", onFs);
+      window.removeEventListener("oasis:camera", onCam);
+    };
+  }, []);
+  const toggleFull = () => {
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void document.documentElement.requestFullscreen?.().catch(() => {});
+  };
   useEffect(() => {
     const on = (e: Event) => setFoe((e as CustomEvent<{ inRange: boolean; ready: boolean }>).detail);
     window.addEventListener("oasis:foe", on);
@@ -94,6 +110,16 @@ export function EmbedPlayControls() {
         <button type="button" aria-label="Turn left" className={btn} {...hold(0, 1)}>◀</button>
         <button type="button" aria-label="Walk back" className={btn} {...hold(-1, 0)}>▼</button>
         <button type="button" aria-label="Turn right" className={btn} {...hold(0, -1)}>▶</button>
+      </div>
+      <div data-embed-pad className="absolute right-3 top-12 z-[90] flex flex-col items-end gap-1">
+        <button type="button" onClick={toggleFull} aria-label="Toggle fullscreen"
+          className="hud-panel px-2 py-1 font-mono text-[10px] text-signal hover:text-bitcoin">
+          {full ? "✕ EXIT FULL" : "⛶ FULLSCREEN"}
+        </button>
+        <button type="button" onClick={() => window.dispatchEvent(new Event("oasis:camera-toggle"))} aria-label="Swap view"
+          className="hud-panel px-2 py-1 font-mono text-[10px] text-signal hover:text-bitcoin">
+          {first ? "⟲ 3RD PERSON" : "👁 1ST PERSON"}
+        </button>
       </div>
       <button
         type="button"

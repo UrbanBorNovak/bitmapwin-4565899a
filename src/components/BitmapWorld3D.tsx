@@ -3849,6 +3849,19 @@ function BitmapWorld3DInner({
     return () => window.removeEventListener("oasis:attack", onAttack);
   }, [attackNearest]);
 
+  // Embed cards (X) have no O key on mobile — a button swaps the view.
+  useEffect(() => {
+    const onToggle = () => {
+      setCameraMode((c) => {
+        const next = c === "first" ? "third" : "first";
+        window.dispatchEvent(new CustomEvent("oasis:camera", { detail: next }));
+        return next;
+      });
+    };
+    window.addEventListener("oasis:camera-toggle", onToggle);
+    return () => window.removeEventListener("oasis:camera-toggle", onToggle);
+  }, []);
+
   // Nearest rival in strike range — drives the target plate and ready glow.
   const [foe, setFoe] = useState<{ handle: string; hp: number; inRange: boolean; distance: number } | null>(null);
   useEffect(() => {
