@@ -112,7 +112,10 @@ export const Route = createFileRoute("/bitmap/$block")({
         { name: "twitter:player", content: `https://bitmapwin.app/embed/bitmap/${params.block}` },
         { name: "twitter:player:width", content: "1280" },
         { name: "twitter:player:height", content: "720" },
-        { name: "twitter:image", content: "https://bitmapwin.app/social-card.svg" },
+        { property: "og:image", content: `https://bitmapwin.app/api/public/og/bitmap/${params.block}.png` },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { name: "twitter:image", content: `https://bitmapwin.app/api/public/og/bitmap/${params.block}.png` },
       ],
     };
   },
