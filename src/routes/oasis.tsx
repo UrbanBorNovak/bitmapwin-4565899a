@@ -2,7 +2,7 @@ import { GuardianRadar } from "@/components/game/GuardianRadar";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Maximize2, Minimize2, Palette } from "lucide-react";
 import { OasisVisualModsPanel, modStyle, useVisualMod, useModsHotkey } from "@/components/game/OasisVisualMods";
 import { getChainBlocks } from "@/lib/chain.functions";
