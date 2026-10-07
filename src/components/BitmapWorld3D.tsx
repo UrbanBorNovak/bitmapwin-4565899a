@@ -1,3 +1,5 @@
+import { LandBuilderBar } from "@/components/game/LandBuilderBar";
+import { getSpawnPoint } from "@/lib/land-spawn.functions";
 import { skillSpeed, SKILL_EVENT, type ClassSkill } from "@/lib/oasis-classes";
 import {
   Fragment,
@@ -3488,6 +3490,14 @@ function BitmapWorld3DInner({
     const spawnHeight = deepLink ? (initialHeight as number) : 0;
     if (saved) placePlayer(pose.current, saved.x, saved.z, saved.yaw);
     else placePlayer(pose.current, worldX(spawnHeight % GRID), worldZ(Math.floor(spawnHeight / GRID)), 0);
+    if (deepLink) {
+      // A holder-set spawn point on the linked BITMAP wins over the block centre.
+      void getSpawnPoint({ data: { height: spawnHeight } }).then((spot) => {
+        if (!spot) return;
+        placePlayer(pose.current, spot.x, spot.z, spot.yaw);
+        publish({ col: pose.current.col, row: pose.current.row, height: pose.current.height, x: pose.current.x, z: pose.current.z, yaw: pose.current.yaw, movement: "idle", teleport: true });
+      }).catch(() => {});
+    }
     publish({
       col: pose.current.col,
       row: pose.current.row,
@@ -4679,6 +4689,16 @@ function BitmapWorld3DInner({
 
 
 
+
+        {exploring && myHeights.has(readout.height) ? (
+          <LandBuilderBar
+            height={readout.height}
+            getPose={() => ({ x: pose.current.x, z: pose.current.z, yaw: pose.current.yaw })}
+            buildOpen={buildOpen}
+            onToggleBuild={() => setBuildOpen((v) => !v)}
+            signedIn={Boolean(session)}
+          />
+        ) : null}
 
         {buildOpen ? (
           <MinerHud address={wallet?.ordinalsAddress ?? null} />
