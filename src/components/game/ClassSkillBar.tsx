@@ -3,7 +3,7 @@ import { castSkill, classById, useOasisClass } from "@/lib/oasis-classes";
 
 /** Hotbar for the chosen class: keys 7/8/9 with cooldown sweeps. */
 export function ClassSkillBar() {
-  const cls = classById(useOasisClass());
+  const cls = classById(useOasisClass() ?? "miner");
   const [ready, setReady] = useState<number[]>([0, 0, 0]);
   const readyRef = useRef(ready);
   readyRef.current = ready;
@@ -40,7 +40,7 @@ export function ClassSkillBar() {
   if (!cls) return null;
   const now = performance.now();
   return (
-    <div className="pointer-events-none absolute bottom-20 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1">
+    <div data-no-translate className="pointer-events-none absolute bottom-20 left-1/2 z-50 flex -translate-x-1/2 flex-col items-center gap-1">
       {note && <p className="font-mono text-xs text-bitcoin">{note}</p>}
       <div className="pointer-events-auto flex gap-1">
         {cls.skills.map((s, i) => {
