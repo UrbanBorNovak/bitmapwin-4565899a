@@ -49,6 +49,33 @@ export type Database = {
           },
         ]
       }
+      adrenaline_licenses: {
+        Row: {
+          address: string
+          config: Json
+          last_seen_at: string
+          licensed_at: string
+          price_bit: number
+          user_id: string
+        }
+        Insert: {
+          address: string
+          config?: Json
+          last_seen_at?: string
+          licensed_at?: string
+          price_bit: number
+          user_id: string
+        }
+        Update: {
+          address?: string
+          config?: Json
+          last_seen_at?: string
+          licensed_at?: string
+          price_bit?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       bids: {
         Row: {
           accepted_offer_id: string | null
@@ -4324,6 +4351,7 @@ export type Database = {
       }
     }
     Functions: {
+      adrenaline_claim: { Args: { _user: string }; Returns: Json }
       archaeology_ledger: { Args: never; Returns: Json }
       atlas_region_stats: {
         Args: { p_hi: number; p_lo: number }

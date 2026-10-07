@@ -76,6 +76,7 @@ import { Route as DistrictSlugRouteImport } from './routes/district.$slug'
 import { Route as EmbedOasisRouteImport } from './routes/embed.oasis'
 import { Route as ExtendersIndexRouteImport } from './routes/extenders.index'
 import { Route as ExtendersSlugRouteImport } from './routes/extenders.$slug'
+import { Route as ExtendersAdrenalineRouteImport } from './routes/extenders.adrenaline'
 import { Route as MapBlockRouteImport } from './routes/map_.$block'
 import { Route as PlayIndexRouteImport } from './routes/play.index'
 import { Route as PlayAtlasRouteImport } from './routes/play.atlas'
@@ -453,6 +454,11 @@ const ExtendersSlugRoute = ExtendersSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => ExtendersRoute,
 } as any)
+const ExtendersAdrenalineRoute = ExtendersAdrenalineRouteImport.update({
+  id: '/adrenaline',
+  path: '/adrenaline',
+  getParentRoute: () => ExtendersRoute,
+} as any)
 const MapBlockRoute = MapBlockRouteImport.update({
   id: '/map_/$block',
   path: '/map/$block',
@@ -722,6 +728,7 @@ export interface FileRoutesByFullPath {
   '/district/$slug': typeof DistrictSlugRoute
   '/embed/oasis': typeof EmbedOasisRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
+  '/extenders/adrenaline': typeof ExtendersAdrenalineRoute
   '/map/$block': typeof MapBlockRoute
   '/play/atlas': typeof PlayAtlasRoute
   '/play/cards': typeof PlayCardsRoute
@@ -827,6 +834,7 @@ export interface FileRoutesByTo {
   '/district/$slug': typeof DistrictSlugRoute
   '/embed/oasis': typeof EmbedOasisRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
+  '/extenders/adrenaline': typeof ExtendersAdrenalineRoute
   '/map/$block': typeof MapBlockRoute
   '/play/atlas': typeof PlayAtlasRoute
   '/play/cards': typeof PlayCardsRoute
@@ -937,6 +945,7 @@ export interface FileRoutesById {
   '/district/$slug': typeof DistrictSlugRoute
   '/embed/oasis': typeof EmbedOasisRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
+  '/extenders/adrenaline': typeof ExtendersAdrenalineRoute
   '/map_/$block': typeof MapBlockRoute
   '/play/atlas': typeof PlayAtlasRoute
   '/play/cards': typeof PlayCardsRoute
@@ -1048,6 +1057,7 @@ export interface FileRouteTypes {
     | '/district/$slug'
     | '/embed/oasis'
     | '/extenders/$slug'
+    | '/extenders/adrenaline'
     | '/map/$block'
     | '/play/atlas'
     | '/play/cards'
@@ -1153,6 +1163,7 @@ export interface FileRouteTypes {
     | '/district/$slug'
     | '/embed/oasis'
     | '/extenders/$slug'
+    | '/extenders/adrenaline'
     | '/map/$block'
     | '/play/atlas'
     | '/play/cards'
@@ -1262,6 +1273,7 @@ export interface FileRouteTypes {
     | '/district/$slug'
     | '/embed/oasis'
     | '/extenders/$slug'
+    | '/extenders/adrenaline'
     | '/map_/$block'
     | '/play/atlas'
     | '/play/cards'
@@ -1851,6 +1863,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExtendersSlugRouteImport
       parentRoute: typeof ExtendersRoute
     }
+    '/extenders/adrenaline': {
+      id: '/extenders/adrenaline'
+      path: '/adrenaline'
+      fullPath: '/extenders/adrenaline'
+      preLoaderRoute: typeof ExtendersAdrenalineRouteImport
+      parentRoute: typeof ExtendersRoute
+    }
     '/map_/$block': {
       id: '/map_/$block'
       path: '/map/$block'
@@ -2208,11 +2227,13 @@ const CollectionsRouteWithChildren = CollectionsRoute._addFileChildren(
 
 interface ExtendersRouteChildren {
   ExtendersSlugRoute: typeof ExtendersSlugRoute
+  ExtendersAdrenalineRoute: typeof ExtendersAdrenalineRoute
   ExtendersIndexRoute: typeof ExtendersIndexRoute
 }
 
 const ExtendersRouteChildren: ExtendersRouteChildren = {
   ExtendersSlugRoute: ExtendersSlugRoute,
+  ExtendersAdrenalineRoute: ExtendersAdrenalineRoute,
   ExtendersIndexRoute: ExtendersIndexRoute,
 }
 

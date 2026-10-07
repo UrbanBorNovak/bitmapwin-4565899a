@@ -1,3 +1,4 @@
+import { AdrenalineBot } from "@/components/game/AdrenalineBot";
 import { GuardianRadar } from "@/components/game/GuardianRadar";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -147,6 +148,7 @@ function OasisPage() {
           />
           <ClassSkillBar />
           <RacePicker />
+          <AdrenalineBot />
           </div>
           <OasisTradeTicker />
           <OasisBroadcastControl {...(height === undefined ? {} : { defaultHeight: height })} />
