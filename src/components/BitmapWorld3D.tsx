@@ -3680,6 +3680,8 @@ function BitmapWorld3DInner({
   const [combatNow, setCombatNow] = useState(() => Date.now());
   const cooldownRemaining = Math.max(0, attackCooldownUntil - combatNow);
   const attackReady = cooldownRemaining === 0 && hp > 0;
+  const attackReadyRef = useRef(attackReady);
+  attackReadyRef.current = attackReady;
   const attackNearest = useCallback((skill?: { name: string; range: number }) => {
     const now = Date.now();
     if (hp <= 0 || (!skill && now < attackCooldownUntil)) return;
@@ -3826,6 +3828,38 @@ function BitmapWorld3DInner({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [attackNearest, equipWeapon, exploring, toggleTruck]);
+
+  // On-screen ATTACK buttons (post embeds, phones) fire the same strike as F.
+  useEffect(() => {
+    const onAttack = () => {
+      unlockAudio();
+      playSfx("hit");
+      attackNearest();
+    };
+    window.addEventListener("oasis:attack", onAttack);
+    return () => window.removeEventListener("oasis:attack", onAttack);
+  }, [attackNearest]);
+
+  // Nearest rival in strike range — drives the target plate and ready glow.
+  const [foe, setFoe] = useState<{ handle: string; hp: number; inRange: boolean; distance: number } | null>(null);
+  useEffect(() => {
+    if (!exploring) return;
+    const id = window.setInterval(() => {
+      const me = pose.current;
+      let best: { handle: string; hp: number; distance: number } | null = null;
+      for (const c of cursorsRef.current) {
+        if (c.hp <= 0) continue;
+        const d = Math.hypot(c.x - me.x, c.z - me.z);
+        if (d <= ATTACK_RANGE * 4 && (!best || d < best.distance)) best = { handle: c.handle, hp: c.hp, distance: d };
+      }
+      const next = best ? { ...best, inRange: best.distance <= ATTACK_RANGE } : null;
+      setFoe((cur) =>
+        cur?.handle === next?.handle && cur?.hp === next?.hp && cur?.inRange === next?.inRange ? cur : next,
+      );
+      window.dispatchEvent(new CustomEvent("oasis:foe", { detail: { inRange: Boolean(next?.inRange), ready: attackReadyRef.current } }));
+    }, 250);
+    return () => window.clearInterval(id);
+  }, [exploring]);
 
   // Mouse wheel cycles through the belt while you are in the world.
   useEffect(() => {
@@ -4689,6 +4723,21 @@ function BitmapWorld3DInner({
 
 
 
+
+        {exploring && foe ? (
+          <div data-no-translate className="pointer-events-none absolute left-1/2 top-14 z-40 -translate-x-1/2">
+            <div className={`hud-panel min-w-44 px-2 py-1 font-mono text-[10px] ${foe.inRange ? "text-bitcoin" : "text-signal"}`}>
+              <div className="flex justify-between gap-3">
+                <span>{foe.inRange ? "⚔ IN RANGE" : "◎ RIVAL"} · {foe.handle.toUpperCase()}</span>
+                <span>{foe.hp}/{MAX_HP}</span>
+              </div>
+              <div className="mt-1 h-1 w-full bg-border">
+                <div className={`h-full ${foe.inRange ? "bg-bitcoin" : "bg-signal"}`} style={{ width: `${Math.max(0, Math.min(100, (foe.hp / MAX_HP) * 100))}%` }} />
+              </div>
+              <div className="mt-0.5 text-muted-foreground">{foe.inRange ? "PRESS F OR ATTACK" : `${foe.distance.toFixed(1)} AWAY · CLOSE IN`}</div>
+            </div>
+          </div>
+        ) : null}
 
         {exploring && myHeights.has(readout.height) ? (
           <LandBuilderBar
