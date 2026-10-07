@@ -4,7 +4,7 @@
  * state (same pool Guardians strike from the Command Centre); a slain boss
  * vanishes until its respawn time. Each boss is two merged meshes.
  */
-import { memo, useMemo, useRef } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useQuery } from "@tanstack/react-query";
 import * as THREE from "three";
