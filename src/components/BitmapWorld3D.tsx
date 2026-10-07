@@ -317,6 +317,7 @@ import { consumeTouchJump, isTouchDevice, takeTouchLook, touchPad } from "@/lib/
 import { QualityProvider, useQuality } from "@/graphics/QualityContext";
 import { QualityHud } from "@/graphics/QualityHud";
 import { GraphicsDebug } from "@/graphics/GraphicsDebug";
+import { OasisOnlinePanel } from "@/components/game/OasisOnlinePanel";
 import {
 
   RIDES,
@@ -4048,6 +4049,8 @@ function BitmapWorld3DInner({
                     {MEMBER_TITLE}
                   </div>
                 ) : null}
+                <OasisOnlinePanel online={cursors.length + 1} />
+
 
               </div>
               <Button
