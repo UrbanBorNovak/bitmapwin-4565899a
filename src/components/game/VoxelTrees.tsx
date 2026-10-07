@@ -136,7 +136,7 @@ export const VoxelTrees = memo(function VoxelTrees({
     blocks.forEach((b, i) => {
       mat.makeTranslation(b.x, b.y, b.z);
       m.setMatrixAt(i, mat);
-      const shade = 0.82 + 0.18 * Math.min(1, (b.y - blocks[0].y) / (cube * 8) + 0.4);
+      const shade = 0.82 + 0.18 * Math.min(1, (b.y - (blocks[0]?.y ?? b.y)) / (cube * 8) + 0.4);
       m.setColorAt(i, col.set(b.color).multiplyScalar(shade));
     });
     m.count = blocks.length;
