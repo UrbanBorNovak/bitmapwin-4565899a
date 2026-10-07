@@ -314,7 +314,7 @@ import { DamageVeil } from "@/components/game/DamageVeil";
 
 import type { RideSpec } from "@/lib/world-vehicle";
 import { dryLandNear, isDeepSea, isSea, nearestSea } from "@/lib/world-sea";
-import { groundY, waterSurfaceY } from "@/lib/world-terrain";
+import { groundY, subscribeTerrain, terrainVersion, waterSurfaceY } from "@/lib/world-terrain";
 import { BlockParcels } from "@/components/game/BlockParcels";
 import { ATLAS } from "@/lib/atlas-palette";
 import { TerrainModels } from "@/components/game/TerrainModels";
@@ -570,6 +570,7 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
   const outerMat = useRef<THREE.MeshBasicMaterial>(null);
   const wireMat = useRef<THREE.MeshBasicMaterial>(null);
   const owned = useMemo(() => [...new Set(heights)], [heights]);
+  const terrain = useSyncExternalStore(subscribeTerrain, terrainVersion, terrainVersion);
 
   useEffect(() => {
     const inner = innerRef.current;
@@ -581,7 +582,7 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
     owned.forEach((height, index) => {
       const x = worldX(height % GRID);
       const z = worldZ(Math.floor(height / GRID));
-      const y = districtHeight(height) + AVATAR_U * 0.02;
+      const y = groundY(x, z) + AVATAR_U * 0.02;
       dummy.rotation.set(-Math.PI / 2, 0, 0);
 
       // Flat ground signals replace the old volumetric ownership columns.
@@ -616,7 +617,7 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
     aura.computeBoundingSphere();
     outer.computeBoundingSphere();
     wire.computeBoundingSphere();
-  }, [owned]);
+  }, [owned, terrain]);
 
   const nextPulse = useRef(0);
   useFrame(({ clock }) => {
@@ -737,6 +738,7 @@ const OwnedBitmapBeacons = memo(function OwnedBitmapBeacons({
     () => [...new Set(heights)].filter((height) => Number.isFinite(height)).slice(0, limit),
     [heights, limit],
   );
+  const terrain = useSyncExternalStore(subscribeTerrain, terrainVersion, terrainVersion);
 
   useEffect(() => {
     const beam = beamRef.current;
@@ -750,7 +752,7 @@ const OwnedBitmapBeacons = memo(function OwnedBitmapBeacons({
     owned.forEach((height, index) => {
       const x = worldX(height % GRID);
       const z = worldZ(Math.floor(height / GRID));
-      const ground = districtHeight(height) + AVATAR_U * 0.02;
+      const ground = (mapView ? districtHeight(height) : groundY(x, z)) + AVATAR_U * 0.02;
 
       marker.position.set(x, ground + beamHeight / 2, z);
       marker.rotation.set(0, 0, 0);
@@ -773,7 +775,7 @@ const OwnedBitmapBeacons = memo(function OwnedBitmapBeacons({
       target.instanceMatrix.needsUpdate = true;
       target.computeBoundingSphere();
     }
-  }, [mapView, owned]);
+  }, [mapView, owned, terrain]);
 
   const nextPulse = useRef(0);
   useFrame(({ clock }) => {
