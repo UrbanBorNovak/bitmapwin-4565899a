@@ -79,6 +79,7 @@ export const TEMPLATES: Template[] = [
   { id: "tower", name: "WATCHTOWER", blurb: "Stone tower with a stair and lit lookout deck", blocks: tower() },
   { id: "outpost", name: "DESERT OUTPOST", blurb: "Sand walls with stone corner posts", blocks: outpost() },
   { id: "pavilion", name: "TRADING PAVILION", blurb: "Open stall with a counter and gold display", blocks: pavilion() },
+  { id: "plaza", name: "PUBLIC PLAZA", blurb: "Shared square: lit corner pillars, benches and a glowing fountain — anyone can build it", blocks: plaza() },
 ];
 
 export function templateCost(t: Template) {
