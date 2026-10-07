@@ -34,20 +34,16 @@ const MACRO = 10;
  * high enough to read as real hills you climb, low enough that scenery standing
  * on the base plane still sits on the land.
  */
-const MACRO_AMP = STRIDE * 7.7;
-/** Extra lift on the highest regions so polar ground reads as peaks. */
-const PEAK_AMP = STRIDE * 4.5;
-/** Dune ripple height across low desert ground. */
-const DUNE_AMP = STRIDE * 1.1;
+const MACRO_AMP = STRIDE * 2.2;
 /** Extra rise a single busy BITMAP adds. */
-const MICRO_AMP = STRIDE * 1.2;
+const MICRO_AMP = STRIDE * 0.8;
 /** How deep the sea floor drops below the water line. */
 const SEA_DROP = STRIDE * 1.6;
 /** Transaction count that counts as a fully busy block. */
 const BUSY_TX = 3200;
 
 /** Highest point the land ever reaches — used for shading and map ranges. */
-export const MAX_RELIEF = MACRO_AMP * 1.12 + PEAK_AMP + MICRO_AMP;
+export const MAX_RELIEF = MACRO_AMP + MICRO_AMP;
 
 /** height → activity 0…1, real rows only. */
 const real = new Map<number, number>();
@@ -157,23 +153,11 @@ export function baseGroundY(x: number, z: number) {
   const fz = z / WORLD_CELL - 0.5;
   const macro = bilinear(fx / MACRO, fz / MACRO, macroActivity);
   const micro = bilinear(fx, fz, activityOfCell);
-  // Elevation profiles by region: high ground sharpens into peaks (polar),
-  // low ground carries dune ripples (desert), mid ground stays rolling meadow.
-  const peak = smooth(clamp((macro - 0.55) / 0.3, 0, 1));
-  const lowland = 1 - smooth(clamp((macro - 0.22) / 0.2, 0, 1));
-  const meadow = 1 - peak - lowland;
-  const ripple = Math.sin(x * 6.3 + Math.sin(z * 2.7) * 2.2) * 0.5 + 0.5;
-  const valley = Math.sin(x * 0.9 + 1.3) * Math.sin(z * 0.7 + 0.4);
-  const land =
-    macro * MACRO_AMP +
-    peak * macro * macro * PEAK_AMP +
-    lowland * ripple * ripple * DUNE_AMP +
-    Math.max(0, meadow) * valley * MACRO_AMP * 0.12 +
-    micro * MICRO_AMP;
+  const land = macro * MACRO_AMP + micro * MICRO_AMP;
   // Water sits at zero: the sea bed dips under it and the shore eases down.
   const hit = seaDepthAt(x, z);
   const depth = hit ? clamp(hit.depth, 0, 1) : 0;
-  return Math.max(0, land) * (1 - depth) - depth * SEA_DROP;
+  return land * (1 - depth) - depth * SEA_DROP;
 }
 
 /**
