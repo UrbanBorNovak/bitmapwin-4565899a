@@ -30,7 +30,8 @@ export function FriendsCrewPanel({ height, onClose }: { height: number; onClose:
 
   const run = async (fn: () => Promise<{ ok: boolean; error?: string; message?: string }>, ok?: string) => {
     setBusy(true);
-    const r = await fn().catch(() => ({ ok: false, error: "SOMETHING WENT WRONG" }));
+    type R = { ok: boolean; error?: string; message?: string };
+    const r: R = await fn().catch((): R => ({ ok: false, error: "SOMETHING WENT WRONG" }));
     setBusy(false);
     if (!r.ok) toast.error(r.error ?? "FAILED");
     else if (r.message || ok) toast.success(r.message ?? ok);
