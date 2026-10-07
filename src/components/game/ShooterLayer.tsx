@@ -159,7 +159,7 @@ export function ShooterLayer({
     if (!active) return;
     const now = performance.now();
     if (flash && now - flash > 70) setFlash(0);
-    setTracers((current) => (current.length && now - current[0]!.born > 120 ? current.slice(1) : current));
+    setTracers((current) => (current.length && now - current[0]!.born > BOLT_LIFE_MS ? current.slice(1) : current));
     setBursts((current) => (current.length && now - current[0]!.born > 620 ? current.slice(1) : current));
 
     const next = Math.max(0, recoil.current - delta * 3.4);
@@ -701,7 +701,13 @@ export function ShooterLayer({
         <VoxelBurst key={burst.id} at={burst.at} born={burst.born} color={strikeColor} radius={STRIDE * spec.splashStrides} />
       ))}
       {tracers.map((tracer) => (
-        <Tracer key={tracer.id} from={tracer.from} to={tracer.to} color={strikeColor} />
+        <BlasterBolt
+          key={tracer.id}
+          from={tracer.from}
+          to={tracer.to}
+          born={tracer.born}
+          color={weapon === "minigun" || weapon === "revolver" ? BOLT_RED : strikeColor}
+        />
       ))}
       {flash ? (
         <pointLight color={strikeColor} intensity={12} distance={STRIDE * 16} position={camera.position} />
@@ -710,18 +716,100 @@ export function ShooterLayer({
   );
 }
 
-function Tracer({ from, to, color }: { from: THREE.Vector3; to: THREE.Vector3; color: string }) {
-  const geometry = useState(() => {
-    const g = new THREE.BufferGeometry();
-    g.setFromPoints([from, to]);
-    return g;
-  })[0];
-  useEffect(() => () => geometry.dispose(), [geometry]);
+/** Blaster bolt look: saturated red plasma around a white-hot core. */
+const BOLT_RED = "#ff2a1f";
+const BOLT_LIFE_MS = 320;
+const BOLT_SPEED = STRIDE * 420; // world units per second
+const Y_AXIS = new THREE.Vector3(0, 1, 0);
+
+/**
+ * STAR WARS BLASTER BOLT — a short glowing slug that streaks from the muzzle
+ * to the impact point instead of an instant line, then flares where it lands.
+ */
+function BlasterBolt({
+  from,
+  to,
+  born,
+  color,
+}: {
+  from: THREE.Vector3;
+  to: THREE.Vector3;
+  born: number;
+  color: string;
+}) {
+  const group = useRef<THREE.Group>(null);
+  const flare = useRef<THREE.Mesh>(null);
+  const { dir, dist, len, quat } = useMemo(() => {
+    const d = to.clone().sub(from);
+    const distance = d.length() || 1;
+    d.divideScalar(distance);
+    return {
+      dir: d,
+      dist: distance,
+      len: Math.min(STRIDE * 5, distance * 0.5),
+      quat: new THREE.Quaternion().setFromUnitVectors(Y_AXIS, d),
+    };
+  }, [from, to]);
+  const travelMs = Math.min(BOLT_LIFE_MS - 60, (dist / BOLT_SPEED) * 1000);
+
+  useFrame(() => {
+    const g = group.current;
+    if (!g) return;
+    const t = performance.now() - born;
+    const head = Math.min(dist, (t / Math.max(1, travelMs)) * dist);
+    const arrived = t >= travelMs;
+    g.visible = !arrived;
+    g.position.copy(from).addScaledVector(dir, Math.max(len / 2, head - len / 2));
+    if (flare.current) {
+      flare.current.visible = arrived;
+      const k = Math.max(0, 1 - (t - travelMs) / 80);
+      flare.current.scale.setScalar(STRIDE * (0.4 + (1 - k) * 0.9));
+      (flare.current.material as THREE.MeshBasicMaterial).opacity = k;
+    }
+  });
+
+  const r = STRIDE * 0.07;
   return (
-    <line>
-      <Primitive object={geometry} attach="geometry" />
-      <lineBasicMaterial color={color} transparent opacity={0.75} />
-    </line>
+    <>
+      <group ref={group} quaternion={quat} position={from}>
+        <mesh>
+          <cylinderGeometry args={[r * 0.45, r * 0.45, len, 6]} />
+          <meshBasicMaterial color="#fff6f0" toneMapped={false} />
+        </mesh>
+        <mesh>
+          <cylinderGeometry args={[r * 1.6, r * 1.6, len * 1.08, 8]} />
+          <meshBasicMaterial
+            color={color}
+            toneMapped={false}
+            transparent
+            opacity={0.55}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+        <mesh>
+          <cylinderGeometry args={[r * 3, r * 3, len * 1.2, 8]} />
+          <meshBasicMaterial
+            color={color}
+            toneMapped={false}
+            transparent
+            opacity={0.18}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+      </group>
+      <mesh ref={flare} position={to} visible={false}>
+        <sphereGeometry args={[1, 10, 8]} />
+        <meshBasicMaterial
+          color={color}
+          toneMapped={false}
+          transparent
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+    </>
   );
 }
 
