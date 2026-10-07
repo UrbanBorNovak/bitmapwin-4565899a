@@ -4,11 +4,11 @@ import { bitmapPattern } from "@/lib/bitmap";
 // Static 1200x630 PNG share image: block number + its deterministic pixel sigil.
 const W = 1200;
 const H = 630;
-const BG = [11, 13, 16];
-const PANEL = [20, 24, 30];
-const ORANGE = [247, 147, 26];
-const CYAN = [56, 210, 230];
-const DIM = [120, 130, 140];
+const BG = [11, 13, 16] as const;
+const PANEL = [20, 24, 30] as const;
+const ORANGE = [247, 147, 26] as const;
+const CYAN = [56, 210, 230] as const;
+const DIM = [120, 130, 140] as const;
 
 // 5x7 pixel font for the few glyphs we print.
 const FONT: Record<string, string[]> = {
@@ -35,14 +35,14 @@ const FONT: Record<string, string[]> = {
 
 function render(block: number): Uint8Array {
   const px = new Uint8Array(W * H * 3);
-  const rect = (x0: number, y0: number, w: number, h: number, c: number[]) => {
+  const rect = (x0: number, y0: number, w: number, h: number, c: readonly [number, number, number]) => {
     for (let y = Math.max(0, y0); y < Math.min(H, y0 + h); y++)
       for (let x = Math.max(0, x0); x < Math.min(W, x0 + w); x++) {
         const i = (y * W + x) * 3;
         px[i] = c[0]; px[i + 1] = c[1]; px[i + 2] = c[2];
       }
   };
-  const text = (s: string, x: number, y: number, scale: number, c: number[]) => {
+  const text = (s: string, x: number, y: number, scale: number, c: readonly [number, number, number]) => {
     for (const ch of s) {
       const g = FONT[ch];
       if (g) g.forEach((row, ry) => [...row].forEach((b, rx) => b === "1" && rect(x + rx * scale, y + ry * scale, scale, scale, c)));
@@ -75,7 +75,7 @@ const CRC = (() => {
   for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
   return t;
 })();
-function crc32(b: Uint8Array) { let c = 0xffffffff; for (const x of b) c = CRC[(c ^ x) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; }
+function crc32(b: Uint8Array) { let c = 0xffffffff; for (const x of b) c = CRC[(c ^ x) & 0xff]! ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; }
 function chunk(type: string, data: Uint8Array) {
   const out = new Uint8Array(12 + data.length);
   const dv = new DataView(out.buffer);
