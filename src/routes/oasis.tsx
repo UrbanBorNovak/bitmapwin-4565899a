@@ -2,7 +2,9 @@ import { GuardianRadar } from "@/components/game/GuardianRadar";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2, Palette } from "lucide-react";
+import { OasisVisualModsPanel, modStyle, useVisualMod } from "@/components/game/OasisVisualMods";
 import { getChainBlocks } from "@/lib/chain.functions";
 import { OasisWorldGuard } from "@/components/OasisWorldGuard";
 import { OasisEntry } from "@/components/game/OasisEntry";
@@ -40,6 +42,30 @@ function OasisPage() {
   const { height } = Route.useSearch();
   // Deep links skip the story and drop straight into the world.
   const [entered, setEntered] = useState(height !== undefined);
+  const [mod, setMod] = useVisualMod();
+  const [modsOpen, setModsOpen] = useState(false);
+  const shellRef = useRef<HTMLDivElement>(null);
+  const [nativeFs, setNativeFs] = useState(false);
+  const [fallbackFs, setFallbackFs] = useState(false);
+  const fullscreen = nativeFs || fallbackFs;
+  useEffect(() => {
+    const onChange = () => setNativeFs(document.fullscreenElement === shellRef.current);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+  useEffect(() => {
+    if (!fallbackFs) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setFallbackFs(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [fallbackFs]);
+  const toggleFullscreen = () => {
+    if (fallbackFs) return setFallbackFs(false);
+    if (document.fullscreenElement) return void document.exitFullscreen();
+    const el = shellRef.current;
+    if (el?.requestFullscreen) el.requestFullscreen().catch(() => setFallbackFs(true));
+    else setFallbackFs(true);
+  };
   const fetchBlocks = useServerFn(getChainBlocks);
   const tip = useQuery({
     queryKey: ["chain", "tip", "map"],
@@ -81,17 +107,33 @@ function OasisPage() {
         <p className="label text-signal">OASIS WORLD · LIVE</p>
         <Link to="/play-guide" className="label text-bitcoin hover:text-foreground">CONTROLS + FIRST 5 MINUTES →</Link>
       </div>
-      <div data-tour="map-world" className="relative min-w-0">
+      <div
+        ref={shellRef}
+        data-tour="map-world"
+        style={modStyle(mod)}
+        className={`oasis-modded relative min-w-0 ${fullscreen ? "oasis-fs" : ""} ${fallbackFs ? "oasis-fs-fallback" : ""}`}
+      >
         {!entered ? (
           <OasisEntry onEnter={() => setEntered(true)} />
         ) : (
         <OasisWorldGuard>
         <Suspense fallback={<div className="grid h-[78vh] min-h-[520px] place-items-center border border-border bg-background font-mono text-xs text-signal">INITIALIZING OASIS RENDERER…</div>}>
+          <div className="relative">
+            <div className="absolute bottom-3 right-3 z-[85] flex gap-1">
+              <button type="button" aria-label="Visual mods" title="Visual mods" onClick={() => setModsOpen((v) => !v)} className={`hud-panel grid size-9 place-items-center ${modsOpen ? "text-bitcoin" : "text-signal"} hover:text-bitcoin`}>
+                <Palette className="size-4" />
+              </button>
+              <button type="button" aria-label={fullscreen ? "Exit full screen" : "Full screen"} title={fullscreen ? "Exit full screen" : "Full screen"} onClick={toggleFullscreen} className="hud-panel grid size-9 place-items-center text-signal hover:text-bitcoin">
+                {fullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              </button>
+            </div>
+            {modsOpen ? <OasisVisualModsPanel mod={mod} setMod={setMod} onClose={() => setModsOpen(false)} /> : null}
           <BitmapWorld3D
             tipHeight={tipHeight}
             {...(height === undefined ? {} : { initialHeight: height })}
             legend={<span data-tour="map-legend" className="flex flex-wrap items-center gap-2">{legend}</span>}
           />
+          </div>
           <OasisTradeTicker />
           <OasisBroadcastControl {...(height === undefined ? {} : { defaultHeight: height })} />
           <ClassSkillBar />
