@@ -97,6 +97,7 @@ export const Route = createFileRoute("/bitmap/$block")({
   head: ({ params }) => {
     const title = `Bitmap #${params.block} — Bitcoin Digital Land`;
     const description = `Ownership, status and price data for Bitmap #${params.block} on the Bitcoin land layer.`;
+    const url = `https://bitmapwin.app/bitmap/${params.block}`;
     return {
       meta: [
         { title },
@@ -104,7 +105,14 @@ export const Route = createFileRoute("/bitmap/$block")({
         { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
-        { name: "twitter:card", content: "summary_large_image" },
+        { property: "og:url", content: url },
+        { name: "twitter:card", content: "player" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        { name: "twitter:player", content: `https://bitmapwin.app/embed/bitmap/${params.block}` },
+        { name: "twitter:player:width", content: "1280" },
+        { name: "twitter:player:height", content: "720" },
+        { name: "twitter:image", content: "https://bitmapwin.app/social-card.svg" },
       ],
     };
   },
