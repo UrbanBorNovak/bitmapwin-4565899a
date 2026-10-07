@@ -89,7 +89,7 @@ function chunk(type: string, data: Uint8Array) {
 async function encodePng(rgb: Uint8Array): Promise<Uint8Array> {
   const raw = new Uint8Array(H * (W * 3 + 1));
   for (let y = 0; y < H; y++) raw.set(rgb.subarray(y * W * 3, (y + 1) * W * 3), y * (W * 3 + 1) + 1);
-  const z = new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream("deflate"))).arrayBuffer());
+  const z = new Uint8Array(await new Response(new Blob([raw.buffer as ArrayBuffer]).stream().pipeThrough(new CompressionStream("deflate"))).arrayBuffer());
   const ihdr = new Uint8Array(13);
   const dv = new DataView(ihdr.buffer);
   dv.setUint32(0, W); dv.setUint32(4, H); ihdr[8] = 8; ihdr[9] = 2;
@@ -106,7 +106,7 @@ export const Route = createFileRoute("/api/public/og/bitmap/$block")({
         const block = Number(params.block.replace(/\.png$/, ""));
         if (!Number.isInteger(block) || block < 0 || block >= 10_000_000) return new Response("Bad block", { status: 400 });
         const png = await encodePng(render(block));
-        return new Response(png, {
+        return new Response(png.buffer as ArrayBuffer, {
           headers: { "Content-Type": "image/png", "Cache-Control": "public, max-age=86400, immutable" },
         });
       },
