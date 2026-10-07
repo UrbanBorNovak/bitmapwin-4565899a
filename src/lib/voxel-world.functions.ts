@@ -35,6 +35,16 @@ async function readBag(userId: string) {
   for (const r of (data ?? []) as { kind: string; count: number }[]) bag[r.kind] = r.count;
   return bag;
 }
+/** Live on-chain holder of a BITMAP through any of the account's linked wallets. */
+async function isLiveHolder(userId: string, height: number) {
+  const { sb } = await admin();
+  const { locateBitmap } = await import("@/lib/locate-bitmap.server");
+  const { data: links } = await sb.from("wallet_links").select("address").eq("user_id", userId);
+  for (const { address } of links ?? []) {
+    if ((await locateBitmap({ height, address }).catch(() => null))?.heldByAddress) return true;
+  }
+  return false;
+}
 const result = (msg: unknown, bag: Record<string, number>) =>
   msg === "ok" ? { ok: true as const, bag } : { ok: false as const, error: String(msg ?? "FAILED"), bag };
 
@@ -58,6 +68,18 @@ export const editVoxelFn = createServerFn({ method: "POST" })
     const { count } = await sb.from("oasis_voxels").select("x", { count: "exact", head: true })
       .eq("placed_by", context.userId).gte("updated_at", since);
     if ((count ?? 0) >= 240) return { ok: false as const, error: "SLOW DOWN — BUILD LIMIT REACHED", bag: await readBag(context.userId) };
+    if (data.kind === "air") {
+      const { data: row } = await sb.from("oasis_voxels").select("placed_by").eq("x", data.x).eq("y", data.y).eq("z", data.z).maybeSingle();
+      const placer = (row as { placed_by: string } | null)?.placed_by;
+      if (placer && placer !== context.userId) {
+        const { VOXEL } = await import("@/lib/voxel-world");
+        const { colAt, rowAt, WORLD_GRID } = await import("@/lib/player-state");
+        const height = rowAt((data.z + 0.5) * VOXEL) * WORLD_GRID + colAt((data.x + 0.5) * VOXEL);
+        if (!(await isLiveHolder(context.userId, height))) {
+          return { ok: false as const, error: `ONLY THE BUILDER OR THE OWNER OF ${height}.BITMAP CAN BREAK THIS`, bag: await readBag(context.userId) };
+        }
+      }
+    }
     const { data: msg, error } = await rpc("voxel_edit", { _user: context.userId, _x: data.x, _y: data.y, _z: data.z, _kind: data.kind });
     return result(error ? "COULD NOT SAVE BLOCK" : msg, await readBag(context.userId));
   });
@@ -126,14 +148,8 @@ export const stampTemplateFn = createServerFn({ method: "POST" })
     const { TEMPLATES } = await import("@/lib/voxel-templates");
     const tpl = TEMPLATES.find((t) => t.id === data.template);
     if (!tpl) return { ok: false as const, error: "NO SUCH TEMPLATE", bag: {}, blocks: [] };
-    const { sb, rpc } = await admin();
-    const { locateBitmap } = await import("@/lib/locate-bitmap.server");
-    const { data: links } = await sb.from("wallet_links").select("address").eq("user_id", context.userId);
-    let holder = false;
-    for (const { address } of links ?? []) {
-      if ((await locateBitmap({ height: data.height, address })).heldByAddress) { holder = true; break; }
-    }
-    if (!holder) return { ok: false as const, error: "ONLY THE LIVE HOLDER CAN BUILD TEMPLATES HERE", bag: await readBag(context.userId), blocks: [] };
+    const { rpc } = await admin();
+    // Anyone may build anywhere; the BITMAP owner can break guest blocks.
     const blocks = tpl.blocks.map((b) => ({ x: data.x + b.dx, y: data.y + b.dy, z: data.z + b.dz, k: b.k }));
     const { data: msg, error } = await rpc("voxel_stamp", { _user: context.userId, _blocks: blocks });
     const r = result(error ? "COULD NOT BUILD" : msg, await readBag(context.userId));
