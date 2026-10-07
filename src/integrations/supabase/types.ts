@@ -3966,6 +3966,39 @@ export type Database = {
         }
         Relationships: []
       }
+      voxel_bag_meta: {
+        Row: {
+          last_harvest_at: string
+          user_id: string
+        }
+        Insert: {
+          last_harvest_at?: string
+          user_id: string
+        }
+        Update: {
+          last_harvest_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      voxel_bags: {
+        Row: {
+          count: number
+          kind: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          kind: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          kind?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       walker_raid_scores: {
         Row: {
           damage: number
@@ -4517,6 +4550,23 @@ export type Database = {
         Args: { _commitment: string; _slug: string }
         Returns: boolean
       }
+      voxel_bag_add: {
+        Args: { _kind: string; _n: number; _user: string }
+        Returns: boolean
+      }
+      voxel_bag_ensure: { Args: { _user: string }; Returns: undefined }
+      voxel_craft: { Args: { _out: string; _user: string }; Returns: string }
+      voxel_edit: {
+        Args: {
+          _kind: string
+          _user: string
+          _x: number
+          _y: number
+          _z: number
+        }
+        Returns: string
+      }
+      voxel_harvest: { Args: { _kind: string; _user: string }; Returns: string }
       walker_hit: {
         Args: { _damage: number; _name: string; _user: string; _walker: string }
         Returns: {
