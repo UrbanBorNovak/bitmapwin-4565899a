@@ -5,7 +5,7 @@ import { pvpScore, rankPlayersQuery } from "@/lib/ranks";
 
 /** Live players online (self + fresh peers) and the real top 3 PvP souls. */
 export function OasisOnlinePanel({ online }: { online: number }) {
-  const players = useQuery({ ...rankPlayersQuery(), refetchInterval: 60_000 });
+  const players = useQuery({ ...rankPlayersQuery(), refetchInterval: 15_000 });
   const top = (players.data ?? [])
     .filter((p) => p.pvpKills + p.pkKills > 0)
     .sort((a, b) => pvpScore(b) - pvpScore(a))
