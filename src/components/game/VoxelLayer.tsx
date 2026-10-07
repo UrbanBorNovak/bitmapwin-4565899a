@@ -9,10 +9,11 @@ import * as THREE from "three";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  VOXEL, VOXEL_DEPTH, VOXEL_RADIUS, VOXEL_REACH, applyEdit, blockAt, blockColor, edits,
-  columnSurface, onVoxelMode, onVoxels, terrainTop, toCell, voxelMode, vkey,
+  VOXEL, VOXEL_RADIUS, VOXEL_REACH, applyEdit, blockAt, blockColor, edits, harvestKind,
+  columnSurface, onVoxelMode, onVoxels, setVoxelBag, toCell, voxelBag, voxelMode, vkey,
 } from "@/lib/voxel-world";
-import { editVoxelFn, voxelsNearFn } from "@/lib/voxel-world.functions";
+import { editVoxelFn, harvestVoxelFn, voxelBagFn, voxelsNearFn } from "@/lib/voxel-world.functions";
+import { wildBiomeAt } from "@/lib/wild-biome";
 import { playSfx } from "@/lib/world-audio";
 import type { PlayerState } from "@/lib/player-state";
 
@@ -77,18 +78,33 @@ export function VoxelLayer({ pose, firstPerson, armed }: { pose: React.RefObject
   }, []);
 
   // Break / place.
+  // Load the server-held block bag when block mode opens.
+  useEffect(() => {
+    if (!mode) return;
+    void voxelBagFn().then((r) => setVoxelBag(r.bag)).catch(() => setVoxelBag(null));
+  }, [mode]);
+
   useEffect(() => {
     if (!mode || armed) return;
     const commit = async (x: number, y: number, z: number, kind: string) => {
       const before = edits.get(vkey(x, y, z)) ?? null;
-      applyEdit(x, y, z, kind);
-      const r = await edit({ data: { x, y, z, kind } }).catch(() => ({ ok: false as const, error: "SIGN IN TO BUILD" }));
+      applyEdit(x, y, z, kind === "air" ? null : kind);
+      const r = await edit({ data: { x, y, z, kind } }).catch(() => ({ ok: false as const, error: "SIGN IN TO BUILD", bag: null }));
+      if (r.bag) setVoxelBag(r.bag);
       if (!r.ok) {
         applyEdit(x, y, z, before);
         toast.error(r.error);
         return;
       }
       void channel.current?.send({ type: "broadcast", event: "edit", payload: { x, y, z, kind } });
+    };
+    const gather = async (x: number, y: number, z: number) => {
+      const natural = blockAt(x, y, z) ?? "dirt";
+      const kind = harvestKind(natural, wildBiomeAt((x + 0.5) * VOXEL, (z + 0.5) * VOXEL) === "desert");
+      const r = await harvestVoxelFn({ data: { kind } }).catch(() => ({ ok: false as const, error: "SIGN IN TO GATHER", bag: null }));
+      if (r.bag) setVoxelBag(r.bag);
+      if (!r.ok) { if (r.error !== "TOO FAST") toast.error(r.error); return; }
+      toast.success(`+1 ${kind.toUpperCase()}`, { duration: 900 });
     };
     const down = (e: PointerEvent) => {
       if ((e.target as HTMLElement | null)?.tagName !== "CANVAS") return;
@@ -98,10 +114,12 @@ export function VoxelLayer({ pose, firstPerson, armed }: { pose: React.RefObject
       const [x, y, z] = h.cell;
       if (e.button === 0) {
         const cur = edits.get(vkey(x, y, z));
-        if (!cur || cur === "air") return; // natural ground is not breakable
         playSfx("hit");
-        void commit(x, y, z, "air");
+        if (!cur || cur === "air") void gather(x, y, z); // natural ground: gather, world stays intact
+        else void commit(x, y, z, "air");
       } else if (e.button === 2) {
+        const have = voxelBag.items?.[voxelMode.block] ?? 0;
+        if (voxelBag.items && have <= 0) { toast.error(`NO ${voxelMode.block.toUpperCase()} LEFT — GATHER OR CRAFT MORE`); return; }
         const [nx, ny, nz] = h.normal;
         const px = x + nx, py = y + ny, pz = z + nz;
         // never entomb yourself
