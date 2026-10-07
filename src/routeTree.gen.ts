@@ -103,6 +103,7 @@ import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
 import { Route as ApiPublicResolveRegistryRouteImport } from './routes/api/public/resolve-registry'
 import { Route as CollectionsGuardiansHeightRouteImport } from './routes/collections.guardians.$height'
+import { Route as EmbedBitmapBlockRouteImport } from './routes/embed.bitmap.$block'
 import { Route as MapDistrictSlugRouteImport } from './routes/map_.district.$slug'
 import { Route as MapPlaceBlockRouteImport } from './routes/map_.place.$block'
 import { Route as PlayCardIdRouteImport } from './routes/play.card.$id'
@@ -588,6 +589,11 @@ const CollectionsGuardiansHeightRoute =
     path: '/$height',
     getParentRoute: () => CollectionsGuardiansRoute,
   } as any)
+const EmbedBitmapBlockRoute = EmbedBitmapBlockRouteImport.update({
+  id: '/embed/bitmap/$block',
+  path: '/embed/bitmap/$block',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MapDistrictSlugRoute = MapDistrictSlugRouteImport.update({
   id: '/map_/district/$slug',
   path: '/map/district/$slug',
@@ -740,6 +746,7 @@ export interface FileRoutesByFullPath {
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
   '/collections/guardians/$height': typeof CollectionsGuardiansHeightRoute
+  '/embed/bitmap/$block': typeof EmbedBitmapBlockRoute
   '/map/district/$slug': typeof MapDistrictSlugRoute
   '/map/place/$block': typeof MapPlaceBlockRoute
   '/play/card/$id': typeof PlayCardIdRoute
@@ -843,6 +850,7 @@ export interface FileRoutesByTo {
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
   '/collections/guardians/$height': typeof CollectionsGuardiansHeightRoute
+  '/embed/bitmap/$block': typeof EmbedBitmapBlockRoute
   '/map/district/$slug': typeof MapDistrictSlugRoute
   '/map/place/$block': typeof MapPlaceBlockRoute
   '/play/card/$id': typeof PlayCardIdRoute
@@ -951,6 +959,7 @@ export interface FileRoutesById {
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
   '/collections/guardians/$height': typeof CollectionsGuardiansHeightRoute
+  '/embed/bitmap/$block': typeof EmbedBitmapBlockRoute
   '/map_/district/$slug': typeof MapDistrictSlugRoute
   '/map_/place/$block': typeof MapPlaceBlockRoute
   '/play/card/$id': typeof PlayCardIdRoute
@@ -1060,6 +1069,7 @@ export interface FileRouteTypes {
     | '/api/public/offers'
     | '/api/public/resolve-registry'
     | '/collections/guardians/$height'
+    | '/embed/bitmap/$block'
     | '/map/district/$slug'
     | '/map/place/$block'
     | '/play/card/$id'
@@ -1163,6 +1173,7 @@ export interface FileRouteTypes {
     | '/api/public/offers'
     | '/api/public/resolve-registry'
     | '/collections/guardians/$height'
+    | '/embed/bitmap/$block'
     | '/map/district/$slug'
     | '/map/place/$block'
     | '/play/card/$id'
@@ -1270,6 +1281,7 @@ export interface FileRouteTypes {
     | '/api/public/offers'
     | '/api/public/resolve-registry'
     | '/collections/guardians/$height'
+    | '/embed/bitmap/$block'
     | '/map_/district/$slug'
     | '/map_/place/$block'
     | '/play/card/$id'
@@ -1351,6 +1363,7 @@ export interface RootRouteChildren {
   CodexIndexRoute: typeof CodexIndexRoute
   TraitsIndexRoute: typeof TraitsIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
+  EmbedBitmapBlockRoute: typeof EmbedBitmapBlockRoute
   MapDistrictSlugRoute: typeof MapDistrictSlugRoute
   MapPlaceBlockRoute: typeof MapPlaceBlockRoute
 }
@@ -2015,6 +2028,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CollectionsGuardiansHeightRouteImport
       parentRoute: typeof CollectionsGuardiansRoute
     }
+    '/embed/bitmap/$block': {
+      id: '/embed/bitmap/$block'
+      path: '/embed/bitmap/$block'
+      fullPath: '/embed/bitmap/$block'
+      preLoaderRoute: typeof EmbedBitmapBlockRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/map_/district/$slug': {
       id: '/map_/district/$slug'
       path: '/map/district/$slug'
@@ -2300,6 +2320,7 @@ const rootRouteChildren: RootRouteChildren = {
   CodexIndexRoute: CodexIndexRoute,
   TraitsIndexRoute: TraitsIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
+  EmbedBitmapBlockRoute: EmbedBitmapBlockRoute,
   MapDistrictSlugRoute: MapDistrictSlugRoute,
   MapPlaceBlockRoute: MapPlaceBlockRoute,
 }
