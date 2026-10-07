@@ -33,12 +33,20 @@ const TOUR_COPY = {
 
 export function GuardianShowcase({ lang = "en" }: { lang?: MintLang }) {
   const roster = useQuery(allGuardiansQuery());
+  // On-chain truth for inscriptions — our own records can lag behind the chain.
+  const inhabited = useQuery(inhabitedQuery());
   const [onlyInscribed, setOnlyInscribed] = useState(false);
   const [i, setI] = useState(0);
   const [auto, setAuto] = useState(true);
   const list = useMemo(
-    () => (roster.data ?? []).filter((g) => !onlyInscribed || g.inscriptionId),
-    [roster.data, onlyInscribed],
+    () =>
+      (roster.data ?? [])
+        .map((g) => {
+          const onChain = inhabited.data?.get(g.height);
+          return onChain && g.inscriptionId !== onChain ? { ...g, inscriptionId: onChain } : g;
+        })
+        .filter((g) => !onlyInscribed || g.inscriptionId),
+    [roster.data, inhabited.data, onlyInscribed],
   );
   const n = list.length;
   const g = n ? list[((i % n) + n) % n]! : null;
