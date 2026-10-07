@@ -12,7 +12,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { PlayerState } from "@/lib/player-state";
 import { WORLD_CELL, WORLD_GRID, cellX, cellZ, colAt, rowAt } from "@/lib/player-state";
@@ -134,6 +134,7 @@ function WindGrassMaterial({
       uWindDirection: { value: new THREE.Vector2(1, 0) },
       uPlayerPosition: { value: new THREE.Vector3() },
       uFirstPerson: { value: firstPerson ? 1 : 0 },
+      uMsaa: { value: 1 },
       uFadeNear: { value: WORLD_CELL * 20 },
       uFadeFar: { value: WORLD_CELL * 28 },
     }),
