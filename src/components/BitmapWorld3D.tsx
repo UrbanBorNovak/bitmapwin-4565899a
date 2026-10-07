@@ -2869,6 +2869,7 @@ const WorldScene = memo(function WorldScene({
         followPlayer={cameraMode !== "map"}
         onRunning={onRunning}
       />
+      <SkillFx pose={pose} />
       <ShooterLayer
         active={weapon !== null && cameraMode !== "map" && !(driving && rideGun(ride.id) !== null)}
         firstPerson={cameraMode === "first"}
@@ -3440,6 +3441,7 @@ function BitmapWorld3DInner({
     healRef.current(amount);
     setRespawnNote(`${from} HEALED THE PARTY · +${amount} HP`);
   });
+  useEffect(() => { setPartyIds((party.party?.members ?? []).map((m) => m.id).filter((id) => id !== selfId)); }, [party.party, selfId]);
   const [chatMode, setChatMode] = useState<"world" | "party">("world");
 
   const pose = useRef<SelfPose>(createPlayerState(0, CELL, 0));
@@ -3867,6 +3869,19 @@ function BitmapWorld3DInner({
     return () => window.clearInterval(id);
   }, [exploring]);
 
+  // Unarmed left click on the world throws a punch, same as F.
+  useEffect(() => {
+    if (!exploring || weapon) return;
+    const onDown = (event: PointerEvent) => {
+      if (event.button !== 0 || (event.target as HTMLElement | null)?.tagName !== "CANVAS") return;
+      unlockAudio();
+      playSfx("hit");
+      attackNearest();
+    };
+    window.addEventListener("pointerdown", onDown);
+    return () => window.removeEventListener("pointerdown", onDown);
+  }, [attackNearest, exploring, weapon]);
+
   // Mouse wheel cycles through the belt while you are in the world.
   useEffect(() => {
     if (!exploring) return;
@@ -3963,7 +3978,7 @@ function BitmapWorld3DInner({
   useEffect(() => {
     const onSkill = (e: Event) => {
       const skill = (e as CustomEvent<ClassSkill>).detail;
-      if (skill?.effect.kind === "heal") heal(skill.effect.amount);
+      if (skill?.effect.kind === "heal") { heal(skill.effect.amount); if (party.party) party.bless(skill.effect.amount); }
       if (skill?.effect.kind === "strike") {
         unlockAudio();
         playSfx("hit");
@@ -4735,7 +4750,7 @@ function BitmapWorld3DInner({
           <PvpFx hitAt={hitAt} lastDamage={lastDamage} peers={cursors} killNote={killNote} />
           {embedded ? (
             <div className="pointer-events-auto absolute left-2 top-10">
-              <OasisOnlinePanel online={cursors.length + 1} />
+              <OasisOnlinePanel compact online={cursors.length + 1} />
             </div>
           ) : null}
         {exploring && foe ? (
