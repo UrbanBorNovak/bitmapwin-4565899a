@@ -2084,7 +2084,7 @@ function PlayerCameraRig({
       const bounce = Math.sin(bob.current * 2) * AVATAR_U * 0.021 * gait * settle;
       const sway = Math.cos(bob.current) * AVATAR_U * 0.028 * gait * settle;
       const strideDip = Math.max(0, Math.cos(bob.current * 2)) * AVATAR_U * 0.011 * gait * settle;
-      const eye = player.y + ground + AVATAR_U * 0.91 + bounce - strideDip - dip;
+      const eye = player.y + ground + AVATAR_U * 1.02 + bounce * 0.6 - strideDip * 0.6 - dip;
       cameraTarget.current.set(
         player.x + Math.cos(player.yaw) * sway,
         eye,
@@ -2138,8 +2138,8 @@ function PlayerCameraRig({
     const zoom = 1 - (1 - aimZoom(weapon)) * aimState.amount;
     // Speed widens the view a little and a landing squeezes it for a beat.
     const targetFov =
-      ((mode === "first" ? 64 : 56) +
-        gait * (mode === "first" ? 5.2 : 4.8) -
+      ((mode === "first" ? 72 : 56) +
+        gait * (mode === "first" ? 3.5 : 4.8) -
         land.current * (mode === "first" ? 4.2 : 3.8)) *
       zoom;
 
@@ -4918,9 +4918,13 @@ function BitmapWorld3DInner({
         {cameraMode === "first" ? (
           <div
             aria-hidden
-             className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 text-signal/80"
+            className="pointer-events-none absolute left-1/2 top-1/2 z-20 size-6 -translate-x-1/2 -translate-y-1/2"
           >
-            <Crosshair className="h-5 w-5" strokeWidth={1.5} />
+            <span className="absolute left-1/2 top-0 h-2 w-px -translate-x-1/2 bg-signal/80" />
+            <span className="absolute bottom-0 left-1/2 h-2 w-px -translate-x-1/2 bg-signal/80" />
+            <span className="absolute left-0 top-1/2 h-px w-2 -translate-y-1/2 bg-signal/80" />
+            <span className="absolute right-0 top-1/2 h-px w-2 -translate-y-1/2 bg-signal/80" />
+            <span className="absolute left-1/2 top-1/2 size-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-bitcoin" />
           </div>
         ) : null}
 
