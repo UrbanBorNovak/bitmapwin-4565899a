@@ -321,6 +321,7 @@ import { QualityProvider, useQuality } from "@/graphics/QualityContext";
 import { QualityHud } from "@/graphics/QualityHud";
 import { GraphicsDebug } from "@/graphics/GraphicsDebug";
 import { OasisOnlinePanel } from "@/components/game/OasisOnlinePanel";
+import { OasisChatDock } from "@/components/game/OasisChatDock";
 import { partyIds, setPartyIds } from "@/lib/party-ids";
 import { SkillFx } from "@/components/game/SkillFx";
 import {
@@ -4116,6 +4117,7 @@ function BitmapWorld3DInner({
                   </div>
                 ) : null}
                 <OasisOnlinePanel online={cursors.length + 1} />
+                <OasisChatDock cursors={cursors} />
 
 
               </div>

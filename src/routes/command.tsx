@@ -11,6 +11,7 @@ import { liveDispatchesQuery } from "@/lib/guardian-dispatch-queries";
 import { DIRECTIVES, MAX_RANGE, dispatchPosition, type Directive, type Dispatch } from "@/lib/guardian-dispatch";
 import { deployGuardianFn, recallGuardianFn } from "@/lib/guardian-dispatch.functions";
 import { settleRaidsFn } from "@/lib/guardian-raid.functions";
+import { BossRaids } from "@/components/command/BossRaids";
 
 export const Route = createFileRoute("/command")({
   head: () => ({
@@ -197,6 +198,8 @@ function CommandPage() {
           );
         })}
       </div>
+
+      {userId && <BossRaids guardians={mine.data ?? []} />}
 
       <h2 className="mt-12 text-[10px] tracking-[0.3em] text-signal">RAID LOG · LIVE</h2>
       <div className="mt-3 grid gap-2">
