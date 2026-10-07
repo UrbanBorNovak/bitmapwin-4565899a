@@ -73,6 +73,7 @@ import { Route as CollectionsClubRouteImport } from './routes/collections.$club'
 import { Route as CollectionsGuardiansRouteImport } from './routes/collections.guardians'
 import { Route as CollectionsJigglypuffRouteImport } from './routes/collections.jigglypuff'
 import { Route as DistrictSlugRouteImport } from './routes/district.$slug'
+import { Route as EmbedOasisRouteImport } from './routes/embed.oasis'
 import { Route as ExtendersIndexRouteImport } from './routes/extenders.index'
 import { Route as ExtendersSlugRouteImport } from './routes/extenders.$slug'
 import { Route as MapBlockRouteImport } from './routes/map_.$block'
@@ -435,6 +436,11 @@ const DistrictSlugRoute = DistrictSlugRouteImport.update({
   path: '/district/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmbedOasisRoute = EmbedOasisRouteImport.update({
+  id: '/embed/oasis',
+  path: '/embed/oasis',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExtendersIndexRoute = ExtendersIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -702,6 +708,7 @@ export interface FileRoutesByFullPath {
   '/collections/guardians': typeof CollectionsGuardiansRouteWithChildren
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/district/$slug': typeof DistrictSlugRoute
+  '/embed/oasis': typeof EmbedOasisRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
   '/map/$block': typeof MapBlockRoute
   '/play/atlas': typeof PlayAtlasRoute
@@ -804,6 +811,7 @@ export interface FileRoutesByTo {
   '/collections/guardians': typeof CollectionsGuardiansRouteWithChildren
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/district/$slug': typeof DistrictSlugRoute
+  '/embed/oasis': typeof EmbedOasisRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
   '/map/$block': typeof MapBlockRoute
   '/play/atlas': typeof PlayAtlasRoute
@@ -911,6 +919,7 @@ export interface FileRoutesById {
   '/collections/guardians': typeof CollectionsGuardiansRouteWithChildren
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/district/$slug': typeof DistrictSlugRoute
+  '/embed/oasis': typeof EmbedOasisRoute
   '/extenders/$slug': typeof ExtendersSlugRoute
   '/map_/$block': typeof MapBlockRoute
   '/play/atlas': typeof PlayAtlasRoute
@@ -1019,6 +1028,7 @@ export interface FileRouteTypes {
     | '/collections/guardians'
     | '/collections/jigglypuff'
     | '/district/$slug'
+    | '/embed/oasis'
     | '/extenders/$slug'
     | '/map/$block'
     | '/play/atlas'
@@ -1121,6 +1131,7 @@ export interface FileRouteTypes {
     | '/collections/guardians'
     | '/collections/jigglypuff'
     | '/district/$slug'
+    | '/embed/oasis'
     | '/extenders/$slug'
     | '/map/$block'
     | '/play/atlas'
@@ -1227,6 +1238,7 @@ export interface FileRouteTypes {
     | '/collections/guardians'
     | '/collections/jigglypuff'
     | '/district/$slug'
+    | '/embed/oasis'
     | '/extenders/$slug'
     | '/map_/$block'
     | '/play/atlas'
@@ -1331,6 +1343,7 @@ export interface RootRouteChildren {
   CodexBestiaryRoute: typeof CodexBestiaryRoute
   CodexMorphsRoute: typeof CodexMorphsRoute
   DistrictSlugRoute: typeof DistrictSlugRoute
+  EmbedOasisRoute: typeof EmbedOasisRoute
   MapBlockRoute: typeof MapBlockRoute
   ProfileAddressRoute: typeof ProfileAddressRoute
   TraitsTraitRoute: typeof TraitsTraitRoute
@@ -1790,6 +1803,13 @@ declare module '@tanstack/react-router' {
       path: '/district/$slug'
       fullPath: '/district/$slug'
       preLoaderRoute: typeof DistrictSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/embed/oasis': {
+      id: '/embed/oasis'
+      path: '/embed/oasis'
+      fullPath: '/embed/oasis'
+      preLoaderRoute: typeof EmbedOasisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/extenders/': {
@@ -2272,6 +2292,7 @@ const rootRouteChildren: RootRouteChildren = {
   CodexBestiaryRoute: CodexBestiaryRoute,
   CodexMorphsRoute: CodexMorphsRoute,
   DistrictSlugRoute: DistrictSlugRoute,
+  EmbedOasisRoute: EmbedOasisRoute,
   MapBlockRoute: MapBlockRoute,
   ProfileAddressRoute: ProfileAddressRoute,
   TraitsTraitRoute: TraitsTraitRoute,
