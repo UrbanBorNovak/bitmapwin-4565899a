@@ -1701,3 +1701,13 @@
 .oasis-fs .oasis-storybook { height: 100dvh !important; border: 0 !important; }
 .oasis-fs-fallback { position: fixed; inset: 0; z-index: 100; }
 @media (prefers-reduced-motion: reduce) { .oasis-modded .oasis-storybook::before { animation: none; } }
+
+/* Tweet-card embeds: keep only the 3D world, hide the full Oasis HUD. */
+.embed-lite .oasis-storybook { height: 100dvh !important; min-height: 0 !important; border: 0 !important; }
+.embed-lite .oasis-storybook .hud-panel,
+.embed-lite .oasis-storybook .hud-toolbar,
+.embed-lite .oasis-storybook .hud-stack,
+.embed-lite .oasis-storybook .hud-vignette,
+.embed-lite .oasis-storybook > div.absolute:not(:has(canvas)),
+.embed-lite .oasis-storybook > button.absolute { display: none !important; }
+.embed-lite .oasis-storybook ~ * { display: none !important; }

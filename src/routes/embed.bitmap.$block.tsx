@@ -33,7 +33,7 @@ function EmbedBitmap() {
   const inhabited = useQuery(inhabitedQuery());
   const isInhabited = inhabited.data?.has(block) ?? false;
   return (
-    <div className="relative h-dvh w-full overflow-hidden bg-background">
+    <div className="embed-lite relative h-dvh w-full overflow-hidden bg-background">
       <OasisWorldGuard>
         <Suspense fallback={<div className="grid h-full place-items-center font-mono text-xs text-signal">LOADING {block}.BITMAP…</div>}>
           <BitmapWorld3D tipHeight={0} initialHeight={block} />

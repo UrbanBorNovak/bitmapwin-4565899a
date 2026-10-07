@@ -29,7 +29,7 @@ function EmbedOasis() {
   const { height } = Route.useSearch();
   const h = height ?? 0;
   return (
-    <div className="relative h-dvh w-full overflow-hidden bg-background">
+    <div className="embed-lite relative h-dvh w-full overflow-hidden bg-background">
       <OasisWorldGuard>
         <Suspense fallback={<div className="grid h-full place-items-center font-mono text-xs text-signal">LOADING {h}.BITMAP…</div>}>
           <BitmapWorld3D tipHeight={0} initialHeight={h} />
