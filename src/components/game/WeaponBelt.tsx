@@ -134,7 +134,7 @@ export function WeaponBelt({
   return (
     <div
       data-no-translate
-      className="absolute bottom-[10.5rem] left-1/2 z-20 w-[calc(100%-1rem)] -translate-x-1/2 md:bottom-3 md:z-40 md:w-auto"
+      className="absolute bottom-[10.5rem] left-1/2 z-20 w-[calc(100%-1rem)] -translate-x-1/2 md:bottom-[4.4rem] md:z-40 md:w-auto"
       aria-label="Weapon belt"
     >
       {held ? (

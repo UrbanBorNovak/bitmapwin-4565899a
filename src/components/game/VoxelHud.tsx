@@ -52,7 +52,7 @@ export function VoxelHud({ height }: { height: number }) {
   }, []);
 
   return (
-    <div data-no-translate data-embed-pad className="pointer-events-none absolute bottom-[4.6rem] left-1/2 z-[94] flex -translate-x-1/2 flex-col items-center gap-1">
+    <div data-no-translate data-embed-pad className="pointer-events-none absolute bottom-[10rem] left-1/2 z-[94] flex -translate-x-1/2 flex-col items-center gap-1">
       {voxelMode.on ? (
         <>
           {forge ? <BlockForge onClose={() => setForge(false)} /> : null}
