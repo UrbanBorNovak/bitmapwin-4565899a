@@ -1,4 +1,5 @@
 import { PvpFx } from "@/components/game/PvpFx";
+import { FpsCrosshair } from "@/components/game/FpsCrosshair";
 import { LandBuilderBar } from "@/components/game/LandBuilderBar";
 import { getSpawnPoint } from "@/lib/land-spawn.functions";
 import { skillSpeed, SKILL_EVENT, type ClassSkill } from "@/lib/oasis-classes";
