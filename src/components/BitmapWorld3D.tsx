@@ -1246,6 +1246,7 @@ function ModelAvatar({
       material.transparent = false;
       material.depthWrite = true;
       material.alphaTest = 0.5;
+      material.alphaToCoverage = true;
       material.side = THREE.FrontSide;
       material.needsUpdate = true;
       return material;

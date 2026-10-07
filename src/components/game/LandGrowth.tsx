@@ -117,6 +117,7 @@ function WindGrassMaterial({
   terrainRevision: number;
 }) {
   const material = useRef<THREE.ShaderMaterial>(null);
+  const gl = useThree((s) => s.gl);
   const sampledCentre = useRef(new THREE.Vector2(Number.NaN, Number.NaN));
   const nextAirborneSample = useRef(0);
   const texture = useMemo(makeGrassTexture, []);
