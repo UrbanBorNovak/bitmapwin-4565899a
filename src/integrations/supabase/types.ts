@@ -3999,6 +3999,24 @@ export type Database = {
         }
         Relationships: []
       }
+      voxel_tools: {
+        Row: {
+          created_at: string
+          tool: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          tool: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          tool?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       walker_raid_scores: {
         Row: {
           damage: number
@@ -4566,7 +4584,11 @@ export type Database = {
         }
         Returns: string
       }
+      voxel_forge: { Args: { _tool: string; _user: string }; Returns: string }
       voxel_harvest: { Args: { _kind: string; _user: string }; Returns: string }
+      voxel_pay: { Args: { _cost: Json; _user: string }; Returns: boolean }
+      voxel_stamp: { Args: { _blocks: Json; _user: string }; Returns: string }
+      voxel_trade: { Args: { _offer: string; _user: string }; Returns: string }
       walker_hit: {
         Args: { _damage: number; _name: string; _user: string; _walker: string }
         Returns: {
