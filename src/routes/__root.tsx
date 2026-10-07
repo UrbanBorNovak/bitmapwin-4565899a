@@ -188,6 +188,16 @@ function RootComponent() {
   }, [router, queryClient]);
 
 
+  if (routeKey.startsWith("/embed")) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <LanguageProvider>
+          <Outlet />
+        </LanguageProvider>
+      </QueryClientProvider>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
