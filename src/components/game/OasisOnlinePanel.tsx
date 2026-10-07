@@ -4,12 +4,39 @@ import { Swords, Users } from "lucide-react";
 import { pvpScore, rankPlayersQuery } from "@/lib/ranks";
 
 /** Live players online (self + fresh peers) and the real top 3 PvP souls. */
-export function OasisOnlinePanel({ online }: { online: number }) {
+export function OasisOnlinePanel({ online, compact = false }: { online: number; compact?: boolean }) {
   const players = useQuery({ ...rankPlayersQuery(), refetchInterval: 15_000 });
   const top = (players.data ?? [])
     .filter((p) => p.pvpKills + p.pkKills > 0)
     .sort((a, b) => pvpScore(b) - pvpScore(a))
     .slice(0, 3);
+
+  if (compact) {
+    return (
+      <div
+        data-no-translate
+        className="pointer-events-auto mt-1 flex w-fit max-w-[15rem] items-center gap-1.5 border-l border-bitcoin bg-background/60 px-1.5 py-0.5 font-mono text-[8px] leading-tight backdrop-blur-md"
+      >
+        <span className="relative flex size-1">
+          <span className="relative inline-flex size-1 rounded-full bg-signal" />
+        </span>
+        <span className="tabular-nums text-foreground">{online}</span>
+        <Swords className="size-2.5 text-bitcoin" aria-hidden />
+        {top.length === 0 ? (
+          <span className="text-muted-foreground">—</span>
+        ) : (
+          top.map((p, i) => (
+            <span key={p.id} className="flex items-center gap-0.5">
+              <span className="text-bitcoin">{i + 1}</span>
+              <span className="max-w-[3.5rem] truncate text-foreground">{p.name}</span>
+              <span className="text-muted-foreground">{p.pvpKills}</span>
+            </span>
+          ))
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       data-no-translate
