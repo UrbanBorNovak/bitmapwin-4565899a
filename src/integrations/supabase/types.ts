@@ -2429,6 +2429,33 @@ export type Database = {
         }
         Relationships: []
       }
+      oasis_voxels: {
+        Row: {
+          kind: string
+          placed_by: string
+          updated_at: string
+          x: number
+          y: number
+          z: number
+        }
+        Insert: {
+          kind: string
+          placed_by: string
+          updated_at?: string
+          x: number
+          y: number
+          z: number
+        }
+        Update: {
+          kind?: string
+          placed_by?: string
+          updated_at?: string
+          x?: number
+          y?: number
+          z?: number
+        }
+        Relationships: []
+      }
       offers: {
         Row: {
           bid_id: string | null
