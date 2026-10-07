@@ -209,7 +209,29 @@ export type CritterKind =
   | "elephant"
   | "rhino"
   | "lion"
-  | "unicorn";
+  | "unicorn"
+  // polar
+  | "polar_bear"
+  | "arctic_fox"
+  | "penguin"
+  | "seal"
+  | "reindeer"
+  // european forest
+  | "deer"
+  | "boar"
+  | "wolf"
+  | "fox"
+  | "brown_bear"
+  | "hare"
+  // farmland meadows
+  | "sheep"
+  | "cow"
+  | "horse"
+  | "pig"
+  | "chicken";
+
+/** Which kind of ground an animal lives on. Decided by the terrain under it. */
+export type WildBiome = "desert" | "polar" | "forest" | "meadow";
 
 
 export type Species = {
@@ -226,6 +248,8 @@ export type Species = {
   /** hit sphere radius and its height off the sand, in avatar units */
   radius: number;
   bodyY: number;
+  /** the terrain it spawns on */
+  biome: WildBiome;
 };
 
 export const JACKAL_SPECIES: Species = {
@@ -239,22 +263,42 @@ export const JACKAL_SPECIES: Species = {
   bite: 10,
   radius: 0.34,
   bodyY: 0.42,
+  biome: "desert",
 };
 
 export const SPECIES: Species[] = [
-  { kind: "scorpion", weight: 22, hostile: true, speed: 0.9, scale: 2.4, hp: 18, xp: 20, bite: 5, radius: 0.11, bodyY: 0.05 },
-  { kind: "snake", weight: 18, hostile: true, speed: 0.6, scale: 2.2, hp: 22, xp: 26, bite: 8, radius: 0.13, bodyY: 0.05 },
-  { kind: "lizard", weight: 16, hostile: false, speed: 1.3, scale: 2.2, hp: 14, xp: 12, bite: 0, radius: 0.1, bodyY: 0.05 },
-  { kind: "jackrabbit", weight: 14, hostile: false, speed: 1.8, scale: 2.6, hp: 12, xp: 14, bite: 0, radius: 0.12, bodyY: 0.08 },
+  { kind: "scorpion", weight: 22, hostile: true, speed: 0.9, scale: 2.4, hp: 18, xp: 20, bite: 5, radius: 0.11, bodyY: 0.05, biome: "desert" },
+  { kind: "snake", weight: 18, hostile: true, speed: 0.6, scale: 2.2, hp: 22, xp: 26, bite: 8, radius: 0.13, bodyY: 0.05, biome: "desert" },
+  { kind: "lizard", weight: 16, hostile: false, speed: 1.3, scale: 2.2, hp: 14, xp: 12, bite: 0, radius: 0.1, bodyY: 0.05, biome: "desert" },
+  { kind: "jackrabbit", weight: 14, hostile: false, speed: 1.8, scale: 2.6, hp: 12, xp: 14, bite: 0, radius: 0.12, bodyY: 0.08, biome: "desert" },
   JACKAL_SPECIES,
-  { kind: "coyote", weight: 7, hostile: true, speed: 1.6, scale: 1.7, hp: 46, xp: 55, bite: 9, radius: 0.26, bodyY: 0.3 },
-  { kind: "vulture", weight: 5, hostile: false, speed: 1.1, scale: 2, hp: 26, xp: 34, bite: 0, radius: 0.24, bodyY: 0 },
+  { kind: "coyote", weight: 7, hostile: true, speed: 1.6, scale: 1.7, hp: 46, xp: 55, bite: 9, radius: 0.26, bodyY: 0.3, biome: "desert" },
+  { kind: "vulture", weight: 5, hostile: false, speed: 1.1, scale: 2, hp: 26, xp: 34, bite: 0, radius: 0.24, bodyY: 0, biome: "desert" },
   // Rare safari sightings — a real sighting, not a regular fixture.
-  { kind: "antelope", weight: 1, hostile: false, speed: 1.5, scale: 1.5, hp: 80, xp: 110, bite: 0, radius: 0.36, bodyY: 0.52 },
-  { kind: "giraffe", weight: 0.6, hostile: false, speed: 1.0, scale: 1.4, hp: 130, xp: 190, bite: 0, radius: 0.44, bodyY: 0.85 },
-  { kind: "elephant", weight: 0.5, hostile: false, speed: 0.9, scale: 1.6, hp: 280, xp: 430, bite: 0, radius: 0.6, bodyY: 0.62 },
-  { kind: "rhino", weight: 0.4, hostile: true, speed: 1.4, scale: 1.5, hp: 220, xp: 350, bite: 18, radius: 0.52, bodyY: 0.48 },
-  { kind: "lion", weight: 0.4, hostile: true, speed: 1.7, scale: 1.5, hp: 160, xp: 280, bite: 15, radius: 0.4, bodyY: 0.38 },
+  { kind: "antelope", weight: 1, hostile: false, speed: 1.5, scale: 1.5, hp: 80, xp: 110, bite: 0, radius: 0.36, bodyY: 0.52, biome: "desert" },
+  { kind: "giraffe", weight: 0.6, hostile: false, speed: 1.0, scale: 1.4, hp: 130, xp: 190, bite: 0, radius: 0.44, bodyY: 0.85, biome: "desert" },
+  { kind: "elephant", weight: 0.5, hostile: false, speed: 0.9, scale: 1.6, hp: 280, xp: 430, bite: 0, radius: 0.6, bodyY: 0.62, biome: "desert" },
+  { kind: "rhino", weight: 0.4, hostile: true, speed: 1.4, scale: 1.5, hp: 220, xp: 350, bite: 18, radius: 0.52, bodyY: 0.48, biome: "desert" },
+  { kind: "lion", weight: 0.4, hostile: true, speed: 1.7, scale: 1.5, hp: 160, xp: 280, bite: 15, radius: 0.4, bodyY: 0.38, biome: "desert" },
   // The rarest sighting of all.
-  { kind: "unicorn", weight: 0.12, hostile: false, speed: 2.1, scale: 1.4, hp: 120, xp: 520, bite: 0, radius: 0.38, bodyY: 0.55 },
+  { kind: "unicorn", weight: 0.12, hostile: false, speed: 2.1, scale: 1.4, hp: 120, xp: 520, bite: 0, radius: 0.38, bodyY: 0.55, biome: "meadow" },
+  // Polar ice and snowline.
+  { kind: "polar_bear", weight: 4, hostile: true, speed: 1.2, scale: 1.6, hp: 240, xp: 320, bite: 16, radius: 0.5, bodyY: 0.42, biome: "polar" },
+  { kind: "arctic_fox", weight: 10, hostile: false, speed: 1.8, scale: 1.7, hp: 30, xp: 32, bite: 0, radius: 0.2, bodyY: 0.2, biome: "polar" },
+  { kind: "penguin", weight: 12, hostile: false, speed: 0.7, scale: 1.8, hp: 24, xp: 22, bite: 0, radius: 0.16, bodyY: 0.18, biome: "polar" },
+  { kind: "seal", weight: 7, hostile: false, speed: 0.5, scale: 1.7, hp: 60, xp: 50, bite: 0, radius: 0.24, bodyY: 0.1, biome: "polar" },
+  { kind: "reindeer", weight: 8, hostile: false, speed: 1.5, scale: 1.5, hp: 90, xp: 90, bite: 0, radius: 0.36, bodyY: 0.5, biome: "polar" },
+  // European forests.
+  { kind: "deer", weight: 12, hostile: false, speed: 1.7, scale: 1.5, hp: 70, xp: 70, bite: 0, radius: 0.32, bodyY: 0.5, biome: "forest" },
+  { kind: "boar", weight: 9, hostile: true, speed: 1.4, scale: 1.6, hp: 80, xp: 85, bite: 9, radius: 0.3, bodyY: 0.3, biome: "forest" },
+  { kind: "wolf", weight: 7, hostile: true, speed: 1.7, scale: 1.6, hp: 70, xp: 90, bite: 11, radius: 0.3, bodyY: 0.38, biome: "forest" },
+  { kind: "fox", weight: 10, hostile: false, speed: 1.8, scale: 1.7, hp: 30, xp: 30, bite: 0, radius: 0.2, bodyY: 0.2, biome: "forest" },
+  { kind: "brown_bear", weight: 3, hostile: true, speed: 1.2, scale: 1.6, hp: 260, xp: 340, bite: 17, radius: 0.5, bodyY: 0.42, biome: "forest" },
+  { kind: "hare", weight: 12, hostile: false, speed: 1.9, scale: 2.4, hp: 12, xp: 12, bite: 0, radius: 0.12, bodyY: 0.08, biome: "forest" },
+  // Farmland meadows.
+  { kind: "sheep", weight: 14, hostile: false, speed: 0.8, scale: 1.6, hp: 40, xp: 30, bite: 0, radius: 0.28, bodyY: 0.3, biome: "meadow" },
+  { kind: "cow", weight: 10, hostile: false, speed: 0.7, scale: 1.5, hp: 110, xp: 60, bite: 0, radius: 0.42, bodyY: 0.48, biome: "meadow" },
+  { kind: "horse", weight: 7, hostile: false, speed: 2, scale: 1.5, hp: 100, xp: 80, bite: 0, radius: 0.4, bodyY: 0.6, biome: "meadow" },
+  { kind: "pig", weight: 10, hostile: false, speed: 0.9, scale: 1.6, hp: 50, xp: 35, bite: 0, radius: 0.26, bodyY: 0.24, biome: "meadow" },
+  { kind: "chicken", weight: 14, hostile: false, speed: 1.1, scale: 2.2, hp: 10, xp: 10, bite: 0, radius: 0.1, bodyY: 0.1, biome: "meadow" },
 ];
