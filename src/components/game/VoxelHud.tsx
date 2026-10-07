@@ -3,13 +3,15 @@ import { toast } from "sonner";
 import { BLOCKS, RECIPES, onVoxelMode, setVoxelBag, setVoxelMode, voxelBag, voxelMode } from "@/lib/voxel-world";
 import { craftVoxelFn } from "@/lib/voxel-world.functions";
 import { BlockForge } from "@/components/game/BlockForge";
+import { FriendsCrewPanel } from "@/components/game/FriendsCrewPanel";
 
 /** Block mode toggle (F9), block bag counts, crafting (C) and palette ([ and ] cycle). */
-export function VoxelHud() {
+export function VoxelHud({ height }: { height: number }) {
   const [, force] = useState(0);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [forge, setForge] = useState(false);
+  const [crew, setCrew] = useState(false);
   const bag = voxelBag.items;
   useEffect(() => onVoxelMode(() => force((n) => n + 1)), []);
   const craft = async (out: string) => {
@@ -54,6 +56,7 @@ export function VoxelHud() {
       {voxelMode.on ? (
         <>
           {forge ? <BlockForge onClose={() => setForge(false)} /> : null}
+          {crew ? <FriendsCrewPanel height={height} onClose={() => setCrew(false)} /> : null}
           {open ? (
             <div className="hud-panel pointer-events-auto grid grid-cols-2 gap-1 p-2 font-mono text-[9px]">
               {RECIPES.map((r) => {
@@ -84,6 +87,8 @@ export function VoxelHud() {
               className={`border px-1.5 font-mono text-[9px] ${open ? "border-bitcoin text-bitcoin" : "border-border text-signal"}`}>CRAFT · C</button>
             <button type="button" onPointerDown={(e) => { e.preventDefault(); setForge((o) => !o); }}
               className={`border px-1.5 font-mono text-[9px] ${forge ? "border-bitcoin text-bitcoin" : "border-border text-signal"}`}>FORGE</button>
+            <button type="button" onPointerDown={(e) => { e.preventDefault(); setCrew((o) => !o); }}
+              className={`border px-1.5 font-mono text-[9px] ${crew ? "border-bitcoin text-bitcoin" : "border-border text-signal"}`}>CREW</button>
           </div>
           <p className="hud-panel px-2 py-0.5 font-mono text-[9px] text-muted-foreground">
             <span className="text-bitcoin">{BLOCKS.find((b) => b.id === voxelMode.block)?.name} ×{bag?.[voxelMode.block] ?? 0}</span>

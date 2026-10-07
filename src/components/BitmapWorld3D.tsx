@@ -4964,7 +4964,7 @@ function BitmapWorld3DInner({
         ) : null}
 
         {cameraMode === "first" ? <FpsCrosshair /> : null}
-        {exploring && !inventoryOpen && !mapOpen ? <VoxelHud /> : null}
+        {exploring && !inventoryOpen && !mapOpen ? <VoxelHud height={readout.height} /> : null}
 
         {/* Health stays out of sight until damage or death makes it important. */}
         {(!exploring || hp < MAX_HP || driving || respawnNote || attackTarget) ? <div
