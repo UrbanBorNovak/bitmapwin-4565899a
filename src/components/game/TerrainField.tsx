@@ -147,23 +147,13 @@ function rebuildRing(ring: RingState, index: number, cx: number, cz: number, inn
   const at = (gx: number, gz: number) =>
     heights[Math.max(0, Math.min(n - 1, gz)) * n + Math.max(0, Math.min(n - 1, gx))]!;
 
-  // 2 · baked sun shadow + cavity from the height grid.
-  const dx = -SUN_AZ.x;
-  const dz = -SUN_AZ.y;
+  // 2 · cavity from the height grid. Sun shading comes from the GPU via
+  // vertex normals, so no per-vertex shadow march stalls the frame.
   for (let gz = 0; gz < n; gz++) {
     for (let gx = 0; gx < n; gx++) {
       const i = gz * n + gx;
       const y = heights[i]!;
-      let shade = 1;
-      for (let s = 1; s <= SHADOW_STEPS; s++) {
-        const dist = s * step * (1 + s * 0.12);
-        const h = at(Math.round(gx + (dx * dist) / step), Math.round(gz + (dz * dist) / step));
-        const over = h - (y + dist * SUN_TAN);
-        if (over > 0) {
-          shade = Math.min(shade, Math.max(0, 1 - over / (step * 0.8)));
-          if (shade <= 0) break;
-        }
-      }
+      const shade = 1;
       let cav = 0;
       if (cavity) {
         const avg = (at(gx - 2, gz) + at(gx + 2, gz) + at(gx, gz - 2) + at(gx, gz + 2)) / 4;
