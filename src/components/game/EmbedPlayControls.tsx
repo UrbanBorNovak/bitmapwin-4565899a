@@ -28,6 +28,10 @@ export function EmbedPlayControls() {
     else void document.documentElement.requestFullscreen?.().catch(() => {});
   };
   useEffect(() => {
+    const t = window.setTimeout(() => setHint(false), 6000);
+    return () => window.clearTimeout(t);
+  }, []);
+  useEffect(() => {
     const on = (e: Event) => setFoe((e as CustomEvent<{ inRange: boolean; ready: boolean }>).detail);
     window.addEventListener("oasis:foe", on);
     return () => window.removeEventListener("oasis:foe", on);
