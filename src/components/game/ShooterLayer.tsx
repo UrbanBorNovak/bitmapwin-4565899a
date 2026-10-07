@@ -22,6 +22,7 @@ import {
 import { MEMBER_MINE_RATE, MEMBER_MINE_XP, isMember } from "@/lib/world-perks";
 import { addItem, grantXp, skillLevel, spendItems } from "@/lib/world-skills";
 import { Primitive } from "./Primitive";
+import { partyIds } from "@/lib/party-ids";
 import { AIM_FORGIVENESS, AIM_REACH_BONUS, aimState } from "@/lib/world-aim";
 import { TRAP_LIMIT, placeTrap } from "@/lib/world-traps";
 import { isSea } from "@/lib/world-sea";
@@ -314,7 +315,7 @@ export function ShooterLayer({
     let best: { distance: number; point: THREE.Vector3; peer: MapCursor } | null = null;
     const hit = new THREE.Vector3();
     for (const peer of cursorsRef.current) {
-      if (peer.hp <= 0) continue;
+      if (peer.hp <= 0 || partyIds.has(peer.id)) continue;
       const center = new THREE.Vector3(peer.x, STRIDE * 1.1, peer.z);
       const sphere = new THREE.Sphere(center, STRIDE * (0.85) * forgive);
       if (!ray.intersectSphere(sphere, hit)) continue;
@@ -465,7 +466,7 @@ export function ShooterLayer({
     // around the impact, still inside the world's shared combat range.
     const splash = STRIDE * spec.splashStrides;
     const caught = cursorsRef.current.filter((peer) => {
-      if (peer.hp <= 0) return false;
+      if (peer.hp <= 0 || partyIds.has(peer.id)) return false;
       if (peer.id === best!.peer.id) return true;
       const near = Math.hypot(peer.x - impact.x, peer.z - impact.z) <= splash;
       const inRange = Math.hypot(peer.x - me.x, peer.z - me.z) <= ATTACK_RANGE;

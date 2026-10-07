@@ -321,6 +321,8 @@ import { QualityProvider, useQuality } from "@/graphics/QualityContext";
 import { QualityHud } from "@/graphics/QualityHud";
 import { GraphicsDebug } from "@/graphics/GraphicsDebug";
 import { OasisOnlinePanel } from "@/components/game/OasisOnlinePanel";
+import { partyIds, setPartyIds } from "@/lib/party-ids";
+import { SkillFx } from "@/components/game/SkillFx";
 import {
 
   RIDES,
@@ -2867,6 +2869,7 @@ const WorldScene = memo(function WorldScene({
         followPlayer={cameraMode !== "map"}
         onRunning={onRunning}
       />
+      <SkillFx pose={pose} />
       <ShooterLayer
         active={weapon !== null && cameraMode !== "map" && !(driving && rideGun(ride.id) !== null)}
         firstPerson={cameraMode === "first"}
@@ -3438,6 +3441,7 @@ function BitmapWorld3DInner({
     healRef.current(amount);
     setRespawnNote(`${from} HEALED THE PARTY · +${amount} HP`);
   });
+  useEffect(() => { setPartyIds((party.party?.members ?? []).map((m) => m.id).filter((id) => id !== selfId)); }, [party.party, selfId]);
   const [chatMode, setChatMode] = useState<"world" | "party">("world");
 
   const pose = useRef<SelfPose>(createPlayerState(0, CELL, 0));
@@ -3700,7 +3704,7 @@ function BitmapWorld3DInner({
     }
     let best: { id: string; handle: string; distance: number } | null = null;
     for (const cursor of cursorsRef.current) {
-      if (cursor.hp <= 0) continue;
+      if (cursor.hp <= 0 || partyIds.has(cursor.id)) continue;
       const dx = cursor.x - me.x;
       const dz = cursor.z - me.z;
       const distance = Math.hypot(dx, dz);
@@ -3865,9 +3869,22 @@ function BitmapWorld3DInner({
     return () => window.clearInterval(id);
   }, [exploring]);
 
+  // Unarmed left click on the world throws a punch, same as F.
+  useEffect(() => {
+    if (!exploring || weapon) return;
+    const onDown = (event: PointerEvent) => {
+      if (event.button !== 0 || (event.target as HTMLElement | null)?.tagName !== "CANVAS") return;
+      unlockAudio();
+      playSfx("hit");
+      attackNearest();
+    };
+    window.addEventListener("pointerdown", onDown);
+    return () => window.removeEventListener("pointerdown", onDown);
+  }, [attackNearest, exploring, weapon]);
+
   // Mouse wheel cycles through the belt while you are in the world.
   useEffect(() => {
-    if (!exploring || !weapon) return;
+    if (!exploring) return;
     let last = 0;
     const onWheel = (event: WheelEvent) => {
       if (Math.abs(event.deltaY) < 4) return;
@@ -3875,6 +3892,7 @@ function BitmapWorld3DInner({
       if (now - last < 180) return;
       last = now;
       event.preventDefault();
+      if (!weapon) { equipWeapon(WEAPON_ORDER[0]!); return; }
       const at = WEAPON_ORDER.indexOf(weapon);
       const step = event.deltaY > 0 ? 1 : -1;
       const next = (at + step + WEAPON_ORDER.length) % WEAPON_ORDER.length;
@@ -3960,7 +3978,7 @@ function BitmapWorld3DInner({
   useEffect(() => {
     const onSkill = (e: Event) => {
       const skill = (e as CustomEvent<ClassSkill>).detail;
-      if (skill?.effect.kind === "heal") heal(skill.effect.amount);
+      if (skill?.effect.kind === "heal") { heal(skill.effect.amount); if (party.party) party.bless(skill.effect.amount); }
       if (skill?.effect.kind === "strike") {
         unlockAudio();
         playSfx("hit");
@@ -3969,7 +3987,7 @@ function BitmapWorld3DInner({
     };
     window.addEventListener(SKILL_EVENT, onSkill);
     return () => window.removeEventListener(SKILL_EVENT, onSkill);
-  }, [heal, attackNearest]);
+  }, [heal, attackNearest, party]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -4732,7 +4750,7 @@ function BitmapWorld3DInner({
           <PvpFx hitAt={hitAt} lastDamage={lastDamage} peers={cursors} killNote={killNote} />
           {embedded ? (
             <div className="pointer-events-auto absolute left-2 top-10">
-              <OasisOnlinePanel online={cursors.length + 1} />
+              <OasisOnlinePanel compact online={cursors.length + 1} />
             </div>
           ) : null}
         {exploring && foe ? (
