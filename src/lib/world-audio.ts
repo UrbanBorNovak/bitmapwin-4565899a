@@ -37,7 +37,10 @@ export type Sfx =
   | "smelt"
   | "splash"
   | "horn"
-  | "cannon";
+  | "cannon"
+  | "blaster"
+  | "ion"
+  | "saber";
 
 
 const MUTE_KEY = "bitmapwin:sound-muted";
@@ -615,6 +618,27 @@ export function playSfx(name: Sfx) {
       burst(context, out, { seconds: 0.05, gain: 0.4, type: "bandpass", frequency: 900 * vary, q: 2.2, curve: 3 });
       burst(context, out, { seconds: 0.09, gain: 0.22, type: "lowpass", frequency: 320, q: 0.9, delay: 0.02 });
       tone(context, out, { from: 1400 * vary, to: 420, seconds: 0.14, gain: 0.12, type: "triangle", delay: 0.03 });
+      break;
+    }
+    case "blaster": {
+      // Pew: a fast descending laser chirp with a metallic spring tail.
+      tone(context, out, { from: 2600 * vary, to: 180, seconds: 0.16, gain: 0.22, type: "sawtooth", attack: 0.001 });
+      tone(context, out, { from: 1300 * vary, to: 90, seconds: 0.2, gain: 0.12, type: "square", delay: 0.005 });
+      burst(context, out, { seconds: 0.03, gain: 0.2, type: "highpass", frequency: 4200, q: 0.6, send: { node: verb, gain: 0.3 } });
+      break;
+    }
+    case "ion": {
+      // A heavy ion slug: deep electric throb under a crackling zap.
+      tone(context, out, { from: 900 * vary, to: 60, seconds: 0.4, gain: 0.26, type: "sawtooth", attack: 0.002, send: { node: verb, gain: 0.6 } });
+      tone(context, out, { from: 140, to: 40, seconds: 0.45, gain: 0.2, type: "sine" });
+      burst(context, out, { seconds: 0.18, gain: 0.22, type: "bandpass", frequency: 5200, q: 3, send: { node: verb, gain: 0.5 } });
+      break;
+    }
+    case "saber": {
+      // The hum surging into a swing: a low buzzing whoosh that bends in pitch.
+      tone(context, out, { from: 95 * vary, to: 150, seconds: 0.28, gain: 0.24, type: "sawtooth", attack: 0.02, send: { node: verb, gain: 0.4 } });
+      tone(context, out, { from: 190 * vary, to: 120, seconds: 0.3, gain: 0.12, type: "square", attack: 0.03 });
+      burst(context, out, { seconds: 0.2, gain: 0.16, type: "bandpass", frequency: 700 * vary, q: 1.2 });
       break;
     }
     case "slash": {
