@@ -4117,6 +4117,7 @@ function BitmapWorld3DInner({
                   </div>
                 ) : null}
                 <OasisOnlinePanel online={cursors.length + 1} />
+                <OasisChatDock cursors={cursors} />
 
 
               </div>

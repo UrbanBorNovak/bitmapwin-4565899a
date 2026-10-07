@@ -16,7 +16,7 @@ export function OasisChatDock({ cursors }: { cursors: MapCursor[] }) {
   }, [open]);
   return (
     <div
-      className="pointer-events-auto absolute bottom-24 left-3 z-40 w-[min(22rem,80vw)]"
+      className="pointer-events-auto fixed bottom-24 left-3 z-40 w-[min(22rem,80vw)]"
       onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Escape") setOpen(false); }}
       onKeyUp={(e) => e.stopPropagation()}
     >
