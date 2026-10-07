@@ -30,6 +30,9 @@ import { poseDown, simDelta} from "@/lib/player-state";
 import { DesertProps } from "@/components/game/DesertProps";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { VoxelCritter, hasVoxelSculpt } from "@/components/game/CritterVoxels";
+import { WildCritter, hasWildSculpt } from "@/components/game/WildVoxels";
+import { VoxelTrees } from "@/components/game/VoxelTrees";
+import { wildBiomeAt } from "@/lib/wild-biome";
 
 import {
   registerBeasts,
@@ -548,6 +551,7 @@ export const DesertLife = memo(function DesertLife({
       <DesertProps unit={unit} center={center} radius={radius} />
       <OreMines unit={unit} center={center} radius={radius} />
       <PineTrees unit={unit} center={center} radius={radius} />
+      <VoxelTrees unit={unit} center={center} radius={radius} />
       <Houses unit={unit} center={center} radius={radius} />
       <ClayShrines unit={unit} center={center} radius={radius} />
       <Igloos unit={unit} center={center} radius={radius} />
@@ -562,7 +566,7 @@ export const DesertLife = memo(function DesertLife({
   );
 });
 
-import { SPECIES, JACKAL_SPECIES, type Species, type CritterKind } from "@/lib/bestiary";
+import { SPECIES, type Species, type CritterKind, type WildBiome } from "@/lib/bestiary";
 
 /** on-chain snake */
 const SNAKE_URL = contentUrl(
@@ -578,15 +582,30 @@ const JACKAL_URL = contentUrl(
 );
 
 
-function pickSpecies(roll: number): Species {
-  const total = SPECIES.reduce((sum, s) => sum + s.weight, 0);
+/** Pick an animal that belongs on this kind of ground. */
+function pickSpecies(roll: number, biome: WildBiome = "desert"): Species {
+  const pool = SPECIES.filter((s) => s.biome === biome);
+  const list = pool.length ? pool : SPECIES;
+  const total = list.reduce((sum, s) => sum + s.weight, 0);
   let acc = 0;
   const target = roll * total;
-  for (const s of SPECIES) {
+  for (const s of list) {
     acc += s.weight;
     if (target <= acc) return s;
   }
-  return SPECIES[0]!;
+  return list[0]!;
+}
+
+/** Swap a body for a new species, keeping the live object the weapons hold. */
+function becomeSpecies(critter: { species: Species } & BeastEntity, species: Species, unit: number) {
+  critter.species = species;
+  critter.label = species.kind.toUpperCase();
+  critter.hostile = species.hostile;
+  critter.hp = species.hp;
+  critter.maxHp = species.hp;
+  critter.bodyY = unit * species.bodyY;
+  critter.bodyRadius = unit * species.radius;
+  critter.xp = species.xp;
 }
 
 /** One animal: a beast the weapon layer can hit, plus how it wanders. */
@@ -601,7 +620,7 @@ type Critter = BeastEntity & {
 };
 
 // Wildlife is thin on the ground, with a few visible jackals so their model is findable.
-const CRITTER_COUNT = 7;
+const CRITTER_COUNT = 12;
 
 
 /**
@@ -625,7 +644,7 @@ const Critters = memo(function Critters({
   const state = useRef<Critter[]>(
     Array.from({ length: CRITTER_COUNT }, (_, i) => {
       const roll = hash(i + 1, i * 3 + 7, 41);
-      const species = i === 0 || i === 7 ? JACKAL_SPECIES : pickSpecies(roll);
+      const species = pickSpecies(roll);
       return {
         id: i + 1,
         label: species.kind.toUpperCase(),
@@ -663,6 +682,8 @@ const Critters = memo(function Critters({
   }, []);
 
   const simBudget = useRef(0);
+  // Bumped when a body turns into another species, so its model re-renders.
+  const [, setBodies] = useState(0);
   useFrame((_, rawDelta) => {
     // Flying or racing past: the crowd here is out of reach, so their brains
     // tick a few times a second instead of once a frame and travel stays smooth.
@@ -697,9 +718,27 @@ const Critters = memo(function Critters({
         ? pursuit.current.get("player", { col: colAt(player.x), row: rowAt(player.z) })
         : null;
 
+    let respawned = false;
     state.current.forEach((critter, index) => {
       const group = groups.current?.[index];
       if (!group) return;
+      // Anything that drifted out of sight (or never left the world centre)
+      // wanders back in around the visitor, as an animal of the ground there.
+      if (player && !critter.deadUntil && Math.hypot(critter.x - player.x, critter.z - player.z) > reach) {
+        const angle = critter.seed + now / 6000 + index * 2.1;
+        const ring = unit * ((critter.species.hostile ? 20 : 8) + (index % 6) * 4);
+        const dry = dryLandNear(player.x + Math.cos(angle) * ring, player.z + Math.sin(angle) * ring, unit * 260, critter.seed);
+        if (dry) {
+          critter.x = dry.x;
+          critter.z = dry.z;
+          const next = pickSpecies(hash(index + 3, Math.floor(now / 1000) + index, 43), wildBiomeAt(dry.x, dry.z));
+          if (next.kind !== critter.species.kind) {
+            becomeSpecies(critter, next, unit);
+            respawned = true;
+          }
+          if (critter.species.hostile) critter.lastBite = now;
+        }
+      }
       if (farFromPlayer(player, critter.x, critter.z, unit)) return;
       const { species } = critter;
 
@@ -878,6 +917,7 @@ const Critters = memo(function Critters({
         }
       }
     });
+    if (respawned) setBodies((v) => v + 1);
   });
 
   return (
@@ -926,6 +966,13 @@ function hostileMarkerHeight(kind: CritterKind) {
       return 0.75;
     case "rhino":
       return 0.95;
+    case "polar_bear":
+    case "brown_bear":
+      return 0.8;
+    case "boar":
+      return 0.55;
+    case "wolf":
+      return 0.7;
     case "jackal":
     case "coyote":
       return 0.6;
@@ -944,6 +991,7 @@ export const CritterBody = memo(function CritterBody({
   unit: number;
   colors: DesertColors;
 }) {
+  if (hasWildSculpt(kind)) return <WildCritter kind={kind} unit={u} />;
   if (hasVoxelSculpt(kind as string)) return <VoxelCritter kind={kind as "scorpion"} unit={u} />;
   if (kind === "scorpion") {
     return (
