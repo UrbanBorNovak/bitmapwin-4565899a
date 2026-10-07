@@ -10,6 +10,7 @@ import { isSea } from "@/lib/world-sea";
 import { groundY, useTerrainVersion } from "@/lib/world-terrain";
 import { wildBiomeAt } from "@/lib/wild-biome";
 import { useQuality } from "@/graphics/QualityContext";
+import { setTreeOccluders, type Occluder } from "@/lib/camera-occluders";
 
 const noRaycast = () => null;
 
@@ -104,8 +105,8 @@ export const VoxelTrees = memo(function VoxelTrees({
         const chance = biome === "forest" ? 0.42 : biome === "polar" ? 0.2 : biome === "meadow" ? 0.1 : 0;
         if (hash(gx, gz, 13) > chance) continue;
         if (isSea(x, z)) continue;
-        // keep a clearing around the player so no trunk spawns through you
-        if (d < (unit * 4) ** 2) continue;
+        // keep a clearing around the player wide enough for the chase camera
+        if (d < (unit * 12) ** 2) continue;
         const roll = hash(gx, gz, 14);
         const h = 4 + Math.floor(hash(gx, gz, 15) * 4);
         const seed = gx * 31 + gz;
@@ -117,13 +118,22 @@ export const VoxelTrees = memo(function VoxelTrees({
       }
     trees.sort((a, b) => a.d - b.d);
     const out: { x: number; y: number; z: number; color: string }[] = [];
+    const occ: Occluder[] = [];
     for (const t of trees.slice(0, treeCap)) {
       const base = groundY(t.x, t.z);
+      let r = 0, top = 0, leafBottom = Infinity;
       for (const [bx, by, bz, color] of t.cubes) {
+        r = Math.max(r, Math.hypot(bx, bz));
+        top = Math.max(top, by + 1);
+        if (bx !== 0 || bz !== 0) leafBottom = Math.min(leafBottom, by);
         if (out.length >= MAX_BLOCKS) break;
         out.push({ x: t.x + bx * cube, y: base + (by + 0.5) * cube - cube * 0.15, z: t.z + bz * cube, color });
       }
+      // canopy volume + a thin trunk column
+      occ.push({ x: t.x, z: t.z, r: (r + 0.7) * cube, bottom: base + (Number.isFinite(leafBottom) ? leafBottom : 0) * cube, top: base + top * cube });
+      occ.push({ x: t.x, z: t.z, r: cube * 0.7, bottom: base, top: base + top * cube });
     }
+    setTreeOccluders(occ);
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [center[0], center[1], radius, unit, treeCap, terrain, cube]);
