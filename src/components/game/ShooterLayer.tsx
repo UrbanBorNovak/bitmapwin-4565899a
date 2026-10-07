@@ -760,7 +760,7 @@ export function ShooterLayer({
           to={tracer.to}
           born={tracer.born}
           color={spec.boltColor ?? (weapon === "minigun" || weapon === "revolver" ? BOLT_RED : strikeColor)}
-          fat={spec.ion}
+          fat={Boolean(spec.ion)}
         />
       ))}
       {rings.map((ring) => (
