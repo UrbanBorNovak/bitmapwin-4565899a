@@ -97,6 +97,8 @@ export function VoxelLayer({ pose, firstPerson, armed }: { pose: React.RefObject
       e.stopImmediatePropagation();
       const [x, y, z] = h.cell;
       if (e.button === 0) {
+        const cur = edits.get(vkey(x, y, z));
+        if (!cur || cur === "air") return; // natural ground is not breakable
         playSfx("hit");
         void commit(x, y, z, "air");
       } else if (e.button === 2) {
@@ -155,26 +157,12 @@ export function VoxelLayer({ pose, firstPerson, armed }: { pose: React.RefObject
         color.set(b.top).multiplyScalar(shade);
         target.setColorAt(i, color);
       };
-      const R = VOXEL_RADIUS;
-      for (let x = cx - R; x <= cx + R; x++) for (let z = cz - R; z <= cz + R; z++) {
-        if ((x - cx) ** 2 + (z - cz) ** 2 > R * R) continue;
-        const top = terrainTop(x, z);
-        for (let y = top; y > top - VOXEL_DEPTH; y--) {
-          const k = blockAt(x, y, z, top);
-          if (k) put(x, y, z, k);
-          else if (edits.get(vkey(x, y, z)) === "air") {
-            // expose the block beneath a dug hole
-            const below = blockAt(x, y - 1, z, top);
-            if (below && y - 1 <= top - VOXEL_DEPTH) put(x, y - 1, z, below);
-          }
-        }
-      }
+      // Only player-placed blocks render; the natural world stays untouched.
+      const R = VOXEL_RADIUS * 3;
       for (const [k, kind] of edits) {
         if (kind === "air") continue;
         const [x, y, z] = k.split(",").map(Number) as [number, number, number];
         if (Math.abs(x - cx) > R || Math.abs(z - cz) > R) continue;
-        const top = terrainTop(x, z);
-        if (y <= top && y > top - VOXEL_DEPTH) continue; // already drawn
         put(x, y, z, kind);
       }
       im.count = Math.min(n, MAX);
