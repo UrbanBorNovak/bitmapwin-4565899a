@@ -7,6 +7,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { allGuardiansQuery } from "@/lib/bitmon-queries";
 import { RARITY_TONE } from "@/lib/bitmon";
+import { inhabitedQuery } from "@/lib/inhabited.functions";
 import { GuardianTurntable } from "@/components/bitmon/SummonGuardianDialog";
 import type { MintLang } from "@/lib/mint-lang";
 
