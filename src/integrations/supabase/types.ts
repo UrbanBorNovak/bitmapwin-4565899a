@@ -354,6 +354,36 @@ export type Database = {
         }
         Relationships: []
       }
+      bitmap_spawn_points: {
+        Row: {
+          bitmap_height: number
+          owner_address: string
+          set_by: string
+          updated_at: string
+          x: number
+          yaw: number
+          z: number
+        }
+        Insert: {
+          bitmap_height: number
+          owner_address: string
+          set_by: string
+          updated_at?: string
+          x: number
+          yaw?: number
+          z: number
+        }
+        Update: {
+          bitmap_height?: number
+          owner_address?: string
+          set_by?: string
+          updated_at?: string
+          x?: number
+          yaw?: number
+          z?: number
+        }
+        Relationships: []
+      }
       bitmap_spoils: {
         Row: {
           bit: number
