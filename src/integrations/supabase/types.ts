@@ -210,6 +210,27 @@ export type Database = {
         }
         Relationships: []
       }
+      bitmap_crews: {
+        Row: {
+          added_by: string
+          created_at: string
+          height: number
+          user_id: string
+        }
+        Insert: {
+          added_by: string
+          created_at?: string
+          height: number
+          user_id: string
+        }
+        Update: {
+          added_by?: string
+          created_at?: string
+          height?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       bitmap_custody: {
         Row: {
           block_height: number
@@ -1349,6 +1370,24 @@ export type Database = {
           price_sats?: number
           seller_address?: string | null
           txid?: string
+        }
+        Relationships: []
+      }
+      crew_stash: {
+        Row: {
+          count: number
+          height: number
+          kind: string
+        }
+        Insert: {
+          count?: number
+          height: number
+          kind: string
+        }
+        Update: {
+          count?: number
+          height?: number
+          kind?: string
         }
         Relationships: []
       }
@@ -2943,6 +2982,51 @@ export type Database = {
           },
         ]
       }
+      player_friend_codes: {
+        Row: {
+          code: string
+          handle: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          handle?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          handle?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      player_friends: {
+        Row: {
+          a: string
+          b: string
+          created_at: string
+          requested_by: string
+          status: string
+        }
+        Insert: {
+          a: string
+          b: string
+          created_at?: string
+          requested_by: string
+          status?: string
+        }
+        Update: {
+          a?: string
+          b?: string
+          created_at?: string
+          requested_by?: string
+          status?: string
+        }
+        Relationships: []
+      }
       player_share_dividends: {
         Row: {
           created_at: string
@@ -4331,6 +4415,10 @@ export type Database = {
       }
       create_clan: {
         Args: { _crest_inscription_id: string; _name: string; _tag: string }
+        Returns: string
+      }
+      crew_move: {
+        Args: { _height: number; _kind: string; _n: number; _user: string }
         Returns: string
       }
       goods_price: {

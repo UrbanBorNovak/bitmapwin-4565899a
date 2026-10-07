@@ -75,8 +75,9 @@ export const editVoxelFn = createServerFn({ method: "POST" })
         const { VOXEL } = await import("@/lib/voxel-world");
         const { colAt, rowAt, WORLD_GRID } = await import("@/lib/player-state");
         const height = rowAt((data.z + 0.5) * VOXEL) * WORLD_GRID + colAt((data.x + 0.5) * VOXEL);
-        if (!(await isLiveHolder(context.userId, height))) {
-          return { ok: false as const, error: `ONLY THE BUILDER OR THE OWNER OF ${height}.BITMAP CAN BREAK THIS`, bag: await readBag(context.userId) };
+        const { data: crew } = await sb.from("bitmap_crews" as never).select("user_id").eq("height", height).eq("user_id", context.userId).maybeSingle();
+        if (!crew && !(await isLiveHolder(context.userId, height))) {
+          return { ok: false as const, error: `ONLY THE BUILDER, THE OWNER OR THE CREW OF ${height}.BITMAP CAN BREAK THIS`, bag: await readBag(context.userId) };
         }
       }
     }
