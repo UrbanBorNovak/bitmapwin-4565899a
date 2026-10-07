@@ -81,9 +81,9 @@ export function ClassSkillBar() {
 
   const now = performance.now();
   return (
-    <div data-no-translate data-embed-pad className="pointer-events-none absolute bottom-3 left-1/2 z-[95] flex -translate-x-1/2 flex-col items-center gap-1">
+    <div data-no-translate data-embed-pad className="pointer-events-none absolute bottom-3 right-3 z-[95] flex sm:right-auto sm:left-1/2 sm:-translate-x-1/2 max-w-[calc(100%-9.5rem)] sm:max-w-none flex-col items-center gap-1">
       {note && <p className="hud-panel px-2 py-0.5 font-mono text-[10px] text-bitcoin">{note}</p>}
-      <div className="hud-panel pointer-events-auto flex gap-[3px] border-bitcoin/40 p-[3px]">
+      <div className="hud-panel pointer-events-auto flex flex-wrap justify-end gap-[3px] border-bitcoin/40 p-[3px]">
         {slots.map((s) => {
           const total = s.cd * 1000;
           const left = Math.max(0, (ready[s.code] ?? 0) - now);
