@@ -1,5 +1,8 @@
 import { PvpFx } from "@/components/game/PvpFx";
 import { FpsCrosshair } from "@/components/game/FpsCrosshair";
+import { VoxelLayer } from "@/components/game/VoxelLayer";
+import { VoxelHud } from "@/components/game/VoxelHud";
+import { columnSurface } from "@/lib/voxel-world";
 import { LandBuilderBar } from "@/components/game/LandBuilderBar";
 import { getSpawnPoint } from "@/lib/land-spawn.functions";
 import { skillSpeed, SKILL_EVENT, type ClassSkill } from "@/lib/oasis-classes";
@@ -359,7 +362,7 @@ const OWNER_CELL_BUDGET = 24_000;
  * through the beach the moment the water flag turns on.
  */
 const traversalSurfaceY = (x: number, z: number) =>
-  isSea(x, z) ? Math.max(groundY(x, z), waterSurfaceY(x, z)) : groundY(x, z);
+  isSea(x, z) ? Math.max(groundY(x, z), waterSurfaceY(x, z)) : (columnSurface(x, z) ?? groundY(x, z));
 
 /** Everything except the flat picking plane opts out of raycasting — one plane hit test per pointer move. */
 const noRaycast = () => {};
@@ -2874,6 +2877,7 @@ const WorldScene = memo(function WorldScene({
         onRunning={onRunning}
       />
       <SkillFx pose={pose} />
+      {cameraMode !== "map" ? <VoxelLayer pose={pose} firstPerson={cameraMode === "first"} armed={weapon !== null} /> : null}
       <ShooterLayer
         active={weapon !== null && cameraMode !== "map" && !(driving && rideGun(ride.id) !== null)}
         firstPerson={cameraMode === "first"}
@@ -3163,6 +3167,12 @@ function BitmapWorld3DInner({
       playSfx(kind ? "cock" : "ui");
       return kind;
     });
+  }, []);
+  // Entering block mode puts the weapon away so clicks dig and build.
+  useEffect(() => {
+    const onHolster = () => setWeapon(null);
+    window.addEventListener("oasis:holster", onHolster);
+    return () => window.removeEventListener("oasis:holster", onHolster);
   }, []);
   const [muted, setMuted] = useState(false);
   const [musicOn, setMusicPlaying] = useState(true);
@@ -4917,6 +4927,7 @@ function BitmapWorld3DInner({
         ) : null}
 
         {cameraMode === "first" ? <FpsCrosshair /> : null}
+        {exploring && !inventoryOpen && !mapOpen ? <VoxelHud /> : null}
 
         {/* Health stays out of sight until damage or death makes it important. */}
         {(!exploring || hp < MAX_HP || driving || respawnNote || attackTarget) ? <div
