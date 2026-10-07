@@ -254,6 +254,10 @@ import {
   unlockAudio,
 } from "@/lib/world-audio";
 import { WorldMusic } from "@/components/game/WorldMusic";
+import { cellX as lairX, cellZ as lairZ } from "@/lib/player-state";
+const LAIR_CELLS = [30, 60, 12];
+const nearBossLair = (x: number, z: number) =>
+  LAIR_CELLS.some((c) => (lairX(c) - x) ** 2 + (lairZ(c) - z) ** 2 < 0.06 * 0.06);
 import { aimState, aimZoom } from "@/lib/world-aim";
 import {
   ITEM_LABELS,
@@ -3150,6 +3154,7 @@ function BitmapWorld3DInner({
     setRideNote(message);
     window.setTimeout(() => setRideNote((current) => (current === message ? null : current)), 1600);
   }, []);
+  const musicPos = useCallback(() => pose.current, []);
   const toggleTruck = useCallback(() => {
     const player = pose.current;
     if (!player) return;
@@ -4199,7 +4204,7 @@ function BitmapWorld3DInner({
             </div>
           ) : null}
           {!exploring || utilityOpen ? (
-          <div className="hud-toolbar pointer-events-auto max-h-[52vh] overflow-y-auto md:max-h-none md:overflow-visible">
+          <div className="hud-toolbar pointer-events-auto max-h-[52vh] overflow-y-auto md:max-h-[46vh] md:max-w-[min(30rem,46vw)]">
             <form
               className="flex items-center gap-1.5"
               onSubmit={(event) => {
@@ -4665,7 +4670,7 @@ function BitmapWorld3DInner({
         {contextLost ? <button type="button" className="hud-panel absolute inset-x-4 top-1/2 z-[80] mx-auto w-fit -translate-y-1/2 border-bitcoin px-4 py-3 font-mono text-xs text-bitcoin" onClick={() => window.location.reload()}>GRAPHICS CONTEXT LOST — TAP TO RELOAD</button> : null}
 
         {/* THE OASIS SCORE — synthesised locally, so it costs nothing to stream. */}
-        <WorldMusic active={musicOn && !muted} />
+        <WorldMusic active={musicOn && !muted} getPos={musicPos} nearLair={nearBossLair} />
 
         <DriveBlur active={driving && cameraMode !== "map"} />
 

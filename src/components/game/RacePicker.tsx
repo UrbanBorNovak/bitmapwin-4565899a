@@ -6,7 +6,7 @@ export function RacePicker() {
   const race = useRace();
   const [open, setOpen] = useState(false);
   return (
-    <div data-embed-pad className="pointer-events-auto absolute left-3 top-24 z-[90] font-mono text-[10px]">
+    <div data-embed-pad className="pointer-events-auto absolute right-3 top-[3.25rem] z-[90] flex flex-col items-end font-mono text-[10px]">
       <button type="button" onClick={() => setOpen((o) => !o)} className="hud-panel px-2 py-1 text-signal hover:text-bitcoin">
         RACE · {RACES[race].name.toUpperCase()}
       </button>
