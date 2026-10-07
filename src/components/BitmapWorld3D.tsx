@@ -3987,7 +3987,7 @@ function BitmapWorld3DInner({
     };
     window.addEventListener(SKILL_EVENT, onSkill);
     return () => window.removeEventListener(SKILL_EVENT, onSkill);
-  }, [heal, attackNearest]);
+  }, [heal, attackNearest, party]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
