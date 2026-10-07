@@ -55,11 +55,31 @@ function pavilion() {
   return b;
 }
 
+function plaza() {
+  let b: TplBlock[] = [];
+  box(b, 0, 8, 0, 0, 0, 8, "stone"); // floor
+  b = swap(b, (t) => t.dy === 0 && (t.dx === 0 || t.dx === 8 || t.dz === 0 || t.dz === 8), "brick"); // border
+  for (const [x, z] of [[0, 0], [8, 0], [0, 8], [8, 8]] as const) { // corner pillars + lamps
+    box(b, x, x, 1, 3, z, z, "log");
+    b.push({ dx: x, dy: 4, dz: z, k: "glow" });
+  }
+  // central fountain: brick ring, gold core, glow top
+  box(b, 3, 5, 1, 1, 3, 5, "brick", true);
+  b.push({ dx: 4, dy: 1, dz: 4, k: "gold" }, { dx: 4, dy: 2, dz: 4, k: "glow" });
+  // benches
+  box(b, 1, 2, 1, 1, 4, 4, "planks");
+  box(b, 6, 7, 1, 1, 4, 4, "planks");
+  box(b, 4, 4, 1, 1, 1, 2, "planks");
+  box(b, 4, 4, 1, 1, 6, 7, "planks");
+  return b;
+}
+
 export const TEMPLATES: Template[] = [
   { id: "cabin", name: "FRONTIER CABIN", blurb: "Log shelter with door, windows and hearth", blocks: cabin() },
   { id: "tower", name: "WATCHTOWER", blurb: "Stone tower with a stair and lit lookout deck", blocks: tower() },
   { id: "outpost", name: "DESERT OUTPOST", blurb: "Sand walls with stone corner posts", blocks: outpost() },
   { id: "pavilion", name: "TRADING PAVILION", blurb: "Open stall with a counter and gold display", blocks: pavilion() },
+  { id: "plaza", name: "PUBLIC PLAZA", blurb: "Shared square: lit corner pillars, benches and a glowing fountain — anyone can build it", blocks: plaza() },
 ];
 
 export function templateCost(t: Template) {
