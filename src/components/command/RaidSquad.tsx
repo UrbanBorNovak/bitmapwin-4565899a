@@ -68,17 +68,10 @@ export function RaidSquad({ boss, guardian, mine }: { boss: string; guardian: nu
           )}
         </div>
       )}
-      {anyMine && (
-        <div className="mt-2 grid gap-0.5">
-          <span className="tracking-[0.2em] text-muted-foreground">CALL TACTIC → WORLD CHAT</span>
-          {tactics.map((t, i) => (
-            <button key={t} className="border border-border px-2 py-0.5 text-left text-foreground hover:border-signal hover:text-signal"
-              onClick={async () => { const r = await post({ data: { boss, index: i } }); r.ok ? toast.success("Tactic sent to chat") : toast.error(r.error); }}>
-              {t}
-            </button>
-          ))}
-        </div>
-      )}
+      {anyMine && <TacticComposer boss={boss} presets={tactics} send={async (p) => {
+        const r = await post({ data: { boss, ...p } });
+        r.ok ? toast.success("Tactic sent to chat") : toast.error(r.error);
+      }} />}
     </div>
   );
 }
