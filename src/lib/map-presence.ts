@@ -474,7 +474,9 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
                     },
               )
             : null;
-        const appliedDamage = vehicleHit?.absorbed ? vehicleHit.occupantDamage : hit.damage;
+        const rawDamage = vehicleHit?.absorbed ? vehicleHit.occupantDamage : hit.damage;
+        // A raised lightsaber guard deflects most of a hit aimed at us.
+        const appliedDamage = mine ? guardedDamage(rawDamage) : rawDamage;
         const after = Math.max(0, before - appliedDamage);
         setCombatLog((current) =>
           [
