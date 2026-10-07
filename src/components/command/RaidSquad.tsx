@@ -64,6 +64,7 @@ export function RaidSquad({ boss, guardian, mine }: { boss: string; guardian: nu
               onClick={async () => { const r = await ready({ data: { boss, height: guardian } }); r.ok ? toast.success("Ready call sent to chat") : toast.error(r.error); refresh(); }}>✅ READY UP</button>
             <button className="border border-border px-2 py-0.5 text-muted-foreground hover:text-bitcoin"
               onClick={async () => { await leave({ data: { height: guardian } }); refresh(); }}>LEAVE SQUAD</button>
+            </>
           )}
         </div>
       )}
