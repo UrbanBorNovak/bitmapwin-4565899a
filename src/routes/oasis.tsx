@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Maximize2, Minimize2, Palette } from "lucide-react";
-import { OasisVisualModsPanel, modStyle, useVisualMod } from "@/components/game/OasisVisualMods";
+import { OasisVisualModsPanel, modStyle, useVisualMod, useModsHotkey } from "@/components/game/OasisVisualMods";
 import { getChainBlocks } from "@/lib/chain.functions";
 import { OasisWorldGuard } from "@/components/OasisWorldGuard";
 import { OasisEntry } from "@/components/game/OasisEntry";
@@ -66,6 +66,8 @@ function OasisPage() {
     if (el?.requestFullscreen) el.requestFullscreen().catch(() => setFallbackFs(true));
     else setFallbackFs(true);
   };
+  const toggleMods = useCallback(() => setModsOpen((v) => !v), []);
+  useModsHotkey(toggleMods);
   const fetchBlocks = useServerFn(getChainBlocks);
   const tip = useQuery({
     queryKey: ["chain", "tip", "map"],
