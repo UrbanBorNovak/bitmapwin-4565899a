@@ -3203,6 +3203,7 @@ export type Database = {
           guardian_height: number
           id: string
           joined_at: string
+          ready_at: string | null
           role: string
           user_id: string
         }
@@ -3211,6 +3212,7 @@ export type Database = {
           guardian_height: number
           id?: string
           joined_at?: string
+          ready_at?: string | null
           role?: string
           user_id: string
         }
@@ -3219,6 +3221,7 @@ export type Database = {
           guardian_height?: number
           id?: string
           joined_at?: string
+          ready_at?: string | null
           role?: string
           user_id?: string
         }

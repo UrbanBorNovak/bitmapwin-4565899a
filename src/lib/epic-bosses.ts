@@ -96,3 +96,16 @@ export const BOSS_TACTICS: Record<string, string[]> = {
   core: ["Destroy the Susceptor drones first", "Barrier down — all strikers in", "Core is cracking — burst!"],
 };
 export const GENERIC_TACTICS = ["Squad assemble — strike on my mark!", "Tanks first, strikers follow", "Boss low — everyone strike now!"];
+
+/** Live bosses fight in shared clock windows so every squad sees the same start. */
+export const RAID_WINDOW_MIN = 15;
+export function nextFightAt(now: number, respawnAt: string | null) {
+  if (respawnAt && Date.parse(respawnAt) > now) return Date.parse(respawnAt);
+  const w = RAID_WINDOW_MIN * 60_000;
+  return Math.ceil(now / w) * w;
+}
+export function fmtCountdown(ms: number) {
+  const s = Math.max(0, Math.round(ms / 1000));
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  return h ? `${h}h ${String(m).padStart(2, "0")}m` : `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+}
