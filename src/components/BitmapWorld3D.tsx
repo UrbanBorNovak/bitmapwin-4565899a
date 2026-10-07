@@ -3,6 +3,7 @@ import { FpsCrosshair } from "@/components/game/FpsCrosshair";
 import { VoxelLayer } from "@/components/game/VoxelLayer";
 import { VoxelHud } from "@/components/game/VoxelHud";
 import { columnSurface } from "@/lib/voxel-world";
+import { clearFraction } from "@/lib/camera-occluders";
 import { LandBuilderBar } from "@/components/game/LandBuilderBar";
 import { getSpawnPoint } from "@/lib/land-spawn.functions";
 import { skillSpeed, SKILL_EVENT, type ClassSkill } from "@/lib/oasis-classes";
@@ -1777,6 +1778,7 @@ function PlayerCameraRig({
   const turnGoal = useRef<number | null>(null);
   const sHeld = useRef(false);
   const bob = useRef(0);
+  const arm = useRef(1);
   const jumpRequested = useRef(false);
   // Landing impact and body lean — feel only, and both switched off for anyone
   // who asked the system for reduced motion.
@@ -2120,10 +2122,30 @@ function PlayerCameraRig({
       const back = AVATAR_U * (riding ? 11.6 + gait * 2.7 : 4.75 + gait * 1.15);
       const shoulder = riding ? 0 : AVATAR_U * 1.05;
       const side = shoulder - steer.current * AVATAR_U * (riding ? 2 : 1.05);
+      const idealX = player.x - Math.sin(player.yaw) * back + Math.cos(player.yaw) * side;
+      const idealY = player.y + ground + AVATAR_U * (riding ? 3.15 - gait * 0.55 : 2 - gait * 0.16) - dip;
+      const idealZ = player.z - Math.cos(player.yaw) * back - Math.sin(player.yaw) * side;
+      // Spring arm: shorten the boom when trees or raised ground sit between the
+      // avatar's head and the ideal camera spot, so the lens never sinks into
+      // leaves or terrain. Pull in fast, ease back out slowly.
+      const headY = player.y + ground + AVATAR_U * 1.1;
+      let clear = clearFraction(player.x, headY, player.z, idealX, idealY, idealZ, AVATAR_U * 0.35);
+      for (let i = 1; i <= 8; i++) {
+        const t = i / 8;
+        const sx = player.x + (idealX - player.x) * t, sz = player.z + (idealZ - player.z) * t;
+        const sy = headY + (idealY - headY) * t;
+        if (traversalSurfaceY(sx, sz) + AVATAR_U * 0.3 > sy) { clear = Math.min(clear, (i - 1) / 8); break; }
+      }
+      const minArm = 0.18;
+      const want = Math.max(minArm, clear);
+      arm.current = want < arm.current
+        ? damp(arm.current, want, 22, delta)
+        : damp(arm.current, want, 3, delta);
+      const a = arm.current;
       cameraTarget.current.set(
-        player.x - Math.sin(player.yaw) * back + Math.cos(player.yaw) * side,
-        player.y + ground + AVATAR_U * (riding ? 3.15 - gait * 0.55 : 2 - gait * 0.16) - dip,
-        player.z - Math.cos(player.yaw) * back - Math.sin(player.yaw) * side,
+        player.x + (idealX - player.x) * a,
+        headY + (idealY - headY) * a + (1 - a) * AVATAR_U * 0.5,
+        player.z + (idealZ - player.z) * a,
       );
       // Keep the avatar on the lower third and reveal more space in front.
       const lead = riding ? 0.16 + gait * 0.16 : 0.22 + gait * 0.18;
