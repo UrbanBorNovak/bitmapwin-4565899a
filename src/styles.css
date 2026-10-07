@@ -1714,3 +1714,4 @@
 
 /* PvP feedback stays visible inside the X post player. */
 .embed-lite .oasis-storybook div.pvp-fx.pvp-fx-show { display: block !important; }
+.embed-lite .oasis-storybook .pvp-fx .hud-panel { display: inline-block !important; }
