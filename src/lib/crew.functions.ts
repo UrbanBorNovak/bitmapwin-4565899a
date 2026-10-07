@@ -177,9 +177,3 @@ export const crewMoveFn = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-/** Server helper used by block breaking: is this user in the crew of this BITMAP? */
-export async function inCrew(userId: string, height: number) {
-  const sb = await db();
-  const { data } = await sb.from("bitmap_crews").select("user_id").eq("height", height).eq("user_id", userId).maybeSingle();
-  return Boolean(data);
-}
