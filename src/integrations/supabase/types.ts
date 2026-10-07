@@ -773,6 +773,36 @@ export type Database = {
         }
         Relationships: []
       }
+      boss_strikes: {
+        Row: {
+          boss_slug: string
+          created_at: string
+          damage: number
+          guardian_height: number
+          id: string
+          spawn_at: string
+          user_id: string
+        }
+        Insert: {
+          boss_slug: string
+          created_at?: string
+          damage: number
+          guardian_height: number
+          id?: string
+          spawn_at: string
+          user_id: string
+        }
+        Update: {
+          boss_slug?: string
+          created_at?: string
+          damage?: number
+          guardian_height?: number
+          id?: string
+          spawn_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bss_block_scan: {
         Row: {
           block_height: number
@@ -1384,6 +1414,36 @@ export type Database = {
         }
         Relationships: []
       }
+      epic_bosses: {
+        Row: {
+          hp: number
+          kills: number
+          max_hp: number
+          respawn_at: string | null
+          slug: string
+          spawned_at: string
+          updated_at: string
+        }
+        Insert: {
+          hp: number
+          kills?: number
+          max_hp: number
+          respawn_at?: string | null
+          slug: string
+          spawned_at?: string
+          updated_at?: string
+        }
+        Update: {
+          hp?: number
+          kills?: number
+          max_hp?: number
+          respawn_at?: string | null
+          slug?: string
+          spawned_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       extender_dependencies: {
         Row: {
           created_at: string
@@ -1828,6 +1888,36 @@ export type Database = {
             referencedColumns: ["block_height"]
           },
         ]
+      }
+      guardian_loot: {
+        Row: {
+          bit: number
+          boss_slug: string
+          created_at: string
+          guardian_height: number
+          id: string
+          item: string
+          rarity: string
+        }
+        Insert: {
+          bit?: number
+          boss_slug: string
+          created_at?: string
+          guardian_height: number
+          id?: string
+          item: string
+          rarity: string
+        }
+        Update: {
+          bit?: number
+          boss_slug?: string
+          created_at?: string
+          guardian_height?: number
+          id?: string
+          item?: string
+          rarity?: string
+        }
+        Relationships: []
       }
       guardian_raids: {
         Row: {
