@@ -202,13 +202,18 @@ function WindGrassMaterial({
     }
   });
 
+  const msaa = Boolean(gl.getContextAttributes()?.antialias);
+  uniforms.uMsaa.value = msaa ? 1 : 0;
   return (
     <shaderMaterial
       ref={material}
       uniforms={uniforms}
       vertexColors
-      transparent
-      depthWrite={false}
+      // Alpha to coverage: MSAA turns blade alpha into sub-pixel coverage, so
+      // edges stay smooth with depth writes on and no sorting or blend overdraw.
+      alphaToCoverage={msaa}
+      transparent={false}
+      depthWrite
       depthTest
       side={THREE.DoubleSide}
       toneMapped={false}
@@ -297,6 +302,7 @@ function WindGrassMaterial({
         uniform float uFadeNear;
         uniform float uFadeFar;
         uniform float uFirstPerson;
+        uniform float uMsaa;
         varying vec2 vUv;
         varying vec3 vInstanceColor;
         varying vec3 vWorldPosition;
@@ -322,7 +328,8 @@ function WindGrassMaterial({
             uFirstPerson
           );
           float alpha = blade.a * distanceFade * cameraFade * firstPersonClearance;
-          if (alpha < 0.012) discard;
+          // Without MSAA, coverage is ignored: fall back to a clean cutout.
+          if (alpha < (uMsaa > 0.5 ? 0.012 : 0.5)) discard;
           vec3 colour = max(blade.rgb, vec3(0.34, 0.52, 0.12)) * vInstanceColor * 2.05;
           gl_FragColor = vec4(colour, min(1.0, alpha * 1.18));
         }
