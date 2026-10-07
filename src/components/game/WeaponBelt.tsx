@@ -83,6 +83,30 @@ export function WeaponGlyph({ kind }: { kind: WeaponKind }) {
         <circle cx="13" cy="4" r="1.6" />
       </g>
     ),
+    blaster: (
+      <g {...stroke}>
+        <path d="M2 10h15v3H9l-1 5H5l1-5H2z" />
+        <path d="M17 11h5M10 8h5" />
+      </g>
+    ),
+    ionrifle: (
+      <g {...stroke}>
+        <path d="M2 10h13v4H8l-1 5H4l1-5H2z" />
+        <circle cx="19" cy="12" r="3" />
+      </g>
+    ),
+    lightsaber: (
+      <g {...stroke}>
+        <path d="M5 19 8 16" strokeWidth={2.6} />
+        <path d="M8 16 20 4" />
+      </g>
+    ),
+    sithsaber: (
+      <g {...stroke}>
+        <path d="M4 20 7 17" strokeWidth={2.6} />
+        <path d="M7 17 19 5M9 19 11 17" />
+      </g>
+    ),
   };
   return (
     <svg viewBox="0 0 24 24" className="size-5 shrink-0" aria-hidden>

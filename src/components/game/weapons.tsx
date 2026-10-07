@@ -52,7 +52,11 @@ export type WeaponKind =
   | "sword"
   | "powersword"
   | "wand"
-  | "staff";
+  | "staff"
+  | "blaster"
+  | "ionrifle"
+  | "lightsaber"
+  | "sithsaber";
 
 
 
@@ -72,7 +76,13 @@ export type WeaponSpec = {
   damage: number;
   /** a mining tool breaks gold veins; a gun does not */
   mining: boolean;
-  fireSfx: "minigun" | "revolver" | "trap" | "pick" | "slash" | "spell";
+  fireSfx: "minigun" | "revolver" | "trap" | "pick" | "slash" | "spell" | "blaster" | "ion" | "saber";
+  /** plasma bolt colour for blaster-class guns */
+  boltColor?: string;
+  /** blade colour for lightsabers — a saber swings an arc instead of firing */
+  saber?: string;
+  /** ion bolts burst into a shock ring where they land */
+  ion?: boolean;
   /** holds down for continuous fire instead of one strike per click */
   auto?: boolean;
   /** the wand casts spells: an arcane bolt on click, a party heal on H */
@@ -243,9 +253,87 @@ export const WEAPONS: Record<WeaponKind, WeaponSpec> = {
     spell: true,
     hint: "SEAT A STONE ON THE HEAD · LEFT TO CAST · H TO HEAL THE PARTY",
   },
+  blaster: {
+    kind: "blaster",
+    label: "E-11 BLASTER RIFLE",
+    short: "BLASTER",
+    magazine: 40,
+    reloadMs: 1_900,
+    cooldownMs: 170,
+    reachStrides: 60,
+    splashStrides: 0.9,
+    damage: 16,
+    mining: false,
+    fireSfx: "blaster",
+    cycleSfx: null,
+    cycleDelayMs: 0,
+    reloadSfx: "reload",
+    auto: true,
+    boltColor: "#ff2a1f",
+    hint: "RED PLASMA BOLTS · HOLD LEFT TO FIRE · RIGHT TO AIM",
+  },
+  ionrifle: {
+    kind: "ionrifle",
+    label: "ION RIFLE",
+    short: "ION",
+    magazine: 8,
+    reloadMs: 2_400,
+    cooldownMs: 650,
+    reachStrides: 70,
+    splashStrides: 2.6,
+    damage: 34,
+    mining: false,
+    fireSfx: "ion",
+    cycleSfx: null,
+    cycleDelayMs: 0,
+    reloadSfx: "reload",
+    boltColor: "#5ad8ff",
+    ion: true,
+    hint: "HEAVY ION BOLT · SHOCK RING ON IMPACT · LEFT TO FIRE",
+  },
+  lightsaber: {
+    kind: "lightsaber",
+    label: "LIGHTSABER",
+    short: "SABER",
+    magazine: 0,
+    reloadMs: 0,
+    cooldownMs: 380,
+    reachStrides: 5.2,
+    splashStrides: 1.8,
+    damage: 48,
+    mining: false,
+    fireSfx: "saber",
+    cycleSfx: null,
+    cycleDelayMs: 0,
+    reloadSfx: "reload",
+    saber: "#4fb8ff",
+    hint: "LEFT TO SLASH · HOLD RIGHT TO DEFLECT · G FOR A DUEL",
+  },
+  sithsaber: {
+    kind: "sithsaber",
+    label: "CRIMSON SABER",
+    short: "CRIMSON",
+    magazine: 0,
+    reloadMs: 0,
+    cooldownMs: 460,
+    reachStrides: 5.6,
+    splashStrides: 2.2,
+    damage: 56,
+    mining: false,
+    fireSfx: "saber",
+    cycleSfx: null,
+    cycleDelayMs: 0,
+    reloadSfx: "reload",
+    saber: "#ff2338",
+    hint: "HEAVIER RED BLADE · HOLD RIGHT TO DEFLECT · G FOR A DUEL",
+  },
 };
 
 export const WEAPON_ORDER: WeaponKind[] = [
+  "blaster",
+  "ionrifle",
+  "lightsaber",
+  "sithsaber",
   "minigun",
   "revolver",
   "trap",
@@ -297,6 +385,74 @@ export function WeaponModel({
   guard?: number;
 }) {
   const { wood, steel, leather, iron, brass } = materials;
+
+  if (kind === "blaster" || kind === "ionrifle") {
+    const ion = kind === "ionrifle";
+    const glow = ion ? "#5ad8ff" : "#ff2a1f";
+    return (
+      <group position={[0, -0.05 * u, 0.06 * u]} rotation={[0.02 - lash * 0.16, 0, -0.04]}>
+        <mesh material={iron} position={[0, 0, -0.35 * u]}>
+          <boxGeometry args={[0.09 * u, 0.12 * u, 0.62 * u]} />
+        </mesh>
+        <mesh material={steel} position={[0, 0.02 * u, -0.86 * u]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[(ion ? 0.05 : 0.035) * u, (ion ? 0.05 : 0.035) * u, 0.5 * u, 10]} />
+        </mesh>
+        {/* cooling fins on the barrel */}
+        {[0, 1, 2].map((i) => (
+          <mesh key={i} material={leather} position={[0, 0.02 * u, (-0.7 - i * 0.12) * u]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.055 * u, 0.055 * u, 0.04 * u, 10]} />
+          </mesh>
+        ))}
+        <mesh material={iron} position={[0, 0.11 * u, -0.38 * u]}>
+          <boxGeometry args={[0.04 * u, 0.06 * u, 0.3 * u]} />
+        </mesh>
+        <mesh material={leather} position={[0, -0.13 * u, -0.18 * u]} rotation={[0.3, 0, 0]}>
+          <boxGeometry args={[0.06 * u, 0.18 * u, 0.07 * u]} />
+        </mesh>
+        <mesh material={iron} position={[0, -0.02 * u, 0.06 * u]}>
+          <boxGeometry args={[0.07 * u, 0.09 * u, 0.28 * u]} />
+        </mesh>
+        {/* power cell glow */}
+        <mesh position={[0.05 * u, 0, -0.3 * u]}>
+          <boxGeometry args={[0.012 * u, 0.04 * u, 0.16 * u]} />
+          <meshBasicMaterial color={glow} toneMapped={false} />
+        </mesh>
+        {flash ? <Muzzle u={u} z={-1.13 * u} size={ion ? 0.12 : 0.08} color={glow} /> : null}
+      </group>
+    );
+  }
+
+  if (kind === "lightsaber" || kind === "sithsaber") {
+    const blade = kind === "sithsaber" ? "#ff2338" : "#4fb8ff";
+    const swing = lash;
+    const up = guard;
+    return (
+      <group
+        position={[0.12 * u - up * 0.1 * u, (-0.12 + up * 0.12) * u, 0.04 * u]}
+        rotation={[-0.9 + up * 0.5 + swing * 1.5, 0.3 - swing * 0.7 + up * 0.5, -0.4 - swing * 0.6 + up * 1.1]}
+      >
+        <mesh material={steel} position={[0, 0, 0.08 * u]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.03 * u, 0.034 * u, 0.26 * u, 12]} />
+        </mesh>
+        <mesh material={iron} position={[0, 0, -0.06 * u]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.04 * u, 0.034 * u, 0.04 * u, 12]} />
+        </mesh>
+        <mesh position={[0, 0, -0.66 * u]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.016 * u, 0.02 * u, 1.16 * u, 10]} />
+          <meshBasicMaterial color="#ffffff" toneMapped={false} />
+        </mesh>
+        <mesh position={[0, 0, -0.66 * u]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.045 * u, 0.05 * u, 1.2 * u, 12]} />
+          <meshBasicMaterial color={blade} toneMapped={false} transparent opacity={0.55} blending={THREE.AdditiveBlending} depthWrite={false} />
+        </mesh>
+        <mesh position={[0, 0, -0.66 * u]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.09 * u, 0.1 * u, 1.26 * u, 12]} />
+          <meshBasicMaterial color={blade} toneMapped={false} transparent opacity={0.16 + swing * 0.15} blending={THREE.AdditiveBlending} depthWrite={false} />
+        </mesh>
+        <pointLight color={blade} intensity={2.5} distance={u * 6} position={[0, 0, -0.6 * u]} />
+      </group>
+    );
+  }
 
   if (kind === "minigun") {
     // The real on-chain minigun, held level, barrels spinning as it rips.
