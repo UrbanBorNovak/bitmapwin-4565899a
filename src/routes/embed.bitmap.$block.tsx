@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, ShieldCheck } from "lucide-react";
 import { OasisWorldGuard } from "@/components/OasisWorldGuard";
 import { EmbedPlayControls } from "@/components/game/EmbedPlayControls";
+import { ClassSkillBar } from "@/components/game/ClassSkillBar";
+import { useChainTip } from "@/lib/use-chain-tip";
 import { inhabitedQuery } from "@/lib/inhabited.functions";
 
 const BitmapWorld3D = lazy(() => import("@/components/BitmapWorld3D").then((m) => ({ default: m.BitmapWorld3D })));
@@ -30,6 +32,7 @@ export const Route = createFileRoute("/embed/bitmap/$block")({
 });
 
 function EmbedBitmap() {
+  const tipHeight = useChainTip();
   const { block } = Route.useLoaderData();
   const inhabited = useQuery(inhabitedQuery());
   const isInhabited = inhabited.data?.has(block) ?? false;
@@ -37,7 +40,8 @@ function EmbedBitmap() {
     <div className="embed-lite relative h-dvh w-full overflow-hidden bg-background">
       <OasisWorldGuard>
         <Suspense fallback={<div className="grid h-full place-items-center font-mono text-xs text-signal">LOADING {block}.BITMAP…</div>}>
-          <BitmapWorld3D tipHeight={0} initialHeight={block} />
+          {tipHeight ? <BitmapWorld3D tipHeight={tipHeight} initialHeight={block} /> : <div className="grid h-full place-items-center font-mono text-xs text-signal">SPAWNING…</div>}
+          <ClassSkillBar />
         </Suspense>
       </OasisWorldGuard>
       <EmbedPlayControls />

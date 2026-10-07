@@ -3,6 +3,8 @@ import { lazy, Suspense } from "react";
 import { ExternalLink } from "lucide-react";
 import { OasisWorldGuard } from "@/components/OasisWorldGuard";
 import { EmbedPlayControls } from "@/components/game/EmbedPlayControls";
+import { ClassSkillBar } from "@/components/game/ClassSkillBar";
+import { useChainTip } from "@/lib/use-chain-tip";
 
 const BitmapWorld3D = lazy(() => import("@/components/BitmapWorld3D").then((m) => ({ default: m.BitmapWorld3D })));
 
@@ -27,13 +29,15 @@ export const Route = createFileRoute("/embed/oasis")({
 });
 
 function EmbedOasis() {
+  const tipHeight = useChainTip();
   const { height } = Route.useSearch();
   const h = height ?? 0;
   return (
     <div className="embed-lite relative h-dvh w-full overflow-hidden bg-background">
       <OasisWorldGuard>
         <Suspense fallback={<div className="grid h-full place-items-center font-mono text-xs text-signal">LOADING {h}.BITMAP…</div>}>
-          <BitmapWorld3D tipHeight={0} initialHeight={h} />
+          {tipHeight ? <BitmapWorld3D tipHeight={tipHeight} initialHeight={h} /> : <div className="grid h-full place-items-center font-mono text-xs text-signal">SPAWNING…</div>}
+          <ClassSkillBar />
         </Suspense>
       </OasisWorldGuard>
       <EmbedPlayControls />
