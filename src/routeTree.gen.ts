@@ -115,6 +115,7 @@ import { Route as ApiPublicGalleryIdRouteImport } from './routes/api/public/gall
 import { Route as ApiPublicInscriptionIdRouteImport } from './routes/api/public/inscription.$id'
 import { Route as ApiPublicLandSkinHeightRouteImport } from './routes/api/public/land-skin.$height'
 import { Route as ApiPublicBlocksHeightMetaRouteImport } from './routes/api/public/blocks.$height.meta'
+import { Route as ApiPublicOgBitmapBlockRouteImport } from './routes/api/public/og.bitmap.$block'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -650,6 +651,11 @@ const ApiPublicBlocksHeightMetaRoute =
     path: '/meta',
     getParentRoute: () => ApiPublicBlocksHeightRoute,
   } as any)
+const ApiPublicOgBitmapBlockRoute = ApiPublicOgBitmapBlockRouteImport.update({
+  id: '/public/og/bitmap/$block',
+  path: '/public/og/bitmap/$block',
+  getParentRoute: () => ApiRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -758,6 +764,7 @@ export interface FileRoutesByFullPath {
   '/api/public/inscription/$id': typeof ApiPublicInscriptionIdRoute
   '/api/public/land-skin/$height': typeof ApiPublicLandSkinHeightRoute
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
+  '/api/public/og/bitmap/$block': typeof ApiPublicOgBitmapBlockRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -862,6 +869,7 @@ export interface FileRoutesByTo {
   '/api/public/inscription/$id': typeof ApiPublicInscriptionIdRoute
   '/api/public/land-skin/$height': typeof ApiPublicLandSkinHeightRoute
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
+  '/api/public/og/bitmap/$block': typeof ApiPublicOgBitmapBlockRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -971,6 +979,7 @@ export interface FileRoutesById {
   '/api/public/inscription/$id': typeof ApiPublicInscriptionIdRoute
   '/api/public/land-skin/$height': typeof ApiPublicLandSkinHeightRoute
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
+  '/api/public/og/bitmap/$block': typeof ApiPublicOgBitmapBlockRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1081,6 +1090,7 @@ export interface FileRouteTypes {
     | '/api/public/inscription/$id'
     | '/api/public/land-skin/$height'
     | '/api/public/blocks/$height/meta'
+    | '/api/public/og/bitmap/$block'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1185,6 +1195,7 @@ export interface FileRouteTypes {
     | '/api/public/inscription/$id'
     | '/api/public/land-skin/$height'
     | '/api/public/blocks/$height/meta'
+    | '/api/public/og/bitmap/$block'
   id:
     | '__root__'
     | '/'
@@ -1293,6 +1304,7 @@ export interface FileRouteTypes {
     | '/api/public/inscription/$id'
     | '/api/public/land-skin/$height'
     | '/api/public/blocks/$height/meta'
+    | '/api/public/og/bitmap/$block'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -2112,6 +2124,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBlocksHeightMetaRouteImport
       parentRoute: typeof ApiPublicBlocksHeightRoute
     }
+    '/api/public/og/bitmap/$block': {
+      id: '/api/public/og/bitmap/$block'
+      path: '/public/og/bitmap/$block'
+      fullPath: '/api/public/og/bitmap/$block'
+      preLoaderRoute: typeof ApiPublicOgBitmapBlockRouteImport
+      parentRoute: typeof ApiRoute
+    }
   }
 }
 
@@ -2139,6 +2158,7 @@ interface ApiRouteChildren {
   ApiPublicGalleryIdRoute: typeof ApiPublicGalleryIdRoute
   ApiPublicInscriptionIdRoute: typeof ApiPublicInscriptionIdRoute
   ApiPublicLandSkinHeightRoute: typeof ApiPublicLandSkinHeightRoute
+  ApiPublicOgBitmapBlockRoute: typeof ApiPublicOgBitmapBlockRoute
 }
 
 const ApiRouteChildren: ApiRouteChildren = {
@@ -2152,6 +2172,7 @@ const ApiRouteChildren: ApiRouteChildren = {
   ApiPublicGalleryIdRoute: ApiPublicGalleryIdRoute,
   ApiPublicInscriptionIdRoute: ApiPublicInscriptionIdRoute,
   ApiPublicLandSkinHeightRoute: ApiPublicLandSkinHeightRoute,
+  ApiPublicOgBitmapBlockRoute: ApiPublicOgBitmapBlockRoute,
 }
 
 const ApiRouteWithChildren = ApiRoute._addFileChildren(ApiRouteChildren)
