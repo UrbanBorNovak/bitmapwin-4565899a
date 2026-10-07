@@ -81,3 +81,61 @@ export const craftVoxelFn = createServerFn({ method: "POST" })
     const { data: msg, error } = await rpc("voxel_craft", { _user: context.userId, _out: data.out });
     return result(error ? "COULD NOT CRAFT" : msg, await readBag(context.userId));
   });
+
+/** Signed-in: pickaxes this account has forged. */
+export const voxelToolsFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { sb } = await admin();
+    const { data } = await sb.from("voxel_tools" as never).select("tool").eq("user_id", context.userId);
+    return { tools: ((data ?? []) as { tool: string }[]).map((r) => r.tool) };
+  });
+
+/** Signed-in: forge one pickaxe at the Block Forge. */
+export const forgeToolFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ tool: z.enum(["wood_pickaxe", "stone_pickaxe", "gold_pickaxe", "glow_pickaxe"]) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { rpc } = await admin();
+    const { data: msg, error } = await rpc("voxel_forge", { _user: context.userId, _tool: data.tool });
+    return result(error ? "COULD NOT FORGE" : msg, await readBag(context.userId));
+  });
+
+/** Signed-in: one fixed block trade at the Block Forge. */
+export const forgeTradeFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ offer: z.string().max(24) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { rpc } = await admin();
+    const { data: msg, error } = await rpc("voxel_trade", { _user: context.userId, _offer: data.offer });
+    return result(error ? "COULD NOT TRADE" : msg, await readBag(context.userId));
+  });
+
+/**
+ * Signed-in live holder only: stamp a starter template on their BITMAP.
+ * The server rebuilds the blocks from the template id, so browsers can't
+ * submit arbitrary structures.
+ */
+export const stampTemplateFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    template: z.string().max(24), height: z.number().int().min(0).max(1_000_000),
+    x: int, y: z.number().int().min(-2000).max(4000), z: int,
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { TEMPLATES } = await import("@/lib/voxel-templates");
+    const tpl = TEMPLATES.find((t) => t.id === data.template);
+    if (!tpl) return { ok: false as const, error: "NO SUCH TEMPLATE", bag: {}, blocks: [] };
+    const { sb, rpc } = await admin();
+    const { locateBitmap } = await import("@/lib/locate-bitmap.server");
+    const { data: links } = await sb.from("wallet_links").select("address").eq("user_id", context.userId);
+    let holder = false;
+    for (const { address } of links ?? []) {
+      if ((await locateBitmap({ height: data.height, address })).heldByAddress) { holder = true; break; }
+    }
+    if (!holder) return { ok: false as const, error: "ONLY THE LIVE HOLDER CAN BUILD TEMPLATES HERE", bag: await readBag(context.userId), blocks: [] };
+    const blocks = tpl.blocks.map((b) => ({ x: data.x + b.dx, y: data.y + b.dy, z: data.z + b.dz, k: b.k }));
+    const { data: msg, error } = await rpc("voxel_stamp", { _user: context.userId, _blocks: blocks });
+    const r = result(error ? "COULD NOT BUILD" : msg, await readBag(context.userId));
+    return { ...r, blocks: r.ok ? blocks : [] };
+  });
