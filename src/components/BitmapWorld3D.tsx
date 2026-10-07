@@ -1,3 +1,4 @@
+import { PvpFx } from "@/components/game/PvpFx";
 import { LandBuilderBar } from "@/components/game/LandBuilderBar";
 import { getSpawnPoint } from "@/lib/land-spawn.functions";
 import { skillSpeed, SKILL_EVENT, type ClassSkill } from "@/lib/oasis-classes";
@@ -3676,6 +3677,8 @@ function BitmapWorld3DInner({
   const struck = useRef<{ id: string; handle: string; at: number } | null>(null);
   const logged = useRef(new Set<string>());
   const [attackTarget, setAttackTarget] = useState<string | null>(null);
+  const [killNote, setKillNote] = useState<string | null>(null);
+  const embedded = typeof window !== "undefined" && window.location.pathname.startsWith("/embed");
   const [attackCooldownUntil, setAttackCooldownUntil] = useState(0);
   const [combatNow, setCombatNow] = useState(() => Date.now());
   const cooldownRemaining = Math.max(0, attackCooldownUntil - combatNow);
@@ -3768,6 +3771,7 @@ function BitmapWorld3DInner({
         const note = `${result.wasPk ? "☠ PK · " : ""}SLAIN ${mark.handle.toUpperCase()} · KARMA ${result.karma}`;
         // Everyone nearby hears the kill, the way the old halls announced it.
         say(result.announce.toUpperCase());
+        setKillNote(`⚔ YOU ${note}`);
         setAttackTarget(note);
         window.setTimeout(
           () => setAttackTarget((current) => (current === note ? null : current)),
@@ -4724,6 +4728,13 @@ function BitmapWorld3DInner({
 
 
 
+        <div className="pvp-fx pvp-fx-show pointer-events-none absolute inset-0 z-[60]">
+          <PvpFx hitAt={hitAt} lastDamage={lastDamage} peers={cursors} killNote={killNote} />
+          {embedded ? (
+            <div className="pointer-events-auto absolute left-2 top-10">
+              <OasisOnlinePanel online={cursors.length + 1} />
+            </div>
+          ) : null}
         {exploring && foe ? (
           <div data-no-translate className="pointer-events-none absolute left-1/2 top-14 z-40 -translate-x-1/2">
             <div className={`hud-panel min-w-44 px-2 py-1 font-mono text-[10px] ${foe.inRange ? "text-bitcoin" : "text-signal"}`}>
@@ -4738,6 +4749,7 @@ function BitmapWorld3DInner({
             </div>
           </div>
         ) : null}
+        </div>
 
         {exploring && myHeights.has(readout.height) ? (
           <LandBuilderBar

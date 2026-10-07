@@ -1711,3 +1711,6 @@
 .embed-lite .oasis-storybook > div.absolute:not(:has(canvas)),
 .embed-lite .oasis-storybook > button.absolute { display: none !important; }
 .embed-lite .oasis-storybook ~ * { display: none !important; }
+
+/* PvP feedback stays visible inside the X post player. */
+.embed-lite .oasis-storybook div.pvp-fx.pvp-fx-show { display: block !important; }
