@@ -106,3 +106,26 @@ export function onVoxelMode(fn: () => void) {
   modeListeners.add(fn);
   return () => void modeListeners.delete(fn);
 }
+
+/** Server-held block bag, mirrored here for the HUD. null = not signed in / not loaded. */
+export const voxelBag: { items: Record<string, number> | null } = { items: null };
+export function setVoxelBag(items: Record<string, number> | null) {
+  voxelBag.items = items;
+  modeListeners.forEach((fn) => fn());
+}
+/** Crafting recipes (mirror of the server's voxel_craft). */
+export const RECIPES: { out: BlockId; qty: number; cost: Partial<Record<BlockId, number>> }[] = [
+  { out: "log", qty: 1, cost: { dirt: 3 } },
+  { out: "planks", qty: 4, cost: { log: 1 } },
+  { out: "stone", qty: 1, cost: { cobble: 2 } },
+  { out: "brick", qty: 1, cost: { stone: 1, dirt: 1 } },
+  { out: "glass", qty: 1, cost: { sand: 2 } },
+  { out: "gold", qty: 1, cost: { stone: 4, sand: 4 } },
+  { out: "glow", qty: 1, cost: { glass: 1, gold: 1 } },
+];
+/** What gathering natural ground yields. */
+export function harvestKind(natural: string, desert: boolean): "grass" | "dirt" | "sand" | "cobble" {
+  if (desert) return "sand";
+  if (natural === "stone") return "cobble";
+  return natural === "grass" ? "grass" : "dirt";
+}
