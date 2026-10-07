@@ -12,7 +12,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { PlayerState } from "@/lib/player-state";
 import { WORLD_CELL, WORLD_GRID, cellX, cellZ, colAt, rowAt } from "@/lib/player-state";
@@ -117,6 +117,7 @@ function WindGrassMaterial({
   terrainRevision: number;
 }) {
   const material = useRef<THREE.ShaderMaterial>(null);
+  const gl = useThree((s) => s.gl);
   const sampledCentre = useRef(new THREE.Vector2(Number.NaN, Number.NaN));
   const nextAirborneSample = useRef(0);
   const texture = useMemo(makeGrassTexture, []);
@@ -134,6 +135,7 @@ function WindGrassMaterial({
       uWindDirection: { value: new THREE.Vector2(1, 0) },
       uPlayerPosition: { value: new THREE.Vector3() },
       uFirstPerson: { value: firstPerson ? 1 : 0 },
+      uMsaa: { value: 1 },
       uFadeNear: { value: WORLD_CELL * 20 },
       uFadeFar: { value: WORLD_CELL * 28 },
     }),
@@ -202,13 +204,18 @@ function WindGrassMaterial({
     }
   });
 
+  const msaa = Boolean(gl.getContextAttributes()?.antialias);
+  uniforms.uMsaa.value = msaa ? 1 : 0;
   return (
     <shaderMaterial
       ref={material}
       uniforms={uniforms}
       vertexColors
-      transparent
-      depthWrite={false}
+      // Alpha to coverage: MSAA turns blade alpha into sub-pixel coverage, so
+      // edges stay smooth with depth writes on and no sorting or blend overdraw.
+      alphaToCoverage={msaa}
+      transparent={false}
+      depthWrite
       depthTest
       side={THREE.DoubleSide}
       toneMapped={false}
@@ -297,6 +304,7 @@ function WindGrassMaterial({
         uniform float uFadeNear;
         uniform float uFadeFar;
         uniform float uFirstPerson;
+        uniform float uMsaa;
         varying vec2 vUv;
         varying vec3 vInstanceColor;
         varying vec3 vWorldPosition;
@@ -322,7 +330,8 @@ function WindGrassMaterial({
             uFirstPerson
           );
           float alpha = blade.a * distanceFade * cameraFade * firstPersonClearance;
-          if (alpha < 0.012) discard;
+          // Without MSAA, coverage is ignored: fall back to a clean cutout.
+          if (alpha < (uMsaa > 0.5 ? 0.012 : 0.5)) discard;
           vec3 colour = max(blade.rgb, vec3(0.34, 0.52, 0.12)) * vInstanceColor * 2.05;
           gl_FragColor = vec4(colour, min(1.0, alpha * 1.18));
         }
