@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BLOCKS, RECIPES, onVoxelMode, setVoxelBag, setVoxelMode, voxelBag, voxelMode } from "@/lib/voxel-world";
 import { craftVoxelFn } from "@/lib/voxel-world.functions";
+import { BlockForge } from "@/components/game/BlockForge";
 
 /** Block mode toggle (F9), block bag counts, crafting (C) and palette ([ and ] cycle). */
 export function VoxelHud() {
   const [, force] = useState(0);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [forge, setForge] = useState(false);
   const bag = voxelBag.items;
   useEffect(() => onVoxelMode(() => force((n) => n + 1)), []);
   const craft = async (out: string) => {
@@ -51,6 +53,7 @@ export function VoxelHud() {
     <div data-no-translate data-embed-pad className="pointer-events-none absolute bottom-[4.6rem] left-1/2 z-[94] flex -translate-x-1/2 flex-col items-center gap-1">
       {voxelMode.on ? (
         <>
+          {forge ? <BlockForge onClose={() => setForge(false)} /> : null}
           {open ? (
             <div className="hud-panel pointer-events-auto grid grid-cols-2 gap-1 p-2 font-mono text-[9px]">
               {RECIPES.map((r) => {
@@ -79,6 +82,8 @@ export function VoxelHud() {
             })}
             <button type="button" onPointerDown={(e) => { e.preventDefault(); setOpen((o) => !o); }}
               className={`border px-1.5 font-mono text-[9px] ${open ? "border-bitcoin text-bitcoin" : "border-border text-signal"}`}>CRAFT · C</button>
+            <button type="button" onPointerDown={(e) => { e.preventDefault(); setForge((o) => !o); }}
+              className={`border px-1.5 font-mono text-[9px] ${forge ? "border-bitcoin text-bitcoin" : "border-border text-signal"}`}>FORGE</button>
           </div>
           <p className="hud-panel px-2 py-0.5 font-mono text-[9px] text-muted-foreground">
             <span className="text-bitcoin">{BLOCKS.find((b) => b.id === voxelMode.block)?.name} ×{bag?.[voxelMode.block] ?? 0}</span>
