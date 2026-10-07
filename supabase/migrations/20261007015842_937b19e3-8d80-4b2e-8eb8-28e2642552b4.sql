@@ -1,0 +1,1 @@
+ALTER TABLE public.raid_squad_members ADD COLUMN ready_at timestamptz;
