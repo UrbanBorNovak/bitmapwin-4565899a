@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { BOSSES, RARITY_COLOR, STRIKE_COOLDOWN_MIN } from "@/lib/epic-bosses";
 import { bossesStateFn, strikeBossFn } from "@/lib/epic-bosses.functions";
+import { RaidSquad } from "@/components/command/RaidSquad";
 
 export function BossRaids({ guardians }: { guardians: { height: number }[] }) {
   const qc = useQueryClient();
@@ -25,6 +26,7 @@ export function BossRaids({ guardians }: { guardians: { height: number }[] }) {
         for (const l of r.loot.filter((l) => l.guardian === g)) toast(`LOOT: ${l.item}${l.bit ? ` +${l.bit} BIT` : ""}`);
       }
       qc.invalidateQueries({ queryKey: ["epic-bosses"] });
+      qc.invalidateQueries({ queryKey: ["raid-squad", slug] });
     } finally { setBusy(null); }
   }
 
@@ -65,6 +67,7 @@ export function BossRaids({ guardians }: { guardians: { height: number }[] }) {
                 className="mt-2 w-full border border-bitcoin px-2 py-1 text-[10px] tracking-[0.2em] text-bitcoin hover:bg-bitcoin/10 disabled:opacity-40">
                 {busy === b.slug ? "STRIKING…" : g == null ? "SUMMON A GUARDIAN FIRST" : `STRIKE WITH #${g}`}
               </button>
+              <RaidSquad boss={b.slug} guardian={g} mine={guardians.map((x) => x.height)} />
             </div>
           );
         })}
