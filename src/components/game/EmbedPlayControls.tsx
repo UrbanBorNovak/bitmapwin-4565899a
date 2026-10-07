@@ -10,6 +10,12 @@ import { touchPad } from "@/lib/touch-input";
  */
 export function EmbedPlayControls() {
   const [hint, setHint] = useState(true);
+  const [foe, setFoe] = useState({ inRange: false, ready: true });
+  useEffect(() => {
+    const on = (e: Event) => setFoe((e as CustomEvent<{ inRange: boolean; ready: boolean }>).detail);
+    window.addEventListener("oasis:foe", on);
+    return () => window.removeEventListener("oasis:foe", on);
+  }, []);
   const drag = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
@@ -73,7 +79,7 @@ export function EmbedPlayControls() {
       {hint ? (
         <div className="pointer-events-none absolute inset-x-0 bottom-24 z-[90] flex justify-center">
           <span className="hud-panel px-3 py-1.5 font-mono text-[11px] text-bitcoin">
-            CLICK TO PLAY · WASD TO MOVE · DRAG TO LOOK · SPACE TO JUMP
+            CLICK TO PLAY · WASD MOVE · DRAG LOOK · F ATTACK · SPACE JUMP
           </span>
         </div>
       ) : null}
@@ -89,6 +95,18 @@ export function EmbedPlayControls() {
         <button type="button" aria-label="Walk back" className={btn} {...hold(-1, 0)}>▼</button>
         <button type="button" aria-label="Turn right" className={btn} {...hold(0, -1)}>▶</button>
       </div>
+      <button
+        type="button"
+        data-embed-pad
+        aria-label="Attack"
+        className={`hud-panel absolute bottom-16 right-3 z-[90] h-12 touch-none px-4 font-mono text-xs ${foe.inRange ? "text-bitcoin animate-pulse" : "text-signal"} ${foe.ready ? "" : "opacity-50"}`}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          window.dispatchEvent(new Event("oasis:attack"));
+        }}
+      >
+        ⚔ ATTACK
+      </button>
       <button
         type="button"
         data-embed-pad
