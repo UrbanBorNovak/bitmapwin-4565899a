@@ -111,6 +111,7 @@ import { Landmarks } from "@/components/game/Landmarks";
 import { CastleDistrict } from "@/components/game/CastleDistrict";
 import { MarioBros } from "@/components/game/MarioBros";
 import { IronWalkers } from "@/components/game/IronWalkers";
+import { EpicBossMonsters } from "@/components/game/EpicBossMonsters";
 import { solidBlocked } from "@/lib/world-solids";
 
 import { useBits } from "@/lib/world-bits";
@@ -2810,6 +2811,7 @@ const WorldScene = memo(function WorldScene({
           <CastleDistrict />
           <MarioBros unit={AVATAR_U} pose={pose} />
           <IronWalkers unit={AVATAR_U} pose={pose} onBite={onBite} />
+          <EpicBossMonsters unit={AVATAR_U} />
           <FlyCreatures unit={AVATAR_U} pose={pose} onBite={onBite} onSighted={onSighted} />
           <MysteryBoxes unit={AVATAR_U} pose={pose} onPrize={onPrize} />
 
