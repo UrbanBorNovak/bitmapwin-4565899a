@@ -93,15 +93,15 @@ export function EmbedPlayControls() {
   return (
     <>
       {hint ? (
-        <div className="pointer-events-none absolute inset-x-0 bottom-24 z-[90] flex justify-center">
-          <span className="hud-panel px-3 py-1.5 font-mono text-[11px] text-bitcoin">
-            CLICK TO PLAY · WASD MOVE · DRAG LOOK · F ATTACK · SPACE JUMP
+        <div className="pointer-events-none absolute inset-x-0 top-14 z-[90] flex justify-center">
+          <span className="hud-panel px-2 py-1 font-mono text-[9px] text-bitcoin">
+            CLICK TO PLAY · WASD · DRAG LOOK · F1–F8 SKILLS
           </span>
         </div>
       ) : null}
       <div
         data-embed-pad
-        className="absolute bottom-3 left-3 z-[90] grid grid-cols-3 gap-1"
+        className={`absolute bottom-3 left-3 z-[90] grid grid-cols-3 gap-1 ${foe.inRange ? "" : ""}`}
         aria-label="Movement pad"
       >
         <span />
@@ -111,40 +111,16 @@ export function EmbedPlayControls() {
         <button type="button" aria-label="Walk back" className={btn} {...hold(-1, 0)}>▼</button>
         <button type="button" aria-label="Turn right" className={btn} {...hold(0, -1)}>▶</button>
       </div>
-      <div data-embed-pad className="absolute right-3 top-12 z-[90] flex flex-col items-end gap-1">
-        <button type="button" onClick={toggleFull} aria-label="Toggle fullscreen"
-          className="hud-panel px-2 py-1 font-mono text-[10px] text-signal hover:text-bitcoin">
-          {full ? "✕ EXIT FULL" : "⛶ FULLSCREEN"}
+      <div data-embed-pad className="absolute right-3 top-12 z-[90] flex gap-1">
+        <button type="button" onClick={toggleFull} aria-label="Toggle fullscreen" title="Fullscreen (F8)"
+          className="hud-panel grid size-7 place-items-center font-mono text-xs text-signal hover:text-bitcoin">
+          {full ? "✕" : "⛶"}
         </button>
-        <button type="button" onClick={() => window.dispatchEvent(new Event("oasis:camera-toggle"))} aria-label="Swap view"
-          className="hud-panel px-2 py-1 font-mono text-[10px] text-signal hover:text-bitcoin">
-          {first ? "⟲ 3RD PERSON" : "👁 1ST PERSON"}
+        <button type="button" onClick={() => window.dispatchEvent(new Event("oasis:camera-toggle"))} aria-label="Swap view" title="Swap view (F7)"
+          className={`hud-panel grid size-7 place-items-center font-mono text-xs ${first ? "text-bitcoin" : "text-signal"} hover:text-bitcoin`}>
+          👁
         </button>
       </div>
-      <button
-        type="button"
-        data-embed-pad
-        aria-label="Attack"
-        className={`hud-panel absolute bottom-16 right-3 z-[90] h-12 touch-none px-4 font-mono text-xs ${foe.inRange ? "text-bitcoin animate-pulse" : "text-signal"} ${foe.ready ? "" : "opacity-50"}`}
-        onPointerDown={(e) => {
-          e.preventDefault();
-          window.dispatchEvent(new Event("oasis:attack"));
-        }}
-      >
-        ⚔ ATTACK
-      </button>
-      <button
-        type="button"
-        data-embed-pad
-        aria-label="Jump"
-        className="hud-panel absolute bottom-3 right-3 z-[90] h-10 touch-none px-4 font-mono text-xs text-bitcoin"
-        onPointerDown={(e) => {
-          e.preventDefault();
-          touchPad.jump = true;
-        }}
-      >
-        JUMP
-      </button>
     </>
   );
 }

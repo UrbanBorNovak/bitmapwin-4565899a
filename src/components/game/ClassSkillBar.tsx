@@ -1,60 +1,123 @@
 import { useEffect, useRef, useState } from "react";
 import { castSkill, classById, useOasisClass } from "@/lib/oasis-classes";
+import { touchPad } from "@/lib/touch-input";
 
-/** Hotbar for the chosen class: keys 7/8/9 with cooldown sweeps. */
+/**
+ * Lineage 2 style shortcut bar: F1–F8 slots with keybind labels and a
+ * cooldown sweep. Basic actions (attack, jump, duel, view) live here too so
+ * the HUD needs no separate floating buttons.
+ */
+type Slot = { key: string; code: string; icon: string; name: string; cd: number; run: () => void; skill?: number };
+
 export function ClassSkillBar() {
   const cls = classById(useOasisClass() ?? "miner");
-  const [ready, setReady] = useState<number[]>([0, 0, 0]);
+  const [ready, setReady] = useState<Record<string, number>>({});
   const readyRef = useRef(ready);
   readyRef.current = ready;
   const [, tick] = useState(0);
   const [note, setNote] = useState<string | null>(null);
+  const [flash, setFlash] = useState<string | null>(null);
 
   useEffect(() => {
-    const t = window.setInterval(() => tick((n) => n + 1), 250);
+    const t = window.setInterval(() => tick((n) => n + 1), 200);
     return () => window.clearInterval(t);
   }, []);
 
-  const fire = (i: number) => {
-    if (!cls) return;
+  const skillIcons = ["✦", "⛨", "◎"];
+  const slots: Slot[] = [
+    { key: "F1", code: "F1", icon: "⚔", name: "Attack", cd: 0.6, run: () => window.dispatchEvent(new Event("oasis:attack")) },
+    ...(cls?.skills ?? []).slice(0, 3).map((s, i) => ({
+      key: `F${i + 2}`,
+      code: `F${i + 2}`,
+      icon: skillIcons[i] ?? "✦",
+      name: s.name,
+      cd: s.cooldown,
+      skill: i,
+      run: () => {
+        castSkill(s);
+        setNote(`${s.name} · ${s.note}`);
+        window.setTimeout(() => setNote(null), 1600);
+      },
+    })),
+    { key: "F5", code: "F5", icon: "⤒", name: "Jump", cd: 0.4, run: () => (touchPad.jump = true) },
+    {
+      key: "F6", code: "F6", icon: "⚡", name: "Duel", cd: 1,
+      run: () => window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyG", key: "g" })),
+    },
+    { key: "F7", code: "F7", icon: "👁", name: "View", cd: 0.3, run: () => window.dispatchEvent(new Event("oasis:camera-toggle")) },
+    {
+      key: "F8", code: "F8", icon: "⛶", name: "Full", cd: 0.3,
+      run: () => {
+        if (document.fullscreenElement) void document.exitFullscreen();
+        else void document.documentElement.requestFullscreen?.().catch(() => {});
+      },
+    },
+  ];
+  const slotsRef = useRef(slots);
+  slotsRef.current = slots;
+
+  const fire = (s: Slot) => {
     const now = performance.now();
-    if (now < readyRef.current[i]!) return;
-    const skill = cls.skills[i]!;
-    castSkill(skill);
-    setReady((r) => r.map((v, j) => (j === i ? now + skill.cooldown * 1000 : v)));
-    setNote(`${skill.name} · ${skill.note}`);
-    window.setTimeout(() => setNote(null), 1600);
+    if (now < (readyRef.current[s.code] ?? 0)) return;
+    s.run();
+    setReady((r) => ({ ...r, [s.code]: now + s.cd * 1000 }));
+    setFlash(s.code);
+    window.setTimeout(() => setFlash((f) => (f === s.code ? null : f)), 180);
   };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
       if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return;
-      const i = ["Digit7", "Digit8", "Digit9"].indexOf(e.code);
-      if (i >= 0) fire(i);
+      const legacy = ["Digit7", "Digit8", "Digit9"].indexOf(e.code);
+      const s = slotsRef.current.find((x) => x.code === e.code) ?? slotsRef.current.find((x) => x.skill === legacy && legacy >= 0);
+      if (!s || !e.isTrusted) return;
+      e.preventDefault();
+      fire(s);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  if (!cls) return null;
   const now = performance.now();
   return (
-    <div data-no-translate className="pointer-events-none absolute bottom-20 left-1/2 z-50 flex -translate-x-1/2 flex-col items-center gap-1">
-      {note && <p className="font-mono text-xs text-bitcoin">{note}</p>}
-      <div className="pointer-events-auto flex gap-1">
-        {cls.skills.map((s, i) => {
-          const left = Math.max(0, (ready[i]! - now) / 1000);
+    <div data-no-translate data-embed-pad className="pointer-events-none absolute bottom-3 left-1/2 z-[95] flex -translate-x-1/2 flex-col items-center gap-1">
+      {note && <p className="hud-panel px-2 py-0.5 font-mono text-[10px] text-bitcoin">{note}</p>}
+      <div className="hud-panel pointer-events-auto flex gap-[3px] border-bitcoin/40 p-[3px]">
+        {slots.map((s) => {
+          const total = s.cd * 1000;
+          const left = Math.max(0, (ready[s.code] ?? 0) - now);
+          const pct = total > 0 ? (left / total) * 100 : 0;
           return (
             <button
-              key={s.name}
-              onClick={() => fire(i)}
-              className={`glass-panel w-24 border px-2 py-1 text-left font-mono text-[10px] ${
-                left > 0 ? "border-border text-muted-foreground" : "border-bitcoin text-foreground"
-              }`}
+              key={s.code}
+              type="button"
+              title={`${s.name} (${s.key})`}
+              aria-label={`${s.name} (${s.key})`}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                fire(s);
+              }}
+              className={`relative grid size-9 touch-none select-none place-items-center overflow-hidden border bg-background/70 font-mono sm:size-10 ${
+                s.skill !== undefined ? "border-bitcoin/60" : "border-border"
+              } ${flash === s.code ? "ring-2 ring-signal" : ""}`}
             >
-              <span className="block text-signal">[{i + 7}] {left > 0 ? `${Math.ceil(left)}S` : "READY"}</span>
-              <span className="block truncate">{s.name}</span>
+              <span className={`text-base leading-none ${left > 0 ? "text-muted-foreground" : "text-foreground"}`}>{s.icon}</span>
+              {left > 0 ? (
+                <>
+                  <span
+                    className="absolute inset-0 bg-background/70"
+                    style={{ clipPath: `inset(${100 - pct}% 0 0 0)` }}
+                  />
+                  <span className="absolute inset-0 grid place-items-center text-[10px] text-bitcoin">
+                    {left > 1000 ? Math.ceil(left / 1000) : ""}
+                  </span>
+                </>
+              ) : null}
+              <span className="absolute left-0.5 top-0 text-[7px] text-signal">{s.key}</span>
+              <span className="absolute inset-x-0 bottom-0 truncate px-0.5 text-center text-[6px] uppercase text-muted-foreground">
+                {s.name}
+              </span>
             </button>
           );
         })}
