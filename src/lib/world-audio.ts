@@ -900,15 +900,24 @@ export function stopDjSet() {
 
 const MUSIC_KEY = "bitmapwin:music-off";
 
-/** Root frequencies of the chord cycle (A minor family, two octaves down). */
-const CHORDS: number[][] = [
-  [110, 130.81, 164.81], // Am
-  [98, 123.47, 146.83], // Gm-ish
-  [87.31, 110, 130.81], // Fmaj
-  [82.41, 103.83, 123.47], // Emin
-];
-/** Pentatonic pluck notes, high and airy. */
-const PLUCKS = [440, 493.88, 587.33, 659.25, 880];
+export type MusicZone = "desert" | "forest" | "polar" | "meadow" | "lair";
+type ZoneScore = { chords: number[][]; plucks: number[]; bar: number; pluck: OscillatorType; drone: number };
+/** One generative score per kind of place; the score cross-fades its notes as you walk. */
+const ZONES: Record<MusicZone, ZoneScore> = {
+  desert: { chords: [[110, 130.81, 164.81], [98, 123.47, 146.83], [87.31, 110, 130.81], [82.41, 103.83, 123.47]], plucks: [440, 493.88, 587.33, 659.25, 880], bar: 7.5, pluck: "sine", drone: 55 },
+  forest: { chords: [[130.81, 164.81, 196], [110, 130.81, 164.81], [87.31, 110, 130.81], [98, 123.47, 146.83]], plucks: [523.25, 587.33, 659.25, 783.99, 880], bar: 6, pluck: "triangle", drone: 65.4 },
+  polar: { chords: [[146.83, 185, 220], [123.47, 155.56, 185], [110, 138.59, 164.81], [130.81, 164.81, 196]], plucks: [1174.66, 1318.51, 1479.98, 1760, 1975.53], bar: 9, pluck: "sine", drone: 73.4 },
+  meadow: { chords: [[146.83, 185, 220], [196, 246.94, 293.66], [164.81, 196, 246.94], [130.81, 164.81, 196]], plucks: [587.33, 659.25, 739.99, 880, 987.77], bar: 5, pluck: "triangle", drone: 73.4 },
+  lair: { chords: [[55, 65.41, 77.78], [51.91, 61.74, 73.42], [55, 65.41, 82.41], [49, 58.27, 73.42]], plucks: [220, 233.08, 261.63, 311.13], bar: 4, pluck: "sawtooth", drone: 41.2 },
+};
+let zone: MusicZone = "desert";
+/** Change which place's score plays; picked up from the next bar. */
+export function setMusicZone(next: MusicZone) {
+  zone = next;
+}
+export function musicZone() {
+  return zone;
+}
 
 let musicOff = false;
 let musicHydrated = false;
