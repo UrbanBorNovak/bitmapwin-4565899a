@@ -321,6 +321,8 @@ import { QualityProvider, useQuality } from "@/graphics/QualityContext";
 import { QualityHud } from "@/graphics/QualityHud";
 import { GraphicsDebug } from "@/graphics/GraphicsDebug";
 import { OasisOnlinePanel } from "@/components/game/OasisOnlinePanel";
+import { partyIds, setPartyIds } from "@/lib/party-ids";
+import { SkillFx } from "@/components/game/SkillFx";
 import {
 
   RIDES,
@@ -3700,7 +3702,7 @@ function BitmapWorld3DInner({
     }
     let best: { id: string; handle: string; distance: number } | null = null;
     for (const cursor of cursorsRef.current) {
-      if (cursor.hp <= 0) continue;
+      if (cursor.hp <= 0 || partyIds.has(cursor.id)) continue;
       const dx = cursor.x - me.x;
       const dz = cursor.z - me.z;
       const distance = Math.hypot(dx, dz);
@@ -3867,7 +3869,7 @@ function BitmapWorld3DInner({
 
   // Mouse wheel cycles through the belt while you are in the world.
   useEffect(() => {
-    if (!exploring || !weapon) return;
+    if (!exploring) return;
     let last = 0;
     const onWheel = (event: WheelEvent) => {
       if (Math.abs(event.deltaY) < 4) return;
@@ -3875,6 +3877,7 @@ function BitmapWorld3DInner({
       if (now - last < 180) return;
       last = now;
       event.preventDefault();
+      if (!weapon) { equipWeapon(WEAPON_ORDER[0]!); return; }
       const at = WEAPON_ORDER.indexOf(weapon);
       const step = event.deltaY > 0 ? 1 : -1;
       const next = (at + step + WEAPON_ORDER.length) % WEAPON_ORDER.length;
