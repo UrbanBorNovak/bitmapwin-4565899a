@@ -3,6 +3,7 @@ import { lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, ShieldCheck } from "lucide-react";
 import { OasisWorldGuard } from "@/components/OasisWorldGuard";
+import { EmbedPlayControls } from "@/components/game/EmbedPlayControls";
 import { inhabitedQuery } from "@/lib/inhabited.functions";
 
 const BitmapWorld3D = lazy(() => import("@/components/BitmapWorld3D").then((m) => ({ default: m.BitmapWorld3D })));
@@ -39,6 +40,7 @@ function EmbedBitmap() {
           <BitmapWorld3D tipHeight={0} initialHeight={block} />
         </Suspense>
       </OasisWorldGuard>
+      <EmbedPlayControls />
       <div className="pointer-events-none absolute inset-x-2 top-2 z-[90] flex items-start justify-between gap-2">
         <div className="flex flex-wrap gap-1">
           <span className="hud-panel px-2 py-1 font-mono text-xs text-bitcoin">{block}.BITMAP</span>
