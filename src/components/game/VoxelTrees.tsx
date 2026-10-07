@@ -20,7 +20,7 @@ function hash(x: number, z: number, salt: number) {
 
 type Cube = [x: number, y: number, z: number, color: string];
 
-const OAK_LOG = "#6b4a2c", OAK_LEAF = "#4f8a34", OAK_LEAF2 = "#5f9c3e";
+const OAK_LOG = "#5a3d24", OAK_LEAF = "#4f8a34", OAK_LEAF2 = "#5f9c3e";
 const BIRCH_LOG = "#e8e4d8", BIRCH_MARK = "#3a3530", BIRCH_LEAF = "#7fb24a", BIRCH_LEAF2 = "#93c25a";
 const SPRUCE_LOG = "#4e3520", SPRUCE_LEAF = "#2f5a3a", SNOW = "#f4f7fa";
 
@@ -104,6 +104,8 @@ export const VoxelTrees = memo(function VoxelTrees({
         const chance = biome === "forest" ? 0.42 : biome === "polar" ? 0.2 : biome === "meadow" ? 0.1 : 0;
         if (hash(gx, gz, 13) > chance) continue;
         if (isSea(x, z)) continue;
+        // keep a clearing around the player so no trunk spawns through you
+        if (d < (unit * 4) ** 2) continue;
         const roll = hash(gx, gz, 14);
         const h = 4 + Math.floor(hash(gx, gz, 15) * 4);
         const seed = gx * 31 + gz;
@@ -134,7 +136,8 @@ export const VoxelTrees = memo(function VoxelTrees({
     blocks.forEach((b, i) => {
       mat.makeTranslation(b.x, b.y, b.z);
       m.setMatrixAt(i, mat);
-      m.setColorAt(i, col.set(b.color));
+      const shade = 0.82 + 0.18 * Math.min(1, (b.y - (blocks[0]?.y ?? b.y)) / (cube * 8) + 0.4);
+      m.setColorAt(i, col.set(b.color).multiplyScalar(shade));
     });
     m.count = blocks.length;
     m.instanceMatrix.needsUpdate = true;

@@ -87,6 +87,8 @@ import { StreamJumbotron } from "@/components/game/StreamJumbotron";
 const JUMBOTRON_HEIGHT = 145_159;
 import { bssSceneQuery } from "@/lib/bss";
 import { AvatarInventory } from "@/components/AvatarInventory";
+import { RACES, getRace, useRace } from "@/lib/character-race";
+import { RaceFeatures } from "@/components/game/RaceFeatures";
 import { ExtenderStage } from "@/components/extenders/ExtenderStage";
 import { ExtenderHud } from "@/components/extenders/ExtenderHud";
 import { runtimeDeploymentsQuery, type RuntimeDeployment } from "@/lib/extender-code";
@@ -1665,6 +1667,7 @@ const SelfAvatar = memo(function SelfAvatar({
   const mounted = useRef(false);
   /** the saved character carries the BITMAP pixel skin you chose */
   const character = useCharacter();
+  const race = useRace();
   const [motion, setMotion] = useState<AvatarMotion>("idle");
   useEffect(() => {
     mounted.current = true;
@@ -1702,7 +1705,12 @@ const SelfAvatar = memo(function SelfAvatar({
         <circleGeometry args={[AVATAR_U * 0.3, 16]} />
         <meshBasicMaterial color={colorsForShadow} transparent opacity={0.38} depthWrite={false} />
       </mesh>
-      {hp > 0 ? <AvatarSkin color={color} model={model} motion={motion} skin={character?.avatarSkin ?? null} /> : null}
+      {hp > 0 ? (
+        <group scale={RACES[race].scale}>
+          <AvatarSkin color={color} model={model} motion={motion} skin={character?.avatarSkin ?? null} />
+          <RaceFeatures race={race} u={AVATAR_U} />
+        </group>
+      ) : null}
       {weapon ? <HeldWeapon kind={weapon} bitcoin={bitcoin} /> : null}
       <WornGear unit={AVATAR_U} pose={pose} weapon={weapon} showHead jetpack={jetpack} />
 
@@ -2000,7 +2008,7 @@ function PlayerCameraRig({
       // quick, forest is slow, high ground lifts a jump further.
       noteStanding(player.x, player.z);
       const perks = standingLand().landscape.effects;
-      intent.speedScale = walkMultiplier() * perks.speed * skillSpeed() * strideSpeed() * mountSpeed();
+      intent.speedScale = walkMultiplier() * RACES[getRace()].speed * perks.speed * skillSpeed() * strideSpeed() * mountSpeed();
       intent.jumpScale = perks.jump * strideJump() * mountJump();
       // A raised weapon trades speed for accuracy, preventing full-speed ADS
       // strafing and giving first-person combat deliberate tactical weight.
@@ -2751,6 +2759,8 @@ const WorldScene = memo(function WorldScene({
 
   // A desert reach opens the horizon; a forest or the frontier closes it in.
   const landView = useStandingLand().landscape.tone.view;
+  // Ground and sky meet in one mid tone so the far land fades, never seams.
+  const horizonFog = useMemo(() => new THREE.Color(colors.background).lerp(new THREE.Color(colors.foreground), 0.18).getStyle(), [colors.background, colors.foreground]);
 
   return (
     <>
@@ -2763,8 +2773,8 @@ const WorldScene = memo(function WorldScene({
           cameraMode === "map"
             ? [colors.background, 40, 190]
             : cameraMode === "first"
-              ? [colors.background, 8 * landView, 64 * landView]
-              : [colors.background, 13 * landView, 82 * landView]
+              ? [horizonFog, 6 * landView, 48 * landView]
+              : [horizonFog, 10 * landView, 62 * landView]
         }
       />
 

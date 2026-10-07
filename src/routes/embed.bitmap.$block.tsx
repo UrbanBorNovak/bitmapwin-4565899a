@@ -5,6 +5,7 @@ import { ExternalLink, ShieldCheck } from "lucide-react";
 import { OasisWorldGuard } from "@/components/OasisWorldGuard";
 import { EmbedPlayControls } from "@/components/game/EmbedPlayControls";
 import { ClassSkillBar } from "@/components/game/ClassSkillBar";
+import { RacePicker } from "@/components/game/RacePicker";
 import { useChainTip } from "@/lib/use-chain-tip";
 import { inhabitedQuery } from "@/lib/inhabited.functions";
 
@@ -42,6 +43,7 @@ function EmbedBitmap() {
         <Suspense fallback={<div className="grid h-full place-items-center font-mono text-xs text-signal">LOADING {block}.BITMAP…</div>}>
           {tipHeight ? <BitmapWorld3D tipHeight={tipHeight} initialHeight={block} /> : <div className="grid h-full place-items-center font-mono text-xs text-signal">SPAWNING…</div>}
           <ClassSkillBar />
+          <RacePicker />
         </Suspense>
       </OasisWorldGuard>
       <EmbedPlayControls />

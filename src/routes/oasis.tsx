@@ -9,6 +9,7 @@ import { getChainBlocks } from "@/lib/chain.functions";
 import { OasisWorldGuard } from "@/components/OasisWorldGuard";
 import { OasisEntry } from "@/components/game/OasisEntry";
 import { ClassSkillBar } from "@/components/game/ClassSkillBar";
+import { RacePicker } from "@/components/game/RacePicker";
 import { OasisTradeTicker } from "@/components/game/OasisTradeTicker";
 import { OasisBroadcastControl } from "@/components/game/OasisBroadcastControl";
 
@@ -145,6 +146,7 @@ function OasisPage() {
             legend={<span data-tour="map-legend" className="flex flex-wrap items-center gap-2">{legend}</span>}
           />
           <ClassSkillBar />
+          <RacePicker />
           </div>
           <OasisTradeTicker />
           <OasisBroadcastControl {...(height === undefined ? {} : { defaultHeight: height })} />
