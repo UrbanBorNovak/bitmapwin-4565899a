@@ -144,10 +144,10 @@ function OasisPage() {
             {...(height === undefined ? {} : { initialHeight: height })}
             legend={<span data-tour="map-legend" className="flex flex-wrap items-center gap-2">{legend}</span>}
           />
+          <ClassSkillBar />
           </div>
           <OasisTradeTicker />
           <OasisBroadcastControl {...(height === undefined ? {} : { defaultHeight: height })} />
-          <ClassSkillBar />
           <Link to="/command" className="mt-3 flex items-center justify-between border border-bitcoin bg-card px-4 py-3 font-mono text-xs text-bitcoin hover:bg-bitcoin/10">
             <span>◆ GUARDIAN COMMAND CENTRE — PATROL · MARCH · RAID</span><span aria-hidden="true">→</span>
           </Link>
