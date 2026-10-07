@@ -104,7 +104,7 @@ export function OasisVisualModsPanel({ mod, setMod, onClose }: { mod: VisualMod;
           <button type="button" aria-label="Close visual mods" onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="size-4" /></button>
         </span>
       </div>
-      <p className="mb-2 text-muted-foreground">SAVED ON THIS DEVICE · PRESS \\ TO SHOW/HIDE WHILE FLYING</p>
+      <p className="mb-2 text-muted-foreground">SAVED ON THIS DEVICE · PRESS {"\\"} TO SHOW/HIDE WHILE FLYING</p>
       <div className="mb-3 grid grid-cols-2 gap-1">
         {PRESETS.map((p) => (
           <button key={p.id} type="button" onClick={() => setMod(p.mod)} className="border border-border px-1.5 py-1 text-left hover:border-bitcoin hover:text-bitcoin">{p.label}</button>
