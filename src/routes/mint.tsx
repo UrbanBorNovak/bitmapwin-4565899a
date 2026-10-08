@@ -16,6 +16,7 @@ import { SummonTutorial } from "@/components/bitmon/SummonTutorial";
 import { MintHero } from "@/components/bitmon/MintHero";
 import { MintMusic } from "@/components/bitmon/MintMusic";
 import { MINT_COPY, MintLangToggle, useMintLang } from "@/lib/mint-lang";
+import { AuraChamber } from "@/components/bitmon/AuraChamber";
 
 export const Route = createFileRoute("/mint")({
   validateSearch: z.object({ height: z.coerce.number().int().min(0).optional() }),
@@ -142,6 +143,8 @@ function MintPage() {
           ))}
         </ol>
       </section>
+
+      <AuraChamber height={height} />
 
       {d ? (
         <section data-tour="mint-delegate" className="panel mt-6 space-y-3 rounded-md border border-border p-4">

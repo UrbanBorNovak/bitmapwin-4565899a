@@ -3,6 +3,10 @@ import hero from "@/assets/mint-guardians.jpg";
 import { allGuardiansQuery } from "@/lib/bitmon-queries";
 import { getGuardianChildrenFn } from "@/lib/guardian-market.functions";
 import { MINT_COPY, MintLangToggle, useMintLang } from "@/lib/mint-lang";
+import { RARITY_TONE } from "@/lib/bitmon";
+
+/** One Guardian per Bitcoin block in the DMT range (blocks 0–839,999). */
+const MAX_SUPPLY = 840_000;
 
 /** Mint page hero: art + live, real collection counts from the Guardian index. */
 export function MintHero() {
@@ -26,10 +30,20 @@ export function MintHero() {
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           {t.heroBody}
         </p>
-        <div className="mt-3 flex flex-wrap items-center gap-2 font-mono text-[11px]">
-          <span className="panel rounded-sm border border-bitcoin/50 px-2 py-1 text-bitcoin">{all.isLoading ? "…" : list.length} {t.awakened}</span>
-          <span className="panel rounded-sm border border-signal/50 px-2 py-1 text-signal">{inscribed ?? "…"} {t.inscribedOnChain}</span>
-          <span className="font-mono text-[10px] text-muted-foreground">{t.formula}</span>
+        <div className="panel mt-3 max-w-2xl rounded-sm border border-border p-2 font-mono text-[11px]">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+            <div><p className="text-[9px] text-muted-foreground">MAX SUPPLY</p><p className="text-base">{MAX_SUPPLY.toLocaleString()}</p></div>
+            <div><p className="text-[9px] text-muted-foreground">{t.awakened}</p><p className="text-base text-bitcoin">{all.isLoading ? "…" : list.length.toLocaleString()}</p></div>
+            <div><p className="text-[9px] text-muted-foreground">{t.inscribedOnChain}</p><p className="text-base text-signal">{inscribed ?? "…"}</p></div>
+            <div><p className="text-[9px] text-muted-foreground">AWAKENED %</p><p className="text-base">{((list.length / MAX_SUPPLY) * 100).toFixed(4)}%</p></div>
+          </div>
+          <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted"><div className="h-full bg-bitcoin" style={{ width: `${Math.max(0.5, (list.length / MAX_SUPPLY) * 100)}%` }} /></div>
+          <div className="mt-1.5 flex flex-wrap gap-2 text-[10px]">
+            {(["COMMON", "RARE", "EPIC", "MYTHIC"] as const).map((r) => (
+              <span key={r} className={RARITY_TONE[r]}>{r} {list.filter((g) => g.rarity === r).length}</span>
+            ))}
+            <span className="text-muted-foreground">· {t.formula}</span>
+          </div>
         </div>
         {latest.length ? (
           <div className="mt-3 flex flex-wrap gap-1.5 font-mono text-[10px]">
