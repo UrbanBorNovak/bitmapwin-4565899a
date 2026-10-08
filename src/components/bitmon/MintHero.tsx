@@ -4,20 +4,26 @@ import { allGuardiansQuery } from "@/lib/bitmon-queries";
 import { getGuardianChildrenFn } from "@/lib/guardian-market.functions";
 import { MINT_COPY, MintLangToggle, useMintLang } from "@/lib/mint-lang";
 import { RARITY_TONE } from "@/lib/bitmon";
+import { CLUBS, inClub } from "@/lib/clubs";
+import { useChainTip } from "@/lib/use-chain-tip";
 
-/** One Guardian per Bitcoin block in the DMT range (blocks 0–839,999). */
-const MAX_SUPPLY = 840_000;
-
-/** Mint page hero: art + live, real collection counts from the Guardian index. */
+/** Mint page hero: art + live, real collection counts grouped by Bitmap club. */
 export function MintHero() {
   const all = useQuery(allGuardiansQuery());
   const children = useQuery({ queryKey: ["guardian-children-v6"], queryFn: () => getGuardianChildrenFn(), staleTime: 60_000, refetchInterval: 120_000 });
   const [lang, setLang] = useMintLang();
   const t = MINT_COPY[lang];
+  const tip = useChainTip();
   const list = all.data ?? [];
   const inscribed = children.data && !children.data.unavailable ? children.data.ids.length : null;
   const onChain = new Set(children.data?.ids ?? []);
   const latest = list.slice(0, 6);
+  // Club supply is real: one BITMAP per mined block in range, capped at the live tip.
+  const clubs = CLUBS.filter((c) => !c.future && (!tip || c.min <= tip)).map((c) => ({
+    ...c,
+    supply: (tip ? Math.min(c.max, tip) : c.max) - c.min + 1,
+    count: list.filter((g) => inClub(g.height, c)).length,
+  }));
 
   return (
     <section className="relative mb-8 overflow-hidden rounded-md border border-border">
@@ -32,12 +38,20 @@ export function MintHero() {
         </p>
         <div className="panel mt-3 max-w-2xl rounded-sm border border-border p-2 font-mono text-[11px]">
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-            <div><p className="text-[9px] text-muted-foreground">MAX SUPPLY</p><p className="text-base">{MAX_SUPPLY.toLocaleString()}</p></div>
+            <div><p className="text-[9px] text-muted-foreground">LIVE CHAIN TIP</p><p className="text-base text-signal">{tip ? `#${tip.toLocaleString()}` : "…"}</p></div>
             <div><p className="text-[9px] text-muted-foreground">{t.awakened}</p><p className="text-base text-bitcoin">{all.isLoading ? "…" : list.length.toLocaleString()}</p></div>
             <div><p className="text-[9px] text-muted-foreground">{t.inscribedOnChain}</p><p className="text-base text-signal">{inscribed ?? "…"}</p></div>
-            <div><p className="text-[9px] text-muted-foreground">AWAKENED %</p><p className="text-base">{((list.length / MAX_SUPPLY) * 100).toFixed(4)}%</p></div>
+            <div><p className="text-[9px] text-muted-foreground">CLUBS ACTIVE</p><p className="text-base">{clubs.filter((c) => c.count > 0).length} / {clubs.length}</p></div>
           </div>
-          <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted"><div className="h-full bg-bitcoin" style={{ width: `${Math.max(0.5, (list.length / MAX_SUPPLY) * 100)}%` }} /></div>
+          <div className="mt-2 grid grid-cols-2 gap-1.5 md:grid-cols-4">
+            {clubs.map((c) => (
+              <div key={c.id} className="border border-border bg-background/60 px-1.5 py-1">
+                <p className="text-[9px] text-muted-foreground">{c.short}</p>
+                <p className="text-xs"><span className="text-bitcoin">{c.count.toLocaleString()}</span><span className="text-muted-foreground"> / {c.supply.toLocaleString()}</span></p>
+                <div className="mt-1 h-0.5 overflow-hidden bg-muted"><div className="h-full bg-bitcoin" style={{ width: `${c.count ? Math.max(2, (c.count / c.supply) * 100) : 0}%` }} /></div>
+              </div>
+            ))}
+          </div>
           <div className="mt-1.5 flex flex-wrap gap-2 text-[10px]">
             {(["COMMON", "RARE", "EPIC", "MYTHIC"] as const).map((r) => (
               <span key={r} className={RARITY_TONE[r]}>{r} {list.filter((g) => g.rarity === r).length}</span>
