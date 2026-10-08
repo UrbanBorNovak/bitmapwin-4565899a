@@ -1905,6 +1905,36 @@ export type Database = {
           },
         ]
       }
+      guardian_auras: {
+        Row: {
+          aura: string
+          created_at: string
+          height: number
+          id: string
+          tier: string
+          user_id: string
+          wager_bit: number
+        }
+        Insert: {
+          aura: string
+          created_at?: string
+          height: number
+          id?: string
+          tier: string
+          user_id: string
+          wager_bit: number
+        }
+        Update: {
+          aura?: string
+          created_at?: string
+          height?: number
+          id?: string
+          tier?: string
+          user_id?: string
+          wager_bit?: number
+        }
+        Relationships: []
+      }
       guardian_dispatches: {
         Row: {
           created_at: string
