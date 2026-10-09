@@ -15,6 +15,7 @@ import { startGuidedTour } from "@/components/GuidedTour";
 import { MobileAppInstall } from "@/components/MobileAppInstall";
 import { GuardianMintStatus } from "@/components/bitmon/GuardianMintStatus";
 import { LatestGuardianCard } from "@/components/bitmon/LatestGuardianCard";
+import { MintPointer } from "@/components/bitmon/MintPointer";
 
 
 export const Route = createFileRoute("/")({
@@ -120,6 +121,7 @@ function Index() {
                   <p className="max-w-2xl text-sm leading-relaxed text-foreground sm:text-base">
                     You own a piece of Bitcoin. Now make something happen there.
                   </p>
+                  <MintPointer />
                   <LandPromptTerminal />
                   <MobileAppInstall />
                   <div data-tour="home-flow" className="mt-4 grid gap-px sm:flex sm:flex-wrap">
