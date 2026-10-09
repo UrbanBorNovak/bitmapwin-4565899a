@@ -68,17 +68,21 @@ function forkCrests(height: number): string[] {
 }
 
 function usePulse() {
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(0);
   useEffect(() => {
+    setNow(Date.now());
     const t = setInterval(() => setNow(Date.now()), 100);
     return () => clearInterval(t);
   }, []);
-  const phase = Math.floor((now % (PULSE_MS * PULSE_PHASES.length)) / PULSE_MS);
-  const progress = (now % PULSE_MS) / PULSE_MS;
-  return { phase, progress };
+  // now === 0 means "not mounted yet": render a stable placeholder so SSR and
+  // the first client render agree (Date.now() differs between the two).
+  const mounted = now > 0;
+  const phase = mounted ? Math.floor((now % (PULSE_MS * PULSE_PHASES.length)) / PULSE_MS) : 0;
+  const progress = mounted ? (now % PULSE_MS) / PULSE_MS : 0;
+  return { phase, progress, mounted };
 }
 
-export const Route = createFileRoute("/collections/guardians/$height")({
+export const Route = createFileRoute("/collections/guardians_/$height")({
   head: ({ params }) => {
     const title = `Guardian of ${params.height}.BITMAP — BITMAPWIN`;
     const desc = `Block-DNA Guardian of block ${params.height}: inscription, difficulty, weight and live pulse cycle.`;
@@ -111,7 +115,7 @@ function GuardianDetails() {
   const awakened = useQuery({ ...guardianQuery(height), enabled: valid });
   const all = useQuery(allGuardiansQuery());
   const [view, setView] = useState<"3D" | "INSCRIPTION">("3D");
-  const { phase, progress } = usePulse();
+  const { phase, progress, mounted } = usePulse();
 
   if (!valid) {
     return (
@@ -200,8 +204,8 @@ function GuardianDetails() {
             {/* Pulse ticker */}
             <div className="border-t border-border px-3 py-2" data-no-translate>
               <div className="flex items-center justify-between font-mono text-[10px]">
-                <span className="text-muted-foreground">COSMIC PULSE · <span className="text-bitcoin">{PULSE_PHASES[phase]}</span></span>
-                <span className="text-signal">{(PULSE_MS / 1000 - progress * (PULSE_MS / 1000)).toFixed(1)}S</span>
+                <span className="text-muted-foreground">COSMIC PULSE · <span className="text-bitcoin">{mounted ? PULSE_PHASES[phase] : "SYNCING"}</span></span>
+                <span className="text-signal">{mounted ? `${(PULSE_MS / 1000 - progress * (PULSE_MS / 1000)).toFixed(1)}S` : "--"}</span>
               </div>
               <div className="mt-1.5 grid grid-cols-4 gap-1">
                 {PULSE_PHASES.map((n, i) => (
