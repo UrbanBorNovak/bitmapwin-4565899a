@@ -78,7 +78,7 @@ function usePulse() {
   return { phase, progress };
 }
 
-export const Route = createFileRoute("/collections/guardians/$height")({
+export const Route = createFileRoute("/collections/guardians_/$height")({
   head: ({ params }) => {
     const title = `Guardian of ${params.height}.BITMAP — BITMAPWIN`;
     const desc = `Block-DNA Guardian of block ${params.height}: inscription, difficulty, weight and live pulse cycle.`;
