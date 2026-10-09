@@ -68,14 +68,18 @@ function forkCrests(height: number): string[] {
 }
 
 function usePulse() {
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(0);
   useEffect(() => {
+    setNow(Date.now());
     const t = setInterval(() => setNow(Date.now()), 100);
     return () => clearInterval(t);
   }, []);
-  const phase = Math.floor((now % (PULSE_MS * PULSE_PHASES.length)) / PULSE_MS);
-  const progress = (now % PULSE_MS) / PULSE_MS;
-  return { phase, progress };
+  // now === 0 means "not mounted yet": render a stable placeholder so SSR and
+  // the first client render agree (Date.now() differs between the two).
+  const mounted = now > 0;
+  const phase = mounted ? Math.floor((now % (PULSE_MS * PULSE_PHASES.length)) / PULSE_MS) : 0;
+  const progress = mounted ? (now % PULSE_MS) / PULSE_MS : 0;
+  return { phase, progress, mounted };
 }
 
 export const Route = createFileRoute("/collections/guardians_/$height")({
