@@ -115,7 +115,7 @@ function GuardianDetails() {
   const awakened = useQuery({ ...guardianQuery(height), enabled: valid });
   const all = useQuery(allGuardiansQuery());
   const [view, setView] = useState<"3D" | "INSCRIPTION">("3D");
-  const { phase, progress } = usePulse();
+  const { phase, progress, mounted } = usePulse();
 
   if (!valid) {
     return (
