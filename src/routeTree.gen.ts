@@ -103,7 +103,7 @@ import { Route as ApiPublicCrawlTradesRouteImport } from './routes/api/public/cr
 import { Route as ApiPublicOfferRouteImport } from './routes/api/public/offer'
 import { Route as ApiPublicOffersRouteImport } from './routes/api/public/offers'
 import { Route as ApiPublicResolveRegistryRouteImport } from './routes/api/public/resolve-registry'
-import { Route as CollectionsGuardiansHeightRouteImport } from './routes/collections.guardians.$height'
+import { Route as CollectionsGuardiansHeightRouteImport } from './routes/collections.guardians_.$height'
 import { Route as EmbedBitmapBlockRouteImport } from './routes/embed.bitmap.$block'
 import { Route as MapDistrictSlugRouteImport } from './routes/map_.district.$slug'
 import { Route as MapPlaceBlockRouteImport } from './routes/map_.place.$block'
@@ -592,9 +592,9 @@ const ApiPublicResolveRegistryRoute =
   } as any)
 const CollectionsGuardiansHeightRoute =
   CollectionsGuardiansHeightRouteImport.update({
-    id: '/$height',
-    path: '/$height',
-    getParentRoute: () => CollectionsGuardiansRoute,
+    id: '/guardians_/$height',
+    path: '/guardians/$height',
+    getParentRoute: () => CollectionsRoute,
   } as any)
 const EmbedBitmapBlockRoute = EmbedBitmapBlockRouteImport.update({
   id: '/embed/bitmap/$block',
@@ -723,7 +723,7 @@ export interface FileRoutesByFullPath {
   '/codex/bestiary': typeof CodexBestiaryRoute
   '/codex/morphs': typeof CodexMorphsRoute
   '/collections/$club': typeof CollectionsClubRoute
-  '/collections/guardians': typeof CollectionsGuardiansRouteWithChildren
+  '/collections/guardians': typeof CollectionsGuardiansRoute
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/embed/oasis': typeof EmbedOasisRoute
@@ -829,7 +829,7 @@ export interface FileRoutesByTo {
   '/codex/bestiary': typeof CodexBestiaryRoute
   '/codex/morphs': typeof CodexMorphsRoute
   '/collections/$club': typeof CollectionsClubRoute
-  '/collections/guardians': typeof CollectionsGuardiansRouteWithChildren
+  '/collections/guardians': typeof CollectionsGuardiansRoute
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/embed/oasis': typeof EmbedOasisRoute
@@ -940,7 +940,7 @@ export interface FileRoutesById {
   '/codex/bestiary': typeof CodexBestiaryRoute
   '/codex/morphs': typeof CodexMorphsRoute
   '/collections/$club': typeof CollectionsClubRoute
-  '/collections/guardians': typeof CollectionsGuardiansRouteWithChildren
+  '/collections/guardians': typeof CollectionsGuardiansRoute
   '/collections/jigglypuff': typeof CollectionsJigglypuffRoute
   '/district/$slug': typeof DistrictSlugRoute
   '/embed/oasis': typeof EmbedOasisRoute
@@ -975,7 +975,7 @@ export interface FileRoutesById {
   '/api/public/offer': typeof ApiPublicOfferRoute
   '/api/public/offers': typeof ApiPublicOffersRoute
   '/api/public/resolve-registry': typeof ApiPublicResolveRegistryRoute
-  '/collections/guardians/$height': typeof CollectionsGuardiansHeightRoute
+  '/collections/guardians_/$height': typeof CollectionsGuardiansHeightRoute
   '/embed/bitmap/$block': typeof EmbedBitmapBlockRoute
   '/map_/district/$slug': typeof MapDistrictSlugRoute
   '/map_/place/$block': typeof MapPlaceBlockRoute
@@ -1303,7 +1303,7 @@ export interface FileRouteTypes {
     | '/api/public/offer'
     | '/api/public/offers'
     | '/api/public/resolve-registry'
-    | '/collections/guardians/$height'
+    | '/collections/guardians_/$height'
     | '/embed/bitmap/$block'
     | '/map_/district/$slug'
     | '/map_/place/$block'
@@ -2052,12 +2052,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicResolveRegistryRouteImport
       parentRoute: typeof ApiRoute
     }
-    '/collections/guardians/$height': {
-      id: '/collections/guardians/$height'
-      path: '/$height'
+    '/collections/guardians_/$height': {
+      id: '/collections/guardians_/$height'
+      path: '/guardians/$height'
       fullPath: '/collections/guardians/$height'
       preLoaderRoute: typeof CollectionsGuardiansHeightRouteImport
-      parentRoute: typeof CollectionsGuardiansRoute
+      parentRoute: typeof CollectionsRoute
     }
     '/embed/bitmap/$block': {
       id: '/embed/bitmap/$block'
@@ -2196,29 +2196,20 @@ const ApiRouteChildren: ApiRouteChildren = {
 
 const ApiRouteWithChildren = ApiRoute._addFileChildren(ApiRouteChildren)
 
-interface CollectionsGuardiansRouteChildren {
-  CollectionsGuardiansHeightRoute: typeof CollectionsGuardiansHeightRoute
-}
-
-const CollectionsGuardiansRouteChildren: CollectionsGuardiansRouteChildren = {
-  CollectionsGuardiansHeightRoute: CollectionsGuardiansHeightRoute,
-}
-
-const CollectionsGuardiansRouteWithChildren =
-  CollectionsGuardiansRoute._addFileChildren(CollectionsGuardiansRouteChildren)
-
 interface CollectionsRouteChildren {
   CollectionsClubRoute: typeof CollectionsClubRoute
-  CollectionsGuardiansRoute: typeof CollectionsGuardiansRouteWithChildren
+  CollectionsGuardiansRoute: typeof CollectionsGuardiansRoute
   CollectionsJigglypuffRoute: typeof CollectionsJigglypuffRoute
   CollectionsIndexRoute: typeof CollectionsIndexRoute
+  CollectionsGuardiansHeightRoute: typeof CollectionsGuardiansHeightRoute
 }
 
 const CollectionsRouteChildren: CollectionsRouteChildren = {
   CollectionsClubRoute: CollectionsClubRoute,
-  CollectionsGuardiansRoute: CollectionsGuardiansRouteWithChildren,
+  CollectionsGuardiansRoute: CollectionsGuardiansRoute,
   CollectionsJigglypuffRoute: CollectionsJigglypuffRoute,
   CollectionsIndexRoute: CollectionsIndexRoute,
+  CollectionsGuardiansHeightRoute: CollectionsGuardiansHeightRoute,
 }
 
 const CollectionsRouteWithChildren = CollectionsRoute._addFileChildren(
