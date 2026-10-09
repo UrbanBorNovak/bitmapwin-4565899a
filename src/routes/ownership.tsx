@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { SovereignValueLoop } from "@/components/ownership/SovereignValueLoop";
 
 export const Route = createFileRoute("/ownership")({
   head: () => {
@@ -80,6 +81,8 @@ function OwnershipPage() {
           <Link to="/my-land" className="btn-term-ghost">[ WHAT DO I HOLD? ]</Link>
         </div>
       </section>
+
+      <SovereignValueLoop />
     </div>
   );
 }
