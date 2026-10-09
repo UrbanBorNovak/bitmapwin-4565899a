@@ -204,8 +204,8 @@ function GuardianDetails() {
             {/* Pulse ticker */}
             <div className="border-t border-border px-3 py-2" data-no-translate>
               <div className="flex items-center justify-between font-mono text-[10px]">
-                <span className="text-muted-foreground">COSMIC PULSE · <span className="text-bitcoin">{PULSE_PHASES[phase]}</span></span>
-                <span className="text-signal">{(PULSE_MS / 1000 - progress * (PULSE_MS / 1000)).toFixed(1)}S</span>
+                <span className="text-muted-foreground">COSMIC PULSE · <span className="text-bitcoin">{mounted ? PULSE_PHASES[phase] : "SYNCING"}</span></span>
+                <span className="text-signal">{mounted ? `${(PULSE_MS / 1000 - progress * (PULSE_MS / 1000)).toFixed(1)}S` : "--"}</span>
               </div>
               <div className="mt-1.5 grid grid-cols-4 gap-1">
                 {PULSE_PHASES.map((n, i) => (
