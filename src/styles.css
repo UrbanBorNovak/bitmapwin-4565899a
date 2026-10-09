@@ -1718,3 +1718,6 @@
 
 @keyframes boss-hit-rise { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-28px); opacity: 0; } }
 .boss-hit { animation: boss-hit-rise 1.6s ease-out forwards; }
+
+@keyframes mint-sweep { 0% { transform: translateX(0); } 100% { transform: translateX(400%); } }
+.mint-sweep { animation: mint-sweep 2.4s ease-in-out infinite; }
