@@ -1,4 +1,4 @@
-import { stepDrop } from "@/lib/battle-royale";
+import { setBrHooks, stepDrop } from "@/lib/battle-royale";
 import { DropshipLayer } from "@/components/game/DropshipLayer";
 import { PvpFx } from "@/components/game/PvpFx";
 import { FpsCrosshair } from "@/components/game/FpsCrosshair";
@@ -3526,6 +3526,7 @@ function BitmapWorld3DInner({
   } = useMapCursors(true, clan);
   const healRef = useRef<(amount: number) => void>(() => {});
   healRef.current = heal;
+  setBrHooks({ hurt: (d: number) => hurt(d, "STORM"), heal });
   const party = useMapParty(selfId, handle, true, (amount, from) => {
     healRef.current(amount);
     setRespawnNote(`${from} HEALED THE PARTY · +${amount} HP`);
