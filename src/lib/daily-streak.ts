@@ -8,8 +8,8 @@ function prevDay(day: string): string {
 }
 
 /** `days` = claimed UTC days (YYYY-MM-DD), any order. */
-export function readStreak(days: string[], today: string) {
-  const set = new Set(days.filter(Boolean));
+export function readStreak(days: (string | undefined)[], today: string) {
+  const set = new Set(days.filter((d): d is string => !!d));
   const claimedToday = set.has(today);
   let cursor = claimedToday ? today : prevDay(today);
   let streak = 0;
