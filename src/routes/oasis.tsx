@@ -85,7 +85,7 @@ function OasisPage() {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
-      if (e.key.toLowerCase() === "h" && !e.ctrlKey && !e.metaKey && !e.altKey) setCinematic((v) => !v);
+      if (e.key === "`" && !e.ctrlKey && !e.metaKey && !e.altKey) setCinematic((v) => !v);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -144,7 +144,7 @@ function OasisPage() {
         <Suspense fallback={<div className="grid h-[78vh] min-h-[520px] place-items-center border border-border bg-background font-mono text-xs text-signal">INITIALIZING OASIS RENDERER…</div>}>
           <div className="relative">
             <div className="absolute bottom-3 right-3 z-[85] flex gap-1">
-              <button type="button" aria-label={cinematic ? "Show HUD" : "Cinematic view"} title={cinematic ? "Show HUD (H)" : "Cinematic view (H)"} onClick={() => setCinematic((v) => !v)} className={`hud-panel hud-keep grid size-9 place-items-center ${cinematic ? "text-bitcoin" : "text-signal"} hover:text-bitcoin`}>
+              <button type="button" aria-label={cinematic ? "Show HUD" : "Cinematic view"} title={cinematic ? "Show HUD (`)" : "Cinematic view (`)"} onClick={() => setCinematic((v) => !v)} className={`hud-panel hud-keep grid size-9 place-items-center ${cinematic ? "text-bitcoin" : "text-signal"} hover:text-bitcoin`}>
                 {cinematic ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
               </button>
               <button type="button" aria-label="Visual mods" title="Visual mods" onClick={() => setModsOpen((v) => !v)} className={`hud-panel hud-keep grid size-9 place-items-center ${modsOpen ? "text-bitcoin" : "text-signal"} hover:text-bitcoin`}>
