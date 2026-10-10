@@ -171,6 +171,7 @@ function GuardiansGuidePage() {
       <div className="mt-8 flex flex-wrap gap-3">
         <Link to="/mint" className="btn-term">{c.cta}</Link>
         <Link to="/collections/guardians" className="btn-term-ghost">{c.ctaMarket}</Link>
+        <Link to="/ownership" hash="value-loop" className="btn-term-ghost">{lang === "en" ? "THE SOVEREIGN VALUE LOOP →" : "主权价值循环 →"}</Link>
       </div>
     </div>
   );
