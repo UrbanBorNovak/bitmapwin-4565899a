@@ -46,13 +46,17 @@ const COPY = {
     ],
     cta: "◆ SUMMON A GUARDIAN",
     ctaMarket: "BROWSE THE COLLECTION →",
+    ctaTracker: "◆ GUARDIAN TRACKER",
+
     faqTitle: "QUESTIONS",
     faq: [
       ["Does it cost anything to look?", "No. Previewing any block's Guardian is free — you only pay if you summon it."],
       ["What does the summon fee do?", "The 1,000-sat fee wakes the Guardian in the Oasis. Inscribing on-chain is a separate step with its own network fee."],
       ["Can two people summon the same block?", "No. The first confirmed summon wins — one block, one Guardian."],
       ["What is the shielded experiment?", "An optional research path that sends your Guardian into a private pool instead of your wallet. It's unaudited — only try it if you want to be part of the first shielded DMT."],
+      ["Where do I track my Guardian?", "Open the Guardian Tracker from the summon page's MY SUMMONS tab. It shows each of your Guardians' confirmed block, era, level, phase and DNA stats, and refreshes on its own as the chain moves."],
     ],
+
   },
   zh: {
     crumb: "BITMAPWIN / 指南",
@@ -81,13 +85,17 @@ const COPY = {
     ],
     cta: "◆ 召唤一只守护者",
     ctaMarket: "浏览收藏系列 →",
+    ctaTracker: "◆ 守护者追踪面板",
+
     faqTitle: "常见问题",
     faq: [
       ["预览需要付费吗?", "不需要。预览任何区块的守护者都是免费的——只有召唤时才需要支付。"],
       ["召唤费用有什么用?", "1,000 sats 的费用让守护者在绿洲中苏醒。链上铭刻是单独的步骤,需要额外支付网络费用。"],
       ["两个人能召唤同一个区块吗?", "不能。第一个确认的召唤获胜——一个区块,一只守护者。"],
       ["什么是屏蔽实验?", "一条可选的研究路径,将你的守护者送入隐私池而不是你的钱包。它未经审计——只有当你想成为第一批屏蔽 DMT 的参与者时才尝试。"],
+      ["在哪里追踪我的守护者?", "在召唤页面的“我的召唤”标签中打开守护者追踪面板。它会显示你每只守护者的确认区块、纪元、等级、阶段和 DNA 属性,并随着链上变化自动刷新。"],
     ],
+
   },
 } as const;
 
@@ -172,6 +180,8 @@ function GuardiansGuidePage() {
         <Link to="/mint" className="btn-term">{c.cta}</Link>
         <Link to="/collections/guardians" className="btn-term-ghost">{c.ctaMarket}</Link>
         <Link to="/ownership" hash="value-loop" className="btn-term-ghost">{lang === "en" ? "THE SOVEREIGN VALUE LOOP →" : "主权价值循环 →"}</Link>
+        <Link to="/mint" search={{ tab: "mine" }} hash="guardian-tracker" className="btn-term-ghost">{c.ctaTracker}</Link>
+
       </div>
     </div>
   );
