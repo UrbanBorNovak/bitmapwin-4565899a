@@ -22,7 +22,7 @@ import {
 } from "@/lib/game/worldState";
 import type { CardVisualExtender } from "@/lib/game/types";
 import { Link } from "@tanstack/react-router";
-import { ORD_TORCHES_PARENT, ORD_TORCHES_POOL, ORD_TORCHES_SUPPLY, useOrdTorches } from "@/lib/game/ordTorches";
+import { ORD_TORCHES_PARENT, ORD_TORCHES_POOL, useOrdTorches } from "@/lib/game/ordTorches";
 import { PUPPETS_PARENT, PUPPETS_POOL, usePuppets } from "@/lib/game/puppets";
 import { JIGGLYPUFF_IDS, JIGGLYPUFF_POOL, useJigglypuff } from "@/lib/game/jigglypuff";
 import { OFFICIAL_TRAITS_POOL, traitExtenderPoolQuery } from "@/lib/trait-collections";
@@ -201,8 +201,8 @@ function PlayExtenders() {
           <article className="border border-bitcoin bg-card p-3">
             <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h2 className="label text-bitcoin">ORD TORCHES · ON-CHAIN POOL</h2>
-                <span className="label text-muted-foreground">{torches ? torches.list.length : "…"} / {ORD_TORCHES_SUPPLY} FOUND ACROSS THE MAP</span>
+                <h2 className="label text-bitcoin">FREE ROSS · ON-CHAIN POOL</h2>
+                <span className="label text-muted-foreground">{torches ? torches.list.length : "…"} FOUND ACROSS THE MAP</span>
               </div>
               <Button
                 type="button"
@@ -214,13 +214,13 @@ function PlayExtenders() {
                 {enabled && selectedCollection === ORD_TORCHES_POOL ? "POOL ACTIVE" : "USE POOL"}
               </Button>
             </header>
-            <p className="mb-3 break-all font-mono text-[10px] text-muted-foreground">PARENT <span data-no-translate>{ORD_TORCHES_PARENT}</span> · ACTIVATE THE POOL TO DISTRIBUTE A DIFFERENT TORCH ACROSS EACH CARD</p>
-            {!torches ? <p className="font-mono text-xs text-muted-foreground">&gt; READING 3000 CHILDREN…</p> : (
+            <p className="mb-3 break-all font-mono text-[10px] text-muted-foreground">PARENT <span data-no-translate>{ORD_TORCHES_PARENT}</span> · ACTIVATE THE POOL TO DISTRIBUTE A DIFFERENT FREE ROSS ACROSS EACH CARD</p>
+            {!torches ? <p className="font-mono text-xs text-muted-foreground">&gt; READING ALL CHILDREN…</p> : (
               <>
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
                   {torches.list.slice(torchPage * 24, torchPage * 24 + 24).map((t) => (
                     <div key={t.inscriptionId} className="relative aspect-square border border-border bg-background">
-                      <iframe src={ordinalsPreviewUrl(t.inscriptionId)} title={`Ord Torch #${t.index + 1}`} loading="lazy" sandbox="allow-scripts allow-same-origin" scrolling="no" className="pointer-events-none h-full w-full border-0" />
+                      <iframe src={ordinalsPreviewUrl(t.inscriptionId)} title={`Free Ross #${t.index + 1}`} loading="lazy" sandbox="allow-scripts allow-same-origin" scrolling="no" className="pointer-events-none h-full w-full border-0" />
                       <Link to="/bitmap/$block" params={{ block: String(t.bitmap) }} className="absolute inset-0" aria-label={`Torch ${t.index + 1} at ${t.bitmap}.bitmap`} />
                       <span className="label pointer-events-none absolute bottom-0 left-0 bg-background/85 px-1 text-[9px]" data-no-translate>#{t.index + 1} · {t.bitmap}</span>
                     </div>
@@ -237,7 +237,7 @@ function PlayExtenders() {
           <article className="border border-bitcoin bg-card p-3">
             <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h2 className="label text-bitcoin">BITCOIN WIERDOS · ON-CHAIN POOL</h2>
+                <h2 className="label text-bitcoin">BITMAP EMPORIUM · 717328.BITMAP CHILDREN</h2>
                 <span className="label text-muted-foreground">{puppets ? puppets.list.length : "…"} FOUND ACROSS THE MAP</span>
               </div>
               <Button
@@ -250,14 +250,14 @@ function PlayExtenders() {
                 {enabled && selectedCollection === PUPPETS_POOL ? "POOL ACTIVE" : "USE POOL"}
               </Button>
             </header>
-            <p className="mb-3 break-all font-mono text-[10px] text-muted-foreground">PARENT <span data-no-translate>{PUPPETS_PARENT}</span> · ACTIVATE THE POOL TO DISTRIBUTE A DIFFERENT WIERDO ACROSS EACH CARD</p>
+            <p className="mb-3 break-all font-mono text-[10px] text-muted-foreground">PARENT <span data-no-translate>{PUPPETS_PARENT}</span> · ACTIVATE THE POOL TO DISTRIBUTE A DIFFERENT EMPORIUM PIECE ACROSS EACH CARD</p>
             {!puppets ? <p className="font-mono text-xs text-muted-foreground">&gt; READING CHILDREN…</p> : (
               <>
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
                   {puppets.list.slice(puppetPage * 24, puppetPage * 24 + 24).map((p) => (
                     <div key={p.inscriptionId} className="relative aspect-square border border-border bg-background">
-                      <img src={inscriptionContentUrl(p.inscriptionId)} alt={`Bitcoin Wierdo #${p.index + 1}`} loading="lazy" className="h-full w-full object-cover [image-rendering:pixelated]" />
-                      <Link to="/bitmap/$block" params={{ block: String(p.bitmap) }} className="absolute inset-0" aria-label={`Wierdo ${p.index + 1} at ${p.bitmap}.bitmap`} />
+                      <img src={inscriptionContentUrl(p.inscriptionId)} alt={`Bitmap Emporium #${p.index + 1}`} loading="lazy" className="h-full w-full object-cover [image-rendering:pixelated]" />
+                      <Link to="/bitmap/$block" params={{ block: String(p.bitmap) }} className="absolute inset-0" aria-label={`Emporium ${p.index + 1} at ${p.bitmap}.bitmap`} />
                       <span className="label pointer-events-none absolute bottom-0 left-0 bg-background/85 px-1 text-[9px]" data-no-translate>#{p.index + 1} · {p.bitmap}</span>
                     </div>
                   ))}
