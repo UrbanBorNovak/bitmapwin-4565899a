@@ -2,7 +2,7 @@ import { PvpFx } from "@/components/game/PvpFx";
 import { FpsCrosshair } from "@/components/game/FpsCrosshair";
 import { VoxelLayer } from "@/components/game/VoxelLayer";
 import { VoxelHud } from "@/components/game/VoxelHud";
-import { columnSurface } from "@/lib/voxel-world";
+import { VOXEL, columnSurface, voxelWallAt } from "@/lib/voxel-world";
 import { clearFraction } from "@/lib/camera-occluders";
 import { LandBuilderBar } from "@/components/game/LandBuilderBar";
 import { getSpawnPoint } from "@/lib/land-spawn.functions";
@@ -1849,6 +1849,12 @@ function PlayerCameraRig({
             return true;
           }
         }
+      }
+      // Placed blocks are solid walls: the body (two blocks tall) slides along
+      // them, steps up single ledges, and only passes over when high enough.
+      if (here && !isDriving()) {
+        const feet = traversalSurfaceY(here.x, here.z) + here.y;
+        if (voxelWallAt(x, z, feet, VOXEL * 1.9, VOXEL * 0.3)) return true;
       }
       if (aloft(pose.current)) return false;
       if (blockedAt(x, z, AVATAR_U * 0.3)) return true;
