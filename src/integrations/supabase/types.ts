@@ -2015,6 +2015,27 @@ export type Database = {
         }
         Relationships: []
       }
+      guardian_mount_unlocks: {
+        Row: {
+          block_height: number
+          raid_id: number
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          block_height: number
+          raid_id: number
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          block_height?: number
+          raid_id?: number
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       guardian_raids: {
         Row: {
           attacker_height: number
@@ -3809,6 +3830,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      shard_raid_claims: {
+        Row: {
+          claimed_at: string
+          id: string
+          raid_id: number
+          shard_height: number
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string
+          id?: string
+          raid_id: number
+          shard_height: number
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string
+          id?: string
+          raid_id?: number
+          shard_height?: number
+          user_id?: string
+        }
+        Relationships: []
       }
       shord_mint_claims: {
         Row: {
