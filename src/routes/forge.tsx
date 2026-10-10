@@ -242,8 +242,8 @@ function ForgePage() {
 
       {guide && (
         <section className="mt-5 grid gap-3 rounded-lg border border-border bg-card/40 p-4 text-xs text-muted-foreground md:grid-cols-3">
-          <div><p className="mb-1 text-primary">WHY IT LASTS</p>Your finished build is inscribed as a child of your BITMAP. It lives on Bitcoin, not on our servers — it shows on ordinals.com, in the Oasis and on your BITMAP's page forever, and travels with the land when it sells.</div>
-          <div><p className="mb-1 text-primary">HOW TO BUILD</p>Pick a piece, move over the grid, click to place. <b className="text-foreground">R</b> rotates, <b className="text-foreground">Q/E</b> change the floor level, <b className="text-foreground">Ctrl+Z</b> undoes. Start from your block's own seed or from scratch.</div>
+          <div><p className="mb-1 text-primary">WHY IT LASTS</p>Your finished build is reinscribed onto the same sat as your BITMAP. It lives on Bitcoin, not on our servers — the newest build on that sat shows on ordinals.com, in the Oasis and on your BITMAP's page, older builds stay as its on-chain history, and it travels with the land when it sells.</div>
+          <div><p className="mb-1 text-primary">HOW TO BUILD</p>Pick a piece, move over the grid, click to place. <b className="text-foreground">R</b> rotates, <b className="text-foreground">Q/E</b> change the floor level, <b className="text-foreground">Ctrl+Z</b> undoes. Start from your block's own seed, this week's blueprint, or from scratch.</div>
           <div><p className="mb-1 text-primary">WHO GETS PAID</p>Community pieces cost a small BIT fee to their maker each time you place them. When you inscribe, every maker in your build's family tree is paid in sats inside the same Bitcoin transaction. Publish your own pieces to earn too.</div>
           <button type="button" onClick={() => setGuide(false)} className="justify-self-start text-[10px] text-accent underline md:col-span-3">HIDE GUIDE</button>
         </section>
