@@ -17,6 +17,13 @@ export function ActiveBuilders() {
         </div>
         <Link to="/forge" className="btn-term">[ PUBLISH YOUR OWN PIECE ]</Link>
       </div>
+      {data.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-6 font-mono text-[11px] text-signal">
+          <span>{data.length} BUILDERS</span>
+          <span>{data.reduce((n, b) => n + b.pieces, 0)} PIECES PUBLISHED</span>
+          <span>{data.reduce((n, b) => n + b.uses, 0)} TIMES BUILT WITH</span>
+        </div>
+      )}
       {isLoading ? (
         <p className="mt-6 font-mono text-sm text-muted-foreground">&gt; LOADING BUILDERS<span className="blink">_</span></p>
       ) : data.length === 0 ? (
