@@ -45,7 +45,7 @@ function BuildMesh({ blocks }: { blocks: TplBlock[] }) {
       o.position.set(b.dx - center[0], b.dy + 0.5, b.dz - center[1]);
       o.updateMatrix();
       m.setMatrixAt(i, o.matrix);
-      m.setColorAt(i, COLORS[b.k] ?? COLORS.stone!);
+      m.setColorAt(i, COLORS[b.k] ?? COLORS["stone"]!);
     });
     m.instanceMatrix.needsUpdate = true;
     if (m.instanceColor) m.instanceColor.needsUpdate = true;
@@ -151,7 +151,7 @@ function ForgePage() {
             </div>
           )}
           <p className="text-[11px] text-muted-foreground">
-            Want to walk it first? <Link to="/oasis" search={height !== null ? ({ height } as never) : undefined} className="text-accent underline">Open the Oasis</Link>.
+            Want to walk it first? <a href={height !== null ? `/oasis?height=${height}` : "/oasis"} className="text-accent underline">Open the Oasis</a>.
           </p>
         </aside>
       </div>

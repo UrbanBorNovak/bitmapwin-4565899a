@@ -60,7 +60,7 @@ export function generateBuild(height: number, txCount: number | null, archetype:
     box(0, n, 0, 0, 0, n, "cobble");
     box(0, n, 1, 3, 0, n, "stone", true);
     for (let x = 0; x <= n; x += 2) put(x, 4, 0, "stone"), put(x, 4, n, "stone"), put(0, 4, x, "stone"), put(n, 4, x, "stone");
-    for (const [x, z] of [[0, 0], [n, 0], [0, n], [n, n]]) { box(x - 1, x + 1, 1, 7, z - 1, z + 1, "brick", true); put(x, 8, z, "glow"); }
+    for (const [x, z] of [[0, 0], [n, 0], [0, n], [n, n]] as const) { box(x - 1, x + 1, 1, 7, z - 1, z + 1, "brick", true); put(x, 8, z, "glow"); }
     box(c - 3, c + 3, 1, 6, c - 3, c + 3, "planks", true);
     box(c - 3, c + 3, 7, 7, c - 3, c + 3, "brick");
     put(c, 1, c, "gold"); put(c, 2, c, "gold"); put(c, 8, c, "glow");
