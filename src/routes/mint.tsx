@@ -201,8 +201,7 @@ function MintPage() {
             </div>
           </>
         ) : null}
-        {tab === "mine" ? <SummonDashboard />
-      <GuardianTracker /> : null}
+        {tab === "mine" ? <><SummonDashboard /><GuardianTracker /></> : null}
       </div>
 
       {open ? <SummonGuardianDialog height={height} open={open} onOpenChange={setOpen} /> : null}
