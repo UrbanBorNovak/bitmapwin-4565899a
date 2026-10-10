@@ -18,6 +18,8 @@ import { clipToParcel, inRect, parcelAt, parcelRects, type ParcelRect } from "@/
 import { publishForgeModuleFn, stampForgeModuleFn } from "@/lib/forge-modules.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useWalletSession } from "@/lib/wallet-session";
+import { heldHeightsQuery } from "@/lib/held-parcels";
+import { forgeRightsFn } from "@/lib/forge-rights.functions";
 
 export const Route = createFileRoute("/forge")({
   validateSearch: (s: Record<string, unknown>): { height?: number } => {
@@ -154,6 +156,19 @@ function ForgePage() {
   const [focus, setFocus] = useState<number | null>(null);
   useEffect(() => setFocus(null), [height]);
   const focusRect = focus !== null ? rects[focus] ?? null : null;
+  const addrs = wallet ? [wallet.ordinalsAddress, wallet.paymentAddress].filter(Boolean) as string[] : [];
+  const owned = useQuery(heldHeightsQuery(addrs));
+  const rightsFn = useServerFn(forgeRightsFn);
+  const rights = useQuery({
+    queryKey: ["forge-rights", height, wallet?.ordinalsAddress],
+    enabled: height !== null && !!wallet,
+    staleTime: 60_000,
+    queryFn: () => rightsFn({ data: { height: height!, address: wallet!.ordinalsAddress } }),
+  });
+  const role = rights.data?.role ?? "none";
+  const myParcels = rights.data?.parcels ?? [];
+  useEffect(() => { if (role === "parcel" && myParcels.length && (focus === null || !myParcels.includes(focus))) setFocus(myParcels[0]!); }, [role, myParcels, focus]);
+  const canInscribe = role === "bitmap" || (role === "parcel" && focus !== null && myParcels.includes(focus));
   const community = useCommunityModules();
   const stampFn = useServerFn(stampForgeModuleFn);
   const publishFn = useServerFn(publishForgeModuleFn);
