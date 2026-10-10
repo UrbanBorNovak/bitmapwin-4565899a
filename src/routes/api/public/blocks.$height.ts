@@ -1,5 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+/** Overall budget so a slow upstream returns 503 instead of hanging the request. */
+function deadline<T>(work: Promise<T>, ms = 20_000): Promise<T> {
+  return Promise.race([
+    work,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Upstream timeout")), ms)),
+  ]);
+}
+
 const CORS = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "GET, OPTIONS",
@@ -30,7 +38,7 @@ export const Route = createFileRoute("/api/public/blocks/$height")({
           // scale (what punk silhouettes are cut on), as JSON.
           if (new URL(request.url).searchParams.get("sides") === "1") {
             const { buildRenderSides } = await import("@/lib/block-bytes.server");
-            const data = await buildRenderSides(height);
+            const data = await deadline(buildRenderSides(height));
             return Response.json(data, {
               headers: {
                 ...CORS,
@@ -39,7 +47,7 @@ export const Route = createFileRoute("/api/public/blocks/$height")({
             });
           }
           const { buildBlockBytes } = await import("@/lib/block-bytes.server");
-          const block = await buildBlockBytes(height);
+          const block = await deadline(buildBlockBytes(height));
           return new Response(block.bytes as unknown as BodyInit, {
             headers: {
               ...CORS,
