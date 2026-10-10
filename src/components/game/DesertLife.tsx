@@ -147,6 +147,9 @@ export const DesertLife = memo(function DesertLife({
   const step = unit * 2.4; // scatter lattice pitch
   const radius = unit * 70; // how far the dressing reaches around the avatar
   const [center, setCenter] = useState<[number, number]>([0, 0]);
+  // Trees rebuild one step behind the ground scatter so the two heaviest
+  // rebuilds never land in the same frame.
+  const treeCenter = useDeferredValue(center);
 
   // Re-seed the patch only after the avatar has really moved on. Rebuilding the
   // whole dressing is the single most expensive thing that happens while you
