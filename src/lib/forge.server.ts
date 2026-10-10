@@ -94,3 +94,49 @@ async function firstForge(ids: string[], height: number, sat: string | null): Pr
   }
   return null;
 }
+
+export type ParcelForgeBuild = { index: number; rect: [number, number, number, number]; inscriptionId: string; sat: string; data: string };
+export type LandHtml = { inscriptionId: string; source: "bitmap" | "parcel"; index: number | null };
+export type ForgeLand = { parcels: ParcelForgeBuild[]; html: LandHtml[] };
+const landCache = new Map<number, { expires: number; value: ForgeLand }>();
+
+async function satLatest(inscriptionId: string): Promise<{ sat: string; latest: string } | null> {
+  const m = await ord(`/r/inscription/${inscriptionId}`);
+  const j = m ? ((await m.json().catch(() => null)) as { sat?: number | string | null } | null) : null;
+  if (j?.sat == null) return null;
+  const sat = String(j.sat);
+  const l = await ord(`/r/sat/${sat}/at/-1`);
+  const lj = l ? ((await l.json().catch(() => null)) as { id?: string } | null) : null;
+  return lj?.id && lj.id !== inscriptionId ? { sat, latest: lj.id } : null;
+}
+
+async function htmlAt(id: string): Promise<string | null> {
+  const r = await ord(`/content/${id}`);
+  if (!r || !(r.headers.get("content-type") ?? "").includes("html")) return null;
+  const buf = await r.arrayBuffer();
+  return buf.byteLength > MAX_BYTES ? "" : new TextDecoder().decode(buf);
+}
+
+/** Parcel holders' builds (newest reinscription on each valid parcel's own sat) + every HTML found on the land. */
+export async function forgeLandFor(height: number): Promise<ForgeLand> {
+  const hit = landCache.get(height);
+  if (hit && hit.expires > Date.now()) return hit.value;
+  const value: ForgeLand = { parcels: [], html: [] };
+  const district = await forgeBuildForHeight(height).catch(() => null);
+  if (district) value.html.push({ inscriptionId: district.inscriptionId, source: "bitmap", index: null });
+  const { parcelHoldersFor } = await import("@/lib/parcel-fief.server");
+  const holders = await parcelHoldersFor(height).catch(() => null);
+  for (const p of (holders?.parcels ?? []).slice(0, 24)) {
+    const s = await satLatest(p.inscriptionId);
+    if (!s) continue;
+    const html = await htmlAt(s.latest);
+    if (html === null) continue;
+    value.html.push({ inscriptionId: s.latest, source: "parcel", index: p.index });
+    const parsed = html ? parseForgeHtml(html) : null;
+    const meta = html.match(/<meta name="bitmapwin-parcel" content="(\d+);(\d+),(\d+),(\d+),(\d+)"/);
+    if (!parsed || !meta || Number(meta[1]) !== p.index) continue;
+    value.parcels.push({ index: p.index, rect: [Number(meta[2]), Number(meta[3]), Number(meta[4]), Number(meta[5])], inscriptionId: s.latest, sat: s.sat, data: parsed.data });
+  }
+  landCache.set(height, { expires: Date.now() + TTL, value });
+  return value;
+}

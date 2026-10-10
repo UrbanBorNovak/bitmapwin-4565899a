@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { getForgeBuildFn } from "@/lib/forge.functions";
+import { getForgeBuildFn, getForgeLandFn } from "@/lib/forge.functions";
 
 /** Live chain check (BITMAP page, Oasis). */
 export const forgeBuildQuery = (height: number | null) =>
@@ -21,4 +21,14 @@ export const forgeBuiltQuery = (height: number) =>
       return data ? { inscriptionId: data.inscription_id as string, sat: (data.sat as string | null) ?? null } : null;
     },
     staleTime: 10 * 60_000,
+  });
+
+/** Parcel-holder builds + HTML inscriptions on the land (chain-verified). */
+export const forgeLandQuery = (height: number | null) =>
+  queryOptions({
+    queryKey: ["forge-land", height],
+    queryFn: () => getForgeLandFn({ data: { height: height as number } }),
+    enabled: height !== null,
+    staleTime: 15 * 60_000,
+    retry: 1,
   });
