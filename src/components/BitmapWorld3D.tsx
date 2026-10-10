@@ -90,6 +90,7 @@ import type { MapControls as MapControlsImpl } from "three-stdlib";
 import { Button } from "@/components/ui/button";
 import { BitmapModelPlacement } from "@/components/BitmapModelPlacement";
 import { BssScene3D } from "@/components/game/BssScene3D";
+import { ForgeNearby } from "@/components/game/ForgeBuild3D";
 import { StreamJumbotron } from "@/components/game/StreamJumbotron";
 /** WarpSpeedTV / bitmap.stream genesis channel. */
 const JUMBOTRON_HEIGHT = 145_159;
@@ -2924,6 +2925,7 @@ const WorldScene = memo(function WorldScene({
           <BlockFloraLayer pose={pose} />
           <DropshipLayer pose={pose} surface={traversalSurfaceY} />
           <ShardRaidLayer pose={pose} surface={traversalSurfaceY} />
+          <ForgeNearby pose={pose} surface={traversalSurfaceY} />
           <Companions unit={AVATAR_U} pose={pose} />
           {self.hp <= 0 ? <GhostShade unit={AVATAR_U} pose={pose} /> : null}
         </>

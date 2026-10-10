@@ -9,6 +9,7 @@ import { atlasPlace, districtBlockRange } from "@/lib/atlas-places";
 import { getAtlasRegionStats } from "@/lib/atlas-land.functions";
 import { TraitBadges } from "@/components/TraitBadges";
 import { ClubBadge } from "@/components/ClubBadge";
+import { ForgeBadge } from "@/components/ForgeBadge";
 import { GalleryBadges } from "@/components/GalleryBadges";
 import { SatBadges } from "@/components/SatBadges";
 import { toast } from "sonner";
@@ -320,6 +321,7 @@ function BitmapDetail() {
       <div className="border-x border-b border-border px-4 py-4">
         <div className="flex flex-wrap items-center gap-2">
           <ClubBadge height={block} />
+          <ForgeBadge height={block} live />
           <GalleryBadges
             height={block}
             txCount={stats.data?.txCount ?? scan.data?.txCount ?? null}

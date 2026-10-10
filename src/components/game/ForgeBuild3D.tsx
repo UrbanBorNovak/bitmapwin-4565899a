@@ -1,5 +1,7 @@
 /** Renders a BITMAP's inscribed Land Forge build on its land in the Oasis. */
-import { memo, useEffect, useMemo, useRef } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { useFrame } from "@react-three/fiber";
+import { WORLD_CELL, WORLD_GRID, cellX, cellZ } from "@/lib/player-state";
 import { useQuery } from "@tanstack/react-query";
 import * as THREE from "three";
 import { forgeBuildQuery } from "@/lib/forge";
@@ -41,3 +43,15 @@ export const ForgeBuild3D = memo(function ForgeBuild3D({ height, position, cell 
     </group>
   );
 });
+
+/** Shows the inscribed build of the BITMAP the walker stands on (checked at most once per BITMAP). */
+export function ForgeNearby({ pose, surface }: { pose: import("react").MutableRefObject<import("@/lib/player-state").PlayerState>; surface: (x: number, z: number) => number }) {
+  const [h, setH] = useState<number | null>(null);
+  useFrame(() => {
+    const now = pose.current.height;
+    if (Number.isInteger(now) && now !== h) setH(now);
+  });
+  if (h === null) return null;
+  const x = cellX(h % WORLD_GRID), z = cellZ(Math.floor(h / WORLD_GRID));
+  return <ForgeBuild3D height={h} position={[x, surface(x, z), z]} cell={WORLD_CELL} />;
+}
