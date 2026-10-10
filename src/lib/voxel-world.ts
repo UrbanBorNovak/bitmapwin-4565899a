@@ -109,10 +109,10 @@ export function voxelWallAt(
   const y0 = Math.floor((feetY + stepUp) / VOXEL);
   const y1 = Math.floor((feetY + height - 1e-6) / VOXEL);
   if (y1 < y0) return false;
-  const xs = [toCell(wx - radius), toCell(wx + radius)];
-  const zs = [toCell(wz - radius), toCell(wz + radius)];
-  for (let x = xs[0]; x <= xs[1]; x++)
-    for (let z = zs[0]; z <= zs[1]; z++) {
+  const xa = toCell(wx - radius), xb = toCell(wx + radius);
+  const za = toCell(wz - radius), zb = toCell(wz + radius);
+  for (let x = xa; x <= xb; x++)
+    for (let z = za; z <= zb; z++) {
       if (!columns.has(`${x},${z}`)) continue;
       for (let y = y0; y <= y1; y++) if (placedSolid(x, y, z)) return true;
     }
