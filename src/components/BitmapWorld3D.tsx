@@ -3,6 +3,8 @@ import { FpsCrosshair } from "@/components/game/FpsCrosshair";
 import { VoxelLayer } from "@/components/game/VoxelLayer";
 import { VoxelHud } from "@/components/game/VoxelHud";
 import { VOXEL, columnSurface, setVoxelFeet, voxelCeilingAt, voxelWallAt } from "@/lib/voxel-world";
+import { floraSurface, floraWallAt } from "@/lib/flora-solids";
+let floraFeet: number | null = null;
 import { clearFraction } from "@/lib/camera-occluders";
 import { LandBuilderBar } from "@/components/game/LandBuilderBar";
 import { getSpawnPoint } from "@/lib/land-spawn.functions";
@@ -369,8 +371,13 @@ const OWNER_CELL_BUDGET = 24_000;
  * water line, so the higher of the two surfaces wins — otherwise the body sinks
  * through the beach the moment the water flag turns on.
  */
-const traversalSurfaceY = (x: number, z: number) =>
-  isSea(x, z) ? Math.max(groundY(x, z), waterSurfaceY(x, z)) : (columnSurface(x, z) ?? groundY(x, z));
+const traversalSurfaceY = (x: number, z: number) => {
+  if (isSea(x, z)) return Math.max(groundY(x, z), waterSurfaceY(x, z));
+  const base = columnSurface(x, z) ?? groundY(x, z);
+  // Block-grown flora is walkable: stand on hedges, flowers and tree tops you can reach.
+  const flora = floraSurface(x, z, floraFeet, VOXEL * 1.05);
+  return flora != null && flora > base ? flora : base;
+};
 
 /** Everything except the flat picking plane opts out of raycasting — one plane hit test per pointer move. */
 const noRaycast = () => {};
@@ -1855,6 +1862,7 @@ function PlayerCameraRig({
       if (here && !isDriving()) {
         const feet = traversalSurfaceY(here.x, here.z) + here.y;
         if (voxelWallAt(x, z, feet, VOXEL * 1.9, VOXEL * 0.3)) return true;
+        if (floraWallAt(x, z, feet, VOXEL * 1.9, VOXEL * 0.3, VOXEL * 1.05)) return true;
       }
       if (aloft(pose.current)) return false;
       if (blockedAt(x, z, AVATAR_U * 0.3)) return true;
@@ -2056,6 +2064,7 @@ function PlayerCameraRig({
     // Feet height before moving: roofs above it are ignored as standing surfaces.
     const feetBefore = traversalSurfaceY(player.x, player.z) + player.y;
     setVoxelFeet(driving ? null : feetBefore);
+    floraFeet = driving ? null : feetBefore;
     stepPlayer(player, intent, delta);
     if (!driving && player.vy > 0) {
       // Head-bonk: a placed block overhead stops the jump.

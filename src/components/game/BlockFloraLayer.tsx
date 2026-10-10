@@ -9,7 +9,8 @@
  */
 import { memo, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries } from "@tanstack/react-query";
+import { setFloraSolids } from "@/lib/flora-solids";
 import * as THREE from "three";
 import type { PlayerState } from "@/lib/player-state";
 import { WORLD_CELL, WORLD_GRID, cellX, cellZ, colAt, rowAt } from "@/lib/player-state";
@@ -107,7 +108,30 @@ export const BlockFloraLayer = memo(function BlockFloraLayer({ pose }: { pose: R
   });
 
   const standing = centre ? centre.row * WORLD_GRID + centre.col : -1;
-  const { data: block } = useQuery({ ...blockSizeMapQuery(Math.max(0, standing)), enabled: standing >= 0 && tip > 0 && standing <= tip });
+  // Real block facts (tx count + hash) for the 3×3 neighbourhood around the walker.
+  const nearHeights = useMemo(() => {
+    if (!centre) return [] as number[];
+    const out: number[] = [];
+    for (let dr = -1; dr <= 1; dr++)
+      for (let dc = -1; dc <= 1; dc++) {
+        const r = centre.row + dr, c = centre.col + dc;
+        if (r >= 0 && c >= 0 && r < WORLD_GRID && c < WORLD_GRID) out.push(r * WORLD_GRID + c);
+      }
+    return out;
+  }, [centre]);
+  const facts = useQueries({
+    queries: nearHeights.map((h) => ({ ...blockSizeMapQuery(h), enabled: tip > 0 && h <= tip })),
+  });
+  const factKey = facts.map((f) => (f.data ? 1 : 0)).join("");
+  const block = useMemo(() => {
+    const m = new Map<number, { tx: number; hash: string | null }>();
+    nearHeights.forEach((h, i) => {
+      const d = facts[i]?.data;
+      if (d) m.set(h, { tx: d.txCount ?? d.classes.length, hash: d.hash ?? null });
+    });
+    return m;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nearHeights, factKey]);
 
   const cubes = useMemo(() => {
     void terrain;
@@ -120,9 +144,8 @@ export const BlockFloraLayer = memo(function BlockFloraLayer({ pose }: { pose: R
         if (col < 0 || col >= WORLD_GRID || out.length >= MAX) continue;
         const height = row * WORLD_GRID + col;
         if (height > tip) continue;
-        const own = height === standing && block;
-        const tx = own ? block.txCount ?? block.classes.length : null;
-        const f = floraFor(height, tip, tx, own ? block.hash : null);
+        const real = block.get(height);
+        const f = floraFor(height, tip, real?.tx ?? null, real?.hash ?? null);
         const cx = cellX(col), cz = cellZ(row);
         // Parcel core: grows with tx count; keep the garden outside it.
         const coreHalf = WORLD_CELL * (0.08 + f.density * 0.22);
@@ -137,8 +160,11 @@ export const BlockFloraLayer = memo(function BlockFloraLayer({ pose }: { pose: R
   useLayoutEffect(() => {
     const m = mesh.current;
     if (!m) return;
+    const solids: { x: number; z: number; h: number; y0: number; y1: number }[] = [];
     cubes.forEach((c, i) => {
-      dummy.position.set(c.x, groundY(c.x, c.z) + c.y + c.s / 2, c.z);
+      const g = groundY(c.x, c.z);
+      solids.push({ x: c.x, z: c.z, h: c.s / 2, y0: g + c.y, y1: g + c.y + c.s });
+      dummy.position.set(c.x, g + c.y + c.s / 2, c.z);
       dummy.scale.setScalar(c.s);
       dummy.updateMatrix();
       m.setMatrixAt(i, dummy.matrix);
@@ -148,6 +174,7 @@ export const BlockFloraLayer = memo(function BlockFloraLayer({ pose }: { pose: R
     m.instanceMatrix.needsUpdate = true;
     if (m.instanceColor) m.instanceColor.needsUpdate = true;
     m.computeBoundingSphere();
+    setFloraSolids(solids);
   }, [cubes]);
 
   return <instancedMesh ref={mesh} args={[geometry, material, MAX]} raycast={noRaycast} frustumCulled={false} receiveShadow />;
