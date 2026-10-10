@@ -17,6 +17,7 @@ import type { ClanBadge } from "@/lib/clans";
 import { useCharacter } from "@/lib/character";
 import { damageActiveVehicle } from "@/lib/world-vehicle-combat";
 import { guardedDamage } from "@/lib/saber-duel";
+import { mountState, subscribeMount } from "@/lib/guardian-mount";
 
 /**
  * Live presence for the land map. Every visitor broadcasts the grid cell they are
@@ -66,6 +67,8 @@ export type MapCursor = {
   hitAt: number;
   /** damage shown above the avatar for the latest validated strike */
   lastDamage: number;
+  /** BITMAP height of the Shard Raid Guardian this peer rides (cosmetic) */
+  mount?: number | null;
   at: number;
 };
 
@@ -175,6 +178,7 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
           clan?: ClanBadge | null;
           hp?: number;
           gone?: boolean;
+          mount?: number | null;
         };
         if (!p?.id || p.id === selfId) return;
         if (p.gone) {
@@ -227,6 +231,7 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
                 : (previous?.hp ?? MAX_HP),
             hitAt: previous?.hitAt ?? 0,
             lastDamage: previous?.lastDamage ?? 0,
+            mount: typeof p.mount === "number" && Number.isInteger(p.mount) && p.mount >= 0 ? p.mount : null,
             at: now,
           });
         }
@@ -308,7 +313,7 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
         type: "broadcast",
         event: "cursor",
         payload: cell
-          ? { id: selfId, handle, model: modelRef.current, clan: clanRef.current, hp: hpRef.current, ...cell }
+          ? { id: selfId, handle, model: modelRef.current, clan: clanRef.current, hp: hpRef.current, mount: mountState().riding, ...cell }
           : { id: selfId, gone: true },
       });
       last = Date.now();
