@@ -13,6 +13,7 @@ import { BLOCKS, type BlockId } from "@/lib/voxel-world";
 import type { TplBlock } from "@/lib/voxel-templates";
 import { ARCHETYPES, FORGE_MAX_BLOCKS, FORGE_SPAN, encodeBuild, forgeInscriptionHtml, generateBuild, type ArchetypeId } from "@/lib/voxel-populate";
 import { HOUSE_PREFABS, SPHERES, cellKey, normaliseModule, rotatePrefab, stampInto, tributeSplit, type Contributor, type Prefab, type Sphere } from "@/lib/forge-prefabs";
+import { BLUEPRINTS, blueprintBlocks, nextDropAt, weekNumber, weeklyBlueprint } from "@/lib/forge-blueprints";
 import { publishForgeModuleFn, stampForgeModuleFn } from "@/lib/forge-modules.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useWalletSession } from "@/lib/wallet-session";
@@ -128,7 +129,7 @@ function ForgePage() {
   const [world, setWorld] = useState<Map<string, TplBlock>>(new Map());
   const [history, setHistory] = useState<Map<string, TplBlock>[]>([]);
   const [used, setUsed] = useState<Prefab[]>([]);
-  const [sphere, setSphere] = useState<Sphere>("kingdom");
+  const [sphere, setSphere] = useState<Sphere>("bricks");
   const [tool, setTool] = useState<Tool>("stamp");
   const [picked, setPicked] = useState<Prefab>(HOUSE_PREFABS[0]!);
   const [paint, setPaint] = useState<BlockId>("stone");
@@ -138,6 +139,23 @@ function ForgePage() {
   const [guide, setGuide] = useState(true);
   const [digest, setDigest] = useState<string | null>(null);
   const [pub, setPub] = useState({ name: "", bit: 10, sats: 1000 });
+  const weekly = useMemo(() => weeklyBlueprint(), []);
+  const [bpId, setBpId] = useState(weekly.id);
+  const [bpStep, setBpStep] = useState(0);
+  const [showBp, setShowBp] = useState(true);
+  const bp = BLUEPRINTS.find((b) => b.id === bpId) ?? weekly;
+  const sketch = useMemo(() => {
+    const s = bp.steps[bpStep];
+    if (!s) return [];
+    return blueprintBlocks({ ...bp, steps: [s] }).filter((b) => !world.has(cellKey(b.dx, b.dy, b.dz))).slice(0, 900);
+  }, [bp, bpStep, world]);
+  const [dropIn, setDropIn] = useState("");
+  useEffect(() => {
+    const tick = () => { const ms = nextDropAt() - Date.now(); const d = Math.floor(ms / 864e5), h = Math.floor((ms % 864e5) / 36e5); setDropIn(`${d}D ${h}H`); };
+    tick();
+    const t = setInterval(tick, 60_000);
+    return () => clearInterval(t);
+  }, []);
 
   const blocks = useMemo(() => [...world.values()], [world]);
   const ghost = useMemo(() => {
@@ -269,6 +287,25 @@ function ForgePage() {
               </div>
             </>
           )}
+          <div className="rounded border border-accent/40 bg-card/40 p-2 text-[11px]">
+            <div className="flex items-center justify-between"><span className="text-accent">BLUEPRINTS</span><span className="text-[10px] text-muted-foreground">NEXT DROP {dropIn}</span></div>
+            <select value={bp.id} onChange={(e) => { setBpId(e.target.value); setBpStep(0); }} className="mt-1 w-full rounded border border-border bg-background px-2 py-1 text-foreground">
+              {BLUEPRINTS.map((b) => <option key={b.id} value={b.id}>{b.id === weekly.id ? `★ WEEK ${weekNumber()} · ` : ""}{b.name}</option>)}
+            </select>
+            <p className="mt-1 text-muted-foreground">{bp.story}</p>
+            <ol className="mt-2 space-y-1">
+              {bp.steps.map((s, i) => (
+                <li key={s.title} className={`rounded border px-2 py-1 ${i === bpStep ? "border-accent text-foreground" : i < bpStep ? "border-border text-muted-foreground line-through" : "border-border text-muted-foreground"}`}>
+                  <b>{i + 1}. {s.title}</b> — {s.tip}
+                </li>
+              ))}
+            </ol>
+            <div className="mt-2 flex flex-wrap gap-1">
+              <button type="button" onClick={() => setShowBp((v) => !v)} className="rounded border border-border px-2 py-0.5 text-[10px] text-foreground">{showBp ? "HIDE SKETCH" : "SHOW SKETCH"}</button>
+              <button type="button" disabled={bpStep >= bp.steps.length} onClick={() => { commit(stampInto(world, blueprintBlocks({ ...bp, steps: [bp.steps[bpStep]!] }), 0, 0, 0)); setBpStep((s) => s + 1); }} className="rounded border border-accent px-2 py-0.5 text-[10px] text-accent disabled:opacity-40">BUILD STEP {Math.min(bpStep + 1, bp.steps.length)}</button>
+              <button type="button" onClick={() => setBpStep((s) => Math.min(bp.steps.length, s + 1))} className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground">I BUILT IT</button>
+            </div>
+          </div>
           <div>
             <p className="mb-1 text-[10px] text-muted-foreground">START FROM YOUR BLOCK'S SEED</p>
             <div className="flex flex-wrap gap-1">
@@ -285,6 +322,7 @@ function ForgePage() {
             <directionalLight position={[20, 40, 10]} intensity={1.2} castShadow />
             <Blocks blocks={blocks} erase={tool === "erase"} onErase={(b) => { const n = new Map(world); n.delete(cellKey(b.dx, b.dy, b.dz)); commit(n); }} />
             {hover && ghost.length > 0 && <Ghost blocks={ghost} at={hover} bad={overLimit} />}
+            {showBp && sketch.length > 0 && <Ghost blocks={sketch} at={[0, 0, 0]} bad={false} />}
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, layer, 0]} onPointerMove={onGround} onPointerLeave={() => setHover(null)} onClick={() => void place()} receiveShadow>
               <planeGeometry args={[FORGE_SPAN, FORGE_SPAN]} />
               <meshStandardMaterial color="#1b1f26" transparent opacity={layer ? 0.25 : 1} />

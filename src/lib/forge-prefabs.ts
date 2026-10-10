@@ -7,8 +7,9 @@ import type { BlockId } from "@/lib/voxel-world";
 import type { TplBlock } from "@/lib/voxel-templates";
 import { FORGE_SPAN } from "@/lib/voxel-populate";
 
-export type Sphere = "kingdom" | "cyber" | "casino" | "nature" | "community";
+export type Sphere = "bricks" | "kingdom" | "cyber" | "casino" | "nature" | "community";
 export const SPHERES: { id: Sphere; name: string }[] = [
+  { id: "bricks", name: "BRICKS" },
   { id: "kingdom", name: "KINGDOM" },
   { id: "cyber", name: "CYBER" },
   { id: "casino", name: "CASINO" },
@@ -61,7 +62,47 @@ function oak() { const s = b(); s.box(2, 2, 0, 4, 2, 2, "log"); s.box(0, 4, 4, 6
 function fountain() { const s = b(); s.box(0, 6, 0, 0, 0, 6, "stone"); s.box(1, 5, 1, 1, 1, 5, "brick", true); s.box(2, 4, 1, 1, 2, 4, "glass"); s.box(3, 3, 1, 3, 3, 3, "stone"); s.put(3, 4, 3, "glow"); return s.out; }
 function stoneCircle() { const s = b(); for (let a = 0; a < 8; a++) { const x = Math.round(4 + Math.cos((a / 8) * Math.PI * 2) * 4), z = Math.round(4 + Math.sin((a / 8) * Math.PI * 2) * 4); s.box(x, x, 0, a % 2 ? 2 : 3, z, z, "stone"); } s.put(4, 0, 4, "glow"); return s.out; }
 
+// ---- BRICKS: small interlocking parts, like toy bricks made of our voxels ----
+const brick = (w: number, d: number, h: number, k: BlockId) => { const s = b(); s.box(0, w - 1, 0, h - 1, 0, d - 1, k); return s.out; };
+function stair(k: BlockId) { const s = b(); for (let i = 0; i < 4; i++) s.box(i, i, 0, i, 0, 1, k); return s.out; }
+function arch3(k: BlockId) { const s = b(); s.box(0, 0, 0, 2, 0, 0, k); s.box(4, 4, 0, 2, 0, 0, k); s.box(0, 4, 3, 3, 0, 0, k); s.put(1, 2, 0, k); s.put(3, 2, 0, k); return s.out; }
+function gable(k: BlockId) { const s = b(); for (let y = 0; y < 3; y++) s.box(y, 6 - y, y, y, 0, 3, k); return s.out; }
+function merlon() { const s = b(); s.box(0, 3, 0, 0, 0, 0, "stone"); s.put(0, 1, 0, "stone"); s.put(3, 1, 0, "stone"); return s.out; }
+function windowFrame() { const s = b(); s.box(0, 3, 0, 3, 0, 0, "planks"); s.box(1, 2, 1, 2, 0, 0, "glass"); return s.out; }
+function door() { const s = b(); s.box(0, 3, 0, 3, 0, 0, "brick"); s.cut((t) => t.dx >= 1 && t.dx <= 2 && t.dy <= 2); s.put(1, 3, 0, "gold"); return s.out; }
+function column(k: BlockId) { const s = b(); s.box(0, 0, 0, 5, 0, 0, k); s.put(0, 6, 0, "glow"); return s.out; }
+function spiral() { const s = b(); for (let y = 0; y < 8; y++) { const a = [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2], [1, 2], [0, 2], [0, 1]][y % 8]!; s.put(a[0]!, y, a[1]!, "planks"); s.put(1, y, 1, "log"); } return s.out; }
+function lamp() { const s = b(); s.box(0, 0, 0, 3, 0, 0, "log"); s.put(0, 4, 0, "glow"); return s.out; }
+function hedge() { const s = b(); s.box(0, 3, 0, 1, 0, 0, "grass"); return s.out; }
+function pond() { const s = b(); s.box(0, 4, 0, 0, 0, 4, "stone", true); s.box(1, 3, 0, 0, 1, 3, "glass"); return s.out; }
+
+export const BRICK_PREFABS: Prefab[] = [
+  { id: "b1x1", name: "1×1 Stud", sphere: "bricks", blocks: brick(1, 1, 1, "stone") },
+  { id: "b1x2", name: "1×2 Brick", sphere: "bricks", blocks: brick(2, 1, 1, "brick") },
+  { id: "b1x4", name: "1×4 Beam", sphere: "bricks", blocks: brick(4, 1, 1, "log") },
+  { id: "b2x2", name: "2×2 Block", sphere: "bricks", blocks: brick(2, 2, 1, "cobble") },
+  { id: "b2x4", name: "2×4 Classic Brick", sphere: "bricks", blocks: brick(4, 2, 1, "brick") },
+  { id: "plate4", name: "4×4 Plate", sphere: "bricks", blocks: brick(4, 4, 1, "planks") },
+  { id: "plate8", name: "8×8 Foundation", sphere: "bricks", blocks: brick(8, 8, 1, "stone") },
+  { id: "wall4", name: "4×4 Wall Panel", sphere: "bricks", blocks: brick(4, 1, 4, "brick") },
+  { id: "glass4", name: "4×4 Glass Panel", sphere: "bricks", blocks: brick(4, 1, 4, "glass") },
+  { id: "window", name: "Window Frame", sphere: "bricks", blocks: windowFrame() },
+  { id: "door", name: "Doorway", sphere: "bricks", blocks: door() },
+  { id: "arch", name: "Round Arch", sphere: "bricks", blocks: arch3("stone") },
+  { id: "column", name: "Pillar", sphere: "bricks", blocks: column("stone") },
+  { id: "stair", name: "Stair Ramp", sphere: "bricks", blocks: stair("planks") },
+  { id: "gable", name: "Roof Gable", sphere: "bricks", blocks: gable("brick") },
+  { id: "merlon", name: "Battlement Merlon", sphere: "bricks", blocks: merlon() },
+  { id: "spiral", name: "Spiral Stair", sphere: "bricks", blocks: spiral() },
+  { id: "lamp", name: "Street Lamp", sphere: "bricks", blocks: lamp() },
+  { id: "hedge", name: "Hedge Row", sphere: "bricks", blocks: hedge() },
+  { id: "pond", name: "Pond", sphere: "bricks", blocks: pond() },
+  { id: "goldbar", name: "Gold Bar", sphere: "bricks", blocks: brick(2, 1, 1, "gold") },
+  { id: "neon", name: "Neon Strip", sphere: "bricks", blocks: brick(4, 1, 1, "glow") },
+].map((p) => ({ ...p, sphere: "bricks" as Sphere }));
+
 export const HOUSE_PREFABS: Prefab[] = [
+  ...BRICK_PREFABS,
   { id: "watchtower", name: "Corner Watchtower", sphere: "kingdom", blocks: watchtower() },
   { id: "gatehouse", name: "Castle Gatehouse", sphere: "kingdom", blocks: gatehouse() },
   { id: "wall8", name: "Battlement Wall", sphere: "kingdom", blocks: wall8() },
@@ -71,11 +112,12 @@ export const HOUSE_PREFABS: Prefab[] = [
   { id: "pad", name: "Landing Pad", sphere: "cyber", blocks: landingPad() },
   { id: "roulette", name: "Roulette Pit", sphere: "casino", blocks: roulette() },
   { id: "bullion", name: "Gold Bullion Stack", sphere: "casino", blocks: bullion() },
-  { id: "arch", name: "Neon Arch", sphere: "casino", blocks: btcArch() },
+  { id: "neonarch", name: "Neon Arch", sphere: "casino", blocks: btcArch() },
   { id: "oak", name: "Ancient Oak", sphere: "nature", blocks: oak() },
   { id: "fountain", name: "Plaza Fountain", sphere: "nature", blocks: fountain() },
   { id: "circle", name: "Stone Circle", sphere: "nature", blocks: stoneCircle() },
 ];
+export const prefabById = (id: string) => HOUSE_PREFABS.find((p) => p.id === id);
 
 /** Rotates a prefab 90° × turns around its own footprint, keeping offsets ≥ 0. */
 export function rotatePrefab(blocks: TplBlock[], turns: number): TplBlock[] {
