@@ -16,6 +16,7 @@ import { MobileAppInstall } from "@/components/MobileAppInstall";
 import { GuardianMintStatus } from "@/components/bitmon/GuardianMintStatus";
 import { LatestGuardianCard } from "@/components/bitmon/LatestGuardianCard";
 import { MintPointer } from "@/components/bitmon/MintPointer";
+import { DailyStreak } from "@/components/retention/DailyStreak";
 
 
 export const Route = createFileRoute("/")({
@@ -122,6 +123,7 @@ function Index() {
                     You own a piece of Bitcoin. Now make something happen there.
                   </p>
                   <MintPointer />
+                  <DailyStreak />
                   <LandPromptTerminal />
                   <MobileAppInstall />
                   <div data-tour="home-flow" className="mt-4 grid gap-px sm:flex sm:flex-wrap">
