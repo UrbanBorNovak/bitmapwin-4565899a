@@ -14,6 +14,7 @@ import type { TplBlock } from "@/lib/voxel-templates";
 import { ARCHETYPES, FORGE_MAX_BLOCKS, FORGE_SPAN, encodeBuild, forgeInscriptionHtml, generateBuild, type ArchetypeId } from "@/lib/voxel-populate";
 import { HOUSE_PREFABS, SPHERES, cellKey, normaliseModule, rotatePrefab, stampInto, tributeSplit, type Contributor, type Prefab, type Sphere } from "@/lib/forge-prefabs";
 import { BLUEPRINTS, blueprintBlocks, nextDropAt, weekNumber, weeklyBlueprint } from "@/lib/forge-blueprints";
+import { clipToParcel, inRect, parcelAt, parcelRects, type ParcelRect } from "@/lib/forge-parcels";
 import { publishForgeModuleFn, stampForgeModuleFn } from "@/lib/forge-modules.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useWalletSession } from "@/lib/wallet-session";
@@ -38,7 +39,34 @@ export const Route = createFileRoute("/forge")({
 
 const HALF = FORGE_SPAN / 2;
 const COLORS = Object.fromEntries(BLOCKS.map((b) => [b.id, new THREE.Color(b.top)]));
-type Tool = "stamp" | "block" | "erase";
+type Tool = "stamp" | "block" | "erase" | "parcel";
+
+function ParcelFloor({ rects, focus, hoverIdx }: { rects: ParcelRect[]; focus: number | null; hoverIdx: number | null }) {
+  const ref = useRef<THREE.InstancedMesh>(null);
+  useEffect(() => {
+    const m = ref.current;
+    if (!m) return;
+    const o = new THREE.Object3D();
+    const base = new THREE.Color("#3a2a12"), hi = new THREE.Color("#f7931a"), hv = new THREE.Color("#00f0ff"), dim = new THREE.Color("#1d2230");
+    rects.forEach((r, i) => {
+      const w = r.x1 - r.x0, d = r.z1 - r.z0;
+      o.position.set((r.x0 + r.x1) / 2 - HALF, 0.02, (r.z0 + r.z1) / 2 - HALF);
+      o.scale.set(Math.max(0.3, w - 0.15), 1, Math.max(0.3, d - 0.15));
+      o.updateMatrix();
+      m.setMatrixAt(i, o.matrix);
+      m.setColorAt(i, r.index === focus ? hi : r.index === hoverIdx ? hv : focus !== null ? dim : base);
+    });
+    m.count = rects.length;
+    m.instanceMatrix.needsUpdate = true;
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+  }, [rects, focus, hoverIdx]);
+  return (
+    <instancedMesh key={rects.length} ref={ref} args={[undefined, undefined, Math.max(1, rects.length)]} raycast={() => null}>
+      <boxGeometry args={[1, 0.04, 1]} />
+      <meshBasicMaterial />
+    </instancedMesh>
+  );
+}
 
 function Blocks({ blocks, onErase, erase }: { blocks: TplBlock[]; erase: boolean; onErase: (b: TplBlock) => void }) {
   const ref = useRef<THREE.InstancedMesh>(null);
@@ -122,6 +150,10 @@ function ForgePage() {
   const height = /^\d+$/.test(input) ? Number(input) : null;
   const { data: sizes } = useQuery({ ...blockSizeMapQuery(height ?? 0), enabled: height !== null });
   const txCount = sizes?.classes?.length ?? null;
+  const rects = useMemo(() => parcelRects(sizes?.classes), [sizes]);
+  const [focus, setFocus] = useState<number | null>(null);
+  useEffect(() => setFocus(null), [height]);
+  const focusRect = focus !== null ? rects[focus] ?? null : null;
   const community = useCommunityModules();
   const stampFn = useServerFn(stampForgeModuleFn);
   const publishFn = useServerFn(publishForgeModuleFn);
@@ -161,8 +193,11 @@ function ForgePage() {
   const ghost = useMemo(() => {
     if (tool === "erase") return [];
     if (tool === "block") return [{ dx: 0, dy: 0, dz: 0, k: paint }];
+    if (tool === "parcel") return [];
     return rotatePrefab(picked.blocks, turns);
   }, [tool, paint, picked, turns]);
+  const hoverParcel = hover ? parcelAt(rects, hover[0], hover[2]) : null;
+  const ghostOut = !!(focusRect && hover && ghost.some((b) => !inRect(focusRect, b.dx + hover[0], b.dz + hover[2])));
   const overLimit = blocks.length + (tool === "erase" ? 0 : ghost.length) > FORGE_MAX_BLOCKS;
 
   const commit = useCallback((next: Map<string, TplBlock>) => {
@@ -185,7 +220,10 @@ function ForgePage() {
   const undo = () => setHistory((h) => { const last = h[h.length - 1]; if (last) setWorld(last); return h.slice(0, -1); });
 
   const place = async (): Promise<void> => {
-    if (!hover || tool === "erase") return;
+    if (!hover) return;
+    if (tool === "parcel") { const p = parcelAt(rects, hover[0], hover[2]); setFocus(p ? p.index : null); return; }
+    if (tool === "erase") return;
+    if (focusRect && !inRect(focusRect, hover[0], hover[2])) { toast.error(`STAY INSIDE PARCEL #${focusRect.index}`); return; }
     if (overLimit) { toast.error(`BUILD LIMIT IS ${FORGE_MAX_BLOCKS} BLOCKS`); return; }
     if (tool === "stamp" && picked.author && (picked.bitCost ?? 0) > 0) {
       if (!wallet) { toast.error("CONNECT A WALLET TO USE PAID MODULES"); return; }
@@ -193,7 +231,9 @@ function ForgePage() {
       if (!r.ok) { toast.error(r.error); return; }
       if (r.paid) toast.success(`PAID ${r.paid} BIT TO ${short(picked.author)}`);
     }
-    commit(stampInto(world, ghost, hover[0], hover[1], hover[2]));
+    const next = stampInto(world, ghost, hover[0], hover[1], hover[2]);
+    if (focusRect) for (const [k, b] of next) if (!world.has(k) && !inRect(focusRect, b.dx, b.dz)) next.delete(k);
+    commit(next);
     if (tool === "stamp" && picked.author && !used.some((u) => u.id === picked.id)) setUsed((u) => [...u, picked]);
   };
 
@@ -211,7 +251,8 @@ function ForgePage() {
   const payouts = useMemo(() => tributeSplit(used.map((u) => u.lineage ?? [])), [used]);
   const payoutSats = payouts.reduce((n, p) => n + p.sats, 0);
   const lineage = used.map((u) => u.id.slice(0, 8)).join(",");
-  const html = useMemo(() => (height === null || !blocks.length ? "" : forgeInscriptionHtml(height, "studio", blocks, lineage)), [height, blocks, lineage]);
+  const parcelBlocks = useMemo(() => (focusRect ? clipToParcel(blocks, focusRect) : blocks), [blocks, focusRect]);
+  const html = useMemo(() => (height === null || !parcelBlocks.length ? "" : forgeInscriptionHtml(height, "studio", parcelBlocks, lineage, focusRect ?? undefined)), [height, parcelBlocks, lineage, focusRect]);
   const bytes = useMemo(() => new TextEncoder().encode(html).length, [html]);
   useEffect(() => {
     setDigest(null);
@@ -256,12 +297,23 @@ function ForgePage() {
             <input value={input} onChange={(e) => setInput(e.target.value.replace(/[^\d]/g, ""))} placeholder="840000" className="mt-1 w-full rounded border border-border bg-background px-3 py-2 text-foreground" />
           </label>
           <div className="flex gap-1">
-            {(["stamp", "block", "erase"] as Tool[]).map((t) => (
+            {(["stamp", "block", "erase", "parcel"] as Tool[]).map((t) => (
               <button key={t} type="button" onClick={() => setTool(t)} className={`flex-1 rounded border px-2 py-1 text-[10px] ${tool === t ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"}`}>
-                {t === "stamp" ? "PIECES" : t === "block" ? "BLOCK" : "ERASE"}
+                {t === "stamp" ? "PIECES" : t === "block" ? "BLOCK" : t === "erase" ? "ERASE" : "PARCEL"}
               </button>
             ))}
           </div>
+          {rects.length > 0 && (
+            <div className="rounded border border-primary/40 bg-card/40 p-2 text-[11px]">
+              <p className="text-primary">BUILD TARGET</p>
+              <p className="mt-1 text-muted-foreground">The floor shows this block's {rects.length.toLocaleString()} real transaction parcels. Use PARCEL and click a tile to build only on it.</p>
+              <div className="mt-2 flex items-center gap-1">
+                <button type="button" onClick={() => setFocus(null)} className={`rounded border px-2 py-0.5 text-[10px] ${focus === null ? "border-primary text-foreground" : "border-border text-muted-foreground"}`}>WHOLE BITMAP</button>
+                <input type="number" min={0} max={rects.length - 1} value={focus ?? ""} placeholder="#" onChange={(e) => { const v = Number(e.target.value); setFocus(e.target.value === "" ? null : Math.max(0, Math.min(rects.length - 1, v))); }} className="w-20 rounded border border-border bg-background px-2 py-0.5 text-foreground" />
+              </div>
+              {focusRect && <p className="mt-1 text-accent">PARCEL {focusRect.index}.{height}.BITMAP · {focusRect.x1 - focusRect.x0}×{focusRect.z1 - focusRect.z0} CELLS</p>}
+            </div>
+          )}
           {tool === "block" && (
             <div className="grid grid-cols-4 gap-1">
               {BLOCKS.map((b) => (
@@ -321,7 +373,8 @@ function ForgePage() {
             <ambientLight intensity={0.6} />
             <directionalLight position={[20, 40, 10]} intensity={1.2} castShadow />
             <Blocks blocks={blocks} erase={tool === "erase"} onErase={(b) => { const n = new Map(world); n.delete(cellKey(b.dx, b.dy, b.dz)); commit(n); }} />
-            {hover && ghost.length > 0 && <Ghost blocks={ghost} at={hover} bad={overLimit} />}
+            {hover && ghost.length > 0 && <Ghost blocks={ghost} at={hover} bad={overLimit || ghostOut} />}
+            <ParcelFloor rects={rects} focus={focus} hoverIdx={hoverParcel?.index ?? null} />
             {showBp && sketch.length > 0 && <Ghost blocks={sketch} at={[0, 0, 0]} bad={false} />}
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, layer, 0]} onPointerMove={onGround} onPointerLeave={() => setHover(null)} onClick={() => void place()} receiveShadow>
               <planeGeometry args={[FORGE_SPAN, FORGE_SPAN]} />
@@ -331,7 +384,7 @@ function ForgePage() {
             <OrbitControls enablePan={false} makeDefault maxPolarAngle={Math.PI / 2.1} />
           </SafeCanvas>
           <div className="pointer-events-none absolute left-3 top-3 rounded border border-border bg-background/70 px-2 py-1 text-[11px] text-accent backdrop-blur">
-            {height !== null ? `${height.toLocaleString()}.BITMAP · ` : ""}{blocks.length}/{FORGE_MAX_BLOCKS} BLOCKS · {(bytes / 1024).toFixed(1)} KB · LEVEL {layer} · ROT {(turns % 4) * 90}°
+            {height !== null ? `${height.toLocaleString()}.BITMAP · ` : ""}{blocks.length}/{FORGE_MAX_BLOCKS} BLOCKS · {(bytes / 1024).toFixed(1)} KB · LEVEL {layer} · ROT {(turns % 4) * 90}°{hoverParcel ? ` · TILE ${hoverParcel.index}.${height}` : ""}{focusRect ? ` · BUILDING ON PARCEL #${focusRect.index}` : ""}
           </div>
           <div className="absolute bottom-3 left-3 flex gap-1">
             <button type="button" onClick={undo} className="rounded border border-border bg-background/80 px-2 py-1 text-[10px] text-foreground">UNDO</button>
@@ -363,7 +416,7 @@ function ForgePage() {
                 height={height}
                 index={0}
                 digest={digest}
-                artifactLabel="REINSCRIBE YOUR BUILD ON THE BITMAP'S SAT"
+                artifactLabel={focusRect ? `REINSCRIBE PARCEL #${focusRect.index} BUILD ON THE BITMAP'S SAT` : "REINSCRIBE YOUR BUILD ON THE BITMAP'S SAT"}
                 actionLabel="INSCRIBE ON BITCOIN"
                 description={`Your wallet must hold ${height}.bitmap. The build is stamped onto the very same sat as your BITMAP, which returns to you in the same transaction.${payoutSats ? ` ${payoutSats.toLocaleString()} sats go to the makers listed above in that same transaction.` : ""}`}
                 allowUpload={false}
