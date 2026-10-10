@@ -164,3 +164,38 @@ export const payGuardianTributeFn = createServerFn({ method: "POST" })
       return { ok: false as const, balance: null, error: /insufficient|balance/i.test(msg) ? "NOT ENOUGH BIT" : "TRIBUTE FAILED — TRY AGAIN" };
     }
   });
+
+/** DAILY STREAK — one BIT tribute per UTC day per account; consecutive days raise it up to day 7. */
+
+
+export const dailyStreakStatusFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { readStreak } = await import("@/lib/daily-streak");
+    const { data } = await supabaseAdmin
+      .from("coin_ledger").select("ref").eq("reason", "daily_streak")
+      .like("ref", `daily:%:${context.userId}`).order("created_at", { ascending: false }).limit(10);
+    return readStreak((data ?? []).map((r) => String(r.ref ?? "").split(":")[1]), new Date().toISOString().slice(0, 10));
+  });
+
+export const claimDailyStreakFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ address: addressSchema }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { assertControls } = await import("@/lib/coins.server");
+    const { readStreak } = await import("@/lib/daily-streak");
+    await assertControls(context.supabase, context.userId, data.address);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: rows } = await supabaseAdmin
+      .from("coin_ledger").select("ref").eq("reason", "daily_streak")
+      .like("ref", `daily:%:${context.userId}`).order("created_at", { ascending: false }).limit(10);
+    const s = readStreak((rows ?? []).map((r) => String(r.ref ?? "").split(":")[1]), today);
+    if (s.claimedToday) return { ok: true as const, already: true, bit: 0, streak: s.streak, error: null };
+    const { error } = await supabaseAdmin.rpc("coin_apply", {
+      _address: data.address, _delta: s.nextBit, _reason: "daily_streak", _ref: `daily:${today}:${context.userId}`,
+    });
+    if (error) return { ok: false as const, already: false, bit: 0, streak: s.streak, error: "PAYOUT FAILED — TRY AGAIN" };
+    return { ok: true as const, already: false, bit: s.nextBit, streak: s.nextStreak, error: null };
+  });
