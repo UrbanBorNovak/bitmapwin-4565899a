@@ -1700,6 +1700,11 @@
 .oasis-fs { background: var(--background); overflow: auto; }
 .oasis-fs .oasis-storybook { height: 100dvh !important; border: 0 !important; }
 .oasis-fs-fallback { position: fixed; inset: 0; z-index: 100; }
+/* Cinematic mode: peripheral HUD fades away; only the keep-controls stay. */
+.oasis-cinematic .hud-panel:not(.hud-keep),
+.oasis-cinematic .hud-telemetry-title,
+.oasis-cinematic .legend-chip { opacity: 0 !important; pointer-events: none !important; transition: opacity 240ms ease; }
+.oasis-modded .hud-panel { transition: opacity 240ms ease; }
 @media (prefers-reduced-motion: reduce) { .oasis-modded .oasis-storybook::before { animation: none; } }
 
 /* Tweet-card embeds: keep only the 3D world, hide the full Oasis HUD. */
