@@ -71,7 +71,7 @@ function LoopDiagram() {
     <svg viewBox="0 0 400 300" className="mt-8 w-full max-w-xl border border-border" role="img" aria-label="Value loop diagram">
       <circle cx={cx} cy={cy} r={r} fill="none" strokeDasharray="4 6" className="stroke-border" />
       {pts.map(([x, y], i) => {
-        const [nx, ny] = pts[(i + 1) % pts.length];
+        const [nx, ny] = pts[(i + 1) % pts.length]!;
         return <line key={i} x1={x} y1={y} x2={nx} y2={ny} className="stroke-primary" strokeWidth={1} opacity={0.6} />;
       })}
       {pts.map(([x, y], i) => (
