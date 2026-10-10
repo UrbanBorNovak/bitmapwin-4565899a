@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import * as THREE from "three";
 import { GuardianBody } from "@/components/bitmon/GuardianBody";
 import { guardianQuery } from "@/lib/bitmon-queries";
-import { mountRev, mountState, setStanding, subscribeMount } from "@/lib/guardian-mount";
+import { SADDLE, mountRev, mountState, setStanding, subscribeMount } from "@/lib/guardian-mount";
 import { STRIDE, WORLD_GRID, cellX, cellZ, type PlayerState } from "@/lib/player-state";
 
 const S = STRIDE;
@@ -58,7 +58,7 @@ export function PeerMount({ height }: { height: number }) {
   const g = useQuery(guardianQuery(height)).data;
   if (!g) return null;
   return (
-    <group position={[0, -S * 0.1, 0]}>
+    <group position={[0, -SADDLE, 0]}>
       <GuardianBody species={g.species} rarity={g.rarity} body={g.body} accent={g.accent} unit={S * 2.2} height={g.height} inscribed={!!g.inscriptionId} />
     </group>
   );

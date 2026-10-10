@@ -1,4 +1,5 @@
 import { applyMountIntent } from "@/lib/guardian-mount";
+import { PeerMount } from "@/components/game/ShardRaidLayer";
 import { ShardRaidLayer } from "@/components/game/ShardRaidLayer";
 import { setBrHooks, stepDrop } from "@/lib/battle-royale";
 import { DropshipLayer } from "@/components/game/DropshipLayer";
@@ -1520,6 +1521,7 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
         <circleGeometry args={[AVATAR_U * 0.28, 16]} />
         <meshBasicMaterial color={colorsForShadow} transparent opacity={0.34} depthWrite={false} />
       </mesh>
+      {cursor.mount != null ? <Suspense fallback={null}><PeerMount height={cursor.mount} /></Suspense> : null}
       <group ref={body}>
         <AvatarSkin
           color={cursor.color}
@@ -1527,7 +1529,7 @@ const VisitorAvatar = memo(function VisitorAvatar({ cursor }: { cursor: MapCurso
           motion={
             cursor.hp <= 0
               ? "down"
-              : cursor.y > AVATAR_U * 0.05
+              : cursor.y > AVATAR_U * 0.05 && cursor.mount == null
                 ? "jump"
                 : cursor.movement === "run"
                   ? "run"
