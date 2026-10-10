@@ -26,6 +26,7 @@ import { RegistryResolverDriver } from "@/components/RegistryResolverDriver";
 import { BlockFactsDriver } from "@/components/BlockFactsDriver";
 import { LanguageProvider } from "@/lib/i18n";
 import { GuidedTour } from "@/components/GuidedTour";
+import { PillarDock } from "@/components/PillarDock";
 
 
 
@@ -208,7 +209,7 @@ function RootComponent() {
           <SiteHeader />
         </div>
 
-        <main className="relative z-10 flex-1">
+        <main className="relative z-10 flex-1 pb-20">
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <div key={routeKey} className="route-stage">
             <Outlet />
@@ -218,6 +219,7 @@ function RootComponent() {
           <SiteFooter />
         </div>
       </div>
+      <PillarDock />
       <GuidedTour />
       <TradeCrawlerDriver />
       <BssCrawlerDriver />
