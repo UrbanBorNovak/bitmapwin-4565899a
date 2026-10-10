@@ -20,7 +20,11 @@ import { MINT_COPY, MintLangToggle, useMintLang } from "@/lib/mint-lang";
 import { AuraChamber } from "@/components/bitmon/AuraChamber";
 
 export const Route = createFileRoute("/mint")({
-  validateSearch: z.object({ height: z.coerce.number().int().min(0).optional() }),
+  validateSearch: z.object({
+    height: z.coerce.number().int().min(0).optional(),
+    tab: z.enum(["tutorial", "tour", "wallet", "story", "mine"]).optional(),
+  }),
+
   head: () => ({
     meta: [
       { title: "Summon a DMT Guardian — BITMAPWIN" },
@@ -36,19 +40,20 @@ export const Route = createFileRoute("/mint")({
 
 
 function MintPage() {
-  const { height: initial } = Route.useSearch();
+  const { height: initial, tab: tabFromUrl } = Route.useSearch();
   const navigate = useNavigate({ from: "/mint" });
   const [input, setInput] = useState(String(initial ?? 840000));
   const height = initial ?? 840000;
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<Tab>("tour");
+  const [tab, setTab] = useState<Tab>(tabFromUrl ?? "tour");
+
   const [lang, setLang] = useMintLang();
   const t = MINT_COPY[lang];
   const dna = useQuery(guardianDnaQuery(height));
   const awake = useQuery(guardianQuery(height));
   const d = dna.data;
   const m = d ? morphFromDna(d) : null;
-  const go = (h: number) => Number.isInteger(h) && h >= 0 && navigate({ search: { height: h } });
+  const go = (h: number) => Number.isInteger(h) && h >= 0 && navigate({ search: { height: h, tab } });
 
   const stats = d ? ([["HP", d.hp], ["BITE", d.bite], ["SPEED", d.speed], ["ARMOR", d.armor]] as const) : [];
   const maxStat = Math.max(100, ...stats.map(([, v]) => Number(v) || 0));
@@ -201,7 +206,7 @@ function MintPage() {
             </div>
           </>
         ) : null}
-        {tab === "mine" ? <><SummonDashboard /><GuardianTracker /></> : null}
+        {tab === "mine" ? <><SummonDashboard /><div id="guardian-tracker"><GuardianTracker /></div></> : null}
       </div>
 
       {open ? <SummonGuardianDialog height={height} open={open} onOpenChange={setOpen} /> : null}
