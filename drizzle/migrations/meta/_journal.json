@@ -15,6 +15,13 @@
       "when": 1791654963205,
       "tag": "0001_shard_raids_and_guardian_mounts",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791657036486,
+      "tag": "0002_bitmap_forge_builds",
+      "breakpoints": true
     }
   ]
 }

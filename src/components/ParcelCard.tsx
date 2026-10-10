@@ -8,6 +8,7 @@ import { GuardianMintStatus } from "@/components/bitmon/GuardianMintStatus";
 import { SatBadges } from "@/components/SatBadges";
 import { TraitBadges } from "@/components/TraitBadges";
 import { ClubBadge } from "@/components/ClubBadge";
+import { ForgeBadge } from "@/components/ForgeBadge";
 import { VerificationChip } from "@/components/ProvenancePanel";
 import { formatSats } from "@/lib/trades";
 import { openBidsQuery, topBidByHeight } from "@/lib/bids";
@@ -35,6 +36,7 @@ export function ParcelCard({ parcel, traitHolder }: { parcel: RegistryParcel; tr
           <div className="flex items-baseline gap-2">
             <div className="display text-sm">{parcel.bitmapHeight}.BITMAP</div>
             <ClubBadge height={parcel.bitmapHeight} />
+            <ForgeBadge height={parcel.bitmapHeight} />
           </div>
           <span className="label">{PARCEL_STATUS_LABEL[parcel.status]}</span>
         </div>

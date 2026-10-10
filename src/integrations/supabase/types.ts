@@ -282,6 +282,30 @@ export type Database = {
         }
         Relationships: []
       }
+      bitmap_forge_builds: {
+        Row: {
+          archetype: string | null
+          bitmap_height: number
+          block_count: number
+          inscription_id: string
+          verified_at: string
+        }
+        Insert: {
+          archetype?: string | null
+          bitmap_height: number
+          block_count?: number
+          inscription_id: string
+          verified_at?: string
+        }
+        Update: {
+          archetype?: string | null
+          bitmap_height?: number
+          block_count?: number
+          inscription_id?: string
+          verified_at?: string
+        }
+        Relationships: []
+      }
       bitmap_index: {
         Row: {
           block_height: number
