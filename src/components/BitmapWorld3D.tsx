@@ -2,7 +2,7 @@ import { PvpFx } from "@/components/game/PvpFx";
 import { FpsCrosshair } from "@/components/game/FpsCrosshair";
 import { VoxelLayer } from "@/components/game/VoxelLayer";
 import { VoxelHud } from "@/components/game/VoxelHud";
-import { VOXEL, columnSurface, voxelWallAt } from "@/lib/voxel-world";
+import { VOXEL, columnSurface, setVoxelFeet, voxelCeilingAt, voxelWallAt } from "@/lib/voxel-world";
 import { clearFraction } from "@/lib/camera-occluders";
 import { LandBuilderBar } from "@/components/game/LandBuilderBar";
 import { getSpawnPoint } from "@/lib/land-spawn.functions";
@@ -2053,7 +2053,20 @@ function PlayerCameraRig({
     steer.current = damp(steer.current, intent.turn, 9, delta);
     intent.turn = Math.abs(steer.current) < 0.02 ? 0 : steer.current;
     const fallSpeed = player.grounded ? 0 : Math.max(0, -player.vy);
+    // Feet height before moving: roofs above it are ignored as standing surfaces.
+    const feetBefore = traversalSurfaceY(player.x, player.z) + player.y;
+    setVoxelFeet(driving ? null : feetBefore);
     stepPlayer(player, intent, delta);
+    if (!driving && player.vy > 0) {
+      // Head-bonk: a placed block overhead stops the jump.
+      const roof = voxelCeilingAt(player.x, player.z, feetBefore, VOXEL * 0.3);
+      const base = traversalSurfaceY(player.x, player.z);
+      if (roof != null && base + player.y + VOXEL * 1.9 > roof) {
+        player.y = Math.max(0, roof - VOXEL * 1.9 - base);
+        player.vy = 0;
+        playSfx("step");
+      }
+    }
 
     // Touching down after a jump or a fall dips the view once, hard enough to
     // feel and short enough not to fight the next step.
