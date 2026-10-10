@@ -3,7 +3,7 @@
  * Device-local presentation only: it moves the visitor's own avatar and never
  * settles anything (no BIT, no kills). The storm circle comes in a later phase.
  */
-import { STRIDE, WORLD_UNITS, syncCell, type MoveIntent, type PlayerState } from "./player-state";
+import { STRIDE, syncCell, type MoveIntent, type PlayerState } from "./player-state";
 
 export type DropPhase = "idle" | "plane" | "freefall" | "glide";
 
@@ -69,8 +69,8 @@ export function cancelDrop() {
   emit();
 }
 
-const clampX = (x: number) => Math.max(-WORLD_UNITS / 2 + 0.05, Math.min(WORLD_UNITS / 2 - 0.05, x));
-const clampZ = (z: number) => Math.max(0.05, Math.min(WORLD_UNITS - 0.05, z));
+const clampX = (x: number) => x;
+const clampZ = (z: number) => z;
 
 /** Plane position at progress 0..1 along its line. */
 export function planeAt(p: number) {

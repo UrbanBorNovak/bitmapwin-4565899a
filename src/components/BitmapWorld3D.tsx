@@ -1,3 +1,5 @@
+import { stepDrop } from "@/lib/battle-royale";
+import { DropshipLayer } from "@/components/game/DropshipLayer";
 import { PvpFx } from "@/components/game/PvpFx";
 import { FpsCrosshair } from "@/components/game/FpsCrosshair";
 import { VoxelLayer } from "@/components/game/VoxelLayer";
@@ -2065,7 +2067,7 @@ function PlayerCameraRig({
     const feetBefore = traversalSurfaceY(player.x, player.z) + player.y;
     setVoxelFeet(driving ? null : feetBefore);
     floraFeet = driving ? null : feetBefore;
-    stepPlayer(player, intent, delta);
+    if (!stepDrop(player, intent, delta, traversalSurfaceY)) stepPlayer(player, intent, delta);
     if (!driving && player.vy > 0) {
       // Head-bonk: a placed block overhead stops the jump.
       const roof = voxelCeilingAt(player.x, player.z, feetBefore, VOXEL * 0.3);
@@ -2915,6 +2917,7 @@ const WorldScene = memo(function WorldScene({
           /> : null}
           <LandGrowth unit={AVATAR_U} pose={pose} firstPerson={cameraMode === "first"} />
           <BlockFloraLayer pose={pose} />
+          <DropshipLayer pose={pose} surface={traversalSurfaceY} />
           <Companions unit={AVATAR_U} pose={pose} />
           {self.hp <= 0 ? <GhostShade unit={AVATAR_U} pose={pose} /> : null}
         </>

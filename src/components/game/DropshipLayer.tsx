@@ -2,13 +2,13 @@ import { useRef, type MutableRefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { dropState, planeAt, planeProgress } from "@/lib/battle-royale";
-import { STRIDE, traversalSurfaceY, type PlayerState } from "@/lib/player-state";
+import { STRIDE, type PlayerState } from "@/lib/player-state";
 
 const S = STRIDE;
 const noRaycast = () => null;
 
 /** Voxel cargo plane + the glider canopy over the diver. Visible only during a drop. */
-export function DropshipLayer({ pose }: { pose: MutableRefObject<PlayerState> }) {
+export function DropshipLayer({ pose, surface }: { pose: MutableRefObject<PlayerState>; surface: (x: number, z: number) => number }) {
   const plane = useRef<THREE.Group>(null);
   const glider = useRef<THREE.Group>(null);
   const props = useRef<THREE.Mesh[]>([]);
@@ -18,7 +18,7 @@ export function DropshipLayer({ pose }: { pose: MutableRefObject<PlayerState> })
     const g = plane.current;
     if (g) {
       // The plane keeps flying on after you jump until its line ends.
-      const at = st.path ? planeAt(st.phase === "plane" ? planeProgress() : Math.min(1, planeProgress() + 0)) : null;
+      const at = st.path ? planeAt(planeProgress()) : null;
       g.visible = Boolean(at);
       if (at) {
         g.position.set(at.x, at.y, at.z);
@@ -31,7 +31,7 @@ export function DropshipLayer({ pose }: { pose: MutableRefObject<PlayerState> })
       const p = pose.current;
       gl.visible = st.phase === "glide";
       if (gl.visible) {
-        gl.position.set(p.x, traversalSurfaceY(p.x, p.z) + p.y + S * 2.1, p.z);
+        gl.position.set(p.x, surface(p.x, p.z) + p.y + S * 2.1, p.z);
         gl.rotation.set(0.12, p.yaw, Math.sin(clock.elapsedTime * 1.3) * 0.05);
       }
     }
