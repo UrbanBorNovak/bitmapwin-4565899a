@@ -288,6 +288,7 @@ export type Database = {
           bitmap_height: number
           block_count: number
           inscription_id: string
+          sat: string | null
           verified_at: string
         }
         Insert: {
@@ -295,6 +296,7 @@ export type Database = {
           bitmap_height: number
           block_count?: number
           inscription_id: string
+          sat?: string | null
           verified_at?: string
         }
         Update: {
@@ -302,6 +304,7 @@ export type Database = {
           bitmap_height?: number
           block_count?: number
           inscription_id?: string
+          sat?: string | null
           verified_at?: string
         }
         Relationships: []
