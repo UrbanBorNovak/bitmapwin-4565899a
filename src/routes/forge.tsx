@@ -169,7 +169,8 @@ function ForgePage() {
   const myParcels = rights.data?.parcels ?? [];
   useEffect(() => { if (role === "parcel" && myParcels.length && (focus === null || !myParcels.includes(focus))) setFocus(myParcels[0]!); }, [role, myParcels, focus]);
   // Reinscription spends the BITMAP's own sat, so only the BITMAP holder can sign it.
-  const canInscribe = role === "bitmap";
+  const parcelTarget = role === "parcel" && focus !== null && myParcels.includes(focus) ? focus : undefined;
+  const canInscribe = role === "bitmap" || parcelTarget !== undefined;
   const community = useCommunityModules();
   const stampFn = useServerFn(stampForgeModuleFn);
   const publishFn = useServerFn(publishForgeModuleFn);
