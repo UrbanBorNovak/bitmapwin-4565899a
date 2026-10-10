@@ -8,7 +8,7 @@
  * the patch you can actually see is ever pushed to the GPU.
  */
 import { farFromPlayer } from "./simGate";
-import { Suspense, memo, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { Suspense, memo, startTransition, useDeferredValue, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
@@ -167,7 +167,9 @@ export const DesertLife = memo(function DesertLife({
     const now = performance.now();
     if (now - lastSeed.current < 650) return;
     lastSeed.current = now;
-    setCenter([aimX, aimZ]);
+    // A transition lets React slice the rebuild of every scatter layer across
+    // frames instead of stalling one frame for 20–35 ms.
+    startTransition(() => setCenter([aimX, aimZ]));
   });
 
   const patch = useMemo(() => {
@@ -551,8 +553,8 @@ export const DesertLife = memo(function DesertLife({
       <DiamondNodes unit={unit} center={center} radius={radius} />
       <DesertProps unit={unit} center={center} radius={radius} />
       <OreMines unit={unit} center={center} radius={radius} />
-      <PineTrees unit={unit} center={center} radius={radius} />
-      <VoxelTrees unit={unit} center={center} radius={radius} />
+      <PineTrees unit={unit} center={treeCenter} radius={radius} />
+      <VoxelTrees unit={unit} center={treeCenter} radius={radius} />
       <Houses unit={unit} center={center} radius={radius} />
       <ClayShrines unit={unit} center={center} radius={radius} />
       <Igloos unit={unit} center={center} radius={radius} />
