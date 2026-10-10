@@ -63,6 +63,8 @@ export function ShadowInscriber(props: {
   claimParentsForHeight?: number;
   /** Optional user-supplied `<height>.bitmap` inscription id (verified server-side). */
   parentBitmapInscriptionId?: string;
+  /** Reinscribe: land the new inscription on the BITMAP's own sat (tag 2 pointer). */
+  reinscribeOnBitmap?: boolean;
   /** Server refuses to price the inscription unless this block's Guardian is already summoned. */
   requireAwake?: boolean;
   /** Where the inscribed sat lands. Defaults to the connected wallet's ordinals address. */
@@ -213,6 +215,7 @@ export function ShadowInscriber(props: {
       const wallet = await resolveWallet();
       const body = file?.bytes ?? new TextEncoder().encode(artifactSource);
       let parents: ParentSpend[] = [];
+      let pointer: number | undefined;
       if (props.claimParentsForHeight !== undefined) {
         setBusy("CHECKING THE PARENT BITMAP…");
         let res: Awaited<ReturnType<typeof resolveParents>>;
@@ -244,6 +247,14 @@ export function ShadowInscriber(props: {
           throw new Error("MINT STOPPED — THE COLLECTION PARENT IS UNAVAILABLE RIGHT NOW. NOTHING WAS PAID.");
         }
         parents = res.parents;
+        if (props.reinscribeOnBitmap) {
+          let before = 0;
+          for (const p of parents) {
+            if (p.inscriptionId === res.bitmapParentId) { pointer = before + (p.offset ?? 0); break; }
+            before += p.value;
+          }
+          if (pointer === undefined) throw new Error("MINT STOPPED — COULD NOT LOCATE THE BITMAP'S SAT. NOTHING WAS PAID.");
+        }
       }
       const prepared = await prepareJob({
         digest: props.digest,
@@ -251,6 +262,7 @@ export function ShadowInscriber(props: {
         body,
         receiveAddress: props.receiveAddress ?? wallet.ordinalsAddress,
         ...(parents.length ? { parents } : {}),
+        ...(pointer !== undefined ? { pointer } : {}),
         ...(!file && variant?.delegate ? { delegate: variant.delegate } : {}),
         ...(!file && variant?.tribute ? { tribute: variant.tribute } : {}),
         ...(!file && variant?.tributes?.length ? { tributes: variant.tributes } : {}),

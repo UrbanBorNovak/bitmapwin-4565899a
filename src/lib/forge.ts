@@ -17,8 +17,8 @@ export const forgeBuiltQuery = (height: number) =>
   queryOptions({
     queryKey: ["forge-built", height],
     queryFn: async () => {
-      const { data } = await supabase.from("bitmap_forge_builds").select("inscription_id").eq("bitmap_height", height).maybeSingle();
-      return data?.inscription_id ?? null;
+      const { data } = await supabase.from("bitmap_forge_builds").select("inscription_id, sat").eq("bitmap_height", height).maybeSingle();
+      return data ? { inscriptionId: data.inscription_id as string, sat: (data.sat as string | null) ?? null } : null;
     },
     staleTime: 10 * 60_000,
   });

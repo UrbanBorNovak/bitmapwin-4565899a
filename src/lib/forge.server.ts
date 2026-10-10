@@ -1,7 +1,8 @@
 /**
- * Finds the newest Land Forge build inscribed as a child of a BITMAP.
- * Only children listed by ordinals.com under the bitmap inscription count, so
- * the parent claim (proof the holder made it) is checked by Ordinals itself.
+ * Finds the active Land Forge build of a BITMAP: the newest reinscription on the
+ * BITMAP's own sat (/r/sat/<sat>/at/-1, one hop). Only the sat's holder can
+ * reinscribe it, so Bitcoin itself proves the owner made it. Older child-style
+ * builds are still read as a fallback.
  */
 import { FORGE_FORMAT } from "@/lib/voxel-populate";
 
@@ -9,7 +10,7 @@ const ORD = "https://ordinals.com";
 const TTL = 15 * 60_000;
 const MAX_BYTES = 120_000;
 
-export type ForgeBuild = { inscriptionId: string; archetype: string | null; data: string; blockCount: number };
+export type ForgeBuild = { sat: string | null; inscriptionId: string; archetype: string | null; data: string; blockCount: number };
 const cache = new Map<number, { expires: number; value: ForgeBuild | null }>();
 
 async function ord(path: string): Promise<Response | null> {
@@ -43,6 +44,24 @@ export async function forgeBuildForHeight(height: number): Promise<ForgeBuild | 
   if (!parent) return put(null);
 
   const ids: string[] = [];
+  let sat: string | null = null;
+  const meta = await ord(`/r/inscription/${parent}`);
+  if (meta) {
+    const j = (await meta.json().catch(() => null)) as { sat?: number | string | null } | null;
+    sat = j?.sat != null ? String(j.sat) : null;
+  }
+  if (sat) {
+    // newest first: at/-1, then the rest of the sat's reinscriptions
+    const latest = await ord(`/r/sat/${sat}/at/-1`);
+    const lj = latest ? ((await latest.json().catch(() => null)) as { id?: string } | null) : null;
+    const satIds: string[] = [];
+    if (lj?.id && lj.id !== parent) satIds.push(lj.id);
+    const list = await ord(`/r/sat/${sat}`);
+    const all = list ? ((await list.json().catch(() => null)) as { ids?: string[] } | null) : null;
+    for (const id of [...(all?.ids ?? [])].reverse()) if (id !== parent && !satIds.includes(id)) satIds.push(id);
+    const hit = await firstForge(satIds.slice(0, 8), height, sat);
+    if (hit) return put(hit);
+  }
   for (let page = 0; page < 4; page++) {
     const r = await ord(`/r/children/${parent}/inscriptions/${page}`);
     if (!r) break;
@@ -50,24 +69,28 @@ export async function forgeBuildForHeight(height: number): Promise<ForgeBuild | 
     for (const c of j.children ?? []) if (c?.id) ids.push(c.id);
     if (!j.more) break;
   }
-  for (const id of ids.reverse().slice(0, 12)) {
+  return put(await firstForge(ids.reverse().slice(0, 12), height, null));
+}
+
+async function firstForge(ids: string[], height: number, sat: string | null): Promise<ForgeBuild | null> {
+  for (const id of ids) {
     const r = await ord(`/content/${id}`);
     if (!r || !(r.headers.get("content-type") ?? "").includes("html")) continue;
     const buf = await r.arrayBuffer();
     if (buf.byteLength > MAX_BYTES) continue;
     const parsed = parseForgeHtml(new TextDecoder().decode(buf));
     if (!parsed) continue;
-    const build = { inscriptionId: id, archetype: parsed.archetype, data: parsed.data, blockCount: Math.floor(atob(parsed.data).length / 4) };
+    const build = { sat, inscriptionId: id, archetype: parsed.archetype, data: parsed.data, blockCount: Math.floor(atob(parsed.data).length / 4) };
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       await supabaseAdmin.from("bitmap_forge_builds").upsert(
-        { bitmap_height: height, inscription_id: id, archetype: build.archetype, block_count: build.blockCount, verified_at: new Date().toISOString() },
+        { bitmap_height: height, sat, inscription_id: id, archetype: build.archetype, block_count: build.blockCount, verified_at: new Date().toISOString() },
         { onConflict: "bitmap_height" },
       );
     } catch {
       // the build still renders when the directory write fails
     }
-    return put(build);
+    return build;
   }
-  return put(null);
+  return null;
 }
