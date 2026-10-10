@@ -1837,6 +1837,51 @@ export type Database = {
         }
         Relationships: []
       }
+      forge_modules: {
+        Row: {
+          author_address: string
+          author_user: string
+          bit_cost: number
+          block_count: number
+          blocks: Json
+          created_at: string
+          id: string
+          lineage: Json
+          name: string
+          sphere: string
+          tribute_sats: number
+          uses: number
+        }
+        Insert: {
+          author_address: string
+          author_user: string
+          bit_cost?: number
+          block_count: number
+          blocks: Json
+          created_at?: string
+          id?: string
+          lineage?: Json
+          name: string
+          sphere?: string
+          tribute_sats?: number
+          uses?: number
+        }
+        Update: {
+          author_address?: string
+          author_user?: string
+          bit_cost?: number
+          block_count?: number
+          blocks?: Json
+          created_at?: string
+          id?: string
+          lineage?: Json
+          name?: string
+          sphere?: string
+          tribute_sats?: number
+          uses?: number
+        }
+        Relationships: []
+      }
       genesis_minters: {
         Row: {
           block_height: number

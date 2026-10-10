@@ -43,6 +43,8 @@ export type ArtifactVariant = {
   delegate?: string;
   /** Output paid inside the reveal, so the master generator can verify it on chain. */
   tribute?: { address: string; sats: number };
+  /** Creator payouts (Land Forge contributors), one output each inside the reveal. */
+  tributes?: { address: string; sats: number }[];
 };
 
 export function ShadowInscriber(props: {
@@ -251,6 +253,7 @@ export function ShadowInscriber(props: {
         ...(parents.length ? { parents } : {}),
         ...(!file && variant?.delegate ? { delegate: variant.delegate } : {}),
         ...(!file && variant?.tribute ? { tribute: variant.tribute } : {}),
+        ...(!file && variant?.tributes?.length ? { tributes: variant.tributes } : {}),
       });
 
       setJob(prepared);

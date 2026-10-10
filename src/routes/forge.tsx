@@ -1,14 +1,21 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import * as THREE from "three";
 import { OrbitControls } from "@react-three/drei";
+import type { ThreeEvent } from "@react-three/fiber";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { ShadowInscriber } from "@/components/territory/ShadowInscriber";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
-import { BLOCKS } from "@/lib/voxel-world";
+import { BLOCKS, type BlockId } from "@/lib/voxel-world";
 import type { TplBlock } from "@/lib/voxel-templates";
-import { ARCHETYPES, encodeBuild, forgeInscriptionHtml, generateBuild, type ArchetypeId } from "@/lib/voxel-populate";
+import { ARCHETYPES, FORGE_MAX_BLOCKS, FORGE_SPAN, encodeBuild, forgeInscriptionHtml, generateBuild, type ArchetypeId } from "@/lib/voxel-populate";
+import { HOUSE_PREFABS, SPHERES, cellKey, normaliseModule, rotatePrefab, stampInto, tributeSplit, type Contributor, type Prefab, type Sphere } from "@/lib/forge-prefabs";
+import { publishForgeModuleFn, stampForgeModuleFn } from "@/lib/forge-modules.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { useWalletSession } from "@/lib/wallet-session";
 
 export const Route = createFileRoute("/forge")({
   validateSearch: (s: Record<string, unknown>): { height?: number } => {
@@ -17,10 +24,10 @@ export const Route = createFileRoute("/forge")({
   },
   head: () => ({
     meta: [
-      { title: "Land Forge — Build & Inscribe Your BITMAP On-Chain" },
-      { name: "description", content: "One-click voxel builds seeded by your BITMAP's own block, inscribed as a permanent child of your land on Bitcoin." },
-      { property: "og:title", content: "Land Forge — On-Chain Builds for BITMAPs" },
-      { property: "og:description", content: "Populate your BITMAP in one click and inscribe the build as a child on Bitcoin. Built land stands out." },
+      { title: "Land Forge Studio — Build, Remix & Inscribe Your BITMAP" },
+      { name: "description", content: "Drag-and-drop voxel studio for BITMAPs. Reuse community modules, pay their creators, and inscribe the finished build as a child on Bitcoin." },
+      { property: "og:title", content: "Land Forge Studio — Composable On-Chain Builds" },
+      { property: "og:description", content: "Build on top of each other's work. Every creator in your build gets paid in sats the moment you inscribe." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -28,32 +35,58 @@ export const Route = createFileRoute("/forge")({
   component: ForgePage,
 });
 
+const HALF = FORGE_SPAN / 2;
 const COLORS = Object.fromEntries(BLOCKS.map((b) => [b.id, new THREE.Color(b.top)]));
+type Tool = "stamp" | "block" | "erase";
 
-function BuildMesh({ blocks }: { blocks: TplBlock[] }) {
+function Blocks({ blocks, onErase, erase }: { blocks: TplBlock[]; erase: boolean; onErase: (b: TplBlock) => void }) {
   const ref = useRef<THREE.InstancedMesh>(null);
-  const center = useMemo(() => {
-    let mx = 0, mz = 0;
-    for (const b of blocks) { mx = Math.max(mx, b.dx); mz = Math.max(mz, b.dz); }
-    return [mx / 2, mz / 2] as const;
-  }, [blocks]);
   useEffect(() => {
     const m = ref.current;
     if (!m) return;
     const o = new THREE.Object3D();
     blocks.forEach((b, i) => {
-      o.position.set(b.dx - center[0], b.dy + 0.5, b.dz - center[1]);
+      o.position.set(b.dx - HALF + 0.5, b.dy + 0.5, b.dz - HALF + 0.5);
       o.updateMatrix();
       m.setMatrixAt(i, o.matrix);
       m.setColorAt(i, COLORS[b.k] ?? COLORS["stone"]!);
     });
+    m.count = blocks.length;
     m.instanceMatrix.needsUpdate = true;
     if (m.instanceColor) m.instanceColor.needsUpdate = true;
-  }, [blocks, center]);
+  }, [blocks]);
   return (
-    <instancedMesh key={blocks.length} ref={ref} args={[undefined, undefined, blocks.length]} castShadow receiveShadow>
+    <instancedMesh
+      ref={ref}
+      args={[undefined, undefined, FORGE_MAX_BLOCKS + 400]}
+      castShadow
+      receiveShadow
+      onClick={(e) => { if (!erase || e.instanceId == null) return; e.stopPropagation(); const b = blocks[e.instanceId]; if (b) onErase(b); }}
+    >
       <boxGeometry args={[0.96, 0.96, 0.96]} />
       <meshStandardMaterial roughness={0.7} />
+    </instancedMesh>
+  );
+}
+
+function Ghost({ blocks, at, bad }: { blocks: TplBlock[]; at: [number, number, number]; bad: boolean }) {
+  const ref = useRef<THREE.InstancedMesh>(null);
+  useEffect(() => {
+    const m = ref.current;
+    if (!m) return;
+    const o = new THREE.Object3D();
+    blocks.forEach((b, i) => {
+      o.position.set(b.dx + at[0] - HALF + 0.5, b.dy + at[1] + 0.5, b.dz + at[2] - HALF + 0.5);
+      o.updateMatrix();
+      m.setMatrixAt(i, o.matrix);
+    });
+    m.count = blocks.length;
+    m.instanceMatrix.needsUpdate = true;
+  }, [blocks, at]);
+  return (
+    <instancedMesh ref={ref} args={[undefined, undefined, 900]} raycast={() => null}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshBasicMaterial color={bad ? "#ff4d4d" : "#00f0ff"} transparent opacity={0.35} depthWrite={false} />
     </instancedMesh>
   );
 }
@@ -63,77 +96,228 @@ async function sha(s: string) {
   return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+type ModuleRow = { id: string; name: string; author_address: string; blocks: TplBlock[]; bit_cost: number; tribute_sats: number; lineage: Contributor[]; uses: number };
+
+function useCommunityModules() {
+  return useQuery({
+    queryKey: ["forge-modules"],
+    staleTime: 60_000,
+    queryFn: async (): Promise<Prefab[]> => {
+      const { data } = await supabase.from("forge_modules").select("id, name, author_address, blocks, bit_cost, tribute_sats, lineage, uses").order("uses", { ascending: false }).limit(60);
+      return ((data ?? []) as unknown as ModuleRow[]).map((r) => ({
+        id: r.id, name: r.name, sphere: "community" as Sphere, blocks: r.blocks, author: r.author_address,
+        bitCost: r.bit_cost, tributeSats: r.tribute_sats, lineage: r.lineage ?? [],
+      }));
+    },
+  });
+}
+
+const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
+
 function ForgePage() {
   const search = Route.useSearch();
+  const wallet = useWalletSession();
   const [input, setInput] = useState(String(search.height ?? ""));
   const height = /^\d+$/.test(input) ? Number(input) : null;
-  const [arch, setArch] = useState<ArchetypeId>("citadel");
-  const [digest, setDigest] = useState<string | null>(null);
   const { data: sizes } = useQuery({ ...blockSizeMapQuery(height ?? 0), enabled: height !== null });
   const txCount = sizes?.classes?.length ?? null;
+  const community = useCommunityModules();
+  const stampFn = useServerFn(stampForgeModuleFn);
+  const publishFn = useServerFn(publishForgeModuleFn);
 
-  const blocks = useMemo(() => (height === null ? [] : generateBuild(height, txCount, arch)), [height, txCount, arch]);
-  const html = useMemo(() => (height === null ? "" : forgeInscriptionHtml(height, arch, blocks)), [height, arch, blocks]);
+  const [world, setWorld] = useState<Map<string, TplBlock>>(new Map());
+  const [history, setHistory] = useState<Map<string, TplBlock>[]>([]);
+  const [used, setUsed] = useState<Prefab[]>([]);
+  const [sphere, setSphere] = useState<Sphere>("kingdom");
+  const [tool, setTool] = useState<Tool>("stamp");
+  const [picked, setPicked] = useState<Prefab>(HOUSE_PREFABS[0]!);
+  const [paint, setPaint] = useState<BlockId>("stone");
+  const [turns, setTurns] = useState(0);
+  const [layer, setLayer] = useState(0);
+  const [hover, setHover] = useState<[number, number, number] | null>(null);
+  const [guide, setGuide] = useState(true);
+  const [digest, setDigest] = useState<string | null>(null);
+  const [pub, setPub] = useState({ name: "", bit: 10, sats: 1000 });
+
+  const blocks = useMemo(() => [...world.values()], [world]);
+  const ghost = useMemo(() => {
+    if (tool === "erase") return [];
+    if (tool === "block") return [{ dx: 0, dy: 0, dz: 0, k: paint }];
+    return rotatePrefab(picked.blocks, turns);
+  }, [tool, paint, picked, turns]);
+  const overLimit = blocks.length + (tool === "erase" ? 0 : ghost.length) > FORGE_MAX_BLOCKS;
+
+  const commit = useCallback((next: Map<string, TplBlock>) => {
+    setHistory((h) => [...h.slice(-30), world]);
+    setWorld(next);
+  }, [world]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement)?.tagName === "INPUT") return;
+      if (e.key === "r" || e.key === "R") setTurns((t) => t + 1);
+      if (e.key === "e" || e.key === "E") setLayer((l) => Math.min(FORGE_SPAN - 1, l + 1));
+      if (e.key === "q" || e.key === "Q") setLayer((l) => Math.max(0, l - 1));
+      if ((e.ctrlKey || e.metaKey) && e.key === "z") { e.preventDefault(); undo(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
+  const undo = () => setHistory((h) => { const last = h[h.length - 1]; if (last) setWorld(last); return h.slice(0, -1); });
+
+  const place = async (): Promise<void> => {
+    if (!hover || tool === "erase") return;
+    if (overLimit) { toast.error(`BUILD LIMIT IS ${FORGE_MAX_BLOCKS} BLOCKS`); return; }
+    if (tool === "stamp" && picked.author && (picked.bitCost ?? 0) > 0) {
+      if (!wallet) { toast.error("CONNECT A WALLET TO USE PAID MODULES"); return; }
+      const r = await stampFn({ data: { moduleId: picked.id, address: wallet.ordinalsAddress } }).catch(() => ({ ok: false as const, error: "SIGN IN TO USE PAID MODULES" }));
+      if (!r.ok) { toast.error(r.error); return; }
+      if (r.paid) toast.success(`PAID ${r.paid} BIT TO ${short(picked.author)}`);
+    }
+    commit(stampInto(world, ghost, hover[0], hover[1], hover[2]));
+    if (tool === "stamp" && picked.author && !used.some((u) => u.id === picked.id)) setUsed((u) => [...u, picked]);
+  };
+
+  const onGround = (e: ThreeEvent<PointerEvent>) => {
+    const x = Math.floor(e.point.x + HALF), z = Math.floor(e.point.z + HALF);
+    if (x < 0 || z < 0 || x >= FORGE_SPAN || z >= FORGE_SPAN) return setHover(null);
+    setHover([x, layer, z]);
+  };
+
+  const seed = (a: ArchetypeId) => {
+    if (height === null) { toast.error("ENTER YOUR BITMAP NUMBER FIRST"); return; }
+    commit(stampInto(new Map(), generateBuild(height, txCount, a), 0, 0, 0));
+  };
+
+  const payouts = useMemo(() => tributeSplit(used.map((u) => u.lineage ?? [])), [used]);
+  const payoutSats = payouts.reduce((n, p) => n + p.sats, 0);
+  const lineage = used.map((u) => u.id.slice(0, 8)).join(",");
+  const html = useMemo(() => (height === null || !blocks.length ? "" : forgeInscriptionHtml(height, "studio", blocks, lineage)), [height, blocks, lineage]);
   const bytes = useMemo(() => new TextEncoder().encode(html).length, [html]);
   useEffect(() => {
     setDigest(null);
     if (!html) return;
-    void sha(`forge:${encodeBuild(blocks)}`).then(setDigest);
-  }, [html, blocks]);
+    const t = setTimeout(() => void sha(`forge:${encodeBuild(blocks)}:${lineage}`).then(setDigest), 400);
+    return () => clearTimeout(t);
+  }, [html, blocks, lineage]);
+
+  const publish = async (): Promise<void> => {
+    if (!wallet) { toast.error("CONNECT A WALLET TO PUBLISH"); return; }
+    if (blocks.length < 4) { toast.error("BUILD SOMETHING FIRST"); return; }
+    if (blocks.length > 800) { toast.error("MODULES ARE CAPPED AT 800 BLOCKS — ERASE SOME FIRST"); return; }
+    const r = await publishFn({ data: {
+      name: pub.name.trim() || "Untitled module", address: wallet.ordinalsAddress, blocks: normaliseModule(blocks),
+      bitCost: pub.bit, tributeSats: pub.sats > 0 ? Math.max(546, pub.sats) : 0, parents: used.map((u) => u.id),
+    } }).catch(() => ({ ok: false as const, error: "SIGN IN TO PUBLISH" }));
+    if (!r.ok) { toast.error(r.error); return; }
+    toast.success("MODULE PUBLISHED — OTHERS CAN NOW BUILD ON IT");
+    void community.refetch();
+  };
+
+  const palette = sphere === "community" ? community.data ?? [] : HOUSE_PREFABS.filter((p) => p.sphere === sphere);
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10 font-mono">
-      <p className="text-xs tracking-widest text-primary">LAND FORGE · ON-CHAIN BUILDS</p>
-      <h1 className="mt-2 font-display text-3xl text-foreground md:text-4xl">Populate your BITMAP. Inscribe it forever.</h1>
-      <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
-        Every build is grown from your block: its height seeds the layout and its transaction count sets the size. The build is
-        inscribed as a child of your BITMAP on Bitcoin, so anyone can verify your land is built — on ordinals.com and in the Oasis.
-      </p>
+    <main className="mx-auto max-w-7xl px-4 py-8 font-mono">
+      <p className="text-xs tracking-widest text-primary">LAND FORGE STUDIO · COMPOSABLE ON-CHAIN BUILDS</p>
+      <h1 className="mt-2 font-display text-3xl text-foreground md:text-4xl">Build on Bitcoin. Build on each other.</h1>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_380px]">
-        <div className="relative h-[460px] overflow-hidden rounded-lg border border-border bg-card/40">
-          {height === null ? (
-            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">ENTER A BITMAP NUMBER TO FORGE</div>
-          ) : (
-            <SafeCanvas shadows camera={{ position: [28, 24, 28], fov: 45 }}>
-              <ambientLight intensity={0.55} />
-              <directionalLight position={[20, 30, 10]} intensity={1.2} castShadow />
-              <BuildMesh blocks={blocks} />
-              <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[80, 80]} /><meshStandardMaterial color="#1b1f26" /></mesh>
-              <OrbitControls autoRotate autoRotateSpeed={0.6} enablePan={false} />
-            </SafeCanvas>
-          )}
-          {height !== null && (
-            <div className="absolute left-3 top-3 rounded border border-border bg-background/70 px-2 py-1 text-[11px] text-accent backdrop-blur">
-              {height.toLocaleString()}.BITMAP · {txCount ?? "…"} TX · {blocks.length} BLOCKS · {(bytes / 1024).toFixed(1)} KB
-            </div>
-          )}
-        </div>
+      {guide && (
+        <section className="mt-5 grid gap-3 rounded-lg border border-border bg-card/40 p-4 text-xs text-muted-foreground md:grid-cols-3">
+          <div><p className="mb-1 text-primary">WHY IT LASTS</p>Your finished build is inscribed as a child of your BITMAP. It lives on Bitcoin, not on our servers — it shows on ordinals.com, in the Oasis and on your BITMAP's page forever, and travels with the land when it sells.</div>
+          <div><p className="mb-1 text-primary">HOW TO BUILD</p>Pick a piece, move over the grid, click to place. <b className="text-foreground">R</b> rotates, <b className="text-foreground">Q/E</b> change the floor level, <b className="text-foreground">Ctrl+Z</b> undoes. Start from your block's own seed or from scratch.</div>
+          <div><p className="mb-1 text-primary">WHO GETS PAID</p>Community pieces cost a small BIT fee to their maker each time you place them. When you inscribe, every maker in your build's family tree is paid in sats inside the same Bitcoin transaction. Publish your own pieces to earn too.</div>
+          <button type="button" onClick={() => setGuide(false)} className="justify-self-start text-[10px] text-accent underline md:col-span-3">HIDE GUIDE</button>
+        </section>
+      )}
 
-        <aside className="space-y-4">
-          <label className="block text-xs text-muted-foreground">
-            BITMAP NUMBER
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value.replace(/[^\d]/g, ""))}
-              placeholder="840000"
-              className="mt-1 w-full rounded border border-border bg-background px-3 py-2 text-foreground"
-            />
+      <div className="mt-6 grid gap-4 lg:grid-cols-[260px_1fr_320px]">
+        <aside className="space-y-3">
+          <label className="block text-[11px] text-muted-foreground">
+            YOUR BITMAP
+            <input value={input} onChange={(e) => setInput(e.target.value.replace(/[^\d]/g, ""))} placeholder="840000" className="mt-1 w-full rounded border border-border bg-background px-3 py-2 text-foreground" />
           </label>
-          <div className="space-y-2">
-            {ARCHETYPES.map((a) => (
-              <button
-                key={a.id}
-                type="button"
-                onClick={() => setArch(a.id)}
-                className={`w-full rounded border px-3 py-2 text-left text-xs transition ${arch === a.id ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground hover:border-primary/50"}`}
-              >
-                <span className="block text-foreground">{a.name}</span>
-                {a.blurb}
+          <div className="flex gap-1">
+            {(["stamp", "block", "erase"] as Tool[]).map((t) => (
+              <button key={t} type="button" onClick={() => setTool(t)} className={`flex-1 rounded border px-2 py-1 text-[10px] ${tool === t ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"}`}>
+                {t === "stamp" ? "PIECES" : t === "block" ? "BLOCK" : "ERASE"}
               </button>
             ))}
           </div>
-          {height !== null && digest && (
+          {tool === "block" && (
+            <div className="grid grid-cols-4 gap-1">
+              {BLOCKS.map((b) => (
+                <button key={b.id} type="button" title={b.name} onClick={() => setPaint(b.id)} className={`h-8 rounded border ${paint === b.id ? "border-primary" : "border-border"}`} style={{ background: b.top }} />
+              ))}
+            </div>
+          )}
+          {tool === "stamp" && (
+            <>
+              <div className="flex flex-wrap gap-1">
+                {SPHERES.map((s) => (
+                  <button key={s.id} type="button" onClick={() => setSphere(s.id)} className={`rounded border px-2 py-0.5 text-[10px] ${sphere === s.id ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>{s.name}</button>
+                ))}
+              </div>
+              <div className="max-h-[360px] space-y-1 overflow-y-auto pr-1">
+                {palette.length === 0 && <p className="text-[11px] text-muted-foreground">No community pieces yet. Build one and publish it to be the first maker.</p>}
+                {palette.map((p) => (
+                  <button key={p.id} type="button" onClick={() => setPicked(p)} className={`w-full rounded border px-2 py-1.5 text-left text-[11px] ${picked.id === p.id ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground hover:border-primary/50"}`}>
+                    <span className="block text-foreground">{p.name}</span>
+                    {p.blocks.length} blocks{p.author ? ` · ${short(p.author)} · ${p.bitCost ?? 0} BIT · ${p.tributeSats ?? 0} sats` : " · free"}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          <div>
+            <p className="mb-1 text-[10px] text-muted-foreground">START FROM YOUR BLOCK'S SEED</p>
+            <div className="flex flex-wrap gap-1">
+              {ARCHETYPES.map((a) => (
+                <button key={a.id} type="button" title={a.blurb} onClick={() => seed(a.id)} className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:border-primary">{a.name}</button>
+              ))}
+            </div>
+          </div>
+        </aside>
+
+        <div className="relative h-[560px] overflow-hidden rounded-lg border border-border bg-card/40">
+          <SafeCanvas shadows camera={{ position: [40, 38, 40], fov: 45 }}>
+            <ambientLight intensity={0.6} />
+            <directionalLight position={[20, 40, 10]} intensity={1.2} castShadow />
+            <Blocks blocks={blocks} erase={tool === "erase"} onErase={(b) => { const n = new Map(world); n.delete(cellKey(b.dx, b.dy, b.dz)); commit(n); }} />
+            {hover && ghost.length > 0 && <Ghost blocks={ghost} at={hover} bad={overLimit} />}
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, layer, 0]} onPointerMove={onGround} onPointerLeave={() => setHover(null)} onClick={() => void place()} receiveShadow>
+              <planeGeometry args={[FORGE_SPAN, FORGE_SPAN]} />
+              <meshStandardMaterial color="#1b1f26" transparent opacity={layer ? 0.25 : 1} />
+            </mesh>
+            <gridHelper args={[FORGE_SPAN, FORGE_SPAN, "#2c3440", "#222831"]} position={[0, layer + 0.01, 0]} />
+            <OrbitControls enablePan={false} makeDefault maxPolarAngle={Math.PI / 2.1} />
+          </SafeCanvas>
+          <div className="pointer-events-none absolute left-3 top-3 rounded border border-border bg-background/70 px-2 py-1 text-[11px] text-accent backdrop-blur">
+            {height !== null ? `${height.toLocaleString()}.BITMAP · ` : ""}{blocks.length}/{FORGE_MAX_BLOCKS} BLOCKS · {(bytes / 1024).toFixed(1)} KB · LEVEL {layer} · ROT {(turns % 4) * 90}°
+          </div>
+          <div className="absolute bottom-3 left-3 flex gap-1">
+            <button type="button" onClick={undo} className="rounded border border-border bg-background/80 px-2 py-1 text-[10px] text-foreground">UNDO</button>
+            <button type="button" onClick={() => setTurns((t) => t + 1)} className="rounded border border-border bg-background/80 px-2 py-1 text-[10px] text-foreground">ROTATE</button>
+            <button type="button" onClick={() => setLayer((l) => Math.max(0, l - 1))} className="rounded border border-border bg-background/80 px-2 py-1 text-[10px] text-foreground">LEVEL −</button>
+            <button type="button" onClick={() => setLayer((l) => Math.min(FORGE_SPAN - 1, l + 1))} className="rounded border border-border bg-background/80 px-2 py-1 text-[10px] text-foreground">LEVEL +</button>
+            <button type="button" onClick={() => { commit(new Map()); setUsed([]); }} className="rounded border border-border bg-background/80 px-2 py-1 text-[10px] text-destructive">CLEAR</button>
+          </div>
+        </div>
+
+        <aside className="space-y-3">
+          <div className="rounded border border-border bg-card/40 p-3 text-[11px]">
+            <p className="mb-2 text-primary">MAKERS IN THIS BUILD</p>
+            {payouts.length === 0 ? (
+              <p className="text-muted-foreground">Only free pieces so far. Community pieces you place show up here with their sat share.</p>
+            ) : (
+              <ul className="space-y-1">
+                {payouts.map((p) => <li key={p.address} className="flex justify-between text-foreground"><span>{short(p.address)}</span><span className="text-accent">{p.sats.toLocaleString()} sats</span></li>)}
+                <li className="flex justify-between border-t border-border pt-1 text-muted-foreground"><span>PAID ON INSCRIBE</span><span>{payoutSats.toLocaleString()} sats</span></li>
+              </ul>
+            )}
+          </div>
+
+          {height !== null && digest && blocks.length > 0 ? (
             <div className="rounded border border-border bg-card/40 p-3">
               <ShadowInscriber
                 key={digest}
@@ -141,18 +325,29 @@ function ForgePage() {
                 height={height}
                 index={0}
                 digest={digest}
-                artifactLabel="INSCRIBE BUILD AS CHILD"
+                artifactLabel="INSCRIBE YOUR BUILD AS A CHILD"
                 actionLabel="INSCRIBE ON BITCOIN"
-                description="Your wallet must hold this BITMAP. It is spent and returned to you in the same transaction to prove the build belongs to it."
+                description={`Your wallet must hold ${height}.bitmap. It is spent and returned to you in the same transaction.${payoutSats ? ` ${payoutSats.toLocaleString()} sats go to the makers listed above in that same transaction.` : ""}`}
                 allowUpload={false}
                 claimParentsForHeight={height}
-                artifactVariants={[{ key: "html", label: "3D BUILD", contentType: "text/html;charset=utf-8", source: html, note: "Self-rendering build, no outside code." }]}
+                artifactVariants={[{ key: "html", label: "3D BUILD", contentType: "text/html;charset=utf-8", source: html, note: "Self-rendering build, no outside code.", ...(payouts.length ? { tributes: payouts } : {}) }]}
               />
             </div>
+          ) : (
+            <p className="rounded border border-border p-3 text-[11px] text-muted-foreground">Enter your BITMAP number and place some blocks to inscribe.</p>
           )}
-          <p className="text-[11px] text-muted-foreground">
-            Want to walk it first? <a href={height !== null ? `/oasis?height=${height}` : "/oasis"} className="text-accent underline">Open the Oasis</a>.
-          </p>
+
+          <div className="rounded border border-border bg-card/40 p-3 text-[11px]">
+            <p className="mb-2 text-primary">PUBLISH AS A REUSABLE PIECE</p>
+            <p className="mb-2 text-muted-foreground">Others can drop it into their own builds. You earn BIT each time it's placed and sats each time a build using it is inscribed — and so do the makers of the pieces you used.</p>
+            <input value={pub.name} onChange={(e) => setPub({ ...pub, name: e.target.value.slice(0, 40) })} placeholder="Piece name" className="mb-2 w-full rounded border border-border bg-background px-2 py-1 text-foreground" />
+            <div className="mb-2 grid grid-cols-2 gap-2">
+              <label className="text-muted-foreground">BIT / USE<input type="number" min={0} max={500} value={pub.bit} onChange={(e) => setPub({ ...pub, bit: Math.max(0, Math.min(500, Number(e.target.value) || 0)) })} className="mt-1 w-full rounded border border-border bg-background px-2 py-1 text-foreground" /></label>
+              <label className="text-muted-foreground">SATS / INSCRIBE<input type="number" min={0} max={100000} value={pub.sats} onChange={(e) => setPub({ ...pub, sats: Math.max(0, Math.min(100000, Number(e.target.value) || 0)) })} className="mt-1 w-full rounded border border-border bg-background px-2 py-1 text-foreground" /></label>
+            </div>
+            <button type="button" onClick={() => void publish()} className="w-full rounded border border-primary bg-primary/10 px-2 py-1.5 text-foreground">PUBLISH PIECE</button>
+          </div>
+          <p className="text-[11px] text-muted-foreground">Want to walk it first? <a href={height !== null ? `/oasis?height=${height}` : "/oasis"} className="text-accent underline">Open the Oasis</a>.</p>
         </aside>
       </div>
     </main>

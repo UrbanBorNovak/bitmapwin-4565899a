@@ -128,10 +128,10 @@ export function decodeBuild(b64: string): TplBlock[] {
 }
 
 /** Self-contained HTML child: renders the build isometrically on ordinals.com, no external code. */
-export function forgeInscriptionHtml(height: number, archetype: ArchetypeId, blocks: TplBlock[]): string {
+export function forgeInscriptionHtml(height: number, archetype: string, blocks: TplBlock[], lineage = ""): string {
   const pal = BLOCKS.map((b) => [b.top, b.side]);
   const data = encodeBuild(blocks);
-  return `<!doctype html><html><head><meta charset="utf-8"><meta name="bitmapwin" content="${FORGE_FORMAT};${height};${archetype}"><title>${height}.bitmap build</title><style>html,body{margin:0;height:100%;background:#07090d}canvas{width:100%;height:100%;display:block}</style></head><body><canvas id="c"></canvas><script id="bwvx" type="text/plain" data-format="${FORGE_FORMAT}" data-height="${height}">${data}</script><script>
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="bitmapwin" content="${FORGE_FORMAT};${height};${archetype}">${lineage ? `<meta name="bitmapwin-lineage" content="${lineage.replace(/[^a-zA-Z0-9:,;._-]/g, "")}">` : ""}<title>${height}.bitmap build</title><style>html,body{margin:0;height:100%;background:#07090d}canvas{width:100%;height:100%;display:block}</style></head><body><canvas id="c"></canvas><script id="bwvx" type="text/plain" data-format="${FORGE_FORMAT}" data-height="${height}">${data}</script><script>
 const P=${JSON.stringify(pal)},r=atob(document.getElementById("bwvx").textContent.trim()),B=[];for(let i=0;i+3<r.length;i+=4)B.push([r.charCodeAt(i),r.charCodeAt(i+1),r.charCodeAt(i+2),r.charCodeAt(i+3)]);
 const cv=document.getElementById("c"),g=cv.getContext("2d");let a=0;
 function sh(h,f){const n=parseInt(h.slice(1),16);return"rgb("+[(n>>16)&255,(n>>8)&255,n&255].map(v=>Math.round(v*f)).join(",")+")"}
