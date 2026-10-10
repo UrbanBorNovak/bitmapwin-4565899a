@@ -8,6 +8,13 @@
       "when": 1791420290048,
       "tag": "0000_guardian_aura_rolls",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791654963205,
+      "tag": "0001_shard_raids_and_guardian_mounts",
+      "breakpoints": true
     }
   ]
 }
