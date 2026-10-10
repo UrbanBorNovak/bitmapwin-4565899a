@@ -214,7 +214,8 @@ function ForgePage() {
     return rotatePrefab(picked.blocks, turns);
   }, [tool, paint, picked, turns]);
   const hoverParcel = hover ? parcelAt(rects, hover[0], hover[2]) : null;
-  const ghostOut = !!(focusRect && hover && ghost.some((b) => !inRect(focusRect, b.dx + hover[0], b.dz + hover[2])));
+  const onTile = (x: number, z: number) => (focusRect ? inRect(focusRect, x, z) : !!parcelAt(rects, x, z));
+  const ghostOut = !!(hover && (rects.length === 0 || ghost.some((b) => !onTile(b.dx + hover[0], b.dz + hover[2]))));
   const overLimit = blocks.length + (tool === "erase" ? 0 : ghost.length) > FORGE_MAX_BLOCKS;
 
   const commit = useCallback((next: Map<string, TplBlock>) => {
@@ -240,7 +241,8 @@ function ForgePage() {
     if (!hover) return;
     if (tool === "parcel") { const p = parcelAt(rects, hover[0], hover[2]); setFocus(p ? p.index : null); return; }
     if (tool === "erase") return;
-    if (focusRect && !inRect(focusRect, hover[0], hover[2])) { toast.error(`STAY INSIDE PARCEL #${focusRect.index}`); return; }
+    if (!rects.length) { toast.error("ENTER YOUR BITMAP NUMBER FIRST"); return; }
+    if (!onTile(hover[0], hover[2])) { toast.error(focusRect ? `STAY INSIDE PARCEL #${focusRect.index}` : "NO PARCEL HERE — BUILD ONLY ON PARCEL TILES"); return; }
     if (overLimit) { toast.error(`BUILD LIMIT IS ${FORGE_MAX_BLOCKS} BLOCKS`); return; }
     if (tool === "stamp" && picked.author && (picked.bitCost ?? 0) > 0) {
       if (!wallet) { toast.error("CONNECT A WALLET TO USE PAID MODULES"); return; }
@@ -249,7 +251,7 @@ function ForgePage() {
       if (r.paid) toast.success(`PAID ${r.paid} BIT TO ${short(picked.author)}`);
     }
     const next = stampInto(world, ghost, hover[0], hover[1], hover[2]);
-    if (focusRect) for (const [k, b] of next) if (!world.has(k) && !inRect(focusRect, b.dx, b.dz)) next.delete(k);
+    for (const [k, b] of next) if (!world.has(k) && !onTile(b.dx, b.dz)) next.delete(k);
     commit(next);
     if (tool === "stamp" && picked.author && !used.some((u) => u.id === picked.id)) setUsed((u) => [...u, picked]);
   };
@@ -262,7 +264,9 @@ function ForgePage() {
 
   const seed = (a: ArchetypeId) => {
     if (height === null) { toast.error("ENTER YOUR BITMAP NUMBER FIRST"); return; }
-    commit(stampInto(new Map(), generateBuild(height, txCount, a), 0, 0, 0));
+    const next = stampInto(new Map(), generateBuild(height, txCount, a), 0, 0, 0);
+    for (const [k, b] of next) if (!onTile(b.dx, b.dz)) next.delete(k);
+    commit(next);
   };
 
   const payouts = useMemo(() => tributeSplit(used.map((u) => u.lineage ?? [])), [used]);
