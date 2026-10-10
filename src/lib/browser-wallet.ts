@@ -523,19 +523,31 @@ export async function signParentInputsPsbt(
     return /^[0-9a-fA-F]+$/.test(signed.trim()) ? hexToBase64(signed) : signed.trim();
   }
   if (taproot) {
-    // Documented Sats Connect signPsbt (SIGHASH_ALL default) first; the raw
-    // provider call is only a fallback for older extension builds.
+    // Xverse rejects signPsbt when an input's sighash isn't explicitly
+    // whitelisted ("Sighash type is not allowed"). signTransaction carries an
+    // explicit per-input sigHash, so try it first with SIGHASH_ALL.
     try {
-      return await xverseSignPsbt({
-        psbt: psbtBase64,
-        signInputs: { [holderAddress]: signIndices },
-        broadcast: false,
-      });
+      return await xverseSignPaymentPsbt(
+        psbtBase64,
+        holderAddress,
+        signIndices,
+        "Claim this bitmap as the parent of a new inscription",
+        SIGHASH_ALL,
+      );
     } catch (error) {
       if (/DECLINED/i.test((error as Error).message)) throw error;
-      const direct = await xverseSignPsbtDirect(psbtBase64, holderAddress, signIndices);
-      if (direct) return direct;
-      throw error;
+      try {
+        return await xverseSignPsbt({
+          psbt: psbtBase64,
+          signInputs: { [holderAddress]: signIndices },
+          broadcast: false,
+        });
+      } catch (second) {
+        if (/DECLINED/i.test((second as Error).message)) throw second;
+        const direct = await xverseSignPsbtDirect(psbtBase64, holderAddress, signIndices);
+        if (direct) return direct;
+        throw error;
+      }
     }
   }
   return xverseSignPaymentPsbt(psbtBase64, holderAddress, signIndices, "Claim this bitmap as the parent of a new inscription", SIGHASH_ALL);
