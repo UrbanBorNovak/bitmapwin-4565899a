@@ -54,11 +54,13 @@ function NotFoundComponent() {
 function reloadOnStaleChunk(error: unknown): boolean {
   const msg = error instanceof Error ? error.message : String(error ?? "");
   if (!/dynamically imported module|Importing a module script failed|error loading dynamically imported/i.test(msg)) return false;
-  const key = "bitmapwin:chunk-reload";
-  const last = Number(sessionStorage.getItem(key) ?? 0);
-  if (Date.now() - last < 10_000) return false;
-  sessionStorage.setItem(key, String(Date.now()));
-  window.location.reload();
+  // Allow up to 3 reloads per minute: a preview restart can make the first retry fail too.
+  const key = "bitmapwin:chunk-reloads";
+  const now = Date.now();
+  const recent = (JSON.parse(sessionStorage.getItem(key) ?? "[]") as number[]).filter((t) => now - t < 60_000);
+  if (recent.length >= 3) return false;
+  sessionStorage.setItem(key, JSON.stringify([...recent, now]));
+  window.setTimeout(() => window.location.reload(), recent.length * 1500);
   return true;
 }
 
