@@ -79,14 +79,23 @@ export function blockAt(x: number, y: number, z: number, top = terrainTop(x, z))
  * natural ground dug away. Only applied near built/edited columns or stepped
  * terrain inside the voxel zone; otherwise null (smooth terrain rules).
  */
+let feetHint: number | null = null;
+/** The walker's current feet height; surfaces above it (roofs) are ignored. */
+export function setVoxelFeet(y: number | null) {
+  feetHint = y;
+}
+
 export function columnSurface(wx: number, wz: number): number | null {
   const x = toCell(wx), z = toCell(wz);
   const col = columns.get(`${x},${z}`);
   if (!col) return null; // no player blocks here: smooth terrain rules
+  // With a feet hint, stand on the highest block you can step onto, so
+  // walking under a roof keeps you on the floor instead of snapping up.
+  const limit = feetHint == null ? Infinity : Math.floor((feetHint + VOXEL * 1.05) / VOXEL) - 1;
   let best = -Infinity;
   for (const y of col) {
     const e = edits.get(vkey(x, y, z));
-    if (e && e !== "air" && y > best) best = y;
+    if (e && e !== "air" && y > best && y <= limit) best = y;
   }
   return best === -Infinity ? null : (best + 1) * VOXEL;
 }
@@ -117,6 +126,20 @@ export function voxelWallAt(
       for (let y = y0; y <= y1; y++) if (placedSolid(x, y, z)) return true;
     }
   return false;
+}
+
+/** Bottom of the lowest placed block above `feetY` in the body's column, or null. */
+export function voxelCeilingAt(wx: number, wz: number, feetY: number, radius: number): number | null {
+  if (columns.size === 0) return null;
+  const from = Math.floor(feetY / VOXEL) + 1;
+  let best: number | null = null;
+  for (let x = toCell(wx - radius); x <= toCell(wx + radius); x++)
+    for (let z = toCell(wz - radius); z <= toCell(wz + radius); z++) {
+      const col = columns.get(`${x},${z}`);
+      if (!col) continue;
+      for (const y of col) if (y >= from && placedSolid(x, y, z) && (best == null || y < best)) best = y;
+    }
+  return best == null ? null : best * VOXEL;
 }
 
 export function blockColor(id: string) {
