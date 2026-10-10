@@ -18,6 +18,8 @@ import { clipToParcel, inRect, parcelAt, parcelRects, type ParcelRect } from "@/
 import { publishForgeModuleFn, stampForgeModuleFn } from "@/lib/forge-modules.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useWalletSession } from "@/lib/wallet-session";
+import { heldHeightsQuery } from "@/lib/held-parcels";
+import { forgeRightsFn } from "@/lib/forge-rights.functions";
 
 export const Route = createFileRoute("/forge")({
   validateSearch: (s: Record<string, unknown>): { height?: number } => {
@@ -154,6 +156,20 @@ function ForgePage() {
   const [focus, setFocus] = useState<number | null>(null);
   useEffect(() => setFocus(null), [height]);
   const focusRect = focus !== null ? rects[focus] ?? null : null;
+  const addrs = wallet ? [wallet.ordinalsAddress, wallet.paymentAddress].filter(Boolean) as string[] : [];
+  const owned = useQuery(heldHeightsQuery(addrs));
+  const rightsFn = useServerFn(forgeRightsFn);
+  const rights = useQuery({
+    queryKey: ["forge-rights", height, wallet?.ordinalsAddress],
+    enabled: height !== null && !!wallet,
+    staleTime: 60_000,
+    queryFn: () => rightsFn({ data: { height: height!, address: wallet!.ordinalsAddress } }),
+  });
+  const role = rights.data?.role ?? "none";
+  const myParcels = rights.data?.parcels ?? [];
+  useEffect(() => { if (role === "parcel" && myParcels.length && (focus === null || !myParcels.includes(focus))) setFocus(myParcels[0]!); }, [role, myParcels, focus]);
+  // Reinscription spends the BITMAP's own sat, so only the BITMAP holder can sign it.
+  const canInscribe = role === "bitmap";
   const community = useCommunityModules();
   const stampFn = useServerFn(stampForgeModuleFn);
   const publishFn = useServerFn(publishForgeModuleFn);
@@ -296,6 +312,25 @@ function ForgePage() {
             YOUR BITMAP
             <input value={input} onChange={(e) => setInput(e.target.value.replace(/[^\d]/g, ""))} placeholder="840000" className="mt-1 w-full rounded border border-border bg-background px-3 py-2 text-foreground" />
           </label>
+          {!wallet ? (
+            <a href="/wallet" className="block rounded border border-primary bg-primary/10 px-2 py-1.5 text-center text-[11px] text-foreground">CONNECT WALLET TO BUILD YOUR LAND</a>
+          ) : (
+            <>
+              {(owned.data?.length ?? 0) > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  <span className="w-full text-[10px] text-muted-foreground">YOUR LAND · TAP TO BUILD</span>
+                  {owned.data!.slice(0, 12).map((h) => (
+                    <button key={h} type="button" onClick={() => setInput(String(h))} className={`rounded border px-2 py-0.5 text-[10px] ${height === h ? "border-primary text-foreground" : "border-border text-muted-foreground"}`}>{h}</button>
+                  ))}
+                </div>
+              )}
+              {height !== null && (
+                <p className={`rounded border px-2 py-1 text-[10px] ${role === "bitmap" ? "border-primary text-primary" : role === "parcel" ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>
+                  {rights.isLoading ? "CHECKING THE CHAIN…" : role === "bitmap" ? `✓ YOU HOLD ${height}.BITMAP` : role === "parcel" ? `✓ YOU HOLD PARCEL ${myParcels.map((p) => `#${p}`).join(", ")} · LOCKED TO YOUR TILE` : "PREVIEW ONLY · THIS WALLET DOESN'T HOLD THIS BITMAP"}
+                </p>
+              )}
+            </>
+          )}
           <div className="flex gap-1">
             {(["stamp", "block", "erase", "parcel"] as Tool[]).map((t) => (
               <button key={t} type="button" onClick={() => setTool(t)} className={`flex-1 rounded border px-2 py-1 text-[10px] ${tool === t ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"}`}>
@@ -408,7 +443,13 @@ function ForgePage() {
             )}
           </div>
 
-          {height !== null && digest && blocks.length > 0 ? (
+          {height !== null && !canInscribe ? (
+            <p className="rounded border border-border p-3 text-[11px] text-muted-foreground">
+              {role === "parcel"
+                ? `You hold parcel${myParcels.length > 1 ? "s" : ""} ${myParcels.map((p) => `#${p}`).join(", ")} here — build on your tile and publish it as a piece. Only the holder of ${height}.bitmap can inscribe onto its sat.`
+                : "Inscribing unlocks once your connected wallet holds this BITMAP."}
+            </p>
+          ) : height !== null && digest && blocks.length > 0 ? (
             <div className="rounded border border-border bg-card/40 p-3">
               <ShadowInscriber
                 key={digest}
