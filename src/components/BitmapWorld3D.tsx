@@ -174,6 +174,7 @@ import { VehicleGunner } from "@/components/game/VehicleGunner";
 import { VehicleDamageFx } from "@/components/game/VehicleDamageFx";
 import { MysteryMist } from "@/components/game/MysteryMist";
 import { LandGrowth } from "@/components/game/LandGrowth";
+import { BlockFloraLayer } from "@/components/game/BlockFloraLayer";
 import { LandSkins } from "@/components/game/LandSkins";
 import { WorldDepthLayers } from "@/components/game/WorldDepthLayers";
 import { WorldAtmosphere } from "@/components/game/WorldAtmosphere";
@@ -2885,6 +2886,7 @@ const WorldScene = memo(function WorldScene({
             color={colors.bitcoin}
           /> : null}
           <LandGrowth unit={AVATAR_U} pose={pose} firstPerson={cameraMode === "first"} />
+          <BlockFloraLayer pose={pose} />
           <Companions unit={AVATAR_U} pose={pose} />
           {self.hp <= 0 ? <GhostShade unit={AVATAR_U} pose={pose} /> : null}
         </>
