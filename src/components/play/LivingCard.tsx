@@ -152,7 +152,7 @@ function CardArt({ card }: { card: Card }) {
         <OasisBackdrop height={card.bitmap} className="pointer-events-none opacity-60 mix-blend-screen" />
         <div className="lc-pfp-scan absolute inset-0" aria-hidden />
         <CardBitmap3D height={card.bitmap} state={card.state} className="absolute bottom-1 left-1 size-12 opacity-95" />
-        <span className="lc-pfp-badge label absolute left-1.5 top-1 text-[7px] text-bitcoin">EMPORIUM #{puppet.index + 1}</span>
+        <span className="lc-pfp-badge label absolute left-1.5 top-1 text-[7px] text-bitcoin">EMPORIUM #{puppet.index + 1} · 717328</span>
       </div>
     );
   const selectedJigglypuffPool = profile?.visuals.pfpExtendersEnabled === true && profile.visuals.selectedPfpCollection === JIGGLYPUFF_POOL;
