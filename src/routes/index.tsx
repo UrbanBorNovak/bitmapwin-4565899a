@@ -16,6 +16,7 @@ import { MobileAppInstall } from "@/components/MobileAppInstall";
 import { GuardianMintStatus } from "@/components/bitmon/GuardianMintStatus";
 import { LatestGuardianCard } from "@/components/bitmon/LatestGuardianCard";
 import { MintPointer } from "@/components/bitmon/MintPointer";
+import { ActiveBuilders } from "@/components/ActiveBuilders";
 import { DailyStreak } from "@/components/retention/DailyStreak";
 
 
@@ -180,6 +181,8 @@ function Index() {
       </section>
 
       <section className="mx-auto max-w-[1600px] px-3 pt-3 md:px-5"><LoopNavigator active="discover" /></section>
+
+      <ActiveBuilders />
 
       <section className="mx-auto max-w-[1600px] px-3 pt-6 md:px-5">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3 border border-border bg-background p-4">
