@@ -1,3 +1,4 @@
+import { ShardRaidHud } from "@/components/game/ShardRaidHud";
 import { DropHud } from "@/components/game/DropHud";
 import { AdrenalineBot } from "@/components/game/AdrenalineBot";
 import { GuardianRadar } from "@/components/game/GuardianRadar";
@@ -161,7 +162,7 @@ function OasisPage() {
             {...(height === undefined ? {} : { initialHeight: height })}
             legend={<span data-tour="map-legend" className="flex flex-wrap items-center gap-2">{legend}</span>}
           />
-          {cinematic ? null : <><DropHud /><ClassSkillBar /><RacePicker /><AdrenalineBot /></>}
+          {cinematic ? null : <><DropHud /><ShardRaidHud /><ClassSkillBar /><RacePicker /><AdrenalineBot /></>}
           </div>
           <div className="mt-2 flex flex-wrap items-stretch gap-2">
             <Link to="/command" className="hud-panel flex flex-1 items-center justify-between gap-3 px-3 py-2 font-mono text-[11px] text-bitcoin hover:text-foreground">

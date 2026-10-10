@@ -1,3 +1,5 @@
+import { applyMountIntent } from "@/lib/guardian-mount";
+import { ShardRaidLayer } from "@/components/game/ShardRaidLayer";
 import { setBrHooks, stepDrop } from "@/lib/battle-royale";
 import { DropshipLayer } from "@/components/game/DropshipLayer";
 import { PvpFx } from "@/components/game/PvpFx";
@@ -2067,6 +2069,7 @@ function PlayerCameraRig({
     const feetBefore = traversalSurfaceY(player.x, player.z) + player.y;
     setVoxelFeet(driving ? null : feetBefore);
     floraFeet = driving ? null : feetBefore;
+    applyMountIntent(intent, isDriving());
     if (!stepDrop(player, intent, delta, traversalSurfaceY)) stepPlayer(player, intent, delta);
     if (!driving && player.vy > 0) {
       // Head-bonk: a placed block overhead stops the jump.
@@ -2918,6 +2921,7 @@ const WorldScene = memo(function WorldScene({
           <LandGrowth unit={AVATAR_U} pose={pose} firstPerson={cameraMode === "first"} />
           <BlockFloraLayer pose={pose} />
           <DropshipLayer pose={pose} surface={traversalSurfaceY} />
+          <ShardRaidLayer pose={pose} surface={traversalSurfaceY} />
           <Companions unit={AVATAR_U} pose={pose} />
           {self.hp <= 0 ? <GhostShade unit={AVATAR_U} pose={pose} /> : null}
         </>
