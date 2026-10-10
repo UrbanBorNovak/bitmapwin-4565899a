@@ -169,7 +169,8 @@ function ForgePage() {
   const myParcels = rights.data?.parcels ?? [];
   useEffect(() => { if (role === "parcel" && myParcels.length && (focus === null || !myParcels.includes(focus))) setFocus(myParcels[0]!); }, [role, myParcels, focus]);
   // Reinscription spends the BITMAP's own sat, so only the BITMAP holder can sign it.
-  const canInscribe = role === "bitmap";
+  const parcelTarget = role === "parcel" && focus !== null && myParcels.includes(focus) ? focus : undefined;
+  const canInscribe = role === "bitmap" || parcelTarget !== undefined;
   const community = useCommunityModules();
   const stampFn = useServerFn(stampForgeModuleFn);
   const publishFn = useServerFn(publishForgeModuleFn);
@@ -446,7 +447,7 @@ function ForgePage() {
           {height !== null && !canInscribe ? (
             <p className="rounded border border-border p-3 text-[11px] text-muted-foreground">
               {role === "parcel"
-                ? `You hold parcel${myParcels.length > 1 ? "s" : ""} ${myParcels.map((p) => `#${p}`).join(", ")} here — build on your tile and publish it as a piece. Only the holder of ${height}.bitmap can inscribe onto its sat.`
+                ? `Pick one of your parcels (${myParcels.map((p) => `#${p}`).join(", ")}) to inscribe your build onto its own sat.`
                 : "Inscribing unlocks once your connected wallet holds this BITMAP."}
             </p>
           ) : height !== null && digest && blocks.length > 0 ? (
@@ -457,12 +458,13 @@ function ForgePage() {
                 height={height}
                 index={0}
                 digest={digest}
-                artifactLabel={focusRect ? `REINSCRIBE PARCEL #${focusRect.index} BUILD ON THE BITMAP'S SAT` : "REINSCRIBE YOUR BUILD ON THE BITMAP'S SAT"}
+                artifactLabel={parcelTarget !== undefined ? `REINSCRIBE YOUR BUILD ON PARCEL #${parcelTarget}'S SAT` : focusRect ? `REINSCRIBE PARCEL #${focusRect.index} BUILD ON THE BITMAP'S SAT` : "REINSCRIBE YOUR BUILD ON THE BITMAP'S SAT"}
                 actionLabel="INSCRIBE ON BITCOIN"
-                description={`Your wallet must hold ${height}.bitmap. The build is stamped onto the very same sat as your BITMAP, which returns to you in the same transaction.${payoutSats ? ` ${payoutSats.toLocaleString()} sats go to the makers listed above in that same transaction.` : ""}`}
+                description={parcelTarget !== undefined ? `Your wallet must hold parcel #${parcelTarget} of ${height}.bitmap. The build is stamped onto your parcel's own sat and shows on its tile on the BITMAP and in the Oasis.${payoutSats ? ` ${payoutSats.toLocaleString()} sats go to the makers listed above in that same transaction.` : ""}` : `Your wallet must hold ${height}.bitmap. The build is stamped onto the very same sat as your BITMAP, which returns to you in the same transaction.${payoutSats ? ` ${payoutSats.toLocaleString()} sats go to the makers listed above in that same transaction.` : ""}`}
                 allowUpload={false}
                 claimParentsForHeight={height}
                 reinscribeOnBitmap
+                {...(parcelTarget !== undefined ? { parcelIndex: parcelTarget } : {})}
                 artifactVariants={[{ key: "html", label: "3D BUILD", contentType: "text/html;charset=utf-8", source: html, note: "Self-rendering build, no outside code.", ...(payouts.length ? { tributes: payouts } : {}) }]}
               />
             </div>

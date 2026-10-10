@@ -10,6 +10,7 @@ import { getAtlasRegionStats } from "@/lib/atlas-land.functions";
 import { TraitBadges } from "@/components/TraitBadges";
 import { ClubBadge } from "@/components/ClubBadge";
 import { ForgeBadge } from "@/components/ForgeBadge";
+import { StasisPods } from "@/components/StasisPods";
 import { GalleryBadges } from "@/components/GalleryBadges";
 import { SatBadges } from "@/components/SatBadges";
 import { toast } from "sonner";
@@ -317,6 +318,7 @@ function BitmapDetail() {
       </header>
 
       <div className="mt-px"><LoopNavigator active="provenance" compact /></div>
+      <div className="mt-px"><StasisPods height={block} /></div>
 
       <div className="border-x border-b border-border px-4 py-4">
         <div className="flex flex-wrap items-center gap-2">

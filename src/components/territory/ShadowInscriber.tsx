@@ -65,6 +65,8 @@ export function ShadowInscriber(props: {
   parentBitmapInscriptionId?: string;
   /** Reinscribe: land the new inscription on the BITMAP's own sat (tag 2 pointer). */
   reinscribeOnBitmap?: boolean;
+  /** With reinscribeOnBitmap: stamp onto this held parcel's sat instead of the BITMAP's. */
+  parcelIndex?: number;
   /** Server refuses to price the inscription unless this block's Guardian is already summoned. */
   requireAwake?: boolean;
   /** Where the inscribed sat lands. Defaults to the connected wallet's ordinals address. */
@@ -226,6 +228,7 @@ export function ShadowInscriber(props: {
               holderAddress: wallet.ordinalsAddress,
               ...(props.parentBitmapInscriptionId ? { bitmapInscriptionId: props.parentBitmapInscriptionId } : {}),
               ...(props.requireAwake ? { requireAwake: true } : {}),
+              ...(props.parcelIndex !== undefined ? { parcelIndex: props.parcelIndex } : {}),
             },
           });
         } catch {
@@ -240,7 +243,9 @@ export function ShadowInscriber(props: {
         }
         if (!res.bitmapParentId) {
           throw new Error(
-            `MINT STOPPED — YOUR CONNECTED ORDINALS WALLET MUST HOLD ${props.claimParentsForHeight}.BITMAP. NOTHING WAS PAID.`,
+            props.parcelIndex !== undefined
+              ? `MINT STOPPED — YOUR CONNECTED ORDINALS WALLET MUST HOLD PARCEL #${props.parcelIndex} OF ${props.claimParentsForHeight}.BITMAP. NOTHING WAS PAID.`
+              : `MINT STOPPED — YOUR CONNECTED ORDINALS WALLET MUST HOLD ${props.claimParentsForHeight}.BITMAP. NOTHING WAS PAID.`,
           );
         }
         if (!res.masterInscriptionId) {

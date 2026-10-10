@@ -1726,3 +1726,10 @@
 
 @keyframes mint-sweep { 0% { transform: translateX(0); } 100% { transform: translateX(400%); } }
 .mint-sweep { animation: mint-sweep 2.4s ease-in-out infinite; }
+
+@keyframes pod-float { 0%,100% { transform: translateY(0) scale(0.97) } 50% { transform: translateY(-8px) scale(0.99) } }
+@keyframes pod-scan { 0% { top: -10% } 100% { top: 105% } }
+@keyframes pod-bubble { 0% { transform: translateY(0); opacity: 0 } 15% { opacity: 1 } 100% { transform: translateY(-300px); opacity: 0 } }
+.pod-float { animation: pod-float 6s ease-in-out infinite; }
+.pod-scan { animation: pod-scan 4s linear infinite; }
+.pod-bubble { animation: pod-bubble 4.5s ease-in infinite; }

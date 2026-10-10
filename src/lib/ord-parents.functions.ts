@@ -20,6 +20,8 @@ export const mintParentsFn = createServerFn({ method: "GET" })
           .optional(),
         /** Inscribe step: refuse unless this block's Guardian was summoned (paid + confirmed). */
         requireAwake: z.boolean().optional(),
+        /** Parcel reinscribe: target the live-held parcel child `<index>.<height>.bitmap` instead. */
+        parcelIndex: z.number().int().min(0).max(100_000).optional(),
       })
       .parse(input),
   )
@@ -51,22 +53,35 @@ export const mintParentsFn = createServerFn({ method: "GET" })
     const parents: ParentSpend[] = [];
 
     let bitmapId: string | null = null;
-    if (data.bitmapInscriptionId) {
+    if (data.parcelIndex !== undefined) {
+      // Parcel holders stamp onto their own parcel sat; the chain scan decides who holds it.
+      const { parcelHoldersFor } = await import("@/lib/parcel-fief.server");
+      const holders = await parcelHoldersFor(data.height).catch(() => null);
+      const p = holders?.parcels.find((x) => x.index === data.parcelIndex);
+      if (!p) notes.push(`PARCEL #${data.parcelIndex} OF ${data.height}.BITMAP IS NOT A VALID ON-CHAIN PARCEL`);
+      else if (!data.holderAddress || p.ownerAddress !== data.holderAddress) notes.push(`YOUR CONNECTED WALLET DOES NOT HOLD PARCEL #${data.parcelIndex}`);
+      else {
+        const spend = await fetchParentSpend(p.inscriptionId.toLowerCase(), "wallet");
+        if (!spend || spend.address !== data.holderAddress) notes.push("COULD NOT LOCATE YOUR PARCEL ON CHAIN RIGHT NOW");
+        else { parents.push(spend); bitmapId = p.inscriptionId.toLowerCase(); }
+      }
+    } else if (data.bitmapInscriptionId) {
       // User-supplied id: accept only if its on-chain content is exactly <height>.bitmap.
       if (await isBitmapInscription(data.bitmapInscriptionId, data.height)) bitmapId = data.bitmapInscriptionId;
       else notes.push(`THAT INSCRIPTION IS NOT ${data.height}.BITMAP`);
     }
-    if (!bitmapId && !data.bitmapInscriptionId) bitmapId = await bitmapInscriptionFor(data.height).catch(() => null);
-    if (!bitmapId && !data.bitmapInscriptionId && data.height >= 942_000) {
+    const isParcel = data.parcelIndex !== undefined;
+    if (!isParcel && !bitmapId && !data.bitmapInscriptionId) bitmapId = await bitmapInscriptionFor(data.height).catch(() => null);
+    if (!isParcel && !bitmapId && !data.bitmapInscriptionId && data.height >= 942_000) {
       // LiveOCI: read the blocks themselves for the first valid <height>.bitmap.
       const { resolveBitmapFromChain } = await import("@/lib/bitmap-live-resolver.server");
       bitmapId = await resolveBitmapFromChain(data.height).catch(() => null);
     }
-    if (!bitmapId && !data.bitmapInscriptionId && data.holderAddress) {
+    if (!isParcel && !bitmapId && !data.bitmapInscriptionId && data.holderAddress) {
       bitmapId = await scanWalletForBitmap(data.holderAddress, data.height).catch(() => null);
       if (bitmapId) notes.push(`FOUND ${data.height}.BITMAP IN YOUR WALLET`);
     }
-    if (bitmapId) {
+    if (bitmapId && !isParcel) {
       // Save verified finds so this block resolves instantly next time.
       const { learnBitmap } = await import("@/lib/bitmap-live-resolver.server");
       const canonical = await learnBitmap(bitmapId, data.height).catch(() => null);
@@ -75,7 +90,9 @@ export const mintParentsFn = createServerFn({ method: "GET" })
         bitmapId = null;
       }
     }
-    if (!bitmapId) {
+    if (isParcel) {
+      // parcel spend already pushed above
+    } else if (!bitmapId) {
       notes.push(`COULD NOT FIND THE INSCRIPTION FOR ${data.height}.BITMAP — PASTE ITS INSCRIPTION ID`);
     } else {
       const spend = await fetchParentSpend(bitmapId.toLowerCase(), "wallet");
