@@ -148,7 +148,7 @@ export function placePlayer(player: PlayerState, x: number, z: number, yaw = pla
   syncCell(player);
 }
 
-function syncCell(player: PlayerState) {
+export function syncCell(player: PlayerState) {
   player.col = colAt(player.x);
   player.row = rowAt(player.z);
   player.height = player.row * WORLD_GRID + player.col;
