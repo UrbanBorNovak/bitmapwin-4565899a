@@ -145,14 +145,14 @@ function CardArt({ card }: { card: Card }) {
     : undefined;
   if (puppet)
     return (
-      <div className="lc-pfp-frame absolute inset-0" title={`BITCOIN WIERDOS · #${puppet.index + 1}`}>
+      <div className="lc-pfp-frame absolute inset-0" title={`BITMAP EMPORIUM · #${puppet.index + 1}`}>
         <AtlasPlaceBackdrop height={card.bitmap} />
-        <img src={inscriptionContentUrl(puppet.inscriptionId)} alt={`Bitcoin Wierdo #${puppet.index + 1}`} loading="lazy" className="h-full w-full object-cover opacity-75 [image-rendering:pixelated]" />
+        <img src={inscriptionContentUrl(puppet.inscriptionId)} alt={`Bitmap Emporium #${puppet.index + 1}`} loading="lazy" className="h-full w-full object-cover opacity-75 [image-rendering:pixelated]" />
         <AtlasPlaceBackdrop height={card.bitmap} className="pointer-events-none opacity-30 mix-blend-soft-light" />
         <OasisBackdrop height={card.bitmap} className="pointer-events-none opacity-60 mix-blend-screen" />
         <div className="lc-pfp-scan absolute inset-0" aria-hidden />
         <CardBitmap3D height={card.bitmap} state={card.state} className="absolute bottom-1 left-1 size-12 opacity-95" />
-        <span className="lc-pfp-badge label absolute left-1.5 top-1 text-[7px] text-bitcoin">WIERDO #{puppet.index + 1}</span>
+        <span className="lc-pfp-badge label absolute left-1.5 top-1 text-[7px] text-bitcoin">EMPORIUM #{puppet.index + 1}</span>
       </div>
     );
   const selectedJigglypuffPool = profile?.visuals.pfpExtendersEnabled === true && profile.visuals.selectedPfpCollection === JIGGLYPUFF_POOL;

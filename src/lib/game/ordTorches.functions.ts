@@ -9,7 +9,7 @@ export const getOrdTorchesFn = createServerFn({ method: "GET" }).handler(async (
   const ids: string[] = [];
   let page = 0;
   let more = true;
-  while (more && page < 40 && ids.length < ORD_TORCHES_SUPPLY) {
+  while (more && page < 250 && ids.length < ORD_TORCHES_SUPPLY) {
     const res = await fetch(`https://ordinals.com/r/children/${ORD_TORCHES_PARENT}/${page}`, { headers: { "User-Agent": "bitmapwin/1.0" } });
     if (!res.ok) break;
     const body = (await res.json()) as { ids?: unknown[]; more?: boolean };
