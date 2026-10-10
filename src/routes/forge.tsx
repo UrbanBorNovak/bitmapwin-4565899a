@@ -166,13 +166,13 @@ function ForgePage() {
 
   const undo = () => setHistory((h) => { const last = h[h.length - 1]; if (last) setWorld(last); return h.slice(0, -1); });
 
-  const place = async () => {
+  const place = async (): Promise<void> => {
     if (!hover || tool === "erase") return;
-    if (overLimit) return toast.error(`BUILD LIMIT IS ${FORGE_MAX_BLOCKS} BLOCKS`);
+    if (overLimit) { toast.error(`BUILD LIMIT IS ${FORGE_MAX_BLOCKS} BLOCKS`); return; }
     if (tool === "stamp" && picked.author && (picked.bitCost ?? 0) > 0) {
-      if (!wallet) return toast.error("CONNECT A WALLET TO USE PAID MODULES");
+      if (!wallet) { toast.error("CONNECT A WALLET TO USE PAID MODULES"); return; }
       const r = await stampFn({ data: { moduleId: picked.id, address: wallet.ordinalsAddress } }).catch(() => ({ ok: false as const, error: "SIGN IN TO USE PAID MODULES" }));
-      if (!r.ok) return toast.error(r.error);
+      if (!r.ok) { toast.error(r.error); return; }
       if (r.paid) toast.success(`PAID ${r.paid} BIT TO ${short(picked.author)}`);
     }
     commit(stampInto(world, ghost, hover[0], hover[1], hover[2]));
@@ -186,7 +186,7 @@ function ForgePage() {
   };
 
   const seed = (a: ArchetypeId) => {
-    if (height === null) return toast.error("ENTER YOUR BITMAP NUMBER FIRST");
+    if (height === null) { toast.error("ENTER YOUR BITMAP NUMBER FIRST"); return; }
     commit(stampInto(new Map(), generateBuild(height, txCount, a), 0, 0, 0));
   };
 
@@ -202,15 +202,15 @@ function ForgePage() {
     return () => clearTimeout(t);
   }, [html, blocks, lineage]);
 
-  const publish = async () => {
-    if (!wallet) return toast.error("CONNECT A WALLET TO PUBLISH");
-    if (blocks.length < 4) return toast.error("BUILD SOMETHING FIRST");
-    if (blocks.length > 800) return toast.error("MODULES ARE CAPPED AT 800 BLOCKS — ERASE SOME FIRST");
+  const publish = async (): Promise<void> => {
+    if (!wallet) { toast.error("CONNECT A WALLET TO PUBLISH"); return; }
+    if (blocks.length < 4) { toast.error("BUILD SOMETHING FIRST"); return; }
+    if (blocks.length > 800) { toast.error("MODULES ARE CAPPED AT 800 BLOCKS — ERASE SOME FIRST"); return; }
     const r = await publishFn({ data: {
       name: pub.name.trim() || "Untitled module", address: wallet.ordinalsAddress, blocks: normaliseModule(blocks),
       bitCost: pub.bit, tributeSats: pub.sats > 0 ? Math.max(546, pub.sats) : 0, parents: used.map((u) => u.id),
     } }).catch(() => ({ ok: false as const, error: "SIGN IN TO PUBLISH" }));
-    if (!r.ok) return toast.error(r.error);
+    if (!r.ok) { toast.error(r.error); return; }
     toast.success("MODULE PUBLISHED — OTHERS CAN NOW BUILD ON IT");
     void community.refetch();
   };
