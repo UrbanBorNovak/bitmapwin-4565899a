@@ -12,6 +12,7 @@ import { DIRECTIVES, MAX_RANGE, dispatchPosition, type Directive, type Dispatch 
 import { deployGuardianFn, recallGuardianFn } from "@/lib/guardian-dispatch.functions";
 import { settleRaidsFn } from "@/lib/guardian-raid.functions";
 import { BossRaids } from "@/components/command/BossRaids";
+import { WhileAway } from "@/components/retention/WhileAway";
 
 export const Route = createFileRoute("/command")({
   head: () => ({
@@ -199,6 +200,7 @@ function CommandPage() {
         })}
       </div>
 
+      <WhileAway raids={raids.data?.raids ?? []} mine={(mine.data ?? []).map((g) => g.height)} />
       {userId && <BossRaids guardians={mine.data ?? []} />}
 
       <h2 className="mt-12 text-[10px] tracking-[0.3em] text-signal">RAID LOG · LIVE</h2>

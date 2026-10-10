@@ -33,7 +33,7 @@ export function DailyStreak() {
 
   const halving = typeof tip === "number" ? 210_000 - (tip % 210_000) : null;
   return (
-    <section data-no-translate className="mx-auto mt-6 max-w-3xl border border-border bg-card/50 p-4 font-mono text-xs backdrop-blur" aria-label="Daily tribute">
+    <section data-no-translate className="mt-4 border border-border bg-card/50 p-4 font-mono text-xs backdrop-blur" aria-label="Daily tribute">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-[10px] tracking-[0.3em] text-signal">DAILY TRIBUTE · MORNING BRIEF</p>
         <p className="text-[10px] text-muted-foreground">
