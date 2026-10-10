@@ -17,7 +17,7 @@ import {
 import { ensureWalletKeys, saveWalletSession } from "@/lib/wallet-session";
 import { formatSats } from "@/lib/trades";
 import { MARKETPLACE_FEE_PERCENT } from "@/lib/marketplace-fee";
-import { TransferTracker, type TrackedPurchase } from "@/components/TransferTracker";
+import { trackPurchase } from "@/components/TransferTracker";
 
 const PROVIDERS: WalletProviderId[] = ["unisat", "xverse"];
 
@@ -58,7 +58,6 @@ export function BuyButton({
   const [lockUntil, setLockUntil] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const holdRef = useRef<string | null>(null);
-  const [tracked, setTracked] = useState<TrackedPurchase | null>(null);
   useEffect(() => {
     if (lockUntil === null) return;
     const t = window.setInterval(() => setNow(Date.now()), 1000);
@@ -103,7 +102,7 @@ export function BuyButton({
     onSuccess: (result) => {
       const buyer = holdRef.current;
       holdRef.current = null;
-      if (result.txid && buyer) setTracked({ txid: result.txid, buyerAddress: buyer, ...(inscriptionId ? { inscriptionId } : {}), ...(height !== undefined ? { height } : {}) });
+      if (result.txid && buyer) trackPurchase({ txid: result.txid, buyerAddress: buyer, ...(inscriptionId ? { inscriptionId } : {}), ...(height !== undefined ? { height } : {}) });
       void queryClient.invalidateQueries({ queryKey: ["offers"] });
       void queryClient.invalidateQueries({ queryKey: ["registry"] });
       void queryClient.invalidateQueries({ queryKey: ["bids"] });
@@ -129,7 +128,6 @@ export function BuyButton({
 
   return (
     <>
-    <TransferTracker purchase={tracked} onClose={() => setTracked(null)} />
     <button className={className} disabled={buy.isPending} onClick={() => buy.mutate()}>
       {buy.isPending
         ? lockUntil

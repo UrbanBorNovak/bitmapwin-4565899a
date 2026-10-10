@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { transferStatusFn } from "@/lib/transfer-status.functions";
@@ -56,4 +57,19 @@ export function TransferTracker({ purchase, onClose }: { purchase: TrackedPurcha
       </DialogContent>
     </Dialog>
   );
+}
+
+/* App-wide tracker state, so the dialog survives the Buy button unmounting once the listing closes. */
+let current: TrackedPurchase | null = null;
+const subs = new Set<() => void>();
+export function trackPurchase(p: TrackedPurchase | null) {
+  current = p;
+  subs.forEach((f) => f());
+}
+const subscribe = (f: () => void) => { subs.add(f); return () => { subs.delete(f); }; };
+
+/** Mounted once at the app root. */
+export function TransferTrackerHost() {
+  const p = useSyncExternalStore(subscribe, () => current, () => null);
+  return <TransferTracker purchase={p} onClose={() => trackPurchase(null)} />;
 }

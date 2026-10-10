@@ -17,6 +17,7 @@ import { SiteTickerTape } from "@/components/SiteTickerTape";
 
 import { SiteFooter } from "@/components/SiteFooter";
 import { Toaster } from "@/components/ui/sonner";
+import { TransferTrackerHost } from "@/components/TransferTracker";
 import { supabase } from "@/integrations/supabase/client";
 import { rememberReferralCode } from "@/lib/referrals";
 import { SalesBackdrop } from "@/components/SalesBackdrop";
@@ -226,6 +227,7 @@ function RootComponent() {
       <RegistryResolverDriver />
       <BlockFactsDriver />
       <Toaster />
+      <TransferTrackerHost />
       </LanguageProvider>
     </QueryClientProvider>
   );

@@ -19,15 +19,10 @@ const ESPLORA = "https://blockstream.info/api";
 /** Esplora returns 25 txs per page; cap the fan-out for very large blocks. */
 const ESPLORA_MAX_PAGES = 24;
 const ESPLORA_CONCURRENCY = 2;
-const UPSTREAM_CONCURRENCY = 3;
 const RETRY_DELAYS = [0, 500, 1_500] as const;
 
 const blockCache = new Map<number, BlockBytes>();
 const metaCache = new Map<number, BlockMeta>();
-const blockInflight = new Map<number, Promise<BlockBytes>>();
-const metaInflight = new Map<number, Promise<BlockMeta>>();
-let activeUpstreamJobs = 0;
-const upstreamQueue: Array<() => void> = [];
 
 export type BlockBytes = {
   height: number;
@@ -62,16 +57,9 @@ export function sizeClassFromValue(valueSats: number): number {
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 async function withUpstreamSlot<T>(task: () => Promise<T>): Promise<T> {
-  if (activeUpstreamJobs >= UPSTREAM_CONCURRENCY) {
-    await new Promise<void>((resolve) => upstreamQueue.push(resolve));
-  }
-  activeUpstreamJobs += 1;
-  try {
-    return await task();
-  } finally {
-    activeUpstreamJobs -= 1;
-    upstreamQueue.shift()?.();
-  }
+  // No cross-request queue: on Workers a resolver from one request cannot
+  // complete another request's promise, which hung waiters.
+  return task();
 }
 
 async function fetchWithBackoff(url: string, accept: string, timeoutMs: number): Promise<Response> {
@@ -120,8 +108,6 @@ async function blockHash(height: number): Promise<string> {
 export async function fetchBlockMeta(height: number): Promise<BlockMeta> {
   const cached = metaCache.get(height);
   if (cached) return cached;
-  const pending = metaInflight.get(height);
-  if (pending) return pending;
 
   const request = (async () => {
     const hash = await blockHash(height);
@@ -153,12 +139,7 @@ export async function fetchBlockMeta(height: number): Promise<BlockMeta> {
     metaCache.set(height, meta);
     return meta;
   })();
-  metaInflight.set(height, request);
-  try {
-    return await request;
-  } finally {
-    metaInflight.delete(height);
-  }
+  return request;
 }
 
 async function valuesFromMempoolSummary(hash: string): Promise<number[]> {
@@ -218,18 +199,9 @@ async function valuesFromEsploraPages(hash: string, txCount: number): Promise<nu
 export async function buildBlockBytes(height: number): Promise<BlockBytes> {
   const cached = blockCache.get(height);
   if (cached) return cached;
-  const pending = blockInflight.get(height);
-  if (pending) return pending;
-
-  const request = buildBlockBytesUncached(height);
-  blockInflight.set(height, request);
-  try {
-    const block = await request;
-    blockCache.set(height, block);
-    return block;
-  } finally {
-    blockInflight.delete(height);
-  }
+  const block = await buildBlockBytesUncached(height);
+  blockCache.set(height, block);
+  return block;
 }
 
 /**
@@ -246,13 +218,10 @@ export type TxValues = {
 };
 
 const valuesCache = new Map<number, TxValues>();
-const valuesInflight = new Map<number, Promise<TxValues>>();
 
 export async function buildTxValues(height: number): Promise<TxValues> {
   const cached = valuesCache.get(height);
   if (cached) return cached;
-  const pending = valuesInflight.get(height);
-  if (pending) return pending;
 
   const request = (async (): Promise<TxValues> => {
     const meta = await fetchBlockMeta(height);
@@ -268,8 +237,7 @@ export async function buildTxValues(height: number): Promise<TxValues> {
     return { height: meta.height, hash: meta.hash, txCount: meta.txCount, source, values };
   })();
 
-  valuesInflight.set(height, request);
-  try {
+  {
     const tx = await request;
     if (valuesCache.size >= 150) {
       const oldest = valuesCache.keys().next().value;
@@ -277,8 +245,6 @@ export async function buildTxValues(height: number): Promise<TxValues> {
     }
     valuesCache.set(height, tx);
     return tx;
-  } finally {
-    valuesInflight.delete(height);
   }
 }
 
