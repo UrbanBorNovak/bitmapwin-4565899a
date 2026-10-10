@@ -2927,7 +2927,7 @@ const WorldScene = memo(function WorldScene({
           <DropshipLayer pose={pose} surface={traversalSurfaceY} />
           <ShardRaidLayer pose={pose} surface={traversalSurfaceY} />
           <ForgeNearby pose={pose} surface={traversalSurfaceY} />
-          <BuilderJumbotron center={[0, 40, WORLD_SIZE / 2]} />
+          <BuilderJumbotron pose={pose} surface={traversalSurfaceY} />
           <Companions unit={AVATAR_U} pose={pose} />
           {self.hp <= 0 ? <GhostShade unit={AVATAR_U} pose={pose} /> : null}
         </>

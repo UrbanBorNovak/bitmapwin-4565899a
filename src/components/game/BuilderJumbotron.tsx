@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { Billboard } from "@react-three/drei";
+import type { PlayerState } from "@/lib/player-state";
 import { builderAvatar, fetchActiveBuilders, shortAddr, type ActiveBuilder } from "@/lib/forge-builders";
 
 /**
@@ -38,7 +40,26 @@ function paint(ctx: CanvasRenderingContext2D, b: ActiveBuilder | null, rank: num
   ctx.fillText(`${b.pieces} PIECES · ${b.uses} USES`, tx, 455);
 }
 
-export function BuilderJumbotron({ center }: { center: [number, number, number] }) {
+function paintBoard(ctx: CanvasRenderingContext2D, list: ActiveBuilder[]) {
+  ctx.fillStyle = "#05070b"; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = "#4fd6e8"; ctx.lineWidth = 8; ctx.strokeRect(4, 4, W - 8, H - 8);
+  ctx.fillStyle = "#4fd6e8"; ctx.font = "bold 42px monospace"; ctx.fillText("BUILDER LEADERBOARD", 40, 70);
+  if (!list.length) { ctx.fillStyle = "#9aa"; ctx.font = "30px monospace"; ctx.fillText("NO PIECES YET — PUBLISH AT /forge", 40, 160); return; }
+  list.slice(0, 6).forEach((b, i) => {
+    const y = 140 + i * 70;
+    const { hue, cells } = builderAvatar(b.address);
+    ctx.fillStyle = `hsl(${hue} 85% 55%)`;
+    cells.forEach((on, k) => { if (on) ctx.fillRect(110 + (k % 5) * 10, y - 40 + Math.floor(k / 5) * 10, 10, 10); });
+    ctx.fillStyle = i === 0 ? "#f7931a" : "#ffffff"; ctx.font = "bold 36px monospace";
+    ctx.fillText(`${i + 1}`, 40, y);
+    ctx.fillText(shortAddr(b.address), 190, y);
+    ctx.fillStyle = "#9aa"; ctx.font = "28px monospace";
+    ctx.fillText(`${b.pieces}P · ${b.uses}U`, 720, y);
+  });
+}
+
+export function BuilderJumbotron({ pose, surface }: { pose: React.MutableRefObject<PlayerState>; surface: (x: number, z: number) => number }) {
+  const follow = useRef<THREE.Group>(null);
   const [builders, setBuilders] = useState<ActiveBuilder[]>([]);
   const [idx, setIdx] = useState(0);
   const spin = useRef<THREE.Group>(null);
@@ -59,6 +80,20 @@ export function BuilderJumbotron({ center }: { center: [number, number, number] 
     if (t) t.colorSpace = THREE.SRGBColorSpace;
     return { canvas: c, texture: t };
   }, []);
+  const board = useMemo(() => {
+    const c = typeof document !== "undefined" ? document.createElement("canvas") : null;
+    if (c) { c.width = W; c.height = H; }
+    const t = c ? new THREE.CanvasTexture(c) : null;
+    if (t) t.colorSpace = THREE.SRGBColorSpace;
+    return { canvas: c, texture: t };
+  }, []);
+  useEffect(() => {
+    const ctx = board.canvas?.getContext("2d");
+    if (!ctx || !board.texture) return;
+    paintBoard(ctx, builders);
+    board.texture.needsUpdate = true;
+  }, [builders, board]);
+  useEffect(() => () => board.texture?.dispose(), [board]);
 
   useEffect(() => {
     const ctx = canvas?.getContext("2d");
@@ -69,43 +104,49 @@ export function BuilderJumbotron({ center }: { center: [number, number, number] 
   }, [builders, idx, canvas, texture]);
 
   useEffect(() => () => texture?.dispose(), [texture]);
-  useFrame((_, dt) => { if (spin.current) spin.current.rotation.y += dt * 0.08; });
+  useFrame((_, dt) => {
+    if (spin.current) spin.current.rotation.y += dt * 0.08;
+    const g = follow.current, p = pose.current;
+    if (!g) return;
+    // Rides the sky above the walker so it is always overhead, never left behind.
+    const k = 1 - Math.exp(-3 * Math.min(dt, 0.05));
+    g.position.x += (p.x - g.position.x) * k;
+    g.position.z += (p.z - g.position.z) * k;
+    g.position.y += (surface(p.x, p.z) + ALT - g.position.y) * k;
+  });
 
-  if (!texture) return null;
-  const sw = 16, sh = 9, half = sw / 2;
+  if (!texture || !board.texture) return null;
+  const sw = 6, sh = 3.4, half = sw / 2;
   return (
-    <group position={center}>
-      {/* suspension cables + ground beacon */}
-      {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * 4, 30, 0]}>
-          <boxGeometry args={[0.08, 50, 0.08]} />
-          <meshBasicMaterial color="#555" fog={false} />
-        </mesh>
-      ))}
-      <mesh position={[0, -center[1] / 2, 0]}>
-        <cylinderGeometry args={[0.15, 0.15, center[1], 6, 1, true]} />
-        <meshBasicMaterial color="#4fd6e8" transparent opacity={0.35} fog={false} />
-      </mesh>
+    <group ref={follow} renderOrder={10}>
       <group ref={spin}>
         <mesh>
-          <boxGeometry args={[sw - 0.4, sh, sw - 0.4]} />
+          <boxGeometry args={[sw - 0.15, sh, sw - 0.15]} />
           <meshBasicMaterial color="#0a0c10" fog={false} />
         </mesh>
         {[0, 1, 2, 3].map((k) => (
           <group key={k} rotation={[0, (k * Math.PI) / 2, 0]}>
-            <mesh position={[0, 0, half]} rotation={[-0.2, 0, 0]}>
+            <mesh position={[0, 0, half]} rotation={[-0.25, 0, 0]}>
               <planeGeometry args={[sw, sh]} />
               <meshBasicMaterial map={texture} toneMapped={false} fog={false} />
             </mesh>
           </group>
         ))}
-        {[sh / 2 + 0.25, -sh / 2 - 0.25].map((y) => (
+        {[sh / 2 + 0.1, -sh / 2 - 0.1].map((y) => (
           <mesh key={y} position={[0, y, 0]}>
-            <boxGeometry args={[sw + 0.4, 0.3, sw + 0.4]} />
+            <boxGeometry args={[sw + 0.15, 0.12, sw + 0.15]} />
             <meshBasicMaterial color="#f7931a" toneMapped={false} fog={false} />
           </mesh>
         ))}
       </group>
+      <Billboard position={[0, sh + 2.6, 0]}>
+        <mesh>
+          <planeGeometry args={[7, 3.94]} />
+          <meshBasicMaterial map={board.texture} toneMapped={false} fog={false} side={THREE.DoubleSide} />
+        </mesh>
+      </Billboard>
     </group>
   );
 }
+
+const ALT = 9;
