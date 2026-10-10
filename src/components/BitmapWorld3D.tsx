@@ -4599,8 +4599,12 @@ function BitmapWorld3DInner({
             dpr={quality.pixelRatio * quality.renderScale}
             shadows={quality.shadows ? { type: THREE.PCFSoftShadowMap } : false}
             frameloop="always"
-            onCreated={({ gl }) => {
+            onCreated={({ gl, scene, camera }) => {
               glRef.current = gl;
+              // Warm shaders off the main thread so the first seconds don't hitch.
+              const warm = () => { void gl.compileAsync?.(scene, camera).catch(() => {}); };
+              window.setTimeout(warm, 300);
+              window.setTimeout(warm, 3000);
               // WebXR ready — the render loop switches to the headset when a
               // session starts, and back to the screen when it ends.
               gl.xr.enabled = true;

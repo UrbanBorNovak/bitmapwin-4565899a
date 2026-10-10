@@ -115,7 +115,7 @@ export function WeatherLighting({ foreground, background, bitcoin }: { foregroun
     <>
       <ambientLight intensity={0.56} />
       {quality.resolved !== "low" ? <hemisphereLight ref={hemi} args={[foreground, background, 0.52]} /> : null}
-      <directionalLight ref={sun} color={foreground} position={[-18, 36, -12]} intensity={1.35} castShadow={quality.shadows} shadow-mapSize-width={quality.shadowMapSize || 512} shadow-mapSize-height={quality.shadowMapSize || 512} />
+      <directionalLight ref={sun} color={foreground} position={[-18, 36, -12]} intensity={1.35} castShadow={quality.shadows} shadow-mapSize-width={quality.shadowMapSize || 512} shadow-mapSize-height={quality.shadowMapSize || 512} shadow-camera-left={-28} shadow-camera-right={28} shadow-camera-top={28} shadow-camera-bottom={-28} shadow-camera-near={1} shadow-camera-far={70} shadow-bias={-0.0004} />
       {quality.resolved === "high" ? <pointLight ref={warm} color={bitcoin} position={[14, 10, 3]} intensity={18} distance={28} decay={2} /> : null}
     </>
   );
