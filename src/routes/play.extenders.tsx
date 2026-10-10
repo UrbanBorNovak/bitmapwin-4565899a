@@ -22,7 +22,7 @@ import {
 } from "@/lib/game/worldState";
 import type { CardVisualExtender } from "@/lib/game/types";
 import { Link } from "@tanstack/react-router";
-import { ORD_TORCHES_PARENT, ORD_TORCHES_POOL, ORD_TORCHES_SUPPLY, useOrdTorches } from "@/lib/game/ordTorches";
+import { ORD_TORCHES_PARENT, ORD_TORCHES_POOL, useOrdTorches } from "@/lib/game/ordTorches";
 import { PUPPETS_PARENT, PUPPETS_POOL, usePuppets } from "@/lib/game/puppets";
 import { JIGGLYPUFF_IDS, JIGGLYPUFF_POOL, useJigglypuff } from "@/lib/game/jigglypuff";
 import { OFFICIAL_TRAITS_POOL, traitExtenderPoolQuery } from "@/lib/trait-collections";
