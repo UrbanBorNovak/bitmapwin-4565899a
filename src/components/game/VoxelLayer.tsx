@@ -46,6 +46,7 @@ export function VoxelLayer({ pose, firstPerson, armed }: { pose: React.RefObject
   const mesh = useRef<THREE.InstancedMesh>(null);
   const glowMesh = useRef<THREE.InstancedMesh>(null);
   const outline = useRef<THREE.LineSegments>(null);
+  const ghost = useRef<THREE.Mesh>(null);
   const center = useRef<[number, number] | null>(null);
   const loaded = useRef<[number, number] | null>(null);
   const [mode, setMode] = useState(voxelMode.on);
@@ -205,6 +206,20 @@ export function VoxelLayer({ pose, firstPerson, armed }: { pose: React.RefObject
         o.position.set((x + 0.5) * VOXEL, (y + 0.5) * VOXEL, (z + 0.5) * VOXEL);
       }
     }
+    // Placement preview: where right click would put a block; red when your body is in the way.
+    const gh = ghost.current;
+    if (gh) {
+      const h = hit.current;
+      gh.visible = Boolean(h);
+      if (h) {
+        const px = h.cell[0] + h.normal[0], py = h.cell[1] + h.normal[1], pz = h.cell[2] + h.normal[2];
+        gh.position.set((px + 0.5) * VOXEL, (py + 0.5) * VOXEL, (pz + 0.5) * VOXEL);
+        const feet = Math.round((columnSurface(me.x, me.z) ?? 0) / VOXEL);
+        const blocked = toCell(me.x) === px && toCell(me.z) === pz && py >= feet && py <= feet + 1;
+        const mat = gh.material as THREE.MeshBasicMaterial;
+        mat.color.set(blocked ? "#ff3b3b" : blockColor(voxelMode.block).top);
+      }
+    }
   });
 
   const box = useMemo(() => new THREE.BoxGeometry(VOXEL, VOXEL, VOXEL), []);
@@ -217,6 +232,9 @@ export function VoxelLayer({ pose, firstPerson, armed }: { pose: React.RefObject
       <instancedMesh ref={glowMesh} args={[box, undefined, 512]} raycast={noRaycast} frustumCulled={false}>
         <meshStandardMaterial emissive="#ffc35a" emissiveIntensity={1.4} toneMapped={false} />
       </instancedMesh>
+      <mesh ref={ghost} geometry={box} raycast={noRaycast} visible={false} renderOrder={2}>
+        <meshBasicMaterial transparent opacity={0.35} depthWrite={false} />
+      </mesh>
       <lineSegments ref={outline} geometry={edgeGeo} raycast={noRaycast} visible={false}>
         <lineBasicMaterial color="#111111" />
       </lineSegments>
