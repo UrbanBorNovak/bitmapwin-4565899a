@@ -9,6 +9,7 @@ import { morphFromDna } from "@/lib/creature-morph";
 import { DelegateGuardianSummon } from "@/components/bitmon/DelegateGuardianSummon";
 import { UnfinishedInscriptions } from "@/components/territory/UnfinishedInscriptions";
 import { SummonDashboard } from "@/components/bitmon/SummonDashboard";
+import { GuardianTracker } from "@/components/bitmon/GuardianTracker";
 import { SHORD_VAULT_DISABLED } from "@/lib/shord-flag";
 import { GuardianShowcase } from "@/components/bitmon/GuardianShowcase";
 import { GuardianStory, WalletMintGuide } from "@/components/bitmon/WalletMintGuide";
@@ -200,7 +201,7 @@ function MintPage() {
             </div>
           </>
         ) : null}
-        {tab === "mine" ? <SummonDashboard /> : null}
+        {tab === "mine" ? <><SummonDashboard /><GuardianTracker /></> : null}
       </div>
 
       {open ? <SummonGuardianDialog height={height} open={open} onOpenChange={setOpen} /> : null}
