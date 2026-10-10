@@ -984,10 +984,47 @@ export function GuardianBody(props: {
   accent: string;
   unit?: number;
   height?: number | undefined;
+  /** Verified on-chain child inscription: adds the inscribed seal. */
+  inscribed?: boolean;
 }) {
-  const { height, ...rest } = props;
+  const { height, inscribed, ...rest } = props;
   const dna = useQuery({ ...guardianDnaQuery(height ?? 0), enabled: height != null, staleTime: Infinity });
   const morph = useMemo(() => (dna.data ? morphFromDna(dna.data) : null), [dna.data]);
-  if (height != null && morph) return <MorphBody m={morph} unit={(rest.unit ?? 1) * 1.1} rarity={rest.rarity} />;
+  const u = (rest.unit ?? 1) * 1.1;
+  if (height != null && morph) {
+    return (
+      <group>
+        <MorphBody m={morph} unit={u} rarity={rest.rarity} />
+        {inscribed ? <InscribedSeal color={morph.glow} u={u} /> : null}
+      </group>
+    );
+  }
   return <SpeciesBody {...rest} />;
+}
+
+/** Orange ground sigil + slow orbiting ring marking an on-chain inscribed Guardian. */
+function InscribedSeal({ color, u }: { color: string; u: number }) {
+  const ring = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    const r = ring.current;
+    if (r) { r.rotation.y = clock.elapsedTime * 0.6; r.position.y = 1.5 * u + Math.sin(clock.elapsedTime * 1.4) * 0.05 * u; }
+  });
+  return (
+    <group raycast={noRaycast}>
+      <mesh rotation-x={-Math.PI / 2} position={[0, 0.015 * u, 0]} raycast={noRaycast}>
+        <ringGeometry args={[0.95 * u, 1.05 * u, 4, 1]} />
+        <meshBasicMaterial color="#f7931a" transparent opacity={0.8} depthWrite={false} />
+      </mesh>
+      <group ref={ring}>
+        <mesh rotation-x={Math.PI / 2} raycast={noRaycast}>
+          <torusGeometry args={[0.32 * u, 0.02 * u, 4, 16]} />
+          <meshStandardMaterial color="#f7931a" emissive="#f7931a" emissiveIntensity={1.8} />
+        </mesh>
+        <mesh raycast={noRaycast}>
+          <octahedronGeometry args={[0.08 * u, 0]} />
+          <meshStandardMaterial color={color} emissive={color} emissiveIntensity={2} />
+        </mesh>
+      </group>
+    </group>
+  );
 }
