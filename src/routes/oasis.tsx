@@ -4,7 +4,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Palette } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, Maximize2, Minimize2, Palette } from "lucide-react";
 import { OasisVisualModsPanel, modStyle, useVisualMod, useModsHotkey } from "@/components/game/OasisVisualMods";
 import { getChainBlocks } from "@/lib/chain.functions";
 import { OasisWorldGuard } from "@/components/OasisWorldGuard";
@@ -79,6 +79,17 @@ function OasisPage() {
   };
   const toggleMods = useCallback(() => setModsOpen((v) => !v), []);
   useModsHotkey(toggleMods);
+  const [cinematic, setCinematic] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      if (e.key === "`" && !e.ctrlKey && !e.metaKey && !e.altKey) setCinematic((v) => !v);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   const fetchBlocks = useServerFn(getChainBlocks);
   const tip = useQuery({
     queryKey: ["chain", "tip", "map"],
@@ -124,7 +135,7 @@ function OasisPage() {
         ref={shellRef}
         data-tour="map-world"
         style={modStyle(mod)}
-        className={`oasis-modded relative min-w-0 ${fullscreen ? "oasis-fs" : ""} ${fallbackFs ? "oasis-fs-fallback" : ""}`}
+        className={`oasis-modded relative min-w-0 ${fullscreen ? "oasis-fs" : ""} ${fallbackFs ? "oasis-fs-fallback" : ""} ${cinematic ? "oasis-cinematic" : ""}`}
       >
         {!entered ? (
           <OasisEntry onEnter={() => setEntered(true)} />
@@ -133,10 +144,13 @@ function OasisPage() {
         <Suspense fallback={<div className="grid h-[78vh] min-h-[520px] place-items-center border border-border bg-background font-mono text-xs text-signal">INITIALIZING OASIS RENDERER…</div>}>
           <div className="relative">
             <div className="absolute bottom-3 right-3 z-[85] flex gap-1">
-              <button type="button" aria-label="Visual mods" title="Visual mods" onClick={() => setModsOpen((v) => !v)} className={`hud-panel grid size-9 place-items-center ${modsOpen ? "text-bitcoin" : "text-signal"} hover:text-bitcoin`}>
+              <button type="button" aria-label={cinematic ? "Show HUD" : "Cinematic view"} title={cinematic ? "Show HUD (`)" : "Cinematic view (`)"} onClick={() => setCinematic((v) => !v)} className={`hud-panel hud-keep grid size-9 place-items-center ${cinematic ? "text-bitcoin" : "text-signal"} hover:text-bitcoin`}>
+                {cinematic ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+              </button>
+              <button type="button" aria-label="Visual mods" title="Visual mods" onClick={() => setModsOpen((v) => !v)} className={`hud-panel hud-keep grid size-9 place-items-center ${modsOpen ? "text-bitcoin" : "text-signal"} hover:text-bitcoin`}>
                 <Palette className="size-4" />
               </button>
-              <button type="button" aria-label={fullscreen ? "Exit full screen" : "Full screen"} title={fullscreen ? "Exit full screen" : "Full screen"} onClick={toggleFullscreen} className="hud-panel grid size-9 place-items-center text-signal hover:text-bitcoin">
+              <button type="button" aria-label={fullscreen ? "Exit full screen" : "Full screen"} title={fullscreen ? "Exit full screen" : "Full screen"} onClick={toggleFullscreen} className="hud-panel hud-keep grid size-9 place-items-center text-signal hover:text-bitcoin">
                 {fullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
               </button>
             </div>
@@ -146,16 +160,23 @@ function OasisPage() {
             {...(height === undefined ? {} : { initialHeight: height })}
             legend={<span data-tour="map-legend" className="flex flex-wrap items-center gap-2">{legend}</span>}
           />
-          <ClassSkillBar />
-          <RacePicker />
-          <AdrenalineBot />
+          {cinematic ? null : <><ClassSkillBar /><RacePicker /><AdrenalineBot /></>}
           </div>
-          <OasisTradeTicker />
-          <OasisBroadcastControl {...(height === undefined ? {} : { defaultHeight: height })} />
-          <Link to="/command" className="mt-3 flex items-center justify-between border border-bitcoin bg-card px-4 py-3 font-mono text-xs text-bitcoin hover:bg-bitcoin/10">
-            <span>◆ GUARDIAN COMMAND CENTRE — PATROL · MARCH · RAID</span><span aria-hidden="true">→</span>
-          </Link>
-          <GuardianRadar {...(height === undefined ? {} : { current: height })} />
+          <div className="mt-2 flex flex-wrap items-stretch gap-2">
+            <Link to="/command" className="hud-panel flex flex-1 items-center justify-between gap-3 px-3 py-2 font-mono text-[11px] text-bitcoin hover:text-foreground">
+              <span>◆ GUARDIAN COMMAND</span><span aria-hidden="true">→</span>
+            </Link>
+            <button type="button" onClick={() => setToolsOpen((v) => !v)} aria-expanded={toolsOpen} className="hud-panel flex items-center gap-2 px-3 py-2 font-mono text-[11px] text-signal hover:text-bitcoin">
+              <ChevronDown className={`size-3.5 transition-transform ${toolsOpen ? "rotate-180" : ""}`} /> MARKET · BROADCAST · RADAR
+            </button>
+          </div>
+          {toolsOpen ? (
+            <div className="mt-2 space-y-2">
+              <OasisTradeTicker />
+              <OasisBroadcastControl {...(height === undefined ? {} : { defaultHeight: height })} />
+              <GuardianRadar {...(height === undefined ? {} : { current: height })} />
+            </div>
+          ) : null}
         </Suspense>
         </OasisWorldGuard>
         )}
