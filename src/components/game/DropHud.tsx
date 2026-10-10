@@ -2,7 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { Plane } from "lucide-react";
 import {
   alive, cancelDrop, clearResult, clock, dropAction, dropRevision, dropState, matchById, onBrEvent,
-  requestDrop, setBrHooks, stormAt, subscribeDrop, DROP, MATCH, STORM_START,
+  requestDrop, setBrHooks, stormAt, subscribeDrop, MATCH, STORM_START,
 } from "@/lib/battle-royale";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -103,7 +103,6 @@ export function DropHud() {
           </button>
         </div>
       ) : null}
-      {st.phase === "plane" && Date.now() % 1 === 0 && DROP.flight ? null : null}
     </>
   );
 }
