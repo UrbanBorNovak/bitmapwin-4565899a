@@ -53,6 +53,17 @@ function Mount({ height, pose, surface }: { height: number; pose: MutableRefObje
   );
 }
 
+/** Another player's Shard Raid Guardian, drawn under their avatar (parent group follows them). */
+export function PeerMount({ height }: { height: number }) {
+  const g = useQuery(guardianQuery(height)).data;
+  if (!g) return null;
+  return (
+    <group position={[0, -S * 0.1, 0]}>
+      <GuardianBody species={g.species} rarity={g.rarity} body={g.body} accent={g.accent} unit={S * 2.2} height={g.height} inscribed={!!g.inscriptionId} />
+    </group>
+  );
+}
+
 /** Raid shards on their real BITMAPs, plus the Guardian you ride. */
 export function ShardRaidLayer({ pose, surface }: { pose: MutableRefObject<PlayerState>; surface: (x: number, z: number) => number }) {
   useSyncExternalStore(subscribeMount, mountRev, () => 0);

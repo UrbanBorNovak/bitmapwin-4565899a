@@ -321,6 +321,13 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
 
     // Avatars stay spawned in the world: re-broadcast the last position on a
     // heartbeat so peers never see us expire while the tab is open.
+    // Mounting or dismounting is announced at once, not on the next heartbeat.
+    let lastMount = mountState().riding;
+    const offMount = subscribeMount(() => {
+      if (mountState().riding === lastMount) return;
+      lastMount = mountState().riding;
+      if (lastCell) push(lastCell);
+    });
     const heartbeat = setInterval(() => {
       if (lastCell) push(lastCell);
     }, STALE_MS / 2);
@@ -539,6 +546,7 @@ export function useMapCursors(enabled = true, clan: ClanBadge | null = null) {
       clearInterval(ticker);
       combat.reset();
       clearInterval(heartbeat);
+      offMount();
       if (frame) cancelAnimationFrame(frame);
       sendRef.current = () => {};
       sayRef.current = () => {};
