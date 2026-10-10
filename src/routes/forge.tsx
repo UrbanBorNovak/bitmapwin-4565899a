@@ -129,7 +129,7 @@ function ForgePage() {
   const [world, setWorld] = useState<Map<string, TplBlock>>(new Map());
   const [history, setHistory] = useState<Map<string, TplBlock>[]>([]);
   const [used, setUsed] = useState<Prefab[]>([]);
-  const [sphere, setSphere] = useState<Sphere>("kingdom");
+  const [sphere, setSphere] = useState<Sphere>("bricks");
   const [tool, setTool] = useState<Tool>("stamp");
   const [picked, setPicked] = useState<Prefab>(HOUSE_PREFABS[0]!);
   const [paint, setPaint] = useState<BlockId>("stone");
