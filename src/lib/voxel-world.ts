@@ -91,6 +91,34 @@ export function columnSurface(wx: number, wz: number): number | null {
   return best === -Infinity ? null : (best + 1) * VOXEL;
 }
 
+/** True when a placed (player-edited) solid block sits in this cell. */
+function placedSolid(x: number, y: number, z: number) {
+  const e = edits.get(vkey(x, y, z));
+  return !!e && e !== "air";
+}
+
+/**
+ * Body-vs-block wall test. The body is a small square footprint (half-width
+ * `radius`) from `feetY` up to `feetY + height`. Blocks whose top is within
+ * `stepUp` of the feet are climbed, not walls (stairs / single ledges).
+ */
+export function voxelWallAt(
+  wx: number, wz: number, feetY: number, height: number, radius: number, stepUp = VOXEL * 1.05,
+): boolean {
+  if (columns.size === 0) return false;
+  const y0 = Math.floor((feetY + stepUp) / VOXEL);
+  const y1 = Math.floor((feetY + height - 1e-6) / VOXEL);
+  if (y1 < y0) return false;
+  const xa = toCell(wx - radius), xb = toCell(wx + radius);
+  const za = toCell(wz - radius), zb = toCell(wz + radius);
+  for (let x = xa; x <= xb; x++)
+    for (let z = za; z <= zb; z++) {
+      if (!columns.has(`${x},${z}`)) continue;
+      for (let y = y0; y <= y1; y++) if (placedSolid(x, y, z)) return true;
+    }
+  return false;
+}
+
 export function blockColor(id: string) {
   return BLOCKS.find((b) => b.id === id) ?? BLOCKS[0];
 }
