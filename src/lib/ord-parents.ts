@@ -22,6 +22,8 @@ export type ParentSpend = {
   address: string;
   /** x-only internal key, when the holder's taproot key is known */
   tapInternalKey?: string;
+  /** sat offset of the inscription inside this UTXO (satpoint third field) */
+  offset?: number;
 };
 
 const ESPLORA = ["https://mempool.space/api", "https://blockstream.info/api"];
@@ -69,8 +71,9 @@ export async function fetchParentSpend(inscriptionId: string, signer: ParentSign
   const meta = await readJson<OrdInscription>(`https://ordinals.com/r/inscription/${inscriptionId}`);
   const satpoint = meta?.satpoint;
   if (!satpoint) return null;
-  const [txid, voutRaw] = satpoint.split(":");
+  const [txid, voutRaw, offRaw] = satpoint.split(":");
   const vout = Number(voutRaw);
+  const offset = Number(offRaw ?? 0) || 0;
   if (!txid || !Number.isInteger(vout)) return null;
 
   let value = Number(meta?.value ?? 0);
@@ -87,6 +90,6 @@ export async function fetchParentSpend(inscriptionId: string, signer: ParentSign
     }
   }
   if (!value || !address) return null;
-  return { inscriptionId, signer, txid, vout, value, address };
+  return { inscriptionId, signer, txid, vout, value, address, offset };
 }
 

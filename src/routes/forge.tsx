@@ -325,11 +325,12 @@ function ForgePage() {
                 height={height}
                 index={0}
                 digest={digest}
-                artifactLabel="INSCRIBE YOUR BUILD AS A CHILD"
+                artifactLabel="REINSCRIBE YOUR BUILD ON THE BITMAP'S SAT"
                 actionLabel="INSCRIBE ON BITCOIN"
-                description={`Your wallet must hold ${height}.bitmap. It is spent and returned to you in the same transaction.${payoutSats ? ` ${payoutSats.toLocaleString()} sats go to the makers listed above in that same transaction.` : ""}`}
+                description={`Your wallet must hold ${height}.bitmap. The build is stamped onto the very same sat as your BITMAP, which returns to you in the same transaction.${payoutSats ? ` ${payoutSats.toLocaleString()} sats go to the makers listed above in that same transaction.` : ""}`}
                 allowUpload={false}
                 claimParentsForHeight={height}
+                reinscribeOnBitmap
                 artifactVariants={[{ key: "html", label: "3D BUILD", contentType: "text/html;charset=utf-8", source: html, note: "Self-rendering build, no outside code.", ...(payouts.length ? { tributes: payouts } : {}) }]}
               />
             </div>
