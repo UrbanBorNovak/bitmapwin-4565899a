@@ -8,6 +8,7 @@ import { OrbitControls } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { ShadowInscriber } from "@/components/territory/ShadowInscriber";
+import { FORGE_MASTER_DELEGATE_ID, delegateSavings, forgeDelegateMetadata } from "@/lib/forge-delegate";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { BLOCKS, type BlockId } from "@/lib/voxel-world";
 import type { TplBlock } from "@/lib/voxel-templates";
@@ -469,7 +470,10 @@ function ForgePage() {
                 claimParentsForHeight={height}
                 reinscribeOnBitmap
                 {...(parcelTarget !== undefined ? { parcelIndex: parcelTarget } : {})}
-                artifactVariants={[{ key: "html", label: "3D BUILD", contentType: "text/html;charset=utf-8", source: html, note: "Self-rendering build, no outside code.", ...(payouts.length ? { tributes: payouts } : {}) }]}
+                artifactVariants={[
+                  ...(FORGE_MASTER_DELEGATE_ID ? [{ key: "lean", label: "LEAN BUILD", contentType: "text/html;charset=utf-8", source: html, note: `Drawn by the shared on-chain Forge renderer — about ${delegateSavings(html, forgeDelegateMetadata(height, encodeBuild(parcelBlocks), lineage, focusRect ?? undefined)).saved.toLocaleString()} fewer bytes to pay for.`, delegate: FORGE_MASTER_DELEGATE_ID, metadata: forgeDelegateMetadata(height, encodeBuild(parcelBlocks), lineage, focusRect ?? undefined), ...(payouts.length ? { tributes: payouts } : {}) }] : []),
+                  { key: "html", label: "3D BUILD", contentType: "text/html;charset=utf-8", source: html, note: "Self-rendering build, no outside code.", ...(payouts.length ? { tributes: payouts } : {}) },
+                ]}
               />
             </div>
           ) : (
