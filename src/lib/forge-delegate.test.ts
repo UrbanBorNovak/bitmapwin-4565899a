@@ -1,0 +1,20 @@
+import { describe, expect, it } from "vitest";
+import { forgeDelegateMetadata, parseForgeMeta } from "@/lib/forge-delegate";
+
+// CBOR map {f:"BWVX1", h:830000, d:"AAAAAA=="} encoded by hand
+const hexOf = (b: number[]) => b.map((v) => v.toString(16).padStart(2, "0")).join("");
+const txt = (s: string) => [0x60 + s.length, ...new TextEncoder().encode(s)];
+
+describe("forge delegate metadata", () => {
+  it("reads build bytes and height from ord's CBOR metadata", () => {
+    const cbor = [0xa3, ...txt("f"), ...txt("BWVX1"), ...txt("h"), 0x1a, 0x00, 0x0c, 0xaa, 0x30, ...txt("d"), ...txt("AAAAAA==")];
+    expect(parseForgeMeta(hexOf(cbor))).toEqual({ f: "BWVX1", h: 830000, d: "AAAAAA==" });
+  });
+  it("rejects metadata that is not a forge build", () => {
+    const cbor = [0xa1, ...txt("f"), ...txt("OTHER")];
+    expect(parseForgeMeta(hexOf(cbor))).toBeNull();
+  });
+  it("encodes the parcel tile as index;x0,z0,x1,z1", () => {
+    expect(forgeDelegateMetadata(830000, "AA==", "", { index: 42, x0: 1, z0: 2, x1: 9, z1: 10 }).p).toBe("42;1,2,9,10");
+  });
+});

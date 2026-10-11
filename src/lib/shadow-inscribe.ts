@@ -37,6 +37,8 @@ export type InscribeJob = {
   tributes?: { address: string; sats: number }[];
   /** tag 2: sat offset in the reveal inputs; set to the BITMAP's own sat for a reinscription */
   pointer?: number;
+  /** tag 5 CBOR metadata (Land Forge delegate builds carry their voxel bytes here) */
+  metadata?: Record<string, unknown>;
   commitTxid?: string;
   revealTxid?: string;
   createdAt: string;
@@ -144,6 +146,7 @@ function revealPayment(
   parents: ParentSpend[] = [],
   delegate?: string,
   pointer?: number,
+  metadata?: Record<string, unknown>,
 ) {
   const pub = btc.utils.pubSchnorr(hex.decode(privHex));
   // Tag 3 may repeat: one entry per parent, in the order the reveal spends them.
@@ -154,6 +157,7 @@ function revealPayment(
     ...(parents.length ? { parent: parents.map((p) => p.inscriptionId) } : {}),
     ...(delegate ? { delegate } : {}),
     ...(pointer !== undefined ? { pointer: BigInt(pointer) } : {}),
+    ...(metadata ? { metadata } : {}),
   } as never;
   const inscription = { tags, body };
   return btc.p2tr(undefined, p2tr_ord_reveal(pub, [inscription]), btc.NETWORK, false, customScripts);
@@ -173,6 +177,7 @@ export async function prepareJob(input: {
   tributes?: { address: string; sats: number }[];
   /** land the inscription on this sat offset (reinscription onto a parent's sat) */
   pointer?: number;
+  metadata?: Record<string, unknown>;
 }): Promise<InscribeJob> {
   if (input.body.length > INSCRIBE_MAX_BYTES) throw new Error("FILE TOO LARGE — KEEP IT UNDER 60 KB");
   const parents = input.parents ?? [];
@@ -184,12 +189,13 @@ export async function prepareJob(input: {
   const priv = btc.utils.randomPrivateKeyBytes();
   const privHex = hex.encode(priv);
   const pointer = input.pointer;
-  const pay = revealPayment(privHex, input.contentType, body, input.digest, parents, delegate, pointer);
+  const metadata = input.metadata;
+  const pay = revealPayment(privHex, input.contentType, body, input.digest, parents, delegate, pointer, metadata);
   const feeRate = await liveFeeRate();
   // witness bytes count a quarter; ~ 150 vB of fixed overhead for 1-in/1-out taproot.
   // Each parent adds one taproot input (~58 vB) and its pass-through output (~43 vB).
   const parentIds = parents.reduce((n, p) => n + p.inscriptionId.length, 0);
-  const tagBytes = parentIds + (delegate ? 36 : input.contentType.length) + 120;
+  const tagBytes = parentIds + (delegate ? 36 : input.contentType.length) + 120 + (metadata ? JSON.stringify(metadata).length + 16 : 0);
   const vbytes = Math.ceil((body.length + tagBytes) / 4) + 150 + parents.length * 101 + (tribute ? 43 : 0) + tributes.length * 43;
   const revealFee = Math.ceil(vbytes * feeRate);
   const job: InscribeJob = {
@@ -207,6 +213,7 @@ export async function prepareJob(input: {
     ...(tribute ? { tribute } : {}),
     ...(tributes.length ? { tributes } : {}),
     ...(pointer !== undefined ? { pointer } : {}),
+    ...(metadata ? { metadata } : {}),
     createdAt: new Date().toISOString(),
   };
   saveJob(job);
@@ -243,7 +250,7 @@ export async function revealJob(
 ): Promise<string> {
   const body = hex.decode(job.bodyHex);
   const parents = job.parents ?? [];
-  const pay = revealPayment(job.privHex, job.contentType, body, job.digest, parents, job.delegate, job.pointer);
+  const pay = revealPayment(job.privHex, job.contentType, body, job.digest, parents, job.delegate, job.pointer, job.metadata);
   const tx = new btc.Transaction({ customScripts });
   for (const parent of parents) {
     tx.addInput({

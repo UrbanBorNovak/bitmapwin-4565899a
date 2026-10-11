@@ -5,6 +5,18 @@
  * builds are still read as a fallback.
  */
 import { FORGE_FORMAT } from "@/lib/voxel-populate";
+import { FORGE_MASTER_DELEGATE_ID, parseForgeMeta, type ForgeMeta } from "@/lib/forge-delegate";
+
+/** Delegated (Tag 11) build: no body, bytes live in Tag 5 metadata. */
+async function delegateMeta(id: string): Promise<ForgeMeta | null> {
+  if (!FORGE_MASTER_DELEGATE_ID) return null;
+  const info = await ord(`/r/inscription/${id}`);
+  const j = info ? ((await info.json().catch(() => null)) as { delegate?: string | null } | null) : null;
+  if (j?.delegate !== FORGE_MASTER_DELEGATE_ID) return null;
+  const m = await ord(`/r/metadata/${id}`);
+  const hexStr = m ? ((await m.json().catch(() => null)) as string | null) : null;
+  return typeof hexStr === "string" ? parseForgeMeta(hexStr) : null;
+}
 
 const ORD = "https://ordinals.com";
 const TTL = 15 * 60_000;
@@ -74,11 +86,15 @@ export async function forgeBuildForHeight(height: number): Promise<ForgeBuild | 
 
 async function firstForge(ids: string[], height: number, sat: string | null): Promise<ForgeBuild | null> {
   for (const id of ids) {
-    const r = await ord(`/content/${id}`);
-    if (!r || !(r.headers.get("content-type") ?? "").includes("html")) continue;
-    const buf = await r.arrayBuffer();
-    if (buf.byteLength > MAX_BYTES) continue;
-    const parsed = parseForgeHtml(new TextDecoder().decode(buf));
+    const dm = await delegateMeta(id);
+    let parsed: { archetype: string | null; data: string } | null = dm && dm.h === height ? { archetype: "studio", data: dm.d } : null;
+    if (!parsed) {
+      const r = await ord(`/content/${id}`);
+      if (!r || !(r.headers.get("content-type") ?? "").includes("html")) continue;
+      const buf = await r.arrayBuffer();
+      if (buf.byteLength > MAX_BYTES) continue;
+      parsed = parseForgeHtml(new TextDecoder().decode(buf));
+    }
     if (!parsed) continue;
     const build = { sat, inscriptionId: id, archetype: parsed.archetype, data: parsed.data, blockCount: Math.floor(atob(parsed.data).length / 4) };
     try {
@@ -129,6 +145,13 @@ export async function forgeLandFor(height: number): Promise<ForgeLand> {
   for (const p of (holders?.parcels ?? []).slice(0, 24)) {
     const s = await satLatest(p.inscriptionId);
     if (!s) continue;
+    const dm = await delegateMeta(s.latest);
+    const pm = dm?.p?.match(/^(\d+);(\d+),(\d+),(\d+),(\d+)$/);
+    if (dm && pm && dm.h === height && Number(pm[1]) === p.index) {
+      value.html.push({ inscriptionId: s.latest, source: "parcel", index: p.index });
+      value.parcels.push({ index: p.index, rect: [Number(pm[2]), Number(pm[3]), Number(pm[4]), Number(pm[5])], inscriptionId: s.latest, sat: s.sat, data: dm.d });
+      continue;
+    }
     const html = await htmlAt(s.latest);
     if (html === null) continue;
     value.html.push({ inscriptionId: s.latest, source: "parcel", index: p.index });

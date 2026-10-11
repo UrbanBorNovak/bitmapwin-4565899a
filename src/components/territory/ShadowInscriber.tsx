@@ -45,6 +45,8 @@ export type ArtifactVariant = {
   tribute?: { address: string; sats: number };
   /** Creator payouts (Land Forge contributors), one output each inside the reveal. */
   tributes?: { address: string; sats: number }[];
+  /** Tag 5 metadata (with a delegate: the build's own bytes). */
+  metadata?: Record<string, unknown>;
 };
 
 export function ShadowInscriber(props: {
@@ -269,6 +271,7 @@ export function ShadowInscriber(props: {
         ...(parents.length ? { parents } : {}),
         ...(pointer !== undefined ? { pointer } : {}),
         ...(!file && variant?.delegate ? { delegate: variant.delegate } : {}),
+        ...(!file && variant?.metadata ? { metadata: variant.metadata } : {}),
         ...(!file && variant?.tribute ? { tribute: variant.tribute } : {}),
         ...(!file && variant?.tributes?.length ? { tributes: variant.tributes } : {}),
       });
