@@ -12,8 +12,8 @@ import { BLOCKS, type BlockId } from "@/lib/voxel-world";
 import { FORGE_FORMAT } from "@/lib/voxel-populate";
 import type { TplBlock } from "@/lib/voxel-templates";
 
-/** Set to the master renderer's inscription id once it is inscribed. Empty = delegate mode off. */
-export const FORGE_MASTER_DELEGATE_ID = "";
+/** The master renderer's inscription id (inscribed once; every delegated build points at it). */
+export const FORGE_MASTER_DELEGATE_ID = "adc48ccd4b2c429c24bf37f44979c22bf14315f39578dbe02c2f33729555c827i0";
 
 export type ForgeMeta = { f: string; h: number; d: string; p?: string; l?: string };
 
