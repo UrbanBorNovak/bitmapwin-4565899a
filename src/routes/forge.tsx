@@ -143,18 +143,22 @@ async function sha(s: string) {
   return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-type ModuleRow = { id: string; name: string; author_address: string; blocks: TplBlock[]; bit_cost: number; tribute_sats: number; lineage: Contributor[]; uses: number };
+type ModuleRow = { id: string; name: string; author_address: string; blocks: TplBlock[]; bit_cost: number; tribute_sats: number; lineage: Contributor[]; uses: number; sphere: string };
 
 function useCommunityModules() {
   return useQuery({
     queryKey: ["forge-modules"],
     staleTime: 60_000,
     queryFn: async (): Promise<Prefab[]> => {
-      const { data } = await supabase.from("forge_modules").select("id, name, author_address, blocks, bit_cost, tribute_sats, lineage, uses").order("uses", { ascending: false }).limit(60);
-      return ((data ?? []) as unknown as ModuleRow[]).map((r) => ({
-        id: r.id, name: r.name, sphere: "community" as Sphere, blocks: r.blocks, author: r.author_address,
-        bitCost: r.bit_cost, tributeSats: r.tribute_sats, lineage: r.lineage ?? [],
-      }));
+      const { data } = await supabase.from("forge_modules").select("id, name, author_address, blocks, bit_cost, tribute_sats, lineage, uses, sphere").order("uses", { ascending: false }).limit(60);
+      return ((data ?? []) as unknown as ModuleRow[]).map((r) => {
+        const ins = inscribedIdOf(r.sphere);
+        // Off-chain pieces are a free commons: no BIT, no sats, no paid lineage.
+        return {
+          id: r.id, name: r.name, sphere: "community" as Sphere, blocks: r.blocks, author: r.author_address,
+          bitCost: ins ? r.bit_cost : 0, tributeSats: ins ? r.tribute_sats : 0, lineage: ins ? r.lineage ?? [] : [], inscriptionId: ins,
+        };
+      });
     },
   });
 }
