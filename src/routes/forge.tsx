@@ -71,7 +71,7 @@ function ParcelFloor({ rects, focus, hoverIdx }: { rects: ParcelRect[]; focus: n
   );
 }
 
-function Blocks({ blocks, onErase, erase }: { blocks: TplBlock[]; erase: boolean; onErase: (b: TplBlock) => void }) {
+function Blocks({ blocks, onErase, erase, onSurface, onPlace }: { blocks: TplBlock[]; erase: boolean; onErase: (b: TplBlock) => void; onSurface: (cell: [number, number, number] | null) => void; onPlace: () => void }) {
   const ref = useRef<THREE.InstancedMesh>(null);
   useEffect(() => {
     const m = ref.current;
@@ -93,7 +93,22 @@ function Blocks({ blocks, onErase, erase }: { blocks: TplBlock[]; erase: boolean
       args={[undefined, undefined, FORGE_MAX_BLOCKS + 400]}
       castShadow
       receiveShadow
-      onClick={(e) => { if (!erase || e.instanceId == null) return; e.stopPropagation(); const b = blocks[e.instanceId]; if (b) onErase(b); }}
+      onPointerMove={(e) => {
+        if (e.instanceId == null) return;
+        e.stopPropagation();
+        const b = blocks[e.instanceId];
+        const n = e.face?.normal;
+        if (!b || !n) return;
+        // Snap onto the face under the cursor: the next cell along its normal.
+        onSurface(erase ? [b.dx, b.dy, b.dz] : [b.dx + Math.round(n.x), Math.max(0, b.dy + Math.round(n.y)), b.dz + Math.round(n.z)]);
+      }}
+      onPointerLeave={() => onSurface(null)}
+      onClick={(e) => {
+        if (e.instanceId == null) return;
+        e.stopPropagation();
+        if (erase) { const b = blocks[e.instanceId]; if (b) onErase(b); return; }
+        onPlace();
+      }}
     >
       <boxGeometry args={[0.96, 0.96, 0.96]} />
       <meshStandardMaterial roughness={0.7} />
@@ -257,10 +272,18 @@ function ForgePage() {
     if (tool === "stamp" && picked.author && !used.some((u) => u.id === picked.id)) setUsed((u) => [...u, picked]);
   };
 
+  // Tallest filled height per column, so pieces dropped on the floor stack on top automatically.
+  const tops = useMemo(() => {
+    const t = new Map<string, number>();
+    for (const b of world.values()) { const k = `${b.dx},${b.dz}`; t.set(k, Math.max(t.get(k) ?? 0, b.dy + 1)); }
+    return t;
+  }, [world]);
   const onGround = (e: ThreeEvent<PointerEvent>) => {
     const x = Math.floor(e.point.x + HALF), z = Math.floor(e.point.z + HALF);
     if (x < 0 || z < 0 || x >= FORGE_SPAN || z >= FORGE_SPAN) return setHover(null);
-    setHover([x, layer, z]);
+    let y = layer;
+    if (tool !== "erase") for (const b of ghost) y = Math.max(y, (tops.get(`${x + b.dx},${z + b.dz}`) ?? 0) - b.dy);
+    setHover([x, Math.min(FORGE_SPAN - 1, y), z]);
   };
 
   const seed = (a: ArchetypeId) => {
@@ -337,13 +360,6 @@ function ForgePage() {
               )}
             </>
           )}
-          <div className="flex gap-1">
-            {(["stamp", "block", "erase", "parcel"] as Tool[]).map((t) => (
-              <button key={t} type="button" onClick={() => setTool(t)} className={`flex-1 rounded border px-2 py-1 text-[10px] ${tool === t ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"}`}>
-                {t === "stamp" ? "PIECES" : t === "block" ? "BLOCK" : t === "erase" ? "ERASE" : "PARCEL"}
-              </button>
-            ))}
-          </div>
           {rects.length > 0 && (
             <div className="rounded border border-primary/40 bg-card/40 p-2 text-[11px]">
               <p className="text-primary">BUILD TARGET</p>
@@ -413,7 +429,7 @@ function ForgePage() {
           <SafeCanvas shadows camera={{ position: [40, 38, 40], fov: 45 }}>
             <ambientLight intensity={0.6} />
             <directionalLight position={[20, 40, 10]} intensity={1.2} castShadow />
-            <Blocks blocks={blocks} erase={tool === "erase"} onErase={(b) => { const n = new Map(world); n.delete(cellKey(b.dx, b.dy, b.dz)); commit(n); }} />
+            <Blocks blocks={blocks} erase={tool === "erase"} onErase={(b) => { const n = new Map(world); n.delete(cellKey(b.dx, b.dy, b.dz)); commit(n); }} onSurface={(c) => { if (c && tool !== "parcel") setHover(c); }} onPlace={() => void place()} />
             {hover && ghost.length > 0 && <Ghost blocks={ghost} at={hover} bad={overLimit || ghostOut} />}
             <ParcelFloor rects={rects} focus={focus} hoverIdx={hoverParcel?.index ?? null} />
             {showBp && sketch.length > 0 && <Ghost blocks={sketch} at={[0, 0, 0]} bad={false} />}
@@ -425,14 +441,30 @@ function ForgePage() {
             <OrbitControls enablePan={false} makeDefault maxPolarAngle={Math.PI / 2.1} />
           </SafeCanvas>
           <div className="pointer-events-none absolute left-3 top-3 rounded border border-border bg-background/70 px-2 py-1 text-[11px] text-accent backdrop-blur">
-            {height !== null ? `${height.toLocaleString()}.BITMAP · ` : ""}{blocks.length}/{FORGE_MAX_BLOCKS} BLOCKS · {(bytes / 1024).toFixed(1)} KB · LEVEL {layer} · ROT {(turns % 4) * 90}°{hoverParcel ? ` · TILE ${hoverParcel.index}.${height}` : ""}{focusRect ? ` · BUILDING ON PARCEL #${focusRect.index}` : ""}
+            {height !== null ? `${height.toLocaleString()}.BITMAP · ` : ""}{(bytes / 1024).toFixed(1)} KB · ROT {(turns % 4) * 90}°{hoverParcel ? ` · TILE ${hoverParcel.index}.${height}` : ""}{focusRect ? ` · BUILDING ON PARCEL #${focusRect.index}` : ""}
           </div>
-          <div className="absolute bottom-3 left-3 flex gap-1">
-            <button type="button" onClick={undo} className="rounded border border-border bg-background/80 px-2 py-1 text-[10px] text-foreground">UNDO</button>
-            <button type="button" onClick={() => setTurns((t) => t + 1)} className="rounded border border-border bg-background/80 px-2 py-1 text-[10px] text-foreground">ROTATE</button>
-            <button type="button" onClick={() => setLayer((l) => Math.max(0, l - 1))} className="rounded border border-border bg-background/80 px-2 py-1 text-[10px] text-foreground">LEVEL −</button>
-            <button type="button" onClick={() => setLayer((l) => Math.min(FORGE_SPAN - 1, l + 1))} className="rounded border border-border bg-background/80 px-2 py-1 text-[10px] text-foreground">LEVEL +</button>
-            <button type="button" onClick={() => { commit(new Map()); setUsed([]); }} className="rounded border border-border bg-background/80 px-2 py-1 text-[10px] text-destructive">CLEAR</button>
+          <div className="pointer-events-none absolute right-3 top-3 w-36 rounded border border-border bg-background/70 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur">
+            <div className="flex justify-between"><span>BLOCKS</span><span className={blocks.length > FORGE_MAX_BLOCKS * 0.85 ? "text-primary" : "text-accent"}>{blocks.length}/{FORGE_MAX_BLOCKS}</span></div>
+            <div className="mt-1 h-1 overflow-hidden rounded bg-muted"><div className={`h-full ${blocks.length > FORGE_MAX_BLOCKS * 0.85 ? "bg-primary" : "bg-accent"}`} style={{ width: `${Math.min(100, (blocks.length / FORGE_MAX_BLOCKS) * 100)}%` }} /></div>
+          </div>
+          <div className="absolute inset-x-0 bottom-3 flex flex-col items-center gap-1.5 px-2">
+            <p className="pointer-events-none rounded bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground backdrop-blur">
+              {tool === "erase" ? "CLICK A BLOCK TO REMOVE IT" : tool === "parcel" ? "CLICK A TILE TO BUILD ONLY ON IT" : "POINT AT ANY SURFACE · CLICK TO PLACE · IT STACKS ON TOP"} · R ROTATE · CTRL+Z UNDO
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-1 rounded-lg border border-border bg-background/80 p-1 backdrop-blur">
+              {(["stamp", "block", "erase", "parcel"] as Tool[]).map((t) => (
+                <button key={t} type="button" onClick={() => setTool(t)} className={`rounded px-2.5 py-1 text-[10px] ${tool === t ? "bg-primary/15 text-foreground ring-1 ring-primary" : "text-muted-foreground hover:text-foreground"}`}>
+                  {t === "stamp" ? "PIECES" : t === "block" ? "BLOCK" : t === "erase" ? "ERASE" : "PARCEL"}
+                </button>
+              ))}
+              <span className="mx-1 h-4 w-px bg-border" />
+              <button type="button" onClick={() => setTurns((t) => t + 1)} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">⟳ ROTATE</button>
+              <button type="button" onClick={undo} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">↶ UNDO</button>
+              <button type="button" title="Floor level (Q/E) — only needed to build in mid-air" onClick={() => setLayer((l) => Math.max(0, l - 1))} className="rounded px-1.5 py-1 text-[10px] text-muted-foreground hover:bg-muted">−</button>
+              <span className="text-[10px] text-muted-foreground">LVL {layer}</span>
+              <button type="button" title="Floor level (Q/E) — only needed to build in mid-air" onClick={() => setLayer((l) => Math.min(FORGE_SPAN - 1, l + 1))} className="rounded px-1.5 py-1 text-[10px] text-muted-foreground hover:bg-muted">+</button>
+              <button type="button" onClick={() => { commit(new Map()); setUsed([]); }} className="rounded px-2 py-1 text-[10px] text-destructive hover:bg-muted">CLEAR</button>
+            </div>
           </div>
         </div>
 
