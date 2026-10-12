@@ -71,7 +71,7 @@ function ParcelFloor({ rects, focus, hoverIdx }: { rects: ParcelRect[]; focus: n
   );
 }
 
-function Blocks({ blocks, onErase, erase }: { blocks: TplBlock[]; erase: boolean; onErase: (b: TplBlock) => void }) {
+function Blocks({ blocks, onErase, erase, onSurface, onPlace }: { blocks: TplBlock[]; erase: boolean; onErase: (b: TplBlock) => void; onSurface: (cell: [number, number, number] | null) => void; onPlace: () => void }) {
   const ref = useRef<THREE.InstancedMesh>(null);
   useEffect(() => {
     const m = ref.current;
@@ -93,7 +93,22 @@ function Blocks({ blocks, onErase, erase }: { blocks: TplBlock[]; erase: boolean
       args={[undefined, undefined, FORGE_MAX_BLOCKS + 400]}
       castShadow
       receiveShadow
-      onClick={(e) => { if (!erase || e.instanceId == null) return; e.stopPropagation(); const b = blocks[e.instanceId]; if (b) onErase(b); }}
+      onPointerMove={(e) => {
+        if (e.instanceId == null) return;
+        e.stopPropagation();
+        const b = blocks[e.instanceId];
+        const n = e.face?.normal;
+        if (!b || !n) return;
+        // Snap onto the face under the cursor: the next cell along its normal.
+        onSurface(erase ? [b.dx, b.dy, b.dz] : [b.dx + Math.round(n.x), Math.max(0, b.dy + Math.round(n.y)), b.dz + Math.round(n.z)]);
+      }}
+      onPointerLeave={() => onSurface(null)}
+      onClick={(e) => {
+        if (e.instanceId == null) return;
+        e.stopPropagation();
+        if (erase) { const b = blocks[e.instanceId]; if (b) onErase(b); return; }
+        onPlace();
+      }}
     >
       <boxGeometry args={[0.96, 0.96, 0.96]} />
       <meshStandardMaterial roughness={0.7} />
