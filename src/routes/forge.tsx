@@ -272,10 +272,18 @@ function ForgePage() {
     if (tool === "stamp" && picked.author && !used.some((u) => u.id === picked.id)) setUsed((u) => [...u, picked]);
   };
 
+  // Tallest filled height per column, so pieces dropped on the floor stack on top automatically.
+  const tops = useMemo(() => {
+    const t = new Map<string, number>();
+    for (const b of world.values()) { const k = `${b.dx},${b.dz}`; t.set(k, Math.max(t.get(k) ?? 0, b.dy + 1)); }
+    return t;
+  }, [world]);
   const onGround = (e: ThreeEvent<PointerEvent>) => {
     const x = Math.floor(e.point.x + HALF), z = Math.floor(e.point.z + HALF);
     if (x < 0 || z < 0 || x >= FORGE_SPAN || z >= FORGE_SPAN) return setHover(null);
-    setHover([x, layer, z]);
+    let y = layer;
+    if (tool !== "erase") for (const b of ghost) y = Math.max(y, (tops.get(`${x + b.dx},${z + b.dz}`) ?? 0) - b.dy);
+    setHover([x, Math.min(FORGE_SPAN - 1, y), z]);
   };
 
   const seed = (a: ArchetypeId) => {
