@@ -360,13 +360,6 @@ function ForgePage() {
               )}
             </>
           )}
-          <div className="flex gap-1">
-            {(["stamp", "block", "erase", "parcel"] as Tool[]).map((t) => (
-              <button key={t} type="button" onClick={() => setTool(t)} className={`flex-1 rounded border px-2 py-1 text-[10px] ${tool === t ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"}`}>
-                {t === "stamp" ? "PIECES" : t === "block" ? "BLOCK" : t === "erase" ? "ERASE" : "PARCEL"}
-              </button>
-            ))}
-          </div>
           {rects.length > 0 && (
             <div className="rounded border border-primary/40 bg-card/40 p-2 text-[11px]">
               <p className="text-primary">BUILD TARGET</p>
