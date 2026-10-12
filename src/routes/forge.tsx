@@ -206,6 +206,7 @@ function ForgePage() {
   const [layer, setLayer] = useState(0);
   const [hover, setHover] = useState<[number, number, number] | null>(null);
   const [guide, setGuide] = useState(true);
+  const insValid = /^[a-f0-9]{64}i\d+$/.test(pub.ins);
   const [digest, setDigest] = useState<string | null>(null);
   const [pub, setPub] = useState({ name: "", bit: 10, sats: 1000 });
   const weekly = useMemo(() => weeklyBlueprint(), []);
@@ -314,9 +315,11 @@ function ForgePage() {
     if (!wallet) { toast.error("CONNECT A WALLET TO PUBLISH"); return; }
     if (blocks.length < 4) { toast.error("BUILD SOMETHING FIRST"); return; }
     if (blocks.length > 800) { toast.error("MODULES ARE CAPPED AT 800 BLOCKS — ERASE SOME FIRST"); return; }
+    if (pub.ins && !insValid) { toast.error("THAT DOESN'T LOOK LIKE AN INSCRIPTION ID"); return; }
     const r = await publishFn({ data: {
       name: pub.name.trim() || "Untitled module", address: wallet.ordinalsAddress, blocks: normaliseModule(blocks),
-      bitCost: pub.bit, tributeSats: pub.sats > 0 ? Math.max(546, pub.sats) : 0, parents: used.map((u) => u.id),
+      bitCost: insValid ? pub.bit : 0, tributeSats: insValid && pub.sats > 0 ? Math.max(546, pub.sats) : 0, parents: used.map((u) => u.id),
+      inscriptionId: insValid ? pub.ins : null,
     } }).catch(() => ({ ok: false as const, error: "SIGN IN TO PUBLISH" }));
     if (!r.ok) { toast.error(r.error); return; }
     toast.success("MODULE PUBLISHED — OTHERS CAN NOW BUILD ON IT");
@@ -393,8 +396,8 @@ function ForgePage() {
                 {palette.length === 0 && <p className="text-[11px] text-muted-foreground">No community pieces yet. Build one and publish it to be the first maker.</p>}
                 {palette.map((p) => (
                   <button key={p.id} type="button" onClick={() => setPicked(p)} className={`w-full rounded border px-2 py-1.5 text-left text-[11px] ${picked.id === p.id ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground hover:border-primary/50"}`}>
-                    <span className="block text-foreground">{p.name}</span>
-                    {p.blocks.length} blocks{p.author ? ` · ${short(p.author)} · ${p.bitCost ?? 0} BIT · ${p.tributeSats ?? 0} sats` : " · free"}
+                    <span className="block text-foreground">{p.name}{p.inscriptionId && <span className="ml-1 rounded border border-accent px-1 text-[9px] text-accent">ON-CHAIN</span>}</span>
+                    {p.blocks.length} blocks{p.author ? ` · ${short(p.author)}` : ""}{p.inscriptionId ? ` · ${p.bitCost ?? 0} BIT · ${p.tributeSats ?? 0} sats` : " · free"}
                   </button>
                 ))}
               </div>
@@ -518,13 +521,14 @@ function ForgePage() {
 
           <div className="rounded border border-border bg-card/40 p-3 text-[11px]">
             <p className="mb-2 text-primary">PUBLISH AS A REUSABLE PIECE</p>
-            <p className="mb-2 text-muted-foreground">Others can drop it into their own builds. You earn BIT each time it's placed and sats each time a build using it is inscribed — and so do the makers of the pieces you used.</p>
+            <p className="mb-2 text-muted-foreground">Uninscribed pieces are free for everyone to use. To earn BIT and sats, inscribe your piece first and paste its inscription ID — only pieces on Bitcoin can charge.</p>
             <input value={pub.name} onChange={(e) => setPub({ ...pub, name: e.target.value.slice(0, 40) })} placeholder="Piece name" className="mb-2 w-full rounded border border-border bg-background px-2 py-1 text-foreground" />
-            <div className="mb-2 grid grid-cols-2 gap-2">
-              <label className="text-muted-foreground">BIT / USE<input type="number" min={0} max={500} value={pub.bit} onChange={(e) => setPub({ ...pub, bit: Math.max(0, Math.min(500, Number(e.target.value) || 0)) })} className="mt-1 w-full rounded border border-border bg-background px-2 py-1 text-foreground" /></label>
-              <label className="text-muted-foreground">SATS / INSCRIBE<input type="number" min={0} max={100000} value={pub.sats} onChange={(e) => setPub({ ...pub, sats: Math.max(0, Math.min(100000, Number(e.target.value) || 0)) })} className="mt-1 w-full rounded border border-border bg-background px-2 py-1 text-foreground" /></label>
+            <input value={pub.ins} onChange={(e) => setPub({ ...pub, ins: e.target.value.trim().toLowerCase() })} placeholder="Inscription ID (optional, unlocks royalties)" className="mb-2 w-full rounded border border-border bg-background px-2 py-1 text-foreground" />
+            <div className={`mb-2 grid grid-cols-2 gap-2 ${insValid ? "" : "opacity-40"}`}>
+              <label className="text-muted-foreground">BIT / USE<input type="number" disabled={!insValid} min={0} max={500} value={insValid ? pub.bit : 0} onChange={(e) => setPub({ ...pub, bit: Math.max(0, Math.min(500, Number(e.target.value) || 0)) })} className="mt-1 w-full rounded border border-border bg-background px-2 py-1 text-foreground" /></label>
+              <label className="text-muted-foreground">SATS / INSCRIBE<input type="number" disabled={!insValid} min={0} max={100000} value={insValid ? pub.sats : 0} onChange={(e) => setPub({ ...pub, sats: Math.max(0, Math.min(100000, Number(e.target.value) || 0)) })} className="mt-1 w-full rounded border border-border bg-background px-2 py-1 text-foreground" /></label>
             </div>
-            <button type="button" onClick={() => void publish()} className="w-full rounded border border-primary bg-primary/10 px-2 py-1.5 text-foreground">PUBLISH PIECE</button>
+            <button type="button" onClick={() => void publish()} className="w-full rounded border border-primary bg-primary/10 px-2 py-1.5 text-foreground">{insValid ? "PUBLISH ON-CHAIN PIECE" : "PUBLISH FREE PIECE"}</button>
           </div>
           <p className="text-[11px] text-muted-foreground">Want to walk it first? <a href={height !== null ? `/oasis?height=${height}` : "/oasis"} className="text-accent underline">Open the Oasis</a>.</p>
         </aside>
