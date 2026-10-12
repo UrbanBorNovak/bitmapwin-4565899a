@@ -30,7 +30,15 @@ export type Prefab = {
   bitCost?: number;
   tributeSats?: number;
   lineage?: Contributor[];
+  /** Set only for community pieces backed by a real inscription. */
+  inscriptionId?: string | null;
 };
+
+/** forge_modules.sphere stores "inscribed:<id>" for on-chain pieces. */
+export const INSCRIBED_PREFIX = "inscribed:";
+export function inscribedIdOf(sphere: string | null | undefined): string | null {
+  return sphere?.startsWith(INSCRIBED_PREFIX) ? sphere.slice(INSCRIBED_PREFIX.length) : null;
+}
 
 function b() {
   const out: TplBlock[] = [];
