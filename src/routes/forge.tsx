@@ -13,7 +13,7 @@ import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { BLOCKS, type BlockId } from "@/lib/voxel-world";
 import type { TplBlock } from "@/lib/voxel-templates";
 import { ARCHETYPES, FORGE_MAX_BLOCKS, FORGE_SPAN, encodeBuild, forgeInscriptionHtml, generateBuild, type ArchetypeId } from "@/lib/voxel-populate";
-import { HOUSE_PREFABS, SPHERES, cellKey, normaliseModule, rotatePrefab, stampInto, tributeSplit, type Contributor, type Prefab, type Sphere } from "@/lib/forge-prefabs";
+import { HOUSE_PREFABS, SPHERES, cellKey, inscribedIdOf, normaliseModule, rotatePrefab, stampInto, tributeSplit, type Contributor, type Prefab, type Sphere } from "@/lib/forge-prefabs";
 import { BLUEPRINTS, blueprintBlocks, nextDropAt, weekNumber, weeklyBlueprint } from "@/lib/forge-blueprints";
 import { clipToParcel, inRect, parcelAt, parcelRects, type ParcelRect } from "@/lib/forge-parcels";
 import { publishForgeModuleFn, stampForgeModuleFn } from "@/lib/forge-modules.functions";
