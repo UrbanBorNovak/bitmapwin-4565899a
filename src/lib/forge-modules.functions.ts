@@ -29,6 +29,9 @@ export const publishForgeModuleFn = createServerFn({ method: "POST" })
       bitCost: z.number().int().min(0).max(500),
       tributeSats: z.union([z.literal(0), z.number().int().min(546).max(100_000)]),
       parents: z.array(z.string().uuid()).max(24),
+      // Where the author's own sat royalty lands. It is the author's money, so any valid
+      // mainnet address they choose is fine (e.g. Xverse's bc1q payment address).
+      payoutAddress: z.string().trim().regex(/^(bc1[02-9ac-hj-np-z]{11,87}|[13][1-9A-HJ-NP-Za-km-z]{25,34})$/).optional(),
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
@@ -45,7 +48,7 @@ export const publishForgeModuleFn = createServerFn({ method: "POST" })
       for (const r of rows ?? []) lineage = lineage.concat((r.lineage as Lineage) ?? []);
     }
     const id = crypto.randomUUID();
-    if (data.tributeSats > 0) lineage.push({ address: data.address, sats: data.tributeSats, moduleId: id, name: data.name });
+    if (data.tributeSats > 0) lineage.push({ address: data.payoutAddress ?? data.address, sats: data.tributeSats, moduleId: id, name: data.name });
     // Dedupe by module so a parent used twice is still paid once per module.
     const seen = new Set<string>();
     lineage = lineage.filter((c) => (seen.has(c.moduleId) ? false : (seen.add(c.moduleId), true))).slice(0, 24);
