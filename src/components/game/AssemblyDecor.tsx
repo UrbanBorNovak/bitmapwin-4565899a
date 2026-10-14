@@ -157,13 +157,17 @@ function DelegatePortrait({ id, lit }: { id: string; lit: boolean }) {
   );
 }
 
+const EMPORIUM_PORTRAITS = 2574;
+
 function Council({ taken, max }: { taken: number; max: number }) {
   const seats = Math.max(1, Math.min(max, 64));
   const glow = useRef<THREE.MeshStandardMaterial[]>([]);
   // Each seat is held by a real Bitmap Emporium child of 717328.bitmap, spread evenly across the pool.
   const pool = usePuppets();
   const delegates = useMemo(() => {
-    const list = pool?.list ?? [];
+    // Only the first 2,574 children of 717328 are Emporium portraits (image/png);
+    // later children are text parcel inscriptions (e.g. "1168.717328.bitmap").
+    const list = (pool?.list ?? []).slice(0, EMPORIUM_PORTRAITS);
     if (!list.length) return [] as typeof list;
     const step = Math.max(1, Math.floor(list.length / seats));
     return Array.from({ length: seats }, (_, i) => list[(i * step) % list.length]!);
