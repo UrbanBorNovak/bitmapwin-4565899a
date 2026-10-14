@@ -10,6 +10,10 @@ describe("forge delegate metadata", () => {
     const cbor = [0xa3, ...txt("f"), ...txt("BWVX1"), ...txt("h"), 0x1a, 0x00, 0x0c, 0xaa, 0x30, ...txt("d"), ...txt("AAAAAA==")];
     expect(parseForgeMeta(hexOf(cbor))).toEqual({ f: "BWVX1", h: 830000, d: "AAAAAA==" });
   });
+  it("accepts BWVX2 compressed builds", () => {
+    const cbor = [0xa3, ...txt("f"), ...txt("BWVX2"), ...txt("h"), 0x1a, 0x00, 0x06, 0x5d, 0x83, ...txt("d"), ...txt("AAAAAA==")];
+    expect(parseForgeMeta(hexOf(cbor))).toEqual({ f: "BWVX2", h: 417155, d: "AAAAAA==" });
+  });
   it("rejects metadata that is not a forge build", () => {
     const cbor = [0xa1, ...txt("f"), ...txt("OTHER")];
     expect(parseForgeMeta(hexOf(cbor))).toBeNull();
