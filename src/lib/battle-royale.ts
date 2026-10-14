@@ -33,6 +33,9 @@ export const DROP = {
   autoDeploy: STRIDE * 18,
 } as const;
 
+/** Live altitude/speed readout for the jump HUD (world units). */
+export const dropTelemetry = { alt: 0, speed: 0 };
+
 export const STORM_START = MATCH.lobby + DROP.flight;
 
 // ---------- deterministic match ----------
@@ -292,6 +295,8 @@ export function stepDrop(player: PlayerState, intent: MoveIntent, rawDelta: numb
       return true;
     }
   }
+  dropTelemetry.alt = Math.max(0, player.y);
+  dropTelemetry.speed = Math.hypot(player.vx, player.vy, player.vz);
   player.grounded = false;
   player.animation = "jump";
   player.movement = "idle";
