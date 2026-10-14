@@ -1,7 +1,8 @@
 import { lazy, Suspense } from "react";
 import { ClientOnly, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { allGuardiansQuery } from "@/lib/bitmon-queries";
+import { allGuardiansQuery, guardianDnaQuery } from "@/lib/bitmon-queries";
+import { v7Genome } from "@/lib/onchain-name";
 import { GuardianName } from "@/components/bitmon/GuardianName";
 
 const Territory3D = lazy(() => import("@/components/BitmapTerritory3D"));
@@ -11,6 +12,9 @@ export function LatestGuardianCard() {
   const q = useQuery({ ...allGuardiansQuery(), refetchInterval: 15_000 });
   const list = q.data ?? [];
   const g = list.find((x) => x.inscriptionId) ?? list[0];
+  const dna = useQuery({ ...guardianDnaQuery(g?.height ?? 0), enabled: !!g });
+  const d = dna.data;
+  const v7 = d?.blockHash && d.txCount != null && d.size != null ? v7Genome(d.height, d.blockHash, d.txCount, d.size) : null;
   if (!g) return null;
   const box = <div className="aspect-square w-full border border-border bg-background" />;
   return (
@@ -28,7 +32,7 @@ export function LatestGuardianCard() {
       </div>
       <div className="display mt-1 truncate text-sm"><GuardianName height={g.height} fallback={g.species} /> · {g.height}.BITMAP</div>
       <div className="mt-1 font-mono text-[10px] text-muted-foreground">
-        {g.rarity} · LV {g.level} · HP {g.hp} · BITE {g.bite}
+        {v7 ? `${v7.ra} · ${v7.sh.toUpperCase()} · LV ${v7.lv} · HP ${v7.hp} · BITE ${v7.bi}` : `${g.rarity} · LV ${g.level} · HP ${g.hp} · BITE ${g.bite}`}
       </div>
       {g.inscriptionId ? (
         <a

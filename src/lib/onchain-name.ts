@@ -14,6 +14,7 @@ export type V7Genome = {
   sh: (typeof SHAPES)[number]; ra: "COMMON" | "RARE" | "EPIC" | "MYTHIC"; nm: string;
   body: string; accent: string; seg: number; bulk: number; horn: number;
   wing: boolean; spine: boolean; pat: boolean; gait: number;
+  hp: number; bi: number; sd: number; ar: number; lv: number;
 };
 
 export function v7Genome(height: number, blockHash: string, txs: number, size: number): V7Genome {
@@ -24,9 +25,11 @@ export function v7Genome(height: number, blockHash: string, txs: number, size: n
   const hue = Math.floor(r() * 360), hue2 = (hue + 90 + Math.floor(r() * 120)) % 360;
   const sh = pick(SHAPES);
   const nm = pick(NAME_A) + " " + pick(NAME_B);
-  r(); r(); r(); r(); // hp, bite, speed, armor
+  const hp = 40 + Math.floor(r() * 60) + Math.min(40, Math.floor(txs / 120));
+  const bi = 12 + Math.floor(r() * 40), sd = 10 + Math.floor(r() * 40), ar = 8 + Math.floor(r() * 40);
   return {
-    sh, ra, nm,
+    sh, ra, nm, hp, bi, sd, ar,
+    lv: 1 + Math.floor(Math.min(20, Math.log2(1 + txs) * 2)),
     body: `hsl(${hue},62%,46%)`, accent: `hsl(${hue2},88%,58%)`,
     seg: Math.max(3, Math.min(7, 3 + Math.floor(txs / 900))),
     bulk: Math.max(0.85, Math.min(1.35, 0.85 + size / 3000000)),
