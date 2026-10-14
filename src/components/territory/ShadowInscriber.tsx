@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { resolveWallet } from "@/components/BuyButton";
 import { refreshWalletKeys, sendBitcoinFromWallet, signParentInputsPsbt, xOnlyPubKeyHex } from "@/lib/browser-wallet";
-import { mintParentsFn, signCollectionParentFn } from "@/lib/ord-parents.functions";
+import { mintParentsFn, signCollectionParentFn, heldParentSpendFn } from "@/lib/ord-parents.functions";
 import type { ParentSpend } from "@/lib/ord-parents";
 import {
   INSCRIBE_MAX_BYTES,
@@ -72,6 +72,8 @@ export function ShadowInscriber(props: {
   reinscribeOnBitmap?: boolean;
   /** With reinscribeOnBitmap: stamp onto this held parcel's sat instead of the BITMAP's. */
   parcelIndex?: number;
+  /** Claim this held inscription (e.g. your Guardian) as the Tag 3 parent; wallet signs, it returns sat-for-sat. */
+  heldParentId?: string;
   /** Server refuses to price the inscription unless this block's Guardian is already summoned. */
   requireAwake?: boolean;
   /** Where the inscribed sat lands. Defaults to the connected wallet's ordinals address. */
@@ -91,6 +93,7 @@ export function ShadowInscriber(props: {
   const [parentNotes, setParentNotes] = useState<string[]>([]);
   const [variantKey, setVariantKey] = useState<string | null>(null);
   const resolveParents = useServerFn(mintParentsFn);
+  const resolveHeldParent = useServerFn(heldParentSpendFn);
   const signCollection = useServerFn(signCollectionParentFn);
 
   useEffect(() => setJob(loadJob(props.digest)), [props.digest]);
@@ -248,6 +251,12 @@ export function ShadowInscriber(props: {
       }
       let parents: ParentSpend[] = [];
       let pointer: number | undefined;
+      if (props.heldParentId && props.claimParentsForHeight === undefined) {
+        setBusy("CHECKING YOUR GUARDIAN…");
+        const res = await resolveHeldParent({ data: { inscriptionId: props.heldParentId, holderAddress: wallet.ordinalsAddress } });
+        if (!res.spend) throw new Error(`MINT STOPPED — ${res.note}. NOTHING WAS PAID.`);
+        parents = [res.spend];
+      }
       if (props.claimParentsForHeight !== undefined) {
         setBusy("CHECKING THE PARENT BITMAP…");
         let res: Awaited<ReturnType<typeof resolveParents>>;

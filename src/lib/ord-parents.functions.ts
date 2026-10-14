@@ -149,3 +149,21 @@ export const collectionParentStatusFn = createServerFn({ method: "GET" }).handle
     return { address: "", masterInscriptionId: null, ready: false, reason: (e as Error).message };
   }
 });
+
+/** Locates a parent inscription the connected wallet holds, so a child (e.g. a pet) can claim it via Tag 3. */
+export const heldParentSpendFn = createServerFn({ method: "GET" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        inscriptionId: z.string().trim().toLowerCase().regex(/^[0-9a-f]{64}i\d+$/),
+        holderAddress: z.string().trim().min(14).max(120),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { fetchParentSpend } = await import("@/lib/ord-parents");
+    const spend = await fetchParentSpend(data.inscriptionId, "wallet").catch(() => null);
+    if (!spend) return { spend: null as ParentSpend | null, note: "COULD NOT LOCATE THAT GUARDIAN ON CHAIN RIGHT NOW" };
+    if (spend.address !== data.holderAddress) return { spend: null as ParentSpend | null, note: "YOUR CONNECTED ORDINALS WALLET DOES NOT HOLD THAT GUARDIAN" };
+    return { spend, note: "" };
+  });
