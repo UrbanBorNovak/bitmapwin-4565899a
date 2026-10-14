@@ -13,13 +13,14 @@ import { FORGE_FORMAT } from "@/lib/voxel-populate";
 import type { TplBlock } from "@/lib/voxel-templates";
 
 /** The master renderer's inscription id (inscribed once; every delegated build points at it). */
-export const FORGE_MASTER_DELEGATE_ID = "adc48ccd4b2c429c24bf37f44979c22bf14315f39578dbe02c2f33729555c827i0";
+// V2 master: reads BWVX1 and BWVX2 (greedy boxes) and draws a base plate. V1 was adc48ccd…c827i0.
+export const FORGE_MASTER_DELEGATE_ID = "d05d29638539d0ba8241b1e459de732011ffe0e16bbd7439a91b473b74ef7fe1i0";
 
 export type ForgeMeta = { f: string; h: number; d: string; p?: string; l?: string };
 
-export function forgeDelegateMetadata(height: number, data: string, lineage = "", parcel?: { index: number; x0: number; z0: number; x1: number; z1: number }): ForgeMeta {
+export function forgeDelegateMetadata(height: number, data: string, lineage = "", parcel?: { index: number; x0: number; z0: number; x1: number; z1: number }, format: string = FORGE_FORMAT): ForgeMeta {
   return {
-    f: FORGE_FORMAT,
+    f: format,
     h: height,
     d: data,
     ...(parcel ? { p: `${parcel.index};${parcel.x0},${parcel.z0},${parcel.x1},${parcel.z1}` } : {}),
