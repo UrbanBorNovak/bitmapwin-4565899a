@@ -28,7 +28,10 @@ export async function collectionPieces(): Promise<CollectionPiece[]> {
   await Promise.all(ids.slice(0, 200).map(async (id) => {
     const blocks = await forgePieceBlocks(id).catch(() => null);
     if (!blocks || blocks.length < 4 || blocks.length > 2400) return;
-    const info = await j<{ address?: string | null; height?: number }>(`/r/inscription/${id}`);
+    // Royalties go to the creator: the address the reveal first delivered the inscription to.
+    const reveal = await fetch(`https://mempool.space/api/tx/${id.slice(0, 64)}`, { signal: AbortSignal.timeout(8000) })
+      .then((r) => (r.ok ? (r.json() as Promise<{ vout: { scriptpubkey_address?: string }[] }>) : null)).catch(() => null);
+    const info = { address: reveal?.vout[0]?.scriptpubkey_address ?? null };
     const meta = await j<string>(`/r/metadata/${id}`);
     let height: number | null = null;
     if (typeof meta === "string") {

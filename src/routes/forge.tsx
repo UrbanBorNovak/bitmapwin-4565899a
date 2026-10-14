@@ -242,7 +242,7 @@ function ForgePage() {
   useEffect(() => { setPerch(null); setBoxStart(null); }, [height]);
   const collectionQ = useQuery(collectionPiecesQuery());
   const [makers, setMakers] = useState<Record<string, string>>({});
-  const [siteTribute, setSiteTribute] = useState(true);
+  const [siteTribute, setSiteTribute] = useState(false);
   const loadPiece = async (given?: string, maker?: string | null): Promise<void> => {
     const id = (given ?? pieceId).trim();
     if (!isInscriptionId(id)) { toast.error("PASTE A FULL INSCRIPTION ID (…i0)"); return; }
@@ -492,20 +492,20 @@ function ForgePage() {
             )}
             <div className="mt-3 border-t border-border pt-2">
               <p className="flex items-center justify-between text-accent"><span>VERIFIED COMMUNITY · ON BITCOIN</span><span className="text-[10px] text-muted-foreground">{collectionQ.data?.length ?? "…"}</span></p>
-              <p className="mt-1 text-[10px] text-muted-foreground">Only Land Forge inscriptions in the official collection appear here. Using one pays its maker 546 sats inside your inscription.</p>
+              <p className="mt-1 text-[10px] text-muted-foreground">Only Land Forge inscriptions in the official collection appear here. Using one pays its creator (the first wallet it was inscribed to) 546 sats inside your inscription.</p>
               <div className="mt-1 max-h-48 space-y-1 overflow-y-auto">
                 {collectionQ.isLoading && <p className="text-[10px] text-muted-foreground">READING THE COLLECTION FROM BITCOIN…</p>}
                 {collectionQ.data?.map((c) => (
                   <button key={c.id} type="button" disabled={pieceBusy} onClick={() => void loadPiece(c.id, c.maker)} className="w-full rounded border border-border px-2 py-1 text-left text-[10px] text-muted-foreground hover:border-accent disabled:opacity-40">
                     <span className="block text-foreground">◆ {c.height !== null ? `${c.height}.BITMAP` : c.id.slice(0, 8)} · {c.voxels} voxels</span>
-                    <span className="font-mono">{c.id.slice(0, 8)}…{c.id.slice(-4)}{c.maker ? ` · maker ${short(c.maker)} · 546 sats` : ""}</span>
+                    <span className="font-mono">{c.id.slice(0, 8)}…{c.id.slice(-4)}{c.maker ? ` · creator ${short(c.maker)} · 546 sats` : ""}</span>
                   </button>
                 ))}
               </div>
             </div>
             <label className="mt-2 flex items-center gap-2 text-[10px] text-muted-foreground">
               <input type="checkbox" checked={siteTribute} onChange={(e) => setSiteTribute(e.target.checked)} />
-              ADD 546 SATS TO THE SITE FUND (OPTIONAL)
+              ADD 546 SATS TO THE SITE FUND — COUNTS TOWARD DONOR STATUS ONCE CONFIRMED
             </label>
           </div>
           {height !== null && (
