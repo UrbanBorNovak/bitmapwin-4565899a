@@ -47,6 +47,11 @@ export function BitmapGuardianPanel({ height }: { height: number }) {
             VISIT ITS PATROL →
           </Link>
         ) : null}
+        {state === "inscribed" ? (
+          <Link to="/breed" search={{ sire: height }} className="border border-signal px-3 py-2 font-mono text-xs text-signal hover:bg-signal/10">
+            BREED A PET · 546 SATS →
+          </Link>
+        ) : null}
         {state !== "inscribed" ? <SummonGuardianButton height={height} /> : null}
       </div>
     </div>
