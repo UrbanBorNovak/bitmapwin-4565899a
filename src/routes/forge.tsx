@@ -21,6 +21,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWalletSession } from "@/lib/wallet-session";
 import { heldHeightsQuery } from "@/lib/held-parcels";
 import { forgeRightsFn } from "@/lib/forge-rights.functions";
+import { forgePieceFn } from "@/lib/forge-parts.functions";
+import { forgeAssemblyHtml, isInscriptionId, normPart, type AsmPart } from "@/lib/forge-assembly";
+import { bakeGuardian } from "@/lib/forge-guardian-bake";
+import { guardianDnaQuery } from "@/lib/bitmon-queries";
+import { OnchainGuardianBody } from "@/components/bitmon/OnchainGuardianBody";
 
 export const Route = createFileRoute("/forge")({
   validateSearch: (s: Record<string, unknown>): { height?: number } => {
@@ -42,7 +47,8 @@ export const Route = createFileRoute("/forge")({
 
 const HALF = FORGE_SPAN / 2;
 const COLORS = Object.fromEntries(BLOCKS.map((b) => [b.id, new THREE.Color(b.top)]));
-type Tool = "stamp" | "block" | "erase" | "parcel";
+type Tool = "stamp" | "block" | "box" | "erase" | "perch" | "parcel";
+type Placement = { part: AsmPart; keys: string[] };
 
 function ParcelFloor({ rects, focus, hoverIdx }: { rects: ParcelRect[]; focus: number | null; hoverIdx: number | null }) {
   const ref = useRef<THREE.InstancedMesh>(null);
@@ -222,13 +228,44 @@ function ForgePage() {
     return () => clearInterval(t);
   }, []);
 
+  // On-chain pieces: imported by inscription id, placed by reference (not copied) in a recursive assembly.
+  const pieceFn = useServerFn(forgePieceFn);
+  const [pieceId, setPieceId] = useState("");
+  const [pieceBusy, setPieceBusy] = useState(false);
+  const [chainPieces, setChainPieces] = useState<Prefab[]>([]);
+  const [placements, setPlacements] = useState<Placement[]>([]);
+  const [boxStart, setBoxStart] = useState<[number, number, number] | null>(null);
+  const [perch, setPerch] = useState<[number, number, number] | null>(null);
+  const dnaQ = useQuery({ ...guardianDnaQuery(height ?? 0), enabled: height !== null });
+  useEffect(() => { setPerch(null); setBoxStart(null); }, [height]);
+  const loadPiece = async (): Promise<void> => {
+    const id = pieceId.trim();
+    if (!isInscriptionId(id)) { toast.error("PASTE A FULL INSCRIPTION ID (…i0)"); return; }
+    setPieceBusy(true);
+    const r = await pieceFn({ data: { id } }).catch(() => ({ ok: false as const, error: "COULD NOT REACH BITCOIN — TRY AGAIN" }));
+    setPieceBusy(false);
+    if (!r.ok) { toast.error(r.error); return; }
+    const p: Prefab = { id: `ins:${id}`, name: `◆ ${id.slice(0, 8)}…${id.slice(-4)}`, sphere: "community" as Sphere, blocks: normPart(r.blocks) } as Prefab;
+    setChainPieces((c) => [p, ...c.filter((x) => x.id !== p.id)].slice(0, 12));
+    setPicked(p); setTool("stamp"); setPieceId("");
+    toast.success(`LOADED ${r.blocks.length} VOXELS FROM BITCOIN — CLICK TO SNAP IT IN`);
+  };
+
   const blocks = useMemo(() => [...world.values()], [world]);
   const ghost = useMemo(() => {
-    if (tool === "erase") return [];
-    if (tool === "block") return [{ dx: 0, dy: 0, dz: 0, k: paint }];
-    if (tool === "parcel") return [];
+    if (tool === "erase" || tool === "parcel" || tool === "perch") return [];
+    if (tool === "block" || tool === "box") return [{ dx: 0, dy: 0, dz: 0, k: paint }];
     return rotatePrefab(picked.blocks, turns);
   }, [tool, paint, picked, turns]);
+  const boxGhost = useMemo(() => {
+    if (tool !== "box" || !boxStart || !hover) return [];
+    const out: TplBlock[] = [];
+    const [x0, x1] = [Math.min(boxStart[0], hover[0]), Math.max(boxStart[0], hover[0])];
+    const [y0, y1] = [Math.min(boxStart[1], hover[1]), Math.max(boxStart[1], hover[1])];
+    const [z0, z1] = [Math.min(boxStart[2], hover[2]), Math.max(boxStart[2], hover[2])];
+    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) out.push({ dx: x, dy: y, dz: z, k: paint });
+    return out.slice(0, FORGE_MAX_BLOCKS);
+  }, [tool, boxStart, hover, paint]);
   const hoverParcel = hover ? parcelAt(rects, hover[0], hover[2]) : null;
   const onTile = (x: number, z: number) => (focusRect ? inRect(focusRect, x, z) : !!parcelAt(rects, x, z));
   const ghostOut = !!(hover && (rects.length === 0 || ghost.some((b) => !onTile(b.dx + hover[0], b.dz + hover[2]))));
@@ -251,6 +288,9 @@ function ForgePage() {
       if (e.key === "s" || e.key === "S") setTool("stamp");
       if (e.key === "x" || e.key === "X") setTool("erase");
       if (e.key === "p" || e.key === "P") setTool("parcel");
+      if (e.key === "w" || e.key === "W") { setTool("box"); setBoxStart(null); }
+      if (e.key === "g" || e.key === "G") setTool("perch");
+      if (e.key === "Escape") setBoxStart(null);
       if (/^[0-9]$/.test(e.key)) { const b = BLOCKS[(Number(e.key) + 9) % 10]; if (b) { setPaint(b.id); setTool("block"); } }
     };
     window.addEventListener("keydown", onKey);
@@ -263,8 +303,21 @@ function ForgePage() {
     if (!hover) return;
     if (tool === "parcel") { const p = parcelAt(rects, hover[0], hover[2]); setFocus(p ? p.index : null); return; }
     if (tool === "erase") return;
+    if (tool === "perch") {
+      if (!dnaQ.data) { toast.error("THIS BLOCK'S GUARDIAN IS STILL LOADING"); return; }
+      setPerch(hover); toast.success("GUARDIAN PERCHED — IT WILL LIVE ON THIS BUILD"); return;
+    }
     if (!rects.length) { toast.error("ENTER YOUR BITMAP NUMBER FIRST"); return; }
     if (!onTile(hover[0], hover[2])) { toast.error(focusRect ? `STAY INSIDE PARCEL #${focusRect.index}` : "NO PARCEL HERE — BUILD ONLY ON PARCEL TILES"); return; }
+    if (tool === "box") {
+      if (!boxStart) { setBoxStart(hover); return; }
+      let next = new Map(world);
+      for (const b of boxGhost) if (onTile(b.dx, b.dz)) next.set(cellKey(b.dx, b.dy, b.dz), b);
+      if (next.size > FORGE_MAX_BLOCKS) { toast.error(`BUILD LIMIT IS ${FORGE_MAX_BLOCKS} BLOCKS`); next = world; }
+      setBoxStart(null);
+      if (next !== world) commit(next);
+      return;
+    }
     if (overLimit) { toast.error(`BUILD LIMIT IS ${FORGE_MAX_BLOCKS} BLOCKS`); return; }
     if (tool === "stamp" && picked.author && (picked.bitCost ?? 0) > 0) {
       if (!wallet) { toast.error("CONNECT A WALLET TO USE PAID MODULES"); return; }
@@ -275,7 +328,21 @@ function ForgePage() {
     const next = stampInto(world, ghost, hover[0], hover[1], hover[2]);
     for (const [k, b] of next) if (!world.has(k) && !onTile(b.dx, b.dz)) next.delete(k);
     commit(next);
+    if (tool === "stamp" && picked.id.startsWith("ins:")) {
+      const keys = [...next.keys()].filter((k) => !world.has(k));
+      if (keys.length) setPlacements((p) => [...p, { part: { id: picked.id.slice(4), x: hover[0], y: hover[1], z: hover[2], r: ((turns % 4) + 4) % 4 }, keys }]);
+    }
     if (tool === "stamp" && picked.author && !used.some((u) => u.id === picked.id)) setUsed((u) => [...u, picked]);
+  };
+
+  /** Erasing one block of an inscribed piece removes the whole piece (it is placed by reference). */
+  const eraseAt = (b: TplBlock) => {
+    const key = cellKey(b.dx, b.dy, b.dz);
+    const hit = placements.find((p) => p.keys.includes(key));
+    const n = new Map(world);
+    if (hit) { for (const k of hit.keys) n.delete(k); setPlacements((p) => p.filter((x) => x !== hit)); }
+    else n.delete(key);
+    commit(n);
   };
 
   // Tallest filled height per column, so pieces dropped on the floor stack on top automatically.
@@ -288,8 +355,15 @@ function ForgePage() {
     const x = Math.floor(e.point.x + HALF), z = Math.floor(e.point.z + HALF);
     if (x < 0 || z < 0 || x >= FORGE_SPAN || z >= FORGE_SPAN) return setHover(null);
     let y = layer;
-    if (tool !== "erase") for (const b of ghost) y = Math.max(y, (tops.get(`${x + b.dx},${z + b.dz}`) ?? 0) - b.dy);
+    if (tool === "perch") y = Math.max(y, tops.get(`${x},${z}`) ?? 0);
+    else if (tool !== "erase" && !(tool === "box" && boxStart)) for (const b of ghost) y = Math.max(y, (tops.get(`${x + b.dx},${z + b.dz}`) ?? 0) - b.dy);
+    else if (tool === "box" && boxStart) y = Math.max(layer, boxStart[1]);
     setHover([x, Math.min(FORGE_SPAN - 1, y), z]);
+  };
+  const autoPerch = () => {
+    let best: [number, number, number] | null = null;
+    for (const [k, t] of tops) { const [x, z] = k.split(",").map(Number); if (!best || t > best[1]) best = [x!, t, z!]; }
+    setPerch(best ?? [32, 0, 32]);
   };
 
   const seed = (a: ArchetypeId) => {
@@ -304,13 +378,23 @@ function ForgePage() {
   const lineage = used.map((u) => u.id.slice(0, 8)).join(",");
   const parcelBlocks = useMemo(() => (focusRect ? clipToParcel(blocks, focusRect) : blocks), [blocks, focusRect]);
   const html = useMemo(() => (height === null || !parcelBlocks.length ? "" : forgeInscriptionHtml(height, "studio", parcelBlocks, lineage, focusRect ?? undefined)), [height, parcelBlocks, lineage, focusRect]);
+  // Recursive assembly: inscribed pieces by reference + own blocks + the block's baked Guardian.
+  const livePlacements = useMemo(() => placements.filter((p) => p.keys.some((k) => world.has(k))), [placements, world]);
+  const asmHtml = useMemo(() => {
+    if (height === null || (!livePlacements.length && !perch)) return "";
+    const taken = new Set(livePlacements.flatMap((p) => p.keys));
+    const own = parcelBlocks.filter((b) => !taken.has(cellKey(b.dx, b.dy, b.dz)));
+    const guardian = perch && dnaQ.data ? { data: bakeGuardian(dnaQ.data), at: perch } : null;
+    return forgeAssemblyHtml(height, livePlacements.map((p) => p.part), own, guardian, lineage);
+  }, [height, livePlacements, perch, parcelBlocks, dnaQ.data, lineage]);
+  const asmBytes = useMemo(() => new TextEncoder().encode(asmHtml).length, [asmHtml]);
   const bytes = useMemo(() => new TextEncoder().encode(html).length, [html]);
   useEffect(() => {
     setDigest(null);
-    if (!html) return;
-    const t = setTimeout(() => void sha(`forge:${encodeBuild(blocks)}:${lineage}`).then(setDigest), 400);
+    if (!html && !asmHtml) return;
+    const t = setTimeout(() => void sha(`forge:${encodeBuild(blocks)}:${lineage}:${asmHtml.length}:${perch?.join(",") ?? ""}`).then(setDigest), 400);
     return () => clearTimeout(t);
-  }, [html, blocks, lineage]);
+  }, [html, asmHtml, blocks, lineage, perch]);
 
   const publish = async (): Promise<void> => {
     if (!wallet) { toast.error("CONNECT A WALLET TO PUBLISH"); return; }
@@ -377,7 +461,35 @@ function ForgePage() {
               {focusRect && <p className="mt-1 text-accent">PARCEL {focusRect.index}.{height}.BITMAP · {focusRect.x1 - focusRect.x0}×{focusRect.z1 - focusRect.z0} CELLS</p>}
             </div>
           )}
-          {tool === "block" && (
+          <div className="rounded border border-primary/40 bg-card/40 p-2 text-[11px]">
+            <p className="text-primary">ON-CHAIN PIECES</p>
+            <p className="mt-1 text-muted-foreground">Paste the inscription ID of any Land Forge build. It snaps in by reference — your inscription points at it instead of paying for its blocks again.</p>
+            <div className="mt-2 flex gap-1">
+              <input value={pieceId} onChange={(e) => setPieceId(e.target.value.trim())} onKeyDown={(e) => { if (e.key === "Enter") void loadPiece(); }} placeholder="f6b0…i0" className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-foreground" />
+              <button type="button" disabled={pieceBusy} onClick={() => void loadPiece()} className="rounded border border-primary bg-primary/10 px-2 py-1 text-[10px] text-foreground disabled:opacity-40">{pieceBusy ? "…" : "LOAD"}</button>
+            </div>
+            {chainPieces.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {chainPieces.map((p) => (
+                  <button key={p.id} type="button" onClick={() => { setPicked(p); setTool("stamp"); }} className={`w-full rounded border px-2 py-1 text-left text-[10px] ${picked.id === p.id && tool === "stamp" ? "border-primary text-foreground" : "border-border text-muted-foreground"}`}>
+                    {p.name} · {p.blocks.length} voxels · {placements.filter((x) => `ins:${x.part.id}` === p.id && x.keys.some((k) => world.has(k))).length} placed
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {height !== null && (
+            <div className="rounded border border-accent/40 bg-card/40 p-2 text-[11px]">
+              <p className="text-accent">GUARDIAN PERCH</p>
+              <p className="mt-1 text-muted-foreground">{dnaQ.data ? "Your block's Guardian lives on the build, in the same inscription, drawn from its on-chain design." : "Loading this block's Guardian…"}</p>
+              <div className="mt-2 flex flex-wrap gap-1">
+                <button type="button" onClick={() => setTool("perch")} className={`rounded border px-2 py-0.5 text-[10px] ${tool === "perch" ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>PLACE (G)</button>
+                <button type="button" disabled={!dnaQ.data} onClick={autoPerch} className="rounded border border-border px-2 py-0.5 text-[10px] text-foreground disabled:opacity-40">ON TOP</button>
+                {perch && <button type="button" onClick={() => setPerch(null)} className="rounded border border-border px-2 py-0.5 text-[10px] text-destructive">REMOVE</button>}
+              </div>
+            </div>
+          )}
+          {(tool === "block" || tool === "box") && (
             <div className="grid grid-cols-4 gap-1">
               {BLOCKS.map((b) => (
                 <button key={b.id} type="button" title={b.name} onClick={() => setPaint(b.id)} className={`h-8 rounded border ${paint === b.id ? "border-primary" : "border-border"}`} style={{ background: b.top }} />
@@ -435,8 +547,14 @@ function ForgePage() {
           <SafeCanvas shadows camera={{ position: [40, 38, 40], fov: 45 }}>
             <ambientLight intensity={0.6} />
             <directionalLight position={[20, 40, 10]} intensity={1.2} castShadow />
-            <Blocks blocks={blocks} erase={tool === "erase"} onErase={(b) => { const n = new Map(world); n.delete(cellKey(b.dx, b.dy, b.dz)); commit(n); }} onSurface={(c) => { if (c && tool !== "parcel") setHover(c); }} onPlace={() => void place()} />
-            {hover && ghost.length > 0 && <Ghost blocks={ghost} at={hover} bad={overLimit || ghostOut} />}
+            <Blocks blocks={blocks} erase={tool === "erase"} onErase={eraseAt} onSurface={(c) => { if (c && tool !== "parcel") setHover(c); }} onPlace={() => void place()} />
+            {hover && ghost.length > 0 && boxGhost.length === 0 && <Ghost blocks={ghost} at={hover} bad={overLimit || ghostOut} />}
+            {boxGhost.length > 0 && <Ghost blocks={boxGhost} at={[0, 0, 0]} bad={blocks.length + boxGhost.length > FORGE_MAX_BLOCKS} />}
+            {perch && dnaQ.data && (
+              <group position={[perch[0] - HALF + 0.5, perch[1], perch[2] - HALF + 0.5]} scale={0.36}>
+                <OnchainGuardianBody dna={dnaQ.data} />
+              </group>
+            )}
             <ParcelFloor rects={rects} focus={focus} hoverIdx={hoverParcel?.index ?? null} />
             {showBp && sketch.length > 0 && <Ghost blocks={sketch} at={[0, 0, 0]} bad={false} />}
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, layer, 0]} onPointerMove={onGround} onPointerLeave={() => setHover(null)} onClick={() => void place()} receiveShadow>
@@ -455,15 +573,15 @@ function ForgePage() {
           </div>
           <div className="absolute inset-x-0 bottom-3 flex flex-col items-center gap-1.5 px-2">
             <p className="pointer-events-none rounded bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground backdrop-blur">
-              {tool === "erase" ? "CLICK A BLOCK TO REMOVE IT" : tool === "parcel" ? "CLICK A TILE TO BUILD ONLY ON IT" : "POINT AT ANY SURFACE · CLICK TO PLACE · IT STACKS ON TOP"} · R ROTATE · CTRL+Z UNDO
+              {tool === "erase" ? "CLICK A BLOCK TO REMOVE IT" : tool === "parcel" ? "CLICK A TILE TO BUILD ONLY ON IT" : tool === "box" ? (boxStart ? "CLICK THE OPPOSITE CORNER TO FILL · ESC CANCELS" : "CLICK ONE CORNER OF A WALL, FLOOR OR BOX") : tool === "perch" ? "CLICK WHERE YOUR GUARDIAN SHOULD LIVE" : "POINT AT ANY SURFACE · CLICK TO PLACE · IT STACKS ON TOP"} · R ROTATE · CTRL+Z UNDO
             </p>
             <div className="flex flex-wrap items-center justify-center gap-1 rounded-lg border border-border bg-background/80 p-1 backdrop-blur">
-              {(["stamp", "block", "erase", "parcel"] as Tool[]).map((t) => (
-                <button key={t} type="button" onClick={() => setTool(t)} className={`rounded px-2.5 py-1 text-[10px] ${tool === t ? "bg-primary/15 text-foreground ring-1 ring-primary" : "text-muted-foreground hover:text-foreground"}`}>
-                  {t === "stamp" ? "PIECES" : t === "block" ? "BLOCK" : t === "erase" ? "ERASE" : "PARCEL"}
+              {(["stamp", "block", "box", "erase", "perch", "parcel"] as Tool[]).map((t) => (
+                <button key={t} type="button" onClick={() => { setTool(t); setBoxStart(null); }} className={`rounded px-2.5 py-1 text-[10px] ${tool === t ? "bg-primary/15 text-foreground ring-1 ring-primary" : "text-muted-foreground hover:text-foreground"}`}>
+                  {t === "stamp" ? "PIECES (S)" : t === "block" ? "BLOCK (B)" : t === "box" ? "BOX (W)" : t === "erase" ? "ERASE (X)" : t === "perch" ? "GUARDIAN (G)" : "PARCEL (P)"}
                 </button>
               ))}
-              {tool === "block" && (
+              {(tool === "block" || tool === "box") && (
                 <>
                   <span className="mx-1 h-4 w-px bg-border" />
                   {BLOCKS.map((b, i) => (
@@ -532,6 +650,7 @@ function ForgePage() {
                 reinscribeOnBitmap
                 {...(parcelTarget !== undefined ? { parcelIndex: parcelTarget } : {})}
                 artifactVariants={[
+                  ...(asmHtml ? [{ key: "asm", label: livePlacements.length ? "RECURSIVE BUILD" : "BUILD + GUARDIAN", contentType: "text/html;charset=utf-8", source: asmHtml, note: `${livePlacements.length} inscribed piece${livePlacements.length === 1 ? "" : "s"} pulled live from Bitcoin${perch ? " · your Guardian perched on top" : ""} · ${(asmBytes / 1024).toFixed(1)} KB.`, ...(payouts.length ? { tributes: payouts } : {}) }] : []),
                   ...(FORGE_MASTER_DELEGATE_ID ? (() => { const best = encodeBuildBest(parcelBlocks); const meta = forgeDelegateMetadata(height, best.data, lineage, focusRect ?? undefined, best.format); return [{ key: "lean", label: "LEAN BUILD", contentType: "text/html;charset=utf-8", source: html, note: `Drawn by the shared on-chain Forge renderer (${best.format}) — about ${delegateSavings(html, meta).saved.toLocaleString()} fewer bytes to pay for.`, delegate: FORGE_MASTER_DELEGATE_ID, metadata: meta, ...(payouts.length ? { tributes: payouts } : {}) }]; })() : []),
                   { key: "html", label: "3D BUILD", contentType: "text/html;charset=utf-8", source: html, note: "Self-rendering build, no outside code.", ...(payouts.length ? { tributes: payouts } : {}) },
                 ]}
