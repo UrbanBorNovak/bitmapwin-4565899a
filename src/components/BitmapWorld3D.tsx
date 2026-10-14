@@ -336,7 +336,7 @@ import { TerrainModels } from "@/components/game/TerrainModels";
 import { TerrainField } from "@/components/game/TerrainField";
 import { WorldBoundary } from "@/components/game/WorldBoundary";
 import TouchControls from "@/components/game/TouchControls";
-import { consumeTouchJump, isTouchDevice, takeTouchLook, touchPad } from "@/lib/touch-input";
+import { consumeTouchJump, isTouchDevice, takeTouchLook, takeTouchMovement, touchPad } from "@/lib/touch-input";
 import { QualityProvider, useQuality } from "@/graphics/QualityContext";
 import { QualityHud } from "@/graphics/QualityHud";
 import { GraphicsDebug } from "@/graphics/GraphicsDebug";
@@ -1894,7 +1894,7 @@ function PlayerCameraRig({
   useEffect(() => {
     const canvas = gl.domElement;
     const lock = () => {
-      if (mode === "first" && document.pointerLockElement !== canvas)
+      if (mode === "first" && !isTouchDevice() && document.pointerLockElement !== canvas)
         void canvas.requestPointerLock();
     };
     const look = (event: MouseEvent) => {
@@ -1926,11 +1926,12 @@ function PlayerCameraRig({
     const pressed = keys.current;
     // A phone has no keys and no locked mouse: the thumb pads feed the same
     // intent, and a look swipe turns the head exactly like mouse movement.
-    const swipe = takeTouchLook();
+    const swipe = takeTouchLook(delta);
+    const mobileMove = takeTouchMovement(delta);
     if (swipe.x !== 0 || swipe.y !== 0) {
       const steady = 1 - aimState.amount * 0.62;
-      player.yaw -= swipe.x * 0.005 * steady;
-      pitch.current = THREE.MathUtils.clamp(pitch.current - swipe.y * 0.004 * steady, -1.05, 1.05);
+      player.yaw -= swipe.x * 0.0028 * steady;
+      pitch.current = THREE.MathUtils.clamp(pitch.current - swipe.y * 0.0024 * steady, -1.05, 1.05);
     }
     const padJump = consumeTouchJump();
     // Third person on foot: S swings the body round and walks the way it faces.
@@ -1947,7 +1948,7 @@ function PlayerCameraRig({
       forward: clampAxis(
         (pressed.has("w") || pressed.has("arrowup") ? 1 : 0) -
           (sDown ? (bodySteer ? -1 : 1) : 0) +
-          touchPad.forward +
+          mobileMove.forward +
           touchPad.throttle,
       ),
       // Modern first person uses familiar WASD strafing. Third person and rides
@@ -1964,7 +1965,7 @@ function PlayerCameraRig({
       turn: clampAxis(
         (pressed.has("arrowleft") || (mode !== "first" && pressed.has("a")) ? 1 : 0) -
           (pressed.has("arrowright") || (mode !== "first" && pressed.has("d")) ? 1 : 0) +
-          touchPad.turn,
+          mobileMove.turn,
       ),
       sprint: pressed.has("shift") || touchPad.sprint,
       jump: jumpRequested.current || padJump,
@@ -4188,15 +4189,15 @@ function BitmapWorld3DInner({
 
   return (
     <div className={className}>
-      <div className="oasis-storybook relative h-[calc(100dvh-3.5rem)] min-h-[360px] w-full overflow-hidden border-0 border-border bg-background sm:h-[78vh] sm:min-h-[520px] sm:border">
+      <div className={`oasis-storybook relative h-[calc(100dvh-3.5rem)] min-h-[360px] w-full overflow-hidden border-0 border-border bg-background sm:h-[78vh] sm:min-h-[520px] sm:border ${touchDevice ? "oasis-touch-world" : ""}`}>
         {/* A soft frame around the screen: darkened corners and a thin lit edge,
             so the readouts sit inside a cockpit instead of floating loose. */}
         {exploring ? <div className="hud-vignette" aria-hidden="true" /> : null}
         {/* Controls sit on the world itself, not stacked above it. */}
         <div className="pointer-events-none absolute inset-x-0 top-0 z-40 p-2">
           {exploring ? (
-            <div className="flex items-start justify-between gap-3 px-1 py-1 font-mono">
-              <div className="pointer-events-auto border-l-2 border-signal bg-background/65 px-3 py-2 backdrop-blur-md">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 px-1 py-1 font-mono">
+              <div className="oasis-identity pointer-events-auto min-w-0 w-fit max-w-full border-l-2 border-signal bg-background/65 px-3 py-2 backdrop-blur-md">
                 <div className="display text-base text-foreground md:text-lg">THE OASIS <span className="text-signal">// LIVE</span></div>
                 <div className="hud-live text-[9px]" data-no-translate>
                   {readout.height.toLocaleString("en-US")}.BITMAP
@@ -4225,8 +4226,7 @@ function BitmapWorld3DInner({
                     {MEMBER_TITLE}
                   </div>
                 ) : null}
-                <OasisOnlinePanel online={cursors.length + 1} />
-                <OasisChatDock cursors={cursors} />
+                {!touchDevice || utilityOpen ? <><OasisOnlinePanel online={cursors.length + 1} /><OasisChatDock cursors={cursors} /></> : null}
 
 
               </div>
@@ -4237,7 +4237,7 @@ function BitmapWorld3DInner({
                 aria-label="Open world tools"
                 aria-expanded={utilityOpen}
                 title="World tools"
-                 className="pointer-events-auto rounded-none border border-bitcoin/50 bg-bitcoin/10 text-bitcoin backdrop-blur-sm hover:bg-bitcoin/20 hover:text-bitcoin"
+                  className="pointer-events-auto size-11 shrink-0 rounded-none border border-bitcoin/50 bg-bitcoin/10 text-bitcoin backdrop-blur-sm hover:bg-bitcoin/20 hover:text-bitcoin"
                 onClick={() => setUtilityOpen((current) => !current)}
               >
                 {utilityOpen ? <X /> : <Menu />}
@@ -4755,7 +4755,7 @@ function BitmapWorld3DInner({
             rideLabel={ride.label}
             onExitRide={toggleTruck}
             shooter={Boolean(weapon) || (driving && rideGun(ride.id) !== null)}
-            paused={utilityOpen || inventoryOpen || buildOpen || mapOpen || chatOpen || rationsOpen}
+            paused={utilityOpen || inventoryOpen || buildOpen || mapOpen || chatOpen || rationsOpen || hp <= 0}
           />
         ) : null}
 
@@ -4849,8 +4849,8 @@ function BitmapWorld3DInner({
         {inventoryOpen ? <BitmapMineHud bitmaps={ownedHeights.length} heights={ownedHeights} /> : null}
 
         {/* THE LAND YOU STAND ON — landscape and the perks it is granting. */}
-        {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <LandPerksHud /> : null}
-        {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <HuntPanel compact /> : null}
+        {exploring && (!touchDevice || utilityOpen) && !inventoryOpen && !buildOpen && !mapOpen ? <LandPerksHud /> : null}
+        {exploring && (!touchDevice || utilityOpen) && !inventoryOpen && !buildOpen && !mapOpen ? <HuntPanel compact /> : null}
         {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <GuardianEncounterHud /> : null}
         {exploring ? <OasisDiscovery pose={pose} unit={AVATAR_U} showTracker={!inventoryOpen && !buildOpen && !mapOpen} /> : null}
         {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <AirdropHud pose={pose} unit={AVATAR_U} block={tipHeight} /> : null}
@@ -4884,7 +4884,7 @@ function BitmapWorld3DInner({
         ) : null}
         </div>
 
-        {exploring ? (
+        {exploring && !touchDevice ? (
           <LandBuilderBar
             height={readout.height}
             getPose={() => ({ x: pose.current.x, z: pose.current.z, yaw: pose.current.yaw })}
@@ -5014,7 +5014,7 @@ function BitmapWorld3DInner({
         ) : null}
 
         {cameraMode === "first" ? <FpsCrosshair /> : null}
-        {exploring && !inventoryOpen && !mapOpen ? <VoxelHud height={readout.height} /> : null}
+        {exploring && (!touchDevice || buildOpen) && !inventoryOpen && !mapOpen ? <VoxelHud height={readout.height} /> : null}
 
         {/* Health stays out of sight until damage or death makes it important. */}
         {(!exploring || hp < MAX_HP || driving || respawnNote || attackTarget) ? <div
@@ -5374,7 +5374,7 @@ function BitmapWorld3DInner({
         </div> : null}
 
         {exploring && !inventoryOpen && !buildOpen && !mapOpen && !chatOpen ? (
-          <div className="pointer-events-none absolute inset-x-0 bottom-[14rem] z-30 flex items-center justify-between px-4 md:bottom-4 md:px-8">
+          <div className="oasis-nav-dock pointer-events-none absolute inset-x-0 bottom-[14rem] z-50 flex items-center justify-between gap-1 px-3 md:bottom-4 md:px-8">
             <HudIconButton large label="Map (M)" icon={<MapIcon />} onClick={() => setMapOpen(true)} />
             <HudIconButton
               large
@@ -5383,7 +5383,7 @@ function BitmapWorld3DInner({
               onClick={() => setCameraMode((current) => (current === "first" ? "third" : "first"))}
             />
             <HudIconButton large label="Chat (C)" icon={<MessageSquare />} onClick={() => setChatOpen(true)} />
-            <HudIconButton
+            <div className="oasis-extra-tools contents"><HudIconButton
               large
               label={muted ? "Sound off — tap to unmute" : "Sound on — tap to mute"}
               icon={muted ? <VolumeX /> : <Volume2 />}
@@ -5397,7 +5397,7 @@ function BitmapWorld3DInner({
               active={musicOn}
               onClick={toggleMusic}
             />
-            <HudIconLink label="Ranks — progression, PvP and clans" icon={<Trophy />} href="/ranks" external />
+            <HudIconLink label="Ranks — progression, PvP and clans" icon={<Trophy />} href="/ranks" external /></div>
             <QualityHud touch={touchDevice} />
           </div>
         ) : null}

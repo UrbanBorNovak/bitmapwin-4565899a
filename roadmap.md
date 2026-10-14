@@ -169,3 +169,9 @@
 - [x] Add a latest-12 Guardian chain timeline with block height, difficulty, weight, inscription date, and Blood Moon markers.
 - [x] Show the selected Guardian's live four-second pulse phase separately from immutable chain history.
 - [x] Add a device-aware, remembered dark/light view control to the V7 inscription.
+
+## Mobile Oasis controls
+- [x] Smooth joystick movement and camera swipes, with immediate release and interruption reset.
+- [x] Reserve non-overlapping touch, navigation, and activity areas in portrait and landscape.
+- [x] Verify real touch joystick/release, camera input, auto-run, menu reset, jump and control-zone spacing in portrait/landscape; inspect desktop layout.
+- [ ] Verify visible 3D walking/camera motion on a graphics-capable device (sandbox WebGL context is lost even at Low settings).

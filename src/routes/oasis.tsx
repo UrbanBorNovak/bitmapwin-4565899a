@@ -15,6 +15,7 @@ import { ClassSkillBar } from "@/components/game/ClassSkillBar";
 import { RacePicker } from "@/components/game/RacePicker";
 import { OasisTradeTicker } from "@/components/game/OasisTradeTicker";
 import { OasisBroadcastControl } from "@/components/game/OasisBroadcastControl";
+import { Button } from "@/components/ui/button";
 
 const BitmapWorld3D = lazy(() => import("@/components/BitmapWorld3D").then((module) => ({ default: module.BitmapWorld3D })));
 
@@ -44,7 +45,6 @@ export const Route = createFileRoute("/oasis")({
         { name: "twitter:player", content: player },
         { name: "twitter:player:width", content: "1280" },
         { name: "twitter:player:height", content: "720" },
-        { name: "twitter:image", content: "https://bitmapwin.app/social-card.svg" },
       ],
     };
   },
@@ -129,9 +129,9 @@ function OasisPage() {
   return (
     <div className="px-0 pb-0 sm:px-2 sm:pb-2 md:px-3">
       <h1 className="sr-only">The Oasis</h1>
-      <div className="flex items-center justify-between gap-3 border-x border-t border-border px-3 py-2">
-        <p className="label text-signal">OASIS WORLD · LIVE</p>
-        <Link to="/play-guide" className="label text-bitcoin hover:text-foreground">CONTROLS + FIRST 5 MINUTES →</Link>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-x border-t border-border px-3 py-2">
+        <p className="label min-w-0 text-signal">OASIS WORLD · LIVE</p>
+        <Link to="/play-guide" className="label shrink-0 text-bitcoin hover:text-foreground">CONTROLS →</Link>
       </div>
       <div
         ref={shellRef}
@@ -145,16 +145,16 @@ function OasisPage() {
         <OasisWorldGuard>
         <Suspense fallback={<div className="grid h-[78vh] min-h-[520px] place-items-center border border-border bg-background font-mono text-xs text-signal">INITIALIZING OASIS RENDERER…</div>}>
           <div className="relative">
-            <div className="absolute bottom-3 right-3 z-[85] flex gap-1">
-              <button type="button" aria-label={cinematic ? "Show HUD" : "Cinematic view"} title={cinematic ? "Show HUD (`)" : "Cinematic view (`)"} onClick={() => setCinematic((v) => !v)} className={`hud-panel hud-keep grid size-9 place-items-center ${cinematic ? "text-bitcoin" : "text-signal"} hover:text-bitcoin`}>
+            <div className="oasis-page-tools flex justify-end gap-2 border-b border-border py-2">
+              <Button variant="terminalGhost" size="icon" type="button" aria-label={cinematic ? "Show HUD" : "Cinematic view"} title={cinematic ? "Show HUD (`)" : "Cinematic view (`)"} onClick={() => setCinematic((v) => !v)} className={`hud-panel hud-keep grid size-11 place-items-center ${cinematic ? "text-bitcoin" : "text-signal"} hover:text-bitcoin`}>
                 {cinematic ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
-              </button>
-              <button type="button" aria-label="Visual mods" title="Visual mods" onClick={() => setModsOpen((v) => !v)} className={`hud-panel hud-keep grid size-9 place-items-center ${modsOpen ? "text-bitcoin" : "text-signal"} hover:text-bitcoin`}>
+              </Button>
+              <Button variant="terminalGhost" size="icon" type="button" aria-label="Visual mods" title="Visual mods" onClick={() => setModsOpen((v) => !v)} className={`hud-panel hud-keep grid size-11 place-items-center ${modsOpen ? "text-bitcoin" : "text-signal"} hover:text-bitcoin`}>
                 <Palette className="size-4" />
-              </button>
-              <button type="button" aria-label={fullscreen ? "Exit full screen" : "Full screen"} title={fullscreen ? "Exit full screen" : "Full screen"} onClick={toggleFullscreen} className="hud-panel hud-keep grid size-9 place-items-center text-signal hover:text-bitcoin">
+              </Button>
+              <Button variant="terminalGhost" size="icon" type="button" aria-label={fullscreen ? "Exit full screen" : "Full screen"} title={fullscreen ? "Exit full screen" : "Full screen"} onClick={toggleFullscreen} className="hud-panel hud-keep grid size-11 place-items-center text-signal hover:text-bitcoin">
                 {fullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-              </button>
+              </Button>
             </div>
             {modsOpen ? <OasisVisualModsPanel mod={mod} setMod={setMod} onClose={() => setModsOpen(false)} /> : null}
           <BitmapWorld3D
@@ -162,14 +162,14 @@ function OasisPage() {
             {...(height === undefined ? {} : { initialHeight: height })}
             legend={<span data-tour="map-legend" className="flex flex-wrap items-center gap-2">{legend}</span>}
           />
-          {cinematic ? null : <><DropHud /><ShardRaidHud /><ClassSkillBar /><RacePicker /><AdrenalineBot /></>}
+          {cinematic ? null : <div className="oasis-activities grid grid-cols-1 items-start gap-3 border-y border-border p-3 sm:grid-cols-2" hidden={!toolsOpen}><DropHud /><ShardRaidHud /><ClassSkillBar /><RacePicker /><AdrenalineBot /></div>}
           </div>
           <div className="mt-2 flex flex-wrap items-stretch gap-2">
             <Link to="/command" className="hud-panel flex flex-1 items-center justify-between gap-3 px-3 py-2 font-mono text-[11px] text-bitcoin hover:text-foreground">
               <span>◆ GUARDIAN COMMAND</span><span aria-hidden="true">→</span>
             </Link>
             <button type="button" onClick={() => setToolsOpen((v) => !v)} aria-expanded={toolsOpen} className="hud-panel flex items-center gap-2 px-3 py-2 font-mono text-[11px] text-signal hover:text-bitcoin">
-              <ChevronDown className={`size-3.5 transition-transform ${toolsOpen ? "rotate-180" : ""}`} /> MARKET · BROADCAST · RADAR
+              <ChevronDown className={`size-3.5 transition-transform ${toolsOpen ? "rotate-180" : ""}`} /> ACTIVITIES · MARKET · RADAR
             </button>
           </div>
           {toolsOpen ? (
