@@ -64,7 +64,7 @@ export function stickIntent(x: number, y: number) {
   const length = Math.hypot(x, y);
   if (length <= 0.12) return { forward: 0, turn: 0 };
   const strength = Math.min(1, (length - 0.12) / 0.88);
-  return { forward: -y / length * strength, turn: -x / length * strength };
+  return { forward: y === 0 ? 0 : -y / length * strength, turn: x === 0 ? 0 : -x / length * strength };
 }
 
 /** Ease held intent, but release immediately: no unwanted coasting. */

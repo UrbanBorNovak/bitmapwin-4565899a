@@ -4849,8 +4849,8 @@ function BitmapWorld3DInner({
         {inventoryOpen ? <BitmapMineHud bitmaps={ownedHeights.length} heights={ownedHeights} /> : null}
 
         {/* THE LAND YOU STAND ON — landscape and the perks it is granting. */}
-        {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <LandPerksHud /> : null}
-        {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <HuntPanel compact /> : null}
+        {exploring && (!touchDevice || utilityOpen) && !inventoryOpen && !buildOpen && !mapOpen ? <LandPerksHud /> : null}
+        {exploring && (!touchDevice || utilityOpen) && !inventoryOpen && !buildOpen && !mapOpen ? <HuntPanel compact /> : null}
         {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <GuardianEncounterHud /> : null}
         {exploring ? <OasisDiscovery pose={pose} unit={AVATAR_U} showTracker={!inventoryOpen && !buildOpen && !mapOpen} /> : null}
         {exploring && !inventoryOpen && !buildOpen && !mapOpen ? <AirdropHud pose={pose} unit={AVATAR_U} block={tipHeight} /> : null}
@@ -5014,7 +5014,7 @@ function BitmapWorld3DInner({
         ) : null}
 
         {cameraMode === "first" ? <FpsCrosshair /> : null}
-        {exploring && !inventoryOpen && !mapOpen ? <VoxelHud height={readout.height} /> : null}
+        {exploring && (!touchDevice || buildOpen) && !inventoryOpen && !mapOpen ? <VoxelHud height={readout.height} /> : null}
 
         {/* Health stays out of sight until damage or death makes it important. */}
         {(!exploring || hp < MAX_HP || driving || respawnNote || attackTarget) ? <div

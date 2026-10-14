@@ -225,7 +225,7 @@ export default function TouchControls({
       </div>
 
       {/* action buttons */}
-      <div className="oasis-touch-actions pointer-events-auto absolute grid grid-cols-2 items-center justify-items-end gap-2">
+      <div className={cn("oasis-touch-actions pointer-events-auto absolute grid grid-cols-2 items-center justify-items-end gap-2", driving && "oasis-driving-actions")}>
         {!driving ? (
           <Button
             type="button"
