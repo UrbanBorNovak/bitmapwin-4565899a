@@ -18,6 +18,8 @@ import { shortenAddress } from "@/lib/registry";
 import { formatBit } from "@/lib/coins";
 import { timeAgo } from "@/lib/bitmap";
 import { deployExtenderFn } from "@/lib/extenders.functions";
+import { ExtenderPreview } from "@/components/extenders/ExtenderPreview";
+import { codeFromManifest } from "@/lib/extender-sdk";
 
 export const Route = createFileRoute("/extenders/$slug")({
   head: ({ params }) => {
@@ -63,6 +65,9 @@ function ExtenderDetail() {
 
   const e = extender.data;
   const stat = stats.data?.get(e.id);
+  const liveCode =
+    published.map((v) => codeFromManifest(v.manifest)).find((c): c is string => Boolean(c)) ?? null;
+  const previewHeight = 840000;
 
   return (
     <div className="mx-auto max-w-[1300px] px-4 py-10 md:px-8 md:py-14">
@@ -77,6 +82,25 @@ function ExtenderDetail() {
           <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
             {e.summary || "NO SUMMARY PROVIDED"}
           </p>
+
+          {liveCode ? (
+            <div className="mt-6">
+              <ExtenderPreview
+                code={liveCode}
+                height={previewHeight}
+                club={e.name}
+                autoRun
+                publicView
+                canvasHeight={460}
+              />
+            </div>
+          ) : versions.isPending ? (
+            <p className="mt-6 font-mono text-xs text-muted-foreground">&gt; LOADING 3D SCENE…</p>
+          ) : (
+            <p className="mt-6 border border-border bg-surface p-4 font-mono text-xs text-muted-foreground">
+              &gt; NO PUBLISHED CODE YET — NOTHING TO RENDER
+            </p>
+          )}
 
           {e.previewInscriptionId ? (
             <div className="mt-6 border border-border bg-surface p-2">
