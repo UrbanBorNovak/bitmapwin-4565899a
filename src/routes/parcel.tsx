@@ -93,8 +93,8 @@ function ParcelStudio() {
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
-      <header className="glass-panel mb-4 rounded-lg border border-border p-4">
-        <p className="label text-accent">PARCEL STUDIO</p>
+      <header className="bg-card/60 backdrop-blur mb-4 rounded-lg border border-border p-4">
+        <p className="label text-signal">PARCEL STUDIO</p>
         <h1 className="display mt-1 text-2xl md:text-3xl">Split a BITMAP into its real on-chain parcels</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           Every transaction in a Bitcoin block is a parcel. It becomes yours only when the first child of the BITMAP named
@@ -133,13 +133,13 @@ function ParcelStudio() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-            <section className="glass-panel rounded-lg border border-border p-3">
+            <section className="bg-card/60 backdrop-blur rounded-lg border border-border p-3">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <span className="label">PARCEL MAP</span>
                 <div className="flex gap-1">
                   {(["all", "open", "valid"] as const).map((f) => (
                     <button key={f} type="button" onClick={() => setFilter(f)}
-                      className={`label rounded border px-2 py-0.5 ${filter === f ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>
+                      className={`label rounded border px-2 py-0.5 ${filter === f ? "border-signal text-signal" : "border-border text-muted-foreground"}`}>
                       {f === "valid" ? "INSCRIBED" : f.toUpperCase()}
                     </button>
                   ))}
@@ -155,7 +155,7 @@ function ParcelStudio() {
                   {layout.parcels.map((p, i) => {
                     const st = stateOf(i);
                     const dim = (filter === "open" && st !== "open") || (filter === "valid" && st !== "valid");
-                    const cls = i === sel ? "fill-primary" : st === "valid" ? "fill-accent" : "fill-muted";
+                    const cls = i === sel ? "fill-primary" : st === "valid" ? "fill-signal" : "fill-muted-foreground/25";
                     return (
                       <rect key={i} x={p.position.x + 0.06} y={p.position.y + offY + 0.06} width={Math.max(0.1, p.size - 0.12)} height={Math.max(0.1, p.size - 0.12)}
                         className={`${cls} cursor-pointer transition-opacity hover:opacity-70`} opacity={dim ? 0.15 : 1}
@@ -165,14 +165,14 @@ function ParcelStudio() {
                 </svg>
               )}
               <div className="mt-2 flex flex-wrap gap-3 label text-muted-foreground">
-                <span><i className="mr-1 inline-block h-2 w-2 bg-accent" />INSCRIBED</span>
-                <span><i className="mr-1 inline-block h-2 w-2 bg-muted" />OPEN</span>
+                <span><i className="mr-1 inline-block h-2 w-2 bg-signal" />INSCRIBED</span>
+                <span><i className="mr-1 inline-block h-2 w-2 bg-muted-foreground/25" />OPEN</span>
                 <span><i className="mr-1 inline-block h-2 w-2 bg-primary" />SELECTED</span>
                 {show !== null && <span className="ml-auto text-foreground">#{show} · {stateOf(show) === "valid" ? "INSCRIBED" : "OPEN"}</span>}
               </div>
             </section>
 
-            <aside className="glass-panel space-y-3 rounded-lg border border-border p-4">
+            <aside className="bg-card/60 backdrop-blur space-y-3 rounded-lg border border-border p-4">
               <p className="label">PARCEL INSPECTOR</p>
               {sel === null ? (
                 <p className="text-sm text-muted-foreground">Tap a tile on the map to inspect that parcel.</p>
@@ -184,7 +184,7 @@ function ParcelStudio() {
                   {selInfo?.state === "valid" && (
                     <>
                       <Row k="HOLDER" v={selInfo.owner ? shortenAddress(selInfo.owner) : "—"} />
-                      <a className="label block text-accent hover:underline" href={`https://ordinals.com/inscription/${selInfo.id}`} target="_blank" rel="noreferrer">VIEW PROOF ON ORDINALS ↗</a>
+                      <a className="label block text-signal hover:underline" href={`https://ordinals.com/inscription/${selInfo.id}`} target="_blank" rel="noreferrer">VIEW PROOF ON ORDINALS ↗</a>
                       <Link to="/forge" search={{ height } as never} className="btn-term block w-full px-3 py-2 text-center">BUILD ON THIS PARCEL IN LAND FORGE</Link>
                     </>
                   )}
@@ -234,9 +234,9 @@ function ParcelStudio() {
 
 function Stat({ k, v, cyan, orange }: { k: string; v: string; cyan?: boolean; orange?: boolean }) {
   return (
-    <div className="glass-panel rounded border border-border px-3 py-2">
+    <div className="bg-card/60 backdrop-blur rounded border border-border px-3 py-2">
       <p className="label text-muted-foreground">{k}</p>
-      <p className={`font-mono text-sm ${cyan ? "text-accent" : orange ? "text-primary" : ""}`} data-no-translate>{v}</p>
+      <p className={`font-mono text-sm ${cyan ? "text-signal" : orange ? "text-primary" : ""}`} data-no-translate>{v}</p>
     </div>
   );
 }
