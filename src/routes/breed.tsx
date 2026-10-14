@@ -122,6 +122,7 @@ function BreedLab() {
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   const pickStable = (h: number) => { if (sireH < 0) setSireH(h); else if (h !== sireH) setDamH(h); if (!muted) tone(880, 50); };
   const [attach, setAttach] = useState(true);
+  const [hatched, setHatched] = useState<string | null>(null);
   const heldParent = sire && stable.some((g) => g.inscriptionId === sire.inscriptionId) ? sire : dam && stable.some((g) => g.inscriptionId === dam.inscriptionId) ? dam : null;
   const html = useMemo(() => (pet && sire && dam ? petArtifactHtml(pet, sire.inscriptionId, dam.inscriptionId) : ""), [pet, sire, dam]);
 
@@ -218,6 +219,19 @@ function BreedLab() {
               COPY PET MASTER HTML (INSCRIBE ONCE TO UNLOCK LEAN PETS)
             </button>
           )}
+          {hatched && (
+            <div role="status" className="space-y-3 rounded-md border border-primary bg-card p-4">
+              <p className="font-display text-xl text-primary">CONGRATULATIONS — YOUR BABY GUARDIAN HAS HATCHED</p>
+              <p className="label text-muted-foreground">GEN {pet.gen} · {sire.height} × {dam.height}. YOUR INSCRIPTION IS SENT TO BITCOIN AND WAITING FOR A MINER — IT BECOMES PERMANENT AT THE FIRST CONFIRMATION.</p>
+              <div className="flex flex-wrap gap-2 font-mono text-xs">
+                <Link to="/pet/$id" params={{ id: hatched }} className="rounded border border-primary bg-primary px-3 py-2 text-primary-foreground">VIEW PEDIGREE →</Link>
+                <a href={`https://ordinals.com/inscription/${hatched}`} target="_blank" rel="noreferrer" className="rounded border border-border px-3 py-2 hover:text-primary">ORDINALS ↗</a>
+                <a href={`https://mempool.space/tx/${hatched.slice(0, 64)}`} target="_blank" rel="noreferrer" className="rounded border border-border px-3 py-2 hover:text-primary">MEMPOOL ↗</a>
+                <a href={`https://x.com/intent/tweet?text=${encodeURIComponent(`My baby Guardian just hatched on Bitcoin — ${sire.height} × ${dam.height}.bitmap lineage 🥚 https://bitmapwin.app/pet/${hatched}`)}`} target="_blank" rel="noreferrer" className="rounded border border-border px-3 py-2 hover:text-primary">SHARE ON X ↗</a>
+                <button type="button" onClick={() => { setHatched(null); setSireH(-1); setDamH(-1); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="rounded border border-border px-3 py-2 hover:text-primary">BREED ANOTHER PAIR</button>
+              </div>
+            </div>
+          )}
           <ShadowInscriber
             key={`${sire.inscriptionId}-${dam.inscriptionId}-${attach}`}
             slug={`pet-${sire.height}-${dam.height}`}
@@ -226,6 +240,7 @@ function BreedLab() {
             digest={`pet:${sire.inscriptionId}:${dam.inscriptionId}`}
             artifactLabel={`GEN ${pet.gen} PET · ${sire.height} × ${dam.height}`}
             actionLabel="INSCRIBE PET ON BITCOIN"
+            onRevealed={(txid) => { setHatched(`${txid}i0`); if (!muted) [523, 659, 784, 1047].forEach((f, k) => setTimeout(() => tone(f, 260, "triangle", 0.06), k * 130)); }}
             description="A self-rendering pet inscription. Its metadata names both parents, so its pedigree can be traced on any explorer."
             allowUpload={false}
             {...(attach && heldParent ? { heldParentId: heldParent.inscriptionId } : {})}

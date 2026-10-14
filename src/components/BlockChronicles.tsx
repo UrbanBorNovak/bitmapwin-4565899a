@@ -188,12 +188,12 @@ export function BlockChronicles() {
   });
   const builtSet = useMemo(() => new Set(builtList ?? []), [builtList]);
   const guardianHeights = useMemo(
-    () => [...new Set([...(builtList ?? []), ...[...(inhabited ?? new Map<number, string>()).keys()].reverse()])].filter((h) => !liveHeights.has(h)).slice(0, 16),
+    () => [...new Set([...(builtList ?? []), ...[...(inhabited ?? new Map<number, string>()).keys()].reverse()])].filter((h) => inhabited?.has(h)).slice(0, 24),
     [inhabited, liveHeights, builtList],
   );
   // Every BITMAP with an inscribed Guardian child also gets its issue, built from its real block.
   const { data: gBlocks } = useQuery({ queryKey: ["block-comic-guardians", guardianHeights], queryFn: () => fetchComicBlocksAt(guardianHeights), enabled: guardianHeights.length > 0, staleTime: Infinity });
-  const issues = useMemo(() => [...live, ...(gBlocks ?? []).map(buildIssue)], [live, gBlocks]);
+  const issues = useMemo(() => (gBlocks ?? []).filter((b) => inhabited?.has(b.height)).sort((a, b) => b.height - a.height).map(buildIssue), [gBlocks, inhabited]);
   const insOf = (h: number) => inhabited?.get(h) ?? null;
   const [open, setOpen] = useState<number | null>(null);
   const current = open != null ? issues[open] : null;
