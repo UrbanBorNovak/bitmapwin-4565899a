@@ -300,8 +300,21 @@ function ForgePage() {
     if (!hover) return;
     if (tool === "parcel") { const p = parcelAt(rects, hover[0], hover[2]); setFocus(p ? p.index : null); return; }
     if (tool === "erase") return;
+    if (tool === "perch") {
+      if (!dnaQ.data) { toast.error("THIS BLOCK'S GUARDIAN IS STILL LOADING"); return; }
+      setPerch(hover); toast.success("GUARDIAN PERCHED — IT WILL LIVE ON THIS BUILD"); return;
+    }
     if (!rects.length) { toast.error("ENTER YOUR BITMAP NUMBER FIRST"); return; }
     if (!onTile(hover[0], hover[2])) { toast.error(focusRect ? `STAY INSIDE PARCEL #${focusRect.index}` : "NO PARCEL HERE — BUILD ONLY ON PARCEL TILES"); return; }
+    if (tool === "box") {
+      if (!boxStart) { setBoxStart(hover); return; }
+      let next = new Map(world);
+      for (const b of boxGhost) if (onTile(b.dx, b.dz)) next.set(cellKey(b.dx, b.dy, b.dz), b);
+      if (next.size > FORGE_MAX_BLOCKS) { toast.error(`BUILD LIMIT IS ${FORGE_MAX_BLOCKS} BLOCKS`); next = world; }
+      setBoxStart(null);
+      if (next !== world) commit(next);
+      return;
+    }
     if (overLimit) { toast.error(`BUILD LIMIT IS ${FORGE_MAX_BLOCKS} BLOCKS`); return; }
     if (tool === "stamp" && picked.author && (picked.bitCost ?? 0) > 0) {
       if (!wallet) { toast.error("CONNECT A WALLET TO USE PAID MODULES"); return; }
@@ -312,7 +325,21 @@ function ForgePage() {
     const next = stampInto(world, ghost, hover[0], hover[1], hover[2]);
     for (const [k, b] of next) if (!world.has(k) && !onTile(b.dx, b.dz)) next.delete(k);
     commit(next);
+    if (tool === "stamp" && picked.id.startsWith("ins:")) {
+      const keys = [...next.keys()].filter((k) => !world.has(k));
+      if (keys.length) setPlacements((p) => [...p, { part: { id: picked.id.slice(4), x: hover[0], y: hover[1], z: hover[2], r: ((turns % 4) + 4) % 4 }, keys }]);
+    }
     if (tool === "stamp" && picked.author && !used.some((u) => u.id === picked.id)) setUsed((u) => [...u, picked]);
+  };
+
+  /** Erasing one block of an inscribed piece removes the whole piece (it is placed by reference). */
+  const eraseAt = (b: TplBlock) => {
+    const key = cellKey(b.dx, b.dy, b.dz);
+    const hit = placements.find((p) => p.keys.includes(key));
+    const n = new Map(world);
+    if (hit) { for (const k of hit.keys) n.delete(k); setPlacements((p) => p.filter((x) => x !== hit)); }
+    else n.delete(key);
+    commit(n);
   };
 
   // Tallest filled height per column, so pieces dropped on the floor stack on top automatically.
@@ -325,8 +352,15 @@ function ForgePage() {
     const x = Math.floor(e.point.x + HALF), z = Math.floor(e.point.z + HALF);
     if (x < 0 || z < 0 || x >= FORGE_SPAN || z >= FORGE_SPAN) return setHover(null);
     let y = layer;
-    if (tool !== "erase") for (const b of ghost) y = Math.max(y, (tops.get(`${x + b.dx},${z + b.dz}`) ?? 0) - b.dy);
+    if (tool === "perch") y = Math.max(y, tops.get(`${x},${z}`) ?? 0);
+    else if (tool !== "erase" && !(tool === "box" && boxStart)) for (const b of ghost) y = Math.max(y, (tops.get(`${x + b.dx},${z + b.dz}`) ?? 0) - b.dy);
+    else if (tool === "box" && boxStart) y = Math.max(layer, boxStart[1]);
     setHover([x, Math.min(FORGE_SPAN - 1, y), z]);
+  };
+  const autoPerch = () => {
+    let best: [number, number, number] | null = null;
+    for (const [k, t] of tops) { const [x, z] = k.split(",").map(Number); if (!best || t > best[1]) best = [x!, t, z!]; }
+    setPerch(best ?? [32, 0, 32]);
   };
 
   const seed = (a: ArchetypeId) => {
@@ -341,13 +375,23 @@ function ForgePage() {
   const lineage = used.map((u) => u.id.slice(0, 8)).join(",");
   const parcelBlocks = useMemo(() => (focusRect ? clipToParcel(blocks, focusRect) : blocks), [blocks, focusRect]);
   const html = useMemo(() => (height === null || !parcelBlocks.length ? "" : forgeInscriptionHtml(height, "studio", parcelBlocks, lineage, focusRect ?? undefined)), [height, parcelBlocks, lineage, focusRect]);
+  // Recursive assembly: inscribed pieces by reference + own blocks + the block's baked Guardian.
+  const livePlacements = useMemo(() => placements.filter((p) => p.keys.some((k) => world.has(k))), [placements, world]);
+  const asmHtml = useMemo(() => {
+    if (height === null || (!livePlacements.length && !perch)) return "";
+    const taken = new Set(livePlacements.flatMap((p) => p.keys));
+    const own = parcelBlocks.filter((b) => !taken.has(cellKey(b.dx, b.dy, b.dz)));
+    const guardian = perch && dnaQ.data ? { data: bakeGuardian(dnaQ.data), at: perch } : null;
+    return forgeAssemblyHtml(height, livePlacements.map((p) => p.part), own, guardian, lineage);
+  }, [height, livePlacements, perch, parcelBlocks, dnaQ.data, lineage]);
+  const asmBytes = useMemo(() => new TextEncoder().encode(asmHtml).length, [asmHtml]);
   const bytes = useMemo(() => new TextEncoder().encode(html).length, [html]);
   useEffect(() => {
     setDigest(null);
-    if (!html) return;
-    const t = setTimeout(() => void sha(`forge:${encodeBuild(blocks)}:${lineage}`).then(setDigest), 400);
+    if (!html && !asmHtml) return;
+    const t = setTimeout(() => void sha(`forge:${encodeBuild(blocks)}:${lineage}:${asmHtml.length}:${perch?.join(",") ?? ""}`).then(setDigest), 400);
     return () => clearTimeout(t);
-  }, [html, blocks, lineage]);
+  }, [html, asmHtml, blocks, lineage, perch]);
 
   const publish = async (): Promise<void> => {
     if (!wallet) { toast.error("CONNECT A WALLET TO PUBLISH"); return; }
