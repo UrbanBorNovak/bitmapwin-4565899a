@@ -273,8 +273,9 @@ function ForgePage() {
     return out.slice(0, FORGE_MAX_BLOCKS);
   }, [tool, boxStart, hover, paint]);
   const hoverParcel = hover ? parcelAt(rects, hover[0], hover[2]) : null;
-  const onTile = (x: number, z: number) => (focusRect ? inRect(focusRect, x, z) : !!parcelAt(rects, x, z));
-  const ghostOut = !!(hover && (rects.length === 0 || ghost.some((b) => !onTile(b.dx + hover[0], b.dz + hover[2]))));
+  // Anywhere on the BITMAP canvas; only an explicitly chosen parcel (parcel inscription) clips placement.
+  const onTile = (x: number, z: number) => (focusRect ? inRect(focusRect, x, z) : Math.abs(x) < FORGE_SPAN && Math.abs(z) < FORGE_SPAN);
+  const ghostOut = !!(hover && (ghost.some((b) => !onTile(b.dx + hover[0], b.dz + hover[2]))));
   const overLimit = blocks.length + (tool === "erase" ? 0 : ghost.length) > FORGE_MAX_BLOCKS;
 
   const commit = useCallback((next: Map<string, TplBlock>) => {
@@ -314,8 +315,7 @@ function ForgePage() {
       if (!dnaQ.data) { toast.error("THIS BLOCK'S GUARDIAN IS STILL LOADING"); return; }
       setPerch(hover); toast.success("GUARDIAN PERCHED — IT WILL LIVE ON THIS BUILD"); return;
     }
-    if (!rects.length) { toast.error("ENTER YOUR BITMAP NUMBER FIRST"); return; }
-    if (!onTile(hover[0], hover[2])) { toast.error(focusRect ? `STAY INSIDE PARCEL #${focusRect.index}` : "NO PARCEL HERE — BUILD ONLY ON PARCEL TILES"); return; }
+        if (!onTile(hover[0], hover[2])) { toast.error(focusRect ? `STAY INSIDE PARCEL #${focusRect.index}` : "NO PARCEL HERE — BUILD ONLY ON PARCEL TILES"); return; }
     if (tool === "box") {
       if (!boxStart) { setBoxStart(hover); return; }
       let next = new Map(world);
