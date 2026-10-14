@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { estimateCart, PARCEL_CART_MAX, toggleCart } from "@/lib/parcel-cart";
+import { estimateCart, PARCEL_CART_MAX, PARCEL_SITE_FEE, toggleCart } from "@/lib/parcel-cart";
+import { DONATION_ADDRESS } from "@/lib/donations";
 import { liveFeeRate } from "@/lib/shadow-inscribe";
 
 type CartQueue = { order: number[]; step: number; done: number[]; confirmed: boolean };
@@ -290,6 +291,7 @@ function ParcelStudio() {
                           <Row k="EST. SIZE" v={`~${est.vbytes.toLocaleString("en-US")} vB`} />
                           <Row k="EST. MINER FEES" v={`~${est.feeSats.toLocaleString("en-US")} sats`} />
                           <Row k="POSTAGE (STAYS ON YOUR PARCELS)" v={`${est.postageSats.toLocaleString("en-US")} sats`} />
+                          <Row k="SITE FEE (ONCE PER CREATION)" v={`${est.siteFeeSats.toLocaleString("en-US")} sats`} />
                           <Row k="EST. TOTAL" v={`~${est.totalSats.toLocaleString("en-US")} sats`} />
                           <p className="text-xs text-muted-foreground">
                             Estimate only — each inscription shows its exact price before you pay. {cart.length} separate wallet payments and {cart.length} parent signatures. Someone else may claim a tile first; late copies never count.
@@ -309,7 +311,8 @@ function ParcelStudio() {
                         <div className="space-y-2 rounded border border-primary/50 p-2">
                           <p className="label text-primary">INSCRIPTION {queue.step + 1} OF {queue.order.length}</p>
                           <p className="display text-lg" data-no-translate>{parcelName(current, height)}</p>
-                          <Row k="EST. COST" v={`~${estimateCart([current], height, feeRate).totalSats.toLocaleString("en-US")} sats`} />
+                          <Row k="EST. COST" v={`~${estimateCart([current], height, feeRate, queue.done.length === 0).totalSats.toLocaleString("en-US")} sats`} />
+                          {queue.done.length === 0 && <p className="label text-primary">INCLUDES THE ONE-TIME 546-SAT SITE FEE — LATER PARCELS IN THIS RUN SKIP IT</p>}
                           {!queue.confirmed ? (
                             <>
                               <p className="text-xs text-muted-foreground">Nothing is signed until you confirm. Your wallet will then ask for the payment and the parent signature.</p>
@@ -331,7 +334,7 @@ function ParcelStudio() {
                               allowUpload={false}
                               claimParentsForHeight={height}
                               parentBitmapInscriptionId={districtId!}
-                              artifactVariants={[{ key: "claim", label: "PARCEL CLAIM", contentType: "text/plain;charset=utf-8", source: parcelName(current, height) }]}
+                              artifactVariants={[{ key: "claim", label: "PARCEL CLAIM", contentType: "text/plain;charset=utf-8", source: parcelName(current, height), ...(queue.done.length === 0 ? { tribute: { address: DONATION_ADDRESS, sats: PARCEL_SITE_FEE } } : {}) }]}
                               onRevealed={() => markDone(current)}
                             />
                           )}
