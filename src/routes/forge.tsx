@@ -450,6 +450,7 @@ function ForgePage() {
     const r = await publishFn({ data: {
       name: pub.name.trim() || "Untitled module", address: wallet.ordinalsAddress, blocks: normaliseModule(blocks),
       bitCost: pub.bit, tributeSats: pub.sats > 0 ? Math.max(546, pub.sats) : 0, parents: used.map((u) => u.id),
+      ...(wallet.paymentAddress ? { payoutAddress: wallet.paymentAddress } : {}),
     } }).catch(() => ({ ok: false as const, error: "SIGN IN TO PUBLISH" }));
     if (!r.ok) { toast.error(r.error); return; }
     toast.success("MODULE PUBLISHED — OTHERS CAN NOW BUILD ON IT");
@@ -760,6 +761,7 @@ function ForgePage() {
               <label className="text-muted-foreground">BIT / USE<input type="number" min={0} max={500} value={pub.bit} onChange={(e) => setPub({ ...pub, bit: Math.max(0, Math.min(500, Number(e.target.value) || 0)) })} className="mt-1 w-full rounded border border-border bg-background px-2 py-1 text-foreground" /></label>
               <label className="text-muted-foreground">SATS / INSCRIBE<input type="number" min={0} max={100000} value={pub.sats} onChange={(e) => setPub({ ...pub, sats: Math.max(0, Math.min(100000, Number(e.target.value) || 0)) })} className="mt-1 w-full rounded border border-border bg-background px-2 py-1 text-foreground" /></label>
             </div>
+            {wallet && <p className="mb-2 text-[10px] text-muted-foreground">SAT ROYALTIES PAID TO <span className="text-accent">{short(wallet.paymentAddress || wallet.ordinalsAddress)}</span>{wallet.paymentAddress ? " (PAYMENT ADDRESS)" : ""}</p>}
             <button type="button" onClick={() => void publish()} className="w-full rounded border border-primary bg-primary/10 px-2 py-1.5 text-foreground">PUBLISH PIECE</button>
           </div>
           <p className="text-[11px] text-muted-foreground">Want to walk it first? <a href={height !== null ? `/oasis?height=${height}` : "/oasis"} className="text-accent underline">Open the Oasis</a>.</p>
