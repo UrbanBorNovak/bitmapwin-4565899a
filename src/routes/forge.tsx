@@ -547,8 +547,14 @@ function ForgePage() {
           <SafeCanvas shadows camera={{ position: [40, 38, 40], fov: 45 }}>
             <ambientLight intensity={0.6} />
             <directionalLight position={[20, 40, 10]} intensity={1.2} castShadow />
-            <Blocks blocks={blocks} erase={tool === "erase"} onErase={(b) => { const n = new Map(world); n.delete(cellKey(b.dx, b.dy, b.dz)); commit(n); }} onSurface={(c) => { if (c && tool !== "parcel") setHover(c); }} onPlace={() => void place()} />
-            {hover && ghost.length > 0 && <Ghost blocks={ghost} at={hover} bad={overLimit || ghostOut} />}
+            <Blocks blocks={blocks} erase={tool === "erase"} onErase={eraseAt} onSurface={(c) => { if (c && tool !== "parcel") setHover(c); }} onPlace={() => void place()} />
+            {hover && ghost.length > 0 && boxGhost.length === 0 && <Ghost blocks={ghost} at={hover} bad={overLimit || ghostOut} />}
+            {boxGhost.length > 0 && <Ghost blocks={boxGhost} at={[0, 0, 0]} bad={blocks.length + boxGhost.length > FORGE_MAX_BLOCKS} />}
+            {perch && dnaQ.data && (
+              <group position={[perch[0] - HALF + 0.5, perch[1], perch[2] - HALF + 0.5]} scale={0.36}>
+                <OnchainGuardianBody dna={dnaQ.data} />
+              </group>
+            )}
             <ParcelFloor rects={rects} focus={focus} hoverIdx={hoverParcel?.index ?? null} />
             {showBp && sketch.length > 0 && <Ghost blocks={sketch} at={[0, 0, 0]} bad={false} />}
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, layer, 0]} onPointerMove={onGround} onPointerLeave={() => setHover(null)} onClick={() => void place()} receiveShadow>
@@ -567,15 +573,15 @@ function ForgePage() {
           </div>
           <div className="absolute inset-x-0 bottom-3 flex flex-col items-center gap-1.5 px-2">
             <p className="pointer-events-none rounded bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground backdrop-blur">
-              {tool === "erase" ? "CLICK A BLOCK TO REMOVE IT" : tool === "parcel" ? "CLICK A TILE TO BUILD ONLY ON IT" : "POINT AT ANY SURFACE · CLICK TO PLACE · IT STACKS ON TOP"} · R ROTATE · CTRL+Z UNDO
+              {tool === "erase" ? "CLICK A BLOCK TO REMOVE IT" : tool === "parcel" ? "CLICK A TILE TO BUILD ONLY ON IT" : tool === "box" ? (boxStart ? "CLICK THE OPPOSITE CORNER TO FILL · ESC CANCELS" : "CLICK ONE CORNER OF A WALL, FLOOR OR BOX") : tool === "perch" ? "CLICK WHERE YOUR GUARDIAN SHOULD LIVE" : "POINT AT ANY SURFACE · CLICK TO PLACE · IT STACKS ON TOP"} · R ROTATE · CTRL+Z UNDO
             </p>
             <div className="flex flex-wrap items-center justify-center gap-1 rounded-lg border border-border bg-background/80 p-1 backdrop-blur">
-              {(["stamp", "block", "erase", "parcel"] as Tool[]).map((t) => (
-                <button key={t} type="button" onClick={() => setTool(t)} className={`rounded px-2.5 py-1 text-[10px] ${tool === t ? "bg-primary/15 text-foreground ring-1 ring-primary" : "text-muted-foreground hover:text-foreground"}`}>
-                  {t === "stamp" ? "PIECES" : t === "block" ? "BLOCK" : t === "erase" ? "ERASE" : "PARCEL"}
+              {(["stamp", "block", "box", "erase", "perch", "parcel"] as Tool[]).map((t) => (
+                <button key={t} type="button" onClick={() => { setTool(t); setBoxStart(null); }} className={`rounded px-2.5 py-1 text-[10px] ${tool === t ? "bg-primary/15 text-foreground ring-1 ring-primary" : "text-muted-foreground hover:text-foreground"}`}>
+                  {t === "stamp" ? "PIECES (S)" : t === "block" ? "BLOCK (B)" : t === "box" ? "BOX (W)" : t === "erase" ? "ERASE (X)" : t === "perch" ? "GUARDIAN (G)" : "PARCEL (P)"}
                 </button>
               ))}
-              {tool === "block" && (
+              {(tool === "block" || tool === "box") && (
                 <>
                   <span className="mx-1 h-4 w-px bg-border" />
                   {BLOCKS.map((b, i) => (
