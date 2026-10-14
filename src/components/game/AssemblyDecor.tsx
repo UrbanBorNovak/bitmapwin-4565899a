@@ -3,7 +3,7 @@
  * Matrix opcode rain on the walls, a floating pyramid eye, the Council of 21
  * seats lit by the real passes taken, and the genesis hash ring on the floor.
  */
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { SafeHtml } from "@/components/game/SafeHtml";
@@ -119,6 +119,44 @@ function PyramidEye() {
   );
 }
 
+/** Real Emporium inscription image as a crisp pixel texture on the seat's backrest. */
+function DelegatePortrait({ id, lit }: { id: string; lit: boolean }) {
+  const [tex, setTex] = useState<THREE.Texture | null>(null);
+  useEffect(() => {
+    let alive = true;
+    let loaded: THREE.Texture | null = null;
+    new THREE.TextureLoader().load(inscriptionContentUrl(id), (t) => {
+      t.magFilter = THREE.NearestFilter;
+      t.minFilter = THREE.NearestFilter;
+      t.generateMipmaps = false;
+      t.colorSpace = THREE.SRGBColorSpace;
+      loaded = t;
+      if (alive) setTex(t);
+      else t.dispose();
+    });
+    return () => {
+      alive = false;
+      loaded?.dispose();
+    };
+  }, [id]);
+  return (
+    <group position={[0, 1.5, 0.43]}>
+      <mesh position={[0, 0, -0.005]}>
+        <planeGeometry args={[0.74, 0.74]} />
+        <meshBasicMaterial color={lit ? "#f7931a" : "#0e7490"} toneMapped={false} />
+      </mesh>
+      <mesh>
+        <planeGeometry args={[0.68, 0.68]} />
+        {tex ? (
+          <meshBasicMaterial map={tex} toneMapped={false} color={lit ? "#ffffff" : "#9aa4ad"} />
+        ) : (
+          <meshBasicMaterial color="#05040a" />
+        )}
+      </mesh>
+    </group>
+  );
+}
+
 function Council({ taken, max }: { taken: number; max: number }) {
   const seats = Math.max(1, Math.min(max, 64));
   const glow = useRef<THREE.MeshStandardMaterial[]>([]);
@@ -157,19 +195,7 @@ function Council({ taken, max }: { taken: number; max: number }) {
                 emissiveIntensity={0.3}
               />
             </mesh>
-            {delegates[i] && (
-              <SafeHtml position={[0, 1.45, 0.44]} transform distanceFactor={2.2} style={{ pointerEvents: "none" }}>
-                <div className={`relative h-[78px] w-[78px] overflow-hidden border ${lit ? "border-bitcoin" : "border-signal/50"}`}>
-                  <img
-                    src={inscriptionContentUrl(delegates[i]!.inscriptionId)}
-                    alt={`Bitmap Emporium delegate #${delegates[i]!.index + 1}`}
-                    loading="lazy"
-                    className={`h-full w-full object-cover [image-rendering:pixelated] ${lit ? "opacity-100" : "opacity-55 grayscale-[60%]"}`}
-                  />
-                  <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent_0_2px,hsl(var(--background)/0.35)_2px_3px)]" />
-                </div>
-              </SafeHtml>
-            )}
+            {delegates[i] && <DelegatePortrait id={delegates[i]!.inscriptionId} lit={lit} />}
             <SafeHtml position={[0, 2.7, 0]} center distanceFactor={10} style={{ pointerEvents: "none" }}>
               <div className={`whitespace-nowrap text-center font-mono text-[8px] ${lit ? "text-bitcoin" : "text-signal/50"}`}>
                 {String(i + 1).padStart(2, "0")}
