@@ -267,6 +267,22 @@ function CreatePage() {
   return (
     <div className="mx-auto max-w-[1500px] px-4 py-10 md:px-8 md:py-14">
       <MvpFlowRail active="deploy" {...(searchHeight === undefined ? {} : { height: searchHeight })} />
+      <div className="mx-auto mt-4 grid max-w-[1600px] gap-px border border-border px-0 md:grid-cols-2">
+        <Link
+          to="/forge"
+          {...(searchHeight === undefined ? {} : { search: { height: searchHeight } as never })}
+          className="group block border-l-2 border-bitcoin p-4 hover:bg-bitcoin/5"
+        >
+          <div className="label text-bitcoin">START HERE · LAND FORGE</div>
+          <div className="display mt-1 text-lg">BUILD VOXELS ON YOUR BITMAP →</div>
+          <p className="mt-1 text-xs text-muted-foreground">Place blocks on your parcels and inscribe the build onto your BITMAP's own sat.</p>
+        </Link>
+        <div className="border-l-2 border-signal p-4">
+          <div className="label text-signal">YOU ARE HERE · AI EXPERIENCES</div>
+          <div className="display mt-1 text-lg">DESCRIBE A PLACE, AI WRITES IT</div>
+          <p className="mt-1 text-xs text-muted-foreground">Scripted places with characters and quests, deployed onto land you hold. Continue below.</p>
+        </div>
+      </div>
       <h1 className="display mt-6 text-3xl md:text-5xl">WHAT DO YOU WANT TO BUILD?</h1>
       <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
         Two steps: say what you want, then put it on your land. Everything else is done for you.

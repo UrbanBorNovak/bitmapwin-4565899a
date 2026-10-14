@@ -28,6 +28,7 @@ const ITEM_ICONS: Record<string, LucideIcon> = {
   "/explore": TrendingUp, "/codex": Library, "/ranks": Trophy, "/experiences": Boxes, "/builders": HardHat,
   "/world-stats": BarChart3, "/archaeology": Pickaxe, "/my-land": MapIcon, "/passport": IdCard,
   "/ownership": BadgeCheck, "/sdk": Code2, "/docs": FileText, "/api": Terminal, "/dev-tools": Wrench,
+  "/forge": Hammer, "/create": Sparkles,
 };
 function ItemIcon({ to, active }: { to: string; active: boolean }) {
   const I = ITEM_ICONS[to] ?? ArrowRight;
@@ -75,6 +76,8 @@ const NAV_GROUPS: NavGroup[] = [
     label: "CREATE",
     note: "Build and publish experiences on your BITMAPs",
     items: [
+      { to: "/forge", label: "LAND FORGE", note: "Build voxels on your BITMAP and inscribe them" },
+      { to: "/create", label: "CREATE HUB", note: "Pick how you want to build" },
       { to: "/my-world", label: "MY WORLD", note: "Manage your BITMAPs and deployments" },
       { to: "/builds", label: "COMMUNITY BUILDS", note: "Preview and enter public BITMAP worlds" },
       { to: "/extend", label: "DEPLOY", note: "Put an experience on your land" },
