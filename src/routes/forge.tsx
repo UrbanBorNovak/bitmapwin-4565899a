@@ -443,7 +443,7 @@ function ForgePage() {
   const publish = async (): Promise<void> => {
     if (!wallet) { toast.error("CONNECT A WALLET TO PUBLISH"); return; }
     if (blocks.length < 4) { toast.error("BUILD SOMETHING FIRST"); return; }
-    if (blocks.length > 800) { toast.error("MODULES ARE CAPPED AT 800 BLOCKS — ERASE SOME FIRST"); return; }
+    if (blocks.length > 2400) { toast.error("MODULES ARE CAPPED AT 2,400 BLOCKS — ERASE SOME FIRST"); return; }
     const r = await publishFn({ data: {
       name: pub.name.trim() || "Untitled module", address: wallet.ordinalsAddress, blocks: normaliseModule(blocks),
       bitCost: pub.bit, tributeSats: pub.sats > 0 ? Math.max(546, pub.sats) : 0, parents: used.map((u) => u.id),
