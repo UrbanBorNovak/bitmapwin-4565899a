@@ -1,7 +1,7 @@
 import { applyMountIntent } from "@/lib/guardian-mount";
 import { PeerMount } from "@/components/game/ShardRaidLayer";
 import { ShardRaidLayer } from "@/components/game/ShardRaidLayer";
-import { setBrHooks, stepDrop } from "@/lib/battle-royale";
+import { dropState, setBrHooks, stepDrop } from "@/lib/battle-royale";
 import { DropshipLayer } from "@/components/game/DropshipLayer";
 import { PvpFx } from "@/components/game/PvpFx";
 import { FpsCrosshair } from "@/components/game/FpsCrosshair";
@@ -1808,6 +1808,8 @@ function PlayerCameraRig({
   const roll = useRef(0);
   const wasGrounded = useRef(true);
   const calm = useRef(false);
+  const dropCam = useRef(0);
+  const dropLand = useRef(new THREE.Vector3());
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -2201,7 +2203,44 @@ function PlayerCameraRig({
         player.z + player.vz * lead + Math.cos(player.yaw) * AVATAR_U * (riding ? 3.1 : 4.2),
       );
     }
-    const transitionSpeed = mode === "first" ? 20 : 8.5;
+    // Battle Drop cinematic: ramp view in the plane, a high chase in freefall
+    // that keeps the projected landing spot in frame, then eases back to the
+    // normal rig over ~1.5s after touching down.
+    const dropPhase = dropState().phase;
+    const airborneDrop = dropPhase === "plane" || dropPhase === "freefall" || dropPhase === "glide";
+    dropCam.current = damp(dropCam.current, airborneDrop ? 1 : 0, airborneDrop ? 2.2 : 1.8, delta);
+    if (dropCam.current > 0.002) {
+      const g0 = groundY(player.x, player.z);
+      const sink = Math.max(-player.vy, STRIDE * 2);
+      const tFall = Math.min(player.y / sink, 12);
+      const lx = player.x + player.vx * tFall;
+      const lz = player.z + player.vz * tFall;
+      dropLand.current.set(lx, groundY(lx, lz), lz);
+      const hx = Math.hypot(player.vx, player.vz) > 0.01 ? player.vx / Math.hypot(player.vx, player.vz) : Math.sin(player.yaw);
+      const hz = Math.hypot(player.vx, player.vz) > 0.01 ? player.vz / Math.hypot(player.vx, player.vz) : Math.cos(player.yaw);
+      const py = g0 + player.y;
+      let back = STRIDE * 9, up = STRIDE * 5;
+      if (dropPhase === "plane") { back = STRIDE * 34; up = STRIDE * 10; }
+      else if (dropPhase === "glide") { back = STRIDE * 7; up = STRIDE * 3; }
+      const tx = player.x - hx * back, ty = py + up, tz = player.z - hz * back;
+      // look between the body and the landing point so both stay on screen
+      const mix = dropPhase === "plane" ? 0.15 : 0.55;
+      const lkx = player.x + (dropLand.current.x - player.x) * mix;
+      const lky = py + (dropLand.current.y - py) * mix;
+      const lkz = player.z + (dropLand.current.z - player.z) * mix;
+      const w = dropCam.current * dropCam.current * (3 - 2 * dropCam.current);
+      cameraTarget.current.set(
+        cameraTarget.current.x + (tx - cameraTarget.current.x) * w,
+        cameraTarget.current.y + (ty - cameraTarget.current.y) * w,
+        cameraTarget.current.z + (tz - cameraTarget.current.z) * w,
+      );
+      cameraLook.current.set(
+        cameraLook.current.x + (lkx - cameraLook.current.x) * w,
+        cameraLook.current.y + (lky - cameraLook.current.y) * w,
+        cameraLook.current.z + (lkz - cameraLook.current.z) * w,
+      );
+    }
+    const transitionSpeed = (mode === "first" ? 20 : 8.5) * (1 - dropCam.current * 0.6);
     camera.position.lerp(cameraTarget.current, 1 - Math.exp(-transitionSpeed * delta));
     lookMatrix.current.lookAt(camera.position, cameraLook.current, camera.up);
     targetRotation.current.setFromRotationMatrix(lookMatrix.current);
@@ -2223,7 +2262,8 @@ function PlayerCameraRig({
     const targetFov =
       ((mode === "first" ? 72 : 56) +
         gait * (mode === "first" ? 3.5 : 4.8) -
-        land.current * (mode === "first" ? 4.2 : 3.8)) *
+        land.current * (mode === "first" ? 4.2 : 3.8) +
+        dropCam.current * (dropState().phase === "freefall" ? 16 : 10)) *
       zoom;
 
     if (Math.abs(perspective.fov - targetFov) > 0.02) {
