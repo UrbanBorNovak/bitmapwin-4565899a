@@ -411,7 +411,7 @@ export function ShadowInscriber(props: {
           </label>
           {props.claimParentsForHeight !== undefined ? (
             <p className="label text-signal">
-              ⧉ THIS CREATURE IS INSCRIBED AS A CHILD OF {props.claimParentsForHeight}.BITMAP AND OF THE BITMAPWIN COLLECTION. BOTH PARENTS PASS
+              ⧉ THIS {props.reinscribeOnBitmap ? "BUILD" : "CREATURE"} IS INSCRIBED AS A CHILD OF {props.claimParentsForHeight}.BITMAP AND OF THE BITMAPWIN COLLECTION. BOTH PARENTS PASS
               THROUGH THE SAME TRANSACTION AND GO STRAIGHT BACK TO THEIR HOLDERS.
             </p>
           ) : null}
