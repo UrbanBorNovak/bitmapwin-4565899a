@@ -27,7 +27,7 @@ function Bob({ phase, children }: { phase: number; children: React.ReactNode }) 
 function Drift() {
   useFrame(({ camera, clock }) => {
     const t = clock.elapsedTime * 0.08;
-    camera.position.set(Math.sin(t) * 1.2, 1.8, 7);
+    camera.position.set(Math.sin(t) * 0.9, 1.6, 5.6);
     camera.lookAt(0, 0.7, -1);
   });
   return null;
