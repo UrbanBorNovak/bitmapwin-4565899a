@@ -14,7 +14,9 @@ export function DropshipLayer({ pose, surface }: { pose: MutableRefObject<Player
   const glider = useRef<THREE.Group>(null);
   const wall = useRef<THREE.Mesh>(null);
   const crates = useRef<THREE.Group>(null);
-  const props = useRef<THREE.Mesh[]>([]);
+  const props = useRef<THREE.Object3D[]>([]);
+  const strobes = useRef<THREE.Mesh[]>([]);
+  const jumpLight = useRef<THREE.Mesh>(null);
   const wallMat = useMemo(
     () => new THREE.MeshBasicMaterial({ color: "#00f0ff", transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false }),
     [],
@@ -32,6 +34,9 @@ export function DropshipLayer({ pose, surface }: { pose: MutableRefObject<Player
         g.position.set(at.x, surface(m.cx, m.cz) + DROP.altitude, at.z);
         g.rotation.set(0, at.yaw, Math.sin(c.elapsedTime * 0.8) * 0.03);
         for (const pr of props.current) pr.rotation.z = c.elapsedTime * 40;
+        const blink = Math.floor(c.elapsedTime * 1.4) % 2 === 0;
+        strobes.current.forEach((sm, i) => { sm.visible = i < 2 || blink; });
+        if (jumpLight.current) (jumpLight.current.material as THREE.MeshBasicMaterial).color.set(at.p < 0.08 ? "#ff3b3b" : "#3bff7a");
       }
     }
     const storm = stormAt(m, t);
@@ -65,12 +70,16 @@ export function DropshipLayer({ pose, surface }: { pose: MutableRefObject<Player
       gl.visible = dropState().phase === "glide";
       if (gl.visible) {
         gl.position.set(p.x, surface(p.x, p.z) + p.y + S * 2.1, p.z);
-        gl.rotation.set(0.12, p.yaw, Math.sin(c.elapsedTime * 1.3) * 0.05);
+        gl.position.y += S * 1.2;
+        gl.rotation.set(0.12, p.yaw, Math.sin(c.elapsedTime * 1.3) * 0.08);
       }
     }
   });
 
-  const addProp = (m: THREE.Mesh | null) => {
+  const addStrobe = (m: THREE.Mesh | null) => {
+    if (m && !strobes.current.includes(m)) strobes.current.push(m);
+  };
+  const addProp = (m: THREE.Object3D | null) => {
     if (m && !props.current.includes(m)) props.current.push(m);
   };
 
@@ -88,62 +97,106 @@ export function DropshipLayer({ pose, surface }: { pose: MutableRefObject<Player
         ))}
       </group>
       <group ref={plane} visible={false}>
-        <mesh raycast={noRaycast}>
-          <boxGeometry args={[S * 3, S * 3, S * 22]} />
-          <meshStandardMaterial color="#3a4350" roughness={0.6} metalness={0.3} />
+        {/* C-130 style transport: fuselage, nose, cockpit, open rear ramp */}
+        <mesh raycast={noRaycast} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[S * 1.9, S * 1.9, S * 18, 14]} />
+          <meshStandardMaterial color="#56604a" roughness={0.75} metalness={0.25} />
         </mesh>
-        <mesh raycast={noRaycast} position={[0, S * 1.2, S * 8]}>
-          <boxGeometry args={[S * 2.4, S * 1.2, S * 3]} />
-          <meshStandardMaterial color="#7ad7f0" roughness={0.2} metalness={0.6} />
+        <mesh raycast={noRaycast} position={[0, -S * 0.1, S * 10.2]} rotation={[Math.PI / 2, 0, 0]}>
+          <coneGeometry args={[S * 1.9, S * 3, 14]} />
+          <meshStandardMaterial color="#4b5440" roughness={0.7} />
         </mesh>
-        <mesh raycast={noRaycast} position={[0, S * 0.8, S * 1]}>
-          <boxGeometry args={[S * 28, S * 0.5, S * 4.5]} />
-          <meshStandardMaterial color="#4a5462" roughness={0.6} />
+        <mesh raycast={noRaycast} position={[0, S * 1.1, S * 9.6]} rotation={[-0.5, 0, 0]}>
+          <boxGeometry args={[S * 2.2, S * 0.7, S * 1.6]} />
+          <meshStandardMaterial color="#1c2a33" emissive="#7ad7f0" emissiveIntensity={0.25} roughness={0.1} metalness={0.8} />
         </mesh>
-        <mesh raycast={noRaycast} position={[0, S * 1.1, S * 1]}>
-          <boxGeometry args={[S * 28.2, S * 0.2, S * 1]} />
-          <meshStandardMaterial color="#f7931a" emissive="#f7931a" emissiveIntensity={0.4} />
+        <mesh raycast={noRaycast} position={[0, S * 0.6, -S * 11.5]} rotation={[Math.PI / 2 - 0.25, 0, 0]}>
+          <cylinderGeometry args={[S * 0.9, S * 1.9, S * 5, 14]} />
+          <meshStandardMaterial color="#56604a" roughness={0.75} />
         </mesh>
-        <mesh raycast={noRaycast} position={[0, S * 3.2, -S * 9.5]}>
-          <boxGeometry args={[S * 0.5, S * 4.5, S * 3]} />
+        <mesh raycast={noRaycast} position={[0, -S * 1.9, -S * 10.5]} rotation={[0.55, 0, 0]}>
+          <boxGeometry args={[S * 2.8, S * 0.2, S * 4]} />
+          <meshStandardMaterial color="#3c4433" />
+        </mesh>
+        <mesh ref={jumpLight} raycast={noRaycast} position={[0, S * 0.6, -S * 8.9]}>
+          <boxGeometry args={[S * 2.6, S * 2.4, S * 0.1]} />
+          <meshBasicMaterial color="#ff3b3b" />
+        </mesh>
+        {/* high wing + bitcoin stripe */}
+        <mesh raycast={noRaycast} position={[0, S * 1.95, S * 1.5]}>
+          <boxGeometry args={[S * 36, S * 0.45, S * 4.2]} />
+          <meshStandardMaterial color="#4b5440" roughness={0.7} />
+        </mesh>
+        <mesh raycast={noRaycast} position={[0, S * 2.2, S * 0.2]}>
+          <boxGeometry args={[S * 36.2, S * 0.1, S * 0.7]} />
+          <meshStandardMaterial color="#f7931a" emissive="#f7931a" emissiveIntensity={0.35} />
+        </mesh>
+        {/* tail fin + stabiliser */}
+        <mesh raycast={noRaycast} position={[0, S * 4.2, -S * 12.6]}>
+          <boxGeometry args={[S * 0.4, S * 5.5, S * 3.2]} />
+          <meshStandardMaterial color="#4b5440" />
+        </mesh>
+        <mesh raycast={noRaycast} position={[0, S * 5.3, -S * 12.8]}>
+          <boxGeometry args={[S * 0.45, S * 1.2, S * 2.4]} />
           <meshStandardMaterial color="#f7931a" />
         </mesh>
-        <mesh raycast={noRaycast} position={[0, S * 1.2, -S * 9.8]}>
-          <boxGeometry args={[S * 10, S * 0.4, S * 2.4]} />
-          <meshStandardMaterial color="#4a5462" />
+        <mesh raycast={noRaycast} position={[0, S * 2, -S * 13]}>
+          <boxGeometry args={[S * 13, S * 0.3, S * 2.6]} />
+          <meshStandardMaterial color="#4b5440" />
         </mesh>
-        {[-7, 7].map((x) => (
-          <group key={x} position={[S * x, S * 0.1, S * 3]}>
-            <mesh raycast={noRaycast}>
-              <boxGeometry args={[S * 2, S * 2, S * 5]} />
-              <meshStandardMaterial color="#2a3038" metalness={0.5} />
+        {/* four turboprops */}
+        {[-12, -6, 6, 12].map((x) => (
+          <group key={x} position={[S * x, S * 1.5, S * 3.6]}>
+            <mesh raycast={noRaycast} rotation={[Math.PI / 2, 0, 0]}>
+              <cylinderGeometry args={[S * 0.75, S * 0.6, S * 4.4, 10]} />
+              <meshStandardMaterial color="#2f352a" metalness={0.5} roughness={0.5} />
             </mesh>
-            <mesh ref={addProp} raycast={noRaycast} position={[0, 0, S * 2.7]}>
-              <boxGeometry args={[S * 5, S * 0.4, S * 0.2]} />
-              <meshStandardMaterial color="#111" />
+            <mesh raycast={noRaycast} position={[0, 0, S * 2.4]} rotation={[Math.PI / 2, 0, 0]}>
+              <coneGeometry args={[S * 0.35, S * 0.8, 8]} />
+              <meshStandardMaterial color="#1a1a1a" metalness={0.6} />
+            </mesh>
+            <group ref={addProp} position={[0, 0, S * 2.3]}>
+              {[0, 1].map((k) => (
+                <mesh key={k} raycast={noRaycast} rotation={[0, 0, (k * Math.PI) / 2]}>
+                  <boxGeometry args={[S * 4.2, S * 0.3, S * 0.08]} />
+                  <meshStandardMaterial color="#111" transparent opacity={0.7} />
+                </mesh>
+              ))}
+            </group>
+            <mesh raycast={noRaycast} position={[0, 0, -S * 9]} rotation={[Math.PI / 2, 0, 0]}>
+              <cylinderGeometry args={[S * 0.15, S * 0.5, S * 14, 6, 1, true]} />
+              <meshBasicMaterial color="#e8eef2" transparent opacity={0.12} depthWrite={false} side={THREE.DoubleSide} />
             </mesh>
           </group>
         ))}
-        <mesh raycast={noRaycast} position={[-S * 14, S * 0.8, S * 1]}>
-          <boxGeometry args={[S * 0.6, S * 0.6, S * 0.6]} />
+        {/* nav strobes */}
+        <mesh ref={addStrobe} raycast={noRaycast} position={[-S * 18, S * 2, S * 1.5]}>
+          <sphereGeometry args={[S * 0.35, 6, 6]} />
           <meshBasicMaterial color="#ff3b3b" />
         </mesh>
-        <mesh raycast={noRaycast} position={[S * 14, S * 0.8, S * 1]}>
-          <boxGeometry args={[S * 0.6, S * 0.6, S * 0.6]} />
-          <meshBasicMaterial color="#00f0ff" />
+        <mesh ref={addStrobe} raycast={noRaycast} position={[S * 18, S * 2, S * 1.5]}>
+          <sphereGeometry args={[S * 0.35, 6, 6]} />
+          <meshBasicMaterial color="#3bff7a" />
+        </mesh>
+        <mesh ref={addStrobe} raycast={noRaycast} position={[0, S * 7, -S * 13]}>
+          <sphereGeometry args={[S * 0.3, 6, 6]} />
+          <meshBasicMaterial color="#ffffff" />
         </mesh>
       </group>
+      {/* ram-air parachute canopy with suspension lines */}
       <group ref={glider} visible={false}>
-        <mesh raycast={noRaycast}>
-          <boxGeometry args={[S * 3.4, S * 0.15, S * 1.3]} />
-          <meshStandardMaterial color="#f7931a" side={THREE.DoubleSide} />
-        </mesh>
-        {[-1, 1].map((sd) => (
-          <mesh key={sd} raycast={noRaycast} position={[sd * S * 1.9, -S * 0.15, 0]} rotation={[0, 0, sd * -0.5]}>
-            <boxGeometry args={[S * 0.9, S * 0.12, S * 1.2]} />
-            <meshStandardMaterial color="#f4f1de" />
+        {[-2, -1, 0, 1, 2].map((i) => (
+          <mesh key={i} raycast={noRaycast} position={[i * S * 0.72, -Math.abs(i) * S * 0.18, 0]} rotation={[0, 0, -i * 0.14]}>
+            <boxGeometry args={[S * 0.7, S * 0.32, S * 1.5]} />
+            <meshStandardMaterial color={i % 2 ? "#f4f1de" : "#f7931a"} roughness={0.8} side={THREE.DoubleSide} />
           </mesh>
         ))}
+        {[-1, 1].flatMap((sd) => [-0.5, 0.5].map((fz) => (
+          <mesh key={`${sd}${fz}`} raycast={noRaycast} position={[sd * S * 0.9, -S * 1.05, fz * S * 0.6]} rotation={[fz * 0.5, 0, sd * 0.5]}>
+            <cylinderGeometry args={[S * 0.015, S * 0.015, S * 2.2, 3]} />
+            <meshBasicMaterial color="#222" />
+          </mesh>
+        )))}
       </group>
     </>
   );

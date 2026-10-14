@@ -1,9 +1,10 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { Plane } from "lucide-react";
 import {
-  alive, cancelDrop, clearResult, clock, dropAction, dropRevision, dropState, matchById, onBrEvent,
-  requestDrop, setBrHooks, stormAt, subscribeDrop, MATCH, STORM_START,
+  alive, cancelDrop, clearResult, clock, dropAction, dropRevision, dropState, matchById, onBrEvent, DROP,
+  dropTelemetry, requestDrop, setBrHooks, stormAt, subscribeDrop, MATCH, STORM_START,
 } from "@/lib/battle-royale";
+import { STRIDE } from "@/lib/player-state";
 import { supabase } from "@/integrations/supabase/client";
 
 const meId = () => {
@@ -79,6 +80,18 @@ export function DropHud() {
             {st.phase === "freefall" ? <button type="button" onClick={dropAction} className="text-bitcoin hover:text-foreground">[SPACE] GLIDER</button> : null}
             <button type="button" onClick={cancelDrop} className="text-muted-foreground hover:text-foreground">LEAVE</button>
           </div>
+        </div>
+      ) : null}
+      {st.phase === "freefall" || st.phase === "glide" ? (
+        <div className="hud-panel pointer-events-none absolute right-3 top-1/3 z-[86] flex w-24 flex-col items-center gap-1 px-2 py-2 font-mono text-[10px]">
+          <span className="text-muted-foreground">ALT</span>
+          <div className="relative h-32 w-2 border border-border bg-background/40">
+            <div className="absolute inset-x-0 bottom-0 bg-signal" style={{ height: `${Math.min(100, (dropTelemetry.alt / DROP.altitude) * 100)}%` }} />
+            <div className="absolute inset-x-[-6px] h-px bg-bitcoin" style={{ bottom: `${(DROP.autoDeploy / DROP.altitude) * 100}%` }} />
+          </div>
+          <span className="text-foreground">{Math.round(dropTelemetry.alt / STRIDE)} m</span>
+          <span className="text-bitcoin">{Math.round((dropTelemetry.speed / STRIDE) * 3.6)} km/h</span>
+          <span className="text-center text-muted-foreground">{st.phase === "freefall" ? "W DIVE · S GLIDE" : "STEER · LAND"}</span>
         </div>
       ) : null}
       {st.phase === "landed" && st.outside ? (
