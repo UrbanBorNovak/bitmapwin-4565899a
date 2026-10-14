@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 function grabFrame(): Promise<Blob | null> {
   return new Promise((resolve) => {
     requestAnimationFrame(() => {
-      const canvas = document.querySelector<HTMLCanvasElement>(".oasis-world canvas, canvas");
+      // The world is the biggest canvas on the page (minimap/portraits are smaller).
+      const canvas = [...document.querySelectorAll("canvas")].sort((a, b) => b.width * b.height - a.width * a.height)[0];
       if (!canvas) return resolve(null);
       try {
         const url = canvas.toDataURL("image/png");
