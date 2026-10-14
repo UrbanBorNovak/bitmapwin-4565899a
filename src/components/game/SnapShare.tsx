@@ -30,7 +30,7 @@ export function SnapShare({ height }: { height: number }) {
     const win = window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank", "noopener");
     const blob = await grabFrame();
     setBusy(false);
-    if (!blob) return toast.error("Couldn't capture the view — the link is still ready to post.");
+    if (!blob) { toast.error("Couldn't capture the view — the link is still ready to post."); return; }
     let copied = false;
     try {
       await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
