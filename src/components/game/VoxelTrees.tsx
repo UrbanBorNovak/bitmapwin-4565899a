@@ -84,7 +84,7 @@ export const VoxelTrees = memo(function VoxelTrees({
 }) {
   const terrain = useTerrainVersion();
   const { quality } = useQuality();
-  const treeCap = quality.resolved === "low" ? 18 : quality.resolved === "medium" ? 40 : 70;
+  const treeCap = quality.resolved === "low" ? 4 : quality.resolved === "medium" ? 8 : 12;
   const mesh = useRef<THREE.InstancedMesh>(null);
   const cube = unit * 0.5;
 
