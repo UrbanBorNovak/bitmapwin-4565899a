@@ -1,4 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { estimateCart, PARCEL_CART_MAX, toggleCart } from "@/lib/parcel-cart";
+import { liveFeeRate } from "@/lib/shadow-inscribe";
+
+type CartQueue = { order: number[]; step: number; done: number[]; confirmed: boolean };
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
@@ -45,6 +49,23 @@ function ParcelStudio() {
   const selected = search.selected ?? null;
   const [hover, setHover] = useState<number | null>(null);
   const [filter, setFilter] = useState<"all" | "open" | "valid">("all");
+  const [cart, setCart] = useState<number[]>([]);
+  const [multi, setMulti] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+  const [queue, setQueue] = useState<CartQueue | null>(null);
+  const [feeMode, setFeeMode] = useState<"1" | "live" | "custom">("live");
+  const [customFee, setCustomFee] = useState("1");
+  const [liveRate, setLiveRate] = useState<number | null>(null);
+  useEffect(() => {
+    try {
+      const s = JSON.parse(localStorage.getItem("bitmapwin:inscribe-fee") ?? "null") as { mode?: string; custom?: string } | null;
+      if (s?.mode === "1" || s?.mode === "live" || s?.mode === "custom") setFeeMode(s.mode);
+      if (s?.custom) setCustomFee(s.custom);
+    } catch { /* ignore */ }
+    void liveFeeRate().then(setLiveRate).catch(() => {});
+  }, []);
+  useEffect(() => { setCart([]); setQueue(null); setAgreed(false); }, [height]);
+  useEffect(() => { setAgreed(false); }, [cart, feeMode, customFee]);
 
   const sizes = useQuery({ ...blockSizeMapQuery(height ?? 0), enabled: height !== null });
   const oci = useQuery({
@@ -86,6 +107,21 @@ function ParcelStudio() {
     if (Number.isInteger(h) && h >= 0) navigate({ search: { height: h } });
   };
   const pick = (i: number) => navigate({ search: (p) => ({ ...p, selected: i }) });
+
+  const canInscribe = !!wallet && !!districtId && holdsDistrict;
+  const feeRate = feeMode === "1" ? 1 : feeMode === "custom" ? Math.max(1, Number(customFee) || 1) : liveRate ?? 1;
+  const est = estimateCart(cart, height ?? 0, feeRate);
+  const current = queue ? queue.order[queue.step] ?? null : null;
+  const startQueue = () => {
+    // The inscriber reads this saved choice, so each job is priced at the rate reviewed here.
+    try { localStorage.setItem("bitmapwin:inscribe-fee", JSON.stringify({ mode: feeMode, custom: String(feeRate) })); } catch { /* ignore */ }
+    setMulti(false);
+    setQueue({ order: [...cart], step: 0, done: [], confirmed: false });
+  };
+  const advance = (q: CartQueue, done: number[]) => setQueue({ ...q, done, step: q.step + 1, confirmed: false });
+  const markDone = (i: number) => setQueue((q) => (q ? { ...q, done: [...q.done, i], step: q.step + 1, confirmed: false } : q));
+  const skipCurrent = () => queue && advance(queue, queue.done);
+  const stopQueue = () => queue && setQueue({ ...queue, step: queue.order.length, confirmed: false });
 
   const side = layout ? Math.max(layout.width, layout.height) : 1;
   const offY = layout ? (side - layout.height) / 2 : 0;
@@ -155,11 +191,14 @@ function ParcelStudio() {
                   {layout.parcels.map((p, i) => {
                     const st = stateOf(i);
                     const dim = (filter === "open" && st !== "open") || (filter === "valid" && st !== "valid");
-                    const cls = i === sel ? "fill-primary" : st === "valid" ? "fill-signal" : "fill-muted-foreground/25";
+                    const cls = i === sel ? "fill-primary" : cart.includes(i) ? "fill-primary/50" : st === "valid" ? "fill-signal" : "fill-muted-foreground/25";
                     return (
                       <rect key={i} x={p.position.x + 0.06} y={p.position.y + offY + 0.06} width={Math.max(0.1, p.size - 0.12)} height={Math.max(0.1, p.size - 0.12)}
                         className={`${cls} cursor-pointer transition-opacity hover:opacity-70`} opacity={dim ? 0.15 : 1}
-                        onMouseEnter={() => setHover(i)} onClick={() => pick(i)} />
+                        onMouseEnter={() => setHover(i)} onClick={() => {
+                          if (multi && canInscribe && queue === null && st === "open") setCart((c) => toggleCart(c, i));
+                          pick(i);
+                        }} />
                     );
                   })}
                 </svg>
@@ -196,24 +235,122 @@ function ParcelStudio() {
                     ) : !holdsDistrict ? (
                       <p className="text-sm text-muted-foreground">Only the wallet holding {height}.bitmap can inscribe a true child parcel — Bitcoin needs that wallet to sign the parent link.</p>
                     ) : (
-                      <ShadowInscriber
-                        key={`${height}-${sel}`}
-                        slug={`parcel-${height}-${sel}`}
-                        height={height}
-                        index={sel}
-                        digest={parcelName(sel, height)}
-                        artifactLabel={`INSCRIBE ${parcelName(sel, height).toUpperCase()}`}
-                        actionLabel="INSCRIBE PARCEL ON BITCOIN"
-                        description={`A tiny text inscription "${parcelName(sel, height)}" created as a child of ${height}.bitmap. If nobody inscribed this index first, it becomes the valid parcel.`}
-                        allowUpload={false}
-                        claimParentsForHeight={height}
-                        parentBitmapInscriptionId={districtId}
-                        artifactVariants={[{ key: "claim", label: "PARCEL CLAIM", contentType: "text/plain;charset=utf-8", source: parcelName(sel, height) }]}
-                      />
+                      <button type="button" disabled={queue !== null} onClick={() => setCart((c) => toggleCart(c, sel))} className="btn-term block w-full px-3 py-2 text-center disabled:opacity-40">
+                        {cart.includes(sel) ? "REMOVE FROM CART" : cart.length >= PARCEL_CART_MAX ? `CART FULL (${PARCEL_CART_MAX})` : "ADD TO CART"}
+                      </button>
                     )
                   )}
                 </>
               )}
+
+              {canInscribe && (
+                <div className="space-y-2 border-t border-border pt-3">
+                  <div className="flex items-center justify-between">
+                    <p className="label">PARCEL CART · {cart.length}/{PARCEL_CART_MAX}</p>
+                    <button type="button" onClick={() => setMulti((m) => !m)} disabled={queue !== null}
+                      className={`label rounded border px-2 py-0.5 ${multi ? "border-primary text-primary" : "border-border text-muted-foreground"}`}>
+                      {multi ? "MULTI-SELECT ON" : "MULTI-SELECT"}
+                    </button>
+                  </div>
+                  {multi && queue === null && <p className="label text-muted-foreground">TAP OPEN TILES TO ADD OR REMOVE THEM.</p>}
+                  {cart.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No parcels yet. Add open tiles to inscribe several in a row.</p>
+                  ) : (
+                    <>
+                      <div className="flex max-h-28 flex-wrap gap-1 overflow-y-auto">
+                        {cart.map((i, n) => {
+                          const done = queue?.done.includes(i);
+                          const now = queue && queue.order[queue.step] === i;
+                          return (
+                            <button key={i} type="button" disabled={queue !== null} onClick={() => setCart((c) => c.filter((x) => x !== i))}
+                              className={`label rounded border px-2 py-0.5 ${done ? "border-signal text-signal" : now ? "border-primary bg-primary text-primary-foreground" : "border-primary/60 text-primary"}`}
+                              title={queue ? undefined : "Remove"}>
+                              {n + 1}. #{i}{done ? " ✓" : queue ? "" : " ×"}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {queue === null && (
+                        <>
+                          <div className="flex flex-wrap items-center gap-1">
+                            <span className="label text-muted-foreground">FEE</span>
+                            {(["1", "live", "custom"] as const).map((m) => (
+                              <button key={m} type="button" onClick={() => setFeeMode(m)}
+                                className={`label rounded border px-2 py-0.5 ${feeMode === m ? "border-signal text-signal" : "border-border text-muted-foreground"}`}>
+                                {m === "1" ? "1 SAT/VB" : m === "live" ? `LIVE${liveRate ? ` ${liveRate}` : ""}` : "CUSTOM"}
+                              </button>
+                            ))}
+                            {feeMode === "custom" && (
+                              <input value={customFee} onChange={(e) => setCustomFee(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" aria-label="Custom fee rate in sats per vbyte"
+                                className="h-6 w-14 rounded border border-border bg-background px-1 font-mono text-xs" />
+                            )}
+                          </div>
+                          <Row k="FEE RATE" v={`${feeRate} sat/vB`} />
+                          <Row k="EST. SIZE" v={`~${est.vbytes.toLocaleString("en-US")} vB`} />
+                          <Row k="EST. MINER FEES" v={`~${est.feeSats.toLocaleString("en-US")} sats`} />
+                          <Row k="POSTAGE (STAYS ON YOUR PARCELS)" v={`${est.postageSats.toLocaleString("en-US")} sats`} />
+                          <Row k="EST. TOTAL" v={`~${est.totalSats.toLocaleString("en-US")} sats`} />
+                          <p className="text-xs text-muted-foreground">
+                            Estimate only — each inscription shows its exact price before you pay. {cart.length} separate wallet payments and {cart.length} parent signatures. Someone else may claim a tile first; late copies never count.
+                          </p>
+                          <label className="flex items-start gap-2 text-xs">
+                            <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5" />
+                            <span>I reviewed these {cart.length} parcels and the estimated ~{est.totalSats.toLocaleString("en-US")} sats.</span>
+                          </label>
+                          <div className="flex gap-2">
+                            <button type="button" disabled={!agreed} onClick={startQueue} className="btn-term flex-1 px-3 py-2 disabled:opacity-40">START INSCRIBING</button>
+                            <button type="button" onClick={() => { setCart([]); setAgreed(false); }} className="label rounded border border-border px-3 text-muted-foreground">CLEAR</button>
+                          </div>
+                        </>
+                      )}
+
+                      {queue !== null && current !== null && (
+                        <div className="space-y-2 rounded border border-primary/50 p-2">
+                          <p className="label text-primary">INSCRIPTION {queue.step + 1} OF {queue.order.length}</p>
+                          <p className="display text-lg" data-no-translate>{parcelName(current, height)}</p>
+                          <Row k="EST. COST" v={`~${estimateCart([current], height, feeRate).totalSats.toLocaleString("en-US")} sats`} />
+                          {!queue.confirmed ? (
+                            <>
+                              <p className="text-xs text-muted-foreground">Nothing is signed until you confirm. Your wallet will then ask for the payment and the parent signature.</p>
+                              <div className="flex gap-2">
+                                <button type="button" onClick={() => setQueue({ ...queue, confirmed: true })} className="btn-term flex-1 px-3 py-2">CONFIRM &amp; SIGN #{current}</button>
+                                <button type="button" onClick={skipCurrent} className="label rounded border border-border px-3 text-muted-foreground">SKIP</button>
+                              </div>
+                            </>
+                          ) : (
+                            <ShadowInscriber
+                              key={`${height}-${current}`}
+                              slug={`parcel-${height}-${current}`}
+                              height={height}
+                              index={current}
+                              digest={parcelName(current, height)}
+                              artifactLabel={`INSCRIBE ${parcelName(current, height).toUpperCase()}`}
+                              actionLabel="INSCRIBE PARCEL ON BITCOIN"
+                              description={`A tiny text inscription "${parcelName(current, height)}" created as a child of ${height}.bitmap. If nobody inscribed this index first, it becomes the valid parcel.`}
+                              allowUpload={false}
+                              claimParentsForHeight={height}
+                              parentBitmapInscriptionId={districtId!}
+                              artifactVariants={[{ key: "claim", label: "PARCEL CLAIM", contentType: "text/plain;charset=utf-8", source: parcelName(current, height) }]}
+                              onRevealed={() => markDone(current)}
+                            />
+                          )}
+                          <button type="button" onClick={stopQueue} className="label text-muted-foreground hover:text-primary">STOP AFTER THIS ONE</button>
+                        </div>
+                      )}
+
+                      {queue !== null && current === null && (
+                        <div className="space-y-2">
+                          <p className="label text-signal">DONE · {queue.done.length} OF {queue.order.length} SENT TO BITCOIN</p>
+                          <p className="text-xs text-muted-foreground">They show as inscribed once confirmed and rescanned.</p>
+                          <button type="button" onClick={() => { setCart(cart.filter((i) => !queue.done.includes(i))); setQueue(null); setAgreed(false); void scan.refetch(); }} className="btn-term w-full px-3 py-2">CLOSE</button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
               {mine.length > 0 && (
                 <div className="border-t border-border pt-3">
                   <p className="label mb-1">YOUR PARCELS HERE</p>
