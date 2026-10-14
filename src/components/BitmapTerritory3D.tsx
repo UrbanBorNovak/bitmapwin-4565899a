@@ -6,6 +6,7 @@ import { GuardianBody } from "@/components/bitmon/GuardianBody";
 import type { AwakeGuardian } from "@/lib/bitmon-queries";
 import { packParcels } from "@/components/TerritoryCanvas";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
+import { ForgeBuild3D } from "@/components/game/ForgeBuild3D";
 
 const PALETTE = ["#ffb45a", "#f7931a", "#e6810e", "#c96d08", "#a95a06"];
 
@@ -68,6 +69,8 @@ export function BitmapTerritory3D({ height, guardian }: { height: number; guardi
         <directionalLight position={[3, 5, 2]} intensity={1.15} color="#ffd7a3" />
         <directionalLight position={[-3, 2, -2]} intensity={0.35} color="#f7931a" />
         <Plots classes={data.classes} />
+        {/* Inscribed Land Forge build: 64-cell canvas spans the same 2-unit plot (cell/40 per block). */}
+        <Suspense fallback={null}><ForgeBuild3D height={height} position={[0, 0, 0]} cell={1.25} /></Suspense>
         {guardian && (
           <Suspense fallback={null}>
             <group position={[0, 0.25, 0]} scale={0.32}>
