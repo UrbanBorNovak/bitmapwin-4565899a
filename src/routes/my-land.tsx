@@ -109,17 +109,17 @@ function MyLandPage() {
       ) : (
         <div data-tour="myland-grid" className="mt-8 grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
           {heights.map((h) => (
-            <Link
-              key={h}
-              to="/bitmap/$block"
-              params={{ block: String(h) }}
-              className="group bg-background p-4 hover:bg-secondary"
-            >
-              <div className="display text-lg">#{h}</div>
-              <div className="label mt-2 text-[0.55rem]">
-                {deployedOn.get(h) ? `${deployedOn.get(h)} DEPLOYED` : "EMPTY LAND"}
-              </div>
-            </Link>
+            <div key={h} className="flex flex-col bg-background">
+              <Link to="/bitmap/$block" params={{ block: String(h) }} className="group flex-1 p-4 hover:bg-secondary">
+                <div className="display text-lg">#{h}</div>
+                <div className="label mt-2 text-[0.55rem]">
+                  {deployedOn.get(h) ? `${deployedOn.get(h)} DEPLOYED` : "EMPTY LAND"}
+                </div>
+              </Link>
+              <Link to="/oasis" search={{ height: h }} className="btn-term m-2 mt-0 justify-center text-center text-[11px]">
+                ENTER OASIS →
+              </Link>
+            </div>
           ))}
         </div>
       )}
