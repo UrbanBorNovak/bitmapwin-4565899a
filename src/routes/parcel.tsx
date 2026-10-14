@@ -15,7 +15,7 @@ type Search = { height?: number; selected?: number };
 
 export const Route = createFileRoute("/parcel")({
   validateSearch: (s: Record<string, unknown>): Search => {
-    const h = Number(s.height), i = Number(s.selected);
+    const h = Number(s["height"]), i = Number(s["selected"]);
     return {
       ...(Number.isInteger(h) && h >= 0 ? { height: h } : {}),
       ...(Number.isInteger(i) && i >= 0 ? { selected: i } : {}),
