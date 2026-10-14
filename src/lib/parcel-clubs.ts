@@ -44,6 +44,14 @@ export const PARCEL_CLUBS: ParcelClub[] = [
     parentInscription: "f6df0ef987c6a80f163592008af2b33910469289b686929fb8f0f37a1d46f167i0",
     blurb: "Holds a valid parcel of 899995.BITMAP.",
   },
+  {
+    id: "emporium",
+    label: "EMPORIUM RESIDENT",
+    short: "EMPORIUM",
+    height: 717328,
+    parentInscription: "c1e3330f25adaec23b5361ef1c1412e3fc29d5615f19fe02bf4c017a80c6031bi0",
+    blurb: "Holds a valid parcel of 717328.BITMAP — Bitmap Emporium.",
+  },
 ];
 
 export function parcelClubById(id: string): ParcelClub | null {
