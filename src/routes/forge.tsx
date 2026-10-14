@@ -12,7 +12,7 @@ import { FORGE_MASTER_DELEGATE_ID, delegateSavings, forgeDelegateMetadata } from
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { BLOCKS, type BlockId } from "@/lib/voxel-world";
 import type { TplBlock } from "@/lib/voxel-templates";
-import { ARCHETYPES, FORGE_MAX_BLOCKS, FORGE_SPAN, encodeBuild, forgeInscriptionHtml, generateBuild, type ArchetypeId } from "@/lib/voxel-populate";
+import { ARCHETYPES, FORGE_MAX_BLOCKS, FORGE_SPAN, encodeBuild, encodeBuildBest, FORGE_UNPACK_JS, forgeInscriptionHtml, generateBuild, type ArchetypeId } from "@/lib/voxel-populate";
 import { HOUSE_PREFABS, SPHERES, cellKey, normaliseModule, rotatePrefab, stampInto, tributeSplit, type Contributor, type Prefab, type Sphere } from "@/lib/forge-prefabs";
 import { BLUEPRINTS, blueprintBlocks, nextDropAt, weekNumber, weeklyBlueprint } from "@/lib/forge-blueprints";
 import { clipToParcel, inRect, parcelAt, parcelRects, type ParcelRect } from "@/lib/forge-parcels";
@@ -489,6 +489,21 @@ function ForgePage() {
             </p>
           ) : height !== null && digest && blocks.length > 0 ? (
             <div className="rounded border border-border bg-card/40 p-3">
+              {(() => {
+                const raw = atob(encodeBuild(blocks)).length;
+                const best = encodeBuildBest(blocks);
+                const packed = atob(best.data).length;
+                const sats = (b: number) => Math.ceil(b / 4) * 5;
+                return (
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded border border-border p-2 font-mono text-[11px]">
+                    <span>
+                      <span className="text-muted-foreground">BLOCK DATA </span>{raw.toLocaleString()} B → <span className="text-primary">{packed.toLocaleString()} B {best.format}</span>
+                      {raw > packed ? <span className="text-muted-foreground"> · saves ~{(sats(raw) - sats(packed)).toLocaleString()} sats at 5 sat/vB</span> : null}
+                    </span>
+                    <button type="button" className="rounded border border-border px-2 py-0.5 hover:bg-card" onClick={() => void navigator.clipboard.writeText(FORGE_UNPACK_JS).then(() => toast.success("Unpacker copied — thank you for building!"))}>COPY UNPACKER JS</button>
+                  </div>
+                );
+              })()}
               <ShadowInscriber
                 key={digest}
                 slug={`forge-${height}`}
