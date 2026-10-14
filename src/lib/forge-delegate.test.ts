@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { forgeDelegateMetadata, parseForgeMeta } from "@/lib/forge-delegate";
+import { forgeDelegateMetadata, isForgeMasterDelegate, parseForgeMeta, FORGE_MASTER_DELEGATE_ID } from "@/lib/forge-delegate";
 
 // CBOR map {f:"BWVX1", h:830000, d:"AAAAAA=="} encoded by hand
 const hexOf = (b: number[]) => b.map((v) => v.toString(16).padStart(2, "0")).join("");
