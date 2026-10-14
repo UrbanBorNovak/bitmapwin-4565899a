@@ -24,7 +24,7 @@ import { forgeRightsFn } from "@/lib/forge-rights.functions";
 import { forgePieceFn } from "@/lib/forge-parts.functions";
 import { collectionPiecesQuery } from "@/lib/forge-collection.functions";
 import { DONATION_ADDRESS } from "@/lib/donations";
-import { forgeAssemblyHtml, isInscriptionId, normPart, type AsmPart } from "@/lib/forge-assembly";
+import { forgeAssemblyHtml, isInscriptionId, MAX_ASM_PARTS, normPart, type AsmPart } from "@/lib/forge-assembly";
 import { bakeGuardian } from "@/lib/forge-guardian-bake";
 import { guardianDnaQuery } from "@/lib/bitmon-queries";
 import { OnchainGuardianBody } from "@/components/bitmon/OnchainGuardianBody";
@@ -330,6 +330,7 @@ function ForgePage() {
       return;
     }
     if (overLimit) { toast.error(`BUILD LIMIT IS ${FORGE_MAX_BLOCKS} BLOCKS`); return; }
+    if (ghostIsPiece && livePlacements.length >= MAX_ASM_PARTS) { toast.error(`A RECURSIVE BUILD HOLDS UP TO ${MAX_ASM_PARTS} ON-CHAIN PIECES`); return; }
     if (tool === "stamp" && picked.author && (picked.bitCost ?? 0) > 0) {
       if (!wallet) { toast.error("CONNECT A WALLET TO USE PAID MODULES"); return; }
       const r = await stampFn({ data: { moduleId: picked.id, address: wallet.ordinalsAddress } }).catch(() => ({ ok: false as const, error: "SIGN IN TO USE PAID MODULES" }));
@@ -629,8 +630,10 @@ function ForgePage() {
             {height !== null ? `${height.toLocaleString()}.BITMAP · ` : ""}{(bytes / 1024).toFixed(1)} KB · ROT {(turns % 4) * 90}°{hoverParcel ? ` · TILE ${hoverParcel.index}.${height}` : ""}{focusRect ? ` · BUILDING ON PARCEL #${focusRect.index}` : ""}
           </div>
           <div className="pointer-events-none absolute right-3 top-3 w-36 rounded border border-border bg-background/70 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur">
-            <div className="flex justify-between"><span>BLOCKS</span><span className={ownCount > FORGE_MAX_BLOCKS * 0.85 ? "text-primary" : "text-accent"}>{ownCount}/{FORGE_MAX_BLOCKS}{blocks.length > ownCount ? ` +${blocks.length - ownCount} on-chain` : ""}</span></div>
+            <div className="flex justify-between"><span>BLOCKS</span><span data-testid="forge-own-count" className={ownCount > FORGE_MAX_BLOCKS * 0.85 ? "text-primary" : "text-accent"}>{ownCount}/{FORGE_MAX_BLOCKS}</span></div>
             <div className="mt-1 h-1 overflow-hidden rounded bg-muted"><div className={`h-full ${ownCount > FORGE_MAX_BLOCKS * 0.85 ? "bg-primary" : "bg-accent"}`} style={{ width: `${Math.min(100, (ownCount / FORGE_MAX_BLOCKS) * 100)}%` }} /></div>
+            <div className="mt-1.5 flex justify-between"><span>PIECES</span><span data-testid="forge-piece-count" className={livePlacements.length >= MAX_ASM_PARTS ? "text-primary" : "text-accent"}>{livePlacements.length}/{MAX_ASM_PARTS}</span></div>
+            {blocks.length > ownCount && <div className="text-right">+{blocks.length - ownCount} on-chain vox</div>}
           </div>
           <div className="absolute inset-x-0 bottom-3 flex flex-col items-center gap-1.5 px-2">
             {chainPieces.length > 0 && (tool === "stamp" || tool === "move") && (
