@@ -7,6 +7,7 @@ import { allGuardiansQuery, guardianDnaQuery, type AwakeGuardian } from "@/lib/b
 import { onchainGenome } from "@/lib/onchain-guardian";
 import { breedPet, breedOdds, petMetadata, PET_SERVICE_FEE, type PetParent } from "@/lib/guardian-genetics";
 import { petArtifactHtml } from "@/lib/pet-artifact";
+import { PET_MASTER_DELEGATE_ID, petLeanGeometry, petMasterHtml } from "@/lib/pet-delegate";
 import { DONATION_ADDRESS } from "@/lib/donations";
 import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
 import { PetPortrait } from "@/components/bitmon/PetPortrait";
@@ -120,6 +121,8 @@ function BreedLab() {
   };
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   const pickStable = (h: number) => { if (sireH < 0) setSireH(h); else if (h !== sireH) setDamH(h); if (!muted) tone(880, 50); };
+  const [attach, setAttach] = useState(true);
+  const heldParent = sire && stable.some((g) => g.inscriptionId === sire.inscriptionId) ? sire : dam && stable.some((g) => g.inscriptionId === dam.inscriptionId) ? dam : null;
   const html = useMemo(() => (pet && sire && dam ? petArtifactHtml(pet, sire.inscriptionId, dam.inscriptionId) : ""), [pet, sire, dam]);
 
   return (
@@ -202,8 +205,21 @@ function BreedLab() {
             <p>BREEDING SERVICE FEE · {PET_SERVICE_FEE} SATS</p>
             <p className="text-muted-foreground">+ BITCOIN NETWORK FEE (SHOWN BEFORE YOU PAY)</p>
           </div>
+          {heldParent ? (
+            <label className="flex items-center gap-2 rounded border border-signal/50 p-2 font-mono text-xs">
+              <input type="checkbox" checked={attach} onChange={(e) => setAttach(e.target.checked)} />
+              <span><span className="text-signal">ATTACH AS OFFICIAL ON-CHAIN CHILD OF {heldParent.height}.BITMAP GUARDIAN</span> — your wallet signs your Guardian into the reveal and gets it straight back (no extra fee beyond ~100 vB).</span>
+            </label>
+          ) : (
+            <p className="label text-muted-foreground">TIP: PICK A GUARDIAN YOU HOLD AS SIRE OR DAM TO HATCH THE PET AS ITS OFFICIAL ON-CHAIN CHILD.</p>
+          )}
+          {!PET_MASTER_DELEGATE_ID && (
+            <button type="button" onClick={() => { void navigator.clipboard.writeText(petMasterHtml()); }} className="label rounded border border-border px-2 py-1 text-muted-foreground hover:text-primary">
+              COPY PET MASTER HTML (INSCRIBE ONCE TO UNLOCK LEAN PETS)
+            </button>
+          )}
           <ShadowInscriber
-            key={`${sire.inscriptionId}-${dam.inscriptionId}`}
+            key={`${sire.inscriptionId}-${dam.inscriptionId}-${attach}`}
             slug={`pet-${sire.height}-${dam.height}`}
             height={sire.height}
             index={dam.height}
@@ -212,12 +228,22 @@ function BreedLab() {
             actionLabel="INSCRIBE PET ON BITCOIN"
             description="A self-rendering pet inscription. Its metadata names both parents, so its pedigree can be traced on any explorer."
             allowUpload={false}
-            artifactVariants={[{
-              key: "pet", label: "PET", contentType: "text/html;charset=utf-8", source: html,
-              tribute: { address: DONATION_ADDRESS, sats: PET_SERVICE_FEE },
-              metadata: petMetadata(sire, dam, pet),
-              brotli: true,
-            }]}
+            {...(attach && heldParent ? { heldParentId: heldParent.inscriptionId } : {})}
+            artifactVariants={[
+              ...(PET_MASTER_DELEGATE_ID ? [{
+                key: "lean", label: "LEAN (DELEGATE)", contentType: "text/html;charset=utf-8", source: "",
+                note: "Empty body — renders with the Pet Master. Cheapest.",
+                delegate: PET_MASTER_DELEGATE_ID,
+                tribute: { address: DONATION_ADDRESS, sats: PET_SERVICE_FEE },
+                metadata: { ...petMetadata(sire, dam, pet), ...petLeanGeometry(pet) },
+              }] : []),
+              {
+                key: "pet", label: "STANDALONE", contentType: "text/html;charset=utf-8", source: html,
+                tribute: { address: DONATION_ADDRESS, sats: PET_SERVICE_FEE },
+                metadata: petMetadata(sire, dam, pet),
+                brotli: true,
+              },
+            ]}
           />
         </section>
       )}
