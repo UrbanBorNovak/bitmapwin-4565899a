@@ -259,7 +259,7 @@ function ForgePage() {
 
   const blocks = useMemo(() => [...world.values()], [world]);
   const ghost = useMemo(() => {
-    if (tool === "erase" || tool === "parcel" || tool === "perch") return [];
+    if (tool === "erase" || tool === "parcel" || tool === "perch" || tool === "move") return [];
     if (tool === "block" || tool === "box") return [{ dx: 0, dy: 0, dz: 0, k: paint }];
     return rotatePrefab(picked.blocks, turns);
   }, [tool, paint, picked, turns]);
@@ -296,6 +296,7 @@ function ForgePage() {
       if (e.key === "p" || e.key === "P") setTool("parcel");
       if (e.key === "w" || e.key === "W") { setTool("box"); setBoxStart(null); }
       if (e.key === "g" || e.key === "G") setTool("perch");
+      if (e.key === "m" || e.key === "M") setTool("move");
       if (e.key === "Escape") setBoxStart(null);
       if (/^[0-9]$/.test(e.key)) { const b = BLOCKS[(Number(e.key) + 9) % 10]; if (b) { setPaint(b.id); setTool("block"); } }
     };
@@ -603,7 +604,7 @@ function ForgePage() {
           <SafeCanvas shadows camera={{ position: [40, 38, 40], fov: 45 }}>
             <ambientLight intensity={0.6} />
             <directionalLight position={[20, 40, 10]} intensity={1.2} castShadow />
-            <Blocks blocks={blocks} erase={tool === "erase"} onErase={eraseAt} onSurface={(c) => { if (c && tool !== "parcel") setHover(c); }} onPlace={() => void place()} />
+            <Blocks blocks={blocks} erase={tool === "erase" || tool === "move"} onErase={eraseAt} onSurface={(c) => { if (c && tool !== "parcel") setHover(c); }} onPlace={() => void place()} />
             {hover && ghost.length > 0 && boxGhost.length === 0 && <Ghost blocks={ghost} at={hover} bad={overLimit || ghostOut} />}
             {boxGhost.length > 0 && <Ghost blocks={boxGhost} at={[0, 0, 0]} bad={blocks.length + boxGhost.length > FORGE_MAX_BLOCKS} />}
             {perch && dnaQ.data && (
@@ -628,13 +629,25 @@ function ForgePage() {
             <div className="mt-1 h-1 overflow-hidden rounded bg-muted"><div className={`h-full ${blocks.length > FORGE_MAX_BLOCKS * 0.85 ? "bg-primary" : "bg-accent"}`} style={{ width: `${Math.min(100, (blocks.length / FORGE_MAX_BLOCKS) * 100)}%` }} /></div>
           </div>
           <div className="absolute inset-x-0 bottom-3 flex flex-col items-center gap-1.5 px-2">
+            {chainPieces.length > 0 && (tool === "stamp" || tool === "move") && (
+              <div className="flex max-w-full gap-1 overflow-x-auto rounded-lg border border-primary/40 bg-background/80 p-1 backdrop-blur">
+                {chainPieces.map((p) => (
+                  <button key={p.id} type="button" title="Drag onto the map, or click then click the map"
+                    onPointerDown={(e) => { e.preventDefault(); setPicked(p); setTool("stamp"); setDragging(true); }}
+                    className={`shrink-0 cursor-grab touch-none rounded border px-2 py-1 text-left text-[10px] active:cursor-grabbing ${picked.id === p.id && tool === "stamp" ? "border-primary text-foreground" : "border-border text-muted-foreground"}`}>
+                    <span className="block">{p.name}</span>
+                    <span>{p.blocks.length} vox · {placements.filter((x) => `ins:${x.part.id}` === p.id && x.keys.some((k) => world.has(k))).length} placed</span>
+                  </button>
+                ))}
+              </div>
+            )}
             <p className="pointer-events-none rounded bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground backdrop-blur">
-              {tool === "erase" ? "CLICK A BLOCK TO REMOVE IT" : tool === "parcel" ? "CLICK A TILE TO BUILD ONLY ON IT" : tool === "box" ? (boxStart ? "CLICK THE OPPOSITE CORNER TO FILL · ESC CANCELS" : "CLICK ONE CORNER OF A WALL, FLOOR OR BOX") : tool === "perch" ? "CLICK WHERE YOUR GUARDIAN SHOULD LIVE" : "POINT AT ANY SURFACE · CLICK TO PLACE · IT STACKS ON TOP"} · R ROTATE · CTRL+Z UNDO
+              {tool === "move" ? "CLICK A PLACED ON-CHAIN PIECE TO PICK IT UP" : tool === "erase" ? "CLICK A BLOCK TO REMOVE IT" : tool === "parcel" ? "CLICK A TILE TO BUILD ONLY ON IT" : tool === "box" ? (boxStart ? "CLICK THE OPPOSITE CORNER TO FILL · ESC CANCELS" : "CLICK ONE CORNER OF A WALL, FLOOR OR BOX") : tool === "perch" ? "CLICK WHERE YOUR GUARDIAN SHOULD LIVE" : "POINT AT ANY SURFACE · CLICK TO PLACE · IT STACKS ON TOP"} · R ROTATE · CTRL+Z UNDO
             </p>
             <div className="flex flex-wrap items-center justify-center gap-1 rounded-lg border border-border bg-background/80 p-1 backdrop-blur">
-              {(["stamp", "block", "box", "erase", "perch", "parcel"] as Tool[]).map((t) => (
+              {(["stamp", "move", "block", "box", "erase", "perch", "parcel"] as Tool[]).map((t) => (
                 <button key={t} type="button" onClick={() => { setTool(t); setBoxStart(null); }} className={`rounded px-2.5 py-1 text-[10px] ${tool === t ? "bg-primary/15 text-foreground ring-1 ring-primary" : "text-muted-foreground hover:text-foreground"}`}>
-                  {t === "stamp" ? "PIECES (S)" : t === "block" ? "BLOCK (B)" : t === "box" ? "BOX (W)" : t === "erase" ? "ERASE (X)" : t === "perch" ? "GUARDIAN (G)" : "PARCEL (P)"}
+                  {t === "stamp" ? "PIECES (S)" : t === "move" ? "MOVE (M)" : t === "block" ? "BLOCK (B)" : t === "box" ? "BOX (W)" : t === "erase" ? "ERASE (X)" : t === "perch" ? "GUARDIAN (G)" : "PARCEL (P)"}
                 </button>
               ))}
               {(tool === "block" || tool === "box") && (
