@@ -74,9 +74,9 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
       const vis = (n: Node) => n.born < s;
       // forces
       for (let i = 0; i < nodes.length; i++) {
-        const a = nodes[i]; if (!vis(a)) continue;
+        const a = nodes[i]!; if (!vis(a)) continue;
         for (let j = i + 1; j < nodes.length; j++) {
-          const b = nodes[j]; if (!vis(b)) continue;
+          const b = nodes[j]!; if (!vis(b)) continue;
           const dx = a.x - b.x, dy = a.y - b.y, d2 = dx * dx + dy * dy + 0.01;
           if (d2 > 40000) continue;
           const f = 900 / d2; const d = Math.sqrt(d2);
@@ -85,7 +85,7 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
         a.vx -= a.x * 0.004; a.vy -= a.y * 0.004;
       }
       for (const e of edges) {
-        const a = nodes[e.a], b = nodes[e.b]; if (!vis(a) || !vis(b)) continue;
+        const a = nodes[e.a]!, b = nodes[e.b]!; if (!vis(a) || !vis(b)) continue;
         const dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy) || 1, f = (d - e.len) * 0.04;
         a.vx += (dx / d) * f; a.vy += (dy / d) * f; b.vx -= (dx / d) * f; b.vy -= (dy / d) * f;
       }
@@ -95,7 +95,7 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
       ctx.clearRect(-w / 2, -h / 2, w, h);
       ctx.lineWidth = 0.8;
       for (const e of edges) {
-        const a = nodes[e.a], b = nodes[e.b]; if (!vis(a) || !vis(b)) continue;
+        const a = nodes[e.a]!, b = nodes[e.b]!; if (!vis(a) || !vis(b)) continue;
         const fresh = Math.max(a.born, b.born) >= s - 2;
         ctx.strokeStyle = col(fresh ? "--signal" : "--border"); ctx.globalAlpha = fresh ? 0.9 : 0.6;
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
