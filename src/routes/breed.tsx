@@ -31,7 +31,7 @@ function useParent(g: AwakeGuardian | undefined): PetParent | null {
   return useMemo(() => (g?.inscriptionId && q.data ? { inscriptionId: g.inscriptionId, height: g.height, genome: onchainGenome(q.data) } : null), [g, q.data]);
 }
 
-function Chamber({ title, list, value, onPick, other }: { title: string; list: AwakeGuardian[]; value?: AwakeGuardian; onPick: (h: number) => void; other?: number }) {
+function Chamber({ title, list, value, onPick, other }: { title: string; list: AwakeGuardian[]; value: AwakeGuardian | undefined; onPick: (h: number) => void; other?: number }) {
   const [q, setQ] = useState("");
   const shown = list.filter((g) => g.height !== other && (!q || String(g.height).includes(q.trim()))).slice(0, 40);
   return (
