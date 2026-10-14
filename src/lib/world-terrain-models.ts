@@ -99,30 +99,29 @@ function resFor(width: number) {
  * Fixed seeds keep every position, size and rotation permanent for all players.
  */
 function layout(): TerrainModelSpec[] {
+  // All inscribed landforms stand OUTSIDE the 1,000 × 1,000 BITMAP grid,
+  // ringing it like a horizon: the grid (x -500..500, z 0..1000 from the
+  // plaza) stays open for parcels, builds and Guardians.
   const out: TerrainModelSpec[] = [];
-  const columns = 8;
-  const rows = 8;
-  const sectorWidth = 900 / columns;
-  const sectorDepth = 900 / rows;
-
-  for (let row = 0; row < rows; row++) {
-    for (let column = 0; column < columns; column++) {
-      const seed = 101 + row * columns + column;
-      // A co-prime source shuffle gives every region a mix of all five forms.
-      const source = SOURCES[((row * columns + column) * 3) % SOURCES.length] ?? SOURCES[0]!;
-      const jitterX = (rand(seed * 3.1) - 0.5) * sectorWidth * 0.55;
-      const jitterZ = (rand(seed * 5.7) - 0.5) * sectorDepth * 0.55;
-      const cell: [number, number] = [
-        Math.round(-450 + sectorWidth * (column + 0.5) + jitterX),
-        Math.round(50 + sectorDepth * (row + 0.5) + jitterZ),
-      ];
-      // Footprints stay well inside a sector, so landforms never merge into one
-      // endless wall, and every one keeps open plain around it.
+  const perSide = 16;
+  const sides = 4;
+  for (let side = 0; side < sides; side++) {
+    for (let i = 0; i < perSide; i++) {
+      const seed = 101 + side * perSide + i;
+      const source = SOURCES[(seed * 3) % SOURCES.length] ?? SOURCES[0]!;
       const low = source.kind === "peak" ? 16 : 7;
       const high = source.kind === "peak" ? 30 : 14;
       const width = low + rand(seed * 9.3) * (high - low);
+      // Keep the whole footprint beyond the grid edge.
+      const gap = width / 2 + 8 + rand(seed * 5.7) * 40;
+      const along = -540 + (1080 / perSide) * (i + 0.5) + (rand(seed * 3.1) - 0.5) * 30;
+      let cell: [number, number];
+      if (side === 0) cell = [Math.round(along), Math.round(-gap)];
+      else if (side === 1) cell = [Math.round(along), Math.round(1000 + gap)];
+      else if (side === 2) cell = [Math.round(-500 - gap), Math.round(500 + along)];
+      else cell = [Math.round(500 + gap), Math.round(500 + along)];
       out.push({
-        id: `${source.key}-${column}-${row}`,
+        id: `${source.key}-${side}-${i}`,
         label: source.label,
         inscription: source.inscription,
         cell,

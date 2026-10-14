@@ -7,6 +7,8 @@ import * as THREE from "three";
 import { forgeBuildQuery, forgeLandQuery } from "@/lib/forge";
 import { decodeBuild, FORGE_SPAN } from "@/lib/voxel-populate";
 import { BLOCKS } from "@/lib/voxel-world";
+import { setForgeCollision } from "@/lib/forge-collision";
+import { groundY } from "@/lib/world-terrain";
 
 const COLORS = Object.fromEntries(BLOCKS.map((b) => [b.id, new THREE.Color(b.top)]));
 const noRaycast = () => {};
@@ -42,7 +44,7 @@ function VoxelLayer({ mat, blocks, unit }: { mat: Mat; blocks: { dx: number; dy:
   );
 }
 
-export const ForgeBuild3D = memo(function ForgeBuild3D({ height, position, cell }: { height: number; position: [number, number, number]; cell: number }) {
+export const ForgeBuild3D = memo(function ForgeBuild3D({ height, position, cell, walkable = false }: { height: number; position: [number, number, number]; cell: number; walkable?: boolean }) {
   const { data } = useQuery(forgeBuildQuery(height));
   const { data: land } = useQuery(forgeLandQuery(height));
   // Parcel holders' builds override the district build inside their own tile.
@@ -58,6 +60,12 @@ export const ForgeBuild3D = memo(function ForgeBuild3D({ height, position, cell 
     return out;
   }, [data, land]);
   const unit = cell / 40;
+  const [px, py, pz] = position;
+  useEffect(() => {
+    if (!walkable) return;
+    setForgeCollision(blocks, [px, py, pz], unit);
+    return () => setForgeCollision(null);
+  }, [walkable, blocks, px, py, pz, unit]);
   const groups = useMemo(() => {
     const g: Record<Mat, typeof blocks> = { solid: [], glass: [], gold: [], glow: [] };
     for (const b of blocks) g[matOf(b.k)].push(b);
@@ -80,5 +88,6 @@ export function ForgeNearby({ pose, surface }: { pose: import("react").MutableRe
   });
   if (h === null) return null;
   const x = cellX(h % WORLD_GRID), z = cellZ(Math.floor(h / WORLD_GRID));
-  return <ForgeBuild3D height={h} position={[x, surface(x, z), z]} cell={WORLD_CELL} />;
+  // Base the build on bare land, not on its own blocks (surface includes the build).
+  return <ForgeBuild3D height={h} position={[x, groundY(x, z), z]} cell={WORLD_CELL} walkable />;
 }
