@@ -13,6 +13,10 @@ import { deployGuardianFn, recallGuardianFn } from "@/lib/guardian-dispatch.func
 import { settleRaidsFn } from "@/lib/guardian-raid.functions";
 import { BossRaids } from "@/components/command/BossRaids";
 import { WhileAway } from "@/components/retention/WhileAway";
+import { GuardianIndex } from "@/components/command/GuardianIndex";
+import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
+import { guardianCry, guardianTier, powerScore } from "@/lib/onchain-guardian";
+import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/command")({
   head: () => ({
@@ -48,6 +52,7 @@ function status(d: Dispatch | undefined, now: number) {
 
 function CommandPage() {
   const [userId, setUserId] = useState<string | null>(null);
+  const navigate = useNavigate();
   const [ready, setReady] = useState(false);
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => { setUserId(data.user?.id ?? null); setReady(true); });
@@ -137,11 +142,19 @@ function CommandPage() {
           return (
             <section key={g.height} className="border border-border bg-card/40 p-4 backdrop-blur">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <div>
+                <div className="flex items-center gap-3">
+                  <GuardianPortrait height={g.height} size={56} />
+                  <div>
                   <span className="text-bitcoin">{g.height}.BITMAP</span>
                   <span className="ml-2 text-xs text-muted-foreground">{g.species} · LV {g.level} · {g.rarity}</span>
                   <span className="ml-2 border border-bitcoin/40 px-1.5 py-0.5 text-[9px] tracking-[0.2em] text-bitcoin">{combatRole(g)}</span>
-                  <button onClick={() => setView3d((s) => ({ ...s, [g.height]: !s[g.height] }))} className="ml-2 text-[10px] text-signal hover:underline">{view3d[g.height] ? "HIDE 3D" : "INSPECT 3D"}</button>
+                  <span className="ml-2 border border-signal/40 px-1.5 py-0.5 text-[9px] tracking-[0.2em] text-signal">TIER {guardianTier(g)} · PWR {powerScore(g)}</span>
+                  <div className="mt-1 flex gap-2 text-[10px]">
+                    <button onClick={() => setView3d((s) => ({ ...s, [g.height]: !s[g.height] }))} className="text-signal hover:underline">{view3d[g.height] ? "HIDE 3D" : "INSPECT 3D"}</button>
+                    <button onClick={() => guardianCry(String(g.height), g.species.toLowerCase(), "roar")} className="text-bitcoin hover:underline">ROAR</button>
+                    <button onClick={() => guardianCry(String(g.height), g.species.toLowerCase(), "strike")} className="text-bitcoin hover:underline">STRIKE</button>
+                  </div>
+                  </div>
                 </div>
                 <span className={`text-[11px] ${d ? "text-signal" : "text-muted-foreground"}`}>{status(d, now)}</span>
               </div>
@@ -210,6 +223,8 @@ function CommandPage() {
           <BattleReport key={r.id} r={r} maxHp={(h) => all.data?.find((x) => x.height === h)?.hp} />
         ))}
       </div>
+
+      <GuardianIndex guardians={all.data ?? []} onPick={(h) => navigate({ to: "/mint", search: { height: h } })} />
     </main>
   );
 }
