@@ -225,7 +225,7 @@ export default function TouchControls({
       </div>
 
       {/* action buttons */}
-      <div className={cn("oasis-touch-actions pointer-events-auto absolute grid grid-cols-2 items-center justify-items-end gap-2", driving && "oasis-driving-actions")}>
+      <div className={cn("oasis-touch-actions pointer-events-auto absolute grid grid-cols-2 items-center justify-items-end gap-2", driving && "oasis-driving-actions", flying && "oasis-flying-actions")}>
         {!driving ? (
           <Button
             type="button"
@@ -252,6 +252,7 @@ export default function TouchControls({
             type="button"
             variant="terminalGhost"
             size="sm"
+            aria-label={driving ? `Exit ${rideLabel ?? "ride"}` : `Ride ${rideLabel ?? ""}`.trim()}
             className={cn(
               "h-11 w-full min-w-0 border bg-background/60 px-2 text-[10px] backdrop-blur-sm active:scale-95",
               driving

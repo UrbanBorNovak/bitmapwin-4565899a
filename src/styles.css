@@ -1744,8 +1744,12 @@
   --oasis-touch-reserve: calc(176px + var(--oasis-touch-bottom));
 }
 .oasis-stick { width: var(--oasis-pad-size); height: var(--oasis-pad-size); left: max(12px, env(safe-area-inset-left)); bottom: var(--oasis-touch-bottom); }
-.oasis-touch-actions { width: 128px; right: max(12px, env(safe-area-inset-right)); bottom: var(--oasis-touch-bottom); }
-.oasis-driving-actions { width: 184px; }
+.oasis-touch-actions { width: 144px; right: max(12px, env(safe-area-inset-right)); bottom: var(--oasis-touch-bottom); }
+.oasis-driving-actions { width: 148px; }
+.oasis-driving-actions .oasis-pad-button { width: 44px; height: 44px; }
+.oasis-touch-world:has(.oasis-flying-actions) { --oasis-touch-reserve: calc(264px + var(--oasis-touch-bottom)); }
+.oasis-touch-world:has(.oasis-driving-actions) { --oasis-touch-reserve: calc(216px + var(--oasis-touch-bottom)); }
+.oasis-touch-world:has(.oasis-driving-actions.oasis-flying-actions) { --oasis-touch-reserve: calc(264px + var(--oasis-touch-bottom)); }
 .oasis-look-pad { top: 112px; bottom: var(--oasis-touch-reserve); }
 .oasis-touch-world .oasis-nav-dock { bottom: var(--oasis-touch-reserve); justify-content: center; gap: 12px; }
 .oasis-touch-world .oasis-extra-tools { display: none; }
