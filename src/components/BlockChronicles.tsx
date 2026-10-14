@@ -1,5 +1,18 @@
 import type React from "react";
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
+import { ClientOnly } from "@tanstack/react-router";
+import { inhabitedQuery } from "@/lib/inhabited.functions";
+const ComicGuardian3D = lazy(() => import("@/components/ComicGuardian3D"));
+
+function Guardian3D({ height }: { height: number }) {
+  return (
+    <ClientOnly fallback={null}>
+      <Suspense fallback={null}>
+        <ComicGuardian3D height={height} />
+      </Suspense>
+    </ClientOnly>
+  );
+}
 import { useQuery } from "@tanstack/react-query";
 import { buildIssue, fetchComicBlocks, seedFrom, type ComicIssue, type ComicPanel } from "@/lib/block-comic";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -54,7 +67,7 @@ function Halftone({ seed, kind }: { seed: number; kind: number }) {
   );
 }
 
-function PanelArt({ panel, kind, issue }: { panel: ComicPanel; kind: number; issue: ComicIssue }) {
+function PanelArt({ panel, kind, issue, inscribed }: { panel: ComicPanel; kind: number; issue: ComicIssue; inscribed: string | null }) {
   const shapes = useMemo(() => {
     const r = seedFrom(issue.hash, panel.seed);
     const out: React.ReactElement[] = [];
@@ -69,9 +82,13 @@ function PanelArt({ panel, kind, issue }: { panel: ComicPanel; kind: number; iss
       {kind === 2 ? (
         <>
           <VoxelLand hash={issue.hash} salt={panel.seed} className="absolute inset-0 h-full w-full" />
-          <div className="absolute left-1/2 top-[8%] -translate-x-1/2">
-            <GuardianPortrait height={issue.height} size={64} />
-          </div>
+          {inscribed ? (
+            <div className="absolute inset-x-0 top-0 h-[78%]"><Guardian3D height={issue.height} /></div>
+          ) : (
+            <div className="absolute left-1/2 top-[8%] -translate-x-1/2 opacity-40 grayscale">
+              <GuardianPortrait height={issue.height} size={64} />
+            </div>
+          )}
         </>
       ) : (
         <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" aria-hidden="true">{shapes}</svg>
@@ -80,15 +97,15 @@ function PanelArt({ panel, kind, issue }: { panel: ComicPanel; kind: number; iss
   );
 }
 
-function Strip({ issue }: { issue: ComicIssue }) {
+function Strip({ issue, inscribed }: { issue: ComicIssue; inscribed: string | null }) {
   return (
     <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
       {issue.panels.map((p, i) => (
         <figure key={i} className="relative aspect-square overflow-hidden border-2 border-foreground">
-          <PanelArt panel={p} kind={i} issue={issue} />
+          <PanelArt panel={p} kind={i} issue={issue} inscribed={inscribed} />
           <span className="absolute left-1 top-1 bg-foreground px-1 font-mono text-[9px] font-bold text-background">{p.kicker}</span>
           <span className="display absolute right-2 top-6 -rotate-6 text-2xl text-bitcoin">{p.sfx}</span>
-          <figcaption className="absolute inset-x-1 bottom-1 border border-foreground bg-background p-1 font-mono text-xs leading-tight">{p.caption}</figcaption>
+          <figcaption className="absolute inset-x-1 bottom-1 border border-foreground bg-background p-1 font-mono text-xs leading-tight">{i === 2 ? (inscribed ? `${p.caption} ITS GUARDIAN IS INSCRIBED AND AWAKE.` : `${p.caption} NO GUARDIAN YET — THE LAND WAITS, DORMANT.`) : p.caption}</figcaption>
         </figure>
       ))}
     </div>
@@ -96,7 +113,7 @@ function Strip({ issue }: { issue: ComicIssue }) {
 }
 
 /** Comic cover tile — the mempool "block cube" of the Chronicles. */
-function Cover({ issue, isNew, onOpen }: { issue: ComicIssue; isNew: boolean; onOpen: () => void }) {
+function Cover({ issue, isNew, onOpen, inscribed }: { issue: ComicIssue; isNew: boolean; onOpen: () => void; inscribed: string | null }) {
   return (
     <button
       type="button"
@@ -105,9 +122,11 @@ function Cover({ issue, isNew, onOpen }: { issue: ComicIssue; isNew: boolean; on
     >
       <Halftone seed={issue.height} kind={issue.height % 4} />
       <VoxelLand hash={issue.hash} salt={issue.height} className="absolute inset-x-0 bottom-0 h-[86px] w-full" />
-      <div className="absolute right-0 top-4">
-        <GuardianPortrait height={issue.height} size={40} />
-      </div>
+      {inscribed ? (
+        <div className="absolute right-0 top-3 h-[70px] w-[70px]"><Guardian3D height={issue.height} /></div>
+      ) : (
+        <div className="absolute right-0 top-4 opacity-40 grayscale"><GuardianPortrait height={issue.height} size={40} /></div>
+      )}
       <div className="absolute inset-x-0 top-0 flex justify-between bg-foreground px-1 font-mono text-[9px] font-bold text-background">
         <span>#{issue.height}</span>
         {isNew && <span className="text-bitcoin">NEW</span>}
@@ -124,10 +143,23 @@ function Cover({ issue, isNew, onOpen }: { issue: ComicIssue; isNew: boolean; on
 /** THE BLOCK CHRONICLES — top-of-page banner: one comic issue per mined block, newest on the left. */
 export function BlockChronicles() {
   const { data, isError } = useQuery({ queryKey: ["block-comic"], queryFn: fetchComicBlocks, refetchInterval: 30_000, staleTime: 20_000 });
-  const issues = useMemo(() => (data ?? []).map(buildIssue), [data]);
+  const { data: inhabited } = useQuery(inhabitedQuery());
+  const live = useMemo(() => (data ?? []).map(buildIssue), [data]);
+  // Every BITMAP with an inscribed Guardian child gets its own issue too (newest children first).
+  const issues = useMemo(() => {
+    const seen = new Set(live.map((i) => i.height));
+    const extra: ComicIssue[] = [];
+    for (const [h, id] of [...(inhabited ?? new Map<number, string>()).entries()].reverse()) {
+      if (seen.has(h)) continue;
+      seen.add(h);
+      extra.push(buildIssue({ id: id.slice(0, 64), height: h, timestamp: 0, txCount: 0, size: 0, pool: null, medianFee: null, totalFees: null, reward: null }));
+    }
+    return [...live, ...extra.slice(0, 24)];
+  }, [live, inhabited]);
+  const insOf = (h: number) => inhabited?.get(h) ?? null;
   const [open, setOpen] = useState<number | null>(null);
   const current = open != null ? issues[open] : null;
-  const next = issues[0] ? issues[0].height + 1 : null;
+  const next = live[0] ? live[0].height + 1 : null;
 
   return (
     <section className="border-b border-border bg-card" data-no-translate>
@@ -146,7 +178,7 @@ export function BlockChronicles() {
         <div className="w-px shrink-0 border-l border-dashed border-border" aria-hidden="true" />
         {issues.length === 0 && !isError && <div className="self-center font-mono text-xs text-muted-foreground">PRINTING LATEST ISSUES…</div>}
         {issues.map((iss, i) => (
-          <Cover key={iss.hash} issue={iss} isNew={i === 0} onOpen={() => setOpen(i)} />
+          <Cover key={iss.hash} issue={iss} isNew={i === 0} inscribed={insOf(iss.height)} onOpen={() => setOpen(i)} />
         ))}
       </div>
       <Dialog open={current != null} onOpenChange={(o) => !o && setOpen(null)}>
@@ -154,7 +186,7 @@ export function BlockChronicles() {
           {current && (
             <>
               <DialogTitle className="display">ISSUE #{current.height} — {current.title}</DialogTitle>
-              <Strip issue={current} />
+              <Strip issue={current} inscribed={insOf(current.height)} />
               <div className="flex items-center justify-between gap-2">
                 <button type="button" className="btn-term-ghost" disabled={open === issues.length - 1} onClick={() => setOpen((o) => (o ?? 0) + 1)}>← OLDER</button>
                 <a href={`https://mempool.space/block/${current.hash}`} target="_blank" rel="noreferrer" className="font-mono text-[10px] text-signal">VERIFY BLOCK ↗</a>
