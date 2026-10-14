@@ -19,6 +19,7 @@ import { MintPointer } from "@/components/bitmon/MintPointer";
 import { ActiveBuilders } from "@/components/ActiveBuilders";
 import { DailyStreak } from "@/components/retention/DailyStreak";
 import { SiteFundTracker } from "@/components/SiteFundTracker";
+import { BlockChronicles } from "@/components/BlockChronicles";
 
 
 export const Route = createFileRoute("/")({
@@ -185,6 +186,8 @@ function Index() {
       </section>
 
       <section className="mx-auto max-w-[1600px] px-3 pt-3 md:px-5"><LoopNavigator active="discover" /></section>
+
+      <BlockChronicles />
 
       <ActiveBuilders />
 
