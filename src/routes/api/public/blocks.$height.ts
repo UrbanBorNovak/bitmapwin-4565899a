@@ -73,13 +73,12 @@ export const Route = createFileRoute("/api/public/blocks/$height")({
               headers: { ...CORS, "cache-control": "public, max-age=60", "x-tx-count": "0" },
             });
           }
-          return Response.json(
-            { error: message },
-            {
-              status: 503,
-              headers: { ...CORS, "cache-control": "no-store", "retry-after": "3" },
-            },
-          );
+          // Slow upstream: answer an uncached empty map so the world renders plain land
+          // instead of surfacing a hard failure; the next visit tries again.
+          return new Response(null, {
+            status: 204,
+            headers: { ...CORS, "cache-control": "no-store", "x-tx-count": "0", "x-degraded": message.slice(0, 120) },
+          });
         }
 
       },
