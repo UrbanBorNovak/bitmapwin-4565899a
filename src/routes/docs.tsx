@@ -8,6 +8,8 @@ import {
   RightsInfographic,
 } from "@/components/docs/Infographics";
 import { ChainStackInfographic } from "@/components/docs/ChainStackInfographic";
+import { ForgeBuildInfographic, GuardianLifecycleInfographic } from "@/components/docs/ProtocolInfographics";
+import { BWVX_SPEC } from "@/lib/protocol-sdk";
 
 
 export const Route = createFileRoute("/docs")({
@@ -124,6 +126,17 @@ function DocsPage() {
       </section>
 
 
+
+      <section className="mt-10">
+        <h2 className="display border-b border-border pb-2 text-xl">GUARDIANS — SUMMON, INSCRIBE, BREED</h2>
+        <div className="mt-4"><GuardianLifecycleInfographic /></div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="display border-b border-border pb-2 text-xl">LAND FORGE — BUILD ON YOUR BITMAP</h2>
+        <div className="mt-4"><ForgeBuildInfographic /></div>
+        <pre data-no-translate className="mt-4 overflow-x-auto border border-border bg-surface p-4 font-mono text-[11px] leading-relaxed text-muted-foreground">{BWVX_SPEC}</pre>
+      </section>
 
       <section className="mt-10">
         <h2 className="display border-b border-border pb-2 text-xl">REFERENCES</h2>
