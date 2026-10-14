@@ -5,7 +5,7 @@
  * builds are still read as a fallback.
  */
 import { FORGE_FORMAT, decodeBuild } from "@/lib/voxel-populate";
-import { FORGE_MASTER_DELEGATE_ID, parseForgeMeta, type ForgeMeta } from "@/lib/forge-delegate";
+import { FORGE_MASTER_DELEGATE_ID, isForgeMasterDelegate, parseForgeMeta, type ForgeMeta } from "@/lib/forge-delegate";
 import { encodeBuildBest } from "@/lib/voxel-populate";
 import { isInscriptionId, parseAssemblyHtml, placePart, type AsmPart } from "@/lib/forge-assembly";
 import type { TplBlock } from "@/lib/voxel-templates";
