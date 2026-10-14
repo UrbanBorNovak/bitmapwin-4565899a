@@ -288,6 +288,9 @@ function ForgePage() {
       if (e.key === "s" || e.key === "S") setTool("stamp");
       if (e.key === "x" || e.key === "X") setTool("erase");
       if (e.key === "p" || e.key === "P") setTool("parcel");
+      if (e.key === "w" || e.key === "W") { setTool("box"); setBoxStart(null); }
+      if (e.key === "g" || e.key === "G") setTool("perch");
+      if (e.key === "Escape") setBoxStart(null);
       if (/^[0-9]$/.test(e.key)) { const b = BLOCKS[(Number(e.key) + 9) % 10]; if (b) { setPaint(b.id); setTool("block"); } }
     };
     window.addEventListener("keydown", onKey);
@@ -458,7 +461,35 @@ function ForgePage() {
               {focusRect && <p className="mt-1 text-accent">PARCEL {focusRect.index}.{height}.BITMAP · {focusRect.x1 - focusRect.x0}×{focusRect.z1 - focusRect.z0} CELLS</p>}
             </div>
           )}
-          {tool === "block" && (
+          <div className="rounded border border-primary/40 bg-card/40 p-2 text-[11px]">
+            <p className="text-primary">ON-CHAIN PIECES</p>
+            <p className="mt-1 text-muted-foreground">Paste the inscription ID of any Land Forge build. It snaps in by reference — your inscription points at it instead of paying for its blocks again.</p>
+            <div className="mt-2 flex gap-1">
+              <input value={pieceId} onChange={(e) => setPieceId(e.target.value.trim())} onKeyDown={(e) => { if (e.key === "Enter") void loadPiece(); }} placeholder="f6b0…i0" className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-foreground" />
+              <button type="button" disabled={pieceBusy} onClick={() => void loadPiece()} className="rounded border border-primary bg-primary/10 px-2 py-1 text-[10px] text-foreground disabled:opacity-40">{pieceBusy ? "…" : "LOAD"}</button>
+            </div>
+            {chainPieces.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {chainPieces.map((p) => (
+                  <button key={p.id} type="button" onClick={() => { setPicked(p); setTool("stamp"); }} className={`w-full rounded border px-2 py-1 text-left text-[10px] ${picked.id === p.id && tool === "stamp" ? "border-primary text-foreground" : "border-border text-muted-foreground"}`}>
+                    {p.name} · {p.blocks.length} voxels · {placements.filter((x) => `ins:${x.part.id}` === p.id && x.keys.some((k) => world.has(k))).length} placed
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {height !== null && (
+            <div className="rounded border border-accent/40 bg-card/40 p-2 text-[11px]">
+              <p className="text-accent">GUARDIAN PERCH</p>
+              <p className="mt-1 text-muted-foreground">{dnaQ.data ? "Your block's Guardian lives on the build, in the same inscription, drawn from its on-chain design." : "Loading this block's Guardian…"}</p>
+              <div className="mt-2 flex flex-wrap gap-1">
+                <button type="button" onClick={() => setTool("perch")} className={`rounded border px-2 py-0.5 text-[10px] ${tool === "perch" ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>PLACE (G)</button>
+                <button type="button" disabled={!dnaQ.data} onClick={autoPerch} className="rounded border border-border px-2 py-0.5 text-[10px] text-foreground disabled:opacity-40">ON TOP</button>
+                {perch && <button type="button" onClick={() => setPerch(null)} className="rounded border border-border px-2 py-0.5 text-[10px] text-destructive">REMOVE</button>}
+              </div>
+            </div>
+          )}
+          {(tool === "block" || tool === "box") && (
             <div className="grid grid-cols-4 gap-1">
               {BLOCKS.map((b) => (
                 <button key={b.id} type="button" title={b.name} onClick={() => setPaint(b.id)} className={`h-8 rounded border ${paint === b.id ? "border-primary" : "border-border"}`} style={{ background: b.top }} />
