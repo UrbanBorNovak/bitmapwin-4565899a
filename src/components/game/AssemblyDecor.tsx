@@ -211,6 +211,7 @@ function Memorials() {
     { t: "CHANCELLOR ON BRINK OF SECOND BAILOUT FOR BANKS", p: [0, 8.6, -HALL + 0.8] as const, r: 0 },
     { t: "CYPHERPUNKS WRITE CODE", p: [-HALL + 0.8, 8.2, 0] as const, r: Math.PI / 2 },
     { t: "ZERO KNOWLEDGE · NO MASTERS", p: [HALL - 0.8, 8.2, 0] as const, r: -Math.PI / 2 },
+    { t: "THE EMPORIUM DELEGATES · 717328.BITMAP · NO NAMES, ONLY KEYS", p: [0, 9.4, -HALL + 0.8] as const, r: 0 },
   ];
   return (
     <>
