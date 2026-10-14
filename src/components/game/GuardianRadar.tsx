@@ -21,11 +21,14 @@ export function GuardianRadar({ current }: { current?: number }) {
                 <span className="size-2.5 shrink-0 rounded-sm" style={{ background: g.accent }} />
                 <span className="truncate">{g.species} · <span className="text-bitcoin">{g.height}.BITMAP</span></span>
               </span>
-              {current === g.height ? (
-                <span className="label text-signal">HERE</span>
-              ) : (
-                <Link to="/oasis" search={{ height: g.height }} className="label text-bitcoin hover:text-foreground">[WARP]</Link>
-              )}
+              <span className="flex shrink-0 gap-2">
+                {g.inscriptionId ? <Link to="/breed" search={{ sire: g.height }} className="label text-signal hover:text-foreground">[BREED]</Link> : null}
+                {current === g.height ? (
+                  <span className="label text-signal">HERE</span>
+                ) : (
+                  <Link to="/oasis" search={{ height: g.height }} className="label text-bitcoin hover:text-foreground">[WARP]</Link>
+                )}
+              </span>
             </li>
           ))}
         </ul>

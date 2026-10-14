@@ -143,6 +143,7 @@ export function GuardianIndex({ guardians, onPick }: { guardians: G[]; onPick?: 
                   </button>
                   <span className="rounded-sm px-1.5 py-0.5 text-[9px] font-bold" style={{ color: TIER_COL[tier], border: `1px solid ${TIER_COL[tier]}55` }}>{tier}</span>
                   <span className="text-[9px]" style={{ color: RA_COL[g.rarity] }}>{g.rarity}</span>
+                  {g.inscriptionId ? <Link to="/breed" search={{ sire: g.height }} className="text-[10px] text-signal hover:underline">BREED →</Link> : null}
                   <Link to="/oasis" search={{ height: g.height }} className="text-[10px] text-bitcoin hover:underline">OASIS →</Link>
                 </div>
               ))}
