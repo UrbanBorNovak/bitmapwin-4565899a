@@ -22,6 +22,8 @@ import { useWalletSession } from "@/lib/wallet-session";
 import { heldHeightsQuery } from "@/lib/held-parcels";
 import { forgeRightsFn } from "@/lib/forge-rights.functions";
 import { forgePieceFn } from "@/lib/forge-parts.functions";
+import { collectionPiecesQuery } from "@/lib/forge-collection.functions";
+import { DONATION_ADDRESS } from "@/lib/donations";
 import { forgeAssemblyHtml, isInscriptionId, normPart, type AsmPart } from "@/lib/forge-assembly";
 import { bakeGuardian } from "@/lib/forge-guardian-bake";
 import { guardianDnaQuery } from "@/lib/bitmon-queries";
@@ -238,8 +240,11 @@ function ForgePage() {
   const [perch, setPerch] = useState<[number, number, number] | null>(null);
   const dnaQ = useQuery({ ...guardianDnaQuery(height ?? 0), enabled: height !== null });
   useEffect(() => { setPerch(null); setBoxStart(null); }, [height]);
-  const loadPiece = async (): Promise<void> => {
-    const id = pieceId.trim();
+  const collectionQ = useQuery(collectionPiecesQuery());
+  const [makers, setMakers] = useState<Record<string, string>>({});
+  const [siteTribute, setSiteTribute] = useState(true);
+  const loadPiece = async (given?: string, maker?: string | null): Promise<void> => {
+    const id = (given ?? pieceId).trim();
     if (!isInscriptionId(id)) { toast.error("PASTE A FULL INSCRIPTION ID (…i0)"); return; }
     setPieceBusy(true);
     const r = await pieceFn({ data: { id } }).catch(() => ({ ok: false as const, error: "COULD NOT REACH BITCOIN — TRY AGAIN" }));
@@ -247,6 +252,7 @@ function ForgePage() {
     if (!r.ok) { toast.error(r.error); return; }
     const p: Prefab = { id: `ins:${id}`, name: `◆ ${id.slice(0, 8)}…${id.slice(-4)}`, sphere: "community" as Sphere, blocks: normPart(r.blocks) } as Prefab;
     setChainPieces((c) => [p, ...c.filter((x) => x.id !== p.id)].slice(0, 12));
+    if (maker) setMakers((m) => ({ ...m, [id]: maker }));
     setPicked(p); setTool("stamp"); setPieceId("");
     toast.success(`LOADED ${r.blocks.length} VOXELS FROM BITCOIN — CLICK TO SNAP IT IN`);
   };
