@@ -182,8 +182,6 @@ import { FootTrail } from "@/components/game/FootTrail";
 import { VehicleGunner } from "@/components/game/VehicleGunner";
 import { VehicleDamageFx } from "@/components/game/VehicleDamageFx";
 import { MysteryMist } from "@/components/game/MysteryMist";
-import { LandGrowth } from "@/components/game/LandGrowth";
-import { BlockFloraLayer } from "@/components/game/BlockFloraLayer";
 import { LandSkins } from "@/components/game/LandSkins";
 import { WorldDepthLayers } from "@/components/game/WorldDepthLayers";
 import { WorldAtmosphere } from "@/components/game/WorldAtmosphere";
