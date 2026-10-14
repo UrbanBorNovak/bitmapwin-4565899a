@@ -136,6 +136,7 @@ function Index() {
                   </div>
                   <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs font-bold">
                     <Link to="/forge" className="text-bitcoin hover:text-foreground">LAND FORGE →</Link>
+                    <Link to="/parcel" className="text-bitcoin hover:text-foreground">PARCEL STUDIO →</Link>
                     <Link to="/extenders" className="text-bitcoin hover:text-foreground">EXPERIENCES →</Link>
                     <Link to="/create" className="text-bitcoin hover:text-foreground">CREATION →</Link>
                   </div>
@@ -273,6 +274,35 @@ function Index() {
             ].map(([n, t]) => (
               <li key={n} className="flex gap-3 border-b border-border p-3 last:border-b-0">
                 <span className="text-bitcoin">{n}</span>
+                <span>{t}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-[1600px] px-3 pb-24 md:px-5">
+        <div className="grid gap-6 bg-card/60 backdrop-blur border border-signal/40 p-5 md:grid-cols-[1.4fr_1fr] md:p-8">
+          <div>
+            <div className="label text-signal">NEW · PARCEL STUDIO</div>
+            <h2 className="display mt-2 text-2xl md:text-4xl">SPLIT YOUR BITMAP INTO TRUE ON-CHAIN PARCELS.</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              See every transaction of your block as a tile, pick one or many open parcels, and inscribe them as real
+              children of your BITMAP. Fees from 1 sat/vB, and the 546-sat site fee is charged only once per creation.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Link to="/parcel" className="btn-term min-h-12">OPEN PARCEL STUDIO →</Link>
+            </div>
+          </div>
+          <ul className="grid content-start gap-px border border-border font-mono text-xs">
+            {[
+              ["01", "ONE TILE PER BLOCK TRANSACTION"],
+              ["02", "MULTI-SELECT CART WITH TOTAL COST"],
+              ["03", "546 SATS ONCE — ONE PARCEL OR TWENTY"],
+              ["04", "FIRST INSCRIPTION OF A PARCEL WINS"],
+            ].map(([n, t]) => (
+              <li key={n} className="flex gap-3 border-b border-border p-3 last:border-b-0">
+                <span className="text-signal">{n}</span>
                 <span>{t}</span>
               </li>
             ))}

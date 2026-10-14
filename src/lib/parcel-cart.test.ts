@@ -8,7 +8,13 @@ describe("parcel cart", () => {
   it("scales fee with the fee rate", () => {
     const a = estimateCart([1, 2], 560770, 1), b = estimateCart([1, 2], 560770, 3);
     expect(b.feeSats).toBe(Math.ceil(a.vbytes * 3));
-    expect(b.totalSats).toBe(b.feeSats + 1092);
+    expect(b.totalSats).toBe(b.feeSats + 1092 + 546);
+  });
+  it("charges the 546-sat site fee only once for one or many parcels", () => {
+    expect(estimateCart([1], 560770, 1).siteFeeSats).toBe(546);
+    expect(estimateCart([1, 2, 3, 4, 5], 560770, 1).siteFeeSats).toBe(546);
+    expect(estimateCart([], 560770, 1).siteFeeSats).toBe(0);
+    expect(estimateCart([2], 560770, 1, false).siteFeeSats).toBe(0);
   });
   it("never goes below 1 sat/vB", () => {
     expect(estimateCart([5], 1, 0).feeSats).toBe(estimateCart([5], 1, 1).feeSats);

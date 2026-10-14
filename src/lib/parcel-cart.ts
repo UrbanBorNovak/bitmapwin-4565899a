@@ -12,14 +12,21 @@ export function parcelVbytes(index: number, height: number): number {
   return COMMIT_VB + REVEAL_BASE_VB + Math.ceil(parcelName(index, height).length / 4);
 }
 
-export type CartEstimate = { count: number; vbytes: number; feeSats: number; postageSats: number; totalSats: number };
+/** Site fee charged once per creation session, whether one parcel or many. Paid inside the first reveal. */
+export const PARCEL_SITE_FEE = 546;
+/** Extra reveal output for the site fee. */
+const SITE_FEE_VB = 43;
 
-export function estimateCart(indexes: number[], height: number, feeRate: number): CartEstimate {
+export type CartEstimate = { count: number; vbytes: number; feeSats: number; postageSats: number; siteFeeSats: number; totalSats: number };
+
+export function estimateCart(indexes: number[], height: number, feeRate: number, includeSiteFee = true): CartEstimate {
   const rate = Math.max(1, feeRate);
-  const vbytes = indexes.reduce((s, i) => s + parcelVbytes(i, height), 0);
+  const charge = includeSiteFee && indexes.length > 0;
+  const vbytes = indexes.reduce((s, i) => s + parcelVbytes(i, height), 0) + (charge ? SITE_FEE_VB : 0);
   const feeSats = Math.ceil(vbytes * rate);
   const postageSats = indexes.length * PARCEL_POSTAGE;
-  return { count: indexes.length, vbytes, feeSats, postageSats, totalSats: feeSats + postageSats };
+  const siteFeeSats = charge ? PARCEL_SITE_FEE : 0;
+  return { count: indexes.length, vbytes, feeSats, postageSats, siteFeeSats, totalSats: feeSats + postageSats + siteFeeSats };
 }
 
 /** Toggle an index in the cart, keeping order and the size cap. */
