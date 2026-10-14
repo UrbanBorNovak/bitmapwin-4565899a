@@ -21,16 +21,24 @@ async function json<T>(path: string): Promise<T | null> {
 }
 
 async function addressInscriptions(address: string): Promise<string[]> {
-  const body = await json<{ inscriptions?: unknown }>(`/address/${address}`);
-  const list = Array.isArray(body?.inscriptions) ? body!.inscriptions : [];
-  return [...new Set(list.filter((x): x is string => typeof x === "string" && ID_RE.test(x)))].slice(0, 400);
+  try {
+    const r = await fetch(`${ORD}/address/${address}`, { signal: AbortSignal.timeout(12_000) });
+    if (!r.ok) return [];
+    const html = await r.text();
+    return [...new Set([...html.matchAll(/\/inscription\/([0-9a-f]{64}i\d+)/g)].map((m) => m[1]!))].slice(0, 400);
+  } catch {
+    return [];
+  }
 }
 
-async function isPortrait(id: string): Promise<boolean> {
-  const meta = await json<{ parents?: unknown; content_type?: string | null }>(`/r/inscription/${id}`);
-  if (!meta) return false;
-  const parents = Array.isArray(meta.parents) ? meta.parents : [];
-  return parents.includes(EMPORIUM_PARENT) && Boolean(meta.content_type?.toLowerCase().startsWith("image/"));
+async function isPortrait(id: string, address: string): Promise<boolean> {
+  const [meta, parents] = await Promise.all([
+    json<{ content_type?: string | null; address?: string | null }>(`/r/inscription/${id}`),
+    json<{ ids?: unknown }>(`/r/parents/${id}`),
+  ]);
+  if (!meta || meta.address !== address) return false;
+  const ids = Array.isArray(parents?.ids) ? parents!.ids : [];
+  return ids.includes(EMPORIUM_PARENT) && Boolean(meta.content_type?.toLowerCase().startsWith("image/"));
 }
 
 export async function verifyEmporiumResident(address: string): Promise<EmporiumResidency> {
@@ -54,7 +62,7 @@ export async function verifyEmporiumResident(address: string): Promise<EmporiumR
   const portraits: string[] = [];
   for (let i = 0; i < ids.length && portraits.length < 24; i += 10) {
     const batch = ids.slice(i, i + 10);
-    const hits = await Promise.all(batch.map(isPortrait));
+    const hits = await Promise.all(batch.map((id) => isPortrait(id, wanted)));
     batch.forEach((id, k) => { if (hits[k]) portraits.push(id); });
   }
   return { ...empty, resident: portraits.length > 0 || parcels.length > 0, portraits, parcels };
