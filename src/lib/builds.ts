@@ -153,6 +153,25 @@ export async function removeDelegate(id: string) {
 export const buildsQuery = () =>
   queryOptions({ queryKey: ["builds", "all-public"], queryFn: fetchBuilds, staleTime: 30_000 });
 
+/** Chain-verified Land Forge builds (server-written directory, public read). */
+export type ForgeDirEntry = { height: number; inscriptionId: string; sat: string | null; archetype: string | null; blocks: number; verifiedAt: string | null };
+
+export async function fetchForgeDirectory(): Promise<ForgeDirEntry[]> {
+  const { data, error } = await supabase
+    .from("bitmap_forge_builds")
+    .select("bitmap_height, inscription_id, sat, archetype, block_count, verified_at")
+    .order("verified_at", { ascending: false })
+    .limit(500);
+  if (error) throw error;
+  return (data ?? []).map((r) => ({
+    height: Number(r.bitmap_height), inscriptionId: r.inscription_id, sat: r.sat ?? null,
+    archetype: r.archetype ?? null, blocks: Number(r.block_count ?? 0), verifiedAt: r.verified_at ?? null,
+  }));
+}
+
+export const forgeDirectoryQuery = () =>
+  queryOptions({ queryKey: ["builds", "forge-directory"], queryFn: fetchForgeDirectory, staleTime: 60_000 });
+
 export const delegatesQuery = (height: number) =>
   queryOptions({
     queryKey: ["build-delegates", height],
