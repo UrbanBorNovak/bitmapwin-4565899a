@@ -9,6 +9,7 @@ import {
   INSCRIBE_MAX_BYTES,
   clearJob,
   findCommitOutput,
+  liveFeeRate,
   loadJob,
   passArtifactSvg,
   prepareJob,
@@ -91,6 +92,21 @@ export function ShadowInscriber(props: {
   const signCollection = useServerFn(signCollectionParentFn);
 
   useEffect(() => setJob(loadJob(props.digest)), [props.digest]);
+
+  const [feeMode, setFeeMode] = useState<string>("live");
+  const [customFee, setCustomFee] = useState("1");
+  const [liveRate, setLiveRate] = useState<number | null>(null);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("bitmapwin:inscribe-fee");
+      if (saved) { const s = JSON.parse(saved) as { mode: string; custom: string }; setFeeMode(s.mode); setCustomFee(s.custom); }
+    } catch { /* ignore */ }
+    void liveFeeRate().then(setLiveRate).catch(() => {});
+  }, []);
+  useEffect(() => {
+    try { localStorage.setItem("bitmapwin:inscribe-fee", JSON.stringify({ mode: feeMode, custom: customFee })); } catch { /* ignore */ }
+  }, [feeMode, customFee]);
+  const chosenFee = feeMode === "1" ? 1 : feeMode === "custom" && Number(customFee) >= 1 ? Number(customFee) : undefined;
 
   const variants = props.artifactVariants ?? [];
   const variant = variants.find((v) => v.key === variantKey) ?? variants[0] ?? null;
@@ -274,6 +290,7 @@ export function ShadowInscriber(props: {
         ...(!file && variant?.metadata ? { metadata: variant.metadata } : {}),
         ...(!file && variant?.tribute ? { tribute: variant.tribute } : {}),
         ...(!file && variant?.tributes?.length ? { tributes: variant.tributes } : {}),
+        ...(chosenFee !== undefined ? { feeRate: chosenFee } : {}),
       });
 
       setJob(prepared);
@@ -394,6 +411,38 @@ export function ShadowInscriber(props: {
               ← BACK TO THE PASS ART
             </button>
           ) : null}
+          <div className="space-y-1">
+            <p className="label text-muted-foreground">FEE RATE · SAT/VB {liveRate ? `· MEMPOOL NOW ${liveRate}` : ""}</p>
+            <div className="flex flex-wrap items-center gap-1">
+              {[
+                { k: "1", label: "1 · ECONOMY" },
+                { k: "live", label: "LIVE" },
+              ].map((o) => (
+                <button
+                  key={o.k}
+                  type="button"
+                  onClick={() => { setFeeMode(o.k); if (o.k === "1") setCustomFee("1"); }}
+                  className={`border px-2 py-1 font-mono text-[10px] ${feeMode === o.k ? "border-bitcoin bg-bitcoin text-background" : "border-border text-muted-foreground hover:border-bitcoin"}`}
+                >
+                  {o.label}
+                </button>
+              ))}
+              <input
+                type="number"
+                min={1}
+                step={0.1}
+                inputMode="decimal"
+                aria-label="Custom fee rate in sat per vbyte"
+                value={feeMode === "custom" ? customFee : ""}
+                placeholder="CUSTOM"
+                onChange={(e) => { setFeeMode("custom"); setCustomFee(e.target.value); }}
+                className={`w-20 border bg-background px-2 py-1 font-mono text-[10px] ${feeMode === "custom" ? "border-bitcoin" : "border-border"}`}
+              />
+            </div>
+            {chosenFee !== undefined && chosenFee <= 1.5 ? (
+              <p className="label text-muted-foreground">LOW FEES CAN TAKE HOURS OR DAYS TO CONFIRM. KEEP YOUR RECOVERY FILE.</p>
+            ) : null}
+          </div>
           <button
             type="button"
             disabled={!!busy}

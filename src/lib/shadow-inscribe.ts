@@ -178,6 +178,8 @@ export async function prepareJob(input: {
   /** land the inscription on this sat offset (reinscription onto a parent's sat) */
   pointer?: number;
   metadata?: Record<string, unknown>;
+  /** sat/vB chosen by the holder; falls back to the live mempool rate */
+  feeRate?: number;
 }): Promise<InscribeJob> {
   if (input.body.length > INSCRIBE_MAX_BYTES) throw new Error("FILE TOO LARGE — KEEP IT UNDER 60 KB");
   const parents = input.parents ?? [];
@@ -191,7 +193,7 @@ export async function prepareJob(input: {
   const pointer = input.pointer;
   const metadata = input.metadata;
   const pay = revealPayment(privHex, input.contentType, body, input.digest, parents, delegate, pointer, metadata);
-  const feeRate = await liveFeeRate();
+  const feeRate = input.feeRate && input.feeRate > 0 ? Math.max(1, Math.round(input.feeRate * 10) / 10) : await liveFeeRate();
   // witness bytes count a quarter; ~ 150 vB of fixed overhead for 1-in/1-out taproot.
   // Each parent adds one taproot input (~58 vB) and its pass-through output (~43 vB).
   const parentIds = parents.reduce((n, p) => n + p.inscriptionId.length, 0);
