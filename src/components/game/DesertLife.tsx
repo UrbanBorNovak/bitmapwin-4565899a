@@ -16,18 +16,12 @@ import { patchSurface, surfaceUniforms, tickSurface } from "@/lib/onchain-surfac
 import { TreasureChests } from "@/components/game/TreasureChests";
 import { MineralNodes } from "@/components/game/MineralNodes";
 import { OreMines } from "@/components/game/OreMines";
-import { PineTrees } from "@/components/game/PineTrees";
-import { Houses } from "@/components/game/Houses";
-import { ClayShrines } from "@/components/game/ClayShrines";
-import { Igloos } from "@/components/game/Igloos";
-import { Playgrounds } from "@/components/game/Playgrounds";
 import { GoldenEgg } from "@/components/game/GoldenEgg";
 import { AntelopeBody } from "@/components/game/Antelope";
 import { UnicornBody } from "@/components/game/Unicorn";
 import { JadeNodes } from "@/components/game/JadeNodes";
 import { DiamondNodes } from "@/components/game/DiamondNodes";
 import { poseDown, simDelta} from "@/lib/player-state";
-import { DesertProps } from "@/components/game/DesertProps";
 import { InscribedModel, contentUrl } from "@/components/game/InscribedParts";
 import { VoxelCritter, hasVoxelSculpt } from "@/components/game/CritterVoxels";
 import { WildCritter, hasWildSculpt } from "@/components/game/WildVoxels";
@@ -554,14 +548,10 @@ export const DesertLife = memo(function DesertLife({
       <MineralNodes unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <JadeNodes unit={unit} center={center} radius={radius} />
       <DiamondNodes unit={unit} center={center} radius={radius} />
-      <DesertProps unit={unit} center={center} radius={radius} />
       <OreMines unit={unit} center={center} radius={radius} />
-      <PineTrees unit={unit} center={treeCenter} radius={radius} />
+      {/* Land stays clear for inscribed builds: no procedural houses, shrines,
+          igloos, playgrounds or groves. Rare voxel trees grow only beyond the grid. */}
       <VoxelTrees unit={unit} center={treeCenter} radius={radius} />
-      <Houses unit={unit} center={center} radius={radius} />
-      <ClayShrines unit={unit} center={center} radius={radius} />
-      <Igloos unit={unit} center={center} radius={radius} />
-      <Playgrounds unit={unit} center={center} radius={radius} />
       <GoldenEgg unit={unit} pose={pose} />
       <TreasureChests unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <Critters unit={unit} colors={colors} pose={pose} onBite={onBite} />

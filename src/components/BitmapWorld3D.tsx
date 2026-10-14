@@ -182,8 +182,6 @@ import { FootTrail } from "@/components/game/FootTrail";
 import { VehicleGunner } from "@/components/game/VehicleGunner";
 import { VehicleDamageFx } from "@/components/game/VehicleDamageFx";
 import { MysteryMist } from "@/components/game/MysteryMist";
-import { LandGrowth } from "@/components/game/LandGrowth";
-import { BlockFloraLayer } from "@/components/game/BlockFloraLayer";
 import { LandSkins } from "@/components/game/LandSkins";
 import { WorldDepthLayers } from "@/components/game/WorldDepthLayers";
 import { WorldAtmosphere } from "@/components/game/WorldAtmosphere";
@@ -2335,7 +2333,8 @@ function OnChainModels({ models, bitcoin }: { models: BitmapModel[]; bitcoin: st
         const allowedWaterModel =
           model.inscriptionId === ISLAND_INSCRIPTION ||
           RIDES.some((ride) => ride.kind === "water" && ride.inscription === model.inscriptionId);
-        if (isSea(x, z) && !allowedWaterModel) return null;
+        // Every BITMAP tile holds parcels; only water models off the land render.
+        if (!isSea(x, z) || !allowedWaterModel) return null;
         return (
           <Suspense
             key={model.bitmapHeight}
@@ -2922,8 +2921,6 @@ const WorldScene = memo(function WorldScene({
             critical={vehicleCritical}
             color={colors.bitcoin}
           /> : null}
-          <LandGrowth unit={AVATAR_U} pose={pose} firstPerson={cameraMode === "first"} />
-          <BlockFloraLayer pose={pose} />
           <DropshipLayer pose={pose} surface={traversalSurfaceY} />
           <ShardRaidLayer pose={pose} surface={traversalSurfaceY} />
           <ForgeNearby pose={pose} surface={traversalSurfaceY} />
