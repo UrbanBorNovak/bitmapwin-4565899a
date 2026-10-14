@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { DataBadge } from "@/components/extenders/DataBadge";
 import { LAND_PERMISSIONS, SDK_VERSION } from "@/lib/extenders";
 import { RUNTIME_LIMITS, SDK_MODULES, SDK_TYPES, STARTER_TEMPLATES } from "@/lib/extender-sdk";
+import { ForgeBuildInfographic, GuardianLifecycleInfographic } from "@/components/docs/ProtocolInfographics";
+import { AGENT_TOOLS, BWVX_SPEC } from "@/lib/protocol-sdk";
 
 export const Route = createFileRoute("/sdk")({
   head: () => {
@@ -165,6 +167,27 @@ function SdkPage() {
             <li key={perm} className="border border-border px-3 py-2" data-no-translate>{perm.toUpperCase()}</li>
           ))}
         </ul>
+      </section>
+
+      <section className="mt-12">
+        <h2 className="display text-2xl">AGENT TOOLS — GUARDIANS & LAND FORGE</h2>
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          Machine-readable recipes an AI agent can follow. Agents prepare and preview; a human wallet always signs and pays.
+        </p>
+        <div className="mt-5 space-y-4">
+          <GuardianLifecycleInfographic />
+          <ForgeBuildInfographic />
+        </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          {AGENT_TOOLS.map((t) => (
+            <section key={t.name} className="border border-border bg-surface p-4">
+              <div className="label text-bitcoin" data-no-translate>{t.name}</div>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t.description}</p>
+              <pre data-no-translate className="mt-3 overflow-x-auto font-mono text-[10px] text-foreground">{JSON.stringify({ input: t.input, output: t.output }, null, 2)}</pre>
+            </section>
+          ))}
+        </div>
+        <pre data-no-translate className="mt-4 overflow-x-auto border border-border bg-surface p-4 font-mono text-[10px] leading-relaxed text-muted-foreground">{BWVX_SPEC}</pre>
       </section>
 
       <div className="mt-10 flex flex-wrap gap-2">
