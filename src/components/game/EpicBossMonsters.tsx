@@ -125,11 +125,86 @@ function queenAnt(): Sculpt {
   return { lit, glow };
 }
 
+/** The enormous Queen in her nest: queen at the centre, ringed by royal guards and glowing larvae. */
+function antNest(): Sculpt {
+  const q = queenAnt();
+  const lit = [...q.lit], glow = [...q.glow];
+  // nest mound
+  for (let i = 0; i < 14; i++) { const a = (i / 14) * Math.PI * 2; lit.push([Math.cos(a) * 16, 0.6, Math.sin(a) * 16 - 4, 6, 1.6 + (i % 3) * 0.6, 4, i % 2 ? "#5a4224" : "#4a361c", 0, -a, 0]); }
+  // royal guards: small ants facing out
+  for (let g = 0; g < 4; g++) {
+    const a = (g / 4) * Math.PI * 2 + 0.4, cx = Math.cos(a) * 12, cz = Math.sin(a) * 12 - 4;
+    lit.push([cx, 2.4, cz, 2.4, 2, 3.4, "#3a280e", 0, -a, 0], [cx + Math.cos(a) * 2.2, 2.8, cz + Math.sin(a) * 2.2, 1.8, 1.6, 1.8, "#6b4a1a"]);
+    for (const s of [-1, 1]) lit.push([cx + s * 1.6, 1, cz, 2.6, 0.4, 0.4, "#1e140a", 0, -a, s * 0.6]);
+    glow.push([cx + Math.cos(a) * 3, 3.2, cz + Math.sin(a) * 3, 0.5, 0.5, 0.5, "#ff3a2a"]);
+  }
+  // larvae
+  for (let l = 0; l < 10; l++) { const a = l * 2.4, r = 5 + (l % 3) * 2; glow.push([Math.cos(a) * r, 0.7, -14 + Math.sin(a) * r * 0.6, 1.4, 1, 2, "#fff2b0"]); }
+  return { lit, glow };
+}
+
+/** Baium: a seated stone titan on a throne with a halo. */
+function baium(): Sculpt {
+  const S = "#8f9aa8", D = "#5c6470", G = "#8fd3ff", lit: Vox[] = [], glow: Vox[] = [];
+  lit.push([0, 3, -3, 14, 6, 10, D], [0, 13, -7, 14, 18, 2, D]); // throne
+  lit.push([0, 10, -2, 7, 8, 5, S], [0, 16, -2, 5, 4, 4, S], [0, 19.5, -1.6, 3.6, 3.6, 3.6, S]); // torso + head
+  for (const s of [-1, 1]) {
+    lit.push([s * 5, 12, -1, 2.6, 7, 2.6, S, 0, 0, s * 0.2], [s * 6, 7.5, 1.4, 2.2, 2.2, 5, D]); // arms on rests
+    lit.push([s * 2.2, 6.5, 2.5, 2.8, 2.6, 7, S], [s * 2.2, 2.6, 5.6, 2.6, 5.4, 2.6, S]); // legs
+    glow.push([s * 0.8, 20, 0.2, 0.7, 0.5, 0.3, G]);
+  }
+  for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; glow.push([Math.cos(a) * 4.4, 21 + Math.sin(a) * 4.4, -3, 0.8, 0.8, 0.4, G]); }
+  return { lit, glow };
+}
+
+/** Zaken: a skeletal pirate lord standing on a ship deck. */
+function zaken(): Sculpt {
+  const B = "#d8d0bf", C = "#2a1840", W = "#5a3a1e", lit: Vox[] = [], glow: Vox[] = [];
+  lit.push([0, 0.8, 0, 12, 1.6, 22, W], [0, 2.4, 10, 6, 1.6, 3, W]); // deck
+  lit.push([0, 8, 0, 4, 6, 2.6, B], [0, 12.5, 0, 6, 4, 3, C], [0, 16, 0, 3, 3, 3, B], [0, 18, 0, 5, 1, 5, C], [0, 19.5, 0, 3, 2, 3, C]); // body, coat, skull, hat
+  for (const s of [-1, 1]) {
+    lit.push([s * 1.2, 3.8, 0, 1, 4.4, 1, B], [s * 3.6, 12, 0, 1, 6, 1, B, 0, 0, s * 0.3]);
+    glow.push([s * 0.7, 16.3, 1.55, 0.6, 0.6, 0.2, "#b06aff"]);
+  }
+  lit.push([4.6, 13, 2.5, 0.4, 0.4, 6, "#c0c0c8"]); // cutlass
+  lit.push([0, 12, -8, 0.8, 22, 0.8, W], [0, 18, -8, 10, 8, 0.3, "#1a1a1a"]); // mast + sail
+  return { lit, glow };
+}
+
+/** Orfen: a vast spore-spider over a fungus bed. */
+function orfen(): Sculpt {
+  const H = "#2f4a2a", P = "#5c7a3a", lit: Vox[] = [], glow: Vox[] = [];
+  lit.push([0, 6, -3, 9, 6, 10, H], [0, 6, 4, 6, 4, 5, P]);
+  for (const s of [-1, 1]) for (let l = 0; l < 4; l++) {
+    const z = 5 - l * 3;
+    lit.push([s * 7, 8.5, z, 6, 1, 1, H, 0, 0, s * -0.5], [s * 11, 4, z + (1.5 - l) * 0.6, 1, 9, 1, P, 0, 0, s * 0.25]);
+  }
+  for (let e = 0; e < 6; e++) glow.push([(e - 2.5) * 0.9, 7 + (e % 2) * 0.6, 6.6, 0.5, 0.5, 0.3, "#4fe08a"]);
+  for (let m = 0; m < 9; m++) { const a = m * 2.1, r = 13 + (m % 3) * 2; lit.push([Math.cos(a) * r, 1.5, Math.sin(a) * r, 0.8, 3, 0.8, "#c9b892"]); glow.push([Math.cos(a) * r, 3.4, Math.sin(a) * r, 3, 1, 3, "#4fe08a"]); }
+  return { lit, glow };
+}
+
+/** Core: a floating crystal construct with orbiting susceptor drones. */
+function coreConstruct(): Sculpt {
+  const lit: Vox[] = [], glow: Vox[] = [];
+  lit.push([0, 12, 0, 8, 8, 8, "#2a4a5a", Math.PI / 4, Math.PI / 4, 0]);
+  glow.push([0, 12, 0, 4, 4, 4, "#3fe0ff", Math.PI / 4, 0, Math.PI / 4]);
+  for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; lit.push([Math.cos(a) * 9, 9 + (i % 2) * 6, Math.sin(a) * 9, 2, 2, 2, "#506878", a, a, 0]); glow.push([Math.cos(a) * 9, 9 + (i % 2) * 6, Math.sin(a) * 9, 0.8, 0.8, 0.8, "#3fe0ff"]); }
+  for (let p = 0; p < 4; p++) { const a = (p / 4) * Math.PI * 2 + 0.78; lit.push([Math.cos(a) * 6, 2, Math.sin(a) * 6, 2, 4, 2, "#3a4048"]); }
+  return { lit, glow };
+}
+
 type BossDef = { slug: string; cell: number; scale: number; glow: string; sculpt: () => Sculpt };
+/** Lair cells (row 0 near genesis) — keep in sync with LAIR_CELLS in BitmapWorld3D. */
+export const BOSS_LAIR_CELLS = [30, 60, 12, 90, 120, 150, 180];
 const DEFS: BossDef[] = [
-  { slug: "valakas", cell: 30, scale: 1.8, glow: "#ff5a1a", sculpt: () => dragon({ hide: "#2a1410", plate: "#4a1f14", belly: "#6e2c16", horn: "#120a08", eye: "#ffd04a", core: "#ff5a1a", membrane: "#5c1a10", rocky: false }) },
-  { slug: "antharas", cell: 60, scale: 1.8, glow: "#5cff9a", sculpt: () => dragon({ hide: "#5a5240", plate: "#6e6650", belly: "#8a7d5c", horn: "#3a3428", eye: "#5cff9a", core: "#c9a24a", membrane: "#4a4434", rocky: true }) },
-  { slug: "queen-ant", cell: 12, scale: 1.6, glow: "#ffd24a", sculpt: queenAnt },
+  { slug: "valakas", cell: 30, scale: 3, glow: "#ff5a1a", sculpt: () => dragon({ hide: "#2a1410", plate: "#4a1f14", belly: "#6e2c16", horn: "#120a08", eye: "#ffd04a", core: "#ff5a1a", membrane: "#5c1a10", rocky: false }) },
+  { slug: "antharas", cell: 60, scale: 3, glow: "#5cff9a", sculpt: () => dragon({ hide: "#5a5240", plate: "#6e6650", belly: "#8a7d5c", horn: "#3a3428", eye: "#5cff9a", core: "#c9a24a", membrane: "#4a4434", rocky: true }) },
+  { slug: "queen-ant", cell: 12, scale: 4.5, glow: "#ffd24a", sculpt: antNest },
+  { slug: "baium", cell: 90, scale: 3, glow: "#8fd3ff", sculpt: baium },
+  { slug: "zaken", cell: 120, scale: 3, glow: "#b06aff", sculpt: zaken },
+  { slug: "orfen", cell: 150, scale: 3, glow: "#4fe08a", sculpt: orfen },
+  { slug: "core", cell: 180, scale: 3, glow: "#3fe0ff", sculpt: coreConstruct },
 ];
 
 const BossMonster = memo(function BossMonster({ def, unit, hp, maxHp }: { def: BossDef; unit: number; hp: number; maxHp: number }) {

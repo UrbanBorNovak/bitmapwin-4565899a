@@ -15,6 +15,7 @@ import { BossRaids } from "@/components/command/BossRaids";
 import { WhileAway } from "@/components/retention/WhileAway";
 import { GuardianIndex } from "@/components/command/GuardianIndex";
 import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
+import { GuardianName } from "@/components/bitmon/GuardianName";
 import { guardianCry, guardianTier, powerScore } from "@/lib/onchain-guardian";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -146,7 +147,8 @@ function CommandPage() {
                   <GuardianPortrait height={g.height} size={56} />
                   <div>
                   <span className="text-bitcoin">{g.height}.BITMAP</span>
-                  <span className="ml-2 text-xs text-muted-foreground">{g.species} · LV {g.level} · {g.rarity}</span>
+                  <span className="ml-2 font-display text-sm text-foreground"><GuardianName height={g.height} fallback={g.species} /></span>
+                  <span className="ml-2 text-xs text-muted-foreground">{g.species} LINE · LV {g.level} · {g.rarity}</span>
                   <span className="ml-2 border border-bitcoin/40 px-1.5 py-0.5 text-[9px] tracking-[0.2em] text-bitcoin">{combatRole(g)}</span>
                   <span className="ml-2 border border-signal/40 px-1.5 py-0.5 text-[9px] tracking-[0.2em] text-signal">TIER {guardianTier(g)} · PWR {powerScore(g)}</span>
                   <div className="mt-1 flex gap-2 text-[10px]">

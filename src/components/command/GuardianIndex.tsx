@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import type { GuardianDna } from "@/lib/bitmon";
 import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
+import { GuardianName } from "@/components/bitmon/GuardianName";
 import { guardianTier, powerScore, type Tier } from "@/lib/onchain-guardian";
 
 type G = Pick<GuardianDna, "height" | "rarity" | "hp" | "bite" | "speed" | "armor" | "species"> & { inscriptionId?: string | null };
@@ -81,7 +82,7 @@ export function GuardianIndex({ guardians, onPick }: { guardians: G[]; onPick?: 
             {top && (
               <button onClick={() => onPick?.(top.g.height)} className="mt-4 flex w-full items-center gap-3 rounded-md border border-signal/30 bg-signal/5 p-3 text-left hover:border-signal/60">
                 <GuardianPortrait height={top.g.height} size={64} />
-                <div><p className="text-[9px] tracking-widest text-signal">TOP GUARDIAN</p><p className="font-display text-base">{top.m.name}</p>
+                <div><p className="text-[9px] tracking-widest text-signal">TOP GUARDIAN</p><p className="font-display text-base"><GuardianName height={top.g.height} fallback={top.m.name} /></p>
                   <p className="text-[10px] text-muted-foreground">{top.g.height}.BITMAP · POWER {top.pw} · TIER {top.tier}</p></div>
               </button>
             )}
@@ -137,7 +138,7 @@ export function GuardianIndex({ guardians, onPick }: { guardians: G[]; onPick?: 
                 <div key={g.height} className="flex items-center gap-3 rounded-md p-2 text-[11px] hover:bg-signal/5">
                   <GuardianPortrait height={g.height} size={48} />
                   <button onClick={() => onPick?.(g.height)} className="flex-1 text-left">
-                    <p className="font-semibold text-foreground">{m.name}</p>
+                    <p className="font-semibold text-foreground"><GuardianName height={g.height} fallback={m.name} /></p>
                     <p className="text-[10px] text-muted-foreground">{g.height}.BITMAP · {m.plan} · POWER {pw}</p>
                   </button>
                   <span className="rounded-sm px-1.5 py-0.5 text-[9px] font-bold" style={{ color: TIER_COL[tier], border: `1px solid ${TIER_COL[tier]}55` }}>{tier}</span>
