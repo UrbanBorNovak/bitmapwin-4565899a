@@ -68,7 +68,7 @@ export function MintLineup3D() {
   }, [all.data]);
   const towers = useMemo(() => {
     const seen = new Set<number>();
-    return (builds.data ?? []).filter((b) => (seen.has(b.bitmap_height) ? false : (seen.add(b.bitmap_height), true))).slice(0, 3);
+    return (builds.data ?? []).filter((b) => (seen.has(b.height) ? false : (seen.add(b.height), true))).slice(0, 3);
   }, [builds.data]);
   // Centre-out ordering so the strongest (first) Guardian stands in the middle.
   const slots = lineup.map((_, i) => (i === 0 ? 0 : (i % 2 ? 1 : -1) * Math.ceil(i / 2)));
@@ -83,7 +83,7 @@ export function MintLineup3D() {
       <pointLight position={[-5, 2, -4]} intensity={1.6} color="#f7931a" />
       <ParcelFloor />
       {towers.map((b, i) => (
-        <ForgeBuild3D key={b.bitmap_height} height={b.bitmap_height} cell={5} position={[(i - (towers.length - 1) / 2) * 7.5, 0, -7 - (i % 2) * 2]} />
+        <ForgeBuild3D key={b.height} height={b.height} cell={5} position={[(i - (towers.length - 1) / 2) * 7.5, 0, -7 - (i % 2) * 2]} />
       ))}
       {lineup.map((g, i) => {
         const x = slots[i]! * 1.55;
