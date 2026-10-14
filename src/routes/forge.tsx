@@ -12,7 +12,7 @@ import { FORGE_MASTER_DELEGATE_ID, delegateSavings, forgeDelegateMetadata } from
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { BLOCKS, type BlockId } from "@/lib/voxel-world";
 import type { TplBlock } from "@/lib/voxel-templates";
-import { ARCHETYPES, FORGE_MAX_BLOCKS, FORGE_SPAN, encodeBuild, encodeBuildBest, FORGE_UNPACK_JS, forgeInscriptionHtml, generateBuild, type ArchetypeId } from "@/lib/voxel-populate";
+import { ARCHETYPES, FORGE_MAX_BLOCKS, FORGE_RENDER_MAX, FORGE_SPAN, encodeBuild, encodeBuildBest, FORGE_UNPACK_JS, forgeInscriptionHtml, generateBuild, type ArchetypeId } from "@/lib/voxel-populate";
 import { HOUSE_PREFABS, SPHERES, cellKey, normaliseModule, rotatePrefab, stampInto, tributeSplit, type Contributor, type Prefab, type Sphere } from "@/lib/forge-prefabs";
 import { BLUEPRINTS, blueprintBlocks, nextDropAt, weekNumber, weeklyBlueprint } from "@/lib/forge-blueprints";
 import { clipToParcel, inRect, parcelAt, parcelRects, type ParcelRect } from "@/lib/forge-parcels";
@@ -98,7 +98,7 @@ function Blocks({ blocks, onErase, erase, onSurface, onPlace }: { blocks: TplBlo
   return (
     <instancedMesh
       ref={ref}
-      args={[undefined, undefined, FORGE_MAX_BLOCKS + 400]}
+      args={[undefined, undefined, FORGE_RENDER_MAX + 400]}
       castShadow
       receiveShadow
       onPointerMove={(e) => {
@@ -276,7 +276,11 @@ function ForgePage() {
   // Anywhere on the BITMAP canvas; only an explicitly chosen parcel (parcel inscription) clips placement.
   const onTile = (x: number, z: number) => (focusRect ? inRect(focusRect, x, z) : Math.abs(x) < FORGE_SPAN && Math.abs(z) < FORGE_SPAN);
   const ghostOut = !!(hover && (ghost.some((b) => !onTile(b.dx + hover[0], b.dz + hover[2]))));
-  const overLimit = blocks.length + (tool === "erase" ? 0 : ghost.length) > FORGE_MAX_BLOCKS;
+  // Voxels of referenced on-chain pieces live in their own inscriptions, so only loose blocks count.
+  const pieceKeys = useMemo(() => new Set(placements.flatMap((p) => p.keys)), [placements]);
+  const ownCount = useMemo(() => { let n = 0; for (const k of world.keys()) if (!pieceKeys.has(k)) n++; return n; }, [world, pieceKeys]);
+  const ghostIsPiece = tool === "stamp" && picked.id.startsWith("ins:");
+  const overLimit = ownCount + (tool === "erase" || ghostIsPiece ? 0 : ghost.length) > FORGE_MAX_BLOCKS;
 
   const commit = useCallback((next: Map<string, TplBlock>) => {
     setHistory((h) => [...h.slice(-30), world]);
@@ -320,7 +324,7 @@ function ForgePage() {
       if (!boxStart) { setBoxStart(hover); return; }
       let next = new Map(world);
       for (const b of boxGhost) if (onTile(b.dx, b.dz)) next.set(cellKey(b.dx, b.dy, b.dz), b);
-      if (next.size > FORGE_MAX_BLOCKS) { toast.error(`BUILD LIMIT IS ${FORGE_MAX_BLOCKS} BLOCKS`); next = world; }
+      if (ownCount + boxGhost.length > FORGE_MAX_BLOCKS || next.size > FORGE_RENDER_MAX) { toast.error(`BUILD LIMIT IS ${FORGE_MAX_BLOCKS} BLOCKS`); next = world; }
       setBoxStart(null);
       if (next !== world) commit(next);
       return;
@@ -439,7 +443,7 @@ function ForgePage() {
   const publish = async (): Promise<void> => {
     if (!wallet) { toast.error("CONNECT A WALLET TO PUBLISH"); return; }
     if (blocks.length < 4) { toast.error("BUILD SOMETHING FIRST"); return; }
-    if (blocks.length > 800) { toast.error("MODULES ARE CAPPED AT 800 BLOCKS — ERASE SOME FIRST"); return; }
+    if (blocks.length > 2400) { toast.error("MODULES ARE CAPPED AT 2,400 BLOCKS — ERASE SOME FIRST"); return; }
     const r = await publishFn({ data: {
       name: pub.name.trim() || "Untitled module", address: wallet.ordinalsAddress, blocks: normaliseModule(blocks),
       bitCost: pub.bit, tributeSats: pub.sats > 0 ? Math.max(546, pub.sats) : 0, parents: used.map((u) => u.id),
@@ -606,7 +610,7 @@ function ForgePage() {
             <directionalLight position={[20, 40, 10]} intensity={1.2} castShadow />
             <Blocks blocks={blocks} erase={tool === "erase" || tool === "move"} onErase={eraseAt} onSurface={(c) => { if (c && tool !== "parcel") setHover(c); }} onPlace={() => void place()} />
             {hover && ghost.length > 0 && boxGhost.length === 0 && <Ghost blocks={ghost} at={hover} bad={overLimit || ghostOut} />}
-            {boxGhost.length > 0 && <Ghost blocks={boxGhost} at={[0, 0, 0]} bad={blocks.length + boxGhost.length > FORGE_MAX_BLOCKS} />}
+            {boxGhost.length > 0 && <Ghost blocks={boxGhost} at={[0, 0, 0]} bad={ownCount + boxGhost.length > FORGE_MAX_BLOCKS} />}
             {perch && dnaQ.data && (
               <group position={[perch[0] - HALF + 0.5, perch[1], perch[2] - HALF + 0.5]} scale={0.36}>
                 <OnchainGuardianBody dna={dnaQ.data} />
@@ -625,8 +629,8 @@ function ForgePage() {
             {height !== null ? `${height.toLocaleString()}.BITMAP · ` : ""}{(bytes / 1024).toFixed(1)} KB · ROT {(turns % 4) * 90}°{hoverParcel ? ` · TILE ${hoverParcel.index}.${height}` : ""}{focusRect ? ` · BUILDING ON PARCEL #${focusRect.index}` : ""}
           </div>
           <div className="pointer-events-none absolute right-3 top-3 w-36 rounded border border-border bg-background/70 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur">
-            <div className="flex justify-between"><span>BLOCKS</span><span className={blocks.length > FORGE_MAX_BLOCKS * 0.85 ? "text-primary" : "text-accent"}>{blocks.length}/{FORGE_MAX_BLOCKS}</span></div>
-            <div className="mt-1 h-1 overflow-hidden rounded bg-muted"><div className={`h-full ${blocks.length > FORGE_MAX_BLOCKS * 0.85 ? "bg-primary" : "bg-accent"}`} style={{ width: `${Math.min(100, (blocks.length / FORGE_MAX_BLOCKS) * 100)}%` }} /></div>
+            <div className="flex justify-between"><span>BLOCKS</span><span className={ownCount > FORGE_MAX_BLOCKS * 0.85 ? "text-primary" : "text-accent"}>{ownCount}/{FORGE_MAX_BLOCKS}{blocks.length > ownCount ? ` +${blocks.length - ownCount} on-chain` : ""}</span></div>
+            <div className="mt-1 h-1 overflow-hidden rounded bg-muted"><div className={`h-full ${ownCount > FORGE_MAX_BLOCKS * 0.85 ? "bg-primary" : "bg-accent"}`} style={{ width: `${Math.min(100, (ownCount / FORGE_MAX_BLOCKS) * 100)}%` }} /></div>
           </div>
           <div className="absolute inset-x-0 bottom-3 flex flex-col items-center gap-1.5 px-2">
             {chainPieces.length > 0 && (tool === "stamp" || tool === "move") && (

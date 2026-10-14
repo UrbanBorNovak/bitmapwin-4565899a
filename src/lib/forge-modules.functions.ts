@@ -25,7 +25,7 @@ export const publishForgeModuleFn = createServerFn({ method: "POST" })
     z.object({
       name: z.string().trim().min(2).max(40),
       address: z.string().trim().min(16).max(120),
-      blocks: z.array(block).min(4).max(800),
+      blocks: z.array(block).min(4).max(2400),
       bitCost: z.number().int().min(0).max(500),
       tributeSats: z.union([z.literal(0), z.number().int().min(546).max(100_000)]),
       parents: z.array(z.string().uuid()).max(24),
