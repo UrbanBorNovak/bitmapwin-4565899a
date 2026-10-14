@@ -37,7 +37,7 @@ const SFX_FEE = ["SQUEEZE!", "CRUNCH!", "FWOOSH!", "SPLAT!"];
 const SFX_LAND = ["SHIMMER!", "VRRMM!", "BLOOM!", "OMMM…"];
 const SFX_STAMP = ["KA-CHUNK!", "SEALED!", "BLAM!", "CLANK!"];
 
-const pick = <T,>(r: () => number, a: T[]) => a[Math.floor(r() * a.length)];
+const pick = <T,>(r: () => number, a: T[]): T => a[Math.floor(r() * a.length)] as T;
 const btc = (sats: number) => `${(sats / 1e8).toFixed(4)} BTC`;
 
 export function buildIssue(b: ComicBlock): ComicIssue {

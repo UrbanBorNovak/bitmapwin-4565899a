@@ -1,3 +1,4 @@
+import type React from "react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { buildIssue, fetchComicBlocks, seedFrom, type ComicIssue, type ComicPanel } from "@/lib/block-comic";
@@ -8,7 +9,7 @@ function PanelArt({ panel, kind, hash }: { panel: ComicPanel; kind: number; hash
   const r = useMemo(() => seedFrom(hash, panel.seed), [hash, panel.seed]);
   const id = `ht-${panel.seed}`;
   const shapes = useMemo(() => {
-    const out: JSX.Element[] = [];
+    const out: React.ReactElement[] = [];
     if (kind === 0) {
       for (let i = 0; i < 7; i++) {
         const x = 8 + i * 14, h = 30 + r() * 50;
