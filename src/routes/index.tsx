@@ -18,6 +18,7 @@ import { LatestGuardianCard } from "@/components/bitmon/LatestGuardianCard";
 import { MintPointer } from "@/components/bitmon/MintPointer";
 import { ActiveBuilders } from "@/components/ActiveBuilders";
 import { DailyStreak } from "@/components/retention/DailyStreak";
+import { SiteFundTracker } from "@/components/SiteFundTracker";
 
 
 export const Route = createFileRoute("/")({
@@ -106,6 +107,7 @@ function Index() {
               <Link to="/marketplace" className="mt-5 inline-flex font-mono text-xs font-bold text-bitcoin hover:text-foreground">
                 SEE WHAT IS FOR SALE →
               </Link>
+              <SiteFundTracker />
             </div>
           </aside>
 
