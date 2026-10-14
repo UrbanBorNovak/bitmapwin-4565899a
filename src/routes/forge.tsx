@@ -228,13 +228,44 @@ function ForgePage() {
     return () => clearInterval(t);
   }, []);
 
+  // On-chain pieces: imported by inscription id, placed by reference (not copied) in a recursive assembly.
+  const pieceFn = useServerFn(forgePieceFn);
+  const [pieceId, setPieceId] = useState("");
+  const [pieceBusy, setPieceBusy] = useState(false);
+  const [chainPieces, setChainPieces] = useState<Prefab[]>([]);
+  const [placements, setPlacements] = useState<Placement[]>([]);
+  const [boxStart, setBoxStart] = useState<[number, number, number] | null>(null);
+  const [perch, setPerch] = useState<[number, number, number] | null>(null);
+  const dnaQ = useQuery({ ...guardianDnaQuery(height ?? 0), enabled: height !== null });
+  useEffect(() => { setPerch(null); setBoxStart(null); }, [height]);
+  const loadPiece = async (): Promise<void> => {
+    const id = pieceId.trim();
+    if (!isInscriptionId(id)) { toast.error("PASTE A FULL INSCRIPTION ID (…i0)"); return; }
+    setPieceBusy(true);
+    const r = await pieceFn({ data: { id } }).catch(() => ({ ok: false as const, error: "COULD NOT REACH BITCOIN — TRY AGAIN" }));
+    setPieceBusy(false);
+    if (!r.ok) { toast.error(r.error); return; }
+    const p: Prefab = { id: `ins:${id}`, name: `◆ ${id.slice(0, 8)}…${id.slice(-4)}`, sphere: "community" as Sphere, blocks: normPart(r.blocks) } as Prefab;
+    setChainPieces((c) => [p, ...c.filter((x) => x.id !== p.id)].slice(0, 12));
+    setPicked(p); setTool("stamp"); setPieceId("");
+    toast.success(`LOADED ${r.blocks.length} VOXELS FROM BITCOIN — CLICK TO SNAP IT IN`);
+  };
+
   const blocks = useMemo(() => [...world.values()], [world]);
   const ghost = useMemo(() => {
-    if (tool === "erase") return [];
-    if (tool === "block") return [{ dx: 0, dy: 0, dz: 0, k: paint }];
-    if (tool === "parcel") return [];
+    if (tool === "erase" || tool === "parcel" || tool === "perch") return [];
+    if (tool === "block" || tool === "box") return [{ dx: 0, dy: 0, dz: 0, k: paint }];
     return rotatePrefab(picked.blocks, turns);
   }, [tool, paint, picked, turns]);
+  const boxGhost = useMemo(() => {
+    if (tool !== "box" || !boxStart || !hover) return [];
+    const out: TplBlock[] = [];
+    const [x0, x1] = [Math.min(boxStart[0], hover[0]), Math.max(boxStart[0], hover[0])];
+    const [y0, y1] = [Math.min(boxStart[1], hover[1]), Math.max(boxStart[1], hover[1])];
+    const [z0, z1] = [Math.min(boxStart[2], hover[2]), Math.max(boxStart[2], hover[2])];
+    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) out.push({ dx: x, dy: y, dz: z, k: paint });
+    return out.slice(0, FORGE_MAX_BLOCKS);
+  }, [tool, boxStart, hover, paint]);
   const hoverParcel = hover ? parcelAt(rects, hover[0], hover[2]) : null;
   const onTile = (x: number, z: number) => (focusRect ? inRect(focusRect, x, z) : !!parcelAt(rects, x, z));
   const ghostOut = !!(hover && (rects.length === 0 || ghost.some((b) => !onTile(b.dx + hover[0], b.dz + hover[2]))));
