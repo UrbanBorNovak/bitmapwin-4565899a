@@ -21,6 +21,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWalletSession } from "@/lib/wallet-session";
 import { heldHeightsQuery } from "@/lib/held-parcels";
 import { forgeRightsFn } from "@/lib/forge-rights.functions";
+import { forgePieceFn } from "@/lib/forge-parts.functions";
+import { forgeAssemblyHtml, isInscriptionId, normPart, type AsmPart } from "@/lib/forge-assembly";
+import { bakeGuardian } from "@/lib/forge-guardian-bake";
+import { guardianDnaQuery } from "@/lib/bitmon-queries";
+import { OnchainGuardianBody } from "@/components/bitmon/OnchainGuardianBody";
 
 export const Route = createFileRoute("/forge")({
   validateSearch: (s: Record<string, unknown>): { height?: number } => {
@@ -42,7 +47,8 @@ export const Route = createFileRoute("/forge")({
 
 const HALF = FORGE_SPAN / 2;
 const COLORS = Object.fromEntries(BLOCKS.map((b) => [b.id, new THREE.Color(b.top)]));
-type Tool = "stamp" | "block" | "erase" | "parcel";
+type Tool = "stamp" | "block" | "box" | "erase" | "perch" | "parcel";
+type Placement = { part: AsmPart; keys: string[] };
 
 function ParcelFloor({ rects, focus, hoverIdx }: { rects: ParcelRect[]; focus: number | null; hoverIdx: number | null }) {
   const ref = useRef<THREE.InstancedMesh>(null);
