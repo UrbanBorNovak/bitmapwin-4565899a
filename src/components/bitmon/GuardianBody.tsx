@@ -6,6 +6,9 @@ import { useQuery } from "@tanstack/react-query";
 import { guardianDnaQuery } from "@/lib/bitmon-queries";
 import { morphFromDna } from "@/lib/creature-morph";
 import { MorphBody } from "@/components/bitmon/MorphBody";
+import { OnchainGuardianBody } from "@/components/bitmon/OnchainGuardianBody";
+/** Render every block-known Guardian with the inscription's own voxel generator. */
+const ONCHAIN_STYLE = true;
 import { shapeOf, type GuardianRarity, type GuardianSpecies } from "@/lib/bitmon";
 
 const noRaycast = () => {};
@@ -991,10 +994,10 @@ export function GuardianBody(props: {
   const dna = useQuery({ ...guardianDnaQuery(height ?? 0), enabled: height != null, staleTime: Infinity });
   const morph = useMemo(() => (dna.data ? morphFromDna(dna.data) : null), [dna.data]);
   const u = (rest.unit ?? 1) * 1.1;
-  if (height != null && morph) {
+  if (height != null && morph && dna.data) {
     return (
       <group>
-        <MorphBody m={morph} unit={u} rarity={rest.rarity} />
+        {ONCHAIN_STYLE ? <OnchainGuardianBody dna={dna.data} unit={u} /> : <MorphBody m={morph} unit={u} rarity={rest.rarity} />}
         {inscribed ? <InscribedSeal color={morph.glow} u={u} /> : null}
       </group>
     );
