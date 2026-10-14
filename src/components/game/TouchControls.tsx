@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, Crosshair, Gauge, LogOut, MoveUp, Play, Square } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { resetTouchPad, touchPad } from "@/lib/touch-input";
+import { resetTouchPad, stickIntent, touchPad } from "@/lib/touch-input";
 import { cn } from "@/lib/utils";
 
 /**
@@ -47,6 +47,9 @@ export default function TouchControls({
   drivingRef.current = driving;
 
   const stopAll = useCallback(() => {
+    const canvas = stick.current?.closest(".oasis-storybook")?.querySelector("canvas");
+    canvas?.dispatchEvent(new PointerEvent("pointerup", { button: 0, buttons: 0, bubbles: true }));
+    window.dispatchEvent(new PointerEvent("pointerup", { button: 0, buttons: 0 }));
     resetTouchPad();
     stickId.current = null;
     lookId.current = null;
@@ -78,13 +81,8 @@ export default function TouchControls({
 
   // Stepping out of a ride clears the pedals, so nothing stays held down.
   useEffect(() => {
-    touchPad.throttle = 0;
-    touchPad.boost = false;
-    if (driving) {
-      autoRunRef.current = false;
-      setAutoRun(false);
-    }
-  }, [driving]);
+    stopAll();
+  }, [driving, stopAll]);
 
   const readStick = useCallback((clientX: number, clientY: number) => {
     const box = stick.current?.getBoundingClientRect();
@@ -101,17 +99,15 @@ export default function TouchControls({
     }
     setKnob({ x: dx, y: dy });
     setSprinting(sprint);
-    const nx = dx / radius;
-    const ny = dy / radius;
-    const dead = (value: number) => (Math.abs(value) < 0.16 ? 0 : value);
+    const intent = stickIntent(dx / (radius * 0.62), dy / (radius * 0.62));
     const wheel = drivingRef.current;
     if (!wheel && autoRunRef.current) {
       autoRunRef.current = false;
       setAutoRun(false);
     }
     // Steering wants the full sweep of the stick; walking keeps its deadzone.
-    touchPad.forward = wheel ? 0 : -dead(ny);
-    touchPad.turn = wheel ? -(Math.abs(nx) < 0.08 ? 0 : nx) : -dead(nx);
+    touchPad.forward = wheel ? 0 : intent.forward;
+    touchPad.turn = intent.turn;
     touchPad.sprint = wheel ? touchPad.boost : sprint;
     touchPad.active = true;
   }, []);
@@ -141,7 +137,7 @@ export default function TouchControls({
   // FIRE / STRIKE reuses the canvas mouse path, so every weapon behaves the
   // same on a phone as it does under a mouse.
   const canvasButton = useCallback((down: boolean) => {
-    const canvas = document.querySelector("canvas");
+    const canvas = stick.current?.closest(".oasis-storybook")?.querySelector("canvas");
     if (!canvas) return;
     canvas.dispatchEvent(
       new PointerEvent(down ? "pointerdown" : "pointerup", {
@@ -156,21 +152,23 @@ export default function TouchControls({
   if (paused) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-40 select-none overscroll-none" data-no-translate>
+    <div className="oasis-touch-controls pointer-events-none absolute inset-0 z-40 select-none overscroll-none" data-no-translate>
       {/* look pad: the right side of the screen, clear of the on-screen buttons
           so the menu, map, chat and belt stay tappable */}
       <div
-        className="pointer-events-auto absolute right-0 top-[4.5rem] bottom-[12.5rem] w-[62%]"
+        aria-label="Camera look area"
+        className="oasis-look-pad pointer-events-auto absolute right-0 w-[62%] touch-none"
         style={{ touchAction: "none" }}
         onPointerDown={(event) => {
           if (lookId.current !== null) return;
           lookId.current = event.pointerId;
           lookLast.current = { x: event.clientX, y: event.clientY };
+          try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* released pointer */ }
         }}
         onPointerMove={(event) => {
           if (lookId.current !== event.pointerId) return;
-          touchPad.lookX += event.clientX - lookLast.current.x;
-          touchPad.lookY += event.clientY - lookLast.current.y;
+          touchPad.lookX += Math.max(-48, Math.min(48, event.clientX - lookLast.current.x));
+          touchPad.lookY += Math.max(-48, Math.min(48, event.clientY - lookLast.current.y));
           lookLast.current = { x: event.clientX, y: event.clientY };
         }}
         onPointerUp={(event) => {
@@ -188,7 +186,7 @@ export default function TouchControls({
       <div
         ref={stick}
         aria-label="Movement joystick"
-        className="pointer-events-auto absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-[max(1rem,env(safe-area-inset-left))] grid size-36 place-items-center rounded-full border border-primary/45 bg-background/45 shadow-[inset_0_0_0_1px_var(--color-background)] backdrop-blur-sm landscape:size-32"
+        className="oasis-stick pointer-events-auto absolute grid place-items-center rounded-full border border-primary/45 bg-background/45 shadow-[inset_0_0_0_1px_var(--color-background)] backdrop-blur-sm touch-none"
         style={{ touchAction: "none" }}
         onPointerDown={(event) => {
           if (stickId.current !== null) return;
@@ -227,7 +225,7 @@ export default function TouchControls({
       </div>
 
       {/* action buttons */}
-      <div className="pointer-events-auto absolute bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] flex flex-col items-end gap-2">
+      <div className="oasis-touch-actions pointer-events-auto absolute grid grid-cols-2 items-center justify-items-end gap-2">
         {!driving ? (
           <Button
             type="button"
@@ -236,7 +234,7 @@ export default function TouchControls({
             aria-pressed={autoRun}
             aria-label={autoRun ? "Stop auto-run" : "Start auto-run"}
             className={cn(
-              "h-10 border bg-background/60 px-3 text-[10px] backdrop-blur-sm active:scale-95",
+              "h-11 w-full border bg-background/60 px-2 text-[10px] backdrop-blur-sm active:scale-95",
               autoRun && "border-primary bg-primary/20 text-primary",
             )}
             style={{ touchAction: "none" }}
@@ -255,7 +253,7 @@ export default function TouchControls({
             variant="terminalGhost"
             size="sm"
             className={cn(
-              "h-10 border bg-background/60 px-3 text-[10px] backdrop-blur-sm active:scale-95",
+              "h-11 w-full min-w-0 border bg-background/60 px-2 text-[10px] backdrop-blur-sm active:scale-95",
               driving
                 ? "border-border text-muted-foreground"
                 : "border-primary/60 bg-primary/15 text-primary",
@@ -269,11 +267,11 @@ export default function TouchControls({
             }}
           >
             <LogOut />
-            {driving ? `EXIT ${rideLabel ?? "RIDE"}` : `RIDE ${rideLabel ?? ""}`.trim()}
+            <span className="truncate">{driving ? "EXIT" : "RIDE"}</span>
           </Button>
         ) : null}
         {flying ? (
-          <div className="flex gap-2">
+          <div className="col-span-2 flex w-full justify-end gap-2">
             <PadButton
               label="DOWN"
               icon={<ArrowDown />}
@@ -297,7 +295,7 @@ export default function TouchControls({
           </div>
         ) : null}
         {driving ? (
-          <div className="flex items-center gap-2">
+          <div className="col-span-2 flex w-full items-center justify-end gap-2">
             <PadButton
               label="REV"
               icon={<ArrowDown />}
@@ -335,7 +333,7 @@ export default function TouchControls({
             />
           </div>
         ) : null}
-        <div className="flex items-center gap-2">
+        <div className="col-span-2 flex w-full items-center justify-end gap-2">
           <PadButton
             label={onJumpLabel ?? "JUMP"}
             icon={<MoveUp />}
@@ -387,8 +385,8 @@ function PadButton({
       className={cn(
         "flex rounded-full border bg-background/55 p-0 font-mono text-[9px] tracking-widest shadow-[0_0_18px_color-mix(in_oklab,var(--color-background)_70%,transparent)] backdrop-blur-sm active:scale-95",
         strong
-          ? "size-20 flex-col gap-0.5 border-primary bg-primary/25 text-primary [&_svg]:size-6"
-          : "size-16 flex-col gap-0.5 border-primary/50 text-muted-foreground [&_svg]:size-5",
+          ? "oasis-pad-button size-14 flex-col gap-0.5 border-primary bg-primary/25 text-primary [&_svg]:size-5"
+          : "oasis-pad-button size-14 flex-col gap-0.5 border-primary/50 text-muted-foreground [&_svg]:size-5",
       )}
       style={{ touchAction: "none" }}
       onPointerDown={(event) => {
@@ -408,6 +406,7 @@ function PadButton({
         onUp?.();
         event.currentTarget.blur();
       }}
+      onLostPointerCapture={() => onUp?.()}
     >
       {icon}
       <span>{label}</span>

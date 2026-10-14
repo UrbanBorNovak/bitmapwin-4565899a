@@ -48,15 +48,36 @@ export function consumeTouchJump(): boolean {
 }
 
 /** Drain the pending look swipe; returns pixels moved since the last frame. */
-export function takeTouchLook(): { x: number; y: number } {
-  const x = touchPad.lookX;
-  const y = touchPad.lookY;
-  touchPad.lookX = 0;
-  touchPad.lookY = 0;
+export function takeTouchLook(delta = 1): { x: number; y: number } {
+  const blend = 1 - Math.exp(-35 * Math.max(0, delta));
+  const x = touchPad.lookX * blend;
+  const y = touchPad.lookY * blend;
+  touchPad.lookX -= x;
+  touchPad.lookY -= y;
   return { x, y };
 }
 
+const smoothMove = { forward: 0, turn: 0 };
+
+/** A continuous radial deadzone reaches full speed at the stick rim. */
+export function stickIntent(x: number, y: number) {
+  const length = Math.hypot(x, y);
+  if (length <= 0.12) return { forward: 0, turn: 0 };
+  const strength = Math.min(1, (length - 0.12) / 0.88);
+  return { forward: -y / length * strength, turn: -x / length * strength };
+}
+
+/** Ease held intent, but release immediately: no unwanted coasting. */
+export function takeTouchMovement(delta: number) {
+  const blend = 1 - Math.exp(-22 * Math.max(0, delta));
+  smoothMove.forward = touchPad.forward === 0 ? 0 : smoothMove.forward + (touchPad.forward - smoothMove.forward) * blend;
+  smoothMove.turn = touchPad.turn === 0 ? 0 : smoothMove.turn + (touchPad.turn - smoothMove.turn) * blend;
+  return smoothMove;
+}
+
 export function resetTouchPad() {
+  smoothMove.forward = 0;
+  smoothMove.turn = 0;
   touchPad.forward = 0;
   touchPad.turn = 0;
   touchPad.sprint = false;
