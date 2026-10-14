@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { ClientOnly, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { allGuardiansQuery } from "@/lib/bitmon-queries";
+import { GuardianName } from "@/components/bitmon/GuardianName";
 
 const Territory3D = lazy(() => import("@/components/BitmapTerritory3D"));
 
@@ -25,7 +26,7 @@ export function LatestGuardianCard() {
         <span className={`size-1.5 ${g.inscriptionId ? "bg-bitcoin" : "bg-signal"}`} aria-hidden="true" />
         {g.inscriptionId ? "FEATURED · INSCRIBED ON-CHAIN" : "LATEST GUARDIAN AWAKENED"}
       </div>
-      <div className="display mt-1 truncate text-sm">{g.species} · {g.height}.BITMAP</div>
+      <div className="display mt-1 truncate text-sm"><GuardianName height={g.height} fallback={g.species} /> · {g.height}.BITMAP</div>
       <div className="mt-1 font-mono text-[10px] text-muted-foreground">
         {g.rarity} · LV {g.level} · HP {g.hp} · BITE {g.bite}
       </div>
