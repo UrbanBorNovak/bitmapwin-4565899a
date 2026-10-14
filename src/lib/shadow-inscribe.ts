@@ -39,6 +39,8 @@ export type InscribeJob = {
   pointer?: number;
   /** tag 5 CBOR metadata (Land Forge delegate builds carry their voxel bytes here) */
   metadata?: Record<string, unknown>;
+  /** tag 9: body is compressed with this encoding ("br"); explorers decompress it */
+  contentEncoding?: string;
   commitTxid?: string;
   revealTxid?: string;
   createdAt: string;
@@ -147,12 +149,14 @@ function revealPayment(
   delegate?: string,
   pointer?: number,
   metadata?: Record<string, unknown>,
+  contentEncoding?: string,
 ) {
   const pub = btc.utils.pubSchnorr(hex.decode(privHex));
   // Tag 3 may repeat: one entry per parent, in the order the reveal spends them.
   // Tag 11 (delegate) points at the master generator; the body then stays empty.
   const tags = {
     ...(delegate ? {} : { contentType }),
+    ...(!delegate && contentEncoding ? { contentEncoding } : {}),
     metaprotocol: `shad:${digest}`,
     ...(parents.length ? { parent: parents.map((p) => p.inscriptionId) } : {}),
     ...(delegate ? { delegate } : {}),
