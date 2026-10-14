@@ -68,9 +68,46 @@ function PanelArt({ panel, kind, issue, inscribed, built }: { panel: ComicPanel;
   const shapes = useMemo(() => {
     const r = seedFrom(issue.hash, panel.seed);
     const out: React.ReactElement[] = [];
-    if (kind === 0) for (let i = 0; i < 7; i++) { const h = 30 + r() * 50; out.push(<rect key={i} x={8 + i * 14} y={100 - h} width={10} height={h} className="fill-foreground" opacity={0.85} />); }
-    if (kind === 1) for (let i = 0; i < 40; i++) out.push(<rect key={i} x={r() * 96} y={r() * 96} width={3 + r() * 6} height={3 + r() * 6} className={i % 5 ? "fill-foreground" : "fill-bitcoin"} />);
-    if (kind === 3) { out.push(<rect key="s" x={25} y={15} width={50} height={40} className="fill-foreground" />); out.push(<rect key="b" x={15} y={70} width={70} height={14} className="fill-bitcoin" />); }
+    const b = issue.block;
+    const v = Math.floor(r() * 3); // archetype variant, from the block hash
+    const F = "fill-foreground", O = "fill-bitcoin", S = "stroke-foreground";
+    if (kind === 0) {
+      if (v === 0) { // ASIC rack: rows of rigs with spinning fans
+        for (let y = 0; y < 4; y++) for (let x = 0; x < 3; x++) { const X = 8 + x * 30, Y = 10 + y * 20; out.push(<rect key={`r${x}${y}`} x={X} y={Y} width={26} height={16} className={F} />, <circle key={`f${x}${y}`} cx={X + 8} cy={Y + 8} r={5} className="fill-background" />, <line key={`b${x}${y}`} x1={X + 4} y1={Y + 8 + (r() - 0.5) * 6} x2={X + 12} y2={Y + 8 - (r() - 0.5) * 6} className={S} strokeWidth={1} />, <rect key={`l${x}${y}`} x={X + 18} y={Y + 5} width={4} height={2} className={r() > 0.4 ? O : "fill-signal"} />); }
+      } else if (v === 1) { // the miner descends a shaft on a cable
+        const d = 30 + r() * 30;
+        out.push(<line key="c" x1={50} y1={0} x2={50} y2={d} className={S} strokeWidth={0.8} />, <rect key="h" x={42} y={d} width={16} height={22} className={F} />, <circle key="hd" cx={50} cy={d - 4} r={6} className={F} />, <rect key="lamp" x={47} y={d - 9} width={6} height={3} className={O} />, <polygon key="beam" points={`50,${d - 8} 20,100 80,100`} className={O} opacity={0.25} />);
+        for (let i = 0; i < 6; i++) out.push(<rect key={`w${i}`} x={i % 2 ? 2 : 88} y={i * 17} width={10} height={14} className={F} opacity={0.6} />);
+      } else { // nonce spiral: hash-search rings
+        for (let i = 0; i < 8; i++) out.push(<circle key={i} cx={50} cy={46} r={6 + i * 5} fill="none" className={i === 7 ? "stroke-bitcoin" : S} strokeWidth={i === 7 ? 2 : 0.6} strokeDasharray={`${2 + r() * 6} ${2 + r() * 4}`} />);
+        out.push(<circle key="core" cx={50} cy={46} r={4} className={O} />);
+      }
+    }
+    if (kind === 1) {
+      const n = Math.min(60, Math.max(8, Math.round(b.txCount / 80)));
+      const hot = Math.min(1, (b.medianFee ?? 1) / 30);
+      if (v === 0) { // mempool pyramid: tx count fills the block
+        let k = 0; for (let row = 0; row < 8 && k < n; row++) for (let c = 0; c <= row && k < n; c++, k++) out.push(<rect key={k} x={50 - row * 5.5 + c * 11} y={12 + row * 10} width={10} height={9} className={r() < hot ? O : F} />);
+      } else if (v === 1) { // fee pipes: thicker = higher fee
+        for (let i = 0; i < 5; i++) { const w = 3 + r() * 6 * (0.4 + hot); const y = 14 + i * 16; out.push(<rect key={`p${i}`} x={0} y={y} width={100} height={w} className={i % 2 ? F : O} opacity={0.85} />); for (let j = 0; j < 4; j++) out.push(<rect key={`q${i}${j}`} x={r() * 90} y={y - 2} width={6} height={w + 4} className="fill-background stroke-foreground" strokeWidth={0.5} />); }
+      } else { // the queue: txs crowding through a gate
+        out.push(<rect key="g1" x={44} y={0} width={4} height={40} className={F} />, <rect key="g2" x={44} y={60} width={4} height={40} className={F} />);
+        for (let i = 0; i < n; i++) { const left = i < n * 0.8; out.push(<rect key={i} x={left ? r() * 40 : 52 + r() * 44} y={left ? 10 + r() * 80 : 42 + r() * 16} width={3 + r() * 4} height={3 + r() * 4} className={left ? F : O} />); }
+      }
+    }
+    if (kind === 3) {
+      const hex = issue.hash.replace(/^0+/, "").slice(0, 16).toUpperCase();
+      if (v === 0) { // wax seal with the block hash around it
+        out.push(<circle key="s" cx={50} cy={45} r={28} className={O} />, <circle key="i" cx={50} cy={45} r={20} fill="none" className="stroke-background" strokeWidth={1.5} />, <text key="h" x={50} y={50} textAnchor="middle" className="fill-background font-mono" fontSize={12} fontWeight={700}>{issue.height % 1000}</text>, <text key="x" x={50} y={88} textAnchor="middle" className="fill-foreground font-mono" fontSize={5}>{hex}</text>);
+      } else if (v === 1) { // chain links: this block snaps onto the previous ones
+        for (let i = 0; i < 4; i++) out.push(<rect key={i} x={6 + i * 23} y={34} width={19} height={19} className={i === 3 ? O : F} />, i < 3 ? <rect key={`l${i}`} x={24 + i * 23} y={42} width={6} height={3} className={F} /> : <g key="n" />);
+        out.push(<text key="x" x={50} y={72} textAnchor="middle" className="fill-foreground font-mono" fontSize={5}>{hex}</text>);
+      } else { // the vault door slams shut
+        out.push(<rect key="d" x={18} y={12} width={64} height={64} className={F} />, <circle key="w" cx={50} cy={44} r={18} fill="none" className="stroke-background" strokeWidth={3} />);
+        for (let i = 0; i < 6; i++) { const a = i * 1.047 + r(); out.push(<line key={i} x1={50} y1={44} x2={50 + 18 * Math.cos(a)} y2={44 + 18 * Math.sin(a)} className="stroke-background" strokeWidth={2} />); }
+        out.push(<rect key="b" x={10} y={80} width={80} height={6} className={O} />);
+      }
+    }
     return out;
   }, [issue.hash, panel.seed, kind]);
   return (
