@@ -165,6 +165,7 @@ function CommandPage() {
                     <button onClick={() => setView3d((s) => ({ ...s, [g.height]: !s[g.height] }))} className="text-signal hover:underline">{view3d[g.height] ? "HIDE 3D" : "INSPECT 3D"}</button>
                     <button onClick={() => guardianCry(String(g.height), g.species.toLowerCase(), "roar")} className="text-bitcoin hover:underline">ROAR</button>
                     <button onClick={() => guardianCry(String(g.height), g.species.toLowerCase(), "strike")} className="text-bitcoin hover:underline">STRIKE</button>
+                    {g.inscriptionId ? <Link to="/breed" search={{ sire: g.height }} className="text-signal hover:underline">BREED →</Link> : null}
                   </div>
                   </div>
                 </div>
