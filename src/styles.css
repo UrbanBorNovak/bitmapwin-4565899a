@@ -1733,3 +1733,6 @@
 .pod-float { animation: pod-float 6s ease-in-out infinite; }
 .pod-scan { animation: pod-scan 4s linear infinite; }
 .pod-bubble { animation: pod-bubble 4.5s ease-in infinite; }
+
+@keyframes hourglass-trickle { to { stroke-dashoffset: -10; } }
+.hourglass-trickle { animation: hourglass-trickle 0.6s linear infinite; }
