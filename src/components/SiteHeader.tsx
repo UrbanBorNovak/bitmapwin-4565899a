@@ -78,6 +78,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: "/forge", label: "LAND FORGE", note: "Build voxels on your BITMAP and inscribe them" },
       { to: "/parcel", label: "PARCEL STUDIO", note: "Map and inscribe the real parcels of a BITMAP" },
+      { to: "/breed", label: "BREEDING LAB", note: "Pair two Guardians and inscribe their pet" },
       { to: "/create", label: "CREATE HUB", note: "Pick how you want to build" },
       { to: "/my-world", label: "MY WORLD", note: "Manage your BITMAPs and deployments" },
       { to: "/builds", label: "COMMUNITY BUILDS", note: "Preview and enter public BITMAP worlds" },
