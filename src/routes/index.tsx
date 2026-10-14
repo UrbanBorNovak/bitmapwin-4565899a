@@ -135,8 +135,9 @@ function Index() {
                     <Link to="/passport" className="btn-term-ghost min-h-12 w-full sm:min-h-0 sm:w-auto">OPEN PASSPORT</Link>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs font-bold">
+                    <Link to="/forge" className="text-bitcoin hover:text-foreground">LAND FORGE →</Link>
                     <Link to="/extenders" className="text-bitcoin hover:text-foreground">EXPERIENCES →</Link>
-                    <Link to="/studio" className="text-bitcoin hover:text-foreground">CREATION →</Link>
+                    <Link to="/create" className="text-bitcoin hover:text-foreground">CREATION →</Link>
                   </div>
                 </div>
 
@@ -239,12 +240,43 @@ function Index() {
           <Pillar n="02" name="LAND" what="Bitmaps" body="The places. Every block is land you can own, build on, or lease." to="/marketplace" action="CLAIM LAND" />
           <Pillar n="03" name="EXPERIENCES" what="Extenders" body="The things that happen on those places. Browse, deploy, play." to="/extenders" action="BROWSE" />
           <Pillar n="04" name="IDENTITY" what="Passport" body="Your history of where you've been and what you've done." to="/passport" action="OPEN PASSPORT" />
-          <Pillar n="05" name="CREATION" what="Studio" body="The machinery that lets owners create experiences." to="/studio" action="OPEN STUDIO" />
+          <Pillar n="05" name="CREATION" what="Land Forge" body="Build voxel structures on your BITMAP's real parcels and inscribe them onto its own sat." to="/forge" action="OPEN FORGE" />
         </div>
         <div className="mt-6 flex flex-wrap gap-2 pb-2">
           <Link to="/marketplace" className="btn-term-ghost">[ GET LAND FIRST ]</Link>
           <Link to="/extenders" className="btn-term-ghost">[ PUBLISHED EXTENDERS ]</Link>
           <Link to="/experiences" className="btn-term-ghost">[ LIVE EXPERIENCES ]</Link>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-[1600px] px-3 pt-10 pb-24 md:px-5">
+        <div className="grid gap-6 bg-card/60 backdrop-blur border border-bitcoin/40 p-5 md:grid-cols-[1.4fr_1fr] md:p-8">
+          <div>
+            <div className="label text-bitcoin">NEW · LAND FORGE</div>
+            <h2 className="display mt-2 text-2xl md:text-4xl">BUILD ON YOUR BITMAP. INSCRIBE IT ON BITCOIN.</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              Place voxel blocks on the real transaction parcels of your block, snap in pieces other builders inscribed, and
+              put your Guardian on top. The finished build is written onto your BITMAP's own sat, and the makers of every
+              piece you used are paid inside the same transaction.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Link to="/forge" className="btn-term min-h-12">LAUNCH LAND FORGE →</Link>
+              <Link to="/builds" className="btn-term-ghost min-h-12">SEE COMMUNITY BUILDS</Link>
+            </div>
+          </div>
+          <ul className="grid content-start gap-px border border-border font-mono text-xs">
+            {[
+              ["01", "BLOCKS SIT ON YOUR BLOCK'S REAL PARCELS"],
+              ["02", "COMPRESSED BUILDS · ABOUT A THIRD OF THE FEE"],
+              ["03", "REUSE INSCRIBED PIECES WITHOUT PAYING TWICE"],
+              ["04", "CREATORS PAID IN THE SAME TRANSACTION"],
+            ].map(([n, t]) => (
+              <li key={n} className="flex gap-3 border-b border-border p-3 last:border-b-0">
+                <span className="text-bitcoin">{n}</span>
+                <span>{t}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
     </div>
@@ -272,7 +304,7 @@ function Pillar({
   name: string;
   what: string;
   body: string;
-  to: "/oasis" | "/marketplace" | "/extenders" | "/passport" | "/studio";
+  to: "/oasis" | "/marketplace" | "/extenders" | "/passport" | "/studio" | "/forge";
   action: string;
 }) {
   return (
