@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Search } from "lucide-react";
 import { ParcelCard } from "@/components/ParcelCard";
 
 import {
@@ -185,90 +186,216 @@ function Marketplace() {
 
   
 
+  const activeFilters = [club !== "any", trait !== "any", !!search, sort !== "default"].filter(Boolean).length;
+  const clearAll = () => { setClub("any"); setTrait("any"); setSearch(""); setSort("default"); setPage(0); };
+
   return (
-    <div className="marketplace-shell mx-auto max-w-[1600px] px-4 py-8 md:px-8 md:py-12">
-      <div>
-        <header data-tour="market-header" className="flex flex-col justify-between gap-5 border-b border-border pb-7">
-          <div className="border-l-2 border-primary pl-4">
-            <span className="label text-primary">LIVE BITCOIN LAND MARKET</span>
-            <h1 className="mt-2 font-mono text-3xl font-bold uppercase text-foreground md:text-5xl">BITMAP MARKETPLACE</h1>
-            <p className="mt-3 max-w-2xl text-sm text-muted-foreground">Buy, bid, list and track Bitmaps through verified Bitcoin transactions.</p>
-            <a href="#sell-bitmap" className="btn-term mt-4 inline-flex">◆ SELL YOUR BITMAP</a>
-          </div>
-          <div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
-            <span className="relative flex size-2" aria-hidden>
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-signal opacity-60" />
-              <span className="relative inline-flex size-2 rounded-full bg-signal" />
-            </span>
-            <span className="text-signal">LIVE SYNC</span> · ON-CHAIN MARKET DATA · REFRESHES EVERY 15S
-          </div>
-        </header>
-
-      </div>
-
-      <LiveMarketTicker trades={recent.data ?? []} inhabited={inhabited.data} syncedAt={crawl.dataUpdatedAt} />
-
-      <div data-tour="market-stats" className="mt-6 grid grid-cols-2 divide-border border border-border bg-card sm:grid-cols-3 sm:divide-x lg:grid-cols-6">
-        <div className="p-4">
-          <p className="label">REGISTERED BITMAPS</p>
-          <p className="mt-1 font-mono text-sm font-bold text-foreground" data-no-translate>
-            {liveOci.data
-              ? liveOci.data.total.toLocaleString("en-US")
-              : registryCount.data !== undefined
-                ? registryCount.data.toLocaleString("en-US")
-                : "…"}
-          </p>
-          {liveOci.data && (
-            <p className="mt-0.5 font-mono text-[10px] text-muted-foreground" data-no-translate>
-              OCI {liveOci.data.ociCount.toLocaleString("en-US")} + LIVEOCI {liveOci.data.liveCount.toLocaleString("en-US")}
-              {liveOci.data.tip ? ` · TIP #${liveOci.data.tip.toLocaleString("en-US")}` : ""}
-            </p>
-          )}
-        </div>
-        <Stat
-          k="TRADED ON CHAIN"
-          v={
-            crawl.data
-              ? crawl.data.tradedBitmaps.toLocaleString("en-US")
-              : traded.length.toLocaleString("en-US")
-          }
-        />
-        <Stat
-          k="LISTED"
-          v={
-            listed.length === 0
-              ? "0"
-              : `${listed.length} · ${formatSats(Math.min(...listed.map((p) => p.listedSats ?? 0)))}`
-          }
-        />
-        <Stat k="LOWEST SALE" v={floor ? formatSats(floor) : "—"} />
-        <Stat k="SALE VOLUME" v={volume ? formatSats(volume) : "—"} />
-        <div className="border-t border-border p-4 sm:border-t-0">
-          <p className="label text-signal">LAST TRADED</p>
-          {lastTrade ? (
-            <a
-              href={`https://mempool.space/tx/${lastTrade.txid}`}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-1 block font-mono text-sm font-bold text-foreground hover:text-signal"
-              data-no-translate
-            >
-              {formatSats(lastTrade.price_sats)}
-              <span className="mt-0.5 block text-[10px] font-normal text-muted-foreground">
-                {lastTrade.bitmap_height}.BITMAP{lastTrade.block_height ? ` · #${lastTrade.block_height}` : ""}
-                {lastTrade.block_time ?? lastTrade.created_at ? ` · ${timeAgo(lastTrade.block_time ?? lastTrade.created_at)}` : ""}
+    <div className="marketplace-shell mx-auto max-w-[1600px] px-3 py-6 sm:px-5 md:py-10">
+      <header data-tour="market-header" className="border border-border bg-card/60 p-5 backdrop-blur-md sm:p-6">
+        <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="label text-bitcoin">TRADE · BITCOIN LAND</span>
+              <span className="flex items-center gap-1.5 font-mono text-[10px] text-signal">
+                <span className="relative flex size-2" aria-hidden>
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-signal opacity-60" />
+                  <span className="relative inline-flex size-2 rounded-full bg-signal" />
+                </span>
+                LIVE SYNC
               </span>
-            </a>
-          ) : (
-            <p className="mt-1 font-mono text-sm text-muted-foreground">{recent.isPending ? "…" : "—"}</p>
-          )}
+            </div>
+            <h1 className="display mt-2 text-4xl sm:text-5xl">BITMAP MARKET</h1>
+            <p className="mt-2 max-w-xl font-mono text-xs leading-6 text-muted-foreground">BUY, BID, LIST AND TRACK BITMAPS THROUGH VERIFIED BITCOIN TRANSACTIONS.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <a href="#sell-bitmap" className="btn-term min-h-11">◆ SELL YOUR BITMAP</a>
+            <Link to="/history" className="btn-term-ghost min-h-11">SALES HISTORY →</Link>
+            <Link to="/leases" className="btn-term-ghost min-h-11">LEASES →</Link>
+          </div>
         </div>
+
+        <dl data-tour="market-stats" className="mt-5 grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3 lg:grid-cols-6">
+          <div className="bg-card p-3 md:p-4">
+            <dt className="label">REGISTERED</dt>
+            <dd className="mt-1 font-mono text-base font-bold text-signal md:text-lg" data-no-translate>
+              {liveOci.data
+                ? liveOci.data.total.toLocaleString("en-US")
+                : registryCount.data !== undefined
+                  ? registryCount.data.toLocaleString("en-US")
+                  : "…"}
+            </dd>
+            {liveOci.data?.tip ? (
+              <p className="mt-0.5 font-mono text-[10px] text-muted-foreground" data-no-translate>TIP #{liveOci.data.tip.toLocaleString("en-US")}</p>
+            ) : null}
+          </div>
+          <Stat k="TRADED ON CHAIN" v={crawl.data ? crawl.data.tradedBitmaps.toLocaleString("en-US") : traded.length.toLocaleString("en-US")} tone="signal" />
+          <Stat k="LISTED" v={listed.length === 0 ? "0" : `${listed.length} · ${formatSats(Math.min(...listed.map((p) => p.listedSats ?? 0)))}`} tone="bitcoin" />
+          <Stat k="LOWEST SALE" v={floor ? formatSats(floor) : "—"} tone="bitcoin" />
+          <Stat k="SALE VOLUME" v={volume ? formatSats(volume) : "—"} tone="bitcoin" />
+          <div className="bg-card p-3 md:p-4">
+            <dt className="label text-signal">LAST TRADED</dt>
+            {lastTrade ? (
+              <a href={`https://mempool.space/tx/${lastTrade.txid}`} target="_blank" rel="noreferrer" className="mt-1 block font-mono text-base font-bold text-foreground hover:text-signal md:text-lg" data-no-translate>
+                {formatSats(lastTrade.price_sats)}
+                <span className="mt-0.5 block text-[10px] font-normal text-muted-foreground">
+                  {lastTrade.bitmap_height}.BITMAP
+                  {lastTrade.block_time ?? lastTrade.created_at ? ` · ${timeAgo(lastTrade.block_time ?? lastTrade.created_at)}` : ""}
+                </span>
+              </a>
+            ) : (
+              <dd className="mt-1 font-mono text-base text-muted-foreground">{recent.isPending ? "…" : "—"}</dd>
+            )}
+          </div>
+        </dl>
+      </header>
+
+      <div className="mt-4">
+        <LiveMarketTicker trades={recent.data ?? []} inhabited={inhabited.data} syncedAt={crawl.dataUpdatedAt} />
       </div>
 
-      <section className="mt-6 border border-border bg-card" aria-labelledby="market-live-panel">
+      <div className="mt-4">
+        <MyBitmapsPanel />
+      </div>
+
+      {/* Sticky control bar */}
+      <div className="sticky top-16 z-20 mt-4 border border-border bg-background/90 p-2 backdrop-blur-md">
+        <div className="grid gap-2 lg:grid-cols-[auto_minmax(0,1fr)_auto]">
+          <div className="flex flex-wrap gap-1" role="tablist" aria-label="Market status">
+            {([
+              ["all", "ALL", parcels.length],
+              ["listed", "LISTED", listed.length],
+              ["inhabited", "INHABITED", inhabited.data?.size ?? 0],
+              ["traded", "TRADED", traded.length],
+            ] as const).map(([id, label, n]) => (
+              <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => { setTab(id); setPage(0); }}
+                className={`flex h-9 items-center gap-2 border px-3 font-mono text-[11px] transition-colors ${tab === id ? "border-bitcoin bg-bitcoin/10 text-bitcoin" : "border-transparent text-muted-foreground hover:border-signal hover:text-signal"}`}>
+                {label}<span className="opacity-70" data-no-translate>{n}</span>
+              </button>
+            ))}
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <input
+              id="bitmap-market-search"
+              type="search"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+              placeholder="SEARCH HEIGHT, OWNER OR TXID"
+              aria-label="Search BITMAPs"
+              className="h-9 w-full border border-input bg-card pl-10 pr-3 font-mono text-xs uppercase text-foreground outline-none placeholder:text-muted-foreground focus:border-signal"
+            />
+          </div>
+          <label className="flex items-center gap-2">
+            <span className="label">SORT</span>
+            <select
+              value={sort}
+              onChange={(e) => { setSort(e.target.value as Sort); setPage(0); }}
+              aria-label="Sort BITMAPs"
+              className="h-9 border border-input bg-card px-2 font-mono text-[11px] text-foreground outline-none focus:border-signal"
+            >
+              {SORTS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+            </select>
+          </label>
+        </div>
+        {activeFilters > 0 && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2">
+            {club !== "any" && <Chip label={CLUBS.find((c) => c.id === club)?.short ?? club} onClear={() => setClub("any")} />}
+            {trait !== "any" && <Chip label={OFFICIAL_TRAITS.find((t) => t.id === trait)?.label ?? trait} onClear={() => setTrait("any")} />}
+            {search && <Chip label={`"${search}"`} onClear={() => setSearch("")} />}
+            {sort !== "default" && <Chip label={SORTS.find((o) => o.id === sort)!.label} onClear={() => setSort("default")} />}
+            {activeFilters > 1 && (
+              <button type="button" className="font-mono text-[10px] text-muted-foreground underline hover:text-bitcoin" onClick={clearAll}>CLEAR ALL</button>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-12">
+        <aside className="lg:col-span-3">
+          <div data-tour="market-filters" className="border border-border bg-card/60 backdrop-blur-md lg:sticky lg:top-36">
+            <details className="group" open>
+              <summary className="flex cursor-pointer list-none items-center justify-between border-b border-border p-4">
+                <span className="label text-foreground">FILTERS</span>
+                <span className="label text-muted-foreground group-open:rotate-180" aria-hidden>▾</span>
+              </summary>
+              <div className="space-y-5 p-4">
+                <div>
+                  <span className="label mb-2 block">COLLECTION</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    <FilterPill active={club === "any"} onClick={() => { setClub("any"); setPage(0); }}>ALL CLUBS</FilterPill>
+                    {CLUBS.map((c) => (
+                      <FilterPill key={c.id} active={club === c.id} label={`Filter by collection ${c.label}`} onClick={() => { setClub(c.id); setPage(0); }}>{c.short}</FilterPill>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <div className="mb-2 flex items-baseline justify-between gap-2">
+                    <span className="label text-bitcoin">OFFICIAL TRAITS</span>
+                    <Link to="/traits" className="label hover:text-bitcoin">INDEX →</Link>
+                  </div>
+                  <div className="grid max-h-72 gap-1 overflow-y-auto pr-1">
+                    <TraitRow active={trait === "any"} label="ALL" count={parcels.length} onClick={() => { setTrait("any"); setPage(0); }} />
+                    {OFFICIAL_TRAITS.map((item) => {
+                      const count = traitCounts.get(item.id) ?? 0;
+                      return (
+                        <TraitRow key={item.id} active={trait === item.id} label={item.label} count={count} title={`${item.sourceKey} — ${item.description}`} disabled={count === 0 && trait !== item.id} onClick={() => { setTrait(item.id); setPage(0); }} />
+                      );
+                    })}
+                  </div>
+                  {trait !== "any" && (
+                    <Link to="/traits/$trait" params={{ trait }} className="label mt-2 inline-block text-bitcoin hover:text-foreground">
+                      FULL {OFFICIAL_TRAITS.find((t) => t.id === trait)?.label} INDEX →
+                    </Link>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-3 border-t border-border pt-4">
+                  <Link to="/collections" className="label hover:text-bitcoin">COLLECTION STATS →</Link>
+                  <a href="https://docs.bitmap.community/bitmap.community/trait-definitions" target="_blank" rel="noreferrer" className="label hover:text-bitcoin">TRAIT SOURCE ↗</a>
+                </div>
+                <div className="label text-muted-foreground" data-no-translate>{holders} HOLDERS IN LOADED INDEX</div>
+              </div>
+            </details>
+          </div>
+        </aside>
+
+        <section data-tour="market-grid" className="lg:col-span-9">
+          {registry.isPending ? (
+            <p className="grid min-h-48 place-items-center border border-dashed border-border font-mono text-sm text-muted-foreground">
+              READING THE REGISTRY FROM CHAIN…
+            </p>
+          ) : visible.length === 0 ? (
+            <EmptyRegistry />
+          ) : (
+            <>
+              <div className="flex flex-wrap items-baseline justify-between gap-3">
+                <span className="label text-muted-foreground" data-no-translate>
+                  {current * PAGE_SIZE + 1}–{current * PAGE_SIZE + pageParcels.length} OF {visible.length.toLocaleString("en-US")} BITMAPS
+                </span>
+                <span className="label text-muted-foreground">
+                  {owners.isFetching ? <span className="text-signal">RESOLVING HOLDERS ON CHAIN…</span> : `PAGE ${current + 1} / ${pageCount}`}
+                </span>
+              </div>
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {pageWithOwners.map((p) => (
+                  <ParcelCard
+                    key={p.inscriptionId}
+                    parcel={p}
+                    {...(p.ownerAddress && traitHolders.data?.get(p.ownerAddress.toLowerCase())
+                      ? { traitHolder: traitHolders.data.get(p.ownerAddress.toLowerCase())! }
+                      : {})}
+                  />
+                ))}
+              </div>
+              <Pager page={current} pageCount={pageCount} onPage={setPage} />
+            </>
+          )}
+        </section>
+      </div>
+
+      <section className="mt-8 border border-border bg-card/60 backdrop-blur-md" aria-labelledby="market-live-panel">
         <div className="flex items-center justify-between gap-4 border-b border-border p-4">
           <div>
-            <h2 id="market-live-panel" className="font-mono text-sm font-bold text-foreground">LIVE MARKET</h2>
+            <h2 id="market-live-panel" className="display text-xl">LIVE MARKET</h2>
             <p className="label mt-1">PRICE CHART · CONFIRMED SALES · CRAWLER</p>
           </div>
           <span className="flex items-center gap-2 font-mono text-[10px] text-signal">
@@ -285,224 +412,7 @@ function Marketplace() {
         </div>
       </section>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-12">
-        <aside className="lg:col-span-3">
-          <div data-tour="market-filters" className="border border-border bg-card lg:sticky lg:top-24">
-            <div className="border-b border-border p-4">
-              <h2 className="border-l-2 border-primary pl-3 font-mono text-sm font-bold text-foreground">FIND BITMAPS</h2>
-              <p className="label mt-2 pl-[14px]">FILTER THE REGISTRY</p>
-            </div>
-            <div className="space-y-5 p-4">
-              <div>
-                <label className="label mb-2 block" htmlFor="bitmap-market-search">SEARCH</label>
-                <input
-                  id="bitmap-market-search"
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-                  placeholder="HEIGHT / OWNER / TXID"
-                  className="w-full border border-border bg-background px-3 py-2.5 font-mono text-xs uppercase text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
-                />
-              </div>
-              <div>
-                <span className="label mb-2 block">MARKET STATUS</span>
-                <div className="grid grid-cols-1 gap-2">
-                  {(["all", "listed", "traded", "inhabited"] as const).map((value) => (
-                    <button key={value} className={tab === value ? "btn-term justify-start" : "btn-term-ghost justify-start"} onClick={() => { setTab(value); setPage(0); }}>
-                      {value === "all" ? "ALL BITMAPS" : value === "inhabited" ? `INHABITED${inhabited.data ? ` · ${inhabited.data.size}` : ""}` : value.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <span className="label mb-2 block">SORT</span>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {SORTS.map((o) => (
-                    <button key={o.id} type="button" aria-pressed={sort === o.id} className={`${sort === o.id ? "btn-term" : "btn-term-ghost"} !px-2`} onClick={() => { setSort(o.id); setPage(0); }}>
-                      {o.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <span className="label mb-2 block">COLLECTION</span>
-                <div className="grid grid-cols-2 gap-2 lg:grid-cols-1 xl:grid-cols-2">
-                  <button
-                    aria-pressed={club === "any"}
-                    className={club === "any" ? "btn-term !px-2" : "btn-term-ghost !px-2"}
-                    onClick={() => {
-                      setClub("any");
-                      setPage(0);
-                    }}
-                  >
-                    ALL CLUBS
-                  </button>
-                  {CLUBS.map((c) => (
-                    <button
-                      key={c.id}
-                      aria-label={`Filter by collection ${c.label}`}
-                      aria-pressed={club === c.id}
-                      className={club === c.id ? "btn-term !px-2" : "btn-term-ghost !px-2"}
-                      onClick={() => {
-                        setClub(c.id);
-                        setPage(0);
-                      }}
-                    >
-                      {c.short}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <div className="mb-2 flex items-baseline justify-between gap-2">
-                  <span className="label text-bitcoin">OFFICIAL TRAIT INDEX</span>
-                  <Link to="/traits" className="label hover:text-bitcoin">ALL →</Link>
-                </div>
-                <div className="grid max-h-72 grid-cols-2 gap-1.5 overflow-y-auto pr-1 lg:grid-cols-1 xl:grid-cols-2">
-                  <button
-                    type="button"
-                    aria-pressed={trait === "any"}
-                    className={trait === "any" ? "btn-term !px-2 justify-between" : "btn-term-ghost !px-2 justify-between"}
-                    onClick={() => { setTrait("any"); setPage(0); }}
-                  >
-                    ALL <span className="opacity-70">{parcels.length}</span>
-                  </button>
-                  {OFFICIAL_TRAITS.map((item) => {
-                    const count = traitCounts.get(item.id) ?? 0;
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        title={`${item.sourceKey} — ${item.description}`}
-                        aria-pressed={trait === item.id}
-                        disabled={count === 0 && trait !== item.id}
-                        className={`${trait === item.id ? "btn-term" : "btn-term-ghost"} !px-2 justify-between disabled:opacity-40`}
-                        onClick={() => { setTrait(item.id); setPage(0); }}
-                      >
-                        <span className="truncate">{item.label}</span>
-                        <span className="opacity-70">{count}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                {trait !== "any" && (
-                  <Link to="/traits/$trait" params={{ trait }} className="label mt-2 inline-block text-bitcoin hover:text-foreground">
-                    FULL {OFFICIAL_TRAITS.find((t) => t.id === trait)?.label} INDEX →
-                  </Link>
-                )}
-              </div>
-              <details className="border-t border-border pt-4">
-                <summary className="label cursor-pointer text-bitcoin">TRAIT GLOSSARY</summary>
-                <div className="mt-3 max-h-64 space-y-3 overflow-y-auto pr-2">
-                  {OFFICIAL_TRAITS.map((item) => (
-                    <div key={item.id}>
-                      <div className="font-mono text-[10px] text-foreground">{item.label}</div>
-                      <div className="mt-0.5 font-mono text-[9px] leading-relaxed text-muted-foreground">{item.description}</div>
-                    </div>
-                  ))}
-                </div>
-                <a
-                  href="https://docs.bitmap.community/bitmap.community/trait-definitions"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="label mt-4 inline-block text-bitcoin hover:text-foreground"
-                >
-                  SOURCE: BITMAP.COMMUNITY ↗
-                </a>
-                <Link to="/traits" className="label ml-3 inline-block text-bitcoin hover:text-foreground">FULL INDEX →</Link>
-              </details>
-              <Link to="/collections" className="btn-term-ghost w-full">PUNKS &amp; COLLECTION STATS →</Link>
-              <div className="border-t border-border pt-4 label">{holders} HOLDERS IN LOADED INDEX</div>
-            </div>
-          </div>
-        </aside>
-
-        <section data-tour="market-grid" className="lg:col-span-9">
-
-      <div className="mb-6">
-        <MyBitmapsPanel />
-      </div>
-
-
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        {([
-          ["all", "ALL", parcels.length],
-          ["listed", "⚡ LISTED NOW", listed.length],
-          ["inhabited", "◆ INHABITED", inhabited.data?.size ?? 0],
-          ["traded", "▲ TRADED", traded.length],
-        ] as const).map(([id, label, n]) => (
-          <button key={id} type="button" aria-pressed={tab === id} onClick={() => { setTab(id); setPage(0); }}
-            className={`flex items-center gap-2 border px-3 py-1.5 font-mono text-[11px] transition-colors ${tab === id ? "border-bitcoin bg-bitcoin/10 text-bitcoin" : "border-border text-muted-foreground hover:border-signal hover:text-signal"}`}>
-            {label}<span className="opacity-70" data-no-translate>{n}</span>
-          </button>
-        ))}
-        {(club !== "any" || trait !== "any" || search || sort !== "default") && (
-          <span className="mx-1 h-4 w-px bg-border" aria-hidden />
-        )}
-        {club !== "any" && <Chip label={CLUBS.find((c) => c.id === club)?.short ?? club} onClear={() => setClub("any")} />}
-        {trait !== "any" && <Chip label={OFFICIAL_TRAITS.find((t) => t.id === trait)?.label ?? trait} onClear={() => setTrait("any")} />}
-        {search && <Chip label={`"${search}"`} onClear={() => setSearch("")} />}
-        {sort !== "default" && <Chip label={SORTS.find((o) => o.id === sort)!.label} onClear={() => setSort("default")} />}
-        {[club !== "any", trait !== "any", !!search, sort !== "default"].filter(Boolean).length > 1 && (
-          <button type="button" className="font-mono text-[10px] text-muted-foreground underline hover:text-bitcoin"
-            onClick={() => { setClub("any"); setTrait("any"); setSearch(""); setSort("default"); setPage(0); }}>
-            CLEAR ALL
-          </button>
-        )}
-      </div>
-
-      <div className="mb-4 flex flex-wrap items-center gap-1.5" role="group" aria-label="Sort BITMAPs">
-        <span className="label mr-1">SORT</span>
-        {SORTS.map((o) => (
-          <button key={o.id} type="button" aria-pressed={sort === o.id} onClick={() => { setSort(o.id); setPage(0); }}
-            className={`border px-2.5 py-1 font-mono text-[10px] transition-colors ${sort === o.id ? "border-bitcoin bg-bitcoin/10 text-bitcoin" : "border-border text-muted-foreground hover:border-signal hover:text-signal"}`}>
-            {o.label}
-          </button>
-        ))}
-      </div>
-
-      {registry.isPending ? (
-        <p className="mt-10 border border-border p-10 font-mono text-sm text-muted-foreground">
-          &gt; READING THE REGISTRY FROM CHAIN<span className="blink">_</span>
-        </p>
-      ) : visible.length === 0 ? (
-        <EmptyRegistry />
-      ) : (
-        <>
-          <div className="flex flex-wrap items-baseline justify-between gap-3 border border-border bg-card p-4">
-            <span className="label">
-              SHOWING {current * PAGE_SIZE + 1}–{current * PAGE_SIZE + pageParcels.length} OF{" "}
-              {visible.length} BITMAP(S)
-            </span>
-            <span className="label">
-              {owners.isFetching ? (
-                <>
-                  RESOLVING HOLDERS ON CHAIN<span className="blink">_</span>
-                </>
-              ) : (
-                `PAGE ${current + 1} / ${pageCount}`
-              )}
-            </span>
-          </div>
-
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {pageWithOwners.map((p) => (
-              <ParcelCard
-                key={p.inscriptionId}
-                parcel={p}
-                {...(p.ownerAddress && traitHolders.data?.get(p.ownerAddress.toLowerCase())
-                  ? { traitHolder: traitHolders.data.get(p.ownerAddress.toLowerCase())! }
-                  : {})}
-              />
-            ))}
-          </div>
-
-          <Pager page={current} pageCount={pageCount} onPage={setPage} />
-        </>
-      )}
-        </section>
-      </div>
-
-      <section className="mt-10 space-y-6 border border-border bg-card p-4 md:p-5" aria-label="Order book and trends">
+      <section className="mt-6 space-y-6 border border-border bg-card/60 p-4 backdrop-blur-md md:p-5" aria-label="Order book and trends">
         <TrendExplorer parcels={parcels} />
         <BitmapOrderBook />
       </section>
@@ -556,7 +466,7 @@ function Pager({
 
 function EmptyRegistry() {
   return (
-    <div className="mt-10 border border-border p-10">
+    <div className="border border-dashed border-border p-10">
       <h2 className="display text-2xl">NO BITMAPS IN THE REGISTRY YET</h2>
       <p className="mt-4 font-mono text-sm text-muted-foreground">
         &gt; CHECK BACK SOON — BITMAPS ARE INDEXED FROM REAL BITCOIN BLOCKS
@@ -571,12 +481,31 @@ function EmptyRegistry() {
   );
 }
 
-function Stat({ k, v }: { k: string; v: string }) {
+function Stat({ k, v, tone }: { k: string; v: string; tone: "bitcoin" | "signal" }) {
   return (
-    <div className="p-4 md:p-5">
-      <div className="label">{k}</div>
-      <div className="mt-2 font-mono text-lg font-bold text-foreground md:text-xl">{v}</div>
+    <div className="bg-card p-3 md:p-4">
+      <dt className="label">{k}</dt>
+      <dd className={`mt-1 font-mono text-base font-bold md:text-lg ${tone === "bitcoin" ? "text-bitcoin" : "text-signal"}`} data-no-translate>{v}</dd>
     </div>
+  );
+}
+
+function FilterPill({ active, label, onClick, children }: { active: boolean; label?: string; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button type="button" aria-pressed={active} aria-label={label} onClick={onClick}
+      className={`border px-2.5 py-1 font-mono text-[10px] transition-colors ${active ? "border-bitcoin bg-bitcoin/10 text-bitcoin" : "border-border text-muted-foreground hover:border-signal hover:text-signal"}`}>
+      {children}
+    </button>
+  );
+}
+
+function TraitRow({ active, label, count, title, disabled, onClick }: { active: boolean; label: string; count: number; title?: string; disabled?: boolean; onClick: () => void }) {
+  return (
+    <button type="button" aria-pressed={active} title={title} disabled={disabled} onClick={onClick}
+      className={`flex items-center justify-between gap-2 border px-2.5 py-1.5 text-left font-mono text-[10px] transition-colors disabled:opacity-40 ${active ? "border-bitcoin bg-bitcoin/10 text-bitcoin" : "border-transparent text-muted-foreground hover:border-signal hover:text-signal"}`}>
+      <span className="truncate">{label}</span>
+      <span className="opacity-70" data-no-translate>{count}</span>
+    </button>
   );
 }
 
