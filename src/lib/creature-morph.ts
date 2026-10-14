@@ -4,6 +4,7 @@
  * Goes beyond the 8 lore species: 8 body plans × parts × patterns × palettes.
  */
 import { guardianFromBlock, type BlockDnaSource, type GuardianDna } from "@/lib/bitmon";
+import { onchainGuardianName } from "@/lib/onchain-name";
 
 export type BodyPlan = "QUADRUPED" | "HEXAPOD" | "SERPENT" | "BIPED" | "AVIAN" | "FLOATER" | "ARACHNID" | "CENTAUR";
 export type HornStyle = "NONE" | "SPIKE" | "CURL" | "ANTLER" | "CROWN";
@@ -98,7 +99,7 @@ export function morphFromDna(dna: GuardianDna): CreatureMorph {
   return {
     height: src.height,
     seed: hash.slice(-16),
-    name: `${prefix} ${pick(CORE[plan])}`,
+    name: (() => { const local = `${prefix} ${pick(CORE[plan])}`; return dna.blockHash ? onchainGuardianName(dna.height, dna.blockHash) : local; })(),
     code: `${plan.slice(0, 3)}-${hash.slice(-6).toUpperCase()}`,
     plan,
     segments: plan === "SERPENT" ? 5 + Math.round(load * 5) : 1 + Math.round(load * 2),

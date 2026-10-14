@@ -50,6 +50,8 @@ export type GuardianDna = {
   body: string;
   accent: string;
   dnaHash: string;
+  /** Full block hash (when known) — the on-chain generator names Guardians from it. */
+  blockHash?: string;
 };
 
 export const SPECIES: { name: GuardianSpecies; ability: string; shape: "wyrm" | "golem" | "beast" | "bird" | "wisp" }[] = [
@@ -125,6 +127,7 @@ export function guardianFromBlock(src: BlockDnaSource): GuardianDna {
     body: hsl(hue, 22 + tier * 10, 38 + tier * 4),
     accent: rarity === "MYTHIC" ? "#f7931a" : hsl((hue + 180) % 360, 70, 60),
     dnaHash: tail,
+    blockHash: hash,
   };
 }
 
