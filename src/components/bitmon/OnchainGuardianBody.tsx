@@ -6,12 +6,29 @@ import type { GuardianDna } from "@/lib/bitmon";
 import { animVox, blueprint, onchainGenome, type Act } from "@/lib/onchain-guardian";
 
 const noRay = () => {};
-// faces shaded like the inscription's painter: top lifted, sides darkened
+// Faces shaded exactly like the inscription's 2D painter, in sRGB space:
+// x sides mix 36% black, z sides 16% black, top mixes white (20%, glow 30%).
+// Codes: <0 darken by |s|, 1 = "top" (uses the material's lift).
 function shadedBox() {
   const g = new THREE.BoxGeometry(1, 1, 1), c: number[] = [];
-  [0.64, 0.64, 1.22, 0.5, 0.84, 0.84].forEach((k) => { for (let i = 0; i < 4; i++) c.push(k, k, k); });
-  g.setAttribute("color", new THREE.Float32BufferAttribute(c, 3));
+  [-0.36, -0.36, 1, -0.5, -0.16, -0.16].forEach((k) => { for (let i = 0; i < 4; i++) c.push(k); });
+  g.setAttribute("shade", new THREE.Float32BufferAttribute(c, 1));
   return g;
+}
+function painterMaterial(lift: number) {
+  const m = new THREE.MeshBasicMaterial({ toneMapped: false });
+  m.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader
+      .replace("#include <common>", "#include <common>\nattribute float shade;\nvarying float vShade;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvShade = shade;");
+    sh.fragmentShader = sh.fragmentShader
+      .replace("#include <common>", "#include <common>\nvarying float vShade;")
+      .replace("#include <color_fragment>", `#include <color_fragment>
+      vec3 sg = pow(max(diffuseColor.rgb, vec3(0.0)), vec3(1.0 / 2.2));
+      sg = vShade > 0.5 ? mix(sg, vec3(1.0), ${lift.toFixed(2)}) : sg * (1.0 + vShade);
+      diffuseColor.rgb = pow(sg, vec3(2.2));`);
+  };
+  return m;
 }
 
 export const OnchainGuardianBody = memo(function OnchainGuardianBody({
@@ -21,10 +38,7 @@ export const OnchainGuardianBody = memo(function OnchainGuardianBody({
   const V = useMemo(() => blueprint(G), [G]);
   const layers = useMemo(() => [V.filter((v) => !v[7]), V.filter((v) => v[7])], [V]);
   const geo = useMemo(shadedBox, []);
-  const mats = useMemo(() => [
-    new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false }),
-    new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false }),
-  ], []);
+  const mats = useMemo(() => [painterMaterial(0.2), painterMaterial(0.3)], []);
   const refs = [useRef<THREE.InstancedMesh>(null), useRef<THREE.InstancedMesh>(null)];
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const actRef = useRef<Act>(null);
