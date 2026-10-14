@@ -35,7 +35,7 @@ function Chamber({ title, list, value, onPick, other }: { title: string; list: A
   const [q, setQ] = useState("");
   const shown = list.filter((g) => g.height !== other && (!q || String(g.height).includes(q.trim()))).slice(0, 40);
   return (
-    <section className="glass-panel rounded-lg border border-border p-4 space-y-3">
+    <section className="bg-card/60 backdrop-blur rounded-lg border border-border p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="label text-primary">{title}</h2>
         {value && <span className="font-mono text-xs text-signal">{value.height}.BITMAP</span>}
@@ -90,7 +90,7 @@ function BreedLab() {
 
       <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr_1fr]">
         <Chamber title="SIRE" list={roster} value={sireG} onPick={setSireH} other={damH} />
-        <section className="glass-panel flex flex-col items-center rounded-lg border border-border p-4">
+        <section className="bg-card/60 backdrop-blur flex flex-col items-center rounded-lg border border-border p-4">
           <h2 className="label self-start text-primary">INCUBATOR</h2>
           {pet ? (
             <>
@@ -112,7 +112,7 @@ function BreedLab() {
       </div>
 
       {pet && sire && dam && (
-        <section className="glass-panel space-y-3 rounded-lg border border-border p-4">
+        <section className="bg-card/60 backdrop-blur space-y-3 rounded-lg border border-border p-4">
           <h2 className="label text-primary">PEDIGREE</h2>
           <p className="font-mono text-xs text-muted-foreground">
             SIRE {sire.height}.BITMAP ({short(sire.inscriptionId)}) × DAM {dam.height}.BITMAP ({short(dam.inscriptionId)}) → GEN {pet.gen} PET
