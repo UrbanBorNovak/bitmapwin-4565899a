@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ExtenderCard } from "@/components/extenders/ExtenderCard";
 import { DataBadge } from "@/components/extenders/DataBadge";
-import { EXTENDER_CATEGORIES, extenderStatsQuery, extendersQuery } from "@/lib/extenders";
+import { EXTENDER_CATEGORIES, extenderStatsQuery, extendersQuery, type Extender } from "@/lib/extenders";
+import { ExtenderPreviewDialog } from "@/components/extenders/ExtenderPreviewDialog";
 
 export const Route = createFileRoute("/extenders/")({
   head: () => {
@@ -39,6 +40,7 @@ function ExtenderCatalogue() {
   const [lane, setLane] = useState<Lane["id"]>("all");
   const [category, setCategory] = useState<string>("any");
   const [search, setSearch] = useState("");
+  const [previewing, setPreviewing] = useState<Extender | null>(null);
   const aiOnly = lane === "ai";
   const catalogue = useQuery(extendersQuery({ category, search, aiOnly }));
   const stats = useQuery(extenderStatsQuery());
@@ -149,12 +151,18 @@ function ExtenderCatalogue() {
           ) : (
             <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {extenders.map((extender) => (
-                <ExtenderCard key={extender.id} extender={extender} stats={stats.data?.get(extender.id)} />
+                <ExtenderCard
+                  key={extender.id}
+                  extender={extender}
+                  stats={stats.data?.get(extender.id)}
+                  onPreview={setPreviewing}
+                />
               ))}
             </div>
           )}
         </>
       )}
+      <ExtenderPreviewDialog extender={previewing} onClose={() => setPreviewing(null)} />
     </div>
   );
 }

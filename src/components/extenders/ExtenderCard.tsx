@@ -3,7 +3,15 @@ import { categoryGlyph, categoryLabel, type Extender, type ExtenderStats } from 
 import { shortenAddress } from "@/lib/registry";
 import { formatBit } from "@/lib/coins";
 
-export function ExtenderCard({ extender, stats }: { extender: Extender; stats?: ExtenderStats | undefined }) {
+export function ExtenderCard({
+  extender,
+  stats,
+  onPreview,
+}: {
+  extender: Extender;
+  stats?: ExtenderStats | undefined;
+  onPreview?: (extender: Extender) => void;
+}) {
   return (
     <Link
       to="/extenders/$slug"
@@ -40,8 +48,23 @@ export function ExtenderCard({ extender, stats }: { extender: Extender; stats?: 
         </div>
       </dl>
 
-      <div className="mt-3 font-mono text-[10px] text-muted-foreground" data-no-translate>
-        BY {extender.creatorAddress ? shortenAddress(extender.creatorAddress) : "UNLINKED BUILDER"}
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <span className="font-mono text-[10px] text-muted-foreground" data-no-translate>
+          BY {extender.creatorAddress ? shortenAddress(extender.creatorAddress) : "UNLINKED BUILDER"}
+        </span>
+        {onPreview && (stats?.publishedVersions ?? 0) > 0 ? (
+          <button
+            type="button"
+            className="label border border-signal px-2 py-1 text-signal transition-colors hover:border-bitcoin hover:text-bitcoin"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onPreview(extender);
+            }}
+          >
+            [ 3D PREVIEW ]
+          </button>
+        ) : null}
       </div>
     </Link>
   );
