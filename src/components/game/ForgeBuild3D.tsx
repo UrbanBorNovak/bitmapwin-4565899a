@@ -10,6 +10,37 @@ import { BLOCKS } from "@/lib/voxel-world";
 
 const COLORS = Object.fromEntries(BLOCKS.map((b) => [b.id, new THREE.Color(b.top)]));
 const noRaycast = () => {};
+type Mat = "solid" | "glass" | "gold" | "glow";
+const matOf = (k: string): Mat => (k === "glass" || k === "gold" || k === "glow" ? k : "solid");
+
+function VoxelLayer({ mat, blocks, unit }: { mat: Mat; blocks: { dx: number; dy: number; dz: number; k: string }[]; unit: number }) {
+  const ref = useRef<THREE.InstancedMesh>(null);
+  useEffect(() => {
+    const m = ref.current;
+    if (!m) return;
+    const o = new THREE.Object3D();
+    blocks.forEach((b, i) => {
+      o.position.set((b.dx - FORGE_SPAN / 2) * unit, (b.dy + 0.5) * unit, (b.dz - FORGE_SPAN / 2) * unit);
+      o.scale.setScalar(unit);
+      o.updateMatrix();
+      m.setMatrixAt(i, o.matrix);
+      m.setColorAt(i, COLORS[b.k] ?? COLORS["stone"]!);
+    });
+    m.instanceMatrix.needsUpdate = true;
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+    m.computeBoundingSphere();
+  }, [blocks, unit]);
+  const size = mat === "solid" ? 0.95 : 0.97;
+  return (
+    <instancedMesh key={blocks.length} ref={ref} args={[undefined, undefined, blocks.length]} castShadow={mat !== "glass"} receiveShadow raycast={noRaycast}>
+      <boxGeometry args={[size, size, size]} />
+      {mat === "glass" ? <meshStandardMaterial transparent opacity={0.65} roughness={0.1} depthWrite={false} />
+        : mat === "gold" ? <meshStandardMaterial metalness={0.85} roughness={0.25} />
+        : mat === "glow" ? <meshStandardMaterial emissive="#ffd27a" emissiveIntensity={2} roughness={0.6} toneMapped={false} />
+        : <meshStandardMaterial roughness={0.7} />}
+    </instancedMesh>
+  );
+}
 
 export const ForgeBuild3D = memo(function ForgeBuild3D({ height, position, cell }: { height: number; position: [number, number, number]; cell: number }) {
   const { data } = useQuery(forgeBuildQuery(height));
@@ -26,31 +57,16 @@ export const ForgeBuild3D = memo(function ForgeBuild3D({ height, position, cell 
     }
     return out;
   }, [data, land]);
-  const ref = useRef<THREE.InstancedMesh>(null);
   const unit = cell / 40;
-  useEffect(() => {
-    const m = ref.current;
-    if (!m || !blocks.length) return;
-    const mx = FORGE_SPAN, mz = FORGE_SPAN;
-    const o = new THREE.Object3D();
-    blocks.forEach((b, i) => {
-      o.position.set((b.dx - mx / 2) * unit, (b.dy + 0.5) * unit, (b.dz - mz / 2) * unit);
-      o.scale.setScalar(unit);
-      o.updateMatrix();
-      m.setMatrixAt(i, o.matrix);
-      m.setColorAt(i, COLORS[b.k] ?? COLORS["stone"]!);
-    });
-    m.instanceMatrix.needsUpdate = true;
-    if (m.instanceColor) m.instanceColor.needsUpdate = true;
-    m.computeBoundingSphere();
-  }, [blocks, unit]);
+  const groups = useMemo(() => {
+    const g: Record<Mat, typeof blocks> = { solid: [], glass: [], gold: [], glow: [] };
+    for (const b of blocks) g[matOf(b.k)].push(b);
+    return g;
+  }, [blocks]);
   if (!blocks.length) return null;
   return (
     <group position={position}>
-      <instancedMesh key={blocks.length} ref={ref} args={[undefined, undefined, blocks.length]} castShadow receiveShadow raycast={noRaycast}>
-        <boxGeometry args={[0.97, 0.97, 0.97]} />
-        <meshStandardMaterial roughness={0.7} />
-      </instancedMesh>
+      {(Object.keys(groups) as Mat[]).map((k) => groups[k].length ? <VoxelLayer key={k} mat={k} blocks={groups[k]} unit={unit} /> : null)}
     </group>
   );
 });

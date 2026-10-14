@@ -4,7 +4,7 @@
  * reinscribe it, so Bitcoin itself proves the owner made it. Older child-style
  * builds are still read as a fallback.
  */
-import { FORGE_FORMAT } from "@/lib/voxel-populate";
+import { FORGE_FORMAT, decodeBuild } from "@/lib/voxel-populate";
 import { FORGE_MASTER_DELEGATE_ID, parseForgeMeta, type ForgeMeta } from "@/lib/forge-delegate";
 
 /** Delegated (Tag 11) build: no body, bytes live in Tag 5 metadata. */
@@ -36,7 +36,7 @@ async function ord(path: string): Promise<Response | null> {
 
 export function parseForgeHtml(html: string): { archetype: string | null; data: string } | null {
   const m = html.match(/<script id="bwvx"[^>]*data-format="([^"]+)"[^>]*>([A-Za-z0-9+/=\s]+)<\/script>/);
-  if (!m || m[1] !== FORGE_FORMAT) return null;
+  if (!m || (m[1] !== FORGE_FORMAT && m[1] !== "BWVX2")) return null;
   const meta = html.match(/<meta name="bitmapwin" content="[^;"]+;\d+;([a-z]+)"/);
   return { archetype: meta?.[1] ?? null, data: m[2]!.trim() };
 }
@@ -96,7 +96,7 @@ async function firstForge(ids: string[], height: number, sat: string | null): Pr
       parsed = parseForgeHtml(new TextDecoder().decode(buf));
     }
     if (!parsed) continue;
-    const build = { sat, inscriptionId: id, archetype: parsed.archetype, data: parsed.data, blockCount: Math.floor(atob(parsed.data).length / 4) };
+    const build = { sat, inscriptionId: id, archetype: parsed.archetype, data: parsed.data, blockCount: decodeBuild(parsed.data).length };
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       await supabaseAdmin.from("bitmap_forge_builds").upsert(
