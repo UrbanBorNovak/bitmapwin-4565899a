@@ -31,17 +31,17 @@ export function MintHero() {
 
   return (
     <section className="relative mb-8 overflow-hidden rounded-md border border-border">
-      <div className="relative h-[420px] w-full md:h-[520px]">
+      <div className="relative h-[280px] w-full md:h-[380px]">
         <img src={hero} alt="" aria-hidden width={1920} height={832} className="absolute inset-0 size-full object-cover object-top opacity-30" />
         <ClientOnly fallback={null}>
           <Suspense fallback={null}>
             <div className="absolute inset-0"><MintLineup3D /></div>
           </Suspense>
         </ClientOnly>
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-background to-transparent" />
       </div>
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
       <div className="absolute right-3 top-3"><MintLangToggle lang={lang} setLang={setLang} /></div>
-      <div data-no-translate={lang === "zh" ? "" : undefined} className="absolute inset-x-0 bottom-0 p-4 md:p-6">
+      <div data-no-translate={lang === "zh" ? "" : undefined} className="relative -mt-6 p-4 md:p-6">
         <p className="label text-signal">{t.heroTag}</p>
         <p className="display mt-1 text-2xl md:text-4xl">{t.heroA} <span className="text-bitcoin">{t.heroB}</span></p>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
