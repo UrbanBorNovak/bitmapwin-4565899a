@@ -250,7 +250,7 @@ function Index() {
       </section>
 
       <section className="mx-auto max-w-[1600px] px-3 pt-10 pb-24 md:px-5">
-        <div className="glass-panel grid gap-6 border border-bitcoin/40 p-5 md:grid-cols-[1.4fr_1fr] md:p-8">
+        <div className="grid gap-6 bg-card/60 backdrop-blur border border-bitcoin/40 p-5 md:grid-cols-[1.4fr_1fr] md:p-8">
           <div>
             <div className="label text-bitcoin">NEW · LAND FORGE</div>
             <h2 className="display mt-2 text-2xl md:text-4xl">BUILD ON YOUR BITMAP. INSCRIBE IT ON BITCOIN.</h2>
@@ -304,7 +304,7 @@ function Pillar({
   name: string;
   what: string;
   body: string;
-  to: "/oasis" | "/marketplace" | "/extenders" | "/passport" | "/studio";
+  to: "/oasis" | "/marketplace" | "/extenders" | "/passport" | "/studio" | "/forge";
   action: string;
 }) {
   return (
