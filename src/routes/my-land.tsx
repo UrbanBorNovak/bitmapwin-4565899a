@@ -58,6 +58,7 @@ function MyLandPage() {
   const usingLive = liveHeights !== null;
   const heights = liveHeights ?? held.data ?? [];
   const scanning = live.isLoading || (!usingLive && held.isLoading);
+  const status = statusQ;
   const deployedOn = new Map<number, number>();
   for (const d of deployments.data ?? []) {
     deployedOn.set(d.bitmapHeight, (deployedOn.get(d.bitmapHeight) ?? 0) + 1);
@@ -115,6 +116,8 @@ function MyLandPage() {
                 <div className="label mt-2 text-[0.55rem]">
                   {deployedOn.get(h) ? `${deployedOn.get(h)} DEPLOYED` : "EMPTY LAND"}
                 </div>
+                {status.data?.get(h)?.build && <div className="label mt-1 text-[0.55rem] text-signal">▣ BUILT · {status.data.get(h)!.build!.voxels} VOXELS</div>}
+                {status.data?.get(h)?.guardian && <div className="label mt-1 text-[0.55rem] text-bitcoin">◆ GUARDIAN · {status.data.get(h)!.guardian!.species}</div>}
               </Link>
               <Link to="/oasis" search={{ height: h }} className="btn-term m-2 mt-0 justify-center text-center text-[11px]">
                 ENTER OASIS →

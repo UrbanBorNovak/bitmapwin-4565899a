@@ -20,6 +20,7 @@ import { publishForgeModuleFn, stampForgeModuleFn } from "@/lib/forge-modules.fu
 import { supabase } from "@/integrations/supabase/client";
 import { useWalletSession } from "@/lib/wallet-session";
 import { heldHeightsQuery } from "@/lib/held-parcels";
+import { landStatusQuery } from "@/lib/land-status";
 import { forgeRightsFn } from "@/lib/forge-rights.functions";
 import { forgePieceFn } from "@/lib/forge-parts.functions";
 import { collectionPiecesQuery } from "@/lib/forge-collection.functions";
@@ -182,6 +183,7 @@ function ForgePage() {
   const focusRect = focus !== null ? rects[focus] ?? null : null;
   const addrs = wallet ? [wallet.ordinalsAddress, wallet.paymentAddress].filter(Boolean) as string[] : [];
   const owned = useQuery(heldHeightsQuery(addrs));
+  const landStatus = useQuery(landStatusQuery(owned.data ?? []));
   const rightsFn = useServerFn(forgeRightsFn);
   const rights = useQuery({
     queryKey: ["forge-rights", height, wallet?.ordinalsAddress],
@@ -483,9 +485,23 @@ function ForgePage() {
               {(owned.data?.length ?? 0) > 0 && (
                 <div className="flex flex-wrap gap-1">
                   <span className="w-full text-[10px] text-muted-foreground">YOUR LAND · TAP TO BUILD</span>
-                  {owned.data!.slice(0, 12).map((h) => (
-                    <button key={h} type="button" onClick={() => setInput(String(h))} className={`rounded border px-2 py-0.5 text-[10px] ${height === h ? "border-primary text-foreground" : "border-border text-muted-foreground"}`}>{h}</button>
-                  ))}
+                  <span className="w-full text-[9px] text-muted-foreground"><span className="text-accent">▣</span> BUILT ON-CHAIN · <span className="text-primary">◆</span> GUARDIAN INSCRIBED</span>
+                  {owned.data!.map((h) => {
+                    const s = landStatus.data?.get(h);
+                    return (
+                      <button key={h} type="button" onClick={() => setInput(String(h))} title={[s?.build ? `Build ${s.build.voxels} voxels` : "No build yet", s?.guardian ? `Guardian ${s.guardian.species}` : "No inscribed Guardian"].join(" · ")} className={`rounded border px-2 py-0.5 text-[10px] ${height === h ? "border-primary text-foreground" : s?.build ? "border-accent/60 text-foreground" : "border-border text-muted-foreground"}`}>
+                        {h}
+                        {s?.build && <span className="ml-1 text-accent">▣{s.build.voxels}</span>}
+                        {s?.guardian && <span className="ml-1 text-primary">◆</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {height !== null && landStatus.data?.get(height) && (
+                <div className="rounded border border-accent/50 px-2 py-1 text-[10px]">
+                  {landStatus.data.get(height)!.build && <p className="text-accent">▣ ALREADY BUILT · {landStatus.data.get(height)!.build!.voxels} VOXELS · <a className="underline" target="_blank" rel="noreferrer" href={`https://ordinals.com/inscription/${landStatus.data.get(height)!.build!.inscriptionId}`}>VIEW ↗</a></p>}
+                  {landStatus.data.get(height)!.guardian && <p className="text-primary">◆ GUARDIAN · {landStatus.data.get(height)!.guardian!.species} · <a className="underline" target="_blank" rel="noreferrer" href={`https://ordinals.com/inscription/${landStatus.data.get(height)!.guardian!.inscriptionId}`}>VIEW ↗</a></p>}
                 </div>
               )}
               {height !== null && (
