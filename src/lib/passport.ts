@@ -1,7 +1,7 @@
 import type { Json } from "@/integrations/supabase/types";
 
 export type ProofLevel = "CHAIN" | "WORLD" | "ACCOUNT";
-export type StampKey = "first-arrival" | "world-walker" | "first-mark" | "builder" | "land-steward" | "deployer" | "participant" | "historian";
+export type StampKey = "first-arrival" | "world-walker" | "first-mark" | "builder" | "land-steward" | "deployer" | "participant" | "historian" | "emporium-resident";
 export type BuildCapability = "build.trail-marker" | "build.oasis-waystation" | "build.fortified-camp" | "build.district-gate";
 
 export type ProvenanceEvent = {
@@ -29,6 +29,7 @@ export const STAMP_RULES: Record<StampKey, { name: string; description: string }
   deployer: { name: "DEPLOYER", description: "Activated an Extender on a BITMAP." },
   participant: { name: "PARTICIPANT", description: "Joined a recorded trade, lease, event, clan action, or duel." },
   historian: { name: "HISTORIAN", description: "Created verified history across four kinds of activity." },
+  "emporium-resident": { name: "EMPORIUM RESIDENT", description: "Held a Resident portrait or valid parcel of 717328.BITMAP (Bitmap Emporium), verified on chain." },
 };
 export const UNLOCK_RULES: Record<BuildCapability, { name: string; description: string; stamp: StampKey }> = {
   "build.trail-marker": { name: "TRAIL MARKER", description: "A roadside marker for future travelers.", stamp: "first-arrival" },

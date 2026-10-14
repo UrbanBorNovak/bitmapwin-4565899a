@@ -164,3 +164,19 @@ export const setMyResidencyFn = createServerFn({ method: "POST" })
     if (error) { console.error("residency save", error); throw new Error("COULD NOT SAVE RESIDENCY"); }
     return resolved;
   });
+
+/** Set a held Bitmap Emporium Resident portrait (verified on chain) as the profile picture. */
+export const setEmporiumAvatarFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ inscriptionId: z.string().regex(/^[0-9a-f]{64}i\d+$/) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const wallet = await verifiedWallet(context.supabase, context.userId);
+    if (!wallet) throw new Error("VERIFY A WALLET FIRST");
+    const { verifyEmporiumResident } = await import("@/lib/emporium.server");
+    const res = await verifyEmporiumResident(wallet);
+    if (!res.portraits.includes(data.inscriptionId)) throw new Error("THIS PORTRAIT IS NOT HELD BY YOUR VERIFIED WALLET");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("wallet_profiles").upsert({ address: wallet, owner_user_id: context.userId, avatar_inscription_id: data.inscriptionId } as any, { onConflict: "address" });
+    if (error) throw new Error("COULD NOT SAVE AVATAR");
+    return { avatarInscriptionId: data.inscriptionId };
+  });

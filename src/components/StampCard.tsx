@@ -8,6 +8,7 @@ export function StampCard({ stamp }: { stamp: PassportStamp }) {
     <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--passport-line)] pt-3 font-mono text-[9px] text-[var(--passport-muted)]">
       <span>APP RECORD · RULE V{stamp.ruleVersion} · {new Date(stamp.earnedAt).toLocaleDateString()}</span>
       {stamp.bitmapHeight !== null ? <Link to="/bitmap/$block" params={{ block: String(stamp.bitmapHeight) }} className="inline-flex items-center gap-1 text-foreground hover:text-bitcoin">EVIDENCE <ExternalLink className="size-3" /></Link> : null}
+      {stamp.inscriptionId ? <a href={`https://ordinals.com/inscription/${stamp.inscriptionId}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-bitcoin hover:underline" data-no-translate>INSCRIPTION {stamp.inscriptionId.slice(0, 8)}… <ExternalLink className="size-3" /></a> : null}
     </div>
   </article>;
 }

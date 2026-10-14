@@ -3,7 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Home } from "lucide-react";
-import { getMyResidencyFn, setMyResidencyFn } from "@/lib/residency.functions";
+import { getMyResidencyFn, setMyResidencyFn, setEmporiumAvatarFn } from "@/lib/residency.functions";
+import { verifyEmporiumResidentFn } from "@/lib/emporium.functions";
 import { InscriptionAvatar } from "@/components/InscriptionAvatar";
 import type { EstateLand } from "@/lib/passport-estate";
 
@@ -25,6 +26,18 @@ export function PassportResidency({ userId, land }: { userId: string; land: Esta
     onError: (e) => toast("RESIDENCY FAILED", { description: (e as Error).message }),
   });
   const r = residency.data;
+  const verifyFn = useServerFn(verifyEmporiumResidentFn);
+  const avatarFn = useServerFn(setEmporiumAvatarFn);
+  const emporium = useQuery({ queryKey: ["emporium-resident", r?.wallet], queryFn: () => verifyFn({ data: { address: r!.wallet! } }), enabled: Boolean(r?.wallet), staleTime: 5 * 60_000 });
+  const setAvatar = useMutation({
+    mutationFn: (inscriptionId: string) => avatarFn({ data: { inscriptionId } }),
+    onSuccess: (x) => {
+      qc.setQueryData(["my-residency", userId], (old: typeof r) => (old ? { ...old, avatarInscriptionId: x.avatarInscriptionId } : old));
+      if (r?.wallet) qc.invalidateQueries({ queryKey: ["wallet-profile", r.wallet] });
+      toast("EMPORIUM PORTRAIT SET AS AVATAR");
+    },
+    onError: (e) => toast("AVATAR FAILED", { description: (e as Error).message }),
+  });
 
   return (
     <section className="passport-panel mt-8 p-4">
@@ -71,6 +84,20 @@ export function PassportResidency({ userId, land }: { userId: string; land: Esta
                   {r.height !== null && <button type="button" className="passport-action" disabled={save.isPending} onClick={() => save.mutate(null)}>CLEAR</button>}
                 </div>
               )}
+              {emporium.data?.portraits.length ? (
+                <div className="mt-5 border-t border-[var(--passport-line)] pt-4">
+                  <p className="passport-kicker">EMPORIUM RESIDENT PORTRAITS · 717328.BITMAP</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {emporium.data.portraits.map((id) => (
+                      <button key={id} type="button" disabled={setAvatar.isPending} onClick={() => setAvatar.mutate(id)} title={`Use ${id.slice(0, 8)}… as avatar`}
+                        className={`size-14 overflow-hidden border p-0.5 ${r.avatarInscriptionId === id ? "border-[var(--passport-gold)]" : "border-[var(--passport-line)]"}`}>
+                        <img src={`https://ordinals.com/content/${id}`} alt="Emporium Resident portrait" loading="lazy" className="size-full object-cover [image-rendering:pixelated]" />
+                      </button>
+                    ))}
+                  </div>
+                  <p className="passport-code mt-2">VERIFIED ON CHAIN · TAP TO USE AS AVATAR</p>
+                </div>
+              ) : emporium.isPending ? <p className="passport-code mt-4">CHECKING EMPORIUM RESIDENCY…</p> : null}
             </>
           )}
         </div>

@@ -68,10 +68,22 @@ export async function syncPassport(userId: string): Promise<Passport> {
     { key: "participant", evidence: evidence.find((e) => ["trade", "lease", "combat", "event", "clan"].includes(e.eventType)) },
     { key: "historian", evidence: categories.size >= 4 ? evidence[evidence.length - 1] : undefined },
   ];
+  const hasEmporium = await client.from("passport_stamps").select("id").eq("user_id", userId).eq("stamp_key", "emporium-resident").maybeSingle();
+  if (!hasEmporium.data) {
+    try {
+      const { verifyEmporiumResident } = await import("@/lib/emporium.server");
+      const res = await verifyEmporiumResident(wallet);
+      const proofId = res.portraits[0] ?? res.parcels[0]?.inscriptionId;
+      if (res.resident && proofId) {
+        const ev = await appendProvenance({ sourceKey: `emporium:${wallet}:${proofId}`, eventType: "residency", userId, wallet, bitmapHeight: 717328, sourceType: "inscription", sourceId: proofId, proofLevel: "CHAIN", title: "EMPORIUM RESIDENT", summary: res.portraits[0] ? "Holds a Resident portrait of 717328.BITMAP" : `Holds parcel ${res.parcels[0]!.index}.717328.bitmap`, metadata: { portraits: res.portraits.slice(0, 8), parcels: res.parcels.slice(0, 8).map((p) => p.inscriptionId) } });
+        candidates.push({ key: "emporium-resident", evidence: ev });
+      }
+    } catch (e) { console.error("emporium residency check failed", e); }
+  }
   for (const candidate of candidates) {
     if (!candidate.evidence) continue;
     const rule = STAMP_RULES[candidate.key];
-    await client.from("passport_stamps").upsert({ user_id: userId, wallet_address: wallet, stamp_key: candidate.key, name: rule.name, description: rule.description, evidence_event_id: candidate.evidence.id, evidence_source_type: candidate.evidence.sourceType, evidence_source_id: candidate.evidence.sourceId, bitmap_height: candidate.evidence.bitmapHeight }, { onConflict: "user_id,stamp_key", ignoreDuplicates: true });
+    await client.from("passport_stamps").upsert({ user_id: userId, wallet_address: wallet, stamp_key: candidate.key, name: rule.name, description: rule.description, evidence_event_id: candidate.evidence.id, evidence_source_type: candidate.evidence.sourceType, evidence_source_id: candidate.evidence.sourceId, bitmap_height: candidate.evidence.bitmapHeight, ...(candidate.key === "emporium-resident" ? { inscription_id: candidate.evidence.sourceId } : {}) }, { onConflict: "user_id,stamp_key", ignoreDuplicates: true });
   }
   const stampsResult = await client.from("passport_stamps").select("*").eq("user_id", userId).order("earned_at", { ascending: false });
   if (stampsResult.error) throw stampsResult.error;
