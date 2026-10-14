@@ -272,6 +272,13 @@ function BitmapDetail() {
                   </p>
                 </a>
               ) : null}
+              <Link
+                to="/oasis"
+                search={{ height: block }}
+                className="btn-term inline-flex min-h-14 items-center gap-2 px-8 text-base shadow-[0_0_24px_hsl(var(--bitcoin)/0.45)] motion-safe:animate-pulse hover:animate-none"
+              >
+                <Globe className="size-5" aria-hidden="true" /> ENTER THE OASIS
+              </Link>
               {parcel?.listedOfferId && parcel.listedSats !== null && (
                 <BuyButton offerId={parcel.listedOfferId} priceSats={parcel.listedSats} inscriptionId={parcel.inscriptionId} height={block} className="btn-term min-h-12 px-6" />
               )}
@@ -337,6 +344,20 @@ function BitmapDetail() {
 
       {tab === "world" && (
         <div id="bitmap-panel-world" role="tabpanel" aria-labelledby="bitmap-tab-world" className="mt-6 space-y-6">
+      <Link
+        to="/oasis"
+        search={{ height: block }}
+        className="group flex flex-wrap items-center justify-between gap-4 border border-bitcoin bg-bitcoin/10 p-5 hover:bg-bitcoin/20 md:p-7"
+      >
+        <div>
+          <p className="label text-bitcoin">3D WORLD · DROP IN</p>
+          <p className="display mt-1 text-2xl md:text-4xl">WALK INTO {block}.BITMAP</p>
+          <p className="mt-1 font-mono text-[11px] text-muted-foreground">One click — you land right on this BITMAP in the Oasis.</p>
+        </div>
+        <span className="btn-term inline-flex min-h-14 items-center gap-2 px-8 text-base">
+          <Globe className="size-5" aria-hidden="true" /> ENTER THE OASIS →
+        </span>
+      </Link>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <BitmapStreamPlayer height={block} />
         <StreamChat height={block} />
