@@ -39,6 +39,8 @@ export type InscribeJob = {
   pointer?: number;
   /** tag 5 CBOR metadata (Land Forge delegate builds carry their voxel bytes here) */
   metadata?: Record<string, unknown>;
+  /** tag 9: body is compressed with this encoding ("br"); explorers decompress it */
+  contentEncoding?: string;
   commitTxid?: string;
   revealTxid?: string;
   createdAt: string;
@@ -147,12 +149,14 @@ function revealPayment(
   delegate?: string,
   pointer?: number,
   metadata?: Record<string, unknown>,
+  contentEncoding?: string,
 ) {
   const pub = btc.utils.pubSchnorr(hex.decode(privHex));
   // Tag 3 may repeat: one entry per parent, in the order the reveal spends them.
   // Tag 11 (delegate) points at the master generator; the body then stays empty.
   const tags = {
     ...(delegate ? {} : { contentType }),
+    ...(!delegate && contentEncoding ? { contentEncoding } : {}),
     metaprotocol: `shad:${digest}`,
     ...(parents.length ? { parent: parents.map((p) => p.inscriptionId) } : {}),
     ...(delegate ? { delegate } : {}),
@@ -178,6 +182,7 @@ export async function prepareJob(input: {
   /** land the inscription on this sat offset (reinscription onto a parent's sat) */
   pointer?: number;
   metadata?: Record<string, unknown>;
+  contentEncoding?: string;
   /** sat/vB chosen by the holder; falls back to the live mempool rate */
   feeRate?: number;
 }): Promise<InscribeJob> {
@@ -192,12 +197,13 @@ export async function prepareJob(input: {
   const privHex = hex.encode(priv);
   const pointer = input.pointer;
   const metadata = input.metadata;
-  const pay = revealPayment(privHex, input.contentType, body, input.digest, parents, delegate, pointer, metadata);
+  const contentEncoding = delegate ? undefined : input.contentEncoding;
+  const pay = revealPayment(privHex, input.contentType, body, input.digest, parents, delegate, pointer, metadata, contentEncoding);
   const feeRate = input.feeRate && input.feeRate > 0 ? Math.max(1, Math.round(input.feeRate * 10) / 10) : await liveFeeRate();
   // witness bytes count a quarter; ~ 150 vB of fixed overhead for 1-in/1-out taproot.
   // Each parent adds one taproot input (~58 vB) and its pass-through output (~43 vB).
   const parentIds = parents.reduce((n, p) => n + p.inscriptionId.length, 0);
-  const tagBytes = parentIds + (delegate ? 36 : input.contentType.length) + 120 + (metadata ? JSON.stringify(metadata).length + 16 : 0);
+  const tagBytes = parentIds + (delegate ? 36 : input.contentType.length) + (contentEncoding ? 4 : 0) + 120 + (metadata ? JSON.stringify(metadata).length + 16 : 0);
   const vbytes = Math.ceil((body.length + tagBytes) / 4) + 150 + parents.length * 101 + (tribute ? 43 : 0) + tributes.length * 43;
   const revealFee = Math.ceil(vbytes * feeRate);
   const job: InscribeJob = {
@@ -216,6 +222,7 @@ export async function prepareJob(input: {
     ...(tributes.length ? { tributes } : {}),
     ...(pointer !== undefined ? { pointer } : {}),
     ...(metadata ? { metadata } : {}),
+    ...(contentEncoding ? { contentEncoding } : {}),
     createdAt: new Date().toISOString(),
   };
   saveJob(job);
@@ -252,7 +259,7 @@ export async function revealJob(
 ): Promise<string> {
   const body = hex.decode(job.bodyHex);
   const parents = job.parents ?? [];
-  const pay = revealPayment(job.privHex, job.contentType, body, job.digest, parents, job.delegate, job.pointer, job.metadata);
+  const pay = revealPayment(job.privHex, job.contentType, body, job.digest, parents, job.delegate, job.pointer, job.metadata, job.contentEncoding);
   const tx = new btc.Transaction({ customScripts });
   for (const parent of parents) {
     tx.addInput({
