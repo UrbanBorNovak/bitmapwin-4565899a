@@ -265,9 +265,9 @@ import {
 } from "@/lib/world-audio";
 import { WorldMusic } from "@/components/game/WorldMusic";
 import { cellX as lairX, cellZ as lairZ } from "@/lib/player-state";
-const LAIR_CELLS = [30, 60, 12];
+const LAIR_CELLS = [30, 60, 12, 90, 120, 150, 180];
 const nearBossLair = (x: number, z: number) =>
-  LAIR_CELLS.some((c) => (lairX(c) - x) ** 2 + (lairZ(c) - z) ** 2 < 0.06 * 0.06);
+  LAIR_CELLS.some((c) => (lairX(c) - x) ** 2 + (lairZ(c) - z) ** 2 < 0.1 * 0.1);
 import { aimState, aimZoom } from "@/lib/world-aim";
 import {
   ITEM_LABELS,
