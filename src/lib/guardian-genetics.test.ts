@@ -18,3 +18,12 @@ describe("guardian breeding", () => {
     expect(w).toBeGreaterThan(170);
   });
 });
+
+import { breedOdds as _bo } from "./guardian-genetics";
+describe("breedOdds", () => {
+  const g = (o: Partial<import("./onchain-guardian").OnchainG>) => ({ ra: "COMMON", wing: false, spine: false, pat: false, ...o }) as never;
+  it("both parents winged gives 95% wings", () => { expect(_bo(g({ wing: true }), g({ wing: true })).wings).toBe(0.95); });
+  it("one winged parent gives 50%", () => { expect(_bo(g({ wing: true }), g({})).wings).toBe(0.5); });
+  it("no ascent when both parents are MYTHIC", () => { expect(_bo(g({ ra: "MYTHIC" }), g({ ra: "MYTHIC" })).jackpot).toBe(0); });
+  it("jackpot is chimera 10% × ascent 12%", () => { expect(_bo(g({}), g({})).jackpot).toBeCloseTo(0.012); });
+});

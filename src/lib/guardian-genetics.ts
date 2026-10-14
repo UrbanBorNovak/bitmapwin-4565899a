@@ -121,3 +121,16 @@ export function petMetadata(sire: PetParent, dam: PetParent, pet: PetGenome) {
     c: [pet.hue, pet.hue2],
   };
 }
+
+/** Real per-trait odds for a pairing, read from the same rules breedPet uses. */
+export function breedOdds(S: OnchainG, D: OnchainG) {
+  const p = (a: boolean, b: boolean) => (a && b ? 0.95 : a || b ? 0.5 : 0.04);
+  const ascent = Math.min(RANK[S.ra], RANK[D.ra]) < 3 ? 0.12 : 0;
+  const chimera = 0.1;
+  return {
+    chimera, wings: p(S.wing, D.wing), spines: p(S.spine, D.spine), markings: p(S.pat, D.pat),
+    hornShift: 0.08, rarityAscent: ascent,
+    /** Jackpot = chimera body plan AND a rarity ascent in the same hatch. */
+    jackpot: chimera * ascent,
+  };
+}

@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { myGuardiansQuery } from "@/lib/bitmon-queries";
 import { useQuery } from "@tanstack/react-query";
 import { allGuardiansQuery, guardianDnaQuery, type AwakeGuardian } from "@/lib/bitmon-queries";
 import { onchainGenome } from "@/lib/onchain-guardian";
-import { breedPet, petMetadata, PET_SERVICE_FEE, type PetParent } from "@/lib/guardian-genetics";
+import { breedPet, breedOdds, petMetadata, PET_SERVICE_FEE, type PetParent } from "@/lib/guardian-genetics";
 import { petArtifactHtml } from "@/lib/pet-artifact";
 import { DONATION_ADDRESS } from "@/lib/donations";
 import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
@@ -21,6 +23,10 @@ export const Route = createFileRoute("/breed")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>): { sire?: number | undefined; dam?: number | undefined } => {
+    const n = (v: unknown) => (Number(v) > 0 ? Number(v) : undefined);
+    return { sire: n(s["sire"]), dam: n(s["dam"]) };
+  },
   component: BreedLab,
 });
 
@@ -67,14 +73,53 @@ function Chamber({ title, list, value, onPick, other }: { title: string; list: A
   );
 }
 
+function tone(f: number, ms: number, type: OscillatorType = "square", vol = 0.04) {
+  try {
+    const W = window as unknown as { __bwAc?: AudioContext };
+    const ac = (W.__bwAc ??= new AudioContext());
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.value = f; g.gain.value = vol;
+    g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + ms / 1000);
+    o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + ms / 1000);
+  } catch { /* audio unavailable */ }
+}
+const pct = (x: number) => `${(x * 100).toFixed(x < 0.1 ? 1 : 0)}%`;
+const REEL = ["QUADRUPED", "HEXAPOD", "SERPENT", "BIPED", "AVIAN", "FLOATER", "ARACHNID", "CENTAUR", "MYTHIC", "CHIMERA", "EPIC", "RARE"];
+
 function BreedLab() {
+  const search = Route.useSearch();
   const all = useQuery(allGuardiansQuery());
   const roster = useMemo(() => (all.data ?? []).filter((g) => !!g.inscriptionId), [all.data]);
-  const [sireH, setSireH] = useState<number>(-1);
-  const [damH, setDamH] = useState<number>(-1);
+  const [userId, setUserId] = useState<string | null>(null);
+  useEffect(() => { supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null)); }, []);
+  const mine = useQuery(myGuardiansQuery(userId));
+  const stable = useMemo(() => (mine.data ?? []).filter((g) => !!g.inscriptionId), [mine.data]);
+  const [sireH, setSireH] = useState<number>(search.sire ?? -1);
+  const [damH, setDamH] = useState<number>(search.dam ?? -1);
+  const [muted, setMuted] = useState(false);
+  const [spin, setSpin] = useState<string | null>(null);
+  const timer = useRef<number | null>(null);
   const sireG = roster.find((g) => g.height === sireH), damG = roster.find((g) => g.height === damH);
   const sire = useParent(sireG), dam = useParent(damG);
   const pet = useMemo(() => (sire && dam ? breedPet(sire, dam) : null), [sire, dam]);
+  const odds = useMemo(() => (sire && dam ? breedOdds(sire.genome, dam.genome) : null), [sire, dam]);
+  const jackpotHit = !!pet && pet.chimera && pet.mutations.includes("RARITY ASCENT");
+  const roll = () => {
+    if (!pet || spin) return;
+    let i = 0;
+    const step = () => {
+      setSpin(REEL[i % REEL.length]!); if (!muted) tone(300 + (i % 6) * 60, 60);
+      i++;
+      if (i < 22) timer.current = window.setTimeout(step, 40 + i * 9);
+      else {
+        setSpin(null);
+        if (!muted) (jackpotHit || pet.ra === "MYTHIC" ? [523, 659, 784, 1047] : pet.mutations.length ? [440, 660] : [330]).forEach((f, k) => setTimeout(() => tone(f, 220, "triangle", 0.06), k * 120));
+      }
+    };
+    step();
+  };
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  const pickStable = (h: number) => { if (sireH < 0) setSireH(h); else if (h !== sireH) setDamH(h); if (!muted) tone(880, 50); };
   const html = useMemo(() => (pet && sire && dam ? petArtifactHtml(pet, sire.inscriptionId, dam.inscriptionId) : ""), [pet, sire, dam]);
 
   return (
@@ -88,13 +133,35 @@ function BreedLab() {
         <p className="label text-muted-foreground">{roster.length} INSCRIBED GUARDIANS AVAILABLE AS PARENTS</p>
       </header>
 
+      {stable.length > 0 && (
+        <section className="bg-card/60 backdrop-blur rounded-lg border border-primary/40 p-3">
+          <p className="label text-primary mb-2">YOUR STABLE · {stable.length} INSCRIBED · TAP TO LOAD AS SIRE, THEN DAM</p>
+          <div className="flex gap-2 overflow-x-auto">
+            {stable.map((g) => (
+              <button key={g.height} type="button" onClick={() => pickStable(g.height)} className={`shrink-0 rounded-md border p-1 ${g.height === sireH || g.height === damH ? "border-primary" : "border-border hover:border-primary"}`}>
+                <GuardianPortrait height={g.height} size={56} />
+                <span className="block font-mono text-[10px] text-muted-foreground">{g.height}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr_1fr]">
         <Chamber title="SIRE" list={roster} value={sireG} onPick={setSireH} other={damH} />
         <section className="bg-card/60 backdrop-blur flex flex-col items-center rounded-lg border border-border p-4">
           <h2 className="label self-start text-primary">INCUBATOR</h2>
           {pet ? (
             <>
-              <PetPortrait genome={pet} size={260} />
+              <div className="relative">
+                <div className={spin ? "opacity-20 blur-sm transition" : "transition"}><PetPortrait genome={pet} size={260} /></div>
+                {spin && <p className="absolute inset-0 flex items-center justify-center font-display text-3xl text-primary">{spin}</p>}
+              </div>
+              {!spin && jackpotHit && <p className="label text-primary animate-pulse">◆ JACKPOT HATCH · CHIMERA + RARITY ASCENT</p>}
+              <div className="my-2 flex gap-2">
+                <button type="button" onClick={roll} disabled={!!spin} className="rounded-md border border-primary bg-primary px-4 py-2 font-mono text-xs text-primary-foreground disabled:opacity-50">{spin ? "ROLLING…" : "▶ ROLL THE HATCH"}</button>
+                <button type="button" onClick={() => setMuted((m) => !m)} className="rounded-md border border-border px-3 py-2 font-mono text-xs text-muted-foreground">{muted ? "SOUND OFF" : "SOUND ON"}</button>
+              </div>
               <div className="grid w-full grid-cols-2 gap-2 font-mono text-xs">
                 <span className="text-muted-foreground">GENERATION</span><span>GEN {pet.gen}</span>
                 <span className="text-muted-foreground">RARITY</span><span>{pet.ra}</span>
@@ -110,6 +177,19 @@ function BreedLab() {
         </section>
         <Chamber title="DAM" list={roster} value={damG} onPick={setDamH} other={sireH} />
       </div>
+
+      {odds && (
+        <section className="bg-card/60 backdrop-blur rounded-lg border border-border p-4">
+          <h2 className="label text-signal mb-2">ODDS BOARD · REAL RULES FOR THIS PAIR</h2>
+          <div className="grid grid-cols-2 gap-2 font-mono text-xs sm:grid-cols-4">
+            {([["CHIMERA BODY", odds.chimera], ["WINGS", odds.wings], ["SPINES", odds.spines], ["MARKINGS", odds.markings], ["HORN SHIFT", odds.hornShift], ["RARITY ASCENT", odds.rarityAscent]] as const).map(([k, v]) => (
+              <div key={k} className="rounded border border-border p-2"><p className="text-muted-foreground">{k}</p><p className="text-signal text-base">{pct(v)}</p></div>
+            ))}
+            <div className="col-span-2 rounded border border-primary p-2"><p className="text-primary">JACKPOT (CHIMERA + ASCENT)</p><p className="text-primary text-base">{odds.jackpot ? `1 IN ${Math.round(1 / odds.jackpot)}` : "NOT POSSIBLE · BOTH MYTHIC"}</p></div>
+          </div>
+          <p className="mt-2 label text-muted-foreground">Each pair always hatches the same pet — these odds show how lucky this pair was to get it. Try other pairs to hunt the jackpot.</p>
+        </section>
+      )}
 
       {pet && sire && dam && (
         <section className="bg-card/60 backdrop-blur space-y-3 rounded-lg border border-border p-4">
