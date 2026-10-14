@@ -6,6 +6,32 @@
  */
 import { FORGE_FORMAT, decodeBuild } from "@/lib/voxel-populate";
 import { FORGE_MASTER_DELEGATE_ID, parseForgeMeta, type ForgeMeta } from "@/lib/forge-delegate";
+import { encodeBuildBest } from "@/lib/voxel-populate";
+import { isInscriptionId, parseAssemblyHtml, placePart, type AsmPart } from "@/lib/forge-assembly";
+import type { TplBlock } from "@/lib/voxel-templates";
+
+/** Voxels of any inscribed Land Forge piece (delegate metadata or self-rendering HTML). */
+export async function forgePieceBlocks(id: string): Promise<TplBlock[] | null> {
+  if (!isInscriptionId(id)) return null;
+  const m = await ord(`/r/metadata/${id}`);
+  const hexStr = m ? ((await m.json().catch(() => null)) as string | null) : null;
+  const meta = typeof hexStr === "string" ? parseForgeMeta(hexStr) : null;
+  if (meta) return decodeBuild(meta.d);
+  const r = await ord(`/content/${id}`);
+  if (!r || !(r.headers.get("content-type") ?? "").includes("html")) return null;
+  const buf = await r.arrayBuffer();
+  if (buf.byteLength > MAX_BYTES) return null;
+  const p = parseForgeHtml(new TextDecoder().decode(buf));
+  return p ? decodeBuild(p.data) : null;
+}
+
+/** Resolves every referenced piece (one level deep) and returns one flat payload. */
+async function flattenAssembly(parts: AsmPart[], own: string): Promise<string> {
+  const all: TplBlock[] = own ? decodeBuild(own) : [];
+  const pieces = await Promise.all(parts.map((p) => forgePieceBlocks(p.id)));
+  parts.forEach((p, i) => { const b = pieces[i]; if (b) all.push(...placePart(b, p)); });
+  return encodeBuildBest(all).data;
+}
 
 /** Delegated (Tag 11) build: no body, bytes live in Tag 5 metadata. */
 async function delegateMeta(id: string): Promise<ForgeMeta | null> {
@@ -93,7 +119,12 @@ async function firstForge(ids: string[], height: number, sat: string | null): Pr
       if (!r || !(r.headers.get("content-type") ?? "").includes("html")) continue;
       const buf = await r.arrayBuffer();
       if (buf.byteLength > MAX_BYTES) continue;
-      parsed = parseForgeHtml(new TextDecoder().decode(buf));
+      const text = new TextDecoder().decode(buf);
+      parsed = parseForgeHtml(text);
+      if (!parsed) {
+        const asm = parseAssemblyHtml(text);
+        if (asm && asm.height === height) parsed = { archetype: "assembly", data: await flattenAssembly(asm.parts, asm.own) };
+      }
     }
     if (!parsed) continue;
     const build = { sat, inscriptionId: id, archetype: parsed.archetype, data: parsed.data, blockCount: decodeBuild(parsed.data).length };
