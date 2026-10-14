@@ -221,6 +221,7 @@ function BreedLab() {
         </section>
       )}
 
+      <PetLookup />
       <p className="label text-muted-foreground">
         Parents stay with their holders — breeding only reads their public inscriptions. <Link to="/command" className="text-primary">GUARDIAN COMMAND →</Link>
       </p>
