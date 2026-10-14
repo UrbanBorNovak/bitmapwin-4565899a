@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DataBadge } from "@/components/extenders/DataBadge";
 import { useWalletSession } from "@/lib/wallet-session";
 import { heldHeightsQuery } from "@/lib/held-parcels";
+import { landStatusQuery } from "@/lib/land-status";
 import { walletQuery } from "@/lib/wallet";
 import { myDeploymentsQuery } from "@/lib/extenders";
 import { HostEarnPanel } from "@/components/extenders/HostEarnPanel";
@@ -35,6 +36,10 @@ function MyLandPage() {
   // Same live Taproot scan as /wallet (shared cache); records are only a fallback.
   const live = useQuery(walletQuery(wallet?.ordinalsAddress ?? ""));
   const deployments = useQuery(myDeploymentsQuery(addresses));
+  const statusHeights = live.data
+    ? [...new Set(live.data.utxos.flatMap((u) => u.inscriptions.map((i) => i.bitmapHeight)).filter((h): h is number => h !== null))]
+    : held.data ?? [];
+  const statusQ = useQuery(landStatusQuery(statusHeights));
 
   if (!wallet) {
     return (
@@ -58,6 +63,7 @@ function MyLandPage() {
   const usingLive = liveHeights !== null;
   const heights = liveHeights ?? held.data ?? [];
   const scanning = live.isLoading || (!usingLive && held.isLoading);
+  const status = statusQ;
   const deployedOn = new Map<number, number>();
   for (const d of deployments.data ?? []) {
     deployedOn.set(d.bitmapHeight, (deployedOn.get(d.bitmapHeight) ?? 0) + 1);
@@ -115,6 +121,8 @@ function MyLandPage() {
                 <div className="label mt-2 text-[0.55rem]">
                   {deployedOn.get(h) ? `${deployedOn.get(h)} DEPLOYED` : "EMPTY LAND"}
                 </div>
+                {status.data?.get(h)?.build && <div className="label mt-1 text-[0.55rem] text-signal">▣ BUILT · {status.data.get(h)!.build!.voxels} VOXELS</div>}
+                {status.data?.get(h)?.guardian && <div className="label mt-1 text-[0.55rem] text-bitcoin">◆ GUARDIAN · {status.data.get(h)!.guardian!.species}</div>}
               </Link>
               <Link to="/oasis" search={{ height: h }} className="btn-term m-2 mt-0 justify-center text-center text-[11px]">
                 ENTER OASIS →
