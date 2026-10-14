@@ -72,8 +72,9 @@ export function parseForgeMeta(hexStr: string): ForgeMeta | null {
     const bytes = new Uint8Array(clean.length / 2);
     for (let k = 0; k < bytes.length; k++) bytes[k] = parseInt(clean.slice(k * 2, k * 2 + 2), 16);
     const m = readCbor(bytes) as Partial<ForgeMeta> | null;
-    if (!m || m.f !== FORGE_FORMAT || typeof m.d !== "string" || typeof m.h !== "number") return null;
-    return { f: m.f, h: m.h, d: m.d, ...(typeof m.p === "string" ? { p: m.p } : {}), ...(typeof m.l === "string" ? { l: m.l } : {}) };
+    const d = m ? (m.d ?? (m as { b?: unknown }).b) : undefined;
+    if (!m || (m.f !== FORGE_FORMAT && m.f !== "BWVX2") || typeof d !== "string" || typeof m.h !== "number") return null;
+    return { f: m.f, h: m.h, d, ...(typeof m.p === "string" ? { p: m.p } : {}), ...(typeof m.l === "string" ? { l: m.l } : {}) };
   } catch {
     return null;
   }
