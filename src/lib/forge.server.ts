@@ -4,7 +4,7 @@
  * reinscribe it, so Bitcoin itself proves the owner made it. Older child-style
  * builds are still read as a fallback.
  */
-import { FORGE_FORMAT } from "@/lib/voxel-populate";
+import { FORGE_FORMAT, decodeBuild } from "@/lib/voxel-populate";
 import { FORGE_MASTER_DELEGATE_ID, parseForgeMeta, type ForgeMeta } from "@/lib/forge-delegate";
 
 /** Delegated (Tag 11) build: no body, bytes live in Tag 5 metadata. */
