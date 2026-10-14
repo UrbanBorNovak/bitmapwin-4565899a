@@ -47,7 +47,7 @@ import { TerritoryPanel } from "@/components/extenders/TerritoryPanel";
 import { getBitmapHolderFn } from "@/lib/locate-bitmap.functions";
 import { LoopNavigator } from "@/components/LoopNavigator";
 import { TerritoryShareCard } from "@/components/TerritoryShareCard";
-import { SummonGuardianButton } from "@/components/bitmon/SummonGuardianDialog";
+import { BitmapGuardianPanel } from "@/components/bitmon/BitmapGuardianPanel";
 import { TerritoryChronicle } from "@/components/TerritoryChronicle";
 import { ShadowGatePanel } from "@/components/territory/ShadowGatePanel";
 import { Button } from "@/components/ui/button";
@@ -524,13 +524,7 @@ function BitmapDetail() {
         height={block}
         districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
       />
-      <div className="mt-8 flex flex-wrap items-center gap-3 border border-border p-4">
-        <div className="min-w-0 flex-1">
-          <p className="label text-bitcoin">BLOCK-DNA GUARDIAN</p>
-          <p className="font-mono text-[11px] text-muted-foreground">A creature read from this block's real data. The holder can summon it to patrol this land in the Oasis.</p>
-        </div>
-        <SummonGuardianButton height={block} />
-      </div>
+      <BitmapGuardianPanel height={block} />
         </div>
       )}
       {tab === "market" && (
