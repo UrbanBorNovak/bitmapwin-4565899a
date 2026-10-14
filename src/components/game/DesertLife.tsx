@@ -554,14 +554,10 @@ export const DesertLife = memo(function DesertLife({
       <MineralNodes unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <JadeNodes unit={unit} center={center} radius={radius} />
       <DiamondNodes unit={unit} center={center} radius={radius} />
-      <DesertProps unit={unit} center={center} radius={radius} />
       <OreMines unit={unit} center={center} radius={radius} />
-      <PineTrees unit={unit} center={treeCenter} radius={radius} />
+      {/* Land stays clear for inscribed builds: no procedural houses, shrines,
+          igloos, playgrounds or groves. Rare voxel trees grow only beyond the grid. */}
       <VoxelTrees unit={unit} center={treeCenter} radius={radius} />
-      <Houses unit={unit} center={center} radius={radius} />
-      <ClayShrines unit={unit} center={center} radius={radius} />
-      <Igloos unit={unit} center={center} radius={radius} />
-      <Playgrounds unit={unit} center={center} radius={radius} />
       <GoldenEgg unit={unit} pose={pose} />
       <TreasureChests unit={unit} bitcoin={colors.bitcoin} center={center} radius={radius} />
       <Critters unit={unit} colors={colors} pose={pose} onBite={onBite} />

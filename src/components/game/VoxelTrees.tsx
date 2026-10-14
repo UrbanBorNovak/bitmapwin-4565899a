@@ -11,6 +11,7 @@ import { groundY, useTerrainVersion } from "@/lib/world-terrain";
 import { wildBiomeAt } from "@/lib/wild-biome";
 import { useQuality } from "@/graphics/QualityContext";
 import { setTreeOccluders, type Occluder } from "@/lib/camera-occluders";
+import { WORLD_UNITS } from "@/lib/player-state";
 
 const noRaycast = () => null;
 
@@ -101,8 +102,10 @@ export const VoxelTrees = memo(function VoxelTrees({
         const dx = x - center[0], dz = z - center[1];
         const d = dx * dx + dz * dz;
         if (d > reach * reach) continue;
+        // Inside the 1,000 × 1,000 BITMAP grid the land belongs to inscriptions.
+        if (Math.abs(x) <= WORLD_UNITS / 2 && z >= 0 && z <= WORLD_UNITS) continue;
         const biome = wildBiomeAt(x, z);
-        const chance = biome === "forest" ? 0.42 : biome === "polar" ? 0.2 : biome === "meadow" ? 0.1 : 0;
+        const chance = biome === "forest" ? 0.04 : biome === "polar" ? 0.02 : biome === "meadow" ? 0.01 : 0;
         if (hash(gx, gz, 13) > chance) continue;
         if (isSea(x, z)) continue;
         // keep a clearing around the player wide enough for the chase camera
