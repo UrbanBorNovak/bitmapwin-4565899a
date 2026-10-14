@@ -20,7 +20,7 @@ describe("BWVX_ASM", () => {
     expect(p?.own).toBe("");
   });
   it("carries 24 pieces plus 8,000 own blocks in one payload", () => {
-    const own = [];
+    const own: Parameters<typeof forgeAssemblyHtml>[2] = [];
     for (let i = 0; i < 8000; i++) own.push({ dx: (i % 40) - 20, dy: Math.floor(i / 1600), dz: (Math.floor(i / 40) % 40) - 20, k: "stone" });
     const parts = Array.from({ length: 24 }, (_, i) => ({ id: ID, x: i, y: 0, z: i, r: i % 4 }));
     const p = parseAssemblyHtml(forgeAssemblyHtml(417155, parts, own));
