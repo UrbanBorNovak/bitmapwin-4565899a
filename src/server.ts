@@ -47,6 +47,12 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      // A server-function call with no function id (stray probe or stale tab)
+      // is not a real request; answer 404 instead of throwing inside the router.
+      const path = new URL(request.url).pathname;
+      if (/^\/_serverFn\/?$/.test(path)) {
+        return new Response("Not found", { status: 404 });
+      }
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);

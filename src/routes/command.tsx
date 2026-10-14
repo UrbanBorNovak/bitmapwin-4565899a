@@ -18,6 +18,11 @@ import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
 import { GuardianName } from "@/components/bitmon/GuardianName";
 import { guardianCry, guardianTier, powerScore } from "@/lib/onchain-guardian";
 import { useNavigate } from "@tanstack/react-router";
+import { StreamConstellation } from "@/components/StreamConstellation";
+import { provenanceStreamQuery } from "@/lib/provenance-stream";
+
+const TABS = [["garrison", "GARRISON & DISPATCH"], ["raids", "RAIDS & BOSSES"], ["stream", "WORLD CONSTELLATION"], ["index", "GUARDIAN INDEX"]] as const;
+type Tab = (typeof TABS)[number][0];
 
 export const Route = createFileRoute("/command")({
   head: () => ({
@@ -61,6 +66,8 @@ function CommandPage() {
   const mine = useQuery(myGuardiansQuery(userId));
   const live = useQuery(liveDispatchesQuery());
   const all = useQuery(allGuardiansQuery());
+  const [tab, setTab] = useState<Tab>("garrison");
+  const stream = useQuery({ ...provenanceStreamQuery("all", 80), enabled: tab === "stream" });
   const [view3d, setView3d] = useState<Record<number, boolean>>({});
   const qc = useQueryClient();
   const deploy = useServerFn(deployGuardianFn);
@@ -104,29 +111,32 @@ function CommandPage() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10 font-mono [background-image:linear-gradient(color-mix(in_oklab,var(--signal)_6%,transparent)_1px,transparent_1px),linear-gradient(90deg,color-mix(in_oklab,var(--signal)_6%,transparent)_1px,transparent_1px)] [background-size:32px_32px]">
+    <main className="mx-auto max-w-6xl px-4 py-6 font-mono [background-image:linear-gradient(color-mix(in_oklab,var(--signal)_6%,transparent)_1px,transparent_1px),linear-gradient(90deg,color-mix(in_oklab,var(--signal)_6%,transparent)_1px,transparent_1px)] [background-size:32px_32px]">
       <p className="text-[10px] tracking-[0.3em] text-signal">COMMAND CENTRE</p>
       <h1 className="mt-2 font-display text-3xl text-foreground">Command your Guardians</h1>
-      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-        Play in the Oasis yourself, or give orders from here and let your Guardians walk the world for you. Every route is shared — other players see your Guardian moving across the map in real time.
-      </p>
-      <div className="mt-4 flex gap-3 text-xs">
-        <Link to="/oasis" className="border border-bitcoin px-3 py-1.5 text-bitcoin hover:bg-bitcoin/10">ENTER THE OASIS →</Link>
-      </div>
-      <div className="mt-6 grid grid-cols-2 gap-px border border-border bg-border md:grid-cols-4">
+      <div className="mt-4 flex flex-wrap items-stretch gap-px border border-border bg-border">
         {([
-          ["DEPLOYED WORLDWIDE", live.data?.length ?? 0],
-          ["GUARDIANS AWAKE", all.data?.length ?? 0],
-          ["YOUR GARRISON", mine.data?.length ?? 0],
-          ["RAIDS SETTLED (RECENT)", raids.data?.raids.length ?? 0],
+          ["DEPLOYED", live.data?.length ?? 0],
+          ["AWAKE", all.data?.length ?? 0],
+          ["GARRISON", mine.data?.length ?? 0],
+          ["RAIDS", raids.data?.raids.length ?? 0],
         ] as const).map(([l, v]) => (
-          <div key={l} className="bg-background/80 px-4 py-3 backdrop-blur">
+          <div key={l} className="flex-1 bg-background/80 px-3 py-2 backdrop-blur">
             <p className="text-[9px] tracking-[0.25em] text-muted-foreground">{l}</p>
-            <p className="font-display text-2xl text-signal">{v}</p>
+            <p className="font-display text-xl text-signal">{v}</p>
           </div>
+        ))}
+        <Link to="/oasis" className="flex items-center bg-background/80 px-4 text-xs text-bitcoin hover:bg-bitcoin/10">ENTER THE OASIS →</Link>
+      </div>
+
+      <div className="sticky top-0 z-10 mt-4 flex gap-1 overflow-x-auto bg-background/90 py-2 backdrop-blur" role="tablist">
+        {TABS.map(([id, label]) => (
+          <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
+            className={`shrink-0 border px-3 py-1.5 text-[11px] tracking-[0.15em] ${tab === id ? "border-signal text-signal" : "border-border text-muted-foreground hover:text-foreground"}`}>{label}</button>
         ))}
       </div>
 
+      {tab === "garrison" && (<>
       {ready && !userId && (
         <p className="mt-8 border border-border p-4 text-sm text-muted-foreground">Sign in with the account that summoned your Guardians to command them.</p>
       )}
@@ -136,7 +146,7 @@ function CommandPage() {
         </p>
       )}
 
-      <div className="mt-8 grid gap-3">
+      <div className="mt-4 grid max-h-[72vh] gap-3 overflow-y-auto pr-1 lg:grid-cols-2">
         {(mine.data ?? []).map((g) => {
           const d = byHeight.get(g.height);
           const dir = directive[g.height] ?? "patrol";
@@ -214,19 +224,39 @@ function CommandPage() {
           );
         })}
       </div>
+      </>)}
 
-      <WhileAway raids={raids.data?.raids ?? []} mine={(mine.data ?? []).map((g) => g.height)} />
-      {userId && <BossRaids guardians={mine.data ?? []} />}
+      {tab === "raids" && (
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <div className="max-h-[70vh] overflow-y-auto pr-1">
+            <WhileAway raids={raids.data?.raids ?? []} mine={(mine.data ?? []).map((g) => g.height)} />
+            {userId ? <BossRaids guardians={mine.data ?? []} /> : <p className="mt-4 text-xs text-muted-foreground">Sign in to strike world bosses.</p>}
+          </div>
+          <div className="max-h-[70vh] overflow-y-auto pr-1">
+            <h2 className="text-[10px] tracking-[0.3em] text-signal">RAID LOG · LIVE</h2>
+            <div className="mt-3 grid gap-2">
+              {(raids.data?.raids ?? []).length === 0 && <p className="text-xs text-muted-foreground">No raids settled yet. March a Guardian onto a guarded BITMAP.</p>}
+              {(raids.data?.raids ?? []).map((r) => (
+                <BattleReport key={r.id} r={r} maxHp={(h) => all.data?.find((x) => x.height === h)?.hp} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
-      <h2 className="mt-12 text-[10px] tracking-[0.3em] text-signal">RAID LOG · LIVE</h2>
-      <div className="mt-3 grid gap-2">
-        {(raids.data?.raids ?? []).length === 0 && <p className="text-xs text-muted-foreground">No raids settled yet. March a Guardian onto a guarded BITMAP.</p>}
-        {(raids.data?.raids ?? []).map((r) => (
-          <BattleReport key={r.id} r={r} maxHp={(h) => all.data?.find((x) => x.height === h)?.hp} />
-        ))}
-      </div>
+      {tab === "stream" && (
+        <div className="mt-4">
+          {stream.data?.length ? <StreamConstellation events={stream.data} height={480} />
+            : <p className="border border-border p-4 text-xs text-muted-foreground">{stream.isPending ? "> READING WORLD HISTORY…" : "> THE STREAM IS QUIET"}</p>}
+          <Link to="/stream" className="mt-2 inline-block text-[10px] text-signal hover:underline">OPEN FULL WORLD STREAM →</Link>
+        </div>
+      )}
 
-      <GuardianIndex guardians={all.data ?? []} onPick={(h) => navigate({ to: "/mint", search: { height: h } })} />
+      {tab === "index" && (
+        <div className="-mt-6">
+          <GuardianIndex guardians={all.data ?? []} onPick={(h) => navigate({ to: "/mint", search: { height: h } })} />
+        </div>
+      )}
     </main>
   );
 }
