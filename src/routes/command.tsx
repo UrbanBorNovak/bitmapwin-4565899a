@@ -67,7 +67,7 @@ function CommandPage() {
   const live = useQuery(liveDispatchesQuery());
   const all = useQuery(allGuardiansQuery());
   const [tab, setTab] = useState<Tab>("garrison");
-  const stream = useQuery({ ...provenanceStreamQuery("all", 120), enabled: tab === "stream" });
+  const stream = useQuery({ ...provenanceStreamQuery("all", 80), enabled: tab === "stream" });
   const [view3d, setView3d] = useState<Record<number, boolean>>({});
   const qc = useQueryClient();
   const deploy = useServerFn(deployGuardianFn);

@@ -18,7 +18,7 @@ export const Route = createFileRoute("/stream")({
 function StreamPage() {
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
   const [view, setView] = useState<"graph" | "list">("graph");
-  const stream = useQuery(provenanceStreamQuery(filter, 120));
+  const stream = useQuery(provenanceStreamQuery(filter, 80));
   return <main className="mx-auto max-w-[1200px] px-4 py-10 md:px-8 md:py-14"><p className="label text-bitcoin">HISTORY IN MOTION</p><h1 className="display mt-3 text-4xl md:text-6xl">WORLD STREAM</h1><p className="mt-4 max-w-2xl text-sm text-muted-foreground">Real actions, connected to their proof. Watch each event grow onto its BITMAP and link to the wallets that made it.</p><div className="mt-6"><LoopNavigator active="provenance" /></div>
     <div className="mt-8 flex gap-1 overflow-x-auto pb-2" role="tablist">{FILTERS.map((id) => <button key={id} type="button" onClick={() => setFilter(id)} aria-pressed={filter === id} className={filter === id ? "btn-term shrink-0" : "btn-term-ghost shrink-0"}>[ {id.toUpperCase()} ]</button>)}
       <span className="flex-1" />
