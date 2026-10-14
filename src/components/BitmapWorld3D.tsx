@@ -8,6 +8,7 @@ import { FpsCrosshair } from "@/components/game/FpsCrosshair";
 import { VoxelLayer } from "@/components/game/VoxelLayer";
 import { VoxelHud } from "@/components/game/VoxelHud";
 import { VOXEL, columnSurface, setVoxelFeet, voxelCeilingAt, voxelWallAt } from "@/lib/voxel-world";
+import { forgeSurfaceAt, forgeWallAt } from "@/lib/forge-collision";
 import { floraSurface, floraWallAt } from "@/lib/flora-solids";
 let floraFeet: number | null = null;
 import { clearFraction } from "@/lib/camera-occluders";
@@ -378,7 +379,10 @@ const OWNER_CELL_BUDGET = 24_000;
  */
 const traversalSurfaceY = (x: number, z: number) => {
   if (isSea(x, z)) return Math.max(groundY(x, z), waterSurfaceY(x, z));
-  const base = columnSurface(x, z) ?? groundY(x, z);
+  let base = columnSurface(x, z) ?? groundY(x, z);
+  // Inscribed Land Forge builds are walkable: floors, stairs and roofs you can reach.
+  const forge = forgeSurfaceAt(x, z, floraFeet, VOXEL * 1.05);
+  if (forge != null && forge > base) base = forge;
   // Block-grown flora is walkable: stand on hedges, flowers and tree tops you can reach.
   const flora = floraSurface(x, z, floraFeet, VOXEL * 1.05);
   return flora != null && flora > base ? flora : base;
@@ -1868,6 +1872,7 @@ function PlayerCameraRig({
       if (here && !isDriving()) {
         const feet = traversalSurfaceY(here.x, here.z) + here.y;
         if (voxelWallAt(x, z, feet, VOXEL * 1.9, VOXEL * 0.3)) return true;
+        if (forgeWallAt(x, z, feet, VOXEL * 1.9)) return true;
         if (floraWallAt(x, z, feet, VOXEL * 1.9, VOXEL * 0.3, VOXEL * 1.05)) return true;
       }
       if (aloft(pose.current)) return false;
