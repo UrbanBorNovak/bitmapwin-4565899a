@@ -7,6 +7,7 @@
 import * as THREE from "three";
 import type { GuardianDna } from "@/lib/bitmon";
 import { morphFromDna } from "@/lib/creature-morph";
+import { v7Genome } from "@/lib/onchain-name";
 
 export type OnchainG = {
   h: number; sh: string; ra: GuardianDna["rarity"]; body: string; accent: string;
@@ -17,6 +18,11 @@ export type Vox = [number, number, number, number, number, number, string, numbe
 const HORN_IDX: Record<string, number> = { NONE: 0, SPIKE: 0, CURL: 1, ANTLER: 2, CROWN: 3 };
 
 export function onchainGenome(dna: GuardianDna): OnchainG {
+  // With the full block facts, use the exact V7 inscription maths so the app matches the chain.
+  if (dna.blockHash && dna.txCount != null && dna.size != null) {
+    const g = v7Genome(dna.height, dna.blockHash, dna.txCount, dna.size);
+    return { h: dna.height, sh: g.sh, ra: g.ra, body: g.body, accent: g.accent, seg: g.seg, bulk: g.bulk, horn: g.horn, wing: g.wing, spine: g.spine, pat: g.pat, gait: g.gait };
+  }
   const m = morphFromDna(dna);
   return {
     h: dna.height,
