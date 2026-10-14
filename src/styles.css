@@ -1736,3 +1736,32 @@
 
 @keyframes hourglass-trickle { to { stroke-dashoffset: -10; } }
 .hourglass-trickle { animation: hourglass-trickle 0.6s linear infinite; }
+
+/* Touch zones belong to the world, never to the whole browser window. */
+.oasis-touch-world {
+  --oasis-pad-size: 128px;
+  --oasis-touch-bottom: max(12px, env(safe-area-inset-bottom));
+  --oasis-touch-reserve: calc(176px + var(--oasis-touch-bottom));
+}
+.oasis-stick { width: var(--oasis-pad-size); height: var(--oasis-pad-size); left: max(12px, env(safe-area-inset-left)); bottom: var(--oasis-touch-bottom); }
+.oasis-touch-actions { width: 128px; right: max(12px, env(safe-area-inset-right)); bottom: var(--oasis-touch-bottom); }
+.oasis-look-pad { top: 112px; bottom: var(--oasis-touch-reserve); }
+.oasis-touch-world .oasis-nav-dock { bottom: var(--oasis-touch-reserve); justify-content: center; gap: 12px; }
+.oasis-touch-world .oasis-extra-tools { display: none; }
+.oasis-touch-world .oasis-identity { padding: 6px 8px; }
+.oasis-touch-world [aria-label="Exploration"] { display: none; }
+.oasis-activities[hidden] { display: none; }
+.oasis-activities > .absolute { position: relative; inset: auto; transform: none; max-width: 100%; width: fit-content; }
+.oasis-activities > .absolute > .hud-panel { max-width: 100%; }
+.oasis-activities > .absolute.pointer-events-none { pointer-events: auto; }
+@media (pointer: coarse) {
+  .oasis-page-tools { min-height: 60px; padding-inline: 12px; }
+  .oasis-touch-world { height: 78dvh; min-height: 360px; }
+}
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 600px) {
+  .oasis-touch-world { --oasis-pad-size: 104px; --oasis-touch-reserve: calc(156px + var(--oasis-touch-bottom)); height: 100dvh; min-height: 280px; }
+  .oasis-touch-world .oasis-nav-dock { inset: 12px 68px auto auto; width: auto; gap: 8px; padding: 0; }
+  .oasis-touch-world .oasis-look-pad { top: 80px; bottom: 100px; right: 152px; width: 42%; }
+  .oasis-touch-world .oasis-pad-button { width: 44px; height: 44px; }
+  .oasis-touch-world .oasis-identity .display { font-size: 14px; }
+}

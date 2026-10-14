@@ -46,7 +46,7 @@ export function QualityHud({ touch = false }: { touch?: boolean }) {
         </button>
         {open ? (
           <section
-            className="hud-panel absolute bottom-full right-0 mb-2 w-[min(22rem,calc(100vw-1.5rem))] p-2 font-mono text-[10px] shadow-lg"
+            className="hud-panel absolute bottom-full right-0 mb-2 max-h-[55dvh] w-[min(22rem,calc(100vw-1.5rem))] overflow-y-auto p-2 font-mono text-[10px] shadow-lg"
             aria-label="Graphics quality"
           >
             <div className="mb-2 flex items-center justify-between">
