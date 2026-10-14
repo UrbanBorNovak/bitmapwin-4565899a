@@ -23,7 +23,10 @@ export const Route = createFileRoute("/breed")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  validateSearch: (s: Record<string, unknown>) => ({ sire: Number(s.sire) > 0 ? Number(s.sire) : undefined, dam: Number(s.dam) > 0 ? Number(s.dam) : undefined }),
+  validateSearch: (s: Record<string, unknown>): { sire?: number; dam?: number } => {
+    const n = (v: unknown) => (Number(v) > 0 ? Number(v) : undefined);
+    return { sire: n(s["sire"]), dam: n(s["dam"]) };
+  },
   component: BreedLab,
 });
 
