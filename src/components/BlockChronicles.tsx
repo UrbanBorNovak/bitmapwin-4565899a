@@ -183,7 +183,7 @@ export function BlockChronicles() {
         <div className="w-px shrink-0 border-l border-dashed border-border" aria-hidden="true" />
         {issues.length === 0 && !isError && <div className="self-center font-mono text-xs text-muted-foreground">PRINTING LATEST ISSUES…</div>}
         {issues.map((iss, i) => (
-          <Cover key={iss.hash} issue={iss} isNew={i === 0} inscribed={insOf(iss.height)} onOpen={() => setOpen(i)} />
+          <Cover key={iss.hash} issue={iss} isNew={i === 0} inscribed={insOf(iss.height)} built={builtSet.has(iss.height)} onOpen={() => setOpen(i)} />
         ))}
       </div>
       <Dialog open={current != null} onOpenChange={(o) => !o && setOpen(null)}>
@@ -191,7 +191,7 @@ export function BlockChronicles() {
           {current && (
             <>
               <DialogTitle className="display">ISSUE #{current.height} — {current.title}</DialogTitle>
-              <Strip issue={current} inscribed={insOf(current.height)} />
+              <Strip issue={current} inscribed={insOf(current.height)} built={builtSet.has(current.height)} />
               <div className="flex items-center justify-between gap-2">
                 <button type="button" className="btn-term-ghost" disabled={open === issues.length - 1} onClick={() => setOpen((o) => (o ?? 0) + 1)}>← OLDER</button>
                 <a href={`https://mempool.space/block/${current.hash}`} target="_blank" rel="noreferrer" className="font-mono text-[10px] text-signal">VERIFY BLOCK ↗</a>
