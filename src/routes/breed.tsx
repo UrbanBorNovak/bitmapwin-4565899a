@@ -216,6 +216,7 @@ function BreedLab() {
               key: "pet", label: "PET", contentType: "text/html;charset=utf-8", source: html,
               tribute: { address: DONATION_ADDRESS, sats: PET_SERVICE_FEE },
               metadata: petMetadata(sire, dam, pet),
+              brotli: true,
             }]}
           />
         </section>

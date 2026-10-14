@@ -48,6 +48,8 @@ export type ArtifactVariant = {
   tributes?: { address: string; sats: number }[];
   /** Tag 5 metadata (with a delegate: the build's own bytes). */
   metadata?: Record<string, unknown>;
+  /** Brotli-pack the source and inscribe it with tag 9 `content-encoding: br`. */
+  brotli?: boolean;
 };
 
 export function ShadowInscriber(props: {
@@ -233,7 +235,17 @@ export function ShadowInscriber(props: {
       }
       setBusy("PRICING…");
       const wallet = await resolveWallet();
-      const body = file?.bytes ?? new TextEncoder().encode(artifactSource);
+      let body = file?.bytes ?? new TextEncoder().encode(artifactSource);
+      let contentEncoding: string | undefined;
+      if (!file && variant?.brotli && !variant.delegate) {
+        setBusy("COMPRESSING (BROTLI)…");
+        const { brotliPackFn } = await import("@/lib/brotli-pack.functions");
+        const packed = await brotliPackFn({ data: { text: artifactSource } });
+        if (packed.packedBytes < body.length) {
+          body = Uint8Array.from(atob(packed.base64), (c) => c.charCodeAt(0));
+          contentEncoding = "br";
+        }
+      }
       let parents: ParentSpend[] = [];
       let pointer: number | undefined;
       if (props.claimParentsForHeight !== undefined) {
@@ -291,6 +303,7 @@ export function ShadowInscriber(props: {
         ...(!file && variant?.tribute ? { tribute: variant.tribute } : {}),
         ...(!file && variant?.tributes?.length ? { tributes: variant.tributes } : {}),
         ...(chosenFee !== undefined ? { feeRate: chosenFee } : {}),
+        ...(contentEncoding ? { contentEncoding } : {}),
       });
 
       setJob(prepared);
