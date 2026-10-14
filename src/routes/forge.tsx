@@ -245,7 +245,13 @@ function ForgePage() {
       if (e.key === "r" || e.key === "R") setTurns((t) => t + 1);
       if (e.key === "e" || e.key === "E") setLayer((l) => Math.min(FORGE_SPAN - 1, l + 1));
       if (e.key === "q" || e.key === "Q") setLayer((l) => Math.max(0, l - 1));
-      if ((e.ctrlKey || e.metaKey) && e.key === "z") { e.preventDefault(); undo(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === "z") { e.preventDefault(); undo(); return; }
+      if (e.ctrlKey || e.metaKey) return;
+      if (e.key === "b" || e.key === "B") setTool("block");
+      if (e.key === "s" || e.key === "S") setTool("stamp");
+      if (e.key === "x" || e.key === "X") setTool("erase");
+      if (e.key === "p" || e.key === "P") setTool("parcel");
+      if (/^[0-9]$/.test(e.key)) { const b = BLOCKS[(Number(e.key) + 9) % 10]; if (b) { setPaint(b.id); setTool("block"); } }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -457,6 +463,14 @@ function ForgePage() {
                   {t === "stamp" ? "PIECES" : t === "block" ? "BLOCK" : t === "erase" ? "ERASE" : "PARCEL"}
                 </button>
               ))}
+              {tool === "block" && (
+                <>
+                  <span className="mx-1 h-4 w-px bg-border" />
+                  {BLOCKS.map((b, i) => (
+                    <button key={b.id} type="button" title={`${b.name} (${(i + 1) % 10})`} onClick={() => setPaint(b.id)} className={`h-5 w-5 rounded-sm border ${paint === b.id ? "border-primary ring-1 ring-primary" : "border-border"}`} style={{ background: b.top }} />
+                  ))}
+                </>
+              )}
               <span className="mx-1 h-4 w-px bg-border" />
               <button type="button" onClick={() => setTurns((t) => t + 1)} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">⟳ ROTATE</button>
               <button type="button" onClick={undo} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">↶ UNDO</button>
@@ -518,7 +532,7 @@ function ForgePage() {
                 reinscribeOnBitmap
                 {...(parcelTarget !== undefined ? { parcelIndex: parcelTarget } : {})}
                 artifactVariants={[
-                  ...(FORGE_MASTER_DELEGATE_ID ? [{ key: "lean", label: "LEAN BUILD", contentType: "text/html;charset=utf-8", source: html, note: `Drawn by the shared on-chain Forge renderer — about ${delegateSavings(html, forgeDelegateMetadata(height, encodeBuild(parcelBlocks), lineage, focusRect ?? undefined)).saved.toLocaleString()} fewer bytes to pay for.`, delegate: FORGE_MASTER_DELEGATE_ID, metadata: forgeDelegateMetadata(height, encodeBuild(parcelBlocks), lineage, focusRect ?? undefined), ...(payouts.length ? { tributes: payouts } : {}) }] : []),
+                  ...(FORGE_MASTER_DELEGATE_ID ? (() => { const best = encodeBuildBest(parcelBlocks); const meta = forgeDelegateMetadata(height, best.data, lineage, focusRect ?? undefined, best.format); return [{ key: "lean", label: "LEAN BUILD", contentType: "text/html;charset=utf-8", source: html, note: `Drawn by the shared on-chain Forge renderer (${best.format}) — about ${delegateSavings(html, meta).saved.toLocaleString()} fewer bytes to pay for.`, delegate: FORGE_MASTER_DELEGATE_ID, metadata: meta, ...(payouts.length ? { tributes: payouts } : {}) }]; })() : []),
                   { key: "html", label: "3D BUILD", contentType: "text/html;charset=utf-8", source: html, note: "Self-rendering build, no outside code.", ...(payouts.length ? { tributes: payouts } : {}) },
                 ]}
               />
