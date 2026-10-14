@@ -160,7 +160,7 @@ export type BtcClaimResult = {
 type MempoolAddressTx = {
   txid: string;
   status?: { confirmed?: boolean };
-  vin: Array<{ prevout?: { scriptpubkey_address?: string | null } | null }>;
+  vin: Array<{ txid?: string; prevout?: { scriptpubkey_address?: string | null } | null }>;
   vout: Array<{ scriptpubkey_address?: string | null; value?: number | null }>;
 };
 
@@ -189,9 +189,16 @@ export async function claimBtcDonations(
   ]);
   const all = [...pending, ...chain];
 
-  const mine = all.filter((tx) =>
-    tx.vin.some((input) => (input.prevout?.scriptpubkey_address ?? "").toLowerCase() === donor),
-  );
+  const paidBy = (tx: MempoolAddressTx) =>
+    tx.vin.some((input) => (input.prevout?.scriptpubkey_address ?? "").toLowerCase() === donor);
+  const mine = all.filter(paidBy);
+  // Confirmed inscription reveals that pay the optional site tribute: the reveal spends a
+  // one-time commit address, so the donor is whoever funded that commit transaction.
+  const reveals = chain.filter((tx) => tx.status?.confirmed && !paidBy(tx) && tx.vin[0]?.txid).slice(0, 25);
+  await Promise.all(reveals.map(async (tx) => {
+    const commit = await getJson<MempoolAddressTx>(`${MEMPOOL}/tx/${tx.vin[0]!.txid}`, 1).catch(() => null);
+    if (commit && paidBy(commit)) mine.push(tx);
+  }));
   if (mine.length === 0) {
     const balances = await db
       .from("coin_balances")
