@@ -17,6 +17,7 @@ export function DropshipLayer({ pose, surface }: { pose: MutableRefObject<Player
   const props = useRef<THREE.Object3D[]>([]);
   const strobes = useRef<THREE.Mesh[]>([]);
   const jumpLight = useRef<THREE.Mesh>(null);
+  const marker = useRef<THREE.Mesh>(null);
   const wallMat = useMemo(
     () => new THREE.MeshBasicMaterial({ color: "#00f0ff", transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false }),
     [],
@@ -64,6 +65,18 @@ export function DropshipLayer({ pose, surface }: { pose: MutableRefObject<Player
           (mesh.material as THREE.MeshStandardMaterial).color.set(CRATE_COLOR[cr.kind]);
         }
       });
+    }
+    const mk = marker.current;
+    if (mk) {
+      const ph = dropState().phase;
+      mk.visible = ph === "freefall" || ph === "glide";
+      if (mk.visible) {
+        const tFall = Math.min(p.y / Math.max(-p.vy, S * 2), 12);
+        const lx = p.x + p.vx * tFall, lz = p.z + p.vz * tFall;
+        mk.position.set(lx, surface(lx, lz) + S * 0.15, lz);
+        const k = 1 + Math.sin(c.elapsedTime * 4) * 0.12;
+        mk.scale.set(k, k, k);
+      }
     }
     const gl = glider.current;
     if (gl) {
@@ -183,6 +196,10 @@ export function DropshipLayer({ pose, surface }: { pose: MutableRefObject<Player
           <meshBasicMaterial color="#ffffff" />
         </mesh>
       </group>
+      <mesh ref={marker} visible={false} raycast={noRaycast} rotation={[-Math.PI / 2, 0, 0]} renderOrder={6}>
+        <ringGeometry args={[S * 2.2, S * 3, 32]} />
+        <meshBasicMaterial color="#f7931a" transparent opacity={0.8} depthTest={false} depthWrite={false} />
+      </mesh>
       {/* ram-air parachute canopy with suspension lines */}
       <group ref={glider} visible={false}>
         {[-2, -1, 0, 1, 2].map((i) => (
