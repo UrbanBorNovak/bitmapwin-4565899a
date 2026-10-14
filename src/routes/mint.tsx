@@ -165,11 +165,12 @@ function MintPage() {
           {awake.isPending ? (
             <p className="font-mono text-xs text-muted-foreground animate-pulse">{t.checking}</p>
           ) : !awake.data ? (
-            <div className="rounded-sm border border-border p-3 font-mono text-[11px]">
-              <p className="text-bitcoin">{t.locked}</p>
-              <p className="mt-1 text-muted-foreground">{t.lockedBody}</p>
-              <button type="button" onClick={() => setOpen(true)} className="btn-term mt-3">{t.inscribeBtn}</button>
-            </div>
+            <>
+              <p className="max-w-2xl font-mono text-[11px] text-signal">
+                DIRECT ON-CHAIN MINT · NO APP SUMMON NEEDED. THE {height}.BITMAP HOLDER INSCRIBES THE GUARDIAN STRAIGHT FROM THE MASTER DELEGATE, WITH THE TRIBUTE INSIDE THE SAME TRANSACTION.
+              </p>
+              <DelegateGuardianSummon dna={d} />
+            </>
           ) : awake.data.inscriptionId ? (
             <div className="rounded-sm border border-signal/40 p-3 font-mono text-[11px]">
               <p className="text-signal">{t.alreadyInscribed}</p>
