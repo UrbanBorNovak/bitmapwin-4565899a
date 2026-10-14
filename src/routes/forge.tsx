@@ -22,6 +22,8 @@ import { useWalletSession } from "@/lib/wallet-session";
 import { heldHeightsQuery } from "@/lib/held-parcels";
 import { forgeRightsFn } from "@/lib/forge-rights.functions";
 import { forgePieceFn } from "@/lib/forge-parts.functions";
+import { collectionPiecesQuery } from "@/lib/forge-collection.functions";
+import { DONATION_ADDRESS } from "@/lib/donations";
 import { forgeAssemblyHtml, isInscriptionId, normPart, type AsmPart } from "@/lib/forge-assembly";
 import { bakeGuardian } from "@/lib/forge-guardian-bake";
 import { guardianDnaQuery } from "@/lib/bitmon-queries";
@@ -238,8 +240,11 @@ function ForgePage() {
   const [perch, setPerch] = useState<[number, number, number] | null>(null);
   const dnaQ = useQuery({ ...guardianDnaQuery(height ?? 0), enabled: height !== null });
   useEffect(() => { setPerch(null); setBoxStart(null); }, [height]);
-  const loadPiece = async (): Promise<void> => {
-    const id = pieceId.trim();
+  const collectionQ = useQuery(collectionPiecesQuery());
+  const [makers, setMakers] = useState<Record<string, string>>({});
+  const [siteTribute, setSiteTribute] = useState(true);
+  const loadPiece = async (given?: string, maker?: string | null): Promise<void> => {
+    const id = (given ?? pieceId).trim();
     if (!isInscriptionId(id)) { toast.error("PASTE A FULL INSCRIPTION ID (…i0)"); return; }
     setPieceBusy(true);
     const r = await pieceFn({ data: { id } }).catch(() => ({ ok: false as const, error: "COULD NOT REACH BITCOIN — TRY AGAIN" }));
@@ -247,6 +252,7 @@ function ForgePage() {
     if (!r.ok) { toast.error(r.error); return; }
     const p: Prefab = { id: `ins:${id}`, name: `◆ ${id.slice(0, 8)}…${id.slice(-4)}`, sphere: "community" as Sphere, blocks: normPart(r.blocks) } as Prefab;
     setChainPieces((c) => [p, ...c.filter((x) => x.id !== p.id)].slice(0, 12));
+    if (maker) setMakers((m) => ({ ...m, [id]: maker }));
     setPicked(p); setTool("stamp"); setPieceId("");
     toast.success(`LOADED ${r.blocks.length} VOXELS FROM BITCOIN — CLICK TO SNAP IT IN`);
   };
@@ -373,7 +379,14 @@ function ForgePage() {
     commit(next);
   };
 
-  const payouts = useMemo(() => tributeSplit(used.map((u) => u.lineage ?? [])), [used]);
+  // Royalties: module lineage + 546 sats to the maker of each verified collection piece still in the build,
+  // plus the optional 546-sat site tribute (counts toward the site fund).
+  const payouts = useMemo(() => {
+    const live = new Set(placements.filter((p) => p.keys.some((k) => world.has(k))).map((p) => p.part.id));
+    const pieceMakers = [...live].map((id) => makers[id]).filter((a): a is string => !!a).map((address) => [{ address, sats: 546 }]);
+    const site = siteTribute ? [[{ address: DONATION_ADDRESS, sats: 546 }]] : [];
+    return tributeSplit([...used.map((u) => u.lineage ?? []), ...pieceMakers, ...site] as Parameters<typeof tributeSplit>[0]);
+  }, [used, placements, world, makers, siteTribute]);
   const payoutSats = payouts.reduce((n, p) => n + p.sats, 0);
   const lineage = used.map((u) => u.id.slice(0, 8)).join(",");
   const parcelBlocks = useMemo(() => (focusRect ? clipToParcel(blocks, focusRect) : blocks), [blocks, focusRect]);
@@ -477,6 +490,23 @@ function ForgePage() {
                 ))}
               </div>
             )}
+            <div className="mt-3 border-t border-border pt-2">
+              <p className="flex items-center justify-between text-accent"><span>VERIFIED COMMUNITY · ON BITCOIN</span><span className="text-[10px] text-muted-foreground">{collectionQ.data?.length ?? "…"}</span></p>
+              <p className="mt-1 text-[10px] text-muted-foreground">Only Land Forge inscriptions in the official collection appear here. Using one pays its maker 546 sats inside your inscription.</p>
+              <div className="mt-1 max-h-48 space-y-1 overflow-y-auto">
+                {collectionQ.isLoading && <p className="text-[10px] text-muted-foreground">READING THE COLLECTION FROM BITCOIN…</p>}
+                {collectionQ.data?.map((c) => (
+                  <button key={c.id} type="button" disabled={pieceBusy} onClick={() => void loadPiece(c.id, c.maker)} className="w-full rounded border border-border px-2 py-1 text-left text-[10px] text-muted-foreground hover:border-accent disabled:opacity-40">
+                    <span className="block text-foreground">◆ {c.height !== null ? `${c.height}.BITMAP` : c.id.slice(0, 8)} · {c.voxels} voxels</span>
+                    <span className="font-mono">{c.id.slice(0, 8)}…{c.id.slice(-4)}{c.maker ? ` · maker ${short(c.maker)} · 546 sats` : ""}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <label className="mt-2 flex items-center gap-2 text-[10px] text-muted-foreground">
+              <input type="checkbox" checked={siteTribute} onChange={(e) => setSiteTribute(e.target.checked)} />
+              ADD 546 SATS TO THE SITE FUND (OPTIONAL)
+            </label>
           </div>
           {height !== null && (
             <div className="rounded border border-accent/40 bg-card/40 p-2 text-[11px]">
