@@ -4,16 +4,17 @@ import { ClientOnly } from "@tanstack/react-router";
 import { inhabitedQuery } from "@/lib/inhabited.functions";
 const ComicGuardian3D = lazy(() => import("@/components/ComicGuardian3D"));
 
-function Guardian3D({ height }: { height: number }) {
+function Guardian3D({ height, guardian }: { height: number; guardian: boolean }) {
   return (
     <ClientOnly fallback={null}>
       <Suspense fallback={null}>
-        <ComicGuardian3D height={height} />
+        <ComicGuardian3D height={height} guardian={guardian} />
       </Suspense>
     </ClientOnly>
   );
 }
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { buildIssue, fetchComicBlocks, fetchComicBlocksAt, seedFrom, type ComicIssue, type ComicPanel } from "@/lib/block-comic";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
@@ -67,7 +68,7 @@ function Halftone({ seed, kind }: { seed: number; kind: number }) {
   );
 }
 
-function PanelArt({ panel, kind, issue, inscribed }: { panel: ComicPanel; kind: number; issue: ComicIssue; inscribed: string | null }) {
+function PanelArt({ panel, kind, issue, inscribed, built }: { panel: ComicPanel; kind: number; issue: ComicIssue; inscribed: string | null; built: boolean }) {
   const shapes = useMemo(() => {
     const r = seedFrom(issue.hash, panel.seed);
     const out: React.ReactElement[] = [];
@@ -81,14 +82,14 @@ function PanelArt({ panel, kind, issue, inscribed }: { panel: ComicPanel; kind: 
       <Halftone seed={panel.seed} kind={kind} />
       {kind === 2 ? (
         <>
-          <VoxelLand hash={issue.hash} salt={panel.seed} className="absolute inset-0 h-full w-full" />
-          {inscribed ? (
-            <div className="absolute inset-x-0 top-0 h-[78%]"><Guardian3D height={issue.height} /></div>
-          ) : (
+          {built || inscribed ? (
+            <div className="absolute inset-x-0 top-6 bottom-12"><Guardian3D height={issue.height} guardian={!!inscribed} /></div>
+          ) : (<>
+            <VoxelLand hash={issue.hash} salt={panel.seed} className="absolute inset-0 h-full w-full" />
             <div className="absolute left-1/2 top-[8%] -translate-x-1/2 opacity-40 grayscale">
               <GuardianPortrait height={issue.height} size={64} />
             </div>
-          )}
+          </>)}
         </>
       ) : (
         <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" aria-hidden="true">{shapes}</svg>
@@ -97,12 +98,12 @@ function PanelArt({ panel, kind, issue, inscribed }: { panel: ComicPanel; kind: 
   );
 }
 
-function Strip({ issue, inscribed }: { issue: ComicIssue; inscribed: string | null }) {
+function Strip({ issue, inscribed, built }: { issue: ComicIssue; inscribed: string | null; built: boolean }) {
   return (
     <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
       {issue.panels.map((p, i) => (
         <figure key={i} className="relative aspect-square overflow-hidden border-2 border-foreground">
-          <PanelArt panel={p} kind={i} issue={issue} inscribed={inscribed} />
+          <PanelArt panel={p} kind={i} issue={issue} inscribed={inscribed} built={built} />
           <span className="absolute left-1 top-1 bg-foreground px-1 font-mono text-[9px] font-bold text-background">{p.kicker}</span>
           <span className="display absolute right-2 top-6 -rotate-6 text-2xl text-bitcoin">{p.sfx}</span>
           <figcaption className="absolute inset-x-1 bottom-1 border border-foreground bg-background p-1 font-mono text-xs leading-tight">{i === 2 ? (inscribed ? `${p.caption} ITS GUARDIAN IS INSCRIBED AND AWAKE.` : `${p.caption} NO GUARDIAN YET — THE LAND WAITS, DORMANT.`) : p.caption}</figcaption>
@@ -113,7 +114,7 @@ function Strip({ issue, inscribed }: { issue: ComicIssue; inscribed: string | nu
 }
 
 /** Comic cover tile — the mempool "block cube" of the Chronicles. */
-function Cover({ issue, isNew, onOpen, inscribed }: { issue: ComicIssue; isNew: boolean; onOpen: () => void; inscribed: string | null }) {
+function Cover({ issue, isNew, onOpen, inscribed, built }: { issue: ComicIssue; isNew: boolean; onOpen: () => void; inscribed: string | null; built: boolean }) {
   return (
     <button
       type="button"
@@ -121,12 +122,12 @@ function Cover({ issue, isNew, onOpen, inscribed }: { issue: ComicIssue; isNew: 
       className="chronicle-in relative h-[132px] w-[118px] shrink-0 overflow-hidden border-2 border-foreground bg-background text-left hover:border-bitcoin"
     >
       <Halftone seed={issue.height} kind={issue.height % 4} />
-      <VoxelLand hash={issue.hash} salt={issue.height} className="absolute inset-x-0 bottom-0 h-[86px] w-full" />
-      {inscribed ? (
-        <div className="absolute right-0 top-3 h-[70px] w-[70px]"><Guardian3D height={issue.height} /></div>
-      ) : (
+      {built || inscribed ? (
+        <div className="absolute inset-x-0 top-[26px] bottom-[22px]"><Guardian3D height={issue.height} guardian={!!inscribed} /></div>
+      ) : (<>
+        <VoxelLand hash={issue.hash} salt={issue.height} className="absolute inset-x-0 bottom-0 h-[86px] w-full" />
         <div className="absolute right-0 top-4 opacity-40 grayscale"><GuardianPortrait height={issue.height} size={40} /></div>
-      )}
+      </>)}
       <div className="absolute inset-x-0 top-0 flex justify-between bg-foreground px-1 font-mono text-[9px] font-bold text-background">
         <span>#{issue.height}</span>
         {isNew && <span className="text-bitcoin">NEW</span>}
@@ -147,9 +148,15 @@ export function BlockChronicles() {
   const live = useMemo(() => (data ?? []).map(buildIssue), [data]);
   // Every BITMAP with an inscribed Guardian child gets its own issue too (newest children first).
   const liveHeights = useMemo(() => new Set(live.map((i) => i.height)), [live]);
+  const { data: builtList } = useQuery({
+    queryKey: ["block-comic-built"],
+    queryFn: async () => ((await supabase.from("bitmap_forge_builds").select("bitmap_height").order("verified_at", { ascending: false }).limit(12)).data ?? []).map((r) => r.bitmap_height as number),
+    staleTime: 10 * 60_000,
+  });
+  const builtSet = useMemo(() => new Set(builtList ?? []), [builtList]);
   const guardianHeights = useMemo(
-    () => [...(inhabited ?? new Map<number, string>()).keys()].reverse().filter((h) => !liveHeights.has(h)).slice(0, 16),
-    [inhabited, liveHeights],
+    () => [...new Set([...(builtList ?? []), ...[...(inhabited ?? new Map<number, string>()).keys()].reverse()])].filter((h) => !liveHeights.has(h)).slice(0, 16),
+    [inhabited, liveHeights, builtList],
   );
   // Every BITMAP with an inscribed Guardian child also gets its issue, built from its real block.
   const { data: gBlocks } = useQuery({ queryKey: ["block-comic-guardians", guardianHeights], queryFn: () => fetchComicBlocksAt(guardianHeights), enabled: guardianHeights.length > 0, staleTime: Infinity });
