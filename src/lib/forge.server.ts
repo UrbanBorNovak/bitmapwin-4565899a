@@ -5,7 +5,7 @@
  * builds are still read as a fallback.
  */
 import { FORGE_FORMAT, decodeBuild } from "@/lib/voxel-populate";
-import { FORGE_MASTER_DELEGATE_ID, parseForgeMeta, type ForgeMeta } from "@/lib/forge-delegate";
+import { FORGE_MASTER_DELEGATE_ID, isForgeMasterDelegate, parseForgeMeta, type ForgeMeta } from "@/lib/forge-delegate";
 import { encodeBuildBest } from "@/lib/voxel-populate";
 import { isInscriptionId, parseAssemblyHtml, placePart, type AsmPart } from "@/lib/forge-assembly";
 import type { TplBlock } from "@/lib/voxel-templates";
@@ -38,7 +38,8 @@ async function delegateMeta(id: string): Promise<ForgeMeta | null> {
   if (!FORGE_MASTER_DELEGATE_ID) return null;
   const info = await ord(`/r/inscription/${id}`);
   const j = info ? ((await info.json().catch(() => null)) as { delegate?: string | null } | null) : null;
-  if (j?.delegate !== FORGE_MASTER_DELEGATE_ID) return null;
+  // Accept both the V2 master and the original V1 master so older Lean builds keep resolving.
+  if (!isForgeMasterDelegate(j?.delegate)) return null;
   const m = await ord(`/r/metadata/${id}`);
   const hexStr = m ? ((await m.json().catch(() => null)) as string | null) : null;
   return typeof hexStr === "string" ? parseForgeMeta(hexStr) : null;

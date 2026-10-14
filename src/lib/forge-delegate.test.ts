@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { forgeDelegateMetadata, parseForgeMeta } from "@/lib/forge-delegate";
+import { forgeDelegateMetadata, isForgeMasterDelegate, parseForgeMeta, FORGE_MASTER_DELEGATE_ID } from "@/lib/forge-delegate";
 
 // CBOR map {f:"BWVX1", h:830000, d:"AAAAAA=="} encoded by hand
 const hexOf = (b: number[]) => b.map((v) => v.toString(16).padStart(2, "0")).join("");
@@ -20,5 +20,11 @@ describe("forge delegate metadata", () => {
   });
   it("encodes the parcel tile as index;x0,z0,x1,z1", () => {
     expect(forgeDelegateMetadata(830000, "AA==", "", { index: 42, x0: 1, z0: 2, x1: 9, z1: 10 }).p).toBe("42;1,2,9,10");
+  });
+  it("recognises both the V2 and original V1 master delegates", () => {
+    expect(isForgeMasterDelegate(FORGE_MASTER_DELEGATE_ID)).toBe(true);
+    expect(isForgeMasterDelegate("adc48ccd" + "0".repeat(56) + "c827i0")).toBe(true);
+    expect(isForgeMasterDelegate("4bf943b16b00addd1d667dea9df048a05ad9146687893002cb21b2d0c075075di0")).toBe(false);
+    expect(isForgeMasterDelegate(null)).toBe(false);
   });
 });

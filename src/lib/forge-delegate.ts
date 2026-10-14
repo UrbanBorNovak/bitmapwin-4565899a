@@ -15,6 +15,12 @@ import type { TplBlock } from "@/lib/voxel-templates";
 /** The master renderer's inscription id (inscribed once; every delegated build points at it). */
 // V2 master: reads BWVX1 and BWVX2 (greedy boxes) and draws a base plate. V1 was adc48ccd…c827i0.
 export const FORGE_MASTER_DELEGATE_ID = "d05d29638539d0ba8241b1e459de732011ffe0e16bbd7439a91b473b74ef7fe1i0";
+/** True for any known Land Forge master renderer (V2 id, or the original V1 master adc48ccd…c827i0). */
+export function isForgeMasterDelegate(id: string | null | undefined): boolean {
+  if (!id) return false;
+  if (id === FORGE_MASTER_DELEGATE_ID) return true;
+  return /^adc48ccd[0-9a-f]{56}c827i0$/.test(id);
+}
 
 export type ForgeMeta = { f: string; h: number; d: string; p?: string; l?: string };
 
