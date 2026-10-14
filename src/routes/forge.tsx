@@ -49,7 +49,7 @@ export const Route = createFileRoute("/forge")({
 
 const HALF = FORGE_SPAN / 2;
 const COLORS = Object.fromEntries(BLOCKS.map((b) => [b.id, new THREE.Color(b.top)]));
-type Tool = "stamp" | "block" | "box" | "erase" | "perch" | "parcel";
+type Tool = "stamp" | "block" | "box" | "erase" | "perch" | "parcel" | "move";
 type Placement = { part: AsmPart; keys: string[] };
 
 function ParcelFloor({ rects, focus, hoverIdx }: { rects: ParcelRect[]; focus: number | null; hoverIdx: number | null }) {
@@ -345,11 +345,37 @@ function ForgePage() {
   const eraseAt = (b: TplBlock) => {
     const key = cellKey(b.dx, b.dy, b.dz);
     const hit = placements.find((p) => p.keys.includes(key));
+    if (tool === "move") {
+      if (!hit) { toast.error("ONLY ON-CHAIN PIECES CAN BE MOVED — CLICK ONE"); return; }
+      const piece = chainPieces.find((c) => c.id === `ins:${hit.part.id}`);
+      if (!piece) return;
+      const n = new Map(world);
+      for (const k of hit.keys) n.delete(k);
+      setPlacements((p) => p.filter((x) => x !== hit));
+      commit(n);
+      setPicked(piece); setTurns(hit.part.r); setTool("stamp");
+      toast.success("PIECE PICKED UP — CLICK ANYWHERE TO DROP IT");
+      return;
+    }
     const n = new Map(world);
     if (hit) { for (const k of hit.keys) n.delete(k); setPlacements((p) => p.filter((x) => x !== hit)); }
     else n.delete(key);
     commit(n);
   };
+
+  // Drag a piece from the in-canvas tray: grab on press, drop where the pointer is released over the map.
+  const [dragging, setDragging] = useState(false);
+  const placeRef = useRef(place);
+  placeRef.current = place;
+  useEffect(() => {
+    if (!dragging) return;
+    const up = (e: PointerEvent) => {
+      setDragging(false);
+      if ((e.target as HTMLElement)?.tagName === "CANVAS") void placeRef.current();
+    };
+    window.addEventListener("pointerup", up);
+    return () => window.removeEventListener("pointerup", up);
+  }, [dragging]);
 
   // Tallest filled height per column, so pieces dropped on the floor stack on top automatically.
   const tops = useMemo(() => {
