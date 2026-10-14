@@ -15,38 +15,34 @@ function Guardian3D({ height, guardian }: { height: number; guardian: boolean })
 }
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { blockSizeMapQuery } from "@/lib/block-bytes";
+import { parcelRects } from "@/lib/forge-parcels";
 import { buildIssue, fetchComicBlocks, fetchComicBlocksAt, seedFrom, type ComicIssue, type ComicPanel } from "@/lib/block-comic";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
 
-/** Isometric voxel land for a block: deterministic towers from the block hash. */
-function VoxelLand({ hash, salt, className = "" }: { hash: string; salt: number; className?: string }) {
-  const cubes = useMemo(() => {
-    const r = seedFrom(hash, salt);
-    const out: React.ReactElement[] = [];
-    const N = 5;
-    for (let gx = 0; gx < N; gx++)
-      for (let gy = 0; gy < N; gy++) {
-        const h = 1 + Math.floor(r() * r() * 4);
-        const tone = r() > 0.78 ? "bitcoin" : r() > 0.85 ? "signal" : "foreground";
-        for (let z = 0; z < h; z++) {
-          const x = 50 + (gx - gy) * 8;
-          const y = 52 + (gx + gy) * 4 - z * 8;
-          const top = z === h - 1;
-          out.push(
-            <g key={`${gx}-${gy}-${z}`}>
-              <polygon points={`${x},${y} ${x + 8},${y + 4} ${x},${y + 8} ${x - 8},${y + 4}`} className={top ? `fill-${tone}` : "fill-muted"} opacity={top ? 1 : 0.6} />
-              <polygon points={`${x - 8},${y + 4} ${x},${y + 8} ${x},${y + 16} ${x - 8},${y + 12}`} className={`fill-${tone}`} opacity={0.55} />
-              <polygon points={`${x},${y + 8} ${x + 8},${y + 4} ${x + 8},${y + 12} ${x},${y + 16}`} className={`fill-${tone}`} opacity={0.3} />
-            </g>,
-          );
-        }
-      }
-    return out;
-  }, [hash, salt]);
+/** The BITMAP as it stands in the Oasis: its real transaction parcels on an isometric tile. */
+function VoxelLand({ height, className = "" }: { hash?: string; salt?: number; height: number; className?: string }) {
+  const { data } = useQuery({ ...blockSizeMapQuery(height), staleTime: Infinity });
+  const paths = useMemo(() => {
+    const rects = parcelRects(data?.classes, 64);
+    // iso projection of tile cell (x,z) in 0..64 → svg
+    const P = (x: number, z: number) => `${(50 + (x - z) * 0.72).toFixed(1)},${(46 + (x + z) * 0.36).toFixed(1)}`;
+    let big = "", mid = "", small = "";
+    for (const r of rects) {
+      const i = Math.min(0.25, (r.x1 - r.x0) * 0.08);
+      const d = `M${P(r.x0 + i, r.z0 + i)}L${P(r.x1 - i, r.z0 + i)}L${P(r.x1 - i, r.z1 - i)}L${P(r.x0 + i, r.z1 - i)}Z`;
+      if (r.size >= 4) big += d; else if (r.size >= 2) mid += d; else small += d;
+    }
+    return { big, mid, small, tile: `M${P(0, 0)}L${P(64, 0)}L${P(64, 64)}L${P(0, 64)}Z`, side: `M${P(0, 64)}L${P(64, 64)}L${P(64, 0)}L${P(64, 0).split(",")[0]},${(46 + 64 * 0.36 + 6).toFixed(1)}L${P(64, 64).split(",")[0]},${(46 + 128 * 0.36 + 6).toFixed(1)}L${P(0, 64).split(",")[0]},${(46 + 64 * 0.36 + 6).toFixed(1)}Z` };
+  }, [data]);
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
-      {cubes}
+      <path d={paths.side} className="fill-muted" opacity={0.8} />
+      <path d={paths.tile} className="fill-background stroke-signal" strokeWidth={0.4} />
+      <path d={paths.small} className="fill-signal" opacity={0.35} />
+      <path d={paths.mid} className="fill-bitcoin" opacity={0.6} />
+      <path d={paths.big} className="fill-bitcoin" />
     </svg>
   );
 }
@@ -85,7 +81,7 @@ function PanelArt({ panel, kind, issue, inscribed, built }: { panel: ComicPanel;
           {built || inscribed ? (
             <div className="absolute inset-x-0 top-6 bottom-12"><Guardian3D height={issue.height} guardian={!!inscribed} /></div>
           ) : (<>
-            <VoxelLand hash={issue.hash} salt={panel.seed} className="absolute inset-0 h-full w-full" />
+            <VoxelLand height={issue.height} className="absolute inset-0 h-full w-full" />
             <div className="absolute left-1/2 top-[8%] -translate-x-1/2 opacity-40 grayscale">
               <GuardianPortrait height={issue.height} size={64} />
             </div>
@@ -125,7 +121,7 @@ function Cover({ issue, isNew, onOpen, inscribed, built }: { issue: ComicIssue; 
       {built || inscribed ? (
         <div className="absolute inset-x-0 top-[26px] bottom-[22px]"><Guardian3D height={issue.height} guardian={!!inscribed} /></div>
       ) : (<>
-        <VoxelLand hash={issue.hash} salt={issue.height} className="absolute inset-x-0 bottom-0 h-[86px] w-full" />
+        <VoxelLand height={issue.height} className="absolute inset-x-0 bottom-0 h-[86px] w-full" />
         <div className="absolute right-0 top-4 opacity-40 grayscale"><GuardianPortrait height={issue.height} size={40} /></div>
       </>)}
       <div className="absolute inset-x-0 top-0 flex justify-between bg-foreground px-1 font-mono text-[9px] font-bold text-background">
