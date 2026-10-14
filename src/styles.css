@@ -1771,3 +1771,6 @@
   .oasis-touch-world .oasis-driving-actions { width: 148px; }
   .oasis-touch-world .oasis-identity .display { font-size: 14px; }
 }
+
+@keyframes chronicle-in { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+.chronicle-in { animation: chronicle-in 0.6s ease-out both; }

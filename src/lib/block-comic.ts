@@ -16,7 +16,7 @@ export type ComicBlock = {
 };
 
 export type ComicPanel = { kicker: string; caption: string; sfx: string; seed: number };
-export type ComicIssue = { height: number; title: string; panels: ComicPanel[]; hash: string };
+export type ComicIssue = { height: number; title: string; panels: ComicPanel[]; hash: string; block: ComicBlock };
 
 /** Seeded PRNG from a hex block hash (mulberry32 over xor-folded words). */
 export function seedFrom(hash: string, salt = 0): () => number {
@@ -50,6 +50,7 @@ export function buildIssue(b: ComicBlock): ComicIssue {
   return {
     height: b.height,
     hash: b.id,
+    block: b,
     title: pick(r, TITLES),
     panels: [
       { kicker: "I · THE DESCENT", caption: `${when} UTC. ${pool.toUpperCase()} FINDS THE NONCE.`, sfx: pick(r, SFX_MINE), seed: Math.floor(r() * 1e9) },
