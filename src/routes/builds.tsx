@@ -1,23 +1,24 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUpRight, Box, Eye, Search, Users, X } from "lucide-react";
+import { ArrowUpRight, Box, Boxes, ExternalLink, Eye, Hammer, Search, Users, X } from "lucide-react";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { BuilderName } from "@/components/BuilderName";
 import { ClubBadge } from "@/components/ClubBadge";
 import { PublicBuildViewer } from "@/components/builds/PublicBuildViewer";
 import { Button } from "@/components/ui/button";
-import { BUILD_KIND_LABELS, BUILD_KINDS, type BuildKind } from "@/lib/build-sdk";
-import { buildsQuery, type BuildEntry } from "@/lib/builds";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { BUILD_KIND_LABELS } from "@/lib/build-sdk";
+import { buildsQuery, forgeDirectoryQuery, type BuildEntry, type ForgeDirEntry } from "@/lib/builds";
 import { inscriptionImageUrl, profilesQuery } from "@/lib/profiles";
 
 export const Route = createFileRoute("/builds")({
   head: () => ({
     meta: [
-      { title: "Community Builds — Live 3D BITMAP Worlds" },
-      { name: "description", content: "Browse every public BITMAP build, inspect its live 3D world, and enter the exact territory in the Oasis." },
-      { property: "og:title", content: "Community Builds — Live 3D BITMAP Worlds" },
-      { property: "og:description", content: "Preview and enter public BITMAP worlds built by the community." },
+      { title: "Community Builds — On-Chain Voxels & Live 3D BITMAP Worlds" },
+      { name: "description", content: "Browse inscribed Land Forge voxel builds and live 3D Extenders on BITMAP land, inspect them in 3D, and enter them in the Oasis." },
+      { property: "og:title", content: "Community Builds — On-Chain Voxels & Live 3D BITMAP Worlds" },
+      { property: "og:description", content: "Inscribed voxel builds and live 3D experiences built on Bitcoin land." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -25,210 +26,248 @@ export const Route = createFileRoute("/builds")({
   component: CommunityBuildsPage,
 });
 
-type SortMode = "newest" | "popular";
-type KindFilter = "all" | BuildKind;
-const PAGE_SIZE = 16;
+type TypeFilter = "all" | "forge" | "extender";
+type SortMode = "newest" | "visited" | "voxels";
+const PAGE_SIZE = 24;
 
-function timestamp(value: string | null) {
-  if (!value) return 0;
-  const parsed = new Date(value).getTime();
-  return Number.isFinite(parsed) ? parsed : 0;
-}
+type Item = {
+  key: string;
+  height: number;
+  kind: "forge" | "extender";
+  title: string;
+  at: number;
+  views: number;
+  visitors: number;
+  voxels: number;
+  forge: ForgeDirEntry | null;
+  build: BuildEntry | null;
+};
+
+const ts = (v: string | null | undefined) => { const n = v ? Date.parse(v) : 0; return Number.isFinite(n) ? n : 0; };
 
 function CommunityBuildsPage() {
   const builds = useQuery(buildsQuery());
-  const [selectedHeight, setSelectedHeight] = useState<number | null>(null);
+  const forge = useQuery(forgeDirectoryQuery());
   const [query, setQuery] = useState("");
-  const [kind, setKind] = useState<KindFilter>("all");
+  const [type, setType] = useState<TypeFilter>("all");
   const [sort, setSort] = useState<SortMode>("newest");
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const stageRef = useRef<HTMLElement | null>(null);
+  const [visible, setVisible] = useState(PAGE_SIZE);
+  const [open, setOpen] = useState<Item | null>(null);
 
-  const addresses = useMemo(
-    () => Array.from(new Set((builds.data ?? []).map((entry) => entry.page.ownerAddress).filter(Boolean))),
-    [builds.data],
-  );
+  const addresses = useMemo(() => Array.from(new Set((builds.data ?? []).map((e) => e.page.ownerAddress).filter(Boolean))), [builds.data]);
   const profiles = useQuery({ ...profilesQuery(addresses), enabled: addresses.length > 0 });
 
-  const entries = useMemo(() => {
-    const term = query.trim().toLowerCase();
-    const filtered = (builds.data ?? []).filter((entry) => {
-      if (kind !== "all" && entry.page.buildKind !== kind) return false;
-      if (!term) return true;
-      const profileName = entry.page.ownerAddress ? profiles.data?.get(entry.page.ownerAddress)?.displayName ?? "" : "";
-      return [
-        entry.page.bitmapHeight,
-        entry.page.title ?? "",
-        entry.page.description ?? "",
-        profileName,
-        ...entry.extenderNames,
-      ].some((value) => String(value).toLowerCase().includes(term));
+  const items = useMemo<Item[]>(() => {
+    const byHeight = new Map((builds.data ?? []).map((b) => [b.page.bitmapHeight, b] as const));
+    const out: Item[] = (forge.data ?? []).map((f) => {
+      const b = byHeight.get(f.height) ?? null;
+      return { key: `f-${f.height}`, height: f.height, kind: "forge", title: b?.page.title || `${f.height}.BITMAP`, at: ts(f.verifiedAt), views: b?.totalViews ?? 0, visitors: b?.uniqueVisitors ?? 0, voxels: f.blocks, forge: f, build: b };
     });
-    return filtered.sort((a, b) => sort === "popular"
-      ? b.totalViews - a.totalViews || b.uniqueVisitors - a.uniqueVisitors
-      : timestamp(b.page.updatedAt) - timestamp(a.page.updatedAt) || b.page.bitmapHeight - a.page.bitmapHeight);
-  }, [builds.data, kind, profiles.data, query, sort]);
-
-  const selected = useMemo(() => {
-    if (selectedHeight !== null) {
-      const exact = (builds.data ?? []).find((entry) => entry.page.bitmapHeight === selectedHeight);
-      if (exact) return exact;
+    for (const b of builds.data ?? []) {
+      out.push({ key: `e-${b.page.bitmapHeight}`, height: b.page.bitmapHeight, kind: "extender", title: b.page.title || `${b.page.bitmapHeight}.BITMAP`, at: ts(b.page.updatedAt), views: b.totalViews, visitors: b.uniqueVisitors, voxels: 0, forge: null, build: b });
     }
-    return entries[0] ?? builds.data?.[0] ?? null;
-  }, [builds.data, entries, selectedHeight]);
+    return out;
+  }, [builds.data, forge.data]);
 
-  useEffect(() => setVisibleCount(PAGE_SIZE), [kind, query, sort]);
+  const filtered = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    return items
+      .filter((i) => type === "all" || i.kind === type)
+      .filter((i) => {
+        if (!term) return true;
+        const owner = i.build?.page.ownerAddress ?? "";
+        const name = owner ? profiles.data?.get(owner)?.displayName ?? "" : "";
+        return [i.height, i.title, owner, name, i.forge?.archetype ?? "", ...(i.build?.extenderNames ?? [])].some((v) => String(v).toLowerCase().includes(term));
+      })
+      .sort((a, b) => sort === "visited" ? b.views - a.views : sort === "voxels" ? b.voxels - a.voxels : b.at - a.at || b.height - a.height);
+  }, [items, type, query, sort, profiles.data]);
 
-  function preview(entry: BuildEntry) {
-    setSelectedHeight(entry.page.bitmapHeight);
-    window.requestAnimationFrame(() => stageRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
-  }
+  useEffect(() => setVisible(PAGE_SIZE), [type, query, sort]);
 
-  const visibleEntries = entries.slice(0, visibleCount);
-  const publicExtenders = (builds.data ?? []).filter((entry) => entry.hasActiveExtender).length;
-  const totalViews = (builds.data ?? []).reduce((sum, entry) => sum + entry.totalViews, 0);
+  const forgeCount = forge.data?.length ?? 0;
+  const voxels = (forge.data ?? []).reduce((s, f) => s + f.blocks, 0);
+  const extCount = builds.data?.length ?? 0;
+  const visits = (builds.data ?? []).reduce((s, b) => s + b.totalViews, 0);
+  const pending = builds.isPending || forge.isPending;
 
   return (
     <main className="mx-auto max-w-[1600px] px-3 py-6 sm:px-5 md:py-10">
-      <header className="border-b border-border pb-7">
-        <div className="label text-bitcoin">DISCOVER · PUBLIC BITMAP EXPERIENCES</div>
-        <div className="mt-3 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+      <header className="glass-panel border border-border p-5 sm:p-6">
+        <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
           <div>
-            <h1 className="display text-4xl sm:text-5xl md:text-7xl">COMMUNITY BUILDS</h1>
-            <p className="mt-3 max-w-2xl font-mono text-xs leading-6 text-muted-foreground">
-              BROWSE LIVE 3D WORLDS BUILT ON BITCOIN LAND. PREVIEW THE EXPERIENCE, THEN ENTER ITS EXACT BITMAP.
-            </p>
+            <div className="label text-bitcoin">DISCOVER · BUILT ON BITCOIN LAND</div>
+            <h1 className="display mt-2 text-4xl sm:text-5xl">COMMUNITY BUILDS</h1>
+            <p className="mt-2 max-w-xl font-mono text-xs leading-6 text-muted-foreground">INSCRIBED VOXEL STRUCTURES AND LIVE 3D EXPERIENCES. INSPECT ANY BUILD, THEN WALK INTO ITS BITMAP.</p>
           </div>
-          <dl className="grid grid-cols-3 border border-border bg-card lg:min-w-[440px]">
-            <Metric label="PUBLIC BUILDS" value={(builds.data ?? []).length} />
-            <Metric label="LIVE EXTENDERS" value={publicExtenders} />
-            <Metric label="VISITS" value={totalViews} last />
-          </dl>
+          <Button asChild size="lg" className="h-12">
+            <Link to="/forge"><Hammer /> LAUNCH LAND FORGE</Link>
+          </Button>
         </div>
+        <dl className="mt-5 grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-4">
+          <Metric label="ON-CHAIN BUILDS" value={forgeCount} tone="signal" />
+          <Metric label="INSCRIBED VOXELS" value={voxels} tone="signal" />
+          <Metric label="3D EXTENDERS" value={extCount} tone="bitcoin" />
+          <Metric label="VISITS" value={visits} tone="bitcoin" />
+        </dl>
       </header>
 
-      <section ref={stageRef} className="scroll-mt-24 border-x border-b border-border" aria-label="Selected live build">
-        {selected ? (
-          <>
-            <div className="grid gap-px border-b border-border bg-border lg:grid-cols-[minmax(0,1fr)_20rem]">
-              <div className="bg-background px-4 py-4 sm:px-6">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="label text-signal">LIVE 3D · {selected.hasActiveExtender ? "EXTENDER ACTIVE" : BUILD_KIND_LABELS[selected.page.buildKind]}</div>
-                    <h2 className="display mt-2 text-2xl sm:text-4xl">{selected.page.title || `${selected.page.bitmapHeight}.BITMAP`}</h2>
-                    <p className="label mt-2 text-muted-foreground">{selected.page.bitmapHeight}.BITMAP{selected.extenderNames.length ? ` · ${selected.extenderNames.join(" · ")}` : ""}</p>
-                  </div>
-                  <ClubBadge height={selected.page.bitmapHeight} asLink={false} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-4 lg:grid-cols-2">
-                <StageMetric icon={<Eye />} label="VIEWS" value={selected.totalViews} />
-                <StageMetric icon={<Users />} label="VISITORS" value={selected.uniqueVisitors} />
-              </div>
-            </div>
-            <PublicBuildViewer key={selected.page.bitmapHeight} page={selected.page} />
-            <div className="grid gap-px border-t border-border bg-border sm:grid-cols-2">
-              <Button asChild size="lg" className="h-12 rounded-none">
-                <Link to="/oasis" search={{ height: selected.page.bitmapHeight }}><ArrowUpRight /> ENTER BUILD</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="h-12 rounded-none border-0">
-                <Link to="/bitmap/$block" params={{ block: String(selected.page.bitmapHeight) }}><Box /> OPEN BITMAP</Link>
-              </Button>
-            </div>
-          </>
-        ) : (
-          <div className="grid min-h-72 place-items-center px-6 text-center">
-            <p className="label text-muted-foreground">{builds.isPending ? "READING EVERY PUBLIC BUILD…" : "NO PUBLIC BUILDS RECORDED"}</p>
+      <div className="sticky top-16 z-20 mt-4 border border-border bg-background/90 p-2 backdrop-blur-md">
+        <div className="grid gap-2 lg:grid-cols-[auto_minmax(0,1fr)_auto]">
+          <div className="flex gap-1" role="tablist" aria-label="Build type">
+            {([["all", "ALL"], ["forge", "ON-CHAIN FORGE"], ["extender", "3D EXTENDERS"]] as const).map(([v, l]) => (
+              <Button key={v} type="button" size="sm" role="tab" aria-selected={type === v} variant={type === v ? "default" : "ghost"} onClick={() => setType(v)}>{l}</Button>
+            ))}
           </div>
-        )}
-      </section>
-
-      <section className="mt-8" aria-label="Community build directory">
-        <div className="sticky top-16 z-20 border-y border-border bg-background/95 py-3 backdrop-blur-md">
-          <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto_auto]">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-              <input
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="SEARCH BUILD, BITMAP, EXTENDER OR BUILDER"
-                aria-label="Search community builds"
-                className="h-10 w-full border border-input bg-card pl-10 pr-10 font-mono text-xs text-foreground outline-none focus:border-bitcoin"
-              />
-              {query ? <Button type="button" size="icon" variant="ghost" onClick={() => setQuery("")} aria-label="Clear search" className="absolute right-0 top-0 h-10"><X /></Button> : null}
-            </div>
-            <select value={kind} onChange={(event) => setKind(event.target.value as KindFilter)} aria-label="Filter by build type" className="h-10 border border-input bg-card px-3 font-mono text-[11px] text-foreground">
-              <option value="all">ALL BUILD TYPES</option>
-              {BUILD_KINDS.map((value) => <option key={value} value={value}>{BUILD_KIND_LABELS[value]}</option>)}
-            </select>
-            <div className="grid grid-cols-2 border border-border bg-card p-1">
-              <Button type="button" size="sm" variant={sort === "newest" ? "default" : "ghost"} onClick={() => setSort("newest")}>NEWEST</Button>
-              <Button type="button" size="sm" variant={sort === "popular" ? "default" : "ghost"} onClick={() => setSort("popular")}>POPULAR</Button>
-            </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="SEARCH BITMAP, TITLE, EXTENDER OR BUILDER" aria-label="Search builds" className="h-9 w-full border border-input bg-card pl-10 pr-10 font-mono text-xs text-foreground outline-none focus:border-bitcoin" />
+            {query ? <Button type="button" size="icon" variant="ghost" onClick={() => setQuery("")} aria-label="Clear search" className="absolute right-0 top-0 h-9"><X /></Button> : null}
+          </div>
+          <div className="flex gap-1">
+            {([["newest", "NEWEST"], ["visited", "MOST VISITED"], ["voxels", "VOXELS"]] as const).map(([v, l]) => (
+              <Button key={v} type="button" size="sm" variant={sort === v ? "secondary" : "ghost"} onClick={() => setSort(v)}>{l}</Button>
+            ))}
           </div>
         </div>
+      </div>
 
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <h2 className="display text-xl">ALL PUBLIC BUILDS</h2>
-          <span className="label">{entries.length.toLocaleString("en-US")} FOUND</span>
-        </div>
+      <div className="mt-4 flex items-center justify-between">
+        <span className="label text-muted-foreground">{filtered.length.toLocaleString("en-US")} BUILDS</span>
+      </div>
 
-        {visibleEntries.length ? (
-          <>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {visibleEntries.map((entry) => (
-                <BuildCard key={entry.page.bitmapHeight} entry={entry} active={selected?.page.bitmapHeight === entry.page.bitmapHeight} profile={entry.page.ownerAddress ? profiles.data?.get(entry.page.ownerAddress) ?? null : null} onPreview={() => preview(entry)} />
-              ))}
-            </div>
-            {visibleCount < entries.length ? (
-              <div className="mt-7 flex justify-center border-t border-border pt-7">
-                <Button type="button" variant="outline" onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}>LOAD {Math.min(PAGE_SIZE, entries.length - visibleCount)} MORE</Button>
-              </div>
-            ) : null}
-          </>
-        ) : (
-          <div className="mt-4 grid min-h-40 place-items-center border border-dashed border-border px-5 text-center">
-            <p className="label text-muted-foreground">{builds.isPending ? "SYNCING PUBLIC BUILDS…" : "NO BUILDS MATCH THESE FILTERS"}</p>
+      {filtered.length ? (
+        <>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filtered.slice(0, visible).map((item) => (
+              <BuildCard key={item.key} item={item} profile={item.build?.page.ownerAddress ? profiles.data?.get(item.build.page.ownerAddress) ?? null : null} onOpen={() => setOpen(item)} />
+            ))}
           </div>
-        )}
-      </section>
+          {visible < filtered.length ? (
+            <div className="mt-6 flex justify-center">
+              <Button type="button" variant="outline" onClick={() => setVisible((c) => c + PAGE_SIZE)}>LOAD MORE</Button>
+            </div>
+          ) : null}
+        </>
+      ) : (
+        <div className="mt-3 grid min-h-48 place-items-center border border-dashed border-border px-5 text-center">
+          <p className="label text-muted-foreground">{pending ? "READING BUILDS FROM CHAIN…" : "NO BUILDS MATCH THESE FILTERS"}</p>
+        </div>
+      )}
+
+      <Dialog open={!!open} onOpenChange={(v) => !v && setOpen(null)}>
+        <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto p-0">
+          {open ? <Inspector item={open} /> : null}
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
 
-function Metric({ label, value, last = false }: { label: string; value: number; last?: boolean }) {
-  return <div className={`${last ? "" : "border-r border-border"} p-3 sm:p-4`}><dt className="label">{label}</dt><dd className="display mt-2 text-xl text-bitcoin sm:text-2xl">{value.toLocaleString("en-US")}</dd></div>;
-}
-
-function StageMetric({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
-  return <div className="bg-card p-3"><div className="flex items-center gap-2 text-signal [&_svg]:size-3.5">{icon}<span className="label">{label}</span></div><div className="display mt-2 text-xl">{value.toLocaleString("en-US")}</div></div>;
-}
-
-function BuildCard({ entry, active, profile, onPreview }: { entry: BuildEntry; active: boolean; profile: NonNullable<Parameters<typeof BuilderName>[0]["profile"]> | null; onPreview: () => void }) {
-  const { page } = entry;
+function Metric({ label, value, tone }: { label: string; value: number; tone: "signal" | "bitcoin" }) {
   return (
-    <article className={`overflow-hidden border bg-card ${active ? "border-signal" : "border-border"}`}>
-      <button type="button" onClick={onPreview} className="group block w-full text-left" aria-label={`Preview ${page.bitmapHeight}.BITMAP`}>
+    <div className="bg-card p-3">
+      <dt className="label text-muted-foreground">{label}</dt>
+      <dd className={`display mt-1 text-xl sm:text-2xl ${tone === "signal" ? "text-signal" : "text-bitcoin"}`}>{value.toLocaleString("en-US")}</dd>
+    </div>
+  );
+}
+
+function Thumb({ item }: { item: Item }) {
+  const banner = item.build?.page.bannerInscriptionId;
+  if (banner) return <img src={inscriptionImageUrl(banner)} alt="" loading="lazy" className="h-full w-full object-cover transition-transform group-hover:scale-[1.03]" />;
+  return <div className="h-full [&>div]:h-full [&_svg]:h-full [&_svg]:w-full"><BlockMosaic height={item.height} /></div>;
+}
+
+function BuildCard({ item, profile, onOpen }: { item: Item; profile: NonNullable<Parameters<typeof BuilderName>[0]["profile"]> | null; onOpen: () => void }) {
+  const owner = item.build?.page.ownerAddress;
+  const isForge = item.kind === "forge";
+  return (
+    <article className="group overflow-hidden border border-border bg-card/70 backdrop-blur transition-colors hover:border-signal">
+      <button type="button" onClick={onOpen} className="block w-full text-left" aria-label={`Inspect ${item.height}.BITMAP`}>
         <div className="relative aspect-[16/10] overflow-hidden border-b border-border bg-background">
-          {page.bannerInscriptionId ? <img src={inscriptionImageUrl(page.bannerInscriptionId)} alt="" loading="lazy" className="h-full w-full object-cover transition-transform group-hover:scale-[1.02]" /> : <div className="h-full [&>div]:h-full [&_svg]:h-full [&_svg]:w-full"><BlockMosaic height={page.bitmapHeight} /></div>}
-          <span className={`label absolute left-2 top-2 border px-2 py-1 backdrop-blur ${entry.hasActiveExtender ? "border-signal bg-background/90 text-signal" : "border-border bg-background/90 text-bitcoin"}`}>{entry.hasActiveExtender ? "LIVE 3D" : BUILD_KIND_LABELS[page.buildKind]}</span>
-          <span className="label absolute bottom-2 right-2 border border-border bg-background/90 px-2 py-1">{entry.totalViews.toLocaleString("en-US")} VIEWS</span>
+          <Thumb item={item} />
+          <span className={`label absolute left-2 top-2 border bg-background/90 px-2 py-1 ${isForge ? "border-signal text-signal" : "border-bitcoin text-bitcoin"}`}>
+            {isForge ? `ON-CHAIN · ${item.voxels.toLocaleString("en-US")} VOXELS` : item.build?.hasActiveExtender ? "LIVE 3D EXTENDER" : BUILD_KIND_LABELS[item.build!.page.buildKind]}
+          </span>
+          <span className="label absolute bottom-2 right-2 flex items-center gap-1 border border-border bg-background/90 px-2 py-1"><Eye className="size-3" /> {item.views.toLocaleString("en-US")}</span>
         </div>
         <div className="p-3">
-          <h3 className="display truncate text-base">{page.title || `${page.bitmapHeight}.BITMAP`}</h3>
-          <p className="label mt-1 truncate text-muted-foreground">{page.bitmapHeight}.BITMAP{entry.extenderNames[0] ? ` · ${entry.extenderNames[0]}` : ""}</p>
+          <h3 className="display truncate text-base">{item.title}</h3>
+          <p className="label mt-1 truncate text-muted-foreground">
+            {item.height}.BITMAP{isForge && item.forge?.archetype ? ` · ${item.forge.archetype.toUpperCase()}` : item.build?.extenderNames[0] ? ` · ${item.build.extenderNames[0]}` : ""}
+          </p>
         </div>
       </button>
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-t border-border px-3 py-2">
-        <div className="min-w-0 label text-muted-foreground">
-          {page.ownerAddress ? <Link to="/profile/$address" params={{ address: page.ownerAddress }} className="hover:text-bitcoin"><BuilderName address={page.ownerAddress} profile={profile} avatar /></Link> : "ACTIVE PUBLIC DEPLOYMENT"}
+      <div className="flex items-center justify-between gap-2 border-t border-border px-3 py-2">
+        <div className="label min-w-0 truncate text-muted-foreground">
+          {owner ? <Link to="/profile/$address" params={{ address: owner }} className="hover:text-bitcoin"><BuilderName address={owner} profile={profile} avatar /></Link> : isForge ? "VERIFIED BY BITCOIN" : "PUBLIC DEPLOYMENT"}
         </div>
-        <Button type="button" size="sm" variant={active ? "default" : "outline"} onClick={onPreview}><Eye /> {active ? "VIEWING" : "PREVIEW"}</Button>
+        <Button asChild size="sm" variant="ghost">
+          <Link to="/oasis" search={{ height: item.height }}>ENTER <ArrowUpRight /></Link>
+        </Button>
       </div>
-      <Button asChild variant="ghost" className="h-9 w-full rounded-none border-t border-border">
-        <Link to="/oasis" search={{ height: page.bitmapHeight }}>ENTER BUILD <ArrowUpRight /></Link>
-      </Button>
     </article>
+  );
+}
+
+function Inspector({ item }: { item: Item }) {
+  const isForge = item.kind === "forge";
+  const id = item.forge?.inscriptionId;
+  return (
+    <div>
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border p-4 pr-12">
+        <div className="min-w-0">
+          <div className={`label ${isForge ? "text-signal" : "text-bitcoin"}`}>{isForge ? "INSCRIBED LAND FORGE BUILD" : "LIVE 3D EXPERIENCE"}</div>
+          <DialogTitle className="display mt-1 text-2xl sm:text-3xl">{item.title}</DialogTitle>
+          <DialogDescription className="label mt-1 text-muted-foreground">
+            {item.height}.BITMAP{isForge ? ` · ${item.voxels.toLocaleString("en-US")} VOXELS` : ""}
+          </DialogDescription>
+        </div>
+        <ClubBadge height={item.height} asLink={false} />
+      </div>
+
+      {isForge && id ? (
+        <div className="aspect-[16/10] w-full bg-background">
+          <iframe src={`https://ordinals.com/preview/${id}`} title={`${item.height}.BITMAP build`} sandbox="allow-scripts" className="h-full w-full border-0" loading="lazy" />
+        </div>
+      ) : item.build ? (
+        <PublicBuildViewer key={item.height} page={item.build.page} />
+      ) : null}
+
+      <div className="grid grid-cols-2 gap-px border-y border-border bg-border sm:grid-cols-4">
+        <Stat icon={<Eye />} label="VIEWS" value={item.views.toLocaleString("en-US")} />
+        <Stat icon={<Users />} label="VISITORS" value={item.visitors.toLocaleString("en-US")} />
+        <Stat icon={<Boxes />} label="VOXELS" value={isForge ? item.voxels.toLocaleString("en-US") : "—"} />
+        <Stat icon={<Box />} label="SAT" value={item.forge?.sat ?? "—"} />
+      </div>
+
+      {id ? (
+        <div className="border-b border-border px-4 py-3">
+          <div className="label text-muted-foreground">INSCRIPTION PROOF</div>
+          <a href={`https://ordinals.com/inscription/${id}`} target="_blank" rel="noreferrer" className="mt-1 flex items-center gap-1 break-all font-mono text-xs text-signal hover:underline">{id} <ExternalLink className="size-3 shrink-0" /></a>
+        </div>
+      ) : null}
+
+      <div className="grid gap-px bg-border sm:grid-cols-3">
+        <Button asChild size="lg" className="h-12 rounded-none">
+          <Link to="/oasis" search={{ height: item.height }}><ArrowUpRight /> ENTER IN OASIS</Link>
+        </Button>
+        <Button asChild size="lg" variant="outline" className="h-12 rounded-none border-0">
+          <Link to="/bitmap/$block" params={{ block: String(item.height) }}><Box /> OPEN BITMAP</Link>
+        </Button>
+        <Button asChild size="lg" variant="outline" className="h-12 rounded-none border-0">
+          <Link to="/forge"><Hammer /> BUILD IN FORGE</Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="bg-card p-3">
+      <div className="flex items-center gap-2 text-signal [&_svg]:size-3.5">{icon}<span className="label">{label}</span></div>
+      <div className="display mt-1 truncate text-lg">{value}</div>
+    </div>
   );
 }
