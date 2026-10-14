@@ -136,7 +136,7 @@ function CommandPage() {
         </p>
       )}
 
-      <div className="mt-8 grid gap-3">
+      <div className="mt-4 grid max-h-[72vh] gap-3 overflow-y-auto pr-1 lg:grid-cols-2">
         {(mine.data ?? []).map((g) => {
           const d = byHeight.get(g.height);
           const dir = directive[g.height] ?? "patrol";
@@ -214,19 +214,39 @@ function CommandPage() {
           );
         })}
       </div>
+      </>)}
 
-      <WhileAway raids={raids.data?.raids ?? []} mine={(mine.data ?? []).map((g) => g.height)} />
-      {userId && <BossRaids guardians={mine.data ?? []} />}
+      {tab === "raids" && (
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <div className="max-h-[70vh] overflow-y-auto pr-1">
+            <WhileAway raids={raids.data?.raids ?? []} mine={(mine.data ?? []).map((g) => g.height)} />
+            {userId ? <BossRaids guardians={mine.data ?? []} /> : <p className="mt-4 text-xs text-muted-foreground">Sign in to strike world bosses.</p>}
+          </div>
+          <div className="max-h-[70vh] overflow-y-auto pr-1">
+            <h2 className="text-[10px] tracking-[0.3em] text-signal">RAID LOG · LIVE</h2>
+            <div className="mt-3 grid gap-2">
+              {(raids.data?.raids ?? []).length === 0 && <p className="text-xs text-muted-foreground">No raids settled yet. March a Guardian onto a guarded BITMAP.</p>}
+              {(raids.data?.raids ?? []).map((r) => (
+                <BattleReport key={r.id} r={r} maxHp={(h) => all.data?.find((x) => x.height === h)?.hp} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
-      <h2 className="mt-12 text-[10px] tracking-[0.3em] text-signal">RAID LOG · LIVE</h2>
-      <div className="mt-3 grid gap-2">
-        {(raids.data?.raids ?? []).length === 0 && <p className="text-xs text-muted-foreground">No raids settled yet. March a Guardian onto a guarded BITMAP.</p>}
-        {(raids.data?.raids ?? []).map((r) => (
-          <BattleReport key={r.id} r={r} maxHp={(h) => all.data?.find((x) => x.height === h)?.hp} />
-        ))}
-      </div>
+      {tab === "stream" && (
+        <div className="mt-4">
+          {stream.data?.length ? <StreamConstellation events={stream.data} height={480} />
+            : <p className="border border-border p-4 text-xs text-muted-foreground">{stream.isPending ? "> READING WORLD HISTORY…" : "> THE STREAM IS QUIET"}</p>}
+          <Link to="/stream" className="mt-2 inline-block text-[10px] text-signal hover:underline">OPEN FULL WORLD STREAM →</Link>
+        </div>
+      )}
 
-      <GuardianIndex guardians={all.data ?? []} onPick={(h) => navigate({ to: "/mint", search: { height: h } })} />
+      {tab === "index" && (
+        <div className="-mt-6">
+          <GuardianIndex guardians={all.data ?? []} onPick={(h) => navigate({ to: "/mint", search: { height: h } })} />
+        </div>
+      )}
     </main>
   );
 }
