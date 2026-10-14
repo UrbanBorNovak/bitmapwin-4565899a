@@ -29,7 +29,7 @@ export const STAMP_RULES: Record<StampKey, { name: string; description: string }
   deployer: { name: "DEPLOYER", description: "Activated an Extender on a BITMAP." },
   participant: { name: "PARTICIPANT", description: "Joined a recorded trade, lease, event, clan action, or duel." },
   historian: { name: "HISTORIAN", description: "Created verified history across four kinds of activity." },
-  "emporium-resident": { name: "EMPORIUM RESIDENT", description: "Held a Resident portrait or valid parcel of 717328.BITMAP (Bitmap Emporium), verified on chain." },
+  "emporium-resident": { name: "EMPORIUM RESIDENT", description: "Historical record: this wallet held a Resident portrait or valid parcel of 717328.BITMAP (Bitmap Emporium) when verified on chain. Current holding is checked live." },
 };
 export const UNLOCK_RULES: Record<BuildCapability, { name: string; description: string; stamp: StampKey }> = {
   "build.trail-marker": { name: "TRAIL MARKER", description: "A roadside marker for future travelers.", stamp: "first-arrival" },
