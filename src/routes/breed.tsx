@@ -228,3 +228,16 @@ function BreedLab() {
     </main>
   );
 }
+
+function PetLookup() {
+  const [v, setV] = useState("");
+  const id = v.trim();
+  const ok = /^[0-9a-f]{64}i\d+$/i.test(id);
+  return (
+    <section className="bg-card/60 backdrop-blur flex flex-wrap items-center gap-2 rounded-lg border border-border p-3">
+      <span className="label text-signal">VIEW AN INSCRIBED PET</span>
+      <input value={v} onChange={(e) => setV(e.target.value)} placeholder="Pet inscription id" className="min-w-0 flex-1 rounded-md border border-border bg-background/60 px-3 py-2 font-mono text-xs" />
+      {ok ? <Link to="/pet/$id" params={{ id }} className="rounded-md border border-primary px-3 py-2 font-mono text-xs text-primary">OPEN PEDIGREE →</Link> : <span className="label text-muted-foreground">PASTE AN ID</span>}
+    </section>
+  );
+}
