@@ -171,6 +171,7 @@
 - [x] Add a device-aware, remembered dark/light view control to the V7 inscription.
 
 ## Mobile Oasis controls
-- [ ] Smooth joystick movement and camera swipes, with immediate release and interruption reset.
-- [ ] Reserve non-overlapping touch, navigation, and activity areas in portrait and landscape.
-- [ ] Verify touch interaction and desktop controls in the live Oasis.
+- [x] Smooth joystick movement and camera swipes, with immediate release and interruption reset.
+- [x] Reserve non-overlapping touch, navigation, and activity areas in portrait and landscape.
+- [x] Verify real touch joystick/release, camera input, auto-run, menu reset, jump and control-zone spacing in portrait/landscape; inspect desktop layout.
+- [ ] Verify visible 3D walking/camera motion on a graphics-capable device (sandbox WebGL context is lost even at Low settings).
