@@ -2,12 +2,16 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import type { GuardianDna } from "@/lib/bitmon";
+import { useQuery } from "@tanstack/react-query";
+import { guardianDnaQuery } from "@/lib/bitmon-queries";
 import { blueprint, onchainGenome } from "@/lib/onchain-guardian";
 
-export function GuardianPortrait({ dna, size = 56, className = "" }: { dna: GuardianDna; size?: number; className?: string }) {
+export function GuardianPortrait({ height, dna: given, size = 56, className = "" }: { height: number; dna?: GuardianDna; size?: number; className?: string }) {
+  const q = useQuery({ ...guardianDnaQuery(height), enabled: !given, staleTime: Infinity });
+  const dna = given ?? q.data;
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    const c = ref.current; if (!c) return;
+    const c = ref.current; if (!c || !dna) return;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     c.width = c.height = size * dpr;
     const g = c.getContext("2d"); if (!g) return;
@@ -33,5 +37,5 @@ export function GuardianPortrait({ dna, size = 56, className = "" }: { dna: Guar
     g.fillStyle = "rgba(0,0,0,.55)"; g.fillRect(3, size - 6, size - 6, 3);
     g.fillStyle = rc; g.fillRect(3, size - 6, (size - 6) * rf, 3);
   }, [dna, size]);
-  return <canvas ref={ref} style={{ width: size, height: size }} className={`rounded-md border border-border ${className}`} aria-label={`${dna.height}.BITMAP Guardian portrait`} />;
+  return <canvas ref={ref} style={{ width: size, height: size }} className={`rounded-md border border-border ${className}`} aria-label={`${height}.BITMAP Guardian portrait`} />;
 }

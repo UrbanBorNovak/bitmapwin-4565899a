@@ -16,7 +16,6 @@ import { WhileAway } from "@/components/retention/WhileAway";
 import { GuardianIndex } from "@/components/command/GuardianIndex";
 import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
 import { guardianCry, guardianTier, powerScore } from "@/lib/onchain-guardian";
-import { morphFromDna } from "@/lib/creature-morph";
 import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/command")({
@@ -144,7 +143,7 @@ function CommandPage() {
             <section key={g.height} className="border border-border bg-card/40 p-4 backdrop-blur">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <div className="flex items-center gap-3">
-                  <GuardianPortrait dna={g} size={56} />
+                  <GuardianPortrait height={g.height} size={56} />
                   <div>
                   <span className="text-bitcoin">{g.height}.BITMAP</span>
                   <span className="ml-2 text-xs text-muted-foreground">{g.species} · LV {g.level} · {g.rarity}</span>
@@ -152,8 +151,8 @@ function CommandPage() {
                   <span className="ml-2 border border-signal/40 px-1.5 py-0.5 text-[9px] tracking-[0.2em] text-signal">TIER {guardianTier(g)} · PWR {powerScore(g)}</span>
                   <div className="mt-1 flex gap-2 text-[10px]">
                     <button onClick={() => setView3d((s) => ({ ...s, [g.height]: !s[g.height] }))} className="text-signal hover:underline">{view3d[g.height] ? "HIDE 3D" : "INSPECT 3D"}</button>
-                    <button onClick={() => guardianCry(g.dnaHash, morphFromDna(g).plan.toLowerCase(), "roar")} className="text-bitcoin hover:underline">ROAR</button>
-                    <button onClick={() => guardianCry(g.dnaHash, morphFromDna(g).plan.toLowerCase(), "strike")} className="text-bitcoin hover:underline">STRIKE</button>
+                    <button onClick={() => guardianCry(String(g.height), g.species.toLowerCase(), "roar")} className="text-bitcoin hover:underline">ROAR</button>
+                    <button onClick={() => guardianCry(String(g.height), g.species.toLowerCase(), "strike")} className="text-bitcoin hover:underline">STRIKE</button>
                   </div>
                   </div>
                 </div>

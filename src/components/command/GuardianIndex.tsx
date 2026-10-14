@@ -4,9 +4,8 @@ import { Link } from "@tanstack/react-router";
 import type { GuardianDna } from "@/lib/bitmon";
 import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
 import { guardianTier, powerScore, type Tier } from "@/lib/onchain-guardian";
-import { morphFromDna } from "@/lib/creature-morph";
 
-type G = GuardianDna & { inscriptionId?: string | null };
+type G = Pick<GuardianDna, "height" | "rarity" | "hp" | "bite" | "speed" | "armor" | "species"> & { inscriptionId?: string | null };
 const RA = ["MYTHIC", "EPIC", "RARE", "COMMON"] as const;
 const RA_COL: Record<string, string> = { MYTHIC: "#fbbf24", EPIC: "#c084fc", RARE: "#60a5fa", COMMON: "#94a3b8" };
 const TIER_COL: Record<Tier, string> = { S: "#fbbf24", A: "#c084fc", B: "#60a5fa", C: "#34d399", D: "#94a3b8" };
@@ -32,7 +31,7 @@ export function GuardianIndex({ guardians, onPick }: { guardians: G[]; onPick?: 
   const [sort, setSort] = useState<Sort>("power");
   const [q, setQ] = useState("");
 
-  const rows = useMemo(() => guardians.map((g) => ({ g, m: morphFromDna(g), pw: powerScore(g), tier: guardianTier(g) })), [guardians]);
+  const rows = useMemo(() => guardians.map((g) => ({ g, m: { name: g.species, plan: g.species }, pw: powerScore(g), tier: guardianTier(g) })), [guardians]);
   const list = useMemo(() => {
     const tr = { S: 0, A: 1, B: 2, C: 3, D: 4 };
     let out = rows;
@@ -70,7 +69,7 @@ export function GuardianIndex({ guardians, onPick }: { guardians: G[]; onPick?: 
       </header>
       <div className="p-4">
         <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-          {([["AWAKE", rows.length], ["INSCRIBED", rows.filter((r) => r.g.inscriptionId).length], ["AVG POWER", Math.round(rows.reduce((s, r) => s + r.pw, 0) / n)], ["TIER S", tc[0][1]]] as const).map(([l, v]) => (
+          {([["AWAKE", rows.length], ["INSCRIBED", rows.filter((r) => r.g.inscriptionId).length], ["AVG POWER", Math.round(rows.reduce((s, r) => s + r.pw, 0) / n)], ["TIER S", tc[0]?.[1] ?? 0]] as const).map(([l, v]) => (
             <div key={l} className="rounded-sm border border-border bg-background/60 p-2 text-center">
               <p className="font-display text-xl text-foreground">{v}</p><p className="text-[8px] tracking-widest text-muted-foreground">{l}</p>
             </div>
@@ -81,7 +80,7 @@ export function GuardianIndex({ guardians, onPick }: { guardians: G[]; onPick?: 
           <>
             {top && (
               <button onClick={() => onPick?.(top.g.height)} className="mt-4 flex w-full items-center gap-3 rounded-md border border-signal/30 bg-signal/5 p-3 text-left hover:border-signal/60">
-                <GuardianPortrait dna={top.g} size={64} />
+                <GuardianPortrait height={top.g.height} size={64} />
                 <div><p className="text-[9px] tracking-widest text-signal">TOP GUARDIAN</p><p className="font-display text-base">{top.m.name}</p>
                   <p className="text-[10px] text-muted-foreground">{top.g.height}.BITMAP · POWER {top.pw} · TIER {top.tier}</p></div>
               </button>
@@ -136,7 +135,7 @@ export function GuardianIndex({ guardians, onPick }: { guardians: G[]; onPick?: 
             <div className="mt-3 max-h-[480px] space-y-1 overflow-auto">
               {list.slice(0, 120).map(({ g, m, pw, tier }) => (
                 <div key={g.height} className="flex items-center gap-3 rounded-md p-2 text-[11px] hover:bg-signal/5">
-                  <GuardianPortrait dna={g} size={48} />
+                  <GuardianPortrait height={g.height} size={48} />
                   <button onClick={() => onPick?.(g.height)} className="flex-1 text-left">
                     <p className="font-semibold text-foreground">{m.name}</p>
                     <p className="text-[10px] text-muted-foreground">{g.height}.BITMAP · {m.plan} · POWER {pw}</p>

@@ -102,7 +102,7 @@ function MintPage() {
                 <div>
                   <p className={`font-mono text-[11px] ${RARITY_TONE[d.rarity]}`}>{d.rarity} · ERA {d.epoch} · LV {guardianLevel(d)}</p>
                   <div className="mt-1 flex items-center gap-3">
-                    <GuardianPortrait dna={d} size={64} />
+                    <GuardianPortrait height={height} dna={d} size={64} />
                     <h2 className="display text-3xl">{m.name}</h2>
                   </div>
                   <p className="mt-1 font-mono text-[10px] text-signal">TIER {guardianTier(d)} · POWER {powerScore(d)}</p>

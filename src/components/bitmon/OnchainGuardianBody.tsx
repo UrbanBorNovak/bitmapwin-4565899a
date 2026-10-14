@@ -60,7 +60,7 @@ export const OnchainGuardianBody = memo(function OnchainGuardianBody({
   return (
     <group scale={s} raycast={noRay}>
       {layers.map((l, gi) => l.length ? (
-        <instancedMesh key={gi} ref={refs[gi]} args={[geo, mats[gi], l.length]} castShadow={!gi} frustumCulled={false} raycast={noRay} />
+        <instancedMesh key={gi} ref={refs[gi]!} args={[geo, mats[gi], l.length]} castShadow={!gi} frustumCulled={false} raycast={noRay} />
       ) : null)}
       <mesh rotation-x={-Math.PI / 2} position={[0, 0.06, 0]} raycast={noRay}>
         <circleGeometry args={[8, 24]} />
