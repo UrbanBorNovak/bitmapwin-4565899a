@@ -106,6 +106,13 @@ async function firstForge(ids: string[], height: number, sat: string | null): Pr
     } catch {
       // the build still renders when the directory write fails
     }
+    try {
+      // Chain-verified build → Atlas landmark (idempotent per inscription).
+      const { appendProvenance } = await import("@/lib/passport.server");
+      await appendProvenance({ sourceKey: `forge:${id}`, eventType: "build", bitmapHeight: height, sourceType: "forge_build", sourceId: id, proofLevel: "CHAIN", title: "INSCRIBED BUILD", summary: `${build.blockCount} voxels inscribed on ${height}.BITMAP`, metadata: { inscriptionId: id, sat, voxels: build.blockCount } });
+    } catch {
+      // landmark registration is best-effort
+    }
     return build;
   }
   return null;
