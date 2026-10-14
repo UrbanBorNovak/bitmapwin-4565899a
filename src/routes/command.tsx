@@ -66,6 +66,8 @@ function CommandPage() {
   const mine = useQuery(myGuardiansQuery(userId));
   const live = useQuery(liveDispatchesQuery());
   const all = useQuery(allGuardiansQuery());
+  const [tab, setTab] = useState<Tab>("garrison");
+  const stream = useQuery({ ...provenanceStreamQuery("all", 120), enabled: tab === "stream" });
   const [view3d, setView3d] = useState<Record<number, boolean>>({});
   const qc = useQueryClient();
   const deploy = useServerFn(deployGuardianFn);
@@ -109,7 +111,7 @@ function CommandPage() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10 font-mono [background-image:linear-gradient(color-mix(in_oklab,var(--signal)_6%,transparent)_1px,transparent_1px),linear-gradient(90deg,color-mix(in_oklab,var(--signal)_6%,transparent)_1px,transparent_1px)] [background-size:32px_32px]">
+    <main className="mx-auto max-w-6xl px-4 py-6 font-mono [background-image:linear-gradient(color-mix(in_oklab,var(--signal)_6%,transparent)_1px,transparent_1px),linear-gradient(90deg,color-mix(in_oklab,var(--signal)_6%,transparent)_1px,transparent_1px)] [background-size:32px_32px]">
       <p className="text-[10px] tracking-[0.3em] text-signal">COMMAND CENTRE</p>
       <h1 className="mt-2 font-display text-3xl text-foreground">Command your Guardians</h1>
       <div className="mt-4 flex flex-wrap items-stretch gap-px border border-border bg-border">
