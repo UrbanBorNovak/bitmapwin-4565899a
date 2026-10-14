@@ -14,7 +14,7 @@ function Guardian3D({ height }: { height: number }) {
   );
 }
 import { useQuery } from "@tanstack/react-query";
-import { buildIssue, fetchComicBlocks, seedFrom, type ComicIssue, type ComicPanel } from "@/lib/block-comic";
+import { buildIssue, fetchComicBlocks, fetchComicBlocksAt, seedFrom, type ComicIssue, type ComicPanel } from "@/lib/block-comic";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
 
@@ -146,16 +146,14 @@ export function BlockChronicles() {
   const { data: inhabited } = useQuery(inhabitedQuery());
   const live = useMemo(() => (data ?? []).map(buildIssue), [data]);
   // Every BITMAP with an inscribed Guardian child gets its own issue too (newest children first).
-  const issues = useMemo(() => {
-    const seen = new Set(live.map((i) => i.height));
-    const extra: ComicIssue[] = [];
-    for (const [h, id] of [...(inhabited ?? new Map<number, string>()).entries()].reverse()) {
-      if (seen.has(h)) continue;
-      seen.add(h);
-      extra.push(buildIssue({ id: id.slice(0, 64), height: h, timestamp: 0, txCount: 0, size: 0, pool: null, medianFee: null, totalFees: null, reward: null }));
-    }
-    return [...live, ...extra.slice(0, 24)];
-  }, [live, inhabited]);
+  const liveHeights = useMemo(() => new Set(live.map((i) => i.height)), [live]);
+  const guardianHeights = useMemo(
+    () => [...(inhabited ?? new Map<number, string>()).keys()].reverse().filter((h) => !liveHeights.has(h)).slice(0, 16),
+    [inhabited, liveHeights],
+  );
+  // Every BITMAP with an inscribed Guardian child also gets its issue, built from its real block.
+  const { data: gBlocks } = useQuery({ queryKey: ["block-comic-guardians", guardianHeights], queryFn: () => fetchComicBlocksAt(guardianHeights), enabled: guardianHeights.length > 0, staleTime: Infinity });
+  const issues = useMemo(() => [...live, ...(gBlocks ?? []).map(buildIssue)], [live, gBlocks]);
   const insOf = (h: number) => inhabited?.get(h) ?? null;
   const [open, setOpen] = useState<number | null>(null);
   const current = open != null ? issues[open] : null;

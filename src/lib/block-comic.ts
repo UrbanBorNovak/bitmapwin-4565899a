@@ -84,3 +84,17 @@ export async function fetchComicBlocks(): Promise<ComicBlock[]> {
     reward: x.extras?.reward ?? null,
   }));
 }
+
+/** Real block facts for specific heights (used for BITMAPs whose Guardian child was inscribed). */
+export async function fetchComicBlocksAt(heights: number[]): Promise<ComicBlock[]> {
+  const out = await Promise.all(heights.map(async (h) => {
+    try {
+      const hash = await fetch(`https://mempool.space/api/block-height/${h}`).then((r) => (r.ok ? r.text() : null));
+      if (!hash) return null;
+      const x = (await fetch(`https://mempool.space/api/v1/block/${hash.trim()}`).then((r) => (r.ok ? r.json() : null))) as RawBlock | null;
+      if (!x) return null;
+      return { id: x.id, height: x.height, timestamp: x.timestamp, txCount: x.tx_count, size: x.size, pool: x.extras?.pool?.name ?? null, medianFee: x.extras?.medianFee ?? null, totalFees: x.extras?.totalFees ?? null, reward: x.extras?.reward ?? null } satisfies ComicBlock;
+    } catch { return null; }
+  }));
+  return out.filter((b): b is ComicBlock => b != null);
+}
