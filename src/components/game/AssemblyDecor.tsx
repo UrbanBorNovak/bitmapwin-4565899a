@@ -7,6 +7,8 @@ import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { SafeHtml } from "@/components/game/SafeHtml";
+import { usePuppets } from "@/lib/game/puppets";
+import { inscriptionContentUrl } from "@/lib/game/pfpExtenders";
 
 const HALL = 26;
 const GENESIS = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f";
@@ -120,6 +122,14 @@ function PyramidEye() {
 function Council({ taken, max }: { taken: number; max: number }) {
   const seats = Math.max(1, Math.min(max, 64));
   const glow = useRef<THREE.MeshStandardMaterial[]>([]);
+  // Each seat is held by a real Bitmap Emporium child of 717328.bitmap, spread evenly across the pool.
+  const pool = usePuppets();
+  const delegates = useMemo(() => {
+    const list = pool?.list ?? [];
+    if (!list.length) return [] as typeof list;
+    const step = Math.max(1, Math.floor(list.length / seats));
+    return Array.from({ length: seats }, (_, i) => list[(i * step) % list.length]!);
+  }, [pool, seats]);
   useFrame(({ clock }) => {
     glow.current.forEach((m, i) => {
       if (!m) return;
@@ -147,9 +157,23 @@ function Council({ taken, max }: { taken: number; max: number }) {
                 emissiveIntensity={0.3}
               />
             </mesh>
+            {delegates[i] && (
+              <SafeHtml position={[0, 1.45, 0.44]} transform distanceFactor={2.2} style={{ pointerEvents: "none" }}>
+                <div className={`relative h-[78px] w-[78px] overflow-hidden border ${lit ? "border-bitcoin" : "border-signal/50"}`}>
+                  <img
+                    src={inscriptionContentUrl(delegates[i]!.inscriptionId)}
+                    alt={`Bitmap Emporium delegate #${delegates[i]!.index + 1}`}
+                    loading="lazy"
+                    className={`h-full w-full object-cover [image-rendering:pixelated] ${lit ? "opacity-100" : "opacity-55 grayscale-[60%]"}`}
+                  />
+                  <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent_0_2px,hsl(var(--background)/0.35)_2px_3px)]" />
+                </div>
+              </SafeHtml>
+            )}
             <SafeHtml position={[0, 2.7, 0]} center distanceFactor={10} style={{ pointerEvents: "none" }}>
-              <div className={`font-mono text-[8px] ${lit ? "text-bitcoin" : "text-signal/50"}`}>
+              <div className={`whitespace-nowrap text-center font-mono text-[8px] ${lit ? "text-bitcoin" : "text-signal/50"}`}>
                 {String(i + 1).padStart(2, "0")}
+                {delegates[i] && <div className="text-[6px] opacity-80">EMPORIUM #{delegates[i]!.index + 1} · 717328</div>}
               </div>
             </SafeHtml>
           </group>
@@ -187,6 +211,7 @@ function Memorials() {
     { t: "CHANCELLOR ON BRINK OF SECOND BAILOUT FOR BANKS", p: [0, 8.6, -HALL + 0.8] as const, r: 0 },
     { t: "CYPHERPUNKS WRITE CODE", p: [-HALL + 0.8, 8.2, 0] as const, r: Math.PI / 2 },
     { t: "ZERO KNOWLEDGE · NO MASTERS", p: [HALL - 0.8, 8.2, 0] as const, r: -Math.PI / 2 },
+    { t: "THE EMPORIUM DELEGATES · 717328.BITMAP · NO NAMES, ONLY KEYS", p: [0, 9.4, -HALL + 0.8] as const, r: 0 },
   ];
   return (
     <>
