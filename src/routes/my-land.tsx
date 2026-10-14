@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DataBadge } from "@/components/extenders/DataBadge";
 import { useWalletSession } from "@/lib/wallet-session";
 import { heldHeightsQuery } from "@/lib/held-parcels";
+import { landStatusQuery } from "@/lib/land-status";
 import { walletQuery } from "@/lib/wallet";
 import { myDeploymentsQuery } from "@/lib/extenders";
 import { HostEarnPanel } from "@/components/extenders/HostEarnPanel";
@@ -35,6 +36,10 @@ function MyLandPage() {
   // Same live Taproot scan as /wallet (shared cache); records are only a fallback.
   const live = useQuery(walletQuery(wallet?.ordinalsAddress ?? ""));
   const deployments = useQuery(myDeploymentsQuery(addresses));
+  const statusHeights = live.data
+    ? [...new Set(live.data.utxos.flatMap((u) => u.inscriptions.map((i) => i.bitmapHeight)).filter((h): h is number => h !== null))]
+    : held.data ?? [];
+  const statusQ = useQuery(landStatusQuery(statusHeights));
 
   if (!wallet) {
     return (
