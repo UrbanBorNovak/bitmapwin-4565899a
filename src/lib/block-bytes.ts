@@ -31,16 +31,22 @@ async function withClientSlot<T>(task: () => Promise<T>): Promise<T> {
  * plus the CDN do most of the work on repeat views.
  */
 export async function fetchBlockSizeMap(height: number): Promise<BlockSizeMap> {
-  const res = await withClientSlot(() =>
-    fetch(`/api/public/blocks/${height}`, {
-      headers: { accept: "application/octet-stream" },
-    }),
-  );
-  // 204/404 = block does not exist (e.g. beyond the chain tip): empty map, no error.
-  if (res.status === 204 || res.status === 404) {
+  const load = () =>
+    withClientSlot(() =>
+      fetch(`/api/public/blocks/${height}`, {
+        headers: { accept: "application/octet-stream" },
+      }),
+    ).catch(() => null);
+  let res = await load();
+  // A slow upstream answers 503 — wait briefly and retry once before degrading.
+  if (!res || res.status >= 500) {
+    await new Promise((r) => setTimeout(r, 3_000));
+    res = await load();
+  }
+  // 204/404 = block does not exist; still-failing upstream = render plain land, never crash the world.
+  if (!res || !res.ok || res.status === 204) {
     return { height, hash: null, txCount: 0, classes: [] };
   }
-  if (!res.ok) throw new Error(`block ${height} size map unavailable (HTTP ${res.status})`);
 
   const buffer = await res.arrayBuffer();
   const txCountHeader = Number(res.headers.get("x-tx-count"));
