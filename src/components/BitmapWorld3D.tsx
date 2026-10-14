@@ -4884,7 +4884,7 @@ function BitmapWorld3DInner({
         ) : null}
         </div>
 
-        {exploring && (!touchDevice || utilityOpen) ? (
+        {exploring && !touchDevice ? (
           <LandBuilderBar
             height={readout.height}
             getPose={() => ({ x: pose.current.x, z: pose.current.z, yaw: pose.current.yaw })}
