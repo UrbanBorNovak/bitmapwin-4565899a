@@ -92,7 +92,7 @@ function CommunityBuildsPage() {
 
   return (
     <main className="mx-auto max-w-[1600px] px-3 py-6 sm:px-5 md:py-10">
-      <header className="glass-panel border border-border p-5 sm:p-6">
+      <header className="border border-border bg-card/60 backdrop-blur-md p-5 sm:p-6">
         <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
           <div>
             <div className="label text-bitcoin">DISCOVER · BUILT ON BITCOIN LAND</div>
