@@ -970,7 +970,7 @@ const petra: Kit = {
     step("Canyon floor", "The sandy floor of the Siq and the courtyard.", (m) => { m.box(6, 57, 0, 0, 18, 43, "sand"); m.box(22, 41, 0, 0, 2, 17, "sand"); }),
     step("Rose-red cliff", "The sheer rock face the Treasury is carved into.", (m) => {
       for (let x = 6; x <= 57; x++) { const top = 46 + Math.round(3 * Math.sin(x / 4)); for (let y = 1; y <= top; y++) m.put(x, y, 44, (x * 3 + y * 7) % 11 < 3 ? "sand" : "brick"); m.put(x, top + 1, 43, "brick"); }
-      for (let z = 18; z <= 43; z++) for (const x of [6, 57]) for (let y = 1; y <= 30 + (z % 5); y++) m.put(x, y, z, "brick");
+      for (let z = 18; z <= 43; z++) for (const x of [6, 57]) for (let y = 1; y <= 16 + (z % 5); y++) m.put(x, y, z, "brick");
     }),
     step("The Siq", "Two towering canyon walls leading in.", (m) => {
       for (let z = 2; z <= 17; z++) { const w = Math.round(2 * Math.sin(z / 3)); for (let y = 1; y <= 26 + (z % 4); y++) { m.put(22 + w, y, z, "brick"); m.put(41 + w, y, z, "brick"); } }
