@@ -49,6 +49,7 @@ import { LoopNavigator } from "@/components/LoopNavigator";
 import { TerritoryShareCard } from "@/components/TerritoryShareCard";
 import { BitmapGuardianPanel } from "@/components/bitmon/BitmapGuardianPanel";
 import { BitmapWorldsPanel } from "@/components/worlds/BitmapWorldsPanel";
+import { OnchainBitmonPanel } from "@/components/worlds/OnchainBitmonPanel";
 import { TerritoryChronicle } from "@/components/TerritoryChronicle";
 import { ShadowGatePanel } from "@/components/territory/ShadowGatePanel";
 import { Button } from "@/components/ui/button";
@@ -527,6 +528,7 @@ function BitmapDetail() {
       />
       <BitmapGuardianPanel height={block} />
       <BitmapWorldsPanel height={block} />
+      <OnchainBitmonPanel height={block} />
         </div>
       )}
       {tab === "market" && (
