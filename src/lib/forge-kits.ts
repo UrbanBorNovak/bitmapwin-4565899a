@@ -1360,54 +1360,64 @@ const tube = (m: M, a: [number, number, number], b: [number, number, number], r0
   const n = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]) * 2);
   for (let i = 0; i <= n; i++) { const t = i / n, r = r0 + (r1 - r0) * t; ellip(m, a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t, r, r, r, paint); }
 };
-const giraffeLegs: [number, number][] = [[20, 26.5], [20, 36.5], [40, 26.5], [40, 36.5]];
+const giraffeLegs: [number, number][] = [[22, 28.5], [24, 34.5], [37, 28.5], [39, 34.5]];
+/** Sunset parcel land: Mondrian-ish tiles, each a stepped orange/gold pillar. */
+const parcelTile = (x: number, z: number) => {
+  const tx = Math.floor((x + (Math.floor(z / 7) % 2) * 3) / 6), tz = Math.floor(z / 7);
+  return { h: gh(tx, 3, tz), edge: (x + (Math.floor(z / 7) % 2) * 3) % 6 === 0 || z % 7 === 0 };
+};
 const giraffe: Kit = {
   id: "kit-giraffe", name: "The Savanna Giraffe", sphere: "wild", kit: true, difficulty: "MASTER",
-  story: "A towering reticulated giraffe on golden savanna, its patterned neck reaching for the crown of an acacia tree.",
+  story: "BE THE BITMAP — a proud reticulated giraffe standing tall over a sunset sea of orange BITMAP parcels, blue mountains and lone acacias behind.",
   steps: [
-    step("Savanna base", "Lay the golden grass plain with a dusty path and a watering hole.", (m) => {
+    step("Parcel land", "Lay the sunset sea of orange BITMAP parcels, each tile a stepped block.", (m) => {
       for (let x = 1; x <= 62; x++) for (let z = 1; z <= 62; z++) {
-        const w = Math.hypot(x - 12, z - 50) < 6;
-        m.put(x, 0, z, w ? "glass" : gh(x, 0, z) < 0.55 ? "sand" : gh(z, 1, x) < 0.5 ? "grass" : "dirt");
+        const { h, edge } = parcelTile(x, z);
+        const far = z < 14 || x > 52 || x < 8;
+        const top = edge ? 0 : far ? Math.floor(h * 4) : Math.floor(h * 2);
+        for (let y = 0; y <= top; y++) m.put(x, y, z, edge ? "log" : y === top ? (h > 0.82 ? "gold" : h > 0.4 ? "planks" : "brick") : "brick");
       }
     }),
-    step("Long legs", "Raise four tall legs with dark hooves and knobbly knees.", (m) => {
+    step("Slender legs", "Raise four slim legs with knobbly pale knees and dark hooves.", (m) => {
       for (const [lx, lz] of giraffeLegs) {
-        tube(m, [lx, 1, lz], [lx, 23, lz], 1.7, 2.3, (x, y, z) => y <= 2 ? "log" : y === 12 || y === 13 ? "sand" : coat(x, y, z));
-        ellip(m, lx, 12.5, lz, 2.6, 1.6, 2.6, () => "sand");
+        tube(m, [lx, 1, lz], [lx + 1, 24, lz], 1.1, 1.6, (x, y, z) => y <= 2 ? "log" : y === 12 || y === 13 ? "sand" : coat(x, y, z));
+        ellip(m, lx + 0.5, 12.5, lz, 1.9, 1.3, 1.9, () => "sand");
       }
     }),
-    step("Body", "Build the deep, sloping torso — higher at the shoulders.", (m) => {
-      ellip(m, 30, 29, GZ, 14, 8, 7, coat);
-      ellip(m, 39, 32, GZ, 7, 7, 6.5, coat); // shoulder hump
-      ellip(m, 30, 23, GZ, 9, 2, 4, () => "sand"); // pale belly
+    step("Body", "Build the short, sloping torso — high at the shoulders, low at the rump.", (m) => {
+      ellip(m, 30, 28, GZ, 11, 6, 5, coat);
+      ellip(m, 38, 31, GZ, 5.5, 6, 4.8, coat); // shoulder
+      ellip(m, 30, 23.5, GZ, 7, 1.5, 3, () => "sand"); // pale belly
     }),
-    step("Neck", "Angle the long patterned neck up toward the treetop.", (m) => {
-      tube(m, [40, 33, GZ], [51, 54, GZ], 5, 3, coat);
+    step("Upright neck", "Stand the long patterned neck almost straight up, proud and alert.", (m) => {
+      tube(m, [39, 33, GZ], [44, 55, GZ], 3.6, 2.2, coat);
     }),
-    step("Mane & tail", "Run the dark mane down the neck and hang the tufted tail.", (m) => {
-      for (let i = 0; i <= 26; i++) { const t = i / 26; const x = Math.round(38 + 12 * t - 3), y = Math.round(36 + 21 * t + 1); m.put(x, y, 31, "log"); m.put(x, y, 32, "log"); m.put(x, y + 1, 31, "log"); }
-      tube(m, [16, 30, GZ], [13, 16, GZ], 0.8, 0.8, () => "sand"); ellip(m, 13, 14, GZ, 1.2, 2, 1.2, () => "log");
+    step("Mane & tail", "Run the dark mane down the back of the neck and hang the tufted tail.", (m) => {
+      for (let i = 0; i <= 22; i++) { const t = i / 22; const x = Math.round(36.6 + 5 * t), y = Math.round(34 + 22 * t); m.put(x, y, 31, "log"); m.put(x, y, 32, "log"); }
+      tube(m, [19, 29, GZ], [17, 16, GZ], 0.7, 0.7, () => "sand"); ellip(m, 17, 14, GZ, 1, 1.8, 1, () => "log");
     }),
-    step("Head & ossicones", "Fit the head and muzzle, then the two horn-like ossicones and ears.", (m) => {
-      ellip(m, 53, 57, GZ, 4, 3.2, 3, (x, y, z) => coat(x, y, z) === "brick" && x < 55 ? "brick" : "sand");
-      ellip(m, 57.5, 55.5, GZ, 3, 2.2, 2.4, () => "sand"); // muzzle
-      m.put(60, 56, 30, "log"); m.put(60, 56, 33, "log"); // nostrils
-      for (const z of [29, 34]) { m.put(55, 58, z, "log"); m.put(55, 58, z === 29 ? 28 : 35, "glow"); } // eyes
-      for (const z of [30, 33]) { for (let y = 60; y <= 62; y++) m.put(52, y, z, "brick"); m.put(52, 63, z, "log"); }
-      for (const z of [27, 36]) { m.put(51, 59, z, "sand"); m.put(50, 59, z, "sand"); }
+    step("Head & ossicones", "Fit the tilted head and dark muzzle, then tufted ossicones and flared ears.", (m) => {
+      ellip(m, 46, 58, GZ, 3.2, 2.8, 2.6, (x, y, z) => coat(x, y, z) === "brick" && x < 47 ? "brick" : "sand");
+      ellip(m, 49.5, 56.5, GZ, 2.3, 1.8, 2, (x) => x >= 50 ? "log" : "sand"); // dark muzzle
+      m.put(51, 55, 31, "brick"); m.put(51, 55, 32, "brick"); // lips
+      for (const z of [29, 34]) { m.put(47, 59, z, "log"); m.put(47, 59, z === 29 ? 28 : 35, "glow"); } // eyes
+      for (const z of [30, 33]) { for (let y = 61; y <= 62; y++) m.put(45, y, z, "sand"); m.put(45, 63, z, "log"); } // ossicones
+      for (const z of [27, 36]) { m.put(44, 60, z, "sand"); m.put(43, 61, z, "sand"); } // ears
     }),
-    step("Acacia tree", "Grow the flat-topped acacia the giraffe is browsing.", (m) => {
-      tube(m, [58, 1, 14], [56, 30, 12], 1.6, 1.1, () => "log");
-      tube(m, [56, 28, 12], [48, 40, 8], 0.9, 0.7, () => "log");
-      tube(m, [56, 28, 12], [61, 38, 18], 0.9, 0.7, () => "log");
-      ellip(m, 54, 42, 12, 10, 2.2, 8, () => "grass");
-      ellip(m, 58, 44, 16, 5, 1.6, 4, () => "grass");
+    step("Blue mountains & acacias", "Raise the blue-green ridges on the horizon and plant two lone acacias.", (m) => {
+      for (let x = 1; x <= 62; x++) {
+        const peak = 8 + Math.round(7 * Math.abs(Math.sin(x * 0.17)) + 4 * Math.abs(Math.sin(x * 0.41 + 1)));
+        for (let z = 1; z <= 3; z++) for (let y = 4; y <= peak - z; y++) m.put(x, y, z, y > peak - z - 2 ? "glass" : z === 1 ? "stone" : "grass");
+      }
+      for (const [tx, tz, th] of [[10, 18, 16], [56, 22, 12]] as const) {
+        tube(m, [tx, 2, tz], [tx + 1, th, tz], 0.6, 0.5, () => "log");
+        ellip(m, tx + 1, th + 1, tz, 5, 1.2, 4, () => "grass");
+      }
     }),
   ],
-  behaviors: [{ card: "sentry_turret", steps: [5], pivot: [52, 55, GZ] }, { card: "beacon_pulse", steps: [0], pivot: [12, 0, 50] }],
+  behaviors: [{ card: "sentry_turret", steps: [5], pivot: [46, 57, GZ] }, { card: "beacon_pulse", steps: [0], pivot: [32, 0, 32] }],
   bags: [1, 2, 3, 4, 5, 6, 7],
-  tagline: "A towering reticulated giraffe browsing a flat-topped acacia on golden savanna.",
+  tagline: "BE THE BITMAP — a proud giraffe over a sunset sea of orange parcels.",
   ages: "12+",
 };
 
