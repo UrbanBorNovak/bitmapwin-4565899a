@@ -210,6 +210,12 @@ export function BlockChronicles() {
   const issues = useMemo(() => (gBlocks ?? []).filter((b) => inhabited?.has(b.height)).sort((a, b) => b.height - a.height).map(buildIssue), [gBlocks, inhabited]);
   const insOf = (h: number) => inhabited?.get(h) ?? null;
   const [open, setOpen] = useState<number | null>(null);
+  // Only ISSUES_PER_PAGE covers at a time; older issues sit on the next page.
+  const ISSUES_PER_PAGE = 5;
+  const [page, setPage] = useState(0);
+  const pages = Math.max(1, Math.ceil(issues.length / ISSUES_PER_PAGE));
+  const cur = Math.min(page, pages - 1);
+  const shown = issues.slice(cur * ISSUES_PER_PAGE, cur * ISSUES_PER_PAGE + ISSUES_PER_PAGE);
   const current = open != null ? issues[open] : null;
   const next = live[0] ? live[0].height + 1 : null;
 
