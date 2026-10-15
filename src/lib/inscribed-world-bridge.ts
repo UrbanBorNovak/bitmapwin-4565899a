@@ -44,9 +44,18 @@ export type WorldPrim = {
   size: [number, number, number];
 };
 
+/** One placed on-chain model (Draco glTF inscription) with its editor transform. */
+export type WorldAsset = {
+  url: string;
+  pos: [number, number, number];
+  rot: [number, number, number]; // degrees
+  scale: [number, number, number];
+};
+
 export type WorldGeometry = {
   prims: WorldPrim[];
   assets: number;
+  models?: WorldAsset[];
   sky: string | null;
   ground: string | null;
 };
@@ -67,12 +76,31 @@ export function parseWorldSource(src: string): WorldGeometry {
     if (typeof c?.[0] === "string" && typeof c[1] === "string" && HEX.test(c[1])) colors.set(c[0], c[1]);
   }
   const app = (statement(src, "appData") as unknown[] | null) ?? [];
+  const modelUrl = new Map<string, string>();
+  for (const m of (statement(src, "appModels") as { a?: unknown; u?: unknown }[] | null) ?? []) {
+    if (typeof m?.a === "string" && typeof m.u === "string" && /^\/content\/[0-9a-f]{64}i\d+$/.test(m.u)) {
+      modelUrl.set(m.a, `https://ordinals.com${m.u}`);
+    }
+  }
+  const models: WorldAsset[] = [];
   const objs = (statement(src, "appObjects") as unknown[][] | null) ?? [];
   const prims: WorldPrim[] = [];
   let assets = 0;
   for (const o of objs) {
     if (!Array.isArray(o)) continue;
-    if (o[3] === "asset") { assets++; continue; }
+    if (o[3] === "asset") {
+      assets++;
+      const url = modelUrl.get(String(o[1]));
+      if (url && models.length < 400) {
+        models.push({
+          url,
+          pos: [num(o[4]), num(o[5]), num(o[6])],
+          rot: [num(o[7]), num(o[8]), num(o[9])],
+          scale: [num(o[10]) || 1, num(o[11]) || 1, num(o[12]) || 1],
+        });
+      }
+      continue;
+    }
     if (o[3] !== "box" && o[3] !== "plane") continue;
     prims.push({
       shape: o[3],
@@ -84,7 +112,7 @@ export function parseWorldSource(src: string): WorldGeometry {
     if (prims.length >= 2000) break;
   }
   const hex = (v: unknown) => (typeof v === "string" && HEX.test(v) ? v : null);
-  return { prims, assets, sky: hex(app[3]), ground: hex(app[4]) };
+  return { prims, assets, models, sky: hex(app[3]), ground: hex(app[4]) };
 }
 
 export async function decodeWorldGeometry(html: string): Promise<WorldGeometry | null> {
@@ -105,7 +133,23 @@ export function isFloorPlane(p: WorldPrim): boolean {
 /** The building only: drops editor floor planes so they never slice through the Oasis view. */
 export function structurePrims(prims: WorldPrim[]): WorldPrim[] {
   const kept = prims.filter((p) => !isFloorPlane(p));
-  return kept.length ? kept : prims;
+  const base = kept.length ? kept : prims;
+  // Drop stray editor markers far from the building cluster so they can't shrink the fit.
+  const med = (k: 0 | 2) => {
+    const v = base.map((p) => p.pos[k]).sort((a, b) => a - b);
+    return v[Math.floor(v.length / 2)] ?? 0;
+  };
+  const cx = med(0), cz = med(2);
+  const near = base.filter((p) => Math.hypot(p.pos[0] - cx, p.pos[2] - cz) <= 150);
+  return near.length ? near : base;
+}
+
+/** Models that land inside the BITMAP once the building is fitted (local units, before offset). */
+export function modelsInside(models: WorldAsset[], fit: { scale: number; offset: [number, number, number] }, half: number): WorldAsset[] {
+  return models.filter((m) =>
+    Math.abs((m.pos[0] + fit.offset[0]) * fit.scale) <= half &&
+    Math.abs((m.pos[2] + fit.offset[2]) * fit.scale) <= half,
+  );
 }
 
 /** Uniform scale + offset that fits the primitives inside `fit` world units, base on y=0. */
