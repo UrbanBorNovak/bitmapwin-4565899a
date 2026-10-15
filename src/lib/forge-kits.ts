@@ -1226,7 +1226,107 @@ const genesisCoin: Kit = {
   ages: "16+",
 };
 
-export const KITS: Kit[] = [citadel, express, array, vault, dragon, mega, colossus, ark, bismarck, tiger, spitfire, hospital, police, fire, school, pyramid, colosseum, eiffel, taj, greatWall, petra, machu, terracotta, angkor, genesisCoin];
+// ---- THE BLACK PEARL (pirate galleon) ----
+const PZ = 31.5;
+/** Half-beam of the hull at length x, height y (keel y=0, deck y=10). */
+function pearlBeam(x: number, y: number) {
+  let f = 1;
+  if (x > 38) f = Math.max(0.08, 1 - ((x - 38) / 19) ** 2);
+  if (x < 12) f = 0.82 + 0.18 * ((x - 5) / 7);
+  const v = y >= 10 ? 0.96 : 0.35 + 0.65 * Math.sqrt(y / 10);
+  return Math.max(0.6, 7 * f * v);
+}
+const pIn = (x: number, y: number, z: number) => Math.abs(z - PZ) <= pearlBeam(x, y);
+const pearlSails: [number, number, number][] = [[44, 30, 9], [31, 36, 10], [18, 28, 8]]; // mast x, top y, half-yard
+const pearl: Kit = {
+  id: "kit-black-pearl", name: "The Black Pearl", sphere: "kingdom", kit: true, difficulty: "MASTER",
+  story: "A cursed pirate galleon: tall stern castle, three masts of torn black canvas, broadside cannons and ghost-green lanterns.",
+  steps: [
+    step("Keel & lower hull", "Lay the dark keel, then curve the hull planks up from it.", (m) => {
+      for (let x = 5; x <= 57; x++) for (let y = 0; y <= 5; y++) for (let z = 18; z <= 45; z++) {
+        if (!pIn(x, y, z)) continue;
+        const shell = !pIn(x, y, z - 1) || !pIn(x, y, z + 1) || y === 0 || !pIn(x - 1, y, z) || !pIn(x + 1, y, z);
+        if (shell) m.put(x, y, z, y <= 1 ? "cobble" : "log");
+      }
+      for (let y = 0; y <= 9; y++) m.put(4, y, 31, "log"), m.put(4, y, 32, "log"); // rudder
+    }),
+    step("Gun deck & broadsides", "Raise the upper hull and run cannons out of every port.", (m) => {
+      for (let x = 5; x <= 57; x++) for (let y = 6; y <= 9; y++) for (let z = 18; z <= 45; z++) {
+        if (!pIn(x, y, z)) continue;
+        if (pIn(x, y, z - 1) && pIn(x, y, z + 1) && pIn(x - 1, y, z) && pIn(x + 1, y, z)) continue;
+        const port = y === 7 && x >= 12 && x <= 44 && x % 3 === 0 && Math.abs(z - PZ) > 3;
+        m.put(x, y, z, port ? "cobble" : y === 8 ? "planks" : "log");
+        if (port) m.put(x, y, z < PZ ? z - 1 : z + 1, "stone");
+      }
+    }),
+    step("Main deck & rails", "Plank the deck, add hatches, capstan and the bulwark rail.", (m) => {
+      for (let x = 5; x <= 57; x++) for (let z = 18; z <= 45; z++) if (pIn(x, 10, z)) {
+        const hatch = (x >= 24 && x <= 27 || x >= 36 && x <= 38) && Math.abs(z - PZ) < 2;
+        m.put(x, 10, z, hatch ? "log" : "planks");
+        if (!pIn(x, 10, z - 1) || !pIn(x, 10, z + 1)) { m.put(x, 11, z, "log"); if (x % 2 === 0) m.put(x, 12, z, "log"); }
+      }
+      m.box(34, 34, 11, 13, 31, 32, "log"); m.box(33, 35, 13, 13, 30, 33, "planks"); // capstan
+      for (const x of [22, 28, 40]) for (const z of [26, 37]) m.put(x, 11, z, "planks"), m.put(x, 12, z, "planks"); // barrels
+    }),
+    step("Forecastle & figurehead", "Raise the forecastle, then the long bowsprit and the gold figurehead.", (m) => {
+      for (let x = 46; x <= 57; x++) for (let z = 18; z <= 45; z++) if (pIn(x, 10, z)) {
+        for (let y = 11; y <= 12; y++) if (!pIn(x, 10, z - 1) || !pIn(x, 10, z + 1) || x === 46) m.put(x, y, z, "log");
+        m.put(x, 13, z, "planks");
+        if (!pIn(x, 10, z - 1) || !pIn(x, 10, z + 1)) m.put(x, 14, z, "log");
+      }
+      for (let i = 0; i <= 8; i++) { const x = 56 + i * 0.85, y = 12 + i; m.put(Math.round(x), y, 31, "log"); m.put(Math.round(x), y, 32, "log"); }
+      for (let y = 6; y <= 10; y++) m.put(58, y, 31, "gold"), m.put(58, y, 32, "gold");
+      m.put(59, 10, 31, "gold"); m.put(59, 10, 32, "gold"); m.put(59, 9, 31, "glow");
+      for (let y = 2; y <= 9; y++) m.put(52, y, y % 2 ? 23 : 24, "stone"); // anchor chain
+    }),
+    step("Stern castle & gallery", "Stack the captain's quarters three decks high with a glass stern gallery.", (m) => {
+      for (let x = 5; x <= 17; x++) for (let z = 18; z <= 45; z++) if (pIn(x, 10, z)) {
+        const top = x <= 12 ? 19 : 15;
+        for (let y = 11; y <= top; y++) {
+          const wall = !pIn(x, 10, z - 1) || !pIn(x, 10, z + 1) || x === 5 || x === 17 || (x === 12 && y > 15);
+          if (!wall) continue;
+          const win = (x === 5 && y % 3 !== 0 && Math.abs(z - PZ) < 5 && (Math.round(z) % 2 === 0)) || ((y === 13 || y === 17) && x % 3 === 0 && x > 5);
+          m.put(x, y, z, win ? "glass" : y === top || y === 15 ? "gold" : "log");
+        }
+        m.put(x, 15, z, "planks"); if (x <= 12) m.put(x, 19, z, "planks");
+        if (!pIn(x, 10, z - 1) || !pIn(x, 10, z + 1)) m.put(x, x <= 12 ? 20 : 16, z, "log");
+      }
+      for (let z = 26; z <= 37; z++) { m.put(4, 13, z, "planks"); if (z % 2) m.put(4, 14, z, "gold"); } // balcony
+      for (let z = 27; z <= 36; z++) m.put(4, 18, z, "gold");
+    }),
+    step("Three masts", "Step the fore, main and mizzen masts through the decks.", (m) => {
+      for (const [mx, top] of pearlSails) for (let y = 10; y <= top + 2; y++) { m.put(mx, y, 31, "log"); m.put(mx, y, 32, "log"); if (y < 20) { m.put(mx + 1, y, 31, "log"); m.put(mx + 1, y, 32, "log"); } }
+    }),
+    step("Yards & crow's nests", "Cross each mast with yards and set a crow's nest on the main.", (m) => {
+      for (const [mx, top, hy] of pearlSails) for (const [yy, w] of [[top - 18, hy], [top - 10, hy - 1], [top - 3, hy - 3]] as const)
+        for (let z = Math.round(PZ - w); z <= Math.round(PZ + w); z++) m.put(mx, yy, z, "log");
+      for (let x = 29; x <= 34; x++) for (let z = 29; z <= 34; z++) { m.put(x, 28, z, "planks"); if (x === 29 || x === 34 || z === 29 || z === 34) m.put(x, 29, z, "log"); }
+    }),
+    step("Torn black sails", "Hang the ragged dark canvas — it bellies forward in the wind.", (m) => {
+      for (const [mx, top, hy] of pearlSails) for (const [y0, y1, w] of [[top - 17, top - 11, hy], [top - 9, top - 4, hy - 1], [top - 2, top + 1, hy - 3]] as const)
+        for (let y = y0; y <= y1; y++) for (let z = Math.round(PZ - w); z <= Math.round(PZ + w); z++) {
+          if (((z * 7 + y * 13 + mx) % 17 === 0) && y > y0) continue; // tears
+          const bell = Math.round(1.6 * Math.sin(((y - y0 + 0.5) / (y1 - y0 + 1)) * Math.PI) * (1 - ((z - PZ) / (w + 1)) ** 2));
+          m.put(mx + 1 + bell, y, z, "cobble");
+        }
+      for (let x = 46; x <= 58; x++) { const y = 12 + Math.round((58 - x) * 1.4); if (y < 30) m.put(x, y, 31, "cobble"); } // jib
+      for (const [mx, top] of pearlSails) for (let i = 0; i < 10; i++) { m.put(mx - 1 - Math.floor(i / 2), top - 18 - i, 24 + (i > 4 ? 0 : 0), "log"); m.put(mx - 1 - Math.floor(i / 2), top - 18 - i, 39, "log"); } // shrouds
+    }),
+    step("Helm, lanterns & treasure", "Mount the ship's wheel, hang the ghost lanterns and stash the gold.", (m) => {
+      m.box(10, 10, 20, 22, 31, 32, "log"); for (const [dy, dz] of [[-1, 0], [1, 0], [0, -1], [0, 2], [2, -1], [-1, 2]] as const) m.put(9, 21 + dy, 31 + dz, "gold");
+      for (const z of [26, 31, 37]) { m.put(3, 20, z, "log"); m.put(3, 19, z, "glow"); }
+      for (const [mx, top] of pearlSails) m.put(mx, top + 3, 31, "glow");
+      m.box(14, 15, 11, 12, 27, 28, "gold"); m.box(14, 15, 11, 12, 35, 36, "gold");
+      m.put(45, 14, 31, "gold"); // bell
+    }),
+  ],
+  behaviors: [{ card: "beacon_pulse", steps: [8], pivot: [10, 21, 31.5] }],
+  bags: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+  tagline: "A cursed galleon with torn black sails, broadside cannons and ghost-lit stern.",
+  ages: "16+",
+};
+
+export const KITS: Kit[] = [citadel, express, array, vault, dragon, mega, colossus, ark, bismarck, tiger, spitfire, hospital, police, fire, school, pyramid, colosseum, eiffel, taj, greatWall, petra, machu, terracotta, angkor, genesisCoin, pearl];
 export const isKit = (b: Blueprint): b is Kit => (b as Kit).kit === true;
 
 /** Deterministic pose for a behavior at time t (seconds). `near` = visitor in range. */
