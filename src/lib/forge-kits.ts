@@ -1337,7 +1337,81 @@ const pearl: Kit = {
   ages: "16+",
 };
 
-export const KITS: Kit[] = [citadel, express, array, vault, dragon, mega, colossus, ark, bismarck, tiger, spitfire, hospital, police, fire, school, pyramid, colosseum, eiffel, taj, greatWall, petra, machu, terracotta, angkor, genesisCoin, pearl];
+// ---- THE SAVANNA GIRAFFE ----
+const GZ = 31.5;
+const gh = (a: number, b: number, c: number) => { const v = Math.sin(a * 127.1 + b * 311.7 + c * 74.7) * 43758.5453; return v - Math.floor(v); };
+/** Reticulated coat: Voronoi patches (brick) split by pale sand lines. */
+const coat = (x: number, y: number, z: number): BlockId => {
+  const C = 5, cx = Math.floor(x / C), cy = Math.floor(y / C), cz = Math.floor(z / C);
+  let d1 = 1e9, d2 = 1e9;
+  for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) for (let k = -1; k <= 1; k++) {
+    const a = cx + i, b = cy + j, c = cz + k;
+    const d = Math.hypot(x - (a + gh(a, b, c)) * C, y - (b + gh(b, c, a)) * C, z - (c + gh(c, a, b)) * C);
+    if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d;
+  }
+  return d2 - d1 < 1.2 ? "sand" : "brick";
+};
+const ellip = (m: M, cx: number, cy: number, cz: number, rx: number, ry: number, rz: number, paint: (x: number, y: number, z: number) => BlockId) => {
+  for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++) for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) for (let z = Math.floor(cz - rz); z <= Math.ceil(cz + rz); z++)
+    if (((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 + ((z - cz) / rz) ** 2 <= 1 && x >= 0 && x < 64 && y >= 0 && y < 64) m.put(x, y, z, paint(x, y, z));
+};
+/** Solid tube between two points. */
+const tube = (m: M, a: [number, number, number], b: [number, number, number], r0: number, r1: number, paint: (x: number, y: number, z: number) => BlockId) => {
+  const n = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]) * 2);
+  for (let i = 0; i <= n; i++) { const t = i / n, r = r0 + (r1 - r0) * t; ellip(m, a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t, r, r, r, paint); }
+};
+const giraffeLegs: [number, number][] = [[20, 26.5], [20, 36.5], [40, 26.5], [40, 36.5]];
+const giraffe: Kit = {
+  id: "kit-giraffe", name: "The Savanna Giraffe", sphere: "wild", kit: true, difficulty: "MASTER",
+  story: "A towering reticulated giraffe on golden savanna, its patterned neck reaching for the crown of an acacia tree.",
+  steps: [
+    step("Savanna base", "Lay the golden grass plain with a dusty path and a watering hole.", (m) => {
+      for (let x = 1; x <= 62; x++) for (let z = 1; z <= 62; z++) {
+        const w = Math.hypot(x - 12, z - 50) < 6;
+        m.put(x, 0, z, w ? "glass" : gh(x, 0, z) < 0.55 ? "sand" : gh(z, 1, x) < 0.5 ? "grass" : "dirt");
+      }
+    }),
+    step("Long legs", "Raise four tall legs with dark hooves and knobbly knees.", (m) => {
+      for (const [lx, lz] of giraffeLegs) {
+        tube(m, [lx, 1, lz], [lx, 23, lz], 1.7, 2.3, (x, y, z) => y <= 2 ? "log" : y === 12 || y === 13 ? "sand" : coat(x, y, z));
+        ellip(m, lx, 12.5, lz, 2.6, 1.6, 2.6, () => "sand");
+      }
+    }),
+    step("Body", "Build the deep, sloping torso — higher at the shoulders.", (m) => {
+      ellip(m, 30, 29, GZ, 14, 8, 7, coat);
+      ellip(m, 39, 32, GZ, 7, 7, 6.5, coat); // shoulder hump
+      ellip(m, 30, 23, GZ, 9, 2, 4, () => "sand"); // pale belly
+    }),
+    step("Neck", "Angle the long patterned neck up toward the treetop.", (m) => {
+      tube(m, [40, 33, GZ], [51, 54, GZ], 5, 3, coat);
+    }),
+    step("Mane & tail", "Run the dark mane down the neck and hang the tufted tail.", (m) => {
+      for (let i = 0; i <= 26; i++) { const t = i / 26; const x = Math.round(38 + 12 * t - 3), y = Math.round(36 + 21 * t + 1); m.put(x, y, 31, "log"); m.put(x, y, 32, "log"); m.put(x, y + 1, 31, "log"); }
+      tube(m, [16, 30, GZ], [13, 16, GZ], 0.8, 0.8, () => "sand"); ellip(m, 13, 14, GZ, 1.2, 2, 1.2, () => "log");
+    }),
+    step("Head & ossicones", "Fit the head and muzzle, then the two horn-like ossicones and ears.", (m) => {
+      ellip(m, 53, 57, GZ, 4, 3.2, 3, (x, y, z) => coat(x, y, z) === "brick" && x < 55 ? "brick" : "sand");
+      ellip(m, 57.5, 55.5, GZ, 3, 2.2, 2.4, () => "sand"); // muzzle
+      m.put(60, 56, 30, "log"); m.put(60, 56, 33, "log"); // nostrils
+      for (const z of [29, 34]) { m.put(55, 58, z, "log"); m.put(55, 58, z === 29 ? 28 : 35, "glow"); } // eyes
+      for (const z of [30, 33]) { for (let y = 60; y <= 62; y++) m.put(52, y, z, "brick"); m.put(52, 63, z, "log"); }
+      for (const z of [27, 36]) { m.put(51, 59, z, "sand"); m.put(50, 59, z, "sand"); }
+    }),
+    step("Acacia tree", "Grow the flat-topped acacia the giraffe is browsing.", (m) => {
+      tube(m, [58, 1, 14], [56, 30, 12], 1.6, 1.1, () => "log");
+      tube(m, [56, 28, 12], [48, 40, 8], 0.9, 0.7, () => "log");
+      tube(m, [56, 28, 12], [61, 38, 18], 0.9, 0.7, () => "log");
+      ellip(m, 54, 42, 12, 10, 2.2, 8, () => "grass");
+      ellip(m, 58, 44, 16, 5, 1.6, 4, () => "grass");
+    }),
+  ],
+  behaviors: [{ card: "sentry_turret", steps: [5], pivot: [52, 55, GZ] }, { card: "beacon_pulse", steps: [0], pivot: [12, 0, 50] }],
+  bags: [1, 2, 3, 4, 5, 6, 7],
+  tagline: "A towering reticulated giraffe browsing a flat-topped acacia on golden savanna.",
+  ages: "12+",
+};
+
+export const KITS: Kit[] = [citadel, express, array, vault, dragon, mega, colossus, ark, bismarck, tiger, spitfire, hospital, police, fire, school, pyramid, colosseum, eiffel, taj, greatWall, petra, machu, terracotta, angkor, genesisCoin, pearl, giraffe];
 export const isKit = (b: Blueprint): b is Kit => (b as Kit).kit === true;
 
 /** Deterministic pose for a behavior at time t (seconds). `near` = visitor in range. */
