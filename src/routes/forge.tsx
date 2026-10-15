@@ -684,6 +684,7 @@ function ForgePage() {
               </div>
             </>
           )}
+          <PackageKit blocks={[...world.values()]} wallet={wallet} onPublished={(id) => { setBpId(id); setBpStep(0); }} />
           <div className="rounded border border-accent/40 bg-card/40 p-2 text-[11px]">
             <div className="flex items-center justify-between"><span className="text-accent">KITS · STEP-BY-STEP + PROGRAMMABLE</span><span className="text-[10px] text-muted-foreground">NEXT DROP {dropIn}</span></div>
             <div className="mt-1 grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
