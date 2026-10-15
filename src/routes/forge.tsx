@@ -663,6 +663,15 @@ function ForgePage() {
               <p className="mt-1 text-muted-foreground">{xl ? "XL: 8× the space at half block size, same land footprint. Inscribes as a recursive build only." : "Original size. Works with every inscribe option."}</p>
             </div>
           )}
+          <div className="rounded border border-border bg-card/40 p-2 text-[11px]">
+            <p className="text-accent">LAND MASS</p>
+            <div className="mt-1 flex gap-1">
+              {LAND_MASSES.map((m) => (
+                <button key={m.id} type="button" title={m.blurb} data-testid={`forge-mass-${m.id}`} onClick={() => setMass(m.id)} className={`rounded border px-2 py-0.5 text-[10px] ${mass === m.id ? "border-accent text-foreground" : "border-border text-muted-foreground"}`}>{m.name}</button>
+              ))}
+            </div>
+            <p className="mt-1 text-muted-foreground">{LAND_MASSES.find((m) => m.id === mass)?.blurb} Decorative only — costs no blocks and isn't inscribed.</p>
+          </div>
           {rects.length > 0 && (
             <div className="rounded border border-primary/40 bg-card/40 p-2 text-[11px]">
               <p className="text-primary">BUILD TARGET</p>
