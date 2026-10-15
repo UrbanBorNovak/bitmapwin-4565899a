@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { OrbitControls } from "@react-three/drei";
 import { guardianDnaQuery } from "@/lib/bitmon-queries";
 import { forgeBuildQuery } from "@/lib/forge";
-import { decodeBuild, FORGE_SPAN } from "@/lib/voxel-populate";
+import { asSpan, decodeBuild, FORGE_SPAN } from "@/lib/voxel-populate";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { parcelRects } from "@/lib/forge-parcels";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
@@ -19,13 +19,13 @@ export default function ComicGuardian3D({ height, guardian }: { height: number; 
   const build = useQuery(forgeBuildQuery(height));
   const top = useMemo(() => {
     if (!build.data?.data) return 0;
-    const c = FORGE_SPAN / 2;
+    const span = asSpan(build.data.span), c = span / 2, f = span / FORGE_SPAN;
     let max = -1, any = -1;
-    for (const b of decodeBuild(build.data.data)) {
+    for (const b of decodeBuild(build.data.data, span)) {
       any = Math.max(any, b.dy);
-      if (Math.abs(b.dx - c) <= 6 && Math.abs(b.dz - c) <= 6) max = Math.max(max, b.dy);
+      if (Math.abs(b.dx - c) <= 6 * f && Math.abs(b.dz - c) <= 6 * f) max = Math.max(max, b.dy);
     }
-    return (max >= 0 ? max : any) + 1;
+    return ((max >= 0 ? max : any) + 1) / f;
   }, [build.data]);
   const sizes = useQuery({ ...blockSizeMapQuery(height), staleTime: Infinity });
   // Big parcels only in 3D (each is its own mesh); tiny ones read as the dark ground.
