@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { OtherthingsBadge } from "@/components/OtherthingsBadge";
 import {
   BedrockStackInfographic,
   DeployFlowInfographic,
@@ -77,6 +78,7 @@ const REFERENCES = [
 function DocsPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 md:px-8 md:py-14">
+      <div className="mb-3"><OtherthingsBadge child="Protocol" /></div>
       <div className="label text-bitcoin">DEVELOP · DOCS</div>
       <h1 className="display mt-3 text-3xl md:text-5xl">DOCS</h1>
       <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">

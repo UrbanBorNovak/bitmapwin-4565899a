@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { OtherthingsBadge } from "@/components/OtherthingsBadge";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { myGuardiansQuery } from "@/lib/bitmon-queries";
@@ -129,6 +130,7 @@ function BreedLab() {
   return (
     <main className="mx-auto max-w-6xl space-y-6 px-4 py-8">
       <header className="space-y-2">
+        <OtherthingsBadge child="Guardians + Pets" />
         <p className="label text-signal">GUARDIAN PEDIGREE · OPEN SIRE ROSTER</p>
         <h1 className="font-display text-3xl">Breeding Lab</h1>
         <p className="max-w-2xl text-sm text-muted-foreground">
