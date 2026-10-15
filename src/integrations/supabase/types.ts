@@ -1427,6 +1427,48 @@ export type Database = {
         }
         Relationships: []
       }
+      community_kits: {
+        Row: {
+          bags: Json
+          block_count: number
+          created_at: string
+          difficulty: string
+          id: string
+          maker_address: string
+          maker_user: string
+          name: string
+          pay_txid: string
+          steps: Json
+          tagline: string
+        }
+        Insert: {
+          bags: Json
+          block_count: number
+          created_at?: string
+          difficulty?: string
+          id?: string
+          maker_address: string
+          maker_user: string
+          name: string
+          pay_txid: string
+          steps: Json
+          tagline?: string
+        }
+        Update: {
+          bags?: Json
+          block_count?: number
+          created_at?: string
+          difficulty?: string
+          id?: string
+          maker_address?: string
+          maker_user?: string
+          name?: string
+          pay_txid?: string
+          steps?: Json
+          tagline?: string
+        }
+        Relationships: []
+      }
       crew_stash: {
         Row: {
           count: number
