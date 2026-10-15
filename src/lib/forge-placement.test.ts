@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
+import type { TplBlock } from "./voxel-templates";
 import { isLive, type AsmPlacement } from "./forge-assembly";
 import { stampInto, cellKey } from "./forge-prefabs";
 
-const piece = [{ dx: 0, dy: 0, dz: 0, k: "gold" }, { dx: 1, dy: 0, dz: 0, k: "gold" }];
+const piece: TplBlock[] = [{ dx: 0, dy: 0, dz: 0, k: "gold" }, { dx: 1, dy: 0, dz: 0, k: "gold" }] as TplBlock[];
 function stamp(world: Map<string, any>) {
   const next = stampInto(world, piece, 5, 0, 5);
   const keys = [...next.keys()].filter((k) => !world.has(k));
@@ -26,7 +27,7 @@ describe("recursive piece placement", () => {
     const { p } = stamp(new Map());
     const cleared = new Map();
     expect(isLive(p, cleared)).toBe(false);
-    const w = new Map([[cellKey(5, 0, 5), { dx: 5, dy: 0, dz: 5, k: "stone" }], [cellKey(6, 0, 5), { dx: 6, dy: 0, dz: 5, k: "stone" }]]);
+    const w = new Map<string, TplBlock>([[cellKey(5, 0, 5), { dx: 5, dy: 0, dz: 5, k: "stone" } as TplBlock], [cellKey(6, 0, 5), { dx: 6, dy: 0, dz: 5, k: "stone" } as TplBlock]]);
     expect(isLive(p, w)).toBe(false);
   });
 });
