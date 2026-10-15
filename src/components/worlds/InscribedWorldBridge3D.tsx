@@ -78,10 +78,22 @@ function Bridge({ height }: { height: number }) {
       if (cy + hy * s <= by + 0.001) continue; // underground
       boxes.push({ x0: cx - hx * s, x1: cx + hx * s, y0: cy - hy * s, y1: cy + hy * s, z0: cz - hz * s, z1: cz + hz * s });
     }
+    // Placed block models (stairs, steps, slabs) are unit cubes scaled by the creator:
+    // register them too so stairways and platforms built from models are walkable.
+    for (const m of models) {
+      if (Math.abs(m.rot[0]) > 5 || Math.abs(m.rot[2]) > 5) continue;
+      const sx = Math.abs(m.scale[0]), sy = Math.abs(m.scale[1]), sz = Math.abs(m.scale[2]);
+      if (Math.max(sx, sy, sz) > 60 || sy > 12) continue; // skip big decorative meshes
+      const turned = Math.abs(Math.round(m.rot[1] / 90)) % 2 === 1;
+      const hx = (turned ? sz : sx) / 2, hz = (turned ? sx : sz) / 2, hy = sy / 2;
+      const cx = x + (m.pos[0] + o[0]) * s, cy = by + (m.pos[1] + o[1]) * s, cz = z + (m.pos[2] + o[2]) * s;
+      if (cy + hy * s <= by + 0.001) continue;
+      boxes.push({ x0: cx - hx * s, x1: cx + hx * s, y0: cy - hy * s, y1: cy + hy * s, z0: cz - hz * s, z1: cz + hz * s });
+    }
     const key = `iw:${height}`;
     setBoxes(key, boxes);
     return () => setBoxes(key, null);
-  }, [fit, prims, height, x, z]);
+  }, [fit, prims, models, height, x, z]);
   if (!data || !fit) return null;
   const s = fit.scale;
   const portalX = WORLD_CELL * 0.42;
