@@ -579,14 +579,14 @@ function ForgePage() {
     if (!html && !asmHtml) return;
     const t = setTimeout(() => void sha(`forge:${encodeBuild(allBlocks)}:${lineage}:${asmHtml.length}:${perch?.join(",") ?? ""}`).then(setDigest), 400);
     return () => clearTimeout(t);
-  }, [html, asmHtml, blocks, lineage, perch]);
+  }, [html, asmHtml, allBlocks, lineage, perch]);
 
   const publish = async (): Promise<void> => {
     if (!wallet) { toast.error("CONNECT A WALLET TO PUBLISH"); return; }
-    if (blocks.length < 4) { toast.error("BUILD SOMETHING FIRST"); return; }
-    if (blocks.length > 2400) { toast.error("MODULES ARE CAPPED AT 2,400 BLOCKS — ERASE SOME FIRST"); return; }
+    if (allBlocks.length < 4) { toast.error("BUILD SOMETHING FIRST"); return; }
+    if (allBlocks.length > 2400) { toast.error("MODULES ARE CAPPED AT 2,400 BLOCKS — ERASE SOME FIRST"); return; }
     const r = await publishFn({ data: {
-      name: pub.name.trim() || "Untitled module", address: wallet.ordinalsAddress, blocks: normaliseModule(blocks),
+      name: pub.name.trim() || "Untitled module", address: wallet.ordinalsAddress, blocks: normaliseModule(allBlocks),
       bitCost: pub.bit, tributeSats: pub.sats > 0 ? Math.max(546, pub.sats) : 0, parents: used.map((u) => u.id),
       ...(wallet.paymentAddress ? { payoutAddress: wallet.paymentAddress } : {}),
     } }).catch(() => ({ ok: false as const, error: "SIGN IN TO PUBLISH" }));
