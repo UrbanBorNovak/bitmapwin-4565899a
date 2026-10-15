@@ -34,6 +34,7 @@ import { forgePieceFn } from "@/lib/forge-parts.functions";
 import { collectionPiecesQuery } from "@/lib/forge-collection.functions";
 import { DONATION_ADDRESS } from "@/lib/donations";
 import { forgeAssemblyHtml, isInscriptionId, MAX_ASM_PARTS, normPart, type AsmPart } from "@/lib/forge-assembly";
+import { forgeBuildViews } from "@/lib/forge-testrun";
 import { bakeGuardian } from "@/lib/forge-guardian-bake";
 import { guardianDnaQuery } from "@/lib/bitmon-queries";
 import { OnchainGuardianBody } from "@/components/bitmon/OnchainGuardianBody";
@@ -324,11 +325,6 @@ function ForgePage() {
       blocks: blueprintBlocks({ ...kit, steps: b.steps.map((i) => kit.steps[i]!) }).filter((x) => world.has(cellKey(x.dx, x.dy, x.dz))),
     })).filter((x) => x.blocks.length > 0);
   }, [kit, off, bpStep, world]);
-  const hiddenKeys = useMemo(() => {
-    const s = new Set<string>();
-    if (testing) for (const lb of liveBehaviors) for (const b of lb.blocks) s.add(cellKey(b.dx, b.dy, b.dz));
-    return s;
-  }, [testing, liveBehaviors]);
   const [dropIn, setDropIn] = useState("");
   useEffect(() => {
     const tick = () => { const ms = nextDropAt() - Date.now(); const d = Math.floor(ms / 864e5), h = Math.floor((ms % 864e5) / 36e5); setDropIn(`${d}D ${h}H`); };
@@ -364,12 +360,10 @@ function ForgePage() {
     toast.success(`LOADED ${r.blocks.length} VOXELS FROM BITCOIN — CLICK TO SNAP IT IN`);
   };
 
-  const blocks = useMemo(() => {
-    const all = [...world.values()];
-    return hiddenKeys.size ? all.filter((b) => !hiddenKeys.has(cellKey(b.dx, b.dy, b.dz))) : all;
-  }, [world, hiddenKeys]);
   // Test Run hides moving parts on screen only — inscriptions and publishing always use the full build.
-  const allBlocks = useMemo(() => [...world.values()], [world]);
+  const views = useMemo(() => forgeBuildViews(world, liveBehaviors.map((lb) => lb.blocks), testing), [world, liveBehaviors, testing]);
+  const blocks = views.shown;
+  const allBlocks = views.payload;
   const ghost = useMemo(() => {
     if (tool === "erase" || tool === "parcel" || tool === "perch" || tool === "move") return [];
     if (tool === "block" || tool === "box") return [{ dx: 0, dy: 0, dz: 0, k: paint }];
