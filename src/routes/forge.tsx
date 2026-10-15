@@ -258,6 +258,7 @@ function ForgePage() {
   const { data: sizes } = useQuery({ ...blockSizeMapQuery(height ?? 0), enabled: height !== null });
   const txCount = sizes?.classes?.length ?? null;
   const [xl, setXl] = useState(false);
+  const [mass, setMass] = useState<LandMass>("flat");
   SPAN = xl ? FORGE_SPAN_XL : FORGE_SPAN;
   const rects = useMemo(() => parcelRects(sizes?.classes, xl ? FORGE_SPAN_XL : FORGE_SPAN), [sizes, xl]);
   const [focus, setFocus] = useState<number | null>(null);
