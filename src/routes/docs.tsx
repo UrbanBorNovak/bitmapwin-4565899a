@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { OtherthingsHierarchy } from "@/components/OtherthingsHierarchy";
 import { OtherthingsBadge } from "@/components/OtherthingsBadge";
 import {
   BedrockStackInfographic,
@@ -81,6 +82,7 @@ function DocsPage() {
       <div className="mb-3"><OtherthingsBadge child="Protocol" /></div>
       <div className="label text-bitcoin">DEVELOP · DOCS</div>
       <h1 className="display mt-3 text-3xl md:text-5xl">DOCS</h1>
+      <div className="mt-6"><OtherthingsHierarchy /></div>
       <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
         BitmapWin gives you land, persistence, ownership, a runtime, extensibility, discovery and a market.
         You bring the world. Start with the loop.

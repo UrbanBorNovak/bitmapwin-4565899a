@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { OtherthingsHierarchy } from "@/components/OtherthingsHierarchy";
 import { DataBadge } from "@/components/extenders/DataBadge";
 import { LAND_PERMISSIONS, SDK_VERSION } from "@/lib/extenders";
 import { RUNTIME_LIMITS, SDK_MODULES, SDK_TYPES, STARTER_TEMPLATES } from "@/lib/extender-sdk";
@@ -84,6 +85,7 @@ function SdkPage() {
         <DataBadge kind="live" note="PRIMITIVES BACKED BY REAL SYSTEMS" />
       </div>
 
+      <div className="mt-8"><OtherthingsHierarchy compact /></div>
       <div className="mt-10 space-y-4">
         {PRIMITIVES.map((p) => (
           <section key={p.id} className="border border-border bg-surface p-5">

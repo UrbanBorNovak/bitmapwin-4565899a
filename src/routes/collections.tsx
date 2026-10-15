@@ -1,4 +1,5 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+import { OtherthingsBadge } from "@/components/OtherthingsBadge";
 
 export const Route = createFileRoute("/collections")({
   component: CollectionsLayout,
@@ -12,6 +13,7 @@ function CollectionsLayout() {
           <Link to="/collections" className="label hover:text-foreground">
             COLLECTIONS /
           </Link>
+          <OtherthingsBadge child="Collections" />
           <span className="label">CLUBS ARE DEFINED BY BLOCK HEIGHT RANGE</span>
         </div>
       </div>

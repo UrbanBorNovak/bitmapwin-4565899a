@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { OtherthingsHierarchy } from "@/components/OtherthingsHierarchy";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BlockMosaic } from "@/components/BlockMosaic";
@@ -43,6 +44,7 @@ function CollectionsIndex() {
         EVERY BITMAP BELONGS TO EXACTLY ONE CLUB, DECIDED BY ITS BLOCK HEIGHT
       </p>
 
+      <div className="mt-8"><OtherthingsHierarchy /></div>
       <Link
         to="/collections/jigglypuff"
         className="mt-8 flex items-baseline justify-between border border-border bg-card/60 p-4 backdrop-blur hover:border-primary"

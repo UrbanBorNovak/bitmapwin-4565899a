@@ -31,7 +31,11 @@ export const AGENT_TOOLS: AgentTool[] = [
   { name: "forge.tributes", description: "List the reveal outputs owed to verified piece makers (≥546 sats each, max 8).", input: { pieceIds: "inscription ids" }, output: "Array<{ address, sats }>" },
 ];
 
-export const BWVX_SPEC = `CBOR metadata (RFC 8949)
+export const BWVX_SPEC = `Collection: THE OTHERTHINGS (umbrella brand)
+  children: Guardians, Land (BITMAPs), Forge builds, Pets
+  note: brand grouping only. Verified Ordinals parentage = Tag 3 parent spent in reveal.
+
+CBOR metadata (RFC 8949)
   f  "BWVX1" | "BWVX2" | "BWVX_ASM"
   h  block height (integer)
   d  base64 payload  (legacy readers: meta.d ?? meta.b)
