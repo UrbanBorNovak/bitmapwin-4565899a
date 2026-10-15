@@ -872,6 +872,7 @@ function ForgePage() {
                 <OnchainGuardianBody dna={dnaQ.data} />
               </group>
             )}
+            <TerrainMass mass={mass} height={height ?? 0} />
             <ParcelFloor rects={rects} focus={focus} hoverIdx={hoverParcel?.index ?? null} />
             {showBp && sketch.length > 0 && <Ghost blocks={sketch} at={[0, 0, 0]} bad={false} />}
             {testing && liveBehaviors.map((lb) => <KitBehaviorPreview key={lb.b.card} behavior={lb.b} blocks={lb.blocks} />)}
