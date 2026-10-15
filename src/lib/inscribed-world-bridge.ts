@@ -132,7 +132,17 @@ export function isFloorPlane(p: WorldPrim): boolean {
 
 /** The building only: drops editor floor planes so they never slice through the Oasis view. */
 export function structurePrims(prims: WorldPrim[]): WorldPrim[] {
-  const kept = prims.filter((p) => !isFloorPlane(p));
+  const floors = prims.filter(isFloorPlane);
+  // Creator's ground level: the editor floor planes. Wide slabs sitting at/below it are
+  // terrain foundations in their engine and would show as a huge grey block in the Oasis.
+  const floorY = floors.length ? Math.min(...floors.map((p) => p.pos[1])) : null;
+  const kept = prims.filter((p) => {
+    if (isFloorPlane(p)) return false;
+    if (floorY === null) return true;
+    if (p.pos[1] + p.size[1] / 2 < floorY - 0.5) return false; // fully underground
+    const wide = Math.max(p.size[0], p.size[2]) >= 40;
+    return !(wide && p.pos[1] <= floorY + 5);
+  });
   const base = kept.length ? kept : prims;
   // Drop stray editor markers far from the building cluster so they can't shrink the fit.
   const med = (k: 0 | 2) => {
