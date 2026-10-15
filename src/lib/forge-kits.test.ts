@@ -3,8 +3,8 @@ import { KITS, behaviorPose } from "@/lib/forge-kits";
 import { blueprintBlocks } from "@/lib/forge-blueprints";
 
 describe("forge kits", () => {
-  it("ships twenty-two boxed sets", () => {
-    expect(KITS.map((k) => k.id)).toEqual(["kit-citadel", "kit-express", "kit-array", "kit-vault", "kit-dragon", "kit-mega", "kit-colossus", "kit-ark", "kit-bismarck", "kit-tiger", "kit-spitfire", "kit-hospital", "kit-police", "kit-fire", "kit-school", "kit-pyramid", "kit-colosseum", "kit-eiffel", "kit-taj", "kit-greatwall", "kit-petra", "kit-machu"]);
+  it("ships twenty-four boxed sets", () => {
+    expect(KITS.map((k) => k.id)).toEqual(["kit-citadel", "kit-express", "kit-array", "kit-vault", "kit-dragon", "kit-mega", "kit-colossus", "kit-ark", "kit-bismarck", "kit-tiger", "kit-spitfire", "kit-hospital", "kit-police", "kit-fire", "kit-school", "kit-pyramid", "kit-colosseum", "kit-eiffel", "kit-taj", "kit-greatwall", "kit-petra", "kit-machu", "kit-terracotta", "kit-angkor"]);
   });
   it("every step comes in a numbered bag, in order", () => {
     for (const k of KITS) {
