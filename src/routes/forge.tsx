@@ -560,7 +560,7 @@ function ForgePage() {
   }, [used, placements, world, makers, siteTribute]);
   const payoutSats = payouts.reduce((n, p) => n + p.sats, 0);
   const lineage = used.map((u) => u.id.slice(0, 8)).join(",");
-  const parcelBlocks = useMemo(() => (focusRect ? clipToParcel(blocks, focusRect) : blocks), [blocks, focusRect]);
+  const parcelBlocks = useMemo(() => (focusRect ? clipToParcel(allBlocks, focusRect) : allBlocks), [allBlocks, focusRect]);
   const html = useMemo(() => (height === null || !parcelBlocks.length ? "" : forgeInscriptionHtml(height, "studio", parcelBlocks, lineage, focusRect ?? undefined)), [height, parcelBlocks, lineage, focusRect]);
   // Recursive assembly: inscribed pieces by reference + own blocks + the block's baked Guardian.
   const livePlacements = useMemo(() => placements.filter((p) => isLive(p, world)), [placements, world]);
@@ -577,7 +577,7 @@ function ForgePage() {
   useEffect(() => {
     setDigest(null);
     if (!html && !asmHtml) return;
-    const t = setTimeout(() => void sha(`forge:${encodeBuild(blocks)}:${lineage}:${asmHtml.length}:${perch?.join(",") ?? ""}`).then(setDigest), 400);
+    const t = setTimeout(() => void sha(`forge:${encodeBuild(allBlocks)}:${lineage}:${asmHtml.length}:${perch?.join(",") ?? ""}`).then(setDigest), 400);
     return () => clearTimeout(t);
   }, [html, asmHtml, blocks, lineage, perch]);
 
