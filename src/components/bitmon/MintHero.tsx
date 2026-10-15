@@ -1,4 +1,5 @@
 import { Suspense, lazy } from "react";
+import { OtherthingsBadge } from "@/components/OtherthingsBadge";
 import { ClientOnly } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 
@@ -42,6 +43,7 @@ export function MintHero() {
       </div>
       <div className="absolute right-3 top-3"><MintLangToggle lang={lang} setLang={setLang} /></div>
       <div data-no-translate={lang === "zh" ? "" : undefined} className="relative -mt-6 p-4 md:p-6">
+        <div className="mb-2"><OtherthingsBadge child="Guardians" /></div>
         <p className="label text-signal">{t.heroTag}</p>
         <p className="display mt-1 text-2xl md:text-4xl">{t.heroA} <span className="text-bitcoin">{t.heroB}</span></p>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
