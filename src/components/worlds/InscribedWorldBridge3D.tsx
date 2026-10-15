@@ -1,15 +1,37 @@
 /** Draws an Inscribed.space world's primitives on its BITMAP in the Oasis, with a portal into the full engine. */
-import { useMemo, useRef, useState } from "react";
+import { Component, Suspense, useMemo, useRef, useState, type ReactNode } from "react";
+import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useQuery } from "@tanstack/react-query";
 import * as THREE from "three";
 import { getWorldGeometryFn } from "@/lib/inscribed-world.functions";
-import { fitPrims, structurePrims } from "@/lib/inscribed-world-bridge";
+import { fitPrims, modelsInside, structurePrims, type WorldAsset } from "@/lib/inscribed-world-bridge";
 import { worldContentUrl } from "@/lib/inscribed-world";
 import { WORLD_CELL, WORLD_GRID, cellX, cellZ, type PlayerState } from "@/lib/player-state";
 import { groundY } from "@/lib/world-terrain";
 
 const D = Math.PI / 180;
+
+/** A model that fails to fetch or decode just stays hidden; the rest of the world keeps drawing. */
+class Quiet extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() { return this.state.failed ? null : this.props.children; }
+}
+
+/** One on-chain Draco glTF, placed with the creator's own transform. */
+function PlacedModel({ m }: { m: WorldAsset }) {
+  const gltf = useGLTF(m.url, true);
+  const obj = useMemo(() => {
+    const c = gltf.scene.clone(true);
+    c.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (mesh.isMesh) { mesh.castShadow = false; mesh.receiveShadow = true; }
+    });
+    return c;
+  }, [gltf.scene]);
+  return <primitive object={obj} position={m.pos} rotation={[m.rot[0] * D, m.rot[1] * D, m.rot[2] * D]} scale={m.scale} />;
+}
 
 function Bridge({ height }: { height: number }) {
   const { data } = useQuery({
@@ -22,10 +44,14 @@ function Bridge({ height }: { height: number }) {
   useFrame((_, dt) => { if (ring.current) ring.current.rotation.y += Math.min(dt, 0.05) * 0.8; });
   const prims = useMemo(() => (data ? structurePrims(data.prims) : []), [data]);
   const fit = useMemo(() => (data ? fitPrims(prims, WORLD_CELL * 0.8) : null), [data, prims]);
+  const models = useMemo(
+    () => (data?.models && fit ? modelsInside(data.models, fit, WORLD_CELL * 0.5) : []),
+    [data, fit],
+  );
   if (!data || !fit) return null;
   const x = cellX(height % WORLD_GRID), z = cellZ(Math.floor(height / WORLD_GRID));
   const s = fit.scale;
-  const portalX = WORLD_CELL * 0.45;
+  const portalX = WORLD_CELL * 0.42;
   return (
     <group position={[x, groundY(x, z), z]}>
       <group scale={s}>
@@ -36,6 +62,11 @@ function Bridge({ height }: { height: number }) {
               <meshStandardMaterial color={p.color} roughness={0.6} side={p.shape === "plane" ? THREE.DoubleSide : THREE.FrontSide} />
             </mesh>
           ))}
+          {models.map((m, i) => (
+            <Quiet key={`m${i}`}>
+              <Suspense fallback={null}><PlacedModel m={m} /></Suspense>
+            </Quiet>
+          ))}
         </group>
       </group>
       {/* Portal: click or tap to run the creator's own engine, untouched, from ordinals.com. */}
@@ -45,12 +76,12 @@ function Bridge({ height }: { height: number }) {
         onPointerOver={() => setHover(true)}
         onPointerOut={() => setHover(false)}
       >
-        <mesh ref={ring} position={[0, WORLD_CELL * 0.12, 0]}>
-          <torusGeometry args={[WORLD_CELL * 0.08, WORLD_CELL * 0.012, 12, 48]} />
+        <mesh ref={ring} position={[0, WORLD_CELL * 0.06, 0]}>
+          <torusGeometry args={[WORLD_CELL * 0.04, WORLD_CELL * 0.006, 12, 48]} />
           <meshStandardMaterial color="#5ee6ff" emissive="#5ee6ff" emissiveIntensity={hover ? 3 : 1.6} toneMapped={false} />
         </mesh>
-        <mesh position={[0, WORLD_CELL * 0.12, 0]}>
-          <circleGeometry args={[WORLD_CELL * 0.075, 32]} />
+        <mesh position={[0, WORLD_CELL * 0.06, 0]}>
+          <circleGeometry args={[WORLD_CELL * 0.037, 32]} />
           <meshBasicMaterial color="#5ee6ff" transparent opacity={hover ? 0.45 : 0.22} side={THREE.DoubleSide} />
         </mesh>
       </group>
