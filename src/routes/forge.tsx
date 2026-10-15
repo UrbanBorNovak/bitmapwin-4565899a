@@ -368,6 +368,8 @@ function ForgePage() {
     const all = [...world.values()];
     return hiddenKeys.size ? all.filter((b) => !hiddenKeys.has(cellKey(b.dx, b.dy, b.dz))) : all;
   }, [world, hiddenKeys]);
+  // Test Run hides moving parts on screen only — inscriptions and publishing always use the full build.
+  const allBlocks = useMemo(() => [...world.values()], [world]);
   const ghost = useMemo(() => {
     if (tool === "erase" || tool === "parcel" || tool === "perch" || tool === "move") return [];
     if (tool === "block" || tool === "box") return [{ dx: 0, dy: 0, dz: 0, k: paint }];
@@ -558,7 +560,7 @@ function ForgePage() {
   }, [used, placements, world, makers, siteTribute]);
   const payoutSats = payouts.reduce((n, p) => n + p.sats, 0);
   const lineage = used.map((u) => u.id.slice(0, 8)).join(",");
-  const parcelBlocks = useMemo(() => (focusRect ? clipToParcel(blocks, focusRect) : blocks), [blocks, focusRect]);
+  const parcelBlocks = useMemo(() => (focusRect ? clipToParcel(allBlocks, focusRect) : allBlocks), [allBlocks, focusRect]);
   const html = useMemo(() => (height === null || !parcelBlocks.length ? "" : forgeInscriptionHtml(height, "studio", parcelBlocks, lineage, focusRect ?? undefined)), [height, parcelBlocks, lineage, focusRect]);
   // Recursive assembly: inscribed pieces by reference + own blocks + the block's baked Guardian.
   const livePlacements = useMemo(() => placements.filter((p) => isLive(p, world)), [placements, world]);
@@ -575,16 +577,16 @@ function ForgePage() {
   useEffect(() => {
     setDigest(null);
     if (!html && !asmHtml) return;
-    const t = setTimeout(() => void sha(`forge:${encodeBuild(blocks)}:${lineage}:${asmHtml.length}:${perch?.join(",") ?? ""}`).then(setDigest), 400);
+    const t = setTimeout(() => void sha(`forge:${encodeBuild(allBlocks)}:${lineage}:${asmHtml.length}:${perch?.join(",") ?? ""}`).then(setDigest), 400);
     return () => clearTimeout(t);
-  }, [html, asmHtml, blocks, lineage, perch]);
+  }, [html, asmHtml, allBlocks, lineage, perch]);
 
   const publish = async (): Promise<void> => {
     if (!wallet) { toast.error("CONNECT A WALLET TO PUBLISH"); return; }
-    if (blocks.length < 4) { toast.error("BUILD SOMETHING FIRST"); return; }
-    if (blocks.length > 2400) { toast.error("MODULES ARE CAPPED AT 2,400 BLOCKS — ERASE SOME FIRST"); return; }
+    if (allBlocks.length < 4) { toast.error("BUILD SOMETHING FIRST"); return; }
+    if (allBlocks.length > 2400) { toast.error("MODULES ARE CAPPED AT 2,400 BLOCKS — ERASE SOME FIRST"); return; }
     const r = await publishFn({ data: {
-      name: pub.name.trim() || "Untitled module", address: wallet.ordinalsAddress, blocks: normaliseModule(blocks),
+      name: pub.name.trim() || "Untitled module", address: wallet.ordinalsAddress, blocks: normaliseModule(allBlocks),
       bitCost: pub.bit, tributeSats: pub.sats > 0 ? Math.max(546, pub.sats) : 0, parents: used.map((u) => u.id),
       ...(wallet.paymentAddress ? { payoutAddress: wallet.paymentAddress } : {}),
     } }).catch(() => ({ ok: false as const, error: "SIGN IN TO PUBLISH" }));
