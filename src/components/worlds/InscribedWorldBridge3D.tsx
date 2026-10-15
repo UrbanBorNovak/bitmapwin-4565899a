@@ -5,12 +5,22 @@ import { useFrame } from "@react-three/fiber";
 import { useQuery } from "@tanstack/react-query";
 import * as THREE from "three";
 import { getWorldGeometryFn } from "@/lib/inscribed-world.functions";
-import { fitPrims, modelsInside, structurePrims, type WorldAsset } from "@/lib/inscribed-world-bridge";
+import { creatorFloorY, fitPrims, modelsInside, structurePrims, type WorldAsset } from "@/lib/inscribed-world-bridge";
 import { worldContentUrl } from "@/lib/inscribed-world";
 import { WORLD_CELL, WORLD_GRID, cellX, cellZ, type PlayerState } from "@/lib/player-state";
 import { groundY } from "@/lib/world-terrain";
 
 const D = Math.PI / 180;
+
+/** Lowest terrain point under the building footprint, so no edge of the base hovers on a slope. */
+function baseY(x: number, z: number) {
+  const r = WORLD_CELL * 0.35;
+  let y = groundY(x, z);
+  for (const [dx, dz] of [[r, r], [r, -r], [-r, r], [-r, -r], [r, 0], [-r, 0], [0, r], [0, -r]] as const) {
+    y = Math.min(y, groundY(x + dx, z + dz));
+  }
+  return y;
+}
 
 /** A model that fails to fetch or decode just stays hidden; the rest of the world keeps drawing. */
 class Quiet extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -43,7 +53,10 @@ function Bridge({ height }: { height: number }) {
   const ring = useRef<THREE.Mesh>(null);
   useFrame((_, dt) => { if (ring.current) ring.current.rotation.y += Math.min(dt, 0.05) * 0.8; });
   const prims = useMemo(() => (data ? structurePrims(data.prims) : []), [data]);
-  const fit = useMemo(() => (data ? fitPrims(prims, WORLD_CELL * 0.8) : null), [data, prims]);
+  const fit = useMemo(
+    () => (data ? fitPrims(prims, WORLD_CELL * 0.8, creatorFloorY(data.prims)) : null),
+    [data, prims],
+  );
   const models = useMemo(
     () => (data?.models && fit ? modelsInside(data.models, fit, WORLD_CELL * 0.5) : []),
     [data, fit],
@@ -53,7 +66,7 @@ function Bridge({ height }: { height: number }) {
   const s = fit.scale;
   const portalX = WORLD_CELL * 0.42;
   return (
-    <group position={[x, groundY(x, z), z]}>
+    <group position={[x, baseY(x, z), z]}>
       <group scale={s}>
         <group position={fit.offset}>
           {prims.map((p, i) => (

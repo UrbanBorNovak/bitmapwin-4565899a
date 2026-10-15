@@ -162,8 +162,18 @@ export function modelsInside(models: WorldAsset[], fit: { scale: number; offset:
   );
 }
 
-/** Uniform scale + offset that fits the primitives inside `fit` world units, base on y=0. */
-export function fitPrims(prims: WorldPrim[], fit: number) {
+/** The creator's own ground height (their editor floor planes), or null when the world has none. */
+export function creatorFloorY(prims: WorldPrim[]): number | null {
+  const floors = prims.filter(isFloorPlane);
+  return floors.length ? Math.min(...floors.map((p) => p.pos[1])) : null;
+}
+
+/**
+ * Uniform scale + offset that fits the primitives inside `fit` world units.
+ * With `floorY` the creator's ground lands on y=0 (parts below it sink into the terrain,
+ * like in their engine); otherwise the lowest part rests on y=0.
+ */
+export function fitPrims(prims: WorldPrim[], fit: number, floorY: number | null = null) {
   if (!prims.length) return { scale: 1, offset: [0, 0, 0] as [number, number, number] };
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, z0 = Infinity, z1 = -Infinity;
   for (const p of prims) {
@@ -173,5 +183,6 @@ export function fitPrims(prims: WorldPrim[], fit: number) {
     y0 = Math.min(y0, p.pos[1] - p.size[1] / 2);
   }
   const scale = fit / Math.max(x1 - x0, z1 - z0, 1);
-  return { scale, offset: [0 - (x0 + x1) / 2, 0 - y0, 0 - (z0 + z1) / 2] as [number, number, number] };
+  const base = floorY ?? y0;
+  return { scale, offset: [0 - (x0 + x1) / 2, 0 - base, 0 - (z0 + z1) / 2] as [number, number, number] };
 }
