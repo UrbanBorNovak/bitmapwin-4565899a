@@ -18,6 +18,7 @@ import { HOUSE_PREFABS, SPHERES, cellKey, normaliseModule, rotatePrefab, stampIn
 import { BLUEPRINTS, blueprintBlocks, nextDropAt, weekNumber, weeklyBlueprint, type Blueprint } from "@/lib/forge-blueprints";
 import { BEHAVIOR_CARDS, KITS, isKit, kitManifest, type BehaviorCard } from "@/lib/forge-kits";
 import { KitBox } from "@/components/forge/KitBox";
+import { CommunityKitShelf, PackageKit, useCommunityKits } from "@/components/forge/PackageKit";
 import { KitThumb } from "@/components/forge/KitThumb";
 import { KitBehaviorPreview } from "@/components/forge/KitBehaviorPreview";
 import { clipToParcel, inRect, parcelAt, parcelRects, type ParcelRect } from "@/lib/forge-parcels";
@@ -257,7 +258,9 @@ function ForgePage() {
   const [bpId, setBpId] = useState(weekly.id);
   const [bpStep, setBpStep] = useState(0);
   const [showBp, setShowBp] = useState(true);
-  const bp: Blueprint = KITS.find((k) => k.id === bpId) ?? BLUEPRINTS.find((b) => b.id === bpId) ?? weekly;
+  const communityKits = useCommunityKits();
+  const playerKits = communityKits.data ?? [];
+  const bp: Blueprint = KITS.find((k) => k.id === bpId) ?? playerKits.find((k) => k.id === bpId) ?? BLUEPRINTS.find((b) => b.id === bpId) ?? weekly;
   const kit = isKit(bp) ? bp : null;
   const [unboxed, setUnboxed] = useState<string[]>([]);
   const [auto, setAuto] = useState(false);
@@ -702,6 +705,8 @@ function ForgePage() {
                 );
               })}
             </div>
+            <div className="mt-2 text-accent">PLAYER KITS · PUBLISHED BY BUILDERS</div>
+            <CommunityKitShelf kits={playerKits} activeId={bp.id} onPick={(id) => { setBpId(id); setBpStep(0); setAuto(false); setTesting(false); }} />
             <select value={bp.id} onChange={(e) => { setBpId(e.target.value); setBpStep(0); setAuto(false); setTesting(false); }} className="mt-2 w-full rounded border border-border bg-background px-2 py-1 text-foreground">
               <optgroup label="KITS · STEP-BY-STEP + PROGRAMMABLE">
                 {KITS.map((k) => <option key={k.id} value={k.id}>▣ {k.name} · {k.difficulty}</option>)}
@@ -711,7 +716,7 @@ function ForgePage() {
               </optgroup>
             </select>
             {kit && !unboxed.includes(kit.id) ? (
-              <KitBox key={kit.id} kit={kit} setNo={KITS.indexOf(kit) + 1} onOpened={() => setUnboxed((u) => [...u, kit.id])} />
+              <KitBox key={kit.id} kit={kit} setNo={KITS.indexOf(kit) >= 0 ? KITS.indexOf(kit) + 1 : 900 + playerKits.indexOf(kit as never) + 1} onOpened={() => setUnboxed((u) => [...u, kit.id])} />
             ) : (<>
             <div className="mt-2 overflow-hidden rounded border border-border bg-background/60">
               <KitThumb bp={bp} upTo={Math.max(1, bpStep)} />
