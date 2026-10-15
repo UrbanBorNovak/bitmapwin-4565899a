@@ -4,7 +4,7 @@ import { blueprintBlocks } from "@/lib/forge-blueprints";
 
 describe("forge kits", () => {
   it("ships twenty-five boxed sets", () => {
-    expect(KITS.map((k) => k.id)).toEqual(["kit-citadel", "kit-express", "kit-array", "kit-vault", "kit-dragon", "kit-mega", "kit-colossus", "kit-ark", "kit-bismarck", "kit-tiger", "kit-spitfire", "kit-hospital", "kit-police", "kit-fire", "kit-school", "kit-pyramid", "kit-colosseum", "kit-eiffel", "kit-taj", "kit-greatwall", "kit-petra", "kit-machu", "kit-terracotta", "kit-angkor", "kit-genesis-coin"]);
+    expect(KITS.map((k) => k.id)).toEqual(["kit-citadel", "kit-express", "kit-array", "kit-vault", "kit-dragon", "kit-mega", "kit-colossus", "kit-ark", "kit-bismarck", "kit-tiger", "kit-spitfire", "kit-hospital", "kit-police", "kit-fire", "kit-school", "kit-pyramid", "kit-colosseum", "kit-eiffel", "kit-taj", "kit-greatwall", "kit-petra", "kit-machu", "kit-terracotta", "kit-angkor", "kit-genesis-coin", "kit-black-pearl"]);
   });
   it("every step comes in a numbered bag, in order", () => {
     for (const k of KITS) {
