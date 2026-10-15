@@ -298,13 +298,13 @@ const mega: Kit = {
   story: "Twin cyber towers over a neon street, linked by sky-bridges and crowned by a glowing Bitcoin prism.",
   steps: [
     step("Neon street grid", "Pave the plaza, then trace glowing lane lines.", (m) => {
-      for (let i = 2; i <= 61; i++) for (const j of [30, 31, 32, 33]) { m.put(i, 0, j, "stone"); m.put(j, 0, i, "stone"); }
+      for (let i = 2; i <= 61; i++) for (const j of [31, 32]) { m.put(i, 0, j, "stone"); m.put(j, 0, i, "stone"); }
       for (let i = 2; i <= 61; i += 4) { m.put(i, 0, 31, "glow"); m.put(31, 0, i, "glow"); }
       for (let i = 2; i <= 61; i++) { m.put(i, 0, 2, "cobble"); m.put(i, 0, 61, "cobble"); m.put(2, 0, i, "cobble"); m.put(61, 0, i, "cobble"); }
     }),
     step("Mining reactor podium", "A hollow podium hiding ASIC racks around a glowing core.", (m) => {
       m.box(6, 57, 1, 3, 6, 57, "brick", true);
-      for (let x = 10; x <= 54; x += 4) for (let z = 12; z <= 52; z += 20) m.box(x, x + 1, 1, 3, z, z + 1, "cobble");
+      for (let x = 10; x <= 54; x += 4) for (let z = 12; z <= 52; z += 40) m.box(x, x + 1, 1, 3, z, z + 1, "cobble");
       for (let x = 7; x <= 56; x += 6) { m.put(x, 2, 6, "glass"); m.put(x, 2, 57, "glass"); m.put(6, 2, x, "glass"); m.put(57, 2, x, "glass"); }
       for (let i = 6; i <= 57; i++) for (const j of [7, 8, 55, 56]) { m.put(i, 5, j, "stone"); m.put(j, 5, i, "stone"); }
     }),
