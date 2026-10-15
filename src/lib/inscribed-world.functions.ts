@@ -27,3 +27,11 @@ export const inspectWorldFn = createServerFn({ method: "GET" })
     const { inspectWorld } = await import("@/lib/inscribed-world.server");
     return inspectWorld(data.id);
   });
+
+/** Public read: decoded primitive geometry of a BITMAP's Inscribed.space world (for the Oasis bridge). */
+export const getWorldGeometryFn = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => z.object({ height: z.number().int().min(0).max(10_000_000) }).parse(d))
+  .handler(async ({ data }) => {
+    const { worldGeometryForHeight } = await import("@/lib/inscribed-world.server");
+    return worldGeometryForHeight(data.height);
+  });
