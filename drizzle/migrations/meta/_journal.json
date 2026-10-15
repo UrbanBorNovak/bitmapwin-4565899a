@@ -50,6 +50,13 @@
       "when": 1792030712205,
       "tag": "0006_bitmap_kennels",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792031602301,
+      "tag": "0007_kennel_public_read_scope",
+      "breakpoints": true
     }
   ]
 }
