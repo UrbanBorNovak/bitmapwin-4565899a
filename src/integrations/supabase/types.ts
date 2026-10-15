@@ -1430,6 +1430,7 @@ export type Database = {
       community_kits: {
         Row: {
           bags: Json
+          behaviors: Json
           block_count: number
           created_at: string
           difficulty: string
@@ -1443,6 +1444,7 @@ export type Database = {
         }
         Insert: {
           bags: Json
+          behaviors?: Json
           block_count: number
           created_at?: string
           difficulty?: string
@@ -1456,6 +1458,7 @@ export type Database = {
         }
         Update: {
           bags?: Json
+          behaviors?: Json
           block_count?: number
           created_at?: string
           difficulty?: string
