@@ -670,7 +670,7 @@ function ForgePage() {
           )}
           <div className="rounded border border-accent/40 bg-card/40 p-2 text-[11px]">
             <div className="flex items-center justify-between"><span className="text-accent">KITS · STEP-BY-STEP + PROGRAMMABLE</span><span className="text-[10px] text-muted-foreground">NEXT DROP {dropIn}</span></div>
-            <div className="mt-1 grid grid-cols-2 gap-1.5">
+            <div className="mt-1 grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
               {KITS.map((k, i) => {
                 const active = k.id === bp.id;
                 return (
@@ -681,9 +681,9 @@ function ForgePage() {
                       <span className="absolute left-1 top-1 rounded bg-background/80 px-1 font-mono text-[9px] text-primary">SET #{String(i + 1).padStart(3, "0")}</span>
                       <span className="absolute right-1 top-1 rounded bg-background/80 px-1 font-mono text-[9px] text-accent">{k.difficulty}</span>
                     </div>
-                    <div className="px-1.5 py-1">
-                      <div className="truncate text-[10px] font-bold text-foreground">{k.name}</div>
-                      <div className="font-mono text-[9px] text-muted-foreground">{k.steps.length} STEPS · {blueprintBlocks(k).length} BLOCKS · {k.behaviors.length} CARDS</div>
+                    <div className="px-2 py-1.5">
+                      <div className="truncate text-xs font-bold text-foreground sm:text-[10px]">{k.name}</div>
+                      <div className="font-mono text-[10px] text-muted-foreground sm:text-[9px]">{k.steps.length} STEPS · {blueprintBlocks(k).length} BLOCKS · {k.behaviors.length} CARDS</div>
                     </div>
                   </button>
                 );
@@ -706,30 +706,34 @@ function ForgePage() {
               <span className="text-accent">STEP {Math.min(bpStep + 1, bp.steps.length)} / {bp.steps.length}{bpStep >= bp.steps.length ? " · COMPLETE" : ""}</span>
               <span className="text-muted-foreground">{bp.steps[bpStep] ? `${blueprintBlocks({ ...bp, steps: [bp.steps[bpStep]!] }).length} BLOCKS THIS STEP` : ""}</span>
             </div>
-            <div className="mt-1 flex gap-0.5">
+            <div className="mt-1 flex gap-1 sm:gap-0.5">
               {bp.steps.map((s, i) => (
-                <button key={s.title} type="button" title={`${i + 1}. ${s.title}`} onClick={() => setBpStep(i)}
-                  className={`h-1.5 flex-1 rounded-full transition ${i < bpStep ? "bg-accent" : i === bpStep ? "bg-primary" : "bg-muted"}`} />
+                <button key={s.title} type="button" title={`${i + 1}. ${s.title}`} aria-label={`Step ${i + 1}: ${s.title}`} onClick={() => setBpStep(i)}
+                  className={`flex h-7 flex-1 items-center rounded transition sm:h-1.5 ${i < bpStep ? "bg-accent/25 sm:bg-accent" : i === bpStep ? "bg-primary/25 sm:bg-primary" : "bg-muted/50 sm:bg-muted"}`}>
+                  <span className={`mx-auto h-1.5 w-full rounded-full sm:hidden ${i < bpStep ? "bg-accent" : i === bpStep ? "bg-primary" : "bg-muted"}`} />
+                </button>
               ))}
             </div>
             <ol className="mt-2 max-h-56 space-y-1 overflow-y-auto">
               {bp.steps.map((s, i) => (
-                <li key={s.title} className={`rounded border px-2 py-1 ${i === bpStep ? "border-accent text-foreground" : i < bpStep ? "border-border text-muted-foreground line-through" : "border-border text-muted-foreground"}`}>
-                  <b>{i + 1}. {s.title}</b> — {s.tip}
+                <li key={s.title}>
+                  <button type="button" onClick={() => setBpStep(i)} className={`w-full rounded border px-2 py-2 text-left sm:py-1 ${i === bpStep ? "border-accent text-foreground" : i < bpStep ? "border-border text-muted-foreground line-through" : "border-border text-muted-foreground"}`}>
+                    <b>{i + 1}. {s.title}</b> — {s.tip}
+                  </button>
                 </li>
               ))}
             </ol>
-            <div className="mt-2 flex flex-wrap gap-1">
-              <button type="button" onClick={() => setShowBp((v) => !v)} className="rounded border border-border px-2 py-0.5 text-[10px] text-foreground">{showBp ? "HIDE GUIDE" : "SHOW GUIDE"}</button>
-              <button type="button" disabled={bpStep === 0} onClick={backStep} className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground disabled:opacity-40">◀ BACK</button>
-              <button type="button" disabled={bpStep >= bp.steps.length} onClick={buildStep} className="rounded border border-accent px-2 py-0.5 text-[10px] text-accent disabled:opacity-40">PLACE STEP {Math.min(bpStep + 1, bp.steps.length)}</button>
-              <button type="button" disabled={bpStep >= bp.steps.length} onClick={() => setAuto((a) => !a)} className="rounded border border-primary px-2 py-0.5 text-[10px] text-primary disabled:opacity-40">{auto ? "❚❚ PAUSE" : "▶ AUTO-ASSEMBLE"}</button>
-              <button type="button" onClick={() => setBpStep((s) => Math.min(bp.steps.length, s + 1))} className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground">I BUILT IT</button>
+            <div className="mt-2 grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:gap-1">
+              <button type="button" onClick={() => setShowBp((v) => !v)} className="rounded border border-border px-2 py-2 text-xs text-foreground sm:py-0.5 sm:text-[10px]">{showBp ? "HIDE GUIDE" : "SHOW GUIDE"}</button>
+              <button type="button" disabled={bpStep === 0} onClick={backStep} className="rounded border border-border px-2 py-2 text-xs text-muted-foreground disabled:opacity-40 sm:py-0.5 sm:text-[10px]">◀ BACK</button>
+              <button type="button" disabled={bpStep >= bp.steps.length} onClick={buildStep} className="rounded border border-accent px-2 py-2 text-xs text-accent disabled:opacity-40 sm:py-0.5 sm:text-[10px]">PLACE STEP {Math.min(bpStep + 1, bp.steps.length)}</button>
+              <button type="button" disabled={bpStep >= bp.steps.length} onClick={() => setAuto((a) => !a)} className="rounded border border-primary px-2 py-2 text-xs text-primary disabled:opacity-40 sm:py-0.5 sm:text-[10px]">{auto ? "❚❚ PAUSE" : "▶ AUTO-ASSEMBLE"}</button>
+              <button type="button" onClick={() => setBpStep((s) => Math.min(bp.steps.length, s + 1))} className="col-span-2 rounded border border-border px-2 py-2 text-xs text-muted-foreground sm:col-span-1 sm:py-0.5 sm:text-[10px]">I BUILT IT</button>
             </div>
             {kit && (
               <div className="mt-3 border-t border-border pt-2">
                 <div className="flex items-center justify-between"><span className="text-primary">BEHAVIOR CARDS</span>
-                  <button type="button" disabled={!liveBehaviors.length && !testing} onClick={() => setTesting((t) => !t)} className="rounded border border-primary px-2 py-0.5 text-[10px] text-primary disabled:opacity-40">{testing ? "■ STOP" : "▶ TEST RUN"}</button>
+                  <button type="button" disabled={!liveBehaviors.length && !testing} onClick={() => setTesting((t) => !t)} className="rounded border border-primary px-2 py-1.5 text-xs text-primary disabled:opacity-40 sm:py-0.5 sm:text-[10px]">{testing ? "■ STOP" : "▶ TEST RUN"}</button>
                 </div>
                 <div className="mt-1 grid grid-cols-1 gap-1">
                   {kit.behaviors.map((b) => {
@@ -738,7 +742,7 @@ function ForgePage() {
                     const ready = b.steps.every((s) => s < bpStep);
                     return (
                       <button key={b.card} type="button" onClick={() => setOff((o) => on ? [...o, b.card] : o.filter((x) => x !== b.card))}
-                        className={`rounded border px-2 py-1 text-left text-[10px] ${on ? "border-primary/70 text-foreground" : "border-border text-muted-foreground"}`}>
+                        className={`rounded border px-2 py-2 text-left text-xs sm:py-1 sm:text-[10px] ${on ? "border-primary/70 text-foreground" : "border-border text-muted-foreground"}`}>
                         <span className="flex justify-between"><b>{on ? "◉" : "○"} {card.name}</b><span className={ready ? "text-accent" : "text-muted-foreground"}>{ready ? "READY" : `AFTER STEP ${Math.max(...b.steps) + 1}`}</span></span>
                         <span className="text-muted-foreground">{card.blurb}</span>
                       </button>
