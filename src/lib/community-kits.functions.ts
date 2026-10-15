@@ -44,7 +44,7 @@ export const publishCommunityKitFn = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin.from("community_kits" as never).insert({
       name: data.name, tagline: data.tagline, difficulty: data.difficulty, maker_address: data.address, maker_user: context.userId,
-      steps: data.steps, bags: data.steps.map((_, i) => i + 1), block_count: total, behaviors: data.behaviors.map((t) => tagToBehavior(t, data.steps)).filter(Boolean), pay_txid: data.txid.toLowerCase(),
+      steps: data.steps, bags: data.steps.map((_, i) => i + 1), block_count: total, behaviors: data.behaviors.map((t) => tagToBehavior(t, data.steps as never)).filter(Boolean), pay_txid: data.txid.toLowerCase(),
     } as never).select("id").single();
     if (error) return { ok: false as const, error: error.code === "23505" ? "THIS PAYMENT ALREADY PUBLISHED A KIT" : "PUBLISH FAILED — TRY AGAIN" };
     return { ok: true as const, id: (row as { id: string }).id, error: null };
