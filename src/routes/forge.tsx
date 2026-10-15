@@ -16,7 +16,7 @@ import { ARCHETYPES, FORGE_MAX_BLOCKS, FORGE_RENDER_MAX, FORGE_SPAN, encodeBuild
 import { HOUSE_PREFABS, SPHERES, cellKey, normaliseModule, rotatePrefab, stampInto, tributeSplit, type Contributor, type Prefab, type Sphere } from "@/lib/forge-prefabs";
 import { BLUEPRINTS, blueprintBlocks, nextDropAt, weekNumber, weeklyBlueprint } from "@/lib/forge-blueprints";
 import { clipToParcel, inRect, parcelAt, parcelRects, type ParcelRect } from "@/lib/forge-parcels";
-import { publishForgeModuleFn, stampForgeModuleFn } from "@/lib/forge-modules.functions";
+import { publishForgeModuleFn, stampForgeModuleFn, stampHousePresetFn } from "@/lib/forge-modules.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useWalletSession } from "@/lib/wallet-session";
 import { heldHeightsQuery } from "@/lib/held-parcels";
@@ -140,10 +140,32 @@ function Ghost({ blocks, at, bad }: { blocks: TplBlock[]; at: [number, number, n
     m.instanceMatrix.needsUpdate = true;
   }, [blocks, at]);
   return (
-    <instancedMesh ref={ref} args={[undefined, undefined, 900]} raycast={() => null}>
+    <instancedMesh ref={ref} args={[undefined, undefined, Math.max(900, blocks.length)]} key={Math.max(900, blocks.length)} raycast={() => null}>
       <boxGeometry args={[1, 1, 1]} />
       <meshBasicMaterial color={bad ? "#ff4d4d" : "#00f0ff"} transparent opacity={0.35} depthWrite={false} />
     </instancedMesh>
+  );
+}
+
+/** Wireframe footprint box + facing arrow around the ghost so builders see size and rotation before placing. */
+function GhostBounds({ blocks, at, bad }: { blocks: TplBlock[]; at: [number, number, number]; bad: boolean }) {
+  if (!blocks.length) return null;
+  let x1 = 0, y1 = 0, z1 = 0;
+  for (const b of blocks) { x1 = Math.max(x1, b.dx); y1 = Math.max(y1, b.dy); z1 = Math.max(z1, b.dz); }
+  const w = x1 + 1, h = y1 + 1, d = z1 + 1;
+  const c = bad ? "#ff4d4d" : "#00f0ff";
+  const cx = at[0] - HALF + w / 2, cz = at[2] - HALF + d / 2;
+  return (
+    <group raycast={() => null}>
+      <lineSegments position={[cx, at[1] + h / 2, cz]}>
+        <edgesGeometry args={[new THREE.BoxGeometry(w + 0.05, h + 0.05, d + 0.05)]} />
+        <lineBasicMaterial color={c} />
+      </lineSegments>
+      <mesh position={[cx, at[1] + 0.03, at[2] - HALF + d + 0.9]} rotation={[-Math.PI / 2, 0, 0]}>
+        <coneGeometry args={[0.6, 1.2, 3]} />
+        <meshBasicMaterial color={c} />
+      </mesh>
+    </group>
   );
 }
 
@@ -199,6 +221,7 @@ function ForgePage() {
   const canInscribe = role === "bitmap" || parcelTarget !== undefined;
   const community = useCommunityModules();
   const stampFn = useServerFn(stampForgeModuleFn);
+  const presetFn = useServerFn(stampHousePresetFn);
   const publishFn = useServerFn(publishForgeModuleFn);
 
   const [world, setWorld] = useState<Map<string, TplBlock>>(new Map());
@@ -333,6 +356,12 @@ function ForgePage() {
     }
     if (overLimit) { toast.error(`BUILD LIMIT IS ${FORGE_MAX_BLOCKS} BLOCKS`); return; }
     if (ghostIsPiece && livePlacements.length >= MAX_ASM_PARTS) { toast.error(`A RECURSIVE BUILD HOLDS UP TO ${MAX_ASM_PARTS} ON-CHAIN PIECES`); return; }
+    if (tool === "stamp" && !picked.author && (picked.bitCost ?? 0) > 0) {
+      if (!wallet) { toast.error(`CONNECT A WALLET — THIS PRESET COSTS ${picked.bitCost} BIT`); return; }
+      const r = await presetFn({ data: { presetId: picked.id, address: wallet.ordinalsAddress } }).catch(() => ({ ok: false as const, error: "SIGN IN TO USE PREMIUM PRESETS" }));
+      if (!r.ok) { toast.error(r.error); return; }
+      if (r.paid) toast.success(`PAID ${r.paid} BIT — ${picked.name.toUpperCase()} PLACED`);
+    }
     if (tool === "stamp" && picked.author && (picked.bitCost ?? 0) > 0) {
       if (!wallet) { toast.error("CONNECT A WALLET TO USE PAID MODULES"); return; }
       const r = await stampFn({ data: { moduleId: picked.id, address: wallet.ordinalsAddress } }).catch(() => ({ ok: false as const, error: "SIGN IN TO USE PAID MODULES" }));
@@ -587,7 +616,7 @@ function ForgePage() {
                 {palette.map((p) => (
                   <button key={p.id} type="button" onClick={() => setPicked(p)} className={`w-full rounded border px-2 py-1.5 text-left text-[11px] ${picked.id === p.id ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground hover:border-primary/50"}`}>
                     <span className="block text-foreground">{p.name}</span>
-                    {p.blocks.length} blocks{p.author ? ` · ${short(p.author)} · ${p.bitCost ?? 0} BIT · ${p.tributeSats ?? 0} sats` : " · free"}
+                    {p.blocks.length} blocks{p.author ? ` · ${short(p.author)} · ${p.bitCost ?? 0} BIT · ${p.tributeSats ?? 0} sats` : (p.bitCost ?? 0) > 0 ? "" : " · free"}{!p.author && (p.bitCost ?? 0) > 0 && <span className="ml-1 rounded border border-primary/60 px-1 text-primary">{p.bitCost} BIT</span>}
                   </button>
                 ))}
               </div>
@@ -623,11 +652,16 @@ function ForgePage() {
         </aside>
 
         <div className="relative h-[560px] overflow-hidden rounded-lg border border-border bg-card/40">
+          {tool === "stamp" && hover && (
+            <div className="pointer-events-none absolute right-2 top-2 z-10 rounded border border-border bg-background/80 px-2 py-1 font-mono text-[10px] text-muted-foreground backdrop-blur">
+              <span className={overLimit || ghostOut ? "text-destructive" : "text-accent"}>{overLimit || ghostOut ? "CLIPS EDGE" : "FITS"}</span> · {picked.name.toUpperCase()} · ROT {(((turns % 4) + 4) % 4) * 90}°{!picked.author && (picked.bitCost ?? 0) > 0 ? ` · ${picked.bitCost} BIT` : ""} · R ROTATE · CLICK PLACE
+            </div>
+          )}
           <SafeCanvas shadows camera={{ position: [40, 38, 40], fov: 45 }}>
             <ambientLight intensity={0.6} />
             <directionalLight position={[20, 40, 10]} intensity={1.2} castShadow />
             <Blocks blocks={blocks} erase={tool === "erase" || tool === "move"} onErase={eraseAt} onSurface={(c) => { if (c && tool !== "parcel") setHover(c); }} onPlace={() => void place()} />
-            {hover && ghost.length > 0 && boxGhost.length === 0 && <Ghost blocks={ghost} at={hover} bad={overLimit || ghostOut} />}
+            {hover && ghost.length > 0 && boxGhost.length === 0 && <><Ghost blocks={ghost} at={hover} bad={overLimit || ghostOut} /><GhostBounds blocks={ghost} at={hover} bad={overLimit || ghostOut} /></>}
             {boxGhost.length > 0 && <Ghost blocks={boxGhost} at={[0, 0, 0]} bad={ownCount + boxGhost.length > FORGE_MAX_BLOCKS} />}
             {perch && dnaQ.data && (
               <group position={[perch[0] - HALF + 0.5, perch[1], perch[2] - HALF + 0.5]} scale={0.36}>

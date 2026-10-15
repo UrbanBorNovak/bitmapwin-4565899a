@@ -24,3 +24,19 @@ describe("rotatePrefab", () => {
     expect(rotatePrefab(b, 4)).toEqual(b);
   });
 });
+
+import { HOUSE_PREFABS, housePresetPrice } from "@/lib/forge-prefabs";
+describe("biome preset prices", () => {
+  it("charges 10–25 BIT for Oasis & Biome presets", () => {
+    expect(housePresetPrice("bio-lotus")).toBe(10);
+    expect(housePresetPrice("bio-treehouse")).toBe(25);
+    for (const p of HOUSE_PREFABS.filter((p) => p.id.startsWith("bio-"))) {
+      expect(p.bitCost).toBeGreaterThanOrEqual(10);
+      expect(p.bitCost).toBeLessThanOrEqual(25);
+    }
+  });
+  it("keeps basic bricks free", () => {
+    expect(housePresetPrice("b2x4")).toBe(0);
+    expect(housePresetPrice("plate8")).toBe(0);
+  });
+});

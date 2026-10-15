@@ -101,6 +101,17 @@ export const BRICK_PREFABS: Prefab[] = [
   { id: "neon", name: "Neon Strip", sphere: "bricks", blocks: brick(4, 1, 1, "glow") },
 ].map((p) => ({ ...p, sphere: "bricks" as Sphere }));
 
+/** BIT price of a house preset (0 = free). Only the server's copy of this decides what is charged. */
+export const HOUSE_PRESET_PRICES: Record<string, number> = {
+  "bio-lotus": 10,
+  "bio-pagoda": 15,
+  "bio-springs": 15,
+  "bio-waterfall": 20,
+  "bio-dome": 20,
+  "bio-treehouse": 25,
+};
+export const housePresetPrice = (id: string) => HOUSE_PRESET_PRICES[id] ?? 0;
+
 export const HOUSE_PREFABS: Prefab[] = [
   ...BRICK_PREFABS,
   { id: "watchtower", name: "Corner Watchtower", sphere: "kingdom", blocks: watchtower() },
@@ -116,8 +127,103 @@ export const HOUSE_PREFABS: Prefab[] = [
   { id: "oak", name: "Ancient Oak", sphere: "nature", blocks: oak() },
   { id: "fountain", name: "Plaza Fountain", sphere: "nature", blocks: fountain() },
   { id: "circle", name: "Stone Circle", sphere: "nature", blocks: stoneCircle() },
+  ...biomePresets(),
 ];
 export const prefabById = (id: string) => HOUSE_PREFABS.find((p) => p.id === id);
+
+// ---- OASIS & BIOMES: premium house presets, 10–25 BIT per stamp ----
+function pagoda() {
+  const s = b();
+  s.box(0, 10, 0, 0, 0, 10, "stone");
+  s.box(1, 9, 1, 1, 1, 9, "planks");
+  for (const x of [2, 8]) for (const z of [2, 8]) s.box(x, x, 2, 5, z, z, "log");
+  s.box(0, 10, 6, 6, 0, 10, "brick");
+  s.box(1, 9, 7, 7, 1, 9, "brick");
+  s.box(3, 7, 8, 9, 3, 7, "planks", true);
+  s.box(2, 8, 10, 10, 2, 8, "brick");
+  s.box(3, 7, 11, 11, 3, 7, "brick");
+  s.box(5, 5, 12, 13, 5, 5, "log");
+  s.put(5, 14, 5, "glow");
+  for (const [x, z] of [[0, 0], [10, 0], [0, 10], [10, 10]] as const) s.put(x, 7, z, "glow");
+  return s.out;
+}
+function waterfall() {
+  const s = b();
+  for (let y = 0; y <= 9; y++) s.box(0, 10, y, y, 0, Math.max(1, 6 - Math.floor(y / 2)), y % 3 ? "stone" : "cobble");
+  s.box(4, 6, 1, 9, 7, 7, "glass");
+  s.box(3, 7, 0, 0, 8, 11, "stone", true);
+  s.box(4, 6, 0, 0, 9, 10, "glass");
+  for (const x of [3, 7]) s.put(x, 1, 11, "glow");
+  s.box(1, 2, 10, 10, 1, 2, "grass");
+  s.box(8, 9, 10, 10, 1, 2, "grass");
+  s.put(5, 1, 12, "gold");
+  return s.out;
+}
+function treehouse() {
+  const s = b();
+  s.box(5, 6, 0, 9, 5, 6, "log");
+  s.box(1, 10, 7, 7, 1, 10, "planks");
+  for (let x = 1; x <= 10; x++) for (const z of [1, 10]) if (x % 2) s.put(x, 8, z, "log");
+  for (let z = 2; z <= 9; z++) for (const x of [1, 10]) if (z % 2) s.put(x, 8, z, "log");
+  s.box(3, 8, 8, 10, 3, 8, "planks", true);
+  s.cut((t) => t.dz === 3 && t.dx >= 5 && t.dx <= 6 && t.dy >= 8 && t.dy <= 9);
+  s.box(0, 11, 11, 12, 0, 11, "grass");
+  s.box(2, 9, 13, 14, 2, 9, "grass");
+  s.box(4, 7, 15, 15, 4, 7, "grass");
+  for (let y = 0; y < 7; y++) s.put(4, y, 7, "planks");
+  s.put(5, 10, 5, "glow");
+  return s.out;
+}
+function lotusBasin() {
+  const s = b();
+  s.box(0, 10, 0, 0, 0, 10, "stone");
+  s.box(1, 9, 1, 1, 1, 9, "cobble", true);
+  s.box(2, 8, 1, 1, 2, 8, "glass");
+  for (const [x, z] of [[3, 3], [7, 4], [4, 7], [6, 6]] as const) { s.put(x, 2, z, "grass"); s.put(x, 3, z, "glow"); }
+  for (let i = 0; i <= 10; i += 5) s.put(i, 1, 0, "stone");
+  return s.out;
+}
+function bioDome() {
+  const s = b();
+  const R = 6;
+  for (let x = 0; x <= 12; x++) for (let z = 0; z <= 12; z++) {
+    const d = Math.hypot(x - R, z - R);
+    if (d <= R + 0.5) s.put(x, 0, z, d > R - 0.6 ? "stone" : "grass");
+    for (let y = 1; y <= R; y++) {
+      const r = Math.hypot(d, y);
+      if (r > R - 0.6 && r <= R + 0.4) s.put(x, y, z, (x + y) % 4 === 0 ? "stone" : "glass");
+    }
+  }
+  s.box(5, 7, 1, 3, 5, 7, "grass");
+  s.put(6, 4, 6, "glow");
+  s.cut((t) => t.dz === 0 || (t.dz <= 1 && t.dx >= 5 && t.dx <= 7 && t.dy >= 1 && t.dy <= 2));
+  return s.out;
+}
+function thermalSprings() {
+  const s = b();
+  s.box(0, 9, 0, 3, 0, 9, "stone", true);
+  s.box(1, 8, 0, 0, 1, 8, "cobble");
+  s.box(2, 7, 1, 1, 2, 7, "glass");
+  for (let i = 0; i < 3; i++) s.box(1, 2, i + 1, i + 1, 8 - i, 8 - i, "stone");
+  for (const [x, z] of [[3, 3], [6, 5]] as const) s.box(x, x, 1, 2, z, z, "glow");
+  for (const [x, z] of [[0, 0], [9, 0], [0, 9], [9, 9]] as const) s.put(x, 4, z, "glow");
+  return s.out;
+}
+function biomePresets(): Prefab[] {
+  const list: [string, string, TplBlock[]][] = [
+    ["bio-lotus", "Lotus Reflection Basin", lotusBasin()],
+    ["bio-pagoda", "Zen Pagoda Pavilion", pagoda()],
+    ["bio-springs", "Sunken Thermal Springs", thermalSprings()],
+    ["bio-waterfall", "Oasis Waterfall Shrine", waterfall()],
+    ["bio-dome", "Bio-Dome Greenhouse", bioDome()],
+    ["bio-treehouse", "Canopy Treehouse", treehouse()],
+  ];
+  return list.map(([id, name, blocks]) => {
+    const seen = new Set<string>();
+    const uniq = blocks.filter((t) => { const k = `${t.dx},${t.dy},${t.dz}`; return seen.has(k) ? false : (seen.add(k), true); });
+    return { id, name, sphere: "nature" as Sphere, blocks: uniq, bitCost: HOUSE_PRESET_PRICES[id] ?? 0 };
+  });
+}
 
 /** Rotates a prefab 90° × turns around its own footprint, keeping offsets ≥ 0. */
 export function rotatePrefab(blocks: TplBlock[], turns: number): TplBlock[] {

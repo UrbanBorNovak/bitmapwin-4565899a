@@ -93,3 +93,26 @@ export const stampForgeModuleFn = createServerFn({ method: "POST" })
     await supabaseAdmin.rpc("coin_apply", { _address: mod.author_address, _delta: mod.bit_cost, _reason: "forge_royalty", _ref: ref });
     return { ok: true as const, paid: mod.bit_cost, error: null };
   });
+
+/** Charges the fixed BIT price of a premium house preset (Oasis & Biomes). Price comes from the server's table only. */
+export const stampHousePresetFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ presetId: z.string().min(1).max(40), address: z.string().trim().min(16).max(120) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { housePresetPrice } = await import("@/lib/forge-prefabs");
+    const price = housePresetPrice(data.presetId);
+    if (price <= 0) return { ok: true as const, paid: 0, error: null };
+    const { assertControls, spendBit } = await import("@/lib/coins.server");
+    try {
+      await assertControls(context.supabase, context.userId, data.address);
+    } catch {
+      return { ok: false as const, error: "VERIFY THIS WALLET ON YOUR WALLET PAGE FIRST" };
+    }
+    try {
+      await spendBit({ address: data.address, amount: price, reason: "forge_preset", ref: `forge-preset:${data.presetId}:${context.userId}:${Date.now()}` });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      return { ok: false as const, error: /insufficient|balance/i.test(msg) ? "NOT ENOUGH BIT" : "PAYMENT FAILED — TRY AGAIN" };
+    }
+    return { ok: true as const, paid: price, error: null };
+  });
