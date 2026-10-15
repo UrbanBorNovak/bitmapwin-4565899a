@@ -4,13 +4,7 @@ const ORD = "https://ordinals.com";
 const MAX_BYTES = 400_000;
 const TTL = 15 * 60_000;
 
-export type BitmapWorld = WorldInfo & { inscriptionId: string; source: "sat" | "child" | "value" | "holder" };
-
-/** Drops the cached lookup for one BITMAP (after a holder deploys a world). */
-export function forgetWorlds(height: number) {
-  cache.delete(height);
-  geoCache.delete(height);
-}
+export type BitmapWorld = WorldInfo & { inscriptionId: string; source: "sat" | "child" | "value" };
 
 async function ord(path: string): Promise<Response | null> {
   try {
@@ -47,24 +41,13 @@ export async function worldsForHeight(height: number): Promise<BitmapWorld[]> {
   }
 
   let parent: string | null = null;
-  let liveOwner: string | null = null;
   try {
     const { locateBitmapHolder } = await import("@/lib/locate-bitmap.server");
-    const h = await locateBitmapHolder(height);
-    parent = h.inscriptionId;
-    liveOwner = h.ownerAddress;
+    parent = (await locateBitmapHolder(height)).inscriptionId;
   } catch {
     parent = null;
   }
 
-  // Holder deployment: counts only while the address that deployed it still holds the BITMAP.
-  try {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: a } = await supabaseAdmin.from("bitmap_world_anchors").select("inscription_id, holder_address").eq("bitmap_height", height).maybeSingle();
-    if (a && liveOwner && a.holder_address === liveOwner) candidates.unshift({ id: a.inscription_id, source: "holder" });
-  } catch {
-    /* anchor lookup is optional */
-  }
 
 
   if (parent) {
