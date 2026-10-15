@@ -28,7 +28,7 @@ export function base91Decode(s: string): Uint8Array {
 /** Pulls the quoted `worldData` literal out of the world's HTML. */
 export function extractWorldData(html: string): string | null {
   const m = html.match(/worldData\s*=\s*(['"`])([\s\S]*?)\1\s*;/);
-  return m ? m[2].replace(/\s+/g, "") : null;
+  return m?.[2] ? m[2].replace(/\s+/g, "") : null;
 }
 
 export async function gunzip(bytes: Uint8Array): Promise<string> {
@@ -53,7 +53,7 @@ export type WorldGeometry = {
 
 function statement(src: string, name: string): unknown {
   const m = src.match(new RegExp(`\\b${name}\\s*=\\s*(\\[[\\s\\S]*?\\])\\s*;`));
-  if (!m) return null;
+  if (!m?.[1]) return null;
   try { return JSON.parse(m[1]); } catch { return null; }
 }
 
