@@ -13,7 +13,7 @@ import { FORGE_MASTER_DELEGATE_ID, delegateSavings, forgeDelegateMetadata } from
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { BLOCKS, type BlockId } from "@/lib/voxel-world";
 import type { TplBlock } from "@/lib/voxel-templates";
-import { ARCHETYPES, FORGE_MAX_BLOCKS, FORGE_RENDER_MAX, FORGE_SPAN, encodeBuild, encodeBuildBest, FORGE_UNPACK_JS, forgeInscriptionHtml, generateBuild, type ArchetypeId } from "@/lib/voxel-populate";
+import { ARCHETYPES, FORGE_MAX_BLOCKS, FORGE_RENDER_MAX, FORGE_SPAN, FORGE_SPAN_XL, type ForgeSpan, encodeBuild, encodeBuildBest, FORGE_UNPACK_JS, forgeInscriptionHtml, generateBuild, type ArchetypeId } from "@/lib/voxel-populate";
 import { HOUSE_PREFABS, SPHERES, cellKey, normaliseModule, rotatePrefab, stampInto, tributeSplit, type Contributor, type Prefab, type Sphere } from "@/lib/forge-prefabs";
 import { BLUEPRINTS, blueprintBlocks, nextDropAt, weekNumber, weeklyBlueprint, type Blueprint } from "@/lib/forge-blueprints";
 import { BEHAVIOR_CARDS, KITS, isKit, kitManifest, type BehaviorCard } from "@/lib/forge-kits";
@@ -54,7 +54,9 @@ export const Route = createFileRoute("/forge")({
   component: ForgePage,
 });
 
-const HALF = FORGE_SPAN / 2;
+/** Studio canvas size: 64³ (original) or 128³ (XL recursive builds). Set by ForgePage each render; the 3D canvas remounts on change. */
+let SPAN: ForgeSpan = FORGE_SPAN;
+const half = () => SPAN / 2;
 const COLORS = Object.fromEntries(BLOCKS.map((b) => [b.id, new THREE.Color(b.top)]));
 type Tool = "stamp" | "block" | "box" | "erase" | "perch" | "parcel" | "move";
 type Placement = { part: AsmPart; keys: string[] };
@@ -68,7 +70,7 @@ function ParcelFloor({ rects, focus, hoverIdx }: { rects: ParcelRect[]; focus: n
     const base = new THREE.Color("#3a2a12"), hi = new THREE.Color("#f7931a"), hv = new THREE.Color("#00f0ff"), dim = new THREE.Color("#1d2230");
     rects.forEach((r, i) => {
       const w = r.x1 - r.x0, d = r.z1 - r.z0;
-      o.position.set((r.x0 + r.x1) / 2 - HALF, 0.02, (r.z0 + r.z1) / 2 - HALF);
+      o.position.set((r.x0 + r.x1) / 2 - half(), 0.02, (r.z0 + r.z1) / 2 - half());
       o.scale.set(Math.max(0.3, w - 0.15), 1, Math.max(0.3, d - 0.15));
       o.updateMatrix();
       m.setMatrixAt(i, o.matrix);
@@ -102,7 +104,7 @@ function Blocks({ blocks, onErase, erase, onSurface, onPlace }: { blocks: TplBlo
     }
     const o = new THREE.Object3D();
     blocks.forEach((b, i) => {
-      o.position.set(b.dx - HALF + 0.5, b.dy + 0.5, b.dz - HALF + 0.5);
+      o.position.set(b.dx - half() + 0.5, b.dy + 0.5, b.dz - half() + 0.5);
       o.updateMatrix();
       m.setMatrixAt(i, o.matrix);
       m.setColorAt(i, COLORS[b.k] ?? COLORS["stone"]!);
@@ -149,7 +151,7 @@ function Ghost({ blocks, at, bad }: { blocks: TplBlock[]; at: [number, number, n
     if (!m) return;
     const o = new THREE.Object3D();
     blocks.forEach((b, i) => {
-      o.position.set(b.dx + at[0] - HALF + 0.5, b.dy + at[1] + 0.5, b.dz + at[2] - HALF + 0.5);
+      o.position.set(b.dx + at[0] - half() + 0.5, b.dy + at[1] + 0.5, b.dz + at[2] - half() + 0.5);
       o.updateMatrix();
       m.setMatrixAt(i, o.matrix);
     });
@@ -171,14 +173,14 @@ function GhostBounds({ blocks, at, bad }: { blocks: TplBlock[]; at: [number, num
   for (const b of blocks) { x1 = Math.max(x1, b.dx); y1 = Math.max(y1, b.dy); z1 = Math.max(z1, b.dz); }
   const w = x1 + 1, h = y1 + 1, d = z1 + 1;
   const c = bad ? "#ff4d4d" : "#00f0ff";
-  const cx = at[0] - HALF + w / 2, cz = at[2] - HALF + d / 2;
+  const cx = at[0] - half() + w / 2, cz = at[2] - half() + d / 2;
   return (
     <group raycast={() => null}>
       <lineSegments position={[cx, at[1] + h / 2, cz]}>
         <edgesGeometry args={[new THREE.BoxGeometry(w + 0.05, h + 0.05, d + 0.05)]} />
         <lineBasicMaterial color={c} />
       </lineSegments>
-      <mesh position={[cx, at[1] + 0.03, at[2] - HALF + d + 0.9]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[cx, at[1] + 0.03, at[2] - half() + d + 0.9]} rotation={[-Math.PI / 2, 0, 0]}>
         <coneGeometry args={[0.6, 1.2, 3]} />
         <meshBasicMaterial color={c} />
       </mesh>
@@ -216,9 +218,11 @@ function ForgePage() {
   const height = /^\d+$/.test(input) ? Number(input) : null;
   const { data: sizes } = useQuery({ ...blockSizeMapQuery(height ?? 0), enabled: height !== null });
   const txCount = sizes?.classes?.length ?? null;
-  const rects = useMemo(() => parcelRects(sizes?.classes), [sizes]);
+  const [xl, setXl] = useState(false);
+  SPAN = xl ? FORGE_SPAN_XL : FORGE_SPAN;
+  const rects = useMemo(() => parcelRects(sizes?.classes, xl ? FORGE_SPAN_XL : FORGE_SPAN), [sizes, xl]);
   const [focus, setFocus] = useState<number | null>(null);
-  useEffect(() => setFocus(null), [height]);
+  useEffect(() => setFocus(null), [height, xl]);
   const focusRect = focus !== null ? rects[focus] ?? null : null;
   const addrs = wallet ? [wallet.ordinalsAddress, wallet.paymentAddress].filter(Boolean) as string[] : [];
   const owned = useQuery(heldHeightsQuery(addrs));
@@ -339,7 +343,7 @@ function ForgePage() {
   }, [tool, boxStart, hover, paint]);
   const hoverParcel = hover ? parcelAt(rects, hover[0], hover[2]) : null;
   // Anywhere on the BITMAP canvas; only an explicitly chosen parcel (parcel inscription) clips placement.
-  const onTile = (x: number, z: number) => (focusRect ? inRect(focusRect, x, z) : Math.abs(x) < FORGE_SPAN && Math.abs(z) < FORGE_SPAN);
+  const onTile = (x: number, z: number) => (focusRect ? inRect(focusRect, x, z) : Math.abs(x) < SPAN && Math.abs(z) < SPAN);
   const ghostOut = !!(hover && (ghost.some((b) => !onTile(b.dx + hover[0], b.dz + hover[2]))));
   // Voxels of referenced on-chain pieces live in their own inscriptions, so only loose blocks count.
   const pieceKeys = useMemo(() => new Set(placements.flatMap((p) => p.keys)), [placements]);
@@ -377,7 +381,7 @@ function ForgePage() {
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement)?.tagName === "INPUT") return;
       if (e.key === "r" || e.key === "R") setTurns((t) => t + 1);
-      if (e.key === "e" || e.key === "E") setLayer((l) => Math.min(FORGE_SPAN - 1, l + 1));
+      if (e.key === "e" || e.key === "E") setLayer((l) => Math.min(SPAN - 1, l + 1));
       if (e.key === "q" || e.key === "Q") setLayer((l) => Math.max(0, l - 1));
       if ((e.ctrlKey || e.metaKey) && e.key === "z") { e.preventDefault(); undo(); return; }
       if (e.ctrlKey || e.metaKey) return;
@@ -483,12 +487,12 @@ function ForgePage() {
   }, [world]);
   const onGround = (e: ThreeEvent<PointerEvent>) => {
     const x = Math.floor(e.point.x + HALF), z = Math.floor(e.point.z + HALF);
-    if (x < 0 || z < 0 || x >= FORGE_SPAN || z >= FORGE_SPAN) return setHover(null);
+    if (x < 0 || z < 0 || x >= SPAN || z >= SPAN) return setHover(null);
     let y = layer;
     if (tool === "perch") y = Math.max(y, tops.get(`${x},${z}`) ?? 0);
     else if (tool !== "erase" && !(tool === "box" && boxStart)) for (const b of ghost) y = Math.max(y, (tops.get(`${x + b.dx},${z + b.dz}`) ?? 0) - b.dy);
     else if (tool === "box" && boxStart) y = Math.max(layer, boxStart[1]);
-    setHover([x, Math.min(FORGE_SPAN - 1, y), z]);
+    setHover([x, Math.min(SPAN - 1, y), z]);
   };
   const autoPerch = () => {
     let best: [number, number, number] | null = null;
@@ -518,12 +522,13 @@ function ForgePage() {
   // Recursive assembly: inscribed pieces by reference + own blocks + the block's baked Guardian.
   const livePlacements = useMemo(() => placements.filter((p) => p.keys.some((k) => world.has(k))), [placements, world]);
   const asmHtml = useMemo(() => {
-    if (height === null || (!livePlacements.length && !perch)) return "";
+    if (height === null || (!xl && !livePlacements.length && !perch)) return "";
+    if (xl && !livePlacements.length && !perch && !parcelBlocks.length) return "";
     const taken = new Set(livePlacements.flatMap((p) => p.keys));
     const own = parcelBlocks.filter((b) => !taken.has(cellKey(b.dx, b.dy, b.dz)));
     const guardian = perch && dnaQ.data ? { data: bakeGuardian(dnaQ.data), at: perch } : null;
-    return forgeAssemblyHtml(height, livePlacements.map((p) => p.part), own, guardian, lineage);
-  }, [height, livePlacements, perch, parcelBlocks, dnaQ.data, lineage]);
+    return forgeAssemblyHtml(height, livePlacements.map((p) => p.part), own, guardian, lineage, SPAN);
+  }, [height, livePlacements, perch, parcelBlocks, dnaQ.data, lineage, xl]);
   const asmBytes = useMemo(() => new TextEncoder().encode(asmHtml).length, [asmHtml]);
   const bytes = useMemo(() => new TextEncoder().encode(html).length, [html]);
   useEffect(() => {
@@ -602,6 +607,20 @@ function ForgePage() {
                 </p>
               )}
             </>
+          )}
+          {height !== null && role !== "parcel" && (
+            <div className="rounded border border-accent/40 bg-card/40 p-2 text-[11px]">
+              <p className="text-accent">CANVAS SIZE</p>
+              <div className="mt-1 flex gap-1">
+                {([FORGE_SPAN, FORGE_SPAN_XL] as const).map((n) => (
+                  <button key={n} type="button" data-testid={`forge-span-${n}`} onClick={() => {
+                    if (n === FORGE_SPAN && blocks.some((b) => b.dx >= FORGE_SPAN || b.dy >= FORGE_SPAN || b.dz >= FORGE_SPAN)) { toast.error("CLEAR BLOCKS OUTSIDE THE 64³ AREA FIRST"); return; }
+                    setXl(n === FORGE_SPAN_XL);
+                  }} className={`rounded border px-2 py-0.5 text-[10px] ${(n === FORGE_SPAN_XL) === xl ? "border-accent text-foreground" : "border-border text-muted-foreground"}`}>{n}³{n === FORGE_SPAN_XL ? " XL" : ""}</button>
+                ))}
+              </div>
+              <p className="mt-1 text-muted-foreground">{xl ? "XL: 8× the space at half block size, same land footprint. Inscribes as a recursive build only." : "Original size. Works with every inscribe option."}</p>
+            </div>
           )}
           {rects.length > 0 && (
             <div className="rounded border border-primary/40 bg-card/40 p-2 text-[11px]">
@@ -792,14 +811,14 @@ function ForgePage() {
               <span className={overLimit || ghostOut ? "text-destructive" : "text-accent"}>{overLimit || ghostOut ? "CLIPS EDGE" : "FITS"}</span> · {picked.name.toUpperCase()} · ROT {(((turns % 4) + 4) % 4) * 90}°{!picked.author && (picked.bitCost ?? 0) > 0 ? ` · ${picked.bitCost} BIT` : ""} · R ROTATE · CLICK PLACE
             </div>
           )}
-          <SafeCanvas shadows camera={{ position: [40, 38, 40], fov: 45 }}>
+          <SafeCanvas key={SPAN} shadows camera={{ position: xl ? [80, 76, 80] : [40, 38, 40], fov: 45 }}>
             <ambientLight intensity={0.6} />
             <directionalLight position={[20, 40, 10]} intensity={1.2} castShadow />
             <Blocks blocks={blocks} erase={tool === "erase" || tool === "move"} onErase={eraseAt} onSurface={(c) => { if (c && tool !== "parcel") setHover(c); }} onPlace={() => void place()} />
             {hover && ghost.length > 0 && boxGhost.length === 0 && <><Ghost blocks={ghost} at={hover} bad={overLimit || ghostOut} /><GhostBounds blocks={ghost} at={hover} bad={overLimit || ghostOut} /></>}
             {boxGhost.length > 0 && <Ghost blocks={boxGhost} at={[0, 0, 0]} bad={ownCount + boxGhost.length > FORGE_MAX_BLOCKS} />}
             {perch && dnaQ.data && (
-              <group position={[perch[0] - HALF + 0.5, perch[1], perch[2] - HALF + 0.5]} scale={0.36}>
+              <group position={[perch[0] - half() + 0.5, perch[1], perch[2] - half() + 0.5]} scale={0.36}>
                 <OnchainGuardianBody dna={dnaQ.data} />
               </group>
             )}
@@ -807,10 +826,10 @@ function ForgePage() {
             {showBp && sketch.length > 0 && <Ghost blocks={sketch} at={[0, 0, 0]} bad={false} />}
             {testing && liveBehaviors.map((lb) => <KitBehaviorPreview key={lb.b.card} behavior={lb.b} blocks={lb.blocks} />)}
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, layer, 0]} onPointerMove={onGround} onPointerLeave={() => setHover(null)} onClick={() => void place()} receiveShadow>
-              <planeGeometry args={[FORGE_SPAN, FORGE_SPAN]} />
+              <planeGeometry args={[SPAN, SPAN]} />
               <meshStandardMaterial color="#1b1f26" transparent opacity={layer ? 0.25 : 1} />
             </mesh>
-            <gridHelper args={[FORGE_SPAN, FORGE_SPAN, "#2c3440", "#222831"]} position={[0, layer + 0.01, 0]} />
+            <gridHelper args={[SPAN, SPAN, "#2c3440", "#222831"]} position={[0, layer + 0.01, 0]} />
             <OrbitControls enablePan={false} makeDefault maxPolarAngle={Math.PI / 2.1} />
           </SafeCanvas>
           <div className="pointer-events-none absolute left-3 top-3 rounded border border-border bg-background/70 px-2 py-1 text-[11px] text-accent backdrop-blur">
@@ -857,7 +876,7 @@ function ForgePage() {
               <button type="button" onClick={undo} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">↶ UNDO</button>
               <button type="button" title="Floor level (Q/E) — only needed to build in mid-air" onClick={() => setLayer((l) => Math.max(0, l - 1))} className="rounded px-1.5 py-1 text-[10px] text-muted-foreground hover:bg-muted">−</button>
               <span className="text-[10px] text-muted-foreground">LVL {layer}</span>
-              <button type="button" title="Floor level (Q/E) — only needed to build in mid-air" onClick={() => setLayer((l) => Math.min(FORGE_SPAN - 1, l + 1))} className="rounded px-1.5 py-1 text-[10px] text-muted-foreground hover:bg-muted">+</button>
+              <button type="button" title="Floor level (Q/E) — only needed to build in mid-air" onClick={() => setLayer((l) => Math.min(SPAN - 1, l + 1))} className="rounded px-1.5 py-1 text-[10px] text-muted-foreground hover:bg-muted">+</button>
               <button type="button" onClick={() => { commit(new Map()); setUsed([]); }} className="rounded px-2 py-1 text-[10px] text-destructive hover:bg-muted">CLEAR</button>
             </div>
           </div>
@@ -913,9 +932,9 @@ function ForgePage() {
                 reinscribeOnBitmap
                 {...(parcelTarget !== undefined ? { parcelIndex: parcelTarget } : {})}
                 artifactVariants={[
-                  ...(asmHtml ? [{ key: "asm", label: livePlacements.length ? "RECURSIVE BUILD" : "BUILD + GUARDIAN", contentType: "text/html;charset=utf-8", source: asmHtml, note: `${livePlacements.length} inscribed piece${livePlacements.length === 1 ? "" : "s"} pulled live from Bitcoin${perch ? " · your Guardian perched on top" : ""} · ${(asmBytes / 1024).toFixed(1)} KB.`, ...(payouts.length ? { tributes: payouts } : {}) }] : []),
-                  ...(FORGE_MASTER_DELEGATE_ID ? (() => { const best = encodeBuildBest(parcelBlocks); const meta = forgeDelegateMetadata(height, best.data, lineage, focusRect ?? undefined, best.format); return [{ key: "lean", label: "LEAN BUILD", contentType: "text/html;charset=utf-8", source: html, note: `Drawn by the shared on-chain Forge renderer (${best.format}) — about ${delegateSavings(html, meta).saved.toLocaleString()} fewer bytes to pay for.`, delegate: FORGE_MASTER_DELEGATE_ID, metadata: meta, ...(payouts.length ? { tributes: payouts } : {}) }]; })() : []),
-                  { key: "html", label: "3D BUILD", contentType: "text/html;charset=utf-8", source: html, note: "Self-rendering build, no outside code.", ...(payouts.length ? { tributes: payouts } : {}) },
+                  ...(asmHtml ? [{ key: "asm", label: xl ? "XL RECURSIVE BUILD · 128³" : livePlacements.length ? "RECURSIVE BUILD" : "BUILD + GUARDIAN", contentType: "text/html;charset=utf-8", source: asmHtml, note: `${livePlacements.length} inscribed piece${livePlacements.length === 1 ? "" : "s"} pulled live from Bitcoin${perch ? " · your Guardian perched on top" : ""} · ${(asmBytes / 1024).toFixed(1)} KB.`, ...(payouts.length ? { tributes: payouts } : {}) }] : []),
+                  ...(xl ? [] : FORGE_MASTER_DELEGATE_ID ? (() => { const best = encodeBuildBest(parcelBlocks); const meta = forgeDelegateMetadata(height, best.data, lineage, focusRect ?? undefined, best.format); return [{ key: "lean", label: "LEAN BUILD", contentType: "text/html;charset=utf-8", source: html, note: `Drawn by the shared on-chain Forge renderer (${best.format}) — about ${delegateSavings(html, meta).saved.toLocaleString()} fewer bytes to pay for.`, delegate: FORGE_MASTER_DELEGATE_ID, metadata: meta, ...(payouts.length ? { tributes: payouts } : {}) }]; })() : []),
+                  ...(xl ? [] : [{ key: "html", label: "3D BUILD", contentType: "text/html;charset=utf-8", source: html, note: "Self-rendering build, no outside code.", ...(payouts.length ? { tributes: payouts } : {}) }]),
                 ]}
               />
             </div>
