@@ -105,7 +105,7 @@ export function fitPrims(prims: WorldPrim[], fit: number) {
     const r = Math.max(p.size[0], p.size[2]) / 2;
     x0 = Math.min(x0, p.pos[0] - r); x1 = Math.max(x1, p.pos[0] + r);
     z0 = Math.min(z0, p.pos[2] - r); z1 = Math.max(z1, p.pos[2] + r);
-    y0 = Math.min(y0, p.pos[1] - Math.max(...p.size) / 2);
+    y0 = Math.min(y0, p.pos[1] - p.size[1] / 2);
   }
   const scale = fit / Math.max(x1 - x0, z1 - z0, 1);
   return { scale, offset: [-(x0 + x1) / 2, -y0, -(z0 + z1) / 2] as [number, number, number] };
