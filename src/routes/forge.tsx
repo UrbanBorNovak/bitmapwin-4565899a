@@ -733,7 +733,7 @@ function ForgePage() {
             {kit && (
               <div className="mt-3 border-t border-border pt-2">
                 <div className="flex items-center justify-between"><span className="text-primary">BEHAVIOR CARDS</span>
-                  <button type="button" disabled={!liveBehaviors.length && !testing} onClick={() => setTesting((t) => !t)} className="rounded border border-primary px-2 py-0.5 text-[10px] text-primary disabled:opacity-40">{testing ? "■ STOP" : "▶ TEST RUN"}</button>
+                  <button type="button" disabled={!liveBehaviors.length && !testing} onClick={() => setTesting((t) => !t)} className="rounded border border-primary px-2 py-1.5 text-xs text-primary disabled:opacity-40 sm:py-0.5 sm:text-[10px]">{testing ? "■ STOP" : "▶ TEST RUN"}</button>
                 </div>
                 <div className="mt-1 grid grid-cols-1 gap-1">
                   {kit.behaviors.map((b) => {
@@ -742,7 +742,7 @@ function ForgePage() {
                     const ready = b.steps.every((s) => s < bpStep);
                     return (
                       <button key={b.card} type="button" onClick={() => setOff((o) => on ? [...o, b.card] : o.filter((x) => x !== b.card))}
-                        className={`rounded border px-2 py-1 text-left text-[10px] ${on ? "border-primary/70 text-foreground" : "border-border text-muted-foreground"}`}>
+                        className={`rounded border px-2 py-2 text-left text-xs sm:py-1 sm:text-[10px] ${on ? "border-primary/70 text-foreground" : "border-border text-muted-foreground"}`}>
                         <span className="flex justify-between"><b>{on ? "◉" : "○"} {card.name}</b><span className={ready ? "text-accent" : "text-muted-foreground"}>{ready ? "READY" : `AFTER STEP ${Math.max(...b.steps) + 1}`}</span></span>
                         <span className="text-muted-foreground">{card.blurb}</span>
                       </button>
