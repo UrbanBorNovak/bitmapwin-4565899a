@@ -59,7 +59,9 @@ let SPAN: ForgeSpan = FORGE_SPAN;
 const half = () => SPAN / 2;
 const COLORS = Object.fromEntries(BLOCKS.map((b) => [b.id, new THREE.Color(b.top)]));
 type Tool = "stamp" | "block" | "box" | "erase" | "perch" | "parcel" | "move";
-type Placement = { part: AsmPart; keys: string[] };
+type Placement = { part: AsmPart; keys: string[]; refs: TplBlock[] };
+/** A piece is in the build only while every block it stamped is still the exact same block (not refilled by undo/clear/generate/other stamps). */
+const isLive = (p: Placement, world: Map<string, TplBlock>) => p.keys.every((k, i) => world.get(k) === p.refs[i]);
 
 function ParcelFloor({ rects, focus, hoverIdx }: { rects: ParcelRect[]; focus: number | null; hoverIdx: number | null }) {
   const ref = useRef<THREE.InstancedMesh>(null);
@@ -439,7 +441,7 @@ function ForgePage() {
     commit(next);
     if (tool === "stamp" && picked.id.startsWith("ins:")) {
       const keys = [...next.keys()].filter((k) => !world.has(k));
-      if (keys.length) setPlacements((p) => [...p, { part: { id: picked.id.slice(4), x: hover[0], y: hover[1], z: hover[2], r: ((turns % 4) + 4) % 4 }, keys }]);
+      if (keys.length) setPlacements((p) => [...p.filter((x) => isLive(x, next)), { part: { id: picked.id.slice(4), x: hover[0], y: hover[1], z: hover[2], r: ((turns % 4) + 4) % 4 }, keys, refs: keys.map((k) => next.get(k)!) }]);
     }
     if (tool === "stamp" && picked.author && !used.some((u) => u.id === picked.id)) setUsed((u) => [...u, picked]);
   };
@@ -447,7 +449,7 @@ function ForgePage() {
   /** Erasing one block of an inscribed piece removes the whole piece (it is placed by reference). */
   const eraseAt = (b: TplBlock) => {
     const key = cellKey(b.dx, b.dy, b.dz);
-    const hit = placements.find((p) => p.keys.includes(key));
+    const hit = placements.find((p) => isLive(p, world) && p.keys.includes(key));
     if (tool === "move") {
       if (!hit) { toast.error("ONLY ON-CHAIN PIECES CAN BE MOVED — CLICK ONE"); return; }
       const piece = chainPieces.find((c) => c.id === `ins:${hit.part.id}`);
@@ -511,7 +513,7 @@ function ForgePage() {
   // Royalties: module lineage + 546 sats to the maker of each verified collection piece still in the build,
   // plus the optional 546-sat site tribute (counts toward the site fund).
   const payouts = useMemo(() => {
-    const live = new Set(placements.filter((p) => p.keys.some((k) => world.has(k))).map((p) => p.part.id));
+    const live = new Set(placements.filter((p) => isLive(p, world)).map((p) => p.part.id));
     const pieceMakers = [...live].map((id) => makers[id]).filter((a): a is string => !!a).map((address) => [{ address, sats: 546 }]);
     const site = siteTribute ? [[{ address: DONATION_ADDRESS, sats: 546 }]] : [];
     return tributeSplit([...used.map((u) => u.lineage ?? []), ...pieceMakers, ...site] as Parameters<typeof tributeSplit>[0]);
@@ -521,7 +523,7 @@ function ForgePage() {
   const parcelBlocks = useMemo(() => (focusRect ? clipToParcel(blocks, focusRect) : blocks), [blocks, focusRect]);
   const html = useMemo(() => (height === null || !parcelBlocks.length ? "" : forgeInscriptionHtml(height, "studio", parcelBlocks, lineage, focusRect ?? undefined)), [height, parcelBlocks, lineage, focusRect]);
   // Recursive assembly: inscribed pieces by reference + own blocks + the block's baked Guardian.
-  const livePlacements = useMemo(() => placements.filter((p) => p.keys.some((k) => world.has(k))), [placements, world]);
+  const livePlacements = useMemo(() => placements.filter((p) => isLive(p, world)), [placements, world]);
   const asmHtml = useMemo(() => {
     if (height === null || (!xl && !livePlacements.length && !perch)) return "";
     if (xl && !livePlacements.length && !perch && !parcelBlocks.length) return "";
@@ -645,7 +647,7 @@ function ForgePage() {
               <div className="mt-2 space-y-1">
                 {chainPieces.map((p) => (
                   <button key={p.id} type="button" onClick={() => { setPicked(p); setTool("stamp"); }} className={`w-full rounded border px-2 py-1 text-left text-[10px] ${picked.id === p.id && tool === "stamp" ? "border-primary text-foreground" : "border-border text-muted-foreground"}`}>
-                    {p.name} · {p.blocks.length} voxels · {placements.filter((x) => `ins:${x.part.id}` === p.id && x.keys.some((k) => world.has(k))).length} placed
+                    {p.name} · {p.blocks.length} voxels · {placements.filter((x) => `ins:${x.part.id}` === p.id && isLive(x, world)).length} placed
                   </button>
                 ))}
               </div>
@@ -850,7 +852,7 @@ function ForgePage() {
                     onPointerDown={(e) => { e.preventDefault(); setPicked(p); setTool("stamp"); setDragging(true); }}
                     className={`shrink-0 cursor-grab touch-none rounded border px-2 py-1 text-left text-[10px] active:cursor-grabbing ${picked.id === p.id && tool === "stamp" ? "border-primary text-foreground" : "border-border text-muted-foreground"}`}>
                     <span className="block">{p.name}</span>
-                    <span>{p.blocks.length} vox · {placements.filter((x) => `ins:${x.part.id}` === p.id && x.keys.some((k) => world.has(k))).length} placed</span>
+                    <span>{p.blocks.length} vox · {placements.filter((x) => `ins:${x.part.id}` === p.id && isLive(x, world)).length} placed</span>
                   </button>
                 ))}
               </div>
