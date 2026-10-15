@@ -28,6 +28,8 @@ const GROUPS: { label: string; items: { to: string; label: string }[] }[] = [
       { to: "/extend", label: "DEPLOY" },
       { to: "/studio", label: "STUDIO" },
       { to: "/mint", label: "MINT GUARDIAN" },
+      { to: "/forge", label: "LAND FORGE" },
+      { to: "/breed", label: "BREED PETS" },
       { to: "/extenders", label: "EXTENDERS" },
     ],
   },
@@ -74,7 +76,7 @@ export function SiteFooter() {
           ))}
         </nav>
         <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3 md:flex-row md:items-center md:justify-between">
-          <div className="display text-xs">BITMAPWIN · THE INTERNET, BUT WITH LAND · <Link to="/beta" className="text-bitcoin hover:text-foreground">BETA 0.9</Link></div>
+          <div className="display text-xs"><Link to="/collections" className="text-primary hover:text-foreground">THE OTHERTHINGS</Link> · BITMAPWIN · THE INTERNET, BUT WITH LAND · <Link to="/beta" className="text-bitcoin hover:text-foreground">BETA 0.9</Link></div>
           <div className="label">
             REAL BLOCKS · LIVE ORDINALS · ON-CHAIN OWNERSHIP
             <span className="blink ml-2 text-foreground">_</span>
