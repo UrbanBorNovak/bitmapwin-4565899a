@@ -15,7 +15,7 @@ export const GUARDIAN_STEPS: ProtocolStep[] = [
 
 export const FORGE_STEPS: ProtocolStep[] = [
   { id: "target", title: "PICK A BITMAP", route: "/forge", detail: "Enter or select a BITMAP you hold. The floor shows its real parcel layout from the block.", cost: "Free" },
-  { id: "compose", title: "COMPOSE", route: "/forge", detail: "Place own blocks (up to 12,000) and drag up to 24 inscribed community pieces anywhere. M moves, R rotates.", cost: "Free to design" },
+  { id: "compose", title: "COMPOSE", route: "/forge", detail: "Place own blocks (up to 12,000) and drag up to 32 inscribed community pieces anywhere. M moves, R rotates.", cost: "Free to design" },
   { id: "encode", title: "ENCODE", route: "/forge", detail: "Choose Recursive (pieces referenced by id), Lean BWVX2 (greedy boxes) or standalone 3D HTML.", cost: "Smallest payload wins" },
   { id: "inscribe", title: "REINSCRIBE ON THE SAT", route: "/forge", detail: "Pay commit, sign the parent claim. The BITMAP sat goes in at input 0 and comes back at output 0; piece makers are paid in the reveal.", cost: "Miner fee + ≥546 sats per maker" },
 ];
@@ -26,7 +26,7 @@ export const AGENT_TOOLS: AgentTool[] = [
   { name: "guardian.resolve", description: "Read the Guardian for a BITMAP: DNA, on-chain name, inscription id if inscribed.", input: { height: "integer block height" }, output: "{ height, name, species, inscribed, inscriptionId | null }" },
   { name: "guardian.breed", description: "Deterministically preview a pet from two inscribed Guardian inscription ids. Same inputs always give the same pet.", input: { sireId: "inscription id", damId: "inscription id" }, output: "{ genome, traits, sire, dam }" },
   { name: "forge.encode", description: "Encode voxels [x,y,z,color] (color 0–10) as BWVX1 or BWVX2, returning the smaller.", input: { height: "integer", voxels: "Array<[x,y,z,color]>" }, output: "{ f: 'BWVX1'|'BWVX2', h, d: base64 }" },
-  { name: "forge.assemble", description: "Build a BWVX_ASM recursive manifest from inscribed pieces + placements (max 24).", input: { height: "integer", pieces: "Array<{ id, x, y, z, rot }>", own: "optional voxels" }, output: "{ f: 'BWVX_ASM', h, parts, d? }" },
+  { name: "forge.assemble", description: "Build a BWVX_ASM recursive manifest from inscribed pieces + placements (max 32).", input: { height: "integer", pieces: "Array<{ id, x, y, z, rot }>", own: "optional voxels" }, output: "{ f: 'BWVX_ASM', h, parts, d? }" },
   { name: "emporium.verifyResident", description: "Check on chain whether an address holds a Bitmap Emporium Resident portrait (image child of 717328.bitmap) or a valid 717328 parcel. Public, read-only.", input: { address: "Bitcoin address" }, output: "{ address, height: 717328, resident, portraits: inscription ids, parcels: Array<{ index, inscriptionId }>, checkedAt }" },
   { name: "forge.tributes", description: "List the reveal outputs owed to verified piece makers (≥546 sats each, max 8).", input: { pieceIds: "inscription ids" }, output: "Array<{ address, sats }>" },
 ];
