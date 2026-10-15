@@ -924,7 +924,123 @@ const taj: Kit = {
   ages: "12+",
 };
 
-export const KITS: Kit[] = [citadel, express, array, vault, dragon, mega, colossus, ark, bismarck, tiger, spitfire, hospital, police, fire, school, pyramid, colosseum, eiffel, taj];
+// ---- GREAT WALL OF CHINA ----
+const wz = (x: number) => Math.round(30 + 13 * Math.sin(x / 9));
+const wg = (x: number) => Math.max(1, Math.round(6 + 5 * Math.sin(x / 7 + 1)));
+const greatWall: Kit = {
+  id: "kit-greatwall", name: "The Great Wall of China", sphere: "kingdom", kit: true, difficulty: "MASTER",
+  story: "The Great Wall snaking over a mountain ridge: crenellated walkway, stone watchtowers with signal fires and a fortified gate pass.",
+  steps: [
+    step("Mountain ridge", "Shape the green ridge the wall rides along.", (m) => {
+      for (let x = 2; x <= 61; x++) for (let z = 2; z <= 61; z++) { const h = Math.max(0, Math.round(wg(x) - Math.abs(z - wz(x)) / 2.2)); m.put(x, h, z, h > 3 ? "grass" : h > 0 ? "dirt" : "grass"); }
+    }),
+    step("Wall footings", "Solid stone under the wall, following the slope.", (m) => {
+      for (let x = 2; x <= 61; x++) { const c = wz(x), g = wg(x); for (let z = c - 2; z <= c + 1; z++) for (let y = Math.max(1, g - 3); y < g; y++) if (z === c - 2 || z === c + 1) m.put(x, y, z, "cobble"); }
+    }),
+    step("Wall body", "Raise the twin stone faces of the wall.", (m) => {
+      for (let x = 2; x <= 61; x++) { const c = wz(x), g = wg(x); for (let y = g; y <= g + 4; y++) for (const z of [c - 2, c + 1]) m.put(x, y, z, y % 2 ? "stone" : "cobble"); }
+    }),
+    step("Walkway", "Lay the brick walkway along the top.", (m) => {
+      for (let x = 2; x <= 61; x++) { const c = wz(x), g = wg(x); for (let z = c - 1; z <= c; z++) m.put(x, g + 4, z, "brick"); }
+    }),
+    step("Battlements", "Crenellations on the outer side, a low parapet on the inner side.", (m) => {
+      for (let x = 2; x <= 61; x++) { const c = wz(x), g = wg(x); m.put(x, g + 5, c + 1, "stone"); if (x % 2 === 0) m.put(x, g + 6, c + 1, "stone"); m.put(x, g + 5, c - 2, "stone"); }
+    }),
+    step("Watchtowers", "Four square towers with windows and tiled roofs.", (m) => {
+      for (const x0 of [6, 22, 38, 54]) { const c = wz(x0 + 2), g = Math.min(...[0, 1, 2, 3, 4].map((i) => wg(x0 + i))) - 1; m.box(x0, x0 + 4, g, g + 11, c - 3, c + 2, "stone", true); for (let y = g + 6; y <= g + 8; y++) { m.put(x0 + 2, y, c - 3, "glass"); m.put(x0 + 2, y, c + 2, "glass"); } m.box(x0 - 1, x0 + 5, g + 12, g + 12, c - 4, c + 3, "brick"); m.box(x0, x0 + 4, g + 13, g + 13, c - 3, c + 2, "brick"); for (const dx of [0, 2, 4]) m.put(x0 + dx, g + 14, c - 3, "stone"); }
+    }),
+    step("Signal fires", "Beacon braziers on every tower roof.", (m) => { for (const x0 of [6, 22, 38, 54]) { const c = wz(x0 + 2), g = Math.min(...[0, 1, 2, 3, 4].map((i) => wg(x0 + i))) - 1; m.put(x0 + 2, g + 14, c, "log"); m.put(x0 + 2, g + 15, c, "glow"); } }),
+    step("Gate pass", "A fortified gatehouse with an arch and red banners.", (m) => {
+      const x0 = 29, c = wz(31), g = wg(31);
+      m.box(x0, x0 + 6, 1, g + 9, c - 4, c + 3, "brick", true); for (let y = 1; y <= 4; y++) for (let x = x0 + 2; x <= x0 + 4; x++) { m.put(x, y, c - 4, "glass"); m.put(x, y, c + 3, "glass"); }
+      m.box(x0 - 1, x0 + 7, g + 10, g + 10, c - 5, c + 4, "gold"); for (const x of [x0, x0 + 6]) for (let y = g + 4; y <= g + 8; y++) m.put(x, y, c - 5, "brick");
+    }),
+  ],
+  behaviors: [{ card: "beacon_pulse", steps: [6], pivot: [31, 20, 30] }],
+  bags: [1, 2, 2, 3, 3, 4, 5, 6],
+  tagline: "Winding wall, watchtowers with signal fires, mountain gate pass.",
+  ages: "12+",
+};
+
+// ---- PETRA ----
+const petra: Kit = {
+  id: "kit-petra", name: "Petra — The Treasury", sphere: "kingdom", kit: true, difficulty: "MASTER",
+  story: "Al-Khazneh, carved into a rose-red cliff at the end of the narrow Siq canyon: columned portico, round tholos with a gold urn, and torch-lit tombs.",
+  steps: [
+    step("Canyon floor", "The sandy floor of the Siq and the courtyard.", (m) => { m.box(6, 57, 0, 0, 18, 43, "sand"); m.box(22, 41, 0, 0, 2, 17, "sand"); }),
+    step("Rose-red cliff", "The sheer rock face the Treasury is carved into.", (m) => {
+      for (let x = 6; x <= 57; x++) { const top = 46 + Math.round(3 * Math.sin(x / 4)); for (let y = 1; y <= top; y++) m.put(x, y, 44, (x * 3 + y * 7) % 11 < 3 ? "sand" : "brick"); m.put(x, top + 1, 43, "brick"); }
+      for (let z = 18; z <= 43; z++) for (const x of [6, 57]) for (let y = 1; y <= 16 + (z % 5); y++) m.put(x, y, z, "brick");
+    }),
+    step("The Siq", "Two towering canyon walls leading in.", (m) => {
+      for (let z = 2; z <= 17; z++) { const w = Math.round(2 * Math.sin(z / 3)); for (let y = 1; y <= 26 + (z % 4); y++) { m.put(22 + w, y, z, "brick"); m.put(41 + w, y, z, "brick"); } }
+    }),
+    step("Lower portico", "Six columns with a doorway behind them.", (m) => {
+      m.box(18, 45, 1, 1, 38, 43, "sand"); m.box(19, 44, 2, 2, 39, 43, "sand");
+      for (const x of [20, 24, 28, 35, 39, 43]) { m.box(x, x + 1, 3, 17, 40, 41, "sand"); m.box(x - 1, x + 2, 18, 18, 39, 41, "stone"); }
+      m.box(29, 34, 3, 12, 43, 43, "log"); m.box(18, 45, 19, 21, 39, 43, "sand");
+    }),
+    step("Pediment", "The triangular roof over the portico.", (m) => { for (let i = 0; i <= 5; i++) m.box(25 + i, 38 - i, 22 + i, 22 + i, 40, 43, i === 0 ? "stone" : "sand"); }),
+    step("Upper tholos", "The round temple in the middle of the upper storey.", (m) => {
+      m.box(18, 45, 28, 28, 40, 43, "stone");
+      for (let x = 27; x <= 36; x++) for (let z = 36; z <= 43; z++) { const d = Math.hypot(x - 31.5, (z - 41) * 1.2); if (d <= 4.8 && d > 3.6) for (let y = 29; y <= 40; y++) if (y > 38 || (x + 1) % 2 === 0) m.put(x, y, z, "sand"); }
+      domeShell(m, 31.5, 41, 41, 4, "sand", 0.7);
+    }),
+    step("Side pavilions & urn", "Two half-pediment pavilions and the gold urn on top.", (m) => {
+      for (const x0 of [18, 39]) { for (const x of [x0, x0 + 3, x0 + 6]) m.box(x, x, 29, 39, 41, 42, "sand"); m.box(x0 - 1, x0 + 7, 40, 40, 40, 43, "stone"); }
+      m.box(31, 32, 45, 47, 40, 41, "gold"); m.put(31, 48, 40, "gold");
+    }),
+    step("Tombs & torches", "Carved tomb doors in the cliff and glowing torches.", (m) => {
+      for (const x of [10, 14, 49, 53]) { m.box(x, x + 2, 1, 6, 43, 43, "log"); m.box(x - 1, x + 3, 7, 7, 43, 43, "sand"); }
+      for (const [x, z] of [[20, 34], [43, 34], [26, 18], [37, 18]] as const) { m.put(x, 1, z, "log"); m.put(x, 2, z, "glow"); }
+    }),
+  ],
+  behaviors: [{ card: "beacon_pulse", steps: [7], pivot: [31, 2, 30] }],
+  bags: [1, 1, 2, 3, 3, 4, 5, 6],
+  tagline: "Rock-cut Treasury, the Siq canyon, round tholos with a gold urn.",
+  ages: "12+",
+};
+
+// ---- MACHU PICCHU ----
+const mpH = (x: number, z: number) => {
+  if (x < 2 || x > 61 || z < 2 || z > 61) return 0;
+  const base = z < 20 ? 2 + 2 * Math.floor((z - 2) / 3) : 14;
+  const peak = Math.round(50 - 3.3 * Math.hypot(x - 30, z - 54));
+  return Math.max(0, Math.min(base > 0 ? Math.max(base, peak) : peak, (x - 1) * 3, (62 - x) * 3, 62));
+};
+const hut = (m: M, x: number, z: number, y: number) => { m.box(x, x + 4, y, y + 2, z, z + 3, "stone", true); m.put(x + 2, y, z, "log"); m.put(x + 2, y + 1, z, "log"); for (let i = 0; i <= 2; i++) m.box(x, x + 4, y + 3 + i, y + 3 + i, z + i, z + 3 - i, "planks"); };
+const machu: Kit = {
+  id: "kit-machu", name: "Machu Picchu", sphere: "nature", kit: true, difficulty: "MASTER",
+  story: "The Inca citadel in the clouds: stepped stone terraces, a green main plaza, the round Temple of the Sun, the Intihuatana stone and Huayna Picchu rising behind.",
+  steps: [
+    step("Mountain & terraces", "Shape the mountain — every drop becomes a stone terrace wall.", (m) => {
+      for (let x = 2; x <= 61; x++) for (let z = 2; z <= 61; z++) {
+        const h = mpH(x, z); const low = Math.min(mpH(x + 1, z), mpH(x - 1, z), mpH(x, z + 1), mpH(x, z - 1));
+        for (let y = Math.max(0, low + 1); y < h; y++) m.put(x, y, z, z < 20 || z > 44 ? "stone" : "cobble");
+        m.put(x, h, z, "grass");
+      }
+    }),
+    step("Grand staircase", "Stone steps climbing the terraces to the city.", (m) => { for (let z = 2; z < 20; z++) { const y = mpH(31, z); m.put(31, y + 1, z, "cobble"); m.put(32, y + 1, z, "cobble"); } }),
+    step("Main plaza ruins", "Stone houses with thatched roofs around the plaza.", (m) => { for (const [x, z] of [[8, 22], [14, 22], [8, 30], [46, 22], [52, 22], [52, 30], [20, 36], [40, 36]] as const) hut(m, x, z, 15); }),
+    step("Temple of the Sun", "The curved stone tower with a window for the solstice sunrise.", (m) => {
+      for (let x = 34; x <= 44; x++) for (let z = 24; z <= 34; z++) { const d = Math.hypot(x - 39, z - 29); if (d <= 4.5 && d > 3.3) for (let y = 15; y <= 21; y++) m.put(x, y, z, y === 19 && x === 39 && z < 29 ? "glass" : "stone"); }
+      m.box(36, 42, 15, 15, 26, 32, "cobble");
+    }),
+    step("Temple of Three Windows", "A long stone wall with three big trapezoid windows.", (m) => { m.box(18, 30, 15, 21, 30, 31, "stone"); for (const x of [20, 24, 28]) m.box(x, x + 1, 17, 19, 30, 31, "glass"); }),
+    step("Intihuatana", "The carved sun-hitching stone on its little hill.", (m) => { m.box(24, 28, 15, 16, 40, 44, "cobble"); m.box(25, 27, 17, 18, 41, 43, "stone"); m.put(26, 19, 42, "stone"); m.put(26, 20, 42, "glow"); }),
+    step("Huayna Picchu path & llamas", "Trail to the peak, a lookout hut and grazing llamas.", (m) => {
+      for (let i = 0; i < 18; i++) { const x = 30 + Math.round(4 * Math.sin(i / 2)), z = 45 + Math.floor(i / 2); m.put(x, mpH(x, z) + 1, z, "cobble"); }
+      hut(m, 28, 52, mpH(30, 54) + 1);
+      for (const [x, z] of [[12, 38], [48, 40], [16, 16]] as const) { const y = mpH(x, z) + 1; m.box(x, x + 2, y + 1, y + 1, z, z, "sand"); m.put(x, y, z, "sand"); m.put(x + 2, y, z, "sand"); m.box(x + 2, x + 2, y + 2, y + 3, z, z, "sand"); }
+    }),
+  ],
+  behaviors: [{ card: "beacon_pulse", steps: [5], pivot: [26, 20, 42] }],
+  bags: [1, 2, 3, 4, 4, 5, 6],
+  tagline: "Stone terraces, Temple of the Sun, Huayna Picchu peak behind.",
+  ages: "14+",
+};
+
+export const KITS: Kit[] = [citadel, express, array, vault, dragon, mega, colossus, ark, bismarck, tiger, spitfire, hospital, police, fire, school, pyramid, colosseum, eiffel, taj, greatWall, petra, machu];
 export const isKit = (b: Blueprint): b is Kit => (b as Kit).kit === true;
 
 /** Deterministic pose for a behavior at time t (seconds). `near` = visitor in range. */
