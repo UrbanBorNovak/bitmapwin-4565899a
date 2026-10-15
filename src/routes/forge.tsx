@@ -15,7 +15,9 @@ import { BLOCKS, type BlockId } from "@/lib/voxel-world";
 import type { TplBlock } from "@/lib/voxel-templates";
 import { ARCHETYPES, FORGE_MAX_BLOCKS, FORGE_RENDER_MAX, FORGE_SPAN, encodeBuild, encodeBuildBest, FORGE_UNPACK_JS, forgeInscriptionHtml, generateBuild, type ArchetypeId } from "@/lib/voxel-populate";
 import { HOUSE_PREFABS, SPHERES, cellKey, normaliseModule, rotatePrefab, stampInto, tributeSplit, type Contributor, type Prefab, type Sphere } from "@/lib/forge-prefabs";
-import { BLUEPRINTS, blueprintBlocks, nextDropAt, weekNumber, weeklyBlueprint } from "@/lib/forge-blueprints";
+import { BLUEPRINTS, blueprintBlocks, nextDropAt, weekNumber, weeklyBlueprint, type Blueprint } from "@/lib/forge-blueprints";
+import { BEHAVIOR_CARDS, KITS, isKit, kitManifest, type BehaviorCard } from "@/lib/forge-kits";
+import { KitBehaviorPreview } from "@/components/forge/KitBehaviorPreview";
 import { clipToParcel, inRect, parcelAt, parcelRects, type ParcelRect } from "@/lib/forge-parcels";
 import { publishForgeModuleFn, stampForgeModuleFn, stampHousePresetFn } from "@/lib/forge-modules.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -242,12 +244,29 @@ function ForgePage() {
   const [bpId, setBpId] = useState(weekly.id);
   const [bpStep, setBpStep] = useState(0);
   const [showBp, setShowBp] = useState(true);
-  const bp = BLUEPRINTS.find((b) => b.id === bpId) ?? weekly;
+  const bp: Blueprint = KITS.find((k) => k.id === bpId) ?? BLUEPRINTS.find((b) => b.id === bpId) ?? weekly;
+  const kit = isKit(bp) ? bp : null;
+  const [auto, setAuto] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [off, setOff] = useState<BehaviorCard[]>([]);
   const sketch = useMemo(() => {
     const s = bp.steps[bpStep];
     if (!s) return [];
     return blueprintBlocks({ ...bp, steps: [s] }).filter((b) => !world.has(cellKey(b.dx, b.dy, b.dz))).slice(0, 900);
   }, [bp, bpStep, world]);
+  // Behavior cards animate the placed blocks of their steps (only once those steps are built).
+  const liveBehaviors = useMemo(() => {
+    if (!kit) return [];
+    return kit.behaviors.filter((b) => !off.includes(b.card) && b.steps.every((s) => s < bpStep)).map((b) => ({
+      b,
+      blocks: blueprintBlocks({ ...kit, steps: b.steps.map((i) => kit.steps[i]!) }).filter((x) => world.has(cellKey(x.dx, x.dy, x.dz))),
+    })).filter((x) => x.blocks.length > 0);
+  }, [kit, off, bpStep, world]);
+  const hiddenKeys = useMemo(() => {
+    const s = new Set<string>();
+    if (testing) for (const lb of liveBehaviors) for (const b of lb.blocks) s.add(cellKey(b.dx, b.dy, b.dz));
+    return s;
+  }, [testing, liveBehaviors]);
   const [dropIn, setDropIn] = useState("");
   useEffect(() => {
     const tick = () => { const ms = nextDropAt() - Date.now(); const d = Math.floor(ms / 864e5), h = Math.floor((ms % 864e5) / 36e5); setDropIn(`${d}D ${h}H`); };
@@ -283,7 +302,10 @@ function ForgePage() {
     toast.success(`LOADED ${r.blocks.length} VOXELS FROM BITCOIN — CLICK TO SNAP IT IN`);
   };
 
-  const blocks = useMemo(() => [...world.values()], [world]);
+  const blocks = useMemo(() => {
+    const all = [...world.values()];
+    return hiddenKeys.size ? all.filter((b) => !hiddenKeys.has(cellKey(b.dx, b.dy, b.dz))) : all;
+  }, [world, hiddenKeys]);
   const ghost = useMemo(() => {
     if (tool === "erase" || tool === "parcel" || tool === "perch" || tool === "move") return [];
     if (tool === "block" || tool === "box") return [{ dx: 0, dy: 0, dz: 0, k: paint }];
@@ -312,6 +334,27 @@ function ForgePage() {
     setHistory((h) => [...h.slice(-30), world]);
     setWorld(next);
   }, [world]);
+
+  const buildStep = useCallback(() => {
+    const s = bp.steps[bpStep];
+    if (!s) { setAuto(false); return; }
+    commit(stampInto(world, blueprintBlocks({ ...bp, steps: [s] }), 0, 0, 0));
+    setBpStep((n) => n + 1);
+  }, [bp, bpStep, world, commit]);
+  const backStep = useCallback(() => {
+    const s = bp.steps[bpStep - 1];
+    if (!s) return;
+    const next = new Map(world);
+    for (const b of blueprintBlocks({ ...bp, steps: [s] })) next.delete(cellKey(b.dx, b.dy, b.dz));
+    commit(next);
+    setBpStep((n) => Math.max(0, n - 1));
+  }, [bp, bpStep, world, commit]);
+  useEffect(() => {
+    if (!auto) return;
+    if (bpStep >= bp.steps.length) { setAuto(false); toast.success(`${bp.name.toUpperCase()} ASSEMBLED`); return; }
+    const t = setTimeout(buildStep, 1100);
+    return () => clearTimeout(t);
+  }, [auto, bpStep, bp, buildStep]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -626,11 +669,21 @@ function ForgePage() {
           )}
           <div className="rounded border border-accent/40 bg-card/40 p-2 text-[11px]">
             <div className="flex items-center justify-between"><span className="text-accent">BLUEPRINTS</span><span className="text-[10px] text-muted-foreground">NEXT DROP {dropIn}</span></div>
-            <select value={bp.id} onChange={(e) => { setBpId(e.target.value); setBpStep(0); }} className="mt-1 w-full rounded border border-border bg-background px-2 py-1 text-foreground">
-              {BLUEPRINTS.map((b) => <option key={b.id} value={b.id}>{b.id === weekly.id ? `★ WEEK ${weekNumber()} · ` : ""}{b.name}</option>)}
+            <select value={bp.id} onChange={(e) => { setBpId(e.target.value); setBpStep(0); setAuto(false); setTesting(false); }} className="mt-1 w-full rounded border border-border bg-background px-2 py-1 text-foreground">
+              <optgroup label="KITS · STEP-BY-STEP + PROGRAMMABLE">
+                {KITS.map((k) => <option key={k.id} value={k.id}>▣ {k.name} · {k.difficulty}</option>)}
+              </optgroup>
+              <optgroup label="BLUEPRINTS">
+                {BLUEPRINTS.map((b) => <option key={b.id} value={b.id}>{b.id === weekly.id ? `★ WEEK ${weekNumber()} · ` : ""}{b.name}</option>)}
+              </optgroup>
             </select>
             <p className="mt-1 text-muted-foreground">{bp.story}</p>
-            <ol className="mt-2 space-y-1">
+            <div className="mt-2 flex items-center justify-between text-[10px]">
+              <span className="text-accent">STEP {Math.min(bpStep + 1, bp.steps.length)} / {bp.steps.length}{bpStep >= bp.steps.length ? " · COMPLETE" : ""}</span>
+              <span className="text-muted-foreground">{bp.steps[bpStep] ? `${blueprintBlocks({ ...bp, steps: [bp.steps[bpStep]!] }).length} BLOCKS THIS STEP` : ""}</span>
+            </div>
+            <div className="mt-1 h-1 overflow-hidden rounded bg-muted"><div className="h-full bg-accent transition-all" style={{ width: `${(bpStep / bp.steps.length) * 100}%` }} /></div>
+            <ol className="mt-2 max-h-56 space-y-1 overflow-y-auto">
               {bp.steps.map((s, i) => (
                 <li key={s.title} className={`rounded border px-2 py-1 ${i === bpStep ? "border-accent text-foreground" : i < bpStep ? "border-border text-muted-foreground line-through" : "border-border text-muted-foreground"}`}>
                   <b>{i + 1}. {s.title}</b> — {s.tip}
@@ -638,10 +691,34 @@ function ForgePage() {
               ))}
             </ol>
             <div className="mt-2 flex flex-wrap gap-1">
-              <button type="button" onClick={() => setShowBp((v) => !v)} className="rounded border border-border px-2 py-0.5 text-[10px] text-foreground">{showBp ? "HIDE SKETCH" : "SHOW SKETCH"}</button>
-              <button type="button" disabled={bpStep >= bp.steps.length} onClick={() => { commit(stampInto(world, blueprintBlocks({ ...bp, steps: [bp.steps[bpStep]!] }), 0, 0, 0)); setBpStep((s) => s + 1); }} className="rounded border border-accent px-2 py-0.5 text-[10px] text-accent disabled:opacity-40">BUILD STEP {Math.min(bpStep + 1, bp.steps.length)}</button>
+              <button type="button" onClick={() => setShowBp((v) => !v)} className="rounded border border-border px-2 py-0.5 text-[10px] text-foreground">{showBp ? "HIDE GUIDE" : "SHOW GUIDE"}</button>
+              <button type="button" disabled={bpStep === 0} onClick={backStep} className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground disabled:opacity-40">◀ BACK</button>
+              <button type="button" disabled={bpStep >= bp.steps.length} onClick={buildStep} className="rounded border border-accent px-2 py-0.5 text-[10px] text-accent disabled:opacity-40">PLACE STEP {Math.min(bpStep + 1, bp.steps.length)}</button>
+              <button type="button" disabled={bpStep >= bp.steps.length} onClick={() => setAuto((a) => !a)} className="rounded border border-primary px-2 py-0.5 text-[10px] text-primary disabled:opacity-40">{auto ? "❚❚ PAUSE" : "▶ AUTO-ASSEMBLE"}</button>
               <button type="button" onClick={() => setBpStep((s) => Math.min(bp.steps.length, s + 1))} className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground">I BUILT IT</button>
             </div>
+            {kit && (
+              <div className="mt-3 border-t border-border pt-2">
+                <div className="flex items-center justify-between"><span className="text-primary">BEHAVIOR CARDS</span>
+                  <button type="button" disabled={!liveBehaviors.length && !testing} onClick={() => setTesting((t) => !t)} className="rounded border border-primary px-2 py-0.5 text-[10px] text-primary disabled:opacity-40">{testing ? "■ STOP" : "▶ TEST RUN"}</button>
+                </div>
+                <div className="mt-1 grid grid-cols-1 gap-1">
+                  {kit.behaviors.map((b) => {
+                    const card = BEHAVIOR_CARDS.find((c) => c.id === b.card)!;
+                    const on = !off.includes(b.card);
+                    const ready = b.steps.every((s) => s < bpStep);
+                    return (
+                      <button key={b.card} type="button" onClick={() => setOff((o) => on ? [...o, b.card] : o.filter((x) => x !== b.card))}
+                        className={`rounded border px-2 py-1 text-left text-[10px] ${on ? "border-primary/70 text-foreground" : "border-border text-muted-foreground"}`}>
+                        <span className="flex justify-between"><b>{on ? "◉" : "○"} {card.name}</b><span className={ready ? "text-accent" : "text-muted-foreground"}>{ready ? "READY" : `AFTER STEP ${Math.max(...b.steps) + 1}`}</span></span>
+                        <span className="text-muted-foreground">{card.blurb}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button type="button" onClick={() => { void navigator.clipboard?.writeText(JSON.stringify(kitManifest(kit, kit.behaviors.map((b) => b.card).filter((c) => !off.includes(c))), null, 2)); toast.success("KIT MANIFEST COPIED"); }} className="mt-1 w-full rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground">COPY KIT MANIFEST (JSON)</button>
+              </div>
+            )}
           </div>
           <div>
             <p className="mb-1 text-[10px] text-muted-foreground">START FROM YOUR BLOCK'S SEED</p>
@@ -672,6 +749,7 @@ function ForgePage() {
             )}
             <ParcelFloor rects={rects} focus={focus} hoverIdx={hoverParcel?.index ?? null} />
             {showBp && sketch.length > 0 && <Ghost blocks={sketch} at={[0, 0, 0]} bad={false} />}
+            {testing && liveBehaviors.map((lb) => <KitBehaviorPreview key={lb.b.card} behavior={lb.b} blocks={lb.blocks} />)}
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, layer, 0]} onPointerMove={onGround} onPointerLeave={() => setHover(null)} onClick={() => void place()} receiveShadow>
               <planeGeometry args={[FORGE_SPAN, FORGE_SPAN]} />
               <meshStandardMaterial color="#1b1f26" transparent opacity={layer ? 0.25 : 1} />
