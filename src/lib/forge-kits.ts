@@ -1146,7 +1146,87 @@ const angkor: Kit = {
   ages: "14+",
 };
 
-export const KITS: Kit[] = [citadel, express, array, vault, dragon, mega, colossus, ark, bismarck, tiger, spitfire, hospital, police, fire, school, pyramid, colosseum, eiffel, taj, greatWall, petra, machu, terracotta, angkor];
+// ---- THE GENESIS COIN ----
+// ₿ glyph, 9 wide × 13 tall, row 0 = top.
+const BTC_GLYPH = [
+  "..#.#....",
+  "#######..",
+  ".##...##.",
+  ".##...##.",
+  ".##...##.",
+  ".######..",
+  ".##...##.",
+  ".##....##",
+  ".##....##",
+  ".##...##.",
+  "#######..",
+  "..#.#....",
+  ".........",
+];
+const COIN_CX = 31.5, COIN_CY = 34, COIN_R = 23;
+const inCoin = (x: number, y: number, r = COIN_R) => (x - COIN_CX) ** 2 + (y - COIN_CY) ** 2 <= r * r;
+const glyphAt = (x: number, y: number) => {
+  const gx = Math.floor((x - 22) / 2), gy = Math.floor((47 - y) / 2);
+  return gx >= 0 && gx < 9 && gy >= 0 && gy < 13 && BTC_GLYPH[gy]![gx] === "#";
+};
+const genesisCoin: Kit = {
+  id: "kit-genesis-coin", name: "The Genesis Coin", sphere: "cyber", kit: true, difficulty: "MASTER",
+  story: "A towering gold Bitcoin standing on edge above a stepped stone plinth, its ₿ glowing on both faces, ringed by eleven halving pylons and a gold inscription floor that reads 03 JAN 2009.",
+  steps: [
+    step("Stepped plinth", "Lay the five-tier stone plinth the coin will stand on.", (m) => {
+      for (let t = 0; t < 5; t++) m.box(6 + t * 3, 57 - t * 3, t, t, 14 + t * 2, 49 - t * 2, t % 2 ? "cobble" : "stone", t < 4);
+      for (let x = 18; x <= 45; x++) for (let z = 22; z <= 41; z++) m.put(x, 5, z, "stone");
+    }),
+    step("Genesis floor", "Inlay the gold ring and the 03 JAN 2009 dates on the plaza.", (m) => {
+      for (let x = 0; x <= 63; x++) for (let z = 0; z <= 63; z++) {
+        const d = Math.hypot(x - 31.5, z - 31.5);
+        if (d >= 29 && d <= 31.5) m.put(x, 0, z, (Math.round(Math.atan2(z - 31.5, x - 31.5) * 10) % 2) ? "gold" : "glow");
+      }
+      for (let x = 10; x <= 53; x++) for (const z of [10, 53]) if (x % 4 !== 1) m.put(x, 0, z, "sand");
+    }),
+    step("Coin core", "Stack the solid gold disc, standing on edge.", (m) => {
+      for (let x = 0; x < 64; x++) for (let y = 6; y < 64; y++) if (inCoin(x, y, COIN_R - 2)) for (let z = 30; z <= 33; z++) m.put(x, y, z, "gold");
+    }),
+    step("Milled rim", "Wrap the ridged rim around the edge of the coin.", (m) => {
+      for (let x = 0; x < 64; x++) for (let y = 6; y < 64; y++) if (inCoin(x, y) && !inCoin(x, y, COIN_R - 2)) for (let z = 29; z <= 34; z++) m.put(x, y, z, (x + y + z) % 3 === 0 ? "glow" : "gold");
+    }),
+    step("Front ₿", "Raise the glowing Bitcoin symbol on the front face.", (m) => {
+      for (let x = 0; x < 64; x++) for (let y = 6; y < 64; y++) {
+        if (glyphAt(x, y)) { m.put(x, y, 29, "glow"); m.put(x, y, 28, "glow"); }
+        else if (inCoin(x, y, COIN_R - 4) && !inCoin(x, y, COIN_R - 5)) m.put(x, y, 29, "sand");
+      }
+    }),
+    step("Back ₿", "Mirror the symbol on the back face so it shines both ways.", (m) => {
+      for (let x = 0; x < 64; x++) for (let y = 6; y < 64; y++) {
+        if (glyphAt(63 - x, y)) { m.put(x, y, 34, "glow"); m.put(x, y, 35, "glow"); }
+        else if (inCoin(x, y, COIN_R - 4) && !inCoin(x, y, COIN_R - 5)) m.put(x, y, 34, "sand");
+      }
+    }),
+    step("Cradle supports", "Brace the coin with gold-capped stone cradles.", (m) => {
+      for (const x of [14, 49]) for (let y = 6; y <= 14; y++) for (const z of [26, 27, 36, 37]) m.put(x, y, z, y === 14 ? "gold" : "brick");
+      for (let x = 22; x <= 41; x++) for (const z of [27, 36]) m.put(x, 6, z, "brick");
+    }),
+    step("Halving pylons", "Eleven glass pylons, one for every halving epoch to come.", (m) => {
+      for (let i = 0; i < 11; i++) {
+        const a = Math.PI * (0.08 + (i / 10) * 0.84) + Math.PI;
+        const x = Math.round(31.5 + Math.cos(a) * 27), z = Math.round(31.5 + Math.sin(a) * 27);
+        for (const zz of [z, 63 - z]) { const h = 8 + i; for (let y = 1; y <= h; y++) m.put(x, y, zz, y === h ? "glow" : "glass"); m.put(x, 0, zz, "cobble"); }
+      }
+    }),
+    step("Orbit halo", "Hang the glowing orbit ring that circles the coin.", (m) => {
+      for (let t = 0; t < 360; t += 1.2) {
+        const a = (t * Math.PI) / 180;
+        m.put(Math.round(31.5 + Math.cos(a) * 27), Math.round(34 + Math.sin(a) * 27 * 0.95), 31, "glow");
+      }
+    }),
+  ],
+  behaviors: [{ card: "beacon_pulse", steps: [4, 5], pivot: [31.5, 34, 31.5] }, { card: "sentry_turret", steps: [8], pivot: [31.5, 34, 31.5] }],
+  bags: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+  tagline: "A gold Bitcoin standing on edge — glowing ₿, halving pylons and an orbit halo.",
+  ages: "16+",
+};
+
+export const KITS: Kit[] = [citadel, express, array, vault, dragon, mega, colossus, ark, bismarck, tiger, spitfire, hospital, police, fire, school, pyramid, colosseum, eiffel, taj, greatWall, petra, machu, terracotta, angkor, genesisCoin];
 export const isKit = (b: Blueprint): b is Kit => (b as Kit).kit === true;
 
 /** Deterministic pose for a behavior at time t (seconds). `near` = visitor in range. */

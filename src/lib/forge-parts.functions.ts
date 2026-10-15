@@ -8,6 +8,6 @@ export const forgePieceFn = createServerFn({ method: "POST" })
     const { forgePieceBlocks } = await import("@/lib/forge.server");
     const blocks = await forgePieceBlocks(data.id);
     if (!blocks || !blocks.length) return { ok: false as const, error: "NO LAND FORGE VOXELS FOUND IN THAT INSCRIPTION" };
-    if (blocks.length > 8000) return { ok: false as const, error: "THAT PIECE IS TOO BIG TO SNAP IN" };
+    if (blocks.length > 12000) return { ok: false as const, error: "THAT PIECE IS TOO BIG TO SNAP IN" };
     return { ok: true as const, blocks };
   });
