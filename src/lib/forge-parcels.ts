@@ -14,10 +14,11 @@ export function parcelRects(classes: number[] | null | undefined, span = FORGE_S
   const { width, height, parcels } = layoutFromSizeClasses(classes);
   const side = Math.max(width, height);
   const offY = (side - height) / 2;
+  const offX = (side - width) / 2;
   const k = span / side;
   return parcels.map((p, index) => {
-    const x0 = Math.floor(p.position.x * k), z0 = Math.floor((p.position.y + offY) * k);
-    const x1 = Math.max(x0 + 1, Math.floor((p.position.x + p.size) * k));
+    const x0 = Math.floor((p.position.x + offX) * k), z0 = Math.floor((p.position.y + offY) * k);
+    const x1 = Math.max(x0 + 1, Math.floor((p.position.x + offX + p.size) * k));
     const z1 = Math.max(z0 + 1, Math.floor((p.position.y + offY + p.size) * k));
     return { index, x0, z0, x1: Math.min(span, x1), z1: Math.min(span, z1), size: p.size };
   });
