@@ -3,8 +3,8 @@ import { KITS, behaviorPose } from "@/lib/forge-kits";
 import { blueprintBlocks } from "@/lib/forge-blueprints";
 
 describe("forge kits", () => {
-  it("ships twenty-four boxed sets", () => {
-    expect(KITS.map((k) => k.id)).toEqual(["kit-citadel", "kit-express", "kit-array", "kit-vault", "kit-dragon", "kit-mega", "kit-colossus", "kit-ark", "kit-bismarck", "kit-tiger", "kit-spitfire", "kit-hospital", "kit-police", "kit-fire", "kit-school", "kit-pyramid", "kit-colosseum", "kit-eiffel", "kit-taj", "kit-greatwall", "kit-petra", "kit-machu", "kit-terracotta", "kit-angkor"]);
+  it("ships twenty-five boxed sets", () => {
+    expect(KITS.map((k) => k.id)).toEqual(["kit-citadel", "kit-express", "kit-array", "kit-vault", "kit-dragon", "kit-mega", "kit-colossus", "kit-ark", "kit-bismarck", "kit-tiger", "kit-spitfire", "kit-hospital", "kit-police", "kit-fire", "kit-school", "kit-pyramid", "kit-colosseum", "kit-eiffel", "kit-taj", "kit-greatwall", "kit-petra", "kit-machu", "kit-terracotta", "kit-angkor", "kit-genesis-coin"]);
   });
   it("every step comes in a numbered bag, in order", () => {
     for (const k of KITS) {
@@ -19,8 +19,8 @@ describe("forge kits", () => {
       expect(b.dz).toBeGreaterThanOrEqual(0); expect(b.dz).toBeLessThan(64);
     }
   });
-  it("every set fits the 8,000-brick inscription limit", () => {
-    for (const k of KITS) expect(blueprintBlocks(k).length).toBeLessThanOrEqual(8000);
+  it("every set fits the 12,000-brick inscription limit", () => {
+    for (const k of KITS) expect(blueprintBlocks(k).length).toBeLessThanOrEqual(12000);
   });
   it("behaviors only target real steps", () => {
     for (const k of KITS) for (const b of k.behaviors) for (const s of b.steps) expect(k.steps[s]?.blocks?.length).toBeGreaterThan(0);

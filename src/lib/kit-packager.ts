@@ -7,7 +7,7 @@ import type { BehaviorCard, Kit, KitBehavior } from "@/lib/forge-kits";
 
 export const KIT_PUBLISH_SATS = 1000;
 export const KIT_MIN_BLOCKS = 40;
-export const KIT_MAX_BLOCKS = 8000;
+export const KIT_MAX_BLOCKS = 12000;
 
 const TITLES = ["Foundation", "Lower walls", "Main body", "Upper floors", "Roof line", "Towers & spires", "Crown details", "Final touches"];
 
