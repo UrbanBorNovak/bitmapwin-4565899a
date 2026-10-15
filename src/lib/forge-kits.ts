@@ -616,7 +616,7 @@ const hospital: Kit = {
     }),
     step("Ward wing west", "Three storeys of white wards with window bands.", (m) => { storeys(m, 8, 21, 16, 36, 1, 3, "sand", "stone"); }),
     step("Ward wing east", "The mirror wing on the other side.", (m) => { storeys(m, 42, 55, 16, 36, 1, 3, "sand", "stone"); }),
-    step("Main tower", "The tall central tower — six storeys.", (m) => { storeys(m, 24, 39, 18, 36, 1, 6, "sand", "stone"); }),
+    step("Main tower", "The tall central tower — six storeys.", (m) => { storeys(m, 24, 39, 18, 36, 1, 5, "sand", "stone"); }),
     step("Glass atrium", "A glass entrance hall in front of the tower, with sliding doors.", (m) => {
       m.box(26, 37, 1, 6, 12, 17, "glass", true); m.box(26, 37, 7, 7, 12, 17, "glass");
       m.box(30, 33, 1, 3, 12, 12, "glow");
@@ -625,7 +625,7 @@ const hospital: Kit = {
     step("Red cross signs", "Big red crosses on the tower and the wings.", (m) => {
       const cross = (cx: number, cy: number, z: number) => { for (let i = -2; i <= 2; i++) { m.put(cx + i, cy, z, "brick"); m.put(cx, cy + i, z, "brick"); } };
       cross(31, 19, 17); cross(14, 9, 15); cross(49, 9, 15);
-      sign(m, 27, 36, 22, 17, "brick");
+      sign(m, 27, 36, 14, 17, "brick");
     }),
     step("Emergency bay", "Covered ambulance bay with two ambulances and flashing lights.", (m) => {
       m.box(42, 55, 13, 13, 41, 47, "stone"); for (const x of [42, 55]) for (const z of [41, 47]) for (let y = 1; y <= 12; y++) if (y < 5) m.put(x, y, z, "cobble");
@@ -635,9 +635,9 @@ const hospital: Kit = {
       sign(m, 44, 53, 6, 41, "brick");
     }),
     step("Helipad", "Rooftop helipad with landing lights on the tower.", (m) => {
-      m.box(26, 37, 26, 26, 20, 34, "cobble");
+      m.box(26, 37, 22, 22, 20, 34, "cobble");
       for (let x = 28; x <= 35; x++) for (const z of [21, 33]) m.put(x, 27, z, "glow");
-      for (let z = 23; z <= 31; z++) { m.put(29, 27, z, "sand"); m.put(34, 27, z, "sand"); } for (let x = 29; x <= 34; x++) m.put(x, 27, 27, "sand");
+      for (let z = 23; z <= 31; z++) { m.put(29, 23, z, "sand"); m.put(34, 23, z, "sand"); } for (let x = 29; x <= 34; x++) m.put(x, 23, 27, "sand");
     }),
     step("Garden & lamps", "Healing garden with trees, benches and street lamps.", (m) => {
       for (const [x, z] of [[43, 50], [48, 53], [53, 49], [12, 50], [18, 53]] as const) tree(m, x, z);
@@ -695,7 +695,7 @@ const fire: Kit = {
   steps: [
     step("Apron", "Concrete apron in front of the bays with yellow lines.", (m) => { plaza(m, "stone"); for (let x = 8; x <= 46; x += 2) m.put(x, 0, 14, "gold"); }),
     step("Engine hall", "Tall brick hall with three engine bays.", (m) => {
-      m.box(8, 46, 1, 12, 16, 40, "brick", true); m.box(8, 46, 13, 13, 16, 40, "stone");
+      m.box(8, 46, 1, 12, 16, 36, "brick", true); m.box(8, 46, 13, 13, 16, 36, "stone");
       for (let x = 8; x <= 46; x += 2) m.put(x, 14, 16, "brick");
       for (const x0 of [10, 22, 34]) m.box(x0, x0 + 9, 1, 9, 16, 16, "glass");
       for (const x0 of [10, 22, 34]) for (let x = x0; x <= x0 + 9; x++) m.put(x, 10, 16, "stone");
