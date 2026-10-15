@@ -162,10 +162,20 @@ export function modelsInside(models: WorldAsset[], fit: { scale: number; offset:
   );
 }
 
-/** The creator's own ground height (their editor floor planes), or null when the world has none. */
+/**
+ * The level the building actually stands on: the top of the creator's foundation slabs
+ * (wide boxes at their floor, dropped from drawing) or the editor floor planes. Null when none.
+ */
 export function creatorFloorY(prims: WorldPrim[]): number | null {
   const floors = prims.filter(isFloorPlane);
-  return floors.length ? Math.min(...floors.map((p) => p.pos[1])) : null;
+  if (!floors.length) return null;
+  const floorY = Math.min(...floors.map((p) => p.pos[1]));
+  let top = floorY;
+  for (const p of prims) {
+    if (p.shape !== "box" || Math.max(p.size[0], p.size[2]) < 40 || p.pos[1] > floorY + 5) continue;
+    top = Math.max(top, p.pos[1] + p.size[1] / 2);
+  }
+  return top;
 }
 
 /**
