@@ -14,7 +14,7 @@ import type { TplBlock } from "@/lib/voxel-templates";
 import { FORGE_SPAN, FORGE_UNPACK_JS, encodeBuildBest } from "@/lib/voxel-populate";
 
 export const FORGE_ASM_FORMAT = "BWVX_ASM";
-export const MAX_ASM_PARTS = 24;
+export const MAX_ASM_PARTS = 32;
 export type AsmPart = { id: string; x: number; y: number; z: number; r: number };
 
 const ID_RE = /^[0-9a-f]{64}i\d+$/;
