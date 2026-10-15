@@ -4,7 +4,7 @@
  * reinscribe it, so Bitcoin itself proves the owner made it. Older child-style
  * builds are still read as a fallback.
  */
-import { FORGE_FORMAT, decodeBuild } from "@/lib/voxel-populate";
+import { FORGE_FORMAT, FORGE_SPAN, decodeBuild, type ForgeSpan } from "@/lib/voxel-populate";
 import { FORGE_MASTER_DELEGATE_ID, isForgeMasterDelegate, parseForgeMeta, type ForgeMeta } from "@/lib/forge-delegate";
 import { encodeBuildBest } from "@/lib/voxel-populate";
 import { isInscriptionId, parseAssemblyHtml, placePart, type AsmPart } from "@/lib/forge-assembly";
@@ -26,11 +26,11 @@ export async function forgePieceBlocks(id: string): Promise<TplBlock[] | null> {
 }
 
 /** Resolves every referenced piece (one level deep) and returns one flat payload. */
-async function flattenAssembly(parts: AsmPart[], own: string): Promise<string> {
-  const all: TplBlock[] = own ? decodeBuild(own) : [];
+async function flattenAssembly(parts: AsmPart[], own: string, span: ForgeSpan = FORGE_SPAN): Promise<string> {
+  const all: TplBlock[] = own ? decodeBuild(own, span) : [];
   const pieces = await Promise.all(parts.map((p) => forgePieceBlocks(p.id)));
-  parts.forEach((p, i) => { const b = pieces[i]; if (b) all.push(...placePart(b, p)); });
-  return encodeBuildBest(all).data;
+  parts.forEach((p, i) => { const b = pieces[i]; if (b) all.push(...placePart(b, p, span)); });
+  return encodeBuildBest(all, span).data;
 }
 
 /** Delegated (Tag 11) build: no body, bytes live in Tag 5 metadata. */
@@ -49,7 +49,8 @@ const ORD = "https://ordinals.com";
 const TTL = 15 * 60_000;
 const MAX_BYTES = 120_000;
 
-export type ForgeBuild = { sat: string | null; inscriptionId: string; archetype: string | null; data: string; blockCount: number };
+/** span: 64 for every original build, 128 for XL recursive builds (data is then BWVX2 on a 128³ canvas). */
+export type ForgeBuild = { sat: string | null; inscriptionId: string; archetype: string | null; data: string; blockCount: number; span?: ForgeSpan };
 const cache = new Map<number, { expires: number; value: ForgeBuild | null }>();
 
 async function ord(path: string): Promise<Response | null> {
@@ -114,7 +115,7 @@ export async function forgeBuildForHeight(height: number): Promise<ForgeBuild | 
 async function firstForge(ids: string[], height: number, sat: string | null): Promise<ForgeBuild | null> {
   for (const id of ids) {
     const dm = await delegateMeta(id);
-    let parsed: { archetype: string | null; data: string } | null = dm && dm.h === height ? { archetype: "studio", data: dm.d } : null;
+    let parsed: { archetype: string | null; data: string; span?: ForgeSpan } | null = dm && dm.h === height ? { archetype: "studio", data: dm.d } : null;
     if (!parsed) {
       const r = await ord(`/content/${id}`);
       if (!r || !(r.headers.get("content-type") ?? "").includes("html")) continue;
@@ -124,11 +125,12 @@ async function firstForge(ids: string[], height: number, sat: string | null): Pr
       parsed = parseForgeHtml(text);
       if (!parsed) {
         const asm = parseAssemblyHtml(text);
-        if (asm && asm.height === height) parsed = { archetype: "assembly", data: await flattenAssembly(asm.parts, asm.own) };
+        if (asm && asm.height === height) parsed = { archetype: "assembly", data: await flattenAssembly(asm.parts, asm.own, asm.span), span: asm.span };
       }
     }
     if (!parsed) continue;
-    const build = { sat, inscriptionId: id, archetype: parsed.archetype, data: parsed.data, blockCount: decodeBuild(parsed.data).length };
+    const span = parsed.span ?? FORGE_SPAN;
+    const build: ForgeBuild = { sat, inscriptionId: id, archetype: parsed.archetype, data: parsed.data, blockCount: decodeBuild(parsed.data, span).length, span };
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       await supabaseAdmin.from("bitmap_forge_builds").upsert(
