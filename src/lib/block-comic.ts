@@ -16,7 +16,7 @@ export type ComicBlock = {
 };
 
 export type ComicPanel = { kicker: string; caption: string; sfx: string; seed: number };
-export type ComicIssue = { height: number; title: string; panels: ComicPanel[]; hash: string; block: ComicBlock };
+export type ComicIssue = { height: number; title: string; era: string; cry: string; panels: ComicPanel[]; hash: string; block: ComicBlock };
 
 /** Seeded PRNG from a hex block hash (mulberry32 over xor-folded words). */
 export function seedFrom(hash: string, salt = 0): () => number {
@@ -40,25 +40,43 @@ const SFX_STAMP = ["KA-CHUNK!", "SEALED!", "BLAM!", "CLANK!"];
 const pick = <T,>(r: () => number, a: T[]): T => a[Math.floor(r() * a.length)] as T;
 const btc = (sats: number) => `${(sats / 1e8).toFixed(4)} BTC`;
 
+/** Story era from height — sets the narrator's voice. */
+export function eraOf(h: number): { name: string; mood: string } {
+  if (h < 30000) return { name: "THE PATOSHI DAWN", mood: "A LONE MINER WALKS AN EMPTY WILDERNESS." };
+  if (h < 210000) return { name: "THE CYPHERPUNK UNDERGROUND", mood: "SIGNALS PASS IN THE DARK BETWEEN FEW NODES." };
+  if (h < 420000) return { name: "THE FIRST SHEARING", mood: "THE REWARD WAS CUT IN HALF, YET THE MINERS MULTIPLY." };
+  if (h < 630000) return { name: "THE BLOCKSIZE WARS", mood: "FACTIONS CLASH, AND THE CHAIN HOLDS ITS SHAPE." };
+  if (h < 767430) return { name: "THE GREAT ACCUMULATION", mood: "INSTITUTIONS ARRIVE AT THE GATES OF THE FRONTIER." };
+  return { name: "THE AGE OF INSCRIPTIONS", mood: "LAND, ART AND GUARDIANS ARE WRITTEN INTO THE SATS." };
+}
+
+const CRIES = ["THIS LAND IS MINE TO GUARD.", "NO KEY, NO CROWN.", "I WAS HASHED INTO BEING. I WILL NOT BE UNWRITTEN.", "WALK SOFTLY, TRAVELLER. THESE PARCELS REMEMBER.", "DON'T TRUST. VERIFY ME.", "EVERY BLOCK A HOME. EVERY HOME A VOW."];
+
 export function buildIssue(b: ComicBlock): ComicIssue {
   const r = seedFrom(b.id, b.height);
   const when = new Date(b.timestamp * 1000).toISOString().slice(11, 16);
-  const pool = b.pool ?? "AN UNKNOWN MINER";
-  const fee = b.medianFee != null ? `${b.medianFee.toFixed(1)} SAT/VB MEDIAN` : "FEE MEDIAN UNREPORTED";
-  const subsidyHalvings = Math.floor(b.height / 210000);
-  const subsidy = Math.floor(50e8 / 2 ** subsidyHalvings);
+  const pool = (b.pool ?? "an unknown miner").toUpperCase();
+  const fee = b.medianFee != null ? `${b.medianFee.toFixed(1)} SAT/VB` : "UNMEASURED";
+  const halvings = Math.floor(b.height / 210000);
+  const subsidy = Math.floor(50e8 / 2 ** halvings);
+  const era = eraOf(b.height);
+  const tx = b.txCount.toLocaleString("en-US");
+  const crowd = b.txCount <= 1 ? "THE MEMPOOL IS SILENT. ONE LONE TRANSACTION WAITS." : b.txCount < 500 ? `A HANDFUL OF ${tx} INTENTS DRIFT IN THE MEMPOOL.` : `${tx} INTENTS HOWL FROM THE MEMPOOL ABYSS.`;
+  const heat = (b.medianFee ?? 0) > 30 ? "THE PRESSURE IS CRUSHING" : (b.medianFee ?? 0) > 5 ? "THE PRESSURE BUILDS" : "THE AIR IS CALM";
   return {
     height: b.height,
     hash: b.id,
     block: b,
     title: pick(r, TITLES),
+    era: era.name,
+    cry: pick(r, CRIES),
     panels: [
-      { kicker: "I · THE DESCENT", caption: `${when} UTC. ${pool.toUpperCase()} FINDS THE NONCE.`, sfx: pick(r, SFX_MINE), seed: Math.floor(r() * 1e9) },
-      { kicker: "II · THE SQUEEZE", caption: `${b.txCount.toLocaleString("en-US")} TRANSACTIONS FIGHT FOR SPACE. ${fee}.`, sfx: pick(r, SFX_FEE), seed: Math.floor(r() * 1e9) },
-      { kicker: "III · THE AWAKENING", caption: `${b.height}.BITMAP RISES — ${(b.size / 1e6).toFixed(2)} MB OF NEW LAND.`, sfx: pick(r, SFX_LAND), seed: Math.floor(r() * 1e9) },
+      { kicker: "I · THE SIGNAL", caption: `${era.name}. ${era.mood} ${crowd} AT ${when} UTC, ${pool} TURNS THE WHEEL.`, sfx: pick(r, SFX_MINE), seed: Math.floor(r() * 1e9) },
+      { kicker: "II · THE CRUCIBLE", caption: `${heat} — ${fee}. ONLY THE SWIFTEST SIGNATURES SQUEEZE THROUGH THE GATE OF ${(b.size / 1e6).toFixed(2)} MB.`, sfx: pick(r, SFX_FEE), seed: Math.floor(r() * 1e9) },
+      { kicker: "III · THE AWAKENING", caption: `THE NONCE BREAKS. ${b.height}.BITMAP CRYSTALLISES INTO ${tx} PARCELS OF NEW LAND.`, sfx: pick(r, SFX_LAND), seed: Math.floor(r() * 1e9) },
       {
-        kicker: "IV · THE SEAL",
-        caption: `SUBSIDY ${btc(subsidy)}${b.totalFees != null ? ` + FEES ${btc(b.totalFees)}` : ""}. NEXT BLOCK… UNWRITTEN.`,
+        kicker: "IV · THE PROPHECY",
+        caption: `THE SEAL SNAPS SHUT: ${btc(subsidy)}${b.totalFees != null ? ` + ${btc(b.totalFees)} IN FEES` : ""}. BEYOND THE HORIZON, BLOCK #${b.height + 1} BEGINS TO STIR… TO BE CONTINUED.`,
         sfx: pick(r, SFX_STAMP),
         seed: Math.floor(r() * 1e9),
       },

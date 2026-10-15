@@ -133,15 +133,29 @@ function PanelArt({ panel, kind, issue, inscribed, built }: { panel: ComicPanel;
 
 function Strip({ issue, inscribed, built }: { issue: ComicIssue; inscribed: string | null; built: boolean }) {
   return (
-    <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
-      {issue.panels.map((p, i) => (
-        <figure key={i} className="relative aspect-square overflow-hidden border-2 border-foreground">
-          <PanelArt panel={p} kind={i} issue={issue} inscribed={inscribed} built={built} />
-          <span className="absolute left-1 top-1 bg-foreground px-1 font-mono text-[9px] font-bold text-background">{p.kicker}</span>
-          <span className="display absolute right-2 top-6 -rotate-6 text-2xl text-bitcoin">{p.sfx}</span>
-          <figcaption className="absolute inset-x-1 bottom-1 border border-foreground bg-background p-1 font-mono text-xs leading-tight">{i === 2 ? (inscribed ? `${p.caption} ITS GUARDIAN IS INSCRIBED AND AWAKE.` : `${p.caption} NO GUARDIAN YET — THE LAND WAITS, DORMANT.`) : p.caption}</figcaption>
-        </figure>
-      ))}
+    <div className="border-4 border-foreground bg-background p-1">
+      <div className="mb-1 flex items-center justify-between gap-2 border-2 border-foreground bg-bitcoin px-2 py-1 text-background">
+        <span className="font-mono text-[10px] font-bold">NO. {issue.height} · 546 SATS</span>
+        <span className="display truncate text-sm">{issue.era}</span>
+        <span className="border border-background px-1 font-mono text-[8px] font-bold leading-tight">APPROVED BY<br />THE TIMECHAIN</span>
+      </div>
+      <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+        {issue.panels.map((p, i) => (
+          <figure key={i} className="relative aspect-square overflow-hidden border-2 border-foreground">
+            <PanelArt panel={p} kind={i} issue={issue} inscribed={inscribed} built={built} />
+            <span className="absolute left-1 top-1 bg-foreground px-1 font-mono text-[9px] font-bold text-background">{p.kicker}</span>
+            <span className="display absolute right-2 top-6 -rotate-6 text-2xl text-bitcoin">{p.sfx}</span>
+            {i === 2 && inscribed && (
+              <div className="absolute left-3 top-8 max-w-[60%] rounded-2xl border-2 border-foreground bg-foreground px-2 py-1 font-mono text-[10px] font-bold leading-tight text-background">
+                “{issue.cry}”
+              </div>
+            )}
+            <figcaption className="absolute inset-x-1 bottom-1 border-2 border-foreground bg-bitcoin p-1 font-mono text-[10px] font-bold leading-tight text-background">
+              {i === 2 ? (inscribed ? `${p.caption} ITS GUARDIAN OPENS ITS EYES — SENTINEL OF THIS TERRITORY.` : `${p.caption} BUT THE THRONE SITS VACANT. THE LAND SLEEPS UNTIL A SUMMONER SPEAKS ITS NAME.`) : p.caption}
+            </figcaption>
+          </figure>
+        ))}
+      </div>
     </div>
   );
 }
