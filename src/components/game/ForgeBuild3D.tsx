@@ -5,7 +5,7 @@ import { WORLD_CELL, WORLD_GRID, cellX, cellZ } from "@/lib/player-state";
 import { useQuery } from "@tanstack/react-query";
 import * as THREE from "three";
 import { forgeBuildQuery, forgeLandQuery } from "@/lib/forge";
-import { asSpan, decodeBuild, FORGE_SPAN, FORGE_SPAN_XL } from "@/lib/voxel-populate";
+import { asSpan, decodeBuild, FORGE_SPAN } from "@/lib/voxel-populate";
 import { BLOCKS } from "@/lib/voxel-world";
 import { setForgeCollision } from "@/lib/forge-collision";
 import { groundY } from "@/lib/world-terrain";
