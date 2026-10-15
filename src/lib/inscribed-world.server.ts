@@ -48,6 +48,8 @@ export async function worldsForHeight(height: number): Promise<BitmapWorld[]> {
     parent = null;
   }
 
+
+
   if (parent) {
     const meta = await ord(`/r/inscription/${parent}`);
     const sat = meta ? ((await meta.json().catch(() => null)) as { sat?: number | string | null } | null)?.sat : null;

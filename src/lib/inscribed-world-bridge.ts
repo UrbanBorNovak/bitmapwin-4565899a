@@ -97,6 +97,17 @@ export async function decodeWorldGeometry(html: string): Promise<WorldGeometry |
   }
 }
 
+/** Editor floor tiles (huge flat planes) belong to the creator's scene, not the building. */
+export function isFloorPlane(p: WorldPrim): boolean {
+  return p.shape === "plane" && Math.max(p.size[0], p.size[2]) >= 100;
+}
+
+/** The building only: drops editor floor planes so they never slice through the Oasis view. */
+export function structurePrims(prims: WorldPrim[]): WorldPrim[] {
+  const kept = prims.filter((p) => !isFloorPlane(p));
+  return kept.length ? kept : prims;
+}
+
 /** Uniform scale + offset that fits the primitives inside `fit` world units, base on y=0. */
 export function fitPrims(prims: WorldPrim[], fit: number) {
   if (!prims.length) return { scale: 1, offset: [0, 0, 0] as [number, number, number] };

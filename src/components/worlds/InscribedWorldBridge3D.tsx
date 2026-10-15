@@ -4,7 +4,7 @@ import { useFrame } from "@react-three/fiber";
 import { useQuery } from "@tanstack/react-query";
 import * as THREE from "three";
 import { getWorldGeometryFn } from "@/lib/inscribed-world.functions";
-import { fitPrims } from "@/lib/inscribed-world-bridge";
+import { fitPrims, structurePrims } from "@/lib/inscribed-world-bridge";
 import { worldContentUrl } from "@/lib/inscribed-world";
 import { WORLD_CELL, WORLD_GRID, cellX, cellZ, type PlayerState } from "@/lib/player-state";
 import { groundY } from "@/lib/world-terrain";
@@ -20,7 +20,8 @@ function Bridge({ height }: { height: number }) {
   const [hover, setHover] = useState(false);
   const ring = useRef<THREE.Mesh>(null);
   useFrame((_, dt) => { if (ring.current) ring.current.rotation.y += Math.min(dt, 0.05) * 0.8; });
-  const fit = useMemo(() => (data ? fitPrims(data.prims, WORLD_CELL * 0.8) : null), [data]);
+  const prims = useMemo(() => (data ? structurePrims(data.prims) : []), [data]);
+  const fit = useMemo(() => (data ? fitPrims(prims, WORLD_CELL * 0.8) : null), [data, prims]);
   if (!data || !fit) return null;
   const x = cellX(height % WORLD_GRID), z = cellZ(Math.floor(height / WORLD_GRID));
   const s = fit.scale;
@@ -29,7 +30,7 @@ function Bridge({ height }: { height: number }) {
     <group position={[x, groundY(x, z), z]}>
       <group scale={s}>
         <group position={fit.offset}>
-          {data.prims.map((p, i) => (
+          {prims.map((p, i) => (
             <mesh key={i} position={p.pos} rotation={[p.rot[0] * D, p.rot[1] * D, p.rot[2] * D]} castShadow receiveShadow>
               {p.shape === "box" ? <boxGeometry args={p.size} /> : <boxGeometry args={[p.size[0], 0.05, p.size[2]]} />}
               <meshStandardMaterial color={p.color} roughness={0.6} side={p.shape === "plane" ? THREE.DoubleSide : THREE.FrontSide} />
