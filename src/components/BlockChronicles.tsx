@@ -210,6 +210,12 @@ export function BlockChronicles() {
   const issues = useMemo(() => (gBlocks ?? []).filter((b) => inhabited?.has(b.height)).sort((a, b) => b.height - a.height).map(buildIssue), [gBlocks, inhabited]);
   const insOf = (h: number) => inhabited?.get(h) ?? null;
   const [open, setOpen] = useState<number | null>(null);
+  // Only ISSUES_PER_PAGE covers at a time; older issues sit on the next page.
+  const ISSUES_PER_PAGE = 5;
+  const [page, setPage] = useState(0);
+  const pages = Math.max(1, Math.ceil(issues.length / ISSUES_PER_PAGE));
+  const cur = Math.min(page, pages - 1);
+  const shown = issues.slice(cur * ISSUES_PER_PAGE, cur * ISSUES_PER_PAGE + ISSUES_PER_PAGE);
   const current = open != null ? issues[open] : null;
   const next = live[0] ? live[0].height + 1 : null;
 
@@ -229,9 +235,33 @@ export function BlockChronicles() {
         )}
         <div className="w-px shrink-0 border-l border-dashed border-border" aria-hidden="true" />
         {issues.length === 0 && !isError && <div className="self-center font-mono text-xs text-muted-foreground">PRINTING LATEST ISSUES…</div>}
-        {issues.map((iss, i) => (
-          <Cover key={iss.hash} issue={iss} isNew={i === 0} inscribed={insOf(iss.height)} built={builtSet.has(iss.height)} onOpen={() => setOpen(i)} />
-        ))}
+        {shown.map((iss, i) => {
+          const at = cur * ISSUES_PER_PAGE + i;
+          return (
+            <Cover key={iss.hash} issue={iss} isNew={at === 0} inscribed={insOf(iss.height)} built={builtSet.has(iss.height)} onOpen={() => setOpen(at)} />
+          );
+        })}
+        {issues.length > ISSUES_PER_PAGE && (
+          <div className="flex h-[132px] w-[70px] shrink-0 flex-col items-center justify-center gap-1">
+            <button
+              type="button"
+              className="border border-border bg-background px-1 py-1 font-mono text-[9px] uppercase text-muted-foreground hover:border-bitcoin hover:text-foreground disabled:opacity-30"
+              disabled={cur === 0}
+              onClick={() => setPage(Math.max(0, cur - 1))}
+            >
+              NEWER ↑
+            </button>
+            <span className="font-mono text-[9px] text-muted-foreground">{cur + 1}/{pages}</span>
+            <button
+              type="button"
+              className="border border-border bg-background px-1 py-1 font-mono text-[9px] uppercase text-muted-foreground hover:border-bitcoin hover:text-foreground disabled:opacity-30"
+              disabled={cur >= pages - 1}
+              onClick={() => setPage(Math.min(pages - 1, cur + 1))}
+            >
+              OLDER ↓
+            </button>
+          </div>
+        )}
       </div>
       <Dialog open={current != null} onOpenChange={(o) => !o && setOpen(null)}>
         <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
