@@ -1349,7 +1349,7 @@ const coat = (x: number, y: number, z: number): BlockId => {
     const d = Math.hypot(x - (a + gh(a, b, c)) * C, y - (b + gh(b, c, a)) * C, z - (c + gh(c, a, b)) * C);
     if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d;
   }
-  return d2 - d1 < 1.2 ? "sand" : "brick";
+  return d2 - d1 < 1.2 ? "gold" : "brick";
 };
 const ellip = (m: M, cx: number, cy: number, cz: number, rx: number, ry: number, rz: number, paint: (x: number, y: number, z: number) => BlockId) => {
   for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++) for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) for (let z = Math.floor(cz - rz); z <= Math.ceil(cz + rz); z++)
@@ -1404,6 +1404,18 @@ const giraffe: Kit = {
       for (const z of [30, 33]) { for (let y = 61; y <= 62; y++) m.put(45, y, z, "sand"); m.put(45, 63, z, "log"); } // ossicones
       for (const z of [27, 36]) { m.put(44, 60, z, "sand"); m.put(43, 61, z, "sand"); } // ears
     }),
+    step("Baby giraffe", "Stand the little calf beside its mother — knobbly legs, short neck, tiny ossicones.", (m) => {
+      const Z = 46;
+      for (const [lx, lz] of [[12, 44.5], [13, 47.5], [19, 44.5], [20, 47.5]] as const) {
+        tube(m, [lx, 2, lz], [lx, 11, lz], 0.7, 0.9, (x, y, z) => y <= 2 ? "log" : y === 6 ? "sand" : coat(x, y, z));
+      }
+      ellip(m, 16, 13, Z, 5, 2.8, 2.6, coat); // body
+      tube(m, [20, 14, Z], [23, 23, Z], 1.7, 1.2, coat); // neck
+      ellip(m, 24, 24.5, Z, 1.9, 1.6, 1.5, () => "gold"); // head
+      ellip(m, 26, 24, Z, 1.2, 1, 1.1, (x) => x >= 26 ? "log" : "sand"); // muzzle
+      for (const z of [45, 47]) { m.put(23, 26, z, "sand"); m.put(23, 27, z, "log"); m.put(24, 25, z === 45 ? 44 : 48, "glow"); }
+      tube(m, [11, 13, Z], [10, 8, Z], 0.5, 0.5, () => "sand"); m.put(10, 7, 46, "log"); // tail
+    }),
     step("Blue mountains & acacias", "Raise the blue-green ridges on the horizon and plant two lone acacias.", (m) => {
       for (let x = 1; x <= 62; x++) {
         const peak = 8 + Math.round(7 * Math.abs(Math.sin(x * 0.17)) + 4 * Math.abs(Math.sin(x * 0.41 + 1)));
@@ -1416,7 +1428,7 @@ const giraffe: Kit = {
     }),
   ],
   behaviors: [{ card: "sentry_turret", steps: [5], pivot: [46, 57, GZ] }, { card: "beacon_pulse", steps: [0], pivot: [32, 0, 32] }],
-  bags: [1, 2, 3, 4, 5, 6, 7],
+  bags: [1, 2, 3, 4, 5, 6, 7, 8],
   tagline: "BE THE BITMAP — a proud giraffe over a sunset sea of orange parcels.",
   ages: "12+",
 };
