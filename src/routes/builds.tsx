@@ -131,6 +131,9 @@ function CommunityBuildsPage() {
         </div>
       </div>
 
+      {type === "worlds" ? (
+        <WorldsDirectory heights={worldHeights} />
+      ) : <>
       <div className="mt-4 flex items-center justify-between">
         <span className="label text-muted-foreground">{filtered.length.toLocaleString("en-US")} BUILDS</span>
       </div>
