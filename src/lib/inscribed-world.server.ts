@@ -4,7 +4,7 @@ const ORD = "https://ordinals.com";
 const MAX_BYTES = 400_000;
 const TTL = 15 * 60_000;
 
-export type BitmapWorld = WorldInfo & { inscriptionId: string; source: "sat" | "child" };
+export type BitmapWorld = WorldInfo & { inscriptionId: string; source: "sat" | "child" | "value" };
 
 async function ord(path: string): Promise<Response | null> {
   try {
@@ -32,31 +32,39 @@ export async function worldsForHeight(height: number): Promise<BitmapWorld[]> {
   if (hit && hit.expires > Date.now()) return hit.value;
   const put = (value: BitmapWorld[]) => (cache.set(height, { expires: Date.now() + TTL, value }), value);
 
+  const candidates: Array<{ id: string; source: BitmapWorld["source"] }> = [];
+  const { VALUE_ANCHORED_WORLDS, valueAnchors } = await import("@/lib/inscribed-world-anchors");
+  for (const id of VALUE_ANCHORED_WORLDS[height] ?? []) {
+    const m = await ord(`/r/inscription/${id}`);
+    const v = m ? ((await m.json().catch(() => null)) as { value?: number | null } | null)?.value : null;
+    if (valueAnchors(v, height)) candidates.push({ id, source: "value" });
+  }
+
   let parent: string | null = null;
   try {
     const { locateBitmapHolder } = await import("@/lib/locate-bitmap.server");
     parent = (await locateBitmapHolder(height)).inscriptionId;
   } catch {
-    return put([]);
+    parent = null;
   }
-  if (!parent) return put([]);
 
-  const candidates: Array<{ id: string; source: "sat" | "child" }> = [];
-  const meta = await ord(`/r/inscription/${parent}`);
-  const sat = meta ? ((await meta.json().catch(() => null)) as { sat?: number | string | null } | null)?.sat : null;
-  if (sat != null) {
-    const list = await ord(`/r/sat/${sat}`);
-    const ids = list ? ((await list.json().catch(() => null)) as { ids?: string[] } | null)?.ids ?? [] : [];
-    for (const id of [...ids].reverse()) if (id !== parent) candidates.push({ id, source: "sat" });
-  }
-  for (let page = 0; page < 2; page++) {
-    const r = await ord(`/r/children/${parent}/inscriptions/${page}`);
-    if (!r) break;
-    const j = (await r.json().catch(() => null)) as { children?: Array<{ id: string; content_type?: string | null }>; more?: boolean } | null;
-    for (const c of [...(j?.children ?? [])].reverse()) {
-      if (c?.id && (!c.content_type || c.content_type.includes("html"))) candidates.push({ id: c.id, source: "child" });
+  if (parent) {
+    const meta = await ord(`/r/inscription/${parent}`);
+    const sat = meta ? ((await meta.json().catch(() => null)) as { sat?: number | string | null } | null)?.sat : null;
+    if (sat != null) {
+      const list = await ord(`/r/sat/${sat}`);
+      const ids = list ? ((await list.json().catch(() => null)) as { ids?: string[] } | null)?.ids ?? [] : [];
+      for (const id of [...ids].reverse()) if (id !== parent) candidates.push({ id, source: "sat" });
     }
-    if (!j?.more) break;
+    for (let page = 0; page < 2; page++) {
+      const r = await ord(`/r/children/${parent}/inscriptions/${page}`);
+      if (!r) break;
+      const j = (await r.json().catch(() => null)) as { children?: Array<{ id: string; content_type?: string | null }>; more?: boolean } | null;
+      for (const c of [...(j?.children ?? [])].reverse()) {
+        if (c?.id && (!c.content_type || c.content_type.includes("html"))) candidates.push({ id: c.id, source: "child" });
+      }
+      if (!j?.more) break;
+    }
   }
 
   const picked = candidates.slice(0, 16);

@@ -47,7 +47,7 @@ export function WorldsDirectory({ heights }: { heights: number[] }) {
           row.worlds.map((w) => (
             <div key={w.inscriptionId} className="space-y-1">
               <Link to="/bitmap/$block" params={{ block: String(row.height) }} className="label text-bitcoin hover:underline">
-                {row.height}.BITMAP · {w.source === "sat" ? "ON ITS SAT" : "CHILD"}
+                {row.height}.BITMAP · {w.source === "sat" ? "ON ITS SAT" : w.source === "value" ? "VALUE ANCHOR" : "CHILD"}
               </Link>
               <InscribedWorldRunner id={w.inscriptionId} engine={w.engine} title={w.title} description={w.description} backgroundId={w.backgroundId} height={360} />
             </div>
