@@ -4,7 +4,7 @@
  */
 import { FORGE_SPAN } from "./voxel-populate";
 
-type Build = { ox: number; oy: number; oz: number; unit: number; cols: Map<number, number[]> };
+type Build = { ox: number; oy: number; oz: number; unit: number; span: number; cols: Map<number, number[]> };
 let active: Build | null = null;
 
 const key = (x: number, z: number) => x * 4096 + z;
@@ -13,6 +13,7 @@ export function setForgeCollision(
   blocks: { dx: number; dy: number; dz: number }[] | null,
   origin?: [number, number, number],
   unit?: number,
+  span: number = FORGE_SPAN,
 ) {
   if (!blocks?.length || !origin || !unit) { active = null; return; }
   const cols = new Map<number, number[]>();
@@ -22,13 +23,13 @@ export function setForgeCollision(
     if (c) c.push(b.dy); else cols.set(k, [b.dy]);
   }
   for (const c of cols.values()) c.sort((a, b) => a - b);
-  active = { ox: origin[0], oy: origin[1], oz: origin[2], unit, cols };
+  active = { ox: origin[0], oy: origin[1], oz: origin[2], unit, span, cols };
 }
 
 function column(wx: number, wz: number) {
   if (!active) return null;
-  const cx = Math.floor((wx - active.ox) / active.unit + FORGE_SPAN / 2 + 0.5);
-  const cz = Math.floor((wz - active.oz) / active.unit + FORGE_SPAN / 2 + 0.5);
+  const cx = Math.floor((wx - active.ox) / active.unit + active.span / 2 + 0.5);
+  const cz = Math.floor((wz - active.oz) / active.unit + active.span / 2 + 0.5);
   return active.cols.get(key(cx, cz)) ?? null;
 }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { encodeParts, forgeAssemblyHtml, MAX_ASM_PARTS, parseAssemblyHtml, parseParts, placePart } from "@/lib/forge-assembly";
-import { FORGE_RENDER_MAX } from "@/lib/voxel-populate";
+import { FORGE_RENDER_MAX, decodeBuild, encodeBuild } from "@/lib/voxel-populate";
 
 const ID = "f6b07baf511942564b24dc1816ae9a1ca69e91ceb39a47ccbd27fb05b97ea48bi0";
 
@@ -44,5 +44,29 @@ describe("BWVX_ASM", () => {
     for (let i = 0; i < 32; i++) total += placePart(piece, { id: ID, x: (i % 2) * 32, y: 0, z: Math.floor(i / 16) * 32, r: i % 4 }).length;
     expect(total).toBeGreaterThan(100000);
     expect(performance.now() - t).toBeLessThan(5000);
+  });
+});
+
+describe("BWVX_ASM XL (128³)", () => {
+  const own = [{ dx: 100, dy: 90, dz: 120, k: "stone" as const }, { dx: 0, dy: 0, dz: 0, k: "gold" as const }];
+  it("tags XL assemblies with data-span=128 and keeps blocks past 64", () => {
+    const p = parseAssemblyHtml(forgeAssemblyHtml(417155, [], own, null, "", 128));
+    expect(p?.span).toBe(128);
+    const back = decodeBuild(p!.own, 128);
+    expect(back).toContainEqual({ dx: 100, dy: 90, dz: 120, k: "stone" });
+  });
+  it("original assemblies have no span tag and still read as 64", () => {
+    const html = forgeAssemblyHtml(417155, [{ id: ID, x: 0, y: 0, z: 0, r: 0 }], [{ dx: 3, dy: 0, dz: 3, k: "stone" }]);
+    expect(html).not.toContain("data-span");
+    expect(parseAssemblyHtml(html)?.span).toBe(64);
+  });
+  it("places pieces up to 127 on XL, still clips at 64 on the original", () => {
+    const piece = [{ dx: 0, dy: 0, dz: 0, k: "stone" as const }];
+    expect(placePart(piece, { id: ID, x: 100, y: 0, z: 100, r: 0 }, 128)).toHaveLength(1);
+    expect(placePart(piece, { id: ID, x: 100, y: 0, z: 100, r: 0 })).toHaveLength(0);
+  });
+  it("existing 64³ payloads decode unchanged", () => {
+    const b = [{ dx: 63, dy: 10, dz: 5, k: "stone" as const }];
+    expect(decodeBuild(encodeBuild(b))).toEqual(b);
   });
 });
