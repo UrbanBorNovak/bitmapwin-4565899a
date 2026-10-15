@@ -447,7 +447,137 @@ const ark: Kit = {
   ages: "16+",
 };
 
-export const KITS: Kit[] = [citadel, express, array, vault, dragon, mega, colossus, ark];
+// ---- WW2: BISMARCK BATTLESHIP ----
+const BZ = 32;
+/** hull half-beam along the keel: pointed bow (x high), rounded stern */
+const beam = (x: number) => x < 4 || x > 60 ? -1 : x > 50 ? Math.round(7 * (60 - x) / 10) : x < 10 ? Math.round(3 + (x - 4) * 4 / 6) : 7;
+const turret = (m: ReturnType<typeof maker>, cx: number, y: number, dir: 1 | -1) => {
+  m.box(cx - 2, cx + 2, y, y + 1, BZ - 3, BZ + 3, "cobble");
+  m.box(cx - 1, cx + 1, y + 2, y + 2, BZ - 2, BZ + 2, "stone");
+  for (let i = 3; i <= 10; i++) { m.put(cx + dir * i, y + 1, BZ - 1, "stone"); m.put(cx + dir * i, y + 1, BZ + 1, "stone"); }
+};
+const bismarck: Kit = {
+  id: "kit-bismarck", name: "Bismarck Battleship", sphere: "kingdom", kit: true, difficulty: "MASTER",
+  story: "A WW2 battleship on the open sea: armored hull, teak deck, four twin heavy turrets, tall bridge tower, funnel and a floatplane.",
+  steps: [
+    step("Open sea", "Lay the glass ocean around the ship.", (m) => {
+      for (let x = 0; x <= 63; x++) for (let z = 18; z <= 46; z++) if (Math.abs(z - BZ) > beam(x)) m.put(x, 0, z, "glass");
+    }),
+    step("Armored hull", "Build the hull up from the waterline. Dark belt low, grey above.", (m) => {
+      for (let x = 4; x <= 60; x++) { const b = beam(x); if (b < 0) continue;
+        for (let y = 0; y <= 4; y++) { const w = Math.max(0, b - (y === 0 ? 1 : 0));
+          for (let z = BZ - w; z <= BZ + w; z++) if (Math.abs(z - BZ) === w || y === 0) m.put(x, y, z, y <= 1 ? "cobble" : "stone"); } }
+    }),
+    step("Teak deck", "Plank the whole deck. Keep a grey edge rail.", (m) => {
+      for (let x = 4; x <= 60; x++) { const b = beam(x); for (let z = BZ - b; z <= BZ + b; z++) m.put(x, 5, z, Math.abs(z - BZ) === b ? "stone" : "planks"); }
+    }),
+    step("Turrets Anton & Bruno", "Two twin turrets at the bow, the second one raised.", (m) => { turret(m, 48, 6, 1); m.box(39, 43, 6, 7, BZ - 3, BZ + 3, "stone"); turret(m, 41, 8, 1); }),
+    step("Bridge tower", "Stack the bridge decks and the tall control tower with glass windows.", (m) => {
+      m.box(28, 36, 6, 9, BZ - 5, BZ + 5, "stone", true);
+      m.box(30, 35, 10, 13, BZ - 3, BZ + 3, "stone", true);
+      m.box(31, 34, 14, 18, BZ - 2, BZ + 2, "stone", true);
+      for (const y of [8, 12, 16]) for (let z = BZ - 2; z <= BZ + 2; z++) m.put(y === 8 ? 36 : y === 12 ? 35 : 34, y, z, "glass");
+      m.box(32, 33, 19, 21, BZ - 1, BZ + 1, "cobble"); m.box(32, 33, 22, 22, BZ - 3, BZ + 3, "stone");
+    }),
+    step("Funnel & mast", "Place the big funnel behind the bridge and the radar mast.", (m) => {
+      m.box(22, 26, 6, 15, BZ - 2, BZ + 2, "stone", true); m.box(22, 26, 16, 16, BZ - 2, BZ + 2, "cobble");
+      for (let y = 6; y <= 26; y++) m.put(29, y, BZ, "log"); m.box(29, 29, 24, 24, BZ - 3, BZ + 3, "log");
+    }),
+    step("Turrets Caesar & Dora", "Two twin turrets at the stern, facing back.", (m) => { m.box(15, 19, 6, 7, BZ - 3, BZ + 3, "stone"); turret(m, 17, 8, -1); turret(m, 10, 6, -1); }),
+    step("Guns, lights & floatplane", "Side guns, searchlights, the flag and a floatplane.", (m) => {
+      for (const x of [24, 28, 33, 37]) for (const s of [-1, 1]) { m.box(x, x + 1, 6, 7, BZ + s * 5, BZ + s * 5, "cobble"); m.put(x + 2, 7, BZ + s * 5, "stone"); }
+      for (const s of [-1, 1]) { m.put(30, 14, BZ + s * 4, "glow"); m.put(24, 17, BZ + s * 3, "glow"); }
+      m.box(20, 21, 6, 6, BZ - 4, BZ + 4, "planks"); m.box(19, 22, 7, 7, BZ, BZ, "gold"); m.put(21, 8, BZ, "glass");
+      for (let y = 6; y <= 9; y++) m.put(5, y, BZ, "log"); m.box(5, 5, 8, 9, BZ + 1, BZ + 2, "brick");
+    }),
+  ],
+  behaviors: [
+    { card: "sentry_turret", steps: [3], pivot: [45, 7, BZ], speed: 0.35 },
+    { card: "sentry_turret", steps: [6], pivot: [14, 7, BZ], speed: 0.3 },
+    { card: "beacon_pulse", steps: [7], pivot: [30, 14, BZ] },
+  ],
+  bags: [1, 2, 3, 4, 5, 6, 7, 8],
+  tagline: "WW2 battleship, four twin turrets, bridge tower, floatplane.",
+  ages: "14+",
+};
+
+// ---- WW2: TIGER I TANK ----
+const tiger: Kit = {
+  id: "kit-tiger", name: "Tiger I Heavy Tank", sphere: "kingdom", kit: true, difficulty: "BUILDER",
+  story: "A WW2 heavy tank on a dirt field: wide tracks, road wheels, boxy hull and a turning turret with a long gun.",
+  steps: [
+    step("Battlefield", "A dirt field with grass at the edges.", (m) => { m.box(8, 55, 0, 0, 14, 49, "dirt"); for (let x = 8; x <= 55; x += 3) { m.put(x, 0, 13, "grass"); m.put(x, 0, 50, "grass"); } }),
+    step("Tracks & wheels", "Two long tracks with big road wheels on each side.", (m) => {
+      for (const z0 of [20, 39]) { m.box(14, 49, 1, 4, z0, z0 + 4, "cobble", true);
+        for (let x = 16; x <= 46; x += 5) m.box(x, x + 2, 2, 3, z0 === 20 ? z0 - 1 : z0 + 5, z0 === 20 ? z0 - 1 : z0 + 5, "stone"); }
+    }),
+    step("Hull", "Build the boxy hull between the tracks, front plate with a driver slit.", (m) => {
+      m.box(14, 49, 4, 8, 22, 41, "stone", true); m.box(14, 49, 9, 9, 20, 43, "stone");
+      for (let z = 26; z <= 30; z++) m.put(49, 7, z, "glass");
+      m.put(49, 8, 36, "cobble"); m.put(50, 8, 36, "cobble");
+    }),
+    step("Engine deck", "Grilles and twin exhausts at the back, spare tracks on the side.", (m) => {
+      for (let x = 15; x <= 22; x++) if (x % 2) m.box(x, x, 10, 10, 24, 39, "cobble");
+      for (const z of [27, 36]) for (let y = 7; y <= 11; y++) m.put(13, y, z, y === 11 ? "glow" : "cobble");
+      for (let x = 26; x <= 44; x += 2) m.put(x, 7, 19, "cobble");
+    }),
+    step("Turret", "Place the square turret with the commander's hatch.", (m) => {
+      m.box(25, 38, 10, 15, 24, 39, "stone", true); m.box(25, 38, 16, 16, 24, 39, "stone");
+      m.box(27, 29, 17, 18, 33, 35, "cobble"); m.put(28, 19, 34, "glow");
+      for (const z of [23, 40]) m.box(36, 37, 12, 13, z, z, "cobble");
+    }),
+    step("88mm gun", "Fit the long gun with its muzzle brake.", (m) => {
+      m.box(39, 41, 12, 14, 30, 33, "cobble");
+      for (let x = 42; x <= 62; x++) for (let y = 13; y <= 13 + (x < 50 ? 1 : 0); y++) for (let z = 31; z <= 32; z++) m.put(x, y, z, "stone");
+      m.box(61, 63, 12, 15, 30, 33, "cobble");
+    }),
+  ],
+  behaviors: [
+    { card: "sentry_turret", steps: [4, 5], pivot: [31, 13, 31], speed: 0.4 },
+    { card: "beacon_pulse", steps: [3], pivot: [13, 11, 31] },
+  ],
+  bags: [1, 1, 2, 3, 4, 4],
+  tagline: "Heavy tank, wide tracks, turning turret, long 88mm gun.",
+  ages: "10+",
+};
+
+// ---- WW2: SPITFIRE FIGHTER ----
+const spitfire: Kit = {
+  id: "kit-spitfire", name: "Spitfire Fighter Plane", sphere: "kingdom", kit: true, difficulty: "BUILDER",
+  story: "A WW2 fighter on a display stand: round wings, glass cockpit, tail fins and a spinning propeller.",
+  steps: [
+    step("Display stand", "Grass pad with a tall glass pole.", (m) => { m.box(22, 41, 0, 0, 22, 41, "grass"); m.box(30, 33, 1, 1, 30, 33, "stone"); for (let y = 2; y <= 9; y++) m.box(31, 32, y, y, 31, 32, "glass"); }),
+    step("Fuselage & cockpit", "A long rounded body with a bubble canopy.", (m) => {
+      for (let x = 12; x <= 52; x++) { const r = x < 18 ? 1 : x > 47 ? 2 : 3;
+        for (let y = -r; y <= r; y++) for (let z = -r; z <= r; z++) if (y * y + z * z <= r * r + 1) m.put(x, 13 + y, 31 + z, x > 44 ? "stone" : "grass"); }
+      for (let x = 34; x <= 39; x++) for (let z = 30; z <= 32; z++) { m.put(x, 16, z, "glass"); if (x > 35 && x < 39) m.put(x, 17, z, "glass"); }
+    }),
+    step("Round wings", "Wide elliptical wings with cannons and roundels.", (m) => {
+      for (let z = 4; z <= 58; z++) { const d = Math.abs(z - 31) / 27; const half = Math.round(6 * Math.sqrt(1 - d * d));
+        for (let x = 38 - half; x <= 38 + half; x++) m.put(x, 11, z, (x + z) % 7 < 3 ? "dirt" : "grass"); }
+      for (const z of [18, 44]) { m.put(38, 12, z, "brick"); m.put(38, 12, z + 1, "gold"); m.put(39, 12, z, "glass"); }
+      for (const z of [22, 40]) for (let x = 44; x <= 47; x++) m.put(x, 11, z, "cobble");
+      m.put(38, 11, 4, "brick"); m.put(38, 11, 58, "glow");
+    }),
+    step("Tail", "Tail wings and the tall fin.", (m) => {
+      for (let z = 23; z <= 39; z++) for (let x = 12; x <= 16 - Math.floor(Math.abs(z - 31) / 3); x++) m.put(x, 13, z, "grass");
+      for (let y = 14; y <= 21; y++) for (let x = 11; x <= 17 - Math.floor((y - 14) / 2); x++) m.put(x, y, 31, y > 18 ? "brick" : "grass");
+    }),
+    step("Nose & propeller", "Spinner cone and a three-blade propeller.", (m) => {
+      m.box(53, 54, 12, 14, 30, 32, "gold"); m.put(55, 13, 31, "gold");
+      for (let i = 1; i <= 7; i++) { m.put(55, 13 + i, 31, "log"); m.put(55, 13 - Math.round(i / 2), 31 + Math.round(i * 0.87), "log"); m.put(55, 13 - Math.round(i / 2), 31 - Math.round(i * 0.87), "log"); }
+    }),
+  ],
+  behaviors: [
+    { card: "sentry_turret", steps: [1, 2, 3, 4], pivot: [32, 13, 31], speed: 0.25 },
+    { card: "beacon_pulse", steps: [2], pivot: [38, 11, 31] },
+  ],
+  bags: [1, 2, 3, 3, 4],
+  tagline: "WW2 fighter plane with round wings and a three-blade propeller.",
+  ages: "8+",
+};
+
+export const KITS: Kit[] = [citadel, express, array, vault, dragon, mega, colossus, ark, bismarck, tiger, spitfire];
 export const isKit = (b: Blueprint): b is Kit => (b as Kit).kit === true;
 
 /** Deterministic pose for a behavior at time t (seconds). `near` = visitor in range. */
