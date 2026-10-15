@@ -17,7 +17,7 @@ describe("Test Run never changes what gets inscribed or published", () => {
     const on = forgeBuildViews(world, moving, true);
     const off = forgeBuildViews(world, moving, false);
 
-    describe(kit.title, () => {
+    describe(kit.name, () => {
       it("hides the moving parts on screen only", () => {
         expect(moving.flat().length).toBeGreaterThan(0);
         expect(on.shown.length).toBe(world.size - new Set(moving.flat().map((b) => cellKey(b.dx, b.dy, b.dz))).size);
