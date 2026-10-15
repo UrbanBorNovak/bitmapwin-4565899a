@@ -7,7 +7,7 @@ import type { TplBlock } from "@/lib/voxel-templates";
 import { prefabById, rotatePrefab, stampInto } from "@/lib/forge-prefabs";
 
 export type Placement = { p: string; x: number; y: number; z: number; r?: number };
-export type BlueprintStep = { title: string; tip: string; parts: Placement[] };
+export type BlueprintStep = { title: string; tip: string; parts: Placement[]; /** raw canvas blocks (kits) */ blocks?: TplBlock[] };
 export type Blueprint = { id: string; name: string; sphere: string; story: string; steps: BlueprintStep[] };
 
 const ring = (p: string, cx: number, cz: number, y: number, r: number): Placement[] =>
@@ -94,9 +94,12 @@ export function nextDropAt(now = Date.now()) {
 /** Blocks for steps [0, upTo) of a blueprint, at canvas coordinates. */
 export function blueprintBlocks(bp: Blueprint, upTo = bp.steps.length): TplBlock[] {
   let m = new Map<string, TplBlock>();
-  for (const step of bp.steps.slice(0, upTo)) for (const pl of step.parts) {
-    const pf = prefabById(pl.p);
-    if (pf) m = stampInto(m, rotatePrefab(pf.blocks, pl.r ?? 0), pl.x, pl.y, pl.z);
+  for (const step of bp.steps.slice(0, upTo)) {
+    for (const pl of step.parts) {
+      const pf = prefabById(pl.p);
+      if (pf) m = stampInto(m, rotatePrefab(pf.blocks, pl.r ?? 0), pl.x, pl.y, pl.z);
+    }
+    if (step.blocks?.length) m = stampInto(m, step.blocks, 0, 0, 0);
   }
   return [...m.values()];
 }
