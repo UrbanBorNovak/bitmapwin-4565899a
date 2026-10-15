@@ -112,3 +112,8 @@ export function parseAssemblyHtml(html: string): { height: number; parts: AsmPar
   const sp = m[3]!.match(/data-span="(\d+)"/);
   return { height: Number(m[1]), parts: parseParts(m[2]!), own: m[4]!.trim(), span: asSpan(sp?.[1]) };
 }
+
+/** A recursive piece stamped in the studio: its placement plus the exact block objects it put on the canvas. */
+export type AsmPlacement = { part: AsmPart; keys: string[]; refs: TplBlock[] };
+/** In the build only while every stamped block is still that same block (undo/clear/rebuild in the spot drops it). */
+export const isLive = (p: AsmPlacement, world: Map<string, TplBlock>) => p.keys.length > 0 && p.keys.every((k, i) => world.get(k) === p.refs[i]);
