@@ -368,6 +368,8 @@ function ForgePage() {
     const all = [...world.values()];
     return hiddenKeys.size ? all.filter((b) => !hiddenKeys.has(cellKey(b.dx, b.dy, b.dz))) : all;
   }, [world, hiddenKeys]);
+  // Test Run hides moving parts on screen only — inscriptions and publishing always use the full build.
+  const allBlocks = useMemo(() => [...world.values()], [world]);
   const ghost = useMemo(() => {
     if (tool === "erase" || tool === "parcel" || tool === "perch" || tool === "move") return [];
     if (tool === "block" || tool === "box") return [{ dx: 0, dy: 0, dz: 0, k: paint }];
