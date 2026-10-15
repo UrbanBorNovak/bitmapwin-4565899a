@@ -17,6 +17,7 @@ import { ARCHETYPES, FORGE_MAX_BLOCKS, FORGE_RENDER_MAX, FORGE_SPAN, encodeBuild
 import { HOUSE_PREFABS, SPHERES, cellKey, normaliseModule, rotatePrefab, stampInto, tributeSplit, type Contributor, type Prefab, type Sphere } from "@/lib/forge-prefabs";
 import { BLUEPRINTS, blueprintBlocks, nextDropAt, weekNumber, weeklyBlueprint, type Blueprint } from "@/lib/forge-blueprints";
 import { BEHAVIOR_CARDS, KITS, isKit, kitManifest, type BehaviorCard } from "@/lib/forge-kits";
+import { KitBox } from "@/components/forge/KitBox";
 import { KitThumb } from "@/components/forge/KitThumb";
 import { KitBehaviorPreview } from "@/components/forge/KitBehaviorPreview";
 import { clipToParcel, inRect, parcelAt, parcelRects, type ParcelRect } from "@/lib/forge-parcels";
@@ -247,6 +248,7 @@ function ForgePage() {
   const [showBp, setShowBp] = useState(true);
   const bp: Blueprint = KITS.find((k) => k.id === bpId) ?? BLUEPRINTS.find((b) => b.id === bpId) ?? weekly;
   const kit = isKit(bp) ? bp : null;
+  const [unboxed, setUnboxed] = useState<string[]>([]);
   const [auto, setAuto] = useState(false);
   const [testing, setTesting] = useState(false);
   const [off, setOff] = useState<BehaviorCard[]>([]);
@@ -697,6 +699,9 @@ function ForgePage() {
                 {BLUEPRINTS.map((b) => <option key={b.id} value={b.id}>{b.id === weekly.id ? `★ WEEK ${weekNumber()} · ` : ""}{b.name}</option>)}
               </optgroup>
             </select>
+            {kit && !unboxed.includes(kit.id) ? (
+              <KitBox key={kit.id} kit={kit} setNo={KITS.indexOf(kit) + 1} onOpened={() => setUnboxed((u) => [...u, kit.id])} />
+            ) : (<>
             <div className="mt-2 overflow-hidden rounded border border-border bg-background/60">
               <KitThumb bp={bp} upTo={Math.max(1, bpStep)} />
               <div className="border-t border-border px-2 py-0.5 font-mono text-[9px] text-muted-foreground">{bpStep === 0 ? "STEP 1 PREVIEW" : `YOUR PROGRESS · ${bpStep} OF ${bp.steps.length} STEPS`}</div>
@@ -718,7 +723,7 @@ function ForgePage() {
               {bp.steps.map((s, i) => (
                 <li key={s.title}>
                   <button type="button" onClick={() => setBpStep(i)} className={`w-full rounded border px-2 py-2 text-left sm:py-1 ${i === bpStep ? "border-accent text-foreground" : i < bpStep ? "border-border text-muted-foreground line-through" : "border-border text-muted-foreground"}`}>
-                    <b>{i + 1}. {s.title}</b> — {s.tip}
+                    {kit && kit.bags[i] !== kit.bags[i - 1] && <span className="mr-1 rounded border border-accent/60 px-1 font-mono text-[9px] text-accent">BAG {kit.bags[i]}</span>}<b>{i + 1}. {s.title}</b> — {s.tip}
                   </button>
                 </li>
               ))}
@@ -752,6 +757,7 @@ function ForgePage() {
                 <button type="button" onClick={() => { void navigator.clipboard?.writeText(JSON.stringify(kitManifest(kit, kit.behaviors.map((b) => b.card).filter((c) => !off.includes(c))), null, 2)); toast.success("KIT MANIFEST COPIED"); }} className="mt-1 w-full rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground">COPY KIT MANIFEST (JSON)</button>
               </div>
             )}
+            </>)}
           </div>
           <div>
             <p className="mb-1 text-[10px] text-muted-foreground">START FROM YOUR BLOCK'S SEED</p>
