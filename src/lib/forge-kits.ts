@@ -577,7 +577,208 @@ const spitfire: Kit = {
   ages: "8+",
 };
 
-export const KITS: Kit[] = [citadel, express, array, vault, dragon, mega, colossus, ark, bismarck, tiger, spitfire];
+// ---- CIVIC SETS: shared helpers ----
+type M = ReturnType<typeof maker>;
+/** Hollow multi-storey block: wall shell, slab every 4 levels, window bands, flat roof with parapet. */
+const storeys = (m: M, x0: number, x1: number, z0: number, z1: number, y0: number, floors: number, wall: BlockId, trim: BlockId) => {
+  const top = y0 + floors * 4;
+  for (let y = y0; y < top; y++) {
+    const lvl = (y - y0) % 4;
+    for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) {
+      const edge = x === x0 || x === x1 || z === z0 || z === z1;
+      if (lvl === 0) { m.put(x, y, z, edge ? trim : "planks"); continue; }
+      if (!edge) continue;
+      const corner = (x === x0 || x === x1) && (z === z0 || z === z1);
+      const along = x === x0 || x === x1 ? z : x;
+      m.put(x, y, z, !corner && lvl !== 3 && along % 3 !== 0 ? "glass" : wall);
+    }
+  }
+  m.box(x0, x1, top, top, z0, z1, trim);
+  for (let x = x0; x <= x1; x++) for (const z of [z0, z1]) m.put(x, top + 1, z, wall);
+  for (let z = z0; z <= z1; z++) for (const x of [x0, x1]) m.put(x, top + 1, z, wall);
+  return top;
+};
+const plaza = (m: M, k: BlockId) => { m.box(4, 59, 0, 0, 4, 59, k); for (let i = 4; i <= 59; i++) for (const j of [4, 59]) { m.put(i, 0, j, "grass"); m.put(j, 0, i, "grass"); } };
+const tree = (m: M, x: number, z: number) => { for (let y = 1; y <= 3; y++) m.put(x, y, z, "log"); m.box(x - 1, x + 1, 4, 5, z - 1, z + 1, "grass"); m.put(x, 6, z, "grass"); };
+const lamp = (m: M, x: number, z: number) => { for (let y = 1; y <= 4; y++) m.put(x, y, z, "cobble"); m.put(x, 5, z, "glow"); };
+const car = (m: M, x: number, z: number, body: BlockId, roof: BlockId) => { m.box(x, x + 4, 1, 1, z, z + 2, body); m.box(x + 1, x + 3, 2, 2, z, z + 2, "glass"); m.box(x + 1, x + 3, 3, 3, z, z + 2, roof); for (const dx of [0, 4]) { m.put(x + dx, 0, z - 1, "cobble"); m.put(x + dx, 0, z + 3, "cobble"); } };
+const sign = (m: M, x0: number, x1: number, y: number, z: number, k: BlockId) => { for (let x = x0; x <= x1; x++) { m.put(x, y, z, k); m.put(x, y + 1, z, x % 2 ? k : "glow"); } };
+
+// ---- CITY HOSPITAL ----
+const hospital: Kit = {
+  id: "kit-hospital", name: "City Hospital", sphere: "bricks", kit: true, difficulty: "MASTER",
+  story: "A full hospital campus: main tower, two ward wings, glass atrium, emergency bay with ambulances, rooftop helipad and a garden.",
+  steps: [
+    step("Campus grounds", "Lay the plaza, the drive loop and the garden lawn.", (m) => {
+      plaza(m, "stone");
+      for (let x = 8; x <= 55; x++) for (const z of [8, 9]) m.put(x, 0, z, "cobble");
+      m.box(40, 55, 0, 0, 44, 55, "grass");
+    }),
+    step("Ward wing west", "Three storeys of white wards with window bands.", (m) => { storeys(m, 8, 21, 14, 40, 1, 3, "sand", "stone"); }),
+    step("Ward wing east", "The mirror wing on the other side.", (m) => { storeys(m, 42, 55, 14, 40, 1, 3, "sand", "stone"); }),
+    step("Main tower", "The tall central tower — six storeys.", (m) => { storeys(m, 24, 39, 18, 36, 1, 6, "sand", "stone"); }),
+    step("Glass atrium", "A glass entrance hall in front of the tower, with sliding doors.", (m) => {
+      m.box(26, 37, 1, 6, 12, 17, "glass", true); m.box(26, 37, 7, 7, 12, 17, "glass");
+      m.box(30, 33, 1, 3, 12, 12, "glow");
+      for (let x = 26; x <= 37; x += 3) for (let y = 1; y <= 7; y++) m.put(x, y, 12, "stone");
+    }),
+    step("Red cross signs", "Big red crosses on the tower and the wings.", (m) => {
+      const cross = (cx: number, cy: number, z: number) => { for (let i = -2; i <= 2; i++) { m.put(cx + i, cy, z, "brick"); m.put(cx, cy + i, z, "brick"); } };
+      cross(31, 19, 17); cross(14, 9, 13); cross(49, 9, 13);
+      sign(m, 27, 36, 22, 17, "brick");
+    }),
+    step("Emergency bay", "Covered ambulance bay with two ambulances and flashing lights.", (m) => {
+      m.box(42, 55, 13, 13, 41, 47, "stone"); for (const x of [42, 55]) for (const z of [41, 47]) for (let y = 1; y <= 12; y++) if (y < 5) m.put(x, y, z, "cobble");
+      m.box(42, 55, 5, 5, 41, 47, "stone");
+      car(m, 44, 42, "sand", "brick"); car(m, 50, 42, "sand", "brick");
+      m.put(46, 4, 43, "glow"); m.put(52, 4, 43, "glow");
+      sign(m, 44, 53, 6, 41, "brick");
+    }),
+    step("Helipad", "Rooftop helipad with landing lights on the tower.", (m) => {
+      m.box(26, 37, 26, 26, 20, 34, "cobble");
+      for (let x = 28; x <= 35; x++) for (const z of [21, 33]) m.put(x, 27, z, "glow");
+      for (let z = 23; z <= 31; z++) { m.put(29, 27, z, "sand"); m.put(34, 27, z, "sand"); } for (let x = 29; x <= 34; x++) m.put(x, 27, 27, "sand");
+    }),
+    step("Garden & lamps", "Healing garden with trees, benches and street lamps.", (m) => {
+      for (const [x, z] of [[43, 50], [48, 53], [53, 49], [12, 50], [18, 53]] as const) tree(m, x, z);
+      for (let x = 8; x <= 55; x += 8) lamp(m, x, 10);
+      for (const x of [22, 30, 38]) m.box(x, x + 2, 1, 1, 52, 52, "planks");
+    }),
+  ],
+  behaviors: [{ card: "beacon_pulse", steps: [6, 7], pivot: [48, 4, 43] }],
+  bags: [1, 2, 3, 4, 5, 5, 6, 7, 8],
+  tagline: "Main tower, ward wings, emergency bay, rooftop helipad.",
+  ages: "12+",
+};
+
+// ---- POLICE STATION ----
+const police: Kit = {
+  id: "kit-police", name: "Police Station", sphere: "bricks", kit: true, difficulty: "BUILDER",
+  story: "A brick precinct with columned entrance, flashing blue lamps, patrol cars, garage, radio mast and a holding block.",
+  steps: [
+    step("Lot & street", "Paved lot with parking lines and a sidewalk.", (m) => { plaza(m, "cobble"); for (let x = 10; x <= 54; x += 6) for (let z = 46; z <= 52; z++) m.put(x, 0, z, "sand"); m.box(4, 59, 0, 0, 8, 10, "stone"); }),
+    step("Precinct building", "Two-storey brick precinct.", (m) => { storeys(m, 10, 45, 14, 36, 1, 3, "brick", "stone"); }),
+    step("Column entrance", "Stone steps, columns and a pediment over the doors.", (m) => {
+      m.box(20, 35, 1, 1, 10, 13, "stone"); m.box(22, 33, 2, 2, 11, 13, "stone");
+      for (const x of [22, 25, 30, 33]) for (let y = 3; y <= 10; y++) m.put(x, y, 12, "stone");
+      m.box(21, 34, 11, 11, 11, 13, "stone"); m.box(23, 32, 12, 12, 12, 13, "stone"); m.box(25, 30, 13, 13, 13, 13, "stone");
+      m.box(26, 29, 3, 6, 14, 14, "log");
+      sign(m, 24, 31, 9, 13, "glass");
+    }),
+    step("Blue lamps", "Blue police lamps on both sides of the door.", (m) => { for (const x of [20, 35]) { for (let y = 2; y <= 5; y++) m.put(x, y, 11, "cobble"); m.put(x, 6, 11, "glass"); m.put(x, 7, 11, "glow"); } }),
+    step("Garage & patrol cars", "Garage with roll-up doors and three patrol cars.", (m) => {
+      m.box(46, 57, 1, 7, 14, 36, "stone", true); m.box(46, 57, 8, 8, 14, 36, "cobble");
+      for (const z0 of [16, 24, 31]) for (let z = z0; z <= z0 + 3; z++) for (let y = 1; y <= 5; y++) m.put(57, y, z, y % 2 ? "cobble" : "stone");
+      car(m, 12, 47, "cobble", "sand"); car(m, 24, 47, "cobble", "sand"); car(m, 36, 47, "cobble", "sand");
+      for (const x of [14, 26, 38]) { m.put(x, 4, 48, "glass"); m.put(x + 1, 4, 48, "brick"); }
+    }),
+    step("Holding block", "Barred cell block behind the precinct.", (m) => {
+      m.box(14, 40, 1, 6, 38, 43, "stone", true); m.box(14, 40, 7, 7, 38, 43, "cobble");
+      for (let x = 15; x <= 39; x += 2) for (let y = 2; y <= 4; y++) m.put(x, y, 43, "log");
+    }),
+    step("Radio mast & flag", "Tall antenna with a red tip and the flagpole.", (m) => {
+      for (let y = 15; y <= 30; y++) m.put(40, y, 30, "cobble"); m.put(40, 31, 30, "glow"); for (const y of [20, 25]) m.box(39, 41, y, y, 30, 30, "cobble");
+      for (let y = 1; y <= 14; y++) m.put(8, y, 12, "stone"); m.box(9, 12, 12, 14, 12, 12, "glass"); m.box(9, 12, 13, 13, 12, 12, "sand");
+      for (let x = 10; x <= 54; x += 11) lamp(m, x, 9);
+    }),
+  ],
+  behaviors: [{ card: "beacon_pulse", steps: [3, 4], pivot: [28, 6, 11] }],
+  bags: [1, 2, 3, 3, 4, 5, 6],
+  tagline: "Brick precinct, blue lamps, patrol cars, radio mast.",
+  ages: "9+",
+};
+
+// ---- FIRE STATION ----
+const fire: Kit = {
+  id: "kit-fire", name: "Fire Station No.1", sphere: "bricks", kit: true, difficulty: "BUILDER",
+  story: "A red-brick firehouse with three tall engine doors, two fire engines, a hose-drying tower, alarm bell and crew quarters.",
+  steps: [
+    step("Apron", "Concrete apron in front of the bays with yellow lines.", (m) => { plaza(m, "stone"); for (let x = 8; x <= 46; x += 2) m.put(x, 0, 14, "gold"); }),
+    step("Engine hall", "Tall brick hall with three engine bays.", (m) => {
+      m.box(8, 46, 1, 12, 16, 40, "brick", true); m.box(8, 46, 13, 13, 16, 40, "stone");
+      for (let x = 8; x <= 46; x += 2) m.put(x, 14, 16, "brick");
+      for (const x0 of [10, 22, 34]) m.box(x0, x0 + 9, 1, 9, 16, 16, "glass");
+      for (const x0 of [10, 22, 34]) for (let x = x0; x <= x0 + 9; x++) m.put(x, 10, 16, "stone");
+    }),
+    step("Fire engines", "Two red engines with ladders and lights.", (m) => {
+      for (const x0 of [11, 23]) {
+        m.box(x0, x0 + 7, 1, 3, 4, 12, "brick"); m.box(x0 + 1, x0 + 6, 2, 3, 4, 5, "glass");
+        for (let z = 6; z <= 12; z++) { m.put(x0 + 2, 4, z, "stone"); m.put(x0 + 5, 4, z, "stone"); if (z % 2 === 0) for (let x = x0 + 3; x <= x0 + 4; x++) m.put(x, 4, z, "stone"); }
+        m.put(x0 + 1, 4, 4, "glow"); m.put(x0 + 6, 4, 4, "glow");
+        for (const z of [5, 11]) { m.put(x0, 0, z, "cobble"); m.put(x0 + 7, 0, z, "cobble"); }
+      }
+    }),
+    step("Crew quarters", "Two floors of crew rooms beside the hall.", (m) => { storeys(m, 47, 58, 16, 40, 1, 3, "brick", "stone"); }),
+    step("Hose tower", "The tall drying tower with lookout windows.", (m) => {
+      m.box(48, 54, 13, 32, 8, 14, "brick", true); m.box(48, 54, 1, 12, 8, 14, "brick", true);
+      for (let y = 28; y <= 30; y++) for (let x = 49; x <= 53; x++) { m.put(x, y, 8, "glass"); m.put(x, y, 14, "glass"); }
+      m.box(47, 55, 33, 33, 7, 15, "stone"); m.box(50, 52, 34, 35, 10, 12, "brick"); m.put(51, 36, 11, "glow");
+    }),
+    step("Alarm bell & sign", "Gold alarm bell and the station sign.", (m) => {
+      m.box(26, 30, 15, 15, 15, 15, "stone"); m.box(27, 29, 16, 17, 15, 15, "gold"); m.put(28, 18, 15, "gold");
+      sign(m, 12, 44, 11, 15, "gold");
+      for (const x of [10, 21, 33, 45]) { m.put(x, 11, 15, "glow"); }
+    }),
+    step("Hydrants & lamps", "Red hydrants, hoses on reels and street lamps.", (m) => {
+      for (const x of [6, 40, 57]) { m.box(x, x, 1, 2, 6, 6, "brick"); m.put(x, 3, 6, "gold"); }
+      for (const z of [44, 50]) { m.box(12, 14, 1, 3, z, z + 1, "brick"); m.box(13, 13, 2, 2, z - 1, z + 2, "gold"); }
+      for (let x = 20; x <= 56; x += 12) lamp(m, x, 48);
+    }),
+  ],
+  behaviors: [
+    { card: "gate_sensor", steps: [2], pivot: [20, 1, 8] },
+    { card: "beacon_pulse", steps: [5], pivot: [28, 16, 15] },
+  ],
+  bags: [1, 2, 3, 4, 5, 6, 6],
+  tagline: "Engine hall, two fire engines, hose tower, alarm bell.",
+  ages: "8+",
+};
+
+// ---- SCHOOL ----
+const school: Kit = {
+  id: "kit-school", name: "Satoshi Academy School", sphere: "bricks", kit: true, difficulty: "MASTER",
+  story: "A full school campus: classroom wings, clock tower, gym hall, sports field with goals, playground and a yellow school bus.",
+  steps: [
+    step("Campus & field", "Lawn, path and a striped sports field.", (m) => {
+      plaza(m, "grass"); m.box(28, 34, 0, 0, 4, 30, "cobble");
+      for (let x = 8; x <= 56; x++) for (let z = 38; z <= 57; z++) m.put(x, 0, z, (x === 8 || x === 56 || z === 38 || z === 57 || x === 32) ? "sand" : "grass");
+    }),
+    step("Classroom wing west", "Two storeys of classrooms with big windows.", (m) => { storeys(m, 6, 26, 16, 32, 1, 2, "brick", "sand"); }),
+    step("Classroom wing east", "The matching wing on the other side.", (m) => { storeys(m, 36, 56, 16, 32, 1, 2, "brick", "sand"); }),
+    step("Entrance hall", "Centre hall joining both wings, with doors and steps.", (m) => {
+      m.box(27, 35, 1, 10, 18, 32, "sand", true); m.box(27, 35, 11, 11, 18, 32, "brick");
+      m.box(29, 33, 1, 5, 18, 18, "glass"); m.box(28, 34, 1, 1, 15, 17, "stone");
+    }),
+    step("Clock tower", "Tall clock tower with a gold clock face and a bell.", (m) => {
+      m.box(29, 33, 12, 26, 22, 26, "brick", true);
+      m.box(30, 32, 20, 22, 21, 21, "gold"); m.put(31, 21, 20, "cobble"); m.put(31, 22, 20, "cobble");
+      m.box(28, 34, 27, 27, 21, 27, "sand"); m.box(29, 33, 28, 29, 22, 26, "planks"); m.box(30, 32, 30, 31, 23, 25, "planks"); m.put(31, 32, 24, "gold");
+      m.put(31, 27, 24, "gold");
+    }),
+    step("Gym hall", "Big gym with curved roof behind the school.", (m) => {
+      m.box(12, 50, 1, 8, 6, 14, "stone", true);
+      for (let x = 12; x <= 50; x++) for (let z = 6; z <= 14; z++) { const d = Math.abs(z - 10); m.put(x, 9 + (d < 2 ? 2 : d < 4 ? 1 : 0), z, "cobble"); }
+      for (let x = 14; x <= 48; x += 3) for (let y = 5; y <= 7; y++) m.put(x, y, 14, "glass");
+    }),
+    step("Goals & playground", "Two football goals, swings and a slide.", (m) => {
+      for (const x of [9, 55]) { for (const z of [45, 50]) for (let y = 1; y <= 3; y++) m.put(x, y, z, "sand"); for (let z = 45; z <= 50; z++) m.put(x, 4, z, "sand"); }
+      for (const x of [10, 16]) for (let y = 1; y <= 5; y++) m.put(x, y, 34, "brick"); m.box(10, 16, 6, 6, 34, 34, "brick"); m.put(12, 3, 34, "planks"); m.put(14, 3, 34, "planks");
+      for (let i = 0; i <= 4; i++) m.put(50 - i, 1 + i, 35, "gold"); m.box(51, 52, 1, 5, 35, 35, "cobble");
+    }),
+    step("School bus & trees", "The yellow school bus, trees and lamps by the path.", (m) => {
+      m.box(38, 49, 1, 3, 6 - 4, 4, "gold"); m.box(39, 48, 2, 2, 2, 2, "glass"); m.box(39, 48, 2, 2, 4, 4, "glass");
+      for (const x of [39, 47]) { m.put(x, 0, 1, "cobble"); m.put(x, 0, 5, "cobble"); } m.put(49, 2, 3, "glow");
+      for (const [x, z] of [[8, 8], [22, 35], [44, 35], [57, 8], [5, 34]] as const) tree(m, x, z);
+      for (const z of [8, 24]) { lamp(m, 26, z); lamp(m, 36, z); }
+    }),
+  ],
+  behaviors: [{ card: "beacon_pulse", steps: [4], pivot: [31, 21, 21] }],
+  bags: [1, 2, 3, 4, 5, 6, 7, 8],
+  tagline: "Classroom wings, clock tower, gym, sports field, school bus.",
+  ages: "8+",
+};
+
+export const KITS: Kit[] = [citadel, express, array, vault, dragon, mega, colossus, ark, bismarck, tiger, spitfire, hospital, police, fire, school];
 export const isKit = (b: Blueprint): b is Kit => (b as Kit).kit === true;
 
 /** Deterministic pose for a behavior at time t (seconds). `near` = visitor in range. */
