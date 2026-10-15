@@ -778,7 +778,153 @@ const school: Kit = {
   ages: "8+",
 };
 
-export const KITS: Kit[] = [citadel, express, array, vault, dragon, mega, colossus, ark, bismarck, tiger, spitfire, hospital, police, fire, school];
+// ---- WORLD WONDERS ----
+const ground = (m: M, k: BlockId) => m.box(2, 61, 0, 0, 2, 61, k);
+const domeShell = (m: M, cx: number, cy: number, cz: number, r: number, k: BlockId, onion = 1) => {
+  for (let x = Math.floor(cx - r); x <= Math.ceil(cx + r); x++) for (let z = Math.floor(cz - r); z <= Math.ceil(cz + r); z++) for (let y = cy; y <= cy + r * onion + 1; y++) {
+    const d = Math.hypot(x - cx, (y - cy) / onion, z - cz);
+    if (d <= r && d > r - 1.3) m.put(x, y, z, k);
+  }
+};
+
+const pyramid: Kit = {
+  id: "kit-pyramid", name: "Great Pyramid & Sphinx", sphere: "kingdom", kit: true, difficulty: "MASTER",
+  story: "The Great Pyramid of Giza with a gold capstone, a hidden tomb passage, the Sphinx guarding the causeway and torch-lit temple gates.",
+  steps: [
+    step("Desert plateau", "Lay the sand plateau and the stone causeway.", (m) => { ground(m, "sand"); for (let z = 2; z <= 12; z++) for (let x = 29; x <= 34; x++) m.put(x, 0, z, "cobble"); }),
+    step("Hidden tomb", "Build the burial chamber and the glowing passage first — it gets sealed inside.", (m) => {
+      m.box(28, 35, 1, 5, 30, 37, "stone", true); m.box(30, 33, 1, 2, 32, 35, "gold");
+      for (let z = 16; z < 30; z++) { m.put(31, 1 + Math.floor((z - 16) / 5), z, "glow"); m.put(32, 1 + Math.floor((z - 16) / 5), z, "glow"); }
+    }),
+    step("Lower courses", "The first ten stepped layers of limestone.", (m) => {
+      for (let y = 1; y <= 10; y++) { const a = 12 + y, b = 51 - y; m.box(a, b, y, y, a + 4, b + 4, y % 3 === 0 ? "stone" : "sand", true); }
+    }),
+    step("Upper courses", "Keep stepping inward to the top.", (m) => {
+      for (let y = 11; y <= 18; y++) { const a = 12 + y, b = 51 - y; m.box(a, b, y, y, a + 4, b + 4, y % 3 === 0 ? "stone" : "sand", true); }
+      m.box(31, 32, 18, 18, 35, 36, "sand");
+    }),
+    step("Gold capstone", "The shining pyramidion on top.", (m) => { m.box(31, 32, 19, 20, 35, 36, "gold"); m.put(31, 21, 35, "glow"); m.put(32, 21, 36, "glow"); }),
+    step("The Sphinx", "A lion body with paws forward and a striped royal headdress.", (m) => {
+      m.box(42, 49, 1, 4, 6, 18, "sand"); m.box(43, 48, 5, 6, 8, 18, "sand");
+      for (const x of [42, 43, 48, 49]) m.box(x, x, 1, 2, 2, 5, "sand");
+      m.box(43, 48, 5, 11, 3, 7, "sand"); m.box(44, 47, 7, 10, 2, 2, "stone");
+      for (let y = 5; y <= 11; y += 2) { m.put(42, y, 5, "gold"); m.put(49, y, 5, "gold"); }
+      m.box(45, 46, 3, 5, 1, 1, "sand"); m.put(44, 9, 2, "glow"); m.put(47, 9, 2, "glow");
+    }),
+    step("Temple gate & torches", "Twin pylons at the causeway with fire braziers.", (m) => {
+      for (const x of [25, 37]) { m.box(x, x + 2, 1, 9, 6, 9, "stone"); m.put(x + 1, 10, 7, "glow"); m.put(x + 1, 10, 8, "glow"); }
+      m.box(28, 36, 8, 9, 6, 9, "stone"); for (let x = 28; x <= 36; x += 2) m.put(x, 7, 6, "gold");
+    }),
+    step("Small pyramids", "The three queens' pyramids beside the great one.", (m) => {
+      for (const [cx, cz] of [[8, 52], [14, 56], [20, 59]] as const) for (let y = 1; y <= 4; y++) { const r = 5 - y; m.box(cx - r, cx + r, y, y, cz - r, Math.min(61, cz + r), "sand", true); }
+    }),
+  ],
+  behaviors: [{ card: "beacon_pulse", steps: [4], pivot: [31, 20, 35] }],
+  bags: [1, 1, 2, 3, 4, 5, 6, 7],
+  tagline: "Stepped pyramid, gold capstone, secret tomb, the Sphinx.",
+  ages: "12+",
+};
+
+const ell = (x: number, z: number, a: number, b: number) => Math.hypot((x - 31.5) / a, (z - 31.5) / b);
+const colosseum: Kit = {
+  id: "kit-colosseum", name: "The Roman Colosseum", sphere: "kingdom", kit: true, difficulty: "MASTER",
+  story: "The great oval arena of Rome: three tiers of arches, a broken outer wall, stepped seats, the emperor's box and the tunnels below the sand.",
+  steps: [
+    step("Piazza & hypogeum", "Stone piazza and the maze of tunnels under the arena.", (m) => {
+      for (let x = 14; x <= 49; x++) for (let z = 18; z <= 45; z++) if (ell(x, z, 16, 12) < 1 && (x % 4 === 0 || z % 5 === 0)) m.put(x, 1, z, "stone");
+    }),
+    step("Arena floor", "Wooden floor with sand and two trapdoors.", (m) => {
+      for (let x = 14; x <= 49; x++) for (let z = 18; z <= 45; z++) if (ell(x, z, 16, 12) < 1) m.put(x, 2, z, (x + z) % 7 ? "sand" : "planks");
+      m.box(24, 26, 3, 3, 30, 32, "planks"); m.box(37, 39, 3, 3, 30, 32, "planks");
+    }),
+    step("Ground arcade", "The first ring of arches, ten blocks high.", (m) => {
+      for (let x = 2; x <= 61; x++) for (let z = 2; z <= 61; z++) { const e = ell(x, z, 29.5, 24.5); if (e > 1 || e < 0.965) continue; const ang = Math.round(Math.atan2(z - 31.5, x - 31.5) * 18); for (let y = 1; y <= 10; y++) m.put(x, y, z, y >= 3 && y <= 8 && ang % 2 === 0 ? "glass" : y === 10 ? "stone" : "sand"); }
+    }),
+    step("Second & third tiers", "Two more rings of arches — the far side stays tall.", (m) => {
+      for (let x = 2; x <= 61; x++) for (let z = 2; z <= 61; z++) { const e = ell(x, z, 29.5, 24.5); if (e > 1 || e < 0.965) continue; const ang = Math.round(Math.atan2(z - 31.5, x - 31.5) * 18); const top = z < 31 && x > 20 && x < 44 ? 20 : 30; for (let y = 11; y <= top; y++) m.put(x, y, z, (y % 10 >= 3 && y % 10 <= 8 && ang % 2 === 0) ? "glass" : y % 10 === 0 ? "stone" : "sand"); }
+    }),
+    step("Ruined edge", "Crumble the broken wall into jagged steps.", (m) => {
+      for (let x = 2; x <= 61; x++) for (let z = 2; z <= 31; z++) { const e = ell(x, z, 29.5, 24.5); if (e > 1 || e < 0.94) continue; if (x <= 20 || x >= 44) continue; const h = 20 + ((x * 7) % 5); for (let y = 21; y <= h; y++) m.put(x, y, z, "cobble"); }
+    }),
+    step("Stepped seating", "Seat rows climbing from the arena to the wall.", (m) => {
+      for (let x = 2; x <= 61; x++) for (let z = 2; z <= 61; z++) { const e = ell(x, z, 29.5, 24.5); if (e >= 0.965 || e < 0.56) continue; const y = 3 + Math.floor((e - 0.56) * 45); m.put(x, y, z, y % 2 ? "stone" : "cobble"); }
+    }),
+    step("Emperor's box & banners", "The gold imperial box and red banners on the wall.", (m) => {
+      m.box(28, 35, 6, 9, 54, 56, "gold", true); m.box(28, 35, 10, 10, 54, 56, "brick");
+      for (let x = 10; x <= 54; x += 11) for (let y = 24; y <= 29; y++) m.put(x, y, x < 32 ? 54 : 55, "brick");
+    }),
+    step("Velarium masts", "Poles on top of the wall that held the giant sun-shade.", (m) => {
+      for (const [x, z] of [[4, 32], [59, 32], [31, 56], [14, 47], [49, 47]] as const) { for (let y = 31; y <= 36; y++) m.put(x, y, z, "log"); m.put(x, 37, z, "glow"); }
+    }),
+  ],
+  behaviors: [{ card: "gate_sensor", steps: [1], pivot: [31, 3, 31] }],
+  bags: [1, 2, 3, 4, 4, 5, 6, 7],
+  tagline: "Three tiers of arches, broken wall, arena tunnels, emperor's box.",
+  ages: "14+",
+};
+
+const eiffel: Kit = {
+  id: "kit-eiffel", name: "The Eiffel Tower", sphere: "kingdom", kit: true, difficulty: "MASTER",
+  story: "The iron lady of Paris: four curved lattice legs, grand arches, two viewing decks, the tall spire and a sweeping searchlight on top.",
+  steps: [
+    step("Champ de Mars", "Lawn, gravel paths and the four leg foundations.", (m) => {
+      ground(m, "grass"); for (let i = 2; i <= 61; i++) for (const j of [31, 32]) { m.put(i, 0, j, "sand"); m.put(j, 0, i, "sand"); }
+      for (const x of [6, 54]) for (const z of [6, 54]) m.box(x, x + 3, 0, 1, z, z + 3, "stone");
+    }),
+    step("Lattice legs", "Four curving iron legs rising to the first deck.", (m) => {
+      for (let y = 2; y <= 14; y++) { const d = Math.round(22 * Math.pow(1 - y / 30, 1.5)) + 2; for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const cx = 31.5 + sx * d, cz = 31.5 + sz * d; const x0 = Math.round(cx - 2), z0 = Math.round(cz - 2); for (let x = x0; x <= x0 + 3; x++) for (let z = z0; z <= z0 + 3; z++) if (x === x0 || x === x0 + 3 || z === z0 || z === z0 + 3) if ((x + y + z) % 3 || x === x0 && z === z0) m.put(x, y, z, "cobble"); } }
+    }),
+    step("Grand arches", "Decorative arches spanning between the legs.", (m) => {
+      for (let i = 14; i <= 49; i++) { const y = 12 - Math.round(4 * Math.cos(((i - 31.5) / 18) * Math.PI / 2)); for (const j of [14, 49]) { m.put(i, y, j, "cobble"); m.put(j, y, i, "cobble"); } }
+    }),
+    step("First deck", "The wide first platform with a gold railing.", (m) => { m.box(14, 49, 15, 15, 14, 49, "planks", true); m.box(14, 49, 16, 16, 14, 49, "gold", true); m.box(18, 45, 15, 15, 18, 45, "stone", true); }),
+    step("Middle tower", "The legs merge as the lattice climbs to deck two.", (m) => {
+      for (let y = 16; y <= 32; y++) { const d = Math.round(12 * Math.pow(1 - (y - 16) / 26, 1.4)) + 1; for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const x0 = Math.round(31.5 + sx * d - 1), z0 = Math.round(31.5 + sz * d - 1); m.box(x0, x0 + 2, y, y, z0, z0 + 2, (x0 + y) % 2 ? "cobble" : "stone", true); } }
+    }),
+    step("Second deck", "A smaller platform with lights.", (m) => { m.box(24, 39, 33, 33, 24, 39, "planks", true); for (let i = 24; i <= 39; i += 3) { m.put(i, 34, 24, "glow"); m.put(i, 34, 39, "glow"); } }),
+    step("Spire", "The slim top tower and the summit cabin.", (m) => {
+      for (let y = 34; y <= 56; y++) { const r = y < 46 ? 2 : 1; for (let x = 32 - r; x <= 31 + r; x++) for (let z = 32 - r; z <= 31 + r; z++) if (x === 32 - r || x === 31 + r || z === 32 - r || z === 31 + r) if ((x + z + y) % 2 || y % 4 === 0) m.put(x, y, z, "cobble"); }
+      m.box(29, 34, 52, 54, 29, 34, "glass", true); m.box(29, 34, 55, 55, 29, 34, "gold");
+    }),
+    step("Antenna & searchlight", "Radio mast and the beacon that sweeps over the city.", (m) => { for (let y = 56; y <= 62; y++) m.put(31, y, 31, "stone"); m.put(31, 63, 31, "glow"); m.box(30, 33, 57, 57, 30, 33, "glow", true); }),
+  ],
+  behaviors: [{ card: "sentry_turret", steps: [7], pivot: [31.5, 57, 31.5], speed: 0.6 }, { card: "beacon_pulse", steps: [5], pivot: [31, 34, 31] }],
+  bags: [1, 2, 2, 3, 4, 5, 6, 7],
+  tagline: "Curved iron legs, two decks, spire with a sweeping searchlight.",
+  ages: "12+",
+};
+
+const taj: Kit = {
+  id: "kit-taj", name: "The Taj Mahal", sphere: "kingdom", kit: true, difficulty: "MASTER",
+  story: "The white marble mausoleum of Agra: raised plinth, great onion dome, four small domed kiosks, four minarets and a long reflecting pool.",
+  steps: [
+    step("Gardens & pool", "Lawns, paths and the long reflecting pool.", (m) => {
+      m.box(8, 55, 0, 0, 48, 61, "grass"); for (let z = 48; z <= 61; z++) { for (let x = 29; x <= 34; x++) m.put(x, 0, z, "stone"); m.put(31, 0, z, "glass"); m.put(32, 0, z, "glass"); }
+      for (let z = 50; z <= 60; z += 3) for (const x of [26, 37]) { for (let y = 1; y <= 3; y++) m.put(x, y, z, "log"); m.box(x, x, 4, 6, z, z, "grass"); }
+    }),
+    step("Marble plinth", "The raised white platform.", (m) => { m.box(12, 51, 1, 3, 10, 47, "sand", true); m.box(12, 51, 3, 3, 10, 47, "stone"); for (let x = 29; x <= 34; x++) for (let y = 1; y <= 3; y++) m.put(x, y, 48 - (4 - y), "stone"); }),
+    step("Main hall", "The square hall with its tall arched doorways.", (m) => {
+      m.box(21, 42, 4, 19, 18, 39, "sand", true);
+      for (const [a, b] of [[27, 36]] as const) for (let x = a; x <= b; x++) for (let y = 5; y <= 16 - Math.abs(x - 31.5) / 2; y++) { m.put(x, y, 39, "glass"); m.put(x, y, 18, "glass"); m.put(21, y, x - 9, "glass"); m.put(42, y, x - 9, "glass"); }
+      for (let x = 21; x <= 42; x++) { m.put(x, 19, 39, "gold"); m.put(x, 19, 18, "gold"); }
+    }),
+    step("Great onion dome", "The huge dome swelling above the hall.", (m) => { m.box(25, 38, 20, 22, 22, 35, "sand", true); domeShell(m, 31.5, 23, 28.5, 9, "sand", 1.35); }),
+    step("Gold finial", "The crescent spike on the very top.", (m) => { for (let y = 36; y <= 41; y++) m.put(31, y, 28, "gold"); m.put(31, 42, 28, "glow"); }),
+    step("Four chattris", "Small domed kiosks at the corners of the roof.", (m) => {
+      for (const [x, z] of [[23, 20], [40, 20], [23, 37], [40, 37]] as const) { m.box(x - 1, x + 1, 20, 22, z - 1, z + 1, "sand", true); domeShell(m, x, 23, z, 2, "sand", 1.3); m.put(x, 27, z, "gold"); }
+    }),
+    step("Four minarets", "Tall towers at each corner of the plinth with balconies.", (m) => {
+      for (const [x, z] of [[14, 12], [49, 12], [14, 45], [49, 45]] as const) { for (let y = 4; y <= 30; y++) m.box(x - 1, x + 1, y, y, z - 1, z + 1, "sand", true); for (const y of [12, 20, 28]) m.box(x - 2, x + 2, y, y, z - 2, z + 2, "stone", true); domeShell(m, x, 31, z, 1.6, "sand", 1.4); m.put(x, 34, z, "gold"); }
+    }),
+    step("Inlay & lanterns", "Gold trim and glowing lanterns along the terrace.", (m) => { for (let x = 13; x <= 50; x += 4) { m.put(x, 4, 46, "glow"); m.put(x, 4, 11, "glow"); } for (let z = 18; z <= 39; z += 3) { m.put(21, 18, z, "gold"); m.put(42, 18, z, "gold"); } }),
+  ],
+  behaviors: [{ card: "beacon_pulse", steps: [7], pivot: [31, 4, 46] }],
+  bags: [1, 2, 3, 4, 4, 5, 6, 7],
+  tagline: "Onion dome, four minarets, marble plinth, reflecting pool.",
+  ages: "12+",
+};
+
+export const KITS: Kit[] = [citadel, express, array, vault, dragon, mega, colossus, ark, bismarck, tiger, spitfire, hospital, police, fire, school, pyramid, colosseum, eiffel, taj];
 export const isKit = (b: Blueprint): b is Kit => (b as Kit).kit === true;
 
 /** Deterministic pose for a behavior at time t (seconds). `near` = visitor in range. */
