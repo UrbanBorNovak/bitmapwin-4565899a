@@ -37,6 +37,7 @@ import { Route as GuardiansRouteImport } from './routes/guardians'
 import { Route as GuardiansGuideRouteImport } from './routes/guardians-guide'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as InventoryRouteImport } from './routes/inventory'
+import { Route as KennelsRouteImport } from './routes/kennels'
 import { Route as Land101RouteImport } from './routes/land-101'
 import { Route as LeasesRouteImport } from './routes/leases'
 import { Route as MapRouteImport } from './routes/map'
@@ -260,6 +261,11 @@ const HistoryRoute = HistoryRouteImport.update({
 const InventoryRoute = InventoryRouteImport.update({
   id: '/inventory',
   path: '/inventory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KennelsRoute = KennelsRouteImport.update({
+  id: '/kennels',
+  path: '/kennels',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Land101Route = Land101RouteImport.update({
@@ -716,6 +722,7 @@ export interface FileRoutesByFullPath {
   '/guardians-guide': typeof GuardiansGuideRoute
   '/history': typeof HistoryRoute
   '/inventory': typeof InventoryRoute
+  '/kennels': typeof KennelsRoute
   '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
@@ -828,6 +835,7 @@ export interface FileRoutesByTo {
   '/guardians-guide': typeof GuardiansGuideRoute
   '/history': typeof HistoryRoute
   '/inventory': typeof InventoryRoute
+  '/kennels': typeof KennelsRoute
   '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
@@ -941,6 +949,7 @@ export interface FileRoutesById {
   '/guardians-guide': typeof GuardiansGuideRoute
   '/history': typeof HistoryRoute
   '/inventory': typeof InventoryRoute
+  '/kennels': typeof KennelsRoute
   '/land-101': typeof Land101Route
   '/leases': typeof LeasesRoute
   '/map': typeof MapRoute
@@ -1057,6 +1066,7 @@ export interface FileRouteTypes {
     | '/guardians-guide'
     | '/history'
     | '/inventory'
+    | '/kennels'
     | '/land-101'
     | '/leases'
     | '/map'
@@ -1169,6 +1179,7 @@ export interface FileRouteTypes {
     | '/guardians-guide'
     | '/history'
     | '/inventory'
+    | '/kennels'
     | '/land-101'
     | '/leases'
     | '/map'
@@ -1281,6 +1292,7 @@ export interface FileRouteTypes {
     | '/guardians-guide'
     | '/history'
     | '/inventory'
+    | '/kennels'
     | '/land-101'
     | '/leases'
     | '/map'
@@ -1396,6 +1408,7 @@ export interface RootRouteChildren {
   GuardiansGuideRoute: typeof GuardiansGuideRoute
   HistoryRoute: typeof HistoryRoute
   InventoryRoute: typeof InventoryRoute
+  KennelsRoute: typeof KennelsRoute
   Land101Route: typeof Land101Route
   LeasesRoute: typeof LeasesRoute
   MapRoute: typeof MapRoute
@@ -1640,6 +1653,13 @@ declare module '@tanstack/react-router' {
       path: '/inventory'
       fullPath: '/inventory'
       preLoaderRoute: typeof InventoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kennels': {
+      id: '/kennels'
+      path: '/kennels'
+      fullPath: '/kennels'
+      preLoaderRoute: typeof KennelsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/land-101': {
@@ -2393,6 +2413,7 @@ const rootRouteChildren: RootRouteChildren = {
   GuardiansGuideRoute: GuardiansGuideRoute,
   HistoryRoute: HistoryRoute,
   InventoryRoute: InventoryRoute,
+  KennelsRoute: KennelsRoute,
   Land101Route: Land101Route,
   LeasesRoute: LeasesRoute,
   MapRoute: MapRoute,
