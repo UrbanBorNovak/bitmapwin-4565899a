@@ -166,7 +166,7 @@ const express: Kit = {
     }),
     step("Signals & trees", "Signal lamps at the corners and a few trees along the line.", (m) => {
       for (const [x, z] of [[T0 - 2, Z0 - 2], [T1 + 2, Z0 - 2], [T0 - 2, Z1 + 2], [T1 + 2, Z1 + 2]] as const) { m.box(x, x, 1, 3, z, z, "log"); m.put(x, 4, z, "glow"); }
-      for (const [x, z] of [[20, 30], [32, 31], [44, 30]] as const) { m.box(x, x, 1, 2, z, z, "log"); m.box(x - 1, x + 1, 3, 4, z - 1, z + 1, "leaves"); }
+      for (const [x, z] of [[20, 30], [32, 31], [44, 30]] as const) { m.box(x, x, 1, 2, z, z, "log"); m.box(x - 1, x + 1, 3, 4, z - 1, z + 1, "grass"); }
     }),
   ],
   behaviors: [
