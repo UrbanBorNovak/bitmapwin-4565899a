@@ -1,5 +1,5 @@
 /** Draws an Inscribed.space world's primitives on its BITMAP in the Oasis, with a portal into the full engine. */
-import { Component, Suspense, useMemo, useRef, useState, type ReactNode } from "react";
+import { Component, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useQuery } from "@tanstack/react-query";
@@ -9,6 +9,7 @@ import { creatorFloorY, fitPrims, modelsInside, structurePrims, type WorldAsset 
 import { worldContentUrl } from "@/lib/inscribed-world";
 import { WORLD_CELL, WORLD_GRID, cellX, cellZ, type PlayerState } from "@/lib/player-state";
 import { groundY } from "@/lib/world-terrain";
+import { setBoxes, type WorldBox } from "@/lib/box-collision";
 
 const D = Math.PI / 180;
 
@@ -61,8 +62,27 @@ function Bridge({ height }: { height: number }) {
     () => (data?.models && fit ? modelsInside(data.models, fit, WORLD_CELL * 0.5) : []),
     [data, fit],
   );
-  if (!data || !fit) return null;
   const x = cellX(height % WORLD_GRID), z = cellZ(Math.floor(height / WORLD_GRID));
+  // Register each box (and visible plane) in world space so the walker can stand on it.
+  useEffect(() => {
+    if (!fit) return;
+    const by = baseY(x, z), s = fit.scale, o = fit.offset;
+    const boxes: WorldBox[] = [];
+    for (const p of prims) {
+      const tilted = Math.abs(p.rot[0]) > 5 || Math.abs(p.rot[2]) > 5;
+      if (tilted) continue;
+      const turned = Math.abs(Math.round(p.rot[1] / 90)) % 2 === 1;
+      const hx = (turned ? p.size[2] : p.size[0]) / 2, hz = (turned ? p.size[0] : p.size[2]) / 2;
+      const hy = p.shape === "plane" ? 0.025 : p.size[1] / 2;
+      const cx = x + (p.pos[0] + o[0]) * s, cy = by + (p.pos[1] + o[1]) * s, cz = z + (p.pos[2] + o[2]) * s;
+      if (cy + hy * s <= by + 0.001) continue; // underground
+      boxes.push({ x0: cx - hx * s, x1: cx + hx * s, y0: cy - hy * s, y1: cy + hy * s, z0: cz - hz * s, z1: cz + hz * s });
+    }
+    const key = `iw:${height}`;
+    setBoxes(key, boxes);
+    return () => setBoxes(key, null);
+  }, [fit, prims, height, x, z]);
+  if (!data || !fit) return null;
   const s = fit.scale;
   const portalX = WORLD_CELL * 0.42;
   return (

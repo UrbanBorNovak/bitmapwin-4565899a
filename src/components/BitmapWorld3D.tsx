@@ -9,6 +9,7 @@ import { VoxelLayer } from "@/components/game/VoxelLayer";
 import { VoxelHud } from "@/components/game/VoxelHud";
 import { VOXEL, columnSurface, setVoxelFeet, voxelCeilingAt, voxelWallAt } from "@/lib/voxel-world";
 import { forgeSurfaceAt, forgeWallAt } from "@/lib/forge-collision";
+import { boxSurfaceAt, boxWallAt } from "@/lib/box-collision";
 import { floraSurface, floraWallAt } from "@/lib/flora-solids";
 let floraFeet: number | null = null;
 import { clearFraction } from "@/lib/camera-occluders";
@@ -384,6 +385,9 @@ const traversalSurfaceY = (x: number, z: number) => {
   // Inscribed Land Forge builds are walkable: floors, stairs and roofs you can reach.
   const forge = forgeSurfaceAt(x, z, floraFeet, VOXEL * 1.05);
   if (forge != null && forge > base) base = forge;
+  // Inscribed World blocks (Inscribed.space builds) are walkable too.
+  const box = boxSurfaceAt(x, z, floraFeet, VOXEL * 1.05);
+  if (box != null && box > base) base = box;
   // Block-grown flora is walkable: stand on hedges, flowers and tree tops you can reach.
   const flora = floraSurface(x, z, floraFeet, VOXEL * 1.05);
   return flora != null && flora > base ? flora : base;
@@ -1876,6 +1880,7 @@ function PlayerCameraRig({
         const feet = traversalSurfaceY(here.x, here.z) + here.y;
         if (voxelWallAt(x, z, feet, VOXEL * 1.9, VOXEL * 0.3)) return true;
         if (forgeWallAt(x, z, feet, VOXEL * 1.9)) return true;
+        if (boxWallAt(x, z, feet, VOXEL * 1.9, VOXEL * 1.05)) return true;
         if (floraWallAt(x, z, feet, VOXEL * 1.9, VOXEL * 0.3, VOXEL * 1.05)) return true;
       }
       if (aloft(pose.current)) return false;
