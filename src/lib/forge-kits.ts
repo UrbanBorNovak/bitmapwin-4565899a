@@ -614,8 +614,8 @@ const hospital: Kit = {
       for (let x = 8; x <= 55; x++) for (const z of [8, 9]) m.put(x, 0, z, "cobble");
       m.box(40, 55, 0, 0, 44, 55, "grass");
     }),
-    step("Ward wing west", "Three storeys of white wards with window bands.", (m) => { storeys(m, 8, 21, 14, 40, 1, 3, "sand", "stone"); }),
-    step("Ward wing east", "The mirror wing on the other side.", (m) => { storeys(m, 42, 55, 14, 40, 1, 3, "sand", "stone"); }),
+    step("Ward wing west", "Three storeys of white wards with window bands.", (m) => { storeys(m, 8, 21, 16, 36, 1, 3, "sand", "stone"); }),
+    step("Ward wing east", "The mirror wing on the other side.", (m) => { storeys(m, 42, 55, 16, 36, 1, 3, "sand", "stone"); }),
     step("Main tower", "The tall central tower — six storeys.", (m) => { storeys(m, 24, 39, 18, 36, 1, 6, "sand", "stone"); }),
     step("Glass atrium", "A glass entrance hall in front of the tower, with sliding doors.", (m) => {
       m.box(26, 37, 1, 6, 12, 17, "glass", true); m.box(26, 37, 7, 7, 12, 17, "glass");
@@ -624,7 +624,7 @@ const hospital: Kit = {
     }),
     step("Red cross signs", "Big red crosses on the tower and the wings.", (m) => {
       const cross = (cx: number, cy: number, z: number) => { for (let i = -2; i <= 2; i++) { m.put(cx + i, cy, z, "brick"); m.put(cx, cy + i, z, "brick"); } };
-      cross(31, 19, 17); cross(14, 9, 13); cross(49, 9, 13);
+      cross(31, 19, 17); cross(14, 9, 15); cross(49, 9, 15);
       sign(m, 27, 36, 22, 17, "brick");
     }),
     step("Emergency bay", "Covered ambulance bay with two ambulances and flashing lights.", (m) => {
@@ -708,7 +708,7 @@ const fire: Kit = {
         for (const z of [5, 11]) { m.put(x0, 0, z, "cobble"); m.put(x0 + 7, 0, z, "cobble"); }
       }
     }),
-    step("Crew quarters", "Two floors of crew rooms beside the hall.", (m) => { storeys(m, 47, 58, 16, 40, 1, 3, "brick", "stone"); }),
+    step("Crew quarters", "Two floors of crew rooms beside the hall.", (m) => { storeys(m, 47, 58, 16, 40, 1, 2, "brick", "stone"); }),
     step("Hose tower", "The tall drying tower with lookout windows.", (m) => {
       m.box(48, 54, 13, 32, 8, 14, "brick", true); m.box(48, 54, 1, 12, 8, 14, "brick", true);
       for (let y = 28; y <= 30; y++) for (let x = 49; x <= 53; x++) { m.put(x, y, 8, "glass"); m.put(x, y, 14, "glass"); }
