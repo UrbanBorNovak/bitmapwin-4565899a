@@ -3,8 +3,15 @@ import { KITS, behaviorPose } from "@/lib/forge-kits";
 import { blueprintBlocks } from "@/lib/forge-blueprints";
 
 describe("forge kits", () => {
-  it("ships the castle and the train", () => {
-    expect(KITS.map((k) => k.id)).toEqual(["kit-citadel", "kit-express"]);
+  it("ships five boxed sets", () => {
+    expect(KITS.map((k) => k.id)).toEqual(["kit-citadel", "kit-express", "kit-array", "kit-vault", "kit-dragon"]);
+  });
+  it("every step comes in a numbered bag, in order", () => {
+    for (const k of KITS) {
+      expect(k.bags.length).toBe(k.steps.length);
+      expect(k.bags[0]).toBe(1);
+      for (let i = 1; i < k.bags.length; i++) expect(k.bags[i]! - k.bags[i - 1]!).toBeGreaterThanOrEqual(0);
+    }
   });
   it("every block stays on the 64×64 canvas", () => {
     for (const k of KITS) for (const b of blueprintBlocks(k)) {

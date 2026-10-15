@@ -31,7 +31,19 @@ export type Kit = Blueprint & {
   kit: true;
   difficulty: "BEGINNER" | "BUILDER" | "MASTER";
   behaviors: KitBehavior[];
+  /** numbered bag (1-based) each step's bricks come in, like a real boxed set */
+  bags: number[];
+  /** box-art tagline + suggested age printed on the box */
+  tagline: string;
+  ages: string;
 };
+
+/** Bag number → list of step indexes, in order. */
+export function kitBags(kit: Kit): { bag: number; steps: number[] }[] {
+  const out: { bag: number; steps: number[] }[] = [];
+  kit.bags.forEach((b, i) => { const last = out[out.length - 1]; if (last && last.bag === b) last.steps.push(i); else out.push({ bag: b, steps: [i] }); });
+  return out;
+}
 
 function maker() {
   const out: TplBlock[] = [];
@@ -66,6 +78,7 @@ const citadel: Kit = {
       m.box(16, 47, 0, 0, 16, 47, "stone");
       for (let i = 13; i <= 50; i++) for (const j of [13, 14, 49, 50]) { m.put(i, 0, j, "glass"); m.put(j, 0, i, "glass"); }
       m.box(30, 33, 0, 0, 13, 15, "planks"); // bridge
+      for (let i = 18; i <= 45; i += 3) m.put(i, 0, 31, "cobble"); // courtyard path
     }),
     step("Curtain walls", "Raise cobble walls 5 high around the yard. Leave a 4-wide gap at the front.", (m) => {
       for (let y = 1; y <= 5; y++) for (let i = 16; i <= 47; i++) {
@@ -84,6 +97,7 @@ const citadel: Kit = {
       m.box(34, 35, 1, 8, 15, 17, "stone");
       m.box(30, 33, 6, 8, 15, 17, "stone");
       m.put(31, 9, 16, "gold"); m.put(32, 9, 16, "gold");
+      for (let x = 27; x <= 36; x += 2) m.put(x, 9, 15, "stone"); // machicolation teeth
     }),
     step("Portcullis", "Drop the wooden portcullis into the arch — it will lift on its own.", (m) => {
       for (let x = 30; x <= 33; x++) for (let y = 1; y <= 5; y++) if (x % 2 === 0 || y % 2 === 1) m.put(x, y, 16, "log");
@@ -91,6 +105,8 @@ const citadel: Kit = {
     step("Keep", "Build the brick keep in the middle with a plank roof.", (m) => {
       m.box(26, 37, 1, 11, 28, 39, "brick", true);
       m.box(26, 37, 12, 12, 28, 39, "planks");
+      for (let i = 26; i <= 37; i += 2) { m.put(i, 13, 28, "brick"); m.put(i, 13, 39, "brick"); m.put(26, 13, i + 2, "brick"); m.put(37, 13, i + 2, "brick"); }
+      for (const y of [6, 9]) for (const x of [28, 35]) { m.put(x, y, 28, "glass"); m.put(x, y, 39, "glass"); }
       for (let x = 30; x <= 33; x++) for (let y = 1; y <= 3; y++) m.put(x, y, 28, "glass");
     }),
     step("Sentry turret", "Place the turret on the keep roof. It turns to watch the land.", (m) => {
@@ -108,6 +124,9 @@ const citadel: Kit = {
     { card: "sentry_turret", steps: [6], pivot: [32, 13, 34], speed: 0.4 },
     { card: "beacon_pulse", steps: [7], pivot: [32, 1, 32] },
   ],
+  bags: [1, 1, 2, 2, 3, 3, 4, 4],
+  tagline: "Moat, towers, a lifting gate and a watchful turret.",
+  ages: "9+",
 };
 
 // ---- THE TIMECHAIN EXPRESS ----
@@ -136,20 +155,141 @@ const express: Kit = {
       m.put(19, 5, Z0, "glass"); m.put(19, 5, Z0 + 1, "glass");
       m.box(25, 25, 5, 7, Z0, Z0, "stone"); // smokestack
       m.put(27, 3, Z0, "glow");
+      m.put(28, 1, Z0, "gold"); m.put(28, 1, Z0 + 1, "gold"); m.put(28, 2, Z0, "stone"); m.put(28, 2, Z0 + 1, "stone"); // cowcatcher
+      for (const x of [22, 24, 26]) { m.put(x, 5, Z0, "gold"); m.put(x, 5, Z0 + 1, "gold"); } // boiler bands
     }),
     step("Tender & carriage", "Coal tender, then a gold-trimmed passenger carriage.", (m) => {
       m.box(15, 17, 3, 4, Z0, Z0 + 1, "planks");
       m.box(12, 14, 3, 5, Z0, Z0 + 1, "gold");
       m.put(13, 4, Z0, "glass"); m.put(13, 4, Z0 + 1, "glass");
+      m.put(16, 5, Z0, "cobble"); m.put(16, 5, Z0 + 1, "cobble"); // coal heap
+    }),
+    step("Signals & trees", "Signal lamps at the corners and a few trees along the line.", (m) => {
+      for (const [x, z] of [[T0 - 2, Z0 - 2], [T1 + 2, Z0 - 2], [T0 - 2, Z1 + 2], [T1 + 2, Z1 + 2]] as const) { m.box(x, x, 1, 3, z, z, "log"); m.put(x, 4, z, "glow"); }
+      for (const [x, z] of [[20, 30], [32, 31], [44, 30]] as const) { m.box(x, x, 1, 2, z, z, "log"); m.box(x - 1, x + 1, 3, 4, z - 1, z + 1, "leaves"); }
     }),
   ],
   behaviors: [
     { card: "train_loop", steps: [2, 3, 4], pivot: [12, 0, Z0], speed: 6, path: [[0, 0], [T1 - 27 - 1, 0], [T1 - 27 - 1, Z1 - 1 - Z0], [T0 - 12, Z1 - 1 - Z0], [T0 - 12, 0]] },
-    { card: "beacon_pulse", steps: [1], pivot: [31, 6, 47] },
+    { card: "beacon_pulse", steps: [1, 5], pivot: [31, 6, 47] },
   ],
+  bags: [1, 1, 2, 2, 3, 3],
+  tagline: "A steam train that really runs laps past its station.",
+  ages: "7+",
 };
 
-export const KITS: Kit[] = [citadel, express];
+// ---- THE CYPHERPUNK SATELLITE ARRAY ----
+const array: Kit = {
+  id: "kit-array", name: "Cypherpunk Satellite Array", sphere: "cyber", kit: true, difficulty: "BUILDER",
+  story: "A relay station that beams blocks to the sky: a turning dish, solar sails and a pulsing core.",
+  steps: [
+    step("Concrete pad", "A wide stone pad with a cobble border.", (m) => {
+      m.box(18, 45, 0, 0, 18, 45, "stone");
+      for (let i = 18; i <= 45; i++) { m.put(i, 0, 18, "cobble"); m.put(i, 0, 45, "cobble"); m.put(18, 0, i, "cobble"); m.put(45, 0, i, "cobble"); }
+    }),
+    step("Control bunker", "A low brick bunker with a glass slit window.", (m) => {
+      m.box(20, 27, 1, 4, 20, 27, "brick", true);
+      m.box(20, 27, 5, 5, 20, 27, "stone");
+      for (let x = 21; x <= 26; x++) m.put(x, 3, 27, "glass");
+    }),
+    step("Mast", "A tall stone mast in the middle of the pad.", (m) => {
+      m.box(31, 32, 1, 14, 31, 32, "stone");
+    }),
+    step("Receiver dish", "Build the gold dish on top of the mast — it turns to track the sky.", (m) => {
+      for (let x = -4; x <= 4; x++) for (let z = -4; z <= 4; z++) { const r = x * x + z * z; if (r <= 18) m.put(32 + x, 15 + Math.floor(r / 6), 32 + z, r <= 2 ? "glow" : "gold"); }
+    }),
+    step("Solar sails", "Two glass solar wings on log arms.", (m) => {
+      for (const sx of [22, 37]) { m.box(sx, sx + 5, 1, 1, 36, 36, "log"); m.box(sx, sx + 5, 2, 2, 34, 41, "glass"); }
+    }),
+    step("Transmitter core", "Glowing core cells around the mast base.", (m) => {
+      for (const [x, z] of [[29, 29], [34, 29], [29, 34], [34, 34]] as const) { m.put(x, 1, z, "cobble"); m.put(x, 2, z, "glow"); }
+    }),
+  ],
+  behaviors: [
+    { card: "sentry_turret", steps: [3], pivot: [32, 15, 32], speed: 0.25 },
+    { card: "beacon_pulse", steps: [5], pivot: [32, 1, 32] },
+  ],
+  bags: [1, 1, 2, 2, 3, 3],
+  tagline: "Turning dish, solar sails, pulsing core.",
+  ages: "9+",
+};
+
+// ---- THE GENESIS VAULT ----
+const vault: Kit = {
+  id: "kit-vault", name: "Genesis Vault & Mint", sphere: "kingdom", kit: true, difficulty: "MASTER",
+  story: "A fortified mint: blast door, laser corridor, a watching sentry and stacks of gold inside.",
+  steps: [
+    step("Bedrock slab", "Lay a thick stone slab two blocks deep.", (m) => { m.box(14, 49, 0, 1, 14, 49, "stone"); }),
+    step("Vault walls", "Brick walls 8 high, with a 6-wide opening at the front.", (m) => {
+      for (let y = 2; y <= 9; y++) for (let i = 14; i <= 49; i++) {
+        if (!(i >= 29 && i <= 34 && y <= 7)) m.put(i, y, 14, "brick");
+        m.put(i, y, 49, "brick"); m.put(14, y, i, "brick"); m.put(49, y, i, "brick");
+      }
+    }),
+    step("Pillared facade", "Four stone columns and a gold pediment out front.", (m) => {
+      for (const x of [20, 25, 38, 43]) m.box(x, x + 1, 2, 9, 11, 12, "stone");
+      m.box(18, 45, 10, 10, 10, 14, "stone");
+      for (let x = 22; x <= 41; x++) m.put(x, 11, 12, x % 3 === 0 ? "glow" : "gold");
+    }),
+    step("Blast door", "The heavy round vault door — it lifts when you walk up.", (m) => {
+      for (let x = 29; x <= 34; x++) for (let y = 2; y <= 7; y++) m.put(x, y, 14, (x === 31 || x === 32) && (y === 4 || y === 5) ? "gold" : "cobble");
+    }),
+    step("Laser corridor", "Glowing tripwires across the inside hall.", (m) => {
+      for (let z = 18; z <= 30; z += 3) for (let x = 29; x <= 34; x++) m.put(x, 3, z, "glow");
+    }),
+    step("Gold reserve", "Stack gold bars in the back chamber.", (m) => {
+      for (let x = 22; x <= 41; x += 3) for (let z = 38; z <= 44; z += 3) m.box(x, x + 1, 2, 2 + ((x + z) % 3), z, z + 1, "gold");
+    }),
+    step("Roof & sentry", "Seal the roof, then mount the sentry eye on top.", (m) => {
+      m.box(14, 49, 10, 10, 14, 49, "stone");
+      m.box(30, 33, 11, 12, 30, 33, "cobble");
+      m.box(31, 32, 13, 13, 29, 34, "glow");
+    }),
+  ],
+  behaviors: [
+    { card: "gate_sensor", steps: [3], pivot: [29, 2, 14] },
+    { card: "sentry_turret", steps: [6], pivot: [32, 12, 32], speed: 0.5 },
+    { card: "beacon_pulse", steps: [4], pivot: [32, 3, 24] },
+  ],
+  bags: [1, 1, 2, 2, 3, 3, 4],
+  tagline: "Blast door, laser hall, gold reserve.",
+  ages: "12+",
+};
+
+// ---- MOUNT SATOSHI DRAGON ----
+const dragon: Kit = {
+  id: "kit-dragon", name: "Mount Satoshi Dragon", sphere: "nature", kit: true, difficulty: "MASTER",
+  story: "A rocky peak with a sleeping dragon curled around it, wings spread and a flame crystal burning.",
+  steps: [
+    step("Mountain base", "A wide stepped cobble hill.", (m) => {
+      for (let y = 0; y <= 6; y++) { const r = 18 - y * 2; for (let x = -r; x <= r; x++) for (let z = -r; z <= r; z++) if (x * x + z * z <= r * r) m.put(32 + x, y, 32 + z, y < 2 ? "grass" : "cobble"); }
+    }),
+    step("Peak & cave", "Stone peak on top with a dark cave mouth.", (m) => {
+      for (let y = 7; y <= 12; y++) { const r = 7 - (y - 7); for (let x = -r; x <= r; x++) for (let z = -r; z <= r; z++) if (x * x + z * z <= r * r) m.put(32 + x, y, 32 + z, "stone"); }
+    }),
+    step("Serpent body", "Wind the dragon's gold body around the mountain.", (m) => {
+      for (let a = 0; a < 300; a += 6) { const t = (a * Math.PI) / 180; const r = 15 - a / 60; const y = 3 + Math.floor(a / 50); m.put(32 + Math.round(Math.cos(t) * r), y, 32 + Math.round(Math.sin(t) * r), "gold"); m.put(32 + Math.round(Math.cos(t) * r), y + 1, 32 + Math.round(Math.sin(t) * r), "gold"); }
+    }),
+    step("Head & horns", "A brick head with glowing eyes and log horns.", (m) => {
+      m.box(41, 44, 9, 11, 30, 33, "brick");
+      m.put(44, 11, 30, "glow"); m.put(44, 11, 33, "glow");
+      m.box(41, 41, 12, 13, 30, 30, "log"); m.box(41, 41, 12, 13, 33, 33, "log");
+    }),
+    step("Wings", "Spread two glass wings over the peak.", (m) => {
+      for (let i = 0; i <= 8; i++) for (let j = 0; j <= 8 - i; j++) { m.put(32 - 2 - i, 13 + j, 32, "glass"); m.put(32 + 2 + i, 13 + j, 32, "glass"); }
+    }),
+    step("Flame crystal", "The burning crystal on the summit.", (m) => { m.box(32, 32, 13, 16, 32, 32, "glow"); m.put(31, 14, 32, "glow"); m.put(33, 14, 32, "glow"); }),
+  ],
+  behaviors: [
+    { card: "beacon_pulse", steps: [5], pivot: [32, 13, 32] },
+    { card: "sentry_turret", steps: [3], pivot: [42, 9, 32], speed: 0.3 },
+  ],
+  bags: [1, 1, 2, 2, 3, 3],
+  tagline: "Coiled dragon, glass wings, burning crystal.",
+  ages: "12+",
+};
+
+export const KITS: Kit[] = [citadel, express, array, vault, dragon];
 export const isKit = (b: Blueprint): b is Kit => (b as Kit).kit === true;
 
 /** Deterministic pose for a behavior at time t (seconds). `near` = visitor in range. */
