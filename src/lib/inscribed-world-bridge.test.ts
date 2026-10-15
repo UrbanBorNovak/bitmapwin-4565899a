@@ -29,3 +29,15 @@ describe("structurePrims", () => {
     expect(_sp([floor, wall])).toEqual([wall]);
   });
 });
+
+import { structurePrims as _sp2, modelsInside as _mi } from "@/lib/inscribed-world-bridge";
+describe("outliers and models", () => {
+  const box = (x: number, z: number) => ({ shape: "box" as const, color: "#fff", pos: [x, 0, z] as [number, number, number], rot: [0, 0, 0] as [number, number, number], size: [5, 5, 5] as [number, number, number] });
+  it("drops a stray marker 600 units away from the building", () => {
+    expect(_sp2([box(0, 0), box(5, 5), box(464, -420)])).toHaveLength(2);
+  });
+  it("keeps only models that land inside the BITMAP", () => {
+    const m = (x: number) => ({ url: "u", pos: [x, 0, 0] as [number, number, number], rot: [0, 0, 0] as [number, number, number], scale: [1, 1, 1] as [number, number, number] });
+    expect(_mi([m(0), m(500)], { scale: 0.1, offset: [0, 0, 0] }, 10)).toHaveLength(1);
+  });
+});
