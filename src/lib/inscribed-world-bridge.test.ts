@@ -20,3 +20,12 @@ describe("fitPrims", () => {
     expect(offset).toEqual([-10, -4, 0]);
   });
 });
+
+import { structurePrims as _sp } from "@/lib/inscribed-world-bridge";
+describe("structurePrims", () => {
+  it("drops 250-unit editor floor planes but keeps the building", () => {
+    const floor = { shape: "plane" as const, color: "#9a9a9a", pos: [0, -34.95, 0] as [number, number, number], rot: [0, 0, 0] as [number, number, number], size: [250, 1, 250] as [number, number, number] };
+    const wall = { ...floor, shape: "box" as const, size: [10, 10, 10] as [number, number, number] };
+    expect(_sp([floor, wall])).toEqual([wall]);
+  });
+});
