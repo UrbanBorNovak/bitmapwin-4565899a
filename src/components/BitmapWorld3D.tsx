@@ -92,6 +92,7 @@ import { Button } from "@/components/ui/button";
 import { BitmapModelPlacement } from "@/components/BitmapModelPlacement";
 import { BssScene3D } from "@/components/game/BssScene3D";
 import { ForgeNearby } from "@/components/game/ForgeBuild3D";
+import { InscribedWorldNearby } from "@/components/worlds/InscribedWorldBridge3D";
 import { BuilderJumbotron } from "@/components/game/BuilderJumbotron";
 import { StreamJumbotron } from "@/components/game/StreamJumbotron";
 /** WarpSpeedTV / bitmap.stream genesis channel. */
@@ -2970,6 +2971,7 @@ const WorldScene = memo(function WorldScene({
           <DropshipLayer pose={pose} surface={traversalSurfaceY} />
           <ShardRaidLayer pose={pose} surface={traversalSurfaceY} />
           <ForgeNearby pose={pose} surface={traversalSurfaceY} />
+          <InscribedWorldNearby pose={pose} />
           <BuilderJumbotron pose={pose} surface={traversalSurfaceY} />
           <Companions unit={AVATAR_U} pose={pose} />
           {self.hp <= 0 ? <GhostShade unit={AVATAR_U} pose={pose} /> : null}
