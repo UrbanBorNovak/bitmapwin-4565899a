@@ -1060,7 +1060,7 @@ const terracotta: Kit = {
       for (let i = 2; i <= 61; i++) for (const j of [2, 61]) { m.put(i, 5, j, "grass"); m.put(j, 5, i, "grass"); }
     }),
     step("Earthen corridors", "Raise the partition walls between the eleven corridors.", (m) => {
-      for (let x = 6; x <= 58; x += 5) for (let z = 14; z <= 58; z++) for (let y = 1; y <= 4; y++) m.put(x, y, z, "dirt");
+      for (let x = 6; x <= 58; x += 5) for (let z = 14; z <= 58; z++) for (let y = 1; y <= 3; y++) m.put(x, y, z, "dirt");
     }),
     step("Vanguard archers", "Three rows of archers stand guard at the front.", (m) => {
       let v = 0; for (const z of [5, 8, 11]) for (let x = 4; x <= 58; x += 3) warrior(m, x, z, v++);
@@ -1088,7 +1088,7 @@ const terracotta: Kit = {
       m.box(31, 32, 9, 10, 13, 13, "sand"); m.box(30, 33, 11, 11, 13, 13, "gold"); m.box(31, 32, 12, 12, 13, 13, "gold");
     }),
     step("Timber roof beams", "Lay the ancient log beams across the walls.", (m) => {
-      for (let x = 6; x <= 58; x += 5) for (let z = 14; z <= 58; z += 3) { m.put(x, 5, z, "log"); m.put(x + 1, 5, z, "planks"); m.put(x - 1, 5, z, "planks"); }
+      for (let x = 6; x <= 58; x += 5) for (let z = 14; z <= 58; z += 3) { m.put(x, 4, z, "log"); m.put(x + 1, 5, z, "planks"); m.put(x - 1, 5, z, "planks"); }
     }),
     step("Excavation hall & lamps", "The great arched visitor hall and its glowing lamps.", (m) => {
       for (let i = 0; i <= 12; i++) { const y = 7 + Math.round(10 * Math.sin((i / 12) * Math.PI / 2)); for (let z = 2; z <= 61; z += 6) { m.put(2 + i, y, z, "cobble"); m.put(61 - i, y, z, "cobble"); } }
@@ -1137,7 +1137,7 @@ const angkor: Kit = {
     step("Central tower", "The great central lotus tower — the summit of Mount Meru.", (m) => { lotus(m, 31, 31, 20, 6); }),
     step("Jungle & libraries", "Twin libraries by the causeway and palms around the moat.", (m) => {
       for (const x of [14, 44]) { m.box(x, x + 5, 2, 4, 11, 14, "sand", true); for (let i = 0; i <= 2; i++) m.box(x + i, x + 5 - i, 5 + i, 5 + i, 11, 14, "brick"); }
-      for (let i = 4; i <= 59; i += 7) for (const [x, z] of [[i, 3], [i, 60], [3, i], [60, i]] as const) tree(m, x, z);
+      for (let i = 5; i <= 59; i += 9) for (const [x, z] of [[i, 3], [i, 60], [3, i], [60, i]] as const) tree(m, x, z);
     }),
   ],
   behaviors: [{ card: "beacon_pulse", steps: [6], pivot: [31, 35, 31] }],
