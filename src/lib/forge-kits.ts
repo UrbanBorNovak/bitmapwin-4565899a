@@ -1246,14 +1246,14 @@ const pearl: Kit = {
       for (let x = 5; x <= 57; x++) for (let y = 0; y <= 5; y++) for (let z = 18; z <= 45; z++) {
         if (!pIn(x, y, z)) continue;
         const shell = !pIn(x, y, z - 1) || !pIn(x, y, z + 1) || y === 0 || !pIn(x - 1, y, z) || !pIn(x + 1, y, z);
-        if (shell) m.put(x, y, z, y <= 1 ? "cobble" : "log");
+        m.put(x, y, z, y <= 1 ? "cobble" : shell ? "log" : "planks"); // solid hold
       }
       for (let y = 0; y <= 9; y++) m.put(4, y, 31, "log"), m.put(4, y, 32, "log"); // rudder
     }),
     step("Gun deck & broadsides", "Raise the upper hull and run cannons out of every port.", (m) => {
       for (let x = 5; x <= 57; x++) for (let y = 6; y <= 9; y++) for (let z = 18; z <= 45; z++) {
         if (!pIn(x, y, z)) continue;
-        if (pIn(x, y, z - 1) && pIn(x, y, z + 1) && pIn(x - 1, y, z) && pIn(x + 1, y, z)) continue;
+        if (pIn(x, y, z - 1) && pIn(x, y, z + 1) && pIn(x - 1, y, z) && pIn(x + 1, y, z)) { m.put(x, y, z, y === 9 ? "log" : "planks"); continue; }
         const port = y === 7 && x >= 12 && x <= 44 && x % 3 === 0 && Math.abs(z - PZ) > 3;
         m.put(x, y, z, port ? "cobble" : y === 8 ? "planks" : "log");
         if (port) m.put(x, y, z < PZ ? z - 1 : z + 1, "stone");
@@ -1307,7 +1307,7 @@ const pearl: Kit = {
         for (let y = y0; y <= y1; y++) for (let z = Math.round(PZ - w); z <= Math.round(PZ + w); z++) {
           if (((z * 7 + y * 13 + mx) % 17 === 0) && y > y0) continue; // tears
           const bell = Math.round(1.6 * Math.sin(((y - y0 + 0.5) / (y1 - y0 + 1)) * Math.PI) * (1 - ((z - PZ) / (w + 1)) ** 2));
-          m.put(mx + 1 + bell, y, z, "cobble");
+          m.put(mx + 1 + bell, y, z, "cobble"); m.put(mx + 2 + bell, y, z, "cobble"); // double canvas
         }
       for (let x = 46; x <= 58; x++) { const y = 12 + Math.round((58 - x) * 1.4); if (y < 30) m.put(x, y, 31, "cobble"); } // jib
       for (const [mx, top] of pearlSails) for (let i = 0; i < 10; i++) { m.put(mx - 1 - Math.floor(i / 2), top - 18 - i, 24 + (i > 4 ? 0 : 0), "log"); m.put(mx - 1 - Math.floor(i / 2), top - 18 - i, 39, "log"); } // shrouds
@@ -1318,6 +1318,17 @@ const pearl: Kit = {
       for (const [mx, top] of pearlSails) m.put(mx, top + 3, 31, "glow");
       m.box(14, 15, 11, 12, 27, 28, "gold"); m.box(14, 15, 11, 12, 35, 36, "gold");
       m.put(45, 14, 31, "gold"); // bell
+      m.box(20, 23, 11, 13, 28, 35, "planks"); m.box(38, 42, 11, 12, 27, 36, "log"); // cargo & longboat
+      for (const z of [23, 40]) m.box(6, 12, 11, 19, z, z, "log"); // quarter galleries
+      m.box(6, 12, 21, 22, 24, 39, "log", true); // poop-deck rail
+      // Jolly Roger: pole above the main mast, dark flag with pale skull & crossbones
+      for (let y = 39; y <= 49; y++) m.put(31, y, 31, "log");
+      const skull = ["..XXXX..", ".XXXXXX.", ".X.XX.X.", ".XXXXXX.", "..X..X..", "X......X", ".XX..XX.", "...XX...", ".XX..XX.", "X......X"];
+      for (let r = 0; r < 10; r++) for (let c = 0; c < 14; c++) {
+        const ch = skull[r]![c - 3];
+        m.put(31, 49 - r, 32 + c, ch === "X" ? "sand" : "cobble");
+        m.put(32, 49 - r, 32 + c, ch === "X" ? "sand" : "cobble");
+      }
     }),
   ],
   behaviors: [{ card: "beacon_pulse", steps: [8], pivot: [10, 21, 31.5] }],
