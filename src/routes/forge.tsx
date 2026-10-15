@@ -23,6 +23,7 @@ import { CommunityKitShelf, PackageKit, useCommunityKits } from "@/components/fo
 import { KitThumb } from "@/components/forge/KitThumb";
 import { KitBehaviorPreview } from "@/components/forge/KitBehaviorPreview";
 import { clipToParcel, inRect, parcelAt, parcelRects, type ParcelRect } from "@/lib/forge-parcels";
+import { LAND_MASSES, terrainHeight, type LandMass } from "@/lib/forge-terrain";
 import { publishForgeModuleFn, stampForgeModuleFn, stampHousePresetFn } from "@/lib/forge-modules.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useWalletSession } from "@/lib/wallet-session";
@@ -86,6 +87,43 @@ function ParcelFloor({ rects, focus, hoverIdx }: { rects: ParcelRect[]; focus: n
       <boxGeometry args={[1, 0.04, 1]} />
       <meshBasicMaterial />
     </instancedMesh>
+  );
+}
+
+/** Decorative land mass under the canvas: a displaced grid mesh seeded by the block height. Never inscribed. */
+function TerrainMass({ mass, height }: { mass: LandMass; height: number }) {
+  const geo = useMemo(() => {
+    if (mass === "flat") return null;
+    const seg = SPAN; // one vertex per cell corner
+    const g = new THREE.PlaneGeometry(SPAN * 1.7, SPAN * 1.7, seg, seg);
+    g.rotateX(-Math.PI / 2);
+    const pos = g.attributes["position"] as THREE.BufferAttribute;
+    const colors = new Float32Array(pos.count * 3);
+    const sand = new THREE.Color("#8a6a3a"), grass = new THREE.Color("#2e4a2a"), rock = new THREE.Color("#3a3f4a"), deep = new THREE.Color("#101820");
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), z = pos.getZ(i);
+      const h = terrainHeight(mass, x + half(), z + half(), height, SPAN);
+      pos.setY(i, h - 0.55);
+      const c = h <= -4 ? deep : h <= -1 ? rock : mass === "island" ? sand : grass;
+      colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
+    }
+    g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    g.computeVertexNormals();
+    return g;
+  }, [mass, height]);
+  if (!geo) return null;
+  return (
+    <group>
+      <mesh geometry={geo} receiveShadow raycast={() => null}>
+        <meshStandardMaterial vertexColors roughness={1} />
+      </mesh>
+      {mass === "island" && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -3.4, 0]} raycast={() => null}>
+          <planeGeometry args={[SPAN * 4, SPAN * 4]} />
+          <meshStandardMaterial color="#0b2a3a" transparent opacity={0.85} roughness={0.3} metalness={0.4} />
+        </mesh>
+      )}
+    </group>
   );
 }
 
@@ -220,6 +258,7 @@ function ForgePage() {
   const { data: sizes } = useQuery({ ...blockSizeMapQuery(height ?? 0), enabled: height !== null });
   const txCount = sizes?.classes?.length ?? null;
   const [xl, setXl] = useState(false);
+  const [mass, setMass] = useState<LandMass>("flat");
   SPAN = xl ? FORGE_SPAN_XL : FORGE_SPAN;
   const rects = useMemo(() => parcelRects(sizes?.classes, xl ? FORGE_SPAN_XL : FORGE_SPAN), [sizes, xl]);
   const [focus, setFocus] = useState<number | null>(null);
@@ -624,6 +663,15 @@ function ForgePage() {
               <p className="mt-1 text-muted-foreground">{xl ? "XL: 8× the space at half block size, same land footprint. Inscribes as a recursive build only." : "Original size. Works with every inscribe option."}</p>
             </div>
           )}
+          <div className="rounded border border-border bg-card/40 p-2 text-[11px]">
+            <p className="text-accent">LAND MASS</p>
+            <div className="mt-1 flex gap-1">
+              {LAND_MASSES.map((m) => (
+                <button key={m.id} type="button" title={m.blurb} data-testid={`forge-mass-${m.id}`} onClick={() => setMass(m.id)} className={`rounded border px-2 py-0.5 text-[10px] ${mass === m.id ? "border-accent text-foreground" : "border-border text-muted-foreground"}`}>{m.name}</button>
+              ))}
+            </div>
+            <p className="mt-1 text-muted-foreground">{LAND_MASSES.find((m) => m.id === mass)?.blurb} Decorative only — costs no blocks and isn't inscribed.</p>
+          </div>
           {rects.length > 0 && (
             <div className="rounded border border-primary/40 bg-card/40 p-2 text-[11px]">
               <p className="text-primary">BUILD TARGET</p>
@@ -824,6 +872,7 @@ function ForgePage() {
                 <OnchainGuardianBody dna={dnaQ.data} />
               </group>
             )}
+            <TerrainMass mass={mass} height={height ?? 0} />
             <ParcelFloor rects={rects} focus={focus} hoverIdx={hoverParcel?.index ?? null} />
             {showBp && sketch.length > 0 && <Ghost blocks={sketch} at={[0, 0, 0]} bad={false} />}
             {testing && liveBehaviors.map((lb) => <KitBehaviorPreview key={lb.b.card} behavior={lb.b} blocks={lb.blocks} />)}
