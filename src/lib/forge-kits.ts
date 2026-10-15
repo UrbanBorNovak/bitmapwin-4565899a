@@ -1318,6 +1318,9 @@ const pearl: Kit = {
       for (const [mx, top] of pearlSails) m.put(mx, top + 3, 31, "glow");
       m.box(14, 15, 11, 12, 27, 28, "gold"); m.box(14, 15, 11, 12, 35, 36, "gold");
       m.put(45, 14, 31, "gold"); // bell
+      m.box(20, 23, 11, 13, 28, 35, "planks"); m.box(38, 42, 11, 12, 27, 36, "log"); // cargo & longboat
+      for (const z of [23, 40]) m.box(6, 12, 11, 19, z, z, "log"); // quarter galleries
+      m.box(6, 12, 21, 22, 24, 39, "log", true); // poop-deck rail
       // Jolly Roger: pole above the main mast, dark flag with pale skull & crossbones
       for (let y = 39; y <= 49; y++) m.put(31, y, 31, "log");
       const skull = ["..XXXX..", ".XXXXXX.", ".X.XX.X.", ".XXXXXX.", "..X..X..", "X......X", ".XX..XX.", "...XX...", ".XX..XX.", "X......X"];
