@@ -48,6 +48,7 @@ import { getBitmapHolderFn } from "@/lib/locate-bitmap.functions";
 import { LoopNavigator } from "@/components/LoopNavigator";
 import { TerritoryShareCard } from "@/components/TerritoryShareCard";
 import { BitmapGuardianPanel } from "@/components/bitmon/BitmapGuardianPanel";
+import { BitmapWorldsPanel } from "@/components/worlds/BitmapWorldsPanel";
 import { TerritoryChronicle } from "@/components/TerritoryChronicle";
 import { ShadowGatePanel } from "@/components/territory/ShadowGatePanel";
 import { Button } from "@/components/ui/button";
@@ -525,6 +526,7 @@ function BitmapDetail() {
         districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
       />
       <BitmapGuardianPanel height={block} />
+      <BitmapWorldsPanel height={block} />
         </div>
       )}
       {tab === "market" && (
