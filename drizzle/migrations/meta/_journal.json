@@ -57,6 +57,13 @@
       "when": 1792031602301,
       "tag": "0007_kennel_public_read_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792031698053,
+      "tag": "0008_hide_internal_account_ids",
+      "breakpoints": true
     }
   ]
 }
