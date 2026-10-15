@@ -90,6 +90,43 @@ function ParcelFloor({ rects, focus, hoverIdx }: { rects: ParcelRect[]; focus: n
   );
 }
 
+/** Decorative land mass under the canvas: a displaced grid mesh seeded by the block height. Never inscribed. */
+function TerrainMass({ mass, height }: { mass: LandMass; height: number }) {
+  const geo = useMemo(() => {
+    if (mass === "flat") return null;
+    const seg = SPAN; // one vertex per cell corner
+    const g = new THREE.PlaneGeometry(SPAN * 1.7, SPAN * 1.7, seg, seg);
+    g.rotateX(-Math.PI / 2);
+    const pos = g.attributes.position as THREE.BufferAttribute;
+    const colors = new Float32Array(pos.count * 3);
+    const sand = new THREE.Color("#8a6a3a"), grass = new THREE.Color("#2e4a2a"), rock = new THREE.Color("#3a3f4a"), deep = new THREE.Color("#101820");
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), z = pos.getZ(i);
+      const h = terrainHeight(mass, x + half(), z + half(), height, SPAN);
+      pos.setY(i, h - 0.55);
+      const c = h <= -4 ? deep : h <= -1 ? rock : mass === "island" ? sand : grass;
+      colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
+    }
+    g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    g.computeVertexNormals();
+    return g;
+  }, [mass, height]);
+  if (!geo) return null;
+  return (
+    <group>
+      <mesh geometry={geo} receiveShadow raycast={() => null}>
+        <meshStandardMaterial vertexColors roughness={1} />
+      </mesh>
+      {mass === "island" && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -3.4, 0]} raycast={() => null}>
+          <planeGeometry args={[SPAN * 4, SPAN * 4]} />
+          <meshStandardMaterial color="#0b2a3a" transparent opacity={0.85} roughness={0.3} metalness={0.4} />
+        </mesh>
+      )}
+    </group>
+  );
+}
+
 function Blocks({ blocks, onErase, erase, onSurface, onPlace }: { blocks: TplBlock[]; erase: boolean; onErase: (b: TplBlock) => void; onSurface: (cell: [number, number, number] | null) => void; onPlace: () => void }) {
   const ref = useRef<THREE.InstancedMesh>(null);
   // Right-sized capacity in 4,096 buckets: a remount only happens when the
