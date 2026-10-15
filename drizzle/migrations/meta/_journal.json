@@ -43,6 +43,13 @@
       "when": 1791991973347,
       "tag": "0005_share_policies_anon",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792030712205,
+      "tag": "0006_bitmap_kennels",
+      "breakpoints": true
     }
   ]
 }
