@@ -17,6 +17,7 @@ import { ARCHETYPES, FORGE_MAX_BLOCKS, FORGE_RENDER_MAX, FORGE_SPAN, encodeBuild
 import { HOUSE_PREFABS, SPHERES, cellKey, normaliseModule, rotatePrefab, stampInto, tributeSplit, type Contributor, type Prefab, type Sphere } from "@/lib/forge-prefabs";
 import { BLUEPRINTS, blueprintBlocks, nextDropAt, weekNumber, weeklyBlueprint, type Blueprint } from "@/lib/forge-blueprints";
 import { BEHAVIOR_CARDS, KITS, isKit, kitManifest, type BehaviorCard } from "@/lib/forge-kits";
+import { KitThumb } from "@/components/forge/KitThumb";
 import { KitBehaviorPreview } from "@/components/forge/KitBehaviorPreview";
 import { clipToParcel, inRect, parcelAt, parcelRects, type ParcelRect } from "@/lib/forge-parcels";
 import { publishForgeModuleFn, stampForgeModuleFn, stampHousePresetFn } from "@/lib/forge-modules.functions";
@@ -668,8 +669,27 @@ function ForgePage() {
             </>
           )}
           <div className="rounded border border-accent/40 bg-card/40 p-2 text-[11px]">
-            <div className="flex items-center justify-between"><span className="text-accent">BLUEPRINTS</span><span className="text-[10px] text-muted-foreground">NEXT DROP {dropIn}</span></div>
-            <select value={bp.id} onChange={(e) => { setBpId(e.target.value); setBpStep(0); setAuto(false); setTesting(false); }} className="mt-1 w-full rounded border border-border bg-background px-2 py-1 text-foreground">
+            <div className="flex items-center justify-between"><span className="text-accent">KITS · STEP-BY-STEP + PROGRAMMABLE</span><span className="text-[10px] text-muted-foreground">NEXT DROP {dropIn}</span></div>
+            <div className="mt-1 grid grid-cols-2 gap-1.5">
+              {KITS.map((k, i) => {
+                const active = k.id === bp.id;
+                return (
+                  <button key={k.id} type="button" onClick={() => { setBpId(k.id); setBpStep(0); setAuto(false); setTesting(false); }}
+                    className={`group overflow-hidden rounded border text-left transition ${active ? "border-primary ring-1 ring-primary/50" : "border-border hover:border-accent/60"}`}>
+                    <div className="relative bg-background/60">
+                      <KitThumb bp={k} />
+                      <span className="absolute left-1 top-1 rounded bg-background/80 px-1 font-mono text-[9px] text-primary">SET #{String(i + 1).padStart(3, "0")}</span>
+                      <span className="absolute right-1 top-1 rounded bg-background/80 px-1 font-mono text-[9px] text-accent">{k.difficulty}</span>
+                    </div>
+                    <div className="px-1.5 py-1">
+                      <div className="truncate text-[10px] font-bold text-foreground">{k.name}</div>
+                      <div className="font-mono text-[9px] text-muted-foreground">{k.steps.length} STEPS · {blueprintBlocks(k).length} BLOCKS · {k.behaviors.length} CARDS</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <select value={bp.id} onChange={(e) => { setBpId(e.target.value); setBpStep(0); setAuto(false); setTesting(false); }} className="mt-2 w-full rounded border border-border bg-background px-2 py-1 text-foreground">
               <optgroup label="KITS · STEP-BY-STEP + PROGRAMMABLE">
                 {KITS.map((k) => <option key={k.id} value={k.id}>▣ {k.name} · {k.difficulty}</option>)}
               </optgroup>
@@ -677,12 +697,21 @@ function ForgePage() {
                 {BLUEPRINTS.map((b) => <option key={b.id} value={b.id}>{b.id === weekly.id ? `★ WEEK ${weekNumber()} · ` : ""}{b.name}</option>)}
               </optgroup>
             </select>
+            <div className="mt-2 overflow-hidden rounded border border-border bg-background/60">
+              <KitThumb bp={bp} upTo={Math.max(1, bpStep)} />
+              <div className="border-t border-border px-2 py-0.5 font-mono text-[9px] text-muted-foreground">{bpStep === 0 ? "STEP 1 PREVIEW" : `YOUR PROGRESS · ${bpStep} OF ${bp.steps.length} STEPS`}</div>
+            </div>
             <p className="mt-1 text-muted-foreground">{bp.story}</p>
             <div className="mt-2 flex items-center justify-between text-[10px]">
               <span className="text-accent">STEP {Math.min(bpStep + 1, bp.steps.length)} / {bp.steps.length}{bpStep >= bp.steps.length ? " · COMPLETE" : ""}</span>
               <span className="text-muted-foreground">{bp.steps[bpStep] ? `${blueprintBlocks({ ...bp, steps: [bp.steps[bpStep]!] }).length} BLOCKS THIS STEP` : ""}</span>
             </div>
-            <div className="mt-1 h-1 overflow-hidden rounded bg-muted"><div className="h-full bg-accent transition-all" style={{ width: `${(bpStep / bp.steps.length) * 100}%` }} /></div>
+            <div className="mt-1 flex gap-0.5">
+              {bp.steps.map((s, i) => (
+                <button key={s.title} type="button" title={`${i + 1}. ${s.title}`} onClick={() => setBpStep(i)}
+                  className={`h-1.5 flex-1 rounded-full transition ${i < bpStep ? "bg-accent" : i === bpStep ? "bg-primary" : "bg-muted"}`} />
+              ))}
+            </div>
             <ol className="mt-2 max-h-56 space-y-1 overflow-y-auto">
               {bp.steps.map((s, i) => (
                 <li key={s.title} className={`rounded border px-2 py-1 ${i === bpStep ? "border-accent text-foreground" : i < bpStep ? "border-border text-muted-foreground line-through" : "border-border text-muted-foreground"}`}>
