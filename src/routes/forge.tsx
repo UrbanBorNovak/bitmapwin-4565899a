@@ -441,7 +441,7 @@ function ForgePage() {
     commit(next);
     if (tool === "stamp" && picked.id.startsWith("ins:")) {
       const keys = [...next.keys()].filter((k) => !world.has(k));
-      if (keys.length) setPlacements((p) => [...p, { part: { id: picked.id.slice(4), x: hover[0], y: hover[1], z: hover[2], r: ((turns % 4) + 4) % 4 }, keys }]);
+      if (keys.length) setPlacements((p) => [...p.filter((x) => isLive(x, next)), { part: { id: picked.id.slice(4), x: hover[0], y: hover[1], z: hover[2], r: ((turns % 4) + 4) % 4 }, keys, refs: keys.map((k) => next.get(k)!) }]);
     }
     if (tool === "stamp" && picked.author && !used.some((u) => u.id === picked.id)) setUsed((u) => [...u, picked]);
   };
