@@ -1092,7 +1092,7 @@ const terracotta: Kit = {
     }),
     step("Excavation hall & lamps", "The great arched visitor hall and its glowing lamps.", (m) => {
       for (let i = 0; i <= 12; i++) { const y = 7 + Math.round(10 * Math.sin((i / 12) * Math.PI / 2)); for (let z = 2; z <= 61; z += 6) { m.put(2 + i, y, z, "cobble"); m.put(61 - i, y, z, "cobble"); } }
-      for (let x = 14; x <= 49; x++) for (let z = 2; z <= 61; z += 6) m.put(x, 17, z, "cobble");
+      for (let x = 14; x <= 49; x++) for (let z = 2; z <= 61; z += 6) if (x % 3 !== 0) m.put(x, 17, z, "cobble");
       for (let x = 4; x <= 58; x += 6) for (const z of [3, 60]) m.put(x, 7, z === 3 ? 3 : 60, "glow");
     }),
   ],
