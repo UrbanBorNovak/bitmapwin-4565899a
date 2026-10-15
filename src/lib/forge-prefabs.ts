@@ -101,6 +101,17 @@ export const BRICK_PREFABS: Prefab[] = [
   { id: "neon", name: "Neon Strip", sphere: "bricks", blocks: brick(4, 1, 1, "glow") },
 ].map((p) => ({ ...p, sphere: "bricks" as Sphere }));
 
+/** BIT price of a house preset (0 = free). Only the server's copy of this decides what is charged. */
+export const HOUSE_PRESET_PRICES: Record<string, number> = {
+  "bio-lotus": 10,
+  "bio-pagoda": 15,
+  "bio-springs": 15,
+  "bio-waterfall": 20,
+  "bio-dome": 20,
+  "bio-treehouse": 25,
+};
+export const housePresetPrice = (id: string) => HOUSE_PRESET_PRICES[id] ?? 0;
+
 export const HOUSE_PREFABS: Prefab[] = [
   ...BRICK_PREFABS,
   { id: "watchtower", name: "Corner Watchtower", sphere: "kingdom", blocks: watchtower() },
@@ -119,17 +130,6 @@ export const HOUSE_PREFABS: Prefab[] = [
   ...biomePresets(),
 ];
 export const prefabById = (id: string) => HOUSE_PREFABS.find((p) => p.id === id);
-
-/** BIT price of a house preset (0 = free). Only the server's copy of this decides what is charged. */
-export const HOUSE_PRESET_PRICES: Record<string, number> = {
-  "bio-lotus": 10,
-  "bio-pagoda": 15,
-  "bio-springs": 15,
-  "bio-waterfall": 20,
-  "bio-dome": 20,
-  "bio-treehouse": 25,
-};
-export const housePresetPrice = (id: string) => HOUSE_PRESET_PRICES[id] ?? 0;
 
 // ---- OASIS & BIOMES: premium house presets, 10–25 BIT per stamp ----
 function pagoda() {
