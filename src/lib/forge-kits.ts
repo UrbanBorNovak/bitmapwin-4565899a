@@ -303,9 +303,9 @@ const mega: Kit = {
       for (let i = 2; i <= 61; i++) { m.put(i, 0, 2, "cobble"); m.put(i, 0, 61, "cobble"); m.put(2, 0, i, "cobble"); m.put(61, 0, i, "cobble"); }
     }),
     step("Mining reactor podium", "A hollow podium hiding ASIC racks around a glowing core.", (m) => {
-      m.box(6, 57, 1, 4, 6, 57, "brick", true); m.box(6, 57, 5, 5, 6, 57, "stone", true);
+      m.box(6, 57, 1, 3, 6, 57, "brick", true);
       for (let x = 10; x <= 54; x += 4) for (let z = 12; z <= 52; z += 20) m.box(x, x + 1, 1, 3, z, z + 1, "cobble");
-      for (let x = 7; x <= 56; x += 3) { m.put(x, 2, 6, "glass"); m.put(x, 2, 57, "glass"); m.put(6, 2, x, "glass"); m.put(57, 2, x, "glass"); }
+      for (let x = 7; x <= 56; x += 6) { m.put(x, 2, 6, "glass"); m.put(x, 2, 57, "glass"); m.put(6, 2, x, "glass"); m.put(57, 2, x, "glass"); }
       for (let i = 6; i <= 57; i++) for (const j of [7, 8, 55, 56]) { m.put(i, 5, j, "stone"); m.put(j, 5, i, "stone"); }
     }),
     step("West tower", "A tall glass-and-stone tower with floor bands.", (m) => {
@@ -324,7 +324,7 @@ const mega: Kit = {
       for (let z = 8; z <= 44; z += 9) { m.box(28, 33, 6, 8, z, z + 4, "cobble", true); m.box(28, 33, 9, 9, z, z + 4, x2(z)); }
     }),
     step("Maglev ring", "A glowing rail loops around the podium.", (m) => {
-      for (let a = 0; a < 360; a += 1.5) { const t = (a * Math.PI) / 180; m.put(32 + Math.round(Math.cos(t) * 29), 12, 32 + Math.round(Math.sin(t) * 29), a % 6 < 3 ? "glow" : "stone"); }
+      for (let a = 0; a < 360; a += 2) { const t = (a * Math.PI) / 180; m.put(32 + Math.round(Math.cos(t) * 29), 12, 32 + Math.round(Math.sin(t) * 29), a % 6 < 3 ? "glow" : "stone"); }
       for (let a = 0; a < 360; a += 30) { const t = (a * Math.PI) / 180; const x = 32 + Math.round(Math.cos(t) * 29), z = 32 + Math.round(Math.sin(t) * 29); m.box(x, x, 6, 11, z, z, "stone"); }
     }),
     step("Rooftop scanners", "Spinning gold scanners and a helipad on the west roof.", (m) => {
@@ -381,7 +381,7 @@ const colossus: Kit = {
       for (let y = 49; y <= 54; y++) m.box(31, 32, y, y, 28 + (y - 49), 35, "gold");
     }),
     step("Holo wings", "Spread the glass-and-light wings behind it.", (m) => {
-      for (let i = 0; i <= 26; i++) for (let j = 0; j <= 19 - Math.floor(i * 0.7); j++) {
+      for (let i = 0; i <= 26; i++) for (let j = 0; j <= 18 - Math.floor(i * 0.7); j++) {
         const k: BlockId = j % 5 === 0 || i % 6 === 0 ? "glow" : "glass";
         if (31 - 4 - i >= 0) m.put(27 - i, 30 + j + Math.floor(i / 3), 38, k);
         if (36 + i < 64) m.put(36 + i, 30 + j + Math.floor(i / 3), 38, k);
