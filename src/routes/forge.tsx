@@ -87,9 +87,18 @@ function ParcelFloor({ rects, focus, hoverIdx }: { rects: ParcelRect[]; focus: n
 
 function Blocks({ blocks, onErase, erase, onSurface, onPlace }: { blocks: TplBlock[]; erase: boolean; onErase: (b: TplBlock) => void; onSurface: (cell: [number, number, number] | null) => void; onPlace: () => void }) {
   const ref = useRef<THREE.InstancedMesh>(null);
+  // Right-sized capacity in 4,096 buckets: a remount only happens when the
+  // build crosses a bucket, and the GPU never holds a 200k-instance buffer.
+  const capacity = Math.min(FORGE_RENDER_MAX + 400, Math.max(4096, Math.ceil((blocks.length + 1) / 4096) * 4096));
+  const big = blocks.length > 3000;
   useEffect(() => {
     const m = ref.current;
     if (!m) return;
+    // Allocate instance colours up front so the shader compiles with them.
+    if (!m.instanceColor) {
+      m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(capacity * 3).fill(1), 3);
+      (m.material as THREE.Material).needsUpdate = true;
+    }
     const o = new THREE.Object3D();
     blocks.forEach((b, i) => {
       o.position.set(b.dx - HALF + 0.5, b.dy + 0.5, b.dz - HALF + 0.5);
@@ -100,13 +109,15 @@ function Blocks({ blocks, onErase, erase, onSurface, onPlace }: { blocks: TplBlo
     m.count = blocks.length;
     m.instanceMatrix.needsUpdate = true;
     if (m.instanceColor) m.instanceColor.needsUpdate = true;
-  }, [blocks]);
+    m.computeBoundingSphere();
+  }, [blocks, capacity]);
   return (
     <instancedMesh
+      key={capacity}
       ref={ref}
-      args={[undefined, undefined, FORGE_RENDER_MAX + 400]}
-      castShadow
-      receiveShadow
+      args={[undefined, undefined, capacity]}
+      castShadow={!big}
+      receiveShadow={!big}
       onPointerMove={(e) => {
         if (e.instanceId == null) return;
         e.stopPropagation();
