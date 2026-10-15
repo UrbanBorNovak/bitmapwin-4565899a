@@ -4,7 +4,7 @@ import { blueprintBlocks } from "@/lib/forge-blueprints";
 import { cellKey, normaliseModule } from "@/lib/forge-prefabs";
 import { forgeBuildViews } from "@/lib/forge-testrun";
 import { decodeBuild, encodeBuildBest, forgeInscriptionHtml, FORGE_SPAN_XL } from "@/lib/voxel-populate";
-import type { TplBlock } from "@/lib/voxel-populate";
+import type { TplBlock } from "@/lib/voxel-templates";
 import { forgeDelegateMetadata } from "@/lib/forge-delegate";
 import { forgeAssemblyHtml, parseAssemblyHtml } from "@/lib/forge-assembly";
 import type { AsmPart } from "@/lib/forge-assembly";
