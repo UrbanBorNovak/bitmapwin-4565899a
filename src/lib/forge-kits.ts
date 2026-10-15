@@ -298,23 +298,23 @@ const mega: Kit = {
   story: "Twin cyber towers over a neon street, linked by sky-bridges and crowned by a glowing Bitcoin prism.",
   steps: [
     step("Neon street grid", "Pave the plaza, then trace glowing lane lines.", (m) => {
-      m.box(2, 61, 0, 0, 2, 61, "stone");
+      for (let i = 2; i <= 61; i++) for (const j of [30, 31, 32, 33]) { m.put(i, 0, j, "stone"); m.put(j, 0, i, "stone"); }
       for (let i = 2; i <= 61; i += 4) { m.put(i, 0, 31, "glow"); m.put(31, 0, i, "glow"); }
       for (let i = 2; i <= 61; i++) { m.put(i, 0, 2, "cobble"); m.put(i, 0, 61, "cobble"); m.put(2, 0, i, "cobble"); m.put(61, 0, i, "cobble"); }
     }),
     step("Mining reactor podium", "A hollow podium hiding ASIC racks around a glowing core.", (m) => {
-      m.box(6, 57, 1, 4, 6, 57, "brick", true);
+      m.box(6, 57, 1, 4, 6, 57, "brick", true); m.box(6, 57, 5, 5, 6, 57, "stone", true);
       for (let x = 10; x <= 54; x += 4) for (let z = 10; z <= 54; z += 11) m.box(x, x + 1, 1, 3, z, z + 1, "cobble");
       for (let x = 7; x <= 56; x += 3) { m.put(x, 2, 6, "glass"); m.put(x, 2, 57, "glass"); m.put(6, 2, x, "glass"); m.put(57, 2, x, "glass"); }
-      m.box(6, 57, 5, 5, 6, 57, "stone");
+      for (let i = 6; i <= 57; i++) for (const j of [7, 8, 55, 56]) { m.put(i, 5, j, "stone"); m.put(j, 5, i, "stone"); }
     }),
     step("West tower", "A tall glass-and-stone tower with floor bands.", (m) => {
       for (let y = 6; y <= 44; y++) { const k: BlockId = y % 4 === 0 ? "stone" : "glass"; m.box(10, 23, y, y, 18, 31, k, true); }
-      for (let y = 6; y <= 44; y += 4) m.box(11, 22, y, y, 19, 30, "planks");
+      for (let y = 6; y <= 44; y += 12) m.box(11, 22, y, y, 19, 30, "planks");
     }),
     step("East tower", "The taller twin, stepping back as it rises.", (m) => {
       for (let y = 6; y <= 54; y++) { const s = y > 40 ? 2 : 0; const k: BlockId = y % 5 === 0 ? "stone" : "glass"; m.box(40 + s, 53 - s, y, y, 32 + s, 45 - s, k, true); }
-      for (let y = 10; y <= 54; y += 5) m.box(41, 52, y, y, 33, 44, "planks");
+      for (let y = 10; y <= 54; y += 15) m.box(41, 52, y, y, 33, 44, "planks");
     }),
     step("Sky-bridges", "Hang two glass bridges between the towers.", (m) => {
       for (const y of [20, 34]) for (let x = 23; x <= 40; x++) { const z = Math.round(31 + ((x - 23) / 17) * 1); m.box(x, x, y, y, z, z + 2, "stone"); m.put(x, y + 1, z, "glass"); m.put(x, y + 1, z + 2, "glass"); m.put(x, y + 2, z + 1, "glow"); }
@@ -329,11 +329,11 @@ const mega: Kit = {
     }),
     step("Rooftop scanners", "Spinning gold scanners and a helipad on the west roof.", (m) => {
       disc(m, 16, 24, 6, 45, "stone"); for (let i = 12; i <= 20; i++) { m.put(i, 46, 24, "glow"); m.put(16, 46, i + 12 - 12, "glow"); }
-      m.box(45, 48, 55, 57, 37, 40, "gold"); m.box(46, 47, 58, 58, 34, 43, "glow");
+      m.box(36, 39, 21, 23, 30, 33, "gold"); m.box(37, 38, 24, 24, 27, 36, "glow");
     }),
     step("Bitcoin prism crown", "Raise the glowing prism above the east tower.", (m) => {
-      for (let y = 0; y <= 6; y++) { const r = 6 - y; m.box(46 - r, 46 + r + 1, 59 + y, 59 + y, 38 - r, 38 + r + 1, y % 2 ? "glow" : "gold", true); }
-      for (let y = 66; y <= 70; y++) m.put(46, y, 38, "glow");
+      for (let y = 0; y <= 6; y++) { const r = 6 - y; m.box(46 - r, 46 + r + 1, 55 + y, 55 + y, 38 - r, 38 + r + 1, y % 2 ? "glow" : "gold", true); }
+      for (let y = 62; y <= 63; y++) m.put(46, y, 38, "glow");
     }),
   ],
   behaviors: [
@@ -352,7 +352,7 @@ const colossus: Kit = {
   story: "A 50-block guardian mech on ancient ruins, sword in the bedrock, an orb of light in hand, glass wings spread.",
   steps: [
     step("Ruin plaza", "Stepped stone plaza with cracked braziers.", (m) => {
-      for (let y = 0; y <= 3; y++) { const r = 28 - y * 4; m.box(32 - r, 31 + r, y, y, 32 - r, 31 + r, y % 2 ? "cobble" : "stone"); }
+      for (let y = 0; y <= 3; y++) { const r = 28 - y * 4; for (let i = 32 - r; i <= 31 + r; i++) for (let w = 0; w < 3; w++) { const k: BlockId = y % 2 ? "cobble" : "stone"; m.put(i, y, 32 - r + w, k); m.put(i, y, 31 + r - w, k); m.put(32 - r + w, y, i, k); m.put(31 + r - w, y, i, k); } }
       for (const [x, z] of [[8, 8], [55, 8], [8, 55], [55, 55]] as const) { m.box(x - 1, x + 1, 1, 4, z - 1, z + 1, "stone"); m.put(x, 5, z, "glow"); }
     }),
     step("Legs & greaves", "Two armoured legs with gold knee plates.", (m) => {
@@ -403,12 +403,12 @@ const ark: Kit = {
   story: "A capital starship in its launch dock: plated hull, command tower, twin turrets and three blazing engines.",
   steps: [
     step("Launch dock", "Dock floor, gantry pylons and glowing guide lights.", (m) => {
-      m.box(2, 61, 0, 0, 14, 49, "stone");
+      for (let x = 2; x <= 61; x++) for (let z = 14; z <= 49; z++) if (x % 6 === 2 || z % 6 === 2) m.put(x, 0, z, "stone");
       for (let x = 4; x <= 60; x += 4) { m.put(x, 1, 14, "glow"); m.put(x, 1, 49, "glow"); }
       for (const x of [10, 26, 42]) for (const z of [15, 48]) { m.box(x, x + 1, 1, 22, z, z, "cobble"); m.box(x, x + 1, 22, 22, Math.min(z, 31), Math.max(z, 32), "cobble"); }
     }),
     step("Keel & lower hull", "A long tapered keel lifted on cradles.", (m) => {
-      for (let x = 4; x <= 60; x++) { const w = x > 48 ? Math.max(1, 10 - (x - 48)) : 10; for (let y = 4; y <= 8; y++) { const ww = w - (8 - y); if (ww > 0) for (let z = 32 - ww; z < 32 + ww; z++) m.put(x, y, z, y === 4 ? "cobble" : "stone"); } }
+      for (let x = 4; x <= 60; x++) { const w = x > 48 ? Math.max(1, 10 - (x - 48)) : 10; for (let y = 4; y <= 8; y++) { const ww = w - (8 - y); if (ww > 0) for (let z = 32 - ww; z < 32 + ww; z++) if (y === 4 || z === 32 - ww || z === 31 + ww || x === 4) m.put(x, y, z, y === 4 ? "cobble" : "stone"); } }
       for (const x of [12, 28, 44]) m.box(x, x + 2, 1, 3, 27, 36, "brick");
     }),
     step("Upper hull plating", "Layer the armoured deck with plating seams.", (m) => {
