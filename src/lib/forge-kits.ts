@@ -831,7 +831,6 @@ const colosseum: Kit = {
   story: "The great oval arena of Rome: three tiers of arches, a broken outer wall, stepped seats, the emperor's box and the tunnels below the sand.",
   steps: [
     step("Piazza & hypogeum", "Stone piazza and the maze of tunnels under the arena.", (m) => {
-      ground(m, "cobble");
       for (let x = 14; x <= 49; x++) for (let z = 18; z <= 45; z++) if (ell(x, z, 16, 12) < 1 && (x % 4 === 0 || z % 5 === 0)) m.put(x, 1, z, "stone");
     }),
     step("Arena floor", "Wooden floor with sand and two trapdoors.", (m) => {
@@ -839,16 +838,16 @@ const colosseum: Kit = {
       m.box(24, 26, 3, 3, 30, 32, "planks"); m.box(37, 39, 3, 3, 30, 32, "planks");
     }),
     step("Ground arcade", "The first ring of arches, ten blocks high.", (m) => {
-      for (let x = 2; x <= 61; x++) for (let z = 2; z <= 61; z++) { const e = ell(x, z, 29.5, 24.5); if (e > 1 || e < 0.94) continue; const ang = Math.round(Math.atan2(z - 31.5, x - 31.5) * 18); for (let y = 1; y <= 10; y++) m.put(x, y, z, y >= 3 && y <= 8 && ang % 2 === 0 ? "glass" : y === 10 ? "stone" : "sand"); }
+      for (let x = 2; x <= 61; x++) for (let z = 2; z <= 61; z++) { const e = ell(x, z, 29.5, 24.5); if (e > 1 || e < 0.965) continue; const ang = Math.round(Math.atan2(z - 31.5, x - 31.5) * 18); for (let y = 1; y <= 10; y++) m.put(x, y, z, y >= 3 && y <= 8 && ang % 2 === 0 ? "glass" : y === 10 ? "stone" : "sand"); }
     }),
     step("Second & third tiers", "Two more rings of arches — the far side stays tall.", (m) => {
-      for (let x = 2; x <= 61; x++) for (let z = 2; z <= 61; z++) { const e = ell(x, z, 29.5, 24.5); if (e > 1 || e < 0.94) continue; const ang = Math.round(Math.atan2(z - 31.5, x - 31.5) * 18); const top = z < 31 && x > 20 && x < 44 ? 20 : 30; for (let y = 11; y <= top; y++) m.put(x, y, z, (y % 10 >= 3 && y % 10 <= 8 && ang % 2 === 0) ? "glass" : y % 10 === 0 ? "stone" : "sand"); }
+      for (let x = 2; x <= 61; x++) for (let z = 2; z <= 61; z++) { const e = ell(x, z, 29.5, 24.5); if (e > 1 || e < 0.965) continue; const ang = Math.round(Math.atan2(z - 31.5, x - 31.5) * 18); const top = z < 31 && x > 20 && x < 44 ? 20 : 30; for (let y = 11; y <= top; y++) m.put(x, y, z, (y % 10 >= 3 && y % 10 <= 8 && ang % 2 === 0) ? "glass" : y % 10 === 0 ? "stone" : "sand"); }
     }),
     step("Ruined edge", "Crumble the broken wall into jagged steps.", (m) => {
       for (let x = 2; x <= 61; x++) for (let z = 2; z <= 31; z++) { const e = ell(x, z, 29.5, 24.5); if (e > 1 || e < 0.94) continue; if (x <= 20 || x >= 44) continue; const h = 20 + ((x * 7) % 5); for (let y = 21; y <= h; y++) m.put(x, y, z, "cobble"); }
     }),
     step("Stepped seating", "Seat rows climbing from the arena to the wall.", (m) => {
-      for (let x = 2; x <= 61; x++) for (let z = 2; z <= 61; z++) { const e = ell(x, z, 29.5, 24.5); if (e >= 0.94 || e < 0.56) continue; const y = 3 + Math.floor((e - 0.56) * 45); m.put(x, y, z, y % 2 ? "stone" : "cobble"); }
+      for (let x = 2; x <= 61; x++) for (let z = 2; z <= 61; z++) { const e = ell(x, z, 29.5, 24.5); if (e >= 0.965 || e < 0.56) continue; const y = 3 + Math.floor((e - 0.56) * 45); m.put(x, y, z, y % 2 ? "stone" : "cobble"); }
     }),
     step("Emperor's box & banners", "The gold imperial box and red banners on the wall.", (m) => {
       m.box(28, 35, 6, 9, 54, 56, "gold", true); m.box(28, 35, 10, 10, 54, 56, "brick");
@@ -900,7 +899,7 @@ const taj: Kit = {
   story: "The white marble mausoleum of Agra: raised plinth, great onion dome, four small domed kiosks, four minarets and a long reflecting pool.",
   steps: [
     step("Gardens & pool", "Lawns, paths and the long reflecting pool.", (m) => {
-      ground(m, "grass"); for (let z = 48; z <= 61; z++) { for (let x = 29; x <= 34; x++) m.put(x, 0, z, "stone"); m.put(31, 0, z, "glass"); m.put(32, 0, z, "glass"); }
+      m.box(8, 55, 0, 0, 48, 61, "grass"); for (let z = 48; z <= 61; z++) { for (let x = 29; x <= 34; x++) m.put(x, 0, z, "stone"); m.put(31, 0, z, "glass"); m.put(32, 0, z, "glass"); }
       for (let z = 50; z <= 60; z += 3) for (const x of [26, 37]) { for (let y = 1; y <= 3; y++) m.put(x, y, z, "log"); m.box(x, x, 4, 6, z, z, "grass"); }
     }),
     step("Marble plinth", "The raised white platform.", (m) => { m.box(12, 51, 1, 3, 10, 47, "sand", true); m.box(12, 51, 3, 3, 10, 47, "stone"); for (let x = 29; x <= 34; x++) for (let y = 1; y <= 3; y++) m.put(x, y, 48 - (4 - y), "stone"); }),
