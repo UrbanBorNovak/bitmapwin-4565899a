@@ -97,7 +97,7 @@ function TerrainMass({ mass, height }: { mass: LandMass; height: number }) {
     const seg = SPAN; // one vertex per cell corner
     const g = new THREE.PlaneGeometry(SPAN * 1.7, SPAN * 1.7, seg, seg);
     g.rotateX(-Math.PI / 2);
-    const pos = g.attributes.position as THREE.BufferAttribute;
+    const pos = g.attributes["position"] as THREE.BufferAttribute;
     const colors = new Float32Array(pos.count * 3);
     const sand = new THREE.Color("#8a6a3a"), grass = new THREE.Color("#2e4a2a"), rock = new THREE.Color("#3a3f4a"), deep = new THREE.Color("#101820");
     for (let i = 0; i < pos.count; i++) {
