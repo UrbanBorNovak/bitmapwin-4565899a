@@ -586,7 +586,7 @@ const storeys = (m: M, x0: number, x1: number, z0: number, z1: number, y0: numbe
     const lvl = (y - y0) % 4;
     for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) {
       const edge = x === x0 || x === x1 || z === z0 || z === z1;
-      if (lvl === 0) { m.put(x, y, z, edge ? trim : "planks"); continue; }
+      if (lvl === 0) { if (edge) m.put(x, y, z, trim); continue; }
       if (!edge) continue;
       const corner = (x === x0 || x === x1) && (z === z0 || z === z1);
       const along = x === x0 || x === x1 ? z : x;
