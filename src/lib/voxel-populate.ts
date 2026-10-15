@@ -13,8 +13,8 @@ import type { TplBlock } from "@/lib/voxel-templates";
 export const FORGE_FORMAT = "BWVX1";
 export const FORGE_SPAN = 64;
 export const FORGE_MAX_BLOCKS = 12000;
-/** Hard render ceiling: own blocks plus every referenced on-chain piece (24 × 12,000). */
-export const FORGE_RENDER_MAX = 12000 + 24 * 12000;
+/** Hard render ceiling: own blocks plus every referenced on-chain piece (32 × 12,000). */
+export const FORGE_RENDER_MAX = 12000 + 32 * 12000;
 
 export const ARCHETYPES = [
   { id: "citadel", name: "SOVEREIGN CITADEL", blurb: "Walled keep with corner towers and a gold throne." },
