@@ -5,7 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import { useQuery } from "@tanstack/react-query";
 import * as THREE from "three";
 import { getWorldGeometryFn } from "@/lib/inscribed-world.functions";
-import { fitPrims, modelsInside, structurePrims, type WorldAsset } from "@/lib/inscribed-world-bridge";
+import { creatorFloorY, fitPrims, modelsInside, structurePrims, type WorldAsset } from "@/lib/inscribed-world-bridge";
 import { worldContentUrl } from "@/lib/inscribed-world";
 import { WORLD_CELL, WORLD_GRID, cellX, cellZ, type PlayerState } from "@/lib/player-state";
 import { groundY } from "@/lib/world-terrain";
@@ -43,7 +43,10 @@ function Bridge({ height }: { height: number }) {
   const ring = useRef<THREE.Mesh>(null);
   useFrame((_, dt) => { if (ring.current) ring.current.rotation.y += Math.min(dt, 0.05) * 0.8; });
   const prims = useMemo(() => (data ? structurePrims(data.prims) : []), [data]);
-  const fit = useMemo(() => (data ? fitPrims(prims, WORLD_CELL * 0.8) : null), [data, prims]);
+  const fit = useMemo(
+    () => (data ? fitPrims(prims, WORLD_CELL * 0.8, creatorFloorY(data.prims)) : null),
+    [data, prims],
+  );
   const models = useMemo(
     () => (data?.models && fit ? modelsInside(data.models, fit, WORLD_CELL * 0.5) : []),
     [data, fit],
