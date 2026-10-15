@@ -12,6 +12,10 @@ import type { TplBlock } from "@/lib/voxel-templates";
 
 export const FORGE_FORMAT = "BWVX1";
 export const FORGE_SPAN = 64;
+/** XL canvas for BWVX_ASM v2 recursive builds; drawn at half block size so it covers the same land. */
+export const FORGE_SPAN_XL = 128;
+export type ForgeSpan = 64 | 128;
+export const asSpan = (n: unknown): ForgeSpan => (Number(n) === FORGE_SPAN_XL ? FORGE_SPAN_XL : FORGE_SPAN);
 export const FORGE_MAX_BLOCKS = 12000;
 /** Hard render ceiling: own blocks plus every referenced on-chain piece (32 × 12,000). */
 export const FORGE_RENDER_MAX = 12000 + 32 * 12000;
@@ -127,8 +131,8 @@ export function encodeBuild(blocks: TplBlock[]): string {
 export const FORGE_FORMAT_V2 = "BWVX2";
 const V2_MAGIC = [66, 87, 50, 0];
 
-export function encodeBuildV2(blocks: TplBlock[]): string {
-  const S = FORGE_SPAN, idx = (x: number, y: number, z: number) => (y * S + z) * S + x;
+export function encodeBuildV2(blocks: TplBlock[], span: ForgeSpan = FORGE_SPAN): string {
+  const S = span, idx = (x: number, y: number, z: number) => (y * S + z) * S + x;
   const grid = new Int16Array(S * S * S).fill(-1);
   for (const b of blocks) {
     if (b.dx < 0 || b.dy < 0 || b.dz < 0 || b.dx >= S || b.dy >= S || b.dz >= S) continue;
@@ -154,14 +158,15 @@ export function encodeBuildV2(blocks: TplBlock[]): string {
   return btoa(s);
 }
 
-/** Smallest payload for these blocks: BWVX2 boxes when they win, else BWVX1. */
-export function encodeBuildBest(blocks: TplBlock[]): { format: string; data: string } {
+/** Smallest payload for these blocks: BWVX2 boxes when they win, else BWVX1. XL (128) always uses BWVX2 so its magic can't be confused with a coordinate. */
+export function encodeBuildBest(blocks: TplBlock[], span: ForgeSpan = FORGE_SPAN): { format: string; data: string } {
+  if (span === FORGE_SPAN_XL) return { format: FORGE_FORMAT_V2, data: encodeBuildV2(blocks, span) };
   const v1 = encodeBuild(blocks), v2 = encodeBuildV2(blocks);
   return v2.length < v1.length ? { format: FORGE_FORMAT_V2, data: v2 } : { format: FORGE_FORMAT, data: v1 };
 }
 
 /** Reads BWVX1 or BWVX2 payloads. */
-export function decodeBuild(b64: string): TplBlock[] {
+export function decodeBuild(b64: string, span: ForgeSpan = FORGE_SPAN): TplBlock[] {
   const raw = atob(b64);
   const out: TplBlock[] = [];
   const c = (i: number) => raw.charCodeAt(i);
@@ -169,7 +174,7 @@ export function decodeBuild(b64: string): TplBlock[] {
     for (let i = 4; i + 6 < raw.length; i += 7) {
       const k = BLOCKS[c(i + 6)];
       if (!k) continue;
-      const x1 = Math.min(FORGE_SPAN - 1, c(i + 3)), y1 = Math.min(FORGE_SPAN - 1, c(i + 4)), z1 = Math.min(FORGE_SPAN - 1, c(i + 5));
+      const x1 = Math.min(span - 1, c(i + 3)), y1 = Math.min(span - 1, c(i + 4)), z1 = Math.min(span - 1, c(i + 5));
       for (let x = c(i); x <= x1; x++) for (let y = c(i + 1); y <= y1; y++) for (let z = c(i + 2); z <= z1; z++) out.push({ dx: x, dy: y, dz: z, k: k.id });
     }
     return out;
