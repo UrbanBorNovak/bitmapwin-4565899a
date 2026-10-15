@@ -1,3 +1,4 @@
+import { isLive, type AsmPlacement } from "@/lib/forge-assembly";
 import { createFileRoute } from "@tanstack/react-router";
 import { OtherthingsBadge } from "@/components/OtherthingsBadge";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -59,9 +60,7 @@ let SPAN: ForgeSpan = FORGE_SPAN;
 const half = () => SPAN / 2;
 const COLORS = Object.fromEntries(BLOCKS.map((b) => [b.id, new THREE.Color(b.top)]));
 type Tool = "stamp" | "block" | "box" | "erase" | "perch" | "parcel" | "move";
-type Placement = { part: AsmPart; keys: string[]; refs: TplBlock[] };
-/** A piece is in the build only while every block it stamped is still the exact same block (not refilled by undo/clear/generate/other stamps). */
-const isLive = (p: Placement, world: Map<string, TplBlock>) => p.keys.every((k, i) => world.get(k) === p.refs[i]);
+type Placement = AsmPlacement;
 
 function ParcelFloor({ rects, focus, hoverIdx }: { rects: ParcelRect[]; focus: number | null; hoverIdx: number | null }) {
   const ref = useRef<THREE.InstancedMesh>(null);
