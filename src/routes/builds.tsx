@@ -6,6 +6,7 @@ import { BlockMosaic } from "@/components/BlockMosaic";
 import { BuilderName } from "@/components/BuilderName";
 import { ClubBadge } from "@/components/ClubBadge";
 import { PublicBuildViewer } from "@/components/builds/PublicBuildViewer";
+import { WorldsDirectory } from "@/components/worlds/WorldsDirectory";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { BUILD_KIND_LABELS } from "@/lib/build-sdk";
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/builds")({
   component: CommunityBuildsPage,
 });
 
-type TypeFilter = "all" | "forge" | "extender";
+type TypeFilter = "all" | "forge" | "extender" | "worlds";
 type SortMode = "newest" | "visited" | "voxels";
 const PAGE_SIZE = 24;
 
@@ -84,6 +85,7 @@ function CommunityBuildsPage() {
 
   useEffect(() => setVisible(PAGE_SIZE), [type, query, sort]);
 
+  const worldHeights = useMemo(() => Array.from(new Set(items.map((i) => i.height))), [items]);
   const forgeCount = forge.data?.length ?? 0;
   const voxels = (forge.data ?? []).reduce((s, f) => s + f.blocks, 0);
   const extCount = builds.data?.length ?? 0;
@@ -114,7 +116,7 @@ function CommunityBuildsPage() {
       <div className="sticky top-16 z-20 mt-4 border border-border bg-background/90 p-2 backdrop-blur-md">
         <div className="grid gap-2 lg:grid-cols-[auto_minmax(0,1fr)_auto]">
           <div className="flex gap-1" role="tablist" aria-label="Build type">
-            {([["all", "ALL"], ["forge", "ON-CHAIN FORGE"], ["extender", "3D EXTENDERS"]] as const).map(([v, l]) => (
+            {([["all", "ALL"], ["forge", "ON-CHAIN FORGE"], ["extender", "3D EXTENDERS"], ["worlds", "INSCRIBED WORLDS"]] as const).map(([v, l]) => (
               <Button key={v} type="button" size="sm" role="tab" aria-selected={type === v} variant={type === v ? "default" : "ghost"} onClick={() => setType(v)}>{l}</Button>
             ))}
           </div>
@@ -131,6 +133,9 @@ function CommunityBuildsPage() {
         </div>
       </div>
 
+      {type === "worlds" ? (
+        <WorldsDirectory heights={worldHeights} />
+      ) : <>
       <div className="mt-4 flex items-center justify-between">
         <span className="label text-muted-foreground">{filtered.length.toLocaleString("en-US")} BUILDS</span>
       </div>
@@ -153,6 +158,7 @@ function CommunityBuildsPage() {
           <p className="label text-muted-foreground">{pending ? "READING BUILDS FROM CHAIN…" : "NO BUILDS MATCH THESE FILTERS"}</p>
         </div>
       )}
+      </>}
 
       <Dialog open={!!open} onOpenChange={(v) => !v && setOpen(null)}>
         <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto p-0">
