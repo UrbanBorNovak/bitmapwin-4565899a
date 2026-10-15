@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { OtherthingsBadge } from "@/components/OtherthingsBadge";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -490,6 +491,7 @@ function ForgePage() {
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 font-mono">
+      <div className="mb-3"><OtherthingsBadge child="Builds" /></div>
       <p className="text-xs tracking-widest text-primary">LAND FORGE STUDIO · COMPOSABLE ON-CHAIN BUILDS</p>
       <h1 className="mt-2 font-display text-3xl text-foreground md:text-4xl">Build on Bitcoin. Build on each other.</h1>
 
