@@ -324,7 +324,7 @@ const mega: Kit = {
       for (let z = 8; z <= 44; z += 9) { m.box(28, 33, 6, 8, z, z + 4, "cobble", true); m.box(28, 33, 9, 9, z, z + 4, x2(z)); }
     }),
     step("Maglev ring", "A glowing rail loops around the podium.", (m) => {
-      for (let a = 0; a < 360; a += 2.2) { const t = (a * Math.PI) / 180; m.put(32 + Math.round(Math.cos(t) * 29), 12, 32 + Math.round(Math.sin(t) * 29), a % 6 < 3 ? "glow" : "stone"); }
+      for (let a = 0; a < 360; a += 2.5) { const t = (a * Math.PI) / 180; m.put(32 + Math.round(Math.cos(t) * 29), 12, 32 + Math.round(Math.sin(t) * 29), a % 6 < 3 ? "glow" : "stone"); }
       for (let a = 0; a < 360; a += 30) { const t = (a * Math.PI) / 180; const x = 32 + Math.round(Math.cos(t) * 29), z = 32 + Math.round(Math.sin(t) * 29); m.box(x, x, 6, 11, z, z, "stone"); }
     }),
     step("Rooftop scanners", "Spinning gold scanners and a helipad on the west roof.", (m) => {
