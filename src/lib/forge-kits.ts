@@ -1055,10 +1055,9 @@ const terracotta: Kit = {
   story: "Pit One of the First Emperor's tomb: earthen corridors under timber beams, rank after rank of clay warriors, horse-drawn chariots, a general and the excavation hall around them.",
   steps: [
     step("Excavation pit", "Dig the pit floor and its rammed-earth walls.", (m) => {
-      m.box(2, 61, 0, 0, 2, 61, "dirt");
-      for (let y = 1; y <= 5; y++) for (let i = 2; i <= 61; i++) { m.put(i, y, 2, "dirt"); m.put(i, y, 61, "dirt"); m.put(2, y, i, "dirt"); m.put(61, y, i, "dirt"); }
-      for (let i = 2; i <= 61; i++) for (const j of [2, 61]) { m.put(i, 6, j, "grass"); m.put(j, 6, i, "grass"); }
-      for (let x = 3; x <= 60; x++) for (let z = 3; z <= 60; z++) if ((x + z) % 4 === 0) m.put(x, 0, z, "brick");
+      for (let x = 2; x <= 61; x++) for (let z = 2; z <= 61; z++) if ((x + z) % 2 === 0) m.put(x, 0, z, (x * 7 + z * 3) % 5 === 0 ? "brick" : "dirt");
+      for (let y = 1; y <= 4; y++) for (let i = 2; i <= 61; i++) { m.put(i, y, 2, "dirt"); m.put(i, y, 61, "dirt"); m.put(2, y, i, "dirt"); m.put(61, y, i, "dirt"); }
+      for (let i = 2; i <= 61; i++) for (const j of [2, 61]) { m.put(i, 5, j, "grass"); m.put(j, 5, i, "grass"); }
     }),
     step("Earthen corridors", "Raise the partition walls between the eleven corridors.", (m) => {
       for (let x = 6; x <= 58; x += 5) for (let z = 14; z <= 58; z++) for (let y = 1; y <= 4; y++) m.put(x, y, z, "dirt");
@@ -1089,12 +1088,11 @@ const terracotta: Kit = {
       m.box(31, 32, 9, 10, 13, 13, "sand"); m.box(30, 33, 11, 11, 13, 13, "gold"); m.box(31, 32, 12, 12, 13, 13, "gold");
     }),
     step("Timber roof beams", "Lay the ancient log beams across the walls.", (m) => {
-      for (let x = 6; x <= 58; x += 5) for (let z = 14; z <= 58; z += 2) { m.put(x, 5, z, "log"); m.put(x + 1, 5, z, "planks"); m.put(x - 1, 5, z, "planks"); }
+      for (let x = 6; x <= 58; x += 5) for (let z = 14; z <= 58; z += 3) { m.put(x, 5, z, "log"); m.put(x + 1, 5, z, "planks"); m.put(x - 1, 5, z, "planks"); }
     }),
     step("Excavation hall & lamps", "The great arched visitor hall and its glowing lamps.", (m) => {
       for (let i = 0; i <= 12; i++) { const y = 7 + Math.round(10 * Math.sin((i / 12) * Math.PI / 2)); for (let z = 2; z <= 61; z += 6) { m.put(2 + i, y, z, "cobble"); m.put(61 - i, y, z, "cobble"); } }
       for (let x = 14; x <= 49; x++) for (let z = 2; z <= 61; z += 6) m.put(x, 17, z, "cobble");
-      for (let x = 2; x <= 61; x++) for (const z of [2, 61]) m.put(x, 7, z, "glass");
       for (let x = 4; x <= 58; x += 6) for (const z of [3, 60]) m.put(x, 7, z === 3 ? 3 : 60, "glow");
     }),
   ],
@@ -1114,7 +1112,7 @@ const angkor: Kit = {
   story: "The largest temple on Earth: a jungle moat, a long causeway with naga rails, nested galleries rising in three terraces, and five lotus-bud towers.",
   steps: [
     step("Moat & island", "A glass moat ringing the sandstone island.", (m) => {
-      for (let x = 2; x <= 61; x++) for (let z = 2; z <= 61; z++) { const e = Math.min(x - 2, 61 - x, z - 2, 61 - z); m.put(x, 0, z, e < 2 ? "grass" : e < 6 ? "glass" : "sand"); }
+      for (let x = 2; x <= 61; x++) for (let z = 2; z <= 61; z++) { const e = Math.min(x - 2, 61 - x, z - 2, 61 - z); if (e < 6 || e > 51 - 2 * 0 || (e >= 6 && (x < 10 || x > 53 || z < 10 || z > 53))) m.put(x, 0, z, e < 2 ? "grass" : e < 6 ? "glass" : "sand"); }
     }),
     step("Causeway & nagas", "The long stone causeway with serpent balustrades.", (m) => {
       m.box(29, 34, 1, 1, 2, 14, "cobble"); for (let z = 2; z <= 14; z++) { m.put(28, 2, z, "stone"); m.put(35, 2, z, "stone"); }
@@ -1123,10 +1121,10 @@ const angkor: Kit = {
     step("Outer gallery", "The long colonnaded wall around the first terrace.", (m) => {
       for (let y = 1; y <= 5; y++) for (let i = 8; i <= 55; i++) for (const j of [8, 55]) { const col = i % 3 === 0 || y === 5 || y === 1; if (col && !(j === 8 && i >= 29 && i <= 34 && y < 5)) { m.put(i, y, j, "stone"); m.put(j, y, i, "stone"); } }
       for (let i = 0; i <= 2; i++) for (let x = 8 - 1 + i; x <= 55 + 1 - i; x++) for (const z of [8 - 1 + i, 55 + 1 - i]) { m.put(x, 6 + i, z, "brick"); m.put(z, 6 + i, x, "brick"); }
-      m.box(10, 53, 1, 1, 10, 53, "sand");
+      for (let x = 10; x <= 53; x++) for (let z = 10; z <= 53; z++) if ((x + z) % 2 === 0 && (x < 16 || x > 47 || z < 16 || z > 47)) m.put(x, 1, z, "sand");
     }),
     step("Second terrace", "A higher walled terrace with corner towers.", (m) => {
-      m.box(16, 47, 2, 9, 16, 47, "sand", true); m.box(17, 46, 9, 9, 17, 46, "cobble");
+      m.box(16, 47, 2, 9, 16, 47, "sand", true); for (let x = 17; x <= 46; x++) for (let z = 17; z <= 46; z++) if (x < 22 || x > 41 || z < 22 || z > 41) m.put(x, 9, z, "cobble");
       for (let y = 2; y <= 9; y++) m.box(29, 34, y, y, 15, 15 + (9 - y), "cobble");
       for (const [x, z] of [[16, 16], [47, 16], [16, 47], [47, 47]] as const) lotus(m, x, z, 10, 2);
     }),
