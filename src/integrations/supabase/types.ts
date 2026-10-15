@@ -345,6 +345,48 @@ export type Database = {
         }
         Relationships: []
       }
+      bitmap_kennels: {
+        Row: {
+          block_height: number
+          created_at: string
+          holder_address: string
+          holder_user: string
+          is_open: boolean
+          max_supply: number
+          minted_count: number
+          name: string
+          payout_address: string
+          price_sats: number
+          updated_at: string
+        }
+        Insert: {
+          block_height: number
+          created_at?: string
+          holder_address: string
+          holder_user: string
+          is_open?: boolean
+          max_supply: number
+          minted_count?: number
+          name: string
+          payout_address: string
+          price_sats: number
+          updated_at?: string
+        }
+        Update: {
+          block_height?: number
+          created_at?: string
+          holder_address?: string
+          holder_user?: string
+          is_open?: boolean
+          max_supply?: number
+          minted_count?: number
+          name?: string
+          payout_address?: string
+          price_sats?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bitmap_land_skins: {
         Row: {
           bitmap_height: number
@@ -2281,6 +2323,36 @@ export type Database = {
           is_bitmap_claim?: boolean
           txid?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      kennel_mints: {
+        Row: {
+          block_height: number
+          buyer_address: string | null
+          child_index: number
+          created_at: string
+          id: string
+          inscription_id: string
+          reveal_txid: string
+        }
+        Insert: {
+          block_height: number
+          buyer_address?: string | null
+          child_index: number
+          created_at?: string
+          id?: string
+          inscription_id: string
+          reveal_txid: string
+        }
+        Update: {
+          block_height?: number
+          buyer_address?: string | null
+          child_index?: number
+          created_at?: string
+          id?: string
+          inscription_id?: string
+          reveal_txid?: string
         }
         Relationships: []
       }
