@@ -238,6 +238,7 @@ function ForgePage() {
   const myParcels = rights.data?.parcels ?? [];
   useEffect(() => { if (role === "parcel" && myParcels.length && (focus === null || !myParcels.includes(focus))) setFocus(myParcels[0]!); }, [role, myParcels, focus]);
   // Reinscription spends the BITMAP's own sat, so only the BITMAP holder can sign it.
+  useEffect(() => { if (role === "parcel") setXl(false); }, [role]);
   const parcelTarget = role === "parcel" && focus !== null && myParcels.includes(focus) ? focus : undefined;
   const canInscribe = role === "bitmap" || parcelTarget !== undefined;
   const community = useCommunityModules();
@@ -486,7 +487,7 @@ function ForgePage() {
     return t;
   }, [world]);
   const onGround = (e: ThreeEvent<PointerEvent>) => {
-    const x = Math.floor(e.point.x + HALF), z = Math.floor(e.point.z + HALF);
+    const x = Math.floor(e.point.x + half()), z = Math.floor(e.point.z + half());
     if (x < 0 || z < 0 || x >= SPAN || z >= SPAN) return setHover(null);
     let y = layer;
     if (tool === "perch") y = Math.max(y, tops.get(`${x},${z}`) ?? 0);
