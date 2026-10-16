@@ -9,7 +9,9 @@ import { creatorFloorY, fitPrims, modelsInside, structurePrims, type WorldAsset 
 import { worldContentUrl } from "@/lib/inscribed-world";
 import { WORLD_CELL, WORLD_GRID, cellX, cellZ, type PlayerState } from "@/lib/player-state";
 import { groundY } from "@/lib/world-terrain";
+import { Primitive } from "@/components/game/Primitive";
 import { setBoxes, type WorldBox } from "@/lib/box-collision";
+import { buildInstances, groupModels, instanceBoxes, type ModelGroup } from "@/lib/instanced-models";
 
 const D = Math.PI / 180;
 
@@ -33,18 +35,6 @@ class Quiet extends Component<{ children: ReactNode }, { failed: boolean }> {
 /** Meshes this simple are blocks (cubes, slabs, pillars with carved bases/capitals): solid to the walker. Very detailed props stay walk-through. */
 const SOLID_MAX_VERTS = 3000;
 
-/** Every placement of one on-chain inscription, grouped so it is fetched and drawn once. */
-export type ModelGroup = { url: string; instances: WorldAsset[] };
-
-export function groupModels(models: WorldAsset[]): ModelGroup[] {
-  const map = new Map<string, WorldAsset[]>();
-  for (const m of models) {
-    const list = map.get(m.url);
-    if (list) list.push(m); else map.set(m.url, [m]);
-  }
-  return [...map].map(([url, instances]) => ({ url, instances }));
-}
-
 /**
  * One on-chain Draco glTF drawn as GPU instances: one InstancedMesh per sub-mesh, one
  * matrix per creator placement. Simple block meshes still register walkable boxes.
@@ -52,55 +42,17 @@ export function groupModels(models: WorldAsset[]): ModelGroup[] {
 function InstancedAssetGroup({ group, boxKey }: { group: ModelGroup; boxKey: string }) {
   const gltf = useGLTF(group.url, true);
   const root = useRef<THREE.Group>(null);
-  const meshes = useMemo(() => {
-    gltf.scene.updateMatrixWorld(true);
-    const inv = new THREE.Matrix4().copy(gltf.scene.matrixWorld).invert();
-    const place = group.instances.map((m) =>
-      new THREE.Matrix4().compose(
-        new THREE.Vector3(...m.pos),
-        new THREE.Quaternion().setFromEuler(new THREE.Euler(m.rot[0] * D, m.rot[1] * D, m.rot[2] * D)),
-        new THREE.Vector3(...m.scale),
-      ),
-    );
-    const out: THREE.InstancedMesh[] = [];
-    gltf.scene.traverse((o) => {
-      const mesh = o as THREE.Mesh;
-      if (!mesh.isMesh || !mesh.geometry) return;
-      const rel = new THREE.Matrix4().multiplyMatrices(inv, mesh.matrixWorld);
-      const inst = new THREE.InstancedMesh(mesh.geometry, mesh.material, place.length);
-      const tmp = new THREE.Matrix4();
-      place.forEach((p, i) => inst.setMatrixAt(i, tmp.multiplyMatrices(p, rel)));
-      inst.instanceMatrix.needsUpdate = true;
-      inst.castShadow = false;
-      inst.receiveShadow = true;
-      inst.computeBoundingSphere();
-      out.push(inst);
-    });
-    return out;
-  }, [gltf.scene, group.instances]);
+  const meshes = useMemo(() => buildInstances(gltf.scene, group.instances), [gltf.scene, group.instances]);
   useEffect(() => () => meshes.forEach((m) => m.dispose()), [meshes]);
   useEffect(() => {
     root.current?.updateWorldMatrix(true, true);
-    const boxes: WorldBox[] = [];
-    const m = new THREE.Matrix4();
-    for (const inst of meshes) {
-      const g = inst.geometry;
-      if ((g.attributes["position"]?.count ?? Infinity) > SOLID_MAX_VERTS) continue;
-      if (!g.boundingBox) g.computeBoundingBox();
-      const local = g.boundingBox;
-      if (!local || local.isEmpty()) continue;
-      for (let i = 0; i < inst.count; i++) {
-        inst.getMatrixAt(i, m);
-        const b = local.clone().applyMatrix4(m.premultiply(inst.matrixWorld));
-        boxes.push({ x0: b.min.x, x1: b.max.x, y0: b.min.y, y1: b.max.y, z0: b.min.z, z1: b.max.z });
-      }
-    }
+    const boxes = instanceBoxes(meshes, SOLID_MAX_VERTS);
     setBoxes(boxKey, boxes.length ? boxes : null);
     return () => setBoxes(boxKey, null);
   }, [meshes, boxKey]);
   return (
     <group ref={root}>
-      {meshes.map((m, i) => <primitive key={i} object={m} />)}
+      {meshes.map((m, i) => <Primitive key={i} object={m} />)}
     </group>
   );
 }
