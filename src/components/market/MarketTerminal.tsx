@@ -148,7 +148,7 @@ const TIER: Record<FeeTier, { label: string; cls: string }> = {
   lagging: { label: "LAGGING ~1H+", cls: "border-bitcoin/60 text-bitcoin" },
 };
 
-function TapeRow({ t, up, hydrated, side, mem, rec }: { t: TradeRow; up: boolean; hydrated: boolean; side: "ask" | "bid"; mem?: MemTx; rec: Rec | null }) {
+function TapeRow({ t, up, hydrated, side, mem, rec }: { t: TradeRow; up: boolean; hydrated: boolean; side: "ask" | "bid"; mem?: MemTx | undefined; rec: Rec | null }) {
   const tier = mem && rec && !mem.missing ? feeTier(mem.rate, rec) : null;
   return (
     <li className="grid grid-cols-[4.5rem_1fr_auto] items-center gap-3 border-b border-border/50 px-3 py-1 font-mono text-[11px] animate-in fade-in" data-no-translate>
