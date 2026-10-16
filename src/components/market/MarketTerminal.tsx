@@ -37,6 +37,8 @@ export function MarketTerminal({ scope = { label: "ALL BITMAPS", match: null } }
   const askBuckets = useMemo(() => bucketize(asks, tick, "ask").slice(0, LEVELS), [asks, tick]);
   const bidBuckets = useMemo(() => bucketize(bidOrders, tick, "bid").slice(0, LEVELS), [bidOrders, tick]);
   const flash = useBookFlash([...asks.map((a) => a.id), ...bidOrders.map((b) => b.id)], !offers.isPending && !bids.isPending);
+  for (const a of asks) flash.labels.set(a.id, `ASK ${a.bitmapHeight}.BITMAP ${formatSats(a.priceSats)}`);
+  for (const b of bidOrders) flash.labels.set(b.id, `BID ${b.bitmapHeight}.BITMAP ${formatSats(b.priceSats)}`);
   const bidRows = bidOrders;
   const allAsks = useMemo(() => (offers.data ?? []).filter((o) => o.status === "open" && o.priceSats > 0).map((o) => ({ priceSats: o.priceSats, height: o.bitmapHeight })), [offers.data]);
   const allBids = useMemo(() => (bids.data ?? []).filter((b) => b.priceSats > 0).map((b) => ({ priceSats: b.priceSats, height: b.bitmapHeight })), [bids.data]);
