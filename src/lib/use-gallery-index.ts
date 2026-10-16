@@ -38,6 +38,7 @@ export function useGalleryIndex(): GalleryIndex {
     return [...s].sort((a, b) => a - b);
   }, [offers.data, bids.data, tape.data, paid.data]);
   const indexable = heights.filter((h) => h > 999 && h <= BLOCK_STATS_MAX_HEIGHT);
+  const live = heights.filter((h) => h > BLOCK_STATS_MAX_HEIGHT);
 
   const stats = useQuery({
     queryKey: ["gallery-index-stats", indexable.join(",")],
@@ -52,7 +53,32 @@ export function useGalleryIndex(): GalleryIndex {
       return out;
     },
   });
-  const twoTx = indexable.filter((h) => stats.data?.get(h) === 2);
+  // Blocks above the imported dataset: read the real tx count from the
+  // block header (immutable, CDN-cached). Failed reads stay "missing".
+  const liveStats = useQuery({
+    queryKey: ["gallery-index-live", live.join(",")],
+    enabled: live.length > 0,
+    staleTime: Infinity,
+    queryFn: async () => {
+      const out = new Map<number, number>();
+      let cursor = 0;
+      const worker = async () => {
+        while (cursor < live.length) {
+          const h = live[cursor++]!;
+          try {
+            const r = await fetch(`/api/public/blocks/${h}/meta`);
+            if (!r.ok) continue;
+            const m = (await r.json()) as { txCount?: number };
+            if (typeof m.txCount === "number" && m.txCount > 0) out.set(h, m.txCount);
+          } catch { /* missing */ }
+        }
+      };
+      await Promise.all(Array.from({ length: 6 }, worker));
+      return out;
+    },
+  });
+  const txOf = (h: number) => stats.data?.get(h) ?? liveStats.data?.get(h);
+  const twoTx = heights.filter((h) => h > 999 && txOf(h) === 2);
   const lookups = twoTx.slice(0, SIDE_LOOKUP_LIMIT);
   const sides = useQuery({
     queryKey: ["gallery-index-sides", lookups.join(",")],
@@ -69,7 +95,7 @@ export function useGalleryIndex(): GalleryIndex {
     const members = new Map<string, Set<number>>(GALLERY_COLLECTIONS.map((g) => [g.id, new Set<number>()]));
     const miss = new Map<string, number>(GALLERY_COLLECTIONS.map((g) => [g.id, 0]));
     for (const h of heights) {
-      const tx = h <= 999 ? null : stats.data?.get(h) ?? null;
+      const tx = h <= 999 ? null : stats.data?.get(h) ?? liveStats.data?.get(h) ?? null;
       for (const g of galleriesFor(h, tx, sides.data?.get(h) ?? null)) members.get(g.id)!.add(h);
       if (h <= 999) continue;
       for (const g of GALLERY_COLLECTIONS) {
@@ -82,8 +108,8 @@ export function useGalleryIndex(): GalleryIndex {
     return {
       match: (id, h) => !!members.get(id)?.has(h),
       missing: (id) => miss.get(id) ?? 0,
-      loading: offers.isPending || stats.isFetching || sides.isFetching,
+      loading: offers.isPending || stats.isFetching || sides.isFetching || liveStats.isFetching,
       error: stats.isError,
     };
-  }, [heights, stats.data, sides.data, offers.isPending, stats.isFetching, sides.isFetching, stats.isError]);
+  }, [heights, stats.data, liveStats.data, sides.data, offers.isPending, stats.isFetching, sides.isFetching, liveStats.isFetching, stats.isError]);
 }
