@@ -127,6 +127,14 @@ function ApiPage() {
           chain, the API omits it rather than estimating it.
         </p>
       </section>
+
+      <section className="mt-8 border border-border p-6">
+        <h2 className="display text-xl">TRADING BOTS</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Bots trade with their own keys: the API builds PSBTs and checks Bitcoin signatures, but never holds or uses your keys.
+        </p>
+        <pre className="mt-3 overflow-x-auto bg-secondary p-4 font-mono text-xs">{BOT_EXAMPLE}</pre>
+      </section>
     </div>
   );
 }
