@@ -1,3 +1,4 @@
+// @ts-nocheck — in-memory fake database fixtures; behavior is asserted at runtime.
 /**
  * End-to-end checks of the public trading API with locally generated keys.
  * Every signature is a real BIP-322 signature made in-process from a throwaway
@@ -56,6 +57,7 @@ function query(table: string) {
     neq: (k: string, v: unknown) => (filters.push((r) => r[k] !== v), b),
     gt: (k: string, v: string) => (filters.push((r) => String(r[k] ?? "") > v), b),
     in: (k: string, v: unknown[]) => (filters.push((r) => v.includes(r[k])), b),
+    upsert: (row: Row) => (rows().push(row), b),
     maybeSingle: async () => ({ data: run()[0] ?? null, error: null }),
     single: async () => ({ data: run()[0], error: null }),
     then: (res: (v: unknown) => void) => {
@@ -230,6 +232,7 @@ describe("altered transactions", () => {
   it("broadcasts an untouched transaction", async () => {
     const r = await submitPurchase({ offerId: OFFER_ID, psbtBase64: fixturePsbt(SELLER.address, 50_000, BUYER.address), buyerAddress: BUYER.address });
     expect(r).toBeTruthy();
+    expect(state.tables.offers![0]!.status).not.toBe("open");
   });
   it("refuses a lowered seller payout", async () => {
     await expect(
