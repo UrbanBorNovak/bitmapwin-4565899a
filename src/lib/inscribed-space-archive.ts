@@ -27,6 +27,9 @@ const v3 = (v: V, d = 0): [number, number, number] => [n(v?.x) || d, n(v?.y) || 
 const abs3 = (v: V): [number, number, number] => v3(v, 1).map((x) => Math.abs(x) || 1) as [number, number, number];
 
 /** Converts one backup export. Textured parts keep a neutral stone colour. */
+/** Widest primitive an archive build may keep (creator units). */
+export const MAX_SLAB_SPAN = 150;
+
 export function convertBackupBuild(b: BackupBuild): WorldGeometry {
   const prims: WorldPrim[] = [];
   const add = (list: Item[] | undefined, shape: WorldPrim["shape"]) => {
