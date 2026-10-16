@@ -1,5 +1,5 @@
 /** Trait Floor Radar: per-segment floor, listed count, best bid and 24h volume from real book + tape rows. Pure, no I/O. */
-export type MatrixSegment = { key: string; kind: "club" | "trait"; id: string; label: string; group: string; match: (h: number) => boolean };
+export type MatrixSegment = { key: string; kind: "club" | "trait" | "gallery"; id: string; label: string; group: string; match: (h: number) => boolean; note?: string };
 export type MatrixRow = { seg: MatrixSegment; floor: number | null; listed: number; bestBid: number | null; vol24: number; fills24: number; share: number };
 
 const DAY = 86_400_000;

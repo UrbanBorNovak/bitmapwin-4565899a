@@ -6,6 +6,8 @@ import { fetchRecentTrades } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
 import { CLUBS, inClub } from "@/lib/clubs";
 import { hasTrait, OFFICIAL_TRAITS, TRAIT_GROUPS } from "@/lib/traits";
+import { GALLERY_COLLECTIONS } from "@/lib/bitmap-collections";
+import { useGalleryIndex } from "@/lib/use-gallery-index";
 import { sortMatrix, traitMatrix, type MatrixSegment, type MatrixSort } from "@/lib/trait-matrix";
 
 const SEGMENTS: MatrixSegment[] = [
@@ -24,14 +26,23 @@ export function TraitMatrix({ activeKey, onPick }: { activeKey: string | null; o
   const [q, setQ] = useState("");
   const [hideEmpty, setHideEmpty] = useState(true);
 
+  const gi = useGalleryIndex();
+  const segments = useMemo<MatrixSegment[]>(() => [
+    ...GALLERY_COLLECTIONS.map((g) => {
+      const miss = g.maxHeight !== undefined ? 0 : gi.missing(g.id);
+      const note = g.maxHeight !== undefined ? undefined : gi.error ? "INDEX UNAVAILABLE" : gi.loading ? "READING INDEX…" : miss ? `${miss} WITHOUT BLOCK RECORD` : undefined;
+      return { key: `gallery:${g.id}`, kind: "gallery" as const, id: g.id, label: g.short, group: "GALLERIES", match: (h: number) => gi.match(g.id, h), note };
+    }),
+    ...SEGMENTS,
+  ], [gi]);
   const rows = useMemo(() => {
     const asks = (offers.data ?? []).filter((o) => o.status === "open" && o.priceSats > 0).map((o) => ({ priceSats: o.priceSats, height: o.bitmapHeight }));
     const bs = (bids.data ?? []).filter((b) => b.priceSats > 0).map((b) => ({ priceSats: b.priceSats, height: b.bitmapHeight }));
     const sales = (tape.data ?? []).filter((t) => t.price_sats > 0).map((t) => ({ priceSats: t.price_sats, height: t.bitmap_height, at: new Date(t.block_time ?? t.created_at).getTime() }));
-    return traitMatrix(SEGMENTS, asks, bs, sales, now);
-  }, [offers.data, bids.data, tape.data, now]);
+    return traitMatrix(segments, asks, bs, sales, now);
+  }, [offers.data, bids.data, tape.data, now, segments]);
 
-  const shown = sortMatrix(rows, sort).filter((r) => (!hideEmpty || r.listed || r.vol24 || r.bestBid || r.seg.key === activeKey) && (!q || r.seg.label.toLowerCase().includes(q.toLowerCase()) || r.seg.group.toLowerCase().includes(q.toLowerCase())));
+  const shown = sortMatrix(rows, sort).filter((r) => (!hideEmpty || r.listed || r.vol24 || r.bestBid || r.seg.key === activeKey || r.seg.kind === "gallery") && (!q || r.seg.label.toLowerCase().includes(q.toLowerCase()) || r.seg.group.toLowerCase().includes(q.toLowerCase())));
   const loading = offers.isPending || bids.isPending;
 
   return (
@@ -62,7 +73,7 @@ export function TraitMatrix({ activeKey, onPick }: { activeKey: string | null; o
               const active = r.seg.key === activeKey;
               return (
                 <tr key={r.seg.key} onClick={() => onPick(active ? null : r.seg)} aria-pressed={active} className={`cursor-pointer border-t border-border/50 hover:bg-accent/10 ${active ? "bg-accent/15 text-accent" : ""}`}>
-                  <td className="px-3 py-1">{active ? "◉ " : ""}{r.seg.label}</td>
+                  <td className="px-3 py-1">{active ? "◉ " : ""}{r.seg.label}{r.seg.note && <span className={`ml-2 text-[10px] ${r.seg.note === "INDEX UNAVAILABLE" ? "text-destructive" : "text-muted-foreground"}`}>{r.seg.note}</span>}</td>
                   <td className="px-2 text-muted-foreground">{r.seg.group}</td>
                   <td className="px-2 text-right text-primary">{r.floor !== null ? formatSats(r.floor) : "—"}</td>
                   <td className="px-2 text-right">{r.bestBid !== null ? formatSats(r.bestBid) : "—"}</td>
