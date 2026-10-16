@@ -75,18 +75,23 @@ export async function worldsForHeight(height: number): Promise<BitmapWorld[]> {
 }
 
 const geoCache = new Map<number, { expires: number; value: WorldGeometryHit | null }>();
-export type WorldGeometryHit = { inscriptionId: string; title: string | null } & import("@/lib/inscribed-world-bridge").WorldGeometry;
+export type WorldGeometryHit = { inscriptionId: string; title: string | null; archive?: boolean } & import("@/lib/inscribed-world-bridge").WorldGeometry;
 
-/** Primitive geometry of the newest Inscribed.space world on a BITMAP, decoded from its on-chain worldData. */
+/** Live on-chain worlds win; the attributed Inscribed.space archive fills known heights only. */
 export async function worldGeometryForHeight(height: number): Promise<WorldGeometryHit | null> {
   const hit = geoCache.get(height);
   if (hit && hit.expires > Date.now()) return hit.value;
   const put = (value: WorldGeometryHit | null) => (geoCache.set(height, { expires: Date.now() + TTL, value }), value);
+  const fromArchive = async () => {
+    const { archiveGeometryFor, ARCHIVE_LABEL } = await import("@/lib/inscribed-space-archive");
+    const geo = await archiveGeometryFor(height);
+    return put(geo ? { inscriptionId: "", title: `${ARCHIVE_LABEL} · ${height}`, archive: true, ...geo } : null);
+  };
   const world = (await worldsForHeight(height)).find((w) => w.engine === "inscribed.space");
-  if (!world) return put(null);
+  if (!world) return fromArchive();
   const r = await ord(`/content/${world.inscriptionId}`);
-  if (!r) return put(null);
+  if (!r) return fromArchive();
   const { decodeWorldGeometry } = await import("@/lib/inscribed-world-bridge");
   const geo = await decodeWorldGeometry(await r.text());
-  return put(geo && geo.prims.length ? { inscriptionId: world.inscriptionId, title: world.title, ...geo } : null);
+  return geo && geo.prims.length ? put({ inscriptionId: world.inscriptionId, title: world.title, ...geo }) : fromArchive();
 }
