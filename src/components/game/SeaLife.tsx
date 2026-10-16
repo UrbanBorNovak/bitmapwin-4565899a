@@ -11,8 +11,8 @@ import { memo, useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import { SEAS, seaRadiusAt, type SeaMass } from "@/lib/world-sea";
-import { waterSurfaceY } from "@/lib/world-terrain";
+import { SEAS, seaRadiusAt, isSea, type SeaMass } from "@/lib/world-sea";
+import { groundY, waterSurfaceY } from "@/lib/world-terrain";
 import type { PlayerState } from "@/lib/player-state";
 
 /** x, y, z, w, h, d (in body units, +z = head, +y = up), colour */
@@ -126,6 +126,8 @@ const q = new THREE.Quaternion();
 const eul = new THREE.Euler();
 const pos = new THREE.Vector3();
 const scl = new THREE.Vector3();
+const wq = new THREE.Quaternion();
+const weul = new THREE.Euler();
 const HIDDEN = new THREE.Matrix4().makeScale(0, 0, 0);
 
 function useInstanced(boxes: () => Box[], count: number) {
@@ -154,8 +156,13 @@ export const SeaLife = memo(function SeaLife({
           dolphins.push({ sea, r: r + (i % 2) * 0.03, a: a - i * 0.025 * dir, speed: 0.05 * dir, phase: i * 0.7 + p, size: unit * (1.8 + seed(s + i, 6) * 0.5) });
       }
       whales.push({ sea, r: 0.2 + seed(s, 7) * 0.15, a: seed(s, 8) * 6.28, speed: 0.012, phase: seed(s, 9) * 10, size: unit * 6 });
-      for (let i = 0; i < 8; i++)
-        crabs.push({ sea, r: 1.0 + seed(s + i, 10) * 0.04, a: seed(s + i, 11) * 6.28, speed: 0, phase: seed(s + i, 12) * 10, size: unit * (0.35 + seed(s + i, 13) * 0.2) });
+      for (let i = 0; i < 8; i++) {
+        // first dry sand just past the coast at this bearing
+        const a = seed(s + i, 11) * 6.28;
+        let r = 1.01;
+        while (r < 1.2) { const [x, z] = ringPoint(sea, a, r); if (!isSea(x, z)) break; r += 0.005; }
+        crabs.push({ sea, r: r + 0.004, a, speed: 0, phase: seed(s + i, 12) * 10, size: unit * (0.35 + seed(s + i, 13) * 0.2) });
+      }
       for (let i = 0; i < 6; i++)
         gulls.push({ sea, r: 0.3 + seed(s + i, 14) * 0.6, a: seed(s + i, 15) * 6.28, speed: (0.04 + seed(s + i, 16) * 0.03) * (i % 2 ? 1 : -1), phase: seed(s + i, 17) * 10, size: unit * (0.9 + seed(s + i, 18) * 0.3) });
     }
@@ -217,7 +224,7 @@ export const SeaLife = memo(function SeaLife({
         if (!near(x, z)) { crabMesh.setMatrixAt(i, HIDDEN); return; }
         const outward = Math.atan2(x - w.sea.x, z - w.sea.z);
         const bob = Math.abs(Math.sin(t * 9 + w.phase)) * w.size * 0.05 * Math.min(1, Math.abs(cyc) * 3);
-        place(crabMesh, i, x, surface + bob, z, outward + Math.PI, 0, Math.sin(t * 9 + w.phase) * 0.06, w.size);
+        place(crabMesh, i, x, Math.max(surface, groundY(x, z)) + bob, z, outward + Math.PI, 0, Math.sin(t * 9 + w.phase) * 0.06, w.size);
       });
       crabMesh.instanceMatrix.needsUpdate = true;
     }
@@ -241,7 +248,7 @@ export const SeaLife = memo(function SeaLife({
           const mirror = side ? Math.PI : 0;
           pos.set(x, y + w.size * 0.04, z);
           q.setFromEuler(eul.set(0, yaw, bank, "YXZ"));
-          const wq = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, mirror, side ? -flap : flap));
+          wq.setFromEuler(weul.set(0, mirror, side ? -flap : flap));
           q.multiply(wq);
           scl.set(w.size, w.size, w.size);
           gwm.setMatrixAt(i * 2 + side, m4.compose(pos, q, scl));
