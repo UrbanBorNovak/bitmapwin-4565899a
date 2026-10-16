@@ -4776,6 +4776,7 @@ function BitmapWorld3DInner({
             }}
             performance={{ min: 0.4 }}
           >
+            <SpawnGuard pose={pose} until={spawnGuardUntil} />
             <WorldScene
               colors={colors}
               command={command}
