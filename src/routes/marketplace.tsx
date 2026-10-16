@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { LiveTradesFeed } from "@/components/market/LiveTradesFeed";
 import { MarketTerminal } from "@/components/market/MarketTerminal";
 import { TraitMatrix } from "@/components/market/TraitMatrix";
+import { useGalleryIndex } from "@/lib/use-gallery-index";
+import { GALLERY_COLLECTIONS } from "@/lib/bitmap-collections";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
@@ -111,6 +113,8 @@ function Marketplace() {
   const [search, setSearch] = useState("");
   const [club, setClub] = useState<ClubId | "any">("any");
   const [trait, setTrait] = useState<string>("any");
+  const [gallery, setGallery] = useState<string>("any");
+  const galleryIndex = useGalleryIndex();
   const [page, setPage] = useState(0);
   const [sort, setSort] = useState<Sort>("default");
   const recent = useQuery({ ...recentTradesQuery(40), refetchInterval: 30_000 });
@@ -159,14 +163,17 @@ function Marketplace() {
     const def = club !== "any" ? CLUBS.find((c) => c.id === club) : undefined;
     const t = trait !== "any" ? ALL_OFFICIAL_TRAITS.find((x) => x.id === trait) : undefined;
     const heightTrait = t && HEIGHT_TRAIT_IDS.has(t.id) ? t : undefined;
-    const parts = [def ? def.label : null, heightTrait ? `TRAIT ${heightTrait.label ?? heightTrait.id}` : null].filter(Boolean);
-    const match = def || heightTrait ? (h: number) => (!def || inClub(h, def)) && (!heightTrait || hasTrait(h, heightTrait.id as TraitId)) : null;
+    const gal = gallery !== "any" ? GALLERY_COLLECTIONS.find((g) => g.id === gallery) : undefined;
+    const parts = [def ? def.label : null, heightTrait ? `TRAIT ${heightTrait.label ?? heightTrait.id}` : null, gal ? `GALLERY ${gal.label}` : null].filter(Boolean);
+    const match = def || heightTrait || gal ? (h: number) => (!def || inClub(h, def)) && (!heightTrait || hasTrait(h, heightTrait.id as TraitId)) && (!gal || galleryIndex.match(gal.id, h)) : null;
+    const galMiss = gal && gal.maxHeight === undefined ? galleryIndex.missing(gal.id) : 0;
+    const galNote = gal && gal.maxHeight === undefined ? (galleryIndex.error ? `${gal.label}: BLOCK INDEX UNAVAILABLE — NOTHING CAN MATCH` : galleryIndex.loading ? `${gal.label}: READING BLOCK INDEX…` : galMiss ? `${gal.label}: ${galMiss} BITMAPS HAVE NO BLOCK RECORD AND ARE EXCLUDED` : undefined) : undefined;
     return {
       label: parts.length ? parts.join(" + ").toUpperCase() : "ALL BITMAPS",
       match,
-      caveat: t && !heightTrait ? `${String(t.label ?? t.id).toUpperCase()} NEEDS INDEXED RECORDS, SO CHARTS IGNORE IT` : undefined,
+      caveat: [t && !heightTrait ? `${String(t.label ?? t.id).toUpperCase()} NEEDS INDEXED RECORDS, SO CHARTS IGNORE IT` : null, galNote].filter(Boolean).join(" · ") || undefined,
     };
-  }, [club, trait]);
+  }, [club, trait, gallery, galleryIndex]);
   const visible = useMemo(() => {
     let base = tab === "traded" ? traded : tab === "listed" ? listed : parcels;
     if (tab === "inhabited") base = inhabitedParcels.data ?? [];
@@ -175,6 +182,7 @@ function Marketplace() {
       if (def) base = base.filter((p) => inClub(p.bitmapHeight, def));
     }
     if (trait !== "any") base = base.filter((p) => matchesTrait(p.bitmapHeight, trait));
+    if (gallery !== "any") base = base.filter((p) => galleryIndex.match(gallery, p.bitmapHeight));
     base = base.filter(passesDesk);
     if (sort !== "default") {
       const cmp: Record<Exclude<Sort, "default">, (a: RegistryParcel, b: RegistryParcel) => number> = {
@@ -196,7 +204,7 @@ function Marketplace() {
         (p.ownerAddress ?? "").toLowerCase().includes(q),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, traded, listed, parcels, search, club, trait, sort, inhabitedParcels.data, minSats, maxSats, onlyInhabited, onlyBuilt, onlySold, inhabitedSet, builtSet]);
+  }, [tab, traded, listed, parcels, search, club, trait, sort, inhabitedParcels.data, minSats, maxSats, onlyInhabited, onlyBuilt, onlySold, inhabitedSet, builtSet, gallery, galleryIndex]);
 
   // Paginate first, then resolve holders on chain for the visible page only.
   // ALL tab reads the full on-chain index page by page on the server.
@@ -262,7 +270,7 @@ function Marketplace() {
   
 
   const activeFilters = [club !== "any", trait !== "any", !!search, sort !== "default", minSats !== null || maxSats !== null, onlyInhabited, onlyBuilt, onlySold].filter(Boolean).length;
-  const clearAll = () => { setClub("any"); setTrait("any"); setSearch(""); setSort("default"); setMinBtc(""); setMaxBtc(""); setOnlyInhabited(false); setOnlyBuilt(false); setOnlySold(false); setPage(0); };
+  const clearAll = () => { setGallery("any"); setClub("any"); setTrait("any"); setSearch(""); setSort("default"); setMinBtc(""); setMaxBtc(""); setOnlyInhabited(false); setOnlyBuilt(false); setOnlySold(false); setPage(0); };
 
   return (
     <div className="marketplace-shell mx-auto max-w-[1600px] px-3 py-6 sm:px-5 md:py-10">
@@ -331,11 +339,11 @@ function Marketplace() {
 
       <div className="mt-4">
         <TraitMatrix
-          activeKey={club !== "any" && trait === "any" ? `club:${club}` : club === "any" && trait !== "any" && HEIGHT_TRAIT_IDS.has(trait) ? `trait:${trait}` : null}
+          activeKey={gallery !== "any" ? `gallery:${gallery}` : club !== "any" && trait === "any" ? `club:${club}` : club === "any" && trait !== "any" && HEIGHT_TRAIT_IDS.has(trait) ? `trait:${trait}` : null}
           onPick={(seg) => {
-            setPage(0);
-            if (!seg) { setClub("any"); setTrait("any"); return; }
-            if (seg.kind === "club") { setClub(seg.id as ClubId); setTrait("any"); } else { setTrait(seg.id); setClub("any"); }
+            setPage(0); setClub("any"); setTrait("any"); setGallery("any");
+            if (!seg) return;
+            if (seg.kind === "club") setClub(seg.id as ClubId); else if (seg.kind === "gallery") setGallery(seg.id); else setTrait(seg.id);
           }}
         />
       </div>
@@ -395,6 +403,7 @@ function Marketplace() {
         {activeFilters > 0 && (
           <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2">
             {club !== "any" && <Chip label={CLUBS.find((c) => c.id === club)?.short ?? club} onClear={() => setClub("any")} />}
+            {gallery !== "any" && <Chip label={GALLERY_COLLECTIONS.find((g) => g.id === gallery)?.short ?? gallery} onClear={() => setGallery("any")} />}
             {trait !== "any" && <Chip label={ALL_OFFICIAL_TRAITS.find((t) => t.id === trait)?.label ?? trait} onClear={() => setTrait("any")} />}
             {search && <Chip label={`"${search}"`} onClear={() => setSearch("")} />}
             {sort !== "default" && <Chip label={SORTS.find((o) => o.id === sort)!.label} onClear={() => setSort("default")} />}
