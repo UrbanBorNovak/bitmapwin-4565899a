@@ -30,8 +30,11 @@ class Quiet extends Component<{ children: ReactNode }, { failed: boolean }> {
   override render() { return this.state.failed ? null : this.props.children; }
 }
 
-/** One on-chain Draco glTF, placed with the creator's own transform. */
-function PlacedModel({ m }: { m: WorldAsset }) {
+/** Meshes this simple are blocks (cubes, slabs, pillars): solid to the walker. Detailed props stay walk-through. */
+const SOLID_MAX_VERTS = 200;
+
+/** One on-chain Draco glTF, placed with the creator's own transform. Simple block meshes become walkable boxes. */
+function PlacedModel({ m, boxKey }: { m: WorldAsset; boxKey: string }) {
   const gltf = useGLTF(m.url, true);
   const obj = useMemo(() => {
     const c = gltf.scene.clone(true);
@@ -41,6 +44,22 @@ function PlacedModel({ m }: { m: WorldAsset }) {
     });
     return c;
   }, [gltf.scene]);
+  useEffect(() => {
+    // Measure the real mesh in world space (the glTF's own node offsets included).
+    obj.updateWorldMatrix(true, true);
+    const boxes: WorldBox[] = [];
+    const b = new THREE.Box3();
+    obj.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      const count = mesh.isMesh ? mesh.geometry?.attributes?.position?.count ?? Infinity : Infinity;
+      if (count > SOLID_MAX_VERTS) return;
+      b.setFromObject(mesh);
+      if (b.isEmpty()) return;
+      boxes.push({ x0: b.min.x, x1: b.max.x, y0: b.min.y, y1: b.max.y, z0: b.min.z, z1: b.max.z });
+    });
+    setBoxes(boxKey, boxes.length ? boxes : null);
+    return () => setBoxes(boxKey, null);
+  }, [obj, boxKey]);
   return <primitive object={obj} position={m.pos} rotation={[m.rot[0] * D, m.rot[1] * D, m.rot[2] * D]} scale={m.scale} />;
 }
 
