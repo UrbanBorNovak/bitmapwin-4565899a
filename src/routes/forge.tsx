@@ -1047,6 +1047,7 @@ function ForgePage() {
           </div>
           )}
           <p className="text-[11px] text-muted-foreground">Want to walk it first? <a href={height !== null ? `/oasis?height=${height}` : "/oasis"} className="text-accent underline">Open the Oasis</a>.</p>
+          </div>
         </aside>
       </div>
     </main>
