@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clipToParcel, parcelAt, parcelRects } from "./forge-parcels";
+import { clipToParcel, mergeParcelBuilds, parcelAt, parcelRects } from "./forge-parcels";
 
 describe("forge parcels", () => {
   it("one parcel per transaction, all inside the 64 canvas", () => {
@@ -54,5 +54,23 @@ describe("dense-block 1x1 conflicts", () => {
   });
   it("sparse blocks are unaffected: each parcel owns its whole rect", () => {
     for (const r of parcelRects(dense(200), 64)) expect(r.cells.size).toBe((r.x1 - r.x0) * (r.z1 - r.z0));
+  });
+});
+
+describe("Oasis merge never lets a neighbour overwrite", () => {
+  it("two parcels sharing a cell: only the owner's block shows there", () => {
+    const base = [{ dx: 5, dy: 0, dz: 5, k: "district" }];
+    const out = mergeParcelBuilds(base, [
+      { index: 0, rect: [5, 5, 6, 6], cells: [5 * 64 + 5], blocks: [{ dx: 5, dy: 9, dz: 5, k: "a" }] },
+      { index: 1, rect: [5, 5, 6, 6], cells: [], blocks: [{ dx: 5, dy: 9, dz: 5, k: "b" }] },
+    ]);
+    expect(out.map((b) => b.k)).toEqual(["a"]);
+  });
+  it("without server cells the lower tx index keeps the shared cell", () => {
+    const out = mergeParcelBuilds([], [
+      { index: 4, rect: [0, 0, 2, 1], cells: null, blocks: [{ dx: 1, dy: 0, dz: 0, k: "late" }] },
+      { index: 2, rect: [1, 0, 2, 1], cells: null, blocks: [{ dx: 1, dy: 0, dz: 0, k: "early" }] },
+    ]);
+    expect(out.map((b) => b.k)).toEqual(["early"]);
   });
 });
