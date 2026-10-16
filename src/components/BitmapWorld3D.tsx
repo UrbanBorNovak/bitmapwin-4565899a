@@ -9,7 +9,7 @@ import { VoxelLayer } from "@/components/game/VoxelLayer";
 import { VoxelHud } from "@/components/game/VoxelHud";
 import { VOXEL, columnSurface, setVoxelFeet, voxelCeilingAt, voxelWallAt } from "@/lib/voxel-world";
 import { forgeSurfaceAt, forgeWallAt } from "@/lib/forge-collision";
-import { boxSurfaceAt, boxWallAt } from "@/lib/box-collision";
+import { boxSurfaceAt, boxWallAt, clearSpotNear } from "@/lib/box-collision";
 /** Inscribed-world stairs rise ~0.013 per step; let the walker climb them. */
 const BOX_STEP = 0.0145;
 /** Body height used against inscribed-world boxes (taller than BOX_STEP so walls register). */
@@ -3656,6 +3656,19 @@ function BitmapWorld3DInner({
   // Deep links spawn directly on the requested experience; every other entry
   // begins the journey at the Genesis block, 0.bitmap.
   const spawnedRef = useRef(false);
+  // Structure models register their solid boxes after the spawn lands, so a
+  // spawn point can end up inside one. For a few seconds after every spawn or
+  // respawn, an embedded player is nudged to the nearest clear spot.
+  const spawnGuardUntil = useRef(0);
+  useFrame(() => {
+    if (!spawnGuardUntil.current || Date.now() > spawnGuardUntil.current) return;
+    const p = pose.current;
+    if (!p || !p.grounded || isDriving()) return;
+    const feet = traversalSurfaceY(p.x, p.z) + p.y;
+    if (!boxWallAt(p.x, p.z, feet, BOX_BODY, BOX_STEP, 0.004)) return;
+    const spot = clearSpotNear(p.x, p.z, feet, BOX_BODY, BOX_STEP, 0.004, AVATAR_U * 0.6);
+    if (spot) placePlayer(p, spot[0], spot[1], p.yaw);
+  });
   useEffect(() => {
     if (spawnedRef.current || !tipHeight) return;
     spawnedRef.current = true;
@@ -3665,11 +3678,13 @@ function BitmapWorld3DInner({
     const spawnHeight = deepLink ? (initialHeight as number) : 0;
     if (saved) placePlayer(pose.current, saved.x, saved.z, saved.yaw);
     else placePlayer(pose.current, worldX(spawnHeight % GRID), worldZ(Math.floor(spawnHeight / GRID)), 0);
+    spawnGuardUntil.current = Date.now() + 6_000;
     if (deepLink) {
       // A holder-set spawn point on the linked BITMAP wins over the block centre.
       void getSpawnPoint({ data: { height: spawnHeight } }).then((spot) => {
         if (!spot) return;
         placePlayer(pose.current, spot.x, spot.z, spot.yaw);
+        spawnGuardUntil.current = Date.now() + 6_000;
         publish({ col: pose.current.col, row: pose.current.row, height: pose.current.height, x: pose.current.x, z: pose.current.z, yaw: pose.current.yaw, movement: "idle", teleport: true });
       }).catch(() => {});
     }
@@ -3727,6 +3742,7 @@ function BitmapWorld3DInner({
       z += STRIDE * 1.4;
     }
     placePlayer(pose.current, x, z, 0);
+    spawnGuardUntil.current = Date.now() + 6_000;
     pose.current.combat = "alive";
     const col = colAt(pose.current.x);
     const row = rowAt(pose.current.z);
