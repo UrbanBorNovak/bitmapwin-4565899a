@@ -373,9 +373,7 @@ export async function fetchRegistryIndexPage(
   const hasMore = rows.length > pageSize;
   const parcels = await buildParcels(rows.slice(0, pageSize).flatMap(toRow), { resolveOwners: false });
   parcels.sort((a, b) => (ascending ? a.bitmapHeight - b.bitmapHeight : b.bitmapHeight - a.bitmapHeight));
-  let filtered = parcels;
-  if (trait) filtered = parcels; // search + trait: trait narrowing happens client-side by caller
-  return { parcels: filtered, total: q ? (hasMore ? null : from + rows.length) : null, hasMore };
+  return { parcels, total: q ? (hasMore ? null : from + rows.length) : null, hasMore };
 }
 
 export const registryIndexPageQuery = (args: IndexPageArgs) =>
