@@ -5,7 +5,8 @@
  * A BITMAP without a record never matches; it is counted as "missing" instead.
  */
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
+import { chunkHeights } from "@/lib/tx-count-windows";
 import { offersQuery } from "@/lib/offers";
 import { openBidsQuery } from "@/lib/bids";
 import { fetchRecentTrades, paidSalesQuery } from "@/lib/trade-store";
@@ -53,31 +54,28 @@ export function useGalleryIndex(): GalleryIndex {
       return out;
     },
   });
-  // Blocks above the imported dataset: read the real tx count from the
-  // block header (immutable, CDN-cached). Failed reads stay "missing".
-  const liveStats = useQuery({
-    queryKey: ["gallery-index-live", live.join(",")],
-    enabled: live.length > 0,
-    staleTime: Infinity,
-    queryFn: async () => {
-      const out = new Map<number, number>();
-      let cursor = 0;
-      const worker = async () => {
-        while (cursor < live.length) {
-          const h = live[cursor++]!;
-          try {
-            const r = await fetch(`/api/public/blocks/${h}/meta`);
-            if (!r.ok) continue;
-            const m = (await r.json()) as { txCount?: number };
-            if (typeof m.txCount === "number" && m.txCount > 0) out.set(h, m.txCount);
-          } catch { /* missing */ }
-        }
-      };
-      await Promise.all(Array.from({ length: 6 }, worker));
-      return out;
-    },
+  // Blocks above the imported dataset: real tx counts from block headers,
+  // batched (15 blocks per upstream call) and merged as each chunk lands.
+  const chunks = useMemo(() => chunkHeights(live, 120), [live.join(",")]); // eslint-disable-line react-hooks/exhaustive-deps
+  const liveQs = useQueries({
+    queries: chunks.map((c) => ({
+      queryKey: ["block-tx-counts", c.join(",")],
+      staleTime: Infinity,
+      retry: 2,
+      queryFn: async () => {
+        const r = await fetch(`/api/public/blocks/tx-counts?h=${c.join(",")}`);
+        if (!r.ok) throw new Error(String(r.status));
+        return ((await r.json()) as { counts: Record<string, number> }).counts;
+      },
+    })),
   });
-  const txOf = (h: number) => stats.data?.get(h) ?? liveStats.data?.get(h);
+  const liveKey = liveQs.map((q) => q.dataUpdatedAt).join(",");
+  const liveStats = useMemo(() => {
+    const m = new Map<number, number>();
+    for (const q of liveQs) for (const [h, n] of Object.entries(q.data ?? {})) m.set(Number(h), n);
+    return { data: m, isFetching: liveQs.some((q) => q.isFetching), resolved: m.size };
+  }, [liveKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const txOf = (h: number) => stats.data?.get(h) ?? liveStats.data.get(h);
   const twoTx = heights.filter((h) => h > 999 && txOf(h) === 2);
   const lookups = twoTx.slice(0, SIDE_LOOKUP_LIMIT);
   const sides = useQuery({

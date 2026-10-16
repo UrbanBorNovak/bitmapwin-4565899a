@@ -117,6 +117,7 @@ import { Route as PlayTableCodeRouteImport } from './routes/play.table.$code'
 import { Route as PlayTournamentCodeRouteImport } from './routes/play.tournament.$code'
 import { Route as RanksPlayerIdRouteImport } from './routes/ranks.player.$id'
 import { Route as ApiPublicBlocksHeightRouteImport } from './routes/api/public/blocks.$height'
+import { Route as ApiPublicBlocksTxCountsRouteImport } from './routes/api/public/blocks.tx-counts'
 import { Route as ApiPublicGalleryIdRouteImport } from './routes/api/public/gallery.$id'
 import { Route as ApiPublicInscriptionIdRouteImport } from './routes/api/public/inscription.$id'
 import { Route as ApiPublicLandSkinHeightRouteImport } from './routes/api/public/land-skin.$height'
@@ -667,6 +668,11 @@ const ApiPublicBlocksHeightRoute = ApiPublicBlocksHeightRouteImport.update({
   path: '/public/blocks/$height',
   getParentRoute: () => ApiRoute,
 } as any)
+const ApiPublicBlocksTxCountsRoute = ApiPublicBlocksTxCountsRouteImport.update({
+  id: '/public/blocks/tx-counts',
+  path: '/public/blocks/tx-counts',
+  getParentRoute: () => ApiRoute,
+} as any)
 const ApiPublicGalleryIdRoute = ApiPublicGalleryIdRouteImport.update({
   id: '/public/gallery/$id',
   path: '/public/gallery/$id',
@@ -808,6 +814,7 @@ export interface FileRoutesByFullPath {
   '/play/tournament/$code': typeof PlayTournamentCodeRoute
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
+  '/api/public/blocks/tx-counts': typeof ApiPublicBlocksTxCountsRoute
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
   '/api/public/inscription/$id': typeof ApiPublicInscriptionIdRoute
   '/api/public/land-skin/$height': typeof ApiPublicLandSkinHeightRoute
@@ -920,6 +927,7 @@ export interface FileRoutesByTo {
   '/play/tournament/$code': typeof PlayTournamentCodeRoute
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
+  '/api/public/blocks/tx-counts': typeof ApiPublicBlocksTxCountsRoute
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
   '/api/public/inscription/$id': typeof ApiPublicInscriptionIdRoute
   '/api/public/land-skin/$height': typeof ApiPublicLandSkinHeightRoute
@@ -1037,6 +1045,7 @@ export interface FileRoutesById {
   '/play/tournament/$code': typeof PlayTournamentCodeRoute
   '/ranks/player/$id': typeof RanksPlayerIdRoute
   '/api/public/blocks/$height': typeof ApiPublicBlocksHeightRouteWithChildren
+  '/api/public/blocks/tx-counts': typeof ApiPublicBlocksTxCountsRoute
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
   '/api/public/inscription/$id': typeof ApiPublicInscriptionIdRoute
   '/api/public/land-skin/$height': typeof ApiPublicLandSkinHeightRoute
@@ -1155,6 +1164,7 @@ export interface FileRouteTypes {
     | '/play/tournament/$code'
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
+    | '/api/public/blocks/tx-counts'
     | '/api/public/gallery/$id'
     | '/api/public/inscription/$id'
     | '/api/public/land-skin/$height'
@@ -1267,6 +1277,7 @@ export interface FileRouteTypes {
     | '/play/tournament/$code'
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
+    | '/api/public/blocks/tx-counts'
     | '/api/public/gallery/$id'
     | '/api/public/inscription/$id'
     | '/api/public/land-skin/$height'
@@ -1383,6 +1394,7 @@ export interface FileRouteTypes {
     | '/play/tournament/$code'
     | '/ranks/player/$id'
     | '/api/public/blocks/$height'
+    | '/api/public/blocks/tx-counts'
     | '/api/public/gallery/$id'
     | '/api/public/inscription/$id'
     | '/api/public/land-skin/$height'
@@ -2227,6 +2239,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBlocksHeightRouteImport
       parentRoute: typeof ApiRoute
     }
+    '/api/public/blocks/tx-counts': {
+      id: '/api/public/blocks/tx-counts'
+      path: '/public/blocks/tx-counts'
+      fullPath: '/api/public/blocks/tx-counts'
+      preLoaderRoute: typeof ApiPublicBlocksTxCountsRouteImport
+      parentRoute: typeof ApiRoute
+    }
     '/api/public/gallery/$id': {
       id: '/api/public/gallery/$id'
       path: '/public/gallery/$id'
@@ -2293,6 +2312,7 @@ interface ApiRouteChildren {
   ApiPublicOffersRoute: typeof ApiPublicOffersRoute
   ApiPublicResolveRegistryRoute: typeof ApiPublicResolveRegistryRoute
   ApiPublicBlocksHeightRoute: typeof ApiPublicBlocksHeightRouteWithChildren
+  ApiPublicBlocksTxCountsRoute: typeof ApiPublicBlocksTxCountsRoute
   ApiPublicGalleryIdRoute: typeof ApiPublicGalleryIdRoute
   ApiPublicInscriptionIdRoute: typeof ApiPublicInscriptionIdRoute
   ApiPublicLandSkinHeightRoute: typeof ApiPublicLandSkinHeightRoute
@@ -2308,6 +2328,7 @@ const ApiRouteChildren: ApiRouteChildren = {
   ApiPublicOffersRoute: ApiPublicOffersRoute,
   ApiPublicResolveRegistryRoute: ApiPublicResolveRegistryRoute,
   ApiPublicBlocksHeightRoute: ApiPublicBlocksHeightRouteWithChildren,
+  ApiPublicBlocksTxCountsRoute: ApiPublicBlocksTxCountsRoute,
   ApiPublicGalleryIdRoute: ApiPublicGalleryIdRoute,
   ApiPublicInscriptionIdRoute: ApiPublicInscriptionIdRoute,
   ApiPublicLandSkinHeightRoute: ApiPublicLandSkinHeightRoute,
