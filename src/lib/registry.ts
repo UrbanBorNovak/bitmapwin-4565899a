@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { MAX_BITMAP } from "@/lib/oci";
+import { heightTraitQuery } from "@/lib/traits";
 import { supabase } from "@/integrations/supabase/client";
 import { getBitmapOwners } from "@/lib/ordinals-scan.functions";
 import {
@@ -343,6 +344,25 @@ export async function fetchRegistryIndexPage(
     if (!/^[0-9a-fA-F]{64}$/.test(txid)) return [];
     return [{ id, txid, block_height: r.genesis_height ?? null, bitmap_height: r.block_height, created_at: r.resolved_at ?? new Date(0).toISOString() }];
   };
+
+  const heightTrait = trait && !q ? heightTraitQuery(trait, MAX_BITMAP + 100_000) : null;
+  if (heightTrait) {
+    let hq = supabase
+      .from("bitmap_index")
+      .select("block_height, inscription_id, genesis_height, resolved_at")
+      .eq("is_valid", true)
+      .not("inscription_id", "is", null);
+    hq = "heights" in heightTrait
+      ? hq.in("block_height", heightTrait.heights.length ? heightTrait.heights : [-1])
+      : hq.gte("block_height", heightTrait.from).lte("block_height", heightTrait.to);
+    const { data, error } = await hq.order("block_height", { ascending }).range(from, from + pageSize);
+    if (error) throw error;
+    const rows = data ?? [];
+    const hasMore = rows.length > pageSize;
+    const parcels = await buildParcels(rows.slice(0, pageSize).flatMap(toRow), { resolveOwners: false });
+    parcels.sort((a, b) => (ascending ? a.bitmapHeight - b.bitmapHeight : b.bitmapHeight - a.bitmapHeight));
+    return { parcels, total: hasMore ? null : from + rows.length, hasMore };
+  }
 
   if (trait && !q) {
     const { data, error } = await supabase.rpc("official_trait_bitmaps", { p_trait: trait, p_offset: from, p_limit: pageSize });
