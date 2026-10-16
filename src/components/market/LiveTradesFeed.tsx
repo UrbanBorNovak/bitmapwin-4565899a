@@ -67,6 +67,13 @@ export function LiveTradesFeed() {
     if (filter === "moves") return all.filter((r) => r.price_sats <= 0);
     return all.filter((r) => r.price_sats > 0);
   }, [q.data, filter]);
+  // Keep the reader's place when a new row lands above them.
+  useLayoutEffect(() => {
+    const el = listRef.current;
+    const a = anchor.current;
+    if (el && a) el.scrollTop = a.top + (el.scrollHeight - a.height);
+    anchor.current = null;
+  }, [q.data]);
   const sales = (q.data ?? []).filter((r) => r.price_sats > 0);
   const volume = sales.reduce((a, r) => a + r.price_sats, 0);
   const top = sales.reduce((m, r) => Math.max(m, r.price_sats), 0);
@@ -104,6 +111,7 @@ export function LiveTradesFeed() {
         {ui ? <span className={`border px-1.5 py-0.5 ${ui.tone}`}>{ui.label}</span> : <span>CHECKING INDEXER…</span>}
         <span data-no-translate>LAST SYNC: {lastRunAt ? `${utcStamp(lastRunAt)} (${timeAgo(lastRunAt)})` : "—"}</span>
         <span data-no-translate>NEWEST SALE CONFIRMED: {latestSale ? `${utcStamp(latestSale.block_time ?? latestSale.created_at)}${latestSale.block_height ? ` · BLK ${latestSale.block_height}` : ""}` : "—"}</span>
+        <span data-no-translate className={live ? "text-signal" : "text-bitcoin"}>{live ? "● STREAMING" : "○ POLLING EVERY 30S"}</span>
         {q.dataUpdatedAt ? <span data-no-translate>FEED REFRESHED {timeAgo(new Date(q.dataUpdatedAt).toISOString())}</span> : null}
       </div>
       {ui?.note && <p className={`border-b border-border px-4 py-2 font-mono text-[11px] ${ui.tone.split(" ")[1]}`}>⚠ {ui.note}</p>}
@@ -119,11 +127,11 @@ export function LiveTradesFeed() {
           &gt; {filter === "whale" ? "NO SALES OF 0.001 BTC OR MORE IN THE LATEST 150 TRADES." : filter === "moves" ? "NO PLAIN TRANSFERS IN THE LATEST 150 TRADES." : "NO CONFIRMED SALES INDEXED YET. THE INDEXER KEEPS WATCHING THE CHAIN."}
         </p>
       ) : (
-        <ul className="max-h-[360px] divide-y divide-border overflow-y-auto" data-no-translate>
+        <ul ref={listRef} className="max-h-[360px] [overflow-anchor:none] divide-y divide-border overflow-y-auto" data-no-translate>
           {rows.slice(0, 60).map((r) => {
             const when = r.block_time ?? r.created_at;
             return (
-              <li key={r.txid} className="grid grid-cols-2 gap-2 p-3 font-mono text-[11px] sm:grid-cols-12 sm:items-center">
+              <li key={r.txid} className={`${fresh_.has(r.txid) ? "bg-signal/10 " : ""}transition-colors duration-1000 grid grid-cols-2 gap-2 p-3 font-mono text-[11px] sm:grid-cols-12 sm:items-center`}>
                 <Link to="/bitmap/$block" params={{ block: String(r.bitmap_height) }} className="font-bold text-foreground hover:text-bitcoin sm:col-span-2">
                   {r.bitmap_height}.BITMAP
                 </Link>
