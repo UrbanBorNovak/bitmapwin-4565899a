@@ -46,6 +46,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as MintRouteImport } from './routes/mint'
 import { Route as MyLandRouteImport } from './routes/my-land'
 import { Route as MyWorldRouteImport } from './routes/my-world'
+import { Route as NoveltyRouteImport } from './routes/novelty'
 import { Route as OasisRouteImport } from './routes/oasis'
 import { Route as OwnershipRouteImport } from './routes/ownership'
 import { Route as ParcelRouteImport } from './routes/parcel'
@@ -308,6 +309,11 @@ const MyLandRoute = MyLandRouteImport.update({
 const MyWorldRoute = MyWorldRouteImport.update({
   id: '/my-world',
   path: '/my-world',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NoveltyRoute = NoveltyRouteImport.update({
+  id: '/novelty',
+  path: '/novelty',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OasisRoute = OasisRouteImport.update({
@@ -743,6 +749,7 @@ export interface FileRoutesByFullPath {
   '/mint': typeof MintRoute
   '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
+  '/novelty': typeof NoveltyRoute
   '/oasis': typeof OasisRoute
   '/ownership': typeof OwnershipRoute
   '/parcel': typeof ParcelRoute
@@ -858,6 +865,7 @@ export interface FileRoutesByTo {
   '/mint': typeof MintRoute
   '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
+  '/novelty': typeof NoveltyRoute
   '/oasis': typeof OasisRoute
   '/ownership': typeof OwnershipRoute
   '/parcel': typeof ParcelRoute
@@ -974,6 +982,7 @@ export interface FileRoutesById {
   '/mint': typeof MintRoute
   '/my-land': typeof MyLandRoute
   '/my-world': typeof MyWorldRoute
+  '/novelty': typeof NoveltyRoute
   '/oasis': typeof OasisRoute
   '/ownership': typeof OwnershipRoute
   '/parcel': typeof ParcelRoute
@@ -1093,6 +1102,7 @@ export interface FileRouteTypes {
     | '/mint'
     | '/my-land'
     | '/my-world'
+    | '/novelty'
     | '/oasis'
     | '/ownership'
     | '/parcel'
@@ -1208,6 +1218,7 @@ export interface FileRouteTypes {
     | '/mint'
     | '/my-land'
     | '/my-world'
+    | '/novelty'
     | '/oasis'
     | '/ownership'
     | '/parcel'
@@ -1323,6 +1334,7 @@ export interface FileRouteTypes {
     | '/mint'
     | '/my-land'
     | '/my-world'
+    | '/novelty'
     | '/oasis'
     | '/ownership'
     | '/parcel'
@@ -1441,6 +1453,7 @@ export interface RootRouteChildren {
   MintRoute: typeof MintRoute
   MyLandRoute: typeof MyLandRoute
   MyWorldRoute: typeof MyWorldRoute
+  NoveltyRoute: typeof NoveltyRoute
   OasisRoute: typeof OasisRoute
   OwnershipRoute: typeof OwnershipRoute
   ParcelRoute: typeof ParcelRoute
@@ -1740,6 +1753,13 @@ declare module '@tanstack/react-router' {
       path: '/my-world'
       fullPath: '/my-world'
       preLoaderRoute: typeof MyWorldRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/novelty': {
+      id: '/novelty'
+      path: '/novelty'
+      fullPath: '/novelty'
+      preLoaderRoute: typeof NoveltyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/oasis': {
@@ -2464,6 +2484,7 @@ const rootRouteChildren: RootRouteChildren = {
   MintRoute: MintRoute,
   MyLandRoute: MyLandRoute,
   MyWorldRoute: MyWorldRoute,
+  NoveltyRoute: NoveltyRoute,
   OasisRoute: OasisRoute,
   OwnershipRoute: OwnershipRoute,
   ParcelRoute: ParcelRoute,
