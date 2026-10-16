@@ -348,7 +348,8 @@ export async function fetchRegistryIndexPage(
     const { data, error } = await supabase.rpc("official_trait_bitmaps", { p_trait: trait, p_offset: from, p_limit: pageSize });
     if (error) throw error;
     const rows = (data ?? []) as Array<{ block_height: number; inscription_id: string | null; genesis_height: number | null; total_count: number }>;
-    const total = rows[0]?.total_count != null ? Number(rows[0].total_count) : rows.length ? null : from;
+    const rawTotal = rows[0]?.total_count != null ? Number(rows[0].total_count) : null;
+    const total = rawTotal !== null && rawTotal >= 0 ? rawTotal : rows.length ? null : from;
     const parcels = await buildParcels(rows.flatMap(toRow), { resolveOwners: false });
     parcels.sort((a, b) => (ascending ? a.bitmapHeight - b.bitmapHeight : b.bitmapHeight - a.bitmapHeight));
     return { parcels, total, hasMore: total !== null ? from + rows.length < total : rows.length === pageSize };
