@@ -16,11 +16,12 @@ describe("market depth", () => {
 import { depthCurve } from "./market-depth";
 describe("depth curve", () => {
   it("counts asks upward from best ask and bids downward from best bid", () => {
-    expect(depthCurve([500, 300], [200, 100])).toEqual([
-      { price: 100, ask: null, bid: 2 },
-      { price: 200, ask: null, bid: 1 },
-      { price: 300, ask: 1, bid: null },
-      { price: 500, ask: 2, bid: null },
+    const L = (priceSats: number, height: number) => ({ priceSats, height });
+    expect(depthCurve([L(500, 5), L(300, 3)], [L(200, 2), L(100, 1)])).toEqual([
+      { price: 100, ask: null, bid: 2, height: 1, cumSats: 300 },
+      { price: 200, ask: null, bid: 1, height: 2, cumSats: 200 },
+      { price: 300, ask: 1, bid: null, height: 3, cumSats: 300 },
+      { price: 500, ask: 2, bid: null, height: 5, cumSats: 800 },
     ]);
   });
 });
