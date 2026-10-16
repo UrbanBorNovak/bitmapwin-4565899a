@@ -152,7 +152,9 @@ async function firstForge(ids: string[], height: number, sat: string | null): Pr
   return null;
 }
 
-export type ParcelForgeBuild = { index: number; rect: [number, number, number, number]; inscriptionId: string; sat: string; data: string };
+export type ParcelForgeBuild = { index: number; rect: [number, number, number, number]; inscriptionId: string; sat: string; data: string;
+  /** Cells (x * 64 + z) this parcel exclusively owns; null when the block's size map is incomplete. */
+  cells: number[] | null };
 export type LandHtml = { inscriptionId: string; source: "bitmap" | "parcel"; index: number | null };
 /** A parcel build whose inscribed rect does not match the block-derived tile; shown as a warning, never rendered. */
 export type RejectedParcelBuild = { index: number; inscriptionId: string; claimed: [number, number, number, number]; derived: [number, number, number, number] };
@@ -183,13 +185,13 @@ async function htmlAt(id: string): Promise<string | null> {
  * rect does not match this derived rect is rejected — tile bounds come from
  * block math, never from the inscription's own claim.
  */
-async function derivedParcelRect(height: number, index: number): Promise<[number, number, number, number] | null> {
+async function derivedParcel(height: number, index: number): Promise<{ rect: [number, number, number, number]; cells: number[] } | null> {
   const { buildBlockBytes } = await import("@/lib/block-bytes.server");
   const block = await buildBlockBytes(height).catch(() => null);
   if (!block || block.covered < block.txCount) return null;
   const { parcelRects } = await import("@/lib/forge-parcels");
   const r = parcelRects([...block.bytes]).find((x) => x.index === index);
-  return r ? [r.x0, r.z0, r.x1, r.z1] : null;
+  return r ? { rect: [r.x0, r.z0, r.x1, r.z1], cells: [...r.cells] } : null;
 }
 
 const rectMatches = (a: [number, number, number, number], b: [number, number, number, number]) =>
@@ -205,7 +207,8 @@ export async function forgeLandFor(height: number): Promise<ForgeLand> {
   const { parcelHoldersFor } = await import("@/lib/parcel-fief.server");
   const holders = await parcelHoldersFor(height).catch(() => null);
   for (const p of (holders?.parcels ?? []).slice(0, 24)) {
-    const derived = await derivedParcelRect(height, p.index);
+    const dp = await derivedParcel(height, p.index);
+    const derived = dp?.rect ?? null;
     const s = await satLatest(p.inscriptionId);
     if (!s) continue;
     const dm = await delegateMeta(s.latest);
@@ -217,7 +220,7 @@ export async function forgeLandFor(height: number): Promise<ForgeLand> {
         continue;
       }
       value.html.push({ inscriptionId: s.latest, source: "parcel", index: p.index });
-      value.parcels.push({ index: p.index, rect, inscriptionId: s.latest, sat: s.sat, data: dm.d });
+      value.parcels.push({ index: p.index, rect, inscriptionId: s.latest, sat: s.sat, data: dm.d, cells: dp?.cells ?? null });
       continue;
     }
     const html = await htmlAt(s.latest);
@@ -231,7 +234,7 @@ export async function forgeLandFor(height: number): Promise<ForgeLand> {
       value.rejected.push({ index: p.index, inscriptionId: s.latest, claimed: rect, derived });
       continue;
     }
-    value.parcels.push({ index: p.index, rect, inscriptionId: s.latest, sat: s.sat, data: parsed.data });
+    value.parcels.push({ index: p.index, rect, inscriptionId: s.latest, sat: s.sat, data: parsed.data, cells: dp?.cells ?? null });
   }
   landCache.set(height, { expires: Date.now() + TTL, value });
   return value;

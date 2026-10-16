@@ -676,7 +676,7 @@ function ForgePage() {
                 <button type="button" onClick={() => setFocus(null)} className={`rounded border px-2 py-0.5 text-[10px] ${focus === null ? "border-primary text-foreground" : "border-border text-muted-foreground"}`}>WHOLE BITMAP</button>
                 <input type="number" min={0} max={rects.length - 1} value={focus ?? ""} placeholder="#" onChange={(e) => { const v = Number(e.target.value); setFocus(e.target.value === "" ? null : Math.max(0, Math.min(rects.length - 1, v))); }} className="w-20 rounded border border-border bg-background px-2 py-0.5 text-foreground" />
               </div>
-              {focusRect && <p className="mt-1 text-accent">PARCEL {focusRect.index}.{height}.BITMAP · {focusRect.x1 - focusRect.x0}×{focusRect.z1 - focusRect.z0} CELLS</p>}
+              {focusRect && <p className="mt-1 text-accent">PARCEL {focusRect.index}.{height}.BITMAP · {focusRect.x1 - focusRect.x0}×{focusRect.z1 - focusRect.z0} CELLS{focusRect.cells.size < (focusRect.x1 - focusRect.x0) * (focusRect.z1 - focusRect.z0) && ` · ${focusRect.cells.size} OWNED (SHARED CELLS GO TO THE LARGER TRANSACTION)`}</p>}
             </div>
           )}
           <div className="rounded border border-primary/40 bg-card/40 p-2 text-[11px]">
