@@ -62,6 +62,18 @@ function page(p: number) {
   return v;
 }
 
+/** Sat + sat index of <height>.bitmap straight from the on-chain OCI pages. */
+export async function ociBitmapSat(height: number): Promise<{ sat: number; at: number; page: number } | null> {
+  if (!Number.isInteger(height) || height < 0 || height >= BITMAP_OCI_MAX) return null;
+  const p = height >= 942000 ? 11 : height >= 907000 ? 10 : height >= 840000 ? 9 : Math.floor(height / 100000);
+  const pg = await page(p);
+  const off = height >= 942000 ? height - 942000 : height >= 907000 ? height - 907000 : height >= 840000 ? height - 840000 : height % 100000;
+  const sat = pg.sats[off];
+  if (!sat) return null;
+  const at = height >= 840000 ? Number(pg.satIndex[String(height)] ?? 0) : SAT_INDICES[height] ?? 0;
+  return { sat, at, page: p };
+}
+
 /** Canonical inscription id for <height>.bitmap per the OCI, or null if out of range / unresolved. */
 export async function ociBitmapInscriptionId(height: number): Promise<string | null> {
   if (!Number.isInteger(height) || height < 0 || height >= BITMAP_OCI_MAX) return null;
