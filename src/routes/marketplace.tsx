@@ -23,7 +23,7 @@ import { MyBitmapsPanel } from "@/components/MyBitmapsPanel";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapMarketChart } from "@/components/BitmapMarketChart";
 import { TrendExplorer } from "@/components/TrendExplorer";
-import { ALL_OFFICIAL_TRAITS, hasTrait, OFFICIAL_TRAITS, type TraitId } from "@/lib/traits";
+import { ALL_OFFICIAL_TRAITS, hasTrait, OFFICIAL_TRAITS, TRAIT_GROUPS, type TraitId } from "@/lib/traits";
 
 const HEIGHT_TRAIT_IDS = new Set<string>(OFFICIAL_TRAITS.map((t) => t.id));
 const matchesTrait = (h: number, t: string) => !HEIGHT_TRAIT_IDS.has(t) || hasTrait(h, t as TraitId);
