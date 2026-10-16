@@ -76,7 +76,7 @@ export function SiteFooter() {
           ))}
         </nav>
         <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3 md:flex-row md:items-center md:justify-between">
-          <div className="display text-xs"><Link to="/collections" className="text-primary hover:text-foreground">THE OTHERTHINGS</Link> · BITMAPWIN · THE INTERNET, BUT WITH LAND · <Link to="/beta" className="text-bitcoin hover:text-foreground">BETA 0.9</Link></div>
+          <div className="display text-xs"><Link to="/collections" className="text-primary hover:text-foreground">THE OTHERTHINGS</Link> · BITMAPWIN · THE INTERNET, BUT WITH LAND · <Link to="/novelty" className="text-signal hover:text-foreground">NOVELTY ON BITCOIN</Link> · <Link to="/beta" className="text-bitcoin hover:text-foreground">BETA 0.9</Link></div>
           <div className="label">
             REAL BLOCKS · LIVE ORDINALS · ON-CHAIN OWNERSHIP
             <span className="blink ml-2 text-foreground">_</span>
