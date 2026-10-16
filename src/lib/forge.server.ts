@@ -154,7 +154,9 @@ async function firstForge(ids: string[], height: number, sat: string | null): Pr
 
 export type ParcelForgeBuild = { index: number; rect: [number, number, number, number]; inscriptionId: string; sat: string; data: string };
 export type LandHtml = { inscriptionId: string; source: "bitmap" | "parcel"; index: number | null };
-export type ForgeLand = { parcels: ParcelForgeBuild[]; html: LandHtml[] };
+/** A parcel build whose inscribed rect does not match the block-derived tile; shown as a warning, never rendered. */
+export type RejectedParcelBuild = { index: number; inscriptionId: string; claimed: [number, number, number, number]; derived: [number, number, number, number] };
+export type ForgeLand = { parcels: ParcelForgeBuild[]; html: LandHtml[]; rejected: RejectedParcelBuild[] };
 const landCache = new Map<number, { expires: number; value: ForgeLand }>();
 
 async function satLatest(inscriptionId: string): Promise<{ sat: string; latest: string } | null> {
@@ -197,7 +199,7 @@ const rectMatches = (a: [number, number, number, number], b: [number, number, nu
 export async function forgeLandFor(height: number): Promise<ForgeLand> {
   const hit = landCache.get(height);
   if (hit && hit.expires > Date.now()) return hit.value;
-  const value: ForgeLand = { parcels: [], html: [] };
+  const value: ForgeLand = { parcels: [], html: [], rejected: [] };
   const district = await forgeBuildForHeight(height).catch(() => null);
   if (district) value.html.push({ inscriptionId: district.inscriptionId, source: "bitmap", index: null });
   const { parcelHoldersFor } = await import("@/lib/parcel-fief.server");
@@ -210,7 +212,10 @@ export async function forgeLandFor(height: number): Promise<ForgeLand> {
     const pm = dm?.p?.match(/^(\d+);(\d+),(\d+),(\d+),(\d+)$/);
     if (dm && pm && dm.h === height && Number(pm[1]) === p.index) {
       const rect: [number, number, number, number] = [Number(pm[2]), Number(pm[3]), Number(pm[4]), Number(pm[5])];
-      if (derived && !rectMatches(rect, derived)) continue;
+      if (derived && !rectMatches(rect, derived)) {
+        value.rejected.push({ index: p.index, inscriptionId: s.latest, claimed: rect, derived });
+        continue;
+      }
       value.html.push({ inscriptionId: s.latest, source: "parcel", index: p.index });
       value.parcels.push({ index: p.index, rect, inscriptionId: s.latest, sat: s.sat, data: dm.d });
       continue;
@@ -222,7 +227,10 @@ export async function forgeLandFor(height: number): Promise<ForgeLand> {
     const meta = html.match(/<meta name="bitmapwin-parcel" content="(\d+);(\d+),(\d+),(\d+),(\d+)"/);
     if (!parsed || !meta || Number(meta[1]) !== p.index) continue;
     const rect: [number, number, number, number] = [Number(meta[2]), Number(meta[3]), Number(meta[4]), Number(meta[5])];
-    if (derived && !rectMatches(rect, derived)) continue;
+    if (derived && !rectMatches(rect, derived)) {
+      value.rejected.push({ index: p.index, inscriptionId: s.latest, claimed: rect, derived });
+      continue;
+    }
     value.parcels.push({ index: p.index, rect, inscriptionId: s.latest, sat: s.sat, data: parsed.data });
   }
   landCache.set(height, { expires: Date.now() + TTL, value });
