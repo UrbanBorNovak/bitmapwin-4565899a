@@ -38,7 +38,7 @@ export function ArchaeologyLedger() {
 
   return (
     <section className="mt-12">
-      <p className="label text-bitcoin">04 · HOLDER LEDGER</p>
+      <p className="label text-bitcoin">05 · HOLDER LEDGER</p>
       <h2 className="display mt-2 text-xl md:text-2xl">ERAS, GENESIS HOLDERS &amp; DIAMOND HANDS</h2>
       <p className="mt-2 max-w-3xl font-mono text-[11px] leading-relaxed text-muted-foreground">
         Counted from {d ? fmt(d.eras.total) : "…"} indexed BITMAP inscriptions by the Bitcoin block each was inscribed in, and {d ? fmt(d.traced_sales) : "…"} traced on-chain sales. Wallets are current indexed holders, not necessarily the original minters.
@@ -46,13 +46,18 @@ export function ArchaeologyLedger() {
       {q.isError ? <p className="mt-6 font-mono text-[11px] text-destructive">LEDGER UNAVAILABLE — <button className="underline" onClick={() => void q.refetch()}>RETRY</button></p> : null}
 
       <div className="mt-6 grid gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
-        {ERAS.map(([k, label, range]) => (
-          <div key={k} className="bg-card p-4">
-            <p className="label">{label}</p>
-            <p className="display mt-2 text-2xl text-bitcoin" data-no-translate>{d ? fmt(d.eras[k]) : "—"}</p>
-            <p className="mt-1 font-mono text-[10px] text-muted-foreground">INSCRIBED IN BLOCKS {range}</p>
-          </div>
-        ))}
+        {ERAS.map(([k, label, range]) => {
+          const pct = d && d.eras.total ? (d.eras[k] / d.eras.total) * 100 : 0;
+          return (
+            <div key={k} className="bg-card p-4">
+              <p className="label">{label}</p>
+              <p className="display mt-2 text-2xl text-bitcoin" data-no-translate>{d ? fmt(d.eras[k]) : "—"}</p>
+              <p className="mt-1 font-mono text-[10px] text-muted-foreground">INSCRIBED IN BLOCKS {range}</p>
+              <div className="mt-3 h-1 bg-border"><div className="h-1 bg-signal" style={{ width: `${Math.max(pct, 0.3)}%` }} /></div>
+              <p className="mt-1 font-mono text-[10px] text-signal" data-no-translate>{d ? `${pct < 0.1 ? pct.toFixed(3) : pct.toFixed(1)}% OF INDEX` : ""}</p>
+            </div>
+          );
+        })}
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
