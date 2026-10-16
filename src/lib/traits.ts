@@ -167,6 +167,8 @@ const INDEX_REQUIRED = "Shown in the official glossary; marketplace matching wai
 const TX_MARKET = "Indexed from stored block transaction counts (blocks 0–839,999); browse and trade matching BITMAP inscriptions.";
 const FACTS_MARKET = "Indexed from real block records (mined time, hash, size, outputs, fees, coinbase); fills in as the block indexer advances.";
 const PATOSHI_MARKET = "Matched against the published Patoshi block list (Sergio Demian Lerner / Jameson Lopp dataset, 21,953 blocks).";
+const GALLERY_TX_MARKET = "Matched by exact transaction count from stored block data (blocks 0–839,999), the same rule as @boppleton's inscribed gallery.";
+const SAT_MARKET = "Matched from the sat each BITMAP is inscribed on, read from the on-chain LiveOCI index.";
 const HEIGHT_MARKET = "Filter, badge, trade and use matching BITMAP inscriptions in the Official Traits extender pool.";
 
 /** Complete Bitmap.Community Blocktributes glossary. Supported entries are provable from block height today. */
@@ -175,7 +177,7 @@ export const ALL_OFFICIAL_TRAITS: OfficialTraitDefinition[] = [
   { id: "patoshi", sourceKey: "is_patoshi", label: "PATOSHI", description: "Block mined by Satoshi Nakamoto.", supported: true, marketplaceUse: PATOSHI_MARKET },
   { id: "billionaire", sourceKey: "is_billionaire", label: "BILLIONAIRE", description: "Total block outputs are worth at least $1 billion using the official fixed $30k BTC threshold.", supported: true, marketplaceUse: FACTS_MARKET },
   { id: "mined-billionaire", sourceKey: "is_mined_billionaire", label: "MINED BILLIONAIRE", description: "Total block outputs were worth at least $1 billion when the block was mined.", supported: true, marketplaceUse: FACTS_MARKET },
-  ...[5, 7, 10, 13, 17, 21, 26, 43].map((count) => ({ id: `${count}tx-perfect-punk`, sourceKey: `is_${count}tx_perfect_punk`, label: `${count}TX PERFECT PUNK`, description: `Perfectly aligned ${count}-transaction punk.`, supported: false, marketplaceUse: INDEX_REQUIRED })),
+  ...[5, 7, 10, 13, 17, 21, 26, 43].map((count) => ({ id: `${count}tx-perfect-punk`, sourceKey: `is_${count}tx_perfect_punk`, label: `${count}TX PERFECT PUNK`, description: `Perfectly aligned ${count}-transaction punk.`, supported: count === 5 || count === 7, marketplaceUse: count === 5 || count === 7 ? GALLERY_TX_MARKET : INDEX_REQUIRED })),
   { id: "pristine-punk", sourceKey: "Pristine Punk", label: "PRISTINE PUNK", description: "Two-transaction punk with a small neck.", supported: false, marketplaceUse: "Available in the Punks & Patterns collection; official trait indexing remains pending." },
   { id: "standard-punk", sourceKey: "Standard Punk", label: "STANDARD PUNK", description: "Two-transaction punk with a medium neck.", supported: false, marketplaceUse: "Available in the Punks & Patterns collection; official trait indexing remains pending." },
   { id: "wide-neck-punk", sourceKey: "Wide Neck Punk", label: "WIDE NECK PUNK", description: "Two-transaction punk with a wide neck.", supported: false, marketplaceUse: "Available in the Punks & Patterns collection; official trait indexing remains pending." },
@@ -194,7 +196,7 @@ export const ALL_OFFICIAL_TRAITS: OfficialTraitDefinition[] = [
   { id: "micro-strategy", sourceKey: "is_micro_strategy", label: "MICROSTRATEGY", description: "Contains a transaction initiated by MicroStrategy.", supported: false, marketplaceUse: INDEX_REQUIRED },
   { id: "chinese-lucky-number", sourceKey: "is_chinese_lucky_number", label: "CHINESE LUCKY NUMBER", description: "Block height contains 168, associated with prosperity in Chinese numerology.", supported: true, marketplaceUse: FACTS_MARKET },
   { id: "pre-segwit-full", sourceKey: "is_pre_segwit_full", label: "PRE-SEGWIT FULL", description: "Maxed out the 1 MB block size before SegWit.", supported: true, marketplaceUse: FACTS_MARKET },
-  { id: "dual-palindrome", sourceKey: "is_dual_palindrome", label: "DUAL PALINDROME", description: "Palindrome block number inscribed on a palindrome sat.", supported: false, marketplaceUse: INDEX_REQUIRED },
+  { id: "dual-palindrome", sourceKey: "is_dual_palindrome", label: "DUAL PALINDROME", description: "Palindrome block number inscribed on a palindrome sat.", supported: true, marketplaceUse: SAT_MARKET },
   ...[1, 2, 3, 4, 5, 6, 7, 8].map((count) => ({ id: `${count}k-txs`, sourceKey: `is_${count}k_txs`, label: `${count}K TXS`, description: `Block containing ${count.toLocaleString("en-US")},000${count === 8 ? "+" : "–" + count + ",999"} transactions.`, supported: true, marketplaceUse: TX_MARKET })),
   ...[1, 2, 3, 4, 5, 6, 7].map((rate) => ({ id: `${rate}k-fee-rate`, sourceKey: `is_${rate}k_fee_rate`, label: `${rate}K FEE RATE`, description: `Block with an average fee rate of ${rate.toLocaleString("en-US")},000 sat/vB.`, supported: true, marketplaceUse: FACTS_MARKET })),
   { id: "21e8", sourceKey: "is_21e8", label: "21E8", description: "Block with a hash containing 21e8.", supported: true, marketplaceUse: FACTS_MARKET },
