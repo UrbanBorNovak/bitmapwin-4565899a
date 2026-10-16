@@ -66,12 +66,11 @@ const ENDPOINTS = [
   { method: "GET", path: "/api/public/market/trades?height=&limit=", body: "TRADING · On-chain sales tape (confirmed and mempool)." },
   { method: "GET", path: "/api/public/market/bids?height=&limit=", body: "TRADING · Open bids, highest first." },
   { method: "POST", path: "/api/public/market/listings", body: "TRADING · List: body is a seller-signed base64 PSBT (raw or JSON psbt field). Validated against the live UTXO set." },
-  { method: "POST", path: "/api/public/market/listings/cancel", body: "TRADING · offerId + signature: BIP-322 signature of the unlist message by the seller address." },
+  { method: "POST", path: "/api/public/market/listings/cancel", body: "TRADING · offerId, issuedAt, signature: BIP-322 signature of the unlist message by the seller address." },
   { method: "POST", path: "/api/public/market/buy/prepare", body: "TRADING · offerId, buyerPaymentAddress, buyerOrdinalsAddress, optional keys: places a 90s hold and returns the buyer PSBT to sign locally." },
   { method: "POST", path: "/api/public/market/buy/broadcast", body: "TRADING · offerId, psbt, buyerAddress: finalizes your signed PSBT and broadcasts it, returning the txid." },
-  { method: "POST", path: "/api/public/market/buy/release", body: "TRADING · offerId, buyerAddress: drops your checkout hold early." },
-  { method: "POST", path: "/api/public/market/bids", body: "TRADING · bitmapHeight, bidderAddress, priceSats, expiresInHours?, signature: BIP-322 signature of the bid message." },
-  { method: "POST", path: "/api/public/market/bids/cancel", body: "TRADING · bidId, address, signature: BIP-322 signature of the cancel message." },
+  { method: "POST", path: "/api/public/market/bids", body: "TRADING · bitmapHeight, bidderAddress, priceSats, expiresInHours?, issuedAt, signature: BIP-322 signature of the bid message." },
+  { method: "POST", path: "/api/public/market/bids/cancel", body: "TRADING · bidId, address, issuedAt, signature: BIP-322 signature of the cancel message." },
 ];
 
 const BOT_EXAMPLE = `# 1. Watch the book
@@ -87,9 +86,14 @@ curl -X POST https://bitmapwin.app/api/public/market/buy/broadcast \\
   -H 'content-type: application/json' \\
   -d '{"offerId":"<id>","psbt":"<signed base64>","buyerAddress":"bc1p..."}'
 
-# Signed messages (BIP-322):
-# bid:    "BITMAP MARKETPLACE BID\\nparcel: <h>.bitmap\\namount: <sats> sats\\nbidder: <addr>"
-# cancel: "BITMAP MARKETPLACE CANCEL BID\\nbid: <bidId>\\naddress: <addr>"`;
+# Signed messages (BIP-322). issuedAt = ISO UTC time, valid 10 min, each signature works once:
+# bid:    "BITMAPWIN API BID\nparcel: <h>.bitmap\namount: <sats> sats\nbidder: <addr>\nissued: <issuedAt>"
+# cancel: "BITMAPWIN API CANCEL BID\nbid: <bidId>\naddress: <addr>\nissued: <issuedAt>"
+# unlist: "BITMAPWIN API UNLIST\nlisting: <offerId>\naddress: <seller>\nissued: <issuedAt>"
+#
+# Limits: 120 reads/min per IP · 20 writes/min per IP · 10 writes/min per wallet
+# · 6 checkout holds/min · max 2 live holds per buyer. HTTP 429 = slow down.
+# Broadcast is refused if the seller payout or inscription delivery output is altered.`;
 
 function ApiPage() {
   return (
