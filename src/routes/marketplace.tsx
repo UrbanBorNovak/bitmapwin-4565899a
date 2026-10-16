@@ -154,6 +154,18 @@ function Marketplace() {
     const base = tab === "traded" ? traded : tab === "listed" ? listed : parcels;
     return new Map(OFFICIAL_TRAITS.map((t) => [t.id, base.filter((p) => hasTrait(p.bitmapHeight, t.id)).length]));
   }, [tab, traded, listed, parcels]);
+  const chartScope = useMemo(() => {
+    const def = club !== "any" ? CLUBS.find((c) => c.id === club) : undefined;
+    const t = trait !== "any" ? ALL_OFFICIAL_TRAITS.find((x) => x.id === trait) : undefined;
+    const heightTrait = t && HEIGHT_TRAIT_IDS.has(t.id) ? t : undefined;
+    const parts = [def ? def.label : null, heightTrait ? `TRAIT ${heightTrait.label ?? heightTrait.id}` : null].filter(Boolean);
+    const match = def || heightTrait ? (h: number) => (!def || inClub(h, def)) && (!heightTrait || hasTrait(h, heightTrait.id as TraitId)) : null;
+    return {
+      label: parts.length ? parts.join(" + ").toUpperCase() : "ALL BITMAPS",
+      match,
+      caveat: t && !heightTrait ? `${String(t.label ?? t.id).toUpperCase()} NEEDS INDEXED RECORDS, SO CHARTS IGNORE IT` : undefined,
+    };
+  }, [club, trait]);
   const visible = useMemo(() => {
     let base = tab === "traded" ? traded : tab === "listed" ? listed : parcels;
     if (tab === "inhabited") base = inhabitedParcels.data ?? [];
@@ -317,7 +329,7 @@ function Marketplace() {
       </div>
 
       <div className="mt-4">
-        <MarketTerminal />
+        <MarketTerminal scope={chartScope} />
       </div>
 
       <div className="mt-4">

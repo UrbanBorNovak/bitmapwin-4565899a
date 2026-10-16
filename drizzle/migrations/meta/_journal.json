@@ -71,6 +71,13 @@
       "when": 1792158924184,
       "tag": "0009_index_punk_and_dual_palindrome_traits",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792170124511,
+      "tag": "0010_market_api_hardening",
+      "breakpoints": true
     }
   ]
 }

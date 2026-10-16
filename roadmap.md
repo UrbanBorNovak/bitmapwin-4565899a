@@ -175,3 +175,11 @@
 - [x] Reserve non-overlapping touch, navigation, and activity areas in portrait and landscape.
 - [x] Verify real touch joystick/release, camera input, auto-run, menu reset, jump and control-zone spacing in portrait/landscape; inspect desktop layout.
 - [ ] Verify visible 3D walking/camera motion on a graphics-capable device (sandbox WebGL context is lost even at Low settings).
+
+## Trading API hardening + scoped terminal charts
+- [x] Rate-limit every public trading call per IP and per wallet.
+- [x] Block replayed bid/cancel signatures (timestamped messages, single-use).
+- [x] Cap checkout holds per buyer to stop reservation squatting.
+- [x] Confirm broadcast rejects altered seller payout / delivery outputs.
+- [x] Depth and sales charts follow the selected trait/club scope with labels and empty states.
+- [x] Hover details: exact sats, cumulative counts, sale timestamps and transaction links.

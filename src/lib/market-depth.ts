@@ -19,17 +19,26 @@ export function spreadOf(bestAsk: number | null, bestBid: number | null) {
   return { sats, pct: mid > 0 ? (sats / mid) * 100 : 0, mid };
 }
 
-export type DepthPoint = { price: number; ask: number | null; bid: number | null };
+export type BookLevel = { priceSats: number; height: number | null };
+export type DepthPoint = { price: number; ask: number | null; bid: number | null; height: number | null; cumSats: number };
 
 /**
  * Cumulative depth curve keyed by price: bids accumulate from the best bid
- * downward, asks from the best ask upward. Each price is one real order level.
+ * downward, asks from the best ask upward. Each point is one real order level;
+ * ask/bid hold the cumulative order count, cumSats the cumulative sats.
  */
-export function depthCurve(asks: number[], bids: number[]): DepthPoint[] {
+export function depthCurve(asks: BookLevel[], bids: BookLevel[]): DepthPoint[] {
   const pts: DepthPoint[] = [];
-  let cum = 0;
-  for (const p of [...bids].sort((a, b) => b - a)) { cum += 1; pts.push({ price: p, ask: null, bid: cum }); }
-  cum = 0;
-  for (const p of [...asks].sort((a, b) => a - b)) { cum += 1; pts.push({ price: p, ask: cum, bid: null }); }
-  return pts.sort((a, b) => a.price - b.price);
+  let n = 0;
+  let sats = 0;
+  for (const b of [...bids].sort((x, y) => y.priceSats - x.priceSats)) {
+    n += 1; sats += b.priceSats;
+    pts.push({ price: b.priceSats, ask: null, bid: n, height: b.height, cumSats: sats });
+  }
+  n = 0; sats = 0;
+  for (const a of [...asks].sort((x, y) => x.priceSats - y.priceSats)) {
+    n += 1; sats += a.priceSats;
+    pts.push({ price: a.priceSats, ask: n, bid: null, height: a.height, cumSats: sats });
+  }
+  return pts.sort((x, y) => x.price - y.price);
 }

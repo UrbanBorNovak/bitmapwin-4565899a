@@ -139,7 +139,40 @@ async function orderbook(url: URL) {
   };
 }
 
-async function verify(addr: string, message: string, signature: string) {
+class ApiError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+  }
+}
+
+async function admin() {
+  return (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+}
+
+function clientIp(request: Request) {
+  return (
+    request.headers.get("cf-connecting-ip") ??
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    "unknown"
+  );
+}
+
+/** Fixed-window limiter kept in the database so it holds across every worker. */
+async function limit(bucket: string, rule: { limit: number; windowSeconds: number }) {
+  const { data, error } = await (await admin()).rpc("market_api_hit", {
+    _bucket: bucket,
+    _limit: rule.limit,
+    _window_seconds: rule.windowSeconds,
+  });
+  if (error) throw new ApiError("Rate limiter unavailable — retry shortly", 503);
+  if (data !== true) throw new ApiError(`Rate limit exceeded (${rule.limit} per ${rule.windowSeconds}s)`, 429);
+}
+
+/** BIP-322 check + freshness + single use, in that order. */
+async function verifySigned(addr: string, message: string, signature: string, issuedAt: string, action: string) {
+  const { signatureAgeProblem } = await import("@/lib/market-api-guard");
+  const problem = signatureAgeProblem(issuedAt, Date.now());
+  if (problem) throw new ApiError(problem, 401);
   const { Verifier } = await import("bip322-js");
   let ok = false;
   try {
@@ -147,32 +180,60 @@ async function verify(addr: string, message: string, signature: string) {
   } catch {
     ok = false;
   }
-  if (!ok) throw new Error("SIGNATURE DOES NOT MATCH THE ADDRESS");
+  if (!ok) throw new ApiError("Signature does not match the address and message", 401);
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${action}\n${message}\n${signature}`));
+  const hash = [...new Uint8Array(digest)].map((x) => x.toString(16).padStart(2, "0")).join("");
+  const { data, error } = await (await admin()).rpc("market_api_claim_signature", { _hash: hash, _address: addr, _action: action });
+  if (error) throw new ApiError("Could not record signature — retry", 503);
+  if (data !== true) throw new ApiError("Signature already used — sign a fresh message", 409);
 }
 
+const sig = z.string().min(8).max(2000);
+const issuedAt = z.string().max(40);
+
 async function post(path: string, request: Request) {
+  const ip = clientIp(request);
+  const G = await import("@/lib/market-api-guard");
+  await limit(`w:ip:${ip}`, G.RATE_LIMITS.writePerIp);
+
   if (path === "listings") {
     const raw = (await request.text()).trim();
+    if (raw.length > 400_100) throw new ApiError("Body too large", 413);
     const body = raw.startsWith("{") ? z.object({ psbt }).parse(JSON.parse(raw)).psbt : psbt.parse(raw);
+    // The seller's own signature inside the PSBT is the proof; validation runs against live UTXOs.
     const { submitOffer } = await import("@/lib/offers.server");
     const offer = await submitOffer(body.replace(/\s+/g, ""));
+    if (offer.sellerAddress) await limit(`w:addr:${offer.sellerAddress}`, G.RATE_LIMITS.writePerWallet);
     return json(offer, offer.duplicate ? 200 : 201);
   }
-  const body = await request.json().catch(() => ({}));
+
+  const text = await request.text();
+  if (text.length > 450_000) throw new ApiError("Body too large", 413);
+  let body: unknown = {};
+  try {
+    body = text ? JSON.parse(text) : {};
+  } catch {
+    throw new ApiError("Body must be JSON", 400);
+  }
+
   if (path === "listings/cancel") {
-    const d = z.object({ offerId: z.string().uuid(), signature: z.string().min(8).max(2000) }).parse(body);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { unlistMessage } = await import("@/lib/offers");
-    const { data: offer } = await supabaseAdmin
+    const d = z.object({ offerId: z.string().uuid(), signature: sig, issuedAt }).parse(body);
+    const db = await admin();
+    const { data: offer } = await db.from("offers").select("id, status, seller_address").eq("id", d.offerId).maybeSingle();
+    if (!offer || offer.status !== "open" || !offer.seller_address) throw new ApiError("Listing not open", 404);
+    await limit(`w:addr:${offer.seller_address}`, G.RATE_LIMITS.writePerWallet);
+    // Only the address that signed the sale PSBT can sign this; message names the exact listing.
+    await verifySigned(offer.seller_address, G.unlistApiMessage(offer.id, offer.seller_address, d.issuedAt), d.signature, d.issuedAt, "unlist");
+    const { error } = await db
       .from("offers")
-      .select("id, status, seller_address")
-      .eq("id", d.offerId)
-      .maybeSingle();
-    if (!offer || offer.status !== "open" || !offer.seller_address) return json({ error: "LISTING NOT OPEN" }, 404);
-    await verify(offer.seller_address, unlistMessage(offer.id), d.signature);
-    await supabaseAdmin.from("offers").update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("id", offer.id).eq("status", "open");
+      .update({ status: "cancelled", updated_at: new Date().toISOString() })
+      .eq("id", offer.id)
+      .eq("status", "open")
+      .eq("seller_address", offer.seller_address);
+    if (error) throw new ApiError("Cancel failed", 500);
     return json({ ok: true, offerId: offer.id });
   }
+
   if (path === "buy/prepare") {
     const d = z
       .object({
@@ -183,19 +244,32 @@ async function post(path: string, request: Request) {
         paymentPublicKeyHex: z.string().regex(/^[0-9a-fA-F]{66}$|^[0-9a-fA-F]{130}$/).optional(),
       })
       .parse(body);
+    await limit(`hold:addr:${d.buyerOrdinalsAddress}`, G.RATE_LIMITS.holdPerWallet);
+    await limit(`hold:ip:${ip}`, G.RATE_LIMITS.holdPerWallet);
+    // Reservation squatting: one buyer may hold only a few listings at once.
+    const { count } = await (await admin())
+      .from("offers")
+      .select("id", { count: "exact", head: true })
+      .eq("reserved_by", d.buyerOrdinalsAddress)
+      .eq("status", "open")
+      .neq("id", d.offerId)
+      .gt("reserved_until", new Date().toISOString());
+    if ((count ?? 0) >= G.MAX_LIVE_HOLDS_PER_BUYER) {
+      throw new ApiError(`Too many live checkout holds (max ${G.MAX_LIVE_HOLDS_PER_BUYER}) — finish or wait 90s`, 429);
+    }
     const { buildPurchase } = await import("@/lib/purchase.server");
     return json(await buildPurchase(d));
   }
+
   if (path === "buy/broadcast") {
     const d = z.object({ offerId: z.string().uuid(), psbt, buyerAddress: address }).parse(body);
+    await limit(`w:addr:${d.buyerAddress}`, G.RATE_LIMITS.writePerWallet);
+    // submitPurchase requires this buyer's live hold and refuses any PSBT whose
+    // seller payout or inscription-delivery outputs were altered.
     const { submitPurchase } = await import("@/lib/purchase.server");
     return json(await submitPurchase({ offerId: d.offerId, psbtBase64: d.psbt, buyerAddress: d.buyerAddress }));
   }
-  if (path === "buy/release") {
-    const d = z.object({ offerId: z.string().uuid(), buyerAddress: address }).parse(body);
-    const { releaseReservation } = await import("@/lib/purchase.server");
-    return json({ released: await releaseReservation(d.offerId, d.buyerAddress) });
-  }
+
   if (path === "bids") {
     const d = z
       .object({
@@ -203,18 +277,32 @@ async function post(path: string, request: Request) {
         bidderAddress: address,
         priceSats: z.number().int().min(546).max(2_100_000_000_000_000),
         expiresInHours: z.number().min(1).max(24 * 90).optional(),
-        signature: z.string().min(8).max(2000),
+        signature: sig,
+        issuedAt,
       })
       .parse(body);
-    const { bidMessage } = await import("@/lib/bids");
-    await verify(d.bidderAddress, bidMessage(d.bitmapHeight, d.priceSats, d.bidderAddress), d.signature);
+    await limit(`w:addr:${d.bidderAddress}`, G.RATE_LIMITS.writePerWallet);
+    const message = G.bidApiMessage(d.bitmapHeight, d.priceSats, d.bidderAddress, d.issuedAt);
+    await verifySigned(d.bidderAddress, message, d.signature, d.issuedAt, "bid");
     const { placeBid } = await import("@/lib/bids.server");
-    return json(await placeBid(d), 201);
+    return json(
+      await placeBid({
+        bitmapHeight: d.bitmapHeight,
+        bidderAddress: d.bidderAddress,
+        priceSats: d.priceSats,
+        expiresInHours: d.expiresInHours,
+        signature: d.signature,
+        note: "api",
+      }),
+      201,
+    );
   }
+
   if (path === "bids/cancel") {
-    const d = z.object({ bidId: z.string().uuid(), address, signature: z.string().min(8).max(2000) }).parse(body);
-    const { bidActionMessage } = await import("@/lib/bids");
-    await verify(d.address, bidActionMessage("cancel", d.bidId, d.address), d.signature);
+    const d = z.object({ bidId: z.string().uuid(), address, signature: sig, issuedAt }).parse(body);
+    await limit(`w:addr:${d.address}`, G.RATE_LIMITS.writePerWallet);
+    await verifySigned(d.address, G.cancelBidApiMessage(d.bidId, d.address, d.issuedAt), d.signature, d.issuedAt, "cancel-bid");
+    // cancelBid also refuses unless the signer is the bid's own bidder.
     const { cancelBid } = await import("@/lib/bids.server");
     return json(await cancelBid(d.bidId, d.address));
   }
@@ -229,6 +317,8 @@ export const Route = createFileRoute("/api/public/market/$")({
         const url = new URL(request.url);
         const path = (params._splat ?? "").replace(/\/+$/, "");
         try {
+          const { RATE_LIMITS } = await import("@/lib/market-api-guard");
+          await limit(`r:ip:${clientIp(request)}`, RATE_LIMITS.readPerIp);
           if (path === "listings") return json(await listings(url));
           if (path === "bids") return json(await bids(url));
           if (path === "trades") return json(await trades(url));
@@ -237,7 +327,8 @@ export const Route = createFileRoute("/api/public/market/$")({
             return json({ ok: true, endpoints: ["listings", "orderbook", "trades", "bids"], docs: "https://bitmapwin.app/api" });
           return json({ error: "Unknown endpoint", docs: "/api" }, 404);
         } catch (e) {
-          return json({ error: e instanceof Error ? e.message : "Bad request" }, e instanceof z.ZodError ? 400 : 500);
+          if (e instanceof ApiError) return json({ error: e.message }, e.status);
+          return json({ error: e instanceof z.ZodError ? "Invalid query" : "Unavailable" }, e instanceof z.ZodError ? 400 : 500);
         }
       },
       POST: async ({ request, params }) => {
@@ -245,6 +336,7 @@ export const Route = createFileRoute("/api/public/market/$")({
           return await post((params._splat ?? "").replace(/\/+$/, ""), request);
         } catch (e) {
           if (e instanceof z.ZodError) return json({ error: "Invalid input", issues: e.issues }, 400);
+          if (e instanceof ApiError) return json({ error: e.message }, e.status);
           return json({ error: e instanceof Error ? e.message : "Rejected" }, 422);
         }
       },

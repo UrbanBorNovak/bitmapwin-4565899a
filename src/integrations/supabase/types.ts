@@ -2598,6 +2598,45 @@ export type Database = {
         }
         Relationships: []
       }
+      market_api_hits: {
+        Row: {
+          bucket: string
+          hits: number
+          window_start: string
+        }
+        Insert: {
+          bucket: string
+          hits?: number
+          window_start: string
+        }
+        Update: {
+          bucket?: string
+          hits?: number
+          window_start?: string
+        }
+        Relationships: []
+      }
+      market_api_signatures: {
+        Row: {
+          action: string
+          address: string
+          sig_hash: string
+          used_at: string
+        }
+        Insert: {
+          action: string
+          address: string
+          sig_hash: string
+          used_at?: string
+        }
+        Update: {
+          action?: string
+          address?: string
+          sig_hash?: string
+          used_at?: string
+        }
+        Relationships: []
+      }
       market_listings: {
         Row: {
           created_at: string
@@ -4796,6 +4835,14 @@ export type Database = {
           block_height: number
           owner_address: string
         }[]
+      }
+      market_api_claim_signature: {
+        Args: { _action: string; _address: string; _hash: string }
+        Returns: boolean
+      }
+      market_api_hit: {
+        Args: { _bucket: string; _limit: number; _window_seconds: number }
+        Returns: boolean
       }
       market_buy_listing: {
         Args: { _buyer_address: string; _listing_id: string; _qty: number }

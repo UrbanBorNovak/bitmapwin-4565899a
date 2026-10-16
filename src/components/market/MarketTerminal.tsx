@@ -9,7 +9,7 @@ import { timeAgo } from "@/lib/bitmap";
 import { btcPriceQuery, usdFromSats } from "@/lib/btc-price";
 import { BuyButton } from "@/components/BuyButton";
 import { spreadOf, withDepth } from "@/lib/market-depth";
-import { TerminalCharts } from "@/components/market/TerminalCharts";
+import { TerminalCharts, type ChartScope } from "@/components/market/TerminalCharts";
 
 const LEVELS = 10;
 const DAY = 86_400_000;
@@ -19,7 +19,7 @@ const DAY = 86_400_000;
  * with a live tape of traced on-chain sales. Shares the live-trades cache so
  * realtime fills from LiveTradesFeed flash here too.
  */
-export function MarketTerminal() {
+export function MarketTerminal({ scope = { label: "ALL BITMAPS", match: null } }: { scope?: ChartScope }) {
   const offers = useQuery(offersQuery());
   const bids = useQuery(openBidsQuery(500));
   const tape = useQuery({ queryKey: ["live-trades-feed"], queryFn: () => fetchRecentTrades(150), staleTime: 15_000, refetchInterval: 60_000 });
@@ -32,8 +32,8 @@ export function MarketTerminal() {
     [offers.data],
   );
   const bidRows = useMemo(() => [...(bids.data ?? [])].sort((a, b) => b.priceSats - a.priceSats).slice(0, LEVELS), [bids.data]);
-  const allAsks = useMemo(() => (offers.data ?? []).filter((o) => o.status === "open" && o.priceSats > 0).map((o) => o.priceSats), [offers.data]);
-  const allBids = useMemo(() => (bids.data ?? []).filter((b) => b.priceSats > 0).map((b) => b.priceSats), [bids.data]);
+  const allAsks = useMemo(() => (offers.data ?? []).filter((o) => o.status === "open" && o.priceSats > 0).map((o) => ({ priceSats: o.priceSats, height: o.bitmapHeight })), [offers.data]);
+  const allBids = useMemo(() => (bids.data ?? []).filter((b) => b.priceSats > 0).map((b) => ({ priceSats: b.priceSats, height: b.bitmapHeight })), [bids.data]);
   const askTotal = asks.reduce((s, a) => s + a.priceSats, 0);
   const bidTotal = bidRows.reduce((s, b) => s + b.priceSats, 0);
   const sideMax = Math.max(askTotal, bidTotal);
@@ -110,8 +110,9 @@ export function MarketTerminal() {
         </div>
       </div>
       <TerminalCharts
-        askPrices={allAsks}
-        bidPrices={allBids}
+        asks={allAsks}
+        bids={allBids}
+        scope={scope}
         loading={offers.isPending || bids.isPending}
       />
       <p className="border-t border-border px-4 py-2 font-mono text-[10px] text-muted-foreground">ASKS ARE SIGNED SALE PSBTS · BIDS ARE SIGNED INTENTS · TAPE IS TRACED BITCOIN TXS · EVERY BUY IS SIGNED IN YOUR OWN WALLET</p>
