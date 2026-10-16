@@ -139,6 +139,7 @@ function ParcelStudio() {
 
   const side = layout ? Math.max(layout.width, layout.height) : 1;
   const offY = layout ? (side - layout.height) / 2 : 0;
+  const offX = layout ? (side - layout.width) / 2 : 0;
   const show = hover ?? sel;
 
   return (
@@ -232,6 +233,7 @@ function ParcelStudio() {
                 <span><i className="mr-1 inline-block h-2 w-2 bg-signal" />INSCRIBED</span>
                 <span><i className="mr-1 inline-block h-2 w-2 bg-muted-foreground/25" />OPEN</span>
                 <span><i className="mr-1 inline-block h-2 w-2 bg-primary" />SELECTED</span>
+                <span><i className="mr-1 inline-block h-2 w-2 border border-primary bg-primary/35" />OWNED GROUND</span>
                 {show !== null && <span className="ml-auto text-foreground">#{show} · {stateOf(show) === "valid" ? "INSCRIBED" : "OPEN"}</span>}
               </div>
             </section>
