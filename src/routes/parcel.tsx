@@ -215,6 +215,17 @@ function ParcelStudio() {
                         }} />
                     );
                   })}
+                  {selRect && selRect.cells.size > 0 && (() => {
+                    const k = selRect.span / side;
+                    return [...selRect.cells].map((c) => {
+                      const cx = Math.floor(c / selRect.span), cz = c % selRect.span;
+                      return (
+                        <rect key={`own-${c}`} x={(cx / k) - offX + 0.08} y={(cz / k) - offY + 0.08}
+                          width={Math.max(0.1, 1 / k - 0.16)} height={Math.max(0.1, 1 / k - 0.16)}
+                          className="pointer-events-none fill-primary/35 stroke-primary" strokeWidth={0.12} />
+                      );
+                    });
+                  })()}
                 </svg>
               )}
               <div className="mt-2 flex flex-wrap gap-3 label text-muted-foreground">
