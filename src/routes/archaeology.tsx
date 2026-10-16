@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ALL_OFFICIAL_TRAITS, traitsOf } from "@/lib/traits";
 import { ArchaeologyLedger } from "@/components/ArchaeologyLedger";
+import { InscribedSpacesArchive } from "@/components/archaeology/InscribedSpacesArchive";
 
 export const Route = createFileRoute("/archaeology")({
   head: () => ({ meta: [
@@ -159,6 +160,8 @@ function ArchaeologyFacts() {
           })}
         </ol>
       </section>
+
+      <InscribedSpacesArchive />
 
       <ArchaeologyLedger />
 
