@@ -52,6 +52,14 @@ export const PARCEL_CLUBS: ParcelClub[] = [
     parentInscription: "c1e3330f25adaec23b5361ef1c1412e3fc29d5615f19fe02bf4c017a80c6031bi0",
     blurb: "Holds a valid parcel of 717328.BITMAP — Bitmap Emporium.",
   },
+  {
+    id: "pathscribe",
+    label: "PATHSCRIBE",
+    short: "PATHSCRIBE",
+    height: 114588,
+    parentInscription: "7b7d0d712731a66c61cd163f96a33d40f3bd4bbb4bc6236fa9bfa2959d937ea7i0",
+    blurb: "Holds a valid parcel of 114588.BITMAP.",
+  },
 ];
 
 export function parcelClubById(id: string): ParcelClub | null {
