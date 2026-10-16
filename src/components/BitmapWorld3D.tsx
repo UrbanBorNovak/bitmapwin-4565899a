@@ -3660,15 +3660,6 @@ function BitmapWorld3DInner({
   // spawn point can end up inside one. For a few seconds after every spawn or
   // respawn, an embedded player is nudged to the nearest clear spot.
   const spawnGuardUntil = useRef(0);
-  useFrame(() => {
-    if (!spawnGuardUntil.current || Date.now() > spawnGuardUntil.current) return;
-    const p = pose.current;
-    if (!p || !p.grounded || isDriving()) return;
-    const feet = traversalSurfaceY(p.x, p.z) + p.y;
-    if (!boxWallAt(p.x, p.z, feet, BOX_BODY, BOX_STEP, 0.004)) return;
-    const spot = clearSpotNear(p.x, p.z, feet, BOX_BODY, BOX_STEP, 0.004, AVATAR_U * 0.6);
-    if (spot) placePlayer(p, spot[0], spot[1], p.yaw);
-  });
   useEffect(() => {
     if (spawnedRef.current || !tipHeight) return;
     spawnedRef.current = true;
