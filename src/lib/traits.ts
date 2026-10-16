@@ -79,12 +79,24 @@ export function heightTraitQuery(id: string, max: number): { heights: number[] }
   return null;
 }
 
+/** Filter groups: every trait belongs to exactly one, so traders can scan the sidebar. */
+export type TraitGroup = "era" | "math" | "culture" | "protocol" | "data";
+
+export const TRAIT_GROUPS: Array<{ id: TraitGroup; label: string; description: string }> = [
+  { id: "era", label: "SUBSIDY ERAS", description: "Which halving epoch the block was mined in. Earlier eras paid far more BTC per block, so the oldest land is the scarcest." },
+  { id: "math", label: "MATHEMATICAL", description: "Rarity written in the block number itself — clean arithmetic patterns anyone can verify with pure math." },
+  { id: "culture", label: "CULTURAL", description: "Blocks tied to famous people, transactions and moments from Bitcoin's history." },
+  { id: "protocol", label: "PROTOCOL MILESTONES", description: "Blocks where Bitcoin's own rules changed or started — genesis, halvings, difficulty firsts and soft fork activations." },
+  { id: "data", label: "ON-CHAIN DATA", description: "Traits read from indexed block records and the sat index — transaction counts, fees, outputs, gallery patterns and sats." },
+];
+
 export type TraitDefinition = {
   id: TraitId;
   sourceKey: string;
   label: string;
   description: string;
   rare: boolean;
+  group: TraitGroup;
 };
 
 export type OfficialTraitDefinition = {
@@ -94,6 +106,7 @@ export type OfficialTraitDefinition = {
   description: string;
   supported: boolean;
   marketplaceUse: string;
+  group: TraitGroup;
 };
 
 export type Trait = TraitDefinition;
@@ -105,33 +118,33 @@ const PIZZA_BLOCK = 57_043;
 const FIRST_TRANSACTION_BLOCK = 170;
 
 export const OFFICIAL_TRAITS: TraitDefinition[] = [
-  { id: "mythic", sourceKey: "is_mythic", label: "MYTHIC", description: "The genesis block.", rare: true },
-  { id: "epic", sourceKey: "is_epic", label: "EPIC", description: "First block of a halving epoch.", rare: true },
-  { id: "rare", sourceKey: "is_rare", label: "RARE", description: "First block of a difficulty adjustment period.", rare: true },
-  { id: "first-transaction", sourceKey: "is_first_transaction", label: "FIRST TRANSACTION", description: "Contains the first peer-to-peer transaction between Satoshi and Hal Finney.", rare: true },
-  { id: "palindrome", sourceKey: "is_palindrome", label: "PALINDROME", description: "Block number reads the same forwards and backwards.", rare: true },
-  { id: "pizza-transaction", sourceKey: "is_pizza_transaction", label: "PIZZA TRANSACTION", description: "Contains the transaction exchanging 10,000 BTC for two pizzas.", rare: true },
-  { id: "pizza-day", sourceKey: "is_pizza_day", label: "PIZZA DAY", description: "A block mined on the day of the famous pizza transaction.", rare: true },
-  { id: "block-9", sourceKey: "is_block_9", label: "BLOCK 9", description: "Oldest block with spent coinbase rewards.", rare: true },
-  { id: "block-78", sourceKey: "is_block_78", label: "BLOCK 78", description: "First block mined by Hal Finney.", rare: true },
-  { id: "66-dao", sourceKey: "is_66_dao", label: "66 DAO", description: "A block from 660000 through 669999 recognized by 66 DAO.", rare: false },
-  { id: "prime-number", sourceKey: "is_prime_number", label: "PRIME NUMBER", description: "Block height is a prime number.", rare: false },
-  { id: "fibonacci", sourceKey: "is_fibonacci", label: "FIBONACCI", description: "Block height is a Fibonacci number.", rare: true },
-  { id: "same-digits", sourceKey: "is_same_digits", label: "SAME DIGITS", description: "Every digit in the block height is the same.", rare: false },
-  { id: "binary", sourceKey: "is_binary", label: "BINARY", description: "Block height contains only binary digits.", rare: false },
-  { id: "power-of-10", sourceKey: "is_power_of_10", label: "POWER OF 10", description: "Block height is a power of ten.", rare: true },
-  { id: "sub-10", sourceKey: "is_sub_10", label: "SUB 10", description: "Mined within the first 10 blocks.", rare: true },
-  { id: "sub-100", sourceKey: "is_sub_100", label: "SUB 100", description: "Mined within the first 100 blocks.", rare: true },
-  { id: "sub-1k", sourceKey: "is_sub_1k", label: "SUB 1K", description: "Mined within the first 1,000 blocks.", rare: true },
-  { id: "sub-10k", sourceKey: "is_sub_10k", label: "SUB 10K", description: "Mined within the first 10,000 blocks.", rare: true },
-  { id: "sub-25k", sourceKey: "is_sub_25k", label: "SUB 25K", description: "Mined within the first 25,000 blocks.", rare: false },
-  { id: "sub-50k", sourceKey: "is_sub_50k", label: "SUB 50K", description: "Mined within the first 50,000 blocks.", rare: false },
-  { id: "sub-100k", sourceKey: "is_sub_100k", label: "SUB 100K", description: "Mined within the first 100,000 blocks.", rare: false },
-  ...SUBSIDY_ERAS.map((e) => ({ id: e.id, sourceKey: `is_era_${e.era}`, label: `ERA ${e.era} · ${e.subsidy} BTC`, description: `Mined in subsidy era ${e.era} (blocks ${e.from.toLocaleString("en-US")}–${e.to.toLocaleString("en-US")}), when the block reward was ${e.subsidy} BTC.`, rare: false })),
-  { id: "perfect-square", sourceKey: "is_perfect_square", label: "PERFECT SQUARE", description: "Block height is a perfect square (n²).", rare: false },
-  { id: "perfect-cube", sourceKey: "is_perfect_cube", label: "PERFECT CUBE", description: "Block height is a perfect cube (n³).", rare: true },
-  { id: "memetic", sourceKey: "is_memetic", label: "MEMETIC HEIGHT", description: `Block height is a culture number: ${MEMETIC_HEIGHTS.join(", ")}.`, rare: true },
-  ...SOFT_FORKS.map((f) => ({ id: f.id, sourceKey: `is_${f.id.replace("-", "_")}`, label: f.label, description: f.description, rare: true })),
+  { id: "mythic", sourceKey: "is_mythic", label: "MYTHIC", description: "The genesis block.", rare: true, group: "protocol" },
+  { id: "epic", sourceKey: "is_epic", label: "EPIC", description: "First block of a halving epoch.", rare: true, group: "protocol" },
+  { id: "rare", sourceKey: "is_rare", label: "RARE", description: "First block of a difficulty adjustment period.", rare: true, group: "protocol" },
+  { id: "first-transaction", sourceKey: "is_first_transaction", label: "FIRST TRANSACTION", description: "Contains the first peer-to-peer transaction between Satoshi and Hal Finney.", rare: true, group: "culture" },
+  { id: "palindrome", sourceKey: "is_palindrome", label: "PALINDROME", description: "Block number reads the same forwards and backwards.", rare: true, group: "math" },
+  { id: "pizza-transaction", sourceKey: "is_pizza_transaction", label: "PIZZA TRANSACTION", description: "Contains the transaction exchanging 10,000 BTC for two pizzas.", rare: true, group: "culture" },
+  { id: "pizza-day", sourceKey: "is_pizza_day", label: "PIZZA DAY", description: "A block mined on the day of the famous pizza transaction.", rare: true, group: "culture" },
+  { id: "block-9", sourceKey: "is_block_9", label: "BLOCK 9", description: "Oldest block with spent coinbase rewards.", rare: true, group: "culture" },
+  { id: "block-78", sourceKey: "is_block_78", label: "BLOCK 78", description: "First block mined by Hal Finney.", rare: true, group: "culture" },
+  { id: "66-dao", sourceKey: "is_66_dao", label: "66 DAO", description: "A block from 660000 through 669999 recognized by 66 DAO.", rare: false, group: "culture" },
+  { id: "prime-number", sourceKey: "is_prime_number", label: "PRIME NUMBER", description: "Block height is a prime number.", rare: false, group: "math" },
+  { id: "fibonacci", sourceKey: "is_fibonacci", label: "FIBONACCI", description: "Block height is a Fibonacci number.", rare: true, group: "math" },
+  { id: "same-digits", sourceKey: "is_same_digits", label: "SAME DIGITS", description: "Every digit in the block height is the same.", rare: false, group: "math" },
+  { id: "binary", sourceKey: "is_binary", label: "BINARY", description: "Block height contains only binary digits.", rare: false, group: "math" },
+  { id: "power-of-10", sourceKey: "is_power_of_10", label: "POWER OF 10", description: "Block height is a power of ten.", rare: true, group: "math" },
+  { id: "sub-10", sourceKey: "is_sub_10", label: "SUB 10", description: "Mined within the first 10 blocks.", rare: true, group: "math" },
+  { id: "sub-100", sourceKey: "is_sub_100", label: "SUB 100", description: "Mined within the first 100 blocks.", rare: true, group: "math" },
+  { id: "sub-1k", sourceKey: "is_sub_1k", label: "SUB 1K", description: "Mined within the first 1,000 blocks.", rare: true, group: "math" },
+  { id: "sub-10k", sourceKey: "is_sub_10k", label: "SUB 10K", description: "Mined within the first 10,000 blocks.", rare: true, group: "math" },
+  { id: "sub-25k", sourceKey: "is_sub_25k", label: "SUB 25K", description: "Mined within the first 25,000 blocks.", rare: false, group: "math" },
+  { id: "sub-50k", sourceKey: "is_sub_50k", label: "SUB 50K", description: "Mined within the first 50,000 blocks.", rare: false, group: "math" },
+  { id: "sub-100k", sourceKey: "is_sub_100k", label: "SUB 100K", description: "Mined within the first 100,000 blocks.", rare: false, group: "math" },
+  ...SUBSIDY_ERAS.map((e) => ({ id: e.id, sourceKey: `is_era_${e.era}`, label: `ERA ${e.era} · ${e.subsidy} BTC`, description: `Mined in subsidy era ${e.era} (blocks ${e.from.toLocaleString("en-US")}–${e.to.toLocaleString("en-US")}), when the block reward was ${e.subsidy} BTC.`, rare: false, group: "era" as const })),
+  { id: "perfect-square", sourceKey: "is_perfect_square", label: "PERFECT SQUARE", description: "Block height is a perfect square (n²).", rare: false, group: "math" },
+  { id: "perfect-cube", sourceKey: "is_perfect_cube", label: "PERFECT CUBE", description: "Block height is a perfect cube (n³).", rare: true, group: "math" },
+  { id: "memetic", sourceKey: "is_memetic", label: "MEMETIC HEIGHT", description: `Block height is a culture number: ${MEMETIC_HEIGHTS.join(", ")}.`, rare: true, group: "culture" },
+  ...SOFT_FORKS.map((f) => ({ id: f.id, sourceKey: `is_${f.id.replace("-", "_")}`, label: f.label, description: f.description, rare: true, group: "protocol" as const })),
 ];
 
 const BY_ID = new Map(OFFICIAL_TRAITS.map((trait) => [trait.id, trait]));
@@ -234,32 +247,32 @@ const HEIGHT_MARKET = "Filter, badge, trade and use matching BITMAP inscriptions
 /** Complete Bitmap.Community Blocktributes glossary. Supported entries are provable from block height today. */
 export const ALL_OFFICIAL_TRAITS: OfficialTraitDefinition[] = [
   ...OFFICIAL_TRAITS.map((trait) => ({ ...trait, supported: true, marketplaceUse: HEIGHT_MARKET })),
-  { id: "patoshi", sourceKey: "is_patoshi", label: "PATOSHI", description: "Block mined by Satoshi Nakamoto.", supported: true, marketplaceUse: PATOSHI_MARKET },
-  { id: "billionaire", sourceKey: "is_billionaire", label: "BILLIONAIRE", description: "Total block outputs are worth at least $1 billion using the official fixed $30k BTC threshold.", supported: true, marketplaceUse: FACTS_MARKET },
-  { id: "mined-billionaire", sourceKey: "is_mined_billionaire", label: "MINED BILLIONAIRE", description: "Total block outputs were worth at least $1 billion when the block was mined.", supported: true, marketplaceUse: FACTS_MARKET },
-  ...[5, 7, 10, 13, 17, 21, 26, 43].map((count) => ({ id: `${count}tx-perfect-punk`, sourceKey: `is_${count}tx_perfect_punk`, label: `${count}TX PERFECT PUNK`, description: `Perfectly aligned ${count}-transaction punk.`, supported: count === 5 || count === 7, marketplaceUse: count === 5 || count === 7 ? GALLERY_TX_MARKET : INDEX_REQUIRED })),
-  { id: "pristine-punk", sourceKey: "Pristine Punk", label: "PRISTINE PUNK", description: "Two-transaction punk with a small neck.", supported: false, marketplaceUse: "Available in the Punks & Patterns collection; official trait indexing remains pending." },
-  { id: "standard-punk", sourceKey: "Standard Punk", label: "STANDARD PUNK", description: "Two-transaction punk with a medium neck.", supported: false, marketplaceUse: "Available in the Punks & Patterns collection; official trait indexing remains pending." },
-  { id: "wide-neck-punk", sourceKey: "Wide Neck Punk", label: "WIDE NECK PUNK", description: "Two-transaction punk with a wide neck.", supported: false, marketplaceUse: "Available in the Punks & Patterns collection; official trait indexing remains pending." },
-  { id: "grid-punk", sourceKey: "is_grid_punk", label: "GRID PUNK", description: "Perfectly aligned punk with a grid shape.", supported: false, marketplaceUse: INDEX_REQUIRED },
-  { id: "community-punk", sourceKey: "is_community_punk", label: "COMMUNITY PUNK", description: "Distinctive punk recognized by the community.", supported: false, marketplaceUse: INDEX_REQUIRED },
-  { id: "ross-ulbricht", sourceKey: "is_ross_ulbricht", label: "ROSS ULBRICHT", description: "Contains a transaction in which payments were made from Silk Road to Ross Ulbricht.", supported: false, marketplaceUse: INDEX_REQUIRED },
-  { id: "mondrian", sourceKey: "is_mondrian", label: "MONDRIAN", description: "Block resembling the grid-based work of Piet Mondrian.", supported: false, marketplaceUse: INDEX_REQUIRED },
-  { id: "leap-day", sourceKey: "is_leap_day", label: "LEAP DAY", description: "Block mined on a leap day.", supported: true, marketplaceUse: FACTS_MARKET },
-  { id: "notable-event", sourceKey: "is_notable_event", label: "NOTABLE EVENT", description: "Block associated with a historical event.", supported: false, marketplaceUse: INDEX_REQUIRED },
-  { id: "1-tx", sourceKey: "is_1_tx", label: "1 TX", description: "Block containing one transaction.", supported: true, marketplaceUse: TX_MARKET },
-  { id: "2-tx", sourceKey: "is_2_tx", label: "2 TX", description: "Block containing two transactions.", supported: true, marketplaceUse: TX_MARKET },
-  { id: "miner-message", sourceKey: "is_miner_message", label: "MINER MESSAGE", description: "Contains a message encoded by the miner.", supported: true, marketplaceUse: FACTS_MARKET },
-  { id: "xspectar", sourceKey: "is_xspectar", label: "XSPECTAR", description: "xSPECTAR land on Bitmap Island.", supported: false, marketplaceUse: INDEX_REQUIRED },
-  { id: "bitmap-valley", sourceKey: "is_bitmap_valley", label: "BITMAP VALLEY", description: "Land in Bitmap Valley.", supported: false, marketplaceUse: INDEX_REQUIRED },
-  ...[100_000, 250_000, 500_000, 1_000_000, 3_000_000, 5_000_000].map((amount) => ({ id: `${amount}-out`, sourceKey: `is_${amount >= 1_000_000 ? `${amount / 1_000_000}m` : `${amount / 1_000}k`}_out`, label: `${amount >= 1_000_000 ? `${amount / 1_000_000}M` : `${amount / 1_000}K`} OUT`, description: `Block with total outputs greater than ${amount.toLocaleString("en-US")} BTC.`, supported: true, marketplaceUse: FACTS_MARKET })),
-  { id: "micro-strategy", sourceKey: "is_micro_strategy", label: "MICROSTRATEGY", description: "Contains a transaction initiated by MicroStrategy.", supported: false, marketplaceUse: INDEX_REQUIRED },
-  { id: "chinese-lucky-number", sourceKey: "is_chinese_lucky_number", label: "CHINESE LUCKY NUMBER", description: "Block height contains 168, associated with prosperity in Chinese numerology.", supported: true, marketplaceUse: FACTS_MARKET },
-  { id: "pre-segwit-full", sourceKey: "is_pre_segwit_full", label: "PRE-SEGWIT FULL", description: "Maxed out the 1 MB block size before SegWit.", supported: true, marketplaceUse: FACTS_MARKET },
-  { id: "dual-palindrome", sourceKey: "is_dual_palindrome", label: "DUAL PALINDROME", description: "Palindrome block number inscribed on a palindrome sat.", supported: true, marketplaceUse: SAT_MARKET },
-  ...[1, 2, 3, 4, 5, 6, 7, 8].map((count) => ({ id: `${count}k-txs`, sourceKey: `is_${count}k_txs`, label: `${count}K TXS`, description: `Block containing ${count.toLocaleString("en-US")},000${count === 8 ? "+" : "–" + count + ",999"} transactions.`, supported: true, marketplaceUse: TX_MARKET })),
-  ...[1, 2, 3, 4, 5, 6, 7].map((rate) => ({ id: `${rate}k-fee-rate`, sourceKey: `is_${rate}k_fee_rate`, label: `${rate}K FEE RATE`, description: `Block with an average fee rate of ${rate.toLocaleString("en-US")},000 sat/vB.`, supported: true, marketplaceUse: FACTS_MARKET })),
-  { id: "21e8", sourceKey: "is_21e8", label: "21E8", description: "Block with a hash containing 21e8.", supported: true, marketplaceUse: FACTS_MARKET },
+  { id: "patoshi", sourceKey: "is_patoshi", label: "PATOSHI", description: "Block mined by Satoshi Nakamoto.", supported: true, marketplaceUse: PATOSHI_MARKET, group: "culture" },
+  { id: "billionaire", sourceKey: "is_billionaire", label: "BILLIONAIRE", description: "Total block outputs are worth at least $1 billion using the official fixed $30k BTC threshold.", supported: true, marketplaceUse: FACTS_MARKET, group: "data" },
+  { id: "mined-billionaire", sourceKey: "is_mined_billionaire", label: "MINED BILLIONAIRE", description: "Total block outputs were worth at least $1 billion when the block was mined.", supported: true, marketplaceUse: FACTS_MARKET, group: "data" },
+  ...[5, 7, 10, 13, 17, 21, 26, 43].map((count) => ({ id: `${count}tx-perfect-punk`, sourceKey: `is_${count}tx_perfect_punk`, label: `${count}TX PERFECT PUNK`, description: `Perfectly aligned ${count}-transaction punk.`, supported: count === 5 || count === 7, marketplaceUse: count === 5 || count === 7 ? GALLERY_TX_MARKET : INDEX_REQUIRED, group: "data" as const })),
+  { id: "pristine-punk", sourceKey: "Pristine Punk", label: "PRISTINE PUNK", description: "Two-transaction punk with a small neck.", supported: false, marketplaceUse: "Available in the Punks & Patterns collection; official trait indexing remains pending.", group: "data" },
+  { id: "standard-punk", sourceKey: "Standard Punk", label: "STANDARD PUNK", description: "Two-transaction punk with a medium neck.", supported: false, marketplaceUse: "Available in the Punks & Patterns collection; official trait indexing remains pending.", group: "data" },
+  { id: "wide-neck-punk", sourceKey: "Wide Neck Punk", label: "WIDE NECK PUNK", description: "Two-transaction punk with a wide neck.", supported: false, marketplaceUse: "Available in the Punks & Patterns collection; official trait indexing remains pending.", group: "data" },
+  { id: "grid-punk", sourceKey: "is_grid_punk", label: "GRID PUNK", description: "Perfectly aligned punk with a grid shape.", supported: false, marketplaceUse: INDEX_REQUIRED, group: "data" },
+  { id: "community-punk", sourceKey: "is_community_punk", label: "COMMUNITY PUNK", description: "Distinctive punk recognized by the community.", supported: false, marketplaceUse: INDEX_REQUIRED, group: "data" },
+  { id: "ross-ulbricht", sourceKey: "is_ross_ulbricht", label: "ROSS ULBRICHT", description: "Contains a transaction in which payments were made from Silk Road to Ross Ulbricht.", supported: false, marketplaceUse: INDEX_REQUIRED, group: "culture" },
+  { id: "mondrian", sourceKey: "is_mondrian", label: "MONDRIAN", description: "Block resembling the grid-based work of Piet Mondrian.", supported: false, marketplaceUse: INDEX_REQUIRED, group: "data" },
+  { id: "leap-day", sourceKey: "is_leap_day", label: "LEAP DAY", description: "Block mined on a leap day.", supported: true, marketplaceUse: FACTS_MARKET, group: "data" },
+  { id: "notable-event", sourceKey: "is_notable_event", label: "NOTABLE EVENT", description: "Block associated with a historical event.", supported: false, marketplaceUse: INDEX_REQUIRED, group: "culture" },
+  { id: "1-tx", sourceKey: "is_1_tx", label: "1 TX", description: "Block containing one transaction.", supported: true, marketplaceUse: TX_MARKET, group: "data" },
+  { id: "2-tx", sourceKey: "is_2_tx", label: "2 TX", description: "Block containing two transactions.", supported: true, marketplaceUse: TX_MARKET, group: "data" },
+  { id: "miner-message", sourceKey: "is_miner_message", label: "MINER MESSAGE", description: "Contains a message encoded by the miner.", supported: true, marketplaceUse: FACTS_MARKET, group: "data" },
+  { id: "xspectar", sourceKey: "is_xspectar", label: "XSPECTAR", description: "xSPECTAR land on Bitmap Island.", supported: false, marketplaceUse: INDEX_REQUIRED, group: "data" },
+  { id: "bitmap-valley", sourceKey: "is_bitmap_valley", label: "BITMAP VALLEY", description: "Land in Bitmap Valley.", supported: false, marketplaceUse: INDEX_REQUIRED, group: "data" },
+  ...[100_000, 250_000, 500_000, 1_000_000, 3_000_000, 5_000_000].map((amount) => ({ id: `${amount}-out`, sourceKey: `is_${amount >= 1_000_000 ? `${amount / 1_000_000}m` : `${amount / 1_000}k`}_out`, label: `${amount >= 1_000_000 ? `${amount / 1_000_000}M` : `${amount / 1_000}K`} OUT`, description: `Block with total outputs greater than ${amount.toLocaleString("en-US")} BTC.`, supported: true, marketplaceUse: FACTS_MARKET, group: "data" as const })),
+  { id: "micro-strategy", sourceKey: "is_micro_strategy", label: "MICROSTRATEGY", description: "Contains a transaction initiated by MicroStrategy.", supported: false, marketplaceUse: INDEX_REQUIRED, group: "culture" },
+  { id: "chinese-lucky-number", sourceKey: "is_chinese_lucky_number", label: "CHINESE LUCKY NUMBER", description: "Block height contains 168, associated with prosperity in Chinese numerology.", supported: true, marketplaceUse: FACTS_MARKET, group: "culture" },
+  { id: "pre-segwit-full", sourceKey: "is_pre_segwit_full", label: "PRE-SEGWIT FULL", description: "Maxed out the 1 MB block size before SegWit.", supported: true, marketplaceUse: FACTS_MARKET, group: "data" },
+  { id: "dual-palindrome", sourceKey: "is_dual_palindrome", label: "DUAL PALINDROME", description: "Palindrome block number inscribed on a palindrome sat.", supported: true, marketplaceUse: SAT_MARKET, group: "math" },
+  ...[1, 2, 3, 4, 5, 6, 7, 8].map((count) => ({ id: `${count}k-txs`, sourceKey: `is_${count}k_txs`, label: `${count}K TXS`, description: `Block containing ${count.toLocaleString("en-US")},000${count === 8 ? "+" : "–" + count + ",999"} transactions.`, supported: true, marketplaceUse: TX_MARKET, group: "data" as const })),
+  ...[1, 2, 3, 4, 5, 6, 7].map((rate) => ({ id: `${rate}k-fee-rate`, sourceKey: `is_${rate}k_fee_rate`, label: `${rate}K FEE RATE`, description: `Block with an average fee rate of ${rate.toLocaleString("en-US")},000 sat/vB.`, supported: true, marketplaceUse: FACTS_MARKET, group: "data" as const })),
+  { id: "21e8", sourceKey: "is_21e8", label: "21E8", description: "Block with a hash containing 21e8.", supported: true, marketplaceUse: FACTS_MARKET, group: "data" },
 ];
 
 export function officialTrait(id: string): OfficialTraitDefinition | null {

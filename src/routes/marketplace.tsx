@@ -23,7 +23,7 @@ import { MyBitmapsPanel } from "@/components/MyBitmapsPanel";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapMarketChart } from "@/components/BitmapMarketChart";
 import { TrendExplorer } from "@/components/TrendExplorer";
-import { ALL_OFFICIAL_TRAITS, hasTrait, OFFICIAL_TRAITS, type TraitId } from "@/lib/traits";
+import { ALL_OFFICIAL_TRAITS, hasTrait, OFFICIAL_TRAITS, TRAIT_GROUPS, type TraitId } from "@/lib/traits";
 
 const HEIGHT_TRAIT_IDS = new Set<string>(OFFICIAL_TRAITS.map((t) => t.id));
 const matchesTrait = (h: number, t: string) => !HEIGHT_TRAIT_IDS.has(t) || hasTrait(h, t as TraitId);
@@ -399,17 +399,34 @@ function Marketplace() {
                     <span className="label text-bitcoin">OFFICIAL TRAITS</span>
                     <Link to="/traits" className="label hover:text-bitcoin">INDEX →</Link>
                   </div>
-                  <div className="grid max-h-72 gap-1 overflow-y-auto pr-1">
+                  <div className="grid max-h-[28rem] gap-3 overflow-y-auto pr-1">
                     <TraitRow active={trait === "any"} label="ALL" count={serverMode ? null : parcels.length} onClick={() => { setTrait("any"); setPage(0); }} />
-                    {traitList.map((item) => {
-                      const count = serverMode ? null : traitCounts.get(item.id as TraitId) ?? 0;
-                      const fl = traitFloors.get(item.id);
-                      const label = fl ? `${item.label} · FLOOR ${formatSats(fl.floor)} (${fl.count})` : item.label;
+                    {TRAIT_GROUPS.map((group) => {
+                      const items = traitList.filter((item) => item.group === group.id);
+                      if (items.length === 0) return null;
                       return (
-                        <TraitRow key={item.id} active={trait === item.id} label={label} count={count} title={`${item.sourceKey} — ${item.description}`} disabled={count === 0 && trait !== item.id} onClick={() => { setTrait(item.id); setPage(0); }} />
+                        <div key={group.id}>
+                          <p className="label text-foreground">{group.label}</p>
+                          <p className="mb-1 font-mono text-[10px] leading-relaxed text-muted-foreground">{group.description}</p>
+                          <div className="grid gap-1">
+                            {items.map((item) => {
+                              const count = serverMode ? null : traitCounts.get(item.id as TraitId) ?? 0;
+                              const fl = traitFloors.get(item.id);
+                              const label = fl ? `${item.label} · FLOOR ${formatSats(fl.floor)} (${fl.count})` : item.label;
+                              return (
+                                <TraitRow key={item.id} active={trait === item.id} label={label} count={count} title={`${item.sourceKey} — ${item.description}`} disabled={count === 0 && trait !== item.id} onClick={() => { setTrait(item.id); setPage(0); }} />
+                              );
+                            })}
+                          </div>
+                        </div>
                       );
                     })}
                   </div>
+                  {trait !== "any" && ALL_OFFICIAL_TRAITS.find((t) => t.id === trait) && (
+                    <p className="mt-2 border-l-2 border-bitcoin pl-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
+                      {ALL_OFFICIAL_TRAITS.find((t) => t.id === trait)!.description}
+                    </p>
+                  )}
                   {trait !== "any" && (
                     <Link to="/traits/$trait" params={{ trait }} className="label mt-2 inline-block text-bitcoin hover:text-foreground">
                       FULL {ALL_OFFICIAL_TRAITS.find((t) => t.id === trait)?.label} INDEX →
