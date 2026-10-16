@@ -21,7 +21,7 @@ export function GuardianMintStatus({ height, className = "" }: { height: number;
         className={`inline-flex items-center gap-2 border border-signal bg-signal/10 px-2 py-0.5 font-mono text-[10px] font-bold text-signal hover:bg-signal/20 ${className}`}
       >
         <span className="size-1.5 bg-signal" aria-hidden="true" />
-        INHABITED{name ? <span data-no-translate>{` · ${name}`}</span> : null} ↗
+        INHABITED{name && dna.data ? <span data-no-translate>{` · ${name} · ${dna.data.rarity}`}</span> : dna.isError ? <span className="text-muted-foreground"> · UNVERIFIED</span> : dna.isPending ? <span className="text-muted-foreground"> · CHECKING…</span> : null} ↗
       </a>
     );
   }
@@ -30,7 +30,7 @@ export function GuardianMintStatus({ height, className = "" }: { height: number;
     return (
       <div className={`flex items-center gap-2 font-mono text-[10px] text-signal ${className}`}>
         <span className="size-1.5 border border-signal" aria-hidden="true" />
-        GUARDIAN AWAKE{name ? <span data-no-translate>{` · ${name}`}</span> : null} · NOT YET INSCRIBED
+        GUARDIAN AWAKE{name && dna.data ? <span data-no-translate>{` · ${name}`}</span> : null} · NOT YET INSCRIBED
       </div>
     );
   }
