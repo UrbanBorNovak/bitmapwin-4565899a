@@ -20,8 +20,6 @@ function when(row: { block_time: string | null; created_at: string }) {
   return d.toISOString().replace("T", " ").slice(0, 16) + " UTC";
 }
 
-/** Marketplace sales log starts with the platform's first live sales in September 2026. */
-const LOG_START_MS = Date.UTC(2026, 8, 1);
 
 export function SalesLog({ limit = 40 }: { limit?: number }) {
   const { data, isPending } = useQuery(recentTradesQuery(120));
@@ -29,7 +27,7 @@ export function SalesLog({ limit = 40 }: { limit?: number }) {
     .filter((row) => {
       if (row.price_sats <= 0) return false;
       const t = new Date(row.block_time ?? row.created_at).getTime();
-      return Number.isFinite(t) && t >= LOG_START_MS;
+      return Number.isFinite(t);
     })
     .slice(0, limit);
 
@@ -40,7 +38,7 @@ export function SalesLog({ limit = 40 }: { limit?: number }) {
           <h2 className="border-l-2 border-primary pl-3 font-mono text-sm font-bold text-foreground">
             SALES LOG
           </h2>
-          <p className="label mt-2 pl-[14px]">MARKETPLACE SALES SINCE SEPTEMBER 2026</p>
+          <p className="label mt-2 pl-[14px]">CONFIRMED ON-CHAIN SALES</p>
         </div>
         <span className="label">{sales.length} SALE(S)</span>
       </div>
