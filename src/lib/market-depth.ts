@@ -18,3 +18,18 @@ export function spreadOf(bestAsk: number | null, bestBid: number | null) {
   const mid = (bestAsk + bestBid) / 2;
   return { sats, pct: mid > 0 ? (sats / mid) * 100 : 0, mid };
 }
+
+export type DepthPoint = { price: number; ask: number | null; bid: number | null };
+
+/**
+ * Cumulative depth curve keyed by price: bids accumulate from the best bid
+ * downward, asks from the best ask upward. Each price is one real order level.
+ */
+export function depthCurve(asks: number[], bids: number[]): DepthPoint[] {
+  const pts: DepthPoint[] = [];
+  let cum = 0;
+  for (const p of [...bids].sort((a, b) => b - a)) { cum += 1; pts.push({ price: p, ask: null, bid: cum }); }
+  cum = 0;
+  for (const p of [...asks].sort((a, b) => a - b)) { cum += 1; pts.push({ price: p, ask: cum, bid: null }); }
+  return pts.sort((a, b) => a.price - b.price);
+}

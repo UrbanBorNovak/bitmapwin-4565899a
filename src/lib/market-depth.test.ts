@@ -12,3 +12,15 @@ describe("market depth", () => {
     expect(spreadOf(null, 40_000)).toBeNull();
   });
 });
+
+import { depthCurve } from "./market-depth";
+describe("depth curve", () => {
+  it("counts asks upward from best ask and bids downward from best bid", () => {
+    expect(depthCurve([500, 300], [200, 100])).toEqual([
+      { price: 100, ask: null, bid: 2 },
+      { price: 200, ask: null, bid: 1 },
+      { price: 300, ask: 1, bid: null },
+      { price: 500, ask: 2, bid: null },
+    ]);
+  });
+});

@@ -9,6 +9,7 @@ import { timeAgo } from "@/lib/bitmap";
 import { btcPriceQuery, usdFromSats } from "@/lib/btc-price";
 import { BuyButton } from "@/components/BuyButton";
 import { spreadOf, withDepth } from "@/lib/market-depth";
+import { TerminalCharts } from "@/components/market/TerminalCharts";
 
 const LEVELS = 10;
 const DAY = 86_400_000;
@@ -31,6 +32,8 @@ export function MarketTerminal() {
     [offers.data],
   );
   const bidRows = useMemo(() => [...(bids.data ?? [])].sort((a, b) => b.priceSats - a.priceSats).slice(0, LEVELS), [bids.data]);
+  const allAsks = useMemo(() => (offers.data ?? []).filter((o) => o.status === "open" && o.priceSats > 0).map((o) => o.priceSats), [offers.data]);
+  const allBids = useMemo(() => (bids.data ?? []).filter((b) => b.priceSats > 0).map((b) => b.priceSats), [bids.data]);
   const askTotal = asks.reduce((s, a) => s + a.priceSats, 0);
   const bidTotal = bidRows.reduce((s, b) => s + b.priceSats, 0);
   const sideMax = Math.max(askTotal, bidTotal);
@@ -47,6 +50,8 @@ export function MarketTerminal() {
   const dir = last && prev ? Math.sign(last.price_sats - prev.price_sats) : 0;
   const usd = (s: number) => (price?.usd ? usdFromSats(s, price.usd) : null);
 
+  if (!hydrated) return <section className="border border-border bg-card/60 px-4 py-6 font-mono text-[11px] text-muted-foreground backdrop-blur-md">&gt; LOADING PRO TERMINAL…</section>;
+
   return (
     <section className="border border-border bg-card/60 backdrop-blur-md" aria-labelledby="terminal-h">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-border px-4 py-3 font-mono text-[11px]" data-no-translate>
@@ -58,7 +63,7 @@ export function MarketTerminal() {
         <Kv k="BEST BID" v={bidRows[0] ? formatSats(bidRows[0].priceSats) : "—"} tone="text-signal" />
         <Kv k="SPREAD" v={spread ? `${formatSats(spread.sats)} · ${spread.pct.toFixed(1)}%` : "—"} />
         <Kv k="24H VOL" v={hydrated ? (vol24 ? formatSats(vol24) : "0") : "…"} suffix={hydrated ? `${day.length} FILLS` : ""} />
-        {price?.usd ? <Kv k="BTC" v={`$${Math.round(price.usd).toLocaleString("en-US")}`} /> : null}
+        {hydrated && price?.usd ? <Kv k="BTC" v={`$${Math.round(price.usd).toLocaleString("en-US")}`} /> : null}
       </div>
 
       <div className="grid gap-px bg-border lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
@@ -104,6 +109,11 @@ export function MarketTerminal() {
           </ol>
         </div>
       </div>
+      <TerminalCharts
+        askPrices={allAsks}
+        bidPrices={allBids}
+        loading={offers.isPending || bids.isPending}
+      />
       <p className="border-t border-border px-4 py-2 font-mono text-[10px] text-muted-foreground">ASKS ARE SIGNED SALE PSBTS · BIDS ARE SIGNED INTENTS · TAPE IS TRACED BITCOIN TXS · EVERY BUY IS SIGNED IN YOUR OWN WALLET</p>
     </section>
   );
