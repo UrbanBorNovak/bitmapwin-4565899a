@@ -124,6 +124,7 @@ import { DesertLife } from "@/components/game/DesertLife";
 import { SeaMasses } from "@/components/game/SeaMasses";
 import { Whales } from "@/components/game/Whales";
 import { SeaShips } from "@/components/game/SeaShips";
+import { SeaLife } from "@/components/game/SeaLife";
 import { TerritoryGuardians } from "@/components/game/TerritoryGuardians";
 import { ShadowArchways } from "@/components/game/ShadowArchways";
 import { ShadowVaultRoom } from "@/components/game/ShadowVaultRoom";
@@ -2953,6 +2954,7 @@ const WorldScene = memo(function WorldScene({
           <SeaMasses unit={AVATAR_U} pose={pose} />
           <Whales unit={AVATAR_U} pose={pose} />
           <SeaShips unit={AVATAR_U} pose={pose} />
+          <SeaLife unit={AVATAR_U} pose={pose} />
           <TerritoryGuardians unit={AVATAR_U} pose={pose} />
           <ShadowArchways unit={AVATAR_U} pose={pose} />
           <AirdropBeacon unit={AVATAR_U} pose={pose} block={tipHeight} />
