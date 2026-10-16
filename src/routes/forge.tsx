@@ -63,6 +63,18 @@ const half = () => SPAN / 2;
 const COLORS = Object.fromEntries(BLOCKS.map((b) => [b.id, new THREE.Color(b.top)]));
 type Tool = "stamp" | "block" | "box" | "erase" | "perch" | "parcel" | "move";
 type Placement = AsmPlacement;
+const TOOL_LABELS: Record<Tool, [string, string]> = { stamp: ["PIECE", "S"], move: ["MOVE", "M"], block: ["BLOCK", "B"], box: ["BOX", "W"], erase: ["ERASE", "X"], perch: ["GUARDIAN", "G"], parcel: ["PARCEL", "P"] };
+
+function TabBar<T extends string>({ value, onChange, tabs }: { value: T; onChange: (v: T) => void; tabs: [T, string][] }) {
+  return (
+    <div role="tablist" className="flex gap-0.5 rounded-md border border-border bg-card/40 p-0.5">
+      {tabs.map(([id, label]) => (
+        <button key={id} type="button" role="tab" aria-selected={value === id} onClick={() => onChange(id)} className={`flex-1 rounded px-2 py-1.5 text-[10px] tracking-wider ${value === id ? "bg-primary/15 text-foreground ring-1 ring-primary" : "text-muted-foreground hover:text-foreground"}`}>{label}</button>
+      ))}
+    </div>
+  );
+}
+
 
 function ParcelFloor({ rects, focus, hoverIdx }: { rects: ParcelRect[]; focus: number | null; hoverIdx: number | null }) {
   const ref = useRef<THREE.InstancedMesh>(null);
@@ -297,7 +309,9 @@ function ForgePage() {
   const [turns, setTurns] = useState(0);
   const [layer, setLayer] = useState(0);
   const [hover, setHover] = useState<[number, number, number] | null>(null);
-  const [guide, setGuide] = useState(true);
+  const [guide, setGuide] = useState(false);
+  const [leftTab, setLeftTab] = useState<"kits" | "pieces" | "land">("kits");
+  const [rightTab, setRightTab] = useState<"inscribe" | "publish">("inscribe");
   const [digest, setDigest] = useState<string | null>(null);
   const [pub, setPub] = useState({ name: "", bit: 10, sats: 1000 });
   const weekly = useMemo(() => weeklyBlueprint(), []);
@@ -594,8 +608,13 @@ function ForgePage() {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 font-mono">
       <div className="mb-3"><OtherthingsBadge child="Builds" /></div>
-      <p className="text-xs tracking-widest text-primary">LAND FORGE STUDIO · COMPOSABLE ON-CHAIN BUILDS</p>
-      <h1 className="mt-2 font-display text-3xl text-foreground md:text-4xl">Build on Bitcoin. Build on each other.</h1>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-xs tracking-widest text-primary">LAND FORGE STUDIO · COMPOSABLE ON-CHAIN BUILDS</p>
+          <h1 className="mt-1 font-display text-2xl text-foreground md:text-3xl">Build on Bitcoin. Build on each other.</h1>
+        </div>
+        <button type="button" onClick={() => setGuide((g) => !g)} className="rounded border border-border px-3 py-1 text-[10px] text-muted-foreground hover:text-foreground">{guide ? "HIDE HOW IT WORKS" : "? HOW IT WORKS"}</button>
+      </div>
 
       {guide && (
         <section className="mt-5 grid gap-3 rounded-lg border border-border bg-card/40 p-4 text-xs text-muted-foreground md:grid-cols-3">
@@ -645,7 +664,8 @@ function ForgePage() {
               )}
             </>
           )}
-          {height !== null && role !== "parcel" && (
+          <TabBar value={leftTab} onChange={setLeftTab} tabs={[["kits", "KITS"], ["pieces", "PIECES"], ["land", "LAND"]]} />
+          {leftTab === "land" && height !== null && role !== "parcel" && (
             <div className="rounded border border-accent/40 bg-card/40 p-2 text-[11px]">
               <p className="text-accent">CANVAS SIZE</p>
               <div className="mt-1 flex gap-1">
@@ -659,6 +679,7 @@ function ForgePage() {
               <p className="mt-1 text-muted-foreground">{xl ? "XL: 8× the space at half block size, same land footprint. Inscribes as a recursive build only." : "Original size. Works with every inscribe option."}</p>
             </div>
           )}
+          {leftTab === "land" && (
           <div className="rounded border border-border bg-card/40 p-2 text-[11px]">
             <p className="text-accent">LAND MASS</p>
             <div className="mt-1 flex gap-1">
@@ -668,7 +689,8 @@ function ForgePage() {
             </div>
             <p className="mt-1 text-muted-foreground">{LAND_MASSES.find((m) => m.id === mass)?.blurb} Decorative only — costs no blocks and isn't inscribed.</p>
           </div>
-          {rects.length > 0 && (
+          )}
+          {leftTab === "land" && rects.length > 0 && (
             <div className="rounded border border-primary/40 bg-card/40 p-2 text-[11px]">
               <p className="text-primary">BUILD TARGET</p>
               <p className="mt-1 text-muted-foreground">The floor shows this block's {rects.length.toLocaleString()} real transaction parcels. Use PARCEL and click a tile to build only on it.</p>
@@ -679,6 +701,7 @@ function ForgePage() {
               {focusRect && <p className="mt-1 text-accent">PARCEL {focusRect.index}.{height}.BITMAP · {focusRect.x1 - focusRect.x0}×{focusRect.z1 - focusRect.z0} CELLS{focusRect.cells.size < (focusRect.x1 - focusRect.x0) * (focusRect.z1 - focusRect.z0) && ` · ${focusRect.cells.size} OWNED (SHARED CELLS GO TO THE LARGER TRANSACTION)`}</p>}
             </div>
           )}
+          {leftTab === "pieces" && (
           <div className="rounded border border-primary/40 bg-card/40 p-2 text-[11px]">
             <p className="text-primary">ON-CHAIN PIECES</p>
             <p className="mt-1 text-muted-foreground">Paste the inscription ID of any Land Forge build. It snaps in by reference — your inscription points at it instead of paying for its blocks again.</p>
@@ -713,7 +736,8 @@ function ForgePage() {
               ADD 546 SATS TO THE SITE FUND — COUNTS TOWARD DONOR STATUS ONCE CONFIRMED
             </label>
           </div>
-          {height !== null && (
+          )}
+          {leftTab === "land" && height !== null && (
             <div className="rounded border border-accent/40 bg-card/40 p-2 text-[11px]">
               <p className="text-accent">GUARDIAN PERCH</p>
               <p className="mt-1 text-muted-foreground">{dnaQ.data ? "Your block's Guardian lives on the build, in the same inscription, drawn from its on-chain design." : "Loading this block's Guardian…"}</p>
@@ -724,32 +748,26 @@ function ForgePage() {
               </div>
             </div>
           )}
-          {(tool === "block" || tool === "box") && (
-            <div className="grid grid-cols-4 gap-1">
-              {BLOCKS.map((b) => (
-                <button key={b.id} type="button" title={b.name} onClick={() => setPaint(b.id)} className={`h-8 rounded border ${paint === b.id ? "border-primary" : "border-border"}`} style={{ background: b.top }} />
-              ))}
-            </div>
-          )}
-          {tool === "stamp" && (
-            <>
+          {leftTab === "pieces" && (
+            <div className="rounded border border-border bg-card/40 p-2 text-[11px]">
+              <p className="mb-1 text-accent">HOUSE & COMMUNITY PIECES</p>
               <div className="flex flex-wrap gap-1">
                 {SPHERES.map((s) => (
                   <button key={s.id} type="button" onClick={() => setSphere(s.id)} className={`rounded border px-2 py-0.5 text-[10px] ${sphere === s.id ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>{s.name}</button>
                 ))}
               </div>
-              <div className="max-h-[360px] space-y-1 overflow-y-auto pr-1">
+              <div className="mt-2 max-h-[320px] space-y-1 overflow-y-auto pr-1">
                 {palette.length === 0 && <p className="text-[11px] text-muted-foreground">No community pieces yet. Build one and publish it to be the first maker.</p>}
                 {palette.map((p) => (
-                  <button key={p.id} type="button" onClick={() => setPicked(p)} className={`w-full rounded border px-2 py-1.5 text-left text-[11px] ${picked.id === p.id ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground hover:border-primary/50"}`}>
+                  <button key={p.id} type="button" onClick={() => { setPicked(p); setTool("stamp"); }} className={`w-full rounded border px-2 py-1.5 text-left text-[11px] ${picked.id === p.id && tool === "stamp" ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground hover:border-primary/50"}`}>
                     <span className="block text-foreground">{p.name}</span>
                     {p.blocks.length} blocks{p.author ? ` · ${short(p.author)} · ${p.bitCost ?? 0} BIT · ${p.tributeSats ?? 0} sats` : (p.bitCost ?? 0) > 0 ? "" : " · free"}{!p.author && (p.bitCost ?? 0) > 0 && <span className="ml-1 rounded border border-primary/60 px-1 text-primary">{p.bitCost} BIT</span>}
                   </button>
                 ))}
               </div>
-            </>
+            </div>
           )}
-          <PackageKit blocks={[...world.values()]} wallet={wallet} onPublished={(id) => { setBpId(id); setBpStep(0); }} />
+          {leftTab === "kits" && (
           <div className="rounded border border-accent/40 bg-card/40 p-2 text-[11px]">
             <div className="flex items-center justify-between"><span className="text-accent">KITS · STEP-BY-STEP + PROGRAMMABLE</span><span className="text-[10px] text-muted-foreground">NEXT DROP {dropIn}</span></div>
             <div className="mt-1 grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
@@ -841,17 +859,20 @@ function ForgePage() {
             )}
             </>)}
           </div>
-          <div>
-            <p className="mb-1 text-[10px] text-muted-foreground">START FROM YOUR BLOCK'S SEED</p>
-            <div className="flex flex-wrap gap-1">
+          )}
+          {leftTab === "pieces" && (
+          <div className="rounded border border-border bg-card/40 p-2 text-[11px]">
+            <p className="text-accent">START FROM YOUR BLOCK'S SEED</p>
+            <div className="mt-1 flex flex-wrap gap-1">
               {ARCHETYPES.map((a) => (
                 <button key={a.id} type="button" title={a.blurb} onClick={() => seed(a.id)} className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:border-primary">{a.name}</button>
               ))}
             </div>
           </div>
+          )}
         </aside>
 
-        <div className="relative h-[560px] overflow-hidden rounded-lg border border-border bg-card/40">
+        <div className="relative h-[620px] overflow-hidden rounded-lg border border-border bg-card/40">
           {tool === "stamp" && hover && (
             <div className="pointer-events-none absolute right-2 top-2 z-10 rounded border border-border bg-background/80 px-2 py-1 font-mono text-[10px] text-muted-foreground backdrop-blur">
               <span className={overLimit || ghostOut ? "text-destructive" : "text-accent"}>{overLimit || ghostOut ? "CLIPS EDGE" : "FITS"}</span> · {picked.name.toUpperCase()} · ROT {(((turns % 4) + 4) % 4) * 90}°{!picked.author && (picked.bitCost ?? 0) > 0 ? ` · ${picked.bitCost} BIT` : ""} · R ROTATE · CLICK PLACE
@@ -902,34 +923,42 @@ function ForgePage() {
               </div>
             )}
             <p className="pointer-events-none rounded bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground backdrop-blur">
-              {tool === "move" ? "CLICK A PLACED ON-CHAIN PIECE TO PICK IT UP" : tool === "erase" ? "CLICK A BLOCK TO REMOVE IT" : tool === "parcel" ? "CLICK A TILE TO BUILD ONLY ON IT" : tool === "box" ? (boxStart ? "CLICK THE OPPOSITE CORNER TO FILL · ESC CANCELS" : "CLICK ONE CORNER OF A WALL, FLOOR OR BOX") : tool === "perch" ? "CLICK WHERE YOUR GUARDIAN SHOULD LIVE" : "POINT AT ANY SURFACE · CLICK TO PLACE · IT STACKS ON TOP"} · R ROTATE · CTRL+Z UNDO
+              {tool === "move" ? "CLICK A PLACED ON-CHAIN PIECE TO PICK IT UP" : tool === "erase" ? "CLICK A BLOCK TO REMOVE IT" : tool === "parcel" ? "CLICK A TILE TO BUILD ONLY ON IT" : tool === "box" ? (boxStart ? "CLICK THE OPPOSITE CORNER TO FILL · ESC CANCELS" : "CLICK ONE CORNER OF A WALL, FLOOR OR BOX") : tool === "perch" ? "CLICK WHERE YOUR GUARDIAN SHOULD LIVE" : "POINT AT ANY SURFACE · CLICK TO PLACE · IT STACKS ON TOP"}
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-1 rounded-lg border border-border bg-background/80 p-1 backdrop-blur">
-              {(["stamp", "move", "block", "box", "erase", "perch", "parcel"] as Tool[]).map((t) => (
-                <button key={t} type="button" onClick={() => { setTool(t); setBoxStart(null); }} className={`rounded px-2.5 py-1 text-[10px] ${tool === t ? "bg-primary/15 text-foreground ring-1 ring-primary" : "text-muted-foreground hover:text-foreground"}`}>
-                  {t === "stamp" ? "PIECES (S)" : t === "move" ? "MOVE (M)" : t === "block" ? "BLOCK (B)" : t === "box" ? "BOX (W)" : t === "erase" ? "ERASE (X)" : t === "perch" ? "GUARDIAN (G)" : "PARCEL (P)"}
-                </button>
-              ))}
-              {(tool === "block" || tool === "box") && (
-                <>
-                  <span className="mx-1 h-4 w-px bg-border" />
-                  {BLOCKS.map((b, i) => (
-                    <button key={b.id} type="button" title={`${b.name} (${(i + 1) % 10})`} onClick={() => setPaint(b.id)} className={`h-5 w-5 rounded-sm border ${paint === b.id ? "border-primary ring-1 ring-primary" : "border-border"}`} style={{ background: b.top }} />
-                  ))}
-                </>
-              )}
+            {(tool === "block" || tool === "box") && (
+              <div className="flex flex-wrap justify-center gap-1 rounded-lg border border-border bg-background/80 p-1 backdrop-blur">
+                {BLOCKS.map((b, i) => (
+                  <button key={b.id} type="button" title={`${b.name} (${(i + 1) % 10})`} onClick={() => setPaint(b.id)} className={`h-6 w-6 rounded-sm border ${paint === b.id ? "border-primary ring-2 ring-primary" : "border-border"}`} style={{ background: b.top }} />
+                ))}
+              </div>
+            )}
+            <div className="flex flex-wrap items-center justify-center gap-1 rounded-lg border border-border bg-background/85 p-1 backdrop-blur">
+              <div className="flex gap-0.5 rounded-md bg-muted/40 p-0.5">
+                {(["stamp", "move", "block", "box", "erase", "perch", "parcel"] as Tool[]).map((t) => {
+                  const [label, key] = TOOL_LABELS[t];
+                  return (
+                    <button key={t} type="button" title={`${label} (${key})`} onClick={() => { setTool(t); setBoxStart(null); }} className={`rounded px-2.5 py-1 text-[10px] ${tool === t ? "bg-primary/20 text-foreground ring-1 ring-primary" : "text-muted-foreground hover:text-foreground"}`}>
+                      {label}<span className="ml-1 hidden text-muted-foreground sm:inline">{key}</span>
+                    </button>
+                  );
+                })}
+              </div>
               <span className="mx-1 h-4 w-px bg-border" />
-              <button type="button" onClick={() => setTurns((t) => t + 1)} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">⟳ ROTATE</button>
-              <button type="button" onClick={undo} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">↶ UNDO</button>
-              <button type="button" title="Floor level (Q/E) — only needed to build in mid-air" onClick={() => setLayer((l) => Math.max(0, l - 1))} className="rounded px-1.5 py-1 text-[10px] text-muted-foreground hover:bg-muted">−</button>
-              <span className="text-[10px] text-muted-foreground">LVL {layer}</span>
-              <button type="button" title="Floor level (Q/E) — only needed to build in mid-air" onClick={() => setLayer((l) => Math.min(SPAN - 1, l + 1))} className="rounded px-1.5 py-1 text-[10px] text-muted-foreground hover:bg-muted">+</button>
-              <button type="button" onClick={() => { commit(new Map()); setUsed([]); }} className="rounded px-2 py-1 text-[10px] text-destructive hover:bg-muted">CLEAR</button>
+              <button type="button" title="Rotate (R)" onClick={() => setTurns((t) => t + 1)} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">⟳ {(((turns % 4) + 4) % 4) * 90}°</button>
+              <button type="button" title="Undo (Ctrl+Z)" onClick={undo} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">↶ UNDO</button>
+              <div className="flex items-center rounded border border-border" title="Floor level (Q/E) — only needed to build in mid-air">
+                <button type="button" onClick={() => setLayer((l) => Math.max(0, l - 1))} className="px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted">−</button>
+                <span className="px-1 text-[10px] text-muted-foreground">LVL {layer}</span>
+                <button type="button" onClick={() => setLayer((l) => Math.min(SPAN - 1, l + 1))} className="px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted">+</button>
+              </div>
+              <button type="button" onClick={() => { if (world.size === 0 || window.confirm("Clear the whole build?")) { commit(new Map()); setUsed([]); } }} className="rounded px-2 py-1 text-[10px] text-destructive hover:bg-muted">CLEAR</button>
             </div>
           </div>
         </div>
 
         <aside className="space-y-3">
+          <TabBar value={rightTab} onChange={setRightTab} tabs={[["inscribe", "INSCRIBE"], ["publish", "PUBLISH & EARN"]]} />
+          {rightTab === "inscribe" && (<>
           <div className="rounded border border-border bg-card/40 p-3 text-[11px]">
             <p className="mb-2 text-primary">MAKERS IN THIS BUILD</p>
             {payouts.length === 0 ? (
@@ -989,6 +1018,8 @@ function ForgePage() {
             <p className="rounded border border-border p-3 text-[11px] text-muted-foreground">Enter your BITMAP number and place some blocks to inscribe.</p>
           )}
 
+          </>)}
+          {rightTab === "publish" && (
           <div className="rounded border border-border bg-card/40 p-3 text-[11px]">
             <p className="mb-2 text-primary">PUBLISH AS A REUSABLE PIECE</p>
             <p className="mb-2 text-muted-foreground">Others can drop it into their own builds. You earn BIT each time it's placed and sats each time a build using it is inscribed — and so do the makers of the pieces you used.</p>
@@ -999,7 +1030,11 @@ function ForgePage() {
             </div>
             {wallet && <p className="mb-2 text-[10px] text-muted-foreground">SAT ROYALTIES PAID TO <span className="text-accent">{short(wallet.paymentAddress || wallet.ordinalsAddress)}</span>{wallet.paymentAddress ? " (PAYMENT ADDRESS)" : ""}</p>}
             <button type="button" onClick={() => void publish()} className="w-full rounded border border-primary bg-primary/10 px-2 py-1.5 text-foreground">PUBLISH PIECE</button>
+            <div className="mt-3 border-t border-border pt-2">
+              <PackageKit blocks={[...world.values()]} wallet={wallet} onPublished={(id) => { setBpId(id); setBpStep(0); setLeftTab("kits"); }} />
+            </div>
           </div>
+          )}
           <p className="text-[11px] text-muted-foreground">Want to walk it first? <a href={height !== null ? `/oasis?height=${height}` : "/oasis"} className="text-accent underline">Open the Oasis</a>.</p>
         </aside>
       </div>
