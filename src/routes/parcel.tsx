@@ -207,7 +207,7 @@ function ParcelStudio() {
                     const st = stateOf(i);
                     const dim = (filter === "open" && st !== "open") || (filter === "valid" && st !== "valid");
                     const ownsGround = i === sel && selRect !== null && selRect.cells.size > 0;
-                    const cls = ownsGround ? "fill-primary/20 stroke-primary" : i === sel ? "fill-primary" : cart.includes(i) ? "fill-primary/50" : st === "valid" ? "fill-signal" : "fill-muted-foreground/25";
+                    const cls = ownsGround ? "fill-none stroke-primary/30" : i === sel ? "fill-primary" : cart.includes(i) ? "fill-primary/50" : st === "valid" ? "fill-signal" : "fill-muted-foreground/25";
                     return (
                       <rect key={i} x={p.position.x + offX + 0.06} y={p.position.y + offY + 0.06} width={Math.max(0.1, p.size - 0.12)} height={Math.max(0.1, p.size - 0.12)}
                         strokeWidth={ownsGround ? 0.1 : undefined}
@@ -220,14 +220,23 @@ function ParcelStudio() {
                   })}
                   {selRect && selRect.cells.size > 0 && (() => {
                     const k = selRect.span / side;
-                    return [...selRect.cells].map((c) => {
-                      const cx = Math.floor(c / selRect.span), cz = c % selRect.span;
-                      return (
-                        <rect key={`own-${c}`} x={(cx / k) + offX + 0.08} y={(cz / k) + offY + 0.08}
-                          width={Math.max(0.1, 1 / k - 0.16)} height={Math.max(0.1, 1 / k - 0.16)}
-                          className="pointer-events-none fill-primary stroke-primary" strokeWidth={0.12} />
-                      );
-                    });
+                    return (
+                      <>
+                        {/* Rounded deed tile: the ground this parcel's build may cover. */}
+                        <rect key="deed" x={selRect.x0 / k + 0.04} y={selRect.z0 / k + 0.04}
+                          width={Math.max(0.1, (selRect.x1 - selRect.x0) / k - 0.08)} height={Math.max(0.1, (selRect.z1 - selRect.z0) / k - 0.08)}
+                          className="pointer-events-none fill-primary/20 stroke-primary" strokeWidth={0.1} />
+                        {/* Exclusively owned squares: where the build actually appears. */}
+                        {[...selRect.cells].map((c) => {
+                          const cx = Math.floor(c / selRect.span), cz = c % selRect.span;
+                          return (
+                            <rect key={`own-${c}`} x={(cx / k) + 0.08} y={(cz / k) + 0.08}
+                              width={Math.max(0.1, 1 / k - 0.16)} height={Math.max(0.1, 1 / k - 0.16)}
+                              className="pointer-events-none fill-primary stroke-primary" strokeWidth={0.12} />
+                          );
+                        })}
+                      </>
+                    );
                   })()}
                 </svg>
               )}
