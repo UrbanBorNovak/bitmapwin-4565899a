@@ -225,6 +225,15 @@ WARNING        never inscribe the .br file without content-encoding: br — it r
         </pre>
       )}
       <iframe title="Master generator preview" srcDoc={html} sandbox="allow-scripts" className="mt-4 h-80 w-full border border-border bg-background" />
+      <div className="mt-6 border border-border p-4 font-mono text-xs">
+        <div className="text-signal">LIVEOCI V1.1 AUDIT</div>
+        <p className="mt-2 text-muted-foreground">
+          BitmapWin reads the on-chain sat cache to block 969,999 with the official corrections, then reads live blocks.
+          Open the on-chain dashboard by @boppleton to build an index or compare any external list against the chain.
+        </p>
+        <a className="mt-3 inline-block border border-signal px-3 py-2 text-signal hover:bg-signal hover:text-background" target="_blank" rel="noreferrer"
+          href="https://ordinals.com/content/0c1d5fbd2cf9a2bd33d53d444e4873f9b2efb54f823226f8a76ba0e4baa5cb11i0">OPEN LIVEOCI DASHBOARD ↗</a>
+      </div>
     </section>
   );
 }

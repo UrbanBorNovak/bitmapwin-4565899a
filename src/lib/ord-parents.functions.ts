@@ -72,7 +72,7 @@ export const mintParentsFn = createServerFn({ method: "GET" })
     }
     const isParcel = data.parcelIndex !== undefined;
     if (!isParcel && !bitmapId && !data.bitmapInscriptionId) bitmapId = await bitmapInscriptionFor(data.height).catch(() => null);
-    if (!isParcel && !bitmapId && !data.bitmapInscriptionId && data.height >= 942_000) {
+    if (!isParcel && !bitmapId && !data.bitmapInscriptionId && data.height >= 970_000) {
       // LiveOCI: read the blocks themselves for the first valid <height>.bitmap.
       const { resolveBitmapFromChain } = await import("@/lib/bitmap-live-resolver.server");
       bitmapId = await resolveBitmapFromChain(data.height).catch(() => null);

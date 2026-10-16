@@ -1,8 +1,9 @@
-// Port of the Bitmap on-chain index (OCI) module inscribed at
-// /content/942b5886158d57fc70cb8fb7d9bd4d37aa95b8b145be1a351326336b087262dbi0
-// Resolves the first-is-first inscription id of <height>.bitmap for 0–941,999.
-export const BITMAP_OCI_MODULE_ID = "942b5886158d57fc70cb8fb7d9bd4d37aa95b8b145be1a351326336b087262dbi0";
-export const BITMAP_OCI_MAX = 942_000;
+// Port of the Bitmap on-chain index (OCI) sat cache module inscribed at
+// /content/970c183ec1e8cb10d25e53140b520bbda5dcf4381d830ea4dfda507b9af4f926i0 (LiveOCI v1.1)
+// Resolves the first-is-first inscription id of <height>.bitmap for 0–969,999.
+import { OCI_ID_FIXES } from "@/lib/oci-fixes";
+export const BITMAP_OCI_MODULE_ID = "970c183ec1e8cb10d25e53140b520bbda5dcf4381d830ea4dfda507b9af4f926i0";
+export const BITMAP_OCI_MAX = 970_000;
 
 const ORD = "https://ordinals.com";
 const PAGES = [
@@ -17,6 +18,7 @@ const PAGES = [
   "bb986a1208380ec7db8df55a01c88c73a581069a51b5a2eb2734b41ba10b65c2i0",
   "b907b51a239e3a37f29f8222fb274f828c6ebf7b93ce501a55b7171daaa75758i0",
   "b942b6477c7da9090edb9751429ba9c3ba01b39ab972fc888d481f528e3e03c3i0",
+  "970bd12900ff92a0e620cf08a7842c310b04d88335ae1c6a0d6b3b38bc377f51i0",
 ];
 const SAT_INDICES: Record<number, number> = {92871:1,92970:1,123132:1,365518:1,700181:1,826151:1,827151:1,828151:1,828239:1,828661:1,829151:1,830151:1,832104:2,832249:2,832252:2,832385:4,833067:1,833101:3,833105:4,833109:4,833121:8,834030:2,834036:2,834051:17,834073:4,836151:1,837115:2,837120:2,837151:1,837183:3,837188:2,838058:5,838068:2,838076:2,838096:1,838151:1,838821:1,839151:1,839377:1,839378:2,839382:2,839397:1,840151:1,841151:1,842151:1,845151:1};
 
@@ -32,7 +34,7 @@ function undelta(d: Array<number | string>): number[] {
 async function loadPage(p: number): Promise<Page> {
   const r = await fetch(`${ORD}/content/${PAGES[p]}`);
   if (!r.ok) throw new Error("OCI page unavailable");
-  if (p === 9 || p === 10) {
+  if (p === 9 || p === 10 || p === 11) {
     const data = (await r.json()) as { deltaEncodedSats: Array<number | string>; satIndexMap: Record<string, number> };
     return { sats: undelta(data.deltaEncodedSats), satIndex: data.satIndexMap ?? {} };
   }
@@ -63,9 +65,11 @@ function page(p: number) {
 /** Canonical inscription id for <height>.bitmap per the OCI, or null if out of range / unresolved. */
 export async function ociBitmapInscriptionId(height: number): Promise<string | null> {
   if (!Number.isInteger(height) || height < 0 || height >= BITMAP_OCI_MAX) return null;
-  const p = height >= 907000 ? 10 : height >= 840000 ? 9 : Math.floor(height / 100000);
+  const fixed = OCI_ID_FIXES[height];
+  if (fixed) return fixed;
+  const p = height >= 942000 ? 11 : height >= 907000 ? 10 : height >= 840000 ? 9 : Math.floor(height / 100000);
   const pg = await page(p);
-  const off = height >= 907000 ? height - 907000 : height >= 840000 ? height - 840000 : height % 100000;
+  const off = height >= 942000 ? height - 942000 : height >= 907000 ? height - 907000 : height >= 840000 ? height - 840000 : height % 100000;
   const sat = pg.sats[off];
   if (!sat) return null;
   const at = height >= 840000 ? Number(pg.satIndex[String(height)] ?? 0) : SAT_INDICES[height] ?? 0;

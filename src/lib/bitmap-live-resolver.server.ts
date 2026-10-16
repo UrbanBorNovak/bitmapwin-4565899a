@@ -76,7 +76,7 @@ const BLOCKS_AHEAD = 6;
  * Reads up to BLOCKS_AHEAD blocks; a hit is verified and stored via learnBitmap.
  */
 export async function resolveBitmapFromChain(height: number): Promise<string | null> {
-  if (!Number.isInteger(height) || height < 942_000) return null;
+  if (!Number.isInteger(height) || height < 970_000) return null;
   const { fetchBlock, listInscriptions, toHex } = await import("@/lib/vendor/ord-block-parser.js");
   const target = toHex(new TextEncoder().encode(`${height}.bitmap`));
   for (let h = height; h < height + BLOCKS_AHEAD; h++) {

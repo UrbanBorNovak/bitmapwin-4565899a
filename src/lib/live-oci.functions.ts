@@ -4,7 +4,7 @@ import { createServerFn } from "@tanstack/react-start";
  * LiveOCI frontier for the marketplace: real counts past the 942k OCI, plus a
  * small, throttled sweep that resolves the newest unindexed blocks on chain.
  */
-const OCI_LIMIT = 942_000;
+const OCI_LIMIT = 970_000;
 const SWEEP = 2;
 let lastSweep = 0;
 
