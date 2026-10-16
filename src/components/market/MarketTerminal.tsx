@@ -61,7 +61,7 @@ export function MarketTerminal() {
         <Kv k="BEST BID" v={bidRows[0] ? formatSats(bidRows[0].priceSats) : "—"} tone="text-signal" />
         <Kv k="SPREAD" v={spread ? `${formatSats(spread.sats)} · ${spread.pct.toFixed(1)}%` : "—"} />
         <Kv k="24H VOL" v={hydrated ? (vol24 ? formatSats(vol24) : "0") : "…"} suffix={hydrated ? `${day.length} FILLS` : ""} />
-        {price?.usd ? <Kv k="BTC" v={`$${Math.round(price.usd).toLocaleString("en-US")}`} /> : null}
+        {hydrated && price?.usd ? <Kv k="BTC" v={`$${Math.round(price.usd).toLocaleString("en-US")}`} /> : null}
       </div>
 
       <div className="grid gap-px bg-border lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
