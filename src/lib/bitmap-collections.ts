@@ -37,7 +37,19 @@ export type GalleryCollection = {
   maxHeight?: number;
 };
 
+/** Bop's inscribed on-chain getGallery(id) reader. */
+export const GET_GALLERY_FUNCTION_INSCRIPTION =
+  "609ae74a6d2dac910a077220dd5d67e2787b1c922b0ea8d64837610cf296d059i0";
+
 export const GALLERY_COLLECTIONS: GalleryCollection[] = [
+  {
+    id: "999-club",
+    label: "999 CLUB",
+    short: "999 CLUB",
+    coverInscription: "999bbd123e327789d9b0991a73bb76385b7d9f3d99828576d6b2b0cb8c3cdfdei0",
+    blurb: "Every BITMAP from block 0 to block 999.",
+    maxHeight: 999,
+  },
   {
     id: "pristine-punks",
     label: "PRISTINE PUNKS",
