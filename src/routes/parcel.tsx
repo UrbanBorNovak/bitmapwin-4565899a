@@ -225,7 +225,7 @@ function ParcelStudio() {
                         {/* Rounded deed tile: the ground this parcel's build may cover. */}
                         <rect key="deed" x={selRect.x0 / k + 0.04} y={selRect.z0 / k + 0.04}
                           width={Math.max(0.1, (selRect.x1 - selRect.x0) / k - 0.08)} height={Math.max(0.1, (selRect.z1 - selRect.z0) / k - 0.08)}
-                          className="pointer-events-none fill-primary/20 stroke-primary" strokeWidth={0.1} />
+                          className="pointer-events-none fill-primary/40 stroke-primary" strokeWidth={0.1} />
                         {/* Exclusively owned squares: where the build actually appears. */}
                         {[...selRect.cells].map((c) => {
                           const cx = Math.floor(c / selRect.span), cz = c % selRect.span;
