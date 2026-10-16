@@ -23,6 +23,7 @@ import { CommunityKitShelf, PackageKit, useCommunityKits } from "@/components/fo
 import { KitThumb } from "@/components/forge/KitThumb";
 import { KitBehaviorPreview } from "@/components/forge/KitBehaviorPreview";
 import { clipToParcel, inRect, parcelAt, parcelRects, type ParcelRect } from "@/lib/forge-parcels";
+import { parcelOutpost } from "@/lib/parcel-foundry";
 import { LAND_MASSES, terrainHeight, type LandMass } from "@/lib/forge-terrain";
 import { publishForgeModuleFn, stampForgeModuleFn, stampHousePresetFn } from "@/lib/forge-modules.functions";
 import { supabase } from "@/integrations/supabase/client";
