@@ -121,9 +121,30 @@ function Marketplace() {
   });
 
 
+  const [view, setView] = useState<"cards" | "table">("cards");
+  const [minBtc, setMinBtc] = useState("");
+  const [maxBtc, setMaxBtc] = useState("");
+  const [onlyInhabited, setOnlyInhabited] = useState(false);
+  const [onlyBuilt, setOnlyBuilt] = useState(false);
+  const [onlySold, setOnlySold] = useState(false);
+  const builtWorld = useQuery(builtWorldQuery());
+  const builtSet = useMemo(() => new Set((builtWorld.data?.built ?? []).map((b) => b.height)), [builtWorld.data]);
+  const inhabitedSet = useMemo(() => new Set(inhabited.data?.keys() ?? []), [inhabited.data]);
+  const minSats = btcInputToSats(minBtc);
+  const maxSats = btcInputToSats(maxBtc);
+  const passesDesk = (p: RegistryParcel) =>
+    inPriceBand(p.listedSats ?? p.lastSaleSats ?? null, minSats, maxSats) &&
+    (!onlyInhabited || inhabitedSet.has(p.bitmapHeight)) &&
+    (!onlyBuilt || builtSet.has(p.bitmapHeight)) &&
+    (!onlySold || !!p.lastSaleSats);
+
   const listed = useMemo(() => parcels.filter((p) => p.listedSats !== null), [parcels]);
   const traded = useMemo(() => parcels.filter((p) => p.transfers > 0), [parcels]);
   const sold = useMemo(() => parcels.filter((p) => p.lastSaleSats), [parcels]);
+  const traitFloors = useMemo(
+    () => floorsBy(listed, (p) => OFFICIAL_TRAITS.filter((t) => hasTrait(p.bitmapHeight, t.id)).map((t) => t.id)),
+    [listed],
+  );
   const traitCounts = useMemo(() => {
     const base = tab === "traded" ? traded : tab === "listed" ? listed : parcels;
     return new Map(OFFICIAL_TRAITS.map((t) => [t.id, base.filter((p) => hasTrait(p.bitmapHeight, t.id)).length]));
@@ -136,6 +157,7 @@ function Marketplace() {
       if (def) base = base.filter((p) => inClub(p.bitmapHeight, def));
     }
     if (trait !== "any") base = base.filter((p) => matchesTrait(p.bitmapHeight, trait));
+    base = base.filter(passesDesk);
     if (sort !== "default") {
       const cmp: Record<Exclude<Sort, "default">, (a: RegistryParcel, b: RegistryParcel) => number> = {
         recent: (a, b) => (b.lastSaleBlock ?? -1) - (a.lastSaleBlock ?? -1),
