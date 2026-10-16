@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 /**
@@ -17,6 +17,12 @@ export type TerritoryShareCardProps = {
   tags?: string[];
   /** Place name from the atlas, when known. */
   placeName?: string | null;
+  /** Verified trait labels derived from the block height (chain math only). */
+  traits?: string[];
+  /** Live preview of the BITMAP (e.g. its block mosaic). */
+  preview?: ReactNode;
+  /** Transaction count from block records, when known. */
+  txCount?: number | null;
   className?: string;
 };
 
@@ -33,6 +39,9 @@ export function TerritoryShareCard({
   title = null,
   tags = [],
   placeName = null,
+  traits = [],
+  preview = null,
+  txCount = null,
   className = "",
 }: TerritoryShareCardProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -45,9 +54,10 @@ export function TerritoryShareCard({
     [tags],
   );
 
+  const traitLine = traits.slice(0, 3).join(" · ");
   const postText = title
     ? `I just built ${headline} on BITMAP #${height} in BitmapWin. Enter the Oasis:`
-    : `BITMAP #${height} — Bitcoin land you can walk into. Enter the Oasis:`;
+    : `${height}.bitmap${traitLine ? ` — ${traitLine}` : ""}. Bitcoin land you can walk into:`;
 
   const share = useCallback(() => {
     const intent = `https://x.com/intent/post?text=${encodeURIComponent(`${postText} `)}&url=${encodeURIComponent(url)}`;
@@ -56,7 +66,7 @@ export function TerritoryShareCard({
 
   const copy = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(`${postText} ${url}`);
+      await navigator.clipboard.writeText(url);
       toast("LINK COPIED", { description: url });
     } catch {
       toast("COULD NOT COPY", { description: url });
@@ -121,6 +131,17 @@ export function TerritoryShareCard({
       }
 
 
+      if (traits.length) {
+        ctx.fillStyle = paper;
+        ctx.font = "700 20px 'JetBrains Mono', monospace";
+        ctx.fillText(`VERIFIED: ${traits.slice(0, 5).join(" · ")}`.toUpperCase().slice(0, 80), 72, 430);
+      }
+      if (txCount != null) {
+        ctx.fillStyle = dim;
+        ctx.font = "700 18px 'JetBrains Mono', monospace";
+        ctx.fillText(`${txCount.toLocaleString("en-US")} TX`, W - 220, 190);
+      }
+
       ctx.strokeStyle = "#2a2a2c";
       ctx.beginPath();
       ctx.moveTo(72, 470);
@@ -142,7 +163,7 @@ export function TerritoryShareCard({
     } finally {
       setBusy(false);
     }
-  }, [headline, height, placeName, tagLine]);
+  }, [headline, height, placeName, tagLine, traits, txCount]);
 
   return (
     <div className={`border border-border-strong bg-surface ${className}`}>
@@ -151,8 +172,9 @@ export function TerritoryShareCard({
         <span className="label text-bitcoin">TERRITORY PROVENANCE · SHARE CARD</span>
       </div>
 
-      <div className="relative overflow-hidden p-5">
+      <div className={`relative overflow-hidden p-5 ${preview ? "grid gap-5 sm:grid-cols-[160px_minmax(0,1fr)]" : ""}`}>
         <div className="pointer-events-none absolute inset-0 dot-bg" />
+        {preview ? <div className="relative w-full max-w-[160px]">{preview}</div> : null}
         <div className="relative">
           <div className="label text-muted-foreground" data-no-translate>
             BITMAP #{height}
@@ -162,6 +184,18 @@ export function TerritoryShareCard({
             <div className="mt-3 font-mono text-[11px] font-bold text-bitcoin" data-no-translate>
               {tagLine}
             </div>
+          ) : null}
+          {traits.length ? (
+            <div className="mt-3 flex flex-wrap gap-1.5" data-no-translate>
+              {traits.map((t) => (
+                <span key={t} className="border border-signal/40 px-1.5 py-0.5 font-mono text-[10px] font-bold text-signal">
+                  ✓ {t.toUpperCase()}
+                </span>
+              ))}
+            </div>
+          ) : null}
+          {txCount != null ? (
+            <div className="mt-2 font-mono text-[10px] text-muted-foreground" data-no-translate>{txCount.toLocaleString("en-US")} TX</div>
           ) : null}
           {placeName && headline !== placeName ? (
             <div className="mt-2 font-mono text-[10px] text-muted-foreground">{placeName.toUpperCase()}</div>

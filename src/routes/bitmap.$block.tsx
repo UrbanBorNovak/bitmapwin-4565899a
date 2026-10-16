@@ -1,3 +1,4 @@
+import { traitsOf } from "@/lib/traits";
 import { Activity, ArrowLeft, ArrowLeftRight, Database, Fingerprint, Globe, MapPin, ScrollText, ShieldCheck, Store, Users, Wallet, type LucideIcon } from "lucide-react";
 import { useSyncExternalStore } from "react";
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
@@ -366,6 +367,16 @@ function BitmapDetail() {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <BitmapStreamPlayer height={block} />
         <StreamChat height={block} />
+      </div>
+      <div className="mt-6">
+        <TerritoryShareCard
+          height={block}
+          placeName={`${place.localName} · ${place.name}`}
+          tags={[parcel ? "CLAIMED LAND" : "UNCLAIMED LAND", "BITCOIN BLOCK"]}
+          traits={traitsOf(block).map((t) => t.label)}
+          txCount={stats.data?.txCount ?? scan.data?.txCount ?? null}
+          preview={<BlockMosaic height={block} txCount={stats.data?.txCount ?? scan.data?.txCount ?? null} />}
+        />
       </div>
       <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="group rounded-lg border border-border bg-card p-6">
@@ -765,9 +776,6 @@ function BitmapDetail() {
         <BitmapEvents height={block} ownerAddress={owner} />
       </div>
       <ShadowGatePanel height={block} />
-      <div className="mt-8 max-w-2xl">
-        <TerritoryShareCard height={block} placeName={`${place.localName} · ${place.name}`} tags={[parcel ? "CLAIMED LAND" : "UNCLAIMED LAND", "BITCOIN BLOCK"]} />
-      </div>
         </div>
       )}
 
