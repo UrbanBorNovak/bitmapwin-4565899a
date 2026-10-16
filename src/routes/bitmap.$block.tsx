@@ -641,7 +641,7 @@ function BitmapDetail() {
           )}
         </div>
       </section>
-      <ArchaeologyDossier height={block} genesisHeight={oci.isLoading ? undefined : (oci.data?.genesisHeight ?? null)} />
+      <ArchaeologyDossier height={block} inscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null} genesisHeight={oci.isLoading ? undefined : (oci.data?.genesisHeight ?? null)} />
       <ParcelPanel
         height={block}
         districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}

@@ -2,13 +2,20 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { claimLag, inscriptionEra, milestoneAt, nearbyMilestones } from "@/lib/archaeology-dossier";
+import { blockEvidenceUrl, claimLag, inscriptionEra, inscriptionEvidenceUrl, milestoneAt, nearbyMilestones } from "@/lib/archaeology-dossier";
 import { officialTrait, traitsOf } from "@/lib/traits";
+import { safeExternalUrl } from "@/lib/safe-url";
 
 type Note = { id: string; trait_id: string; thesis: string; evidence_url: string; contributor_name: string; inscription_id: string };
 
+function Evidence({ href, label }: { href: string; label: string }) {
+  const safe = safeExternalUrl(href);
+  if (!safe) return null;
+  return <a href={safe} target="_blank" rel="noreferrer" className="label inline-flex items-center hover:text-bitcoin">{label}<ExternalLink className="ml-1 size-3" /></a>;
+}
+
 /** Era + milestone dossier for one BITMAP. Chain facts and community notes stay visibly separate. */
-export function ArchaeologyDossier({ height, genesisHeight }: { height: number; genesisHeight: number | null | undefined }) {
+export function ArchaeologyDossier({ height, genesisHeight, inscriptionId }: { height: number; genesisHeight: number | null | undefined; inscriptionId?: string | null }) {
   const era = inscriptionEra(genesisHeight);
   const milestone = milestoneAt(height);
   const { prev, next } = nearbyMilestones(height);
@@ -44,11 +51,19 @@ export function ArchaeologyDossier({ height, genesisHeight }: { height: number; 
           <p className="mt-1 font-mono text-[10px] text-muted-foreground">
             {era ? `CLAIM INSCRIBED IN BLOCK ${Number(genesisHeight).toLocaleString("en-US")} · ERA ${era.range}` : "NO VALID CLAIM BLOCK ON RECORD"}
           </p>
+          {era && (
+            <div className="mt-2 flex flex-wrap gap-3">
+              <Evidence href={blockEvidenceUrl(Number(genesisHeight))} label="CLAIM BLOCK" />
+              {inscriptionId && <Evidence href={inscriptionEvidenceUrl(inscriptionId)} label="INSCRIPTION" />}
+            </div>
+          )}
+          {era && <p className="mt-2 font-mono text-[9px] text-muted-foreground">ERA NAMES ARE A BITMAPWIN CONVENTION; ONLY THE BLOCK NUMBER IS A CHAIN FACT.</p>}
         </div>
         <div className="bg-card p-4">
-          <p className="label">LAND AGE AT CLAIM</p>
+          <p className="label text-signal">CHAIN VERIFIED · LAND AGE AT CLAIM</p>
           <p className="display mt-2 text-xl" data-no-translate>{lag !== null ? lag.toLocaleString("en-US") : "—"}</p>
           <p className="mt-1 font-mono text-[10px] text-muted-foreground">BLOCKS BETWEEN THIS BLOCK AND ITS .BITMAP CLAIM</p>
+          <div className="mt-2"><Evidence href={blockEvidenceUrl(height)} label="THIS BLOCK" /></div>
         </div>
         <div className="bg-card p-4">
           <p className="label">BETWEEN MILESTONES</p>
@@ -62,9 +77,17 @@ export function ArchaeologyDossier({ height, genesisHeight }: { height: number; 
       </div>
 
       {milestone && (
-        <div className="border-t border-bitcoin/60 bg-background p-4">
-          <p className="label text-bitcoin">HISTORIC BLOCK · {milestone.title}</p>
-          <p className="mt-2 font-mono text-xs leading-relaxed text-muted-foreground">{milestone.note}</p>
+        <div className="grid gap-px border-t border-bitcoin/60 bg-border md:grid-cols-2">
+          <div className="bg-background p-4">
+            <p className="label text-signal">CHAIN VERIFIED · BLOCK {milestone.height.toLocaleString("en-US")}</p>
+            <p className="mt-2 font-mono text-xs text-muted-foreground">This block exists at this height on Bitcoin mainnet.</p>
+            <div className="mt-2"><Evidence href={blockEvidenceUrl(milestone.height)} label="MEMPOOL.SPACE" /></div>
+          </div>
+          <div className="bg-background p-4">
+            <p className="label text-bitcoin">HISTORICAL INTERPRETATION · {milestone.title}</p>
+            <p className="mt-2 font-mono text-xs leading-relaxed text-muted-foreground">{milestone.note}</p>
+            <div className="mt-2"><Evidence href={milestone.source} label={`SOURCE · ${milestone.sourceLabel}`} /></div>
+          </div>
         </div>
       )}
 
@@ -84,7 +107,7 @@ export function ArchaeologyDossier({ height, genesisHeight }: { height: number; 
               <li key={n.id} className="border border-border p-3">
                 <p className="label">{officialTrait(n.trait_id)?.label ?? n.trait_id} · RECORDED BY {n.contributor_name}</p>
                 <p className="mt-2 break-words font-mono text-xs leading-relaxed text-muted-foreground">{n.thesis}</p>
-                <a href={n.evidence_url} target="_blank" rel="noreferrer" className="label mt-2 inline-flex hover:text-bitcoin">EVIDENCE <ExternalLink className="ml-1 size-3" /></a>
+                <div className="mt-2 flex flex-wrap gap-3"><Evidence href={n.evidence_url} label="COMMUNITY EVIDENCE" /><Evidence href={inscriptionEvidenceUrl(n.inscription_id)} label="INSCRIPTION" /></div>
               </li>
             ))}
           </ul>
