@@ -39,6 +39,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { tradeCrawlProgressFn } from "@/lib/trade-crawler.functions";
 import { liveOciStatusFn } from "@/lib/live-oci.functions";
 import { inhabitedQuery } from "@/lib/inhabited.functions";
+import { allGuardiansQuery } from "@/lib/bitmon-queries";
+import type { GuardianRarity } from "@/lib/bitmon";
+import { BitmonsShelf } from "@/components/market/BitmonsShelf";
 import { LiveMarketTicker } from "@/components/market/LiveMarketTicker";
 import { FloorSweeper, ProTable } from "@/components/market/TradingDesk";
 import { builtWorldQuery } from "@/lib/built-bitmaps";
@@ -140,6 +143,9 @@ function Marketplace() {
   const builtWorld = useQuery(builtWorldQuery());
   const builtSet = useMemo(() => new Set((builtWorld.data?.built ?? []).map((b) => b.height)), [builtWorld.data]);
   const inhabitedSet = useMemo(() => new Set(inhabited.data?.keys() ?? []), [inhabited.data]);
+  const [bitmonRarity, setBitmonRarity] = useState<GuardianRarity | "ALL">("ALL");
+  const roster = useQuery(allGuardiansQuery());
+  const rarityByHeight = useMemo(() => new Map((roster.data ?? []).map((g) => [g.height, g.rarity])), [roster.data]);
   const minSats = btcInputToSats(minBtc);
   const maxSats = btcInputToSats(maxBtc);
   const passesDesk = (p: RegistryParcel) =>
@@ -176,7 +182,10 @@ function Marketplace() {
   }, [club, trait, gallery, galleryIndex]);
   const visible = useMemo(() => {
     let base = tab === "traded" ? traded : tab === "listed" ? listed : parcels;
-    if (tab === "inhabited") base = inhabitedParcels.data ?? [];
+    if (tab === "inhabited") {
+      base = inhabitedParcels.data ?? [];
+      if (bitmonRarity !== "ALL") base = base.filter((p) => rarityByHeight.get(p.bitmapHeight) === bitmonRarity);
+    }
     if (club !== "any") {
       const def = CLUBS.find((c) => c.id === club);
       if (def) base = base.filter((p) => inClub(p.bitmapHeight, def));
