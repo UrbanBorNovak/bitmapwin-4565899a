@@ -10,6 +10,7 @@ import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { layoutFromSizeClasses } from "@/lib/bitmap-layout";
 import { parcelName, parcelsQuery } from "@/lib/parcels";
 import { getBitmapRegistryEntry } from "@/lib/oci.functions";
+import { getForgeLandFn } from "@/lib/forge.functions";
 import { MAX_BITMAP } from "@/lib/oci";
 import { useWalletSession } from "@/lib/wallet-session";
 import { heldHeightsQuery } from "@/lib/held-parcels";
@@ -78,6 +79,13 @@ function ParcelStudio() {
   });
   const districtId = (oci.data as { inscriptionId?: string | null } | undefined)?.inscriptionId ?? null;
   const scan = useQuery(parcelsQuery(height ?? 0, height !== null ? districtId : null));
+  const land = useQuery({
+    queryKey: ["forge-land", height],
+    queryFn: () => getForgeLandFn({ data: { height: height! } }),
+    enabled: height !== null,
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
   const addrs = wallet ? ([wallet.ordinalsAddress, wallet.paymentAddress].filter(Boolean) as string[]) : [];
   const owned = useQuery(heldHeightsQuery(addrs));
   const ownedHeights = (owned.data ?? []) as number[];
@@ -102,6 +110,7 @@ function ParcelStudio() {
   const sel = selected !== null && txCount !== null && selected < txCount ? selected : null;
   const selInfo = sel !== null ? byIndex.get(sel) : undefined;
   const scanning = scan.isPending && !!districtId;
+  const rejectedBuild = sel !== null ? (land.data?.rejected ?? []).find((r) => r.index === sel) : undefined;
 
   const go = () => {
     const h = Number(input);
@@ -226,6 +235,34 @@ function ParcelStudio() {
                       <Row k="HOLDER" v={selInfo.owner ? shortenAddress(selInfo.owner) : "—"} />
                       <a className="label block text-signal hover:underline" href={`https://ordinals.com/inscription/${selInfo.id}`} target="_blank" rel="noreferrer">VIEW PROOF ON ORDINALS ↗</a>
                       <Link to="/forge" search={{ height } as never} className="btn-term block w-full px-3 py-2 text-center">BUILD ON THIS PARCEL IN LAND FORGE</Link>
+                      {rejectedBuild && (
+                        <div className="rounded-md border border-destructive/60 bg-destructive/10 p-3">
+                          <p className="label text-destructive">BUILD NOT SHOWN — COORDINATES MISMATCH</p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            The newest build inscribed on this parcel claims tile{" "}
+                            <span className="text-foreground" data-no-translate>
+                              {rejectedBuild.claimed[0]},{rejectedBuild.claimed[1]} → {rejectedBuild.claimed[2]},{rejectedBuild.claimed[3]}
+                            </span>
+                            , but the block's transaction layout gives this parcel the verified tile{" "}
+                            <span className="text-foreground" data-no-translate>
+                              {rejectedBuild.derived[0]},{rejectedBuild.derived[1]} → {rejectedBuild.derived[2]},{rejectedBuild.derived[3]}
+                            </span>
+                            . Tile bounds come from the block itself, so this build will not appear in the world.
+                          </p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            Re-inscribe the build with the verified tile coordinates to fix it.
+                          </p>
+                          <a
+                            className="label mt-1 block text-signal hover:underline"
+                            href={`https://ordinals.com/inscription/${rejectedBuild.inscriptionId}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            data-no-translate
+                          >
+                            VIEW REJECTED BUILD ↗
+                          </a>
+                        </div>
+                      )}
                     </>
                   )}
                   {selInfo?.state !== "valid" && (
