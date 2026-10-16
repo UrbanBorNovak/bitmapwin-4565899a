@@ -312,6 +312,8 @@ function ForgePage() {
   const [guide, setGuide] = useState(false);
   const [leftTab, setLeftTab] = useState<"kits" | "pieces" | "land">("kits");
   const [rightTab, setRightTab] = useState<"inscribe" | "publish">("inscribe");
+  const [leftOpen, setLeftOpen] = useState(false);
+  const [rightOpen, setRightOpen] = useState(false);
   const [digest, setDigest] = useState<string | null>(null);
   const [pub, setPub] = useState({ name: "", bit: 10, sats: 1000 });
   const weekly = useMemo(() => weeklyBlueprint(), []);
@@ -626,8 +628,12 @@ function ForgePage() {
       )}
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[260px_1fr_320px]">
-        <aside className="space-y-3">
-          <label className="block text-[11px] text-muted-foreground">
+        <aside>
+          <button type="button" onClick={() => setLeftOpen((o) => !o)} aria-expanded={leftOpen} className="flex w-full items-center justify-between rounded-lg border border-border bg-card/40 px-3 py-2 text-[11px] text-foreground lg:hidden">
+            <span>LAND · KITS · PIECES</span><span className="text-muted-foreground">{leftOpen ? "▲ HIDE" : "▼ SHOW"}</span>
+          </button>
+          <div className={`space-y-3 ${leftOpen ? "mt-3" : "hidden"} lg:mt-0 lg:block`}>
+           <label className="block text-[11px] text-muted-foreground">
             YOUR BITMAP
             <input value={input} onChange={(e) => setInput(e.target.value.replace(/[^\d]/g, ""))} placeholder="840000" className="mt-1 w-full rounded border border-border bg-background px-3 py-2 text-foreground" />
           </label>
