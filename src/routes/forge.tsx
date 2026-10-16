@@ -841,17 +841,20 @@ function ForgePage() {
             )}
             </>)}
           </div>
-          <div>
-            <p className="mb-1 text-[10px] text-muted-foreground">START FROM YOUR BLOCK'S SEED</p>
-            <div className="flex flex-wrap gap-1">
+          )}
+          {leftTab === "pieces" && (
+          <div className="rounded border border-border bg-card/40 p-2 text-[11px]">
+            <p className="text-accent">START FROM YOUR BLOCK'S SEED</p>
+            <div className="mt-1 flex flex-wrap gap-1">
               {ARCHETYPES.map((a) => (
                 <button key={a.id} type="button" title={a.blurb} onClick={() => seed(a.id)} className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:border-primary">{a.name}</button>
               ))}
             </div>
           </div>
+          )}
         </aside>
 
-        <div className="relative h-[560px] overflow-hidden rounded-lg border border-border bg-card/40">
+        <div className="relative h-[620px] overflow-hidden rounded-lg border border-border bg-card/40">
           {tool === "stamp" && hover && (
             <div className="pointer-events-none absolute right-2 top-2 z-10 rounded border border-border bg-background/80 px-2 py-1 font-mono text-[10px] text-muted-foreground backdrop-blur">
               <span className={overLimit || ghostOut ? "text-destructive" : "text-accent"}>{overLimit || ghostOut ? "CLIPS EDGE" : "FITS"}</span> · {picked.name.toUpperCase()} · ROT {(((turns % 4) + 4) % 4) * 90}°{!picked.author && (picked.bitCost ?? 0) > 0 ? ` · ${picked.bitCost} BIT` : ""} · R ROTATE · CLICK PLACE
@@ -902,34 +905,42 @@ function ForgePage() {
               </div>
             )}
             <p className="pointer-events-none rounded bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground backdrop-blur">
-              {tool === "move" ? "CLICK A PLACED ON-CHAIN PIECE TO PICK IT UP" : tool === "erase" ? "CLICK A BLOCK TO REMOVE IT" : tool === "parcel" ? "CLICK A TILE TO BUILD ONLY ON IT" : tool === "box" ? (boxStart ? "CLICK THE OPPOSITE CORNER TO FILL · ESC CANCELS" : "CLICK ONE CORNER OF A WALL, FLOOR OR BOX") : tool === "perch" ? "CLICK WHERE YOUR GUARDIAN SHOULD LIVE" : "POINT AT ANY SURFACE · CLICK TO PLACE · IT STACKS ON TOP"} · R ROTATE · CTRL+Z UNDO
+              {tool === "move" ? "CLICK A PLACED ON-CHAIN PIECE TO PICK IT UP" : tool === "erase" ? "CLICK A BLOCK TO REMOVE IT" : tool === "parcel" ? "CLICK A TILE TO BUILD ONLY ON IT" : tool === "box" ? (boxStart ? "CLICK THE OPPOSITE CORNER TO FILL · ESC CANCELS" : "CLICK ONE CORNER OF A WALL, FLOOR OR BOX") : tool === "perch" ? "CLICK WHERE YOUR GUARDIAN SHOULD LIVE" : "POINT AT ANY SURFACE · CLICK TO PLACE · IT STACKS ON TOP"}
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-1 rounded-lg border border-border bg-background/80 p-1 backdrop-blur">
-              {(["stamp", "move", "block", "box", "erase", "perch", "parcel"] as Tool[]).map((t) => (
-                <button key={t} type="button" onClick={() => { setTool(t); setBoxStart(null); }} className={`rounded px-2.5 py-1 text-[10px] ${tool === t ? "bg-primary/15 text-foreground ring-1 ring-primary" : "text-muted-foreground hover:text-foreground"}`}>
-                  {t === "stamp" ? "PIECES (S)" : t === "move" ? "MOVE (M)" : t === "block" ? "BLOCK (B)" : t === "box" ? "BOX (W)" : t === "erase" ? "ERASE (X)" : t === "perch" ? "GUARDIAN (G)" : "PARCEL (P)"}
-                </button>
-              ))}
-              {(tool === "block" || tool === "box") && (
-                <>
-                  <span className="mx-1 h-4 w-px bg-border" />
-                  {BLOCKS.map((b, i) => (
-                    <button key={b.id} type="button" title={`${b.name} (${(i + 1) % 10})`} onClick={() => setPaint(b.id)} className={`h-5 w-5 rounded-sm border ${paint === b.id ? "border-primary ring-1 ring-primary" : "border-border"}`} style={{ background: b.top }} />
-                  ))}
-                </>
-              )}
+            {(tool === "block" || tool === "box") && (
+              <div className="flex flex-wrap justify-center gap-1 rounded-lg border border-border bg-background/80 p-1 backdrop-blur">
+                {BLOCKS.map((b, i) => (
+                  <button key={b.id} type="button" title={`${b.name} (${(i + 1) % 10})`} onClick={() => setPaint(b.id)} className={`h-6 w-6 rounded-sm border ${paint === b.id ? "border-primary ring-2 ring-primary" : "border-border"}`} style={{ background: b.top }} />
+                ))}
+              </div>
+            )}
+            <div className="flex flex-wrap items-center justify-center gap-1 rounded-lg border border-border bg-background/85 p-1 backdrop-blur">
+              <div className="flex gap-0.5 rounded-md bg-muted/40 p-0.5">
+                {(["stamp", "move", "block", "box", "erase", "perch", "parcel"] as Tool[]).map((t) => {
+                  const [label, key] = TOOL_LABELS[t];
+                  return (
+                    <button key={t} type="button" title={`${label} (${key})`} onClick={() => { setTool(t); setBoxStart(null); }} className={`rounded px-2.5 py-1 text-[10px] ${tool === t ? "bg-primary/20 text-foreground ring-1 ring-primary" : "text-muted-foreground hover:text-foreground"}`}>
+                      {label}<span className="ml-1 hidden text-muted-foreground sm:inline">{key}</span>
+                    </button>
+                  );
+                })}
+              </div>
               <span className="mx-1 h-4 w-px bg-border" />
-              <button type="button" onClick={() => setTurns((t) => t + 1)} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">⟳ ROTATE</button>
-              <button type="button" onClick={undo} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">↶ UNDO</button>
-              <button type="button" title="Floor level (Q/E) — only needed to build in mid-air" onClick={() => setLayer((l) => Math.max(0, l - 1))} className="rounded px-1.5 py-1 text-[10px] text-muted-foreground hover:bg-muted">−</button>
-              <span className="text-[10px] text-muted-foreground">LVL {layer}</span>
-              <button type="button" title="Floor level (Q/E) — only needed to build in mid-air" onClick={() => setLayer((l) => Math.min(SPAN - 1, l + 1))} className="rounded px-1.5 py-1 text-[10px] text-muted-foreground hover:bg-muted">+</button>
-              <button type="button" onClick={() => { commit(new Map()); setUsed([]); }} className="rounded px-2 py-1 text-[10px] text-destructive hover:bg-muted">CLEAR</button>
+              <button type="button" title="Rotate (R)" onClick={() => setTurns((t) => t + 1)} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">⟳ {(((turns % 4) + 4) % 4) * 90}°</button>
+              <button type="button" title="Undo (Ctrl+Z)" onClick={undo} className="rounded px-2 py-1 text-[10px] text-foreground hover:bg-muted">↶ UNDO</button>
+              <div className="flex items-center rounded border border-border" title="Floor level (Q/E) — only needed to build in mid-air">
+                <button type="button" onClick={() => setLayer((l) => Math.max(0, l - 1))} className="px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted">−</button>
+                <span className="px-1 text-[10px] text-muted-foreground">LVL {layer}</span>
+                <button type="button" onClick={() => setLayer((l) => Math.min(SPAN - 1, l + 1))} className="px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted">+</button>
+              </div>
+              <button type="button" onClick={() => { if (world.size === 0 || window.confirm("Clear the whole build?")) { commit(new Map()); setUsed([]); } }} className="rounded px-2 py-1 text-[10px] text-destructive hover:bg-muted">CLEAR</button>
             </div>
           </div>
         </div>
 
         <aside className="space-y-3">
+          <TabBar value={rightTab} onChange={setRightTab} tabs={[["inscribe", "INSCRIBE"], ["publish", "PUBLISH & EARN"]]} />
+          {rightTab === "inscribe" && (<>
           <div className="rounded border border-border bg-card/40 p-3 text-[11px]">
             <p className="mb-2 text-primary">MAKERS IN THIS BUILD</p>
             {payouts.length === 0 ? (
@@ -989,6 +1000,8 @@ function ForgePage() {
             <p className="rounded border border-border p-3 text-[11px] text-muted-foreground">Enter your BITMAP number and place some blocks to inscribe.</p>
           )}
 
+          </>)}
+          {rightTab === "publish" && (
           <div className="rounded border border-border bg-card/40 p-3 text-[11px]">
             <p className="mb-2 text-primary">PUBLISH AS A REUSABLE PIECE</p>
             <p className="mb-2 text-muted-foreground">Others can drop it into their own builds. You earn BIT each time it's placed and sats each time a build using it is inscribed — and so do the makers of the pieces you used.</p>
@@ -999,7 +1012,11 @@ function ForgePage() {
             </div>
             {wallet && <p className="mb-2 text-[10px] text-muted-foreground">SAT ROYALTIES PAID TO <span className="text-accent">{short(wallet.paymentAddress || wallet.ordinalsAddress)}</span>{wallet.paymentAddress ? " (PAYMENT ADDRESS)" : ""}</p>}
             <button type="button" onClick={() => void publish()} className="w-full rounded border border-primary bg-primary/10 px-2 py-1.5 text-foreground">PUBLISH PIECE</button>
+            <div className="mt-3 border-t border-border pt-2">
+              <PackageKit blocks={[...world.values()]} wallet={wallet} onPublished={(id) => { setBpId(id); setBpStep(0); setLeftTab("kits"); }} />
+            </div>
           </div>
+          )}
           <p className="text-[11px] text-muted-foreground">Want to walk it first? <a href={height !== null ? `/oasis?height=${height}` : "/oasis"} className="text-accent underline">Open the Oasis</a>.</p>
         </aside>
       </div>
