@@ -246,8 +246,8 @@ function Marketplace() {
 
   
 
-  const activeFilters = [club !== "any", trait !== "any", !!search, sort !== "default"].filter(Boolean).length;
-  const clearAll = () => { setClub("any"); setTrait("any"); setSearch(""); setSort("default"); setPage(0); };
+  const activeFilters = [club !== "any", trait !== "any", !!search, sort !== "default", minSats !== null || maxSats !== null, onlyInhabited, onlyBuilt, onlySold].filter(Boolean).length;
+  const clearAll = () => { setClub("any"); setTrait("any"); setSearch(""); setSort("default"); setMinBtc(""); setMaxBtc(""); setOnlyInhabited(false); setOnlyBuilt(false); setOnlySold(false); setPage(0); };
 
   return (
     <div className="marketplace-shell mx-auto max-w-[1600px] px-3 py-6 sm:px-5 md:py-10">
@@ -397,8 +397,10 @@ function Marketplace() {
                     <TraitRow active={trait === "any"} label="ALL" count={serverMode ? null : parcels.length} onClick={() => { setTrait("any"); setPage(0); }} />
                     {traitList.map((item) => {
                       const count = serverMode ? null : traitCounts.get(item.id as TraitId) ?? 0;
+                      const fl = traitFloors.get(item.id);
+                      const label = fl ? `${item.label} · FLOOR ${formatSats(fl.floor)} (${fl.count})` : item.label;
                       return (
-                        <TraitRow key={item.id} active={trait === item.id} label={item.label} count={count} title={`${item.sourceKey} — ${item.description}`} disabled={count === 0 && trait !== item.id} onClick={() => { setTrait(item.id); setPage(0); }} />
+                        <TraitRow key={item.id} active={trait === item.id} label={label} count={count} title={`${item.sourceKey} — ${item.description}`} disabled={count === 0 && trait !== item.id} onClick={() => { setTrait(item.id); setPage(0); }} />
                       );
                     })}
                   </div>
@@ -407,6 +409,23 @@ function Marketplace() {
                       FULL {ALL_OFFICIAL_TRAITS.find((t) => t.id === trait)?.label} INDEX →
                     </Link>
                   )}
+                </div>
+                <div>
+                  <span className="label mb-2 block">PRICE (BTC · ASK OR LAST SALE)</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input inputMode="decimal" value={minBtc} onChange={(e) => { setMinBtc(e.target.value); setPage(0); }} placeholder="MIN" aria-label="Minimum price in BTC"
+                      className="h-9 w-full border border-input bg-card px-2 font-mono text-xs text-foreground outline-none focus:border-signal" />
+                    <input inputMode="decimal" value={maxBtc} onChange={(e) => { setMaxBtc(e.target.value); setPage(0); }} placeholder="MAX" aria-label="Maximum price in BTC"
+                      className="h-9 w-full border border-input bg-card px-2 font-mono text-xs text-foreground outline-none focus:border-signal" />
+                  </div>
+                </div>
+                <div>
+                  <span className="label mb-2 block">QUICK FILTERS</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    <FilterPill active={onlyInhabited} onClick={() => { setOnlyInhabited((v) => !v); setPage(0); }}>GUARDIAN</FilterPill>
+                    <FilterPill active={onlyBuilt} onClick={() => { setOnlyBuilt((v) => !v); setPage(0); }}>BUILT</FilterPill>
+                    <FilterPill active={onlySold} onClick={() => { setOnlySold((v) => !v); setPage(0); }}>HAS SALE</FilterPill>
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-3 border-t border-border pt-4">
                   <Link to="/collections" className="label hover:text-bitcoin">COLLECTION STATS →</Link>
@@ -419,6 +438,7 @@ function Marketplace() {
         </aside>
 
         <section data-tour="market-grid" className="lg:col-span-9">
+          {tab === "listed" && <FloorSweeper listed={visible} />}
           {(serverMode ? indexPage.isPending : registry.isPending) ? (
             <p className="grid min-h-48 place-items-center border border-dashed border-border font-mono text-sm text-muted-foreground">
               READING THE REGISTRY FROM CHAIN…
@@ -431,10 +451,23 @@ function Marketplace() {
                 <span className="label text-muted-foreground" data-no-translate>
                   {current * PAGE_SIZE + 1}–{current * PAGE_SIZE + pageParcels.length} OF {totalLabel} BITMAPS
                 </span>
-                <span className="label text-muted-foreground">
-                  {owners.isFetching || (serverMode && indexPage.isFetching) ? <span className="text-signal">RESOLVING HOLDERS ON CHAIN…</span> : serverMode && serverTotal === null ? `PAGE ${current + 1}` : `PAGE ${current + 1} / ${pageCount.toLocaleString("en-US")}`}
+                <span className="flex items-center gap-3">
+                  <span className="label text-muted-foreground">
+                    {owners.isFetching || (serverMode && indexPage.isFetching) ? <span className="text-signal">RESOLVING HOLDERS ON CHAIN…</span> : serverMode && serverTotal === null ? `PAGE ${current + 1}` : `PAGE ${current + 1} / ${pageCount.toLocaleString("en-US")}`}
+                  </span>
+                  <span className="flex" role="group" aria-label="View mode">
+                    {(["cards", "table"] as const).map((v) => (
+                      <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)}
+                        className={`h-7 border px-2 font-mono text-[10px] ${view === v ? "border-bitcoin bg-bitcoin/10 text-bitcoin" : "border-border text-muted-foreground hover:text-signal"}`}>
+                        {v === "cards" ? "CARDS" : "PRO TABLE"}
+                      </button>
+                    ))}
+                  </span>
                 </span>
               </div>
+              {view === "table" ? (
+                <ProTable parcels={pageWithOwners} inhabited={inhabitedSet} built={builtSet} />
+              ) : (
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {pageWithOwners.map((p) => (
                   <ParcelCard
@@ -446,6 +479,7 @@ function Marketplace() {
                   />
                 ))}
               </div>
+              )}
               <Pager page={current} pageCount={pageCount} onPage={setPage} />
             </>
           )}
