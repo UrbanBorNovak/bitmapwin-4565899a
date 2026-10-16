@@ -209,8 +209,10 @@ export async function forgeLandFor(height: number): Promise<ForgeLand> {
     const dm = await delegateMeta(s.latest);
     const pm = dm?.p?.match(/^(\d+);(\d+),(\d+),(\d+),(\d+)$/);
     if (dm && pm && dm.h === height && Number(pm[1]) === p.index) {
+      const rect: [number, number, number, number] = [Number(pm[2]), Number(pm[3]), Number(pm[4]), Number(pm[5])];
+      if (derived && !rectMatches(rect, derived)) continue;
       value.html.push({ inscriptionId: s.latest, source: "parcel", index: p.index });
-      value.parcels.push({ index: p.index, rect: [Number(pm[2]), Number(pm[3]), Number(pm[4]), Number(pm[5])], inscriptionId: s.latest, sat: s.sat, data: dm.d });
+      value.parcels.push({ index: p.index, rect, inscriptionId: s.latest, sat: s.sat, data: dm.d });
       continue;
     }
     const html = await htmlAt(s.latest);
@@ -219,7 +221,9 @@ export async function forgeLandFor(height: number): Promise<ForgeLand> {
     const parsed = html ? parseForgeHtml(html) : null;
     const meta = html.match(/<meta name="bitmapwin-parcel" content="(\d+);(\d+),(\d+),(\d+),(\d+)"/);
     if (!parsed || !meta || Number(meta[1]) !== p.index) continue;
-    value.parcels.push({ index: p.index, rect: [Number(meta[2]), Number(meta[3]), Number(meta[4]), Number(meta[5])], inscriptionId: s.latest, sat: s.sat, data: parsed.data });
+    const rect: [number, number, number, number] = [Number(meta[2]), Number(meta[3]), Number(meta[4]), Number(meta[5])];
+    if (derived && !rectMatches(rect, derived)) continue;
+    value.parcels.push({ index: p.index, rect, inscriptionId: s.latest, sat: s.sat, data: parsed.data });
   }
   landCache.set(height, { expires: Date.now() + TTL, value });
   return value;
