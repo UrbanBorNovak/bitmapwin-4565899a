@@ -8,6 +8,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
 import { layoutFromSizeClasses } from "@/lib/bitmap-layout";
+import { parcelRects } from "@/lib/forge-parcels";
 import { parcelName, parcelsQuery } from "@/lib/parcels";
 import { getBitmapRegistryEntry } from "@/lib/oci.functions";
 import { getForgeLandFn } from "@/lib/forge.functions";
@@ -111,6 +112,9 @@ function ParcelStudio() {
   const selInfo = sel !== null ? byIndex.get(sel) : undefined;
   const scanning = scan.isPending && !!districtId;
   const rejectedBuild = sel !== null ? (land.data?.rejected ?? []).find((r) => r.index === sel) : undefined;
+  const rects = useMemo(() => parcelRects(sizes.data?.classes), [sizes.data]);
+  const selRect = sel !== null ? (rects[sel] ?? null) : null;
+  const noGround = selRect !== null && selRect.cells.size === 0;
 
   const go = () => {
     const h = Number(input);
