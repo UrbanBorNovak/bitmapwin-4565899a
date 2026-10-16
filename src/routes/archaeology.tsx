@@ -9,8 +9,8 @@ const TAB_IDS = ["timeline", "spaces", "traits", "ledger"] as const;
 type ArchTab = (typeof TAB_IDS)[number];
 
 export const Route = createFileRoute("/archaeology")({
-  validateSearch: (s: Record<string, unknown>): { tab?: ArchTab } => ({
-    tab: (TAB_IDS as readonly string[]).includes(String(s.tab)) ? (s.tab as ArchTab) : undefined,
+  validateSearch: (s: Record<string, unknown>): { tab?: ArchTab | undefined } => ({
+    tab: (TAB_IDS as readonly string[]).includes(String(s["tab"])) ? (s["tab"] as ArchTab) : undefined,
   }),
   head: () => ({ meta: [
     { title: "BITMAP Archaeology — Facts, Traits & Block History — BITMAPWIN" },
