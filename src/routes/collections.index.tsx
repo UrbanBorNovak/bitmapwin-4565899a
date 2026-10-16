@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { CLUBS, clubOf, clubSupply, formatRange } from "@/lib/clubs";
-import { GALLERY_COLLECTIONS, type GalleryCollection } from "@/lib/bitmap-collections";
+import { GALLERY_COLLECTIONS, GALLERY_PARENT_INSCRIPTION, GET_GALLERY_FUNCTION_INSCRIPTION, type GalleryCollection } from "@/lib/bitmap-collections";
 import { usePunkFilter } from "@/lib/punk-filter";
 import { ordContentUrl } from "@/lib/oci";
 import { registryBaseQuery } from "@/lib/registry";
@@ -133,6 +133,19 @@ function CollectionsIndex() {
         <p className="label mt-3">
           INSCRIBED COLLECTIONS DECIDED BY FIXED ON-CHAIN FACTS — TRANSACTION COUNT AND RENDER SHAPE
         </p>
+        <div className="mt-4 border border-border bg-card/60 p-4 font-mono text-[11px] text-muted-foreground backdrop-blur">
+          <p>
+            Six galleries inscribed by{" "}
+            <a className="text-signal hover:underline" href="https://x.com/boppleton" target="_blank" rel="noreferrer">@boppleton</a>{" "}
+            — these patterns can never occur again, so they never need updates.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <a className="border border-bitcoin px-2 py-1 text-bitcoin hover:bg-bitcoin hover:text-background" target="_blank" rel="noreferrer"
+              href={`https://ordinals.com/children/${GALLERY_PARENT_INSCRIPTION}`}>PARENT #126,374,978 · ALL CHILDREN ↗</a>
+            <a className="border border-signal px-2 py-1 text-signal hover:bg-signal hover:text-background" target="_blank" rel="noreferrer"
+              href={`https://ordinals.com/content/${GET_GALLERY_FUNCTION_INSCRIPTION}`}>INSCRIBED getGallery(id) ↗</a>
+          </div>
+        </div>
         <div className="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {GALLERY_COLLECTIONS.map((collection) => (
             <PunkCard
