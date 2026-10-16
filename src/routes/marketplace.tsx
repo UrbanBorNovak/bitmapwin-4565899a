@@ -8,6 +8,7 @@ import {
   parcelOwnersQuery,
   registryBaseQuery,
   registryCountQuery,
+  registryIndexPageQuery,
   type RegistryParcel,
   fetchRegistryParcel,
 } from "@/lib/registry";
@@ -21,7 +22,10 @@ import { MyBitmapsPanel } from "@/components/MyBitmapsPanel";
 import { BitmapOrderBook } from "@/components/BitmapOrderBook";
 import { BitmapMarketChart } from "@/components/BitmapMarketChart";
 import { TrendExplorer } from "@/components/TrendExplorer";
-import { hasTrait, OFFICIAL_TRAITS, type TraitId } from "@/lib/traits";
+import { ALL_OFFICIAL_TRAITS, hasTrait, OFFICIAL_TRAITS, type TraitId } from "@/lib/traits";
+
+const HEIGHT_TRAIT_IDS = new Set<string>(OFFICIAL_TRAITS.map((t) => t.id));
+const matchesTrait = (h: number, t: string) => !HEIGHT_TRAIT_IDS.has(t) || hasTrait(h, t as TraitId);
 import { traitHolderBadgesQuery } from "@/lib/trait-collections";
 
 import { SalesLog } from "@/components/SalesLog";
@@ -100,7 +104,7 @@ function Marketplace() {
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [club, setClub] = useState<ClubId | "any">("any");
-  const [trait, setTrait] = useState<TraitId | "any">("any");
+  const [trait, setTrait] = useState<string>("any");
   const [page, setPage] = useState(0);
   const [sort, setSort] = useState<Sort>("default");
   const recent = useQuery({ ...recentTradesQuery(40), refetchInterval: 30_000 });
@@ -131,7 +135,7 @@ function Marketplace() {
       const def = CLUBS.find((c) => c.id === club);
       if (def) base = base.filter((p) => inClub(p.bitmapHeight, def));
     }
-    if (trait !== "any") base = base.filter((p) => hasTrait(p.bitmapHeight, trait));
+    if (trait !== "any") base = base.filter((p) => matchesTrait(p.bitmapHeight, trait));
     if (sort !== "default") {
       const cmp: Record<Exclude<Sort, "default">, (a: RegistryParcel, b: RegistryParcel) => number> = {
         recent: (a, b) => (b.lastSaleBlock ?? -1) - (a.lastSaleBlock ?? -1),
@@ -154,12 +158,41 @@ function Marketplace() {
   }, [tab, traded, listed, parcels, search, club, trait, sort, inhabitedParcels.data]);
 
   // Paginate first, then resolve holders on chain for the visible page only.
-  const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
-  const current = Math.min(page, pageCount - 1);
+  // ALL tab reads the full on-chain index page by page on the server.
+  const serverMode = tab === "all";
+  const indexPage = useQuery({
+    ...registryIndexPageQuery({
+      page,
+      pageSize: PAGE_SIZE,
+      search: search.trim(),
+      ascending: sort === "height-asc",
+      trait: trait === "any" ? null : trait,
+    }),
+    enabled: serverMode,
+  });
+  const serverTotal = indexPage.data?.total ?? null;
+  const pageCount = serverMode
+    ? serverTotal !== null
+      ? Math.max(1, Math.ceil(serverTotal / PAGE_SIZE))
+      : page + (indexPage.data?.hasMore ? 2 : 1)
+    : Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+  const current = serverMode ? page : Math.min(page, pageCount - 1);
+  const clubDef = club === "any" ? null : CLUBS.find((c) => c.id === club) ?? null;
   const pageParcels = useMemo(
-    () => visible.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE),
-    [visible, current],
+    () =>
+      serverMode
+        ? (indexPage.data?.parcels ?? []).filter((p) => !clubDef || inClub(p.bitmapHeight, clubDef))
+        : visible.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE),
+    [serverMode, indexPage.data, clubDef, visible, current],
   );
+  const totalLabel = serverMode
+    ? serverTotal !== null
+      ? serverTotal.toLocaleString("en-US")
+      : !search && trait === "any"
+        ? (liveOci.data?.total ?? registryCount.data ?? 0).toLocaleString("en-US")
+        : "MANY"
+    : visible.length.toLocaleString("en-US");
+  const traitList = serverMode ? ALL_OFFICIAL_TRAITS.filter((t) => t.supported) : OFFICIAL_TRAITS;
   const owners = useQuery({
     ...parcelOwnersQuery(pageParcels.map((p) => p.txid)),
     enabled: pageParcels.length > 0,
@@ -262,7 +295,7 @@ function Marketplace() {
         <div className="grid gap-2 lg:grid-cols-[auto_minmax(0,1fr)_auto]">
           <div className="flex flex-wrap gap-1" role="tablist" aria-label="Market status">
             {([
-              ["all", "ALL", parcels.length],
+              ["all", "ALL INDEXED", liveOci.data?.total ?? registryCount.data ?? parcels.length],
               ["listed", "LISTED", listed.length],
               ["inhabited", "INHABITED", inhabited.data?.size ?? 0],
               ["traded", "TRADED", traded.length],
@@ -300,7 +333,7 @@ function Marketplace() {
         {activeFilters > 0 && (
           <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2">
             {club !== "any" && <Chip label={CLUBS.find((c) => c.id === club)?.short ?? club} onClear={() => setClub("any")} />}
-            {trait !== "any" && <Chip label={OFFICIAL_TRAITS.find((t) => t.id === trait)?.label ?? trait} onClear={() => setTrait("any")} />}
+            {trait !== "any" && <Chip label={ALL_OFFICIAL_TRAITS.find((t) => t.id === trait)?.label ?? trait} onClear={() => setTrait("any")} />}
             {search && <Chip label={`"${search}"`} onClear={() => setSearch("")} />}
             {sort !== "default" && <Chip label={SORTS.find((o) => o.id === sort)!.label} onClear={() => setSort("default")} />}
             {activeFilters > 1 && (
@@ -334,9 +367,9 @@ function Marketplace() {
                     <Link to="/traits" className="label hover:text-bitcoin">INDEX →</Link>
                   </div>
                   <div className="grid max-h-72 gap-1 overflow-y-auto pr-1">
-                    <TraitRow active={trait === "any"} label="ALL" count={parcels.length} onClick={() => { setTrait("any"); setPage(0); }} />
-                    {OFFICIAL_TRAITS.map((item) => {
-                      const count = traitCounts.get(item.id) ?? 0;
+                    <TraitRow active={trait === "any"} label="ALL" count={serverMode ? null : parcels.length} onClick={() => { setTrait("any"); setPage(0); }} />
+                    {traitList.map((item) => {
+                      const count = serverMode ? null : traitCounts.get(item.id) ?? 0;
                       return (
                         <TraitRow key={item.id} active={trait === item.id} label={item.label} count={count} title={`${item.sourceKey} — ${item.description}`} disabled={count === 0 && trait !== item.id} onClick={() => { setTrait(item.id); setPage(0); }} />
                       );
@@ -344,7 +377,7 @@ function Marketplace() {
                   </div>
                   {trait !== "any" && (
                     <Link to="/traits/$trait" params={{ trait }} className="label mt-2 inline-block text-bitcoin hover:text-foreground">
-                      FULL {OFFICIAL_TRAITS.find((t) => t.id === trait)?.label} INDEX →
+                      FULL {ALL_OFFICIAL_TRAITS.find((t) => t.id === trait)?.label} INDEX →
                     </Link>
                   )}
                 </div>
@@ -359,20 +392,20 @@ function Marketplace() {
         </aside>
 
         <section data-tour="market-grid" className="lg:col-span-9">
-          {registry.isPending ? (
+          {(serverMode ? indexPage.isPending : registry.isPending) ? (
             <p className="grid min-h-48 place-items-center border border-dashed border-border font-mono text-sm text-muted-foreground">
               READING THE REGISTRY FROM CHAIN…
             </p>
-          ) : visible.length === 0 ? (
+          ) : (serverMode ? pageParcels.length === 0 : visible.length === 0) ? (
             <EmptyRegistry />
           ) : (
             <>
               <div className="flex flex-wrap items-baseline justify-between gap-3">
                 <span className="label text-muted-foreground" data-no-translate>
-                  {current * PAGE_SIZE + 1}–{current * PAGE_SIZE + pageParcels.length} OF {visible.length.toLocaleString("en-US")} BITMAPS
+                  {current * PAGE_SIZE + 1}–{current * PAGE_SIZE + pageParcels.length} OF {totalLabel} BITMAPS
                 </span>
                 <span className="label text-muted-foreground">
-                  {owners.isFetching ? <span className="text-signal">RESOLVING HOLDERS ON CHAIN…</span> : `PAGE ${current + 1} / ${pageCount}`}
+                  {owners.isFetching || (serverMode && indexPage.isFetching) ? <span className="text-signal">RESOLVING HOLDERS ON CHAIN…</span> : serverMode && serverTotal === null ? `PAGE ${current + 1}` : `PAGE ${current + 1} / ${pageCount.toLocaleString("en-US")}`}
                 </span>
               </div>
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
