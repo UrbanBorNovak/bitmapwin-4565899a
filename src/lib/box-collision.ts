@@ -31,3 +31,31 @@ export function boxWallAt(x: number, z: number, feetY: number, height: number, s
   for (const b of under(x, z, radius)) if (b.y1 > lo && b.y0 < hi) return true;
   return false;
 }
+
+/**
+ * Nearest spot to (x, z) where the body is not embedded in a box, spiralling
+ * outward ring by ring. Used right after spawning: structure models load after
+ * the player is placed, so a spawn point can land inside one. Returns null when
+ * everything within `maxRadius` is solid.
+ */
+export function clearSpotNear(
+  x: number,
+  z: number,
+  feetY: number,
+  height: number,
+  stepUp: number,
+  radius = 0,
+  maxRadius = 0.02,
+): [number, number] | null {
+  if (!boxWallAt(x, z, feetY, height, stepUp, radius)) return [x, z];
+  const step = Math.max(radius * 2, 0.002);
+  for (let r = step; r <= maxRadius; r += step) {
+    const n = Math.max(8, Math.round((2 * Math.PI * r) / step));
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2;
+      const cx = x + Math.cos(a) * r, cz = z + Math.sin(a) * r;
+      if (!boxWallAt(cx, cz, feetY, height, stepUp, radius)) return [cx, cz];
+    }
+  }
+  return null;
+}
