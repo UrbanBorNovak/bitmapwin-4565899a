@@ -116,7 +116,7 @@ function Bridge({ height }: { height: number }) {
           ))}
           {models.map((m, i) => (
             <Quiet key={`m${i}`}>
-              <Suspense fallback={null}><PlacedModel m={m} /></Suspense>
+              <Suspense fallback={null}><PlacedModel m={m} boxKey={`iw:${height}:m${i}`} /></Suspense>
             </Quiet>
           ))}
         </group>
