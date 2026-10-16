@@ -3678,11 +3678,13 @@ function BitmapWorld3DInner({
     const spawnHeight = deepLink ? (initialHeight as number) : 0;
     if (saved) placePlayer(pose.current, saved.x, saved.z, saved.yaw);
     else placePlayer(pose.current, worldX(spawnHeight % GRID), worldZ(Math.floor(spawnHeight / GRID)), 0);
+    spawnGuardUntil.current = Date.now() + 6_000;
     if (deepLink) {
       // A holder-set spawn point on the linked BITMAP wins over the block centre.
       void getSpawnPoint({ data: { height: spawnHeight } }).then((spot) => {
         if (!spot) return;
         placePlayer(pose.current, spot.x, spot.z, spot.yaw);
+        spawnGuardUntil.current = Date.now() + 6_000;
         publish({ col: pose.current.col, row: pose.current.row, height: pose.current.height, x: pose.current.x, z: pose.current.z, yaw: pose.current.yaw, movement: "idle", teleport: true });
       }).catch(() => {});
     }
