@@ -17,24 +17,28 @@ export const Route = createFileRoute("/beta")({
 const RELEASES = [
   ["WORLD", "Enter the Oasis, travel across BITMAP terrain, build, drive, fight, and discover on-chain experiences."],
   ["LAND", "Explore real BITMAP ownership, listings, offers, sales history, leases, and collection signals."],
+  ["MARKET", "Trade on the new desk: every indexed BITMAP searchable, Floor Sweep, Pro Table, trait floors and price filters. Every buy is signed in your own wallet."],
+  ["GUARDIANS", "Awaken the Guardian living in your block, then inscribe it as a child of your BITMAP."],
   ["PLAY", "Use living cards born from Bitcoin blocks. Cards remember matches, learn adaptations, and evolve."],
   ["IDENTITY", "Build a sovereign Passport from verified wallet proof, residency, visits, builds, and card growth."],
-  ["CREATION", "Design Extenders in Studio, test them, and deploy experiences to eligible BITMAPS."],
+  ["CREATION", "Build in Land Forge and inscribe voxel builds onto your BITMAP, or design Extenders in Studio."],
 ] as const;
+
+const INVITE = "The BitmapWin beta market is opening: search every indexed BITMAP, sweep the floor, check trait floors, and buy with your own wallet. Come test it → https://bitmapwin.app/marketplace";
 
 function BetaPage() {
   return (
     <main className="mx-auto max-w-[1100px] px-4 py-10 md:px-8 md:py-14">
       <header className="border-b border-border pb-7">
-        <p className="label text-bitcoin">RELEASE · 0.9.0-BETA.2</p>
+        <p className="label text-bitcoin">RELEASE · 0.9.5-BETA · MARKET & BUILDS</p>
         <h1 className="display mt-3 text-4xl md:text-6xl">BITMAPWIN BETA</h1>
         <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
-          The connected world is open for testing. Use real BITMAP data, report rough edges, and keep valuable assets in wallets you control.
+          The connected world is open for testing, and the market is next. Use real BITMAP data, report rough edges, and keep valuable assets in wallets you control.
         </p>
         <div className="mt-6 flex flex-wrap gap-2">
-          <Link to="/oasis" className="btn-term">ENTER THE OASIS</Link>
-          <Link to="/play" className="btn-term-ghost">START PLAY</Link>
-          <Link to="/marketplace" className="btn-term-ghost">EXPLORE LAND</Link>
+          <Link to="/marketplace" className="btn-term">OPEN THE MARKET</Link>
+          <Link to="/oasis" className="btn-term-ghost">ENTER THE OASIS</Link>
+          <Link to="/forge" className="btn-term-ghost">BUILD IN LAND FORGE</Link>
         </div>
       </header>
 
@@ -47,6 +51,16 @@ function BetaPage() {
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="mt-8 border border-signal/50 p-5" aria-labelledby="beta-invite">
+        <p className="label text-signal">INVITE TRADERS</p>
+        <h2 id="beta-invite" className="display mt-2 text-xl">BRING YOUR COMMUNITY TO THE MARKET</h2>
+        <p className="mt-3 rounded-sm border border-border bg-background p-3 font-mono text-xs leading-relaxed">{INVITE}</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <a className="btn-term" target="_blank" rel="noreferrer" href={`https://x.com/intent/post?text=${encodeURIComponent(INVITE)}`}>SHARE ON X</a>
+          <button type="button" className="btn-term-ghost" onClick={() => navigator.clipboard?.writeText(INVITE)}>COPY INVITE</button>
         </div>
       </section>
 

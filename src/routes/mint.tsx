@@ -20,6 +20,7 @@ import { MINT_COPY, MintLangToggle, useMintLang } from "@/lib/mint-lang";
 import { AuraChamber } from "@/components/bitmon/AuraChamber";
 import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
 import { guardianTier, powerScore } from "@/lib/onchain-guardian";
+import { ForgeBuildAd } from "@/components/bitmon/ForgeBuildAd";
 
 export const Route = createFileRoute("/mint")({
   validateSearch: z.object({
@@ -29,9 +30,9 @@ export const Route = createFileRoute("/mint")({
 
   head: () => ({
     meta: [
-      { title: "Summon a DMT Guardian — BITMAPWIN" },
-      { name: "description", content: "Pick any BITMAP and summon the Guardian read straight from its block — Digital Matter Theory, no invented traits. Optional shielded experiment." },
-      { property: "og:title", content: "Summon a DMT Guardian from any BITMAP" },
+      { title: "Awaken Your Block Guardian — BITMAPWIN" },
+      { name: "description", content: "Pick any BITMAP and awaken the Guardian read straight from its block — Digital Matter Theory, no invented traits. Optional shielded experiment." },
+      { property: "og:title", content: "Awaken the Guardian living in your BITMAP" },
       { property: "og:description", content: "One block, one Guardian. Every trait is read from Bitcoin itself." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -156,6 +157,8 @@ function MintPage() {
         </ol>
       </section>
 
+      <ForgeBuildAd height={height} />
+
       <AuraChamber height={height} />
 
       {d ? (
@@ -221,5 +224,5 @@ function MintPage() {
   );
 }
 
-const TABS = [["tutorial", "SUMMON TUTORIAL"], ["tour", "GUARDIAN TOUR"], ["wallet", "WALLET GUIDE"], ["story", "THE STORY"], ["mine", "MY SUMMONS"]] as const;
+const TABS = [["tutorial", "AWAKEN TUTORIAL"], ["tour", "GUARDIAN TOUR"], ["wallet", "WALLET GUIDE"], ["story", "THE STORY"], ["mine", "MY AWAKENINGS"]] as const;
 type Tab = (typeof TABS)[number][0];

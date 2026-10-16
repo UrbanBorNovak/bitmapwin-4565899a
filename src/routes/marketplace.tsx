@@ -266,6 +266,7 @@ function Marketplace() {
             </div>
             <h1 className="display mt-2 text-4xl sm:text-5xl">BITMAP MARKET</h1>
             <p className="mt-2 max-w-xl font-mono text-xs leading-6 text-muted-foreground">BUY, BID, LIST AND TRACK BITMAPS THROUGH VERIFIED BITCOIN TRANSACTIONS.</p>
+            <p className="mt-2 max-w-xl font-mono text-[11px] text-signal">BETA TRADING DESK · TRY FLOOR SWEEP AND PRO TABLE · <Link to="/beta" className="text-bitcoin underline">WHAT'S NEW →</Link></p>
           </div>
           <div className="flex flex-wrap gap-2">
             <a href="#sell-bitmap" className="btn-term min-h-11">◆ SELL YOUR BITMAP</a>

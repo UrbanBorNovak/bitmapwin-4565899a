@@ -38,7 +38,7 @@ export function BitmapGuardianPanel({ height }: { height: number }) {
             <p className="font-mono text-[11px] text-signal">AWAKE IN THE OASIS · NOT YET INSCRIBED ON BITCOIN</p>
           </>
         ) : (
-          <p className="font-mono text-[11px] text-muted-foreground">A creature read from this block's real data. The holder can summon it to patrol this land in the Oasis.</p>
+          <p className="font-mono text-[11px] text-muted-foreground">A creature read from this block's real data. The holder can awaken it to patrol this land in the Oasis.</p>
         )}
       </div>
       <div className="flex flex-wrap gap-2">
