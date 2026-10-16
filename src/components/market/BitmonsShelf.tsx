@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { inhabitedQuery } from "@/lib/inhabited.functions";
-import { allGuardiansQuery } from "@/lib/bitmon-queries";
+import { useVerifiedBitmons } from "@/lib/use-verified-bitmons";
+import { confirmedRarity } from "@/lib/bitmon-verify";
 import { offersQuery } from "@/lib/offers";
 import { formatSats } from "@/lib/trades";
 import type { GuardianRarity } from "@/lib/bitmon";
@@ -11,18 +11,17 @@ export const BITMON_RARITIES: GuardianRarity[] = ["MYTHIC", "EPIC", "RARE", "COM
 
 /** Bitmons rubrique: BITMAPs whose Guardian child is inscribed on chain, with live floor and rarity filter. */
 export function BitmonsShelf({ rarity, onRarity, onOpen }: { rarity: GuardianRarity | "ALL"; onRarity: (r: GuardianRarity | "ALL") => void; onOpen: () => void }) {
-  const inhabited = useQuery(inhabitedQuery());
-  const roster = useQuery(allGuardiansQuery());
+  const { inhabited, checks } = useVerifiedBitmons();
   const offers = useQuery(offersQuery());
   const stats = useMemo(() => {
     const on = inhabited.data ?? new Map<number, string>();
-    const byH = new Map((roster.data ?? []).map((g) => [g.height, g.rarity]));
     const counts: Record<string, number> = {};
-    for (const h of on.keys()) { const r = byH.get(h); if (r) counts[r] = (counts[r] ?? 0) + 1; }
+    let unverified = 0, mismatch = 0;
+    for (const c of checks.values()) { const r = confirmedRarity(c); if (r) counts[r] = (counts[r] ?? 0) + 1; else unverified++; if (c.status === "mismatch") mismatch++; }
     const asks = (offers.data ?? []).filter((o) => o.status === "open" && o.priceSats > 0 && o.bitmapHeight !== null && on.has(o.bitmapHeight));
     const floor = asks.length ? Math.min(...asks.map((a) => a.priceSats)) : null;
-    return { total: on.size, counts, listed: asks.length, floor };
-  }, [inhabited.data, roster.data, offers.data]);
+    return { total: on.size, counts, listed: asks.length, floor, unverified, mismatch };
+  }, [inhabited.data, checks, offers.data]);
 
   return (
     <section className="rounded border border-border bg-card/60 p-3 backdrop-blur-sm" aria-label="Bitmons">
@@ -48,6 +47,11 @@ export function BitmonsShelf({ rarity, onRarity, onOpen }: { rarity: GuardianRar
           ))}
         </dd></div>
       </dl>
+      <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+        RARITY RE-DERIVED FROM EACH INSCRIBED BLOCK.
+        {stats.unverified > 0 && <span className="ml-1 text-destructive">{stats.unverified} UNVERIFIED — BLOCK DATA NOT READ YET, NOT COUNTED OR FILTERABLE.</span>}
+        {stats.mismatch > 0 && <span className="ml-1 text-accent">{stats.mismatch} STORED LABEL{stats.mismatch > 1 ? "S" : ""} CORRECTED TO CHAIN.</span>}
+      </p>
       {!inhabited.isPending && stats.total === 0 && <p className="mt-2 font-mono text-[11px] text-muted-foreground">NO INSCRIBED BITMONS FOUND ON CHAIN YET.</p>}
     </section>
   );

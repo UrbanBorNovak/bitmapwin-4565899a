@@ -39,7 +39,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { tradeCrawlProgressFn } from "@/lib/trade-crawler.functions";
 import { liveOciStatusFn } from "@/lib/live-oci.functions";
 import { inhabitedQuery } from "@/lib/inhabited.functions";
-import { allGuardiansQuery } from "@/lib/bitmon-queries";
+import { useVerifiedBitmons } from "@/lib/use-verified-bitmons";
+import { confirmedRarity } from "@/lib/bitmon-verify";
 import type { GuardianRarity } from "@/lib/bitmon";
 import { BitmonsShelf } from "@/components/market/BitmonsShelf";
 import { LiveMarketTicker } from "@/components/market/LiveMarketTicker";
@@ -144,8 +145,8 @@ function Marketplace() {
   const builtSet = useMemo(() => new Set((builtWorld.data?.built ?? []).map((b) => b.height)), [builtWorld.data]);
   const inhabitedSet = useMemo(() => new Set(inhabited.data?.keys() ?? []), [inhabited.data]);
   const [bitmonRarity, setBitmonRarity] = useState<GuardianRarity | "ALL">("ALL");
-  const roster = useQuery(allGuardiansQuery());
-  const rarityByHeight = useMemo(() => new Map((roster.data ?? []).map((g) => [g.height, g.rarity])), [roster.data]);
+  const { checks: bitmonChecks } = useVerifiedBitmons();
+  const rarityByHeight = useMemo(() => new Map([...bitmonChecks].map(([h, c]) => [h, confirmedRarity(c)])), [bitmonChecks]);
   const minSats = btcInputToSats(minBtc);
   const maxSats = btcInputToSats(maxBtc);
   const passesDesk = (p: RegistryParcel) =>
