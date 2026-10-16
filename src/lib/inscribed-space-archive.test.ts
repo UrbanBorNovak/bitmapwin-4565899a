@@ -37,7 +37,7 @@ d2("archive boundary clamp", () => {
     e2(modelsInside([ok, sky], fit, 10)).toEqual([ok]);
   });
   i2("drops 1,000-unit floor slabs", () => {
-    const g = cbb({ ground: [{ p: { x: 0, y: 0, z: 0 }, s: { x: 1000, y: 1, z: 1000 } }, { p: { x: 0, y: 0, z: 0 }, s: { x: 20, y: 1, z: 20 } }] } as never);
+    const g = cbb({ box: [{ p: { x: 0, y: 0, z: 0 }, s: { x: 1000, y: 1, z: 1000 } }, { p: { x: 0, y: 0, z: 0 }, s: { x: 20, y: 1, z: 20 } }] } as never);
     e2(g.prims.length).toBe(1);
   });
 });

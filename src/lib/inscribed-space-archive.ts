@@ -37,7 +37,7 @@ export function convertBackupBuild(b: BackupBuild): WorldGeometry {
       if (prims.length >= 2000) return;
       const s = abs3(it.s);
       // Mega slabs (editor ground, 1,000-unit floors) would slice across neighbouring districts.
-      if (Math.max(s[0], s[2]) > MAX_SLAB_SPAN) continue;
+      if (shape === "box" && Math.max(s[0], s[2]) > MAX_SLAB_SPAN) continue;
       prims.push({ shape, color: it.col && HEX.test(it.col) ? it.col.toLowerCase() : "#9a9a9a", pos: v3(it.p), rot: v3(it.r), size: abs3(it.s) });
     }
   };
