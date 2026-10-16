@@ -40,9 +40,13 @@ import { guardianDnaQuery } from "@/lib/bitmon-queries";
 import { OnchainGuardianBody } from "@/components/bitmon/OnchainGuardianBody";
 
 export const Route = createFileRoute("/forge")({
-  validateSearch: (s: Record<string, unknown>): { height?: number } => {
+  validateSearch: (s: Record<string, unknown>): { height?: number; parcel?: number } => {
     const h = Number(s["height"]);
-    return Number.isInteger(h) && h >= 0 ? { height: h } : {};
+    const p = Number(s["parcel"]);
+    const out: { height?: number; parcel?: number } = {};
+    if (s["height"] !== undefined && Number.isInteger(h) && h >= 0) out.height = h;
+    if (s["parcel"] !== undefined && Number.isInteger(p) && p >= 0) out.parcel = p;
+    return out;
   },
   head: () => ({
     meta: [
@@ -274,8 +278,9 @@ function ForgePage() {
   const [mass, setMass] = useState<LandMass>("flat");
   SPAN = xl ? FORGE_SPAN_XL : FORGE_SPAN;
   const rects = useMemo(() => parcelRects(sizes?.classes, xl ? FORGE_SPAN_XL : FORGE_SPAN), [sizes, xl]);
-  const [focus, setFocus] = useState<number | null>(null);
-  useEffect(() => setFocus(null), [height, xl]);
+  const [focus, setFocus] = useState<number | null>(search.parcel ?? null);
+  const firstFocus = useRef(true);
+  useEffect(() => { if (firstFocus.current) { firstFocus.current = false; return; } setFocus(null); }, [height, xl]);
   const focusRect = focus !== null ? rects[focus] ?? null : null;
   const addrs = wallet ? [wallet.ordinalsAddress, wallet.paymentAddress].filter(Boolean) as string[] : [];
   const owned = useQuery(heldHeightsQuery(addrs));
@@ -717,6 +722,16 @@ function ForgePage() {
                 <input type="number" min={0} max={rects.length - 1} value={focus ?? ""} placeholder="#" onChange={(e) => { const v = Number(e.target.value); setFocus(e.target.value === "" ? null : Math.max(0, Math.min(rects.length - 1, v))); }} className="w-20 rounded border border-border bg-background px-2 py-0.5 text-foreground" />
               </div>
               {focusRect && <p className="mt-1 text-accent">PARCEL {focusRect.index}.{height}.BITMAP · {focusRect.x1 - focusRect.x0}×{focusRect.z1 - focusRect.z0} CELLS{focusRect.cells.size < (focusRect.x1 - focusRect.x0) * (focusRect.z1 - focusRect.z0) && ` · ${focusRect.cells.size} OWNED (SHARED CELLS GO TO THE LARGER TRANSACTION)`}</p>}
+              {focusRect && height !== null && !xl && (() => {
+                const o = parcelOutpost(height, focusRect);
+                return (
+                  <div className="mt-2 border-t border-border pt-2">
+                    <p className="text-primary">PARCEL OUTPOST · {o.style.name}</p>
+                    <p className="mt-1 text-[10px] text-muted-foreground">Derived from this block and transaction number only — fitted to this tile's own ground. {o.blocks.length} blocks, free.</p>
+                    <button type="button" disabled={!o.blocks.length} onClick={() => commit(stampInto(world, o.blocks, 0, 0, 0))} className="mt-1 rounded border border-primary bg-primary/10 px-2 py-1 text-[10px] text-foreground disabled:opacity-40">{o.blocks.length ? "PLACE OUTPOST" : "THIS PARCEL OWNS NO GROUND"}</button>
+                  </div>
+                );
+              })()}
             </div>
           )}
           {leftTab === "pieces" && (
