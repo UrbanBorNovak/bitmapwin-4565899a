@@ -1668,6 +1668,21 @@ function SpawnGuard({
     const spot = clearSpotNear(p.x, p.z, feet, BOX_BODY, BOX_STEP, 0.004, AVATAR_U * 0.6);
     if (spot) placePlayer(p, spot[0], spot[1], p.yaw);
   });
+  // BLINK: teleport ~10 m (13 strides) forward; lands on the nearest clear spot.
+  useEffect(() => {
+    const onBlink = () => {
+      const p = pose.current;
+      if (!p || isDriving()) return;
+      const d = STRIDE * 13;
+      const x = p.x + Math.sin(p.yaw) * d;
+      const z = p.z + Math.cos(p.yaw) * d;
+      const feet = traversalSurfaceY(x, z);
+      const spot = clearSpotNear(x, z, feet, BOX_BODY, BOX_STEP, 0.004, AVATAR_U * 0.6) ?? [x, z];
+      placePlayer(p, spot[0], spot[1], p.yaw);
+    };
+    window.addEventListener("oasis:blink", onBlink);
+    return () => window.removeEventListener("oasis:blink", onBlink);
+  }, [pose]);
   return null;
 }
 
