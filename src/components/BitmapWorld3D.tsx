@@ -9,7 +9,7 @@ import { VoxelLayer } from "@/components/game/VoxelLayer";
 import { VoxelHud } from "@/components/game/VoxelHud";
 import { VOXEL, columnSurface, setVoxelFeet, voxelCeilingAt, voxelWallAt } from "@/lib/voxel-world";
 import { forgeSurfaceAt, forgeWallAt } from "@/lib/forge-collision";
-import { boxSurfaceAt, boxWallAt, clearSpotNear } from "@/lib/box-collision";
+import { blinkTarget, boxSurfaceAt, boxWallAt, clearSpotNear } from "@/lib/box-collision";
 /** Inscribed-world stairs rise ~0.013 per step; let the walker climb them. */
 const BOX_STEP = 0.0145;
 /** Body height used against inscribed-world boxes (taller than BOX_STEP so walls register). */
@@ -1673,12 +1673,8 @@ function SpawnGuard({
     const onBlink = () => {
       const p = pose.current;
       if (!p || isDriving()) return;
-      const d = STRIDE * 13;
-      const x = p.x + Math.sin(p.yaw) * d;
-      const z = p.z + Math.cos(p.yaw) * d;
-      const feet = traversalSurfaceY(x, z);
-      const spot = clearSpotNear(x, z, feet, BOX_BODY, BOX_STEP, 0.004, AVATAR_U * 0.6) ?? [x, z];
-      placePlayer(p, spot[0], spot[1], p.yaw);
+      const spot = blinkTarget(p.x, p.z, p.yaw, STRIDE * 13, traversalSurfaceY, BOX_BODY, BOX_STEP, 0.004, AVATAR_U * 0.6);
+      if (spot) placePlayer(p, spot[0], spot[1], p.yaw);
     };
     window.addEventListener("oasis:blink", onBlink);
     return () => window.removeEventListener("oasis:blink", onBlink);
