@@ -313,7 +313,7 @@ function Marketplace() {
               type="search"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-              placeholder="SEARCH HEIGHT, OWNER OR TXID"
+              placeholder="SEARCH ALL BITMAPS: HEIGHT, INSCRIPTION ID OR OWNER"
               aria-label="Search BITMAPs"
               className="h-9 w-full border border-input bg-card pl-10 pr-3 font-mono text-xs uppercase text-foreground outline-none placeholder:text-muted-foreground focus:border-signal"
             />
@@ -532,12 +532,12 @@ function FilterPill({ active, label, onClick, children }: { active: boolean; lab
   );
 }
 
-function TraitRow({ active, label, count, title, disabled, onClick }: { active: boolean; label: string; count: number; title?: string; disabled?: boolean; onClick: () => void }) {
+function TraitRow({ active, label, count, title, disabled, onClick }: { active: boolean; label: string; count: number | null; title?: string; disabled?: boolean; onClick: () => void }) {
   return (
     <button type="button" aria-pressed={active} title={title} disabled={disabled} onClick={onClick}
       className={`flex items-center justify-between gap-2 border px-2.5 py-1.5 text-left font-mono text-[10px] transition-colors disabled:opacity-40 ${active ? "border-bitcoin bg-bitcoin/10 text-bitcoin" : "border-transparent text-muted-foreground hover:border-signal hover:text-signal"}`}>
       <span className="truncate">{label}</span>
-      <span className="opacity-70" data-no-translate>{count}</span>
+      {count !== null && <span className="opacity-70" data-no-translate>{count}</span>}
     </button>
   );
 }
