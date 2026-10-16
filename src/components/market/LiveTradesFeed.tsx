@@ -1,5 +1,8 @@
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { mergeTrade } from "@/lib/trade-merge";
+import type { TradeRow } from "@/lib/trade-store";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { fetchRecentTrades } from "@/lib/trade-store";
@@ -23,14 +26,39 @@ const FRESH_UI: Record<Freshness, { label: string; tone: string; note: string }>
   unknown: { label: "SYNC UNKNOWN", tone: "border-border text-muted-foreground", note: "No indexer run has been recorded yet." },
 };
 
+const FEED_KEY = ["live-trades-feed"] as const;
+
 export function LiveTradesFeed() {
   const [filter, setFilter] = useState<Filter>("sales");
+  const [live, setLive] = useState(false);
+  const [fresh_, setFresh] = useState<Set<string>>(() => new Set());
+  const qc = useQueryClient();
+  const listRef = useRef<HTMLUListElement>(null);
+  const anchor = useRef<{ top: number; height: number } | null>(null);
   const progressFn = useServerFn(tradeCrawlProgressFn);
   const progress = useQuery({ queryKey: ["trade-crawl", "progress"], queryFn: () => progressFn(), staleTime: 10_000, refetchInterval: 15_000 });
+
+  // Live subscription; polling below only runs fast while this is down.
+  useEffect(() => {
+    const channel = supabase
+      .channel("market-trades-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "trades" }, (payload) => {
+        const row = payload.new as TradeRow | undefined;
+        if (!row?.txid) return;
+        const el = listRef.current;
+        anchor.current = el && el.scrollTop > 0 ? { top: el.scrollTop, height: el.scrollHeight } : null;
+        qc.setQueryData<TradeRow[]>(FEED_KEY, (old) => mergeTrade(old ?? [], row));
+        setFresh((s) => new Set(s).add(row.txid));
+        window.setTimeout(() => setFresh((s) => { const n = new Set(s); n.delete(row.txid); return n; }), 4000);
+      })
+      .subscribe((status) => setLive(status === "SUBSCRIBED"));
+    return () => { supabase.removeChannel(channel); };
+  }, [qc]);
+
   const q = useQuery({
-    queryKey: ["live-trades-feed"],
+    queryKey: FEED_KEY,
     queryFn: () => fetchRecentTrades(150),
-    refetchInterval: 30_000,
+    refetchInterval: live ? 5 * 60_000 : 30_000,
     staleTime: 15_000,
   });
   const rows = useMemo(() => {
