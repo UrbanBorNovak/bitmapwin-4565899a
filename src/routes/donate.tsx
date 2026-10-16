@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -7,9 +6,8 @@ import {
   DONATION_ADDRESS,
   btcDonationsQuery,
   donationPayout,
-  donationsQuery,
 } from "@/lib/donations";
-import { claimBtcDonationsFn, donateInscriptionFn } from "@/lib/donations.functions";
+import { claimBtcDonationsFn } from "@/lib/donations.functions";
 import { coinBalanceQuery, formatBit } from "@/lib/coins";
 import { useWalletSession } from "@/lib/wallet-session";
 
@@ -39,32 +37,12 @@ function DonatePage() {
   const wallet = useWalletSession();
   const address = wallet?.ordinalsAddress ?? null;
   const client = useQueryClient();
-  const [inscriptionId, setInscriptionId] = useState("");
 
-  const donations = useQuery({ ...donationsQuery(address), enabled: Boolean(address) });
   const balances = useQuery({
     ...coinBalanceQuery(address ? [address] : []),
     enabled: Boolean(address),
   });
   const balance = balances.data?.[0]?.balance ?? 0;
-
-  const claim = useMutation({
-    mutationFn: async () => {
-      if (!address) throw new Error("Connect and verify your wallet first");
-      return donateInscriptionFn({ data: { inscriptionId: inscriptionId.trim(), address } });
-    },
-    onSuccess: (result) => {
-      setInscriptionId("");
-      if (result.alreadyClaimed) {
-        toast.info(`ALREADY CREDITED — ${formatBit(result.bits)} FOR ${result.sats} SATS`);
-      } else {
-        toast.success(`+${formatBit(result.bits)} FOR ${result.sats} SHARED SATS`);
-      }
-      void client.invalidateQueries({ queryKey: ["inscription-donations"] });
-      void client.invalidateQueries({ queryKey: ["coin-balance"] });
-    },
-    onError: (error: Error) => toast.error(error.message.toUpperCase()),
-  });
 
   const btc = useQuery({ ...btcDonationsQuery(address), enabled: Boolean(address) });
   const btcSats = (btc.data ?? []).reduce((sum, row) => sum + row.sats, 0);
@@ -87,8 +65,6 @@ function DonatePage() {
     onError: (error: Error) => toast.error(error.message.toUpperCase()),
   });
 
-  const totalSats = (donations.data ?? []).reduce((sum, d) => sum + d.sats, 0);
-  const totalBits = (donations.data ?? []).reduce((sum, d) => sum + d.bitsAwarded, 0);
 
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-10 md:px-8">
@@ -102,8 +78,8 @@ function DonatePage() {
       <section className="mt-8 grid grid-cols-2 border border-border md:grid-cols-4">
         <Stat k="RATE" v={`${BIT_PER_SAT} BIT / SAT`} />
         <Stat k="YOUR SHARES" v={String((btc.data ?? []).length)} />
-        <Stat k="SATS SHARED" v={String(totalSats + btcSats)} />
-        <Stat k="BIT EARNED" v={formatBit(totalBits + btcBits)} />
+        <Stat k="SATS SHARED" v={String(btcSats)} />
+        <Stat k="BIT EARNED" v={formatBit(btcBits)} />
       </section>
 
       <section className="mt-6 border border-border">
@@ -146,31 +122,6 @@ function DonatePage() {
         </div>
       </section>
 
-      <section className="mt-6 border border-border">
-        <header className="border-b border-border p-5">
-          <h2 className="display text-xl">YOUR DONATION LOG</h2>
-        </header>
-        {(donations.data ?? []).length === 0 ? (
-          <p className="p-5 font-mono text-[11px] text-muted-foreground">
-            &gt; NO DONATIONS YET<span className="blink">_</span>
-          </p>
-        ) : (
-          <ul className="divide-y divide-border">
-            {(donations.data ?? []).map((donation) => (
-              <li key={donation.id} className="flex flex-wrap items-center gap-3 p-4">
-                <span
-                  className="break-all font-mono text-[11px] text-foreground"
-                  data-no-translate
-                >
-                  {donation.inscriptionId.slice(0, 10)}…{donation.inscriptionId.slice(-4)}
-                </span>
-                <span className="label ml-auto">{donation.sats} SATS</span>
-                <span className="label text-bitcoin">+{formatBit(donation.bitsAwarded)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
     </div>
   );
 }
