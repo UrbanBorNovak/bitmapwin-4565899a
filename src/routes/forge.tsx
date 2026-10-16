@@ -876,6 +876,7 @@ function ForgePage() {
             </div>
           </div>
           )}
+          </div>
         </aside>
 
         <div className="relative order-first h-[460px] overflow-hidden rounded-lg border border-border bg-card/40 lg:order-none lg:h-[620px]">
@@ -962,7 +963,11 @@ function ForgePage() {
           </div>
         </div>
 
-        <aside className="space-y-3">
+        <aside>
+          <button type="button" onClick={() => setRightOpen((o) => !o)} aria-expanded={rightOpen} className="flex w-full items-center justify-between rounded-lg border border-border bg-card/40 px-3 py-2 text-[11px] text-foreground lg:hidden">
+            <span>INSCRIBE · PUBLISH & EARN</span><span className="text-muted-foreground">{rightOpen ? "▲ HIDE" : "▼ SHOW"}</span>
+          </button>
+          <div className={`space-y-3 ${rightOpen ? "mt-3" : "hidden"} lg:mt-0 lg:block`}>
           <TabBar value={rightTab} onChange={setRightTab} tabs={[["inscribe", "INSCRIBE"], ["publish", "PUBLISH & EARN"]]} />
           {rightTab === "inscribe" && (<>
           <div className="rounded border border-border bg-card/40 p-3 text-[11px]">
