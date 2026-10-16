@@ -40,6 +40,7 @@ export function ClassSkillBar() {
       },
     })),
     { key: "F5", code: "F5", icon: "⤒", name: "Jump", cd: 0.4, run: () => (touchPad.jump = true) },
+    { key: "F9", code: "F9", icon: "⇥", name: "Blink", cd: 5, run: () => window.dispatchEvent(new Event("oasis:blink")) },
     {
       key: "F6", code: "F6", icon: "⚡", name: "Duel", cd: 1,
       run: () => window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyG", key: "g" })),
