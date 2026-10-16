@@ -187,7 +187,7 @@ export const SeaLife = memo(function SeaLife({
       list.forEach((w, i) => {
         const a = w.a + t * w.speed;
         const [x, z] = ringPoint(w.sea, a, w.r);
-        if (!near(x, z)) return mesh.setMatrixAt(i, HIDDEN);
+        if (!near(x, z)) { mesh.setMatrixAt(i, HIDDEN); return; }
         const [nx, nz] = ringPoint(w.sea, a + 0.01 * Math.sign(w.speed || 1), w.r);
         const [y, pitch] = lift(w, i);
         place(mesh, i, x, y, z, Math.atan2(nx - x, nz - z), pitch, 0, w.size);
@@ -214,7 +214,7 @@ export const SeaLife = memo(function SeaLife({
         const cyc = Math.sin(t * 0.5 + w.phase);
         const a = w.a + Math.sign(cyc) * Math.min(1, Math.abs(cyc) * 1.5) * 0.004;
         const [x, z] = ringPoint(w.sea, a, w.r);
-        if (!near(x, z)) return crabMesh.setMatrixAt(i, HIDDEN);
+        if (!near(x, z)) { crabMesh.setMatrixAt(i, HIDDEN); return; }
         const outward = Math.atan2(x - w.sea.x, z - w.sea.z);
         const bob = Math.abs(Math.sin(t * 9 + w.phase)) * w.size * 0.05 * Math.min(1, Math.abs(cyc) * 3);
         place(crabMesh, i, x, surface + bob, z, outward + Math.PI, 0, Math.sin(t * 9 + w.phase) * 0.06, w.size);
