@@ -391,7 +391,7 @@ const traversalSurfaceY = (x: number, z: number) => {
   const forge = forgeSurfaceAt(x, z, floraFeet, VOXEL * 1.05);
   if (forge != null && forge > base) base = forge;
   // Inscribed World blocks (Inscribed.space builds) are walkable too.
-  const box = boxSurfaceAt(x, z, floraFeet, BOX_STEP);
+  const box = boxSurfaceAt(x, z, floraFeet, BOX_STEP, 0.008);
   if (box != null && box > base) base = box;
   // Block-grown flora is walkable: stand on hedges, flowers and tree tops you can reach.
   const flora = floraSurface(x, z, floraFeet, VOXEL * 1.05);
@@ -2091,7 +2091,19 @@ function PlayerCameraRig({
     setVoxelFeet(driving ? null : feetBefore);
     floraFeet = driving ? null : feetBefore;
     applyMountIntent(intent, isDriving());
-    if (!stepDrop(player, intent, delta, traversalSurfaceY)) stepPlayer(player, intent, delta);
+    const groundBefore = feetBefore - player.y;
+    if (!stepDrop(player, intent, delta, traversalSurfaceY)) {
+      stepPlayer(player, intent, delta);
+      // Stepping off a ledge or jumping a gap keeps your real altitude: the
+      // ground dropping away under you turns into air, not a snap to the grass.
+      if (!driving && intent.fly === undefined) {
+        const groundAfter = traversalSurfaceY(player.x, player.z);
+        if (groundAfter < groundBefore - 0.004) {
+          player.y += groundBefore - groundAfter;
+          player.grounded = false;
+        }
+      }
+    }
     if (!driving && player.vy > 0) {
       // Head-bonk: a placed block overhead stops the jump.
       const roof = voxelCeilingAt(player.x, player.z, feetBefore, VOXEL * 0.3);

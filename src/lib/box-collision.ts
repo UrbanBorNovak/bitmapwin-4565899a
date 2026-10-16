@@ -17,10 +17,11 @@ function* under(x: number, z: number, r = 0) {
 }
 
 /** Top of the highest box whose top is reachable from `feetY` (null = no box here). */
-export function boxSurfaceAt(x: number, z: number, feetY: number | null, stepUp: number): number | null {
+export function boxSurfaceAt(x: number, z: number, feetY: number | null, stepUp: number, radius = 0): number | null {
   const limit = feetY == null ? Infinity : feetY + stepUp;
   let best: number | null = null;
-  for (const b of under(x, z)) if (b.y1 <= limit && (best == null || b.y1 > best)) best = b.y1;
+  // `radius` is the foot stance: thin seams between slabs are bridged instead of dropped through.
+  for (const b of under(x, z, radius)) if (b.y1 <= limit && (best == null || b.y1 > best)) best = b.y1;
   return best;
 }
 
