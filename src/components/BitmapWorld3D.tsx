@@ -11,7 +11,9 @@ import { VOXEL, columnSurface, setVoxelFeet, voxelCeilingAt, voxelWallAt } from 
 import { forgeSurfaceAt, forgeWallAt } from "@/lib/forge-collision";
 import { boxSurfaceAt, boxWallAt } from "@/lib/box-collision";
 /** Inscribed-world stairs rise ~0.013 per step; let the walker climb them. */
-const BOX_STEP = 0.018;
+const BOX_STEP = 0.0145;
+/** Body height used against inscribed-world boxes (taller than BOX_STEP so walls register). */
+const BOX_BODY = 0.018;
 import { floraSurface, floraWallAt } from "@/lib/flora-solids";
 let floraFeet: number | null = null;
 import { clearFraction } from "@/lib/camera-occluders";
@@ -1882,7 +1884,7 @@ function PlayerCameraRig({
         const feet = traversalSurfaceY(here.x, here.z) + here.y;
         if (voxelWallAt(x, z, feet, VOXEL * 1.9, VOXEL * 0.3)) return true;
         if (forgeWallAt(x, z, feet, VOXEL * 1.9)) return true;
-        if (boxWallAt(x, z, feet, VOXEL * 1.9, BOX_STEP)) return true;
+        if (boxWallAt(x, z, feet, BOX_BODY, BOX_STEP)) return true;
         if (floraWallAt(x, z, feet, VOXEL * 1.9, VOXEL * 0.3, VOXEL * 1.05)) return true;
       }
       if (aloft(pose.current)) return false;
