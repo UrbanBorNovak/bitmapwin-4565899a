@@ -171,16 +171,18 @@ function Marketplace() {
     const t = trait !== "any" ? ALL_OFFICIAL_TRAITS.find((x) => x.id === trait) : undefined;
     const heightTrait = t && HEIGHT_TRAIT_IDS.has(t.id) ? t : undefined;
     const gal = gallery !== "any" ? GALLERY_COLLECTIONS.find((g) => g.id === gallery) : undefined;
-    const parts = [def ? def.label : null, heightTrait ? `TRAIT ${heightTrait.label ?? heightTrait.id}` : null, gal ? `GALLERY ${gal.label}` : null].filter(Boolean);
-    const match = def || heightTrait || gal ? (h: number) => (!def || inClub(h, def)) && (!heightTrait || hasTrait(h, heightTrait.id as TraitId)) && (!gal || galleryIndex.match(gal.id, h)) : null;
+    const bm = tab === "inhabited";
+    const bmLabel = bm ? (bitmonRarity === "ALL" ? "BITMONS" : `BITMONS ${bitmonRarity}`) : null;
+    const parts = [bmLabel, def ? def.label : null, heightTrait ? `TRAIT ${heightTrait.label ?? heightTrait.id}` : null, gal ? `GALLERY ${gal.label}` : null].filter(Boolean);
+    const match = bm || def || heightTrait || gal ? (h: number) => (!bm || (inhabitedSet.has(h) && (bitmonRarity === "ALL" || rarityByHeight.get(h) === bitmonRarity))) && (!def || inClub(h, def)) && (!heightTrait || hasTrait(h, heightTrait.id as TraitId)) && (!gal || galleryIndex.match(gal.id, h)) : null;
     const galMiss = gal && gal.maxHeight === undefined ? galleryIndex.missing(gal.id) : 0;
     const galNote = gal && gal.maxHeight === undefined ? (galleryIndex.error ? `${gal.label}: BLOCK INDEX UNAVAILABLE — NOTHING CAN MATCH` : galleryIndex.loading ? `${gal.label}: READING BLOCK INDEX…` : galMiss ? `${gal.label}: ${galMiss} BITMAPS HAVE NO BLOCK RECORD AND ARE EXCLUDED` : undefined) : undefined;
     return {
       label: parts.length ? parts.join(" + ").toUpperCase() : "ALL BITMAPS",
       match,
-      caveat: [t && !heightTrait ? `${String(t.label ?? t.id).toUpperCase()} NEEDS INDEXED RECORDS, SO CHARTS IGNORE IT` : null, galNote].filter(Boolean).join(" · ") || undefined,
+      caveat: [t && !heightTrait ? `${String(t.label ?? t.id).toUpperCase()} NEEDS INDEXED RECORDS, SO CHARTS IGNORE IT` : null, galNote, bm && inhabited.isPending ? "BITMONS: READING CHAIN…" : null, bm && bitmonRarity !== "ALL" ? "UNVERIFIED BITMONS ARE EXCLUDED FROM RARITY SCOPE" : null].filter(Boolean).join(" · ") || undefined,
     };
-  }, [club, trait, gallery, galleryIndex]);
+  }, [club, trait, gallery, galleryIndex, tab, bitmonRarity, inhabitedSet, rarityByHeight, inhabited.isPending]);
   const visible = useMemo(() => {
     let base = tab === "traded" ? traded : tab === "listed" ? listed : parcels;
     if (tab === "inhabited") {
@@ -368,7 +370,7 @@ function Marketplace() {
       </div>
 
       <div className="mt-4">
-        <LiveTradesFeed />
+        <LiveTradesFeed scope={chartScope} />
       </div>
 
       <div className="mt-4">
