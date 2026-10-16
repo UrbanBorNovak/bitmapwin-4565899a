@@ -61,7 +61,35 @@ const ENDPOINTS = [
     path: "/api/public/gallery/{inscriptionId}",
     body: "Membership of an inscribed ordinals gallery, decoded from its reveal transaction. Immutable, so it is cached hard.",
   },
+  { method: "GET", path: "/api/public/market/orderbook?depth=20", body: "TRADING · Best ask/bid, spread, mid, last price, 24h volume and the ask/bid ladders." },
+  { method: "GET", path: "/api/public/market/listings?sort=price_asc&min_sats=&max_sats=&height=&seller=&limit=&offset=", body: "TRADING · Open listings with seller-signed PSBTs and checkout-hold status." },
+  { method: "GET", path: "/api/public/market/trades?height=&limit=", body: "TRADING · On-chain sales tape (confirmed and mempool)." },
+  { method: "GET", path: "/api/public/market/bids?height=&limit=", body: "TRADING · Open bids, highest first." },
+  { method: "POST", path: "/api/public/market/listings", body: "TRADING · List: body is a seller-signed base64 PSBT (raw or JSON psbt field). Validated against the live UTXO set." },
+  { method: "POST", path: "/api/public/market/listings/cancel", body: "TRADING · offerId + signature: BIP-322 signature of the unlist message by the seller address." },
+  { method: "POST", path: "/api/public/market/buy/prepare", body: "TRADING · offerId, buyerPaymentAddress, buyerOrdinalsAddress, optional keys: places a 90s hold and returns the buyer PSBT to sign locally." },
+  { method: "POST", path: "/api/public/market/buy/broadcast", body: "TRADING · offerId, psbt, buyerAddress: finalizes your signed PSBT and broadcasts it, returning the txid." },
+  { method: "POST", path: "/api/public/market/buy/release", body: "TRADING · offerId, buyerAddress: drops your checkout hold early." },
+  { method: "POST", path: "/api/public/market/bids", body: "TRADING · bitmapHeight, bidderAddress, priceSats, expiresInHours?, signature: BIP-322 signature of the bid message." },
+  { method: "POST", path: "/api/public/market/bids/cancel", body: "TRADING · bidId, address, signature: BIP-322 signature of the cancel message." },
 ];
+
+const BOT_EXAMPLE = `# 1. Watch the book
+curl https://bitmapwin.app/api/public/market/orderbook
+
+# 2. Prepare a buy (90s hold), sign the returned PSBT with YOUR key locally
+curl -X POST https://bitmapwin.app/api/public/market/buy/prepare \\
+  -H 'content-type: application/json' \\
+  -d '{"offerId":"<id>","buyerPaymentAddress":"bc1q...","buyerOrdinalsAddress":"bc1p..."}'
+
+# 3. Broadcast your signed PSBT
+curl -X POST https://bitmapwin.app/api/public/market/buy/broadcast \\
+  -H 'content-type: application/json' \\
+  -d '{"offerId":"<id>","psbt":"<signed base64>","buyerAddress":"bc1p..."}'
+
+# Signed messages (BIP-322):
+# bid:    "BITMAP MARKETPLACE BID\\nparcel: <h>.bitmap\\namount: <sats> sats\\nbidder: <addr>"
+# cancel: "BITMAP MARKETPLACE CANCEL BID\\nbid: <bidId>\\naddress: <addr>"`;
 
 function ApiPage() {
   return (

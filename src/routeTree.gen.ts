@@ -120,6 +120,7 @@ import { Route as ApiPublicBlocksHeightRouteImport } from './routes/api/public/b
 import { Route as ApiPublicGalleryIdRouteImport } from './routes/api/public/gallery.$id'
 import { Route as ApiPublicInscriptionIdRouteImport } from './routes/api/public/inscription.$id'
 import { Route as ApiPublicLandSkinHeightRouteImport } from './routes/api/public/land-skin.$height'
+import { Route as ApiPublicMarketSplatRouteImport } from './routes/api/public/market.$'
 import { Route as ApiPublicBlocksHeightMetaRouteImport } from './routes/api/public/blocks.$height.meta'
 import { Route as ApiPublicOgBitmapBlockRouteImport } from './routes/api/public/og.bitmap.$block'
 
@@ -681,6 +682,11 @@ const ApiPublicLandSkinHeightRoute = ApiPublicLandSkinHeightRouteImport.update({
   path: '/public/land-skin/$height',
   getParentRoute: () => ApiRoute,
 } as any)
+const ApiPublicMarketSplatRoute = ApiPublicMarketSplatRouteImport.update({
+  id: '/public/market/$',
+  path: '/public/market/$',
+  getParentRoute: () => ApiRoute,
+} as any)
 const ApiPublicBlocksHeightMetaRoute =
   ApiPublicBlocksHeightMetaRouteImport.update({
     id: '/meta',
@@ -805,6 +811,7 @@ export interface FileRoutesByFullPath {
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
   '/api/public/inscription/$id': typeof ApiPublicInscriptionIdRoute
   '/api/public/land-skin/$height': typeof ApiPublicLandSkinHeightRoute
+  '/api/public/market/$': typeof ApiPublicMarketSplatRoute
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
   '/api/public/og/bitmap/$block': typeof ApiPublicOgBitmapBlockRoute
 }
@@ -916,6 +923,7 @@ export interface FileRoutesByTo {
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
   '/api/public/inscription/$id': typeof ApiPublicInscriptionIdRoute
   '/api/public/land-skin/$height': typeof ApiPublicLandSkinHeightRoute
+  '/api/public/market/$': typeof ApiPublicMarketSplatRoute
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
   '/api/public/og/bitmap/$block': typeof ApiPublicOgBitmapBlockRoute
 }
@@ -1032,6 +1040,7 @@ export interface FileRoutesById {
   '/api/public/gallery/$id': typeof ApiPublicGalleryIdRoute
   '/api/public/inscription/$id': typeof ApiPublicInscriptionIdRoute
   '/api/public/land-skin/$height': typeof ApiPublicLandSkinHeightRoute
+  '/api/public/market/$': typeof ApiPublicMarketSplatRoute
   '/api/public/blocks/$height/meta': typeof ApiPublicBlocksHeightMetaRoute
   '/api/public/og/bitmap/$block': typeof ApiPublicOgBitmapBlockRoute
 }
@@ -1149,6 +1158,7 @@ export interface FileRouteTypes {
     | '/api/public/gallery/$id'
     | '/api/public/inscription/$id'
     | '/api/public/land-skin/$height'
+    | '/api/public/market/$'
     | '/api/public/blocks/$height/meta'
     | '/api/public/og/bitmap/$block'
   fileRoutesByTo: FileRoutesByTo
@@ -1260,6 +1270,7 @@ export interface FileRouteTypes {
     | '/api/public/gallery/$id'
     | '/api/public/inscription/$id'
     | '/api/public/land-skin/$height'
+    | '/api/public/market/$'
     | '/api/public/blocks/$height/meta'
     | '/api/public/og/bitmap/$block'
   id:
@@ -1375,6 +1386,7 @@ export interface FileRouteTypes {
     | '/api/public/gallery/$id'
     | '/api/public/inscription/$id'
     | '/api/public/land-skin/$height'
+    | '/api/public/market/$'
     | '/api/public/blocks/$height/meta'
     | '/api/public/og/bitmap/$block'
   fileRoutesById: FileRoutesById
@@ -2236,6 +2248,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicLandSkinHeightRouteImport
       parentRoute: typeof ApiRoute
     }
+    '/api/public/market/$': {
+      id: '/api/public/market/$'
+      path: '/public/market/$'
+      fullPath: '/api/public/market/$'
+      preLoaderRoute: typeof ApiPublicMarketSplatRouteImport
+      parentRoute: typeof ApiRoute
+    }
     '/api/public/blocks/$height/meta': {
       id: '/api/public/blocks/$height/meta'
       path: '/meta'
@@ -2277,6 +2296,7 @@ interface ApiRouteChildren {
   ApiPublicGalleryIdRoute: typeof ApiPublicGalleryIdRoute
   ApiPublicInscriptionIdRoute: typeof ApiPublicInscriptionIdRoute
   ApiPublicLandSkinHeightRoute: typeof ApiPublicLandSkinHeightRoute
+  ApiPublicMarketSplatRoute: typeof ApiPublicMarketSplatRoute
   ApiPublicOgBitmapBlockRoute: typeof ApiPublicOgBitmapBlockRoute
 }
 
@@ -2291,6 +2311,7 @@ const ApiRouteChildren: ApiRouteChildren = {
   ApiPublicGalleryIdRoute: ApiPublicGalleryIdRoute,
   ApiPublicInscriptionIdRoute: ApiPublicInscriptionIdRoute,
   ApiPublicLandSkinHeightRoute: ApiPublicLandSkinHeightRoute,
+  ApiPublicMarketSplatRoute: ApiPublicMarketSplatRoute,
   ApiPublicOgBitmapBlockRoute: ApiPublicOgBitmapBlockRoute,
 }
 
