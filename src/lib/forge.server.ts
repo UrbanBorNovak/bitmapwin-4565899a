@@ -174,6 +174,25 @@ async function htmlAt(id: string): Promise<string | null> {
   return buf.byteLength > MAX_BYTES ? "" : new TextDecoder().decode(buf);
 }
 
+/**
+ * The rect the Parcel Floor Metric derives for `index` from the block's real
+ * transaction sizes, or null when the block's size map is incomplete (partial
+ * Esplora coverage) so no verdict is possible. A parcel build whose inscribed
+ * rect does not match this derived rect is rejected — tile bounds come from
+ * block math, never from the inscription's own claim.
+ */
+async function derivedParcelRect(height: number, index: number): Promise<[number, number, number, number] | null> {
+  const { buildBlockBytes } = await import("@/lib/block-bytes.server");
+  const block = await buildBlockBytes(height).catch(() => null);
+  if (!block || block.covered < block.txCount) return null;
+  const { parcelRects } = await import("@/lib/forge-parcels");
+  const r = parcelRects([...block.bytes]).find((x) => x.index === index);
+  return r ? [r.x0, r.z0, r.x1, r.z1] : null;
+}
+
+const rectMatches = (a: [number, number, number, number], b: [number, number, number, number]) =>
+  a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3];
+
 /** Parcel holders' builds (newest reinscription on each valid parcel's own sat) + every HTML found on the land. */
 export async function forgeLandFor(height: number): Promise<ForgeLand> {
   const hit = landCache.get(height);
@@ -184,6 +203,7 @@ export async function forgeLandFor(height: number): Promise<ForgeLand> {
   const { parcelHoldersFor } = await import("@/lib/parcel-fief.server");
   const holders = await parcelHoldersFor(height).catch(() => null);
   for (const p of (holders?.parcels ?? []).slice(0, 24)) {
+    const derived = await derivedParcelRect(height, p.index);
     const s = await satLatest(p.inscriptionId);
     if (!s) continue;
     const dm = await delegateMeta(s.latest);
