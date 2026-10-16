@@ -13,11 +13,11 @@ import { InscribedModel, contentUrl } from "./InscribedParts";
 const SHIP_INSCRIPTION = "f052b807840ed3a051a253e43128b0c1a5f75f87221e2e69253a569f8f0d7726i0";
 
 class Quiet extends Component<{ children: ReactNode }, { failed: boolean }> {
-  state = { failed: false };
+  override state = { failed: false };
   static getDerivedStateFromError() {
     return { failed: true };
   }
-  render() {
+  override render() {
     return this.state.failed ? null : this.props.children;
   }
 }
