@@ -12,6 +12,9 @@ import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
 import { MARKETPLACE_FEE_PERCENT } from "@/lib/marketplace-fee";
 import { resolveWallet } from "@/components/BuyButton";
+import { useVerifiedBitmons } from "@/lib/use-verified-bitmons";
+import type { BitmonCheck } from "@/lib/bitmon-verify";
+import { traitsOf, hasTrait, type TraitId } from "@/lib/traits";
 
 type HeldBitmap = {
   outpoint: string;
@@ -126,15 +129,31 @@ const PAGE = 20;
 function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint: Map<string, Offer> }) {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "listed" | "unlisted">("all");
+  const [onlyBitmons, setOnlyBitmons] = useState(false);
+  const [trait, setTrait] = useState<TraitId | "">("");
   const [page, setPage] = useState(0);
+  const { checks } = useVerifiedBitmons();
+  const bitmonCount = useMemo(() => held.filter((b) => checks.has(b.bitmapHeight)).length, [held, checks]);
+  // Only offer traits this wallet actually holds, with counts.
+  const traitOptions = useMemo(() => {
+    const counts = new Map<TraitId, { label: string; n: number }>();
+    for (const b of held) for (const t of traitsOf(b.bitmapHeight)) {
+      const c = counts.get(t.id) ?? { label: t.label, n: 0 };
+      c.n++;
+      counts.set(t.id, c);
+    }
+    return [...counts.entries()].sort((a, b) => a[1].label.localeCompare(b[1].label));
+  }, [held]);
   const rows = useMemo(
     () =>
       held.filter((b) => {
         if (q.trim() && !String(b.bitmapHeight).includes(q.trim())) return false;
+        if (onlyBitmons && !checks.has(b.bitmapHeight)) return false;
+        if (trait && !hasTrait(b.bitmapHeight, trait)) return false;
         const listed = openByOutpoint.has(b.outpoint);
         return filter === "all" || (filter === "listed" ? listed : !listed);
       }),
-    [held, q, filter, openByOutpoint],
+    [held, q, filter, openByOutpoint, onlyBitmons, trait, checks],
   );
   const pages = Math.max(1, Math.ceil(rows.length / PAGE));
   const p = Math.min(page, pages - 1);
@@ -157,14 +176,40 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
             {f.toUpperCase()}
           </button>
         ))}
+        <button
+          className={onlyBitmons ? "btn-term !px-3 !py-1" : "btn-term-ghost !px-3 !py-1"}
+          onClick={() => { setOnlyBitmons((v) => !v); setPage(0); }}
+        >
+          BITMONS ({bitmonCount})
+        </button>
+        <select
+          value={trait}
+          onChange={(e) => { setTrait(e.target.value as TraitId | ""); setPage(0); }}
+          className="border border-border bg-background px-2 py-1.5 font-mono text-[11px] text-foreground focus:border-foreground focus:outline-none"
+          aria-label="Filter by trait"
+        >
+          <option value="">ALL TRAITS</option>
+          {traitOptions.map(([id, c]) => (
+            <option key={id} value={id}>{c.label.toUpperCase()} ({c.n})</option>
+          ))}
+        </select>
+        {(onlyBitmons || trait) && (
+          <button className="btn-term-ghost !px-2 !py-1" onClick={() => { setOnlyBitmons(false); setTrait(""); setPage(0); }}>
+            [ CLEAR ]
+          </button>
+        )}
         <span className="label ml-auto">{rows.length} SHOWN</span>
       </div>
+      {rows.length === 0 && (
+        <p className="p-5 font-mono text-[11px] text-muted-foreground">&gt; NONE OF YOUR BITMAPS MATCH THESE FILTERS</p>
+      )}
       <ul className="divide-y divide-border">
         {rows.slice(p * PAGE, p * PAGE + PAGE).map((bitmap) => (
           <HeldRow
             key={`${bitmap.outpoint}-${bitmap.bitmapHeight}`}
             bitmap={bitmap}
             offer={openByOutpoint.get(bitmap.outpoint) ?? null}
+            bitmon={checks.get(bitmap.bitmapHeight) ?? null}
           />
         ))}
       </ul>
@@ -179,7 +224,8 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
   );
 }
 
-function HeldRow({ bitmap, offer }: { bitmap: HeldBitmap; offer: Offer | null }) {
+function HeldRow({ bitmap, offer, bitmon }: { bitmap: HeldBitmap; offer: Offer | null; bitmon: BitmonCheck | null }) {
+  const traits = useMemo(() => traitsOf(bitmap.bitmapHeight), [bitmap.bitmapHeight]);
   const wallet = useWalletSession();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
@@ -279,6 +325,23 @@ function HeldRow({ bitmap, offer }: { bitmap: HeldBitmap; offer: Offer | null })
               ? `LISTED · ASK ${formatSats(offer.priceSats)}`
               : "NOT LISTED · YOURS ON CHAIN"}
           </p>
+          {(bitmon || traits.length > 0) && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {bitmon && (
+                <span className="border border-primary/60 px-1.5 py-0.5 font-mono text-[9px] text-primary">
+                  BITMON
+                  {bitmon.status === "unverified"
+                    ? bitmon.reason === "reading" ? " · CHECKING…" : " · UNVERIFIED"
+                    : ` · ${String(bitmon.species).toUpperCase()} · ${String(bitmon.rarity).toUpperCase()}`}
+                </span>
+              )}
+              {traits.map((t) => (
+                <span key={t.id} className="border border-border px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground">
+                  {t.label.toUpperCase()}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
