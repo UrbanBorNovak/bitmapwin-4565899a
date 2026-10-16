@@ -27,11 +27,17 @@ const v3 = (v: V, d = 0): [number, number, number] => [n(v?.x) || d, n(v?.y) || 
 const abs3 = (v: V): [number, number, number] => v3(v, 1).map((x) => Math.abs(x) || 1) as [number, number, number];
 
 /** Converts one backup export. Textured parts keep a neutral stone colour. */
+/** Widest primitive an archive build may keep (creator units). */
+export const MAX_SLAB_SPAN = 150;
+
 export function convertBackupBuild(b: BackupBuild): WorldGeometry {
   const prims: WorldPrim[] = [];
   const add = (list: Item[] | undefined, shape: WorldPrim["shape"]) => {
     for (const it of list ?? []) {
       if (prims.length >= 2000) return;
+      const s = abs3(it.s);
+      // Mega slabs (editor ground, 1,000-unit floors) would slice across neighbouring districts.
+      if (shape === "box" && Math.max(s[0], s[2]) > MAX_SLAB_SPAN) continue;
       prims.push({ shape, color: it.col && HEX.test(it.col) ? it.col.toLowerCase() : "#9a9a9a", pos: v3(it.p), rot: v3(it.r), size: abs3(it.s) });
     }
   };

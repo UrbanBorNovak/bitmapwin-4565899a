@@ -154,9 +154,16 @@ export function structurePrims(prims: WorldPrim[]): WorldPrim[] {
   return near.length ? near : base;
 }
 
-/** Models that land inside the BITMAP once the building is fitted (local units, before offset). */
+/** Creator scale above which a model is a runaway sky/horizon prop, never part of the land. */
+export const MAX_MODEL_SCALE = 100;
+
+/**
+ * Models that land inside the BITMAP once the building is fitted (local units, before offset).
+ * Runaway scales (sky domes, 1,000,000-unit props) are dropped so nothing spills over neighbours.
+ */
 export function modelsInside(models: WorldAsset[], fit: { scale: number; offset: [number, number, number] }, half: number): WorldAsset[] {
   return models.filter((m) =>
+    m.scale.every((s) => Number.isFinite(s) && Math.abs(s) <= MAX_MODEL_SCALE) &&
     Math.abs((m.pos[0] + fit.offset[0]) * fit.scale) <= half &&
     Math.abs((m.pos[2] + fit.offset[2]) * fit.scale) <= half,
   );
