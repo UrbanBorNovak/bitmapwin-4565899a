@@ -46,6 +46,7 @@ import { BitmapPixelLabel, DestinationArrow } from "@/components/game/WorldMarke
 import { SafeLightformer } from "@/components/game/SafeLightformer";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useQuery } from "@tanstack/react-query";
+import { builtWorldQuery } from "@/lib/built-bitmaps";
 import { useServerFn } from "@tanstack/react-start";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useCharacter } from "@/lib/character";
@@ -746,6 +747,18 @@ const OwnedBitmapGlow = memo(function OwnedBitmapGlow({
     </group>
   );
 });
+
+/** Cold cyan shafts over every built BITMAP so builds read from across the Oasis. */
+function BuiltBitmapBeacons({ mapView }: { mapView: boolean }) {
+  const built = useQuery(builtWorldQuery());
+  const heights = useMemo(() => (built.data?.built ?? []).map((b) => b.height), [built.data]);
+  const [signal, setSignal] = useState("#55dbea");
+  useEffect(() => {
+    const v = getComputedStyle(document.documentElement).getPropertyValue("--signal").trim();
+    if (v) setSignal(v);
+  }, []);
+  return <OwnedBitmapBeacons heights={heights} bitcoin={signal} mapView={mapView} />;
+}
 
 /**
  * Long-range ownership signals. The existing ground glow identifies the exact
@@ -3059,6 +3072,7 @@ const WorldScene = memo(function WorldScene({
         bitcoin={colors.bitcoin}
         mapView={cameraMode === "map"}
       />
+      <BuiltBitmapBeacons mapView={cameraMode === "map"} />
       <OnChainModels models={models} bitcoin={colors.bitcoin} />
       <ExtenderStage
         deployments={deployments}

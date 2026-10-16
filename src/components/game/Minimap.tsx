@@ -12,6 +12,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import type { PlayerState } from "@/lib/player-state";
 import { WORLD_CELL, WORLD_GRID, WORLD_UNITS } from "@/lib/player-state";
+import { useQuery } from "@tanstack/react-query";
+import { builtWorldQuery } from "@/lib/built-bitmaps";
+import { VOXEL, blockColor } from "@/lib/voxel-world";
 import type { MapCursor } from "@/lib/map-presence";
 import { CHUNK_TILES, TILE, loadedChunks } from "@/lib/world-grid";
 import { MAX_RELIEF, groundY, requestTerrainAround, terrainVersion } from "@/lib/world-terrain";
@@ -94,6 +97,9 @@ export function Minimap({
   );
   const ownedRef = useRef(owned);
   ownedRef.current = owned;
+  const builtWorld = useQuery(builtWorldQuery());
+  const builtRef = useRef(builtWorld.data);
+  builtRef.current = builtWorld.data;
 
   const partyPeers = useMemo(
     () => cursors.filter((peer) => partySet.has(peer.id)),
@@ -271,6 +277,31 @@ export function Minimap({
         WORLD_UNITS * scale,
       );
       ctx.globalAlpha = 1;
+
+      // built BITMAPs (cyan frames) and every placed voxel in its block colour
+      const world = builtRef.current;
+      if (world) {
+        ctx.strokeStyle = theme.signal;
+        ctx.lineWidth = 1.5;
+        const box = Math.max(4, Math.min(14, step));
+        for (const b of world.built) {
+          const x = toPx((b.height % WORLD_GRID) * WORLD_CELL - WORLD_UNITS / 2);
+          const z = toPy(Math.floor(b.height / WORLD_GRID) * WORLD_CELL);
+          if (x < -box || z < -box || x > size + box || z > size + box) continue;
+          ctx.globalAlpha = 0.9;
+          ctx.strokeRect(x, z, box, box);
+        }
+        const vpx = Math.max(1, VOXEL * scale);
+        for (const v of world.voxels) {
+          const x = toPx(v.x * VOXEL);
+          const z = toPy(v.z * VOXEL);
+          if (x < 0 || z < 0 || x > size || z > size) continue;
+          ctx.globalAlpha = 0.95;
+          ctx.fillStyle = blockColor(v.kind).top;
+          ctx.fillRect(x, z, vpx, vpx);
+        }
+        ctx.globalAlpha = 1;
+      }
 
       // your own BITMAPs
       ctx.fillStyle = theme.bitcoin;
