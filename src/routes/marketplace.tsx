@@ -369,7 +369,7 @@ function Marketplace() {
                   <div className="grid max-h-72 gap-1 overflow-y-auto pr-1">
                     <TraitRow active={trait === "any"} label="ALL" count={serverMode ? null : parcels.length} onClick={() => { setTrait("any"); setPage(0); }} />
                     {traitList.map((item) => {
-                      const count = serverMode ? null : traitCounts.get(item.id) ?? 0;
+                      const count = serverMode ? null : traitCounts.get(item.id as TraitId) ?? 0;
                       return (
                         <TraitRow key={item.id} active={trait === item.id} label={item.label} count={count} title={`${item.sourceKey} — ${item.description}`} disabled={count === 0 && trait !== item.id} onClick={() => { setTrait(item.id); setPage(0); }} />
                       );
