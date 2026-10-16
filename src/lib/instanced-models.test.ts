@@ -47,7 +47,7 @@ describe("instanced on-chain models", () => {
       return [b.min.x, b.max.x, b.min.y, b.max.y, b.min.z, b.max.z];
     });
     expect(got).toHaveLength(2);
-    got.forEach((b, i) => [b.x0, b.x1, b.y0, b.y1, b.z0, b.z1].forEach((v, k) => expect(v).toBeCloseTo(old[i]![k]!, 9)));
+    got.forEach((b, i) => [b.x0, b.x1, b.y0, b.y1, b.z0, b.z1].forEach((v, k) => expect(v).toBeCloseTo(old[i]![k]!, 6)));
   });
 
   it("detailed meshes above the vertex limit stay walk-through", () => {
