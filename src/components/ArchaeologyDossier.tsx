@@ -107,7 +107,7 @@ export function ArchaeologyDossier({ height, genesisHeight, inscriptionId }: { h
               <li key={n.id} className="border border-border p-3">
                 <p className="label">{officialTrait(n.trait_id)?.label ?? n.trait_id} · RECORDED BY {n.contributor_name}</p>
                 <p className="mt-2 break-words font-mono text-xs leading-relaxed text-muted-foreground">{n.thesis}</p>
-                <a href={n.evidence_url} target="_blank" rel="noreferrer" className="label mt-2 inline-flex hover:text-bitcoin">EVIDENCE <ExternalLink className="ml-1 size-3" /></a>
+                <div className="mt-2 flex flex-wrap gap-3"><Evidence href={n.evidence_url} label="COMMUNITY EVIDENCE" /><Evidence href={inscriptionEvidenceUrl(n.inscription_id)} label="INSCRIPTION" /></div>
               </li>
             ))}
           </ul>
