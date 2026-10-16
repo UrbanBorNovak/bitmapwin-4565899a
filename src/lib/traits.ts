@@ -27,7 +27,57 @@ export type TraitId =
   | "sub-25k"
   | "sub-50k"
   | "sub-100k"
+  | "era-1"
+  | "era-2"
+  | "era-3"
+  | "era-4"
+  | "era-5"
+  | "perfect-square"
+  | "perfect-cube"
+  | "memetic"
+  | "bip34-activation"
+  | "bip66-activation"
+  | "csv-activation"
+  | "segwit-activation"
+  | "taproot-activation"
   ;
+
+/** Subsidy eras: [first, last] height of each 210,000-block halving epoch. */
+export const SUBSIDY_ERAS: Array<{ id: TraitId; era: number; from: number; to: number; subsidy: string }> = [
+  { id: "era-1", era: 1, from: 0, to: 209_999, subsidy: "50" },
+  { id: "era-2", era: 2, from: 210_000, to: 419_999, subsidy: "25" },
+  { id: "era-3", era: 3, from: 420_000, to: 629_999, subsidy: "12.5" },
+  { id: "era-4", era: 4, from: 630_000, to: 839_999, subsidy: "6.25" },
+  { id: "era-5", era: 5, from: 840_000, to: 1_049_999, subsidy: "3.125" },
+];
+
+/** Bitcoin / internet culture numbers. */
+export const MEMETIC_HEIGHTS = [42, 69, 420, 1337, 21_000, 69_420, 420_000, 690_420];
+
+/** First mainnet block enforcing each soft fork's rules. */
+export const SOFT_FORKS: Array<{ id: TraitId; height: number; label: string; description: string }> = [
+  { id: "bip34-activation", height: 227_931, label: "BIP 34 ACTIVATION", description: "First block enforcing BIP 34: block height in the coinbase." },
+  { id: "bip66-activation", height: 363_725, label: "BIP 66 ACTIVATION", description: "First block enforcing BIP 66: strict DER signatures." },
+  { id: "csv-activation", height: 419_328, label: "CSV ACTIVATION", description: "First block enforcing CheckSequenceVerify (BIP 68/112/113)." },
+  { id: "segwit-activation", height: 481_824, label: "SEGWIT ACTIVATION", description: "First block enforcing Segregated Witness (BIP 141)." },
+  { id: "taproot-activation", height: 709_632, label: "TAPROOT ACTIVATION", description: "First block enforcing Taproot and Schnorr (BIP 340–342)." },
+];
+
+/** Heights 0..max matching a sparse pure-height trait, or a range for eras. Null if not a height trait. */
+export function heightTraitQuery(id: string, max: number): { heights: number[] } | { from: number; to: number } | null {
+  const era = SUBSIDY_ERAS.find((e) => e.id === id);
+  if (era) return { from: era.from, to: era.to };
+  const fork = SOFT_FORKS.find((f) => f.id === id);
+  if (fork) return { heights: [fork.height] };
+  if (id === "memetic") return { heights: MEMETIC_HEIGHTS.filter((h) => h <= max) };
+  if (id === "perfect-square" || id === "perfect-cube") {
+    const p = id === "perfect-square" ? 2 : 3;
+    const out: number[] = [];
+    for (let n = 1; n ** p <= max; n++) out.push(n ** p);
+    return { heights: out };
+  }
+  return null;
+}
 
 export type TraitDefinition = {
   id: TraitId;
@@ -77,6 +127,11 @@ export const OFFICIAL_TRAITS: TraitDefinition[] = [
   { id: "sub-25k", sourceKey: "is_sub_25k", label: "SUB 25K", description: "Mined within the first 25,000 blocks.", rare: false },
   { id: "sub-50k", sourceKey: "is_sub_50k", label: "SUB 50K", description: "Mined within the first 50,000 blocks.", rare: false },
   { id: "sub-100k", sourceKey: "is_sub_100k", label: "SUB 100K", description: "Mined within the first 100,000 blocks.", rare: false },
+  ...SUBSIDY_ERAS.map((e) => ({ id: e.id, sourceKey: `is_era_${e.era}`, label: `ERA ${e.era} · ${e.subsidy} BTC`, description: `Mined in subsidy era ${e.era} (blocks ${e.from.toLocaleString("en-US")}–${e.to.toLocaleString("en-US")}), when the block reward was ${e.subsidy} BTC.`, rare: false })),
+  { id: "perfect-square", sourceKey: "is_perfect_square", label: "PERFECT SQUARE", description: "Block height is a perfect square (n²).", rare: false },
+  { id: "perfect-cube", sourceKey: "is_perfect_cube", label: "PERFECT CUBE", description: "Block height is a perfect cube (n³).", rare: true },
+  { id: "memetic", sourceKey: "is_memetic", label: "MEMETIC HEIGHT", description: `Block height is a culture number: ${MEMETIC_HEIGHTS.join(", ")}.`, rare: true },
+  ...SOFT_FORKS.map((f) => ({ id: f.id, sourceKey: `is_${f.id.replace("-", "_")}`, label: f.label, description: f.description, rare: true })),
 ];
 
 const BY_ID = new Map(OFFICIAL_TRAITS.map((trait) => [trait.id, trait]));
@@ -145,6 +200,11 @@ export function traitsOf(height: number): Trait[] {
   if (height >= 0 && height < 25_000) ids.push("sub-25k");
   if (height >= 0 && height < 50_000) ids.push("sub-50k");
   if (height >= 0 && height < 100_000) ids.push("sub-100k");
+  for (const e of SUBSIDY_ERAS) if (height >= e.from && height <= e.to) ids.push(e.id);
+  if (height > 0 && Math.round(Math.sqrt(height)) ** 2 === height) ids.push("perfect-square");
+  if (height > 0 && Math.round(Math.cbrt(height)) ** 3 === height) ids.push("perfect-cube");
+  if (MEMETIC_HEIGHTS.includes(height)) ids.push("memetic");
+  for (const f of SOFT_FORKS) if (height === f.height) ids.push(f.id);
   return ids.map(definition);
 }
 
