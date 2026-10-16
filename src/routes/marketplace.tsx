@@ -158,7 +158,7 @@ function Marketplace() {
     const def = club !== "any" ? CLUBS.find((c) => c.id === club) : undefined;
     const t = trait !== "any" ? ALL_OFFICIAL_TRAITS.find((x) => x.id === trait) : undefined;
     const heightTrait = t && HEIGHT_TRAIT_IDS.has(t.id) ? t : undefined;
-    const parts = [def ? `CLUB ${def.label ?? def.id}` : null, heightTrait ? `TRAIT ${heightTrait.label ?? heightTrait.id}` : null].filter(Boolean);
+    const parts = [def ? def.label : null, heightTrait ? `TRAIT ${heightTrait.label ?? heightTrait.id}` : null].filter(Boolean);
     const match = def || heightTrait ? (h: number) => (!def || inClub(h, def)) && (!heightTrait || hasTrait(h, heightTrait.id as TraitId)) : null;
     return {
       label: parts.length ? parts.join(" + ").toUpperCase() : "ALL BITMAPS",
