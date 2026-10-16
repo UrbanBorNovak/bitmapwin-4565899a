@@ -243,7 +243,7 @@ function ParcelStudio() {
               <div className="mt-2 flex flex-wrap gap-3 label text-muted-foreground">
                 <span><i className="mr-1 inline-block h-2 w-2 bg-signal" />INSCRIBED</span>
                 <span><i className="mr-1 inline-block h-2 w-2 bg-muted-foreground/25" />OPEN</span>
-                <span><i className="mr-1 inline-block h-2 w-2 border border-primary bg-primary/20" />SELECTED</span>
+                <span><i className="mr-1 inline-block h-2 w-2 border border-primary bg-primary/40" />SELECTED</span>
                 <span><i className="mr-1 inline-block h-2 w-2 bg-primary" />OWNED GROUND</span>
                 {show !== null && <span className="ml-auto text-foreground">#{show} · {stateOf(show) === "valid" ? "INSCRIBED" : "OPEN"}</span>}
               </div>
