@@ -26,7 +26,7 @@ export const getPublicPassportFn = createServerFn({ method: "GET" })
 export const listProvenanceStreamFn = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({
     filter: z.enum(["all", "world", "chain", "account", "build", "stamp"]).default("all"),
-    limit: z.number().int().min(1).max(80).default(40),
+    limit: z.number().int().min(1).max(300).default(40),
     wallet: z.string().trim().min(8).max(128).optional(),
     bitmapHeight: z.number().int().min(0).max(10_000_000).optional(),
   }).parse(input))
