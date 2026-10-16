@@ -40,11 +40,11 @@ export function SiteFundTracker() {
           {data ? `${data.monthComplete ? "" : "≥ "}${data.monthSats.toLocaleString("en-US")}` : "—"} <span className="text-[10px] text-muted-foreground">SATS</span>
         </div>
         <div className="text-[10px] text-muted-foreground">
-          {data ? `${data.monthPayments} DONATIONS THIS MONTH` : "READING THE CHAIN…"}
+          {data ? `${data.monthPayments} SHARES THIS MONTH` : "READING THE CHAIN…"}
         </div>
         {data?.pendingSats ? <div className="text-[10px] text-signal">+{data.pendingSats.toLocaleString("en-US")} SATS CONFIRMING</div> : null}
         <div className="text-[10px] text-muted-foreground">{daysLeft} DAYS UNTIL THE GLASS TURNS</div>
-        <Link to="/donate" className="mt-1 inline-flex text-xs font-bold text-bitcoin hover:text-foreground">SUPPORT THE SITE →</Link>
+        <Link to="/donate" className="mt-1 inline-flex text-xs font-bold text-bitcoin hover:text-foreground">SHARE & FUEL →</Link>
       </div>
     </div>
   );

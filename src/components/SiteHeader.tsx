@@ -68,7 +68,7 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/marketplace", label: "BITMAP MARKET", note: "Buy and sell BITMAPs" },
       { to: "/leases", label: "LEASES", note: "Rent BITMAPs by the day" },
       { to: "/history", label: "SALES HISTORY", note: "Confirmed on-chain sales" },
-      { to: "/donate", label: "DONATE AN INSCRIPTION", note: "Retire unwanted ordinals for BIT" },
+      { to: "/donate", label: "SHARE & FUEL", note: "Share BTC, collect BIT to use in the Oasis" },
     ],
   },
   {

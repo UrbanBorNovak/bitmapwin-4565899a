@@ -12,7 +12,7 @@ export const Route = createFileRoute("/world-stats")({
       {
         name: "description",
         content:
-          "Live growth numbers for the Oasis: total BIT in circulation, average trading post price, ore mined each day, rigs running, builds raised and donations received.",
+          "Live growth numbers for the Oasis: total BIT in circulation, average trading post price, ore mined each day, rigs running, builds raised and sats shared.",
       },
       { property: "og:title", content: "World Stats — BIT Supply, Prices & Daily Mining" },
       {
@@ -78,7 +78,7 @@ function WorldStatsPage() {
               note={`${formatCount(t.goodsTrades24h)} TRADES · ${formatCount(t.openListings)} LISTINGS`}
             />
             <Stat
-              k="DONATIONS RECEIVED"
+              k="SATS SHARED"
               v={`${formatCount(t.donatedSats)} SATS`}
               note={`PAID OUT ${formatBit(t.donatedBits)}`}
             />
@@ -177,7 +177,7 @@ function WorldStatsPage() {
             </Link>
             {" · "}
             <Link to="/donate" className="text-bitcoin hover:underline">
-              DONATE FOR BIT
+              SHARE & FUEL FOR BIT
             </Link>
           </p>
         </>
