@@ -50,6 +50,8 @@ export function MarketTerminal() {
   const dir = last && prev ? Math.sign(last.price_sats - prev.price_sats) : 0;
   const usd = (s: number) => (price?.usd ? usdFromSats(s, price.usd) : null);
 
+  if (!hydrated) return <section className="border border-border bg-card/60 px-4 py-6 font-mono text-[11px] text-muted-foreground backdrop-blur-md">&gt; LOADING PRO TERMINAL…</section>;
+
   return (
     <section className="border border-border bg-card/60 backdrop-blur-md" aria-labelledby="terminal-h">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-border px-4 py-3 font-mono text-[11px]" data-no-translate>
