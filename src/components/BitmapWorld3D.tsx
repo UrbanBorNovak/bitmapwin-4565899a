@@ -3681,9 +3681,6 @@ function BitmapWorld3DInner({
   // Deep links spawn directly on the requested experience; every other entry
   // begins the journey at the Genesis block, 0.bitmap.
   const spawnedRef = useRef(false);
-  // Structure models register their solid boxes after the spawn lands, so a
-  // spawn point can end up inside one. For a few seconds after every spawn or
-  // respawn, an embedded player is nudged to the nearest clear spot.
   const spawnGuardUntil = useRef(0);
   useEffect(() => {
     if (spawnedRef.current || !tipHeight) return;
