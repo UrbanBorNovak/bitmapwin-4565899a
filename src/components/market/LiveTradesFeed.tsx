@@ -1,5 +1,8 @@
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { mergeTrade } from "@/lib/trade-merge";
+import type { TradeRow } from "@/lib/trade-store";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { fetchRecentTrades } from "@/lib/trade-store";
@@ -23,14 +26,39 @@ const FRESH_UI: Record<Freshness, { label: string; tone: string; note: string }>
   unknown: { label: "SYNC UNKNOWN", tone: "border-border text-muted-foreground", note: "No indexer run has been recorded yet." },
 };
 
+const FEED_KEY = ["live-trades-feed"] as const;
+
 export function LiveTradesFeed() {
   const [filter, setFilter] = useState<Filter>("sales");
+  const [live, setLive] = useState(false);
+  const [fresh_, setFresh] = useState<Set<string>>(() => new Set());
+  const qc = useQueryClient();
+  const listRef = useRef<HTMLUListElement>(null);
+  const anchor = useRef<{ top: number; height: number } | null>(null);
   const progressFn = useServerFn(tradeCrawlProgressFn);
   const progress = useQuery({ queryKey: ["trade-crawl", "progress"], queryFn: () => progressFn(), staleTime: 10_000, refetchInterval: 15_000 });
+
+  // Live subscription; polling below only runs fast while this is down.
+  useEffect(() => {
+    const channel = supabase
+      .channel("market-trades-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "trades" }, (payload) => {
+        const row = payload.new as TradeRow | undefined;
+        if (!row?.txid) return;
+        const el = listRef.current;
+        anchor.current = el && el.scrollTop > 0 ? { top: el.scrollTop, height: el.scrollHeight } : null;
+        qc.setQueryData<TradeRow[]>(FEED_KEY, (old) => mergeTrade(old ?? [], row));
+        setFresh((s) => new Set(s).add(row.txid));
+        window.setTimeout(() => setFresh((s) => { const n = new Set(s); n.delete(row.txid); return n; }), 4000);
+      })
+      .subscribe((status) => setLive(status === "SUBSCRIBED"));
+    return () => { supabase.removeChannel(channel); };
+  }, [qc]);
+
   const q = useQuery({
-    queryKey: ["live-trades-feed"],
+    queryKey: FEED_KEY,
     queryFn: () => fetchRecentTrades(150),
-    refetchInterval: 30_000,
+    refetchInterval: live ? 5 * 60_000 : 30_000,
     staleTime: 15_000,
   });
   const rows = useMemo(() => {
@@ -39,6 +67,13 @@ export function LiveTradesFeed() {
     if (filter === "moves") return all.filter((r) => r.price_sats <= 0);
     return all.filter((r) => r.price_sats > 0);
   }, [q.data, filter]);
+  // Keep the reader's place when a new row lands above them.
+  useLayoutEffect(() => {
+    const el = listRef.current;
+    const a = anchor.current;
+    if (el && a) el.scrollTop = a.top + (el.scrollHeight - a.height);
+    anchor.current = null;
+  }, [q.data]);
   const sales = (q.data ?? []).filter((r) => r.price_sats > 0);
   const volume = sales.reduce((a, r) => a + r.price_sats, 0);
   const top = sales.reduce((m, r) => Math.max(m, r.price_sats), 0);
@@ -76,6 +111,7 @@ export function LiveTradesFeed() {
         {ui ? <span className={`border px-1.5 py-0.5 ${ui.tone}`}>{ui.label}</span> : <span>CHECKING INDEXER…</span>}
         <span data-no-translate>LAST SYNC: {lastRunAt ? `${utcStamp(lastRunAt)} (${timeAgo(lastRunAt)})` : "—"}</span>
         <span data-no-translate>NEWEST SALE CONFIRMED: {latestSale ? `${utcStamp(latestSale.block_time ?? latestSale.created_at)}${latestSale.block_height ? ` · BLK ${latestSale.block_height}` : ""}` : "—"}</span>
+        <span data-no-translate className={live ? "text-signal" : "text-bitcoin"}>{live ? "● STREAMING" : "○ POLLING EVERY 30S"}</span>
         {q.dataUpdatedAt ? <span data-no-translate>FEED REFRESHED {timeAgo(new Date(q.dataUpdatedAt).toISOString())}</span> : null}
       </div>
       {ui?.note && <p className={`border-b border-border px-4 py-2 font-mono text-[11px] ${ui.tone.split(" ")[1]}`}>⚠ {ui.note}</p>}
@@ -91,11 +127,11 @@ export function LiveTradesFeed() {
           &gt; {filter === "whale" ? "NO SALES OF 0.001 BTC OR MORE IN THE LATEST 150 TRADES." : filter === "moves" ? "NO PLAIN TRANSFERS IN THE LATEST 150 TRADES." : "NO CONFIRMED SALES INDEXED YET. THE INDEXER KEEPS WATCHING THE CHAIN."}
         </p>
       ) : (
-        <ul className="max-h-[360px] divide-y divide-border overflow-y-auto" data-no-translate>
+        <ul ref={listRef} className="max-h-[360px] [overflow-anchor:none] divide-y divide-border overflow-y-auto" data-no-translate>
           {rows.slice(0, 60).map((r) => {
             const when = r.block_time ?? r.created_at;
             return (
-              <li key={r.txid} className="grid grid-cols-2 gap-2 p-3 font-mono text-[11px] sm:grid-cols-12 sm:items-center">
+              <li key={r.txid} className={`${fresh_.has(r.txid) ? "bg-signal/10 " : ""}transition-colors duration-1000 grid grid-cols-2 gap-2 p-3 font-mono text-[11px] sm:grid-cols-12 sm:items-center`}>
                 <Link to="/bitmap/$block" params={{ block: String(r.bitmap_height) }} className="font-bold text-foreground hover:text-bitcoin sm:col-span-2">
                   {r.bitmap_height}.BITMAP
                 </Link>
