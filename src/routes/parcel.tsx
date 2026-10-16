@@ -234,6 +234,24 @@ function ParcelStudio() {
                   <p className="display text-xl" data-no-translate>{parcelName(sel, height)}</p>
                   <Row k="TRANSACTION" v={`#${sel} of ${txCount?.toLocaleString("en-US")}`} />
                   <Row k="STATUS" v={selInfo?.state === "valid" ? "INSCRIBED · VALID" : selInfo?.state === "dup" ? "ONLY LATE COPIES — STILL OPEN" : "OPEN"} />
+                  {selRect && (
+                    <Row k="GROUND" v={noGround ? "NONE — DENSE BLOCK" : `${selRect.cells.size} SQUARE${selRect.cells.size === 1 ? "" : "S"}`} />
+                  )}
+                  {noGround && (
+                    <div className="rounded-md border border-destructive/60 bg-destructive/10 p-3">
+                      <p className="label text-destructive">NO GROUND — DENSE BLOCK</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        This block packs so many transactions that every square of ground near this parcel's exact
+                        position is owned by a neighbouring parcel. Each square belongs to exactly one holder, and
+                        parcels are never moved away from their true block position — so this parcel owns no buildable
+                        ground in the world.
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        The parcel deed itself is untouched and still proves its place in the block; it simply has no
+                        land to build on here.
+                      </p>
+                    </div>
+                  )}
                   {selInfo?.state === "valid" && (
                     <>
                       <Row k="HOLDER" v={selInfo.owner ? shortenAddress(selInfo.owner) : "—"} />
