@@ -17,7 +17,7 @@ const SEGMENTS: MatrixSegment[] = [
 ];
 
 /** Trait Floor Radar: live floors, listed density and 24h volume per club/trait; clicking a row pivots the terminal. */
-export function TraitMatrix({ activeKey, onPick }: { activeKey: string | null; onPick: (seg: MatrixSegment | null) => void }) {
+export function TraitMatrix({ activeKey, onPick, scoped = false }: { activeKey: string | null; scoped?: boolean; onPick: (seg: MatrixSegment | null) => void }) {
   const offers = useQuery(offersQuery());
   const bids = useQuery(openBidsQuery(500));
   const tape = useQuery({ queryKey: ["live-trades-feed"], queryFn: () => fetchRecentTrades(150), staleTime: 15_000, refetchInterval: 60_000 });
@@ -59,7 +59,7 @@ export function TraitMatrix({ activeKey, onPick }: { activeKey: string | null; o
             <button key={s} onClick={() => setSort(s)} className={`rounded border px-2 py-1 ${sort === s ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>{s === "listed" ? "DENSITY" : s === "floor" ? "FLOOR" : "24H VOL"}</button>
           ))}
           <button onClick={() => setHideEmpty((v) => !v)} className={`rounded border px-2 py-1 ${hideEmpty ? "border-border text-muted-foreground" : "border-accent text-accent"}`}>{hideEmpty ? "SHOW EMPTY" : "HIDE EMPTY"}</button>
-          {activeKey && <button onClick={() => onPick(null)} className="rounded border border-primary px-2 py-1 text-primary">RESET TO FULL MARKET</button>}
+          {(activeKey || scoped) && <button onClick={() => onPick(null)} className="rounded border border-primary px-2 py-1 text-primary">RESET TO FULL MARKET</button>}
         </div>
       </header>
       <div className="max-h-80 overflow-auto">
