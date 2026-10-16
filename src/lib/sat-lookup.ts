@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getOciSatFn } from "@/lib/oci-sat.functions";
 
 /**
  * Reads the real satoshi number a bitmap is inscribed on from the on-chain
@@ -41,5 +42,18 @@ export const satQuery = (height: number) =>
   queryOptions({
     queryKey: ["bitmap", "sat", height],
     queryFn: () => loadSat(height),
+    staleTime: Infinity,
+  });
+
+/** Single-BITMAP sat with on-chain LiveOCI fallback when the index has no row yet. */
+export const satProofQuery = (height: number) =>
+  queryOptions({
+    queryKey: ["bitmap", "sat-proof", height],
+    queryFn: async () => {
+      const oci = await getOciSatFn({ data: { height } }).catch(() => null);
+      if (oci) return { sat: oci.sat, at: oci.at, page: oci.page, source: "LIVEOCI" as const };
+      const sat = await loadSat(height);
+      return sat === null ? null : { sat, at: null, page: null, source: "INDEX" as const };
+    },
     staleTime: Infinity,
   });

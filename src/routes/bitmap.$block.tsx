@@ -13,6 +13,7 @@ import { ForgeBadge } from "@/components/ForgeBadge";
 import { StasisPods } from "@/components/StasisPods";
 import { GalleryBadges } from "@/components/GalleryBadges";
 import { SatBadges } from "@/components/SatBadges";
+import { TributesPanel } from "@/components/TributesPanel";
 import { toast } from "sonner";
 import { BlockMosaic } from "@/components/BlockMosaic";
 
@@ -343,6 +344,7 @@ function BitmapDetail() {
           <GuardianMintStatus height={block} />
         </div>
       </div>
+      <div className="mt-4"><TributesPanel height={block} /></div>
 
       {tab === "world" && (
         <div id="bitmap-panel-world" role="tabpanel" aria-labelledby="bitmap-tab-world" className="mt-6 space-y-6">
