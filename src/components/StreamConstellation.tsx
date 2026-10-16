@@ -53,7 +53,9 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
   // playback
   useEffect(() => {
     if (!playing || !ordered.length) return;
-    const t = setInterval(() => setStep((s) => { if (s >= ordered.length) { setPlaying(false); return s; } return s + 1; }), 450);
+    // keep a full replay under ~40s however deep the history is
+    const tick = Math.max(120, Math.min(450, 40_000 / ordered.length));
+    const t = setInterval(() => setStep((s) => { if (s >= ordered.length) { setPlaying(false); return s; } return s + 1; }), tick);
     return () => clearInterval(t);
   }, [playing, ordered.length]);
 
@@ -73,10 +75,12 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
       const { nodes, edges } = graph.current; const s = stepRef.current;
       const vis = (n: Node) => n.born < s;
       // forces
+      // settled nodes (born >40 steps ago) only feel forces from fresh ones
+      const settled = (n: Node) => n.born < s - 40;
       for (let i = 0; i < nodes.length; i++) {
         const a = nodes[i]!; if (!vis(a)) continue;
         for (let j = i + 1; j < nodes.length; j++) {
-          const b = nodes[j]!; if (!vis(b)) continue;
+          const b = nodes[j]!; if (!vis(b) || (settled(a) && settled(b))) continue;
           const dx = a.x - b.x, dy = a.y - b.y, d2 = dx * dx + dy * dy + 0.01;
           if (d2 > 40000) continue;
           const f = 900 / d2; const d = Math.sqrt(d2);
