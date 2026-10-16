@@ -9,6 +9,7 @@ import { creatorFloorY, fitPrims, modelsInside, structurePrims, type WorldAsset 
 import { worldContentUrl } from "@/lib/inscribed-world";
 import { WORLD_CELL, WORLD_GRID, cellX, cellZ, type PlayerState } from "@/lib/player-state";
 import { groundY } from "@/lib/world-terrain";
+import { Primitive } from "@/components/game/Primitive";
 import { setBoxes, type WorldBox } from "@/lib/box-collision";
 
 const D = Math.PI / 180;
@@ -100,7 +101,7 @@ function InstancedAssetGroup({ group, boxKey }: { group: ModelGroup; boxKey: str
   }, [meshes, boxKey]);
   return (
     <group ref={root}>
-      {meshes.map((m, i) => <primitive key={i} object={m} />)}
+      {meshes.map((m, i) => <Primitive key={i} object={m} />)}
     </group>
   );
 }
