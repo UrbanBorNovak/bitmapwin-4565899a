@@ -316,6 +316,75 @@ export const registryParcelsQuery = (limit = 300) =>
     staleTime: 60_000,
   });
 
+export type IndexPageArgs = {
+  page: number;
+  pageSize: number;
+  search: string;
+  ascending: boolean;
+  trait: string | null;
+};
+
+/**
+ * One server-paginated page straight from the full BITMAP index (900k+ rows).
+ * Search hits the whole index: a number is an exact height, an inscription id
+ * or txid matches its claim, anything else is a holder address. Trait pages
+ * come from the official_trait_bitmaps RPC. No full-index count is requested.
+ */
+export async function fetchRegistryIndexPage(
+  args: IndexPageArgs,
+): Promise<{ parcels: RegistryParcel[]; total: number | null; hasMore: boolean }> {
+  const { page, pageSize, ascending, trait } = args;
+  const q = args.search.trim();
+  const from = page * pageSize;
+  const toRow = (r: { block_height: number; inscription_id: string | null; genesis_height: number | null; resolved_at?: string | null }): ClaimRow[] => {
+    const id = r.inscription_id;
+    if (!id) return [];
+    const txid = id.split("i")[0] ?? "";
+    if (!/^[0-9a-fA-F]{64}$/.test(txid)) return [];
+    return [{ id, txid, block_height: r.genesis_height ?? null, bitmap_height: r.block_height, created_at: r.resolved_at ?? new Date(0).toISOString() }];
+  };
+
+  if (trait && !q) {
+    const { data, error } = await supabase.rpc("official_trait_bitmaps", { p_trait: trait, p_offset: from, p_limit: pageSize });
+    if (error) throw error;
+    const rows = (data ?? []) as Array<{ block_height: number; inscription_id: string | null; genesis_height: number | null; total_count: number }>;
+    const rawTotal = rows[0]?.total_count != null ? Number(rows[0].total_count) : null;
+    const total = rawTotal !== null && rawTotal >= 0 ? rawTotal : rows.length ? null : from;
+    const parcels = await buildParcels(rows.flatMap(toRow), { resolveOwners: false });
+    parcels.sort((a, b) => (ascending ? a.bitmapHeight - b.bitmapHeight : b.bitmapHeight - a.bitmapHeight));
+    return { parcels, total, hasMore: total !== null ? from + rows.length < total : rows.length === pageSize };
+  }
+
+  let query = supabase
+    .from("bitmap_index")
+    .select("block_height, inscription_id, genesis_height, resolved_at")
+    .eq("is_valid", true)
+    .not("inscription_id", "is", null);
+  if (q) {
+    if (/^\d+$/.test(q)) query = query.eq("block_height", Number(q));
+    else if (/^[0-9a-f]{64}i\d+$/i.test(q)) query = query.eq("inscription_id", q.toLowerCase());
+    else if (/^[0-9a-f]{64}$/i.test(q)) query = query.like("inscription_id", `${q.toLowerCase()}i%`);
+    else query = query.eq("owner_address", q);
+  }
+  const { data, error } = await query
+    .order("block_height", { ascending })
+    .range(from, from + pageSize);
+  if (error) throw error;
+  const rows = data ?? [];
+  const hasMore = rows.length > pageSize;
+  const parcels = await buildParcels(rows.slice(0, pageSize).flatMap(toRow), { resolveOwners: false });
+  parcels.sort((a, b) => (ascending ? a.bitmapHeight - b.bitmapHeight : b.bitmapHeight - a.bitmapHeight));
+  return { parcels, total: q ? (hasMore ? null : from + rows.length) : null, hasMore };
+}
+
+export const registryIndexPageQuery = (args: IndexPageArgs) =>
+  queryOptions({
+    queryKey: ["registry", "index-page", args],
+    queryFn: () => fetchRegistryIndexPage(args),
+    staleTime: 60_000,
+    placeholderData: (prev) => prev,
+  });
+
 export const registryBaseQuery = (limit = 300) =>
   queryOptions({
     queryKey: ["registry", "base", limit],
