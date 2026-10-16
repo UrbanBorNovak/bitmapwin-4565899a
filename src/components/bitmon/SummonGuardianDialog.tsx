@@ -559,13 +559,13 @@ export function SummonGuardianDialog({ height, open, onOpenChange }: { height: n
               </div>
             </div>
           ) : signedIn === false ? (
-            <Link to="/auth" className="font-mono text-xs text-bitcoin">SIGN IN TO SUMMON →</Link>
+            <Link to="/auth" className="font-mono text-xs text-bitcoin">SIGN IN TO AWAKEN →</Link>
           ) : (
             <div className="space-y-2">
               <button type="button" disabled={busy || !d} onClick={start} className="border border-bitcoin bg-bitcoin px-4 py-2 font-mono text-xs text-background disabled:opacity-50">
-                {busy ? "CHECKING HOLDER…" : `SUMMON FOR ${GUARDIAN_PRICE_SATS.toLocaleString()} SATS`}
+                {busy ? "CHECKING HOLDER…" : `AWAKEN FOR ${GUARDIAN_PRICE_SATS.toLocaleString()} SATS`}
               </button>
-              <p className="font-mono text-[10px] text-muted-foreground">ONLY THE VERIFIED HOLDER OF THIS BITMAP CAN SUMMON. ONE GUARDIAN PER BLOCK, EVER.</p>
+              <p className="font-mono text-[10px] text-muted-foreground">ONLY THE VERIFIED HOLDER OF THIS BITMAP CAN AWAKEN ITS GUARDIAN. ONE GUARDIAN PER BLOCK, EVER.</p>
               {denied ? <p className="font-mono text-[11px] text-destructive">{denied}</p> : null}
               {needBitmapId ? (
                 <label className="block space-y-1">

@@ -15,7 +15,7 @@ const PILLARS = [
 
 const JUMPS = [
   { to: "/forge", label: "Land Forge (voxel builder)", icon: Hammer },
-  { to: "/mint", label: "Summon a Guardian", icon: Sparkles },
+  { to: "/mint", label: "Awaken Your Guardian", icon: Sparkles },
   { to: "/command", label: "Guardian Command", icon: Swords },
   { to: "/marketplace", label: "Marketplace", icon: Store },
   { to: "/collections", label: "Collections", icon: Compass },
