@@ -206,9 +206,11 @@ function ParcelStudio() {
                   {layout.parcels.map((p, i) => {
                     const st = stateOf(i);
                     const dim = (filter === "open" && st !== "open") || (filter === "valid" && st !== "valid");
-                    const cls = i === sel ? "fill-primary" : cart.includes(i) ? "fill-primary/50" : st === "valid" ? "fill-signal" : "fill-muted-foreground/25";
+                    const ownsGround = i === sel && selRect !== null && selRect.cells.size > 0;
+                    const cls = ownsGround ? "fill-none stroke-primary/30" : i === sel ? "fill-primary" : cart.includes(i) ? "fill-primary/50" : st === "valid" ? "fill-signal" : "fill-muted-foreground/25";
                     return (
-                      <rect key={i} x={p.position.x + 0.06} y={p.position.y + offY + 0.06} width={Math.max(0.1, p.size - 0.12)} height={Math.max(0.1, p.size - 0.12)}
+                      <rect key={i} x={p.position.x + offX + 0.06} y={p.position.y + offY + 0.06} width={Math.max(0.1, p.size - 0.12)} height={Math.max(0.1, p.size - 0.12)}
+                        strokeWidth={ownsGround ? 0.1 : undefined}
                         className={`${cls} cursor-pointer transition-opacity hover:opacity-70`} opacity={dim ? 0.15 : 1}
                         onMouseEnter={() => setHover(i)} onClick={() => {
                           if (multi && canInscribe && queue === null && st === "open") setCart((c) => toggleCart(c, i));
@@ -218,22 +220,31 @@ function ParcelStudio() {
                   })}
                   {selRect && selRect.cells.size > 0 && (() => {
                     const k = selRect.span / side;
-                    return [...selRect.cells].map((c) => {
-                      const cx = Math.floor(c / selRect.span), cz = c % selRect.span;
-                      return (
-                        <rect key={`own-${c}`} x={(cx / k) - offX + 0.08} y={(cz / k) - offY + 0.08}
-                          width={Math.max(0.1, 1 / k - 0.16)} height={Math.max(0.1, 1 / k - 0.16)}
-                          className="pointer-events-none fill-primary/35 stroke-primary" strokeWidth={0.12} />
-                      );
-                    });
+                    return (
+                      <>
+                        {/* Rounded deed tile: the ground this parcel's build may cover. */}
+                        <rect key="deed" x={selRect.x0 / k + 0.04} y={selRect.z0 / k + 0.04}
+                          width={Math.max(0.1, (selRect.x1 - selRect.x0) / k - 0.08)} height={Math.max(0.1, (selRect.z1 - selRect.z0) / k - 0.08)}
+                          className="pointer-events-none fill-primary/40 stroke-primary" strokeWidth={0.1} />
+                        {/* Exclusively owned squares: where the build actually appears. */}
+                        {[...selRect.cells].map((c) => {
+                          const cx = Math.floor(c / selRect.span), cz = c % selRect.span;
+                          return (
+                            <rect key={`own-${c}`} x={(cx / k) + 0.08} y={(cz / k) + 0.08}
+                              width={Math.max(0.1, 1 / k - 0.16)} height={Math.max(0.1, 1 / k - 0.16)}
+                              className="pointer-events-none fill-primary stroke-primary" strokeWidth={0.12} />
+                          );
+                        })}
+                      </>
+                    );
                   })()}
                 </svg>
               )}
               <div className="mt-2 flex flex-wrap gap-3 label text-muted-foreground">
                 <span><i className="mr-1 inline-block h-2 w-2 bg-signal" />INSCRIBED</span>
                 <span><i className="mr-1 inline-block h-2 w-2 bg-muted-foreground/25" />OPEN</span>
-                <span><i className="mr-1 inline-block h-2 w-2 bg-primary" />SELECTED</span>
-                <span><i className="mr-1 inline-block h-2 w-2 border border-primary bg-primary/35" />OWNED GROUND</span>
+                <span><i className="mr-1 inline-block h-2 w-2 border border-primary bg-primary/40" />SELECTED</span>
+                <span><i className="mr-1 inline-block h-2 w-2 bg-primary" />OWNED GROUND</span>
                 {show !== null && <span className="ml-auto text-foreground">#{show} · {stateOf(show) === "valid" ? "INSCRIBED" : "OPEN"}</span>}
               </div>
             </section>
