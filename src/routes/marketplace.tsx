@@ -35,6 +35,9 @@ import { tradeCrawlProgressFn } from "@/lib/trade-crawler.functions";
 import { liveOciStatusFn } from "@/lib/live-oci.functions";
 import { inhabitedQuery } from "@/lib/inhabited.functions";
 import { LiveMarketTicker } from "@/components/market/LiveMarketTicker";
+import { FloorSweeper, ProTable } from "@/components/market/TradingDesk";
+import { builtWorldQuery } from "@/lib/built-bitmaps";
+import { btcInputToSats, floorsBy, inPriceBand } from "@/lib/market-sweep";
 
 type Sort = "default" | "recent" | "ask" | "height-asc" | "height-desc" | "transfers";
 const SORTS: { id: Sort; label: string }[] = [
@@ -177,7 +180,8 @@ function Marketplace() {
         p.txid.toLowerCase().includes(q) ||
         (p.ownerAddress ?? "").toLowerCase().includes(q),
     );
-  }, [tab, traded, listed, parcels, search, club, trait, sort, inhabitedParcels.data]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, traded, listed, parcels, search, club, trait, sort, inhabitedParcels.data, minSats, maxSats, onlyInhabited, onlyBuilt, onlySold, inhabitedSet, builtSet]);
 
   // Paginate first, then resolve holders on chain for the visible page only.
   // ALL tab reads the full on-chain index page by page on the server.
@@ -203,9 +207,10 @@ function Marketplace() {
   const pageParcels = useMemo(
     () =>
       serverMode
-        ? (indexPage.data?.parcels ?? []).filter((p) => !clubDef || inClub(p.bitmapHeight, clubDef))
+        ? (indexPage.data?.parcels ?? []).filter((p) => (!clubDef || inClub(p.bitmapHeight, clubDef)) && passesDesk(p))
         : visible.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE),
-    [serverMode, indexPage.data, clubDef, visible, current],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [serverMode, indexPage.data, clubDef, visible, current, minSats, maxSats, onlyInhabited, onlyBuilt, onlySold, inhabitedSet, builtSet],
   );
   const totalLabel = serverMode
     ? serverTotal !== null
