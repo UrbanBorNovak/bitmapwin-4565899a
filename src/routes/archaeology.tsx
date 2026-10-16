@@ -5,7 +5,13 @@ import { ALL_OFFICIAL_TRAITS, traitsOf } from "@/lib/traits";
 import { ArchaeologyLedger } from "@/components/ArchaeologyLedger";
 import { InscribedSpacesArchive } from "@/components/archaeology/InscribedSpacesArchive";
 
+const TAB_IDS = ["timeline", "spaces", "traits", "ledger"] as const;
+type ArchTab = (typeof TAB_IDS)[number];
+
 export const Route = createFileRoute("/archaeology")({
+  validateSearch: (s: Record<string, unknown>): { tab?: ArchTab | undefined } => ({
+    tab: (TAB_IDS as readonly string[]).includes(String(s["tab"])) ? (s["tab"] as ArchTab) : undefined,
+  }),
   head: () => ({ meta: [
     { title: "BITMAP Archaeology — Facts, Traits & Block History — BITMAPWIN" },
     { name: "description", content: "The BITMAP archaeology facts page: every official Bitmap trait definition, the indexed trait catalogue, and a timeline of notable blocks in Bitcoin history." },
@@ -40,8 +46,15 @@ const TIMELINE: TimelineEntry[] = [
 type BlockFact = { block_height: number; block_hash: string; mined_at: string | null; pool_name: string | null };
 
 function ArchaeologyFacts() {
+  const tab: ArchTab = Route.useSearch().tab ?? "timeline";
   const supported = ALL_OFFICIAL_TRAITS.filter((t) => t.supported);
   const pending = ALL_OFFICIAL_TRAITS.filter((t) => !t.supported);
+  const TABS: { id: ArchTab; label: string; count: number | null }[] = [
+    { id: "timeline", label: "BLOCK TIMELINE", count: TIMELINE.length },
+    { id: "spaces", label: "HISTORICAL SPACES", count: 100 },
+    { id: "traits", label: "TRAITS & GLOSSARY", count: ALL_OFFICIAL_TRAITS.length },
+    { id: "ledger", label: "FIELD NOTES & LEDGER", count: null },
+  ];
 
   const factsQuery = useQuery({
     queryKey: ["archaeology-timeline-facts"],
@@ -67,7 +80,24 @@ function ArchaeologyFacts() {
         </p>
       </header>
 
+      <nav role="tablist" aria-label="Archaeology sections" className="sticky top-14 z-20 mt-8 flex flex-wrap gap-px border border-border bg-border backdrop-blur">
+        {TABS.map((t) => (
+          <Link
+            key={t.id}
+            to="/archaeology"
+            search={{ tab: t.id }}
+            resetScroll={false}
+            role="tab"
+            aria-selected={tab === t.id}
+            className={`label flex-1 whitespace-nowrap px-4 py-3 text-center transition-colors ${tab === t.id ? "bg-background text-bitcoin" : "bg-card text-muted-foreground hover:text-signal"}`}
+          >
+            {t.label}{t.count != null ? ` (${t.count})` : ""}
+          </Link>
+        ))}
+      </nav>
+
       {/* Trait definitions */}
+      {tab === "traits" && (<>
       <section className="mt-12">
         <p className="label text-bitcoin">01 · OFFICIAL TRAIT DEFINITIONS</p>
         <h2 className="display mt-2 text-xl md:text-2xl">THE GLOSSARY</h2>
@@ -113,7 +143,10 @@ function ArchaeologyFacts() {
         </div>
       </section>
 
+      </>)}
+
       {/* Block history timeline */}
+      {tab === "timeline" && (<>
       <section className="mt-12">
         <p className="label text-bitcoin">03 · BLOCK HISTORY TIMELINE</p>
         <h2 className="display mt-2 text-xl md:text-2xl">BLOCKS THAT ANCHOR THE RECORD</h2>
@@ -161,9 +194,11 @@ function ArchaeologyFacts() {
         </ol>
       </section>
 
-      <InscribedSpacesArchive />
+      </>)}
 
-      <ArchaeologyLedger />
+      {tab === "spaces" && <InscribedSpacesArchive />}
+
+      {tab === "ledger" && <ArchaeologyLedger />}
 
       <div className="mt-10 flex flex-wrap gap-3">
         <Link to="/traits" className="btn-term-ghost">OFFICIAL TRAIT INDEX →</Link>
