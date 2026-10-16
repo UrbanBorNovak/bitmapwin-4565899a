@@ -100,7 +100,7 @@ export const SeaMasses = memo(function SeaMasses({
     const player = pose.current;
     const node = group.current;
     if (!player || !node) return;
-    const range = unit * 90;
+    const range = unit * 260;
     for (const child of node.children) {
       const sea = SEAS[child.userData["seaId"] as number];
       if (!sea) continue;

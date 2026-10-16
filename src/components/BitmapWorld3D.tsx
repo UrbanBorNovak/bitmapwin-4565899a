@@ -123,6 +123,7 @@ import { EggHunt } from "@/components/game/EggHunt";
 import { DesertLife } from "@/components/game/DesertLife";
 import { SeaMasses } from "@/components/game/SeaMasses";
 import { Whales } from "@/components/game/Whales";
+import { SeaShips } from "@/components/game/SeaShips";
 import { TerritoryGuardians } from "@/components/game/TerritoryGuardians";
 import { ShadowArchways } from "@/components/game/ShadowArchways";
 import { ShadowVaultRoom } from "@/components/game/ShadowVaultRoom";
@@ -2939,6 +2940,7 @@ const WorldScene = memo(function WorldScene({
           <DesertLife unit={AVATAR_U} colors={colors} pose={pose} active onBite={onBite} />
           <SeaMasses unit={AVATAR_U} pose={pose} />
           <Whales unit={AVATAR_U} pose={pose} />
+          <SeaShips unit={AVATAR_U} pose={pose} />
           <TerritoryGuardians unit={AVATAR_U} pose={pose} />
           <ShadowArchways unit={AVATAR_U} pose={pose} />
           <AirdropBeacon unit={AVATAR_U} pose={pose} block={tipHeight} />
