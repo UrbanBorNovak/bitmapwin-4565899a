@@ -11,6 +11,7 @@ import { WORLD_CELL, WORLD_GRID, cellX, cellZ, type PlayerState } from "@/lib/pl
 import { groundY } from "@/lib/world-terrain";
 import { Primitive } from "@/components/game/Primitive";
 import { setBoxes, type WorldBox } from "@/lib/box-collision";
+import { buildInstances, groupModels, instanceBoxes, type ModelGroup } from "@/lib/instanced-models";
 
 const D = Math.PI / 180;
 
