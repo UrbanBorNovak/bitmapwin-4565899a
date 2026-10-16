@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { ChevronDown, Gauge, SignalHigh, SignalLow, SignalMedium, Wand2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuality } from "./QualityContext";
+import { UI_SCALES, loadUiScale, saveUiScale } from "./ui-scale";
 import {
   QUALITY_PROMPT_KEY,
   isLimitedHardware,
@@ -22,6 +23,8 @@ export function QualityHud({ touch = false }: { touch?: boolean }) {
   const [open, setOpen] = useState(false);
   const [advanced, setAdvanced] = useState(false);
   const [suggestLow, setSuggestLow] = useState(false);
+  const [uiScale, setUiScale] = useState(1);
+  useEffect(() => setUiScale(loadUiScale()), []);
   useEffect(() => {
     if (!localStorage.getItem(QUALITY_PROMPT_KEY) && stored.mode === "auto" && isLimitedHardware())
       setSuggestLow(true);
@@ -74,6 +77,19 @@ export function QualityHud({ touch = false }: { touch?: boolean }) {
                   className={`grid ${touch ? "min-h-11" : "h-9"} place-items-center border transition-colors [&_svg]:size-[1.15rem] ${stored.mode === mode.value ? "border-bitcoin bg-bitcoin text-bitcoin-foreground" : "border-border text-muted-foreground hover:border-bitcoin hover:text-bitcoin"}`}
                 >
                   {mode.icon}
+                </button>
+              ))}
+            </div>
+            <div className="mt-2 grid grid-cols-[auto_1fr_1fr_1fr] items-center gap-1 text-[12px]">
+              <span className="pr-1 text-muted-foreground">TEXT SIZE</span>
+              {UI_SCALES.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => { saveUiScale(s); setUiScale(s); }}
+                  className={`${touch ? "min-h-11" : "h-8"} border transition-colors ${uiScale === s ? "border-bitcoin bg-bitcoin text-bitcoin-foreground" : "border-border text-muted-foreground hover:border-bitcoin hover:text-bitcoin"}`}
+                >
+                  {Math.round(s * 100)}%
                 </button>
               ))}
             </div>
