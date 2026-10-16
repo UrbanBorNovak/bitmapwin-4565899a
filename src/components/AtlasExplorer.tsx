@@ -27,6 +27,9 @@ import { sampleVisibleHeights, type AtlasClaim, type AtlasParcelization } from "
 import { atlasPlace, atlasDistrictStory, districtAt, districtBlockRange, districtChapter, findAtlasNamedPlace } from "@/lib/atlas-places";
 import { landscapeFor, setLandChainTip } from "@/lib/land-biome";
 import { useSeenCells } from "@/lib/oasis-discovery";
+import { builtWorldQuery } from "@/lib/built-bitmaps";
+import { VOXEL, blockColor } from "@/lib/voxel-world";
+import { WORLD_CELL, WORLD_GRID, WORLD_UNITS, colAt, rowAt } from "@/lib/player-state";
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 16;
@@ -247,6 +250,9 @@ export function AtlasExplorer({ initialHeight }: { initialHeight?: number }) {
   const [layers,setLayers]=useState<LayerKey[]>(ALL_LAYERS); const [dropIn,setDropIn]=useState<number|null>(null); const [landOn,setLandOn]=useState(true);
   const [timeWindow,setTimeWindow]=useState<WindowKey>("7d"); const [heatOn,setHeatOn]=useState(false); const [mineOn,setMineOn]=useState(true); const [parcelsOn,setParcelsOn]=useState(true);
   const seenCells=useSeenCells();
+  const [builtOn,setBuiltOn]=useState(true); const [voxelsOn,setVoxelsOn]=useState(true);
+  const builtWorld=useQuery(builtWorldQuery()); const builtList=builtWorld.data?.built??[];
+  const voxelDots=useMemo(()=>{const out:{x:number;y:number;s:number;c:string}[]=[];for(const v of builtWorld.data?.voxels??[]){const wx=v.x*VOXEL;const wz=v.z*VOXEL;const col=colAt(wx);const row=rowAt(wz);const p=blockToAtlas(row*WORLD_GRID+col);const fx=(wx+WORLD_UNITS/2)/WORLD_CELL-col;const fy=wz/WORLD_CELL-row;out.push({x:p.x+Math.min(.98,Math.max(0,fx)),y:p.y+Math.min(.98,Math.max(0,fy)),s:.06,c:blockColor(v.kind).top});}return out;},[builtWorld.data]);
   const wallet=useWalletSession(); const ordinals=wallet?.ordinalsAddress??"";
   const fetchMyLand=useServerFn(getAtlasLandForAddress);
   const myLand=useQuery({queryKey:["atlas","my-land",ordinals],queryFn:()=>fetchMyLand({data:{address:ordinals}}),enabled:ordinals!=="",staleTime:120_000});
@@ -317,6 +323,8 @@ export function AtlasExplorer({ initialHeight }: { initialHeight?: number }) {
              {parcelsOn&&camera.zoom>=4&&[...parcelized.values()].map((item)=>{const point=blockToAtlas(item.height);return <button key={`parcelized-${item.height}`} type="button" onPointerDown={(event)=>event.stopPropagation()} onClick={()=>focusHeight(item.height,Math.max(7,camera.zoom))} style={{left:`${((point.x+.5)/ATLAS_SIDE)*100}%`,top:`${((point.y+.5)/ATLAS_SIDE)*100}%`,transform:`translate(-50%,-50%) scale(${1/camera.zoom})`}} className="absolute grid size-5 grid-cols-2 gap-px border border-signal bg-background/80 p-0.5 shadow-[0_0_14px_var(--color-signal)] transition-transform hover:scale-125" aria-label={`${item.height}.BITMAP parcelized into ${item.validParcels} valid parcels`}><span className="bg-signal/80"/><span className="bg-signal/40"/><span className="bg-signal/40"/><span className="bg-signal/80"/></button>;})}
             {mineOn&&[...myHeights].slice(0,200).map((height)=>{const point=blockToAtlas(height);return <button key={`mine-${height}`} type="button" onPointerDown={(event)=>event.stopPropagation()} onClick={()=>focusHeight(height,Math.max(5,camera.zoom))} style={{left:`${((point.x+.5)/ATLAS_SIDE)*100}%`,top:`${((point.y+.5)/ATLAS_SIDE)*100}%`,transform:`translate(-50%,-50%) scale(${1/camera.zoom})`}} className="absolute size-3 rotate-45 border-2 border-bitcoin bg-bitcoin/35 shadow-[0_0_12px_var(--color-bitcoin)] transition-transform hover:scale-150" aria-label={`Your land, ${height}.BITMAP`}/>;})}
             {mineOn&&selected===null&&[...myHeights][0]!==undefined&&<AtlasBeacon height={[...myHeights][0]!} zoom={camera.zoom}/>}
+            {voxelsOn&&voxelDots.length>0&&<svg aria-hidden viewBox={`0 0 ${ATLAS_SIDE} ${ATLAS_SIDE}`} preserveAspectRatio="none" className="pointer-events-none absolute inset-0 size-full">{voxelDots.map((d,i)=><rect key={i} x={d.x} y={d.y} width={d.s} height={d.s} fill={d.c}/>)}</svg>}
+            {builtOn&&builtList.filter((b)=>!places.some((place)=>place.height===b.height)).map((b)=>{const point=blockToAtlas(b.height);return <button key={`built-${b.height}`} type="button" onPointerDown={(event)=>event.stopPropagation()} onClick={()=>focusHeight(b.height,Math.max(5,camera.zoom))} style={{left:`${((point.x+.5)/ATLAS_SIDE)*100}%`,top:`${((point.y+.5)/ATLAS_SIDE)*100}%`,transform:`translate(-50%,-50%) scale(${1/camera.zoom})`}} className="absolute grid size-6 place-items-center rounded-full border border-background/70 bg-signal/75 text-background shadow-[0_0_16px_var(--color-signal)] transition-transform hover:scale-125" aria-label={`${b.height}.BITMAP built · ${b.sources.join(", ")}`}><Hammer className="size-3"/></button>;})}
             {selected&&<span aria-hidden style={{left:`${selected.x*100}%`,top:`${selected.y*100}%`,transform:`translate(-50%,-50%) scale(${1/camera.zoom})`}} className="pointer-events-none absolute size-11 rounded-full border border-signal/80 shadow-[0_0_20px_var(--color-signal)] before:absolute before:inset-2 before:rounded-full before:border before:border-signal/40"/>}
             {dropIn!==null&&<div className="pointer-events-none absolute inset-0 grid place-items-center bg-background/55 backdrop-blur-[1px]"><p className="border border-signal bg-background/90 px-4 py-2 font-mono text-[10px] uppercase text-signal" data-no-translate>DROPPING INTO {dropIn.toLocaleString("en-US")}.BITMAP…</p></div>}
           </div>
