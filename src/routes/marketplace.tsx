@@ -190,7 +190,7 @@ function Marketplace() {
       ? serverTotal.toLocaleString("en-US")
       : !search && trait === "any"
         ? (liveOci.data?.total ?? registryCount.data ?? 0).toLocaleString("en-US")
-        : "MANY"
+        : `${(page * PAGE_SIZE + pageParcels.length).toLocaleString("en-US")}${indexPage.data?.hasMore ? "+" : ""}`
     : visible.length.toLocaleString("en-US");
   const traitList = serverMode ? ALL_OFFICIAL_TRAITS.filter((t) => t.supported) : OFFICIAL_TRAITS;
   const owners = useQuery({
