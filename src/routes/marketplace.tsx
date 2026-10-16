@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { LiveTradesFeed } from "@/components/market/LiveTradesFeed";
+import { MarketTerminal } from "@/components/market/MarketTerminal";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
@@ -313,6 +314,10 @@ function Marketplace() {
 
       <div className="mt-4">
         <LiveMarketTicker trades={recent.data ?? []} inhabited={inhabited.data} syncedAt={crawl.dataUpdatedAt} />
+      </div>
+
+      <div className="mt-4">
+        <MarketTerminal />
       </div>
 
       <div className="mt-4">
