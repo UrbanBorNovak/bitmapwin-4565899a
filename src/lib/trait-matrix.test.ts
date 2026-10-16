@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sortMatrix, traitMatrix, type MatrixSegment } from "./trait-matrix";
+import { sortMatrix, traitMatrix, type MatrixRow, type MatrixSegment } from "./trait-matrix";
 
 const seg = (id: string, match: (h: number) => boolean): MatrixSegment => ({ key: id, kind: "club", id, label: id, group: "g", match });
 const NOW = 10 * 86_400_000;
@@ -11,7 +11,7 @@ describe("traitMatrix", () => {
     [{ priceSats: 200, height: 7 }, { priceSats: 250, height: 8 }],
     [{ priceSats: 1000, height: 3, at: NOW - 1000 }, { priceSats: 7, height: 4, at: NOW - 2 * 86_400_000 }],
     NOW,
-  );
+  ) as [MatrixRow, MatrixRow];
   it("floor is the cheapest ask inside the segment", () => expect(rows[0].floor).toBe(300));
   it("listed density counts only segment asks and its share of the book", () => { expect(rows[0].listed).toBe(2); expect(rows[0].share).toBeCloseTo(2 / 3); });
   it("best bid is the highest bid inside the segment", () => expect(rows[0].bestBid).toBe(250));
@@ -19,6 +19,6 @@ describe("traitMatrix", () => {
   it("segment with no bids has null best bid", () => expect(rows[1].bestBid).toBeNull());
   it("sorting by floor puts empty segments last", () => {
     const s = sortMatrix([{ ...rows[1], floor: null }, rows[0]], "floor");
-    expect(s[0].seg.id).toBe("sub1k");
+    expect(s[0]!.seg.id).toBe("sub1k");
   });
 });
