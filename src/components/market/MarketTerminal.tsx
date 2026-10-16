@@ -9,6 +9,7 @@ import { timeAgo } from "@/lib/bitmap";
 import { btcPriceQuery, usdFromSats } from "@/lib/btc-price";
 import { BuyButton } from "@/components/BuyButton";
 import { spreadOf, withDepth } from "@/lib/market-depth";
+import { TerminalCharts } from "@/components/market/TerminalCharts";
 
 const LEVELS = 10;
 const DAY = 86_400_000;
@@ -31,6 +32,8 @@ export function MarketTerminal() {
     [offers.data],
   );
   const bidRows = useMemo(() => [...(bids.data ?? [])].sort((a, b) => b.priceSats - a.priceSats).slice(0, LEVELS), [bids.data]);
+  const allAsks = useMemo(() => (offers.data ?? []).filter((o) => o.status === "open" && o.priceSats > 0).map((o) => o.priceSats), [offers.data]);
+  const allBids = useMemo(() => (bids.data ?? []).filter((b) => b.priceSats > 0).map((b) => b.priceSats), [bids.data]);
   const askTotal = asks.reduce((s, a) => s + a.priceSats, 0);
   const bidTotal = bidRows.reduce((s, b) => s + b.priceSats, 0);
   const sideMax = Math.max(askTotal, bidTotal);
@@ -104,6 +107,11 @@ export function MarketTerminal() {
           </ol>
         </div>
       </div>
+      <TerminalCharts
+        askPrices={allAsks}
+        bidPrices={allBids}
+        loading={offers.isPending || bids.isPending}
+      />
       <p className="border-t border-border px-4 py-2 font-mono text-[10px] text-muted-foreground">ASKS ARE SIGNED SALE PSBTS · BIDS ARE SIGNED INTENTS · TAPE IS TRACED BITCOIN TXS · EVERY BUY IS SIGNED IN YOUR OWN WALLET</p>
     </section>
   );
