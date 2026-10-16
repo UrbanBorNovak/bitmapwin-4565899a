@@ -18,3 +18,12 @@ describe("inscribed-world box collision", () => {
     expect(boxWallAt(0.5, 0.5, 0, BODY, STEP)).toBe(true);
   });
 });
+
+describe("pillar body width", () => {
+  afterEach(() => setBoxes("p", null));
+  it("a thin pillar blocks a body just beside it", () => {
+    setBoxes("p", [{ x0: 0, x1: 0.026, y0: 0, y1: 0.13, z0: 0, z1: 0.026 }]);
+    expect(boxWallAt(0.029, 0.013, 0, 0.018, 0.0145, 0.004)).toBe(true);
+    expect(boxWallAt(0.035, 0.013, 0, 0.018, 0.0145, 0.004)).toBe(false);
+  });
+});
