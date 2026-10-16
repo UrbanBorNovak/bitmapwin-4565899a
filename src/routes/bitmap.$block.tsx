@@ -65,6 +65,7 @@ import { tradesForHeightQuery } from "@/lib/trade-store";
 import { traceBitmapTradesFn } from "@/lib/trades.functions";
 import { formatSats } from "@/lib/trades";
 import { timeAgo } from "@/lib/bitmap";
+import { ArchaeologyDossier } from "@/components/ArchaeologyDossier";
 
 
 const blockScanQuery = (height: number) =>
@@ -640,6 +641,7 @@ function BitmapDetail() {
           )}
         </div>
       </section>
+      <ArchaeologyDossier height={block} genesisHeight={oci.isLoading ? undefined : (oci.data?.genesisHeight ?? null)} />
       <ParcelPanel
         height={block}
         districtInscriptionId={parcel?.inscriptionId ?? oci.data?.inscriptionId ?? null}
