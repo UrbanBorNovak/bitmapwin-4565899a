@@ -180,7 +180,7 @@ function Marketplace() {
     return {
       label: parts.length ? parts.join(" + ").toUpperCase() : "ALL BITMAPS",
       match,
-      caveat: [t && !heightTrait ? `${String(t.label ?? t.id).toUpperCase()} NEEDS INDEXED RECORDS, SO CHARTS IGNORE IT` : null, galNote, bm && inhabited.isPending ? "BITMONS: READING CHAIN…" : null, bm && bitmonRarity !== "ALL" ? `${[...inhabitedSet].filter((h) => !rarityByHeight.get(h)).length} UNVERIFIED BITMONS ARE EXCLUDED FROM RARITY SCOPE` : null].filter(Boolean).join(" · ") || undefined,
+      caveat: [t && !heightTrait ? `${String(t.label ?? t.id).toUpperCase()} NEEDS INDEXED RECORDS, SO CHARTS IGNORE IT` : null, galNote, bm && inhabited.isPending ? "BITMONS: READING CHAIN…" : null, bm && bitmonRarity !== "ALL" && [...inhabitedSet].some((h) => !rarityByHeight.get(h)) ? `${[...inhabitedSet].filter((h) => !rarityByHeight.get(h)).length} UNVERIFIED BITMONS ARE EXCLUDED FROM RARITY SCOPE` : null].filter(Boolean).join(" · ") || undefined,
     };
   }, [club, trait, gallery, galleryIndex, tab, bitmonRarity, inhabitedSet, rarityByHeight, inhabited.isPending]);
   const visible = useMemo(() => {
