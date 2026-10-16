@@ -213,7 +213,7 @@ function Marketplace() {
         (p.ownerAddress ?? "").toLowerCase().includes(q),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, traded, listed, parcels, search, club, trait, sort, inhabitedParcels.data, minSats, maxSats, onlyInhabited, onlyBuilt, onlySold, inhabitedSet, builtSet, gallery, galleryIndex]);
+  }, [tab, traded, listed, parcels, search, club, trait, sort, inhabitedParcels.data, minSats, maxSats, onlyInhabited, onlyBuilt, onlySold, inhabitedSet, builtSet, gallery, galleryIndex, bitmonRarity, rarityByHeight]);
 
   // Paginate first, then resolve holders on chain for the visible page only.
   // ALL tab reads the full on-chain index page by page on the server.
@@ -347,6 +347,10 @@ function Marketplace() {
       </div>
 
       <div className="mt-4">
+        <BitmonsShelf rarity={bitmonRarity} onRarity={setBitmonRarity} onOpen={() => { setTab("inhabited"); setPage(0); }} />
+      </div>
+
+      <div className="mt-4">
         <TraitMatrix
           activeKey={gallery !== "any" ? `gallery:${gallery}` : club !== "any" && trait === "any" ? `club:${club}` : club === "any" && trait !== "any" && HEIGHT_TRAIT_IDS.has(trait) ? `trait:${trait}` : null}
           onPick={(seg) => {
@@ -376,7 +380,7 @@ function Marketplace() {
             {([
               ["all", "ALL INDEXED", liveOci.data?.total ?? registryCount.data ?? parcels.length],
               ["listed", "LISTED", listed.length],
-              ["inhabited", "INHABITED", inhabited.data?.size ?? 0],
+              ["inhabited", "BITMONS", inhabited.data?.size ?? 0],
               ["traded", "TRADED", traded.length],
             ] as const).map(([id, label, n]) => (
               <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => { setTab(id); setPage(0); }}
