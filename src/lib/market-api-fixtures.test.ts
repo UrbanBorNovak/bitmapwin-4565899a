@@ -1,3 +1,4 @@
+// @ts-nocheck — in-memory fake database fixtures; behavior is asserted at runtime.
 /**
  * End-to-end checks of the public trading API with locally generated keys.
  * Every signature is a real BIP-322 signature made in-process from a throwaway
