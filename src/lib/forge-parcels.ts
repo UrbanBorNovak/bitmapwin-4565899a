@@ -66,3 +66,34 @@ export function parcelAt(rects: ParcelRect[], x: number, z: number): ParcelRect 
 export function clipToParcel(blocks: TplBlock[], r: ParcelRect): TplBlock[] {
   return blocks.filter((b) => inRect(r, b.dx, b.dz));
 }
+
+type MergeParcel = { index: number; rect: [number, number, number, number]; cells: number[] | null; blocks: TplBlock[] };
+
+/**
+ * Oasis merge of a district build with parcel holders' builds. Each 64-grid cell
+ * gets one owner: server-derived exclusive cells first, then (only when the block's
+ * size map was incomplete) the lower tx index for any still-unclaimed rect cell.
+ * Parcel blocks land only on their own cells; the district build is punched out
+ * only where a parcel owns ground. XL district builds use factor f (= span / 64).
+ */
+export function mergeParcelBuilds(base: TplBlock[], parcels: MergeParcel[], f = 1): TplBlock[] {
+  const S = FORGE_SPAN;
+  const owner = new Map<number, number>();
+  const sorted = [...parcels].sort((a, b) => a.index - b.index);
+  for (const p of sorted) for (const c of p.cells ?? []) if (!owner.has(c)) owner.set(c, p.index);
+  for (const p of sorted) {
+    if (p.cells) continue;
+    const [x0, z0, x1, z1] = p.rect;
+    for (let x = Math.max(0, x0); x < Math.min(S, x1); x++) for (let z = Math.max(0, z0); z < Math.min(S, z1); z++) {
+      const c = x * S + z;
+      if (!owner.has(c)) owner.set(c, p.index);
+    }
+  }
+  const out = base.filter((b) => !owner.has(Math.floor(b.dx / f) * S + Math.floor(b.dz / f)));
+  for (const p of parcels) for (const b of p.blocks) {
+    if (b.dx < 0 || b.dz < 0 || b.dx >= S || b.dz >= S || owner.get(b.dx * S + b.dz) !== p.index) continue;
+    if (f === 1) { out.push(b); continue; }
+    for (let i = 0; i < f; i++) for (let j = 0; j < f; j++) for (let l = 0; l < f; l++) out.push({ dx: b.dx * f + i, dy: b.dy * f + j, dz: b.dz * f + l, k: b.k });
+  }
+  return out;
+}
