@@ -5,7 +5,7 @@ import { paidSalesQuery } from "@/lib/trade-store";
 import { depthCurve, type BookLevel, type DepthPoint } from "@/lib/market-depth";
 
 /** Which BITMAPs the charts cover. match = null means the whole market. */
-export type ChartScope = { label: string; match: ((height: number) => boolean) | null; caveat?: string };
+export type ChartScope = { label: string; match: ((height: number) => boolean) | null; caveat?: string | undefined };
 
 const btc = (s: number) => (s / 1e8).toFixed(s < 1e5 ? 6 : 4);
 const sats = (s: number) => `${s.toLocaleString("en-US")} sats`;
