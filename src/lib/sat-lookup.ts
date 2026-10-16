@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getOciSatFn } from "@/lib/oci-sat.functions";
 
 /**
  * Reads the real satoshi number a bitmap is inscribed on from the on-chain
@@ -49,7 +50,6 @@ export const satProofQuery = (height: number) =>
   queryOptions({
     queryKey: ["bitmap", "sat-proof", height],
     queryFn: async () => {
-      const { getOciSatFn } = await import("@/lib/oci-sat.functions");
       const oci = await getOciSatFn({ data: { height } }).catch(() => null);
       if (oci) return { sat: oci.sat, at: oci.at, page: oci.page, source: "LIVEOCI" as const };
       const sat = await loadSat(height);
