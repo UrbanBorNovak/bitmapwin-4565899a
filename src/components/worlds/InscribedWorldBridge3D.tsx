@@ -30,8 +30,8 @@ class Quiet extends Component<{ children: ReactNode }, { failed: boolean }> {
   override render() { return this.state.failed ? null : this.props.children; }
 }
 
-/** Meshes this simple are blocks (cubes, slabs, pillars): solid to the walker. Detailed props stay walk-through. */
-const SOLID_MAX_VERTS = 400;
+/** Meshes this simple are blocks (cubes, slabs, pillars with carved bases/capitals): solid to the walker. Very detailed props stay walk-through. */
+const SOLID_MAX_VERTS = 3000;
 
 /** One on-chain Draco glTF, placed with the creator's own transform. Simple block meshes become walkable boxes. */
 function PlacedModel({ m, boxKey }: { m: WorldAsset; boxKey: string }) {
