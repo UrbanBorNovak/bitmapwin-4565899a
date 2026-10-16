@@ -1,0 +1,1 @@
+- Marketplace trading API (src/routes/api/public/market.$.ts): public reads; every write is proven by a seller PSBT, BIP-322 signature, or a buyer-signed PSBT, and reuses the same server helpers as the site. Why: bots and players trade under identical, key-free server rules.

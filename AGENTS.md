@@ -38,4 +38,4 @@
 - Wildlife and VoxelTrees spawn by wildBiomeAt (src/lib/wild-biome.ts); far critters relocate near the visitor and re-pick species for that biome. Why: nature matches the ground anywhere.
 - Oasis touch input is sampled and damped in the camera frame loop, with immediate movement release; touch pads are world-relative and navigation reserves their space. Why: smooth, frame-rate-independent controls without drifting or overlapping thumbs.
 - Public game/chain tables (dispatches, spoils, forge modules/builds, kits, custody, genesis minters, spawn points, oasis voxels, kennels) stay world-readable via RLS but expose only non-account columns through column-level GRANTs; internal user uuids are read only by server code. Why: shared world state is public, account linkage is not.
-- Marketplace trading API (src/routes/api/public/market.$.ts): public reads; every write is proven by a seller PSBT, BIP-322 signature, or a buyer-signed PSBT, and reuses the same server helpers as the site. Why: bots and players trade under identical, key-free server rules.
+- Subdirectories have their own AGENTS.md; read it before changing files there.
