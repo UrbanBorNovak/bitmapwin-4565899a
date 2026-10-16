@@ -713,7 +713,8 @@ function ForgePage() {
               ADD 546 SATS TO THE SITE FUND — COUNTS TOWARD DONOR STATUS ONCE CONFIRMED
             </label>
           </div>
-          {height !== null && (
+          )}
+          {leftTab === "land" && height !== null && (
             <div className="rounded border border-accent/40 bg-card/40 p-2 text-[11px]">
               <p className="text-accent">GUARDIAN PERCH</p>
               <p className="mt-1 text-muted-foreground">{dnaQ.data ? "Your block's Guardian lives on the build, in the same inscription, drawn from its on-chain design." : "Loading this block's Guardian…"}</p>
@@ -724,32 +725,26 @@ function ForgePage() {
               </div>
             </div>
           )}
-          {(tool === "block" || tool === "box") && (
-            <div className="grid grid-cols-4 gap-1">
-              {BLOCKS.map((b) => (
-                <button key={b.id} type="button" title={b.name} onClick={() => setPaint(b.id)} className={`h-8 rounded border ${paint === b.id ? "border-primary" : "border-border"}`} style={{ background: b.top }} />
-              ))}
-            </div>
-          )}
-          {tool === "stamp" && (
-            <>
+          {leftTab === "pieces" && (
+            <div className="rounded border border-border bg-card/40 p-2 text-[11px]">
+              <p className="mb-1 text-accent">HOUSE & COMMUNITY PIECES</p>
               <div className="flex flex-wrap gap-1">
                 {SPHERES.map((s) => (
                   <button key={s.id} type="button" onClick={() => setSphere(s.id)} className={`rounded border px-2 py-0.5 text-[10px] ${sphere === s.id ? "border-accent text-accent" : "border-border text-muted-foreground"}`}>{s.name}</button>
                 ))}
               </div>
-              <div className="max-h-[360px] space-y-1 overflow-y-auto pr-1">
+              <div className="mt-2 max-h-[320px] space-y-1 overflow-y-auto pr-1">
                 {palette.length === 0 && <p className="text-[11px] text-muted-foreground">No community pieces yet. Build one and publish it to be the first maker.</p>}
                 {palette.map((p) => (
-                  <button key={p.id} type="button" onClick={() => setPicked(p)} className={`w-full rounded border px-2 py-1.5 text-left text-[11px] ${picked.id === p.id ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground hover:border-primary/50"}`}>
+                  <button key={p.id} type="button" onClick={() => { setPicked(p); setTool("stamp"); }} className={`w-full rounded border px-2 py-1.5 text-left text-[11px] ${picked.id === p.id && tool === "stamp" ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground hover:border-primary/50"}`}>
                     <span className="block text-foreground">{p.name}</span>
                     {p.blocks.length} blocks{p.author ? ` · ${short(p.author)} · ${p.bitCost ?? 0} BIT · ${p.tributeSats ?? 0} sats` : (p.bitCost ?? 0) > 0 ? "" : " · free"}{!p.author && (p.bitCost ?? 0) > 0 && <span className="ml-1 rounded border border-primary/60 px-1 text-primary">{p.bitCost} BIT</span>}
                   </button>
                 ))}
               </div>
-            </>
+            </div>
           )}
-          <PackageKit blocks={[...world.values()]} wallet={wallet} onPublished={(id) => { setBpId(id); setBpStep(0); }} />
+          {leftTab === "kits" && (
           <div className="rounded border border-accent/40 bg-card/40 p-2 text-[11px]">
             <div className="flex items-center justify-between"><span className="text-accent">KITS · STEP-BY-STEP + PROGRAMMABLE</span><span className="text-[10px] text-muted-foreground">NEXT DROP {dropIn}</span></div>
             <div className="mt-1 grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
