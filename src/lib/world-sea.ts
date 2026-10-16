@@ -61,6 +61,13 @@ function buildSeas(): SeaMass[] {
       wob5: 0.03 + seed(i, 8) * 0.08,
     });
   }
+  // Southern seas: the same coasts mirrored below the equator, so the
+  // genesis districts have water in sight too.
+  const north = seas.length;
+  for (let i = 0; i < north; i++) {
+    const src = seas[i]!;
+    seas.push({ ...src, id: north + i, x: -src.x, z: -src.z, phase: src.phase + 1.3 });
+  }
   return seas;
 }
 

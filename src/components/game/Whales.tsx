@@ -84,7 +84,7 @@ export const Whales = memo(function Whales({
     if (!node) return;
     const dt = Math.min(rawDelta, 0.05);
     const t = clock.elapsedTime;
-    const range = unit * 160;
+    const range = unit * 260;
     for (let i = 0; i < node.children.length; i++) {
       const child = node.children[i]!;
       const w = whales[i]!;
