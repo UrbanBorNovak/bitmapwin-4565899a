@@ -115,6 +115,10 @@ function ParcelStudio() {
   const rects = useMemo(() => parcelRects(sizes.data?.classes), [sizes.data]);
   const selRect = sel !== null ? (rects[sel] ?? null) : null;
   const noGround = selRect !== null && selRect.cells.size === 0;
+  // Deed-tile squares: the bright ones are owned ground, the dim ones belong to neighbours.
+  const selTile = selRect !== null
+    ? { total: (selRect.x1 - selRect.x0) * (selRect.z1 - selRect.z0), owned: selRect.cells.size }
+    : null;
 
   const go = () => {
     const h = Number(input);
@@ -243,8 +247,13 @@ function ParcelStudio() {
               <div className="mt-2 flex flex-wrap gap-3 label text-muted-foreground">
                 <span><i className="mr-1 inline-block h-2 w-2 bg-signal" />INSCRIBED</span>
                 <span><i className="mr-1 inline-block h-2 w-2 bg-muted-foreground/25" />OPEN</span>
-                <span><i className="mr-1 inline-block h-2 w-2 border border-primary bg-primary/40" />SELECTED</span>
-                <span><i className="mr-1 inline-block h-2 w-2 bg-primary" />OWNED GROUND</span>
+                <span><i className="mr-1 inline-block h-2 w-2 border border-primary" />SELECTED</span>
+                {selTile && (
+                  <span><i className="mr-1 inline-block h-2 w-2 bg-primary" />OWNED GROUND · {selTile.owned.toLocaleString("en-US")}</span>
+                )}
+                {selTile && selTile.owned > 0 && selTile.total > selTile.owned && (
+                  <span><i className="mr-1 inline-block h-2 w-2 border border-primary bg-primary/40" />NOT YOURS · {(selTile.total - selTile.owned).toLocaleString("en-US")}</span>
+                )}
                 {show !== null && <span className="ml-auto text-foreground">#{show} · {stateOf(show) === "valid" ? "INSCRIBED" : "OPEN"}</span>}
               </div>
             </section>
