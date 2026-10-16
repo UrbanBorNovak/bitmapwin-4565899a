@@ -3,11 +3,14 @@ import { useNavigate } from "@tanstack/react-router";
 import atlasHd from "@/assets/oasis-atlas-storybook.jpg";
 import { ATLAS_CAPACITY, ATLAS_SIDE, atlasToBlock, blockToAtlas } from "@/lib/atlas-geometry";
 import { atlasPlace } from "@/lib/atlas-places";
+import { useQuery } from "@tanstack/react-query";
+import { builtWorldQuery } from "@/lib/built-bitmaps";
 
 /** Same painted atlas as /map, shrunk into an Oasis HUD overlay. Click to travel. */
 export function OasisAtlasMinimap({ height, tipHeight }: { height?: number | undefined; tipHeight: number }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);
+  const built = useQuery(builtWorldQuery());
 
   const here = height !== undefined && height >= 0 ? blockToAtlas(height) : null;
   const tip = tipHeight > 0 && tipHeight < ATLAS_CAPACITY ? blockToAtlas(tipHeight) : null;
@@ -43,6 +46,10 @@ export function OasisAtlasMinimap({ height, tipHeight }: { height?: number | und
             className="relative block aspect-square w-full overflow-hidden"
           >
             <img src={atlasHd} alt="Hand-painted atlas of the Oasis" loading="lazy" className="absolute inset-0 size-full object-cover opacity-90 saturate-[1.05]" />
+            {(built.data?.built ?? []).map((b) => {
+              const p = blockToAtlas(b.height);
+              return <span key={b.height} aria-hidden className="absolute size-1.5 -translate-x-1/2 -translate-y-1/2 border border-signal bg-signal/50" style={{ left: pct(p.x), top: pct(p.y) }} />;
+            })}
             {tip && (
               <span
                 className="absolute size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-signal shadow-[0_0_6px_var(--color-signal)]"
