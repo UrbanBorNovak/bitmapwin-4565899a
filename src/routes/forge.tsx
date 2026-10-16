@@ -63,6 +63,18 @@ const half = () => SPAN / 2;
 const COLORS = Object.fromEntries(BLOCKS.map((b) => [b.id, new THREE.Color(b.top)]));
 type Tool = "stamp" | "block" | "box" | "erase" | "perch" | "parcel" | "move";
 type Placement = AsmPlacement;
+const TOOL_LABELS: Record<Tool, [string, string]> = { stamp: ["PIECE", "S"], move: ["MOVE", "M"], block: ["BLOCK", "B"], box: ["BOX", "W"], erase: ["ERASE", "X"], perch: ["GUARDIAN", "G"], parcel: ["PARCEL", "P"] };
+
+function TabBar<T extends string>({ value, onChange, tabs }: { value: T; onChange: (v: T) => void; tabs: [T, string][] }) {
+  return (
+    <div role="tablist" className="flex gap-0.5 rounded-md border border-border bg-card/40 p-0.5">
+      {tabs.map(([id, label]) => (
+        <button key={id} type="button" role="tab" aria-selected={value === id} onClick={() => onChange(id)} className={`flex-1 rounded px-2 py-1.5 text-[10px] tracking-wider ${value === id ? "bg-primary/15 text-foreground ring-1 ring-primary" : "text-muted-foreground hover:text-foreground"}`}>{label}</button>
+      ))}
+    </div>
+  );
+}
+
 
 function ParcelFloor({ rects, focus, hoverIdx }: { rects: ParcelRect[]; focus: number | null; hoverIdx: number | null }) {
   const ref = useRef<THREE.InstancedMesh>(null);
@@ -297,7 +309,9 @@ function ForgePage() {
   const [turns, setTurns] = useState(0);
   const [layer, setLayer] = useState(0);
   const [hover, setHover] = useState<[number, number, number] | null>(null);
-  const [guide, setGuide] = useState(true);
+  const [guide, setGuide] = useState(false);
+  const [leftTab, setLeftTab] = useState<"kits" | "pieces" | "land">("kits");
+  const [rightTab, setRightTab] = useState<"inscribe" | "publish">("inscribe");
   const [digest, setDigest] = useState<string | null>(null);
   const [pub, setPub] = useState({ name: "", bit: 10, sats: 1000 });
   const weekly = useMemo(() => weeklyBlueprint(), []);
@@ -594,8 +608,13 @@ function ForgePage() {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 font-mono">
       <div className="mb-3"><OtherthingsBadge child="Builds" /></div>
-      <p className="text-xs tracking-widest text-primary">LAND FORGE STUDIO · COMPOSABLE ON-CHAIN BUILDS</p>
-      <h1 className="mt-2 font-display text-3xl text-foreground md:text-4xl">Build on Bitcoin. Build on each other.</h1>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-xs tracking-widest text-primary">LAND FORGE STUDIO · COMPOSABLE ON-CHAIN BUILDS</p>
+          <h1 className="mt-1 font-display text-2xl text-foreground md:text-3xl">Build on Bitcoin. Build on each other.</h1>
+        </div>
+        <button type="button" onClick={() => setGuide((g) => !g)} className="rounded border border-border px-3 py-1 text-[10px] text-muted-foreground hover:text-foreground">{guide ? "HIDE HOW IT WORKS" : "? HOW IT WORKS"}</button>
+      </div>
 
       {guide && (
         <section className="mt-5 grid gap-3 rounded-lg border border-border bg-card/40 p-4 text-xs text-muted-foreground md:grid-cols-3">
@@ -645,7 +664,8 @@ function ForgePage() {
               )}
             </>
           )}
-          {height !== null && role !== "parcel" && (
+          <TabBar value={leftTab} onChange={setLeftTab} tabs={[["kits", "KITS"], ["pieces", "PIECES"], ["land", "LAND"]]} />
+          {leftTab === "land" && height !== null && role !== "parcel" && (
             <div className="rounded border border-accent/40 bg-card/40 p-2 text-[11px]">
               <p className="text-accent">CANVAS SIZE</p>
               <div className="mt-1 flex gap-1">
@@ -659,6 +679,7 @@ function ForgePage() {
               <p className="mt-1 text-muted-foreground">{xl ? "XL: 8× the space at half block size, same land footprint. Inscribes as a recursive build only." : "Original size. Works with every inscribe option."}</p>
             </div>
           )}
+          {leftTab === "land" && (
           <div className="rounded border border-border bg-card/40 p-2 text-[11px]">
             <p className="text-accent">LAND MASS</p>
             <div className="mt-1 flex gap-1">
@@ -668,7 +689,8 @@ function ForgePage() {
             </div>
             <p className="mt-1 text-muted-foreground">{LAND_MASSES.find((m) => m.id === mass)?.blurb} Decorative only — costs no blocks and isn't inscribed.</p>
           </div>
-          {rects.length > 0 && (
+          )}
+          {leftTab === "land" && rects.length > 0 && (
             <div className="rounded border border-primary/40 bg-card/40 p-2 text-[11px]">
               <p className="text-primary">BUILD TARGET</p>
               <p className="mt-1 text-muted-foreground">The floor shows this block's {rects.length.toLocaleString()} real transaction parcels. Use PARCEL and click a tile to build only on it.</p>
@@ -679,6 +701,7 @@ function ForgePage() {
               {focusRect && <p className="mt-1 text-accent">PARCEL {focusRect.index}.{height}.BITMAP · {focusRect.x1 - focusRect.x0}×{focusRect.z1 - focusRect.z0} CELLS{focusRect.cells.size < (focusRect.x1 - focusRect.x0) * (focusRect.z1 - focusRect.z0) && ` · ${focusRect.cells.size} OWNED (SHARED CELLS GO TO THE LARGER TRANSACTION)`}</p>}
             </div>
           )}
+          {leftTab === "pieces" && (
           <div className="rounded border border-primary/40 bg-card/40 p-2 text-[11px]">
             <p className="text-primary">ON-CHAIN PIECES</p>
             <p className="mt-1 text-muted-foreground">Paste the inscription ID of any Land Forge build. It snaps in by reference — your inscription points at it instead of paying for its blocks again.</p>
