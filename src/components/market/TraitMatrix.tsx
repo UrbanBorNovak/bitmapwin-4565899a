@@ -7,6 +7,7 @@ import { formatSats } from "@/lib/trades";
 import { CLUBS, inClub } from "@/lib/clubs";
 import { hasTrait, OFFICIAL_TRAITS, TRAIT_GROUPS } from "@/lib/traits";
 import { GALLERY_COLLECTIONS } from "@/lib/bitmap-collections";
+import { inhabitedQuery } from "@/lib/inhabited.functions";
 import { useGalleryIndex } from "@/lib/use-gallery-index";
 import { sortMatrix, traitMatrix, type MatrixSegment, type MatrixSort } from "@/lib/trait-matrix";
 
@@ -27,14 +28,16 @@ export function TraitMatrix({ activeKey, onPick }: { activeKey: string | null; o
   const [hideEmpty, setHideEmpty] = useState(true);
 
   const gi = useGalleryIndex();
+  const inhabited = useQuery(inhabitedQuery());
   const segments = useMemo<MatrixSegment[]>(() => [
     ...GALLERY_COLLECTIONS.map((g) => {
       const miss = g.maxHeight !== undefined ? 0 : gi.missing(g.id);
       const note = g.maxHeight !== undefined ? undefined : gi.error ? "INDEX UNAVAILABLE" : gi.loading ? "READING INDEX…" : miss ? `${miss} WITHOUT BLOCK RECORD` : undefined;
       return { key: `gallery:${g.id}`, kind: "gallery" as const, id: g.id, label: g.short, group: "GALLERIES", match: (h: number) => gi.match(g.id, h), note };
     }),
+    { key: "bitmons", kind: "gallery" as const, id: "bitmons", label: "BITMONS", group: "BITMONS", match: (h: number) => !!inhabited.data?.has(h), note: inhabited.isPending ? "READING CHAIN…" : inhabited.isError ? "INDEX UNAVAILABLE" : undefined },
     ...SEGMENTS,
-  ], [gi]);
+  ], [gi, inhabited.data, inhabited.isPending, inhabited.isError]);
   const rows = useMemo(() => {
     const asks = (offers.data ?? []).filter((o) => o.status === "open" && o.priceSats > 0).map((o) => ({ priceSats: o.priceSats, height: o.bitmapHeight }));
     const bs = (bids.data ?? []).filter((b) => b.priceSats > 0).map((b) => ({ priceSats: b.priceSats, height: b.bitmapHeight }));
