@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { applyUiScale, loadUiScale } from "@/graphics/ui-scale";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteTickerTape } from "@/components/SiteTickerTape";
 
@@ -173,6 +174,8 @@ function RootComponent() {
     window.addEventListener("unhandledrejection", onRejection);
     return () => { window.removeEventListener("vite:preloadError", onPreload); window.removeEventListener("unhandledrejection", onRejection); };
   }, []);
+
+  useEffect(() => { applyUiScale(loadUiScale()); }, []);
 
   useEffect(() => {
     const ref = new URLSearchParams(window.location.search).get("ref");
