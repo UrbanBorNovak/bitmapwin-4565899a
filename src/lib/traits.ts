@@ -79,12 +79,24 @@ export function heightTraitQuery(id: string, max: number): { heights: number[] }
   return null;
 }
 
+/** Filter groups: every trait belongs to exactly one, so traders can scan the sidebar. */
+export type TraitGroup = "era" | "math" | "culture" | "protocol" | "data";
+
+export const TRAIT_GROUPS: Array<{ id: TraitGroup; label: string; description: string }> = [
+  { id: "era", label: "SUBSIDY ERAS", description: "Which halving epoch the block was mined in. Earlier eras paid far more BTC per block, so the oldest land is the scarcest." },
+  { id: "math", label: "MATHEMATICAL", description: "Rarity written in the block number itself — clean arithmetic patterns anyone can verify with pure math." },
+  { id: "culture", label: "CULTURAL", description: "Blocks tied to famous people, transactions and moments from Bitcoin's history." },
+  { id: "protocol", label: "PROTOCOL MILESTONES", description: "Blocks where Bitcoin's own rules changed or started — genesis, halvings, difficulty firsts and soft fork activations." },
+  { id: "data", label: "ON-CHAIN DATA", description: "Traits read from indexed block records and the sat index — transaction counts, fees, outputs, gallery patterns and sats." },
+];
+
 export type TraitDefinition = {
   id: TraitId;
   sourceKey: string;
   label: string;
   description: string;
   rare: boolean;
+  group: TraitGroup;
 };
 
 export type OfficialTraitDefinition = {
@@ -94,6 +106,7 @@ export type OfficialTraitDefinition = {
   description: string;
   supported: boolean;
   marketplaceUse: string;
+  group: TraitGroup;
 };
 
 export type Trait = TraitDefinition;
