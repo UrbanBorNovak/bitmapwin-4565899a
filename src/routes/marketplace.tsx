@@ -315,6 +315,10 @@ function Marketplace() {
       </div>
 
       <div className="mt-4">
+        <LiveTradesFeed />
+      </div>
+
+      <div className="mt-4">
         <MyBitmapsPanel />
       </div>
 
