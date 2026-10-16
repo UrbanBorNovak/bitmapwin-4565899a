@@ -81,7 +81,7 @@ export function MarketTerminal() {
           <div className="flex items-center justify-between border-y border-border bg-muted/30 px-3 py-2 font-mono text-[11px]" data-no-translate>
             <span className="label">MID</span>
             <span className="font-bold">{spread ? formatSats(Math.round(spread.mid)) : "—"}</span>
-            <span className="text-muted-foreground">{spread && usd(spread.mid) !== null ? `≈ $${usd(spread.mid)!.toFixed(0)}` : `ASK ${formatSats(askTotal)} · BID ${formatSats(bidTotal)}`}</span>
+            <span className="text-muted-foreground">{spread && usd(spread.mid) !== null ? `≈ ${usd(spread.mid)}` : `ASK ${formatSats(askTotal)} · BID ${formatSats(bidTotal)}`}</span>
           </div>
           <ol aria-label="Bids">
             {bidDepth.length === 0 ? <Empty text={bids.isPending ? "READING BIDS…" : "NO OPEN BIDS"} /> : bidDepth.map((b) => (
