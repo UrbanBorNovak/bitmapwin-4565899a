@@ -92,6 +92,7 @@ export function LiveTradesFeed({ scope }: { scope?: { label: string; match: ((h:
               <span className={`relative inline-flex size-2 rounded-full ${fresh === "live" ? "bg-signal" : "bg-muted-foreground"}`} />
             </span>
             LIVE ON-CHAIN TRADES
+            {scope?.match ? <span className="ml-2 font-mono text-[11px] text-accent">· SCOPE {scope.label}</span> : null}
           </h2>
           <p className="label mt-1" data-no-translate>
             {sales.length} RECENT SALES · {formatSats(volume)} VOLUME · TOP {top ? formatSats(top) : "—"}
