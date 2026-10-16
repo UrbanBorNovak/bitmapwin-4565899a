@@ -1782,3 +1782,10 @@
 .kitbag { animation: kitbag-spill .55s cubic-bezier(.2,1.4,.4,1) both; }
 @keyframes kitbag-spill { from { opacity: 0; transform: translateY(-40px) rotate(-12deg) scale(.6); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .kitbox, .kitbox-tape, .kitbag { transition: none; animation: none; } }
+
+/* Order book micro-animations */
+@keyframes book-flash-new { from { background: color-mix(in oklab, var(--color-signal) 28%, transparent); } to { background: transparent; } }
+@keyframes book-flash-gone { from { background: color-mix(in oklab, var(--color-bitcoin) 24%, transparent); opacity: 1; } to { background: transparent; opacity: 0.35; } }
+.book-flash-new { animation: book-flash-new 1.6s ease-out; }
+.book-flash-gone { animation: book-flash-gone 1.6s ease-out forwards; text-decoration: line-through; }
+@media (prefers-reduced-motion: reduce) { .book-flash-new, .book-flash-gone { animation: none; } }
