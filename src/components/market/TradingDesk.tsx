@@ -11,7 +11,7 @@ export function FloorSweeper({ listed }: { listed: RegistryParcel[] }) {
   const { picks, totalSats } = useMemo(() => sweepCheapest(listed, n), [listed, n]);
   if (listed.length === 0) return null;
   return (
-    <section className="mb-4 border border-bitcoin/50 bg-card/60 p-4 backdrop-blur-md" aria-label="Floor sweeper">
+    <section className="mb-4 border border-bitcoin/50 bg-card p-4" aria-label="Floor sweeper">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="label text-bitcoin">FLOOR SWEEP</h2>
@@ -24,18 +24,19 @@ export function FloorSweeper({ listed }: { listed: RegistryParcel[] }) {
           ))}
         </div>
         <div className="text-right font-mono" data-no-translate>
-          <div className="text-base font-bold text-bitcoin">{totalSats ? formatSats(totalSats) : "—"}</div>
+          <div className="text-base font-bold text-bitcoin">{totalSats ? `${(totalSats / 1e8).toFixed(8)} BTC` : "—"}</div>
+          {totalSats > 0 && <div className="text-[10px] text-muted-foreground">{totalSats.toLocaleString("en-US")} SATS · BEFORE FEES</div>}
           <div className="text-[10px] text-muted-foreground">{picks.length} BITMAPS{picks.length ? ` · AVG ${formatSats(Math.round(totalSats / picks.length))}` : ""}</div>
         </div>
       </div>
       {picks.length > 0 && (
         <ol className="mt-3 grid gap-1">
           {picks.map((p, i) => (
-            <li key={p.inscriptionId} className="grid grid-cols-[2rem_1fr_auto_9rem] items-center gap-2 border-t border-border pt-1 font-mono text-[11px]" data-no-translate>
+            <li key={p.inscriptionId} className="grid grid-cols-[2rem_1fr_auto_auto] items-center gap-2 border-t border-border pt-1 font-mono text-[11px]" data-no-translate>
               <span className="text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
               <Link to="/bitmap/$block" params={{ block: String(p.bitmapHeight) }} className="hover:text-signal">{p.bitmapHeight}.BITMAP</Link>
               <span className="text-bitcoin">{formatSats(p.listedSats)}</span>
-              <BuyButton offerId={p.listedOfferId!} priceSats={p.listedSats!} inscriptionId={p.inscriptionId} height={p.bitmapHeight} className="btn-term !px-2 !py-1" />
+              <BuyButton offerId={p.listedOfferId!} priceSats={p.listedSats!} inscriptionId={p.inscriptionId} height={p.bitmapHeight} className="btn-term whitespace-nowrap !px-2 !py-1" />
             </li>
           ))}
         </ol>
@@ -47,7 +48,7 @@ export function FloorSweeper({ listed }: { listed: RegistryParcel[] }) {
 /** Dense pro table view of the current page. */
 export function ProTable({ parcels, inhabited, built }: { parcels: RegistryParcel[]; inhabited?: Set<number>; built?: Set<number> }) {
   return (
-    <div className="mt-3 overflow-x-auto border border-border">
+    <div className="mt-3 overflow-x-auto border border-border bg-card">
       <table className="w-full min-w-[760px] font-mono text-[11px]" data-no-translate>
         <thead className="bg-card text-left">
           <tr className="[&>th]:label [&>th]:px-3 [&>th]:py-2">
@@ -56,7 +57,7 @@ export function ProTable({ parcels, inhabited, built }: { parcels: RegistryParce
         </thead>
         <tbody>
           {parcels.map((p) => (
-            <tr key={p.inscriptionId} className="border-t border-border hover:bg-card/80 [&>td]:px-3 [&>td]:py-2">
+            <tr key={p.inscriptionId} className="border-t border-border hover:bg-muted/40 [&>td]:px-3 [&>td]:py-2">
               <td><Link to="/bitmap/$block" params={{ block: String(p.bitmapHeight) }} className="font-bold hover:text-signal">{p.bitmapHeight}.BITMAP</Link></td>
               <td className="text-muted-foreground">{shortenAddress(p.ownerAddress)}</td>
               <td className="space-x-1">
@@ -66,9 +67,9 @@ export function ProTable({ parcels, inhabited, built }: { parcels: RegistryParce
               <td className="text-right text-bitcoin">{p.listedSats ? formatSats(p.listedSats) : "—"}</td>
               <td className="text-right">{p.lastSaleSats ? formatSats(p.lastSaleSats) : "—"}</td>
               <td className="text-right">{p.transfers}</td>
-              <td className="w-36">
+              <td className="w-px">
                 {p.listedOfferId && p.listedSats ? (
-                  <BuyButton offerId={p.listedOfferId} priceSats={p.listedSats} inscriptionId={p.inscriptionId} height={p.bitmapHeight} className="btn-term w-full !px-2 !py-1" />
+                  <BuyButton offerId={p.listedOfferId} priceSats={p.listedSats} inscriptionId={p.inscriptionId} height={p.bitmapHeight} className="btn-term w-full whitespace-nowrap !px-2 !py-1" />
                 ) : (
                   <Link to="/bitmap/$block" params={{ block: String(p.bitmapHeight) }} className="btn-term-ghost block w-full !px-2 !py-1 text-center">VIEW</Link>
                 )}
