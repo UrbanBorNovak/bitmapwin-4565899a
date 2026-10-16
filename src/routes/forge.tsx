@@ -770,7 +770,7 @@ function ForgePage() {
           {leftTab === "kits" && (
           <div className="rounded border border-accent/40 bg-card/40 p-2 text-[11px]">
             <div className="flex items-center justify-between"><span className="text-accent">KITS · STEP-BY-STEP + PROGRAMMABLE</span><span className="text-[10px] text-muted-foreground">NEXT DROP {dropIn}</span></div>
-            <div className="mt-1 grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
+            <div className="mt-1 grid max-h-[360px] grid-cols-2 gap-2 overflow-y-auto pr-1">
               {KITS.map((k, i) => {
                 const active = k.id === bp.id;
                 return (
@@ -872,7 +872,7 @@ function ForgePage() {
           )}
         </aside>
 
-        <div className="relative h-[620px] overflow-hidden rounded-lg border border-border bg-card/40">
+        <div className="relative order-first h-[460px] overflow-hidden rounded-lg border border-border bg-card/40 lg:order-none lg:h-[620px]">
           {tool === "stamp" && hover && (
             <div className="pointer-events-none absolute right-2 top-2 z-10 rounded border border-border bg-background/80 px-2 py-1 font-mono text-[10px] text-muted-foreground backdrop-blur">
               <span className={overLimit || ghostOut ? "text-destructive" : "text-accent"}>{overLimit || ghostOut ? "CLIPS EDGE" : "FITS"}</span> · {picked.name.toUpperCase()} · ROT {(((turns % 4) + 4) % 4) * 90}°{!picked.author && (picked.bitCost ?? 0) > 0 ? ` · ${picked.bitCost} BIT` : ""} · R ROTATE · CLICK PLACE
