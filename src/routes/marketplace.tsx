@@ -352,10 +352,11 @@ function Marketplace() {
 
       <div className="mt-4">
         <TraitMatrix
-          activeKey={gallery !== "any" ? `gallery:${gallery}` : club !== "any" && trait === "any" ? `club:${club}` : club === "any" && trait !== "any" && HEIGHT_TRAIT_IDS.has(trait) ? `trait:${trait}` : null}
+          activeKey={tab === "inhabited" && gallery === "any" && club === "any" && trait === "any" ? "bitmons" : gallery !== "any" ? `gallery:${gallery}` : club !== "any" && trait === "any" ? `club:${club}` : club === "any" && trait !== "any" && HEIGHT_TRAIT_IDS.has(trait) ? `trait:${trait}` : null}
           onPick={(seg) => {
             setPage(0); setClub("any"); setTrait("any"); setGallery("any");
-            if (!seg) return;
+            if (!seg) { if (tab === "inhabited") setTab("all"); return; }
+            if (seg.id === "bitmons") { setTab("inhabited"); return; }
             if (seg.kind === "club") setClub(seg.id as ClubId); else if (seg.kind === "gallery") setGallery(seg.id); else setTrait(seg.id);
           }}
         />
