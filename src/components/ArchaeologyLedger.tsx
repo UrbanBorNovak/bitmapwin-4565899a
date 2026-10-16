@@ -38,7 +38,7 @@ export function ArchaeologyLedger() {
 
   return (
     <section className="mt-12">
-      <p className="label text-bitcoin">04 · HOLDER LEDGER</p>
+      <p className="label text-bitcoin">05 · HOLDER LEDGER</p>
       <h2 className="display mt-2 text-xl md:text-2xl">ERAS, GENESIS HOLDERS &amp; DIAMOND HANDS</h2>
       <p className="mt-2 max-w-3xl font-mono text-[11px] leading-relaxed text-muted-foreground">
         Counted from {d ? fmt(d.eras.total) : "…"} indexed BITMAP inscriptions by the Bitcoin block each was inscribed in, and {d ? fmt(d.traced_sales) : "…"} traced on-chain sales. Wallets are current indexed holders, not necessarily the original minters.
