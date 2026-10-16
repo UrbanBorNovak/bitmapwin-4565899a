@@ -1646,6 +1646,31 @@ const SelfBeacon = memo(function SelfBeacon({
 /** Full local player: position, velocity, facing, movement/animation/combat state, region and target. */
 export type SelfPose = PlayerState;
 
+/**
+ * Structure models register their solid boxes after the spawn lands, so a
+ * spawn point can end up inside one. For a few seconds after every spawn or
+ * respawn, an embedded player is nudged to the nearest clear spot. Must live
+ * inside the Canvas — it runs on the frame loop.
+ */
+function SpawnGuard({
+  pose,
+  until,
+}: {
+  pose: React.RefObject<SelfPose>;
+  until: React.RefObject<number>;
+}) {
+  useFrame(() => {
+    if (!until.current || Date.now() > until.current) return;
+    const p = pose.current;
+    if (!p || !p.grounded || isDriving()) return;
+    const feet = traversalSurfaceY(p.x, p.z) + p.y;
+    if (!boxWallAt(p.x, p.z, feet, BOX_BODY, BOX_STEP, 0.004)) return;
+    const spot = clearSpotNear(p.x, p.z, feet, BOX_BODY, BOX_STEP, 0.004, AVATAR_U * 0.6);
+    if (spot) placePlayer(p, spot[0], spot[1], p.yaw);
+  });
+  return null;
+}
+
 const colorsForShadow = "#000000";
 
 /**
@@ -3656,19 +3681,7 @@ function BitmapWorld3DInner({
   // Deep links spawn directly on the requested experience; every other entry
   // begins the journey at the Genesis block, 0.bitmap.
   const spawnedRef = useRef(false);
-  // Structure models register their solid boxes after the spawn lands, so a
-  // spawn point can end up inside one. For a few seconds after every spawn or
-  // respawn, an embedded player is nudged to the nearest clear spot.
   const spawnGuardUntil = useRef(0);
-  useFrame(() => {
-    if (!spawnGuardUntil.current || Date.now() > spawnGuardUntil.current) return;
-    const p = pose.current;
-    if (!p || !p.grounded || isDriving()) return;
-    const feet = traversalSurfaceY(p.x, p.z) + p.y;
-    if (!boxWallAt(p.x, p.z, feet, BOX_BODY, BOX_STEP, 0.004)) return;
-    const spot = clearSpotNear(p.x, p.z, feet, BOX_BODY, BOX_STEP, 0.004, AVATAR_U * 0.6);
-    if (spot) placePlayer(p, spot[0], spot[1], p.yaw);
-  });
   useEffect(() => {
     if (spawnedRef.current || !tipHeight) return;
     spawnedRef.current = true;
@@ -4760,6 +4773,7 @@ function BitmapWorld3DInner({
             }}
             performance={{ min: 0.4 }}
           >
+            <SpawnGuard pose={pose} until={spawnGuardUntil} />
             <WorldScene
               colors={colors}
               command={command}
