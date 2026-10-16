@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { LiveTradesFeed } from "@/components/market/LiveTradesFeed";
 import { MarketTerminal } from "@/components/market/MarketTerminal";
+import { TraitMatrix } from "@/components/market/TraitMatrix";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
@@ -326,6 +327,17 @@ function Marketplace() {
 
       <div className="mt-4">
         <LiveMarketTicker trades={recent.data ?? []} inhabited={inhabited.data} syncedAt={crawl.dataUpdatedAt} />
+      </div>
+
+      <div className="mt-4">
+        <TraitMatrix
+          activeKey={club !== "any" && trait === "any" ? `club:${club}` : club === "any" && trait !== "any" && HEIGHT_TRAIT_IDS.has(trait) ? `trait:${trait}` : null}
+          onPick={(seg) => {
+            setPage(0);
+            if (!seg) { setClub("any"); setTrait("any"); return; }
+            if (seg.kind === "club") { setClub(seg.id as ClubId); setTrait("any"); } else { setTrait(seg.id); setClub("any"); }
+          }}
+        />
       </div>
 
       <div className="mt-4">

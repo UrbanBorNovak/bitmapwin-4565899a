@@ -27,11 +27,12 @@ export function MarketTerminal({ scope = { label: "ALL BITMAPS", match: null } }
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
 
+  const inScope = (h: number | null | undefined) => !scope.match || (h != null && scope.match(h));
   const asks = useMemo(
-    () => (offers.data ?? []).filter((o) => o.status === "open" && o.priceSats > 0 && o.bitmapHeight !== null).sort((a, b) => a.priceSats - b.priceSats),
-    [offers.data],
+    () => (offers.data ?? []).filter((o) => o.status === "open" && o.priceSats > 0 && o.bitmapHeight !== null && inScope(o.bitmapHeight)).sort((a, b) => a.priceSats - b.priceSats),
+    [offers.data, scope], // eslint-disable-line react-hooks/exhaustive-deps
   );
-  const bidOrders = useMemo(() => [...(bids.data ?? [])].filter((b) => b.priceSats > 0).sort((a, b) => b.priceSats - a.priceSats), [bids.data]);
+  const bidOrders = useMemo(() => [...(bids.data ?? [])].filter((b) => b.priceSats > 0 && inScope(b.bitmapHeight)).sort((a, b) => b.priceSats - a.priceSats), [bids.data, scope]); // eslint-disable-line react-hooks/exhaustive-deps
   const [tick, setTick] = useState<number>(0);
   const [open, setOpen] = useState<string | null>(null);
   const askBuckets = useMemo(() => bucketize(asks, tick, "ask").slice(0, LEVELS), [asks, tick]);
@@ -50,7 +51,7 @@ export function MarketTerminal({ scope = { label: "ALL BITMAPS", match: null } }
   const bidders = useMemo(() => new Set((bids.data ?? []).map((b) => `${b.bitmapHeight}:${b.bidderAddress}`)), [bids.data]);
   const spread = spreadOf(asks[0]?.priceSats ?? null, bidRows[0]?.priceSats ?? null);
 
-  const sales = useMemo(() => (tape.data ?? []).filter((t) => t.price_sats > 0), [tape.data]);
+  const sales = useMemo(() => (tape.data ?? []).filter((t) => t.price_sats > 0 && inScope(t.bitmap_height)), [tape.data, scope]); // eslint-disable-line react-hooks/exhaustive-deps
   const pendingIds = useMemo(() => sales.filter((t) => !t.block_height).slice(0, 20).map((t) => t.txid), [sales]);
   const mem = useMempoolInfo(pendingIds, hydrated);
   const now = hydrated ? Date.now() : 0;
