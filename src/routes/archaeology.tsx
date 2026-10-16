@@ -9,8 +9,8 @@ const TAB_IDS = ["timeline", "spaces", "traits", "ledger"] as const;
 type ArchTab = (typeof TAB_IDS)[number];
 
 export const Route = createFileRoute("/archaeology")({
-  validateSearch: (s: Record<string, unknown>): { tab: ArchTab } => ({
-    tab: (TAB_IDS as readonly string[]).includes(String(s.tab)) ? (s.tab as ArchTab) : "timeline",
+  validateSearch: (s: Record<string, unknown>): { tab?: ArchTab } => ({
+    tab: (TAB_IDS as readonly string[]).includes(String(s.tab)) ? (s.tab as ArchTab) : undefined,
   }),
   head: () => ({ meta: [
     { title: "BITMAP Archaeology — Facts, Traits & Block History — BITMAPWIN" },
@@ -46,7 +46,7 @@ const TIMELINE: TimelineEntry[] = [
 type BlockFact = { block_height: number; block_hash: string; mined_at: string | null; pool_name: string | null };
 
 function ArchaeologyFacts() {
-  const { tab } = Route.useSearch();
+  const tab: ArchTab = Route.useSearch().tab ?? "timeline";
   const supported = ALL_OFFICIAL_TRAITS.filter((t) => t.supported);
   const pending = ALL_OFFICIAL_TRAITS.filter((t) => !t.supported);
   const TABS: { id: ArchTab; label: string; count: number | null }[] = [
