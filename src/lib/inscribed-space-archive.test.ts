@@ -14,7 +14,7 @@ describe("Inscribed.space archive", () => {
     expect(g.models).toHaveLength(1);
     expect(g.assets).toBe(2);
     expect(g.prims.map((p) => p.shape)).toEqual(["plane", "box"]);
-    expect(g.prims[1].color).toBe("#ff0000");
+    expect(g.prims[1]?.color).toBe("#ff0000");
   });
 
   it("vendors all 87 heights and nothing else", async () => {
