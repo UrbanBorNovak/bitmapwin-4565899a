@@ -252,7 +252,7 @@ function ParcelStudio() {
                   <span><i className="mr-1 inline-block h-2 w-2 bg-primary" />OWNED GROUND · {selTile.owned.toLocaleString("en-US")}</span>
                 )}
                 {selTile && selTile.owned > 0 && selTile.total > selTile.owned && (
-                  <span><i className="mr-1 inline-block h-2 w-2 border border-primary bg-primary/40" />NOT YOURS · {(selTile.total - selTile.owned).toLocaleString("en-US")}</span>
+                  <span><i className="mr-1 inline-block h-2.5 w-2.5 border border-primary/70 bg-primary/60" />NOT YOURS · {(selTile.total - selTile.owned).toLocaleString("en-US")}</span>
                 )}
                 {show !== null && <span className="ml-auto text-foreground">#{show} · {stateOf(show) === "valid" ? "INSCRIBED" : "OPEN"}</span>}
               </div>
