@@ -51,7 +51,7 @@ function PlacedModel({ m, boxKey }: { m: WorldAsset; boxKey: string }) {
     const b = new THREE.Box3();
     obj.traverse((o) => {
       const mesh = o as THREE.Mesh;
-      const count = mesh.isMesh ? mesh.geometry?.attributes?.position?.count ?? Infinity : Infinity;
+      const count = mesh.isMesh ? mesh.geometry?.attributes?.["position"]?.count ?? Infinity : Infinity;
       if (count > SOLID_MAX_VERTS) return;
       b.setFromObject(mesh);
       if (b.isEmpty()) return;
