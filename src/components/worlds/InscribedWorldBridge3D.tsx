@@ -30,8 +30,11 @@ class Quiet extends Component<{ children: ReactNode }, { failed: boolean }> {
   override render() { return this.state.failed ? null : this.props.children; }
 }
 
-/** One on-chain Draco glTF, placed with the creator's own transform. */
-function PlacedModel({ m }: { m: WorldAsset }) {
+/** Meshes this simple are blocks (cubes, slabs, pillars): solid to the walker. Detailed props stay walk-through. */
+const SOLID_MAX_VERTS = 400;
+
+/** One on-chain Draco glTF, placed with the creator's own transform. Simple block meshes become walkable boxes. */
+function PlacedModel({ m, boxKey }: { m: WorldAsset; boxKey: string }) {
   const gltf = useGLTF(m.url, true);
   const obj = useMemo(() => {
     const c = gltf.scene.clone(true);
@@ -41,6 +44,22 @@ function PlacedModel({ m }: { m: WorldAsset }) {
     });
     return c;
   }, [gltf.scene]);
+  useEffect(() => {
+    // Measure the real mesh in world space (the glTF's own node offsets included).
+    obj.updateWorldMatrix(true, true);
+    const boxes: WorldBox[] = [];
+    const b = new THREE.Box3();
+    obj.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      const count = mesh.isMesh ? mesh.geometry?.attributes?.["position"]?.count ?? Infinity : Infinity;
+      if (count > SOLID_MAX_VERTS) return;
+      b.setFromObject(mesh);
+      if (b.isEmpty()) return;
+      boxes.push({ x0: b.min.x, x1: b.max.x, y0: b.min.y, y1: b.max.y, z0: b.min.z, z1: b.max.z });
+    });
+    setBoxes(boxKey, boxes.length ? boxes : null);
+    return () => setBoxes(boxKey, null);
+  }, [obj, boxKey]);
   return <primitive object={obj} position={m.pos} rotation={[m.rot[0] * D, m.rot[1] * D, m.rot[2] * D]} scale={m.scale} />;
 }
 
@@ -78,22 +97,10 @@ function Bridge({ height }: { height: number }) {
       if (cy + hy * s <= by + 0.001) continue; // underground
       boxes.push({ x0: cx - hx * s, x1: cx + hx * s, y0: cy - hy * s, y1: cy + hy * s, z0: cz - hz * s, z1: cz + hz * s });
     }
-    // Placed block models (stairs, steps, slabs) are unit cubes scaled by the creator:
-    // register them too so stairways and platforms built from models are walkable.
-    for (const m of models) {
-      if (Math.abs(m.rot[0]) > 5 || Math.abs(m.rot[2]) > 5) continue;
-      const sx = Math.abs(m.scale[0]), sy = Math.abs(m.scale[1]), sz = Math.abs(m.scale[2]);
-      if (Math.max(sx, sy, sz) > 60 || sy > 12) continue; // skip big decorative meshes
-      const turned = Math.abs(Math.round(m.rot[1] / 90)) % 2 === 1;
-      const hx = (turned ? sz : sx) / 2, hz = (turned ? sx : sz) / 2, hy = sy / 2;
-      const cx = x + (m.pos[0] + o[0]) * s, cy = by + (m.pos[1] + o[1]) * s, cz = z + (m.pos[2] + o[2]) * s;
-      if (cy + hy * s <= by + 0.001) continue;
-      boxes.push({ x0: cx - hx * s, x1: cx + hx * s, y0: cy - hy * s, y1: cy + hy * s, z0: cz - hz * s, z1: cz + hz * s });
-    }
     const key = `iw:${height}`;
     setBoxes(key, boxes);
     return () => setBoxes(key, null);
-  }, [fit, prims, models, height, x, z]);
+  }, [fit, prims, height, x, z]);
   if (!data || !fit) return null;
   const s = fit.scale;
   const portalX = WORLD_CELL * 0.42;
@@ -109,7 +116,7 @@ function Bridge({ height }: { height: number }) {
           ))}
           {models.map((m, i) => (
             <Quiet key={`m${i}`}>
-              <Suspense fallback={null}><PlacedModel m={m} /></Suspense>
+              <Suspense fallback={null}><PlacedModel m={m} boxKey={`iw:${height}:m${i}`} /></Suspense>
             </Quiet>
           ))}
         </group>
