@@ -55,12 +55,21 @@ export const ForgeBuild3D = memo(function ForgeBuild3D({ height, position, cell,
     const base = data?.data ? decodeBuild(data.data, span) : [];
     const parcels = land?.parcels ?? [];
     // Parcel tiles are always 64-grid; on an XL build they are scaled up to its grid.
-    const inside = (x: number, z: number) => parcels.some(({ rect: [x0, z0, x1, z1] }) => x >= x0 * f && x < x1 * f && z >= z0 * f && z < z1 * f);
-    const out = base.filter((b) => !inside(b.dx, b.dz));
-    for (const p of parcels) {
+    // Exclusive ownership: each 64-grid cell belongs to one parcel only (server-derived
+    // cells; if unknown, the rect with lower tx index wins shared cells) — no overwrite.
+    const owner = new Map<number, number>();
+    for (const p of [...parcels].sort((a, b) => a.index - b.index)) {
       const [x0, z0, x1, z1] = p.rect;
+      const own = p.cells ? new Set(p.cells) : null;
+      for (let x = x0; x < x1; x++) for (let z = z0; z < z1; z++) {
+        const c = x * FORGE_SPAN + z;
+        if ((!own || own.has(c)) && !owner.has(c)) owner.set(c, p.index);
+      }
+    }
+    const out = base.filter((b) => !owner.has(Math.floor(b.dx / f) * FORGE_SPAN + Math.floor(b.dz / f)));
+    for (const p of parcels) {
       for (const b of decodeBuild(p.data)) {
-        if (!(b.dx >= x0 && b.dx < x1 && b.dz >= z0 && b.dz < z1)) continue;
+        if (owner.get(b.dx * FORGE_SPAN + b.dz) !== p.index) continue;
         if (f === 1) { out.push(b); continue; }
         for (let i = 0; i < f; i++) for (let j = 0; j < f; j++) for (let l = 0; l < f; l++) out.push({ dx: b.dx * f + i, dy: b.dy * f + j, dz: b.dz * f + l, k: b.k });
       }

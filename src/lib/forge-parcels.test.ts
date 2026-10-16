@@ -38,3 +38,21 @@ describe("forge parcels", () => {
     expect(out.map((b) => b.dy)).toEqual([0, 63]);
   });
 });
+
+describe("dense-block 1x1 conflicts", () => {
+  const dense = (n: number) => { let s = 7; return Array.from({ length: n }, () => { s = (s * 1103515245 + 12345) % 2147483648; const r = s / 2147483648; return r < 0.7 ? 1 : r < 0.9 ? 2 : 3; }); };
+  it("every canvas cell has at most one owner in a 5,000-tx block", () => {
+    const rects = parcelRects(dense(5000), 64);
+    const seen = new Set<number>();
+    for (const r of rects) for (const c of r.cells) { expect(seen.has(c)).toBe(false); seen.add(c); }
+  });
+  it("a parcel's build never lands on a cell another parcel owns", () => {
+    const rects = parcelRects(dense(3000), 64);
+    for (const r of rects) for (let x = r.x0; x < r.x1; x++) for (let z = r.z0; z < r.z1; z++) {
+      if (!r.cells.has(x * 64 + z)) expect(clipToParcel([{ dx: x, dy: 0, dz: z, k: "stone" }], r)).toHaveLength(0);
+    }
+  });
+  it("sparse blocks are unaffected: each parcel owns its whole rect", () => {
+    for (const r of parcelRects(dense(200), 64)) expect(r.cells.size).toBe((r.x1 - r.x0) * (r.z1 - r.z0));
+  });
+});
