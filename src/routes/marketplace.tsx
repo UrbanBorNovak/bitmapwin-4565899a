@@ -182,6 +182,7 @@ function Marketplace() {
       if (def) base = base.filter((p) => inClub(p.bitmapHeight, def));
     }
     if (trait !== "any") base = base.filter((p) => matchesTrait(p.bitmapHeight, trait));
+    if (gallery !== "any") base = base.filter((p) => galleryIndex.match(gallery, p.bitmapHeight));
     base = base.filter(passesDesk);
     if (sort !== "default") {
       const cmp: Record<Exclude<Sort, "default">, (a: RegistryParcel, b: RegistryParcel) => number> = {
@@ -203,7 +204,7 @@ function Marketplace() {
         (p.ownerAddress ?? "").toLowerCase().includes(q),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, traded, listed, parcels, search, club, trait, sort, inhabitedParcels.data, minSats, maxSats, onlyInhabited, onlyBuilt, onlySold, inhabitedSet, builtSet]);
+  }, [tab, traded, listed, parcels, search, club, trait, sort, inhabitedParcels.data, minSats, maxSats, onlyInhabited, onlyBuilt, onlySold, inhabitedSet, builtSet, gallery, galleryIndex]);
 
   // Paginate first, then resolve holders on chain for the visible page only.
   // ALL tab reads the full on-chain index page by page on the server.
@@ -402,6 +403,7 @@ function Marketplace() {
         {activeFilters > 0 && (
           <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2">
             {club !== "any" && <Chip label={CLUBS.find((c) => c.id === club)?.short ?? club} onClear={() => setClub("any")} />}
+            {gallery !== "any" && <Chip label={GALLERY_COLLECTIONS.find((g) => g.id === gallery)?.short ?? gallery} onClear={() => setGallery("any")} />}
             {trait !== "any" && <Chip label={ALL_OFFICIAL_TRAITS.find((t) => t.id === trait)?.label ?? trait} onClear={() => setTrait("any")} />}
             {search && <Chip label={`"${search}"`} onClear={() => setSearch("")} />}
             {sort !== "default" && <Chip label={SORTS.find((o) => o.id === sort)!.label} onClear={() => setSort("default")} />}
