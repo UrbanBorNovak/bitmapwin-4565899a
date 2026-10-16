@@ -102,11 +102,11 @@ export function MembershipPanel({ address, canEdit }: { address: string; canEdit
             <span className="text-foreground">
               {new Date(membership.data!.expiresAt!).toISOString().slice(0, 10)}
             </span>
-            . DONATE AGAIN ANY TIME TO EXTEND.
+            . SHARE AGAIN ANY TIME TO EXTEND.
           </p>
         ) : (
           <p>
-            &gt; DONATE {MEMBERSHIP_SATS.toLocaleString()} SATS AND CARRY A MEMBERS BADGE ON YOUR
+            &gt; SHARE {MEMBERSHIP_SATS.toLocaleString()} SATS AND CARRY A MEMBERS BADGE ON YOUR
             PROFILE FOR {MEMBERSHIP_DAYS} DAYS.
           </p>
         )}
@@ -118,13 +118,13 @@ export function MembershipPanel({ address, canEdit }: { address: string; canEdit
         {canEdit && (
           <>
             <div className="border border-border p-4">
-              <p className="label">DONATION ADDRESS</p>
+              <p className="label">MEMBERSHIP ADDRESS</p>
               <p className="mt-1 break-all text-foreground">{MEMBERSHIP_ADDRESS}</p>
               <p className="label mt-4">EXACT AMOUNT</p>
               <p className="mt-1 text-foreground">
                 {amount
                   ? `${amount.toLocaleString()} SATS`
-                  : "GET YOUR EXACT AMOUNT BELOW — IT IDENTIFIES YOUR DONATION"}
+                  : "GET YOUR EXACT AMOUNT BELOW — IT IDENTIFIES YOUR PAYMENT"}
               </p>
             </div>
 
@@ -143,7 +143,7 @@ export function MembershipPanel({ address, canEdit }: { address: string; canEdit
                 disabled={confirm.isPending}
                 className="label border border-bitcoin px-4 py-2 text-bitcoin hover:bg-bitcoin hover:text-background disabled:opacity-50"
               >
-                {confirm.isPending ? "CHECKING…" : "I HAVE DONATED — CHECK"}
+                {confirm.isPending ? "CHECKING…" : "I HAVE SENT IT — CHECK"}
               </button>
             </div>
             <p>
