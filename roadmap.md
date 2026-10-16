@@ -177,9 +177,9 @@
 - [ ] Verify visible 3D walking/camera motion on a graphics-capable device (sandbox WebGL context is lost even at Low settings).
 
 ## Trading API hardening + scoped terminal charts
-- [ ] Rate-limit every public trading call per IP and per wallet.
-- [ ] Block replayed bid/cancel signatures (timestamped messages, single-use).
-- [ ] Cap checkout holds per buyer to stop reservation squatting.
-- [ ] Confirm broadcast rejects altered seller payout / delivery outputs.
-- [ ] Depth and sales charts follow the selected trait/club scope with labels and empty states.
-- [ ] Hover details: exact sats, cumulative counts, sale timestamps and transaction links.
+- [x] Rate-limit every public trading call per IP and per wallet.
+- [x] Block replayed bid/cancel signatures (timestamped messages, single-use).
+- [x] Cap checkout holds per buyer to stop reservation squatting.
+- [x] Confirm broadcast rejects altered seller payout / delivery outputs.
+- [x] Depth and sales charts follow the selected trait/club scope with labels and empty states.
+- [x] Hover details: exact sats, cumulative counts, sale timestamps and transaction links.
