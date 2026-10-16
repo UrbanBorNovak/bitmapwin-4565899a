@@ -370,7 +370,7 @@ function Marketplace() {
       </div>
 
       <div className="mt-4">
-        <LiveTradesFeed />
+        <LiveTradesFeed scope={chartScope} />
       </div>
 
       <div className="mt-4">

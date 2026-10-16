@@ -28,7 +28,7 @@ const FRESH_UI: Record<Freshness, { label: string; tone: string; note: string }>
 
 const FEED_KEY = ["live-trades-feed"] as const;
 
-export function LiveTradesFeed() {
+export function LiveTradesFeed({ scope }: { scope?: { label: string; match: ((h: number) => boolean) | null } } = {}) {
   const [filter, setFilter] = useState<Filter>("sales");
   const [live, setLive] = useState(false);
   const [fresh_, setFresh] = useState<Set<string>>(() => new Set());
@@ -62,11 +62,11 @@ export function LiveTradesFeed() {
     staleTime: 15_000,
   });
   const rows = useMemo(() => {
-    const all = q.data ?? [];
+    const all = (q.data ?? []).filter((r) => !scope?.match || (r.bitmap_height != null && scope.match(r.bitmap_height)));
     if (filter === "whale") return all.filter((r) => r.price_sats >= WHALE_SATS);
     if (filter === "moves") return all.filter((r) => r.price_sats <= 0);
     return all.filter((r) => r.price_sats > 0);
-  }, [q.data, filter]);
+  }, [q.data, filter, scope]);
   // Keep the reader's place when a new row lands above them.
   useLayoutEffect(() => {
     const el = listRef.current;
@@ -74,7 +74,7 @@ export function LiveTradesFeed() {
     if (el && a) el.scrollTop = a.top + (el.scrollHeight - a.height);
     anchor.current = null;
   }, [q.data]);
-  const sales = (q.data ?? []).filter((r) => r.price_sats > 0);
+  const sales = (q.data ?? []).filter((r) => r.price_sats > 0 && (!scope?.match || (r.bitmap_height != null && scope.match(r.bitmap_height))));
   const volume = sales.reduce((a, r) => a + r.price_sats, 0);
   const top = sales.reduce((m, r) => Math.max(m, r.price_sats), 0);
   const lastRunAt = progress.data?.lastRunAt ?? null;
