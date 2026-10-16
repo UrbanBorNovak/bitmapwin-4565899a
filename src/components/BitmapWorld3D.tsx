@@ -3742,6 +3742,7 @@ function BitmapWorld3DInner({
       z += STRIDE * 1.4;
     }
     placePlayer(pose.current, x, z, 0);
+    spawnGuardUntil.current = Date.now() + 6_000;
     pose.current.combat = "alive";
     const col = colAt(pose.current.x);
     const row = rowAt(pose.current.z);
