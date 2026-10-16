@@ -50,3 +50,22 @@ describe("clearSpotNear", () => {
     expect(clearSpotNear(0, 0, 0, BODY, STEP, 0.004, 0.02)).toBeNull();
   });
 });
+
+describe("blinkTarget", () => {
+  const wall = { x0: -1, x1: 1, y0: 0, y1: 5, z0: 9, z1: 11 };
+  it("lands the full distance ahead when open", async () => {
+    const { setBoxes, blinkTarget } = await import("./box-collision");
+    setBoxes("blink", null);
+    const t = blinkTarget(0, 0, 0, 10, () => 0, 1.8, 0.3, 0.1, 0.5)!;
+    expect(t[1]).toBeCloseTo(10);
+  });
+  it("never lands inside a solid box; falls back to a shorter hop", async () => {
+    const { setBoxes, blinkTarget, boxWallAt } = await import("./box-collision");
+    setBoxes("blink", [wall]);
+    const t = blinkTarget(0, 0, 0, 10, () => 0, 1.8, 0.3, 0.1, 0.5)!;
+    expect(boxWallAt(t[0], t[1], 0, 1.8, 0.3, 0.1)).toBe(false);
+    setBoxes("blink", [{ x0: -50, x1: 50, y0: 0, y1: 5, z0: 1, z1: 50 }]);
+    expect(blinkTarget(0, 0, 0, 10, () => 0, 1.8, 0.3, 0.1, 0.5)).toBeNull();
+    setBoxes("blink", null);
+  });
+});

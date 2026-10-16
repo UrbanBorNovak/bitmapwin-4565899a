@@ -59,3 +59,28 @@ export function clearSpotNear(
   }
   return null;
 }
+
+/**
+ * BLINK destination: try the full distance ahead, then shorter hops back
+ * toward the caster, taking the first spot (or its nearest clear neighbour)
+ * where the body is not embedded. Null = every hop is solid, so stay put.
+ */
+export function blinkTarget(
+  x: number,
+  z: number,
+  yaw: number,
+  distance: number,
+  feetAt: (x: number, z: number) => number,
+  height: number,
+  stepUp: number,
+  radius = 0,
+  search = 0.02,
+): [number, number] | null {
+  for (let f = 1; f >= 0.25; f -= 0.25) {
+    const tx = x + Math.sin(yaw) * distance * f;
+    const tz = z + Math.cos(yaw) * distance * f;
+    const spot = clearSpotNear(tx, tz, feetAt(tx, tz), height, stepUp, radius, search);
+    if (spot) return spot;
+  }
+  return null;
+}
