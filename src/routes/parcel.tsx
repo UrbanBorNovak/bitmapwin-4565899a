@@ -209,7 +209,7 @@ function ParcelStudio() {
                     const ownsGround = i === sel && selRect !== null && selRect.cells.size > 0;
                     const cls = ownsGround ? "fill-primary/20 stroke-primary" : i === sel ? "fill-primary" : cart.includes(i) ? "fill-primary/50" : st === "valid" ? "fill-signal" : "fill-muted-foreground/25";
                     return (
-                      <rect key={i} x={p.position.x + 0.06} y={p.position.y + offY + 0.06} width={Math.max(0.1, p.size - 0.12)} height={Math.max(0.1, p.size - 0.12)}
+                      <rect key={i} x={p.position.x + offX + 0.06} y={p.position.y + offY + 0.06} width={Math.max(0.1, p.size - 0.12)} height={Math.max(0.1, p.size - 0.12)}
                         strokeWidth={ownsGround ? 0.1 : undefined}
                         className={`${cls} cursor-pointer transition-opacity hover:opacity-70`} opacity={dim ? 0.15 : 1}
                         onMouseEnter={() => setHover(i)} onClick={() => {
