@@ -25,3 +25,19 @@ describe("Inscribed.space archive", () => {
     expect(Object.keys(pack)).toHaveLength(87);
   });
 });
+
+import { describe as d2, it as i2, expect as e2 } from "vitest";
+import { modelsInside } from "./inscribed-world-bridge";
+import { convertBackupBuild as cbb } from "./inscribed-space-archive";
+d2("archive boundary clamp", () => {
+  i2("drops runaway model scales", () => {
+    const fit = { scale: 1, offset: [0, 0, 0] as [number, number, number] };
+    const ok = { url: "u", pos: [0, 0, 0] as [number, number, number], rot: [0, 0, 0] as [number, number, number], scale: [2, 2, 2] as [number, number, number] };
+    const sky = { ...ok, scale: [1054137, 1, 1] as [number, number, number] };
+    e2(modelsInside([ok, sky], fit, 10)).toEqual([ok]);
+  });
+  i2("drops 1,000-unit floor slabs", () => {
+    const g = cbb({ ground: [{ p: { x: 0, y: 0, z: 0 }, s: { x: 1000, y: 1, z: 1000 } }, { p: { x: 0, y: 0, z: 0 }, s: { x: 20, y: 1, z: 20 } }] } as never);
+    e2(g.prims.length).toBe(1);
+  });
+});
