@@ -119,7 +119,13 @@ function Bridge({ height }: { height: number }) {
       {/* Portal: click or tap to run the creator's own engine, untouched, from ordinals.com. */}
       <group
         position={[portalX, 0, 0]}
-        onClick={(e) => { e.stopPropagation(); window.open(worldContentUrl(data.inscriptionId), "_blank", "noopener"); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          const url = data.archive || !data.inscriptionId
+            ? `https://github.com/ordengine/inscribedspace_backup/blob/main/build_${height}.json`
+            : worldContentUrl(data.inscriptionId);
+          window.open(url, "_blank", "noopener");
+        }}
         onPointerOver={() => setHover(true)}
         onPointerOut={() => setHover(false)}
       >
