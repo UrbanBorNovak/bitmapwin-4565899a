@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { buildStoreHtml, DEFAULT_STORE, type StoreConfig } from "@/lib/store-template";
+import { buildStoreHtml, DEFAULT_FORM, DEFAULT_STORE, storeFormFromSearch, type StoreConfig } from "@/lib/store-template";
 
 export const Route = createFileRoute("/store-kit")({
   head: () => {
@@ -37,21 +37,26 @@ function StoreKit() {
   const [maxH, setMaxH] = useState("");
   const [maxBtc, setMaxBtc] = useState("");
   const [copied, setCopied] = useState(false);
+  const [apiBase, setApiBase] = useState(DEFAULT_STORE.apiBase);
+  const [cleared, setCleared] = useState(false);
   useEffect(() => {
-    const q = new URLSearchParams(window.location.search);
-    const sort = q.get("sort");
-    setC((p) => ({
-      ...p,
-      name: q.get("name")?.slice(0, 80) || p.name,
-      tagline: q.get("tagline")?.slice(0, 200) || p.tagline,
-      accent: /^#[0-9a-fA-F]{6}$/.test(q.get("accent") ?? "") ? q.get("accent")! : p.accent,
-      seller: q.get("seller")?.trim() || p.seller,
-      sort: sort === "price_desc" || sort === "recent" || sort === "price_asc" ? sort : p.sort,
-    }));
-    setMinH((q.get("from") ?? "").replace(/\D/g, ""));
-    setMaxH((q.get("to") ?? "").replace(/\D/g, ""));
-    setMaxBtc((q.get("max") ?? "").replace(/[^\d.]/g, ""));
+    const f = storeFormFromSearch(window.location.search);
+    setC(f.config);
+    setMinH(f.minH);
+    setMaxH(f.maxH);
+    setMaxBtc(f.maxBtc);
+    setApiBase(window.location.origin);
   }, []);
+  const reset = () => {
+    setC({ ...DEFAULT_FORM.config });
+    setMinH(DEFAULT_FORM.minH);
+    setMaxH(DEFAULT_FORM.maxH);
+    setMaxBtc(DEFAULT_FORM.maxBtc);
+    setCopied(false);
+    window.history.replaceState(null, "", "/store-kit");
+    setCleared(true);
+    setTimeout(() => setCleared(false), 2500);
+  };
   const share = async () => {
     const q = new URLSearchParams({ name: c.name, tagline: c.tagline, accent: c.accent, sort: c.sort });
     if (c.seller) q.set("seller", c.seller);
@@ -70,7 +75,7 @@ function StoreKit() {
   };
   const cfg: StoreConfig = {
     ...c,
-    apiBase: typeof window !== "undefined" ? window.location.origin : DEFAULT_STORE.apiBase,
+    apiBase,
     minHeight: num(minH),
     maxHeight: num(maxH),
     maxSats: maxBtc ? Math.round(Number(maxBtc) * 1e8) : undefined,
@@ -113,6 +118,8 @@ function StoreKit() {
           </label>
           <button onClick={download} className="w-full rounded bg-bitcoin px-4 py-3 text-sm font-bold text-background">DOWNLOAD MY SHOP</button>
           <button onClick={share} className="w-full rounded border border-signal px-4 py-3 text-sm font-bold text-signal">{copied ? "LINK COPIED" : "COPY SHARE LINK"}</button>
+          <button onClick={reset} className="w-full rounded border border-border bg-secondary/40 px-4 py-2 text-xs font-bold text-muted-foreground">RESET TO DEFAULTS</button>
+          {cleared && <p className="text-xs text-signal">BACK TO DEFAULTS — SHARED SETTINGS CLEARED</p>}
           <p className="text-xs text-muted-foreground">Free and open — change the file however you like.</p>
         </div>
         <iframe title="Shop preview" srcDoc={html} sandbox="allow-scripts allow-popups" className="h-[720px] w-full rounded border border-border bg-background" />
