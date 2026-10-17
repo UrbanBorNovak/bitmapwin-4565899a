@@ -4,7 +4,8 @@ import { MarketTerminal } from "@/components/market/MarketTerminal";
 import { TraitMatrix } from "@/components/market/TraitMatrix";
 import { useGalleryIndex } from "@/lib/use-gallery-index";
 import { GALLERY_COLLECTIONS } from "@/lib/bitmap-collections";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { BITMON_FILTER_KEY, loadBitmonFilters } from "@/lib/bitmon-filters";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { ParcelCard } from "@/components/ParcelCard";
@@ -145,6 +146,7 @@ function Marketplace() {
   useEffect(() => { priceUnit.hydrate(); try { const v = localStorage.getItem("bitmapwin.market-view.v1"); if (v === "cards" || v === "table") setViewState(v); } catch { /* ignore */ } }, []);
   useEffect(() => { priceUnit.setUsdRate(btcPrice.data?.usd ?? null); }, [btcPrice.data?.usd]);
   const [bitmonSpecies, setBitmonSpecies] = useState<GuardianSpecies | "ALL">("ALL");
+  const bitmonFiltersLoaded = useRef(false);
   const [minBtc, setMinBtc] = useState("");
   const [maxBtc, setMaxBtc] = useState("");
   const [onlyInhabited, setOnlyInhabited] = useState(false);
@@ -155,6 +157,18 @@ function Marketplace() {
   const inhabitedSet = useMemo(() => new Set(inhabited.data?.keys() ?? []), [inhabited.data]);
   const [bitmonRarity, setBitmonRarity] = useState<GuardianRarity | "ALL">("ALL");
   const { checks: bitmonChecks } = useVerifiedBitmons();
+  // Bitmon creature/rarity filters survive reloads; restoring a filter reopens the Bitmons tab so it applies.
+  useEffect(() => {
+    try {
+      const saved = loadBitmonFilters(localStorage.getItem(BITMON_FILTER_KEY));
+      if (saved.rarity !== "ALL" || saved.species !== "ALL") { setBitmonRarity(saved.rarity); setBitmonSpecies(saved.species); setTab("inhabited"); }
+    } catch { /* ignore */ }
+    bitmonFiltersLoaded.current = true;
+  }, []);
+  useEffect(() => {
+    if (!bitmonFiltersLoaded.current) return;
+    try { localStorage.setItem(BITMON_FILTER_KEY, JSON.stringify({ rarity: bitmonRarity, species: bitmonSpecies })); } catch { /* ignore */ }
+  }, [bitmonRarity, bitmonSpecies]);
   const speciesByHeight = useMemo(() => new Map([...bitmonChecks].map(([h, c]) => [h, c.status === "unverified" ? null : c.species])), [bitmonChecks]);
   const rarityByHeight = useMemo(() => new Map([...bitmonChecks].map(([h, c]) => [h, confirmedRarity(c)])), [bitmonChecks]);
   const minSats = btcInputToSats(minBtc);
@@ -371,7 +385,7 @@ function Marketplace() {
       </div>
 
       <div className="mt-4">
-        <BitmonsShelf rarity={bitmonRarity} onRarity={setBitmonRarity} species={bitmonSpecies} onSpecies={(sp) => { setBitmonSpecies(sp); setPage(0); }} onOpen={() => { setTab("inhabited"); setPage(0); }} />
+        <BitmonsShelf rarity={bitmonRarity} onRarity={setBitmonRarity} species={bitmonSpecies} onReset={() => { setBitmonRarity("ALL"); setBitmonSpecies("ALL"); setPage(0); }} onSpecies={(sp) => { setBitmonSpecies(sp); setPage(0); }} onOpen={() => { setTab("inhabited"); setPage(0); }} />
       </div>
 
       <div className="mt-4">
