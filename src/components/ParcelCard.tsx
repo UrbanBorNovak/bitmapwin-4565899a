@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { BuyButton } from "@/components/BuyButton";
+import { CartToggle } from "@/components/market/TradeSlip";
 import { MakeOfferButton } from "@/components/MakeOfferButton";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { GuardianMintStatus } from "@/components/bitmon/GuardianMintStatus";
@@ -95,7 +96,8 @@ export function ParcelCard({ parcel, traitHolder }: { parcel: RegistryParcel; tr
         )}
 
         {parcel.listedOfferId && parcel.listedSats !== null && (
-          <div className="mt-4">
+          <div className="mt-4 flex items-stretch gap-1">
+            <CartToggle item={{ offerId: parcel.listedOfferId, height: parcel.bitmapHeight, priceSats: parcel.listedSats, inscriptionId: parcel.inscriptionId }} className="!px-2" />
             <BuyButton
               offerId={parcel.listedOfferId}
               priceSats={parcel.listedSats}
