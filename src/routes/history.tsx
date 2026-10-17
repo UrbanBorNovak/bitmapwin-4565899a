@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { DataBadge } from "@/components/extenders/DataBadge";
-import { recentTradesQuery, tradedBitmapCountQuery, tradeTime } from "@/lib/trade-store";
+import { paidSalesQuery, tradedBitmapCountQuery, tradeTime } from "@/lib/trade-store";
+import { SalesBollingerChart } from "@/components/SalesBollingerChart";
 import { formatSats, SATS_PER_BTC } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
 
@@ -25,10 +26,11 @@ export const Route = createFileRoute("/history")({
 });
 
 function HistoryPage() {
-  const trades = useQuery(recentTradesQuery(200));
+  const trades = useQuery(paidSalesQuery());
   const tradedCount = useQuery(tradedBitmapCountQuery());
 
-  const rows = trades.data ?? [];
+  const all = trades.data ?? [];
+  const rows = [...all].sort((a, b) => new Date(b.block_time ?? b.created_at).getTime() - new Date(a.block_time ?? a.created_at).getTime());
   const totalSats = rows.reduce((s, t) => s + (t.price_sats || 0), 0);
   const maxSale = rows.reduce((m, t) => Math.max(m, t.price_sats || 0), 0);
 
@@ -46,11 +48,14 @@ function HistoryPage() {
       </div>
 
       <section className="mt-8 grid grid-cols-2 border border-border md:grid-cols-4">
-        <Stat k="TRACED SALES SHOWN" v={trades.isLoading ? "…" : String(rows.length)} />
+        <Stat k="TRACED SALES" v={trades.isLoading ? "…" : String(rows.length)} />
         <Stat k="BITMAPS EVER TRADED" v={tradedCount.data != null ? String(tradedCount.data) : "…"} />
-        <Stat k="VOLUME (SHOWN)" v={`${(totalSats / SATS_PER_BTC).toFixed(4)} BTC`} />
-        <Stat k="TOP SALE (SHOWN)" v={formatSats(maxSale)} />
+        <Stat k="TOTAL VOLUME" v={`${(totalSats / SATS_PER_BTC).toFixed(4)} BTC`} />
+        <Stat k="TOP SALE" v={formatSats(maxSale)} />
       </section>
+
+      <SalesBollingerChart rows={all} loading={trades.isLoading} />
+
 
       <div className="mt-8 overflow-x-auto border border-border">
         <table className="w-full min-w-[760px] font-mono text-xs">
