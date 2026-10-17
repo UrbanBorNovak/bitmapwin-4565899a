@@ -257,7 +257,10 @@ function Marketplace() {
     club !== "any" || gallery !== "any" || minSats !== null || maxSats !== null ||
     onlyInhabited || onlyBuilt || onlySold ||
     (sort !== "default" && sort !== "height-asc" && sort !== "height-desc");
-  const serverMode = tab === "all" && !patternSet && !clientOnlyFilters;
+  // A Bitmon shape group pages its own verified heights against the full index.
+  const patternServer = !!patternSet && !search.trim() && trait === "any";
+  const serverMode = tab === "all" && !clientOnlyFilters && (!patternSet || patternServer);
+  const patternHeights = patternServer ? (patternQ.isError ? [] : patternQ.data ?? null) : null;
   const indexPage = useQuery({
     ...registryIndexPageQuery({
       page,
@@ -265,8 +268,9 @@ function Marketplace() {
       search: search.trim(),
       ascending: sort === "height-asc",
       trait: trait === "any" ? null : trait,
+      heights: patternHeights,
     }),
-    enabled: serverMode,
+    enabled: serverMode && (!patternServer || patternHeights !== null),
   });
   const serverTotal = indexPage.data?.total ?? null;
   const pageCount = serverMode
