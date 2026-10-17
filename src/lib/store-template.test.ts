@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildStoreHtml, DEFAULT_FORM, DEFAULT_STORE, storeFormFromSearch, storeQuery } from "./store-template";
+import { buildStoreHtml, DEFAULT_FORM, DEFAULT_STORE, isFormDefault, storeFormFromSearch, storeQuery } from "./store-template";
 
 describe("store template", () => {
   it("filters to one seller when a valid address is set", () => {
@@ -30,5 +30,20 @@ describe("store template", () => {
   it("resetting gives the same form as an empty link", () => {
     expect(storeFormFromSearch("")).toEqual(DEFAULT_FORM);
     expect(DEFAULT_FORM).toEqual({ config: DEFAULT_STORE, minH: "", maxH: "", maxBtc: "" });
+  });
+  it("treats an untouched or empty-linked shop as at defaults", () => {
+    expect(isFormDefault(DEFAULT_FORM)).toBe(true);
+    expect(isFormDefault(storeFormFromSearch(""))).toBe(true);
+  });
+  it("treats a customized shop as not at defaults", () => {
+    expect(isFormDefault({ ...DEFAULT_FORM, config: { ...DEFAULT_STORE, name: "ORANGE KEEP" } })).toBe(false);
+    expect(isFormDefault({ ...DEFAULT_FORM, config: { ...DEFAULT_STORE, seller: "bc1pqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq" } })).toBe(false);
+    expect(isFormDefault({ ...DEFAULT_FORM, minH: "100" })).toBe(false);
+    expect(isFormDefault({ ...DEFAULT_FORM, maxH: "200" })).toBe(false);
+    expect(isFormDefault({ ...DEFAULT_FORM, maxBtc: "0.5" })).toBe(false);
+    expect(isFormDefault(storeFormFromSearch("?name=ORANGE%20KEEP"))).toBe(false);
+  });
+  it("ignores the API host when judging defaults", () => {
+    expect(isFormDefault({ ...DEFAULT_FORM, config: { ...DEFAULT_STORE, apiBase: "http://localhost:8080" } })).toBe(true);
   });
 });
