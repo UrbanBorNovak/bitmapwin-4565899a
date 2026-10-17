@@ -251,7 +251,7 @@ function Marketplace() {
 
   // Paginate first, then resolve holders on chain for the visible page only.
   // ALL tab reads the full on-chain index page by page on the server.
-  const serverMode = tab === "all";
+  const serverMode = tab === "all" && !patternSet;
   const indexPage = useQuery({
     ...registryIndexPageQuery({
       page,
