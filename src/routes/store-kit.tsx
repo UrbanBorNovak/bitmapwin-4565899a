@@ -38,6 +38,7 @@ function StoreKit() {
   const [maxBtc, setMaxBtc] = useState("");
   const [copied, setCopied] = useState(false);
   const [apiBase, setApiBase] = useState(DEFAULT_STORE.apiBase);
+  const [cleared, setCleared] = useState(false);
   useEffect(() => {
     const f = storeFormFromSearch(window.location.search);
     setC(f.config);
