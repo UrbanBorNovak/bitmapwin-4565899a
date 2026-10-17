@@ -6,7 +6,7 @@ import { HowItWorks } from "@/components/HowItWorks";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { BitmapConstellations } from "@/components/BitmapConstellations";
 import { registryParcelsQuery, registryCountQuery } from "@/lib/registry";
-import { recentTradesQuery, tradedBitmapCountQuery } from "@/lib/trade-store";
+import { recentTradesQuery, tradedBitmapCountQuery, paidSalesCountQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
 import { LoopNavigator } from "@/components/LoopNavigator";
 import { LandPromptTerminal } from "@/components/LandPromptTerminal";
