@@ -130,7 +130,7 @@ function StoreKit() {
       return;
     }
     setManual(url);
-    flash("COPY BLOCKED BY YOUR BROWSER — THE LINK BELOW IS SELECTED, PRESS CTRL+C");
+    flash("COPY BLOCKED BY YOUR BROWSER — YOUR SHOP LINK IS SELECTED, PRESS CTRL+C");
   };
   const cfg: StoreConfig = {
     ...c,
