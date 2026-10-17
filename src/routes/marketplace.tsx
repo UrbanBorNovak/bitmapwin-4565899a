@@ -41,7 +41,9 @@ import { liveOciStatusFn } from "@/lib/live-oci.functions";
 import { inhabitedQuery } from "@/lib/inhabited.functions";
 import { useVerifiedBitmons } from "@/lib/use-verified-bitmons";
 import { confirmedRarity } from "@/lib/bitmon-verify";
-import type { GuardianRarity } from "@/lib/bitmon";
+import type { GuardianRarity, GuardianSpecies } from "@/lib/bitmon";
+import { priceUnit, usePriceUnit, type PriceUnit } from "@/lib/price-unit";
+import { btcPriceQuery } from "@/lib/btc-price";
 import { BitmonsShelf } from "@/components/market/BitmonsShelf";
 import { LiveMarketTicker } from "@/components/market/LiveMarketTicker";
 import { FloorSweeper, ProTable } from "@/components/market/TradingDesk";
@@ -136,7 +138,14 @@ function Marketplace() {
   });
 
 
-  const [view, setView] = useState<"cards" | "table">("cards");
+  const [view, setViewState] = useState<"cards" | "table">("cards");
+  const setView = (v: "cards" | "table") => { setViewState(v); try { localStorage.setItem("bitmapwin.market-view.v1", v); } catch { /* ignore */ } };
+  const { unit, rate } = usePriceUnit();
+  const btcPrice = useQuery(btcPriceQuery());
+  useEffect(() => { priceUnit.hydrate(); try { const v = localStorage.getItem("bitmapwin.market-view.v1"); if (v === "cards" || v === "table") setViewState(v); } catch { /* ignore */ } }, []);
+  useEffect(() => { priceUnit.setUsdRate(btcPrice.data?.usd ?? null); }, [btcPrice.data?.usd]);
+  const [bitmonSpecies, setBitmonSpecies] = useState<GuardianSpecies | "ALL">("ALL");
+  const speciesByHeight = useMemo(() => new Map([...bitmonChecksEarly()].map(([h, c]) => [h, c.status === "unverified" ? null : c.species])), []);
   const [minBtc, setMinBtc] = useState("");
   const [maxBtc, setMaxBtc] = useState("");
   const [onlyInhabited, setOnlyInhabited] = useState(false);
