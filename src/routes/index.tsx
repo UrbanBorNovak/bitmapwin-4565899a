@@ -100,7 +100,8 @@ function Index() {
               <dl data-tour="home-market" className="mt-4 grid grid-cols-2 border border-border lg:grid-cols-1">
                 <MarketStat k="OPEN FLOOR" v={floor ? formatSats(floor) : "—"} />
                 <MarketStat k="BITMAPS INDEXED" v={indexedCount.toLocaleString("en-US")} />
-                <MarketStat k="CONFIRMED SALES" v={tradedCount.toLocaleString("en-US")} />
+                <MarketStat k="CONFIRMED SALES" v={salesCount.toLocaleString("en-US")} />
+                <MarketStat k="BITMAPS TRADED" v={tradedCount.toLocaleString("en-US")} />
                 <MarketStat k="RECENT VOLUME" v={volume ? formatSats(volume) : "—"} />
               </dl>
             </div>
