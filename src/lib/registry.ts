@@ -480,3 +480,102 @@ export function shortenAddress(address: string | null): string {
   if (address.length <= 16) return address;
   return `${address.slice(0, 8)}…${address.slice(-6)}`;
 }
+
+export type ScopeArgs = {
+  /** Finite candidate heights (pattern, built, listed, sold…), or null for a pure range. */
+  heights: number[] | null;
+  min: number;
+  max: number;
+  /** Pure-height trait id, intersected server-side. */
+  heightTrait: string | null;
+  ascending: boolean;
+  page: number;
+  pageSize: number;
+  /** Build every candidate (small sets) so the caller can filter/sort on market data. */
+  buildAll: boolean;
+};
+
+const SCOPE_BUILD_MAX = 3_000;
+const SCOPE_EXACT_RANGE = 120_000;
+
+/**
+ * Full-index scope read for combined marketplace filters. Candidates are validated
+ * against bitmap_index (valid claims only), so totals are exact claim counts.
+ */
+export async function fetchRegistryScope(args: ScopeArgs): Promise<{ parcels: RegistryParcel[]; total: number | null; hasMore: boolean; all: boolean }> {
+  const { ascending, page, pageSize } = args;
+  let min = args.min;
+  let max = args.max;
+  let heights = args.heights;
+  const ht = args.heightTrait ? heightTraitQuery(args.heightTrait, MAX_BITMAP + 100_000) : null;
+  if (ht) {
+    if ("heights" in ht) heights = heights ? heights.filter((h) => ht.heights.includes(h)) : ht.heights;
+    else { min = Math.max(min, ht.from); max = Math.min(max, ht.to); }
+  }
+  const cols = "block_height, inscription_id, genesis_height, resolved_at";
+  const toRow = (r: { block_height: number; inscription_id: string | null; genesis_height: number | null; resolved_at?: string | null }): ClaimRow[] => {
+    const id = r.inscription_id;
+    if (!id) return [];
+    const txid = id.split("i")[0] ?? "";
+    if (!/^[0-9a-fA-F]{64}$/.test(txid)) return [];
+    return [{ id, txid, block_height: r.genesis_height ?? null, bitmap_height: r.block_height, created_at: r.resolved_at ?? new Date(0).toISOString() }];
+  };
+  const sortP = (ps: RegistryParcel[]) => ps.sort((a, b) => (ascending ? a.bitmapHeight - b.bitmapHeight : b.bitmapHeight - a.bitmapHeight));
+
+  if (heights === null) {
+    if (min > max) return { parcels: [], total: 0, hasMore: false, all: false };
+    const exact = max - min <= SCOPE_EXACT_RANGE;
+    const from = page * pageSize;
+    const { data, error, count } = await supabase
+      .from("bitmap_index")
+      .select(cols, exact ? { count: "exact" } : undefined)
+      .eq("is_valid", true)
+      .not("inscription_id", "is", null)
+      .gte("block_height", min)
+      .lte("block_height", max)
+      .order("block_height", { ascending })
+      .range(from, from + pageSize);
+    if (error) throw error;
+    const rows = data ?? [];
+    const hasMore = rows.length > pageSize;
+    const parcels = sortP(await buildParcels(rows.slice(0, pageSize).flatMap(toRow), { resolveOwners: false }));
+    return { parcels, total: exact ? count ?? null : hasMore ? null : from + rows.length, hasMore, all: false };
+  }
+
+  const cand = [...new Set(heights)].filter((h) => h >= min && h <= max);
+  const valid: ClaimRow[] = [];
+  for (let i = 0; i < cand.length; i += 500) {
+    const { data, error } = await supabase.from("bitmap_index").select(cols).eq("is_valid", true).not("inscription_id", "is", null).in("block_height", cand.slice(i, i + 500));
+    if (error) throw error;
+    for (const r of data ?? []) valid.push(...toRow(r));
+  }
+  valid.sort((a, b) => (ascending ? a.bitmap_height! - b.bitmap_height! : b.bitmap_height! - a.bitmap_height!));
+  if (args.buildAll && valid.length <= SCOPE_BUILD_MAX) {
+    const out: RegistryParcel[] = [];
+    for (let i = 0; i < valid.length; i += 300) out.push(...(await buildParcels(valid.slice(i, i + 300), { resolveOwners: false })));
+    return { parcels: sortP(out), total: valid.length, hasMore: false, all: true };
+  }
+  const slice = valid.slice(page * pageSize, page * pageSize + pageSize);
+  const parcels = sortP(await buildParcels(slice, { resolveOwners: false }));
+  return { parcels, total: valid.length, hasMore: (page + 1) * pageSize < valid.length, all: false };
+}
+
+export const registryScopeQuery = (args: ScopeArgs) =>
+  queryOptions({
+    queryKey: ["registry", "scope", { ...args, heights: args.heights ? args.heights.length + ":" + args.heights.slice(0, 50).join(",") + ":" + args.heights.reduce((s, h) => (s * 31 + h) % 1e9, 7) : null, page: args.buildAll ? 0 : args.page }],
+    queryFn: () => fetchRegistryScope(args.buildAll ? { ...args, page: 0 } : args),
+    staleTime: 60_000,
+    placeholderData: (prev) => prev,
+  });
+
+/** Every BITMAP height with at least one recorded on-chain move. */
+export async function fetchTradedHeights(): Promise<number[]> {
+  const out = new Set<number>();
+  for (let from = 0; from < 50_000; from += 1000) {
+    const { data, error } = await supabase.from("trades").select("bitmap_height").order("id").range(from, from + 999);
+    if (error) throw error;
+    for (const r of data ?? []) if (r.bitmap_height != null) out.add(Number(r.bitmap_height));
+    if (!data || data.length < 1000) break;
+  }
+  return [...out];
+}
