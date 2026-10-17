@@ -95,29 +95,37 @@ export function buildStoreHtml(c: StoreConfig): string {
 <title>${esc(c.name)}</title><meta name="description" content="${esc(c.tagline)}">
 <style>
 :root{--a:${accent};--bg:#0b0d10;--fg:#e8e6e1;--mut:#8a8f98;--ln:#ffffff1a}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
-header{padding:40px 24px 16px;max-width:1100px;margin:auto}h1{margin:0;font:700 34px/1.1 ui-monospace,monospace;letter-spacing:.04em;color:var(--a)}
-p.t{color:var(--mut);margin:8px 0 0}#s{color:var(--mut);font:12px ui-monospace,monospace;margin-top:16px}
-main{max-width:1100px;margin:auto;padding:8px 24px 48px;display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
-.c{border:1px solid var(--ln);border-radius:10px;overflow:hidden;background:#ffffff08}
-.c img{display:block;width:100%;aspect-ratio:1;object-fit:cover;background:#000;image-rendering:pixelated}
-.b{padding:10px 12px}.h{font:700 15px ui-monospace,monospace}.p{color:var(--a);font:600 14px ui-monospace,monospace}
-.c a{display:block;margin:0 12px 12px;padding:8px;text-align:center;border-radius:6px;background:var(--a);color:#000;font:700 12px ui-monospace,monospace;text-decoration:none;letter-spacing:.08em}
-.hold{opacity:.5}footer{text-align:center;color:var(--mut);font:11px ui-monospace,monospace;padding:24px}footer a{color:var(--a)}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,color-mix(in srgb,var(--a) 10%,transparent),transparent 60%),var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
+header{padding:44px 24px 20px;max-width:1100px;margin:auto}h1{margin:0;font:700 34px/1.1 ui-monospace,monospace;letter-spacing:.04em;color:var(--a)}
+p.t{color:var(--mut);margin:8px 0 0}
+#s{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;font:11px ui-monospace,monospace;letter-spacing:.08em}
+.k{border:1px solid var(--ln);border-radius:999px;padding:5px 12px;background:#ffffff08;color:var(--mut)}.k b{color:var(--fg);font-weight:700}.k.f b{color:var(--a)}
+main{max-width:1100px;margin:auto;padding:8px 24px 48px;display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.c{border:1px solid var(--ln);border-radius:12px;overflow:hidden;background:linear-gradient(#ffffff0a,#ffffff03);backdrop-filter:blur(6px);transition:transform .2s,border-color .2s,box-shadow .2s}
+.c:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--a) 60%,transparent);box-shadow:0 10px 30px -12px var(--a)}
+.v{aspect-ratio:1;display:grid;place-items:center;border-bottom:1px solid var(--ln);background:repeating-linear-gradient(0deg,#ffffff06 0 1px,transparent 1px 16px),repeating-linear-gradient(90deg,#ffffff06 0 1px,transparent 1px 16px),#050607;font:700 26px ui-monospace,monospace;color:var(--a);text-shadow:0 0 18px color-mix(in srgb,var(--a) 50%,transparent)}.v small{display:block;text-align:center;color:var(--mut);font-size:10px;letter-spacing:.2em;text-shadow:none}
+.b{padding:12px}.h{font:700 15px ui-monospace,monospace}.p{color:var(--a);font:700 16px ui-monospace,monospace;margin-top:6px}.q{color:var(--mut);font:11px ui-monospace,monospace}
+.c a{display:block;margin:0 12px 12px;padding:9px;text-align:center;border-radius:8px;background:var(--a);color:#000;font:700 12px ui-monospace,monospace;text-decoration:none;letter-spacing:.1em;transition:filter .15s}.c a:hover{filter:brightness(1.15)}
+.hold{opacity:.5}.hold a{background:transparent;color:var(--mut);border:1px solid var(--ln)}
+.e{grid-column:1/-1;border:1px dashed var(--ln);border-radius:12px;padding:40px 20px;text-align:center;color:var(--mut);font:12px/1.7 ui-monospace,monospace;letter-spacing:.06em}.e b{display:block;color:var(--fg);font-size:14px;margin-bottom:6px}.e a{color:var(--a)}
+footer{text-align:center;color:var(--mut);font:11px ui-monospace,monospace;padding:24px}footer a{color:var(--a)}
 </style></head><body>
-<header><h1>${esc(c.name)}</h1><p class="t">${esc(c.tagline)}</p><div id="s">LOADING LIVE LISTINGS…</div></header>
+<header><h1>${esc(c.name)}</h1><p class="t">${esc(c.tagline)}</p><div id="s"><span class="k">LOADING LIVE LISTINGS…</span></div></header>
 <main id="g"></main>
 <footer>Zero custody · you sign in your own wallet · data from <a href="${esc(base)}/api" target="_blank" rel="noreferrer">BitmapWin public API</a></footer>
 <script>
 const C=${cfg};
 const g=document.getElementById('g'),s=document.getElementById('s');
+const btc=v=>(v/1e8).toFixed(8).replace(/0+$/,'').replace(/\\.$/,'')+' BTC',sat=v=>Number(v).toLocaleString('en-US')+' sats';
 fetch(C.url).then(r=>r.json()).then(d=>{
  const L=(d.listings||[]).filter(o=>(C.min==null||o.bitmap_height>=C.min)&&(C.max==null||o.bitmap_height<=C.max));
- s.textContent=L.length+' BITMAP'+(L.length===1?'':'S')+' FOR SALE';
+ const open=L.filter(o=>!o.on_hold),fl=open.length?Math.min(...open.map(o=>o.price_sats)):null;
+ s.innerHTML='<span class="k"><b>'+L.length+'</b> FOR SALE</span>'+(fl!=null?'<span class="k f">FLOOR <b>'+sat(fl)+'</b> · '+btc(fl)+'</span>':'')+'<span class="k">● LIVE</span>';
+ if(!L.length){g.innerHTML='<div class="e"><b>NO ACTIVE LISTINGS RIGHT NOW</b>Nothing matches this shop yet — check back soon, or browse the <a target="_blank" rel="noreferrer" href="'+C.base+'/marketplace">full marketplace</a>.</div>';return;}
  for(const o of L){const el=document.createElement('div');el.className='c'+(o.on_hold?' hold':'');
   const h=Number(o.bitmap_height),id=String(o.inscription_id).replace(/[^a-z0-9i]/gi,'');
-  el.innerHTML='<img loading="lazy" alt="'+h+'.bitmap" src="https://ordinals.com/content/'+id+'"><div class="b"><div class="h">'+h+'.bitmap</div><div class="p">'+(o.price_sats/1e8).toFixed(8).replace(/0+$/,'').replace(/\\.$/,'')+' BTC</div></div><a target="_blank" rel="noreferrer" href="'+C.base+'/bitmap/'+h+'">'+(o.on_hold?'IN CHECKOUT':'BUY')+'</a>';
+  el.innerHTML='<div class="v"><div>'+h+'<small>BLOCK</small></div></div><div class="b"><div class="h">'+h+'.bitmap</div><div class="p">'+sat(o.price_sats)+'</div><div class="q">'+btc(o.price_sats)+'</div></div><a target="_blank" rel="noreferrer" href="'+C.base+'/bitmap/'+h+'">'+(o.on_hold?'IN CHECKOUT':'BUY')+'</a>';
   g.appendChild(el);}
-}).catch(()=>{s.textContent='COULD NOT LOAD LISTINGS — TRY AGAIN SOON';});
+}).catch(()=>{s.innerHTML='<span class="k">COULD NOT LOAD LISTINGS — TRY AGAIN SOON</span>';});
 </script></body></html>`;
 }
