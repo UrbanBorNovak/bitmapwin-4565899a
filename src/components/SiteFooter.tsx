@@ -87,6 +87,7 @@ export function SiteFooter() {
           <a href="https://x.com/boppleton" target="_blank" rel="noreferrer" className="text-primary hover:text-foreground">@BOPPLETON</a>
           {" · "}BOT STARTER KIT ON{" "}
           <a href="https://github.com/UrbanBorNovak/bitmapwin-bot-starter" target="_blank" rel="noreferrer" className="text-signal hover:text-foreground">GITHUB</a>
+          <a href="/store-kit" className="text-signal hover:text-foreground">STORE KIT</a>
         </div>
       </div>
     </footer>
