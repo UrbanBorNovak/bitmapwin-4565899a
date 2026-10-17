@@ -6,10 +6,10 @@ export type StoreConfig = {
   name: string;
   tagline: string;
   accent: string; // hex
-  seller?: string; // only this seller's listings
-  minHeight?: number;
-  maxHeight?: number;
-  maxSats?: number;
+  seller?: string | undefined; // only this seller's listings
+  minHeight?: number | undefined;
+  maxHeight?: number | undefined;
+  maxSats?: number | undefined;
   sort: "price_asc" | "price_desc" | "recent";
   apiBase: string;
 };
