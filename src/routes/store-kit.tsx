@@ -23,6 +23,14 @@ export const Route = createFileRoute("/store-kit")({
 
 const num = (v: string) => (v.trim() === "" ? undefined : Number(v));
 
+const GUIDE = [
+  { title: "CUSTOMIZE", body: "Fill in your shop name, tagline and colour above. Add your seller address to show only your own listings, or set a block range or max price to curate. The preview updates as you type." },
+  { title: "DOWNLOAD", body: "Press DOWNLOAD MY SHOP. You get one file called index.html — that is your whole shop." },
+  { title: "CREATE A GITHUB REPOSITORY", body: "Sign in at github.com (free account), press New repository, give it a name like my-bitmap-shop, set it to Public and create it." },
+  { title: "UPLOAD THE FILE", body: "In the new repository, choose Add file → Upload files, drag in index.html and press Commit changes." },
+  { title: "TURN ON GITHUB PAGES", body: "Open Settings → Pages. Under Branch pick main and / (root), then Save. After a minute your shop is live at yourname.github.io/my-bitmap-shop. To change it later, make a new file here and upload it again." },
+] as const;
+
 function StoreKit() {
   const [c, setC] = useState<StoreConfig>(DEFAULT_STORE);
   const [minH, setMinH] = useState("");
@@ -76,6 +84,31 @@ function StoreKit() {
         </div>
         <iframe title="Shop preview" srcDoc={html} sandbox="allow-scripts allow-popups" className="h-[720px] w-full rounded border border-border bg-background" />
       </div>
+      <section className="mt-12 border border-border">
+        <header className="border-b border-border p-5">
+          <div className="label text-signal">HOW TO LAUNCH YOUR SHOP</div>
+          <p className="mt-2 text-sm text-muted-foreground">Five steps, no coding needed. Takes about 10 minutes.</p>
+        </header>
+        <ol className="divide-y divide-border">
+          {GUIDE.map((s, i) => (
+            <li key={s.title} className="flex gap-4 p-4">
+              <span className="font-mono text-xs text-bitcoin">{String(i + 1).padStart(2, "0")}</span>
+              <div>
+                <div className="display text-sm md:text-base">{s.title}</div>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <footer className="border-t border-border bg-secondary/40 p-5">
+          <div className="label text-bitcoin">WHERE BUYING HAPPENS</div>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Your shop is a window, not a checkout. When a visitor presses BUY, they go to that BITMAP's page on the main
+            BitmapWin marketplace and sign there with their own wallet. Payment goes straight to the seller on Bitcoin —
+            your shop never holds coins, keys or BITMAPs. A listing marked IN CHECKOUT is briefly reserved by another buyer.
+          </p>
+        </footer>
+      </section>
     </div>
   );
 }
