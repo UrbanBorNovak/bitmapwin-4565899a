@@ -132,3 +132,18 @@ export const sellerOffersQuery = (address: string) =>
     queryFn: () => fetchSellerOffers(address),
     staleTime: 20_000,
   });
+
+/** Every open ask on the market (up to 1,000) — powers holder floor matching. */
+export async function fetchOpenOffers() {
+  const { data, error } = await supabase
+    .from("offers")
+    .select("id, bitmap_height, inscription_id, outpoint, seller_address, price_sats, status, created_at")
+    .eq("status", "open")
+    .order("price_sats", { ascending: true })
+    .limit(1000);
+  if (error) throw error;
+  return (data ?? []).map((row) => toOffer(row as OfferRow));
+}
+
+export const openOffersQuery = () =>
+  queryOptions({ queryKey: ["offers", "open-all"], queryFn: fetchOpenOffers, staleTime: 30_000 });

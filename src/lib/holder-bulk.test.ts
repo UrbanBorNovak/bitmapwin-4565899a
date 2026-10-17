@@ -24,6 +24,6 @@ describe("holder bulk tools", () => {
 
   it("warns when an ask is under half the floor", () => {
     expect(isFarBelowFloor(4_999, 10_000)).toBe(true);
-    expect(isFarBelowFloor(5_000, 10_000)).toBe(true === false ? true : false);
+    expect(isFarBelowFloor(5_000, 10_000)).toBe(false);
   });
 });
