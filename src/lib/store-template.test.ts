@@ -47,3 +47,13 @@ describe("store template", () => {
     expect(isFormDefault({ ...DEFAULT_FORM, config: { ...DEFAULT_STORE, apiBase: "http://localhost:8080" } })).toBe(true);
   });
 });
+
+describe("store inscription pack", () => {
+  it("brotli round-trips byte-for-byte and stays small", async () => {
+    const zlib = await import("zlib");
+    const raw = Buffer.from(buildStoreHtml(DEFAULT_STORE), "utf8");
+    const packed = zlib.brotliCompressSync(raw, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 11 } });
+    expect(zlib.brotliDecompressSync(packed).equals(raw)).toBe(true);
+    expect(packed.length).toBeLessThan(raw.length);
+  });
+});

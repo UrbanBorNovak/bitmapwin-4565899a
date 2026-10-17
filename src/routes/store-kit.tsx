@@ -1,6 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { buildStoreHtml, DEFAULT_FORM, DEFAULT_STORE, isFormDefault, storeFormFromSearch, type StoreConfig } from "@/lib/store-template";
+import { brotliPackFn } from "@/lib/brotli-pack.functions";
+
+const INSCRIBE = [
+  { title: "CHOOSE YOUR WAY", body: "Easiest: use the ord wallet with the normal index.html and the --compress flag — ord packs it for you. If you use an inscription service instead, only upload the .html.br file when it lets you set content type text/html and content encoding br; otherwise upload the normal index.html." },
+  { title: "ORD COMMAND", body: "ord wallet inscribe --fee-rate <sats/vB> --file index.html --compress — ord checks the fee and shows the cost before anything is sent. You sign and send it yourself; BitmapWin never does." },
+  { title: "OPEN YOUR SHOP", body: "After it confirms, your shop lives forever at ordinals.com/content/<your inscription id>. Browsers open it normally; very old tools that can't read packed files may show an error instead." },
+] as const;
 
 export const Route = createFileRoute("/store-kit")({
   head: () => {
@@ -140,14 +147,36 @@ function StoreKit() {
     maxSats: maxBtc ? Math.round(Number(maxBtc) * 1e8) : undefined,
   };
   const html = useMemo(() => buildStoreHtml(cfg), [JSON.stringify(cfg)]);
-  const download = () => {
-    const url = URL.createObjectURL(new Blob([buildStoreHtml({ ...cfg, apiBase: DEFAULT_STORE.apiBase })], { type: "text/html" }));
+  const save = (blob: Blob, name: string) => {
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "index.html";
+    a.download = name;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
   };
+  const liveHtml = () => buildStoreHtml({ ...cfg, apiBase: DEFAULT_STORE.apiBase });
+  const download = () => save(new Blob([liveHtml()], { type: "text/html" }), "index.html");
+  const [packed, setPacked] = useState<{ bytes: Uint8Array; raw: number; size: number; key: string } | null>(null);
+  const [packing, setPacking] = useState(false);
+  const packKey = JSON.stringify(cfg);
+  const prepareBr = async () => {
+    setPacking(true);
+    try {
+      const r = await brotliPackFn({ data: { text: liveHtml() } });
+      const bin = atob(r.base64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      setPacked({ bytes, raw: r.rawBytes, size: r.packedBytes, key: packKey });
+    } catch {
+      flash("COULD NOT PACK THE FILE — TRY AGAIN");
+    } finally {
+      setPacking(false);
+    }
+  };
+  const ready = packed && packed.key === packKey ? packed : null;
   const input = "w-full rounded border border-border bg-background/60 px-3 py-2 text-sm";
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
@@ -176,6 +205,16 @@ function StoreKit() {
             </select>
           </label>
           <button onClick={download} className="w-full rounded bg-bitcoin px-4 py-3 text-sm font-bold text-background">DOWNLOAD MY SHOP</button>
+          {ready ? (
+            <button onClick={() => save(new Blob([ready.bytes as BlobPart], { type: "application/octet-stream" }), "index.html.br")} className="w-full rounded border border-bitcoin px-4 py-3 text-sm font-bold text-bitcoin">
+              DOWNLOAD FOR INSCRIPTION (.HTML.BR) · {ready.size.toLocaleString("en-US")} BYTES
+            </button>
+          ) : (
+            <button onClick={prepareBr} disabled={packing} className="w-full rounded border border-bitcoin px-4 py-3 text-sm font-bold text-bitcoin disabled:opacity-50">
+              {packing ? "PACKING…" : "PREPARE FOR INSCRIPTION (.HTML.BR)"}
+            </button>
+          )}
+          {ready && <p className="font-mono text-[11px] text-muted-foreground">PACKED {ready.raw.toLocaleString("en-US")} → {ready.size.toLocaleString("en-US")} BYTES · CHECKED: UNPACKS TO THE EXACT SAME SHOP</p>}
           <button onClick={share} className="w-full rounded border border-signal px-4 py-3 text-sm font-bold text-signal">{copied ? "LINK COPIED" : "COPY SHARE LINK"}</button>
           {manual && (
             <label className="block text-xs text-signal">
@@ -221,6 +260,30 @@ function StoreKit() {
             </li>
           ))}
         </ol>
+        <div className="border-t border-border p-5">
+          <div className="label text-bitcoin">PUT YOUR SHOP ON BITCOIN (OPTIONAL)</div>
+          <p className="mt-2 text-sm text-muted-foreground">Inscribe it once and it stays on Bitcoin forever — no hosting. Small fee, paid by you to miners.</p>
+        </div>
+        <ol className="divide-y divide-border border-t border-border">
+          {INSCRIBE.map((s, i) => (
+            <li key={s.title} className="flex gap-4 p-4">
+              <span className="font-mono text-xs text-bitcoin">{String(i + 1).padStart(2, "0")}</span>
+              <div>
+                <div className="display text-sm md:text-base">{s.title}</div>
+                <p className="mt-1 break-words text-sm leading-relaxed text-muted-foreground">{s.body}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <div className="border-t border-border p-5">
+          <div className="label text-signal">WHAT STAYS LIVE (EVEN ON BITCOIN)</div>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            The inscribed file is only the shop window. Every time someone opens it, it asks bitmapwin.app for the current
+            listings, and BUY opens the BITMAP's page on the BitmapWin marketplace for checkout. If bitmapwin.app is
+            unreachable, the shop shows "COULD NOT LOAD LISTINGS" and nobody can buy through it until it's back. Only
+            listed BITMAPs appear.
+          </p>
+        </div>
         <footer className="border-t border-border bg-secondary/40 p-5">
           <div className="label text-bitcoin">WHERE BUYING HAPPENS</div>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
