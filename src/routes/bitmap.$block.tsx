@@ -389,6 +389,9 @@ function BitmapDetail() {
           txCount={stats.data?.txCount ?? scan.data?.txCount ?? null}
           preview={<BlockMosaic height={block} txCount={stats.data?.txCount ?? scan.data?.txCount ?? null} />}
         />
+        <Link to="/clips" search={{ block }} className="btn-term-ghost mt-3 inline-flex">
+          [ MAKE A 3D VIDEO OF {block}.BITMAP ]
+        </Link>
       </div>
       <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="group rounded-lg border border-border bg-card p-6">

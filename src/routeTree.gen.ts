@@ -19,6 +19,7 @@ import { Route as BuildersRouteImport } from './routes/builders'
 import { Route as BuildsRouteImport } from './routes/builds'
 import { Route as CharacterRouteImport } from './routes/character'
 import { Route as CitiesRouteImport } from './routes/cities'
+import { Route as ClipsRouteImport } from './routes/clips'
 import { Route as CoinsRouteImport } from './routes/coins'
 import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as CommandRouteImport } from './routes/command'
@@ -174,6 +175,11 @@ const CharacterRoute = CharacterRouteImport.update({
 const CitiesRoute = CitiesRouteImport.update({
   id: '/cities',
   path: '/cities',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClipsRoute = ClipsRouteImport.update({
+  id: '/clips',
+  path: '/clips',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoinsRoute = CoinsRouteImport.update({
@@ -722,6 +728,7 @@ export interface FileRoutesByFullPath {
   '/builds': typeof BuildsRoute
   '/character': typeof CharacterRoute
   '/cities': typeof CitiesRoute
+  '/clips': typeof ClipsRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/command': typeof CommandRoute
@@ -840,6 +847,7 @@ export interface FileRoutesByTo {
   '/builds': typeof BuildsRoute
   '/character': typeof CharacterRoute
   '/cities': typeof CitiesRoute
+  '/clips': typeof ClipsRoute
   '/coins': typeof CoinsRoute
   '/command': typeof CommandRoute
   '/create': typeof CreateRoute
@@ -955,6 +963,7 @@ export interface FileRoutesById {
   '/builds': typeof BuildsRoute
   '/character': typeof CharacterRoute
   '/cities': typeof CitiesRoute
+  '/clips': typeof ClipsRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/command': typeof CommandRoute
@@ -1075,6 +1084,7 @@ export interface FileRouteTypes {
     | '/builds'
     | '/character'
     | '/cities'
+    | '/clips'
     | '/coins'
     | '/collections'
     | '/command'
@@ -1193,6 +1203,7 @@ export interface FileRouteTypes {
     | '/builds'
     | '/character'
     | '/cities'
+    | '/clips'
     | '/coins'
     | '/command'
     | '/create'
@@ -1307,6 +1318,7 @@ export interface FileRouteTypes {
     | '/builds'
     | '/character'
     | '/cities'
+    | '/clips'
     | '/coins'
     | '/collections'
     | '/command'
@@ -1426,6 +1438,7 @@ export interface RootRouteChildren {
   BuildsRoute: typeof BuildsRoute
   CharacterRoute: typeof CharacterRoute
   CitiesRoute: typeof CitiesRoute
+  ClipsRoute: typeof ClipsRoute
   CoinsRoute: typeof CoinsRoute
   CollectionsRoute: typeof CollectionsRouteWithChildren
   CommandRoute: typeof CommandRoute
@@ -1564,6 +1577,13 @@ declare module '@tanstack/react-router' {
       path: '/cities'
       fullPath: '/cities'
       preLoaderRoute: typeof CitiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clips': {
+      id: '/clips'
+      path: '/clips'
+      fullPath: '/clips'
+      preLoaderRoute: typeof ClipsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/coins': {
@@ -2457,6 +2477,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuildsRoute: BuildsRoute,
   CharacterRoute: CharacterRoute,
   CitiesRoute: CitiesRoute,
+  ClipsRoute: ClipsRoute,
   CoinsRoute: CoinsRoute,
   CollectionsRoute: CollectionsRouteWithChildren,
   CommandRoute: CommandRoute,
