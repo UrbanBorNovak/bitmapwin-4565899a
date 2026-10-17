@@ -15,6 +15,7 @@ import { resolveWallet } from "@/components/BuyButton";
 import { useVerifiedBitmons } from "@/lib/use-verified-bitmons";
 import type { BitmonCheck } from "@/lib/bitmon-verify";
 import { traitsOf, hasTrait, type TraitId } from "@/lib/traits";
+import { BulkListBar } from "@/components/market/BulkListBar";
 
 type HeldBitmap = {
   outpoint: string;
@@ -132,6 +133,7 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
   const [onlyBitmons, setOnlyBitmons] = useState(false);
   const [trait, setTrait] = useState<TraitId | "">("");
   const [page, setPage] = useState(0);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const { checks } = useVerifiedBitmons();
   const bitmonCount = useMemo(() => held.filter((b) => checks.has(b.bitmapHeight)).length, [held, checks]);
   // Only offer traits this wallet actually holds, with counts.
@@ -200,6 +202,23 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
         )}
         <span className="label ml-auto">{rows.length} SHOWN</span>
       </div>
+      <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2">
+        <span className="label">SELECT:</span>
+        {([
+          ["SHOWN", rows],
+          ["UNLISTED", rows.filter((b) => !openByOutpoint.has(b.outpoint))],
+          ["LISTED", rows.filter((b) => openByOutpoint.has(b.outpoint))],
+          ["BITMONS", rows.filter((b) => checks.has(b.bitmapHeight))],
+        ] as const).map(([l, list]) => (
+          <button key={l} className="btn-term-ghost !px-2 !py-0.5" disabled={list.length === 0}
+            onClick={() => setSelected(new Set(list.map((b) => b.outpoint)))}>
+            {l} ({list.length})
+          </button>
+        ))}
+        {selected.size > 0 && (
+          <button className="btn-term-ghost !px-2 !py-0.5" onClick={() => setSelected(new Set())}>[ NONE ]</button>
+        )}
+      </div>
       {rows.length === 0 && (
         <p className="p-5 font-mono text-[11px] text-muted-foreground">&gt; NONE OF YOUR BITMAPS MATCH THESE FILTERS</p>
       )}
@@ -207,6 +226,8 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
         {rows.slice(p * PAGE, p * PAGE + PAGE).map((bitmap) => (
           <HeldRow
             key={`${bitmap.outpoint}-${bitmap.bitmapHeight}`}
+            selected={selected.has(bitmap.outpoint)}
+            onSelect={(on) => setSelected((cur) => { const n = new Set(cur); if (on) n.add(bitmap.outpoint); else n.delete(bitmap.outpoint); return n; })}
             bitmap={bitmap}
             offer={openByOutpoint.get(bitmap.outpoint) ?? null}
             bitmon={checks.get(bitmap.bitmapHeight) ?? null}
@@ -220,11 +241,19 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
           <button className="btn-term-ghost !px-3 !py-1" disabled={p >= pages - 1} onClick={() => setPage(p + 1)}>[ NEXT ]</button>
         </div>
       )}
+      {selected.size > 0 && (
+        <BulkListBar
+          items={held.filter((b) => selected.has(b.outpoint))}
+          openByOutpoint={openByOutpoint}
+          checks={checks}
+          onClear={() => setSelected(new Set())}
+        />
+      )}
     </>
   );
 }
 
-function HeldRow({ bitmap, offer, bitmon }: { bitmap: HeldBitmap; offer: Offer | null; bitmon: BitmonCheck | null }) {
+function HeldRow({ bitmap, offer, bitmon, selected, onSelect }: { bitmap: HeldBitmap; offer: Offer | null; bitmon: BitmonCheck | null; selected: boolean; onSelect: (on: boolean) => void }) {
   const traits = useMemo(() => traitsOf(bitmap.bitmapHeight), [bitmap.bitmapHeight]);
   const wallet = useWalletSession();
   const queryClient = useQueryClient();
@@ -316,6 +345,9 @@ function HeldRow({ bitmap, offer, bitmon }: { bitmap: HeldBitmap; offer: Offer |
   return (
     <li className="p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <input type="checkbox" className="mt-1" checked={selected} onChange={(e) => onSelect(e.target.checked)}
+            aria-label={`Select ${bitmap.bitmapHeight}.bitmap`} />
         <div>
           <p className="font-mono text-sm font-bold text-foreground">
             {bitmap.bitmapHeight}.BITMAP
@@ -342,6 +374,7 @@ function HeldRow({ bitmap, offer, bitmon }: { bitmap: HeldBitmap; offer: Offer |
               ))}
             </div>
           )}
+        </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
