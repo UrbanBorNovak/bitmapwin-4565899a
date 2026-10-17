@@ -69,6 +69,7 @@ function Index() {
   const { data: trades } = useSuspenseQuery(recentTradesQuery(20));
   const { data: indexedCount } = useSuspenseQuery(registryCountQuery());
   const { data: tradedCount } = useSuspenseQuery(tradedBitmapCountQuery());
+  const { data: salesCount } = useSuspenseQuery(paidSalesCountQuery());
 
   const featured = [...parcels]
     .sort((a, b) => {
