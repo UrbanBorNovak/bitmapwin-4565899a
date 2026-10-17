@@ -35,7 +35,7 @@ export function TraitMatrix({ activeKey, onPick, scoped = false }: { activeKey: 
       const note = g.maxHeight !== undefined ? undefined : gi.error ? "INDEX UNAVAILABLE" : gi.loading ? "RESOLVING L1…" : miss ? `${miss} WITHOUT BLOCK RECORD` : undefined;
       return { key: `gallery:${g.id}`, kind: "gallery" as const, id: g.id, label: g.short, group: "GALLERIES", match: (h: number) => gi.match(g.id, h), note };
     }),
-    { key: "bitmons", kind: "gallery" as const, id: "bitmons", label: "BITMONS", group: "BITMONS", match: (h: number) => !!inhabited.data?.has(h), note: inhabited.isPending ? "READING CHAIN…" : inhabited.isError ? "INDEX UNAVAILABLE" : undefined },
+    { key: "bitmons", kind: "gallery" as const, id: "bitmons", label: "GUARDIANS", group: "GUARDIANS", match: (h: number) => !!inhabited.data?.has(h), note: inhabited.isPending ? "READING CHAIN…" : inhabited.isError ? "INDEX UNAVAILABLE" : undefined },
     ...SEGMENTS,
   ], [gi, inhabited.data, inhabited.isPending, inhabited.isError]);
   const rows = useMemo(() => {

@@ -71,7 +71,7 @@ export function ProTable({ parcels, inhabited, built, bitmons, floorSats }: { pa
               <td><Link to="/bitmap/$block" params={{ block: String(p.bitmapHeight) }} className="font-bold hover:text-signal">{p.bitmapHeight}.BITMAP</Link></td>
               <td className="text-muted-foreground">{shortenAddress(p.ownerAddress)}</td>
               <td className="space-x-1">
-                {inhabited?.has(p.bitmapHeight) && (() => { const c = bitmons?.get(p.bitmapHeight); return <span className="border border-signal/50 px-1 text-signal" title={c && c.status !== "unverified" ? String(c.species) : undefined}>BITMON{c ? c.status === "unverified" ? " · UNVERIFIED" : ` · ${c.rarity}` : ""}</span>; })()}
+                {inhabited?.has(p.bitmapHeight) && (() => { const c = bitmons?.get(p.bitmapHeight); return <span className="border border-signal/50 px-1 text-signal" title={c && c.status !== "unverified" ? String(c.species) : undefined}>GUARDIAN{c ? c.status === "unverified" ? " · UNVERIFIED" : ` · ${c.rarity}` : ""}</span>; })()}
                 {built?.has(p.bitmapHeight) && <span className="border border-signal/50 px-1 text-signal">BUILT</span>}
               </td>
               <td className="text-right text-bitcoin">{p.listedSats ? <span className="inline-flex items-center gap-1">{formatSats(p.listedSats)}{floorSats ? <span className="text-[9px]"><FloorDelta ask={p.listedSats} floor={floorSats} /></span> : null}</span> : "—"}</td>
