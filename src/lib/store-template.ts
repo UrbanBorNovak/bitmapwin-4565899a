@@ -25,6 +25,34 @@ export const DEFAULT_STORE: StoreConfig = {
 const HEX = /^#[0-9a-fA-F]{6}$/;
 const ADDR = /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{20,90}$/;
 
+export type StoreForm = { config: StoreConfig; minH: string; maxH: string; maxBtc: string };
+
+/** A shop with every setting back at its starting value. */
+export const DEFAULT_FORM: StoreForm = { config: { ...DEFAULT_STORE }, minH: "", maxH: "", maxBtc: "" };
+
+/** Reads a shared shop link; anything missing or malformed keeps its default. */
+export function storeFormFromSearch(search: string): StoreForm {
+  const q = new URLSearchParams(search);
+  const sort = q.get("sort");
+  const digits = (v: string | null) => (v ?? "").replace(/\D/g, "");
+  const accent = q.get("accent") ?? "";
+  return {
+    config: {
+      ...DEFAULT_STORE,
+      name: q.get("name")?.slice(0, 80) || DEFAULT_STORE.name,
+      tagline: q.get("tagline")?.slice(0, 200) || DEFAULT_STORE.tagline,
+      accent: HEX.test(accent) ? accent : DEFAULT_STORE.accent,
+      seller: q.get("seller")?.trim() || undefined,
+      sort: sort === "price_desc" || sort === "recent" || sort === "price_asc" ? sort : DEFAULT_STORE.sort,
+    },
+    minH: digits(q.get("from")),
+    maxH: digits(q.get("to")),
+    maxBtc: (q.get("max") ?? "").replace(/[^\d.]/g, ""),
+  };
+}
+
+
+
 /** Builds the listings query; filters the API can't do (height range) run in the page. */
 export function storeQuery(c: StoreConfig): string {
   const p = new URLSearchParams({ sort: c.sort, limit: "200" });
