@@ -4,7 +4,7 @@ import { MarketTerminal } from "@/components/market/MarketTerminal";
 import { TraitMatrix } from "@/components/market/TraitMatrix";
 import { useGalleryIndex } from "@/lib/use-gallery-index";
 import { GALLERY_COLLECTIONS } from "@/lib/bitmap-collections";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { ParcelCard } from "@/components/ParcelCard";
@@ -41,7 +41,9 @@ import { liveOciStatusFn } from "@/lib/live-oci.functions";
 import { inhabitedQuery } from "@/lib/inhabited.functions";
 import { useVerifiedBitmons } from "@/lib/use-verified-bitmons";
 import { confirmedRarity } from "@/lib/bitmon-verify";
-import type { GuardianRarity } from "@/lib/bitmon";
+import type { GuardianRarity, GuardianSpecies } from "@/lib/bitmon";
+import { priceUnit, usePriceUnit, type PriceUnit } from "@/lib/price-unit";
+import { btcPriceQuery } from "@/lib/btc-price";
 import { BitmonsShelf } from "@/components/market/BitmonsShelf";
 import { LiveMarketTicker } from "@/components/market/LiveMarketTicker";
 import { FloorSweeper, ProTable } from "@/components/market/TradingDesk";
@@ -136,7 +138,13 @@ function Marketplace() {
   });
 
 
-  const [view, setView] = useState<"cards" | "table">("cards");
+  const [view, setViewState] = useState<"cards" | "table">("cards");
+  const setView = (v: "cards" | "table") => { setViewState(v); try { localStorage.setItem("bitmapwin.market-view.v1", v); } catch { /* ignore */ } };
+  const { unit, rate } = usePriceUnit();
+  const btcPrice = useQuery(btcPriceQuery());
+  useEffect(() => { priceUnit.hydrate(); try { const v = localStorage.getItem("bitmapwin.market-view.v1"); if (v === "cards" || v === "table") setViewState(v); } catch { /* ignore */ } }, []);
+  useEffect(() => { priceUnit.setUsdRate(btcPrice.data?.usd ?? null); }, [btcPrice.data?.usd]);
+  const [bitmonSpecies, setBitmonSpecies] = useState<GuardianSpecies | "ALL">("ALL");
   const [minBtc, setMinBtc] = useState("");
   const [maxBtc, setMaxBtc] = useState("");
   const [onlyInhabited, setOnlyInhabited] = useState(false);
@@ -147,6 +155,7 @@ function Marketplace() {
   const inhabitedSet = useMemo(() => new Set(inhabited.data?.keys() ?? []), [inhabited.data]);
   const [bitmonRarity, setBitmonRarity] = useState<GuardianRarity | "ALL">("ALL");
   const { checks: bitmonChecks } = useVerifiedBitmons();
+  const speciesByHeight = useMemo(() => new Map([...bitmonChecks].map(([h, c]) => [h, c.status === "unverified" ? null : c.species])), [bitmonChecks]);
   const rarityByHeight = useMemo(() => new Map([...bitmonChecks].map(([h, c]) => [h, confirmedRarity(c)])), [bitmonChecks]);
   const minSats = btcInputToSats(minBtc);
   const maxSats = btcInputToSats(maxBtc);
@@ -189,6 +198,7 @@ function Marketplace() {
     if (tab === "inhabited") {
       base = inhabitedParcels.data ?? [];
       if (bitmonRarity !== "ALL") base = base.filter((p) => rarityByHeight.get(p.bitmapHeight) === bitmonRarity);
+      if (bitmonSpecies !== "ALL") base = base.filter((p) => speciesByHeight.get(p.bitmapHeight) === bitmonSpecies);
     }
     if (club !== "any") {
       const def = CLUBS.find((c) => c.id === club);
@@ -217,7 +227,7 @@ function Marketplace() {
         (p.ownerAddress ?? "").toLowerCase().includes(q),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, traded, listed, parcels, search, club, trait, sort, inhabitedParcels.data, minSats, maxSats, onlyInhabited, onlyBuilt, onlySold, inhabitedSet, builtSet, gallery, galleryIndex, bitmonRarity, rarityByHeight]);
+  }, [tab, traded, listed, parcels, search, club, trait, sort, inhabitedParcels.data, minSats, maxSats, onlyInhabited, onlyBuilt, onlySold, inhabitedSet, builtSet, gallery, galleryIndex, bitmonRarity, rarityByHeight, bitmonSpecies, speciesByHeight, unit, rate]);
 
   // Paginate first, then resolve holders on chain for the visible page only.
   // ALL tab reads the full on-chain index page by page on the server.
@@ -283,8 +293,8 @@ function Marketplace() {
   
 
   const listedFloor = listed.length ? Math.min(...listed.map((p) => p.listedSats ?? Infinity)) : null;
-  const activeFilters = [tab === "inhabited" && bitmonRarity !== "ALL", gallery !== "any", club !== "any", trait !== "any", !!search, sort !== "default", minSats !== null || maxSats !== null, onlyInhabited, onlyBuilt, onlySold].filter(Boolean).length;
-  const clearAll = () => { setBitmonRarity("ALL"); setGallery("any"); setClub("any"); setTrait("any"); setSearch(""); setSort("default"); setMinBtc(""); setMaxBtc(""); setOnlyInhabited(false); setOnlyBuilt(false); setOnlySold(false); setPage(0); };
+  const activeFilters = [tab === "inhabited" && bitmonRarity !== "ALL", tab === "inhabited" && bitmonSpecies !== "ALL", gallery !== "any", club !== "any", trait !== "any", !!search, sort !== "default", minSats !== null || maxSats !== null, onlyInhabited, onlyBuilt, onlySold].filter(Boolean).length;
+  const clearAll = () => { setBitmonRarity("ALL"); setBitmonSpecies("ALL"); setGallery("any"); setClub("any"); setTrait("any"); setSearch(""); setSort("default"); setMinBtc(""); setMaxBtc(""); setOnlyInhabited(false); setOnlyBuilt(false); setOnlySold(false); setPage(0); };
 
   return (
     <div className="marketplace-shell mx-auto max-w-[1600px] px-3 py-6 sm:px-5 md:py-10">
@@ -305,7 +315,16 @@ function Marketplace() {
             <p className="mt-2 max-w-xl font-mono text-xs leading-6 text-muted-foreground">BUY, BID, LIST AND TRACK BITMAPS THROUGH VERIFIED BITCOIN TRANSACTIONS.</p>
             <p className="mt-2 max-w-xl font-mono text-[11px] text-signal">BETA TRADING DESK · TRY FLOOR SWEEP AND PRO TABLE · <Link to="/beta" className="text-bitcoin underline">WHAT'S NEW →</Link></p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="flex" role="group" aria-label="Price unit">
+              {(["btc", "sats", "usd"] as PriceUnit[]).map((u) => (
+                <button key={u} type="button" aria-pressed={unit === u} disabled={u === "usd" && !rate} onClick={() => priceUnit.set(u)}
+                  title={u === "usd" ? (rate ? `LIVE RATE $${Math.round(rate).toLocaleString("en-US")} / BTC · DISPLAY ONLY` : "USD RATE UNAVAILABLE") : "DISPLAY ONLY · TRADES SETTLE IN SATS"}
+                  className={`h-11 border px-3 font-mono text-[11px] disabled:opacity-40 ${unit === u ? "border-bitcoin bg-bitcoin/10 text-bitcoin" : "border-border text-muted-foreground hover:text-signal"}`}>
+                  {u.toUpperCase()}
+                </button>
+              ))}
+            </span>
             <a href="#sell-bitmap" className="btn-term min-h-11">◆ SELL YOUR BITMAP</a>
             <Link to="/history" className="btn-term-ghost min-h-11">SALES HISTORY →</Link>
             <Link to="/leases" className="btn-term-ghost min-h-11">LEASES →</Link>
@@ -352,7 +371,7 @@ function Marketplace() {
       </div>
 
       <div className="mt-4">
-        <BitmonsShelf rarity={bitmonRarity} onRarity={setBitmonRarity} onOpen={() => { setTab("inhabited"); setPage(0); }} />
+        <BitmonsShelf rarity={bitmonRarity} onRarity={setBitmonRarity} species={bitmonSpecies} onSpecies={(sp) => { setBitmonSpecies(sp); setPage(0); }} onOpen={() => { setTab("inhabited"); setPage(0); }} />
       </div>
 
       <div className="mt-4">
@@ -425,6 +444,7 @@ function Marketplace() {
         {activeFilters > 0 && (
           <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2">
             {tab === "inhabited" && bitmonRarity !== "ALL" && <Chip label={`BITMONS ${bitmonRarity}`} onClear={() => setBitmonRarity("ALL")} />}
+            {tab === "inhabited" && bitmonSpecies !== "ALL" && <Chip label={bitmonSpecies} onClear={() => setBitmonSpecies("ALL")} />}
             {club !== "any" && <Chip label={CLUBS.find((c) => c.id === club)?.short ?? club} onClear={() => setClub("any")} />}
             {gallery !== "any" && <Chip label={GALLERY_COLLECTIONS.find((g) => g.id === gallery)?.short ?? gallery} onClear={() => setGallery("any")} />}
             {trait !== "any" && <Chip label={ALL_OFFICIAL_TRAITS.find((t) => t.id === trait)?.label ?? trait} onClear={() => setTrait("any")} />}

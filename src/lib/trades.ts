@@ -1,3 +1,4 @@
+import { formatInUnit, priceUnit } from "@/lib/price-unit";
 /**
  * Real on-chain trade model. A "trade" is a confirmed Bitcoin transaction that
  * moved a bitmap's inscription satoshi from one holder to another. When the
@@ -42,6 +43,5 @@ export function satsToBtc(sats: number | null | undefined): number | null {
 
 export function formatSats(sats: number | null | undefined): string {
   if (!sats || sats <= 0) return "TRANSFER (NO PAYMENT)";
-  const btc = sats / SATS_PER_BTC;
-  return `${btc.toFixed(btc < 0.001 ? 8 : 4)} BTC`;
+  return formatInUnit(sats, priceUnit.effective(), priceUnit.usdRate());
 }
