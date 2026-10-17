@@ -282,6 +282,7 @@ function Marketplace() {
 
   
 
+  const listedFloor = listed.length ? Math.min(...listed.map((p) => p.listedSats ?? Infinity)) : null;
   const activeFilters = [tab === "inhabited" && bitmonRarity !== "ALL", gallery !== "any", club !== "any", trait !== "any", !!search, sort !== "default", minSats !== null || maxSats !== null, onlyInhabited, onlyBuilt, onlySold].filter(Boolean).length;
   const clearAll = () => { setBitmonRarity("ALL"); setGallery("any"); setClub("any"); setTrait("any"); setSearch(""); setSort("default"); setMinBtc(""); setMaxBtc(""); setOnlyInhabited(false); setOnlyBuilt(false); setOnlySold(false); setPage(0); };
 
@@ -549,13 +550,14 @@ function Marketplace() {
                 </span>
               </div>
               {view === "table" ? (
-                <ProTable parcels={pageWithOwners} inhabited={inhabitedSet} built={builtSet} />
+                <ProTable parcels={pageWithOwners} inhabited={inhabitedSet} built={builtSet} bitmons={bitmonChecks} floorSats={listedFloor} />
               ) : (
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {pageWithOwners.map((p) => (
                   <ParcelCard
                     key={p.inscriptionId}
                     parcel={p}
+                    floorSats={listedFloor}
                     {...(p.ownerAddress && traitHolders.data?.get(p.ownerAddress.toLowerCase())
                       ? { traitHolder: traitHolders.data.get(p.ownerAddress.toLowerCase())! }
                       : {})}
