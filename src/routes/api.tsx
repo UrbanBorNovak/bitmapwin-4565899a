@@ -163,6 +163,33 @@ function ApiPage() {
         </p>
         <pre className="mt-3 overflow-x-auto bg-secondary p-4 font-mono text-xs">{CLIENT_EXAMPLE}</pre>
       </section>
+
+      <section className="mt-8 border border-border p-6">
+        <h2 className="display text-xl">BOT STARTER KIT</h2>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          A ready-to-run repository: TypeScript and Python floor monitors, the typed client above, the exact BIP-322
+          messages the server verifies, and bid / cancel / unlist helpers. MIT licensed — start your own bot from it in
+          one click. Nothing signs or broadcasts on its own.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <a
+            href="https://github.com/UrbanBorNovak/bitmapwin-bot-starter"
+            target="_blank"
+            rel="noreferrer"
+            className="btn-term-ghost"
+          >
+            [ VIEW ON GITHUB ]
+          </a>
+          <a
+            href="https://github.com/UrbanBorNovak/bitmapwin-bot-starter/generate"
+            target="_blank"
+            rel="noreferrer"
+            className="btn-term-ghost"
+          >
+            [ USE AS TEMPLATE ]
+          </a>
+        </div>
+      </section>
     </div>
   );
 }

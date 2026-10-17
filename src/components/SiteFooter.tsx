@@ -57,7 +57,7 @@ const GROUPS: { label: string; items: { to: string; label: string }[] }[] = [
 
 export function SiteFooter() {
   return (
-    <footer className="site-footer border-t border-border px-4 py-6 md:px-5">
+    <footer className="site-footer border-t border-border px-4 pt-6 pb-24 md:px-5">
       <div className="mx-auto max-w-[1600px]">
         <nav className="grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3 lg:grid-cols-5">
           {GROUPS.map((g) => (
@@ -85,6 +85,8 @@ export function SiteFooter() {
         <div className="mt-2 label text-[0.6rem]">
           LIVEOCI INDEXING &amp; ON-CHAIN BITMON BY{" "}
           <a href="https://x.com/boppleton" target="_blank" rel="noreferrer" className="text-primary hover:text-foreground">@BOPPLETON</a>
+          {" · "}BOT STARTER KIT ON{" "}
+          <a href="https://github.com/UrbanBorNovak/bitmapwin-bot-starter" target="_blank" rel="noreferrer" className="text-signal hover:text-foreground">GITHUB</a>
         </div>
       </div>
     </footer>
