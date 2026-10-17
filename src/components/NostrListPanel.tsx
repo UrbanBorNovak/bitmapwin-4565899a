@@ -47,8 +47,8 @@ export function NostrListPanel() {
         utxoValueSats: ins.value,
         sellerAddress: wallet.ordinalsAddress,
         priceSats,
-        tapInternalKeyHex: xOnlyPubKeyHex(wallet.publicKey),
-        publicKeyHex: wallet.publicKey,
+        ...(xOnlyPubKeyHex(wallet.publicKey) ? { tapInternalKeyHex: xOnlyPubKeyHex(wallet.publicKey)! } : {}),
+        ...(wallet.publicKey ? { publicKeyHex: wallet.publicKey } : {}),
       });
       setMsg("SIGN THE OFFER IN YOUR WALLET…");
       const signed = await signListingPsbt(wallet.provider, psbt, wallet.ordinalsAddress);
