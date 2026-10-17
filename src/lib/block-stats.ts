@@ -121,6 +121,7 @@ export const patternHeightsQuery = (pattern: number | null) =>
   queryOptions({
     queryKey: ["block-stats-pattern-heights", pattern ?? -1],
     queryFn: () => fetchPatternHeights(pattern as number),
+    retry: (n, e) => !String(e?.message).startsWith("PATTERN_TOO_COMMON") && n < 2,
     enabled: typeof pattern === "number",
     staleTime: Infinity,
   });
