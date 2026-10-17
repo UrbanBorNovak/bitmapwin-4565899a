@@ -414,14 +414,25 @@ export const registryBaseQuery = (limit = 300) =>
 
 /** Total valid bitmap claims in the index — a real count, not the loaded page. */
 export async function fetchRegistryCount(): Promise<number> {
-  const { count, error } = await supabase
-    .from("bitmap_index")
-    .select("block_height", { count: "exact", head: true })
-    .eq("is_valid", true);
+  const [{ count, error }, { data: top }] = await Promise.all([
+    supabase
+      .from("bitmap_index")
+      .select("block_height", { count: "exact", head: true })
+      .eq("is_valid", true),
+    // The live resolver caches newest blocks past the inscribed OCI pages.
+    supabase
+      .from("bitmap_index")
+      .select("block_height")
+      .not("inscription_id", "is", null)
+      .order("block_height", { ascending: false })
+      .limit(1),
+  ]);
   if (error) throw error;
-  // The inscribed OCI is the authoritative complete registry. The local table
-  // may trail its latest page while ownership metadata is still being resolved.
-  return Math.max(count ?? 0, MAX_BITMAP + 1);
+  // The inscribed OCI is the authoritative complete registry (up to
+  // MAX_BITMAP); beyond it the live resolver extends the frontier, so the
+  // coverage shown is the highest block the registry can actually resolve.
+  const liveFrontier = top?.[0]?.block_height != null ? Number(top[0].block_height) + 1 : 0;
+  return Math.max(count ?? 0, MAX_BITMAP + 1, liveFrontier);
 }
 
 export const registryCountQuery = () =>

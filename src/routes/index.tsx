@@ -6,7 +6,7 @@ import { HowItWorks } from "@/components/HowItWorks";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { BitmapConstellations } from "@/components/BitmapConstellations";
 import { registryParcelsQuery, registryCountQuery } from "@/lib/registry";
-import { recentTradesQuery, tradedBitmapCountQuery } from "@/lib/trade-store";
+import { recentTradesQuery, tradedBitmapCountQuery, paidSalesCountQuery } from "@/lib/trade-store";
 import { formatSats } from "@/lib/trades";
 import { LoopNavigator } from "@/components/LoopNavigator";
 import { LandPromptTerminal } from "@/components/LandPromptTerminal";
@@ -51,6 +51,7 @@ export const Route = createFileRoute("/")({
       context.queryClient.ensureQueryData(recentTradesQuery(20)),
       context.queryClient.ensureQueryData(registryCountQuery()),
       context.queryClient.ensureQueryData(tradedBitmapCountQuery()),
+      context.queryClient.ensureQueryData(paidSalesCountQuery()),
     ]);
   },
   component: Index,
@@ -68,6 +69,7 @@ function Index() {
   const { data: trades } = useSuspenseQuery(recentTradesQuery(20));
   const { data: indexedCount } = useSuspenseQuery(registryCountQuery());
   const { data: tradedCount } = useSuspenseQuery(tradedBitmapCountQuery());
+  const { data: salesCount } = useSuspenseQuery(paidSalesCountQuery());
 
   const featured = [...parcels]
     .sort((a, b) => {
@@ -98,7 +100,8 @@ function Index() {
               <dl data-tour="home-market" className="mt-4 grid grid-cols-2 border border-border lg:grid-cols-1">
                 <MarketStat k="OPEN FLOOR" v={floor ? formatSats(floor) : "—"} />
                 <MarketStat k="BITMAPS INDEXED" v={indexedCount.toLocaleString("en-US")} />
-                <MarketStat k="CONFIRMED SALES" v={tradedCount.toLocaleString("en-US")} />
+                <MarketStat k="CONFIRMED SALES" v={salesCount.toLocaleString("en-US")} />
+                <MarketStat k="BITMAPS TRADED" v={tradedCount.toLocaleString("en-US")} />
                 <MarketStat k="RECENT VOLUME" v={volume ? formatSats(volume) : "—"} />
               </dl>
             </div>

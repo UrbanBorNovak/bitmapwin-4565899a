@@ -101,15 +101,43 @@ export const recentTradesQuery = (limit = 60) =>
 
 /** Distinct bitmap heights that have a real traced on-chain transfer. */
 export async function fetchTradedBitmapCount(): Promise<number> {
-  const { data, error } = await supabase.from("trades").select("bitmap_height");
-  if (error) throw error;
-  return new Set((data ?? []).map((row) => row.bitmap_height)).size;
+  // The data API caps every response at 1,000 rows, so page through the
+  // (height-only) trade log until a short page says we have seen it all.
+  const heights = new Set<number>();
+  const PAGE = 1_000;
+  for (let from = 0; from < 100_000; from += PAGE) {
+    const { data, error } = await supabase
+      .from("trades")
+      .select("bitmap_height")
+      .range(from, from + PAGE - 1);
+    if (error) throw error;
+    for (const row of data ?? []) heights.add(row.bitmap_height);
+    if (!data || data.length < PAGE) break;
+  }
+  return heights.size;
 }
 
 export const tradedBitmapCountQuery = () =>
   queryOptions({
     queryKey: ["trades", "traded-count"],
     queryFn: fetchTradedBitmapCount,
+    staleTime: 120_000,
+  });
+
+/** Exact count of confirmed paid sales — a real purchase, not a plain transfer. */
+export async function fetchPaidSalesCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from("trades")
+    .select("txid", { count: "exact", head: true })
+    .gt("price_sats", 0);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+export const paidSalesCountQuery = () =>
+  queryOptions({
+    queryKey: ["trades", "paid-sales-count"],
+    queryFn: fetchPaidSalesCount,
     staleTime: 120_000,
   });
 
