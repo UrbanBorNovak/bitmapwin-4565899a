@@ -297,7 +297,9 @@ function StoreKit() {
             The inscribed file is only the shop window. Every time someone opens it, it asks bitmapwin.app for the current
             listings, and BUY opens the BITMAP's page on the BitmapWin marketplace for checkout. If bitmapwin.app is
             unreachable, the shop shows "COULD NOT LOAD LISTINGS" and nobody can buy through it until it's back. Only
-            listed BITMAPs appear.
+            listed BITMAPs appear. The SOVEREIGN shop removes that dependency: it reads open Nostr relays, re-checks each
+            offer on Bitcoin (ordinals.com recursion + mempool.space), and the buyer signs and sends the swap from their own
+            wallet in the page.
           </p>
         </div>
         <footer className="border-t border-border bg-secondary/40 p-5">
