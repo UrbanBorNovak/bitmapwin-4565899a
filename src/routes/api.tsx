@@ -95,6 +95,22 @@ curl -X POST https://bitmapwin.app/api/public/market/buy/broadcast \\
 # · 6 checkout holds/min · max 2 live holds per buyer. HTTP 429 = slow down.
 # Broadcast is refused if the seller payout or inscription delivery output is altered.`;
 
+const CLIENT_EXAMPLE = `import { BitmapWinClient } from "./bitmapwin-client";
+
+const bw = new BitmapWinClient();          // baseUrl defaults to https://bitmapwin.app
+
+const book = await bw.market.orderbook(10);
+const { listings } = await bw.market.listings({ max_sats: 100_000, sort: "price_asc", limit: 1 });
+
+// Bid: build the exact message, sign it with YOUR wallet (BIP-322), then submit
+const issuedAt = bw.issuedAt();
+const msg = bw.messages.bid(840000, 50_000, "bc1p...", issuedAt);
+const signature = await wallet.signMessage(msg, "bip322-simple");
+await bw.market.placeBid({ bitmapHeight: 840000, bidderAddress: "bc1p...", priceSats: 50_000, issuedAt, signature });
+
+// Errors carry the HTTP status (e.g. 429 = slow down)
+// catch (e) { if (e instanceof BitmapWinApiError && e.status === 429) ... }`;
+
 function ApiPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 md:px-8 md:py-14">
@@ -138,6 +154,14 @@ function ApiPage() {
           Bots trade with their own keys: the API builds PSBTs and checks Bitcoin signatures, but never holds or uses your keys.
         </p>
         <pre className="mt-3 overflow-x-auto bg-secondary p-4 font-mono text-xs">{BOT_EXAMPLE}</pre>
+      </section>
+
+      <section className="mt-8 border border-border p-6">
+        <h2 className="display text-xl">TYPESCRIPT CLIENT</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          A typed, dependency-free client for browsers, Node, Bun and Deno. It builds the exact messages to sign; your wallet signs them.
+        </p>
+        <pre className="mt-3 overflow-x-auto bg-secondary p-4 font-mono text-xs">{CLIENT_EXAMPLE}</pre>
       </section>
     </div>
   );
