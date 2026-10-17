@@ -541,7 +541,7 @@ function BlockPreview({ height, stats, shape, traits, bitmon, children }: {
       <PopoverTrigger asChild onPointerEnter={hover(true)} onPointerLeave={hover(false)}>
         {children}
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-3" side="right" align="start"
+      <PopoverContent className="w-[min(18rem,calc(100vw-1.5rem))] p-3" side="right" align="start" collisionPadding={12}
         onPointerEnter={hover(true)} onPointerLeave={hover(false)}>
         {open && (
           <div className="aspect-square w-full overflow-hidden border border-border">
