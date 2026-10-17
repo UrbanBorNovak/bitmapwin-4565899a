@@ -251,7 +251,13 @@ function Marketplace() {
 
   // Paginate first, then resolve holders on chain for the visible page only.
   // ALL tab reads the full on-chain index page by page on the server.
-  const serverMode = tab === "all" && !patternSet;
+  // Server paging only knows height order + trait/search; any other filter or
+  // sort falls back to the fully filtered client list so cards match charts.
+  const clientOnlyFilters =
+    club !== "any" || gallery !== "any" || minSats !== null || maxSats !== null ||
+    onlyInhabited || onlyBuilt || onlySold ||
+    (sort !== "default" && sort !== "height-asc" && sort !== "height-desc");
+  const serverMode = tab === "all" && !patternSet && !clientOnlyFilters;
   const indexPage = useQuery({
     ...registryIndexPageQuery({
       page,
