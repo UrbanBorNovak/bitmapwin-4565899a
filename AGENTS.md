@@ -37,3 +37,4 @@
 - Public game/chain tables (dispatches, spoils, forge modules/builds, kits, custody, genesis minters, spawn points, oasis voxels, kennels) stay world-readable via RLS but expose only non-account columns through column-level GRANTs; internal user uuids are read only by server code. Why: shared world state is public, account linkage is not.
 - Subdirectories have their own AGENTS.md; read it before changing files there.
 - Marketplace Bitmon pattern filter (BitmonPatternFilter + block-stats patternHeightsQuery) matches only verified block_stats.pattern records and is separate from Guardian species/rarity; groups above PATTERN_GROUP_MAX are refused, never truncated. Why: Bitmons are block shapes, Guardians are Oasis creatures.
+- Bitmap Clips (src/routes/clips.tsx): @bitlodo's MIT studio is vendored unmodified as a static build in public/tools/clips and framed; rebuild from upstream to update. Why: full fidelity with no server state.
