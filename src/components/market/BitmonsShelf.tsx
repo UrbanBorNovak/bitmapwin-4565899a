@@ -10,7 +10,7 @@ import { SPECIES, type GuardianRarity, type GuardianSpecies } from "@/lib/bitmon
 export const BITMON_RARITIES: GuardianRarity[] = ["MYTHIC", "EPIC", "RARE", "COMMON"];
 
 /** Bitmons rubrique: BITMAPs whose Guardian child is inscribed on chain, with live floor and rarity filter. */
-export function BitmonsShelf({ rarity, onRarity, onOpen, species = "ALL", onSpecies }: { rarity: GuardianRarity | "ALL"; onRarity: (r: GuardianRarity | "ALL") => void; onOpen: () => void; species?: GuardianSpecies | "ALL"; onSpecies?: (s: GuardianSpecies | "ALL") => void }) {
+export function BitmonsShelf({ rarity, onRarity, onOpen, species = "ALL", onSpecies, onReset }: { onReset?: () => void; rarity: GuardianRarity | "ALL"; onRarity: (r: GuardianRarity | "ALL") => void; onOpen: () => void; species?: GuardianSpecies | "ALL"; onSpecies?: (s: GuardianSpecies | "ALL") => void }) {
   const { inhabited, checks } = useVerifiedBitmons();
   const offers = useQuery(offersQuery());
   const stats = useMemo(() => {
@@ -31,6 +31,9 @@ export function BitmonsShelf({ rarity, onRarity, onOpen, species = "ALL", onSpec
         <span className="text-muted-foreground">BITMAPS WITH AN INSCRIBED GUARDIAN CHILD · VERIFIED ON CHAIN</span>
         <div className="ml-auto flex gap-1">
           <button onClick={onOpen} className="rounded border border-primary px-2 py-1 text-primary">BROWSE BITMONS</button>
+          {onReset && (rarity !== "ALL" || species !== "ALL") && (
+            <button type="button" onClick={onReset} className="rounded border border-bitcoin px-2 py-1 text-bitcoin hover:bg-bitcoin/10">RESET BITMON FILTERS ✕</button>
+          )}
           <Link to="/collections/guardians" className="rounded border border-border px-2 py-1 text-muted-foreground hover:text-accent">GUARDIAN MARKET →</Link>
           <Link to="/mint" className="rounded border border-border px-2 py-1 text-muted-foreground hover:text-accent">AWAKEN →</Link>
         </div>
