@@ -205,6 +205,16 @@ function StoreKit() {
             </select>
           </label>
           <button onClick={download} className="w-full rounded bg-bitcoin px-4 py-3 text-sm font-bold text-background">DOWNLOAD MY SHOP</button>
+          {ready ? (
+            <button onClick={() => save(new Blob([ready.bytes as BlobPart], { type: "application/octet-stream" }), "index.html.br")} className="w-full rounded border border-bitcoin px-4 py-3 text-sm font-bold text-bitcoin">
+              DOWNLOAD FOR INSCRIPTION (.HTML.BR) · {ready.size.toLocaleString("en-US")} BYTES
+            </button>
+          ) : (
+            <button onClick={prepareBr} disabled={packing} className="w-full rounded border border-bitcoin px-4 py-3 text-sm font-bold text-bitcoin disabled:opacity-50">
+              {packing ? "PACKING…" : "PREPARE FOR INSCRIPTION (.HTML.BR)"}
+            </button>
+          )}
+          {ready && <p className="font-mono text-[11px] text-muted-foreground">PACKED {ready.raw.toLocaleString("en-US")} → {ready.size.toLocaleString("en-US")} BYTES · CHECKED: UNPACKS TO THE EXACT SAME SHOP</p>}
           <button onClick={share} className="w-full rounded border border-signal px-4 py-3 text-sm font-bold text-signal">{copied ? "LINK COPIED" : "COPY SHARE LINK"}</button>
           {manual && (
             <label className="block text-xs text-signal">
@@ -250,6 +260,30 @@ function StoreKit() {
             </li>
           ))}
         </ol>
+        <div className="border-t border-border p-5">
+          <div className="label text-bitcoin">PUT YOUR SHOP ON BITCOIN (OPTIONAL)</div>
+          <p className="mt-2 text-sm text-muted-foreground">Inscribe it once and it stays on Bitcoin forever — no hosting. Small fee, paid by you to miners.</p>
+        </div>
+        <ol className="divide-y divide-border border-t border-border">
+          {INSCRIBE.map((s, i) => (
+            <li key={s.title} className="flex gap-4 p-4">
+              <span className="font-mono text-xs text-bitcoin">{String(i + 1).padStart(2, "0")}</span>
+              <div>
+                <div className="display text-sm md:text-base">{s.title}</div>
+                <p className="mt-1 break-words text-sm leading-relaxed text-muted-foreground">{s.body}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <div className="border-t border-border p-5">
+          <div className="label text-signal">WHAT STAYS LIVE (EVEN ON BITCOIN)</div>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            The inscribed file is only the shop window. Every time someone opens it, it asks bitmapwin.app for the current
+            listings, and BUY opens the BITMAP's page on the BitmapWin marketplace for checkout. If bitmapwin.app is
+            unreachable, the shop shows "COULD NOT LOAD LISTINGS" and nobody can buy through it until it's back. Only
+            listed BITMAPs appear.
+          </p>
+        </div>
         <footer className="border-t border-border bg-secondary/40 p-5">
           <div className="label text-bitcoin">WHERE BUYING HAPPENS</div>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
