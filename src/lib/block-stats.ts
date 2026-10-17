@@ -36,7 +36,7 @@ function toStats(row: Row): BlockStats {
     txCount: row.tx_count,
     previewWidth: row.preview_width,
     previewHeight: row.preview_height,
-    pattern: row.pattern,
+    pattern: row.pattern == null ? null : Number(row.pattern),
   };
 }
 
