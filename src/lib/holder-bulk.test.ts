@@ -14,7 +14,7 @@ describe("holder bulk tools", () => {
       { bitmapHeight: 800_003, priceSats: 5_000, sellerAddress: "bc1other" },
     ];
     expect(suggestFloor(800_005, asks, "BC1ME")?.floorSats).toBe(5_000);
-    expect(suggestFloor(800_005, [asks[0]], "bc1me")).toBeNull();
+    expect(suggestFloor(800_005, [asks[0]!], "bc1me")).toBeNull();
   });
 
   it("flags 2009 blocks and inscribed Bitmons", () => {
