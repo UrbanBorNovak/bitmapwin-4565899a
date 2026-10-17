@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { buildStoreHtml, DEFAULT_STORE, type StoreConfig } from "@/lib/store-template";
 
 export const Route = createFileRoute("/store-kit")({
@@ -36,6 +36,38 @@ function StoreKit() {
   const [minH, setMinH] = useState("");
   const [maxH, setMaxH] = useState("");
   const [maxBtc, setMaxBtc] = useState("");
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const sort = q.get("sort");
+    setC((p) => ({
+      ...p,
+      name: q.get("name")?.slice(0, 80) || p.name,
+      tagline: q.get("tagline")?.slice(0, 200) || p.tagline,
+      accent: /^#[0-9a-fA-F]{6}$/.test(q.get("accent") ?? "") ? q.get("accent")! : p.accent,
+      seller: q.get("seller")?.trim() || p.seller,
+      sort: sort === "price_desc" || sort === "recent" || sort === "price_asc" ? sort : p.sort,
+    }));
+    setMinH((q.get("from") ?? "").replace(/\D/g, ""));
+    setMaxH((q.get("to") ?? "").replace(/\D/g, ""));
+    setMaxBtc((q.get("max") ?? "").replace(/[^\d.]/g, ""));
+  }, []);
+  const share = async () => {
+    const q = new URLSearchParams({ name: c.name, tagline: c.tagline, accent: c.accent, sort: c.sort });
+    if (c.seller) q.set("seller", c.seller);
+    if (minH) q.set("from", minH);
+    if (maxH) q.set("to", maxH);
+    if (maxBtc) q.set("max", maxBtc);
+    const url = `${window.location.origin}/store-kit?${q}`;
+    window.history.replaceState(null, "", `/store-kit?${q}`);
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      window.prompt("Copy this link", url);
+    }
+  };
   const cfg: StoreConfig = {
     ...c,
     apiBase: typeof window !== "undefined" ? window.location.origin : DEFAULT_STORE.apiBase,
@@ -80,6 +112,7 @@ function StoreKit() {
             </select>
           </label>
           <button onClick={download} className="w-full rounded bg-bitcoin px-4 py-3 text-sm font-bold text-background">DOWNLOAD MY SHOP</button>
+          <button onClick={share} className="w-full rounded border border-signal px-4 py-3 text-sm font-bold text-signal">{copied ? "LINK COPIED" : "COPY SHARE LINK"}</button>
           <p className="text-xs text-muted-foreground">Free and open — change the file however you like.</p>
         </div>
         <iframe title="Shop preview" srcDoc={html} sandbox="allow-scripts allow-popups" className="h-[720px] w-full rounded border border-border bg-background" />
