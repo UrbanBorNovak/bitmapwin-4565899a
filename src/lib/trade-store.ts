@@ -101,13 +101,20 @@ export const recentTradesQuery = (limit = 60) =>
 
 /** Distinct bitmap heights that have a real traced on-chain transfer. */
 export async function fetchTradedBitmapCount(): Promise<number> {
-  // Range past the default 1,000-row response cap — the trade log is bigger now.
-  const { data, error } = await supabase
-    .from("trades")
-    .select("bitmap_height")
-    .range(0, 49_999);
-  if (error) throw error;
-  return new Set((data ?? []).map((row) => row.bitmap_height)).size;
+  // The data API caps every response at 1,000 rows, so page through the
+  // (height-only) trade log until a short page says we have seen it all.
+  const heights = new Set<number>();
+  const PAGE = 1_000;
+  for (let from = 0; from < 100_000; from += PAGE) {
+    const { data, error } = await supabase
+      .from("trades")
+      .select("bitmap_height")
+      .range(from, from + PAGE - 1);
+    if (error) throw error;
+    for (const row of data ?? []) heights.add(row.bitmap_height);
+    if (!data || data.length < PAGE) break;
+  }
+  return heights.size;
 }
 
 export const tradedBitmapCountQuery = () =>
