@@ -42,7 +42,7 @@ export function listingGuards(height: number, bitmonInscribed: boolean): Guard[]
   if (height <= 32_489) g.push({ id: "vintage", label: "2009 BLOCK — VINTAGE ERA" });
   else if (height < 10_000) g.push({ id: "sub10k", label: "SUB-10K BLOCK" });
   if (height < 1_000) g.push({ id: "sub1k", label: "SUB-1K BLOCK" });
-  if (bitmonInscribed) g.push({ id: "bitmon", label: "INSCRIBED BITMON LIVES HERE" });
+  if (bitmonInscribed) g.push({ id: "bitmon", label: "INSCRIBED GUARDIAN LIVES HERE" });
   return g;
 }
 

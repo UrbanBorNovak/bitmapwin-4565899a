@@ -25,14 +25,14 @@ export function BitmonsShelf({ rarity, onRarity, onOpen, species = "ALL", onSpec
   }, [inhabited.data, checks, offers.data]);
 
   return (
-    <section className="rounded border border-border bg-card/60 p-3 backdrop-blur-sm" aria-label="Bitmons">
+    <section className="rounded border border-border bg-card/60 p-3 backdrop-blur-sm" aria-label="Guardians">
       <header className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
-        <span className="tracking-widest text-accent">BITMONS</span>
+        <span className="tracking-widest text-accent">INSCRIBED GUARDIANS</span>
         <span className="text-muted-foreground">BITMAPS WITH AN INSCRIBED GUARDIAN CHILD · VERIFIED ON CHAIN</span>
         <div className="ml-auto flex gap-1">
-          <button onClick={onOpen} className="rounded border border-primary px-2 py-1 text-primary">BROWSE BITMONS</button>
+          <button onClick={onOpen} className="rounded border border-primary px-2 py-1 text-primary">BROWSE GUARDIANS</button>
           {onReset && (rarity !== "ALL" || species !== "ALL") && (
-            <button type="button" onClick={onReset} className="rounded border border-bitcoin px-2 py-1 text-bitcoin hover:bg-bitcoin/10">RESET BITMON FILTERS ✕</button>
+            <button type="button" onClick={onReset} className="rounded border border-bitcoin px-2 py-1 text-bitcoin hover:bg-bitcoin/10">RESET GUARDIAN FILTERS ✕</button>
           )}
           <Link to="/collections/guardians" className="rounded border border-border px-2 py-1 text-muted-foreground hover:text-accent">GUARDIAN MARKET →</Link>
           <Link to="/mint" className="rounded border border-border px-2 py-1 text-muted-foreground hover:text-accent">AWAKEN →</Link>
@@ -52,7 +52,7 @@ export function BitmonsShelf({ rarity, onRarity, onOpen, species = "ALL", onSpec
         </dd></div>
       </dl>
       {onSpecies && (
-        <div className="mt-3 flex flex-wrap items-center gap-1 font-mono text-[10px]" role="group" aria-label="Bitmon creature type">
+        <div className="mt-3 flex flex-wrap items-center gap-1 font-mono text-[10px]" role="group" aria-label="Guardian species">
           <span className="mr-1 text-muted-foreground">CREATURE</span>
           {(["ALL", ...SPECIES.map((s) => s.name)] as const).map((s) => (
             <button key={s} type="button" onClick={() => { onSpecies(s); onOpen(); }} aria-pressed={species === s}
@@ -67,7 +67,7 @@ export function BitmonsShelf({ rarity, onRarity, onOpen, species = "ALL", onSpec
         {stats.unverified > 0 && <span className="ml-1 text-destructive">{stats.unverified} UNVERIFIED — BLOCK DATA NOT READ YET, NOT COUNTED OR FILTERABLE.</span>}
         {stats.mismatch > 0 && <span className="ml-1 text-accent">{stats.mismatch} STORED LABEL{stats.mismatch > 1 ? "S" : ""} CORRECTED TO CHAIN.</span>}
       </p>
-      {!inhabited.isPending && stats.total === 0 && <p className="mt-2 font-mono text-[11px] text-muted-foreground">NO INSCRIBED BITMONS FOUND ON CHAIN YET.</p>}
+      {!inhabited.isPending && stats.total === 0 && <p className="mt-2 font-mono text-[11px] text-muted-foreground">NO INSCRIBED GUARDIANS FOUND ON CHAIN YET.</p>}
     </section>
   );
 }

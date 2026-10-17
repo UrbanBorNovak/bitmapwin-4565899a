@@ -196,7 +196,7 @@ function Marketplace() {
     const heightTrait = t && HEIGHT_TRAIT_IDS.has(t.id) ? t : undefined;
     const gal = gallery !== "any" ? GALLERY_COLLECTIONS.find((g) => g.id === gallery) : undefined;
     const bm = tab === "inhabited";
-    const bmLabel = bm ? (bitmonRarity === "ALL" ? "BITMONS" : `BITMONS ${bitmonRarity}`) : null;
+    const bmLabel = bm ? (bitmonRarity === "ALL" ? "BITMONS" : `GUARDIANS ${bitmonRarity}`) : null;
     const parts = [bmLabel, def ? def.label : null, heightTrait ? `TRAIT ${heightTrait.label ?? heightTrait.id}` : null, gal ? `GALLERY ${gal.label}` : null].filter(Boolean);
     const match = bm || def || heightTrait || gal ? (h: number) => (!bm || (inhabitedSet.has(h) && (bitmonRarity === "ALL" || rarityByHeight.get(h) === bitmonRarity))) && (!def || inClub(h, def)) && (!heightTrait || hasTrait(h, heightTrait.id as TraitId)) && (!gal || galleryIndex.match(gal.id, h)) : null;
     const galMiss = gal && gal.maxHeight === undefined ? galleryIndex.missing(gal.id) : 0;
@@ -204,7 +204,7 @@ function Marketplace() {
     return {
       label: parts.length ? parts.join(" + ").toUpperCase() : "ALL BITMAPS",
       match,
-      caveat: [t && !heightTrait ? `${String(t.label ?? t.id).toUpperCase()} NEEDS INDEXED RECORDS, SO CHARTS IGNORE IT` : null, galNote, bm && inhabited.isPending ? "BITMONS: READING CHAIN…" : null, bm && bitmonRarity !== "ALL" && [...inhabitedSet].some((h) => !rarityByHeight.get(h)) ? `${[...inhabitedSet].filter((h) => !rarityByHeight.get(h)).length} UNVERIFIED BITMONS ARE EXCLUDED FROM RARITY SCOPE` : null].filter(Boolean).join(" · ") || undefined,
+      caveat: [t && !heightTrait ? `${String(t.label ?? t.id).toUpperCase()} NEEDS INDEXED RECORDS, SO CHARTS IGNORE IT` : null, galNote, bm && inhabited.isPending ? "GUARDIANS: READING CHAIN…" : null, bm && bitmonRarity !== "ALL" && [...inhabitedSet].some((h) => !rarityByHeight.get(h)) ? `${[...inhabitedSet].filter((h) => !rarityByHeight.get(h)).length} UNVERIFIED GUARDIANS ARE EXCLUDED FROM RARITY SCOPE` : null].filter(Boolean).join(" · ") || undefined,
     };
   }, [club, trait, gallery, galleryIndex, tab, bitmonRarity, inhabitedSet, rarityByHeight, inhabited.isPending]);
   const visible = useMemo(() => {
@@ -422,7 +422,7 @@ function Marketplace() {
             {([
               ["all", "ALL INDEXED", liveOci.data?.total ?? registryCount.data ?? parcels.length],
               ["listed", "LISTED", listed.length],
-              ["inhabited", "BITMONS", inhabited.data?.size ?? 0],
+              ["inhabited", "GUARDIANS", inhabited.data?.size ?? 0],
               ["traded", "TRADED", traded.length],
             ] as const).map(([id, label, n]) => (
               <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => { setTab(id); setPage(0); }}
@@ -457,7 +457,7 @@ function Marketplace() {
         </div>
         {activeFilters > 0 && (
           <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2">
-            {tab === "inhabited" && bitmonRarity !== "ALL" && <Chip label={`BITMONS ${bitmonRarity}`} onClear={() => setBitmonRarity("ALL")} />}
+            {tab === "inhabited" && bitmonRarity !== "ALL" && <Chip label={`GUARDIANS ${bitmonRarity}`} onClear={() => setBitmonRarity("ALL")} />}
             {tab === "inhabited" && bitmonSpecies !== "ALL" && <Chip label={bitmonSpecies} onClear={() => setBitmonSpecies("ALL")} />}
             {club !== "any" && <Chip label={CLUBS.find((c) => c.id === club)?.short ?? club} onClear={() => setClub("any")} />}
             {gallery !== "any" && <Chip label={GALLERY_COLLECTIONS.find((g) => g.id === gallery)?.short ?? gallery} onClear={() => setGallery("any")} />}
