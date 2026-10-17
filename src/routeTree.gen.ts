@@ -62,6 +62,7 @@ import { Route as SdkPlaygroundRouteImport } from './routes/sdk-playground'
 import { Route as ShadowNotesRouteImport } from './routes/shadow-notes'
 import { Route as ShordRouteImport } from './routes/shord'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as StoreKitRouteImport } from './routes/store-kit'
 import { Route as StreamRouteImport } from './routes/stream'
 import { Route as StudioRouteImport } from './routes/studio'
 import { Route as TradingPostRouteImport } from './routes/trading-post'
@@ -390,6 +391,11 @@ const ShordRoute = ShordRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoreKitRoute = StoreKitRouteImport.update({
+  id: '/store-kit',
+  path: '/store-kit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StreamRoute = StreamRouteImport.update({
@@ -771,6 +777,7 @@ export interface FileRoutesByFullPath {
   '/shadow-notes': typeof ShadowNotesRoute
   '/shord': typeof ShordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/store-kit': typeof StoreKitRoute
   '/stream': typeof StreamRoute
   '/studio': typeof StudioRoute
   '/trading-post': typeof TradingPostRoute
@@ -886,6 +893,7 @@ export interface FileRoutesByTo {
   '/shadow-notes': typeof ShadowNotesRoute
   '/shord': typeof ShordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/store-kit': typeof StoreKitRoute
   '/stream': typeof StreamRoute
   '/studio': typeof StudioRoute
   '/trading-post': typeof TradingPostRoute
@@ -1006,6 +1014,7 @@ export interface FileRoutesById {
   '/shadow-notes': typeof ShadowNotesRoute
   '/shord': typeof ShordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/store-kit': typeof StoreKitRoute
   '/stream': typeof StreamRoute
   '/studio': typeof StudioRoute
   '/trading-post': typeof TradingPostRoute
@@ -1127,6 +1136,7 @@ export interface FileRouteTypes {
     | '/shadow-notes'
     | '/shord'
     | '/sitemap.xml'
+    | '/store-kit'
     | '/stream'
     | '/studio'
     | '/trading-post'
@@ -1242,6 +1252,7 @@ export interface FileRouteTypes {
     | '/shadow-notes'
     | '/shord'
     | '/sitemap.xml'
+    | '/store-kit'
     | '/stream'
     | '/studio'
     | '/trading-post'
@@ -1361,6 +1372,7 @@ export interface FileRouteTypes {
     | '/shadow-notes'
     | '/shord'
     | '/sitemap.xml'
+    | '/store-kit'
     | '/stream'
     | '/studio'
     | '/trading-post'
@@ -1481,6 +1493,7 @@ export interface RootRouteChildren {
   ShadowNotesRoute: typeof ShadowNotesRoute
   ShordRoute: typeof ShordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  StoreKitRoute: typeof StoreKitRoute
   StreamRoute: typeof StreamRoute
   StudioRoute: typeof StudioRoute
   TradingPostRoute: typeof TradingPostRoute
@@ -1878,6 +1891,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/store-kit': {
+      id: '/store-kit'
+      path: '/store-kit'
+      fullPath: '/store-kit'
+      preLoaderRoute: typeof StoreKitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stream': {
@@ -2520,6 +2540,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShadowNotesRoute: ShadowNotesRoute,
   ShordRoute: ShordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  StoreKitRoute: StoreKitRoute,
   StreamRoute: StreamRoute,
   StudioRoute: StudioRoute,
   TradingPostRoute: TradingPostRoute,
