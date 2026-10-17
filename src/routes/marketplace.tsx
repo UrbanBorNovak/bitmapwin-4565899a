@@ -647,8 +647,20 @@ function Marketplace() {
             <p className="grid min-h-48 place-items-center border border-dashed border-border font-mono text-sm text-muted-foreground">
               READING THE REGISTRY FROM CHAIN…
             </p>
+          ) : scanMode && scopeQ.isError ? (
+            <p className="grid min-h-48 place-items-center border border-dashed border-destructive/60 p-6 text-center font-mono text-sm text-muted-foreground">
+              INDEX QUERY FAILED — NO TOTAL SHOWN. TRY SYNC OR ADJUST FILTERS.
+            </p>
           ) : (pagedMode ? pageParcels.length === 0 : visible.length === 0) ? (
-            <EmptyRegistry />
+            clientOnlyFilters || patternSet || trait !== "any" || search.trim() || tab !== "all" ? (
+              <div className="border border-dashed border-border p-8 font-mono text-sm" role="status">
+                <p className="text-[11px] text-muted-foreground">0 BITMAPS MATCH · PAGE 1 / 1</p>
+                <p className="mt-2 text-foreground">NO BITMAPS MATCH THIS SCOPE: <span data-no-translate>{chartScope.label}</span></p>
+                <p className="mt-2 text-[11px] text-muted-foreground">CHECKED AGAINST THE FULL INDEX — LOOSEN A FILTER TO SEE RESULTS.</p>
+              </div>
+            ) : (
+              <EmptyRegistry />
+            )
           ) : (
             <>
               <div className="flex flex-wrap items-baseline justify-between gap-3">
