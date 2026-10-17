@@ -100,7 +100,7 @@ export class BitmapWinClient {
     const res = await this.f(`${this.baseUrl}/api/public${path}`, {
       method: body === undefined ? "GET" : "POST",
       headers: body === undefined ? { accept: "application/json" } : { accept: "application/json", "content-type": "application/json" },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? null : JSON.stringify(body),
     });
     const data: unknown = await res.json().catch(() => null);
     if (!res.ok) {

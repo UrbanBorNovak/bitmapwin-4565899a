@@ -3,7 +3,7 @@ import { BitmapWinApiError, BitmapWinClient } from "./bitmapwin-client";
 import { bidApiMessage } from "./market-api-guard";
 
 function mock(status = 200, body: unknown = {}) {
-  const calls: { url: string; init?: RequestInit }[] = [];
+  const calls: { url: string; init: RequestInit | undefined }[] = [];
   const f = (async (url: string, init?: RequestInit) => {
     calls.push({ url, init });
     return new Response(JSON.stringify(body), { status });
@@ -15,8 +15,8 @@ describe("BitmapWinClient", () => {
   it("builds listing queries and skips empty params", async () => {
     const m = mock(200, { listings: [], limit: 5, offset: 0 });
     await new BitmapWinClient({ baseUrl: "https://x.test/", fetch: m.f }).market.listings({ max_sats: 1000, limit: 5 });
-    expect(m.calls[0].url).toBe("https://x.test/api/public/market/listings?max_sats=1000&limit=5");
-    expect(m.calls[0].init?.method).toBe("GET");
+    expect(m.calls[0]!.url).toBe("https://x.test/api/public/market/listings?max_sats=1000&limit=5");
+    expect(m.calls[0]!.init?.method).toBe("GET");
   });
 
   it("posts JSON for bids", async () => {
@@ -24,9 +24,9 @@ describe("BitmapWinClient", () => {
     await new BitmapWinClient({ fetch: m.f }).market.placeBid({
       bitmapHeight: 1, bidderAddress: "bc1q", priceSats: 600, issuedAt: "t", signature: "s",
     });
-    expect(m.calls[0].url).toBe("https://bitmapwin.app/api/public/market/bids");
-    expect(m.calls[0].init?.method).toBe("POST");
-    expect(JSON.parse(String(m.calls[0].init?.body)).priceSats).toBe(600);
+    expect(m.calls[0]!.url).toBe("https://bitmapwin.app/api/public/market/bids");
+    expect(m.calls[0]!.init?.method).toBe("POST");
+    expect(JSON.parse(String(m.calls[0]!.init?.body)).priceSats).toBe(600);
   });
 
   it("throws the server error with status on 429", async () => {
