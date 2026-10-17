@@ -162,7 +162,7 @@ export class BitmapWinClient {
   };
 
   readonly blocks = {
-    /** One byte per transaction (parcel size class 1..5). Empty when the block is unknown/unavailable. */
+    /** One byte per transaction (parcel size class, small integers starting at 1). Empty when the block is unknown/unavailable. */
     bytes: async (height: number): Promise<{ bytes: Uint8Array; txCount: number; hash: string | null }> => {
       const res = await this.f(`${this.baseUrl}/api/public/blocks/${height}`);
       if (!res.ok) {
