@@ -74,7 +74,7 @@ function ClipsPage() {
       <iframe
         title="Bitmap Clips studio"
         src="/tools/clips/index.html"
-        sandbox="allow-scripts allow-same-origin allow-downloads allow-popups"
+        sandbox="allow-scripts allow-same-origin allow-downloads allow-popups allow-forms allow-modals"
         allow="fullscreen; autoplay"
         className="mt-4 h-[80vh] w-full rounded-lg border border-border bg-background"
       />
