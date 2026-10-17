@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { buildStoreHtml, DEFAULT_FORM, DEFAULT_STORE, isFormDefault, storeFormFromSearch, type StoreConfig } from "@/lib/store-template";
 import { brotliPackFn } from "@/lib/brotli-pack.functions";
+import { buildSovereignStoreHtml } from "@/lib/sovereign-store";
+import { NostrListPanel } from "@/components/NostrListPanel";
 
 const INSCRIBE = [
   { title: "CHOOSE YOUR WAY", body: "Easiest: use the ord wallet with the normal index.html and the --compress flag — ord packs it for you. If you use an inscription service instead, only upload the .html.br file when it lets you set content type text/html and content encoding br; otherwise upload the normal index.html." },
@@ -74,6 +76,7 @@ function StoreKit() {
   const [note, setNote] = useState("");
   const [manual, setManual] = useState("");
   const [confirming, setConfirming] = useState(false);
+  const [mode, setMode] = useState<"live" | "sovereign">("live");
   const noteTimer = useRef<number | undefined>(undefined);
   const copiedTimer = useRef<number | undefined>(undefined);
   const manualRef = useRef<HTMLInputElement>(null);
@@ -146,7 +149,7 @@ function StoreKit() {
     maxHeight: num(maxH),
     maxSats: maxBtc ? Math.round(Number(maxBtc) * 1e8) : undefined,
   };
-  const html = useMemo(() => buildStoreHtml(cfg), [JSON.stringify(cfg)]);
+  const html = useMemo(() => (mode === "sovereign" ? buildSovereignStoreHtml(cfg) : buildStoreHtml(cfg)), [JSON.stringify(cfg), mode]);
   const save = (blob: Blob, name: string) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -157,11 +160,11 @@ function StoreKit() {
     a.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
   };
-  const liveHtml = () => buildStoreHtml({ ...cfg, apiBase: DEFAULT_STORE.apiBase });
+  const liveHtml = () => (mode === "sovereign" ? buildSovereignStoreHtml(cfg) : buildStoreHtml({ ...cfg, apiBase: DEFAULT_STORE.apiBase }));
   const download = () => save(new Blob([liveHtml()], { type: "text/html" }), "index.html");
   const [packed, setPacked] = useState<{ bytes: Uint8Array; raw: number; size: number; key: string } | null>(null);
   const [packing, setPacking] = useState(false);
-  const packKey = JSON.stringify(cfg);
+  const packKey = JSON.stringify(cfg) + mode;
   const prepareBr = async () => {
     setPacking(true);
     try {
@@ -188,6 +191,18 @@ function StoreKit() {
       </p>
       <div className="mt-8 grid gap-6 lg:grid-cols-[320px_1fr]">
         <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-1 rounded border border-border p-1 text-[11px] font-bold">
+            {(["live", "sovereign"] as const).map((m) => (
+              <button key={m} onClick={() => setMode(m)} className={`rounded px-2 py-2 ${mode === m ? "bg-bitcoin text-background" : "text-muted-foreground"}`}>
+                {m === "live" ? "FAST · BITMAPWIN" : "SOVEREIGN · NOSTR"}
+              </button>
+            ))}
+          </div>
+          <p className="text-[11px] leading-relaxed text-muted-foreground">
+            {mode === "live"
+              ? "Reads listings from bitmapwin.app; BUY opens the BitmapWin checkout."
+              : "Needs no BitmapWin: listings come from open Nostr relays, every offer is re-checked on Bitcoin, and buyers pay the seller directly from their UniSat wallet inside the shop. No marketplace fee."}
+          </p>
           <label className="block text-xs">SHOP NAME<input className={input} value={c.name} onChange={(e) => setC({ ...c, name: e.target.value })} /></label>
           <label className="block text-xs">TAGLINE<input className={input} value={c.tagline} onChange={(e) => setC({ ...c, tagline: e.target.value })} /></label>
           <label className="block text-xs">COLOUR<input type="color" className="h-10 w-full" value={c.accent} onChange={(e) => setC({ ...c, accent: e.target.value })} /></label>
@@ -240,6 +255,7 @@ function StoreKit() {
             <button onClick={reset} className="w-full rounded border border-border bg-secondary/40 px-4 py-2 text-xs font-bold text-muted-foreground">RESET TO DEFAULTS</button>
           )}
           {note && <p className="text-xs text-signal">{note}</p>}
+          {mode === "sovereign" && <NostrListPanel />}
           <p className="text-xs text-muted-foreground">Free and open — change the file however you like.</p>
         </div>
         <iframe title="Shop preview" srcDoc={html} sandbox="allow-scripts allow-popups" className="h-[720px] w-full rounded border border-border bg-background" />
@@ -281,7 +297,9 @@ function StoreKit() {
             The inscribed file is only the shop window. Every time someone opens it, it asks bitmapwin.app for the current
             listings, and BUY opens the BITMAP's page on the BitmapWin marketplace for checkout. If bitmapwin.app is
             unreachable, the shop shows "COULD NOT LOAD LISTINGS" and nobody can buy through it until it's back. Only
-            listed BITMAPs appear.
+            listed BITMAPs appear. The SOVEREIGN shop removes that dependency: it reads open Nostr relays, re-checks each
+            offer on Bitcoin (ordinals.com recursion + mempool.space), and the buyer signs and sends the swap from their own
+            wallet in the page.
           </p>
         </div>
         <footer className="border-t border-border bg-secondary/40 p-5">
