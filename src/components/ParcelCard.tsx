@@ -18,7 +18,7 @@ import { TraitHolderBadge } from "@/components/TraitHolderBadge";
 import type { TraitHolderBadge as TraitHolderProof } from "@/lib/trait-collections";
 
 /** Card for a real, on-chain bitmap claim held in the registry. */
-export function ParcelCard({ parcel, traitHolder }: { parcel: RegistryParcel; traitHolder?: TraitHolderProof }) {
+export function ParcelCard({ parcel, traitHolder, floorSats }: { parcel: RegistryParcel; traitHolder?: TraitHolderProof; floorSats?: number | null }) {
   const bids = useQuery(openBidsQuery(500));
   const topBid = topBidByHeight(bids.data ?? []).get(parcel.bitmapHeight) ?? null;
 
@@ -48,7 +48,9 @@ export function ParcelCard({ parcel, traitHolder }: { parcel: RegistryParcel; tr
               <span className="relative flex size-1.5"><span className="absolute inline-flex size-full animate-ping rounded-full bg-bitcoin opacity-70" /><span className="relative inline-flex size-1.5 rounded-full bg-bitcoin" /></span>
               FOR SALE · {formatSats(parcel.listedSats)}
             </span>
-          ) : parcel.lastSaleSats ? (
+          ) : null}
+          {parcel.listedSats && floorSats ? <FloorDelta ask={parcel.listedSats} floor={floorSats} /> : null}
+          {!parcel.listedSats && parcel.lastSaleSats ? (
             <span className="border border-border px-2 py-1 text-foreground">LAST {formatSats(parcel.lastSaleSats)}</span>
           ) : null}
           {topBid && <span className="border border-signal/50 bg-signal/10 px-2 py-1 text-signal">BID {formatSats(topBid.priceSats)}</span>}
@@ -147,4 +149,12 @@ function Row({ k, v }: { k: string; v: string }) {
       <dd className="truncate font-mono text-foreground">{v}</dd>
     </div>
   );
+}
+
+/** Distance of an ask from the current listed floor. */
+export function FloorDelta({ ask, floor }: { ask: number; floor: number }) {
+  const pct = Math.round(((ask - floor) / floor) * 100);
+  return pct <= 0
+    ? <span className="border border-signal bg-signal/10 px-2 py-1 font-bold text-signal">AT FLOOR</span>
+    : <span className="border border-border px-2 py-1 text-muted-foreground">+{pct}% FLOOR</span>;
 }

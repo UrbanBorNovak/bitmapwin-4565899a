@@ -6,6 +6,8 @@ import { shortenAddress, type RegistryParcel } from "@/lib/registry";
 import { sweepCheapest } from "@/lib/market-sweep";
 import { cart } from "@/lib/sweep-cart";
 import { CartToggle } from "@/components/market/TradeSlip";
+import { FloorDelta } from "@/components/ParcelCard";
+import type { BitmonCheck } from "@/lib/bitmon-verify";
 
 /** Floor sweeper: lines up the N cheapest open asks; each buy is still its own wallet-signed PSBT. */
 export function FloorSweeper({ listed }: { listed: RegistryParcel[] }) {
@@ -54,7 +56,7 @@ export function FloorSweeper({ listed }: { listed: RegistryParcel[] }) {
 }
 
 /** Dense pro table view of the current page. */
-export function ProTable({ parcels, inhabited, built }: { parcels: RegistryParcel[]; inhabited?: Set<number>; built?: Set<number> }) {
+export function ProTable({ parcels, inhabited, built, bitmons, floorSats }: { parcels: RegistryParcel[]; inhabited?: Set<number>; built?: Set<number>; bitmons?: Map<number, BitmonCheck>; floorSats?: number | null }) {
   return (
     <div className="mt-3 overflow-x-auto border border-border bg-card">
       <table className="w-full min-w-[760px] font-mono text-[11px]" data-no-translate>
@@ -69,10 +71,10 @@ export function ProTable({ parcels, inhabited, built }: { parcels: RegistryParce
               <td><Link to="/bitmap/$block" params={{ block: String(p.bitmapHeight) }} className="font-bold hover:text-signal">{p.bitmapHeight}.BITMAP</Link></td>
               <td className="text-muted-foreground">{shortenAddress(p.ownerAddress)}</td>
               <td className="space-x-1">
-                {inhabited?.has(p.bitmapHeight) && <span className="border border-signal/50 px-1 text-signal">GUARDIAN</span>}
+                {inhabited?.has(p.bitmapHeight) && (() => { const c = bitmons?.get(p.bitmapHeight); return <span className="border border-signal/50 px-1 text-signal" title={c && c.status !== "unverified" ? String(c.species) : undefined}>BITMON{c ? c.status === "unverified" ? " · UNVERIFIED" : ` · ${c.rarity}` : ""}</span>; })()}
                 {built?.has(p.bitmapHeight) && <span className="border border-signal/50 px-1 text-signal">BUILT</span>}
               </td>
-              <td className="text-right text-bitcoin">{p.listedSats ? formatSats(p.listedSats) : "—"}</td>
+              <td className="text-right text-bitcoin">{p.listedSats ? <span className="inline-flex items-center gap-1">{formatSats(p.listedSats)}{floorSats ? <span className="text-[9px]"><FloorDelta ask={p.listedSats} floor={floorSats} /></span> : null}</span> : "—"}</td>
               <td className="text-right">{p.lastSaleSats ? formatSats(p.lastSaleSats) : "—"}</td>
               <td className="text-right">{p.transfers}</td>
               <td className="w-px">
