@@ -63,7 +63,7 @@ export function BitmonsShelf({ rarity, onRarity, onOpen, species = "ALL", onSpec
         </div>
       )}
       <p className="mt-2 font-mono text-[10px] text-muted-foreground">
-        CREATURE TYPE AND  FROM EACH INSCRIBED BLOCK.
+        GUARDIAN SPECIES AND RARITY ARE READ FROM EACH INSCRIBED BLOCK.
         {stats.unverified > 0 && <span className="ml-1 text-destructive">{stats.unverified} UNVERIFIED — BLOCK DATA NOT READ YET, NOT COUNTED OR FILTERABLE.</span>}
         {stats.mismatch > 0 && <span className="ml-1 text-accent">{stats.mismatch} STORED LABEL{stats.mismatch > 1 ? "S" : ""} CORRECTED TO CHAIN.</span>}
       </p>

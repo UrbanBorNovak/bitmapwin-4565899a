@@ -99,3 +99,23 @@ export const patternSiblingsQuery = (pattern: number | null | undefined) =>
     enabled: typeof pattern === "number",
     staleTime: Infinity,
   });
+
+/** Every block in a Bitmon shape group (verified block_stats records only), paged past the 1,000-row cap. */
+export async function fetchPatternHeights(pattern: number): Promise<number[]> {
+  const out: number[] = [];
+  for (let from = 0; from < 20_000; from += 1000) {
+    const { data, error } = await supabase.from("block_stats").select("block_height").eq("pattern", pattern).order("block_height").range(from, from + 999);
+    if (error) throw error;
+    for (const r of data ?? []) out.push(Number(r.block_height));
+    if (!data || data.length < 1000) break;
+  }
+  return out;
+}
+
+export const patternHeightsQuery = (pattern: number | null) =>
+  queryOptions({
+    queryKey: ["block-stats-pattern-heights", pattern ?? -1],
+    queryFn: () => fetchPatternHeights(pattern as number),
+    enabled: typeof pattern === "number",
+    staleTime: Infinity,
+  });

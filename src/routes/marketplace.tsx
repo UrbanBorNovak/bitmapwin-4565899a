@@ -196,7 +196,7 @@ function Marketplace() {
     const heightTrait = t && HEIGHT_TRAIT_IDS.has(t.id) ? t : undefined;
     const gal = gallery !== "any" ? GALLERY_COLLECTIONS.find((g) => g.id === gallery) : undefined;
     const bm = tab === "inhabited";
-    const bmLabel = bm ? (bitmonRarity === "ALL" ? "BITMONS" : `GUARDIANS ${bitmonRarity}`) : null;
+    const bmLabel = bm ? (bitmonRarity === "ALL" ? "GUARDIANS" : `GUARDIANS ${bitmonRarity}`) : null;
     const parts = [bmLabel, def ? def.label : null, heightTrait ? `TRAIT ${heightTrait.label ?? heightTrait.id}` : null, gal ? `GALLERY ${gal.label}` : null].filter(Boolean);
     const match = bm || def || heightTrait || gal ? (h: number) => (!bm || (inhabitedSet.has(h) && (bitmonRarity === "ALL" || rarityByHeight.get(h) === bitmonRarity))) && (!def || inClub(h, def)) && (!heightTrait || hasTrait(h, heightTrait.id as TraitId)) && (!gal || galleryIndex.match(gal.id, h)) : null;
     const galMiss = gal && gal.maxHeight === undefined ? galleryIndex.missing(gal.id) : 0;
