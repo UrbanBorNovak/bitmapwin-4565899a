@@ -37,13 +37,14 @@ function StoreKit() {
   const [maxH, setMaxH] = useState("");
   const [maxBtc, setMaxBtc] = useState("");
   const [copied, setCopied] = useState(false);
-  const [cleared, setCleared] = useState(false);
+  const [apiBase, setApiBase] = useState(DEFAULT_STORE.apiBase);
   useEffect(() => {
     const f = storeFormFromSearch(window.location.search);
     setC(f.config);
     setMinH(f.minH);
     setMaxH(f.maxH);
     setMaxBtc(f.maxBtc);
+    setApiBase(window.location.origin);
   }, []);
   const reset = () => {
     setC({ ...DEFAULT_FORM.config });
@@ -73,7 +74,7 @@ function StoreKit() {
   };
   const cfg: StoreConfig = {
     ...c,
-    apiBase: typeof window !== "undefined" ? window.location.origin : DEFAULT_STORE.apiBase,
+    apiBase,
     minHeight: num(minH),
     maxHeight: num(maxH),
     maxSats: maxBtc ? Math.round(Number(maxBtc) * 1e8) : undefined,
