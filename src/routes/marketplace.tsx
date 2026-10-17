@@ -279,7 +279,7 @@ function Marketplace() {
     if (!scanMode) return null;
     const sets: (number[] | null)[] = [];
     let waiting = false;
-    const need = (q: { data?: number[] | null; isError?: boolean }) => { if (q.data) sets.push(q.data); else if (q.isError) sets.push([]); else waiting = true; };
+    const need = (q: { data: number[] | null | undefined; isError: boolean }) => { if (q.data) sets.push(q.data); else if (q.isError) sets.push([]); else waiting = true; };
     if (patternSet) need({ data: patternQ.data, isError: patternQ.isError });
     if (onlyInhabited) { if (inhabited.data) sets.push([...inhabitedSet]); else waiting = true; }
     if (onlyBuilt) { if (builtWorld.data) sets.push([...builtSet]); else waiting = true; }
@@ -292,7 +292,7 @@ function Marketplace() {
     if (/^\d+$/.test(qTrim)) sets.push([Number(qTrim)]);
     if (waiting) return "waiting" as const;
     let heights: number[] | null = null;
-    for (const s of sets) heights = heights === null ? s : (() => { const keep = new Set(s); return heights!.filter((h) => keep.has(h)); })();
+    for (const s of sets) { if (heights === null) heights = s; else { const keep = new Set(s); heights = heights.filter((h: number) => keep.has(h)); } }
     const min = Math.max(clubDef?.min ?? 0, 0);
     const max = Math.min(clubDef?.max ?? Number.MAX_SAFE_INTEGER, galDef?.maxHeight ?? Number.MAX_SAFE_INTEGER);
     const buildAll = priceBand || onlySold || (sort !== "default" && sort !== "height-asc" && sort !== "height-desc");
