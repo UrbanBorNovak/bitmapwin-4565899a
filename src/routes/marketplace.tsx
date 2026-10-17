@@ -45,6 +45,7 @@ import type { GuardianRarity } from "@/lib/bitmon";
 import { BitmonsShelf } from "@/components/market/BitmonsShelf";
 import { LiveMarketTicker } from "@/components/market/LiveMarketTicker";
 import { FloorSweeper, ProTable } from "@/components/market/TradingDesk";
+import { TradeSlip } from "@/components/market/TradeSlip";
 import { builtWorldQuery } from "@/lib/built-bitmaps";
 import { btcInputToSats, floorsBy, inPriceBand } from "@/lib/market-sweep";
 
@@ -370,6 +371,7 @@ function Marketplace() {
       <div className="mt-4">
         <MarketTerminal scope={chartScope} />
       </div>
+      <TradeSlip />
 
       <div className="mt-4">
         <LiveTradesFeed scope={chartScope} />

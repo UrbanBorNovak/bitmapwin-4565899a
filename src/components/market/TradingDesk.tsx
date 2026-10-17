@@ -4,6 +4,8 @@ import { BuyButton } from "@/components/BuyButton";
 import { formatSats } from "@/lib/trades";
 import { shortenAddress, type RegistryParcel } from "@/lib/registry";
 import { sweepCheapest } from "@/lib/market-sweep";
+import { cart } from "@/lib/sweep-cart";
+import { CartToggle } from "@/components/market/TradeSlip";
 
 /** Floor sweeper: lines up the N cheapest open asks; each buy is still its own wallet-signed PSBT. */
 export function FloorSweeper({ listed }: { listed: RegistryParcel[] }) {
@@ -27,6 +29,12 @@ export function FloorSweeper({ listed }: { listed: RegistryParcel[] }) {
           <div className="text-base font-bold text-bitcoin">{totalSats ? `${(totalSats / 1e8).toFixed(8)} BTC` : "—"}</div>
           {totalSats > 0 && <div className="text-[10px] text-muted-foreground">{totalSats.toLocaleString("en-US")} SATS · BEFORE FEES</div>}
           <div className="text-[10px] text-muted-foreground">{picks.length} BITMAPS{picks.length ? ` · AVG ${formatSats(Math.round(totalSats / picks.length))}` : ""}</div>
+          {picks.length > 0 && (
+            <button type="button" className="btn-term mt-1 !px-2 !py-1 text-[10px]"
+              onClick={() => cart.add(picks.filter((p) => p.listedOfferId && p.listedSats).map((p) => ({ offerId: p.listedOfferId!, height: p.bitmapHeight, priceSats: p.listedSats!, inscriptionId: p.inscriptionId })))}>
+              SWEEP TO SLIP
+            </button>
+          )}
         </div>
       </div>
       {picks.length > 0 && (
@@ -69,7 +77,10 @@ export function ProTable({ parcels, inhabited, built }: { parcels: RegistryParce
               <td className="text-right">{p.transfers}</td>
               <td className="w-px">
                 {p.listedOfferId && p.listedSats ? (
-                  <BuyButton offerId={p.listedOfferId} priceSats={p.listedSats} inscriptionId={p.inscriptionId} height={p.bitmapHeight} className="btn-term w-full whitespace-nowrap !px-2 !py-1" />
+                  <div className="flex items-center gap-1">
+                    <CartToggle item={{ offerId: p.listedOfferId, height: p.bitmapHeight, priceSats: p.listedSats, inscriptionId: p.inscriptionId }} />
+                    <BuyButton offerId={p.listedOfferId} priceSats={p.listedSats} inscriptionId={p.inscriptionId} height={p.bitmapHeight} className="btn-term w-full whitespace-nowrap !px-2 !py-1" />
+                  </div>
                 ) : (
                   <Link to="/bitmap/$block" params={{ block: String(p.bitmapHeight) }} className="btn-term-ghost block w-full !px-2 !py-1 text-center">VIEW</Link>
                 )}
