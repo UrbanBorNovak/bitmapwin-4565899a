@@ -124,7 +124,7 @@ fetch(C.url).then(r=>r.json()).then(d=>{
  if(!L.length){g.innerHTML='<div class="e"><b>NO ACTIVE LISTINGS RIGHT NOW</b>Nothing matches this shop yet — check back soon, or browse the <a target="_blank" rel="noreferrer" href="'+C.base+'/marketplace">full marketplace</a>.</div>';return;}
  for(const o of L){const el=document.createElement('div');el.className='c'+(o.on_hold?' hold':'');
   const h=Number(o.bitmap_height),id=String(o.inscription_id).replace(/[^a-z0-9i]/gi,'');
-  el.innerHTML='<a class="v" style="all:unset;cursor:pointer" target="_blank" rel="noreferrer" href="https://ordinals.com/inscription/'+id+'"></a><div class="b"><div class="h">'+h+'.bitmap</div><div class="p">'+sat(o.price_sats)+'</div><div class="q">'+btc(o.price_sats)+'</div></div><a target="_blank" rel="noreferrer" href="'+C.base+'/bitmap/'+h+'">'+(o.on_hold?'IN CHECKOUT':'BUY')+'</a>';
+  el.innerHTML='<div class="v"><div>'+h+'<small>BLOCK</small></div></div><div class="b"><div class="h">'+h+'.bitmap</div><div class="p">'+sat(o.price_sats)+'</div><div class="q">'+btc(o.price_sats)+'</div></div><a target="_blank" rel="noreferrer" href="'+C.base+'/bitmap/'+h+'">'+(o.on_hold?'IN CHECKOUT':'BUY')+'</a>';
   g.appendChild(el);}
 }).catch(()=>{s.innerHTML='<span class="k">COULD NOT LOAD LISTINGS — TRY AGAIN SOON</span>';});
 </script></body></html>`;
