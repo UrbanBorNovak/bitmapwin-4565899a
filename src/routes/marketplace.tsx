@@ -13,13 +13,15 @@ import { ParcelCard } from "@/components/ParcelCard";
 import {
   parcelOwnersQuery,
   registryBaseQuery,
+  registryScopeQuery,
+  fetchTradedHeights,
   registryCountQuery,
   registryIndexPageQuery,
   type RegistryParcel,
   fetchRegistryParcel,
 } from "@/lib/registry";
 import { formatSats } from "@/lib/trades";
-import { recentTradesQuery } from "@/lib/trade-store";
+import { paidSalesQuery, recentTradesQuery } from "@/lib/trade-store";
 import { timeAgo } from "@/lib/bitmap";
 import { useLiveOffers } from "@/lib/use-live-offers";
 import { TrendingParcels } from "@/components/TrendingParcels";
@@ -258,42 +260,106 @@ function Marketplace() {
     onlyInhabited || onlyBuilt || onlySold ||
     (sort !== "default" && sort !== "height-asc" && sort !== "height-desc");
   // A Bitmon shape group pages its own verified heights against the full index.
-  const patternServer = !!patternSet && !search.trim() && trait === "any";
+  const patternServer = !!patternSet && !search.trim() && trait === "any" && !clientOnlyFilters;
   const serverMode = tab === "all" && !clientOnlyFilters && (!patternSet || patternServer);
   const patternHeights = patternServer ? (patternQ.isError ? [] : patternQ.data ?? null) : null;
+
+  // Combined filters on ALL: query the full index for the exact scope instead of the loaded subset.
+  const galDef = gallery === "any" ? null : GALLERY_COLLECTIONS.find((g) => g.id === gallery) ?? null;
+  const traitIsHeight = trait === "any" || HEIGHT_TRAIT_IDS.has(trait);
+  const qTrim = search.trim();
+  const priceBand = minSats !== null || maxSats !== null;
+  const scopeUnsupported =
+    (galDef !== null && galDef.maxHeight === undefined) || !traitIsHeight || (qTrim !== "" && !/^\d+$/.test(qTrim));
+  const scanMode = tab === "all" && !serverMode && !scopeUnsupported && (clientOnlyFilters || !!patternSet);
+  const paidSales = useQuery({ ...paidSalesQuery(), enabled: scanMode && (onlySold || priceBand || sort === "recent") });
+  const tradedHeights = useQuery({ queryKey: ["registry", "traded-heights"], queryFn: fetchTradedHeights, staleTime: 120_000, enabled: scanMode && sort === "transfers" });
+  const clubDef = club === "any" ? null : CLUBS.find((c) => c.id === club) ?? null;
+  const scope = useMemo(() => {
+    if (!scanMode) return null;
+    const sets: (number[] | null)[] = [];
+    let waiting = false;
+    const need = (q: { data?: number[] | null; isError?: boolean }) => { if (q.data) sets.push(q.data); else if (q.isError) sets.push([]); else waiting = true; };
+    if (patternSet) need({ data: patternQ.data, isError: patternQ.isError });
+    if (onlyInhabited) { if (inhabited.data) sets.push([...inhabitedSet]); else waiting = true; }
+    if (onlyBuilt) { if (builtWorld.data) sets.push([...builtSet]); else waiting = true; }
+    const soldH = paidSales.data ? [...new Set(paidSales.data.map((t) => t.bitmap_height).filter((h): h is number => h !== null))] : null;
+    const listedH = registry.data ? listed.map((p) => p.bitmapHeight) : null;
+    if (onlySold || sort === "recent") need({ data: soldH, isError: paidSales.isError });
+    if (priceBand) { if (soldH && listedH) sets.push([...soldH, ...listedH]); else if (paidSales.isError) sets.push(listedH ?? []); else waiting = true; }
+    if (sort === "ask") { if (listedH) sets.push(listedH); else waiting = true; }
+    if (sort === "transfers") need({ data: tradedHeights.data, isError: tradedHeights.isError });
+    if (/^\d+$/.test(qTrim)) sets.push([Number(qTrim)]);
+    if (waiting) return "waiting" as const;
+    let heights: number[] | null = null;
+    for (const s of sets) heights = heights === null ? s : (() => { const keep = new Set(s); return heights!.filter((h) => keep.has(h)); })();
+    const min = Math.max(clubDef?.min ?? 0, 0);
+    const max = Math.min(clubDef?.max ?? Number.MAX_SAFE_INTEGER, galDef?.maxHeight ?? Number.MAX_SAFE_INTEGER);
+    const buildAll = priceBand || onlySold || (sort !== "default" && sort !== "height-asc" && sort !== "height-desc");
+    return { heights, min, max, buildAll };
+  }, [scanMode, patternSet, patternQ.data, patternQ.isError, onlyInhabited, inhabited.data, inhabitedSet, onlyBuilt, builtWorld.data, builtSet, onlySold, sort, priceBand, paidSales.data, paidSales.isError, registry.data, listed, tradedHeights.data, tradedHeights.isError, qTrim, clubDef, galDef]);
+  const scopeArgs = scope && scope !== "waiting" ? { ...scope, heightTrait: trait === "any" ? null : trait, ascending: sort === "height-asc", page, pageSize: PAGE_SIZE } : null;
+  const scopeQ = useQuery({
+    ...registryScopeQuery(scopeArgs ?? { heights: [], min: 0, max: 0, heightTrait: null, ascending: false, page: 0, pageSize: PAGE_SIZE, buildAll: false }),
+    enabled: scopeArgs !== null,
+  });
+  // Built-all scopes are small; apply desk filters + sorts to the exact full set.
+  const scopeVisible = useMemo(() => {
+    if (!scanMode || !scopeQ.data?.all) return null;
+    let base = scopeQ.data.parcels.filter(passesDesk);
+    if (galDef) base = base.filter((p) => galleryIndex.match(galDef.id, p.bitmapHeight) || (galDef.maxHeight !== undefined && p.bitmapHeight <= galDef.maxHeight));
+    if (sort !== "default" && sort !== "height-asc") {
+      const cmp: Record<string, (a: RegistryParcel, b: RegistryParcel) => number> = {
+        recent: (a, b) => (b.lastSaleBlock ?? -1) - (a.lastSaleBlock ?? -1),
+        ask: (a, b) => (a.listedSats ?? Infinity) - (b.listedSats ?? Infinity),
+        "height-desc": (a, b) => b.bitmapHeight - a.bitmapHeight,
+        transfers: (a, b) => b.transfers - a.transfers,
+      };
+      base = [...base].sort(cmp[sort]);
+    }
+    return base;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scanMode, scopeQ.data, minSats, maxSats, onlyInhabited, onlyBuilt, onlySold, inhabitedSet, builtSet, galDef, sort]);
+  const scopeTotal = scanMode ? (scopeVisible ? scopeVisible.length : scopeQ.data?.total ?? null) : null;
+  const scopePending = scanMode && (scope === "waiting" || scopeQ.isPending);
+
   const indexPage = useQuery({
     ...registryIndexPageQuery({
       page,
       pageSize: PAGE_SIZE,
-      search: search.trim(),
+      search: qTrim,
       ascending: sort === "height-asc",
       trait: trait === "any" ? null : trait,
       heights: patternHeights,
     }),
     enabled: serverMode && (!patternServer || patternHeights !== null),
   });
-  const serverTotal = indexPage.data?.total ?? null;
-  const pageCount = serverMode
+  const serverTotal = serverMode ? indexPage.data?.total ?? null : scopeTotal;
+  const pagedMode = serverMode || scanMode;
+  const pageCount = pagedMode
     ? serverTotal !== null
       ? Math.max(1, Math.ceil(serverTotal / PAGE_SIZE))
-      : page + (indexPage.data?.hasMore ? 2 : 1)
+      : page + ((serverMode ? indexPage.data?.hasMore : scopeQ.data?.hasMore) ? 2 : 1)
     : Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
-  const current = serverMode ? page : Math.min(page, pageCount - 1);
-  const clubDef = club === "any" ? null : CLUBS.find((c) => c.id === club) ?? null;
+  const current = pagedMode && !scopeVisible ? page : Math.min(page, pageCount - 1);
   const pageParcels = useMemo(
     () =>
       serverMode
         ? (indexPage.data?.parcels ?? []).filter((p) => (!clubDef || inClub(p.bitmapHeight, clubDef)) && passesDesk(p))
-        : visible.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE),
+        : scanMode
+          ? scopeVisible
+            ? scopeVisible.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE)
+            : (scopeQ.data?.parcels ?? []).filter(passesDesk)
+          : visible.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [serverMode, indexPage.data, clubDef, visible, current, minSats, maxSats, onlyInhabited, onlyBuilt, onlySold, inhabitedSet, builtSet],
+    [serverMode, scanMode, scopeVisible, scopeQ.data, indexPage.data, clubDef, visible, current, minSats, maxSats, onlyInhabited, onlyBuilt, onlySold, inhabitedSet, builtSet],
   );
-  const totalLabel = serverMode
+  const totalLabel = pagedMode
     ? serverTotal !== null
       ? serverTotal.toLocaleString("en-US")
-      : !search && trait === "any"
+      : serverMode && !search && trait === "any"
         ? (liveOci.data?.total ?? registryCount.data ?? 0).toLocaleString("en-US")
-        : `${(page * PAGE_SIZE + pageParcels.length).toLocaleString("en-US")}${indexPage.data?.hasMore ? "+" : ""}`
+        : `${(page * PAGE_SIZE + pageParcels.length).toLocaleString("en-US")}${(serverMode ? indexPage.data?.hasMore : scopeQ.data?.hasMore) ? "+" : ""}`
     : visible.length.toLocaleString("en-US");
   const traitList = serverMode ? ALL_OFFICIAL_TRAITS.filter((t) => t.supported) : OFFICIAL_TRAITS;
   const owners = useQuery({
@@ -577,11 +643,11 @@ function Marketplace() {
 
         <section data-tour="market-grid" className="lg:col-span-9">
           {tab === "listed" && <FloorSweeper listed={visible} />}
-          {(serverMode ? indexPage.isPending : registry.isPending) ? (
+          {(serverMode ? indexPage.isPending : scanMode ? scopePending : registry.isPending) ? (
             <p className="grid min-h-48 place-items-center border border-dashed border-border font-mono text-sm text-muted-foreground">
               READING THE REGISTRY FROM CHAIN…
             </p>
-          ) : (serverMode ? pageParcels.length === 0 : visible.length === 0) ? (
+          ) : (pagedMode ? pageParcels.length === 0 : visible.length === 0) ? (
             <EmptyRegistry />
           ) : (
             <>
@@ -591,7 +657,7 @@ function Marketplace() {
                 </span>
                 <span className="flex items-center gap-3">
                   <span className="label text-muted-foreground">
-                    {owners.isFetching || (serverMode && indexPage.isFetching) ? <span className="text-signal">RESOLVING HOLDERS ON CHAIN…</span> : serverMode && serverTotal === null ? `PAGE ${current + 1}` : `PAGE ${current + 1} / ${pageCount.toLocaleString("en-US")}`}
+                    {owners.isFetching || (serverMode && indexPage.isFetching) || (scanMode && scopeQ.isFetching) ? <span className="text-signal">RESOLVING HOLDERS ON CHAIN…</span> : pagedMode && serverTotal === null ? `PAGE ${current + 1}` : `PAGE ${current + 1} / ${pageCount.toLocaleString("en-US")}`}
                   </span>
                   <span className="flex" role="group" aria-label="View mode">
                     {(["cards", "table"] as const).map((v) => (
