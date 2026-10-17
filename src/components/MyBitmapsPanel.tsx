@@ -16,6 +16,12 @@ import { useVerifiedBitmons } from "@/lib/use-verified-bitmons";
 import type { BitmonCheck } from "@/lib/bitmon-verify";
 import { traitsOf, hasTrait, type TraitId } from "@/lib/traits";
 import { BulkListBar } from "@/components/market/BulkListBar";
+import { BlockMosaic } from "@/components/BlockMosaic";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { fetchBlockStatsMany, type BlockStats } from "@/lib/block-stats";
+import { Link } from "@tanstack/react-router";
+
+const BLOCK_STATS_CEILING = 839_999;
 
 type HeldBitmap = {
   outpoint: string;
@@ -131,10 +137,31 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "listed" | "unlisted">("all");
   const [onlyBitmons, setOnlyBitmons] = useState(false);
+  const [onlyPatterns, setOnlyPatterns] = useState(false);
   const [trait, setTrait] = useState<TraitId | "">("");
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const { checks } = useVerifiedBitmons();
+  const statHeights = useMemo(
+    () => [...new Set(held.map((b) => b.bitmapHeight).filter((h) => h <= BLOCK_STATS_CEILING))].sort((a, b) => a - b),
+    [held],
+  );
+  const statsQ = useQuery({
+    queryKey: ["held-block-stats", statHeights],
+    queryFn: async () => {
+      const out = new Map<number, BlockStats>();
+      for (let i = 0; i < statHeights.length; i += 500) {
+        const m = await fetchBlockStatsMany(statHeights.slice(i, i + 500));
+        for (const [k, v] of m) out.set(k, v);
+      }
+      return out;
+    },
+    enabled: statHeights.length > 0,
+    staleTime: Infinity,
+  });
+  const stats = statsQ.data ?? new Map<number, BlockStats>();
+  const hasPattern = (h: number) => typeof stats.get(h)?.pattern === "number";
+  const patternCount = useMemo(() => held.filter((b) => typeof stats.get(b.bitmapHeight)?.pattern === "number").length, [held, stats]);
   const bitmonCount = useMemo(() => held.filter((b) => checks.has(b.bitmapHeight)).length, [held, checks]);
   // Only offer traits this wallet actually holds, with counts.
   const traitOptions = useMemo(() => {
@@ -151,11 +178,12 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
       held.filter((b) => {
         if (q.trim() && !String(b.bitmapHeight).includes(q.trim())) return false;
         if (onlyBitmons && !checks.has(b.bitmapHeight)) return false;
+        if (onlyPatterns && !hasPattern(b.bitmapHeight)) return false;
         if (trait && !hasTrait(b.bitmapHeight, trait)) return false;
         const listed = openByOutpoint.has(b.outpoint);
         return filter === "all" || (filter === "listed" ? listed : !listed);
       }),
-    [held, q, filter, openByOutpoint, onlyBitmons, trait, checks],
+    [held, q, filter, openByOutpoint, onlyBitmons, onlyPatterns, trait, checks, stats],
   );
   const pages = Math.max(1, Math.ceil(rows.length / PAGE));
   const p = Math.min(page, pages - 1);
@@ -184,6 +212,13 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
         >
           GUARDIANS ({bitmonCount})
         </button>
+        <button
+          className={onlyPatterns ? "btn-term !px-3 !py-1" : "btn-term-ghost !px-3 !py-1"}
+          onClick={() => { setOnlyPatterns((v) => !v); setPage(0); }}
+          title="Verified Bitmon block-shape patterns (block records 0–839,999)"
+        >
+          BITMONS ({statsQ.isLoading ? "…" : patternCount})
+        </button>
         <select
           value={trait}
           onChange={(e) => { setTrait(e.target.value as TraitId | ""); setPage(0); }}
@@ -195,8 +230,8 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
             <option key={id} value={id}>{c.label.toUpperCase()} ({c.n})</option>
           ))}
         </select>
-        {(onlyBitmons || trait) && (
-          <button className="btn-term-ghost !px-2 !py-1" onClick={() => { setOnlyBitmons(false); setTrait(""); setPage(0); }}>
+        {(onlyBitmons || onlyPatterns || trait) && (
+          <button className="btn-term-ghost !px-2 !py-1" onClick={() => { setOnlyBitmons(false); setOnlyPatterns(false); setTrait(""); setPage(0); }}>
             [ CLEAR ]
           </button>
         )}
@@ -209,6 +244,7 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
           ["UNLISTED", rows.filter((b) => !openByOutpoint.has(b.outpoint))],
           ["LISTED", rows.filter((b) => openByOutpoint.has(b.outpoint))],
           ["GUARDIANS", rows.filter((b) => checks.has(b.bitmapHeight))],
+          ["BITMONS", rows.filter((b) => hasPattern(b.bitmapHeight))],
         ] as const).map(([l, list]) => (
           <button key={l} className="btn-term-ghost !px-2 !py-0.5" disabled={list.length === 0}
             onClick={() => setSelected(new Set(list.map((b) => b.outpoint)))}>
@@ -231,6 +267,8 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
             bitmap={bitmap}
             offer={openByOutpoint.get(bitmap.outpoint) ?? null}
             bitmon={checks.get(bitmap.bitmapHeight) ?? null}
+            stats={stats.get(bitmap.bitmapHeight) ?? null}
+            statsLoading={statsQ.isLoading && bitmap.bitmapHeight <= BLOCK_STATS_CEILING}
           />
         ))}
       </ul>
@@ -253,7 +291,7 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
   );
 }
 
-function HeldRow({ bitmap, offer, bitmon, selected, onSelect }: { bitmap: HeldBitmap; offer: Offer | null; bitmon: BitmonCheck | null; selected: boolean; onSelect: (on: boolean) => void }) {
+function HeldRow({ bitmap, offer, bitmon, stats, statsLoading, selected, onSelect }: { bitmap: HeldBitmap; offer: Offer | null; bitmon: BitmonCheck | null; stats: BlockStats | null; statsLoading: boolean; selected: boolean; onSelect: (on: boolean) => void }) {
   const traits = useMemo(() => traitsOf(bitmap.bitmapHeight), [bitmap.bitmapHeight]);
   const wallet = useWalletSession();
   const queryClient = useQueryClient();
@@ -348,17 +386,29 @@ function HeldRow({ bitmap, offer, bitmon, selected, onSelect }: { bitmap: HeldBi
         <div className="flex items-start gap-3">
           <input type="checkbox" className="mt-1" checked={selected} onChange={(e) => onSelect(e.target.checked)}
             aria-label={`Select ${bitmap.bitmapHeight}.bitmap`} />
+        <BlockPreview height={bitmap.bitmapHeight} stats={stats} statsLoading={statsLoading} traits={traits} bitmon={bitmon}>
+          <button type="button" className="h-12 w-12 shrink-0 overflow-hidden border border-border hover:border-primary" aria-label={`Preview ${bitmap.bitmapHeight}.bitmap`}>
+            <BlockMosaic height={bitmap.bitmapHeight} txCount={stats?.txCount ?? null} className="h-full w-full" />
+          </button>
+        </BlockPreview>
         <div>
-          <p className="font-mono text-sm font-bold text-foreground">
-            {bitmap.bitmapHeight}.BITMAP
-          </p>
+          <BlockPreview height={bitmap.bitmapHeight} stats={stats} statsLoading={statsLoading} traits={traits} bitmon={bitmon}>
+            <button type="button" className="font-mono text-sm font-bold text-foreground hover:text-primary">
+              {bitmap.bitmapHeight}.BITMAP
+            </button>
+          </BlockPreview>
           <p className="label mt-1">
             {offer
               ? `LISTED · ASK ${formatSats(offer.priceSats)}`
               : "NOT LISTED · YOURS ON CHAIN"}
           </p>
-          {(bitmon || traits.length > 0) && (
+          {(bitmon || traits.length > 0 || typeof stats?.pattern === "number") && (
             <div className="mt-2 flex flex-wrap gap-1">
+              {typeof stats?.pattern === "number" && (
+                <span className="border border-accent/60 px-1.5 py-0.5 font-mono text-[9px] text-accent">
+                  BITMON #{stats.pattern}
+                </span>
+              )}
               {bitmon && (
                 <span className="border border-primary/60 px-1.5 py-0.5 font-mono text-[9px] text-primary">
                   GUARDIAN
@@ -440,5 +490,53 @@ function HeldRow({ bitmap, offer, bitmon, selected, onSelect }: { bitmap: HeldBi
         </div>
       )}
     </li>
+  );
+}
+
+function BlockPreview({ height, stats, statsLoading, traits, bitmon, children }: {
+  height: number; stats: BlockStats | null; statsLoading: boolean;
+  traits: ReturnType<typeof traitsOf>; bitmon: BitmonCheck | null; children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const patternLine = height > BLOCK_STATS_CEILING
+    ? "NOT INDEXED (ABOVE 839,999)"
+    : statsLoading ? "CHECKING…"
+    : typeof stats?.pattern === "number" ? `#${stats.pattern}` : "NONE ON RECORD";
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+        {children}
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-3" side="right" align="start"
+        onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+        {open && (
+          <div className="aspect-square w-full overflow-hidden border border-border">
+            <BlockMosaic height={height} txCount={stats?.txCount ?? null} className="h-full w-full" />
+          </div>
+        )}
+        <p className="mt-2 font-mono text-sm font-bold text-foreground">{height}.BITMAP</p>
+        <dl className="mt-1 space-y-0.5 font-mono text-[10px]">
+          {stats?.txCount != null && (
+            <div className="flex justify-between"><dt className="text-muted-foreground">TRANSACTIONS</dt><dd className="text-foreground">{stats.txCount.toLocaleString("en-US")}</dd></div>
+          )}
+          <div className="flex justify-between"><dt className="text-muted-foreground">BITMON PATTERN</dt><dd className="text-accent">{patternLine}</dd></div>
+          {bitmon && (
+            <div className="flex justify-between"><dt className="text-muted-foreground">GUARDIAN</dt><dd className="text-primary">
+              {bitmon.status === "unverified" ? "UNVERIFIED" : `${String(bitmon.species).toUpperCase()} · ${String(bitmon.rarity).toUpperCase()}`}
+            </dd></div>
+          )}
+        </dl>
+        {traits.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {traits.map((t) => (
+              <span key={t.id} className="border border-border px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground">{t.label.toUpperCase()}</span>
+            ))}
+          </div>
+        )}
+        <Link to="/bitmap/$block" params={{ block: String(height) }} className="btn-term-ghost mt-3 block !px-2 !py-1 text-center">
+          [ OPEN DOSSIER ]
+        </Link>
+      </PopoverContent>
+    </Popover>
   );
 }
