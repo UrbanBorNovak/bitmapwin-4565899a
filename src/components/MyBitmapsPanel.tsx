@@ -18,7 +18,7 @@ import { traitsOf, hasTrait, type TraitId } from "@/lib/traits";
 import { BulkListBar } from "@/components/market/BulkListBar";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { fetchBlockStatsMany, type BlockStats } from "@/lib/block-stats";
+import { fetchBlockStatsMany, fetchPatternSiblings, type BlockStats } from "@/lib/block-stats";
 import { Link } from "@tanstack/react-router";
 
 const BLOCK_STATS_CEILING = 839_999;
@@ -160,8 +160,36 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
     staleTime: Infinity,
   });
   const stats = statsQ.data ?? new Map<number, BlockStats>();
-  const hasPattern = (h: number) => typeof stats.get(h)?.pattern === "number";
-  const patternCount = useMemo(() => held.filter((b) => typeof stats.get(b.bitmapHeight)?.pattern === "number").length, [held, stats]);
+  // Every block has a shape record; a Bitmon is a shape shared by 2+ blocks.
+  // Pattern ids are the lowest block in their group, so only self-ids need a count.
+  const selfPatterns = useMemo(
+    () => [...stats.values()].filter((s) => s.pattern === s.blockHeight).map((s) => s.blockHeight),
+    [stats],
+  );
+  const groupQ = useQuery({
+    queryKey: ["held-pattern-groups", selfPatterns],
+    queryFn: async () => {
+      const out = new Map<number, number>();
+      const list = [...selfPatterns];
+      await Promise.all(Array.from({ length: 6 }, async () => {
+        for (let p = list.shift(); p !== undefined; p = list.shift()) out.set(p, await fetchPatternSiblings(p));
+      }));
+      return out;
+    },
+    enabled: selfPatterns.length > 0,
+    staleTime: Infinity,
+  });
+  const shapeOf = (h: number): ShapeInfo => {
+    const st = stats.get(h);
+    if (h > BLOCK_STATS_CEILING) return { kind: "unindexed" };
+    if (!st || typeof st.pattern !== "number") return statsQ.isLoading ? { kind: "loading" } : { kind: "none" };
+    if (st.pattern !== h) return { kind: "bitmon", pattern: st.pattern };
+    const sib = groupQ.data?.get(h);
+    if (sib === undefined) return groupQ.isError ? { kind: "none" } : { kind: "loading" };
+    return sib > 0 ? { kind: "bitmon", pattern: st.pattern, siblings: sib } : { kind: "unique" };
+  };
+  const hasPattern = (h: number) => shapeOf(h).kind === "bitmon";
+  const patternCount = held.filter((b) => hasPattern(b.bitmapHeight)).length;
   const bitmonCount = useMemo(() => held.filter((b) => checks.has(b.bitmapHeight)).length, [held, checks]);
   // Only offer traits this wallet actually holds, with counts.
   const traitOptions = useMemo(() => {
@@ -183,7 +211,7 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
         const listed = openByOutpoint.has(b.outpoint);
         return filter === "all" || (filter === "listed" ? listed : !listed);
       }),
-    [held, q, filter, openByOutpoint, onlyBitmons, onlyPatterns, trait, checks, stats],
+    [held, q, filter, openByOutpoint, onlyBitmons, onlyPatterns, trait, checks, stats, groupQ.data],
   );
   const pages = Math.max(1, Math.ceil(rows.length / PAGE));
   const p = Math.min(page, pages - 1);
@@ -215,9 +243,9 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
         <button
           className={onlyPatterns ? "btn-term !px-3 !py-1" : "btn-term-ghost !px-3 !py-1"}
           onClick={() => { setOnlyPatterns((v) => !v); setPage(0); }}
-          title="Verified Bitmon block-shape patterns (block records 0–839,999)"
+          title="Bitmons: block shapes shared with other blocks (verified records 0–839,999)"
         >
-          BITMONS ({statsQ.isLoading ? "…" : patternCount})
+          BITMONS ({statsQ.isLoading || groupQ.isLoading ? "…" : patternCount})
         </button>
         <select
           value={trait}
@@ -268,7 +296,7 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
             offer={openByOutpoint.get(bitmap.outpoint) ?? null}
             bitmon={checks.get(bitmap.bitmapHeight) ?? null}
             stats={stats.get(bitmap.bitmapHeight) ?? null}
-            statsLoading={statsQ.isLoading && bitmap.bitmapHeight <= BLOCK_STATS_CEILING}
+            shape={shapeOf(bitmap.bitmapHeight)}
           />
         ))}
       </ul>
@@ -291,7 +319,7 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
   );
 }
 
-function HeldRow({ bitmap, offer, bitmon, stats, statsLoading, selected, onSelect }: { bitmap: HeldBitmap; offer: Offer | null; bitmon: BitmonCheck | null; stats: BlockStats | null; statsLoading: boolean; selected: boolean; onSelect: (on: boolean) => void }) {
+function HeldRow({ bitmap, offer, bitmon, stats, shape, selected, onSelect }: { bitmap: HeldBitmap; offer: Offer | null; bitmon: BitmonCheck | null; stats: BlockStats | null; shape: ShapeInfo; selected: boolean; onSelect: (on: boolean) => void }) {
   const traits = useMemo(() => traitsOf(bitmap.bitmapHeight), [bitmap.bitmapHeight]);
   const wallet = useWalletSession();
   const queryClient = useQueryClient();
@@ -386,13 +414,13 @@ function HeldRow({ bitmap, offer, bitmon, stats, statsLoading, selected, onSelec
         <div className="flex items-start gap-3">
           <input type="checkbox" className="mt-1" checked={selected} onChange={(e) => onSelect(e.target.checked)}
             aria-label={`Select ${bitmap.bitmapHeight}.bitmap`} />
-        <BlockPreview height={bitmap.bitmapHeight} stats={stats} statsLoading={statsLoading} traits={traits} bitmon={bitmon}>
+        <BlockPreview height={bitmap.bitmapHeight} stats={stats} shape={shape} traits={traits} bitmon={bitmon}>
           <button type="button" className="h-12 w-12 shrink-0 overflow-hidden border border-border hover:border-primary" aria-label={`Preview ${bitmap.bitmapHeight}.bitmap`}>
             <BlockMosaic height={bitmap.bitmapHeight} txCount={stats?.txCount ?? null} className="h-full w-full" />
           </button>
         </BlockPreview>
         <div>
-          <BlockPreview height={bitmap.bitmapHeight} stats={stats} statsLoading={statsLoading} traits={traits} bitmon={bitmon}>
+          <BlockPreview height={bitmap.bitmapHeight} stats={stats} shape={shape} traits={traits} bitmon={bitmon}>
             <button type="button" className="font-mono text-sm font-bold text-foreground hover:text-primary">
               {bitmap.bitmapHeight}.BITMAP
             </button>
@@ -402,11 +430,11 @@ function HeldRow({ bitmap, offer, bitmon, stats, statsLoading, selected, onSelec
               ? `LISTED · ASK ${formatSats(offer.priceSats)}`
               : "NOT LISTED · YOURS ON CHAIN"}
           </p>
-          {(bitmon || traits.length > 0 || typeof stats?.pattern === "number") && (
+          {(bitmon || traits.length > 0 || shape.kind === "bitmon") && (
             <div className="mt-2 flex flex-wrap gap-1">
-              {typeof stats?.pattern === "number" && (
-                <span className="border border-accent/60 px-1.5 py-0.5 font-mono text-[9px] text-accent">
-                  BITMON #{stats.pattern}
+              {shape.kind === "bitmon" && (
+                <span className="border border-accent/60 px-1.5 py-0.5 font-mono text-[9px] text-accent" data-no-translate>
+                  BITMON #{shape.pattern}
                 </span>
               )}
               {bitmon && (
@@ -493,22 +521,28 @@ function HeldRow({ bitmap, offer, bitmon, stats, statsLoading, selected, onSelec
   );
 }
 
-function BlockPreview({ height, stats, statsLoading, traits, bitmon, children }: {
-  height: number; stats: BlockStats | null; statsLoading: boolean;
+type ShapeInfo =
+  | { kind: "unindexed" | "loading" | "none" | "unique" }
+  | { kind: "bitmon"; pattern: number; siblings?: number };
+
+function BlockPreview({ height, stats, shape, traits, bitmon, children }: {
+  height: number; stats: BlockStats | null; shape: ShapeInfo;
   traits: ReturnType<typeof traitsOf>; bitmon: BitmonCheck | null; children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const patternLine = height > BLOCK_STATS_CEILING
-    ? "NOT INDEXED (ABOVE 839,999)"
-    : statsLoading ? "CHECKING…"
-    : typeof stats?.pattern === "number" ? `#${stats.pattern}` : "NONE ON RECORD";
+  const patternLine = shape.kind === "unindexed" ? "NOT INDEXED (ABOVE 839,999)"
+    : shape.kind === "loading" ? "CHECKING…"
+    : shape.kind === "unique" ? "UNIQUE SHAPE — NOT A BITMON"
+    : shape.kind === "bitmon" ? `#${shape.pattern}${shape.siblings ? ` · ${shape.siblings + 1} BLOCKS` : ""}`
+    : "NONE ON RECORD";
+  const hover = (on: boolean) => (e: React.PointerEvent) => { if (e.pointerType === "mouse") setOpen(on); };
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <PopoverTrigger asChild onPointerEnter={hover(true)} onPointerLeave={hover(false)}>
         {children}
       </PopoverTrigger>
       <PopoverContent className="w-72 p-3" side="right" align="start"
-        onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+        onPointerEnter={hover(true)} onPointerLeave={hover(false)}>
         {open && (
           <div className="aspect-square w-full overflow-hidden border border-border">
             <BlockMosaic height={height} txCount={stats?.txCount ?? null} className="h-full w-full" />
