@@ -85,6 +85,8 @@ export function SiteFooter() {
         <div className="mt-2 label text-[0.6rem]">
           LIVEOCI INDEXING &amp; ON-CHAIN BITMON BY{" "}
           <a href="https://x.com/boppleton" target="_blank" rel="noreferrer" className="text-primary hover:text-foreground">@BOPPLETON</a>
+          {" · "}BOT STARTER KIT ON{" "}
+          <a href="https://github.com/UrbanBorNovak/bitmapwin-bot-starter" target="_blank" rel="noreferrer" className="text-signal hover:text-foreground">GITHUB</a>
         </div>
       </div>
     </footer>
