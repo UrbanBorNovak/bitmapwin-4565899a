@@ -551,11 +551,11 @@ function BlockPreview({ height, stats, shape, traits, bitmon, children }: {
         <p className="mt-2 font-mono text-sm font-bold text-foreground">{height}.BITMAP</p>
         <dl className="mt-1 space-y-0.5 font-mono text-[10px]">
           {stats?.txCount != null && (
-            <div className="flex justify-between"><dt className="text-muted-foreground">TRANSACTIONS</dt><dd className="text-foreground">{stats.txCount.toLocaleString("en-US")}</dd></div>
+            <div className="flex justify-between gap-3 text-right"><dt className="text-muted-foreground">TRANSACTIONS</dt><dd className="text-foreground">{stats.txCount.toLocaleString("en-US")}</dd></div>
           )}
-          <div className="flex justify-between"><dt className="text-muted-foreground">BITMON PATTERN</dt><dd className="text-accent">{patternLine}</dd></div>
+          <div className="flex justify-between gap-3 text-right"><dt className="text-muted-foreground">BITMON PATTERN</dt><dd className="text-accent">{patternLine}</dd></div>
           {bitmon && (
-            <div className="flex justify-between"><dt className="text-muted-foreground">GUARDIAN</dt><dd className="text-primary">
+            <div className="flex justify-between gap-3 text-right"><dt className="text-muted-foreground">GUARDIAN</dt><dd className="text-primary">
               {bitmon.status === "unverified" ? "UNVERIFIED" : `${String(bitmon.species).toUpperCase()} · ${String(bitmon.rarity).toUpperCase()}`}
             </dd></div>
           )}
