@@ -30,6 +30,24 @@ export type StoreForm = { config: StoreConfig; minH: string; maxH: string; maxBt
 /** A shop with every setting back at its starting value. */
 export const DEFAULT_FORM: StoreForm = { config: { ...DEFAULT_STORE }, minH: "", maxH: "", maxBtc: "" };
 
+/**
+ * True when the shop is exactly as it started, so resetting has nothing to lose.
+ * apiBase is ignored: the preview points at localhost, the downloaded shop at the live site.
+ */
+export function isFormDefault(f: StoreForm): boolean {
+  const c = f.config;
+  return (
+    c.name === DEFAULT_STORE.name &&
+    c.tagline === DEFAULT_STORE.tagline &&
+    c.accent === DEFAULT_STORE.accent &&
+    c.sort === DEFAULT_STORE.sort &&
+    !c.seller &&
+    f.minH === "" &&
+    f.maxH === "" &&
+    f.maxBtc === ""
+  );
+}
+
 /** Reads a shared shop link; anything missing or malformed keeps its default. */
 export function storeFormFromSearch(search: string): StoreForm {
   const q = new URLSearchParams(search);

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { buildStoreHtml, DEFAULT_FORM, DEFAULT_STORE, storeFormFromSearch, type StoreConfig } from "@/lib/store-template";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { buildStoreHtml, DEFAULT_FORM, DEFAULT_STORE, isFormDefault, storeFormFromSearch, type StoreConfig } from "@/lib/store-template";
 
 export const Route = createFileRoute("/store-kit")({
   head: () => {
@@ -31,6 +31,32 @@ const GUIDE = [
   { title: "TURN ON GITHUB PAGES", body: "Open Settings → Pages. Under Branch pick main and / (root), then Save. After a minute your shop is live at yourname.github.io/my-bitmap-shop. To change it later, make a new file here and upload it again." },
 ] as const;
 
+/** Best-effort copy: clipboard API, then a hidden textarea, then give up and show the link. */
+async function copyText(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    // blocked permission or an insecure page: fall through to the textarea trick
+  }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    ta.remove();
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
 function StoreKit() {
   const [c, setC] = useState<StoreConfig>(DEFAULT_STORE);
   const [minH, setMinH] = useState("");
@@ -38,7 +64,12 @@ function StoreKit() {
   const [maxBtc, setMaxBtc] = useState("");
   const [copied, setCopied] = useState(false);
   const [apiBase, setApiBase] = useState(DEFAULT_STORE.apiBase);
-  const [cleared, setCleared] = useState(false);
+  const [note, setNote] = useState("");
+  const [manual, setManual] = useState("");
+  const [confirming, setConfirming] = useState(false);
+  const noteTimer = useRef<number | undefined>(undefined);
+  const copiedTimer = useRef<number | undefined>(undefined);
+  const manualRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const f = storeFormFromSearch(window.location.search);
     setC(f.config);
@@ -47,15 +78,40 @@ function StoreKit() {
     setMaxBtc(f.maxBtc);
     setApiBase(window.location.origin);
   }, []);
-  const reset = () => {
+  useEffect(() => {
+    if (manual) manualRef.current?.select();
+  }, [manual]);
+  useEffect(
+    () => () => {
+      window.clearTimeout(noteTimer.current);
+      window.clearTimeout(copiedTimer.current);
+    },
+    [],
+  );
+  const flash = (msg: string) => {
+    window.clearTimeout(noteTimer.current);
+    setNote(msg);
+    noteTimer.current = window.setTimeout(() => setNote(""), 3000);
+  };
+  const atDefaults = useMemo(() => isFormDefault({ config: c, minH, maxH, maxBtc }), [c, minH, maxH, maxBtc]);
+  const doReset = () => {
+    const wasCustom = !atDefaults;
+    setConfirming(false);
     setC({ ...DEFAULT_FORM.config });
     setMinH(DEFAULT_FORM.minH);
     setMaxH(DEFAULT_FORM.maxH);
     setMaxBtc(DEFAULT_FORM.maxBtc);
     setCopied(false);
+    setManual("");
     window.history.replaceState(null, "", "/store-kit");
-    setCleared(true);
-    setTimeout(() => setCleared(false), 2500);
+    flash(wasCustom ? "BACK TO DEFAULTS — SHARED SETTINGS CLEARED" : "ALREADY AT DEFAULTS");
+  };
+  const reset = () => {
+    if (atDefaults) {
+      doReset();
+      return;
+    }
+    setConfirming(true);
   };
   const share = async () => {
     const q = new URLSearchParams({ name: c.name, tagline: c.tagline, accent: c.accent, sort: c.sort });
@@ -65,13 +121,16 @@ function StoreKit() {
     if (maxBtc) q.set("max", maxBtc);
     const url = `${window.location.origin}/store-kit?${q}`;
     window.history.replaceState(null, "", `/store-kit?${q}`);
-    try {
-      await navigator.clipboard.writeText(url);
+    if (await copyText(url)) {
+      setManual("");
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      window.prompt("Copy this link", url);
+      window.clearTimeout(copiedTimer.current);
+      copiedTimer.current = window.setTimeout(() => setCopied(false), 2000);
+      flash("LINK COPIED — ANYONE WHO OPENS IT SEES THIS SHOP");
+      return;
     }
+    setManual(url);
+    flash("COPY BLOCKED BY YOUR BROWSER — YOUR SHOP LINK IS SELECTED, PRESS CTRL+C");
   };
   const cfg: StoreConfig = {
     ...c,
@@ -118,8 +177,30 @@ function StoreKit() {
           </label>
           <button onClick={download} className="w-full rounded bg-bitcoin px-4 py-3 text-sm font-bold text-background">DOWNLOAD MY SHOP</button>
           <button onClick={share} className="w-full rounded border border-signal px-4 py-3 text-sm font-bold text-signal">{copied ? "LINK COPIED" : "COPY SHARE LINK"}</button>
-          <button onClick={reset} className="w-full rounded border border-border bg-secondary/40 px-4 py-2 text-xs font-bold text-muted-foreground">RESET TO DEFAULTS</button>
-          {cleared && <p className="text-xs text-signal">BACK TO DEFAULTS — SHARED SETTINGS CLEARED</p>}
+          {manual && (
+            <label className="block text-xs text-signal">
+              SHOP LINK — SELECTED, PRESS CTRL+C
+              <input
+                ref={manualRef}
+                readOnly
+                value={manual}
+                onFocus={(e) => e.currentTarget.select()}
+                className="mt-1 w-full rounded border border-signal bg-background/60 px-2 py-2 font-mono text-[11px] text-signal"
+              />
+            </label>
+          )}
+          {confirming ? (
+            <div className="rounded border border-bitcoin/60 bg-bitcoin/10 p-3">
+              <p className="text-xs leading-relaxed">RESET EVERYTHING? Your shop name, colour, seller and filters go back to their starting values.</p>
+              <div className="mt-2 flex gap-2">
+                <button onClick={doReset} className="flex-1 rounded bg-bitcoin px-3 py-2 text-xs font-bold text-background">YES, RESET</button>
+                <button onClick={() => setConfirming(false)} className="flex-1 rounded border border-border px-3 py-2 text-xs font-bold text-muted-foreground">KEEP MY SETTINGS</button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={reset} className="w-full rounded border border-border bg-secondary/40 px-4 py-2 text-xs font-bold text-muted-foreground">RESET TO DEFAULTS</button>
+          )}
+          {note && <p className="text-xs text-signal">{note}</p>}
           <p className="text-xs text-muted-foreground">Free and open — change the file however you like.</p>
         </div>
         <iframe title="Shop preview" srcDoc={html} sandbox="allow-scripts allow-popups" className="h-[720px] w-full rounded border border-border bg-background" />
