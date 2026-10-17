@@ -46,6 +46,8 @@ import type { GuardianRarity, GuardianSpecies } from "@/lib/bitmon";
 import { priceUnit, usePriceUnit, type PriceUnit } from "@/lib/price-unit";
 import { btcPriceQuery } from "@/lib/btc-price";
 import { BitmonsShelf } from "@/components/market/BitmonsShelf";
+import { BitmonPatternFilter } from "@/components/market/BitmonPatternFilter";
+import { patternHeightsQuery } from "@/lib/block-stats";
 import { LiveMarketTicker } from "@/components/market/LiveMarketTicker";
 import { FloorSweeper, ProTable } from "@/components/market/TradingDesk";
 import { TradeSlip } from "@/components/market/TradeSlip";
@@ -123,6 +125,9 @@ function Marketplace() {
   const [trait, setTrait] = useState<string>("any");
   const [gallery, setGallery] = useState<string>("any");
   const galleryIndex = useGalleryIndex();
+  const [bitmonPattern, setBitmonPattern] = useState<number | null>(null);
+  const patternQ = useQuery(patternHeightsQuery(bitmonPattern));
+  const patternSet = useMemo(() => (bitmonPattern === null ? null : new Set(patternQ.data ?? [])), [bitmonPattern, patternQ.data]);
   const [page, setPage] = useState(0);
   const [sort, setSort] = useState<Sort>("default");
   const recent = useQuery({ ...recentTradesQuery(40), refetchInterval: 30_000 });
@@ -197,8 +202,8 @@ function Marketplace() {
     const gal = gallery !== "any" ? GALLERY_COLLECTIONS.find((g) => g.id === gallery) : undefined;
     const bm = tab === "inhabited";
     const bmLabel = bm ? (bitmonRarity === "ALL" ? "GUARDIANS" : `GUARDIANS ${bitmonRarity}`) : null;
-    const parts = [bmLabel, def ? def.label : null, heightTrait ? `TRAIT ${heightTrait.label ?? heightTrait.id}` : null, gal ? `GALLERY ${gal.label}` : null].filter(Boolean);
-    const match = bm || def || heightTrait || gal ? (h: number) => (!bm || (inhabitedSet.has(h) && (bitmonRarity === "ALL" || rarityByHeight.get(h) === bitmonRarity))) && (!def || inClub(h, def)) && (!heightTrait || hasTrait(h, heightTrait.id as TraitId)) && (!gal || galleryIndex.match(gal.id, h)) : null;
+    const parts = [bmLabel, def ? def.label : null, heightTrait ? `TRAIT ${heightTrait.label ?? heightTrait.id}` : null, gal ? `GALLERY ${gal.label}` : null, patternSet ? `BITMON PATTERN #${bitmonPattern}` : null].filter(Boolean);
+    const match = bm || def || heightTrait || gal || patternSet ? (h: number) => (!patternSet || patternSet.has(h)) && (!bm || (inhabitedSet.has(h) && (bitmonRarity === "ALL" || rarityByHeight.get(h) === bitmonRarity))) && (!def || inClub(h, def)) && (!heightTrait || hasTrait(h, heightTrait.id as TraitId)) && (!gal || galleryIndex.match(gal.id, h)) : null;
     const galMiss = gal && gal.maxHeight === undefined ? galleryIndex.missing(gal.id) : 0;
     const galNote = gal && gal.maxHeight === undefined ? (galleryIndex.error ? `${gal.label}: BLOCK INDEX UNAVAILABLE — NOTHING CAN MATCH` : galleryIndex.loading ? `${gal.label}: READING BLOCK INDEX…` : galMiss ? `${gal.label}: ${galMiss} BITMAPS HAVE NO BLOCK RECORD AND ARE EXCLUDED` : undefined) : undefined;
     return {
@@ -206,7 +211,7 @@ function Marketplace() {
       match,
       caveat: [t && !heightTrait ? `${String(t.label ?? t.id).toUpperCase()} NEEDS INDEXED RECORDS, SO CHARTS IGNORE IT` : null, galNote, bm && inhabited.isPending ? "GUARDIANS: READING CHAIN…" : null, bm && bitmonRarity !== "ALL" && [...inhabitedSet].some((h) => !rarityByHeight.get(h)) ? `${[...inhabitedSet].filter((h) => !rarityByHeight.get(h)).length} UNVERIFIED GUARDIANS ARE EXCLUDED FROM RARITY SCOPE` : null].filter(Boolean).join(" · ") || undefined,
     };
-  }, [club, trait, gallery, galleryIndex, tab, bitmonRarity, inhabitedSet, rarityByHeight, inhabited.isPending]);
+  }, [club, trait, gallery, galleryIndex, tab, bitmonRarity, inhabitedSet, rarityByHeight, inhabited.isPending, patternSet, bitmonPattern]);
   const visible = useMemo(() => {
     let base = tab === "traded" ? traded : tab === "listed" ? listed : parcels;
     if (tab === "inhabited") {
@@ -220,6 +225,7 @@ function Marketplace() {
     }
     if (trait !== "any") base = base.filter((p) => matchesTrait(p.bitmapHeight, trait));
     if (gallery !== "any") base = base.filter((p) => galleryIndex.match(gallery, p.bitmapHeight));
+    if (patternSet) base = base.filter((p) => patternSet.has(p.bitmapHeight));
     base = base.filter(passesDesk);
     if (sort !== "default") {
       const cmp: Record<Exclude<Sort, "default">, (a: RegistryParcel, b: RegistryParcel) => number> = {
@@ -241,7 +247,7 @@ function Marketplace() {
         (p.ownerAddress ?? "").toLowerCase().includes(q),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, traded, listed, parcels, search, club, trait, sort, inhabitedParcels.data, minSats, maxSats, onlyInhabited, onlyBuilt, onlySold, inhabitedSet, builtSet, gallery, galleryIndex, bitmonRarity, rarityByHeight, bitmonSpecies, speciesByHeight, unit, rate]);
+  }, [tab, traded, listed, parcels, search, club, trait, sort, inhabitedParcels.data, minSats, maxSats, onlyInhabited, onlyBuilt, onlySold, inhabitedSet, builtSet, gallery, galleryIndex, bitmonRarity, rarityByHeight, bitmonSpecies, speciesByHeight, unit, rate, patternSet]);
 
   // Paginate first, then resolve holders on chain for the visible page only.
   // ALL tab reads the full on-chain index page by page on the server.
@@ -307,8 +313,8 @@ function Marketplace() {
   
 
   const listedFloor = listed.length ? Math.min(...listed.map((p) => p.listedSats ?? Infinity)) : null;
-  const activeFilters = [tab === "inhabited" && bitmonRarity !== "ALL", tab === "inhabited" && bitmonSpecies !== "ALL", gallery !== "any", club !== "any", trait !== "any", !!search, sort !== "default", minSats !== null || maxSats !== null, onlyInhabited, onlyBuilt, onlySold].filter(Boolean).length;
-  const clearAll = () => { setBitmonRarity("ALL"); setBitmonSpecies("ALL"); setGallery("any"); setClub("any"); setTrait("any"); setSearch(""); setSort("default"); setMinBtc(""); setMaxBtc(""); setOnlyInhabited(false); setOnlyBuilt(false); setOnlySold(false); setPage(0); };
+  const activeFilters = [tab === "inhabited" && bitmonRarity !== "ALL", tab === "inhabited" && bitmonSpecies !== "ALL", gallery !== "any", bitmonPattern !== null, club !== "any", trait !== "any", !!search, sort !== "default", minSats !== null || maxSats !== null, onlyInhabited, onlyBuilt, onlySold].filter(Boolean).length;
+  const clearAll = () => { setBitmonPattern(null); setBitmonRarity("ALL"); setBitmonSpecies("ALL"); setGallery("any"); setClub("any"); setTrait("any"); setSearch(""); setSort("default"); setMinBtc(""); setMaxBtc(""); setOnlyInhabited(false); setOnlyBuilt(false); setOnlySold(false); setPage(0); };
 
   return (
     <div className="marketplace-shell mx-auto max-w-[1600px] px-3 py-6 sm:px-5 md:py-10">
@@ -387,6 +393,9 @@ function Marketplace() {
       <div className="mt-4">
         <BitmonsShelf rarity={bitmonRarity} onRarity={setBitmonRarity} species={bitmonSpecies} onReset={() => { setBitmonRarity("ALL"); setBitmonSpecies("ALL"); setPage(0); }} onSpecies={(sp) => { setBitmonSpecies(sp); setPage(0); }} onOpen={() => { setTab("inhabited"); setPage(0); }} />
       </div>
+      <div className="mt-4">
+        <BitmonPatternFilter pattern={bitmonPattern} onPattern={(p) => { setBitmonPattern(p); setPage(0); }} count={patternQ.data?.length ?? null} loading={patternQ.isPending && bitmonPattern !== null} error={patternQ.isError} />
+      </div>
 
       <div className="mt-4">
         <TraitMatrix
@@ -459,6 +468,7 @@ function Marketplace() {
           <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2">
             {tab === "inhabited" && bitmonRarity !== "ALL" && <Chip label={`GUARDIANS ${bitmonRarity}`} onClear={() => setBitmonRarity("ALL")} />}
             {tab === "inhabited" && bitmonSpecies !== "ALL" && <Chip label={bitmonSpecies} onClear={() => setBitmonSpecies("ALL")} />}
+            {bitmonPattern !== null && <Chip label={`BITMON PATTERN #${bitmonPattern}`} onClear={() => setBitmonPattern(null)} />}
             {club !== "any" && <Chip label={CLUBS.find((c) => c.id === club)?.short ?? club} onClear={() => setClub("any")} />}
             {gallery !== "any" && <Chip label={GALLERY_COLLECTIONS.find((g) => g.id === gallery)?.short ?? gallery} onClear={() => setGallery("any")} />}
             {trait !== "any" && <Chip label={ALL_OFFICIAL_TRAITS.find((t) => t.id === trait)?.label ?? trait} onClear={() => setTrait("any")} />}
