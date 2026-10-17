@@ -102,9 +102,19 @@ export const Route = createFileRoute("/bitmap/$block")({
     return { block };
   },
   head: ({ params }) => {
-    const title = `Bitmap #${params.block} — Bitcoin Digital Land`;
-    const description = `Ownership, status and price data for Bitmap #${params.block} on the Bitcoin land layer.`;
+    const height = Number(params.block);
+    const all = Number.isInteger(height) && height >= 0 ? traitsOf(height) : [];
+    // Distinctive traits first; broad "sub-N" ranges only fill remaining space.
+    const ranked = [...all.filter((t) => !t.id.startsWith("sub-")), ...all.filter((t) => t.id.startsWith("sub-"))];
+    const labels = ranked.slice(0, 4).map((t) => t.label);
+    const title = labels.length
+      ? `${params.block}.bitmap — ${labels.slice(0, 2).join(" · ")} | BitmapWin`
+      : `${params.block}.bitmap — Bitcoin Land | BitmapWin`;
+    const description = labels.length
+      ? `Verified traits: ${labels.join(", ")}. Ownership, live market and on-chain history for BITMAP #${params.block} on Bitcoin.`
+      : `Ownership, live market and on-chain history for BITMAP #${params.block} on Bitcoin.`;
     const url = `https://bitmapwin.app/bitmap/${params.block}`;
+    const image = `https://bitmapwin.app/api/public/og/bitmap/${params.block}.png`;
     return {
       meta: [
         { title },
@@ -112,18 +122,20 @@ export const Route = createFileRoute("/bitmap/$block")({
         { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
+        { property: "og:site_name", content: "BitmapWin" },
         { property: "og:url", content: url },
-        { name: "twitter:card", content: "player" },
-        { name: "twitter:title", content: title },
-        { name: "twitter:description", content: description },
-        { name: "twitter:player", content: `https://bitmapwin.app/embed/bitmap/${params.block}` },
-        { name: "twitter:player:width", content: "1280" },
-        { name: "twitter:player:height", content: "720" },
-        { property: "og:image", content: `https://bitmapwin.app/api/public/og/bitmap/${params.block}.png` },
+        { property: "og:image", content: image },
+        { property: "og:image:type", content: "image/png" },
         { property: "og:image:width", content: "1200" },
         { property: "og:image:height", content: "630" },
-        { name: "twitter:image", content: `https://bitmapwin.app/api/public/og/bitmap/${params.block}.png` },
+        { property: "og:image:alt", content: `Block preview for ${params.block}.bitmap` },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        { name: "twitter:image", content: image },
+        { name: "twitter:image:alt", content: `Block preview for ${params.block}.bitmap` },
       ],
+      links: [{ rel: "canonical", href: url }],
     };
   },
   component: BitmapDetail,
