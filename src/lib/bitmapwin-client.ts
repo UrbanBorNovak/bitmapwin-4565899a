@@ -54,6 +54,15 @@ export interface Bid {
   created_at: string;
 }
 
+export interface BlockMeta {
+  height: number;
+  hash: string;
+  timestamp: number;
+  size: number;
+  weight: number;
+  txCount: number;
+}
+
 export interface ListingQuery {
   height?: number;
   min_sats?: number;
@@ -153,8 +162,17 @@ export class BitmapWinClient {
   };
 
   readonly blocks = {
-    get: (height: number) => this.call<Record<string, unknown>>(`/blocks/${height}`),
-    meta: (height: number) => this.call<Record<string, unknown>>(`/blocks/${height}/meta`),
+    /** One byte per transaction (parcel size class 1..5). Empty when the block is unknown/unavailable. */
+    bytes: async (height: number): Promise<{ bytes: Uint8Array; txCount: number; hash: string | null }> => {
+      const res = await this.f(`${this.baseUrl}/api/public/blocks/${height}`);
+      if (!res.ok) {
+        const data: unknown = await res.json().catch(() => null);
+        throw new BitmapWinApiError((data as { error?: string } | null)?.error ?? `HTTP ${res.status}`, res.status, data);
+      }
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      return { bytes, txCount: Number(res.headers.get("x-tx-count") ?? bytes.length), hash: res.headers.get("x-block-hash") };
+    },
+    meta: (height: number) => this.call<BlockMeta>(`/blocks/${height}/meta`),
   };
 
   /** Exact messages the server verifies — sign these byte-for-byte. */
