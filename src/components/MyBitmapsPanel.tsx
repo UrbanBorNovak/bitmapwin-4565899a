@@ -182,7 +182,7 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
           className={onlyBitmons ? "btn-term !px-3 !py-1" : "btn-term-ghost !px-3 !py-1"}
           onClick={() => { setOnlyBitmons((v) => !v); setPage(0); }}
         >
-          BITMONS ({bitmonCount})
+          GUARDIANS ({bitmonCount})
         </button>
         <select
           value={trait}
