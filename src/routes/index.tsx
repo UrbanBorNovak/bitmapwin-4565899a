@@ -51,6 +51,7 @@ export const Route = createFileRoute("/")({
       context.queryClient.ensureQueryData(recentTradesQuery(20)),
       context.queryClient.ensureQueryData(registryCountQuery()),
       context.queryClient.ensureQueryData(tradedBitmapCountQuery()),
+      context.queryClient.ensureQueryData(paidSalesCountQuery()),
     ]);
   },
   component: Index,
