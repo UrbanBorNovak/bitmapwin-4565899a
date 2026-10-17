@@ -208,7 +208,7 @@ function HeldList({ held, openByOutpoint }: { held: HeldBitmap[]; openByOutpoint
           ["SHOWN", rows],
           ["UNLISTED", rows.filter((b) => !openByOutpoint.has(b.outpoint))],
           ["LISTED", rows.filter((b) => openByOutpoint.has(b.outpoint))],
-          ["BITMONS", rows.filter((b) => checks.has(b.bitmapHeight))],
+          ["GUARDIANS", rows.filter((b) => checks.has(b.bitmapHeight))],
         ] as const).map(([l, list]) => (
           <button key={l} className="btn-term-ghost !px-2 !py-0.5" disabled={list.length === 0}
             onClick={() => setSelected(new Set(list.map((b) => b.outpoint)))}>
@@ -361,7 +361,7 @@ function HeldRow({ bitmap, offer, bitmon, selected, onSelect }: { bitmap: HeldBi
             <div className="mt-2 flex flex-wrap gap-1">
               {bitmon && (
                 <span className="border border-primary/60 px-1.5 py-0.5 font-mono text-[9px] text-primary">
-                  BITMON
+                  GUARDIAN
                   {bitmon.status === "unverified"
                     ? bitmon.reason === "reading" ? " · CHECKING…" : " · UNVERIFIED"
                     : ` · ${String(bitmon.species).toUpperCase()} · ${String(bitmon.rarity).toUpperCase()}`}
