@@ -323,6 +323,8 @@ export type IndexPageArgs = {
   search: string;
   ascending: boolean;
   trait: string | null;
+  /** Explicit height set (e.g. a verified Bitmon shape group), paged in height order. */
+  heights?: number[] | null;
 };
 
 /**
@@ -344,6 +346,22 @@ export async function fetchRegistryIndexPage(
     if (!/^[0-9a-fA-F]{64}$/.test(txid)) return [];
     return [{ id, txid, block_height: r.genesis_height ?? null, bitmap_height: r.block_height, created_at: r.resolved_at ?? new Date(0).toISOString() }];
   };
+
+  if (args.heights) {
+    const sorted = [...args.heights].sort((a, b) => (ascending ? a - b : b - a));
+    const slice = sorted.slice(from, from + pageSize);
+    if (slice.length === 0) return { parcels: [], total: sorted.length, hasMore: false };
+    const { data, error } = await supabase
+      .from("bitmap_index")
+      .select("block_height, inscription_id, genesis_height, resolved_at")
+      .eq("is_valid", true)
+      .not("inscription_id", "is", null)
+      .in("block_height", slice);
+    if (error) throw error;
+    const parcels = await buildParcels((data ?? []).flatMap(toRow), { resolveOwners: false });
+    parcels.sort((a, b) => (ascending ? a.bitmapHeight - b.bitmapHeight : b.bitmapHeight - a.bitmapHeight));
+    return { parcels, total: sorted.length, hasMore: from + pageSize < sorted.length };
+  }
 
   const heightTrait = trait && !q ? heightTraitQuery(trait, MAX_BITMAP + 100_000) : null;
   if (heightTrait) {
