@@ -394,7 +394,7 @@ function Marketplace() {
         <BitmonsShelf rarity={bitmonRarity} onRarity={setBitmonRarity} species={bitmonSpecies} onReset={() => { setBitmonRarity("ALL"); setBitmonSpecies("ALL"); setPage(0); }} onSpecies={(sp) => { setBitmonSpecies(sp); setPage(0); }} onOpen={() => { setTab("inhabited"); setPage(0); }} />
       </div>
       <div className="mt-4">
-        <BitmonPatternFilter pattern={bitmonPattern} onPattern={(p) => { setBitmonPattern(p); setPage(0); }} count={patternQ.data?.length ?? null} loading={patternQ.isPending && bitmonPattern !== null} error={patternQ.isError} />
+        <BitmonPatternFilter pattern={bitmonPattern} onPattern={(p) => { setBitmonPattern(p); setPage(0); }} count={patternQ.data?.length ?? null} loading={patternQ.isPending && bitmonPattern !== null} error={patternQ.isError} tooCommon={patternQ.error?.message.startsWith("PATTERN_TOO_COMMON:") ? Number(patternQ.error.message.split(":")[1]) : null} />
       </div>
 
       <div className="mt-4">

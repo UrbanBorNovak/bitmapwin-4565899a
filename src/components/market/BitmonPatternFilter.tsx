@@ -7,7 +7,7 @@ import { BLOCK_STATS_MAX_HEIGHT, blockStatsQuery } from "@/lib/block-stats";
  * (block_stats.pattern), not Guardians. Pick a block, the filter keeps every
  * BITMAP sharing its verified pattern record.
  */
-export function BitmonPatternFilter({ pattern, onPattern, count, loading, error }: { pattern: number | null; onPattern: (p: number | null) => void; count: number | null; loading: boolean; error: boolean }) {
+export function BitmonPatternFilter({ pattern, onPattern, count, loading, error, tooCommon }: { pattern: number | null; onPattern: (p: number | null) => void; count: number | null; loading: boolean; error: boolean; tooCommon?: number | null }) {
   const [input, setInput] = useState("");
   const h = Number(input);
   const valid = input !== "" && Number.isInteger(h) && h >= 0;
@@ -37,7 +37,7 @@ export function BitmonPatternFilter({ pattern, onPattern, count, loading, error 
       </form>
       {pattern !== null && (
         <p className="mt-2 font-mono text-[10px] text-muted-foreground" data-no-translate>
-          ACTIVE: PATTERN #{pattern} · {loading ? "READING GROUP…" : error ? "GROUP UNAVAILABLE — NOTHING MATCHES" : `${count ?? 0} BLOCKS SHARE THIS SHAPE`} · BLOCKS WITHOUT A RECORD NEVER MATCH
+          ACTIVE: PATTERN #{pattern} · {loading ? "READING GROUP…" : tooCommon ? `${tooCommon.toLocaleString()} BLOCKS SHARE THIS SHAPE — TOO COMMON TO FILTER, NOTHING SHOWN` : error ? "GROUP UNAVAILABLE — NOTHING MATCHES" : `${count ?? 0} BLOCKS SHARE THIS SHAPE`} · BLOCKS WITHOUT A RECORD NEVER MATCH
         </p>
       )}
     </section>

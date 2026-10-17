@@ -100,10 +100,15 @@ export const patternSiblingsQuery = (pattern: number | null | undefined) =>
     staleTime: Infinity,
   });
 
+/** Largest shape group the market will load whole; bigger groups are refused, never truncated. */
+export const PATTERN_GROUP_MAX = 20_000;
+
 /** Every block in a Bitmon shape group (verified block_stats records only), paged past the 1,000-row cap. */
 export async function fetchPatternHeights(pattern: number): Promise<number[]> {
+  const total = (await fetchPatternSiblings(pattern)) + 1;
+  if (total > PATTERN_GROUP_MAX) throw new Error(`PATTERN_TOO_COMMON:${total}`);
   const out: number[] = [];
-  for (let from = 0; from < 20_000; from += 1000) {
+  for (let from = 0; from < PATTERN_GROUP_MAX; from += 1000) {
     const { data, error } = await supabase.from("block_stats").select("block_height").eq("pattern", pattern).order("block_height").range(from, from + 999);
     if (error) throw error;
     for (const r of data ?? []) out.push(Number(r.block_height));
