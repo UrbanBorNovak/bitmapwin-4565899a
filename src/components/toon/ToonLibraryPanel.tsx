@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import type { ToonEpisode } from "@/lib/toon-script";
-import { applyCast, episodeFromTemplate, toTemplate, isMigrated, loadLibrary, markMigrated, mergeLibraries, newId, saveLibrary, upsertEpisode, type ToonLibrary } from "@/lib/toon-library";
+import { applyCast, autosaveEpisode, episodeFromTemplate, toTemplate, isMigrated, loadLibrary, markMigrated, mergeLibraries, newId, saveLibrary, upsertEpisode, type ToonLibrary } from "@/lib/toon-library";
 import { fetchCloudLibrary, pushCloudLibrary } from "@/lib/toon-cloud";
 import { useAuthSession } from "@/lib/auth";
 
@@ -58,6 +58,25 @@ export function ToonLibraryPanel({ episode, onOpen }: { episode: ToonEpisode; on
       .catch(() => { setSync("error"); setNote("SAVED ON THIS DEVICE, BUT NOT TO YOUR ACCOUNT. TRY AGAIN."); });
   };
   const series = lib.series.find((s) => s.id === seriesId);
+  const current = series?.episodes.find((e) => e.id === currentId);
+  const [dirty, setDirty] = useState(false);
+  const libRef = useRef(lib);
+  libRef.current = lib;
+  const commitRef = useRef(commit);
+  commitRef.current = commit;
+
+  // Autosave the open saved episode 1.5s after the last edit; the prior copy goes into its version history.
+  useEffect(() => {
+    if (!currentId || !seriesId) { setDirty(false); return; }
+    const saved = libRef.current.series.find((s) => s.id === seriesId)?.episodes.find((e) => e.id === currentId);
+    if (!saved || JSON.stringify(saved.episode) === JSON.stringify(episode)) { setDirty(false); return; }
+    setDirty(true);
+    const t = setTimeout(() => {
+      commitRef.current(autosaveEpisode(libRef.current, seriesId, currentId, episode, Date.now()), "AUTOSAVED.");
+      setDirty(false);
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [episode, currentId, seriesId]);
 
   const save = (asNew: boolean) => {
     if (!series) return setNote("CREATE A SERIES FIRST.");
@@ -71,7 +90,7 @@ export function ToonLibraryPanel({ episode, onOpen }: { episode: ToonEpisode; on
       <div className="flex items-center justify-between">
         <div className="label text-signal">MY SERIES</div>
         <span className="font-mono text-[10px] text-muted-foreground">
-          {sync === "local" ? "THIS DEVICE" : sync === "loading" ? "LOADING…" : sync === "saving" ? "SAVING…" : sync === "synced" ? "● SYNCED TO ACCOUNT" : "⚠ OFFLINE COPY"}
+          {dirty ? "● UNSAVED CHANGES…" : !currentId ? "NOT SAVED YET" : sync === "local" ? "SAVED ON THIS DEVICE" : sync === "loading" ? "LOADING…" : sync === "saving" ? "SAVING…" : sync === "synced" ? "● SYNCED TO ACCOUNT" : "⚠ OFFLINE COPY"}
         </span>
       </div>
       {!user && !loading && (
@@ -156,6 +175,21 @@ export function ToonLibraryPanel({ episode, onOpen }: { episode: ToonEpisode; on
           </li>
         ))}
       </ul>
+      {current && (current.history?.length ?? 0) > 0 && (
+        <div className="mt-4">
+          <div className="label text-signal">PREVIOUS VERSIONS</div>
+          <p className="mt-1 text-[11px] text-muted-foreground">Restoring opens that version; your current one is kept as a version too.</p>
+          <ul className="mt-2 space-y-1">
+            {[...current.history!].reverse().map((v) => (
+              <li key={v.savedAt} className="flex items-center gap-2 border border-border px-2 py-1 font-mono text-[11px]">
+                <span className="flex-1 truncate">{new Date(v.savedAt).toLocaleString()} · {v.episode.title}</span>
+                <button className="text-signal hover:text-bitcoin" onClick={() => { if (confirm(`Restore the version from ${new Date(v.savedAt).toLocaleString()}?`)) { onOpen(structuredClone(v.episode)); setNote("PREVIOUS VERSION RESTORED — AUTOSAVING."); } }}>RESTORE</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {!currentId && <p className="mt-2 text-[11px] text-muted-foreground">Save this episode to a series to turn on autosave.</p>}
       {note && <p className="mt-2 font-mono text-[11px] text-signal">&gt; {note}</p>}
     </section>
   );
