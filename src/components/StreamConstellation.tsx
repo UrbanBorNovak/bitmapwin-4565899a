@@ -8,6 +8,20 @@ import type { ProvenanceEvent } from "@/lib/passport";
  */
 type Node = { id: string; kind: "bitmap" | "event" | "wallet"; x: number; y: number; vx: number; vy: number; r: number; tone: string; label: string; ev?: ProvenanceEvent; born: number };
 type Edge = { a: number; b: number; len: number };
+type Cls = "all" | "bitmap" | "chain" | "world" | "raid";
+function clsOf(n: Node): Cls {
+  if (n.kind === "bitmap") return "bitmap";
+  if (n.kind === "wallet") return "all";
+  if (n.tone === "--destructive") return "raid";
+  return n.ev?.proofLevel === "CHAIN" ? "chain" : "world";
+}
+const FILTERS: { k: Cls; label: string; cls: string }[] = [
+  { k: "all", label: "ALL", cls: "text-foreground" },
+  { k: "bitmap", label: "▣ BITMAP", cls: "text-bitcoin" },
+  { k: "chain", label: "◆ CHAIN", cls: "text-bitcoin" },
+  { k: "world", label: "● WORLD", cls: "text-signal" },
+  { k: "raid", label: "⚔ RAID", cls: "text-destructive" },
+];
 
 function toneFor(e: ProvenanceEvent) {
   const t = e.eventType;
@@ -65,6 +79,36 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
   lockRef.current = lock;
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [fps, setFps] = useState(60);
+  const [filter, setFilter] = useState<Cls>("all");
+  const filterRef = useRef<Cls>("all"); filterRef.current = filter;
+  const cursor = useRef<{ x: number; y: number } | null>(null);
+  const [az, setAz] = useState({ az: 0, el: 0, quad: "—" });
+  const [audioOn, setAudioOn] = useState(false);
+  const audio = useRef<AudioContext | null>(null);
+  const beep = (f1: number, f2: number, ms: number, vol = 0.04) => {
+    if (!audioOn) return;
+    const ac = audio.current ?? (audio.current = new AudioContext());
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "triangle"; o.frequency.setValueAtTime(f1, t); o.frequency.exponentialRampToValueAtTime(f2, t + ms / 1000);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + ms / 1000);
+    o.connect(g).connect(ac.destination); o.start(t); o.stop(t + ms / 1000 + 0.02);
+  };
+  // soft tick as each event materialises (throttled for big replays)
+  const lastTick = useRef(0);
+  useEffect(() => {
+    if (!playing || step === 0) return;
+    const now = performance.now(); if (now - lastTick.current < 120) return; lastTick.current = now;
+    beep(220, 180, 30, 0.02);
+  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
+  // density histogram for the oscilloscope (64 bins across the timeline)
+  const density = useMemo(() => {
+    const bins = new Array(64).fill(0); if (!ordered.length) return bins;
+    const t0 = +new Date(ordered[0]!.occurredAt), t1 = +new Date(ordered[ordered.length - 1]!.occurredAt) || t0 + 1;
+    for (const e of ordered) bins[Math.min(63, Math.floor(((+new Date(e.occurredAt) - t0) / Math.max(1, t1 - t0)) * 64))]++;
+    const m = Math.max(1, ...bins); return bins.map((b) => b / m);
+  }, [ordered]);
+  const densityRef = useRef(density); densityRef.current = density;
+  const lenRef = useRef(ordered.length); lenRef.current = ordered.length;
 
   // physics + render loop
   useEffect(() => {
