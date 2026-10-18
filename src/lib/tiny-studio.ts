@@ -102,8 +102,8 @@ $('n').onclick=()=>{W^=1;if(W){wx=32;wz=32;wyaw=yaw+Math.PI;wpit=-.2;wy=ground(w
 $('p').innerHTML='';P.forEach((c,i)=>{const b=document.createElement('button');b.className='s'+(i?'':' on');b.style.background=c;b.onclick=()=>{K=i;document.querySelectorAll('.s').forEach(q=>q.classList.remove('on'));b.classList.add('on')};$('p').append(b)});
 $('g').onclick=()=>{H=Math.max(0,+$('h').value|0);seed(H)};
 const say=t=>{$('i').textContent=t},J=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.json()});
-function grab(t){const m=t.match(/data-b="([A-Za-z0-9+/=]+)"/)||t.match(/<script id="bwvx"[^>]*data-format="BWVX1"[^>]*>([A-Za-z0-9+/=\s]+)<\/script>/);return m?m[1].replace(/\s/g,''):null}
-async function fetchBuild(){const q=$('q').value.trim();try{let id=q;if(!/^[0-9a-f]{64}i\d+$/.test(q)){H=Math.max(0,+q|0||+$('h').value|0);$('h').value=H;say('looking up '+H+'.bitmap on chain…');
+function grab(t){const m=t.match(/data-b="([A-Za-z0-9+/=]+)"/)||t.match(/<script id="bwvx"[^>]*data-format="BWVX1"[^>]*>([A-Za-z0-9+/=\\s]+)<\\/script>/);return m?m[1].replace(/\\s/g,''):null}
+async function fetchBuild(){const q=$('q').value.trim();try{let id=q;if(!/^[0-9a-f]{64}i\\d+$/.test(q)){H=Math.max(0,+q|0||+$('h').value|0);$('h').value=H;say('looking up '+H+'.bitmap on chain…');
 const m=await import('/content/${OCI_MODULE}');const bid=await m.getBitmapInscriptionId(H);if(!bid)throw 0;const ins=await J('/r/inscription/'+bid),at=await J('/r/sat/'+ins.sat+'/at/-1');id=at.id;if(!id||id==bid){seed(H);say(H+'.bitmap has no build yet · starter ground loaded');return}}
 const t=await(await fetch('/content/'+id)).text(),b=grab(t);if(!b){say('no Tiny Studio / Land Forge build in '+id.slice(0,10)+'…');return}load(b);say('loaded on-chain build '+id.slice(0,10)+'… · edit and SAVE')}catch(e){say('could not reach the chain here (open on ordinals.com) · starter ground kept')}}
 $('f').onclick=fetchBuild;
