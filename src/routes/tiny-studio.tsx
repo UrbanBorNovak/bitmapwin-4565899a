@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { getBitmapHolderFn } from "@/lib/locate-bitmap.functions";
 import { buildTinyStudioHtml } from "@/lib/tiny-studio";
 import { brotliPackFn } from "@/lib/brotli-pack.functions";
 
@@ -32,6 +33,16 @@ function TinyStudio() {
   const [height, setHeight] = useState(840000);
   const [packed, setPacked] = useState<{ raw: number; size: number; bytes: Uint8Array; h: number } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [bitmapId, setBitmapId] = useState<{ h: number; id: string } | null>(null);
+  useEffect(() => {
+    let live = true;
+    const t = setTimeout(() => {
+      getBitmapHolderFn({ data: { height } }).then((r) => { if (live && r?.inscriptionId) setBitmapId({ h: height, id: r.inscriptionId }); }).catch(() => {});
+    }, 500);
+    return () => { live = false; clearTimeout(t); };
+  }, [height]);
+  // The preview frame can't run the on-chain lookup module, so it gets the BITMAP id resolved here; the downloaded file never needs it.
+  const previewHtml = useMemo(() => buildTinyStudioHtml({ height, bitmapId: bitmapId?.h === height ? bitmapId.id : undefined }), [height, bitmapId]);
   const html = useMemo(() => buildTinyStudioHtml({ height }), [height]);
   const ready = packed && packed.h === height ? packed : null;
 
@@ -59,7 +70,7 @@ function TinyStudio() {
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
-        <iframe title="Tiny Studio" srcDoc={html} sandbox="allow-scripts allow-downloads" className="h-[560px] w-full rounded-lg border border-border bg-background" />
+        <iframe title="Tiny Studio" srcDoc={previewHtml} sandbox="allow-scripts allow-downloads" className="h-[560px] w-full rounded-lg border border-border bg-background" />
         <aside className="space-y-4 rounded-lg border border-border bg-card/60 p-4 font-mono text-xs">
           <label className="block space-y-1">
             <span className="text-muted-foreground">STARTING BLOCK</span>
@@ -81,7 +92,7 @@ function TinyStudio() {
             <p>EXPORT .BWVX saves just your blocks (4 bytes each) in the same format Land Forge uses. SAVE .HTML saves a copy of the studio with your build inside — open it and your build is there.</p>
             <p className="text-foreground">PUT IT ON BITCOIN</p>
             <p>ord wallet inscribe --fee-rate &lt;sats/vB&gt; --file tiny-studio.html --compress. You sign and send it yourself — BitmapWin never does. It needs no website to work: everything is inside the file.</p>
-            <p>FETCH ON-CHAIN: type a block number or an inscription id. Once the studio is on Bitcoin, it finds that BITMAP's newest Land Forge or Tiny Studio build straight from the chain so you can walk it, erase and add blocks, and save your remix. Here in the preview it can't reach the chain, so it keeps the starter ground.</p>
+            <p>FETCH ON-CHAIN: type a block number or an inscription id. Once the studio is on Bitcoin, it finds that BITMAP's newest Land Forge or Tiny Studio build straight from the chain so you can walk it, erase and add blocks, and save your remix. It also runs here in the preview: change STARTING BLOCK and it loads that BITMAP's inscribed build if one exists.</p>
             <p>Anyone can remix any build on their own screen; only the holder of that BITMAP can make a change permanent on Bitcoin. To place a build with its exact parcel limits, use Land Forge.</p>
           </div>
         </aside>
