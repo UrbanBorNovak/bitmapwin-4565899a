@@ -48,7 +48,7 @@ button.on{border-color:#f7931a;color:#f7931a}.s{width:20px;height:20px;padding:0
 </style></head><body><canvas id="c"></canvas><div id="u"><input id="h" type="number" value="${h}" style="width:80px"><button id="g">SEED</button><button id="m" class="on">PLACE</button><span id="p"></span><button id="x">EXPORT .BWVX</button><button id="v">SAVE .HTML</button></div><div id="i"></div>
 <script id="d" type="text/plain" data-b="${esc(opts.payload ?? "")}"></script><script>
 const P=${pal},S=64,C=document.getElementById('c'),G=C.getContext('webgl',{antialias:true}),$=i=>document.getElementById(i);
-let V=new Map,K=0,E=0,H=${h},yaw=.8,pit=.6,dist=90,tx=32,ty=4,tz=32,dirty=1;
+let V=new Map,K=0,E=0,H=+document.querySelector('meta[name=bitmapwin]').content.split(';')[1]||0,yaw=.8,pit=.6,dist=90,tx=32,ty=4,tz=32,dirty=1;
 const key=(x,y,z)=>x+','+y+','+z;
 function seed(h){V.clear();let s=(h*2654435761)>>>0;const r=()=>((s=(Math.imul(s^(s>>>15),2246822507)+1)>>>0)/4294967296);const a=r()*6,b=r()*6;
 for(let x=0;x<S;x++)for(let z=0;z<S;z++){const t=1+Math.floor(1.5+Math.sin(x/9+a)+Math.cos(z/11+b));for(let y=0;y<t;y++)V.set(key(x,y,z),y==t-1?0:1)}dirty=1}
@@ -79,11 +79,11 @@ function edit(px,py){const r=pick(px,py);if(!r)return;if(E&&r.hit){if(r.hit[1]>0
 let dn=null,mv=0;C.onpointerdown=e=>{dn=[e.clientX,e.clientY];mv=0;C.setPointerCapture(e.pointerId)};
 C.onpointermove=e=>{if(!dn)return;const dx=e.clientX-dn[0],dy=e.clientY-dn[1];mv+=Math.abs(dx)+Math.abs(dy);yaw+=dx*.008;pit=Math.max(.05,Math.min(1.5,pit+dy*.008));dn=[e.clientX,e.clientY]};
 C.onpointerup=e=>{if(dn&&mv<6)edit(e.clientX,e.clientY);dn=null};C.onwheel=e=>{e.preventDefault();dist=Math.max(10,Math.min(220,dist*(e.deltaY>0?1.1:.9)))};
-P.forEach((c,i)=>{const b=document.createElement('button');b.className='s'+(i?'':' on');b.style.background=c;b.onclick=()=>{K=i;document.querySelectorAll('.s').forEach(q=>q.classList.remove('on'));b.classList.add('on')};$('p').append(b)});
+$('p').innerHTML='';P.forEach((c,i)=>{const b=document.createElement('button');b.className='s'+(i?'':' on');b.style.background=c;b.onclick=()=>{K=i;document.querySelectorAll('.s').forEach(q=>q.classList.remove('on'));b.classList.add('on')};$('p').append(b)});
 $('m').onclick=()=>{E^=1;$('m').textContent=E?'ERASE':'PLACE'};$('g').onclick=()=>{H=Math.max(0,+$('h').value|0);seed(H)};
 const save=(data,name,type)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click()};
 $('x').onclick=()=>{const s=pack(),b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);save(b,H+'.bwvx','application/octet-stream')};
 $('v').onclick=()=>{const html='<!doctype html>'+document.documentElement.outerHTML.replace(/data-b="[^"]*"/,'data-b="'+btoa(pack())+'"').replace(/content="BWVX1;\\d+/,'content="BWVX1;'+H);save(html,H+'.bitmap-build.html','text/html')};
-const b0=$('d').dataset.b;b0?load(b0):seed(H);draw();
+$('h').value=H;const b0=$('d').dataset.b;b0?load(b0):seed(H);draw();
 </script></body></html>`;
 }
