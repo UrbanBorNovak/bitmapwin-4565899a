@@ -117,6 +117,7 @@ function TinyStudio() {
             <p className="text-foreground">PUT IT ON BITCOIN</p>
             <p>ord wallet inscribe --fee-rate &lt;sats/vB&gt; --file tiny-studio.html --compress. You sign and send it yourself — BitmapWin never does. It needs no website to work: everything is inside the file.</p>
             <p>LOAD: type a block number or an inscription id (Enter works too). You get starter ground right away, replaced by the inscribed build if one exists. Once the studio is on Bitcoin, it finds that BITMAP's newest Land Forge or Tiny Studio build straight from the chain so you can walk it, erase and add blocks, and save your remix. It also runs here in the preview: change STARTING BLOCK and it loads that BITMAP's inscribed build if one exists.</p>
+            <p>GUARDIAN: if the BITMAP has an awakened Guardian, it stands on the lowest open ground of the land. It is only shown — it is never saved into your .BWVX or .HTML. On Bitcoin, the studio shows it when the build itself carries a Guardian (Land Forge assemblies with a baked Guardian).</p>
             <p>Anyone can remix any build on their own screen; only the holder of that BITMAP can make a change permanent on Bitcoin. To place a build with its exact parcel limits, use Land Forge.</p>
           </div>
         </aside>
