@@ -86,7 +86,7 @@ let lt=0;const solid=(x,y,z)=>V.has(key(Math.floor(x),Math.floor(y),Math.floor(z
 function ground(x,z,top){for(let y=Math.min(S-1,Math.floor(top));y>=0;y--)if(solid(x,y,z))return y+1;return 0}
 function step(){const n=performance.now(),dt=Math.min(.05,(n-lt)/1e3||0);lt=n;if(!W)return;
 let f=(KD.KeyW?1:0)-(KD.KeyS?1:0)-jy,r=(KD.KeyD?1:0)-(KD.KeyA?1:0)+jx;const l=Math.hypot(f,r);if(l>1){f/=l;r/=l}
-const sp=(KD.ShiftLeft?14:7)*dt,c=Math.cos(wyaw),s=Math.sin(wyaw),feet=wy-1.6;
+const sp=9*dt,c=Math.cos(wyaw),s=Math.sin(wyaw),feet=wy-1.6;
 const nx=Math.max(.3,Math.min(S-.3,wx+(c*f-s*r)*sp)),nz=Math.max(.3,Math.min(S-.3,wz+(s*f+c*r)*sp));
 const ok=(x,z)=>ground(x,z,feet+1.2)<=feet+1.05&&!solid(x,feet+1.2,z);if(ok(nx,wz))wx=nx;if(ok(wx,nz))wz=nz;
 const g=ground(wx,wz,feet+1.2)+1.6;wy+=(g-wy)*(1-Math.exp(-12*dt))}
@@ -117,10 +117,10 @@ try{const r=await fetch(O+'/content/'+id);if(!r.ok||!(r.headers.get('content-typ
 await Promise.all(ps.map(async seg=>{const[pid,pos]=seg.split('@'),[px,py,pz,q]=pos.split(',').map(Number),pb=await fromId(pid,1);if(typeof pb!='string')return;o.c=-~o.c;let B=[];D(pb,(...v)=>B.push(v));
 const mn=j=>Math.min(...B.map(v=>v[j])),m0=mn(0),m1=mn(1),m2=mn(2);B=B.map(v=>[v[0]-m0,v[1]-m1,v[2]-m2,v[3]]);for(let k=0;k<(q%4+4)%4;k++){const m=Math.max(...B.map(v=>v[0]));B=B.map(v=>[v[2],v[1],m-v[0],v[3]])}
 for(const v of B){const x=v[0]+px,y=v[1]+py,z=v[2]+pz;if(x<sp&&y<sp&&z<sp)o.push([x,y,z,v[3]])}}));return{a:o,s:sp,n:~~o.c+'/'+ps.length}}catch(e){return null}}
-async function fetchBuild(){const q=$('q').value.trim();try{let ids=[q];if(!/^[0-9a-f]{64}i\\d+$/.test(q)){H=Math.max(0,+q|0||+$('h').value|0);$('h').value=H;seed(H);say('looking up…');
+async function fetchBuild(){const q=$('q').value.trim();try{let ids=[q];if(!/^[0-9a-f]{64}i\\d+$/.test(q)){H=Math.max(0,+q|0||+$('h').value|0);$('h').value=H;seed(H);say('…');
 const bid=await(async()=>{try{const m=await import(O+'/content/${OCI_MODULE}');return await m.getBitmapInscriptionId(H)}catch(e){const d=$('d').dataset;if(d.ih==H)return d.i;if(parent!==window)return await new Promise(ok=>{const f=v=>{if(v.data&&v.data.tsH==H){removeEventListener('message',f);ok(v.data.tsId)}};addEventListener('message',f);parent.postMessage({tsAsk:H},'*');setTimeout(()=>ok(null),9e3)});throw e}})();if(!bid)throw 0;const ins=await J('/r/inscription/'+bid),at=await J('/r/sat/'+ins.sat+'/at/-1');ids=[at.id];
 try{const l=await J('/r/sat/'+ins.sat);ids.push(...(l.ids||[]).reverse())}catch(e){}ids=[...new Set(ids)].filter(i=>i&&i!=bid).slice(0,8);if(!ids.length){seed(H);say('no build');return}}
-for(const id of ids){say('reading '+id.slice(0,10)+'…');const b=await fromId(id);if(b){b.a?load(b.a,b.s,1):load(b,0,1);say('loaded '+id.slice(0,10)+(b.n?' · '+b.n+' pieces':''));return}}
+for(const id of ids){const b=await fromId(id);if(b){b.a?load(b.a,b.s,1):load(b,0,1);say('loaded '+id.slice(0,10)+(b.n?' · '+b.n+' pieces':''));return}}
 say('no build')}catch(e){say('offline')}}
 $('f').onclick=fetchBuild;$('q').onkeydown=e=>{if(e.key=='Enter')fetchBuild()};
 const save=(d,n,t)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([d],{type:t}));a.download=n;a.click()};
