@@ -104,7 +104,7 @@ function tool(i){T=i;document.querySelectorAll('.t').forEach((b,j)=>b.classList.
 $('n').onclick=()=>{W^=1;if(W){wx=wz=S/2;wyaw=yaw+Math.PI;wpit=-.2;wy=ground(wx,wz,S)+1.6}jx=jy=0;$('n').textContent='VIEW: '+(W?'WALK':'ORBIT');$('j').className=W&&matchMedia('(pointer:coarse)').matches?'w':'';hud()};
 $('p').innerHTML='';P.forEach((c,i)=>{const b=document.createElement('button');b.className='s'+(i?'':' on');b.style.background=c;b.onclick=()=>{K=i;document.querySelectorAll('.s').forEach(q=>q.classList.remove('on'));b.classList.add('on')};$('p').append(b)});
 
-let M='';const say=t=>{M=t+' · ';hud()},O=location.hostname=='ordinals.com'?'':'https://ordinals.com',J=u=>fetch(O+u).then(r=>{if(!r.ok)throw 0;return r.json()});
+let M='';const say=t=>{M=t+' · ';hud()},O=location.hostname=='ordinals.com'?'':'https://ordinals.com',F0=fetch;if(O)window.fetch=(u,o)=>F0(typeof u=='string'&&u[0]=='/'?O+u:u,o);const J=u=>fetch(O+u).then(r=>{if(!r.ok)throw 0;return r.json()});
 function grab(t){const m=t.match(/data-b="([A-Za-z0-9+/=]+)"/)||t.match(/<script id="bwvx"[^>]*data-format="BWVX[12]"[^>]*>([A-Za-z0-9+/=\\s]+)<\\/script>/);return m?m[1].replace(/\\s/g,''):null}
 function cb(b){let i=0;const L=a=>a<24?a:a==24?b[i++]:a==25?(i+=2,b[i-2]<<8|b[i-1]):a==26?(i+=4,(b[i-4]<<24>>>0)+(b[i-3]<<16)+(b[i-2]<<8)+b[i-1]):0;
 const I=()=>{const x=b[i++],t=x>>5,a=x&31;if(t==0)return L(a);if(t==1)return-1-L(a);if(t==2||t==3){if(a==31){let s=t==3?"":[];while(b[i]!=255){const c=I();t==3?s+=c:s.push(...c)}i++;return s}const n=L(a),s=b.slice(i,i+n);i+=n;return t==3?new TextDecoder().decode(s):Array.from(s)}
