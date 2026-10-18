@@ -3,7 +3,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { episodeLength, generateEpisode, parseEpisode, sceneAt, type ToonEpisode } from "@/lib/toon-script";
 import { SceneEditor } from "@/components/toon/SceneEditor";
 import { ToonLibraryPanel } from "@/components/toon/ToonLibraryPanel";
-import type { ToonCharacter } from "@/lib/toon-library";
+import type { ContinuityNote, ToonCharacter } from "@/lib/toon-library";
 
 const ToonStage3D = lazy(() => import("@/components/toon/ToonStage3D"));
 
@@ -112,6 +112,7 @@ function ToonPage() {
   const [recording, setRecording] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [characters, setCharacters] = useState<ToonCharacter[]>([]);
+  const [notes, setNotes] = useState<ContinuityNote[]>([]);
   const stageRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const total = useMemo(() => episodeLength(episode), [episode]);
@@ -216,7 +217,7 @@ function ToonPage() {
         </div>
 
         <aside className="space-y-4">
-          <ToonLibraryPanel episode={episode} onOpen={load} onCharacters={setCharacters} />
+          <ToonLibraryPanel episode={episode} onOpen={load} onCharacters={setCharacters} onNotes={setNotes} />
           <section className="rounded-lg border border-border bg-card p-4">
             <div className="label text-signal">EPISODE GENERATOR</div>
             <div className="mt-3 flex gap-2 font-mono text-xs">
@@ -229,7 +230,7 @@ function ToonPage() {
               <button className="btn-term-ghost" onClick={() => load({ ...episode, aspect: vertical ? "16:9" : "9:16" })}>[ {vertical ? "16:9 TV" : "9:16 REEL"} ]</button>
             </div>
           </section>
-          <SceneEditor episode={episode} characters={characters}
+          <SceneEditor episode={episode} characters={characters} notes={notes}
             onChange={(e) => { setEpisode(e); setScript(JSON.stringify(e, null, 2)); setScriptError(null); setTime((t) => Math.min(t, episodeLength(e))); }}
             onSeek={(t) => { setPlaying(false); setTime(t + 0.01); }} />
           <section className="rounded-lg border border-border bg-card p-4">

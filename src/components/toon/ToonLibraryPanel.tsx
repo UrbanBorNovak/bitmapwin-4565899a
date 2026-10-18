@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import type { ToonEpisode } from "@/lib/toon-script";
-import { applyCast, autosaveEpisode, episodeFromTemplate, toTemplate, isMigrated, loadLibrary, markMigrated, mergeLibraries, newId, saveLibrary, upsertEpisode, type ToonCharacter, type ToonLibrary } from "@/lib/toon-library";
+import { applyCast, autosaveEpisode, episodeFromTemplate, toTemplate, isMigrated, loadLibrary, markMigrated, mergeLibraries, newId, saveLibrary, upsertEpisode, type ContinuityNote, type ToonCharacter, type ToonLibrary } from "@/lib/toon-library";
 import { CharacterProfiles } from "@/components/toon/CharacterProfiles";
+import { ContinuityNotebook } from "@/components/toon/ContinuityNotebook";
 import { fetchCloudLibrary, pushCloudLibrary } from "@/lib/toon-cloud";
 import { useAuthSession } from "@/lib/auth";
 
@@ -11,12 +12,14 @@ const btn = "border border-border px-2 py-1 font-mono text-[11px] hover:border-b
 type Sync = "local" | "loading" | "synced" | "saving" | "error";
 
 /** Series, saved episodes and recurring casts. Signed in: the account copy is the source of truth. */
-export function ToonLibraryPanel({ episode, onOpen, onCharacters }: { episode: ToonEpisode; onOpen: (e: ToonEpisode) => void; onCharacters?: (c: ToonCharacter[]) => void }) {
+export function ToonLibraryPanel({ episode, onOpen, onCharacters, onNotes }: { episode: ToonEpisode; onOpen: (e: ToonEpisode) => void; onCharacters?: (c: ToonCharacter[]) => void; onNotes?: (n: ContinuityNote[]) => void }) {
   const { user, loading } = useAuthSession();
   const [lib, setLib] = useState<ToonLibrary>({ series: [], casts: [] });
   const [seriesId, setSeriesId] = useState("");
   const activeCharacters = lib.series.find((s) => s.id === seriesId)?.characters;
   useEffect(() => { onCharacters?.(activeCharacters ?? []); }, [activeCharacters, onCharacters]);
+  const activeNotes = lib.series.find((s) => s.id === seriesId)?.notes;
+  useEffect(() => { onNotes?.(activeNotes ?? []); }, [activeNotes, onNotes]);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [newSeries, setNewSeries] = useState("");
   const [castName, setCastName] = useState("");
@@ -162,6 +165,10 @@ export function ToonLibraryPanel({ episode, onOpen, onCharacters }: { episode: T
             <CharacterProfiles characters={series.characters ?? []}
               castHeights={[...new Set(episode.scenes.flatMap((sc) => sc.cast.map((a) => a.height)))]}
               onChange={(characters) => commit({ ...lib, series: lib.series.map((s) => (s.id === series.id ? { ...s, characters } : s)) }, "CHARACTERS SAVED.")} />
+          )}
+          {series && (
+            <ContinuityNotebook notes={series.notes ?? []} episodeTitle={episode.title}
+              onChange={(notes) => commit({ ...lib, series: lib.series.map((s) => (s.id === series.id ? { ...s, notes } : s)) }, "NOTEBOOK SAVED.")} />
           )}
         </>
       )}

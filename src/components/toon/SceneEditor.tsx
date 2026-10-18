@@ -1,5 +1,6 @@
 import { useState } from "react";
-import type { ToonCharacter } from "@/lib/toon-library";
+import type { ContinuityNote, ToonCharacter } from "@/lib/toon-library";
+import { ContinuityHint } from "@/components/toon/ContinuityNotebook";
 import { CharacterHint } from "@/components/toon/CharacterProfiles";
 import { MAX_SCENE_SECONDS, MAX_SCENES, type Pose, type Shot, type ToonEpisode, type ToonLine, type ToonScene } from "@/lib/toon-script";
 
@@ -16,7 +17,7 @@ const field = "w-full border border-border bg-background px-2 py-1 font-mono tex
 const num = (v: string, min: number, max: number) => Math.min(max, Math.max(min, Number(v) || 0));
 
 /** Visual editor for the episode script; every change produces a new episode object. */
-export function SceneEditor({ episode, onChange, onSeek, characters = [] }: { episode: ToonEpisode; onChange: (e: ToonEpisode) => void; onSeek: (t: number) => void; characters?: ToonCharacter[] }) {
+export function SceneEditor({ episode, onChange, onSeek, characters = [], notes = [] }: { episode: ToonEpisode; onChange: (e: ToonEpisode) => void; onSeek: (t: number) => void; characters?: ToonCharacter[]; notes?: ContinuityNote[] }) {
   const [sel, setSel] = useState(0);
   const i = Math.min(sel, episode.scenes.length - 1);
   const s = episode.scenes[i]!;
@@ -87,6 +88,7 @@ export function SceneEditor({ episode, onChange, onSeek, characters = [] }: { ep
       )}
 
       <div className="label mt-4 text-signal">DIALOGUE</div>
+      <ContinuityHint notes={notes} />
       {s.lines.map((l, k) => (
         <div key={k} className="mt-2 space-y-1 border-l border-border pl-2">
           <CharacterHint c={characters.find((c) => c.height === s.cast[l.speaker]?.height)} />
