@@ -76,7 +76,8 @@ function TinyStudio() {
           )}
           <div className="space-y-2 border-t border-border pt-3 text-muted-foreground">
             <p className="text-foreground">HOW TO USE</p>
-            <p>Drag to look around, scroll to zoom. Pick a colour and click to add a block; switch PLACE to ERASE to remove one. SEED rebuilds the starting ground for any block number.</p>
+            <p>VIEW switches between ORBIT (drag to turn, scroll or pinch to zoom) and WALK (W A S D to move, Shift to run, drag to look; on a phone, drag in the left circle to move).</p>
+            <p>LOOK, PLACE and ERASE decide what a click or tap does — LOOK never changes anything. Keys 1, 2, 3 pick them, V switches the view. SEED rebuilds the starting ground for any block number.</p>
             <p>EXPORT .BWVX saves just your blocks (4 bytes each) in the same format Land Forge uses. SAVE .HTML saves a copy of the studio with your build inside — open it and your build is there.</p>
             <p className="text-foreground">PUT IT ON BITCOIN</p>
             <p>ord wallet inscribe --fee-rate &lt;sats/vB&gt; --file tiny-studio.html --compress. You sign and send it yourself — BitmapWin never does. It needs no website to work: everything is inside the file.</p>
