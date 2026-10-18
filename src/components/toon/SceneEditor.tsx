@@ -54,14 +54,14 @@ export function SceneEditor({ episode, onChange, onSeek }: { episode: ToonEpisod
           <input type="range" min={1} max={MAX_SCENE_SECONDS} step={0.5} value={s.duration} className="w-full" onChange={(e) => patch({ duration: Number(e.target.value) })} />
         </label>
         <label className="text-[11px] text-muted-foreground">Sound effect
-          <select className={field} value={s.sfx ?? ""} onChange={(e) => patch({ sfx: e.target.value || undefined })}>
+          <select className={field} value={s.sfx ?? ""} onChange={(e) => patch({ sfx: e.target.value })}>
             {SFX.map((x) => <option key={x} value={x}>{x || "None"}</option>)}
           </select>
         </label>
         <div className="flex items-end gap-1">
-          <button className="btn-term-ghost text-[11px]" onClick={() => onSeek(start)}>[ PREVIEW ]</button>
+          <button className="btn-term-ghost text-[11px]" onClick={() => onSeek(start)}>PREVIEW</button>
           <button disabled={episode.scenes.length <= 1} className="btn-term-ghost text-[11px] disabled:opacity-40"
-            onClick={() => { setScenes(episode.scenes.filter((_, k) => k !== i)); setSel(Math.max(0, i - 1)); }}>[ DELETE ]</button>
+            onClick={() => { setScenes(episode.scenes.filter((_, k) => k !== i)); setSel(Math.max(0, i - 1)); }}>DELETE</button>
         </div>
       </div>
 
