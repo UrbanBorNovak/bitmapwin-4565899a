@@ -225,6 +225,10 @@ export async function validateOffer(psbtBase64: string): Promise<OfferValidation
         .filter((output) => output.address === sellerAddress)
         .reduce((sum, output) => sum + output.valueSats, 0)
     : 0;
+  // The signed output must pay the address that holds the inscription.
+  if (sellerAddress && decoded.outputs[0]?.address !== sellerAddress) {
+    throw new Error("THE SIGNED PRICE OUTPUT DOES NOT PAY THE WALLET HOLDING THIS BITMAP");
+  }
   const priceSats = toSeller > 0 ? toSeller : decoded.totalOutSats;
 
   return {
