@@ -166,22 +166,22 @@ function Cover({ issue, isNew, onOpen, inscribed, built }: { issue: ComicIssue; 
     <button
       type="button"
       onClick={onOpen}
-      className="chronicle-in relative h-[132px] w-[118px] shrink-0 overflow-hidden border-2 border-foreground bg-background text-left hover:border-bitcoin"
+      className="chronicle-in group relative h-[200px] min-w-[150px] flex-1 overflow-hidden border border-border-strong bg-background text-left shadow-[inset_0_1px_0_color-mix(in_oklab,var(--foreground)_10%,transparent)] transition-all duration-300 hover:-translate-y-0.5 hover:border-bitcoin hover:shadow-[0_8px_24px_-12px_var(--bitcoin)]"
     >
       <Halftone seed={issue.height} kind={issue.height % 4} />
       {built || inscribed ? (
-        <div className="absolute inset-x-0 top-[26px] bottom-[22px]"><Guardian3D height={issue.height} guardian={!!inscribed} /></div>
+        <div className="absolute inset-x-0 top-[34px] bottom-[34px] transition-transform duration-500 group-hover:scale-105"><Guardian3D height={issue.height} guardian={!!inscribed} /></div>
       ) : (<>
-        <VoxelLand height={issue.height} className="absolute inset-x-0 bottom-0 h-[86px] w-full" />
-        <div className="absolute right-0 top-4 opacity-40 grayscale"><GuardianPortrait height={issue.height} size={40} /></div>
+        <VoxelLand height={issue.height} className="absolute inset-x-0 bottom-2 h-[130px] w-full transition-transform duration-500 group-hover:scale-105" />
+        <div className="absolute right-1 top-7 opacity-40 grayscale"><GuardianPortrait height={issue.height} size={48} /></div>
       </>)}
-      <div className="absolute inset-x-0 top-0 flex justify-between bg-foreground px-1 font-mono text-[9px] font-bold text-background">
-        <span>#{issue.height}</span>
-        {isNew && <span className="text-bitcoin">NEW</span>}
+      <div className="absolute inset-x-0 top-0 flex items-center justify-between border-b border-border-strong bg-background/85 px-2 py-1 font-mono text-[10px] font-bold backdrop-blur-sm">
+        <span className="text-foreground">#{issue.height}</span>
+        {isNew && <span className="flex items-center gap-1 text-bitcoin"><span className="size-1.5 animate-pulse bg-bitcoin" />NEW</span>}
       </div>
-      <div className="display absolute left-1 top-4 w-[70px] text-[10px] leading-tight text-bitcoin">{issue.title}</div>
-      <div className="absolute inset-x-0 bottom-0 border-t border-foreground bg-background/90 px-1 font-mono text-[8px] leading-tight">
-        {issue.block.txCount.toLocaleString("en-US")} TX · {issue.block.medianFee != null ? `${issue.block.medianFee.toFixed(1)} S/VB` : "—"}
+      <div className="display absolute left-2 top-7 w-[70%] text-sm leading-tight text-bitcoin drop-shadow-[0_1px_0_var(--background)]">{issue.title}</div>
+      <div className="absolute inset-x-0 bottom-0 border-t border-border-strong bg-background/90 px-2 py-1 font-mono text-[9px] leading-tight backdrop-blur-sm">
+        <span className="text-signal">{issue.block.txCount.toLocaleString("en-US")} TX</span> · {issue.block.medianFee != null ? `${issue.block.medianFee.toFixed(1)} S/VB` : "—"}
         <div className="truncate text-muted-foreground">{(issue.block.pool ?? "UNKNOWN").toUpperCase()}</div>
       </div>
     </button>
@@ -221,19 +221,22 @@ export function BlockChronicles() {
 
   return (
     <section className="border-b border-border bg-card" data-no-translate>
-      <div className="mx-auto flex max-w-[1600px] items-stretch gap-3 overflow-x-auto px-3 py-3 md:px-5">
-        <div className="flex shrink-0 flex-col justify-between">
-          <div className="label text-bitcoin">THE BLOCK<br />CHRONICLES</div>
+      <div className="mx-auto max-w-[1600px] px-3 pt-3 md:px-5 md:pt-5">
+      <div className="flex items-stretch gap-3 overflow-x-auto border border-border-strong bg-background/60 p-3 backdrop-blur-sm">
+        <div className="flex w-[130px] shrink-0 flex-col justify-between border-r border-border pr-3">
+          <div>
+            <div className="label flex items-center gap-2 text-bitcoin"><span className="size-2 bg-bitcoin" />CHRONICLES</div>
+            <div className="display mt-2 text-xl leading-none">THE<br />BLOCK<br /><span className="text-bitcoin">COMICS</span></div>
+          </div>
           <div className="font-mono text-[9px] text-muted-foreground">{isError ? "FEED OFFLINE" : "ONE ISSUE / BLOCK"}</div>
         </div>
         {next != null && (
-          <div className="flex h-[132px] w-[118px] shrink-0 flex-col items-center justify-center border-2 border-dashed border-signal p-2 text-center">
-            <span className="size-2 animate-pulse bg-signal" aria-hidden="true" />
-            <div className="mt-2 font-mono text-[10px] text-signal">ISSUE #{next}</div>
+          <div className="flex h-[200px] w-[150px] shrink-0 flex-col items-center justify-center border border-dashed border-signal bg-signal/5 p-3 text-center">
+            <span className="size-3 animate-pulse bg-signal shadow-[0_0_12px_var(--signal)]" aria-hidden="true" />
+            <div className="mt-3 font-mono text-xs font-bold text-signal">ISSUE #{next}</div>
             <div className="mt-1 font-mono text-[9px] text-muted-foreground">INKING IN THE MEMPOOL…</div>
           </div>
         )}
-        <div className="w-px shrink-0 border-l border-dashed border-border" aria-hidden="true" />
         {issues.length === 0 && !isError && <div className="self-center font-mono text-xs text-muted-foreground">PRINTING LATEST ISSUES…</div>}
         {shown.map((iss, i) => {
           const at = cur * ISSUES_PER_PAGE + i;
@@ -242,7 +245,7 @@ export function BlockChronicles() {
           );
         })}
         {issues.length > ISSUES_PER_PAGE && (
-          <div className="flex h-[132px] w-[70px] shrink-0 flex-col items-center justify-center gap-1">
+          <div className="flex h-[200px] w-[70px] shrink-0 flex-col items-center justify-center gap-2 border-l border-border pl-3">
             <button
               type="button"
               className="border border-border bg-background px-1 py-1 font-mono text-[9px] uppercase text-muted-foreground hover:border-bitcoin hover:text-foreground disabled:opacity-30"
@@ -262,6 +265,7 @@ export function BlockChronicles() {
             </button>
           </div>
         )}
+      </div>
       </div>
       <Dialog open={current != null} onOpenChange={(o) => !o && setOpen(null)}>
         <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
