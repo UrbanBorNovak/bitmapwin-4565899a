@@ -8,9 +8,9 @@ import { supabase } from "@/integrations/supabase/client";
 async function heightsFrom(table: "trades" | "offers" | "bitmap_forge_builds", openOnly = false): Promise<number[]> {
   const out: number[] = [];
   for (let from = 0; from < 50_000; from += 1000) {
-    let q = supabase.from(table).select("bitmap_height").order("bitmap_height").range(from, from + 999);
-    if (openOnly) q = q.eq("status", "open");
-    const { data, error } = await q;
+    const { data, error } = openOnly
+      ? await supabase.from("offers").select("bitmap_height").eq("status", "open").order("bitmap_height").range(from, from + 999)
+      : await supabase.from(table).select("bitmap_height").order("bitmap_height").range(from, from + 999);
     if (error) throw new Error(`sitemap ${table}: ${error.message}`);
     for (const r of data ?? []) if (Number.isInteger((r as { bitmap_height: number }).bitmap_height)) out.push((r as { bitmap_height: number }).bitmap_height);
     if (!data || data.length < 1000) break;
