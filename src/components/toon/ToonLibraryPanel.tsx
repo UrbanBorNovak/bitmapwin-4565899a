@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import type { ToonEpisode } from "@/lib/toon-script";
-import { applyCast, isMigrated, loadLibrary, markMigrated, mergeLibraries, newId, saveLibrary, upsertEpisode, type ToonLibrary } from "@/lib/toon-library";
+import { applyCast, episodeFromTemplate, toTemplate, isMigrated, loadLibrary, markMigrated, mergeLibraries, newId, saveLibrary, upsertEpisode, type ToonLibrary } from "@/lib/toon-library";
 import { fetchCloudLibrary, pushCloudLibrary } from "@/lib/toon-cloud";
 import { useAuthSession } from "@/lib/auth";
 
@@ -102,6 +102,24 @@ export function ToonLibraryPanel({ episode, onOpen }: { episode: ToonEpisode; on
               const rest = lib.series.filter((s) => s.id !== series.id);
               commit({ ...lib, series: rest }, "SERIES DELETED."); setSeriesId(rest[0]?.id ?? ""); setCurrentId(null);
             }}>DELETE SERIES</button>
+          </div>
+          <div className="mt-3 border border-dashed border-border p-2">
+            <div className="font-mono text-[10px] text-muted-foreground">
+              SERIES TEMPLATE · {series?.template ? `SET ${new Date(series.template.savedAt).toLocaleDateString()} · ${series.template.episode.scenes.length} SCENES · ${series.template.episode.aspect}` : "NONE YET"}
+            </div>
+            <p className="mt-1 text-[11px] text-muted-foreground">Keeps the cast, BITMAP locations, camera moves, timing, format and sound effects. Dialogue starts empty.</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button className={btn} disabled={!series} onClick={() => {
+                if (!series) return;
+                if (series.template && !confirm("Replace this series' template with the current episode?")) return;
+                commit({ ...lib, series: lib.series.map((s) => (s.id === series.id ? { ...s, template: { savedAt: Date.now(), episode: toTemplate(episode) } } : s)) }, "TEMPLATE SET FROM THIS EPISODE.");
+              }}>{series?.template ? "UPDATE TEMPLATE" : "USE AS TEMPLATE"}</button>
+              <button className="btn-term text-[11px]" disabled={!series?.template} onClick={() => {
+                const next = series && episodeFromTemplate(series);
+                if (!next) return;
+                onOpen(next); setCurrentId(null); setNote(`STARTED ${next.title.toUpperCase()} — WRITE THE DIALOGUE, THEN SAVE.`);
+              }}>[ NEXT EPISODE ]</button>
+            </div>
           </div>
           <ol className="mt-3 space-y-1">
             {series?.episodes.map((e, k) => (

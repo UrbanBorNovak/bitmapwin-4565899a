@@ -2,7 +2,8 @@
 import type { ToonEpisode } from "./toon-script";
 
 export interface SavedEpisode { id: string; savedAt: number; episode: ToonEpisode; }
-export interface ToonSeries { id: string; name: string; episodes: SavedEpisode[]; }
+export interface SeriesTemplate { savedAt: number; episode: ToonEpisode; }
+export interface ToonSeries { id: string; name: string; episodes: SavedEpisode[]; template?: SeriesTemplate; }
 export interface ToonCast { id: string; name: string; heights: number[]; }
 export interface ToonLibrary { series: ToonSeries[]; casts: ToonCast[]; }
 
@@ -54,7 +55,8 @@ export function mergeLibraries(a: ToonLibrary, b: ToonLibrary): ToonLibrary {
     if (!cur) { series.set(s.id, s); continue; }
     const eps = new Map(cur.episodes.map((e) => [e.id, e]));
     for (const e of s.episodes) { const x = eps.get(e.id); if (!x || e.savedAt > x.savedAt) eps.set(e.id, e); }
-    series.set(s.id, { ...cur, episodes: [...eps.values()].sort((x, y) => x.savedAt - y.savedAt) });
+    const template = !cur.template || (s.template && s.template.savedAt > cur.template.savedAt) ? s.template ?? cur.template : cur.template;
+    series.set(s.id, { ...cur, ...(template ? { template } : {}), episodes: [...eps.values()].sort((x, y) => x.savedAt - y.savedAt) });
   }
   const casts = new Map(a.casts.map((c) => [c.id, c]));
   for (const c of b.casts) if (!casts.has(c.id)) casts.set(c.id, c);
@@ -64,3 +66,14 @@ export function mergeLibraries(a: ToonLibrary, b: ToonLibrary): ToonLibrary {
 const migratedKey = (userId: string) => `toon-studio-migrated-${userId}`;
 export const isMigrated = (userId: string) => { try { return localStorage.getItem(migratedKey(userId)) === "1"; } catch { return false; } };
 export const markMigrated = (userId: string) => { try { localStorage.setItem(migratedKey(userId), "1"); } catch { /* ignore */ } };
+
+/** Template = the episode's structure (cast, BITMAP locations, camera, timing, format, effects) without its dialogue. */
+export function toTemplate(ep: ToonEpisode): ToonEpisode {
+  return { ...structuredClone(ep), scenes: ep.scenes.map((sc) => ({ ...structuredClone(sc), lines: [] })) };
+}
+
+/** Starts the next episode of a series from its template. */
+export function episodeFromTemplate(series: ToonSeries): ToonEpisode | null {
+  if (!series.template) return null;
+  return { ...structuredClone(series.template.episode), title: `${series.name} — EP${series.episodes.length + 1}` };
+}
