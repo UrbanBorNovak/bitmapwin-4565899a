@@ -18,6 +18,7 @@ import { Route as BreedRouteImport } from './routes/breed'
 import { Route as BuildersRouteImport } from './routes/builders'
 import { Route as BuildsRouteImport } from './routes/builds'
 import { Route as CharacterRouteImport } from './routes/character'
+import { Route as ChurchRouteImport } from './routes/church'
 import { Route as CitiesRouteImport } from './routes/cities'
 import { Route as ClipsRouteImport } from './routes/clips'
 import { Route as CoForgeRouteImport } from './routes/co-forge'
@@ -173,6 +174,11 @@ const BuildsRoute = BuildsRouteImport.update({
 const CharacterRoute = CharacterRouteImport.update({
   id: '/character',
   path: '/character',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChurchRoute = ChurchRouteImport.update({
+  id: '/church',
+  path: '/church',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CitiesRoute = CitiesRouteImport.update({
@@ -745,6 +751,7 @@ export interface FileRoutesByFullPath {
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
   '/character': typeof CharacterRoute
+  '/church': typeof ChurchRoute
   '/cities': typeof CitiesRoute
   '/clips': typeof ClipsRoute
   '/co-forge': typeof CoForgeRoute
@@ -867,6 +874,7 @@ export interface FileRoutesByTo {
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
   '/character': typeof CharacterRoute
+  '/church': typeof ChurchRoute
   '/cities': typeof CitiesRoute
   '/clips': typeof ClipsRoute
   '/co-forge': typeof CoForgeRoute
@@ -986,6 +994,7 @@ export interface FileRoutesById {
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
   '/character': typeof CharacterRoute
+  '/church': typeof ChurchRoute
   '/cities': typeof CitiesRoute
   '/clips': typeof ClipsRoute
   '/co-forge': typeof CoForgeRoute
@@ -1110,6 +1119,7 @@ export interface FileRouteTypes {
     | '/builders'
     | '/builds'
     | '/character'
+    | '/church'
     | '/cities'
     | '/clips'
     | '/co-forge'
@@ -1232,6 +1242,7 @@ export interface FileRouteTypes {
     | '/builders'
     | '/builds'
     | '/character'
+    | '/church'
     | '/cities'
     | '/clips'
     | '/co-forge'
@@ -1350,6 +1361,7 @@ export interface FileRouteTypes {
     | '/builders'
     | '/builds'
     | '/character'
+    | '/church'
     | '/cities'
     | '/clips'
     | '/co-forge'
@@ -1473,6 +1485,7 @@ export interface RootRouteChildren {
   BuildersRoute: typeof BuildersRoute
   BuildsRoute: typeof BuildsRoute
   CharacterRoute: typeof CharacterRoute
+  ChurchRoute: typeof ChurchRoute
   CitiesRoute: typeof CitiesRoute
   ClipsRoute: typeof ClipsRoute
   CoForgeRoute: typeof CoForgeRoute
@@ -1609,6 +1622,13 @@ declare module '@tanstack/react-router' {
       path: '/character'
       fullPath: '/character'
       preLoaderRoute: typeof CharacterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/church': {
+      id: '/church'
+      path: '/church'
+      fullPath: '/church'
+      preLoaderRoute: typeof ChurchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cities': {
@@ -2536,6 +2556,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuildersRoute: BuildersRoute,
   BuildsRoute: BuildsRoute,
   CharacterRoute: CharacterRoute,
+  ChurchRoute: ChurchRoute,
   CitiesRoute: CitiesRoute,
   ClipsRoute: ClipsRoute,
   CoForgeRoute: CoForgeRoute,
