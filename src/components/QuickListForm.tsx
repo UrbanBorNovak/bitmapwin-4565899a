@@ -10,6 +10,7 @@ import { MARKETPLACE_FEE_PERCENT } from "@/lib/marketplace-fee";
 import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
 import { ListPriceHint } from "@/components/market/ListPriceHint";
+import { EvPricePicker } from "@/components/market/EvPricePicker";
 
 /**
  * One-field listing: pick a price, press the button, the wallet signs the sale
@@ -120,6 +121,13 @@ export function QuickListForm({ height }: { height?: number }) {
           {list.isPending ? "[ BUILDING & SIGNING… ]" : "[ GENERATE & LIST PSBT ]"}
         </button>
       </div>
+      <EvPricePicker
+        height={parcel?.bitmapHeight ?? height ?? null}
+        priceSats={priceSats}
+        onPick={(sats) => {
+          setPrice(unit === "btc" ? (sats / 1e8).toFixed(8).replace(/0+$/, "").replace(/\.$/, "") : String(sats));
+        }}
+      />
       <ListPriceHint priceSats={priceSats} />
 
       {parcels.length > 1 && (
