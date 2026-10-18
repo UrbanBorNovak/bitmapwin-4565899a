@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyCast, autosaveEpisode, episodeFromTemplate, mergeLibraries, toTemplate, upsertEpisode, type ToonLibrary } from "./toon-library";
+import { applyCast, autosaveEpisode, episodeFromTemplate, mergeLibraries, notesFor, toTemplate, upsertEpisode, type ToonLibrary } from "./toon-library";
 import { generateEpisode } from "./toon-script";
 
 describe("toon library", () => {
@@ -72,5 +72,17 @@ describe("continuity notes", () => {
     const a: ToonLibrary = { series: [{ id: "s", name: "S", episodes: [], notes: [n("x", 2)] }], casts: [] };
     const b: ToonLibrary = { series: [{ id: "s", name: "S", episodes: [], notes: [n("x", 2), n("y", 1)] }], casts: [] };
     expect(mergeLibraries(a, b).series[0]!.notes!.map((x) => x.id)).toEqual(["y", "x"]);
+  });
+});
+
+describe("continuity tags", () => {
+  it("filters notes to the ones tagged with a Guardian", () => {
+    const notes = [
+      { id: "a", kind: "event" as const, text: "", episode: "", at: 1, guardians: [840000] },
+      { id: "b", kind: "thread" as const, text: "", episode: "", at: 2, guardians: [77819, 840000] },
+      { id: "c", kind: "event" as const, text: "", episode: "", at: 3 },
+    ];
+    expect(notesFor(notes, 77819).map((n) => n.id)).toEqual(["b"]);
+    expect(notesFor(notes, null).length).toBe(3);
   });
 });

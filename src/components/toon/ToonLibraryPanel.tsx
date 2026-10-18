@@ -167,7 +167,7 @@ export function ToonLibraryPanel({ episode, onOpen, onCharacters, onNotes }: { e
               onChange={(characters) => commit({ ...lib, series: lib.series.map((s) => (s.id === series.id ? { ...s, characters } : s)) }, "CHARACTERS SAVED.")} />
           )}
           {series && (
-            <ContinuityNotebook notes={series.notes ?? []} episodeTitle={episode.title}
+            <ContinuityNotebook notes={series.notes ?? []} characters={series.characters ?? []} episodeTitle={episode.title}
               onChange={(notes) => commit({ ...lib, series: lib.series.map((s) => (s.id === series.id ? { ...s, notes } : s)) }, "NOTEBOOK SAVED.")} />
           )}
         </>

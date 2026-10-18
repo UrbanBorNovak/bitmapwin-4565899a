@@ -7,7 +7,7 @@ export interface SeriesTemplate { savedAt: number; episode: ToonEpisode; }
 /** Recurring Guardian character in a series, keyed by the Guardian's BITMAP block. */
 export interface ToonCharacter { height: number; nickname: string; personality: string; voice: string; relationships: string; }
 /** Continuity note: an episode event, or a storyline thread that can be resolved later. */
-export interface ContinuityNote { id: string; kind: "event" | "thread"; text: string; episode: string; at: number; resolved?: boolean; }
+export interface ContinuityNote { id: string; kind: "event" | "thread"; text: string; episode: string; at: number; resolved?: boolean; guardians?: number[]; }
 export interface ToonSeries { id: string; name: string; episodes: SavedEpisode[]; template?: SeriesTemplate; characters?: ToonCharacter[]; notes?: ContinuityNote[]; }
 export interface ToonCast { id: string; name: string; heights: number[]; }
 export interface ToonLibrary { series: ToonSeries[]; casts: ToonCast[]; }
@@ -111,3 +111,7 @@ export function autosaveEpisode(lib: ToonLibrary, seriesId: string, id: string, 
     }),
   };
 }
+
+/** Notes tagged with a Guardian (by BITMAP block); null = every note. */
+export const notesFor = (notes: ContinuityNote[], guardian: number | null) =>
+  guardian === null ? notes : notes.filter((n) => n.guardians?.includes(guardian));
