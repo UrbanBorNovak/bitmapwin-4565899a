@@ -6,7 +6,9 @@ export interface SavedEpisode { id: string; savedAt: number; episode: ToonEpisod
 export interface SeriesTemplate { savedAt: number; episode: ToonEpisode; }
 /** Recurring Guardian character in a series, keyed by the Guardian's BITMAP block. */
 export interface ToonCharacter { height: number; nickname: string; personality: string; voice: string; relationships: string; }
-export interface ToonSeries { id: string; name: string; episodes: SavedEpisode[]; template?: SeriesTemplate; characters?: ToonCharacter[]; }
+/** Continuity note: an episode event, or a storyline thread that can be resolved later. */
+export interface ContinuityNote { id: string; kind: "event" | "thread"; text: string; episode: string; at: number; resolved?: boolean; }
+export interface ToonSeries { id: string; name: string; episodes: SavedEpisode[]; template?: SeriesTemplate; characters?: ToonCharacter[]; notes?: ContinuityNote[]; }
 export interface ToonCast { id: string; name: string; heights: number[]; }
 export interface ToonLibrary { series: ToonSeries[]; casts: ToonCast[]; }
 
@@ -61,7 +63,9 @@ export function mergeLibraries(a: ToonLibrary, b: ToonLibrary): ToonLibrary {
     const template = !cur.template || (s.template && s.template.savedAt > cur.template.savedAt) ? s.template ?? cur.template : cur.template;
     const chars = new Map((cur.characters ?? []).map((c) => [c.height, c]));
     for (const c of s.characters ?? []) if (!chars.has(c.height)) chars.set(c.height, c);
-    series.set(s.id, { ...cur, ...(template ? { template } : {}), ...(chars.size ? { characters: [...chars.values()] } : {}), episodes: [...eps.values()].sort((x, y) => x.savedAt - y.savedAt) });
+    const notes = new Map((cur.notes ?? []).map((n) => [n.id, n]));
+    for (const n of s.notes ?? []) if (!notes.has(n.id)) notes.set(n.id, n);
+    series.set(s.id, { ...cur, ...(notes.size ? { notes: [...notes.values()].sort((x, y) => x.at - y.at) } : {}), ...(template ? { template } : {}), ...(chars.size ? { characters: [...chars.values()] } : {}), episodes: [...eps.values()].sort((x, y) => x.savedAt - y.savedAt) });
   }
   const casts = new Map(a.casts.map((c) => [c.id, c]));
   for (const c of b.casts) if (!casts.has(c.id)) casts.set(c.id, c);
