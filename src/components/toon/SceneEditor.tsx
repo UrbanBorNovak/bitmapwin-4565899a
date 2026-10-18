@@ -252,7 +252,7 @@ function SceneTimeline({ duration, rows }: { duration: number; rows: TimelineRow
       <div ref={scroller} className="mt-1 overflow-x-auto pb-1" onScroll={(e) => setView({ x: e.currentTarget.scrollLeft, w: e.currentTarget.clientWidth })}>
       <div style={{ width: `${zoom * 100}%` }}>
       <div className="relative h-4 font-mono text-[9px] text-muted-foreground">
-        {ticks.map((t) => <span key={t} className="absolute -translate-x-1/2 first:translate-x-0 last:-translate-x-full" style={{ left: `${(t / duration) * 100}%` }}>{t.toFixed(step < 1 ? 1 : 0)}s</span>)}
+        {ticks.map((t) => <span key={t} className="absolute -translate-x-1/2 first:translate-x-0 last:-translate-x-full" style={{ left: `${(t / duration) * 100}%` }}>{t.toFixed(step < 0.5 ? 2 : step < 1 ? 1 : 0)}s</span>)}
       </div>
       <div className="relative space-y-1">
         {guide !== null && (
