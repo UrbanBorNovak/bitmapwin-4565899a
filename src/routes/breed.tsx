@@ -43,19 +43,23 @@ function Chamber({ title, list, value, onPick, other }: { title: string; list: A
   const [q, setQ] = useState("");
   const shown = list.filter((g) => g.height !== other && (!q || String(g.height).includes(q.trim()))).slice(0, 40);
   return (
-    <section className="bg-card/60 backdrop-blur rounded-lg border border-border p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="label text-primary">{title}</h2>
-        {value && <span className="font-mono text-xs text-signal">{value.height}.BITMAP</span>}
+    <section className={`relative bg-card/60 backdrop-blur rounded-lg border p-4 space-y-3 ${value ? "border-signal/50" : "border-border"}`}>
+      <div className="flex items-center justify-between border-b border-border pb-2">
+        <h2 className="label text-primary">SPECIMEN POD · {title}</h2>
+        <span className={`font-mono text-[10px] ${value ? "text-signal" : "text-muted-foreground"}`}>{value ? "● LOADED" : "○ EMPTY"}</span>
       </div>
       {value ? (
-        <div className="flex items-center gap-3">
-          <GuardianPortrait height={value.height} size={96} />
-          <div className="space-y-1 text-xs">
-            <p className="font-mono text-muted-foreground">{short(value.inscriptionId!)}</p>
-            <p className="label">{value.rarity} · {value.species}</p>
-            <button type="button" onClick={() => onPick(-1)} className="label text-muted-foreground hover:text-primary">CHANGE</button>
+        <div className="space-y-3">
+          <div className="relative mx-auto w-fit rounded-full border border-signal/30 p-3">
+            <GuardianPortrait height={value.height} size={128} />
           </div>
+          <dl className="grid grid-cols-2 gap-x-2 gap-y-1 font-mono text-[11px]">
+            <dt className="text-muted-foreground">SPECIMEN</dt><dd className="text-signal">{value.height}.BITMAP</dd>
+            <dt className="text-muted-foreground">INSCRIPTION</dt><dd>{short(value.inscriptionId!)}</dd>
+            <dt className="text-muted-foreground">TAXONOMY</dt><dd>{value.species}</dd>
+            <dt className="text-muted-foreground">GRADE</dt><dd>{value.rarity}</dd>
+          </dl>
+          <button type="button" onClick={() => onPick(-1)} className="label w-full rounded border border-border py-1.5 text-muted-foreground hover:border-primary hover:text-primary">EJECT SPECIMEN</button>
         </div>
       ) : (
         <>
@@ -129,14 +133,30 @@ function BreedLab() {
 
   return (
     <main className="mx-auto max-w-6xl space-y-6 px-4 py-8">
-      <header className="space-y-2">
+      <header className="space-y-4">
         <OtherthingsBadge child="Guardians + Pets" />
-        <p className="label text-signal">GUARDIAN PEDIGREE · OPEN SIRE ROSTER</p>
-        <h1 className="font-display text-3xl">Breeding Lab</h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          Pick any two inscribed Guardians. Their offspring is worked out from the two inscription ids, so the same pair always hatches the same pet — anyone can check it. Inscribing the pet costs a {PET_SERVICE_FEE}-sat service fee plus the Bitcoin network fee.
-        </p>
-        <p className="label text-muted-foreground">{roster.length} INSCRIBED GUARDIANS AVAILABLE AS PARENTS</p>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="space-y-2">
+            <p className="label text-signal">FACILITY 01 · GUARDIAN GENETICS LABORATORY</p>
+            <h1 className="font-display text-3xl sm:text-4xl">Breeding Lab</h1>
+            <p className="max-w-2xl text-sm text-muted-foreground">
+              Load two inscribed Guardians into the specimen pods. Their offspring is sequenced from the two inscription ids, so the same pair always hatches the same pet — anyone can re-run the test. Inscribing costs a {PET_SERVICE_FEE}-sat service fee plus the Bitcoin network fee.
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border font-mono text-[11px] sm:grid-cols-4">
+          {([
+            ["STATUS", all.isLoading ? "CALIBRATING…" : "● ONLINE", "text-signal"],
+            ["SPECIMEN VAULT", `${roster.length} INSCRIBED`, "text-foreground"],
+            ["SEQUENCER", "DETERMINISTIC · L1", "text-foreground"],
+            ["SERVICE FEE", `${PET_SERVICE_FEE} SATS`, "text-primary"],
+          ] as const).map(([k, v, c]) => (
+            <div key={k} className="bg-card/80 px-3 py-2 backdrop-blur">
+              <p className="text-muted-foreground">{k}</p>
+              <p className={c}>{v}</p>
+            </div>
+          ))}
+        </div>
       </header>
 
       {stable.length > 0 && (
