@@ -155,7 +155,7 @@ function DocsPage() {
           <div className="space-y-2 bg-background p-5 text-sm leading-relaxed text-muted-foreground">
             <div className="display text-base text-foreground">TINY STUDIO</div>
             <p>A 3D voxel viewer and builder in ~5.5 KB packed. ORBIT or WALK, then LOOK, PLACE or ERASE (keys 1–3, V for view). Phones: drag in the left circle to walk.</p>
-            <p>FETCH ON-CHAIN loads a BITMAP's newest Land Forge or Tiny Studio build by block number or inscription id. EXPORT .BWVX saves blocks (4 bytes each, Land Forge format); SAVE .HTML keeps your build inside the file.</p>
+            <p>LOAD (one box, block number or inscription id) shows starter ground, then the BITMAP's newest Land Forge or Tiny Studio build by block number or inscription id. EXPORT .BWVX saves blocks (4 bytes each, Land Forge format); SAVE .HTML keeps your build inside the file.</p>
             <p>Limits: the starter ground is a formula, not the BITMAP's real layout or parcel limits; only standard 64-size builds load (not XL or recursive); block lookup covers up to 969,999 — use an inscription id for newer. Anyone can remix on screen; only the holder can make it permanent on Bitcoin.</p>
             <Link to="/tiny-studio" className="btn-term-ghost inline-block">[ OPEN TINY STUDIO ]</Link>
           </div>

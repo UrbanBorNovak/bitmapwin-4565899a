@@ -48,7 +48,7 @@ export function buildTinyStudioHtml(opts: { height?: number; payload?: string; b
 html,body{margin:0;height:100%;background:#0b0d10;color:#e8e8e8;font:12px monospace;overflow:hidden}canvas{width:100%;height:100%;display:block;touch-action:none}
 #u{position:fixed;left:8px;top:8px;display:flex;flex-wrap:wrap;gap:4px;max-width:96vw}#u *{font:inherit}button,input{background:#14171c;color:#e8e8e8;border:1px solid #2a2f37;border-radius:4px;padding:4px 6px}
 button.on{border-color:#f7931a;color:#f7931a}.s{width:20px;height:20px;padding:0}#i{position:fixed;left:8px;bottom:8px;right:8px;opacity:.75}#j{position:fixed;left:16px;bottom:40px;width:110px;height:110px;border:1px solid #2a2f37;border-radius:50%;display:none;pointer-events:none}#j.w{display:block}
-</style></head><body><canvas id="c"></canvas><div id="u"><input id="h" type="number" value="${h}" style="width:80px"><button id="g">SEED</button><input id="q" placeholder="block # or id" style="width:150px"><button id="f">FETCH ON-CHAIN</button><button id="n">VIEW: ORBIT</button><button id="t0" class="t">LOOK</button><button id="t1" class="t on">PLACE</button><button id="t2" class="t">ERASE</button><span id="p"></span><button id="x">EXPORT .BWVX</button><button id="v">SAVE .HTML</button></div><div id="j"></div><div id="i"></div>
+</style></head><body><canvas id="c"></canvas><div id="u"><input id="h" type="hidden" value="${h}"><input id="q" placeholder="block # or inscription id" style="width:170px"><button id="f">LOAD</button><button id="n">VIEW: ORBIT</button><button id="t0" class="t">LOOK</button><button id="t1" class="t on">PLACE</button><button id="t2" class="t">ERASE</button><span id="p"></span><button id="x">EXPORT .BWVX</button><button id="v">SAVE .HTML</button></div><div id="j"></div><div id="i"></div>
 <script id="d" type="text/plain" data-b="${esc(opts.payload ?? "")}"${opts.bitmapId && /^[0-9a-f]{64}i\d+$/.test(opts.bitmapId) ? ` data-i="${opts.bitmapId}" data-ih="${h}"` : ""}></script><script>
 const P=${pal},C=document.getElementById('c'),G=C.getContext('webgl',{antialias:true}),$=i=>document.getElementById(i);
 let S=64,V=new Map,K=0,T=1,W=0,H=+document.querySelector('meta[name=bitmapwin]').content.split(';')[1]||0,yaw=.8,pit=.6,dist=90,tx=32,ty=4,tz=32,dirty=1,wx=32,wy=20,wz=32,wyaw=0,wpit=-.2,jx=0,jy=0;const KD={};
@@ -103,7 +103,7 @@ onkeydown=e=>{if(e.target.tagName=='INPUT')return;KD[e.code]=1;if(e.key=='1'||e.
 function tool(i){T=i;document.querySelectorAll('.t').forEach((b,j)=>b.classList.toggle('on',j==i));hud()}[0,1,2].forEach(i=>$('t'+i).onclick=()=>tool(i));
 $('n').onclick=()=>{W^=1;if(W){wx=wz=S/2;wyaw=yaw+Math.PI;wpit=-.2;wy=ground(wx,wz,S)+1.6}jx=jy=0;$('n').textContent='VIEW: '+(W?'WALK':'ORBIT');$('j').className=W&&matchMedia('(pointer:coarse)').matches?'w':'';hud()};
 $('p').innerHTML='';P.forEach((c,i)=>{const b=document.createElement('button');b.className='s'+(i?'':' on');b.style.background=c;b.onclick=()=>{K=i;document.querySelectorAll('.s').forEach(q=>q.classList.remove('on'));b.classList.add('on')};$('p').append(b)});
-$('g').onclick=()=>{H=Math.max(0,+$('h').value|0);seed(H)};
+
 let M='';const say=t=>{M=t+' · ';hud()},O=location.hostname=='ordinals.com'?'':'https://ordinals.com',J=u=>fetch(O+u).then(r=>{if(!r.ok)throw 0;return r.json()});
 function grab(t){const m=t.match(/data-b="([A-Za-z0-9+/=]+)"/)||t.match(/<script id="bwvx"[^>]*data-format="BWVX[12]"[^>]*>([A-Za-z0-9+/=\\s]+)<\\/script>/);return m?m[1].replace(/\\s/g,''):null}
 function cb(b){let i=0;const L=a=>a<24?a:a==24?b[i++]:a==25?(i+=2,b[i-2]<<8|b[i-1]):a==26?(i+=4,(b[i-4]<<24>>>0)+(b[i-3]<<16)+(b[i-2]<<8)+b[i-1]):0;
@@ -114,12 +114,12 @@ try{const r=await fetch(O+'/content/'+id);if(!r.ok||!(r.headers.get('content-typ
 await Promise.all(ps.map(async seg=>{const[pid,pos]=seg.split('@'),[px,py,pz,q]=pos.split(',').map(Number),pb=await fromId(pid,1);if(typeof pb!='string')return;o.c=-~o.c;let B=[];D(pb,(...v)=>B.push(v));
 const mn=j=>Math.min(...B.map(v=>v[j])),m0=mn(0),m1=mn(1),m2=mn(2);B=B.map(v=>[v[0]-m0,v[1]-m1,v[2]-m2,v[3]]);for(let k=0;k<(q%4+4)%4;k++){const m=Math.max(...B.map(v=>v[0]));B=B.map(v=>[v[2],v[1],m-v[0],v[3]])}
 for(const v of B){const x=v[0]+px,y=v[1]+py,z=v[2]+pz;if(x<sp&&y<sp&&z<sp)o.push([x,y,z,v[3]])}}));return{a:o,s:sp,n:~~o.c+'/'+ps.length}}catch(e){return null}}
-async function fetchBuild(){const q=$('q').value.trim();try{let ids=[q];if(!/^[0-9a-f]{64}i\\d+$/.test(q)){H=Math.max(0,+q|0||+$('h').value|0);$('h').value=H;say('looking up '+H+'.bitmap on chain…');
+async function fetchBuild(){const q=$('q').value.trim();try{let ids=[q];if(!/^[0-9a-f]{64}i\\d+$/.test(q)){H=Math.max(0,+q|0||+$('h').value|0);$('h').value=H;seed(H);say('looking up '+H+'.bitmap on chain…');
 const bid=await(async()=>{try{const m=await import(O+'/content/${OCI_MODULE}');return await m.getBitmapInscriptionId(H)}catch(e){const d=$('d').dataset;if(d.ih==H)return d.i;if(parent!==window)return await new Promise(ok=>{const f=v=>{if(v.data&&v.data.tsH==H){removeEventListener('message',f);ok(v.data.tsId)}};addEventListener('message',f);parent.postMessage({tsAsk:H},'*');setTimeout(()=>ok(null),9e3)});throw e}})();if(!bid)throw 0;const ins=await J('/r/inscription/'+bid),at=await J('/r/sat/'+ins.sat+'/at/-1');ids=[at.id];
 try{const l=await J('/r/sat/'+ins.sat);ids.push(...(l.ids||[]).reverse())}catch(e){}ids=[...new Set(ids)].filter(i=>i&&i!=bid).slice(0,8);if(!ids.length){seed(H);say(H+'.bitmap has no build yet · starter ground loaded');return}}
 for(const id of ids){say('reading '+id.slice(0,10)+'…');const b=await fromId(id);if(b){b.a?load(b.a,b.s):load(b);say('loaded on-chain build '+id.slice(0,10)+'…'+(b.n?' · '+b.n+' pieces':'')+' · edit and SAVE');return}}
 say('no build found · starter ground kept')}catch(e){say('ordinals.com unreachable · starter ground kept')}}
-$('f').onclick=fetchBuild;
+$('f').onclick=fetchBuild;$('q').onkeydown=e=>{if(e.key=='Enter')fetchBuild()};
 const save=(data,name,type)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click()};
 $('x').onclick=()=>{const s=pack(),b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);save(b,H+'.bwvx','application/octet-stream')};
 $('v').onclick=()=>{const html='<!doctype html>'+document.documentElement.outerHTML.replace(/data-b="[^"]*"/,'data-b="'+btoa(pack())+'"').replace(/content="BWVX[12];\\d+/,'content="BWVX'+(S>64?2:1)+';'+H);save(html,H+'.bitmap-build.html','text/html')};
