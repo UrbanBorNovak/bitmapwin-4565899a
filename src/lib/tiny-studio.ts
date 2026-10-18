@@ -40,7 +40,8 @@ export function unpackBwvx1(bytes: Uint8Array): number[][] {
 
 const esc = (s: string) => s.replace(/[^A-Za-z0-9+/=]/g, "");
 
-export function buildTinyStudioHtml(opts: { height?: number; payload?: string } = {}): string {
+/** bitmapId: optional pre-resolved BITMAP inscription id for `height`, used only when the on-chain OCI module cannot run (e.g. off ordinals.com). */
+export function buildTinyStudioHtml(opts: { height?: number; payload?: string; bitmapId?: string } = {}): string {
   const h = Math.max(0, Math.floor(opts.height ?? 840000));
   const pal = JSON.stringify(BLOCKS.map((b) => b.top));
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="bitmapwin" content="BWVX1;${h};studio"><title>${h}.bitmap · Tiny Studio</title><style>
@@ -48,7 +49,7 @@ html,body{margin:0;height:100%;background:#0b0d10;color:#e8e8e8;font:12px monosp
 #u{position:fixed;left:8px;top:8px;display:flex;flex-wrap:wrap;gap:4px;max-width:96vw}#u *{font:inherit}button,input{background:#14171c;color:#e8e8e8;border:1px solid #2a2f37;border-radius:4px;padding:4px 6px}
 button.on{border-color:#f7931a;color:#f7931a}.s{width:20px;height:20px;padding:0}#i{position:fixed;left:8px;bottom:8px;right:8px;opacity:.75}#j{position:fixed;left:16px;bottom:40px;width:110px;height:110px;border:1px solid #2a2f37;border-radius:50%;display:none;pointer-events:none}#j.w{display:block}
 </style></head><body><canvas id="c"></canvas><div id="u"><input id="h" type="number" value="${h}" style="width:80px"><button id="g">SEED</button><input id="q" placeholder="block # or inscription id" style="width:150px"><button id="f">FETCH ON-CHAIN</button><button id="n">VIEW: ORBIT</button><button id="t0" class="t">LOOK</button><button id="t1" class="t on">PLACE</button><button id="t2" class="t">ERASE</button><span id="p"></span><button id="x">EXPORT .BWVX</button><button id="v">SAVE .HTML</button></div><div id="j"></div><div id="i"></div>
-<script id="d" type="text/plain" data-b="${esc(opts.payload ?? "")}"></script><script>
+<script id="d" type="text/plain" data-b="${esc(opts.payload ?? "")}"${opts.bitmapId && /^[0-9a-f]{64}i\d+$/.test(opts.bitmapId) ? ` data-i="${opts.bitmapId}" data-ih="${h}"` : ""}></script><script>
 const P=${pal},S=64,C=document.getElementById('c'),G=C.getContext('webgl',{antialias:true}),$=i=>document.getElementById(i);
 let V=new Map,K=0,T=1,W=0,H=+document.querySelector('meta[name=bitmapwin]').content.split(';')[1]||0,yaw=.8,pit=.6,dist=90,tx=32,ty=4,tz=32,dirty=1,wx=32,wy=20,wz=32,wyaw=0,wpit=-.2,jx=0,jy=0;const KD={};
 const key=(x,y,z)=>x+','+y+','+z;
@@ -111,7 +112,7 @@ if(t==4){const n=L(a),r=[];for(let k=0;k<n;k++)r.push(I());return r}if(t==5){con
 async function fromId(id){try{const h=(await J('/r/metadata/'+id)).replace(/[^0-9a-f]/gi,''),b=new Uint8Array(h.length/2);for(let k=0;k<b.length;k++)b[k]=parseInt(h.substr(k*2,2),16);const o=cb(b);if(o&&(o.d||o.b))return o.d||o.b}catch(e){}
 try{const r=await fetch(O+'/content/'+id);if(!r.ok||!(r.headers.get('content-type')||'').includes('html'))return null;return grab(await r.text())}catch(e){return null}}
 async function fetchBuild(){const q=$('q').value.trim();try{let ids=[q];if(!/^[0-9a-f]{64}i\\d+$/.test(q)){H=Math.max(0,+q|0||+$('h').value|0);$('h').value=H;say('looking up '+H+'.bitmap on chain…');
-const m=await import(O+'/content/${OCI_MODULE}');const bid=await m.getBitmapInscriptionId(H);if(!bid)throw 0;const ins=await J('/r/inscription/'+bid),at=await J('/r/sat/'+ins.sat+'/at/-1');ids=[at.id];
+const bid=await(async()=>{try{const m=await import(O+'/content/${OCI_MODULE}');return await m.getBitmapInscriptionId(H)}catch(e){const d=$('d').dataset;if(d.ih==H)return d.i;throw e}})();if(!bid)throw 0;const ins=await J('/r/inscription/'+bid),at=await J('/r/sat/'+ins.sat+'/at/-1');ids=[at.id];
 try{const l=await J('/r/sat/'+ins.sat);ids.push(...(l.ids||[]).reverse())}catch(e){}ids=[...new Set(ids)].filter(i=>i&&i!=bid).slice(0,8);if(!ids.length){seed(H);say(H+'.bitmap has no build yet · starter ground loaded');return}}
 for(const id of ids){say('reading '+id.slice(0,10)+'…');const b=await fromId(id);if(b){load(b);say('loaded on-chain build '+id.slice(0,10)+'… · edit and SAVE');return}}
 say('no voxel build found on chain for this BITMAP · starter ground kept')}catch(e){say('could not reach ordinals.com · starter ground kept')}}
