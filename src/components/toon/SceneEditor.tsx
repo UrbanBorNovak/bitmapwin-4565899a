@@ -78,7 +78,19 @@ export function SceneEditor({ episode, onChange, onSeek, characters = [], notes 
           </select>
           <button className="px-2 font-mono text-[11px] text-muted-foreground hover:text-bitcoin" aria-label="Remove Guardian"
             onClick={() => patch({ cast: s.cast.filter((_, j) => j !== k), lines: s.lines.filter((l) => l.speaker !== k).map((l) => ({ ...l, speaker: l.speaker > k ? l.speaker - 1 : l.speaker })) })}>✕</button>
+          <div className="col-span-3 text-[10px] font-mono text-muted-foreground">{a.to ? "START POSITION" : "POSITION"}</div>
           <PositionPad x={a.x} z={a.z} onMove={(x, z) => patch({ cast: s.cast.map((c, j) => (j === k ? { ...c, x, z } : c)) })} />
+          <label className="col-span-3 flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
+            <input type="checkbox" checked={!!a.to} onChange={(e) => patch({ cast: s.cast.map((c, j) => {
+              if (j !== k) return c;
+              if (e.target.checked) return { ...c, to: { x: Math.max(-20, Math.min(20, -c.x || 8)), z: c.z } };
+              const { to: _drop, ...rest } = c; return rest;
+            }) })} /> MOVES DURING SCENE
+          </label>
+          {a.to && (<>
+            <div className="col-span-3 text-[10px] font-mono text-bitcoin">END POSITION</div>
+            <PositionPad x={a.to.x} z={a.to.z} start={{ x: a.x, z: a.z }} onMove={(x, z) => patch({ cast: s.cast.map((c, j) => (j === k ? { ...c, to: { x, z } } : c)) })} />
+          </>)}
         </div>
       ))}
       {s.cast.length < 4 && (
@@ -114,7 +126,7 @@ export function SceneEditor({ episode, onChange, onSeek, characters = [], notes 
 }
 
 /** Drag pad: left/right moves x, up/down moves the Guardian back/front (z). Arrow buttons nudge. */
-function PositionPad({ x, z, onMove }: { x: number; z: number; onMove: (x: number, z: number) => void }) {
+function PositionPad({ x, z, onMove, start }: { x: number; z: number; onMove: (x: number, z: number) => void; start?: { x: number; z: number } }) {
   const clamp = (v: number) => Math.max(-20, Math.min(20, Math.round(v)));
   const at = (e: RPointerEvent<HTMLDivElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -130,6 +142,7 @@ function PositionPad({ x, z, onMove }: { x: number; z: number; onMove: (x: numbe
         <div className="absolute inset-x-0 top-1/2 h-px bg-border" /><div className="absolute inset-y-0 left-1/2 w-px bg-border" />
         <span className="absolute left-1 top-0.5 font-mono text-[9px] text-muted-foreground">BACK</span>
         <span className="absolute bottom-0.5 left-1 font-mono text-[9px] text-muted-foreground">FRONT</span>
+        {start && <div className="absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-signal" style={{ left: `${((start.x + 20) / 40) * 100}%`, top: `${((start.z + 20) / 40) * 100}%` }} />}
         <div className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-bitcoin" style={{ left: `${((x + 20) / 40) * 100}%`, top: `${((z + 20) / 40) * 100}%` }} />
       </div>
       <div className="grid grid-cols-3 gap-1">

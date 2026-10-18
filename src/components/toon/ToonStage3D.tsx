@@ -10,22 +10,25 @@ import { FORGE_SPAN } from "@/lib/voxel-populate";
 import { SafeCanvas } from "@/components/game/SafeCanvas";
 import { ForgeBuild3D } from "@/components/game/ForgeBuild3D";
 import { GuardianBody } from "@/components/bitmon/GuardianBody";
-import { sceneAt, type ToonActor, type ToonEpisode, type Shot } from "@/lib/toon-script";
+import { sceneAt, actorPositionAt, type ToonActor, type ToonEpisode, type Shot } from "@/lib/toon-script";
 
 /** One Guardian actor; pose is a procedural cartoon loop on top of its real on-chain body. */
-function Actor({ actor, timeRef }: { actor: ToonActor; timeRef: MutableRefObject<number> }) {
+function Actor({ actor, timeRef, progressRef }: { actor: ToonActor; timeRef: MutableRefObject<number>; progressRef: MutableRefObject<number> }) {
   const g = useRef<Group>(null);
   const dna = useQuery({ ...guardianDnaQuery(actor.height), staleTime: Infinity });
   useFrame(() => {
     const t = timeRef.current, o = g.current;
     if (!o) return;
-    let y = 0, x = actor.x, rz = 0, ry = actor.x > 0 ? -Math.PI / 2 : Math.PI / 2, s = 1;
+    const pos = actorPositionAt(actor, progressRef.current);
+    const dx = actor.to ? actor.to.x - actor.x : 0, dz = actor.to ? actor.to.z - actor.z : 0;
+    let y = 0, x = pos.x, rz = 0, ry = actor.to && (dx || dz) ? Math.atan2(dx, dz) : actor.x > 0 ? -Math.PI / 2 : Math.PI / 2, s = 1;
     if (actor.pose === "idle") y = Math.sin(t * 2) * 0.15;
-    if (actor.pose === "walk") { x = actor.x + Math.sin(t * 0.6) * 4; y = Math.abs(Math.sin(t * 6)) * 0.5; ry = Math.cos(t * 0.6) > 0 ? Math.PI / 2 : -Math.PI / 2; }
+    if (pos.moving && actor.pose !== "jump") y = Math.abs(Math.sin(t * 6)) * 0.5;
+    else if (actor.pose === "walk") { x = actor.x + Math.sin(t * 0.6) * 4; y = Math.abs(Math.sin(t * 6)) * 0.5; ry = Math.cos(t * 0.6) > 0 ? Math.PI / 2 : -Math.PI / 2; }
     if (actor.pose === "talk") { y = Math.abs(Math.sin(t * 8)) * 0.35; s = 1 + Math.sin(t * 8) * 0.03; }
     if (actor.pose === "jump") y = Math.max(0, Math.sin(t * 3.5)) * 4;
     if (actor.pose === "combat") { rz = Math.sin(t * 10) * 0.08; s = 1.08; }
-    o.position.set(x, y, actor.z);
+    o.position.set(x, y, pos.z);
     o.rotation.set(0, ry, rz);
     o.scale.setScalar(10 * s);
   });
@@ -84,6 +87,8 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
   const timeRef = useRef(time);
   timeRef.current = time;
   const { index, local } = sceneAt(episode, time);
+  const progressRef = useRef(0);
+  progressRef.current = episode.scenes[index] ? local / Math.max(0.01, episode.scenes[index]!.duration) : 0;
   const scene = episode.scenes[index];
   if (!scene) return null;
   return (
@@ -93,7 +98,7 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
       <hemisphereLight args={["#ffffff", "#d9b77a", 0.9]} />
       <directionalLight position={[40, 80, 30]} intensity={1.8} />
       <Land key={scene.block} block={scene.block} />
-      {scene.cast.map((a, i) => <Actor key={`${index}-${i}-${a.height}`} actor={a} timeRef={timeRef} />)}
+      {scene.cast.map((a, i) => <Actor key={`${index}-${i}-${a.height}`} actor={a} timeRef={timeRef} progressRef={progressRef} />)}
       <Director shot={scene.shot} local={local} dur={scene.duration} />
     </SafeCanvas>
   );
