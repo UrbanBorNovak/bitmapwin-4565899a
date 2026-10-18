@@ -72,9 +72,13 @@ export const newOid = () => Math.random().toString(36).slice(2, 12);
  * events can change who builds. Visitors always see the build; only the owner
  * and approved builders' ops count, and while locked only the owner's do.
  * Removing someone drops all their ops, so the build is replayed from history. */
-export type RoomConfig = { allow: string[]; locked: boolean; t: number };
-export type Batch = { ops: CoOp[]; t: number; by: string };
-export const openConfig = (): RoomConfig => ({ allow: [], locked: false, t: 0 });
+/** seal: builder batches the owner had accepted at lock time (event id prefixes); deny: builder batches that arrived while locked. */
+export type RoomConfig = { allow: string[]; locked: boolean; t: number; seal: string[]; deny: string[] };
+/** id = the signed Nostr event id; it, not the self-reported time, decides lock rules. */
+export type Batch = { ops: CoOp[]; t: number; by: string; id: string };
+export const openConfig = (): RoomConfig => ({ allow: [], locked: false, t: 0, seal: [], deny: [] });
+export const SEAL_MAX = 4000;
+export const sealId = (eventId: string) => eventId.slice(0, 16);
 
 const HEX64 = /^[0-9a-f]{64}$/;
 export const roomOwner = (room: string): string | null => { const o = room.split("@")[1]; return o && HEX64.test(o) ? o : null; };
@@ -84,20 +88,37 @@ export const makeRoom = (name: string, owner: string) => `${roomName(name)}@${ow
 /** Accepts a control event only if the owner signed it and it is newer than the current one. */
 export function nextConfig(cur: RoomConfig, owner: string, by: string, raw: unknown, t: number): RoomConfig {
   if (by !== owner || t <= cur.t || !raw || typeof raw !== "object") return cur;
-  const c = raw as { allow?: unknown; locked?: unknown };
+  const c = raw as { allow?: unknown; locked?: unknown; seal?: unknown; deny?: unknown };
   const allow = Array.isArray(c.allow) ? c.allow.filter((p): p is string => typeof p === "string" && HEX64.test(p)).slice(0, 200) : [];
-  return { allow, locked: c.locked === true, t };
+  const ids = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && /^[0-9a-f]{16}$/.test(x)).slice(0, SEAL_MAX) : []);
+  return { allow, locked: c.locked === true, t, seal: ids(c.seal), deny: ids(c.deny) };
 }
 
 export function canEdit(cfg: RoomConfig, owner: string, who: string) {
   return who === owner || (!cfg.locked && cfg.allow.includes(who));
 }
 
-/** Replays history under the current rules. A batch sent while locked never counts for non-owners. */
+/**
+ * Whether a builder batch counts. Timestamps are never trusted here: while locked only
+ * batches in the owner's seal count, and batches the owner saw arrive during a lock stay denied.
+ */
+export function batchCounts(b: Batch, cfg: RoomConfig, owner: string) {
+  if (b.by === owner) return true;
+  if (!cfg.allow.includes(b.by)) return false;
+  const id = sealId(b.id);
+  if (cfg.deny.includes(id)) return false;
+  return !cfg.locked || cfg.seal.includes(id);
+}
+
+/** Builder batches the owner currently accepts — what a new lock seals. */
+export const sealFor = (batches: Batch[], cfg: RoomConfig, owner: string) =>
+  [...new Set(batches.filter((b) => b.by !== owner && batchCounts(b, { ...cfg, locked: false }, owner)).map((b) => sealId(b.id)))].slice(-SEAL_MAX);
+
+/** Replays history under the current rules, in any arrival order. */
 export function buildState(batches: Batch[], cfg: RoomConfig, owner: string): CoState {
   const s = emptyState();
   for (const b of batches) {
-    if (b.by !== owner && (!cfg.allow.includes(b.by) || (cfg.locked && b.t >= cfg.t))) continue;
+    if (!batchCounts(b, cfg, owner)) continue;
     b.ops.forEach((o) => applyOp(s, o, { t: b.t, by: b.by }));
   }
   return s;
