@@ -182,7 +182,9 @@ function ToonPage() {
       // Cover-fit the stage into the exact X frame size.
       const s = Math.max(W / gl.width, H / gl.height), dw = gl.width * s, dh = gl.height * s;
       ctx.fillStyle = "#0a0e14"; ctx.fillRect(0, 0, W, H);
+      ctx.filter = styleFilter(episode.style);
       ctx.drawImage(gl, (W - dw) / 2, (H - dh) / 2, dw, dh);
+      ctx.filter = "none";
       drawOverlay(octx, W, H, episode, timeRef.current);
       ctx.drawImage(over, 0, 0);
       rec.addFrame(out, timeRef.current);
@@ -245,6 +247,14 @@ function ToonPage() {
             <input type="range" min={0} max={total} step={0.05} value={time} disabled={recording}
               onChange={(e) => { setPlaying(false); setTime(Number(e.target.value)); }} className="min-w-40 flex-1" aria-label="Timeline" />
             <span className="text-muted-foreground">{time.toFixed(1)}s / {total.toFixed(0)}s</span>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 font-mono text-xs">
+            <span className="label text-signal">ART STYLE</span>
+            {TOON_STYLES.map((s) => (
+              <button key={s.id} disabled={recording} aria-pressed={(episode.style ?? "classic") === s.id}
+                className={(episode.style ?? "classic") === s.id ? "btn-term" : "btn-term-ghost"}
+                onClick={() => { const n = { ...episode, style: s.id as ToonStyle }; setEpisode(n); setScript(JSON.stringify(n, null, 2)); }}>[ {s.label} ]</button>
+            ))}
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2 font-mono text-xs">
             <span className="label text-signal">SOUND</span>
