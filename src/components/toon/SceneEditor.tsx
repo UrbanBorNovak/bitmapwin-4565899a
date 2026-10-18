@@ -59,9 +59,9 @@ export function SceneEditor({ episode, onChange, onSeek }: { episode: ToonEpisod
           </select>
         </label>
         <div className="flex items-end gap-1">
-          <button className="btn-term-ghost text-[11px]" onClick={() => onSeek(start)}>[ PREVIEW ]</button>
+          <button className="btn-term-ghost text-[11px]" onClick={() => onSeek(start)}>PREVIEW</button>
           <button disabled={episode.scenes.length <= 1} className="btn-term-ghost text-[11px] disabled:opacity-40"
-            onClick={() => { setScenes(episode.scenes.filter((_, k) => k !== i)); setSel(Math.max(0, i - 1)); }}>[ DELETE ]</button>
+            onClick={() => { setScenes(episode.scenes.filter((_, k) => k !== i)); setSel(Math.max(0, i - 1)); }}>DELETE</button>
         </div>
       </div>
 
