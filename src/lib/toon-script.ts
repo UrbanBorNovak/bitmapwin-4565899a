@@ -20,8 +20,33 @@ export function actorPositionAt(a: ToonActor, local: number, dur: number): { x: 
   const q = t1 <= t0 ? (local >= t1 ? 1 : 0) : Math.max(0, Math.min(1, (local - t0) / (t1 - t0))), e = q * q * (3 - 2 * q);
   return { x: a.x + (a.to.x - a.x) * e, z: a.z + (a.to.z - a.z) * e, moving: q > 0 && q < 1 };
 }
-export interface ToonLine { at: number; dur: number; speaker: number; text: string; style: "speech" | "shout" | "thought"; }
-export interface ToonScene { block: number; duration: number; shot: Shot; cast: ToonActor[]; lines: ToonLine[]; sfx?: string; }
+export interface ToonLine { at: number; dur: number; speaker: number; text: string; style: "speech" | "shout" | "thought"; cam?: LineCam; }
+export type LineCam = "auto" | "close" | "two" | "ots";
+export type Transition = "cut" | "fade" | "wipe" | "iris";
+export const TRANSITION_SECONDS = 0.45;
+export interface ToonScene { block: number; duration: number; shot: Shot; cast: ToonActor[]; lines: ToonLine[]; sfx?: string; transition?: Transition; cutBlend?: boolean; }
+
+/** The dialogue line whose camera framing is active at scene-local time (latest started line with a non-auto cam). */
+export function activeCut(s: ToonScene, local: number): ToonLine | null {
+  let best: ToonLine | null = null;
+  for (const l of s.lines) if (l.cam && l.cam !== "auto" && local >= l.at && local < l.at + l.dur && (!best || l.at >= best.at)) best = l;
+  return best;
+}
+
+/** Transition coverage at episode time t: 0 = clear, 1 = fully covered. Scene i's transition plays
+ * as an out/in pair around the boundary into scene i (closing the previous scene, opening scene i). */
+export function transitionAt(ep: ToonEpisode, t: number): { kind: Transition; k: number; opening: boolean } | null {
+  let start = 0;
+  for (let i = 0; i < ep.scenes.length; i++) {
+    const s = ep.scenes[i]!, kind = s.transition ?? "cut";
+    if (i > 0 && kind !== "cut") {
+      const d = t - start;
+      if (d >= -TRANSITION_SECONDS && d < TRANSITION_SECONDS) return { kind, k: 1 - Math.abs(d) / TRANSITION_SECONDS, opening: d >= 0 };
+    }
+    start += s.duration;
+  }
+  return null;
+}
 export type Music = "none" | "chill" | "adventure" | "tension";
 export const MUSIC: Music[] = ["none", "chill", "adventure", "tension"];
 export interface ToonEpisode { title: string; aspect: "16:9" | "9:16"; scenes: ToonScene[]; music?: Music; voices?: boolean; style?: import("./toon-style").ToonStyle; }
@@ -101,6 +126,8 @@ export function parseEpisode(json: string): ToonEpisode {
     for (const c of s.cast) if (!okBlock(c.height) || !POSES.includes(c.pose)) throw new Error("Each actor needs a valid block and pose.");
     for (const c of s.cast) if (c.emote && !EMOTES.some((x) => x.v === c.emote)) delete c.emote;
     if (!Array.isArray(s.lines)) s.lines = [];
+    if (s.transition && !["cut", "fade", "wipe", "iris"].includes(s.transition)) delete s.transition;
+    for (const l of s.lines) if (l.cam && !["auto", "close", "two", "ots"].includes(l.cam)) delete l.cam;
   }
   return { title: String(e.title ?? "Untitled"), aspect: e.aspect === "9:16" ? "9:16" : "16:9", scenes: e.scenes, music: MUSIC.includes(e.music as Music) ? (e.music as Music) : "adventure", voices: e.voices !== false, ...(["manga", "ghibli", "shonen", "noir", "retro"].includes(e.style as string) ? { style: e.style as NonNullable<ToonEpisode["style"]> } : {}) };
 }
