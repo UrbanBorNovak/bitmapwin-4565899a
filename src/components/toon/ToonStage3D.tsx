@@ -115,7 +115,7 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
     }
     o.scale.set(10 * s, 10 * s * sy, 10 * s);
     const bodyH = (unitH.current || 1.2) * 10;
-    actorHeights.set(slot, bodyH);
+    actorHeights.set(slot, bodyH); (window as unknown as { __toonH: unknown }).__toonH = Object.fromEntries(actorHeights);
     // Publish the head's screen position for the speech-bubble overlay.
     if (dna.data) {
       head.set(x, y + bodyH * s * sy * 0.92, pos.z).project(camera);
