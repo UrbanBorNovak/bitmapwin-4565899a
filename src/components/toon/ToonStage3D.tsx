@@ -144,19 +144,41 @@ function Land({ block }: { block: number }) {
   );
 }
 
-function Director({ shot, local, dur }: { shot: Shot; local: number; dur: number }) {
+function shotPose(shot: Shot, p: number): [number, number, number, number, number, number] {
+  let x = 0, y = 0, z = 0;
+  if (shot === "wide") { const a = 0.6 + p * 0.5; x = Math.cos(a) * 70; z = Math.sin(a) * 70; y = 38; }
+  if (shot === "orbit") { const a = p * Math.PI * 1.2; x = Math.cos(a) * 34; z = Math.sin(a) * 34; y = 14; }
+  if (shot === "dolly") { x = 6; z = 60 - p * 32; y = 6 + (1 - p) * 6; }
+  if (shot === "dutch") { x = 22; z = 22; y = 5; }
+  if (shot === "crane") { x = 10; z = 20; y = 80 - p * 66; }
+  return [x, y, z, 0, 4, 0];
+}
+
+/** Camera framing for a dialogue cut, built from the speaker's (and listener's) live positions. */
+function cutPose(scene: ToonScene, line: ToonLine, local: number): [number, number, number, number, number, number] {
+  const at = (i: number) => { const a = scene.cast[i]; return a ? actorPositionAt(a, local, scene.duration) : { x: 0, z: 0 }; };
+  const sp = at(line.speaker), oi = scene.cast.findIndex((_, i) => i !== line.speaker), ot = oi >= 0 ? at(oi) : { x: sp.x - 10, z: sp.z + 10 };
+  let dx = sp.x - ot.x, dz = sp.z - ot.z; const L = Math.hypot(dx, dz) || 1; dx /= L; dz /= L;
+  const px = -dz, pz = dx; // perpendicular (camera side)
+  if (line.cam === "close") return [sp.x - dx * 14 + px * 6, 10, sp.z - dz * 14 + pz * 6, sp.x, 9, sp.z];
+  if (line.cam === "ots") return [ot.x - dx * 8 + px * 4, 13, ot.z - dz * 8 + pz * 4, sp.x, 9, sp.z];
+  const mx = (sp.x + ot.x) / 2, mz = (sp.z + ot.z) / 2, span = Math.max(20, L * 1.4);
+  return [mx + px * span, 11, mz + pz * span, mx, 7, mz];
+}
+
+function Director({ scene, local }: { scene: ToonScene; local: number }) {
   const { camera } = useThree();
+  const cur = useRef<number[] | null>(null), last = useRef(local);
   useFrame(() => {
-    const p = Math.min(1, local / dur);
-    let x = 0, y = 0, z = 0;
-    if (shot === "wide") { const a = 0.6 + p * 0.5; x = Math.cos(a) * 70; z = Math.sin(a) * 70; y = 38; }
-    if (shot === "orbit") { const a = p * Math.PI * 1.2; x = Math.cos(a) * 34; z = Math.sin(a) * 34; y = 14; }
-    if (shot === "dolly") { x = 6; z = 60 - p * 32; y = 6 + (1 - p) * 6; }
-    if (shot === "dutch") { x = 22; z = 22; y = 5; }
-    if (shot === "crane") { x = 10; z = 20; y = 80 - p * 66; }
-    camera.position.set(x, y, z);
-    camera.up.set(shot === "dutch" ? Math.sin(0.25) : 0, 1, 0);
-    camera.lookAt(0, 4, 0);
+    const p = Math.min(1, local / scene.duration), line = activeCut(scene, local);
+    const target = line ? cutPose(scene, line, local) : shotPose(scene.shot, p);
+    const jumped = Math.abs(local - last.current) > 0.5; last.current = local;
+    if (!cur.current || !scene.cutBlend || jumped) cur.current = [...target];
+    else for (let i = 0; i < 6; i++) cur.current[i]! += (target[i]! - cur.current[i]!) * 0.12;
+    const c = cur.current;
+    camera.position.set(c[0]!, c[1]!, c[2]!);
+    camera.up.set(scene.shot === "dutch" && !line ? Math.sin(0.25) : 0, 1, 0);
+    camera.lookAt(c[3]!, c[4]!, c[5]!);
   });
   return null;
 }
@@ -180,7 +202,7 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
       <directionalLight position={[40, 80, 30]} intensity={1.8} />
       <Land key={scene.block} block={scene.block} />
       {scene.cast.map((a, i) => <Actor key={`${index}-${i}-${a.height}`} actor={a} slot={i} scene={index} timeRef={timeRef} progressRef={progressRef} durRef={durRef} />)}
-      <Director shot={scene.shot} local={local} dur={scene.duration} />
+      <Director key={index} scene={scene} local={local} />
     </SafeCanvas>
   );
 }
