@@ -178,26 +178,51 @@ type TimelineRow = { key: string; kind: "move" | "line"; label: string; start: n
 
 /** Scene timeline: Guardian walks (orange) and dialogue (cyan) as bars; drag a bar to shift it, drag its edges to retime. */
 function SceneTimeline({ duration, rows }: { duration: number; rows: TimelineRow[] }) {
+  const [snapOn, setSnapOn] = useState(true);
+  const [guide, setGuide] = useState<number | null>(null);
   if (!rows.length) return null;
-  const snap = (v: number) => Math.round(v * 10) / 10;
+  const tenth = (v: number) => Math.round(v * 10) / 10;
+  // Walk bars snap to dialogue start/end times within ~8px.
+  const targets = rows.filter((r) => r.kind === "line").flatMap((r) => [r.start, r.end]);
   const drag = (e: RPointerEvent<HTMLElement>, r: TimelineRow, mode: "start" | "end" | "move") => {
     e.preventDefault(); e.stopPropagation();
     const track = (e.currentTarget.closest("[data-track]") as HTMLElement).getBoundingClientRect();
-    const x0 = e.clientX, s0 = r.start, e0 = r.end, len = e0 - s0;
+    const x0 = e.clientX, s0 = r.start, e0 = r.end, len = e0 - s0, tol = (8 / track.width) * duration;
+    const useSnap = snapOn && r.kind === "move" && targets.length > 0;
+    const near = (v: number) => { let best: number | null = null; for (const t of targets) if (Math.abs(t - v) <= tol && (best === null || Math.abs(t - v) < Math.abs(best - v))) best = t; return best; };
     const onMove = (ev: PointerEvent) => {
       const d = ((ev.clientX - x0) / track.width) * duration;
-      if (mode === "start") r.set(snap(Math.max(0, Math.min(e0 - 0.1, s0 + d))), e0);
-      else if (mode === "end") r.set(s0, snap(Math.min(duration, Math.max(s0 + 0.1, e0 + d))));
-      else { const st = snap(Math.max(0, Math.min(duration - len, s0 + d))); r.set(st, snap(st + len)); }
+      let g: number | null = null;
+      if (mode === "start") { let v = Math.max(0, Math.min(e0 - 0.1, s0 + d)); const n = useSnap ? near(v) : null; if (n !== null && n < e0) { v = n; g = n; } else v = tenth(v); r.set(v, e0); }
+      else if (mode === "end") { let v = Math.min(duration, Math.max(s0 + 0.1, e0 + d)); const n = useSnap ? near(v) : null; if (n !== null && n > s0) { v = n; g = n; } else v = tenth(v); r.set(s0, v); }
+      else {
+        let st = Math.max(0, Math.min(duration - len, s0 + d));
+        const ns = useSnap ? near(st) : null, ne = useSnap ? near(st + len) : null;
+        if (ns !== null && (ne === null || Math.abs(ns - st) <= Math.abs(ne - st - len))) { st = ns; g = ns; }
+        else if (ne !== null && ne - len >= 0) { st = ne - len; g = ne; }
+        else st = tenth(st);
+        r.set(st, st + len);
+      }
+      setGuide(g);
     };
-    const up = () => { window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", up); };
+    const up = () => { setGuide(null); window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", up); };
     window.addEventListener("pointermove", onMove); window.addEventListener("pointerup", up);
   };
   return (
     <div className="mt-4">
-      <div className="label text-signal">SCENE TIMELINE</div>
+      <div className="flex items-center justify-between">
+        <div className="label text-signal">SCENE TIMELINE</div>
+        <label className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground">
+          <input type="checkbox" checked={snapOn} onChange={(e) => setSnapOn(e.target.checked)} /> SNAP TO DIALOGUE
+        </label>
+      </div>
       <div className="mt-1 flex justify-between font-mono text-[9px] text-muted-foreground"><span>0s</span><span>{(duration / 2).toFixed(1)}s</span><span>{duration.toFixed(1)}s</span></div>
-      <div className="space-y-1">
+      <div className="relative space-y-1">
+        {guide !== null && (
+          <div className="pointer-events-none absolute -inset-y-1 z-10 w-px bg-foreground" style={{ left: `${(guide / duration) * 100}%` }}>
+            <span className="absolute -top-4 -translate-x-1/2 bg-foreground px-1 font-mono text-[9px] text-background">{guide.toFixed(1)}s</span>
+          </div>
+        )}
         {rows.map((r) => {
           const left = (r.start / duration) * 100, width = Math.max(2, ((Math.min(r.end, duration) - r.start) / duration) * 100);
           const tone = r.kind === "move" ? "border-bitcoin bg-bitcoin/25 text-bitcoin" : "border-signal bg-signal/20 text-signal";
@@ -213,7 +238,7 @@ function SceneTimeline({ duration, rows }: { duration: number; rows: TimelineRow
           );
         })}
       </div>
-      <p className="mt-1 text-[10px] text-muted-foreground">Drag a bar to move it; drag its ends to change when it starts and stops.</p>
+      <p className="mt-1 text-[10px] text-muted-foreground">Drag a bar to move it; drag its ends to change when it starts and stops. Walk bars snap to dialogue times.</p>
     </div>
   );
 }
