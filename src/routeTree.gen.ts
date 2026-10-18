@@ -14,6 +14,7 @@ import { Route as ApiRouteImport } from './routes/api'
 import { Route as ArchaeologyRouteImport } from './routes/archaeology'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BetaRouteImport } from './routes/beta'
+import { Route as BotRouteImport } from './routes/bot'
 import { Route as BreedRouteImport } from './routes/breed'
 import { Route as BuildersRouteImport } from './routes/builders'
 import { Route as BuildsRouteImport } from './routes/builds'
@@ -154,6 +155,11 @@ const AuthRoute = AuthRouteImport.update({
 const BetaRoute = BetaRouteImport.update({
   id: '/beta',
   path: '/beta',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BotRoute = BotRouteImport.update({
+  id: '/bot',
+  path: '/bot',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BreedRoute = BreedRouteImport.update({
@@ -747,6 +753,7 @@ export interface FileRoutesByFullPath {
   '/archaeology': typeof ArchaeologyRoute
   '/auth': typeof AuthRoute
   '/beta': typeof BetaRoute
+  '/bot': typeof BotRoute
   '/breed': typeof BreedRoute
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
@@ -870,6 +877,7 @@ export interface FileRoutesByTo {
   '/archaeology': typeof ArchaeologyRoute
   '/auth': typeof AuthRoute
   '/beta': typeof BetaRoute
+  '/bot': typeof BotRoute
   '/breed': typeof BreedRoute
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
@@ -990,6 +998,7 @@ export interface FileRoutesById {
   '/archaeology': typeof ArchaeologyRoute
   '/auth': typeof AuthRoute
   '/beta': typeof BetaRoute
+  '/bot': typeof BotRoute
   '/breed': typeof BreedRoute
   '/builders': typeof BuildersRoute
   '/builds': typeof BuildsRoute
@@ -1115,6 +1124,7 @@ export interface FileRouteTypes {
     | '/archaeology'
     | '/auth'
     | '/beta'
+    | '/bot'
     | '/breed'
     | '/builders'
     | '/builds'
@@ -1238,6 +1248,7 @@ export interface FileRouteTypes {
     | '/archaeology'
     | '/auth'
     | '/beta'
+    | '/bot'
     | '/breed'
     | '/builders'
     | '/builds'
@@ -1357,6 +1368,7 @@ export interface FileRouteTypes {
     | '/archaeology'
     | '/auth'
     | '/beta'
+    | '/bot'
     | '/breed'
     | '/builders'
     | '/builds'
@@ -1481,6 +1493,7 @@ export interface RootRouteChildren {
   ArchaeologyRoute: typeof ArchaeologyRoute
   AuthRoute: typeof AuthRoute
   BetaRoute: typeof BetaRoute
+  BotRoute: typeof BotRoute
   BreedRoute: typeof BreedRoute
   BuildersRoute: typeof BuildersRoute
   BuildsRoute: typeof BuildsRoute
@@ -1594,6 +1607,13 @@ declare module '@tanstack/react-router' {
       path: '/beta'
       fullPath: '/beta'
       preLoaderRoute: typeof BetaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bot': {
+      id: '/bot'
+      path: '/bot'
+      fullPath: '/bot'
+      preLoaderRoute: typeof BotRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/breed': {
@@ -2552,6 +2572,7 @@ const rootRouteChildren: RootRouteChildren = {
   ArchaeologyRoute: ArchaeologyRoute,
   AuthRoute: AuthRoute,
   BetaRoute: BetaRoute,
+  BotRoute: BotRoute,
   BreedRoute: BreedRoute,
   BuildersRoute: BuildersRoute,
   BuildsRoute: BuildsRoute,
