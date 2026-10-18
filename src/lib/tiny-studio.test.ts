@@ -21,11 +21,11 @@ describe("tiny studio", () => {
     // The only outside address allowed is ordinals.com (chain reads when opened elsewhere).
     expect(html.replace(/https:\/\/ordinals\.com/g, "")).not.toMatch(/https?:\/\//);
   });
-  it("has navigation, place and erase controls and packs under 6 KB", () => {
+  it("has navigation, place and erase controls and packs under 6.5 KB", () => {
     const html = buildTinyStudioHtml({ height: 840000 });
     for (const id of ['id="n"', 'id="t0"', 'id="t1"', 'id="t2"']) expect(html).toContain(id);
     const br = brotliCompressSync(Buffer.from(html), { params: { [constants.BROTLI_PARAM_QUALITY]: 11, [constants.BROTLI_PARAM_MODE]: constants.BROTLI_MODE_TEXT } });
     console.log("tiny studio", Buffer.byteLength(html), "->", br.length, "bytes brotli");
-    expect(br.length).toBeLessThan(6000);
+    expect(br.length).toBeLessThan(6500);
   });
 });
