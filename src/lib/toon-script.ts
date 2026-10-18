@@ -4,7 +4,14 @@
 export type Pose = "idle" | "walk" | "talk" | "jump" | "combat";
 export type Shot = "wide" | "orbit" | "dolly" | "dutch" | "crane";
 
-export interface ToonActor { height: number; name: string; x: number; z: number; pose: Pose; }
+export interface ToonActor { height: number; name: string; x: number; z: number; pose: Pose; to?: { x: number; z: number }; }
+
+/** Where an actor stands at scene progress p (0–1): eased glide from start (x,z) to `to`; static when no `to`. */
+export function actorPositionAt(a: ToonActor, p: number): { x: number; z: number; moving: boolean } {
+  if (!a.to) return { x: a.x, z: a.z, moving: false };
+  const q = Math.max(0, Math.min(1, p)), e = q * q * (3 - 2 * q);
+  return { x: a.x + (a.to.x - a.x) * e, z: a.z + (a.to.z - a.z) * e, moving: q > 0 && q < 1 };
+}
 export interface ToonLine { at: number; dur: number; speaker: number; text: string; style: "speech" | "shout" | "thought"; }
 export interface ToonScene { block: number; duration: number; shot: Shot; cast: ToonActor[]; lines: ToonLine[]; sfx?: string; }
 export type Music = "none" | "chill" | "adventure" | "tension";
