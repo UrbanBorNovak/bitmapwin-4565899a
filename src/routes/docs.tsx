@@ -160,7 +160,7 @@ function DocsPage() {
             <Link to="/tiny-studio" className="btn-term-ghost inline-block">[ OPEN TINY STUDIO ]</Link>
           </div>
         </div>
-        <p className="mt-3 text-sm text-muted-foreground">Put the FAST shop or Tiny Studio on Bitcoin with <span data-no-translate className="font-mono">ord wallet inscribe --fee-rate &lt;sats/vB&gt; --file index.html --compress</span>. You sign and send it yourself — BitmapWin never does. The SOVEREIGN shop is hosted instead of inscribed, because ordinals.com blocks the outside connections it needs.</p>
+        <p className="mt-3 text-sm text-muted-foreground">Only Tiny Studio goes on Bitcoin, with <span data-no-translate className="font-mono">ord wallet inscribe --fee-rate &lt;sats/vB&gt; --file index.html --compress</span>. You sign and send it yourself — BitmapWin never does. Both shops (FAST and SOVEREIGN) are hosted, not inscribed, because ordinals.com blocks the outside connections they need to load listings.</p>
       </section>
 
       <section className="mt-10">
