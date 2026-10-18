@@ -179,9 +179,10 @@ function cutPose(scene: ToonScene, line: ToonLine, local: number): [number, numb
   const px = -dz, pz = dx; // perpendicular (camera side)
   // Frame from measured body heights; fov 40 → distance ≈ 1.4 × visible height.
   const hs = actorHeights.get(line.speaker) ?? 12, ho = oi >= 0 ? actorHeights.get(oi) ?? hs : hs;
-  if (line.cam === "close") { const d = hs * 1.25; return [sp.x - dx * d * 0.8 + px * d * 0.6, hs * 0.8, sp.z - dz * d * 0.8 + pz * d * 0.6, sp.x, hs * 0.7, sp.z]; }
-  if (line.cam === "ots") { const d = ho * 0.6; return [ot.x - dx * d + px * d * 0.7, ho * 1.05, ot.z - dz * d + pz * d * 0.7, sp.x, hs * 0.6, sp.z]; }
-  const h = Math.max(hs, ho), mx = (sp.x + ot.x) / 2, mz = (sp.z + ot.z) / 2, span = Math.max(h * 1.6, L * 1.3);
+  // (dx,dz) points from listener to speaker; close-ups sit in front of the speaker, angled toward the listener.
+  if (line.cam === "close") { const d = hs * 1.3; return [sp.x - dx * d * 0.35 + px * d, hs * 0.75, sp.z - dz * d * 0.35 + pz * d, sp.x, hs * 0.6, sp.z]; }
+  if (line.cam === "ots") { const d = Math.max(ho, hs) * 0.9; return [ot.x - dx * d + px * d * 0.6, ho * 1.1, ot.z - dz * d + pz * d * 0.6, sp.x, hs * 0.55, sp.z]; }
+  const h = Math.max(hs, ho), mx = (sp.x + ot.x) / 2, mz = (sp.z + ot.z) / 2, span = Math.max(h * 2.2, L * 1.4);
   return [mx + px * span, h * 0.75, mz + pz * span, mx, h * 0.5, mz];
 }
 
@@ -197,7 +198,7 @@ function Director({ scene, local }: { scene: ToonScene; local: number }) {
     const c = cur.current;
     camera.position.set(c[0]!, c[1]!, c[2]!);
     camera.up.set(scene.shot === "dutch" && !line ? Math.sin(0.25) : 0, 1, 0);
-    camera.lookAt(c[3]!, c[4]!, c[5]!); (window as unknown as { __cam: unknown }).__cam = { c: c.map((v) => +v.toFixed(1)), h: Object.fromEntries(actorHeights), line: line?.cam };
+    camera.lookAt(c[3]!, c[4]!, c[5]!);
   });
   return null;
 }
