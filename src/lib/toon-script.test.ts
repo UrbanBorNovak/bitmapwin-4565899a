@@ -16,3 +16,17 @@ describe("toon script", () => {
     expect(() => parseEpisode(JSON.stringify(e))).toThrow();
   });
 });
+
+import { actorPositionAt as apa } from "./toon-script";
+describe("actorPositionAt", () => {
+  const a = { height: 1, name: "1.bitmap", x: -10, z: 0, pose: "walk" as const, to: { x: 10, z: 6 } };
+  it("starts at start, ends at end, halfway in the middle", () => {
+    expect(apa(a, 0)).toMatchObject({ x: -10, z: 0 });
+    expect(apa(a, 1)).toMatchObject({ x: 10, z: 6 });
+    expect(apa(a, 0.5)).toMatchObject({ x: 0, z: 3, moving: true });
+  });
+  it("stays put without an end position", () => {
+    const { to: _t, ...still } = a;
+    expect(apa(still, 0.7)).toEqual({ x: -10, z: 0, moving: false });
+  });
+});
