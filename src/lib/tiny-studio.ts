@@ -50,15 +50,15 @@ html,body{margin:0;height:100%;background:#0b0d10;color:#e8e8e8;font:12px monosp
 button.on{border-color:#f7931a;color:#f7931a}.s{width:20px;height:20px;padding:0}#i{position:fixed;left:8px;bottom:8px;right:8px;opacity:.75}#j{position:fixed;left:16px;bottom:40px;width:110px;height:110px;border:1px solid #2a2f37;border-radius:50%;display:none;pointer-events:none}#j.w{display:block}
 </style></head><body><canvas id="c"></canvas><div id="u"><input id="h" type="number" value="${h}" style="width:80px"><button id="g">SEED</button><input id="q" placeholder="block # or inscription id" style="width:150px"><button id="f">FETCH ON-CHAIN</button><button id="n">VIEW: ORBIT</button><button id="t0" class="t">LOOK</button><button id="t1" class="t on">PLACE</button><button id="t2" class="t">ERASE</button><span id="p"></span><button id="x">EXPORT .BWVX</button><button id="v">SAVE .HTML</button></div><div id="j"></div><div id="i"></div>
 <script id="d" type="text/plain" data-b="${esc(opts.payload ?? "")}"${opts.bitmapId && /^[0-9a-f]{64}i\d+$/.test(opts.bitmapId) ? ` data-i="${opts.bitmapId}" data-ih="${h}"` : ""}></script><script>
-const P=${pal},S=64,C=document.getElementById('c'),G=C.getContext('webgl',{antialias:true}),$=i=>document.getElementById(i);
-let V=new Map,K=0,T=1,W=0,H=+document.querySelector('meta[name=bitmapwin]').content.split(';')[1]||0,yaw=.8,pit=.6,dist=90,tx=32,ty=4,tz=32,dirty=1,wx=32,wy=20,wz=32,wyaw=0,wpit=-.2,jx=0,jy=0;const KD={};
+const P=${pal},C=document.getElementById('c'),G=C.getContext('webgl',{antialias:true}),$=i=>document.getElementById(i);
+let S=64,V=new Map,K=0,T=1,W=0,H=+document.querySelector('meta[name=bitmapwin]').content.split(';')[1]||0,yaw=.8,pit=.6,dist=90,tx=32,ty=4,tz=32,dirty=1,wx=32,wy=20,wz=32,wyaw=0,wpit=-.2,jx=0,jy=0;const KD={};
 const key=(x,y,z)=>x+','+y+','+z;
-function seed(h){V.clear();let s=(h*2654435761)>>>0;const r=()=>((s=(Math.imul(s^(s>>>15),2246822507)+1)>>>0)/4294967296);const a=r()*6,b=r()*6;
+function seed(h){V.clear();S=64;let s=(h*2654435761)>>>0;const r=()=>((s=(Math.imul(s^(s>>>15),2246822507)+1)>>>0)/4294967296);const a=r()*6,b=r()*6;
 for(let x=0;x<S;x++)for(let z=0;z<S;z++){const t=Math.max(1,1+Math.floor(1.5+Math.sin(x/9+a)+Math.cos(z/11+b)));for(let y=0;y<t;y++)V.set(key(x,y,z),y==t-1?0:1)}dirty=1}
-function load(b64){V.clear();const r=atob(b64),c=i=>r.charCodeAt(i),put=(x,y,z,k)=>{if(x<S&&y<S&&z<S&&k<P.length)V.set(key(x,y,z),k)};
+function load(b64){V.clear();const r=atob(b64),c=i=>r.charCodeAt(i);S=64;if(r.length>3&&c(0)==66&&c(1)==87&&c(2)==50&&c(3)==0)for(let i=4;i+6<r.length;i+=7)if(c(i+3)>63||c(i+4)>63||c(i+5)>63)S=128;tx=tz=S/2;const put=(x,y,z,k)=>{if(x<S&&y<S&&z<S&&k<P.length)V.set(key(x,y,z),k)};
 if(r.length>3&&c(0)==66&&c(1)==87&&c(2)==50&&c(3)==0){for(let i=4;i+6<r.length;i+=7)for(let x=c(i);x<=c(i+3);x++)for(let y=c(i+1);y<=c(i+4);y++)for(let z=c(i+2);z<=c(i+5);z++)put(x,y,z,c(i+6))}
 else for(let i=0;i+3<r.length;i+=4)put(c(i),c(i+1),c(i+2),c(i+3));dirty=1}
-function pack(){let s='';for(const[k,v]of V){const[x,y,z]=k.split(',');s+=String.fromCharCode(+x,+y,+z,v)}return s}
+function pack(){let s=S>64?'BW2\\0':'';for(const[k,v]of V){const[x,y,z]=k.split(',').map(Number);s+=S>64?String.fromCharCode(x,y,z,x,y,z,v):String.fromCharCode(x,y,z,v)}return s}
 const sh=(t,src)=>{const s=G.createShader(t);G.shaderSource(s,src);G.compileShader(s);return s},pr=G.createProgram();
 G.attachShader(pr,sh(G.VERTEX_SHADER,'attribute vec3 p;attribute vec3 c;uniform mat4 m;varying vec3 v;varying float f;void main(){gl_Position=m*vec4(p,1.);v=c;f=gl_Position.z;}'));
 G.attachShader(pr,sh(G.FRAGMENT_SHADER,'precision mediump float;varying vec3 v;varying float f;void main(){gl_FragColor=vec4(mix(v,vec3(.043,.051,.063),clamp((f-60.)/160.,0.,.7)),1.);}'));
@@ -69,7 +69,7 @@ function mesh(){const a=[];const quad=(x,y,z,d,c)=>{const[nx,ny,nz]=d,u=nx?[0,1,
 for(const[k,v]of V){const[x,y,z]=k.split(',').map(Number),c=rgb(P[v]);for(const d of F)if(!V.has(key(x+d[0],y+d[1],z+d[2])))quad(x,y,z,d,c)}
 const g=[.11,.13,.16];for(const[i,j]of[[0,0],[S,0],[S,S],[0,0],[S,S],[0,S]])a.push(i,-.01,j,...g);
 G.bindBuffer(G.ARRAY_BUFFER,bf);G.bufferData(G.ARRAY_BUFFER,new Float32Array(a),G.STATIC_DRAW);N=a.length/6;dirty=0;hud()}
-function hud(){$('i').textContent=(typeof M=='string'?M:'')+H+'.bitmap · '+V.size+' blocks · '+(W?'WALK: WASD or left-thumb pad to move · drag to look':'ORBIT: drag to turn · wheel or pinch to zoom')+' · tap/click = '+['look only','place','erase'][T]}
+function hud(){$('i').textContent=(typeof M=='string'?M:'')+H+'.bitmap · '+V.size+' blocks · '+(S>64?'XL 128³ · ':'')+(W?'WALK: WASD or left-thumb pad to move · drag to look':'ORBIT: drag to turn · wheel or pinch to zoom')+' · tap/click = '+['look only','place','erase'][T]}
 function view(){if(W)return{e:[wx,wy,wz],f:[Math.cos(wpit)*Math.cos(wyaw),Math.sin(wpit),Math.cos(wpit)*Math.sin(wyaw)]};const e=[tx+dist*Math.cos(pit)*Math.cos(yaw),ty+dist*Math.sin(pit),tz+dist*Math.cos(pit)*Math.sin(yaw)];return{e,f:[tx-e[0],ty-e[1],tz-e[2]]}}
 function eye(){return view().e}
 function mat(){const w=C.width,h=C.height,{e,f}=view(),n=v=>{const l=Math.hypot(...v);return v.map(x=>x/l)},cr=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
@@ -101,7 +101,7 @@ C.onpointerup=C.onpointercancel=e=>{const p=PT.get(e.pointerId);PT.delete(e.poin
 C.onwheel=e=>{e.preventDefault();if(!W)dist=Math.max(10,Math.min(220,dist*(e.deltaY>0?1.1:.9)))};
 onkeydown=e=>{if(e.target.tagName=='INPUT')return;KD[e.code]=1;if(e.key=='1'||e.key=='2'||e.key=='3')tool(+e.key-1);if(e.key=='v'||e.key=='V')$('n').click()};onkeyup=e=>{KD[e.code]=0};onblur=()=>{for(const k in KD)KD[k]=0};
 function tool(i){T=i;document.querySelectorAll('.t').forEach((b,j)=>b.classList.toggle('on',j==i));hud()}[0,1,2].forEach(i=>$('t'+i).onclick=()=>tool(i));
-$('n').onclick=()=>{W^=1;if(W){wx=32;wz=32;wyaw=yaw+Math.PI;wpit=-.2;wy=ground(wx,wz,S)+1.6}jx=jy=0;$('n').textContent='VIEW: '+(W?'WALK':'ORBIT');$('j').className=W&&matchMedia('(pointer:coarse)').matches?'w':'';hud()};
+$('n').onclick=()=>{W^=1;if(W){wx=wz=S/2;wyaw=yaw+Math.PI;wpit=-.2;wy=ground(wx,wz,S)+1.6}jx=jy=0;$('n').textContent='VIEW: '+(W?'WALK':'ORBIT');$('j').className=W&&matchMedia('(pointer:coarse)').matches?'w':'';hud()};
 $('p').innerHTML='';P.forEach((c,i)=>{const b=document.createElement('button');b.className='s'+(i?'':' on');b.style.background=c;b.onclick=()=>{K=i;document.querySelectorAll('.s').forEach(q=>q.classList.remove('on'));b.classList.add('on')};$('p').append(b)});
 $('g').onclick=()=>{H=Math.max(0,+$('h').value|0);seed(H)};
 let M='';const say=t=>{M=t+' · ';hud()},O=location.hostname=='ordinals.com'?'':'https://ordinals.com',J=u=>fetch(O+u).then(r=>{if(!r.ok)throw 0;return r.json()});
@@ -119,7 +119,7 @@ say('no voxel build found on chain for this BITMAP · starter ground kept')}catc
 $('f').onclick=fetchBuild;
 const save=(data,name,type)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click()};
 $('x').onclick=()=>{const s=pack(),b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);save(b,H+'.bwvx','application/octet-stream')};
-$('v').onclick=()=>{const html='<!doctype html>'+document.documentElement.outerHTML.replace(/data-b="[^"]*"/,'data-b="'+btoa(pack())+'"').replace(/content="BWVX1;\\d+/,'content="BWVX1;'+H);save(html,H+'.bitmap-build.html','text/html')};
+$('v').onclick=()=>{const html='<!doctype html>'+document.documentElement.outerHTML.replace(/data-b="[^"]*"/,'data-b="'+btoa(pack())+'"').replace(/content="BWVX[12];\\d+/,'content="BWVX'+(S>64?2:1)+';'+H);save(html,H+'.bitmap-build.html','text/html')};
 $('h').value=H;const b0=$('d').dataset.b;if(b0)load(b0);else{seed(H);$('q').value=H;fetchBuild()}draw();
 </script></body></html>`;
 }
