@@ -32,7 +32,7 @@ function CoForge() {
   const [room, setRoom] = useState("");
   const [joined, setJoined] = useState<string | null>(null);
   const [height, setHeight] = useState(840000);
-  const [, setTick] = useState(0);
+  const [tick, setTick] = useState(0);
   const state = useRef<CoState>(emptyState());
   const [me, setMe] = useState("");
   const [peers, setPeers] = useState<Record<string, number>>({});
@@ -128,7 +128,7 @@ function CoForge() {
     }
     for (const [k, b] of state.current.blocks) { if (b.k === null) w.delete(k); else w.set(k, b.k); o.delete(k); }
     return { world: w, owner: o };
-  }, [parts, cache, state.current.blocks.size, peers]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [parts, cache, tick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const top = useMemo(() => {
     const t = new Map<string, { y: number; k: number }>();
@@ -188,7 +188,7 @@ function CoForge() {
   };
 
   const exp = exportAssembly(state.current);
-  const html = useMemo(() => forgeAssemblyHtml(height, exp.parts, exp.own.map((b) => ({ ...b, k: BLOCKS[b.k]!.id })) as TplBlock[]), [height, exp.parts.length, exp.own.length, peers]); // eslint-disable-line react-hooks/exhaustive-deps
+  const html = useMemo(() => forgeAssemblyHtml(height, exp.parts, exp.own.map((b) => ({ ...b, k: BLOCKS[b.k]!.id })) as TplBlock[]), [height, exp.parts.length, exp.own.length, tick]); // eslint-disable-line react-hooks/exhaustive-deps
   const bytes = new TextEncoder().encode(html).length;
   const share = typeof window !== "undefined" && joined ? `${location.origin}/co-forge?room=${encodeURIComponent(joined)}` : "";
   const download = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([html], { type: "text/html" })); a.download = `${height}-co-forge.html`; a.click(); };
