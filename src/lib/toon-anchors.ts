@@ -2,6 +2,8 @@
 // position (0..1 of the stage canvas) every frame; the 2D overlay reads it to place bubbles.
 export interface HeadAnchor { x: number; y: number; scene: number }
 export const toonHeads = new Map<number, HeadAnchor>();
+/** Emote icon circles: centre (0..1) and radius as a fraction of stage height. */
+export const toonEmotes = new Map<number, HeadAnchor & { r: number }>();
 
 export interface Rect { x: number; y: number; w: number; h: number }
 

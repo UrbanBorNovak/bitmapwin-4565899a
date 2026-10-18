@@ -3,7 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useQuery } from "@tanstack/react-query";
 import { CanvasTexture, SRGBColorSpace, Vector3, type Group, type Sprite } from "three";
 import type { Emote } from "@/lib/toon-script";
-import { toonHeads } from "@/lib/toon-anchors";
+import { toonEmotes, toonHeads } from "@/lib/toon-anchors";
 
 /** Vector comic icons (no emoji fonts) so every browser and export draws the same thing. */
 function drawEmote(x: CanvasRenderingContext2D, e: Emote) {
@@ -26,8 +26,10 @@ function drawEmote(x: CanvasRenderingContext2D, e: Emote) {
 }
 
 /** Comic emote bubble drawn once to a canvas texture so it bakes into exports. */
-function EmoteIcon({ emote, timeRef }: { emote: Emote; timeRef: MutableRefObject<number> }) {
+function EmoteIcon({ emote, timeRef, slot, scene }: { emote: Emote; timeRef: MutableRefObject<number>; slot: number; scene: number }) {
   const sp = useRef<Sprite>(null);
+  const wp = useMemo(() => new Vector3(), []), tp = useMemo(() => new Vector3(), []), ws = useMemo(() => new Vector3(), []);
+  useEffect(() => () => { toonEmotes.delete(slot); }, [slot]);
   const tex = useMemo(() => {
     const c = document.createElement("canvas"); c.width = c.height = 128;
     const x = c.getContext("2d")!;
@@ -43,14 +45,20 @@ function EmoteIcon({ emote, timeRef }: { emote: Emote; timeRef: MutableRefObject
     if (!o) return;
     // Keep the bubble readable on far shots (wide/crane): grow with camera distance.
     const dist = o.parent ? camera.position.distanceTo(o.parent.getWorldPosition(o.position.clone().set(0, 0, 0))) : 30;
-    let s = 0.34 * Math.min(2.6, Math.max(1, dist / 32)), y = 1.15;
+    let s = 0.34 * Math.min(2.6, Math.max(1, dist / 32)), y = 0.95;
     if (emote === "love" || emote === "happy") s *= 1 + Math.abs(Math.sin(t * 4)) * 0.18;
-    if (emote === "terrified" || emote === "afraid") o.position.x = 0.5 + Math.sin(t * 40) * 0.03;
+    if (emote === "terrified" || emote === "afraid") o.position.x = 0.75 + Math.sin(t * 40) * 0.03;
     if (emote === "sad" || emote === "lonely" || emote === "sleepy") y += Math.sin(t * 1.2) * 0.06;
     if (emote === "surprised" || emote === "angry") s *= 1 + Math.max(0, Math.sin(t * 6)) * 0.25;
     o.position.y = y; o.scale.setScalar(s);
+    // Publish the icon's screen circle so speech bubbles are placed around it.
+    o.updateWorldMatrix(true, false);
+    o.getWorldPosition(wp); o.getWorldScale(ws);
+    tp.copy(wp); tp.y += ws.y * 0.55; tp.project(camera); wp.project(camera);
+    if (wp.z < 1) toonEmotes.set(slot, { x: (wp.x + 1) / 2, y: (1 - wp.y) / 2, r: Math.abs(wp.y - tp.y) / 2, scene });
+    else toonEmotes.delete(slot);
   });
-  return <sprite ref={sp} position={[0.5, 1.15, 0]}><spriteMaterial map={tex} depthTest={false} transparent /></sprite>;
+  return <sprite ref={sp} position={[0.75, 0.95, 0]}><spriteMaterial map={tex} depthTest={false} transparent /></sprite>;
 }
 import { guardianDnaQuery } from "@/lib/bitmon-queries";
 import { forgeBuildQuery } from "@/lib/forge";
@@ -107,7 +115,7 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
   return (
     <group ref={g}>
       <GuardianBody species={d.species} rarity={d.rarity} body={d.body} accent={d.accent} height={actor.height} inscribed />
-      {actor.emote && <EmoteIcon emote={actor.emote} timeRef={timeRef} />}
+      {actor.emote && <EmoteIcon emote={actor.emote} timeRef={timeRef} slot={slot} scene={scene} />}
     </group>
   );
 }

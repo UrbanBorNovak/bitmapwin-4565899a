@@ -7,7 +7,7 @@ import { ToonLibraryPanel } from "@/components/toon/ToonLibraryPanel";
 import type { ContinuityNote, ToonCharacter } from "@/lib/toon-library";
 import { playSoundtrack, renderSoundtrack } from "@/lib/toon-audio";
 import { canEncodeMp4, createXRecorder, X_MAX_SECONDS, X_SIZES, xIntentUrl } from "@/lib/x-video";
-import { placeBubble, toonHeads, type Rect } from "@/lib/toon-anchors";
+import { placeBubble, toonEmotes, toonHeads, type Rect } from "@/lib/toon-anchors";
 
 const ToonStage3D = lazy(() => import("@/components/toon/ToonStage3D"));
 
@@ -52,6 +52,12 @@ function drawOverlay(ctx: CanvasRenderingContext2D, w: number, h: number, ep: To
     ctx.globalAlpha = 1;
   }
   const taken: Rect[] = [];
+  // Emote icons are obstacles: bubbles are placed so they never cover them.
+  for (const e of toonEmotes.values()) {
+    if (e.scene !== index) continue;
+    const [cx, cy] = toPx(e.x, e.y), [, ey] = toPx(e.x, e.y + e.r), r = Math.abs(ey - cy) * 1.15 + 4;
+    taken.push({ x: cx - r, y: cy - r, w: r * 2, h: r * 2 });
+  }
   for (const l of s.lines) {
     if (local < l.at || local > l.at + l.dur) continue;
     const pop = Math.min(1, (local - l.at) * 6);
