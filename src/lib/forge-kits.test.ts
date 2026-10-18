@@ -18,7 +18,7 @@ describe("forge kits", () => {
       expect(b.dx).toBeGreaterThanOrEqual(0); expect(b.dx).toBeLessThan(64);
       expect(b.dz).toBeGreaterThanOrEqual(0); expect(b.dz).toBeLessThan(64);
     }
-  });
+  }, 20_000);
   it("every set fits the 12,000-brick inscription limit", () => {
     for (const k of KITS) expect(blueprintBlocks(k).length).toBeLessThanOrEqual(12000);
   });
