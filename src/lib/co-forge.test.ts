@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyOp, emptyState, exportAssembly, liveBlocks, parseOp } from "@/lib/co-forge";
+import { applyOp, buildState, canEdit, emptyState, exportAssembly, liveBlocks, nextConfig, openConfig, parseOp } from "@/lib/co-forge";
 
 const ID = "a".repeat(64) + "i0";
 
@@ -35,5 +35,30 @@ describe("co-forge merge", () => {
     expect(parseOp({ op: "b+", x: 64, y: 0, z: 0, k: 1 })).toBeNull();
     expect(parseOp({ op: "p+", oid: "abcd1", id: "nope", x: 0, y: 0, z: 0, r: 0 })).toBeNull();
     expect(parseOp({ op: "p+", oid: "abcd1", id: ID, x: 1, y: 2, z: 3, r: 5 })).toMatchObject({ r: 1 });
+  });
+});
+
+describe("co-forge room owner", () => {
+  const O = "o".repeat(0) + "1".repeat(64), A = "2".repeat(64), V = "3".repeat(64);
+  const place = (x: number) => ({ ops: [{ op: "b+" as const, x, y: 0, z: 0, k: 1 }] });
+  it("only the owner and approved builders change the build", () => {
+    const cfg = nextConfig(openConfig(), O, O, { allow: [A] }, 10);
+    const s = buildState([{ ...place(1), t: 20, by: O }, { ...place(2), t: 21, by: A }, { ...place(3), t: 22, by: V }], cfg, O);
+    expect(liveBlocks(s).map((b) => b.dx).sort()).toEqual([1, 2]);
+  });
+  it("removing a builder drops everything they built", () => {
+    const hist = [{ ...place(2), t: 21, by: A }];
+    const cfg = nextConfig(nextConfig(openConfig(), O, O, { allow: [A] }, 10), O, O, { allow: [] }, 30);
+    expect(liveBlocks(buildState(hist, cfg, O))).toEqual([]);
+  });
+  it("locking keeps earlier work but blocks new builder edits; owner can still edit", () => {
+    const cfg = nextConfig(openConfig(), O, O, { allow: [A], locked: true }, 50);
+    const s = buildState([{ ...place(1), t: 40, by: A }, { ...place(2), t: 60, by: A }, { ...place(3), t: 61, by: O }], cfg, O);
+    expect(liveBlocks(s).map((b) => b.dx).sort()).toEqual([1, 3]);
+    expect(canEdit(cfg, O, A)).toBe(false);
+    expect(canEdit(cfg, O, O)).toBe(true);
+  });
+  it("ignores control events not signed by the owner", () => {
+    expect(nextConfig(openConfig(), O, V, { allow: [V] }, 99).allow).toEqual([]);
   });
 });
