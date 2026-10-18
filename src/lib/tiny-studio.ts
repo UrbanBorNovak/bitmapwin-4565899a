@@ -41,7 +41,7 @@ export function unpackBwvx1(bytes: Uint8Array): number[][] {
 const esc = (s: string) => s.replace(/[^A-Za-z0-9+/=]/g, "");
 
 /** bitmapId: optional pre-resolved BITMAP inscription id for `height`, used only when the on-chain OCI module cannot run (e.g. off ordinals.com). */
-export function buildTinyStudioHtml(opts: { height?: number; payload?: string; bitmapId?: string } = {}): string {
+export function buildTinyStudioHtml(opts: { height?: number; payload?: string; bitmapId?: string | undefined } = {}): string {
   const h = Math.max(0, Math.floor(opts.height ?? 840000));
   const pal = JSON.stringify(BLOCKS.map((b) => b.top));
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="bitmapwin" content="BWVX1;${h};studio"><title>${h}.bitmap · Tiny Studio</title><style>
