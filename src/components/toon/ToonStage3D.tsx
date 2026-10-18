@@ -1,7 +1,7 @@
-import { useMemo, useRef, type MutableRefObject } from "react";
+import { useEffect, useMemo, useRef, type MutableRefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useQuery } from "@tanstack/react-query";
-import { CanvasTexture, SRGBColorSpace, type Group, type Sprite } from "three";
+import { Box3, CanvasTexture, SRGBColorSpace, type Group, type Sprite } from "three";
 import { EMOTES, type Emote } from "@/lib/toon-script";
 
 /** Comic emote bubble drawn once to a canvas texture so it bakes into exports. */
@@ -13,14 +13,23 @@ function EmoteIcon({ emote, timeRef }: { emote: Emote; timeRef: MutableRefObject
     x.fillStyle = "#fff"; x.strokeStyle = "#111"; x.lineWidth = 6;
     x.beginPath(); x.arc(64, 58, 50, 0, Math.PI * 2); x.fill(); x.stroke();
     x.beginPath(); x.moveTo(50, 104); x.lineTo(64, 124); x.lineTo(76, 104); x.fill();
-    x.font = "60px serif"; x.textAlign = "center"; x.textBaseline = "middle";
+    x.font = "60px 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif"; x.textAlign = "center"; x.textBaseline = "middle";
     x.fillText(EMOTES.find((e) => e.v === emote)?.icon ?? "", 64, 62);
     const t = new CanvasTexture(c); t.colorSpace = SRGBColorSpace; return t;
   }, [emote]);
+  useEffect(() => () => tex.dispose(), [tex]);
+  const top = useRef<number | null>(null);
   useFrame(() => {
-    const o = sp.current, t = timeRef.current;
-    if (!o) return;
-    let s = 0.45, y = 1.5;
+    const o = sp.current, t = timeRef.current, parent = o?.parent;
+    if (!o || !parent) return;
+    // Measure the Guardian's real head height once so the bubble sits just above it.
+    if (top.current === null) {
+      o.visible = false; parent.updateWorldMatrix(true, true);
+      const b = new Box3().setFromObject(parent);
+      o.visible = true;
+      top.current = b.isEmpty() ? 1 : Math.max(0.4, (b.max.y - parent.position.y) / (parent.scale.y || 1));
+    }
+    let s = 0.38, y = top.current + 0.25;
     if (emote === "love" || emote === "happy") s *= 1 + Math.abs(Math.sin(t * 4)) * 0.18;
     if (emote === "terrified" || emote === "afraid") o.position.x = Math.sin(t * 40) * 0.03;
     if (emote === "sad" || emote === "lonely" || emote === "sleepy") y += Math.sin(t * 1.2) * 0.06;
