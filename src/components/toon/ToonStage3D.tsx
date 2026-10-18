@@ -27,7 +27,7 @@ function Actor({ actor, timeRef }: { actor: ToonActor; timeRef: MutableRefObject
     if (actor.pose === "combat") { rz = Math.sin(t * 10) * 0.08; s = 1.08; }
     o.position.set(x, y, actor.z);
     o.rotation.set(0, ry, rz);
-    o.scale.setScalar(6 * s);
+    o.scale.setScalar(10 * s);
   });
   const d = dna.data;
   if (!d) return null;
