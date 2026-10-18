@@ -15,7 +15,7 @@ export function seedTerrain(height: number): number[][] {
   const r = () => ((s = (Math.imul(s ^ (s >>> 15), 2246822507) + 1) >>> 0) / 4294967296);
   const a = r() * 6, b = r() * 6, out: number[][] = [];
   for (let x = 0; x < 64; x++) for (let z = 0; z < 64; z++) {
-    const h = 1 + Math.floor(1.5 + Math.sin(x / 9 + a) + Math.cos(z / 11 + b));
+    const h = Math.max(1, 1 + Math.floor(1.5 + Math.sin(x / 9 + a) + Math.cos(z / 11 + b)));
     for (let y = 0; y < h; y++) out.push([x, y, z, y === h - 1 ? 0 : 1]);
   }
   return out;
@@ -51,7 +51,7 @@ const P=${pal},S=64,C=document.getElementById('c'),G=C.getContext('webgl',{antia
 let V=new Map,K=0,E=0,H=+document.querySelector('meta[name=bitmapwin]').content.split(';')[1]||0,yaw=.8,pit=.6,dist=90,tx=32,ty=4,tz=32,dirty=1;
 const key=(x,y,z)=>x+','+y+','+z;
 function seed(h){V.clear();let s=(h*2654435761)>>>0;const r=()=>((s=(Math.imul(s^(s>>>15),2246822507)+1)>>>0)/4294967296);const a=r()*6,b=r()*6;
-for(let x=0;x<S;x++)for(let z=0;z<S;z++){const t=1+Math.floor(1.5+Math.sin(x/9+a)+Math.cos(z/11+b));for(let y=0;y<t;y++)V.set(key(x,y,z),y==t-1?0:1)}dirty=1}
+for(let x=0;x<S;x++)for(let z=0;z<S;z++){const t=Math.max(1,1+Math.floor(1.5+Math.sin(x/9+a)+Math.cos(z/11+b)));for(let y=0;y<t;y++)V.set(key(x,y,z),y==t-1?0:1)}dirty=1}
 function load(b64){V.clear();const r=atob(b64);for(let i=0;i+3<r.length;i+=4){const x=r.charCodeAt(i),y=r.charCodeAt(i+1),z=r.charCodeAt(i+2),k=r.charCodeAt(i+3);if(x<S&&y<S&&z<S&&k<P.length)V.set(key(x,y,z),k)}dirty=1}
 function pack(){let s='';for(const[k,v]of V){const[x,y,z]=k.split(',');s+=String.fromCharCode(+x,+y,+z,v)}return s}
 const sh=(t,src)=>{const s=G.createShader(t);G.shaderSource(s,src);G.compileShader(s);return s},pr=G.createProgram();
