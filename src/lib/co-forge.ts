@@ -73,10 +73,11 @@ export const newOid = () => Math.random().toString(36).slice(2, 12);
  * and approved builders' ops count, and while locked only the owner's do.
  * Removing someone drops all their ops, so the build is replayed from history. */
 /** seal: builder batches the owner had accepted at lock time (event id prefixes); deny: builder batches that arrived while locked. */
-export type RoomConfig = { allow: string[]; locked: boolean; t: number; seal: string[]; deny: string[] };
+/** keep: work of revoked builders that stays (event id prefixes); purge: builders whose whole contribution is removed. */
+export type RoomConfig = { allow: string[]; locked: boolean; t: number; seal: string[]; deny: string[]; keep: string[]; purge: string[] };
 /** id = the signed Nostr event id; it, not the self-reported time, decides lock rules. */
 export type Batch = { ops: CoOp[]; t: number; by: string; id: string };
-export const openConfig = (): RoomConfig => ({ allow: [], locked: false, t: 0, seal: [], deny: [] });
+export const openConfig = (): RoomConfig => ({ allow: [], locked: false, t: 0, seal: [], deny: [], keep: [], purge: [] });
 export const SEAL_MAX = 4000;
 export const sealId = (eventId: string) => eventId.slice(0, 16);
 
@@ -88,10 +89,11 @@ export const makeRoom = (name: string, owner: string) => `${roomName(name)}@${ow
 /** Accepts a control event only if the owner signed it and it is newer than the current one. */
 export function nextConfig(cur: RoomConfig, owner: string, by: string, raw: unknown, t: number): RoomConfig {
   if (by !== owner || t <= cur.t || !raw || typeof raw !== "object") return cur;
-  const c = raw as { allow?: unknown; locked?: unknown; seal?: unknown; deny?: unknown };
-  const allow = Array.isArray(c.allow) ? c.allow.filter((p): p is string => typeof p === "string" && HEX64.test(p)).slice(0, 200) : [];
+  const c = raw as { allow?: unknown; locked?: unknown; seal?: unknown; deny?: unknown; keep?: unknown; purge?: unknown };
+  const keys = (v: unknown) => (Array.isArray(v) ? v.filter((p): p is string => typeof p === "string" && HEX64.test(p)).slice(0, 200) : []);
+  const allow = keys(c.allow);
   const ids = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && /^[0-9a-f]{16}$/.test(x)).slice(0, SEAL_MAX) : []);
-  return { allow, locked: c.locked === true, t, seal: ids(c.seal), deny: ids(c.deny) };
+  return { allow, locked: c.locked === true, t, seal: ids(c.seal), deny: ids(c.deny), keep: ids(c.keep), purge: keys(c.purge) };
 }
 
 export function canEdit(cfg: RoomConfig, owner: string, who: string) {
@@ -104,8 +106,10 @@ export function canEdit(cfg: RoomConfig, owner: string, who: string) {
  */
 export function batchCounts(b: Batch, cfg: RoomConfig, owner: string) {
   if (b.by === owner) return true;
-  if (!cfg.allow.includes(b.by)) return false;
+  if (cfg.purge.includes(b.by)) return false;
   const id = sealId(b.id);
+  // Revoked builders: only the work the owner kept when revoking them still counts.
+  if (!cfg.allow.includes(b.by)) return cfg.keep.includes(id) && !cfg.deny.includes(id);
   if (cfg.deny.includes(id)) return false;
   return !cfg.locked || cfg.seal.includes(id);
 }
@@ -123,3 +127,7 @@ export function buildState(batches: Batch[], cfg: RoomConfig, owner: string): Co
   }
   return s;
 }
+
+/** Revoking a builder keeps every move of theirs the owner currently accepts, and nothing after. */
+export const keepFor = (batches: Batch[], cfg: RoomConfig, owner: string, who: string) =>
+  batches.filter((b) => b.by === who && batchCounts(b, cfg, owner)).map((b) => sealId(b.id));
