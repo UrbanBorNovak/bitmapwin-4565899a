@@ -5,6 +5,7 @@ import { Box3, CanvasTexture, SRGBColorSpace, Vector3, type Group, type Sprite }
 
 /** Measured world height of each cast slot (so cuts frame the real body, not a guess). */
 const actorHeights = new Map<number, number>();
+const SEAL_GEOMS = new Set(["TorusGeometry", "OctahedronGeometry", "RingGeometry"]);
 import type { Emote } from "@/lib/toon-script";
 import { toonEmotes, toonHeads } from "@/lib/toon-anchors";
 
@@ -110,7 +111,7 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
       o.scale.set(1, 1, 1); o.position.set(0, 0, 0); o.rotation.set(0, 0, 0); o.updateMatrixWorld(true);
       // Body voxels only — halos, seals and gems float above the head and would skew framing.
       const b = new Box3(), tmp = new Box3();
-      o.traverse((m) => { const g = (m as { geometry?: { type?: string } }).geometry; if (g?.type === "BoxGeometry" || (m as { isInstancedMesh?: boolean }).isInstancedMesh) b.union(tmp.setFromObject(m, true)); });
+      o.traverse((m) => { const g = (m as { geometry?: { type?: string } }).geometry; if (g && !SEAL_GEOMS.has(g.type ?? "")) b.union(tmp.setFromObject(m, true)); });
       if (!b.isEmpty()) unitH.current = Math.max(0.2, b.max.y);
     }
     o.scale.set(10 * s, 10 * s * sy, 10 * s);
