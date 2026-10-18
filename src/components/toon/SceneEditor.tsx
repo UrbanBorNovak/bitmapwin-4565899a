@@ -181,13 +181,14 @@ function SceneTimeline({ duration, rows }: { duration: number; rows: TimelineRow
   const [snapOn, setSnapOn] = useState(true);
   const [guide, setGuide] = useState<number | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [view, setView] = useState({ x: 0, w: 0 });
   const scroller = useRef<HTMLDivElement>(null);
   const setZoomAt = (next: number, anchorPx?: number) => {
     const el = scroller.current, z = Math.max(1, Math.min(16, next));
     if (!el) return setZoom(z);
     const ax = anchorPx ?? el.clientWidth / 2, frac = (el.scrollLeft + ax) / (el.clientWidth * zoom);
     setZoom(z);
-    requestAnimationFrame(() => { el.scrollLeft = frac * el.clientWidth * z - ax; });
+    requestAnimationFrame(() => { el.scrollLeft = frac * el.clientWidth * z - ax; setView({ x: el.scrollLeft, w: el.clientWidth }); });
   };
   const zoomRef = useRef(setZoomAt); zoomRef.current = setZoomAt;
   const zRef = useRef(zoom); zRef.current = zoom;
@@ -248,7 +249,7 @@ function SceneTimeline({ duration, rows }: { duration: number; rows: TimelineRow
           <input type="checkbox" checked={snapOn} onChange={(e) => setSnapOn(e.target.checked)} /> SNAP TO DIALOGUE
         </label>
       </div>
-      <div ref={scroller} className="mt-1 overflow-x-auto pb-1">
+      <div ref={scroller} className="mt-1 overflow-x-auto pb-1" onScroll={(e) => setView({ x: e.currentTarget.scrollLeft, w: e.currentTarget.clientWidth })}>
       <div style={{ width: `${zoom * 100}%` }}>
       <div className="relative h-4 font-mono text-[9px] text-muted-foreground">
         {ticks.map((t) => <span key={t} className="absolute -translate-x-1/2 first:translate-x-0 last:-translate-x-full" style={{ left: `${(t / duration) * 100}%` }}>{t.toFixed(step < 1 ? 1 : 0)}s</span>)}
@@ -267,7 +268,7 @@ function SceneTimeline({ duration, rows }: { duration: number; rows: TimelineRow
               <div className={`absolute inset-y-0 flex cursor-grab touch-none items-center overflow-hidden border px-2 font-mono text-[10px] ${tone}`}
                 style={{ left: `${left}%`, width: `${width}%` }} onPointerDown={(e) => drag(e, r, "move")} title={`${r.label} · ${r.start.toFixed(1)}s → ${r.end.toFixed(1)}s`}>
                 <span className="absolute inset-y-0 left-0 w-2 cursor-ew-resize touch-none bg-current opacity-50" aria-label={`${r.label} start`} onPointerDown={(e) => drag(e, r, "start")} />
-                <span className="truncate">{r.label}{width * zoom > 28 ? ` · ${r.start.toFixed(1)}–${r.end.toFixed(1)}s` : ""}</span>
+                <span className="truncate" style={{ marginLeft: Math.max(0, Math.min(view.x - (left / 100) * view.w * zoom, (width / 100) * view.w * zoom - 60)) }}>{r.label}{width * zoom > 28 ? ` · ${r.start.toFixed(1)}–${r.end.toFixed(1)}s` : ""}</span>
                 <span className="absolute inset-y-0 right-0 w-2 cursor-ew-resize touch-none bg-current opacity-50" aria-label={`${r.label} end`} onPointerDown={(e) => drag(e, r, "end")} />
               </div>
             </div>
