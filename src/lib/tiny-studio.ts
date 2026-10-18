@@ -48,16 +48,16 @@ export function buildTinyStudioHtml(opts: { height?: number; payload?: string; b
 html,body{margin:0;height:100%;background:#0b0d10;color:#e8e8e8;font:12px monospace;overflow:hidden}canvas{width:100%;height:100%;display:block;touch-action:none}
 #u{position:fixed;left:8px;top:8px;display:flex;flex-wrap:wrap;gap:4px;max-width:96vw}#u *{font:inherit}button,input{background:#14171c;color:#e8e8e8;border:1px solid #2a2f37;border-radius:4px;padding:4px 6px}
 button.on{border-color:#f7931a;color:#f7931a}.s{width:20px;height:20px;padding:0}#i{position:fixed;left:8px;bottom:8px;right:8px;opacity:.75}#j{position:fixed;left:16px;bottom:40px;width:110px;height:110px;border:1px solid #2a2f37;border-radius:50%;display:none;pointer-events:none}#j.w{display:block}
-</style></head><body><canvas id="c"></canvas><div id="u"><input id="h" type="number" value="${h}" style="width:80px"><button id="g">SEED</button><input id="q" placeholder="block # or inscription id" style="width:150px"><button id="f">FETCH ON-CHAIN</button><button id="n">VIEW: ORBIT</button><button id="t0" class="t">LOOK</button><button id="t1" class="t on">PLACE</button><button id="t2" class="t">ERASE</button><span id="p"></span><button id="x">EXPORT .BWVX</button><button id="v">SAVE .HTML</button></div><div id="j"></div><div id="i"></div>
+</style></head><body><canvas id="c"></canvas><div id="u"><input id="h" type="number" value="${h}" style="width:80px"><button id="g">SEED</button><input id="q" placeholder="block # or id" style="width:150px"><button id="f">FETCH ON-CHAIN</button><button id="n">VIEW: ORBIT</button><button id="t0" class="t">LOOK</button><button id="t1" class="t on">PLACE</button><button id="t2" class="t">ERASE</button><span id="p"></span><button id="x">EXPORT .BWVX</button><button id="v">SAVE .HTML</button></div><div id="j"></div><div id="i"></div>
 <script id="d" type="text/plain" data-b="${esc(opts.payload ?? "")}"${opts.bitmapId && /^[0-9a-f]{64}i\d+$/.test(opts.bitmapId) ? ` data-i="${opts.bitmapId}" data-ih="${h}"` : ""}></script><script>
 const P=${pal},C=document.getElementById('c'),G=C.getContext('webgl',{antialias:true}),$=i=>document.getElementById(i);
 let S=64,V=new Map,K=0,T=1,W=0,H=+document.querySelector('meta[name=bitmapwin]').content.split(';')[1]||0,yaw=.8,pit=.6,dist=90,tx=32,ty=4,tz=32,dirty=1,wx=32,wy=20,wz=32,wyaw=0,wpit=-.2,jx=0,jy=0;const KD={};
 const key=(x,y,z)=>x+','+y+','+z;
 function seed(h){V.clear();S=64;tx=tz=32;let s=(h*2654435761)>>>0;const r=()=>((s=(Math.imul(s^(s>>>15),2246822507)+1)>>>0)/4294967296);const a=r()*6,b=r()*6;
 for(let x=0;x<S;x++)for(let z=0;z<S;z++){const t=Math.max(1,1+Math.floor(1.5+Math.sin(x/9+a)+Math.cos(z/11+b)));for(let y=0;y<t;y++)V.set(key(x,y,z),y==t-1?0:1)}dirty=1}
-function load(b64){V.clear();const r=atob(b64),c=i=>r.charCodeAt(i);S=64;if(r.length>3&&c(0)==66&&c(1)==87&&c(2)==50&&c(3)==0)for(let i=4;i+6<r.length;i+=7)if(c(i+3)>63||c(i+4)>63||c(i+5)>63)S=128;tx=tz=S/2;dist=S*1.4;const put=(x,y,z,k)=>{if(x<S&&y<S&&z<S&&k<P.length)V.set(key(x,y,z),k)};
-if(r.length>3&&c(0)==66&&c(1)==87&&c(2)==50&&c(3)==0){for(let i=4;i+6<r.length;i+=7)for(let x=c(i);x<=c(i+3);x++)for(let y=c(i+1);y<=c(i+4);y++)for(let z=c(i+2);z<=c(i+5);z++)put(x,y,z,c(i+6))}
-else for(let i=0;i+3<r.length;i+=4)put(c(i),c(i+1),c(i+2),c(i+3));dirty=1}
+function D(b,f){const r=atob(b),c=i=>r.charCodeAt(i);if(c(0)==66&&c(1)==87&&c(2)==50&&c(3)==0){for(let i=4;i+6<r.length;i+=7)for(let x=c(i);x<=c(i+3);x++)for(let y=c(i+1);y<=c(i+4);y++)for(let z=c(i+2);z<=c(i+5);z++)f(x,y,z,c(i+6))}else for(let i=0;i+3<r.length;i+=4)f(c(i),c(i+1),c(i+2),c(i+3))}
+function load(b,sp){V.clear();const A=b.map?b:[];b.map||D(b,(...v)=>A.push(v));S=sp||(A.some(v=>v[0]>63||v[1]>63||v[2]>63)?128:64);tx=tz=S/2;dist=S*1.4;
+for(const[x,y,z,k]of A)if(x<S&&y<S&&z<S&&k<P.length)V.set(key(x,y,z),k);dirty=1}
 function pack(){let s=S>64?'BW2\\0':'';for(const[k,v]of V){const[x,y,z]=k.split(',').map(Number);s+=S>64?String.fromCharCode(x,y,z,x,y,z,v):String.fromCharCode(x,y,z,v)}return s}
 const sh=(t,src)=>{const s=G.createShader(t);G.shaderSource(s,src);G.compileShader(s);return s},pr=G.createProgram();
 G.attachShader(pr,sh(G.VERTEX_SHADER,'attribute vec3 p;attribute vec3 c;uniform mat4 m;varying vec3 v;varying float f;void main(){gl_Position=m*vec4(p,1.);v=c;f=gl_Position.z;}'));
@@ -69,7 +69,7 @@ function mesh(){const a=[];const quad=(x,y,z,d,c)=>{const[nx,ny,nz]=d,u=nx?[0,1,
 for(const[k,v]of V){const[x,y,z]=k.split(',').map(Number),c=rgb(P[v]);for(const d of F)if(!V.has(key(x+d[0],y+d[1],z+d[2])))quad(x,y,z,d,c)}
 const g=[.11,.13,.16];for(const[i,j]of[[0,0],[S,0],[S,S],[0,0],[S,S],[0,S]])a.push(i,-.01,j,...g);
 G.bindBuffer(G.ARRAY_BUFFER,bf);G.bufferData(G.ARRAY_BUFFER,new Float32Array(a),G.STATIC_DRAW);N=a.length/6;dirty=0;hud()}
-function hud(){$('i').textContent=(typeof M=='string'?M:'')+H+'.bitmap · '+V.size+' blocks · '+(S>64?'XL 128³ · ':'')+(W?'WALK: WASD or left-thumb pad to move · drag to look':'ORBIT: drag to turn · wheel or pinch to zoom')+' · tap/click = '+['look only','place','erase'][T]}
+function hud(){$('i').textContent=(typeof M=='string'?M:'')+H+'.bitmap · '+V.size+' blocks · '+(S>64?'XL 128³ · ':'')+(W?'WALK: WASD/pad to move · drag to look':'ORBIT: drag to turn · pinch/wheel zoom')+' · tap/click = '+['look only','place','erase'][T]}
 function view(){if(W)return{e:[wx,wy,wz],f:[Math.cos(wpit)*Math.cos(wyaw),Math.sin(wpit),Math.cos(wpit)*Math.sin(wyaw)]};const e=[tx+dist*Math.cos(pit)*Math.cos(yaw),ty+dist*Math.sin(pit),tz+dist*Math.cos(pit)*Math.sin(yaw)];return{e,f:[tx-e[0],ty-e[1],tz-e[2]]}}
 function eye(){return view().e}
 function mat(){const w=C.width,h=C.height,{e,f}=view(),n=v=>{const l=Math.hypot(...v);return v.map(x=>x/l)},cr=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
@@ -109,13 +109,16 @@ function grab(t){const m=t.match(/data-b="([A-Za-z0-9+/=]+)"/)||t.match(/<script
 function cb(b){let i=0;const L=a=>a<24?a:a==24?b[i++]:a==25?(i+=2,b[i-2]<<8|b[i-1]):a==26?(i+=4,(b[i-4]<<24>>>0)+(b[i-3]<<16)+(b[i-2]<<8)+b[i-1]):0;
 const I=()=>{const x=b[i++],t=x>>5,a=x&31;if(t==0)return L(a);if(t==1)return-1-L(a);if(t==2||t==3){if(a==31){let s=t==3?"":[];while(b[i]!=255){const c=I();t==3?s+=c:s.push(...c)}i++;return s}const n=L(a),s=b.slice(i,i+n);i+=n;return t==3?new TextDecoder().decode(s):Array.from(s)}
 if(t==4){const n=L(a),r=[];for(let k=0;k<n;k++)r.push(I());return r}if(t==5){const n=L(a),o={};for(let k=0;k<n;k++){const q=I();o[q]=I()}return o}return null};return I()}
-async function fromId(id){try{const h=(await J('/r/metadata/'+id)).replace(/[^0-9a-f]/gi,''),b=new Uint8Array(h.length/2);for(let k=0;k<b.length;k++)b[k]=parseInt(h.substr(k*2,2),16);const o=cb(b);if(o&&(o.d||o.b))return o.d||o.b}catch(e){}
-try{const r=await fetch(O+'/content/'+id);if(!r.ok||!(r.headers.get('content-type')||'').includes('html'))return null;return grab(await r.text())}catch(e){return null}}
+async function fromId(id,dp){try{const h=(await J('/r/metadata/'+id)).replace(/[^0-9a-f]/gi,''),b=new Uint8Array(h.length/2);for(let k=0;k<b.length;k++)b[k]=parseInt(h.substr(k*2,2),16);const o=cb(b);if(o&&(o.d||o.b))return o.d||o.b}catch(e){}
+try{const r=await fetch(O+'/content/'+id);if(!r.ok||!(r.headers.get('content-type')||'').includes('html'))return null;const t=await r.text(),a=!dp&&t.match(/<script id="bwvx-asm"([^>]*)>([A-Za-z0-9+/=\\s]*)</);if(!a)return grab(t);const g=n=>(a[1].match(RegExp('data-'+n+'="([^"]*)"'))||[])[1]||'',sp=+g('span')||64,own=a[2].replace(/\\s/g,''),o=[],n=0;if(own)D(own,(...v)=>o.push(v));const ps=g('parts').split(';').filter(Boolean).slice(0,32);
+await Promise.all(ps.map(async seg=>{const[pid,pos]=seg.split('@'),[px,py,pz,q]=pos.split(',').map(Number),pb=await fromId(pid,1);if(typeof pb!='string')return;o.c=-~o.c;let B=[];D(pb,(...v)=>B.push(v));
+const mn=j=>Math.min(...B.map(v=>v[j])),m0=mn(0),m1=mn(1),m2=mn(2);B=B.map(v=>[v[0]-m0,v[1]-m1,v[2]-m2,v[3]]);for(let k=0;k<(q%4+4)%4;k++){const m=Math.max(...B.map(v=>v[0]));B=B.map(v=>[v[2],v[1],m-v[0],v[3]])}
+for(const v of B){const x=v[0]+px,y=v[1]+py,z=v[2]+pz;if(x<sp&&y<sp&&z<sp)o.push([x,y,z,v[3]])}}));return{a:o,s:sp,n:~~o.c+'/'+ps.length}}catch(e){return null}}
 async function fetchBuild(){const q=$('q').value.trim();try{let ids=[q];if(!/^[0-9a-f]{64}i\\d+$/.test(q)){H=Math.max(0,+q|0||+$('h').value|0);$('h').value=H;say('looking up '+H+'.bitmap on chain…');
 const bid=await(async()=>{try{const m=await import(O+'/content/${OCI_MODULE}');return await m.getBitmapInscriptionId(H)}catch(e){const d=$('d').dataset;if(d.ih==H)return d.i;if(parent!==window)return await new Promise(ok=>{const f=v=>{if(v.data&&v.data.tsH==H){removeEventListener('message',f);ok(v.data.tsId)}};addEventListener('message',f);parent.postMessage({tsAsk:H},'*');setTimeout(()=>ok(null),9e3)});throw e}})();if(!bid)throw 0;const ins=await J('/r/inscription/'+bid),at=await J('/r/sat/'+ins.sat+'/at/-1');ids=[at.id];
 try{const l=await J('/r/sat/'+ins.sat);ids.push(...(l.ids||[]).reverse())}catch(e){}ids=[...new Set(ids)].filter(i=>i&&i!=bid).slice(0,8);if(!ids.length){seed(H);say(H+'.bitmap has no build yet · starter ground loaded');return}}
-for(const id of ids){say('reading '+id.slice(0,10)+'…');const b=await fromId(id);if(b){load(b);say('loaded on-chain build '+id.slice(0,10)+'… · edit and SAVE');return}}
-say('no voxel build found on chain for this BITMAP · starter ground kept')}catch(e){say('could not reach ordinals.com · starter ground kept')}}
+for(const id of ids){say('reading '+id.slice(0,10)+'…');const b=await fromId(id);if(b){b.a?load(b.a,b.s):load(b);say('loaded on-chain build '+id.slice(0,10)+'…'+(b.n?' · '+b.n+' pieces':'')+' · edit and SAVE');return}}
+say('no build found · starter ground kept')}catch(e){say('ordinals.com unreachable · starter ground kept')}}
 $('f').onclick=fetchBuild;
 const save=(data,name,type)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click()};
 $('x').onclick=()=>{const s=pack(),b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);save(b,H+'.bwvx','application/octet-stream')};
