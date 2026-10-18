@@ -51,7 +51,7 @@ function chime() {
 }
 
 function BotPage() {
-  const [rule, setRule] = useState<BotRule>(BOT_PRESETS[0]);
+  const [rule, setRule] = useState<BotRule>(BOT_PRESETS[0]!);
   const [running, setRunning] = useState(false);
   const [listings, setListings] = useState<BotListing[]>([]);
   const [alerts, setAlerts] = useState<BotListing[]>([]);
