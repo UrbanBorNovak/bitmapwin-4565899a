@@ -54,7 +54,7 @@ export function SceneEditor({ episode, onChange, onSeek }: { episode: ToonEpisod
           <input type="range" min={1} max={MAX_SCENE_SECONDS} step={0.5} value={s.duration} className="w-full" onChange={(e) => patch({ duration: Number(e.target.value) })} />
         </label>
         <label className="text-[11px] text-muted-foreground">Sound effect
-          <select className={field} value={s.sfx ?? ""} onChange={(e) => patch({ sfx: e.target.value || undefined })}>
+          <select className={field} value={s.sfx ?? ""} onChange={(e) => patch({ sfx: e.target.value })}>
             {SFX.map((x) => <option key={x} value={x}>{x || "None"}</option>)}
           </select>
         </label>
