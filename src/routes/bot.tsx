@@ -29,8 +29,19 @@ export const Route = createFileRoute("/bot")({
       ],
     };
   },
+  validateSearch: (s: Record<string, unknown>): BotSearch => ({
+    maxSats: optInt(s.maxSats),
+    minHeight: optInt(s.minHeight),
+    maxHeight: optInt(s.maxHeight),
+  }),
   component: BotPage,
 });
+
+type BotSearch = { maxSats?: number; minHeight?: number; maxHeight?: number };
+function optInt(v: unknown): number | undefined {
+  const n = Number(v);
+  return v === undefined || v === "" || !Number.isFinite(n) || n < 0 ? undefined : Math.floor(n);
+}
 
 const num = (v: string) => (v.trim() === "" || !Number.isFinite(Number(v)) ? null : Math.max(0, Math.floor(Number(v))));
 
@@ -51,7 +62,13 @@ function chime() {
 }
 
 function BotPage() {
-  const [rule, setRule] = useState<BotRule>(BOT_PRESETS[0]!);
+  const search = Route.useSearch();
+  const fromMarket = search.maxSats !== undefined || search.minHeight !== undefined || search.maxHeight !== undefined;
+  const [rule, setRule] = useState<BotRule>(() =>
+    fromMarket
+      ? { name: "MARKETPLACE FILTERS", maxSats: search.maxSats ?? null, minHeight: search.minHeight ?? null, maxHeight: search.maxHeight ?? null, seller: null }
+      : BOT_PRESETS[0]!,
+  );
   const [running, setRunning] = useState(false);
   const [listings, setListings] = useState<BotListing[]>([]);
   const [alerts, setAlerts] = useState<BotListing[]>([]);

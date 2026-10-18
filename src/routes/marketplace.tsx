@@ -422,6 +422,22 @@ function Marketplace() {
               ))}
             </span>
             <a href="#sell-bitmap" className="btn-term min-h-11">◆ SELL YOUR BITMAP</a>
+            <Link
+              to="/bot"
+              search={{
+                maxSats: maxSats ?? undefined,
+                minHeight: /^\d+$/.test(qTrim) ? Number(qTrim) : clubDef?.min ?? undefined,
+                maxHeight: /^\d+$/.test(qTrim)
+                  ? Number(qTrim)
+                  : (() => {
+                      const m = Math.min(clubDef?.max ?? Infinity, galDef?.maxHeight ?? Infinity);
+                      return Number.isFinite(m) ? m : undefined;
+                    })(),
+              }}
+              className="btn-term-ghost min-h-11"
+            >
+              ◉ WATCH LISTINGS
+            </Link>
             <Link to="/history" className="btn-term-ghost min-h-11">SALES HISTORY →</Link>
             <Link to="/leases" className="btn-term-ghost min-h-11">LEASES →</Link>
           </div>
