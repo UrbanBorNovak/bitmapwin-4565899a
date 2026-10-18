@@ -7,6 +7,7 @@ import { ToonLibraryPanel } from "@/components/toon/ToonLibraryPanel";
 import type { ContinuityNote, ToonCharacter } from "@/lib/toon-library";
 import { playSoundtrack, renderSoundtrack } from "@/lib/toon-audio";
 import { canEncodeMp4, createXRecorder, X_MAX_SECONDS, X_SIZES, xIntentUrl } from "@/lib/x-video";
+import { CITADEL_TEASER } from "@/lib/toon-teaser";
 import { placeBubble, toonEmotes, toonHeads, type Rect } from "@/lib/toon-anchors";
 
 const ToonStage3D = lazy(() => import("@/components/toon/ToonStage3D"));
@@ -338,6 +339,9 @@ function ToonPage() {
             <div className="mt-2 flex flex-wrap gap-2">
               <button className="btn-term" onClick={() => load(generateEpisode(Number(hero) || 0, Number(rival) || 0))}>[ WRITE EPISODE ]</button>
               <button className="btn-term-ghost" onClick={() => load(generateEpisode(Number(hero) || 0, Number(rival) || 0, Math.floor(Math.random() * 1e9)))}>[ NEW TAKE ]</button>
+              <button className="btn-term-ghost" disabled={recording} onClick={() => {
+                if (window.confirm("Replace your current episode with the Guardians of the Citadel teaser? Unsaved changes to this episode will be lost.")) load(structuredClone(CITADEL_TEASER));
+              }}>[ LOAD TEASER ]</button>
               <button className="btn-term-ghost" onClick={() => load({ ...episode, aspect: vertical ? "16:9" : "9:16" })}>[ {vertical ? "16:9 TV" : "9:16 REEL"} ]</button>
             </div>
           </section>
