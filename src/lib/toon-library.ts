@@ -56,7 +56,7 @@ export function mergeLibraries(a: ToonLibrary, b: ToonLibrary): ToonLibrary {
     const eps = new Map(cur.episodes.map((e) => [e.id, e]));
     for (const e of s.episodes) { const x = eps.get(e.id); if (!x || e.savedAt > x.savedAt) eps.set(e.id, e); }
     const template = !cur.template || (s.template && s.template.savedAt > cur.template.savedAt) ? s.template ?? cur.template : cur.template;
-    series.set(s.id, { ...cur, template, episodes: [...eps.values()].sort((x, y) => x.savedAt - y.savedAt) });
+    series.set(s.id, { ...cur, ...(template ? { template } : {}), episodes: [...eps.values()].sort((x, y) => x.savedAt - y.savedAt) });
   }
   const casts = new Map(a.casts.map((c) => [c.id, c]));
   for (const c of b.casts) if (!casts.has(c.id)) casts.set(c.id, c);
