@@ -103,6 +103,24 @@ export function ToonLibraryPanel({ episode, onOpen }: { episode: ToonEpisode; on
               commit({ ...lib, series: rest }, "SERIES DELETED."); setSeriesId(rest[0]?.id ?? ""); setCurrentId(null);
             }}>DELETE SERIES</button>
           </div>
+          <div className="mt-3 border border-dashed border-border p-2">
+            <div className="font-mono text-[10px] text-muted-foreground">
+              SERIES TEMPLATE · {series?.template ? `SET ${new Date(series.template.savedAt).toLocaleDateString()} · ${series.template.episode.scenes.length} SCENES · ${series.template.episode.aspect}` : "NONE YET"}
+            </div>
+            <p className="mt-1 text-[11px] text-muted-foreground">Keeps the cast, BITMAP locations, camera moves, timing, format and sound effects. Dialogue starts empty.</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button className={btn} disabled={!series} onClick={() => {
+                if (!series) return;
+                if (series.template && !confirm("Replace this series' template with the current episode?")) return;
+                commit({ ...lib, series: lib.series.map((s) => (s.id === series.id ? { ...s, template: { savedAt: Date.now(), episode: toTemplate(episode) } } : s)) }, "TEMPLATE SET FROM THIS EPISODE.");
+              }}>{series?.template ? "UPDATE TEMPLATE" : "USE AS TEMPLATE"}</button>
+              <button className="btn-term text-[11px]" disabled={!series?.template} onClick={() => {
+                const next = series && episodeFromTemplate(series);
+                if (!next) return;
+                onOpen(next); setCurrentId(null); setNote(`STARTED ${next.title.toUpperCase()} — WRITE THE DIALOGUE, THEN SAVE.`);
+              }}>[ NEXT EPISODE ]</button>
+            </div>
+          </div>
           <ol className="mt-3 space-y-1">
             {series?.episodes.map((e, k) => (
               <li key={e.id} className={`flex items-center gap-2 border px-2 py-1 font-mono text-[11px] ${e.id === currentId ? "border-bitcoin" : "border-border"}`}>
