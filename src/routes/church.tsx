@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PILGRIMAGES, RANKS, dayKey, emptyDevotion, parseDevotion, pilgrimage, pray, rankOf, streak, type Devotion } from "@/lib/church";
+import ogImage from "@/assets/church-og.jpg.asset.json";
 
 export const Route = createFileRoute("/church")({
   head: () => {
@@ -11,6 +12,10 @@ export const Route = createFileRoute("/church")({
       { title }, { name: "description", content: description },
       { property: "og:title", content: title }, { property: "og:description", content: description },
       { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:image", content: `https://bitmapwin.app${ogImage.url}` },
+      { property: "og:image:width", content: "1200" }, { property: "og:image:height", content: "630" },
+      { name: "twitter:image", content: `https://bitmapwin.app${ogImage.url}` },
+      { property: "og:url", content: "https://bitmapwin.app/church" },
     ] };
   },
   component: Church,
