@@ -7,6 +7,7 @@ import { ToonLibraryPanel } from "@/components/toon/ToonLibraryPanel";
 import type { ContinuityNote, ToonCharacter } from "@/lib/toon-library";
 import { playSoundtrack, renderSoundtrack } from "@/lib/toon-audio";
 import { canEncodeMp4, createXRecorder, X_MAX_SECONDS, X_SIZES, xIntentUrl } from "@/lib/x-video";
+import { placeBubble, toonHeads, type Rect } from "@/lib/toon-anchors";
 
 const ToonStage3D = lazy(() => import("@/components/toon/ToonStage3D"));
 
