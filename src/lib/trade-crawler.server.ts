@@ -30,7 +30,7 @@ export type CrawlResult = {
   heights: number[];
 };
 
-export async function crawlTrades(batch = 20, maxHops = 6): Promise<CrawlResult> {
+export async function crawlTrades(batch = 20, maxHops = 12): Promise<CrawlResult> {
   const size = Math.max(1, Math.min(batch, MAX_BATCH));
   const client = db();
 
