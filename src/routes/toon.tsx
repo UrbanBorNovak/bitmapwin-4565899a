@@ -30,7 +30,8 @@ export const Route = createFileRoute("/toon")({
 });
 
 /** Draws title card, captions and comic bubbles onto a 2D context (shared by screen + recording). */
-function drawOverlay(ctx: CanvasRenderingContext2D, w: number, h: number, ep: ToonEpisode, t: number) {
+function drawOverlay(ctx: CanvasRenderingContext2D, w: number, h: number, ep: ToonEpisode, t: number,
+  toPx: (nx: number, ny: number) => [number, number] = (nx, ny) => [nx * w, ny * h]) {
   ctx.clearRect(0, 0, w, h);
   paintStyle(ctx, w, h, ep.style, t);
   const { index, local } = sceneAt(ep, t);
