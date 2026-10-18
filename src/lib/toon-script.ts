@@ -95,5 +95,5 @@ export function parseEpisode(json: string): ToonEpisode {
     for (const c of s.cast) if (!okBlock(c.height) || !POSES.includes(c.pose)) throw new Error("Each actor needs a valid block and pose.");
     if (!Array.isArray(s.lines)) s.lines = [];
   }
-  return { title: String(e.title ?? "Untitled"), aspect: e.aspect === "9:16" ? "9:16" : "16:9", scenes: e.scenes, music: MUSIC.includes(e.music as Music) ? (e.music as Music) : "adventure", voices: e.voices !== false };
+  return { title: String(e.title ?? "Untitled"), aspect: e.aspect === "9:16" ? "9:16" : "16:9", scenes: e.scenes, music: MUSIC.includes(e.music as Music) ? (e.music as Music) : "adventure", voices: e.voices !== false, ...(["manga", "ghibli", "shonen", "noir", "retro"].includes(e.style as string) ? { style: e.style as ToonEpisode["style"] } : {}) };
 }
