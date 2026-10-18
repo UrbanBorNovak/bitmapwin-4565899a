@@ -20,6 +20,7 @@ import { Route as BuildsRouteImport } from './routes/builds'
 import { Route as CharacterRouteImport } from './routes/character'
 import { Route as CitiesRouteImport } from './routes/cities'
 import { Route as ClipsRouteImport } from './routes/clips'
+import { Route as CoForgeRouteImport } from './routes/co-forge'
 import { Route as CoinsRouteImport } from './routes/coins'
 import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as CommandRouteImport } from './routes/command'
@@ -182,6 +183,11 @@ const CitiesRoute = CitiesRouteImport.update({
 const ClipsRoute = ClipsRouteImport.update({
   id: '/clips',
   path: '/clips',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoForgeRoute = CoForgeRouteImport.update({
+  id: '/co-forge',
+  path: '/co-forge',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoinsRoute = CoinsRouteImport.update({
@@ -741,6 +747,7 @@ export interface FileRoutesByFullPath {
   '/character': typeof CharacterRoute
   '/cities': typeof CitiesRoute
   '/clips': typeof ClipsRoute
+  '/co-forge': typeof CoForgeRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/command': typeof CommandRoute
@@ -862,6 +869,7 @@ export interface FileRoutesByTo {
   '/character': typeof CharacterRoute
   '/cities': typeof CitiesRoute
   '/clips': typeof ClipsRoute
+  '/co-forge': typeof CoForgeRoute
   '/coins': typeof CoinsRoute
   '/command': typeof CommandRoute
   '/create': typeof CreateRoute
@@ -980,6 +988,7 @@ export interface FileRoutesById {
   '/character': typeof CharacterRoute
   '/cities': typeof CitiesRoute
   '/clips': typeof ClipsRoute
+  '/co-forge': typeof CoForgeRoute
   '/coins': typeof CoinsRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/command': typeof CommandRoute
@@ -1103,6 +1112,7 @@ export interface FileRouteTypes {
     | '/character'
     | '/cities'
     | '/clips'
+    | '/co-forge'
     | '/coins'
     | '/collections'
     | '/command'
@@ -1224,6 +1234,7 @@ export interface FileRouteTypes {
     | '/character'
     | '/cities'
     | '/clips'
+    | '/co-forge'
     | '/coins'
     | '/command'
     | '/create'
@@ -1341,6 +1352,7 @@ export interface FileRouteTypes {
     | '/character'
     | '/cities'
     | '/clips'
+    | '/co-forge'
     | '/coins'
     | '/collections'
     | '/command'
@@ -1463,6 +1475,7 @@ export interface RootRouteChildren {
   CharacterRoute: typeof CharacterRoute
   CitiesRoute: typeof CitiesRoute
   ClipsRoute: typeof ClipsRoute
+  CoForgeRoute: typeof CoForgeRoute
   CoinsRoute: typeof CoinsRoute
   CollectionsRoute: typeof CollectionsRouteWithChildren
   CommandRoute: typeof CommandRoute
@@ -1610,6 +1623,13 @@ declare module '@tanstack/react-router' {
       path: '/clips'
       fullPath: '/clips'
       preLoaderRoute: typeof ClipsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/co-forge': {
+      id: '/co-forge'
+      path: '/co-forge'
+      fullPath: '/co-forge'
+      preLoaderRoute: typeof CoForgeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/coins': {
@@ -2518,6 +2538,7 @@ const rootRouteChildren: RootRouteChildren = {
   CharacterRoute: CharacterRoute,
   CitiesRoute: CitiesRoute,
   ClipsRoute: ClipsRoute,
+  CoForgeRoute: CoForgeRoute,
   CoinsRoute: CoinsRoute,
   CollectionsRoute: CollectionsRouteWithChildren,
   CommandRoute: CommandRoute,
