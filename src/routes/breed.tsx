@@ -43,19 +43,23 @@ function Chamber({ title, list, value, onPick, other }: { title: string; list: A
   const [q, setQ] = useState("");
   const shown = list.filter((g) => g.height !== other && (!q || String(g.height).includes(q.trim()))).slice(0, 40);
   return (
-    <section className="bg-card/60 backdrop-blur rounded-lg border border-border p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="label text-primary">{title}</h2>
-        {value && <span className="font-mono text-xs text-signal">{value.height}.BITMAP</span>}
+    <section className={`relative bg-card/60 backdrop-blur rounded-lg border p-4 space-y-3 ${value ? "border-signal/50" : "border-border"}`}>
+      <div className="flex items-center justify-between border-b border-border pb-2">
+        <h2 className="label text-primary">SPECIMEN POD · {title}</h2>
+        <span className={`font-mono text-[10px] ${value ? "text-signal" : "text-muted-foreground"}`}>{value ? "● LOADED" : "○ EMPTY"}</span>
       </div>
       {value ? (
-        <div className="flex items-center gap-3">
-          <GuardianPortrait height={value.height} size={96} />
-          <div className="space-y-1 text-xs">
-            <p className="font-mono text-muted-foreground">{short(value.inscriptionId!)}</p>
-            <p className="label">{value.rarity} · {value.species}</p>
-            <button type="button" onClick={() => onPick(-1)} className="label text-muted-foreground hover:text-primary">CHANGE</button>
+        <div className="space-y-3">
+          <div className="relative mx-auto w-fit rounded-full border border-signal/30 p-3">
+            <GuardianPortrait height={value.height} size={128} />
           </div>
+          <dl className="grid grid-cols-2 gap-x-2 gap-y-1 font-mono text-[11px]">
+            <dt className="text-muted-foreground">SPECIMEN</dt><dd className="text-signal">{value.height}.BITMAP</dd>
+            <dt className="text-muted-foreground">INSCRIPTION</dt><dd>{short(value.inscriptionId!)}</dd>
+            <dt className="text-muted-foreground">TAXONOMY</dt><dd>{value.species}</dd>
+            <dt className="text-muted-foreground">GRADE</dt><dd>{value.rarity}</dd>
+          </dl>
+          <button type="button" onClick={() => onPick(-1)} className="label w-full rounded border border-border py-1.5 text-muted-foreground hover:border-primary hover:text-primary">EJECT SPECIMEN</button>
         </div>
       ) : (
         <>
@@ -129,19 +133,35 @@ function BreedLab() {
 
   return (
     <main className="mx-auto max-w-6xl space-y-6 px-4 py-8">
-      <header className="space-y-2">
+      <header className="space-y-4">
         <OtherthingsBadge child="Guardians + Pets" />
-        <p className="label text-signal">GUARDIAN PEDIGREE · OPEN SIRE ROSTER</p>
-        <h1 className="font-display text-3xl">Breeding Lab</h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          Pick any two inscribed Guardians. Their offspring is worked out from the two inscription ids, so the same pair always hatches the same pet — anyone can check it. Inscribing the pet costs a {PET_SERVICE_FEE}-sat service fee plus the Bitcoin network fee.
-        </p>
-        <p className="label text-muted-foreground">{roster.length} INSCRIBED GUARDIANS AVAILABLE AS PARENTS</p>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="space-y-2">
+            <p className="label text-signal">FACILITY 01 · GUARDIAN GENETICS LABORATORY</p>
+            <h1 className="font-display text-3xl sm:text-4xl">Breeding Lab</h1>
+            <p className="max-w-2xl text-sm text-muted-foreground">
+              Load two inscribed Guardians into the specimen pods. Their offspring is sequenced from the two inscription ids, so the same pair always hatches the same pet — anyone can re-run the test. Inscribing costs a {PET_SERVICE_FEE}-sat service fee plus the Bitcoin network fee.
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border font-mono text-[11px] sm:grid-cols-4">
+          {([
+            ["STATUS", all.isLoading ? "CALIBRATING…" : "● ONLINE", "text-signal"],
+            ["SPECIMEN VAULT", `${roster.length} INSCRIBED`, "text-foreground"],
+            ["SEQUENCER", "DETERMINISTIC · L1", "text-foreground"],
+            ["SERVICE FEE", `${PET_SERVICE_FEE} SATS`, "text-primary"],
+          ] as const).map(([k, v, c]) => (
+            <div key={k} className="bg-card/80 px-3 py-2 backdrop-blur">
+              <p className="text-muted-foreground">{k}</p>
+              <p className={c}>{v}</p>
+            </div>
+          ))}
+        </div>
       </header>
 
       {stable.length > 0 && (
         <section className="bg-card/60 backdrop-blur rounded-lg border border-primary/40 p-3">
-          <p className="label text-primary mb-2">YOUR STABLE · {stable.length} INSCRIBED · TAP TO LOAD AS SIRE, THEN DAM</p>
+          <p className="label text-primary mb-2">COLD STORAGE · {stable.length} OF YOUR INSCRIBED SPECIMENS · TAP TO LOAD SIRE, THEN DAM</p>
           <div className="flex gap-2 overflow-x-auto">
             {stable.map((g) => (
               <button key={g.height} type="button" onClick={() => pickStable(g.height)} className={`shrink-0 rounded-md border p-1 ${g.height === sireH || g.height === damH ? "border-primary" : "border-border hover:border-primary"}`}>
@@ -156,16 +176,16 @@ function BreedLab() {
       <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr_1fr]">
         <Chamber title="SIRE" list={roster} value={sireG} onPick={setSireH} other={damH} />
         <section className="bg-card/60 backdrop-blur flex flex-col items-center rounded-lg border border-border p-4">
-          <h2 className="label self-start text-primary">INCUBATOR</h2>
+          <div className="flex w-full items-center justify-between border-b border-border pb-2"><h2 className="label text-primary">SYNTHESIS CORE · INCUBATOR</h2><span className={`font-mono text-[10px] ${pet ? "text-signal" : "text-muted-foreground"}`}>{spin ? "◌ SEQUENCING" : pet ? "● GENOME LOCKED" : "○ STANDBY"}</span></div>
           {pet ? (
             <>
-              <div className="relative">
+              <div className="relative mt-3 rounded-full border border-dashed border-signal/40 p-4">
                 <div className={spin ? "opacity-20 blur-sm transition" : "transition"}><PetPortrait genome={pet} size={260} /></div>
                 {spin && <p className="absolute inset-0 flex items-center justify-center font-display text-3xl text-primary">{spin}</p>}
               </div>
               {!spin && jackpotHit && <p className="label text-primary animate-pulse">◆ JACKPOT HATCH · CHIMERA + RARITY ASCENT</p>}
               <div className="my-2 flex gap-2">
-                <button type="button" onClick={roll} disabled={!!spin} className="rounded-md border border-primary bg-primary px-4 py-2 font-mono text-xs text-primary-foreground disabled:opacity-50">{spin ? "ROLLING…" : "▶ ROLL THE HATCH"}</button>
+                <button type="button" onClick={roll} disabled={!!spin} className="rounded-md border border-primary bg-primary px-4 py-2 font-mono text-xs text-primary-foreground disabled:opacity-50">{spin ? "SEQUENCING…" : "▶ RUN HATCH SEQUENCE"}</button>
                 <button type="button" onClick={() => setMuted((m) => !m)} className="rounded-md border border-border px-3 py-2 font-mono text-xs text-muted-foreground">{muted ? "SOUND OFF" : "SOUND ON"}</button>
               </div>
               <div className="grid w-full grid-cols-2 gap-2 font-mono text-xs">
@@ -174,11 +194,12 @@ function BreedLab() {
                 <span className="text-muted-foreground">BODY PLAN</span><span>{pet.sh.toUpperCase()}{pet.chimera ? " · CHIMERA" : ""}</span>
                 <span className="text-muted-foreground">WINGS / SPINES</span><span>{pet.wing ? "YES" : "NO"} / {pet.spine ? "YES" : "NO"}</span>
                 <span className="text-muted-foreground">PURITY</span><span className="text-signal">{pet.purity}%</span>
+                <div className="col-span-2 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full bg-signal" style={{ width: `${pet.purity}%` }} /></div>
               </div>
               {pet.mutations.length > 0 && <p className="mt-2 label text-primary">MUTATIONS: {pet.mutations.join(" · ")}</p>}
             </>
           ) : (
-            <p className="my-auto label text-muted-foreground">{all.isLoading ? "LOADING GUARDIANS…" : "CHOOSE A SIRE AND A DAM"}</p>
+            <p className="my-auto label text-muted-foreground">{all.isLoading ? "CALIBRATING SEQUENCER…" : "LOAD A SIRE AND A DAM TO BEGIN SYNTHESIS"}</p>
           )}
         </section>
         <Chamber title="DAM" list={roster} value={damG} onPick={setDamH} other={sireH} />
@@ -186,7 +207,7 @@ function BreedLab() {
 
       {odds && (
         <section className="bg-card/60 backdrop-blur rounded-lg border border-border p-4">
-          <h2 className="label text-signal mb-2">ODDS BOARD · REAL RULES FOR THIS PAIR</h2>
+          <h2 className="label text-signal mb-2">MUTATION MATRIX · REAL PROBABILITIES FOR THIS PAIR</h2>
           <div className="grid grid-cols-2 gap-2 font-mono text-xs sm:grid-cols-4">
             {([["CHIMERA BODY", odds.chimera], ["WINGS", odds.wings], ["SPINES", odds.spines], ["MARKINGS", odds.markings], ["HORN SHIFT", odds.hornShift], ["RARITY ASCENT", odds.rarityAscent]] as const).map(([k, v]) => (
               <div key={k} className="rounded border border-border p-2"><p className="text-muted-foreground">{k}</p><p className="text-signal text-base">{pct(v)}</p></div>
@@ -199,7 +220,7 @@ function BreedLab() {
 
       {pet && sire && dam && (
         <section className="bg-card/60 backdrop-blur space-y-3 rounded-lg border border-border p-4">
-          <h2 className="label text-primary">PEDIGREE</h2>
+          <h2 className="label text-primary">INSCRIPTION TERMINAL · PEDIGREE</h2>
           <p className="font-mono text-xs text-muted-foreground">
             SIRE {sire.height}.BITMAP ({short(sire.inscriptionId)}) × DAM {dam.height}.BITMAP ({short(dam.inscriptionId)}) → GEN {pet.gen} PET
           </p>
@@ -279,7 +300,7 @@ function PetLookup() {
   const ok = /^[0-9a-f]{64}i\d+$/i.test(id);
   return (
     <section className="bg-card/60 backdrop-blur flex flex-wrap items-center gap-2 rounded-lg border border-border p-3">
-      <span className="label text-signal">VIEW AN INSCRIBED PET</span>
+      <span className="label text-signal">SPECIMEN ARCHIVE · LOOK UP A PET</span>
       <input value={v} onChange={(e) => setV(e.target.value)} placeholder="Pet inscription id" className="min-w-0 flex-1 rounded-md border border-border bg-background/60 px-3 py-2 font-mono text-xs" />
       {ok ? <Link to="/pet/$id" params={{ id }} className="rounded-md border border-primary px-3 py-2 font-mono text-xs text-primary">OPEN PEDIGREE →</Link> : <span className="label text-muted-foreground">PASTE AN ID</span>}
     </section>
