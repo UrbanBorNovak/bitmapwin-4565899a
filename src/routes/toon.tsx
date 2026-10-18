@@ -49,13 +49,14 @@ function drawOverlay(ctx: CanvasRenderingContext2D, w: number, h: number, ep: To
     ctx.fillText(ep.title.toUpperCase(), w / 2, h / 2);
     ctx.globalAlpha = 1;
   }
+  const taken: Rect[] = [];
   for (const l of s.lines) {
     if (local < l.at || local > l.at + l.dur) continue;
     const pop = Math.min(1, (local - l.at) * 6);
     const left = l.speaker % 2 === 0;
     ctx.font = `bold ${22 * u}px 'DM Sans', sans-serif`;
     ctx.textAlign = "left";
-    const words = l.text.split(" "), lines: string[] = [], maxW = w * 0.38;
+    const words = l.text.split(" "), lines: string[] = [], maxW = w * 0.34;
     let cur = "";
     for (const word of words) {
       const next = cur ? `${cur} ${word}` : word;
@@ -63,7 +64,15 @@ function drawOverlay(ctx: CanvasRenderingContext2D, w: number, h: number, ep: To
     }
     lines.push(cur);
     const lh = 28 * u, bw = Math.max(...lines.map((x) => ctx.measureText(x).width)) + 36 * u, bh = lines.length * lh + 28 * u;
-    const bx = left ? w * 0.06 : w * 0.94 - bw, by = h * 0.12;
+    // Anchor beside the speaking Guardian's head; fall back to a corner if it isn't on screen.
+    const a = toonHeads.get(l.speaker);
+    const head = a && a.scene === index && a.x > -0.1 && a.x < 1.1 && a.y > -0.1 && a.y < 1.1 ? toPx(a.x, a.y) : null;
+    const margin = 14 * u, nameH = 20 * u, gap = 40 * u;
+    const r = head
+      ? placeBubble(head[0], head[1], bw, bh + nameH, w, h, gap, margin, taken)
+      : placeBubble(left ? margin + bw / 2 : w - margin - bw / 2, h * 0.12 + bh + nameH + gap, bw, bh + nameH, w, h, gap, margin, taken);
+    taken.push(r);
+    const bx = r.x, by = r.y + nameH;
     ctx.save();
     ctx.translate(bx + bw / 2, by + bh / 2);
     ctx.scale(pop, pop);
@@ -74,15 +83,23 @@ function drawOverlay(ctx: CanvasRenderingContext2D, w: number, h: number, ep: To
     ctx.beginPath();
     ctx.roundRect(bx, by, bw, bh, l.style === "thought" ? bh / 2 : 14 * u);
     ctx.fill(); ctx.stroke();
-    // tail
-    const tx = left ? bx + bw * 0.3 : bx + bw * 0.7;
+    // Tail points at the speaker's head (capped length), from whichever bubble edge faces it.
+    const hx = head ? head[0] : left ? bx + bw * 0.3 : bx + bw * 0.7, hy = head ? head[1] : by + bh + 60 * u;
+    const below = hy > by + bh / 2, ex = below ? by + bh - 2 : by + 2;
+    const tx = Math.max(bx + 22 * u, Math.min(bx + bw - 22 * u, hx));
+    const dx = hx - tx, dy = hy - ex, len = Math.hypot(dx, dy) || 1, tl = Math.min(34 * u, Math.max(14 * u, len - 8 * u));
     ctx.beginPath();
-    ctx.moveTo(tx - 14 * u, by + bh - 2); ctx.lineTo(tx + (left ? 20 : -20) * u, by + bh + 34 * u); ctx.lineTo(tx + 14 * u, by + bh - 2);
+    ctx.moveTo(tx - 12 * u, ex); ctx.lineTo(tx + (dx / len) * tl, ex + (dy / len) * tl); ctx.lineTo(tx + 12 * u, ex);
     ctx.fill(); ctx.stroke();
     ctx.fillStyle = "#111";
     lines.forEach((x, i) => ctx.fillText(x, bx + 18 * u, by + 14 * u + lh * (i + 0.5)));
     const who = s.cast[l.speaker]?.name;
-    if (who) { ctx.font = `bold ${13 * u}px 'Space Mono', monospace`; ctx.fillStyle = "#f7931a"; ctx.fillText(who.toUpperCase(), bx + 18 * u, by - 10 * u); }
+    if (who) {
+      ctx.font = `bold ${13 * u}px 'Space Mono', monospace`;
+      ctx.lineWidth = 3 * u; ctx.strokeStyle = "rgba(10,14,20,0.85)";
+      ctx.strokeText(who.toUpperCase(), bx + 18 * u, by - 10 * u);
+      ctx.fillStyle = "#f7931a"; ctx.fillText(who.toUpperCase(), bx + 18 * u, by - 10 * u);
+    }
     ctx.restore();
   }
   if (s.sfx && local > 0.3 && local < 1.6) {
