@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyCast, episodeFromTemplate, mergeLibraries, toTemplate, upsertEpisode, type ToonLibrary } from "./toon-library";
+import { applyCast, autosaveEpisode, episodeFromTemplate, mergeLibraries, toTemplate, upsertEpisode, type ToonLibrary } from "./toon-library";
 import { generateEpisode } from "./toon-script";
 
 describe("toon library", () => {
@@ -37,5 +37,22 @@ describe("series templates", () => {
     expect(next.scenes.map((s) => [s.block, s.shot])).toEqual(ep.scenes.map((s) => [s.block, s.shot]));
     expect(next.scenes[1]!.cast.map((a) => a.height)).toEqual([840000, 77819]);
     expect(next.scenes.every((s) => s.lines.length === 0)).toBe(true);
+  });
+});
+
+describe("autosave versions", () => {
+  const base = (): ToonLibrary => ({ series: [{ id: "s", name: "S", episodes: [{ id: "e", savedAt: 0, episode: generateEpisode(1, 2) }] }], casts: [] });
+  it("keeps the previous saved copy so it can be recovered", () => {
+    const lib = autosaveEpisode(base(), "s", "e", { ...generateEpisode(1, 2), title: "edited" }, 1000);
+    const e = lib.series[0]!.episodes[0]!;
+    expect(e.episode.title).toBe("edited");
+    expect(e.history![0]!.episode.title).toBe("1.bitmap vs 2.bitmap");
+  });
+  it("folds saves within a minute into one version and keeps at most 10", () => {
+    let lib = base();
+    for (let i = 1; i <= 5; i++) lib = autosaveEpisode(lib, "s", "e", generateEpisode(i, 2), i * 1000);
+    expect(lib.series[0]!.episodes[0]!.history!.length).toBe(1);
+    for (let i = 1; i <= 30; i++) lib = autosaveEpisode(lib, "s", "e", generateEpisode(i, 2), 100_000 + i * 120_000);
+    expect(lib.series[0]!.episodes[0]!.history!.length).toBe(10);
   });
 });

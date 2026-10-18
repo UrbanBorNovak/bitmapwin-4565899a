@@ -1,7 +1,8 @@
 // Toon Studio library: series of saved episodes and recurring Guardian casts, kept on this device.
 import type { ToonEpisode } from "./toon-script";
 
-export interface SavedEpisode { id: string; savedAt: number; episode: ToonEpisode; }
+export interface EpisodeVersion { savedAt: number; episode: ToonEpisode; }
+export interface SavedEpisode { id: string; savedAt: number; episode: ToonEpisode; history?: EpisodeVersion[]; }
 export interface SeriesTemplate { savedAt: number; episode: ToonEpisode; }
 export interface ToonSeries { id: string; name: string; episodes: SavedEpisode[]; template?: SeriesTemplate; }
 export interface ToonCast { id: string; name: string; heights: number[]; }
@@ -76,4 +77,29 @@ export function toTemplate(ep: ToonEpisode): ToonEpisode {
 export function episodeFromTemplate(series: ToonSeries): ToonEpisode | null {
   if (!series.template) return null;
   return { ...structuredClone(series.template.episode), title: `${series.name} — EP${series.episodes.length + 1}` };
+}
+
+export const MAX_VERSIONS = 10;
+/** Edits within this window fold into one version so autosave doesn't flood the history. */
+export const VERSION_WINDOW_MS = 60_000;
+
+/** Autosave: stores the new copy and moves the previous saved copy into the version history. */
+export function autosaveEpisode(lib: ToonLibrary, seriesId: string, id: string, episode: ToonEpisode, now: number): ToonLibrary {
+  return {
+    ...lib,
+    series: lib.series.map((s) => {
+      if (s.id !== seriesId) return s;
+      return {
+        ...s,
+        episodes: s.episodes.map((e) => {
+          if (e.id !== id) return e;
+          const hist = e.history ?? [];
+          const last = hist[hist.length - 1];
+          const prev = { savedAt: e.savedAt, episode: e.episode };
+          const next = last && prev.savedAt - last.savedAt < VERSION_WINDOW_MS ? hist : [...hist, prev].slice(-MAX_VERSIONS);
+          return { ...e, savedAt: now, episode, history: next };
+        }),
+      };
+    }),
+  };
 }
