@@ -108,7 +108,9 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
     o.rotation.set(rx, ry, rz);
     if (o.children.length && frames.current++ % 30 === 0) {
       o.scale.set(1, 1, 1); o.position.set(0, 0, 0); o.rotation.set(0, 0, 0); o.updateMatrixWorld(true);
-      const b = new Box3().setFromObject(o);
+      // Body voxels only — halos, seals and gems float above the head and would skew framing.
+      const b = new Box3(), tmp = new Box3();
+      o.traverse((m) => { const g = (m as { geometry?: { type?: string } }).geometry; if (g?.type === "BoxGeometry" || (m as { isInstancedMesh?: boolean }).isInstancedMesh) b.union(tmp.setFromObject(m, true)); });
       if (!b.isEmpty()) unitH.current = Math.max(0.2, b.max.y);
     }
     o.scale.set(10 * s, 10 * s * sy, 10 * s);
