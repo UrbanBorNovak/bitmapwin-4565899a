@@ -16,6 +16,7 @@ import { useVerifiedBitmons } from "@/lib/use-verified-bitmons";
 import type { BitmonCheck } from "@/lib/bitmon-verify";
 import { traitsOf, hasTrait, type TraitId } from "@/lib/traits";
 import { BulkListBar } from "@/components/market/BulkListBar";
+import { ListPriceHint } from "@/components/market/ListPriceHint";
 import { BlockMosaic } from "@/components/BlockMosaic";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { fetchBlockStatsMany, fetchPatternSiblings, type BlockStats } from "@/lib/block-stats";
@@ -510,11 +511,7 @@ function HeldRow({ bitmap, offer, bitmon, stats, shape, selected, onSelect }: { 
                   : "[ SIGN & LIST ]"}
             </button>
           </div>
-          {priceSats !== null && (
-            <p className="mt-2 font-mono text-[11px] text-foreground">
-              &gt; ASK {formatSats(priceSats)} · {priceSats.toLocaleString("en-US")} SATS
-            </p>
-          )}
+          <ListPriceHint priceSats={priceSats} />
         </div>
       )}
     </li>
