@@ -17,7 +17,7 @@ const OCI_MODULE = "970c183ec1e8cb10d25e53140b520bbda5dcf4381d830ea4dfda507b9af4
  * Steep faces and peaks expose stone, low ground is sand, flats are grass.
  * The same source runs inline in the studio and in seedTerrain().
  */
-const LAND_JS = `function LAND(h,P){let s=h*2654435761>>>0,T=[],x,z,M=Math,S=M.sin;const r=()=>(s=M.imul(s^s>>>15,2246822507)+1>>>0)/4294967296,a=r()*6,b=r()*6,f=(h+(h/210000|0))%4;for(x=0;x<64;x++)for(z=0;z<64;z++){const u=x-32,w=z-32,d=M.hypot(u,w)/32,n=S(x/17+a)*S(z/13+b)+S((x+z)/7+b)/2+S(x/3+a)*S(z/4)/5;T[x*64+z]=M.max(1,M.min(20,M.round((f<1?12-16*M.abs(S(u/19+w/31+a)+n/3):f<2?2*M.round(2+3*n):f<3?12*M.exp(-30*(d-.55)**2)+n*1.5:3+5*n-3*d)+3-3*d)))}for(x=0;x<64;x++)for(z=0;z<64;z++){const t=T[x*64+z],g=M.max(...[1,-1,64,-64].map(o=>M.abs(t-(T[x*64+z+o]??t))));for(let y=0;y<t;y++)P(x,y,z,y<t-1?y<t-3?3:1:g>1||t>15?3:t<3?2:0)}}`;
+const LAND_JS = `function LAND(h,P){let s=h*2654435761>>>0,T=[],x,z,M=Math,S=M.sin;const r=()=>(s=M.imul(s^s>>>15,2246822507)+1>>>0)/4294967296,a=r()*6,b=r()*6,f=(h+(h/210000|0))%4;for(x=0;x<64;x++)for(z=0;z<64;z++){const u=x-32,w=z-32,d=M.hypot(u,w)/32,n=S(x/17+a)*S(z/13+b)+S((x+z)/7+b)/2;T[x*64+z]=M.max(1,M.min(20,M.round((f<1?12-16*M.abs(S(u/19+w/31+a)+n/3):f<2?2*M.round(2+3*n):f<3?12*M.exp(-30*(d-.55)**2)+n*1.5:3+5*n-3*d)+3-3*d)))}for(x=0;x<64;x++)for(z=0;z<64;z++){const t=T[x*64+z],g=M.max(...[1,-1,64,-64].map(o=>M.abs(t-(T[x*64+z+o]??t))));for(let y=0;y<t;y++)P(x,y,z,y<t-1?y<t-3?3:1:g>1||t>15?3:t<3?2:0)}}`;
 
 /** Deterministic starter ground for a block height (same code as the inline JS). */
 export function seedTerrain(height: number): number[][] {
@@ -72,7 +72,7 @@ function mesh(){const a=[];const quad=(x,y,z,d,c)=>{const[nx,ny,nz]=d,u=nx?[0,1,
 for(const[k,v]of V){const[x,y,z]=k.split(',').map(Number),c=rgb(P[v]);for(const d of F)if(!V.has(key(x+d[0],y+d[1],z+d[2])))quad(x,y,z,d,c)}
 const g=[.11,.13,.16];for(const[i,j]of[[0,0],[S,0],[S,S],[0,0],[S,S],[0,S]])a.push(i,-.01,j,...g);
 G.bindBuffer(G.ARRAY_BUFFER,bf);G.bufferData(G.ARRAY_BUFFER,new Float32Array(a),G.STATIC_DRAW);N=a.length/6;dirty=0;hud()}
-function hud(){$('i').textContent=(typeof M=='string'?M:'')+H+'.bitmap · '+V.size+' blocks · '+(S>64?'XL 128³ · ':'')+(W?'WALK: WASD/pad to move · drag to look':'ORBIT: drag to turn · pinch/wheel zoom')+' · tap/click = '+['look only','place','erase'][T]}
+function hud(){$('i').textContent=(typeof M=='string'?M:'')+H+'.bitmap · '+V.size+' blocks · '+(S>64?'XL 128³ · ':'')+(W?'WALK':'ORBIT')}
 function view(){if(W)return{e:[wx,wy,wz],f:[Math.cos(wpit)*Math.cos(wyaw),Math.sin(wpit),Math.cos(wpit)*Math.sin(wyaw)]};const e=[tx+dist*Math.cos(pit)*Math.cos(yaw),ty+dist*Math.sin(pit),tz+dist*Math.cos(pit)*Math.sin(yaw)];return{e,f:[tx-e[0],ty-e[1],tz-e[2]]}}
 function eye(){return view().e}
 function mat(){const w=C.width,h=C.height,{e,f}=view(),n=v=>{const l=Math.hypot(...v);return v.map(x=>x/l)},cr=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
@@ -117,10 +117,10 @@ try{const r=await fetch(O+'/content/'+id);if(!r.ok||!(r.headers.get('content-typ
 await Promise.all(ps.map(async seg=>{const[pid,pos]=seg.split('@'),[px,py,pz,q]=pos.split(',').map(Number),pb=await fromId(pid,1);if(typeof pb!='string')return;o.c=-~o.c;let B=[];D(pb,(...v)=>B.push(v));
 const mn=j=>Math.min(...B.map(v=>v[j])),m0=mn(0),m1=mn(1),m2=mn(2);B=B.map(v=>[v[0]-m0,v[1]-m1,v[2]-m2,v[3]]);for(let k=0;k<(q%4+4)%4;k++){const m=Math.max(...B.map(v=>v[0]));B=B.map(v=>[v[2],v[1],m-v[0],v[3]])}
 for(const v of B){const x=v[0]+px,y=v[1]+py,z=v[2]+pz;if(x<sp&&y<sp&&z<sp)o.push([x,y,z,v[3]])}}));return{a:o,s:sp,n:~~o.c+'/'+ps.length}}catch(e){return null}}
-async function fetchBuild(){const q=$('q').value.trim();try{let ids=[q];if(!/^[0-9a-f]{64}i\\d+$/.test(q)){H=Math.max(0,+q|0||+$('h').value|0);$('h').value=H;seed(H);say('looking up '+H+'.bitmap on chain…');
+async function fetchBuild(){const q=$('q').value.trim();try{let ids=[q];if(!/^[0-9a-f]{64}i\\d+$/.test(q)){H=Math.max(0,+q|0||+$('h').value|0);$('h').value=H;seed(H);say('looking up…');
 const bid=await(async()=>{try{const m=await import(O+'/content/${OCI_MODULE}');return await m.getBitmapInscriptionId(H)}catch(e){const d=$('d').dataset;if(d.ih==H)return d.i;if(parent!==window)return await new Promise(ok=>{const f=v=>{if(v.data&&v.data.tsH==H){removeEventListener('message',f);ok(v.data.tsId)}};addEventListener('message',f);parent.postMessage({tsAsk:H},'*');setTimeout(()=>ok(null),9e3)});throw e}})();if(!bid)throw 0;const ins=await J('/r/inscription/'+bid),at=await J('/r/sat/'+ins.sat+'/at/-1');ids=[at.id];
 try{const l=await J('/r/sat/'+ins.sat);ids.push(...(l.ids||[]).reverse())}catch(e){}ids=[...new Set(ids)].filter(i=>i&&i!=bid).slice(0,8);if(!ids.length){seed(H);say(H+'.bitmap has no build yet');return}}
-for(const id of ids){say('reading '+id.slice(0,10)+'…');const b=await fromId(id);if(b){b.a?load(b.a,b.s):load(b);say('loaded on-chain build '+id.slice(0,10)+'…'+(b.n?' · '+b.n+' pieces':'')+'');return}}
+for(const id of ids){say('reading '+id.slice(0,10)+'…');const b=await fromId(id);if(b){b.a?load(b.a,b.s):load(b);say('loaded '+id.slice(0,10)+(b.n?' · '+b.n+' pieces':''));return}}
 say('no build found')}catch(e){say('offline · starter ground')}}
 $('f').onclick=fetchBuild;$('q').onkeydown=e=>{if(e.key=='Enter')fetchBuild()};
 const save=(data,name,type)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click()};
