@@ -2,6 +2,7 @@ import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { episodeLength, generateEpisode, parseEpisode, sceneAt, type ToonEpisode } from "@/lib/toon-script";
 import { SceneEditor } from "@/components/toon/SceneEditor";
+import { ToonLibraryPanel } from "@/components/toon/ToonLibraryPanel";
 
 const ToonStage3D = lazy(() => import("@/components/toon/ToonStage3D"));
 
@@ -213,6 +214,7 @@ function ToonPage() {
         </div>
 
         <aside className="space-y-4">
+          <ToonLibraryPanel episode={episode} onOpen={load} />
           <section className="rounded-lg border border-border bg-card p-4">
             <div className="label text-signal">EPISODE GENERATOR</div>
             <div className="mt-3 flex gap-2 font-mono text-xs">
