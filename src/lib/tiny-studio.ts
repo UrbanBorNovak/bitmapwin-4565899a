@@ -17,7 +17,7 @@ const OCI_MODULE = "970c183ec1e8cb10d25e53140b520bbda5dcf4381d830ea4dfda507b9af4
  * Steep faces and peaks expose stone, low ground is sand, flats are grass.
  * The same source runs inline in the studio and in seedTerrain().
  */
-const LAND_JS = `function LAND(h,P){let s=(h*2654435761)>>>0;const r=()=>((s=(Math.imul(s^(s>>>15),2246822507)+1)>>>0)/4294967296),a=r()*6,b=r()*6,c=r()*6,f=(h+(h/210000|0))%4,T=[],M=Math,Q=(x,z)=>T[x*64+z];for(let x=0;x<64;x++)for(let z=0;z<64;z++){const u=x-32,w=z-32,d=M.hypot(u,w)/32,n=M.sin(x/17+a)*M.cos(z/13+b)+.5*M.sin((x+z)/7+c)+.2*M.sin(x/3+a)*M.cos(z/4+b),e=f<1?12-16*M.abs(M.sin(u/19+w/31+a)+n*.3):f<2?2*M.round(2+3*n):f<3?12*M.exp(-30*(d-.55)**2)+n*1.5:3+5*n-3*d;T[x*64+z]=M.max(1,M.min(20,M.round(e+(1-d)*3)))}for(let x=0;x<64;x++)for(let z=0;z<64;z++){const t=Q(x,z),g=M.max(...[[1,0],[-1,0],[0,1],[0,-1]].map(([i,j])=>M.abs(t-(Q(x+i,z+j)??t))));for(let y=0;y<t;y++)P(x,y,z,y<t-1?y<t-3?3:1:g>1||t>15?3:t<3?2:0)}}`;
+const LAND_JS = `function LAND(h,P){let s=h*2654435761>>>0,T=[],x,z,M=Math,S=M.sin;const r=()=>(s=M.imul(s^s>>>15,2246822507)+1>>>0)/4294967296,a=r()*6,b=r()*6,f=(h+(h/210000|0))%4;for(x=0;x<64;x++)for(z=0;z<64;z++){const u=x-32,w=z-32,d=M.hypot(u,w)/32,n=S(x/17+a)*S(z/13+b)+S((x+z)/7+b)/2+S(x/3+a)*S(z/4)/5;T[x*64+z]=M.max(1,M.min(20,M.round((f<1?12-16*M.abs(S(u/19+w/31+a)+n/3):f<2?2*M.round(2+3*n):f<3?12*M.exp(-30*(d-.55)**2)+n*1.5:3+5*n-3*d)+3-3*d)))}for(x=0;x<64;x++)for(z=0;z<64;z++){const t=T[x*64+z],g=M.max(...[1,-1,64,-64].map(o=>M.abs(t-(T[x*64+z+o]??t))));for(let y=0;y<t;y++)P(x,y,z,y<t-1?y<t-3?3:1:g>1||t>15?3:t<3?2:0)}}`;
 
 /** Deterministic starter ground for a block height (same code as the inline JS). */
 export function seedTerrain(height: number): number[][] {
