@@ -4,6 +4,7 @@ import { episodeLength, generateEpisode, parseEpisode, sceneAt, type ToonEpisode
 import { SceneEditor } from "@/components/toon/SceneEditor";
 import { ToonLibraryPanel } from "@/components/toon/ToonLibraryPanel";
 import type { ContinuityNote, ToonCharacter } from "@/lib/toon-library";
+import { canEncodeMp4, createXRecorder, X_MAX_SECONDS, X_SIZES, xIntentUrl } from "@/lib/x-video";
 
 const ToonStage3D = lazy(() => import("@/components/toon/ToonStage3D"));
 
@@ -144,46 +145,59 @@ function ToonPage() {
     if (ctx) drawOverlay(ctx, c.width, c.height, episode, time);
   }, [episode, time]);
 
-  const record = () => {
+  const [lastFile, setLastFile] = useState<File | null>(null);
+
+  const record = async () => {
     const gl = stageRef.current?.querySelector("canvas");
-    if (!gl || typeof MediaRecorder === "undefined") return setNote("VIDEO RECORDING IS NOT SUPPORTED IN THIS BROWSER.");
+    if (!gl || (typeof MediaRecorder === "undefined" && !canEncodeMp4())) return setNote("VIDEO RECORDING IS NOT SUPPORTED IN THIS BROWSER.");
+    if (total > X_MAX_SECONDS) setNote(`EPISODE IS LONGER THAN ${X_MAX_SECONDS}s — X MAY REJECT IT.`);
+    const [W, H] = X_SIZES[episode.aspect];
     const out = document.createElement("canvas");
-    out.width = gl.width; out.height = gl.height;
+    out.width = W; out.height = H;
     const ctx = out.getContext("2d")!;
     const over = document.createElement("canvas");
-    over.width = gl.width; over.height = gl.height;
+    over.width = W; over.height = H;
     const octx = over.getContext("2d")!;
-    const stream = out.captureStream(30);
-    const type = ["video/mp4", "video/webm;codecs=vp9", "video/webm"].find((m) => MediaRecorder.isTypeSupported(m)) ?? "";
-    const rec = new MediaRecorder(stream, type ? { mimeType: type, videoBitsPerSecond: 6_000_000 } : undefined);
-    const chunks: Blob[] = [];
-    rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
-    let raf = 0;
-    const paint = () => {
-      ctx.drawImage(gl, 0, 0);
-      drawOverlay(octx, over.width, over.height, episode, timeRef.current);
+    const rec = await createXRecorder(out);
+    let raf = 0, stopped = false;
+    const paint = async () => {
+      // Cover-fit the stage into the exact X frame size.
+      const s = Math.max(W / gl.width, H / gl.height), dw = gl.width * s, dh = gl.height * s;
+      ctx.fillStyle = "#0a0e14"; ctx.fillRect(0, 0, W, H);
+      ctx.drawImage(gl, (W - dw) / 2, (H - dh) / 2, dw, dh);
+      drawOverlay(octx, W, H, episode, timeRef.current);
       ctx.drawImage(over, 0, 0);
-      if (timeRef.current >= total) { rec.stop(); return; }
+      rec.addFrame(out, timeRef.current);
+      if (timeRef.current >= total && !stopped) {
+        stopped = true;
+        const blob = await rec.finish();
+        setRecording(false);
+        const name = `${episode.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-x.${rec.kind}`;
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob); a.download = name;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 30_000);
+        setLastFile(new File([blob], name, { type: blob.type }));
+        setNote(rec.kind === "mp4" ? `X-READY MP4 SAVED (${W}×${H}, 30 FPS, H.264). NOW PRESS POST TO X AND ATTACH IT.` : "SAVED AS WEBM — X NEEDS MP4. USE CHROME, EDGE OR SAFARI FOR AN X-READY FILE.");
+        return;
+      }
       raf = requestAnimationFrame(paint);
     };
-    rec.onstop = () => {
-      cancelAnimationFrame(raf);
-      setRecording(false);
-      const blob = new Blob(chunks, { type: type || "video/webm" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `${episode.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.${type.includes("mp4") ? "mp4" : "webm"}`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-      setNote("EPISODE SAVED TO YOUR DOWNLOADS.");
-    };
+    void raf;
     setNote(null);
     setTime(0);
     timeRef.current = 0;
     setRecording(true);
     setPlaying(true);
-    rec.start(500);
     raf = requestAnimationFrame(paint);
+  };
+
+  const postToX = async () => {
+    const file = lastFile;
+    if (file && matchMedia("(pointer: coarse)").matches && navigator.canShare?.({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: episode.title, text: `${episode.title} #Bitmap #Ordinals #Bitcoin` }); return; } catch { /* fall through */ }
+    }
+    window.open(xIntentUrl(episode.title), "_blank", "noopener");
   };
 
   const vertical = episode.aspect === "9:16";
