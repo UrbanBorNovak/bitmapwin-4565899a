@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef, type MutableRefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useQuery } from "@tanstack/react-query";
-import { CanvasTexture, SRGBColorSpace, Vector3, type Group, type Sprite } from "three";
+import { Box3, CanvasTexture, SRGBColorSpace, Vector3, type Group, type Sprite } from "three";
+
+/** Measured world height of each cast slot (so cuts frame the real body, not a guess). */
+const actorHeights = new Map<number, number>();
+/** Largest body extent (long creatures need wider framing than their height). */
+const actorSizes = new Map<number, number>();
+const SEAL_GEOMS = new Set(["TorusGeometry", "OctahedronGeometry", "RingGeometry"]);
 import type { Emote } from "@/lib/toon-script";
 import { toonEmotes, toonHeads } from "@/lib/toon-anchors";
 
@@ -75,7 +81,8 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
   const g = useRef<Group>(null);
   const dna = useQuery({ ...guardianDnaQuery(actor.height), staleTime: Infinity });
   const head = useMemo(() => new Vector3(), []);
-  useEffect(() => () => { toonHeads.delete(slot); }, [slot]);
+  const unitH = useRef(0), unitS = useRef(0), frames = useRef(0);
+  useEffect(() => () => { toonHeads.delete(slot); actorHeights.delete(slot); actorSizes.delete(slot); }, [slot]);
   useFrame(({ camera }) => {
     const t = timeRef.current, o = g.current;
     if (!o) return;
@@ -102,10 +109,22 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
     }
     o.position.set(x, y, pos.z);
     o.rotation.set(rx, ry, rz);
+    if (o.children.length && frames.current++ % 30 === 0) {
+      o.scale.set(1, 1, 1); o.position.set(0, 0, 0); o.rotation.set(0, 0, 0); o.updateMatrixWorld(true);
+      // Body voxels only — halos, seals and gems float above the head and would skew framing.
+      const b = new Box3(), tmp = new Box3();
+      o.traverse((m) => { const g = (m as { geometry?: { type?: string } }).geometry; if (!g || SEAL_GEOMS.has(g.type ?? "")) return;
+        // InstancedMesh caches its bounds before the voxels are written; refresh them.
+        (m as { computeBoundingBox?: () => void }).computeBoundingBox?.();
+        b.union(tmp.setFromObject(m)); });
+      if (!b.isEmpty()) { unitH.current = Math.max(0.2, b.max.y); unitS.current = Math.max(b.max.y, b.max.x - b.min.x, b.max.z - b.min.z); }
+    }
     o.scale.set(10 * s, 10 * s * sy, 10 * s);
+    const bodyH = (unitH.current || 1.2) * 10;
+    actorHeights.set(slot, bodyH); actorSizes.set(slot, Math.max(bodyH, (unitS.current || 0) * 10 * s));
     // Publish the head's screen position for the speech-bubble overlay.
     if (dna.data) {
-      head.set(x, y + 12 * s * sy, pos.z).project(camera);
+      head.set(x, y + bodyH * s * sy * 0.92, pos.z).project(camera);
       if (head.z < 1) toonHeads.set(slot, { x: (head.x + 1) / 2, y: (1 - head.y) / 2, scene });
       else toonHeads.delete(slot);
     }
@@ -160,10 +179,14 @@ function cutPose(scene: ToonScene, line: ToonLine, local: number): [number, numb
   const sp = at(line.speaker), oi = scene.cast.findIndex((_, i) => i !== line.speaker), ot = oi >= 0 ? at(oi) : { x: sp.x - 10, z: sp.z + 10 };
   let dx = sp.x - ot.x, dz = sp.z - ot.z; const L = Math.hypot(dx, dz) || 1; dx /= L; dz /= L;
   const px = -dz, pz = dx; // perpendicular (camera side)
-  if (line.cam === "close") return [sp.x - dx * 14 + px * 6, 10, sp.z - dz * 14 + pz * 6, sp.x, 9, sp.z];
-  if (line.cam === "ots") return [ot.x - dx * 8 + px * 4, 13, ot.z - dz * 8 + pz * 4, sp.x, 9, sp.z];
-  const mx = (sp.x + ot.x) / 2, mz = (sp.z + ot.z) / 2, span = Math.max(20, L * 1.4);
-  return [mx + px * span, 11, mz + pz * span, mx, 7, mz];
+  // Frame from measured body heights; fov 40 → distance ≈ 1.4 × visible height.
+  const hs = actorHeights.get(line.speaker) ?? 12, ho = oi >= 0 ? actorHeights.get(oi) ?? hs : hs;
+  // (dx,dz) points from listener to speaker; close-ups sit in front of the speaker, angled toward the listener.
+  const ss = actorSizes.get(line.speaker) ?? hs, so = oi >= 0 ? actorSizes.get(oi) ?? ss : ss;
+  if (line.cam === "close") { const d = ss * 1.6; return [sp.x - dx * d * 0.35 + px * d, hs * 0.8, sp.z - dz * d * 0.35 + pz * d, sp.x, hs * 0.5, sp.z]; }
+  if (line.cam === "ots") { const d = Math.max(so, ss) * 0.8; return [ot.x - dx * d + px * d * 0.6, ho * 1.1, ot.z - dz * d + pz * d * 0.6, sp.x, hs * 0.55, sp.z]; }
+  const h = Math.max(hs, ho), mx = (sp.x + ot.x) / 2, mz = (sp.z + ot.z) / 2, span = Math.max(h * 2.2, Math.max(ss, so) * 1.6, L * 1.4);
+  return [mx + px * span, h * 0.75, mz + pz * span, mx, h * 0.5, mz];
 }
 
 function Director({ scene, local }: { scene: ToonScene; local: number }) {
