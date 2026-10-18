@@ -179,30 +179,69 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
       ctx.globalAlpha = 0.7; ctx.strokeStyle = sig; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(sweep) * R, Math.sin(sweep) * R); ctx.stroke();
       const lit = (n: Node) => { let da = sweep - Math.atan2(n.y, n.x); da = ((da % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2); return da < 0.5 ? 1 - da / 0.5 : 0; };
       ctx.lineWidth = 0.8;
+      const fk = filterRef.current;
+      const on = (n: Node) => (fk === "all" || clsOf(n) === fk || (n.kind === "wallet" && false) ? 1 : 0.1);
       for (const e of edges) {
         const a = nodes[e.a]!, b = nodes[e.b]!; if (!vis(a) || !vis(b)) continue;
-        const fresh = Math.max(a.born, b.born) >= s - 2;
-        ctx.strokeStyle = col(fresh ? "--signal" : "--border"); ctx.globalAlpha = fresh ? 0.9 : 0.6;
+        const fresh = Math.max(a.born, b.born) >= s - 2; const m = Math.max(on(a), on(b));
+        ctx.strokeStyle = col(fresh ? "--signal" : "--border"); ctx.globalAlpha = (fresh ? 0.9 : 0.6) * m;
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
         const p = (T * (fresh ? 0.9 : 0.35) + ((e.a * 7 + e.b * 13) % 100) / 100) % 1;
-        ctx.globalAlpha = fresh ? 1 : 0.55; ctx.fillStyle = fresh ? sig : btc; ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 8;
+        ctx.globalAlpha = (fresh ? 1 : 0.55) * m; ctx.fillStyle = fresh ? sig : btc; ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 8;
         ctx.beginPath(); ctx.arc(a.x + (b.x - a.x) * p, a.y + (b.y - a.y) * p, fresh ? 1.8 : 1.1, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
       }
       for (const n of nodes) {
         if (!vis(n)) continue;
-        const fresh = n.born >= s - 1; const c = col(n.tone);
-        ctx.globalAlpha = 1; ctx.fillStyle = c; ctx.shadowColor = c; const L = lit(n); ctx.shadowBlur = fresh ? 18 : (n.kind === "event" ? 6 : 0) + L * 22; ctx.globalAlpha = 0.75 + L * 0.25;
+        const fresh = n.born >= s - 1; const c = col(n.tone); const m = on(n);
+        ctx.globalAlpha = 1; ctx.fillStyle = c; ctx.shadowColor = c; const L = lit(n); ctx.shadowBlur = m < 1 ? 0 : fresh ? 18 : (n.kind === "event" ? 6 : 0) + L * 22; ctx.globalAlpha = (0.75 + L * 0.25) * m;
         ctx.beginPath();
         if (n.kind === "bitmap") {
           ctx.rect(n.x - n.r * 0.55, n.y - n.r * 0.55, n.r * 1.1, n.r * 1.1);
-          ctx.save(); ctx.strokeStyle = c; ctx.globalAlpha = 0.8; const q = n.r + 3, k = 3; ctx.beginPath();
+          ctx.save(); ctx.strokeStyle = c; ctx.globalAlpha = 0.8 * m; const q = n.r + 3, k = 3; ctx.beginPath();
           for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]] as const) { ctx.moveTo(n.x + sx * q, n.y + sy * (q - k)); ctx.lineTo(n.x + sx * q, n.y + sy * q); ctx.lineTo(n.x + sx * (q - k), n.y + sy * q); }
           ctx.stroke(); ctx.restore();
         } else if (n.ev?.proofLevel === "CHAIN") { ctx.moveTo(n.x, n.y - n.r * 1.3); ctx.lineTo(n.x + n.r * 1.3, n.y); ctx.lineTo(n.x, n.y + n.r * 1.3); ctx.lineTo(n.x - n.r * 1.3, n.y); ctx.closePath(); }
         else ctx.arc(n.x, n.y, n.r * (fresh ? 1.5 : 1), 0, Math.PI * 2);
         ctx.fill(); ctx.shadowBlur = 0;
-        if (n.kind === "bitmap") { ctx.fillStyle = col("--muted-foreground"); ctx.font = "9px 'Space Mono', monospace"; ctx.fillText(n.label, n.x + 12, n.y + 3); }
+        if (n.kind === "bitmap" && m === 1) { ctx.fillStyle = col("--muted-foreground"); ctx.font = "9px 'Space Mono', monospace"; ctx.fillText(n.label, n.x + 12, n.y + 3); }
       }
+      // quadrant labels
+      ctx.globalAlpha = 0.35; ctx.fillStyle = sig; ctx.font = "8px 'Space Mono', monospace";
+      ctx.fillText("QUAD I", w / 2 - 60, -h / 2 + 64); ctx.fillText("QUAD II", -w / 2 + 12, -h / 2 + 64);
+      ctx.fillText("QUAD III", -w / 2 + 12, h / 2 - 66); ctx.fillText("QUAD IV", w / 2 - 60, h / 2 - 66);
+      // cursor crosshair with azimuth ring
+      const cu = cursor.current;
+      if (cu) {
+        ctx.strokeStyle = sig; ctx.lineWidth = 0.6; ctx.globalAlpha = 0.35; ctx.setLineDash([2, 4]);
+        ctx.beginPath(); ctx.moveTo(-w / 2, cu.y); ctx.lineTo(w / 2, cu.y); ctx.moveTo(cu.x, -h / 2); ctx.lineTo(cu.x, h / 2); ctx.stroke();
+        ctx.setLineDash([]); ctx.globalAlpha = 0.8;
+        ctx.beginPath(); ctx.arc(cu.x, cu.y, 14, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(cu.x, cu.y); ctx.globalAlpha = 0.25; ctx.stroke();
+        const azd = ((Math.atan2(cu.y, cu.x) * 180) / Math.PI + 90 + 360) % 360;
+        ctx.globalAlpha = 0.9; ctx.fillStyle = sig; ctx.fillText(`AZ ${azd.toFixed(1)}° · R ${Math.hypot(cu.x, cu.y).toFixed(0)}`, cu.x + 18, cu.y - 10);
+      }
+      // CRT phosphor scanline
+      const sy = ((T * 60) % (h + 40)) - h / 2 - 20;
+      const sg = ctx.createLinearGradient(0, sy - 20, 0, sy + 2); sg.addColorStop(0, "transparent"); sg.addColorStop(1, sig);
+      ctx.globalAlpha = 0.07; ctx.fillStyle = sg; ctx.fillRect(-w / 2, sy - 20, w, 22);
+      // event-density oscilloscope along the bottom deck
+      const dens = densityRef.current, oy = h / 2 - 24, ow = Math.min(360, w * 0.45), ox = -ow / 2;
+      const prog = lenRef.current ? s / lenRef.current : 0;
+      ctx.globalAlpha = 0.25; ctx.strokeStyle = sig; ctx.strokeRect(ox - 4, oy - 22, ow + 8, 30);
+      ctx.beginPath(); ctx.moveTo(ox, oy - 7); ctx.lineTo(ox + ow, oy - 7); ctx.stroke();
+      ctx.lineWidth = 1.2; ctx.shadowColor = sig; ctx.shadowBlur = 6;
+      for (const pass of [0, 1]) {
+        ctx.globalAlpha = pass ? 0.95 : 0.3; ctx.beginPath();
+        const lim = pass ? Math.floor(prog * 64) : 64;
+        for (let i = 0; i < lim; i++) {
+          const x = ox + (i / 63) * ow, jit = Math.sin(T * 9 + i * 1.7) * 1.2 * (pass ? 1 : 0.3);
+          const y = oy - 7 - dens[i]! * 13 * (i % 2 ? 1 : -0.6) + jit;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+      ctx.shadowBlur = 0; ctx.lineWidth = 0.8;
+      ctx.globalAlpha = 0.6; ctx.fillStyle = sig; ctx.fillText("EVT.DENSITY // OSC", ox - 2, oy - 26);
       ctx.globalAlpha = 1;
       // target lock reticle + leader line to the HUD card (top-right)
       const lk = lockRef.current;
