@@ -12,7 +12,7 @@ describe("toon script", () => {
   });
   it("rejects more than 4 Guardians in a scene", () => {
     const e = generateEpisode(1, 2);
-    e.scenes[0].cast = Array(5).fill(e.scenes[0].cast[0]);
+    e.scenes[0]!.cast = Array(5).fill(e.scenes[0]!.cast[0]);
     expect(() => parseEpisode(JSON.stringify(e))).toThrow();
   });
 });

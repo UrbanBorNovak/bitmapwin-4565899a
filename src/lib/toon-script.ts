@@ -24,7 +24,7 @@ export function rng(seed: number) {
   };
 }
 
-const pick = <T,>(r: () => number, xs: readonly T[]) => xs[Math.floor(r() * xs.length)];
+const pick = <T,>(r: () => number, xs: readonly T[]): T => xs[Math.floor(r() * xs.length)] as T;
 
 const OPEN = ["Another block, another sunrise.", "Something moved on my BITMAP.", "Ten strides across. I know every one.", "The mempool is quiet. Too quiet."];
 const CALL = ["Who goes there?", "Halt! This land is inscribed.", "You're standing on my parcel!", "State your block height!"];
@@ -59,7 +59,7 @@ export const episodeLength = (e: ToonEpisode) => e.scenes.reduce((s, c) => s + c
 export function sceneAt(e: ToonEpisode, t: number): { index: number; local: number } {
   let acc = 0;
   for (let i = 0; i < e.scenes.length; i++) {
-    const d = e.scenes[i].duration;
+    const d = e.scenes[i]!.duration;
     if (t < acc + d) return { index: i, local: t - acc };
     acc += d;
   }
