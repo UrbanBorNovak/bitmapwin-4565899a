@@ -102,7 +102,7 @@ if(PT.size==2&&!W){const[a,b]=[...PT.values()],d=Math.hypot(a.x-b.x,a.y-b.y);if(
 if(W){wyaw+=dx*.006;wpit=Math.max(-1.4,Math.min(1.4,wpit-dy*.006))}else{yaw+=dx*.008;pit=Math.max(.05,Math.min(1.5,pit+dy*.008))}};
 C.onpointerup=C.onpointercancel=e=>{const p=PT.get(e.pointerId);PT.delete(e.pointerId);if(PT.size<2)pinch=0;if(!p)return;if(p.stick){jx=jy=0;if(p.mv>=6)return}if(p.mv<6&&e.type=='pointerup')edit(e.clientX,e.clientY)};
 C.onwheel=e=>{e.preventDefault();if(!W)dist=Math.max(10,Math.min(220,dist*(e.deltaY>0?1.1:.9)))};
-onkeydown=e=>{if(e.target.tagName=='INPUT')return;KD[e.code]=1;if(e.key=='1'||e.key=='2'||e.key=='3')tool(+e.key-1);if(e.key=='v'||e.key=='V')$('n').click()};onkeyup=e=>{KD[e.code]=0};onblur=()=>{for(const k in KD)KD[k]=0};
+onkeydown=e=>{if(e.target.tagName=='INPUT')return;KD[e.code]=1;if(e.key=='1'||e.key=='2'||e.key=='3')tool(+e.key-1);if(e.key=='v')$('n').click()};onkeyup=e=>{KD[e.code]=0};onblur=()=>{for(const k in KD)KD[k]=0};
 function tool(i){T=i;document.querySelectorAll('.t').forEach((b,j)=>b.classList.toggle('on',j==i));hud()}[0,1,2].forEach(i=>$('t'+i).onclick=()=>tool(i));
 $('n').onclick=()=>{W^=1;if(W){wx=wz=S/2;wyaw=yaw+Math.PI;wpit=-.2;wy=ground(wx,wz,S)+1.6}jx=jy=0;$('n').textContent='VIEW: '+(W?'WALK':'ORBIT');$('j').className=W&&matchMedia('(pointer:coarse)').matches?'w':'';hud()};
 P.forEach((c,i)=>{const b=document.createElement('button');b.className='s'+(i?'':' on');b.style.background=c;b.onclick=()=>{K=i;document.querySelectorAll('.s').forEach(q=>q.classList.remove('on'));b.classList.add('on')};$('p').append(b)});
@@ -119,9 +119,9 @@ const mn=j=>Math.min(...B.map(v=>v[j])),m0=mn(0),m1=mn(1),m2=mn(2);B=B.map(v=>[v
 for(const v of B){const x=v[0]+px,y=v[1]+py,z=v[2]+pz;if(x<sp&&y<sp&&z<sp)o.push([x,y,z,v[3]])}}));return{a:o,s:sp,n:~~o.c+'/'+ps.length}}catch(e){return null}}
 async function fetchBuild(){const q=$('q').value.trim();try{let ids=[q];if(!/^[0-9a-f]{64}i\\d+$/.test(q)){H=Math.max(0,+q|0||+$('h').value|0);$('h').value=H;seed(H);say('looking up…');
 const bid=await(async()=>{try{const m=await import(O+'/content/${OCI_MODULE}');return await m.getBitmapInscriptionId(H)}catch(e){const d=$('d').dataset;if(d.ih==H)return d.i;if(parent!==window)return await new Promise(ok=>{const f=v=>{if(v.data&&v.data.tsH==H){removeEventListener('message',f);ok(v.data.tsId)}};addEventListener('message',f);parent.postMessage({tsAsk:H},'*');setTimeout(()=>ok(null),9e3)});throw e}})();if(!bid)throw 0;const ins=await J('/r/inscription/'+bid),at=await J('/r/sat/'+ins.sat+'/at/-1');ids=[at.id];
-try{const l=await J('/r/sat/'+ins.sat);ids.push(...(l.ids||[]).reverse())}catch(e){}ids=[...new Set(ids)].filter(i=>i&&i!=bid).slice(0,8);if(!ids.length){seed(H);say(H+'.bitmap has no build yet');return}}
+try{const l=await J('/r/sat/'+ins.sat);ids.push(...(l.ids||[]).reverse())}catch(e){}ids=[...new Set(ids)].filter(i=>i&&i!=bid).slice(0,8);if(!ids.length){seed(H);say('no build');return}}
 for(const id of ids){say('reading '+id.slice(0,10)+'…');const b=await fromId(id);if(b){b.a?load(b.a,b.s):load(b);say('loaded '+id.slice(0,10)+(b.n?' · '+b.n+' pieces':''));return}}
-say('no build found')}catch(e){say('offline')}}
+say('no build')}catch(e){say('offline')}}
 $('f').onclick=fetchBuild;$('q').onkeydown=e=>{if(e.key=='Enter')fetchBuild()};
 const save=(data,name,type)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click()};
 $('x').onclick=()=>{const s=pack(),b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);save(b,H+'.bwvx','application/octet-stream')};
