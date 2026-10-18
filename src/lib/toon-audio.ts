@@ -51,6 +51,15 @@ function reverb(ctx: OfflineAudioContext, out: AudioNode, seconds = 2.2) {
   return conv;
 }
 
+/** Sustained pad tone: slow swell, held, then a gentle linear release (no early exponential fade-out). */
+function pad(ctx: OfflineAudioContext, out: AudioNode, f: number, t: number, d: number, vol: number) {
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = "sine"; o.frequency.value = f;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.4);
+  g.gain.setValueAtTime(vol, t + d * 0.7); g.gain.linearRampToValueAtTime(0, t + d);
+  o.connect(g).connect(out); o.start(t); o.stop(t + d + 0.05);
+}
+
 /** Bell / chime: sine with a soft inharmonic partial, long decay. */
 function bell(ctx: OfflineAudioContext, out: AudioNode, f: number, t: number, d: number, vol: number) {
   note(ctx, out, f, t, d, vol, "sine");
@@ -75,7 +84,7 @@ export async function renderSoundtrack(ep: ToonEpisode): Promise<AudioBuffer | n
       const bar = Math.floor(i / 4), chord = m.steps[bar % m.steps.length] ?? 0;
       if (i % 4 === 0) {
         note(ctx, tone, hz(m.root / 2, chord), t, beat * 3.8, 0.45, "sine"); // bass
-        for (const s of [0, 4, 7]) note(ctx, tone, hz(m.root, chord + s), t, beat * 5, 0.1, "sine"); // soft pad, overlaps the next bar so the bed never drops out
+        for (const s of [0, 4, 7]) pad(ctx, tone, hz(m.root, chord + s), t, beat * 4.6, 0.07); // sustained pad, crossfades into the next bar so the bed never drops out
       }
       if (r() < 0.55) bell(ctx, tone, hz(m.root * 2, (m.steps[Math.floor(r() * m.steps.length)] ?? 0) + chord), t, beat * 1.4, 0.16); // kalimba pluck
       else if (r() < 0.3) note(ctx, tone, hz(m.root * 2, chord + 7), t, beat * 0.8, 0.1, lead);
