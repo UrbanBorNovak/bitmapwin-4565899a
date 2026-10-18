@@ -78,7 +78,7 @@ export async function renderSoundtrack(ep: ToonEpisode): Promise<AudioBuffer | n
   if (music !== "none") {
     const m = SCALES[music], beat = 60 / m.bpm, r = rng(ep.title.length * 977 + ep.scenes.length);
     const bus = ctx.createGain(); bus.gain.value = 0.2; bus.connect(master); bus.connect(verb);
-    const tone = ctx.createBiquadFilter(); tone.type = "lowpass"; tone.frequency.value = 2400; tone.connect(bus); // TEMP
+    const tone = ctx.createBiquadFilter(); tone.type = "lowpass"; tone.frequency.value = 2400; tone.connect(bus);
     const lead: OscillatorType = m.wave === "sawtooth" ? "triangle" : m.wave;
     for (let i = 0, t = 0; t < total; i++, t = i * beat) {
       const bar = Math.floor(i / 4), chord = m.steps[bar % m.steps.length] ?? 0;
