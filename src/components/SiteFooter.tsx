@@ -33,6 +33,7 @@ const GROUPS: { label: string; items: { to: string; label: string }[] }[] = [
       { to: "/extenders", label: "EXTENDERS" },
       { to: "/store-kit", label: "TINY STORE KIT" },
       { to: "/tiny-studio", label: "TINY STUDIO" },
+      { to: "/co-forge", label: "CO-FORGE" },
     ],
   },
   {
