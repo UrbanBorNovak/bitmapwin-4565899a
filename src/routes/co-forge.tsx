@@ -137,7 +137,11 @@ function CoForge() {
     if (tool === "piece") {
       if (!picked) { toast.error("PICK A PIECE FROM THE SHELF"); return; }
       if (parts.length >= MAX_ASM_PARTS) toast.warning(`OVER ${MAX_ASM_PARTS} PIECES — EXTRAS WON'T BE INSCRIBED`);
-      send.current([{ op: "p+", oid: newOid(), id: picked, x, y: 0, z, r: rot }]);
+      const b = cache[picked] ?? [];
+      const ex = b.length ? Math.max(...b.map((v) => v.dx)) + 1 : 1, ez = b.length ? Math.max(...b.map((v) => v.dz)) + 1 : 1;
+      const [w, d] = rot % 2 ? [ez, ex] : [ex, ez];
+      const fit = (c: number, n: number) => Math.max(0, Math.min(SPAN - Math.min(n, SPAN), c - Math.floor(n / 2)));
+      send.current([{ op: "p+", oid: newOid(), id: picked, x: fit(x, w), y: 0, z: fit(z, d), r: rot }]);
     } else if (tool === "block") {
       const y = col ? col.y + 1 : 0;
       if (y < SPAN) send.current([{ op: "b+", x, y, z, k: kind }]);
