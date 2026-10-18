@@ -142,6 +142,27 @@ function DocsPage() {
         <pre data-no-translate className="mt-4 overflow-x-auto border border-border bg-surface p-4 font-mono text-[11px] leading-relaxed text-muted-foreground">{BWVX_SPEC}</pre>
       </section>
 
+      <section id="tiny-tools" className="mt-10 scroll-mt-20">
+        <h2 className="display border-b border-border pb-2 text-xl">TINY TOOLS — ONE-FILE APPS YOU CAN INSCRIBE</h2>
+        <div className="mt-4 grid gap-px border border-border bg-border md:grid-cols-2">
+          <div className="space-y-2 bg-background p-5 text-sm leading-relaxed text-muted-foreground">
+            <div className="display text-base text-foreground">TINY STORE KIT</div>
+            <p>Make a one-file shop for BITMAPs: name, tagline, colour, seller address, block range, max price, sort. Share the link to keep your settings.</p>
+            <p><span className="text-foreground">FAST</span> (~1.8 KB packed) shows live BitmapWin listings; BUY opens that BITMAP on the main marketplace. An empty range shows 0 for sale — only listed BITMAPs appear.</p>
+            <p><span className="text-foreground">SOVEREIGN</span> (~5 KB packed) reads signed Nostr listings and checks each one on Bitcoin, with in-page checkout. Limits: buying works with UniSat only; open it in its own tab; buyers need 3 separate plain coins; only blocks up to 969,999; raising a price or cancelling means moving the BITMAP. Still reads ordinals.com and mempool.space.</p>
+            <Link to="/store-kit" className="btn-term-ghost inline-block">[ OPEN STORE KIT ]</Link>
+          </div>
+          <div className="space-y-2 bg-background p-5 text-sm leading-relaxed text-muted-foreground">
+            <div className="display text-base text-foreground">TINY STUDIO</div>
+            <p>A 3D voxel viewer and builder in ~5.5 KB packed. ORBIT or WALK, then LOOK, PLACE or ERASE (keys 1–3, V for view). Phones: drag in the left circle to walk.</p>
+            <p>FETCH ON-CHAIN loads a BITMAP's newest Land Forge or Tiny Studio build by block number or inscription id. EXPORT .BWVX saves blocks (4 bytes each, Land Forge format); SAVE .HTML keeps your build inside the file.</p>
+            <p>Limits: the starter ground is a formula, not the BITMAP's real layout or parcel limits; only standard 64-size builds load (not XL or recursive); block lookup covers up to 969,999 — use an inscription id for newer. Anyone can remix on screen; only the holder can make it permanent on Bitcoin.</p>
+            <Link to="/tiny-studio" className="btn-term-ghost inline-block">[ OPEN TINY STUDIO ]</Link>
+          </div>
+        </div>
+        <p className="mt-3 text-sm text-muted-foreground">Put either on Bitcoin with <span data-no-translate className="font-mono">ord wallet inscribe --fee-rate &lt;sats/vB&gt; --file index.html --compress</span>. You sign and send it yourself — BitmapWin never does.</p>
+      </section>
+
       <section className="mt-10">
         <h2 className="display border-b border-border pb-2 text-xl">REFERENCES</h2>
         <div className="grid gap-px border border-t-0 border-border bg-border md:grid-cols-2">
