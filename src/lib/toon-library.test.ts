@@ -65,3 +65,12 @@ describe("series characters", () => {
     expect(mergeLibraries(a, b).series[0]!.characters!.map((x) => x.nickname)).toEqual(["Ace", "Bo"]);
   });
 });
+
+describe("continuity notes", () => {
+  it("merging keeps notes from both devices without duplicates", () => {
+    const n = (id: string, at: number) => ({ id, kind: "thread" as const, text: id, episode: "EP1", at });
+    const a: ToonLibrary = { series: [{ id: "s", name: "S", episodes: [], notes: [n("x", 2)] }], casts: [] };
+    const b: ToonLibrary = { series: [{ id: "s", name: "S", episodes: [], notes: [n("x", 2), n("y", 1)] }], casts: [] };
+    expect(mergeLibraries(a, b).series[0]!.notes!.map((x) => x.id)).toEqual(["y", "x"]);
+  });
+});
