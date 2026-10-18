@@ -41,7 +41,7 @@ describe("co-forge merge", () => {
 describe("co-forge room owner", () => {
   const O = "o".repeat(0) + "1".repeat(64), A = "2".repeat(64), V = "3".repeat(64);
   let n = 0;
-  const place = (x: number) => ({ ops: [{ op: "b+" as const, x, y: 0, z: 0, k: 1 }], id: (++n).toString(16).padStart(64, "0") });
+  const place = (x: number) => ({ ops: [{ op: "b+" as const, x, y: 0, z: 0, k: 1 }], id: (++n).toString(16).padEnd(64, "0") });
   it("only the owner and approved builders change the build", () => {
     const cfg = nextConfig(openConfig(), O, O, { allow: [A] }, 10);
     const s = buildState([{ ...place(1), t: 20, by: O }, { ...place(2), t: 21, by: A }, { ...place(3), t: 22, by: V }], cfg, O);
