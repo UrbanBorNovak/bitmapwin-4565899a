@@ -98,10 +98,20 @@ export const Route = createFileRoute("/bitmap/$block")({
   loader: async ({ context, params }) => {
     const block = Number(params.block);
     if (!Number.isFinite(block) || block < 0) throw notFound();
-    await context.queryClient.ensureQueryData(registryParcelQuery(block));
-    return { block };
+    const [parcel, stats] = await Promise.all([
+      context.queryClient.ensureQueryData(registryParcelQuery(block)),
+      context.queryClient.ensureQueryData(blockStatsQuery(block)).catch(() => null),
+    ]);
+    // Only verified facts feed the search description; missing ones are left out.
+    const facts: string[] = [];
+    if (stats?.txCount) facts.push(`${stats.txCount.toLocaleString("en-US")} transactions`);
+    if (parcel?.lastSaleSats) facts.push(`last sold for ${parcel.lastSaleSats.toLocaleString("en-US")} sats${parcel.lastSaleAt ? ` on ${parcel.lastSaleAt.slice(0, 10)}` : ""}`);
+    if (parcel?.listedSats) facts.push(`listed at ${parcel.listedSats.toLocaleString("en-US")} sats`);
+    return { block, facts };
   },
-  head: ({ params }) => {
+  head: ({ params, loaderData }) => {
+    const facts = loaderData?.facts ?? [];
+    const factLine = facts.length ? `Block ${params.block}: ${facts.join(", ")}. ` : "";
     const height = Number(params.block);
     const all = Number.isInteger(height) && height >= 0 ? traitsOf(height) : [];
     // Distinctive traits first; broad "sub-N" ranges only fill remaining space.
@@ -111,8 +121,8 @@ export const Route = createFileRoute("/bitmap/$block")({
       ? `${params.block}.bitmap — ${labels.slice(0, 2).join(" · ")} | BitmapWin`
       : `${params.block}.bitmap — Bitcoin Land | BitmapWin`;
     const description = labels.length
-      ? `Verified traits: ${labels.join(", ")}. Ownership, live market and on-chain history for BITMAP #${params.block} on Bitcoin.`
-      : `Ownership, live market and on-chain history for BITMAP #${params.block} on Bitcoin.`;
+      ? `${factLine}Verified traits: ${labels.join(", ")}. Ownership, live market and on-chain history for BITMAP #${params.block} on Bitcoin.`
+      : `${factLine}Ownership, live market and on-chain history for BITMAP #${params.block} on Bitcoin.`;
     const url = `https://bitmapwin.app/bitmap/${params.block}`;
     const image = `https://bitmapwin.app/api/public/og/bitmap/${params.block}.png`;
     return {

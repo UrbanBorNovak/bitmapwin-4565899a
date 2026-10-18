@@ -2,6 +2,23 @@ import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 import { CLUBS } from "@/lib/clubs";
 import { atlasDistricts } from "@/lib/atlas-places";
+import { supabase } from "@/integrations/supabase/client";
+
+/** Every bitmap_height in a public table, paged past the 1,000-row cap. Throws on failure so no partial sitemap is served. */
+async function heightsFrom(table: "trades" | "offers" | "bitmap_forge_builds", openOnly = false): Promise<number[]> {
+  const out: number[] = [];
+  for (let from = 0; from < 50_000; from += 1000) {
+    const { data, error } = openOnly
+      ? await supabase.from("offers").select("bitmap_height").eq("status", "open").order("bitmap_height").range(from, from + 999)
+      : await supabase.from(table).select("bitmap_height").order("bitmap_height").range(from, from + 999);
+    if (error) throw new Error(`sitemap ${table}: ${error.message}`);
+    for (const r of data ?? []) if (Number.isInteger((r as { bitmap_height: number }).bitmap_height)) out.push((r as { bitmap_height: number }).bitmap_height);
+    if (!data || data.length < 1000) break;
+  }
+  return out;
+}
+
+const MAIN_PAGES = ["/forge", "/mint", "/breed", "/guardians", "/guardians-guide", "/church", "/store-kit", "/co-forge", "/tiny-studio", "/bot", "/clips", "/traits", "/kennels", "/explore", "/experiences", "/extenders", "/history", "/builders", "/cities", "/world-stats", "/trading-post", "/ranks", "/codex", "/genesis-ranks", "/novelty"];
 
 const BASE_URL = "https://bitmapwin.app";
 
@@ -15,6 +32,8 @@ export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
       GET: async () => {
+        const [traded, listed, built] = await Promise.all([heightsFrom("trades"), heightsFrom("offers", true), heightsFrom("bitmap_forge_builds")]);
+        const bitmapHeights = [...new Set([...traded, ...listed, ...built])].sort((a, b) => a - b);
         const entries: SitemapEntry[] = [
           { path: "/", changefreq: "daily", priority: "1.0" },
           { path: "/marketplace", changefreq: "hourly", priority: "0.9" },
@@ -34,6 +53,8 @@ export const Route = createFileRoute("/sitemap.xml")({
           { path: "/dev-tools", changefreq: "weekly", priority: "0.6" },
           { path: "/ownership", changefreq: "monthly", priority: "0.6" },
           { path: "/land-101", changefreq: "monthly", priority: "0.6" },
+          ...MAIN_PAGES.map((path) => ({ path, changefreq: "weekly" as const, priority: "0.7" })),
+          ...bitmapHeights.map((h) => ({ path: `/bitmap/${h}`, changefreq: "daily" as const, priority: "0.6" })),
           ...CLUBS.map((club) => ({
             path: `/collections/${encodeURIComponent(club.id)}`,
             changefreq: "daily" as const,
