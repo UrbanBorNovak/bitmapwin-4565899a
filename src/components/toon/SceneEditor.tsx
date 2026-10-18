@@ -78,9 +78,7 @@ export function SceneEditor({ episode, onChange, onSeek, characters = [], notes 
           </select>
           <button className="px-2 font-mono text-[11px] text-muted-foreground hover:text-bitcoin" aria-label="Remove Guardian"
             onClick={() => patch({ cast: s.cast.filter((_, j) => j !== k), lines: s.lines.filter((l) => l.speaker !== k).map((l) => ({ ...l, speaker: l.speaker > k ? l.speaker - 1 : l.speaker })) })}>✕</button>
-          <label className="col-span-3 text-[11px] text-muted-foreground">Position ← → {a.x}
-            <input type="range" min={-20} max={20} value={a.x} className="w-full" onChange={(e) => patch({ cast: s.cast.map((c, j) => (j === k ? { ...c, x: Number(e.target.value) } : c)) })} />
-          </label>
+          <PositionPad x={a.x} z={a.z} onMove={(x, z) => patch({ cast: s.cast.map((c, j) => (j === k ? { ...c, x, z } : c)) })} />
         </div>
       ))}
       {s.cast.length < 4 && (
@@ -112,5 +110,36 @@ export function SceneEditor({ episode, onChange, onSeek, characters = [], notes 
         <button className="mt-2 font-mono text-[11px] text-signal" onClick={() => patch({ lines: [...s.lines, { at: 0.5, dur: Math.min(3, s.duration), speaker: 0, text: "New line", style: "speech" }] })}>+ ADD LINE</button>
       )}
     </section>
+  );
+}
+
+/** Drag pad: left/right moves x, up/down moves the Guardian back/front (z). Arrow buttons nudge. */
+function PositionPad({ x, z, onMove }: { x: number; z: number; onMove: (x: number, z: number) => void }) {
+  const clamp = (v: number) => Math.max(-20, Math.min(20, Math.round(v)));
+  const at = (e: React.PointerEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    onMove(clamp(((e.clientX - r.left) / r.width) * 40 - 20), clamp(((e.clientY - r.top) / r.height) * 40 - 20));
+  };
+  const btn = "h-8 w-8 border border-border font-mono text-xs hover:text-bitcoin";
+  return (
+    <div className="col-span-3 flex items-center gap-3">
+      <div role="slider" aria-label="Guardian position" aria-valuetext={`x ${x}, depth ${z}`} tabIndex={0}
+        className="relative h-24 w-24 shrink-0 touch-none cursor-crosshair border border-border bg-background"
+        onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); at(e); }}
+        onPointerMove={(e) => { if (e.buttons) at(e); }}>
+        <div className="absolute inset-x-0 top-1/2 h-px bg-border" /><div className="absolute inset-y-0 left-1/2 w-px bg-border" />
+        <span className="absolute left-1 top-0.5 font-mono text-[9px] text-muted-foreground">BACK</span>
+        <span className="absolute bottom-0.5 left-1 font-mono text-[9px] text-muted-foreground">FRONT</span>
+        <div className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-bitcoin" style={{ left: `${((x + 20) / 40) * 100}%`, top: `${((z + 20) / 40) * 100}%` }} />
+      </div>
+      <div className="grid grid-cols-3 gap-1">
+        <span /><button className={btn} aria-label="Move back" onClick={() => onMove(x, clamp(z - 2))}>↑</button><span />
+        <button className={btn} aria-label="Move left" onClick={() => onMove(clamp(x - 2), z)}>←</button>
+        <button className={btn} aria-label="Centre" onClick={() => onMove(0, 0)}>·</button>
+        <button className={btn} aria-label="Move right" onClick={() => onMove(clamp(x + 2), z)}>→</button>
+        <span /><button className={btn} aria-label="Move front" onClick={() => onMove(x, clamp(z + 2))}>↓</button><span />
+      </div>
+      <span className="font-mono text-[10px] text-muted-foreground">X {x}<br />DEPTH {z}</span>
+    </div>
   );
 }
