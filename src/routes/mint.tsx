@@ -20,12 +20,13 @@ import { MINT_COPY, MintLangToggle, useMintLang } from "@/lib/mint-lang";
 import { AuraChamber } from "@/components/bitmon/AuraChamber";
 import { GuardianPortrait } from "@/components/bitmon/GuardianPortrait";
 import { guardianTier, powerScore } from "@/lib/onchain-guardian";
+import { GuardianScout } from "@/components/bitmon/GuardianScout";
 import { ForgeBuildAd } from "@/components/bitmon/ForgeBuildAd";
 
 export const Route = createFileRoute("/mint")({
   validateSearch: z.object({
     height: z.coerce.number().int().min(0).optional(),
-    tab: z.enum(["tutorial", "tour", "wallet", "story", "mine"]).optional(),
+    tab: z.enum(["tutorial", "tour", "wallet", "story", "mine", "scout"]).optional(),
   }),
 
   head: () => ({
@@ -216,6 +217,7 @@ function MintPage() {
             </div>
           </>
         ) : null}
+        {tab === "scout" ? <GuardianScout /> : null}
         {tab === "mine" ? <><SummonDashboard /><div id="guardian-tracker"><GuardianTracker /></div></> : null}
       </div>
 
@@ -224,5 +226,5 @@ function MintPage() {
   );
 }
 
-const TABS = [["tutorial", "AWAKEN TUTORIAL"], ["tour", "GUARDIAN TOUR"], ["wallet", "WALLET GUIDE"], ["story", "THE STORY"], ["mine", "MY AWAKENINGS"]] as const;
+const TABS = [["tutorial", "AWAKEN TUTORIAL"], ["tour", "GUARDIAN TOUR"], ["wallet", "WALLET GUIDE"], ["story", "THE STORY"], ["mine", "MY AWAKENINGS"], ["scout", "SCOUT MY BITMAPS"]] as const;
 type Tab = (typeof TABS)[number][0];
