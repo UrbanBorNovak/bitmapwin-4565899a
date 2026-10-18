@@ -33,7 +33,7 @@ export function RegistryResolverDriver() {
     };
 
     void tick();
-    const timer = window.setInterval(tick, 6_000);
+    const timer = window.setInterval(tick, 60_000);
     const onVisible = () => {
       if (!document.hidden) void tick();
     };

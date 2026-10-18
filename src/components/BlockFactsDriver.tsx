@@ -19,7 +19,7 @@ export function BlockFactsDriver() {
       }
     };
     void tick();
-    const timer = window.setInterval(tick, 20_000);
+    const timer = window.setInterval(tick, 90_000);
     return () => window.clearInterval(timer);
   }, [run]);
   return null;

@@ -1,0 +1,2 @@
+CREATE INDEX IF NOT EXISTS bitmap_index_resolved_at_idx ON public.bitmap_index (resolved_at DESC);
+CREATE INDEX IF NOT EXISTS bitmap_index_unresolved_idx ON public.bitmap_index (resolved_at ASC, block_height DESC) WHERE inscription_id IS NULL;

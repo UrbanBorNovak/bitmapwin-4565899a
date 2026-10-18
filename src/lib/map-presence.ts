@@ -86,7 +86,7 @@ const CHANNEL = "map-cursors";
 /** cursors older than this are considered gone */
 const STALE_MS = 8_000;
 /** at most this many messages per second per visitor */
-const SEND_INTERVAL_MS = 90;
+const SEND_INTERVAL_MS = 250;
 /** speech bubbles fade after this long */
 export const SAY_TTL_MS = 9_000;
 export const SAY_MAX_LENGTH = 140;
