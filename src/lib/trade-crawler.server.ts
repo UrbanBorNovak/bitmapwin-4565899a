@@ -46,33 +46,56 @@ export async function crawlTrades(batch = 20, maxHops = 6): Promise<CrawlResult>
   const skip = new Set((recent ?? []).map((row) => row.block_height));
 
   const candidates: Array<{ bitmapHeight: number; txid: string; inscriptionId: string }> = [];
-  // bitmap_index can hold several sat rows per height — one candidate per height.
   const seen = new Set<number>();
-  let page = 0;
-  // Prefer the highest bitmaps first: recent blocks trade most actively.
-  while (candidates.length < size && page < 12) {
-    const from = page * 500;
+  const take = (rows: Array<{ block_height: number; inscription_id: string | null }> | null) => {
+    for (const row of rows ?? []) {
+      if (candidates.length >= size) return;
+      if (skip.has(row.block_height) || seen.has(row.block_height)) continue;
+      const id = row.inscription_id;
+      const txid = id ? revealTxid(id) : null;
+      if (!id || !txid) continue;
+      seen.add(row.block_height);
+      candidates.push({ bitmapHeight: row.block_height, txid, inscriptionId: id });
+    }
+  };
+  const indexRows = async (heights: number[]) => {
+    const wanted = [...new Set(heights)].filter((h) => !skip.has(h)).slice(0, 400);
+    if (wanted.length === 0) return [];
     const { data, error } = await client
       .from("bitmap_index")
       .select("block_height, inscription_id")
       .eq("is_valid", true)
       .not("inscription_id", "is", null)
-      .order("block_height", { ascending: false })
-      .range(from, from + 499);
+      .in("block_height", wanted);
     if (error) throw Object.assign(error, { stage: "index-read" });
-    if (!data || data.length === 0) break;
-    for (const row of data) {
-      if (candidates.length >= size) break;
-      if (skip.has(row.block_height)) continue;
-      if (seen.has(row.block_height)) continue;
-      const id = row.inscription_id;
-      if (!id) continue;
-      const txid = revealTxid(id);
-      if (!txid) continue;
-      seen.add(row.block_height);
-      candidates.push({ bitmapHeight: row.block_height, txid, inscriptionId: id });
-    }
-    page += 1;
+    return data ?? [];
+  };
+
+  // High-velocity first: BITMAPs listed for sale and BITMAPs that already traded.
+  const [{ data: listed }, { data: traded }] = await Promise.all([
+    client.from("offers").select("bitmap_height").eq("status", "open").limit(1000),
+    client.from("trades").select("bitmap_height").order("block_height", { ascending: false, nullsFirst: false }).limit(3000),
+  ]);
+  take(await indexRows((listed ?? []).map((r) => r.bitmap_height as number)));
+  if (candidates.length < size) take(await indexRows((traded ?? []).map((r) => r.bitmap_height as number)));
+
+  // Then the most-traded ranges: sub-10k, sub-100k, the newest blocks, and a random slice of the whole index.
+  const ranges: Array<[number, number]> = [[0, 9_999], [10_000, 99_999], [900_000, 99_999_999], [0, 99_999_999]];
+  for (const [lo, hi] of ranges) {
+    if (candidates.length >= size) break;
+    const span = Math.min(hi, 980_000) - lo;
+    const start = lo + Math.floor(Math.random() * Math.max(1, span - 400));
+    const { data, error } = await client
+      .from("bitmap_index")
+      .select("block_height, inscription_id")
+      .eq("is_valid", true)
+      .not("inscription_id", "is", null)
+      .gte("block_height", start)
+      .lte("block_height", hi)
+      .order("block_height", { ascending: true })
+      .limit(200);
+    if (error) throw Object.assign(error, { stage: "index-read" });
+    take(data);
   }
 
   if (candidates.length === 0) {
