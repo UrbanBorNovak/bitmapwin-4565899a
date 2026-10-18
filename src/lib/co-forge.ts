@@ -64,5 +64,41 @@ export function exportAssembly(s: CoState) {
   return { parts: all.slice(0, MAX_ASM_PARTS).map(({ id, x, y, z, r }) => ({ id, x, y, z, r })), dropped: all.length - Math.min(all.length, MAX_ASM_PARTS), own: liveBlocks(s) };
 }
 
-export const roomTag = (room: string) => `bitmapwin-coforge:${room.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 40)}`;
+export const roomTag = (room: string) => `bitmapwin-coforge:${roomName(room)}${roomOwner(room) ? ":" + roomOwner(room) : ""}`;
 export const newOid = () => Math.random().toString(36).slice(2, 12);
+
+/* ---------------- Room ownership ----------------
+ * A room id is "<name>@<owner pubkey>", so only the owner's signed control
+ * events can change who builds. Visitors always see the build; only the owner
+ * and approved builders' ops count, and while locked only the owner's do.
+ * Removing someone drops all their ops, so the build is replayed from history. */
+export type RoomConfig = { allow: string[]; locked: boolean; t: number };
+export type Batch = { ops: CoOp[]; t: number; by: string };
+export const openConfig = (): RoomConfig => ({ allow: [], locked: false, t: 0 });
+
+const HEX64 = /^[0-9a-f]{64}$/;
+export const roomOwner = (room: string): string | null => { const o = room.split("@")[1]; return o && HEX64.test(o) ? o : null; };
+export const roomName = (room: string) => room.split("@")[0]!.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 40);
+export const makeRoom = (name: string, owner: string) => `${roomName(name)}@${owner}`;
+
+/** Accepts a control event only if the owner signed it and it is newer than the current one. */
+export function nextConfig(cur: RoomConfig, owner: string, by: string, raw: unknown, t: number): RoomConfig {
+  if (by !== owner || t <= cur.t || !raw || typeof raw !== "object") return cur;
+  const c = raw as { allow?: unknown; locked?: unknown };
+  const allow = Array.isArray(c.allow) ? c.allow.filter((p): p is string => typeof p === "string" && HEX64.test(p)).slice(0, 200) : [];
+  return { allow, locked: c.locked === true, t };
+}
+
+export function canEdit(cfg: RoomConfig, owner: string, who: string) {
+  return who === owner || (!cfg.locked && cfg.allow.includes(who));
+}
+
+/** Replays history under the current rules. A batch sent while locked never counts for non-owners. */
+export function buildState(batches: Batch[], cfg: RoomConfig, owner: string): CoState {
+  const s = emptyState();
+  for (const b of batches) {
+    if (b.by !== owner && (!cfg.allow.includes(b.by) || (cfg.locked && b.t >= cfg.t))) continue;
+    b.ops.forEach((o) => applyOp(s, o, { t: b.t, by: b.by }));
+  }
+  return s;
+}

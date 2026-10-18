@@ -8,7 +8,7 @@ import type { TplBlock } from "@/lib/voxel-templates";
 import { forgePieceFn } from "@/lib/forge-parts.functions";
 import { collectionPiecesQuery } from "@/lib/forge-collection.functions";
 import { forgeAssemblyHtml, isInscriptionId, normPart, placePart, MAX_ASM_PARTS } from "@/lib/forge-assembly";
-import { applyOp, emptyState, exportAssembly, liveBlocks, liveParts, newOid, type CoOp, type CoState } from "@/lib/co-forge";
+import { buildState, canEdit, emptyState, exportAssembly, liveParts, makeRoom, newOid, nextConfig, openConfig, roomName, roomOwner, type Batch, type CoOp, type CoState, type RoomConfig } from "@/lib/co-forge";
 
 export const Route = createFileRoute("/co-forge")({
   head: () => {
@@ -32,7 +32,7 @@ function CoForge() {
   const [room, setRoom] = useState("");
   const [joined, setJoined] = useState<string | null>(null);
   const [height, setHeight] = useState(840000);
-  const [, setTick] = useState(0);
+  const [tick, setTick] = useState(0);
   const state = useRef<CoState>(emptyState());
   const [me, setMe] = useState("");
   const [peers, setPeers] = useState<Record<string, number>>({});
@@ -44,6 +44,22 @@ function CoForge() {
   const [rot, setRot] = useState(0);
   const [kind, setKind] = useState(0);
   const send = useRef<((ops: CoOp[]) => void) | null>(null);
+  const batches = useRef<Batch[]>([]);
+  const [cfg, setCfg] = useState<RoomConfig>(openConfig());
+  const cfgRef = useRef(cfg);
+  const [requests, setRequests] = useState<Record<string, number>>({});
+  const owner = joined ? roomOwner(joined) : null;
+  const isOwner = !!owner && owner === me;
+  const mayEdit = !!owner && !!me && canEdit(cfg, owner, me);
+  const ctrl = useRef<((c: { allow: string[]; locked: boolean }) => void) | null>(null);
+
+  const join = async () => {
+    const net = await import("@/lib/nostr/co-forge-room");
+    const raw = room.trim();
+    // A plain name opens your own room; a full invite code joins someone else's.
+    const id = roomOwner(raw) ? `${roomName(raw)}@${roomOwner(raw)}` : makeRoom(raw, net.myPubkey());
+    setRoom(id); setJoined(id);
+  };
 
   useEffect(() => {
     const q = new URLSearchParams(location.search).get("room");
@@ -61,7 +77,7 @@ function CoForge() {
   };
 
   useEffect(() => {
-    if (!joined) return;
+    if (!joined || !owner) return;
     let stop = () => {};
     let alive = true;
     (async () => {
@@ -69,27 +85,41 @@ function CoForge() {
       if (!alive) return;
       const pk = net.myPubkey();
       setMe(pk);
+      batches.current = []; cfgRef.current = openConfig(); setCfg(cfgRef.current); setRequests({}); setPeers({});
       state.current = emptyState();
+      const rebuild = () => { state.current = buildState(batches.current, cfgRef.current, owner); setTick((n) => n + 1); };
       stop = net.joinRoom(joined, (b) => {
-        b.ops.forEach((o) => applyOp(state.current, o, { t: b.t, by: b.by }));
+        batches.current.push(b);
+        rebuild();
         setPeers((p) => ({ ...p, [b.by]: Math.max(p[b.by] ?? 0, b.t) }));
-        setTick((n) => n + 1);
+      }, (c) => {
+        if (c.hello && c.by !== owner) setRequests((r) => ({ ...r, [c.by]: Math.max(r[c.by] ?? 0, c.t) }));
+        const next = nextConfig(cfgRef.current, owner, c.by, c.cfg, c.t);
+        if (next !== cfgRef.current) { cfgRef.current = next; setCfg(next); rebuild(); }
       });
+      if (pk !== owner) net.sendCtrl(joined, { hello: true }).catch(() => {});
       send.current = (ops) => {
+        if (!canEdit(cfgRef.current, owner, pk)) { toast.error(cfgRef.current.locked ? "THE OWNER LOCKED EDITING" : "WAITING FOR THE OWNER TO APPROVE YOU"); return; }
         const t = Date.now();
-        ops.forEach((o) => applyOp(state.current, o, { t, by: pk }));
-        setTick((n) => n + 1);
+        batches.current.push({ ops, t, by: pk });
+        rebuild();
         net.sendOps(joined, ops, t).catch((e: Error) => toast.error(e.message));
       };
+      ctrl.current = (c) => {
+        net.sendCtrl(joined, { cfg: c }).then((t) => {
+          const next = nextConfig(cfgRef.current, owner, pk, c, t);
+          cfgRef.current = next; setCfg(next); rebuild();
+        }, (e: Error) => toast.error(e.message));
+      };
     })();
-    return () => { alive = false; stop(); send.current = null; };
-  }, [joined]);
+    return () => { alive = false; stop(); send.current = null; ctrl.current = null; };
+  }, [joined, owner]);
 
   const parts = liveParts(state.current);
   useEffect(() => { parts.forEach((p) => void fetchPiece(p.id)); });
 
   // Flatten: pieces (oldest first) then loose blocks/erasures on top.
-  const { world, owner } = useMemo(() => {
+  const { world, owner: cellOwner } = useMemo(() => {
     const w = new Map<string, number>(), o = new Map<string, string>();
     for (const p of parts) {
       const b = cache[p.id];
@@ -98,7 +128,7 @@ function CoForge() {
     }
     for (const [k, b] of state.current.blocks) { if (b.k === null) w.delete(k); else w.set(k, b.k); o.delete(k); }
     return { world: w, owner: o };
-  }, [parts, cache, state.current.blocks.size, peers]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [parts, cache, tick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const top = useMemo(() => {
     const t = new Map<string, { y: number; k: number }>();
@@ -146,7 +176,7 @@ function CoForge() {
       const y = col ? col.y + 1 : 0;
       if (y < SPAN) send.current([{ op: "b+", x, y, z, k: kind }]);
     } else if (col) {
-      const key = `${x},${col.y},${z}`, oid = owner.get(key);
+      const key = `${x},${col.y},${z}`, oid = cellOwner.get(key);
       send.current([oid ? { op: "p-", oid } : { op: "b-", x, y: col.y, z }]);
     }
   };
@@ -158,7 +188,7 @@ function CoForge() {
   };
 
   const exp = exportAssembly(state.current);
-  const html = useMemo(() => forgeAssemblyHtml(height, exp.parts, exp.own.map((b) => ({ ...b, k: BLOCKS[b.k]!.id })) as TplBlock[]), [height, exp.parts.length, exp.own.length, peers]); // eslint-disable-line react-hooks/exhaustive-deps
+  const html = useMemo(() => forgeAssemblyHtml(height, exp.parts, exp.own.map((b) => ({ ...b, k: BLOCKS[b.k]!.id })) as TplBlock[]), [height, exp.parts.length, exp.own.length, tick]); // eslint-disable-line react-hooks/exhaustive-deps
   const bytes = new TextEncoder().encode(html).length;
   const share = typeof window !== "undefined" && joined ? `${location.origin}/co-forge?room=${encodeURIComponent(joined)}` : "";
   const download = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([html], { type: "text/html" })); a.download = `${height}-co-forge.html`; a.click(); };
@@ -172,12 +202,39 @@ function CoForge() {
       <p className="mt-2 max-w-2xl text-muted-foreground">Build one BITMAP together. Snap inscribed pieces in by reference — everyone sees each move live through public Nostr relays — then download one tiny recursive file to inscribe yourself. Nothing is signed or sent to Bitcoin from here.</p>
 
       <section className="mt-6 flex flex-wrap items-end gap-2 rounded border border-border bg-card/60 p-3">
-        <label className="flex flex-col gap-1">ROOM CODE<input className="rounded border border-border bg-background px-2 py-1" value={room} onChange={(e) => setRoom(e.target.value)} placeholder="e.g. 819245-crew" /></label>
+        <label className="flex flex-col gap-1">ROOM CODE<input className="rounded border border-border bg-background px-2 py-1" value={room} onChange={(e) => setRoom(e.target.value)} placeholder="name, or paste an invite code" /></label>
         <label className="flex flex-col gap-1">BITMAP<input type="number" className="w-28 rounded border border-border bg-background px-2 py-1" value={height} onChange={(e) => setHeight(Math.max(0, Number(e.target.value) | 0))} /></label>
-        <button className="rounded bg-primary px-3 py-1.5 text-primary-foreground disabled:opacity-50" disabled={!room.trim()} onClick={() => setJoined(room.trim().toLowerCase())}>{joined ? "SWITCH ROOM" : "JOIN ROOM"}</button>
+        <button className="rounded bg-primary px-3 py-1.5 text-primary-foreground disabled:opacity-50" disabled={!room.trim()} onClick={() => void join()}>{joined ? "SWITCH ROOM" : "JOIN / OPEN ROOM"}</button>
         {joined && <button className="rounded border border-border px-3 py-1.5" onClick={() => navigator.clipboard.writeText(share).then(() => toast.success("INVITE LINK COPIED"), () => toast.message(share))}>COPY INVITE LINK</button>}
-        {joined && <span className="text-signal">● LIVE IN “{joined}” · {Object.keys(peers).filter((p) => p !== me).length} OTHER BUILDER(S) SEEN</span>}
+        {joined && <span className="text-signal">● LIVE IN “{roomName(joined)}” · {isOwner ? "YOU OWN THIS ROOM" : mayEdit ? "YOU CAN BUILD" : cfg.locked ? "VIEWING · EDITING LOCKED" : "VIEWING · WAITING FOR APPROVAL"}</span>}
       </section>
+
+      {joined && isOwner && (
+        <section className="mt-3 space-y-2 rounded border border-primary/40 bg-card/60 p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-primary">OWNER CONTROLS</p>
+            <button className={`rounded border px-3 py-1 ${cfg.locked ? "border-primary text-primary" : "border-border"}`} onClick={() => ctrl.current?.({ allow: cfg.allow, locked: !cfg.locked })}>{cfg.locked ? "🔒 EDITING LOCKED — UNLOCK" : "LOCK EDITING"}</button>
+            <span className="text-muted-foreground">Visitors can always watch. Only you and approved builders can change the build{cfg.locked ? "; right now only you can" : ""}.</span>
+          </div>
+          <div className="grid gap-2 md:grid-cols-2">
+            <div>
+              <p className="text-signal">WANTS TO BUILD</p>
+              {Object.keys(requests).filter((p) => !cfg.allow.includes(p)).length === 0 && <p className="text-muted-foreground">No requests yet.</p>}
+              {Object.keys(requests).filter((p) => !cfg.allow.includes(p)).map((p) => (
+                <div key={p} className="flex items-center gap-2 py-0.5"><span className="truncate">◇ {p.slice(0, 8)}…{p.slice(-4)}</span><button className="rounded border border-primary px-2 text-primary" onClick={() => ctrl.current?.({ allow: [...cfg.allow, p], locked: cfg.locked })}>APPROVE</button></div>
+              ))}
+            </div>
+            <div>
+              <p className="text-signal">APPROVED BUILDERS</p>
+              {cfg.allow.length === 0 && <p className="text-muted-foreground">Only you so far.</p>}
+              {cfg.allow.map((p) => (
+                <div key={p} className="flex items-center gap-2 py-0.5"><span className="truncate">◆ {p.slice(0, 8)}…{p.slice(-4)}</span><button className="rounded border border-destructive px-2 text-destructive" onClick={() => ctrl.current?.({ allow: cfg.allow.filter((x) => x !== p), locked: cfg.locked })}>REMOVE</button></div>
+              ))}
+              {cfg.allow.length > 0 && <p className="mt-1 text-muted-foreground">Removing a builder also takes out everything they built.</p>}
+            </div>
+          </div>
+        </section>
+      )}
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[260px_1fr_1fr]">
         <aside className="space-y-3 rounded border border-border bg-card/60 p-3">
