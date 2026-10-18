@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, type MutableRefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useQuery } from "@tanstack/react-query";
-import { CanvasTexture, SRGBColorSpace, type Group, type Sprite } from "three";
+import { CanvasTexture, SRGBColorSpace, Vector3, type Group, type Sprite } from "three";
 import type { Emote } from "@/lib/toon-script";
+import { toonHeads } from "@/lib/toon-anchors";
 
 /** Vector comic icons (no emoji fonts) so every browser and export draws the same thing. */
 function drawEmote(x: CanvasRenderingContext2D, e: Emote) {
@@ -62,10 +63,12 @@ import { GuardianBody } from "@/components/bitmon/GuardianBody";
 import { sceneAt, actorPositionAt, type ToonActor, type ToonEpisode, type Shot } from "@/lib/toon-script";
 
 /** One Guardian actor; pose is a procedural cartoon loop on top of its real on-chain body. */
-function Actor({ actor, timeRef, progressRef, durRef }: { actor: ToonActor; timeRef: MutableRefObject<number>; progressRef: MutableRefObject<number>; durRef: MutableRefObject<number> }) {
+function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: ToonActor; slot: number; scene: number; timeRef: MutableRefObject<number>; progressRef: MutableRefObject<number>; durRef: MutableRefObject<number> }) {
   const g = useRef<Group>(null);
   const dna = useQuery({ ...guardianDnaQuery(actor.height), staleTime: Infinity });
-  useFrame(() => {
+  const head = useMemo(() => new Vector3(), []);
+  useEffect(() => () => { toonHeads.delete(slot); }, [slot]);
+  useFrame(({ camera }) => {
     const t = timeRef.current, o = g.current;
     if (!o) return;
     const pos = actorPositionAt(actor, progressRef.current, durRef.current);
@@ -92,6 +95,12 @@ function Actor({ actor, timeRef, progressRef, durRef }: { actor: ToonActor; time
     o.position.set(x, y, pos.z);
     o.rotation.set(rx, ry, rz);
     o.scale.set(10 * s, 10 * s * sy, 10 * s);
+    // Publish the head's screen position for the speech-bubble overlay.
+    if (dna.data) {
+      head.set(x, y + 12 * s * sy, pos.z).project(camera);
+      if (head.z < 1) toonHeads.set(slot, { x: (head.x + 1) / 2, y: (1 - head.y) / 2, scene });
+      else toonHeads.delete(slot);
+    }
   });
   const d = dna.data;
   if (!d) return null;
@@ -162,7 +171,7 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
       <hemisphereLight args={["#ffffff", "#d9b77a", 0.9]} />
       <directionalLight position={[40, 80, 30]} intensity={1.8} />
       <Land key={scene.block} block={scene.block} />
-      {scene.cast.map((a, i) => <Actor key={`${index}-${i}-${a.height}`} actor={a} timeRef={timeRef} progressRef={progressRef} durRef={durRef} />)}
+      {scene.cast.map((a, i) => <Actor key={`${index}-${i}-${a.height}`} actor={a} slot={i} scene={index} timeRef={timeRef} progressRef={progressRef} durRef={durRef} />)}
       <Director shot={scene.shot} local={local} dur={scene.duration} />
     </SafeCanvas>
   );
