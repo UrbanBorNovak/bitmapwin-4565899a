@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { episodeLength, generateEpisode, parseEpisode, sceneAt } from "./toon-script";
+import { episodeLength, generateEpisode, parseEpisode, sceneAt, actorPositionAt as apa } from "./toon-script";
 
 describe("toon script", () => {
   it("generates the same episode for the same BITMAPs", () => {
@@ -17,7 +17,6 @@ describe("toon script", () => {
   });
 });
 
-import { actorPositionAt as apa } from "./toon-script";
 describe("actorPositionAt", () => {
   const a = { height: 1, name: "1.bitmap", x: -10, z: 0, pose: "walk" as const, to: { x: 10, z: 6 } };
   it("starts at start, ends at end, halfway in the middle", () => {
