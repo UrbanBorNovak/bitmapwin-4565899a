@@ -90,6 +90,52 @@ function tone(f: number, ms: number, type: OscillatorType = "square", vol = 0.04
   } catch { /* audio unavailable */ }
 }
 const pct = (x: number) => `${(x * 100).toFixed(x < 0.1 ? 1 : 0)}%`;
+
+/** Two gene strands (sire left, dam right) flowing into a pulsing core. Purely decorative. */
+function GeneFusion({ fast }: { fast: boolean }) {
+  const dur = fast ? "0.6s" : "2.4s";
+  const helix = (x0: number, dir: 1 | -1, cls: string) => {
+    const pts = Array.from({ length: 9 }, (_, k) => k);
+    return (
+      <g className={cls}>
+        {pts.map((k) => {
+          const x = x0 + dir * k * 14;
+          const y = 100 + Math.sin(k * 0.9) * 22;
+          const y2 = 100 - Math.sin(k * 0.9) * 22;
+          return (
+            <g key={k}>
+              <line x1={x} y1={y} x2={x} y2={y2} stroke="currentColor" strokeOpacity="0.35" />
+              <circle cx={x} cy={y} r="3" fill="currentColor"><animate attributeName="cy" values={`${y};${y2};${y}`} dur={dur} begin={`${k * 0.12}s`} repeatCount="indefinite" /></circle>
+              <circle cx={x} cy={y2} r="3" fill="currentColor" fillOpacity="0.6"><animate attributeName="cy" values={`${y2};${y};${y2}`} dur={dur} begin={`${k * 0.12}s`} repeatCount="indefinite" /></circle>
+            </g>
+          );
+        })}
+        {[0, 1, 2].map((p) => (
+          <circle key={p} r="2.5" fill="currentColor">
+            <animate attributeName="cx" values={`${x0};${150}`} dur={dur} begin={`${p * 0.5}s`} repeatCount="indefinite" />
+            <animate attributeName="cy" values="100;100" dur={dur} repeatCount="indefinite" />
+            <animate attributeName="opacity" values="1;0" dur={dur} begin={`${p * 0.5}s`} repeatCount="indefinite" />
+          </circle>
+        ))}
+      </g>
+    );
+  };
+  return (
+    <svg viewBox="0 0 300 200" className="mx-auto w-full max-w-[320px]" role="img" aria-label="Genes from both parents combining">
+      <text x="6" y="20" className="fill-current text-signal" fontSize="9" fontFamily="Space Mono, monospace">SIRE</text>
+      <text x="294" y="20" textAnchor="end" className="fill-current text-primary" fontSize="9" fontFamily="Space Mono, monospace">DAM</text>
+      {helix(10, 1, "text-signal")}
+      {helix(290, -1, "text-primary")}
+      <g className="text-foreground">
+        <circle cx="150" cy="100" r="18" fill="none" stroke="currentColor" strokeOpacity="0.5" strokeDasharray="3 4">
+          <animateTransform attributeName="transform" type="rotate" from="0 150 100" to="360 150 100" dur={fast ? "1s" : "6s"} repeatCount="indefinite" />
+        </circle>
+        <circle cx="150" cy="100" r="8" fill="currentColor"><animate attributeName="r" values="6;11;6" dur={fast ? "0.4s" : "1.6s"} repeatCount="indefinite" /></circle>
+        <text x="150" y="150" textAnchor="middle" className="fill-current" fontSize="10" fontFamily="Space Mono, monospace">? ? ?</text>
+      </g>
+    </svg>
+  );
+}
 const REEL = ["QUADRUPED", "HEXAPOD", "SERPENT", "BIPED", "AVIAN", "FLOATER", "ARACHNID", "CENTAUR", "MYTHIC", "CHIMERA", "EPIC", "RARE"];
 
 function BreedLab() {
@@ -108,6 +154,8 @@ function BreedLab() {
   const sireG = roster.find((g) => g.height === sireH), damG = roster.find((g) => g.height === damH);
   const sire = useParent(sireG), dam = useParent(damG);
   const pet = useMemo(() => (sire && dam ? breedPet(sire, dam) : null), [sire, dam]);
+  const [revealed, setRevealed] = useState(false);
+  useEffect(() => { setRevealed(false); }, [sireH, damH]);
   const odds = useMemo(() => (sire && dam ? breedOdds(sire.genome, dam.genome) : null), [sire, dam]);
   const jackpotHit = !!pet && pet.chimera && pet.mutations.includes("RARITY ASCENT");
   const roll = () => {
@@ -119,6 +167,7 @@ function BreedLab() {
       if (i < 22) timer.current = window.setTimeout(step, 40 + i * 9);
       else {
         setSpin(null);
+        setRevealed(true);
         if (!muted) (jackpotHit || pet.ra === "MYTHIC" ? [523, 659, 784, 1047] : pet.mutations.length ? [440, 660] : [330]).forEach((f, k) => setTimeout(() => tone(f, 220, "triangle", 0.06), k * 120));
       }
     };
@@ -177,9 +226,16 @@ function BreedLab() {
         <Chamber title="SIRE" list={roster} value={sireG} onPick={setSireH} other={damH} />
         <section className="bg-card/60 backdrop-blur flex flex-col items-center rounded-lg border border-border p-4">
           <div className="flex w-full items-center justify-between border-b border-border pb-2"><h2 className="label text-primary">SYNTHESIS CORE · INCUBATOR</h2><span className={`font-mono text-[10px] ${pet ? "text-signal" : "text-muted-foreground"}`}>{spin ? "◌ SEQUENCING" : pet ? "● GENOME LOCKED" : "○ STANDBY"}</span></div>
-          {pet ? (
+          {pet && !revealed ? (
             <>
-              <div className="relative mt-3 rounded-full border border-dashed border-signal/40 p-4">
+              <div className="relative mt-3 w-full"><GeneFusion fast={!!spin} /></div>
+              {spin && <p className="font-display text-2xl text-primary">{spin}</p>}
+              <p className="label text-muted-foreground">{spin ? "SPLICING SIRE + DAM GENOMES…" : "GENOME SEALED · 50% SIRE / 50% DAM"}</p>
+              <button type="button" onClick={roll} disabled={!!spin} className="my-2 rounded-md border border-primary bg-primary px-4 py-2 font-mono text-xs text-primary-foreground disabled:opacity-50">{spin ? "SEQUENCING…" : "▶ RUN HATCH SEQUENCE"}</button>
+            </>
+          ) : pet ? (
+            <>
+              <div className="relative mt-3 rounded-full border border-dashed border-signal/40 p-4 animate-in fade-in zoom-in duration-700">
                 <div className={spin ? "opacity-20 blur-sm transition" : "transition"}><PetPortrait genome={pet} size={260} /></div>
                 {spin && <p className="absolute inset-0 flex items-center justify-center font-display text-3xl text-primary">{spin}</p>}
               </div>
