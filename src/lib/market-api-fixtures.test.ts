@@ -217,11 +217,17 @@ describe("cancellations", () => {
 });
 
 describe("altered transactions", () => {
+  // Safe layout: [pad, pad, seller, funding] → [pads back, BITMAP to buyer, price to seller]
   function fixturePsbt(sellerTo: string, sellerSats: number, deliverTo: string) {
     const p = new bitcoin.Psbt();
-    p.addInput({ hash: "ab".repeat(32), index: 0 });
-    p.addOutput({ script: Buffer.from(addressToScriptPubKey(sellerTo)), value: BigInt(sellerSats) } as any);
+    const w = (addr: string, v: number) => ({ witnessUtxo: { script: Buffer.from(addressToScriptPubKey(addr)), value: BigInt(v) } as any });
+    p.addInput({ hash: "01".repeat(32), index: 0, ...w(BUYER.address, 600) });
+    p.addInput({ hash: "02".repeat(32), index: 0, ...w(BUYER.address, 600) });
+    p.addInput({ hash: "ab".repeat(32), index: 0, ...w(SELLER.address, 546) });
+    p.addInput({ hash: "03".repeat(32), index: 0, ...w(BUYER.address, 100_000) });
+    p.addOutput({ script: Buffer.from(addressToScriptPubKey(BUYER.address)), value: BigInt(1200) } as any);
     p.addOutput({ script: Buffer.from(addressToScriptPubKey(deliverTo)), value: BigInt(546) } as any);
+    p.addOutput({ script: Buffer.from(addressToScriptPubKey(sellerTo)), value: BigInt(sellerSats) } as any);
     return p.toBase64();
   }
   beforeEach(() => {
