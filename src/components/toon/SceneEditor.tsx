@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type PointerEvent as RPointerEvent } from "react";
 import type { ContinuityNote, ToonCharacter } from "@/lib/toon-library";
 import { ContinuityHint } from "@/components/toon/ContinuityNotebook";
 import { CharacterHint } from "@/components/toon/CharacterProfiles";
@@ -116,7 +116,7 @@ export function SceneEditor({ episode, onChange, onSeek, characters = [], notes 
 /** Drag pad: left/right moves x, up/down moves the Guardian back/front (z). Arrow buttons nudge. */
 function PositionPad({ x, z, onMove }: { x: number; z: number; onMove: (x: number, z: number) => void }) {
   const clamp = (v: number) => Math.max(-20, Math.min(20, Math.round(v)));
-  const at = (e: React.PointerEvent<HTMLDivElement>) => {
+  const at = (e: RPointerEvent<HTMLDivElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
     onMove(clamp(((e.clientX - r.left) / r.width) * 40 - 20), clamp(((e.clientY - r.top) / r.height) * 40 - 20));
   };
