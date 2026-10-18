@@ -60,7 +60,7 @@ ${LAND_JS}
 function seed(h){V.clear();S=64;tx=tz=32;LAND(h,(x,y,z,k)=>V.set(key(x,y,z),k));dirty=1}
 function D(b,f){const r=atob(b),c=i=>r.charCodeAt(i);if(c(0)==66&&c(1)==87&&c(2)==50&&c(3)==0){for(let i=4;i+6<r.length;i+=7)for(let x=c(i);x<=c(i+3);x++)for(let y=c(i+1);y<=c(i+4);y++)for(let z=c(i+2);z<=c(i+5);z++)f(x,y,z,c(i+6))}else for(let i=0;i+3<r.length;i+=4)f(c(i),c(i+1),c(i+2),c(i+3))}
 function load(b,sp,g){const A=b.map?b:[];b.map||D(b,(...v)=>A.push(v));S=sp||(A.some(v=>v[0]>63||v[1]>63||v[2]>63)?128:64);tx=tz=S/2;dist=S*1.4;let L=0;const c=new Set(A.map(v=>v[0]+','+v[2]));
-if(g&&S>64){const o=[...V];V.clear();for(const[k,v]of o){const[x,y,z]=k.split(',').map(n=>n*2);for(let i=0;i<8;i++)V.set(key(x+(i&1),y+(i>>1&1),z+(i>>2)),v)}}if(g){for(const k of V.keys()){const[x,y,z]=k.split(',');c.has(x+','+z)&&y>=L&&(L=+y+1)}for(const q of c){const[x,z]=q.split(',');for(let y=0;y<L;y++)V.has(key(x,y,z))||V.set(key(x,y,z),3)}}else V.clear();
+if(g&&S<65){for(const k of V.keys()){const[x,y,z]=k.split(',');c.has(x+','+z)&&y>=L&&(L=+y+1)}for(const q of c){const[x,z]=q.split(',');for(let y=0;y<L;y++)V.has(key(x,y,z))||V.set(key(x,y,z),3)}}else V.clear();
 for(const[x,y,z,k]of A)if(x<S&&y+L<S&&z<S&&k<P.length)V.set(key(x,y+L,z),k);dirty=1}
 function pack(){let s=S>64?'BW2\\0':'';for(const[k,v]of V){const[x,y,z]=k.split(',').map(Number);s+=S>64?String.fromCharCode(x,y,z,x,y,z,v):String.fromCharCode(x,y,z,v)}return s}
 const sh=(t,src)=>{const s=G.createShader(t);G.shaderSource(s,src);G.compileShader(s);return s},pr=G.createProgram();
