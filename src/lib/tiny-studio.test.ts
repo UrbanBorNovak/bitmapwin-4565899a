@@ -18,7 +18,8 @@ describe("tiny studio", () => {
   });
   it("studio file stays self-contained", () => {
     const html = buildTinyStudioHtml({ height: 1 });
-    expect(html).not.toMatch(/https?:\/\//);
+    // The only outside address allowed is ordinals.com (chain reads when opened elsewhere).
+    expect(html.replace(/https:\/\/ordinals\.com/g, "")).not.toMatch(/https?:\/\//);
   });
   it("has navigation, place and erase controls and packs under 6 KB", () => {
     const html = buildTinyStudioHtml({ height: 840000 });
