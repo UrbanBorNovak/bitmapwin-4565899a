@@ -17,3 +17,12 @@ describe("placeBubble", () => {
     expect(b.y >= a.y + a.h || b.y + b.h <= a.y).toBe(true);
   });
 });
+
+describe("placeBubble around emotes", () => {
+  it("never covers an emote icon sitting where the bubble would go", () => {
+    const emote = { x: 450, y: 280, w: 60, h: 60 };
+    const b = placeBubble(500, 400, 200, 80, 1280, 720, 20, 10, [emote]);
+    const hit = b.x < emote.x + emote.w && b.x + b.w > emote.x && b.y < emote.y + emote.h && b.y + b.h > emote.y;
+    expect(hit).toBe(false);
+  });
+});
