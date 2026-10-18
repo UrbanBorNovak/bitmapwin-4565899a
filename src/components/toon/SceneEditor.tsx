@@ -1,4 +1,4 @@
-import { useState, type PointerEvent as RPointerEvent } from "react";
+import { useEffect, useRef, useState, type PointerEvent as RPointerEvent } from "react";
 import type { ContinuityNote, ToonCharacter } from "@/lib/toon-library";
 import { ContinuityHint } from "@/components/toon/ContinuityNotebook";
 import { CharacterHint } from "@/components/toon/CharacterProfiles";
@@ -180,6 +180,33 @@ type TimelineRow = { key: string; kind: "move" | "line"; label: string; start: n
 function SceneTimeline({ duration, rows }: { duration: number; rows: TimelineRow[] }) {
   const [snapOn, setSnapOn] = useState(true);
   const [guide, setGuide] = useState<number | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [view, setView] = useState({ x: 0, w: 0 });
+  const scroller = useRef<HTMLDivElement>(null);
+  const setZoomAt = (next: number, anchorPx?: number) => {
+    const el = scroller.current, z = Math.max(1, Math.min(16, next));
+    if (!el) return setZoom(z);
+    const ax = anchorPx ?? el.clientWidth / 2, frac = (el.scrollLeft + ax) / (el.clientWidth * zoom);
+    setZoom(z);
+    requestAnimationFrame(() => { el.scrollLeft = frac * el.clientWidth * z - ax; setView({ x: el.scrollLeft, w: el.clientWidth }); });
+  };
+  const zoomRef = useRef(setZoomAt); zoomRef.current = setZoomAt;
+  const zRef = useRef(zoom); zRef.current = zoom;
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    // Ctrl/⌘ + wheel or trackpad pinch zooms around the cursor; plain wheel scrolls the page.
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1);
+      zoomRef.current(zRef.current * Math.exp(-dy * 0.003), e.clientX - el.getBoundingClientRect().left);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [rows.length > 0]);
+  const step = [0.25, 0.5, 1, 2, 5].find((v) => duration / v <= 6 * zoom) ?? 5;
+  const ticks = Array.from({ length: Math.floor(duration / step + 1e-6) + 1 }, (_, k) => +(k * step).toFixed(2));
   if (!rows.length) return null;
   const tenth = (v: number) => Math.round(v * 10) / 10;
   // Walk bars snap to dialogue start/end times within ~8px.
@@ -213,14 +240,24 @@ function SceneTimeline({ duration, rows }: { duration: number; rows: TimelineRow
       <div className="flex items-center justify-between">
         <div className="label text-signal">SCENE TIMELINE</div>
         <label className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground">
+          <span className="mr-2 flex items-center gap-1">
+            <button className="h-6 w-6 border border-border hover:text-bitcoin disabled:opacity-40" disabled={zoom <= 1} aria-label="Zoom out timeline" onClick={() => setZoomAt(zoom / 1.5)}>−</button>
+            <span className="w-8 text-center">{zoom.toFixed(1)}×</span>
+            <button className="h-6 w-6 border border-border hover:text-bitcoin disabled:opacity-40" disabled={zoom >= 16} aria-label="Zoom in timeline" onClick={() => setZoomAt(zoom * 1.5)}>+</button>
+            <button className="h-6 border border-border px-1 hover:text-bitcoin" aria-label="Fit timeline" onClick={() => setZoomAt(1)}>FIT</button>
+          </span>
           <input type="checkbox" checked={snapOn} onChange={(e) => setSnapOn(e.target.checked)} /> SNAP TO DIALOGUE
         </label>
       </div>
-      <div className="mt-1 flex justify-between font-mono text-[9px] text-muted-foreground"><span>0s</span><span>{(duration / 2).toFixed(1)}s</span><span>{duration.toFixed(1)}s</span></div>
+      <div ref={scroller} className="mt-1 overflow-x-auto pb-1" onScroll={(e) => setView({ x: e.currentTarget.scrollLeft, w: e.currentTarget.clientWidth })}>
+      <div style={{ width: `${zoom * 100}%` }}>
+      <div className="relative h-4 font-mono text-[9px] text-muted-foreground">
+        {ticks.map((t) => <span key={t} className="absolute -translate-x-1/2 first:translate-x-0 last:-translate-x-full" style={{ left: `${(t / duration) * 100}%` }}>{t.toFixed(step < 0.5 ? 2 : step < 1 ? 1 : 0)}s</span>)}
+      </div>
       <div className="relative space-y-1">
         {guide !== null && (
           <div className="pointer-events-none absolute -inset-y-1 z-10 w-px bg-foreground" style={{ left: `${(guide / duration) * 100}%` }}>
-            <span className="absolute -top-4 -translate-x-1/2 bg-foreground px-1 font-mono text-[9px] text-background">{guide.toFixed(1)}s</span>
+            <span className="absolute -bottom-4 -translate-x-1/2 bg-foreground px-1 font-mono text-[9px] text-background">{guide.toFixed(1)}s</span>
           </div>
         )}
         {rows.map((r) => {
@@ -231,14 +268,16 @@ function SceneTimeline({ duration, rows }: { duration: number; rows: TimelineRow
               <div className={`absolute inset-y-0 flex cursor-grab touch-none items-center overflow-hidden border px-2 font-mono text-[10px] ${tone}`}
                 style={{ left: `${left}%`, width: `${width}%` }} onPointerDown={(e) => drag(e, r, "move")} title={`${r.label} · ${r.start.toFixed(1)}s → ${r.end.toFixed(1)}s`}>
                 <span className="absolute inset-y-0 left-0 w-2 cursor-ew-resize touch-none bg-current opacity-50" aria-label={`${r.label} start`} onPointerDown={(e) => drag(e, r, "start")} />
-                <span className="truncate">{r.label} · {r.start.toFixed(1)}–{r.end.toFixed(1)}s</span>
+                <span className="truncate" style={{ marginLeft: Math.max(0, Math.min(view.x - (left / 100) * view.w * zoom, (width / 100) * view.w * zoom - 60)) }}>{r.label}{width * zoom > 28 ? ` · ${r.start.toFixed(1)}–${r.end.toFixed(1)}s` : ""}</span>
                 <span className="absolute inset-y-0 right-0 w-2 cursor-ew-resize touch-none bg-current opacity-50" aria-label={`${r.label} end`} onPointerDown={(e) => drag(e, r, "end")} />
               </div>
             </div>
           );
         })}
       </div>
-      <p className="mt-1 text-[10px] text-muted-foreground">Drag a bar to move it; drag its ends to change when it starts and stops. Walk bars snap to dialogue times.</p>
+      </div>
+      </div>
+      <p className="mt-1 text-[10px] text-muted-foreground">Ctrl/⌘ + scroll or pinch to zoom. Drag a bar to move it; drag its ends to change when it starts and stops. Walk bars snap to dialogue times.</p>
     </div>
   );
 }
