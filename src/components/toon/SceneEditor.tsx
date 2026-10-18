@@ -84,11 +84,21 @@ export function SceneEditor({ episode, onChange, onSeek, characters = [], notes 
             <input type="checkbox" checked={!!a.to} onChange={(e) => patch({ cast: s.cast.map((c, j) => {
               if (j !== k) return c;
               if (e.target.checked) return { ...c, to: { x: Math.max(-20, Math.min(20, -c.x || 8)), z: c.z } };
-              const { to: _drop, ...rest } = c; return rest;
+              const { to: _drop, moveStart: _a, moveEnd: _b, ...rest } = c; return rest;
             }) })} /> MOVES DURING SCENE
           </label>
           {a.to && (<>
             <div className="col-span-3 text-[10px] font-mono text-bitcoin">END POSITION</div>
+            <div className="col-span-3 grid grid-cols-2 gap-2 text-[11px] text-muted-foreground">
+              <label>Start walking at {(a.moveStart ?? 0).toFixed(1)}s
+                <input type="range" min={0} max={s.duration} step={0.1} value={a.moveStart ?? 0} className="w-full" aria-label="Movement start time"
+                  onChange={(e) => { const v = Number(e.target.value); patch({ cast: s.cast.map((c, j) => (j === k ? { ...c, moveStart: v, moveEnd: Math.max(v, c.moveEnd ?? s.duration) } : c)) }); }} />
+              </label>
+              <label>Arrive by {(a.moveEnd ?? s.duration).toFixed(1)}s
+                <input type="range" min={0} max={s.duration} step={0.1} value={a.moveEnd ?? s.duration} className="w-full" aria-label="Movement stop time"
+                  onChange={(e) => { const v = Number(e.target.value); patch({ cast: s.cast.map((c, j) => (j === k ? { ...c, moveEnd: v, moveStart: Math.min(v, c.moveStart ?? 0) } : c)) }); }} />
+              </label>
+            </div>
             <PositionPad x={a.to.x} z={a.to.z} start={{ x: a.x, z: a.z }} onMove={(x, z) => patch({ cast: s.cast.map((c, j) => (j === k ? { ...c, to: { x, z } } : c)) })} />
           </>)}
         </div>

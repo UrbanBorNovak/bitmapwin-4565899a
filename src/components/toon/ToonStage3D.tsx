@@ -13,13 +13,13 @@ import { GuardianBody } from "@/components/bitmon/GuardianBody";
 import { sceneAt, actorPositionAt, type ToonActor, type ToonEpisode, type Shot } from "@/lib/toon-script";
 
 /** One Guardian actor; pose is a procedural cartoon loop on top of its real on-chain body. */
-function Actor({ actor, timeRef, progressRef }: { actor: ToonActor; timeRef: MutableRefObject<number>; progressRef: MutableRefObject<number> }) {
+function Actor({ actor, timeRef, progressRef, durRef }: { actor: ToonActor; timeRef: MutableRefObject<number>; progressRef: MutableRefObject<number>; durRef: MutableRefObject<number> }) {
   const g = useRef<Group>(null);
   const dna = useQuery({ ...guardianDnaQuery(actor.height), staleTime: Infinity });
   useFrame(() => {
     const t = timeRef.current, o = g.current;
     if (!o) return;
-    const pos = actorPositionAt(actor, progressRef.current);
+    const pos = actorPositionAt(actor, progressRef.current, durRef.current);
     const dx = actor.to ? actor.to.x - actor.x : 0, dz = actor.to ? actor.to.z - actor.z : 0;
     let y = 0, x = pos.x, rz = 0, ry = actor.to && (dx || dz) ? Math.atan2(dx, dz) : actor.x > 0 ? -Math.PI / 2 : Math.PI / 2, s = 1;
     if (actor.pose === "idle") y = Math.sin(t * 2) * 0.15;
@@ -88,7 +88,9 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
   timeRef.current = time;
   const { index, local } = sceneAt(episode, time);
   const progressRef = useRef(0);
-  progressRef.current = episode.scenes[index] ? local / Math.max(0.01, episode.scenes[index]!.duration) : 0;
+  progressRef.current = local;
+  const durRef = useRef(1);
+  durRef.current = episode.scenes[index]?.duration ?? 1;
   const scene = episode.scenes[index];
   if (!scene) return null;
   return (
@@ -98,7 +100,7 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
       <hemisphereLight args={["#ffffff", "#d9b77a", 0.9]} />
       <directionalLight position={[40, 80, 30]} intensity={1.8} />
       <Land key={scene.block} block={scene.block} />
-      {scene.cast.map((a, i) => <Actor key={`${index}-${i}-${a.height}`} actor={a} timeRef={timeRef} progressRef={progressRef} />)}
+      {scene.cast.map((a, i) => <Actor key={`${index}-${i}-${a.height}`} actor={a} timeRef={timeRef} progressRef={progressRef} durRef={durRef} />)}
       <Director shot={scene.shot} local={local} dur={scene.duration} />
     </SafeCanvas>
   );
