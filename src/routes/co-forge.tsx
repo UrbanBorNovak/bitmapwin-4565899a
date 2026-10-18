@@ -8,7 +8,7 @@ import type { TplBlock } from "@/lib/voxel-templates";
 import { forgePieceFn } from "@/lib/forge-parts.functions";
 import { collectionPiecesQuery } from "@/lib/forge-collection.functions";
 import { forgeAssemblyHtml, isInscriptionId, normPart, placePart, MAX_ASM_PARTS } from "@/lib/forge-assembly";
-import { buildState, canEdit, emptyState, exportAssembly, liveParts, makeRoom, newOid, nextConfig, openConfig, roomName, roomOwner, type Batch, type CoOp, type CoState, type RoomConfig } from "@/lib/co-forge";
+import { batchCounts, sealFor, sealId, SEAL_MAX, buildState, canEdit, emptyState, exportAssembly, liveParts, makeRoom, newOid, nextConfig, openConfig, roomName, roomOwner, type Batch, type CoOp, type CoState, type RoomConfig } from "@/lib/co-forge";
 
 export const Route = createFileRoute("/co-forge")({
   head: () => {
@@ -45,6 +45,7 @@ function CoForge() {
   const [kind, setKind] = useState(0);
   const send = useRef<((ops: CoOp[]) => void) | null>(null);
   const batches = useRef<Batch[]>([]);
+  const deny = useRef(new Set<string>());
   const [cfg, setCfg] = useState<RoomConfig>(openConfig());
   const cfgRef = useRef(cfg);
   const [requests, setRequests] = useState<Record<string, number>>({});
@@ -85,29 +86,40 @@ function CoForge() {
       if (!alive) return;
       const pk = net.myPubkey();
       setMe(pk);
-      batches.current = []; cfgRef.current = openConfig(); setCfg(cfgRef.current); setRequests({}); setPeers({});
+      batches.current = []; deny.current = new Set(); cfgRef.current = openConfig(); setCfg(cfgRef.current); setRequests({}); setPeers({});
       state.current = emptyState();
       const rebuild = () => { state.current = buildState(batches.current, cfgRef.current, owner); setTick((n) => n + 1); };
       stop = net.joinRoom(joined, (b) => {
+        if (batches.current.some((x) => x.id === b.id)) return;
         batches.current.push(b);
+        // The owner remembers builder moves that arrive while locked so they stay out after unlock.
+        if (pk === owner && cfgRef.current.locked && b.by !== owner && !batchCounts(b, cfgRef.current, owner)) deny.current.add(sealId(b.id));
         rebuild();
         setPeers((p) => ({ ...p, [b.by]: Math.max(p[b.by] ?? 0, b.t) }));
       }, (c) => {
         if (c.hello && c.by !== owner) setRequests((r) => ({ ...r, [c.by]: Math.max(r[c.by] ?? 0, c.t) }));
         const next = nextConfig(cfgRef.current, owner, c.by, c.cfg, c.t);
+        if (next !== cfgRef.current) next.deny.forEach((d) => deny.current.add(d));
         if (next !== cfgRef.current) { cfgRef.current = next; setCfg(next); rebuild(); }
       });
       if (pk !== owner) net.sendCtrl(joined, { hello: true }).catch(() => {});
       send.current = (ops) => {
         if (!canEdit(cfgRef.current, owner, pk)) { toast.error(cfgRef.current.locked ? "THE OWNER LOCKED EDITING" : "WAITING FOR THE OWNER TO APPROVE YOU"); return; }
         const t = Date.now();
-        batches.current.push({ ops, t, by: pk });
-        rebuild();
-        net.sendOps(joined, ops, t).catch((e: Error) => toast.error(e.message));
+        net.sendOps(joined, ops, t).then((id) => {
+          if (!batches.current.some((b) => b.id === id)) batches.current.push({ ops, t, by: pk, id });
+          rebuild();
+        }, (e: Error) => toast.error(e.message));
       };
       ctrl.current = (c) => {
-        net.sendCtrl(joined, { cfg: c }).then((t) => {
-          const next = nextConfig(cfgRef.current, owner, pk, c, t);
+        // Unlocking: every builder move outside the seal was made during the lock — keep it out for good.
+        if (cfgRef.current.locked && !c.locked) {
+          const cur = cfgRef.current;
+          batches.current.forEach((b) => { if (b.by !== owner && !cur.seal.includes(sealId(b.id))) deny.current.add(sealId(b.id)); });
+        }
+        const full = { ...c, seal: c.locked ? (cfgRef.current.locked ? cfgRef.current.seal : sealFor(batches.current, cfgRef.current, owner)) : [], deny: [...deny.current].slice(-SEAL_MAX) };
+        net.sendCtrl(joined, { cfg: full }).then((t) => {
+          const next = nextConfig(cfgRef.current, owner, pk, full, t);
           cfgRef.current = next; setCfg(next); rebuild();
         }, (e: Error) => toast.error(e.message));
       };
