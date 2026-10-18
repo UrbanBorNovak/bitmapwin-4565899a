@@ -269,6 +269,15 @@ function SceneTimeline({ duration, rows }: { duration: number; rows: TimelineRow
             </div>
           );
         })}
+        {guide !== null && (() => {
+          const gp = (guide / duration) * 100;
+          const shift = gp < 10 ? "translateX(0)" : gp > 90 ? "translateX(-100%)" : "translateX(-50%)";
+          return (
+            <div className="pointer-events-none absolute inset-y-0 z-10 w-px bg-foreground" style={{ left: `${gp}%` }}>
+              <span className="absolute bottom-0 bg-foreground px-1 font-mono text-[9px] leading-4 text-background" style={{ transform: shift }}>{guide.toFixed(1)}s</span>
+            </div>
+          );
+        })()}
       </div>
       </div>
       </div>
