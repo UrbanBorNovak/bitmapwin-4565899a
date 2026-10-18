@@ -220,16 +220,18 @@ function StoreKit() {
             </select>
           </label>
           <button onClick={download} className="w-full rounded bg-bitcoin px-4 py-3 text-sm font-bold text-background">DOWNLOAD MY SHOP</button>
-          {ready ? (
-            <button onClick={() => save(new Blob([ready.bytes as BlobPart], { type: "application/octet-stream" }), "index.html.br")} className="w-full rounded border border-bitcoin px-4 py-3 text-sm font-bold text-bitcoin">
-              DOWNLOAD FOR INSCRIPTION (.HTML.BR) · {ready.size.toLocaleString("en-US")} BYTES
-            </button>
-          ) : (
-            <button onClick={prepareBr} disabled={packing} className="w-full rounded border border-bitcoin px-4 py-3 text-sm font-bold text-bitcoin disabled:opacity-50">
-              {packing ? "PACKING…" : "PREPARE FOR INSCRIPTION (.HTML.BR)"}
-            </button>
-          )}
-          {ready && <p className="font-mono text-[11px] text-muted-foreground">PACKED {ready.raw.toLocaleString("en-US")} → {ready.size.toLocaleString("en-US")} BYTES · CHECKED: UNPACKS TO THE EXACT SAME SHOP</p>}
+          {mode === "live" &&
+            (ready ? (
+              <button onClick={() => save(new Blob([ready.bytes as BlobPart], { type: "application/octet-stream" }), "index.html.br")} className="w-full rounded border border-bitcoin px-4 py-3 text-sm font-bold text-bitcoin">
+                DOWNLOAD FOR INSCRIPTION (.HTML.BR) · {ready.size.toLocaleString("en-US")} BYTES
+              </button>
+            ) : (
+              <button onClick={prepareBr} disabled={packing} className="w-full rounded border border-bitcoin px-4 py-3 text-sm font-bold text-bitcoin disabled:opacity-50">
+                {packing ? "PACKING…" : "PREPARE FOR INSCRIPTION (.HTML.BR)"}
+              </button>
+            ))}
+          {ready && mode === "live" && <p className="font-mono text-[11px] text-muted-foreground">PACKED {ready.raw.toLocaleString("en-US")} → {ready.size.toLocaleString("en-US")} BYTES · CHECKED: UNPACKS TO THE EXACT SAME SHOP</p>}
+          {mode === "sovereign" && <p className="text-[11px] leading-relaxed text-muted-foreground">Download only — this one cannot be inscribed: ordinals.com blocks the outside connections a sovereign shop needs, so an inscribed copy would never show listings. Host the file on GitHub Pages or open it on your computer.</p>}
           <button onClick={share} className="w-full rounded border border-signal px-4 py-3 text-sm font-bold text-signal">{copied ? "LINK COPIED" : "COPY SHARE LINK"}</button>
           {manual && (
             <label className="block text-xs text-signal">
