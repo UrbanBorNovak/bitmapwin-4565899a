@@ -34,6 +34,7 @@ const GROUPS: { label: string; items: { to: string; label: string }[] }[] = [
       { to: "/store-kit", label: "TINY STORE KIT" },
       { to: "/tiny-studio", label: "TINY STUDIO" },
       { to: "/co-forge", label: "CO-FORGE" },
+      { to: "/church", label: "CHURCH OF BITMAP" },
     ],
   },
   {
