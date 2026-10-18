@@ -61,6 +61,14 @@ export function SceneEditor({ episode, onChange, onSeek, characters = [], notes 
             {SFX.map((x) => <option key={x} value={x}>{x || "None"}</option>)}
           </select>
         </label>
+        <label className="text-[11px] text-muted-foreground">Transition in
+          <select className={field} value={s.transition ?? "cut"} disabled={i === 0} onChange={(e) => patch({ transition: e.target.value as NonNullable<ToonScene["transition"]> })}>
+            <option value="cut">Hard cut</option><option value="fade">Fade to black</option><option value="wipe">Comic wipe</option><option value="iris">Cartoon iris</option>
+          </select>
+        </label>
+        <label className="flex items-end gap-1 text-[11px] text-muted-foreground">
+          <input type="checkbox" checked={!!s.cutBlend} onChange={(e) => patch({ cutBlend: e.target.checked })} /> Smooth camera cuts
+        </label>
         <div className="flex items-end gap-1">
           <button className="btn-term-ghost text-[11px]" onClick={() => onSeek(start)}>PREVIEW</button>
           <button disabled={episode.scenes.length <= 1} className="btn-term-ghost text-[11px] disabled:opacity-40"
@@ -77,7 +85,7 @@ export function SceneEditor({ episode, onChange, onSeek, characters = [], notes 
         ]} />
       <div className="label mt-4 text-signal">GUARDIANS</div>
       {s.cast.map((a, k) => (
-        <div key={k} className="mt-2 grid grid-cols-[1fr_1fr_auto] gap-2">
+        <div key={k} className="mt-2 grid grid-cols-[1fr_1fr_1fr_auto] gap-2">
           <input className={field} inputMode="numeric" aria-label="Guardian block" value={a.height}
             onChange={(e) => { const h = num(e.target.value.replace(/\D/g, ""), 0, 1_999_999); patch({ cast: s.cast.map((c, j) => (j === k ? { ...c, height: h, name: `${h}.bitmap` } : c)) }); }} />
           <div className="grid gap-1">
@@ -130,12 +138,15 @@ export function SceneEditor({ episode, onChange, onSeek, characters = [], notes 
         <div key={k} className="mt-2 space-y-1 border-l border-border pl-2">
           <CharacterHint c={characters.find((c) => c.height === s.cast[l.speaker]?.height)} />
           <textarea className={`${field} h-14`} value={l.text} aria-label="Line text" onChange={(e) => patchLine(k, { text: e.target.value.slice(0, 140) })} />
-          <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
+          <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2">
             <select className={field} value={l.speaker} aria-label="Speaker" onChange={(e) => patchLine(k, { speaker: Number(e.target.value) })}>
               {s.cast.map((a, j) => <option key={j} value={j}>{characters.find((c) => c.height === a.height)?.nickname || a.name}</option>)}
             </select>
             <select className={field} value={l.style} aria-label="Bubble style" onChange={(e) => patchLine(k, { style: e.target.value as ToonLine["style"] })}>
               <option value="speech">Speech</option><option value="shout">Shout</option><option value="thought">Thought</option>
+            </select>
+            <select className={field} value={l.cam ?? "auto"} aria-label="Camera shot" onChange={(e) => patchLine(k, { cam: e.target.value as NonNullable<ToonLine["cam"]> })}>
+              <option value="auto">Camera: scene</option><option value="close">Speaker close-up</option><option value="two">Two-shot</option><option value="ots">Over the shoulder</option>
             </select>
             <button className="px-2 font-mono text-[11px] text-muted-foreground hover:text-bitcoin" aria-label="Remove line" onClick={() => patch({ lines: s.lines.filter((_, j) => j !== k) })}>✕</button>
           </div>
