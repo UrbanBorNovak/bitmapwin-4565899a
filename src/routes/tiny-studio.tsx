@@ -41,6 +41,19 @@ function TinyStudio() {
     }, 500);
     return () => { live = false; clearTimeout(t); };
   }, [height]);
+  // Answers block lookups from the input inside the preview frame (it can't run the on-chain module here).
+  useEffect(() => {
+    const onMsg = (e: MessageEvent) => {
+      const h = e.data?.tsAsk;
+      if (typeof h !== "number" || !Number.isInteger(h) || h < 0 || !e.source) return;
+      const src = e.source as Window;
+      getBitmapHolderFn({ data: { height: h } })
+        .then((r) => src.postMessage({ tsH: h, tsId: r?.inscriptionId ?? null }, "*"))
+        .catch(() => src.postMessage({ tsH: h, tsId: null }, "*"));
+    };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, []);
   // The preview frame can't run the on-chain lookup module, so it gets the BITMAP id resolved here; the downloaded file never needs it.
   const previewHtml = useMemo(() => buildTinyStudioHtml({ height, bitmapId: bitmapId?.h === height ? bitmapId.id : undefined }), [height, bitmapId]);
   const html = useMemo(() => buildTinyStudioHtml({ height }), [height]);
