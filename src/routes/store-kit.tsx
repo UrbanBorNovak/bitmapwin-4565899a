@@ -1,15 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { buildStoreHtml, DEFAULT_FORM, DEFAULT_STORE, isFormDefault, storeFormFromSearch, type StoreConfig } from "@/lib/store-template";
-import { brotliPackFn } from "@/lib/brotli-pack.functions";
 import { buildSovereignStoreHtml } from "@/lib/sovereign-store";
 import { NostrListPanel } from "@/components/NostrListPanel";
-
-const INSCRIBE = [
-  { title: "CHOOSE YOUR WAY", body: "Easiest: use the ord wallet with the normal index.html and the --compress flag — ord packs it for you. If you use an inscription service instead, only upload the .html.br file when it lets you set content type text/html and content encoding br; otherwise upload the normal index.html." },
-  { title: "ORD COMMAND", body: "ord wallet inscribe --fee-rate <sats/vB> --file index.html --compress — ord checks the fee and shows the cost before anything is sent. You sign and send it yourself; BitmapWin never does." },
-  { title: "OPEN YOUR SHOP", body: "After it confirms, your shop lives forever at ordinals.com/content/<your inscription id>. Browsers open it normally; very old tools that can't read packed files may show an error instead." },
-] as const;
 
 export const Route = createFileRoute("/store-kit")({
   head: () => {
@@ -162,24 +155,6 @@ function StoreKit() {
   };
   const liveHtml = () => (mode === "sovereign" ? buildSovereignStoreHtml(cfg) : buildStoreHtml({ ...cfg, apiBase: DEFAULT_STORE.apiBase }));
   const download = () => save(new Blob([liveHtml()], { type: "text/html" }), "index.html");
-  const [packed, setPacked] = useState<{ bytes: Uint8Array; raw: number; size: number; key: string } | null>(null);
-  const [packing, setPacking] = useState(false);
-  const packKey = JSON.stringify(cfg) + mode;
-  const prepareBr = async () => {
-    setPacking(true);
-    try {
-      const r = await brotliPackFn({ data: { text: liveHtml() } });
-      const bin = atob(r.base64);
-      const bytes = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      setPacked({ bytes, raw: r.rawBytes, size: r.packedBytes, key: packKey });
-    } catch {
-      flash("COULD NOT PACK THE FILE — TRY AGAIN");
-    } finally {
-      setPacking(false);
-    }
-  };
-  const ready = packed && packed.key === packKey ? packed : null;
   const input = "w-full rounded border border-border bg-background/60 px-3 py-2 text-sm";
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
@@ -220,18 +195,7 @@ function StoreKit() {
             </select>
           </label>
           <button onClick={download} className="w-full rounded bg-bitcoin px-4 py-3 text-sm font-bold text-background">DOWNLOAD MY SHOP</button>
-          {mode === "live" &&
-            (ready ? (
-              <button onClick={() => save(new Blob([ready.bytes as BlobPart], { type: "application/octet-stream" }), "index.html.br")} className="w-full rounded border border-bitcoin px-4 py-3 text-sm font-bold text-bitcoin">
-                DOWNLOAD FOR INSCRIPTION (.HTML.BR) · {ready.size.toLocaleString("en-US")} BYTES
-              </button>
-            ) : (
-              <button onClick={prepareBr} disabled={packing} className="w-full rounded border border-bitcoin px-4 py-3 text-sm font-bold text-bitcoin disabled:opacity-50">
-                {packing ? "PACKING…" : "PREPARE FOR INSCRIPTION (.HTML.BR)"}
-              </button>
-            ))}
-          {ready && mode === "live" && <p className="font-mono text-[11px] text-muted-foreground">PACKED {ready.raw.toLocaleString("en-US")} → {ready.size.toLocaleString("en-US")} BYTES · CHECKED: UNPACKS TO THE EXACT SAME SHOP</p>}
-          {mode === "sovereign" && <p className="text-[11px] leading-relaxed text-muted-foreground">Download only — this one cannot be inscribed: ordinals.com blocks the outside connections a sovereign shop needs, so an inscribed copy would never show listings. Host the file on GitHub Pages or open it on your computer.</p>}
+          <p className="text-[11px] leading-relaxed text-muted-foreground">Download only — shops cannot be inscribed: ordinals.com blocks the outside connections a shop needs to load listings, so an inscribed copy would stay empty. Host the file on GitHub Pages or open it on your computer.</p>
           <button onClick={share} className="w-full rounded border border-signal px-4 py-3 text-sm font-bold text-signal">{copied ? "LINK COPIED" : "COPY SHARE LINK"}</button>
           {manual && (
             <label className="block text-xs text-signal">
@@ -278,40 +242,19 @@ function StoreKit() {
             </li>
           ))}
         </ol>
-        {mode === "live" ? (
-          <>
-            <div className="border-t border-border p-5">
-              <div className="label text-bitcoin">PUT YOUR SHOP ON BITCOIN (OPTIONAL)</div>
-              <p className="mt-2 text-sm text-muted-foreground">Inscribe it once and it stays on Bitcoin forever — no hosting. Small fee, paid by you to miners.</p>
-            </div>
-            <ol className="divide-y divide-border border-t border-border">
-              {INSCRIBE.map((s, i) => (
-                <li key={s.title} className="flex gap-4 p-4">
-                  <span className="font-mono text-xs text-bitcoin">{String(i + 1).padStart(2, "0")}</span>
-                  <div>
-                    <div className="display text-sm md:text-base">{s.title}</div>
-                    <p className="mt-1 break-words text-sm leading-relaxed text-muted-foreground">{s.body}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </>
-        ) : (
-          <div className="border-t border-border p-5">
-            <div className="label text-signal">HOST IT — DON'T INSCRIBE IT</div>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              A sovereign shop has to reach Nostr relays, ordinals.com and mempool.space every time it opens. ordinals.com
-              runs inscriptions inside a sandbox that blocks exactly those outside connections, so an inscribed sovereign
-              shop would open on an empty wall. Put the file on GitHub Pages (steps 3–5 above) or open it on your computer
-              — there it reads listings and checks them on Bitcoin normally.
-            </p>
-          </div>
-        )}
+        <div className="border-t border-border p-5">
+          <div className="label text-signal">HOST IT — DON'T INSCRIBE IT</div>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Your shop has to fetch live listings every time it opens. ordinals.com runs inscriptions inside a sandbox
+            that blocks those outside connections, so an inscribed shop would open empty. Put the file on GitHub Pages
+            (steps 3–5 above) or open it on your computer — there it works normally.
+          </p>
+        </div>
         <div className="border-t border-border p-5">
           <div className="label text-signal">WHAT STAYS LIVE</div>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             {mode === "live"
-              ? "The file is only the shop window. Every time someone opens it, it asks bitmapwin.app for the current listings, and BUY opens the BITMAP's page on the BitmapWin marketplace for checkout. If bitmapwin.app is unreachable, the shop shows \"COULD NOT LOAD LISTINGS\" and nobody can buy through it until it's back. Only listed BITMAPs appear. This is the version you can also inscribe."
+              ? "The file is only the shop window. Every time someone opens it, it asks bitmapwin.app for the current listings, and BUY opens the BITMAP's page on the BitmapWin marketplace for checkout. If bitmapwin.app is unreachable, the shop shows \"COULD NOT LOAD LISTINGS\" and nobody can buy through it until it's back. Only listed BITMAPs appear."
               : "The sovereign file is also only a window. Every time it opens it reads signed listings from open Nostr relays and re-checks each one on Bitcoin (ordinals.com recursion + mempool.space) before showing it, so a stale or fake offer never appears. The buyer signs and sends the swap from their own wallet in the page. Because it needs those services reachable, it is hosted — not inscribed."}
           </p>
         </div>
