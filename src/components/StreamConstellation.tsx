@@ -60,6 +60,11 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
   }, [playing, ordered.length]);
 
   const stepRef = useRef(step); stepRef.current = step;
+  const lockRef = useRef<Node | null>(null);
+  const [lock, setLock] = useState<Node | null>(null);
+  lockRef.current = lock;
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [fps, setFps] = useState(60);
 
   // physics + render loop
   useEffect(() => {
@@ -67,7 +72,7 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
     const ctx = cv.getContext("2d"); if (!ctx) return;
     const css = getComputedStyle(document.documentElement);
     const col = (v: string) => css.getPropertyValue(v).trim() || "currentColor";
-    let raf = 0; let t0 = performance.now();
+    let raf = 0; let t0 = performance.now(); let frames = 0; let fpsT = t0;
     const loop = (now: number) => {
       const dt = Math.min(0.05, (now - t0) / 1000); t0 = now;
       const dpr = window.devicePixelRatio || 1; const w = cv.clientWidth, h = cv.clientHeight;
@@ -97,22 +102,78 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
       // draw
       ctx.setTransform(dpr, 0, 0, dpr, w / 2 * dpr, h / 2 * dpr);
       ctx.clearRect(-w / 2, -h / 2, w, h);
+      const sig = col("--signal"), btc = col("--bitcoin"), mut = col("--muted-foreground");
+      const T = now / 1000; const sweep = (T * 0.9) % (Math.PI * 2);
+      frames++; if (now - fpsT > 1000) { setFps(frames); frames = 0; fpsT = now; }
+      // crosshair grid
+      ctx.globalAlpha = 0.18; ctx.strokeStyle = sig; ctx.lineWidth = 0.6;
+      for (let gx = -Math.floor(w / 2 / 40) * 40; gx < w / 2; gx += 40) for (let gy = -Math.floor(h / 2 / 40) * 40; gy < h / 2; gy += 40) {
+        ctx.beginPath(); ctx.moveTo(gx - 2, gy); ctx.lineTo(gx + 2, gy); ctx.moveTo(gx, gy - 2); ctx.lineTo(gx, gy + 2); ctx.stroke();
+      }
+      // range rings + ticks
+      const R = Math.min(w, h) / 2 - 16;
+      ctx.font = "8px 'Space Mono', monospace"; ctx.fillStyle = sig;
+      [0.25, 0.5, 0.75, 1].forEach((k, i) => {
+        ctx.globalAlpha = i === 3 ? 0.45 : 0.22; ctx.setLineDash(i % 2 ? [3, 5] : []);
+        ctx.beginPath(); ctx.arc(0, 0, R * k, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = 0.5; ctx.fillText(`R-${250 * 2 ** i}`, R * k * 0.707 + 3, -R * k * 0.707);
+      });
+      ctx.setLineDash([]);
+      for (let d = 0; d < 360; d += 5) {
+        const a = (d * Math.PI) / 180, l = d % 90 === 0 ? 10 : d % 30 === 0 ? 6 : 3;
+        ctx.globalAlpha = d % 90 === 0 ? 0.8 : 0.35;
+        ctx.beginPath(); ctx.moveTo(Math.cos(a) * R, Math.sin(a) * R); ctx.lineTo(Math.cos(a) * (R - l), Math.sin(a) * (R - l)); ctx.stroke();
+        if (d % 90 === 0) ctx.fillText(String((d + 90) % 360).padStart(3, "0") + "°", Math.cos(a) * (R - 26) - 9, Math.sin(a) * (R - 26) + 3);
+      }
+      // rotating dashed compass dial
+      ctx.save(); ctx.rotate(-T * 0.15); ctx.globalAlpha = 0.3; ctx.setLineDash([2, 10]);
+      ctx.beginPath(); ctx.arc(0, 0, R * 0.88, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); ctx.setLineDash([]);
+      // sweep beam
+      const g = ctx.createConicGradient ? ctx.createConicGradient(sweep - 0.6, 0, 0) : null;
+      if (g) { g.addColorStop(0, "transparent"); g.addColorStop(0.095, sig); g.addColorStop(0.0955, "transparent"); g.addColorStop(1, "transparent");
+        ctx.globalAlpha = 0.16; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill(); }
+      ctx.globalAlpha = 0.7; ctx.strokeStyle = sig; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(sweep) * R, Math.sin(sweep) * R); ctx.stroke();
+      const lit = (n: Node) => { let da = sweep - Math.atan2(n.y, n.x); da = ((da % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2); return da < 0.5 ? 1 - da / 0.5 : 0; };
       ctx.lineWidth = 0.8;
       for (const e of edges) {
         const a = nodes[e.a]!, b = nodes[e.b]!; if (!vis(a) || !vis(b)) continue;
         const fresh = Math.max(a.born, b.born) >= s - 2;
         ctx.strokeStyle = col(fresh ? "--signal" : "--border"); ctx.globalAlpha = fresh ? 0.9 : 0.6;
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        const p = (T * (fresh ? 0.9 : 0.35) + ((e.a * 7 + e.b * 13) % 100) / 100) % 1;
+        ctx.globalAlpha = fresh ? 1 : 0.55; ctx.fillStyle = fresh ? sig : btc; ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 8;
+        ctx.beginPath(); ctx.arc(a.x + (b.x - a.x) * p, a.y + (b.y - a.y) * p, fresh ? 1.8 : 1.1, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
       }
       for (const n of nodes) {
         if (!vis(n)) continue;
         const fresh = n.born >= s - 1; const c = col(n.tone);
-        ctx.globalAlpha = 1; ctx.fillStyle = c; ctx.shadowColor = c; ctx.shadowBlur = fresh ? 18 : n.kind === "event" ? 6 : 0;
+        ctx.globalAlpha = 1; ctx.fillStyle = c; ctx.shadowColor = c; const L = lit(n); ctx.shadowBlur = fresh ? 18 : (n.kind === "event" ? 6 : 0) + L * 22; ctx.globalAlpha = 0.75 + L * 0.25;
         ctx.beginPath();
-        if (n.kind === "bitmap") { ctx.rect(n.x - n.r, n.y - n.r, n.r * 2, n.r * 2); }
+        if (n.kind === "bitmap") {
+          ctx.rect(n.x - n.r * 0.55, n.y - n.r * 0.55, n.r * 1.1, n.r * 1.1);
+          ctx.save(); ctx.strokeStyle = c; ctx.globalAlpha = 0.8; const q = n.r + 3, k = 3; ctx.beginPath();
+          for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]] as const) { ctx.moveTo(n.x + sx * q, n.y + sy * (q - k)); ctx.lineTo(n.x + sx * q, n.y + sy * q); ctx.lineTo(n.x + sx * (q - k), n.y + sy * q); }
+          ctx.stroke(); ctx.restore();
+        } else if (n.ev?.proofLevel === "CHAIN") { ctx.moveTo(n.x, n.y - n.r * 1.3); ctx.lineTo(n.x + n.r * 1.3, n.y); ctx.lineTo(n.x, n.y + n.r * 1.3); ctx.lineTo(n.x - n.r * 1.3, n.y); ctx.closePath(); }
         else ctx.arc(n.x, n.y, n.r * (fresh ? 1.5 : 1), 0, Math.PI * 2);
         ctx.fill(); ctx.shadowBlur = 0;
-        if (n.kind === "bitmap") { ctx.fillStyle = col("--muted-foreground"); ctx.font = "9px 'Space Mono', monospace"; ctx.fillText(n.label, n.x + 10, n.y + 3); }
+        if (n.kind === "bitmap") { ctx.fillStyle = col("--muted-foreground"); ctx.font = "9px 'Space Mono', monospace"; ctx.fillText(n.label, n.x + 12, n.y + 3); }
+      }
+      ctx.globalAlpha = 1;
+      // target lock reticle + leader line to the HUD card (top-right)
+      const lk = lockRef.current;
+      if (lk && vis(lk)) {
+        ctx.strokeStyle = sig; ctx.lineWidth = 1;
+        for (let i = 0; i < 3; i++) {
+          ctx.save(); ctx.translate(lk.x, lk.y); ctx.rotate((i % 2 ? -1 : 1) * T * (1 + i * 0.6)); ctx.globalAlpha = 0.9 - i * 0.25;
+          ctx.setLineDash(i === 1 ? [4, 4] : []); const rr = 10 + i * 6;
+          for (let q = 0; q < 4; q++) { ctx.beginPath(); ctx.arc(0, 0, rr, q * Math.PI / 2 + 0.2, q * Math.PI / 2 + 1.2); ctx.stroke(); }
+          ctx.restore();
+        }
+        ctx.setLineDash([]);
+        const tx = w / 2 - 280, ty = -h / 2 + 40, mx = tx - Math.abs(ty - lk.y) * 0.5;
+        ctx.globalAlpha = 0.8; ctx.beginPath(); ctx.moveTo(lk.x, lk.y); ctx.lineTo(Math.max(lk.x, Math.min(mx, tx)), ty); ctx.lineTo(tx, ty); ctx.stroke();
+        ctx.fillStyle = sig; ctx.fillRect(tx - 2, ty - 2, 4, 4);
       }
       raf = requestAnimationFrame(loop);
     };
@@ -126,26 +187,51 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
     let best: Node | null = null, bd = 144;
     for (const n of graph.current.nodes) { if (n.kind !== "event" || n.born >= step) continue; const d = (n.x - x) ** 2 + (n.y - y) ** 2; if (d < bd) { bd = d; best = n; } }
     setHover(best?.ev ?? null);
+    setTilt({ x: (ev.clientY - r.top) / r.height - 0.5, y: (ev.clientX - r.left) / r.width - 0.5 });
+    return best;
   }
+  function lockOn(ev: React.MouseEvent) { const n = pick(ev); setLock(n && n !== lock ? n : null); }
 
   const cur = ordered[Math.max(0, step - 1)];
+  const card = lock?.ev ?? hover;
+  const hash = (id: string) => { let h = 2166136261; for (const c of id) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return (h >>> 0).toString(16).padStart(8, "0"); };
+  const pct = ordered.length ? (Math.min(step, ordered.length) / ordered.length) * 100 : 0;
   return (
-    <div ref={wrap} className="relative border border-border bg-card/30 backdrop-blur">
-      <canvas ref={canvas} onMouseMove={pick} className="block w-full" style={{ height }} aria-label="World stream constellation" />
+    <div ref={wrap} className="relative overflow-hidden border border-signal/30 bg-card/30 backdrop-blur" style={{ perspective: 1100 }}>
+      {(["left-0 top-0 border-l border-t", "right-0 top-0 border-r border-t", "left-0 bottom-0 border-l border-b", "right-0 bottom-0 border-r border-b"]).map((c) => (
+        <span key={c} className={`pointer-events-none absolute z-10 h-4 w-4 border-signal ${c}`} />
+      ))}
+      <canvas ref={canvas} onMouseMove={pick} onClick={lockOn} onMouseLeave={() => setTilt({ x: 0, y: 0 })}
+        className="block w-full cursor-crosshair transition-transform duration-300 ease-out" aria-label="World stream constellation"
+        style={{ height, transform: `rotateX(${(-tilt.x * 7).toFixed(2)}deg) rotateY(${(tilt.y * 9).toFixed(2)}deg)` }} />
       <div className="pointer-events-none absolute left-3 top-3 font-mono text-[9px] tracking-[0.2em] text-muted-foreground">
-        <p className="text-signal">HISTORY SIMULATION · {Math.min(step, ordered.length)}/{ordered.length} EVENTS</p>
-        <p className="mt-1"><span className="text-bitcoin">■</span> BITMAP <span className="ml-2 text-bitcoin">●</span> CHAIN <span className="ml-2 text-signal">●</span> WORLD <span className="ml-2 text-destructive">●</span> RAID</p>
+        <p className="text-signal">J.A.R.V.I.S. // BITMAP PROVENANCE COGNITION</p>
+        <p className="mt-1">HISTORY SIM · {Math.min(step, ordered.length)}/{ordered.length} EVENTS · {fps} FPS · <span className={playing ? "text-signal" : "text-bitcoin"}>{playing ? "SYNCHRONIZING" : "STANDBY"}</span></p>
+        <p className="mt-1"><span className="text-bitcoin">▣</span> BITMAP <span className="ml-2 text-bitcoin">◆</span> CHAIN <span className="ml-2 text-signal">●</span> WORLD <span className="ml-2 text-destructive">●</span> RAID</p>
       </div>
-      {hover && (
-        <div className="pointer-events-none absolute right-3 top-3 max-w-[260px] border border-border bg-background/90 p-2 font-mono text-[10px]">
-          <p className="text-foreground">{hover.title}</p>
-          <p className="mt-1 text-muted-foreground">{hover.summary}</p>
-          <p className="mt-1 text-signal">{hover.proofLevel}{hover.bitmapHeight != null ? ` · ${hover.bitmapHeight}.BITMAP` : ""} · {new Date(hover.occurredAt).toLocaleString()}</p>
+      <p className="pointer-events-none absolute bottom-14 left-3 font-mono text-[8px] tracking-[0.2em] text-signal/60">SYS: ONLINE · VEC.SYNC · CLICK NODE TO LOCK</p>
+      {card && (
+        <div className="pointer-events-none absolute right-3 top-8 w-[268px] border border-signal/50 bg-background/85 p-2 font-mono text-[10px] shadow-[0_0_24px_-6px_var(--signal)]">
+          <p className="mb-1 text-[8px] tracking-[0.25em] text-signal">{lock ? "◉ TARGET LOCKED" : "○ SCANNING"}</p>
+          <p className="text-foreground">{card.title}</p>
+          <p className="mt-1 line-clamp-3 text-muted-foreground">{card.summary}</p>
+          <div className="mt-2 grid grid-cols-2 gap-x-2 border-t border-border pt-1 text-[9px] text-muted-foreground">
+            <span>PROOF</span><span className={card.proofLevel === "CHAIN" ? "text-bitcoin" : "text-signal"}>{card.proofLevel}</span>
+            {card.bitmapHeight != null && (<><span>TERRITORY</span><span className="text-bitcoin">{card.bitmapHeight}.BITMAP</span></>)}
+            <span>CLASS</span><span className="text-foreground">{card.eventType.toUpperCase()}</span>
+            <span>EVENT_HASH</span><span className="text-signal">0x{hash(card.id)}</span>
+            <span>T</span><span className="text-foreground">{new Date(card.occurredAt).toLocaleString()}</span>
+          </div>
         </div>
       )}
-      <div className="flex items-center gap-2 border-t border-border px-3 py-2 font-mono text-[10px]">
+      <div className="flex items-center gap-2 border-t border-signal/30 px-3 py-2 font-mono text-[10px]">
         <button type="button" onClick={() => { if (step >= ordered.length) setStep(0); setPlaying((p) => !p); }} className="btn-term-ghost shrink-0">{playing ? "[ PAUSE ]" : step >= ordered.length ? "[ REPLAY ]" : "[ PLAY ]"}</button>
-        <input type="range" min={0} max={ordered.length} value={step} onChange={(e) => { setPlaying(false); setStep(Number(e.target.value)); }} className="flex-1 accent-[var(--signal)]" aria-label="Scrub history" />
+        <div className="relative h-5 flex-1">
+          <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[repeating-linear-gradient(90deg,var(--signal)_0_1px,transparent_1px_10px)] opacity-40" />
+          <div className="absolute left-0 top-1/2 h-[2px] -translate-y-1/2 bg-signal shadow-[0_0_10px_var(--signal)]" style={{ width: `${pct}%` }} />
+          <div className="absolute top-1/2 h-3 w-1 -translate-y-1/2 bg-signal shadow-[0_0_10px_var(--signal)]" style={{ left: `calc(${pct}% - 2px)` }} />
+          <input type="range" min={0} max={ordered.length} value={step} onChange={(e) => { setPlaying(false); setStep(Number(e.target.value)); }} className="absolute inset-0 w-full cursor-pointer opacity-0" aria-label="Scrub history" />
+        </div>
         <span className="hidden truncate text-muted-foreground sm:block sm:max-w-[40%]">{cur ? `${new Date(cur.occurredAt).toLocaleDateString()} · ${cur.title}` : "—"}</span>
       </div>
     </div>
