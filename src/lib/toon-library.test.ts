@@ -56,3 +56,12 @@ describe("autosave versions", () => {
     expect(lib.series[0]!.episodes[0]!.history!.length).toBe(10);
   });
 });
+
+describe("series characters", () => {
+  it("merging keeps characters from both devices, one per Guardian", () => {
+    const c = (height: number, nickname: string) => ({ height, nickname, personality: "", voice: "", relationships: "" });
+    const a: ToonLibrary = { series: [{ id: "s", name: "S", episodes: [], characters: [c(1, "Ace")] }], casts: [] };
+    const b: ToonLibrary = { series: [{ id: "s", name: "S", episodes: [], characters: [c(1, "Other"), c(2, "Bo")] }], casts: [] };
+    expect(mergeLibraries(a, b).series[0]!.characters!.map((x) => x.nickname)).toEqual(["Ace", "Bo"]);
+  });
+});
