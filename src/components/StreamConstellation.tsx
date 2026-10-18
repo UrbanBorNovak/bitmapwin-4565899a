@@ -8,6 +8,20 @@ import type { ProvenanceEvent } from "@/lib/passport";
  */
 type Node = { id: string; kind: "bitmap" | "event" | "wallet"; x: number; y: number; vx: number; vy: number; r: number; tone: string; label: string; ev?: ProvenanceEvent; born: number };
 type Edge = { a: number; b: number; len: number };
+type Cls = "all" | "bitmap" | "chain" | "world" | "raid";
+function clsOf(n: Node): Cls {
+  if (n.kind === "bitmap") return "bitmap";
+  if (n.kind === "wallet") return "all";
+  if (n.tone === "--destructive") return "raid";
+  return n.ev?.proofLevel === "CHAIN" ? "chain" : "world";
+}
+const FILTERS: { k: Cls; label: string; cls: string }[] = [
+  { k: "all", label: "ALL", cls: "text-foreground" },
+  { k: "bitmap", label: "▣ BITMAP", cls: "text-bitcoin" },
+  { k: "chain", label: "◆ CHAIN", cls: "text-bitcoin" },
+  { k: "world", label: "● WORLD", cls: "text-signal" },
+  { k: "raid", label: "⚔ RAID", cls: "text-destructive" },
+];
 
 function toneFor(e: ProvenanceEvent) {
   const t = e.eventType;
@@ -65,6 +79,36 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
   lockRef.current = lock;
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [fps, setFps] = useState(60);
+  const [filter, setFilter] = useState<Cls>("all");
+  const filterRef = useRef<Cls>("all"); filterRef.current = filter;
+  const cursor = useRef<{ x: number; y: number } | null>(null);
+  const [az, setAz] = useState({ az: 0, el: 0, quad: "—" });
+  const [audioOn, setAudioOn] = useState(false);
+  const audio = useRef<AudioContext | null>(null);
+  const beep = (f1: number, f2: number, ms: number, vol = 0.04) => {
+    if (!audioOn) return;
+    const ac = audio.current ?? (audio.current = new AudioContext());
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "triangle"; o.frequency.setValueAtTime(f1, t); o.frequency.exponentialRampToValueAtTime(f2, t + ms / 1000);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + ms / 1000);
+    o.connect(g).connect(ac.destination); o.start(t); o.stop(t + ms / 1000 + 0.02);
+  };
+  // soft tick as each event materialises (throttled for big replays)
+  const lastTick = useRef(0);
+  useEffect(() => {
+    if (!playing || step === 0) return;
+    const now = performance.now(); if (now - lastTick.current < 120) return; lastTick.current = now;
+    beep(220, 180, 30, 0.02);
+  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
+  // density histogram for the oscilloscope (64 bins across the timeline)
+  const density = useMemo(() => {
+    const bins = new Array(64).fill(0); if (!ordered.length) return bins;
+    const t0 = +new Date(ordered[0]!.occurredAt), t1 = +new Date(ordered[ordered.length - 1]!.occurredAt) || t0 + 1;
+    for (const e of ordered) bins[Math.min(63, Math.floor(((+new Date(e.occurredAt) - t0) / Math.max(1, t1 - t0)) * 64))]++;
+    const m = Math.max(1, ...bins); return bins.map((b) => b / m);
+  }, [ordered]);
+  const densityRef = useRef(density); densityRef.current = density;
+  const lenRef = useRef(ordered.length); lenRef.current = ordered.length;
 
   // physics + render loop
   useEffect(() => {
@@ -135,30 +179,69 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
       ctx.globalAlpha = 0.7; ctx.strokeStyle = sig; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(sweep) * R, Math.sin(sweep) * R); ctx.stroke();
       const lit = (n: Node) => { let da = sweep - Math.atan2(n.y, n.x); da = ((da % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2); return da < 0.5 ? 1 - da / 0.5 : 0; };
       ctx.lineWidth = 0.8;
+      const fk = filterRef.current;
+      const on = (n: Node) => (fk === "all" || clsOf(n) === fk || (n.kind === "wallet" && false) ? 1 : 0.1);
       for (const e of edges) {
         const a = nodes[e.a]!, b = nodes[e.b]!; if (!vis(a) || !vis(b)) continue;
-        const fresh = Math.max(a.born, b.born) >= s - 2;
-        ctx.strokeStyle = col(fresh ? "--signal" : "--border"); ctx.globalAlpha = fresh ? 0.9 : 0.6;
+        const fresh = Math.max(a.born, b.born) >= s - 2; const m = Math.max(on(a), on(b));
+        ctx.strokeStyle = col(fresh ? "--signal" : "--border"); ctx.globalAlpha = (fresh ? 0.9 : 0.6) * m;
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
         const p = (T * (fresh ? 0.9 : 0.35) + ((e.a * 7 + e.b * 13) % 100) / 100) % 1;
-        ctx.globalAlpha = fresh ? 1 : 0.55; ctx.fillStyle = fresh ? sig : btc; ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 8;
+        ctx.globalAlpha = (fresh ? 1 : 0.55) * m; ctx.fillStyle = fresh ? sig : btc; ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 8;
         ctx.beginPath(); ctx.arc(a.x + (b.x - a.x) * p, a.y + (b.y - a.y) * p, fresh ? 1.8 : 1.1, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
       }
       for (const n of nodes) {
         if (!vis(n)) continue;
-        const fresh = n.born >= s - 1; const c = col(n.tone);
-        ctx.globalAlpha = 1; ctx.fillStyle = c; ctx.shadowColor = c; const L = lit(n); ctx.shadowBlur = fresh ? 18 : (n.kind === "event" ? 6 : 0) + L * 22; ctx.globalAlpha = 0.75 + L * 0.25;
+        const fresh = n.born >= s - 1; const c = col(n.tone); const m = on(n);
+        ctx.globalAlpha = 1; ctx.fillStyle = c; ctx.shadowColor = c; const L = lit(n); ctx.shadowBlur = m < 1 ? 0 : fresh ? 18 : (n.kind === "event" ? 6 : 0) + L * 22; ctx.globalAlpha = (0.75 + L * 0.25) * m;
         ctx.beginPath();
         if (n.kind === "bitmap") {
           ctx.rect(n.x - n.r * 0.55, n.y - n.r * 0.55, n.r * 1.1, n.r * 1.1);
-          ctx.save(); ctx.strokeStyle = c; ctx.globalAlpha = 0.8; const q = n.r + 3, k = 3; ctx.beginPath();
+          ctx.save(); ctx.strokeStyle = c; ctx.globalAlpha = 0.8 * m; const q = n.r + 3, k = 3; ctx.beginPath();
           for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]] as const) { ctx.moveTo(n.x + sx * q, n.y + sy * (q - k)); ctx.lineTo(n.x + sx * q, n.y + sy * q); ctx.lineTo(n.x + sx * (q - k), n.y + sy * q); }
           ctx.stroke(); ctx.restore();
         } else if (n.ev?.proofLevel === "CHAIN") { ctx.moveTo(n.x, n.y - n.r * 1.3); ctx.lineTo(n.x + n.r * 1.3, n.y); ctx.lineTo(n.x, n.y + n.r * 1.3); ctx.lineTo(n.x - n.r * 1.3, n.y); ctx.closePath(); }
         else ctx.arc(n.x, n.y, n.r * (fresh ? 1.5 : 1), 0, Math.PI * 2);
         ctx.fill(); ctx.shadowBlur = 0;
-        if (n.kind === "bitmap") { ctx.fillStyle = col("--muted-foreground"); ctx.font = "9px 'Space Mono', monospace"; ctx.fillText(n.label, n.x + 12, n.y + 3); }
+        if (n.kind === "bitmap" && m === 1) { ctx.fillStyle = col("--muted-foreground"); ctx.font = "9px 'Space Mono', monospace"; ctx.fillText(n.label, n.x + 12, n.y + 3); }
       }
+      // quadrant labels
+      ctx.globalAlpha = 0.35; ctx.fillStyle = sig; ctx.font = "8px 'Space Mono', monospace";
+      ctx.fillText("QUAD I", w / 2 - 60, -h / 2 + 64); ctx.fillText("QUAD II", -w / 2 + 12, -h / 2 + 64);
+      ctx.fillText("QUAD III", -w / 2 + 12, h / 2 - 66); ctx.fillText("QUAD IV", w / 2 - 60, h / 2 - 66);
+      // cursor crosshair with azimuth ring
+      const cu = cursor.current;
+      if (cu) {
+        ctx.strokeStyle = sig; ctx.lineWidth = 0.6; ctx.globalAlpha = 0.35; ctx.setLineDash([2, 4]);
+        ctx.beginPath(); ctx.moveTo(-w / 2, cu.y); ctx.lineTo(w / 2, cu.y); ctx.moveTo(cu.x, -h / 2); ctx.lineTo(cu.x, h / 2); ctx.stroke();
+        ctx.setLineDash([]); ctx.globalAlpha = 0.8;
+        ctx.beginPath(); ctx.arc(cu.x, cu.y, 14, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(cu.x, cu.y); ctx.globalAlpha = 0.25; ctx.stroke();
+        const azd = ((Math.atan2(cu.y, cu.x) * 180) / Math.PI + 90 + 360) % 360;
+        ctx.globalAlpha = 0.9; ctx.fillStyle = sig; ctx.fillText(`AZ ${azd.toFixed(1)}° · R ${Math.hypot(cu.x, cu.y).toFixed(0)}`, cu.x + 18, cu.y - 10);
+      }
+      // CRT phosphor scanline
+      const sy = ((T * 60) % (h + 40)) - h / 2 - 20;
+      const sg = ctx.createLinearGradient(0, sy - 20, 0, sy + 2); sg.addColorStop(0, "transparent"); sg.addColorStop(1, sig);
+      ctx.globalAlpha = 0.07; ctx.fillStyle = sg; ctx.fillRect(-w / 2, sy - 20, w, 22);
+      // event-density oscilloscope along the bottom deck
+      const dens = densityRef.current, oy = h / 2 - 24, ow = Math.min(360, w * 0.45), ox = -ow / 2;
+      const prog = lenRef.current ? s / lenRef.current : 0;
+      ctx.globalAlpha = 0.25; ctx.strokeStyle = sig; ctx.strokeRect(ox - 4, oy - 22, ow + 8, 30);
+      ctx.beginPath(); ctx.moveTo(ox, oy - 7); ctx.lineTo(ox + ow, oy - 7); ctx.stroke();
+      ctx.lineWidth = 1.2; ctx.shadowColor = sig; ctx.shadowBlur = 6;
+      for (const pass of [0, 1]) {
+        ctx.globalAlpha = pass ? 0.95 : 0.3; ctx.beginPath();
+        const lim = pass ? Math.floor(prog * 64) : 64;
+        for (let i = 0; i < lim; i++) {
+          const x = ox + (i / 63) * ow, jit = Math.sin(T * 9 + i * 1.7) * 1.2 * (pass ? 1 : 0.3);
+          const y = oy - 7 - dens[i]! * 13 * (i % 2 ? 1 : -0.6) + jit;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+      ctx.shadowBlur = 0; ctx.lineWidth = 0.8;
+      ctx.globalAlpha = 0.6; ctx.fillStyle = sig; ctx.fillText("EVT.DENSITY // OSC", ox - 2, oy - 26);
       ctx.globalAlpha = 1;
       // target lock reticle + leader line to the HUD card (top-right)
       const lk = lockRef.current;
@@ -186,11 +269,19 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
     const r = cv.getBoundingClientRect(); const x = ev.clientX - r.left - r.width / 2, y = ev.clientY - r.top - r.height / 2;
     let best: Node | null = null, bd = 144;
     for (const n of graph.current.nodes) { if (n.kind !== "event" || n.born >= step) continue; const d = (n.x - x) ** 2 + (n.y - y) ** 2; if (d < bd) { bd = d; best = n; } }
+    if ((best?.ev ?? null) !== hover && best) beep(900, 1300, 25, 0.015);
     setHover(best?.ev ?? null);
+    cursor.current = { x, y };
+    const azd = ((Math.atan2(y, x) * 180) / Math.PI + 90 + 360) % 360;
+    setAz({ az: azd, el: (-y / (r.height / 2)) * 45, quad: x >= 0 ? (y < 0 ? "I" : "IV") : (y < 0 ? "II" : "III") });
     setTilt({ x: (ev.clientY - r.top) / r.height - 0.5, y: (ev.clientX - r.left) / r.width - 0.5 });
     return best;
   }
-  function lockOn(ev: React.MouseEvent) { const n = pick(ev); setLock(n && n !== lock ? n : null); }
+  function lockOn(ev: React.MouseEvent) {
+    const n = pick(ev); const next = n && n !== lock ? n : null;
+    if (next) beep(1200, 1800, 70, 0.05); else if (lock) beep(600, 300, 60, 0.03);
+    setLock(next);
+  }
 
   const cur = ordered[Math.max(0, step - 1)];
   const card = lock?.ev ?? hover;
@@ -201,13 +292,26 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
       {(["left-0 top-0 border-l border-t", "right-0 top-0 border-r border-t", "left-0 bottom-0 border-l border-b", "right-0 bottom-0 border-r border-b"]).map((c) => (
         <span key={c} className={`pointer-events-none absolute z-10 h-4 w-4 border-signal ${c}`} />
       ))}
-      <canvas ref={canvas} onMouseMove={pick} onClick={lockOn} onMouseLeave={() => setTilt({ x: 0, y: 0 })}
+      <canvas ref={canvas} onMouseMove={pick} onClick={lockOn} onMouseLeave={() => { setTilt({ x: 0, y: 0 }); cursor.current = null; }}
         className="block w-full cursor-crosshair transition-transform duration-300 ease-out" aria-label="World stream constellation"
         style={{ height, transform: `rotateX(${(-tilt.x * 7).toFixed(2)}deg) rotateY(${(tilt.y * 9).toFixed(2)}deg)` }} />
       <div className="pointer-events-none absolute left-3 top-3 font-mono text-[9px] tracking-[0.2em] text-muted-foreground">
-        <p className="text-signal">J.A.R.V.I.S. // BITMAP PROVENANCE COGNITION</p>
+        <p className="text-signal">S.A.T.O.S.H.I. // TACTICAL PROVENANCE SYSTEM</p>
+        <p className="text-[7px] text-signal/50">SPATIAL AUTONOMOUS TACTICAL ORDINAL SETTLEMENT &amp; HISTORY INTERFACE</p>
         <p className="mt-1">HISTORY SIM · {Math.min(step, ordered.length)}/{ordered.length} EVENTS · {fps} FPS · <span className={playing ? "text-signal" : "text-bitcoin"}>{playing ? "SYNCHRONIZING" : "STANDBY"}</span></p>
-        <p className="mt-1"><span className="text-bitcoin">▣</span> BITMAP <span className="ml-2 text-bitcoin">◆</span> CHAIN <span className="ml-2 text-signal">●</span> WORLD <span className="ml-2 text-destructive">●</span> RAID</p>
+        <p className="mt-1">AZ {az.az.toFixed(1)}° · EL {az.el >= 0 ? "+" : ""}{az.el.toFixed(1)}° · QUAD {az.quad}</p>
+        <div className="pointer-events-auto mt-2 flex flex-wrap gap-1">
+          {FILTERS.map((f) => (
+            <button key={f.k} type="button" onClick={() => { setFilter(f.k); beep(700, 1000, 35, 0.03); }}
+              className={`border px-1.5 py-0.5 text-[8px] tracking-[0.15em] transition-colors ${filter === f.k ? "border-signal bg-signal/15 " + f.cls : "border-border bg-background/60 text-muted-foreground hover:border-signal/60"}`}>
+              [ {f.label} ]
+            </button>
+          ))}
+          <button type="button" onClick={() => { const n = !audioOn; setAudioOn(n); if (n) { audio.current ??= new AudioContext(); void audio.current.resume(); } }}
+            className={`border px-1.5 py-0.5 text-[8px] tracking-[0.15em] ${audioOn ? "border-bitcoin text-bitcoin" : "border-border bg-background/60 text-muted-foreground"}`}>
+            [ AUDIO: {audioOn ? "ON" : "MUTED"} ]
+          </button>
+        </div>
       </div>
       <p className="pointer-events-none absolute bottom-14 left-3 font-mono text-[8px] tracking-[0.2em] text-signal/60">SYS: ONLINE · VEC.SYNC · CLICK NODE TO LOCK</p>
       {card && (
@@ -225,7 +329,7 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
         </div>
       )}
       <div className="flex items-center gap-2 border-t border-signal/30 px-3 py-2 font-mono text-[10px]">
-        <button type="button" onClick={() => { if (step >= ordered.length) setStep(0); setPlaying((p) => !p); }} className="btn-term-ghost shrink-0">{playing ? "[ PAUSE ]" : step >= ordered.length ? "[ REPLAY ]" : "[ PLAY ]"}</button>
+        <button type="button" onClick={() => { if (step >= ordered.length) setStep(0); if (!playing) beep(300, 900, 180, 0.04); setPlaying((p) => !p); }} className="btn-term-ghost shrink-0">{playing ? "[ PAUSE ]" : step >= ordered.length ? "[ REPLAY ]" : "[ PLAY ]"}</button>
         <div className="relative h-5 flex-1">
           <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[repeating-linear-gradient(90deg,var(--signal)_0_1px,transparent_1px_10px)] opacity-40" />
           <div className="absolute left-0 top-1/2 h-[2px] -translate-y-1/2 bg-signal shadow-[0_0_10px_var(--signal)]" style={{ width: `${pct}%` }} />
