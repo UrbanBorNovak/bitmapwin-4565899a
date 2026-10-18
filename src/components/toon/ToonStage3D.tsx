@@ -197,7 +197,7 @@ function Director({ scene, local }: { scene: ToonScene; local: number }) {
     const c = cur.current;
     camera.position.set(c[0]!, c[1]!, c[2]!);
     camera.up.set(scene.shot === "dutch" && !line ? Math.sin(0.25) : 0, 1, 0);
-    camera.lookAt(c[3]!, c[4]!, c[5]!);
+    camera.lookAt(c[3]!, c[4]!, c[5]!); (window as unknown as { __cam: unknown }).__cam = { c: c.map((v) => +v.toFixed(1)), h: Object.fromEntries(actorHeights), line: line?.cam };
   });
   return null;
 }
