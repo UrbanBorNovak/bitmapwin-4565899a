@@ -1,4 +1,6 @@
 import { useState } from "react";
+import type { ToonCharacter } from "@/lib/toon-library";
+import { CharacterHint } from "@/components/toon/CharacterProfiles";
 import { MAX_SCENE_SECONDS, MAX_SCENES, type Pose, type Shot, type ToonEpisode, type ToonLine, type ToonScene } from "@/lib/toon-script";
 
 const SHOTS: { v: Shot; label: string }[] = [
@@ -14,7 +16,7 @@ const field = "w-full border border-border bg-background px-2 py-1 font-mono tex
 const num = (v: string, min: number, max: number) => Math.min(max, Math.max(min, Number(v) || 0));
 
 /** Visual editor for the episode script; every change produces a new episode object. */
-export function SceneEditor({ episode, onChange, onSeek }: { episode: ToonEpisode; onChange: (e: ToonEpisode) => void; onSeek: (t: number) => void }) {
+export function SceneEditor({ episode, onChange, onSeek, characters = [] }: { episode: ToonEpisode; onChange: (e: ToonEpisode) => void; onSeek: (t: number) => void; characters?: ToonCharacter[] }) {
   const [sel, setSel] = useState(0);
   const i = Math.min(sel, episode.scenes.length - 1);
   const s = episode.scenes[i]!;
@@ -87,10 +89,11 @@ export function SceneEditor({ episode, onChange, onSeek }: { episode: ToonEpisod
       <div className="label mt-4 text-signal">DIALOGUE</div>
       {s.lines.map((l, k) => (
         <div key={k} className="mt-2 space-y-1 border-l border-border pl-2">
+          <CharacterHint c={characters.find((c) => c.height === s.cast[l.speaker]?.height)} />
           <textarea className={`${field} h-14`} value={l.text} aria-label="Line text" onChange={(e) => patchLine(k, { text: e.target.value.slice(0, 140) })} />
           <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
             <select className={field} value={l.speaker} aria-label="Speaker" onChange={(e) => patchLine(k, { speaker: Number(e.target.value) })}>
-              {s.cast.map((a, j) => <option key={j} value={j}>{a.name}</option>)}
+              {s.cast.map((a, j) => <option key={j} value={j}>{characters.find((c) => c.height === a.height)?.nickname || a.name}</option>)}
             </select>
             <select className={field} value={l.style} aria-label="Bubble style" onChange={(e) => patchLine(k, { style: e.target.value as ToonLine["style"] })}>
               <option value="speech">Speech</option><option value="shout">Shout</option><option value="thought">Thought</option>

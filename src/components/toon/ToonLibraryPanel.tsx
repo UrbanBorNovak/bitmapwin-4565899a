@@ -10,10 +10,12 @@ const btn = "border border-border px-2 py-1 font-mono text-[11px] hover:border-b
 type Sync = "local" | "loading" | "synced" | "saving" | "error";
 
 /** Series, saved episodes and recurring casts. Signed in: the account copy is the source of truth. */
-export function ToonLibraryPanel({ episode, onOpen }: { episode: ToonEpisode; onOpen: (e: ToonEpisode) => void }) {
+export function ToonLibraryPanel({ episode, onOpen, onCharacters }: { episode: ToonEpisode; onOpen: (e: ToonEpisode) => void; onCharacters?: (c: ToonCharacter[]) => void }) {
   const { user, loading } = useAuthSession();
   const [lib, setLib] = useState<ToonLibrary>({ series: [], casts: [] });
   const [seriesId, setSeriesId] = useState("");
+  const activeCharacters = lib.series.find((s) => s.id === seriesId)?.characters;
+  useEffect(() => { onCharacters?.(activeCharacters ?? []); }, [activeCharacters, onCharacters]);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [newSeries, setNewSeries] = useState("");
   const [castName, setCastName] = useState("");
@@ -155,6 +157,11 @@ export function ToonLibraryPanel({ episode, onOpen }: { episode: ToonEpisode; on
             ))}
             {series && series.episodes.length === 0 && <li className="text-[11px] text-muted-foreground">No episodes yet.</li>}
           </ol>
+          {series && (
+            <CharacterProfiles characters={series.characters ?? []}
+              castHeights={[...new Set(episode.scenes.flatMap((sc) => sc.cast.map((a) => a.height)))]}
+              onChange={(characters) => commit({ ...lib, series: lib.series.map((s) => (s.id === series.id ? { ...s, characters } : s)) }, "CHARACTERS SAVED.")} />
+          )}
         </>
       )}
 
