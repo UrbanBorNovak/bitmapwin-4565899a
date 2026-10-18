@@ -105,7 +105,6 @@ export const Route = createFileRoute("/bitmap/$block")({
     // Only verified facts feed the search description; missing ones are left out.
     const facts: string[] = [];
     if (stats?.txCount) facts.push(`${stats.txCount.toLocaleString("en-US")} transactions`);
-    if (parcel?.inscribedAt) facts.push(`claimed ${parcel.inscribedAt.slice(0, 10)}`);
     if (parcel?.lastSaleSats) facts.push(`last sold for ${parcel.lastSaleSats.toLocaleString("en-US")} sats${parcel.lastSaleAt ? ` on ${parcel.lastSaleAt.slice(0, 10)}` : ""}`);
     if (parcel?.listedSats) facts.push(`listed at ${parcel.listedSats.toLocaleString("en-US")} sats`);
     return { block, facts };
