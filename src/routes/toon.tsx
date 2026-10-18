@@ -222,7 +222,8 @@ function ToonPage() {
           <div className="mt-3 flex flex-wrap items-center gap-2 font-mono text-xs">
             <button className="btn-term" disabled={recording} onClick={() => { if (time >= total) setTime(0); setPlaying((p) => !p); }}>[ {playing ? "PAUSE" : "▶ PLAY"} ]</button>
             <button className="btn-term-ghost" disabled={recording} onClick={() => { setPlaying(false); setTime(0); }}>[ ⏮ REWIND ]</button>
-            <button className="btn-term" disabled={recording} onClick={record}>[ {recording ? "● RECORDING…" : "⏺ RECORD EPISODE"} ]</button>
+            <button className="btn-term" disabled={recording} onClick={() => void record()}>[ {recording ? "● RECORDING…" : "⏺ EXPORT FOR X (MP4)"} ]</button>
+            <button className="btn-term-ghost" disabled={recording} onClick={() => void postToX()}>[ 𝕏 POST TO X ]</button>
             <input type="range" min={0} max={total} step={0.05} value={time} disabled={recording}
               onChange={(e) => { setPlaying(false); setTime(Number(e.target.value)); }} className="min-w-40 flex-1" aria-label="Timeline" />
             <span className="text-muted-foreground">{time.toFixed(1)}s / {total.toFixed(0)}s</span>
