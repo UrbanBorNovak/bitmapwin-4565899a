@@ -114,7 +114,7 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
       o.traverse((m) => { const g = (m as { geometry?: { type?: string } }).geometry; if (!g || SEAL_GEOMS.has(g.type ?? "")) return;
         // InstancedMesh caches its bounds before the voxels are written; refresh them.
         (m as { computeBoundingBox?: () => void }).computeBoundingBox?.();
-        b.union(tmp.setFromObject(m, true)); });
+        b.union(tmp.setFromObject(m)); });
       if (!b.isEmpty()) unitH.current = Math.max(0.2, b.max.y);
     }
     o.scale.set(10 * s, 10 * s * sy, 10 * s);
