@@ -111,7 +111,7 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
       o.scale.set(1, 1, 1); o.position.set(0, 0, 0); o.rotation.set(0, 0, 0); o.updateMatrixWorld(true);
       // Body voxels only — halos, seals and gems float above the head and would skew framing.
       const b = new Box3(), tmp = new Box3();
-      o.traverse((m) => { const g = (m as { geometry?: { type?: string } }).geometry; if (g && !SEAL_GEOMS.has(g.type ?? "")) b.union(tmp.setFromObject(m, true)); });
+      o.traverse((m) => { const g = (m as { geometry?: { type?: string } }).geometry; if (g && !SEAL_GEOMS.has(g.type ?? "")) { (m as { computeBoundingBox?: () => void }).computeBoundingBox?.(); } if (g && !SEAL_GEOMS.has(g.type ?? "")) b.union(tmp.setFromObject(m, true)); });
       const dbg = ((window as unknown as { __dbg: Record<number, unknown> }).__dbg ??= {}); const ty: string[] = []; o.traverse((m) => { const g = (m as { geometry?: { type?: string } }).geometry; if (g) ty.push(g.type ?? "?"); }); dbg[slot] = { ty: [...new Set(ty)], n: ty.length, max: b.max.y, min: b.min.y };
       if (!b.isEmpty()) unitH.current = Math.max(0.2, b.max.y);
     }
