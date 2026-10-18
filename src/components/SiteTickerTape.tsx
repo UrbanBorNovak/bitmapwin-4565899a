@@ -14,7 +14,7 @@ export function SiteTickerTape() {
   const items = feed.data ?? [];
 
   return (
-    <div data-no-translate className="ticker-tape relative flex items-stretch overflow-hidden border-b border-border bg-background">
+    <div data-no-translate data-nosnippet className="ticker-tape relative flex items-stretch overflow-hidden border-b border-border bg-background">
       <span className="label z-10 flex shrink-0 items-center gap-1.5 border-r border-border bg-surface px-2 text-[0.5rem] text-signal sm:px-3">
         <span className="size-1.5 shrink-0 bg-signal lc-blink" aria-hidden />
         <span className="hidden sm:inline">THE FLOOR IS MOVING</span>

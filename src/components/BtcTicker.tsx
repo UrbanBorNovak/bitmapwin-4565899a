@@ -21,7 +21,7 @@ export function BtcTicker({ className = "" }: { className?: string }) {
   if (isError) return null;
 
   return (
-    <div
+    <div data-nosnippet
       className={`flex items-center gap-2 border border-border px-2 py-1 font-mono text-[10px] ${className}`}
       aria-live="polite"
       data-no-translate
