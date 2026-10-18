@@ -33,7 +33,7 @@ export function TradeCrawlerDriver() {
     };
 
     void tick();
-    const timer = window.setInterval(tick, 15_000);
+    const timer = window.setInterval(tick, 60_000);
     const onVisible = () => {
       if (!document.hidden) void tick();
     };

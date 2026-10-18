@@ -78,6 +78,13 @@
       "when": 1792170124511,
       "tag": "0010_market_api_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792355086459,
+      "tag": "0011_bitmap_index_resolved_at_idx",
+      "breakpoints": true
     }
   ]
 }

@@ -43,7 +43,7 @@ export function BssCrawlerDriver({ lo, hi }: { lo?: number; hi?: number }) {
     };
 
     void tick();
-    const timer = window.setInterval(tick, 20_000);
+    const timer = window.setInterval(tick, 90_000);
     const onVisible = () => {
       if (!document.hidden) void tick();
     };
