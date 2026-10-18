@@ -3,6 +3,8 @@ import type { Database } from "@/integrations/supabase/types";
 import { addressToScriptPubKey } from "@/lib/psbt-builder";
 import {
   buildBuyerPsbt,
+  SELLER_INDEX,
+  satDestination,
   byteArrayToHex,
   extractRawTxHex,
   finalizeSignedPsbt,
@@ -311,7 +313,7 @@ export async function submitPurchase(input: {
   const report = inputSignatureReport(finalized);
   const unsigned = report.filter((r) => !r.isFinal);
   if (unsigned.length > 0) {
-    const missingBuyer = unsigned.filter((r) => r.index > 0 && !r.hasSignature);
+    const missingBuyer = unsigned.filter((r) => r.index !== SELLER_INDEX && !r.hasSignature);
     if (missingBuyer.length > 0) {
       throw new Error(
         `Your wallet did not sign funding input(s) ${missingBuyer
@@ -324,14 +326,17 @@ export async function submitPurchase(input: {
     );
   }
 
-  // Guarantee the money actually moves: output 0 pays the seller the asking
-  // price, output 1 delivers the inscription to the buyer.
+  // Guarantee the money actually moves: output 2 pays the seller the asking
+  // price, and following the sats the BITMAP lands in output 1 at the buyer.
   const outs = psbtOutputs(finalized);
+  if (satDestination(finalized, SELLER_INDEX) !== 1) {
+    throw new Error("Refusing to broadcast: the BITMAP would not reach the buyer's output");
+  }
   const expectedSeller = offer.seller_address
     ? byteArrayToHex(addressToScriptPubKey(offer.seller_address))
     : null;
   const price = Number(offer.price_sats ?? 0);
-  if (expectedSeller && (outs[0]?.scriptHex !== expectedSeller || Number(outs[0]?.valueSats) < price)) {
+  if (expectedSeller && (outs[SELLER_INDEX]?.scriptHex !== expectedSeller || Number(outs[SELLER_INDEX]?.valueSats) < price)) {
     throw new Error("Refusing to broadcast: the seller payout output was altered");
   }
   const expectedBuyer = byteArrayToHex(addressToScriptPubKey(input.buyerAddress));
