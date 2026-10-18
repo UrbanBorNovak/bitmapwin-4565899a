@@ -65,6 +65,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StoreKitRouteImport } from './routes/store-kit'
 import { Route as StreamRouteImport } from './routes/stream'
 import { Route as StudioRouteImport } from './routes/studio'
+import { Route as TinyStudioRouteImport } from './routes/tiny-studio'
 import { Route as TradingPostRouteImport } from './routes/trading-post'
 import { Route as ValuationRouteImport } from './routes/valuation'
 import { Route as WalletRouteImport } from './routes/wallet'
@@ -406,6 +407,11 @@ const StreamRoute = StreamRouteImport.update({
 const StudioRoute = StudioRouteImport.update({
   id: '/studio',
   path: '/studio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TinyStudioRoute = TinyStudioRouteImport.update({
+  id: '/tiny-studio',
+  path: '/tiny-studio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TradingPostRoute = TradingPostRouteImport.update({
@@ -780,6 +786,7 @@ export interface FileRoutesByFullPath {
   '/store-kit': typeof StoreKitRoute
   '/stream': typeof StreamRoute
   '/studio': typeof StudioRoute
+  '/tiny-studio': typeof TinyStudioRoute
   '/trading-post': typeof TradingPostRoute
   '/valuation': typeof ValuationRoute
   '/wallet': typeof WalletRoute
@@ -896,6 +903,7 @@ export interface FileRoutesByTo {
   '/store-kit': typeof StoreKitRoute
   '/stream': typeof StreamRoute
   '/studio': typeof StudioRoute
+  '/tiny-studio': typeof TinyStudioRoute
   '/trading-post': typeof TradingPostRoute
   '/valuation': typeof ValuationRoute
   '/wallet': typeof WalletRoute
@@ -1017,6 +1025,7 @@ export interface FileRoutesById {
   '/store-kit': typeof StoreKitRoute
   '/stream': typeof StreamRoute
   '/studio': typeof StudioRoute
+  '/tiny-studio': typeof TinyStudioRoute
   '/trading-post': typeof TradingPostRoute
   '/valuation': typeof ValuationRoute
   '/wallet': typeof WalletRoute
@@ -1139,6 +1148,7 @@ export interface FileRouteTypes {
     | '/store-kit'
     | '/stream'
     | '/studio'
+    | '/tiny-studio'
     | '/trading-post'
     | '/valuation'
     | '/wallet'
@@ -1255,6 +1265,7 @@ export interface FileRouteTypes {
     | '/store-kit'
     | '/stream'
     | '/studio'
+    | '/tiny-studio'
     | '/trading-post'
     | '/valuation'
     | '/wallet'
@@ -1375,6 +1386,7 @@ export interface FileRouteTypes {
     | '/store-kit'
     | '/stream'
     | '/studio'
+    | '/tiny-studio'
     | '/trading-post'
     | '/valuation'
     | '/wallet'
@@ -1496,6 +1508,7 @@ export interface RootRouteChildren {
   StoreKitRoute: typeof StoreKitRoute
   StreamRoute: typeof StreamRoute
   StudioRoute: typeof StudioRoute
+  TinyStudioRoute: typeof TinyStudioRoute
   TradingPostRoute: typeof TradingPostRoute
   ValuationRoute: typeof ValuationRoute
   WalletRoute: typeof WalletRoute
@@ -1912,6 +1925,13 @@ declare module '@tanstack/react-router' {
       path: '/studio'
       fullPath: '/studio'
       preLoaderRoute: typeof StudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tiny-studio': {
+      id: '/tiny-studio'
+      path: '/tiny-studio'
+      fullPath: '/tiny-studio'
+      preLoaderRoute: typeof TinyStudioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/trading-post': {
@@ -2543,6 +2563,7 @@ const rootRouteChildren: RootRouteChildren = {
   StoreKitRoute: StoreKitRoute,
   StreamRoute: StreamRoute,
   StudioRoute: StudioRoute,
+  TinyStudioRoute: TinyStudioRoute,
   TradingPostRoute: TradingPostRoute,
   ValuationRoute: ValuationRoute,
   WalletRoute: WalletRoute,
