@@ -37,10 +37,12 @@ function EmoteIcon({ emote, timeRef }: { emote: Emote; timeRef: MutableRefObject
     const t = new CanvasTexture(c); t.colorSpace = SRGBColorSpace; return t;
   }, [emote]);
   useEffect(() => () => tex.dispose(), [tex]);
-  useFrame(() => {
+  useFrame(({ camera }) => {
     const o = sp.current, t = timeRef.current;
     if (!o) return;
-    let s = 0.34, y = 1.15;
+    // Keep the bubble readable on far shots (wide/crane): grow with camera distance.
+    const dist = o.parent ? camera.position.distanceTo(o.parent.getWorldPosition(o.position.clone().set(0, 0, 0))) : 30;
+    let s = 0.34 * Math.min(2.6, Math.max(1, dist / 32)), y = 1.15;
     if (emote === "love" || emote === "happy") s *= 1 + Math.abs(Math.sin(t * 4)) * 0.18;
     if (emote === "terrified" || emote === "afraid") o.position.x = 0.5 + Math.sin(t * 40) * 0.03;
     if (emote === "sad" || emote === "lonely" || emote === "sleepy") y += Math.sin(t * 1.2) * 0.06;
