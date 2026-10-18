@@ -17,6 +17,8 @@ export type PsbtInput = {
   witnessScriptPubKeyHex: string | null;
   /** True when the input carries a signature (final or partial). */
   signed: boolean;
+  /** Sighash type of every signature on the input (0x00 = taproot default/ALL). */
+  sighashes: number[];
 };
 
 export type PsbtOutput = {
@@ -218,7 +220,12 @@ export function decodePsbt(base64: string): DecodedPsbt {
     const signed = map.some(
       (entry) => entry.keyType === 0x02 || entry.keyType === 0x08 || entry.keyType === 0x13,
     );
+    const sighashes = map.flatMap((entry) => {
+      const t = sighashOfSignature(entry.keyType, entry.value);
+      return t === null ? [] : [t];
+    });
     return {
+      sighashes,
       txid: input.txid,
       vout: input.vout,
       outpoint: `${input.txid}:${input.vout}`,
@@ -242,4 +249,23 @@ export function decodePsbt(base64: string): DecodedPsbt {
     outputs,
     totalOutSats: outputs.reduce((sum, output) => sum + output.valueSats, 0),
   };
+}
+
+
+/**
+ * Sighash byte of one PSBT input signature entry: 0x13 tap key sig, 0x02
+ * partial ECDSA sig, or 0x08 final witness (first stack item). Taproot 64-byte
+ * signatures carry no byte and mean SIGHASH_DEFAULT (0x00, same as ALL).
+ */
+export function sighashOfSignature(keyType: number, value: Uint8Array | number[]): number | null {
+  const v = Array.from(value);
+  const fromSig = (sig: number[]) => (sig.length === 64 ? 0x00 : sig.length > 0 ? sig[sig.length - 1]! : null);
+  if (keyType === 0x13 || keyType === 0x02) return fromSig(v);
+  if (keyType === 0x08) {
+    if (v.length < 2 || v[0] === 0) return null;
+    const len = v[1]!;
+    if (len >= 0xfd) return null;
+    return fromSig(v.slice(2, 2 + len));
+  }
+  return null;
 }
