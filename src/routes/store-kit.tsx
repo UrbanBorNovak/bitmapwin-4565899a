@@ -220,16 +220,18 @@ function StoreKit() {
             </select>
           </label>
           <button onClick={download} className="w-full rounded bg-bitcoin px-4 py-3 text-sm font-bold text-background">DOWNLOAD MY SHOP</button>
-          {ready ? (
-            <button onClick={() => save(new Blob([ready.bytes as BlobPart], { type: "application/octet-stream" }), "index.html.br")} className="w-full rounded border border-bitcoin px-4 py-3 text-sm font-bold text-bitcoin">
-              DOWNLOAD FOR INSCRIPTION (.HTML.BR) · {ready.size.toLocaleString("en-US")} BYTES
-            </button>
-          ) : (
-            <button onClick={prepareBr} disabled={packing} className="w-full rounded border border-bitcoin px-4 py-3 text-sm font-bold text-bitcoin disabled:opacity-50">
-              {packing ? "PACKING…" : "PREPARE FOR INSCRIPTION (.HTML.BR)"}
-            </button>
-          )}
-          {ready && <p className="font-mono text-[11px] text-muted-foreground">PACKED {ready.raw.toLocaleString("en-US")} → {ready.size.toLocaleString("en-US")} BYTES · CHECKED: UNPACKS TO THE EXACT SAME SHOP</p>}
+          {mode === "live" &&
+            (ready ? (
+              <button onClick={() => save(new Blob([ready.bytes as BlobPart], { type: "application/octet-stream" }), "index.html.br")} className="w-full rounded border border-bitcoin px-4 py-3 text-sm font-bold text-bitcoin">
+                DOWNLOAD FOR INSCRIPTION (.HTML.BR) · {ready.size.toLocaleString("en-US")} BYTES
+              </button>
+            ) : (
+              <button onClick={prepareBr} disabled={packing} className="w-full rounded border border-bitcoin px-4 py-3 text-sm font-bold text-bitcoin disabled:opacity-50">
+                {packing ? "PACKING…" : "PREPARE FOR INSCRIPTION (.HTML.BR)"}
+              </button>
+            ))}
+          {ready && mode === "live" && <p className="font-mono text-[11px] text-muted-foreground">PACKED {ready.raw.toLocaleString("en-US")} → {ready.size.toLocaleString("en-US")} BYTES · CHECKED: UNPACKS TO THE EXACT SAME SHOP</p>}
+          {mode === "sovereign" && <p className="text-[11px] leading-relaxed text-muted-foreground">Download only — this one cannot be inscribed: ordinals.com blocks the outside connections a sovereign shop needs, so an inscribed copy would never show listings. Host the file on GitHub Pages or open it on your computer.</p>}
           <button onClick={share} className="w-full rounded border border-signal px-4 py-3 text-sm font-bold text-signal">{copied ? "LINK COPIED" : "COPY SHARE LINK"}</button>
           {manual && (
             <label className="block text-xs text-signal">
@@ -276,38 +278,49 @@ function StoreKit() {
             </li>
           ))}
         </ol>
+        {mode === "live" ? (
+          <>
+            <div className="border-t border-border p-5">
+              <div className="label text-bitcoin">PUT YOUR SHOP ON BITCOIN (OPTIONAL)</div>
+              <p className="mt-2 text-sm text-muted-foreground">Inscribe it once and it stays on Bitcoin forever — no hosting. Small fee, paid by you to miners.</p>
+            </div>
+            <ol className="divide-y divide-border border-t border-border">
+              {INSCRIBE.map((s, i) => (
+                <li key={s.title} className="flex gap-4 p-4">
+                  <span className="font-mono text-xs text-bitcoin">{String(i + 1).padStart(2, "0")}</span>
+                  <div>
+                    <div className="display text-sm md:text-base">{s.title}</div>
+                    <p className="mt-1 break-words text-sm leading-relaxed text-muted-foreground">{s.body}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </>
+        ) : (
+          <div className="border-t border-border p-5">
+            <div className="label text-signal">HOST IT — DON'T INSCRIBE IT</div>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              A sovereign shop has to reach Nostr relays, ordinals.com and mempool.space every time it opens. ordinals.com
+              runs inscriptions inside a sandbox that blocks exactly those outside connections, so an inscribed sovereign
+              shop would open on an empty wall. Put the file on GitHub Pages (steps 3–5 above) or open it on your computer
+              — there it reads listings and checks them on Bitcoin normally.
+            </p>
+          </div>
+        )}
         <div className="border-t border-border p-5">
-          <div className="label text-bitcoin">PUT YOUR SHOP ON BITCOIN (OPTIONAL)</div>
-          <p className="mt-2 text-sm text-muted-foreground">Inscribe it once and it stays on Bitcoin forever — no hosting. Small fee, paid by you to miners.</p>
-        </div>
-        <ol className="divide-y divide-border border-t border-border">
-          {INSCRIBE.map((s, i) => (
-            <li key={s.title} className="flex gap-4 p-4">
-              <span className="font-mono text-xs text-bitcoin">{String(i + 1).padStart(2, "0")}</span>
-              <div>
-                <div className="display text-sm md:text-base">{s.title}</div>
-                <p className="mt-1 break-words text-sm leading-relaxed text-muted-foreground">{s.body}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-        <div className="border-t border-border p-5">
-          <div className="label text-signal">WHAT STAYS LIVE (EVEN ON BITCOIN)</div>
+          <div className="label text-signal">WHAT STAYS LIVE</div>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            The inscribed file is only the shop window. Every time someone opens it, it asks bitmapwin.app for the current
-            listings, and BUY opens the BITMAP's page on the BitmapWin marketplace for checkout. If bitmapwin.app is
-            unreachable, the shop shows "COULD NOT LOAD LISTINGS" and nobody can buy through it until it's back. Only
-            listed BITMAPs appear. The SOVEREIGN shop removes that dependency: it reads open Nostr relays, re-checks each
-            offer on Bitcoin (ordinals.com recursion + mempool.space), and the buyer signs and sends the swap from their own
-            wallet in the page.
+            {mode === "live"
+              ? "The file is only the shop window. Every time someone opens it, it asks bitmapwin.app for the current listings, and BUY opens the BITMAP's page on the BitmapWin marketplace for checkout. If bitmapwin.app is unreachable, the shop shows \"COULD NOT LOAD LISTINGS\" and nobody can buy through it until it's back. Only listed BITMAPs appear. This is the version you can also inscribe."
+              : "The sovereign file is also only a window. Every time it opens it reads signed listings from open Nostr relays and re-checks each one on Bitcoin (ordinals.com recursion + mempool.space) before showing it, so a stale or fake offer never appears. The buyer signs and sends the swap from their own wallet in the page. Because it needs those services reachable, it is hosted — not inscribed."}
           </p>
         </div>
         <footer className="border-t border-border bg-secondary/40 p-5">
           <div className="label text-bitcoin">WHERE BUYING HAPPENS</div>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            Your shop is a window, not a checkout. When a visitor presses BUY, they go to that BITMAP's page on the main
-            BitmapWin marketplace and sign there with their own wallet. Payment goes straight to the seller on Bitcoin —
-            your shop never holds coins, keys or BITMAPs. A listing marked IN CHECKOUT is briefly reserved by another buyer.
+            {mode === "live"
+              ? "Your shop is a window, not a checkout. When a visitor presses BUY, they go to that BITMAP's page on the main BitmapWin marketplace and sign there with their own wallet. Payment goes straight to the seller on Bitcoin — your shop never holds coins, keys or BITMAPs. A listing marked IN CHECKOUT is briefly reserved by another buyer."
+              : "Your shop is a window, but the swap happens inside it. Pressing BUY builds the trade in the page and the buyer's own UniSat wallet signs and sends it — coins go straight to the seller, the BITMAP straight to the buyer. Your shop never holds coins, keys or BITMAPs, and nothing is signed until the buyer confirms."}
           </p>
         </footer>
       </section>
