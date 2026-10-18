@@ -2,7 +2,7 @@ import type { ToonEpisode } from "@/lib/toon-script";
 
 /** Ready-made teaser on real Forge-built BITMAPs (208 and 715093) starring Guardians 208 and 840000. */
 export const CITADEL_TEASER: ToonEpisode = {
-  title: "GUARDIANS OF THE CITADEL", aspect: "16:9", music: "adventure", voices: true, style: "storybook",
+  title: "GUARDIANS OF THE CITADEL", aspect: "16:9", music: "adventure", voices: true, style: "ghibli",
   scenes: [
     { block: 208, duration: 5.5, shot: "crane", sfx: "SATS!",
       cast: [{ height: 208, name: "208.bitmap", x: -2, z: 1, pose: "idle", emote: "surprised" }],
