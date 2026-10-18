@@ -12,7 +12,9 @@ export function SiteFundTracker() {
   const now = new Date();
   const start = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1);
   const end = Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1);
-  const p = Math.min(1, Math.max(0, (now.getTime() - start) / (end - start)));
+  // Snap to the hour so server render and hydration draw identical sand.
+  const hour = Math.floor(now.getTime() / 3_600_000) * 3_600_000;
+  const p = Math.min(1, Math.max(0, (hour - start) / (end - start)));
   const month = now.toLocaleString("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).toUpperCase();
   const daysLeft = Math.ceil((end - now.getTime()) / 86_400_000);
   // Chamber geometry (viewBox 60x100): top chamber y 8..48, bottom 52..92.
