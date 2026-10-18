@@ -65,21 +65,32 @@ function reloadOnStaleChunk(error: unknown): boolean {
   return true;
 }
 
+const isChunkError = (error: unknown) =>
+  /dynamically imported module|Importing a module script failed|error loading dynamically imported/i.test(
+    error instanceof Error ? error.message : String(error ?? ""),
+  );
+
 function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  const chunk = isChunkError(error);
   useEffect(() => {
     if (reloadOnStaleChunk(error)) return;
+    if (chunk) {
+      // Fast retries exhausted (e.g. preview still restarting): keep retrying slowly, never stay blank.
+      const t = window.setTimeout(() => window.location.reload(), 10_000);
+      return () => window.clearTimeout(t);
+    }
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
+  }, [error, chunk]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="terminal-panel max-w-md p-8 text-center">
         <div className="label text-bitcoin">SYSTEM · ERROR</div>
-        <h1 className="display mt-4 text-2xl text-foreground">THIS PAGE DIDN'T LOAD</h1>
+        <h1 className="display mt-4 text-2xl text-foreground">{chunk ? "LOADING THE LATEST VERSION" : "THIS PAGE DIDN'T LOAD"}</h1>
         <p className="mt-3 font-mono text-xs leading-relaxed text-muted-foreground">
-          &gt; TRY THE REQUEST AGAIN OR RETURN TO THE START<span className="blink">_</span>
+          &gt; {chunk ? "THE SITE WAS UPDATED · RELOADING AUTOMATICALLY" : "TRY THE REQUEST AGAIN OR RETURN TO THE START"}<span className="blink">_</span>
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
