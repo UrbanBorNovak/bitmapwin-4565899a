@@ -54,7 +54,9 @@ async function check(e){const h=Number(tag(e,'height')),id=String(tag(e,'inscrip
  const u=await J(ORD+'/r/utxo/'+ut);if(!(u.inscriptions||[]).includes(id))return null;
  const c=await canon(h);if(c!==id)return null;
  return{h,id,ut,price,p,value:u.value,seller:tag(e,'seller')||''}}
-async function load(){say('ASKING NOSTR RELAYS…');let E=await pull();
+function boxed(){return /(^|\\.)ordinals\\.com$/.test(H)&&location.pathname.indexOf('/content/')===0}
+async function load(){if(boxed()){say('ORDINALS.COM SANDBOX');g.innerHTML='<div class="e"><b>NOSTR IS BLOCKED ON ORDINALS.COM</b>ordinals.com does not let inscriptions open outside connections, so this shop cannot read listings here. Download it and open the file on your computer, or host it on GitHub Pages — the same file then loads live listings.<br><br><a id="dl" href="#">DOWNLOAD THIS SHOP</a></div>';const a=document.getElementById('dl');a.onclick=e=>{e.preventDefault();const u=URL.createObjectURL(new Blob(['<!doctype html>'+document.documentElement.outerHTML],{type:'text/html'}));a.href=u;a.download='bitmap-shop.html';a.onclick=null;a.click()};return}
+ say('ASKING NOSTR RELAYS…');let E=await pull();
  E=E.filter(e=>{const h=Number(tag(e,'height')),pr=Number(tag(e,'price'));return(C.min==null||h>=C.min)&&(C.max==null||h<=C.max)&&(!C.maxSats||pr<=C.maxSats)&&(!C.seller||tag(e,'seller')===C.seller)});
  say('CHECKING '+E.length+' LISTINGS ON BITCOIN…');
  const L=[];for(let i=0;i<E.length;i+=6){const r=await Promise.all(E.slice(i,i+6).map(e=>check(e).catch(()=>null)));for(const x of r)if(x)L.push(x)}
