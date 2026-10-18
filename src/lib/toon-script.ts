@@ -18,7 +18,7 @@ export interface ToonLine { at: number; dur: number; speaker: number; text: stri
 export interface ToonScene { block: number; duration: number; shot: Shot; cast: ToonActor[]; lines: ToonLine[]; sfx?: string; }
 export type Music = "none" | "chill" | "adventure" | "tension";
 export const MUSIC: Music[] = ["none", "chill", "adventure", "tension"];
-export interface ToonEpisode { title: string; aspect: "16:9" | "9:16"; scenes: ToonScene[]; music?: Music; voices?: boolean; }
+export interface ToonEpisode { title: string; aspect: "16:9" | "9:16"; scenes: ToonScene[]; music?: Music; voices?: boolean; style?: import("./toon-style").ToonStyle; }
 
 export const MAX_SCENES = 12;
 export const MAX_SCENE_SECONDS = 20;

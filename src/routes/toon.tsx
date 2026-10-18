@@ -1,6 +1,7 @@
 import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { episodeLength, generateEpisode, parseEpisode, sceneAt, MUSIC, type Music, type ToonEpisode } from "@/lib/toon-script";
+import { TOON_STYLES, paintStyle, styleFilter, type ToonStyle } from "@/lib/toon-style";
 import { SceneEditor } from "@/components/toon/SceneEditor";
 import { ToonLibraryPanel } from "@/components/toon/ToonLibraryPanel";
 import type { ContinuityNote, ToonCharacter } from "@/lib/toon-library";
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/toon")({
 /** Draws title card, captions and comic bubbles onto a 2D context (shared by screen + recording). */
 function drawOverlay(ctx: CanvasRenderingContext2D, w: number, h: number, ep: ToonEpisode, t: number) {
   ctx.clearRect(0, 0, w, h);
+  paintStyle(ctx, w, h, ep.style, t);
   const { index, local } = sceneAt(ep, t);
   const s = ep.scenes[index];
   if (!s) return;
