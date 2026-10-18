@@ -27,37 +27,97 @@ function noise(ctx: OfflineAudioContext, out: AudioNode, t: number, d: number, v
   s.connect(f).connect(g).connect(out); s.start(t);
 }
 
-/** Renders music bed + scene sound effects + Guardian voice babble into a stereo buffer. */
+/** Soft voice syllable: sine + quiet triangle octave, gentle pitch glide, lowpass. */
+function syllable(ctx: OfflineAudioContext, out: AudioNode, f: number, t: number, d: number, vol: number, glide: number) {
+  const g = ctx.createGain(), lp = ctx.createBiquadFilter();
+  lp.type = "lowpass"; lp.frequency.value = 1800; lp.Q.value = 0.7;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + Math.min(0.03, d * 0.3));
+  g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+  for (const [mul, type, lvl] of [[1, "sine", 1], [2, "triangle", 0.25]] as const) {
+    const o = ctx.createOscillator(), og = ctx.createGain();
+    o.type = type; og.gain.value = lvl;
+    o.frequency.setValueAtTime(f * mul, t); o.frequency.linearRampToValueAtTime(f * mul * glide, t + d);
+    o.connect(og).connect(lp); o.start(t); o.stop(t + d + 0.05);
+  }
+  lp.connect(g).connect(out);
+}
+
+/** Simple feedback-free reverb send built from decaying noise. */
+function reverb(ctx: OfflineAudioContext, out: AudioNode, seconds = 2.2) {
+  const len = Math.ceil(ctx.sampleRate * seconds), ir = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) { const ch = ir.getChannelData(c); for (let i = 0; i < len; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 3; }
+  const conv = ctx.createConvolver(); conv.buffer = ir;
+  const wet = ctx.createGain(); wet.gain.value = 0.35; conv.connect(wet).connect(out);
+  return conv;
+}
+
+/** Bell / chime: sine with a soft inharmonic partial, long decay. */
+function bell(ctx: OfflineAudioContext, out: AudioNode, f: number, t: number, d: number, vol: number) {
+  note(ctx, out, f, t, d, vol, "sine");
+  note(ctx, out, f * 2.76, t, d * 0.4, vol * 0.18, "sine");
+}
+
+/** Renders music bed + scene sound effects + Guardian voices into a stereo buffer. */
 export async function renderSoundtrack(ep: ToonEpisode): Promise<AudioBuffer | null> {
   if (typeof OfflineAudioContext === "undefined") return null;
   const total = Math.max(0.5, episodeLength(ep));
   const ctx = new OfflineAudioContext(2, Math.ceil(total * AUDIO_RATE), AUDIO_RATE);
-  const master = ctx.createGain(); master.gain.value = 0.8; master.connect(ctx.destination);
+  const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 3; comp.connect(ctx.destination);
+  const master = ctx.createGain(); master.gain.value = 0.75; master.connect(comp);
+  const verb = reverb(ctx, master);
   const music = ep.music ?? "adventure";
   if (music !== "none") {
     const m = SCALES[music], beat = 60 / m.bpm, r = rng(ep.title.length * 977 + ep.scenes.length);
-    const bus = ctx.createGain(); bus.gain.value = 0.22; bus.connect(master);
+    const bus = ctx.createGain(); bus.gain.value = 0.2; bus.connect(master); bus.connect(verb);
+    const tone = ctx.createBiquadFilter(); tone.type = "lowpass"; tone.frequency.value = 2400; tone.connect(bus);
+    const lead: OscillatorType = m.wave === "sawtooth" ? "triangle" : m.wave;
     for (let i = 0, t = 0; t < total; i++, t = i * beat) {
       const bar = Math.floor(i / 4), chord = m.steps[bar % m.steps.length] ?? 0;
-      if (i % 4 === 0) note(ctx, bus, hz(m.root / 2, chord), t, beat * 3.8, 0.5, "sine"); // bass
-      if (r() < 0.7) note(ctx, bus, hz(m.root * 2, (m.steps[Math.floor(r() * m.steps.length)] ?? 0) + chord), t, beat * 0.9, 0.25, m.wave);
-      if (music !== "chill" && i % 2 === 0) noise(ctx, bus, t, 0.06, 0.3, 6000); // hat
-      if (music === "adventure" && i % 4 === 0) note(ctx, bus, 60, t, 0.25, 0.9, "sine"); // kick
+      if (i % 4 === 0) {
+        note(ctx, tone, hz(m.root / 2, chord), t, beat * 3.8, 0.45, "sine"); // bass
+        for (const s of [0, 4, 7]) note(ctx, tone, hz(m.root, chord + s), t, beat * 4, 0.08, "sine"); // soft pad
+      }
+      if (r() < 0.55) bell(ctx, tone, hz(m.root * 2, (m.steps[Math.floor(r() * m.steps.length)] ?? 0) + chord), t, beat * 1.4, 0.16); // kalimba pluck
+      else if (r() < 0.3) note(ctx, tone, hz(m.root * 2, chord + 7), t, beat * 0.8, 0.1, lead);
+      if (music === "adventure" && i % 2 === 0) noise(ctx, bus, t, 0.04, 0.08, 7000); // light shaker
+      if (music === "adventure" && i % 4 === 0) note(ctx, bus, 55, t, 0.3, 0.6, "sine"); // soft kick
     }
   }
   let start = 0;
   for (const s of ep.scenes) {
     if (s.sfx) {
-      const t = start + 0.3;
-      if (s.sfx.includes("WHOOSH")) noise(ctx, master, t, 0.7, 0.6, 1800);
-      else { noise(ctx, master, t, 0.35, 0.9, 900); note(ctx, master, 80, t, 0.4, 0.9, "sine"); }
-      if (s.sfx.includes("SATS")) for (let k = 0; k < 4; k++) note(ctx, master, 1600 + k * 300, t + k * 0.07, 0.15, 0.25, "square");
+      const t = start + 0.3, fx = ctx.createGain(); fx.gain.value = 0.7; fx.connect(master); fx.connect(verb);
+      if (s.sfx.includes("WHOOSH")) {
+        const b = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * 1.2), ctx.sampleRate), ch = b.getChannelData(0);
+        for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+        const src = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+        src.buffer = b; bp.type = "bandpass"; bp.Q.value = 2;
+        bp.frequency.setValueAtTime(300, t); bp.frequency.exponentialRampToValueAtTime(2500, t + 0.6); bp.frequency.exponentialRampToValueAtTime(400, t + 1.2);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.5, t + 0.5); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
+        src.connect(bp).connect(g).connect(fx); src.start(t);
+      } else if (s.sfx.includes("SATS")) {
+        [0, 4, 7, 12, 16].forEach((st, k) => bell(ctx, fx, hz(880, st), t + k * 0.09, 1.2, 0.18));
+      } else if (s.sfx.includes("HODL")) {
+        [0, 4, 7, 11, 14].forEach((st) => bell(ctx, fx, hz(262, st), t, 2.8, 0.12));
+      } else {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = "sine"; o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.5);
+        g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+        o.connect(g).connect(fx); o.start(t); o.stop(t + 0.7);
+        noise(ctx, fx, t, 0.15, 0.25, 600);
+      }
     }
     if (ep.voices !== false) for (const l of s.lines) {
-      const who = s.cast[l.speaker]?.height ?? 0, base = 160 + (who % 9) * 35, r = rng(who + Math.round(l.at * 100));
-      const sylls = Math.min(60, Math.max(2, Math.round(l.text.length / 3))), step = Math.min(0.12, l.dur / sylls);
-      const vol = l.style === "shout" ? 0.35 : l.style === "thought" ? 0.1 : 0.2;
-      for (let k = 0; k < sylls; k++) note(ctx, master, base * (0.85 + r() * 0.4), start + l.at + k * step, step * 0.8, vol, l.style === "thought" ? "sine" : "square");
+      const who = s.cast[l.speaker]?.height ?? 0, base = 190 + (who % 7) * 28, r = rng(who + Math.round(l.at * 100));
+      const sylls = Math.min(40, Math.max(2, Math.round(l.text.length / 4))), step = Math.min(0.15, l.dur / sylls);
+      const vol = l.style === "shout" ? 0.22 : l.style === "thought" ? 0.08 : 0.14;
+      const question = l.text.trim().endsWith("?");
+      const scale = [0, 2, 4, 7, 9];
+      for (let k = 0; k < sylls; k++) {
+        const last = k === sylls - 1;
+        const f = hz(base, scale[Math.floor(r() * scale.length)] ?? 0);
+        syllable(ctx, l.style === "thought" ? verb : master, f, start + l.at + k * step, step * 0.85, vol, last ? (question ? 1.25 : 0.85) : 0.97 + r() * 0.06);
+      }
     }
     start += s.duration;
   }
