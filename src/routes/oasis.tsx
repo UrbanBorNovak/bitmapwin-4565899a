@@ -30,7 +30,7 @@ export const Route = createFileRoute("/oasis")({
     const h = (match.search as { height?: number }).height ?? 0;
     const title = `${h}.BITMAP in The Oasis — Bitcoin-native world`;
     const description =
-      "Explore every Bitcoin bitmap district as a live 3D land world. Fly, orbit and click any district to open its on-chain view.";
+      "Walk and fly through every Bitcoin block as a shared 3D world. Visit BITMAP districts, find community builds, join Shard Raids and meet Guardians.";
     const player = `https://bitmapwin.app/embed/oasis?height=${h}`;
     return {
       meta: [

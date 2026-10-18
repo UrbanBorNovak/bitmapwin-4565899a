@@ -29,13 +29,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "BitmapWin turns Bitcoin blockspace into places you can enter, build on and experience. Own Bitcoin land, extend it, and leave history.",
+          "Explore Bitcoin-native worlds built on blockspace. Look up any BITMAP, follow live on-chain trades, and step into community-built 3D districts.",
       },
       { property: "og:title", content: "BitmapWin — The Internet, But With Land" },
       {
         property: "og:description",
         content:
-          "BitmapWin turns Bitcoin blockspace into places you can enter, build on and experience. Own Bitcoin land, extend it, and leave history.",
+          "Explore Bitcoin-native worlds built on blockspace. Look up any BITMAP, follow live on-chain trades, and step into community-built 3D districts.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
