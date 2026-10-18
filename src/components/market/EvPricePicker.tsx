@@ -21,7 +21,7 @@ export function EvPricePicker({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("trades")
-        .select("bitmap_height, price_sats")
+        .select("bitmap_height, price_sats, block_time")
         .gt("price_sats", 0)
         .order("block_height", { ascending: false, nullsFirst: false })
         .limit(2000);
@@ -36,14 +36,29 @@ export function EvPricePicker({
   if (!ev) return null;
 
   const bands = [
-    { key: "EV−", sats: ev.low, hint: "QUICK SELL" },
+    { key: "EV−", sats: ev.low, hint: "FASTER SALE (NOT GUARANTEED)" },
     { key: "EV", sats: ev.mid, hint: "FAIR VALUE" },
     { key: "EV+", sats: ev.high, hint: "PREMIUM" },
   ];
 
+  const day = (iso: string | null) => (iso ? iso.slice(0, 10) : "?");
   return (
     <div className="mt-3 border border-border p-2">
-      <p className="label">PRICE GUIDE · {ev.scope} · {ev.sampleSize} CONFIRMED</p>
+      <p className="label">PRICE GUIDE · {ev.scope}</p>
+      <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+        &gt; BASED ON {ev.sampleSize} COMPARABLE CONFIRMED SALE{ev.sampleSize === 1 ? "" : "S"}
+        {ev.from ? ` · ${day(ev.from)} → ${day(ev.to)}` : ""}
+      </p>
+      {ev.fallback && (
+        <p className="mt-1 font-mono text-[10px] text-bitcoin">
+          ⚠ BROAD-MARKET FALLBACK: TOO FEW SALES IN THIS HEIGHT RANGE, SO ALL BITMAP SALES ARE USED.
+        </p>
+      )}
+      {ev.lowConfidence && (
+        <p className="mt-1 font-mono text-[10px] text-bitcoin">
+          ⚠ LOW CONFIDENCE: FEWER THAN 8 COMPARABLE SALES. TREAT THESE PRICES AS A ROUGH GUIDE.
+        </p>
+      )}
       <div className="mt-2 grid grid-cols-3 gap-2">
         {bands.map((b) => {
           const usd = usdFromSats(b.sats, btc.data?.usd);
@@ -68,6 +83,9 @@ export function EvPricePicker({
       {priceSats !== null && (
         <p className="mt-2 font-mono text-[10px] text-signal">&gt; YOUR ASK: {evVerdict(priceSats, ev)}</p>
       )}
+      <p className="mt-1 font-mono text-[9px] text-muted-foreground">
+        &gt; GUIDE ONLY, FROM PAST SALES. EV− IS PRICED TO SELL FASTER, BUT NO SALE OR TIMING IS GUARANTEED.
+      </p>
     </div>
   );
 }

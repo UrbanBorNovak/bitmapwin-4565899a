@@ -15,7 +15,23 @@ describe("listing EV", () => {
     expect(ev).toMatchObject({ low: 175_000, mid: 250_000, high: 340_000, sampleSize: 4 });
   });
   it("falls back to all sales when the tier has fewer than 3 sales", () => {
-    expect(computeEv(950_000, sales)!.sampleSize).toBe(5);
+    const ev = computeEv(950_000, sales)!;
+    expect(ev.sampleSize).toBe(5);
+    expect(ev.fallback).toBe(true);
+  });
+  it("flags fewer than 8 comparable sales as low confidence", () => {
+    expect(computeEv(55_000, sales)!.lowConfidence).toBe(true);
+    const many = Array.from({ length: 8 }, (_, i) => ({ bitmap_height: 50_000 + i, price_sats: 1000 }));
+    expect(computeEv(55_000, many)!.lowConfidence).toBe(false);
+  });
+  it("reports the date range of comparable sales", () => {
+    const dated = [
+      { bitmap_height: 50_000, price_sats: 1, block_time: "2026-09-01T00:00:00Z" },
+      { bitmap_height: 50_001, price_sats: 2, block_time: "2026-10-11T00:00:00Z" },
+      { bitmap_height: 50_002, price_sats: 3, block_time: "2026-09-20T00:00:00Z" },
+    ];
+    const ev = computeEv(55_000, dated)!;
+    expect([ev.from, ev.to]).toEqual(["2026-09-01T00:00:00Z", "2026-10-11T00:00:00Z"]);
   });
   it("ignores zero-price transfers", () => {
     expect(computeEv(1, [{ bitmap_height: 1, price_sats: 0 }])).toBeNull();

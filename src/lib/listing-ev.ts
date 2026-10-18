@@ -26,15 +26,24 @@ function quantile(sorted: number[], q: number): number {
   return Math.round(sorted[lo]! + (sorted[hi]! - sorted[lo]!) * (pos - lo));
 }
 
+/** Below this many comparable sales the estimate is flagged low-confidence. */
+export const EV_LOW_CONFIDENCE = 8;
+
 export type EvBands = {
   low: number;
   mid: number;
   high: number;
   sampleSize: number;
   scope: string;
+  /** True when the tier had too few sales and all BITMAP sales were used. */
+  fallback: boolean;
+  lowConfidence: boolean;
+  /** ISO dates of the oldest/newest comparable sale, when known. */
+  from: string | null;
+  to: string | null;
 };
 
-export type EvSale = { bitmap_height: number; price_sats: number };
+export type EvSale = { bitmap_height: number; price_sats: number; block_time?: string | null };
 
 /** EV− = 25th, EV = median, EV+ = 80th percentile of peer sale prices. */
 export function computeEv(height: number | null, sales: EvSale[]): EvBands | null {
@@ -42,14 +51,20 @@ export function computeEv(height: number | null, sales: EvSale[]): EvBands | nul
   const tier = height === null ? null : evTierOf(height);
   const peers = tier ? paid.filter((s) => s.bitmap_height >= tier.min && s.bitmap_height <= tier.max) : [];
   const useTier = tier !== null && peers.length >= EV_MIN_PEERS;
-  const pool = (useTier ? peers : paid).map((s) => s.price_sats).sort((a, b) => a - b);
+  const chosen = useTier ? peers : paid;
+  const pool = chosen.map((s) => s.price_sats).sort((a, b) => a - b);
   if (pool.length === 0) return null;
+  const times = chosen.flatMap((s) => (s.block_time ? [s.block_time] : [])).sort();
   return {
     low: quantile(pool, 0.25),
     mid: quantile(pool, 0.5),
     high: quantile(pool, 0.8),
     sampleSize: pool.length,
     scope: useTier ? `${tier!.label} SALES` : "ALL BITMAP SALES",
+    fallback: !useTier,
+    lowConfidence: pool.length < EV_LOW_CONFIDENCE,
+    from: times[0] ?? null,
+    to: times[times.length - 1] ?? null,
   };
 }
 
