@@ -99,6 +99,7 @@ export function parseEpisode(json: string): ToonEpisode {
     if (!SHOTS.includes(s.shot)) throw new Error(`Unknown shot "${s.shot}".`);
     if (!Array.isArray(s.cast) || s.cast.length > 4) throw new Error("Up to 4 Guardians per scene.");
     for (const c of s.cast) if (!okBlock(c.height) || !POSES.includes(c.pose)) throw new Error("Each actor needs a valid block and pose.");
+    for (const c of s.cast) if (c.emote && !EMOTES.some((x) => x.v === c.emote)) delete c.emote;
     if (!Array.isArray(s.lines)) s.lines = [];
   }
   return { title: String(e.title ?? "Untitled"), aspect: e.aspect === "9:16" ? "9:16" : "16:9", scenes: e.scenes, music: MUSIC.includes(e.music as Music) ? (e.music as Music) : "adventure", voices: e.voices !== false, ...(["manga", "ghibli", "shonen", "noir", "retro"].includes(e.style as string) ? { style: e.style as NonNullable<ToonEpisode["style"]> } : {}) };
