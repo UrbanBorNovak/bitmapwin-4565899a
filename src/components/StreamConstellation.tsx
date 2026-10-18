@@ -269,11 +269,19 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
     const r = cv.getBoundingClientRect(); const x = ev.clientX - r.left - r.width / 2, y = ev.clientY - r.top - r.height / 2;
     let best: Node | null = null, bd = 144;
     for (const n of graph.current.nodes) { if (n.kind !== "event" || n.born >= step) continue; const d = (n.x - x) ** 2 + (n.y - y) ** 2; if (d < bd) { bd = d; best = n; } }
+    if ((best?.ev ?? null) !== hover && best) beep(900, 1300, 25, 0.015);
     setHover(best?.ev ?? null);
+    cursor.current = { x, y };
+    const azd = ((Math.atan2(y, x) * 180) / Math.PI + 90 + 360) % 360;
+    setAz({ az: azd, el: (-y / (r.height / 2)) * 45, quad: x >= 0 ? (y < 0 ? "I" : "IV") : (y < 0 ? "II" : "III") });
     setTilt({ x: (ev.clientY - r.top) / r.height - 0.5, y: (ev.clientX - r.left) / r.width - 0.5 });
     return best;
   }
-  function lockOn(ev: React.MouseEvent) { const n = pick(ev); setLock(n && n !== lock ? n : null); }
+  function lockOn(ev: React.MouseEvent) {
+    const n = pick(ev); const next = n && n !== lock ? n : null;
+    if (next) beep(1200, 1800, 70, 0.05); else if (lock) beep(600, 300, 60, 0.03);
+    setLock(next);
+  }
 
   const cur = ordered[Math.max(0, step - 1)];
   const card = lock?.ev ?? hover;
@@ -284,13 +292,26 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
       {(["left-0 top-0 border-l border-t", "right-0 top-0 border-r border-t", "left-0 bottom-0 border-l border-b", "right-0 bottom-0 border-r border-b"]).map((c) => (
         <span key={c} className={`pointer-events-none absolute z-10 h-4 w-4 border-signal ${c}`} />
       ))}
-      <canvas ref={canvas} onMouseMove={pick} onClick={lockOn} onMouseLeave={() => setTilt({ x: 0, y: 0 })}
+      <canvas ref={canvas} onMouseMove={pick} onClick={lockOn} onMouseLeave={() => { setTilt({ x: 0, y: 0 }); cursor.current = null; }}
         className="block w-full cursor-crosshair transition-transform duration-300 ease-out" aria-label="World stream constellation"
         style={{ height, transform: `rotateX(${(-tilt.x * 7).toFixed(2)}deg) rotateY(${(tilt.y * 9).toFixed(2)}deg)` }} />
       <div className="pointer-events-none absolute left-3 top-3 font-mono text-[9px] tracking-[0.2em] text-muted-foreground">
-        <p className="text-signal">J.A.R.V.I.S. // BITMAP PROVENANCE COGNITION</p>
+        <p className="text-signal">S.A.T.O.S.H.I. // TACTICAL PROVENANCE SYSTEM</p>
+        <p className="text-[7px] text-signal/50">SPATIAL AUTONOMOUS TACTICAL ORDINAL SETTLEMENT &amp; HISTORY INTERFACE</p>
         <p className="mt-1">HISTORY SIM · {Math.min(step, ordered.length)}/{ordered.length} EVENTS · {fps} FPS · <span className={playing ? "text-signal" : "text-bitcoin"}>{playing ? "SYNCHRONIZING" : "STANDBY"}</span></p>
-        <p className="mt-1"><span className="text-bitcoin">▣</span> BITMAP <span className="ml-2 text-bitcoin">◆</span> CHAIN <span className="ml-2 text-signal">●</span> WORLD <span className="ml-2 text-destructive">●</span> RAID</p>
+        <p className="mt-1">AZ {az.az.toFixed(1)}° · EL {az.el >= 0 ? "+" : ""}{az.el.toFixed(1)}° · QUAD {az.quad}</p>
+        <div className="pointer-events-auto mt-2 flex flex-wrap gap-1">
+          {FILTERS.map((f) => (
+            <button key={f.k} type="button" onClick={() => { setFilter(f.k); beep(700, 1000, 35, 0.03); }}
+              className={`border px-1.5 py-0.5 text-[8px] tracking-[0.15em] transition-colors ${filter === f.k ? "border-signal bg-signal/15 " + f.cls : "border-border bg-background/60 text-muted-foreground hover:border-signal/60"}`}>
+              [ {f.label} ]
+            </button>
+          ))}
+          <button type="button" onClick={() => { const n = !audioOn; setAudioOn(n); if (n) { audio.current ??= new AudioContext(); void audio.current.resume(); } }}
+            className={`border px-1.5 py-0.5 text-[8px] tracking-[0.15em] ${audioOn ? "border-bitcoin text-bitcoin" : "border-border bg-background/60 text-muted-foreground"}`}>
+            [ AUDIO: {audioOn ? "ON" : "MUTED"} ]
+          </button>
+        </div>
       </div>
       <p className="pointer-events-none absolute bottom-14 left-3 font-mono text-[8px] tracking-[0.2em] text-signal/60">SYS: ONLINE · VEC.SYNC · CLICK NODE TO LOCK</p>
       {card && (
