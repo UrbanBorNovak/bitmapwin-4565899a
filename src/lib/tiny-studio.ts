@@ -51,9 +51,9 @@ export function buildTinyStudioHtml(opts: { height?: number; payload?: string; b
 html,body{margin:0;height:100%;background:#0b0d10;color:#e8e8e8;font:12px monospace;overflow:hidden}canvas{width:100%;height:100%;display:block;touch-action:none}
 #u{position:fixed;left:8px;top:8px;display:flex;flex-wrap:wrap;gap:4px}#u *{font:inherit}button,input{background:#14171c;color:#e8e8e8;border:1px solid #2a2f37;border-radius:4px;padding:4px 6px}
 button.on{border-color:#f7931a;color:#f7931a}.s{width:20px;height:20px;padding:0}#i{position:fixed;left:8px;bottom:8px;right:8px;opacity:.75}#j{position:fixed;left:16px;bottom:40px;width:110px;height:110px;border:1px solid #2a2f37;border-radius:50%;display:none;pointer-events:none}#j.w{display:block}
-</style></head><body><canvas id="c"></canvas><div id="u"><input id="h" type="hidden" value="${h}"><input id="q" placeholder="block or id" style="width:170px"><button id="f">LOAD</button><button id="n">VIEW: ORBIT</button><button id="t0" class="t">LOOK</button><button id="t1" class="t on">PLACE</button><button id="t2" class="t">ERASE</button><span id="p"></span><button id="x">.BWVX</button><button id="v">.HTML</button></div><div id="j"></div><div id="i"></div>
+</style></head><body><canvas id="c"></canvas><div id="u"><input id="h" type="hidden" value="${h}"><input id="q" placeholder="block or id" style="width:170px"><button id="f">LOAD</button><button id="n">ORBIT</button><button id="t0" class="t">LOOK</button><button id="t1" class="t on">PLACE</button><button id="t2" class="t">ERASE</button><span id="p"></span><button id="x">.BWVX</button><button id="v">.HTML</button></div><div id="j"></div><div id="i"></div>
 <script id="d" type="text/plain" data-b="${esc(opts.payload ?? "")}"${opts.bitmapId && /^[0-9a-f]{64}i\d+$/.test(opts.bitmapId) ? ` data-i="${opts.bitmapId}" data-ih="${h}"` : ""}></script><script>
-const P=${pal},C=document.getElementById('c'),G=C.getContext('webgl',{antialias:true}),$=i=>document.getElementById(i);
+const P=${pal},C=document.getElementById('c'),G=C.getContext('webgl'),$=i=>document.getElementById(i);
 let S=64,V=new Map,K=0,T=1,W=0,H=${h},yaw=.8,pit=.6,dist=90,tx=32,ty=4,tz=32,dirty=1,wx=32,wy=20,wz=32,wyaw=0,wpit=-.2,jx=0,jy=0;const KD={};
 const key=(x,y,z)=>x+','+y+','+z;
 ${LAND_JS}
@@ -102,9 +102,9 @@ if(PT.size==2&&!W){const[a,b]=[...PT.values()],d=Math.hypot(a.x-b.x,a.y-b.y);if(
 if(W){wyaw+=dx*.006;wpit=Math.max(-1.4,Math.min(1.4,wpit-dy*.006))}else{yaw+=dx*.008;pit=Math.max(.05,Math.min(1.5,pit+dy*.008))}};
 C.onpointerup=C.onpointercancel=e=>{const p=PT.get(e.pointerId);PT.delete(e.pointerId);if(PT.size<2)pinch=0;if(!p)return;if(p.stick){jx=jy=0;if(p.mv>=6)return}if(p.mv<6&&e.type=='pointerup')edit(e.clientX,e.clientY)};
 C.onwheel=e=>{e.preventDefault();if(!W)dist=Math.max(10,Math.min(220,dist*(e.deltaY>0?1.1:.9)))};
-onkeydown=e=>{if(e.target.tagName=='INPUT')return;KD[e.code]=1;if(e.key=='1'||e.key=='2'||e.key=='3')tool(+e.key-1);if(e.key=='v')$('n').click()};onkeyup=e=>{KD[e.code]=0};onblur=()=>{for(const k in KD)KD[k]=0};
+onkeydown=e=>{if(e.target.tagName=='INPUT')return;KD[e.code]=1;if(e.key=='1'||e.key=='2'||e.key=='3')tool(+e.key-1);};onkeyup=e=>{KD[e.code]=0};onblur=()=>{for(const k in KD)KD[k]=0};
 function tool(i){T=i;document.querySelectorAll('.t').forEach((b,j)=>b.classList.toggle('on',j==i));hud()}[0,1,2].forEach(i=>$('t'+i).onclick=()=>tool(i));
-$('n').onclick=()=>{W^=1;if(W){wx=wz=S/2;wyaw=yaw+Math.PI;wpit=-.2;wy=ground(wx,wz,S)+1.6}jx=jy=0;$('n').textContent='VIEW: '+(W?'WALK':'ORBIT');$('j').className=W&&matchMedia('(pointer:coarse)').matches?'w':'';hud()};
+$('n').onclick=()=>{W^=1;if(W){wx=wz=S/2;wyaw=yaw+Math.PI;wpit=-.2;wy=ground(wx,wz,S)+1.6}jx=jy=0;$('n').textContent=(W?'WALK':'ORBIT');$('j').className=W&&matchMedia('(pointer:coarse)').matches?'w':'';hud()};
 P.forEach((c,i)=>{const b=document.createElement('button');b.className='s'+(i?'':' on');b.style.background=c;b.onclick=()=>{K=i;document.querySelectorAll('.s').forEach(q=>q.classList.remove('on'));b.classList.add('on')};$('p').append(b)});
 
 let M='';const say=t=>{M=t+' · ';hud()},O=location.hostname=='ordinals.com'?'':'https://ordinals.com',F0=fetch;if(O)window.fetch=(u,o)=>F0(typeof u=='string'&&u[0]=='/'?O+u:u,o);const J=u=>fetch(O+u).then(r=>{if(!r.ok)throw 0;return r.json()});
@@ -123,7 +123,7 @@ try{const l=await J('/r/sat/'+ins.sat);ids.push(...(l.ids||[]).reverse())}catch(
 for(const id of ids){say('reading '+id.slice(0,10)+'…');const b=await fromId(id);if(b){b.a?load(b.a,b.s,1):load(b,0,1);say('loaded '+id.slice(0,10)+(b.n?' · '+b.n+' pieces':''));return}}
 say('no build')}catch(e){say('offline')}}
 $('f').onclick=fetchBuild;$('q').onkeydown=e=>{if(e.key=='Enter')fetchBuild()};
-const save=(data,name,type)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click()};
+const save=(d,n,t)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([d],{type:t}));a.download=n;a.click()};
 $('x').onclick=()=>{const s=pack(),b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);save(b,H+'.bwvx','application/octet-stream')};
 $('v').onclick=()=>{const html='<!doctype html>'+document.documentElement.outerHTML.replace(/data-b="[^"]*"/,'data-b="'+btoa(pack())+'"').replace(/content="BWVX[12];\\d+/,'content="BWVX'+(S>64?2:1)+';'+H);save(html,H+'.bitmap-build.html','text/html')};
 $('h').value=H;const b0=$('d').dataset.b;if(b0)load(b0);else{seed(H);$('q').value=H;fetchBuild()}draw();
