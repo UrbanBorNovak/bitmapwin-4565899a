@@ -161,7 +161,7 @@ function BreedLab() {
 
       {stable.length > 0 && (
         <section className="bg-card/60 backdrop-blur rounded-lg border border-primary/40 p-3">
-          <p className="label text-primary mb-2">YOUR STABLE · {stable.length} INSCRIBED · TAP TO LOAD AS SIRE, THEN DAM</p>
+          <p className="label text-primary mb-2">COLD STORAGE · {stable.length} OF YOUR INSCRIBED SPECIMENS · TAP TO LOAD SIRE, THEN DAM</p>
           <div className="flex gap-2 overflow-x-auto">
             {stable.map((g) => (
               <button key={g.height} type="button" onClick={() => pickStable(g.height)} className={`shrink-0 rounded-md border p-1 ${g.height === sireH || g.height === damH ? "border-primary" : "border-border hover:border-primary"}`}>
@@ -176,16 +176,16 @@ function BreedLab() {
       <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr_1fr]">
         <Chamber title="SIRE" list={roster} value={sireG} onPick={setSireH} other={damH} />
         <section className="bg-card/60 backdrop-blur flex flex-col items-center rounded-lg border border-border p-4">
-          <h2 className="label self-start text-primary">INCUBATOR</h2>
+          <div className="flex w-full items-center justify-between border-b border-border pb-2"><h2 className="label text-primary">SYNTHESIS CORE · INCUBATOR</h2><span className={`font-mono text-[10px] ${pet ? "text-signal" : "text-muted-foreground"}`}>{spin ? "◌ SEQUENCING" : pet ? "● GENOME LOCKED" : "○ STANDBY"}</span></div>
           {pet ? (
             <>
-              <div className="relative">
+              <div className="relative mt-3 rounded-full border border-dashed border-signal/40 p-4">
                 <div className={spin ? "opacity-20 blur-sm transition" : "transition"}><PetPortrait genome={pet} size={260} /></div>
                 {spin && <p className="absolute inset-0 flex items-center justify-center font-display text-3xl text-primary">{spin}</p>}
               </div>
               {!spin && jackpotHit && <p className="label text-primary animate-pulse">◆ JACKPOT HATCH · CHIMERA + RARITY ASCENT</p>}
               <div className="my-2 flex gap-2">
-                <button type="button" onClick={roll} disabled={!!spin} className="rounded-md border border-primary bg-primary px-4 py-2 font-mono text-xs text-primary-foreground disabled:opacity-50">{spin ? "ROLLING…" : "▶ ROLL THE HATCH"}</button>
+                <button type="button" onClick={roll} disabled={!!spin} className="rounded-md border border-primary bg-primary px-4 py-2 font-mono text-xs text-primary-foreground disabled:opacity-50">{spin ? "SEQUENCING…" : "▶ RUN HATCH SEQUENCE"}</button>
                 <button type="button" onClick={() => setMuted((m) => !m)} className="rounded-md border border-border px-3 py-2 font-mono text-xs text-muted-foreground">{muted ? "SOUND OFF" : "SOUND ON"}</button>
               </div>
               <div className="grid w-full grid-cols-2 gap-2 font-mono text-xs">
@@ -194,11 +194,12 @@ function BreedLab() {
                 <span className="text-muted-foreground">BODY PLAN</span><span>{pet.sh.toUpperCase()}{pet.chimera ? " · CHIMERA" : ""}</span>
                 <span className="text-muted-foreground">WINGS / SPINES</span><span>{pet.wing ? "YES" : "NO"} / {pet.spine ? "YES" : "NO"}</span>
                 <span className="text-muted-foreground">PURITY</span><span className="text-signal">{pet.purity}%</span>
+                <div className="col-span-2 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full bg-signal" style={{ width: `${pet.purity}%` }} /></div>
               </div>
               {pet.mutations.length > 0 && <p className="mt-2 label text-primary">MUTATIONS: {pet.mutations.join(" · ")}</p>}
             </>
           ) : (
-            <p className="my-auto label text-muted-foreground">{all.isLoading ? "LOADING GUARDIANS…" : "CHOOSE A SIRE AND A DAM"}</p>
+            <p className="my-auto label text-muted-foreground">{all.isLoading ? "CALIBRATING SEQUENCER…" : "LOAD A SIRE AND A DAM TO BEGIN SYNTHESIS"}</p>
           )}
         </section>
         <Chamber title="DAM" list={roster} value={damG} onPick={setDamH} other={sireH} />
@@ -206,7 +207,7 @@ function BreedLab() {
 
       {odds && (
         <section className="bg-card/60 backdrop-blur rounded-lg border border-border p-4">
-          <h2 className="label text-signal mb-2">ODDS BOARD · REAL RULES FOR THIS PAIR</h2>
+          <h2 className="label text-signal mb-2">MUTATION MATRIX · REAL PROBABILITIES FOR THIS PAIR</h2>
           <div className="grid grid-cols-2 gap-2 font-mono text-xs sm:grid-cols-4">
             {([["CHIMERA BODY", odds.chimera], ["WINGS", odds.wings], ["SPINES", odds.spines], ["MARKINGS", odds.markings], ["HORN SHIFT", odds.hornShift], ["RARITY ASCENT", odds.rarityAscent]] as const).map(([k, v]) => (
               <div key={k} className="rounded border border-border p-2"><p className="text-muted-foreground">{k}</p><p className="text-signal text-base">{pct(v)}</p></div>
@@ -219,7 +220,7 @@ function BreedLab() {
 
       {pet && sire && dam && (
         <section className="bg-card/60 backdrop-blur space-y-3 rounded-lg border border-border p-4">
-          <h2 className="label text-primary">PEDIGREE</h2>
+          <h2 className="label text-primary">INSCRIPTION TERMINAL · PEDIGREE</h2>
           <p className="font-mono text-xs text-muted-foreground">
             SIRE {sire.height}.BITMAP ({short(sire.inscriptionId)}) × DAM {dam.height}.BITMAP ({short(dam.inscriptionId)}) → GEN {pet.gen} PET
           </p>
@@ -299,7 +300,7 @@ function PetLookup() {
   const ok = /^[0-9a-f]{64}i\d+$/i.test(id);
   return (
     <section className="bg-card/60 backdrop-blur flex flex-wrap items-center gap-2 rounded-lg border border-border p-3">
-      <span className="label text-signal">VIEW AN INSCRIBED PET</span>
+      <span className="label text-signal">SPECIMEN ARCHIVE · LOOK UP A PET</span>
       <input value={v} onChange={(e) => setV(e.target.value)} placeholder="Pet inscription id" className="min-w-0 flex-1 rounded-md border border-border bg-background/60 px-3 py-2 font-mono text-xs" />
       {ok ? <Link to="/pet/$id" params={{ id }} className="rounded-md border border-primary px-3 py-2 font-mono text-xs text-primary">OPEN PEDIGREE →</Link> : <span className="label text-muted-foreground">PASTE AN ID</span>}
     </section>
