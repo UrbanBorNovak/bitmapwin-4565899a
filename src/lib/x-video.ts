@@ -14,9 +14,12 @@ export function canEncodeMp4() {
 export async function createXRecorder(canvas: HTMLCanvasElement): Promise<XRecorder> {
   const { width, height } = canvas;
   if (canEncodeMp4()) {
-    const codec = "avc1.4d0028"; // H.264 Main, level 4.0
-    const ok = await VideoEncoder.isConfigSupported({ codec, width, height, bitrate: 6_000_000, framerate: X_FPS }).catch(() => null);
-    if (ok?.supported) {
+    let codec = "";
+    for (const c of ["avc1.4d0028", "avc1.640028", "avc1.42002a", "avc1.42001f"]) {
+      const ok = await VideoEncoder.isConfigSupported({ codec: c, width, height, bitrate: 6_000_000, framerate: X_FPS }).catch(() => null);
+      if (ok?.supported) { codec = c; break; }
+    }
+    if (codec) {
       const { Muxer, ArrayBufferTarget } = await import("mp4-muxer");
       const target = new ArrayBufferTarget();
       const muxer = new Muxer({ target, video: { codec: "avc", width, height, frameRate: X_FPS }, fastStart: "in-memory" });
@@ -44,7 +47,7 @@ export async function createXRecorder(canvas: HTMLCanvasElement): Promise<XRecor
       };
     }
   }
-  const type = ["video/mp4;codecs=avc1", "video/mp4", "video/webm;codecs=vp9", "video/webm"].find((m) => MediaRecorder.isTypeSupported(m)) ?? "";
+  const type = ["video/mp4;codecs=avc1.42E01E", "video/mp4;codecs=avc1", "video/webm;codecs=vp9", "video/webm"].find((m) => MediaRecorder.isTypeSupported(m)) ?? "";
   const rec = new MediaRecorder(canvas.captureStream(X_FPS), type ? { mimeType: type, videoBitsPerSecond: 6_000_000 } : undefined);
   const chunks: Blob[] = [];
   rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
