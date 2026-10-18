@@ -27,7 +27,7 @@ const inCanvas = (n: unknown, span: number) => Number.isInteger(n) && (n as numb
 /** Validates an op from the wire. Anything malformed is dropped. */
 export function parseOp(raw: unknown, span = 64): CoOp | null {
   if (!raw || typeof raw !== "object") return null;
-  const o = raw as Record<string, unknown>;
+  const o = raw as { op?: unknown; oid?: unknown; id?: unknown; x?: unknown; y?: unknown; z?: unknown; r?: unknown; k?: unknown };
   const xyz = inCanvas(o.x, span) && inCanvas(o.y, span) && inCanvas(o.z, span);
   const oid = typeof o.oid === "string" && /^[a-z0-9]{4,24}$/.test(o.oid) ? o.oid : null;
   if (o.op === "p+" && oid && typeof o.id === "string" && isInscriptionId(o.id) && xyz && Number.isInteger(o.r))
