@@ -94,7 +94,7 @@ function CoForge() {
     for (const p of parts) {
       const b = cache[p.id];
       if (!b) continue;
-      for (const v of placePart(b, p, SPAN)) { const k = `${v.dx},${v.dy},${v.dz}`; w.set(k, v.k); o.set(k, p.oid); }
+      for (const v of placePart(b, p, SPAN)) { const k = `${v.dx},${v.dy},${v.dz}`; w.set(k, Math.max(0, BLOCKS.findIndex((x) => x.id === v.k))); o.set(k, p.oid); }
     }
     for (const [k, b] of state.current.blocks) { if (b.k === null) w.delete(k); else w.set(k, b.k); o.delete(k); }
     return { world: w, owner: o };
@@ -154,7 +154,7 @@ function CoForge() {
   };
 
   const exp = exportAssembly(state.current);
-  const html = useMemo(() => forgeAssemblyHtml(height, exp.parts, exp.own as TplBlock[]), [height, exp.parts.length, exp.own.length, peers]); // eslint-disable-line react-hooks/exhaustive-deps
+  const html = useMemo(() => forgeAssemblyHtml(height, exp.parts, exp.own.map((b) => ({ ...b, k: BLOCKS[b.k]!.id })) as TplBlock[]), [height, exp.parts.length, exp.own.length, peers]); // eslint-disable-line react-hooks/exhaustive-deps
   const bytes = new TextEncoder().encode(html).length;
   const share = typeof window !== "undefined" && joined ? `${location.origin}/co-forge?room=${encodeURIComponent(joined)}` : "";
   const download = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([html], { type: "text/html" })); a.download = `${height}-co-forge.html`; a.click(); };
