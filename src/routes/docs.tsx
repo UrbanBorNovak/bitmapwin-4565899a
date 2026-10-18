@@ -143,13 +143,13 @@ function DocsPage() {
       </section>
 
       <section id="tiny-tools" className="mt-10 scroll-mt-20">
-        <h2 className="display border-b border-border pb-2 text-xl">TINY TOOLS — ONE-FILE APPS YOU CAN INSCRIBE</h2>
+        <h2 className="display border-b border-border pb-2 text-xl">TINY TOOLS — ONE-FILE APPS</h2>
         <div className="mt-4 grid gap-px border border-border bg-border md:grid-cols-2">
           <div className="space-y-2 bg-background p-5 text-sm leading-relaxed text-muted-foreground">
             <div className="display text-base text-foreground">TINY STORE KIT</div>
             <p>Make a one-file shop for BITMAPs: name, tagline, colour, seller address, block range, max price, sort. Share the link to keep your settings.</p>
-            <p><span className="text-foreground">FAST</span> (~1.8 KB packed) shows live BitmapWin listings; BUY opens that BITMAP on the main marketplace. An empty range shows 0 for sale — only listed BITMAPs appear.</p>
-            <p><span className="text-foreground">SOVEREIGN</span> (~5 KB packed) reads signed Nostr listings and checks each one on Bitcoin, with in-page checkout. Download and host it — do not inscribe it: ordinals.com runs inscriptions in a sandbox that blocks the outside connections this shop needs, so an inscribed copy would never show listings. Limits: buying works with UniSat only; open it in its own tab; buyers need 3 separate plain coins; only blocks up to 969,999; raising a price or cancelling means moving the BITMAP. Still reads ordinals.com and mempool.space.</p>
+            <p><span className="text-foreground">FAST</span> shows live BitmapWin listings; BUY opens that BITMAP on the main marketplace. An empty range shows 0 for sale — only listed BITMAPs appear.</p>
+            <p><span className="text-foreground">SOVEREIGN</span> reads signed Nostr listings and checks each one on Bitcoin, with in-page checkout. Download and host it — do not inscribe it: ordinals.com runs inscriptions in a sandbox that blocks the outside connections this shop needs, so an inscribed copy would never show listings. Limits: buying works with UniSat only; open it in its own tab; buyers need 3 separate plain coins; only blocks up to 969,999; raising a price or cancelling means moving the BITMAP. Still reads ordinals.com and mempool.space.</p>
             <Link to="/store-kit" className="btn-term-ghost inline-block">[ OPEN STORE KIT ]</Link>
           </div>
           <div className="space-y-2 bg-background p-5 text-sm leading-relaxed text-muted-foreground">
