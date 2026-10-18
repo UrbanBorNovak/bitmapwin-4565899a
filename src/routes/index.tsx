@@ -38,7 +38,11 @@ export const Route = createFileRoute("/")({
           "BitmapWin turns Bitcoin blockspace into places you can enter, build on and experience. Own Bitcoin land, extend it, and leave history.",
       },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:image", content: "https://bitmapwin.app/social-card.jpg" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:image", content: "https://bitmapwin.app/social-card.jpg" },
     ],
   }),
 
