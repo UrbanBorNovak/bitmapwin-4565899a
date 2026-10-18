@@ -5,6 +5,8 @@ import { Box3, CanvasTexture, SRGBColorSpace, Vector3, type Group, type Sprite }
 
 /** Measured world height of each cast slot (so cuts frame the real body, not a guess). */
 const actorHeights = new Map<number, number>();
+/** Largest body extent (long creatures need wider framing than their height). */
+const actorSizes = new Map<number, number>();
 const SEAL_GEOMS = new Set(["TorusGeometry", "OctahedronGeometry", "RingGeometry"]);
 import type { Emote } from "@/lib/toon-script";
 import { toonEmotes, toonHeads } from "@/lib/toon-anchors";
@@ -79,8 +81,8 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
   const g = useRef<Group>(null);
   const dna = useQuery({ ...guardianDnaQuery(actor.height), staleTime: Infinity });
   const head = useMemo(() => new Vector3(), []);
-  const unitH = useRef(0), frames = useRef(0);
-  useEffect(() => () => { toonHeads.delete(slot); actorHeights.delete(slot); }, [slot]);
+  const unitH = useRef(0), unitS = useRef(0), frames = useRef(0);
+  useEffect(() => () => { toonHeads.delete(slot); actorHeights.delete(slot); actorSizes.delete(slot); }, [slot]);
   useFrame(({ camera }) => {
     const t = timeRef.current, o = g.current;
     if (!o) return;
@@ -115,11 +117,11 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
         // InstancedMesh caches its bounds before the voxels are written; refresh them.
         (m as { computeBoundingBox?: () => void }).computeBoundingBox?.();
         b.union(tmp.setFromObject(m)); });
-      if (!b.isEmpty()) unitH.current = Math.max(0.2, b.max.y);
+      if (!b.isEmpty()) { unitH.current = Math.max(0.2, b.max.y); unitS.current = Math.max(b.max.y, b.max.x - b.min.x, b.max.z - b.min.z); }
     }
     o.scale.set(10 * s, 10 * s * sy, 10 * s);
     const bodyH = (unitH.current || 1.2) * 10;
-    actorHeights.set(slot, bodyH);
+    actorHeights.set(slot, bodyH); actorSizes.set(slot, Math.max(bodyH, (unitS.current || 0) * 10 * s));
     // Publish the head's screen position for the speech-bubble overlay.
     if (dna.data) {
       head.set(x, y + bodyH * s * sy * 0.92, pos.z).project(camera);
@@ -180,9 +182,10 @@ function cutPose(scene: ToonScene, line: ToonLine, local: number): [number, numb
   // Frame from measured body heights; fov 40 → distance ≈ 1.4 × visible height.
   const hs = actorHeights.get(line.speaker) ?? 12, ho = oi >= 0 ? actorHeights.get(oi) ?? hs : hs;
   // (dx,dz) points from listener to speaker; close-ups sit in front of the speaker, angled toward the listener.
-  if (line.cam === "close") { const d = hs * 1.3; return [sp.x - dx * d * 0.35 + px * d, hs * 0.75, sp.z - dz * d * 0.35 + pz * d, sp.x, hs * 0.6, sp.z]; }
-  if (line.cam === "ots") { const d = Math.max(ho, hs) * 0.9; return [ot.x - dx * d + px * d * 0.6, ho * 1.1, ot.z - dz * d + pz * d * 0.6, sp.x, hs * 0.55, sp.z]; }
-  const h = Math.max(hs, ho), mx = (sp.x + ot.x) / 2, mz = (sp.z + ot.z) / 2, span = Math.max(h * 2.2, L * 1.4);
+  const ss = actorSizes.get(line.speaker) ?? hs, so = oi >= 0 ? actorSizes.get(oi) ?? ss : ss;
+  if (line.cam === "close") { const d = ss * 1.25; return [sp.x - dx * d * 0.35 + px * d, hs * 0.75, sp.z - dz * d * 0.35 + pz * d, sp.x, hs * 0.6, sp.z]; }
+  if (line.cam === "ots") { const d = Math.max(so, ss) * 0.8; return [ot.x - dx * d + px * d * 0.6, ho * 1.1, ot.z - dz * d + pz * d * 0.6, sp.x, hs * 0.55, sp.z]; }
+  const h = Math.max(hs, ho), mx = (sp.x + ot.x) / 2, mz = (sp.z + ot.z) / 2, span = Math.max(h * 2.2, Math.max(ss, so) * 1.6, L * 1.4);
   return [mx + px * span, h * 0.75, mz + pz * span, mx, h * 0.5, mz];
 }
 
