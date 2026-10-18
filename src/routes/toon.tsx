@@ -1,6 +1,6 @@
 import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { episodeLength, generateEpisode, parseEpisode, sceneAt, MUSIC, type Music, type ToonEpisode } from "@/lib/toon-script";
+import { episodeLength, generateEpisode, parseEpisode, sceneAt, transitionAt, MUSIC, type Music, type ToonEpisode } from "@/lib/toon-script";
 import { TOON_STYLES, paintStyle, styleFilter, type ToonStyle } from "@/lib/toon-style";
 import { SceneEditor } from "@/components/toon/SceneEditor";
 import { ToonLibraryPanel } from "@/components/toon/ToonLibraryPanel";
@@ -128,6 +128,28 @@ function drawOverlay(ctx: CanvasRenderingContext2D, w: number, h: number, ep: To
   ctx.textAlign = "right";
   ctx.fillStyle = "rgba(255,255,255,0.85)";
   ctx.fillText(`${s.block}.BITMAP · SCENE ${index + 1}/${ep.scenes.length}`, w - 12 * u, h - 16 * u);
+  paintTransition(ctx, w, h, ep, t);
+}
+
+/** Scene transitions drawn over everything (stage, bubbles) so preview and export match. */
+function paintTransition(ctx: CanvasRenderingContext2D, w: number, h: number, ep: ToonEpisode, t: number) {
+  const tr = transitionAt(ep, t);
+  if (!tr || tr.k <= 0) return;
+  const k = tr.k * tr.k * (3 - 2 * tr.k);
+  ctx.save();
+  ctx.fillStyle = "#0a0a0f";
+  if (tr.kind === "fade") { ctx.globalAlpha = k; ctx.fillRect(0, 0, w, h); }
+  else if (tr.kind === "wipe") {
+    const edge = tr.opening ? w * (1 - k) : w * k, x0 = tr.opening ? w - edge : 0;
+    ctx.fillRect(x0, 0, edge, h);
+    ctx.fillStyle = "#f7931a";
+    const ex = tr.opening ? x0 : edge;
+    for (let y = 0; y < h; y += 14) { ctx.beginPath(); ctx.arc(ex, y + 7, 5 * k + 1, 0, Math.PI * 2); ctx.fill(); }
+  } else if (tr.kind === "iris") {
+    const r = Math.hypot(w, h) * 0.55 * (1 - k);
+    ctx.beginPath(); ctx.rect(0, 0, w, h); ctx.arc(w / 2, h / 2, Math.max(0.1, r), 0, Math.PI * 2, true); ctx.fill("evenodd");
+  }
+  ctx.restore();
 }
 
 function ToonPage() {
