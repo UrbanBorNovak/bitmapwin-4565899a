@@ -68,6 +68,13 @@ export function SceneEditor({ episode, onChange, onSeek, characters = [], notes 
         </div>
       </div>
 
+      <SceneTimeline duration={s.duration}
+        rows={[
+          ...s.cast.flatMap((a, k) => a.to ? [{ key: `m${k}`, kind: "move" as const, label: `▶ ${characters.find((c) => c.height === a.height)?.nickname || a.name} walks`, start: a.moveStart ?? 0, end: a.moveEnd ?? s.duration,
+            set: (st: number, en: number) => patch({ cast: s.cast.map((c, j) => (j === k ? { ...c, moveStart: st, moveEnd: en } : c)) }) }] : []),
+          ...s.lines.map((l, k) => ({ key: `l${k}`, kind: "line" as const, label: `“${l.text.slice(0, 24)}”`, start: l.at, end: l.at + l.dur,
+            set: (st: number, en: number) => patchLine(k, { at: st, dur: Math.max(0.3, en - st) }) })),
+        ]} />
       <div className="label mt-4 text-signal">GUARDIANS</div>
       {s.cast.map((a, k) => (
         <div key={k} className="mt-2 grid grid-cols-[1fr_1fr_auto] gap-2">
@@ -163,6 +170,50 @@ function PositionPad({ x, z, onMove, start }: { x: number; z: number; onMove: (x
         <span /><button className={btn} aria-label="Move front" onClick={() => onMove(x, clamp(z + 2))}>↓</button><span />
       </div>
       <span className="font-mono text-[10px] text-muted-foreground">X {x}<br />DEPTH {z}</span>
+    </div>
+  );
+}
+
+type TimelineRow = { key: string; kind: "move" | "line"; label: string; start: number; end: number; set: (start: number, end: number) => void };
+
+/** Scene timeline: Guardian walks (orange) and dialogue (cyan) as bars; drag a bar to shift it, drag its edges to retime. */
+function SceneTimeline({ duration, rows }: { duration: number; rows: TimelineRow[] }) {
+  if (!rows.length) return null;
+  const snap = (v: number) => Math.round(v * 10) / 10;
+  const drag = (e: RPointerEvent<HTMLElement>, r: TimelineRow, mode: "start" | "end" | "move") => {
+    e.preventDefault(); e.stopPropagation();
+    const track = (e.currentTarget.closest("[data-track]") as HTMLElement).getBoundingClientRect();
+    const x0 = e.clientX, s0 = r.start, e0 = r.end, len = e0 - s0;
+    const onMove = (ev: PointerEvent) => {
+      const d = ((ev.clientX - x0) / track.width) * duration;
+      if (mode === "start") r.set(snap(Math.max(0, Math.min(e0 - 0.1, s0 + d))), e0);
+      else if (mode === "end") r.set(s0, snap(Math.min(duration, Math.max(s0 + 0.1, e0 + d))));
+      else { const st = snap(Math.max(0, Math.min(duration - len, s0 + d))); r.set(st, snap(st + len)); }
+    };
+    const up = () => { window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", up); };
+    window.addEventListener("pointermove", onMove); window.addEventListener("pointerup", up);
+  };
+  return (
+    <div className="mt-4">
+      <div className="label text-signal">SCENE TIMELINE</div>
+      <div className="mt-1 flex justify-between font-mono text-[9px] text-muted-foreground"><span>0s</span><span>{(duration / 2).toFixed(1)}s</span><span>{duration.toFixed(1)}s</span></div>
+      <div className="space-y-1">
+        {rows.map((r) => {
+          const left = (r.start / duration) * 100, width = Math.max(2, ((Math.min(r.end, duration) - r.start) / duration) * 100);
+          const tone = r.kind === "move" ? "border-bitcoin bg-bitcoin/25 text-bitcoin" : "border-signal bg-signal/20 text-signal";
+          return (
+            <div key={r.key} data-track className="relative h-7 border border-border bg-background">
+              <div className={`absolute inset-y-0 flex cursor-grab touch-none items-center overflow-hidden border px-2 font-mono text-[10px] ${tone}`}
+                style={{ left: `${left}%`, width: `${width}%` }} onPointerDown={(e) => drag(e, r, "move")} title={`${r.label} · ${r.start.toFixed(1)}s → ${r.end.toFixed(1)}s`}>
+                <span className="absolute inset-y-0 left-0 w-2 cursor-ew-resize touch-none bg-current opacity-50" aria-label={`${r.label} start`} onPointerDown={(e) => drag(e, r, "start")} />
+                <span className="truncate">{r.label} · {r.start.toFixed(1)}–{r.end.toFixed(1)}s</span>
+                <span className="absolute inset-y-0 right-0 w-2 cursor-ew-resize touch-none bg-current opacity-50" aria-label={`${r.label} end`} onPointerDown={(e) => drag(e, r, "end")} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-1 text-[10px] text-muted-foreground">Drag a bar to move it; drag its ends to change when it starts and stops.</p>
     </div>
   );
 }
