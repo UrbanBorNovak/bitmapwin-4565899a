@@ -408,10 +408,21 @@ function estimateVsize(inputs: number, outputs: number): number {
   return Math.ceil(11 + inputs * 58 + outputs * 43);
 }
 
+/** Where the seller's input and payment output sit in every purchase. */
+export const SELLER_INDEX = 2;
+
 /**
- * Builds the complete purchase PSBT: seller input/output stay at index 0, the
- * buyer's funding inputs follow, and the inscription is delivered to the
- * buyer's ordinals address with change returned to their payment address.
+ * Builds the complete purchase PSBT with ordinal-safe sat flow.
+ *
+ * Sats leave a transaction first-in first-out, so the BITMAP (first sat of the
+ * seller's input) lands in whichever output covers that offset. Two plain buyer
+ * "padding" coins go first and come straight back in output 0, which puts the
+ * BITMAP at the very start of output 1 (the buyer's ordinals address). The
+ * seller's SIGHASH_SINGLE|ANYONECANPAY signature does not commit to its input
+ * index, so the seller input and its price output both move to index 2.
+ *
+ * inputs : [pad, pad, seller, funding…]
+ * outputs: [pads → buyer, BITMAP → buyer, price → seller, market fee, tribute?, change?]
  */
 export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
   const seller = parsePsbt(input.sellerPsbtBase64);
@@ -424,9 +435,10 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
     (i) => byteArrayToHex(i.txidLe) === byteArrayToHex(txidLe) && i.vout === vout,
   );
   if (sellerIndex === -1) throw new Error("The offer PSBT does not spend the listed inscription");
-  if (sellerIndex !== 0) throw new Error("Unsupported offer: the inscription must be input 0");
-  const priceOutput = seller.tx.outputs[0];
-  if (!priceOutput) throw new Error("The offer PSBT has no payment output");
+  if (sellerIndex !== 0 || seller.tx.inputs.length !== 1 || seller.tx.outputs.length !== 1) {
+    throw new Error("Unsupported offer: expected one inscription input and one price output");
+  }
+  const priceOutput = seller.tx.outputs[0]!;
   const priceSats = priceOutput.valueSats;
 
   const receiveScript = hexToByteArray(input.receiveScriptHex);
@@ -436,23 +448,27 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
       ? hexToByteArray(input.tapInternalKeyHex)
       : null;
 
-  // marketplace commission: extra output paid by the buyer to the platform
   const marketFeeSats = marketplaceFeeSats(priceSats);
   const marketFeeScript = addressToScriptPubKey(MARKETPLACE_FEE_ADDRESS);
   const landTribute =
     input.landTribute && input.landTribute.sats >= DUST ? input.landTribute : undefined;
   const landTributeSats = landTribute?.sats ?? 0;
-  // Relay nodes reject a fee-paying transaction with a sub-dust output. Older
-  // inscriptions commonly sit on postage below today's 546-sat threshold, so
-  // the buyer contributes enough sats to make the receive output relayable.
+  // Old inscriptions often sit on sub-dust postage; the buyer tops output 1 up to dust.
   const inscriptionOutputSats = Math.max(input.inscriptionValueSats, DUST);
   const inscriptionTopUpSats = inscriptionOutputSats - input.inscriptionValueSats;
 
-  // greedy largest-first coin selection over confirmed funding UTXOs
-  const candidates = [...input.funding]
-    .filter((u) => u.valueSats > DUST)
-    .sort((a, b) => b.valueSats - a.valueSats);
+  const plain = input.funding.filter((u) => u.valueSats >= DUST);
+  if (plain.length < 3) {
+    throw new Error(
+      "Your payment address needs at least 3 separate plain coins: two small ones keep the BITMAP from flowing to the seller. Send yourself two payments of 600 sats, wait for them to confirm, and retry",
+    );
+  }
+  const ascending = [...plain].sort((a, b) => a.valueSats - b.valueSats);
+  const pads = ascending.slice(0, 2);
+  const padSats = pads[0]!.valueSats + pads[1]!.valueSats;
+  const candidates = ascending.slice(2).reverse(); // largest first
 
+  const fixedOutputs = 4 + (landTribute ? 1 : 0); // pads, BITMAP, price, fee, tribute?
   const used: FundingUtxo[] = [];
   let funded = 0;
   let feeSats = 0;
@@ -460,50 +476,38 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
   for (const candidate of candidates) {
     used.push(candidate);
     funded += candidate.valueSats;
-    feeSats = Math.ceil(estimateVsize(1 + used.length, landTribute ? 5 : 4) * Math.max(1, input.feeRate));
+    feeSats = Math.ceil(estimateVsize(3 + used.length, fixedOutputs + 1) * Math.max(1, input.feeRate));
     needed = priceSats + marketFeeSats + landTributeSats + inscriptionTopUpSats + feeSats;
     if (funded >= needed + DUST) break;
   }
-  if (used.length === 0 || funded < needed) {
-    throw new Error(
-      `Not enough confirmed funds: need ~${priceSats + marketFeeSats + landTributeSats + inscriptionTopUpSats + feeSats} sats plus fees, have ${funded}`,
-    );
+  if (funded < needed) {
+    throw new Error(`Not enough confirmed funds: need ~${needed} sats plus fees, have ${funded}`);
   }
 
-  let changeSats = funded - priceSats - marketFeeSats - landTributeSats - inscriptionTopUpSats - feeSats;
+  let changeSats = funded - needed;
   if (changeSats < DUST) {
-    // fold sub-dust change into the fee rather than creating an unspendable output
     feeSats += changeSats;
     changeSats = 0;
   }
 
+  const toInput = (u: FundingUtxo) => ({ txidLe: hexToByteArray(u.txid).reverse(), vout: u.vout, sequence: 0xfffffffd });
   const tx: RawTx = {
     version: seller.tx.version || 2,
     locktime: 0,
-    inputs: [
-      seller.tx.inputs[0]!,
-      ...used.map((u) => ({
-        txidLe: hexToByteArray(u.txid).reverse(),
-        vout: u.vout,
-        sequence: 0xfffffffd,
-      })),
-    ],
+    inputs: [toInput(pads[0]!), toInput(pads[1]!), seller.tx.inputs[0]!, ...used.map(toInput)],
     outputs: [
-      priceOutput,
+      { valueSats: padSats, script: changeScript },
       { valueSats: inscriptionOutputSats, script: receiveScript },
+      priceOutput,
       { valueSats: marketFeeSats, script: marketFeeScript },
       ...(landTribute ? [{ valueSats: landTributeSats, script: hexToByteArray(landTribute.scriptHex) }] : []),
       ...(changeSats > 0 ? [{ valueSats: changeSats, script: changeScript }] : []),
     ],
   };
 
-
-  const inputMaps: Kv[][] = [seller.inputs[0] ?? []];
-  for (const utxo of used) {
-    inputMaps.push(fundingInputMap(utxo, tapKey, input.paymentPublicKeyHex));
-  }
-
-  const outputMaps: Kv[][] = tx.outputs.map((_, i) => (i === 0 ? (seller.outputs[0] ?? []) : []));
+  const fundingMap = (u: FundingUtxo) => fundingInputMap(u, tapKey, input.paymentPublicKeyHex);
+  const inputMaps: Kv[][] = [fundingMap(pads[0]!), fundingMap(pads[1]!), seller.inputs[0] ?? [], ...used.map(fundingMap)];
+  const outputMaps: Kv[][] = tx.outputs.map((_, i) => (i === SELLER_INDEX ? (seller.outputs[0] ?? []) : []));
 
   const psbtBase64 = serializePsbt({
     global: seller.global.filter((kv) => kv.key[0] === 0x00),
@@ -514,16 +518,48 @@ export function buildBuyerPsbt(input: BuyerPsbtInput): BuyerPsbtResult {
 
   return {
     psbtBase64,
-    signIndices: used.map((_, i) => i + 1),
+    signIndices: [0, 1, ...used.map((_, i) => i + 3)],
     priceSats,
     feeSats,
     marketFeeSats,
     landTributeSats,
     changeSats,
     spentSats: priceSats + marketFeeSats + landTributeSats + inscriptionTopUpSats + feeSats,
-    usedFunding: used,
+    usedFunding: [...pads, ...used],
   };
+}
 
+/**
+ * Follows the sats: index of the output that receives the first sat of
+ * `inputIndex`, or null when it would go to fees. Input values come from each
+ * input's witness/non-witness UTXO record, or `knownValues` when given.
+ */
+export function satDestination(psbtBase64: string, inputIndex: number, knownValues?: number[]): number | null {
+  const psbt = parsePsbt(psbtBase64);
+  const valueOf = (i: number): number => {
+    if (knownValues?.[i] !== undefined) return knownValues[i]!;
+    const w = psbt.inputs[i]?.find((kv) => kv.key.length === 1 && kv.key[0] === 0x01)?.value;
+    if (w) {
+      let v = 0;
+      for (let k = 0; k < 8; k++) v += w[k]! * 2 ** (8 * k);
+      return v;
+    }
+    const nw = psbt.inputs[i]?.find((kv) => kv.key.length === 1 && kv.key[0] === 0x00)?.value;
+    if (nw) {
+      const prev = parseTx(nw);
+      const out = prev.outputs[psbt.tx.inputs[i]!.vout];
+      if (out) return out.valueSats;
+    }
+    throw new Error(`Input ${i} has no UTXO value`);
+  };
+  let offset = 0;
+  for (let i = 0; i < inputIndex; i++) offset += valueOf(i);
+  let end = 0;
+  for (let o = 0; o < psbt.tx.outputs.length; o++) {
+    end += psbt.tx.outputs[o]!.valueSats;
+    if (offset < end) return o;
+  }
+  return null;
 }
 
 export type PaymentPsbtInput = {
