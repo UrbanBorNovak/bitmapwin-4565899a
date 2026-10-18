@@ -31,6 +31,8 @@ const GROUPS: { label: string; items: { to: string; label: string }[] }[] = [
       { to: "/forge", label: "LAND FORGE" },
       { to: "/breed", label: "BREED PETS" },
       { to: "/extenders", label: "EXTENDERS" },
+      { to: "/store-kit", label: "TINY STORE KIT" },
+      { to: "/tiny-studio", label: "TINY STUDIO" },
     ],
   },
   {
@@ -82,13 +84,18 @@ export function SiteFooter() {
             <span className="blink ml-2 text-foreground">_</span>
           </div>
         </div>
-        <div className="mt-2 label text-[0.6rem]">
-          LIVEOCI INDEXING &amp; ON-CHAIN BITMON BY{" "}
-          <a href="https://x.com/boppleton" target="_blank" rel="noreferrer" className="text-primary hover:text-foreground">@BOPPLETON</a>
-          {" · "}BOT STARTER KIT ON{" "}
-          <a href="https://github.com/UrbanBorNovak/bitmapwin-bot-starter" target="_blank" rel="noreferrer" className="text-signal hover:text-foreground">GITHUB</a>
-          <a href="/store-kit" className="text-signal hover:text-foreground">STORE KIT</a>
-          <a href="/tiny-studio" className="text-signal hover:text-foreground">TINY STUDIO</a>
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 label text-[0.6rem]">
+          <span>LIVEOCI INDEXING &amp; ON-CHAIN BITMON BY{" "}
+            <a href="https://x.com/boppleton" target="_blank" rel="noreferrer" className="text-primary hover:text-foreground">@BOPPLETON</a></span>
+          <span aria-hidden>·</span>
+          <span>BOT STARTER KIT ON{" "}
+            <a href="https://github.com/UrbanBorNovak/bitmapwin-bot-starter" target="_blank" rel="noreferrer" className="text-signal hover:text-foreground">GITHUB</a></span>
+          <span aria-hidden>·</span>
+          <Link to="/store-kit" className="text-signal hover:text-foreground">STORE KIT</Link>
+          <span aria-hidden>·</span>
+          <Link to="/tiny-studio" className="text-signal hover:text-foreground">TINY STUDIO</Link>
+          <span aria-hidden>·</span>
+          <Link to="/docs" hash="tiny-tools" className="text-signal hover:text-foreground">TOOL DOCS</Link>
         </div>
       </div>
     </footer>
