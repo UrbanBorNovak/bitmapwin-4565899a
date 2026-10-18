@@ -204,7 +204,7 @@ function ToonPage() {
       ctx.filter = styleFilter(episode.style);
       ctx.drawImage(gl, (W - dw) / 2, (H - dh) / 2, dw, dh);
       ctx.filter = "none";
-      drawOverlay(octx, W, H, episode, timeRef.current);
+      drawOverlay(octx, W, H, episode, timeRef.current, (nx, ny) => [(W - dw) / 2 + nx * dw, (H - dh) / 2 + ny * dh]);
       ctx.drawImage(over, 0, 0);
       rec.addFrame(out, timeRef.current);
       if (timeRef.current >= total && !stopped) {
