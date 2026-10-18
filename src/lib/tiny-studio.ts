@@ -11,15 +11,18 @@ export const STUDIO_SPAN = 64;
 /** On-chain LiveOCI sat cache module (getBitmapInscriptionId), imported by relative path on ordinals.com. */
 const OCI_MODULE = "970c183ec1e8cb10d25e53140b520bbda5dcf4381d830ea4dfda507b9af4f926i0";
 
-/** Deterministic starter ground for a block height (same maths as the inline JS). */
+/**
+ * Block-derived landmass. The height seeds three noise octaves; the halving
+ * epoch plus height pick one of four landforms (ridge, mesa, caldera, isles).
+ * Steep faces and peaks expose stone, low ground is sand, flats are grass.
+ * The same source runs inline in the studio and in seedTerrain().
+ */
+const LAND_JS = `function LAND(h,P){let s=(h*2654435761)>>>0;const r=()=>((s=(Math.imul(s^(s>>>15),2246822507)+1)>>>0)/4294967296),a=r()*6,b=r()*6,c=r()*6,f=(h+(h/210000|0))%4,T=[],M=Math,Q=(x,z)=>T[x*64+z];for(let x=0;x<64;x++)for(let z=0;z<64;z++){const u=x-32,w=z-32,d=M.hypot(u,w)/32,n=M.sin(x/17+a)*M.cos(z/13+b)+.5*M.sin((x+z)/7+c)+.2*M.sin(x/3+a)*M.cos(z/4+b),e=f<1?12-16*M.abs(M.sin(u/19+w/31+a)+n*.3):f<2?2*M.round(2+3*n):f<3?12*M.exp(-30*(d-.55)**2)+n*1.5:3+5*n-3*d;T[x*64+z]=M.max(1,M.min(20,M.round(e+(1-d)*3)))}for(let x=0;x<64;x++)for(let z=0;z<64;z++){const t=Q(x,z),g=M.max(...[[1,0],[-1,0],[0,1],[0,-1]].map(([i,j])=>M.abs(t-(Q(x+i,z+j)??t))));for(let y=0;y<t;y++)P(x,y,z,y<t-1?y<t-3?3:1:g>1||t>15?3:t<3?2:0)}}`;
+
+/** Deterministic starter ground for a block height (same code as the inline JS). */
 export function seedTerrain(height: number): number[][] {
-  let s = (height * 2654435761) >>> 0;
-  const r = () => ((s = (Math.imul(s ^ (s >>> 15), 2246822507) + 1) >>> 0) / 4294967296);
-  const a = r() * 6, b = r() * 6, out: number[][] = [];
-  for (let x = 0; x < 64; x++) for (let z = 0; z < 64; z++) {
-    const h = Math.max(1, 1 + Math.floor(1.5 + Math.sin(x / 9 + a) + Math.cos(z / 11 + b)));
-    for (let y = 0; y < h; y++) out.push([x, y, z, y === h - 1 ? 0 : 1]);
-  }
+  const out: number[][] = [];
+  new Function("h", "P", LAND_JS + ";LAND(h,P)")(height, (x: number, y: number, z: number, k: number) => out.push([x, y, z, k]));
   return out;
 }
 
@@ -53,8 +56,8 @@ button.on{border-color:#f7931a;color:#f7931a}.s{width:20px;height:20px;padding:0
 const P=${pal},C=document.getElementById('c'),G=C.getContext('webgl',{antialias:true}),$=i=>document.getElementById(i);
 let S=64,V=new Map,K=0,T=1,W=0,H=+document.querySelector('meta[name=bitmapwin]').content.split(';')[1]||0,yaw=.8,pit=.6,dist=90,tx=32,ty=4,tz=32,dirty=1,wx=32,wy=20,wz=32,wyaw=0,wpit=-.2,jx=0,jy=0;const KD={};
 const key=(x,y,z)=>x+','+y+','+z;
-function seed(h){V.clear();S=64;tx=tz=32;let s=(h*2654435761)>>>0;const r=()=>((s=(Math.imul(s^(s>>>15),2246822507)+1)>>>0)/4294967296);const a=r()*6,b=r()*6;
-for(let x=0;x<S;x++)for(let z=0;z<S;z++){const t=Math.max(1,1+Math.floor(1.5+Math.sin(x/9+a)+Math.cos(z/11+b)));for(let y=0;y<t;y++)V.set(key(x,y,z),y==t-1?0:1)}dirty=1}
+${LAND_JS}
+function seed(h){V.clear();S=64;tx=tz=32;LAND(h,(x,y,z,k)=>V.set(key(x,y,z),k));dirty=1}
 function D(b,f){const r=atob(b),c=i=>r.charCodeAt(i);if(c(0)==66&&c(1)==87&&c(2)==50&&c(3)==0){for(let i=4;i+6<r.length;i+=7)for(let x=c(i);x<=c(i+3);x++)for(let y=c(i+1);y<=c(i+4);y++)for(let z=c(i+2);z<=c(i+5);z++)f(x,y,z,c(i+6))}else for(let i=0;i+3<r.length;i+=4)f(c(i),c(i+1),c(i+2),c(i+3))}
 function load(b,sp){V.clear();const A=b.map?b:[];b.map||D(b,(...v)=>A.push(v));S=sp||(A.some(v=>v[0]>63||v[1]>63||v[2]>63)?128:64);tx=tz=S/2;dist=S*1.4;
 for(const[x,y,z,k]of A)if(x<S&&y<S&&z<S&&k<P.length)V.set(key(x,y,z),k);dirty=1}
