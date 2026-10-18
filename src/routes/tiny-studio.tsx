@@ -3,6 +3,15 @@ import { useEffect, useMemo, useState } from "react";
 import { getBitmapHolderFn } from "@/lib/locate-bitmap.functions";
 import { buildTinyStudioHtml } from "@/lib/tiny-studio";
 import { brotliPackFn } from "@/lib/brotli-pack.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { fetchBlockDnaSource, guardianFromBlock } from "@/lib/bitmon";
+import { bakeGuardian } from "@/lib/forge-guardian-bake";
+
+/** The BITMAP's awakened Guardian, baked to voxels — only when one exists in the Guardian registry. */
+async function guardianFor(h: number): Promise<string | null> {
+  const { data } = await supabase.from("bitmon_guardians").select("block_height").eq("block_height", h).maybeSingle();
+  return data ? bakeGuardian(guardianFromBlock(await fetchBlockDnaSource(h))) : null;
+}
 
 export const Route = createFileRoute("/tiny-studio")({
   head: () => {
@@ -34,10 +43,12 @@ function TinyStudio() {
   const [packed, setPacked] = useState<{ raw: number; size: number; bytes: Uint8Array; h: number } | null>(null);
   const [busy, setBusy] = useState(false);
   const [bitmapId, setBitmapId] = useState<{ h: number; id: string } | null>(null);
+  const [guardian, setGuardian] = useState<{ h: number; g: string } | null>(null);
   useEffect(() => {
     let live = true;
     const t = setTimeout(() => {
       getBitmapHolderFn({ data: { height } }).then((r) => { if (live && r?.inscriptionId) setBitmapId({ h: height, id: r.inscriptionId }); }).catch(() => {});
+      guardianFor(height).then((g) => { if (live && g) setGuardian({ h: height, g }); }).catch(() => {});
     }, 500);
     return () => { live = false; clearTimeout(t); };
   }, [height]);
@@ -47,15 +58,15 @@ function TinyStudio() {
       const h = e.data?.tsAsk;
       if (typeof h !== "number" || !Number.isInteger(h) || h < 0 || !e.source) return;
       const src = e.source as Window;
-      getBitmapHolderFn({ data: { height: h } })
-        .then((r) => src.postMessage({ tsH: h, tsId: r?.inscriptionId ?? null }, "*"))
+      Promise.all([getBitmapHolderFn({ data: { height: h } }), guardianFor(h).catch(() => null)])
+        .then(([r, g]) => src.postMessage({ tsH: h, tsId: r?.inscriptionId ?? null, tsG: g }, "*"))
         .catch(() => src.postMessage({ tsH: h, tsId: null }, "*"));
     };
     window.addEventListener("message", onMsg);
     return () => window.removeEventListener("message", onMsg);
   }, []);
   // The preview frame can't run the on-chain lookup module, so it gets the BITMAP id resolved here; the downloaded file never needs it.
-  const previewHtml = useMemo(() => buildTinyStudioHtml({ height, bitmapId: bitmapId?.h === height ? bitmapId.id : undefined }), [height, bitmapId]);
+  const previewHtml = useMemo(() => buildTinyStudioHtml({ height, bitmapId: bitmapId?.h === height ? bitmapId.id : undefined, guardian: guardian?.h === height ? guardian.g : undefined }), [height, bitmapId, guardian]);
   const html = useMemo(() => buildTinyStudioHtml({ height }), [height]);
   const ready = packed && packed.h === height ? packed : null;
 
@@ -106,6 +117,7 @@ function TinyStudio() {
             <p className="text-foreground">PUT IT ON BITCOIN</p>
             <p>ord wallet inscribe --fee-rate &lt;sats/vB&gt; --file tiny-studio.html --compress. You sign and send it yourself — BitmapWin never does. It needs no website to work: everything is inside the file.</p>
             <p>LOAD: type a block number or an inscription id (Enter works too). You get starter ground right away, replaced by the inscribed build if one exists. Once the studio is on Bitcoin, it finds that BITMAP's newest Land Forge or Tiny Studio build straight from the chain so you can walk it, erase and add blocks, and save your remix. It also runs here in the preview: change STARTING BLOCK and it loads that BITMAP's inscribed build if one exists.</p>
+            <p>GUARDIAN: if the BITMAP has an awakened Guardian, it stands on the lowest open ground of the land. It is only shown — it is never saved into your .BWVX or .HTML. On Bitcoin, the studio shows it when the build itself carries a Guardian (Land Forge assemblies with a baked Guardian).</p>
             <p>Anyone can remix any build on their own screen; only the holder of that BITMAP can make a change permanent on Bitcoin. To place a build with its exact parcel limits, use Land Forge.</p>
           </div>
         </aside>
