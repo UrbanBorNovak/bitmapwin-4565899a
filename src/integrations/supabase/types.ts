@@ -4254,6 +4254,24 @@ export type Database = {
         }
         Relationships: []
       }
+      toon_libraries: {
+        Row: {
+          data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          data?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          data?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       trade_crawl_state: {
         Row: {
           block_height: number
