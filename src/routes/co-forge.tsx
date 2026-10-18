@@ -112,6 +112,11 @@ function CoForge() {
         }, (e: Error) => toast.error(e.message));
       };
       ctrl.current = (c) => {
+        // Unlocking: every builder move outside the seal was made during the lock — keep it out for good.
+        if (cfgRef.current.locked && !c.locked) {
+          const cur = cfgRef.current;
+          batches.current.forEach((b) => { if (b.by !== owner && !cur.seal.includes(sealId(b.id))) deny.current.add(sealId(b.id)); });
+        }
         const full = { ...c, seal: c.locked ? (cfgRef.current.locked ? cfgRef.current.seal : sealFor(batches.current, cfgRef.current, owner)) : [], deny: [...deny.current].slice(-SEAL_MAX) };
         net.sendCtrl(joined, { cfg: full }).then((t) => {
           const next = nextConfig(cfgRef.current, owner, pk, full, t);
