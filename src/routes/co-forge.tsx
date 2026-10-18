@@ -8,7 +8,7 @@ import type { TplBlock } from "@/lib/voxel-templates";
 import { forgePieceFn } from "@/lib/forge-parts.functions";
 import { collectionPiecesQuery } from "@/lib/forge-collection.functions";
 import { forgeAssemblyHtml, isInscriptionId, normPart, placePart, MAX_ASM_PARTS } from "@/lib/forge-assembly";
-import { batchCounts, sealFor, sealId, SEAL_MAX, buildState, canEdit, emptyState, exportAssembly, liveParts, makeRoom, newOid, nextConfig, openConfig, roomName, roomOwner, type Batch, type CoOp, type CoState, type RoomConfig } from "@/lib/co-forge";
+import { batchCounts, keepFor, sealFor, sealId, SEAL_MAX, buildState, canEdit, emptyState, exportAssembly, liveParts, makeRoom, newOid, nextConfig, openConfig, roomName, roomOwner, type Batch, type CoOp, type CoState, type RoomConfig } from "@/lib/co-forge";
 
 export const Route = createFileRoute("/co-forge")({
   head: () => {
@@ -52,7 +52,7 @@ function CoForge() {
   const owner = joined ? roomOwner(joined) : null;
   const isOwner = !!owner && owner === me;
   const mayEdit = !!owner && !!me && canEdit(cfg, owner, me);
-  const ctrl = useRef<((c: { allow: string[]; locked: boolean }) => void) | null>(null);
+  const ctrl = useRef<((c: { allow: string[]; locked: boolean; revoke?: string; wipe?: string }) => void) | null>(null);
 
   const join = async () => {
     const net = await import("@/lib/nostr/co-forge-room");
@@ -111,13 +111,18 @@ function CoForge() {
           rebuild();
         }, (e: Error) => toast.error(e.message));
       };
-      ctrl.current = (c) => {
+      ctrl.current = ({ revoke, wipe, ...c }) => {
+        const cur0 = cfgRef.current;
+        let keep = cur0.keep;
+        // Revoking keeps what they built so far; wiping is a separate, explicit step.
+        if (revoke) keep = [...new Set([...keep, ...keepFor(batches.current, cur0, owner, revoke)])].slice(-SEAL_MAX);
+        if (wipe) batches.current.forEach((b) => { if (b.by === wipe) deny.current.add(sealId(b.id)); });
         // Unlocking: every builder move outside the seal was made during the lock — keep it out for good.
         if (cfgRef.current.locked && !c.locked) {
           const cur = cfgRef.current;
           batches.current.forEach((b) => { if (b.by !== owner && !cur.seal.includes(sealId(b.id))) deny.current.add(sealId(b.id)); });
         }
-        const full = { ...c, seal: c.locked ? (cfgRef.current.locked ? cfgRef.current.seal : sealFor(batches.current, cfgRef.current, owner)) : [], deny: [...deny.current].slice(-SEAL_MAX) };
+        const full = { ...c, seal: c.locked ? (cfgRef.current.locked ? cfgRef.current.seal : sealFor(batches.current, cfgRef.current, owner)) : [], deny: [...deny.current].slice(-SEAL_MAX), keep };
         net.sendCtrl(joined, { cfg: full }).then((t) => {
           const next = nextConfig(cfgRef.current, owner, pk, full, t);
           cfgRef.current = next; setCfg(next); rebuild();
@@ -200,6 +205,10 @@ function CoForge() {
   };
 
   const exp = exportAssembly(state.current);
+  const former = owner ? Object.entries(batches.current.reduce<Record<string, number>>((m, b) => {
+    if (b.by !== owner && !cfg.allow.includes(b.by) && batchCounts(b, cfg, owner)) m[b.by] = (m[b.by] ?? 0) + 1;
+    return m;
+  }, {})) : [];
   const html = useMemo(() => forgeAssemblyHtml(height, exp.parts, exp.own.map((b) => ({ ...b, k: BLOCKS[b.k]!.id })) as TplBlock[]), [height, exp.parts.length, exp.own.length, tick]); // eslint-disable-line react-hooks/exhaustive-deps
   const bytes = new TextEncoder().encode(html).length;
   const share = typeof window !== "undefined" && joined ? `${location.origin}/co-forge?room=${encodeURIComponent(joined)}` : "";
@@ -240,9 +249,20 @@ function CoForge() {
               <p className="text-signal">APPROVED BUILDERS</p>
               {cfg.allow.length === 0 && <p className="text-muted-foreground">Only you so far.</p>}
               {cfg.allow.map((p) => (
-                <div key={p} className="flex items-center gap-2 py-0.5"><span className="truncate">◆ {p.slice(0, 8)}…{p.slice(-4)}</span><button className="rounded border border-destructive px-2 text-destructive" onClick={() => ctrl.current?.({ allow: cfg.allow.filter((x) => x !== p), locked: cfg.locked })}>REMOVE</button></div>
+                <div key={p} className="flex items-center gap-2 py-0.5"><span className="truncate">◆ {p.slice(0, 8)}…{p.slice(-4)}</span><button className="rounded border border-destructive px-2 text-destructive" onClick={() => ctrl.current?.({ allow: cfg.allow.filter((x) => x !== p), locked: cfg.locked, revoke: p })}>REVOKE ACCESS</button></div>
               ))}
-              {cfg.allow.length > 0 && <p className="mt-1 text-muted-foreground">Removing a builder also takes out everything they built.</p>}
+              {cfg.allow.length > 0 && <p className="mt-1 text-muted-foreground">Revoking stops new edits. What they already built stays.</p>}
+            </div>
+            <div className="md:col-span-2">
+              <p className="text-signal">FORMER BUILDERS · WORK STILL IN THE BUILD</p>
+              {former.length === 0 && <p className="text-muted-foreground">None.</p>}
+              {former.map(([p, n]) => (
+                <div key={p} className="flex flex-wrap items-center gap-2 py-0.5">
+                  <span className="truncate">◇ {p.slice(0, 8)}…{p.slice(-4)} · {n} MOVE(S) KEPT</span>
+                  <button className="rounded border border-primary px-2 text-primary" onClick={() => ctrl.current?.({ allow: [...cfg.allow, p], locked: cfg.locked })}>RE-APPROVE</button>
+                  <button className="rounded border border-destructive px-2 text-destructive" onClick={() => { if (confirm(`Remove everything ${p.slice(0, 8)}… built? This takes it out of the build for everyone.`)) ctrl.current?.({ allow: cfg.allow, locked: cfg.locked, wipe: p }); }}>REMOVE THEIR WORK</button>
+                </div>
+              ))}
             </div>
           </div>
         </section>

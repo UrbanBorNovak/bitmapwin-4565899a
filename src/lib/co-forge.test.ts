@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyOp, buildState, canEdit, emptyState, exportAssembly, liveBlocks, nextConfig, openConfig, parseOp, sealFor } from "@/lib/co-forge";
+import { applyOp, buildState, canEdit, emptyState, exportAssembly, liveBlocks, nextConfig, openConfig, parseOp, sealFor, keepFor } from "@/lib/co-forge";
 
 const ID = "a".repeat(64) + "i0";
 
@@ -47,9 +47,17 @@ describe("co-forge room owner", () => {
     const s = buildState([{ ...place(1), t: 20, by: O }, { ...place(2), t: 21, by: A }, { ...place(3), t: 22, by: V }], cfg, O);
     expect(liveBlocks(s).map((b) => b.dx).sort()).toEqual([1, 2]);
   });
-  it("removing a builder drops everything they built", () => {
+  it("revoking a builder keeps their work but ignores anything new, even backdated", () => {
+    const old = { ...place(2), t: 21, by: A }, late = { ...place(4), t: 1, by: A };
+    const open = nextConfig(openConfig(), O, O, { allow: [A] }, 10);
+    const cfg = nextConfig(open, O, O, { allow: [], keep: keepFor([old], open, O, A) }, 30);
+    expect(liveBlocks(buildState([late, old], cfg, O)).map((b) => b.dx)).toEqual([2]);
+    expect(canEdit(cfg, O, A)).toBe(false);
+  });
+  it("removing a builder's contributions drops everything they built", () => {
     const hist = [{ ...place(2), t: 21, by: A }];
-    const cfg = nextConfig(nextConfig(openConfig(), O, O, { allow: [A] }, 10), O, O, { allow: [] }, 30);
+    const open = nextConfig(openConfig(), O, O, { allow: [A] }, 10);
+    const cfg = nextConfig(open, O, O, { allow: [], keep: keepFor(hist, open, O, A), purge: [A] }, 30);
     expect(liveBlocks(buildState(hist, cfg, O))).toEqual([]);
   });
   it("locking keeps sealed work, blocks later builder edits even with a faked early time; owner can still edit", () => {
