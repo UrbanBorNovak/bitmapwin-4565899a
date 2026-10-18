@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import type { ToonEpisode } from "@/lib/toon-script";
-import { applyCast, isMigrated, loadLibrary, markMigrated, mergeLibraries, newId, saveLibrary, upsertEpisode, type ToonLibrary } from "@/lib/toon-library";
+import { applyCast, episodeFromTemplate, toTemplate, isMigrated, loadLibrary, markMigrated, mergeLibraries, newId, saveLibrary, upsertEpisode, type ToonLibrary } from "@/lib/toon-library";
 import { fetchCloudLibrary, pushCloudLibrary } from "@/lib/toon-cloud";
 import { useAuthSession } from "@/lib/auth";
 
