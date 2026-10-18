@@ -52,9 +52,9 @@ export const Route = createFileRoute("/forge")({
   head: () => ({
     meta: [
       { title: "Land Forge Studio — Build, Remix & Inscribe Your BITMAP" },
-      { name: "description", content: "Drag-and-drop voxel studio for BITMAPs. Reuse community modules, pay their creators, and inscribe the finished build as a child on Bitcoin." },
+      { name: "description", content: "Design 3D voxel builds for your BITMAP. Stamp community pieces, preview your exact land boundaries, and inscribe the finished build on Bitcoin." },
       { property: "og:title", content: "Land Forge Studio — Composable On-Chain Builds" },
-      { property: "og:description", content: "Build on top of each other's work. Every creator in your build gets paid in sats the moment you inscribe." },
+      { property: "og:description", content: "Design 3D voxel builds for your BITMAP. Stamp community pieces, preview your exact land boundaries, and inscribe the finished build on Bitcoin." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

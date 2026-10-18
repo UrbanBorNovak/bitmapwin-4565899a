@@ -76,13 +76,13 @@ export const Route = createFileRoute("/marketplace")({
       {
         name: "description",
         content:
-          "Trade Bitcoin Bitmaps with real on-chain prices, bids, asks, collections and confirmed sale history.",
+          "Buy and sell BITMAPs with your own wallet signing. Filter by clubs, traits and Bitmon patterns, see fair-value price guides and confirmed sale history.",
       },
       { property: "og:title", content: "Marketplace — On-Chain Bitmap Trades" },
       {
         property: "og:description",
         content:
-          "Trade Bitcoin Bitmaps with real on-chain prices, bids, asks, collections and confirmed sale history.",
+          "Buy and sell BITMAPs with your own wallet signing. Filter by clubs, traits and Bitmon patterns, see fair-value price guides and confirmed sale history.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
