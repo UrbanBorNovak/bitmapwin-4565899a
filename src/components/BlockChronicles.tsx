@@ -245,19 +245,21 @@ export function BlockChronicles() {
           );
         })}
         {issues.length > ISSUES_PER_PAGE && (
-          <div className="col-span-2 flex items-center justify-center gap-3 border-t border-border pt-2 sm:h-[200px] sm:w-[70px] sm:shrink-0 sm:flex-col sm:gap-2 sm:border-l sm:border-t-0 sm:pl-3 sm:pt-0">
+          <div className="col-span-2 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 border-t border-border pt-2 sm:flex sm:h-[200px] sm:w-[70px] sm:shrink-0 sm:flex-col sm:gap-2 sm:border-l sm:border-t-0 sm:pl-3 sm:pt-0">
             <button
               type="button"
-              className="border border-border bg-background px-1 py-1 font-mono text-[9px] uppercase text-muted-foreground hover:border-bitcoin hover:text-foreground disabled:opacity-30"
+              aria-label="Newer issues"
+              className="min-h-[44px] w-full min-w-0 truncate border border-border bg-background px-3 py-2 font-mono text-xs font-bold uppercase text-muted-foreground hover:border-bitcoin hover:text-foreground disabled:opacity-30 sm:min-h-0 sm:w-auto sm:px-2 sm:py-1.5 sm:text-[9px]"
               disabled={cur === 0}
               onClick={() => setPage(Math.max(0, cur - 1))}
             >
               NEWER ↑
             </button>
-            <span className="font-mono text-[9px] text-muted-foreground">{cur + 1}/{pages}</span>
+            <span className="font-mono text-xs font-bold text-muted-foreground sm:text-[9px]">{cur + 1}/{pages}</span>
             <button
               type="button"
-              className="border border-border bg-background px-1 py-1 font-mono text-[9px] uppercase text-muted-foreground hover:border-bitcoin hover:text-foreground disabled:opacity-30"
+              aria-label="Older issues"
+              className="min-h-[44px] w-full min-w-0 truncate border border-border bg-background px-3 py-2 font-mono text-xs font-bold uppercase text-muted-foreground hover:border-bitcoin hover:text-foreground disabled:opacity-30 sm:min-h-0 sm:w-auto sm:px-2 sm:py-1.5 sm:text-[9px]"
               disabled={cur >= pages - 1}
               onClick={() => setPage(Math.min(pages - 1, cur + 1))}
             >
