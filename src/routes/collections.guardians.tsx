@@ -163,6 +163,7 @@ function GuardianMarket() {
       ) : null}
 
       <MyGuardianCollection />
+      <Link to="/mint" search={{ tab: "scout" }} className="btn-term-ghost mt-3 inline-block">◇ SCOUT THE GUARDIANS OF ALL MY BITMAPS →</Link>
 
       {/* Tutorial */}
       <h2 className="display mt-10 text-xl">HOW TO MINT, WITHDRAW AND LIST</h2>

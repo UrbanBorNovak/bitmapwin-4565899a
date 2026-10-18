@@ -9,6 +9,7 @@ import { useWalletSession } from "@/lib/wallet-session";
 import { MARKETPLACE_FEE_PERCENT } from "@/lib/marketplace-fee";
 import { formatSats } from "@/lib/trades";
 import { shortenAddress } from "@/lib/registry";
+import { ListPriceHint } from "@/components/market/ListPriceHint";
 
 /**
  * One-field listing: pick a price, press the button, the wallet signs the sale
@@ -119,11 +120,7 @@ export function QuickListForm({ height }: { height?: number }) {
           {list.isPending ? "[ BUILDING & SIGNING… ]" : "[ GENERATE & LIST PSBT ]"}
         </button>
       </div>
-      {priceSats !== null && (
-        <p className="mt-2 font-mono text-[11px] text-foreground">
-          &gt; ASK {formatSats(priceSats)} · {priceSats.toLocaleString("en-US")} SATS
-        </p>
-      )}
+      <ListPriceHint priceSats={priceSats} />
 
       {parcels.length > 1 && (
         <div className="mt-2 flex flex-wrap items-center gap-2">
