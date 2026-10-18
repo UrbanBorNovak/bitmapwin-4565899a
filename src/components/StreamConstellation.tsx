@@ -54,7 +54,7 @@ export function StreamConstellation({ events, height = 460 }: { events: Provenan
   useEffect(() => {
     if (!playing || !ordered.length) return;
     // keep a full replay under ~40s however deep the history is
-    const tick = Math.max(120, Math.min(450, 40_000 / ordered.length));
+    const tick = Math.max(40, Math.min(450, 40_000 / ordered.length));
     const t = setInterval(() => setStep((s) => { if (s >= ordered.length) { setPlaying(false); return s; } return s + 1; }), tick);
     return () => clearInterval(t);
   }, [playing, ordered.length]);

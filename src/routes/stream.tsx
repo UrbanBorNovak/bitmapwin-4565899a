@@ -7,7 +7,7 @@ import { StreamConstellation } from "@/components/StreamConstellation";
 import { provenanceStreamQuery } from "@/lib/provenance-stream";
 import { GenesisBroadcaster } from "@/components/GenesisBroadcaster";
 const FILTERS = ["all", "world", "chain", "account", "build", "stamp"] as const;
-const LIMITS = [40, 80, 150, 300] as const;
+const LIMITS = [100, 250, 500, 1000] as const;
 export const Route = createFileRoute("/stream")({
   head: () => ({ meta: [
     { title: "World Stream — Verified BitmapWin History" },
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/stream")({
 function StreamPage() {
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
   const [view, setView] = useState<"graph" | "list">("graph");
-  const [limit, setLimit] = useState<(typeof LIMITS)[number]>(80);
+  const [limit, setLimit] = useState<(typeof LIMITS)[number]>(250);
   const stream = useQuery(provenanceStreamQuery(filter, limit));
   return <main className="mx-auto max-w-[1200px] px-4 py-10 md:px-8 md:py-14"><p className="label text-bitcoin">HISTORY IN MOTION</p><h1 className="display mt-3 text-4xl md:text-6xl">WORLD STREAM</h1><p className="mt-4 max-w-2xl text-sm text-muted-foreground">Real actions, connected to their proof. Watch each event grow onto its BITMAP and link to the wallets that made it.</p><div className="mt-6"><LoopNavigator active="provenance" /></div>
     <GenesisBroadcaster />
