@@ -75,7 +75,7 @@ function ErrorComponent({ error, reset }: { error: unknown; reset: () => void })
   const router = useRouter();
   const chunk = isChunkError(error);
   useEffect(() => {
-    if (reloadOnStaleChunk(error)) return;
+    if (reloadOnStaleChunk(error)) return undefined;
     if (chunk) {
       // Fast retries exhausted (e.g. preview still restarting): keep retrying slowly, never stay blank.
       const t = window.setTimeout(() => window.location.reload(), 10_000);
