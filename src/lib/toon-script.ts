@@ -4,7 +4,13 @@
 export type Pose = "idle" | "walk" | "talk" | "jump" | "combat";
 export type Shot = "wide" | "orbit" | "dolly" | "dutch" | "crane";
 
-export interface ToonActor { height: number; name: string; x: number; z: number; pose: Pose; to?: { x: number; z: number }; moveStart?: number; moveEnd?: number; }
+export type Emote = "love" | "happy" | "afraid" | "terrified" | "lonely" | "sad" | "angry" | "surprised" | "sleepy";
+export const EMOTES: { v: Emote; label: string; icon: string }[] = [
+  { v: "love", label: "Love", icon: "💖" }, { v: "happy", label: "Happy", icon: "✨" }, { v: "afraid", label: "Afraid", icon: "💧" },
+  { v: "terrified", label: "Terrified", icon: "⚡" }, { v: "lonely", label: "Lonely", icon: "☁️" }, { v: "sad", label: "Sad", icon: "😢" },
+  { v: "angry", label: "Angry", icon: "💢" }, { v: "surprised", label: "Surprised", icon: "❗" }, { v: "sleepy", label: "Sleepy", icon: "💤" },
+];
+export interface ToonActor { height: number; name: string; x: number; z: number; pose: Pose; emote?: Emote; to?: { x: number; z: number }; moveStart?: number; moveEnd?: number; }
 
 /** Where an actor stands at scene-local time `local` (s) in a scene of `dur` s: eased glide from (x,z) to `to`
  * between moveStart and moveEnd seconds (default: whole scene); waits before, holds after; static when no `to`. */
@@ -93,6 +99,7 @@ export function parseEpisode(json: string): ToonEpisode {
     if (!SHOTS.includes(s.shot)) throw new Error(`Unknown shot "${s.shot}".`);
     if (!Array.isArray(s.cast) || s.cast.length > 4) throw new Error("Up to 4 Guardians per scene.");
     for (const c of s.cast) if (!okBlock(c.height) || !POSES.includes(c.pose)) throw new Error("Each actor needs a valid block and pose.");
+    for (const c of s.cast) if (c.emote && !EMOTES.some((x) => x.v === c.emote)) delete c.emote;
     if (!Array.isArray(s.lines)) s.lines = [];
   }
   return { title: String(e.title ?? "Untitled"), aspect: e.aspect === "9:16" ? "9:16" : "16:9", scenes: e.scenes, music: MUSIC.includes(e.music as Music) ? (e.music as Music) : "adventure", voices: e.voices !== false, ...(["manga", "ghibli", "shonen", "noir", "retro"].includes(e.style as string) ? { style: e.style as NonNullable<ToonEpisode["style"]> } : {}) };

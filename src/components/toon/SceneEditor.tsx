@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type PointerEvent as RPointerEvent } from 
 import type { ContinuityNote, ToonCharacter } from "@/lib/toon-library";
 import { ContinuityHint } from "@/components/toon/ContinuityNotebook";
 import { CharacterHint } from "@/components/toon/CharacterProfiles";
-import { MAX_SCENE_SECONDS, MAX_SCENES, type Pose, type Shot, type ToonEpisode, type ToonLine, type ToonScene } from "@/lib/toon-script";
+import { EMOTES, MAX_SCENE_SECONDS, MAX_SCENES, type Emote, type Pose, type Shot, type ToonEpisode, type ToonLine, type ToonScene } from "@/lib/toon-script";
 
 const SHOTS: { v: Shot; label: string }[] = [
   { v: "wide", label: "Wide sweep" }, { v: "orbit", label: "Orbit" }, { v: "dolly", label: "Dolly in" },
@@ -80,9 +80,19 @@ export function SceneEditor({ episode, onChange, onSeek, characters = [], notes 
         <div key={k} className="mt-2 grid grid-cols-[1fr_1fr_auto] gap-2">
           <input className={field} inputMode="numeric" aria-label="Guardian block" value={a.height}
             onChange={(e) => { const h = num(e.target.value.replace(/\D/g, ""), 0, 1_999_999); patch({ cast: s.cast.map((c, j) => (j === k ? { ...c, height: h, name: `${h}.bitmap` } : c)) }); }} />
-          <select className={field} value={a.pose} aria-label="Guardian action" onChange={(e) => patch({ cast: s.cast.map((c, j) => (j === k ? { ...c, pose: e.target.value as Pose } : c)) })}>
-            {POSES.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
-          </select>
+          <div className="grid gap-1">
+            <select className={field} value={a.pose} aria-label="Guardian action" onChange={(e) => patch({ cast: s.cast.map((c, j) => (j === k ? { ...c, pose: e.target.value as Pose } : c)) })}>
+              {POSES.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
+            </select>
+            <select className={field} value={a.emote ?? ""} aria-label="Guardian emote" onChange={(e) => patch({ cast: s.cast.map((c, j) => {
+              if (j !== k) return c;
+              if (!e.target.value) { const { emote: _e, ...rest } = c; return rest; }
+              return { ...c, emote: e.target.value as Emote };
+            }) })}>
+              <option value="">No emote</option>
+              {EMOTES.map((o) => <option key={o.v} value={o.v}>{o.icon} {o.label}</option>)}
+            </select>
+          </div>
           <button className="px-2 font-mono text-[11px] text-muted-foreground hover:text-bitcoin" aria-label="Remove Guardian"
             onClick={() => patch({ cast: s.cast.filter((_, j) => j !== k), lines: s.lines.filter((l) => l.speaker !== k).map((l) => ({ ...l, speaker: l.speaker > k ? l.speaker - 1 : l.speaker })) })}>✕</button>
           <div className="col-span-3 text-[10px] font-mono text-muted-foreground">{a.to ? "START POSITION" : "POSITION"}</div>

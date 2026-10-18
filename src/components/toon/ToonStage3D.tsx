@@ -1,7 +1,34 @@
 import { useMemo, useRef, type MutableRefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useQuery } from "@tanstack/react-query";
-import type { Group } from "three";
+import { CanvasTexture, SRGBColorSpace, type Group, type Sprite } from "three";
+import { EMOTES, type Emote } from "@/lib/toon-script";
+
+/** Comic emote bubble drawn once to a canvas texture so it bakes into exports. */
+function EmoteIcon({ emote, timeRef }: { emote: Emote; timeRef: MutableRefObject<number> }) {
+  const sp = useRef<Sprite>(null);
+  const tex = useMemo(() => {
+    const c = document.createElement("canvas"); c.width = c.height = 128;
+    const x = c.getContext("2d")!;
+    x.fillStyle = "#fff"; x.strokeStyle = "#111"; x.lineWidth = 6;
+    x.beginPath(); x.arc(64, 58, 50, 0, Math.PI * 2); x.fill(); x.stroke();
+    x.beginPath(); x.moveTo(50, 104); x.lineTo(64, 124); x.lineTo(76, 104); x.fill();
+    x.font = "60px serif"; x.textAlign = "center"; x.textBaseline = "middle";
+    x.fillText(EMOTES.find((e) => e.v === emote)?.icon ?? "", 64, 62);
+    const t = new CanvasTexture(c); t.colorSpace = SRGBColorSpace; return t;
+  }, [emote]);
+  useFrame(() => {
+    const o = sp.current, t = timeRef.current;
+    if (!o) return;
+    let s = 0.45, y = 1.5;
+    if (emote === "love" || emote === "happy") s *= 1 + Math.abs(Math.sin(t * 4)) * 0.18;
+    if (emote === "terrified" || emote === "afraid") o.position.x = Math.sin(t * 40) * 0.03;
+    if (emote === "sad" || emote === "lonely" || emote === "sleepy") y += Math.sin(t * 1.2) * 0.06;
+    if (emote === "surprised" || emote === "angry") s *= 1 + Math.max(0, Math.sin(t * 6)) * 0.25;
+    o.position.y = y; o.scale.setScalar(s);
+  });
+  return <sprite ref={sp} position={[0, 1.5, 0]}><spriteMaterial map={tex} depthTest={false} transparent /></sprite>;
+}
 import { guardianDnaQuery } from "@/lib/bitmon-queries";
 import { forgeBuildQuery } from "@/lib/forge";
 import { blockSizeMapQuery } from "@/lib/block-bytes";
@@ -28,15 +55,28 @@ function Actor({ actor, timeRef, progressRef, durRef }: { actor: ToonActor; time
     if (actor.pose === "talk") { y = Math.abs(Math.sin(t * 8)) * 0.35; s = 1 + Math.sin(t * 8) * 0.03; }
     if (actor.pose === "jump") y = Math.max(0, Math.sin(t * 3.5)) * 4;
     if (actor.pose === "combat") { rz = Math.sin(t * 10) * 0.08; s = 1.08; }
+    let rx = 0, sy = 1;
+    switch (actor.emote) {
+      case "love": rz += Math.sin(t * 2) * 0.1; y += Math.sin(t * 3) * 0.3 + 0.3; break;
+      case "happy": y += Math.abs(Math.sin(t * 9)) * 0.9; break;
+      case "afraid": x += Math.sin(t * 35) * 0.12; sy = 0.9; rx = -0.12; break;
+      case "terrified": x += Math.sin(t * 60) * 0.3; rz += Math.sin(t * 47) * 0.1; rx = -0.3; break;
+      case "lonely": rx = 0.25; y = Math.sin(t * 0.8) * 0.08; break;
+      case "sad": rx = 0.35; sy = 0.88; y = 0; break;
+      case "angry": rz += Math.sin(t * 25) * 0.05; s *= 1.1; break;
+      case "surprised": y += Math.max(0, Math.sin(t * 4)) * 1.2; sy = 1.08; break;
+      case "sleepy": rz += Math.sin(t * 0.9) * 0.15; rx = 0.2; break;
+    }
     o.position.set(x, y, pos.z);
-    o.rotation.set(0, ry, rz);
-    o.scale.setScalar(10 * s);
+    o.rotation.set(rx, ry, rz);
+    o.scale.set(10 * s, 10 * s * sy, 10 * s);
   });
   const d = dna.data;
   if (!d) return null;
   return (
     <group ref={g}>
       <GuardianBody species={d.species} rarity={d.rarity} body={d.body} accent={d.accent} height={actor.height} inscribed />
+      {actor.emote && <EmoteIcon emote={actor.emote} timeRef={timeRef} />}
     </group>
   );
 }
