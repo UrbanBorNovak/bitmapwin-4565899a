@@ -119,6 +119,6 @@ $('f').onclick=fetchBuild;
 const save=(data,name,type)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click()};
 $('x').onclick=()=>{const s=pack(),b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);save(b,H+'.bwvx','application/octet-stream')};
 $('v').onclick=()=>{const html='<!doctype html>'+document.documentElement.outerHTML.replace(/data-b="[^"]*"/,'data-b="'+btoa(pack())+'"').replace(/content="BWVX1;\\d+/,'content="BWVX1;'+H);save(html,H+'.bitmap-build.html','text/html')};
-$('h').value=H;const b0=$('d').dataset.b;b0?load(b0):seed(H);draw();
+$('h').value=H;const b0=$('d').dataset.b;if(b0)load(b0);else{seed(H);$('q').value=H;fetchBuild()}draw();
 </script></body></html>`;
 }
