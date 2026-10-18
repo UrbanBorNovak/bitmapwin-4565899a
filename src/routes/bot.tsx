@@ -30,14 +30,14 @@ export const Route = createFileRoute("/bot")({
     };
   },
   validateSearch: (s: Record<string, unknown>): BotSearch => ({
-    maxSats: optInt(s.maxSats),
-    minHeight: optInt(s.minHeight),
-    maxHeight: optInt(s.maxHeight),
+    maxSats: optInt(s["maxSats"]),
+    minHeight: optInt(s["minHeight"]),
+    maxHeight: optInt(s["maxHeight"]),
   }),
   component: BotPage,
 });
 
-type BotSearch = { maxSats?: number; minHeight?: number; maxHeight?: number };
+type BotSearch = { maxSats?: number | undefined; minHeight?: number | undefined; maxHeight?: number | undefined };
 function optInt(v: unknown): number | undefined {
   const n = Number(v);
   return v === undefined || v === "" || !Number.isFinite(n) || n < 0 ? undefined : Math.floor(n);
