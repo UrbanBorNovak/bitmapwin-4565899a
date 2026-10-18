@@ -93,46 +93,67 @@ const pct = (x: number) => `${(x * 100).toFixed(x < 0.1 ? 1 : 0)}%`;
 
 /** Two gene strands (sire left, dam right) flowing into a pulsing core. Purely decorative. */
 function GeneFusion({ fast }: { fast: boolean }) {
-  const dur = fast ? "0.6s" : "2.4s";
-  const helix = (x0: number, dir: 1 | -1, cls: string) => {
-    const pts = Array.from({ length: 9 }, (_, k) => k);
-    return (
-      <g className={cls}>
-        {pts.map((k) => {
-          const x = x0 + dir * k * 14;
-          const y = 100 + Math.sin(k * 0.9) * 22;
-          const y2 = 100 - Math.sin(k * 0.9) * 22;
-          return (
-            <g key={k}>
-              <line x1={x} y1={y} x2={x} y2={y2} stroke="currentColor" strokeOpacity="0.35" />
-              <circle cx={x} cy={y} r="3" fill="currentColor"><animate attributeName="cy" values={`${y};${y2};${y}`} dur={dur} begin={`${k * 0.12}s`} repeatCount="indefinite" /></circle>
-              <circle cx={x} cy={y2} r="3" fill="currentColor" fillOpacity="0.6"><animate attributeName="cy" values={`${y2};${y};${y2}`} dur={dur} begin={`${k * 0.12}s`} repeatCount="indefinite" /></circle>
-            </g>
-          );
-        })}
-        {[0, 1, 2].map((p) => (
-          <circle key={p} r="2.5" fill="currentColor">
-            <animate attributeName="cx" values={`${x0};${150}`} dur={dur} begin={`${p * 0.5}s`} repeatCount="indefinite" />
-            <animate attributeName="cy" values="100;100" dur={dur} repeatCount="indefinite" />
-            <animate attributeName="opacity" values="1;0" dur={dur} begin={`${p * 0.5}s`} repeatCount="indefinite" />
-          </circle>
-        ))}
-      </g>
-    );
+  // Phase drives a real twist: parent strands flow in from each side and wind
+  // into a rotating double helix in the centre.
+  const [t, setT] = useState(0);
+  const speed = useRef(1);
+  speed.current = fast ? 4 : 1;
+  useEffect(() => {
+    let raf = 0, last = performance.now(), acc = 0;
+    const loop = (now: number) => { acc += ((now - last) / 1000) * speed.current; last = now; setT(acc); raf = requestAnimationFrame(loop); };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  const CX = 150, CY = 100, AMP = 26, TOP = 30, BOT = 170;
+  const phase = t * 2.2;
+  // Incoming parent streams: wavy lines from each edge into the helix ends.
+  const stream = (side: 1 | -1) => {
+    const pts: string[] = [];
+    for (let k = 0; k <= 24; k++) {
+      const u = k / 24;
+      const x = side === 1 ? 8 + u * (CX - 30 - 8) : 292 - u * (292 - (CX + 30));
+      const y = CY + Math.sin(u * 9 - phase * 1.5) * 14 * (1 - u * 0.6);
+      pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+    }
+    return pts.join(" ");
   };
+  // Central helix: two strands sharing y, offset by π in x.
+  const rungs = Array.from({ length: 15 }, (_, k) => {
+    const y = TOP + (k / 14) * (BOT - TOP);
+    const a = k * 0.62 + phase;
+    return { y, xa: CX + Math.sin(a) * AMP, xb: CX - Math.sin(a) * AMP, za: Math.cos(a) };
+  });
+  const strand = (s: 1 | -1) => rungs.map((r) => `${(s === 1 ? r.xa : r.xb).toFixed(1)},${r.y.toFixed(1)}`).join(" ");
+  const pulse = 1 + Math.sin(t * 6) * 0.15;
   return (
-    <svg viewBox="0 0 300 200" className="mx-auto w-full max-w-[320px]" role="img" aria-label="Genes from both parents combining">
+    <svg viewBox="0 0 300 200" className="mx-auto w-full max-w-[320px]" role="img" aria-label="Genes from both parents twisting into one DNA helix">
       <text x="6" y="20" className="fill-current text-signal" fontSize="9" fontFamily="Space Mono, monospace">SIRE</text>
       <text x="294" y="20" textAnchor="end" className="fill-current text-primary" fontSize="9" fontFamily="Space Mono, monospace">DAM</text>
-      {helix(10, 1, "text-signal")}
-      {helix(290, -1, "text-primary")}
-      <g className="text-foreground">
-        <circle cx="150" cy="100" r="18" fill="none" stroke="currentColor" strokeOpacity="0.5" strokeDasharray="3 4">
-          <animateTransform attributeName="transform" type="rotate" from="0 150 100" to="360 150 100" dur={fast ? "1s" : "6s"} repeatCount="indefinite" />
-        </circle>
-        <circle cx="150" cy="100" r="8" fill="currentColor"><animate attributeName="r" values="6;11;6" dur={fast ? "0.4s" : "1.6s"} repeatCount="indefinite" /></circle>
-        <text x="150" y="150" textAnchor="middle" className="fill-current" fontSize="10" fontFamily="Space Mono, monospace">? ? ?</text>
-      </g>
+      <polyline points={stream(1)} fill="none" stroke="currentColor" strokeWidth="2" className="text-signal" strokeOpacity="0.8" />
+      <polyline points={stream(-1)} fill="none" stroke="currentColor" strokeWidth="2" className="text-primary" strokeOpacity="0.8" />
+      {[0, 1, 2, 3].map((p) => {
+        const u = ((t * 0.6 + p / 4) % 1);
+        const yL = CY + Math.sin(u * 9 - phase * 1.5) * 14 * (1 - u * 0.6);
+        return (
+          <g key={p} opacity={1 - u * 0.5}>
+            <circle cx={8 + u * (CX - 38)} cy={yL} r="3" className="fill-current text-signal" />
+            <circle cx={292 - u * (292 - CX - 30)} cy={yL} r="3" className="fill-current text-primary" />
+          </g>
+        );
+      })}
+      {rungs.map((r, k) => (
+        <line key={k} x1={r.xa} y1={r.y} x2={r.xb} y2={r.y} stroke="currentColor" className="text-foreground" strokeOpacity={0.15 + Math.abs(r.za) * 0.35} />
+      ))}
+      <polyline points={strand(-1)} fill="none" stroke="currentColor" strokeWidth="2.5" className="text-primary" />
+      <polyline points={strand(1)} fill="none" stroke="currentColor" strokeWidth="2.5" className="text-signal" />
+      {rungs.map((r, k) => (
+        <g key={`n${k}`}>
+          <circle cx={r.xa} cy={r.y} r={2.5 + (r.za + 1)} className="fill-current text-signal" fillOpacity={0.5 + r.za * 0.5 * 0.9 + 0.05} />
+          <circle cx={r.xb} cy={r.y} r={2.5 + (1 - r.za)} className="fill-current text-primary" fillOpacity={0.5 - r.za * 0.45} />
+        </g>
+      ))}
+      <circle cx={CX} cy={CY} r={10 * pulse} fill="none" stroke="currentColor" className="text-foreground" strokeOpacity="0.4" strokeDasharray="2 3" />
+      <text x={CX} y="192" textAnchor="middle" className="fill-current text-foreground" fontSize="10" fontFamily="Space Mono, monospace">? ? ?</text>
     </svg>
   );
 }
