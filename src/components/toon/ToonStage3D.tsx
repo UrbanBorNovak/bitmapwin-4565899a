@@ -2,7 +2,27 @@ import { useEffect, useMemo, useRef, type MutableRefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useQuery } from "@tanstack/react-query";
 import { CanvasTexture, SRGBColorSpace, type Group, type Sprite } from "three";
-import { EMOTES, type Emote } from "@/lib/toon-script";
+import type { Emote } from "@/lib/toon-script";
+
+/** Vector comic icons (no emoji fonts) so every browser and export draws the same thing. */
+function drawEmote(x: CanvasRenderingContext2D, e: Emote) {
+  x.lineJoin = x.lineCap = "round"; x.lineWidth = 5; x.strokeStyle = "#111";
+  const txt = (s: string, col: string, size = 64) => { x.font = `900 ${size}px sans-serif`; x.textAlign = "center"; x.textBaseline = "middle"; x.fillStyle = col; x.fillText(s, 64, 62); x.strokeText(s, 64, 62); };
+  x.beginPath();
+  switch (e) {
+    case "love": x.moveTo(64, 88); x.bezierCurveTo(20, 60, 34, 22, 64, 44); x.bezierCurveTo(94, 22, 108, 60, 64, 88); x.fillStyle = "#ff3b6b"; x.fill(); x.stroke(); break;
+    case "happy": for (let i = 0; i < 10; i++) { const r = i % 2 ? 14 : 32, a = -Math.PI / 2 + (i * Math.PI) / 5; x.lineTo(64 + Math.cos(a) * r, 58 + Math.sin(a) * r); } x.closePath(); x.fillStyle = "#ffd23f"; x.fill(); x.stroke(); break;
+    case "afraid": x.moveTo(64, 24); x.bezierCurveTo(90, 60, 88, 90, 64, 90); x.bezierCurveTo(40, 90, 38, 60, 64, 24); x.fillStyle = "#6cc8ff"; x.fill(); x.stroke(); break;
+    case "terrified": x.moveTo(72, 18); x.lineTo(42, 64); x.lineTo(62, 64); x.lineTo(52, 98); x.lineTo(86, 50); x.lineTo(66, 50); x.closePath(); x.fillStyle = "#ffe14d"; x.fill(); x.stroke(); break;
+    case "lonely": x.arc(48, 62, 18, Math.PI * 0.5, Math.PI * 1.5); x.arc(66, 46, 22, Math.PI, 0); x.arc(84, 62, 16, Math.PI * 1.5, Math.PI * 0.5); x.closePath(); x.fillStyle = "#9aa5b8"; x.fill(); x.stroke();
+      x.beginPath(); for (const dx of [50, 66, 82]) { x.moveTo(dx, 84); x.lineTo(dx - 4, 96); } x.strokeStyle = "#3b82f6"; x.stroke(); break;
+    case "sad": x.arc(64, 58, 28, 0, Math.PI * 2); x.fillStyle = "#ffd23f"; x.fill(); x.stroke(); x.beginPath(); x.arc(64, 78, 12, Math.PI * 1.15, Math.PI * 1.85); x.stroke();
+      x.fillStyle = "#111"; x.fillRect(51, 48, 5, 7); x.fillRect(72, 48, 5, 7); x.beginPath(); x.ellipse(52, 66, 4, 7, 0, 0, Math.PI * 2); x.fillStyle = "#6cc8ff"; x.fill(); break;
+    case "angry": x.strokeStyle = "#e11d2e"; x.lineWidth = 9; for (const [a, b] of [[1, 1], [-1, 1], [1, -1], [-1, -1]] as const) { x.moveTo(64 + a * 8, 58 + b * 26); x.quadraticCurveTo(64 + a * 8, 58 + b * 8, 64 + a * 26, 58 + b * 8); } x.stroke(); break;
+    case "surprised": txt("!", "#ff6a00", 80); break;
+    case "sleepy": txt("Zz", "#7c8cff", 52); break;
+  }
+}
 
 /** Comic emote bubble drawn once to a canvas texture so it bakes into exports. */
 function EmoteIcon({ emote, timeRef }: { emote: Emote; timeRef: MutableRefObject<number> }) {
@@ -13,8 +33,7 @@ function EmoteIcon({ emote, timeRef }: { emote: Emote; timeRef: MutableRefObject
     x.fillStyle = "#fff"; x.strokeStyle = "#111"; x.lineWidth = 6;
     x.beginPath(); x.arc(64, 58, 50, 0, Math.PI * 2); x.fill(); x.stroke();
     x.beginPath(); x.moveTo(50, 104); x.lineTo(64, 124); x.lineTo(76, 104); x.fill();
-    x.font = "60px 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif"; x.textAlign = "center"; x.textBaseline = "middle";
-    x.fillText(EMOTES.find((e) => e.v === emote)?.icon ?? "", 64, 62);
+    drawEmote(x, emote);
     const t = new CanvasTexture(c); t.colorSpace = SRGBColorSpace; return t;
   }, [emote]);
   useEffect(() => () => tex.dispose(), [tex]);
