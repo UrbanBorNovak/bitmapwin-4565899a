@@ -1,6 +1,7 @@
 import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { episodeLength, generateEpisode, parseEpisode, sceneAt, MUSIC, type Music, type ToonEpisode } from "@/lib/toon-script";
+import { TOON_STYLES, paintStyle, styleFilter, type ToonStyle } from "@/lib/toon-style";
 import { SceneEditor } from "@/components/toon/SceneEditor";
 import { ToonLibraryPanel } from "@/components/toon/ToonLibraryPanel";
 import type { ContinuityNote, ToonCharacter } from "@/lib/toon-library";
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/toon")({
 /** Draws title card, captions and comic bubbles onto a 2D context (shared by screen + recording). */
 function drawOverlay(ctx: CanvasRenderingContext2D, w: number, h: number, ep: ToonEpisode, t: number) {
   ctx.clearRect(0, 0, w, h);
+  paintStyle(ctx, w, h, ep.style, t);
   const { index, local } = sceneAt(ep, t);
   const s = ep.scenes[index];
   if (!s) return;
@@ -180,7 +182,9 @@ function ToonPage() {
       // Cover-fit the stage into the exact X frame size.
       const s = Math.max(W / gl.width, H / gl.height), dw = gl.width * s, dh = gl.height * s;
       ctx.fillStyle = "#0a0e14"; ctx.fillRect(0, 0, W, H);
+      ctx.filter = styleFilter(episode.style);
       ctx.drawImage(gl, (W - dw) / 2, (H - dh) / 2, dw, dh);
+      ctx.filter = "none";
       drawOverlay(octx, W, H, episode, timeRef.current);
       ctx.drawImage(over, 0, 0);
       rec.addFrame(out, timeRef.current);
@@ -228,11 +232,13 @@ function ToonPage() {
       <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_420px]">
         <div>
           <div ref={stageRef} className={`relative mx-auto overflow-hidden rounded-lg border border-border bg-card ${vertical ? "aspect-[9/16] max-h-[78vh]" : "aspect-video"}`}>
+            <div className="absolute inset-0" style={{ filter: styleFilter(episode.style) }}>
             <ClientOnly fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING STAGE…</div>}>
               <Suspense fallback={<div className="grid h-full place-items-center font-mono text-xs text-muted-foreground">LOADING STAGE…</div>}>
                 <ToonStage3D episode={episode} time={time} />
               </Suspense>
             </ClientOnly>
+            </div>
             <canvas ref={overlayRef} className="pointer-events-none absolute inset-0 h-full w-full" />
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2 font-mono text-xs">
@@ -243,6 +249,14 @@ function ToonPage() {
             <input type="range" min={0} max={total} step={0.05} value={time} disabled={recording}
               onChange={(e) => { setPlaying(false); setTime(Number(e.target.value)); }} className="min-w-40 flex-1" aria-label="Timeline" />
             <span className="text-muted-foreground">{time.toFixed(1)}s / {total.toFixed(0)}s</span>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 font-mono text-xs">
+            <span className="label text-signal">ART STYLE</span>
+            {TOON_STYLES.map((s) => (
+              <button key={s.id} disabled={recording} aria-pressed={(episode.style ?? "classic") === s.id}
+                className={(episode.style ?? "classic") === s.id ? "btn-term" : "btn-term-ghost"}
+                onClick={() => { const n = { ...episode, style: s.id as ToonStyle }; setEpisode(n); setScript(JSON.stringify(n, null, 2)); }}>[ {s.label} ]</button>
+            ))}
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2 font-mono text-xs">
             <span className="label text-signal">SOUND</span>

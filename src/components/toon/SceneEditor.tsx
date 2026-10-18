@@ -254,7 +254,7 @@ function SceneTimeline({ duration, rows }: { duration: number; rows: TimelineRow
       <div className="relative h-4 font-mono text-[9px] text-muted-foreground">
         {ticks.map((t) => <span key={t} className="absolute -translate-x-1/2 first:translate-x-0 last:-translate-x-full" style={{ left: `${(t / duration) * 100}%` }}>{t.toFixed(step < 0.5 ? 2 : step < 1 ? 1 : 0)}s</span>)}
       </div>
-      <div className="relative space-y-1 pb-4">
+      <div className="relative mt-1 space-y-1 pb-7">
         {rows.map((r) => {
           const left = (r.start / duration) * 100, width = Math.max(2, ((Math.min(r.end, duration) - r.start) / duration) * 100);
           const tone = r.kind === "move" ? "border-bitcoin bg-bitcoin/25 text-bitcoin" : "border-signal bg-signal/20 text-signal";
@@ -273,8 +273,8 @@ function SceneTimeline({ duration, rows }: { duration: number; rows: TimelineRow
           const gp = (guide / duration) * 100;
           const shift = gp < 10 ? "translateX(0)" : gp > 90 ? "translateX(-100%)" : "translateX(-50%)";
           return (
-            <div className="pointer-events-none absolute inset-y-0 z-10 w-px bg-foreground" style={{ left: `${gp}%` }}>
-              <span className="absolute bottom-0 bg-foreground px-1 font-mono text-[9px] leading-4 text-background" style={{ transform: shift }}>{guide.toFixed(1)}s</span>
+            <div className="pointer-events-none absolute bottom-6 top-0 z-10 w-px bg-foreground" style={{ left: `${gp}%` }}>
+              <span className="absolute -bottom-6 whitespace-nowrap rounded-sm bg-foreground px-1.5 font-mono text-[10px] leading-5 text-background shadow" style={{ transform: shift }}>SNAP {guide.toFixed(1)}s</span>
             </div>
           );
         })()}
