@@ -171,7 +171,7 @@ export default function ToonStage3D({ episode, time }: { episode: ToonEpisode; t
       <hemisphereLight args={["#ffffff", "#d9b77a", 0.9]} />
       <directionalLight position={[40, 80, 30]} intensity={1.8} />
       <Land key={scene.block} block={scene.block} />
-      {scene.cast.map((a, i) => <Actor key={`${index}-${i}-${a.height}`} actor={a} timeRef={timeRef} progressRef={progressRef} durRef={durRef} />)}
+      {scene.cast.map((a, i) => <Actor key={`${index}-${i}-${a.height}`} actor={a} slot={i} scene={index} timeRef={timeRef} progressRef={progressRef} durRef={durRef} />)}
       <Director shot={scene.shot} local={local} dur={scene.duration} />
     </SafeCanvas>
   );
