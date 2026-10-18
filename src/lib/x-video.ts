@@ -11,7 +11,16 @@ export function canEncodeMp4() {
   return typeof window !== "undefined" && "VideoEncoder" in window && "VideoFrame" in window;
 }
 
-export async function createXRecorder(canvas: HTMLCanvasElement): Promise<XRecorder> {
+import { playSoundtrack, sharedCtx } from "@/lib/toon-audio";
+
+async function aacSupported(sr: number) {
+  if (typeof AudioEncoder === "undefined") return false;
+  const ok = await AudioEncoder.isConfigSupported({ codec: "mp4a.40.2", sampleRate: sr, numberOfChannels: 2, bitrate: 128_000 }).catch(() => null);
+  return !!ok?.supported;
+}
+
+/** `hasAudio` on the result tells the caller whether the soundtrack made it into the file. */
+export async function createXRecorder(canvas: HTMLCanvasElement, audio?: AudioBuffer | null): Promise<XRecorder & { hasAudio: boolean }> {
   const { width, height } = canvas;
   if (canEncodeMp4()) {
     let codec = "";
@@ -22,13 +31,16 @@ export async function createXRecorder(canvas: HTMLCanvasElement): Promise<XRecor
     if (codec) {
       const { Muxer, ArrayBufferTarget } = await import("mp4-muxer");
       const target = new ArrayBufferTarget();
-      const muxer = new Muxer({ target, video: { codec: "avc", width, height, frameRate: X_FPS }, fastStart: "in-memory" });
+      const withAudio = !!audio && (await aacSupported(audio.sampleRate));
+      const muxer = new Muxer({ target, video: { codec: "avc", width, height, frameRate: X_FPS },
+        ...(withAudio && audio ? { audio: { codec: "aac" as const, numberOfChannels: 2, sampleRate: audio.sampleRate } } : {}), fastStart: "in-memory" });
       let err: unknown = null;
       const enc = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m ?? undefined), error: (e) => { err = e; } });
       enc.configure({ codec, width, height, bitrate: 6_000_000, framerate: X_FPS, avc: { format: "avc" } });
       let n = 0;
       return {
         kind: "mp4",
+        hasAudio: withAudio,
         addFrame(c, t) {
           // Emit constant-rate frames up to time t so the file is true 30 fps CFR.
           while (n / X_FPS <= t) {
@@ -41,6 +53,20 @@ export async function createXRecorder(canvas: HTMLCanvasElement): Promise<XRecor
         async finish() {
           await enc.flush(); enc.close();
           if (err) throw err;
+          if (withAudio && audio) {
+            const aenc = new AudioEncoder({ output: (c, m) => muxer.addAudioChunk(c, m ?? undefined), error: (e) => { err = e; } });
+            aenc.configure({ codec: "mp4a.40.2", sampleRate: audio.sampleRate, numberOfChannels: 2, bitrate: 128_000 });
+            const L = audio.getChannelData(0), R = audio.getChannelData(audio.numberOfChannels > 1 ? 1 : 0);
+            const end = Math.min(audio.length, Math.ceil((n / X_FPS) * audio.sampleRate)), CH = 4096;
+            for (let i = 0; i < end; i += CH) {
+              const len = Math.min(CH, end - i), data = new Float32Array(len * 2);
+              data.set(L.subarray(i, i + len), 0); data.set(R.subarray(i, i + len), len);
+              const ad = new AudioData({ format: "f32-planar", sampleRate: audio.sampleRate, numberOfFrames: len, numberOfChannels: 2, timestamp: Math.round((i / audio.sampleRate) * 1e6), data });
+              aenc.encode(ad); ad.close();
+            }
+            await aenc.flush(); aenc.close();
+            if (err) throw err;
+          }
           muxer.finalize();
           return new Blob([target.buffer], { type: "video/mp4" });
         },
@@ -48,14 +74,22 @@ export async function createXRecorder(canvas: HTMLCanvasElement): Promise<XRecor
     }
   }
   const type = ["video/mp4;codecs=avc1.42E01E", "video/mp4;codecs=avc1", "video/webm;codecs=vp9", "video/webm"].find((m) => MediaRecorder.isTypeSupported(m)) ?? "";
-  const rec = new MediaRecorder(canvas.captureStream(X_FPS), type ? { mimeType: type, videoBitsPerSecond: 6_000_000 } : undefined);
+  const stream = canvas.captureStream(X_FPS);
+  let stopAudio = () => {};
+  if (audio) {
+    const dest = sharedCtx().createMediaStreamDestination();
+    for (const t of dest.stream.getAudioTracks()) stream.addTrack(t);
+    stopAudio = playSoundtrack(audio, 0, dest);
+  }
+  const rec = new MediaRecorder(stream, type ? { mimeType: type, videoBitsPerSecond: 6_000_000 } : undefined);
   const chunks: Blob[] = [];
   rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
   rec.start(500);
   return {
     kind: type.includes("mp4") ? "mp4" : "webm",
+    hasAudio: !!audio,
     addFrame() {},
-    finish: () => new Promise((res) => { rec.onstop = () => res(new Blob(chunks, { type: type || "video/webm" })); rec.stop(); }),
+    finish: () => new Promise((res) => { rec.onstop = () => { stopAudio(); res(new Blob(chunks, { type: type || "video/webm" })); }; rec.stop(); }),
   };
 }
 
