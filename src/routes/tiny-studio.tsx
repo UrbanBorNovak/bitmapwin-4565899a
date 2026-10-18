@@ -101,11 +101,11 @@ function TinyStudio() {
           <div className="space-y-2 border-t border-border pt-3 text-muted-foreground">
             <p className="text-foreground">HOW TO USE</p>
             <p>VIEW switches between ORBIT (drag to turn, scroll or pinch to zoom) and WALK (W A S D to move, Shift to run, drag to look; on a phone, drag in the left circle to move).</p>
-            <p>LOOK, PLACE and ERASE decide what a click or tap does — LOOK never changes anything. Keys 1, 2, 3 pick them, V switches the view. SEED rebuilds the starting ground for any block number.</p>
+            <p>LOOK, PLACE and ERASE decide what a click or tap does — LOOK never changes anything. Keys 1, 2, 3 pick them, V switches the view..</p>
             <p>EXPORT .BWVX saves just your blocks (4 bytes each) in the same format Land Forge uses. SAVE .HTML saves a copy of the studio with your build inside — open it and your build is there.</p>
             <p className="text-foreground">PUT IT ON BITCOIN</p>
             <p>ord wallet inscribe --fee-rate &lt;sats/vB&gt; --file tiny-studio.html --compress. You sign and send it yourself — BitmapWin never does. It needs no website to work: everything is inside the file.</p>
-            <p>FETCH ON-CHAIN: type a block number or an inscription id. Once the studio is on Bitcoin, it finds that BITMAP's newest Land Forge or Tiny Studio build straight from the chain so you can walk it, erase and add blocks, and save your remix. It also runs here in the preview: change STARTING BLOCK and it loads that BITMAP's inscribed build if one exists.</p>
+            <p>LOAD: type a block number or an inscription id (Enter works too). You get starter ground right away, replaced by the inscribed build if one exists. Once the studio is on Bitcoin, it finds that BITMAP's newest Land Forge or Tiny Studio build straight from the chain so you can walk it, erase and add blocks, and save your remix. It also runs here in the preview: change STARTING BLOCK and it loads that BITMAP's inscribed build if one exists.</p>
             <p>Anyone can remix any build on their own screen; only the holder of that BITMAP can make a change permanent on Bitcoin. To place a build with its exact parcel limits, use Land Forge.</p>
           </div>
         </aside>
