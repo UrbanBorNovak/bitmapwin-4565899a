@@ -1,6 +1,7 @@
 import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { episodeLength, generateEpisode, parseEpisode, sceneAt, type ToonEpisode } from "@/lib/toon-script";
+import { SceneEditor } from "@/components/toon/SceneEditor";
 
 const ToonStage3D = lazy(() => import("@/components/toon/ToonStage3D"));
 
@@ -224,8 +225,11 @@ function ToonPage() {
               <button className="btn-term-ghost" onClick={() => load({ ...episode, aspect: vertical ? "16:9" : "9:16" })}>[ {vertical ? "16:9 TV" : "9:16 REEL"} ]</button>
             </div>
           </section>
+          <SceneEditor episode={episode}
+            onChange={(e) => { setEpisode(e); setScript(JSON.stringify(e, null, 2)); setScriptError(null); setTime((t) => Math.min(t, episodeLength(e))); }}
+            onSeek={(t) => { setPlaying(false); setTime(t + 0.01); }} />
           <section className="rounded-lg border border-border bg-card p-4">
-            <div className="label text-signal">SCRIPT (JSON)</div>
+            <div className="label text-signal">SCRIPT (JSON · ADVANCED)</div>
             <p className="mt-1 text-[11px] text-muted-foreground">Edit scenes, shots (wide, orbit, dolly, dutch, crane), poses (idle, walk, talk, jump, combat) and lines, then apply.</p>
             <textarea value={script} onChange={(e) => setScript(e.target.value)} spellCheck={false}
               className="mt-2 h-80 w-full border border-border bg-background p-2 font-mono text-[11px]" aria-label="Episode script" />
