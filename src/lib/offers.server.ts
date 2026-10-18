@@ -170,6 +170,21 @@ export async function validateOffer(psbtBase64: string): Promise<OfferValidation
     );
   }
 
+  // Listing gate 1b — the seller's signature must be SIGHASH_SINGLE|ANYONECANPAY
+  // (0x83) and nothing else. SINGLE ties the inscription input to the seller's
+  // price output; NONE (0x82) would let anyone take the BITMAP for nothing, and
+  // ALL (0x00/0x01) could never be completed by a buyer.
+  if (input.sighashes.length === 0 || input.sighashes.some((t) => t !== 0x83)) {
+    throw new Error(
+      "UNSAFE OR UNUSABLE SIGNATURE — THE LISTING MUST BE SIGNED SIGHASH_SINGLE|ANYONECANPAY. RELIST AND APPROVE THE SIGNATURE YOUR WALLET REQUESTS",
+    );
+  }
+  // Listing gate 1c — exactly one inscription input paired with one price
+  // output at the same index, so the signed output is the seller's payout.
+  if (decoded.inputs.length !== 1 || decoded.outputs.length !== 1 || index !== 0) {
+    throw new Error("UNSUPPORTED OFFER SHAPE — EXPECTED ONE INSCRIPTION INPUT AND ONE PRICE OUTPUT");
+  }
+
   // Listing gate 2 — the inscription must still be sitting in an unspent
   // output, i.e. the seller really holds it right now.
   if (ordOutput.spent) {
