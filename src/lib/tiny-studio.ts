@@ -66,7 +66,7 @@ function mesh(){const a=[];const quad=(x,y,z,d,c)=>{const[nx,ny,nz]=d,u=nx?[0,1,
 for(const[k,v]of V){const[x,y,z]=k.split(',').map(Number),c=rgb(P[v]);for(const d of F)if(!V.has(key(x+d[0],y+d[1],z+d[2])))quad(x,y,z,d,c)}
 const g=[.11,.13,.16];for(const[i,j]of[[0,0],[S,0],[S,S],[0,0],[S,S],[0,S]])a.push(i,-.01,j,...g);
 G.bindBuffer(G.ARRAY_BUFFER,bf);G.bufferData(G.ARRAY_BUFFER,new Float32Array(a),G.STATIC_DRAW);N=a.length/6;dirty=0;hud()}
-function hud(){$('i').textContent=H+'.bitmap · '+V.size+' blocks · '+(W?'WALK: WASD or left-thumb pad to move · drag to look':'ORBIT: drag to turn · wheel or pinch to zoom')+' · tap/click = '+['look only','place','erase'][T]}
+function hud(){$('i').textContent=(typeof M=='string'?M:'')+H+'.bitmap · '+V.size+' blocks · '+(W?'WALK: WASD or left-thumb pad to move · drag to look':'ORBIT: drag to turn · wheel or pinch to zoom')+' · tap/click = '+['look only','place','erase'][T]}
 function view(){if(W)return{e:[wx,wy,wz],f:[Math.cos(wpit)*Math.cos(wyaw),Math.sin(wpit),Math.cos(wpit)*Math.sin(wyaw)]};const e=[tx+dist*Math.cos(pit)*Math.cos(yaw),ty+dist*Math.sin(pit),tz+dist*Math.cos(pit)*Math.sin(yaw)];return{e,f:[tx-e[0],ty-e[1],tz-e[2]]}}
 function eye(){return view().e}
 function mat(){const w=C.width,h=C.height,{e,f}=view(),n=v=>{const l=Math.hypot(...v);return v.map(x=>x/l)},cr=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
@@ -101,7 +101,7 @@ function tool(i){T=i;document.querySelectorAll('.t').forEach((b,j)=>b.classList.
 $('n').onclick=()=>{W^=1;if(W){wx=32;wz=32;wyaw=yaw+Math.PI;wpit=-.2;wy=ground(wx,wz,S)+1.6}jx=jy=0;$('n').textContent='VIEW: '+(W?'WALK':'ORBIT');$('j').className=W&&matchMedia('(pointer:coarse)').matches?'w':'';hud()};
 $('p').innerHTML='';P.forEach((c,i)=>{const b=document.createElement('button');b.className='s'+(i?'':' on');b.style.background=c;b.onclick=()=>{K=i;document.querySelectorAll('.s').forEach(q=>q.classList.remove('on'));b.classList.add('on')};$('p').append(b)});
 $('g').onclick=()=>{H=Math.max(0,+$('h').value|0);seed(H)};
-const say=t=>{$('i').textContent=t},J=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.json()});
+let M='';const say=t=>{M=t+' · ';hud()},J=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.json()});
 function grab(t){const m=t.match(/data-b="([A-Za-z0-9+/=]+)"/)||t.match(/<script id="bwvx"[^>]*data-format="BWVX1"[^>]*>([A-Za-z0-9+/=\\s]+)<\\/script>/);return m?m[1].replace(/\\s/g,''):null}
 async function fetchBuild(){const q=$('q').value.trim();try{let id=q;if(!/^[0-9a-f]{64}i\\d+$/.test(q)){H=Math.max(0,+q|0||+$('h').value|0);$('h').value=H;say('looking up '+H+'.bitmap on chain…');
 const m=await import('/content/${OCI_MODULE}');const bid=await m.getBitmapInscriptionId(H);if(!bid)throw 0;const ins=await J('/r/inscription/'+bid),at=await J('/r/sat/'+ins.sat+'/at/-1');id=at.id;if(!id||id==bid){seed(H);say(H+'.bitmap has no build yet · starter ground loaded');return}}
