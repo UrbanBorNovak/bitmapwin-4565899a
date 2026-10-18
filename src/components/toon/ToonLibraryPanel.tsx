@@ -1,21 +1,62 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import type { ToonEpisode } from "@/lib/toon-script";
-import { applyCast, loadLibrary, newId, saveLibrary, upsertEpisode, type ToonLibrary } from "@/lib/toon-library";
+import { applyCast, isMigrated, loadLibrary, markMigrated, mergeLibraries, newId, saveLibrary, upsertEpisode, type ToonLibrary } from "@/lib/toon-library";
+import { fetchCloudLibrary, pushCloudLibrary } from "@/lib/toon-cloud";
+import { useAuthSession } from "@/lib/auth";
 
 const field = "w-full border border-border bg-background px-2 py-1 font-mono text-[11px] text-foreground";
 const btn = "border border-border px-2 py-1 font-mono text-[11px] hover:border-bitcoin disabled:opacity-40";
+type Sync = "local" | "loading" | "synced" | "saving" | "error";
 
-/** Series, saved episodes and recurring casts. `currentId` tracks which saved episode is open. */
+/** Series, saved episodes and recurring casts. Signed in: the account copy is the source of truth. */
 export function ToonLibraryPanel({ episode, onOpen }: { episode: ToonEpisode; onOpen: (e: ToonEpisode) => void }) {
+  const { user, loading } = useAuthSession();
   const [lib, setLib] = useState<ToonLibrary>({ series: [], casts: [] });
   const [seriesId, setSeriesId] = useState("");
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [newSeries, setNewSeries] = useState("");
   const [castName, setCastName] = useState("");
   const [note, setNote] = useState<string | null>(null);
+  const [sync, setSync] = useState<Sync>("local");
 
-  useEffect(() => { const l = loadLibrary(); setLib(l); setSeriesId(l.series[0]?.id ?? ""); }, []);
-  const commit = (l: ToonLibrary, msg: string) => { setLib(l); setNote(saveLibrary(l) ? msg : "COULD NOT SAVE — BROWSER STORAGE IS FULL OR BLOCKED."); };
+  const show = (l: ToonLibrary) => { setLib(l); setSeriesId((cur) => (l.series.some((s) => s.id === cur) ? cur : l.series[0]?.id ?? "")); };
+
+  useEffect(() => {
+    if (loading) return;
+    const local = loadLibrary();
+    if (!user) { show(local); setSync("local"); return; }
+    let live = true;
+    setSync("loading");
+    (async () => {
+      try {
+        const cloud = await fetchCloudLibrary(user.id);
+        let next = cloud ?? { series: [], casts: [] };
+        // First sign-in on this device: fold browser-saved projects into the account, never dropping either side.
+        if (!isMigrated(user.id) && (local.series.length || local.casts.length)) {
+          next = mergeLibraries(next, local);
+          await pushCloudLibrary(user.id, next);
+          if (live) setNote("YOUR BROWSER-SAVED PROJECTS WERE ADDED TO YOUR ACCOUNT.");
+        }
+        markMigrated(user.id);
+        saveLibrary(next);
+        if (live) { show(next); setSync("synced"); }
+      } catch {
+        if (live) { show(local); setSync("error"); setNote("COULD NOT REACH YOUR ACCOUNT — SHOWING THIS DEVICE'S COPY."); }
+      }
+    })();
+    return () => { live = false; };
+  }, [user, loading]);
+
+  const commit = (l: ToonLibrary, msg: string) => {
+    setLib(l);
+    const okLocal = saveLibrary(l);
+    if (!user || sync === "error" || sync === "loading") return setNote(okLocal ? msg : "COULD NOT SAVE — BROWSER STORAGE IS FULL OR BLOCKED.");
+    setSync("saving");
+    pushCloudLibrary(user.id, l)
+      .then(() => { setSync("synced"); setNote(msg); })
+      .catch(() => { setSync("error"); setNote("SAVED ON THIS DEVICE, BUT NOT TO YOUR ACCOUNT. TRY AGAIN."); });
+  };
   const series = lib.series.find((s) => s.id === seriesId);
 
   const save = (asNew: boolean) => {
@@ -27,8 +68,20 @@ export function ToonLibraryPanel({ episode, onOpen }: { episode: ToonEpisode; on
 
   return (
     <section className="rounded-lg border border-border bg-card p-4">
-      <div className="label text-signal">MY SERIES</div>
-      <p className="mt-1 text-[11px] text-muted-foreground">Saved on this device only.</p>
+      <div className="flex items-center justify-between">
+        <div className="label text-signal">MY SERIES</div>
+        <span className="font-mono text-[10px] text-muted-foreground">
+          {sync === "local" ? "THIS DEVICE" : sync === "loading" ? "LOADING…" : sync === "saving" ? "SAVING…" : sync === "synced" ? "● SYNCED TO ACCOUNT" : "⚠ OFFLINE COPY"}
+        </span>
+      </div>
+      {!user && !loading && (
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          Saved on this device only. <Link to="/auth" className="text-signal underline">Sign in</Link> to keep your series on every device — what you saved here comes with you.
+        </p>
+      )}
+      {sync === "error" && user && (
+        <button className={`${btn} mt-2`} onClick={async () => { setSync("saving"); try { const merged = mergeLibraries((await fetchCloudLibrary(user.id)) ?? { series: [], casts: [] }, lib); await pushCloudLibrary(user.id, merged); saveLibrary(merged); show(merged); setSync("synced"); setNote("SYNCED."); } catch { setSync("error"); } }}>RETRY SYNC</button>
+      )}
       <div className="mt-2 flex gap-2">
         <input className={field} value={newSeries} placeholder="New series name" onChange={(e) => setNewSeries(e.target.value.slice(0, 60))} aria-label="New series name" />
         <button className={btn} disabled={!newSeries.trim()} onClick={() => {
