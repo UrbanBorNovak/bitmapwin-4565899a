@@ -80,7 +80,7 @@ export function ToonLibraryPanel({ episode, onOpen }: { episode: ToonEpisode; on
         </p>
       )}
       {sync === "error" && user && (
-        <button className={`${btn} mt-2`} onClick={() => { setSync("saving"); pushCloudLibrary(user.id, lib).then(() => { setSync("synced"); setNote("SYNCED."); }).catch(() => setSync("error")); }}>RETRY SYNC</button>
+        <button className={`${btn} mt-2`} onClick={async () => { setSync("saving"); try { const merged = mergeLibraries((await fetchCloudLibrary(user.id)) ?? { series: [], casts: [] }, lib); await pushCloudLibrary(user.id, merged); saveLibrary(merged); show(merged); setSync("synced"); setNote("SYNCED."); } catch { setSync("error"); } }}>RETRY SYNC</button>
       )}
       <div className="mt-2 flex gap-2">
         <input className={field} value={newSeries} placeholder="New series name" onChange={(e) => setNewSeries(e.target.value.slice(0, 60))} aria-label="New series name" />
