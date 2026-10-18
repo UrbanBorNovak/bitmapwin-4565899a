@@ -81,7 +81,8 @@ function TinyStudio() {
             <p>EXPORT .BWVX saves just your blocks (4 bytes each) in the same format Land Forge uses. SAVE .HTML saves a copy of the studio with your build inside — open it and your build is there.</p>
             <p className="text-foreground">PUT IT ON BITCOIN</p>
             <p>ord wallet inscribe --fee-rate &lt;sats/vB&gt; --file tiny-studio.html --compress. You sign and send it yourself — BitmapWin never does. It needs no website to work: everything is inside the file.</p>
-            <p>The starting ground is a simple shape seeded by the block number, not that block's real BITMAP layout. To place a build on your own BITMAP with its exact parcel limits, use Land Forge.</p>
+            <p>FETCH ON-CHAIN: type a block number or an inscription id. Once the studio is on Bitcoin, it finds that BITMAP's newest Land Forge or Tiny Studio build straight from the chain so you can walk it, erase and add blocks, and save your remix. Here in the preview it can't reach the chain, so it keeps the starter ground.</p>
+            <p>Anyone can remix any build on their own screen; only the holder of that BITMAP can make a change permanent on Bitcoin. To place a build with its exact parcel limits, use Land Forge.</p>
           </div>
         </aside>
       </div>
