@@ -3,6 +3,15 @@ import { useEffect, useMemo, useState } from "react";
 import { getBitmapHolderFn } from "@/lib/locate-bitmap.functions";
 import { buildTinyStudioHtml } from "@/lib/tiny-studio";
 import { brotliPackFn } from "@/lib/brotli-pack.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { fetchBlockDnaSource, guardianFromBlock } from "@/lib/bitmon";
+import { bakeGuardian } from "@/lib/forge-guardian-bake";
+
+/** The BITMAP's awakened Guardian, baked to voxels — only when one exists in the Guardian registry. */
+async function guardianFor(h: number): Promise<string | null> {
+  const { data } = await supabase.from("bitmon_guardians").select("block_height").eq("block_height", h).maybeSingle();
+  return data ? bakeGuardian(guardianFromBlock(await fetchBlockDnaSource(h))) : null;
+}
 
 export const Route = createFileRoute("/tiny-studio")({
   head: () => {
@@ -34,10 +43,12 @@ function TinyStudio() {
   const [packed, setPacked] = useState<{ raw: number; size: number; bytes: Uint8Array; h: number } | null>(null);
   const [busy, setBusy] = useState(false);
   const [bitmapId, setBitmapId] = useState<{ h: number; id: string } | null>(null);
+  const [guardian, setGuardian] = useState<{ h: number; g: string } | null>(null);
   useEffect(() => {
     let live = true;
     const t = setTimeout(() => {
       getBitmapHolderFn({ data: { height } }).then((r) => { if (live && r?.inscriptionId) setBitmapId({ h: height, id: r.inscriptionId }); }).catch(() => {});
+      guardianFor(height).then((g) => { if (live && g) setGuardian({ h: height, g }); }).catch(() => {});
     }, 500);
     return () => { live = false; clearTimeout(t); };
   }, [height]);
@@ -47,15 +58,15 @@ function TinyStudio() {
       const h = e.data?.tsAsk;
       if (typeof h !== "number" || !Number.isInteger(h) || h < 0 || !e.source) return;
       const src = e.source as Window;
-      getBitmapHolderFn({ data: { height: h } })
-        .then((r) => src.postMessage({ tsH: h, tsId: r?.inscriptionId ?? null }, "*"))
+      Promise.all([getBitmapHolderFn({ data: { height: h } }), guardianFor(h).catch(() => null)])
+        .then(([r, g]) => src.postMessage({ tsH: h, tsId: r?.inscriptionId ?? null, tsG: g }, "*"))
         .catch(() => src.postMessage({ tsH: h, tsId: null }, "*"));
     };
     window.addEventListener("message", onMsg);
     return () => window.removeEventListener("message", onMsg);
   }, []);
   // The preview frame can't run the on-chain lookup module, so it gets the BITMAP id resolved here; the downloaded file never needs it.
-  const previewHtml = useMemo(() => buildTinyStudioHtml({ height, bitmapId: bitmapId?.h === height ? bitmapId.id : undefined }), [height, bitmapId]);
+  const previewHtml = useMemo(() => buildTinyStudioHtml({ height, bitmapId: bitmapId?.h === height ? bitmapId.id : undefined, guardian: guardian?.h === height ? guardian.g : undefined }), [height, bitmapId, guardian]);
   const html = useMemo(() => buildTinyStudioHtml({ height }), [height]);
   const ready = packed && packed.h === height ? packed : null;
 
