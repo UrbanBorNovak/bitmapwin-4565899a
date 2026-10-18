@@ -88,7 +88,7 @@ export function SceneEditor({ episode, onChange, onSeek, characters = [], notes 
       )}
 
       <div className="label mt-4 text-signal">DIALOGUE</div>
-      <ContinuityHint notes={notes} />
+      <ContinuityHint notes={notes} characters={characters} />
       {s.lines.map((l, k) => (
         <div key={k} className="mt-2 space-y-1 border-l border-border pl-2">
           <CharacterHint c={characters.find((c) => c.height === s.cast[l.speaker]?.height)} />
