@@ -82,6 +82,7 @@ function ErrorComponent({ error, reset }: { error: unknown; reset: () => void })
       return () => window.clearTimeout(t);
     }
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    return undefined;
   }, [error, chunk]);
 
   return (
