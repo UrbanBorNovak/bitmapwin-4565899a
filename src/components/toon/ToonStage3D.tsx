@@ -78,7 +78,7 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
   const g = useRef<Group>(null);
   const dna = useQuery({ ...guardianDnaQuery(actor.height), staleTime: Infinity });
   const head = useMemo(() => new Vector3(), []);
-  const unitH = useRef(0);
+  const unitH = useRef(0), frames = useRef(0);
   useEffect(() => () => { toonHeads.delete(slot); actorHeights.delete(slot); }, [slot]);
   useFrame(({ camera }) => {
     const t = timeRef.current, o = g.current;
@@ -106,14 +106,14 @@ function Actor({ actor, slot, scene, timeRef, progressRef, durRef }: { actor: To
     }
     o.position.set(x, y, pos.z);
     o.rotation.set(rx, ry, rz);
-    if (!unitH.current && o.children.length) {
+    if (o.children.length && frames.current++ % 30 === 0) {
       o.scale.set(1, 1, 1); o.position.set(0, 0, 0); o.rotation.set(0, 0, 0); o.updateMatrixWorld(true);
       const b = new Box3().setFromObject(o);
       if (!b.isEmpty()) unitH.current = Math.max(0.2, b.max.y);
     }
     o.scale.set(10 * s, 10 * s * sy, 10 * s);
     const bodyH = (unitH.current || 1.2) * 10;
-    actorHeights.set(slot, bodyH); (window as unknown as { __toonH: unknown }).__toonH = Object.fromEntries(actorHeights);
+    actorHeights.set(slot, bodyH);
     // Publish the head's screen position for the speech-bubble overlay.
     if (dna.data) {
       head.set(x, y + bodyH * s * sy * 0.92, pos.z).project(camera);
