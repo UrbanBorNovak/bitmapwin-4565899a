@@ -254,12 +254,7 @@ function SceneTimeline({ duration, rows }: { duration: number; rows: TimelineRow
       <div className="relative h-4 font-mono text-[9px] text-muted-foreground">
         {ticks.map((t) => <span key={t} className="absolute -translate-x-1/2 first:translate-x-0 last:-translate-x-full" style={{ left: `${(t / duration) * 100}%` }}>{t.toFixed(step < 0.5 ? 2 : step < 1 ? 1 : 0)}s</span>)}
       </div>
-      <div className="relative space-y-1">
-        {guide !== null && (
-          <div className="pointer-events-none absolute -inset-y-1 z-10 w-px bg-foreground" style={{ left: `${(guide / duration) * 100}%` }}>
-            <span className="absolute -bottom-4 -translate-x-1/2 bg-foreground px-1 font-mono text-[9px] text-background">{guide.toFixed(1)}s</span>
-          </div>
-        )}
+      <div className="relative space-y-1 pb-4">
         {rows.map((r) => {
           const left = (r.start / duration) * 100, width = Math.max(2, ((Math.min(r.end, duration) - r.start) / duration) * 100);
           const tone = r.kind === "move" ? "border-bitcoin bg-bitcoin/25 text-bitcoin" : "border-signal bg-signal/20 text-signal";
