@@ -1,9 +1,10 @@
 import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { episodeLength, generateEpisode, parseEpisode, sceneAt, type ToonEpisode } from "@/lib/toon-script";
+import { episodeLength, generateEpisode, parseEpisode, sceneAt, MUSIC, type Music, type ToonEpisode } from "@/lib/toon-script";
 import { SceneEditor } from "@/components/toon/SceneEditor";
 import { ToonLibraryPanel } from "@/components/toon/ToonLibraryPanel";
 import type { ContinuityNote, ToonCharacter } from "@/lib/toon-library";
+import { playSoundtrack, renderSoundtrack } from "@/lib/toon-audio";
 import { canEncodeMp4, createXRecorder, X_MAX_SECONDS, X_SIZES, xIntentUrl } from "@/lib/x-video";
 
 const ToonStage3D = lazy(() => import("@/components/toon/ToonStage3D"));
@@ -119,6 +120,21 @@ function ToonPage() {
   const total = useMemo(() => episodeLength(episode), [episode]);
   const timeRef = useRef(0);
   timeRef.current = time;
+  const [muted, setMuted] = useState(false);
+  const soundRef = useRef<{ key: string; buf: Promise<AudioBuffer | null> } | null>(null);
+  const soundtrack = () => {
+    const key = JSON.stringify(episode);
+    if (soundRef.current?.key !== key) soundRef.current = { key, buf: renderSoundtrack(episode).catch(() => null) };
+    return soundRef.current.buf;
+  };
+  // Live preview audio follows play/pause and restarts from the playhead.
+  useEffect(() => {
+    if (!playing || muted || recording) return;
+    let stop = () => {}, live = true;
+    void soundtrack().then((b) => { if (b && live) stop = playSoundtrack(b, timeRef.current); });
+    return () => { live = false; stop(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing, muted, recording, episode]);
 
   const load = (e: ToonEpisode) => { setEpisode(e); setScript(JSON.stringify(e, null, 2)); setTime(0); setScriptError(null); };
 
@@ -158,7 +174,7 @@ function ToonPage() {
     const over = document.createElement("canvas");
     over.width = W; over.height = H;
     const octx = over.getContext("2d")!;
-    const rec = await createXRecorder(out);
+    const rec = await createXRecorder(out, muted ? null : await soundtrack());
     let raf = 0, stopped = false;
     const paint = async () => {
       // Cover-fit the stage into the exact X frame size.
@@ -178,7 +194,7 @@ function ToonPage() {
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(a.href), 30_000);
         setLastFile(new File([blob], name, { type: blob.type }));
-        setNote(rec.kind === "mp4" ? `X-READY MP4 SAVED (${W}×${H}, 30 FPS, H.264). NOW PRESS POST TO X AND ATTACH IT.` : "SAVED AS WEBM — X NEEDS MP4. USE CHROME, EDGE OR SAFARI FOR AN X-READY FILE.");
+        setNote(rec.kind === "mp4" ? `X-READY MP4 SAVED (${W}×${H}, 30 FPS, H.264${rec.hasAudio ? " + AAC SOUND" : muted ? ", SOUND OFF" : ", NO SOUND — THIS BROWSER CAN'T ENCODE AUDIO"}). NOW PRESS POST TO X AND ATTACH IT.` : "SAVED AS WEBM — X NEEDS MP4. USE CHROME, EDGE OR SAFARI FOR AN X-READY FILE.");
         return;
       }
       raf = requestAnimationFrame(paint);
@@ -227,6 +243,20 @@ function ToonPage() {
             <input type="range" min={0} max={total} step={0.05} value={time} disabled={recording}
               onChange={(e) => { setPlaying(false); setTime(Number(e.target.value)); }} className="min-w-40 flex-1" aria-label="Timeline" />
             <span className="text-muted-foreground">{time.toFixed(1)}s / {total.toFixed(0)}s</span>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 font-mono text-xs">
+            <span className="label text-signal">SOUND</span>
+            <button className="btn-term-ghost" disabled={recording} onClick={() => setMuted((m) => !m)}>[ {muted ? "🔇 SOUND OFF" : "🔊 SOUND ON"} ]</button>
+            <label className="flex items-center gap-1 text-muted-foreground">MUSIC
+              <select className="border border-border bg-background px-2 py-1" value={episode.music ?? "adventure"} disabled={recording}
+                onChange={(e) => { const n = { ...episode, music: e.target.value as Music }; setEpisode(n); setScript(JSON.stringify(n, null, 2)); }}>
+                {MUSIC.map((m) => <option key={m} value={m}>{m.toUpperCase()}</option>)}
+              </select>
+            </label>
+            <label className="flex items-center gap-1 text-muted-foreground">
+              <input type="checkbox" checked={episode.voices !== false} disabled={recording}
+                onChange={(e) => { const n = { ...episode, voices: e.target.checked }; setEpisode(n); setScript(JSON.stringify(n, null, 2)); }} /> GUARDIAN VOICES
+            </label>
           </div>
           {note && <p className="mt-2 font-mono text-[11px] text-signal">&gt; {note}</p>}
         </div>

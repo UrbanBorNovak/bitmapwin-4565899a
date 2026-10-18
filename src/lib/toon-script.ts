@@ -7,7 +7,9 @@ export type Shot = "wide" | "orbit" | "dolly" | "dutch" | "crane";
 export interface ToonActor { height: number; name: string; x: number; z: number; pose: Pose; }
 export interface ToonLine { at: number; dur: number; speaker: number; text: string; style: "speech" | "shout" | "thought"; }
 export interface ToonScene { block: number; duration: number; shot: Shot; cast: ToonActor[]; lines: ToonLine[]; sfx?: string; }
-export interface ToonEpisode { title: string; aspect: "16:9" | "9:16"; scenes: ToonScene[]; }
+export type Music = "none" | "chill" | "adventure" | "tension";
+export const MUSIC: Music[] = ["none", "chill", "adventure", "tension"];
+export interface ToonEpisode { title: string; aspect: "16:9" | "9:16"; scenes: ToonScene[]; music?: Music; voices?: boolean; }
 
 export const MAX_SCENES = 12;
 export const MAX_SCENE_SECONDS = 20;
@@ -84,5 +86,5 @@ export function parseEpisode(json: string): ToonEpisode {
     for (const c of s.cast) if (!okBlock(c.height) || !POSES.includes(c.pose)) throw new Error("Each actor needs a valid block and pose.");
     if (!Array.isArray(s.lines)) s.lines = [];
   }
-  return { title: String(e.title ?? "Untitled"), aspect: e.aspect === "9:16" ? "9:16" : "16:9", scenes: e.scenes };
+  return { title: String(e.title ?? "Untitled"), aspect: e.aspect === "9:16" ? "9:16" : "16:9", scenes: e.scenes, music: MUSIC.includes(e.music as Music) ? (e.music as Music) : "adventure", voices: e.voices !== false };
 }
