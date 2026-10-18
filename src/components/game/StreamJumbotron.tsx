@@ -52,7 +52,11 @@ export function StreamJumbotron({ height, position, cell }: { height: number; po
               allowFullScreen
             />
           ) : (
-            <div style={{ color: "#7fe7ff", font: "12px monospace", padding: 16 }}>● {height}.BITMAP · WALK CLOSER TO TUNE IN</div>
+            <div style={{ color: "#7fe7ff", font: "12px monospace", padding: 16 }}>
+              <div style={{ color: "#f7931a", fontSize: 22, marginBottom: 8 }}>BITMAP.STREAM</div>
+              <div>● GENESIS BROADCASTER · @elevateddabber</div>
+              <div style={{ marginTop: 6 }}>{height}.BITMAP · WALK CLOSER TO TUNE IN</div>
+            </div>
           )}
         </div>
         {near ? <JumbotronChat height={height} /> : null}
