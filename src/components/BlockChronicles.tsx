@@ -166,7 +166,7 @@ function Cover({ issue, isNew, onOpen, inscribed, built }: { issue: ComicIssue; 
     <button
       type="button"
       onClick={onOpen}
-      className="chronicle-in group relative h-[200px] min-w-[150px] flex-1 overflow-hidden border border-border-strong bg-background text-left shadow-[inset_0_1px_0_color-mix(in_oklab,var(--foreground)_10%,transparent)] transition-all duration-300 hover:-translate-y-0.5 hover:border-bitcoin hover:shadow-[0_8px_24px_-12px_var(--bitcoin)]"
+      className="chronicle-in group relative h-[200px] min-w-0 overflow-hidden sm:min-w-[150px] sm:flex-1 border border-border-strong bg-background text-left shadow-[inset_0_1px_0_color-mix(in_oklab,var(--foreground)_10%,transparent)] transition-all duration-300 hover:-translate-y-0.5 hover:border-bitcoin hover:shadow-[0_8px_24px_-12px_var(--bitcoin)]"
     >
       <Halftone seed={issue.height} kind={issue.height % 4} />
       {built || inscribed ? (
@@ -222,16 +222,16 @@ export function BlockChronicles() {
   return (
     <section className="border-b border-border bg-card" data-no-translate>
       <div className="mx-auto max-w-[1600px] px-3 pt-3 md:px-5 md:pt-5">
-      <div className="flex items-stretch gap-3 overflow-x-auto border border-border-strong bg-background/60 p-3 backdrop-blur-sm">
-        <div className="flex w-[130px] shrink-0 flex-col justify-between border-r border-border pr-3">
+      <div className="grid grid-cols-2 gap-2 border border-border-strong sm:flex sm:items-stretch sm:gap-3 sm:overflow-x-auto bg-background/60 p-3 backdrop-blur-sm">
+        <div className="col-span-2 flex flex-row items-end justify-between gap-2 border-b border-border pb-2 sm:w-[130px] sm:shrink-0 sm:flex-col sm:items-stretch sm:border-b-0 sm:border-r sm:pb-0 sm:pr-3">
           <div>
             <div className="label flex items-center gap-2 text-bitcoin"><span className="size-2 bg-bitcoin" />CHRONICLES</div>
-            <div className="display mt-2 text-xl leading-none">THE<br />BLOCK<br /><span className="text-bitcoin">COMICS</span></div>
+            <div className="display mt-2 text-xl leading-none">THE<br className="hidden sm:block" /> BLOCK<br className="hidden sm:block" /> <span className="text-bitcoin">COMICS</span></div>
           </div>
           <div className="font-mono text-[9px] text-muted-foreground">{isError ? "FEED OFFLINE" : "ONE ISSUE / BLOCK"}</div>
         </div>
         {next != null && (
-          <div className="flex h-[200px] w-[150px] shrink-0 flex-col items-center justify-center border border-dashed border-signal bg-signal/5 p-3 text-center">
+          <div className="flex h-[200px] min-w-0 flex-col items-center justify-center border border-dashed sm:w-[150px] sm:shrink-0 border-signal bg-signal/5 p-3 text-center">
             <span className="size-3 animate-pulse bg-signal shadow-[0_0_12px_var(--signal)]" aria-hidden="true" />
             <div className="mt-3 font-mono text-xs font-bold text-signal">ISSUE #{next}</div>
             <div className="mt-1 font-mono text-[9px] text-muted-foreground">INKING IN THE MEMPOOL…</div>
@@ -245,7 +245,7 @@ export function BlockChronicles() {
           );
         })}
         {issues.length > ISSUES_PER_PAGE && (
-          <div className="flex h-[200px] w-[70px] shrink-0 flex-col items-center justify-center gap-2 border-l border-border pl-3">
+          <div className="col-span-2 flex items-center justify-center gap-3 border-t border-border pt-2 sm:h-[200px] sm:w-[70px] sm:shrink-0 sm:flex-col sm:gap-2 sm:border-l sm:border-t-0 sm:pl-3 sm:pt-0">
             <button
               type="button"
               className="border border-border bg-background px-1 py-1 font-mono text-[9px] uppercase text-muted-foreground hover:border-bitcoin hover:text-foreground disabled:opacity-30"
