@@ -49,9 +49,9 @@ export function buildTinyStudioHtml(opts: { height?: number; payload?: string; b
   const pal = JSON.stringify(BLOCKS.map((b) => b.top));
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="bitmapwin" content="BWVX1;${h};studio"><title>${h}.bitmap · Tiny Studio</title><style>
 html,body{margin:0;height:100%;background:#0b0d10;color:#e8e8e8;font:12px monospace;overflow:hidden}canvas{width:100%;height:100%;display:block;touch-action:none}
-#u{position:fixed;left:8px;top:8px;display:flex;flex-wrap:wrap;gap:4px;max-width:96vw}#u *{font:inherit}button,input{background:#14171c;color:#e8e8e8;border:1px solid #2a2f37;border-radius:4px;padding:4px 6px}
+#u{position:fixed;left:8px;top:8px;display:flex;flex-wrap:wrap;gap:4px}#u *{font:inherit}button,input{background:#14171c;color:#e8e8e8;border:1px solid #2a2f37;border-radius:4px;padding:4px 6px}
 button.on{border-color:#f7931a;color:#f7931a}.s{width:20px;height:20px;padding:0}#i{position:fixed;left:8px;bottom:8px;right:8px;opacity:.75}#j{position:fixed;left:16px;bottom:40px;width:110px;height:110px;border:1px solid #2a2f37;border-radius:50%;display:none;pointer-events:none}#j.w{display:block}
-</style></head><body><canvas id="c"></canvas><div id="u"><input id="h" type="hidden" value="${h}"><input id="q" placeholder="block # or inscription id" style="width:170px"><button id="f">LOAD</button><button id="n">VIEW: ORBIT</button><button id="t0" class="t">LOOK</button><button id="t1" class="t on">PLACE</button><button id="t2" class="t">ERASE</button><span id="p"></span><button id="x">EXPORT .BWVX</button><button id="v">SAVE .HTML</button></div><div id="j"></div><div id="i"></div>
+</style></head><body><canvas id="c"></canvas><div id="u"><input id="h" type="hidden" value="${h}"><input id="q" placeholder="block or id" style="width:170px"><button id="f">LOAD</button><button id="n">VIEW: ORBIT</button><button id="t0" class="t">LOOK</button><button id="t1" class="t on">PLACE</button><button id="t2" class="t">ERASE</button><span id="p"></span><button id="x">EXPORT .BWVX</button><button id="v">SAVE .HTML</button></div><div id="j"></div><div id="i"></div>
 <script id="d" type="text/plain" data-b="${esc(opts.payload ?? "")}"${opts.bitmapId && /^[0-9a-f]{64}i\d+$/.test(opts.bitmapId) ? ` data-i="${opts.bitmapId}" data-ih="${h}"` : ""}></script><script>
 const P=${pal},C=document.getElementById('c'),G=C.getContext('webgl',{antialias:true}),$=i=>document.getElementById(i);
 let S=64,V=new Map,K=0,T=1,W=0,H=${h},yaw=.8,pit=.6,dist=90,tx=32,ty=4,tz=32,dirty=1,wx=32,wy=20,wz=32,wyaw=0,wpit=-.2,jx=0,jy=0;const KD={};
@@ -85,7 +85,7 @@ G.enableVertexAttribArray(ap);G.vertexAttribPointer(ap,3,G.FLOAT,0,24,0);G.enabl
 let lt=0;const solid=(x,y,z)=>V.has(key(Math.floor(x),Math.floor(y),Math.floor(z)));
 function ground(x,z,top){for(let y=Math.min(S-1,Math.floor(top));y>=0;y--)if(solid(x,y,z))return y+1;return 0}
 function step(){const n=performance.now(),dt=Math.min(.05,(n-lt)/1e3||0);lt=n;if(!W)return;
-let f=(KD.KeyW||KD.ArrowUp?1:0)-(KD.KeyS||KD.ArrowDown?1:0)-jy,r=(KD.KeyD||KD.ArrowRight?1:0)-(KD.KeyA||KD.ArrowLeft?1:0)+jx;const l=Math.hypot(f,r);if(l>1){f/=l;r/=l}
+let f=(KD.KeyW?1:0)-(KD.KeyS?1:0)-jy,r=(KD.KeyD?1:0)-(KD.KeyA?1:0)+jx;const l=Math.hypot(f,r);if(l>1){f/=l;r/=l}
 const sp=(KD.ShiftLeft?14:7)*dt,c=Math.cos(wyaw),s=Math.sin(wyaw),feet=wy-1.6;
 const nx=Math.max(.3,Math.min(S-.3,wx+(c*f-s*r)*sp)),nz=Math.max(.3,Math.min(S-.3,wz+(s*f+c*r)*sp));
 const ok=(x,z)=>ground(x,z,feet+1.2)<=feet+1.05&&!solid(x,feet+1.2,z);if(ok(nx,wz))wx=nx;if(ok(wx,nz))wz=nz;
