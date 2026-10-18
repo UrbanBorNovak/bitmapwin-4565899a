@@ -59,8 +59,9 @@ const key=(x,y,z)=>x+','+y+','+z;
 ${LAND_JS}
 function seed(h){V.clear();S=64;tx=tz=32;LAND(h,(x,y,z,k)=>V.set(key(x,y,z),k));dirty=1}
 function D(b,f){const r=atob(b),c=i=>r.charCodeAt(i);if(c(0)==66&&c(1)==87&&c(2)==50&&c(3)==0){for(let i=4;i+6<r.length;i+=7)for(let x=c(i);x<=c(i+3);x++)for(let y=c(i+1);y<=c(i+4);y++)for(let z=c(i+2);z<=c(i+5);z++)f(x,y,z,c(i+6))}else for(let i=0;i+3<r.length;i+=4)f(c(i),c(i+1),c(i+2),c(i+3))}
-function load(b,sp){V.clear();const A=b.map?b:[];b.map||D(b,(...v)=>A.push(v));S=sp||(A.some(v=>v[0]>63||v[1]>63||v[2]>63)?128:64);tx=tz=S/2;dist=S*1.4;
-for(const[x,y,z,k]of A)if(x<S&&y<S&&z<S&&k<P.length)V.set(key(x,y,z),k);dirty=1}
+function load(b,sp,g){const A=b.map?b:[];b.map||D(b,(...v)=>A.push(v));S=sp||(A.some(v=>v[0]>63||v[1]>63||v[2]>63)?128:64);tx=tz=S/2;dist=S*1.4;let L=0;const c=new Set(A.map(v=>v[0]+','+v[2]));
+if(g&&S>64){const o=[...V];V.clear();for(const[k,v]of o){const[x,y,z]=k.split(',').map(n=>n*2);for(let i=0;i<8;i++)V.set(key(x+(i&1),y+(i>>1&1),z+(i>>2)),v)}}if(g){for(const k of V.keys()){const[x,y,z]=k.split(',');c.has(x+','+z)&&y>=L&&(L=+y+1)}for(const q of c){const[x,z]=q.split(',');for(let y=0;y<L;y++)V.has(key(x,y,z))||V.set(key(x,y,z),3)}}else V.clear();
+for(const[x,y,z,k]of A)if(x<S&&y+L<S&&z<S&&k<P.length)V.set(key(x,y+L,z),k);dirty=1}
 function pack(){let s=S>64?'BW2\\0':'';for(const[k,v]of V){const[x,y,z]=k.split(',').map(Number);s+=S>64?String.fromCharCode(x,y,z,x,y,z,v):String.fromCharCode(x,y,z,v)}return s}
 const sh=(t,src)=>{const s=G.createShader(t);G.shaderSource(s,src);G.compileShader(s);return s},pr=G.createProgram();
 G.attachShader(pr,sh(G.VERTEX_SHADER,'attribute vec3 p;attribute vec3 c;uniform mat4 m;varying vec3 v;varying float f;void main(){gl_Position=m*vec4(p,1.);v=c;f=gl_Position.z;}'));
@@ -120,7 +121,7 @@ for(const v of B){const x=v[0]+px,y=v[1]+py,z=v[2]+pz;if(x<sp&&y<sp&&z<sp)o.push
 async function fetchBuild(){const q=$('q').value.trim();try{let ids=[q];if(!/^[0-9a-f]{64}i\\d+$/.test(q)){H=Math.max(0,+q|0||+$('h').value|0);$('h').value=H;seed(H);say('looking up…');
 const bid=await(async()=>{try{const m=await import(O+'/content/${OCI_MODULE}');return await m.getBitmapInscriptionId(H)}catch(e){const d=$('d').dataset;if(d.ih==H)return d.i;if(parent!==window)return await new Promise(ok=>{const f=v=>{if(v.data&&v.data.tsH==H){removeEventListener('message',f);ok(v.data.tsId)}};addEventListener('message',f);parent.postMessage({tsAsk:H},'*');setTimeout(()=>ok(null),9e3)});throw e}})();if(!bid)throw 0;const ins=await J('/r/inscription/'+bid),at=await J('/r/sat/'+ins.sat+'/at/-1');ids=[at.id];
 try{const l=await J('/r/sat/'+ins.sat);ids.push(...(l.ids||[]).reverse())}catch(e){}ids=[...new Set(ids)].filter(i=>i&&i!=bid).slice(0,8);if(!ids.length){seed(H);say('no build');return}}
-for(const id of ids){say('reading '+id.slice(0,10)+'…');const b=await fromId(id);if(b){b.a?load(b.a,b.s):load(b);say('loaded '+id.slice(0,10)+(b.n?' · '+b.n+' pieces':''));return}}
+for(const id of ids){say('reading '+id.slice(0,10)+'…');const b=await fromId(id);if(b){b.a?load(b.a,b.s,1):load(b,0,1);say('loaded '+id.slice(0,10)+(b.n?' · '+b.n+' pieces':''));return}}
 say('no build')}catch(e){say('offline')}}
 $('f').onclick=fetchBuild;$('q').onkeydown=e=>{if(e.key=='Enter')fetchBuild()};
 const save=(data,name,type)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click()};
