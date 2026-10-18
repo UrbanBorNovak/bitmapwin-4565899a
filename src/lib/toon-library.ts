@@ -45,3 +45,22 @@ export function applyCast(ep: ToonEpisode, heights: number[]): ToonEpisode {
     })),
   };
 }
+
+/** Combines two libraries without losing anything: items matched by id, newer saved episode wins. */
+export function mergeLibraries(a: ToonLibrary, b: ToonLibrary): ToonLibrary {
+  const series = new Map(a.series.map((s) => [s.id, s]));
+  for (const s of b.series) {
+    const cur = series.get(s.id);
+    if (!cur) { series.set(s.id, s); continue; }
+    const eps = new Map(cur.episodes.map((e) => [e.id, e]));
+    for (const e of s.episodes) { const x = eps.get(e.id); if (!x || e.savedAt > x.savedAt) eps.set(e.id, e); }
+    series.set(s.id, { ...cur, episodes: [...eps.values()].sort((x, y) => x.savedAt - y.savedAt) });
+  }
+  const casts = new Map(a.casts.map((c) => [c.id, c]));
+  for (const c of b.casts) if (!casts.has(c.id)) casts.set(c.id, c);
+  return { series: [...series.values()], casts: [...casts.values()] };
+}
+
+const migratedKey = (userId: string) => `toon-studio-migrated-${userId}`;
+export const isMigrated = (userId: string) => { try { return localStorage.getItem(migratedKey(userId)) === "1"; } catch { return false; } };
+export const markMigrated = (userId: string) => { try { localStorage.setItem(migratedKey(userId), "1"); } catch { /* ignore */ } };
