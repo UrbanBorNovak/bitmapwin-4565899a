@@ -4,7 +4,9 @@ import type { ToonEpisode } from "./toon-script";
 export interface EpisodeVersion { savedAt: number; episode: ToonEpisode; }
 export interface SavedEpisode { id: string; savedAt: number; episode: ToonEpisode; history?: EpisodeVersion[]; }
 export interface SeriesTemplate { savedAt: number; episode: ToonEpisode; }
-export interface ToonSeries { id: string; name: string; episodes: SavedEpisode[]; template?: SeriesTemplate; }
+/** Recurring Guardian character in a series, keyed by the Guardian's BITMAP block. */
+export interface ToonCharacter { height: number; nickname: string; personality: string; voice: string; relationships: string; }
+export interface ToonSeries { id: string; name: string; episodes: SavedEpisode[]; template?: SeriesTemplate; characters?: ToonCharacter[]; }
 export interface ToonCast { id: string; name: string; heights: number[]; }
 export interface ToonLibrary { series: ToonSeries[]; casts: ToonCast[]; }
 
@@ -57,7 +59,9 @@ export function mergeLibraries(a: ToonLibrary, b: ToonLibrary): ToonLibrary {
     const eps = new Map(cur.episodes.map((e) => [e.id, e]));
     for (const e of s.episodes) { const x = eps.get(e.id); if (!x || e.savedAt > x.savedAt) eps.set(e.id, e); }
     const template = !cur.template || (s.template && s.template.savedAt > cur.template.savedAt) ? s.template ?? cur.template : cur.template;
-    series.set(s.id, { ...cur, ...(template ? { template } : {}), episodes: [...eps.values()].sort((x, y) => x.savedAt - y.savedAt) });
+    const chars = new Map((cur.characters ?? []).map((c) => [c.height, c]));
+    for (const c of s.characters ?? []) if (!chars.has(c.height)) chars.set(c.height, c);
+    series.set(s.id, { ...cur, ...(template ? { template } : {}), ...(chars.size ? { characters: [...chars.values()] } : {}), episodes: [...eps.values()].sort((x, y) => x.savedAt - y.savedAt) });
   }
   const casts = new Map(a.casts.map((c) => [c.id, c]));
   for (const c of b.casts) if (!casts.has(c.id)) casts.set(c.id, c);
